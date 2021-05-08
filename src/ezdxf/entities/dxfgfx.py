@@ -71,6 +71,8 @@ acdb_entity = DefSubclass('AcDbEntity', {
     'invisible': DXFAttr(60, default=0, dxfversion=DXF2000, optional=True),
 
     # True color as 0x00RRGGBB 24-bit value
+    # True color always overrides ACI "color"!
+
     'true_color': DXFAttr(420, dxfversion=DXF2004, optional=True),
 
     # Color name as string. Color books are stored in .stb config files?

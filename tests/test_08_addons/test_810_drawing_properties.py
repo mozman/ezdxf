@@ -141,6 +141,17 @@ def test_resolve_entity_color(doc):
     assert line2.color == '#ff0000'
 
 
+def test_existing_true_color_overrides_any_aci_color(doc):
+    ctx = RenderContext(doc)
+    line = factory.new('LINE')
+    line.rgb = (255, 1, 1)
+    for color in range(const.BYLAYER + 1):
+        line.dxf.color = color
+        props = ctx.resolve_all(line)
+        assert props.color == '#ff0101', \
+            "true_color should override any ACI color"
+
+
 def test_resolve_entity_linetype(doc):
     ctx = RenderContext(doc)
     msp = doc.modelspace()

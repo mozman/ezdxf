@@ -14,6 +14,7 @@ Version 0.16.3 - dev
 - BUGFIX: improved virtual DIMENSION handling
 - BUGFIX: DIMENSION transformation also transform the content of the 
   associated anonymous geometry block content
+- BUGFIX: `drawing` add-on, true color values always override ACI colors
 
 Version 0.16.2 - 2021-04-21
 ---------------------------

@@ -460,7 +460,13 @@ class RenderContext:
         """ Resolve the rgb-color of `entity` as hex color string:
         "#RRGGBB" or "#RRGGBBAA".
         """
-        aci = entity.dxf.color  # defaults to BYLAYER
+        if entity.dxf.hasattr('true_color'):
+            # An existing true color value always overrides ACI color!
+            # Do not default to BYLAYER or BYBLOCK, this ACI value is ignored!
+            aci = 7
+        else:
+            aci = entity.dxf.color  # defaults to BYLAYER
+
         if aci == const.BYLAYER:
             entity_layer = resolved_layer or layer_key(
                 self.resolve_layer(entity))
@@ -473,7 +479,6 @@ class RenderContext:
                 color = self.current_layout.default_color
             else:
                 color = self.current_block_reference.color
-
         else:  # BYOBJECT
             color = self._true_entity_color(entity.rgb, aci)
 
