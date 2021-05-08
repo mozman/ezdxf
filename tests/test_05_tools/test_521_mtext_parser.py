@@ -90,9 +90,8 @@ class TestMTextContentParsing:
         assert token.data == "%%a%%uTEXT%%u%%z"
 
     def test_percent_sign_usage(self):
-        # underline codes in TEXT are not supported in MTEXT:
-        token = list(MTextParser("%_%%_%%%_%%%"))[0]
-        assert token.data == "%_%%_%%%_%%%"
+        token = list(MTextParser("%_%%_%%%_%%%%"))[0]
+        assert token.data == "%_%%_%%%_%%%%"
 
 
 class TestMTextContextParsing:
