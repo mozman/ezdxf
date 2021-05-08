@@ -255,31 +255,30 @@ def plain_text(text: str) -> str:
     """ Returns the plain text for :class:`~ezdxf.entities.Text`,
     :class:`~ezdxf.entities.Attrib` and :class:`~ezdxf.entities.Attdef` content.
     """
-    # TODO: using TextScanner()
-    chars = []
-    raw_chars = list(reversed(validator.fix_one_line_text(caret_decode(text))))
-    while len(raw_chars):
-        char = raw_chars.pop()
-        if char == '%':  # special characters
-            if len(raw_chars) and raw_chars[-1] == '%':
-                raw_chars.pop()  # discard next '%'
-                if len(raw_chars):
-                    code = raw_chars.pop()
-                    letter = const.SPECIAL_CHARS_ENCODING.get(code.lower())
-                    if letter:
-                        chars.append(letter)
-                    else:
-                        # formatting codes (%%k, %%o, %%u) will be ignored in
-                        # TEXT, ATTRIB and ATTDEF:
-                        if code.lower() not in "kou":
-                            # no special encoding, append chars as they are
-                            chars.extend(("%", "%", code))
-            else:  # char is just a single '%'
-                chars.append(char)
-        else:  # char is what it is, a character
-            chars.append(char)
-
-    return "".join(chars)
+    # TEXT, ATTRIB and ATTDEF are short strings <= 255 in R12.
+    # R2000 allows 2049 chars, but this limit is not often used in real world
+    # applications.
+    result = ""
+    scanner = TextScanner(validator.fix_one_line_text(caret_decode(text)))
+    while not scanner.is_empty:
+        char = scanner.peek()
+        if char == "%":  # special characters
+            if scanner.peek(1) == "%":
+                code = scanner.peek(2).lower()
+                letter = const.SPECIAL_CHARS_ENCODING.get(code)
+                if letter:
+                    scanner.consume(3)  # %%?
+                    result += letter
+                    continue
+                elif code in "kou":
+                    # formatting codes (%%k, %%o, %%u) will be ignored in
+                    # TEXT, ATTRIB and ATTDEF:
+                    scanner.consume(3)
+                    continue
+        scanner.consume(1)
+        # slightly faster then "".join(chars)
+        result += char
+    return result
 
 
 ONE_CHAR_COMMANDS = "PNLlOoKkX"
