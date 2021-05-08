@@ -51,9 +51,9 @@ Information gathered by implementing the :class:`MTextEditor` and the
     - other characters renders as empty square "▯"
 
 - special encoded characters:
-    - "%%c" and "%%C" renders "⌀"
-    - "%%d" and "%%D" renders "°"
-    - "%%p" and "%%P" renders "±"
+    - "%%c" and "%%C" renders "Ø" (alt-0216)
+    - "%%d" and "%%D" renders "°" (alt-0176)
+    - "%%p" and "%%P" renders "±" (alt-0177)
 
 - Alignment command "\\A": argument "0", "1" or "2" is expected
     - the terminator symbol ";" is optional

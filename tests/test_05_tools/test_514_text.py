@@ -158,9 +158,9 @@ class TestTextLineTransformation:
 
 
 def test_plain_text():
-    assert plain_text('%%C') == '⌀'
-    assert plain_text('%%D') == '°'
-    assert plain_text('%%P') == '±'
+    assert plain_text('%%C') == 'Ø'  # alt-0216
+    assert plain_text('%%D') == '°'  # alt-0176
+    assert plain_text('%%P') == '±'  # alt-0177
     # underline
     assert plain_text('%%u') == ''
     assert plain_text('%%utext%%u') == 'text'
@@ -229,9 +229,9 @@ def test_plain_text_removes_formatting():
 
 
 def test_plain_text_decoding_special_chars():
-    assert plain_mtext("%%C") == "⌀"
-    assert plain_mtext("%%D") == "°"
-    assert plain_mtext("%%P") == "±"
+    assert plain_mtext("%%C") == "Ø"  # alt-0216
+    assert plain_mtext("%%D") == "°"  # alt-0176
+    assert plain_mtext("%%P") == "±"  # alt-0177
     # formatting codes of TEXT are not supported in MTEXT
     # and unknown codes are rendered as they are:
     s = "%%a%%u_%%U_%%k_%%K_%%o_%%O_%%z"

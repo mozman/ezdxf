@@ -82,7 +82,7 @@ class TestMTextContentParsing:
 
     def test_decode_special_encodings(self):
         token = list(MTextParser("%%c%%d%%p%%C%%D%%P"))[0]
-        assert token.data == "⌀°±⌀°±"
+        assert token.data == "Ø°±Ø°±"
 
     def test_unknown_special_encodings(self):
         # underline codes in TEXT are not supported in MTEXT:

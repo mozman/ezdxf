@@ -323,9 +323,9 @@ VERTICAL_STACKED = 4  # only stored in TextStyle.dxf.flags!
 # Special char and encodings used in TEXT, ATTRIB and ATTDEF:
 # "%%d" -> "°"
 SPECIAL_CHAR_ENCODING = {
-    'c': '⌀',
-    'd': '°',
-    'p': '±',
+    'c': 'Ø',  # alt-0216
+    'd': '°',  # alt-0176
+    'p': '±',  # alt-0177
 }
 # Inline codes for strokes in TEXT, ATTRIB and ATTDEF
 # %%u underline
