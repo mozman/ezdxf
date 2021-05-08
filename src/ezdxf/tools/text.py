@@ -260,7 +260,7 @@ def plain_text(text: str) -> str:
     # applications.
     result = ""
     scanner = TextScanner(validator.fix_one_line_text(caret_decode(text)))
-    while not scanner.is_empty:
+    while scanner.has_data:
         char = scanner.peek()
         if char == "%":  # special characters
             if scanner.peek(1) == "%":
@@ -995,6 +995,10 @@ class TextScanner:
     def is_empty(self) -> bool:
         return self._index >= len(self._text)
 
+    @property
+    def has_data(self) -> bool:
+        return self._index < len(self._text)
+
     def get(self) -> str:
         char = self.peek()
         self.consume(1)
@@ -1081,7 +1085,7 @@ class MTextParser:
 
         word = ""
         scanner = self.scanner
-        while not scanner.is_empty:
+        while scanner.has_data:
             escape = False
             letter = scanner.peek()
             if letter == "\\" and scanner.peek(1) in "\\{}":
