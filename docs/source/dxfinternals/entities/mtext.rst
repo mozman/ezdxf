@@ -51,7 +51,7 @@ Information gathered by implementing the :class:`MTextEditor` and the
     - other characters renders as empty square "▯"
 
 - special encoded characters:
-    - "%%c" and "%%C" renders "Ø"
+    - "%%c" and "%%C" renders "⌀"
     - "%%d" and "%%D" renders "°"
     - "%%p" and "%%P" renders "±"
 

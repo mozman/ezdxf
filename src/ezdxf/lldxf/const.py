@@ -320,12 +320,20 @@ UPSIDE_DOWN = MIRROR_Y
 
 VERTICAL_STACKED = 4  # only stored in TextStyle.dxf.flags!
 
-# Special char and encodings and formatting codes used in TEXT
-# %%d: "°"
-# %%u in TEXT start underline formatting until next %%u or until end of line
+# Special char and encodings used in TEXT, ATTRIB and ATTDEF:
+# "%%d" -> "°"
 SPECIAL_CHARS_ENCODING = {
-    'd': '°'
+    'c': '⌀',
+    'd': '°',
+    'p': '±',
 }
+# Inline codes for strokes in TEXT, ATTRIB and ATTDEF
+# %%u underline
+# %%o overline
+# %%k strike through
+# Formatting will be applied until the same code appears again or the end
+# of line.
+# Special codes and formatting is case insensitive: d=D, u=U
 
 MTEXT_TOP_LEFT = 1
 MTEXT_TOP_CENTER = 2

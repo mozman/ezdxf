@@ -158,10 +158,17 @@ class TestTextLineTransformation:
 
 
 def test_plain_text():
-    assert plain_text('%%d') == '°'
+    assert plain_text('%%C') == '⌀'
+    assert plain_text('%%D') == '°'
+    assert plain_text('%%P') == '±'
     # underline
     assert plain_text('%%u') == ''
     assert plain_text('%%utext%%u') == 'text'
+    # overline
+    assert plain_text('%%o') == ''
+    # strike through
+    assert plain_text('%%k') == ''
+
     # single %
     assert plain_text('%u%d%') == '%u%d%'
     t = Text.new(dxfattribs={'text': '45%%d'})
@@ -221,10 +228,14 @@ def test_plain_text_removes_formatting():
         "invalid escape code is printed verbatim"
 
 
-def test_plain_text_convert_special_chars():
-    assert plain_mtext("%%d") == "°"
-    assert plain_mtext("%%u") == ""
-    assert plain_mtext("%%U") == ""
+def test_plain_text_decoding_special_chars():
+    assert plain_mtext("%%C") == "⌀"
+    assert plain_mtext("%%D") == "°"
+    assert plain_mtext("%%P") == "±"
+    # formatting codes of TEXT are not supported in MTEXT
+    # and unknown codes are rendered as they are:
+    s = "%%a%%u_%%U_%%k_%%K_%%o_%%O_%%z"
+    assert plain_mtext(s) == s
 
 
 class TestSplitMText:

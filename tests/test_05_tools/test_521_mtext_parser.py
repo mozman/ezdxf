@@ -114,35 +114,16 @@ class TestMTextContentParsing:
         tokens = list(MTextParser(r"\N"))
         assert token_types(tokens) == (TokenType.NEW_COLUMN,)
 
-    def test_new_column_token_in_usual_context(self):
-        tokens = list(MTextParser(r"word\Nword"))
-        assert token_types(tokens) == (
-            TokenType.WORD, TokenType.NEW_COLUMN, TokenType.WORD
-        )
-
-    def test_grouping_level_one(self):
-        tokens = list(MTextParser("{word}"))
-        assert token_types(tokens) == (
-            TokenType.GROUP_START, TokenType.WORD, TokenType.GROUP_END
-        )
-
-    def test_grouping_level_two(self):
+    def test_grouping_chars_do_not_yield_tokens(self):
         tokens = list(MTextParser("{word{word}}"))
         assert token_types(tokens) == (
-            TokenType.GROUP_START, TokenType.WORD,
-            TokenType.GROUP_START, TokenType.WORD,
-            TokenType.GROUP_END,
-            TokenType.GROUP_END
+            TokenType.WORD,
+            TokenType.WORD,
         )
 
     def test_parser_does_not_check_valid_grouping(self):
         tokens = list(MTextParser("{{{}"))
-        assert token_types(tokens) == (
-            TokenType.GROUP_START,
-            TokenType.GROUP_START,
-            TokenType.GROUP_START,
-            TokenType.GROUP_END
-        )
+        assert len(tokens) == 0
 
     def test_wrap_at_dimline(self):
         mp = MTextParser(r"1\X2")
@@ -153,6 +134,19 @@ class TestMTextContentParsing:
             TokenType.WORD,
         )
 
+    def test_decode_special_encodings(self):
+        token = list(MTextParser("%%c%%d%%p%%C%%D%%P"))[0]
+        assert token.data == "⌀°±⌀°±"
+
+    def test_unknown_special_encodings(self):
+        # underline codes in TEXT are not supported in MTEXT:
+        token = list(MTextParser("%%a%%uTEXT%%u%%z"))[0]
+        assert token.data == "%%a%%uTEXT%%u%%z"
+
+    def test_percent_sign_usage(self):
+        # underline codes in TEXT are not supported in MTEXT:
+        token = list(MTextParser("%_%%_%%%_%%%"))[0]
+        assert token.data == "%_%%_%%%_%%%"
 
 
 class TestMTextContextParsing:
@@ -192,6 +186,14 @@ class TestMTextContextParsing:
         final_ctx = mp.ctx
         assert t2.ctx.strike_through is not final_ctx.strike_through
         assert t2.ctx != final_ctx
+
+    def test_context_stack_for_grouping(self):
+        t0, t1, t2 = MTextParser(r"word{\Lword}word")
+        assert t0.ctx.underline is False
+        assert t1.ctx.underline is True
+        assert t2.ctx.underline is False
+        assert t0.ctx is not t1.ctx
+        assert t0.ctx is t2.ctx, "initial context should be restored"
 
     def test_bottom_alignment_with_terminator(self):
         tokens = list(MTextParser(r"\A0;word"))

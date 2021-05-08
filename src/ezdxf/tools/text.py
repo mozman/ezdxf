@@ -263,10 +263,16 @@ def plain_text(text: str) -> str:
             if len(raw_chars) and raw_chars[-1] == '%':
                 raw_chars.pop()  # discard next '%'
                 if len(raw_chars):
-                    special_char = raw_chars.pop()
-                    # replace or discard formatting code
-                    chars.append(
-                        const.SPECIAL_CHARS_ENCODING.get(special_char, ''))
+                    code = raw_chars.pop()
+                    letter = const.SPECIAL_CHARS_ENCODING.get(code.lower())
+                    if letter:
+                        chars.append(letter)
+                    else:
+                        # formatting codes (%%k, %%o, %%u) will be ignored in
+                        # TEXT, ATTRIB and ATTDEF:
+                        if code.lower() not in "kou":
+                            # no special encoding, append chars as they are
+                            chars.extend(("%", "%", code))
             else:  # char is just a single '%'
                 chars.append(char)
         else:  # char is what it is, a character
@@ -440,10 +446,12 @@ def plain_mtext(text: str, split=False) -> Union[List[str], str]:
             if len(raw_chars) and raw_chars[-1] == '%':
                 raw_chars.pop()  # discard next '%'
                 if len(raw_chars):
-                    special_char = raw_chars.pop()
-                    # replace or discard formatting code
-                    chars.append(
-                        const.SPECIAL_CHARS_ENCODING.get(special_char, ""))
+                    code = raw_chars.pop()
+                    letter = const.SPECIAL_CHARS_ENCODING.get(code.lower())
+                    if letter:
+                        chars.append(letter)
+                    else:
+                        chars.extend(("%", "%", code))
             else:  # char is just a single '%'
                 chars.append(char)
         else:  # char is what it is, a character
@@ -1015,9 +1023,7 @@ class TokenType(enum.IntEnum):
     TABULATOR = 5  # data = None
     NEW_PARAGRAPH = 6  # data = None
     NEW_COLUMN = 7  # data = None
-    GROUP_START = 8  # data = None
-    GROUP_END = 9  # data = None
-    WRAP_AT_DIMLINE = 10  # data = None
+    WRAP_AT_DIMLINE = 8  # data = None
 
 
 class MTextToken:
@@ -1046,8 +1052,7 @@ class MTextParser:
             ctx = MTextContext()
         self.ctx = ctx
         self.scanner = TextScanner(content)
-        self._escape = False
-        self._word = ""
+        self._ctx_stack = []
 
     def __next__(self) -> MTextToken:
         type_, data = self.next_token()
@@ -1058,6 +1063,13 @@ class MTextParser:
 
     def __iter__(self):
         return self
+
+    def push_ctx(self) -> None:
+        self._ctx_stack.append(self.ctx)
+
+    def pop_ctx(self) -> None:
+        if self._ctx_stack:
+            self.ctx = self._ctx_stack.pop()
 
     def next_token(self):
         def word_or_token(token, consume: int = 1):
@@ -1102,7 +1114,6 @@ class MTextParser:
                 # harm is done.
                 continue
 
-            # todo: special encodings %%d = "°" ???
             if letter == "^":  # caret decode
                 following_letter = scanner.peek(1)
                 if following_letter == "I":
@@ -1112,16 +1123,31 @@ class MTextParser:
                 if following_letter == "M":  # ignore CR
                     scanner.consume(2)
                     continue
-
+            if letter == "%" and scanner.peek(1) == "%":
+                code = scanner.peek(2).lower()
+                special_char = const.SPECIAL_CHARS_ENCODING.get(code)
+                if special_char:
+                    scanner.consume(2)  # %%
+                    letter = special_char
             if letter == " ":
                 return word_or_token(TokenType.SPACE)
             if letter == "{" and not escape:
-                return word_or_token(TokenType.GROUP_START)
+                if word:
+                    return TokenType.WORD, word
+                else:
+                    scanner.consume(1)
+                    self.push_ctx()
+                    continue
             if letter == "}" and not escape:
-                return word_or_token(TokenType.GROUP_END)
+                if word:
+                    return TokenType.WORD, word
+                else:
+                    scanner.consume(1)
+                    self.pop_ctx()
+                    continue
 
             # any unparsed unicode letter can be used in a word
-            letter = scanner.get()
+            scanner.consume(1)
             if ord(letter[0]) > 31:
                 word += letter
 
