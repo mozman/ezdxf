@@ -255,6 +255,7 @@ def plain_text(text: str) -> str:
     """ Returns the plain text for :class:`~ezdxf.entities.Text`,
     :class:`~ezdxf.entities.Attrib` and :class:`~ezdxf.entities.Attdef` content.
     """
+    # TODO: using TextScanner()
     chars = []
     raw_chars = list(reversed(validator.fix_one_line_text(caret_decode(text))))
     while len(raw_chars):
@@ -1008,10 +1009,6 @@ class TextScanner:
             return self._text[self._index + offset]
         except IndexError:
             return ""
-
-    def undo(self) -> None:
-        if self._index > 0:
-            self._index -= 1
 
 
 class TokenType(enum.IntEnum):

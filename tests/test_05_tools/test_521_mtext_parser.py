@@ -11,8 +11,6 @@ class TestTextScanner:
         assert s.is_empty is True
         assert s.peek() == ""  # empty string signals end of text
         assert s.get() == ""
-        s.undo()
-        assert s.is_empty is True, "should be still empty"
 
     def test_non_empty_string_is_not_empty(self):
         s = TextScanner("word")
@@ -50,13 +48,6 @@ class TestTextScanner:
         s = TextScanner("w")
         s.get()
         assert s.is_empty is True
-
-    def test_undo_one_letter(self):
-        s = TextScanner("w")
-        s.get()
-        s.undo()
-        assert s.is_empty is False
-        assert s.peek() == "w"
 
 
 def token_types(tokens):
