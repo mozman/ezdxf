@@ -7,28 +7,28 @@ from ezdxf.tools.text import MTextEditor
 
 def test_append_text():
     m = MTextEditor()
-    m.append('TEXT')
+    m.append("TEXT")
     assert str(m) == "TEXT"
 
 
 def test_iadd_text():
     m = MTextEditor()
-    m += 'TEXT'
+    m += "TEXT"
     assert str(m) == "TEXT"
 
 
 def test_stacked_text_limits_style():
-    m = MTextEditor().stack('1', '2')
+    m = MTextEditor().stack("1", "2")
     assert str(m) == r"\S1^ 2;"
 
 
 def test_stacked_text_with_horizontal_divider_line():
-    m = MTextEditor().stack('1', '2', "/")
+    m = MTextEditor().stack("1", "2", "/")
     assert str(m) == r"\S1/2;"  # no space after "/" required
 
 
 def test_stacked_text_with_slanted_divider_line():
-    m = MTextEditor().stack('1', '2', "#")
+    m = MTextEditor().stack("1", "2", "#")
     assert str(m) == r"\S1#2;"  # no space after "#" required
 
 
@@ -39,7 +39,7 @@ def test_invalid_divider_char_raises_value_error():
 
 def test_change_color_name():
     m = MTextEditor()
-    m.color('red')
+    m.color("red")
     assert str(m) == r"\C1;"
     m.clear()
     m.aci(0)
@@ -52,7 +52,7 @@ def test_change_aci_color():
     assert str(m) == r"\C0;\C256;"
 
 
-@pytest.mark.parametrize('aci', [-1, 257])
+@pytest.mark.parametrize("aci", [-1, 257])
 def test_aci_color_raises_value_error(aci):
     with pytest.raises(ValueError):
         MTextEditor().aci(aci)
@@ -75,7 +75,7 @@ def test_change_to_blue_by_rgb():
 
 def test_change_font():
     m = MTextEditor()
-    m.font('Arial', bold=False, italic=False)
+    m.font("Arial", bold=False, italic=False)
     assert str(m) == r"\fArial|b0|i0|c0|p0;"
 
 
@@ -105,8 +105,7 @@ def test_change_oblique_angle():
 
 
 def test_fluent_interface():
-    m = MTextEditor(
-        "some text").color("red").stack('1', '2').append("end.")
+    m = MTextEditor("some text").color("red").stack("1", "2").append("end.")
     assert str(m) == r"some text\C1;\S1^ 2;end."
 
 
@@ -133,10 +132,10 @@ def test_bullet_lists():
     result = MTextEditor().bullet_list(
         indent=4,  # left indentation of the list items
         bullets=["-", "+"],  # bullets - mark in front of the list item
-        content=["first", "second"]  # list items
+        content=["first", "second"],  # list items
     )
     assert str(result) == r"{\pi-3,l4,xt4;-^Ifirst\P+^Isecond\P}"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])
