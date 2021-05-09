@@ -49,6 +49,7 @@ Information gathered by implementing the :class:`MTextEditor` and the
     - "^J" (LF) is a valid line break like "\\P"
     - "^M" (CR) is ignored
     - other characters render as empty square "▯"
+    - a space " " after the caret renders the caret glyph: "1^ 2" renders "1^2"
 
 - special encoded characters:
     - "%%c" and "%%C" renders "Ø" (alt-0216)
