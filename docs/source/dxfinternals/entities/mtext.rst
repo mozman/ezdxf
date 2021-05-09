@@ -48,7 +48,7 @@ Information gathered by implementing the :class:`MTextEditor` and the
     - "^I" tabulator
     - "^J" (LF) is a valid line break like "\\P"
     - "^M" (CR) is ignored
-    - other characters renders as empty square "▯"
+    - other characters render as empty square "▯"
 
 - special encoded characters:
     - "%%c" and "%%C" renders "Ø" (alt-0216)
@@ -91,13 +91,26 @@ Information gathered by implementing the :class:`MTextEditor` and the
     - Character tracking commands "\\T" and "\\T...x", negative values are used
     - Slanting (oblique) command "\\Q"
 
-- Stacking command "\\S": numerator (upr) and denominator arguments expected,
-  separated by a stacking type char: "^", "/" or "#"
-    - terminator ";" is not mandatory but recommended
-    - a space " " after the stacking type char "^" is mandatory to avoid caret
+- Stacking command "\\S":
+    - build fractions: "numerator (upr)" + "stacking type char (t)" + "denominator (lwr)" + ";"
+    - divider chars: "^", "/" or "#"
+    - a space " " after the divider char "^" is mandatory to avoid caret
       decoding: "\\S1^ 2;"
-    - a space " " after the staking types "/" and "#" is rendered in front of
-      the denominator
+    - the terminator symbol ";" is mandatory to end the command, all
+      chars beyond the "\\S" until the next ";" or the end of the string
+      are part of the fraction.
+    - backslash escape "\\;" to render the terminator char
+    - a space " " after the divider chars "/" and "#" is rendered as space " "
+      in front of the denominator
+    - the numerator and denominator can contain spaces
+    - backslashes "\\" inside the stacking command are ignored (except "\\;")
+      "\\S\\N^ \\P" render "N" over "P", therefore property changes (color, text
+      height, ...) are not possible inside the stacking command
+    - grouping chars "{" and "}" render as simple curly braces
+    - caret encoded chars are decoded "^I", "^J", "^M", but render as a simple
+      space " " or as the replacement char "▯" plus a space
+    - a divider char after the first divider char, renders as the char itself:
+      "\\S1/2/3" renders the horizontal fraction "1" / "2/3"
 
 Height Calculation
 ------------------

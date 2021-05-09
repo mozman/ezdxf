@@ -190,7 +190,8 @@ Code    Description
 \\W	    Text width - e.g. relative \\W0.8x; absolut \\W0.8;
 \\T     Tracking, character spacing - e.g. relative \\T0.5x; absolut \\T2;
 \\F	    Font selection e.g. \\Fgdt;o - GDT-tolerance
-\\S	    Stacking, fractions e.g. \\SA^ B or \\SX/ Y or \\S1# 4
+\\S     Stacking, fractions e.g. \\SA^ B; space after "^" is required to avoid
+        caret decoding, \\SX/Y; \\S1#4;
 \\A     Alignment
 
         - \\A0; = bottom
@@ -208,9 +209,9 @@ Code    Description
         - \\C7; = white
 
 \\~     Non breaking space
-{}	    Braces - define the text area influenced by the code, codes and braces
+{}      Braces - define the text area influenced by the code, codes and braces
         can be nested up to 8 levels deep
-\\	    Escape character - e.g. \\{ = "{"
+\\      Escape character - e.g. \\{ = "{"
 ======= ===========
 
 Convenient constants defined in MTextEditor:
