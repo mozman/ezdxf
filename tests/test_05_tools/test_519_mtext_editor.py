@@ -134,7 +134,7 @@ def test_bullet_lists():
         bullets=["-", "+"],  # bullets - mark in front of the list item
         content=["first", "second"],  # list items
     )
-    assert str(result) == r"{\pi-3,l4,xt4;-^Ifirst\P+^Isecond\P}"
+    assert str(result) == r"{\pxi-3,l4,t4;-^Ifirst\P+^Isecond\P}"
 
 
 if __name__ == "__main__":

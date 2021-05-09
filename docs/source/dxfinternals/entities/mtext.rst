@@ -114,6 +114,10 @@ Information gathered by implementing the :class:`MTextEditor` and the
       "\\S1/2/3" renders the horizontal fraction "1" / "2/3"
 
 - Font command "\\f" and "\\F": export only "\\f", parse both, "\\F" ignores some arguments
+    - the terminator symbol ";" is mandatory to end the command, all
+      chars beyond the "\\f" until the next ";" or the end of the string
+      are part of the command
+    - the command arguments are separated by the pipe char "|"
     - arguments: "font family name" | "bold" | "italic" | "codepage" | "pitch";
       example "\\fArial|b0|i0|c0|p0;"
     - only the "font family name" argument is required, fonts which are not
@@ -129,9 +133,54 @@ Information gathered by implementing the :class:`MTextEditor` and the
       BricsCAD, to change the text height use the "\\H" command
     - the order is not important, but export always in the shown order:
       "\\fArial|b0|i0;" the arguments "c0" and "p0" are not required
+
+- Paragraph properties command "\\p"
     - the terminator symbol ";" is mandatory to end the command, all
-      chars beyond the "\\f" until the next ";" or the end of the string
+      chars beyond the "\\p" until the next ";" or the end of the string
       are part of the command
+    - the command arguments are separated by commas ","
+    - all values are factors for the initial char height of the MTEXT entity,
+      example: char height = 2.5, "\\pl1;" set the left paragraph indentation
+      to 1 x 2.5 = 2.5 drawing units.
+    - all values are floating point values, see height command
+    - arguments are "i", "l", "r", "q", "t"
+    - a "\*" as argument value, resets the argument to the initial value: "i0",
+      "l0", "r0", the "q" argument most likely depends on the text direction;
+      I haven't seen "t\*". The sequence used by BricsCAD to reset all values
+      is ``"\pi*,l*,r*,q*,t;"``
+    - "i" indentation of the first line relative to the "l" argument as floating
+      point value, "\\pi1.5"
+    - "l" left paragraph indentation as floating point value, "\\pl1.5"
+    - "r" right paragraph indentation as floating point value, "\\pr1.5"
+    - "x" is required if a "q" or a "t" argument is present, the placement of
+      the "x" has no obvious rules
+    - "q" paragraph alignment
+
+        - "ql" left paragraph alignment
+        - "qr" right paragraph alignment
+        - "qc" center paragraph alignment
+        - "qj" justified paragraph alignment
+        - "qd" distributed paragraph alignment
+
+    - "t" tabulator stops as comma separated list, the default tabulator stops
+      are located at 4, 8, 12, ..., by defining at least one tabulator stop,
+      the default tabulator stops wil be ignored.
+      There 3 kind of tabulator stops: left, right and center adjusted stops,
+      e.g. "\pxt1,r5,c8":
+
+        - a left adjusted stop has no leading char, two left adjusted stops "\\pxt1,2;"
+        - a right adjusted stop has a preceding "r" char, "\\pxtr1,r2;"
+        - a center adjusted stop has a preceding "c" char, "\\pxtc1,c2;"
+
+      complex example to create a numbered list with two items:
+      ``"pxi-3,l4t4;1.^Ifirst item\P2.^Isecond item"``
+    - a parser should be very flexible, I have seen several different orders of
+      the arguments and placing the sometimes required "x" has no obvious rules.
+    - exporting seems to be safe to follow these three rules:
+
+        1. the command starts with "\\px", the "x" does no harm, if not required
+        2. argument order "i", "l", "r", "q", "t", any of the arguments can be left off
+        3. terminate the command with a ";"
 
 Height Calculation
 ------------------

@@ -58,34 +58,30 @@ class TestParagraphPropertiesToString:
         assert ParagraphProperties().tostring() == ""
 
     def test_indent_first_line(self):
-        assert ParagraphProperties(indent=2).tostring() == "\\pi2;"
+        assert ParagraphProperties(indent=2).tostring() == "\\pxi2;"
 
     def test_indent_paragraph_left(self):
-        assert ParagraphProperties(left=3).tostring() == "\\pi0,l3;"
+        assert ParagraphProperties(left=3).tostring() == "\\pxl3;"
 
     def test_indent_paragraph_right(self):
-        assert ParagraphProperties(right=4).tostring() == "\\pi0,r4;"
+        assert ParagraphProperties(right=4).tostring() == "\\pxr4;"
 
     def test_center_alignment_without_indentation(self):
-        # extended argument "alignment" requires a leading "x"
         assert ParagraphProperties(
             align=MTextParagraphAlignment.CENTER).tostring() == "\\pxqc;"
 
     def test_center_alignment_with_indentation(self):
         # always a "," after indentations
-        # extended argument "alignment" requires a leading "x"
         assert ParagraphProperties(
             indent=2.5,
-            align=MTextParagraphAlignment.CENTER).tostring() == "\\pi2.5,xqc;"
+            align=MTextParagraphAlignment.CENTER).tostring() == "\\pxi2.5,qc;"
 
     def test_one_tab_stop(self):
         p = ParagraphProperties(tab_stops=(1, ))
-        # extended argument "tab stops" requires a leading "x"
         assert p.tostring() == "\\pxt1;"
 
     def test_multiple_tab_stops(self):
         p = ParagraphProperties(tab_stops=(1, 2, 3))
-        # extended argument "tab stops" requires a leading "x"
         assert p.tostring() == "\\pxt1,2,3;"
 
     def test_different_kinds_of_tab_stops(self):
@@ -94,21 +90,18 @@ class TestParagraphPropertiesToString:
         # prefix 'c' defines a center adjusted tab stop e.g. 'c3.5'
         # prefix 'r' defines a right adjusted tab stop e.g. 'r2.7'
         p = ParagraphProperties(tab_stops=(1, 'c2', 'r3.7'))
-        # extended argument "tab stops" requires a leading "x"
         assert p.tostring() == "\\pxt1,c2,r3.7;"
 
     def test_indention_and_multiple_tab_stops(self):
         p = ParagraphProperties(indent=1,
                                 tab_stops=(1, 2, 3))
         # always a "," after indentations
-        # extended argument "tab stops" requires a leading "x"
-        assert p.tostring() == "\\pi1,xt1,2,3;"
+        assert p.tostring() == "\\pxi1,t1,2,3;"
 
     def test_justified_alignment_and_multiple_tab_stops(self):
         p = ParagraphProperties(align=MTextParagraphAlignment.JUSTIFIED,
                                 tab_stops=(1, 2, 3))
-        # extended argument "alignment" requires a leading "x"
-        assert p.tostring() == "\\pxqjt1,2,3;"
+        assert p.tostring() == "\\pxqj,t1,2,3;"
 
 
 if __name__ == '__main__':

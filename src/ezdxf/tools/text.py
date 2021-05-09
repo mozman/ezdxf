@@ -631,30 +631,31 @@ class ParagraphProperties(NamedTuple):
 
     def tostring(self) -> str:
         """ Returns the MTEXT paragraph properties as MTEXT inline code
-        e.g. ``"\\pi-2,l2;"``.
+        e.g. ``"\\pxi-2,l2;"``.
 
         """
         args = []
-        # if any indentation is applied at least "i0" is always required
-        if self.indent or self.left or self.right:
+        if self.indent:
             args.append(f"i{self.indent:g}")
+            args.append(COMMA)
         if self.left:
-            args.append(f",l{self.left:g}")
+            args.append(f"l{self.left:g}")
+            args.append(COMMA)
         if self.right:
-            args.append(f",r{self.right:g}")
-
-        # extended arguments are alignment and tab stops
-        xargs = ['x']  # first letter "x" is required
+            args.append(f"r{self.right:g}")
+            args.append(COMMA)
         if self.align:
-            xargs.append(f"q{_alignment_char[self.align]}")
+            args.append(f"q{_alignment_char[self.align]}")
+            args.append(COMMA)
         if self.tab_stops:
-            xargs.append(f"t{COMMA.join(map(rstrip0, self.tab_stops))}")
-        if len(xargs) > 1:  # has extended arguments
-            if args:  # has any arguments
-                args.append(COMMA)
-            args.extend(xargs)
+            args.append(f"t{COMMA.join(map(rstrip0, self.tab_stops))}")
+            args.append(COMMA)
+
         if args:
-            return "\\p" + "".join(args) + ";"
+            if args[-1] == COMMA:
+                args.pop()
+            # exporting always "x" as second letter seems to be safe
+            return "\\px" + "".join(args) + ";"
         else:
             return ""
 
