@@ -814,9 +814,10 @@ class MTextEditor:
         r, g, b = rgb
         return self.append(rf"\c{rgb2int((b, g, r))};")
 
-    def stack(self, upr: str, lwr: str, t: str = '^') -> 'MTextEditor':
+    def stack(self, upr: str, lwr: str, t: str = "^") -> 'MTextEditor':
         r""" Append stacked text `upr` over `lwr`, argument `t` defines the
-        kind of stacking:
+        kind of stacking, the space " " after the "^" will be added
+        automatically to avoid caret decoding:
 
         .. code-block:: none
 
@@ -824,17 +825,21 @@ class MTextEditor:
                  A
                  B
 
-            "/": vertical stacked with divider line,  e.g. \SX/ Y:
+            "/": vertical stacked with divider line,  e.g. \SX/Y:
                  X
                  -
                  Y
 
-            "#": diagonal stacked, with slanting divider line, e.g. \S1# 4:
+            "#": diagonal stacked, with slanting divider line, e.g. \S1#4:
                  1/4
 
         """
-        # space ' ' in front of {lwr} is important
-        return self.append(rf'\S{upr}{t} {lwr};')
+        if t not in "^/#":
+            raise ValueError(f"invalid type symbol: {t}")
+        # space " " after "^" is required to avoid caret decoding
+        if t == "^":
+            t += " "
+        return self.append(rf"\S{upr}{t}{lwr};")
 
     def group(self, text: str) -> 'MTextEditor':
         """ Group `text`, all properties changed inside a group are reverted at

@@ -91,7 +91,13 @@ Information gathered by implementing the :class:`MTextEditor` and the
     - Character tracking commands "\\T" and "\\T...x", negative values are used
     - Slanting (oblique) command "\\Q"
 
-
+- Stacking command "\\S": numerator (upr) and denominator arguments expected,
+  separated by a stacking type char: "^", "/" or "#"
+    - terminator ";" is not mandatory but recommended
+    - a space " " after the stacking type char "^" is mandatory to avoid caret
+      decoding: "\\S1^ 2;"
+    - a space " " after the staking types "/" and "#" is rendered in front of
+      the denominator
 
 Height Calculation
 ------------------

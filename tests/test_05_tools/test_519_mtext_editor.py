@@ -17,10 +17,24 @@ def test_iadd_text():
     assert str(m) == "TEXT"
 
 
-def test_stacked_text():
-    m = MTextEditor()
-    m.stack('1', '2')
+def test_stacked_text_limits_style():
+    m = MTextEditor().stack('1', '2')
     assert str(m) == r"\S1^ 2;"
+
+
+def test_stacked_text_with_horizontal_divider_line():
+    m = MTextEditor().stack('1', '2', "/")
+    assert str(m) == r"\S1/2;"  # no space after "/" required
+
+
+def test_stacked_text_with_slanted_divider_line():
+    m = MTextEditor().stack('1', '2', "#")
+    assert str(m) == r"\S1#2;"  # no space after "#" required
+
+
+def test_invalid_divider_char_raises_value_error():
+    m = MTextEditor()
+    pytest.raises(ValueError, m.stack, "1", "2", "x")
 
 
 def test_change_color_name():
