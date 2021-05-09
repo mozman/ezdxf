@@ -93,6 +93,12 @@ SHX_FONTS = {
     # Shape file structure is not documented, therefore replace this fonts by
     # true type fonts.
     # `None` is for: use the default font.
+    #
+    # All these replacement TTF fonts have a copyright remark:
+    # "(c) Copyright 1996 by Autodesk Inc., All rights reserved"
+    # and therefore can not be included in ezdxf or the associated repository!
+    # You got them if you install any Autodesk product, like the free available
+    # DWG/DXF viewer "TrueView" : https://www.autodesk.com/viewers
     'AMGDT': "amgdt___.ttf",  # Tolerance symbols
     'AMGDT.SHX': "amgdt___.ttf",
     'COMPLEX': "complex_.ttf",

@@ -99,7 +99,7 @@ Information gathered by implementing the :class:`MTextEditor` and the
       decoding: "\\S1^ 2;"
     - the terminator symbol ";" is mandatory to end the command, all
       chars beyond the "\\S" until the next ";" or the end of the string
-      are part of the fraction.
+      are part of the fraction
     - backslash escape "\\;" to render the terminator char
     - a space " " after the divider chars "/" and "#" is rendered as space " "
       in front of the denominator
@@ -112,6 +112,26 @@ Information gathered by implementing the :class:`MTextEditor` and the
       space " " or as the replacement char "▯" plus a space
     - a divider char after the first divider char, renders as the char itself:
       "\\S1/2/3" renders the horizontal fraction "1" / "2/3"
+
+- Font command "\\f" and "\\F": export only "\\f", parse both, "\\F" ignores some arguments
+    - arguments: "font family name" | "bold" | "italic" | "codepage" | "pitch";
+      example "\\fArial|b0|i0|c0|p0;"
+    - only the "font family name" argument is required, fonts which are not
+      available on the system are replaced by the "TXT.SHX" shape font
+    - the "font family name" is the font name shown in font selection widgets in
+      desktop applications
+    - "b1" to use the bold font style, any other second char is interpreted as "non bold"
+    - "i1" to use an italic font style, any other second char is interpreted as "non italic"
+    - "c???" change codepage, "c0" use the default codepage, because of the age
+      of unicode no further investigations, also seems to be ignored by AutoCAD
+      and BricsCAD
+    - "p???" change pitch size, "p0" means don't change, ignored by AutoCAD and
+      BricsCAD, to change the text height use the "\\H" command
+    - the order is not important, but export always in the shown order:
+      "\\fArial|b0|i0;" the arguments "c0" and "p0" are not required
+    - the terminator symbol ";" is mandatory to end the command, all
+      chars beyond the "\\f" until the next ";" or the end of the string
+      are part of the command
 
 Height Calculation
 ------------------

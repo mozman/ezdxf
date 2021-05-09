@@ -76,7 +76,7 @@ def test_change_to_blue_by_rgb():
 def test_change_font():
     m = MTextEditor()
     m.font("Arial", bold=False, italic=False)
-    assert str(m) == r"\fArial|b0|i0|c0|p0;"
+    assert str(m) == r"\fArial|b0|i0;"
 
 
 def test_scale_height_factor():
@@ -113,7 +113,7 @@ def test_grouping():
     m = MTextEditor("some text")
     group_content = str(MTextEditor().font("Arial").append("Font=Arial"))
     m.group(group_content)
-    assert str(m) == r"some text{\fArial|b0|i0|c0|p0;Font=Arial}"
+    assert str(m) == r"some text{\fArial|b0|i0;Font=Arial}"
 
 
 def test_underline_text():

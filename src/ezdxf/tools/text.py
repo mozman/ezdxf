@@ -760,8 +760,7 @@ class MTextEditor:
         # Switching codepage makes no sense!
         # p0 = current text size
         # Text size should be changed by \H<factor>x;
-        # TODO: is c0|p0 even required?
-        return self.append(rf"\f{name}|b{int(bold)}|i{int(italic)}|c0|p0;")
+        return self.append(rf"\f{name}|b{int(bold)}|i{int(italic)};")
 
     def scale_height(self, factor: float) -> 'MTextEditor':
         """ Scale the text height by a `factor`. This scaling will accumulate,
