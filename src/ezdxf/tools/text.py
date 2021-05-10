@@ -461,9 +461,6 @@ def plain_mtext(text: str, split=False) -> Union[List[str], str]:
     return result.split('\n') if split else result
 
 
-CARET_PATTERN = re.compile(r'\^(.)')
-
-
 def caret_decode(text: str) -> str:
     """ DXF stores some special characters using caret notation. This function
     decodes this notation to normalise the representation of special characters
@@ -477,7 +474,7 @@ def caret_decode(text: str) -> str:
         c = ord(match.group(1))
         return chr((c - 64) % 126)
 
-    return re.sub(CARET_PATTERN, replace_match, text)
+    return re.sub(r'\^(.)', replace_match, text)
 
 
 def split_mtext_string(s: str, size: int = 250) -> List[str]:
