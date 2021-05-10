@@ -1104,7 +1104,7 @@ class MTextParser:
         if ctx is None:
             ctx = MTextContext()
         self.ctx = ctx
-        self.scanner = TextScanner(content)
+        self.scanner = TextScanner(caret_decode(content))
         self._ctx_stack = []
 
     def __next__(self) -> MTextToken:
@@ -1167,15 +1167,15 @@ class MTextParser:
                 # harm is done.
                 continue
 
-            if letter == "^":  # caret decode
-                following_letter = scanner.peek(1)
-                if following_letter == "I":
-                    return word_or_token(TokenType.TABULATOR, consume=2)
-                if following_letter == "J":  # LF
-                    return word_or_token(TokenType.NEW_PARAGRAPH, consume=2)
-                if following_letter == "M":  # ignore CR
-                    scanner.consume(2)
-                    continue
+            # process control chars, caret decoding is already done!
+            if ord(letter) < 32:
+                if letter == "\t":
+                    return word_or_token(TokenType.TABULATOR)
+                elif letter == "\n":  # LF
+                    return word_or_token(TokenType.NEW_PARAGRAPH)
+                else:  # replace other control chars by a space
+                    letter = " "
+
             if letter == "%" and scanner.peek(1) == "%":
                 code = scanner.peek(2).lower()
                 special_char = const.SPECIAL_CHAR_ENCODING.get(code)
@@ -1210,30 +1210,34 @@ class MTextParser:
             return TokenType.NONE, None
 
     def parse_stacking(self) -> Tuple:
-        def next_char():
-            # special caret decode
-            c = stacking_scanner.peek()
-            if c == "^":
-                stacking_scanner.consume(1)
-                if stacking_scanner.peek() == " ":
-                    # only "^ " yields a "^"
-                    c = "^"
-                else:  # replace caret decoded chars by a space " "
-                    c = " "
+        """ Returns a tuple of strings: (numerator, denominator, type).
+        The numerator and denominator is always a single and can contain spaces,
+        which are not decoded as separate tokens. The type string is "^" for
+        a limit style fraction without a line, "/" for a horizontal fraction
+        and "#" for a diagonal fraction. If the expression does not contain
+        any stacking type char, the type and denominator string are empty "".
 
+        """
+        def next_char():
+            escape = False
+            c = stacking_scanner.peek()
+            if ord(c) < 32:  # replace all control chars by space
+                c = " "
             # escape sequences: remove backslash and return next char
             if c == "\\":
+                escape = True
                 stacking_scanner.consume(1)
                 c = stacking_scanner.peek()
+                if ord(c) < 32:  # replace all control chars by space
+                    c = " "
             stacking_scanner.consume(1)
-            return c
+            return c, escape
 
         def parse_numerator() -> Tuple[str, str]:
             word = ""
             while stacking_scanner.has_data:
-                not_escape = stacking_scanner.peek() != "\\"
-                c = next_char()
-                if not_escape and c in "^/#":  # scan until stacking type char
+                c, escape = next_char()
+                if not escape and c in "^/#":  # scan until stacking type char
                     return word, c
                 word += c
             return word, ""
@@ -1241,7 +1245,7 @@ class MTextParser:
         def parse_denominator() -> str:
             word = ""
             while stacking_scanner.has_data:
-                word += next_char()
+                word += next_char()[0]
             return word
 
         stop = self.scanner.find(";", escape=True)

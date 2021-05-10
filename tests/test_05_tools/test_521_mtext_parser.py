@@ -40,6 +40,33 @@ class TestMTextContentParsing:
             TokenType.WORD
         )
 
+    def test_tabulator_caret_I(self):
+        tokens = list(MTextParser(r"word^Iword"))
+        assert token_types(tokens) == (
+            TokenType.WORD,
+            TokenType.TABULATOR,
+            TokenType.WORD
+        )
+        assert token_data(tokens) == ("word", None, "word")
+
+    def test_new_paragraph_caret_J(self):
+        tokens = list(MTextParser(r"word^Jword"))
+        assert token_types(tokens) == (
+            TokenType.WORD,
+            TokenType.NEW_PARAGRAPH,
+            TokenType.WORD
+        )
+        assert token_data(tokens) == ("word", None, "word")
+
+    def test_replace_caret_chars_by_space(self):
+        tokens = list(MTextParser(r"word^Mword"))
+        assert token_types(tokens) == (
+            TokenType.WORD,
+            TokenType.SPACE,
+            TokenType.WORD
+        )
+        assert token_data(tokens) == ("word", None, "word")
+
     def test_escaped_letters_building_words(self):
         tokens = list(MTextParser(r"\\\{\} \\\{\}"))
         assert token_types(tokens) == (
@@ -111,6 +138,13 @@ class TestParsingFractions:
         token = list(MTextParser("\\S1/2"))[0]
         assert token.data == ("1", "2", "/")
 
+    @pytest.mark.parametrize("char", list("AIJMZ"))
+    def test_replace_all_caret_encoded_chars_by_space(self, char):
+        # AutoCAD/BricsCAD preserve "^I" as tabulator, but this makes no sense
+        # in a stacking expression and would add an unnecessary "if" check.
+        token = list(MTextParser(f"\\S\\^{char}^ 2;"))[0]
+        assert token.data == (" ", "2", "^")
+
     def test_escape_terminator_char(self):
         token = list(MTextParser("\\S1\\;/2;"))[0]
         assert token.data == ("1;", "2", "/")
@@ -127,29 +161,27 @@ class TestParsingFractions:
 
     def test_escape_caret_char(self):
         token = list(MTextParser("\\S1\\^ 2;"))[0]
-        # This is not like AutoCAD/BricsCAD, which render: 1^2 without a space
-        # AutoCAD/BricsCAD caret decode the chars before parsing the content.
-        # IMHO: escaping the caret should also avoid caret decoding of the
-        # following space " "
-        assert token.data == ("1^ 2", "", "")
+        assert token.data == ("1^2", "", "")
+
+    def test_escape_caret_new_line(self):
         token = list(MTextParser("\\S\\^J^ 2;"))[0]
-        assert token.data == ("^J", "2", "^")
+        assert token.data == (" ", "2", "^")
 
     def test_remove_backslash_escape_char(self):
         token = list(MTextParser("\\S\\N^ \\P;"))[0]
         assert token.data == ("N", "P", "^")
 
-    def test_parse_only_the_first_stacking_type_char(self):
+    def test_preserve_second_stacking_type_char(self):
         token = list(MTextParser("\\S1/2/3;"))[0]
         assert token.data == ("1", "2/3", "/")
         token = list(MTextParser("\\S1#2/3;"))[0]
         assert token.data == ("1", "2/3", "#")
 
-    def test_parse_caret_char(self):
+    def test_preserve_second_caret_char(self):
         token = list(MTextParser("\\S1^ 2^ 3;"))[0]
         assert token.data == ("1", "2^3", "^")
 
-    def test_without_stacking_type_char(self):
+    def test_parse_without_stacking_type_char(self):
         token = list(MTextParser("\\S123;"))[0]
         assert token.data == ("123", "", "")
 
