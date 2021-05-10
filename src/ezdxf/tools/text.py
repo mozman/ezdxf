@@ -611,10 +611,10 @@ class ParagraphProperties(NamedTuple):
          left (float): left indentation of the paragraph except for the first line
          right (float): left indentation of the paragraph
          align: :class:`~ezdxf.lldxf.const.MTextParagraphAlignment` enum
-         tab_stops: tuple of tabulator stops, as ``int`` or as ``str``, ``int``
-            values are left aligned tab stops, strings with prefix ``"c"`` are
-            center aligned tab stops and strings with prefix ``"r"`` are right
-            aligned tab stops
+         tab_stops: tuple of tabulator stops, as ``float`` or as ``str``,
+            ``float`` values are left aligned tab stops, strings with prefix
+            ``"c"`` are center aligned tab stops and strings with prefix ``"r"``
+            are right aligned tab stops
 
     """
     # Reset: \pi*,l*,r*,q*,t;
@@ -1089,6 +1089,14 @@ class MTextToken:
 RE_FLOAT = re.compile(r"[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?")
 RE_FLOAT_X = re.compile(r"[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?([x]?)")
 
+CHAR_TO_ALIGN = {
+    'l': MTextParagraphAlignment.LEFT,
+    'r': MTextParagraphAlignment.RIGHT,
+    'c': MTextParagraphAlignment.CENTER,
+    'j': MTextParagraphAlignment.JUSTIFIED,
+    'd': MTextParagraphAlignment.DISTRIBUTED,
+}
+
 
 class MTextParser:
     """ Parses the MText content string and yields the content as tokens and
@@ -1390,7 +1398,56 @@ class MTextParser:
         return expr
 
     def parse_paragraph_properties(self, ctx: MTextContext):
-        property_scanner = TextScanner(self.extract_expression())
+        def parse_float() -> float:
+            value = 0.0
+            expr = parse_float_expr()
+            if expr:
+                value = float(expr)
+            return value
+
+        def parse_float_expr() -> str:
+            expr = ""
+            tail = paragraph_scanner.tail()
+            match = re.match(RE_FLOAT, tail)
+            if match:
+                start, end = match.span()
+                expr = tail[start: end]
+                paragraph_scanner.consume(end)
+                skip_commas()
+            return expr
+
+        def skip_commas():
+            while paragraph_scanner.peek() == ",":
+                paragraph_scanner.consume(1)
+
+        paragraph_scanner = TextScanner(self.extract_expression())
+        indent, left, right, align, tab_stops = ctx.paragraph  # NamedTuple
+        while paragraph_scanner.has_data:
+            cmd = paragraph_scanner.get()
+            if cmd == "i":
+                indent = parse_float()
+            elif cmd == "l":
+                left = parse_float()
+            elif cmd == "r":
+                right = parse_float()
+            elif cmd == "x":
+                pass  # ignore
+            elif cmd == "q":
+                adjustment = paragraph_scanner.get()
+                align = CHAR_TO_ALIGN.get(
+                    adjustment, MTextParagraphAlignment.DEFAULT)
+                skip_commas()
+            elif cmd == "t":
+                tab_stops = []
+                while paragraph_scanner.has_data:  # parse to end
+                    type_ = paragraph_scanner.peek()
+                    if type_ == "r" or type_ == "c":
+                        paragraph_scanner.consume()
+                        tab_stops.append(type_ + parse_float_expr())
+                    else:
+                        tab_stops.append(parse_float())
+        ctx.paragraph = ParagraphProperties(
+            indent, left, right, align, tuple(tab_stops))
 
     def parse_font_properties(self, ctx: MTextContext):
         parts = self.extract_expression().split("|")

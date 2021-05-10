@@ -2,7 +2,7 @@
 #  License: MIT License
 
 import pytest
-from ezdxf.tools.text import MTextParser, TokenType
+from ezdxf.tools.text import MTextParser, TokenType, MTextParagraphAlignment
 
 
 def token_types(tokens):
@@ -492,14 +492,83 @@ class TestMTextContextParsing:
         assert t0.ctx.rgb == (255, 227, 11)
 
 
-class MTextParagraphProperties:
-    @pytest.mark.parametrize("expr", [
-        "i1;",
-        "i1.0;",
+class TestMTextParagraphProperties:
+    @pytest.mark.parametrize("expr, expected", [
+        ("i0;", 0),
+        ("i+1;", 1),
+        ("i1.1;", 1.1),
+        ("i-1;", -1),
+        ("i-1.1;", -1.1),
     ])
-    def test_indent_first_line(self, expr):
+    def test_indent_first_line(self, expr, expected):
         t0 = list(MTextParser(rf"\p{expr}word"))[0]
+        assert t0.ctx.paragraph.indent == expected
+
+    @pytest.mark.parametrize("expr, expected", [
+        ("l0;", 0),
+        ("l+1;", 1),
+        ("l1.1;", 1.1),
+        ("l-1;", -1),
+        ("l-1.1;", -1.1),
+    ])
+    def test_indent_left(self, expr, expected):
+        t0 = list(MTextParser(rf"\p{expr}word"))[0]
+        assert t0.ctx.paragraph.left == expected
+
+    @pytest.mark.parametrize("expr, expected", [
+        ("r0;", 0),
+        ("r+1;", 1),
+        ("r1.1;", 1.1),
+        ("r-1;", -1),
+        ("r-1.1;", -1.1),
+    ])
+    def test_indent_right(self, expr, expected):
+        t0 = list(MTextParser(rf"\p{expr}word"))[0]
+        assert t0.ctx.paragraph.right == expected
+
+    @pytest.mark.parametrize("expr, expected", [
+        ("ql;", MTextParagraphAlignment.LEFT),
+        ("qr;", MTextParagraphAlignment.RIGHT),
+        ("qc;", MTextParagraphAlignment.CENTER),
+        ("qj;", MTextParagraphAlignment.JUSTIFIED),
+        ("qd;", MTextParagraphAlignment.DISTRIBUTED),
+        ("q?;", MTextParagraphAlignment.DEFAULT),
+    ])
+    def test_paragraph_alignment(self, expr, expected):
+        t0 = list(MTextParser(rf"\p{expr}word"))[0]
+        assert t0.ctx.paragraph.align == expected
+
+    def test_tab_stops(self):
+        t0 = list(MTextParser(r"\pxt4,c5,r6,7.5;word"))[0]
+        assert t0.ctx.paragraph.tab_stops == (4, "c5", "r6", 7.5)
+
+    @pytest.mark.parametrize("expr", [
+        "i1,l2,r3,qc,t1,2,3;",  # regular order
+        "qc,l2,r3,i1,t1,2,3;",  # tab stops have to be the last argument
+        "xqc,xl2,xr3,xi1,xt1,2,3;",  # ignore "x"
+        "xqcl2xr3xi1xt1,2,3;",  # ezdxf: commas not required between arguments
+    ])
+    def test_combinations(self, expr):
+        t0 = list(MTextParser(rf"\pi{expr}word"))[0]
         assert t0.ctx.paragraph.indent == 1
+        assert t0.ctx.paragraph.left == 2
+        assert t0.ctx.paragraph.right == 3
+        assert t0.ctx.paragraph.align == MTextParagraphAlignment.CENTER
+        assert t0.ctx.paragraph.tab_stops == (1, 2, 3)
+
+    def test_reset_arguments(self):
+        t0, t1 = list(MTextParser(
+            r"\pi1,l2,r3,qc,t1,2,3;word\pi*,l*,r*,q*,t;word"))
+        assert t0.ctx.paragraph.indent == 1
+        assert t0.ctx.paragraph.left == 2
+        assert t0.ctx.paragraph.right == 3
+        assert t0.ctx.paragraph.align == MTextParagraphAlignment.CENTER
+        assert t0.ctx.paragraph.tab_stops == (1, 2, 3)
+        assert t1.ctx.paragraph.indent == 0
+        assert t1.ctx.paragraph.left == 0
+        assert t1.ctx.paragraph.right == 0
+        assert t1.ctx.paragraph.align == MTextParagraphAlignment.DEFAULT
+        assert t1.ctx.paragraph.tab_stops == tuple()
 
 
 if __name__ == '__main__':
