@@ -461,6 +461,9 @@ def plain_mtext(text: str, split=False) -> Union[List[str], str]:
     return result.split('\n') if split else result
 
 
+CARET_PATTERN = re.compile(r'\^(.)')
+
+
 def caret_decode(text: str) -> str:
     """ DXF stores some special characters using caret notation. This function
     decodes this notation to normalise the representation of special characters
@@ -474,7 +477,7 @@ def caret_decode(text: str) -> str:
         c = ord(match.group(1))
         return chr((c - 64) % 126)
 
-    return re.sub(r'\^(.)', replace_match, text)
+    return re.sub(CARET_PATTERN, replace_match, text)
 
 
 def split_mtext_string(s: str, size: int = 250) -> List[str]:
@@ -1214,36 +1217,34 @@ class MTextParser:
             # special caret decode
             c = stacking_scanner.peek()
             if c == "^":
-                if stacking_scanner.peek(1) != " ":  # only "^ " yields a "^"
-                    # replace caret decoded chars by a space " "
-                    stacking_scanner.consume(1)
+                stacking_scanner.consume(1)
+                if stacking_scanner.peek() == " ":
+                    # only "^ " yields a "^"
+                    c = "^"
+                else:  # replace caret decoded chars by a space " "
                     c = " "
+
+            # escape sequences: remove backslash and return next char
+            if c == "\\":
+                stacking_scanner.consume(1)
+                c = stacking_scanner.peek()
+            stacking_scanner.consume(1)
             return c
 
-        def parse_numerator() -> str:
+        def parse_numerator() -> Tuple[str, str]:
             word = ""
             while stacking_scanner.has_data:
+                not_escape = stacking_scanner.peek() != "\\"
                 c = next_char()
-                if c in "^/#":  # scan until stacking type char
-                    return word
+                if not_escape and c in "^/#":  # scan until stacking type char
+                    return word, c
                 word += c
-                stacking_scanner.consume(1)
-
-        def parse_type() -> str:
-            t = stacking_scanner.peek()
-            if t == "^" and stacking_scanner.peek(1) == " ":
-                stacking_scanner.consume(2)
-                return "^"
-            elif t in "/#":
-                stacking_scanner.consume(1)
-                return t
-            return ""
+            return word, ""
 
         def parse_denominator() -> str:
             word = ""
             while stacking_scanner.has_data:
                 word += next_char()
-                stacking_scanner.consume(1)
             return word
 
         stop = self.scanner.find(";", escape=True)
@@ -1254,8 +1255,7 @@ class MTextParser:
             stacking = self.scanner.substr(stop)  # exclude ";"
         self.scanner.consume(len(stacking) + 1)  # include ";"
         stacking_scanner = TextScanner(stacking)
-        numerator = parse_numerator()
-        t = parse_type()
+        numerator, t = parse_numerator()
         if t:
             denominator = parse_denominator()
         else:

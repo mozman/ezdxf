@@ -111,6 +111,48 @@ class TestParsingFractions:
         token = list(MTextParser("\\S1/2"))[0]
         assert token.data == ("1", "2", "/")
 
+    def test_escape_terminator_char(self):
+        token = list(MTextParser("\\S1\\;/2;"))[0]
+        assert token.data == ("1;", "2", "/")
+
+    def test_escape_backslash_char(self):
+        token = list(MTextParser("\\S\\\\1/\\\\2;"))[0]
+        assert token.data == ("\\1", "\\2", "/")
+
+    def test_escape_stacking_type_char(self):
+        token = list(MTextParser("\\S1\\/2;"))[0]
+        assert token.data == ("1/2", "", "")
+        token = list(MTextParser("\\S1\\#2;"))[0]
+        assert token.data == ("1#2", "", "")
+
+    def test_escape_caret_char(self):
+        token = list(MTextParser("\\S1\\^ 2;"))[0]
+        # This is not like AutoCAD/BricsCAD, which render: 1^2 without a space
+        # AutoCAD/BricsCAD caret decode the chars before parsing the content.
+        # IMHO: escaping the caret should also avoid caret decoding of the
+        # following space " "
+        assert token.data == ("1^ 2", "", "")
+        token = list(MTextParser("\\S\\^J^ 2;"))[0]
+        assert token.data == ("^J", "2", "^")
+
+    def test_remove_backslash_escape_char(self):
+        token = list(MTextParser("\\S\\N^ \\P;"))[0]
+        assert token.data == ("N", "P", "^")
+
+    def test_parse_only_the_first_stacking_type_char(self):
+        token = list(MTextParser("\\S1/2/3;"))[0]
+        assert token.data == ("1", "2/3", "/")
+        token = list(MTextParser("\\S1#2/3;"))[0]
+        assert token.data == ("1", "2/3", "#")
+
+    def test_parse_caret_char(self):
+        token = list(MTextParser("\\S1^ 2^ 3;"))[0]
+        assert token.data == ("1", "2^3", "^")
+
+    def test_without_stacking_type_char(self):
+        token = list(MTextParser("\\S123;"))[0]
+        assert token.data == ("123", "", "")
+
 
 class TestMTextContextParsing:
     def test_switch_underline_on(self):
