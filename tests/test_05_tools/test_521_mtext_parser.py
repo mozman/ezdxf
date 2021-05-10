@@ -310,6 +310,151 @@ class TestMTextContextParsing:
         assert t0.ctx.font_face.family == "Arial"
         assert t0.ctx.font_face is t1.ctx.font_face
 
+    @pytest.mark.parametrize("expr", [
+        r"\H3",
+        r"\H3;",
+        r"\H+3",
+        r"\H+3;",
+        r"\H-3",  # ignore sign
+        r"\H-3;",  # ignore sign
+        r"\H0.3e1",
+        r"\H0.3e1;",
+        r"\H30e-1",
+        r"\H30e-1;",
+    ])
+    def test_absolut_height_command(self, expr):
+        t0 = list(MTextParser(f"{expr}word"))[0]
+        assert t0.ctx.cap_height == 3
+
+    @pytest.mark.parametrize("expr", [
+        r"\H3x",
+        r"\H3x;",
+        r"\H+3x",
+        r"\H+3x;",
+        r"\H-3x",  # ignore sign
+        r"\H-3x;",  # ignore sign
+        r"\H0.3e1x",
+        r"\H0.3e1x;",
+        r"\H30e-1x",
+        r"\H30e-1x;",
+    ])
+    def test_relative_height_command(self, expr):
+        t1 = list(MTextParser(rf"\H2;word{expr}word"))[1]
+        assert t1.ctx.cap_height == 6.0
+        assert t1.data == "word"
+
+    @pytest.mark.parametrize("expr", [
+        r"\H",
+        r"\H;",
+        r"\Hx",
+        r"\Hx;",
+        r"\H1-2;",
+        r"\H.3",  # this does work in AutoCAD
+        r"\H.3;",  # this does work in AutoCAD
+        r"\H.3x",  # this does work in AutoCAD
+        r"\H.3x;",  # this does work in AutoCAD
+        r"\H.",
+        r"\H.;",
+    ])
+    def test_invalid_height_command(self, expr):
+        t0 = list(MTextParser(rf"{expr}word"))[0]
+        assert t0.ctx.cap_height == 1.0
+        # The important part: does not raise an exception, the word after the
+        # INVALID height command is not relevant and may differ from AutoCAD and
+        # BricsCAD rendering.
+
+    @pytest.mark.parametrize("expr", [
+        r"\W3",
+        r"\W3;",
+        r"\W+3",
+        r"\W+3;",
+        r"\W-3",  # ignore sign
+        r"\W-3;",  # ignore sign
+        r"\W0.3e1",
+        r"\W0.3e1;",
+        r"\W30e-1",
+        r"\W30e-1;",
+    ])
+    def test_absolut_width_command(self, expr):
+        t0 = list(MTextParser(f"{expr}word"))[0]
+        assert t0.ctx.width_factor == 3
+
+    @pytest.mark.parametrize("expr", [
+        r"\W3x",
+        r"\W3x;",
+        r"\W+3x",
+        r"\W+3x;",
+        r"\W-3x",  # ignore sign
+        r"\W-3x;",  # ignore sign
+        r"\W0.3e1x",
+        r"\W0.3e1x;",
+        r"\W30e-1x",
+        r"\W30e-1x;",
+    ])
+    def test_relative_height_command(self, expr):
+        t1 = list(MTextParser(rf"\W2;word{expr}word"))[1]
+        assert t1.ctx.width_factor == 6.0
+        assert t1.data == "word"
+
+    @pytest.mark.parametrize("expr", [
+        r"\T3",
+        r"\T3;",
+        r"\T+3",
+        r"\T+3;",
+        r"\T-3",  # ignore sign
+        r"\T-3;",  # ignore sign
+        r"\T0.3e1",
+        r"\T0.3e1;",
+        r"\T30e-1",
+        r"\T30e-1;",
+    ])
+    def test_absolut_char_tracking_command(self, expr):
+        t0 = list(MTextParser(f"{expr}word"))[0]
+        assert t0.ctx.char_tracking_factor == 3
+
+    @pytest.mark.parametrize("expr", [
+        r"\T3x",
+        r"\T3x;",
+        r"\T+3x",
+        r"\T+3x;",
+        r"\T-3x",  # ignore sign
+        r"\T-3x;",  # ignore sign
+        r"\T0.3e1x",
+        r"\T0.3e1x;",
+        r"\T30e-1x",
+        r"\T30e-1x;",
+    ])
+    def test_relative_char_tracking_command(self, expr):
+        t1 = list(MTextParser(rf"\T2;word{expr}word"))[1]
+        assert t1.ctx.char_tracking_factor == 6.0
+        assert t1.data == "word"
+
+    @pytest.mark.parametrize("expr", [
+        r"\Q3",
+        r"\Q3;",
+        r"\Q+3",
+        r"\Q+3;",
+        r"\Q0.3e1",
+        r"\Q0.3e1;",
+        r"\Q30e-1",
+        r"\Q30e-1;",
+    ])
+    def test_positive_oblique_command(self, expr):
+        t0 = list(MTextParser(f"{expr}word"))[0]
+        assert t0.ctx.oblique == 3
+
+    @pytest.mark.parametrize("expr", [
+        r"\Q-3",
+        r"\Q-3;",
+        r"\Q-0.3e1",
+        r"\Q-0.3e1;",
+        r"\Q-30e-1",
+        r"\Q-30e-1;",
+    ])
+    def test_negative_oblique_command(self, expr):
+        t0 = list(MTextParser(f"{expr}word"))[0]
+        assert t0.ctx.oblique == -3
+
 
 if __name__ == '__main__':
     pytest.main([__file__])

@@ -1086,6 +1086,10 @@ class MTextToken:
         self.data = data
 
 
+RE_FLOAT = re.compile(r"[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?")
+RE_FLOAT_X = re.compile(r"[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?([x]?)")
+
+
 class MTextParser:
     """ Parses the MText content string and yields the content as tokens and
     the current MText properties as MTextContext object. The context object is
@@ -1271,9 +1275,16 @@ class MTextParser:
             new_ctx.strike_through = True
         elif cmd == 'k':
             new_ctx.strike_through = False
-        elif cmd == 'A':  # cell alignment A0=bottom, A1=middle, A2=top
-            if not self.parse_align(new_ctx):
-                return
+        elif cmd == 'A':
+            self.parse_align(new_ctx)
+        elif cmd == 'H':
+            self.parse_height(new_ctx)
+        elif cmd == 'W':
+            self.parse_width(new_ctx)
+        elif cmd == 'Q':
+            self.parse_oblique(new_ctx)
+        elif cmd == 'T':
+            self.parse_char_tracking(new_ctx)
         elif cmd == 'p':
             self.parse_paragraph_properties(new_ctx)
         elif cmd == 'f' or cmd == 'F':
@@ -1282,10 +1293,55 @@ class MTextParser:
             return
         self.ctx = new_ctx
 
-    def parse_align(self, ctx: MTextContext) -> bool:
-        arg = self.parse_required_char(choices={"0", "1", "2"}, default="0")
-        ctx.align = MTextLineAlignment(int(arg))
-        return True
+    def parse_align(self, ctx: MTextContext):
+        char = self.scanner.get()  # always consume next char
+        if char in "012":
+            ctx.align = MTextLineAlignment(int(char))
+        else:
+            ctx.align = MTextLineAlignment.BOTTOM
+        self.consume_optional_terminator()
+
+    def parse_height(self, ctx: MTextContext):
+        ctx.cap_height = self.parse_float_value_or_factor(
+            ctx.cap_height)
+        self.consume_optional_terminator()
+
+    def parse_width(self, ctx: MTextContext):
+        ctx.width_factor = self.parse_float_value_or_factor(
+            ctx.width_factor)
+        self.consume_optional_terminator()
+
+    def parse_char_tracking(self, ctx: MTextContext):
+        ctx.char_tracking_factor = self.parse_float_value_or_factor(
+            ctx.char_tracking_factor)
+        self.consume_optional_terminator()
+
+    def parse_float_value_or_factor(self, value) -> float:
+        expr = self.extract_float_expression(relative=True)
+        if expr:
+            if expr.endswith("x"):
+                factor = float(expr[:-1])
+                value *= abs(factor)
+            else:
+                value = abs(float(expr))
+        return value
+
+    def parse_oblique(self, ctx: MTextContext):
+        oblique_expr = self.extract_float_expression(relative=False)
+        if oblique_expr:
+            ctx.oblique = float(oblique_expr)
+        self.consume_optional_terminator()
+
+    def extract_float_expression(self, relative=False) -> str:
+        result = ""
+        tail = self.scanner.tail()
+        pattern = RE_FLOAT_X if relative else RE_FLOAT
+        match = re.match(pattern, tail)
+        if match:
+            start, end = match.span()
+            result = tail[start:end]
+            self.scanner.consume(end)
+        return result
 
     def extract_expression(self, escape=False) -> str:
         """ Returns the next expression from the current location until
@@ -1320,18 +1376,6 @@ class MTextParser:
                 elif part.startswith("i1"):
                     style = "italic"
             ctx.font_face = FontFace(family=name, style=style, weight=weight)
-
-    def parse_required_char(self, choices: set, default: str) -> str:
-        scanner = self.scanner
-        if scanner.is_empty:
-            return default
-        char = scanner.get()  # always consume next char
-        if char in choices:
-            result = char
-        else:
-            result = default
-        self.consume_optional_terminator()
-        return result
 
     def consume_optional_terminator(self):
         if self.scanner.peek() == ";":
