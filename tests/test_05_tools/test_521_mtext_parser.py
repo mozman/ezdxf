@@ -2,7 +2,9 @@
 #  License: MIT License
 
 import pytest
-from ezdxf.tools.text import MTextParser, TokenType, MTextParagraphAlignment
+from ezdxf.tools.text import (
+    MTextParser, TokenType, MTextParagraphAlignment, ParagraphProperties
+)
 
 
 def token_types(tokens):
@@ -549,26 +551,16 @@ class TestMTextParagraphProperties:
         "xqcl2xr3xi1xt1,2,3;",  # ezdxf: commas not required between arguments
     ])
     def test_combinations(self, expr):
-        t0 = list(MTextParser(rf"\pi{expr}word"))[0]
-        assert t0.ctx.paragraph.indent == 1
-        assert t0.ctx.paragraph.left == 2
-        assert t0.ctx.paragraph.right == 3
-        assert t0.ctx.paragraph.align == MTextParagraphAlignment.CENTER
-        assert t0.ctx.paragraph.tab_stops == (1, 2, 3)
+        t0 = list(MTextParser(rf"\p{expr}word"))[0]
+        assert t0.ctx.paragraph == (
+            1, 2, 3, MTextParagraphAlignment.CENTER, (1, 2, 3))
 
     def test_reset_arguments(self):
         t0, t1 = list(MTextParser(
             r"\pi1,l2,r3,qc,t1,2,3;word\pi*,l*,r*,q*,t;word"))
-        assert t0.ctx.paragraph.indent == 1
-        assert t0.ctx.paragraph.left == 2
-        assert t0.ctx.paragraph.right == 3
-        assert t0.ctx.paragraph.align == MTextParagraphAlignment.CENTER
-        assert t0.ctx.paragraph.tab_stops == (1, 2, 3)
-        assert t1.ctx.paragraph.indent == 0
-        assert t1.ctx.paragraph.left == 0
-        assert t1.ctx.paragraph.right == 0
-        assert t1.ctx.paragraph.align == MTextParagraphAlignment.DEFAULT
-        assert t1.ctx.paragraph.tab_stops == tuple()
+        assert t0.ctx.paragraph == (
+            1, 2, 3, MTextParagraphAlignment.CENTER, (1, 2, 3))
+        assert t1.ctx.paragraph == ParagraphProperties()  # reset to default
 
 
 if __name__ == '__main__':
