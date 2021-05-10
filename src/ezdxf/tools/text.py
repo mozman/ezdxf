@@ -15,7 +15,7 @@ from ezdxf.lldxf.const import (
 )
 from ezdxf.math import Vec3, Vec2, Vertex
 from .fonts import FontMeasurements, AbstractFont, FontFace
-from .rgb import rgb2int, RGB
+from .rgb import rgb2int, RGB, int2rgb
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Text, MText, DXFEntity
@@ -1277,6 +1277,10 @@ class MTextParser:
             new_ctx.strike_through = False
         elif cmd == 'A':
             self.parse_align(new_ctx)
+        elif cmd == 'C':
+            self.parse_aci_color(new_ctx)
+        elif cmd == 'c':
+            self.parse_rgb_color(new_ctx)
         elif cmd == 'H':
             self.parse_height(new_ctx)
         elif cmd == 'W':
@@ -1332,11 +1336,38 @@ class MTextParser:
             ctx.oblique = float(oblique_expr)
         self.consume_optional_terminator()
 
+    def parse_aci_color(self, ctx: MTextContext):
+        aci_expr = self.extract_int_expression()
+        if aci_expr:
+            aci = int(aci_expr)
+            if aci < 257:
+                ctx.aci = aci
+                ctx.rgb = None
+        self.consume_optional_terminator()
+
+    def parse_rgb_color(self, ctx: MTextContext):
+        rgb_expr = self.extract_int_expression()
+        if rgb_expr:
+            # in reversed order!
+            b, g, r = int2rgb(int(rgb_expr) & 0xFFFFFF)
+            ctx.rgb = (r, g, b,)
+        self.consume_optional_terminator()
+
     def extract_float_expression(self, relative=False) -> str:
         result = ""
         tail = self.scanner.tail()
         pattern = RE_FLOAT_X if relative else RE_FLOAT
         match = re.match(pattern, tail)
+        if match:
+            start, end = match.span()
+            result = tail[start:end]
+            self.scanner.consume(end)
+        return result
+
+    def extract_int_expression(self) -> str:
+        result = ""
+        tail = self.scanner.tail()
+        match = re.match(r"\d+", tail)
         if match:
             start, end = match.span()
             result = tail[start:end]

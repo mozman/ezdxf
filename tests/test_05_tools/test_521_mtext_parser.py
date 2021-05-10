@@ -455,6 +455,52 @@ class TestMTextContextParsing:
         t0 = list(MTextParser(f"{expr}word"))[0]
         assert t0.ctx.oblique == -3
 
+    @pytest.mark.parametrize("expr", [
+        r"\C3",
+        r"\C3;",
+        r"\C03",
+        r"\C03;",
+    ])
+    def test_aci_color(self, expr):
+        t0 = list(MTextParser(rf"{expr}word"))[0]
+        assert t0.ctx.aci == 3
+        assert t0.ctx.rgb is None
+
+    @pytest.mark.parametrize("expr", [
+        r"\C1000",
+        r"\C1000;",
+    ])
+    def test_aci_color_is_limited_to_256(self, expr):
+        t0 = list(MTextParser(rf"{expr}word"))[0]
+        assert t0.ctx.aci == 7  # default value
+        assert t0.ctx.rgb is None
+        assert t0.data == "word"
+
+    @pytest.mark.parametrize("expr", [
+        r"\c255",
+        r"\c255;",
+        r"\c0255",
+        r"\c0255;",
+    ])
+    def test_rgb_color(self, expr):
+        t0 = list(MTextParser(rf"{expr}word"))[0]
+        assert t0.ctx.aci == 7  # default value
+        assert t0.ctx.rgb == (255, 0, 0)
+
+    def test_rgb_color_overflow(self):
+        t0 = list(MTextParser(r"\c9999999999;word"))[0]
+        assert t0.ctx.rgb == (255, 227, 11)
+
+
+class MTextParagraphProperties:
+    @pytest.mark.parametrize("expr", [
+        "i1;",
+        "i1.0;",
+    ])
+    def test_indent_first_line(self, expr):
+        t0 = list(MTextParser(rf"\p{expr}word"))[0]
+        assert t0.ctx.paragraph.indent == 1
+
 
 if __name__ == '__main__':
     pytest.main([__file__])

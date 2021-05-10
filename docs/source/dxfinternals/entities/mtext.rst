@@ -75,7 +75,7 @@ Information gathered by implementing the :class:`MTextEditor` and the
     - arguments >= 16777216 are masked by: value & 0xFFFFFF
     - a trailing ";" after integers is always consumed, even for much to big
       values, "\\c9999999999;" renders nothing and switches the color to
-      yellow (11, 227, 255)
+      yellow (255, 227, 11)
 
 - Height command "\\H" and "\\H...x": float argument is expected
     - the terminator symbol ";" is optional
