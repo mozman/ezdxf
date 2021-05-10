@@ -1218,25 +1218,27 @@ class MTextParser:
         any stacking type char, the type and denominator string are empty "".
 
         """
-        def next_char():
-            escape = False
+        def peek_char():
             c = stacking_scanner.peek()
             if ord(c) < 32:  # replace all control chars by space
                 c = " "
+            return c
+
+        def get_next_char():
+            escape = False
+            c = peek_char()
             # escape sequences: remove backslash and return next char
             if c == "\\":
                 escape = True
                 stacking_scanner.consume(1)
-                c = stacking_scanner.peek()
-                if ord(c) < 32:  # replace all control chars by space
-                    c = " "
+                c = peek_char()
             stacking_scanner.consume(1)
             return c, escape
 
         def parse_numerator() -> Tuple[str, str]:
             word = ""
             while stacking_scanner.has_data:
-                c, escape = next_char()
+                c, escape = get_next_char()
                 if not escape and c in "^/#":  # scan until stacking type char
                     return word, c
                 word += c
@@ -1245,7 +1247,7 @@ class MTextParser:
         def parse_denominator() -> str:
             word = ""
             while stacking_scanner.has_data:
-                word += next_char()[0]
+                word += get_next_char()[0]
             return word
 
         stop = self.scanner.find(";", escape=True)
