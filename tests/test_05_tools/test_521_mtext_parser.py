@@ -185,6 +185,26 @@ class TestParsingFractions:
         token = list(MTextParser("\\S123;"))[0]
         assert token.data == ("123", "", "")
 
+    def test_next_word_after_stacking(self):
+        tokens = list(MTextParser("\\S1/2;word"))
+        assert token_types(tokens) == (TokenType.STACK, TokenType.WORD)
+        assert tokens[1].data == "word"
+
+    def test_next_semi_colon_after_stacking(self):
+        tokens = list(MTextParser("\\S1/2;;"))
+        assert token_types(tokens) == (TokenType.STACK, TokenType.WORD)
+        assert tokens[1].data == ";"
+
+    @pytest.mark.parametrize('expr', [
+        r"word\p______;word",
+        r"word\f______;word",
+        r"word\F______;word",
+    ])
+    def test_extraction_of_expression(self, expr):
+        tokens = list(MTextParser(expr))
+        assert token_types(tokens) == (TokenType.WORD, TokenType.WORD)
+        assert token_data(tokens) == ("word", "word")
+
 
 class TestMTextContextParsing:
     def test_switch_underline_on(self):

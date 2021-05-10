@@ -1250,20 +1250,10 @@ class MTextParser:
                 word += get_next_char()[0]
             return word
 
-        stop = self.scanner.find(";", escape=True)
-        if stop < 0:  # ";" not found
-            stacking = self.scanner.tail()  # scan until end of content
-        else:
-            # extract the stacking expression
-            stacking = self.scanner.substr(stop)  # exclude ";"
-        self.scanner.consume(len(stacking) + 1)  # include ";"
-        stacking_scanner = TextScanner(stacking)
-        numerator, t = parse_numerator()
-        if t:
-            denominator = parse_denominator()
-        else:
-            denominator = ""
-        return TokenType.STACK, (numerator, denominator, t)
+        stacking_scanner = TextScanner(self.extract_expression(escape=True))
+        numerator, stacking_type = parse_numerator()
+        denominator = parse_denominator() if stacking_type else ""
+        return TokenType.STACK, (numerator, denominator, stacking_type)
 
     def parse_properties(self, cmd: str) -> None:
         # Treat the existing context as immutable, create a new one:
@@ -1283,6 +1273,10 @@ class MTextParser:
         elif cmd == 'A':  # cell alignment A0=bottom, A1=middle, A2=top
             if not self.parse_align(new_ctx):
                 return
+        elif cmd == 'p':
+            self.parse_paragraph_properties(new_ctx)
+        elif cmd == 'f' or cmd == 'F':
+            self.parse_font_properties(new_ctx)
         else:  # unknown commands
             return
         self.ctx = new_ctx
@@ -1291,6 +1285,27 @@ class MTextParser:
         arg = self.parse_required_char(choices={"0", "1", "2"}, default="0")
         ctx.align = MTextLineAlignment(int(arg))
         return True
+
+    def extract_expression(self, escape=False) -> str:
+        """ Returns the next expression from the current location until
+        the terminating ";". The terminating semi-colon is not included.
+        Skips escaped "\\;" semi-colons if `escape` is True.
+
+        """
+        stop = self.scanner.find(";", escape=escape)
+        if stop < 0:  # ";" not found
+            expr = self.scanner.tail()  # scan until end of content
+        else:
+            expr = self.scanner.substr(stop)  # exclude ";"
+        # skip the expression in the main scanner
+        self.scanner.consume(len(expr) + 1)  # include ";"
+        return expr
+
+    def parse_paragraph_properties(self, ctx: MTextContext):
+        property_scanner = TextScanner(self.extract_expression())
+
+    def parse_font_properties(self, ctx: MTextContext):
+        font_scanner = TextScanner(self.extract_expression())
 
     def parse_required_char(self, choices: set, default: str) -> str:
         scanner = self.scanner
