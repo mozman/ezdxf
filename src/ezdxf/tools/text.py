@@ -1218,6 +1218,7 @@ class MTextParser:
         any stacking type char, the type and denominator string are empty "".
 
         """
+
         def peek_char():
             c = stacking_scanner.peek()
             if ord(c) < 32:  # replace all control chars by space
@@ -1305,7 +1306,20 @@ class MTextParser:
         property_scanner = TextScanner(self.extract_expression())
 
     def parse_font_properties(self, ctx: MTextContext):
-        font_scanner = TextScanner(self.extract_expression())
+        parts = self.extract_expression().split("|")
+        # an empty font family name does not change the font properties
+        if parts and parts[0]:
+            name = parts[0]
+            style = "normal"
+            weight = "normal"
+            # ignore codepage and pitch - it seems not to be used in newer
+            # CAD applications.
+            for part in parts[1:]:
+                if part.startswith('b1'):
+                    weight = "bold"
+                elif part.startswith("i1"):
+                    style = "italic"
+            ctx.font_face = FontFace(family=name, style=style, weight=weight)
 
     def parse_required_char(self, choices: set, default: str) -> str:
         scanner = self.scanner

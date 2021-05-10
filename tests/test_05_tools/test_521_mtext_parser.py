@@ -276,6 +276,40 @@ class TestMTextContextParsing:
         assert t0.ctx.align == 0
         assert t0.data == "word", "invalid argument should be removed"
 
+    def test_font_b0_i0(self):
+        t0 = list(MTextParser(r"\fArial Narrow;word"))[0]
+        font_face = t0.ctx.font_face
+        assert font_face.family == "Arial Narrow"
+        assert font_face.style == "normal"
+        assert font_face.weight == "normal"
+
+    def test_font_b1_i0(self):
+        t0 = list(MTextParser(r"\fArial Narrow|b1;word"))[0]
+        assert t0.ctx.font_face.weight == "bold"
+
+    def test_font_b0_i1(self):
+        t0 = list(MTextParser(r"\fArial Narrow|i1;word"))[0]
+        assert t0.ctx.font_face.style == "italic"
+
+    def test_font_b1_i1(self):
+        t0 = list(MTextParser(r"\fArial Narrow|i1|b1;word"))[0]
+        assert t0.ctx.font_face.style == "italic"
+        assert t0.ctx.font_face.weight == "bold"
+
+    def test_font_uppercase_command(self):
+        t0 = list(MTextParser(r"\FArial Narrow;word"))[0]
+        assert t0.ctx.font_face.family == "Arial Narrow"
+
+    def test_empty_font_command_does_not_change_font_properties(self):
+        t0, t1 = list(MTextParser(r"\fArial;word\f;word"))
+        assert t0.ctx.font_face.family == "Arial"
+        assert t0.ctx.font_face is t1.ctx.font_face
+
+    def test_empty_font_family_name_does_not_change_font_properties(self):
+        t0, t1 = list(MTextParser(r"\fArial;word\f|b1|i1;word"))
+        assert t0.ctx.font_face.family == "Arial"
+        assert t0.ctx.font_face is t1.ctx.font_face
+
 
 if __name__ == '__main__':
     pytest.main([__file__])
