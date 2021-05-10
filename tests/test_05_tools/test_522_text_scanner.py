@@ -64,6 +64,52 @@ class TestTextScanner:
         s = TextScanner("w")
         pytest.raises(ValueError, s.peek, -1)
 
+    def test_find_next_char(self):
+        assert TextScanner(";").find(';') == 0
+        assert TextScanner("word;").find(';') == 4
+        assert TextScanner("word;;").find(';') == 4
+
+    def test_find_ignores_escaped_chars(self):
+        assert TextScanner("word\\;;").find(';', escape=True) == 6
+        assert TextScanner("word\\n;").find(';', escape=True) == 6
+        assert TextScanner("word\\;\\;;").find(';', escape=True) == 8
+
+    def test_find_next_backslash(self):
+        assert TextScanner("\\").find('\\') == 0
+        assert TextScanner("a\\").find('\\', escape=False) == 1
+        assert TextScanner("a\\").find('\\', escape=True) == 1
+        assert TextScanner("a\\\\").find('\\', escape=True) == -1
+        assert TextScanner("a\\\\\\").find('\\', escape=True) == 3
+
+    def test_not_find_next(self):
+        assert TextScanner("").find(';') == -1
+        assert TextScanner("word").find(';') == -1
+        assert TextScanner("\\;").find(';', escape=True) == -1
+
+    def test_substr_at_the_begin(self):
+        assert TextScanner("").substr(0) == ""
+        assert TextScanner("a").substr(1) == "a"
+        assert TextScanner("ab").substr(1) == "a", \
+            "do not return the char at the index itself"
+        assert TextScanner("ab").substr(2) == "ab"
+        assert TextScanner("ab").substr(3) == "ab"
+
+    def test_substr_from_consumed_string(self):
+        s = TextScanner("abcdef")
+        s.consume(2)
+        assert s.substr(2) == ""
+        assert s.substr(3) == "c"
+        assert s.substr(4) == "cd"
+        assert s.substr(10) == "cdef"
+
+    def test_substr_index_error(self):
+        with pytest.raises(IndexError):
+            TextScanner("").substr(-1)
+        s = TextScanner("abcd")
+        s.consume(2)
+        with pytest.raises(IndexError):
+            s.substr(1)
+
 
 if __name__ == '__main__':
     pytest.main([__file__])

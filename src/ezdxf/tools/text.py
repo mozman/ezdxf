@@ -1032,11 +1032,45 @@ class TextScanner:
         except IndexError:
             return ""
 
+    def find(self, char: str, escape=False) -> int:
+        """ Return the index of the next `char`. If `escape` is True, backslash
+        escaped `chars` will be ignored e.g. "\\;;" index of the next ";" is 1
+        if `escape` is False and 2 if `escape` is True. Returns -1 if `char`
+        was not found.
+
+        Args:
+            char: single letter as string
+            escape: ignore backslash escaped chars if True.
+
+        """
+
+        scanner = self.__class__(self._text[self._index:])
+        while scanner.has_data:
+            c = scanner.peek()
+            if escape and c == "\\" and scanner.peek(1) == char:
+                scanner.consume(2)
+                continue
+            if c == char:
+                return self._index + scanner._index
+            scanner.consume(1)
+        return -1
+
+    def substr(self, stop: int) -> str:
+        """ Returns the substring from the current location until index < stop.
+        """
+        if stop < self._index:
+            raise IndexError(stop)
+        return self._text[self._index:stop]
+
+    def tail(self) -> str:
+        """ Returns the unprocessed part of the content. """
+        return self._text[self._index:]
+
 
 class TokenType(enum.IntEnum):
     NONE = 0
     WORD = 1  # data = str
-    STACK = 2  # data = upr, lwr, type; upr&lwr:=(str|space)+
+    STACK = 2  # data = upr: str, lwr:str, type:str
     SPACE = 3  # data = None
     NBSP = 4  # data = None
     TABULATOR = 5  # data = None
@@ -1176,8 +1210,57 @@ class MTextParser:
             return TokenType.NONE, None
 
     def parse_stacking(self) -> Tuple:
-        scanner = self.scanner
-        return TokenType.STACK, ("NUMERATOR", "DENOMINATOR", "^")
+        def next_char():
+            # special caret decode
+            c = stacking_scanner.peek()
+            if c == "^":
+                if stacking_scanner.peek(1) != " ":  # only "^ " yields a "^"
+                    # replace caret decoded chars by a space " "
+                    stacking_scanner.consume(1)
+                    c = " "
+            return c
+
+        def parse_numerator() -> str:
+            word = ""
+            while stacking_scanner.has_data:
+                c = next_char()
+                if c in "^/#":  # scan until stacking type char
+                    return word
+                word += c
+                stacking_scanner.consume(1)
+
+        def parse_type() -> str:
+            t = stacking_scanner.peek()
+            if t == "^" and stacking_scanner.peek(1) == " ":
+                stacking_scanner.consume(2)
+                return "^"
+            elif t in "/#":
+                stacking_scanner.consume(1)
+                return t
+            return ""
+
+        def parse_denominator() -> str:
+            word = ""
+            while stacking_scanner.has_data:
+                word += next_char()
+                stacking_scanner.consume(1)
+            return word
+
+        stop = self.scanner.find(";", escape=True)
+        if stop < 0:  # ";" not found
+            stacking = self.scanner.tail()  # scan until end of content
+        else:
+            # extract the stacking expression
+            stacking = self.scanner.substr(stop)  # exclude ";"
+        self.scanner.consume(len(stacking) + 1)  # include ";"
+        stacking_scanner = TextScanner(stacking)
+        numerator = parse_numerator()
+        t = parse_type()
+        if t:
+            denominator = parse_denominator()
+        else:
+            denominator = ""
+        return TokenType.STACK, (numerator, denominator, t)
 
     def parse_properties(self, cmd: str) -> None:
         # Treat the existing context as immutable, create a new one:

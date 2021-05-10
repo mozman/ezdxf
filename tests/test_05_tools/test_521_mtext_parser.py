@@ -94,6 +94,24 @@ class TestMTextContentParsing:
         assert token.data == "%_%%_%%%_%%%%"
 
 
+class TestParsingFractions:
+    def test_simple_horizontal_fraction(self):
+        token = list(MTextParser("\\S1/2;"))[0]
+        assert token.data == ("1", "2", "/")
+
+    def test_simple_diagonal_fraction(self):
+        token = list(MTextParser("\\S1#2;"))[0]
+        assert token.data == ("1", "2", "#")
+
+    def test_simple_limit_style_fraction(self):
+        token = list(MTextParser("\\S1^ 2;"))[0]
+        assert token.data == ("1", "2", "^")
+
+    def test_without_terminator_parsing_until_end_of_string(self):
+        token = list(MTextParser("\\S1/2"))[0]
+        assert token.data == ("1", "2", "/")
+
+
 class TestMTextContextParsing:
     def test_switch_underline_on(self):
         tokens = list(MTextParser(r"\Lword"))
