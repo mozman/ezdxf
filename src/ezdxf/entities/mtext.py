@@ -68,7 +68,7 @@ acdb_mtext = DefSubclass('AcDbMText', {
     # 9 = Bottom right
     'attachment_point': DXFAttr(
         71, default=1,
-        validator=validator.is_in_integer_range(0, 10),
+        validator=validator.is_in_integer_range(1, 10),
         fixer=RETURN_DEFAULT,
     ),
 
