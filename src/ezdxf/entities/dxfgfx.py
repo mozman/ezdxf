@@ -184,7 +184,7 @@ class DXFGraphic(DXFEntity):
                 )
 
     @property
-    def rgb(self) -> Optional[Tuple[int, int, int]]:
+    def rgb(self) -> Optional[clr.RGB]:
         """ Returns RGB true color as (r, g, b) tuple or None if true_color is
         not set.
         """
@@ -194,7 +194,7 @@ class DXFGraphic(DXFEntity):
             return None
 
     @rgb.setter
-    def rgb(self, rgb: Tuple[int, int, int]) -> None:
+    def rgb(self, rgb: clr.RGB) -> None:
         """ Set RGB true color as (r, g , b) tuple e.g. (12, 34, 56). """
         self.dxf.set('true_color', clr.rgb2int(rgb))
 
