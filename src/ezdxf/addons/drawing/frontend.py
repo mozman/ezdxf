@@ -307,7 +307,7 @@ class Frontend:
         points = get_tri_or_quad_points(
             entity, adjust_order=dxftype != '3DFACE')
         # TRACE is an OCS entity
-        if dxftype == 'TRACE' and dxf.hasattr('extrusion'):
+        if dxftype in ('TRACE', 'SOLID') and dxf.hasattr('extrusion'):
             ocs = entity.ocs()
             points = list(ocs.points_to_wcs(points))
         if dxftype == '3DFACE':
