@@ -90,7 +90,7 @@ class Solid(_Base):
     def transform(self, m: Matrix44) -> 'Solid':
         """ Transform the SOLID/TRACE entity by transformation matrix `m` inplace.
         """
-        # SOLID/TRACE is 2d entity, placed by an OCS in 3d space
+        # SOLID and TRACE are OCS entities.
         dxf = self.dxf
         ocs = OCSTransform(self.dxf.extrusion, m)
         for name in VERTEXNAMES:

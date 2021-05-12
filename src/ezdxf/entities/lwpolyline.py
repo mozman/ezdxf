@@ -324,7 +324,7 @@ class LWPolyline(DXFGraphic):
         """
         dxf = self.dxf
         ocs = OCSTransform(self.dxf.extrusion, m)
-        if not ocs.scale_uniform:
+        if not ocs.scale_uniform and self.has_arc:
             raise NonUniformScalingError(
                 '2D POLYLINE with arcs does not support non uniform scaling')
             # Parent function has to catch this Exception and explode this
