@@ -1,5 +1,4 @@
-# Created: 06.2020
-# Copyright (c) 2020, Matthew Broadway
+# Copyright (c) 2020-2021, Matthew Broadway
 # License: MIT License
 import math
 from typing import Iterable, cast, Union, List, Dict, Callable
@@ -9,10 +8,9 @@ from ezdxf.addons.drawing.properties import (
     RenderContext, VIEWPORT_COLOR, Properties, set_color_alpha, Filling,
 )
 from ezdxf.addons.drawing.text import simplified_text_chunks
-from ezdxf.addons.drawing.utils import get_tri_or_quad_points
 from ezdxf.entities import (
     DXFGraphic, Insert, MText, Polyline, LWPolyline, Spline, Hatch, Attrib,
-    Text, Polyface, Wipeout, AttDef,
+    Text, Polyface, Wipeout, AttDef, Solid, Face3d
 )
 from ezdxf.entities.dxfentity import DXFTagStorage, DXFEntity
 from ezdxf.layouts import Layout
@@ -298,22 +296,18 @@ class Frontend:
                         self.out.draw_line(start, end, properties)
                     pass
                 else:  # CIRCLE
-                    self.draw_elliptic_arc_entity(entity, properties)
+                    self.draw_curve_entity(entity, properties)
 
     def draw_solid_entity(self, entity: DXFGraphic,
                           properties: Properties) -> None:
-        # Handles SOLID, TRACE and 3DFACE
+        assert isinstance(entity, (Solid, Face3d)), \
+            "API error, requires a SOLID, TRACE or 3DFACE entity"
         dxf, dxftype = entity.dxf, entity.dxftype()
-        points = get_tri_or_quad_points(
-            entity, adjust_order=dxftype != '3DFACE')
-        # TRACE is an OCS entity
-        if dxftype in ('TRACE', 'SOLID') and dxf.hasattr('extrusion'):
-            ocs = entity.ocs()
-            points = list(ocs.points_to_wcs(points))
+        points = entity.wcs_vertices()
         if dxftype == '3DFACE':
             self.out.draw_path(from_vertices(points, close=True), properties)
         else:
-            # Set default SOLID filling for SOLID and TRACE
+            # set solid fill type for SOLID and TRACE
             properties.filling = Filling()
             self.out.draw_filled_polygon(points, properties)
 
