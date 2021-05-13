@@ -21,6 +21,16 @@ if not ezdxf.options.use_matplotlib:
 
 DIR = pathlib.Path('~/Desktop/Outbox').expanduser()
 
+LOREM_IPSUM = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam " \
+              "nonumy eirmod tempor {\C1invidunt ut labore} et dolore magna aliquyam " \
+              "erat, sed diam voluptua. At vero eos et accusam et justo duo dolores " \
+              "et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est " \
+              "Lorem ipsum dolor sit amet."
+LEFT = LOREM_IPSUM + "\n\n"
+CENTER = r"\pxqc;" + LOREM_IPSUM + "\n\n"
+RIGHT = r"\pxqr;" + LOREM_IPSUM + "\n\n"
+JUSTIFIED = r"\pi1,qj;" + LOREM_IPSUM + "\n\n"
+
 
 class FrameRenderer(text_layout.ContentRenderer):
     def __init__(self, attribs: Dict, layout: BaseLayout):
@@ -164,12 +174,23 @@ ALIGN = {
 }
 
 
-def new_paragraph(cells: List, ctx: MTextContext, cap_height: float):
-    p = ctx.paragraph
-    align = ALIGN.get(p.align, text_layout.FlowTextAlignment.LEFT)
-    indent = (p.indent * cap_height, p.left * cap_height, p.right * cap_height)
-    paragraph = text_layout.FlowText(align=align, indent=indent)
-    paragraph.append_content(cells)
+def new_paragraph(cells: List, ctx: MTextContext, cap_height: float,
+                  line_spacing: float = 1):
+    if cells:
+        p = ctx.paragraph
+        align = ALIGN.get(p.align, text_layout.FlowTextAlignment.LEFT)
+        left = p.left * cap_height
+        right = p.right * cap_height
+        first = left + p.indent * cap_height  # relative to left
+        paragraph = text_layout.FlowText(
+            align=align,
+            indent=(first, left, right),
+            line_spacing=line_spacing,
+        )
+        paragraph.append_content(cells)
+    else:
+        paragraph = text_layout.EmptyParagraph(
+            cap_height=ctx.cap_height, line_spacing=line_spacing)
     return paragraph
 
 
@@ -241,12 +262,15 @@ class MTextExplode:
             return attribs
 
         def append_paragraph():
-            paragraph = new_paragraph(cells, ctx, initial_cap_height)
+            paragraph = new_paragraph(
+                cells, ctx, initial_cap_height, line_spacing)
             layout.append_paragraphs([paragraph])
             cells.clear()
 
         content = mtext.text
         initial_cap_height = mtext.dxf.char_height
+        # same line spacing for all paragraphs
+        line_spacing = mtext.dxf.line_spacing_factor
         base_attribs = get_base_attribs()
         ctx = mtext_context(mtext)
         parser = MTextParser(content, ctx)
@@ -335,11 +359,6 @@ def new_doc(content: str, width: float = 30):
     return doc
 
 
-def uniform_content(count=100):
-    text = " ".join(text_layout.lorem_ipsum(count))
-    return r"\pxqc;" + text
-
-
 def explode_mtext(doc):
     msp = doc.modelspace()
     mtext = msp.query("MTEXT").first
@@ -351,7 +370,7 @@ def explode_mtext(doc):
 
 
 if __name__ == '__main__':
-    doc = new_doc(uniform_content())
+    doc = new_doc(LEFT + CENTER + RIGHT + JUSTIFIED)
     doc.saveas(DIR / "mtext_source.dxf")
     doc = explode_mtext(doc)
     doc.saveas(DIR / "mtext_xplode.dxf")

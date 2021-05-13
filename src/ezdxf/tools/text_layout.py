@@ -830,6 +830,29 @@ class Paragraph(Container):  # ABC
         pass
 
 
+class EmptyParagraph(Cell):
+    """ Spacer between two paragraphs, represents empty lines like in
+    "line1\n\nline2".
+    """
+    def __init__(self, cap_height: float, line_spacing: float = 1):
+        self._height = leading(cap_height, line_spacing)
+        self._width = 0
+
+    @property
+    def total_width(self) -> float:
+        return self._width
+
+    @property
+    def total_height(self) -> float:
+        return self._height
+
+    def set_total_width(self, width: float):
+        self._width = width
+
+    def distribute_content(self, height: float = None):
+        pass
+
+
 class FlowTextAlignment(enum.IntEnum):
     DEFAULT = 0
     LEFT = 1
@@ -1097,12 +1120,9 @@ def leading(cap_height: float, line_spacing: float = 1.0) -> float:
         line_spacing: line spacing factor as percentage of 3-on-5 spacing
 
     """
-    # 3-on-5 line spacing = 5/3 = 1.667
+    # method "exact": 3-on-5 line spacing = 5/3 = 1.667
+    # method "at least" is not supported
     return cap_height * 1.667 * line_spacing
-
-
-class BulletList(Paragraph):
-    pass
 
 
 class Column(Container):
