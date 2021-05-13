@@ -10,7 +10,10 @@ from ezdxf.entities import MText, DXFGraphic, Textstyle
 from ezdxf.layouts import BaseLayout
 from ezdxf.math import Matrix44
 from ezdxf.tools import text_layout, fonts
-from ezdxf.tools.text import MTextParser, MTextContext, TokenType
+from ezdxf.tools.text import (
+    MTextParser, MTextContext, TokenType, ParagraphProperties,
+    MTextParagraphAlignment,
+)
 
 if not ezdxf.options.use_matplotlib:
     print("The Matplotlib package is required.")
@@ -151,9 +154,21 @@ def mtext_context(mtext: MText) -> MTextContext:
     return ctx
 
 
-def new_paragraph(ctx: MTextContext, cells: List):
-    # TODO: set paragraph properties
-    paragraph = text_layout.FlowText()
+ALIGN = {
+    MTextParagraphAlignment.LEFT: text_layout.FlowTextAlignment.LEFT,
+    MTextParagraphAlignment.RIGHT: text_layout.FlowTextAlignment.RIGHT,
+    MTextParagraphAlignment.CENTER: text_layout.FlowTextAlignment.CENTER,
+    MTextParagraphAlignment.JUSTIFIED: text_layout.FlowTextAlignment.JUSTIFIED,
+    MTextParagraphAlignment.DISTRIBUTED: text_layout.FlowTextAlignment.JUSTIFIED,
+    MTextParagraphAlignment.DEFAULT: text_layout.FlowTextAlignment.LEFT,
+}
+
+
+def new_paragraph(cells: List, ctx: MTextContext, cap_height: float):
+    p = ctx.paragraph
+    align = ALIGN.get(p.align, text_layout.FlowTextAlignment.LEFT)
+    indent = (p.indent * cap_height, p.left * cap_height, p.right * cap_height)
+    paragraph = text_layout.FlowText(align=align, indent=indent)
     paragraph.append_content(cells)
     return paragraph
 
@@ -226,11 +241,12 @@ class MTextExplode:
             return attribs
 
         def append_paragraph():
-            paragraph = new_paragraph(ctx, cells)
+            paragraph = new_paragraph(cells, ctx, initial_cap_height)
             layout.append_paragraphs([paragraph])
             cells.clear()
 
         content = mtext.text
+        initial_cap_height = mtext.dxf.char_height
         base_attribs = get_base_attribs()
         ctx = mtext_context(mtext)
         parser = MTextParser(content, ctx)
@@ -320,7 +336,8 @@ def new_doc(content: str, width: float = 30):
 
 
 def uniform_content(count=100):
-    return " ".join(text_layout.lorem_ipsum(count))
+    text = " ".join(text_layout.lorem_ipsum(count))
+    return r"\pxqc;" + text
 
 
 def explode_mtext(doc):
