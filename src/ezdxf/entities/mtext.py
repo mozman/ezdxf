@@ -524,8 +524,9 @@ def load_columns_from_xdata(dxf: 'DXFNamespace',
                             xdata: XData) -> Optional[MTextColumns]:
     # The ACAD section in XDATA of the main MTEXT entity stores all column
     # related information:
-    acad = xdata.get('ACAD')
-    if acad is None:
+    if "ACAD" in xdata:
+        acad = xdata.get("ACAD")
+    else:
         return None
 
     name = f"MTEXT(#{dxf.get('handle')})"
