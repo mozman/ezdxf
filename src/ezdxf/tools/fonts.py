@@ -290,18 +290,24 @@ def find_font_face_by_family(family: str, italic=False, bold=False) -> Optional[
     return None
 
 
-def find_ttf_path(font_face: FontFace, default="arial.ttf") -> str:
-    """ Returns the true type font path """
-    weight = font_face.weight
-    if isinstance(weight, str):
-        weight = weight_name_to_value(weight)
-
-    font_face = find_font_face_by_family(
-        font_face.family,
-        italic=font_face.style.find("italic") > -1,
-        bold=weight > 400,
-    )
-    return default if font_face is None else font_face.ttf
+def find_ttf_path(font_face: FontFace, default="DejaVuSans.ttf") -> str:
+    """ Returns the true type font path. """
+    if options.use_matplotlib:
+        from ._matplotlib_font_support import find_filename
+        path = find_filename(
+            family=font_face.family,
+            style=font_face.style,
+            stretch=font_face.stretch,
+            weight=font_face.weight,
+        )
+        return path.name
+    else:
+        font_face = find_font_face_by_family(
+            font_face.family,
+            italic=font_face.is_italic,
+            bold=font_face.is_bold,
+        )
+        return default if font_face is None else font_face.ttf
 
 
 def get_cache_file_path(path, name: str = FONT_FACE_CACHE_FILE) -> Path:

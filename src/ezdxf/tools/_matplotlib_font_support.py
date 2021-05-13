@@ -1,16 +1,28 @@
 # Copyright (c) 2021, Manfred Moitzi
 # License: MIT License
 from typing import Optional, Dict
+from pathlib import Path
 from functools import lru_cache
 from matplotlib.font_manager import FontProperties
 from matplotlib.textpath import TextPath
 from matplotlib.font_manager import FontManager
 from . import fonts
 
+_font_manager = None
+
 
 def rebuild_system_fonts():
-    import matplotlib.font_manager as fm
-    fm._rebuild()
+    import matplotlib.font_manager
+    matplotlib.font_manager._rebuild()
+    global _font_manager
+    _font_manager = FontManager()
+
+
+def _get_font_manger():
+    global _font_manager
+    if _font_manager is None:
+        _font_manager = FontManager()
+    return _font_manager
 
 
 def load_system_fonts() -> Dict[str, fonts.FontFace]:
@@ -20,7 +32,8 @@ def load_system_fonts() -> Dict[str, fonts.FontFace]:
 
     """
     font_faces = dict()
-    for entry in FontManager().ttflist:
+    fm = _get_font_manger()
+    for entry in fm.ttflist:
         ttf = fonts.cache_key(entry.fname)
         font_faces[ttf] = fonts.FontFace(
             ttf,
@@ -104,3 +117,11 @@ def remove_fonts_without_measurement(font_faces: Dict, measurements: Dict):
     for name in names:
         if name not in measurements:
             del font_faces[name]
+
+
+def find_filename(family: str, style="normal", stretch="normal",
+                  weight="normal") -> Path:
+    fm = _get_font_manger()
+    prop = FontProperties(family=family, style=style, stretch=stretch,
+                          weight=weight)
+    return Path(fm.findfont(prop))
