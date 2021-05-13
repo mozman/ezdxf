@@ -2,8 +2,8 @@
 News
 ====
 
-Version 0.16.3 - dev
---------------------
+Version 0.16.3b1 - dev
+----------------------
 
 - NEW: `ezdxf.tools.text.MTextEditor` class, extracted from the `MText` class
 - CHANGE: move `MText` constants to `MTextEditor` class
