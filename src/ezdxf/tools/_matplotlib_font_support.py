@@ -18,7 +18,7 @@ def rebuild_system_fonts():
     _font_manager = FontManager()
 
 
-def _get_font_manger():
+def _get_font_manager():
     global _font_manager
     if _font_manager is None:
         _font_manager = FontManager()
@@ -32,7 +32,7 @@ def load_system_fonts() -> Dict[str, fonts.FontFace]:
 
     """
     font_faces = dict()
-    fm = _get_font_manger()
+    fm = _get_font_manager()
     for entry in fm.ttflist:
         ttf = fonts.cache_key(entry.fname)
         font_faces[ttf] = fonts.FontFace(
@@ -121,7 +121,7 @@ def remove_fonts_without_measurement(font_faces: Dict, measurements: Dict):
 
 def find_filename(family: str, style="normal", stretch="normal",
                   weight="normal") -> Path:
-    fm = _get_font_manger()
+    fm = _get_font_manager()
     prop = FontProperties(family=family, style=style, stretch=stretch,
                           weight=weight)
     return Path(fm.findfont(prop))
