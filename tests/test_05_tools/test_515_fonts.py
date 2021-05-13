@@ -77,6 +77,28 @@ def test_same_font_faces_have_equal_hash_values():
     assert hash(f1) == hash(f2)
 
 
+def test_font_face_is_italic():
+    assert fonts.FontFace(style="italic").is_italic is True
+    assert fonts.FontFace(style="oblique-italic").is_italic is True
+    assert fonts.FontFace(style="").is_italic is False
+    assert fonts.FontFace().is_italic is False
+
+
+def test_font_face_is_oblique():
+    assert fonts.FontFace(style="oblique").is_oblique is True
+    assert fonts.FontFace(style="oblique-italic").is_oblique is True
+    assert fonts.FontFace(style="").is_oblique is False
+    assert fonts.FontFace().is_oblique is False
+
+
+def test_font_face_is_bold():
+    assert fonts.FontFace().is_bold is False
+    assert fonts.FontFace(weight=300).is_bold is False
+    assert fonts.FontFace(weight="bold").is_bold is True
+    assert fonts.FontFace(weight="black").is_bold is True
+    assert fonts.FontFace(weight=500).is_bold is True
+
+
 class TestFontMeasurements:
     @pytest.fixture
     def default(self):

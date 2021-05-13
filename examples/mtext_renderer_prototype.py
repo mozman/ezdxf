@@ -61,22 +61,11 @@ class TextRenderer(FrameRenderer):
 required_text_styles = {}
 
 
-def is_italic(font_face):
-    return font_face.style.find("italic") > -1
-
-
-def is_bold(font_face):
-    weight = font_face.weight
-    if isinstance(weight, str):
-        weight = fonts.weight_name_to_value(weight)
-    return weight > 400
-
-
 def generic_text_style(font_face: fonts.FontFace) -> str:
     style = 0
-    if is_bold(font_face):
+    if font_face.is_bold:
         style += 1
-    if is_italic(font_face):
+    if font_face.is_italic:
         style += 2
     style = str(style) if style > 0 else ""
     # BricsCAD naming convention for exploded MTEXT styles:
@@ -317,8 +306,8 @@ def create_text_styles(text_styles, required_styles):
             style.dxf.font = ttf_path(font_face)
             style.set_extended_font_data(
                 font_face.family,
-                italic=is_italic(font_face),
-                bold=is_bold(font_face)
+                italic=font_face.is_italic,
+                bold=font_face.is_bold,
             )
 
 

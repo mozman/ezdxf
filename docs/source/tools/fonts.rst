@@ -107,6 +107,18 @@ available.
 
         Font weight as string, the default value is "normal"
 
+    .. property:: is_italic
+
+        Returns ``True`` if font face is italic
+
+    .. property:: is_oblique
+
+        Returns ``True`` if font face is oblique
+
+    .. property:: is_bold
+
+        Returns ``True`` if font face weight > 400
+
 .. class:: FontMeasurements
 
     See `Font Anatomy`_ for more information.

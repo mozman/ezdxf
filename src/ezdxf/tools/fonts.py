@@ -57,12 +57,27 @@ logger = logging.getLogger('ezdxf')
 
 class FontFace(NamedTuple):
     # This would be the matplotlib FontProperties class, if matplotlib would
-    # be a hard dependency!
+    # be a core dependency!
     ttf: str = ''
     family: str = 'sans-serif'
     style: str = 'normal'
     stretch: str = 'normal'
     weight: str = 'normal'
+
+    @property
+    def is_italic(self) -> bool:
+        return self.style.find("italic") > -1
+
+    @property
+    def is_oblique(self) -> bool:
+        return self.style.find("oblique") > -1
+
+    @property
+    def is_bold(self) -> bool:
+        weight = self.weight
+        if isinstance(weight, str):
+            weight = weight_name_to_value(weight)
+        return weight > 400
 
 
 # Key is TTF font file name without path in lowercase like "arial.ttf":
