@@ -179,9 +179,6 @@ acdb_mtext_group_codes = group_code_mapping(acdb_mtext)
 # MTEXT columns have the same appearance and handling for all DXF versions
 # as a single MTEXT entity like in DXF R2018.
 
-# TODO: Drawing.load_mtext_columns()?
-#  Many structures are not available at the loading stage, a second run after
-#  the document is fully loaded is maybe the safer way.
 
 class ColumnType(enum.IntEnum):
     NONE = 0

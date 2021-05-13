@@ -22,8 +22,8 @@ if not ezdxf.options.use_matplotlib:
 DIR = pathlib.Path('~/Desktop/Outbox').expanduser()
 
 LOREM_IPSUM = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam " \
-              "nonumy eirmod tempor {\C1invidunt ut labore} et dolore magna aliquyam " \
-              "erat, sed diam voluptua. At vero eos et accusam et justo duo dolores " \
+              "nonumy eirmod tempor {\C1invidunt ut labore} et dolore mag{\C3na al}iquyam " \
+              "erat, sed {\C5diam voluptua.} At vero eos et accusam et justo duo dolores " \
               "et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est " \
               "Lorem ipsum dolor sit amet."
 LEFT = LOREM_IPSUM + "\n\n"
@@ -212,11 +212,18 @@ def get_color_attribs(ctx: MTextContext) -> Dict:
     return attribs
 
 
+def super_glue():
+    return text_layout.NonBreakingSpace(width=0, min_width=0, max_width=0)
+
+
 class MTextExplode:
-    def __init__(self, layout: BaseLayout, doc=None):
+    def __init__(self, layout: BaseLayout, doc=None,
+                 spacing_factor: float = 1.0):
         self.layout = layout
         self._doc = doc if doc else layout.doc
         assert self._doc is not None, "DXF document required"
+        # scale the width of spaces by this factor:
+        self._spacing_factor = spacing_factor
         self._required_text_styles: Dict = {}
         self._font_cache = {}
 
@@ -291,6 +298,10 @@ class MTextExplode:
             elif token.type == TokenType.TABULATOR:
                 cells.append(self.space(ctx))
             elif token.type == TokenType.WORD:
+                if cells and isinstance(cells[-1], Word):
+                    # property change inside a word, create an unbreakable
+                    # connection between those two parts of the same word.
+                    cells.append(super_glue())
                 cells.append(self.word(token.data, ctx, base_attribs))
             elif token.type == TokenType.STACK:
                 cells.append(self.fraction(token.data, ctx, base_attribs))
@@ -300,12 +311,14 @@ class MTextExplode:
 
         return layout
 
+    def space_width(self, ctx: MTextContext) -> float:
+        return self.get_font(ctx).space_width() * self._spacing_factor
+
     def space(self, ctx: MTextContext):
-        return text_layout.Space(width=self.get_font(ctx).space_width())
+        return text_layout.Space(width=self.space_width(ctx))
 
     def non_breaking_space(self, ctx: MTextContext):
-        return text_layout.NonBreakingSpace(
-            width=self.get_font(ctx).space_width())
+        return text_layout.NonBreakingSpace(width=self.space_width(ctx))
 
     def word(self, text: str, ctx: MTextContext, attribs: Dict):
         return Word(text, ctx, attribs, self)
@@ -353,7 +366,8 @@ def new_doc(content: str, width: float = 30):
         "width": width,
         "char_height": 1,
         "color": 7,
-        "style": "OpenSans"
+        "style": "OpenSans",
+        "line_spacing_style": ezdxf.const.MTEXT_EXACT
     })
     zoom.extents(msp)
     return doc
@@ -363,8 +377,10 @@ def explode_mtext(doc):
     msp = doc.modelspace()
     mtext = msp.query("MTEXT").first
     xpl = MTextExplode(msp)
-    xpl.explode(mtext)
+    xpl.explode(mtext, destroy=False)
     xpl.finalize()
+    if mtext.is_alive:
+        mtext.dxf.layer = "SOURCE"
     zoom.extents(msp)
     return doc
 

@@ -569,9 +569,9 @@ class Fraction(ContentCell):
         self.renderer.line(x1, y1, x2, y2, m)
 
 
-_content = {Text, Fraction}
-_glue = {Space, NonBreakingSpace}
-_no_break = {Text, Fraction, NonBreakingSpace}
+_content = (Text, Fraction)
+_glue = (Space, NonBreakingSpace)
+_no_break = (Text, Fraction, NonBreakingSpace)
 
 
 def normalize_cells(cells: Iterable[Cell]) -> List[Cell]:
@@ -579,7 +579,7 @@ def normalize_cells(cells: Iterable[Cell]) -> List[Cell]:
         index = len(content) - 1
         while index >= 0:
             cell = content[index]
-            if type(cell) is NonBreakingSpace:
+            if isinstance(cell, NonBreakingSpace):
                 content[index] = cell.to_space()
                 index -= 1
             else:
@@ -587,10 +587,10 @@ def normalize_cells(cells: Iterable[Cell]) -> List[Cell]:
 
     def is_useless_nbsp():
         try:
-            peek = type(cells[index + 1])
+            peek = cells[index + 1]
         except IndexError:
             return True
-        if prev not in _no_break or peek not in _no_break:
+        if not isinstance(prev, _no_break) or not isinstance(peek, _no_break):
             return True
         return False
 
@@ -598,20 +598,19 @@ def normalize_cells(cells: Iterable[Cell]) -> List[Cell]:
     cells = list(cells)
     prev = None
     for index, cell in enumerate(cells):
-        current = type(cell)
-        if current in _content:
-            if prev in _content:
+
+        if isinstance(cell, _content):
+            if isinstance(prev, _content):
                 raise ValueError('no glue between content cells')
-        elif current is NonBreakingSpace and is_useless_nbsp():
+        elif isinstance(cell, NonBreakingSpace) and is_useless_nbsp():
             cell = cell.to_space()
-            current = type(cell)
             replace_pending_nbsp_by_spaces()
 
-        prev = current
+        prev = cell
         content.append(cell)
 
     # remove pending glue:
-    while content and (type(content[-1]) in _glue):
+    while content and isinstance(content[-1], _glue):
         content.pop()
 
     return content
@@ -999,11 +998,11 @@ class FlowText(Paragraph):
             """
             group = []
             if cells:
-                next_t = type(cells[-1])
-                if next_t is NonBreakingSpace:
+                next_t = cells[-1]
+                if isinstance(next_t, NonBreakingSpace):
                     group.append(cells.pop())
                     group.extend(next_group(cells))
-                elif next_t in _content:
+                elif isinstance(next_t, _content):
                     group.append(cells.pop())
                     if cells and isinstance(cells[-1], NonBreakingSpace):
                         group.extend(next_group(cells))
