@@ -28,10 +28,14 @@ Font Classes
 
     .. automethod:: text_width
 
+    .. automethod:: space_width
+
 
 .. autoclass:: MatplotlibFont
 
     .. automethod:: text_width
+
+    .. automethod:: space_width
 
 .. _font_anatomy:
 

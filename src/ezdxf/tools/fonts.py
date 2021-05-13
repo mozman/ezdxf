@@ -433,6 +433,10 @@ class AbstractFont:
     def text_width(self, text: str) -> float:
         pass
 
+    @abc.abstractmethod
+    def space_width(self) -> float:
+        pass
+
 
 class MatplotlibFont(AbstractFont):
     """ This class provides proper font measurement support by using the optional
@@ -453,6 +457,7 @@ class MatplotlibFont(AbstractFont):
         scale = cap_height / font_measurements.cap_height
         self._font_properties = self._support_lib.get_font_properties(font_face)
         self._width_factor = width_factor * scale
+        self._space_width = self.text_width(' X') - self.text_width('X')
 
     def text_width(self, text: str) -> float:
         """ Returns the text with in drawing units for the given `text` string.
@@ -468,6 +473,10 @@ class MatplotlibFont(AbstractFont):
         except RuntimeError as e:
             logger.error(f"Matplotlib RuntimeError: {str(e)}")
             return 0
+
+    def space_width(self) -> float:
+        """ Returns the width of a "space" char. """
+        return self._space_width
 
 
 class MonospaceFont(AbstractFont):
@@ -492,6 +501,7 @@ class MonospaceFont(AbstractFont):
             descender_height=cap_height * descender_factor,
         ))
         self._width_factor: float = abs(width_factor)
+        self._space_width = self.measurements.cap_height * self._width_factor
 
     def text_width(self, text: str) -> float:
         """  Returns the text width in drawing units for the given `text` based
@@ -499,6 +509,10 @@ class MonospaceFont(AbstractFont):
 
         """
         return len(text) * self.measurements.cap_height * self._width_factor
+
+    def space_width(self) -> float:
+        """ Returns the width of a "space" char. """
+        return self._space_width
 
 
 def make_font(ttf_path: str, cap_height: float,

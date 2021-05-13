@@ -61,7 +61,7 @@ class TextRenderer(FrameRenderer):
 required_text_styles = {}
 
 
-def generic_text_style(font_face: fonts.FontFace) -> str:
+def mtext_exploded_text_style(font_face: fonts.FontFace) -> str:
     style = 0
     if font_face.is_bold:
         style += 1
@@ -77,7 +77,7 @@ def generic_text_style(font_face: fonts.FontFace) -> str:
 def get_text_attribs(ctx: MTextContext) -> Dict:
     attribs = {
         "height": ctx.cap_height,
-        "style": generic_text_style(ctx.font_face),
+        "style": mtext_exploded_text_style(ctx.font_face),
     }
     if not math.isclose(ctx.width_factor, 1.0):
         attribs["width"] = ctx.width_factor
@@ -161,16 +161,12 @@ class Fraction(text_layout.Fraction):
         )
 
 
-def measure_space(font: fonts.AbstractFont) -> float:
-    return font.text_width(' X') - font.text_width('X')
-
-
 def space(ctx: MTextContext):
-    return text_layout.Space(width=measure_space(get_font(ctx)))
+    return text_layout.Space(width=get_font(ctx).space_width())
 
 
 def non_breaking_space(ctx: MTextContext):
-    return text_layout.NonBreakingSpace(width=measure_space(get_font(ctx)))
+    return text_layout.NonBreakingSpace(width=get_font(ctx).space_width())
 
 
 def new_doc(content: str, width: float = 30):
