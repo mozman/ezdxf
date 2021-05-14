@@ -144,6 +144,8 @@ acdb_mtext = DefSubclass('AcDbMText', {
     # 2 = drawing window color
     # 3 = use background color (1 & 2)
     # 16 = text frame ODA specification 20.4.46
+    # 2021-05-14: text frame only is supported bg_fill = 16,
+    # but scaling is always 1.5 and tags 45 + 63 are not present
     'bg_fill': DXFAttr(
         90, dxfversion='AC1021',
         validator=validator.is_valid_bitmask(BG_FILL_MASK),
@@ -801,8 +803,13 @@ class MText(DXFGraphic):
         Use special color name ``canvas``, to set background color to canvas
         background color.
 
+        Use `color` = ``None`` to remove the background filling.
+
+        Setting only a text border is supported (`color`=None), but in this case
+        the scaling is always 1.5.
+
         Args:
-            color: color as :ref:`ACI`, string or RGB tuple
+            color: color as :ref:`ACI`, string, RGB tuple or ``None``
             scale: determines how much border there is around the text, the
                 value is based on the text height, and should be in the range
                 of [1, 5], where 1 fits exact the MText entity.
@@ -814,18 +821,21 @@ class MText(DXFGraphic):
         else:
             raise ValueError('argument scale has to be in range from 1 to 5.')
 
-        flags = const.MTEXT_TEXT_FRAME if text_frame else 0
+        text_frame = const.MTEXT_TEXT_FRAME if text_frame else 0
         if color is None:
             self.dxf.discard('bg_fill')
             self.dxf.discard('box_fill_scale')
             self.dxf.discard('bg_fill_color')
             self.dxf.discard('bg_fill_true_color')
             self.dxf.discard('bg_fill_color_name')
+            if text_frame:
+                # special case, text frame only with scaling factor = 1.5
+                self.dxf.bg_fill = 16
         elif color == 'canvas':  # special case for use background color
-            self.dxf.bg_fill = const.MTEXT_BG_CANVAS_COLOR | flags
+            self.dxf.bg_fill = const.MTEXT_BG_CANVAS_COLOR | text_frame
             self.dxf.bg_fill_color = 0  # required but ignored
         else:
-            self.dxf.bg_fill = const.MTEXT_BG_COLOR | flags
+            self.dxf.bg_fill = const.MTEXT_BG_COLOR | text_frame
             if isinstance(color, int):
                 self.dxf.bg_fill_color = color
             elif isinstance(color, str):

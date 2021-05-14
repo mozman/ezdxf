@@ -250,6 +250,16 @@ def test_set_bg_canvas_color(layout):
         "box_fill_scale attribute must exists, else AutoCAD complains"
 
 
+def test_set_text_frame_only(layout):
+    # special case, text frame only with scaling factor = 1.5
+    mtext = layout.add_mtext("TEST").set_bg_color(None, text_frame=True)
+    assert mtext.dxf.bg_fill == const.MTEXT_TEXT_FRAME
+    assert mtext.dxf.hasattr('bg_fill_color') is False
+    assert mtext.dxf.hasattr('bg_fill_true_color') is False
+    assert mtext.dxf.hasattr('bg_fill_color_name') is False
+    assert mtext.dxf.hasattr('box_fill_scale') is False
+
+
 def test_transform_interface():
     mtext = MText()
     mtext.dxf.insert = (1, 0, 0)

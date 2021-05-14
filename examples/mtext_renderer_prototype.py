@@ -72,6 +72,8 @@ class ColumnBackgroundRenderer(FrameRenderer):
 
     def render(self, left: float, bottom: float, right: float,
                top: float, m: Matrix44 = None) -> None:
+        # Important: this is not a clipping box, it is possible to
+        # render anything outside of the given borders!
         offset = self.offset
         left -= offset
         right += offset
@@ -263,7 +265,7 @@ def make_bg_renderer(mtext: MText, attribs: Dict, layout: BaseLayout):
         # The fill scale is a multiple of the initial char height and
         # a scale of 1, fits exact the outer border
         # of the column -> offset = 0
-        offset = dxf.char_height * (dxf.get("box_fill_scale", 1) - 1)
+        offset = dxf.char_height * (dxf.get("box_fill_scale", 1.5) - 1)
         if bg_fill & ezdxf.const.MTEXT_BG_COLOR:
             if dxf.hasattr("bg_fill_color"):
                 bg_aci = dxf.bg_fill_color
@@ -469,7 +471,7 @@ def new_doc(content: str, width: float = 30):
         "style": "OpenSans",
         "line_spacing_style": ezdxf.const.MTEXT_EXACT
     })
-    mtext.set_bg_color(8, scale=1.5, text_frame=True)
+    mtext.set_bg_color(None, text_frame=True)
     zoom.extents(msp)
     return doc
 
