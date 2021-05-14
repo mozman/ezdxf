@@ -6,6 +6,7 @@ Version 0.16.3b1 - dev
 ----------------------
 
 - NEW: `ezdxf.tools.text.MTextEditor` class, extracted from the `MText` class
+- NEW: `MText.set_bg_color()`, new argument `text_frame` to add a text frame
 - CHANGE: move `MText` constants to `MTextEditor` class
 - CHANGE: move `MText.set_font()` to `MTextEditor.change_font()`
 - CHANGE: move `MText.set_color()` to `MTextEditor.change_color()`

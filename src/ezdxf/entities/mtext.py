@@ -794,7 +794,7 @@ class MText(DXFGraphic):
         return self  # fluent interface
 
     def set_bg_color(self, color: Union[int, str, Tuple[int, int, int], None],
-                     scale: float = 1.5):
+                     scale: float = 1.5, text_frame=False):
         """ Set background color as :ref:`ACI` value or as name string or as RGB
         tuple ``(r, g, b)``.
 
@@ -806,12 +806,15 @@ class MText(DXFGraphic):
             scale: determines how much border there is around the text, the
                 value is based on the text height, and should be in the range
                 of [1, 5], where 1 fits exact the MText entity.
+            text_frame: draw a text frame in text color if ``True``
 
         """
         if 1 <= scale <= 5:
             self.dxf.box_fill_scale = scale
         else:
             raise ValueError('argument scale has to be in range from 1 to 5.')
+
+        flags = const.MTEXT_TEXT_FRAME if text_frame else 0
         if color is None:
             self.dxf.discard('bg_fill')
             self.dxf.discard('box_fill_scale')
@@ -819,10 +822,10 @@ class MText(DXFGraphic):
             self.dxf.discard('bg_fill_true_color')
             self.dxf.discard('bg_fill_color_name')
         elif color == 'canvas':  # special case for use background color
-            self.dxf.bg_fill = const.MTEXT_BG_CANVAS_COLOR
+            self.dxf.bg_fill = const.MTEXT_BG_CANVAS_COLOR | flags
             self.dxf.bg_fill_color = 0  # required but ignored
         else:
-            self.dxf.bg_fill = const.MTEXT_BG_COLOR
+            self.dxf.bg_fill = const.MTEXT_BG_COLOR | flags
             if isinstance(color, int):
                 self.dxf.bg_fill_color = color
             elif isinstance(color, str):

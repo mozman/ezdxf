@@ -11,8 +11,7 @@ from ezdxf.layouts import BaseLayout
 from ezdxf.math import Matrix44
 from ezdxf.tools import text_layout, fonts
 from ezdxf.tools.text import (
-    MTextParser, MTextContext, TokenType, ParagraphProperties,
-    MTextParagraphAlignment,
+    MTextParser, MTextContext, TokenType, MTextParagraphAlignment,
 )
 
 if not ezdxf.options.use_matplotlib:
@@ -52,6 +51,42 @@ class FrameRenderer(text_layout.ContentRenderer):
                                     dxfattribs=self.line_attribs)
         if m:
             line.transform(m)
+
+
+class ColumnBackgroundRenderer(FrameRenderer):
+    def __init__(self, attribs: Dict, layout: BaseLayout,
+                 bg_aci: int = None,
+                 bg_true_color: int = None,
+                 offset: float = 0,
+                 text_frame: bool = False):
+        super().__init__(attribs, layout)
+        self.solid_attribs = None
+        if bg_aci is not None:
+            self.solid_attribs = dict(attribs)
+            self.solid_attribs["color"] = bg_aci
+        elif bg_true_color is not None:
+            self.solid_attribs = dict(attribs)
+            self.solid_attribs["true_color"] = bg_true_color
+        self.offset = offset  # background border offset
+        self.has_text_frame = text_frame
+
+    def render(self, left: float, bottom: float, right: float,
+               top: float, m: Matrix44 = None) -> None:
+        offset = self.offset
+        left -= offset
+        right += offset
+        top += offset
+        bottom -= offset
+        if self.solid_attribs is not None:
+            solid = self.layout.add_solid(
+                # SOLID! switch last two vertices:
+                [(left, top), (right, top), (left, bottom), (right, bottom)],
+                dxfattribs=self.solid_attribs,
+            )
+            if m:
+                solid.transform(m)
+        if self.has_text_frame:
+            super().render(left, bottom, right, top, m)
 
 
 class TextRenderer(FrameRenderer):
@@ -216,6 +251,45 @@ def super_glue():
     return text_layout.NonBreakingSpace(width=0, min_width=0, max_width=0)
 
 
+def make_bg_renderer(mtext: MText, attribs: Dict, layout: BaseLayout):
+    dxf = mtext.dxf
+    bg_fill = dxf.get("bg_fill", 0)
+
+    bg_aci = None
+    bg_true_color = None
+    has_text_frame = False
+    offset = 0
+    if bg_fill:
+        # The fill scale is a multiple of the initial char height and
+        # a scale of 1, fits exact the outer border
+        # of the column -> offset = 0
+        offset = dxf.char_height * (dxf.get("box_fill_scale", 1) - 1)
+        if bg_fill & ezdxf.const.MTEXT_BG_COLOR:
+            if dxf.hasattr("bg_fill_color"):
+                bg_aci = dxf.bg_fill_color
+
+            if dxf.hasattr("bg_fill_true_color"):
+                bg_aci = None
+                bg_true_color = dxf.bg_fill_true_color
+
+            if (bg_fill & 3) == 3:  # canvas color = bit 0 and 1 set
+                # can not detect canvas color from DXF document!
+                # do not draw any background:
+                bg_aci = None
+                bg_true_color = None
+
+        if bg_fill & ezdxf.const.MTEXT_TEXT_FRAME:
+            has_text_frame = True
+
+    return ColumnBackgroundRenderer(
+        attribs, layout,
+        bg_aci=bg_aci,
+        bg_true_color=bg_true_color,
+        offset=offset,
+        text_frame=has_text_frame,
+    )
+
+
 class MTextExplode:
     def __init__(self, layout: BaseLayout, doc=None,
                  spacing_factor: float = 1.0):
@@ -274,7 +348,19 @@ class MTextExplode:
             layout.append_paragraphs([paragraph])
             cells.clear()
 
-        content = mtext.text
+        def column_heights():
+            if columns.heights:  # dynamic manual
+                heights = list(columns.heights)
+            else:  # static, dynamic auto
+                heights = [columns.defined_height] * columns.count
+            # last height has to be auto height = None
+            if heights:
+                heights[-1] = None
+            else:
+                heights = [None]
+            return heights
+
+        content = mtext.all_columns_raw_content()
         initial_cap_height = mtext.dxf.char_height
         # same line spacing for all paragraphs
         line_spacing = mtext.dxf.line_spacing_factor
@@ -282,7 +368,20 @@ class MTextExplode:
         ctx = mtext_context(mtext)
         parser = MTextParser(content, ctx)
         layout = text_layout.Layout(width=mtext.dxf.width)
-        layout.append_column()
+        bg_renderer = make_bg_renderer(mtext, base_attribs, self.layout)
+        if mtext.has_columns:
+            columns = mtext.columns
+            for height in column_heights():
+                layout.append_column(
+                    width=columns.width,
+                    height=height,
+                    gutter=columns.gutter_width,
+                    renderer=bg_renderer,
+                )
+        else:
+            # column with auto height and default width
+            layout.append_column(renderer=bg_renderer)
+
         cells = []
         for token in parser:
             ctx = token.ctx
@@ -362,13 +461,15 @@ class MTextExplode:
 def new_doc(content: str, width: float = 30):
     doc = ezdxf.new(setup=True)
     msp = doc.modelspace()
-    msp.add_mtext(content, dxfattribs={
+    mtext = msp.add_mtext(content, dxfattribs={
+        "layer": "MTEXT_EXPLODE",
         "width": width,
         "char_height": 1,
         "color": 7,
         "style": "OpenSans",
         "line_spacing_style": ezdxf.const.MTEXT_EXACT
     })
+    mtext.set_bg_color(8, scale=1.5, text_frame=True)
     zoom.extents(msp)
     return doc
 
