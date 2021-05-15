@@ -1,6 +1,6 @@
 # Copyright (c) 2010-2021, Manfred Moitzi
 # License: MIT License
-from typing import Union, Sequence
+from typing import Union, Sequence, Iterable
 # Using * imports to simplify namespace imports, therefore every module
 # has to have an export declaration: __all__ = [...]
 
@@ -32,6 +32,11 @@ from .clipping import *
 
 Vertex = Union[Sequence[float], Vec3, Vec2]
 VecXY = Union[Vec2, Vec3]  # Vector with x and y attributes
+
+
+def close_vectors(a: Iterable[VecXY], b: Iterable[Vertex], *,
+                  abs_tol=1e-12, rel_tol=1e-9) -> bool:
+    return all(v1.isclose(v2, abs_tol=abs_tol) for v1, v2 in zip(a, b))
 
 
 def xround(value: float, rounding: float = 0.) -> float:

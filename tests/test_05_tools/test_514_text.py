@@ -151,10 +151,10 @@ class TestTextLineTransformation:
             ],
             oblique=oblique
         )
-        assert vertices[0] == (0, 0)
-        assert vertices[1] == (1, 1)
-        assert vertices[2] == (-1, -1)
-        assert vertices[3] == (11, 1)
+        assert vertices[0].isclose((0, 0))
+        assert vertices[1].isclose((1, 1))
+        assert vertices[2].isclose((-1, -1))
+        assert vertices[3].isclose((11, 1))
 
 
 def test_plain_text():

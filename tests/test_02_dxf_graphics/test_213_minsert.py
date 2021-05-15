@@ -151,10 +151,10 @@ class TestRotatedInsert:
         minsert = list(insert.multi_insert())
         assert len(minsert) == 4
         # Rotated 90° counter clockwise:
-        assert minsert[0].dxf.insert == (0, 0)
-        assert minsert[1].dxf.insert == (0, 10)
-        assert minsert[2].dxf.insert == (-10, 0)
-        assert minsert[3].dxf.insert == (-10, 10)
+        assert minsert[0].dxf.insert.isclose((0, 0))
+        assert minsert[1].dxf.insert.isclose((0, 10))
+        assert minsert[2].dxf.insert.isclose((-10, 0))
+        assert minsert[3].dxf.insert.isclose((-10, 10))
 
     def test_attribs_transformation(self, insert):
         insert.grid(size=(2, 2), spacing=(10, 10))
@@ -162,10 +162,10 @@ class TestRotatedInsert:
         assert len(attribs) == 4
         assert len(set(id(attrib) for attrib in attribs)) == 4
         # Rotated 90° counter clockwise:
-        assert attribs[0].dxf.insert == (0, 0)
-        assert attribs[1].dxf.insert == (0, 10)
-        assert attribs[2].dxf.insert == (-10, 0)
-        assert attribs[3].dxf.insert == (-10, 10)
+        assert attribs[0].dxf.insert.isclose((0, 0))
+        assert attribs[1].dxf.insert.isclose((0, 10))
+        assert attribs[2].dxf.insert.isclose((-10, 0))
+        assert attribs[3].dxf.insert.isclose((-10, 10))
 
 
 if __name__ == '__main__':

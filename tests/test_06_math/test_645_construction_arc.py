@@ -36,14 +36,14 @@ def test_arc_from_2p_angle_simple():
 
     arc = ConstructionArc.from_2p_angle(start_point=p1, end_point=p2,
                                         angle=angle)
-    assert arc.center == (0, 1)
+    assert arc.center.isclose((0, 1))
     assert isclose(arc.radius, 2)
     assert isclose(arc.start_angle, 0, abs_tol=1e-12)
     assert isclose(arc.end_angle, 90)
 
     arc = ConstructionArc.from_2p_angle(start_point=p2, end_point=p1,
                                         angle=angle)
-    assert arc.center == (2, 3)
+    assert arc.center.isclose((2, 3))
     assert isclose(arc.radius, 2)
     assert isclose(arc.start_angle, 180)
     assert isclose(arc.end_angle, -90)
@@ -56,14 +56,14 @@ def test_arc_from_2p_radius():
 
     arc = ConstructionArc.from_2p_radius(start_point=p1, end_point=p2,
                                          radius=radius)
-    assert arc.center == (0, 1)
+    assert arc.center.isclose((0, 1))
     assert isclose(arc.radius, radius)
     assert isclose(arc.start_angle, 0)
     assert isclose(arc.end_angle, 90)
 
     arc = ConstructionArc.from_2p_radius(start_point=p2, end_point=p1,
                                          radius=radius)
-    assert arc.center == Vec3(2, 3)
+    assert arc.center.isclose((2, 3))
     assert isclose(arc.radius, radius)
     assert isclose(arc.start_angle, 180)
     assert isclose(arc.end_angle, -90)
@@ -116,18 +116,18 @@ def test_spatial_arc_from_3p():
 def test_bounding_box():
     bbox = ConstructionArc(center=(0, 0), radius=1, start_angle=0,
                            end_angle=90).bounding_box
-    assert bbox.extmin == (0, 0)
-    assert bbox.extmax == (1, 1)
+    assert bbox.extmin.isclose((0, 0))
+    assert bbox.extmax.isclose((1, 1))
 
     bbox = ConstructionArc(center=(0, 0), radius=1, start_angle=0,
                            end_angle=180).bounding_box
-    assert bbox.extmin == (-1, 0)
-    assert bbox.extmax == (1, 1)
+    assert bbox.extmin.isclose((-1, 0))
+    assert bbox.extmax.isclose((1, 1))
 
     bbox = ConstructionArc(center=(0, 0), radius=1, start_angle=270,
                            end_angle=90).bounding_box
-    assert bbox.extmin == (0, -1)
-    assert bbox.extmax == (1, 1)
+    assert bbox.extmin.isclose((0, -1))
+    assert bbox.extmax.isclose((1, 1))
 
 
 def test_angles():

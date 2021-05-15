@@ -69,7 +69,7 @@ def test_matrix44_rotation():
     assert m.is_cartesian
     v = m.transform((1, 2, 3))
     assert v == ucs.to_wcs((1, 2, 3))
-    assert m.ucs_vertex_from_wcs(v) == (1, 2, 3)
+    assert m.ucs_vertex_from_wcs(v).isclose((1, 2, 3))
 
 
 def test_transformation():
@@ -110,7 +110,7 @@ def test_arbitrary_ucs():
 
     assert def_point_in_ucs == m.ucs_vertex_from_wcs(def_point_in_xy_plane)
     assert def_point_in_ucs.z == 0
-    assert ucs.to_wcs(def_point_in_ucs) == def_point_in_xy_plane
+    assert ucs.to_wcs(def_point_in_ucs).isclose(def_point_in_xy_plane)
     assert ucs.is_cartesian is True
 
 

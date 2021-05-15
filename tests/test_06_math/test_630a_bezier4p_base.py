@@ -3,7 +3,7 @@
 import pytest
 import pickle
 import math
-from ezdxf.math import Vec3, Vec2, Matrix44, ConstructionEllipse
+from ezdxf.math import Vec3, Vec2, Matrix44, ConstructionEllipse, close_vectors
 # Import from 'ezdxf.math._bezier4p' to test Python implementation
 from ezdxf.math._bezier4p import Bezier4P
 from ezdxf.math._bezier4p import cubic_bezier_arc_parameters
@@ -85,7 +85,7 @@ def test_reverse(bezier):
     vertices = list(curve.approximate(10))
     rev_curve = curve.reverse()
     rev_vertices = list(rev_curve.approximate(10))
-    assert list(reversed(vertices)) == rev_vertices
+    assert close_vectors(reversed(vertices), rev_vertices)
 
 
 def test_transform_interface(bezier):

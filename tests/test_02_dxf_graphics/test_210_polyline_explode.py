@@ -94,7 +94,7 @@ def test_polyline2d_closed():
 
     e = result[1]
     assert e.dxftype() == 'ARC'
-    assert e.dxf.center == (0.5, 0)
+    assert e.dxf.center.isclose((0.5, 0))
     assert e.dxf.radius == 0.5
     assert math.isclose(e.dxf.start_angle, 0, abs_tol=1e-12)
     assert math.isclose(abs(e.dxf.end_angle), 180, abs_tol=1e-12)

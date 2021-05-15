@@ -2,7 +2,7 @@
 #  License: MIT License
 import pytest
 import pickle
-from ezdxf.math import Vec3, Vec2, Matrix44
+from ezdxf.math import Vec3, Vec2, Matrix44, close_vectors
 # Import from 'ezdxf.math._bezier3p' to test Python implementation
 from ezdxf.math._bezier3p import Bezier3P
 from ezdxf.acc import USE_C_EXT
@@ -53,7 +53,7 @@ def test_reverse_points(bezier):
     vertices = list(curve.approximate(10))
     rev_curve = curve.reverse()
     rev_vertices = list(rev_curve.approximate(10))
-    assert list(reversed(vertices)) == rev_vertices
+    assert close_vectors(reversed(vertices), rev_vertices)
 
 
 def test_transformation_interface(bezier):

@@ -285,9 +285,11 @@ def test_matrix44_rotation():
         'rotation': 90,
     })
     m = insert.matrix44()
-    assert list(m.transform_vertices([(1, 0, 0), (0, 0, 1)])) == [(0, 1, 0),
-                                                                  (0, 0, 1)]
-    assert m.transform_direction((1, 0, 0)) == (0, 1, 0)
+    for v1, v2 in zip(
+            m.transform_vertices([(1, 0, 0), (0, 0, 1)]),
+            [(0, 1, 0), (0, 0, 1)]):
+        assert v1.isclose(v2)
+    assert m.transform_direction((1, 0, 0)).isclose((0, 1, 0))
 
 
 def test_matrix44_scaled():

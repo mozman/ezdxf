@@ -3,7 +3,7 @@ import pytest
 import ezdxf
 import math
 from math import isclose
-from ezdxf.math import Vec3, global_bspline_interpolation
+from ezdxf.math import Vec3, global_bspline_interpolation, close_vectors
 from ezdxf.math.parametrize import (
     uniform_t_vector, distance_t_vector, centripetal_t_vector, arc_t_vector,
     arc_distances, estimate_tangents,
@@ -12,7 +12,7 @@ from ezdxf.math.bspline import (
     knots_from_parametrization, required_knot_values,
     averaged_knots_unconstrained, natural_knots_constrained,
     averaged_knots_constrained,
-    natural_knots_unconstrained, double_knots, create_t_vector, normalize_knots
+    natural_knots_unconstrained, double_knots, create_t_vector, normalize_knots,
 )
 
 POINTS1 = Vec3.list([(1, 1), (2, 4), (4, 1), (7, 6)])
@@ -163,18 +163,18 @@ def test_double_knots(p, fit_points_2):
     check_knots((n + 1) * 2, p + 1, knots)
 
 
+
 def test_bspline_interpolation(fit_points):
     spline = global_bspline_interpolation(fit_points, degree=3, method='chord')
     assert len(spline.control_points) == len(fit_points)
-    
+
     t_array = list(create_t_vector(fit_points, 'chord'))
     assert t_array[0] == 0.
     assert t_array[-1] == 1.
     assert len(t_array) == len(fit_points)
 
     t_points = [spline.point(t) for t in t_array]
-    for p1, p2 in zip(t_points, fit_points):
-        assert p1 == p2
+    assert close_vectors(t_points, fit_points)
 
 
 def test_bspline_interpolation_first_derivatives(fit_points):

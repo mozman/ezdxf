@@ -5,7 +5,6 @@
 # is located in test suite 602.
 
 import pytest
-import array
 
 cyvec = pytest.importorskip('ezdxf.acc.vector')
 Vec3 = cyvec.Vec3
@@ -85,9 +84,9 @@ def test_bool():
 def test_compare():
     assert Vec3(1, 2, 3) == Vec3(1, 2, 3)
     assert Vec3(1, 2, 3) == (1, 2, 3)
-    # abs_tol is 1e-12
-    assert Vec3(1, 2, 3) == (1, 2.0000000000001, 3)
     assert (1, 2) == Vec3(1, 2)
+    assert Vec3(1, 2, 3) != (1, 2.0000000000001, 3), \
+        "__eq__() should use the full floating point precision"
     assert Vec3(1, 2) != (2, 1)
 
 
@@ -99,6 +98,7 @@ def test_lower_than():
 def test_does_not_support_slicing():
     with pytest.raises(TypeError):
         _ = Vec3(2, 1)[:]
+
 
 if __name__ == '__main__':
     pytest.main([__file__])

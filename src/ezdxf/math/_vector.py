@@ -350,10 +350,7 @@ class Vec3:
         Args:
             other: :class:`Vec3` compatible object
         """
-        x, y, z = self.decompose(other)
-        return isclose(self._x, x) and \
-               isclose(self._y, y) and \
-               isclose(self._z, z)
+        return self.__hash__() == hash(Vec3(other))
 
     def __lt__(self, other: 'Vertex') -> bool:
         """
@@ -719,14 +716,13 @@ class Vec2:
         return not self.is_null
 
     def isclose(self, other: 'VecXY', abs_tol: float = 1e-12) -> bool:
+        if not isinstance(other, Vec2):
+            other = Vec2(other)
         return math.isclose(self.x, other.x, abs_tol=abs_tol) and math.isclose(
             self.y, other.y, abs_tol=abs_tol)
 
     def __eq__(self, other: 'Vertex') -> bool:
-        # accepts also tuples, for more convenience at testing
-        x, y, *_ = other
-        return isclose(self.x, x) and \
-               isclose(self.y, y)
+        return self.__hash__() == hash(Vec2(other))
 
     def __lt__(self, other: 'Vertex') -> bool:
         # accepts also tuples, for more convenience at testing

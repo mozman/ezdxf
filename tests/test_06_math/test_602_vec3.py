@@ -11,6 +11,7 @@ vec3_classes = [Vec3]
 
 if USE_C_EXT:
     from ezdxf.acc.vector import Vec3 as CVec3
+
     vec3_classes.append(CVec3)
 
 
@@ -407,7 +408,7 @@ def test_cross_product(vec3):
 
 
 def test_rot_z(vec3):
-    assert vec3(2, 2, 7).rotate_deg(90) == (-2, 2, 7)
+    assert vec3(2, 2, 7).rotate_deg(90).isclose((-2, 2, 7))
 
 
 def test_lerp(vec3):
@@ -433,7 +434,7 @@ def test_project(vec3):
     assert v.project((5, 5, 5)) == (5, 0, 0)
 
     v = vec3(10, 10, 0)
-    assert v.project((10, 0, 0)) == (5, 5, 0)
+    assert v.project((10, 0, 0)).isclose((5, 5, 0))
 
 
 def test_vec3_sum(vec3):
@@ -447,3 +448,22 @@ def test_picklable(vec3):
         pickled_v = pickle.loads(pickle.dumps(v))
         assert v == pickled_v
         assert type(v) is type(pickled_v)
+
+
+def test_is_equal(vec3):
+    v1 = 1.23456789
+    assert vec3(v1, v1, v1) == vec3(v1, v1, v1)
+    assert vec3(v1, v1, v1) == (v1, v1, v1)
+    assert vec3(v1, v1, 0) == vec3(v1, v1)
+    assert vec3(v1, v1, 0) == (v1, v1)
+
+
+def test_is_not_equal(vec3):
+    v1 = 1.23456789
+    v2 = 1.234567891
+    assert vec3(v1, v1, v1) != vec3(v2, v2, v2)
+    assert vec3(v1, v1, v1) != (v2, v2, v2)
+    assert vec3(v1, v1, 0) != vec3(v2, v2)
+    assert vec3(v1, v1, 0) != (v2, v2)
+    assert vec3(v1, v1, 1) != vec3(v1, v1)
+    assert vec3(v1, v1, 1) != (v1, v1)

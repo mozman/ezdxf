@@ -6,7 +6,7 @@ import math
 from ezdxf.path import (
     Path, make_path, converter, Command, tools,
 )
-from ezdxf.math import Vec3, Matrix44, Bezier4P, Bezier3P
+from ezdxf.math import Vec3, Matrix44, Bezier4P, Bezier3P, close_vectors
 from ezdxf.entities.hatch import PolylinePath, EdgePath
 from ezdxf.entities import factory, DXFEntity, Polymesh, LWPolyline
 
@@ -133,22 +133,22 @@ def test_add_ellipse():
                                   start_param=0, end_param=math.pi)
     path = Path()
     tools.add_ellipse(path, ellipse)
-    assert path.start == (4, 0)
-    assert path.end == (2, 0)
+    assert path.start.isclose((4, 0))
+    assert path.end.isclose((2, 0))
 
     # set start point to end of ellipse
     path = Path(start=(2, 0))
     # add reversed ellipse, by default the start of
     # an empty path is set to the ellipse start
     tools.add_ellipse(path, ellipse, reset=False)
-    assert path.start == (2, 0)
-    assert path.end == (4, 0)
+    assert path.start.isclose((2, 0))
+    assert path.end.isclose((4, 0))
 
     path = Path()
     # add a line segment from (0, 0) to start of ellipse
     tools.add_ellipse(path, ellipse, reset=False)
-    assert path.start == (0, 0)
-    assert path.end == (2, 0)
+    assert path.start.isclose((0, 0))
+    assert path.end.isclose((2, 0))
 
 
 def test_raises_type_error_for_unsupported_objects():
@@ -169,8 +169,8 @@ def test_from_ellipse():
         'end_param': math.pi
     })
     path = make_path(ellipse)
-    assert path.start == (4, 0)
-    assert path.end == (2, 0)
+    assert path.start.isclose((4, 0))
+    assert path.end.isclose((2, 0))
 
 
 def test_from_arc():
@@ -181,8 +181,8 @@ def test_from_arc():
         'end_angle': 180,
     })
     path = make_path(arc)
-    assert path.start == (2, 0)
-    assert path.end == (0, 0)
+    assert path.start.isclose((2, 0))
+    assert path.end.isclose((0, 0))
 
 
 @pytest.mark.parametrize('radius', [1, -1])
@@ -192,8 +192,8 @@ def test_from_circle(radius):
         'radius': radius,
     })
     path = make_path(circle)
-    assert path.start == (2, 0)
-    assert path.end == (2, 0)
+    assert path.start.isclose((2, 0))
+    assert path.end.isclose((2, 0))
     assert path.is_closed is True
 
 
@@ -211,8 +211,8 @@ def test_from_line():
     end = Vec3(4, 5, 6)
     line = factory.new('LINE', dxfattribs={'start': start, 'end': end})
     path = make_path(line)
-    assert path.start == start
-    assert path.end == end
+    assert path.start.isclose(start)
+    assert path.end.isclose(end)
 
 
 @pytest.mark.parametrize('dxftype', ['SOLID', 'TRACE', '3DFACE'])
@@ -245,14 +245,14 @@ def test_lwpolyline_lines():
     pline = LWPolyline()
     pline.append_points([(1, 1), (2, 1), (2, 2)], format='xy')
     path = make_path(pline)
-    assert path.start == (1, 1)
-    assert path.end == (2, 2)
+    assert path.start.isclose((1, 1))
+    assert path.end.isclose((2, 2))
     assert len(path) == 2
 
     pline.dxf.elevation = 1.0
     path = make_path(pline)
-    assert path.start == (1, 1, 1)
-    assert path.end == (2, 2, 1)
+    assert path.start.isclose((1, 1, 1))
+    assert path.end.isclose((2, 2, 1))
 
 
 POINTS = [
@@ -279,8 +279,8 @@ def test_make_path_from_full_circle_lwpolyline():
     pline.closed = True
     pline.append_points([(0, 0, 1), (1, 0, 1)], format='xyb')
     path = make_path(pline)
-    assert path.start == (0, 0)
-    assert path.end == (0, 0)
+    assert path.start.isclose((0, 0))
+    assert path.end.isclose((0, 0))
     assert len(path) == 4
     assert any(cmd.type == Command.CURVE4_TO for cmd in path)
     vertices = list(path.flattening(0.1))
@@ -419,7 +419,7 @@ def test_path_from_hatch_polyline_path_with_bulge():
     assert path.end == (3, 0)
 
     assert path[1].type == Command.CURVE4_TO
-    assert path[1].end == (1.5, -0.25)
+    assert path[1].end.isclose((1.5, -0.25))
 
 
 @pytest.fixture
@@ -445,25 +445,25 @@ def test_path_cloning(p1):
 def test_approximate_line_curves(p1):
     vertices = list(p1.approximate(20))
     assert len(vertices) == 42
-    assert vertices[0] == (0, 0)
-    assert vertices[-1] == (6, 0)
+    assert vertices[0].isclose((0, 0))
+    assert vertices[-1].isclose((6, 0))
 
 
 def test_transform(p1):
     p2 = p1.transform(Matrix44.translate(1, 1, 0))
-    assert p2.start == (1, 1)
-    assert p2[0].end == (3, 1)  # line to location
-    assert p2[1].end == (5, 1)  # cubic to location
-    assert p2[1].ctrl1 == (3, 2)  # cubic ctrl1
-    assert p2[1].ctrl2 == (5, 2)  # cubic ctrl2
-    assert p2[2].end == (7, 1)  # quadratic to location
-    assert p2[2].ctrl == (6, 0)  # quadratic ctrl
-    assert p2.end == (7, 1)
+    assert p2.start.isclose((1, 1))
+    assert p2[0].end.isclose((3, 1))  # line to location
+    assert p2[1].end.isclose((5, 1))  # cubic to location
+    assert p2[1].ctrl1.isclose((3, 2))  # cubic ctrl1
+    assert p2[1].ctrl2.isclose((5, 2))  # cubic ctrl2
+    assert p2[2].end.isclose((7, 1))  # quadratic to location
+    assert p2[2].ctrl.isclose((6, 0))  # quadratic ctrl
+    assert p2.end.isclose((7, 1))
 
 
 def test_control_vertices(p1):
     vertices = list(p1.control_vertices())
-    assert vertices == Vec3.list([
+    assert close_vectors(vertices, [
         (0, 0),
         (2, 0), (2, 1), (4, 1), (4, 0),
         (5, -1), (6, 0)
@@ -496,27 +496,26 @@ def test_reversing_one_line():
     p = Path()
     p.line_to((1, 0))
     p2 = list(p.reversed().control_vertices())
-    assert p2 == [(1, 0), (0, 0)]
+    assert close_vectors(p2, [(1, 0), (0, 0)])
 
 
 def test_reversing_one_curve3():
     p = Path()
     p.curve3_to((3, 0), (1.5, 1))
     p2 = list(p.reversed().control_vertices())
-    assert p2 == [(3, 0), (1.5, 1), (0, 0)]
+    assert close_vectors(p2, [(3, 0), (1.5, 1), (0, 0)])
 
 
 def test_reversing_one_curve4():
     p = Path()
     p.curve4_to((3, 0), (1, 1), (2, 1))
     p2 = list(p.reversed().control_vertices())
-    assert p2 == [(3, 0), (2, 1), (1, 1), (0, 0)]
+    assert close_vectors(p2, [(3, 0), (2, 1), (1, 1), (0, 0)])
 
 
 def test_reversing_path(p1):
     p2 = p1.reversed()
-    assert list(p2.control_vertices()) == list(
-        reversed(list(p1.control_vertices())))
+    assert close_vectors(p2.control_vertices(), reversed(list(p1.control_vertices())))
 
 
 def test_clockwise(p1):

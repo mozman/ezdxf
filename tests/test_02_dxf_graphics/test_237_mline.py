@@ -88,7 +88,7 @@ class TestMLine:
         m = Matrix44.x_rotate(math.pi / 2)
         mline.transform(m)
         assert mline.start_location().isclose((0, 0, 5))
-        assert mline.dxf.extrusion == (0, -1, 0)
+        assert mline.dxf.extrusion.isclose((0, -1, 0))
         assert mline.dxf.scale_factor == 1
 
     def test_translate(self, msp):

@@ -6,7 +6,6 @@
 
 import pytest
 import math
-import array
 
 cyvec = pytest.importorskip('ezdxf.acc.vector')
 Vec2 = cyvec.Vec2
@@ -70,9 +69,9 @@ def test_init_type_error():
 def test_compare():
     assert Vec2(1, 2) == Vec2(1, 2)
     assert Vec2(1, 2) == (1, 2)
-    # abs_tol is 1e-12
-    assert Vec2(1, 2) == (1, 2.0000000000001)
     assert (1, 2) == Vec2(1, 2)
+    assert Vec2(1, 2) != (1, 2.0000000000001), \
+        "__eq__() should use the full floating point precision"
     assert Vec2(1, 2) != (2, 1)
 
 

@@ -290,7 +290,7 @@ class TestMakePathsFromEntity:
         bbox = get_bbox(text)
         assert bbox.size.x == length, "expected text length fits into given length"
         assert bbox.size.y == height, "expected unscaled text height"
-        assert bbox.extmin == (1, 0)
+        assert bbox.extmin.isclose((1, 0))
 
     def test_alignment_aligned(self, get_bbox):
         length = 2
@@ -304,7 +304,7 @@ class TestMakePathsFromEntity:
 
         assert bbox.size.x == length, "expected text length fits into given length"
         assert bbox.size.y != height, "expected scaled text height"
-        assert bbox.extmin == (1, 0)
+        assert bbox.extmin.isclose((1, 0))
         assert bbox.size.x / bbox.size.y == pytest.approx(ratio), \
             "expected same width/height ratio"
 

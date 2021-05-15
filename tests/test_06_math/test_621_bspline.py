@@ -1,7 +1,7 @@
 # Copyright (c) 2012-2021 Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.math import Vec3, BSpline
+from ezdxf.math import Vec3, BSpline, close_vectors
 from ezdxf.math.bspline import normalize_knots, subdivide_params, linspace
 
 DEFPOINTS = [(0.0, 0.0, 0.0), (10., 20., 20.), (30., 10., 25.), (40., 10., 25.),
@@ -57,18 +57,18 @@ def test_bezier_decomposition():
     bezier_segments = list(bspline.bezier_decomposition())
     assert len(bezier_segments) == 5
     # results visually checked to be correct
-    assert bezier_segments[0] == [
+    assert close_vectors(bezier_segments[0], [
         (0.0, 0.0, 0.0),
         (2.02070813064438, 39.58989657555839, 0.0),
         (14.645958536022286, 10.410103424441612, 0.0),
         (30.0, 10.0, 0.0)
-    ]
-    assert bezier_segments[-1] == [
+    ])
+    assert close_vectors(bezier_segments[-1], [
         (60.0, 20.0, 0.0),
         (66.33216513897267, 43.20202388489432, 0.0),
         (69.54617236126121, 50.37880459351478, 0.0),
         (80.0, 70.0, 0.0)
-    ]
+    ])
 
 
 def test_cubic_bezier_approximation():

@@ -171,8 +171,8 @@ def test_ellipse_edges_to_spline_edges(hatch):
 
     edge = path.edges[0]
     assert edge.EDGE_TYPE == 'SplineEdge'
-    assert edge.control_points[0] == (0, 0)
-    assert edge.control_points[-1] == (10, 0)
+    assert edge.control_points[0].isclose((0, 0))
+    assert edge.control_points[-1].isclose((10, 0))
 
     edge = path.edges[2]
     assert edge.EDGE_TYPE == 'SplineEdge'

@@ -193,7 +193,7 @@ def test_vertices():
         assert v.isclose(r)
 
     v1, v2 = e.vertices([0, math.tau])
-    assert v1 == v2
+    assert v1.isclose(v2)
 
 
 def test_tangents():

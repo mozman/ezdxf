@@ -3,7 +3,7 @@
 import pytest
 import math
 from ezdxf.layouts import VirtualLayout
-from ezdxf.math import Matrix44, OCS, Vec3
+from ezdxf.math import Matrix44, OCS, Vec3, close_vectors
 from ezdxf.path import (
     Path, bbox, fit_paths_into_box, transform_paths, transform_paths_to_ocs,
     to_polylines3d, to_lines, to_lwpolylines, to_polylines2d,
@@ -180,29 +180,29 @@ class TestFitPathsIntoBoxUniformScaling:
         result = fit_paths_into_box([spath], (1.2, 6, 6))
         box = bbox(result)
         # stretch factor: 1.2
-        assert box.size == (1.2, 2.4, 3.6)
+        assert box.size.isclose((1.2, 2.4, 3.6))
 
     def test_uniform_shrink_paths(self, spath):
         result = fit_paths_into_box([spath], (1.5, 1.5, 1.5))
         box = bbox(result)
-        assert box.size == (0.5, 1, 1.5)
+        assert box.size.isclose((0.5, 1, 1.5))
 
     def test_project_into_xy(self, spath):
         result = fit_paths_into_box([spath], (6, 6, 0))
         box = bbox(result)
         # Note: z-axis is also ignored by extent detection:
         # scaling factor = 3x
-        assert box.size == (3, 6, 0), "z-axis should be ignored"
+        assert box.size.isclose((3, 6, 0)), "z-axis should be ignored"
 
     def test_project_into_xz(self, spath):
         result = fit_paths_into_box([spath], (6, 0, 6))
         box = bbox(result)
-        assert box.size == (2, 0, 6), "y-axis should be ignored"
+        assert box.size.isclose((2, 0, 6)), "y-axis should be ignored"
 
     def test_project_into_yz(self, spath):
         result = fit_paths_into_box([spath], (0, 6, 6))
         box = bbox(result)
-        assert box.size == (0, 4, 6), "x-axis should be ignored"
+        assert box.size.isclose((0, 4, 6)), "x-axis should be ignored"
 
     def test_invalid_target_size(self, spath):
         with pytest.raises(ValueError):
@@ -387,10 +387,10 @@ class TestToEntityConverter:
         extrusion = m.transform((0, 0, 1))
         polylines = list(to_polylines2d(path, extrusion=extrusion))
         p0 = polylines[0]
-        assert p0.dxf.elevation == (0, 0, 1)
+        assert p0.dxf.elevation.isclose((0, 0, 1))
         assert p0.dxf.extrusion.isclose(extrusion)
-        assert p0[0].dxf.location == (0, 0, 1)
-        assert p0[-1].dxf.location == (4, 0, 1)
+        assert p0[0].dxf.location.isclose((0, 0, 1))
+        assert p0[-1].dxf.location.isclose((4, 0, 1))
 
     def test_empty_to_hatches(self):
         assert list(to_hatches([])) == []
@@ -405,7 +405,7 @@ class TestToEntityConverter:
     def test_to_poly_path_hatches_with_wcs_elevation(self, path1):
         hatches = list(to_hatches(path1, edge_path=False))
         ho = hatches[0]
-        assert ho.dxf.elevation == (0, 0, 1)
+        assert ho.dxf.elevation.isclose((0, 0, 1))
 
     def test_to_poly_path_hatches_with_ocs(self, path1):
         m = Matrix44.x_rotate(math.pi / 4)
@@ -413,7 +413,7 @@ class TestToEntityConverter:
         extrusion = m.transform((0, 0, 1))
         hatches = list(to_hatches(path, edge_path=False, extrusion=extrusion))
         h0 = hatches[0]
-        assert h0.dxf.elevation == (0, 0, 1)
+        assert h0.dxf.elevation.isclose((0, 0, 1))
         assert h0.dxf.extrusion.isclose(extrusion)
         polypath0 = h0.paths[0]
         assert polypath0.vertices[0] == (0, 0, 0)  # x, y, bulge
@@ -433,10 +433,9 @@ class TestToEntityConverter:
         assert line.start == (0, 0)
         assert line.end == (4, 0)
         assert spline.EDGE_TYPE == 'SplineEdge'
-        assert spline.control_points[0] == (4, 0)
-        assert spline.control_points[1] == (3, 1)  # 2D OCS entity
-        assert spline.control_points[2] == (1, 1)  # 2D OCS entity
-        assert spline.control_points[3] == (0, 0)
+        assert close_vectors(Vec3.generate(spline.control_points), [
+            (4, 0), (3, 1), (1, 1), (0, 0)
+        ])
 
     def test_to_splines_and_polylines(self, path):
         entities = list(to_splines_and_polylines([path]))
@@ -445,12 +444,11 @@ class TestToEntityConverter:
         spline = entities[1]
         assert polyline.dxftype() == 'POLYLINE'
         assert spline.dxftype() == 'SPLINE'
-        assert polyline.vertices[0].dxf.location == (0, 0)
-        assert polyline.vertices[1].dxf.location == (4, 0)
-        assert spline.control_points[0] == Vec3(4, 0, 0)
-        assert spline.control_points[1] == Vec3(3, 1, 1)  # 3D entity
-        assert spline.control_points[2] == Vec3(1, 1, 1)  # 3D entity
-        assert spline.control_points[3] == Vec3(0, 0, 0)
+        assert polyline.vertices[0].dxf.location.isclose((0, 0))
+        assert polyline.vertices[1].dxf.location.isclose((4, 0))
+        assert close_vectors(Vec3.generate(spline.control_points), [
+            (4, 0, 0), (3, 1, 1), (1, 1, 1), (0, 0, 0)
+        ])
 
 
 # Issue #224 regression test

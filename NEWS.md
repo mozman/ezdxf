@@ -17,6 +17,10 @@ Version 0.16.3b1 - dev
   associated anonymous geometry block content
 - BUGFIX: `drawing` add-on, true color values always override ACI colors
 - BUGFIX: `drawing` add-on, handle SOLID as OCS entity like TRACE
+- BUGFIX/CHANGE: `Vec2.__eq__()` and `Vec3.__eq__()` (`==` operator) compares 
+  the full floating point precision by comparing the hash values, 
+  use `Vec2/3.isclose()` to take floating point imprecision into account. 
+  **This is an annoying but necessary change!** 
 
 Version 0.16.2 - 2021-04-21
 ---------------------------

@@ -7,7 +7,7 @@ pytest.importorskip('ezdxf.acc.bspline')
 
 from ezdxf.math._bspline import Basis as PyBasis, Evaluator as PyEvaluator
 from ezdxf.acc.bspline import Basis as CyBasis, Evaluator as CyEvaluator
-from ezdxf.math import linspace, Vec3
+from ezdxf.math import linspace, Vec3, close_vectors
 
 COUNT = 10
 ORDER = 4
@@ -145,7 +145,8 @@ def test_weighted_point_evaluator(py_weval, cy_weval, t_vector):
 def test_weighted_derivative_evaluator(py_weval, cy_weval, t_vector):
     py_ders = list(py_weval.derivatives(t_vector, 2))
     cy_ders = list(cy_weval.derivatives(t_vector, 2))
-    assert py_ders == cy_ders
+    for d1, d2 in zip(py_ders, cy_ders):
+        assert close_vectors(d1, d2)
 
 
 if __name__ == '__main__':

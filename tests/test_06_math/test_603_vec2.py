@@ -333,7 +333,7 @@ def test_angle_between_outside_domain():
 
 
 def test_rotate(vcls):
-    assert vcls(2, 2).rotate_deg(90) == (-2, 2)
+    assert vcls(2, 2).rotate_deg(90).isclose(vcls(-2, 2))
 
 
 def test_lerp(vcls):
@@ -351,7 +351,7 @@ def test_project(vcls):
     assert v.project(vcls(5, 5)) == (5, 0)
 
     v = vcls(10, 10)
-    assert v.project(vcls(10, 0)) == (5, 5)
+    assert v.project(vcls(10, 0)).isclose(vcls(5, 5))
 
 
 def test_det(vec2):

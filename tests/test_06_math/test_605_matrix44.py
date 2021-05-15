@@ -4,6 +4,7 @@ import pytest
 import pickle
 from math import radians, sin, cos, pi, isclose
 # Import from 'ezdxf.math._matrix44' to test Python implementation
+from ezdxf.math import close_vectors
 from ezdxf.math._matrix44 import Matrix44
 from ezdxf.acc import USE_C_EXT
 
@@ -32,13 +33,6 @@ def equal_matrix(m1, m2, abs_tol=1e-9):
         for col in range(4):
             if not isclose(m1[row, col], m2[row, col], abs_tol=abs_tol):
                 return False
-    return True
-
-
-def equal_vectors(p1, p2):
-    for v1, v2 in zip(p1, p2):
-        if v1 != v2:
-            return False
     return True
 
 
@@ -243,7 +237,7 @@ class TestMatrix44:
 
         c = m44.chain(s, t, r)
         p2 = c.transform_vertices(points)
-        assert equal_vectors(p1, p2) is True
+        assert close_vectors(p1, p2) is True
 
     def test_transform(self, m44):
         t = m44.scale(2., .5, 1.)

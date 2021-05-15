@@ -80,7 +80,7 @@ class TestPaperSpace:
         vp = psp.main_viewport()
         box = bbox.extents([vp])
         assert box.has_data is True
-        assert box.center == vp.dxf.center
+        assert box.center.isclose(vp.dxf.center)
         assert box.size.x == pytest.approx(vp.dxf.width)
         assert box.size.y == pytest.approx(vp.dxf.height)
 
