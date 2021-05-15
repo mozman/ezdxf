@@ -467,3 +467,85 @@ def test_is_not_equal(vec3):
     assert vec3(v1, v1, 0) != (v2, v2)
     assert vec3(v1, v1, 1) != vec3(v1, v1)
     assert vec3(v1, v1, 1) != (v1, v1)
+
+
+@pytest.mark.parametrize("a,b,rel_tol", [
+    # maximum relative tolerance to be close
+    (1.000001, 1.0000019, 1e-6),
+    (10.000001, 10.0000019, 1e-7),
+    (100.000001, 100.0000019, 1e-8),
+    (1000.000001, 1000.0000019, 1e-9),
+    (10000.000001, 10000.0000019, 1e-10),
+    (100000.000001, 100000.0000019, 1e-11),
+    (1000000.000001, 1000000.0000019, 1e-12),
+])
+def test_is_close_relative_tolerance(vec3, a, b, rel_tol):
+    va = vec3(a, a, a)
+    vb = vec3(b, b, b)
+    assert va.isclose(vb, rel_tol=rel_tol)
+
+
+@pytest.mark.parametrize("a,b,rel_tol", [
+    (1.000001, 1.0000019, 1e-7),
+    (10.000001, 10.0000019, 1e-8),
+    (100.000001, 100.0000019, 1e-9),
+    (1000.000001, 1000.0000019, 1e-10),
+    (10000.000001, 10000.0000019, 1e-11),
+    (100000.000001, 100000.0000019, 1e-12),
+    (1000000.000001, 1000000.0000019, 1e-13),
+])
+def test_is_not_close_relative_tolerance(vec3, a, b, rel_tol):
+    va = vec3(a, a, a)
+    vb = vec3(b, b, b)
+    assert not va.isclose(vb, rel_tol=rel_tol)
+
+
+@pytest.mark.parametrize("a,b", [
+    # default relative tolerance is 1e-9
+    (10.00000001, 10.000000019),  # 1e-8
+    (100.0000001, 100.00000019),  # 1e-7
+    (1000.000001, 1000.0000019),  # 1e-6
+    (10000.00001, 10000.000019),  # 1e-5
+    (100000.0001, 100000.00019),  # 1e-4
+])
+def test_is_close_for_fixed_relative_tolerance(vec3, a, b):
+    va = vec3(a, a, a)
+    vb = vec3(b, b, b)
+    assert va.isclose(vb, rel_tol=1e-9)
+
+
+VALUES = [
+    (10.000001, 10.0000019),
+    (100.000001, 100.0000019),
+    (1000.000001, 1000.0000019),
+    (10000.000001, 10000.0000019),
+    (100000.000001, 100000.0000019),
+    (1000000.000001, 1000000.0000019),
+]
+
+
+@pytest.mark.parametrize("a,b", VALUES)
+def test_is_close_absolute_tolerance(vec3, a, b):
+    va = vec3(a, a, a)
+    vb = vec3(b, b, b)
+    assert va.isclose(vb, rel_tol=0, abs_tol=1e-6)
+
+
+@pytest.mark.parametrize("a,b", VALUES)
+def test_is_not_close_absolute_tolerance(vec3, a, b):
+    va = vec3(a, a, a)
+    vb = vec3(b, b, b)
+    assert not va.isclose(vb, rel_tol=0, abs_tol=1e-7)
+
+
+def test_loosing_floating_point_precision_for_big_values():
+    # This values can be represented by a double without loss of precision
+    assert not math.isclose(1_000_000_000.000001,
+                            1_000_000_000.0000019,
+                            rel_tol=0, abs_tol=1e-7)
+
+    # multiply by 10 and loose precision in the fractional part,
+    # now the values are close enough to be equal:
+    assert math.isclose(10_000_000_000.000001,
+                        10_000_000_000.0000019,
+                        rel_tol=0, abs_tol=1e-7)
