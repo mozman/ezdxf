@@ -205,10 +205,10 @@ cdef class Vec2:
         return isclose(self.x, o.x, rel_tol, abs_tol) and \
                isclose(self.y, o.y, rel_tol, abs_tol)
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: 'Vertex') -> bool:
         if not isinstance(other, Vec2):
             other = Vec2(other)
-        return self.__hash__() == hash(other)
+        return self.x == other.x and self.y == other.y
 
     def __lt__(self, other) -> bool:
         cdef Vec2 o = Vec2(other)
@@ -603,7 +603,7 @@ cdef class Vec3:
     def __eq__(self, other: 'Vertex') -> bool:
         if not isinstance(other, Vec3):
             other = Vec3(other)
-        return self.__hash__() == hash(other)
+        return self.x == other.x and self.y == other.y and self.z == other.z
 
     def __lt__(self, other: 'Vertex') -> bool:
         if not isinstance(other, Vec3):

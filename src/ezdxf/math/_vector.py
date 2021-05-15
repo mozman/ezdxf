@@ -356,7 +356,9 @@ class Vec3:
         Args:
             other: :class:`Vec3` compatible object
         """
-        return self.__hash__() == hash(Vec3(other))
+        if not isinstance(other, Vec3):
+            other = Vec3(other)
+        return self.x == other.x and self.y == other.y and self.z == other.z
 
     def __lt__(self, other: 'Vertex') -> bool:
         """
@@ -730,7 +732,9 @@ class Vec2:
             self.y, other.y, rel_tol=rel_tol, abs_tol=abs_tol)
 
     def __eq__(self, other: 'Vertex') -> bool:
-        return self.__hash__() == hash(Vec2(other))
+        if not isinstance(other, Vec2):
+            other = Vec2(other)
+        return self.x == other.x and self.y == other.y
 
     def __lt__(self, other: 'Vertex') -> bool:
         # accepts also tuples, for more convenience at testing
