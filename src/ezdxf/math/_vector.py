@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2020, Manfred Moitzi
+# Copyright (c) 2018-2021, Manfred Moitzi
 # License: MIT License
 from typing import Tuple, List, Any, Iterable, Sequence, TYPE_CHECKING
 from functools import partial
@@ -266,11 +266,12 @@ class Vec3:
                isclose(self._y, 0.) and \
                isclose(self._z, 0.)
 
-    def is_parallel(self, other: 'Vec3', abs_tol: float = 1e-12) -> bool:
+    def is_parallel(self, other: 'Vec3', *, abs_tol: float = 1e-12) -> bool:
         """ Returns ``True`` if `self` and `other` are parallel to vectors. """
         v1 = self.normalize()
         v2 = other.normalize()
-        return v1.isclose(v2, abs_tol) or v1.isclose(-v2, abs_tol)
+        return v1.isclose(v2, abs_tol=abs_tol) or v1.isclose(
+            -v2, abs_tol=abs_tol)
 
     @property
     def spatial_angle(self) -> float:
@@ -336,7 +337,7 @@ class Vec3:
         """ Returns ``True`` if vector is not ``(0, 0, 0)``. """
         return not self.is_null
 
-    def isclose(self, other: 'Vertex', abs_tol: float = 1e-12) -> bool:
+    def isclose(self, other: 'Vertex', *, abs_tol: float = 1e-12) -> bool:
         """ Returns ``True`` if `self` is close to `other`. Uses :func:`math.isclose` to compare all axis. """
         x, y, z = self.decompose(other)
         return math.isclose(self._x, x, abs_tol=abs_tol) and \
@@ -715,7 +716,7 @@ class Vec2:
     def __bool__(self) -> bool:
         return not self.is_null
 
-    def isclose(self, other: 'VecXY', abs_tol: float = 1e-12) -> bool:
+    def isclose(self, other: 'VecXY', *, abs_tol: float = 1e-12) -> bool:
         if not isinstance(other, Vec2):
             other = Vec2(other)
         return math.isclose(self.x, other.x, abs_tol=abs_tol) and math.isclose(

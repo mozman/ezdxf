@@ -40,7 +40,7 @@ def is_planar_face(face: Sequence[Vec3], abs_tol=1e-9) -> bool:
         normal = (b - a).cross(c - b).normalize()
         if first_normal is None:
             first_normal = normal
-        elif not first_normal.isclose(normal, abs_tol):
+        elif not first_normal.isclose(normal, abs_tol=abs_tol):
             return False
     return True
 
@@ -238,7 +238,9 @@ class Plane:
     def is_coplanar_plane(self, p: 'Plane', abs_tol=1e-9) -> bool:
         """ Returns ``True`` if plane `p` is coplanar, normal vectors in same or opposite direction. """
         n_is_close = self._normal.isclose
-        return n_is_close(p._normal, abs_tol) or n_is_close(-p._normal, abs_tol)
+        return n_is_close(
+            p._normal, abs_tol=abs_tol) or n_is_close(
+            -p._normal, abs_tol=abs_tol)
 
 
 class BarycentricCoordinates:
@@ -264,6 +266,7 @@ class BarycentricCoordinates:
       (a + b + c)/3
 
     """
+
     # Source: https://gamemath.com/book/geomprims.html#triangle_barycentric_space
 
     def __init__(self, a: 'Vertex', b: 'Vertex', c: 'Vertex'):

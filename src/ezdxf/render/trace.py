@@ -130,7 +130,8 @@ class LinearTrace(AbstractTrace):
         point = Vec2(point)
         stations = self._stations
 
-        if bool(stations) and stations[-1].vertex.isclose(point, self.abs_tol):
+        if bool(stations) and stations[-1].vertex.isclose(point,
+                                                          abs_tol=self.abs_tol):
             # replace last station
             stations.pop()
         stations.append(LinearStation(point, float(start_width), float(end_width)))

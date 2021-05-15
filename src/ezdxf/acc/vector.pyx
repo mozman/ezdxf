@@ -199,7 +199,7 @@ cdef class Vec2:
     def __bool__(self) -> bool:
         return self.x != 0 or self.y != 0
 
-    def isclose(self, other: 'VecXY', double abs_tol = ABS_TOL) -> bool:
+    def isclose(self, other: 'VecXY', *, double abs_tol = ABS_TOL) -> bool:
         cdef Vec2 o = Vec2(other)
         return isclose(self.x, o.x, abs_tol) and \
                isclose(self.y, o.y, abs_tol)
@@ -543,7 +543,7 @@ cdef class Vec3:
     def is_null(self) -> bool:
         return bool(v3_isclose(self, <Vec3> NULLVEC, ABS_TOL))
 
-    def is_parallel(self, other: 'Vertex', double abs_tol = ABS_TOL) -> bool:
+    def is_parallel(self, other: 'Vertex', *, double abs_tol = ABS_TOL) -> bool:
         cdef Vec3 o = Vec3(other)
         cdef Vec3 v1 = v3_normalize(self, 1.0)
         cdef Vec3 v2 = v3_normalize(o, 1.0)
@@ -592,7 +592,7 @@ cdef class Vec3:
     def __bool__(self) -> bool:
         return not self.is_null
 
-    def isclose(self, other: 'Vertex', double abs_tol = ABS_TOL) -> bool:
+    def isclose(self, other: 'Vertex', *, double abs_tol = ABS_TOL) -> bool:
         if not isinstance(other, Vec3):
             other = Vec3(other)
         return v3_isclose(self, <Vec3> other, abs_tol)

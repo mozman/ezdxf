@@ -61,7 +61,7 @@ def test_derivative_1(dbezier):
 
 def test_derivative_2(dbezier):
     for point, chk in iter_data(dbezier, 2):
-        assert point.isclose(chk, 1e-10)
+        assert point.isclose(chk, abs_tol=1e-10)
 
 
 def test_reverse():
