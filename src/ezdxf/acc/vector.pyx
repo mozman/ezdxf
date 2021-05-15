@@ -12,11 +12,11 @@ DEF REL_TOL = 1e-9
 if TYPE_CHECKING:
     from ezdxf.eztypes import VecXY, Vertex
 
-cdef bint isclose(double a, double b, double abs_tol):
+cdef bint isclose(double a, double b, double rel_tol, double abs_tol):
     # Has to match the Python implementation!
     cdef double diff = fabs(b - a)
-    return diff <= fabs(REL_TOL * b) or \
-           diff <= fabs(REL_TOL * a) or \
+    return diff <= fabs(rel_tol * b) or \
+           diff <= fabs(rel_tol * a) or \
            diff <= abs_tol
 
 cdef double RAD2DEG = 180.0 / M_PI
@@ -164,7 +164,7 @@ cdef class Vec2:
     @property
     def is_null(self) -> bool:
         cdef Vec2 zero = Vec2()
-        return bool(v2_isclose(self, zero, ABS_TOL))
+        return bool(v2_isclose(self, zero, REL_TOL, ABS_TOL))
 
     @property
     def angle(self) -> float:
@@ -199,10 +199,11 @@ cdef class Vec2:
     def __bool__(self) -> bool:
         return self.x != 0 or self.y != 0
 
-    def isclose(self, other: 'VecXY', *, double abs_tol = ABS_TOL) -> bool:
+    def isclose(self, other: 'VecXY', *, double rel_tol=REL_TOL,
+                double abs_tol = ABS_TOL) -> bool:
         cdef Vec2 o = Vec2(other)
-        return isclose(self.x, o.x, abs_tol) and \
-               isclose(self.y, o.y, abs_tol)
+        return isclose(self.x, o.x, rel_tol, abs_tol) and \
+               isclose(self.y, o.y, rel_tol, abs_tol)
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, Vec2):
@@ -363,9 +364,9 @@ cdef Vec2 v2_project(Vec2 a, Vec2 b):
     cdef Vec2 uv = v2_normalize(a, 1.0)
     return v2_mul(uv, v2_dot(uv, b))
 
-cdef bint v2_isclose(Vec2 a, Vec2 b, double abs_tol):
-    return isclose(a.x, b.x, abs_tol) and \
-           isclose(a.y, b.y, abs_tol)
+cdef bint v2_isclose(Vec2 a, Vec2 b, double rel_tol, double abs_tol):
+    return isclose(a.x, b.x, rel_tol, abs_tol) and \
+           isclose(a.y, b.y, rel_tol, abs_tol)
 
 cdef Vec2 v2_from_cpp_vec3(CppVec3 c):
     cdef Vec2 v = Vec2()
@@ -541,15 +542,16 @@ cdef class Vec3:
 
     @property
     def is_null(self) -> bool:
-        return bool(v3_isclose(self, <Vec3> NULLVEC, ABS_TOL))
+        return bool(v3_isclose(self, <Vec3> NULLVEC, REL_TOL, ABS_TOL))
 
-    def is_parallel(self, other: 'Vertex', *, double abs_tol = ABS_TOL) -> bool:
+    def is_parallel(self, other: 'Vertex', *, double rel_tol=REL_TOL,
+                    double abs_tol = ABS_TOL) -> bool:
         cdef Vec3 o = Vec3(other)
         cdef Vec3 v1 = v3_normalize(self, 1.0)
         cdef Vec3 v2 = v3_normalize(o, 1.0)
         cdef Vec3 neg_v2 = v3_reverse(v2)
-        return v3_isclose(v1, v2, abs_tol) or \
-               v3_isclose(v1, neg_v2, abs_tol)
+        return v3_isclose(v1, v2, rel_tol, abs_tol) or \
+               v3_isclose(v1, neg_v2, rel_tol, abs_tol)
 
     @property
     def spatial_angle(self) -> float:
@@ -592,16 +594,16 @@ cdef class Vec3:
     def __bool__(self) -> bool:
         return not self.is_null
 
-    def isclose(self, other: 'Vertex', *, double abs_tol = ABS_TOL) -> bool:
+    def isclose(self, other: 'Vertex', *, double rel_tol = REL_TOL,
+                double abs_tol = ABS_TOL) -> bool:
         if not isinstance(other, Vec3):
             other = Vec3(other)
-        return v3_isclose(self, <Vec3> other, abs_tol)
+        return v3_isclose(self, <Vec3> other, rel_tol, abs_tol)
 
     def __eq__(self, other: 'Vertex') -> bool:
         if not isinstance(other, Vec3):
             other = Vec3(other)
         return self.__hash__() == hash(other)
-
 
     def __lt__(self, other: 'Vertex') -> bool:
         if not isinstance(other, Vec3):
@@ -811,10 +813,10 @@ cdef Vec3 v3_project(Vec3 a, Vec3 b):
     cdef Vec3 uv = v3_normalize(a, 1.0)
     return v3_mul(uv, v3_dot(uv, b))
 
-cdef bint v3_isclose(Vec3 a, Vec3 b, double abs_tol):
-    return isclose(a.x, b.x, abs_tol) and \
-           isclose(a.y, b.y, abs_tol) and \
-           isclose(a.z, b.z, abs_tol)
+cdef bint v3_isclose(Vec3 a, Vec3 b, double rel_tol, double abs_tol):
+    return isclose(a.x, b.x, rel_tol, abs_tol) and \
+           isclose(a.y, b.y, rel_tol, abs_tol) and \
+           isclose(a.z, b.z, rel_tol, abs_tol)
 
 cdef Vec3 v3_from_cpp_vec3(CppVec3 c):
     cdef Vec3 v = Vec3()

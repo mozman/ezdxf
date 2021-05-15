@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
 DEF ABS_TOL = 1e-12
+DEF REL_TOL = 1e-9
 DEF TOLERANCE = 1e-10
 
 def has_clockwise_orientation(vertices: Iterable['Vertex']) -> bool:
@@ -36,7 +37,7 @@ def has_clockwise_orientation(vertices: Iterable['Vertex']) -> bool:
     cdef Py_ssize_t index
 
     # Using the same tolerance as the Python implementation:
-    if not v2_isclose(p1, p2, ABS_TOL):
+    if not v2_isclose(p1, p2, REL_TOL, ABS_TOL):
         _vertices.append(p1)
 
     for index in range(1, len(_vertices)):
@@ -196,14 +197,14 @@ def intersection_ray_ray_3d(ray1: Tuple[Vec3, Vec3],
             return v3_from_cpp_vec3(p1), v3_from_cpp_vec3(p2)
 
 def arc_angle_span_deg(double start, double end) -> float:
-    if isclose(start, end, ABS_TOL):
+    if isclose(start, end, REL_TOL, ABS_TOL):
         return 0.0
 
     start %= 360.0
-    if isclose(start, end % 360.0, ABS_TOL):
+    if isclose(start, end % 360.0, REL_TOL, ABS_TOL):
         return 360.0
 
-    if not isclose(end, 360.0, ABS_TOL):
+    if not isclose(end, 360.0, REL_TOL, ABS_TOL):
         end %= 360.0
 
     if end < start:

@@ -24,6 +24,7 @@ ONE_LIST = [1.0]
 
 cdef Vec3 NULLVEC = Vec3()
 DEF ABS_TOL = 1e-12
+DEF REL_TOL = 1e-9
 
 # AutoCAD limits the degree to 11 or order = 12
 DEF MAX_ORDER = 12
@@ -297,7 +298,7 @@ cdef class Evaluator:
         # Source: The NURBS Book: Algorithm A3.1
         cdef Basis basis = self._basis
         cdef int p = basis.order - 1
-        if isclose(u, basis.max_t, ABS_TOL):
+        if isclose(u, basis.max_t, REL_TOL, ABS_TOL):
             u = basis.max_t
 
         cdef int span = basis.find_span(u)
@@ -322,7 +323,7 @@ cdef class Evaluator:
         cdef list CK = [], CKw = [], wders = []
         cdef tuple weights
         cdef Basis basis = self._basis
-        if isclose(u, basis.max_t, ABS_TOL):
+        if isclose(u, basis.max_t, REL_TOL, ABS_TOL):
             u = basis.max_t
 
         cdef int p = basis.degree

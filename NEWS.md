@@ -21,8 +21,8 @@ Version 0.16.3b1 - dev
   the full floating point precision by comparing the hash values, 
   use `Vec2/3.isclose()` to take floating point imprecision into account. 
   **This is an annoying but necessary change!**
-- CHANGE: new signature for `Vec2/3.isclose(other, *, abs_tol=1e-12)`, 
-  argument `abs_tol` is keyword only
+- CHANGE: new signature for `Vec2/3.isclose(other, *, rel_tol=1e-9, abs_tol=1e-12)`, 
+  new argument `rel_tol` and arguments `rel_tol` and `abs_tol` are keyword only
 
 Version 0.16.2 - 2021-04-21
 ---------------------------

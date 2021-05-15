@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 __all__ = ['Bezier3P']
 
 DEF ABS_TOL = 1e-12
+DEF REL_TOL = 1e-9
 DEF M_PI = 3.141592653589793
 DEF M_TAU = M_PI * 2.0
 DEF DEG2RAD = M_PI / 180.0
@@ -87,7 +88,7 @@ cdef class Bezier3P:
 
         while t0 < 1.0:
             t1 = t0 + dt
-            if isclose(t1, 1.0, ABS_TOL):
+            if isclose(t1, 1.0, REL_TOL, ABS_TOL):
                 end_point = (<Vec3> self.end_point).to_cpp_vec3()
                 t1 = 1.0
             else:

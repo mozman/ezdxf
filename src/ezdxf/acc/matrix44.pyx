@@ -16,6 +16,8 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
 DEF ABS_TOL = 1e-12
+DEF REL_TOL = 1e-9
+
 cdef double[16] IDENTITY = [
     1.0, 0.0, 0.0, 0.0,
     0.0, 1.0, 0.0, 0.0,
@@ -186,7 +188,7 @@ cdef class Matrix44:
     @property
     def is_cartesian(self) -> bool:
         cdef Vec3 x_axis = v3_cross(self.get_uy(), self.get_uz())
-        return v3_isclose(x_axis, self.get_ux(), ABS_TOL)
+        return v3_isclose(x_axis, self.get_ux(), REL_TOL, ABS_TOL)
 
     @property
     def is_orthogonal(self) -> bool:

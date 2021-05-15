@@ -35,8 +35,9 @@ VecXY = Union[Vec2, Vec3]  # Vector with x and y attributes
 
 
 def close_vectors(a: Iterable[VecXY], b: Iterable[Vertex], *,
-                  abs_tol=1e-12, rel_tol=1e-9) -> bool:
-    return all(v1.isclose(v2, abs_tol=abs_tol) for v1, v2 in zip(a, b))
+                  rel_tol=1e-9, abs_tol=1e-12) -> bool:
+    return all(v1.isclose(v2, rel_tol=rel_tol, abs_tol=abs_tol)
+               for v1, v2 in zip(a, b))
 
 
 def xround(value: float, rounding: float = 0.) -> float:
