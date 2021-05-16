@@ -287,21 +287,6 @@ def test_make_path_from_full_circle_lwpolyline():
     assert len(vertices) == 65
 
 
-def test_big_coords_issue_424():
-    # Vec3 can't distinguish these two vertices:
-    assert Vec3(39_482_129.9462793, 3_554_328.753243976, 1.0).isclose(
-        Vec3(39_482_129.95781776, 3_554_328.753243976, 1.0),
-        abs_tol=1e-3) is True
-
-    # same issue for math.isclose():
-    assert math.isclose(39_482_129.9462793, 39_482_129.95781776,
-                        abs_tol=1e-3) is True
-
-    # This would work, but relative tolerance is not used by Vec3()
-    assert math.isclose(39_482_129.9462793, 39_482_129.95781776,
-                        rel_tol=1e-10) is False
-
-
 def test_make_path_from_full_circle_lwpolyline_issue_424():
     pline = LWPolyline()
     pline.closed = True
@@ -311,8 +296,7 @@ def test_make_path_from_full_circle_lwpolyline_issue_424():
     ]
     pline.append_points(points, format='xyb')
     path = make_path(pline)
-    # Limit of floating point representation: see test_big_coords_issue_424()
-    assert len(path) == 0
+    assert len(path) == 2
 
 
 S_SHAPE = [

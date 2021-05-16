@@ -1,7 +1,7 @@
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
 from typing import (
-    TYPE_CHECKING, List, Iterable, Tuple, Optional, Dict, Sequence
+    TYPE_CHECKING, List, Iterable, Tuple, Optional, Dict, Sequence,
 )
 
 import math
@@ -9,7 +9,7 @@ import itertools
 from ezdxf.math import (
     Vec3, Z_AXIS, OCS, Matrix44, BoundingBox, ConstructionEllipse,
     cubic_bezier_from_ellipse, Bezier4P, Bezier3P, BSpline,
-    reverse_bezier_curves, bulge_to_arc
+    reverse_bezier_curves, bulge_to_arc,
 )
 
 from ezdxf.query import EntityQuery
@@ -32,6 +32,7 @@ __all__ = [
 MAX_DISTANCE = 0.01
 MIN_SEGMENTS = 4
 G1_TOL = 1e-4
+IS_CLOSE_TOL = 1e-10
 
 
 def transform_paths(paths: Iterable[Path], m: Matrix44) -> List[Path]:
@@ -484,12 +485,12 @@ def add_bezier4p(path: Path, curves: Iterable[Bezier4P]) -> None:
 
     for curve in curves:
         start, ctrl1, ctrl2, end = curve.control_points
-        if not start.isclose(path.end, abs_tol=1e-9):
+        if not start.isclose(path.end):
             path.line_to(start)
 
         # add linear bezier segments as LINE_TO commands
-        if start.isclose(ctrl1, abs_tol=1e-9) and \
-                end.isclose(ctrl2, abs_tol=1e-9):
+        if start.isclose(ctrl1) and \
+                end.isclose(ctrl2):
             path.line_to(end)
         else:
             path.curve4_to(end, ctrl1, ctrl2)
@@ -518,11 +519,11 @@ def add_bezier3p(path: Path, curves: Iterable[Bezier3P]) -> None:
 
     for curve in curves:
         start, ctrl, end = curve.control_points
-        if not start.isclose(path.end, abs_tol=1e-9):
+        if not start.isclose(path.end, abs_tol=0):  # only rel_tol=1e-9
             path.line_to(start)
 
-        # add linear bezier segments as LINE_TO commands
-        if start.isclose(ctrl, abs_tol=1e-9) or end.isclose(ctrl, abs_tol=1e-9):
+        # add linear bezier segments as LINE_TO commands, use only rel_tol=1e-9
+        if start.isclose(ctrl, abs_tol=0) or end.isclose(ctrl, abs_tol=0):
             path.line_to(end)
         else:
             path.curve3_to(end, ctrl)
@@ -536,7 +537,7 @@ def add_2d_polyline(path: Path, points: Iterable[Sequence[float]], close: bool,
     """
 
     def bulge_to(p1: Vec3, p2: Vec3, bulge: float):
-        if p1.isclose(p2):
+        if p1.isclose(p2, rel_tol=IS_CLOSE_TOL, abs_tol=0):
             return
         center, start_angle, end_angle, radius = bulge_to_arc(p1, p2, bulge)
         ellipse = ConstructionEllipse.from_arc(
@@ -547,7 +548,7 @@ def add_2d_polyline(path: Path, points: Iterable[Sequence[float]], close: bool,
         curves = list(cubic_bezier_from_ellipse(ellipse))
         curve0 = curves[0]
         cp0 = curve0.control_points[0]
-        if cp0.isclose(p2):
+        if cp0.isclose(p2, rel_tol=IS_CLOSE_TOL, abs_tol=0):
             curves = reverse_bezier_curves(curves)
         add_bezier4p(path, curves)
 
@@ -574,7 +575,8 @@ def add_2d_polyline(path: Path, points: Iterable[Sequence[float]], close: bool,
         prev_point = point
         prev_bulge = bulge
 
-    if close and not path.start.isclose(path.end):
+    if close and not path.start.isclose(
+            path.end, rel_tol=IS_CLOSE_TOL, abs_tol=0):
         if prev_bulge:
             bulge_to(path.end, path.start, prev_bulge)
         else:
