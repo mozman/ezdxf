@@ -322,6 +322,10 @@ class NonBreakingSpace(Glue):
     pass
 
 
+class Tabulator(Glue):
+    pass
+
+
 class CellAlignment(enum.IntEnum):
     BOTTOM = 0
     CENTER = 1
@@ -570,7 +574,7 @@ class Fraction(ContentCell):
 
 
 _content = (Text, Fraction)
-_glue = (Space, NonBreakingSpace)
+_glue = (Space, NonBreakingSpace, Tabulator)
 _no_break = (Text, Fraction, NonBreakingSpace)
 
 
@@ -833,6 +837,7 @@ class EmptyParagraph(Cell):
     """ Spacer between two paragraphs, represents empty lines like in
     "line1\n\nline2".
     """
+
     def __init__(self, cap_height: float, line_spacing: float = 1):
         self._height = leading(cap_height, line_spacing)
         self._width = 0

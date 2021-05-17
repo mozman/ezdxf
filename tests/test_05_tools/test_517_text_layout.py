@@ -584,6 +584,7 @@ def str2cells(s: str, content=3, space=0.5):
     # f ... fraction cell
     # space is space
     # ~ ... non breaking space (nbsp)
+    # # ... tabulator
     for c in s.lower():
         if c == 't':
             yield tl.Text(width=content, height=1, renderer=Rect('Text'))
@@ -596,6 +597,8 @@ def str2cells(s: str, content=3, space=0.5):
             yield tl.Space(width=space)
         elif c == '~':
             yield tl.NonBreakingSpace(width=space)
+        elif c == '#':
+            yield tl.Tabulator(width=0)  # Tabulators do not need a width
         else:
             raise ValueError(f'unknown cell type "{c}"')
 
@@ -612,6 +615,8 @@ def cells2str(cells: Iterable[tl.Cell]) -> str:
             s.append(' ')
         elif t is tl.NonBreakingSpace:
             s.append('~')
+        elif t is tl.Tabulator:
+            s.append('#')
         else:
             raise ValueError(f'unknown cell type {str(t)}')
     return "".join(s)
@@ -622,7 +627,7 @@ def lines2str(lines):
 
 
 def test_cell_converter():
-    assert cells2str(str2cells('tf ~')) == 'tf ~'
+    assert cells2str(str2cells('tf ~#')) == 'tf ~#'
     with pytest.raises(ValueError):
         list(str2cells('x'))
     with pytest.raises(ValueError):
@@ -641,8 +646,9 @@ class TestNormalizeCells:
         cells = tl.normalize_cells(str2cells(content))
         assert cells2str(cells) == content
 
-    @pytest.mark.parametrize(
-        'content', ['t~ t', 't ~t', 't~~ t', 't ~~t', '~t', '~~t'])
+    @pytest.mark.parametrize('content', [
+        't~ t', 't ~t', 't~~ t', 't ~~t', '~t', '~~t', 't#~t', 't~#t', 't~#~t'
+    ])
     def test_replace_useless_nbsp_by_spaces(self, content):
         cells = tl.normalize_cells(str2cells(content))
         assert cells2str(cells) == content.replace('~', ' ')
@@ -653,7 +659,7 @@ class TestNormalizeCells:
         assert cells2str(cells) == content
 
     def test_remove_pending_glue(self):
-        for glue in permutations([' ', '~', ' ']):
+        for glue in permutations([' ', '~', ' ', '#']):
             content = 't' + "".join(glue)
             cells = list(tl.normalize_cells(str2cells(content)))
             assert cells2str(cells) == 't'
