@@ -6,28 +6,34 @@ from itertools import permutations
 import ezdxf.tools.text_layout as tl
 
 
-@pytest.mark.parametrize('margins,expected', [
-    [None, (0, 0, 0, 0)],
-    [(1,), (1, 1, 1, 1)],
-    [(1, 2), (1, 2, 1, 2)],
-    [(1, 2, 3), (1, 2, 3, 2)],
-    [(1, 2, 3, 4), (1, 2, 3, 4)]
-])
+@pytest.mark.parametrize(
+    "margins,expected",
+    [
+        [None, (0, 0, 0, 0)],
+        [(1,), (1, 1, 1, 1)],
+        [(1, 2), (1, 2, 1, 2)],
+        [(1, 2, 3), (1, 2, 3, 2)],
+        [(1, 2, 3, 4), (1, 2, 3, 4)],
+    ],
+)
 def test_resolve_margins(margins, expected):
     assert tl.resolve_margins(margins) == expected
 
 
-@pytest.mark.parametrize('align,expected', [
-    [tl.LayoutAlignment.TOP_LEFT, (0, 0)],
-    [tl.LayoutAlignment.TOP_CENTER, (-2, 0)],
-    [tl.LayoutAlignment.TOP_RIGHT, (-4, 0)],
-    [tl.LayoutAlignment.MIDDLE_LEFT, (0, 3)],
-    [tl.LayoutAlignment.MIDDLE_CENTER, (-2, 3)],
-    [tl.LayoutAlignment.MIDDLE_RIGHT, (-4, 3)],
-    [tl.LayoutAlignment.BOTTOM_LEFT, (0, 6)],
-    [tl.LayoutAlignment.BOTTOM_CENTER, (-2, 6)],
-    [tl.LayoutAlignment.BOTTOM_RIGHT, (-4, 6)],
-])
+@pytest.mark.parametrize(
+    "align,expected",
+    [
+        [tl.LayoutAlignment.TOP_LEFT, (0, 0)],
+        [tl.LayoutAlignment.TOP_CENTER, (-2, 0)],
+        [tl.LayoutAlignment.TOP_RIGHT, (-4, 0)],
+        [tl.LayoutAlignment.MIDDLE_LEFT, (0, 3)],
+        [tl.LayoutAlignment.MIDDLE_CENTER, (-2, 3)],
+        [tl.LayoutAlignment.MIDDLE_RIGHT, (-4, 3)],
+        [tl.LayoutAlignment.BOTTOM_LEFT, (0, 6)],
+        [tl.LayoutAlignment.BOTTOM_CENTER, (-2, 6)],
+        [tl.LayoutAlignment.BOTTOM_RIGHT, (-4, 6)],
+    ],
+)
 def test_insert_location(align, expected):
     assert tl.insert_location(align, width=4, height=6) == expected
 
@@ -39,10 +45,12 @@ class Rect(tl.ContentRenderer):
         self.result = result  # store test results
         self.name = name
 
-    def render(self, left: float, bottom: float, right: float,
-               top: float, m=None) -> None:
+    def render(
+        self, left: float, bottom: float, right: float, top: float, m=None
+    ) -> None:
         self.result.append(
-            f"{self.name}({left:.1f}, {bottom:.1f}, {right:.1f}, {top:.1f})")
+            f"{self.name}({left:.1f}, {bottom:.1f}, {right:.1f}, {top:.1f})"
+        )
 
     def line(self, x1: float, y1: float, x2: float, y2: float, m=None) -> None:
         self.result.append(f"LINE({x1:.1f}, {y1:.1f})TO({x2:.1f}, {y2:.1f})")
@@ -51,8 +59,9 @@ class Rect(tl.ContentRenderer):
 class TestTopLevelLayout:
     @pytest.fixture
     def layout1(self):
-        return tl.Layout(width=10, height=None, margins=(1, 1),
-                         renderer=Rect('Layout1'))
+        return tl.Layout(
+            width=10, height=None, margins=(1, 1), renderer=Rect("Layout1")
+        )
 
     def test_create_empty_layout_top_left(self, layout1):
         # layout1 has no height, only margins
@@ -82,7 +91,7 @@ class TestTopLevelLayout:
         height = 17
         width = layout1.content_width  # reference column width
         result = layout1.renderer.result  # use same result container
-        layout1.append_column(height=height, renderer=Rect('Col1', result))
+        layout1.append_column(height=height, renderer=Rect("Col1", result))
 
         assert layout1.total_width == width + 2
         assert layout1.total_height == height + 2
@@ -95,10 +104,12 @@ class TestTopLevelLayout:
 
     def test_add_two_equal_columns(self, layout1):
         margins = (1,)
-        layout1.append_column(width=5, height=10, gutter=2,
-                              margins=margins, renderer=Rect('Col1'))
-        layout1.append_column(width=7, height=20, margins=margins,
-                              renderer=Rect('Col2'))
+        layout1.append_column(
+            width=5, height=10, gutter=2, margins=margins, renderer=Rect("Col1")
+        )
+        layout1.append_column(
+            width=7, height=20, margins=margins, renderer=Rect("Col2")
+        )
         # width1 + margins + gutter + width2 + margins
         assert layout1.content_width == (5 + 2 + 2 + 7 + 2)
 
@@ -126,7 +137,11 @@ class TestColumn:
     def c1(self):
         return tl.Column(
             # margins = top, right, bottom, left - same order as for CSS
-            width=5, height=7, margins=(1, 2, 3, 4), renderer=Rect('C1'))
+            width=5,
+            height=7,
+            margins=(1, 2, 3, 4),
+            renderer=Rect("C1"),
+        )
 
     def test_size_calculation(self, c1):
         c1.place(0, 0)
@@ -160,7 +175,7 @@ class TestFlowTextWithUnrestrictedHeight:
         # because the required space is independent from alignment (left,
         # right, center or justified).
         # This may change by implementing regular tabulator support.
-        return tl.FlowText(width=10, renderer=Rect('PAR'))
+        return tl.FlowText(width=10, renderer=Rect("PAR"))
 
     def test_empty_paragraph_dimensions(self, flow):
         assert flow.content_height == 0
@@ -175,7 +190,7 @@ class TestFlowTextWithUnrestrictedHeight:
         assert result[0] == "PAR(0.0, 0.0, 10.0, 0.0)"
 
     def test_distribute_invalid_content(self, flow):
-        flow.append_content(str2cells('ttt'))
+        flow.append_content(str2cells("ttt"))
         with pytest.raises(ValueError):
             flow.distribute_content(height=None)
 
@@ -183,44 +198,40 @@ class TestFlowTextWithUnrestrictedHeight:
         # column width = 10
         # content width = 3
         # space width = 0.5
-        flow.append_content(str2cells('t t t t t t t t t'))
+        flow.append_content(str2cells("t t t t t t t t t"))
         flow.distribute_content(height=None)
         assert lines2str(flow) == [
-            't t t',  # width = 3x3 + 2x0.5 = 10
-            't t t',  # remove line breaking spaces!
-            't t t'
+            "t t t",  # width = 3x3 + 2x0.5 = 10
+            "t t t",  # remove line breaking spaces!
+            "t t t",
         ]
 
     def test_distribute_with_nbsp(self, flow):
         # column width = 10
         # content width = 3
         # space width = 0.5
-        flow.append_content(str2cells('t t t~t t t'))
+        flow.append_content(str2cells("t t t~t t t"))
         flow.distribute_content(height=None)
         assert lines2str(flow) == [
-            't t',  # t~t does not fit and goes to next line
-            't~t t',  # width = 3x3 + 2x0.5 = 10
-            't'
+            "t t",  # t~t does not fit and goes to next line
+            "t~t t",  # width = 3x3 + 2x0.5 = 10
+            "t",
         ]
 
     def test_distribute_too_long_lines(self, flow):
         # column width = 10
-        flow.append_content(str2cells('t t t', content=12))
+        flow.append_content(str2cells("t t t", content=12))
         flow.distribute_content(height=None)
-        assert lines2str(flow) == [
-            't',
-            't',
-            't'
-        ]
+        assert lines2str(flow) == ["t", "t", "t"]
 
     def test_distribute_too_long_lines_including_nbsp(self, flow):
         # column width = 10
-        flow.append_content(str2cells('t~t~t t~t t', content=5))
+        flow.append_content(str2cells("t~t~t t~t t", content=5))
         flow.distribute_content(height=None)
         assert lines2str(flow) == [
-            't~t~t',  # width = 3x5 + 2x0.5 = 17
-            't~t',  # width = 2x5 + 0.5 = 10.5
-            't'
+            "t~t~t",  # width = 3x5 + 2x0.5 = 17
+            "t~t",  # width = 2x5 + 0.5 = 10.5
+            "t",
         ]
 
 
@@ -236,32 +247,32 @@ class TestFlowTextWithRestrictedHeight:
     @pytest.fixture
     def flow(self):
         # Paragraph alignment is not important for content distribution.
-        return tl.FlowText(width=10, renderer=Rect('PAR'))
+        return tl.FlowText(width=10, renderer=Rect("PAR"))
 
     def test_distribute_with_exact_height_match(self, flow):
-        flow.append_content(str2cells('t t t t t t t t t'))
+        flow.append_content(str2cells("t t t t t t t t t"))
         flow.distribute_content(height=self.THREE_LINE_SPACE)
         assert lines2str(flow) == [
-            't t t',  # width = 3x3 + 2x0.5 = 10
-            't t t',
-            't t t'
+            "t t t",  # width = 3x3 + 2x0.5 = 10
+            "t t t",
+            "t t t",
         ]
 
     def test_distribute_with_one_line_left_over(self, flow):
-        flow.append_content(str2cells('t t t t t t t t t'))
+        flow.append_content(str2cells("t t t t t t t t t"))
         # Paragraph has only space for 2 lines by reducing the available space
         # by a small amount:
         height = self.THREE_LINE_SPACE - 0.01
         leftover = flow.distribute_content(height=height)
         assert lines2str(flow) == [
-            't t t',
-            't t t',
+            "t t t",
+            "t t t",
         ]
         leftover.distribute_content(height=1)
-        assert lines2str(leftover) == ['t t t']
+        assert lines2str(leftover) == ["t t t"]
 
     def test_distribute_with_all_lines_left_over(self, flow):
-        flow.append_content(str2cells('t t t~t t t t t t'))
+        flow.append_content(str2cells("t t t~t t t t t t"))
         # Paragraph has no space at all:
         leftover = flow.distribute_content(height=0)
         assert lines2str(flow) == []
@@ -269,15 +280,15 @@ class TestFlowTextWithRestrictedHeight:
         # None = unrestricted height
         leftover.distribute_content(height=None)
         assert lines2str(leftover) == [
-            't t',
-            't~t t',
-            't t t',
-            't',
+            "t t",
+            "t~t t",
+            "t t t",
+            "t",
         ]
 
 
 def set_flow_content(flow):
-    flow.append_content(str2cells('t t t t t t t t t'))
+    flow.append_content(str2cells("t t t t t t t t t"))
     flow.distribute_content()
 
 
@@ -295,8 +306,9 @@ class TestFlowTextLeftAlignment:
             assert line.final_location()[0] == 0
 
     def test_left_indentation(self):
-        flow = tl.FlowText(width=12, indent=(0.7, 0.5, 0),
-                           align=tl.FlowTextAlignment.LEFT)
+        flow = tl.FlowText(
+            width=12, indent=(0.7, 0.5, 0), align=tl.FlowTextAlignment.LEFT
+        )
         set_flow_content(flow)
         flow.place(0, 0)
         lines = list(flow)
@@ -325,8 +337,9 @@ class TestFlowTextRightAlignment:
             assert line.final_location()[0] == 2
 
     def test_right_indentation(self):
-        flow = tl.FlowText(width=12, indent=(0.5, 0.5, 0.5),
-                           align=tl.FlowTextAlignment.RIGHT)
+        flow = tl.FlowText(
+            width=12, indent=(0.5, 0.5, 0.5), align=tl.FlowTextAlignment.RIGHT
+        )
         set_flow_content(flow)
         flow.place(0, 0)
         for line in flow:
@@ -348,8 +361,9 @@ class TestFlowTextCenterAlignment:
             assert line.final_location()[0] == 1
 
     def test_left_indentation(self):
-        flow = tl.FlowText(width=12, indent=(0.5, 0.5, 0),
-                           align=tl.FlowTextAlignment.CENTER)
+        flow = tl.FlowText(
+            width=12, indent=(0.5, 0.5, 0), align=tl.FlowTextAlignment.CENTER
+        )
         set_flow_content(flow)
         flow.place(0, 0)
         for line in flow:
@@ -357,8 +371,9 @@ class TestFlowTextCenterAlignment:
             assert line.final_location()[0] == 1.25  # 0.5 + (11.5 - 10) / 2
 
     def test_right_indentation(self):
-        flow = tl.FlowText(width=12, indent=(0, 0, 0.5),
-                           align=tl.FlowTextAlignment.CENTER)
+        flow = tl.FlowText(
+            width=12, indent=(0, 0, 0.5), align=tl.FlowTextAlignment.CENTER
+        )
         set_flow_content(flow)
         flow.place(0, 0)
         for line in flow:
@@ -386,8 +401,11 @@ class TestFlowTextJustifiedAlignment:
         assert last_line.final_location()[0] == 0
 
     def test_with_indentation(self):
-        flow = tl.FlowText(width=12, indent=(0.7, 0.5, 0.5),
-                           align=tl.FlowTextAlignment.JUSTIFIED)
+        flow = tl.FlowText(
+            width=12,
+            indent=(0.7, 0.5, 0.5),
+            align=tl.FlowTextAlignment.JUSTIFIED,
+        )
         set_flow_content(flow)
         flow.place(0, 0)
         lines = list(flow)
@@ -409,7 +427,7 @@ class TestVerticalCellAlignment:
     @staticmethod
     def build_line(align):
         big0 = tl.Text(width=3, height=3)
-        small = tl.Text(width=1, height=1, valign=align, renderer=Rect('CELL'))
+        small = tl.Text(width=1, height=1, valign=align, renderer=Rect("CELL"))
         big1 = tl.Text(width=3, height=3)
         line = tl.HCellGroup([big0, small, big1])
         line.place(0, 0)
@@ -489,16 +507,23 @@ class StrokeRender(Rect):
 class TestTextStrokeRendering:
     @staticmethod
     def render_text(stroke, result):
-        text = tl.Text(width=3, height=1, stroke=stroke,
-                       renderer=StrokeRender("STROKE", result))
+        text = tl.Text(
+            width=3,
+            height=1,
+            stroke=stroke,
+            renderer=StrokeRender("STROKE", result),
+        )
         text.place(0, 0)
         tl.render_text_strokes([text])
 
-    @pytest.mark.parametrize("stroke,expected", [
-        (tl.Stroke.UNDERLINE, "STROKE(UNDERLINE, 3.0)"),
-        (tl.Stroke.OVERLINE, "STROKE(OVERLINE, 3.0)"),
-        (tl.Stroke.STRIKE_THROUGH, "STROKE(STRIKE_THROUGH, 3.0)"),
-    ])
+    @pytest.mark.parametrize(
+        "stroke,expected",
+        [
+            (tl.Stroke.UNDERLINE, "STROKE(UNDERLINE, 3.0)"),
+            (tl.Stroke.OVERLINE, "STROKE(OVERLINE, 3.0)"),
+            (tl.Stroke.STRIKE_THROUGH, "STROKE(STRIKE_THROUGH, 3.0)"),
+        ],
+    )
     def test_simple_stroke(self, stroke, expected):
         result = []
         self.render_text(stroke, result)
@@ -508,8 +533,12 @@ class TestTextStrokeRendering:
 class TestTextContinueStroke:
     @staticmethod
     def make_text(stroke, result):
-        text = tl.Text(width=3, height=1, stroke=stroke,
-                       renderer=StrokeRender("STROKE", result))
+        text = tl.Text(
+            width=3,
+            height=1,
+            stroke=stroke,
+            renderer=StrokeRender("STROKE", result),
+        )
         text.place(0, 0)
         return text
 
@@ -529,8 +558,9 @@ class TestTextContinueStroke:
         nbsp = tl.NonBreakingSpace(width=0.5)
         tl.render_text_strokes([word, space, nbsp, space, word])
         assert len(result) == 2
-        assert result[
-                   0] == "STROKE(UNDERLINE, 4.5)", "3 spaces should be included"
+        assert (
+            result[0] == "STROKE(UNDERLINE, 4.5)"
+        ), "3 spaces should be included"
         assert result[1] == "STROKE(UNDERLINE, 3.0)", "no following spaces"
 
     def test_do_not_continue_stroke_automatically(self):
@@ -555,16 +585,18 @@ class TestFractionCell:
 
     def test_a_over_b(self):
         # y = total height = (a.total_height + b.total_height) * HEIGHT_SCALE
-        result = self.fraction(tl.Stacking.OVER, x=0,
-                               y=2 * tl.Fraction.HEIGHT_SCALE)
+        result = self.fraction(
+            tl.Stacking.OVER, x=0, y=2 * tl.Fraction.HEIGHT_SCALE
+        )
         assert len(result) == 2
         assert result[0] == "A(0.0, 1.4, 1.0, 2.4)"  # L, B, R, T
         assert result[1] == "B(0.0, 0.0, 1.0, 1.0)"  # L, B, R, T
 
     def test_a_over_line_b(self):
         # y = total height = (a.total_height + a.total_height) * HEIGHT_SCALE
-        result = self.fraction(tl.Stacking.LINE, x=0,
-                               y=2 * tl.Fraction.HEIGHT_SCALE)
+        result = self.fraction(
+            tl.Stacking.LINE, x=0, y=2 * tl.Fraction.HEIGHT_SCALE
+        )
         assert len(result) == 3
         assert result[0] == "A(0.0, 1.4, 1.0, 2.4)"  # L, B, R, T
         assert result[1] == "B(0.0, 0.0, 1.0, 1.0)"  # L, B, R, T
@@ -586,18 +618,21 @@ def str2cells(s: str, content=3, space=0.5):
     # ~ ... non breaking space (nbsp)
     # # ... tabulator
     for c in s.lower():
-        if c == 't':
-            yield tl.Text(width=content, height=1, renderer=Rect('Text'))
-        elif c == 'f':
+        if c == "t":
+            yield tl.Text(width=content, height=1, renderer=Rect("Text"))
+        elif c == "f":
             cell = tl.Text(content / 2, 1)
-            yield tl.Fraction(top=cell, bottom=cell,
-                              stacking=tl.Stacking.SLANTED,
-                              renderer=Rect('Fraction'))
-        elif c == ' ':
+            yield tl.Fraction(
+                top=cell,
+                bottom=cell,
+                stacking=tl.Stacking.SLANTED,
+                renderer=Rect("Fraction"),
+            )
+        elif c == " ":
             yield tl.Space(width=space)
-        elif c == '~':
+        elif c == "~":
             yield tl.NonBreakingSpace(width=space)
-        elif c == '#':
+        elif c == "#":
             yield tl.Tabulator(width=0)  # Tabulators do not need a width
         else:
             raise ValueError(f'unknown cell type "{c}"')
@@ -621,44 +656,55 @@ def lines2str(lines):
 
 
 def test_cell_converter():
-    assert cells2str(str2cells('tf ~#')) == 'tf ~#'
+    assert cells2str(str2cells("tf ~#")) == "tf ~#"
     with pytest.raises(ValueError):
-        list(str2cells('x'))
+        list(str2cells("x"))
     with pytest.raises(KeyError):
         cells2str([0])
 
 
 class TestNormalizeCells:
-    @pytest.mark.parametrize('content', ['tt', 'tf', 'ft', 'ff'])
+    @pytest.mark.parametrize("content", ["tt", "tf", "ft", "ff"])
     def test_no_glue_between_content_raises_value_error(self, content):
         cells = str2cells(content)
         with pytest.raises(ValueError):
             list(tl.normalize_cells(cells))
 
-    @pytest.mark.parametrize('content', ['t~t', 't~~t', 't~~~t'])
+    @pytest.mark.parametrize("content", ["t~t", "t~~t", "t~~~t"])
     def test_preserve_multiple_nbsp(self, content):
         cells = tl.normalize_cells(str2cells(content))
         assert cells2str(cells) == content
 
-    @pytest.mark.parametrize('content', [
-        't~ t', 't ~t', 't~~ t', 't ~~t', '~t', '~~t', 't#~t', 't~#t', 't~#~t'
-    ])
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "t~ t",
+            "t ~t",
+            "t~~ t",
+            "t ~~t",
+            "~t",
+            "~~t",
+            "t#~t",
+            "t~#t",
+            "t~#~t",
+        ],
+    )
     def test_replace_useless_nbsp_by_spaces(self, content):
         cells = tl.normalize_cells(str2cells(content))
-        assert cells2str(cells) == content.replace('~', ' ')
+        assert cells2str(cells) == content.replace("~", " ")
 
-    @pytest.mark.parametrize('content', ['t t', 't  t', 't   t'])
+    @pytest.mark.parametrize("content", ["t t", "t  t", "t   t"])
     def test_preserve_multiple_spaces(self, content):
         cells = tl.normalize_cells(str2cells(content))
         assert cells2str(cells) == content
 
     def test_remove_pending_glue(self):
-        for glue in permutations([' ', '~', ' ', '#']):
-            content = 't' + "".join(glue)
+        for glue in permutations([" ", "~", " ", "#"]):
+            content = "t" + "".join(glue)
             cells = list(tl.normalize_cells(str2cells(content)))
-            assert cells2str(cells) == 't'
+            assert cells2str(cells) == "t"
 
-    @pytest.mark.parametrize('content', [' t', '  t', '   t'])
+    @pytest.mark.parametrize("content", [" t", "  t", "   t"])
     def test_preserve_prepending_space(self, content):
         cells = list(tl.normalize_cells(str2cells(content)))
         assert cells2str(cells) == content
@@ -707,5 +753,5 @@ class TestSpace:
         assert tl.Space(1, max_width=1.0).can_grow is False
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])
