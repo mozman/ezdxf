@@ -127,6 +127,7 @@ class Word(text_layout.Text):
             # not be changed by the layout engine:
             width=font.text_width(text),
             height=ctx.cap_height,
+            valign=text_layout.CellAlignment(ctx.align),
             stroke=stroke,
             # Each content box can have it's own rendering object:
             renderer=TextRenderer(text, text_attribs, line_attribs, xpl.layout),
@@ -476,20 +477,34 @@ def new_doc(content: str, width: float = 30):
     return doc
 
 
-def explode_mtext(doc):
+def explode_mtext(doc, destroy=True):
     msp = doc.modelspace()
-    mtext = msp.query("MTEXT").first
     xpl = MTextExplode(msp)
-    xpl.explode(mtext, destroy=False)
-    xpl.finalize()
-    if mtext.is_alive:
-        mtext.dxf.layer = "SOURCE"
+    for mtext in msp.query("MTEXT"):
+        xpl.explode(mtext, destroy=destroy)
+        xpl.finalize()
+        if mtext.is_alive:
+            mtext.dxf.layer = "SOURCE"
     zoom.extents(msp)
     return doc
 
 
-if __name__ == '__main__':
+def create(filename):
     doc = new_doc(LEFT + CENTER + RIGHT + JUSTIFIED)
-    doc.saveas(DIR / "mtext_source.dxf")
-    doc = explode_mtext(doc)
-    doc.saveas(DIR / "mtext_xplode.dxf")
+    doc.saveas(DIR / filename)
+    return doc
+
+
+def load(filename):
+    return ezdxf.readfile(DIR / filename)
+
+
+def explode(doc, filename):
+    doc = explode_mtext(doc, destroy=False)
+    doc.saveas(DIR / filename)
+
+
+if __name__ == '__main__':
+    # doc = create("mtext_source.dxf")
+    doc = load("mtext_source.dxf")
+    explode(doc, "mtext_xplode.dxf")
