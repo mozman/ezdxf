@@ -603,23 +603,17 @@ def str2cells(s: str, content=3, space=0.5):
             raise ValueError(f'unknown cell type "{c}"')
 
 
+CELL2STR = {
+    tl.Text: "t",
+    tl.Fraction: "f",
+    tl.Space: " ",
+    tl.NonBreakingSpace: "~",
+    tl.Tabulator: "#",
+}
+
+
 def cells2str(cells: Iterable[tl.Cell]) -> str:
-    s = []
-    for cell in cells:
-        t = type(cell)
-        if t is tl.Text:
-            s.append('t')
-        elif t is tl.Fraction:
-            s.append('f')
-        elif t is tl.Space:
-            s.append(' ')
-        elif t is tl.NonBreakingSpace:
-            s.append('~')
-        elif t is tl.Tabulator:
-            s.append('#')
-        else:
-            raise ValueError(f'unknown cell type {str(t)}')
-    return "".join(s)
+    return "".join(CELL2STR[type(cell)] for cell in cells)
 
 
 def lines2str(lines):
@@ -630,7 +624,7 @@ def test_cell_converter():
     assert cells2str(str2cells('tf ~#')) == 'tf ~#'
     with pytest.raises(ValueError):
         list(str2cells('x'))
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         cells2str([0])
 
 
