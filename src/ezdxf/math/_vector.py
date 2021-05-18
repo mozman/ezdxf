@@ -8,7 +8,8 @@ import random
 if TYPE_CHECKING:
     from ezdxf.eztypes import VecXY, Vertex
 
-isclose = partial(math.isclose, abs_tol=1e-12)
+ABS_TOL = 1e-12
+isclose = partial(math.isclose, abs_tol=ABS_TOL)
 
 
 class Vec3:
@@ -261,10 +262,12 @@ class Vec3:
 
     @property
     def is_null(self) -> bool:
-        """ ``True`` for ``Vec3(0, 0, 0)``. """
-        return isclose(self._x, 0.) and \
-               isclose(self._y, 0.) and \
-               isclose(self._z, 0.)
+        """ ``True`` if all components are close to zero: ``Vec3(0, 0, 0)``.
+        Has a fixed absolute testing tolerance of 1e-12!
+        """
+        return abs(self._x) <= ABS_TOL and \
+               abs(self._y) <= ABS_TOL and \
+               abs(self._z) <= ABS_TOL
 
     def is_parallel(self, other: 'Vec3', *, rel_tol: float = 1e-9,
                     abs_tol: float = 1e-12) -> bool:
@@ -343,6 +346,10 @@ class Vec3:
                 abs_tol: float = 1e-12) -> bool:
         """ Returns ``True`` if `self` is close to `other`.
         Uses :func:`math.isclose` to compare all axis.
+
+        Learn more about the :func:`math.isclose` function in
+        `PEP 485 <https://www.python.org/dev/peps/pep-0485/>`_.
+
         """
         x, y, z = self.decompose(other)
         return math.isclose(self._x, x, rel_tol=rel_tol, abs_tol=abs_tol) and \
@@ -658,7 +665,7 @@ class Vec2:
 
     @property
     def is_null(self) -> bool:
-        return isclose(self.x, 0.) and isclose(self.y, 0.)
+        return abs(self.x) <= ABS_TOL and abs(self.y) <= ABS_TOL
 
     @property
     def angle(self) -> float:

@@ -163,8 +163,7 @@ cdef class Vec2:
 
     @property
     def is_null(self) -> bool:
-        cdef Vec2 zero = Vec2()
-        return bool(v2_isclose(self, zero, REL_TOL, ABS_TOL))
+        return fabs(self.x) <= ABS_TOL and fabs(self.y) <= ABS_TOL
 
     @property
     def angle(self) -> float:
@@ -542,7 +541,8 @@ cdef class Vec3:
 
     @property
     def is_null(self) -> bool:
-        return bool(v3_isclose(self, <Vec3> NULLVEC, REL_TOL, ABS_TOL))
+        return fabs(self.x) <= ABS_TOL and fabs(self.y) <= ABS_TOL and \
+               fabs(self.z) <= ABS_TOL
 
     def is_parallel(self, other: 'Vertex', *, double rel_tol=REL_TOL,
                     double abs_tol = ABS_TOL) -> bool:

@@ -167,6 +167,14 @@ def test_is_null(vec3):
     assert vec3(0, 0, 0).is_null
 
 
+def test_is_not_null_default_abs_tol(vec3):
+    assert vec3(1e-11, 0, 0).is_null is False
+
+
+def test_is_null_default_abs_tol(vec3):
+    assert vec3(1e-12, 0, 0).is_null is True
+
+
 def test_bool(vec3):
     v = vec3()
     assert bool(v) is False

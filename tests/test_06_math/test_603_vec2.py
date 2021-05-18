@@ -134,6 +134,14 @@ def test_is_null(vcls):
     assert (v2 - v1).is_null
 
 
+def test_is_not_null_default_abs_tol(vcls):
+    assert vcls(1e-11, 0).is_null is False
+
+
+def test_is_null_default_abs_tol(vcls):
+    assert vcls(1e-12, 0).is_null is True
+
+
 def test_bool(vcls):
     v = vcls((0, 0))
     assert bool(v) is False
