@@ -89,31 +89,38 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
         Viewport status bit-coded flags:
 
-        =================== ==========================================
-        1 (0x1)             Enables perspective mode
-        2 (0x2)             Enables front clipping
-        4 (0x4)             Enables back clipping
-        8 (0x8)             Enables UCS follow
-        16 (0x10)           Enables front clip not at eye
-        32 (0x20)           Enables UCS icon visibility
-        64 (0x40)           Enables UCS icon at origin
-        128 (0x80)          Enables fast zoom
-        256 (0x100)         Enables snap mode
-        512 (0x200)         Enables grid mode
-        1024 (0x400)        Enables isometric snap style
-        2048 (0x800)        Enables hide plot mode
-        4096 (0x1000)       kIsoPairTop. If set and kIsoPairRight is not set, then isopair top is enabled. If both kIsoPairTop
-                            and kIsoPairRight are set, then isopair left is enabled
-        8192 (0x2000)       kIsoPairRight. If set and kIsoPairTop is not set, then isopair right is enabled
-        16384 (0x4000)      Enables viewport zoom locking
-        32768 (0x8000)      Currently always enabled
-        65536 (0x10000)     Enables non-rectangular clipping
-        131072 (0x20000)    Turns the viewport off
-        262144 (0x40000)    Enables the display of the grid beyond the drawing limits
-        524288 (0x80000)    Enable adaptive grid display
-        1048576 (0x100000)  Enables subdivision of the grid below the set grid spacing when the grid display is adaptive
-        2097152 (0x200000)  Enables grid follows workplane switching
-        =================== ==========================================
+        =================== =============================== ==========================================
+        Bit value           Constant in :mod:`ezdxf.const`  Description
+        =================== =============================== ==========================================
+        1 (0x1)             VSF_PERSPECTIVE_MODE            Enables perspective mode
+        2 (0x2)             VSF_FRONT_CLIPPING              Enables front clipping
+        4 (0x4)             VSF_BACK_CLIPPING               Enables back clipping
+        8 (0x8)             VSF_USC_FOLLOW                  Enables UCS follow
+        16 (0x10)           VSF_FRONT_CLIPPING_NOT_AT_EYE   Enables front clip not at eye
+        32 (0x20)           VSF_UCS_ICON_VISIBILITY         Enables UCS icon visibility
+        64 (0x40)           VSF_UCS_ICON_AT_ORIGIN          Enables UCS icon at origin
+        128 (0x80)          VSF_FAST_ZOOM                   Enables fast zoom
+        256 (0x100)         VSF_SNAP_MODE                   Enables snap mode
+        512 (0x200)         VSF_GRID_MODE                   Enables grid mode
+        1024 (0x400)        VSF_ISOMETRIC_SNAP_STYLE        Enables isometric snap style
+        2048 (0x800)        VSF_HIDE_PLOT_MODE              Enables hide plot mode
+        4096 (0x1000)       VSF_KISOPAIR_TOP                kIsoPairTop. If set and kIsoPairRight is not set, then isopair top is enabled. If both kIsoPairTop
+                                                            and kIsoPairRight are set, then isopair left is enabled
+        8192 (0x2000)       VSF_KISOPAIR_RIGHT              kIsoPairRight. If set and kIsoPairTop is not set, then isopair right is enabled
+        16384 (0x4000)      VSF_LOCK_ZOOM                   Enables viewport zoom locking
+        32768 (0x8000)      VSF_CURRENTLY_ALWAYS_ENABLED    Currently always enabled
+        65536 (0x10000)     VSF_NON_RECTANGULAR_CLIPPING    Enables non-rectangular clipping
+        131072 (0x20000)    VSF_TURN_VIEWPORT_OFF           Turns the viewport off
+        262144 (0x40000)    VSF_NO_GRID_LIMITS              Enables the display of the grid beyond the drawing limits
+        524288 (0x80000)    VSF_ADAPTIVE_GRID_DISPLAY       Enable adaptive grid display
+        1048576 (0x100000)  VSF_SUBDIVIDE_GRID              Enables subdivision of the grid below the set grid spacing when the grid display is adaptive
+        2097152 (0x200000)  VSF_GRID_FOLLOW_WORKPLANE       Enables grid follows workplane switching
+        =================== =============================== ==========================================
+
+        Use helper method :meth:`~DXFEntity.set_flag_state` to set and clear
+        viewport flags, e.g. lock viewport::
+
+            vp.set_flag_state(ezdxf.const.VSF_LOCK_ZOOM, True)
 
     .. attribute:: dxf.clipping_boundary_handle
 
