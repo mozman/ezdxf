@@ -7,8 +7,6 @@ Utility functions and classes located in module :mod:`ezdxf.math`.
 Functions
 =========
 
-.. autofunction:: is_close_points
-
 .. autofunction:: closest_point
 
 .. autofunction:: uniform_knot_vector

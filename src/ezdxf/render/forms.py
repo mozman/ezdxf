@@ -4,8 +4,7 @@ from typing import TYPE_CHECKING, Iterable, List, Tuple, Sequence
 from math import pi, sin, cos, radians, tan, isclose, asin, fabs
 from enum import IntEnum
 from ezdxf.math import (
-    Vec3, Matrix44, is_close_points, global_bspline_interpolation,
-    EulerSpiral,
+    Vec3, Matrix44, global_bspline_interpolation, EulerSpiral,
 )
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
@@ -396,11 +395,14 @@ def scale(vertices: Iterable['Vertex'], scaling=(1., 1., 1.)) -> Iterable[Vec3]:
         yield Vec3(v.x * sx, v.y * sy, v.z * sz)
 
 
-def close_polygon(vertices: Iterable['Vertex']) -> List['Vertex']:
+def close_polygon(vertices: Iterable['Vertex'],
+                  rel_tol: float = 1e-9,
+                  abs_tol: float = 1e-12) -> List['Vertex']:
     """ Returns list of vertices, where vertices[0] == vertices[-1].
     """
     vertices = list(vertices)
-    if not is_close_points(vertices[0], vertices[-1]):
+    if not Vec3(vertices[0]).isclose(
+            vertices[-1], rel_tol=rel_tol, abs_tol=abs_tol):
         vertices.append(vertices[0])
     return vertices
 

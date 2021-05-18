@@ -1,5 +1,4 @@
-# Created: 14.11.2010
-# Copyright (c) 2010-2020, Manfred Moitzi
+# Copyright (c) 2010-2021, Manfred Moitzi
 # License: MIT License
 import pytest
 from math import isclose, radians
@@ -59,14 +58,6 @@ def test_point_ot_line_relation_on_line():
     assert point_to_line_relation(Vec2(0.5, 0.5), Vec2(0, 0), Vec2(1, 1)) == 0
     assert point_to_line_relation(Vec2(1, 1), Vec2(0, 0), Vec2(1, 1)) == 0
     assert point_to_line_relation(Vec2(-.5, -.5), Vec2(0, 0), Vec2(1, 1)) == 0
-
-
-def test_is_close_points():
-    with pytest.raises(TypeError):
-        is_close_points((1, 1, 0), (1, 1))
-
-    assert is_close_points((1, 1, 1), (1, 1, 1)) is True
-    assert is_close_points((1, 1, 1), (1, 1, 1.0000000001)) is True
 
 
 def test_xround():

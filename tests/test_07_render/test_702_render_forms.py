@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2020 Manfred Moitzi
+# Copyright (c) 2018-2021 Manfred Moitzi
 # License: MIT License
 from ezdxf.render.forms import (
     circle, close_polygon, cube, extrude, cylinder,
@@ -12,7 +12,7 @@ from ezdxf.render.forms import (
 from ezdxf.render.forms import from_profiles_linear, from_profiles_spline
 from ezdxf.render.forms import rotation_form, ngon_to_triangles
 from ezdxf.render.forms import translate, rotate, scale
-from ezdxf.math import Vec3, is_close_points, close_vectors
+from ezdxf.math import Vec3, close_vectors
 
 
 def test_circle_open():
@@ -110,7 +110,7 @@ def test_cylinder():
                     caps=False)
     assert len(mesh.faces) == 12
     assert len(mesh.vertices) == 24
-    assert in_vertices((3, 0, 3),  mesh.vertices)
+    assert in_vertices((3, 0, 3), mesh.vertices)
     assert in_vertices((-1, 0, 3), mesh.vertices)
 
 
@@ -118,10 +118,10 @@ def test_spline_interpolation():
     vertices = [(0., 0.), (1., 2.), (3., 1.), (5., 3.)]
     result = spline_interpolation(vertices, method='uniform', subdivide=4)
     assert len(result) == 13  # (len-1) * subdivide + 1
-    assert is_close_points((0, 0, 0), result[0]), 'expected start point'
-    assert is_close_points((5, 3, 0), result[-1]), 'expected end point'
-    assert is_close_points((1, 2, 0), result[4]), 'expected 2. fit point'
-    assert is_close_points((3, 1, 0), result[8]), 'expected 3. fit point'
+    assert Vec3(0, 0, 0).isclose(result[0]), 'expected start point'
+    assert Vec3(5, 3, 0).isclose(result[-1]), 'expected end point'
+    assert Vec3(1, 2, 0).isclose(result[4]), 'expected 2. fit point'
+    assert Vec3(3, 1, 0).isclose(result[8]), 'expected 3. fit point'
 
 
 def test_spline_interpolated_profiles():
@@ -160,47 +160,43 @@ def test_rotation_form():
 def test_translate():
     p = [(1, 2, 3), (4, 5, 6)]
     r = list(translate(p, (3, 2, 1)))
-    assert is_close_points(r[0], (4, 4, 4))
-    assert is_close_points(r[1], (7, 7, 7))
+    assert r[0].isclose((4, 4, 4))
+    assert r[1].isclose((7, 7, 7))
 
 
 def test_scale():
     p = [(1, 2, 3), (4, 5, 6)]
     r = list(scale(p, (3, 2, 1)))
-    assert is_close_points(r[0], (3, 4, 3))
-    assert is_close_points(r[1], (12, 10, 6))
+    assert r[0].isclose((3, 4, 3))
+    assert r[1].isclose((12, 10, 6))
 
 
 def test_rotate():
     p = [(1, 0, 3), (0, 1, 6)]
     r = list(rotate(p, 90, deg=True))
-    assert is_close_points(r[0], (0, 1, 3))
-    assert is_close_points(r[1], (-1, 0, 6))
+    assert r[0].isclose((0, 1, 3))
+    assert r[1].isclose((-1, 0, 6))
 
 
 def test_square_by_radius():
     corners = list(ngon(4, radius=1))
     assert len(corners) == 4
-    assert is_close_points(corners[0], (1, 0, 0))
-    assert is_close_points(corners[1], (0, 1, 0))
-    assert is_close_points(corners[2], (-1, 0, 0))
-    assert is_close_points(corners[3], (0, -1, 0))
+    assert corners[0].isclose((1, 0, 0))
+    assert corners[1].isclose((0, 1, 0))
+    assert corners[2].isclose((-1, 0, 0))
+    assert corners[3].isclose((0, -1, 0))
 
 
 def test_heptagon_by_edge_length():
     corners = list(ngon(7, length=10))
     assert len(corners) == 7
-    assert is_close_points(corners[0], (11.523824354812433, 0, 0))
-    assert is_close_points(corners[1],
-                           (7.184986963636852, 9.009688679024192, 0))
-    assert is_close_points(corners[2],
-                           (-2.564292158181384, 11.234898018587335, 0))
-    assert is_close_points(corners[3], (-10.382606982861683, 5, 0))
-    assert is_close_points(corners[4], (-10.382606982861683, -5, 0))
-    assert is_close_points(corners[5],
-                           (-2.564292158181387, -11.234898018587335, 0))
-    assert is_close_points(corners[6],
-                           (7.18498696363685, -9.009688679024192, 0))
+    assert corners[0].isclose((11.523824354812433, 0, 0))
+    assert corners[1].isclose((7.184986963636852, 9.009688679024192, 0))
+    assert corners[2].isclose((-2.564292158181384, 11.234898018587335, 0))
+    assert corners[3].isclose((-10.382606982861683, 5, 0))
+    assert corners[4].isclose((-10.382606982861683, -5, 0))
+    assert corners[5].isclose((-2.564292158181387, -11.234898018587335, 0))
+    assert corners[6].isclose((7.18498696363685, -9.009688679024192, 0))
 
 
 def test_ngons_to_triangles():

@@ -1,9 +1,10 @@
-# Copyright (c) 2010-2020, Manfred Moitzi
+# Copyright (c) 2010-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List, Union, Tuple
+from typing import TYPE_CHECKING, Iterable, List, Union
 
 from functools import partial
 import math
+import warnings
 from ezdxf.math import Vec3, Vec2
 from decimal import Decimal
 
@@ -26,25 +27,11 @@ __all__ = [
 
 
 def is_close_points(p1: 'Vertex', p2: 'Vertex', abs_tol=TOLERANCE) -> bool:
+    """ Deprecated function will be removed in v0.18! Use Vec(p1).isclose(p2).
     """
-    Returns ``True`` if `p1` is very close to `p2`.
-
-    Args:
-        p1: first vertex as :class:`Vec3` compatible object
-        p2: second vertex as :class:`Vec3` compatible object
-        abs_tol: absolute tolerance
-
-    Raises:
-        TypeError: for incompatible vertices
-
-    """
-    if len(p1) != len(p2):
-        raise TypeError('incompatible points')
-
-    for v1, v2 in zip(p1, p2):
-        if not math.isclose(v1, v2, abs_tol=abs_tol):
-            return False
-    return True
+    warnings.warn("Deprecated function will be removed in v0.18! "
+                  "Use Vec3(p1).isclose(p2).", DeprecationWarning)
+    return Vec3(p1).isclose(p2, abs_tol=abs_tol)
 
 
 def linspace(start: float, stop: float, num: int,

@@ -1,9 +1,12 @@
-# Copyright (c) 2009-2020, Manfred Moitzi
+# Copyright (c) 2009-2021, Manfred Moitzi
 # License: MIT License
 import math
 from math import isclose
+
+import pytest
+
 from ezdxf.math import (
-    is_close_points, ConstructionRay, ConstructionCircle, Vec2,
+    ConstructionRay, ConstructionCircle, Vec2,
 )
 
 HALF_PI = math.pi / 2.
@@ -77,64 +80,70 @@ def test_intersect_ray_touch():
     assert test_touch(5, 8.8341, 12.7642, 0.3991568, abs_tol=1e-4) is True
 
 
-def test_intersect_ray_intersect():
-    circle = ConstructionCircle((10., 10.), 3)
-    ray_vert = ConstructionRay((8.5, 10.), angle=HALF_PI)
-    cross_points = circle.intersect_ray(ray_vert)
-    assert len(cross_points) == 2
-    p1, p2 = cross_points
-    if p1[1] > p2[1]: p1, p2 = p2, p1
-    assert is_close_points(p1, (8.5, 7.4019), abs_tol=1e-4) is True
-    assert is_close_points(p2, (8.5, 12.5981), abs_tol=1e-4) is True
+class TestCircleInterectRay:
+    @pytest.fixture
+    def circle(self):
+        return ConstructionCircle((10., 10.), 3)
 
-    ray_hor = ConstructionRay((10, 8.5), angle=0.)
-    cross_points = circle.intersect_ray(ray_hor)
-    assert len(cross_points) == 2
-    p1, p2 = cross_points
-    if p1[0] > p2[0]: p1, p2 = p2, p1
-    assert is_close_points(p1, (7.4019, 8.5), abs_tol=1e-4) is True
-    assert is_close_points(p2, (12.5981, 8.5), abs_tol=1e-4) is True
+    def test_vertical_ray(self, circle):
+        ray_vert = ConstructionRay((8.5, 10.), angle=HALF_PI)
+        cross_points = circle.intersect_ray(ray_vert)
+        assert len(cross_points) == 2
+        p1, p2 = cross_points
+        if p1[1] > p2[1]: p1, p2 = p2, p1
+        assert p1.isclose((8.5, 7.4019), abs_tol=1e-4)
+        assert p2.isclose((8.5, 12.5981), abs_tol=1e-4)
 
-    ray_slope = ConstructionRay((5, 5), (16, 12))
-    cross_points = circle.intersect_ray(ray_slope)
-    assert len(cross_points) == 2
-    p1, p2 = cross_points
-    if p1[0] > p2[0]: p1, p2 = p2, p1
-    assert is_close_points(p1, (8.64840, 7.3217), abs_tol=1e-4) is True
-    assert is_close_points(p2, (12.9986, 10.0900), abs_tol=1e-4) is True
+    def test_horizontal_ray(self, circle):
+        ray_hor = ConstructionRay((10, 8.5), angle=0.)
+        cross_points = circle.intersect_ray(ray_hor)
+        assert len(cross_points) == 2
+        p1, p2 = cross_points
+        if p1[0] > p2[0]: p1, p2 = p2, p1
+        assert p1.isclose((7.4019, 8.5), abs_tol=1e-4)
+        assert p2.isclose((12.5981, 8.5), abs_tol=1e-4)
 
-    # ray with slope through midpoint
-    ray_slope = ConstructionRay((10, 10), angle=HALF_PI / 2)
-    cross_points = circle.intersect_ray(ray_slope)
-    assert len(cross_points) == 2
-    p1, p2 = cross_points
-    if p1[0] > p2[0]: p1, p2 = p2, p1
-    # print (p1[0], p1[1], p2[0], p2[1])
-    assert is_close_points(p1, (7.8787, 7.8787), abs_tol=1e-4) is True
-    assert is_close_points(p2, (12.1213, 12.1213), abs_tol=1e-4) is True
+    def test_diagonal_ray(self, circle):
+        ray_slope = ConstructionRay((5, 5), (16, 12))
+        cross_points = circle.intersect_ray(ray_slope)
+        assert len(cross_points) == 2
+        p1, p2 = cross_points
+        if p1[0] > p2[0]: p1, p2 = p2, p1
+        assert p1.isclose((8.64840, 7.3217), abs_tol=1e-4)
+        assert p2.isclose((12.9986, 10.0900), abs_tol=1e-4)
 
-    # horizontal ray through midpoint
-    ray_hor = ConstructionRay((10, 10), angle=0)
-    cross_points = circle.intersect_ray(ray_hor)
-    assert len(cross_points) == 2
-    p1, p2 = cross_points
-    if p1[0] > p2[0]: p1, p2 = p2, p1
-    # print (p1[0], p1[1], p2[0], p2[1])
-    assert is_close_points(p1, (7, 10), abs_tol=1e-5) is True
-    assert is_close_points(p2, (13, 10), abs_tol=1e-5) is True
+    def test_diagonal_ray_through_mid_point(self, circle):
+        ray_slope = ConstructionRay((10, 10), angle=HALF_PI / 2)
+        cross_points = circle.intersect_ray(ray_slope)
+        assert len(cross_points) == 2
+        p1, p2 = cross_points
+        if p1[0] > p2[0]: p1, p2 = p2, p1
+        # print (p1[0], p1[1], p2[0], p2[1])
+        assert p1.isclose((7.8787, 7.8787), abs_tol=1e-4)
+        assert p2.isclose((12.1213, 12.1213), abs_tol=1e-4)
 
-    # vertical ray through midpoint
-    ray_vert = ConstructionRay((10, 10), angle=HALF_PI)
-    cross_points = circle.intersect_ray(ray_vert)
-    assert len(cross_points) == 2
-    p1, p2 = cross_points
-    if p1[1] > p2[1]: p1, p2 = p2, p1
-    # print (p1[0], p1[1], p2[0], p2[1])
-    assert is_close_points(p1, (10, 7), abs_tol=1e-5) is True
-    assert is_close_points(p2, (10, 13), abs_tol=1e-5) is True
+    def test_horizontal_ray_through_mid_point(self, circle):
+        ray_hor = ConstructionRay((10, 10), angle=0)
+        cross_points = circle.intersect_ray(ray_hor)
+        assert len(cross_points) == 2
+        p1, p2 = cross_points
+        if p1[0] > p2[0]: p1, p2 = p2, p1
+        # print (p1[0], p1[1], p2[0], p2[1])
+        assert p1.isclose((7, 10), abs_tol=1e-5)
+        assert p2.isclose((13, 10), abs_tol=1e-5)
+
+    def test_vertical_ray_through_mid_point(self, circle):
+        ray_vert = ConstructionRay((10, 10), angle=HALF_PI)
+        cross_points = circle.intersect_ray(ray_vert)
+        assert len(cross_points) == 2
+        p1, p2 = cross_points
+        if p1[1] > p2[1]: p1, p2 = p2, p1
+        # print (p1[0], p1[1], p2[0], p2[1])
+        assert p1.isclose((10, 7), abs_tol=1e-5)
+        assert p2.isclose((10, 13), abs_tol=1e-5)
 
 
-def test_intersect_circle_pass():
+def test_cicles_do_not_intersect():
     M1 = (30, 30)
     M2 = (40, 40)
     M3 = (30.3, 30.3)
@@ -156,7 +165,7 @@ def test_intersect_circle_touch():
         circle2 = ConstructionCircle(m, 1.5)
         points = circle1.intersect_circle(circle2, 4)
         assert len(points) == 1
-        return is_close_points(points[0], Vec2(t), abs_tol=abs_tol)
+        return points[0].isclose(t, abs_tol=abs_tol)
 
     circle1 = ConstructionCircle((20, 20), 5)
 
@@ -184,12 +193,10 @@ def test_intersect_circle_intersect():
         assert len(points) == 2
         a, b = points
 
-        result1 = is_close_points(a, p1, abs_tol=abs_tol) and is_close_points(b,
-                                                                              p2,
-                                                                              abs_tol=abs_tol)
-        result2 = is_close_points(a, p2, abs_tol=abs_tol) and is_close_points(b,
-                                                                              p1,
-                                                                              abs_tol=abs_tol)
+        result1 = a.isclose(p1, abs_tol=abs_tol) and \
+                  b.isclose(p2, abs_tol=abs_tol)
+        result2 = a.isclose(p2, abs_tol=abs_tol) and \
+                  b.isclose(p1, abs_tol=abs_tol)
         return result1 or result2
 
     circle1 = ConstructionCircle((40, 20), 5)
