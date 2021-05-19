@@ -769,5 +769,105 @@ class TestSpace:
         assert tl.Space(1, max_width=1.0).can_grow is False
 
 
+class TestLeftLine:
+    def test_setup(self):
+        line = tl.LeftLine(10)
+        assert line.total_width == 10, "line always consumes the total width"
+
+    def test_line_height_is_defined_by_max_content_height(self):
+        line = tl.LeftLine(10)
+        line.append(tl.Text(1, 1))
+        assert line.total_height == 1
+        line.append(tl.Text(1, 2))
+        assert line.total_height == 2
+        line.append(tl.Text(1, 3))
+        assert line.total_height == 3
+
+    def test_fill_until_line_is_full(self):
+        line = tl.LeftLine(10)
+        assert line.append(tl.Text(5, 1)) is True
+        assert line.append(tl.Text(5, 1)) is True
+        assert line.append(tl.Text(5, 1)) is False
+        assert line.total_width == 10
+
+    def test_left_tab(self):
+        def append_left_tab(size):
+            line.append(tl.Tabulator(width=0.5))
+            line.append(tl.Text(size, 1, renderer=Rect("LTAB", result)))
+
+        result = []
+        line = tl.LeftLine(20, tab_stops=[
+            tl.TabStop(6, tl.TabStopType.LEFT),
+            tl.TabStop(12, tl.TabStopType.LEFT),
+        ])
+        line.append(tl.Text(2, 1, renderer=Rect("TEXT", result)))
+        append_left_tab(2)
+        append_left_tab(2)
+        line.append(tl.Space(0.5))
+        line.append(tl.Text(2, 1, renderer=Rect("TEXT", result)))
+        line.place(0, 0)
+        line.render()
+        assert result[0] == "TEXT(0.0, -1.0, 2.0, 0.0)"
+        assert result[1] == "LTAB(6.0, -1.0, 8.0, 0.0)"
+        assert result[2] == "LTAB(12.0, -1.0, 14.0, 0.0)"
+        assert result[3] == "TEXT(14.5, -1.0, 16.5, 0.0)"
+
+    def test_left_tab_without_tab_stops(self):
+        result = []
+        line = tl.LeftLine(20)
+        line.append(tl.Text(2, 1, renderer=Rect("TEXT", result)))
+        line.append(tl.Tabulator(width=0.5))
+        line.append(tl.Text(2, 1, renderer=Rect("LTAB", result)))
+        line.place(0, 0)
+        line.render()
+        assert result[0] == "TEXT(0.0, -1.0, 2.0, 0.0)"
+        # replace tab by a space width= 0.5
+        assert result[1] == "LTAB(2.5, -1.0, 4.5, 0.0)"
+
+    def test_center_tab(self):
+        def append_center_tab(size):
+            line.append(tl.Tabulator(width=0.5))
+            line.append(tl.Text(size, 1, renderer=Rect("CTAB", result)))
+
+        result = []
+        line = tl.LeftLine(20, tab_stops=[
+            tl.TabStop(6, tl.TabStopType.CENTER),
+            tl.TabStop(12, tl.TabStopType.CENTER),
+        ])
+        line.append(tl.Text(2, 1, renderer=Rect("TEXT", result)))
+        append_center_tab(2)
+        append_center_tab(2)
+        line.append(tl.Space(0.5))
+        line.append(tl.Text(2, 1, renderer=Rect("TEXT", result)))
+        line.place(0, 0)
+        line.render()
+        assert result[0] == "TEXT(0.0, -1.0, 2.0, 0.0)"
+        assert result[1] == "CTAB(5.0, -1.0, 7.0, 0.0)"
+        assert result[2] == "CTAB(11.0, -1.0, 13.0, 0.0)"
+        assert result[3] == "TEXT(13.5, -1.0, 15.5, 0.0)"
+
+    def test_right_tab(self):
+        def append_right_tab(size):
+            line.append(tl.Tabulator(width=0.5))
+            line.append(tl.Text(size, 1, renderer=Rect("RTAB", result)))
+
+        result = []
+        line = tl.LeftLine(20, tab_stops=[
+            tl.TabStop(6, tl.TabStopType.RIGHT),
+            tl.TabStop(12, tl.TabStopType.RIGHT),
+        ])
+        line.append(tl.Text(2, 1, renderer=Rect("TEXT", result)))
+        append_right_tab(2)
+        append_right_tab(2)
+        line.append(tl.Space(0.5))
+        line.append(tl.Text(2, 1, renderer=Rect("TEXT", result)))
+        line.place(0, 0)
+        line.render()
+        assert result[0] == "TEXT(0.0, -1.0, 2.0, 0.0)"
+        assert result[1] == "RTAB(4.0, -1.0, 6.0, 0.0)"
+        assert result[2] == "RTAB(10.0, -1.0, 12.0, 0.0)"
+        assert result[3] == "TEXT(12.5, -1.0, 14.5, 0.0)"
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

@@ -1,10 +1,12 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Sequence, Iterable, Optional, Tuple, List
+from typing import Sequence, Iterable, Optional, Tuple, List, NamedTuple
 import abc
 import math
 import itertools
 import enum
+
+import ezdxf.lldxf.const
 from ezdxf.math import Matrix44, BoundingBox2d
 
 """
@@ -1341,3 +1343,320 @@ class Layout(Container):
         self._current_column += 1
         if self._current_column >= len(self._columns):
             self._new_column()
+
+
+class TabStopType(enum.IntEnum):
+    LEFT = 0
+    RIGHT = 1
+    CENTER = 2
+
+
+class TabStop(NamedTuple):
+    pos: float = 0.0
+    kind: TabStopType = TabStopType.LEFT
+
+
+class AbstractLine(ContentCell):  # ABC
+    @abc.abstractmethod
+    def append(self, cell: Cell) -> bool:
+        pass
+
+    @abc.abstractmethod
+    def distribute(self):
+        pass
+
+    @property
+    @abc.abstractmethod
+    def has_content(self):
+        pass
+
+
+class LineCell(NamedTuple):
+    cell: Cell
+    offset: float
+    locked: bool
+
+
+class LeftLine(AbstractLine):
+    def __init__(self, width: float,
+                 tab_stops: Sequence[TabStop] = None):
+        super().__init__(width=width, height=0,
+                         valign=CellAlignment.BOTTOM)
+        self._tab_stops = tab_stops or []  # tab stops relative to line start
+        self._cells: List[LineCell] = []
+        self._current_offset: float = 0.0
+        self._was_tab = False
+        self._replacement_space: Space = Space(0.0)
+
+    @property
+    def has_content(self):
+        return bool(self._cells)
+
+    def append(self, cell: Cell) -> bool:
+        if isinstance(cell, Tabulator):
+            self._was_tab = True
+            self._replacement_space = cell.to_space()
+            return True
+
+        was_tab = self._was_tab
+        self._was_tab = False
+        if was_tab:
+            return self._append_at_tab(cell)
+        else:
+            return self._append(cell)
+
+    def _append_line_cell(self, cell: Cell, offset: float,
+                          locked: bool = False):
+        cells = self._cells
+        if cells and not isinstance(cells[-1].cell, Glue):
+            cells.append(LineCell(Space(0), self._current_offset, False))
+        cells.append(LineCell(cell, offset, locked))
+
+    def _append(self, cell: Cell):
+        width = cell.total_width
+        if self._current_offset + width <= self.total_width:
+            self._append_line_cell(cell, self._current_offset)
+            self._current_offset += width
+            return True
+        else:
+            return False
+
+    def _append_at_tab(self, cell: Cell):
+        width = cell.total_width
+        pos = self._current_offset
+        if pos + width > self.total_width:
+            return False
+        left_pos = pos
+        center_pos = pos + width / 2
+        right_pos = pos + width
+        tab_stop = self._next_tab_stop(left_pos, center_pos, right_pos)
+        if tab_stop is None:
+            self._append(self._replacement_space)
+            return self._append(cell)
+        else:
+            if tab_stop.kind == TabStopType.LEFT:
+                return self._append_left(cell, tab_stop.pos)
+            elif tab_stop.kind == TabStopType.CENTER:
+                return self._append_center(cell, tab_stop.pos)
+            else:
+                return self._append_right(cell, tab_stop.pos)
+
+    def _append_left(self, cell, pos):
+        width = cell.total_width
+        if pos + width <= self.total_width:
+            self._append_line_cell(cell, pos, True)
+            self._current_offset = pos + width
+            return True
+        return False
+
+    def _append_center(self, cell, pos):
+        width2 = cell.total_width / 2
+        if self._current_offset + width2 > pos:
+            return self._append(cell)
+        elif pos + width2 <= self.total_width:
+            self._append_line_cell(cell, pos - width2, True)
+            self._current_offset = pos + width2
+            return True
+        return False
+
+    def _append_right(self, cell, pos):
+        width = cell.total_width
+        end_of_cell_pos = self._current_offset + width
+        if end_of_cell_pos > self.total_width:
+            return False
+        if end_of_cell_pos > pos:
+            return self._append(cell)
+        self._append_line_cell(cell, pos - width, True)
+        self._current_offset = pos
+        return True
+
+    def _next_tab_stop(self, left, center, right):
+        for tab in self._tab_stops:
+            if tab.kind == TabStopType.LEFT and tab.pos > left:
+                return tab
+            elif tab.kind == TabStopType.CENTER and tab.pos > center:
+                return tab
+            elif tab.kind == TabStopType.RIGHT and tab.pos > right:
+                return tab
+        return None
+
+    def place(self, x: float, y: float):
+        super().place(x, y)
+        group_height = self.total_height
+        for line_cell in self._cells:
+            cx = x + line_cell.offset
+            cy = y
+            cell = line_cell.cell
+            if isinstance(cell, ContentCell) and \
+                    cell.valign != CellAlignment.TOP:
+                dy = cell.total_height - group_height
+                if cell.valign == CellAlignment.CENTER:
+                    dy /= 2.0
+                cy += dy
+            cell.place(cx, cy)
+
+    @property
+    def total_height(self) -> float:
+        return max(c.cell.total_height for c in self._cells)
+
+    def distribute(self):
+        pass
+
+    def render(self, m: Matrix44 = None) -> None:
+        for c in self._cells:
+            c.cell.render(m)
+
+
+class FlowText2(Paragraph):
+    def __init__(self, width: float = None,  # defined by parent container
+                 align: FlowTextAlignment = FlowTextAlignment.DEFAULT,
+                 indent: Tuple[float, float, float] = (0, 0, 0),
+
+                 line_spacing: float = 1,
+                 margins: Sequence[float] = None,
+                 tab_stops: Sequence[TabStop] = None,
+                 renderer: ContentRenderer = None):
+        super().__init__(width, None, margins, renderer)
+        self._align = align
+        first, left, right = indent
+        self._indent_first = first
+        self._indent_left = left
+        self._indent_right = right
+        self._line_spacing = line_spacing
+        self._tab_stops = tab_stops or []
+
+        # contains the raw and not distributed content:
+        self._cells: List[Cell] = []
+
+        # contains the final distributed content:
+        self._lines: List[AbstractLine] = []
+
+        # This flag is False if the original flow text was split into
+        # multiple paragraphs and this is not the last one.
+        self._has_last_line = True
+
+    def __iter__(self):
+        return iter(self._lines)
+
+    def set_total_width(self, width: float):
+        self._content_width = width - self.left_margin - self.right_margin
+        if self._content_width < 1e-6:
+            raise ValueError('invalid width, no usable space left')
+
+    def append_content(self, content: Iterable[Cell]):
+        self._cells.extend(content)
+
+    def line_width(self, first: bool) -> float:
+        indent = self._indent_right
+        indent += self._indent_first if first else self._indent_left
+        return self.content_width - indent
+
+    def place_content(self):
+        x, y = self.final_location()
+        x += self.left_margin
+        y -= self.top_margin
+        first = True
+        lines = self._lines
+        for line in lines:
+            x_final = self._left_border(x, first)
+            line.place(x_final, y)
+            y -= leading(line.total_height, self._line_spacing)
+            if first:
+                first = False
+
+    def _left_border(self, x: float, first: bool) -> float:
+        """ Apply indentation and paragraph alignment """
+        left_indent = self._indent_first if first else self._indent_left
+        return x + left_indent
+
+    def _calculate_content_height(self) -> float:
+        """ Returns the actual content height determined by the distributed
+        lines.
+        """
+        return sum(
+            leading(line.total_height, self._line_spacing)
+            for line in self._lines
+        )
+
+    def distribute_content(self, height: float = None) -> Optional['FlowText2']:
+        """ Distribute the raw content into lines. Returns the cells which do
+        not fit as a new paragraph.
+
+        Args:
+            height: available total height (margins + content), ``None`` for
+                unrestricted paragraph height
+
+        """
+
+        # This method does not apply indentation or alignment,
+        # see place_content() method.
+
+        def new_line(space: float) -> AbstractLine:
+            return LeftLine(space, self._tab_stops)
+
+        # Refactoring required:
+        # using indices into `cells` instead creating temp copies.
+
+        cells = normalize_cells(self._cells)
+        cells.reverse()
+        undo = cells
+        first = True
+        paragraph_height = self.top_margin + self.bottom_margin
+        while cells:
+            if height is not None:  # is restricted
+                # shallow copy current cell state for undo, if not enough space
+                # for next line:
+                undo = list(cells)
+
+            line = new_line(self.line_width(first))
+            while cells:
+                cell = cells[-1]
+                if line.append(cell):
+                    cells.pop()
+                else:
+                    break
+
+            if line.has_content:
+                line_height = line.total_height
+                if paragraph_height + line_height > height:
+                    # Not enough space for the new line:
+                    cells = undo
+                    break
+                else:
+                    first = False
+                    line.distribute()
+                    self._lines.append(line)
+                    paragraph_height += leading(
+                        line_height, self._line_spacing)
+
+        # Delete raw content:
+        self._cells = []
+
+        # Update content height:
+        self._content_height = self._calculate_content_height()
+
+        # If not all cells could be processed, put them into a new paragraph
+        # and return it to the caller.
+        if cells:
+            cells.reverse()
+            self._has_last_line = False
+            return self._create_new_flow_text(cells, first)
+        else:
+            return None
+
+    def _create_new_flow_text(self, cells: List[Cell],
+                              first: bool) -> 'FlowText2':
+        # First line of the paragraph included?
+        indent_first = self._indent_first if first else self._indent_left
+        indent = (indent_first, self._indent_left, self._indent_right)
+        flow_text = FlowText2(
+            self._content_width,
+            self._align,
+            indent,
+            self._line_spacing,
+            self._margins,
+            self._tab_stops,
+            self.renderer
+        )
+        flow_text.append_content(cells)
+        return flow_text
