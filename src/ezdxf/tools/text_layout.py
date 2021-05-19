@@ -1499,8 +1499,12 @@ class LeftLine(AbstractLine):
             self._append_line_cell(cell, self._current_offset)
             self._current_offset += width
             return True
-        else:
-            return False
+        if len(self._cells) == 0:
+            # single cell is too wide for a line,
+            # forced rendering with oversize
+            self._append_line_cell(cell, 0)
+            return True
+        return False
 
     def _append_at_tab(self, cell: Cell):
         width = cell.total_width
@@ -1573,6 +1577,12 @@ class NoTabLine(AbstractLine):
             self._cells.append(LineCell(cell, self._current_offset, False))
             self._current_offset += width
             return True
+        if len(self._cells) == 0:
+            # single cell is too wide for a line,
+            # forced rendering with oversize
+            self._cells.append(LineCell(cell, 0, False))
+            return True
+        return False
 
     def distribute(self):
         start_offset = self.start_offset()
@@ -1688,6 +1698,7 @@ class FlowText2(Paragraph):
                 unrestricted paragraph height
 
         """
+
         def new_line(space: float) -> AbstractLine:
             indent = self._indent_first if first else self._indent_left
             tab_stops = shift_tab_stops(self._tab_stops, indent)
