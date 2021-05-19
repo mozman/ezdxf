@@ -1603,6 +1603,11 @@ class RightLine(NoTabLine):
         return self.total_width - real_width
 
 
+def shift_tab_stops(tab_stops: Iterable[TabStop],
+                    offset: float) -> List[TabStop]:
+    return [TabStop(pos + offset, kind) for pos, kind in tab_stops]
+
+
 class FlowText2(Paragraph):
     def __init__(self, width: float = None,  # defined by parent container
                  align: FlowTextAlignment = FlowTextAlignment.DEFAULT,
@@ -1683,15 +1688,10 @@ class FlowText2(Paragraph):
                 unrestricted paragraph height
 
         """
-
-        # This method does not apply indentation or alignment,
-        # see place_content() method.
-
         def new_line(space: float) -> AbstractLine:
-            return LeftLine(space, self._tab_stops)
-
-        # Refactoring required:
-        # using indices into `cells` instead creating temp copies.
+            indent = self._indent_first if first else self._indent_left
+            tab_stops = shift_tab_stops(self._tab_stops, indent)
+            return LeftLine(space, tab_stops)
 
         cells = normalize_cells(self._cells)
         cells = group_non_breakable_cells(cells)
