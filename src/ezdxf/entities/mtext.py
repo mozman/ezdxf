@@ -22,7 +22,7 @@ from ezdxf.math import Vec3, Matrix44, OCS, UCS, NULLVEC, Z_AXIS, X_AXIS
 from ezdxf.math.transformtools import transform_extrusion
 from ezdxf.colors import rgb2int
 from ezdxf.tools.text import (
-    caret_decode, split_mtext_string, escape_dxf_line_endings, plain_mtext,
+    split_mtext_string, escape_dxf_line_endings, plain_mtext,
 )
 from . import factory
 from .dxfentity import base_class, SubclassProcessor
@@ -558,6 +558,34 @@ def load_columns_from_xdata(dxf: 'DXFNamespace',
     return columns
 
 
+def extract_mtext_text_frame_handle(xdata: XData) -> Optional[str]:
+    # Stores information about the text frame until DXF R2018.
+    # Newer CAD applications do not need that information nor the separated
+    # LWPOLYLINE as text frame entity.
+    if "ACAD" in xdata:
+        acad = xdata.get("ACAD")
+    else:
+        return None
+
+    handle = None
+    try:
+        start, end = find_begin_and_end_of_encoded_xdata_tags(
+            "ACAD_MTEXT_TEXT_BORDERS", acad)
+    except NotFoundException:
+        return handle
+
+    for code, value in acad[start:end]:
+        # only one handle to a LWPOLYLINE entity should be present:
+        if code == 1005:
+            handle = value
+
+    # remove MTEXT_TEXT_BORDERS data
+    del acad[start:end]
+    if len(acad) < 2:
+        xdata.discard("ACAD")
+    return handle
+
+
 @factory.register_entity
 class MText(DXFGraphic):
     """ DXF MTEXT entity """
@@ -598,12 +626,20 @@ class MText(DXFGraphic):
             if processor.embedded_objects:
                 obj = processor.embedded_objects[0]
                 self._columns = load_columns_from_embedded_object(dxf, obj)
-            elif self.xdata:  # xdata is already set by parent class
+            elif self.xdata:
                 self._columns = load_columns_from_xdata(dxf, self.xdata)
         self.embedded_objects = None  # todo: remove
         return dxf
 
     def post_load_hook(self, doc: 'Drawing') -> Optional[Callable]:
+        def destroy_text_frame_entity():
+            handle = extract_mtext_text_frame_handle(self.xdata)
+            entitydb = doc.entitydb
+            if handle and entitydb:
+                text_frame = entitydb.get(handle)
+                if text_frame:
+                    text_frame.destroy()
+
         def unlink_mtext_columns_from_layout():
             """ Unlinked MTEXT entities from layout entity space. """
             layout = self.get_layout()
@@ -615,6 +651,9 @@ class MText(DXFGraphic):
                     mtext.dxf.owner = None
 
         super().post_load_hook(doc)
+        if self.xdata:
+            destroy_text_frame_entity()
+
         if self.has_columns:
             # Link columns, one MTEXT entity for each column, to the main MTEXT
             # entity (DXF version <R2018).
@@ -746,7 +785,9 @@ class MText(DXFGraphic):
             acad.extend(cols.acad_mtext_defined_height_xdata())
 
         xdata = self.xdata
-        xdata.discard('ACAD')  # replace existing column data
+        # Replace existing column data and therefore also removes
+        # ACAD_MTEXT_TEXT_BORDERS information!
+        xdata.discard('ACAD')
         xdata.add('ACAD', acad)
 
     def set_linked_columns_xdata(self):

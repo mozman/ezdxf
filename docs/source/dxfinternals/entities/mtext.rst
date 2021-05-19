@@ -275,6 +275,48 @@ Columns with background color:
     :align: center
     :width: 800px
 
+Text Frame
+----------
+
+The MTEXT entity can have a text frame only, without a background filling,
+group code 90 has value 16. In this case all other background related tags
+are removed (45, 63, 421, 431, 441) and the scaling factor is 1.5 by default.
+
+XDATA for Text Frame
+++++++++++++++++++++
+
+This XDATA exist only if the text frame flag in group code 90 is set and the
+DXF versions < R2018!
+
+.. code-block:: Text
+
+    ...  <snip>
+    1001 <ctrl> ACAD
+    1000 <str> ACAD_MTEXT_TEXT_BORDERS_BEGIN
+    1070 <int> 80       <<< group code for repeated flags
+    1070 <int> 16       <<< repeated group code 90?
+    1070 <int> 46       <<< group code for scaling factor, which is fixed?
+    1040 <float> 1.5    <<< scaling factor
+    1070 <int> 81       <<< group code for repeated flow direction?
+    1070 <int> 1        <<< flow direction?
+    1070 <int> 5        <<< group code for a handle
+    1005 <hex> #A8      <<< handle to the LWPOLYLINE text frame
+    1000 <str> ACAD_MTEXT_TEXT_BORDERS_END
+
+Extra LWPOLYLINE Entity as Text Frame
++++++++++++++++++++++++++++++++++++++
+
+The newer versions of AutoCAD and BricsCAD get all the information they need
+from the MTEXT entity, but it seems that older versions could not handle the
+text frame property correct. Therefore AutoCAD and BricsCAD create a separated
+LWPOLYLINE entity for the text frame for DXF versions < R2018.
+The handle to this text frame entity is stored in the XDATA as group code 1005,
+see section above.
+
+Because this LWPOLYLINE is not required *ezdxf* does **not** create such a text
+frame entity nor the associated XDATA and *ezdxf* also **removes** this data
+from loaded DXF files at the second loading stage.
+
 Column Support
 --------------
 

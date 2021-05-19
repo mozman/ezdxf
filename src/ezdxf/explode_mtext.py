@@ -359,8 +359,7 @@ class MTextExplode:
         ctx = mtext_context(mtext)
         parser = MTextParser(content, ctx)
         bg_renderer = make_bg_renderer(mtext, base_attribs, self.layout)
-        layout = text_layout.Layout(
-            width=mtext.dxf.width, renderer=bg_renderer)
+        layout = text_layout.Layout(width=mtext.dxf.width)
         if mtext.has_columns:
             columns = mtext.columns
             for height in column_heights():
@@ -368,10 +367,11 @@ class MTextExplode:
                     width=columns.width,
                     height=height,
                     gutter=columns.gutter_width,
+                    renderer=bg_renderer,
                 )
         else:
             # column with auto height and default width
-            layout.append_column()
+            layout.append_column(renderer=bg_renderer)
 
         cells = []
         for token in parser:
