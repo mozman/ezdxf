@@ -1228,6 +1228,10 @@ class Layout(Container):
         return len(self._columns)
 
     @property
+    def current_column_index(self):
+        return self._current_column
+
+    @property
     def content_width(self):
         width = self._content_width
         if self._columns:
@@ -1332,3 +1336,8 @@ class Layout(Container):
         empty = self._columns[-1].clone_empty()
         self._columns.append(empty)
         return empty
+
+    def next_column(self) -> None:
+        self._current_column += 1
+        if self._current_column >= len(self._columns):
+            self._new_column()

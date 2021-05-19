@@ -46,7 +46,7 @@ class Rect(tl.ContentRenderer):
         self.name = name
 
     def render(
-        self, left: float, bottom: float, right: float, top: float, m=None
+            self, left: float, bottom: float, right: float, top: float, m=None
     ) -> None:
         self.result.append(
             f"{self.name}({left:.1f}, {bottom:.1f}, {right:.1f}, {top:.1f})"
@@ -130,6 +130,22 @@ class TestTopLevelLayout:
         bbox = layout1.bbox()
         assert bbox.extmin == (-6, -6)  # left/bottom
         assert bbox.extmax == (6, 6)  # right/top
+
+    def test_next_existing_column(self, layout1):
+        layout1.append_column(height=10)
+        layout1.append_column(height=10)
+        assert len(layout1) == 2
+        assert layout1.current_column_index == 0
+        layout1.next_column()
+        assert layout1.current_column_index == 1
+
+    def test_next_column_creates_a_new_column(self, layout1):
+        layout1.append_column(height=10)
+        assert len(layout1) == 1
+        assert layout1.current_column_index == 0
+        layout1.next_column()
+        assert layout1.current_column_index == 1
+        assert len(layout1) == 2, "a new column should be created"
 
 
 class TestColumn:
@@ -559,7 +575,7 @@ class TestTextContinueStroke:
         tl.render_text_strokes([word, space, nbsp, space, word])
         assert len(result) == 2
         assert (
-            result[0] == "STROKE(UNDERLINE, 4.5)"
+                result[0] == "STROKE(UNDERLINE, 4.5)"
         ), "3 spaces should be included"
         assert result[1] == "STROKE(UNDERLINE, 3.0)", "no following spaces"
 

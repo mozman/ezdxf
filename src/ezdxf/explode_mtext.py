@@ -380,7 +380,7 @@ class MTextExplode:
                 append_paragraph()
             elif token.type == TokenType.NEW_COLUMN:
                 append_paragraph()
-                # todo: layout.next_column()
+                layout.next_column()
             elif token.type == TokenType.SPACE:
                 cells.append(self.space(ctx))
             elif token.type == TokenType.NBSP:
