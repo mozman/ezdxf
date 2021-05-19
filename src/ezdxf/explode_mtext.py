@@ -342,13 +342,10 @@ class MTextExplode:
         def column_heights():
             if columns.heights:  # dynamic manual
                 heights = list(columns.heights)
+                # last height has to be auto height = None
+                heights[-1] = None
             else:  # static, dynamic auto
                 heights = [columns.defined_height] * columns.count
-            # last height has to be auto height = None
-            if heights:
-                heights[-1] = None
-            else:
-                heights = [None]
             return heights
 
         content = mtext.all_columns_raw_content()
