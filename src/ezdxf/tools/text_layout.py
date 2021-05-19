@@ -455,6 +455,12 @@ class Text(ContentCell):
             renderer.line(left, y, right, y, m)
 
 
+def render_cells(cells: Iterable[Cell], m: Matrix44 = None) -> None:
+    for cell in cells:
+        if cell.is_visible:
+            cell.render(m)
+
+
 def render_text_strokes(cells: List[Cell], m: Matrix44 = None) -> None:
     """ Render text cell strokes across glue cells. """
 
@@ -577,7 +583,7 @@ class Fraction(ContentCell):
 
 _content = (Text, Fraction)
 _glue = (Space, NonBreakingSpace, Tabulator)
-_no_break = (Text, Fraction, NonBreakingSpace)
+_no_break = (Text, NonBreakingSpace)
 
 
 def normalize_cells(cells: Iterable[Cell]) -> List[Cell]:
@@ -668,10 +674,7 @@ class HCellGroup(ContentCell):
             self.append(cell)
 
     def render(self, m: Matrix44 = None) -> None:
-        for cell in self._cells:
-            if cell.is_visible:
-                cell.render(m)
-
+        render_cells(self._cells, m)
         # HCellGroup can contain Text cells:
         render_text_strokes(self._cells, m)
 
@@ -1345,6 +1348,60 @@ class Layout(Container):
             self._new_column()
 
 
+class DontBreakGroup(ContentCell):
+    def __init__(self, cells: Iterable[Cell] = None,
+                 valign=CellAlignment.BOTTOM):
+        super().__init__(0, 0, valign=valign)
+        self._cells: List[Cell] = list(cells)
+
+    def __iter__(self):
+        return iter(self._cells)
+
+    def total_width(self) -> float:
+        return sum(cell.total_width for cell in self._cells)
+
+    def total_height(self) -> float:
+        return max(cell.total_height for cell in self._cells)
+
+    def render(self, m: Matrix44 = None) -> None:
+        render_cells(self._cells, m)
+        render_text_strokes(self._cells, m)
+
+    def _glue_cells(self) -> Iterable[Glue]:
+        return (cell for cell in self._cells if isinstance(cell, Glue))
+
+    def growable_cells(self) -> Iterable[Glue]:
+        return (cell for cell in self._glue_cells() if cell.can_grow)
+
+    def grow(self, target_width: float):
+        for cell in self.growable_cells():
+            cell.resize(target_width)
+
+
+def group_non_breakable_cells(cells: List[Cell]) -> List[Cell]:
+    index = 0
+    count = len(cells)
+    new_cells = []
+    while index < count:
+        cell = cells[index]
+        if isinstance(cell, _no_break):
+            start = index
+            index += 1
+            while index < count:
+                if not isinstance(cells[index], _no_break):
+                    new_cells.append(DontBreakGroup(cells[start: index]))
+                    break
+                index += 1
+            if index == count:
+                new_cells.append(DontBreakGroup(cells[start: index]))
+            else:
+                continue
+        else:
+            new_cells.append(cell)
+        index += 1
+    return new_cells
+
+
 class TabStopType(enum.IntEnum):
     LEFT = 0
     RIGHT = 1
@@ -1356,41 +1413,65 @@ class TabStop(NamedTuple):
     kind: TabStopType = TabStopType.LEFT
 
 
-class AbstractLine(ContentCell):  # ABC
-    @abc.abstractmethod
-    def append(self, cell: Cell) -> bool:
-        pass
-
-    @abc.abstractmethod
-    def distribute(self):
-        pass
-
-    @property
-    @abc.abstractmethod
-    def has_content(self):
-        pass
-
-
 class LineCell(NamedTuple):
     cell: Cell
     offset: float
     locked: bool
 
 
-class LeftLine(AbstractLine):
-    def __init__(self, width: float,
-                 tab_stops: Sequence[TabStop] = None):
+class AbstractLine(ContentCell):  # ABC
+    def __init__(self, width: float):
         super().__init__(width=width, height=0,
                          valign=CellAlignment.BOTTOM)
-        self._tab_stops = tab_stops or []  # tab stops relative to line start
         self._cells: List[LineCell] = []
         self._current_offset: float = 0.0
-        self._was_tab = False
-        self._replacement_space: Space = Space(0.0)
+
+    @abc.abstractmethod
+    def append(self, cell: Cell) -> bool:
+        pass
+
+    def distribute(self):
+        pass
 
     @property
     def has_content(self):
         return bool(self._cells)
+
+    def place(self, x: float, y: float):
+        super().place(x, y)
+        group_height = self.total_height
+        for line_cell in self._cells:
+            cx = x + line_cell.offset
+            cy = y
+            cell = line_cell.cell
+            if isinstance(cell, ContentCell) and \
+                    cell.valign != CellAlignment.TOP:
+                dy = cell.total_height - group_height
+                if cell.valign == CellAlignment.CENTER:
+                    dy /= 2.0
+                cy += dy
+            cell.place(cx, cy)
+
+    @property
+    def total_height(self) -> float:
+        return max(c.cell.total_height for c in self._cells)
+
+    def cells(self):
+        return [c.cell for c in self._cells]
+
+    def render(self, m: Matrix44 = None) -> None:
+        cells = self.cells()
+        render_cells(cells, m)
+        render_text_strokes(cells, m)
+
+
+class LeftLine(AbstractLine):
+    def __init__(self, width: float,
+                 tab_stops: Sequence[TabStop] = None):
+        super().__init__(width=width)
+        self._tab_stops = tab_stops or []  # tab stops relative to line start
+        self._was_tab = False
+        self._replacement_space: Space = Space(0.0)
 
     def append(self, cell: Cell) -> bool:
         if isinstance(cell, Tabulator):
@@ -1408,8 +1489,8 @@ class LeftLine(AbstractLine):
     def _append_line_cell(self, cell: Cell, offset: float,
                           locked: bool = False):
         cells = self._cells
-        if cells and not isinstance(cells[-1].cell, Glue):
-            cells.append(LineCell(Space(0), self._current_offset, False))
+        # if cells and not isinstance(cells[-1].cell, Glue):
+        #   cells.append(LineCell(Space(0), self._current_offset, False))
         cells.append(LineCell(cell, offset, locked))
 
     def _append(self, cell: Cell):
@@ -1480,31 +1561,46 @@ class LeftLine(AbstractLine):
                 return tab
         return None
 
-    def place(self, x: float, y: float):
-        super().place(x, y)
-        group_height = self.total_height
-        for line_cell in self._cells:
-            cx = x + line_cell.offset
-            cy = y
-            cell = line_cell.cell
-            if isinstance(cell, ContentCell) and \
-                    cell.valign != CellAlignment.TOP:
-                dy = cell.total_height - group_height
-                if cell.valign == CellAlignment.CENTER:
-                    dy /= 2.0
-                cy += dy
-            cell.place(cx, cy)
 
-    @property
-    def total_height(self) -> float:
-        return max(c.cell.total_height for c in self._cells)
+class NoTabLine(AbstractLine):
+    """ Base class for lines without tab stop support! """
+
+    def append(self, cell: Cell) -> bool:
+        if isinstance(cell, Tabulator):
+            cell = cell.to_space()
+        width = cell.total_width
+        if self._current_offset + width < self.total_width:
+            self._cells.append(LineCell(cell, self._current_offset, False))
+            self._current_offset += width
+            return True
 
     def distribute(self):
+        start_offset = self.start_offset()
+        cells = [
+            LineCell(cell, start_offset + offset, False)
+            for cell, offset, locked in self._cells
+        ]
+        self._cells = cells
+
+    @abc.abstractmethod
+    def start_offset(self):
         pass
 
-    def render(self, m: Matrix44 = None) -> None:
-        for c in self._cells:
-            c.cell.render(m)
+
+class CenterLine(NoTabLine):
+    """ Right aligned lines do not support tab stops! """
+
+    def start_offset(self):
+        real_width = sum(c.cell.total_width for c in self._cells)
+        return (self.total_width - real_width) / 2
+
+
+class RightLine(NoTabLine):
+    """ Right aligned lines do not support tab stops! """
+
+    def start_offset(self):
+        real_width = sum(c.cell.total_width for c in self._cells)
+        return self.total_width - real_width
 
 
 class FlowText2(Paragraph):
@@ -1598,6 +1694,7 @@ class FlowText2(Paragraph):
         # using indices into `cells` instead creating temp copies.
 
         cells = normalize_cells(self._cells)
+        cells = group_non_breakable_cells(cells)
         cells.reverse()
         undo = cells
         first = True

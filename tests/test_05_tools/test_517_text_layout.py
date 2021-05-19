@@ -686,6 +686,17 @@ class TestNormalizeCells:
         with pytest.raises(ValueError):
             list(tl.normalize_cells(cells))
 
+    @pytest.mark.parametrize("content", ["t~f", "f~f", "f~t"])
+    def test_ignore_non_breaking_space_between_text_and_fraction(self, content):
+        cells = str2cells(content)
+        result = tl.normalize_cells(cells)
+        assert len(result) == 3
+
+    def test_ignore_pending_non_breaking_space(self):
+        cells = str2cells("t~t~")
+        result = tl.normalize_cells(cells)
+        assert len(result) == 3
+
     @pytest.mark.parametrize("content", ["t~t", "t~~t", "t~~~t"])
     def test_preserve_multiple_nbsp(self, content):
         cells = tl.normalize_cells(str2cells(content))
@@ -767,6 +778,26 @@ class TestSpace:
     def test_can_grow(self):
         assert tl.Space(1).can_grow is True
         assert tl.Space(1, max_width=1.0).can_grow is False
+
+
+class TestGroupNonBreakableCells:
+    @pytest.mark.parametrize("content", ["t~t", "t~t~t"])
+    def test_create_one_group(self, content):
+        cells = tl.normalize_cells(str2cells(content))
+        result = tl.group_non_breakable_cells(cells)
+        assert len(result) == 1
+
+    @pytest.mark.parametrize("content", ["t~t t~t", "t~t~t t~t~t"])
+    def test_create_three_groups(self, content):
+        cells = tl.normalize_cells(str2cells(content))
+        result = tl.group_non_breakable_cells(cells)
+        assert len(result) == 3
+        assert isinstance(result[1], tl.Space)
+
+    def test_ignore_pending_non_breaking_space(self):
+        cells = tl.normalize_cells(str2cells("t~t~"))
+        result = tl.group_non_breakable_cells(cells)
+        assert len(result) == 1
 
 
 class TestLeftLine:
