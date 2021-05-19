@@ -62,7 +62,7 @@ def load(filename):
 
 
 def explode(doc, filename):
-    doc = explode_mtext(doc, destroy=False)
+    doc = explode_mtext(doc, destroy=True)
     doc.saveas(DIR / filename)
 
 

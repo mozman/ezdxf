@@ -358,8 +358,9 @@ class MTextExplode:
         base_attribs = get_base_attribs()
         ctx = mtext_context(mtext)
         parser = MTextParser(content, ctx)
-        layout = text_layout.Layout(width=mtext.dxf.width)
         bg_renderer = make_bg_renderer(mtext, base_attribs, self.layout)
+        layout = text_layout.Layout(
+            width=mtext.dxf.width, renderer=bg_renderer)
         if mtext.has_columns:
             columns = mtext.columns
             for height in column_heights():
@@ -367,11 +368,10 @@ class MTextExplode:
                     width=columns.width,
                     height=height,
                     gutter=columns.gutter_width,
-                    renderer=bg_renderer,
                 )
         else:
             # column with auto height and default width
-            layout.append_column(renderer=bg_renderer)
+            layout.append_column()
 
         cells = []
         for token in parser:
@@ -421,12 +421,10 @@ class MTextExplode:
             return Word(upr, ctx, attribs, self)
 
     def explode(self, mtext: MText, destroy=True):
-        location = mtext.dxf.insert
         align = text_layout.LayoutAlignment(mtext.dxf.attachment_point)
         layout_engine = self.layout_engine(mtext)
         layout_engine.place(align=align)
-        m = Matrix44.translate(location.x, location.y, location.z)
-        layout_engine.render(m)
+        layout_engine.render(mtext.ucs().matrix)
         if destroy:
             mtext.destroy()
 
