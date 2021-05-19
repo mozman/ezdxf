@@ -16,10 +16,12 @@ COLUMN_BREAK = "\\N"
 
 
 def add_column_breaks(content: Iterable[str]) -> Iterable[str]:
-    for c in content:
+    content = list(content)
+    for c in content[:-1]:
         if not c.endswith(COLUMN_BREAK):
             c += COLUMN_BREAK
         yield c
+    yield content[-1]  # last column without a column break
 
 
 def make_static_columns_r2000(
