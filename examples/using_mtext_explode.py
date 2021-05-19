@@ -46,7 +46,7 @@ def explode_mtext(doc, destroy=True):
         xpl.explode(mtext, destroy=destroy)
         if mtext.is_alive:
             mtext.dxf.layer = "SOURCE"
-    xpl.finalize()
+    xpl.finalize()  # create required text styles
     zoom.extents(msp)
     return doc
 

@@ -157,10 +157,9 @@ def map_shx_to_ttf(font_name: str) -> str:
     return font_name
 
 
-def map_ttf_to_shx(ttf: str) -> str:
+def map_ttf_to_shx(ttf: str) -> Optional[str]:
     """ Map TTF file names to SHX font names. e.g. "txt_____.ttf" -> "TXT" """
-    font_name = TTF_TO_SHX.get(ttf.lower())
-    return font_name or ttf
+    return TTF_TO_SHX.get(ttf.lower())
 
 
 def weight_name_to_value(name: str) -> int:

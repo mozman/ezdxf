@@ -40,6 +40,7 @@ def test_map_shx_to_ttf():
 def test_map_ttf_to_shx():
     assert fonts.map_ttf_to_shx("txt_____.ttf") == "TXT.SHX"
     assert fonts.map_ttf_to_shx("TXT_____.TTF") == "TXT.SHX"
+    assert fonts.map_ttf_to_shx("xxx.ttf") is None
 
 
 def test_get_font_face_for_shx_fonts():
