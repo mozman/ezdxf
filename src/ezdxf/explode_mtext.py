@@ -430,6 +430,10 @@ class MTextExplode:
             ttf = font_face.ttf
             if not ttf:
                 ttf = fonts.find_ttf_path(font_face)
+            else:
+                shx = fonts.map_ttf_to_shx(ttf)
+                if shx.endswith("SHX"):
+                    ttf = shx
             return ttf
 
         text_styles = self._doc.styles
@@ -437,8 +441,9 @@ class MTextExplode:
             if name not in text_styles:
                 style = cast(Textstyle, text_styles.new(name))
                 style.dxf.font = ttf_path(font_face)
-                style.set_extended_font_data(
-                    font_face.family,
-                    italic=font_face.is_italic,
-                    bold=font_face.is_bold,
-                )
+                if not style.dxf.font.endswith("SHX"):
+                    style.set_extended_font_data(
+                        font_face.family,
+                        italic=font_face.is_italic,
+                        bold=font_face.is_bold,
+                    )

@@ -31,6 +31,17 @@ def test_get_font_face_with_definition():
     assert fonts.get_font_face('Arial.ttf') is fonts.find_font_face('arial.ttf')
 
 
+def test_map_shx_to_ttf():
+    assert fonts.map_shx_to_ttf("TXT") == "txt_____.ttf"
+    assert fonts.map_shx_to_ttf("TXT.SHX") == "txt_____.ttf"
+    assert fonts.map_shx_to_ttf("txt.shx") == "txt_____.ttf"
+
+
+def test_map_ttf_to_shx():
+    assert fonts.map_ttf_to_shx("txt_____.ttf") == "TXT.SHX"
+    assert fonts.map_ttf_to_shx("TXT_____.TTF") == "TXT.SHX"
+
+
 def test_get_font_face_for_shx_fonts():
     assert fonts.get_font_face('TXT') == (
         'txt_____.ttf', 'Txt', 'normal', 'normal', 400

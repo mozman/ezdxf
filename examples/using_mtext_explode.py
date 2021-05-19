@@ -44,9 +44,9 @@ def explode_mtext(doc, destroy=True):
     xpl = MTextExplode(msp)
     for mtext in msp.query("MTEXT"):
         xpl.explode(mtext, destroy=destroy)
-        xpl.finalize()
         if mtext.is_alive:
             mtext.dxf.layer = "SOURCE"
+    xpl.finalize()
     zoom.extents(msp)
     return doc
 
@@ -67,6 +67,6 @@ def explode(doc, filename):
 
 
 if __name__ == '__main__':
-    # doc = create("mtext_source.dxf")
-    doc = load("mtext_framed_columns.dxf")
+    doc = create("mtext_source.dxf")
+    # doc = load("mtext_source.dxf")
     explode(doc, "mtext_xplode.dxf")

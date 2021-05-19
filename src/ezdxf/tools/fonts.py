@@ -143,18 +143,24 @@ SHX_FONTS = {
     'TXT': "txt_____.ttf",  # Default AutoCAD font
     'TXT.SHX': "txt_____.ttf",
 }
-
+TTF_TO_SHX = {v: k for k, v in SHX_FONTS.items() if k.endswith("SHX")}
 DESCENDER_FACTOR = 0.333  # from TXT SHX font - just guessing
 X_HEIGHT_FACTOR = 0.666  # from TXT SHX font - just guessing
 
 
-def resolve_shx_font_name(font_name: str) -> str:
+def map_shx_to_ttf(font_name: str) -> str:
     """ Map SHX font names to TTF file names. e.g. "TXT" -> "txt_____.ttf" """
     # Map SHX fonts to True Type Fonts:
     font_upper = font_name.upper()
     if font_upper in SHX_FONTS:
         font_name = SHX_FONTS[font_upper]
     return font_name
+
+
+def map_ttf_to_shx(ttf: str) -> str:
+    """ Map TTF file names to SHX font names. e.g. "txt_____.ttf" -> "TXT" """
+    font_name = TTF_TO_SHX.get(ttf.lower())
+    return font_name or ttf
 
 
 def weight_name_to_value(name: str) -> int:
@@ -241,7 +247,7 @@ def get_font_face(ttf_path: str, map_shx=True) -> FontFace:
     if not isinstance(ttf_path, str):
         raise TypeError('ttf_path has invalid type')
     if map_shx:
-        ttf_path = resolve_shx_font_name(ttf_path)
+        ttf_path = map_shx_to_ttf(ttf_path)
     font = find_font_face(ttf_path)
     if font is None:
         # Create a pseudo entry:
@@ -267,7 +273,7 @@ def get_font_measurements(ttf_path: str, map_shx=True) -> 'FontMeasurements':
     """
     # TODO: is using freetype-py the better solution?
     if map_shx:
-        ttf_path = resolve_shx_font_name(ttf_path)
+        ttf_path = map_shx_to_ttf(ttf_path)
     m = font_measurement_cache.get(cache_key(ttf_path))
     if m is None:
         m = FontMeasurements(
