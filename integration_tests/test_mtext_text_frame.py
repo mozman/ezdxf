@@ -37,6 +37,13 @@ def test_remove_mtext_text_frame_at_loading_stage(doc):
     assert bool(mtext.dxf.bg_fill & 16) is True
 
 
+def test_remove_column_text_frames_at_loading_stage():
+    doc = ezdxf.readfile(DATA / "mtext_framed_columns.dxf")
+    msp = doc.modelspace()
+    assert len(msp.query("LWPOLYLINE")) == 0, \
+        "text frame entities should be removed"
+
+
 def test_do_not_export_mtext_text_borders(tmp_path):
     doc1 = ezdxf.readfile(DATA / TEXT_FRAME)
     doc1.saveas(tmp_path / TEXT_FRAME)

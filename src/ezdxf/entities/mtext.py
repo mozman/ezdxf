@@ -558,32 +558,32 @@ def load_columns_from_xdata(dxf: 'DXFNamespace',
     return columns
 
 
-def extract_mtext_text_frame_handle(xdata: XData) -> Optional[str]:
+def extract_mtext_text_frame_handles(xdata: XData) -> List[str]:
     # Stores information about the text frame until DXF R2018.
     # Newer CAD applications do not need that information nor the separated
     # LWPOLYLINE as text frame entity.
+    handles = []
     if "ACAD" in xdata:
         acad = xdata.get("ACAD")
     else:
-        return None
+        return handles
 
-    handle = None
     try:
         start, end = find_begin_and_end_of_encoded_xdata_tags(
             "ACAD_MTEXT_TEXT_BORDERS", acad)
     except NotFoundException:
-        return handle
+        return handles
 
     for code, value in acad[start:end]:
-        # only one handle to a LWPOLYLINE entity should be present:
+        # multiple handles to a LWPOLYLINE entity could be present:
         if code == 1005:
-            handle = value
+            handles.append(value)
 
     # remove MTEXT_TEXT_BORDERS data
     del acad[start:end]
     if len(acad) < 2:
         xdata.discard("ACAD")
-    return handle
+    return handles
 
 
 @factory.register_entity
@@ -633,12 +633,12 @@ class MText(DXFGraphic):
 
     def post_load_hook(self, doc: 'Drawing') -> Optional[Callable]:
         def destroy_text_frame_entity():
-            handle = extract_mtext_text_frame_handle(self.xdata)
             entitydb = doc.entitydb
-            if handle and entitydb:
-                text_frame = entitydb.get(handle)
-                if text_frame:
-                    text_frame.destroy()
+            if entitydb:
+                for handle in extract_mtext_text_frame_handles(self.xdata):
+                    text_frame = entitydb.get(handle)
+                    if text_frame:
+                        text_frame.destroy()
 
         def unlink_mtext_columns_from_layout():
             """ Unlinked MTEXT entities from layout entity space. """

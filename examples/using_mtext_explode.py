@@ -68,5 +68,5 @@ def explode(doc, filename):
 
 if __name__ == '__main__':
     # doc = create("mtext_source.dxf")
-    doc = load("mtext_source.dxf")
+    doc = load("mtext_framed_columns.dxf")
     explode(doc, "mtext_xplode.dxf")

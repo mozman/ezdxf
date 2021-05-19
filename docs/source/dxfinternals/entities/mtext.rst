@@ -299,8 +299,11 @@ DXF versions < R2018!
     1040 <float> 1.5    <<< scaling factor
     1070 <int> 81       <<< group code for repeated flow direction?
     1070 <int> 1        <<< flow direction?
-    1070 <int> 5        <<< group code for a handle
+    1070 <int> 5        <<< group code for a handle, multiple entries possible
     1005 <hex> #A8      <<< handle to the LWPOLYLINE text frame
+    1070 <int> 5        <<< group code for next handle
+    1005 <hex> #A9      <<< next handle
+    ...
     1000 <str> ACAD_MTEXT_TEXT_BORDERS_END
 
 Extra LWPOLYLINE Entity as Text Frame
