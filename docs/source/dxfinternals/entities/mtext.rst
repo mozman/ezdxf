@@ -285,8 +285,8 @@ are removed (45, 63, 421, 431, 441) and the scaling factor is 1.5 by default.
 XDATA for Text Frame
 ++++++++++++++++++++
 
-This XDATA exist only if the text frame flag in group code 90 is set and the
-DXF versions < R2018!
+This XDATA exist only if the text frame flag in group code 90 is set and for
+DXF version < R2018!
 
 .. code-block:: Text
 
