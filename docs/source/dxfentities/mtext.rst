@@ -154,6 +154,8 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: set_rotation
 
+    .. automethod:: get_text_direction
+
     .. automethod:: set_bg_color
 
     .. automethod:: __iadd__(text: str) -> MText
@@ -167,6 +169,8 @@ Required DXF version     DXF R2000 (``'AC1015'``)
     .. automethod:: all_columns_raw_content
 
     .. automethod:: transform(m: Matrix44) -> MText
+
+    .. automethod:: ucs(m: Matrix44) -> UCS
 
 .. _mtext_inline_codes:
 

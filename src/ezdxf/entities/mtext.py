@@ -18,7 +18,7 @@ from ezdxf.lldxf.tags import (
     Tags, find_begin_and_end_of_encoded_xdata_tags, NotFoundException,
 )
 
-from ezdxf.math import Vec3, Matrix44, OCS, NULLVEC, Z_AXIS, X_AXIS
+from ezdxf.math import Vec3, Matrix44, OCS, UCS, NULLVEC, Z_AXIS, X_AXIS
 from ezdxf.math.transformtools import transform_extrusion
 from ezdxf.colors import rgb2int
 from ezdxf.tools.text import (
@@ -805,8 +805,8 @@ class MText(DXFGraphic):
 
         Use `color` = ``None`` to remove the background filling.
 
-        Setting only a text border is supported (`color`=None), but in this case
-        the scaling is always 1.5.
+        Setting only a text border is supported (`color`=``None``), but in this
+        case the scaling is always 1.5.
 
         Args:
             color: color as :ref:`ACI`, string, RGB tuple or ``None``
@@ -853,20 +853,50 @@ class MText(DXFGraphic):
 
     append = __iadd__
 
+    def get_text_direction(self) -> Vec3:
+        """ Returns the horizontal text direction as :class:`~ezdxf.math.Vec3`
+        object, even if only the text rotation is defined.
+
+        """
+        dxf = self.dxf
+        # "text_direction" has higher priority than "rotation"
+        if dxf.hasattr("text_direction"):
+            return dxf.text_direction
+        if dxf.hasattr("rotation"):
+            # MTEXT is not an OCS entity, but I don't know how else to convert
+            # a rotation angle for an entity just defined by an extrusion vector.
+            # It's correct for the most common case: extrusion=(0, 0, 1)
+            return OCS(dxf.extrusion).to_wcs(Vec3.from_deg_angle(dxf.rotation))
+        return X_AXIS
+
+    def convert_rotation_to_text_direction(self):
+        """ Convert text rotation into text direction and discard text rotation.
+        """
+        dxf = self.dxf
+        if dxf.hasattr('rotation'):
+            if not dxf.hasattr('text_direction'):
+                dxf.text_direction = self.get_text_direction()
+            dxf.discard('rotation')
+
+    def ucs(self) -> UCS:
+        """ Returns the :class:`~ezdxf.math.UCS` of the :class:`MText` entity,
+        defined by the insert location (origin), the text direction or rotation
+        (x-axis) and the extrusion vector (z-axis).
+
+        """
+        dxf = self.dxf
+        return UCS(
+            origin=dxf.insert,
+            ux=self.get_text_direction(),
+            uz=dxf.extrusion,
+        )
+
     def transform(self, m: Matrix44) -> 'MText':
         """ Transform the MTEXT entity by transformation matrix `m` inplace. """
         dxf = self.dxf
         old_extrusion = Vec3(dxf.extrusion)
         new_extrusion, _ = transform_extrusion(old_extrusion, m)
-
-        if dxf.hasattr('rotation') and not dxf.hasattr('text_direction'):
-            # MTEXT is not an OCS entity, but I don't know how else to convert
-            # a rotation angle for an entity just defined by an extrusion vector.
-            # It's correct for the most common case: extrusion=(0, 0, 1)
-            ocs = OCS(old_extrusion)
-            dxf.text_direction = ocs.to_wcs(Vec3.from_deg_angle(dxf.rotation))
-
-        dxf.discard('rotation')
+        self.convert_rotation_to_text_direction()
 
         old_text_direction = Vec3(dxf.text_direction)
         new_text_direction = m.transform_direction(old_text_direction)

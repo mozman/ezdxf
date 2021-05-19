@@ -1,6 +1,8 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 # created 2019-03-06
+import math
+
 import pytest
 from ezdxf.entities.mtext import MText
 from ezdxf.layouts import VirtualLayout
@@ -282,3 +284,41 @@ def test_bg_fill_flags():
     assert mtext.dxf.bg_fill == 0
     mtext.dxf.bg_fill = 0x20  # invalid flag
     assert mtext.dxf.bg_fill == 0
+
+
+def test_get_text_direction_from_text_direction():
+    mtext = MText()
+    mtext.dxf.text_direction = (1, 2, 3)
+    assert mtext.get_text_direction().isclose((1, 2, 3))
+
+
+def test_get_text_direction_from_rotation():
+    mtext = MText()
+    mtext.dxf.rotation = 45
+    s = math.sin(math.radians(mtext.dxf.rotation))
+    assert mtext.get_text_direction().isclose((s, s, 0))
+
+
+def test_convert_rotation_to_text_direction():
+    mtext = MText()
+    mtext.dxf.rotation = 45
+    mtext.convert_rotation_to_text_direction()
+    assert mtext.dxf.hasattr("rotation") is False
+    assert mtext.dxf.hasattr("text_direction") is True
+    old = mtext.dxf.text_direction
+
+    # calling again, does nothing
+    mtext.convert_rotation_to_text_direction()
+    assert mtext.dxf.hasattr("rotation") is False
+    assert mtext.dxf.hasattr("text_direction") is True
+    assert old.isclose(mtext.dxf.text_direction)
+
+
+def test_get_ucs():
+    mtext = MText()
+    mtext.dxf.insert = (1, 2, 3)
+    m = mtext.ucs().matrix
+    assert m.origin.isclose((1, 2, 3))
+    assert m.ux.isclose((1, 0, 0))
+    assert m.uy.isclose((0, 1, 0))
+    assert m.uz.isclose((0, 0, 1))
