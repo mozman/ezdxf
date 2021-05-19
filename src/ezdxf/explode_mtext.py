@@ -159,7 +159,7 @@ def get_font_face(entity: DXFGraphic, doc=None) -> fonts.FontFace:
     style_name = ""
     # This also works for entities which do not support "style",
     # where :code:`style_name = entity.dxf.get("style")` would fail.
-    if entity.dxf.hasattr("style"):
+    if entity.dxf.is_supported("style"):
         style_name = entity.dxf.style
 
     font_face = fonts.FontFace()
