@@ -66,6 +66,8 @@ BaseLayout
 
     .. automethod:: unlink_entity
 
+    .. automethod:: purge
+
     .. automethod:: query(query: str = '*') -> EntityQuery
 
     .. automethod:: groupby
