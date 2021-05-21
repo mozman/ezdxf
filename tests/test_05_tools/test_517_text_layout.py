@@ -803,7 +803,8 @@ class TestGroupNonBreakableCells:
 class TestLeftLine:
     def test_setup(self):
         line = tl.LeftLine(10)
-        assert line.total_width == 10, "line always consumes the total width"
+        assert line.line_width == 10
+        assert line.total_width == 0
 
     def test_line_height_is_defined_by_max_content_height(self):
         line = tl.LeftLine(10)
@@ -814,12 +815,21 @@ class TestLeftLine:
         line.append(tl.Text(1, 3))
         assert line.total_height == 3
 
+    def test_line_total_width_is_defined_by_content(self):
+        line = tl.LeftLine(10)
+        line.append(tl.Text(1, 1))
+        assert line.total_width == 1
+        line.append(tl.Text(1, 1))
+        assert line.total_width == 2
+        line.append(tl.Text(1, 1))
+        assert line.total_width == 3
+
     def test_fill_until_line_is_full(self):
         line = tl.LeftLine(10)
         assert line.append(tl.Text(5, 1)) is True
         assert line.append(tl.Text(5, 1)) is True
         assert line.append(tl.Text(5, 1)) is False
-        assert line.total_width == 10
+        assert line.total_width <= line.line_width
 
     def test_left_tab(self):
         def append_left_tab(size):

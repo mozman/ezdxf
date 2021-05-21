@@ -916,7 +916,10 @@ class Paragraph(Container):
 
     """
 
-    _LEFT_AND_JUSTIFIED = (ParagraphAlignment.LEFT, ParagraphAlignment.JUSTIFIED)
+    _LEFT_AND_JUSTIFIED = (
+        ParagraphAlignment.LEFT,
+        ParagraphAlignment.JUSTIFIED,
+    )
 
     def __init__(
             self,
@@ -1394,15 +1397,18 @@ class Layout(Container):
             self._new_column()
 
 
-class DontBreakGroup(ContentCell):
+def linear_placing(cells: Sequence[Cell], x: float, y: float):
+    for cell in cells:
+        cell.place(x, y)
+        x += cell.total_width
+
+
+class RigidConnection(ContentCell):
     def __init__(
             self, cells: Iterable[Cell] = None, valign=CellAlignment.BOTTOM
     ):
         super().__init__(0, 0, valign=valign)
         self._cells: List[Cell] = list(cells)
-
-    def __iter__(self):
-        return iter(self._cells)
 
     def total_width(self) -> float:
         return sum(cell.total_width for cell in self._cells)
@@ -1414,15 +1420,16 @@ class DontBreakGroup(ContentCell):
         render_cells(self._cells, m)
         render_text_strokes(self._cells, m)
 
-    def _glue_cells(self) -> Iterable[Glue]:
-        return (cell for cell in self._cells if isinstance(cell, Glue))
+    def place(self, x: float, y: float):
+        super().place(x, y)
+        linear_placing(self._cells, x, y)
 
-    def growable_cells(self) -> Iterable[Glue]:
-        return (cell for cell in self._glue_cells() if cell.can_grow)
-
-    def grow(self, target_width: float):
-        for cell in self.growable_cells():
-            cell.resize(target_width)
+    def growable_glue(self) -> Iterable[Glue]:
+        return (
+            cell
+            for cell in self._cells
+            if isinstance(cell, Glue) and cell.can_grow
+        )
 
 
 def group_non_breakable_cells(cells: List[Cell]) -> List[Cell]:
@@ -1436,11 +1443,11 @@ def group_non_breakable_cells(cells: List[Cell]) -> List[Cell]:
             index += 1
             while index < count:
                 if not isinstance(cells[index], _no_break):
-                    new_cells.append(DontBreakGroup(cells[start:index]))
+                    new_cells.append(RigidConnection(cells[start:index]))
                     break
                 index += 1
             if index == count:
-                new_cells.append(DontBreakGroup(cells[start:index]))
+                new_cells.append(RigidConnection(cells[start:index]))
             else:
                 continue
         else:
@@ -1485,9 +1492,6 @@ class AbstractLine(ContentCell):  # ABC
     def append(self, cell: Cell) -> bool:
         pass
 
-    def distribute(self):
-        pass
-
     @property
     def has_content(self):
         return bool(self._cells)
@@ -1500,6 +1504,18 @@ class AbstractLine(ContentCell):  # ABC
             cx = x + line_cell.offset
             cy = y + vertical_cell_shift(cell, group_height)
             cell.place(cx, cy)
+
+    @property
+    def line_width(self) -> float:
+        return self._width
+
+    @property
+    def total_width(self) -> float:
+        width = 0
+        if len(self._cells):
+            last_cell = self._cells[-1]
+            width = last_cell.offset + last_cell.cell.total_width
+        return width
 
     @property
     def total_height(self) -> float:
@@ -1544,7 +1560,7 @@ class LeftLine(AbstractLine):
 
     def _append(self, cell: Cell):
         width = cell.total_width
-        if self._current_offset + width <= self.total_width:
+        if self._current_offset + width <= self.line_width:
             self._append_line_cell(cell, self._current_offset)
             self._current_offset += width
             return True
@@ -1558,7 +1574,7 @@ class LeftLine(AbstractLine):
     def _append_at_tab(self, cell: Cell):
         width = cell.total_width
         pos = self._current_offset
-        if pos + width > self.total_width:
+        if pos + width > self.line_width:
             return False
         left_pos = pos
         center_pos = pos + width / 2
@@ -1577,7 +1593,7 @@ class LeftLine(AbstractLine):
 
     def _append_left(self, cell, pos):
         width = cell.total_width
-        if pos + width <= self.total_width:
+        if pos + width <= self.line_width:
             self._append_line_cell(cell, pos, True)
             self._current_offset = pos + width
             return True
@@ -1587,7 +1603,7 @@ class LeftLine(AbstractLine):
         width2 = cell.total_width / 2
         if self._current_offset + width2 > pos:
             return self._append(cell)
-        elif pos + width2 <= self.total_width:
+        elif pos + width2 <= self.line_width:
             self._append_line_cell(cell, pos - width2, True)
             self._current_offset = pos + width2
             return True
@@ -1596,7 +1612,7 @@ class LeftLine(AbstractLine):
     def _append_right(self, cell, pos):
         width = cell.total_width
         end_of_cell_pos = self._current_offset + width
-        if end_of_cell_pos > self.total_width:
+        if end_of_cell_pos > self.line_width:
             return False
         if end_of_cell_pos > pos:
             return self._append(cell)
@@ -1615,6 +1631,77 @@ class LeftLine(AbstractLine):
         return None
 
 
+def content_width(cells: Iterable[Cell]) -> float:
+    return sum(cell.total_width for cell in cells)
+
+
+def growable_cells(cells: Iterable[Cell]) -> List[Glue]:
+    growable = []
+    for cell in cells:
+        if isinstance(cell, Glue) and cell.can_grow:
+            growable.append(cell)
+        elif isinstance(cell, RigidConnection):
+            growable.extend(cell.growable_glue())
+    return growable
+
+
+def update_offsets(cells: List[LineCell], index: int) -> None:
+    count = len(cells)
+    if count == 0 or index > count:
+        return
+
+    last_cell = cells[index - 1]
+    offset = last_cell.offset + last_cell.cell.total_width
+    while index < count:
+        cell = cells[index].cell
+        cells[index] = LineCell(cell, offset, False)
+        offset += cell.total_width
+        index += 1
+
+
+class JustifiedLine(LeftLine):
+    def distribute(self):
+        cells = self._cells
+        last_locked_cell = self._last_locked_cell()
+        if last_locked_cell == len(cells):
+            return
+
+        available_space = self._available_space(last_locked_cell)
+        cells = [c.cell for c in cells[last_locked_cell + 1:]]
+        modified = False
+        while True:
+            growable = growable_cells(cells)
+            if len(growable) == 0:
+                break
+
+            space_to_distribute = available_space - content_width(cells)
+            if space_to_distribute <= 1e-9:
+                break
+
+            delta = space_to_distribute / len(growable)
+            for cell in growable:
+                cell.resize(cell.total_width + delta)
+            modified = True
+
+        if modified:
+            update_offsets(self._cells, last_locked_cell + 1)
+
+    def _end_offset(self, index):
+        cell = self._cells[index]
+        return cell.offset + cell.cell.total_width
+
+    def _available_space(self, index):
+        return self.line_width - self._end_offset(index)
+
+    def _last_locked_cell(self):
+        cells = self._cells
+        index = len(cells)
+        while index > 0:
+            if cells[index].locked:
+                return index
+            index -= 1
+
+
 class NoTabLine(AbstractLine):
     """Base class for lines without tab stop support!"""
 
@@ -1622,7 +1709,7 @@ class NoTabLine(AbstractLine):
         if isinstance(cell, Tabulator):
             cell = cell.to_space()
         width = cell.total_width
-        if self._current_offset + width < self.total_width:
+        if self._current_offset + width < self.line_width:
             self._cells.append(LineCell(cell, self._current_offset, False))
             self._current_offset += width
             return True
@@ -1634,19 +1721,12 @@ class NoTabLine(AbstractLine):
         return False
 
     def place(self, x: float, y: float):
-        self.update_width()
-        # just move whole line cell:
+        # shift the line cell:
         super().place(x + self.start_offset(), y)
 
     @abc.abstractmethod
     def start_offset(self):
         pass
-
-    def update_width(self):
-        # update _width, which also represents the total_width:
-        if self._cells:
-            last_cell = self._cells[-1]
-            self._width = last_cell.offset + last_cell.cell.total_width
 
 
 class CenterLine(NoTabLine):
@@ -1654,7 +1734,7 @@ class CenterLine(NoTabLine):
 
     def start_offset(self):
         real_width = sum(c.cell.total_width for c in self._cells)
-        return (self.total_width - real_width) / 2
+        return (self.line_width - real_width) / 2
 
 
 class RightLine(NoTabLine):
@@ -1662,7 +1742,7 @@ class RightLine(NoTabLine):
 
     def start_offset(self):
         real_width = sum(c.cell.total_width for c in self._cells)
-        return self.total_width - real_width
+        return self.line_width - real_width
 
 
 def shift_tab_stops(
@@ -1727,8 +1807,7 @@ class Paragraph2(Container):
             x_final = self._left_border(x, first)
             line.place(x_final, y)
             y -= leading(line.total_height, self._line_spacing)
-            if first:
-                first = False
+            first = False
 
     def _left_border(self, x: float, first: bool) -> float:
         """Apply indentation and paragraph alignment"""
@@ -1744,7 +1823,7 @@ class Paragraph2(Container):
             for line in self._lines
         )
 
-    def distribute_content(self, height: float = None) -> Optional["Paragraph2"]:
+    def distribute_content(self, height: float = None) -> Optional["Paragraph"]:
         """Distribute the raw content into lines. Returns the cells which do
         not fit as a new paragraph.
 
@@ -1755,9 +1834,19 @@ class Paragraph2(Container):
         """
 
         def new_line(space: float) -> AbstractLine:
-            indent = self._indent_first if first else self._indent_left
-            tab_stops = shift_tab_stops(self._tab_stops, indent)
-            return LeftLine(space, tab_stops)
+            align = self._align
+            if align in (ParagraphAlignment.LEFT, ParagraphAlignment.JUSTIFIED):
+                indent = self._indent_first if first else self._indent_left
+                tab_stops = shift_tab_stops(self._tab_stops, indent)
+                return (
+                    LeftLine(space, tab_stops)
+                    if align == ParagraphAlignment.LEFT
+                    else JustifiedLine(space, tab_stops)
+                )
+            elif align == ParagraphAlignment.RIGHT:
+                return RightLine(space)
+            elif align == ParagraphAlignment.CENTER:
+                return CenterLine(space)
 
         cells = normalize_cells(self._cells)
         cells = group_non_breakable_cells(cells)
@@ -1787,9 +1876,15 @@ class Paragraph2(Container):
                     break
                 else:
                     first = False
-                    line.distribute()
                     self._lines.append(line)
                     paragraph_height += leading(line_height, self._line_spacing)
+
+        if self._align == ParagraphAlignment.JUSTIFIED:
+            # distribute justified text across the line width,
+            # except for the last line:
+            for line in self._lines[:-1]:
+                assert isinstance(line, JustifiedLine)
+                line.distribute()
 
         # Delete raw content:
         self._cells = []
@@ -1802,17 +1897,17 @@ class Paragraph2(Container):
         if cells:
             cells.reverse()
             self._has_last_line = False
-            return self._create_new_flow_text(cells, first)
+            return self._new_paragraph(cells, first)
         else:
             return None
 
-    def _create_new_flow_text(
+    def _new_paragraph(
             self, cells: List[Cell], first: bool
-    ) -> "Paragraph2":
+    ) -> "Paragraph":
         # First line of the paragraph included?
         indent_first = self._indent_first if first else self._indent_left
         indent = (indent_first, self._indent_left, self._indent_right)
-        flow_text = Paragraph2(
+        paragraph = Paragraph2(
             self._content_width,
             self._align,
             indent,
@@ -1821,5 +1916,5 @@ class Paragraph2(Container):
             self._tab_stops,
             self.renderer,
         )
-        flow_text.append_content(cells)
-        return flow_text
+        paragraph.append_content(cells)
+        return paragraph
