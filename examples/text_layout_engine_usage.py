@@ -281,7 +281,7 @@ def fraction_content():
 
 def create_layout(align, content):
     # Create a flow text paragraph for the content:
-    paragraph = text_layout.FlowText(align=align)
+    paragraph = text_layout.Paragraph(align=align)
     paragraph.append_content(content)
 
     # Start the layout engine and set default column width:
@@ -328,7 +328,7 @@ def create_layout(align, content):
     return layout
 
 
-FlowTextAlignment = text_layout.FlowTextAlignment
+FlowTextAlignment = text_layout.ParagraphAlignment
 ALIGNMENTS = [
     FlowTextAlignment.LEFT,
     FlowTextAlignment.RIGHT,

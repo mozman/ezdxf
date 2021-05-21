@@ -191,12 +191,12 @@ def mtext_context(mtext: MText) -> MTextContext:
 
 
 ALIGN = {
-    MTextParagraphAlignment.LEFT: text_layout.FlowTextAlignment.LEFT,
-    MTextParagraphAlignment.RIGHT: text_layout.FlowTextAlignment.RIGHT,
-    MTextParagraphAlignment.CENTER: text_layout.FlowTextAlignment.CENTER,
-    MTextParagraphAlignment.JUSTIFIED: text_layout.FlowTextAlignment.JUSTIFIED,
-    MTextParagraphAlignment.DISTRIBUTED: text_layout.FlowTextAlignment.JUSTIFIED,
-    MTextParagraphAlignment.DEFAULT: text_layout.FlowTextAlignment.LEFT,
+    MTextParagraphAlignment.LEFT: text_layout.ParagraphAlignment.LEFT,
+    MTextParagraphAlignment.RIGHT: text_layout.ParagraphAlignment.RIGHT,
+    MTextParagraphAlignment.CENTER: text_layout.ParagraphAlignment.CENTER,
+    MTextParagraphAlignment.JUSTIFIED: text_layout.ParagraphAlignment.JUSTIFIED,
+    MTextParagraphAlignment.DISTRIBUTED: text_layout.ParagraphAlignment.JUSTIFIED,
+    MTextParagraphAlignment.DEFAULT: text_layout.ParagraphAlignment.LEFT,
 }
 
 
@@ -204,11 +204,11 @@ def new_paragraph(cells: List, ctx: MTextContext, cap_height: float,
                   line_spacing: float = 1):
     if cells:
         p = ctx.paragraph
-        align = ALIGN.get(p.align, text_layout.FlowTextAlignment.LEFT)
+        align = ALIGN.get(p.align, text_layout.ParagraphAlignment.LEFT)
         left = p.left * cap_height
         right = p.right * cap_height
         first = left + p.indent * cap_height  # relative to left
-        paragraph = text_layout.FlowText(
+        paragraph = text_layout.Paragraph(
             align=align,
             indent=(first, left, right),
             line_spacing=line_spacing,

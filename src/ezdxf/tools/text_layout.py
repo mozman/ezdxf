@@ -856,16 +856,6 @@ class Container(Box):
             )
 
 
-class Paragraph(Container):  # ABC
-    @abc.abstractmethod
-    def distribute_content(self, height: float = None):
-        pass
-
-    @abc.abstractmethod
-    def set_total_width(self, width: float):
-        pass
-
-
 class EmptyParagraph(Cell):
     """Spacer between two paragraphs, represents empty lines like in
     "line1\n\nline2".
@@ -890,7 +880,7 @@ class EmptyParagraph(Cell):
         pass
 
 
-class FlowTextAlignment(enum.IntEnum):
+class ParagraphAlignment(enum.IntEnum):
     DEFAULT = 0
     LEFT = 1
     RIGHT = 2
@@ -898,13 +888,13 @@ class FlowTextAlignment(enum.IntEnum):
     JUSTIFIED = 4
 
 
-class FlowText(Paragraph):
+class Paragraph(Container):
     """Single paragraph of flow text.
 
     Supported paragraph alignments (IntEnum):
 
         === =================
-        int FlowTextAlignment
+        int ParagraphAlignment
         === =================
         0   DEFAULT
         1   LEFT
@@ -926,12 +916,12 @@ class FlowText(Paragraph):
 
     """
 
-    _LEFT_AND_JUSTIFIED = (FlowTextAlignment.LEFT, FlowTextAlignment.JUSTIFIED)
+    _LEFT_AND_JUSTIFIED = (ParagraphAlignment.LEFT, ParagraphAlignment.JUSTIFIED)
 
     def __init__(
             self,
             width: float = None,  # defined by parent container
-            align: FlowTextAlignment = FlowTextAlignment.DEFAULT,
+            align: ParagraphAlignment = ParagraphAlignment.DEFAULT,
             indent: Tuple[float, float, float] = (0, 0, 0),
             line_spacing: float = 1,
             margins: Sequence[float] = None,
@@ -967,7 +957,7 @@ class FlowText(Paragraph):
         x, y = self.final_location()
         x += self.left_margin
         y -= self.top_margin
-        justified_alignment = self._align == FlowTextAlignment.JUSTIFIED
+        justified_alignment = self._align == ParagraphAlignment.JUSTIFIED
         first = True
         available_width = self.line_width(first)
         lines = self._lines
@@ -989,18 +979,18 @@ class FlowText(Paragraph):
     ) -> float:
         """Apply indentation and paragraph alignment"""
         alignment = self._align
-        if alignment == FlowTextAlignment.DEFAULT:
-            alignment = FlowTextAlignment.LEFT
+        if alignment == ParagraphAlignment.DEFAULT:
+            alignment = ParagraphAlignment.LEFT
 
         left_indent = self._indent_first if first else self._indent_left
         left_border = x + left_indent
-        if alignment in FlowText._LEFT_AND_JUSTIFIED:
+        if alignment in Paragraph._LEFT_AND_JUSTIFIED:
             return left_border
 
         right_border = left_border + available_width
-        if alignment == FlowTextAlignment.RIGHT:
+        if alignment == ParagraphAlignment.RIGHT:
             return right_border - line.total_width
-        elif alignment == FlowTextAlignment.CENTER:
+        elif alignment == ParagraphAlignment.CENTER:
             center = (right_border + left_border) / 2
             return center - line.total_width / 2
         return left_border
@@ -1014,7 +1004,7 @@ class FlowText(Paragraph):
             for line in self._lines
         )
 
-    def distribute_content(self, height: float = None) -> Optional["FlowText"]:
+    def distribute_content(self, height: float = None) -> Optional["Paragraph"]:
         """Distribute the raw content into lines. Returns the cells which do
         not fit as a new paragraph.
 
@@ -1133,11 +1123,11 @@ class FlowText(Paragraph):
 
     def _create_new_flow_text(
             self, cells: List[Cell], first: bool
-    ) -> "FlowText":
+    ) -> "Paragraph":
         # First line of the paragraph included?
         indent_first = self._indent_first if first else self._indent_left
         indent = (indent_first, self._indent_left, self._indent_right)
-        flow_text = FlowText(
+        flow_text = Paragraph(
             self._content_width,
             self._align,
             indent,
@@ -1681,11 +1671,11 @@ def shift_tab_stops(
     return [TabStop(pos + offset, kind) for pos, kind in tab_stops]
 
 
-class FlowText2(Paragraph):
+class Paragraph2(Container):
     def __init__(
             self,
             width: float = None,  # defined by parent container
-            align: FlowTextAlignment = FlowTextAlignment.DEFAULT,
+            align: ParagraphAlignment = ParagraphAlignment.DEFAULT,
             indent: Tuple[float, float, float] = (0, 0, 0),
             line_spacing: float = 1,
             margins: Sequence[float] = None,
@@ -1754,7 +1744,7 @@ class FlowText2(Paragraph):
             for line in self._lines
         )
 
-    def distribute_content(self, height: float = None) -> Optional["FlowText2"]:
+    def distribute_content(self, height: float = None) -> Optional["Paragraph2"]:
         """Distribute the raw content into lines. Returns the cells which do
         not fit as a new paragraph.
 
@@ -1818,11 +1808,11 @@ class FlowText2(Paragraph):
 
     def _create_new_flow_text(
             self, cells: List[Cell], first: bool
-    ) -> "FlowText2":
+    ) -> "Paragraph2":
         # First line of the paragraph included?
         indent_first = self._indent_first if first else self._indent_left
         indent = (indent_first, self._indent_left, self._indent_right)
-        flow_text = FlowText2(
+        flow_text = Paragraph2(
             self._content_width,
             self._align,
             indent,

@@ -173,85 +173,85 @@ class TestColumn:
         assert result[0] == "C1(0.0, -11.0, 11.0, 0.0)"
 
 
-def test_flow_text_available_line_content_space():
-    flow = tl.FlowText(width=12, indent=(0.7, 0.5, 0.9))
-    assert flow.line_width(first=True) == 12 - 0.7 - 0.9
-    assert flow.line_width(first=False) == 12 - 0.5 - 0.9
+def test_paragraph_available_line_content_space():
+    par = tl.Paragraph(width=12, indent=(0.7, 0.5, 0.9))
+    assert par.line_width(first=True) == 12 - 0.7 - 0.9
+    assert par.line_width(first=False) == 12 - 0.5 - 0.9
 
 
-class TestFlowTextWithUnrestrictedHeight:
+class TestParagraphWithUnrestrictedHeight:
     # default values:
     # column width = 10
     # content width = 3
     # space width = 0.5
 
     @pytest.fixture
-    def flow(self):
+    def par(self):
         # Paragraph alignment is not important for content distribution,
         # because the required space is independent from alignment (left,
         # right, center or justified).
         # This may change by implementing regular tabulator support.
-        return tl.FlowText(width=10, renderer=Rect("PAR"))
+        return tl.Paragraph(width=10, renderer=Rect("PAR"))
 
-    def test_empty_paragraph_dimensions(self, flow):
-        assert flow.content_height == 0
-        assert flow.content_width == 10
+    def test_empty_paragraph_dimensions(self, par):
+        assert par.content_height == 0
+        assert par.content_width == 10
 
-    def test_render_empty_paragraph(self, flow):
-        flow.place(0, 0)
-        flow.render()
-        result = flow.renderer.result
+    def test_render_empty_paragraph(self, par):
+        par.place(0, 0)
+        par.render()
+        result = par.renderer.result
 
         assert len(result) == 1
         assert result[0] == "PAR(0.0, 0.0, 10.0, 0.0)"
 
-    def test_distribute_invalid_content(self, flow):
-        flow.append_content(str2cells("ttt"))
+    def test_distribute_invalid_content(self, par):
+        par.append_content(str2cells("ttt"))
         with pytest.raises(ValueError):
-            flow.distribute_content(height=None)
+            par.distribute_content(height=None)
 
-    def test_distribute_common_case_without_nbsp(self, flow):
+    def test_distribute_common_case_without_nbsp(self, par):
         # column width = 10
         # content width = 3
         # space width = 0.5
-        flow.append_content(str2cells("t t t t t t t t t"))
-        flow.distribute_content(height=None)
-        assert lines2str(flow) == [
+        par.append_content(str2cells("t t t t t t t t t"))
+        par.distribute_content(height=None)
+        assert lines2str(par) == [
             "t t t",  # width = 3x3 + 2x0.5 = 10
             "t t t",  # remove line breaking spaces!
             "t t t",
         ]
 
-    def test_distribute_with_nbsp(self, flow):
+    def test_distribute_with_nbsp(self, par):
         # column width = 10
         # content width = 3
         # space width = 0.5
-        flow.append_content(str2cells("t t t~t t t"))
-        flow.distribute_content(height=None)
-        assert lines2str(flow) == [
+        par.append_content(str2cells("t t t~t t t"))
+        par.distribute_content(height=None)
+        assert lines2str(par) == [
             "t t",  # t~t does not fit and goes to next line
             "t~t t",  # width = 3x3 + 2x0.5 = 10
             "t",
         ]
 
-    def test_distribute_too_long_lines(self, flow):
+    def test_distribute_too_long_lines(self, par):
         # column width = 10
-        flow.append_content(str2cells("t t t", content=12))
-        flow.distribute_content(height=None)
-        assert lines2str(flow) == ["t", "t", "t"]
+        par.append_content(str2cells("t t t", content=12))
+        par.distribute_content(height=None)
+        assert lines2str(par) == ["t", "t", "t"]
 
-    def test_distribute_too_long_lines_including_nbsp(self, flow):
+    def test_distribute_too_long_lines_including_nbsp(self, par):
         # column width = 10
-        flow.append_content(str2cells("t~t~t t~t t", content=5))
-        flow.distribute_content(height=None)
-        assert lines2str(flow) == [
+        par.append_content(str2cells("t~t~t t~t t", content=5))
+        par.distribute_content(height=None)
+        assert lines2str(par) == [
             "t~t~t",  # width = 3x5 + 2x0.5 = 17
             "t~t",  # width = 2x5 + 0.5 = 10.5
             "t",
         ]
 
 
-class TestFlowTextWithRestrictedHeight:
+class TestParagraphWithRestrictedHeight:
     # default values:
     # column width = 10
     # content width = 3
@@ -261,37 +261,37 @@ class TestFlowTextWithRestrictedHeight:
     THREE_LINE_SPACE = tl.leading(1, 1) * 2 + 1
 
     @pytest.fixture
-    def flow(self):
+    def par(self):
         # Paragraph alignment is not important for content distribution.
-        return tl.FlowText(width=10, renderer=Rect("PAR"))
+        return tl.Paragraph(width=10, renderer=Rect("PAR"))
 
-    def test_distribute_with_exact_height_match(self, flow):
-        flow.append_content(str2cells("t t t t t t t t t"))
-        flow.distribute_content(height=self.THREE_LINE_SPACE)
-        assert lines2str(flow) == [
+    def test_distribute_with_exact_height_match(self, par):
+        par.append_content(str2cells("t t t t t t t t t"))
+        par.distribute_content(height=self.THREE_LINE_SPACE)
+        assert lines2str(par) == [
             "t t t",  # width = 3x3 + 2x0.5 = 10
             "t t t",
             "t t t",
         ]
 
-    def test_distribute_with_one_line_left_over(self, flow):
-        flow.append_content(str2cells("t t t t t t t t t"))
+    def test_distribute_with_one_line_left_over(self, par):
+        par.append_content(str2cells("t t t t t t t t t"))
         # Paragraph has only space for 2 lines by reducing the available space
         # by a small amount:
         height = self.THREE_LINE_SPACE - 0.01
-        leftover = flow.distribute_content(height=height)
-        assert lines2str(flow) == [
+        leftover = par.distribute_content(height=height)
+        assert lines2str(par) == [
             "t t t",
             "t t t",
         ]
         leftover.distribute_content(height=1)
         assert lines2str(leftover) == ["t t t"]
 
-    def test_distribute_with_all_lines_left_over(self, flow):
-        flow.append_content(str2cells("t t t~t t t t t t"))
+    def test_distribute_with_all_lines_left_over(self, par):
+        par.append_content(str2cells("t t t~t t t t t t"))
         # Paragraph has no space at all:
-        leftover = flow.distribute_content(height=0)
-        assert lines2str(flow) == []
+        leftover = par.distribute_content(height=0)
+        assert lines2str(par) == []
 
         # None = unrestricted height
         leftover.distribute_content(height=None)
@@ -303,110 +303,110 @@ class TestFlowTextWithRestrictedHeight:
         ]
 
 
-def set_flow_content(flow):
+def set_paragraph_content(flow):
     flow.append_content(str2cells("t t t t t t t t t"))
     flow.distribute_content()
 
 
-class TestFlowTextLeftAlignment:
+class TestParagraphLeftAlignment:
     # default values:
     # content width = 3
     # space width = 0.5
 
     def test_without_indentation(self):
-        flow = tl.FlowText(width=12, align=tl.FlowTextAlignment.LEFT)
-        set_flow_content(flow)
-        flow.place(0, 0)
-        for line in flow:
+        par = tl.Paragraph(width=12, align=tl.ParagraphAlignment.LEFT)
+        set_paragraph_content(par)
+        par.place(0, 0)
+        for line in par:
             assert line.total_width == 10
             assert line.final_location()[0] == 0
 
     def test_left_indentation(self):
-        flow = tl.FlowText(
-            width=12, indent=(0.7, 0.5, 0), align=tl.FlowTextAlignment.LEFT
+        par = tl.Paragraph(
+            width=12, indent=(0.7, 0.5, 0), align=tl.ParagraphAlignment.LEFT
         )
-        set_flow_content(flow)
-        flow.place(0, 0)
-        lines = list(flow)
+        set_paragraph_content(par)
+        par.place(0, 0)
+        lines = list(par)
         # first line:
-        assert flow.line_width(True) == 12 - 0.7  # available content space
+        assert par.line_width(True) == 12 - 0.7  # available content space
         assert lines[0].final_location()[0] == 0.7
         assert lines[0].total_width == 10
         # remaining lines:
         for line in lines[1:]:
-            assert flow.line_width(False) == 12 - 0.5  # available content space
+            assert par.line_width(False) == 12 - 0.5  # available content space
             assert line.total_width == 10
             assert line.final_location()[0] == 0.5
 
 
-class TestFlowTextRightAlignment:
+class TestParagraphAlignment:
     # default values:
     # content width = 3
     # space width = 0.5
 
     def test_without_indentation(self):
-        flow = tl.FlowText(width=12, align=tl.FlowTextAlignment.RIGHT)
-        set_flow_content(flow)
-        flow.place(0, 0)
-        for line in flow:
+        par = tl.Paragraph(width=12, align=tl.ParagraphAlignment.RIGHT)
+        set_paragraph_content(par)
+        par.place(0, 0)
+        for line in par:
             assert line.total_width == 10
             assert line.final_location()[0] == 2
 
     def test_right_indentation(self):
-        flow = tl.FlowText(
-            width=12, indent=(0.5, 0.5, 0.5), align=tl.FlowTextAlignment.RIGHT
+        par = tl.Paragraph(
+            width=12, indent=(0.5, 0.5, 0.5), align=tl.ParagraphAlignment.RIGHT
         )
-        set_flow_content(flow)
-        flow.place(0, 0)
-        for line in flow:
+        set_paragraph_content(par)
+        par.place(0, 0)
+        for line in par:
             assert line.total_width == 10
             assert line.final_location()[0] == 1.5  # 12 - 0.5 - 10
 
 
-class TestFlowTextCenterAlignment:
+class TestParagraphCenterAlignment:
     # default values:
     # content width = 3
     # space width = 0.5
 
     def test_without_indentation(self):
-        flow = tl.FlowText(width=12, align=tl.FlowTextAlignment.CENTER)
-        set_flow_content(flow)
-        flow.place(0, 0)
-        for line in flow:
+        par = tl.Paragraph(width=12, align=tl.ParagraphAlignment.CENTER)
+        set_paragraph_content(par)
+        par.place(0, 0)
+        for line in par:
             assert line.total_width == 10
             assert line.final_location()[0] == 1
 
     def test_left_indentation(self):
-        flow = tl.FlowText(
-            width=12, indent=(0.5, 0.5, 0), align=tl.FlowTextAlignment.CENTER
+        par = tl.Paragraph(
+            width=12, indent=(0.5, 0.5, 0), align=tl.ParagraphAlignment.CENTER
         )
-        set_flow_content(flow)
-        flow.place(0, 0)
-        for line in flow:
+        set_paragraph_content(par)
+        par.place(0, 0)
+        for line in par:
             assert line.total_width == 10
             assert line.final_location()[0] == 1.25  # 0.5 + (11.5 - 10) / 2
 
     def test_right_indentation(self):
-        flow = tl.FlowText(
-            width=12, indent=(0, 0, 0.5), align=tl.FlowTextAlignment.CENTER
+        par = tl.Paragraph(
+            width=12, indent=(0, 0, 0.5), align=tl.ParagraphAlignment.CENTER
         )
-        set_flow_content(flow)
-        flow.place(0, 0)
-        for line in flow:
+        set_paragraph_content(par)
+        par.place(0, 0)
+        for line in par:
             assert line.total_width == 10
             assert line.final_location()[0] == 0.75  # (11.5 - 10) / 2
 
 
-class TestFlowTextJustifiedAlignment:
+class TestParagraphJustifiedAlignment:
     # default values:
     # content width = 3
     # space width = 0.5
 
     def test_without_indentation(self):
-        flow = tl.FlowText(width=12, align=tl.FlowTextAlignment.JUSTIFIED)
-        set_flow_content(flow)
-        flow.place(0, 0)
-        lines = list(flow)
+        par = tl.Paragraph(width=12, align=tl.ParagraphAlignment.JUSTIFIED)
+        set_paragraph_content(par)
+        par.place(0, 0)
+        lines = list(par)
         for line in lines[:-1]:
             assert line.total_width == 12  # expand across paragraph width
             assert line.final_location()[0] == 0
@@ -417,14 +417,14 @@ class TestFlowTextJustifiedAlignment:
         assert last_line.final_location()[0] == 0
 
     def test_with_indentation(self):
-        flow = tl.FlowText(
+        par = tl.Paragraph(
             width=12,
             indent=(0.7, 0.5, 0.5),
-            align=tl.FlowTextAlignment.JUSTIFIED,
+            align=tl.ParagraphAlignment.JUSTIFIED,
         )
-        set_flow_content(flow)
-        flow.place(0, 0)
-        lines = list(flow)
+        set_paragraph_content(par)
+        par.place(0, 0)
+        lines = list(par)
         # first line:
         assert lines[0].total_width == 10.8  # 12 - (0.7 + 0.5)
         assert lines[0].final_location()[0] == 0.7
