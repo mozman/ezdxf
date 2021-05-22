@@ -102,7 +102,11 @@ class Path(abc.Sequence):
 
     @property
     def has_sub_paths(self) -> bool:
-        """Returns ``True`` if the path has multiple sub-paths."""
+        """Returns ``True`` if the path has multiple sub-paths.
+
+        .. versionadded:: 0.17
+
+        """
         return self._has_sub_paths
 
     def has_clockwise_orientation(self) -> bool:
@@ -125,8 +129,10 @@ class Path(abc.Sequence):
         """Start a new sup-path at `location`. This creates a gap between the
         current end-point and the start-point of the new sub-path.
 
-        If the ``MOVETO`` command is the first command, the start point of
+        If the :meth:`move_to` command is the first command, the start point of
         the path will be reset to `location`.
+
+        .. versionadded:: 0.17
 
         """
         commands = self._commands
@@ -327,7 +333,11 @@ class Path(abc.Sequence):
             self._commands[i] = cmd.to_wcs(ocs, elevation)
 
     def sub_paths(self) -> Iterable["Path"]:
-        """Yield sub-path as single-path objects. """
+        """Yield sub-path as single-path objects.
+
+        .. versionadded:: 0.17
+
+        """
         path = self.__class__(start=self.start)
         for cmd in self._commands:
             if cmd.type == Command.MOVE_TO:
@@ -534,6 +544,8 @@ class Path(abc.Sequence):
         """Extend the path by another path. The source path is automatically a
         multi path object, even if the previous end point matches the start
         point of the appended path.
+
+        .. versionadded:: 0.17
 
         """
         self.move_to(path.start)

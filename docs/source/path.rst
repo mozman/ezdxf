@@ -53,11 +53,16 @@ only support 2D paths.
     Refactored the module :mod:`ezdxf.render.path` into the subpackage
     :mod:`ezdxf.path`.
 
+
 The usability of the :class:`Path` class expanded by the introduction
 of the reverse conversion from :class:`Path` to DXF entities (LWPOLYLINE,
 POLYLINE, LINE), and many other tools in `ezdxf` v0.16.
 To emphasize this new usability, the :class:`Path` class has got its own
 subpackage :mod:`ezdxf.path`.
+
+.. versionadded:: 0.17
+    Added the :meth:`Path.move_to` command and multi-path support.
+
 
 .. warning::
 
