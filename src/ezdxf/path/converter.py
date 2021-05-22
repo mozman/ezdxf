@@ -29,7 +29,9 @@ __all__ = [
     'to_polylines2d', 'to_hatches', 'to_bsplines_and_vertices',
     'to_splines_and_polylines', 'from_hatch', 'from_hatch_boundary_path',
     'from_vertices', 'from_matplotlib_path', 'from_qpainter_path',
-    'to_matplotlib_path', 'to_qpainter_path'
+    'to_matplotlib_path', 'to_qpainter_path',
+    'multi_path_from_matplotlib_path',
+    'multi_path_from_qpainter_path',
 ]
 
 MAX_DISTANCE = 0.01
@@ -770,23 +772,25 @@ class MplCmd(enum.IntEnum):
     STOP = 0
 
 
-def from_matplotlib_path(mpath, curves=True) -> Iterable[Path]:
-    """ Yields multiple :class:`Path` objects from a Matplotlib `Path`_
-    (`TextPath`_)  object. (requires Matplotlib)
+def multi_path_from_matplotlib_path(mpath, curves=True) -> Path:
+    """Returns a :class:`Path` object from a Matplotlib `Path`_
+    (`TextPath`_)  object. (requires Matplotlib). Returns a multi-path object
+    if necessary.
 
-    .. versionadded:: 0.16
+    .. versionadded:: 0.17
 
     .. _TextPath: https://matplotlib.org/3.1.1/api/textpath_api.html
     .. _Path: https://matplotlib.org/3.1.1/api/path_api.html#matplotlib.path.Path
 
     """
-    path = None
+    path = Path()
+    current_polyline_start = Vec3()
     for vertices, cmd in mpath.iter_segments(curves=curves):
         cmd = MplCmd(cmd)
-        if cmd == MplCmd.MOVETO:  # each "moveto" creates new path
-            if path is not None:
-                yield path
-            path = Path(vertices)
+        if cmd == MplCmd.MOVETO:
+            # vertices = [x0, y0]
+            current_polyline_start = Vec3(vertices)
+            path.move_to(vertices)
         elif cmd == MplCmd.LINETO:
             # vertices = [x0, y0]
             path.line_to(vertices)
@@ -798,15 +802,28 @@ def from_matplotlib_path(mpath, curves=True) -> Iterable[Path]:
             path.curve4_to(vertices[4:], vertices[0:2], vertices[2:4])
         elif cmd == MplCmd.CLOSEPOLY:
             # vertices = [0, 0]
-            if not path.is_closed:
-                path.line_to(path.start)
-            yield path
-            path = None
+            if not path.end.isclose(current_polyline_start):
+                path.line_to(current_polyline_start)
         elif cmd == MplCmd.STOP:  # not used
-            break
+            pass
+    return path
 
-    if path is not None:
-        yield path
+
+def from_matplotlib_path(mpath, curves=True) -> Iterable[Path]:
+    """ Yields multiple :class:`Path` objects from a Matplotlib `Path`_
+    (`TextPath`_)  object. (requires Matplotlib)
+
+    .. versionadded:: 0.16
+
+    .. _TextPath: https://matplotlib.org/3.1.1/api/textpath_api.html
+    .. _Path: https://matplotlib.org/3.1.1/api/path_api.html#matplotlib.path.Path
+
+    """
+    path = multi_path_from_matplotlib_path(mpath, curves=curves)
+    if path.has_sub_paths:
+        return path.sub_paths()
+    else:
+        return [path]
 
 
 def to_matplotlib_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
@@ -861,29 +878,26 @@ def to_matplotlib_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
 
 # Interface to PyQt5.QtGui.QPainterPath
 
+def multi_path_from_qpainter_path(qpath) -> Path:
+    """Returns a :class:`Path` objects from a `QPainterPath`_.
+    Returns a multi-path object if necessary. (requires PyQt5)
 
-def from_qpainter_path(qpath) -> Iterable[Path]:
-    """ Yields multiple :class:`Path` objects from a `QPainterPath`_.
-    (requires PyQt5)
-
-    .. versionadded:: 0.16
+    .. versionadded:: 0.17
 
     .. _QPainterPath: https://doc.qt.io/qt-5/qpainterpath.html
 
     """
     # QPainterPath stores only cubic Bèzier curves
-    path = None
+    path = Path()
     vertices = list()
     for index in range(qpath.elementCount()):
         element = qpath.elementAt(index)
         cmd = element.type
         v = Vec3(element.x, element.y)
 
-        if cmd == 0:  # MoveTo, each "moveto" creates new path
-            if path is not None:
-                yield path
+        if cmd == 0:  # MoveTo
             assert len(vertices) == 0
-            path = Path(v)
+            path.move_to(v)
         elif cmd == 1:  # LineTo
             assert len(vertices) == 0
             path.line_to(v)
@@ -896,9 +910,24 @@ def from_qpainter_path(qpath) -> Iterable[Path]:
                 vertices.clear()
             else:
                 vertices.append(v)
+    return path
 
-    if path is not None:
-        yield path
+
+def from_qpainter_path(qpath) -> Iterable[Path]:
+    """ Yields multiple :class:`Path` objects from a `QPainterPath`_.
+    (requires PyQt5)
+
+    .. versionadded:: 0.16
+
+    .. _QPainterPath: https://doc.qt.io/qt-5/qpainterpath.html
+
+    """
+    # QPainterPath stores only cubic Bèzier curves
+    path = multi_path_from_qpainter_path(qpath)
+    if path.has_sub_paths:
+        return path.sub_paths()
+    else:
+        return [path]
 
 
 def to_qpainter_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):

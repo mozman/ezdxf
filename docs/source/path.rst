@@ -108,7 +108,11 @@ Functions to create :class:`Path` objects from other objects.
 
 .. autofunction:: from_matplotlib_path(mpath, curves=True) -> Iterable[Path]
 
+.. autofunction:: multi_path_from_matplotlib_path(mpath, curves=True) -> Path
+
 .. autofunction:: from_qpainter_path(qpath) -> Iterable[Path]
+
+.. autofunction:: multi_path_from_qpainter_path(qpath) -> Path
 
 Render Functions
 ----------------
