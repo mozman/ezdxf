@@ -113,6 +113,18 @@ class TestTransformPaths():
         assert path1.start == (4, 0)
         assert path1.end == (7, 0)
 
+    def test_multi_path_objects(self):
+        path = Path()
+        path.line_to((1, 0, 0))
+        path.move_to((2, 0, 0))
+        paths = transform_paths([path], Matrix44.translate(0, 1, 0))
+        assert len(paths) == 1
+        path2 = paths[0]
+        assert path2.start.isclose((0, 1, 0))
+        assert len(path2) == 2
+        assert path2.end.isclose((2, 1, 0))
+        assert path2.has_sub_paths is True
+
     def test_to_ocs(self):
         p = Path((0, 1, 1))
         p.line_to((0, 1, 3))

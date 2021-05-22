@@ -72,6 +72,9 @@ def transform_paths(paths: Iterable[Path], m: Matrix44) -> List[Path]:
                 if len(collect) == 3:
                     path.curve4_to(collect[0], collect[1], collect[2])
                     collect.clear()
+            elif cmd == Command.MOVE_TO:
+                path.move_to(vertex)
+
         if path is not None:
             transformed_paths.append(path)
 
