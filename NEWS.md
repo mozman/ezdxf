@@ -2,8 +2,8 @@
 News
 ====
 
-Version 0.16.3b1 - dev
-----------------------
+Version 0.16.3 - 2021-05-22
+---------------------------
 
 - NEW: `ezdxf.tools.text.MTextEditor` class, extracted from the `MText` class
 - NEW: `MText.set_bg_color()`, new argument `text_frame` to add a text frame
