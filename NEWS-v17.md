@@ -7,4 +7,4 @@ Version 0.17 - dev
 - NEW: factory method `BaseLayout.add_mtext_dynamic_manual_height_columns()`
 - NEW: `move_to()` command and multi-path support for the `ezdxf.path.Path` class 
 - NEW: regular `make_path()` support for the HATCH entity, returns a multi-path object  
-- NEW: regular `make_primitive()` for the HATCH entity  
+- NEW: regular `make_primitive()` support for the HATCH entity  
