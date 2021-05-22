@@ -6,7 +6,7 @@ import math
 from ezdxf.path import (
     Path, make_path, converter, Command, tools,
 )
-from ezdxf.math import Vec3, Matrix44, Bezier4P, Bezier3P, close_vectors
+from ezdxf.math import Vec3, Matrix44, Bezier4P, Bezier3P, close_vectors, OCS
 from ezdxf.entities.hatch import PolylinePath, EdgePath
 from ezdxf.entities import factory, DXFEntity, Polymesh, LWPolyline
 
@@ -94,6 +94,117 @@ def test_add_curves4_reverse():
     tools.add_bezier4p(path, [c1])
     assert len(path) == 1
     assert path.end == (2, 0, 0)
+
+
+class TestSubPath:
+    def simple_multi_path(self):
+        path = Path(start=(1, 0, 0))
+        path.line_to((2, 0, 0))
+        path.move_to((3, 0, 0))
+        return path
+
+    def test_has_no_sub_paths_by_default(self):
+        path = Path()
+        assert path.has_sub_paths is False
+
+    def test_first_move_to(self):
+        path = Path(start=(1, 0, 0))
+        path.move_to((2, 0, 0))
+        assert path.start.isclose((2, 0, 0)), "should reset the start point"
+        assert len(path) == 0, "should not add a MOVETO cmd as first cmd"
+        assert path.has_sub_paths is False
+
+    def test_multiple_first_move_to(self):
+        path = Path(start=(1, 0, 0))
+        path.move_to((2, 0, 0))
+        path.move_to((3, 0, 0))
+        path.move_to((4, 0, 0))
+        assert path.start.isclose((4, 0, 0)), "should reset the start point"
+        assert len(path) == 0, "should not add a MOVETO cmd as first cmd"
+        assert path.has_sub_paths is False
+
+    def test_move_to_creates_a_multi_path_object(self):
+        path = Path(start=(1, 0, 0))
+        path.line_to((2, 0, 0))
+        path.move_to((3, 0, 0))
+        assert len(path) == 2, "should add a MOVETO cmd as last cmd"
+        assert path.has_sub_paths is True, "should be a multi path object"
+        assert path.end.isclose((3, 0, 0)), "should end at the MOVETO location"
+
+    def test_merge_multiple_move_to_commands_at_the_end(self):
+        path = self.simple_multi_path()
+        path.move_to((4, 0, 0))
+        path.move_to((4, 0, 0))
+        assert len(path) == 2, \
+            "should merge multiple MOVETO commands at the end of the path"
+
+    def test_clone_multi_path_object(self):
+        path = self.simple_multi_path()
+        path2 = path.clone()
+        assert path2.has_sub_paths
+        assert path.end == path2.end
+
+    def test_can_not_reverse_multi_path_object(self):
+        path = self.simple_multi_path()
+        pytest.raises(TypeError, path.reversed)
+
+    def test_cant_detect_orientation_of_multi_path_object(self):
+        path = self.simple_multi_path()
+        pytest.raises(TypeError, path.has_clockwise_orientation)
+
+    def test_cant_convert_multi_path_object_to_clockwise_orientation(self):
+        path = self.simple_multi_path()
+        pytest.raises(TypeError, path.clockwise)
+
+    def test_cant_convert_multi_path_object_to_ccw_orientation(self):
+        path = self.simple_multi_path()
+        pytest.raises(TypeError, path.counter_clockwise)
+
+    def test_approximate_multi_path_object(self):
+        path = self.simple_multi_path()
+        vertices = list(path.approximate())
+        assert len(vertices) == 3
+
+    def test_flatten_multi_path_object(self):
+        path = self.simple_multi_path()
+        vertices = list(path.flattening(0.1))
+        assert len(vertices) == 3
+
+    def test_multi_path_object_to_wcs(self):
+        path = self.simple_multi_path()
+        path.to_wcs(OCS(), 0)
+        assert path.end.isclose((3, 0, 0))
+
+    def test_transform_multi_path_object(self):
+        path = self.simple_multi_path()
+        m = Matrix44.translate(1, 1, 1)
+        path2 = path.transform(m)
+        assert path.end.isclose((3, 0, 0))
+        assert path2.has_sub_paths is True
+        assert path2.end.isclose((4, 1, 1))
+
+    def test_sub_paths_from_single_path_object(self):
+        path = Path(start=(1, 2, 3))
+        paths = list(path.sub_paths())
+        assert len(paths) == 1
+        s0 = paths[0]
+        assert s0.start == (1, 2, 3)
+        assert s0.end == (1, 2, 3)
+        assert s0.has_sub_paths is False
+        assert len(s0) == 0
+
+    def test_sub_paths_from_multi_path_object(self):
+        path = self.simple_multi_path()
+        s0, s1 = path.sub_paths()
+        assert s0.start == (1, 0, 0)
+        assert s0.end == (2, 0, 0)
+        assert s0.has_sub_paths is False
+        assert len(s0) == 1
+
+        assert s1.start == (3, 0, 0)
+        assert s1.end == (3, 0, 0)
+        assert len(s1) == 0
+        assert s1.has_sub_paths is False
 
 
 def test_add_spline():
@@ -499,7 +610,8 @@ def test_reversing_one_curve4():
 
 def test_reversing_path(p1):
     p2 = p1.reversed()
-    assert close_vectors(p2.control_vertices(), reversed(list(p1.control_vertices())))
+    assert close_vectors(p2.control_vertices(),
+                         reversed(list(p1.control_vertices())))
 
 
 def test_clockwise(p1):
