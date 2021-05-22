@@ -84,10 +84,7 @@ Functions to create :class:`Path` objects from other objects.
     - SOLID, TRACE, 3DFACE
     - IMAGE, WIPEOUT clipping path
     - VIEWPORT clipping path
-
-    The HATCH entity consist of multiple boundary paths and is not convertible
-    into a single :class:`Path` object and therefore not supported by this
-    function.
+    - HATCH as multi-path, new in v0.17
 
     :param entity: DXF entity
     :param segments: minimal count of cubic Bézier-curves for elliptical arcs
@@ -174,6 +171,10 @@ Utility Functions
 
 .. autofunction:: add_spline(path: Path, spline: BSpline, level=4)
 
+.. autofunction:: to_multi_path(paths: Iterable[Path]) -> Path
+
+.. autofunction:: single_paths(paths: Iterable[Path]) -> Iterable[Path]
+
 Basic Shapes
 ------------
 
@@ -210,11 +211,15 @@ The Path Class
 
     .. autoattribute:: has_curves
 
+    .. autoattribute:: has_sub_paths
+
     .. automethod:: control_vertices
 
     .. automethod:: has_clockwise_orientation
 
     .. automethod:: line_to(location: Vec3)
+
+    .. automethod:: move_to(location: Vec3)
 
     .. automethod:: curve3_to(location: Vec3, ctrl: Vec3)
 
@@ -235,6 +240,8 @@ The Path Class
     .. automethod:: approximate(segments: int=20) -> Iterable[Vec3]
 
     .. automethod:: flattening(distance: float, segments: int=16) -> Iterable[Vec3]
+
+    .. automethod:: extend_multi_path(path: Path)
 
 .. _PathPatch: https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.patches.PathPatch.html#matplotlib.patches.PathPatch
 .. _QPainterPath: https://doc.qt.io/qt-5/qpainterpath.html

@@ -26,7 +26,7 @@ __all__ = [
     'render_lwpolylines', 'render_polylines2d', 'render_polylines3d',
     'render_lines', 'render_hatches', 'render_splines_and_polylines',
     'add_bezier4p', 'add_bezier3p', 'add_ellipse', 'add_2d_polyline',
-    'add_spline', 'to_multi_path'
+    'add_spline', 'to_multi_path', 'single_paths'
 ]
 
 MAX_DISTANCE = 0.01
@@ -36,11 +36,28 @@ IS_CLOSE_TOL = 1e-10
 
 
 def to_multi_path(paths: Iterable[Path]) -> Path:
-    """Returns a multi-path object from all paths and sub-paths. """
+    """Returns a multi-path object from all given paths and their sub-paths.
+
+    .. versionadded:: 0.17
+
+    """
     multi_path = Path()
     for p in paths:
         multi_path.extend_multi_path(p)
     return multi_path
+
+
+def single_paths(paths: Iterable[Path]) -> Iterable[Path]:
+    """Yields all given paths and their sub-paths as single path objects.
+
+    .. versionadded:: 0.17
+
+    """
+    for p in paths:
+        if p.has_sub_paths:
+            yield from p.sub_paths()
+        else:
+            yield p
 
 
 def transform_paths(paths: Iterable[Path], m: Matrix44) -> List[Path]:

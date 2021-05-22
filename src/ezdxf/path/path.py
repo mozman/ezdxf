@@ -108,6 +108,10 @@ class Path(abc.Sequence):
     def has_clockwise_orientation(self) -> bool:
         """Returns ``True`` if 2D path has clockwise orientation, ignores
         z-axis of all control vertices.
+
+        Raises:
+            TypeError: can't detect orientation of a multi-path object
+
         """
         if self.has_sub_paths:
             raise TypeError("can't detect orientation of a multi-path object")
@@ -121,7 +125,7 @@ class Path(abc.Sequence):
         """Start a new sup-path at `location`. This creates a gap between the
         current end-point and the start-point of the new sub-path.
 
-        If the ``MOVETO``command is the first command, the start point of
+        If the ``MOVETO`` command is the first command, the start point of
         the path will be reset to `location`.
 
         """
@@ -163,6 +167,10 @@ class Path(abc.Sequence):
     def reversed(self) -> "Path":
         """Returns a new :class:`Path` with reversed segments and control
         vertices.
+
+        Raises:
+            TypeError: can't reverse a multi-path object
+
         """
         if self.has_sub_paths:
             raise TypeError("can't reverse a multi-path object")
@@ -186,14 +194,24 @@ class Path(abc.Sequence):
         return path
 
     def clockwise(self) -> "Path":
-        """Returns new :class:`Path` in clockwise orientation."""
+        """Returns new :class:`Path` in clockwise orientation.
+
+        Raises:
+            TypeError: can't detect orientation of a multi-path object
+
+        """
         if self.has_clockwise_orientation():
             return self.clone()
         else:
             return self.reversed()
 
     def counter_clockwise(self) -> "Path":
-        """Returns new :class:`Path` in counter-clockwise orientation."""
+        """Returns new :class:`Path` in counter-clockwise orientation.
+
+        Raises:
+            TypeError: can't detect orientation of a multi-path object
+
+        """
 
         if self.has_clockwise_orientation():
             return self.reversed()
@@ -520,4 +538,3 @@ class Path(abc.Sequence):
         """
         self.move_to(path.start)
         self._commands.extend(path._commands)  # immutable data!
-
