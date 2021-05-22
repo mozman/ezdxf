@@ -74,12 +74,24 @@ class TestToQPainterPath:
         assert q3.type == 3  # curve data element
         assert q3.x, q3.y == bez4[0]
 
-    def test_two_paths(self):
+    def test_two_single_paths(self):
         p1 = path.Path()
         p1.line_to((4, 5, 6))
         p2 = path.Path()
         p2.line_to((7, 8, 6))
         qpath = path.to_qpainter_path([p1, p2])
+        assert qpath.elementCount() == 4
+        assert qpath.elementAt(0).isMoveTo() is True
+        assert qpath.elementAt(1).isLineTo() is True
+        assert qpath.elementAt(2).isMoveTo() is True
+        assert qpath.elementAt(3).isLineTo() is True
+
+    def test_one_multi_paths(self):
+        p = path.Path()
+        p.line_to((4, 5, 6))
+        p.move_to((0, 0, 0))
+        p.line_to((7, 8, 6))
+        qpath = path.to_qpainter_path([p])
         assert qpath.elementCount() == 4
         assert qpath.elementAt(0).isMoveTo() is True
         assert qpath.elementAt(1).isLineTo() is True

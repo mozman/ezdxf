@@ -968,6 +968,8 @@ def to_qpainter_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
         for cmd in path:
             if cmd.type == Command.LINE_TO:
                 qpath.lineTo(qpnt(cmd.end))
+            elif cmd.type == Command.MOVE_TO:
+                qpath.moveTo(qpnt(cmd.end))
             elif cmd.type == Command.CURVE3_TO:
                 qpath.quadTo(qpnt(cmd.ctrl), qpnt(cmd.end))
             elif cmd.type == Command.CURVE4_TO:
