@@ -863,6 +863,8 @@ def to_matplotlib_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
         for cmd in path:
             if cmd.type == Command.LINE_TO:
                 add_command(MplCmd.LINETO, cmd.end)
+            elif cmd.type == Command.MOVE_TO:
+                add_command(MplCmd.MOVETO, cmd.end)
             elif cmd.type == Command.CURVE3_TO:
                 add_command(MplCmd.CURVE3, cmd.ctrl)
                 add_command(MplCmd.CURVE3, cmd.end)
