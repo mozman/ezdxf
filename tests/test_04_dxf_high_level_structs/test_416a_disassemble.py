@@ -241,14 +241,6 @@ def test_mtext_columns_to_primitive():
     assert vertices[3].isclose((0, -15))
 
 
-def test_make_primitive_for_hatch_is_empty():
-    hatch = factory.new('HATCH')
-    # make_primitive() returns an empty primitive, because a HATCH entity can
-    # not be reduced into a single path or mesh.
-    prim = disassemble.make_primitive(hatch)
-    assert prim.is_empty
-
-
 def test_hatch_returns_multiple_primitives():
     hatch = factory.new('HATCH')
     paths = hatch.paths
@@ -257,13 +249,13 @@ def test_hatch_returns_multiple_primitives():
     paths.add_polyline_path([(0, 0), (1, 0), (1, 1)])
     paths.add_polyline_path([(0, 2), (1, 2), (1, 3), (0, 3)])
     res = list(disassemble.to_primitives([hatch]))
-    assert len(res) == 2
-    p0 = res[0]
-    p1 = res[1]
-    assert p0.path is not None
-    assert p1.path is not None
-    v0 = list(p0.vertices())
-    v1 = list(p1.vertices())
+    assert len(res) == 1
+    p = res[0]
+    assert p.path is not None
+    assert p.path.has_sub_paths is True
+    p0, p1 = p.path.sub_paths()
+    v0 = list(p0.approximate())
+    v1 = list(p1.approximate())
     assert len(v0) == 4, "expected closed triangle"
     assert len(v1) == 5, "expected closed box"
 

@@ -191,7 +191,7 @@ def _from_image(image: 'Image', **kwargs) -> Path:
     return from_vertices(image.boundary_path_wcs(), close=True)
 
 
-# @make_path.register(Hatch)
+@make_path.register(Hatch)
 def _from_hatch(hatch: Hatch, **kwargs) -> Path:
     ocs = hatch.ocs()
     elevation = hatch.dxf.elevation.z

@@ -208,6 +208,11 @@ class PolylinePrimitive(ConvertedPrimitive):
             self._mesh = MeshBuilder.from_builder(m)
 
 
+class HatchPrimitive(ConvertedPrimitive):
+    def _convert_entity(self):
+        self._path = make_path(self.entity)
+
+
 DESCENDER_FACTOR = 0.333  # from TXT SHX font - just guessing
 X_HEIGHT_FACTOR = 0.666  # from TXT SHX font - just guessing
 
@@ -440,7 +445,7 @@ _PRIMITIVE_CLASSES = {
     "ATTDEF": TextLinePrimitive,
     "CIRCLE": CurvePrimitive,
     "ELLIPSE": CurvePrimitive,
-    # HATCH: Special handling required, see to_primitives() function
+    "HATCH": HatchPrimitive,  # multi-path object
     "HELIX": CurvePrimitive,
     "IMAGE": ImagePrimitive,
     "LINE": LinePrimitive,
@@ -469,11 +474,8 @@ def make_primitive(entity: DXFEntity,
     The :attr:`path` and the :attr:`mesh` attributes of an empty primitive
     are ``None`` and the :meth:`vertices` method  yields no vertices.
 
-    Returns an empty primitive for the :class:`~ezdxf.entities.Hatch` entity,
-    see docs of the :mod:`~ezdxf.disassemble` module. Use the this to create
-    multiple primitives from the HATCH boundary paths::
-
-        primitives = list(to_primitives([hatch_entity]))
+    .. versionchanged:: 0.17
+        regular support for the :class:`~ezdxf.entities.Hatch` entity.
 
     """
     cls = _PRIMITIVE_CLASSES.get(entity.dxftype(), EmptyPrimitive)
@@ -540,24 +542,7 @@ def to_primitives(entities: Iterable[DXFEntity],
 
     """
     for e in entities:
-        # Special handling for HATCH required, because a HATCH entity can not be
-        # reduced into a single path or mesh.
-        if e.dxftype() == 'HATCH':
-            # noinspection PyTypeChecker
-            yield from _hatch_primitives(e, max_flattening_distance)
-        else:
-            yield make_primitive(e, max_flattening_distance)
-
-
-def _hatch_primitives(
-        hatch: 'Hatch', max_flattening_distance=None) -> Iterable[Primitive]:
-    """ Yield all HATCH boundary paths as separated Path() objects. """
-    for p in from_hatch(hatch):
-        yield PathPrimitive(
-            p,
-            hatch,
-            max_flattening_distance
-        )
+        yield make_primitive(e, max_flattening_distance)
 
 
 def to_vertices(primitives: Iterable[Primitive]) -> Iterable[Vec3]:
