@@ -684,5 +684,37 @@ def test_from_edge_path(edge_path):
     assert len(path) == 19
 
 
+def test_extend_path_by_another_path():
+    path = Path((1, 0, 0))
+    path.line_to((2, 0, 0))
+    path.extend_multi_path(Path((3, 0, 0)))
+    assert path.has_sub_paths is True
+    assert path.start == (1, 0, 0)
+    assert path.end == (3, 0, 0)
+
+
+def test_extend_path_by_another_single_path():
+    path = Path((1, 0, 0))
+    path.line_to((2, 0, 0))
+    p1 = Path((3, 0, 0))
+    p1.line_to((4, 0, 0))
+    path.extend_multi_path(p1)
+    assert path.has_sub_paths is True
+    assert path.start == (1, 0, 0)
+    assert path.end == (4, 0, 0)
+
+
+def test_extend_path_by_another_multi_path():
+    path = Path((1, 0, 0))
+    path.line_to((2, 0, 0))
+    p1 = Path((3, 0, 0))
+    p1.line_to((4, 0, 0))
+    p1.move_to((5, 0, 0))
+    path.extend_multi_path(p1)
+    assert path.has_sub_paths is True
+    assert path.start == (1, 0, 0)
+    assert path.end == (5, 0, 0)
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

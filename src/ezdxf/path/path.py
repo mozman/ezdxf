@@ -511,3 +511,13 @@ class Path(abc.Sequence):
                     yield cmd.end
                 elif cmd.type == Command.MOVE_TO:
                     yield cmd.end
+
+    def extend_multi_path(self, path: "Path") -> None:
+        """Extend the path by another path. The source path is automatically a
+        multi path object, even if the previous end point matches the start
+        point of the appended path.
+
+        """
+        self.move_to(path.start)
+        self._commands.extend(path._commands)  # immutable data!
+

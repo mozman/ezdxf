@@ -8,7 +8,7 @@ from ezdxf.path import (
     Path, bbox, fit_paths_into_box, transform_paths, transform_paths_to_ocs,
     to_polylines3d, to_lines, to_lwpolylines, to_polylines2d,
     to_hatches, to_bsplines_and_vertices, to_splines_and_polylines,
-    from_vertices
+    from_vertices, to_multi_path,
 )
 from ezdxf.path import make_path, Command
 
@@ -480,6 +480,21 @@ def ellipse():
             'extrusion': (0.0, 0.0, -1.0),
         },
     )
+
+
+def test_to_multi_path():
+    p0 = Path((1, 0, 0))
+    p0.line_to((2, 0, 0))
+    p0.move_to((3, 0, 0))  # will be replaced by move_to(4, 0, 0)
+    p1 = Path((4, 0, 0))
+    p1.line_to((5, 0, 0))
+    p1.move_to((6, 0, 0))
+    path = to_multi_path([p0, p1])
+    assert path.has_sub_paths is True
+    assert path.start == (1, 0, 0)
+    assert path.end == (6, 0, 0)
+    assert path[1].type == Command.MOVE_TO
+    assert path[1].end == (4, 0, 0)
 
 
 def test_issue_224_end_points(ellipse):
