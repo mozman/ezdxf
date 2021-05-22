@@ -352,6 +352,9 @@ class TestToEntityConverter:
     def test_empty_to_lwpolyline(self):
         assert list(to_lwpolylines([])) == []
 
+    def test_empty_path_to_lwpolyline(self):
+        assert list(to_lwpolylines([Path()])) == []
+
     def test_to_lwpolylines(self, path):
         polylines = list(to_lwpolylines(path))
         assert len(polylines) == 1
@@ -375,6 +378,16 @@ class TestToEntityConverter:
         assert p0.dxf.extrusion.isclose(extrusion)
         assert p0[0] == (0, 0, 0, 0, 0)
         assert p0[-1] == (4, 0, 0, 0, 0)
+
+    def test_multi_path_to_lwpolylines(self):
+        path = Path()
+        path.line_to((1, 0, 0))
+        path.move_to((2, 0, 0))
+        path.line_to((3, 0, 0))
+        polylines = list(to_lwpolylines(path))
+        assert len(polylines) == 2
+        assert len(polylines[0]) == 2
+        assert len(polylines[1]) == 2
 
     def test_empty_to_polylines2d(self):
         assert list(to_polylines2d([])) == []

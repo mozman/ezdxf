@@ -403,10 +403,11 @@ def to_lwpolylines(
     elif reference_point.z != 0:
         dxfattribs['elevation'] = reference_point.z
 
-    for path in paths:
-        p = LWPolyline.new(dxfattribs=dxfattribs)
-        p.append_points(path.flattening(distance, segments), format='xy')
-        yield p
+    for path in tools.single_paths(paths):
+        if len(path) > 0:
+            p = LWPolyline.new(dxfattribs=dxfattribs)
+            p.append_points(path.flattening(distance, segments), format='xy')
+            yield p
 
 
 def _get_ocs(extrusion: Vec3, referenc_point: Vec3) -> Tuple[OCS, float]:
@@ -460,10 +461,11 @@ def to_polylines2d(
     elif reference_point.z != 0:
         dxfattribs['elevation'] = Vec3(0, 0, reference_point.z)
 
-    for path in paths:
-        p = Polyline.new(dxfattribs=dxfattribs)
-        p.append_vertices(path.flattening(distance, segments))
-        yield p
+    for path in tools.single_paths(paths):
+        if len(path) > 0:
+            p = Polyline.new(dxfattribs=dxfattribs)
+            p.append_vertices(path.flattening(distance, segments))
+            yield p
 
 
 def to_hatches(
@@ -559,7 +561,7 @@ def _hatch_converter(
     dxfattribs.setdefault('pattern_name', 'SOLID')
     dxfattribs.setdefault('color', const.BYLAYER)
 
-    for group in group_paths(paths):
+    for group in group_paths(tools.single_paths(paths)):
         if len(group) == 0:
             continue
         hatch = Hatch.new(dxfattribs=dxfattribs)
@@ -598,10 +600,11 @@ def to_polylines3d(
 
     dxfattribs = dxfattribs or {}
     dxfattribs['flags'] = const.POLYLINE_3D_POLYLINE
-    for path in paths:
-        p = Polyline.new(dxfattribs=dxfattribs)
-        p.append_vertices(path.flattening(distance, segments))
-        yield p
+    for path in tools.single_paths(paths):
+        if len(path) > 0:
+            p = Polyline.new(dxfattribs=dxfattribs)
+            p.append_vertices(path.flattening(distance, segments))
+            yield p
 
 
 def to_lines(
@@ -628,7 +631,9 @@ def to_lines(
         paths = [paths]
     dxfattribs = dxfattribs or {}
     prev_vertex = None
-    for path in paths:
+    for path in tools.single_paths(paths):
+        if len(path) == 0:
+            continue
         for vertex in path.flattening(distance, segments):
             if prev_vertex is None:
                 prev_vertex = vertex
@@ -681,19 +686,20 @@ def to_bsplines_and_vertices(path: Path,
         if _g1_continuity_curves:
             yield bezier_to_bspline(_g1_continuity_curves)
 
-    prev = path.start
     curves = []
-    for cmd in path:
-        if cmd.type == Command.CURVE3_TO:
-            curve = Bezier3P([prev, cmd.ctrl, cmd.end])
-        elif cmd.type == Command.CURVE4_TO:
-            curve = Bezier4P([prev, cmd.ctrl1, cmd.ctrl2, cmd.end])
-        elif cmd.type == Command.LINE_TO:
-            curve = (prev, cmd.end)
-        else:
-            raise ValueError
-        curves.append(curve)
-        prev = cmd.end
+    for path in tools.single_paths([path]):
+        prev = path.start
+        for cmd in path:
+            if cmd.type == Command.CURVE3_TO:
+                curve = Bezier3P([prev, cmd.ctrl, cmd.end])
+            elif cmd.type == Command.CURVE4_TO:
+                curve = Bezier4P([prev, cmd.ctrl1, cmd.ctrl2, cmd.end])
+            elif cmd.type == Command.LINE_TO:
+                curve = (prev, cmd.end)
+            else:
+                raise ValueError
+            curves.append(curve)
+            prev = cmd.end
 
     bezier = []
     polyline = []
@@ -738,7 +744,7 @@ def to_splines_and_polylines(
         paths = [paths]
     dxfattribs = dxfattribs or {}
 
-    for path in paths:
+    for path in tools.single_paths(paths):
         for data in to_bsplines_and_vertices(path, g1_tol):
             if isinstance(data, BSpline):
                 spline = Spline.new(dxfattribs=dxfattribs)
