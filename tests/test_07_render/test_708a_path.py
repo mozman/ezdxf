@@ -144,10 +144,6 @@ class TestSubPath:
         assert path2.has_sub_paths
         assert path.end == path2.end
 
-    def test_can_not_reverse_multi_path_object(self):
-        path = self.simple_multi_path()
-        pytest.raises(TypeError, path.reversed)
-
     def test_cant_detect_orientation_of_multi_path_object(self):
         path = self.simple_multi_path()
         pytest.raises(TypeError, path.has_clockwise_orientation)
@@ -241,7 +237,7 @@ def test_from_spline():
 def test_add_ellipse():
     from ezdxf.math import ConstructionEllipse
     ellipse = ConstructionEllipse(center=(3, 0), major_axis=(1, 0), ratio=0.5,
-                                  start_param=0, end_param=math.pi)
+        start_param=0, end_param=math.pi)
     path = Path()
     tools.add_ellipse(path, ellipse)
     assert path.start.isclose((4, 0))
@@ -611,7 +607,38 @@ def test_reversing_one_curve4():
 def test_reversing_path(p1):
     p2 = p1.reversed()
     assert close_vectors(p2.control_vertices(),
-                         reversed(list(p1.control_vertices())))
+        reversed(list(p1.control_vertices())))
+
+
+def test_reversing_multi_path():
+    p = Path()
+    p.line_to((1, 0, 0))
+    p.move_to((2, 0, 0))
+    p.line_to((3, 0, 0))
+    r = p.reversed()
+    assert r.has_sub_paths is True
+    assert len(r) == 3
+    assert r.start == (3, 0, 0)
+    assert r.end == (0, 0, 0)
+
+    r0, r1 = r.sub_paths()
+    assert r0.start == (3, 0, 0)
+    assert r0.end == (2, 0, 0)
+    assert r1.start == (1, 0, 0)
+    assert r1.end == (0, 0, 0)
+
+
+def test_reversing_multi_path_with_a_move_to_cmd_at_the_end():
+    p = Path()
+    p.line_to((1, 0, 0))
+    p.move_to((2, 0, 0))
+    # The last move_to will become the first move_to.
+    # A move_to as first command just moves the start point.
+    r = p.reversed()
+    assert len(r) == 1
+    assert r.start == (1, 0, 0)
+    assert r.end == (0, 0, 0)
+    assert r.has_sub_paths is False
 
 
 def test_clockwise(p1):
@@ -626,7 +653,7 @@ def test_clockwise(p1):
 def edge_path():
     ep = EdgePath()
     ep.add_line((70.79594401862802, 38.81021154906707),
-                (61.49705431814723, 38.81021154906707))
+        (61.49705431814723, 38.81021154906707))
     ep.add_ellipse(
         center=(49.64089977339618, 36.43095770602131),
         major_axis=(16.69099826506408, 6.96203799241026),
@@ -636,7 +663,7 @@ def edge_path():
         ccw=True,
     )
     ep.add_line((47.21845383585098, 38.81021154906707),
-                (32.00406637283394, 38.81021154906707))
+        (32.00406637283394, 38.81021154906707))
     ep.add_arc(
         center=(27.23255482392775, 37.32841621274949),
         radius=4.996302620946588,
@@ -645,11 +672,11 @@ def edge_path():
         ccw=True,
     )
     ep.add_line((22.46104327502155, 38.81021154906707),
-                (15.94617981131185, 38.81021154906707))
+        (15.94617981131185, 38.81021154906707))
     ep.add_line((15.94617981131185, 38.81021154906707),
-                (15.94617981131185, 17.88970141145027))
+        (15.94617981131185, 17.88970141145027))
     ep.add_line((15.94617981131185, 17.88970141145027),
-                (22.07965616927404, 17.88970141145026))
+        (22.07965616927404, 17.88970141145026))
     ep.add_spline(
         control_points=[
             (22.07965616927404, 17.88970141145027),
@@ -673,9 +700,9 @@ def edge_path():
         periodic=0,
     )
     ep.add_line((68.72358721334535, 17.88970141145027),
-                (70.79594401862802, 17.88970141145027))
+        (70.79594401862802, 17.88970141145027))
     ep.add_line((70.79594401862802, 17.88970141145027),
-                (70.79594401862802, 38.81021154906707))
+        (70.79594401862802, 38.81021154906707))
     return ep
 
 

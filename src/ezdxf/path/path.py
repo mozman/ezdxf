@@ -174,12 +174,7 @@ class Path(abc.Sequence):
         """Returns a new :class:`Path` with reversed segments and control
         vertices.
 
-        Raises:
-            TypeError: can't reverse a multi-path object
-
         """
-        if self.has_sub_paths:
-            raise TypeError("can't reverse a multi-path object")
         if len(self) == 0:
             return Path(self.start)
 
@@ -197,6 +192,9 @@ class Path(abc.Sequence):
                 path.curve3_to(prev_end, cmd.ctrl)
             elif cmd.type == Command.CURVE4_TO:
                 path.curve4_to(prev_end, cmd.ctrl2, cmd.ctrl1)
+            elif cmd.type == Command.MOVE_TO:
+                path.move_to(prev_end)
+
         return path
 
     def clockwise(self) -> "Path":
