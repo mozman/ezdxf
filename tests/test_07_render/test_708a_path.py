@@ -743,5 +743,41 @@ def test_extend_path_by_another_multi_path():
     assert path.end == (5, 0, 0)
 
 
+class TestCloseSubPath:
+    def test_close_last_sub_path(self):
+        p = Path()
+        p.line_to((1, 0, 0))
+        p.move_to((2, 0, 0))
+        p.line_to((3, 0, 0))
+        p.close_sub_path()
+        assert p.end == (2, 0, 0)
+
+    def test_does_nothing_if_last_sub_path_is_closed(self):
+        p = Path()
+        p.line_to((1, 0, 0))
+        p.move_to((2, 0, 0))
+        p.line_to((3, 0, 0))
+        p.line_to((2, 0, 0))
+        assert len(p) == 4
+        p.close_sub_path()
+        assert len(p) == 4
+        assert p.end == (2, 0, 0)
+
+    def test_does_nothing_if_last_sub_path_is_empty(self):
+        p = Path()
+        p.line_to((1, 0, 0))
+        p.move_to((2, 0, 0))
+        assert len(p) == 2
+        p.close_sub_path()
+        assert len(p) == 2
+        assert p.end == (2, 0, 0)
+
+    def test_close_single_path(self):
+        p = Path((1, 0, 0))
+        p.line_to((3, 0, 0))
+        p.close_sub_path()
+        assert p.end == (1, 0, 0)
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

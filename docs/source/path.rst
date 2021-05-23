@@ -81,7 +81,7 @@ subpackage :mod:`ezdxf.path`.
         :meth:`Path.sub_paths` yields all paths within this object as single-path
         objects. It is not possible to detect the orientation of a multi-path
         object, therefore the methods :meth:`Path.has_clockwise_orientation`,
-        :meth:`Path.clockwise` and :meth:`Path.counter_clockwise` raise an
+        :meth:`Path.clockwise` and :meth:`Path.counter_clockwise` raise a
         :class:`TypeError` exception.
 
 .. warning::
@@ -260,6 +260,8 @@ The Path Class
     .. automethod:: curve4_to(location: Vec3, ctrl1: Vec3, ctrl2: Vec3)
 
     .. automethod:: close
+
+    .. automethod:: close_sub_path
 
     .. automethod:: clone() -> Path
 

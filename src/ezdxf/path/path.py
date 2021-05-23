@@ -1,6 +1,6 @@
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List, Iterable
+from typing import TYPE_CHECKING, List, Iterable, Optional
 from collections import abc
 import warnings
 
@@ -171,6 +171,35 @@ class Path(abc.Sequence):
         """
         if not self.is_closed:
             self.line_to(self.start)
+
+    def close_sub_path(self) -> None:
+        """Close last sub-path by adding a line segment from the end point to
+        the start point of the last sub-path. Behaves like :meth:`close` for
+        :term:`Single-Path` instances.
+
+        .. versionadded:: 0.17
+
+        """
+        if self.has_sub_paths:
+            start_point = self._start_of_last_sub_path()
+            assert (
+                start_point is not None
+            ), "internal error: required MOVE_TO command not found"
+            if not self.end.isclose(start_point):
+                self.line_to(start_point)
+        else:
+            self.close()
+
+    def _start_of_last_sub_path(self) -> Optional[Vec3]:
+        move_to = Command.MOVE_TO
+        commands = self._commands
+        index = len(commands) - 1
+        # The first command at index 0 is never MOVE_TO!
+        while index > 0:
+            cmd = commands[index]
+            if cmd.type == move_to:
+                return cmd.end
+            index -= 1
 
     def reversed(self) -> "Path":
         """Returns a new :class:`Path` with reversed segments and control
