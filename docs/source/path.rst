@@ -63,6 +63,26 @@ subpackage :mod:`ezdxf.path`.
 .. versionadded:: 0.17
     Added the :meth:`Path.move_to` command and multi-path support.
 
+.. glossary::
+
+    Empty-Path
+        Contains only a start point, the length of the path is 0 and the methods
+        :meth:`Path.approximate` and :meth:`Path.flattening` do not yield any
+        vertices.
+
+    Single-Path
+        The :class:`Path` object contains only one path without gaps, the property
+        :attr:`Path.has_sub_paths` is ``False`` and the method
+        :meth:`Path.sub_paths` yields only this one path.
+
+    Multi-Path
+        The :class:`Path` object contains more than one path, the property
+        :attr:`Path.has_sub_paths` is ``True`` and the method
+        :meth:`Path.sub_paths` yields all paths within this object as single-path
+        objects. It is not possible to detect the orientation of a multi-path
+        object, therefore the methods :meth:`Path.has_clockwise_orientation`,
+        :meth:`Path.clockwise` and :meth:`Path.counter_clockwise` raise an
+        :class:`TypeError` exception.
 
 .. warning::
 
@@ -210,17 +230,19 @@ The Path Class
 
 .. class:: Path
 
-    .. autoattribute:: start
+    .. autoproperty:: start
 
-    .. autoattribute:: end
+    .. autoproperty:: end
 
-    .. autoattribute:: is_closed
+    .. autoproperty:: is_closed
 
-    .. autoattribute:: has_lines
+    .. autoproperty:: has_lines
 
-    .. autoattribute:: has_curves
+    .. autoproperty:: has_curves
 
-    .. autoattribute:: has_sub_paths
+    .. autoproperty:: has_sub_paths
+
+    .. automethod:: sub_paths
 
     .. automethod:: control_vertices
 

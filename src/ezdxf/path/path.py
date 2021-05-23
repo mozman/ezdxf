@@ -335,6 +335,9 @@ class Path(abc.Sequence):
     def sub_paths(self) -> Iterable["Path"]:
         """Yield sub-path as single-path objects.
 
+        It is safe to call :meth:`sub_paths` on any type of :class:`Path`:
+        :term:`Single-Path`, :term:`Multi-Path` and :term:`Empty-Path`.
+
         .. versionadded:: 0.17
 
         """
