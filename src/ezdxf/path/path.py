@@ -72,7 +72,7 @@ class Path(abc.Sequence):
 
     @start.setter
     def start(self, location: "Vertex") -> None:
-        if len(self._commands):
+        if self._commands:
             raise ValueError("Requires an empty path.")
         else:
             self._start = Vec3(location)
@@ -136,14 +136,14 @@ class Path(abc.Sequence):
 
         """
         commands = self._commands
-        if len(commands) == 0:
+        if not commands:
             self._start = Vec3(location)
         else:
             self._has_sub_paths = True
             if commands[-1].type == Command.MOVE_TO:
                 # replace last move to command
                 commands.pop()
-            self._commands.append(MoveTo(end=Vec3(location)))
+            commands.append(MoveTo(end=Vec3(location)))
 
     def curve3_to(self, location: "Vertex", ctrl: "Vertex") -> None:
         """Add a quadratic Bèzier-curve from actual path end point to
@@ -152,7 +152,7 @@ class Path(abc.Sequence):
         self._commands.append(Curve3To(end=Vec3(location), ctrl=Vec3(ctrl)))
 
     def curve4_to(
-            self, location: "Vertex", ctrl1: "Vertex", ctrl2: "Vertex"
+        self, location: "Vertex", ctrl1: "Vertex", ctrl2: "Vertex"
     ) -> None:
         """Add a cubic Bèzier-curve from actual path end point to `location`,
         `ctrl1` and `ctrl2` are the control points for the cubic Bèzier-curve.
@@ -175,24 +175,28 @@ class Path(abc.Sequence):
         vertices.
 
         """
-        if len(self) == 0:
+        commands = self._commands
+        if not commands:
             return Path(self.start)
-
         path = Path(start=self.end)
-        for index in range(len(self) - 1, -1, -1):
-            cmd = self[index]
-            if index > 0:
-                prev_end = self[index - 1].end
+
+        # localize variables:
+        _, line_to, curve3_to, curve4_to, move_to = Command
+        commands = self._commands
+        for index in range(len(commands) - 1, -1, -1):
+            cmd = commands[index]
+            if index:
+                prev_end = commands[index - 1].end
             else:
                 prev_end = self.start
-
-            if cmd.type == Command.LINE_TO:
+            t = cmd.type
+            if t == line_to:
                 path.line_to(prev_end)
-            elif cmd.type == Command.CURVE3_TO:
+            elif t == curve3_to:
                 path.curve3_to(prev_end, cmd.ctrl)
-            elif cmd.type == Command.CURVE4_TO:
+            elif t == curve4_to:
                 path.curve4_to(prev_end, cmd.ctrl2, cmd.ctrl1)
-            elif cmd.type == Command.MOVE_TO:
+            elif t == move_to:
                 path.move_to(prev_end)
 
         return path
@@ -278,21 +282,25 @@ class Path(abc.Sequence):
         start = self._start
         yield start
 
+        # localize variables:
+        _, line_to, curve3_to, curve4_to, move_to = Command
+
         for cmd in self._commands:
             end_location = cmd.end
-            if cmd.type == Command.LINE_TO:
+            t = cmd.type
+            if t == line_to:
                 yield end_location
-            elif cmd.type == Command.CURVE3_TO:
+            elif t == curve3_to:
                 pts = iter(approx_curve3(start, cmd.ctrl, end_location))
                 next(pts)  # skip first vertex
                 yield from pts
-            elif cmd.type == Command.CURVE4_TO:
+            elif t == curve4_to:
                 pts = iter(
                     approx_curve4(start, cmd.ctrl1, cmd.ctrl2, end_location)
                 )
                 next(pts)  # skip first vertex
                 yield from pts
-            elif cmd.type == Command.MOVE_TO:
+            elif t == move_to:
                 yield end_location
             else:
                 raise ValueError(f"Invalid command: {cmd.type}")
@@ -306,18 +314,23 @@ class Path(abc.Sequence):
 
         """
         new_path = self.__class__(m.transform(self.start))
+
+        # localize variables:
+        _, line_to, curve3_to, curve4_to, move_to = Command
+
         for cmd in self._commands:
-            if cmd.type == Command.LINE_TO:
+            t = cmd.type
+            if t == line_to:
                 new_path.line_to(m.transform(cmd.end))
-            elif cmd.type == Command.CURVE3_TO:
+            elif t == curve3_to:
                 loc, ctrl = m.transform_vertices((cmd.end, cmd.ctrl))
                 new_path.curve3_to(loc, ctrl)
-            elif cmd.type == Command.CURVE4_TO:
+            elif t == curve4_to:
                 loc, ctrl1, ctrl2 = m.transform_vertices(
                     (cmd.end, cmd.ctrl1, cmd.ctrl2)
                 )
                 new_path.curve4_to(loc, ctrl1, ctrl2)
-            elif cmd.type == Command.MOVE_TO:
+            elif t == move_to:
                 new_path.move_to(m.transform(cmd.end))
             else:
                 raise ValueError(f"Invalid command: {cmd.type}")
@@ -340,8 +353,9 @@ class Path(abc.Sequence):
 
         """
         path = self.__class__(start=self.start)
+        move_to = Command.MOVE_TO
         for cmd in self._commands:
-            if cmd.type == Command.MOVE_TO:
+            if cmd.type == move_to:
                 yield path
                 path = self.__class__(start=cmd.end)
             else:
@@ -374,7 +388,7 @@ class Path(abc.Sequence):
         add_bezier3p(self, curves)
 
     def add_ellipse(
-            self, ellipse: ConstructionEllipse, segments=1, reset=True
+        self, ellipse: ConstructionEllipse, segments=1, reset=True
     ) -> None:
         """Add an elliptical arc as multiple cubic Bèzier-curves
 
@@ -526,19 +540,23 @@ class Path(abc.Sequence):
 
     def control_vertices(self):
         """Yields all path control vertices in consecutive order."""
-        if len(self):
+        # localize variables:
+        _, line_to, curve3_to, curve4_to, move_to = Command
+
+        if self._commands:
             yield self.start
             for cmd in self._commands:
-                if cmd.type == Command.LINE_TO:
+                t = cmd.type
+                if t == line_to:
                     yield cmd.end
-                elif cmd.type == Command.CURVE3_TO:
+                elif t == curve3_to:
                     yield cmd.ctrl
                     yield cmd.end
-                elif cmd.type == Command.CURVE4_TO:
+                elif t == curve4_to:
                     yield cmd.ctrl1
                     yield cmd.ctrl2
                     yield cmd.end
-                elif cmd.type == Command.MOVE_TO:
+                elif t == move_to:
                     yield cmd.end
 
     def extend_multi_path(self, path: "Path") -> None:
