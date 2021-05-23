@@ -186,6 +186,16 @@ class TestMakePathFromString:
         paths = text2path.make_paths_from_str("", font=ff)
         assert len(paths) == 0
 
+    def test_make_multi_path_object(self, ff):
+        p = text2path.make_path_from_str("ABC", font=ff)
+        assert p.has_sub_paths is True
+        assert len(list(p.sub_paths())) == 6
+
+    def test_make_empty_multi_path_object(self, ff):
+        p = text2path.make_path_from_str("", font=ff)
+        assert p.has_sub_paths is False
+        assert len(p) == 0
+
 
 class TestMakeHatchesFromString:
     def test_hatches_from_empty_string(self, ff):
@@ -237,6 +247,11 @@ def make_text(text, location, alignment, height=1.0, rotation=0):
 
 
 def get_path_bbox(text):
+    p = text2path.make_path_from_entity(text)
+    return path.bbox([p], flatten=0)
+
+
+def get_paths_bbox(text):
     paths = text2path.make_paths_from_entity(text)
     return path.bbox(paths, flatten=0)
 
@@ -246,7 +261,7 @@ def get_hatches_bbox(text):
     return bbox.extents(hatches, flatten=0)
 
 
-@pytest.fixture(params=[get_path_bbox, get_hatches_bbox])
+@pytest.fixture(params=[get_path_bbox, get_paths_bbox, get_hatches_bbox])
 def get_bbox(request):
     return request.param
 

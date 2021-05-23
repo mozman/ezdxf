@@ -8,3 +8,5 @@ Version 0.17 - dev
 - NEW: `move_to()` command and multi-path support for the `ezdxf.path.Path` class 
 - NEW: regular `make_path()` support for the HATCH entity, returns a multi-path object  
 - NEW: regular `make_primitive()` support for the HATCH entity  
+- NEW: `text2path.make_path_from_str()` returns a multi-path object  
+- NEW: `text2path.make_path_from_enity()` returns a multi-path object  
