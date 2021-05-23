@@ -72,12 +72,28 @@ class TestToMatplotlibPath:
         )
         assert Vec2.list(mpath.vertices) == [(0, 0), (1, 1), (3, 1), (4, 0)]
 
-    def test_two_paths(self):
+    def test_two_single_paths(self):
         p1 = path.Path()
         p1.line_to((4, 5, 6))
         p2 = path.Path()
         p2.line_to((7, 8, 6))
         mpath = path.to_matplotlib_path([p1, p2])
+        assert tuple(mpath.codes) == (
+            MC.MOVETO, MC.LINETO,
+            MC.MOVETO, MC.LINETO,
+        )
+        assert Vec2.list(mpath.vertices) == [
+            (0, 0), (4, 5),
+            (0, 0), (7, 8),
+        ]
+
+    def test_one_multi_path(self):
+        p = path.Path()
+        p.line_to((4, 5, 6))
+        p.move_to((0, 0, 0))
+        p.line_to((7, 8, 9))
+
+        mpath = path.to_matplotlib_path([p])
         assert tuple(mpath.codes) == (
             MC.MOVETO, MC.LINETO,
             MC.MOVETO, MC.LINETO,

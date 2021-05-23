@@ -56,6 +56,8 @@ A font face is defined by the Matplotlib compatible
 String Functions
 ----------------
 
+.. autofunction:: make_path_from_str(s: str, font: FontFace, size: float = 1.0, align: str = "LEFT", length: float = 0, m: Matrix44 = None) -> Path
+
 .. autofunction:: make_paths_from_str(s: str, font: FontFace, size: float = 1.0, align: str = "LEFT", length: float = 0, m: Matrix44 = None) -> List[Path]
 
 .. autofunction:: make_hatches_from_str(s: str, font: FontFace, size: float = 1.0,align: str = "LEFT", length: float = 0, dxfattribs: Dict = None m: Matrix44 = None) -> List[Hatch]
@@ -68,6 +70,8 @@ Entity Functions
 .. autofunction:: virtual_entities(entity, kind = Kind.HATCHES) -> EntityQuery
 
 .. autofunction:: explode(entity, kind = Kind.HATCHES, target = None) -> EntityQuery
+
+.. autofunction:: make_path_from_entity(entity)-> Path
 
 .. autofunction:: make_paths_from_entity(entity)-> List[Path]
 

@@ -6,7 +6,7 @@ import math
 from ezdxf.path import (
     Path, make_path, converter, Command, tools,
 )
-from ezdxf.math import Vec3, Matrix44, Bezier4P, Bezier3P, close_vectors
+from ezdxf.math import Vec3, Matrix44, Bezier4P, Bezier3P, close_vectors, OCS
 from ezdxf.entities.hatch import PolylinePath, EdgePath
 from ezdxf.entities import factory, DXFEntity, Polymesh, LWPolyline
 
@@ -96,6 +96,113 @@ def test_add_curves4_reverse():
     assert path.end == (2, 0, 0)
 
 
+class TestSubPath:
+    def simple_multi_path(self):
+        path = Path(start=(1, 0, 0))
+        path.line_to((2, 0, 0))
+        path.move_to((3, 0, 0))
+        return path
+
+    def test_has_no_sub_paths_by_default(self):
+        path = Path()
+        assert path.has_sub_paths is False
+
+    def test_first_move_to(self):
+        path = Path(start=(1, 0, 0))
+        path.move_to((2, 0, 0))
+        assert path.start.isclose((2, 0, 0)), "should reset the start point"
+        assert len(path) == 0, "should not add a MOVETO cmd as first cmd"
+        assert path.has_sub_paths is False
+
+    def test_multiple_first_move_to(self):
+        path = Path(start=(1, 0, 0))
+        path.move_to((2, 0, 0))
+        path.move_to((3, 0, 0))
+        path.move_to((4, 0, 0))
+        assert path.start.isclose((4, 0, 0)), "should reset the start point"
+        assert len(path) == 0, "should not add a MOVETO cmd as first cmd"
+        assert path.has_sub_paths is False
+
+    def test_move_to_creates_a_multi_path_object(self):
+        path = Path(start=(1, 0, 0))
+        path.line_to((2, 0, 0))
+        path.move_to((3, 0, 0))
+        assert len(path) == 2, "should add a MOVETO cmd as last cmd"
+        assert path.has_sub_paths is True, "should be a multi path object"
+        assert path.end.isclose((3, 0, 0)), "should end at the MOVETO location"
+
+    def test_merge_multiple_move_to_commands_at_the_end(self):
+        path = self.simple_multi_path()
+        path.move_to((4, 0, 0))
+        path.move_to((4, 0, 0))
+        assert len(path) == 2, \
+            "should merge multiple MOVETO commands at the end of the path"
+
+    def test_clone_multi_path_object(self):
+        path = self.simple_multi_path()
+        path2 = path.clone()
+        assert path2.has_sub_paths
+        assert path.end == path2.end
+
+    def test_cant_detect_orientation_of_multi_path_object(self):
+        path = self.simple_multi_path()
+        pytest.raises(TypeError, path.has_clockwise_orientation)
+
+    def test_cant_convert_multi_path_object_to_clockwise_orientation(self):
+        path = self.simple_multi_path()
+        pytest.raises(TypeError, path.clockwise)
+
+    def test_cant_convert_multi_path_object_to_ccw_orientation(self):
+        path = self.simple_multi_path()
+        pytest.raises(TypeError, path.counter_clockwise)
+
+    def test_approximate_multi_path_object(self):
+        path = self.simple_multi_path()
+        vertices = list(path.approximate())
+        assert len(vertices) == 3
+
+    def test_flatten_multi_path_object(self):
+        path = self.simple_multi_path()
+        vertices = list(path.flattening(0.1))
+        assert len(vertices) == 3
+
+    def test_multi_path_object_to_wcs(self):
+        path = self.simple_multi_path()
+        path.to_wcs(OCS(), 0)
+        assert path.end.isclose((3, 0, 0))
+
+    def test_transform_multi_path_object(self):
+        path = self.simple_multi_path()
+        m = Matrix44.translate(1, 1, 1)
+        path2 = path.transform(m)
+        assert path.end.isclose((3, 0, 0))
+        assert path2.has_sub_paths is True
+        assert path2.end.isclose((4, 1, 1))
+
+    def test_sub_paths_from_single_path_object(self):
+        path = Path(start=(1, 2, 3))
+        paths = list(path.sub_paths())
+        assert len(paths) == 1
+        s0 = paths[0]
+        assert s0.start == (1, 2, 3)
+        assert s0.end == (1, 2, 3)
+        assert s0.has_sub_paths is False
+        assert len(s0) == 0
+
+    def test_sub_paths_from_multi_path_object(self):
+        path = self.simple_multi_path()
+        s0, s1 = path.sub_paths()
+        assert s0.start == (1, 0, 0)
+        assert s0.end == (2, 0, 0)
+        assert s0.has_sub_paths is False
+        assert len(s0) == 1
+
+        assert s1.start == (3, 0, 0)
+        assert s1.end == (3, 0, 0)
+        assert len(s1) == 0
+        assert s1.has_sub_paths is False
+
+
 def test_add_spline():
     from ezdxf.math import BSpline
     spline = BSpline.from_fit_points([(2, 0), (4, 1), (6, -1), (8, 0)])
@@ -130,7 +237,7 @@ def test_from_spline():
 def test_add_ellipse():
     from ezdxf.math import ConstructionEllipse
     ellipse = ConstructionEllipse(center=(3, 0), major_axis=(1, 0), ratio=0.5,
-                                  start_param=0, end_param=math.pi)
+        start_param=0, end_param=math.pi)
     path = Path()
     tools.add_ellipse(path, ellipse)
     assert path.start.isclose((4, 0))
@@ -499,7 +606,39 @@ def test_reversing_one_curve4():
 
 def test_reversing_path(p1):
     p2 = p1.reversed()
-    assert close_vectors(p2.control_vertices(), reversed(list(p1.control_vertices())))
+    assert close_vectors(p2.control_vertices(),
+        reversed(list(p1.control_vertices())))
+
+
+def test_reversing_multi_path():
+    p = Path()
+    p.line_to((1, 0, 0))
+    p.move_to((2, 0, 0))
+    p.line_to((3, 0, 0))
+    r = p.reversed()
+    assert r.has_sub_paths is True
+    assert len(r) == 3
+    assert r.start == (3, 0, 0)
+    assert r.end == (0, 0, 0)
+
+    r0, r1 = r.sub_paths()
+    assert r0.start == (3, 0, 0)
+    assert r0.end == (2, 0, 0)
+    assert r1.start == (1, 0, 0)
+    assert r1.end == (0, 0, 0)
+
+
+def test_reversing_multi_path_with_a_move_to_cmd_at_the_end():
+    p = Path()
+    p.line_to((1, 0, 0))
+    p.move_to((2, 0, 0))
+    # The last move_to will become the first move_to.
+    # A move_to as first command just moves the start point.
+    r = p.reversed()
+    assert len(r) == 1
+    assert r.start == (1, 0, 0)
+    assert r.end == (0, 0, 0)
+    assert r.has_sub_paths is False
 
 
 def test_clockwise(p1):
@@ -514,7 +653,7 @@ def test_clockwise(p1):
 def edge_path():
     ep = EdgePath()
     ep.add_line((70.79594401862802, 38.81021154906707),
-                (61.49705431814723, 38.81021154906707))
+        (61.49705431814723, 38.81021154906707))
     ep.add_ellipse(
         center=(49.64089977339618, 36.43095770602131),
         major_axis=(16.69099826506408, 6.96203799241026),
@@ -524,7 +663,7 @@ def edge_path():
         ccw=True,
     )
     ep.add_line((47.21845383585098, 38.81021154906707),
-                (32.00406637283394, 38.81021154906707))
+        (32.00406637283394, 38.81021154906707))
     ep.add_arc(
         center=(27.23255482392775, 37.32841621274949),
         radius=4.996302620946588,
@@ -533,11 +672,11 @@ def edge_path():
         ccw=True,
     )
     ep.add_line((22.46104327502155, 38.81021154906707),
-                (15.94617981131185, 38.81021154906707))
+        (15.94617981131185, 38.81021154906707))
     ep.add_line((15.94617981131185, 38.81021154906707),
-                (15.94617981131185, 17.88970141145027))
+        (15.94617981131185, 17.88970141145027))
     ep.add_line((15.94617981131185, 17.88970141145027),
-                (22.07965616927404, 17.88970141145026))
+        (22.07965616927404, 17.88970141145026))
     ep.add_spline(
         control_points=[
             (22.07965616927404, 17.88970141145027),
@@ -561,15 +700,83 @@ def edge_path():
         periodic=0,
     )
     ep.add_line((68.72358721334535, 17.88970141145027),
-                (70.79594401862802, 17.88970141145027))
+        (70.79594401862802, 17.88970141145027))
     ep.add_line((70.79594401862802, 17.88970141145027),
-                (70.79594401862802, 38.81021154906707))
+        (70.79594401862802, 38.81021154906707))
     return ep
 
 
 def test_from_edge_path(edge_path):
     path = converter.from_hatch_edge_path(edge_path)
     assert len(path) == 19
+
+
+def test_extend_path_by_another_path():
+    path = Path((1, 0, 0))
+    path.line_to((2, 0, 0))
+    path.extend_multi_path(Path((3, 0, 0)))
+    assert path.has_sub_paths is True
+    assert path.start == (1, 0, 0)
+    assert path.end == (3, 0, 0)
+
+
+def test_extend_path_by_another_single_path():
+    path = Path((1, 0, 0))
+    path.line_to((2, 0, 0))
+    p1 = Path((3, 0, 0))
+    p1.line_to((4, 0, 0))
+    path.extend_multi_path(p1)
+    assert path.has_sub_paths is True
+    assert path.start == (1, 0, 0)
+    assert path.end == (4, 0, 0)
+
+
+def test_extend_path_by_another_multi_path():
+    path = Path((1, 0, 0))
+    path.line_to((2, 0, 0))
+    p1 = Path((3, 0, 0))
+    p1.line_to((4, 0, 0))
+    p1.move_to((5, 0, 0))
+    path.extend_multi_path(p1)
+    assert path.has_sub_paths is True
+    assert path.start == (1, 0, 0)
+    assert path.end == (5, 0, 0)
+
+
+class TestCloseSubPath:
+    def test_close_last_sub_path(self):
+        p = Path()
+        p.line_to((1, 0, 0))
+        p.move_to((2, 0, 0))
+        p.line_to((3, 0, 0))
+        p.close_sub_path()
+        assert p.end == (2, 0, 0)
+
+    def test_does_nothing_if_last_sub_path_is_closed(self):
+        p = Path()
+        p.line_to((1, 0, 0))
+        p.move_to((2, 0, 0))
+        p.line_to((3, 0, 0))
+        p.line_to((2, 0, 0))
+        assert len(p) == 4
+        p.close_sub_path()
+        assert len(p) == 4
+        assert p.end == (2, 0, 0)
+
+    def test_does_nothing_if_last_sub_path_is_empty(self):
+        p = Path()
+        p.line_to((1, 0, 0))
+        p.move_to((2, 0, 0))
+        assert len(p) == 2
+        p.close_sub_path()
+        assert len(p) == 2
+        assert p.end == (2, 0, 0)
+
+    def test_close_single_path(self):
+        p = Path((1, 0, 0))
+        p.line_to((3, 0, 0))
+        p.close_sub_path()
+        assert p.end == (1, 0, 0)
 
 
 if __name__ == '__main__':

@@ -8,7 +8,7 @@ from ezdxf.path import (
     Path, bbox, fit_paths_into_box, transform_paths, transform_paths_to_ocs,
     to_polylines3d, to_lines, to_lwpolylines, to_polylines2d,
     to_hatches, to_bsplines_and_vertices, to_splines_and_polylines,
-    from_vertices
+    from_vertices, to_multi_path, single_paths,
 )
 from ezdxf.path import make_path, Command
 
@@ -112,6 +112,18 @@ class TestTransformPaths():
         assert path1[2].type == Command.CURVE4_TO
         assert path1.start == (4, 0)
         assert path1.end == (7, 0)
+
+    def test_multi_path_objects(self):
+        path = Path()
+        path.line_to((1, 0, 0))
+        path.move_to((2, 0, 0))
+        paths = transform_paths([path], Matrix44.translate(0, 1, 0))
+        assert len(paths) == 1
+        path2 = paths[0]
+        assert path2.start.isclose((0, 1, 0))
+        assert len(path2) == 2
+        assert path2.end.isclose((2, 1, 0))
+        assert path2.has_sub_paths is True
 
     def test_to_ocs(self):
         p = Path((0, 1, 1))
@@ -340,6 +352,9 @@ class TestToEntityConverter:
     def test_empty_to_lwpolyline(self):
         assert list(to_lwpolylines([])) == []
 
+    def test_empty_path_to_lwpolyline(self):
+        assert list(to_lwpolylines([Path()])) == []
+
     def test_to_lwpolylines(self, path):
         polylines = list(to_lwpolylines(path))
         assert len(polylines) == 1
@@ -363,6 +378,16 @@ class TestToEntityConverter:
         assert p0.dxf.extrusion.isclose(extrusion)
         assert p0[0] == (0, 0, 0, 0, 0)
         assert p0[-1] == (4, 0, 0, 0, 0)
+
+    def test_multi_path_to_lwpolylines(self):
+        path = Path()
+        path.line_to((1, 0, 0))
+        path.move_to((2, 0, 0))
+        path.line_to((3, 0, 0))
+        polylines = list(to_lwpolylines(path))
+        assert len(polylines) == 2
+        assert len(polylines[0]) == 2
+        assert len(polylines[1]) == 2
 
     def test_empty_to_polylines2d(self):
         assert list(to_polylines2d([])) == []
@@ -468,6 +493,36 @@ def ellipse():
             'extrusion': (0.0, 0.0, -1.0),
         },
     )
+
+
+def test_to_multi_path():
+    p0 = Path((1, 0, 0))
+    p0.line_to((2, 0, 0))
+    p0.move_to((3, 0, 0))  # will be replaced by move_to(4, 0, 0)
+    p1 = Path((4, 0, 0))
+    p1.line_to((5, 0, 0))
+    p1.move_to((6, 0, 0))
+    path = to_multi_path([p0, p1])
+    assert path.has_sub_paths is True
+    assert path.start == (1, 0, 0)
+    assert path.end == (6, 0, 0)
+    assert path[1].type == Command.MOVE_TO
+    assert path[1].end == (4, 0, 0)
+
+
+def test_single_paths_from_a_single_path_object():
+    p = Path((1, 0, 0))
+    assert len(list(single_paths([p]))) == 1
+
+
+def test_single_paths_from_a_multi_path_object():
+    p = Path((1, 0, 0))
+    p.line_to((2, 0, 0))  # 1st sub-path
+    p.move_to((3, 0, 0))  # 2nd sub-path
+    p.line_to((4, 0, 0))
+    p.move_to((5, 0, 0))  # 3rd sub-path
+    paths = list(single_paths([p]))
+    assert len(paths) == 3
 
 
 def test_issue_224_end_points(ellipse):

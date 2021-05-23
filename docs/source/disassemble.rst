@@ -11,13 +11,9 @@ entities into geometric primitives of :class:`~ezdxf.path.Path` and
 :class:`~ezdxf.render.mesh.MeshBuilder` objects encapsulated into
 intermediate :class:`Primitive` classes.
 
-The :class:`~ezdxf.entities.Hatch` entity is special because this entity can
-not be reduced into as single geometric primitive. The :func:`make_primitive`
-function returns an empty primitive, instead use the :func:`to_primitives`
-function to convert a :class:`~ezdxf.entities.Hatch` entity into multiple
-(boundary path) primitives::
-
-    primitives = list(to_primitives([hatch_entity]))
+.. versionchanged:: 0.17
+    The :class:`~ezdxf.entities.Hatch` entity is no special case anymore and
+    has regular support by the :func:`make_primitive` function.
 
 
 .. warning::

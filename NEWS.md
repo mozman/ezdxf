@@ -2,8 +2,14 @@
 News
 ====
 
-Version 0.16.3b1 - dev
+Version 0.16.4b0 - dev
 ----------------------
+
+- NEW: `move_to()` command and multi-path support for the `ezdxf.path.Path` class 
+  as beta feature, official release in v0.17
+
+Version 0.16.3 - 2021-05-22
+---------------------------
 
 - NEW: `ezdxf.tools.text.MTextEditor` class, extracted from the `MText` class
 - NEW: `MText.set_bg_color()`, new argument `text_frame` to add a text frame

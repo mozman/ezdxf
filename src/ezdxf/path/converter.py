@@ -29,7 +29,9 @@ __all__ = [
     'to_polylines2d', 'to_hatches', 'to_bsplines_and_vertices',
     'to_splines_and_polylines', 'from_hatch', 'from_hatch_boundary_path',
     'from_vertices', 'from_matplotlib_path', 'from_qpainter_path',
-    'to_matplotlib_path', 'to_qpainter_path'
+    'to_matplotlib_path', 'to_qpainter_path',
+    'multi_path_from_matplotlib_path',
+    'multi_path_from_qpainter_path',
 ]
 
 MAX_DISTANCE = 0.01
@@ -187,6 +189,17 @@ def _from_viewport(vp: 'Viewport', **kwargs) -> Path:
 @make_path.register(Image)
 def _from_image(image: 'Image', **kwargs) -> Path:
     return from_vertices(image.boundary_path_wcs(), close=True)
+
+
+@make_path.register(Hatch)
+def _from_hatch(hatch: Hatch, **kwargs) -> Path:
+    ocs = hatch.ocs()
+    elevation = hatch.dxf.elevation.z
+    paths = [
+        from_hatch_boundary_path(boundary, ocs, elevation)
+        for boundary in hatch.paths
+    ]
+    return tools.to_multi_path(paths)
 
 
 def from_hatch(hatch: Hatch) -> Iterable[Path]:
@@ -392,10 +405,11 @@ def to_lwpolylines(
     elif reference_point.z != 0:
         dxfattribs['elevation'] = reference_point.z
 
-    for path in paths:
-        p = LWPolyline.new(dxfattribs=dxfattribs)
-        p.append_points(path.flattening(distance, segments), format='xy')
-        yield p
+    for path in tools.single_paths(paths):
+        if len(path) > 0:
+            p = LWPolyline.new(dxfattribs=dxfattribs)
+            p.append_points(path.flattening(distance, segments), format='xy')
+            yield p
 
 
 def _get_ocs(extrusion: Vec3, referenc_point: Vec3) -> Tuple[OCS, float]:
@@ -449,10 +463,11 @@ def to_polylines2d(
     elif reference_point.z != 0:
         dxfattribs['elevation'] = Vec3(0, 0, reference_point.z)
 
-    for path in paths:
-        p = Polyline.new(dxfattribs=dxfattribs)
-        p.append_vertices(path.flattening(distance, segments))
-        yield p
+    for path in tools.single_paths(paths):
+        if len(path) > 0:
+            p = Polyline.new(dxfattribs=dxfattribs)
+            p.append_vertices(path.flattening(distance, segments))
+            yield p
 
 
 def to_hatches(
@@ -548,7 +563,7 @@ def _hatch_converter(
     dxfattribs.setdefault('pattern_name', 'SOLID')
     dxfattribs.setdefault('color', const.BYLAYER)
 
-    for group in group_paths(paths):
+    for group in group_paths(tools.single_paths(paths)):
         if len(group) == 0:
             continue
         hatch = Hatch.new(dxfattribs=dxfattribs)
@@ -587,10 +602,11 @@ def to_polylines3d(
 
     dxfattribs = dxfattribs or {}
     dxfattribs['flags'] = const.POLYLINE_3D_POLYLINE
-    for path in paths:
-        p = Polyline.new(dxfattribs=dxfattribs)
-        p.append_vertices(path.flattening(distance, segments))
-        yield p
+    for path in tools.single_paths(paths):
+        if len(path) > 0:
+            p = Polyline.new(dxfattribs=dxfattribs)
+            p.append_vertices(path.flattening(distance, segments))
+            yield p
 
 
 def to_lines(
@@ -617,7 +633,9 @@ def to_lines(
         paths = [paths]
     dxfattribs = dxfattribs or {}
     prev_vertex = None
-    for path in paths:
+    for path in tools.single_paths(paths):
+        if len(path) == 0:
+            continue
         for vertex in path.flattening(distance, segments):
             if prev_vertex is None:
                 prev_vertex = vertex
@@ -670,19 +688,20 @@ def to_bsplines_and_vertices(path: Path,
         if _g1_continuity_curves:
             yield bezier_to_bspline(_g1_continuity_curves)
 
-    prev = path.start
     curves = []
-    for cmd in path:
-        if cmd.type == Command.CURVE3_TO:
-            curve = Bezier3P([prev, cmd.ctrl, cmd.end])
-        elif cmd.type == Command.CURVE4_TO:
-            curve = Bezier4P([prev, cmd.ctrl1, cmd.ctrl2, cmd.end])
-        elif cmd.type == Command.LINE_TO:
-            curve = (prev, cmd.end)
-        else:
-            raise ValueError
-        curves.append(curve)
-        prev = cmd.end
+    for path in tools.single_paths([path]):
+        prev = path.start
+        for cmd in path:
+            if cmd.type == Command.CURVE3_TO:
+                curve = Bezier3P([prev, cmd.ctrl, cmd.end])
+            elif cmd.type == Command.CURVE4_TO:
+                curve = Bezier4P([prev, cmd.ctrl1, cmd.ctrl2, cmd.end])
+            elif cmd.type == Command.LINE_TO:
+                curve = (prev, cmd.end)
+            else:
+                raise ValueError
+            curves.append(curve)
+            prev = cmd.end
 
     bezier = []
     polyline = []
@@ -727,7 +746,7 @@ def to_splines_and_polylines(
         paths = [paths]
     dxfattribs = dxfattribs or {}
 
-    for path in paths:
+    for path in tools.single_paths(paths):
         for data in to_bsplines_and_vertices(path, g1_tol):
             if isinstance(data, BSpline):
                 spline = Spline.new(dxfattribs=dxfattribs)
@@ -753,23 +772,25 @@ class MplCmd(enum.IntEnum):
     STOP = 0
 
 
-def from_matplotlib_path(mpath, curves=True) -> Iterable[Path]:
-    """ Yields multiple :class:`Path` objects from a Matplotlib `Path`_
-    (`TextPath`_)  object. (requires Matplotlib)
+def multi_path_from_matplotlib_path(mpath, curves=True) -> Path:
+    """Returns a :class:`Path` object from a Matplotlib `Path`_
+    (`TextPath`_)  object. (requires Matplotlib). Returns a multi-path object
+    if necessary.
 
-    .. versionadded:: 0.16
+    .. versionadded:: 0.17
 
     .. _TextPath: https://matplotlib.org/3.1.1/api/textpath_api.html
     .. _Path: https://matplotlib.org/3.1.1/api/path_api.html#matplotlib.path.Path
 
     """
-    path = None
+    path = Path()
+    current_polyline_start = Vec3()
     for vertices, cmd in mpath.iter_segments(curves=curves):
         cmd = MplCmd(cmd)
-        if cmd == MplCmd.MOVETO:  # each "moveto" creates new path
-            if path is not None:
-                yield path
-            path = Path(vertices)
+        if cmd == MplCmd.MOVETO:
+            # vertices = [x0, y0]
+            current_polyline_start = Vec3(vertices)
+            path.move_to(vertices)
         elif cmd == MplCmd.LINETO:
             # vertices = [x0, y0]
             path.line_to(vertices)
@@ -781,15 +802,28 @@ def from_matplotlib_path(mpath, curves=True) -> Iterable[Path]:
             path.curve4_to(vertices[4:], vertices[0:2], vertices[2:4])
         elif cmd == MplCmd.CLOSEPOLY:
             # vertices = [0, 0]
-            if not path.is_closed:
-                path.line_to(path.start)
-            yield path
-            path = None
+            if not path.end.isclose(current_polyline_start):
+                path.line_to(current_polyline_start)
         elif cmd == MplCmd.STOP:  # not used
-            break
+            pass
+    return path
 
-    if path is not None:
-        yield path
+
+def from_matplotlib_path(mpath, curves=True) -> Iterable[Path]:
+    """ Yields multiple :class:`Path` objects from a Matplotlib `Path`_
+    (`TextPath`_)  object. (requires Matplotlib)
+
+    .. versionadded:: 0.16
+
+    .. _TextPath: https://matplotlib.org/3.1.1/api/textpath_api.html
+    .. _Path: https://matplotlib.org/3.1.1/api/path_api.html#matplotlib.path.Path
+
+    """
+    path = multi_path_from_matplotlib_path(mpath, curves=curves)
+    if path.has_sub_paths:
+        return path.sub_paths()
+    else:
+        return [path]
 
 
 def to_matplotlib_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
@@ -829,6 +863,8 @@ def to_matplotlib_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
         for cmd in path:
             if cmd.type == Command.LINE_TO:
                 add_command(MplCmd.LINETO, cmd.end)
+            elif cmd.type == Command.MOVE_TO:
+                add_command(MplCmd.MOVETO, cmd.end)
             elif cmd.type == Command.CURVE3_TO:
                 add_command(MplCmd.CURVE3, cmd.ctrl)
                 add_command(MplCmd.CURVE3, cmd.end)
@@ -844,29 +880,26 @@ def to_matplotlib_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
 
 # Interface to PyQt5.QtGui.QPainterPath
 
+def multi_path_from_qpainter_path(qpath) -> Path:
+    """Returns a :class:`Path` objects from a `QPainterPath`_.
+    Returns a multi-path object if necessary. (requires PyQt5)
 
-def from_qpainter_path(qpath) -> Iterable[Path]:
-    """ Yields multiple :class:`Path` objects from a `QPainterPath`_.
-    (requires PyQt5)
-
-    .. versionadded:: 0.16
+    .. versionadded:: 0.17
 
     .. _QPainterPath: https://doc.qt.io/qt-5/qpainterpath.html
 
     """
     # QPainterPath stores only cubic Bèzier curves
-    path = None
+    path = Path()
     vertices = list()
     for index in range(qpath.elementCount()):
         element = qpath.elementAt(index)
         cmd = element.type
         v = Vec3(element.x, element.y)
 
-        if cmd == 0:  # MoveTo, each "moveto" creates new path
-            if path is not None:
-                yield path
+        if cmd == 0:  # MoveTo
             assert len(vertices) == 0
-            path = Path(v)
+            path.move_to(v)
         elif cmd == 1:  # LineTo
             assert len(vertices) == 0
             path.line_to(v)
@@ -879,9 +912,24 @@ def from_qpainter_path(qpath) -> Iterable[Path]:
                 vertices.clear()
             else:
                 vertices.append(v)
+    return path
 
-    if path is not None:
-        yield path
+
+def from_qpainter_path(qpath) -> Iterable[Path]:
+    """ Yields multiple :class:`Path` objects from a `QPainterPath`_.
+    (requires PyQt5)
+
+    .. versionadded:: 0.16
+
+    .. _QPainterPath: https://doc.qt.io/qt-5/qpainterpath.html
+
+    """
+    # QPainterPath stores only cubic Bèzier curves
+    path = multi_path_from_qpainter_path(qpath)
+    if path.has_sub_paths:
+        return path.sub_paths()
+    else:
+        return [path]
 
 
 def to_qpainter_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
@@ -920,6 +968,8 @@ def to_qpainter_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
         for cmd in path:
             if cmd.type == Command.LINE_TO:
                 qpath.lineTo(qpnt(cmd.end))
+            elif cmd.type == Command.MOVE_TO:
+                qpath.moveTo(qpnt(cmd.end))
             elif cmd.type == Command.CURVE3_TO:
                 qpath.quadTo(qpnt(cmd.ctrl), qpnt(cmd.end))
             elif cmd.type == Command.CURVE4_TO:
