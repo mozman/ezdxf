@@ -78,26 +78,29 @@ def transform_paths(paths: Iterable[Path], m: Matrix44) -> List[Path]:
             vertices.extend(cmd)
 
     def rebuild(vertices):
+        # localize variables:
+        start_path, line_to, curve3_to, curve4_to, move_to = Command
+
         path = None
         collect = []
         for vertex, cmd in zip(vertices, commands):
-            if cmd == Command.START_PATH:
+            if cmd == start_path:
                 if path is not None:
                     transformed_paths.append(path)
                 path = Path(vertex)
-            elif cmd == Command.LINE_TO:
+            elif cmd == line_to:
                 path.line_to(vertex)
-            elif cmd == Command.CURVE3_TO:
+            elif cmd == curve3_to:
                 collect.append(vertex)
                 if len(collect) == 2:
                     path.curve3_to(collect[0], collect[1])
                     collect.clear()
-            elif cmd == Command.CURVE4_TO:
+            elif cmd == curve4_to:
                 collect.append(vertex)
                 if len(collect) == 3:
                     path.curve4_to(collect[0], collect[1], collect[2])
                     collect.clear()
-            elif cmd == Command.MOVE_TO:
+            elif cmd == move_to:
                 path.move_to(vertex)
 
         if path is not None:
