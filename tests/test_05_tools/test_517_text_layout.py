@@ -780,15 +780,24 @@ class TestSpace:
         assert tl.Space(1, max_width=1.0).can_grow is False
 
 
-class TestGroupNonBreakableCells:
+class TestRigidConnection:
+    def test_rigid_connection(self):
+        cells = tl.normalize_cells(str2cells("t~t t t"))
+        result = tl.group_non_breakable_cells(cells)
+        assert isinstance(result[0], tl.RigidConnection)
+        assert isinstance(result[1], tl.Space)
+        assert isinstance(result[2], tl.Text)
+        assert isinstance(result[3], tl.Space)
+        assert isinstance(result[4], tl.Text)
+
     @pytest.mark.parametrize("content", ["t~t", "t~t~t"])
-    def test_create_one_group(self, content):
+    def test_create_one_connection(self, content):
         cells = tl.normalize_cells(str2cells(content))
         result = tl.group_non_breakable_cells(cells)
         assert len(result) == 1
 
     @pytest.mark.parametrize("content", ["t~t t~t", "t~t~t t~t~t"])
-    def test_create_three_groups(self, content):
+    def test_create_two_connections(self, content):
         cells = tl.normalize_cells(str2cells(content))
         result = tl.group_non_breakable_cells(cells)
         assert len(result) == 3
@@ -826,9 +835,9 @@ class TestLeftLine:
 
     def test_fill_until_line_is_full(self):
         line = tl.LeftLine(10)
-        assert line.append(tl.Text(5, 1)) is True
-        assert line.append(tl.Text(5, 1)) is True
-        assert line.append(tl.Text(5, 1)) is False
+        assert line.append(tl.Text(5, 1)) == tl.AppendType.SUCCESS
+        assert line.append(tl.Text(5, 1)) == tl.AppendType.SUCCESS
+        assert line.append(tl.Text(5, 1)) == tl.AppendType.FAIL
         assert line.total_width <= line.line_width
 
     def test_left_tab(self):
