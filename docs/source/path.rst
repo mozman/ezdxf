@@ -61,14 +61,14 @@ To emphasize this new usability, the :class:`Path` class has got its own
 subpackage :mod:`ezdxf.path`.
 
 .. versionadded:: 0.17
-    Added the :meth:`Path.move_to` command and multi-path support.
+    Added the :meth:`Path.move_to` command and :term:`Multi-Path` support.
 
 .. glossary::
 
     Empty-Path
         Contains only a start point, the length of the path is 0 and the methods
-        :meth:`Path.approximate` and :meth:`Path.flattening` do not yield any
-        vertices.
+        :meth:`Path.approximate`, :meth:`Path.flattening` and
+        :meth:`Path.control_vertices` do not yield any vertices.
 
     Single-Path
         The :class:`Path` object contains only one path without gaps, the property
@@ -109,7 +109,7 @@ Functions to create :class:`Path` objects from other objects.
     - SOLID, TRACE, 3DFACE
     - IMAGE, WIPEOUT clipping path
     - VIEWPORT clipping path
-    - HATCH as multi-path, new in v0.17
+    - HATCH as :term:`Multi-Path` object, new in v0.17
 
     :param entity: DXF entity
     :param segments: minimal count of cubic Bézier-curves for elliptical arcs
@@ -120,6 +120,9 @@ Functions to create :class:`Path` objects from other objects.
     :raises TypeError: for unsupported DXF types
 
     .. versionadded:: 0.16
+
+    .. versionchanged:: 0.17
+        support for HATCH as :term:`Multi-Path` object
 
 
 .. autofunction:: from_hatch(hatch: Hatch) -> Iterable[Path]
@@ -242,7 +245,7 @@ The Path Class
 
     .. autoproperty:: has_sub_paths
 
-    .. automethod:: sub_paths
+    .. automethod:: sub_paths() -> Iterable[Path]
 
     .. automethod:: control_vertices
 

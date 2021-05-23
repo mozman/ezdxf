@@ -102,7 +102,8 @@ class Path(abc.Sequence):
 
     @property
     def has_sub_paths(self) -> bool:
-        """Returns ``True`` if the path has multiple sub-paths.
+        """Returns ``True`` if the path is a :term:`Multi-Path` object which
+        contains multiple sub-paths.
 
         .. versionadded:: 0.17
 
@@ -114,7 +115,7 @@ class Path(abc.Sequence):
         z-axis of all control vertices.
 
         Raises:
-            TypeError: can't detect orientation of a multi-path object
+            TypeError: can't detect orientation of a :term:`Multi-Path` object
 
         """
         if self.has_sub_paths:
@@ -126,8 +127,9 @@ class Path(abc.Sequence):
         self._commands.append(LineTo(end=Vec3(location)))
 
     def move_to(self, location: "Vertex") -> None:
-        """Start a new sup-path at `location`. This creates a gap between the
-        current end-point and the start-point of the new sub-path.
+        """Start a new sub-path at `location`. This creates a gap between the
+        current end-point and the start-point of the new sub-path. This converts
+        the instance into a :term:`Multi-Path` object.
 
         If the :meth:`move_to` command is the first command, the start point of
         the path will be reset to `location`.
@@ -205,7 +207,7 @@ class Path(abc.Sequence):
         """Returns new :class:`Path` in clockwise orientation.
 
         Raises:
-            TypeError: can't detect orientation of a multi-path object
+            TypeError: can't detect orientation of a :term:`Multi-Path` object
 
         """
         if self.has_clockwise_orientation():
@@ -217,7 +219,7 @@ class Path(abc.Sequence):
         """Returns new :class:`Path` in counter-clockwise orientation.
 
         Raises:
-            TypeError: can't detect orientation of a multi-path object
+            TypeError: can't detect orientation of a :term:`Multi-Path` object
 
         """
 
@@ -233,7 +235,7 @@ class Path(abc.Sequence):
         Does not yield any vertices for empty paths, where only a start point
         is present!
 
-        Approximation of multi-path objects is possible, but gaps are
+        Approximation of :term:`Multi-Path` objects is possible, but gaps are
         indistinguishable from line segments.
 
         """
@@ -256,7 +258,7 @@ class Path(abc.Sequence):
         Does not yield any vertices for empty paths, where only a start point
         is present!
 
-        Flattening of multi-path objects is possible, but gaps are
+        Flattening of :term:`Multi-Path` objects is possible, but gaps are
         indistinguishable from line segments.
 
         Args:
@@ -344,9 +346,9 @@ class Path(abc.Sequence):
             self._commands[i] = cmd.to_wcs(ocs, elevation)
 
     def sub_paths(self) -> Iterable["Path"]:
-        """Yield sub-path as single-path objects.
+        """Yield sub-path as :term:`Single-Path` objects.
 
-        It is safe to call :meth:`sub_paths` on any type of :class:`Path`:
+        It is safe to call :meth:`sub_paths` on any path-type:
         :term:`Single-Path`, :term:`Multi-Path` and :term:`Empty-Path`.
 
         .. versionadded:: 0.17
@@ -561,8 +563,8 @@ class Path(abc.Sequence):
 
     def extend_multi_path(self, path: "Path") -> None:
         """Extend the path by another path. The source path is automatically a
-        multi path object, even if the previous end point matches the start
-        point of the appended path.
+        :term:`Multi-Path` object, even if the previous end point matches the
+        start point of the appended path.
 
         .. versionadded:: 0.17
 

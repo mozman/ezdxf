@@ -37,8 +37,8 @@ def make_path_from_str(
     length: float = 0,
     m: Matrix44 = None,
 ) -> Path:
-    """Convert a single line string `s` into a multi :class:`~ezdxf.path.Path`
-    object. The text `size` is the height of the uppercase letter "X" (cap height).
+    """Convert a single line string `s` into a :term:`Multi-Path` object.
+    The text `size` is the height of the uppercase letter "X" (cap height).
     The paths are aligned about the insertion point at (0, 0).
     BASELINE means the bottom of the letter "X".
 
@@ -80,7 +80,7 @@ def make_paths_from_str(
 ) -> List[Path]:
     """Convert a single line string `s` into a list of
     :class:`~ezdxf.path.Path` objects. All paths are returned as a list of
-    single-path objects.
+    :term:`Single-Path` objects.
     The text `size` is the height of the uppercase letter "X" (cap height).
     The paths are aligned about the insertion point at (0, 0).
     BASELINE means the bottom of the letter "X".
@@ -225,7 +225,7 @@ def check_entity_type(entity):
 
 def make_path_from_entity(entity: AnyText) -> Path:
     """Convert text content from DXF entities TEXT and ATTRIB into a
-    multi :class:`~ezdxf.path.Path` object.
+    :term:`Multi-Path` object.
     The paths are located at the location of the source entity.
 
     .. versionadded:: 0.17
@@ -249,7 +249,7 @@ def make_path_from_entity(entity: AnyText) -> Path:
 def make_paths_from_entity(entity: AnyText) -> List[Path]:
     """Convert text content from DXF entities TEXT and ATTRIB into a
     list of :class:`~ezdxf.path.Path` objects. All paths are returned as a
-    list of single-path objects.
+    list of :term:`Single-Path` objects.
     The paths are located at the location of the source entity.
 
     """
