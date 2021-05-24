@@ -53,13 +53,13 @@ if not ezdxf.options.use_matplotlib:
     print("The Matplotlib package is required.")
     sys.exit(1)
 
-# Type aliases:
+# Type alias:
 Content = Iterable[tl.Cell]
 
 DIR = pathlib.Path("~/Desktop/Outbox").expanduser()
 STYLE = "Style0"
 FONT = "OpenSans-Regular.ttf"
-COLUMN_HEIGHT = 12
+COLUMN_HEIGHT: float = 12
 
 print_config()
 
@@ -259,7 +259,9 @@ class Fraction(tl.Fraction):
 
     """
 
-    def __init__(self, t1: str, t2: str, stacking: tl.Stacking, font: SizedFont):
+    def __init__(
+        self, t1: str, t2: str, stacking: tl.Stacking, font: SizedFont
+    ):
         top = Word(t1, font)
         bottom = Word(t2, font)
         super().__init__(
@@ -347,7 +349,7 @@ def create_layout(align: tl.ParagraphAlignment, content: Content) -> tl.Layout:
 
 def create(content: Content, y: float) -> None:
     x: float = 0
-    for align in list(tl.ParagraphAlignment)[1:]:
+    for align in list(tl.ParagraphAlignment):
         # Build and place the layout at (0, 0):
         layout = create_layout(align, content)
         # Render and move the layout to the final location:
@@ -356,11 +358,12 @@ def create(content: Content, y: float) -> None:
         x += layout.total_width + 2
 
 
-dy = COLUMN_HEIGHT + 3
+dy: float = COLUMN_HEIGHT + 3
 create(list(uniform_content(200)), 0)
 create(list(random_sized_content(200)), dy)
 create(list(stroked_content(200)), 2 * dy)
 create(fraction_content(), 3 * dy)
 
+# zooming needs the longest time:
 zoom.extents(msp, factor=1.1)
 doc.saveas(str(DIR / "text_layout.dxf"))

@@ -134,6 +134,48 @@ clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
 """
 
 
+class Stacking(enum.IntEnum):
+    OVER = 0
+    LINE = 1
+    SLANTED = 2
+
+
+class LayoutAlignment(enum.IntEnum):
+    TOP_LEFT = 1
+    TOP_CENTER = 2
+    TOP_RIGHT = 3
+    MIDDLE_LEFT = 4
+    MIDDLE_CENTER = 5
+    MIDDLE_RIGHT = 6
+    BOTTOM_LEFT = 7
+    BOTTOM_CENTER = 8
+    BOTTOM_RIGHT = 9
+
+
+class CellAlignment(enum.IntEnum):
+    BOTTOM = 0
+    CENTER = 1
+    TOP = 2
+
+
+class ParagraphAlignment(enum.IntEnum):
+    LEFT = 1
+    RIGHT = 2
+    CENTER = 3
+    JUSTIFIED = 4
+
+
+class TabStopType(enum.IntEnum):
+    LEFT = 0
+    RIGHT = 1
+    CENTER = 2
+
+
+class TabStop(NamedTuple):
+    pos: float = 0.0
+    kind: TabStopType = TabStopType.LEFT
+
+
 def lorem_ipsum(count=100):
     return itertools.islice(itertools.cycle(LOREM_IPSUM.split()), count)
 
@@ -186,18 +228,6 @@ def resolve_margins(margins: Optional[Sequence[float]]) -> Tuple4f:
         return margins[0], margins[1], margins[0], margins[1]
     elif count == 1:  # CSS: top, right=top, bottom=top, left=top
         return margins[0], margins[0], margins[0], margins[0]
-
-
-class LayoutAlignment(enum.IntEnum):
-    TOP_LEFT = 1
-    TOP_CENTER = 2
-    TOP_RIGHT = 3
-    MIDDLE_LEFT = 4
-    MIDDLE_CENTER = 5
-    MIDDLE_RIGHT = 6
-    BOTTOM_LEFT = 7
-    BOTTOM_CENTER = 8
-    BOTTOM_RIGHT = 9
 
 
 def insert_location(
@@ -332,12 +362,6 @@ class NonBreakingSpace(Glue):
 
 class Tabulator(Glue):
     pass
-
-
-class CellAlignment(enum.IntEnum):
-    BOTTOM = 0
-    CENTER = 1
-    TOP = 2
 
 
 class ContentCell(Cell):  # ABC
@@ -499,12 +523,6 @@ def render_text_strokes(cells: List[Cell], m: Matrix44 = None) -> None:
         if isinstance(cell, Text) and cell.stroke:
             extend = stroke_extension() if cell.stroke & Stroke.CONTINUE else 0
             cell.render_stroke(extend_right=extend, m=m)
-
-
-class Stacking(enum.IntEnum):
-    OVER = 0
-    LINE = 1
-    SLANTED = 2
 
 
 class Fraction(ContentCell):
@@ -880,14 +898,6 @@ class EmptyParagraph(Cell):
         pass
 
 
-class ParagraphAlignment(enum.IntEnum):
-    DEFAULT = 0
-    LEFT = 1
-    RIGHT = 2
-    CENTER = 3
-    JUSTIFIED = 4
-
-
 def leading(cap_height: float, line_spacing: float = 1.0) -> float:
     """Returns the distance from baseline to baseline.
 
@@ -899,6 +909,187 @@ def leading(cap_height: float, line_spacing: float = 1.0) -> float:
     # method "exact": 3-on-5 line spacing = 5/3 = 1.667
     # method "at least" is not supported
     return cap_height * 1.667 * line_spacing
+
+
+class Paragraph(Container):
+    def __init__(
+        self,
+        width: float = None,  # defined by parent container
+        align: ParagraphAlignment = ParagraphAlignment.LEFT,
+        indent: Tuple[float, float, float] = (0, 0, 0),
+        line_spacing: float = 1,
+        margins: Sequence[float] = None,
+        tab_stops: Sequence[TabStop] = None,
+        renderer: ContentRenderer = None,
+    ):
+        super().__init__(width, None, margins, renderer)
+        self._align = align
+        first, left, right = indent
+        self._indent_first = first
+        self._indent_left = left
+        self._indent_right = right
+        self._line_spacing = line_spacing
+        self._tab_stops = tab_stops or []
+
+        # contains the raw and not distributed content:
+        self._cells: List[Cell] = []
+
+        # contains the final distributed content:
+        self._lines: List[AbstractLine] = []
+
+        # This flag is False if the original flow text was split into
+        # multiple paragraphs and this is not the last one.
+        self._has_last_line = True
+
+    def __iter__(self):
+        return iter(self._lines)
+
+    def set_total_width(self, width: float):
+        self._content_width = width - self.left_margin - self.right_margin
+        if self._content_width < 1e-6:
+            raise ValueError("invalid width, no usable space left")
+
+    def append_content(self, content: Iterable[Cell]):
+        self._cells.extend(content)
+
+    def line_width(self, first: bool) -> float:
+        indent = self._indent_right
+        indent += self._indent_first if first else self._indent_left
+        return self.content_width - indent
+
+    def place_content(self):
+        x, y = self.final_location()
+        x += self.left_margin
+        y -= self.top_margin
+        first = True
+        lines = self._lines
+        for line in lines:
+            x_final = self._left_border(x, first)
+            line.place(x_final, y)
+            y -= leading(line.total_height, self._line_spacing)
+            first = False
+
+    def _left_border(self, x: float, first: bool) -> float:
+        """Apply indentation and paragraph alignment"""
+        left_indent = self._indent_first if first else self._indent_left
+        return x + left_indent
+
+    def _calculate_content_height(self) -> float:
+        """Returns the actual content height determined by the distributed
+        lines.
+        """
+        return sum(
+            leading(line.total_height, self._line_spacing)
+                for line in self._lines
+        )
+
+    def distribute_content(self, height: float = None) -> Optional["Paragraph"]:
+        """Distribute the raw content into lines. Returns the cells which do
+        not fit as a new paragraph.
+
+        Args:
+            height: available total height (margins + content), ``None`` for
+                unrestricted paragraph height
+
+        """
+
+        def new_line(space: float) -> AbstractLine:
+            align = self._align
+            if align in (ParagraphAlignment.LEFT, ParagraphAlignment.JUSTIFIED):
+                indent = self._indent_first if first else self._indent_left
+                tab_stops = shift_tab_stops(self._tab_stops, indent)
+                return (
+                    LeftLine(space, tab_stops)
+                    if align == ParagraphAlignment.LEFT
+                    else JustifiedLine(space, tab_stops)
+                )
+            elif align == ParagraphAlignment.RIGHT:
+                return RightLine(space)
+            elif align == ParagraphAlignment.CENTER:
+                return CenterLine(space)
+
+        def remove_line_breaking_space():
+            if cells and isinstance(cells[-1], Space):
+                cells.pop()
+
+        cells = normalize_cells(self._cells)
+        cells = group_non_breakable_cells(cells)
+        cells.reverse()
+        undo = cells
+        first = True
+        paragraph_height = self.top_margin + self.bottom_margin
+        height_is_restricted = height is not None
+        while cells:
+            if height_is_restricted:
+                # shallow copy current cell state for undo, if not enough space
+                # for next line:
+                undo = list(cells)
+
+            line = new_line(self.line_width(first))
+            while cells:
+                cell = cells[-1]
+                append_state = line.append(cell)
+                if append_state == AppendType.SUCCESS:
+                    cells.pop()
+                elif append_state == AppendType.FORCED:
+                    cells.pop()
+                    break
+                elif append_state == AppendType.FAIL:
+                    break
+
+            if line.has_content:
+                line.remove_line_breaking_space()
+                remove_line_breaking_space()
+                line_height = line.total_height
+                if (
+                    height_is_restricted
+                    and paragraph_height + line_height > height
+                ):
+                    # Not enough space for the new line:
+                    cells = undo
+                    break
+                else:
+                    first = False
+                    self._lines.append(line)
+                    paragraph_height += leading(line_height, self._line_spacing)
+
+        if self._align == ParagraphAlignment.JUSTIFIED:
+            # distribute justified text across the line width,
+            # except for the last line:
+            for line in self._lines[:-1]:
+                assert isinstance(line, JustifiedLine)
+                line.distribute()
+
+        # Delete raw content:
+        self._cells = []
+
+        # Update content height:
+        self._content_height = self._calculate_content_height()
+
+        # If not all cells could be processed, put them into a new paragraph
+        # and return it to the caller.
+        if cells:
+            cells.reverse()
+            self._has_last_line = False
+            return self._new_paragraph(cells, first)
+        else:
+            return None
+
+    def _new_paragraph(self, cells: List[Cell], first: bool) -> "Paragraph":
+        # First line of the paragraph included?
+        indent_first = self._indent_first if first else self._indent_left
+        indent = (indent_first, self._indent_left, self._indent_right)
+        paragraph = Paragraph(
+            self._content_width,
+            self._align,
+            indent,
+            self._line_spacing,
+            self._margins,
+            self._tab_stops,
+            self.renderer,
+        )
+        paragraph.append_content(cells)
+        return paragraph
 
 
 class Column(Container):
@@ -972,8 +1163,8 @@ class Column(Container):
             y -= p.total_height
 
     def append_paragraphs(
-        self, paragraphs: Iterable["Paragraph"]
-    ) -> List["Paragraph"]:
+        self, paragraphs: Iterable[Paragraph]
+    ) -> List[Paragraph]:
         remainer = []
         for paragraph in paragraphs:
             if remainer:
@@ -1103,7 +1294,7 @@ class Layout(Container):
         self._columns.append(column)
         return column
 
-    def append_paragraphs(self, paragraphs: Iterable["Paragraph"]):
+    def append_paragraphs(self, paragraphs: Iterable[Paragraph]):
         remainer = list(paragraphs)
         # 1. fill existing columns:
         columns = self._columns
@@ -1206,23 +1397,6 @@ def group_non_breakable_cells(cells: List[Cell]) -> List[Cell]:
     return new_cells
 
 
-class TabStopType(enum.IntEnum):
-    LEFT = 0
-    RIGHT = 1
-    CENTER = 2
-
-
-class TabStop(NamedTuple):
-    pos: float = 0.0
-    kind: TabStopType = TabStopType.LEFT
-
-
-class LineCell(NamedTuple):
-    cell: Cell
-    offset: float
-    locked: bool
-
-
 def vertical_cell_shift(cell: Cell, group_height: float) -> float:
     dy = 0.0
     if isinstance(cell, ContentCell) and cell.valign != CellAlignment.TOP:
@@ -1230,6 +1404,12 @@ def vertical_cell_shift(cell: Cell, group_height: float) -> float:
         if cell.valign == CellAlignment.CENTER:
             dy /= 2.0
     return dy
+
+
+class LineCell(NamedTuple):
+    cell: Cell
+    offset: float
+    locked: bool
 
 
 class AbstractLine(ContentCell):  # ABC
@@ -1522,184 +1702,3 @@ def shift_tab_stops(
     tab_stops: Iterable[TabStop], offset: float
 ) -> List[TabStop]:
     return [TabStop(pos + offset, kind) for pos, kind in tab_stops]
-
-
-class Paragraph(Container):
-    def __init__(
-        self,
-        width: float = None,  # defined by parent container
-        align: ParagraphAlignment = ParagraphAlignment.DEFAULT,
-        indent: Tuple[float, float, float] = (0, 0, 0),
-        line_spacing: float = 1,
-        margins: Sequence[float] = None,
-        tab_stops: Sequence[TabStop] = None,
-        renderer: ContentRenderer = None,
-    ):
-        super().__init__(width, None, margins, renderer)
-        self._align = align or ParagraphAlignment.LEFT
-        first, left, right = indent
-        self._indent_first = first
-        self._indent_left = left
-        self._indent_right = right
-        self._line_spacing = line_spacing
-        self._tab_stops = tab_stops or []
-
-        # contains the raw and not distributed content:
-        self._cells: List[Cell] = []
-
-        # contains the final distributed content:
-        self._lines: List[AbstractLine] = []
-
-        # This flag is False if the original flow text was split into
-        # multiple paragraphs and this is not the last one.
-        self._has_last_line = True
-
-    def __iter__(self):
-        return iter(self._lines)
-
-    def set_total_width(self, width: float):
-        self._content_width = width - self.left_margin - self.right_margin
-        if self._content_width < 1e-6:
-            raise ValueError("invalid width, no usable space left")
-
-    def append_content(self, content: Iterable[Cell]):
-        self._cells.extend(content)
-
-    def line_width(self, first: bool) -> float:
-        indent = self._indent_right
-        indent += self._indent_first if first else self._indent_left
-        return self.content_width - indent
-
-    def place_content(self):
-        x, y = self.final_location()
-        x += self.left_margin
-        y -= self.top_margin
-        first = True
-        lines = self._lines
-        for line in lines:
-            x_final = self._left_border(x, first)
-            line.place(x_final, y)
-            y -= leading(line.total_height, self._line_spacing)
-            first = False
-
-    def _left_border(self, x: float, first: bool) -> float:
-        """Apply indentation and paragraph alignment"""
-        left_indent = self._indent_first if first else self._indent_left
-        return x + left_indent
-
-    def _calculate_content_height(self) -> float:
-        """Returns the actual content height determined by the distributed
-        lines.
-        """
-        return sum(
-            leading(line.total_height, self._line_spacing)
-                for line in self._lines
-        )
-
-    def distribute_content(self, height: float = None) -> Optional["Paragraph"]:
-        """Distribute the raw content into lines. Returns the cells which do
-        not fit as a new paragraph.
-
-        Args:
-            height: available total height (margins + content), ``None`` for
-                unrestricted paragraph height
-
-        """
-
-        def new_line(space: float) -> AbstractLine:
-            align = self._align
-            if align in (ParagraphAlignment.LEFT, ParagraphAlignment.JUSTIFIED):
-                indent = self._indent_first if first else self._indent_left
-                tab_stops = shift_tab_stops(self._tab_stops, indent)
-                return (
-                    LeftLine(space, tab_stops)
-                    if align == ParagraphAlignment.LEFT
-                    else JustifiedLine(space, tab_stops)
-                )
-            elif align == ParagraphAlignment.RIGHT:
-                return RightLine(space)
-            elif align == ParagraphAlignment.CENTER:
-                return CenterLine(space)
-
-        def remove_line_breaking_space():
-            if cells and isinstance(cells[-1], Space):
-                cells.pop()
-
-        cells = normalize_cells(self._cells)
-        cells = group_non_breakable_cells(cells)
-        cells.reverse()
-        undo = cells
-        first = True
-        paragraph_height = self.top_margin + self.bottom_margin
-        height_is_restricted = height is not None
-        while cells:
-            if height_is_restricted:
-                # shallow copy current cell state for undo, if not enough space
-                # for next line:
-                undo = list(cells)
-
-            line = new_line(self.line_width(first))
-            while cells:
-                cell = cells[-1]
-                append_state = line.append(cell)
-                if append_state == AppendType.SUCCESS:
-                    cells.pop()
-                elif append_state == AppendType.FORCED:
-                    cells.pop()
-                    break
-                elif append_state == AppendType.FAIL:
-                    break
-
-            if line.has_content:
-                line.remove_line_breaking_space()
-                remove_line_breaking_space()
-                line_height = line.total_height
-                if (
-                    height_is_restricted
-                    and paragraph_height + line_height > height
-                ):
-                    # Not enough space for the new line:
-                    cells = undo
-                    break
-                else:
-                    first = False
-                    self._lines.append(line)
-                    paragraph_height += leading(line_height, self._line_spacing)
-
-        if self._align == ParagraphAlignment.JUSTIFIED:
-            # distribute justified text across the line width,
-            # except for the last line:
-            for line in self._lines[:-1]:
-                assert isinstance(line, JustifiedLine)
-                line.distribute()
-
-        # Delete raw content:
-        self._cells = []
-
-        # Update content height:
-        self._content_height = self._calculate_content_height()
-
-        # If not all cells could be processed, put them into a new paragraph
-        # and return it to the caller.
-        if cells:
-            cells.reverse()
-            self._has_last_line = False
-            return self._new_paragraph(cells, first)
-        else:
-            return None
-
-    def _new_paragraph(self, cells: List[Cell], first: bool) -> "Paragraph":
-        # First line of the paragraph included?
-        indent_first = self._indent_first if first else self._indent_left
-        indent = (indent_first, self._indent_left, self._indent_right)
-        paragraph = Paragraph(
-            self._content_width,
-            self._align,
-            indent,
-            self._line_spacing,
-            self._margins,
-            self._tab_stops,
-            self.renderer,
-        )
-        paragraph.append_content(cells)
-        return paragraph
