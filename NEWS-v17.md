@@ -2,10 +2,10 @@ Version 0.17 - dev
 ------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-17.html
-- NEW: Column support for MTEXT read and create, but no editing
+- NEW: column support for MTEXT read and create, but no editing
 - NEW: factory method `BaseLayout.add_mtext_static_columns()`
 - NEW: factory method `BaseLayout.add_mtext_dynamic_manual_height_columns()`
-- NEW: Add-on class `MTextExplode()` to destruct MTEXT entities
+- NEW: add-on tool `MTextExplode()` to explode MTEXT entities
   into single line TEXT entities and additional LINE entities to emulate 
   strokes, requires the `Matplotlib` package
 - NEW: `move_to()` command and multi-path support for the `ezdxf.path.Path` class 

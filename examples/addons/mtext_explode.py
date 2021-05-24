@@ -34,16 +34,28 @@ def new_doc(content: str, width: float = 30):
     return doc
 
 
-def explode_mtext(doc, destroy=True):
+def explode_mtext(doc, filename, destroy=False):
     msp = doc.modelspace()
-    xpl = MTextExplode(msp)
-    for mtext in msp.query("MTEXT"):
-        xpl.explode(mtext, destroy=destroy)
-        if mtext.is_alive:
-            mtext.dxf.layer = "SOURCE"
-    xpl.finalize()  # create required text styles
+    with MTextExplode(msp) as xpl:
+        for mtext in msp.query("MTEXT"):
+            xpl.explode(mtext, destroy=destroy)
+            if mtext.is_alive:
+                mtext.dxf.layer = "SOURCE"
     zoom.extents(msp)
-    return doc
+    doc.saveas(DIR / filename)
+
+
+def explode_mtext_to_block(doc, filename, destroy=False):
+    msp = doc.modelspace()
+    blk = doc.blocks.new("EXPLODE")
+    with MTextExplode(blk) as xpl:
+        for mtext in msp.query("MTEXT"):
+            xpl.explode(mtext, destroy=destroy)
+            if mtext.is_alive:
+                mtext.dxf.layer = "SOURCE"
+    msp.add_blockref("EXPLODE", (0, 0))
+    zoom.extents(msp)
+    doc.saveas(DIR / filename)
 
 
 def create(filename):
@@ -56,12 +68,8 @@ def load(filename):
     return ezdxf.readfile(DIR / filename)
 
 
-def explode(doc, filename):
-    doc = explode_mtext(doc, destroy=True)
-    doc.saveas(DIR / filename)
-
-
 if __name__ == '__main__':
     doc = create("mtext_source.dxf")
     # doc = load("mtext_source.dxf")
-    explode(doc, "mtext_xplode.dxf")
+    # explode_mtext(doc, "mtext_xplode.dxf", destroy=True)
+    explode_mtext_to_block(doc, "mtext_xpl_blk.dxf", destroy=True)

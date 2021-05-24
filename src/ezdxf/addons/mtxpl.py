@@ -64,7 +64,7 @@ class ColumnBackgroundRenderer(FrameRenderer):
         bottom -= offset
         if self.solid_attribs is not None:
             solid = self.layout.add_solid(
-                # SOLID! switch last two vertices:
+                # SOLID! swap last two vertices:
                 [(left, top), (right, top), (left, bottom), (right, bottom)],
                 dxfattribs=self.solid_attribs,
             )
@@ -277,6 +277,17 @@ def make_bg_renderer(mtext: MText, attribs: Dict, layout: BaseLayout):
 
 
 class MTextExplode:
+    """The :class:`MTextExplode` class is a tool to disassemble MTEXT entities
+    into single line TEXT entities and additional LINE entities if required to
+    emulate strokes.
+
+    The `layout` argument defines the target layout  for "exploded" parts of the
+    MTEXT entity. Use argument `doc` if the
+    target layout has no DXF document assigned. The `spacing_factor`
+    argument is an advanced tuning parameter to scale the size of space
+    chars.
+
+    """
     def __init__(self, layout: BaseLayout, doc=None,
                  spacing_factor: float = 1.0):
         self.layout = layout
@@ -286,6 +297,12 @@ class MTextExplode:
         self._spacing_factor = spacing_factor
         self._required_text_styles: Dict = {}
         self._font_cache = {}
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.finalize()
 
     def mtext_exploded_text_style(self, font_face: fonts.FontFace) -> str:
         style = 0
@@ -413,6 +430,9 @@ class MTextExplode:
             return Word(upr, ctx, attribs, self)
 
     def explode(self, mtext: MText, destroy=True):
+        """Explode `mtext` and destroy the source entity if argument `destroy`
+        is ``True``.
+        """
         align = text_layout.LayoutAlignment(mtext.dxf.attachment_point)
         layout_engine = self.layout_engine(mtext)
         layout_engine.place(align=align)
@@ -421,6 +441,9 @@ class MTextExplode:
             mtext.destroy()
 
     def finalize(self):
+        """Create required text styles. This method is called automatically if
+        the class is used as context manager.
+        """
         def ttf_path(font_face: fonts.FontFace) -> str:
             ttf = font_face.ttf
             if not ttf:
