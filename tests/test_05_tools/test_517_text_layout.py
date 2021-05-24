@@ -454,10 +454,13 @@ class TestParagraphJustifiedAlignment:
 class TestVerticalCellAlignment:
     @staticmethod
     def build_line(align):
+        line = tl.LeftLine(width=7)
         big0 = tl.Text(width=3, height=3)
         small = tl.Text(width=1, height=1, valign=align, renderer=Rect("CELL"))
         big1 = tl.Text(width=3, height=3)
-        line = tl.HCellGroup([big0, small, big1])
+        line.append(big0)
+        line.append(small)
+        line.append(big1)
         line.place(0, 0)
         return line
 
@@ -512,9 +515,10 @@ class TestVerticalCellAlignment:
         center = tl.Text(width=1, height=1, valign=tl.CellAlignment.CENTER)
         top = tl.Text(width=1, height=1, valign=tl.CellAlignment.TOP)
         big1 = tl.Text(width=3, height=3)
-        line = tl.HCellGroup([big0, top, center, bottom, big1])
+        line = tl.LeftLine(width=9)
+        for cell in [big0, top, center, bottom, big1]:
+            line.append(cell)
         line.place(0, 0)
-        # final location is always the top/left corner of the cell:
         assert bottom.final_location() == (5, -2)
         assert center.final_location() == (4, -1)
         assert top.final_location() == (3, 0)

@@ -2,7 +2,6 @@
 #  License: MIT License
 from typing import Sequence, Iterable, Optional, Tuple, List, NamedTuple
 import abc
-import math
 import itertools
 import enum
 
@@ -119,7 +118,7 @@ Do not support margins.
         
     2.2 Fraction cell ... (MTEXT!)
 
-3. HCellGroup (H for horizontal, a.k.a. Line)
+3. AbstractLine
     
     A line contains only simple boxes and has a fixed width. 
     The height is determined by the tallest box of the group. 
@@ -394,6 +393,7 @@ class ContentCell(Cell):  # ABC
         self._height = float(height)
         self.valign = CellAlignment(valign)  # public attribute read/write
         self.renderer = renderer
+        self.tab_aligned = False  # only required for undo action
 
     def set_final_location(self, x: float, y: float):
         self._final_x = x
@@ -664,98 +664,6 @@ def normalize_cells(cells: Iterable[Cell]) -> List[Cell]:
     return content
 
 
-class HCellGroup(ContentCell):
-    """Stores content in horizontal order and does not render itself.
-    Recursive data structure, a HCellGroup can contain cell groups as well.
-
-    This is not a real container class, from outside it behaves like a
-    single opaque cell with a fixed width and height determined by the
-    extents of its content.
-
-    """
-
-    def __init__(
-        self, cells: Iterable[Cell] = None, valign=CellAlignment.BOTTOM
-    ):
-        super().__init__(0, 0, valign=valign)
-        self._cells: List[Cell] = []
-        if cells:
-            self.extend(cells)
-
-    def __iter__(self):
-        return iter(self._cells)
-
-    def place(self, x: float, y: float):
-        super().place(x, y)
-        group_height = self.total_height
-        cx = x
-        for cell in self._cells:
-            cy = y
-            if (
-                isinstance(cell, ContentCell)
-                and cell.valign != CellAlignment.TOP
-            ):
-                dy = cell.total_height - group_height
-                if cell.valign == CellAlignment.CENTER:
-                    dy /= 2.0
-                cy += dy
-
-            cell.place(cx, cy)
-            cx += cell.total_width
-
-    def append(self, cell: Cell):
-        self._height = max(cell.total_height, self._height)
-        self._width += cell.total_width
-        self._cells.append(cell)
-
-    def extend(self, cells: Iterable[Cell]):
-        for cell in cells:
-            self.append(cell)
-
-    def render(self, m: Matrix44 = None) -> None:
-        render_cells(self._cells, m)
-        # HCellGroup can contain Text cells:
-        render_text_strokes(self._cells, m)
-
-    def grow(self, target_width: float) -> None:
-        """Expand glue cells to match target_width by `total_width`."""
-        self._apply_justified_alignment(target_width)
-        self.update_width()
-
-    def update_width(self):
-        self._width = sum(cell.total_width for cell in self._cells)
-
-    def _glue_cells(self):
-        return [cell for cell in self._cells if isinstance(cell, Glue)]
-
-    def _apply_justified_alignment(self, target_width: float) -> None:
-        success = False
-        spaces: List[Glue] = self._glue_cells()
-        if len(spaces) == 0:  # no spaces to grow
-            return
-
-        while not success:
-            success = True
-            # total line width could be bigger than width!
-            space_to_distribute = target_width - self.total_width
-            if space_to_distribute < 1e-6:
-                return
-
-            growable_spaces = [space for space in spaces if space.can_grow]
-            count = len(growable_spaces)
-            if count == 0:  # no spaces to grow
-                return
-
-            delta_space = space_to_distribute / count
-            for space in growable_spaces:
-                new_size = space.total_width + delta_space
-                space.resize(new_size)
-                if not math.isclose(new_size, space.total_width):
-                    # space can't grow that much
-                    success = False
-                    # but grow remaining spaces
-
-
 class Container(Box):
     def __init__(
         self,
@@ -1016,7 +924,6 @@ class Paragraph(Container):
         cells = group_non_breakable_cells(cells)
         cells.reverse()
         undo = cells
-        remember_tab = None
         first = True
         paragraph_height = self.top_margin + self.bottom_margin
         height_is_restricted = height is not None
@@ -1034,14 +941,7 @@ class Paragraph(Container):
             # had inconclusive results, sometimes faster - sometimes slower
             while cells:
                 # core loop of paragraph processing and the whole layout engine:
-                next_cell = cells[-1]
-                append_state = line.append(next_cell)
-                if remember_tab and append_state == FAIL:
-                    cells.append(remember_tab)
-                if isinstance(next_cell, Tabulator):
-                    remember_tab = next_cell
-                else:
-                    remember_tab = None
+                append_state = line.append(cells[-1])
 
                 # state check order by probability:
                 if append_state == SUCCESS:
@@ -1512,9 +1412,11 @@ class LeftLine(AbstractLine):
             self._replacement_space = cell.to_space()
             return AppendType.SUCCESS
 
-        was_tab = self._was_tab
+        was_tab = self._was_tab or getattr(cell, "tab_aligned", False)
         self._was_tab = False
         if was_tab:
+            if isinstance(cell, ContentCell):
+                cell.tab_aligned = True  # only required for undo action
             return self._append_at_tab(cell)
         else:
             return self._append(cell)
