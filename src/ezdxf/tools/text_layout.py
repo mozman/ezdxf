@@ -919,59 +919,59 @@ class Paragraph(Container):
             elif align == ParagraphAlignment.CENTER:
                 return CenterLine(space)
 
-        def remove_line_breaking_space():
-            if cells and isinstance(cells[-1], Space):
-                cells.pop()
-
         cells = normalize_cells(self._cells)
         cells = group_non_breakable_cells(cells)
-        cells.reverse()
-        undo = cells
+        # Delete raw content:
+        self._cells.clear()
+
+        index = 0
+        undo = 0
+        count = len(cells)
         first = True
         paragraph_height = self.top_margin + self.bottom_margin
         height_is_restricted = height is not None
         # localize enums for core loop optimization:
         # CPython 3.9 access is around 3x faster, no difference for PyPy 3.7!
         FAIL, SUCCESS, FORCED = AppendType
-        while cells:
+        while index < count:
             if height_is_restricted:
-                # shallow copy current cell state for undo, if not enough space
-                # for next line:
-                undo = list(cells)
+                # index of first unprocessed cell, if not enough space for
+                # next line:
+                undo = index
 
             line = new_line(self.line_width(first))
-            # localization of methods calls like line_append = line.append
-            # had inconclusive results, sometimes faster - sometimes slower
-            while cells:
+            while index < count:
                 # core loop of paragraph processing and the whole layout engine:
-                append_state = line.append(cells[-1])
-
+                append_state = line.append(cells[index])
                 # state check order by probability:
                 if append_state == SUCCESS:
-                    cells.pop()
+                    index += 1
                 elif append_state == FAIL:
                     break
                 elif append_state == FORCED:
-                    cells.pop()
+                    index += 1
                     break
 
             if line.has_content:
                 line.remove_line_breaking_space()
-                remove_line_breaking_space()
+                # remove line breaking space:
+                if index < count and isinstance(cells[index], Space):
+                    index += 1
+
                 line_height = line.total_height
                 if (
                     height_is_restricted
                     and paragraph_height + line_height > height
                 ):
                     # Not enough space for the new line:
-                    cells = undo
+                    index = undo
                     break
                 else:
                     first = False
                     self._lines.append(line)
                     paragraph_height += leading(line_height, self._line_spacing)
 
-        not_all_cells_processed = bool(cells)
+        not_all_cells_processed = index < count
         if self._align == ParagraphAlignment.JUSTIFIED:
             # distribute justified text across the line width,
             # except for the VERY last line:
@@ -980,18 +980,14 @@ class Paragraph(Container):
                 assert isinstance(line, JustifiedLine)
                 line.distribute()
 
-        # Delete raw content:
-        self._cells = []
-
         # Update content height:
         self._content_height = self._calculate_content_height()
 
         # If not all cells could be processed, put them into a new paragraph
         # and return it to the caller.
         if not_all_cells_processed:
-            cells.reverse()
             self._has_last_line = False
-            return self._new_paragraph(cells, first)
+            return self._new_paragraph(cells[index:], first)
         else:
             return None
 
