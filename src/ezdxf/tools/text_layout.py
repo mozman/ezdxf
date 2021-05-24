@@ -845,10 +845,6 @@ class Paragraph(Container):
         # contains the final distributed content:
         self._lines: List[AbstractLine] = []
 
-        # This flag is False if the original flow text was split into
-        # multiple paragraphs and this is not the last one.
-        self._has_last_line = True
-
     def __iter__(self):
         return iter(self._lines)
 
@@ -986,7 +982,6 @@ class Paragraph(Container):
         # If not all cells could be processed, put them into a new paragraph
         # and return it to the caller.
         if not_all_cells_processed:
-            self._has_last_line = False
             return self._new_paragraph(cells[index:], first)
         else:
             return None
