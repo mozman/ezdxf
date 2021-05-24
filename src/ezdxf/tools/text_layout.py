@@ -897,29 +897,26 @@ class Paragraph(Container):
 
         """
 
-        def new_line(space: float) -> AbstractLine:
-            align = self._align
+        def new_line(width: float) -> AbstractLine:
             if align in (ParagraphAlignment.LEFT, ParagraphAlignment.JUSTIFIED):
                 indent = self._indent_first if first else self._indent_left
-
-                tab_stops = shift_tab_stops(
-                    self._tab_stops, -indent, self.line_width(first)
-                )
+                tab_stops = shift_tab_stops(self._tab_stops, -indent, width)
                 return (
-                    LeftLine(space, tab_stops)
+                    LeftLine(width, tab_stops)
                     if align == ParagraphAlignment.LEFT
-                    else JustifiedLine(space, tab_stops)
+                    else JustifiedLine(width, tab_stops)
                 )
             elif align == ParagraphAlignment.RIGHT:
-                return RightLine(space)
+                return RightLine(width)
             elif align == ParagraphAlignment.CENTER:
-                return CenterLine(space)
+                return CenterLine(width)
 
         cells = normalize_cells(self._cells)
         cells = group_non_breakable_cells(cells)
         # Delete raw content:
         self._cells.clear()
 
+        align = self._align
         index = 0
         undo = 0
         count = len(cells)
@@ -968,7 +965,7 @@ class Paragraph(Container):
                     paragraph_height += leading(line_height, self._line_spacing)
 
         not_all_cells_processed = index < count
-        if self._align == ParagraphAlignment.JUSTIFIED:
+        if align == ParagraphAlignment.JUSTIFIED:
             # distribute justified text across the line width,
             # except for the VERY last line:
             end = len(self._lines) if not_all_cells_processed else -1
