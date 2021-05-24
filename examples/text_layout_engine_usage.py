@@ -8,7 +8,7 @@ import ezdxf
 from ezdxf import zoom, print_config
 from ezdxf.math import Matrix44
 from ezdxf.tools import fonts
-from ezdxf.tools import text_layout
+from ezdxf.tools import text_layout as tl
 
 """ 
 This example shows the usage of the internal text_layout module to render 
@@ -54,9 +54,7 @@ if not ezdxf.options.use_matplotlib:
     sys.exit(1)
 
 # Type aliases:
-Content = Iterable[text_layout.Cell]
-Stacking = text_layout.Stacking
-ParagraphAlignment = text_layout.ParagraphAlignment
+Content = Iterable[tl.Cell]
 
 DIR = pathlib.Path("~/Desktop/Outbox").expanduser()
 STYLE = "Style0"
@@ -93,7 +91,7 @@ fix_sized_fonts = [
 ]
 
 
-class FrameRenderer(text_layout.ContentRenderer):
+class FrameRenderer(tl.ContentRenderer):
     """Render object to render a frame around a content collection.
 
     This renderer can be used by collections which just manages content
@@ -135,7 +133,7 @@ class FrameRenderer(text_layout.ContentRenderer):
             line.transform(m)
 
 
-class TextRenderer(text_layout.ContentRenderer):
+class TextRenderer(tl.ContentRenderer):
     """Text content renderer."""
 
     def __init__(self, text, attribs):
@@ -169,7 +167,7 @@ class TextRenderer(text_layout.ContentRenderer):
             line.transform(m)
 
 
-class Word(text_layout.Text):
+class Word(tl.Text):
     """Represent a word as content box for the layout engine."""
 
     def __init__(self, text: str, font: SizedFont, stroke: int = 0):
@@ -193,9 +191,9 @@ class Word(text_layout.Text):
 def uniform_content(count: int, size: int = 1) -> Content:
     """Create content with one text size."""
     font = fix_sized_fonts[size]
-    for word in text_layout.lorem_ipsum(count):
+    for word in tl.lorem_ipsum(count):
         yield Word(word, font)
-        yield text_layout.Space(font.space)
+        yield tl.Space(font.space)
 
 
 def random_sized_content(count: int) -> Content:
@@ -204,10 +202,10 @@ def random_sized_content(count: int) -> Content:
     def size():
         return random.choice([0, 1, 1, 1, 1, 1, 2, 3])
 
-    for word in text_layout.lorem_ipsum(count):
+    for word in tl.lorem_ipsum(count):
         font = fix_sized_fonts[size()]
         yield Word(word, font)
-        yield text_layout.Space(font.space)
+        yield tl.Space(font.space)
 
 
 def stroke_groups(words: Iterable[str]):
@@ -235,7 +233,7 @@ def stroked_content(count: int, size: int = 1) -> Content:
 
     """
     font = fix_sized_fonts[size]
-    groups = stroke_groups(text_layout.lorem_ipsum(count))
+    groups = stroke_groups(tl.lorem_ipsum(count))
     for group, stroke in groups:
         # strokes should span across spaces in between words:
         # Spaces between words are bound to the preceding content box renderer,
@@ -245,13 +243,13 @@ def stroked_content(count: int, size: int = 1) -> Content:
         continue_stroke = stroke + 8 if stroke else 0
         for word in group[:-1]:
             yield Word(word, font=font, stroke=continue_stroke)
-            yield text_layout.Space(font.space)
+            yield tl.Space(font.space)
         # strokes end at the last word, without continue stroke:
         yield Word(group[-1], font=font, stroke=stroke)
-        yield text_layout.Space(font.space)
+        yield tl.Space(font.space)
 
 
-class Fraction(text_layout.Fraction):
+class Fraction(tl.Fraction):
     """Represents a fraction for the layout engine, which consist of a top-
     and bottom content box, divided by horizontal or slanted line.
     The "tolerance style" has no line between the stacked content boxes.
@@ -261,7 +259,7 @@ class Fraction(text_layout.Fraction):
 
     """
 
-    def __init__(self, t1: str, t2: str, stacking: Stacking, font: SizedFont):
+    def __init__(self, t1: str, t2: str, stacking: tl.Stacking, font: SizedFont):
         top = Word(t1, font)
         bottom = Word(t2, font)
         super().__init__(
@@ -281,29 +279,29 @@ def fraction_content() -> Content:
     """
     words = list(uniform_content(120))
     for word in words:
-        word.valign = text_layout.CellAlignment.BOTTOM
+        word.valign = tl.CellAlignment.BOTTOM
 
-    stacking_options = [Stacking.OVER, Stacking.LINE, Stacking.SLANTED]
+    stacking_options = list(tl.Stacking)
     font = SizedFont(0.25)  # fraction font
     for _ in range(10):
         stacking = random.choice(stacking_options)
         top = str(random.randint(1, 1000))
         bottom = str(random.randint(1, 1000))
         pos = random.randint(0, len(words) - 1)
-        if isinstance(words[pos], text_layout.Space):
+        if isinstance(words[pos], tl.Space):
             pos += 1
         words.insert(pos, Fraction(top, bottom, stacking, font))
-        words.insert(pos + 1, text_layout.Space(font.space))
+        words.insert(pos + 1, tl.Space(font.space))
     return words
 
 
-def create_layout(align: "ParagraphAlignment", content: Content):
+def create_layout(align: tl.ParagraphAlignment, content: Content) -> tl.Layout:
     # Create a flow text paragraph for the content:
-    paragraph = text_layout.Paragraph(align=align)
+    paragraph = tl.Paragraph(align=align)
     paragraph.append_content(content)
 
     # Start the layout engine and set default column width:
-    layout = text_layout.Layout(
+    layout = tl.Layout(
         width=8,  # default column width for columns without define width
         margins=(0.5,),  # space around the layout
         # The render object of collections like Layout, Column or Paragraph is
@@ -340,7 +338,7 @@ def create_layout(align: "ParagraphAlignment", content: Content):
     # transformation matrix to move the layout to the final location in
     # the DXF target layout - the model space in this example.
     # Set final layout location in the xy-plane with alignment:
-    layout.place(align=text_layout.LayoutAlignment.BOTTOM_LEFT)
+    layout.place(align=tl.LayoutAlignment.BOTTOM_LEFT)
 
     # It is possible to add content after calling place(), but place has to be
     # called again before calling the render() method of the layout.
@@ -349,7 +347,7 @@ def create_layout(align: "ParagraphAlignment", content: Content):
 
 def create(content: Content, y: float) -> None:
     x: float = 0
-    for align in list(ParagraphAlignment)[1:]:
+    for align in list(tl.ParagraphAlignment)[1:]:
         # Build and place the layout at (0, 0):
         layout = create_layout(align, content)
         # Render and move the layout to the final location:
