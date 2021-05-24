@@ -1,7 +1,6 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 from typing import cast, Dict, Tuple, List
-import sys
 import math
 import ezdxf
 from ezdxf.entities import MText, DXFGraphic, Textstyle
@@ -13,10 +12,6 @@ from ezdxf.tools.text import (
 )
 
 __all__ = ["MTextExplode"]
-
-if not ezdxf.options.use_matplotlib:
-    print("The Matplotlib package is required.")
-    sys.exit(1)
 
 
 class FrameRenderer(text_layout.ContentRenderer):

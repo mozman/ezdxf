@@ -1,14 +1,9 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-import sys
 import pathlib
 import ezdxf
 from ezdxf import zoom
 from ezdxf.addons import MTextExplode
-
-if not ezdxf.options.use_matplotlib:
-    print("The Matplotlib package is required.")
-    sys.exit(1)
 
 DIR = pathlib.Path('~/Desktop/Outbox').expanduser()
 
