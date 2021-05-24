@@ -888,7 +888,7 @@ class Paragraph(Container):
         """
         return sum(
             leading(line.total_height, self._line_spacing)
-                for line in self._lines
+            for line in self._lines
         )
 
     def distribute_content(self, height: float = None) -> Optional["Paragraph"]:
@@ -905,7 +905,10 @@ class Paragraph(Container):
             align = self._align
             if align in (ParagraphAlignment.LEFT, ParagraphAlignment.JUSTIFIED):
                 indent = self._indent_first if first else self._indent_left
-                tab_stops = shift_tab_stops(self._tab_stops, indent)
+
+                tab_stops = shift_tab_stops(
+                    self._tab_stops, -indent, self.line_width(first)
+                )
                 return (
                     LeftLine(space, tab_stops)
                     if align == ParagraphAlignment.LEFT
@@ -1424,10 +1427,7 @@ class LeftLine(AbstractLine):
     def _append_line_cell(
         self, cell: Cell, offset: float, locked: bool = False
     ) -> None:
-        cells = self._cells
-        # if cells and not isinstance(cells[-1].cell, Glue):
-        #   cells.append(LineCell(Space(0), self._current_offset, False))
-        cells.append(LineCell(cell, offset, locked))
+        self._cells.append(LineCell(cell, offset, locked))
 
     def _append(self, cell: Cell) -> AppendType:
         width = cell.total_width
@@ -1538,7 +1538,7 @@ class JustifiedLine(LeftLine):
             return
 
         available_space = self._available_space(last_locked_cell)
-        cells = [c.cell for c in cells[last_locked_cell + 1:]]
+        cells = [c.cell for c in cells[last_locked_cell + 1 :]]
         modified = False
         while True:
             growable = growable_cells(cells)
@@ -1618,6 +1618,10 @@ class RightLine(NoTabLine):
 
 
 def shift_tab_stops(
-    tab_stops: Iterable[TabStop], offset: float
+    tab_stops: Iterable[TabStop], offset: float, right_border: float
 ) -> List[TabStop]:
-    return [TabStop(pos + offset, kind) for pos, kind in tab_stops]
+    return [
+        tab_stop
+        for tab_stop in (TabStop(pos + offset, kind) for pos, kind in tab_stops)
+        if 0 < tab_stop.pos <= right_border
+    ]

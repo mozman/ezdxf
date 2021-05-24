@@ -948,5 +948,29 @@ class TestLeftLine:
         assert result[3] == "TEXT(12.5, -1.0, 14.5, 0.0)"
 
 
+def tab_stops(*values):
+    return [tl.TabStop(v) for v in values]
+
+
+def test_shift_tab_stop_left_in_range():
+    result = tl.shift_tab_stops(tab_stops(4, 8), -2, 10)
+    assert result[0].pos == 2
+    assert result[1].pos == 6
+
+
+def test_shift_tab_stops_beyond_left_border():
+    result = tl.shift_tab_stops(tab_stops(4, 8), -4, 10)
+    assert len(result) == 1, "tab stop at pos=0 should be removed"
+    assert result[0].pos == 4
+
+
+def test_shift_tab_stops_beyond_right_border():
+    result = tl.shift_tab_stops(tab_stops(4, 8), 4, 8)
+    assert len(result) == 1
+    assert (
+        result[0].pos == 8
+    ), "tab stop at the right border should be preserved"
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
