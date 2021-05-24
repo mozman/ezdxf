@@ -4,7 +4,7 @@ import sys
 import pathlib
 import ezdxf
 from ezdxf import zoom
-from ezdxf.explode_mtext import MTextExplode
+from ezdxf.addons import MTextExplode
 
 if not ezdxf.options.use_matplotlib:
     print("The Matplotlib package is required.")
