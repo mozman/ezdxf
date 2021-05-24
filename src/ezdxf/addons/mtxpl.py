@@ -1,12 +1,12 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import cast, Dict, Tuple, List
+from typing import cast, Dict, Tuple, List, Sequence
 import math
 import ezdxf
 from ezdxf.entities import MText, DXFGraphic, Textstyle
 from ezdxf.layouts import BaseLayout
 from ezdxf.math import Matrix44
-from ezdxf.tools import text_layout, fonts
+from ezdxf.tools import text_layout as tl, fonts
 from ezdxf.tools.text import (
     MTextParser,
     MTextContext,
@@ -17,7 +17,7 @@ from ezdxf.tools.text import (
 __all__ = ["MTextExplode"]
 
 
-class FrameRenderer(text_layout.ContentRenderer):
+class FrameRenderer(tl.ContentRenderer):
     def __init__(self, attribs: Dict, layout: BaseLayout):
         self.line_attribs = attribs
         self.layout = layout
@@ -125,7 +125,7 @@ class TextRenderer(FrameRenderer):
             text.transform(m)
 
 
-class Word(text_layout.Text):
+class Word(tl.Text):
     """Represent a word as content box for the layout engine."""
 
     def __init__(
@@ -144,7 +144,7 @@ class Word(text_layout.Text):
             # not be changed by the layout engine:
             width=font.text_width(text),
             height=ctx.cap_height,
-            valign=text_layout.CellAlignment(ctx.align),
+            valign=tl.CellAlignment(ctx.align),
             stroke=stroke,
             # Each content box can have it's own rendering object:
             renderer=TextRenderer(text, text_attribs, line_attribs, xpl.layout),
@@ -152,13 +152,13 @@ class Word(text_layout.Text):
 
 
 STACKING = {
-    "^": text_layout.Stacking.OVER,
-    "/": text_layout.Stacking.LINE,
-    "#": text_layout.Stacking.SLANTED,
+    "^": tl.Stacking.OVER,
+    "/": tl.Stacking.LINE,
+    "#": tl.Stacking.SLANTED,
 }
 
 
-class Fraction(text_layout.Fraction):
+class Fraction(tl.Fraction):
     def __init__(
         self,
         upr: str,
@@ -171,7 +171,7 @@ class Fraction(text_layout.Fraction):
         super().__init__(
             top=Word(upr, ctx, attribs, xpl),
             bottom=Word(lwr, ctx, attribs, xpl),
-            stacking=STACKING.get(type_, text_layout.Stacking.LINE),
+            stacking=STACKING.get(type_, tl.Stacking.LINE),
             # Uses only the generic line renderer to render the divider line,
             # the top- and bottom content boxes use their own render objects.
             renderer=FrameRenderer(attribs, xpl.layout),
@@ -228,17 +228,57 @@ def mtext_context(mtext: MText) -> MTextContext:
 
 
 ALIGN = {
-    MTextParagraphAlignment.LEFT: text_layout.ParagraphAlignment.LEFT,
-    MTextParagraphAlignment.RIGHT: text_layout.ParagraphAlignment.RIGHT,
-    MTextParagraphAlignment.CENTER: text_layout.ParagraphAlignment.CENTER,
-    MTextParagraphAlignment.JUSTIFIED: text_layout.ParagraphAlignment.JUSTIFIED,
-    MTextParagraphAlignment.DISTRIBUTED: text_layout.ParagraphAlignment.JUSTIFIED,
-    MTextParagraphAlignment.DEFAULT: text_layout.ParagraphAlignment.LEFT,
+    MTextParagraphAlignment.LEFT: tl.ParagraphAlignment.LEFT,
+    MTextParagraphAlignment.RIGHT: tl.ParagraphAlignment.RIGHT,
+    MTextParagraphAlignment.CENTER: tl.ParagraphAlignment.CENTER,
+    MTextParagraphAlignment.JUSTIFIED: tl.ParagraphAlignment.JUSTIFIED,
+    MTextParagraphAlignment.DISTRIBUTED: tl.ParagraphAlignment.JUSTIFIED,
+    MTextParagraphAlignment.DEFAULT: tl.ParagraphAlignment.LEFT,
 }
 
 
-def make_tab_stops(cap_height, width, tab_stops):
-    return None
+def make_default_tab_stops(cap_height: float, width: float) -> List[tl.TabStop]:
+    tab_stops = []
+    step = 4.0 * cap_height
+    pos = step
+    while pos < width:
+        tab_stops.append(tl.TabStop(pos, tl.TabStopType.LEFT))
+        pos += step
+    return tab_stops
+
+
+def append_default_tab_stops(
+    tab_stops: List[tl.TabStop], default_stops: Sequence[tl.TabStop]
+) -> None:
+    last_pos = 0.0
+    if tab_stops:
+        last_pos = tab_stops[-1].pos
+    tab_stops.extend(stop for stop in default_stops if stop.pos > last_pos)
+
+
+def make_tab_stops(
+    cap_height: float,
+    width: float,
+    tab_stops: Sequence,
+    default_stops: Sequence[tl.TabStop],
+) -> List[tl.TabStop]:
+    _tab_stops = []
+    for stop in tab_stops:
+        if isinstance(stop, str):
+            value = float(stop[1:])
+            if stop[0] == "c":
+                kind = tl.TabStopType.CENTER
+            else:
+                kind = tl.TabStopType.RIGHT
+        else:
+            kind = tl.TabStopType.LEFT
+            value = float(stop)
+        pos = value * cap_height
+        if pos < width:
+            _tab_stops.append(tl.TabStop(pos, kind))
+
+    append_default_tab_stops(_tab_stops, default_stops)
+    return _tab_stops
 
 
 def new_paragraph(
@@ -247,17 +287,20 @@ def new_paragraph(
     cap_height: float,
     line_spacing: float = 1,
     width: float = 0,
+    default_stops: Sequence[tl.TabStop] = None,
 ):
     if cells:
         p = ctx.paragraph
-        align = ALIGN.get(p.align, text_layout.ParagraphAlignment.LEFT)
+        align = ALIGN.get(p.align, tl.ParagraphAlignment.LEFT)
         left = p.left * cap_height
         right = p.right * cap_height
         first = left + p.indent * cap_height  # relative to left
-        tab_stops = None
+        tab_stops = default_stops
         if p.tab_stops:
-            tab_stops = make_tab_stops(cap_height, width, p.tab_stops)
-        paragraph = text_layout.Paragraph(
+            tab_stops = make_tab_stops(
+                cap_height, width, p.tab_stops, default_stops
+            )
+        paragraph = tl.Paragraph(
             align=align,
             indent=(first, left, right),
             line_spacing=line_spacing,
@@ -265,7 +308,7 @@ def new_paragraph(
         )
         paragraph.append_content(cells)
     else:
-        paragraph = text_layout.EmptyParagraph(
+        paragraph = tl.EmptyParagraph(
             cap_height=ctx.cap_height, line_spacing=line_spacing
         )
     return paragraph
@@ -274,11 +317,11 @@ def new_paragraph(
 def get_stroke(ctx: MTextContext) -> int:
     stroke = 0
     if ctx.underline:
-        stroke += text_layout.Stroke.UNDERLINE
+        stroke += tl.Stroke.UNDERLINE
     if ctx.strike_through:
-        stroke += text_layout.Stroke.STRIKE_THROUGH
+        stroke += tl.Stroke.STRIKE_THROUGH
     if ctx.overline:
-        stroke += text_layout.Stroke.OVERLINE
+        stroke += tl.Stroke.OVERLINE
     return stroke
 
 
@@ -290,7 +333,7 @@ def get_color_attribs(ctx: MTextContext) -> Dict:
 
 
 def super_glue():
-    return text_layout.NonBreakingSpace(width=0, min_width=0, max_width=0)
+    return tl.NonBreakingSpace(width=0, min_width=0, max_width=0)
 
 
 def make_bg_renderer(mtext: MText, attribs: Dict, layout: BaseLayout):
@@ -395,7 +438,7 @@ class MTextExplode:
             attribs["oblique"] = ctx.oblique
         return attribs
 
-    def layout_engine(self, mtext: MText) -> text_layout.Layout:
+    def layout_engine(self, mtext: MText) -> tl.Layout:
         def get_base_attribs() -> Dict:
             dxf = mtext.dxf
             attribs = {
@@ -406,7 +449,12 @@ class MTextExplode:
 
         def append_paragraph():
             paragraph = new_paragraph(
-                cells, ctx, initial_cap_height, line_spacing, width
+                cells,
+                ctx,
+                initial_cap_height,
+                line_spacing,
+                width,
+                default_stops,
             )
             layout.append_paragraphs([paragraph])
             cells.clear()
@@ -422,6 +470,7 @@ class MTextExplode:
 
         content = mtext.all_columns_raw_content()
         initial_cap_height = mtext.dxf.char_height
+
         # same line spacing for all paragraphs
         line_spacing = mtext.dxf.line_spacing_factor
         base_attribs = get_base_attribs()
@@ -429,7 +478,8 @@ class MTextExplode:
         parser = MTextParser(content, ctx)
         bg_renderer = make_bg_renderer(mtext, base_attribs, self.layout)
         width = mtext.dxf.width
-        layout = text_layout.Layout(width=width)
+        default_stops = make_default_tab_stops(initial_cap_height, width)
+        layout = tl.Layout(width=width)
         if mtext.has_columns:
             columns = mtext.columns
             for height in column_heights():
@@ -456,7 +506,7 @@ class MTextExplode:
             elif token.type == TokenType.NBSP:
                 cells.append(self.non_breaking_space(ctx))
             elif token.type == TokenType.TABULATOR:
-                cells.append(self.space(ctx))
+                cells.append(self.tabulator(ctx))
             elif token.type == TokenType.WORD:
                 if cells and isinstance(cells[-1], Word):
                     # property change inside a word, create an unbreakable
@@ -475,10 +525,13 @@ class MTextExplode:
         return self.get_font(ctx).space_width() * self._spacing_factor
 
     def space(self, ctx: MTextContext):
-        return text_layout.Space(width=self.space_width(ctx))
+        return tl.Space(width=self.space_width(ctx))
+
+    def tabulator(self, ctx: MTextContext):
+        return tl.Tabulator(width=self.space_width(ctx))
 
     def non_breaking_space(self, ctx: MTextContext):
-        return text_layout.NonBreakingSpace(width=self.space_width(ctx))
+        return tl.NonBreakingSpace(width=self.space_width(ctx))
 
     def word(self, text: str, ctx: MTextContext, attribs: Dict):
         return Word(text, ctx, attribs, self)
@@ -494,7 +547,7 @@ class MTextExplode:
         """Explode `mtext` and destroy the source entity if argument `destroy`
         is ``True``.
         """
-        align = text_layout.LayoutAlignment(mtext.dxf.attachment_point)
+        align = tl.LayoutAlignment(mtext.dxf.attachment_point)
         layout_engine = self.layout_engine(mtext)
         layout_engine.place(align=align)
         layout_engine.render(mtext.ucs().matrix)

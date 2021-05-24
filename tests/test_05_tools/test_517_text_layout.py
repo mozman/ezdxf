@@ -46,7 +46,7 @@ class Rect(tl.ContentRenderer):
         self.name = name
 
     def render(
-            self, left: float, bottom: float, right: float, top: float, m=None
+        self, left: float, bottom: float, right: float, top: float, m=None
     ) -> None:
         self.result.append(
             f"{self.name}({left:.1f}, {bottom:.1f}, {right:.1f}, {top:.1f})"
@@ -338,6 +338,18 @@ class TestParagraphLeftAlignment:
             assert line.total_width == 10
             assert line.final_location()[0] == 0.5
 
+    def test_move_tab_to_next_line_if_following_content_does_not_fit(self):
+        result = []
+        par = tl.Paragraph(width=10, tab_stops=[tl.TabStop(4)])
+        par.append_content(str2cells("t#t", content=6, result=result))
+        # The tab (#) should move the following text to the tab stop
+        # in the next line at position 4.
+        par.distribute_content()
+        par.place(0, 0)
+        par.render()
+        assert result[0] == "Text(0.0, -1.0, 6.0, 0.0)"
+        assert result[1] == "Text(4.0, -2.7, 10.0, -1.7)", "x1 has to be 4.0"
+
 
 class TestParagraphAlignment:
     # default values:
@@ -575,7 +587,7 @@ class TestTextContinueStroke:
         tl.render_text_strokes([word, space, nbsp, space, word])
         assert len(result) == 2
         assert (
-                result[0] == "STROKE(UNDERLINE, 4.5)"
+            result[0] == "STROKE(UNDERLINE, 4.5)"
         ), "3 spaces should be included"
         assert result[1] == "STROKE(UNDERLINE, 3.0)", "no following spaces"
 
@@ -627,22 +639,26 @@ class TestFractionCell:
         assert result[2] == "LINE(0.0, 0.0)TO(2.0, 2.0)"
 
 
-def str2cells(s: str, content=3, space=0.5):
+def str2cells(s: str, content=3, space=0.5, result=None):
     # t ... text cell
     # f ... fraction cell
     # space is space
     # ~ ... non breaking space (nbsp)
     # # ... tabulator
+    if result is None:
+        result = []
     for c in s.lower():
         if c == "t":
-            yield tl.Text(width=content, height=1, renderer=Rect("Text"))
+            yield tl.Text(
+                width=content, height=1, renderer=Rect("Text", result=result)
+            )
         elif c == "f":
             cell = tl.Text(content / 2, 1)
             yield tl.Fraction(
                 top=cell,
                 bottom=cell,
                 stacking=tl.Stacking.SLANTED,
-                renderer=Rect("Fraction"),
+                renderer=Rect("Fraction", result=result),
             )
         elif c == " ":
             yield tl.Space(width=space)
@@ -846,10 +862,13 @@ class TestLeftLine:
             line.append(tl.Text(size, 1, renderer=Rect("LTAB", result)))
 
         result = []
-        line = tl.LeftLine(20, tab_stops=[
-            tl.TabStop(6, tl.TabStopType.LEFT),
-            tl.TabStop(12, tl.TabStopType.LEFT),
-        ])
+        line = tl.LeftLine(
+            20,
+            tab_stops=[
+                tl.TabStop(6, tl.TabStopType.LEFT),
+                tl.TabStop(12, tl.TabStopType.LEFT),
+            ],
+        )
         line.append(tl.Text(2, 1, renderer=Rect("TEXT", result)))
         append_left_tab(2)
         append_left_tab(2)
@@ -880,10 +899,13 @@ class TestLeftLine:
             line.append(tl.Text(size, 1, renderer=Rect("CTAB", result)))
 
         result = []
-        line = tl.LeftLine(20, tab_stops=[
-            tl.TabStop(6, tl.TabStopType.CENTER),
-            tl.TabStop(12, tl.TabStopType.CENTER),
-        ])
+        line = tl.LeftLine(
+            20,
+            tab_stops=[
+                tl.TabStop(6, tl.TabStopType.CENTER),
+                tl.TabStop(12, tl.TabStopType.CENTER),
+            ],
+        )
         line.append(tl.Text(2, 1, renderer=Rect("TEXT", result)))
         append_center_tab(2)
         append_center_tab(2)
@@ -902,10 +924,13 @@ class TestLeftLine:
             line.append(tl.Text(size, 1, renderer=Rect("RTAB", result)))
 
         result = []
-        line = tl.LeftLine(20, tab_stops=[
-            tl.TabStop(6, tl.TabStopType.RIGHT),
-            tl.TabStop(12, tl.TabStopType.RIGHT),
-        ])
+        line = tl.LeftLine(
+            20,
+            tab_stops=[
+                tl.TabStop(6, tl.TabStopType.RIGHT),
+                tl.TabStop(12, tl.TabStopType.RIGHT),
+            ],
+        )
         line.append(tl.Text(2, 1, renderer=Rect("TEXT", result)))
         append_right_tab(2)
         append_right_tab(2)

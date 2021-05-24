@@ -1016,6 +1016,7 @@ class Paragraph(Container):
         cells = group_non_breakable_cells(cells)
         cells.reverse()
         undo = cells
+        remember_tab = None
         first = True
         paragraph_height = self.top_margin + self.bottom_margin
         height_is_restricted = height is not None
@@ -1033,7 +1034,15 @@ class Paragraph(Container):
             # had inconclusive results, sometimes faster - sometimes slower
             while cells:
                 # core loop of paragraph processing and the whole layout engine:
-                append_state = line.append(cells[-1])
+                next_cell = cells[-1]
+                append_state = line.append(next_cell)
+                if remember_tab and append_state == FAIL:
+                    cells.append(remember_tab)
+                if isinstance(next_cell, Tabulator):
+                    remember_tab = next_cell
+                else:
+                    remember_tab = None
+
                 # state check order by probability:
                 if append_state == SUCCESS:
                     cells.pop()
