@@ -1019,6 +1019,9 @@ class Paragraph(Container):
         first = True
         paragraph_height = self.top_margin + self.bottom_margin
         height_is_restricted = height is not None
+        # localize enums for core loop optimization:
+        # CPython 3.9 access is around 3x faster, no difference for PyPy 3.7!
+        FAIL, SUCCESS, FORCED = AppendType
         while cells:
             if height_is_restricted:
                 # shallow copy current cell state for undo, if not enough space
@@ -1026,15 +1029,18 @@ class Paragraph(Container):
                 undo = list(cells)
 
             line = new_line(self.line_width(first))
+            # localization of methods calls like line_append = line.append
+            # had inconclusive results, sometimes faster - sometimes slower
             while cells:
-                cell = cells[-1]
-                append_state = line.append(cell)
-                if append_state == AppendType.SUCCESS:
+                # core loop of paragraph processing and the whole layout engine:
+                append_state = line.append(cells[-1])
+                # state check order by probability:
+                if append_state == SUCCESS:
                     cells.pop()
-                elif append_state == AppendType.FORCED:
-                    cells.pop()
+                elif append_state == FAIL:
                     break
-                elif append_state == AppendType.FAIL:
+                elif append_state == FORCED:
+                    cells.pop()
                     break
 
             if line.has_content:
@@ -1053,10 +1059,12 @@ class Paragraph(Container):
                     self._lines.append(line)
                     paragraph_height += leading(line_height, self._line_spacing)
 
+        not_all_cells_processed = bool(cells)
         if self._align == ParagraphAlignment.JUSTIFIED:
             # distribute justified text across the line width,
-            # except for the last line:
-            for line in self._lines[:-1]:
+            # except for the VERY last line:
+            end = len(self._lines) if not_all_cells_processed else -1
+            for line in self._lines[:end]:
                 assert isinstance(line, JustifiedLine)
                 line.distribute()
 
@@ -1068,7 +1076,7 @@ class Paragraph(Container):
 
         # If not all cells could be processed, put them into a new paragraph
         # and return it to the caller.
-        if cells:
+        if not_all_cells_processed:
             cells.reverse()
             self._has_last_line = False
             return self._new_paragraph(cells, first)
