@@ -5,13 +5,15 @@ import ezdxf
 from ezdxf import zoom
 from ezdxf.addons import MTextExplode
 
-DIR = pathlib.Path('~/Desktop/Outbox').expanduser()
+DIR = pathlib.Path("~/Desktop/Outbox").expanduser()
 
-LOREM_IPSUM = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam " \
-              "nonumy eirmod tempor {\C1invidunt ut labore} et dolore mag{\C3na al}iquyam " \
-              "erat, sed {\C5diam voluptua.} At vero eos et accusam et justo duo dolores " \
-              "et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est " \
-              "Lorem ipsum dolor sit amet."
+LOREM_IPSUM = (
+    "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam "
+    "nonumy eirmod tempor {\C1invidunt ut labore} et dolore mag{\C3na al}iquyam "
+    "erat, sed {\C5diam voluptua.} At vero eos et accusam et justo duo dolores "
+    "et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est "
+    "Lorem ipsum dolor sit amet."
+)
 LEFT = LOREM_IPSUM + "\n\n"
 CENTER = r"\pxqc;" + LOREM_IPSUM + "\n\n"
 RIGHT = r"\pxqr;" + LOREM_IPSUM + "\n\n"
@@ -21,14 +23,17 @@ JUSTIFIED = r"\pi1,qj;" + LOREM_IPSUM + "\n\n"
 def new_doc(content: str, width: float = 30):
     doc = ezdxf.new(setup=True)
     msp = doc.modelspace()
-    mtext = msp.add_mtext(content, dxfattribs={
-        "layer": "MTEXT_EXPLODE",
-        "width": width,
-        "char_height": 1,
-        "color": 7,
-        "style": "OpenSans",
-        "line_spacing_style": ezdxf.const.MTEXT_EXACT
-    })
+    mtext = msp.add_mtext(
+        content,
+        dxfattribs={
+            "layer": "MTEXT_EXPLODE",
+            "width": width,
+            "char_height": 1,
+            "color": 7,
+            "style": "OpenSans",
+            "line_spacing_style": ezdxf.const.MTEXT_EXACT,
+        },
+    )
     mtext.set_bg_color(None, text_frame=True)
     zoom.extents(msp)
     return doc
@@ -68,8 +73,8 @@ def load(filename):
     return ezdxf.readfile(DIR / filename)
 
 
-if __name__ == '__main__':
-    doc = create("mtext_source.dxf")
-    # doc = load("mtext_source.dxf")
-    # explode_mtext(doc, "mtext_xplode.dxf", destroy=True)
-    explode_mtext_to_block(doc, "mtext_xpl_blk.dxf", destroy=True)
+if __name__ == "__main__":
+    # doc = create("mtext_source.dxf")
+    doc = load("mtext_tab_stops.dxf")
+    explode_mtext(doc, "mtext_xpl_tabs.dxf", destroy=False)
+    # explode_mtext_to_block(doc, "mtext_xpl_blk.dxf", destroy=True)

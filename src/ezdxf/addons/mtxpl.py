@@ -8,7 +8,10 @@ from ezdxf.layouts import BaseLayout
 from ezdxf.math import Matrix44
 from ezdxf.tools import text_layout, fonts
 from ezdxf.tools.text import (
-    MTextParser, MTextContext, TokenType, MTextParagraphAlignment,
+    MTextParser,
+    MTextContext,
+    TokenType,
+    MTextParagraphAlignment,
 )
 
 __all__ = ["MTextExplode"]
@@ -19,29 +22,42 @@ class FrameRenderer(text_layout.ContentRenderer):
         self.line_attribs = attribs
         self.layout = layout
 
-    def render(self, left: float, bottom: float, right: float,
-               top: float, m: Matrix44 = None) -> None:
+    def render(
+        self,
+        left: float,
+        bottom: float,
+        right: float,
+        top: float,
+        m: Matrix44 = None,
+    ) -> None:
         pline = self.layout.add_lwpolyline(
             [(left, top), (right, top), (right, bottom), (left, bottom)],
-            close=True, dxfattribs=self.line_attribs,
+            close=True,
+            dxfattribs=self.line_attribs,
         )
         if m:
             pline.transform(m)
 
-    def line(self, x1: float, y1: float, x2: float, y2: float,
-             m: Matrix44 = None) -> None:
-        line = self.layout.add_line((x1, y1), (x2, y2),
-                                    dxfattribs=self.line_attribs)
+    def line(
+        self, x1: float, y1: float, x2: float, y2: float, m: Matrix44 = None
+    ) -> None:
+        line = self.layout.add_line(
+            (x1, y1), (x2, y2), dxfattribs=self.line_attribs
+        )
         if m:
             line.transform(m)
 
 
 class ColumnBackgroundRenderer(FrameRenderer):
-    def __init__(self, attribs: Dict, layout: BaseLayout,
-                 bg_aci: int = None,
-                 bg_true_color: int = None,
-                 offset: float = 0,
-                 text_frame: bool = False):
+    def __init__(
+        self,
+        attribs: Dict,
+        layout: BaseLayout,
+        bg_aci: int = None,
+        bg_true_color: int = None,
+        offset: float = 0,
+        text_frame: bool = False,
+    ):
         super().__init__(attribs, layout)
         self.solid_attribs = None
         if bg_aci is not None:
@@ -53,8 +69,14 @@ class ColumnBackgroundRenderer(FrameRenderer):
         self.offset = offset  # background border offset
         self.has_text_frame = text_frame
 
-    def render(self, left: float, bottom: float, right: float,
-               top: float, m: Matrix44 = None) -> None:
+    def render(
+        self,
+        left: float,
+        bottom: float,
+        right: float,
+        top: float,
+        m: Matrix44 = None,
+    ) -> None:
         # Important: this is not a clipping box, it is possible to
         # render anything outside of the given borders!
         offset = self.offset
@@ -75,28 +97,40 @@ class ColumnBackgroundRenderer(FrameRenderer):
 
 
 class TextRenderer(FrameRenderer):
-    """ Text content renderer. """
+    """Text content renderer."""
 
-    def __init__(self, text: str, text_attribs: Dict, line_attribs: Dict,
-                 layout: BaseLayout):
+    def __init__(
+        self,
+        text: str,
+        text_attribs: Dict,
+        line_attribs: Dict,
+        layout: BaseLayout,
+    ):
         super().__init__(line_attribs, layout)
         self.text = text
         self.text_attribs = text_attribs
 
-    def render(self, left: float, bottom: float, right: float,
-               top: float, m: Matrix44 = None):
-        """ Create/render the text content """
+    def render(
+        self,
+        left: float,
+        bottom: float,
+        right: float,
+        top: float,
+        m: Matrix44 = None,
+    ):
+        """Create/render the text content"""
         text = self.layout.add_text(self.text, dxfattribs=self.text_attribs)
-        text.set_pos((left, bottom), align='LEFT')
+        text.set_pos((left, bottom), align="LEFT")
         if m:
             text.transform(m)
 
 
 class Word(text_layout.Text):
-    """ Represent a word as content box for the layout engine. """
+    """Represent a word as content box for the layout engine."""
 
-    def __init__(self, text: str, ctx: MTextContext, attribs: Dict,
-                 xpl: "MTextExplode"):
+    def __init__(
+        self, text: str, ctx: MTextContext, attribs: Dict, xpl: "MTextExplode"
+    ):
         # Each content box can have individual properties:
         line_attribs = dict(attribs or {})
         line_attribs.update(get_color_attribs(ctx))
@@ -125,8 +159,15 @@ STACKING = {
 
 
 class Fraction(text_layout.Fraction):
-    def __init__(self, upr: str, lwr: str, type_: str, ctx: MTextContext,
-                 attribs: Dict, xpl: "MTextExplode"):
+    def __init__(
+        self,
+        upr: str,
+        lwr: str,
+        type_: str,
+        ctx: MTextContext,
+        attribs: Dict,
+        xpl: "MTextExplode",
+    ):
         super().__init__(
             top=Word(upr, ctx, attribs, xpl),
             bottom=Word(lwr, ctx, attribs, xpl),
@@ -138,7 +179,7 @@ class Fraction(text_layout.Fraction):
 
 
 def get_font_face(entity: DXFGraphic, doc=None) -> fonts.FontFace:
-    """ Returns the :class:`~ezdxf.tools.fonts.FontFace` defined by the
+    """Returns the :class:`~ezdxf.tools.fonts.FontFace` defined by the
     associated text style. Returns the default font face if the `entity` does
     not have or support the DXF attribute "style".
 
@@ -165,7 +206,8 @@ def get_font_face(entity: DXFGraphic, doc=None) -> fonts.FontFace:
             text_style = "italic" if italic else "normal"
             text_weight = "bold" if bold else "normal"
             font_face = fonts.FontFace(
-                family=family, style=text_style, weight=text_weight)
+                family=family, style=text_style, weight=text_weight
+            )
         else:
             ttf = style.dxf.font
             if ttf:
@@ -174,7 +216,7 @@ def get_font_face(entity: DXFGraphic, doc=None) -> fonts.FontFace:
 
 
 def mtext_context(mtext: MText) -> MTextContext:
-    """ Setup initial MTEXT context. """
+    """Setup initial MTEXT context."""
     ctx = MTextContext()
     ctx.font_face = get_font_face(mtext)
     ctx.cap_height = mtext.dxf.char_height
@@ -195,23 +237,37 @@ ALIGN = {
 }
 
 
-def new_paragraph(cells: List, ctx: MTextContext, cap_height: float,
-                  line_spacing: float = 1):
+def make_tab_stops(cap_height, width, tab_stops):
+    return None
+
+
+def new_paragraph(
+    cells: List,
+    ctx: MTextContext,
+    cap_height: float,
+    line_spacing: float = 1,
+    width: float = 0,
+):
     if cells:
         p = ctx.paragraph
         align = ALIGN.get(p.align, text_layout.ParagraphAlignment.LEFT)
         left = p.left * cap_height
         right = p.right * cap_height
         first = left + p.indent * cap_height  # relative to left
+        tab_stops = None
+        if p.tab_stops:
+            tab_stops = make_tab_stops(cap_height, width, p.tab_stops)
         paragraph = text_layout.Paragraph(
             align=align,
             indent=(first, left, right),
             line_spacing=line_spacing,
+            tab_stops=tab_stops,
         )
         paragraph.append_content(cells)
     else:
         paragraph = text_layout.EmptyParagraph(
-            cap_height=ctx.cap_height, line_spacing=line_spacing)
+            cap_height=ctx.cap_height, line_spacing=line_spacing
+        )
     return paragraph
 
 
@@ -268,7 +324,8 @@ def make_bg_renderer(mtext: MText, attribs: Dict, layout: BaseLayout):
             has_text_frame = True
 
     return ColumnBackgroundRenderer(
-        attribs, layout,
+        attribs,
+        layout,
         bg_aci=bg_aci,
         bg_true_color=bg_true_color,
         offset=offset,
@@ -288,8 +345,10 @@ class MTextExplode:
     chars.
 
     """
-    def __init__(self, layout: BaseLayout, doc=None,
-                 spacing_factor: float = 1.0):
+
+    def __init__(
+        self, layout: BaseLayout, doc=None, spacing_factor: float = 1.0
+    ):
         self.layout = layout
         self._doc = doc if doc else layout.doc
         assert self._doc is not None, "DXF document required"
@@ -347,7 +406,8 @@ class MTextExplode:
 
         def append_paragraph():
             paragraph = new_paragraph(
-                cells, ctx, initial_cap_height, line_spacing)
+                cells, ctx, initial_cap_height, line_spacing, width
+            )
             layout.append_paragraphs([paragraph])
             cells.clear()
 
@@ -368,7 +428,8 @@ class MTextExplode:
         ctx = mtext_context(mtext)
         parser = MTextParser(content, ctx)
         bg_renderer = make_bg_renderer(mtext, base_attribs, self.layout)
-        layout = text_layout.Layout(width=mtext.dxf.width)
+        width = mtext.dxf.width
+        layout = text_layout.Layout(width=width)
         if mtext.has_columns:
             columns = mtext.columns
             for height in column_heights():
@@ -444,6 +505,7 @@ class MTextExplode:
         """Create required text styles. This method is called automatically if
         the class is used as context manager.
         """
+
         def ttf_path(font_face: fonts.FontFace) -> str:
             ttf = font_face.ttf
             if not ttf:
