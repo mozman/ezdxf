@@ -393,7 +393,6 @@ class ContentCell(Cell):  # ABC
         self._height = float(height)
         self.valign = CellAlignment(valign)  # public attribute read/write
         self.renderer = renderer
-        self.tab_aligned = False  # only required for undo action
 
     def set_final_location(self, x: float, y: float):
         self._final_x = x
@@ -884,7 +883,7 @@ class Paragraph(Container):
         """
         return sum(
             leading(line.total_height, self._line_spacing)
-            for line in self._lines
+                for line in self._lines
         )
 
     def distribute_content(self, height: float = None) -> Optional["Paragraph"]:
@@ -911,38 +910,48 @@ class Paragraph(Container):
             elif align == ParagraphAlignment.CENTER:
                 return CenterLine(width)
 
-        cells = normalize_cells(self._cells)
+        cells: List[Cell] = normalize_cells(self._cells)
         cells = group_non_breakable_cells(cells)
         # Delete raw content:
         self._cells.clear()
 
-        align = self._align
-        index = 0
-        undo = 0
-        count = len(cells)
-        first = True
-        paragraph_height = self.top_margin + self.bottom_margin
-        height_is_restricted = height is not None
+        align: ParagraphAlignment = self._align
+        index: int = 0  # index of current cell
+        count: int = len(cells)
+        first: bool = True  # is current line the first line?
+
+        # current paragraph height:
+        paragraph_height: float = self.top_margin + self.bottom_margin
+
         # localize enums for core loop optimization:
         # CPython 3.9 access is around 3x faster, no difference for PyPy 3.7!
         FAIL, SUCCESS, FORCED = AppendType
         while index < count:
-            if height_is_restricted:
-                # index of first unprocessed cell, if not enough space for
-                # next line:
-                undo = index
-
+            # store index of first unprocessed cell to restore index,
+            # if not enough space in line
+            undo = index
             line = new_line(self.line_width(first))
+            has_tab_support = line.has_tab_support
             while index < count:
                 # core loop of paragraph processing and the whole layout engine:
-                append_state = line.append(cells[index])
+                cell = cells[index]
+                if isinstance(cell, Tabulator) and has_tab_support:
+                    append_state = line.append_with_tab(
+                        # a tabulator cell has always a following cell,
+                        # see normalize_cells()!
+                        cells[index + 1], cell
+                    )
+                    if append_state == SUCCESS:
+                        index += 1  # consume tabulator
+                else:
+                    append_state = line.append(cell)
                 # state check order by probability:
                 if append_state == SUCCESS:
-                    index += 1
+                    index += 1  # consume current cell
                 elif append_state == FAIL:
                     break
                 elif append_state == FORCED:
-                    index += 1
+                    index += 1  # consume current cell
                     break
 
             if line.has_content:
@@ -953,7 +962,7 @@ class Paragraph(Container):
 
                 line_height = line.total_height
                 if (
-                    height_is_restricted
+                    height is not None  # restricted paragraph height
                     and paragraph_height + line_height > height
                 ):
                     # Not enough space for the new line:
@@ -1320,7 +1329,15 @@ class LineCell(NamedTuple):
     locked: bool
 
 
+class AppendType(enum.IntEnum):
+    FAIL = 0
+    SUCCESS = 1
+    FORCED = 2
+
+
 class AbstractLine(ContentCell):  # ABC
+    has_tab_support = False
+
     def __init__(self, width: float):
         super().__init__(width=width, height=0, valign=CellAlignment.BOTTOM)
         self._cells: List[LineCell] = []
@@ -1330,7 +1347,15 @@ class AbstractLine(ContentCell):  # ABC
         return self.flatten()
 
     @abc.abstractmethod
-    def append(self, cell: Cell) -> bool:
+    def append(self, cell: Cell) -> AppendType:
+        """ Append cell to the line content and report SUCCESS or FAIL. """
+        pass
+
+    @abc.abstractmethod
+    def append_with_tab(self, cell: Cell, tab: Tabulator) -> AppendType:
+        """ Append cell with preceding tabulator cell to the line content
+        and report SUCCESS or FAIL.
+        """
         pass
 
     @property
@@ -1363,10 +1388,11 @@ class AbstractLine(ContentCell):  # ABC
         return max(c.cell.total_height for c in self._cells)
 
     def cells(self) -> Iterable[Cell]:
+        """ Yield line content including RigidConnections. """
         return [c.cell for c in self._cells]
 
     def flatten(self) -> Iterable[Cell]:
-        # dissolve rigid connections
+        """ Yield line content with resolved RigidConnections.  """
         for cell in self.cells():
             if isinstance(cell, RigidConnection):
                 yield from cell
@@ -1379,45 +1405,25 @@ class AbstractLine(ContentCell):  # ABC
         render_text_strokes(cells, m)
 
     def remove_line_breaking_space(self):
+        """ Remove the last space in the line. """
         _cells = self._cells
         if _cells and isinstance(_cells[-1].cell, Space):
             _cells.pop()
 
 
-class AppendType(enum.IntEnum):
-    FAIL = 0
-    SUCCESS = 1
-    FORCED = 2
-
-
 class LeftLine(AbstractLine):
+    has_tab_support = True
+
     def __init__(self, width: float, tab_stops: Sequence[TabStop] = None):
         super().__init__(width=width)
         self._tab_stops = tab_stops or []  # tab stops relative to line start
-        self._was_tab = False
-        self._replacement_space: Space = Space(0.0)
-
-    def append(self, cell: Cell) -> AppendType:
-        if isinstance(cell, Tabulator):
-            self._was_tab = True
-            self._replacement_space = cell.to_space()
-            return AppendType.SUCCESS
-
-        was_tab = self._was_tab or getattr(cell, "tab_aligned", False)
-        self._was_tab = False
-        if was_tab:
-            if isinstance(cell, ContentCell):
-                cell.tab_aligned = True  # only required for undo action
-            return self._append_at_tab(cell)
-        else:
-            return self._append(cell)
 
     def _append_line_cell(
         self, cell: Cell, offset: float, locked: bool = False
     ) -> None:
         self._cells.append(LineCell(cell, offset, locked))
 
-    def _append(self, cell: Cell) -> AppendType:
+    def append(self, cell: Cell) -> AppendType:
         width = cell.total_width
         if self._current_offset + width <= self.line_width:
             self._append_line_cell(cell, self._current_offset)
@@ -1430,18 +1436,21 @@ class LeftLine(AbstractLine):
             return AppendType.FORCED
         return AppendType.FAIL
 
-    def _append_at_tab(self, cell: Cell) -> AppendType:
+    def append_with_tab(self, cell: Cell, tab: Tabulator) -> AppendType:
         width = cell.total_width
         pos = self._current_offset
+        # does content fit into line:
         if pos + width > self.line_width:
             return AppendType.FAIL
+
+        # next possible tab stop location:
         left_pos = pos
         center_pos = pos + width / 2
         right_pos = pos + width
         tab_stop = self._next_tab_stop(left_pos, center_pos, right_pos)
-        if tab_stop is None:
-            self._append(self._replacement_space)
-            return self._append(cell)
+        if tab_stop is None:  # no tab stop found
+            self.append(tab.to_space())  # replace tabulator by space
+            return self.append(cell)
         else:
             if tab_stop.kind == TabStopType.LEFT:
                 return self._append_left(cell, tab_stop.pos)
@@ -1461,7 +1470,7 @@ class LeftLine(AbstractLine):
     def _append_center(self, cell, pos) -> AppendType:
         width2 = cell.total_width / 2
         if self._current_offset + width2 > pos:
-            return self._append(cell)
+            return self.append(cell)
         elif pos + width2 <= self.line_width:
             self._append_line_cell(cell, pos - width2, True)
             self._current_offset = pos + width2
@@ -1474,7 +1483,7 @@ class LeftLine(AbstractLine):
         if end_of_cell_pos > self.line_width:
             return AppendType.FAIL
         if end_of_cell_pos > pos:
-            return self._append(cell)
+            return self.append(cell)
         self._append_line_cell(cell, pos - width, True)
         self._current_offset = pos
         return AppendType.SUCCESS
@@ -1526,7 +1535,7 @@ class JustifiedLine(LeftLine):
             return
 
         available_space = self._available_space(last_locked_cell)
-        cells = [c.cell for c in cells[last_locked_cell + 1 :]]
+        cells = [c.cell for c in cells[last_locked_cell + 1:]]
         modified = False
         while True:
             growable = growable_cells(cells)
@@ -1564,6 +1573,7 @@ class JustifiedLine(LeftLine):
 
 class NoTabLine(AbstractLine):
     """Base class for lines without tab stop support!"""
+    has_tab_support = False
 
     def append(self, cell: Cell) -> AppendType:
         if isinstance(cell, Tabulator):
@@ -1579,6 +1589,10 @@ class NoTabLine(AbstractLine):
             self._cells.append(LineCell(cell, 0, False))
             return AppendType.FORCED
         return AppendType.FAIL
+
+    def append_with_tab(self, cell: Cell, tab: Tabulator) -> AppendType:
+        """ No tabulator support! """
+        raise NotImplementedError()
 
     def place(self, x: float, y: float):
         # shift the line cell:

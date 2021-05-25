@@ -862,8 +862,10 @@ class TestLeftLine:
 
     def test_left_tab(self):
         def append_left_tab(size):
-            line.append(tl.Tabulator(width=0.5))
-            line.append(tl.Text(size, 1, renderer=Rect("LTAB", result)))
+            line.append_with_tab(
+                tl.Text(size, 1, renderer=Rect("LTAB", result)),
+                tl.Tabulator(width=0.5)
+            )
 
         result = []
         line = tl.LeftLine(
@@ -899,8 +901,10 @@ class TestLeftLine:
 
     def test_center_tab(self):
         def append_center_tab(size):
-            line.append(tl.Tabulator(width=0.5))
-            line.append(tl.Text(size, 1, renderer=Rect("CTAB", result)))
+            line.append_with_tab(
+                tl.Text(size, 1, renderer=Rect("CTAB", result)),
+                tl.Tabulator(width=0.5)
+            )
 
         result = []
         line = tl.LeftLine(
@@ -924,8 +928,10 @@ class TestLeftLine:
 
     def test_right_tab(self):
         def append_right_tab(size):
-            line.append(tl.Tabulator(width=0.5))
-            line.append(tl.Text(size, 1, renderer=Rect("RTAB", result)))
+            line.append_with_tab(
+                tl.Text(size, 1, renderer=Rect("RTAB", result)),
+                tl.Tabulator(width=0.5)
+            )
 
         result = []
         line = tl.LeftLine(
