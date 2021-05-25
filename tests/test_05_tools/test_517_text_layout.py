@@ -643,7 +643,9 @@ class TestFractionCell:
         assert result[2] == "LINE(0.0, 0.0)TO(2.0, 2.0)"
 
 
-def str2cells(s: str, content=3, space=0.5, result=None):
+def str2cells(
+    s: str, content: float = 3, space: float = 0.5, tab: float = 0, result=None
+):
     # t ... text cell
     # f ... fraction cell
     # space is space
@@ -669,7 +671,7 @@ def str2cells(s: str, content=3, space=0.5, result=None):
         elif c == "~":
             yield tl.NonBreakingSpace(width=space)
         elif c == "#":
-            yield tl.Tabulator(width=0)  # Tabulators do not need a width
+            yield tl.Tabulator(width=tab)  # Tabulators do not need a width
         else:
             raise ValueError(f'unknown cell type "{c}"')
 
@@ -829,6 +831,31 @@ class TestRigidConnection:
         assert len(result) == 1
 
 
+def render_line_with_tabs(
+    line: tl.AbstractLine,
+    cells: Iterable[tl.Cell],
+):
+    result = []
+    tab = None
+    tab_renderer = Rect("TAB-TEXT", result=result)
+    text_renderer = Rect("TEXT", result=result)
+    for cell in cells:
+        cell.renderer = text_renderer
+        if tab is not None:
+            cell.renderer = tab_renderer
+            line.append_with_tab(cell, tab)
+            tab = None
+            continue
+        if isinstance(cell, tl.Tabulator):
+            tab = cell
+        else:
+            tab = None
+            line.append(cell)
+    line.place(0, 0)
+    line.render()
+    return result
+
+
 class TestLeftLine:
     def test_setup(self):
         line = tl.LeftLine(10)
@@ -861,96 +888,56 @@ class TestLeftLine:
         assert line.total_width <= line.line_width
 
     def test_left_tab(self):
-        def append_left_tab(size):
-            line.append_with_tab(
-                tl.Text(size, 1, renderer=Rect("LTAB", result)),
-                tl.Tabulator(width=0.5)
-            )
-
-        result = []
         line = tl.LeftLine(
-            20,
+            width=20,
             tab_stops=[
                 tl.TabStop(6, tl.TabStopType.LEFT),
                 tl.TabStop(12, tl.TabStopType.LEFT),
             ],
         )
-        line.append(tl.Text(2, 1, renderer=Rect("TEXT", result)))
-        append_left_tab(2)
-        append_left_tab(2)
-        line.append(tl.Space(0.5))
-        line.append(tl.Text(2, 1, renderer=Rect("TEXT", result)))
-        line.place(0, 0)
-        line.render()
+        cells = str2cells("t#t#t t", content=2, space=0.5)
+        result = render_line_with_tabs(line, cells)
         assert result[0] == "TEXT(0.0, -1.0, 2.0, 0.0)"
-        assert result[1] == "LTAB(6.0, -1.0, 8.0, 0.0)"
-        assert result[2] == "LTAB(12.0, -1.0, 14.0, 0.0)"
+        assert result[1] == "TAB-TEXT(6.0, -1.0, 8.0, 0.0)"
+        assert result[2] == "TAB-TEXT(12.0, -1.0, 14.0, 0.0)"
         assert result[3] == "TEXT(14.5, -1.0, 16.5, 0.0)"
 
     def test_left_tab_without_tab_stops(self):
-        result = []
         line = tl.LeftLine(20)
-        line.append(tl.Text(2, 1, renderer=Rect("TEXT", result)))
-        line.append(tl.Tabulator(width=0.5))
-        line.append(tl.Text(2, 1, renderer=Rect("LTAB", result)))
-        line.place(0, 0)
-        line.render()
+        cells = str2cells("t#t", content=2, space=0.5, tab=0.5)
+        result = render_line_with_tabs(line, cells)
         assert result[0] == "TEXT(0.0, -1.0, 2.0, 0.0)"
-        # replace tab by a space width= 0.5
-        assert result[1] == "LTAB(2.5, -1.0, 4.5, 0.0)"
+        # replace tab by a space width = 0.5
+        assert result[1] == "TAB-TEXT(2.5, -1.0, 4.5, 0.0)"
 
     def test_center_tab(self):
-        def append_center_tab(size):
-            line.append_with_tab(
-                tl.Text(size, 1, renderer=Rect("CTAB", result)),
-                tl.Tabulator(width=0.5)
-            )
-
-        result = []
         line = tl.LeftLine(
-            20,
+            width=20,
             tab_stops=[
                 tl.TabStop(6, tl.TabStopType.CENTER),
                 tl.TabStop(12, tl.TabStopType.CENTER),
             ],
         )
-        line.append(tl.Text(2, 1, renderer=Rect("TEXT", result)))
-        append_center_tab(2)
-        append_center_tab(2)
-        line.append(tl.Space(0.5))
-        line.append(tl.Text(2, 1, renderer=Rect("TEXT", result)))
-        line.place(0, 0)
-        line.render()
+        cells = str2cells("t#t#t t", content=2, space=0.5)
+        result = render_line_with_tabs(line, cells)
         assert result[0] == "TEXT(0.0, -1.0, 2.0, 0.0)"
-        assert result[1] == "CTAB(5.0, -1.0, 7.0, 0.0)"
-        assert result[2] == "CTAB(11.0, -1.0, 13.0, 0.0)"
+        assert result[1] == "TAB-TEXT(5.0, -1.0, 7.0, 0.0)"
+        assert result[2] == "TAB-TEXT(11.0, -1.0, 13.0, 0.0)"
         assert result[3] == "TEXT(13.5, -1.0, 15.5, 0.0)"
 
     def test_right_tab(self):
-        def append_right_tab(size):
-            line.append_with_tab(
-                tl.Text(size, 1, renderer=Rect("RTAB", result)),
-                tl.Tabulator(width=0.5)
-            )
-
-        result = []
         line = tl.LeftLine(
-            20,
+            width=20,
             tab_stops=[
                 tl.TabStop(6, tl.TabStopType.RIGHT),
                 tl.TabStop(12, tl.TabStopType.RIGHT),
             ],
         )
-        line.append(tl.Text(2, 1, renderer=Rect("TEXT", result)))
-        append_right_tab(2)
-        append_right_tab(2)
-        line.append(tl.Space(0.5))
-        line.append(tl.Text(2, 1, renderer=Rect("TEXT", result)))
-        line.place(0, 0)
-        line.render()
+        cells = str2cells("t#t#t t", content=2, space=0.5)
+        result = render_line_with_tabs(line, cells)
         assert result[0] == "TEXT(0.0, -1.0, 2.0, 0.0)"
-        assert result[1] == "RTAB(4.0, -1.0, 6.0, 0.0)"
-        assert result[2] == "RTAB(10.0, -1.0, 12.0, 0.0)"
+        assert result[1] == "TAB-TEXT(4.0, -1.0, 6.0, 0.0)"
+        assert result[2] == "TAB-TEXT(10.0, -1.0, 12.0, 0.0)"
         assert result[3] == "TEXT(12.5, -1.0, 14.5, 0.0)"
 
 
