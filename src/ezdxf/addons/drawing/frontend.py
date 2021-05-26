@@ -10,7 +10,7 @@ from ezdxf.addons.drawing.properties import (
 from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.entities import (
     DXFGraphic, Insert, MText, Polyline, LWPolyline, Spline, Hatch, Attrib,
-    Text, Polyface, Wipeout, AttDef, Solid, Face3d
+    Text, Polyface, Wipeout, AttDef, Solid, Face3d,
 )
 from ezdxf.entities.dxfentity import DXFTagStorage, DXFEntity
 from ezdxf.layouts import Layout
@@ -32,6 +32,8 @@ IGNORE_PROXY_GRAPHICS = 0
 USE_PROXY_GRAPHICS = 1
 PREFER_PROXY_GRAPHICS = 2
 
+FilterFunc = Callable[[DXFGraphic], bool]
+
 
 class Frontend:
     """ Drawing frontend, responsible for decomposing entities into graphic
@@ -44,7 +46,7 @@ class Frontend:
     """
 
     def __init__(self, ctx: RenderContext, out: Backend,
-                 proxy_graphics: int = USE_PROXY_GRAPHICS):
+        proxy_graphics: int = USE_PROXY_GRAPHICS):
         # RenderContext contains all information to resolve resources for a
         # specific DXF document.
         self.ctx = ctx
@@ -106,8 +108,8 @@ class Frontend:
         # These types have a virtual_entities() method, which returns
         # the content of the associated block or anonymous block
         for dxftype in ['INSERT', 'DIMENSION', 'ARC_DIMENSION',
-                        'LARGE_RADIAL_DIMENSION', 'LEADER',
-                        'MLINE', 'ACAD_TABLE']:
+            'LARGE_RADIAL_DIMENSION', 'LEADER',
+            'MLINE', 'ACAD_TABLE']:
             dispatch_table[dxftype] = self.draw_composite_entity
 
         return dispatch_table
@@ -119,7 +121,7 @@ class Frontend:
         self.log_message(f'skipped entity {str(entity)}. Reason: "{msg}"')
 
     def override_properties(self, entity: DXFGraphic,
-                            properties: Properties) -> None:
+        properties: Properties) -> None:
         """ The :meth:`override_properties` filter can change the properties of
         an entity independent from the DXF attributes.
 
@@ -131,18 +133,36 @@ class Frontend:
         if entity.dxftype() == 'HATCH':
             properties.color = set_color_alpha(properties.color, 200)
 
-    def draw_layout(self, layout: 'Layout', finalize: bool = True) -> None:
+    def draw_layout(
+        self, layout: 'Layout',
+        finalize: bool = True,
+        *,
+        filter_func: FilterFunc = None
+    ) -> None:
         self.parent_stack = []
         handle_mapping = list(layout.get_redraw_order())
         if handle_mapping:
-            self.draw_entities(reorder.ascending(layout, handle_mapping))
+            self.draw_entities(
+                reorder.ascending(layout, handle_mapping),
+                filter_func=filter_func,
+            )
         else:
-            self.draw_entities(layout)
+            self.draw_entities(
+                layout,
+                filter_func=filter_func,
+            )
         self.out.set_background(self.ctx.current_layout.background_color)
         if finalize:
             self.out.finalize()
 
-    def draw_entities(self, entities: Iterable[DXFGraphic]) -> None:
+    def draw_entities(
+        self,
+        entities: Iterable[DXFGraphic],
+        *,
+        filter_func: FilterFunc = None,
+    ) -> None:
+        if filter_func is not None:
+            entities = filter(filter_func, entities)
         for entity in entities:
             # Skip unsupported DXF entities - just tag storage to preserve data
             if isinstance(entity, DXFTagStorage):
@@ -182,7 +202,7 @@ class Frontend:
         self.out.exit_entity(entity)
 
     def draw_line_entity(self, entity: DXFGraphic,
-                         properties: Properties) -> None:
+        properties: Properties) -> None:
         d, dxftype = entity.dxf, entity.dxftype()
         if dxftype == 'LINE':
             self.out.draw_line(d.start, d.end, properties)
@@ -192,36 +212,36 @@ class Frontend:
             delta = d.unit_vector * INFINITE_LINE_LENGTH
             if dxftype == 'XLINE':
                 self.out.draw_line(start - delta / 2, start + delta / 2,
-                                   properties)
+                    properties)
             elif dxftype == 'RAY':
                 self.out.draw_line(start, start + delta, properties)
         else:
             raise TypeError(dxftype)
 
     def draw_text_entity(self, entity: DXFGraphic,
-                         properties: Properties) -> None:
+        properties: Properties) -> None:
         if is_spatial_text(Vec3(entity.dxf.extrusion)):
             self.draw_text_entity_3d(entity, properties)
         else:
             self.draw_text_entity_2d(entity, properties)
 
     def draw_text_entity_2d(self, entity: DXFGraphic,
-                            properties: Properties) -> None:
+        properties: Properties) -> None:
         d, dxftype = entity.dxf, entity.dxftype()
         if dxftype in ('TEXT', 'ATTRIB', 'ATTDEF'):
             entity = cast(Union[Text, Attrib, AttDef], entity)
             for line, transform, cap_height in simplified_text_chunks(
-                    entity, self.out, font=properties.font):
+                entity, self.out, font=properties.font):
                 self.out.draw_text(line, transform, properties, cap_height)
         else:
             raise TypeError(dxftype)
 
     def draw_text_entity_3d(self, entity: DXFGraphic,
-                            properties: Properties) -> None:
+        properties: Properties) -> None:
         self.skip_entity(entity, '3D text not supported')
 
     def draw_mtext_entity(self, mtext: 'MText',
-                          properties: Properties) -> None:
+        properties: Properties) -> None:
         if is_spatial_text(Vec3(mtext.dxf.extrusion)):
             self.skip_entity(mtext, '3D MTEXT not supported')
             return
@@ -244,22 +264,22 @@ class Frontend:
             self.draw_mtext_column(mtext, properties)
 
     def distribute_mtext_columns_content(self, mtext: MText,
-                                         properties: Properties):
+        properties: Properties):
         """ Distribute the content of the MTEXT entity across multiple columns
         """
         # TODO: complex MTEXT renderer
         self.draw_mtext_column(mtext, properties)
 
     def draw_mtext_column(self, mtext: MText,
-                          properties: Properties) -> None:
+        properties: Properties) -> None:
         """ Draw the content of a MTEXT entity as a single column. """
         # TODO: complex MTEXT renderer
         for line, transform, cap_height in simplified_text_chunks(
-                mtext, self.out, font=properties.font):
+            mtext, self.out, font=properties.font):
             self.out.draw_text(line, transform, properties, cap_height)
 
     def draw_curve_entity(self, entity: DXFGraphic,
-                          properties: Properties) -> None:
+        properties: Properties) -> None:
         try:
             path = make_path(entity)
         except AttributeError:  # API usage error
@@ -268,7 +288,7 @@ class Frontend:
         self.out.draw_path(path, properties)
 
     def draw_point_entity(self, entity: DXFGraphic,
-                          properties: Properties) -> None:
+        properties: Properties) -> None:
         point = cast('Point', entity)
         pdmode = self.out.pdmode
 
@@ -299,7 +319,7 @@ class Frontend:
                     self.draw_curve_entity(entity, properties)
 
     def draw_solid_entity(self, entity: DXFGraphic,
-                          properties: Properties) -> None:
+        properties: Properties) -> None:
         assert isinstance(entity, (Solid, Face3d)), \
             "API error, requires a SOLID, TRACE or 3DFACE entity"
         dxf, dxftype = entity.dxf, entity.dxftype()
@@ -312,7 +332,7 @@ class Frontend:
             self.out.draw_filled_polygon(points, properties)
 
     def draw_hatch_entity(self, entity: DXFGraphic,
-                          properties: Properties) -> None:
+        properties: Properties) -> None:
         def to_path(p):
             path = from_hatch_boundary_path(p, ocs, elevation)
             path.close()
@@ -347,7 +367,7 @@ class Frontend:
             self.out.draw_filled_paths([holes[0]], holes[1:], properties)
 
     def draw_wipeout_entity(self, entity: DXFGraphic,
-                            properties: Properties) -> None:
+        properties: Properties) -> None:
         wipeout = cast(Wipeout, entity)
         properties.filling = Filling()
         properties.color = self.ctx.current_layout.background_color
@@ -355,7 +375,7 @@ class Frontend:
         self.out.draw_filled_polygon(path, properties)
 
     def draw_viewport_entity(self, entity: DXFGraphic,
-                             properties: Properties) -> None:
+        properties: Properties) -> None:
         assert entity.dxftype() == 'VIEWPORT'
         # Special VIEWPORT id == 1, this viewport defines the "active viewport"
         # which is the area currently shown in the layout tab by the CAD
@@ -391,21 +411,21 @@ class Frontend:
         # Set default SOLID filling for VIEWPORT
         props.filling = Filling()
         self.out.draw_filled_polygon([Vec3(x, y, 0) for x, y in points],
-                                     props)
+            props)
 
     def draw_mesh_entity(self, entity: DXFGraphic,
-                         properties: Properties) -> None:
+        properties: Properties) -> None:
         builder = MeshBuilder.from_mesh(entity)
         self.draw_mesh_builder_entity(builder, properties)
 
     def draw_mesh_builder_entity(self, builder: MeshBuilder,
-                                 properties: Properties) -> None:
+        properties: Properties) -> None:
         for face in builder.faces_as_vertices():
             self.out.draw_path(
                 from_vertices(face, close=True), properties=properties)
 
     def draw_polyline_entity(self, entity: DXFGraphic,
-                             properties: Properties) -> None:
+        properties: Properties) -> None:
         dxftype = entity.dxftype()
         if dxftype == 'POLYLINE':
             e = cast(Polyface, entity)
@@ -449,7 +469,7 @@ class Frontend:
         self.out.draw_path(path, properties)
 
     def draw_composite_entity(self, entity: DXFGraphic,
-                              properties: Properties) -> None:
+        properties: Properties) -> None:
         def set_opaque(entities: Iterable[DXFGraphic]):
             for child in entities:
                 # todo: defaults to 1.0 (fully transparent)???

@@ -26,27 +26,27 @@ class BasicBackend(Backend):
         self.collector.append(('point', pos, properties))
 
     def draw_line(self, start: Vec3, end: Vec3,
-                  properties: Properties) -> None:
+        properties: Properties) -> None:
         self.collector.append(('line', start, end, properties))
 
     def draw_filled_polygon(self, points: List[Vec3],
-                            properties: Properties) -> None:
+        properties: Properties) -> None:
         self.collector.append(('filled_polygon', points, properties))
 
     def draw_text(self, text: str, transform: Matrix44, properties: Properties,
-                  cap_height: float) -> None:
+        cap_height: float) -> None:
         self.collector.append(('text', text, transform, properties))
 
     def get_font_measurements(self, cap_height: float,
-                              font=None) -> FontMeasurements:
+        font=None) -> FontMeasurements:
         return FontMeasurements(baseline=0.0, cap_height=1.0, x_height=0.5,
-                                descender_height=0.2)
+            descender_height=0.2)
 
     def set_background(self, color: str) -> None:
         self.collector.append(('bgcolor', color))
 
     def get_text_line_width(self, text: str, cap_height: float,
-                            font: str = None) -> float:
+        font: str = None) -> float:
         return len(text)
 
     def clear(self) -> None:
@@ -124,6 +124,19 @@ def test_draw_entities(msp, basic):
     assert result[1][0] == 'point'
 
 
+def test_filter_draw_entities(msp, basic):
+    def filter_layer_l1(e: DXFGraphic) -> bool:
+        return e.dxf.layer == "L1"
+
+    msp.add_point((0, 0), dxfattribs={'layer': "L1"})
+    msp.add_point((0, 0), dxfattribs={'layer': "L2"})
+
+    basic.draw_entities(msp, filter_func=filter_layer_l1)
+    result = basic.out.collector
+    assert len(result) == 1
+    assert result[0][2].layer == "L1"
+
+
 def test_point_and_layers(msp, basic):
     msp.add_point((0, 0), dxfattribs={'layer': 'Test1'})
     # a non-existing layer shouldn't be a problem
@@ -163,7 +176,7 @@ def test_lwpolyline_path(msp, path_backend):
 
 def test_banded_lwpolyline(msp, basic):
     msp.add_lwpolyline([(0, 0), (1, 0), (2, 0)],
-                       dxfattribs={'const_width': 0.1})
+        dxfattribs={'const_width': 0.1})
     basic.draw_entities(msp)
     result = basic.out.collector
     assert len(result) == 1
@@ -181,7 +194,7 @@ def test_polyline_2d(msp, basic):
 
 def test_banded_polyline_2d(msp, basic):
     msp.add_polyline2d([(0, 0, 0.1, 0.2), (1, 0, 0.2, 0.1), (2, 0, 0.1, 0.5)],
-                       format='xyse')
+        format='xyse')
     basic.draw_entities(msp)
     result = basic.out.collector
     assert len(result) == 1
@@ -207,9 +220,9 @@ def test_polyline_3d_path(msp, path_backend):
 def test_2d_arc_basic(msp, basic):
     msp.add_circle((0, 0), radius=2)
     msp.add_arc((0, 0), radius=2, start_angle=30, end_angle=60,
-                dxfattribs={'layer': 'Test1'})
+        dxfattribs={'layer': 'Test1'})
     msp.add_ellipse((0, 0), major_axis=(1, 0, 0), ratio=0.5, start_param=1,
-                    end_param=2, dxfattribs={'layer': 'Test1'})
+        end_param=2, dxfattribs={'layer': 'Test1'})
     basic.draw_entities(msp)
     result = basic.out.collector
     assert len(result) > 3
@@ -218,7 +231,7 @@ def test_2d_arc_basic(msp, basic):
 
 def test_3d_circle_basic(msp, basic):
     msp.add_circle((0, 0), radius=2,
-                   dxfattribs={'extrusion': (0, 1, 1)})
+        dxfattribs={'extrusion': (0, 1, 1)})
     basic.draw_entities(msp)
     result = basic.out.collector
     assert len(result) > 30
@@ -227,7 +240,7 @@ def test_3d_circle_basic(msp, basic):
 
 def test_3d_circle_path(msp, path_backend):
     msp.add_circle((0, 0), radius=2,
-                   dxfattribs={'extrusion': (0, 1, 1)})
+        dxfattribs={'extrusion': (0, 1, 1)})
     path_backend.draw_entities(msp)
     result = path_backend.out.collector
     assert len(result) == 1
@@ -236,7 +249,7 @@ def test_3d_circle_path(msp, path_backend):
 
 def test_3d_arc_basic(msp, basic):
     msp.add_arc((0, 0), radius=2, start_angle=30, end_angle=60,
-                dxfattribs={'extrusion': (0, 1, 1)})
+        dxfattribs={'extrusion': (0, 1, 1)})
     basic.draw_entities(msp)
     result = basic.out.collector
     assert len(result) > 10
@@ -245,7 +258,7 @@ def test_3d_arc_basic(msp, basic):
 
 def test_3d_arc_path(msp, path_backend):
     msp.add_arc((0, 0), radius=2, start_angle=30, end_angle=60,
-                dxfattribs={'extrusion': (0, 1, 1)})
+        dxfattribs={'extrusion': (0, 1, 1)})
     path_backend.draw_entities(msp)
     result = path_backend.out.collector
     assert len(result) == 1
@@ -254,7 +267,7 @@ def test_3d_arc_path(msp, path_backend):
 
 def test_3d_ellipse_basic(msp, basic):
     msp.add_ellipse((0, 0), major_axis=(1, 0, 0), ratio=0.5, start_param=1,
-                    end_param=2, dxfattribs={'extrusion': (0, 1, 1)})
+        end_param=2, dxfattribs={'extrusion': (0, 1, 1)})
     basic.draw_entities(msp)
     result = basic.out.collector
     assert len(result) > 10
@@ -263,8 +276,8 @@ def test_3d_ellipse_basic(msp, basic):
 
 def test_3d_ellipse_path(msp, path_backend):
     msp.add_ellipse((0, 0), major_axis=(1, 0, 0), ratio=0.5, start_param=1,
-                    end_param=2,
-                    dxfattribs={'extrusion': (0, 1, 1)})
+        end_param=2,
+        dxfattribs={'extrusion': (0, 1, 1)})
     path_backend.draw_entities(msp)
     result = path_backend.out.collector
     assert len(result) == 1
@@ -385,7 +398,7 @@ def test_visibility_insert_0():
     # 'L0' on '0'
     # 'L1' on 'Layer1'
     assert _get_text_visible_when(doc, {'0', 'Layer1', 'Layer2'}) == ['L0',
-                                                                      'L1']
+        'L1']
     assert _get_text_visible_when(doc, {'0', 'Layer2'}) == ['L0']
     assert _get_text_visible_when(doc, {'0', 'Layer1'}) == ['L0', 'L1']
     assert _get_text_visible_when(doc, {'Layer1', 'Layer2'}) == ['L1']
@@ -408,7 +421,7 @@ def test_visibility_insert_2():
     # 'L1' on 'Layer1'
     # text-block on 'Layer2' -> 'L0' on '0' acts like on 'Layer2'
     assert _get_text_visible_when(doc, {'0', 'Layer1', 'Layer2'}) == ['L0',
-                                                                      'L1']
+        'L1']
     assert _get_text_visible_when(doc, {'0', 'Layer2'}) == ['L0']
     assert _get_text_visible_when(doc, {'0', 'Layer1'}) == ['L1']
     assert _get_text_visible_when(doc, {'Layer1', 'Layer2'}) == ['L0', 'L1']
@@ -424,7 +437,7 @@ def test_override_filter(msp, ctx):
             self.override_enabled = True
 
         def override_properties(self, entity: DXFGraphic,
-                                properties: Properties) -> None:
+            properties: Properties) -> None:
             if not self.override_enabled:
                 return
             if properties.layer == 'T1':
