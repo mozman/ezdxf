@@ -1,8 +1,7 @@
-# Copyright (c) 2020, Matthew Broadway
+# Copyright (c) 2020-2021, Matthew Broadway
 # License: MIT License
 import math
 from typing import Iterable, TYPE_CHECKING, Optional, Dict, Sequence
-import warnings
 from collections import defaultdict
 from functools import lru_cache
 
@@ -51,7 +50,9 @@ def get_params(params: Optional[Dict]) -> Dict:
 
 
 class MatplotlibBackend(Backend):
-    def __init__(self, ax: plt.Axes,
+    def __init__(
+        self,
+        ax: plt.Axes,
         *,
         adjust_figure: bool = True,
         font: FontProperties = FontProperties(),
@@ -61,9 +62,9 @@ class MatplotlibBackend(Backend):
         super().__init__(get_params(params))
         self.ax = ax
         self._adjust_figure = adjust_figure
-        self._scale_dashes_backup = plt.rcParams['lines.scale_dashes']
+        self._scale_dashes_backup = plt.rcParams["lines.scale_dashes"]
         # Disable internal line style scaling by matplotlib
-        plt.rcParams['lines.scale_dashes'] = False
+        plt.rcParams["lines.scale_dashes"] = False
 
         # like set_axis_off, except that the face_color can still be set
         self.ax.xaxis.set_visible(False)
@@ -72,7 +73,7 @@ class MatplotlibBackend(Backend):
             s.set_visible(False)
 
         self.ax.autoscale(False)
-        self.ax.set_aspect('equal', 'datalim')
+        self.ax.set_aspect("equal", "datalim")
         self._current_z = 0
         self._text_renderer = TextRenderer(font, use_text_cache)
 
@@ -97,7 +98,7 @@ class MatplotlibBackend(Backend):
         self.ax.set_facecolor(color)
 
     def draw_point(self, pos: Vec3, properties: Properties):
-        """ Draw a real dimensionless point. """
+        """Draw a real dimensionless point."""
         color = properties.color
         self.ax.scatter([pos.x], [pos.y], s=0.1, c=color, zorder=self._get_z())
 
@@ -111,8 +112,9 @@ class MatplotlibBackend(Backend):
     def draw_path(self, path, properties: Properties):
         self._line_renderer.draw_path(path, properties, self._get_z())
 
-    def draw_filled_paths(self, paths: Sequence,
-        holes: Sequence, properties: Properties):
+    def draw_filled_paths(
+        self, paths: Sequence, holes: Sequence, properties: Properties
+    ):
         fill, hatch = self._get_filling(properties)
         if fill is False and hatch is None:
             return
@@ -138,21 +140,27 @@ class MatplotlibBackend(Backend):
             linewidth=linewidth,
             fill=fill,
             hatch=hatch,
-            zorder=self._get_z()
+            zorder=self._get_z(),
         )
         self.ax.add_patch(patch)
 
-    def draw_filled_polygon(self, points: Iterable[Vec3],
-        properties: Properties):
+    def draw_filled_polygon(
+        self, points: Iterable[Vec3], properties: Properties
+    ):
         self.ax.fill(
             *zip(*((p.x, p.y) for p in points)),
             color=properties.color,
             linewidth=0,
-            zorder=self._get_z()
+            zorder=self._get_z(),
         )
 
-    def draw_text(self, text: str, transform: Matrix44, properties: Properties,
-        cap_height: float):
+    def draw_text(
+        self,
+        text: str,
+        transform: Matrix44,
+        properties: Properties,
+        cap_height: float,
+    ):
         if not text.strip():
             return  # no point rendering empty strings
         font_properties = self.get_font_properties(properties.font)
@@ -160,12 +168,18 @@ class MatplotlibBackend(Backend):
         transformed_path = _transform_path(
             self._text_renderer.get_text_path(text, font_properties),
             Matrix44.scale(
-                self._text_renderer.get_scale(cap_height,
-                    font_properties)) @ transform
+                self._text_renderer.get_scale(cap_height, font_properties)
+            )
+            @ transform,
         )
         self.ax.add_patch(
-            PathPatch(transformed_path, facecolor=properties.color, linewidth=0,
-                zorder=self._get_z()))
+            PathPatch(
+                transformed_path,
+                facecolor=properties.color,
+                linewidth=0,
+                zorder=self._get_z(),
+            )
+        )
 
     @lru_cache(maxsize=256)  # fonts.Font is a named tuple
     def get_font_properties(self, font: fonts.FontFace) -> FontProperties:
@@ -184,22 +198,27 @@ class MatplotlibBackend(Backend):
                 pass
         return font_properties
 
-    def get_font_measurements(self, cap_height: float,
-        font: fonts.FontFace = None) -> FontMeasurements:
+    def get_font_measurements(
+        self, cap_height: float, font: fonts.FontFace = None
+    ) -> FontMeasurements:
         return self._text_renderer.get_font_measurements(
-            self.get_font_properties(font)).scale_from_baseline(
-            desired_cap_height=cap_height)
+            self.get_font_properties(font)
+        ).scale_from_baseline(desired_cap_height=cap_height)
 
-    def get_text_line_width(self, text: str, cap_height: float,
-        font: fonts.FontFace = None) -> float:
+    def get_text_line_width(
+        self, text: str, cap_height: float, font: fonts.FontFace = None
+    ) -> float:
         if not text.strip():
             return 0
-        dxftype = self.current_entity.dxftype() if self.current_entity else 'TEXT'
+        dxftype = (
+            self.current_entity.dxftype() if self.current_entity else "TEXT"
+        )
         text = prepare_string_for_rendering(text, dxftype)
         font_properties = self.get_font_properties(font)
         path = self._text_renderer.get_text_path(text, font_properties)
         return max(x for x, y in path.vertices) * self._text_renderer.get_scale(
-            cap_height, font_properties)
+            cap_height, font_properties
+        )
 
     def clear(self):
         self.ax.clear()
@@ -213,15 +232,16 @@ class MatplotlibBackend(Backend):
             data_width, data_height = maxx - minx, maxy - miny
             if not math.isclose(data_width, 0):
                 width, height = plt.figaspect(data_height / data_width)
-                self.ax.get_figure().set_size_inches(width, height,
-                    forward=True)
-        plt.rcParams['lines.scale_dashes'] = self._scale_dashes_backup
+                self.ax.get_figure().set_size_inches(
+                    width, height, forward=True
+                )
+        plt.rcParams["lines.scale_dashes"] = self._scale_dashes_backup
 
     def _get_filling(self, properties: Properties):
         fill = True
         hatch = None
         name = properties.filling.name.upper()
-        if properties.filling.type == 1 and name != 'SOLID':
+        if properties.filling.type == 1 and name != "SOLID":
             if self.hatch_pattern == 0:
                 # Disable hatch patterns
                 fill = False
@@ -229,7 +249,7 @@ class MatplotlibBackend(Backend):
             elif self.hatch_pattern == 1:
                 # Use predefined hatch pattern by name matching:
                 fill = False
-                hatch = HATCH_NAME_MAPPING.get(name, r'\\\\')
+                hatch = HATCH_NAME_MAPPING.get(name, r"\\\\")
             else:
                 # Draw hatch pattern as solid filling
                 fill = True
@@ -239,7 +259,8 @@ class MatplotlibBackend(Backend):
 
 def _transform_path(path: Path, transform: Matrix44) -> Path:
     vertices = transform.transform_vertices(
-        [Vec3(x, y) for x, y in path.vertices])
+        [Vec3(x, y) for x, y in path.vertices]
+    )
     return Path([(v.x, v.y) for v in vertices], path.codes)
 
 
@@ -250,13 +271,13 @@ class TextRenderer:
 
         # Each font has its own text path cache
         # key is hash(FontProperties)
-        self._text_path_cache: Dict[
-            int, Dict[str, TextPath]] = defaultdict(dict)
+        self._text_path_cache: Dict[int, Dict[str, TextPath]] = defaultdict(
+            dict
+        )
 
         # Each font has its own font measurements cache
         # key is hash(FontProperties)
-        self._font_measurement_cache: Dict[
-            int, FontMeasurements] = {}
+        self._font_measurement_cache: Dict[int, FontMeasurements] = {}
 
     @property
     def default_font(self) -> FontProperties:
@@ -265,8 +286,9 @@ class TextRenderer:
     def clear_cache(self):
         self._text_path_cache.clear()
 
-    def get_scale(self, desired_cap_height: float,
-        font: FontProperties) -> float:
+    def get_scale(
+        self, desired_cap_height: float, font: FontProperties
+    ) -> float:
         return desired_cap_height / self.get_font_measurements(font).cap_height
 
     def get_font_measurements(self, font: FontProperties) -> FontMeasurements:
@@ -274,15 +296,15 @@ class TextRenderer:
         key = hash(font)
         measurements = self._font_measurement_cache.get(key)
         if measurements is None:
-            upper_x = self.get_text_path('X', font).vertices[:, 1].tolist()
-            lower_x = self.get_text_path('x', font).vertices[:, 1].tolist()
-            lower_p = self.get_text_path('p', font).vertices[:, 1].tolist()
+            upper_x = self.get_text_path("X", font).vertices[:, 1].tolist()
+            lower_x = self.get_text_path("x", font).vertices[:, 1].tolist()
+            lower_p = self.get_text_path("p", font).vertices[:, 1].tolist()
             baseline = min(lower_x)
             measurements = FontMeasurements(
                 baseline=baseline,
                 cap_height=max(upper_x) - baseline,
                 x_height=max(lower_x) - baseline,
-                descender_height=baseline - min(lower_p)
+                descender_height=baseline - min(lower_p),
             )
             self._font_measurement_cache[key] = measurements
         return measurements
@@ -295,8 +317,13 @@ class TextRenderer:
             if font is None:
                 font = self._default_font
             # must replace $ with \$ to avoid matplotlib interpreting it as math text
-            path = TextPath((0, 0), text.replace('$', '\\$'), size=1,
-                prop=font, usetex=False)
+            path = TextPath(
+                (0, 0),
+                text.replace("$", "\\$"),
+                size=1,
+                prop=font,
+                usetex=False,
+            )
             if self._use_cache:
                 cache[text] = path
         return path
@@ -313,21 +340,22 @@ def _get_path_patch_data(path):
             codes.extend(CURVE4x3)
             vertices.extend((cmd.ctrl1, cmd.ctrl2, cmd.end))
         else:
-            raise ValueError(f'Invalid command: {cmd.type}')
+            raise ValueError(f"Invalid command: {cmd.type}")
     return [(p.x, p.y) for p in vertices], codes
 
 
 def qsave(
-    layout: 'Layout', filename: str,
+    layout: "Layout",
+    filename: str,
     *,
     bg: Optional[Color] = None,
     fg: Optional[Color] = None,
     dpi: int = 300,
-    backend: str = 'agg',
+    backend: str = "agg",
     params: dict = None,
     filter_func: FilterFunc = None,
 ) -> None:
-    """ Quick and simplified render export by matplotlib.
+    """Quick and simplified render export by matplotlib.
 
     Args:
         layout: modelspace or paperspace layout to export
@@ -376,9 +404,9 @@ def qsave(
     params = params or {}
 
     # Let the user choose a minimum lineweight:
-    if 'min_lineweight' not in params:
+    if "min_lineweight" not in params:
         # If not set by user, use ~1 pixel
-        params['min_lineweight'] = 72 / dpi
+        params["min_lineweight"] = 72 / dpi
 
     try:
         fig: plt.Figure = plt.figure()
@@ -397,8 +425,9 @@ def qsave(
         # facecolor sets the figure color
         # (semi-)transparent axes colors do not produce transparent outputs
         # but (semi-)transparent figure colors do.
-        fig.savefig(filename, dpi=dpi,
-            facecolor=ax.get_facecolor(), transparent=True)
+        fig.savefig(
+            filename, dpi=dpi, facecolor=ax.get_facecolor(), transparent=True
+        )
         plt.close(fig)
     finally:
         matplotlib.use(old_backend)
@@ -421,21 +450,24 @@ ANSI_LIN_PATTERN_FACTOR = ISO_LIN_PATTERN_FACTOR * 2.54
 
 
 class InternalLineRenderer(MatplotlibLineRenderer):
-    """ matplotlib internal linetype rendering, which is oriented on the output
+    """matplotlib internal linetype rendering, which is oriented on the output
     medium and dpi: This method is simpler and faster but may not replicate the
     results of CAD applications.
     """
 
-    def draw_line(self, start: Vec3,
-        end: Vec3, properties: Properties, z: float):
+    def draw_line(
+        self, start: Vec3, end: Vec3, properties: Properties, z: float
+    ):
         self.ax.add_line(
             Line2D(
-                (start.x, end.x), (start.y, end.y),
+                (start.x, end.x),
+                (start.y, end.y),
                 linewidth=self.lineweight(properties),
                 linestyle=self.linetype(properties),
                 color=properties.color,
                 zorder=z,
-            ))
+            )
+        )
 
     def draw_path(self, path, properties: Properties, z: float):
         vertices, codes = _get_path_patch_data(path)
@@ -445,24 +477,27 @@ class InternalLineRenderer(MatplotlibLineRenderer):
             linestyle=self.linetype(properties),
             fill=False,
             color=properties.color,
-            zorder=z
+            zorder=z,
         )
         self.ax.add_patch(patch)
 
     @property
     def measurement_scale(self) -> float:
-        return ISO_LIN_PATTERN_FACTOR if self.measurement \
+        return (
+            ISO_LIN_PATTERN_FACTOR
+            if self.measurement
             else ANSI_LIN_PATTERN_FACTOR
+        )
 
     def create_pattern(self, properties: Properties, scale: float):
-        """ Return matplotlib line style tuple: (offset, on_off_sequence) or
+        """Return matplotlib line style tuple: (offset, on_off_sequence) or
         "solid".
 
         See examples: https://matplotlib.org/gallery/lines_bars_and_markers/linestyles.html
 
         """
         if len(properties.linetype_pattern) < 2:
-            return 'solid'
+            return "solid"
         else:
             pattern = np.round(np.array(properties.linetype_pattern) * scale)
             pattern = [max(element, 1) for element in pattern]
@@ -472,13 +507,12 @@ class InternalLineRenderer(MatplotlibLineRenderer):
 
 
 class EzdxfLineRenderer(MatplotlibLineRenderer):
-    """ Replicate AutoCAD linetype rendering oriented on drawing units and
+    """Replicate AutoCAD linetype rendering oriented on drawing units and
     various ltscale factors. This rendering method break lines into small
     segments which causes a longer rendering time!
     """
 
-    def draw_line(self, start: Vec3, end: Vec3,
-        properties: Properties, z: int):
+    def draw_line(self, start: Vec3, end: Vec3, properties: Properties, z: int):
         pattern = self.pattern(properties)
         lineweight = self.lineweight(properties)
         render_linetypes = bool(self.linetype_scaling)
@@ -486,19 +520,25 @@ class EzdxfLineRenderer(MatplotlibLineRenderer):
         if len(pattern) < 2 or not render_linetypes:
             self.ax.add_line(
                 Line2D(
-                    (start.x, end.x), (start.y, end.y),
+                    (start.x, end.x),
+                    (start.y, end.y),
                     linewidth=lineweight,
                     color=color,
                     zorder=z,
-                ))
+                )
+            )
         else:
             renderer = EzdxfLineTypeRenderer(pattern)
             lines = LineCollection(
-                [((s.x, s.y), (e.x, e.y))
-                    for s, e in renderer.line_segment(start, end)],
-                linewidths=lineweight, color=color, zorder=z
+                [
+                    ((s.x, s.y), (e.x, e.y))
+                    for s, e in renderer.line_segment(start, end)
+                ],
+                linewidths=lineweight,
+                color=color,
+                zorder=z,
             )
-            lines.set_capstyle('butt')
+            lines.set_capstyle("butt")
             self.ax.add_collection(lines)
 
     def draw_path(self, path, properties: Properties, z: int):
@@ -513,16 +553,19 @@ class EzdxfLineRenderer(MatplotlibLineRenderer):
                 linewidth=lineweight,
                 color=color,
                 fill=False,
-                zorder=z
+                zorder=z,
             )
             self.ax.add_patch(patch)
         else:
             renderer = EzdxfLineTypeRenderer(pattern)
-            segments = renderer.line_segments(path.flattening(
-                self.max_flattening_distance, segments=16))
+            segments = renderer.line_segments(
+                path.flattening(self.max_flattening_distance, segments=16)
+            )
             lines = LineCollection(
                 [((s.x, s.y), (e.x, e.y)) for s, e in segments],
-                linewidths=lineweight, color=color, zorder=z
+                linewidths=lineweight,
+                color=color,
+                zorder=z,
             )
-            lines.set_capstyle('butt')
+            lines.set_capstyle("butt")
             self.ax.add_collection(lines)
