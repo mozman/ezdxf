@@ -17,6 +17,7 @@ import numpy as np
 
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.properties import Properties
+from ezdxf.addons.drawing.type_hints import FilterFunc
 from ezdxf.tools.fonts import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.tools import fonts
@@ -51,12 +52,12 @@ def get_params(params: Optional[Dict]) -> Dict:
 
 class MatplotlibBackend(Backend):
     def __init__(self, ax: plt.Axes,
-                 *,
-                 adjust_figure: bool = True,
-                 font: FontProperties = FontProperties(),
-                 use_text_cache: bool = True,
-                 params: Dict = None,
-                 ):
+        *,
+        adjust_figure: bool = True,
+        font: FontProperties = FontProperties(),
+        use_text_cache: bool = True,
+        params: Dict = None,
+    ):
         super().__init__(get_params(params))
         self.ax = ax
         self._adjust_figure = adjust_figure
@@ -111,7 +112,7 @@ class MatplotlibBackend(Backend):
         self._line_renderer.draw_path(path, properties, self._get_z())
 
     def draw_filled_paths(self, paths: Sequence,
-                          holes: Sequence, properties: Properties):
+        holes: Sequence, properties: Properties):
         fill, hatch = self._get_filling(properties)
         if fill is False and hatch is None:
             return
@@ -142,7 +143,7 @@ class MatplotlibBackend(Backend):
         self.ax.add_patch(patch)
 
     def draw_filled_polygon(self, points: Iterable[Vec3],
-                            properties: Properties):
+        properties: Properties):
         self.ax.fill(
             *zip(*((p.x, p.y) for p in points)),
             color=properties.color,
@@ -151,7 +152,7 @@ class MatplotlibBackend(Backend):
         )
 
     def draw_text(self, text: str, transform: Matrix44, properties: Properties,
-                  cap_height: float):
+        cap_height: float):
         if not text.strip():
             return  # no point rendering empty strings
         font_properties = self.get_font_properties(properties.font)
@@ -160,11 +161,11 @@ class MatplotlibBackend(Backend):
             self._text_renderer.get_text_path(text, font_properties),
             Matrix44.scale(
                 self._text_renderer.get_scale(cap_height,
-                                              font_properties)) @ transform
+                    font_properties)) @ transform
         )
         self.ax.add_patch(
             PathPatch(transformed_path, facecolor=properties.color, linewidth=0,
-                      zorder=self._get_z()))
+                zorder=self._get_z()))
 
     @lru_cache(maxsize=256)  # fonts.Font is a named tuple
     def get_font_properties(self, font: fonts.FontFace) -> FontProperties:
@@ -184,13 +185,13 @@ class MatplotlibBackend(Backend):
         return font_properties
 
     def get_font_measurements(self, cap_height: float,
-                              font: fonts.FontFace = None) -> FontMeasurements:
+        font: fonts.FontFace = None) -> FontMeasurements:
         return self._text_renderer.get_font_measurements(
             self.get_font_properties(font)).scale_from_baseline(
             desired_cap_height=cap_height)
 
     def get_text_line_width(self, text: str, cap_height: float,
-                            font: fonts.FontFace = None) -> float:
+        font: fonts.FontFace = None) -> float:
         if not text.strip():
             return 0
         dxftype = self.current_entity.dxftype() if self.current_entity else 'TEXT'
@@ -213,7 +214,7 @@ class MatplotlibBackend(Backend):
             if not math.isclose(data_width, 0):
                 width, height = plt.figaspect(data_height / data_width)
                 self.ax.get_figure().set_size_inches(width, height,
-                                                     forward=True)
+                    forward=True)
         plt.rcParams['lines.scale_dashes'] = self._scale_dashes_backup
 
     def _get_filling(self, properties: Properties):
@@ -265,7 +266,7 @@ class TextRenderer:
         self._text_path_cache.clear()
 
     def get_scale(self, desired_cap_height: float,
-                  font: FontProperties) -> float:
+        font: FontProperties) -> float:
         return desired_cap_height / self.get_font_measurements(font).cap_height
 
     def get_font_measurements(self, font: FontProperties) -> FontMeasurements:
@@ -295,7 +296,7 @@ class TextRenderer:
                 font = self._default_font
             # must replace $ with \$ to avoid matplotlib interpreting it as math text
             path = TextPath((0, 0), text.replace('$', '\\$'), size=1,
-                            prop=font, usetex=False)
+                prop=font, usetex=False)
             if self._use_cache:
                 cache[text] = path
         return path
@@ -316,15 +317,18 @@ def _get_path_patch_data(path):
     return [(p.x, p.y) for p in vertices], codes
 
 
-def qsave(layout: 'Layout', filename: str, *,
-          bg: Optional[Color] = None,
-          fg: Optional[Color] = None,
-          dpi: int = 300,
-          backend: str = 'agg',
-          ltype=None,  # deprecated
-          lineweight_scaling=None,  # deprecated
-          params: dict = None,
-          ) -> None:
+def qsave(
+    layout: 'Layout', filename: str,
+    *,
+    bg: Optional[Color] = None,
+    fg: Optional[Color] = None,
+    dpi: int = 300,
+    backend: str = 'agg',
+    ltype=None,  # deprecated
+    lineweight_scaling=None,  # deprecated
+    params: dict = None,
+    filter_func: FilterFunc = None,
+) -> None:
     """ Quick and simplified render export by matplotlib.
 
     Args:
@@ -349,14 +353,19 @@ def qsave(layout: 'Layout', filename: str, *,
         ltype: deprecated, use :code:`params={"linetype_renderer": "ezdxf"}`
         lineweight_scaling: deprecated, use :code:`params={"lineweight_scaling": 0}`
         params: matplotlib backend parameters
+        filter_func: filter function which takes a DXFGraphic object as input
+            and returns ``True`` if the entity should be drawn or ``False`` if
+            the entity should be ignored
 
     .. versionadded:: 0.14
 
     .. versionchanged:: 0.15
-
         deprecated arguments `ltype` and `lineweight_scaling` will be removed in
-        v0.16, added argument `params` to pass parameters to the matplotlib
+        v0.17, added argument `params` to pass parameters to the matplotlib
         backend.
+
+    .. versionadded:: 0.17
+        argument `filter_func` to filter DXF entities
 
     """
     from .properties import RenderContext
@@ -379,13 +388,13 @@ def qsave(layout: 'Layout', filename: str, *,
         warnings.warn(
             'The "ltype" argument is deprecated use the "params" dict '
             'to pass arguments to the MatplotlibBackend, '
-            'will be removed in v0.16.', DeprecationWarning)
+            'will be removed in v0.17.', DeprecationWarning)
     if lineweight_scaling is not None:
         params['lineweight_scaling'] = lineweight_scaling
         warnings.warn(
             'The "lineweight_scaling" argument is deprecated use the '
             '"params" dict to pass arguments to the MatplotlibBackend, '
-            'will be removed in v0.16.', DeprecationWarning)
+            'will be removed in v0.17.', DeprecationWarning)
 
     try:
         fig: plt.Figure = plt.figure()
@@ -395,13 +404,17 @@ def qsave(layout: 'Layout', filename: str, *,
         if bg is not None:
             ctx.current_layout.set_colors(bg, fg)
         out = MatplotlibBackend(ax, params=params)
-        Frontend(ctx, out).draw_layout(layout, finalize=True)
+        Frontend(ctx, out).draw_layout(
+            layout,
+            finalize=True,
+            filter_func=filter_func,
+        )
         # transparent=True sets the axes color to fully transparent
         # facecolor sets the figure color
         # (semi-)transparent axes colors do not produce transparent outputs
         # but (semi-)transparent figure colors do.
         fig.savefig(filename, dpi=dpi,
-                    facecolor=ax.get_facecolor(), transparent=True)
+            facecolor=ax.get_facecolor(), transparent=True)
         plt.close(fig)
     finally:
         matplotlib.use(old_backend)
@@ -430,7 +443,7 @@ class InternalLineRenderer(MatplotlibLineRenderer):
     """
 
     def draw_line(self, start: Vec3,
-                  end: Vec3, properties: Properties, z: float):
+        end: Vec3, properties: Properties, z: float):
         self.ax.add_line(
             Line2D(
                 (start.x, end.x), (start.y, end.y),
@@ -481,7 +494,7 @@ class EzdxfLineRenderer(MatplotlibLineRenderer):
     """
 
     def draw_line(self, start: Vec3, end: Vec3,
-                  properties: Properties, z: int):
+        properties: Properties, z: int):
         pattern = self.pattern(properties)
         lineweight = self.lineweight(properties)
         render_linetypes = bool(self.linetype_scaling)
@@ -498,7 +511,7 @@ class EzdxfLineRenderer(MatplotlibLineRenderer):
             renderer = EzdxfLineTypeRenderer(pattern)
             lines = LineCollection(
                 [((s.x, s.y), (e.x, e.y))
-                 for s, e in renderer.line_segment(start, end)],
+                    for s, e in renderer.line_segment(start, end)],
                 linewidths=lineweight, color=color, zorder=z
             )
             lines.set_capstyle('butt')

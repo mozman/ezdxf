@@ -8,6 +8,7 @@ from ezdxf.addons.drawing.properties import (
     RenderContext, VIEWPORT_COLOR, Properties, set_color_alpha, Filling,
 )
 from ezdxf.addons.drawing.text import simplified_text_chunks
+from ezdxf.addons.drawing.type_hints import FilterFunc
 from ezdxf.entities import (
     DXFGraphic, Insert, MText, Polyline, LWPolyline, Spline, Hatch, Attrib,
     Text, Polyface, Wipeout, AttDef, Solid, Face3d,
@@ -16,7 +17,7 @@ from ezdxf.entities.dxfentity import DXFTagStorage, DXFEntity
 from ezdxf.layouts import Layout
 from ezdxf.math import Vec3, Z_AXIS
 from ezdxf.path import (
-    Path, make_path, from_hatch_boundary_path, fast_bbox_detection,
+    make_path, from_hatch_boundary_path, fast_bbox_detection,
     winding_deconstruction, from_vertices,
 )
 from ezdxf.render import MeshBuilder, TraceBuilder
@@ -31,8 +32,6 @@ DEFAULT_PDSIZE = 1
 IGNORE_PROXY_GRAPHICS = 0
 USE_PROXY_GRAPHICS = 1
 PREFER_PROXY_GRAPHICS = 2
-
-FilterFunc = Callable[[DXFGraphic], bool]
 
 
 class Frontend:
