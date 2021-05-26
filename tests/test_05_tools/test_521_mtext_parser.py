@@ -580,13 +580,5 @@ class TestMTextParagraphProperties:
         assert t.ctx.paragraph.tab_stops == tuple()
 
 
-def test_infinite_loop_issue():
-    raw_text = r"\A1;Das ist eine MText\PZeile mit {\LFormat}ierung\Pänder " \
-               r"die Farbe\P\pi-7.5,l7.5,t7.5;1.^INummerierung\P2.^INummeri" \
-               r"erung\P\pi0,l0,tz;\P{\H0.7x;\S1/2500;}  ein Bruch"
-    result = list(MTextParser(raw_text))
-    assert len(result)
-
-
 if __name__ == '__main__':
     pytest.main([__file__])
