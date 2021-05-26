@@ -506,7 +506,7 @@ def split_mtext_string(s: str, size: int = 250) -> List[str]:
     chunks = []
     pos = 0
     while True:
-        chunk = s[pos: pos + size]
+        chunk = s[pos : pos + size]
         if len(chunk):
             if len(chunk) < size:
                 chunks.append(chunk)
@@ -533,13 +533,24 @@ def plain_mtext2(
     Args:
         text: MTEXT content string
         split: split content at line endings ``\\P``
+        tabsize: count of replacement spaces for tabulators ``^I``
 
     """
     content: List[str] = []
     paragraph: List[str] = []
 
     # localize enum to speed up inner loop
-    _, word, stack, space, nbsp, tabulator, new_paragraph, *_ = TokenType
+    (
+        _,
+        word,
+        stack,
+        space,
+        nbsp,
+        tabulator,
+        new_paragraph,
+        new_column,
+        *_,
+    ) = TokenType
     tab_replacement = " " * tabsize
 
     for token in MTextParser(text):
@@ -548,12 +559,14 @@ def plain_mtext2(
             paragraph.append(token.data)
         elif t == space or t == nbsp:
             paragraph.append(" ")
-        elif t == new_paragraph:
-            # NEW_COLUMN is not a line break!
+        elif t == new_paragraph or t == new_column:
             content.append("".join(paragraph))
             paragraph.clear()
         elif t == tabulator:
             paragraph.append(tab_replacement)
+        elif t == stack:
+            upr, lwr, divider = token.data
+            paragraph.append(upr + divider + lwr)
         elif t == stack:
             upr, lwr, divider = token.data
             paragraph.append(upr + divider + lwr)
@@ -980,7 +993,7 @@ class MTextEditor:
         items.append(
             "".join(
                 b + self.TAB + c + self.NEW_PARAGRAPH
-                    for b, c in zip(bullets, content)
+                for b, c in zip(bullets, content)
             )
         )
         return self.group(str(items))
@@ -1134,7 +1147,7 @@ class TextScanner:
 
         """
 
-        scanner = self.__class__(self._text[self._index:])
+        scanner = self.__class__(self._text[self._index :])
         while scanner.has_data:
             c = scanner.peek()
             if escape and c == "\\" and scanner.peek(1) == char:
@@ -1149,11 +1162,11 @@ class TextScanner:
         """Returns the substring from the current location until index < stop."""
         if stop < self._index:
             raise IndexError(stop)
-        return self._text[self._index: stop]
+        return self._text[self._index : stop]
 
     def tail(self) -> str:
         """Returns the unprocessed part of the content."""
-        return self._text[self._index:]
+        return self._text[self._index :]
 
 
 class TokenType(enum.IntEnum):
@@ -1262,7 +1275,12 @@ class MTextParser:
                 if cmd == "S":
                     return self.parse_stacking()
                 if cmd:
-                    self.parse_properties(cmd)
+                    try:
+                        self.parse_properties(cmd)
+                    except ValueError:
+                        # print invalid escaped letters verbatim
+                        word += letter + cmd
+
                 # else: A single backslash at the end is an error, but DXF
                 # content is often invalid and should be ignored silently, if no
                 # harm is done.
@@ -1391,7 +1409,7 @@ class MTextParser:
         elif cmd == "f" or cmd == "F":
             self.parse_font_properties(new_ctx)
         else:  # unknown commands
-            return
+            raise ValueError("unknown command")
         self.ctx = new_ctx
 
     def parse_align(self, ctx: MTextContext):

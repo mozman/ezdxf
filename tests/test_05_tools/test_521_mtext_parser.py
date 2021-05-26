@@ -75,6 +75,18 @@ class TestMTextContentParsing:
             TokenType.WORD, TokenType.SPACE, TokenType.WORD)
         assert token_data(tokens) == (r"\{}", None, r"\{}")
 
+    def test_invalid_escaped_letters_printed_verbatim(self):
+        # The current implementation automatically end the previous word
+        # at a backslash. Therefore "\:\;" returns two tokens!
+        w1 = r"\:"
+        w2 = r"\;"
+        tokens = list(MTextParser(w1+w2))
+        t0, t1 = tokens
+        assert t0.type is TokenType.WORD
+        assert t0.data == w1
+        assert t1.type is TokenType.WORD
+        assert t1.data == w2
+
     def test_single_new_paragraph_token(self):
         tokens = list(MTextParser(r"\P"))
         assert token_types(tokens) == (TokenType.NEW_PARAGRAPH,)

@@ -8,11 +8,13 @@ from ezdxf.entities import Text, DXFEntity
 from ezdxf.tools.text import (
     TextLine, plain_text, caret_decode,
     escape_dxf_line_endings, replace_non_printable_characters, plain_mtext,
-    split_mtext_string, text_wrap, is_text_vertical_stacked,
+    split_mtext_string, text_wrap, is_text_vertical_stacked, plain_mtext2,
 )
 from ezdxf.tools.fonts import MonospaceFont
 from ezdxf.math import Vec3
 from ezdxf.lldxf import const
+
+plain_mtext = plain_mtext2
 
 
 @pytest.fixture
@@ -222,9 +224,9 @@ def test_plain_text_removes_formatting():
                r"die Farbe\P\pi-7.5,l7.5,t7.5;1.^INummerierung\P2.^INummeri" \
                r"erung\P\pi0,l0,tz;\P{\H0.7x;\S1/2500;}  ein Bruch"
     expected = "Das ist eine MText\nZeile mit Formatierung\nänder die Farbe\n" \
-               "1.^INummerierung\n2.^INummerierung\n\n1/2500  ein Bruch"
-    assert plain_mtext(raw_text) == expected
-    assert plain_mtext('\\:') == '\\:', \
+               "1. Nummerierung\n2. Nummerierung\n\n1/2500  ein Bruch"
+    assert plain_mtext(raw_text, tabsize=1) == expected
+    assert plain_mtext('\\:\\;') == '\\:\\;', \
         "invalid escape code is printed verbatim"
 
 
@@ -327,7 +329,7 @@ class TestIsTextVerticalStacked:
 
     def test_stacked_text_entity(self, doc):
         text = doc.modelspace().add_text('Test',
-                                         dxfattribs={'style': 'Stacked'})
+            dxfattribs={'style': 'Stacked'})
         assert is_text_vertical_stacked(text) is True
 
     def test_stacked_mtext_entity(self, doc):
@@ -336,7 +338,7 @@ class TestIsTextVerticalStacked:
 
         """
         mtext = doc.modelspace().add_mtext('Test',
-                                           dxfattribs={'style': 'Stacked'})
+            dxfattribs={'style': 'Stacked'})
         assert is_text_vertical_stacked(mtext) is True
 
     def test_raise_type_error_for_unsupported_types(self):
