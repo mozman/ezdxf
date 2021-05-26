@@ -567,9 +567,6 @@ def plain_mtext2(
         elif t == stack:
             upr, lwr, divider = token.data
             paragraph.append(upr + divider + lwr)
-        elif t == stack:
-            upr, lwr, divider = token.data
-            paragraph.append(upr + divider + lwr)
 
     if paragraph:
         content.append("".join(paragraph))
