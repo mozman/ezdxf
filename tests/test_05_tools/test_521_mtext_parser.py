@@ -575,7 +575,7 @@ class TestMTextParagraphProperties:
         assert t1.ctx.paragraph == ParagraphProperties()  # reset to default
 
     def test_invalid_tab_stops(self):
-        tokens = list(MTextParser("\pi0,l0,tz;A"))
+        tokens = list(MTextParser(r"\pi0,l0,tz;A"))
         t = tokens[0]
         assert t.ctx.paragraph.tab_stops == tuple()
 
