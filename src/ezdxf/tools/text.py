@@ -809,7 +809,7 @@ class MTextEditor:
         return self
 
     def __iadd__(self, text: str) -> "MTextEditor":
-        """
+        r"""
         Append `text`::
 
             e = MTextEditor("First paragraph.\P")
