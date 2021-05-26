@@ -4,25 +4,40 @@ import enum
 import math
 import logging
 from typing import (
-    TYPE_CHECKING, Union, Tuple, List, Iterable, Optional, Callable, cast,
+    TYPE_CHECKING,
+    Union,
+    Tuple,
+    List,
+    Iterable,
+    Optional,
+    Callable,
+    cast,
 )
 
 from ezdxf.lldxf import const, validator
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    DXFAttr,
+    DXFAttributes,
+    DefSubclass,
+    XType,
+    RETURN_DEFAULT,
     group_code_mapping,
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2018
 from ezdxf.lldxf.types import DXFTag, dxftag
 from ezdxf.lldxf.tags import (
-    Tags, find_begin_and_end_of_encoded_xdata_tags, NotFoundException,
+    Tags,
+    find_begin_and_end_of_encoded_xdata_tags,
+    NotFoundException,
 )
 
 from ezdxf.math import Vec3, Matrix44, OCS, UCS, NULLVEC, Z_AXIS, X_AXIS
 from ezdxf.math.transformtools import transform_extrusion
 from ezdxf.colors import rgb2int
 from ezdxf.tools.text import (
-    split_mtext_string, escape_dxf_line_endings, plain_mtext,
+    split_mtext_string,
+    escape_dxf_line_endings,
+    plain_mtext,
 )
 from . import factory
 from .dxfentity import base_class, SubclassProcessor
@@ -31,145 +46,152 @@ from .xdata import XData
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, DXFNamespace, DXFEntity, Vertex, Auditor, Drawing, EntityDB,
+        TagWriter,
+        DXFNamespace,
+        DXFEntity,
+        Vertex,
+        Auditor,
+        Drawing,
+        EntityDB,
     )
 
-__all__ = ['MText', 'MTextColumns', 'ColumnType']
+__all__ = ["MText", "MTextColumns", "ColumnType"]
 
-logger = logging.getLogger('ezdxf')
+logger = logging.getLogger("ezdxf")
 
 BG_FILL_MASK = 1 + 2 + 16
 
-acdb_mtext = DefSubclass('AcDbMText', {
-    'insert': DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
-
-    # Nominal (initial) text height
-    'char_height': DXFAttr(
-        40, default=2.5,
-        validator=validator.is_greater_zero,
-        fixer=RETURN_DEFAULT,
-    ),
-
-    # Reference column width
-    'width': DXFAttr(41, optional=True),
-
-    # Found in BricsCAD export:
-    'defined_height': DXFAttr(46, dxfversion='AC1021'),
-
-    # Attachment point: enum const.MTextEntityAlignment
-    # 1 = Top left
-    # 2 = Top center
-    # 3 = Top right
-    # 4 = Middle left
-    # 5 = Middle center
-    # 6 = Middle right
-    # 7 = Bottom left
-    # 8 = Bottom center
-    # 9 = Bottom right
-    'attachment_point': DXFAttr(
-        71, default=1,
-        validator=validator.is_in_integer_range(1, 10),
-        fixer=RETURN_DEFAULT,
-    ),
-
-    # Flow direction: enum MTextFlowDirection
-    # 1 = Left to right
-    # 3 = Top to bottom
-    # 5 = By style (the flow direction is inherited from the associated
-    #     text style)
-    'flow_direction': DXFAttr(
-        72, default=1, optional=True,
-        validator=validator.is_one_of({1, 3, 5}),
-        fixer=RETURN_DEFAULT,
-    ),
-
-    # Content text:
-    # group code 1: text
-    # group code 3: additional text (optional)
-
-    # Text style name:
-    'style': DXFAttr(
-        7, default='Standard', optional=True,
-        validator=validator.is_valid_table_name,  # do not fix!
-    ),
-    'extrusion': DXFAttr(
-        210, xtype=XType.point3d, default=Z_AXIS, optional=True,
-        validator=validator.is_not_null_vector,
-        fixer=RETURN_DEFAULT,
-    ),
-
-    # x-axis direction vector (in WCS)
-    # If rotation and text_direction are present, text_direction wins
-    'text_direction': DXFAttr(
-        11, xtype=XType.point3d, default=X_AXIS, optional=True,
-        validator=validator.is_not_null_vector,
-        fixer=RETURN_DEFAULT,
-    ),
-
-    # Horizontal width of the characters that make up the mtext entity.
-    # This value will always be equal to or less than the value of *width*,
-    # (read-only, ignored if supplied)
-    'rect_width': DXFAttr(42, optional=True),
-
-    # Vertical height of the mtext entity (read-only, ignored if supplied)
-    'rect_height': DXFAttr(43, optional=True),
-
-    # Text rotation in degrees -  Error in DXF reference, which claims radians
-    'rotation': DXFAttr(50, default=0, optional=True),
-
-    # Line spacing style (optional): enum const.MTextLineSpacing
-    # 1 = At least (taller characters will override)
-    # 2 = Exact (taller characters will not override)
-    'line_spacing_style': DXFAttr(
-        73, default=1, optional=True,
-        validator=validator.is_one_of({1, 2}),
-        fixer=RETURN_DEFAULT,
-    ),
-
-    # Line spacing factor (optional): Percentage of default (3-on-5) line
-    # spacing to be applied. Valid values range from 0.25 to 4.00
-    'line_spacing_factor': DXFAttr(
-        44, default=1, optional=True,
-        validator=validator.is_in_float_range(0.25, 4.00),
-        fixer=validator.fit_into_float_range(0.25, 4.00),
-    ),
-
-    # Determines how much border there is around the text.
-    # (45) + (90) + (63) all three required, if one of them is used
-    'box_fill_scale': DXFAttr(45, dxfversion='AC1021'),
-
-    # background fill type flags: enum const.MTextBackgroundColor
-    # 0 = off
-    # 1 = color -> (63) < (421) or (431)
-    # 2 = drawing window color
-    # 3 = use background color (1 & 2)
-    # 16 = text frame ODA specification 20.4.46
-    # 2021-05-14: text frame only is supported bg_fill = 16,
-    # but scaling is always 1.5 and tags 45 + 63 are not present
-    'bg_fill': DXFAttr(
-        90, dxfversion='AC1021',
-        validator=validator.is_valid_bitmask(BG_FILL_MASK),
-        fixer=validator.fix_bitmask(BG_FILL_MASK)
-    ),
-
-    # background fill color as ACI, required even true color is used
-    'bg_fill_color': DXFAttr(
-        63, dxfversion='AC1021',
-        validator=validator.is_valid_aci_color,
-    ),
-
-    # 420-429? : background fill color as true color value, (63) also required
-    # but ignored
-    'bg_fill_true_color': DXFAttr(421, dxfversion='AC1021'),
-
-    # 430-439? : background fill color as color name ???, (63) also required
-    # but ignored
-    'bg_fill_color_name': DXFAttr(431, dxfversion='AC1021'),
-
-    # background fill color transparency - not used by AutoCAD/BricsCAD
-    'bg_fill_transparency': DXFAttr(441, dxfversion='AC1021'),
-
-})
+acdb_mtext = DefSubclass(
+    "AcDbMText",
+    {
+        "insert": DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
+        # Nominal (initial) text height
+        "char_height": DXFAttr(
+            40,
+            default=2.5,
+            validator=validator.is_greater_zero,
+            fixer=RETURN_DEFAULT,
+        ),
+        # Reference column width
+        "width": DXFAttr(41, optional=True),
+        # Found in BricsCAD export:
+        "defined_height": DXFAttr(46, dxfversion="AC1021"),
+        # Attachment point: enum const.MTextEntityAlignment
+        # 1 = Top left
+        # 2 = Top center
+        # 3 = Top right
+        # 4 = Middle left
+        # 5 = Middle center
+        # 6 = Middle right
+        # 7 = Bottom left
+        # 8 = Bottom center
+        # 9 = Bottom right
+        "attachment_point": DXFAttr(
+            71,
+            default=1,
+            validator=validator.is_in_integer_range(1, 10),
+            fixer=RETURN_DEFAULT,
+        ),
+        # Flow direction: enum MTextFlowDirection
+        # 1 = Left to right
+        # 3 = Top to bottom
+        # 5 = By style (the flow direction is inherited from the associated
+        #     text style)
+        "flow_direction": DXFAttr(
+            72,
+            default=1,
+            optional=True,
+            validator=validator.is_one_of({1, 3, 5}),
+            fixer=RETURN_DEFAULT,
+        ),
+        # Content text:
+        # group code 1: text
+        # group code 3: additional text (optional)
+        # Text style name:
+        "style": DXFAttr(
+            7,
+            default="Standard",
+            optional=True,
+            validator=validator.is_valid_table_name,  # do not fix!
+        ),
+        "extrusion": DXFAttr(
+            210,
+            xtype=XType.point3d,
+            default=Z_AXIS,
+            optional=True,
+            validator=validator.is_not_null_vector,
+            fixer=RETURN_DEFAULT,
+        ),
+        # x-axis direction vector (in WCS)
+        # If rotation and text_direction are present, text_direction wins
+        "text_direction": DXFAttr(
+            11,
+            xtype=XType.point3d,
+            default=X_AXIS,
+            optional=True,
+            validator=validator.is_not_null_vector,
+            fixer=RETURN_DEFAULT,
+        ),
+        # Horizontal width of the characters that make up the mtext entity.
+        # This value will always be equal to or less than the value of *width*,
+        # (read-only, ignored if supplied)
+        "rect_width": DXFAttr(42, optional=True),
+        # Vertical height of the mtext entity (read-only, ignored if supplied)
+        "rect_height": DXFAttr(43, optional=True),
+        # Text rotation in degrees -  Error in DXF reference, which claims radians
+        "rotation": DXFAttr(50, default=0, optional=True),
+        # Line spacing style (optional): enum const.MTextLineSpacing
+        # 1 = At least (taller characters will override)
+        # 2 = Exact (taller characters will not override)
+        "line_spacing_style": DXFAttr(
+            73,
+            default=1,
+            optional=True,
+            validator=validator.is_one_of({1, 2}),
+            fixer=RETURN_DEFAULT,
+        ),
+        # Line spacing factor (optional): Percentage of default (3-on-5) line
+        # spacing to be applied. Valid values range from 0.25 to 4.00
+        "line_spacing_factor": DXFAttr(
+            44,
+            default=1,
+            optional=True,
+            validator=validator.is_in_float_range(0.25, 4.00),
+            fixer=validator.fit_into_float_range(0.25, 4.00),
+        ),
+        # Determines how much border there is around the text.
+        # (45) + (90) + (63) all three required, if one of them is used
+        "box_fill_scale": DXFAttr(45, dxfversion="AC1021"),
+        # background fill type flags: enum const.MTextBackgroundColor
+        # 0 = off
+        # 1 = color -> (63) < (421) or (431)
+        # 2 = drawing window color
+        # 3 = use background color (1 & 2)
+        # 16 = text frame ODA specification 20.4.46
+        # 2021-05-14: text frame only is supported bg_fill = 16,
+        # but scaling is always 1.5 and tags 45 + 63 are not present
+        "bg_fill": DXFAttr(
+            90,
+            dxfversion="AC1021",
+            validator=validator.is_valid_bitmask(BG_FILL_MASK),
+            fixer=validator.fix_bitmask(BG_FILL_MASK),
+        ),
+        # background fill color as ACI, required even true color is used
+        "bg_fill_color": DXFAttr(
+            63,
+            dxfversion="AC1021",
+            validator=validator.is_valid_aci_color,
+        ),
+        # 420-429? : background fill color as true color value, (63) also required
+        # but ignored
+        "bg_fill_true_color": DXFAttr(421, dxfversion="AC1021"),
+        # 430-439? : background fill color as color name ???, (63) also required
+        # but ignored
+        "bg_fill_color_name": DXFAttr(431, dxfversion="AC1021"),
+        # background fill color transparency - not used by AutoCAD/BricsCAD
+        "bg_fill_transparency": DXFAttr(441, dxfversion="AC1021"),
+    },
+)
 acdb_mtext_group_codes = group_code_mapping(acdb_mtext)
 
 
@@ -217,16 +239,16 @@ class MTextColumns:
         # Storage for handles of linked MTEXT entities at loading stage:
         self.linked_handles: Optional[List[str]] = None
         # Storage for linked MTEXT entities for DXF versions < R2018:
-        self.linked_columns: List['MText'] = []
+        self.linked_columns: List["MText"] = []
         # R2018+: heights of all columns if auto_height is False
         self.heights: List[float] = []
 
-    def deep_copy(self) -> 'MTextColumns':
+    def deep_copy(self) -> "MTextColumns":
         columns = self.shallow_copy()
         columns.linked_columns = [mtext.copy() for mtext in self.linked_columns]
         return columns
 
-    def shallow_copy(self) -> 'MTextColumns':
+    def shallow_copy(self) -> "MTextColumns":
         columns = MTextColumns()
         columns.count = self.count
         columns.column_type = self.column_type
@@ -242,8 +264,9 @@ class MTextColumns:
         return columns
 
     @classmethod
-    def new_static_columns(cls, count: int, width: float, gutter_width: float,
-                           height: float) -> 'MTextColumns':
+    def new_static_columns(
+        cls, count: int, width: float, gutter_width: float, height: float
+    ) -> "MTextColumns":
         columns = cls()
         columns.column_type = ColumnType.STATIC
         columns.count = int(count)
@@ -256,8 +279,8 @@ class MTextColumns:
 
     @classmethod
     def new_dynamic_auto_height_columns(
-            cls, count: int, width: float, gutter_width: float,
-            height: float) -> 'MTextColumns':
+        cls, count: int, width: float, gutter_width: float, height: float
+    ) -> "MTextColumns":
         columns = cls()
         columns.column_type = ColumnType.DYNAMIC
         columns.auto_height = True
@@ -271,8 +294,8 @@ class MTextColumns:
 
     @classmethod
     def new_dynamic_manual_height_columns(
-            cls, width: float, gutter_width: float,
-            heights: Iterable[float]) -> 'MTextColumns':
+        cls, width: float, gutter_width: float, heights: Iterable[float]
+    ) -> "MTextColumns":
         columns = cls()
         columns.column_type = ColumnType.DYNAMIC
         columns.auto_height = False
@@ -288,8 +311,9 @@ class MTextColumns:
     def update_total_width(self):
         count = self.count
         if count > 0:
-            self.total_width = count * self.width + \
-                               (count - 1) * self.gutter_width
+            self.total_width = (
+                count * self.width + (count - 1) * self.gutter_width
+            )
         else:
             self.total_width = 0.0
 
@@ -307,7 +331,7 @@ class MTextColumns:
     def has_dynamic_manual_height(self) -> bool:
         return self.column_type == ColumnType.DYNAMIC and not self.auto_height
 
-    def link_columns(self, doc: 'Drawing'):
+    def link_columns(self, doc: "Drawing"):
         # DXF R2018+ has no linked MTEXT entities.
         if doc.dxfversion >= DXF2018 or not self.linked_handles:
             return
@@ -315,7 +339,7 @@ class MTextColumns:
         assert db is not None, "entity database not initialized"
         linked_columns = []
         for handle in self.linked_handles:
-            mtext = cast('MText', db.get(handle))
+            mtext = cast("MText", db.get(handle))
             if mtext:
                 linked_columns.append(mtext)
             else:
@@ -334,15 +358,23 @@ class MTextColumns:
             mtext.transform(m)
 
     def acad_mtext_column_info_xdata(self) -> Tags:
-        tags = Tags([
-            DXFTag(1000, "ACAD_MTEXT_COLUMN_INFO_BEGIN"),
-            DXFTag(1070, 75), DXFTag(1070, int(self.column_type)),
-            DXFTag(1070, 79), DXFTag(1070, int(self.auto_height)),
-            DXFTag(1070, 76), DXFTag(1070, self.count),
-            DXFTag(1070, 78), DXFTag(1070, int(self.reversed_column_flow)),
-            DXFTag(1070, 48), DXFTag(1040, self.width),
-            DXFTag(1070, 49), DXFTag(1040, self.gutter_width),
-        ])
+        tags = Tags(
+            [
+                DXFTag(1000, "ACAD_MTEXT_COLUMN_INFO_BEGIN"),
+                DXFTag(1070, 75),
+                DXFTag(1070, int(self.column_type)),
+                DXFTag(1070, 79),
+                DXFTag(1070, int(self.auto_height)),
+                DXFTag(1070, 76),
+                DXFTag(1070, self.count),
+                DXFTag(1070, 78),
+                DXFTag(1070, int(self.reversed_column_flow)),
+                DXFTag(1070, 48),
+                DXFTag(1040, self.width),
+                DXFTag(1070, 49),
+                DXFTag(1040, self.gutter_width),
+            ]
+        )
         if self.has_dynamic_manual_height:
             tags.extend([DXFTag(1070, 50), DXFTag(1070, len(self.heights))])
             tags.extend(DXFTag(1040, height) for height in self.heights)
@@ -350,17 +382,21 @@ class MTextColumns:
         return tags
 
     def acad_mtext_columns_xdata(self) -> Tags:
-        tags = Tags([
-            DXFTag(1000, "ACAD_MTEXT_COLUMNS_BEGIN"),
-            DXFTag(1070, 47), DXFTag(1070, self.count),  # incl. main MTEXT
-        ])
+        tags = Tags(
+            [
+                DXFTag(1000, "ACAD_MTEXT_COLUMNS_BEGIN"),
+                DXFTag(1070, 47),
+                DXFTag(1070, self.count),  # incl. main MTEXT
+            ]
+        )
         tags.extend(  # writes only (count - 1) handles!
-            DXFTag(1005, handle) for handle in self.mtext_handles())
+            DXFTag(1005, handle) for handle in self.mtext_handles()
+        )
         tags.append(DXFTag(1000, "ACAD_MTEXT_COLUMNS_END"))
         return tags
 
     def mtext_handles(self) -> List[str]:
-        """ Returns a list of all linked MTEXT handles. """
+        """Returns a list of all linked MTEXT handles."""
         if self.linked_handles:
             return self.linked_handles
         handles = []
@@ -369,32 +405,37 @@ class MTextColumns:
                 handle = column.dxf.handle
                 if handle is None:
                     raise const.DXFStructureError(
-                        "Linked MTEXT column has no handle.")
+                        "Linked MTEXT column has no handle."
+                    )
                 handles.append(handle)
             else:
                 raise const.DXFStructureError("Linked MTEXT column deleted!")
         return handles
 
     def acad_mtext_defined_height_xdata(self) -> Tags:
-        return Tags([
-            DXFTag(1000, "ACAD_MTEXT_DEFINED_HEIGHT_BEGIN"),
-            DXFTag(1070, 46), DXFTag(1040, self.defined_height),
-            DXFTag(1000, "ACAD_MTEXT_DEFINED_HEIGHT_END"),
-        ])
+        return Tags(
+            [
+                DXFTag(1000, "ACAD_MTEXT_DEFINED_HEIGHT_BEGIN"),
+                DXFTag(1070, 46),
+                DXFTag(1040, self.defined_height),
+                DXFTag(1000, "ACAD_MTEXT_DEFINED_HEIGHT_END"),
+            ]
+        )
 
 
 def load_columns_from_embedded_object(
-        dxf: 'DXFNamespace', embedded_obj: Tags) -> MTextColumns:
+    dxf: "DXFNamespace", embedded_obj: Tags
+) -> MTextColumns:
     columns = MTextColumns()
-    insert = dxf.get('insert')  # mandatory attribute, but what if ...
-    text_direction = dxf.get('text_direction')  # optional attribute
-    reference_column_width = dxf.get('width')  # optional attribute
+    insert = dxf.get("insert")  # mandatory attribute, but what if ...
+    text_direction = dxf.get("text_direction")  # optional attribute
+    reference_column_width = dxf.get("width")  # optional attribute
     for code, value in embedded_obj:
         # Update duplicated attributes if MTEXT attributes are not set:
         if code == 10 and text_direction is None:
             dxf.text_direction = Vec3(value)
             # rotation is not needed anymore:
-            dxf.discard('rotation')
+            dxf.discard("rotation")
         elif code == 11 and insert is None:
             dxf.insert = Vec3(value)
         elif code == 40 and reference_column_width is None:
@@ -444,7 +485,8 @@ def load_columns_from_embedded_object(
 def load_mtext_column_info(tags: Tags) -> Optional[MTextColumns]:
     try:  # has column info?
         start, end = find_begin_and_end_of_encoded_xdata_tags(
-            "ACAD_MTEXT_COLUMN_INFO", tags)
+            "ACAD_MTEXT_COLUMN_INFO", tags
+        )
     except NotFoundException:
         return None
     columns = MTextColumns()
@@ -486,7 +528,8 @@ def load_mtext_linked_column_handles(tags: Tags) -> List[str]:
     handles = []
     try:
         start, end = find_begin_and_end_of_encoded_xdata_tags(
-            "ACAD_MTEXT_COLUMNS", tags)
+            "ACAD_MTEXT_COLUMNS", tags
+        )
     except NotFoundException:
         return handles
     for code, value in tags[start:end]:
@@ -509,7 +552,8 @@ def load_mtext_defined_height(tags: Tags) -> float:
     height = 0.0
     try:
         start, end = find_begin_and_end_of_encoded_xdata_tags(
-            "ACAD_MTEXT_DEFINED_HEIGHT", tags)
+            "ACAD_MTEXT_DEFINED_HEIGHT", tags
+        )
     except NotFoundException:
         return height
 
@@ -519,8 +563,9 @@ def load_mtext_defined_height(tags: Tags) -> float:
     return height
 
 
-def load_columns_from_xdata(dxf: 'DXFNamespace',
-                            xdata: XData) -> Optional[MTextColumns]:
+def load_columns_from_xdata(
+    dxf: "DXFNamespace", xdata: XData
+) -> Optional[MTextColumns]:
     # The ACAD section in XDATA of the main MTEXT entity stores all column
     # related information:
     if "ACAD" in xdata:
@@ -570,7 +615,8 @@ def extract_mtext_text_frame_handles(xdata: XData) -> List[str]:
 
     try:
         start, end = find_begin_and_end_of_encoded_xdata_tags(
-            "ACAD_MTEXT_TEXT_BORDERS", acad)
+            "ACAD_MTEXT_TEXT_BORDERS", acad
+        )
     except NotFoundException:
         return handles
 
@@ -588,8 +634,9 @@ def extract_mtext_text_frame_handles(xdata: XData) -> List[str]:
 
 @factory.register_entity
 class MText(DXFGraphic):
-    """ DXF MTEXT entity """
-    DXFTYPE = 'MTEXT'
+    """DXF MTEXT entity"""
+
+    DXFTYPE = "MTEXT"
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mtext)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
@@ -601,7 +648,7 @@ class MText(DXFGraphic):
 
     @property
     def columns(self) -> Optional[MTextColumns]:
-        """ Returns a copy of the column configuration. """
+        """Returns a copy of the column configuration."""
         # The column configuration is deliberately not editable.
         # Can't prevent access to _columns, but you are on your own if do this!
         return self._columns.shallow_copy() if self._columns else None
@@ -610,19 +657,21 @@ class MText(DXFGraphic):
     def has_columns(self) -> bool:
         return self._columns is not None
 
-    def _copy_data(self, entity: 'MText') -> None:
+    def _copy_data(self, entity: "MText") -> None:
         entity.text = self.text
         if self.has_columns:
             # copies also the linked MTEXT column entities!
             entity._columns = self._columns.deep_copy()
 
     def load_dxf_attribs(
-            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        self, processor: SubclassProcessor = None
+    ) -> "DXFNamespace":
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = Tags(self.load_mtext_content(processor.subclass_by_index(2)))
             processor.fast_load_dxfattribs(
-                dxf, acdb_mtext_group_codes, subclass=tags, recover=True)
+                dxf, acdb_mtext_group_codes, subclass=tags, recover=True
+            )
             if processor.embedded_objects:
                 obj = processor.embedded_objects[0]
                 self._columns = load_columns_from_embedded_object(dxf, obj)
@@ -631,7 +680,7 @@ class MText(DXFGraphic):
         self.embedded_objects = None  # todo: remove
         return dxf
 
-    def post_load_hook(self, doc: 'Drawing') -> Optional[Callable]:
+    def post_load_hook(self, doc: "Drawing") -> Optional[Callable]:
         def destroy_text_frame_entity():
             entitydb = doc.entitydb
             if entitydb:
@@ -641,7 +690,7 @@ class MText(DXFGraphic):
                         text_frame.destroy()
 
         def unlink_mtext_columns_from_layout():
-            """ Unlinked MTEXT entities from layout entity space. """
+            """Unlinked MTEXT entities from layout entity space."""
             layout = self.get_layout()
             if layout is not None:
                 for mtext in self._columns.linked_columns:
@@ -661,8 +710,8 @@ class MText(DXFGraphic):
             return unlink_mtext_columns_from_layout
         return None
 
-    def preprocess_export(self, tagwriter: 'TagWriter') -> bool:
-        """ Pre requirement check and pre processing for export.
+    def preprocess_export(self, tagwriter: "TagWriter") -> bool:
+        """Pre requirement check and pre processing for export.
 
         Returns False if MTEXT should not be exported at all.
 
@@ -672,36 +721,56 @@ class MText(DXFGraphic):
         if columns and tagwriter.dxfversion < const.DXF2018:
             if columns.count != len(columns.linked_columns) + 1:
                 logger.debug(
-                    f"{str(self)}: column count does not match linked columns")
+                    f"{str(self)}: column count does not match linked columns"
+                )
                 return False
             if not all(column.is_alive for column in columns.linked_columns):
-                logger.debug(
-                    f"{str(self)}: contains destroyed linked columns")
+                logger.debug(f"{str(self)}: contains destroyed linked columns")
                 return False
             self.sync_common_attribs_of_linked_columns()
         return True
 
-    def export_dxf(self, tagwriter: 'TagWriter') -> None:
+    def export_dxf(self, tagwriter: "TagWriter") -> None:
         super().export_dxf(tagwriter)
         # Linked MTEXT entities are not stored in the layout entity space!
         if self.has_columns and tagwriter.dxfversion < const.DXF2018:
             self.export_linked_entities(tagwriter)
 
-    def export_entity(self, tagwriter: 'TagWriter') -> None:
-        """ Export entity specific data as DXF tags. """
+    def export_entity(self, tagwriter: "TagWriter") -> None:
+        """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_mtext.name)
-        self.dxf.export_dxf_attribs(tagwriter, [
-            'insert', 'char_height', 'width', 'defined_height',
-            'attachment_point', 'flow_direction',
-        ])
+        self.dxf.export_dxf_attribs(
+            tagwriter,
+            [
+                "insert",
+                "char_height",
+                "width",
+                "defined_height",
+                "attachment_point",
+                "flow_direction",
+            ],
+        )
         self.export_mtext_content(tagwriter)
-        self.dxf.export_dxf_attribs(tagwriter, [
-            'style', 'extrusion', 'text_direction', 'rect_width', 'rect_height',
-            'rotation', 'line_spacing_style', 'line_spacing_factor',
-            'box_fill_scale', 'bg_fill', 'bg_fill_color', 'bg_fill_true_color',
-            'bg_fill_color_name', 'bg_fill_transparency',
-        ])
+        self.dxf.export_dxf_attribs(
+            tagwriter,
+            [
+                "style",
+                "extrusion",
+                "text_direction",
+                "rect_width",
+                "rect_height",
+                "rotation",
+                "line_spacing_style",
+                "line_spacing_factor",
+                "box_fill_scale",
+                "bg_fill",
+                "bg_fill_color",
+                "bg_fill_true_color",
+                "bg_fill_color_name",
+                "bg_fill_transparency",
+            ],
+        )
         columns = self._columns
         if columns is None or columns.column_type == ColumnType.NONE:
             return
@@ -712,7 +781,7 @@ class MText(DXFGraphic):
             self.set_column_xdata()
             self.set_linked_columns_xdata()
 
-    def load_mtext_content(self, tags: Tags) -> Iterable['DXFTag']:
+    def load_mtext_content(self, tags: Tags) -> Iterable["DXFTag"]:
         tail = ""
         parts = []
         for tag in tags:
@@ -725,7 +794,7 @@ class MText(DXFGraphic):
         parts.append(tail)
         self.text = escape_dxf_line_endings("".join(parts))
 
-    def export_mtext_content(self, tagwriter: 'TagWriter') -> None:
+    def export_mtext_content(self, tagwriter: "TagWriter") -> None:
         txt = escape_dxf_line_endings(self.text)
         str_chunks = split_mtext_string(txt, size=250)
         if len(str_chunks) == 0:
@@ -734,11 +803,11 @@ class MText(DXFGraphic):
             tagwriter.write_tag2(3, str_chunks.pop(0))
         tagwriter.write_tag2(1, str_chunks[0])
 
-    def export_embedded_object(self, tagwriter: 'TagWriter'):
+    def export_embedded_object(self, tagwriter: "TagWriter"):
         dxf = self.dxf
         cols = self._columns
 
-        tagwriter.write_tag2(101, 'Embedded Object')
+        tagwriter.write_tag2(101, "Embedded Object")
         tagwriter.write_tag2(70, 1)  # unknown meaning
         tagwriter.write_tag(dxftag(10, dxf.text_direction))
         tagwriter.write_tag(dxftag(11, dxf.insert))
@@ -761,17 +830,19 @@ class MText(DXFGraphic):
         for height in cols.heights:
             tagwriter.write_tag2(46, height)
 
-    def export_linked_entities(self, tagwriter: 'TagWriter'):
+    def export_linked_entities(self, tagwriter: "TagWriter"):
         for mtext in self._columns.linked_columns:
             if mtext.dxf.handle is None:
                 raise const.DXFStructureError(
-                    "Linked MTEXT column has no handle.")
+                    "Linked MTEXT column has no handle."
+                )
             # Export linked columns as separated DXF entities:
             mtext.export_dxf(tagwriter)
 
     def sync_common_attribs_of_linked_columns(self):
-        common_attribs = self.dxfattribs(drop={
-            'handle', 'insert', 'rect_width', 'rect_height'})
+        common_attribs = self.dxfattribs(
+            drop={"handle", "insert", "rect_width", "rect_height"}
+        )
         for mtext in self._columns.linked_columns:
             mtext.update_dxf_attribs(common_attribs)
 
@@ -787,44 +858,48 @@ class MText(DXFGraphic):
         xdata = self.xdata
         # Replace existing column data and therefore also removes
         # ACAD_MTEXT_TEXT_BORDERS information!
-        xdata.discard('ACAD')
-        xdata.add('ACAD', acad)
+        xdata.discard("ACAD")
+        xdata.add("ACAD", acad)
 
     def set_linked_columns_xdata(self):
         cols = self._columns
         for column in cols.linked_columns:
-            column.discard_xdata('ACAD')
+            column.discard_xdata("ACAD")
         if not cols.has_dynamic_manual_height:
             tags = cols.acad_mtext_defined_height_xdata()
             for column in cols.linked_columns:
-                column.set_xdata('ACAD', tags)
+                column.set_xdata("ACAD", tags)
 
     def get_rotation(self) -> float:
-        """ Get text rotation in degrees, independent if it is defined by
+        """Get text rotation in degrees, independent if it is defined by
         :attr:`dxf.rotation` or :attr:`dxf.text_direction`.
 
         """
-        if self.dxf.hasattr('text_direction'):
+        if self.dxf.hasattr("text_direction"):
             vector = self.dxf.text_direction
             radians = math.atan2(vector[1], vector[0])  # ignores z-axis
             rotation = math.degrees(radians)
         else:
-            rotation = self.dxf.get('rotation', 0)
+            rotation = self.dxf.get("rotation", 0)
         return rotation
 
-    def set_rotation(self, angle: float) -> 'MText':
-        """ Set attribute :attr:`rotation` to `angle` (in degrees) and deletes
+    def set_rotation(self, angle: float) -> "MText":
+        """Set attribute :attr:`rotation` to `angle` (in degrees) and deletes
         :attr:`dxf.text_direction` if present.
 
         """
         # text_direction has higher priority than rotation, therefore delete it
-        self.dxf.discard('text_direction')
+        self.dxf.discard("text_direction")
         self.dxf.rotation = angle
         return self  # fluent interface
 
-    def set_location(self, insert: 'Vertex', rotation: float = None,
-                     attachment_point: int = None) -> 'MText':
-        """ Set attributes :attr:`dxf.insert`, :attr:`dxf.rotation` and
+    def set_location(
+        self,
+        insert: "Vertex",
+        rotation: float = None,
+        attachment_point: int = None,
+    ) -> "MText":
+        """Set attributes :attr:`dxf.insert`, :attr:`dxf.rotation` and
         :attr:`dxf.attachment_point`, ``None`` for :attr:`dxf.rotation` or
         :attr:`dxf.attachment_point` preserves the existing value.
 
@@ -836,9 +911,13 @@ class MText(DXFGraphic):
             self.dxf.attachment_point = attachment_point
         return self  # fluent interface
 
-    def set_bg_color(self, color: Union[int, str, Tuple[int, int, int], None],
-                     scale: float = 1.5, text_frame=False):
-        """ Set background color as :ref:`ACI` value or as name string or as RGB
+    def set_bg_color(
+        self,
+        color: Union[int, str, Tuple[int, int, int], None],
+        scale: float = 1.5,
+        text_frame=False,
+    ):
+        """Set background color as :ref:`ACI` value or as name string or as RGB
         tuple ``(r, g, b)``.
 
         Use special color name ``canvas``, to set background color to canvas
@@ -860,19 +939,19 @@ class MText(DXFGraphic):
         if 1 <= scale <= 5:
             self.dxf.box_fill_scale = scale
         else:
-            raise ValueError('argument scale has to be in range from 1 to 5.')
+            raise ValueError("argument scale has to be in range from 1 to 5.")
 
         text_frame = const.MTEXT_TEXT_FRAME if text_frame else 0
         if color is None:
-            self.dxf.discard('bg_fill')
-            self.dxf.discard('box_fill_scale')
-            self.dxf.discard('bg_fill_color')
-            self.dxf.discard('bg_fill_true_color')
-            self.dxf.discard('bg_fill_color_name')
+            self.dxf.discard("bg_fill")
+            self.dxf.discard("box_fill_scale")
+            self.dxf.discard("bg_fill_color")
+            self.dxf.discard("bg_fill_true_color")
+            self.dxf.discard("bg_fill_color_name")
             if text_frame:
                 # special case, text frame only with scaling factor = 1.5
                 self.dxf.bg_fill = 16
-        elif color == 'canvas':  # special case for use background color
+        elif color == "canvas":  # special case for use background color
             self.dxf.bg_fill = const.MTEXT_BG_CANVAS_COLOR | text_frame
             self.dxf.bg_fill_color = 0  # required but ignored
         else:
@@ -887,15 +966,15 @@ class MText(DXFGraphic):
                 self.dxf.bg_fill_true_color = rgb2int(color)
         return self  # fluent interface
 
-    def __iadd__(self, text: str) -> 'MText':
-        """ Append `text` to existing content (:attr:`text` attribute). """
+    def __iadd__(self, text: str) -> "MText":
+        """Append `text` to existing content (:attr:`text` attribute)."""
         self.text += text
         return self
 
     append = __iadd__
 
     def get_text_direction(self) -> Vec3:
-        """ Returns the horizontal text direction as :class:`~ezdxf.math.Vec3`
+        """Returns the horizontal text direction as :class:`~ezdxf.math.Vec3`
         object, even if only the text rotation is defined.
 
         """
@@ -911,16 +990,15 @@ class MText(DXFGraphic):
         return X_AXIS
 
     def convert_rotation_to_text_direction(self):
-        """ Convert text rotation into text direction and discard text rotation.
-        """
+        """Convert text rotation into text direction and discard text rotation."""
         dxf = self.dxf
-        if dxf.hasattr('rotation'):
-            if not dxf.hasattr('text_direction'):
+        if dxf.hasattr("rotation"):
+            if not dxf.hasattr("text_direction"):
                 dxf.text_direction = self.get_text_direction()
-            dxf.discard('rotation')
+            dxf.discard("rotation")
 
     def ucs(self) -> UCS:
-        """ Returns the :class:`~ezdxf.math.UCS` of the :class:`MText` entity,
+        """Returns the :class:`~ezdxf.math.UCS` of the :class:`MText` entity,
         defined by the insert location (origin), the text direction or rotation
         (x-axis) and the extrusion vector (z-axis).
 
@@ -932,8 +1010,8 @@ class MText(DXFGraphic):
             uz=dxf.extrusion,
         )
 
-    def transform(self, m: Matrix44) -> 'MText':
-        """ Transform the MTEXT entity by transformation matrix `m` inplace. """
+    def transform(self, m: Matrix44) -> "MText":
+        """Transform the MTEXT entity by transformation matrix `m` inplace."""
         dxf = self.dxf
         old_extrusion = Vec3(dxf.extrusion)
         new_extrusion, _ = transform_extrusion(old_extrusion, m)
@@ -948,7 +1026,7 @@ class MText(DXFGraphic):
         oblique = new_text_direction.angle_between(new_char_height_vec)
         dxf.char_height = new_char_height_vec.magnitude * math.sin(oblique)
 
-        if dxf.hasattr('width'):
+        if dxf.hasattr("width"):
             width_vec = old_text_direction.normalize(dxf.width)
             dxf.width = m.transform_direction(width_vec).magnitude
 
@@ -957,14 +1035,16 @@ class MText(DXFGraphic):
         dxf.extrusion = new_extrusion
         if self.has_columns:
             hscale = m.transform_direction(
-                old_text_direction.normalize()).magnitude
+                old_text_direction.normalize()
+            ).magnitude
             vscale = m.transform_direction(
-                old_vertical_direction.normalize()).magnitude
+                old_vertical_direction.normalize()
+            ).magnitude
             self._columns.transform(m, hscale, vscale)
         return self
 
     def plain_text(self, split=False) -> Union[List[str], str]:
-        """ Returns the text content without inline formatting codes.
+        """Returns the text content without inline formatting codes.
 
         Args:
             split: split content text at line breaks if ``True`` and
@@ -974,7 +1054,7 @@ class MText(DXFGraphic):
         return plain_mtext(self.text, split=split)
 
     def all_columns_plain_text(self, split=False) -> Union[List[str], str]:
-        """ Returns the text content of all columns without inline formatting
+        """Returns the text content of all columns without inline formatting
         codes.
 
         Args:
@@ -1009,7 +1089,7 @@ class MText(DXFGraphic):
             return merged_content()
 
     def all_columns_raw_content(self) -> str:
-        """ Returns the text content of all columns as a single string
+        """Returns the text content of all columns as a single string
         including the inline formatting codes.
 
         .. versionadded: 0.17
@@ -1021,8 +1101,8 @@ class MText(DXFGraphic):
                 content.append(column.text)
         return "".join(content)
 
-    def audit(self, auditor: 'Auditor'):
-        """ Validity check. """
+    def audit(self, auditor: "Auditor"):
+        """Validity check."""
         if not self.is_alive:
             return
         if self.dxf.owner is not None:
@@ -1047,8 +1127,8 @@ class MText(DXFGraphic):
 
     # Linked MTEXT columns are not the same structure as
     # POLYLINE & INSERT with sub-entities and SEQEND :(
-    def add_sub_entities_to_entitydb(self, db: 'EntityDB') -> None:
-        """ Add linked columns (MTEXT) entities to entity database `db`,
+    def add_sub_entities_to_entitydb(self, db: "EntityDB") -> None:
+        """Add linked columns (MTEXT) entities to entity database `db`,
         called from EntityDB. (internal API)
 
         """
@@ -1059,23 +1139,23 @@ class MText(DXFGraphic):
                     column.doc = doc
                     db.add(column)
 
-    def process_sub_entities(self, func: Callable[['DXFEntity'], None]):
-        """ Call `func` for linked columns. (internal API)
-        """
+    def process_sub_entities(self, func: Callable[["DXFEntity"], None]):
+        """Call `func` for linked columns. (internal API)"""
         if self.is_alive and self._columns:
             for entity in self._columns.linked_columns:
                 if entity.is_alive:
                     func(entity)
 
-    def setup_columns(self, columns: MTextColumns,
-                      linked: bool = False) -> None:
+    def setup_columns(
+        self, columns: MTextColumns, linked: bool = False
+    ) -> None:
         assert columns.column_type != ColumnType.NONE
         assert columns.count > 0, "one or more columns required"
         assert columns.width > 0, "column width has to be > 0"
         assert columns.gutter_width >= 0, "gutter width has to be >= 0"
 
         if self.has_columns:
-            raise const.DXFStructureError('Column setup already exist.')
+            raise const.DXFStructureError("Column setup already exist.")
         self._columns = columns
         self.dxf.width = columns.width
         self.dxf.defined_height = columns.defined_height
@@ -1087,16 +1167,16 @@ class MText(DXFGraphic):
             self._create_linked_columns()
 
     def _create_linked_columns(self) -> None:
-        """ Create linked MTEXT columns for DXF versions before R2018. """
+        """Create linked MTEXT columns for DXF versions before R2018."""
         # creates virtual MTEXT entities
         dxf = self.dxf
-        attribs = self.dxfattribs(drop={'handle', 'owner'})
+        attribs = self.dxfattribs(drop={"handle", "owner"})
         doc = self.doc
         cols = self._columns
 
-        insert = dxf.get('insert', Vec3())
-        default_direction = Vec3.from_deg_angle(dxf.get('rotation', 0))
-        text_direction = Vec3(dxf.get('text_direction', default_direction))
+        insert = dxf.get("insert", Vec3())
+        default_direction = Vec3.from_deg_angle(dxf.get("rotation", 0))
+        text_direction = Vec3(dxf.get("text_direction", default_direction))
         offset = text_direction.normalize(cols.width + cols.gutter_width)
         linked_columns = cols.linked_columns
         for _ in range(cols.count - 1):
@@ -1105,14 +1185,14 @@ class MText(DXFGraphic):
             column.dxf.insert = insert
             linked_columns.append(column)
 
-    def remove_dependencies(self, other: 'Drawing' = None) -> None:
+    def remove_dependencies(self, other: "Drawing" = None) -> None:
         if not self.is_alive:
             return
 
         super().remove_dependencies()
-        has_style = (bool(other) and (self.dxf.style in other.styles))
+        has_style = bool(other) and (self.dxf.style in other.styles)
         if not has_style:
-            self.dxf.style = 'Standard'
+            self.dxf.style = "Standard"
 
         if self.has_columns:
             for column in self._columns.linked_columns:
