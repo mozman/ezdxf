@@ -324,8 +324,6 @@ def qsave(
     fg: Optional[Color] = None,
     dpi: int = 300,
     backend: str = 'agg',
-    ltype=None,  # deprecated
-    lineweight_scaling=None,  # deprecated
     params: dict = None,
     filter_func: FilterFunc = None,
 ) -> None:
@@ -350,8 +348,6 @@ def qsave(
         backend: the matplotlib rendering backend to use (agg, cairo, svg etc)
             (see documentation for `matplotlib.use() <https://matplotlib.org/3.1.1/api/matplotlib_configuration_api.html?highlight=matplotlib%20use#matplotlib.use>`_
             for a complete list of backends)
-        ltype: deprecated, use :code:`params={"linetype_renderer": "ezdxf"}`
-        lineweight_scaling: deprecated, use :code:`params={"lineweight_scaling": 0}`
         params: matplotlib backend parameters
         filter_func: filter function which takes a DXFGraphic object as input
             and returns ``True`` if the entity should be drawn or ``False`` if
@@ -359,13 +355,14 @@ def qsave(
 
     .. versionadded:: 0.14
 
-    .. versionchanged:: 0.15
-        deprecated arguments `ltype` and `lineweight_scaling` will be removed in
-        v0.17, added argument `params` to pass parameters to the matplotlib
-        backend.
+    .. versionadded:: 0.15
+        added argument `params` to pass parameters to the matplotlib backend
+
+    .. versionchanged:: 0.16
+        removed arguments `ltype` and `lineweight_scaling`
 
     .. versionadded:: 0.17
-        argument `filter_func` to filter DXF entities
+        added argument `filter_func` to filter DXF entities
 
     """
     from .properties import RenderContext
@@ -382,19 +379,6 @@ def qsave(
     if 'min_lineweight' not in params:
         # If not set by user, use ~1 pixel
         params['min_lineweight'] = 72 / dpi
-
-    if ltype is not None:
-        params['linetype_renderer'] = ltype
-        warnings.warn(
-            'The "ltype" argument is deprecated use the "params" dict '
-            'to pass arguments to the MatplotlibBackend, '
-            'will be removed in v0.17.', DeprecationWarning)
-    if lineweight_scaling is not None:
-        params['lineweight_scaling'] = lineweight_scaling
-        warnings.warn(
-            'The "lineweight_scaling" argument is deprecated use the '
-            '"params" dict to pass arguments to the MatplotlibBackend, '
-            'will be removed in v0.17.', DeprecationWarning)
 
     try:
         fig: plt.Figure = plt.figure()
