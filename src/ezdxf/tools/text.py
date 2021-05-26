@@ -506,7 +506,7 @@ def split_mtext_string(s: str, size: int = 250) -> List[str]:
     chunks = []
     pos = 0
     while True:
-        chunk = s[pos : pos + size]
+        chunk = s[pos: pos + size]
         if len(chunk):
             if len(chunk) < size:
                 chunks.append(chunk)
@@ -519,6 +519,51 @@ def split_mtext_string(s: str, size: int = 250) -> List[str]:
             chunks.append(chunk)
         else:
             return chunks
+
+
+def plain_mtext2(
+    text: str,
+    split=False,
+    tabsize: int = 4,
+) -> Union[List[str], str]:
+    """Returns the plain MTEXT content as a single string or a list of
+    strings if `split` is ``True``. Replaces ``\\P`` by ``\\n`` and removes
+    other controls chars and inline codes.
+
+    Args:
+        text: MTEXT content string
+        split: split content at line endings ``\\P``
+
+    """
+    content: List[str] = []
+    paragraph: List[str] = []
+
+    # localize enum to speed up inner loop
+    _, word, stack, space, nbsp, tabulator, new_paragraph, *_ = TokenType
+    tab_replacement = " " * tabsize
+
+    for token in MTextParser(text):
+        t = token.type
+        if t == word:
+            paragraph.append(token.data)
+        elif t == space or t == nbsp:
+            paragraph.append(" ")
+        elif t == new_paragraph:
+            # NEW_COLUMN is not a line break!
+            content.append("".join(paragraph))
+            paragraph.clear()
+        elif t == tabulator:
+            paragraph.append(tab_replacement)
+        elif t == stack:
+            upr, lwr, divider = token.data
+            paragraph.append(upr + divider + lwr)
+
+    if paragraph:
+        content.append("".join(paragraph))
+    if split:
+        return content
+    else:
+        return "\n".join(content)
 
 
 def escape_dxf_line_endings(text: str) -> str:
@@ -935,7 +980,7 @@ class MTextEditor:
         items.append(
             "".join(
                 b + self.TAB + c + self.NEW_PARAGRAPH
-                for b, c in zip(bullets, content)
+                    for b, c in zip(bullets, content)
             )
         )
         return self.group(str(items))
@@ -1089,7 +1134,7 @@ class TextScanner:
 
         """
 
-        scanner = self.__class__(self._text[self._index :])
+        scanner = self.__class__(self._text[self._index:])
         while scanner.has_data:
             c = scanner.peek()
             if escape and c == "\\" and scanner.peek(1) == char:
@@ -1104,11 +1149,11 @@ class TextScanner:
         """Returns the substring from the current location until index < stop."""
         if stop < self._index:
             raise IndexError(stop)
-        return self._text[self._index : stop]
+        return self._text[self._index: stop]
 
     def tail(self) -> str:
         """Returns the unprocessed part of the content."""
-        return self._text[self._index :]
+        return self._text[self._index:]
 
 
 class TokenType(enum.IntEnum):
@@ -1489,7 +1534,13 @@ class MTextParser:
                         paragraph_scanner.consume()
                         tab_stops.append(type_ + parse_float_expr())
                     else:
-                        tab_stops.append(parse_float())
+                        float_expr = parse_float_expr()
+                        if float_expr:
+                            tab_stops.append(float(float_expr))
+                        else:
+                            # invalid float expression, consume invalid letter
+                            # and try again:
+                            paragraph_scanner.consume()
         ctx.paragraph = ParagraphProperties(
             indent, left, right, align, tuple(tab_stops)
         )
