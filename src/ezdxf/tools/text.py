@@ -3,15 +3,30 @@
 #  All tools in this module have to be independent from DXF entities!
 import enum
 from typing import (
-    List, Iterable, Tuple, TYPE_CHECKING, Union, Optional, Callable, NamedTuple,
+    List,
+    Iterable,
+    Tuple,
+    TYPE_CHECKING,
+    Union,
+    Optional,
+    Callable,
+    NamedTuple,
 )
 import re
 import math
 
 from ezdxf.lldxf import validator, const
 from ezdxf.lldxf.const import (
-    MTextParagraphAlignment, MTextLineAlignment, MTextStroke,
-    LEFT, CENTER, RIGHT, BASELINE, BOTTOM, MIDDLE, TOP,
+    MTextParagraphAlignment,
+    MTextLineAlignment,
+    MTextStroke,
+    LEFT,
+    CENTER,
+    RIGHT,
+    BASELINE,
+    BOTTOM,
+    MIDDLE,
+    TOP,
 )
 from ezdxf.math import Vec3, Vec2, Vertex
 from .fonts import FontMeasurements, AbstractFont, FontFace
@@ -36,7 +51,7 @@ MTEXT_ALIGN_FLAGS = {
 
 
 class TextLine:
-    """ Helper class which represents a single line text entity
+    """Helper class which represents a single line text entity
     (e.g. :class:`~ezdxf.entities.Text`).
 
     Args:
@@ -46,50 +61,52 @@ class TextLine:
 
     """
 
-    def __init__(self, text: str, font: 'AbstractFont'):
+    def __init__(self, text: str, font: "AbstractFont"):
         self._font = font
         self._text_width: float = font.text_width(text)
         self._stretch_x: float = 1.0
         self._stretch_y: float = 1.0
 
     def stretch(self, alignment: str, p1: Vec3, p2: Vec3) -> None:
-        """ Set stretch factors for "FIT" and "ALIGNED" alignments to fit the
+        """Set stretch factors for "FIT" and "ALIGNED" alignments to fit the
         text between `p1` and `p2`, only the distance between these points is
         important. Other given `alignment` values are ignore.
 
         """
         sx: float = 1.0
         sy: float = 1.0
-        if alignment in ('FIT', 'ALIGNED'):
+        if alignment in ("FIT", "ALIGNED"):
             defined_length: float = (p2 - p1).magnitude
             if self._text_width > 1e-9:
                 sx = defined_length / self._text_width
-                if alignment == 'ALIGNED':
+                if alignment == "ALIGNED":
                     sy = sx
         self._stretch_x = sx
         self._stretch_y = sy
 
     @property
     def width(self) -> float:
-        """ Returns the final (stretched) text width. """
+        """Returns the final (stretched) text width."""
         return self._text_width * self._stretch_x
 
     @property
     def height(self) -> float:
-        """ Returns the final (stretched) text height. """
+        """Returns the final (stretched) text height."""
         return self._font.measurements.total_height * self._stretch_y
 
     def font_measurements(self) -> FontMeasurements:
-        """ Returns the scaled font measurements. """
+        """Returns the scaled font measurements."""
         return self._font.measurements.scale(self._stretch_y)
 
-    def baseline_vertices(self,
-                          insert: Vertex,
-                          halign: int = 0,
-                          valign: int = 0,
-                          angle: float = 0,
-                          scale: Tuple[float, float] = (1, 1)) -> List[Vec3]:
-        """ Returns the left and the right baseline vertex of the text line.
+    def baseline_vertices(
+        self,
+        insert: Vertex,
+        halign: int = 0,
+        valign: int = 0,
+        angle: float = 0,
+        scale: Tuple[float, float] = (1, 1),
+    ) -> List[Vec3]:
+        """Returns the left and the right baseline vertex of the text line.
 
         Args:
             insert: insertion location
@@ -109,14 +126,16 @@ class TextLine:
         # (near) the y-coordinate=0.
         return TextLine.transform_2d(vertices, insert, shift, angle, scale)
 
-    def corner_vertices(self,
-                        insert: Vertex,
-                        halign: int = 0,
-                        valign: int = 0,
-                        angle: float = 0,
-                        scale: Tuple[float, float] = (1, 1),
-                        oblique: float = 0) -> List[Vec3]:
-        """ Returns the corner vertices of the text line in the order
+    def corner_vertices(
+        self,
+        insert: Vertex,
+        halign: int = 0,
+        valign: int = 0,
+        angle: float = 0,
+        scale: Tuple[float, float] = (1, 1),
+        oblique: float = 0,
+    ) -> List[Vec3]:
+        """Returns the corner vertices of the text line in the order
         bottom left, bottom right, top right, top left.
 
         Args:
@@ -137,20 +156,24 @@ class TextLine:
         ]
         shift = self._shift_vector(halign, valign, fm)
         return TextLine.transform_2d(
-            vertices, insert, shift, angle, scale, oblique)
+            vertices, insert, shift, angle, scale, oblique
+        )
 
-    def _shift_vector(self, halign: int, valign: int,
-                      fm: FontMeasurements) -> Tuple[float, float]:
+    def _shift_vector(
+        self, halign: int, valign: int, fm: FontMeasurements
+    ) -> Tuple[float, float]:
         return _shift_x(self.width, halign), _shift_y(fm, valign)
 
     @staticmethod
-    def transform_2d(vertices: Iterable[Vertex],
-                     insert: Vertex = Vec3(0, 0, 0),
-                     shift: Tuple[float, float] = (0, 0),
-                     rotation: float = 0,
-                     scale: Tuple[float, float] = (1, 1),
-                     oblique: float = 0) -> List[Vec3]:
-        """ Transform any vertices from the text line located at the base
+    def transform_2d(
+        vertices: Iterable[Vertex],
+        insert: Vertex = Vec3(0, 0, 0),
+        shift: Tuple[float, float] = (0, 0),
+        rotation: float = 0,
+        scale: Tuple[float, float] = (1, 1),
+        oblique: float = 0,
+    ) -> List[Vec3]:
+        """Transform any vertices from the text line located at the base
         location at (0, 0) and alignment "LEFT".
 
         Args:
@@ -221,8 +244,8 @@ def _shift_y(fm: FontMeasurements, valign: int) -> float:
     return -fm.bottom
 
 
-def unified_alignment(entity: Union['Text', 'MText']) -> Tuple[int, int]:
-    """ Return unified horizontal and vertical alignment.
+def unified_alignment(entity: Union["Text", "MText"]) -> Tuple[int, int]:
+    """Return unified horizontal and vertical alignment.
 
     horizontal alignment: left=0, center=1, right=2
 
@@ -233,7 +256,7 @@ def unified_alignment(entity: Union['Text', 'MText']) -> Tuple[int, int]:
 
     """
     dxftype = entity.dxftype()
-    if dxftype in ('TEXT', 'ATTRIB', 'ATTDEF'):
+    if dxftype in ("TEXT", "ATTRIB", "ATTDEF"):
         halign = entity.dxf.halign
         valign = entity.dxf.valign
         if halign in (3, 5):  # ALIGNED=3, FIT=5
@@ -245,14 +268,14 @@ def unified_alignment(entity: Union['Text', 'MText']) -> Tuple[int, int]:
             halign = CENTER
             valign = X_MIDDLE
         return halign, valign
-    elif dxftype == 'MTEXT':
+    elif dxftype == "MTEXT":
         return MTEXT_ALIGN_FLAGS.get(entity.dxf.attachment_point, (LEFT, TOP))
     else:
         raise TypeError(f"invalid DXF {dxftype}")
 
 
 def plain_text(text: str) -> str:
-    """ Returns the plain text for :class:`~ezdxf.entities.Text`,
+    """Returns the plain text for :class:`~ezdxf.entities.Text`,
     :class:`~ezdxf.entities.Attrib` and :class:`~ezdxf.entities.Attdef` content.
     """
     # TEXT, ATTRIB and ATTDEF are short strings <= 255 in R12.
@@ -393,8 +416,9 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 # - All columns have the same width and gutter.
 # - Paragraphs do overflow into the next column if required.
 
+
 def plain_mtext(text: str, split=False) -> Union[List[str], str]:
-    """ Returns the plain MTEXT content as a single string or  a list of
+    """Returns the plain MTEXT content as a single string or  a list of
     strings if `split` is ``True``. Replaces ``\\P`` by ``\\n`` and removes
     other controls chars and inline codes.
 
@@ -408,42 +432,42 @@ def plain_mtext(text: str, split=False) -> Union[List[str], str]:
     raw_chars = list(reversed(text))
     while len(raw_chars):
         char = raw_chars.pop()
-        if char == '\\':  # is a formatting command
+        if char == "\\":  # is a formatting command
             try:
                 char = raw_chars.pop()
             except IndexError:
                 break  # premature end of text - just ignore
 
-            if char in '\\{}':
+            if char in "\\{}":
                 chars.append(char)
             elif char in ONE_CHAR_COMMANDS:
-                if char == 'P':  # new line
-                    chars.append('\n')
-                elif char == 'N':  # new column
+                if char == "P":  # new line
+                    chars.append("\n")
+                elif char == "N":  # new column
                     # until columns are supported, better to at least remove the
                     # escape character
-                    chars.append(' ')
+                    chars.append(" ")
                 else:
                     pass  # discard other commands
             else:  # multiple character commands are terminated by ';'
-                stacking = char == 'S'  # stacking command surrounds user data
+                stacking = char == "S"  # stacking command surrounds user data
                 first_char = char
                 search_chars = raw_chars.copy()
                 try:
-                    while char != ';':  # end of format marker
+                    while char != ";":  # end of format marker
                         char = search_chars.pop()
-                        if stacking and char != ';':
+                        if stacking and char != ";":
                             # append user data of stacking command
                             chars.append(char)
                     raw_chars = search_chars
                 except IndexError:
                     # premature end of text - just ignore
-                    chars.append('\\')
+                    chars.append("\\")
                     chars.append(first_char)
-        elif char in '{}':  # grouping
+        elif char in "{}":  # grouping
             pass  # discard group markers
-        elif char == '%':  # special characters
-            if len(raw_chars) and raw_chars[-1] == '%':
+        elif char == "%":  # special characters
+            if len(raw_chars) and raw_chars[-1] == "%":
                 raw_chars.pop()  # discard next '%'
                 if len(raw_chars):
                     code = raw_chars.pop()
@@ -458,11 +482,11 @@ def plain_mtext(text: str, split=False) -> Union[List[str], str]:
             chars.append(char)
 
     result = "".join(chars)
-    return result.split('\n') if split else result
+    return result.split("\n") if split else result
 
 
 def caret_decode(text: str) -> str:
-    """ DXF stores some special characters using caret notation. This function
+    """DXF stores some special characters using caret notation. This function
     decodes this notation to normalise the representation of special characters
     in the string.
 
@@ -474,22 +498,22 @@ def caret_decode(text: str) -> str:
         c = ord(match.group(1))
         return chr((c - 64) % 126)
 
-    return re.sub(r'\^(.)', replace_match, text)
+    return re.sub(r"\^(.)", replace_match, text)
 
 
 def split_mtext_string(s: str, size: int = 250) -> List[str]:
-    """ Split the MTEXT content string into chunks of max `size`. """
+    """Split the MTEXT content string into chunks of max `size`."""
     chunks = []
     pos = 0
     while True:
-        chunk = s[pos:pos + size]
+        chunk = s[pos : pos + size]
         if len(chunk):
             if len(chunk) < size:
                 chunks.append(chunk)
                 return chunks
             pos += size
             # do not split chunks at '^'
-            if chunk[-1] == '^':
+            if chunk[-1] == "^":
                 chunk = chunk[:-1]
                 pos -= 1
             chunks.append(chunk)
@@ -500,20 +524,23 @@ def split_mtext_string(s: str, size: int = 250) -> List[str]:
 def escape_dxf_line_endings(text: str) -> str:
     # replacing '\r\n' and '\n' by '\P' is required when exporting, else an
     # invalid DXF file would be created.
-    return text.replace('\r', '').replace('\n', '\\P')
+    return text.replace("\r", "").replace("\n", "\\P")
 
 
-def replace_non_printable_characters(text: str, replacement: str = '▯') -> str:
-    return ''.join(replacement if is_non_printable_char(c) else c for c in text)
+def replace_non_printable_characters(text: str, replacement: str = "▯") -> str:
+    return "".join(replacement if is_non_printable_char(c) else c for c in text)
 
 
 def is_non_printable_char(char: str) -> bool:
-    return 0 <= ord(char) < 32 and char != '\t'
+    return 0 <= ord(char) < 32 and char != "\t"
 
 
-def text_wrap(text: str, box_width: Optional[float],
-              get_text_width: Callable[[str], float]) -> List[str]:
-    """ Wrap text at ``\\n`` and given `box_width`. This tool was developed for
+def text_wrap(
+    text: str,
+    box_width: Optional[float],
+    get_text_width: Callable[[str], float],
+) -> List[str]:
+    """Wrap text at ``\\n`` and given `box_width`. This tool was developed for
     usage with the MTEXT entity. This isn't the most straightforward word
     wrapping algorithm, but it aims to match the behavior of AutoCAD.
 
@@ -527,26 +554,28 @@ def text_wrap(text: str, box_width: Optional[float],
     # License: MIT License
     if not text or text.isspace():
         return []
-    manual_lines = re.split(r'(\n)', text)  # includes \n as it's own token
-    tokens = [t for line in manual_lines for t in re.split(r'(\s+)', line) if t]
+    manual_lines = re.split(r"(\n)", text)  # includes \n as it's own token
+    tokens = [t for line in manual_lines for t in re.split(r"(\s+)", line) if t]
     lines = []
-    current_line = ''
+    current_line = ""
     line_just_wrapped = False
 
     for t in tokens:
         on_first_line = not lines
-        if t == '\n' and line_just_wrapped:
+        if t == "\n" and line_just_wrapped:
             continue
         line_just_wrapped = False
-        if t == '\n':
+        if t == "\n":
             lines.append(current_line.rstrip())
-            current_line = ''
+            current_line = ""
         elif t.isspace():
             if current_line or on_first_line:
                 current_line += t
         else:
-            if box_width is not None and get_text_width(
-                    current_line + t) > box_width:
+            if (
+                box_width is not None
+                and get_text_width(current_line + t) > box_width
+            ):
                 if not current_line:
                     current_line += t
                 else:
@@ -561,13 +590,14 @@ def text_wrap(text: str, box_width: Optional[float],
     return lines
 
 
-def is_text_vertical_stacked(text: 'DXFEntity') -> bool:
-    """ Returns ``True`` if the associated text :class:`~ezdxf.entities.Textstyle`
+def is_text_vertical_stacked(text: "DXFEntity") -> bool:
+    """Returns ``True`` if the associated text :class:`~ezdxf.entities.Textstyle`
     is vertical stacked.
     """
-    if not text.is_supported_dxf_attrib('style'):
+    if not text.is_supported_dxf_attrib("style"):
         raise TypeError(
-            f'{text.dxftype()} does not support the style attribute.')
+            f"{text.dxftype()} does not support the style attribute."
+        )
 
     if text.doc:
         style = text.doc.styles.get(text.dxf.style)
@@ -577,12 +607,12 @@ def is_text_vertical_stacked(text: 'DXFEntity') -> bool:
 
 
 _alignment_char = {
-    MTextParagraphAlignment.DEFAULT: '',
-    MTextParagraphAlignment.LEFT: 'l',
-    MTextParagraphAlignment.RIGHT: 'r',
-    MTextParagraphAlignment.CENTER: 'c',
-    MTextParagraphAlignment.JUSTIFIED: 'j',
-    MTextParagraphAlignment.DISTRIBUTED: 'd',
+    MTextParagraphAlignment.DEFAULT: "",
+    MTextParagraphAlignment.LEFT: "l",
+    MTextParagraphAlignment.RIGHT: "r",
+    MTextParagraphAlignment.CENTER: "c",
+    MTextParagraphAlignment.JUSTIFIED: "j",
+    MTextParagraphAlignment.DISTRIBUTED: "d",
 }
 
 COMMA = ","
@@ -597,7 +627,7 @@ def rstrip0(s):
 
 
 class ParagraphProperties(NamedTuple):
-    """ Stores all known MTEXT paragraph properties in a :class:`NamedTuple`.
+    """Stores all known MTEXT paragraph properties in a :class:`NamedTuple`.
     Indentations and tab stops are multiples of the default text height
     :attr:`MText.dxf.char_height`. E.g. :attr:`char_height` is 0.25 and
     :attr:`indent` is 4, the real indentation is 4 x 0.25 = 1 drawing unit.
@@ -617,6 +647,7 @@ class ParagraphProperties(NamedTuple):
             are right aligned tab stops
 
     """
+
     # Reset: \pi*,l*,r*,q*,t;
     indent: float = 0  # relative to left!
     left: float = 0
@@ -630,7 +661,7 @@ class ParagraphProperties(NamedTuple):
     tab_stops: Tuple = tuple()
 
     def tostring(self) -> str:
-        """ Returns the MTEXT paragraph properties as MTEXT inline code
+        """Returns the MTEXT paragraph properties as MTEXT inline code
         e.g. ``"\\pxi-2,l2;"``.
 
         """
@@ -665,7 +696,7 @@ class ParagraphProperties(NamedTuple):
 
 
 class MTextEditor:
-    """ The :class:`MtextEditor` is a helper class to build MTEXT content
+    """The :class:`MtextEditor` is a helper class to build MTEXT content
     strings with support for inline codes to change color, font or
     paragraph properties. The result is always accessible by the :attr:`text`
     attribute or the magic :func:`__str__` function as
@@ -700,29 +731,29 @@ class MTextEditor:
     def __init__(self, text: str = ""):
         self.text = str(text)
 
-    NEW_LINE = r'\P'
-    NEW_PARAGRAPH = r'\P'
-    NEW_COLUMN = r'\N'
-    UNDERLINE_START = r'\L'
-    UNDERLINE_STOP = r'\l'
-    OVERSTRIKE_START = r'\O'
-    OVERSTRIKE_STOP = r'\o'
-    STRIKE_START = r'\K'
-    STRIKE_STOP = r'\k'
-    GROUP_START = '{'
-    GROUP_END = '}'
-    ALIGN_BOTTOM = r'\A0;'
-    ALIGN_MIDDLE = r'\A1;'
-    ALIGN_TOP = r'\A2;'
-    NBSP = r'\~'  # non breaking space
-    TAB = '^I'
+    NEW_LINE = r"\P"
+    NEW_PARAGRAPH = r"\P"
+    NEW_COLUMN = r"\N"
+    UNDERLINE_START = r"\L"
+    UNDERLINE_STOP = r"\l"
+    OVERSTRIKE_START = r"\O"
+    OVERSTRIKE_STOP = r"\o"
+    STRIKE_START = r"\K"
+    STRIKE_STOP = r"\k"
+    GROUP_START = "{"
+    GROUP_END = "}"
+    ALIGN_BOTTOM = r"\A0;"
+    ALIGN_MIDDLE = r"\A1;"
+    ALIGN_TOP = r"\A2;"
+    NBSP = r"\~"  # non breaking space
+    TAB = "^I"
 
-    def append(self, text: str) -> 'MTextEditor':
-        """ Append `text`. """
+    def append(self, text: str) -> "MTextEditor":
+        """Append `text`."""
         self.text += text
         return self
 
-    def __iadd__(self, text: str) -> 'MTextEditor':
+    def __iadd__(self, text: str) -> "MTextEditor":
         """
         Append `text`::
 
@@ -734,16 +765,17 @@ class MTextEditor:
         return self
 
     def __str__(self) -> str:
-        """ Returns the MTEXT content attribute :attr:`text`. """
+        """Returns the MTEXT content attribute :attr:`text`."""
         return self.text
 
     def clear(self):
-        """ Reset the content to an empty string. """
+        """Reset the content to an empty string."""
         self.text = ""
 
-    def font(self, name: str, bold: bool = False,
-             italic: bool = False) -> 'MTextEditor':
-        """ Set the text font by the font family name. Changing the font height
+    def font(
+        self, name: str, bold: bool = False, italic: bool = False
+    ) -> "MTextEditor":
+        """Set the text font by the font family name. Changing the font height
         should be done by the :meth:`height` or the :meth:`scale_height` method.
         The font family name is the name shown in font selection widgets in
         desktop applications: "Arial", "Times New Roman", "Comic Sans MS".
@@ -763,8 +795,8 @@ class MTextEditor:
         # Text size should be changed by \H<factor>x;
         return self.append(rf"\f{name}|b{int(bold)}|i{int(italic)};")
 
-    def scale_height(self, factor: float) -> 'MTextEditor':
-        """ Scale the text height by a `factor`. This scaling will accumulate,
+    def scale_height(self, factor: float) -> "MTextEditor":
+        """Scale the text height by a `factor`. This scaling will accumulate,
         which means starting at height 2.5 and scaling by 2 and again by 3 will
         set the text height to 2.5 x 2 x 3 = 15. The current text height is not
         stored in the :class:`MTextEditor`, you have to track the text height by
@@ -773,49 +805,48 @@ class MTextEditor:
         :class:`~ezdxf.entities.MText.dxf.char_height`.
 
         """
-        return self.append(rf'\H{round(factor, 3)}x;')
+        return self.append(rf"\H{round(factor, 3)}x;")
 
-    def height(self, height: float) -> 'MTextEditor':
-        """ Set the absolute text height in drawing units. """
-        return self.append(rf'\H{round(height, 3)};')
+    def height(self, height: float) -> "MTextEditor":
+        """Set the absolute text height in drawing units."""
+        return self.append(rf"\H{round(height, 3)};")
 
-    def width_factor(self, factor: float) -> 'MTextEditor':
-        """ Set the absolute text width factor. """
-        return self.append(rf'\W{round(factor, 3)};')
+    def width_factor(self, factor: float) -> "MTextEditor":
+        """Set the absolute text width factor."""
+        return self.append(rf"\W{round(factor, 3)};")
 
-    def char_tracking_factor(self, factor: float) -> 'MTextEditor':
-        """ Set the absolute character tracking factor. """
-        return self.append(rf'\T{round(factor, 3)};')
+    def char_tracking_factor(self, factor: float) -> "MTextEditor":
+        """Set the absolute character tracking factor."""
+        return self.append(rf"\T{round(factor, 3)};")
 
-    def oblique(self, angle: int) -> 'MTextEditor':
-        """ Set the text oblique angle in degrees, vertical is 0, a value of 15
+    def oblique(self, angle: int) -> "MTextEditor":
+        """Set the text oblique angle in degrees, vertical is 0, a value of 15
         will lean the text 15 degree to the right.
 
         """
-        return self.append(rf'\Q{int(angle)};')
+        return self.append(rf"\Q{int(angle)};")
 
-    def color(self, name: str) -> 'MTextEditor':
-        """ Set the text color by color name: "red", "yellow", "green", "cyan",
+    def color(self, name: str) -> "MTextEditor":
+        """Set the text color by color name: "red", "yellow", "green", "cyan",
         "blue", "magenta" or "white".
 
         """
         return self.aci(const.MTEXT_COLOR_INDEX[name.lower()])
 
-    def aci(self, aci: int) -> 'MTextEditor':
-        """ Set the text color by :ref:`ACI` in range [0, 256].
-        """
+    def aci(self, aci: int) -> "MTextEditor":
+        """Set the text color by :ref:`ACI` in range [0, 256]."""
         if 0 <= aci <= 256:
             return self.append(rf"\C{aci};")
         else:
             raise ValueError("aci not in range [0, 256]")
 
-    def rgb(self, rgb: RGB) -> 'MTextEditor':
-        """ Set the text color as RGB value. """
+    def rgb(self, rgb: RGB) -> "MTextEditor":
+        """Set the text color as RGB value."""
         r, g, b = rgb
         return self.append(rf"\c{rgb2int((b, g, r))};")
 
-    def stack(self, upr: str, lwr: str, t: str = "^") -> 'MTextEditor':
-        r""" Append stacked text `upr` over `lwr`, argument `t` defines the
+    def stack(self, upr: str, lwr: str, t: str = "^") -> "MTextEditor":
+        r"""Append stacked text `upr` over `lwr`, argument `t` defines the
         kind of stacking, the space " " after the "^" will be added
         automatically to avoid caret decoding:
 
@@ -841,33 +872,33 @@ class MTextEditor:
             t += " "
         return self.append(rf"\S{upr}{t}{lwr};")
 
-    def group(self, text: str) -> 'MTextEditor':
-        """ Group `text`, all properties changed inside a group are reverted at
+    def group(self, text: str) -> "MTextEditor":
+        """Group `text`, all properties changed inside a group are reverted at
         the end of the group. AutoCAD supports grouping up to 8 levels.
 
         """
         return self.append(f"{{{text}}}")
 
-    def underline(self, text: str) -> 'MTextEditor':
-        """ Append `text` with a line below the text. """
+    def underline(self, text: str) -> "MTextEditor":
+        """Append `text` with a line below the text."""
         return self.append(rf"\L{text}\l")
 
-    def overline(self, text: str) -> 'MTextEditor':
-        """ Append `text` with a line above the text. """
+    def overline(self, text: str) -> "MTextEditor":
+        """Append `text` with a line above the text."""
         return self.append(rf"\O{text}\o")
 
-    def strike_through(self, text: str) -> 'MTextEditor':
-        """ Append `text` with a line through the text. """
+    def strike_through(self, text: str) -> "MTextEditor":
+        """Append `text` with a line through the text."""
         return self.append(rf"\K{text}\k")
 
-    def paragraph(self, props: ParagraphProperties) -> 'MTextEditor':
-        """ Set paragraph properties by a :class:`ParagraphProperties` object.
-        """
+    def paragraph(self, props: ParagraphProperties) -> "MTextEditor":
+        """Set paragraph properties by a :class:`ParagraphProperties` object."""
         return self.append(props.tostring())
 
-    def bullet_list(self, indent: float, bullets: Iterable[str],
-                    content: Iterable[str]) -> 'MTextEditor':
-        """ Build bulleted lists by utilizing paragraph indentation and a
+    def bullet_list(
+        self, indent: float, bullets: Iterable[str], content: Iterable[str]
+    ) -> "MTextEditor":
+        """Build bulleted lists by utilizing paragraph indentation and a
         tabulator stop. Any string can be used as bullet. Indentation is
         a multiple of the initial MTEXT char height (see also docs about
         :class:`ParagraphProperties`), which means indentation in
@@ -894,20 +925,24 @@ class MTextEditor:
                 list items should not contain new line or new paragraph commands.
 
         """
-        items = MTextEditor().paragraph(ParagraphProperties(
-            indent=-indent * .75,  # like BricsCAD
-            left=indent,
-            tab_stops=(indent,)
-        ))
+        items = MTextEditor().paragraph(
+            ParagraphProperties(
+                indent=-indent * 0.75,  # like BricsCAD
+                left=indent,
+                tab_stops=(indent,),
+            )
+        )
         items.append(
-            "".join(b + self.TAB + c + self.NEW_PARAGRAPH
-                    for b, c in zip(bullets, content))
+            "".join(
+                b + self.TAB + c + self.NEW_PARAGRAPH
+                for b, c in zip(bullets, content)
+            )
         )
         return self.group(str(items))
 
 
 class MTextContext:
-    """ Internal class to store the MTEXT context state. """
+    """Internal class to store the MTEXT context state."""
 
     def __init__(self):
         self._stroke: int = 0
@@ -921,7 +956,7 @@ class MTextContext:
         self.oblique: float = 0.0
         self.paragraph = ParagraphProperties()
 
-    def __copy__(self) -> 'MTextContext':
+    def __copy__(self) -> "MTextContext":
         p = MTextContext()
         p._stroke = self._stroke
         p._aci = self._aci
@@ -939,12 +974,21 @@ class MTextContext:
 
     def __hash__(self):
         return hash(
-            (self._stroke, self._aci, self.rgb, self.align, self.font_face,
-             self.cap_height, self.width_factor, self.char_tracking_factor,
-             self.oblique, self.paragraph)
+            (
+                self._stroke,
+                self._aci,
+                self.rgb,
+                self.align,
+                self.font_face,
+                self.cap_height,
+                self.width_factor,
+                self.char_tracking_factor,
+                self.oblique,
+                self.paragraph,
+            )
         )
 
-    def __eq__(self, other: 'MTextContext') -> bool:
+    def __eq__(self, other: "MTextContext") -> bool:
         return hash(self) == hash(other)
 
     @property
@@ -957,11 +1001,12 @@ class MTextContext:
             self._aci = aci
             self.rgb = None  # clear rgb
         else:
-            raise ValueError('aci not in range[0,256]')
+            raise ValueError("aci not in range[0,256]")
 
-    def _set_stroke_state(self, stroke: MTextStroke,
-                          state: bool = True) -> None:
-        """ Set/clear binary `stroke` flag in `self._stroke`.
+    def _set_stroke_state(
+        self, stroke: MTextStroke, state: bool = True
+    ) -> None:
+        """Set/clear binary `stroke` flag in `self._stroke`.
 
         Args:
             stroke: set/clear stroke flag
@@ -1033,7 +1078,7 @@ class TextScanner:
             return ""
 
     def find(self, char: str, escape=False) -> int:
-        """ Return the index of the next `char`. If `escape` is True, backslash
+        """Return the index of the next `char`. If `escape` is True, backslash
         escaped `chars` will be ignored e.g. "\\;;" index of the next ";" is 1
         if `escape` is False and 2 if `escape` is True. Returns -1 if `char`
         was not found.
@@ -1044,7 +1089,7 @@ class TextScanner:
 
         """
 
-        scanner = self.__class__(self._text[self._index:])
+        scanner = self.__class__(self._text[self._index :])
         while scanner.has_data:
             c = scanner.peek()
             if escape and c == "\\" and scanner.peek(1) == char:
@@ -1056,15 +1101,14 @@ class TextScanner:
         return -1
 
     def substr(self, stop: int) -> str:
-        """ Returns the substring from the current location until index < stop.
-        """
+        """Returns the substring from the current location until index < stop."""
         if stop < self._index:
             raise IndexError(stop)
-        return self._text[self._index:stop]
+        return self._text[self._index : stop]
 
     def tail(self) -> str:
-        """ Returns the unprocessed part of the content. """
-        return self._text[self._index:]
+        """Returns the unprocessed part of the content."""
+        return self._text[self._index :]
 
 
 class TokenType(enum.IntEnum):
@@ -1090,16 +1134,16 @@ RE_FLOAT = re.compile(r"[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?")
 RE_FLOAT_X = re.compile(r"[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?([x]?)")
 
 CHAR_TO_ALIGN = {
-    'l': MTextParagraphAlignment.LEFT,
-    'r': MTextParagraphAlignment.RIGHT,
-    'c': MTextParagraphAlignment.CENTER,
-    'j': MTextParagraphAlignment.JUSTIFIED,
-    'd': MTextParagraphAlignment.DISTRIBUTED,
+    "l": MTextParagraphAlignment.LEFT,
+    "r": MTextParagraphAlignment.RIGHT,
+    "c": MTextParagraphAlignment.CENTER,
+    "j": MTextParagraphAlignment.JUSTIFIED,
+    "d": MTextParagraphAlignment.DISTRIBUTED,
 }
 
 
 class MTextParser:
-    """ Parses the MText content string and yields the content as tokens and
+    """Parses the MText content string and yields the content as tokens and
     the current MText properties as MTextContext object. The context object is
     treated internally as immutable object and should be treated by the client
     the same way.
@@ -1222,7 +1266,7 @@ class MTextParser:
             return TokenType.NONE, None
 
     def parse_stacking(self) -> Tuple:
-        """ Returns a tuple of strings: (numerator, denominator, type).
+        """Returns a tuple of strings: (numerator, denominator, type).
         The numerator and denominator is always a single and can contain spaces,
         which are not decoded as separate tokens. The type string is "^" for
         a limit style fraction without a line, "/" for a horizontal fraction
@@ -1271,35 +1315,35 @@ class MTextParser:
     def parse_properties(self, cmd: str) -> None:
         # Treat the existing context as immutable, create a new one:
         new_ctx = self.ctx.copy()
-        if cmd == 'L':
+        if cmd == "L":
             new_ctx.underline = True
-        elif cmd == 'l':
+        elif cmd == "l":
             new_ctx.underline = False
-        elif cmd == 'O':
+        elif cmd == "O":
             new_ctx.overline = True
-        elif cmd == 'o':
+        elif cmd == "o":
             new_ctx.overline = False
-        elif cmd == 'K':
+        elif cmd == "K":
             new_ctx.strike_through = True
-        elif cmd == 'k':
+        elif cmd == "k":
             new_ctx.strike_through = False
-        elif cmd == 'A':
+        elif cmd == "A":
             self.parse_align(new_ctx)
-        elif cmd == 'C':
+        elif cmd == "C":
             self.parse_aci_color(new_ctx)
-        elif cmd == 'c':
+        elif cmd == "c":
             self.parse_rgb_color(new_ctx)
-        elif cmd == 'H':
+        elif cmd == "H":
             self.parse_height(new_ctx)
-        elif cmd == 'W':
+        elif cmd == "W":
             self.parse_width(new_ctx)
-        elif cmd == 'Q':
+        elif cmd == "Q":
             self.parse_oblique(new_ctx)
-        elif cmd == 'T':
+        elif cmd == "T":
             self.parse_char_tracking(new_ctx)
-        elif cmd == 'p':
+        elif cmd == "p":
             self.parse_paragraph_properties(new_ctx)
-        elif cmd == 'f' or cmd == 'F':
+        elif cmd == "f" or cmd == "F":
             self.parse_font_properties(new_ctx)
         else:  # unknown commands
             return
@@ -1314,18 +1358,17 @@ class MTextParser:
         self.consume_optional_terminator()
 
     def parse_height(self, ctx: MTextContext):
-        ctx.cap_height = self.parse_float_value_or_factor(
-            ctx.cap_height)
+        ctx.cap_height = self.parse_float_value_or_factor(ctx.cap_height)
         self.consume_optional_terminator()
 
     def parse_width(self, ctx: MTextContext):
-        ctx.width_factor = self.parse_float_value_or_factor(
-            ctx.width_factor)
+        ctx.width_factor = self.parse_float_value_or_factor(ctx.width_factor)
         self.consume_optional_terminator()
 
     def parse_char_tracking(self, ctx: MTextContext):
         ctx.char_tracking_factor = self.parse_float_value_or_factor(
-            ctx.char_tracking_factor)
+            ctx.char_tracking_factor
+        )
         self.consume_optional_terminator()
 
     def parse_float_value_or_factor(self, value) -> float:
@@ -1358,7 +1401,7 @@ class MTextParser:
         if rgb_expr:
             # in reversed order!
             b, g, r = int2rgb(int(rgb_expr) & 0xFFFFFF)
-            ctx.rgb = (r, g, b,)
+            ctx.rgb = r, g, b
         self.consume_optional_terminator()
 
     def extract_float_expression(self, relative=False) -> str:
@@ -1383,7 +1426,7 @@ class MTextParser:
         return result
 
     def extract_expression(self, escape=False) -> str:
-        """ Returns the next expression from the current location until
+        """Returns the next expression from the current location until
         the terminating ";". The terminating semi-colon is not included.
         Skips escaped "\\;" semi-colons if `escape` is True.
 
@@ -1411,7 +1454,7 @@ class MTextParser:
             match = re.match(RE_FLOAT, tail)
             if match:
                 start, end = match.span()
-                expr = tail[start: end]
+                expr = tail[start:end]
                 paragraph_scanner.consume(end)
                 skip_commas()
             return expr
@@ -1435,7 +1478,8 @@ class MTextParser:
             elif cmd == "q":
                 adjustment = paragraph_scanner.get()
                 align = CHAR_TO_ALIGN.get(
-                    adjustment, MTextParagraphAlignment.DEFAULT)
+                    adjustment, MTextParagraphAlignment.DEFAULT
+                )
                 skip_commas()
             elif cmd == "t":
                 tab_stops = []
@@ -1447,7 +1491,8 @@ class MTextParser:
                     else:
                         tab_stops.append(parse_float())
         ctx.paragraph = ParagraphProperties(
-            indent, left, right, align, tuple(tab_stops))
+            indent, left, right, align, tuple(tab_stops)
+        )
 
     def parse_font_properties(self, ctx: MTextContext):
         parts = self.extract_expression().split("|")
@@ -1459,7 +1504,7 @@ class MTextParser:
             # ignore codepage and pitch - it seems not to be used in newer
             # CAD applications.
             for part in parts[1:]:
-                if part.startswith('b1'):
+                if part.startswith("b1"):
                     weight = "bold"
                 elif part.startswith("i1"):
                     style = "italic"
