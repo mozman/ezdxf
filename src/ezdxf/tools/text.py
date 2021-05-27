@@ -506,7 +506,7 @@ def split_mtext_string(s: str, size: int = 250) -> List[str]:
     chunks = []
     pos = 0
     while True:
-        chunk = s[pos : pos + size]
+        chunk = s[pos: pos + size]
         if len(chunk):
             if len(chunk) < size:
                 chunks.append(chunk)
@@ -990,7 +990,7 @@ class MTextEditor:
         items.append(
             "".join(
                 b + self.TAB + c + self.NEW_PARAGRAPH
-                for b, c in zip(bullets, content)
+                    for b, c in zip(bullets, content)
             )
         )
         return self.group(str(items))
@@ -1158,7 +1158,7 @@ class TextScanner:
 
         """
 
-        scanner = self.__class__(self._text[self._index :])
+        scanner = self.__class__(self._text[self._index:])
         while scanner.has_data:
             c = scanner.peek()
             if escape and c == "\\" and scanner.peek(1) == char:
@@ -1173,11 +1173,11 @@ class TextScanner:
         """Returns the substring from the current location until index < stop."""
         if stop < self._index:
             raise IndexError(stop)
-        return self._text[self._index : stop]
+        return self._text[self._index: stop]
 
     def tail(self) -> str:
         """Returns the unprocessed part of the content."""
-        return self._text[self._index :]
+        return self._text[self._index:]
 
 
 class TokenType(enum.IntEnum):
@@ -1224,6 +1224,7 @@ class MTextParser:
         ctx: initial MText context
 
     """
+    __slots__ = ("ctx", "scanner", "_ctx_stack")
 
     def __init__(self, content: str, ctx: MTextContext = None):
         if ctx is None:
