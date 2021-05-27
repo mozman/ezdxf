@@ -1262,7 +1262,6 @@ class MTextParser:
         scanner = self.scanner
         consume = scanner.fast_consume
         peek = scanner.fast_peek
-        get = scanner.get
         while scanner.has_data:
             escape = False
             letter = peek()
@@ -1278,7 +1277,7 @@ class MTextParser:
                         # Do not consume backslash!
                         return TokenType.WORD, word
                     consume()  # leading backslash
-                    cmd = get()
+                    cmd = scanner.get()
                     if cmd == "~":
                         return TokenType.NBSP, None
                     if cmd == "P":
