@@ -9,6 +9,7 @@ Add-ons
     - (v0.17) add support for ATTRIB with embedded MTEXT
     - (v0.17) global fonts cache usage
     - (>v1.0) ACAD_TABLE
+    - (>v1.0) support for switching plot styles (DXF_DEFAULT_PAPERSPACE_COLORS)
   
 - (>v1.0) Native SVG exporter, planned after the matplotlib backend supports 
   all v1.0 features. 
@@ -55,7 +56,7 @@ DXF Entities
 - (v0.17) Remove generic "Embedded Object" support in DXFEntity because this is 
   always a special case which should be handled by DXF load/export procedure, 
   and it is used only by ATTRIB/ATTDEF/MTEXT yet.
-- (v0.17) MTEXT: multi column support and exploding into DXF primitives
+- (>v1.0) MPOLYGON
 - (>v1.0) FIELD, used by ACAD_TABLE and MTEXT
 - (>v1.0) ACAD_TABLE
 
