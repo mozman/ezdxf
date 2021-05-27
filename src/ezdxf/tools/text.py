@@ -1115,8 +1115,11 @@ class TextScanner:
         return self._index < self._text_len
 
     def get(self) -> str:
-        char = self.peek()
-        self.consume(1)
+        try:
+            char = self._text[self._index]
+            self._index += 1
+        except IndexError:
+            return ""
         return char
 
     def consume(self, count: int = 1) -> None:
@@ -1124,9 +1127,20 @@ class TextScanner:
             raise ValueError(count)
         self._index += count
 
+    def fast_consume(self, count: int = 1) -> None:
+        """ consume() without safety check """
+        self._index += count
+
     def peek(self, offset: int = 0) -> str:
         if offset < 0:
             raise ValueError(offset)
+        try:
+            return self._text[self._index + offset]
+        except IndexError:
+            return ""
+
+    def fast_peek(self, offset: int = 0) -> str:
+        """ peek() without safety check """
         try:
             return self._text[self._index + offset]
         except IndexError:
@@ -1236,88 +1250,90 @@ class MTextParser:
             self.ctx = self._ctx_stack.pop()
 
     def next_token(self):
-        def word_or_token(token, consume: int = 1):
+        def word_or_token(token, count: int = 1):
             if word:
                 return TokenType.WORD, word
             else:
-                scanner.consume(consume)
+                consume(count)
                 return token, None
 
         word = ""
+        # localize method calls
         scanner = self.scanner
+        consume = scanner.fast_consume
+        peek = scanner.fast_peek
+        get = scanner.get
         while scanner.has_data:
             escape = False
-            letter = scanner.peek()
-            if letter == "\\" and scanner.peek(1) in "\\{}":
-                # escape next letter
-                escape = True
-                scanner.consume()  # leading backslash
-                letter = scanner.peek()
-
-            if letter == "\\" and not escape:
-                # A non escaped backslash is always the end of a word.
-                if word:
-                    # Do not consume backslash!
-                    return TokenType.WORD, word
-                scanner.consume()  # leading backslash
-                cmd = scanner.get()
-                if cmd == "~":
-                    return TokenType.NBSP, None
-                if cmd == "P":
-                    return TokenType.NEW_PARAGRAPH, None
-                if cmd == "N":
-                    return TokenType.NEW_COLUMN, None
-                if cmd == "X":
-                    return TokenType.WRAP_AT_DIMLINE, None
-                if cmd == "S":
-                    return self.parse_stacking()
-                if cmd:
-                    try:
-                        self.parse_properties(cmd)
-                    except ValueError:
-                        # print invalid escaped letters verbatim
-                        word += letter + cmd
-
-                # else: A single backslash at the end is an error, but DXF
-                # content is often invalid and should be ignored silently, if no
-                # harm is done.
-                continue
+            letter = peek()
+            if letter == "\\":
+                # known escape sequences: "\\", "\{", "\}"
+                if peek(1) in "\\{}":
+                    escape = True
+                    consume()  # leading backslash
+                    letter = peek()
+                else:
+                    # A non escaped backslash is always the end of a word.
+                    if word:
+                        # Do not consume backslash!
+                        return TokenType.WORD, word
+                    consume()  # leading backslash
+                    cmd = get()
+                    if cmd == "~":
+                        return TokenType.NBSP, None
+                    if cmd == "P":
+                        return TokenType.NEW_PARAGRAPH, None
+                    if cmd == "N":
+                        return TokenType.NEW_COLUMN, None
+                    if cmd == "X":
+                        return TokenType.WRAP_AT_DIMLINE, None
+                    if cmd == "S":
+                        return self.parse_stacking()
+                    if cmd:
+                        try:
+                            self.parse_properties(cmd)
+                        except ValueError:
+                            # print invalid escaped letters verbatim
+                            word += letter + cmd
+                    continue
 
             # process control chars, caret decoding is already done!
-            if ord(letter) < 32:
+            if letter < " ":
                 if letter == "\t":
                     return word_or_token(TokenType.TABULATOR)
                 elif letter == "\n":  # LF
                     return word_or_token(TokenType.NEW_PARAGRAPH)
                 else:  # replace other control chars by a space
                     letter = " "
-
-            if letter == "%" and scanner.peek(1) == "%":
-                code = scanner.peek(2).lower()
+            elif letter == "%" and peek(1) == "%":
+                code = peek(2).lower()
                 special_char = const.SPECIAL_CHAR_ENCODING.get(code)
                 if special_char:
-                    scanner.consume(2)  # %%
+                    consume(2)  # %%
                     letter = special_char
+
             if letter == " ":
                 return word_or_token(TokenType.SPACE)
-            if letter == "{" and not escape:
-                if word:
-                    return TokenType.WORD, word
-                else:
-                    scanner.consume(1)
-                    self.push_ctx()
-                    continue
-            if letter == "}" and not escape:
-                if word:
-                    return TokenType.WORD, word
-                else:
-                    scanner.consume(1)
-                    self.pop_ctx()
-                    continue
+
+            if not escape:
+                if letter == "{":
+                    if word:
+                        return TokenType.WORD, word
+                    else:
+                        consume(1)
+                        self.push_ctx()
+                        continue
+                elif letter == "}":
+                    if word:
+                        return TokenType.WORD, word
+                    else:
+                        consume(1)
+                        self.pop_ctx()
+                        continue
 
             # any unparsed unicode letter can be used in a word
-            scanner.consume(1)
-            if ord(letter[0]) > 31:
+            consume(1)
+            if letter >= " ":
                 word += letter
 
         if word:

@@ -296,8 +296,8 @@ def test_plain_mtext2_removes_formatting():
 
 def test_remove_commands_without_terminating_semicolon():
     # single letter commands do not need a trailing semicolon:
-    assert plain_mtext2("\C1Text") == "Text"
-    assert plain_mtext("\C1Text") == "\C1Text"  # not the expected result
+    assert plain_mtext2(r"\C1Text") == "Text"
+    assert plain_mtext(r"\C1Text") == r"\C1Text"  # not the expected result
 
 
 @pytest.mark.parametrize("func", [plain_mtext, plain_mtext2])
