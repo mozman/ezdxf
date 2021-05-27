@@ -516,7 +516,7 @@ def split_mtext_string(s: str, size: int = 250) -> List[str]:
     chunks = []
     pos = 0
     while True:
-        chunk = s[pos : pos + size]
+        chunk = s[pos: pos + size]
         if len(chunk):
             if len(chunk) < size:
                 chunks.append(chunk)
@@ -1003,7 +1003,7 @@ class MTextEditor:
         items.append(
             "".join(
                 b + self.TAB + c + self.NEW_PARAGRAPH
-                for b, c in zip(bullets, content)
+                    for b, c in zip(bullets, content)
             )
         )
         return self.group(str(items))
@@ -1171,7 +1171,7 @@ class TextScanner:
 
         """
 
-        scanner = self.__class__(self._text[self._index :])
+        scanner = self.__class__(self._text[self._index:])
         while scanner.has_data:
             c = scanner.peek()
             if escape and c == "\\" and scanner.peek(1) == char:
@@ -1186,11 +1186,11 @@ class TextScanner:
         """Returns the substring from the current location until index < stop."""
         if stop < self._index:
             raise IndexError(stop)
-        return self._text[self._index : stop]
+        return self._text[self._index: stop]
 
     def tail(self) -> str:
         """Returns the unprocessed part of the content."""
-        return self._text[self._index :]
+        return self._text[self._index:]
 
 
 class TokenType(enum.IntEnum):
@@ -1264,12 +1264,17 @@ class MTextParser:
         scanner = self.scanner
         consume = scanner.fast_consume
         peek = scanner.fast_peek
+        followup_token: Optional[TokenType] = None
+        space_token = TokenType.SPACE
+        word_token = TokenType.WORD
 
-        def word_or_token(word, token, count: int = 1):
+        def word_and_token(word, token):
+            nonlocal followup_token
+            consume()
             if word:
-                return TokenType.WORD, word
+                followup_token = token
+                return word_token, word
             else:
-                consume(count)
                 return token, None
 
         def next_token():
@@ -1287,7 +1292,7 @@ class MTextParser:
                         # A non escaped backslash is always the end of a word.
                         if word:
                             # Do not consume backslash!
-                            return TokenType.WORD, word
+                            return word_token, word
                         consume()  # leading backslash
                         cmd = scanner.get()
                         if cmd == "~":
@@ -1311,9 +1316,9 @@ class MTextParser:
                 # process control chars, caret decoding is already done!
                 if letter < " ":
                     if letter == "\t":
-                        return word_or_token(word, TokenType.TABULATOR)
+                        return word_and_token(word, TokenType.TABULATOR)
                     elif letter == "\n":  # LF
-                        return word_or_token(word, TokenType.NEW_PARAGRAPH)
+                        return word_and_token(word, TokenType.NEW_PARAGRAPH)
                     else:  # replace other control chars by a space
                         letter = " "
                 elif letter == "%" and peek(1) == "%":
@@ -1324,31 +1329,31 @@ class MTextParser:
                         letter = special_char
 
                 if letter == " ":
-                    return word_or_token(word, TokenType.SPACE)
+                    return word_and_token(word, space_token)
 
                 if not escape:
                     if letter == "{":
                         if word:
-                            return TokenType.WORD, word
+                            return word_token, word
                         else:
                             consume(1)
                             self.push_ctx()
                             continue
                     elif letter == "}":
                         if word:
-                            return TokenType.WORD, word
+                            return word_token, word
                         else:
                             consume(1)
                             self.pop_ctx()
                             continue
 
                 # any unparsed unicode letter can be used in a word
-                consume(1)
+                consume()
                 if letter >= " ":
                     word += letter
 
             if word:
-                return TokenType.WORD, word
+                return word_token, word
             else:
                 return TokenType.NONE, None
 
@@ -1356,6 +1361,9 @@ class MTextParser:
             type_, data = next_token()
             if type_:
                 yield MTextToken(type_, self.ctx, data)
+                if followup_token:
+                    yield MTextToken(followup_token, self.ctx, None)
+                    followup_token = None
             else:
                 break
 
