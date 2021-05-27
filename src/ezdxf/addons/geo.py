@@ -353,7 +353,7 @@ class GeoProxy:
         if isinstance(entity, DXFGraphic):
             m = mapping(entity, distance, force_line_string)
         else:
-            m = collection(entity, distance)
+            m = collection(entity, distance, force_line_string)
         return cls(m)
 
     def to_dxf_entities(self, polygon: int = 1,
