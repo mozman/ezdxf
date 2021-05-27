@@ -1193,6 +1193,8 @@ class TokenType(enum.IntEnum):
 
 
 class MTextToken:
+    __slots__ = ("type", "ctx", "data")
+
     def __init__(self, t: TokenType, ctx: MTextContext, data=None):
         self.type: TokenType = t
         self.ctx: MTextContext = ctx
