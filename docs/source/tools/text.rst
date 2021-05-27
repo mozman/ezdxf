@@ -117,6 +117,8 @@ Functions
 
 .. autofunction:: plain_text
 
+.. autofunction:: fast_plain_mtext
+
 .. autofunction:: plain_mtext
 
 .. autofunction:: text_wrap

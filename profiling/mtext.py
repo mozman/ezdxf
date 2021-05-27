@@ -2,7 +2,7 @@
 #  License: MIT License
 from typing import Callable
 import time
-from ezdxf.tools.text import plain_mtext, plain_mtext2, MTextParser
+from ezdxf.tools.text import fast_plain_mtext, plain_mtext, MTextParser
 
 SHORT = "MTEXT short string"
 LONG = (
@@ -26,24 +26,24 @@ def long_mtext_parser(count: int):
         list(MTextParser(LONG))
 
 
+def short_fast_plain_mtext(count: int):
+    for _ in range(count):
+        fast_plain_mtext(SHORT)
+
+
 def short_plain_mtext(count: int):
     for _ in range(count):
         plain_mtext(SHORT)
 
 
-def short_plain_mtext2(count: int):
+def long_fast_plain_mtext(count: int):
     for _ in range(count):
-        plain_mtext2(SHORT)
+        fast_plain_mtext(LONG)
 
 
 def long_plain_mtext(count: int):
     for _ in range(count):
         plain_mtext(LONG)
-
-
-def long_plain_mtext2(count: int):
-    for _ in range(count):
-        plain_mtext2(LONG)
 
 
 def print_result(count: int, t: float, text: str):
@@ -62,7 +62,7 @@ def run(func: Callable[[int], None], count: int = DEFAULT_COUNT):
 if __name__ == "__main__":
     run(short_mtext_parser)
     run(long_mtext_parser)
+    run(short_fast_plain_mtext)
     run(short_plain_mtext)
-    run(short_plain_mtext2)
+    run(long_fast_plain_mtext)
     run(long_plain_mtext)
-    run(long_plain_mtext2)

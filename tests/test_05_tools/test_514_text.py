@@ -14,8 +14,8 @@ from ezdxf.tools.text import (
     split_mtext_string,
     text_wrap,
     is_text_vertical_stacked,
+    fast_plain_mtext,
     plain_mtext,
-    plain_mtext2,
 )
 from ezdxf.tools.fonts import MonospaceFont
 from ezdxf.math import Vec3
@@ -272,9 +272,9 @@ def test_plain_mtext_removes_formatting():
         "Das ist eine MText\nZeile mit Formatierung\nänder die Farbe\n"
         "1.^INummerierung\n2.^INummerierung\n\n1/2500  ein Bruch"
     )
-    assert plain_mtext(raw_text) == expected
+    assert fast_plain_mtext(raw_text) == expected
     assert (
-        plain_mtext("\\:") == "\\:"
+        fast_plain_mtext("\\:") == "\\:"
     ), "invalid escape code is printed verbatim"
 
 
@@ -288,19 +288,19 @@ def test_plain_mtext2_removes_formatting():
         "Das ist eine MText\nZeile mit Formatierung\nänder die Farbe\n"
         "1. Nummerierung\n2. Nummerierung\n\n1/2500  ein Bruch"
     )
-    assert plain_mtext2(raw_text, tabsize=1) == expected
+    assert plain_mtext(raw_text, tabsize=1) == expected
     assert (
-        plain_mtext2("\\:\\;") == "\\:\\;"
+        plain_mtext("\\:\\;") == "\\:\\;"
     ), "invalid escape code is printed verbatim"
 
 
 def test_remove_commands_without_terminating_semicolon():
     # single letter commands do not need a trailing semicolon:
-    assert plain_mtext2(r"\C1Text") == "Text"
-    assert plain_mtext(r"\C1Text") == r"\C1Text"  # not the expected result
+    assert plain_mtext(r"\C1Text") == "Text"
+    assert fast_plain_mtext(r"\C1Text") == r"\C1Text"  # not the expected result
 
 
-@pytest.mark.parametrize("func", [plain_mtext, plain_mtext2])
+@pytest.mark.parametrize("func", [fast_plain_mtext, plain_mtext])
 def test_plain_mtext_decoding_special_chars(func):
     assert func("%%C") == "Ø"  # alt-0216
     assert func("%%D") == "°"  # alt-0176

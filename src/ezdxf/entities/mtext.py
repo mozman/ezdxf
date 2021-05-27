@@ -37,7 +37,7 @@ from ezdxf.colors import rgb2int
 from ezdxf.tools.text import (
     split_mtext_string,
     escape_dxf_line_endings,
-    plain_mtext,
+    fast_plain_mtext,
 )
 from . import factory
 from .dxfentity import base_class, SubclassProcessor
@@ -1051,7 +1051,7 @@ class MText(DXFGraphic):
                 returns a list of strings without line endings
 
         """
-        return plain_mtext(self.text, split=split)
+        return fast_plain_mtext(self.text, split=split)
 
     def all_columns_plain_text(self, split=False) -> Union[List[str], str]:
         """Returns the text content of all columns without inline formatting
@@ -1066,14 +1066,14 @@ class MText(DXFGraphic):
         """
 
         def merged_content():
-            content = [plain_mtext(self.text, split=False)]
+            content = [fast_plain_mtext(self.text, split=False)]
             if self.has_columns:
                 for c in self._columns.linked_columns:
                     content.append(c.plain_text(split=False))
             return "".join(content)
 
         def split_content():
-            content = plain_mtext(self.text, split=True)
+            content = fast_plain_mtext(self.text, split=True)
             if self.has_columns:
                 if content and content[-1] == "":
                     content.pop()

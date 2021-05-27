@@ -417,10 +417,20 @@ ONE_CHAR_COMMANDS = "PNLlOoKkX"
 # - Paragraphs do overflow into the next column if required.
 
 
-def plain_mtext(text: str, split=False) -> Union[List[str], str]:
+def fast_plain_mtext(text: str, split=False) -> Union[List[str], str]:
     """Returns the plain MTEXT content as a single string or  a list of
     strings if `split` is ``True``. Replaces ``\\P`` by ``\\n`` and removes
     other controls chars and inline codes.
+
+    This function is more than 4x faster than :func:`plain_mtext`, but does not
+    remove single letter inline commands with arguments without a terminating
+    semicolon like this ``"\\C1red text"``.
+
+    .. note::
+
+        Well behaved CAD applications and libraries always create inline codes
+        for commands with arguments with a terminating semicolon like this
+        ``"\\C1;red text"``!
 
     Args:
         text: MTEXT content string
@@ -521,7 +531,7 @@ def split_mtext_string(s: str, size: int = 250) -> List[str]:
             return chunks
 
 
-def plain_mtext2(
+def plain_mtext(
     text: str,
     split=False,
     tabsize: int = 4,
@@ -529,6 +539,9 @@ def plain_mtext2(
     """Returns the plain MTEXT content as a single string or a list of
     strings if `split` is ``True``. Replaces ``\\P`` by ``\\n`` and removes
     other controls chars and inline codes.
+
+    This function is much slower than :func:`fast_plain_mtext`, but removes all
+    inline codes.
 
     Args:
         text: MTEXT content string
