@@ -114,6 +114,10 @@ class CADGraphicsViewWithOverlay(CADGraphicsView):
         self._selected_items = None
         self._selected_index = None
 
+    def begin_loading(self):
+        self.clear()
+        super().begin_loading()
+
     def drawForeground(self, painter: qg.QPainter, rect: qc.QRectF) -> None:
         super().drawForeground(painter, rect)
         if self._selected_items:
