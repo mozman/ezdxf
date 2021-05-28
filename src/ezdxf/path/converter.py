@@ -14,7 +14,7 @@ from ezdxf.math import (
 from ezdxf.lldxf import const
 from ezdxf.entities import (
     LWPolyline, Polyline, Hatch, Line, Spline, Ellipse, Arc, Circle, Solid,
-    Trace, Face3d, Viewport, Image, Helix, Wipeout,
+    Trace, Face3d, Viewport, Image, Helix, Wipeout, MPolygon
 )
 from .path import Path
 from .commands import Command
@@ -191,6 +191,7 @@ def _from_image(image: 'Image', **kwargs) -> Path:
     return from_vertices(image.boundary_path_wcs(), close=True)
 
 
+@make_path.register(MPolygon)
 @make_path.register(Hatch)
 def _from_hatch(hatch: Hatch, **kwargs) -> Path:
     ocs = hatch.ocs()

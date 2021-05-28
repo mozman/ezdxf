@@ -446,6 +446,7 @@ _PRIMITIVE_CLASSES = {
     "CIRCLE": CurvePrimitive,
     "ELLIPSE": CurvePrimitive,
     "HATCH": HatchPrimitive,  # multi-path object
+    "MPOLYGON": HatchPrimitive,  # multi-path object
     "HELIX": CurvePrimitive,
     "IMAGE": ImagePrimitive,
     "LINE": LinePrimitive,

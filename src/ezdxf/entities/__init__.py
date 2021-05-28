@@ -68,6 +68,7 @@ from .mesh import Mesh, MeshData
 from .hatch import (
     Hatch, BoundaryPaths, PolylinePath, EdgePath, LineEdge,
     ArcEdge, EllipseEdge, SplineEdge, Pattern, PatternLine, Gradient,
+    MPolygon,
 )
 from .image import Image, ImageDef, Wipeout
 from .underlay import (

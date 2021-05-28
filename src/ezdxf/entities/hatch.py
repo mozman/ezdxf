@@ -341,7 +341,7 @@ class Hatch(DXFGraphic):
         self.pattern = Pattern.load_tags(pattern_tags)
 
         # Delete pattern data including length tag 78
-        del tags[index : index + len(pattern_tags) + 1]
+        del tags[index: index + len(pattern_tags) + 1]
         return tags
 
     def load_gradient(self, tags: Tags) -> Tags:
@@ -367,7 +367,7 @@ class Hatch(DXFGraphic):
         )
 
         # Remove seed data from tags:
-        del tags[start_index : start_index + len(seed_data) + 1]
+        del tags[start_index: start_index + len(seed_data) + 1]
 
         # Just process vertices with group code 10
         self.seeds = [value for code, value in seed_data if code == 10]
@@ -814,7 +814,7 @@ class BoundaryPaths:
 
         paths = sorted(
             (path_type_enum(p.path_type_flags), i, p)
-            for i, p in enumerate(self.paths)
+                for i, p in enumerate(self.paths)
         )
         ignore = 1  # EXTERNAL only
         if hatch_style == const.HATCH_STYLE_NESTED:
@@ -2024,3 +2024,14 @@ class Gradient:
             write_tag(63, self.aci2)  # code 63 "color as ACI" could be left off
         write_tag(421, clr.rgb2int(self.color2))  # second color
         write_tag(470, self.name)
+
+
+@register_entity
+class MPolygon(Hatch):
+    """DXF MPOLYGON entity
+
+    The MPOLYGON is not a core DXF entity, and requires a CLASS definition.
+
+    """
+
+    DXFTYPE = "MPOLYGON"
