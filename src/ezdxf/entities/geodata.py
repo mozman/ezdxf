@@ -325,6 +325,11 @@ class GeoData(DXFObject):
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_geo_data.name)
+        if self.dxf.version < 2:
+            logger.warning(
+                "exporting unsupported GEODATA version 1, this may corrupt "
+                "the DXF file!"
+            )
         self.dxf.export_dxf_attribs(
             tagwriter,
             [
