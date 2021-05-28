@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020, Manfred Moitzi
+# Copyright (c) 2019-2021, Manfred Moitzi
 # License: MIT-License
 import math
 import re
@@ -259,10 +259,14 @@ class GeoData(DXFObject):
     ) -> "DXFNamespace":
         dxf = super().load_dxf_attribs(processor)
         if processor:
+            version = processor.detect_implementation_version(
+                subclass_index=1,
+                group_code=90,
+                default=2,
+            )
             tags = processor.fast_load_dxfattribs(
                 dxf, acdb_geo_data_group_codes, 1, log=False
             )
-            version = dxf.get("version", 2)
             tags = self.load_coordinate_system_definition(tags)
             if version > 1:
                 self.load_mesh_data(tags, version)
@@ -526,8 +530,8 @@ class GeoData(DXFObject):
         transformation = (
             Matrix44.translate(-source.x, -source.y, 0)
             @ Matrix44.scale(
-                self.dxf.horizontal_unit_scale, self.dxf.vertical_unit_scale, 1
-            )
+            self.dxf.horizontal_unit_scale, self.dxf.vertical_unit_scale, 1
+        )
             @ Matrix44.z_rotate(theta)
             @ Matrix44.translate(target.x, target.y, 0)
         )
