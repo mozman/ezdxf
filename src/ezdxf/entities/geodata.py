@@ -224,6 +224,10 @@ class MeshVertices(VertexArray):
     VERTEX_SIZE = 2
 
 
+def mesh_group_codes(version: int) -> Tuple[int, int]:
+    return (12, 13) if version < 2 else (13, 14)
+
+
 @register_entity
 class GeoData(DXFObject):
     """DXF GEODATA entity"""
@@ -273,7 +277,9 @@ class GeoData(DXFObject):
             else:
                 # version 1 is not really supported, because the group codes are
                 # totally messed up!
-                logger.warning("GEODATA version 1 found, maybe incorrect")
+                logger.warning(
+                    "GEODATA version 1 found, perhaps loaded data is incorrect"
+                )
                 dxf.discard("north_direction")  # group code issue!!!
         return dxf
 
@@ -289,31 +295,26 @@ class GeoData(DXFObject):
             self.coordinate_system_definition = "".join(lines)
 
     def load_mesh_data(self, tags: Iterable[DXFTag], version: int = 2):
-        # group codes of version 1 and 2 differ
-        # See DXF reference R2009
-        if version > 1:
-            src, target, fi1, fi2, fi3 = 13, 14, 97, 98, 99
-        else:
-            src, target, fi1, fi2, fi3 = 12, 13, 97, 98, 99
-        face_indices = {fi1, fi2, fi3}
+        # group codes of version 1 and 2 differ, see DXF reference R2009
+        src, target = mesh_group_codes(version)
+        face_indices = {97, 98, 99}
         face = []
-        for tag in tags:
-            code, value = tag
+        for code, value in tags:
             if code == src:
                 self.source_vertices.append(value)
             elif code == target:
                 self.target_vertices.append(value)
             elif code in face_indices:
-                if code == fi1 and len(face):
+                if code == 97 and len(face):
                     if len(face) != 3:
                         raise DXFStructureError(
                             f"GEODATA face definition error: invalid index "
                             f"count {len(face)}."
                         )
                     self.faces.append(tuple(face))
-                    face = []
+                    face.clear()
                 face.append(value)
-        if len(face):  # collect last face
+        if face:  # collect last face
             self.faces.append(tuple(face))
         if len(self.source_vertices) != len(self.target_vertices):
             raise DXFStructureError(
@@ -365,20 +366,21 @@ class GeoData(DXFObject):
 
     def export_mesh_data(self, tagwriter: "TagWriter"):
         if len(self.source_vertices) != len(self.target_vertices):
-            raise DXFTypeError(
+            raise DXFStructureError(
                 "GEODATA mesh definition error: source and target point count "
                 "does not match."
             )
+        src, target = mesh_group_codes(self.dxf.version)
 
         tagwriter.write_tag2(93, len(self.source_vertices))
         for s, t in zip(self.source_vertices, self.target_vertices):
-            tagwriter.write_vertex(13, s)
-            tagwriter.write_vertex(14, t)
+            tagwriter.write_vertex(src, s)
+            tagwriter.write_vertex(target, t)
 
         tagwriter.write_tag2(96, len(self.faces))
         for face in self.faces:
             if len(face) != 3:
-                raise DXFTypeError(
+                raise DXFStructureError(
                     f"GEODATA face definition error: invalid index "
                     f"count {len(face)}."
                 )
