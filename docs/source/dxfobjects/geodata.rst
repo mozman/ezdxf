@@ -4,7 +4,10 @@ GeoData
 .. module:: ezdxf.entities
     :noindex:
 
-The `GEODATA`_ entity is associated to the :class:`~ezdxf.layouts.Modelspace` object.
+The `GEODATA`_ entity is associated to the :class:`~ezdxf.layouts.Modelspace`
+object. The `GEODATA`_ entity is supported since the DXF version R2000,
+but was officially documented the first time in the DXF reference for version
+R2009.
 
 ======================== =============================================================
 Subclass of              :class:`ezdxf.entities.DXFObject`
