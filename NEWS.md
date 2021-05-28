@@ -7,6 +7,10 @@ Version 0.16.4b0 - dev
 
 - NEW: `move_to()` command and multi-path support for the `ezdxf.path.Path` class 
   as beta feature, official release in v0.17
+- NEW: `MPOLYGON` loading support as beta feature, official release in v0.17
+- BUGFIX: loading crash of the PyQt `CADViewer` class
+- BUGFIX: loading `GEODATA` version 1, perhaps data is incorrect, 
+  logged as warning
 
 Version 0.16.3 - 2021-05-22
 ---------------------------

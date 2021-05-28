@@ -56,8 +56,8 @@ DXF Entities
 - (v0.17) Remove generic "Embedded Object" support in DXFEntity because this is 
   always a special case which should be handled by DXF load/export procedure, 
   and it is used only by ATTRIB/ATTDEF/MTEXT yet.
-- (>v1.0) MPOLYGON
-- (>v1.0) GEODATA version 1 support, see mpolygon examples, DXF Reference R2009
+- (v0.17) MPOLYGON
+- (>v1.0) GEODATA version 1 support, see mpolygon examples and DXF reference R2009
 - (>v1.0) FIELD, used by ACAD_TABLE and MTEXT
 - (>v1.0) ACAD_TABLE
 
