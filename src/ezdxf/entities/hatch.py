@@ -174,7 +174,7 @@ class BasePolygon(DXFGraphic):
         self.pattern = Pattern.load_tags(pattern_tags)
 
         # Delete pattern data including length tag 78
-        del tags[index : index + len(pattern_tags) + 1]
+        del tags[index: index + len(pattern_tags) + 1]
         return tags
 
     def load_gradient(self, tags: Tags) -> Tags:
@@ -645,7 +645,7 @@ class Hatch(BasePolygon):
         )
 
         # Remove seed data from tags:
-        del tags[start_index : start_index + len(seed_data) + 1]
+        del tags[start_index: start_index + len(seed_data) + 1]
 
         # Just process vertices with group code 10
         self.seeds = [value for code, value in seed_data if code == 10]
@@ -810,7 +810,6 @@ acdb_mpolygon = DefSubclass(
             validator=validator.is_greater_or_equal_zero,
             fixer=RETURN_DEFAULT,
         ),
-        "unknown1": DXFAttr(78, default=0),
         # MPolygon: offset vector in OCS ???
         "offset_vector": DXFAttr(11, xtype=XType.point2d, default=(0, 0)),
         # MPolygon: number of degenerate boundary paths (loops), where a
@@ -872,11 +871,12 @@ class MPolygon(BasePolygon):
                 "pixel_size",
             ],
         )
-        if dxf.solid_fill == 0:
-            dxf.export_dxf_attribs(tagwriter, "unknown1")
+        if dxf.solid_fill == 0:  # export pattern
+            # always write at least tag (78, 0)
+            self.pattern.export_dxf(tagwriter, force=True)
         dxf.export_dxf_attribs(tagwriter, "offset_vector")
         self.export_degenerated_loops(tagwriter)
-        if self.gradient:
+        if self.gradient:  # todo:  is gradient supported by MPOLYGON?
             self.gradient.export_dxf(tagwriter)
 
     def export_degenerated_loops(self, tagwriter: "TagWriter"):
@@ -958,7 +958,7 @@ class BoundaryPaths:
 
         paths = sorted(
             (path_type_enum(p.path_type_flags), i, p)
-            for i, p in enumerate(self.paths)
+                for i, p in enumerate(self.paths)
         )
         ignore = 1  # EXTERNAL only
         if hatch_style == const.HATCH_STYLE_NESTED:
@@ -2018,8 +2018,8 @@ class Pattern:
             PatternLine(angle, base_point, offset, dash_length_items)
         )
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
-        if len(self.lines):
+    def export_dxf(self, tagwriter: "TagWriter", force=False) -> None:
+        if len(self.lines) or force:
             tagwriter.write_tag2(78, len(self.lines))
             for line in self.lines:
                 line.export_dxf(tagwriter)
