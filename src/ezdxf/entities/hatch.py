@@ -1594,7 +1594,7 @@ class EdgePath:
         return self.add_spline(
             fit_points=fit_points,
             control_points=bspline.control_points,
-            knot_values=bspline.knot_values(),
+            knot_values=bspline.knots(),
         )
 
     def clear(self) -> None:

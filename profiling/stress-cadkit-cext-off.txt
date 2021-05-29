@@ -1,0 +1,140 @@
+ezdxf v0.16b0 @ d:\source\ezdxf.git\src\ezdxf
+Python version: 3.9.1 (tags/v3.9.1:1e5d33e, Dec  7 2020, 17:08:21) [MSC v.1927 64 bit (AMD64)]
+using C-extensions: no
+using Matplotlib: yes
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\AEC Plan Elev Sample.dxf"
+Header var $EXTMIN/$EXTMAX: (-2060.149, -589.656, 0.0); (2144.874, 991.67, 0.0)
+Calculated $EXTMIN/$EXTMAX: (-2060.149, -590.558, 0.0); (2144.874, 991.67, 0.0)
+Timing:  loading: 1.355s audit: 0.120s extends: 14.735s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\A_000217.dxf"
+Fixed 16 error(s).
+Header var $EXTMIN/$EXTMAX: (-17.524, 0.0, 0.0); (1890.0, 1390.0, 0.0)
+Calculated $EXTMIN/$EXTMAX: (-1632.77, 0.0, 0.0); (1890.0, 1390.0, 0.0)
+Timing:  loading: 0.349s audit: 0.035s extends: 2.247s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\backhoe.dxf"
+Fixed 14 error(s).
+Header var $EXTMIN/$EXTMAX: (-103.163, -104.969, 5.21); (87.908, 104.969, 151.515)
+Calculated $EXTMIN/$EXTMAX: (-103.163, -104.969, 5.21); (87.908, 104.969, 151.515)
+Timing:  loading: 7.730s audit: 0.862s extends: 9.819s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\BIKE.DXF"
+Header var $EXTMIN/$EXTMAX: (-649.436, -344.37, 0.0); (786.93, 770.889, 0.0)
+Calculated $EXTMIN/$EXTMAX: (-649.439, -344.37, 0.0); (786.944, 770.894, 0.0)
+Timing:  loading: 0.343s audit: 0.035s extends: 1.262s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\cnc machine.dxf"
+Fixed 12 error(s).
+Header var $EXTMIN/$EXTMAX: (-237.285, -205.613, -149.686); (317.715, 345.387, 333.314)
+Calculated $EXTMIN/$EXTMAX: (-237.285, -205.613, -149.686); (317.715, 345.387, 333.314)
+Timing:  loading: 14.446s audit: 1.530s extends: 18.478s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\Controller-M128-top.dxf"
+Fixed 9 error(s).
+Header var $EXTMIN/$EXTMAX: (-4.099, -1.464, -0.0); (6.209, 2.459, 0.0)
+Calculated $EXTMIN/$EXTMAX: (0.007, 0.294, 0.0); (1.392, 2.454, 0.0)
+Timing:  loading: 0.667s audit: 0.082s extends: 3.939s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\drilling_machine.dxf"
+Fixed 10 error(s).
+Header var $EXTMIN/$EXTMAX: (-20.623, -14.763, 1.601); (40.354, 14.763, 84.334)
+Calculated $EXTMIN/$EXTMAX: (-20.623, -14.763, 1.601); (40.354, 14.763, 84.334)
+Timing:  loading: 10.964s audit: 1.126s extends: 13.639s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\fanuc-430-arm.dxf"
+Fixed 10 error(s).
+Header var $EXTMIN/$EXTMAX: (-416.0, -0.0, -523.0); (455.163, 2211.0, 1820.25)
+Calculated $EXTMIN/$EXTMAX: (-416.0, -0.0, -523.0); (455.163, 2211.0, 1820.25)
+Timing:  loading: 18.284s audit: 2.122s extends: 23.789s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\Floor plan.dxf"
+Fixed 29 error(s).
+Header var $EXTMIN/$EXTMAX: (-724.981, -522.268, 0.0); (239.417, 416.279, 0.0)
+Calculated $EXTMIN/$EXTMAX: (-724.173, -520.584, 0.0); (238.525, 415.473, 0.0)
+Timing:  loading: 0.444s audit: 0.089s extends: 1.216s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\gekko.DXF"
+Header var $EXTMIN/$EXTMAX: (-696.071, -343.751, 0.0); (165.298, 644.614, 0.0)
+Calculated $EXTMIN/$EXTMAX: (-696.091, -343.751, 0.0); (165.298, 644.614, 0.0)
+Timing:  loading: 1.014s audit: 0.086s extends: 5.478s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\house design for two family with comman staircasedwg.dxf"
+Header var $EXTMIN/$EXTMAX: (-3655.419, -209.976, 0.0); (5708.064, 4244.713, 0.0)
+Calculated $EXTMIN/$EXTMAX: (1049.822, 1717.396, 0.0); (2206.095, 2448.844, 0.0)
+Timing:  loading: 0.158s audit: 0.025s extends: 0.511s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\house design.dxf"
+Header var $EXTMIN/$EXTMAX: (-3655.419, -209.976, 0.0); (5708.064, 4244.713, 0.0)
+Calculated $EXTMIN/$EXTMAX: (-21929.882, -26011.457, 0.0); (31798.185, 27163.083, 0.0)
+Timing:  loading: 0.206s audit: 0.029s extends: 0.678s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\kit-dev-coldfire-xilinx_5213.dxf"
+Calculated $EXTMIN/$EXTMAX: (4000.0, 4000.0, 0.0); (161350.0, 113000.0, 0.0)
+Timing:  loading: 2.530s audit: 0.233s extends: 4.752s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\Laurana50k.dxf"
+Header var $EXTMIN/$EXTMAX: (1e+20, 1e+20, 1e+20); (-1e+20, -1e+20, -1e+20)
+Calculated $EXTMIN/$EXTMAX: (-223.235, -13.603, -250.77); (243.995, 487.973, 8.72)
+Timing:  loading: 5.557s audit: 0.404s extends: 8.894s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\Lock-Off.dxf"
+Header var $EXTMIN/$EXTMAX: (1121.137, 424.789, -0.002); (1606.654, 930.226, 0.0)
+Calculated $EXTMIN/$EXTMAX: (1121.169, 424.838, 0.0); (1606.605, 954.684, 0.0)
+Timing:  loading: 0.482s audit: 0.035s extends: 5.891s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\Mc Cormik-D3262.DXF"
+Header var $EXTMIN/$EXTMAX: (-1041.309, -447.357, 0.0); (1726.035, 1705.076, 0.0)
+Calculated $EXTMIN/$EXTMAX: (-1041.309, -447.357, 0.0); (1726.035, 1705.076, 0.0)
+Timing:  loading: 0.677s audit: 0.052s extends: 2.762s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\Mechanical Sample.dxf"
+Header var $EXTMIN/$EXTMAX: (-17.794, -1.069, 0.0); (106.116, 100.304, 0.0)
+Calculated $EXTMIN/$EXTMAX: (-17.794, -1.069, 0.0); (106.116, 100.304, 0.0)
+Timing:  loading: 0.535s audit: 0.062s extends: 1.000s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\Nikon_D90_Camera.DXF"
+Header var $EXTMIN/$EXTMAX: (-84.855, -57.602, 0.0); (56.769, 66.732, 0.0)
+Calculated $EXTMIN/$EXTMAX: (-84.855, -57.602, 0.0); (56.769, 66.732, 0.0)
+Timing:  loading: 0.427s audit: 0.035s extends: 1.690s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\pic_programmer.dxf"
+Calculated $EXTMIN/$EXTMAX: (4000.0, 4000.0, 0.0); (113000.0, 78670.0, 0.0)
+Timing:  loading: 0.825s audit: 0.080s extends: 1.521s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\Proposed Townhouse.dxf"
+Header var $EXTMIN/$EXTMAX: (8172.001, -1388.391, -33.184); (11620.07, 1167.469, 42.664)
+Calculated $EXTMIN/$EXTMAX: (8172.446, -1383.208, -33.183); (11619.257, 1167.402, 42.663)
+Timing:  loading: 1.919s audit: 0.153s extends: 6.094s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\Shapefont.dxf"
+Fixed 5 error(s).
+Header var $EXTMIN/$EXTMAX: (26.323, 16.056, 0.0); (35.31, 19.99, 0.0)
+Calculated $EXTMIN/$EXTMAX: (26.306, 15.503, 0.0); (33.166, 19.046, 0.0)
+Timing:  loading: 0.058s audit: 0.005s extends: 0.263s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\SMA-Controller.dxf"
+Calculated $EXTMIN/$EXTMAX: (-2.54, 2.54, 0.0); (347.218, 212.344, 0.0)
+Timing:  loading: 0.334s audit: 0.046s extends: 1.202s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\Tamiya TT-01.DXF"
+Header var $EXTMIN/$EXTMAX: (-151.289, -71.247, 0.0); (156.732, 281.818, 0.0)
+Calculated $EXTMIN/$EXTMAX: (-151.289, -71.247, 0.0); (156.732, 281.818, 0.0)
+Timing:  loading: 0.622s audit: 0.047s extends: 2.227s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\torso_uniform.dxf"
+Header var $EXTMIN/$EXTMAX: (1e+20, 1e+20, 1e+20); (-1e+20, -1e+20, -1e+20)
+Calculated $EXTMIN/$EXTMAX: (-0.465, -0.139, -0.435); (0.465, 0.176, 0.145)
+Timing:  loading: 33.705s audit: 2.150s extends: 53.079s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\Tyrannosaurus.DXF"
+Header var $EXTMIN/$EXTMAX: (10.074, -115.352, 0.0); (270.03, 28.732, 0.0)
+Calculated $EXTMIN/$EXTMAX: (10.074, -115.352, 0.0); (270.03, 28.731, 0.0)
+Timing:  loading: 0.349s audit: 0.037s extends: 0.597s
+-------------------------------------------------------------------------------
+Loading file: "D:\Source\dxftest\CADKitSamples\WOOD DETAILS.dxf"
+Header var $EXTMIN/$EXTMAX: (188.202, 212.412, 0.0); (734.65, 573.912, 0.0)
+Calculated $EXTMIN/$EXTMAX: (188.202, 213.029, 0.0); (733.947, 573.209, 0.0)
+Timing:  loading: 0.400s audit: 0.029s extends: 3.061s
+-------------------------------------------------------------------------------
