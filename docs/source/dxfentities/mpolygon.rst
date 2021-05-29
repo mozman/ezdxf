@@ -37,7 +37,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
         Pattern name as string
 
-    .. attribute:: Hatch.dxf.solid_fill
+    .. attribute:: dxf.solid_fill
 
         === ==========================================================
         1   solid fill, better use: :meth:`MPolygon.set_solid_fill`
@@ -64,13 +64,13 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: dxf.pattern_angle
 
-        Actual pattern angle in degrees (float). Changing this value does not rotate the pattern,
-        use :meth:`~Hatch.set_pattern_angle` for this task.
+        Actual pattern angle in degrees (float). Changing this value does not
+        rotate the pattern, use :meth:`~MPolygon.set_pattern_angle` for this task.
 
     .. attribute:: dxf.pattern_scale
 
-        Actual pattern scaling factor (float). Changing this value does not scale the pattern
-        use :meth:`~Hatch.set_pattern_scale` for this task.
+        Actual pattern scaling factor (float). Changing this value does not
+        scale the pattern use :meth:`~MPolygon.set_pattern_scale` for this task.
 
     .. attribute:: dxf.pattern_double
 
@@ -112,5 +112,5 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: set_gradient
 
-    .. automethod:: transform(m: Matrix44) -> Hatch
+    .. automethod:: transform(m: Matrix44) -> MPolygon
 

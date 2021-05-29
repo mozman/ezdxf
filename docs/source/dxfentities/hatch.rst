@@ -62,7 +62,7 @@ Path manager: :class:`BoundaryPaths`
 
         Pattern name as string
 
-    .. attribute:: Hatch.dxf.solid_fill
+    .. attribute:: dxf.solid_fill
 
         === ==========================================================
         1   solid fill, better use: :meth:`Hatch.set_solid_fill`
@@ -76,7 +76,8 @@ Path manager: :class:`BoundaryPaths`
         0   not associative hatch
         === =========================
 
-        Associations not handled by `ezdxf`, you have to set the handles to the associated DXF entities by yourself.
+        Associations not handled by `ezdxf`, you have to set the handles to the
+        associated DXF entities by yourself.
 
     .. attribute:: dxf.hatch_style
 
@@ -98,13 +99,13 @@ Path manager: :class:`BoundaryPaths`
 
     .. attribute:: dxf.pattern_angle
 
-        Actual pattern angle in degrees (float). Changing this value does not rotate the pattern,
-        use :meth:`~Hatch.set_pattern_angle` for this task.
+        Actual pattern angle in degrees (float). Changing this value does not
+        rotate the pattern, use :meth:`~Hatch.set_pattern_angle` for this task.
 
     .. attribute:: dxf.pattern_scale
 
-        Actual pattern scaling factor (float). Changing this value does not scale the pattern
-        use :meth:`~Hatch.set_pattern_scale` for this task.
+        Actual pattern scaling factor (float). Changing this value does not
+        scale the pattern use :meth:`~Hatch.set_pattern_scale` for this task.
 
     .. attribute:: dxf.pattern_double
 
