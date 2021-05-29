@@ -1905,6 +1905,13 @@ class SplineEdge:
         return edge
 
     def export_dxf(self, tagwriter: "TagWriter") -> None:
+        def set_required_tangents(points: List[Vec2]):
+            if len(points) > 1:
+                if self.start_tangent is None:
+                    self.start_tangent = points[1] - points[0]
+                if self.end_tangent is None:
+                    self.end_tangent = points[-1] - points[-2]
+
         if len(self.weights):
             if len(self.weights) == len(self.control_points):
                 self.rational = 1
@@ -1935,7 +1942,7 @@ class SplineEdge:
 
         # build control points
         # control points have to be present and valid, otherwise AutoCAD crashes
-        cp = Vec2.generate(self.control_points)
+        cp = Vec2.list(self.control_points)
         if self.rational:
             for point, weight in zip(cp, self.weights):
                 write_tag(10, float(point.x))
@@ -1948,6 +1955,7 @@ class SplineEdge:
 
         # build optional fit points
         if len(self.fit_points) > 0:
+            set_required_tangents(cp)
             write_tag(97, len(self.fit_points))
             for x, y, *_ in self.fit_points:
                 write_tag(11, float(x))

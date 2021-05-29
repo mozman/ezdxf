@@ -11,6 +11,7 @@ Version 0.16.4b0 - dev
 - BUGFIX: loading crash of the PyQt `CADViewer` class
 - BUGFIX: loading `GEODATA` version 1, perhaps data is incorrect, 
   logged as warning
+- BUGFIX: HATCH spline edge from fit points require start- and end tangents
 
 Version 0.16.3 - 2021-05-22
 ---------------------------

@@ -5,7 +5,7 @@ import math
 
 import ezdxf
 from ezdxf.entities.hatch import Hatch
-from ezdxf.lldxf.tagwriter import TagCollector
+from ezdxf.lldxf.tagwriter import TagCollector, Tags
 from ezdxf.lldxf import const
 from ezdxf.render.forms import box
 from ezdxf.math import Vec3, Matrix44, arc_angle_span_deg
@@ -37,9 +37,9 @@ def hatch_pattern():
 
 
 def test_default_settings(hatch):
-    assert hatch.dxf.layer == '0'
+    assert hatch.dxf.layer == "0"
     assert hatch.dxf.color == 256  # by layer
-    assert hatch.dxf.linetype == 'BYLAYER'
+    assert hatch.dxf.linetype == "BYLAYER"
     assert hatch.dxf.ltscale == 1.0
     assert hatch.dxf.invisible == 0
     assert hatch.dxf.extrusion == (0.0, 0.0, 1.0)
@@ -82,13 +82,13 @@ def test_remove_all_paths(path_hatch):
 
 def test_add_polyline_path(hatch):
     new_path = hatch.paths.add_polyline_path([(0, 0), (0, 1), (1, 1), (1, 0)])
-    assert 'PolylinePath' == new_path.PATH_TYPE, "invalid path type"
+    assert "PolylinePath" == new_path.PATH_TYPE, "invalid path type"
     assert 4 == len(new_path.vertices), "invalid vertex count"
 
     # now check the created entity
     assert 1 == len(hatch.paths)
     path = hatch.paths[0]
-    assert 'PolylinePath' == path.PATH_TYPE, "invalid path type"
+    assert "PolylinePath" == path.PATH_TYPE, "invalid path type"
     assert 4 == len(path.vertices), "invalid vertex count"
     # vertex format: x, y, bulge_value
     assert (0, 0, 0) == path.vertices[0], "invalid first vertex"
@@ -98,7 +98,7 @@ def test_add_polyline_path(hatch):
 
 def test_polyline_path_attribs(path_hatch):
     path = path_hatch.paths[0]  # test first boundary path
-    assert 'PolylinePath' == path.PATH_TYPE, "invalid path type"
+    assert "PolylinePath" == path.PATH_TYPE, "invalid path type"
     assert 4 == len(path.vertices)
     assert path.has_bulge() is False
     assert path.is_closed == 1
@@ -107,7 +107,7 @@ def test_polyline_path_attribs(path_hatch):
 
 def test_polyline_path_vertices(path_hatch):
     path = path_hatch.paths[0]  # test first boundary path
-    assert 'PolylinePath' == path.PATH_TYPE, "invalid path type"
+    assert "PolylinePath" == path.PATH_TYPE, "invalid path type"
     assert 4 == len(path.vertices)
     # vertex format: x, y, bulge_value
     assert (10, 10, 0) == path.vertices[0], "invalid first vertex"
@@ -133,49 +133,53 @@ def test_polyline_path_transform_interface(hatch, m44):
 
 
 def test_arc_to_ellipse_edges(hatch):
-    hatch.paths.add_polyline_path([(0, 0, 1), (10, 0), (10, 10, -0.5), (0, 10)],
-                                  is_closed=True)
+    hatch.paths.add_polyline_path(
+        [(0, 0, 1), (10, 0), (10, 10, -0.5), (0, 10)], is_closed=True
+    )
 
     hatch.paths.polyline_to_edge_path()
     path = hatch.paths[0]
-    assert path.PATH_TYPE == 'EdgePath', 'polyline path not converted to edge path'
+    assert (
+        path.PATH_TYPE == "EdgePath"
+    ), "polyline path not converted to edge path"
 
     hatch.paths.arc_edges_to_ellipse_edges()
 
     edge = path.edges[0]
-    assert edge.EDGE_TYPE == 'EllipseEdge'
+    assert edge.EDGE_TYPE == "EllipseEdge"
     assert edge.center == (5, 0)
     assert edge.major_axis == (5, 0)
     assert edge.ratio == 1.0
 
     edge = path.edges[1]
-    assert edge.EDGE_TYPE == 'LineEdge'
+    assert edge.EDGE_TYPE == "LineEdge"
     assert edge.start == (10, 0)
     assert edge.end == (10, 10)
 
     edge = path.edges[2]
-    assert edge.EDGE_TYPE == 'EllipseEdge'
+    assert edge.EDGE_TYPE == "EllipseEdge"
     assert edge.ratio == 1.0
 
     edge = path.edges[3]
-    assert edge.EDGE_TYPE == 'LineEdge'
+    assert edge.EDGE_TYPE == "LineEdge"
     assert edge.start == (0, 10)
     assert edge.end == (0, 0)
 
 
 def test_ellipse_edges_to_spline_edges(hatch):
-    hatch.paths.add_polyline_path([(0, 0, 1), (10, 0), (10, 10, -0.5), (0, 10)],
-                                  is_closed=True)
+    hatch.paths.add_polyline_path(
+        [(0, 0, 1), (10, 0), (10, 10, -0.5), (0, 10)], is_closed=True
+    )
     hatch.paths.all_to_spline_edges(num=32)
     path = hatch.paths[0]
 
     edge = path.edges[0]
-    assert edge.EDGE_TYPE == 'SplineEdge'
+    assert edge.EDGE_TYPE == "SplineEdge"
     assert edge.control_points[0].isclose((0, 0))
     assert edge.control_points[-1].isclose((10, 0))
 
     edge = path.edges[2]
-    assert edge.EDGE_TYPE == 'SplineEdge'
+    assert edge.EDGE_TYPE == "SplineEdge"
     assert Vec3(10, 10).isclose(edge.control_points[0])
     assert Vec3(0, 10).isclose(edge.control_points[-1])
 
@@ -186,81 +190,88 @@ def test_edge_path_count(edge_hatch):
 
 def test_edge_path_type(edge_hatch):
     path = edge_hatch.paths[0]
-    assert 'EdgePath' == path.PATH_TYPE, "invalid path type"
+    assert "EdgePath" == path.PATH_TYPE, "invalid path type"
 
 
 def test_edge_path_edges(edge_hatch):
     path = edge_hatch.paths[0]
     edge = path.edges[0]
-    assert 'EllipseEdge' == edge.EDGE_TYPE, "invalid edge type for 1. edge"
+    assert "EllipseEdge" == edge.EDGE_TYPE, "invalid edge type for 1. edge"
     assert (10, 5) == edge.center
     assert (3, 0) == edge.major_axis
-    assert 1. / 3. == edge.ratio
+    assert 1.0 / 3.0 == edge.ratio
     assert 270 == edge.start_angle
-    assert 450 == edge.end_angle  # this value was created by AutoCAD == 90 degree
+    assert (
+        450 == edge.end_angle
+    )  # this value was created by AutoCAD == 90 degree
     assert 1 == edge.ccw
 
     edge = path.edges[1]
-    assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 2. edge"
+    assert "LineEdge" == edge.EDGE_TYPE, "invalid edge type for 2. edge"
     assert (10, 6) == edge.start
     assert (10, 10) == edge.end
 
     edge = path.edges[2]
-    assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 3. edge"
+    assert "LineEdge" == edge.EDGE_TYPE, "invalid edge type for 3. edge"
     assert (10, 10) == edge.start
     assert (6, 10) == edge.end
 
     edge = path.edges[3]
-    assert 'ArcEdge' == edge.EDGE_TYPE, "invalid edge type for 4. edge"
+    assert "ArcEdge" == edge.EDGE_TYPE, "invalid edge type for 4. edge"
     assert (5, 10) == edge.center
     assert 1 == edge.radius
     # clockwise arc edge:
     assert 0 == edge.ccw
     # now we get converted and swapped angles
-    assert 360 == 360.0 - edge.end_angle  # this value was created by AutoCAD (0 degree)
-    assert 540 == 360.0 - edge.start_angle  # this value was created by AutoCAD (-180 degree)
+    assert (
+        360 == 360.0 - edge.end_angle
+    )  # this value was created by AutoCAD (0 degree)
+    assert (
+        540 == 360.0 - edge.start_angle
+    )  # this value was created by AutoCAD (-180 degree)
     assert -180 == edge.start_angle  # ezdxf representation
     assert 0 == edge.end_angle  # ezdxf representation
 
     edge = path.edges[4]
-    assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 5. edge"
+    assert "LineEdge" == edge.EDGE_TYPE, "invalid edge type for 5. edge"
     assert (4, 10) == edge.start
     assert (0, 10) == edge.end
 
     edge = path.edges[5]
-    assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 6. edge"
+    assert "LineEdge" == edge.EDGE_TYPE, "invalid edge type for 6. edge"
     assert (0, 10) == edge.start
     assert (0, 0) == edge.end
 
     edge = path.edges[6]
-    assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 7. edge"
+    assert "LineEdge" == edge.EDGE_TYPE, "invalid edge type for 7. edge"
     assert (0, 0) == edge.start
     assert (10, 0) == edge.end
 
     edge = path.edges[7]
-    assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 8. edge"
+    assert "LineEdge" == edge.EDGE_TYPE, "invalid edge type for 8. edge"
     assert (10, 0) == edge.start
     assert (10, 4) == edge.end
 
 
 def test_add_edge_path(edge_hatch):
     path = edge_hatch.paths.add_edge_path()
-    assert 'EdgePath' == path.PATH_TYPE, "created wrong path type"
+    assert "EdgePath" == path.PATH_TYPE, "created wrong path type"
     path.add_line((0, 0), (10, 0))
     path.add_arc((10, 5), radius=5, start_angle=270, end_angle=450, ccw=True)
-    path.add_ellipse((5, 10), major_axis=(5, 0), ratio=0.2, start_angle=0,
-                     end_angle=180)
+    path.add_ellipse(
+        (5, 10), major_axis=(5, 0), ratio=0.2, start_angle=0, end_angle=180
+    )
     path.add_line((10, 0), (0, 0))
     # exit with statement and create DXF tags
 
     path = edge_hatch.paths[-1]
     edge = path.edges[0]
-    assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 1. edge"
+    assert "LineEdge" == edge.EDGE_TYPE, "invalid edge type for 1. edge"
     assert (0, 0) == edge.start
     assert (10, 0) == edge.end
 
     edge = path.edges[1]
-    assert 'ArcEdge' == edge.EDGE_TYPE, "invalid edge type for 2. edge"
+    assert "ArcEdge" == edge.EDGE_TYPE, "invalid edge type for 2. edge"
     assert (10, 5) == edge.center
     assert 5 == edge.radius
     assert 270 == edge.start_angle
@@ -268,16 +279,16 @@ def test_add_edge_path(edge_hatch):
     assert edge.ccw is True
 
     edge = path.edges[2]
-    assert 'EllipseEdge' == edge.EDGE_TYPE, "invalid edge type for 3. edge"
+    assert "EllipseEdge" == edge.EDGE_TYPE, "invalid edge type for 3. edge"
     assert (5, 10) == edge.center
     assert (5, 0) == edge.major_axis
-    assert .2 == edge.ratio
+    assert 0.2 == edge.ratio
     assert 0 == edge.start_angle
     assert 180 == edge.end_angle
     assert edge.ccw is True
 
     edge = path.edges[3]
-    assert 'LineEdge' == edge.EDGE_TYPE, "invalid edge type for 4. edge"
+    assert "LineEdge" == edge.EDGE_TYPE, "invalid edge type for 4. edge"
     assert (10, 0) == edge.start
     assert (0, 0) == edge.end
 
@@ -286,10 +297,12 @@ def test_edge_path_transform_interface(hatch, m44):
     path = hatch.paths.add_edge_path()
     path.add_line((0, 0), (10, 0))
     path.add_arc((10, 5), radius=5, start_angle=270, end_angle=450, ccw=1)
-    path.add_ellipse((5, 10), major_axis=(5, 0), ratio=0.2, start_angle=0,
-                     end_angle=180)
-    spline = path.add_spline([(1, 1), (2, 2), (3, 3), (4, 4)], degree=3,
-                             periodic=1)
+    path.add_ellipse(
+        (5, 10), major_axis=(5, 0), ratio=0.2, start_angle=0, end_angle=180
+    )
+    spline = path.add_spline(
+        [(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, periodic=1
+    )
     # the following values do not represent a mathematically valid spline
     spline.control_points = [(1, 1), (2, 2), (3, 3), (4, 4)]
     spline.knot_values = [1, 2, 3, 4, 5, 6]
@@ -297,10 +310,20 @@ def test_edge_path_transform_interface(hatch, m44):
     spline.start_tangent = (10, 1)
     spline.end_tangent = (2, 20)
 
-    chk = list(m44.transform_vertices([
-        Vec3(0, 0), Vec3(10, 0), Vec3(10, 5), Vec3(5, 10),
-        Vec3(1, 1), Vec3(2, 2), Vec3(3, 3), Vec3(4, 4),
-    ]))
+    chk = list(
+        m44.transform_vertices(
+            [
+                Vec3(0, 0),
+                Vec3(10, 0),
+                Vec3(10, 5),
+                Vec3(5, 10),
+                Vec3(1, 1),
+                Vec3(2, 2),
+                Vec3(3, 3),
+                Vec3(4, 4),
+            ]
+        )
+    )
 
     hatch.transform(m44)
     line = path.edges[0]
@@ -319,27 +342,30 @@ def test_edge_path_transform_interface(hatch, m44):
     assert m44.transform_direction((2, 20, 0)).isclose(spline.end_tangent)
 
 
-@pytest.fixture(params=['arc', 'ellipse'])
+@pytest.fixture(params=["arc", "ellipse"])
 def closed_edge_hatch(request):
     _hatch = Hatch.new()
     _path = _hatch.paths.add_edge_path()
-    if request.param == 'arc':
+    if request.param == "arc":
         _path.add_arc((0, 0), radius=1, start_angle=0, end_angle=360, ccw=1)
-    elif request.param == 'ellipse':
-        _path.add_ellipse((0, 0), major_axis=(5, 0), ratio=0.2, start_angle=0,
-                          end_angle=360)
+    elif request.param == "ellipse":
+        _path.add_ellipse(
+            (0, 0), major_axis=(5, 0), ratio=0.2, start_angle=0, end_angle=360
+        )
     return _hatch
 
 
 def test_full_circle_ellipse_edge_rotation(closed_edge_hatch):
     edge = closed_edge_hatch.paths[0].edges[0]
-    assert arc_angle_span_deg(edge.start_angle,
-                              edge.end_angle) == pytest.approx(360)
+    assert arc_angle_span_deg(
+        edge.start_angle, edge.end_angle
+    ) == pytest.approx(360)
 
     closed_edge_hatch.transform(Matrix44.z_rotate(math.radians(30)))
     edge2 = closed_edge_hatch.paths[0].edges[0]
-    assert arc_angle_span_deg(edge2.start_angle,
-                              edge2.end_angle) == pytest.approx(360)
+    assert arc_angle_span_deg(
+        edge2.start_angle, edge2.end_angle
+    ) == pytest.approx(360)
 
 
 def test_full_circle_edge_scaling():
@@ -367,7 +393,8 @@ def test_spline_edge_hatch_get_params(spline_edge_hatch):
     assert 11.86874452602773 == spline.knot_values[-1]
     assert 6 == len(spline.control_points)
     assert (0, 10) == spline.control_points[
-        0], "Unexpected start control point."
+        0
+    ], "Unexpected start control point."
     assert (0, 0) == spline.control_points[-1], "Unexpected end control point."
     assert 0 == len(spline.weights)
     assert 4 == len(spline.fit_points)
@@ -378,8 +405,9 @@ def test_spline_edge_hatch_get_params(spline_edge_hatch):
 def test_create_spline_edge(spline_edge_hatch):
     # create the spline
     path = spline_edge_hatch.paths[0]
-    spline = path.add_spline([(1, 1), (2, 2), (3, 3), (4, 4)], degree=3,
-                             periodic=1)
+    spline = path.add_spline(
+        [(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, periodic=1
+    )
     # the following values do not represent a mathematically valid spline
     spline.control_points = [(1, 1), (2, 2), (3, 3), (4, 4)]
     spline.knot_values = [1, 2, 3, 4, 5, 6]
@@ -401,13 +429,31 @@ def test_create_spline_edge(spline_edge_hatch):
 
     writer = TagCollector()
     spline.export_dxf(writer)
-    assert (97, 4) in writer.tags
+    tags = Tags(writer.tags)
+    assert tags.get_first_value(97) == 4, "expected count of fit points"
+
+
+def test_create_required_tangents_for_spline_edge_if_fit_points_present(
+    spline_edge_hatch,
+):
+    # create the spline
+    path = spline_edge_hatch.paths[0]
+    spline = path.add_spline_control_frame(
+        fit_points=[(1, 1), (2, 2), (3, 3), (4, 4)]
+    )
+    writer = TagCollector()
+    spline.export_dxf(writer)
+    tags = Tags(writer.tags)
+    assert tags.get_first_value(97) == 4, "expected count of fit points"
+    assert tags.has_tag(12), "expected start tangent to be present"
+    assert tags.has_tag(13), "expected end tangent to be present"
 
 
 def test_no_fit_points_export(spline_edge_hatch):
     path = spline_edge_hatch.paths[0]
-    spline = path.add_spline(control_points=[(1, 1), (2, 2), (3, 3), (4, 4)],
-                             degree=3, periodic=1)
+    spline = path.add_spline(
+        control_points=[(1, 1), (2, 2), (3, 3), (4, 4)], degree=3, periodic=1
+    )
     spline.knot_values = [1, 2, 3, 4, 5, 6]
     assert [(1, 1), (2, 2), (3, 3), (4, 4)] == spline.control_points
     assert len(spline.fit_points) == 0
@@ -450,7 +496,7 @@ def test_edit_pattern(hatch_pattern):
 def pattern():
     return [
         [45, (0, 0), (0, 1), []],  # 1. Line: continuous
-        [45, (0, 0.5), (0, 1), [0.2, -0.1]]  # 2. Line: dashed
+        [45, (0, 0.5), (0, 1), [0.2, -0.1]],  # 2. Line: dashed
     ]
 
 
@@ -512,7 +558,8 @@ def test_pattern_rotation(hatch, pattern):
     assert line1.offset.isclose(Vec3(-0.7071067811865475, 0.7071067811865476))
     assert line2.angle == 90
     assert line2.base_point.isclose(
-        Vec3(-0.35355339059327373, 0.3535533905932738))
+        Vec3(-0.35355339059327373, 0.3535533905932738)
+    )
     assert line2.offset.isclose(Vec3(-0.7071067811865475, 0.7071067811865476))
 
 
@@ -528,7 +575,7 @@ def test_pattern_rotation_add_angle(hatch, pattern):
 
 
 def test_create_gradient(hatch):
-    hatch.set_gradient((10, 10, 10), (250, 250, 250), rotation=180.)
+    hatch.set_gradient((10, 10, 10), (250, 250, 250), rotation=180.0)
     assert hatch.has_gradient_data is True
     assert hatch.has_solid_fill is True
     assert hatch.has_pattern_fill is False
@@ -539,11 +586,11 @@ def test_create_gradient(hatch):
     assert 180 == int(gdata.rotation)
     assert 0 == gdata.centered
     assert 0 == gdata.tint
-    assert 'LINEAR' == gdata.name
+    assert "LINEAR" == gdata.name
 
 
 def test_create_gradient_low_level_dxf_tags(hatch):
-    hatch.set_gradient((10, 10, 10), (250, 250, 250), rotation=180.)
+    hatch.set_gradient((10, 10, 10), (250, 250, 250), rotation=180.0)
     tags = TagCollector.dxftags(hatch.gradient)
     for code in [450, 451, 452, 453, 460, 461, 462, 470]:
         assert tags.has_tag(code) is True, "missing required tag: %d" % code
@@ -552,7 +599,7 @@ def test_create_gradient_low_level_dxf_tags(hatch):
 
 
 def test_remove_gradient_data(hatch):
-    hatch.set_gradient((10, 10, 10), (250, 250, 250), rotation=180.)
+    hatch.set_gradient((10, 10, 10), (250, 250, 250), rotation=180.0)
     assert hatch.has_gradient_data is True
 
     hatch.set_solid_fill(color=4)  # remove gradient data
@@ -562,7 +609,7 @@ def test_remove_gradient_data(hatch):
 
 
 def test_remove_gradient_low_level_dxf_tags(hatch):
-    hatch.set_gradient((10, 10, 10), (250, 250, 250), rotation=180.)
+    hatch.set_gradient((10, 10, 10), (250, 250, 250), rotation=180.0)
     assert hatch.has_gradient_data is True
 
     hatch.set_solid_fill(color=4)  # remove gradient data
@@ -597,7 +644,7 @@ def test_delete_not_existing_bgcolor(hatch):
     assert hatch.bgcolor is None
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def msp():
     doc = ezdxf.new()
     return doc.modelspace()
