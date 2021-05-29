@@ -63,7 +63,9 @@ if TYPE_CHECKING:
 
 TPath = Union["PolylinePath", "EdgePath"]
 
-__all__ = ["Hatch", "Gradient", "Pattern", "PolylinePath", "EdgePath"]
+__all__ = [
+    "Hatch", "MPolygon", "Gradient", "Pattern", "PolylinePath", "EdgePath"
+]
 
 acdb_hatch = DefSubclass(
     "AcDbHatch",
@@ -255,6 +257,7 @@ class Hatch(DXFGraphic):
     DXFTYPE = "HATCH"
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_hatch)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
+    SUBCLASS_NAME = "AcDbHatch"
 
     def __init__(self):
         super().__init__()
@@ -314,8 +317,8 @@ class Hatch(DXFGraphic):
             start_index = tags.tag_index(91)
         except const.DXFValueError:
             raise const.DXFStructureError(
-                "HATCH: Missing required DXF tag 'Number of boundary paths "
-                "(loops)' (code=91)."
+                f"{self.dxftype()}: Missing required DXF tag 'Number of "
+                f"boundary paths (loops)' (code=91)."
             )
 
         path_tags = tags.collect_consecutive_tags(
@@ -376,7 +379,7 @@ class Hatch(DXFGraphic):
     def export_entity(self, tagwriter: "TagWriter") -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
-        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_hatch.name)
+        tagwriter.write_tag2(SUBCLASS_MARKER, self.SUBCLASS_NAME)
         self.dxf.export_dxf_attribs(
             tagwriter,
             [
@@ -2035,3 +2038,4 @@ class MPolygon(Hatch):
     """
 
     DXFTYPE = "MPOLYGON"
+    SUBCLASS_NAME = "AcDbMPolygon"
