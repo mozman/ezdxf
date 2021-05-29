@@ -41,6 +41,20 @@ def test_default_new():
     assert entity.dxf.fill_color == ezdxf.const.BYLAYER
 
 
+def test_fill_properties_without_solid_filling():
+    entity = MPolygon()
+    entity.dxf.solid_fill = 0
+    assert entity.has_solid_fill is False
+    assert entity.has_pattern_fill is True
+
+
+def test_fill_properties_with_solid_filling():
+    entity = MPolygon()
+    entity.dxf.solid_fill = 1
+    assert entity.has_solid_fill is True
+    assert entity.has_pattern_fill is False
+
+
 def test_load_from_text(entity):
     assert entity.dxf.layer == "mpolygons"
     assert entity.dxf.color == 1
