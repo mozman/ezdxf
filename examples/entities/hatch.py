@@ -1,8 +1,11 @@
-# Created: 21.06.2015
-# Copyright (c) 2015-2019 Manfred Moitzi
+# Copyright (c) 2015-2021 Manfred Moitzi
 # License: MIT License
+from pathlib import Path
 import ezdxf
+from ezdxf import zoom
 from ezdxf.lldxf import const
+
+DIR = Path("~/Desktop/Outbox").expanduser()
 
 
 def create_solid_polyline_hatch():
@@ -10,29 +13,38 @@ def create_solid_polyline_hatch():
     msp = doc.modelspace()  # we are working in model space
     hatch = msp.add_hatch(color=2)  # by default a SOLID fill
     # if only 1 path - flags = 1 (external) by default
-    hatch.paths.add_polyline_path([(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)])
-    doc.saveas("hatch_solid_polyline.dxf")  # save DXF drawing
+    hatch.paths.add_polyline_path(
+        [(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)]
+    )
+    zoom.extents(msp)
+    doc.saveas(DIR / "hatch_solid_polyline.dxf")  # save DXF drawing
 
 
 def create_pattern_fill_polyline_hatch():
     doc = ezdxf.new("R2010")  # create a new DXF drawing (AutoCAD 2010)
     msp = doc.modelspace()  # we are working in model space
     hatch = msp.add_hatch()  # by default a SOLID fill
-    hatch.set_pattern_fill('ANSI33', color=7, scale=0.01)
+    hatch.set_pattern_fill("ANSI33", color=7, scale=0.01)
     # if only 1 path - flags = 1 (external) by default
-    hatch.paths.add_polyline_path([(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)])
-    doc.saveas("hatch_pattern_fill_polyline.dxf")  # save DXF drawing
+    hatch.paths.add_polyline_path(
+        [(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)]
+    )
+    zoom.extents(msp)
+    doc.saveas(DIR / "hatch_pattern_fill_polyline.dxf")  # save DXF drawing
 
 
 def create_pattern_fill_hatch_with_bgcolor():
     doc = ezdxf.new("R2010")  # create a new DXF drawing (AutoCAD 2010)
     msp = doc.modelspace()  # we are working in model space
     hatch = msp.add_hatch()  # by default a SOLID fill
-    hatch.set_pattern_fill('ANSI33', color=7, scale=0.01)
+    hatch.set_pattern_fill("ANSI33", color=7, scale=0.01)
     # if only 1 path - flags = 1 (external) by default
-    hatch.paths.add_polyline_path([(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)])
+    hatch.paths.add_polyline_path(
+        [(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)]
+    )
     hatch.bgcolor = (100, 200, 100)
-    doc.saveas("hatch_pattern_fill_with_bgcolor.dxf")  # save DXF drawing
+    zoom.extents(msp)
+    doc.saveas(DIR / "hatch_pattern_fill_with_bgcolor.dxf")  # save DXF drawing
 
 
 def using_hatch_style():
@@ -41,43 +53,60 @@ def using_hatch_style():
             return x + point[0], y + point[1]
 
         # outer loop - flags = 1 (external) default value
-        hatch.paths.add_polyline_path(map(shift, [(0, 0), (8, 0), (8, 8), (0, 8)]))
+        hatch.paths.add_polyline_path(
+            map(shift, [(0, 0), (8, 0), (8, 8), (0, 8)])
+        )
         # first inner loop - flags = 16 (outermost)
-        hatch.paths.add_polyline_path(map(shift, [(2, 2), (7, 2), (7, 7), (2, 7)]), flags=const.BOUNDARY_PATH_OUTERMOST)
+        hatch.paths.add_polyline_path(
+            map(shift, [(2, 2), (7, 2), (7, 7), (2, 7)]),
+            flags=const.BOUNDARY_PATH_OUTERMOST,
+        )
         # any further inner loops - flags = 0 (default)
-        hatch.paths.add_polyline_path(map(shift, [(4, 4), (6, 4), (6, 6), (4, 6)]), flags=const.BOUNDARY_PATH_DEFAULT)
+        hatch.paths.add_polyline_path(
+            map(shift, [(4, 4), (6, 4), (6, 6), (4, 6)]),
+            flags=const.BOUNDARY_PATH_DEFAULT,
+        )
 
     def place_square_2(hatch, x, y):
         def shift(point):
             return x + point[0], y + point[1]
 
         # outer loop - flags = 1 (external) default value
-        hatch.paths.add_polyline_path(map(shift, [(0, 0), (8, 0), (8, 8), (0, 8)]))
+        hatch.paths.add_polyline_path(
+            map(shift, [(0, 0), (8, 0), (8, 8), (0, 8)])
+        )
         # partly 1. inner loop - flags = 16 (outermost)
-        hatch.paths.add_polyline_path(map(shift, [(3, 1), (7, 1), (7, 5), (3, 5)]), flags=const.BOUNDARY_PATH_OUTERMOST)
+        hatch.paths.add_polyline_path(
+            map(shift, [(3, 1), (7, 1), (7, 5), (3, 5)]),
+            flags=const.BOUNDARY_PATH_OUTERMOST,
+        )
         # partly 1. inner loop - flags = 16 (outermost)
-        hatch.paths.add_polyline_path(map(shift, [(1, 3), (5, 3), (5, 7), (1, 7)]), flags=const.BOUNDARY_PATH_OUTERMOST)
+        hatch.paths.add_polyline_path(
+            map(shift, [(1, 3), (5, 3), (5, 7), (1, 7)]),
+            flags=const.BOUNDARY_PATH_OUTERMOST,
+        )
 
     doc = ezdxf.new("R2010")  # create a new DXF drawing (AutoCAD 2010)
     msp = doc.modelspace()  # we are working in model space
     # first create DXF hatch entities
-    hatch_style_0 = msp.add_hatch(color=3, dxfattribs={'hatch_style': 0})
-    hatch_style_1 = msp.add_hatch(color=3, dxfattribs={'hatch_style': 1})
-    hatch_style_2 = msp.add_hatch(color=3, dxfattribs={'hatch_style': 2})
+    hatch_style_0 = msp.add_hatch(color=3, dxfattribs={"hatch_style": 0})
+    hatch_style_1 = msp.add_hatch(color=3, dxfattribs={"hatch_style": 1})
+    hatch_style_2 = msp.add_hatch(color=3, dxfattribs={"hatch_style": 2})
     # then insert path elements to define the hatch boundaries
     place_square_1(hatch_style_0, 0, 0)
     place_square_1(hatch_style_1, 10, 0)
     place_square_1(hatch_style_2, 20, 0)
 
     # first create DXF hatch entities
-    hatch_style_0b = msp.add_hatch(color=4, dxfattribs={'hatch_style': 0})
-    hatch_style_1b = msp.add_hatch(color=4, dxfattribs={'hatch_style': 1})
-    hatch_style_2b = msp.add_hatch(color=4, dxfattribs={'hatch_style': 2})
+    hatch_style_0b = msp.add_hatch(color=4, dxfattribs={"hatch_style": 0})
+    hatch_style_1b = msp.add_hatch(color=4, dxfattribs={"hatch_style": 1})
+    hatch_style_2b = msp.add_hatch(color=4, dxfattribs={"hatch_style": 2})
     # then insert path elements to define the hatch boundaries
     place_square_2(hatch_style_0b, 0, 10)
     place_square_2(hatch_style_1b, 10, 10)
     place_square_2(hatch_style_2b, 20, 10)
-    doc.saveas("hatch_styles_examples.dxf")  # save DXF drawing
+    zoom.extents(msp)
+    doc.saveas(DIR / "hatch_styles_examples.dxf")  # save DXF drawing
 
 
 def using_hatch_style_with_edge_path():
@@ -95,42 +124,64 @@ def using_hatch_style_with_edge_path():
             return x + point[0], y + point[1]
 
         # outer loop - flags=1 (external) default value
-        add_edge_path(hatch.paths, map(shift, [(0, 0), (12.5, 0), (12.5, 12.5), (0, 12.5)]))
+        add_edge_path(
+            hatch.paths,
+            map(shift, [(0, 0), (12.5, 0), (12.5, 12.5), (0, 12.5)]),
+        )
         # first inner loop - flags=16 (outermost)
-        add_edge_path(hatch.paths, map(shift, [(2.5, 2.5), (10, 2.5), (10, 10), (2.5, 10)]),
-                      flags=const.BOUNDARY_PATH_OUTERMOST)
+        add_edge_path(
+            hatch.paths,
+            map(shift, [(2.5, 2.5), (10, 2.5), (10, 10), (2.5, 10)]),
+            flags=const.BOUNDARY_PATH_OUTERMOST,
+        )
         # any inner loop - flags=0 (default)
-        add_edge_path(hatch.paths, map(shift, [(5, 5), (7.5, 5), (7.5, 7.5), (5, 7.5)]),
-                      flags=const.BOUNDARY_PATH_DEFAULT)
+        add_edge_path(
+            hatch.paths,
+            map(shift, [(5, 5), (7.5, 5), (7.5, 7.5), (5, 7.5)]),
+            flags=const.BOUNDARY_PATH_DEFAULT,
+        )
 
     def place_square_2(hatch, x, y):
         def shift(point):
             return x + point[0], y + point[1]
 
-        add_edge_path(hatch.paths, map(shift, [(0, 0), (0, 8), (8, 8), (8, 0)]))  # 1. path
-        add_edge_path(hatch.paths, map(shift, [(3, 1), (7, 1), (7, 5), (3, 5)]), flags=const.BOUNDARY_PATH_OUTERMOST)
-        add_edge_path(hatch.paths, map(shift, [(1, 3), (5, 3), (5, 7), (1, 7)]), flags=const.BOUNDARY_PATH_OUTERMOST)
+        add_edge_path(
+            hatch.paths, map(shift, [(0, 0), (0, 8), (8, 8), (8, 0)])
+        )  # 1. path
+        add_edge_path(
+            hatch.paths,
+            map(shift, [(3, 1), (7, 1), (7, 5), (3, 5)]),
+            flags=const.BOUNDARY_PATH_OUTERMOST,
+        )
+        add_edge_path(
+            hatch.paths,
+            map(shift, [(1, 3), (5, 3), (5, 7), (1, 7)]),
+            flags=const.BOUNDARY_PATH_OUTERMOST,
+        )
 
     doc = ezdxf.new("R2010")  # create a new DXF drawing (AutoCAD 2010)
     msp = doc.modelspace()  # we are working in model space
     # first create DXF hatch entities
-    hatch_style_0 = msp.add_hatch(color=3, dxfattribs={'hatch_style': 0})
-    hatch_style_1 = msp.add_hatch(color=3, dxfattribs={'hatch_style': 1})
-    hatch_style_2 = msp.add_hatch(color=3, dxfattribs={'hatch_style': 2})
+    hatch_style_0 = msp.add_hatch(color=3, dxfattribs={"hatch_style": 0})
+    hatch_style_1 = msp.add_hatch(color=3, dxfattribs={"hatch_style": 1})
+    hatch_style_2 = msp.add_hatch(color=3, dxfattribs={"hatch_style": 2})
     # then insert path elements to define the hatch boundaries
     place_square_1(hatch_style_0, 0, 0)
     place_square_1(hatch_style_1, 15, 0)
     place_square_1(hatch_style_2, 30, 0)
 
     # first create DXF hatch entities
-    hatch_style_0b = msp.add_hatch(color=4, dxfattribs={'hatch_style': 0})
-    hatch_style_1b = msp.add_hatch(color=4, dxfattribs={'hatch_style': 1})
-    hatch_style_2b = msp.add_hatch(color=4, dxfattribs={'hatch_style': 2})
+    hatch_style_0b = msp.add_hatch(color=4, dxfattribs={"hatch_style": 0})
+    hatch_style_1b = msp.add_hatch(color=4, dxfattribs={"hatch_style": 1})
+    hatch_style_2b = msp.add_hatch(color=4, dxfattribs={"hatch_style": 2})
     # then insert path elements to define the hatch boundaries
     place_square_2(hatch_style_0b, 0, 15)
     place_square_2(hatch_style_1b, 15, 15)
     place_square_2(hatch_style_2b, 30, 15)
-    doc.saveas("hatch_styles_examples_with_edge_path.dxf")  # save DXF drawing
+    zoom.extents(msp)
+    doc.saveas(
+        DIR / "hatch_styles_examples_with_edge_path.dxf"
+    )  # save DXF drawing
 
 
 def using_hatch_with_spline_edge():
@@ -153,7 +204,8 @@ def using_hatch_with_spline_edge():
     path.add_line((0, 8), (0, 0))
     path.add_line((0, 0), (8, 0))
     path.add_spline_control_frame(fit_points=fitpoints)
-    doc.saveas("hatch_with_spline_edge.dxf")  # save DXF drawing
+    zoom.extents(msp)
+    doc.saveas(DIR / "hatch_with_spline_edge.dxf")  # save DXF drawing
 
 
 create_solid_polyline_hatch()
