@@ -29,6 +29,7 @@ DXF Entities
     lwpolyline
     mline
     mesh
+    mpolygon
     mtext
     point
     polyline

@@ -134,13 +134,13 @@ Path manager: :class:`BoundaryPaths`
 
         List of ``(x, y)`` tuples.
 
-    .. autoattribute:: has_solid_fill
+    .. autoproperty:: has_solid_fill
 
-    .. autoattribute:: has_pattern_fill
+    .. autoproperty:: has_pattern_fill
 
-    .. autoattribute:: has_gradient_data
+    .. autoproperty:: has_gradient_data
 
-    .. autoattribute:: bgcolor
+    .. autoproperty:: bgcolor
 
     .. automethod:: set_pattern_definition
 

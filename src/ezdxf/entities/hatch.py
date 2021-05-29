@@ -191,25 +191,7 @@ class BasePolygon(DXFGraphic):
         return tags
 
     def load_seeds(self, tags: Tags) -> Tags:
-        try:
-            start_index = tags.tag_index(98)
-        except const.DXFValueError:
-            return tags
-        seed_data = tags.collect_consecutive_tags(
-            {98, 10, 20}, start=start_index
-        )
-
-        # Remove seed data from tags:
-        del tags[start_index : start_index + len(seed_data) + 1]
-
-        # Just process vertices with group code 10
-        self.seeds = [value for code, value in seed_data if code == 10]
         return tags
-
-    def export_seeds(self, tagwriter: "TagWriter"):
-        tagwriter.write_tag2(98, len(self.seeds))
-        for seed in self.seeds:
-            tagwriter.write_vertex(10, seed[:2])
 
     @property
     def has_solid_fill(self) -> bool:
@@ -324,7 +306,7 @@ class BasePolygon(DXFGraphic):
             name: name of gradient type, default "LINEAR"
 
         """
-        if self.doc is not None and self.drawing.dxfversion < DXF2004:
+        if self.doc is not None and self.doc.dxfversion < DXF2004:
             raise const.DXFVersionError("Gradient support requires DXF R2004")
         if name not in const.GRADIENT_TYPES:
             raise const.DXFValueError(f"Invalid gradient type name: {name}")
@@ -468,8 +450,8 @@ class BasePolygon(DXFGraphic):
         self.pattern.scale(angle=angle - dxf.pattern_angle)
         dxf.pattern_angle = angle % 360.0
 
-    def transform(self, m: "Matrix44") -> "Hatch":
-        """Transform the HATCH entity by transformation matrix `m` inplace."""
+    def transform(self, m: "Matrix44") -> "BasePolygon":
+        """Transform entity by transformation matrix `m` inplace. """
         dxf = self.dxf
         ocs = OCSTransform(dxf.extrusion, m)
 
@@ -653,6 +635,27 @@ class Hatch(BasePolygon):
         if self.gradient:
             self.gradient.export_dxf(tagwriter)
 
+    def load_seeds(self, tags: Tags) -> Tags:
+        try:
+            start_index = tags.tag_index(98)
+        except const.DXFValueError:
+            return tags
+        seed_data = tags.collect_consecutive_tags(
+            {98, 10, 20}, start=start_index
+        )
+
+        # Remove seed data from tags:
+        del tags[start_index : start_index + len(seed_data) + 1]
+
+        # Just process vertices with group code 10
+        self.seeds = [value for code, value in seed_data if code == 10]
+        return tags
+
+    def export_seeds(self, tagwriter: "TagWriter"):
+        tagwriter.write_tag2(98, len(self.seeds))
+        for seed in self.seeds:
+            tagwriter.write_vertex(10, seed[:2])
+
     def remove_dependencies(self, other: "Drawing" = None) -> None:
         """Remove all dependencies from actual document. (internal API)"""
         if not self.is_alive:
@@ -748,7 +751,7 @@ acdb_mpolygon = DefSubclass(
         # Hatch pattern name:
         "pattern_name": DXFAttr(2, default="SOLID"),
         # pattern fill color as the ACI
-        "pattern_fill_color": DXFAttr(63, default=const.BYLAYER, optional=True),
+        "fill_color": DXFAttr(63, default=const.BYLAYER, optional=True),
         # MPolygon: Solid-fill flag:
         # 0 = lacks solid fill
         # 1 = has solid fill
@@ -758,12 +761,13 @@ acdb_mpolygon = DefSubclass(
             validator=validator.is_integer_bool,
             fixer=RETURN_DEFAULT,
         ),
-        # Hatch style is not supported/exported for MPolygon
+        # is Hatch style supported for MPolygon?
         "hatch_style": DXFAttr(
             75,
             default=const.HATCH_STYLE_NESTED,
             validator=validator.is_in_integer_range(0, 3),
             fixer=RETURN_DEFAULT,
+            optional=True,
         ),
         # Hatch pattern type ... see HATCH
         "pattern_type": DXFAttr(
@@ -812,7 +816,6 @@ acdb_mpolygon = DefSubclass(
         # MPolygon: number of degenerate boundary paths (loops), where a
         # degenerate boundary path is a border that is ignored by the hatch:
         "degenerated_loops": DXFAttr(99, default=0),
-        # ... see HATCH
     },
 )
 acdb_mpolygon_group_code = group_code_mapping(acdb_mpolygon)
@@ -842,7 +845,7 @@ class MPolygon(BasePolygon):
                 "elevation",
                 "extrusion",
                 "pattern_name",
-                "pattern_fill_color",
+                "fill_color",
                 "solid_fill",
             ],
         )
@@ -851,7 +854,7 @@ class MPolygon(BasePolygon):
         self.dxf.export_dxf_attribs(
             tagwriter,
             [
-                # "hatch_style",
+                "hatch_style",
                 "pattern_type",
             ],
         )
