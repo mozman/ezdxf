@@ -451,7 +451,7 @@ class BasePolygon(DXFGraphic):
         dxf.pattern_angle = angle % 360.0
 
     def transform(self, m: "Matrix44") -> "BasePolygon":
-        """Transform entity by transformation matrix `m` inplace. """
+        """Transform entity by transformation matrix `m` inplace."""
         dxf = self.dxf
         ocs = OCSTransform(dxf.extrusion, m)
 
@@ -838,7 +838,8 @@ class MPolygon(BasePolygon):
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_mpolygon.name)
-        self.dxf.export_dxf_attribs(
+        dxf = self.dxf
+        dxf.export_dxf_attribs(
             tagwriter,
             [
                 "version",
@@ -851,7 +852,7 @@ class MPolygon(BasePolygon):
         )
         self.paths.export_dxf(tagwriter, self.dxftype())
         # hatch_style not supported?
-        self.dxf.export_dxf_attribs(
+        dxf.export_dxf_attribs(
             tagwriter,
             [
                 "hatch_style",
@@ -859,22 +860,27 @@ class MPolygon(BasePolygon):
             ],
         )
         if self.pattern:
-            self.dxf.export_dxf_attribs(
+            dxf.export_dxf_attribs(
                 tagwriter, ["pattern_angle", "pattern_scale", "pattern_double"]
             )
             self.pattern.export_dxf(tagwriter)
-        self.dxf.export_dxf_attribs(
+
+        dxf.export_dxf_attribs(
             tagwriter,
             [
                 "annotated_boundary",
                 "pixel_size",
-                "unknown1",  # group code 78
-                "offset_vector",
-                "degenerated_loops",
             ],
         )
+        if dxf.solid_fill == 0:
+            dxf.export_dxf_attribs(tagwriter, "unknown1")
+        dxf.export_dxf_attribs(tagwriter, "offset_vector")
+        self.export_degenerated_loops(tagwriter)
         if self.gradient:
             self.gradient.export_dxf(tagwriter)
+
+    def export_degenerated_loops(self, tagwriter: "TagWriter"):
+        self.dxf.export_dxf_attribs(tagwriter, "degenerated_loops")
 
 
 class BoundaryPaths:
