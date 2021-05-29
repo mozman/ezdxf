@@ -11,6 +11,7 @@ from typing import (
 )
 import math
 import copy
+
 from ezdxf.lldxf import const
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
@@ -64,167 +65,14 @@ if TYPE_CHECKING:
 TPath = Union["PolylinePath", "EdgePath"]
 
 __all__ = [
-    "Hatch", "MPolygon", "Gradient", "Pattern", "PolylinePath", "EdgePath"
+    "Hatch",
+    "MPolygon",
+    "Gradient",
+    "Pattern",
+    "PolylinePath",
+    "EdgePath",
 ]
 
-acdb_hatch = DefSubclass(
-    "AcDbHatch",
-    {
-        # This subclass can also represent a MPolygon, whatever this is, never seen
-        # such a MPolygon in the wild.
-        # x- and y-axis always equal 0, z-axis represents the elevation:
-        "elevation": DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
-        "extrusion": DXFAttr(
-            210,
-            xtype=XType.point3d,
-            default=Z_AXIS,
-            validator=validator.is_not_null_vector,
-            fixer=RETURN_DEFAULT,
-        ),
-        # Hatch pattern name:
-        "pattern_name": DXFAttr(2, default="SOLID"),
-        # HATCH: Solid fill flag:
-        # 0 = pattern fill
-        # 1 = solid fill
-        # MPolygon: the version of MPolygon
-        "solid_fill": DXFAttr(
-            70,
-            default=1,
-            alias="mp_version",
-            validator=validator.is_integer_bool,
-            fixer=RETURN_DEFAULT,
-        ),
-        # MPolygon: pattern fill color as the ACI
-        "mp_pattern_fill_color": DXFAttr(
-            63, default=const.BYLAYER, optional=True
-        ),
-        # HATCH: associativity flag
-        # 0 = non-associative
-        # 1 = associative
-        # MPolygon: solid-fill flag
-        # 0 = lacks solid fill
-        # 1 = has solid fill
-        "associative": DXFAttr(
-            71,
-            default=0,
-            alias="mp_solid_fill",
-            validator=validator.is_integer_bool,
-            fixer=RETURN_DEFAULT,
-        ),
-        # 91: Number of boundary paths (loops)
-        # following: Boundary path data. Repeats number of times specified by
-        # code 91. See Boundary Path Data
-        # Hatch style:
-        # 0 = Hatch “odd parity” area (Normal style)
-        # 1 = Hatch outermost area only (Outer style)
-        # 2 = Hatch through entire area (Ignore style)
-        "hatch_style": DXFAttr(
-            75,
-            default=const.HATCH_STYLE_NESTED,
-            validator=validator.is_in_integer_range(0, 3),
-            fixer=RETURN_DEFAULT,
-        ),
-        # Hatch pattern type:
-        # 0 = User-defined
-        # 1 = Predefined
-        # 2 = Custom
-        "pattern_type": DXFAttr(
-            76,
-            default=const.HATCH_TYPE_PREDEFINED,
-            validator=validator.is_in_integer_range(0, 3),
-            fixer=RETURN_DEFAULT,
-        ),
-        # Hatch pattern angle (pattern fill only) in degrees:
-        "pattern_angle": DXFAttr(52, default=0),
-        # Hatch pattern scale or spacing (pattern fill only):
-        "pattern_scale": DXFAttr(
-            41,
-            default=1,
-            validator=validator.is_not_zero,
-            fixer=RETURN_DEFAULT,
-        ),
-        # For MPolygon, boundary annotation flag:
-        # 0 = boundary is not an annotated boundary
-        # 1 = boundary is an annotated boundary
-        "mp_annotated_boundary": DXFAttr(
-            73,
-            default=0,
-            optional=True,
-            validator=validator.is_integer_bool,
-            fixer=RETURN_DEFAULT,
-        ),
-        # Hatch pattern double flag (pattern fill only):
-        # 0 = not double
-        # 1 = double
-        "pattern_double": DXFAttr(
-            77,
-            default=0,
-            validator=validator.is_integer_bool,
-            fixer=RETURN_DEFAULT,
-        ),
-        # 78: Number of pattern definition lines
-        # following: Pattern line data. Repeats number of times specified by
-        # code 78. See Pattern Data
-        # Pixel size used to determine the density to perform various intersection
-        # and ray casting operations in hatch pattern computation for associative
-        # hatches and hatches created with the Flood method of hatching
-        "pixel_size": DXFAttr(47, optional=True),
-        # Number of seed points
-        "n_seed_points": DXFAttr(
-            98,
-            default=0,
-            validator=validator.is_greater_or_equal_zero,
-            fixer=RETURN_DEFAULT,
-        ),
-        # 10, 20: Seed point (in OCS) 2D point (multiple entries)
-        # For MPolygon, offset vector in OCS
-        "mp_offset_vector": DXFAttr(11, xtype=XType.point3d, optional=True),
-        # For MPolygon, number of degenerate boundary paths (loops), where a
-        # degenerate boundary path is a border that is ignored by the hatch:
-        "mp_degenerated_loops": DXFAttr(99, optional=True),
-        # 450 Indicates solid hatch or gradient; if solid hatch, the values for the
-        # remaining codes are ignored but must be present. Optional;
-        #
-        # if code 450 is in the file, then the following codes must be in the
-        # file: 451, 452, 453, 460, 461, 462, and 470.
-        # If code 450 is not in the file, then the following codes must not be
-        # in the file: 451, 452, 453, 460, 461, 462, and 470
-        #
-        #   0 = Solid hatch
-        #   1 = Gradient
-        #
-        # 451 Zero is reserved for future use
-        # 452 Records how colors were defined and is used only by dialog code:
-        #
-        #   0 = Two-color gradient
-        #   1 = Single-color gradient
-        #
-        # 453 Number of colors:
-        #
-        #   0 = Solid hatch
-        #   2 = Gradient
-        #
-        # 460 Rotation angle in radians for gradients (default = 0, 0)
-        # 461 Gradient definition; corresponds to the Centered option on the
-        #     Gradient Tab of the Boundary Hatch and Fill dialog box. Each gradient
-        #     has two definitions, shifted and non-shifted. A Shift value describes
-        #     the blend of the two definitions that should be used. A value of 0.0
-        #     means only the non-shifted version should be used, and a value of 1.0
-        #     means that only the shifted version should be used.
-        #
-        # 462 Color tint value used by dialog code (default = 0, 0; range is 0.0 to
-        #     1.0). The color tint value is a gradient color and controls the degree
-        #     of tint in the dialog when the Hatch group code 452 is set to 1.
-        #
-        # 463 Reserved for future use:
-        #
-        #   0 = First value
-        #   1 = Second value
-        #
-        # 470 String (default = LINEAR)
-    },
-)
-acdb_hatch_group_code = group_code_mapping(acdb_hatch)
 GRADIENT_CODES = {450, 451, 452, 453, 460, 461, 462, 463, 470, 421, 63}
 PATH_CODES = {
     10,
@@ -250,21 +98,18 @@ PATH_CODES = {
 PATTERN_DEFINITION_LINE_CODES = {53, 43, 44, 45, 46, 79, 49}
 
 
-@register_entity
-class Hatch(DXFGraphic):
-    """DXF HATCH entity"""
+class BasePolygon(DXFGraphic):
+    """Base class for the HATCH and the MPOLYGON entity."""
 
-    DXFTYPE = "HATCH"
-    DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_hatch)
-    MIN_DXF_VERSION_FOR_EXPORT = DXF2000
-    SUBCLASS_NAME = "AcDbHatch"
+    SUBCLASS_NAME = "default"
+    LOAD_GROUP_CODES = {}
 
     def __init__(self):
         super().__init__()
         self.paths = BoundaryPaths()
         self.pattern: Optional[Pattern] = None
         self.gradient: Optional[Gradient] = None
-        self.seeds = []
+        self.seeds = []  # not supported/exported by MPOLYGON
 
     def _copy_data(self, entity: "Hatch") -> None:
         """Copy paths, pattern, gradient, seeds."""
@@ -272,21 +117,6 @@ class Hatch(DXFGraphic):
         entity.pattern = copy.deepcopy(self.pattern)
         entity.gradient = copy.deepcopy(self.gradient)
         entity.seeds = copy.deepcopy(self.seeds)
-
-    def remove_dependencies(self, other: "Drawing" = None) -> None:
-        """Remove all dependencies from actual document. (internal API)"""
-        if not self.is_alive:
-            return
-
-        super().remove_dependencies()
-        self.remove_association()
-
-    def remove_association(self):
-        """Remove associated path elements."""
-        if self.dxf.associative:
-            self.dxf.associative = 0
-            for path in self.paths:
-                path.source_boundary_objects = []
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
@@ -306,7 +136,7 @@ class Hatch(DXFGraphic):
 
             # Load HATCH DXF attributes from remaining tags:
             processor.fast_load_dxfattribs(
-                dxf, acdb_hatch_group_code, subclass=tags, recover=True
+                dxf, self.LOAD_GROUP_CODES, subclass=tags, recover=True
             )
         return dxf
 
@@ -344,7 +174,7 @@ class Hatch(DXFGraphic):
         self.pattern = Pattern.load_tags(pattern_tags)
 
         # Delete pattern data including length tag 78
-        del tags[index: index + len(pattern_tags) + 1]
+        del tags[index : index + len(pattern_tags) + 1]
         return tags
 
     def load_gradient(self, tags: Tags) -> Tags:
@@ -370,43 +200,11 @@ class Hatch(DXFGraphic):
         )
 
         # Remove seed data from tags:
-        del tags[start_index: start_index + len(seed_data) + 1]
+        del tags[start_index : start_index + len(seed_data) + 1]
 
         # Just process vertices with group code 10
         self.seeds = [value for code, value in seed_data if code == 10]
         return tags
-
-    def export_entity(self, tagwriter: "TagWriter") -> None:
-        """Export entity specific data as DXF tags."""
-        super().export_entity(tagwriter)
-        tagwriter.write_tag2(SUBCLASS_MARKER, self.SUBCLASS_NAME)
-        self.dxf.export_dxf_attribs(
-            tagwriter,
-            [
-                "elevation",
-                "extrusion",
-                "pattern_name",
-                "solid_fill",
-                "mp_pattern_fill_color",
-                "associative",
-            ],
-        )
-        self.paths.export_dxf(tagwriter)
-        self.dxf.export_dxf_attribs(tagwriter, ["hatch_style", "pattern_type"])
-        if self.pattern:
-            self.dxf.export_dxf_attribs(
-                tagwriter, ["pattern_angle", "pattern_scale", "pattern_double"]
-            )
-            self.pattern.export_dxf(tagwriter)
-        self.dxf.export_dxf_attribs(
-            tagwriter, ["mp_annotated_boundary", "pixel_size"]
-        )
-        self.export_seeds(tagwriter)
-        self.dxf.export_dxf_attribs(
-            tagwriter, ["mp_offset_vector", "mp_degenerated_loops"]
-        )
-        if self.gradient:
-            self.gradient.export_dxf(tagwriter)
 
     def export_seeds(self, tagwriter: "TagWriter"):
         tagwriter.write_tag2(98, len(self.seeds))
@@ -670,21 +468,6 @@ class Hatch(DXFGraphic):
         self.pattern.scale(angle=angle - dxf.pattern_angle)
         dxf.pattern_angle = angle % 360.0
 
-    def set_seed_points(self, points: Iterable[Tuple[float, float]]) -> None:
-        """Set seed points, `points` is an iterable of (x, y)-tuples.
-        I don't know why there can be more than one seed point.
-        All points in :ref:`OCS` (:attr:`Hatch.dxf.elevation` is the Z value)
-
-        """
-        points = list(points)
-        if len(points) < 1:
-            raise const.DXFValueError(
-                "Param points should be an iterable of 2D points and requires at "
-                "least one point."
-            )
-        self.seeds = list(points)
-        self.dxf.n_seed_points = len(self.seeds)
-
     def transform(self, m: "Matrix44") -> "Hatch":
         """Transform the HATCH entity by transformation matrix `m` inplace."""
         dxf = self.dxf
@@ -698,6 +481,192 @@ class Hatch(DXFGraphic):
         dxf.extrusion = ocs.new_extrusion
         # todo scale pattern
         return self
+
+
+acdb_hatch = DefSubclass(
+    "AcDbHatch",
+    {
+        # This subclass can also represent a MPolygon, whatever this is, never seen
+        # such a MPolygon in the wild.
+        # x- and y-axis always equal 0, z-axis represents the elevation:
+        "elevation": DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
+        "extrusion": DXFAttr(
+            210,
+            xtype=XType.point3d,
+            default=Z_AXIS,
+            validator=validator.is_not_null_vector,
+            fixer=RETURN_DEFAULT,
+        ),
+        # Hatch pattern name:
+        "pattern_name": DXFAttr(2, default="SOLID"),
+        # HATCH: Solid fill flag:
+        # 0 = pattern fill
+        # 1 = solid fill
+        "solid_fill": DXFAttr(
+            70,
+            default=1,
+            validator=validator.is_integer_bool,
+            fixer=RETURN_DEFAULT,
+        ),
+        # HATCH: associativity flag
+        # 0 = non-associative
+        # 1 = associative
+        "associative": DXFAttr(
+            71,
+            default=0,
+            validator=validator.is_integer_bool,
+            fixer=RETURN_DEFAULT,
+        ),
+        # 91: Number of boundary paths (loops)
+        # following: Boundary path data. Repeats number of times specified by
+        # code 91. See Boundary Path Data
+        # Hatch style:
+        # 0 = Hatch “odd parity” area (Normal style)
+        # 1 = Hatch outermost area only (Outer style)
+        # 2 = Hatch through entire area (Ignore style)
+        "hatch_style": DXFAttr(
+            75,
+            default=const.HATCH_STYLE_NESTED,
+            validator=validator.is_in_integer_range(0, 3),
+            fixer=RETURN_DEFAULT,
+        ),
+        # Hatch pattern type:
+        # 0 = User-defined
+        # 1 = Predefined
+        # 2 = Custom
+        "pattern_type": DXFAttr(
+            76,
+            default=const.HATCH_TYPE_PREDEFINED,
+            validator=validator.is_in_integer_range(0, 3),
+            fixer=RETURN_DEFAULT,
+        ),
+        # Hatch pattern angle (pattern fill only) in degrees:
+        "pattern_angle": DXFAttr(52, default=0),
+        # Hatch pattern scale or spacing (pattern fill only):
+        "pattern_scale": DXFAttr(
+            41,
+            default=1,
+            validator=validator.is_not_zero,
+            fixer=RETURN_DEFAULT,
+        ),
+        # Hatch pattern double flag (pattern fill only):
+        # 0 = not double
+        # 1 = double
+        "pattern_double": DXFAttr(
+            77,
+            default=0,
+            validator=validator.is_integer_bool,
+            fixer=RETURN_DEFAULT,
+        ),
+        # 78: Number of pattern definition lines
+        # following: Pattern line data. Repeats number of times specified by
+        # code 78. See Pattern Data
+        # Pixel size used to determine the density to perform various intersection
+        # and ray casting operations in hatch pattern computation for associative
+        # hatches and hatches created with the Flood method of hatching
+        "pixel_size": DXFAttr(47, optional=True),
+        # Number of seed points
+        "n_seed_points": DXFAttr(
+            98,
+            default=0,
+            validator=validator.is_greater_or_equal_zero,
+            fixer=RETURN_DEFAULT,
+        ),
+        # 10, 20: Seed point (in OCS) 2D point (multiple entries)
+        # 450 Indicates solid hatch or gradient; if solid hatch, the values for the
+        # remaining codes are ignored but must be present. Optional;
+        #
+        # if code 450 is in the file, then the following codes must be in the
+        # file: 451, 452, 453, 460, 461, 462, and 470.
+        # If code 450 is not in the file, then the following codes must not be
+        # in the file: 451, 452, 453, 460, 461, 462, and 470
+        #
+        #   0 = Solid hatch
+        #   1 = Gradient
+        #
+        # 451 Zero is reserved for future use
+        # 452 Records how colors were defined and is used only by dialog code:
+        #
+        #   0 = Two-color gradient
+        #   1 = Single-color gradient
+        #
+        # 453 Number of colors:
+        #
+        #   0 = Solid hatch
+        #   2 = Gradient
+        #
+        # 460 Rotation angle in radians for gradients (default = 0, 0)
+        # 461 Gradient definition; corresponds to the Centered option on the
+        #     Gradient Tab of the Boundary Hatch and Fill dialog box. Each gradient
+        #     has two definitions, shifted and non-shifted. A Shift value describes
+        #     the blend of the two definitions that should be used. A value of 0.0
+        #     means only the non-shifted version should be used, and a value of 1.0
+        #     means that only the shifted version should be used.
+        #
+        # 462 Color tint value used by dialog code (default = 0, 0; range is 0.0 to
+        #     1.0). The color tint value is a gradient color and controls the degree
+        #     of tint in the dialog when the Hatch group code 452 is set to 1.
+        #
+        # 463 Reserved for future use:
+        #
+        #   0 = First value
+        #   1 = Second value
+        #
+        # 470 String (default = LINEAR)
+    },
+)
+acdb_hatch_group_code = group_code_mapping(acdb_hatch)
+
+
+@register_entity
+class Hatch(BasePolygon):
+    """DXF HATCH entity"""
+
+    DXFTYPE = "HATCH"
+    DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_hatch)
+    MIN_DXF_VERSION_FOR_EXPORT = DXF2000
+    LOAD_GROUP_CODES = acdb_hatch_group_code
+
+    def export_entity(self, tagwriter: "TagWriter") -> None:
+        """Export entity specific data as DXF tags."""
+        super().export_entity(tagwriter)
+        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_hatch.name)
+        self.dxf.export_dxf_attribs(
+            tagwriter,
+            [
+                "elevation",
+                "extrusion",
+                "pattern_name",
+                "solid_fill",
+                "associative",
+            ],
+        )
+        self.paths.export_dxf(tagwriter, self.dxftype())
+        self.dxf.export_dxf_attribs(tagwriter, ["hatch_style", "pattern_type"])
+        if self.pattern:
+            self.dxf.export_dxf_attribs(
+                tagwriter, ["pattern_angle", "pattern_scale", "pattern_double"]
+            )
+            self.pattern.export_dxf(tagwriter)
+        self.dxf.export_dxf_attribs(tagwriter, ["pixel_size"])
+        self.export_seeds(tagwriter)
+        if self.gradient:
+            self.gradient.export_dxf(tagwriter)
+
+    def remove_dependencies(self, other: "Drawing" = None) -> None:
+        """Remove all dependencies from actual document. (internal API)"""
+        if not self.is_alive:
+            return
+
+        super().remove_dependencies()
+        self.remove_association()
+
+    def remove_association(self):
+        """Remove associated path elements."""
+        if self.dxf.associative:
+            self.dxf.associative = 0
+            for path in self.paths:
+                path.source_boundary_objects = []
 
     def associate(self, path: TPath, entities: Iterable["DXFEntity"]):
         """Set association from hatch boundary `path` to DXF geometry `entities`.
@@ -740,6 +709,169 @@ class Hatch(DXFGraphic):
             path.source_boundary_objects.append(entity.dxf.handle)
             entity.append_reactor_handle(handle)
         self.dxf.associative = 1 if len(path.source_boundary_objects) else 0
+
+    def set_seed_points(self, points: Iterable[Tuple[float, float]]) -> None:
+        """Set seed points, `points` is an iterable of (x, y)-tuples.
+        I don't know why there can be more than one seed point.
+        All points in :ref:`OCS` (:attr:`Hatch.dxf.elevation` is the Z value)
+
+        """
+        points = list(points)
+        if len(points) < 1:
+            raise const.DXFValueError(
+                "Param points should be an iterable of 2D points and requires at "
+                "least one point."
+            )
+        self.seeds = list(points)
+        self.dxf.n_seed_points = len(self.seeds)
+
+
+acdb_mpolygon = DefSubclass(
+    "AcDbMPolygon",
+    {
+        # MPolygon: version
+        "version": DXFAttr(
+            70,
+            default=1,
+            validator=validator.is_integer_bool,
+            fixer=RETURN_DEFAULT,
+        ),
+        # x- and y-axis always equal 0, z-axis represents the elevation:
+        "elevation": DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
+        "extrusion": DXFAttr(
+            210,
+            xtype=XType.point3d,
+            default=Z_AXIS,
+            validator=validator.is_not_null_vector,
+            fixer=RETURN_DEFAULT,
+        ),
+        # Hatch pattern name:
+        "pattern_name": DXFAttr(2, default="SOLID"),
+        # pattern fill color as the ACI
+        "pattern_fill_color": DXFAttr(63, default=const.BYLAYER, optional=True),
+        # MPolygon: Solid-fill flag:
+        # 0 = lacks solid fill
+        # 1 = has solid fill
+        "solid_fill": DXFAttr(
+            71,
+            default=0,
+            validator=validator.is_integer_bool,
+            fixer=RETURN_DEFAULT,
+        ),
+        # Hatch style is not supported/exported for MPolygon
+        "hatch_style": DXFAttr(
+            75,
+            default=const.HATCH_STYLE_NESTED,
+            validator=validator.is_in_integer_range(0, 3),
+            fixer=RETURN_DEFAULT,
+        ),
+        # Hatch pattern type ... see HATCH
+        "pattern_type": DXFAttr(
+            76,
+            default=const.HATCH_TYPE_PREDEFINED,
+            validator=validator.is_in_integer_range(0, 3),
+            fixer=RETURN_DEFAULT,
+        ),
+        # Hatch pattern angle (pattern fill only) in degrees:
+        "pattern_angle": DXFAttr(52, default=0),
+        # Hatch pattern scale or spacing (pattern fill only):
+        "pattern_scale": DXFAttr(
+            41,
+            default=1,
+            validator=validator.is_not_zero,
+            fixer=RETURN_DEFAULT,
+        ),
+        # MPolygon: Boundary annotation flag:
+        # 0 = boundary is not an annotated boundary
+        # 1 = boundary is an annotated boundary
+        "annotated_boundary": DXFAttr(
+            73,
+            default=0,
+            optional=True,
+            validator=validator.is_integer_bool,
+            fixer=RETURN_DEFAULT,
+        ),
+        # Hatch pattern double flag (pattern fill only) .. see HATCH
+        "pattern_double": DXFAttr(
+            77,
+            default=0,
+            validator=validator.is_integer_bool,
+            fixer=RETURN_DEFAULT,
+        ),
+        # see ... HATCH
+        "pixel_size": DXFAttr(47, optional=True),
+        "n_seed_points": DXFAttr(
+            98,
+            default=0,
+            validator=validator.is_greater_or_equal_zero,
+            fixer=RETURN_DEFAULT,
+        ),
+        "unknown1": DXFAttr(78, default=0),
+        # MPolygon: offset vector in OCS ???
+        "offset_vector": DXFAttr(11, xtype=XType.point2d, default=(0, 0)),
+        # MPolygon: number of degenerate boundary paths (loops), where a
+        # degenerate boundary path is a border that is ignored by the hatch:
+        "degenerated_loops": DXFAttr(99, default=0),
+        # ... see HATCH
+    },
+)
+acdb_mpolygon_group_code = group_code_mapping(acdb_mpolygon)
+
+
+@register_entity
+class MPolygon(BasePolygon):
+    """DXF MPOLYGON entity
+
+    The MPOLYGON is not a core DXF entity, and requires a CLASS definition.
+
+    """
+
+    DXFTYPE = "MPOLYGON"
+    DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mpolygon)
+    MIN_DXF_VERSION_FOR_EXPORT = DXF2000
+    LOAD_GROUP_CODES = acdb_mpolygon_group_code
+
+    def export_entity(self, tagwriter: "TagWriter") -> None:
+        """Export entity specific data as DXF tags."""
+        super().export_entity(tagwriter)
+        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_mpolygon.name)
+        self.dxf.export_dxf_attribs(
+            tagwriter,
+            [
+                "version",
+                "elevation",
+                "extrusion",
+                "pattern_name",
+                "pattern_fill_color",
+                "solid_fill",
+            ],
+        )
+        self.paths.export_dxf(tagwriter, self.dxftype())
+        # hatch_style not supported?
+        self.dxf.export_dxf_attribs(
+            tagwriter,
+            [
+                # "hatch_style",
+                "pattern_type",
+            ],
+        )
+        if self.pattern:
+            self.dxf.export_dxf_attribs(
+                tagwriter, ["pattern_angle", "pattern_scale", "pattern_double"]
+            )
+            self.pattern.export_dxf(tagwriter)
+        self.dxf.export_dxf_attribs(
+            tagwriter,
+            [
+                "annotated_boundary",
+                "pixel_size",
+                "unknown1",  # group code 78
+                "offset_vector",
+                "degenerated_loops",
+            ],
+        )
+        if self.gradient:
+            self.gradient.export_dxf(tagwriter)
 
 
 class BoundaryPaths:
@@ -817,7 +949,7 @@ class BoundaryPaths:
 
         paths = sorted(
             (path_type_enum(p.path_type_flags), i, p)
-                for i, p in enumerate(self.paths)
+            for i, p in enumerate(self.paths)
         )
         ignore = 1  # EXTERNAL only
         if hatch_style == const.HATCH_STYLE_NESTED:
@@ -859,10 +991,10 @@ class BoundaryPaths:
         self.paths.append(new_path)
         return new_path
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: "TagWriter", dxftype: str) -> None:
         tagwriter.write_tag2(91, len(self.paths))
         for path in self.paths:
-            path.export_dxf(tagwriter)
+            path.export_dxf(tagwriter, dxftype)
 
     def transform(self, ocs: OCSTransform, elevation: float = 0) -> None:
         """Transform HATCH boundary paths.
@@ -1164,6 +1296,8 @@ class PolylinePath:
         # List of 2D coordinates with bulge values (x, y, bulge);
         # bulge default = 0.0
         self.vertices: List[Tuple[float, float, float]] = []
+        # MPOLYGON does not support source boundary objects, the MPOLYGON is
+        # the source object!
         self.source_boundary_objects: List[str] = []  # (330, handle) tags
 
     @classmethod
@@ -1222,20 +1356,29 @@ class PolylinePath:
     def has_bulge(self) -> bool:
         return any(bulge for x, y, bulge in self.vertices)
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: "TagWriter", dxftype: str) -> None:
         has_bulge = self.has_bulge()
         write_tag = tagwriter.write_tag2
 
         write_tag(92, int(self.path_type_flags))
-        write_tag(72, int(has_bulge))
-        write_tag(73, int(self.is_closed))
+        if dxftype == "HATCH":  # great design :<
+            write_tag(72, int(has_bulge))
+            write_tag(73, int(self.is_closed))
+        elif dxftype == "MPOLYGON":
+            write_tag(73, int(self.is_closed))
+            write_tag(72, int(has_bulge))
+        else:
+            raise ValueError(f"unsupported DXF type {dxftype}")
         write_tag(93, len(self.vertices))
         for x, y, bulge in self.vertices:
             tagwriter.write_vertex(10, (float(x), float(y)))
             if has_bulge:
                 write_tag(42, float(bulge))
 
-        export_source_boundary_objects(tagwriter, self.source_boundary_objects)
+        if dxftype == "HATCH":
+            export_source_boundary_objects(
+                tagwriter, self.source_boundary_objects
+            )
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
         """Transform polyline path."""
@@ -1449,7 +1592,7 @@ class EdgePath:
         """Delete all edges."""
         self.edges = []
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: "TagWriter", dxftype: str) -> None:
         tagwriter.write_tag2(92, int(self.path_type_flags))
         tagwriter.write_tag2(93, len(self.edges))
         for edge in self.edges:
@@ -2027,15 +2170,3 @@ class Gradient:
             write_tag(63, self.aci2)  # code 63 "color as ACI" could be left off
         write_tag(421, clr.rgb2int(self.color2))  # second color
         write_tag(470, self.name)
-
-
-@register_entity
-class MPolygon(Hatch):
-    """DXF MPOLYGON entity
-
-    The MPOLYGON is not a core DXF entity, and requires a CLASS definition.
-
-    """
-
-    DXFTYPE = "MPOLYGON"
-    SUBCLASS_NAME = "AcDbMPolygon"
