@@ -8,8 +8,13 @@ Add-ons
     - (v0.17) MLEADER full rendering support, requires `MLeader.virtual_entities()`
     - (v0.17) add support for ATTRIB with embedded MTEXT
     - (v0.17) global fonts cache usage
+    - (v0.17) MPOLYGON support  
+    - (v0.17) extended MTEXT renderer  
     - (>v1.0) ACAD_TABLE
     - (>v1.0) support for switching plot styles (DXF_DEFAULT_PAPERSPACE_COLORS)
+  
+- geo: (v0.17) MPOLYGON support
+- dxf2code: (v0.17) MPOLYGON support
   
 - (>v1.0) Native SVG exporter, planned after the matplotlib backend supports 
   all v1.0 features. 
@@ -46,6 +51,11 @@ Render Tools
     - ordinate dim
     - arc dim
 - (>v1.0) `ACADTable.virtual_entities()`, requires basic ACAD_TABLE support
+
+Construction Tools
+------------------
+
+- (v0.17) Path to MPOLYGON converter? MPOLYGON does not support spline edges!
 
 DXF Entities
 ------------
