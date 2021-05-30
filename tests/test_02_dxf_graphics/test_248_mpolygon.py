@@ -84,7 +84,6 @@ def test_write_dxf_no_fill(entity):
 
 
 def test_write_dxf_r2004_no_fill_requires_basic_gradient_data(entity):
-    entity = MPolygon.from_text(MPOLYGON_NO_FILL)
     result = TagCollector.dxftags(entity, dxfversion=ezdxf.const.DXF2004)
     tags = list(result.pop_tags([450, 451, 460, 461, 452, 462, 453, 470]))
     assert tags == [
@@ -100,7 +99,6 @@ def test_write_dxf_r2004_no_fill_requires_basic_gradient_data(entity):
 
 
 def test_write_dxf_with_fill(entity):
-    entity = MPolygon.from_text(MPOLYGON_NO_FILL)
     entity.dxf.solid_fill = 1
     entity.dxf.fill_color = 163
     result = TagCollector.dxftags(entity, dxfversion=ezdxf.const.DXF2000)
@@ -123,7 +121,6 @@ def test_write_dxf_with_fill(entity):
 
 
 def test_write_dxf_R2004_with_fill(entity):
-    entity = MPolygon.from_text(MPOLYGON_NO_FILL)
     entity.dxf.solid_fill = 1
     entity.dxf.fill_color = 163
     result = TagCollector.dxftags(entity, dxfversion=ezdxf.const.DXF2004)
@@ -143,7 +140,6 @@ def test_write_dxf_R2004_with_fill(entity):
 
 
 def test_write_correct_polyline_path_tag_order(entity):
-    entity = MPolygon.from_text(MPOLYGON_NO_FILL)
     result = TagCollector.dxftags(entity)
     tags = list(result.pop_tags([92, 72, 73]))
     # 92 = path type 2: polyline path
@@ -155,8 +151,7 @@ def test_write_correct_polyline_path_tag_order(entity):
 
 
 def test_write_dxf_with_pattern_fill(entity):
-    mpolygon = MPolygon.from_text(MPOLYGON_NO_FILL)
-    mpolygon.set_pattern_fill("ANSI33", color=7, scale=0.01)
+    entity.set_pattern_fill("ANSI33", color=7, scale=0.01)
     result = TagCollector.dxftags(entity, dxfversion=ezdxf.const.DXF2000)
     assert result.has_tag(75) is False, "hatch style tag not supported?!"
 

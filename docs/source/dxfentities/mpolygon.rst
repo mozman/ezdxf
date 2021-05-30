@@ -19,6 +19,8 @@ The MPOLYGON does not support associated source path entities, because the
 MPOLYGON also represents the boundary paths as visible graphical objects.
 
 Hatch patterns are supported, but the hatch style tag is not supported.
+Background color for pattern fillings is supported, set background color
+by property :attr:`MPolygon.bgcolor` as RGB tuple.
 
 
 .. seealso::
