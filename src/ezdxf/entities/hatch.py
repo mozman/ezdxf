@@ -749,7 +749,7 @@ acdb_mpolygon = DefSubclass(
             fixer=RETURN_DEFAULT,
         ),
         # Hatch pattern name:
-        "pattern_name": DXFAttr(2, default="SOLID"),
+        "pattern_name": DXFAttr(2, default=""),
         # pattern fill color as the ACI
         "fill_color": DXFAttr(63, default=const.BYLAYER, optional=True),
         # MPolygon: Solid-fill flag:
@@ -858,11 +858,9 @@ class MPolygon(BasePolygon):
                 "pattern_type",
             ],
         )
-        if self.pattern:
-            dxf.export_dxf_attribs(
-                tagwriter, ["pattern_angle", "pattern_scale", "pattern_double"]
-            )
-            self.pattern.export_dxf(tagwriter)
+        dxf.export_dxf_attribs(
+            tagwriter, ["pattern_angle", "pattern_scale", "pattern_double"]
+        )
 
         dxf.export_dxf_attribs(
             tagwriter,
@@ -872,8 +870,10 @@ class MPolygon(BasePolygon):
             ],
         )
         if dxf.solid_fill == 0:  # export pattern
-            # always write at least tag (78, 0)
-            self.pattern.export_dxf(tagwriter, force=True)
+            if self.pattern:
+                self.pattern.export_dxf(tagwriter, force=True)
+            else:  # required pattern length tag!
+                tagwriter.write_tag2(78, 0)
         dxf.export_dxf_attribs(tagwriter, "offset_vector")
         self.export_degenerated_loops(tagwriter)
         if self.gradient:  # todo:  is gradient supported by MPOLYGON?
