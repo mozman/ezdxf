@@ -14,7 +14,7 @@ from ezdxf.math import NULLVEC, Z_AXIS
 from .dxfentity import base_class
 from .dxfgfx import acdb_entity
 from .factory import register_entity
-from .hatch import BasePolygon
+from .hatch import BasePolygon, Gradient
 
 __all__ = ["MPolygon"]
 
@@ -185,14 +185,12 @@ class MPolygon(BasePolygon):
         if tagwriter.dxfversion <= const.DXF2000:
             return
         if self.gradient is None:
-            # required data for AutoCAD
-            tagwriter.write_tag2(450, 0)  # gradient or solid
-            tagwriter.write_tag2(451, 0)  # reserved for the future
-            tagwriter.write_tag2(460, 0.0)  # rotation angle in radians
-            tagwriter.write_tag2(461, 0.0)  # centered
-            tagwriter.write_tag2(452, 0)  # one color
-            tagwriter.write_tag2(462, 0.0)  # tint
-            tagwriter.write_tag2(453, 0)  # number of colors
-            tagwriter.write_tag2(470, "")  # gradient name
-        else:
-            self.gradient.export_dxf(tagwriter)
+            self.setup_basic_gradient()
+        self.gradient.export_dxf(tagwriter)
+
+    def setup_basic_gradient(self):
+        gradient = Gradient()
+        gradient.kind = 0
+        gradient.number_of_colors = 0
+        gradient.name = ""
+        self.gradient = gradient
