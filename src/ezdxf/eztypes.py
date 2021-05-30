@@ -101,7 +101,8 @@ if TYPE_CHECKING:
     from ezdxf.entities.mtext import MText
     from ezdxf.entities.spline import Spline
     from ezdxf.entities.mesh import Mesh
-    from ezdxf.entities.hatch import Hatch, MPolygon
+    from ezdxf.entities.hatch import Hatch
+    from ezdxf.entities.mpolygon import MPolygon
     from ezdxf.entities.image import (
         Image, ImageDef, ImageDefReactor, RasterVariables, Wipeout
     )

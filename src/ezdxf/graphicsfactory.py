@@ -5,7 +5,7 @@ import math
 import logging
 import warnings
 from ezdxf.lldxf import const
-from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000, DXF2007
+from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000
 from ezdxf.math import Vec3, global_bspline_interpolation, fit_points_to_cad_cv
 from ezdxf.render.arrows import ARROWS
 from ezdxf.entities import factory
@@ -36,8 +36,8 @@ if TYPE_CHECKING:
         Line,
         LoftedSurface,
         MLine,
-        MPolygon,
         MText,
+        MPolygon,
         Mesh,
         Point,
         Polyface,

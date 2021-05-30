@@ -65,22 +65,28 @@ from .mtext import MText
 from .mtext_columns import *
 from .spline import Spline
 from .mesh import Mesh, MeshData
-from .hatch import (
-    Hatch, BoundaryPaths, PolylinePath, EdgePath, LineEdge,
-    ArcEdge, EllipseEdge, SplineEdge, Pattern, PatternLine, Gradient,
-    MPolygon,
-)
+from .hatch import *
+from .mpolygon import MPolygon
 from .image import Image, ImageDef, Wipeout
 from .underlay import (
-    Underlay, UnderlayDefinition, PdfUnderlay, DgnUnderlay,
+    Underlay,
+    UnderlayDefinition,
+    PdfUnderlay,
+    DgnUnderlay,
     DwfUnderlay,
 )
 from .leader import Leader
 from .tolerance import Tolerance
 from .helix import Helix
 from .acis import (
-    Body, Solid3d, Region, Surface, ExtrudedSurface,
-    LoftedSurface, RevolvedSurface, SweptSurface,
+    Body,
+    Solid3d,
+    Region,
+    Surface,
+    ExtrudedSurface,
+    LoftedSurface,
+    RevolvedSurface,
+    SweptSurface,
 )
 from .mline import MLine, MLineVertex, MLineStyle, MLineStyleCollection
 from .mleader import MLeader, MLeaderStyle, MLeaderStyleCollection

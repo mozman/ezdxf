@@ -3,7 +3,7 @@
 import pytest
 
 import ezdxf
-from ezdxf.entities.hatch import MPolygon
+from ezdxf.entities import MPolygon
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
 
