@@ -154,6 +154,13 @@ def test_write_correct_polyline_path_tag_order(entity):
     assert tags == [(92, 2), (73, 0), (72, 0), (92, 2), (73, 0), (72, 0)]
 
 
+def test_write_dxf_with_pattern_fill(entity):
+    mpolygon = MPolygon.from_text(MPOLYGON_NO_FILL)
+    mpolygon.set_pattern_fill("ANSI33", color=7, scale=0.01)
+    result = TagCollector.dxftags(entity, dxfversion=ezdxf.const.DXF2000)
+    assert result.has_tag(75) is False, "hatch style tag not supported?!"
+
+
 MPOLYGON_NO_FILL = """0
 MPOLYGON
 5

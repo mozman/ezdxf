@@ -18,7 +18,8 @@ the color of the solid fill is defined by :attr:`dxf.fill_color` as :ref:`ACI`.
 The MPOLYGON does not support associated source path entities, because the
 MPOLYGON also represents the boundary paths as visible graphical objects.
 
-TODO: pattern supported? gradients supported? edge paths supported?
+Hatch patterns are supported, but the hatch style tag is not supported.
+
 
 .. seealso::
     For more information see the :class:`ezdxf.entities.Hatch` documentation.

@@ -59,7 +59,7 @@ acdb_mpolygon = DefSubclass(
             validator=validator.is_integer_bool,
             fixer=RETURN_DEFAULT,
         ),
-        # is Hatch style supported for MPolygon?
+        # is Hatch style supported for MPolygon ???
         "hatch_style": DXFAttr(
             75,
             default=const.HATCH_STYLE_NESTED,
@@ -151,7 +151,7 @@ class MPolygon(BasePolygon):
         dxf.export_dxf_attribs(
             tagwriter,
             [
-                "hatch_style",
+                # "hatch_style",  # not supported by MPolygon ???
                 "pattern_type",
             ],
         )
