@@ -761,6 +761,10 @@ class BoundaryPaths:
             paths.append(path)
         return cls(paths)
 
+    @property
+    def has_edge_paths(self) -> bool:
+        return any(p.PATH_TYPE == "EdgePath" for p in self.paths)
+
     def clear(self) -> None:
         """Remove all boundary paths."""
         self.paths = []
@@ -1969,7 +1973,7 @@ class Gradient:
     def __init__(self):
         # 1 for gradient by default, 0 for Solid
         self.kind: int = 1
-        self.number_of_colors:int = 2
+        self.number_of_colors: int = 2
         self.color1: RGB = (0, 0, 0)
         self.aci1: Optional[int] = None
         self.color2: RGB = (255, 255, 255)

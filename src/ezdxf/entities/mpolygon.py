@@ -1,6 +1,7 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 from typing import TYPE_CHECKING
+import logging
 from ezdxf.lldxf import validator, const
 from ezdxf.lldxf.attributes import (
     DXFAttributes,
@@ -21,6 +22,7 @@ __all__ = ["MPolygon"]
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
 
+logger = logging.getLogger("ezdxf")
 acdb_mpolygon = DefSubclass(
     "AcDbMPolygon",
     {
@@ -59,7 +61,10 @@ acdb_mpolygon = DefSubclass(
             validator=validator.is_integer_bool,
             fixer=RETURN_DEFAULT,
         ),
-        # is Hatch style supported for MPolygon ???
+        # Hatch style tag is not supported for MPOLYGON!?
+        # I don't know in which order this tag has to be exported.
+        # TrueView does not accept this tag in any place!
+        # BricsCAD supports this tag!
         "hatch_style": DXFAttr(
             75,
             default=const.HATCH_STYLE_NESTED,
@@ -130,6 +135,14 @@ class MPolygon(BasePolygon):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mpolygon)
     MIN_DXF_VERSION_FOR_EXPORT = const.DXF2000
     LOAD_GROUP_CODES = acdb_mpolygon_group_code
+
+    def preprocess_export(self, tagwriter: "TagWriter") -> bool:
+        if self.paths.has_edge_paths:
+            logger.warning(
+                "MPOLYGON including edge paths are not exported by ezdxf!"
+            )
+            return False
+        return True
 
     def export_entity(self, tagwriter: "TagWriter") -> None:
         """Export entity specific data as DXF tags."""

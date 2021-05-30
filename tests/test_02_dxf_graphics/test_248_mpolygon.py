@@ -156,6 +156,12 @@ def test_write_dxf_with_pattern_fill(entity):
     assert result.has_tag(75) is False, "hatch style tag not supported?!"
 
 
+def test_do_not_export_mpolygon_with_edge_paths(entity):
+    # Edge paths are not supported by MPOLYGON as far as I known!
+    entity.paths.add_edge_path()
+    assert entity.preprocess_export(TagCollector()) is False
+
+
 MPOLYGON_NO_FILL = """0
 MPOLYGON
 5

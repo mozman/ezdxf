@@ -256,6 +256,8 @@ def test_edge_path_edges(edge_hatch):
 def test_add_edge_path(edge_hatch):
     path = edge_hatch.paths.add_edge_path()
     assert "EdgePath" == path.PATH_TYPE, "created wrong path type"
+    assert edge_hatch.paths.has_edge_paths is True
+
     path.add_line((0, 0), (10, 0))
     path.add_arc((10, 5), radius=5, start_angle=270, end_angle=450, ccw=True)
     path.add_ellipse(

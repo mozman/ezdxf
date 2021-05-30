@@ -18,10 +18,15 @@ the color of the solid fill is defined by :attr:`dxf.fill_color` as :ref:`ACI`.
 The MPOLYGON does not support associated source path entities, because the
 MPOLYGON also represents the boundary paths as visible graphical objects.
 
-Hatch patterns are supported, but the hatch style tag is not supported.
+Hatch patterns are supported, but the hatch style tag is not supported, the
+default hatch style is :attr:`ezdxf.const.HATCH_STYLE_NESTED` and the style
+flags of the boundary paths are ignored.
+
 Background color for pattern fillings is supported, set background color
 by property :attr:`MPolygon.bgcolor` as RGB tuple.
 
+An example for edge paths as boundary paths is not available or edge paths
+are not supported. `Ezdxf` does not export MPOLYGON entities with edge paths!
 
 .. seealso::
     For more information see the :class:`ezdxf.entities.Hatch` documentation.

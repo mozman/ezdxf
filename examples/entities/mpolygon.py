@@ -53,7 +53,8 @@ def create_pattern_filled_mpolygon_with_bgcolor():
     mpolygon.bgcolor = (100, 200, 100)
     zoom.extents(msp)
     doc.saveas(
-        DIR / f"simple_pattern_filled_mpolygon_with_bgcolor_{dxfversion}.dxf")
+        DIR / f"simple_pattern_filled_mpolygon_with_bgcolor_{dxfversion}.dxf"
+    )
 
 
 def using_hatch_style():
@@ -95,126 +96,45 @@ def using_hatch_style():
             flags=const.BOUNDARY_PATH_OUTERMOST,
         )
 
-    doc = ezdxf.new("R2010")  # create a new DXF drawing (AutoCAD 2010)
-    msp = doc.modelspace()  # we are working in model space
-    # first create DXF hatch entities
-    hatch_style_0 = msp.add_hatch(color=3, dxfattribs={"hatch_style": 0})
-    hatch_style_1 = msp.add_hatch(color=3, dxfattribs={"hatch_style": 1})
-    hatch_style_2 = msp.add_hatch(color=3, dxfattribs={"hatch_style": 2})
-    # then insert path elements to define the hatch boundaries
+    doc = ezdxf.new("R2010")
+    msp = doc.modelspace()
+    # The hatch style tag, group code 75, is not supported for the MPOLYGON
+    # entity by Autodesk products!
+    # This example remains as it is, maybe I find a solution for this issue in
+    # the future.
+
+    # first create MPOLYGON entities
+    hatch_style_0 = msp.add_mpolygon(
+        color=3, fill_color=1, dxfattribs={"hatch_style": 0}
+    )
+    hatch_style_1 = msp.add_mpolygon(
+        color=3, fill_color=1, dxfattribs={"hatch_style": 1}
+    )
+    hatch_style_2 = msp.add_mpolygon(
+        color=3, fill_color=1, dxfattribs={"hatch_style": 2}
+    )
+    # then insert path elements to define the MPOLYGON boundaries
     place_square_1(hatch_style_0, 0, 0)
     place_square_1(hatch_style_1, 10, 0)
     place_square_1(hatch_style_2, 20, 0)
 
-    # first create DXF hatch entities
-    hatch_style_0b = msp.add_hatch(color=4, dxfattribs={"hatch_style": 0})
-    hatch_style_1b = msp.add_hatch(color=4, dxfattribs={"hatch_style": 1})
-    hatch_style_2b = msp.add_hatch(color=4, dxfattribs={"hatch_style": 2})
-    # then insert path elements to define the hatch boundaries
+    # first create DXF mpolygon entities
+    hatch_style_0b = msp.add_mpolygon(
+        color=4, fill_color=2, dxfattribs={"hatch_style": 0}
+    )
+    hatch_style_1b = msp.add_mpolygon(
+        color=4, fill_color=2, dxfattribs={"hatch_style": 1}
+    )
+    hatch_style_2b = msp.add_mpolygon(
+        color=4, fill_color=2, dxfattribs={"hatch_style": 2}
+    )
+
+    # then insert path elements to define the MPOLYGON boundaries
     place_square_2(hatch_style_0b, 0, 10)
     place_square_2(hatch_style_1b, 10, 10)
     place_square_2(hatch_style_2b, 20, 10)
     zoom.extents(msp)
-    doc.saveas(DIR / "hatch_styles_examples.dxf")  # save DXF drawing
-
-
-def using_hatch_style_with_edge_path():
-    def add_edge_path(paths, vertices, flags=1):
-        path = paths.add_edge_path(flags)  # create a new edge path
-        first_point = next(vertices)  # store first point for closing path
-        last_point = first_point
-        for next_point in vertices:
-            path.add_line(last_point, next_point)  # add lines to edge path
-            last_point = next_point
-        path.add_line(last_point, first_point)  # close path
-
-    def place_square_1(hatch, x, y):
-        def shift(point):
-            return x + point[0], y + point[1]
-
-        # outer loop - flags=1 (external) default value
-        add_edge_path(
-            hatch.paths,
-            map(shift, [(0, 0), (12.5, 0), (12.5, 12.5), (0, 12.5)]),
-        )
-        # first inner loop - flags=16 (outermost)
-        add_edge_path(
-            hatch.paths,
-            map(shift, [(2.5, 2.5), (10, 2.5), (10, 10), (2.5, 10)]),
-            flags=const.BOUNDARY_PATH_OUTERMOST,
-        )
-        # any inner loop - flags=0 (default)
-        add_edge_path(
-            hatch.paths,
-            map(shift, [(5, 5), (7.5, 5), (7.5, 7.5), (5, 7.5)]),
-            flags=const.BOUNDARY_PATH_DEFAULT,
-        )
-
-    def place_square_2(hatch, x, y):
-        def shift(point):
-            return x + point[0], y + point[1]
-
-        add_edge_path(
-            hatch.paths, map(shift, [(0, 0), (0, 8), (8, 8), (8, 0)])
-        )  # 1. path
-        add_edge_path(
-            hatch.paths,
-            map(shift, [(3, 1), (7, 1), (7, 5), (3, 5)]),
-            flags=const.BOUNDARY_PATH_OUTERMOST,
-        )
-        add_edge_path(
-            hatch.paths,
-            map(shift, [(1, 3), (5, 3), (5, 7), (1, 7)]),
-            flags=const.BOUNDARY_PATH_OUTERMOST,
-        )
-
-    doc = ezdxf.new("R2010")  # create a new DXF drawing (AutoCAD 2010)
-    msp = doc.modelspace()  # we are working in model space
-    # first create DXF hatch entities
-    hatch_style_0 = msp.add_hatch(color=3, dxfattribs={"hatch_style": 0})
-    hatch_style_1 = msp.add_hatch(color=3, dxfattribs={"hatch_style": 1})
-    hatch_style_2 = msp.add_hatch(color=3, dxfattribs={"hatch_style": 2})
-    # then insert path elements to define the hatch boundaries
-    place_square_1(hatch_style_0, 0, 0)
-    place_square_1(hatch_style_1, 15, 0)
-    place_square_1(hatch_style_2, 30, 0)
-
-    # first create DXF hatch entities
-    hatch_style_0b = msp.add_hatch(color=4, dxfattribs={"hatch_style": 0})
-    hatch_style_1b = msp.add_hatch(color=4, dxfattribs={"hatch_style": 1})
-    hatch_style_2b = msp.add_hatch(color=4, dxfattribs={"hatch_style": 2})
-    # then insert path elements to define the hatch boundaries
-    place_square_2(hatch_style_0b, 0, 15)
-    place_square_2(hatch_style_1b, 15, 15)
-    place_square_2(hatch_style_2b, 30, 15)
-    zoom.extents(msp)
-    doc.saveas(
-        DIR / "hatch_styles_examples_with_edge_path.dxf"
-    )  # save DXF drawing
-
-
-def using_hatch_with_spline_edge():
-    doc = ezdxf.new("R2010")  # create a new DXF drawing (AutoCAD 2010)
-    msp = doc.modelspace()  # we are working in model space
-    # draw outline
-    fitpoints = [(8, 0, 0), (10, 2, 0), (6, 6, 0), (8, 8, 0)]
-    msp.add_line((8, 8), (0, 8))
-    msp.add_line((0, 8), (0, 0))
-    msp.add_line((0, 0), (8, 0))
-    # use spline with control points created by ezdxf
-    # Don't know how AutoCAD calculates control points from fit points
-    msp.add_spline_control_frame(fit_points=fitpoints)
-
-    # next create DXF hatch entities
-    hatch = msp.add_hatch(color=3)
-    # if only 1 path - flags = 1 (external) by default
-    path = hatch.paths.add_edge_path()  # create a new edge path
-    path.add_line((8, 8), (0, 8))
-    path.add_line((0, 8), (0, 0))
-    path.add_line((0, 0), (8, 0))
-    path.add_spline_control_frame(fit_points=fitpoints)
-    zoom.extents(msp)
-    doc.saveas(DIR / "hatch_with_spline_edge.dxf")  # save DXF drawing
+    doc.saveas(DIR / "mpolygon_with_hatch_styles.dxf")  # save DXF drawing
 
 
 for dxfversion in ["R2000", "R2004", "R2007"]:
@@ -222,3 +142,4 @@ for dxfversion in ["R2000", "R2004", "R2007"]:
     create_simple_solid_filled_mpolygon(dxfversion)
     create_simple_pattern_filled_mpolygon(dxfversion)
     create_pattern_filled_mpolygon_with_bgcolor()
+    using_hatch_style()
