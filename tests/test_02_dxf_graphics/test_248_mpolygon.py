@@ -78,10 +78,31 @@ def test_write_dxf_no_fill(entity):
         (78, 0),  # patten length tag must be presents
     ], "required pattern tags are not in expected order"
 
+    assert (
+        result.has_tag(450) is False
+    ), "gradient data is not supported for DXF R2000"
+
+
+def test_write_dxf_r2004_no_fill_requires_basic_gradient_data(entity):
+    entity = MPolygon.from_text(MPOLYGON_NO_FILL)
+    result = TagCollector.dxftags(entity, dxfversion=ezdxf.const.DXF2004)
+    tags = list(result.pop_tags([450, 451, 460, 461, 452, 462, 453, 470]))
+    assert tags == [
+        (450, 0),  # kind = solid fill
+        (451, 0),  # reserved for the future
+        (460, 0),  # angle in radians
+        (461, 0),  # centered
+        (452, 0),  # one color
+        (462, 0),  # tint
+        (453, 0),  # number of colors
+        (470, ""),  # gradient name
+    ], "required gradient tags are not in expected order"
+
 
 def test_write_dxf_with_fill(entity):
     entity = MPolygon.from_text(MPOLYGON_NO_FILL)
     entity.dxf.solid_fill = 1
+    entity.dxf.fill_color = 163
     result = TagCollector.dxftags(entity, dxfversion=ezdxf.const.DXF2000)
     assert result.get_first_value(71) == 1  # solid_fill
     assert (
@@ -96,6 +117,29 @@ def test_write_dxf_with_fill(entity):
     assert (
         result.has_tag(78) is False
     ), "pattern length tag should not be presents"
+    assert (
+        result.has_tag(63) is False
+    ), "fill color tag is not supported for DXF R2000"
+
+
+def test_write_dxf_R2004_with_fill(entity):
+    entity = MPolygon.from_text(MPOLYGON_NO_FILL)
+    entity.dxf.solid_fill = 1
+    entity.dxf.fill_color = 163
+    result = TagCollector.dxftags(entity, dxfversion=ezdxf.const.DXF2004)
+    assert result.get_first_value(63) == 163, "missing fill color tag"
+
+    tags = list(result.pop_tags([450, 451, 460, 461, 452, 462, 453, 470]))
+    assert tags == [
+        (450, 0),  # kind = solid fill
+        (451, 0),  # reserved for the future
+        (460, 0),  # angle in radians
+        (461, 0),  # centered
+        (452, 0),  # one color
+        (462, 0),  # tint
+        (453, 0),  # number of colors
+        (470, ""),  # gradient name
+    ], "required gradient tags are not in expected order"
 
 
 def test_write_correct_polyline_path_tag_order(entity):
