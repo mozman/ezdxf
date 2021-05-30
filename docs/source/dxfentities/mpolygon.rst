@@ -26,7 +26,8 @@ Background color for pattern fillings is supported, set background color
 by property :attr:`MPolygon.bgcolor` as RGB tuple.
 
 An example for edge paths as boundary paths is not available or edge paths
-are not supported. `Ezdxf` does not export MPOLYGON entities with edge paths!
+are not supported. `Ezdxf` does **not** export MPOLYGON entities including
+edge paths!
 
 .. seealso::
     For more information see the :class:`ezdxf.entities.Hatch` documentation.

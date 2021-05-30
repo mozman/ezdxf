@@ -13,4 +13,4 @@ Version 0.17 - dev
 - NEW: regular `make_primitive()` support for the HATCH entity  
 - NEW: `text2path.make_path_from_str()` returns a multi-path object  
 - NEW: `text2path.make_path_from_enity()` returns a multi-path object  
-- NEW: `MPOLYGON` support load, rewrite (and create?)
+- NEW: `MPOLYGON` load/write/create support
