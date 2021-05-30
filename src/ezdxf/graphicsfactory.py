@@ -1238,15 +1238,12 @@ class CreatorInterface:
         dxfattribs = dict(dxfattribs or {})
         if fill_color is None:
             dxfattribs["solid_fill"] = 0
-            dxfattribs["pattern_name"] = "SOLID"
-            dxfattribs["pattern_type"] = const.HATCH_TYPE_USER_DEFINED
-
         else:
-            dxfattribs["pattern_name"] = "SOLID"
-            dxfattribs["pattern_type"] = const.HATCH_TYPE_PREDEFINED
             dxfattribs["solid_fill"] = 1
             dxfattribs["fill_color"] = fill_color
 
+        dxfattribs["pattern_name"] = "SOLID"
+        dxfattribs["pattern_type"] = const.HATCH_TYPE_PREDEFINED
         dxfattribs["color"] = int(color)
         return cast("MPolygon", self.new_entity("MPOLYGON", dxfattribs))
 

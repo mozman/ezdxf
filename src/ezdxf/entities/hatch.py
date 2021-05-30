@@ -1969,6 +1969,7 @@ class Gradient:
     def __init__(self):
         # 1 for gradient by default, 0 for Solid
         self.kind: int = 1
+        self.number_of_colors:int = 2
         self.color1: RGB = (0, 0, 0)
         self.aci1: Optional[int] = None
         self.color2: RGB = (255, 255, 255)
@@ -2002,6 +2003,8 @@ class Gradient:
                 gdata.tint = value
             elif code == 470:
                 gdata.name = value
+            elif code == 453:
+                gdata.number_of_colors = value
             elif code == 63:
                 if first_aci_value:
                     gdata.aci1 = value
@@ -2027,14 +2030,17 @@ class Gradient:
         write_tag(461, self.centered)
         write_tag(452, self.one_color)
         write_tag(462, self.tint)
-        write_tag(453, 2)  # number of colors
-        write_tag(463, 0)  # first value, see DXF standard
-        if self.aci1 is not None:
-            write_tag(63, self.aci1)
-        # code == 63 "color as ACI" can be left off
-        write_tag(421, clr.rgb2int(self.color1))  # first color
-        write_tag(463, 1)  # second value, see DXF standard
-        if self.aci2 is not None:
-            write_tag(63, self.aci2)  # code 63 "color as ACI" could be left off
-        write_tag(421, clr.rgb2int(self.color2))  # second color
+        write_tag(453, self.number_of_colors)
+        if self.number_of_colors > 0:
+            write_tag(463, 0)  # first value, see DXF standard
+            if self.aci1 is not None:
+                # code 63 "color as ACI" could be left off
+                write_tag(63, self.aci1)
+            write_tag(421, clr.rgb2int(self.color1))  # first color
+        if self.number_of_colors > 1:
+            write_tag(463, 1)  # second value, see DXF standard
+            if self.aci2 is not None:
+                # code 63 "color as ACI" could be left off
+                write_tag(63, self.aci2)
+            write_tag(421, clr.rgb2int(self.color2))  # second color
         write_tag(470, self.name)
