@@ -53,14 +53,6 @@ Required DXF version     DXF R2000 (``'AC1015'``)
         0   pattern fill, better use: :meth:`MPolygon.set_pattern_fill`
         === ==========================================================
 
-    .. attribute:: dxf.hatch_style
-
-        === ========
-        0   normal
-        1   outer
-        2   ignore
-        === ========
-
         (search AutoCAD help for more information)
 
     .. attribute:: dxf.pattern_type
