@@ -8,29 +8,38 @@ from ezdxf.lldxf import const
 DIR = Path("~/Desktop/Outbox").expanduser()
 
 
-def create_mpolygon_without_fill():
-    doc = ezdxf.new("R2000")
+def create_simple_mpolygon_no_fill(dxfversion="R2000"):
+    doc = ezdxf.new(dxfversion)
     msp = doc.modelspace()
-    hatch = msp.add_mpolygon(color=2, fill_color=None)
-    # if only 1 path - flags = 1 (external) by default
-    hatch.paths.add_polyline_path(
+    mpolygon = msp.add_mpolygon(color=2, fill_color=None)
+    mpolygon.paths.add_polyline_path(
         [(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)]
     )
     zoom.extents(msp)
-    doc.saveas(DIR / "mpolygon_without_fill.dxf")  # save DXF drawing
+    doc.saveas(DIR / f"simple_mpolygon_no_fill_{dxfversion}.dxf")
 
 
-def create_pattern_fill_polyline_hatch():
-    doc = ezdxf.new("R2010")  # create a new DXF drawing (AutoCAD 2010)
-    msp = doc.modelspace()  # we are working in model space
-    hatch = msp.add_hatch()  # by default a SOLID fill
-    hatch.set_pattern_fill("ANSI33", color=7, scale=0.01)
-    # if only 1 path - flags = 1 (external) by default
-    hatch.paths.add_polyline_path(
+def create_simple_solid_filled_mpolygon(dxfversion="R2000"):
+    doc = ezdxf.new(dxfversion)
+    msp = doc.modelspace()
+    mpolygon = msp.add_mpolygon(color=1, fill_color=5)
+    mpolygon.paths.add_polyline_path(
         [(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)]
     )
     zoom.extents(msp)
-    doc.saveas(DIR / "hatch_pattern_fill_polyline.dxf")  # save DXF drawing
+    doc.saveas(DIR / f"simple_solid_filled_mpolygon_{dxfversion}.dxf")
+
+
+def create_simple_pattern_filled_mpolygon(dxfversion="R2000"):
+    doc = ezdxf.new(dxfversion)
+    msp = doc.modelspace()
+    mpolygon = msp.add_mpolygon()
+    mpolygon.set_pattern_fill("ANSI33", color=7, scale=0.01)
+    mpolygon.paths.add_polyline_path(
+        [(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)]
+    )
+    zoom.extents(msp)
+    doc.saveas(DIR / f"simple_pattern_filled_mpolygon_{dxfversion}.dxf")
 
 
 def create_pattern_fill_hatch_with_bgcolor():
@@ -207,5 +216,7 @@ def using_hatch_with_spline_edge():
     zoom.extents(msp)
     doc.saveas(DIR / "hatch_with_spline_edge.dxf")  # save DXF drawing
 
-
-create_mpolygon_without_fill()
+for dxfversion in ["R2000", "R2004"]:
+    create_simple_mpolygon_no_fill(dxfversion)
+    create_simple_solid_filled_mpolygon(dxfversion)
+    create_simple_pattern_filled_mpolygon(dxfversion)

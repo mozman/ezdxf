@@ -3,8 +3,12 @@
 from typing import TYPE_CHECKING
 from ezdxf.lldxf import validator, const
 from ezdxf.lldxf.attributes import (
-    DXFAttributes, DefSubclass, DXFAttr,
-    RETURN_DEFAULT, XType, group_code_mapping,
+    DXFAttributes,
+    DefSubclass,
+    DXFAttr,
+    RETURN_DEFAULT,
+    XType,
+    group_code_mapping,
 )
 from ezdxf.math import NULLVEC, Z_AXIS
 from .dxfentity import base_class
@@ -38,8 +42,14 @@ acdb_mpolygon = DefSubclass(
         ),
         # Hatch pattern name:
         "pattern_name": DXFAttr(2, default=""),
-        # pattern fill color as the ACI
-        "fill_color": DXFAttr(63, default=const.BYLAYER, optional=True),
+        # Solid fill color as ACI
+        "fill_color": DXFAttr(
+            63,
+            default=const.BYLAYER,
+            optional=True,
+            validator=validator.is_valid_aci_color,
+            fixer=RETURN_DEFAULT,
+        ),
         # MPolygon: Solid-fill flag:
         # 0 = lacks solid fill
         # 1 = has solid fill
@@ -128,12 +138,11 @@ class MPolygon(BasePolygon):
         dxf = self.dxf
         dxf.export_dxf_attribs(
             tagwriter,
-            [
+            [  # tag order is important!
                 "version",
                 "elevation",
                 "extrusion",
                 "pattern_name",
-                "fill_color",
                 "solid_fill",
             ],
         )
@@ -146,9 +155,10 @@ class MPolygon(BasePolygon):
                 "pattern_type",
             ],
         )
-        dxf.export_dxf_attribs(
-            tagwriter, ["pattern_angle", "pattern_scale", "pattern_double"]
-        )
+        if dxf.solid_fill == 0:  # export pattern
+            dxf.export_dxf_attribs(
+                tagwriter, ["pattern_angle", "pattern_scale", "pattern_double"]
+            )
 
         dxf.export_dxf_attribs(
             tagwriter,
@@ -162,10 +172,27 @@ class MPolygon(BasePolygon):
                 self.pattern.export_dxf(tagwriter, force=True)
             else:  # required pattern length tag!
                 tagwriter.write_tag2(78, 0)
+        if tagwriter.dxfversion > const.DXF2000:
+            dxf.export_dxf_attribs(tagwriter, "fill_color")
         dxf.export_dxf_attribs(tagwriter, "offset_vector")
         self.export_degenerated_loops(tagwriter)
-        if self.gradient:  # todo:  is gradient supported by MPOLYGON?
-            self.gradient.export_dxf(tagwriter)
+        self.export_gradient(tagwriter)
 
     def export_degenerated_loops(self, tagwriter: "TagWriter"):
         self.dxf.export_dxf_attribs(tagwriter, "degenerated_loops")
+
+    def export_gradient(self, tagwriter: "TagWriter"):
+        if tagwriter.dxfversion <= const.DXF2000:
+            return
+        if self.gradient is None:
+            # required data for AutoCAD
+            tagwriter.write_tag2(450, 0)  # gradient or solid
+            tagwriter.write_tag2(451, 0)  # reserved for the future
+            tagwriter.write_tag2(460, 0.0)  # rotation angle in radians
+            tagwriter.write_tag2(461, 0.0)  # centered
+            tagwriter.write_tag2(452, 0)  # one color
+            tagwriter.write_tag2(462, 0.0)  # tint
+            tagwriter.write_tag2(453, 0)  # number of colors
+            tagwriter.write_tag2(470, "")  # gradient name
+        else:
+            self.gradient.export_dxf(tagwriter)

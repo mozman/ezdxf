@@ -66,18 +66,36 @@ def test_load_from_text(entity):
 
 def test_write_dxf_no_fill(entity):
     entity = MPolygon.from_text(MPOLYGON_NO_FILL)
-    result = TagCollector.dxftags(entity)
+    result = TagCollector.dxftags(entity, dxfversion=ezdxf.const.DXF2000)
     expected = basic_tags_from_text(MPOLYGON_NO_FILL)
     assert result == expected
-    assert result.has_tag(78) is True, "unknown1 tag must be presents"
+    assert result.get_first_value(71) == 0  # pattern fill
+    tags = list(result.pop_tags([52, 41, 77, 78]))
+    assert tags == [
+        (52, 0),  # pattern_angle tag must be presents
+        (41, 1),  # pattern_scale tag must be presents
+        (77, 0),  # pattern_double tag must be presents
+        (78, 0),  # patten length tag must be presents
+    ], "required pattern tags are not in expected order"
 
 
 def test_write_dxf_with_fill(entity):
     entity = MPolygon.from_text(MPOLYGON_NO_FILL)
     entity.dxf.solid_fill = 1
-    result = TagCollector.dxftags(entity)
+    result = TagCollector.dxftags(entity, dxfversion=ezdxf.const.DXF2000)
     assert result.get_first_value(71) == 1  # solid_fill
-    assert result.has_tag(78) is False, "unknown1 tag should not be presents"
+    assert (
+        result.has_tag(52) is False
+    ), "pattern_angle tag should not be presents"
+    assert (
+        result.has_tag(41) is False
+    ), "pattern_scale tag should not be presents"
+    assert (
+        result.has_tag(77) is False
+    ), "pattern_double tag should not be presents"
+    assert (
+        result.has_tag(78) is False
+    ), "pattern length tag should not be presents"
 
 
 def test_write_correct_polyline_path_tag_order(entity):

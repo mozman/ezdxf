@@ -1223,10 +1223,13 @@ class CreatorInterface:
         The MPOLYGON entity is not a core DXF entity and is not supported by
         every CAD application or DXF library.
 
+        DXF version R2004+ is required to use a fill color different from
+        BYLAYER. For R2000 the fill color is always BYLAYER, set any ACI value
+        to create a filled MPOLYGON entity.
+
         Args:
             color: boundary color as :ref:`ACI`, default is BYLAYER.
-            fill_color: fill color as :ref:`ACI`, default is ``None`` for no
-                fill color.
+            fill_color: fill color as :ref:`ACI`, default is ``None``
             dxfattribs: additional DXF attributes
 
         """
@@ -1235,13 +1238,17 @@ class CreatorInterface:
         dxfattribs = dict(dxfattribs or {})
         if fill_color is None:
             dxfattribs["solid_fill"] = 0
+            dxfattribs["pattern_name"] = "SOLID"
+            dxfattribs["pattern_type"] = const.HATCH_TYPE_USER_DEFINED
+
         else:
+            dxfattribs["pattern_name"] = "SOLID"
+            dxfattribs["pattern_type"] = const.HATCH_TYPE_PREDEFINED
             dxfattribs["solid_fill"] = 1
             dxfattribs["fill_color"] = fill_color
 
         dxfattribs["color"] = int(color)
-        dxfattribs["pattern_type"] = const.HATCH_TYPE_USER_DEFINED
-        return self.new_entity("MPOLYGON", dxfattribs)
+        return cast("MPolygon", self.new_entity("MPOLYGON", dxfattribs))
 
     def add_mesh(self, dxfattribs: Dict = None) -> "Mesh":
         """
