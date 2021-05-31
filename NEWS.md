@@ -8,6 +8,9 @@ Version 0.16.4b1 - dev
 - NEW: `move_to()` command and multi-path support for the `ezdxf.path.Path` class 
   as beta feature, official release in v0.17
 - NEW: `MPOLYGON` load/write/create support as beta feature, official release in v0.17
+- NEW: `PolylinePath.type` and `EdgePath.type` as `ezdxf.entities.BoundaryPathType` enum 
+- NEW: `LineEdge.type`, `ArcEdge.type`, `EllipseEdge.type` and `SplineEdge.type` 
+  as `ezdxf.entities.EdgeType` enum  
 - BUGFIX: loading crash of the PyQt `CADViewer` class
 - BUGFIX: loading `GEODATA` version 1, perhaps data is incorrect, 
   logged as warning
