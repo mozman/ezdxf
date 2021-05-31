@@ -1,5 +1,6 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
+import enum
 from typing import (
     Union,
     List,
@@ -41,9 +42,25 @@ __all__ = [
     "EllipseEdge",
     "SplineEdge",
     "TPath",
+    "EdgeType",
+    "BoundaryPathType",
 ]
 
 TPath = Union["PolylinePath", "EdgePath"]
+
+
+@enum.unique
+class BoundaryPathType(enum.IntEnum):
+    POLYLINE = 1
+    EDGE = 2
+
+
+@enum.unique
+class EdgeType(enum.IntEnum):
+    LINE = 1
+    ARC = 2
+    ELLIPSE = 3
+    SPLINE = 4
 
 
 class BoundaryPaths:
@@ -125,7 +142,7 @@ class BoundaryPaths:
 
         paths = sorted(
             (path_type_enum(p.path_type_flags), i, p)
-            for i, p in enumerate(self.paths)
+                for i, p in enumerate(self.paths)
         )
         ignore = 1  # EXTERNAL only
         if hatch_style == const.HATCH_STYLE_NESTED:
@@ -494,6 +511,7 @@ def export_source_boundary_objects(
 
 class PolylinePath:
     PATH_TYPE = "PolylinePath"
+    type = BoundaryPathType.POLYLINE
 
     def __init__(self):
         self.path_type_flags: int = const.BOUNDARY_PATH_POLYLINE
@@ -629,6 +647,7 @@ class PolylinePath:
 
 class EdgePath:
     PATH_TYPE = "EdgePath"
+    type = BoundaryPathType.EDGE
 
     def __init__(self):
         self.path_type_flags = const.BOUNDARY_PATH_DEFAULT
@@ -828,6 +847,7 @@ class EdgePath:
 
 
 class LineEdge:
+    type = EdgeType.LINE
     EDGE_TYPE = "LineEdge"
 
     def __init__(self):
@@ -862,6 +882,7 @@ class LineEdge:
 
 
 class ArcEdge:
+    type = EdgeType.ARC
     EDGE_TYPE = "ArcEdge"
 
     def __init__(self):
@@ -937,6 +958,7 @@ class ArcEdge:
 
 
 class EllipseEdge:
+    type = EdgeType.ELLIPSE
     EDGE_TYPE = "EllipseEdge"
 
     def __init__(self):
@@ -1073,6 +1095,7 @@ class EllipseEdge:
 
 
 class SplineEdge:
+    type = EdgeType.SPLINE
     EDGE_TYPE = "SplineEdge"
 
     def __init__(self):

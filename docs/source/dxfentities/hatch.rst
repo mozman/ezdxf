@@ -236,9 +236,25 @@ Hatch Boundary Helper Classes
 
     .. automethod:: clear
 
+
+.. class:: BoundaryPathType
+
+    .. attribute:: POLYLINE
+
+        polyline path type
+
+    .. attribute:: EDGE
+
+        edge path type
+
+
 .. class:: PolylinePath
 
     A polyline as hatch boundary path.
+
+    .. attribute:: type
+
+        Path type as :attr:`BoundaryPathType.POLYLINE` enum
 
     .. attribute:: path_type_flags
 
@@ -285,6 +301,10 @@ Hatch Boundary Helper Classes
     :class:`EllipseEdge` of :class:`SplineEdge`. Make sure there are no gaps between edges. AutoCAD in this regard is
     very picky. `ezdxf` performs no checks on gaps between the edges.
 
+    .. attribute:: type
+
+        Path type as :attr:`BoundaryPathType.EDGE` enum
+
     .. attribute:: path_type_flags
 
         (bit coded flags)
@@ -316,9 +336,24 @@ Hatch Boundary Helper Classes
     .. automethod:: add_spline(fit_points=None, control_points=None, knot_values=None, weights=None, degree=3, rational=0, periodic=0) -> SplinePath
 
 
+.. class:: EdgeType
+
+    .. attribute:: LINE
+
+    .. attribute:: ARC
+
+    .. attribute:: ELLIPSE
+
+    .. attribute:: SPLINE
+
+
 .. class:: LineEdge
 
     Straight boundary edge.
+
+    .. attribute:: type
+
+        Edge type as :attr:`EdgeType.LINE` enum
 
     .. attribute:: start
 
@@ -332,6 +367,10 @@ Hatch Boundary Helper Classes
 .. class:: ArcEdge
 
     Arc as boundary edge.
+
+    .. attribute:: type
+
+        Edge type as :attr:`EdgeType.ARC` enum
 
     .. attribute:: center
 
@@ -357,6 +396,10 @@ Hatch Boundary Helper Classes
 .. class:: EllipseEdge
 
     Elliptic arc as boundary edge.
+
+    .. attribute:: type
+
+        Edge type as :attr:`EdgeType.ELLIPSE` enum
 
     .. attribute:: major_axis_vector
 
@@ -386,6 +429,10 @@ Hatch Boundary Helper Classes
 .. class:: SplineEdge
 
     Spline as boundary edge.
+
+    .. attribute:: type
+
+        Edge type as :attr:`EdgeType.SPLINE` enum
 
     .. attribute:: degree
 
