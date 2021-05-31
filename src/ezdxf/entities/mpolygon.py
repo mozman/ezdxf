@@ -15,7 +15,7 @@ from ezdxf.math import NULLVEC, Z_AXIS
 from .dxfentity import base_class
 from .dxfgfx import acdb_entity
 from .factory import register_entity
-from .hatch import BasePolygon
+from .polygon import BasePolygon
 from .gradient import Gradient
 
 __all__ = ["MPolygon"]
