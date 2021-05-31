@@ -178,13 +178,13 @@ class BoundaryPaths:
 
         """
         if not ocs.scale_uniform:
-            self.polyline_to_edge_path(just_with_bulge=True)
+            self.polyline_to_edge_paths(just_with_bulge=True)
             self.arc_edges_to_ellipse_edges()
 
         for path in self.paths:
             path.transform(ocs, elevation=elevation)
 
-    def polyline_to_edge_path(self, just_with_bulge=True) -> None:
+    def polyline_to_edge_paths(self, just_with_bulge=True) -> None:
         """Convert polyline paths including bulge values to line- and arc edges.
 
         Args:
@@ -244,6 +244,10 @@ class BoundaryPaths:
                 if just_with_bulge and not path.has_bulge():
                     continue
                 self.paths[path_index] = to_edge_path(path)
+
+    def all_to_polyline_paths(self):
+        """Convert all paths to simple polyline paths without bulges. """
+        pass
 
     def arc_edges_to_ellipse_edges(self) -> None:
         """Convert all arc edges to ellipse edges."""
@@ -402,7 +406,7 @@ class BoundaryPaths:
                 least 3.
 
         """
-        self.polyline_to_edge_path(just_with_bulge=True)
+        self.polyline_to_edge_paths(just_with_bulge=True)
         self.arc_edges_to_ellipse_edges()
         self.ellipse_edges_to_spline_edges(num)
 
@@ -418,7 +422,7 @@ class BoundaryPaths:
                 control points x spline_factor
 
         """
-        self.polyline_to_edge_path(just_with_bulge=True)
+        self.polyline_to_edge_paths(just_with_bulge=True)
         self.arc_edges_to_ellipse_edges()
         self.ellipse_edges_to_line_edges(num)
         self.spline_edges_to_line_edges(spline_factor)

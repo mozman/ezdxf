@@ -137,7 +137,7 @@ def test_arc_to_ellipse_edges(hatch):
         [(0, 0, 1), (10, 0), (10, 10, -0.5), (0, 10)], is_closed=True
     )
 
-    hatch.paths.polyline_to_edge_path()
+    hatch.paths.polyline_to_edge_paths()
     path = hatch.paths[0]
     assert (
         path.PATH_TYPE == "EdgePath"
