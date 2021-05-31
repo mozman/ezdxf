@@ -64,6 +64,7 @@ from .mtext_columns import *
 from .spline import Spline
 from .mesh import Mesh, MeshData
 from .boundary_paths import *
+from .gradient import *
 from .hatch import *
 from .mpolygon import MPolygon
 from .image import Image, ImageDef, Wipeout
