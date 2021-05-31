@@ -5,15 +5,27 @@ import math
 from ezdxf.layouts import VirtualLayout
 from ezdxf.math import Matrix44, OCS, Vec3, close_vectors
 from ezdxf.path import (
-    Path, bbox, fit_paths_into_box, transform_paths, transform_paths_to_ocs,
-    to_polylines3d, to_lines, to_lwpolylines, to_polylines2d,
-    to_hatches, to_bsplines_and_vertices, to_splines_and_polylines,
-    from_vertices, to_multi_path, single_paths,
+    Path,
+    bbox,
+    fit_paths_into_box,
+    transform_paths,
+    transform_paths_to_ocs,
+    to_polylines3d,
+    to_lines,
+    to_lwpolylines,
+    to_polylines2d,
+    to_hatches,
+    to_bsplines_and_vertices,
+    to_splines_and_polylines,
+    from_vertices,
+    to_multi_path,
+    single_paths,
 )
 from ezdxf.path import make_path, Command
+from ezdxf.entities import BoundaryPathType, EdgeType
 
 
-class TestTransformPaths():
+class TestTransformPaths:
     def test_empty_paths(self):
         result = transform_paths([], Matrix44())
         assert len(result) == 0
@@ -152,7 +164,7 @@ class TestBoundingBox:
         p2.line_to((-3, -2, -1))
         assert bbox([p1, p2]).size == (4, 4, 4)
 
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def quadratic(self):
         p = Path()
         p.curve3_to((2, 0), (1, 1))
@@ -168,7 +180,7 @@ class TestBoundingBox:
 
 
 class TestFitPathsIntoBoxUniformScaling:
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def spath(self):
         p = Path()
         p.line_to((1, 2, 3))
@@ -222,7 +234,7 @@ class TestFitPathsIntoBoxUniformScaling:
 
 
 class TestFitPathsIntoBoxNonUniformScaling:
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def spath(self):
         p = Path()
         p.line_to((1, 2, 3))
@@ -234,8 +246,7 @@ class TestFitPathsIntoBoxNonUniformScaling:
         assert box.size == (8, 7, 6)
 
     def test_non_uniform_shrink_paths(self, spath):
-        result = fit_paths_into_box([spath], (1.5, 1.5, 1.5),
-                                    uniform=False)
+        result = fit_paths_into_box([spath], (1.5, 1.5, 1.5), uniform=False)
         box = bbox(result)
         assert box.size == (1.5, 1.5, 1.5)
 
@@ -332,7 +343,7 @@ class TestToEntityConverter:
         polylines = list(to_polylines3d(path))
         assert len(polylines) == 1
         p0 = polylines[0]
-        assert p0.dxftype() == 'POLYLINE'
+        assert p0.dxftype() == "POLYLINE"
         assert p0.is_3d_polyline is True
         assert len(p0) == 18
         assert p0.vertices[0].dxf.location == (0, 0, 0)
@@ -345,7 +356,7 @@ class TestToEntityConverter:
         lines = list(to_lines(path))
         assert len(lines) == 17
         l0 = lines[0]
-        assert l0.dxftype() == 'LINE'
+        assert l0.dxftype() == "LINE"
         assert l0.dxf.start == (0, 0, 0)
         assert l0.dxf.end == (4, 0, 0)
 
@@ -359,7 +370,7 @@ class TestToEntityConverter:
         polylines = list(to_lwpolylines(path))
         assert len(polylines) == 1
         p0 = polylines[0]
-        assert p0.dxftype() == 'LWPOLYLINE'
+        assert p0.dxftype() == "LWPOLYLINE"
         assert p0[0] == (0, 0, 0, 0, 0)  # x, y, swidth, ewidth, bulge
         assert p0[-1] == (0, 0, 0, 0, 0)
 
@@ -396,7 +407,7 @@ class TestToEntityConverter:
         polylines = list(to_polylines2d(path))
         assert len(polylines) == 1
         p0 = polylines[0]
-        assert p0.dxftype() == 'POLYLINE'
+        assert p0.dxftype() == "POLYLINE"
         assert p0.is_2d_polyline is True
         assert p0[0].dxf.location == (0, 0, 0)
         assert p0[-1].dxf.location == (0, 0, 0)
@@ -424,7 +435,7 @@ class TestToEntityConverter:
         hatches = list(to_hatches(path, edge_path=False))
         assert len(hatches) == 1
         h0 = hatches[0]
-        assert h0.dxftype() == 'HATCH'
+        assert h0.dxftype() == "HATCH"
         assert len(h0.paths) == 1
 
     def test_to_poly_path_hatches_with_wcs_elevation(self, path1):
@@ -443,37 +454,42 @@ class TestToEntityConverter:
         polypath0 = h0.paths[0]
         assert polypath0.vertices[0] == (0, 0, 0)  # x, y, bulge
         assert polypath0.vertices[-1] == (
-            0, 0, 0), "should be closed automatically"
+            0,
+            0,
+            0,
+        ), "should be closed automatically"
 
     def test_to_edge_path_hatches(self, path):
         hatches = list(to_hatches(path, edge_path=True))
         assert len(hatches) == 1
         h0 = hatches[0]
-        assert h0.dxftype() == 'HATCH'
+        assert h0.dxftype() == "HATCH"
         assert len(h0.paths) == 1
         edge_path = h0.paths[0]
-        assert edge_path.PATH_TYPE == 'EdgePath'
+        assert edge_path.type == BoundaryPathType.EDGE
         line, spline = edge_path.edges
-        assert line.EDGE_TYPE == 'LineEdge'
+        assert line.type == EdgeType.LINE
         assert line.start == (0, 0)
         assert line.end == (4, 0)
-        assert spline.EDGE_TYPE == 'SplineEdge'
-        assert close_vectors(Vec3.generate(spline.control_points), [
-            (4, 0), (3, 1), (1, 1), (0, 0)
-        ])
+        assert spline.type == EdgeType.SPLINE
+        assert close_vectors(
+            Vec3.generate(spline.control_points),
+            [(4, 0), (3, 1), (1, 1), (0, 0)],
+        )
 
     def test_to_splines_and_polylines(self, path):
         entities = list(to_splines_and_polylines([path]))
         assert len(entities) == 2
         polyline = entities[0]
         spline = entities[1]
-        assert polyline.dxftype() == 'POLYLINE'
-        assert spline.dxftype() == 'SPLINE'
+        assert polyline.dxftype() == "POLYLINE"
+        assert spline.dxftype() == "SPLINE"
         assert polyline.vertices[0].dxf.location.isclose((0, 0))
         assert polyline.vertices[1].dxf.location.isclose((4, 0))
-        assert close_vectors(Vec3.generate(spline.control_points), [
-            (4, 0, 0), (3, 1, 1), (1, 1, 1), (0, 0, 0)
-        ])
+        assert close_vectors(
+            Vec3.generate(spline.control_points),
+            [(4, 0, 0), (3, 1, 1), (1, 1, 1), (0, 0, 0)],
+        )
 
 
 # Issue #224 regression test
@@ -487,10 +503,10 @@ def ellipse():
         start_param=-1.261396328799999,
         end_param=-0.2505454928,
         dxfattribs={
-            'layer': "0",
-            'linetype': "Continuous",
-            'color': 3,
-            'extrusion': (0.0, 0.0, -1.0),
+            "layer": "0",
+            "linetype": "Continuous",
+            "color": 3,
+            "extrusion": (0.0, 0.0, -1.0),
         },
     )
 

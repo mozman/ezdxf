@@ -92,7 +92,7 @@ class BoundaryPaths:
 
     @property
     def has_edge_paths(self) -> bool:
-        return any(p.PATH_TYPE == "EdgePath" for p in self.paths)
+        return any(p.type == BoundaryPathType.EDGE for p in self.paths)
 
     def clear(self) -> None:
         """Remove all boundary paths."""
@@ -256,7 +256,7 @@ class BoundaryPaths:
             return edge_path
 
         for path_index, path in enumerate(self.paths):
-            if path.PATH_TYPE == "PolylinePath":
+            if path.type == BoundaryPathType.POLYLINE:
                 if just_with_bulge and not path.has_bulge():
                     continue
                 self.paths[path_index] = to_edge_path(path)
@@ -273,7 +273,7 @@ class BoundaryPaths:
         """
         converted = []
         for path in self.paths:
-            if path.PATH_TYPE == "EdgePath":
+            if path.type == BoundaryPathType.EDGE:
                 path = flatten_to_polyline_path(path, distance, segments)
             converted.append(path)
         self.paths = converted
@@ -292,10 +292,10 @@ class BoundaryPaths:
             return ellipse
 
         for path in self.paths:
-            if path.PATH_TYPE == "EdgePath":
+            if path.type == BoundaryPathType.EDGE:
                 edges = path.edges
                 for edge_index, edge in enumerate(edges):
-                    if edge.EDGE_TYPE == "ArcEdge":
+                    if edge.type == EdgeType.ARC:
                         edges[edge_index] = to_ellipse(edge)
 
     def ellipse_edges_to_spline_edges(self, num: int = 32) -> None:
@@ -335,10 +335,10 @@ class BoundaryPaths:
             return spline
 
         for path_index, path in enumerate(self.paths):
-            if path.PATH_TYPE == "EdgePath":
+            if path.type == BoundaryPathType.EDGE:
                 edges = path.edges
                 for edge_index, edge in enumerate(edges):
-                    if edge.EDGE_TYPE == "EllipseEdge":
+                    if edge.type == EdgeType.ELLIPSE:
                         edges[edge_index] = to_spline_edge(edge)
 
     def spline_edges_to_line_edges(self, factor: int = 8) -> None:
@@ -376,10 +376,10 @@ class BoundaryPaths:
                 yield edge
 
         for path in self.paths:
-            if path.PATH_TYPE == "EdgePath":
+            if path.type == BoundaryPathType.EDGE:
                 new_edges = []
                 for edge in path.edges:
-                    if edge.EDGE_TYPE == "SplineEdge":
+                    if edge.type == EdgeType.SPLINE:
                         new_edges.extend(to_line_edges(edge))
                     else:
                         new_edges.append(edge)
@@ -416,10 +416,10 @@ class BoundaryPaths:
                 yield line
 
         for path in self.paths:
-            if path.PATH_TYPE == "EdgePath":
+            if path.type == BoundaryPathType.EDGE:
                 new_edges = []
                 for edge in path.edges:
-                    if edge.EDGE_TYPE == "EllipseEdge":
+                    if edge.type == EdgeType.ELLIPSE:
                         new_edges.extend(to_line_edges(edge))
                     else:
                         new_edges.append(edge)
@@ -462,11 +462,11 @@ class BoundaryPaths:
 
         """
         for path in self.paths:
-            if path.PATH_TYPE == "PolylinePath":
+            if path.type == BoundaryPathType.POLYLINE:
                 return path.has_bulge()
             else:
                 for edge in path.edges:
-                    if edge.EDGE_TYPE in {"ArcEdge", "EllipseEdge"}:
+                    if edge.type in {EdgeType.ARC, EdgeType.ELLIPSE}:
                         return True
         return False
 
@@ -510,7 +510,7 @@ def export_source_boundary_objects(
 
 
 class PolylinePath:
-    PATH_TYPE = "PolylinePath"
+    PATH_TYPE = "PolylinePath"  # 2021-05-31: deprecated use type
     type = BoundaryPathType.POLYLINE
 
     def __init__(self):
@@ -646,7 +646,7 @@ class PolylinePath:
 
 
 class EdgePath:
-    PATH_TYPE = "EdgePath"
+    PATH_TYPE = "EdgePath"  # 2021-05-31: deprecated use type
     type = BoundaryPathType.EDGE
 
     def __init__(self):
@@ -847,8 +847,8 @@ class EdgePath:
 
 
 class LineEdge:
+    EDGE_TYPE = "LineEdge"  # 2021-05-31: deprecated use type
     type = EdgeType.LINE
-    EDGE_TYPE = "LineEdge"
 
     def __init__(self):
         self.start = Vec2(0, 0)  # OCS!
@@ -882,7 +882,7 @@ class LineEdge:
 
 
 class ArcEdge:
-    type = EdgeType.ARC
+    type = EdgeType.ARC  # 2021-05-31: deprecated use type
     EDGE_TYPE = "ArcEdge"
 
     def __init__(self):
@@ -958,8 +958,8 @@ class ArcEdge:
 
 
 class EllipseEdge:
+    EDGE_TYPE = "EllipseEdge"  # 2021-05-31: deprecated use type
     type = EdgeType.ELLIPSE
-    EDGE_TYPE = "EllipseEdge"
 
     def __init__(self):
         self.center = Vec2((0.0, 0.0))
@@ -1095,8 +1095,8 @@ class EllipseEdge:
 
 
 class SplineEdge:
+    EDGE_TYPE = "SplineEdge"  # 2021-05-31: deprecated use type
     type = EdgeType.SPLINE
-    EDGE_TYPE = "SplineEdge"
 
     def __init__(self):
         self.degree: int = 3  # code = 94

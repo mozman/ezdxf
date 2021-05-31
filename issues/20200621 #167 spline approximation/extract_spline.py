@@ -1,17 +1,17 @@
 from typing import cast
 from pathlib import Path
 import ezdxf
-from ezdxf.math import Vector, BSpline
-
+from ezdxf.math import BSpline
+from ezdxf.entities import EdgeType
 DIR = Path('~/Desktop/Outbox').expanduser()
 
-doc = ezdxf.readfile('../../examples/addons/drawing/test_files/hatches_2.dxf')
+doc = ezdxf.readfile('../../examples_dxf/hatches_2.dxf')
 msp = doc.modelspace()
 
 hatch = cast('Hatch', msp.query('HATCH').first)
 if hatch:
     for edge in hatch.paths[0].edges:
-        if edge.EDGE_TYPE == 'SplineEdge':
+        if edge.type == EdgeType.SPLINE:
             s = BSpline(control_points=edge.control_points, knots=edge.knot_values, order=edge.degree + 1)
             print(s.knots())
             c = s.to_nurbs_python_curve()

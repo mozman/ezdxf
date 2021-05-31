@@ -1,6 +1,7 @@
 from pathlib import Path
 import math
 import ezdxf
+from ezdxf.entities import EdgeType
 
 DIR = Path('~/Desktop/Outbox').expanduser()
 
@@ -47,7 +48,7 @@ def transform(e):
 lines = []
 for hatch in hatches:
     for edge in hatch.paths[0]:
-        if edge.EDGE_TYPE == 'LineEdge':
+        if edge.type == EdgeType.LINE:
             lines.append(msp.add_line(edge.start, edge.end, dxfattribs={'color': 6}))
 
 for hatch in hatches:

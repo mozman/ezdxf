@@ -45,6 +45,8 @@ from ezdxf.entities import (
     Helix,
     Wipeout,
     MPolygon,
+    BoundaryPathType,
+    EdgeType,
 )
 from .path import Path
 from .commands import Command
@@ -260,7 +262,7 @@ def from_hatch_boundary_path(
     """Returns a :class:`Path` object from a :class:`~ezdxf.entities.Hatch`
     polyline- or edge path.
     """
-    if boundary.PATH_TYPE == "EdgePath":
+    if boundary.type == BoundaryPathType.EDGE:
         return from_hatch_edge_path(boundary, ocs, elevation)
     else:
         return from_hatch_polyline_path(boundary, ocs, elevation)
@@ -374,15 +376,15 @@ def from_hatch_edge_path(
     extrusion = ocs.uz if ocs else Z_AXIS
     path = Path()
     for edge in edges:
-        if edge.EDGE_TYPE == "LineEdge":
+        if edge.type == EdgeType.LINE:
             add_line_edge(edge)
-        elif edge.EDGE_TYPE == "ArcEdge":
+        elif edge.type == EdgeType.ARC:
             if not math.isclose(edge.radius, 0):
                 add_arc_edge(edge)
-        elif edge.EDGE_TYPE == "EllipseEdge":
+        elif edge.type == EdgeType.ELLIPSE:
             if not NULLVEC.isclose(edge.major_axis):
                 add_ellipse_edge(edge)
-        elif edge.EDGE_TYPE == "SplineEdge":
+        elif edge.type == EdgeType.SPLINE:
             add_spline_edge(edge)
 
     return path

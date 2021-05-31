@@ -6,19 +6,32 @@ import json
 
 from ezdxf.sections.tables import TABLENAMES
 from ezdxf.lldxf.tags import Tags
+from ezdxf.entities import BoundaryPathType, EdgeType
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        Insert, MText, LWPolyline, Polyline, Spline, Leader, Dimension, Image,
-        Mesh, Hatch, Wipeout,
+        Insert,
+        MText,
+        LWPolyline,
+        Polyline,
+        Spline,
+        Leader,
+        Dimension,
+        Image,
+        Mesh,
+        Hatch,
+        Wipeout,
     )
     from ezdxf.eztypes import DXFEntity, Linetype, DXFTag, BlockLayout
 
 __all__ = ["entities_to_code", "block_to_code", "table_entries_to_code"]
 
 
-def entities_to_code(entities: Iterable["DXFEntity"], layout: str = "layout",
-                     ignore: Iterable[str] = None) -> "Code":
+def entities_to_code(
+    entities: Iterable["DXFEntity"],
+    layout: str = "layout",
+    ignore: Iterable[str] = None,
+) -> "Code":
     """
     Translates DXF entities into Python source code to recreate this entities
     by ezdxf.
@@ -38,8 +51,9 @@ def entities_to_code(entities: Iterable["DXFEntity"], layout: str = "layout",
     return code.code
 
 
-def block_to_code(block: "BlockLayout", drawing: str = "doc",
-                  ignore: Iterable[str] = None) -> "Code":
+def block_to_code(
+    block: "BlockLayout", drawing: str = "doc", ignore: Iterable[str] = None
+) -> "Code":
     """
     Translates a BLOCK into Python source code to recreate the BLOCK by ezdxf.
 
@@ -66,15 +80,16 @@ def block_to_code(block: "BlockLayout", drawing: str = "doc",
     return code.code
 
 
-def table_entries_to_code(entities: Iterable["DXFEntity"],
-                          drawing="doc") -> "Code":
+def table_entries_to_code(
+    entities: Iterable["DXFEntity"], drawing="doc"
+) -> "Code":
     code = _SourceCodeGenerator(doc=drawing)
     code.translate_entities(entities)
     return code.code
 
 
 class Code:
-    """ Source code container. """
+    """Source code container."""
 
     def __init__(self):
         self.code: List[str] = []
@@ -92,7 +107,7 @@ class Code:
         self.blocks: Set[str] = set()
 
     def code_str(self, indent: int = 0) -> str:
-        """ Returns the source code as a single string.
+        """Returns the source code as a single string.
 
         Args:
             indent: source code indentation count by spaces
@@ -102,12 +117,12 @@ class Code:
         return "\n".join(lead_str + line for line in self.code)
 
     def __str__(self) -> str:
-        """ Returns the source code as a single string. """
+        """Returns the source code as a single string."""
 
         return self.code_str()
 
     def import_str(self, indent: int = 0) -> str:
-        """ Returns required imports as a single string.
+        """Returns required imports as a single string.
 
         Args:
             indent: source code indentation count by spaces
@@ -117,22 +132,22 @@ class Code:
         return "\n".join(lead_str + line for line in self.imports)
 
     def add_import(self, statement: str) -> None:
-        """ Add import statement, identical import statements are merged
+        """Add import statement, identical import statements are merged
         together.
         """
         self.imports.add(statement)
 
     def add_line(self, code: str, indent: int = 0) -> None:
-        """ Add a single source code line without line ending ``\\n``. """
+        """Add a single source code line without line ending ``\\n``."""
         self.code.append(" " * indent + code)
 
     def add_lines(self, code: Iterable[str], indent: int = 0) -> None:
-        """ Add multiple source code lines without line ending ``\\n``. """
+        """Add multiple source code lines without line ending ``\\n``."""
         for line in code:
             self.add_line(line, indent=indent)
 
     def merge(self, code: "Code", indent: int = 0) -> None:
-        """ Add another :class:`Code` object. """
+        """Add another :class:`Code` object."""
         # merge used resources
         self.imports.update(code.imports)
         self.layers.update(code.layers)
@@ -156,7 +171,7 @@ _PURGE_DXF_ATTRIBUTES = {
 
 
 def _purge_handles(attribs: dict) -> dict:
-    """ Purge handles from DXF attributes which will be invalid in a new
+    """Purge handles from DXF attributes which will be invalid in a new
     document, or which will be set automatically by adding an entity to a
     layout (paperspace).
 
@@ -185,8 +200,9 @@ def _fmt_list(l: Iterable, indent: int = 0) -> Iterable[str]:
         yield fmt.format(str(v))
 
 
-def _fmt_api_call(func_call: str, args: Iterable[str],
-                  dxfattribs: dict) -> List[str]:
+def _fmt_api_call(
+    func_call: str, args: Iterable[str], dxfattribs: dict
+) -> List[str]:
     attributes = dict(dxfattribs)
     args = list(args) if args else []
 
@@ -206,7 +222,10 @@ def _fmt_api_call(func_call: str, args: Iterable[str],
     s.append("    dxfattribs={")
     s.extend(_fmt_mapping(attributes, indent=8))
     s.extend(
-        ["    },", ")", ]
+        [
+            "    },",
+            ")",
+        ]
     )
     return s
 
@@ -240,7 +259,7 @@ class _SourceCodeGenerator:
         self.code = Code()
 
     def translate_entity(self, entity: "DXFEntity") -> None:
-        """ Translates one DXF entity into Python source code. The generated
+        """Translates one DXF entity into Python source code. The generated
         source code is appended to the attribute `source_code`.
 
         Args:
@@ -251,15 +270,14 @@ class _SourceCodeGenerator:
         try:
             entity_translator = getattr(self, "_" + dxftype.lower())
         except AttributeError:
-            self.add_source_code_line(
-                f'# unsupported DXF entity "{dxftype}"'
-            )
+            self.add_source_code_line(f'# unsupported DXF entity "{dxftype}"')
         else:
             entity_translator(entity)
 
-    def translate_entities(self, entities: Iterable["DXFEntity"],
-                           ignore: Iterable[str] = None) -> None:
-        """ Translates multiple DXF entities into Python source code. The
+    def translate_entities(
+        self, entities: Iterable["DXFEntity"], ignore: Iterable[str] = None
+    ) -> None:
+        """Translates multiple DXF entities into Python source code. The
         generated source code is appended to the attribute `source_code`.
 
         Args:
@@ -275,7 +293,7 @@ class _SourceCodeGenerator:
                 self.translate_entity(entity)
 
     def add_used_resources(self, dxfattribs: Mapping) -> None:
-        """ Register used resources like layers, line types, text styles and
+        """Register used resources like layers, line types, text styles and
         dimension styles.
 
         Args:
@@ -301,30 +319,42 @@ class _SourceCodeGenerator:
         assert not isinstance(code, str)
         self.code.add_lines(code)
 
-    def add_list_source_code(self, values: Iterable, prolog: str = "[",
-                             epilog: str = "]", indent: int = 0, ) -> None:
+    def add_list_source_code(
+        self,
+        values: Iterable,
+        prolog: str = "[",
+        epilog: str = "]",
+        indent: int = 0,
+    ) -> None:
         fmt_str = " " * indent + "{}"
         self.add_source_code_line(fmt_str.format(prolog))
         self.add_source_code_lines(_fmt_list(values, indent=4 + indent))
         self.add_source_code_line(fmt_str.format(epilog))
 
-    def add_dict_source_code(self, mapping: Mapping, prolog: str = "{",
-                             epilog: str = "}", indent: int = 0, ) -> None:
+    def add_dict_source_code(
+        self,
+        mapping: Mapping,
+        prolog: str = "{",
+        epilog: str = "}",
+        indent: int = 0,
+    ) -> None:
         fmt_str = " " * indent + "{}"
         self.add_source_code_line(fmt_str.format(prolog))
         self.add_source_code_lines(_fmt_mapping(mapping, indent=4 + indent))
         self.add_source_code_line(fmt_str.format(epilog))
 
-    def add_tags_source_code(self, tags: Tags, prolog="tags = Tags(",
-                             epilog=")", indent=4):
+    def add_tags_source_code(
+        self, tags: Tags, prolog="tags = Tags(", epilog=")", indent=4
+    ):
         fmt_str = " " * indent + "{}"
         self.add_source_code_line(fmt_str.format(prolog))
         self.add_source_code_lines(_fmt_dxf_tags(tags, indent=4 + indent))
         self.add_source_code_line(fmt_str.format(epilog))
 
-    def generic_api_call(self, dxftype: str, dxfattribs: dict,
-                         prefix: str = "e = ") -> Iterable[str]:
-        """ Returns the source code strings to create a DXF entity by a generic
+    def generic_api_call(
+        self, dxftype: str, dxfattribs: dict, prefix: str = "e = "
+    ) -> Iterable[str]:
+        """Returns the source code strings to create a DXF entity by a generic
         `new_entity()` call.
 
         Args:
@@ -342,13 +372,21 @@ class _SourceCodeGenerator:
         ]
         s.extend(_fmt_mapping(dxfattribs, indent=8))
         s.extend(
-            ["    },", ")", ]
+            [
+                "    },",
+                ")",
+            ]
         )
         return s
 
-    def api_call(self, api_call: str, args: Iterable[str], dxfattribs: dict,
-                 prefix: str = "e = ") -> Iterable[str]:
-        """ Returns the source code strings to create a DXF entity by the
+    def api_call(
+        self,
+        api_call: str,
+        args: Iterable[str],
+        dxfattribs: dict,
+        prefix: str = "e = ",
+    ) -> Iterable[str]:
+        """Returns the source code strings to create a DXF entity by the
         specialised API call.
 
         Args:
@@ -363,7 +401,7 @@ class _SourceCodeGenerator:
         return _fmt_api_call(func_call, args, dxfattribs)
 
     def new_table_entry(self, dxftype: str, dxfattribs: dict) -> Iterable[str]:
-        """ Returns the source code strings to create a new table entity by
+        """Returns the source code strings to create a new table entity by
         ezdxf.
 
         Args:
@@ -382,7 +420,10 @@ class _SourceCodeGenerator:
         ]
         s.extend(_fmt_mapping(dxfattribs, indent=12))
         s.extend(
-            ["        },", "    )", ]
+            [
+                "        },",
+                "    )",
+            ]
         )
         return s
 
@@ -468,7 +509,7 @@ class _SourceCodeGenerator:
         )
         self.add_source_code_line(
             '# Set valid handles or remove attributes ending with "_handle", '
-            'otherwise the DXF file is invalid for AutoCAD'
+            "otherwise the DXF file is invalid for AutoCAD"
         )
 
     # complex graphical types
@@ -669,7 +710,7 @@ class _SourceCodeGenerator:
             add_line(arg.format("name", json.dumps(g.name)))
             add_line(")")
         for count, path in enumerate(entity.paths, start=1):
-            if path.PATH_TYPE == "PolylinePath":
+            if path.type == BoundaryPathType.POLYLINE:
                 add_line("# {}. polyline path".format(count))
                 self.add_list_source_code(
                     path.vertices,
@@ -687,11 +728,9 @@ class _SourceCodeGenerator:
                     f"ep = e.paths.add_edge_path(flags={path.path_type_flags})"
                 )
                 for edge in path.edges:
-                    if edge.EDGE_TYPE == "LineEdge":
-                        add_line(
-                            f"ep.add_line({edge.start}, {str(edge.end)})"
-                        )
-                    elif edge.EDGE_TYPE == "ArcEdge":
+                    if edge.type == EdgeType.LINE:
+                        add_line(f"ep.add_line({edge.start}, {str(edge.end)})")
+                    elif edge.type == EdgeType.ARC:
                         add_line("ep.add_arc(")
                         add_line(arg.format("center", str(edge.center)))
                         add_line(arg.format("radius", edge.radius))
@@ -699,18 +738,16 @@ class _SourceCodeGenerator:
                         add_line(arg.format("end_angle", edge.end_angle))
                         add_line(arg.format("ccw", edge.ccw))
                         add_line(")")
-                    elif edge.EDGE_TYPE == "EllipseEdge":
+                    elif edge.type == EdgeType.ELLIPSE:
                         add_line("ep.add_ellipse(")
                         add_line(arg.format("center", str(edge.center)))
-                        add_line(
-                            arg.format("major_axis", str(edge.major_axis))
-                        )
+                        add_line(arg.format("major_axis", str(edge.major_axis)))
                         add_line(arg.format("ratio", edge.ratio))
                         add_line(arg.format("start_angle", edge.start_angle))
                         add_line(arg.format("end_angle", edge.end_angle))
                         add_line(arg.format("ccw", edge.ccw))
                         add_line(")")
-                    elif edge.EDGE_TYPE == "SplineEdge":
+                    elif edge.type == EdgeType.SPLINE:
                         add_line("ep.add_spline(")
                         if edge.fit_points:
                             add_line(
