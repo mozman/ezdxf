@@ -1,20 +1,50 @@
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
 from typing import (
-    TYPE_CHECKING, List, Iterable, Union, Tuple, Optional, Dict, Callable,
+    TYPE_CHECKING,
+    List,
+    Iterable,
+    Union,
+    Tuple,
+    Optional,
+    Dict,
+    Callable,
 )
 from functools import singledispatch
 import enum
 import math
 from ezdxf.math import (
-    Vec2, Vec3, Z_AXIS, NULLVEC, OCS, Bezier3P, Bezier4P,
-    ConstructionEllipse, BSpline, have_bezier_curves_g1_continuity,
-    global_bspline_interpolation, Vertex,
+    Vec2,
+    Vec3,
+    Z_AXIS,
+    NULLVEC,
+    OCS,
+    Bezier3P,
+    Bezier4P,
+    ConstructionEllipse,
+    BSpline,
+    have_bezier_curves_g1_continuity,
+    global_bspline_interpolation,
+    Vertex,
 )
 from ezdxf.lldxf import const
 from ezdxf.entities import (
-    LWPolyline, Polyline, Hatch, Line, Spline, Ellipse, Arc, Circle, Solid,
-    Trace, Face3d, Viewport, Image, Helix, Wipeout, MPolygon
+    LWPolyline,
+    Polyline,
+    Hatch,
+    Line,
+    Spline,
+    Ellipse,
+    Arc,
+    Circle,
+    Solid,
+    Trace,
+    Face3d,
+    Viewport,
+    Image,
+    Helix,
+    Wipeout,
+    MPolygon,
 )
 from .path import Path
 from .commands import Command
@@ -22,16 +52,26 @@ from . import tools
 from .nesting import group_paths
 
 if TYPE_CHECKING:
-    from ezdxf.entities.hatch import PolylinePath, EdgePath, TPath
+    from ezdxf.entities import TPath, PolylinePath, EdgePath
 
 __all__ = [
-    'make_path', 'to_lines', 'to_polylines3d', 'to_lwpolylines',
-    'to_polylines2d', 'to_hatches', 'to_bsplines_and_vertices',
-    'to_splines_and_polylines', 'from_hatch', 'from_hatch_boundary_path',
-    'from_vertices', 'from_matplotlib_path', 'from_qpainter_path',
-    'to_matplotlib_path', 'to_qpainter_path',
-    'multi_path_from_matplotlib_path',
-    'multi_path_from_qpainter_path',
+    "make_path",
+    "to_lines",
+    "to_polylines3d",
+    "to_lwpolylines",
+    "to_polylines2d",
+    "to_hatches",
+    "to_bsplines_and_vertices",
+    "to_splines_and_polylines",
+    "from_hatch",
+    "from_hatch_boundary_path",
+    "from_vertices",
+    "from_matplotlib_path",
+    "from_qpainter_path",
+    "to_matplotlib_path",
+    "to_qpainter_path",
+    "multi_path_from_matplotlib_path",
+    "multi_path_from_qpainter_path",
 ]
 
 MAX_DISTANCE = 0.01
@@ -41,7 +81,7 @@ G1_TOL = 1e-4
 
 @singledispatch
 def make_path(entity, segments: int = 1, level: int = 4) -> Path:
-    """ Factory function to create a single :class:`Path` object from a DXF
+    """Factory function to create a single :class:`Path` object from a DXF
     entity.
 
     Args:
@@ -57,15 +97,15 @@ def make_path(entity, segments: int = 1, level: int = 4) -> Path:
     # renders for each overloaded function a signature, which is ugly
     # and wrong signatures for multiple overloaded function
     # e.g. 3 equal signatures for type Solid.
-    raise TypeError(f'unsupported DXF type: {entity.dxftype()}')
+    raise TypeError(f"unsupported DXF type: {entity.dxftype()}")
 
 
 @make_path.register(LWPolyline)
-def _from_lwpolyline(lwpolyline: LWPolyline, **kwargs) -> 'Path':
+def _from_lwpolyline(lwpolyline: LWPolyline, **kwargs) -> "Path":
     path = Path()
     tools.add_2d_polyline(
         path,
-        lwpolyline.get_points('xyb'),
+        lwpolyline.get_points("xyb"),
         close=lwpolyline.closed,
         ocs=lwpolyline.ocs(),
         elevation=lwpolyline.dxf.elevation,
@@ -74,9 +114,9 @@ def _from_lwpolyline(lwpolyline: LWPolyline, **kwargs) -> 'Path':
 
 
 @make_path.register(Polyline)
-def _from_polyline(polyline: Polyline, **kwargs) -> 'Path':
+def _from_polyline(polyline: Polyline, **kwargs) -> "Path":
     if polyline.is_polygon_mesh or polyline.is_poly_face_mesh:
-        raise TypeError('Unsupported DXF type PolyMesh or PolyFaceMesh')
+        raise TypeError("Unsupported DXF type PolyMesh or PolyFaceMesh")
 
     path = Path()
     if len(polyline.vertices) == 0:
@@ -85,9 +125,9 @@ def _from_polyline(polyline: Polyline, **kwargs) -> 'Path':
     if polyline.is_3d_polyline:
         return from_vertices(polyline.points(), polyline.is_closed)
 
-    points = [vertex.format('xyb') for vertex in polyline.vertices]
+    points = [vertex.format("xyb") for vertex in polyline.vertices]
     ocs = polyline.ocs()
-    if polyline.dxf.hasattr('elevation'):
+    if polyline.dxf.hasattr("elevation"):
         elevation = Vec3(polyline.dxf.elevation).z
     else:
         # Elevation attribute is mandatory, but you never know,
@@ -105,34 +145,33 @@ def _from_polyline(polyline: Polyline, **kwargs) -> 'Path':
 
 @make_path.register(Helix)
 @make_path.register(Spline)
-def _from_spline(spline: Spline, **kwargs) -> 'Path':
-    level = kwargs.get('level', 4)
+def _from_spline(spline: Spline, **kwargs) -> "Path":
+    level = kwargs.get("level", 4)
     path = Path()
     tools.add_spline(path, spline.construction_tool(), level=level, reset=True)
     return path
 
 
 @make_path.register(Ellipse)
-def _from_ellipse(ellipse: Ellipse, **kwargs) -> 'Path':
-    segments = kwargs.get('segments', 1)
+def _from_ellipse(ellipse: Ellipse, **kwargs) -> "Path":
+    segments = kwargs.get("segments", 1)
     path = Path()
-    tools.add_ellipse(path,
-                      ellipse.construction_tool(),
-                      segments=segments,
-                      reset=True)
+    tools.add_ellipse(
+        path, ellipse.construction_tool(), segments=segments, reset=True
+    )
     return path
 
 
 @make_path.register(Line)
-def _from_line(line: Line, **kwargs) -> 'Path':
+def _from_line(line: Line, **kwargs) -> "Path":
     path = Path(line.dxf.start)
     path.line_to(line.dxf.end)
     return path
 
 
 @make_path.register(Arc)
-def _from_arc(arc: Arc, **kwargs) -> 'Path':
-    segments = kwargs.get('segments', 1)
+def _from_arc(arc: Arc, **kwargs) -> "Path":
+    segments = kwargs.get("segments", 1)
     path = Path()
     radius = abs(arc.dxf.radius)
     if not math.isclose(radius, 0):
@@ -148,8 +187,8 @@ def _from_arc(arc: Arc, **kwargs) -> 'Path':
 
 
 @make_path.register(Circle)
-def _from_circle(circle: Circle, **kwargs) -> 'Path':
-    segments = kwargs.get('segments', 1)
+def _from_circle(circle: Circle, **kwargs) -> "Path":
+    segments = kwargs.get("segments", 1)
     path = Path()
     radius = abs(circle.dxf.radius)
     if not math.isclose(radius, 0):
@@ -165,16 +204,16 @@ def _from_circle(circle: Circle, **kwargs) -> 'Path':
 @make_path.register(Face3d)
 @make_path.register(Trace)
 @make_path.register(Solid)
-def _from_quadrilateral(solid: 'Solid', **kwargs) -> 'Path':
+def _from_quadrilateral(solid: "Solid", **kwargs) -> "Path":
     vertices = solid.wcs_vertices()
     return from_vertices(vertices, close=True)
 
 
 @make_path.register(Viewport)
-def _from_viewport(vp: 'Viewport', **kwargs) -> Path:
+def _from_viewport(vp: "Viewport", **kwargs) -> Path:
     if vp.has_clipping_path():
         handle = vp.dxf.clipping_boundary_handle
-        if handle != '0' and vp.doc:  # exist
+        if handle != "0" and vp.doc:  # exist
             db = vp.doc.entitydb
             if db:  # exist
                 # Many DXF entities can define a clipping path:
@@ -187,7 +226,7 @@ def _from_viewport(vp: 'Viewport', **kwargs) -> Path:
 
 @make_path.register(Wipeout)
 @make_path.register(Image)
-def _from_image(image: 'Image', **kwargs) -> Path:
+def _from_image(image: "Image", **kwargs) -> Path:
     return from_vertices(image.boundary_path_wcs(), close=True)
 
 
@@ -204,7 +243,7 @@ def _from_hatch(hatch: Hatch, **kwargs) -> Path:
 
 
 def from_hatch(hatch: Hatch) -> Iterable[Path]:
-    """ Yield all HATCH boundary paths as separated :class:`Path` objects.
+    """Yield all HATCH boundary paths as separated :class:`Path` objects.
 
     .. versionadded:: 0.16
 
@@ -215,20 +254,22 @@ def from_hatch(hatch: Hatch) -> Iterable[Path]:
         yield from_hatch_boundary_path(boundary, ocs, elevation)
 
 
-def from_hatch_boundary_path(boundary: 'TPath', ocs: OCS = None,
-                             elevation: float = 0) -> 'Path':
-    """ Returns a :class:`Path` object from a :class:`~ezdxf.entities.Hatch`
+def from_hatch_boundary_path(
+    boundary: "TPath", ocs: OCS = None, elevation: float = 0
+) -> "Path":
+    """Returns a :class:`Path` object from a :class:`~ezdxf.entities.Hatch`
     polyline- or edge path.
     """
-    if boundary.PATH_TYPE == 'EdgePath':
+    if boundary.PATH_TYPE == "EdgePath":
         return from_hatch_edge_path(boundary, ocs, elevation)
     else:
         return from_hatch_polyline_path(boundary, ocs, elevation)
 
 
-def from_hatch_polyline_path(polyline: 'PolylinePath', ocs: OCS = None,
-                             elevation: float = 0) -> 'Path':
-    """ Returns a :class:`Path` object from a :class:`~ezdxf.entities.Hatch`
+def from_hatch_polyline_path(
+    polyline: "PolylinePath", ocs: OCS = None, elevation: float = 0
+) -> "Path":
+    """Returns a :class:`Path` object from a :class:`~ezdxf.entities.Hatch`
     polyline path.
     """
     path = Path()
@@ -242,9 +283,10 @@ def from_hatch_polyline_path(polyline: 'PolylinePath', ocs: OCS = None,
     return path
 
 
-def from_hatch_edge_path(edges: 'EdgePath', ocs: OCS = None,
-                         elevation: float = 0) -> 'Path':
-    """ Returns a :class:`Path` object from a :class:`~ezdxf.entities.Hatch`
+def from_hatch_edge_path(
+    edges: "EdgePath", ocs: OCS = None, elevation: float = 0
+) -> "Path":
+    """Returns a :class:`Path` object from a :class:`~ezdxf.entities.Hatch`
     edge path.
     """
 
@@ -308,10 +350,7 @@ def from_hatch_edge_path(edges: 'EdgePath', ocs: OCS = None,
     def from_fit_points(edge, fit_points):
         tangents = None
         if edge.start_tangent and edge.end_tangent:
-            tangents = (
-                wcs(edge.start_tangent),
-                wcs(edge.end_tangent)
-            )
+            tangents = (wcs(edge.start_tangent), wcs(edge.end_tangent))
         return global_bspline_interpolation(
             fit_points,
             degree=edge.degree,
@@ -323,7 +362,7 @@ def from_hatch_edge_path(edges: 'EdgePath', ocs: OCS = None,
             control_points=control_points,
             order=edge.degree + 1,
             knots=edge.knot_values,
-            weights=edge.weights if edge.weights else None
+            weights=edge.weights if edge.weights else None,
         )
 
     def wcs(vertex):
@@ -349,8 +388,8 @@ def from_hatch_edge_path(edges: 'EdgePath', ocs: OCS = None,
     return path
 
 
-def from_vertices(vertices: Iterable['Vertex'], close=False) -> Path:
-    """ Returns a :class:`Path` object from the given `vertices`.  """
+def from_vertices(vertices: Iterable["Vertex"], close=False) -> Path:
+    """Returns a :class:`Path` object from the given `vertices`."""
     vertices = Vec3.list(vertices)
     if len(vertices) < 2:
         return Path()
@@ -363,12 +402,14 @@ def from_vertices(vertices: Iterable['Vertex'], close=False) -> Path:
 
 
 def to_lwpolylines(
-        paths: Iterable[Path], *,
-        distance: float = MAX_DISTANCE,
-        segments: int = MIN_SEGMENTS,
-        extrusion: 'Vertex' = Z_AXIS,
-        dxfattribs: Optional[Dict] = None) -> Iterable[LWPolyline]:
-    """ Convert the given `paths` into :class:`~ezdxf.entities.LWPolyline`
+    paths: Iterable[Path],
+    *,
+    distance: float = MAX_DISTANCE,
+    segments: int = MIN_SEGMENTS,
+    extrusion: "Vertex" = Z_AXIS,
+    dxfattribs: Optional[Dict] = None,
+) -> Iterable[LWPolyline]:
+    """Convert the given `paths` into :class:`~ezdxf.entities.LWPolyline`
     entities.
     The `extrusion` vector is applied to all paths, all vertices are projected
     onto the plane normal to this extrusion vector. The default extrusion vector
@@ -401,15 +442,15 @@ def to_lwpolylines(
     if not extrusion.isclose(Z_AXIS):
         ocs, elevation = _get_ocs(extrusion, reference_point)
         paths = tools.transform_paths_to_ocs(paths, ocs)
-        dxfattribs['elevation'] = elevation
-        dxfattribs['extrusion'] = extrusion
+        dxfattribs["elevation"] = elevation
+        dxfattribs["extrusion"] = extrusion
     elif reference_point.z != 0:
-        dxfattribs['elevation'] = reference_point.z
+        dxfattribs["elevation"] = reference_point.z
 
     for path in tools.single_paths(paths):
         if len(path) > 0:
             p = LWPolyline.new(dxfattribs=dxfattribs)
-            p.append_points(path.flattening(distance, segments), format='xy')
+            p.append_points(path.flattening(distance, segments), format="xy")
             yield p
 
 
@@ -420,13 +461,14 @@ def _get_ocs(extrusion: Vec3, referenc_point: Vec3) -> Tuple[OCS, float]:
 
 
 def to_polylines2d(
-        paths: Iterable[Path],
-        *,
-        distance: float = MAX_DISTANCE,
-        segments: int = MIN_SEGMENTS,
-        extrusion: 'Vertex' = Z_AXIS,
-        dxfattribs: Optional[Dict] = None) -> Iterable[Polyline]:
-    """ Convert the given `paths` into 2D :class:`~ezdxf.entities.Polyline`
+    paths: Iterable[Path],
+    *,
+    distance: float = MAX_DISTANCE,
+    segments: int = MIN_SEGMENTS,
+    extrusion: "Vertex" = Z_AXIS,
+    dxfattribs: Optional[Dict] = None,
+) -> Iterable[Polyline]:
+    """Convert the given `paths` into 2D :class:`~ezdxf.entities.Polyline`
     entities.
     The `extrusion` vector is applied to all paths, all vertices are projected
     onto the plane normal to this extrusion vector. The default extrusion vector
@@ -459,10 +501,10 @@ def to_polylines2d(
     if not extrusion.isclose(Z_AXIS):
         ocs, elevation = _get_ocs(extrusion, reference_point)
         paths = tools.transform_paths_to_ocs(paths, ocs)
-        dxfattribs['elevation'] = Vec3(0, 0, elevation)
-        dxfattribs['extrusion'] = extrusion
+        dxfattribs["elevation"] = Vec3(0, 0, elevation)
+        dxfattribs["extrusion"] = extrusion
     elif reference_point.z != 0:
-        dxfattribs['elevation'] = Vec3(0, 0, reference_point.z)
+        dxfattribs["elevation"] = Vec3(0, 0, reference_point.z)
 
     for path in tools.single_paths(paths):
         if len(path) > 0:
@@ -472,15 +514,16 @@ def to_polylines2d(
 
 
 def to_hatches(
-        paths: Iterable[Path],
-        *,
-        edge_path: bool = True,
-        distance: float = MAX_DISTANCE,
-        segments: int = MIN_SEGMENTS,
-        g1_tol: float = G1_TOL,
-        extrusion: 'Vertex' = Z_AXIS,
-        dxfattribs: Optional[Dict] = None) -> Iterable[Hatch]:
-    """ Convert the given `paths` into :class:`~ezdxf.entities.Hatch` entities.
+    paths: Iterable[Path],
+    *,
+    edge_path: bool = True,
+    distance: float = MAX_DISTANCE,
+    segments: int = MIN_SEGMENTS,
+    g1_tol: float = G1_TOL,
+    extrusion: "Vertex" = Z_AXIS,
+    dxfattribs: Optional[Dict] = None,
+) -> Iterable[Hatch]:
+    """Convert the given `paths` into :class:`~ezdxf.entities.Hatch` entities.
     Uses LWPOLYLINE paths for boundaries without curves and edge paths, build
     of LINE and SPLINE edges, as boundary paths for boundaries including curves.
     The `extrusion` vector is applied to all paths, all vertices are projected
@@ -508,8 +551,7 @@ def to_hatches(
     def build_edge_path(hatch: Hatch, path: Path, flags: int):
         if path.has_curves:  # Edge path with LINE and SPLINE edges
             edge_path = hatch.paths.add_edge_path(flags)
-            for edge in to_bsplines_and_vertices(
-                    path, g1_tol=g1_tol):
+            for edge in to_bsplines_and_vertices(path, g1_tol=g1_tol):
                 if isinstance(edge, BSpline):
                     edge_path.add_spline(
                         control_points=edge.control_points,
@@ -523,12 +565,15 @@ def to_hatches(
                         prev = p
         else:  # Polyline boundary path
             hatch.paths.add_polyline_path(
-                Vec2.generate(path.flattening(distance, segments)), flags=flags)
+                Vec2.generate(path.flattening(distance, segments)), flags=flags
+            )
 
     def build_poly_path(hatch: Hatch, path: Path, flags: int):
         hatch.paths.add_polyline_path(
             # Vec2 removes the z-axis, which would be interpreted as bulge value!
-            Vec2.generate(path.flattening(distance, segments)), flags=flags)
+            Vec2.generate(path.flattening(distance, segments)),
+            flags=flags,
+        )
 
     if edge_path:
         boundary_factory = build_edge_path
@@ -539,10 +584,11 @@ def to_hatches(
 
 
 def _hatch_converter(
-        paths: Iterable[Path],
-        add_boundary: Callable[[Hatch, Path, int], None],
-        extrusion: 'Vertex' = Z_AXIS,
-        dxfattribs: Optional[Dict] = None) -> Iterable[Hatch]:
+    paths: Iterable[Path],
+    add_boundary: Callable[[Hatch, Path, int], None],
+    extrusion: "Vertex" = Z_AXIS,
+    dxfattribs: Optional[Dict] = None,
+) -> Iterable[Hatch]:
     if isinstance(paths, Path):
         paths = [paths]
     else:
@@ -556,13 +602,13 @@ def _hatch_converter(
     if not extrusion.isclose(Z_AXIS):
         ocs, elevation = _get_ocs(extrusion, reference_point)
         paths = tools.transform_paths_to_ocs(paths, ocs)
-        dxfattribs['elevation'] = Vec3(0, 0, elevation)
-        dxfattribs['extrusion'] = extrusion
+        dxfattribs["elevation"] = Vec3(0, 0, elevation)
+        dxfattribs["extrusion"] = extrusion
     elif reference_point.z != 0:
-        dxfattribs['elevation'] = Vec3(0, 0, reference_point.z)
-    dxfattribs.setdefault('solid_fill', 1)
-    dxfattribs.setdefault('pattern_name', 'SOLID')
-    dxfattribs.setdefault('color', const.BYLAYER)
+        dxfattribs["elevation"] = Vec3(0, 0, reference_point.z)
+    dxfattribs.setdefault("solid_fill", 1)
+    dxfattribs.setdefault("pattern_name", "SOLID")
+    dxfattribs.setdefault("color", const.BYLAYER)
 
     for group in group_paths(tools.single_paths(paths)):
         if len(group) == 0:
@@ -578,12 +624,13 @@ def _hatch_converter(
 
 
 def to_polylines3d(
-        paths: Iterable[Path],
-        *,
-        distance: float = MAX_DISTANCE,
-        segments: int = MIN_SEGMENTS,
-        dxfattribs: Optional[Dict] = None) -> Iterable[Polyline]:
-    """ Convert the given `paths` into 3D :class:`~ezdxf.entities.Polyline`
+    paths: Iterable[Path],
+    *,
+    distance: float = MAX_DISTANCE,
+    segments: int = MIN_SEGMENTS,
+    dxfattribs: Optional[Dict] = None,
+) -> Iterable[Polyline]:
+    """Convert the given `paths` into 3D :class:`~ezdxf.entities.Polyline`
     entities.
 
     Args:
@@ -602,7 +649,7 @@ def to_polylines3d(
         paths = [paths]
 
     dxfattribs = dxfattribs or {}
-    dxfattribs['flags'] = const.POLYLINE_3D_POLYLINE
+    dxfattribs["flags"] = const.POLYLINE_3D_POLYLINE
     for path in tools.single_paths(paths):
         if len(path) > 0:
             p = Polyline.new(dxfattribs=dxfattribs)
@@ -611,12 +658,13 @@ def to_polylines3d(
 
 
 def to_lines(
-        paths: Iterable[Path],
-        *,
-        distance: float = MAX_DISTANCE,
-        segments: int = MIN_SEGMENTS,
-        dxfattribs: Optional[Dict] = None) -> Iterable[Line]:
-    """ Convert the given `paths` into :class:`~ezdxf.entities.Line` entities.
+    paths: Iterable[Path],
+    *,
+    distance: float = MAX_DISTANCE,
+    segments: int = MIN_SEGMENTS,
+    dxfattribs: Optional[Dict] = None,
+) -> Iterable[Line]:
+    """Convert the given `paths` into :class:`~ezdxf.entities.Line` entities.
 
     Args:
         paths: iterable of :class:`Path` objects
@@ -641,8 +689,8 @@ def to_lines(
             if prev_vertex is None:
                 prev_vertex = vertex
                 continue
-            dxfattribs['start'] = prev_vertex
-            dxfattribs['end'] = vertex
+            dxfattribs["start"] = prev_vertex
+            dxfattribs["end"] = vertex
             yield Line.new(dxfattribs=dxfattribs)
             prev_vertex = vertex
         prev_vertex = None
@@ -651,9 +699,10 @@ def to_lines(
 PathParts = Union[BSpline, List[Vec3]]
 
 
-def to_bsplines_and_vertices(path: Path,
-                             g1_tol: float = G1_TOL) -> Iterable[PathParts]:
-    """ Convert a :class:`Path` object into multiple cubic B-splines and
+def to_bsplines_and_vertices(
+    path: Path, g1_tol: float = G1_TOL
+) -> Iterable[PathParts]:
+    """Convert a :class:`Path` object into multiple cubic B-splines and
     polylines as lists of vertices. Breaks adjacent Bèzier without G1
     continuity into separated B-splines.
 
@@ -725,11 +774,12 @@ def to_bsplines_and_vertices(path: Path,
 
 
 def to_splines_and_polylines(
-        paths: Iterable[Path],
-        *,
-        g1_tol: float = G1_TOL,
-        dxfattribs: Optional[Dict] = None) -> Iterable[Union[Spline, Polyline]]:
-    """ Convert the given `paths` into :class:`~ezdxf.entities.Spline` and 3D
+    paths: Iterable[Path],
+    *,
+    g1_tol: float = G1_TOL,
+    dxfattribs: Optional[Dict] = None,
+) -> Iterable[Union[Spline, Polyline]]:
+    """Convert the given `paths` into :class:`~ezdxf.entities.Spline` and 3D
     :class:`~ezdxf.entities.Polyline` entities.
 
     Args:
@@ -755,13 +805,14 @@ def to_splines_and_polylines(
                 yield spline
             else:
                 attribs = dict(dxfattribs)
-                attribs['flags'] = const.POLYLINE_3D_POLYLINE
+                attribs["flags"] = const.POLYLINE_3D_POLYLINE
                 polyline = Polyline.new(dxfattribs=dxfattribs)
                 polyline.append_vertices(data)
                 yield polyline
 
 
 # Interface to Matplotlib.path.Path
+
 
 @enum.unique
 class MplCmd(enum.IntEnum):
@@ -811,7 +862,7 @@ def multi_path_from_matplotlib_path(mpath, curves=True) -> Path:
 
 
 def from_matplotlib_path(mpath, curves=True) -> Iterable[Path]:
-    """ Yields multiple :class:`Path` objects from a Matplotlib `Path`_
+    """Yields multiple :class:`Path` objects from a Matplotlib `Path`_
     (`TextPath`_)  object. (requires Matplotlib)
 
     .. versionadded:: 0.16
@@ -827,8 +878,8 @@ def from_matplotlib_path(mpath, curves=True) -> Iterable[Path]:
         return [path]
 
 
-def to_matplotlib_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
-    """ Convert the given `paths` into a single :class:`matplotlib.path.Path`
+def to_matplotlib_path(paths: Iterable[Path], extrusion: "Vertex" = Z_AXIS):
+    """Convert the given `paths` into a single :class:`matplotlib.path.Path`
     object.
     The `extrusion` vector is applied to all paths, all vertices are projected
     onto the plane normal to this extrusion vector.The default extrusion vector
@@ -846,12 +897,13 @@ def to_matplotlib_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
 
     """
     from matplotlib.path import Path as MatplotlibPath
+
     if not extrusion.isclose(Z_AXIS):
         paths = tools.transform_paths_to_ocs(paths, OCS(extrusion))
     else:
         paths = list(paths)
     if len(paths) == 0:
-        raise ValueError('one or more paths required')
+        raise ValueError("one or more paths required")
 
     def add_command(code: MplCmd, point: Vec3):
         codes.append(code)
@@ -880,6 +932,7 @@ def to_matplotlib_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
 
 
 # Interface to PyQt5.QtGui.QPainterPath
+
 
 def multi_path_from_qpainter_path(qpath) -> Path:
     """Returns a :class:`Path` objects from a `QPainterPath`_.
@@ -917,7 +970,7 @@ def multi_path_from_qpainter_path(qpath) -> Path:
 
 
 def from_qpainter_path(qpath) -> Iterable[Path]:
-    """ Yields multiple :class:`Path` objects from a `QPainterPath`_.
+    """Yields multiple :class:`Path` objects from a `QPainterPath`_.
     (requires PyQt5)
 
     .. versionadded:: 0.16
@@ -933,8 +986,8 @@ def from_qpainter_path(qpath) -> Iterable[Path]:
         return [path]
 
 
-def to_qpainter_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
-    """ Convert the given `paths` into a :class:`PyQt5.QtGui.QPainterPath`
+def to_qpainter_path(paths: Iterable[Path], extrusion: "Vertex" = Z_AXIS):
+    """Convert the given `paths` into a :class:`PyQt5.QtGui.QPainterPath`
     object.
     The `extrusion` vector is applied to all paths, all vertices are projected
     onto the plane normal to this extrusion vector. The default extrusion vector
@@ -953,12 +1006,13 @@ def to_qpainter_path(paths: Iterable[Path], extrusion: 'Vertex' = Z_AXIS):
     """
     from PyQt5.QtGui import QPainterPath
     from PyQt5.QtCore import QPointF
+
     if not extrusion.isclose(Z_AXIS):
         paths = tools.transform_paths_to_ocs(paths, OCS(extrusion))
     else:
         paths = list(paths)
     if len(paths) == 0:
-        raise ValueError('one or more paths required')
+        raise ValueError("one or more paths required")
 
     def qpnt(v: Vec3):
         return QPointF(v.x, v.y)

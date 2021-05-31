@@ -1,8 +1,6 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-# Created 2019-02-13
 
-# first factory
 from . import factory
 
 # basic classes
@@ -65,6 +63,7 @@ from .mtext import MText
 from .mtext_columns import *
 from .spline import Spline
 from .mesh import Mesh, MeshData
+from .boundary_paths import *
 from .hatch import *
 from .mpolygon import MPolygon
 from .image import Image, ImageDef, Wipeout
@@ -89,7 +88,7 @@ from .acis import (
     SweptSurface,
 )
 from .mline import MLine, MLineVertex, MLineStyle, MLineStyleCollection
-from .mleader import MLeader, MLeaderStyle, MLeaderStyleCollection
+from .mleader import MLeader, MLeaderStyle, MLeaderStyleCollection, MultiLeader
 
 # register graphical entities R2004
 

@@ -4,11 +4,21 @@ import pytest
 import math
 
 from ezdxf.path import (
-    Path, make_path, converter, Command, tools,
+    Path,
+    make_path,
+    converter,
+    Command,
+    tools,
 )
 from ezdxf.math import Vec3, Matrix44, Bezier4P, Bezier3P, close_vectors, OCS
-from ezdxf.entities.hatch import PolylinePath, EdgePath
-from ezdxf.entities import factory, DXFEntity, Polymesh, LWPolyline
+from ezdxf.entities import (
+    factory,
+    DXFEntity,
+    Polymesh,
+    LWPolyline,
+    PolylinePath,
+    EdgePath,
+)
 
 
 def test_init():
@@ -135,8 +145,9 @@ class TestSubPath:
         path = self.simple_multi_path()
         path.move_to((4, 0, 0))
         path.move_to((4, 0, 0))
-        assert len(path) == 2, \
-            "should merge multiple MOVETO commands at the end of the path"
+        assert (
+            len(path) == 2
+        ), "should merge multiple MOVETO commands at the end of the path"
 
     def test_clone_multi_path_object(self):
         path = self.simple_multi_path()
@@ -205,6 +216,7 @@ class TestSubPath:
 
 def test_add_spline():
     from ezdxf.math import BSpline
+
     spline = BSpline.from_fit_points([(2, 0), (4, 1), (6, -1), (8, 0)])
     path = Path()
     tools.add_spline(path, spline)
@@ -227,7 +239,7 @@ def test_add_spline():
 
 
 def test_from_spline():
-    spline = factory.new('SPLINE')
+    spline = factory.new("SPLINE")
     spline.fit_points = [(2, 0), (4, 1), (6, -1), (8, 0)]
     path = make_path(spline)
     assert path.start == (2, 0)
@@ -236,8 +248,14 @@ def test_from_spline():
 
 def test_add_ellipse():
     from ezdxf.math import ConstructionEllipse
-    ellipse = ConstructionEllipse(center=(3, 0), major_axis=(1, 0), ratio=0.5,
-        start_param=0, end_param=math.pi)
+
+    ellipse = ConstructionEllipse(
+        center=(3, 0),
+        major_axis=(1, 0),
+        ratio=0.5,
+        start_param=0,
+        end_param=math.pi,
+    )
     path = Path()
     tools.add_ellipse(path, ellipse)
     assert path.start.isclose((4, 0))
@@ -262,42 +280,51 @@ def test_raises_type_error_for_unsupported_objects():
     with pytest.raises(TypeError):
         make_path(DXFEntity())
     with pytest.raises(TypeError):
-        make_path(Polymesh.new(dxfattribs={'flags': Polymesh.POLYMESH}))
+        make_path(Polymesh.new(dxfattribs={"flags": Polymesh.POLYMESH}))
     with pytest.raises(TypeError):
-        make_path(Polymesh.new(dxfattribs={'flags': Polymesh.POLYFACE}))
+        make_path(Polymesh.new(dxfattribs={"flags": Polymesh.POLYFACE}))
 
 
 def test_from_ellipse():
-    ellipse = factory.new('ELLIPSE', dxfattribs={
-        'center': (3, 0),
-        'major_axis': (1, 0),
-        'ratio': 0.5,
-        'start_param': 0,
-        'end_param': math.pi
-    })
+    ellipse = factory.new(
+        "ELLIPSE",
+        dxfattribs={
+            "center": (3, 0),
+            "major_axis": (1, 0),
+            "ratio": 0.5,
+            "start_param": 0,
+            "end_param": math.pi,
+        },
+    )
     path = make_path(ellipse)
     assert path.start.isclose((4, 0))
     assert path.end.isclose((2, 0))
 
 
 def test_from_arc():
-    arc = factory.new('ARC', dxfattribs={
-        'center': (1, 0, 0),
-        'radius': 1,
-        'start_angle': 0,
-        'end_angle': 180,
-    })
+    arc = factory.new(
+        "ARC",
+        dxfattribs={
+            "center": (1, 0, 0),
+            "radius": 1,
+            "start_angle": 0,
+            "end_angle": 180,
+        },
+    )
     path = make_path(arc)
     assert path.start.isclose((2, 0))
     assert path.end.isclose((0, 0))
 
 
-@pytest.mark.parametrize('radius', [1, -1])
+@pytest.mark.parametrize("radius", [1, -1])
 def test_from_circle(radius):
-    circle = factory.new('CIRCLE', dxfattribs={
-        'center': (1, 0, 0),
-        'radius': radius,
-    })
+    circle = factory.new(
+        "CIRCLE",
+        dxfattribs={
+            "center": (1, 0, 0),
+            "radius": radius,
+        },
+    )
     path = make_path(circle)
     assert path.start.isclose((2, 0))
     assert path.end.isclose((2, 0))
@@ -305,10 +332,13 @@ def test_from_circle(radius):
 
 
 def test_from_circle_with_zero_radius():
-    circle = factory.new('CIRCLE', dxfattribs={
-        'center': (1, 0, 0),
-        'radius': 0,
-    })
+    circle = factory.new(
+        "CIRCLE",
+        dxfattribs={
+            "center": (1, 0, 0),
+            "radius": 0,
+        },
+    )
     path = make_path(circle)
     assert len(path) == 0
 
@@ -316,13 +346,13 @@ def test_from_circle_with_zero_radius():
 def test_from_line():
     start = Vec3(1, 2, 3)
     end = Vec3(4, 5, 6)
-    line = factory.new('LINE', dxfattribs={'start': start, 'end': end})
+    line = factory.new("LINE", dxfattribs={"start": start, "end": end})
     path = make_path(line)
     assert path.start.isclose(start)
     assert path.end.isclose(end)
 
 
-@pytest.mark.parametrize('dxftype', ['SOLID', 'TRACE', '3DFACE'])
+@pytest.mark.parametrize("dxftype", ["SOLID", "TRACE", "3DFACE"])
 def test_from_quadrilateral_with_4_points(dxftype):
     entity = factory.new(dxftype)
     entity.dxf.vtx0 = (0, 0, 0)
@@ -335,7 +365,7 @@ def test_from_quadrilateral_with_4_points(dxftype):
     assert len(list(path.approximate())) == 5
 
 
-@pytest.mark.parametrize('dxftype', ['SOLID', 'TRACE', '3DFACE'])
+@pytest.mark.parametrize("dxftype", ["SOLID", "TRACE", "3DFACE"])
 def test_from_quadrilateral_with_3_points(dxftype):
     entity = factory.new(dxftype)
     entity.dxf.vtx0 = (0, 0, 0)
@@ -349,8 +379,9 @@ def test_from_quadrilateral_with_3_points(dxftype):
 
 def test_lwpolyline_lines():
     from ezdxf.entities import LWPolyline
+
     pline = LWPolyline()
-    pline.append_points([(1, 1), (2, 1), (2, 2)], format='xy')
+    pline.append_points([(1, 1), (2, 1), (2, 2)], format="xy")
     path = make_path(pline)
     assert path.start.isclose((1, 1))
     assert path.end.isclose((2, 2))
@@ -374,7 +405,7 @@ POINTS = [
 def test_make_path_from_lwpolyline_with_bulges():
     pline = LWPolyline()
     pline.closed = True
-    pline.append_points(POINTS, format='xyb')
+    pline.append_points(POINTS, format="xyb")
     path = make_path(pline)
     assert path.start == (0, 0)
     assert path.end == (0, 0)  # closed
@@ -384,7 +415,7 @@ def test_make_path_from_lwpolyline_with_bulges():
 def test_make_path_from_full_circle_lwpolyline():
     pline = LWPolyline()
     pline.closed = True
-    pline.append_points([(0, 0, 1), (1, 0, 1)], format='xyb')
+    pline.append_points([(0, 0, 1), (1, 0, 1)], format="xyb")
     path = make_path(pline)
     assert path.start.isclose((0, 0))
     assert path.end.isclose((0, 0))
@@ -401,7 +432,7 @@ def test_make_path_from_full_circle_lwpolyline_issue_424():
         (39_482_129.9462793, 3_554_328.753243976, 1.0),
         (39_482_129.95781776, 3_554_328.753243976, 1.0),
     ]
-    pline.append_points(points, format='xyb')
+    pline.append_points(points, format="xyb")
     path = make_path(pline)
     assert len(path) == 2
 
@@ -418,8 +449,9 @@ S_SHAPE = [
 
 def test_lwpolyline_s_shape():
     from ezdxf.entities import LWPolyline
+
     pline = LWPolyline()
-    pline.append_points(S_SHAPE, format='xyb')
+    pline.append_points(S_SHAPE, format="xyb")
     path = make_path(pline)
     assert path.start == (0, 0)
     assert path.end == (5, 2)  # closed
@@ -428,8 +460,9 @@ def test_lwpolyline_s_shape():
 
 def test_polyline_lines():
     from ezdxf.entities import Polyline
+
     pline = Polyline()
-    pline.append_formatted_vertices([(1, 1), (2, 1), (2, 2)], format='xy')
+    pline.append_formatted_vertices([(1, 1), (2, 1), (2, 2)], format="xy")
     path = make_path(pline)
     assert path.start == (1, 1)
     assert path.end == (2, 2)
@@ -443,9 +476,10 @@ def test_polyline_lines():
 
 def test_polyline_with_bulges():
     from ezdxf.entities import Polyline
+
     pline = Polyline()
     pline.close(True)
-    pline.append_formatted_vertices(POINTS, format='xyb')
+    pline.append_formatted_vertices(POINTS, format="xyb")
     path = make_path(pline)
     assert path.start == (0, 0)
     assert path.end == (0, 0)  # closed
@@ -454,7 +488,8 @@ def test_polyline_with_bulges():
 
 def test_3d_polyline():
     from ezdxf.entities import Polyline
-    pline = Polyline.new(dxfattribs={'flags': Polyline.POLYLINE_3D})
+
+    pline = Polyline.new(dxfattribs={"flags": Polyline.POLYLINE_3D})
     pline.append_vertices([(1, 1, 1), (2, 1, 3), (2, 2, 2)])
     path = make_path(pline)
     assert path.start == (1, 1, 1)
@@ -554,11 +589,9 @@ def test_transform(p1):
 
 def test_control_vertices(p1):
     vertices = list(p1.control_vertices())
-    assert close_vectors(vertices, [
-        (0, 0),
-        (2, 0), (2, 1), (4, 1), (4, 0),
-        (5, -1), (6, 0)
-    ])
+    assert close_vectors(
+        vertices, [(0, 0), (2, 0), (2, 1), (4, 1), (4, 0), (5, -1), (6, 0)]
+    )
     path = Path()
     assert len(list(path.control_vertices())) == 0
     assert list(path.control_vertices()) == list(path.approximate(2))
@@ -606,8 +639,9 @@ def test_reversing_one_curve4():
 
 def test_reversing_path(p1):
     p2 = p1.reversed()
-    assert close_vectors(p2.control_vertices(),
-        reversed(list(p1.control_vertices())))
+    assert close_vectors(
+        p2.control_vertices(), reversed(list(p1.control_vertices()))
+    )
 
 
 def test_reversing_multi_path():
@@ -643,6 +677,7 @@ def test_reversing_multi_path_with_a_move_to_cmd_at_the_end():
 
 def test_clockwise(p1):
     from ezdxf.math import has_clockwise_orientation
+
     cw_path = p1.clockwise()
     ccw_path = p1.counter_clockwise()
     assert has_clockwise_orientation(cw_path.control_vertices()) is True
@@ -652,8 +687,10 @@ def test_clockwise(p1):
 @pytest.fixture
 def edge_path():
     ep = EdgePath()
-    ep.add_line((70.79594401862802, 38.81021154906707),
-        (61.49705431814723, 38.81021154906707))
+    ep.add_line(
+        (70.79594401862802, 38.81021154906707),
+        (61.49705431814723, 38.81021154906707),
+    )
     ep.add_ellipse(
         center=(49.64089977339618, 36.43095770602131),
         major_axis=(16.69099826506408, 6.96203799241026),
@@ -662,8 +699,10 @@ def edge_path():
         end_angle=472.8737032507014,
         ccw=True,
     )
-    ep.add_line((47.21845383585098, 38.81021154906707),
-        (32.00406637283394, 38.81021154906707))
+    ep.add_line(
+        (47.21845383585098, 38.81021154906707),
+        (32.00406637283394, 38.81021154906707),
+    )
     ep.add_arc(
         center=(27.23255482392775, 37.32841621274949),
         radius=4.996302620946588,
@@ -671,12 +710,18 @@ def edge_path():
         end_angle=162.7477919060089,
         ccw=True,
     )
-    ep.add_line((22.46104327502155, 38.81021154906707),
-        (15.94617981131185, 38.81021154906707))
-    ep.add_line((15.94617981131185, 38.81021154906707),
-        (15.94617981131185, 17.88970141145027))
-    ep.add_line((15.94617981131185, 17.88970141145027),
-        (22.07965616927404, 17.88970141145026))
+    ep.add_line(
+        (22.46104327502155, 38.81021154906707),
+        (15.94617981131185, 38.81021154906707),
+    )
+    ep.add_line(
+        (15.94617981131185, 38.81021154906707),
+        (15.94617981131185, 17.88970141145027),
+    )
+    ep.add_line(
+        (15.94617981131185, 17.88970141145027),
+        (22.07965616927404, 17.88970141145026),
+    )
     ep.add_spline(
         control_points=[
             (22.07965616927404, 17.88970141145027),
@@ -689,20 +734,36 @@ def edge_path():
             (60.37405963053161, 14.60131364832752),
             (63.71393926002737, 20.24075830571701),
             (67.36423789268184, 19.07462271006858),
-            (68.72358721334537, 17.88970141145026)],
+            (68.72358721334537, 17.88970141145026),
+        ],
         knot_values=[
-            2.825276861104652, 2.825276861104652, 2.825276861104652,
-            2.825276861104652, 8.585563484895022, 22.93271064560279,
-            29.77376253023298, 35.89697937194972, 41.26107011625705,
-            51.23489795733507, 54.82267350174899, 59.57512798605262,
-            59.57512798605262, 59.57512798605262, 59.57512798605262],
+            2.825276861104652,
+            2.825276861104652,
+            2.825276861104652,
+            2.825276861104652,
+            8.585563484895022,
+            22.93271064560279,
+            29.77376253023298,
+            35.89697937194972,
+            41.26107011625705,
+            51.23489795733507,
+            54.82267350174899,
+            59.57512798605262,
+            59.57512798605262,
+            59.57512798605262,
+            59.57512798605262,
+        ],
         degree=3,
         periodic=0,
     )
-    ep.add_line((68.72358721334535, 17.88970141145027),
-        (70.79594401862802, 17.88970141145027))
-    ep.add_line((70.79594401862802, 17.88970141145027),
-        (70.79594401862802, 38.81021154906707))
+    ep.add_line(
+        (68.72358721334535, 17.88970141145027),
+        (70.79594401862802, 17.88970141145027),
+    )
+    ep.add_line(
+        (70.79594401862802, 17.88970141145027),
+        (70.79594401862802, 38.81021154906707),
+    )
     return ep
 
 
@@ -779,5 +840,5 @@ class TestCloseSubPath:
         assert p.end == (1, 0, 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])
