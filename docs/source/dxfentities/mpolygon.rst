@@ -25,9 +25,12 @@ flags of the boundary paths are ignored.
 Background color for pattern fillings is supported, set background color
 by property :attr:`MPolygon.bgcolor` as RGB tuple.
 
+Autodesk products do support polyline paths including bulges.
 An example for edge paths as boundary paths is not available or edge paths
 are not supported. `Ezdxf` does **not** export MPOLYGON entities including
-edge paths!
+edge paths! The :meth:`BoundaryPaths.edge_to_polyline_paths` method converts
+all edge paths to simple polyline paths with approximated curves, this
+conversion has to be done explicit.
 
 .. seealso::
     For more information see the :class:`ezdxf.entities.Hatch` documentation.

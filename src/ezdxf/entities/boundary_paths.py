@@ -14,9 +14,10 @@ import math
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tags import Tags, group_tags
 from ezdxf.math import (
-    Vec3,
-    bulge_to_arc,
     Vec2,
+    Vec3,
+    OCS,
+    bulge_to_arc,
     ConstructionEllipse,
     BSpline,
     NonUniformScalingError,
@@ -39,7 +40,7 @@ __all__ = [
     "ArcEdge",
     "EllipseEdge",
     "SplineEdge",
-    "TPath"
+    "TPath",
 ]
 
 TPath = Union["PolylinePath", "EdgePath"]
@@ -135,22 +136,20 @@ class BoundaryPaths:
 
     def add_polyline_path(
         self,
-        path_vertices: Sequence[Tuple[float, ...]],
+        path_vertices: Iterable[Tuple[float, ...]],
         is_closed: bool = True,
         flags: int = 1,
     ) -> "PolylinePath":
         """Create and add a new :class:`PolylinePath` object.
 
         Args:
-            path_vertices: list of polyline vertices as (x, y) or
+            path_vertices: iterable of polyline vertices as (x, y) or
                 (x, y, bulge)-tuples.
             is_closed: 1 for a closed polyline else 0
             flags: external(1) or outermost(16) or default (0)
 
         """
-        new_path = PolylinePath()
-        new_path.set_vertices(path_vertices, is_closed)
-        new_path.path_type_flags = flags | const.BOUNDARY_PATH_POLYLINE
+        new_path = PolylinePath.from_vertices(path_vertices, is_closed, flags)
         self.paths.append(new_path)
         return new_path
 
@@ -245,9 +244,34 @@ class BoundaryPaths:
                     continue
                 self.paths[path_index] = to_edge_path(path)
 
-    def all_to_polyline_paths(self):
-        """Convert all paths to simple polyline paths without bulges. """
-        pass
+    def edge_to_polyline_paths(self, distance: float, segments: int = 16):
+        """Convert all edge paths to simple polyline paths without bulges.
+
+        Args:
+            distance: maximum distance from the center of the curve to the
+                center of the line segment between two approximation points to
+                determine if a segment should be subdivided.
+            segments: minimum segment count per curve
+
+        """
+        import ezdxf.path  # avoid cyclic import
+
+        ocs = OCS()  # keep path in original OCS!
+        converted = []
+        for path in self.paths:
+            if path.PATH_TYPE == "EdgePath":
+                ez_path = ezdxf.path.from_hatch_boundary_path(
+                    path, ocs=ocs, elevation=0
+                )
+                vertices = (
+                    (v.x, v.y) for v in ez_path.flattening(distance, segments)
+                )
+                path = PolylinePath.from_vertices(
+                    vertices,
+                    flags=path.path_type_flags,
+                )
+            converted.append(path)
+        self.paths = converted
 
     def arc_edges_to_ellipse_edges(self) -> None:
         """Convert all arc edges to ellipse edges."""
@@ -480,6 +504,28 @@ class PolylinePath:
         self.source_boundary_objects: List[str] = []  # (330, handle) tags
 
     @classmethod
+    def from_vertices(
+        cls,
+        path_vertices: Iterable[Tuple[float, ...]],
+        is_closed: bool = True,
+        flags: int = 1,
+    ) -> "PolylinePath":
+        """Create a new :class:`PolylinePath` object from vertices.
+
+        Args:
+            path_vertices: iterable of polyline vertices as (x, y) or
+                (x, y, bulge)-tuples.
+            is_closed: 1 for a closed polyline else 0
+            flags: external(1) or outermost(16) or default (0)
+
+        """
+
+        new_path = PolylinePath()
+        new_path.set_vertices(path_vertices, is_closed)
+        new_path.path_type_flags = flags | const.BOUNDARY_PATH_POLYLINE
+        return new_path
+
+    @classmethod
     def load_tags(cls, tags: Tags) -> "PolylinePath":
         path = PolylinePath()
         path.source_boundary_objects = pop_source_boundary_objects_tags(tags)
@@ -503,7 +549,7 @@ class PolylinePath:
         return path
 
     def set_vertices(
-        self, vertices: Sequence[Sequence[float]], is_closed: bool = True
+        self, vertices: Iterable[Sequence[float]], is_closed: bool = True
     ) -> None:
         """Set new `vertices` as new polyline path, a vertex has to be a
         (x, y) or a (x, y, bulge)-tuple.

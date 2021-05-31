@@ -222,13 +222,13 @@ Hatch Boundary Helper Classes
 
     .. automethod:: polyline_to_edge_paths
 
+    .. automethod:: edge_to_polyline_paths
+
     .. automethod:: arc_edges_to_ellipse_edges
 
     .. automethod:: ellipse_edges_to_spline_edges
 
     .. automethod:: spline_edges_to_line_edges
-
-    .. automethod:: all_to_polyline_paths
 
     .. automethod:: all_to_spline_edges
 

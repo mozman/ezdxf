@@ -30,6 +30,17 @@ def create_simple_solid_filled_mpolygon(dxfversion="R2000"):
     doc.saveas(DIR / f"simple_solid_filled_mpolygon_{dxfversion}.dxf")
 
 
+def create_mpolygon_with_bulge(dxfversion="R2000"):
+    doc = ezdxf.new(dxfversion)
+    msp = doc.modelspace()
+    mpolygon = msp.add_mpolygon(color=1, fill_color=5)
+    mpolygon.paths.add_polyline_path(
+        [(0, 0), (0, 3, 0.5), (3, 6), (6, 6), (6, 3), (3, 0)]
+    )
+    zoom.extents(msp)
+    doc.saveas(DIR / f"simple_mpolygon_with_bulge_{dxfversion}.dxf")
+
+
 def create_simple_pattern_filled_mpolygon(dxfversion="R2000"):
     doc = ezdxf.new(dxfversion)
     msp = doc.modelspace()
@@ -140,6 +151,7 @@ def using_hatch_style():
 for dxfversion in ["R2000", "R2004", "R2007"]:
     create_simple_mpolygon_no_fill(dxfversion)
     create_simple_solid_filled_mpolygon(dxfversion)
+    create_mpolygon_with_bulge(dxfversion)
     create_simple_pattern_filled_mpolygon(dxfversion)
     create_pattern_filled_mpolygon_with_bgcolor()
     using_hatch_style()
