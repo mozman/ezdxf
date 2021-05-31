@@ -120,5 +120,23 @@ def test_ellipse_edges_to_spline_edges():
     assert Vec3(0, 10).isclose(edge.control_points[-1])
 
 
+def add_edge_path(paths: BoundaryPaths):
+    path = paths.add_edge_path()
+    path.add_line((0, 0), (1, 0))
+    path.add_line((1, 0), (1, 1))
+    path.add_line((1, 1), (0, 1))
+    path.add_line((0, 1), (0, 0))
+
+
+def test_edge_to_polyline_paths():
+    paths = BoundaryPaths()
+    add_edge_path(paths)
+    paths.edge_to_polyline_paths(distance=0.1)
+    path = paths[0]
+    assert path.type == BoundaryPathType.POLYLINE
+    assert path.has_bulge() is False
+    assert len(path.vertices) == 5
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
