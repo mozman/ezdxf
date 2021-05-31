@@ -254,22 +254,10 @@ class BoundaryPaths:
             segments: minimum segment count per curve
 
         """
-        import ezdxf.path  # avoid cyclic import
-
-        ocs = OCS()  # keep path in original OCS!
         converted = []
         for path in self.paths:
             if path.PATH_TYPE == "EdgePath":
-                ez_path = ezdxf.path.from_hatch_boundary_path(
-                    path, ocs=ocs, elevation=0
-                )
-                vertices = (
-                    (v.x, v.y) for v in ez_path.flattening(distance, segments)
-                )
-                path = PolylinePath.from_vertices(
-                    vertices,
-                    flags=path.path_type_flags,
-                )
+                path = flatten_to_polyline_path(path, distance, segments)
             converted.append(path)
         self.paths = converted
 
@@ -464,6 +452,20 @@ class BoundaryPaths:
                     if edge.EDGE_TYPE in {"ArcEdge", "EllipseEdge"}:
                         return True
         return False
+
+
+def flatten_to_polyline_path(
+    path: TPath, distance: float, segments: int = 16
+) -> "PolylinePath":
+    import ezdxf.path  # avoid cyclic imports
+
+    # keep path in original OCS!
+    ez_path = ezdxf.path.from_hatch_boundary_path(path, ocs=OCS(), elevation=0)
+    vertices = ((v.x, v.y) for v in ez_path.flattening(distance, segments))
+    return PolylinePath.from_vertices(
+        vertices,
+        flags=path.path_type_flags,
+    )
 
 
 def pop_source_boundary_objects_tags(path_tags: Tags) -> List[str]:
