@@ -21,7 +21,7 @@ from .factory import register_entity
 from .polygon import BasePolygon
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing, DXFEntity
+    from ezdxf.eztypes import TagWriter, Drawing, DXFEntity, RGB
 
 __all__ = ["Hatch"]
 
@@ -215,7 +215,7 @@ class Hatch(BasePolygon):
             self.pattern.export_dxf(tagwriter)
         self.dxf.export_dxf_attribs(tagwriter, ["pixel_size"])
         self.export_seeds(tagwriter)
-        if self.gradient:
+        if self.gradient and tagwriter.dxfversion > const.DXF2000:
             self.gradient.export_dxf(tagwriter)
 
     def load_seeds(self, tags: Tags) -> Tags:
@@ -253,6 +253,30 @@ class Hatch(BasePolygon):
             self.dxf.associative = 0
             for path in self.paths:
                 path.source_boundary_objects = []
+
+    def set_solid_fill(self, color: int = 7, style: int = 1, rgb: "RGB" = None):
+        """Set :class:`Hatch` to solid fill mode and removes all gradient and
+        pattern fill related data.
+
+        Args:
+            color: :ref:`ACI`, (0 = BYBLOCK; 256 = BYLAYER)
+            style: hatch style (0 = normal; 1 = outer; 2 = ignore)
+            rgb: true color value as (r, g, b)-tuple - has higher priority
+                than `color`. True color support requires DXF R2000.
+
+        """
+        # remove existing gradient and pattern fill
+        self.gradient = None
+        self.pattern = None
+        self.dxf.solid_fill = 1
+
+        # if true color is present, the color attribute is ignored
+        self.dxf.color = color
+        self.dxf.hatch_style = style
+        self.dxf.pattern_name = "SOLID"
+        self.dxf.pattern_type = const.HATCH_TYPE_PREDEFINED
+        if rgb is not None:
+            self.rgb = rgb
 
     def associate(self, path: TPath, entities: Iterable["DXFEntity"]):
         """Set association from hatch boundary `path` to DXF geometry `entities`.

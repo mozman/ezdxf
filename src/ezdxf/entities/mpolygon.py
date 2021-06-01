@@ -16,12 +16,12 @@ from .dxfentity import base_class
 from .dxfgfx import acdb_entity
 from .factory import register_entity
 from .polygon import BasePolygon
-from .gradient import Gradient
+from .gradient import Gradient, GradientType
 
 __all__ = ["MPolygon"]
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter
+    from ezdxf.eztypes import TagWriter, RGB
 
 logger = logging.getLogger("ezdxf")
 acdb_mpolygon = DefSubclass(
@@ -196,15 +196,42 @@ class MPolygon(BasePolygon):
         self.dxf.export_dxf_attribs(tagwriter, "degenerated_loops")
 
     def export_gradient(self, tagwriter: "TagWriter"):
-        if tagwriter.dxfversion <= const.DXF2000:
+        if tagwriter.dxfversion < const.DXF2004:
             return
         if self.gradient is None:
-            self.setup_basic_gradient()
+            self.gradient = Gradient(kind=0, num=0, type=0)
         self.gradient.export_dxf(tagwriter)
 
-    def setup_basic_gradient(self):
-        gradient = Gradient()
-        gradient.kind = 0
-        gradient.number_of_colors = 0
-        gradient.name = ""
-        self.gradient = gradient
+    def set_solid_fill(self, color: int = 7, style: int = 1, rgb: "RGB" = None):
+        """Set :class:`MPolygon` to solid fill mode and removes all gradient and
+        pattern fill related data.
+
+        Args:
+            color: :ref:`ACI`, (0 = BYBLOCK; 256 = BYLAYER)
+            style: hatch style is not supported by MPOLYGON, just for symmetry
+                to HATCH
+            rgb: true color value as (r, g, b)-tuple - has higher priority
+                than `color`. True color support requires DXF R2004+
+
+        """
+        # remove existing gradient and pattern fill
+        self.gradient = None
+        self.pattern = None
+        self.dxf.solid_fill = 1
+
+        # if a gradient is present, the solid fill_color is ignored
+        self.dxf.fill_color = color
+        self.dxf.pattern_name = "SOLID"
+        self.dxf.pattern_type = const.HATCH_TYPE_PREDEFINED
+        if rgb is not None:
+            self.set_solid_rgb_gradient(rgb)
+
+    def set_solid_rgb_gradient(self, rgb: "RGB"):
+        """ Set solid fill color as gradient of a single RGB color.
+        This disables pattern fill!
+
+        (internal API)
+        """
+        self.gradient = Gradient(kind=1, num=2, type=GradientType.LINEAR)
+        self.gradient.color1 = rgb
+        self.gradient.color2 = rgb

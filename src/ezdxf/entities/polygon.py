@@ -1,6 +1,7 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 from typing import Sequence, Optional
+import abc
 import copy
 
 from ezdxf.lldxf import const
@@ -186,30 +187,6 @@ class BasePolygon(DXFGraphic):
     @bgcolor.deleter
     def bgcolor(self) -> None:
         self.discard_xdata("HATCHBACKGROUNDCOLOR")
-
-    def set_solid_fill(self, color: int = 7, style: int = 1, rgb: RGB = None):
-        """Set :class:`Hatch` to solid fill mode and removes all gradient and
-        pattern fill related data.
-
-        Args:
-            color: :ref:`ACI`, (0 = BYBLOCK; 256 = BYLAYER)
-            style: hatch style (0 = normal; 1 = outer; 2 = ignore)
-            rgb: true color value as (r, g, b)-tuple - has higher priority
-                than `color`. True color support requires DXF R2000.
-
-        """
-        self.gradient = None
-        if self.has_pattern_fill:
-            self.pattern = None
-            self.dxf.solid_fill = 1
-
-        # If a true color value is present, the color value is ignored by AutoCAD
-        self.dxf.color = color
-        self.dxf.hatch_style = style
-        self.dxf.pattern_name = "SOLID"
-        self.dxf.pattern_type = const.HATCH_TYPE_PREDEFINED
-        if rgb is not None:
-            self.rgb: RGB = rgb
 
     def set_gradient(
         self,
@@ -407,3 +384,7 @@ class BasePolygon(DXFGraphic):
         dxf.extrusion = ocs.new_extrusion
         # todo scale pattern
         return self
+
+    @abc.abstractmethod
+    def set_solid_fill(self, color: int = 7, style: int = 1, rgb: "RGB" = None):
+        ...

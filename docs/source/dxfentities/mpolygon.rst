@@ -15,6 +15,11 @@ attributes of the main entity like :attr:`dxf.color`, :attr:`dxf.linetype` and s
 The solid filling is only visible if the attribute :attr:`dxf.solid_fill` is 1,
 the color of the solid fill is defined by :attr:`dxf.fill_color` as :ref:`ACI`.
 
+MPOLYGON supports :class:`ezdxf.entities.Gradient` settings like HATCH
+for DXF R2004+. This feature is used by method :meth:`MPolygon.set_solid_fill`
+to set a solid RGB fill color as linear gradient, this disables pattern fill
+automatically.
+
 The MPOLYGON does not support associated source path entities, because the
 MPOLYGON also represents the boundary paths as visible graphical objects.
 
@@ -25,6 +30,11 @@ flags of the boundary paths are ignored.
 Background color for pattern fillings is supported, set background color
 by property :attr:`MPolygon.bgcolor` as RGB tuple.
 
+.. note::
+
+    Background RGB fill color for solid fill and pattern fill is set
+    differently!
+
 Autodesk products do support polyline paths including bulges.
 An example for edge paths as boundary paths is not available or edge paths
 are not supported. `Ezdxf` does **not** export MPOLYGON entities including
@@ -33,6 +43,7 @@ all edge paths to simple polyline paths with approximated curves, this
 conversion has to be done explicit.
 
 .. seealso::
+
     For more information see the :class:`ezdxf.entities.Hatch` documentation.
 
 ======================== ==========================================

@@ -1,7 +1,8 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-import math
 from typing import Optional, TYPE_CHECKING
+import enum
+import math
 
 from ezdxf.colors import RGB, int2rgb, rgb2int
 from ezdxf.lldxf.tags import Tags
@@ -9,16 +10,43 @@ from ezdxf.lldxf.tags import Tags
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
 
-__all__ = ["Gradient"]
+__all__ = ["Gradient", "GradientType"]
 
 GRADIENT_CODES = {450, 451, 452, 453, 460, 461, 462, 463, 470, 421, 63}
 
 
+class GradientType(enum.IntEnum):
+    NONE = 0
+    LINEAR = 1
+    CYLINDER = 2
+    INVCYLINDER = 3
+    SPHERICAL = 4
+    INVSPHERICAL = 5
+    HEMISPHERICAL = 6
+    INVHEMISPHERICAL = 7
+    CURVED = 8
+    INVCURVED = 9
+
+
+gradient_names = [
+    "",
+    "LINEAR",
+    "CYLINDER",
+    "INVCYLINDER",
+    "SPHERICAL",
+    "INVSPHERICAL",
+    "HEMISPHERICAL",
+    "INVHEMISPHERICAL",
+    "CURVED",
+    "INVCURVED",
+]
+
+
 class Gradient:
-    def __init__(self):
+    def __init__(self, kind: int = 1, num: int = 2, type=GradientType.LINEAR):
         # 1 for gradient by default, 0 for Solid
-        self.kind: int = 1
-        self.number_of_colors: int = 2
+        self.kind: int = kind
+        self.number_of_colors: int = num
         self.color1: RGB = (0, 0, 0)
         self.aci1: Optional[int] = None
         self.color2: RGB = (255, 255, 255)
@@ -32,7 +60,7 @@ class Gradient:
         self.rotation: float = 0.0
         self.centered: float = 0.0
         self.tint: float = 0.0
-        self.name: str = "LINEAR"
+        self.name: str = gradient_names[type]
 
     @classmethod
     def load_tags(cls, tags: Tags) -> "Gradient":
