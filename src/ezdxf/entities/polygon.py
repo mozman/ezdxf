@@ -140,17 +140,17 @@ class BasePolygon(DXFGraphic):
 
     @property
     def has_solid_fill(self) -> bool:
-        """``True`` if hatch has a solid fill. (read only)"""
+        """``True`` if entity has a solid fill. (read only)"""
         return bool(self.dxf.solid_fill)
 
     @property
     def has_pattern_fill(self) -> bool:
-        """``True`` if hatch has a pattern fill. (read only)"""
+        """``True`` if entity has a pattern fill. (read only)"""
         return not bool(self.dxf.solid_fill)
 
     @property
     def has_gradient_data(self) -> bool:
-        """``True`` if hatch has a gradient fill. A hatch with gradient fill
+        """``True`` if entity has a gradient fill. A hatch with gradient fill
         has also a solid fill. (read only)
         """
         return bool(self.gradient)
@@ -158,14 +158,14 @@ class BasePolygon(DXFGraphic):
     @property
     def bgcolor(self) -> Optional[RGB]:
         """
-        Property background color as (r, g, b)-tuple, rgb values in the
-        range [0, 255] (read/write/del)
+        Set pattern fill background color as (r, g, b)-tuple, rgb values
+        in the range [0, 255] (read/write/del)
 
         usage::
 
-            color = hatch.bgcolor  # get background color as (r, g, b) tuple
-            hatch.bgcolor = (10, 20, 30)  # set background color
-            del hatch.bgcolor  # delete background color
+            r, g, b = entity.bgcolor  # get pattern fill background color
+            entity.bgcolor = (10, 20, 30)  # set pattern fill background color
+            del entity.bgcolor  # delete pattern fill background color
 
         """
         try:
@@ -198,8 +198,9 @@ class BasePolygon(DXFGraphic):
         tint: float = 0.0,
         name: str = "LINEAR",
     ) -> None:
-        """Set :class:`Hatch` to gradient fill mode and removes all pattern
-        fill related data. Gradient support requires DXF DXF R2004.
+        """Set :class:`Hatch` and :class:`MPolygon` to gradient fill mode and
+        removes all pattern fill related data. Gradient support requires
+        DXF R2004+.
         A gradient filled hatch is also a solid filled hatch.
 
         Valid gradient type names are:
@@ -258,8 +259,9 @@ class BasePolygon(DXFGraphic):
         pattern_type: int = 1,
         definition=None,
     ) -> None:
-        """Set :class:`Hatch` to pattern fill mode. Removes all gradient
-        related data. The pattern definition should be designed for scaling
+        """Set :class:`Hatch` and :class:`MPolygon` to pattern fill mode.
+        Removes all gradient related data.
+        The pattern definition should be designed for scaling
         factor 1. Predefined hatch pattern like "ANSI33" are scaled according
         to the HEADER variable $MEASUREMENT for ISO measurement (m, cm, ... ),
         or imperial units (in, ft, ...), this replicates the behavior of
@@ -308,8 +310,8 @@ class BasePolygon(DXFGraphic):
     def set_pattern_definition(
         self, lines: Sequence, factor: float = 1, angle: float = 0
     ) -> None:
-        """Setup hatch patten definition by a list of definition lines and  a
-        definition line is a 4-tuple [angle, base_point, offset, dash_length_items],
+        """Setup pattern definition by a list of definition lines and  a
+        definition line is a 4-tuple (angle, base_point, offset, dash_length_items),
         the pattern definition should be designed for scaling factor 1 and
         angle 0.
 
