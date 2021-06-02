@@ -12,9 +12,9 @@ __all__ = ["BoundingBox2d", "BoundingBox"]
 
 
 class AbstractBoundingBox:
-    __slots__ = ('extmin', 'extmax')
+    __slots__ = ("extmin", "extmax")
 
-    def __init__(self, vertices: Iterable['Vertex'] = None):
+    def __init__(self, vertices: Iterable["Vertex"] = None):
         self.extmax = None
         self.extmin = None
         if vertices is not None:
@@ -40,19 +40,19 @@ class AbstractBoundingBox:
             yield self.extmax
 
     @abc.abstractmethod
-    def extends_detector(self, vertices: Iterable['Vertex']):
+    def extends_detector(self, vertices: Iterable["Vertex"]):
         pass
 
     @abc.abstractmethod
-    def inside(self, vertex: 'Vertex') -> bool:
+    def inside(self, vertex: "Vertex") -> bool:
         pass
 
     @abc.abstractmethod
-    def intersect(self, other: 'AbstractBoundingBox') -> bool:
+    def intersect(self, other: "AbstractBoundingBox") -> bool:
         pass
 
-    def any_inside(self, vertices: Iterable['Vertex']) -> bool:
-        """ Returns ``True`` if any vertex is inside this bounding box.
+    def any_inside(self, vertices: Iterable["Vertex"]) -> bool:
+        """Returns ``True`` if any vertex is inside this bounding box.
 
         Vertices at the box border are inside!
         """
@@ -60,8 +60,8 @@ class AbstractBoundingBox:
             return any(self.inside(v) for v in vertices)
         return False
 
-    def all_inside(self, vertices: Iterable['Vertex']) -> bool:
-        """ Returns ``True`` if all vertices are inside this bounding box.
+    def all_inside(self, vertices: Iterable["Vertex"]) -> bool:
+        """Returns ``True`` if all vertices are inside this bounding box.
 
         Vertices at the box border are inside!
         """
@@ -77,26 +77,26 @@ class AbstractBoundingBox:
 
     @property
     def has_data(self) -> bool:
-        """ Returns ``True`` if bonding box is not empty """
+        """Returns ``True`` if bonding box is not empty"""
         return self.extmin is not None
 
     @property
     def is_empty(self) -> bool:
-        """ Returns ``True`` if bonding box is empty """
+        """Returns ``True`` if bonding box is empty"""
         return self.extmin is None
 
     @property
     def size(self):
-        """ Returns size of bounding box. """
+        """Returns size of bounding box."""
         return self.extmax - self.extmin
 
     @property
     def center(self):
-        """ Returns center of bounding box. """
+        """Returns center of bounding box."""
         return self.extmin.lerp(self.extmax)
 
-    def extend(self, vertices: Iterable['Vertex']) -> None:
-        """ Extend bounds by `vertices`.
+    def extend(self, vertices: Iterable["Vertex"]) -> None:
+        """Extend bounds by `vertices`.
 
         Args:
             vertices: iterable of Vertex objects
@@ -109,8 +109,8 @@ class AbstractBoundingBox:
             v.extend([self.extmin, self.extmax])
         self.extmin, self.extmax = self.extends_detector(v)
 
-    def union(self, other: 'AbstractBoundingBox'):
-        """ Returns a new bounding box as union of this and `other` bounding
+    def union(self, other: "AbstractBoundingBox"):
+        """Returns a new bounding box as union of this and `other` bounding
         box.
         """
         vertices = []
@@ -120,32 +120,43 @@ class AbstractBoundingBox:
             vertices.extend(other)
         return self.__class__(vertices)
 
+    def rect_vertices(self) -> Tuple[Vec2, ...]:
+        """Returns the corners of the bounding box in the xy-plane as
+        :class:`Vec2` objects.
+        """
+        if self.has_data:
+            x0, y0, *_ = self.extmin
+            x1, y1, *_ = self.extmax
+            return Vec2(x0, y0), Vec2(x1, y0), Vec2(x1, y1), Vec2(x0, y1)
+        else:
+            raise ValueError("empty bounding box")
+
 
 class BoundingBox(AbstractBoundingBox):
-    """ 3D bounding box.
+    """3D bounding box.
 
     Args:
         vertices: iterable of ``(x, y, z)`` tuples or :class:`Vec3` objects
 
     """
 
-    def extends_detector(self, vertices: Iterable['Vertex']):
+    def extends_detector(self, vertices: Iterable["Vertex"]):
         return extends3d(vertices)
 
-    def inside(self, vertex: 'Vertex') -> bool:
-        """ Returns ``True`` if `vertex` is inside this bounding box.
+    def inside(self, vertex: "Vertex") -> bool:
+        """Returns ``True`` if `vertex` is inside this bounding box.
 
         Vertices at the box border are inside!
         """
         x, y, z = Vec3(vertex).xyz
         xmin, ymin, zmin = self.extmin.xyz
         xmax, ymax, zmax = self.extmax.xyz
-        return (xmin <= x <= xmax) and \
-               (ymin <= y <= ymax) and \
-               (zmin <= z <= zmax)
+        return (
+            (xmin <= x <= xmax) and (ymin <= y <= ymax) and (zmin <= z <= zmax)
+        )
 
-    def intersect(self, other: 'AbstractBoundingBox') -> bool:
-        """ Returns `True` if this bounding box intersects with `other`.
+    def intersect(self, other: "AbstractBoundingBox") -> bool:
+        """Returns `True` if this bounding box intersects with `other`.
 
         Touching bounding boxes do not intersect!
 
@@ -169,20 +180,38 @@ class BoundingBox(AbstractBoundingBox):
             return False
         return True
 
+    def cube_vertices(self) -> Tuple[Vec3, ...]:
+        """Returns the 3D corners of the bounding box as :class:`Vec3` objects."""
+        if self.has_data:
+            x0, y0, z0 = self.extmin
+            x1, y1, z1 = self.extmax
+            return (
+                Vec3(x0, y0, z0),
+                Vec3(x1, y0, z0),
+                Vec3(x1, y1, z0),
+                Vec3(x0, y1, z0),
+                Vec3(x0, y0, z1),
+                Vec3(x1, y0, z1),
+                Vec3(x1, y1, z1),
+                Vec3(x0, y1, z1),
+            )
+        else:
+            raise ValueError("empty bounding box")
+
 
 class BoundingBox2d(AbstractBoundingBox):
-    """ Optimized 2D bounding box.
+    """Optimized 2D bounding box.
 
     Args:
         vertices: iterable of ``(x, y[, z])`` tuples or :class:`Vec3` objects
 
     """
 
-    def extends_detector(self, vertices: Iterable['Vertex']):
+    def extends_detector(self, vertices: Iterable["Vertex"]):
         return extends2d(vertices)
 
-    def inside(self, vertex: 'Vertex') -> bool:
-        """ Returns ``True`` if `vertex` is inside this bounding box.
+    def inside(self, vertex: "Vertex") -> bool:
+        """Returns ``True`` if `vertex` is inside this bounding box.
 
         Vertices at the box border are inside!
         """
@@ -191,8 +220,8 @@ class BoundingBox2d(AbstractBoundingBox):
         max_ = self.extmax
         return (min_.x <= v.x <= max_.x) and (min_.y <= v.y <= max_.y)
 
-    def intersect(self, other: 'AbstractBoundingBox') -> bool:
-        """ Returns `True` if this bounding box intersects with `other`.
+    def intersect(self, other: "AbstractBoundingBox") -> bool:
+        """Returns `True` if this bounding box intersects with `other`.
 
         Touching bounding boxes do not intersect!
 
@@ -212,7 +241,7 @@ class BoundingBox2d(AbstractBoundingBox):
         return True
 
 
-def extends3d(vertices: Iterable['Vertex']) -> Tuple[Vec3, Vec3]:
+def extends3d(vertices: Iterable["Vertex"]) -> Tuple[Vec3, Vec3]:
     minx, miny, minz = None, None, None
     maxx, maxy, maxz = None, None, None
     for v in vertices:
@@ -239,7 +268,7 @@ def extends3d(vertices: Iterable['Vertex']) -> Tuple[Vec3, Vec3]:
     return Vec3(minx, miny, minz), Vec3(maxx, maxy, maxz)
 
 
-def extends2d(vertices: Iterable['Vertex']) -> Tuple[Vec2, Vec2]:
+def extends2d(vertices: Iterable["Vertex"]) -> Tuple[Vec2, Vec2]:
     minx, miny = None, None
     maxx, maxy = None, None
     for v in vertices:

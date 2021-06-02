@@ -1,7 +1,10 @@
 # Copyright (c) 2019-2021, Manfred Moitzi
 # License: MIT License
-from ezdxf.math import BoundingBox, BoundingBox2d
+import pytest
+
+from ezdxf.math import BoundingBox, BoundingBox2d, Vec2, Vec3
 from itertools import permutations
+
 
 class TestBoundingBox:
     def test_init(self):
@@ -152,6 +155,35 @@ class TestBoundingBox:
         bbox = BoundingBox().union(BoundingBox())
         assert bbox.is_empty is True
 
+    def test_rect_vertices_for_empty_bbox_raises_value_error(self):
+        with pytest.raises(ValueError):
+            BoundingBox().rect_vertices()
+
+    def test_cube_vertices_for_empty_bbox_raises_value_error(self):
+        with pytest.raises(ValueError):
+            BoundingBox().cube_vertices()
+
+    def test_rect_vertices_returns_vertices_in_counter_clockwise_order(self):
+        bbox = BoundingBox([(0, 0, 0), (1, 2, 3)])
+        assert bbox.rect_vertices() == Vec2.tuple(
+            [(0, 0), (1, 0), (1, 2), (0, 2)]
+        )
+
+    def test_cube_vertices_returns_vertices_in_counter_clockwise_order(self):
+        bbox = BoundingBox([(0, 0, 0), (1, 2, 3)])
+        assert bbox.cube_vertices() == Vec3.tuple(
+            [
+                (0, 0, 0),  # bottom layer
+                (1, 0, 0),
+                (1, 2, 0),
+                (0, 2, 0),
+                (0, 0, 3),  # top layer
+                (1, 0, 3),
+                (1, 2, 3),
+                (0, 2, 3),
+            ]
+        )
+
 
 class TestBoundingBox2d:
     def test_init(self):
@@ -206,3 +238,13 @@ class TestBoundingBox2d:
     def test_center(self):
         bbox = BoundingBox2d([(-1, -1), (9, 9)])
         assert bbox.center == (4, 4)
+
+    def test_rect_vertices_for_empty_bbox_raises_value_error(self):
+        with pytest.raises(ValueError):
+            BoundingBox2d().rect_vertices()
+
+    def test_rect_vertices_returns_vertices_in_counter_clockwise_order(self):
+        bbox = BoundingBox2d([(0, 0, 0), (1, 2, 3)])
+        assert bbox.rect_vertices() == Vec2.tuple(
+            [(0, 0), (1, 0), (1, 2), (0, 2)]
+        )
