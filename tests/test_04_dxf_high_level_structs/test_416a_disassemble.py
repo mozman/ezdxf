@@ -2,7 +2,7 @@
 #  License: MIT License
 
 import pytest
-from ezdxf.math import Vec3
+from ezdxf.math import Vec3, BoundingBox
 from ezdxf import disassemble
 from ezdxf.entities import factory
 
@@ -14,7 +14,7 @@ def test_do_nothing():
 
 
 def test_convert_unsupported_entity_to_primitive():
-    p = disassemble.make_primitive(factory.new('3DSOLID'))
+    p = disassemble.make_primitive(factory.new("3DSOLID"))
     assert p.path is None
     assert p.mesh is None
     assert p.is_empty is True
@@ -22,7 +22,7 @@ def test_convert_unsupported_entity_to_primitive():
 
 
 def test_multiple_unsupported_entities_to_vertices():
-    w = factory.new('3DSOLID')
+    w = factory.new("3DSOLID")
     primitives = list(disassemble.to_primitives([w, w, w]))
     assert len(primitives) == 3, "3 empty primitives expected"
     vertices = list(disassemble.to_vertices(primitives))
@@ -30,7 +30,7 @@ def test_multiple_unsupported_entities_to_vertices():
 
 
 def test_point_to_primitive():
-    e = factory.new('POINT', dxfattribs={'location': (1, 2, 3)})
+    e = factory.new("POINT", dxfattribs={"location": (1, 2, 3)})
     p = disassemble.make_primitive(e)
     assert p.is_empty is False
     assert p.path is not None
@@ -41,7 +41,7 @@ def test_point_to_primitive():
 def test_line_to_primitive():
     start = Vec3(1, 2, 3)
     end = Vec3(4, 5, 6)
-    e = factory.new('LINE', dxfattribs={'start': start, 'end': end})
+    e = factory.new("LINE", dxfattribs={"start": start, "end": end})
     p = disassemble.make_primitive(e)
     assert p.is_empty is False
     assert p.path is not None
@@ -53,7 +53,7 @@ def test_lwpolyline_to_primitive():
     p1 = Vec3(1, 1)
     p2 = Vec3(2, 2)
     p3 = Vec3(3, 3)
-    e = factory.new('LWPOLYLINE')
+    e = factory.new("LWPOLYLINE")
     e.append_points([p1, p2, p3], format="xy")
     p = disassemble.make_primitive(e)
     assert p.is_empty is False
@@ -63,7 +63,7 @@ def test_lwpolyline_to_primitive():
 
 
 def test_circle_to_primitive():
-    e = factory.new('CIRCLE', dxfattribs={'radius': 5})
+    e = factory.new("CIRCLE", dxfattribs={"radius": 5})
     p = disassemble.make_primitive(e)
     assert p.is_empty is False
     assert p.path is not None
@@ -72,7 +72,7 @@ def test_circle_to_primitive():
 
 
 def test_arc_to_primitive():
-    e = factory.new('ARC', dxfattribs={'radius': 5})
+    e = factory.new("ARC", dxfattribs={"radius": 5})
     p = disassemble.make_primitive(e)
     assert p.is_empty is False
     assert p.path is not None
@@ -81,7 +81,7 @@ def test_arc_to_primitive():
 
 
 def test_ellipse_to_primitive():
-    e = factory.new('ELLIPSE', dxfattribs={'major_axis': (5, 0)})
+    e = factory.new("ELLIPSE", dxfattribs={"major_axis": (5, 0)})
     p = disassemble.make_primitive(e)
     assert p.is_empty is False
     assert p.path is not None
@@ -90,7 +90,7 @@ def test_ellipse_to_primitive():
 
 
 def test_spline_to_primitive():
-    e = factory.new('SPLINE')
+    e = factory.new("SPLINE")
     e.control_points = [(0, 0), (3, 2), (6, -2), (9, 4)]
     p = disassemble.make_primitive(e)
     assert p.is_empty is False
@@ -103,6 +103,7 @@ def test_spline_to_primitive():
 def test_mesh_entity_to_primitive():
     from ezdxf.layouts import VirtualLayout
     from ezdxf.render.forms import cube
+
     vl = VirtualLayout()
     mesh_entity = cube().render_mesh(vl)
     assert mesh_entity.dxftype() == "MESH"
@@ -119,7 +120,7 @@ def test_mesh_entity_to_primitive():
     assert len(list(p.vertices())) == 8
 
 
-@pytest.mark.parametrize('dxftype', ['SOLID', 'TRACE', '3DFACE'])
+@pytest.mark.parametrize("dxftype", ["SOLID", "TRACE", "3DFACE"])
 def test_from_quadrilateral_with_3_points(dxftype):
     entity = factory.new(dxftype)
     entity.dxf.vtx0 = (0, 0, 0)
@@ -133,7 +134,7 @@ def test_from_quadrilateral_with_3_points(dxftype):
     assert len(list(p.vertices())) == 4, "expected closed path"
 
 
-@pytest.mark.parametrize('dxftype', ['SOLID', 'TRACE', '3DFACE'])
+@pytest.mark.parametrize("dxftype", ["SOLID", "TRACE", "3DFACE"])
 def test_from_quadrilateral_with_4_points(dxftype):
     entity = factory.new(dxftype)
     entity.dxf.vtx0 = (0, 0, 0)
@@ -150,6 +151,7 @@ def test_from_quadrilateral_with_4_points(dxftype):
 def test_poly_face_mesh_to_primitive():
     from ezdxf.layouts import VirtualLayout
     from ezdxf.render.forms import cube
+
     vl = VirtualLayout()
     poly_face_mesh = cube().render_polyface(vl)
     assert poly_face_mesh.dxftype() == "POLYLINE"
@@ -167,6 +169,7 @@ def test_poly_face_mesh_to_primitive():
 
 def test_poly_mesh_to_primitive():
     from ezdxf.layouts import VirtualLayout
+
     vl = VirtualLayout()
     poly_mesh = vl.add_polymesh(size=(4, 4))
     for x in range(4):
@@ -186,6 +189,7 @@ def test_poly_mesh_to_primitive():
 
 def test_2d_3d_polyline_to_primitive():
     from ezdxf.layouts import VirtualLayout
+
     vl = VirtualLayout()
 
     p1 = Vec3(1, 1)
@@ -201,10 +205,37 @@ def test_2d_3d_polyline_to_primitive():
         assert list(p.vertices()) == [p1, p2, p3]
 
 
+def test_2d_polyline_including_width_to_primitive():
+    from ezdxf.layouts import VirtualLayout
+
+    vl = VirtualLayout()
+
+    p1 = (0, 0, 1, 1, 0)
+    p2 = (2, 0, 0, 0, 0)
+    lwp = vl.add_lwpolyline([p1, p2], dxfattribs={"elevation": 1})
+    p2d = vl.add_polyline2d(
+        [p1, p2], format="xyseb", dxfattribs={"elevation": (0, 0, 1)}
+    )
+
+    for e in [lwp, p2d]:
+        p = disassemble.make_primitive(e)
+        assert p.is_empty is False
+        assert p.path is None
+        assert (
+            p.mesh is not None
+        ), "2D polylines including width should create a mesh"
+        vertices = list(p.vertices())
+        assert len(vertices) == 4
+
+        box = BoundingBox(vertices)
+        assert box.extmin.isclose((0, -0.5, 1)), "vertices should be in WCS"
+        assert box.extmax.isclose((2, 0.5, 1)), "vertices should be in WCS"
+
+
 def test_text_to_primitive():
     # Testing just the control flow, correct bounding boxes are visually tested.
     # see: ezdxf/examples/entities/text.py
-    text = factory.new('TEXT')
+    text = factory.new("TEXT")
     text.dxf.text = "0123456789"
     p = disassemble.make_primitive(text)
     assert p.is_empty is False
@@ -216,7 +247,7 @@ def test_text_to_primitive():
 def test_mtext_to_primitive():
     # Testing just the control flow, correct bounding boxes are visually tested.
     # see: ezdxf/examples/entities/mtext.py
-    mtext = factory.new('MTEXT')
+    mtext = factory.new("MTEXT")
     mtext.text = "0123456789"
     p = disassemble.make_primitive(mtext)
     assert p.is_empty is False
@@ -227,7 +258,8 @@ def test_mtext_to_primitive():
 
 def test_mtext_columns_to_primitive():
     from ezdxf.entities.mtext import MTextColumns
-    mtext = factory.new('MTEXT')
+
+    mtext = factory.new("MTEXT")
     mtext._columns = MTextColumns.new_static_columns(3, 10, 1, 15)
     p = disassemble.make_primitive(mtext)
     assert p.is_empty is False
@@ -242,7 +274,7 @@ def test_mtext_columns_to_primitive():
 
 
 def test_hatch_returns_multiple_primitives():
-    hatch = factory.new('HATCH')
+    hatch = factory.new("HATCH")
     paths = hatch.paths
 
     # Conversion of boundary paths is tested in 708.
@@ -261,7 +293,7 @@ def test_hatch_returns_multiple_primitives():
 
 
 def test_image_primitive():
-    image = factory.new('IMAGE')
+    image = factory.new("IMAGE")
     image.dxf.insert = (0, 0)
     image.dxf.u_pixel = Vec3(1, 0)
     image.dxf.v_pixel = Vec3(0, -1)
@@ -276,9 +308,9 @@ def test_image_primitive():
     assert vertices[3] == (0.5, 99.5, 0)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def circle_primitive():
-    circle = factory.new('CIRCLE', dxfattribs={'radius': 3})
+    circle = factory.new("CIRCLE", dxfattribs={"radius": 3})
     return disassemble.make_primitive(circle)
 
 
@@ -293,5 +325,5 @@ def test_to_control_vertices(circle_primitive):
     assert len(vertices) == 13  # closed: first == last
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

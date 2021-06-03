@@ -15,6 +15,8 @@ Version 0.16.4b1 - dev
 - BUGFIX: loading `GEODATA` version 1, perhaps data is incorrect, 
   logged as warning
 - BUGFIX: HATCH spline edge from fit points require start- and end tangents
+- BUGFIX: `disassemble.make_primitive()` transform LWPOLYLINE including width 
+  into WCS
 
 Version 0.16.3 - 2021-05-22
 ---------------------------

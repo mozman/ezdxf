@@ -171,10 +171,13 @@ class LwPolylinePrimitive(ConvertedPrimitive):
     def _convert_entity(self):
         e: "LWPolyline" = cast("LWPolyline", self.entity)
         if e.has_width:  # use a mesh representation:
+            # TraceBuilder operates in OCS!
+            ocs = e.ocs()
+            elevation = e.dxf.elevation
             tb = TraceBuilder.from_polyline(e)
             mb = MeshVertexMerger()  # merges coincident vertices
-            for face in tb.faces():
-                mb.add_face(Vec3.generate(face))
+            for face in tb.faces_wcs(ocs, elevation):
+                mb.add_face(face)
             self._mesh = MeshBuilder.from_builder(mb)
         else:  # use a path representation to support bulges!
             self._path = make_path(e)
@@ -210,7 +213,16 @@ class QuadrilateralPrimitive(ConvertedPrimitive):
 class PolylinePrimitive(ConvertedPrimitive):
     def _convert_entity(self):
         e: "Polyline" = cast("Polyline", self.entity)
-        if e.is_2d_polyline or e.is_3d_polyline:
+        if e.is_2d_polyline and e.has_width:
+            # TraceBuilder operates in OCS!
+            ocs = e.ocs()
+            elevation = e.dxf.elevation.z
+            tb = TraceBuilder.from_polyline(e)
+            mb = MeshVertexMerger()  # merges coincident vertices
+            for face in tb.faces_wcs(ocs, elevation):
+                mb.add_face(face)
+            self._mesh = MeshBuilder.from_builder(mb)
+        elif e.is_2d_polyline or e.is_3d_polyline:
             self._path = make_path(e)
         else:
             m = MeshVertexMerger.from_polyface(e)
