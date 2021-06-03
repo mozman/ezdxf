@@ -1,15 +1,30 @@
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
 from typing import (
-    TYPE_CHECKING, List, Iterable, Tuple, Optional, Dict, Sequence,
+    TYPE_CHECKING,
+    List,
+    Iterable,
+    Tuple,
+    Optional,
+    Dict,
+    Sequence,
 )
 
 import math
 import itertools
 from ezdxf.math import (
-    Vec3, Z_AXIS, OCS, Matrix44, BoundingBox, ConstructionEllipse,
-    cubic_bezier_from_ellipse, Bezier4P, Bezier3P, BSpline,
-    reverse_bezier_curves, bulge_to_arc,
+    Vec3,
+    Z_AXIS,
+    OCS,
+    Matrix44,
+    BoundingBox,
+    ConstructionEllipse,
+    cubic_bezier_from_ellipse,
+    Bezier4P,
+    Bezier3P,
+    BSpline,
+    reverse_bezier_curves,
+    bulge_to_arc,
 )
 
 from ezdxf.query import EntityQuery
@@ -22,11 +37,23 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, Layout, EntityQuery
 
 __all__ = [
-    'bbox', 'fit_paths_into_box', 'transform_paths', 'transform_paths_to_ocs',
-    'render_lwpolylines', 'render_polylines2d', 'render_polylines3d',
-    'render_lines', 'render_hatches', 'render_splines_and_polylines',
-    'add_bezier4p', 'add_bezier3p', 'add_ellipse', 'add_2d_polyline',
-    'add_spline', 'to_multi_path', 'single_paths'
+    "bbox",
+    "fit_paths_into_box",
+    "transform_paths",
+    "transform_paths_to_ocs",
+    "render_lwpolylines",
+    "render_polylines2d",
+    "render_polylines3d",
+    "render_lines",
+    "render_hatches",
+    "render_splines_and_polylines",
+    "add_bezier4p",
+    "add_bezier3p",
+    "add_ellipse",
+    "add_2d_polyline",
+    "add_spline",
+    "to_multi_path",
+    "single_paths",
 ]
 
 MAX_DISTANCE = 0.01
@@ -61,7 +88,7 @@ def single_paths(paths: Iterable[Path]) -> Iterable[Path]:
 
 
 def transform_paths(paths: Iterable[Path], m: Matrix44) -> List[Path]:
-    """ Transform multiple :class:`Path` objects at once by transformation
+    """Transform multiple :class:`Path` objects at once by transformation
     matrix `m`. Returns a list of the transformed :class:`Path` objects.
 
     Args:
@@ -118,7 +145,7 @@ def transform_paths(paths: Iterable[Path], m: Matrix44) -> List[Path]:
 
 
 def transform_paths_to_ocs(paths: Iterable[Path], ocs: OCS) -> List[Path]:
-    """ Transform multiple :class:`Path` objects at once from WCS to OCS.
+    """Transform multiple :class:`Path` objects at once from WCS to OCS.
     Returns a list of the transformed :class:`Path` objects.
 
     Args:
@@ -131,15 +158,16 @@ def transform_paths_to_ocs(paths: Iterable[Path], ocs: OCS) -> List[Path]:
     return transform_paths(paths, t)
 
 
-def bbox(paths: Iterable[Path], flatten=0.01,
-         segments: int = 16) -> BoundingBox:
-    """ Returns the :class:`~ezdxf.math.BoundingBox` for the given paths.
+def bbox(
+    paths: Iterable[Path], flatten=0.01, segments: int = 16
+) -> BoundingBox:
+    """Returns the :class:`~ezdxf.math.BoundingBox` for the given paths.
 
     Args:
         paths: iterable of :class:`~ezdxf.path.Path` objects
         flatten: value != 0  for bounding box calculation from the flattened
-        path and value == 0 for bounding box from the control vertices.
-        Default value is 0.01 as max flattening distance.
+            path and value == 0 for bounding box from the control vertices.
+            Default value is 0.01 as max flattening distance.
         segments: minimal segment count for flattening
 
     """
@@ -152,11 +180,13 @@ def bbox(paths: Iterable[Path], flatten=0.01,
     return box
 
 
-def fit_paths_into_box(paths: Iterable[Path],
-                       size: Tuple[float, float, float],
-                       uniform: bool = True,
-                       source_box: BoundingBox = None) -> List[Path]:
-    """ Scale the given `paths` to fit into a box of the given `size`,
+def fit_paths_into_box(
+    paths: Iterable[Path],
+    size: Tuple[float, float, float],
+    uniform: bool = True,
+    source_box: BoundingBox = None,
+) -> List[Path]:
+    """Scale the given `paths` to fit into a box of the given `size`,
     so that all path vertices are inside this borders.
     If `source_box` is ``None`` the default source bounding box is calculated
     from the control points of the `paths`.
@@ -184,7 +214,7 @@ def fit_paths_into_box(paths: Iterable[Path],
         return paths
     target_size = Vec3(size)
     if target_size == (0, 0, 0) or min(target_size) < 0:
-        raise ValueError('invalid target size')
+        raise ValueError("invalid target size")
 
     if uniform:
         sx, sy, sz = _get_uniform_scaling(current_box.size, target_size)
@@ -208,7 +238,7 @@ def _get_uniform_scaling(current_size: Vec3, target_size: Vec3):
 
     uniform_scale = min(scale_x, scale_y, scale_z)
     if uniform_scale is math.inf:
-        raise ArithmeticError('internal error')
+        raise ArithmeticError("internal error")
     scale_x = uniform_scale if target_size.x > TOL else 0
     scale_y = uniform_scale if target_size.y > TOL else 0
     scale_z = uniform_scale if target_size.z > TOL else 0
@@ -233,14 +263,15 @@ def _get_non_uniform_scaling(current_size: Vec3, target_size: Vec3):
 
 
 def render_lwpolylines(
-        layout: 'Layout',
-        paths: Iterable[Path],
-        *,
-        distance: float = MAX_DISTANCE,
-        segments: int = MIN_SEGMENTS,
-        extrusion: 'Vertex' = Z_AXIS,
-        dxfattribs: Optional[Dict] = None) -> EntityQuery:
-    """ Render the given `paths` into `layout` as
+    layout: "Layout",
+    paths: Iterable[Path],
+    *,
+    distance: float = MAX_DISTANCE,
+    segments: int = MIN_SEGMENTS,
+    extrusion: "Vertex" = Z_AXIS,
+    dxfattribs: Optional[Dict] = None
+) -> EntityQuery:
+    """Render the given `paths` into `layout` as
     :class:`~ezdxf.entities.LWPolyline` entities.
     The `extrusion` vector is applied to all paths, all vertices are projected
     onto the plane normal to this extrusion vector. The default extrusion vector
@@ -261,27 +292,30 @@ def render_lwpolylines(
     .. versionadded:: 0.16
 
     """
-    lwpolylines = list(converter.to_lwpolylines(
-        paths,
-        distance=distance,
-        segments=segments,
-        extrusion=extrusion,
-        dxfattribs=dxfattribs,
-    ))
+    lwpolylines = list(
+        converter.to_lwpolylines(
+            paths,
+            distance=distance,
+            segments=segments,
+            extrusion=extrusion,
+            dxfattribs=dxfattribs,
+        )
+    )
     for lwpolyline in lwpolylines:
         layout.add_entity(lwpolyline)
     return EntityQuery(lwpolylines)
 
 
 def render_polylines2d(
-        layout: 'Layout',
-        paths: Iterable[Path],
-        *,
-        distance: float = 0.01,
-        segments: int = 4,
-        extrusion: 'Vertex' = Z_AXIS,
-        dxfattribs: Optional[Dict] = None) -> EntityQuery:
-    """ Render the given `paths` into `layout` as 2D
+    layout: "Layout",
+    paths: Iterable[Path],
+    *,
+    distance: float = 0.01,
+    segments: int = 4,
+    extrusion: "Vertex" = Z_AXIS,
+    dxfattribs: Optional[Dict] = None
+) -> EntityQuery:
+    """Render the given `paths` into `layout` as 2D
     :class:`~ezdxf.entities.Polyline` entities.
     The `extrusion` vector is applied to all paths, all vertices are projected
     onto the plane normal to this extrusion vector.The default extrusion vector
@@ -302,29 +336,32 @@ def render_polylines2d(
     .. versionadded:: 0.16
 
     """
-    polylines2d = list(converter.to_polylines2d(
-        paths,
-        distance=distance,
-        segments=segments,
-        extrusion=extrusion,
-        dxfattribs=dxfattribs,
-    ))
+    polylines2d = list(
+        converter.to_polylines2d(
+            paths,
+            distance=distance,
+            segments=segments,
+            extrusion=extrusion,
+            dxfattribs=dxfattribs,
+        )
+    )
     for polyline2d in polylines2d:
         layout.add_entity(polyline2d)
     return EntityQuery(polylines2d)
 
 
 def render_hatches(
-        layout: 'Layout',
-        paths: Iterable[Path],
-        *,
-        edge_path: bool = True,
-        distance: float = MAX_DISTANCE,
-        segments: int = MIN_SEGMENTS,
-        g1_tol: float = G1_TOL,
-        extrusion: 'Vertex' = Z_AXIS,
-        dxfattribs: Optional[Dict] = None) -> EntityQuery:
-    """ Render the given `paths` into `layout` as
+    layout: "Layout",
+    paths: Iterable[Path],
+    *,
+    edge_path: bool = True,
+    distance: float = MAX_DISTANCE,
+    segments: int = MIN_SEGMENTS,
+    g1_tol: float = G1_TOL,
+    extrusion: "Vertex" = Z_AXIS,
+    dxfattribs: Optional[Dict] = None
+) -> EntityQuery:
+    """Render the given `paths` into `layout` as
     :class:`~ezdxf.entities.Hatch` entities.
     The `extrusion` vector is applied to all paths, all vertices are projected
     onto the plane normal to this extrusion vector. The default extrusion vector
@@ -348,28 +385,31 @@ def render_hatches(
     .. versionadded:: 0.16
 
     """
-    hatches = list(converter.to_hatches(
-        paths,
-        edge_path=edge_path,
-        distance=distance,
-        segments=segments,
-        g1_tol=g1_tol,
-        extrusion=extrusion,
-        dxfattribs=dxfattribs,
-    ))
+    hatches = list(
+        converter.to_hatches(
+            paths,
+            edge_path=edge_path,
+            distance=distance,
+            segments=segments,
+            g1_tol=g1_tol,
+            extrusion=extrusion,
+            dxfattribs=dxfattribs,
+        )
+    )
     for hatch in hatches:
         layout.add_entity(hatch)
     return EntityQuery(hatches)
 
 
 def render_polylines3d(
-        layout: 'Layout',
-        paths: Iterable[Path],
-        *,
-        distance: float = MAX_DISTANCE,
-        segments: int = MIN_SEGMENTS,
-        dxfattribs: Optional[Dict] = None) -> EntityQuery:
-    """ Render the given `paths` into `layout` as 3D
+    layout: "Layout",
+    paths: Iterable[Path],
+    *,
+    distance: float = MAX_DISTANCE,
+    segments: int = MIN_SEGMENTS,
+    dxfattribs: Optional[Dict] = None
+) -> EntityQuery:
+    """Render the given `paths` into `layout` as 3D
     :class:`~ezdxf.entities.Polyline` entities.
 
     Args:
@@ -386,25 +426,28 @@ def render_polylines3d(
 
     """
 
-    polylines3d = list(converter.to_polylines3d(
-        paths,
-        distance=distance,
-        segments=segments,
-        dxfattribs=dxfattribs,
-    ))
+    polylines3d = list(
+        converter.to_polylines3d(
+            paths,
+            distance=distance,
+            segments=segments,
+            dxfattribs=dxfattribs,
+        )
+    )
     for polyline3d in polylines3d:
         layout.add_entity(polyline3d)
     return EntityQuery(polylines3d)
 
 
 def render_lines(
-        layout: 'Layout',
-        paths: Iterable[Path],
-        *,
-        distance: float = MAX_DISTANCE,
-        segments: int = MIN_SEGMENTS,
-        dxfattribs: Optional[Dict] = None) -> EntityQuery:
-    """ Render the given `paths` into `layout` as
+    layout: "Layout",
+    paths: Iterable[Path],
+    *,
+    distance: float = MAX_DISTANCE,
+    segments: int = MIN_SEGMENTS,
+    dxfattribs: Optional[Dict] = None
+) -> EntityQuery:
+    """Render the given `paths` into `layout` as
     :class:`~ezdxf.entities.Line` entities.
 
     Args:
@@ -420,24 +463,27 @@ def render_lines(
     .. versionadded:: 0.16
 
     """
-    lines = list(converter.to_lines(
-        paths,
-        distance=distance,
-        segments=segments,
-        dxfattribs=dxfattribs,
-    ))
+    lines = list(
+        converter.to_lines(
+            paths,
+            distance=distance,
+            segments=segments,
+            dxfattribs=dxfattribs,
+        )
+    )
     for line in lines:
         layout.add_entity(line)
     return EntityQuery(lines)
 
 
 def render_splines_and_polylines(
-        layout: 'Layout',
-        paths: Iterable[Path],
-        *,
-        g1_tol: float = G1_TOL,
-        dxfattribs: Optional[Dict] = None) -> EntityQuery:
-    """ Render the given `paths` into `layout` as :class:`~ezdxf.entities.Spline`
+    layout: "Layout",
+    paths: Iterable[Path],
+    *,
+    g1_tol: float = G1_TOL,
+    dxfattribs: Optional[Dict] = None
+) -> EntityQuery:
+    """Render the given `paths` into `layout` as :class:`~ezdxf.entities.Spline`
     and 3D :class:`~ezdxf.entities.Polyline` entities.
 
     Args:
@@ -452,19 +498,22 @@ def render_splines_and_polylines(
     .. versionadded:: 0.16
 
     """
-    entities = list(converter.to_splines_and_polylines(
-        paths,
-        g1_tol=g1_tol,
-        dxfattribs=dxfattribs,
-    ))
+    entities = list(
+        converter.to_splines_and_polylines(
+            paths,
+            g1_tol=g1_tol,
+            dxfattribs=dxfattribs,
+        )
+    )
     for entity in entities:
         layout.add_entity(entity)
     return EntityQuery(entities)
 
 
-def add_ellipse(path: Path, ellipse: ConstructionEllipse, segments=1,
-                reset=True) -> None:
-    """ Add an elliptical arc as multiple cubic Bèzier-curves to the given
+def add_ellipse(
+    path: Path, ellipse: ConstructionEllipse, segments=1, reset=True
+) -> None:
+    """Add an elliptical arc as multiple cubic Bèzier-curves to the given
     `path`, use :meth:`~ezdxf.math.ConstructionEllipse.from_arc` constructor
     of class :class:`~ezdxf.math.ConstructionEllipse` to add circular arcs.
 
@@ -494,7 +543,7 @@ def add_ellipse(path: Path, ellipse: ConstructionEllipse, segments=1,
 
 
 def add_bezier4p(path: Path, curves: Iterable[Bezier4P]) -> None:
-    """ Add multiple cubic Bèzier-curves to the given `path`.
+    """Add multiple cubic Bèzier-curves to the given `path`.
 
     Auto-detect the connection point to the given `path`, if neither the start-
     nor the end point of the curves is close to the path end point, a line from
@@ -520,15 +569,14 @@ def add_bezier4p(path: Path, curves: Iterable[Bezier4P]) -> None:
             path.line_to(start)
 
         # add linear bezier segments as LINE_TO commands
-        if start.isclose(ctrl1) and \
-                end.isclose(ctrl2):
+        if start.isclose(ctrl1) and end.isclose(ctrl2):
             path.line_to(end)
         else:
             path.curve4_to(end, ctrl1, ctrl2)
 
 
 def add_bezier3p(path: Path, curves: Iterable[Bezier3P]) -> None:
-    """ Add multiple quadratic Bèzier-curves to the given `path`.
+    """Add multiple quadratic Bèzier-curves to the given `path`.
 
     Auto-detect the connection point to the given `path`, if neither the start-
     nor the end point of the curves is close to the path end point, a line from
@@ -560,9 +608,14 @@ def add_bezier3p(path: Path, curves: Iterable[Bezier3P]) -> None:
             path.curve3_to(end, ctrl)
 
 
-def add_2d_polyline(path: Path, points: Iterable[Sequence[float]], close: bool,
-                    ocs: OCS, elevation: float) -> None:
-    """ Internal API to add 2D polylines which may include bulges to an
+def add_2d_polyline(
+    path: Path,
+    points: Iterable[Sequence[float]],
+    close: bool,
+    ocs: OCS,
+    elevation: float,
+) -> None:
+    """Internal API to add 2D polylines which may include bulges to an
     **empty** path.
 
     """
@@ -572,7 +625,9 @@ def add_2d_polyline(path: Path, points: Iterable[Sequence[float]], close: bool,
             return
         center, start_angle, end_angle, radius = bulge_to_arc(p1, p2, bulge)
         ellipse = ConstructionEllipse.from_arc(
-            center, radius, Z_AXIS,
+            center,
+            radius,
+            Z_AXIS,
             math.degrees(start_angle),
             math.degrees(end_angle),
         )
@@ -584,7 +639,7 @@ def add_2d_polyline(path: Path, points: Iterable[Sequence[float]], close: bool,
         add_bezier4p(path, curves)
 
     if len(path):
-        raise ValueError('Requires an empty path.')
+        raise ValueError("Requires an empty path.")
 
     prev_point = None
     prev_bulge = 0
@@ -607,7 +662,8 @@ def add_2d_polyline(path: Path, points: Iterable[Sequence[float]], close: bool,
         prev_bulge = bulge
 
     if close and not path.start.isclose(
-            path.end, rel_tol=IS_CLOSE_TOL, abs_tol=0):
+        path.end, rel_tol=IS_CLOSE_TOL, abs_tol=0
+    ):
         if prev_bulge:
             bulge_to(path.end, path.start, prev_bulge)
         else:
@@ -618,7 +674,7 @@ def add_2d_polyline(path: Path, points: Iterable[Sequence[float]], close: bool,
 
 
 def add_spline(path: Path, spline: BSpline, level=4, reset=True) -> None:
-    """ Add a B-spline as multiple cubic Bèzier-curves.
+    """Add a B-spline as multiple cubic Bèzier-curves.
 
     Non-rational B-splines of 3rd degree gets a perfect conversion to
     cubic bezier curves with a minimal count of curve segments, all other
@@ -643,8 +699,7 @@ def add_spline(path: Path, spline: BSpline, level=4, reset=True) -> None:
     if len(path) == 0 and reset:
         path.start = spline.point(0)
     if spline.degree == 3 and not spline.is_rational and spline.is_clamped:
-        curves = [Bezier4P(points) for points in
-                  spline.bezier_decomposition()]
+        curves = [Bezier4P(points) for points in spline.bezier_decomposition()]
     else:
         curves = spline.cubic_bezier_approximation(level=level)
     add_bezier4p(path, curves)
