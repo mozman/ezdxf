@@ -18,7 +18,9 @@ Path rendering as quadrilaterals: :class:`~ezdxf.entities.Trace`,
 
     .. automethod:: close
 
-    .. automethod:: faces() -> Iterable[Tuple[Vec2, Vec2, Vec2, Vec2]
+    .. automethod:: faces() -> Iterable[Sequence[Vec2]
+
+    .. automethod:: faces_wcs(ocs: OCS, elevation: float) -> Iterable[Sequence[Vec3]]
 
     .. automethod:: virtual_entities
 

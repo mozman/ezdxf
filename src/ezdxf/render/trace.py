@@ -15,9 +15,11 @@ from collections import namedtuple
 import math
 from ezdxf.math import (
     Vec2,
+    Vec3,
     BSpline,
     linspace,
     ConstructionRay,
+    OCS,
     ParallelRaysError,
     bulge_to_arc,
     ConstructionArc,
@@ -134,7 +136,7 @@ class LinearTrace(AbstractTrace):
     def add_station(
         self, point: "Vertex", start_width: float, end_width: float = None
     ) -> None:
-        """ Add a trace station (like a vertex) at location `point`,
+        """Add a trace station (like a vertex) at location `point`,
         `start_width` is the width of the next segment starting at this station,
         `end_width` is the end width of the next segment.
 
@@ -415,7 +417,11 @@ class TraceBuilder(Sequence):
     """Sequence of 2D banded lines like polylines with start- and end width or
     curves with start- and end width.
 
-    Accepts 3D input, but z-axis is ignored.
+
+    .. note::
+
+        Accepts 3D input, but z-axis is ignored. The :class:`TraceBuilder` is a
+        2D only object and uses only the :ref:`OCS` coordinates!
 
     """
 
@@ -434,16 +440,40 @@ class TraceBuilder(Sequence):
         self._traces.append(trace)
 
     def faces(self) -> Iterable[Face]:
-        """Yields all faces as 4-tuples of :class:`~ezdxf.math.Vec2` objects."""
+        """Yields all faces as 4-tuples of :class:`~ezdxf.math.Vec2` objects
+        in :ref:`OCS`.
+        """
         for trace in self._traces:
             yield from trace.faces()
 
+    def faces_wcs(self, ocs: OCS, elevation: float) -> Iterable[Sequence[Vec3]]:
+        """Yields all faces as 4-tuples of :class:`~ezdxf.math.Vec3` objects
+        in :ref:`WCS`.
+        """
+        for face in self.faces():
+            yield tuple(
+                ocs.points_to_wcs(Vec3(v.x, v.y, elevation) for v in face)
+            )
+
     def polygons(self) -> Iterable[Polygon]:
         """Yields for each sub-trace a single polygon as sequence of
-        :class:`~ezdxf.math.Vec2` objects.
+        :class:`~ezdxf.math.Vec2` objects in :ref:`OCS`.
         """
         for trace in self._traces:
             yield trace.polygon()
+
+    def polygons_wcs(
+        self, ocs: OCS, elevation: float
+    ) -> Iterable[Sequence[Vec3]]:
+        """Yields for each sub-trace a single polygon as sequence of
+        :class:`~ezdxf.math.Vec3` objects in :ref:`WCS`.
+        """
+        for trace in self._traces:
+            yield tuple(
+                ocs.points_to_wcs(
+                    Vec3(v.x, v.y, elevation) for v in trace.polygon()
+                )
+            )
 
     def virtual_entities(
         self, dxftype="TRACE", dxfattribs: Dict = None, doc: "Drawing" = None
@@ -455,6 +485,11 @@ class TraceBuilder(Sequence):
         set and the new entities will be automatically added to the entity
         database of that document.
 
+        .. note::
+
+            The :class:`TraceBuilder` is a 2D only object and uses only the
+            :ref:`OCS` coordinates!
+
         Args:
             dxftype: DXF type as string, "SOLID", "TRACE" or "3DFACE"
             dxfattribs: DXF attributes for SOLID, TRACE or 3DFACE entities
@@ -465,8 +500,7 @@ class TraceBuilder(Sequence):
             yield from trace.virtual_entities(dxftype, dxfattribs, doc)
 
     def close(self):
-        """Close multi traces by merging first and last trace, if linear traces.
-        """
+        """Close multi traces by merging first and last trace, if linear traces."""
         traces = self._traces
         if len(traces) < 2:
             return
@@ -485,7 +519,7 @@ class TraceBuilder(Sequence):
         """
         Create a complete trace from a LWPOLYLINE or a 2D POLYLINE entity, the
         trace consist of multiple sub-traces if :term:`bulge` values are
-        present.
+        present. Uses only the :ref:`OCS` coordinates!
 
         Args:
             polyline: :class:`~ezdxf.entities.LWPolyline` or 2D
