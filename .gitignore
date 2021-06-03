@@ -13,8 +13,6 @@ tools/ltype/
 __pycache__
 
 examples/**/*.dxf
-issues/**/*.dxf
-issues/**/*.html
 newctb.ctb
 makefile
 tox.ini
