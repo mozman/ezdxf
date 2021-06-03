@@ -8,8 +8,12 @@ from ezdxf.math import Vec3, Matrix44, Z_AXIS
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
-    group_code_mapping
+    DXFAttr,
+    DXFAttributes,
+    DefSubclass,
+    XType,
+    RETURN_DEFAULT,
+    group_code_mapping,
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, LWPOLYLINE_CLOSED
 from ezdxf.lldxf.tags import Tags
@@ -24,55 +28,63 @@ from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, Vertex, DXFNamespace, Line, Arc, BaseLayout,
+        TagWriter,
+        Vertex,
+        DXFNamespace,
+        Line,
+        Arc,
+        BaseLayout,
     )
 
-__all__ = ['LWPolyline']
+__all__ = ["LWPolyline"]
 
 LWPointType = Tuple[float, float, float, float, float]
 
-FORMAT_CODES = frozenset('xysebv')
-DEFAULT_FORMAT = 'xyseb'
+FORMAT_CODES = frozenset("xysebv")
+DEFAULT_FORMAT = "xyseb"
 LWPOINTCODES = (10, 20, 40, 41, 42)
 
 # Order does matter:
 # If tag 90 is not the first TAG, AutoCAD does not close the polyline, when the
 # `close` flag is set.
-acdb_lwpolyline = DefSubclass('AcDbPolyline', {
-    # Count always returns the actual length:
-    'count': DXFAttr(90, xtype=XType.callback, getter='__len__'),
-
-    # Elevation: OCS z-axis value for all vertices:
-    'elevation': DXFAttr(38, default=0, optional=True),
-
-    # Thickness can be negative!
-    'thickness': DXFAttr(39, default=0, optional=True),
-
-    # Flags:
-    # 1 = Closed
-    # 128 = Plinegen
-    'flags': DXFAttr(70, default=0),
-
-    # Const width: DXF reference error - AutoCAD uses just const width if not 0,
-    # for all line segments.
-    'const_width': DXFAttr(43, default=0, optional=True),
-    'extrusion': DXFAttr(
-        210, xtype=XType.point3d, default=Z_AXIS, optional=True,
-        validator=validator.is_not_null_vector,
-        fixer=RETURN_DEFAULT,
-    ),
-    # 10, 20 : Vertex x, y
-    # 91: vertex identifier ???
-    # 40, 41, 42: start width, end width, bulge
-})
+acdb_lwpolyline = DefSubclass(
+    "AcDbPolyline",
+    {
+        # Count always returns the actual length:
+        "count": DXFAttr(90, xtype=XType.callback, getter="__len__"),
+        # Elevation: OCS z-axis value for all vertices:
+        "elevation": DXFAttr(38, default=0, optional=True),
+        # Thickness can be negative!
+        "thickness": DXFAttr(39, default=0, optional=True),
+        # Flags:
+        # 1 = Closed
+        # 128 = Plinegen
+        "flags": DXFAttr(70, default=0),
+        # Const width: DXF reference error - AutoCAD uses just const width if not 0,
+        # for all line segments.
+        "const_width": DXFAttr(43, default=0, optional=True),
+        "extrusion": DXFAttr(
+            210,
+            xtype=XType.point3d,
+            default=Z_AXIS,
+            optional=True,
+            validator=validator.is_not_null_vector,
+            fixer=RETURN_DEFAULT,
+        ),
+        # 10, 20 : Vertex x, y
+        # 91: vertex identifier ???
+        # 40, 41, 42: start width, end width, bulge
+    },
+)
 
 acdb_lwpolyline_group_codes = group_code_mapping(acdb_lwpolyline)
 
 
 @register_entity
 class LWPolyline(DXFGraphic):
-    """ DXF LWPOLYLINE entity """
-    DXFTYPE = 'LWPOLYLINE'
+    """DXF LWPOLYLINE entity"""
+
+    DXFTYPE = "LWPOLYLINE"
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_lwpolyline)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
@@ -80,12 +92,13 @@ class LWPolyline(DXFGraphic):
         super().__init__()
         self.lwpoints = LWPolylinePoints()
 
-    def _copy_data(self, entity: 'LWPolyline') -> None:
-        """ Copy lwpoints. """
+    def _copy_data(self, entity: "LWPolyline") -> None:
+        """Copy lwpoints."""
         entity.lwpoints = copy.deepcopy(self.lwpoints)
 
     def load_dxf_attribs(
-            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        self, processor: SubclassProcessor = None
+    ) -> "DXFNamespace":
         """
         Adds subclass processing for AcDbPolyline, requires previous base class
         and AcDbEntity processing by parent class.
@@ -95,31 +108,33 @@ class LWPolyline(DXFGraphic):
             tags = processor.subclass_by_index(2)
             tags = self.load_vertices(tags)
             processor.fast_load_dxfattribs(
-                dxf, acdb_lwpolyline_group_codes, subclass=tags, recover=True)
+                dxf, acdb_lwpolyline_group_codes, subclass=tags, recover=True
+            )
         return dxf
 
-    def load_vertices(self, tags: 'Tags') -> Tags:
+    def load_vertices(self, tags: "Tags") -> Tags:
         self.lwpoints, unprocessed_tags = LWPolylinePoints.from_tags(tags)
         return unprocessed_tags
 
-    def preprocess_export(self, tagwriter: 'TagWriter') -> bool:
+    def preprocess_export(self, tagwriter: "TagWriter") -> bool:
         # Returns True if entity should be exported
         # Do not export polylines without vertices
         return len(self.lwpoints) > 0
 
-    def export_entity(self, tagwriter: 'TagWriter') -> None:
-        """ Export entity specific data as DXF tags. """
+    def export_entity(self, tagwriter: "TagWriter") -> None:
+        """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_lwpolyline.name)
-        self.dxf.export_dxf_attribs(tagwriter, [
-            'count', 'flags', 'const_width', 'elevation', 'thickness'
-        ])
+        self.dxf.export_dxf_attribs(
+            tagwriter,
+            ["count", "flags", "const_width", "elevation", "thickness"],
+        )
         tagwriter.write_tags(Tags(self.lwpoints.dxftags()))
-        self.dxf.export_dxf_attribs(tagwriter, 'extrusion')
+        self.dxf.export_dxf_attribs(tagwriter, "extrusion")
 
     @property
     def closed(self) -> bool:
-        """ Get/set closed state of polyline.
+        """Get/set closed state of polyline.
         A closed polyline has a connection from the last vertex to the first
         vertex.
         """
@@ -131,47 +146,46 @@ class LWPolyline(DXFGraphic):
 
     @property
     def is_closed(self) -> bool:
-        """ Returns ``True`` if LWPOLYLINE is closed.
+        """Returns ``True`` if LWPOLYLINE is closed.
         Compatibility interface to :class:`Polyline`
         """
         return self.get_flag_state(LWPOLYLINE_CLOSED)
 
     def close(self, state: bool = True) -> None:
-        """ Get/set closed state of LWPOLYLINE.
+        """Get/set closed state of LWPOLYLINE.
         Compatibility interface to :class:`Polyline`
         """
         self.closed = state
 
     @property
     def has_arc(self) -> bool:
-        """ Returns ``True`` if LWPOLYLINE has an arc segment. """
+        """Returns ``True`` if LWPOLYLINE has an arc segment."""
         return any(bool(b) for x, y, s, e, b in self.lwpoints)
 
     @property
     def has_width(self) -> bool:
-        """ Returns ``True`` if LWPOLYLINE has any segment with width attributes
+        """Returns ``True`` if LWPOLYLINE has any segment with width attributes
         or DXF attribute const_width != 0.
 
         .. versionadded:: 0.14
 
         """
-        if self.dxf.hasattr('const_width'):
+        if self.dxf.hasattr("const_width"):
             # 'const_width' overrides all individual start- or end width settings.
             # The DXF reference claims the opposite, but that is simply not true.
             return self.dxf.const_width != 0.0
         return any((s or e) for x, y, s, e, b in self.lwpoints)
 
     def __len__(self) -> int:
-        """ Returns count of polyline points. """
+        """Returns count of polyline points."""
         return len(self.lwpoints)
 
     def __iter__(self) -> Iterable[LWPointType]:
-        """ Returns iterable of tuples (x, y, start_width, end_width, bulge).
-        """
+        """Returns iterable of tuples (x, y, start_width, end_width, bulge)."""
         return iter(self.lwpoints)
 
     def __getitem__(self, index: int) -> LWPointType:
-        """ Returns point at position `index` as (x, y, start_width, end_width,
+        """Returns point at position `index` as (x, y, start_width, end_width,
         bulge) tuple. start_width, end_width and bulge is ``0`` if not present,
         supports extended slicing. Point format is fixed as ``'xyseb'``.
 
@@ -198,7 +212,7 @@ class LWPolyline(DXFGraphic):
         self.lwpoints[index] = compile_array(value)
 
     def __delitem__(self, index: int) -> None:
-        """ Delete point at position `index`, supports extended slicing. """
+        """Delete point at position `index`, supports extended slicing."""
         del self.lwpoints[index]
 
     def vertices(self) -> Iterable[Tuple[float, float]]:
@@ -210,24 +224,23 @@ class LWPolyline(DXFGraphic):
         for point in self:
             yield point[0], point[1]
 
-    def vertices_in_wcs(self) -> Iterable['Vertex']:
-        """ Returns iterable of all polyline points as Vec3(x, y, z) in :ref:`WCS`.
-        """
+    def vertices_in_wcs(self) -> Iterable["Vertex"]:
+        """Returns iterable of all polyline points as Vec3(x, y, z) in :ref:`WCS`."""
         ocs = self.ocs()
-        elevation = self.get_dxf_attrib('elevation', default=0.)
+        elevation = self.get_dxf_attrib("elevation", default=0.0)
         for x, y in self.vertices():
             yield ocs.to_wcs((x, y, elevation))
 
-    def vertices_in_ocs(self) -> Iterable['Vertex']:
-        """ Returns iterable of all polyline points as Vec3(x, y, z) in :ref:`OCS`.
-        """
-        elevation = self.get_dxf_attrib('elevation', default=0.)
+    def vertices_in_ocs(self) -> Iterable["Vertex"]:
+        """Returns iterable of all polyline points as Vec3(x, y, z) in :ref:`OCS`."""
+        elevation = self.get_dxf_attrib("elevation", default=0.0)
         for x, y in self.vertices():
             yield Vec3(x, y, elevation)
 
-    def append(self, point: Sequence[float],
-               format: str = DEFAULT_FORMAT) -> None:
-        """ Append `point` to polyline, `format`` specifies a user defined
+    def append(
+        self, point: Sequence[float], format: str = DEFAULT_FORMAT
+    ) -> None:
+        """Append `point` to polyline, `format`` specifies a user defined
         point format.
 
         All coordinates in :ref:`OCS`.
@@ -239,9 +252,10 @@ class LWPolyline(DXFGraphic):
         """
         self.lwpoints.append(point, format=format)
 
-    def insert(self, pos: int, point: Sequence[float],
-               format: str = DEFAULT_FORMAT) -> None:
-        """ Insert new point in front of positions `pos`, `format` specifies a
+    def insert(
+        self, pos: int, point: Sequence[float], format: str = DEFAULT_FORMAT
+    ) -> None:
+        """Insert new point in front of positions `pos`, `format` specifies a
         user defined point format.
 
         All coordinates in :ref:`OCS`.
@@ -255,8 +269,9 @@ class LWPolyline(DXFGraphic):
         data = compile_array(point, format=format)
         self.lwpoints.insert(pos, data)
 
-    def append_points(self, points: Iterable[Sequence[float]],
-                      format: str = DEFAULT_FORMAT) -> None:
+    def append_points(
+        self, points: Iterable[Sequence[float]], format: str = DEFAULT_FORMAT
+    ) -> None:
         """
         Append new `points` to polyline, `format` specifies a user defined
         point format.
@@ -274,7 +289,7 @@ class LWPolyline(DXFGraphic):
 
     @contextmanager
     def points(self, format: str = DEFAULT_FORMAT) -> List[Sequence[float]]:
-        """ Context manager for polyline points. Returns a standard Python list
+        """Context manager for polyline points. Returns a standard Python list
         of points, according to the format string.
 
         All coordinates in :ref:`OCS`.
@@ -288,7 +303,7 @@ class LWPolyline(DXFGraphic):
         self.set_points(points, format=format)
 
     def get_points(self, format: str = DEFAULT_FORMAT) -> List[Sequence[float]]:
-        """ Returns all points as list of tuples, format specifies a user
+        """Returns all points as list of tuples, format specifies a user
         defined point format.
 
         All points in :ref:`OCS` as (x, y) tuples (:attr:`dxf.elevation` is
@@ -300,9 +315,10 @@ class LWPolyline(DXFGraphic):
         """
         return [format_point(p, format=format) for p in self.lwpoints]
 
-    def set_points(self, points: Iterable[Sequence[float]],
-                   format: str = DEFAULT_FORMAT) -> None:
-        """ Remove all points and append new `points`.
+    def set_points(
+        self, points: Iterable[Sequence[float]], format: str = DEFAULT_FORMAT
+    ) -> None:
+        """Remove all points and append new `points`.
 
         All coordinates in :ref:`OCS`.
 
@@ -316,22 +332,24 @@ class LWPolyline(DXFGraphic):
         self.append_points(points, format=format)
 
     def clear(self) -> None:
-        """ Remove all points. """
+        """Remove all points."""
         self.lwpoints.clear()
 
-    def transform(self, m: 'Matrix44') -> 'LWPolyline':
-        """ Transform the LWPOLYLINE entity by transformation matrix `m` inplace.
-        """
+    def transform(self, m: "Matrix44") -> "LWPolyline":
+        """Transform the LWPOLYLINE entity by transformation matrix `m` inplace."""
         dxf = self.dxf
         ocs = OCSTransform(self.dxf.extrusion, m)
         if not ocs.scale_uniform and self.has_arc:
             raise NonUniformScalingError(
-                '2D POLYLINE with arcs does not support non uniform scaling')
+                "2D POLYLINE with arcs does not support non uniform scaling"
+            )
             # Parent function has to catch this Exception and explode this
             # LWPOLYLINE into LINE and ELLIPSE entities.
         vertices = list(ocs.transform_vertex(v) for v in self.vertices_in_ocs())
-        lwpoints = [(v[0], v[1], p[2], p[3], p[4]) for v, p in
-                    zip(vertices, self.lwpoints)]
+        lwpoints = [
+            (v[0], v[1], p[2], p[3], p[4])
+            for v, p in zip(vertices, self.lwpoints)
+        ]
         self.set_points(lwpoints)
 
         # All new OCS vertices must have the same z-axis, which is the elevation
@@ -339,14 +357,15 @@ class LWPolyline(DXFGraphic):
         if vertices:
             dxf.elevation = vertices[0][2]
 
-        if dxf.hasattr('thickness'):
+        if dxf.hasattr("thickness"):
             dxf.thickness = ocs.transform_length(
-                (0, 0, dxf.thickness), reflection=dxf.thickness)
+                (0, 0, dxf.thickness), reflection=dxf.thickness
+            )
         dxf.extrusion = ocs.new_extrusion
         return self
 
-    def virtual_entities(self) -> Iterable[Union['Line', 'Arc']]:
-        """ Yields 'virtual' parts of LWPOLYLINE as LINE or ARC entities.
+    def virtual_entities(self) -> Iterable[Union["Line", "Arc"]]:
+        """Yields 'virtual' parts of LWPOLYLINE as LINE or ARC entities.
 
         This entities are located at the original positions, but are not stored
         in the entity database, have no handle and are not assigned to any
@@ -355,8 +374,8 @@ class LWPolyline(DXFGraphic):
         """
         return virtual_lwpolyline_entities(self)
 
-    def explode(self, target_layout: 'BaseLayout' = None) -> 'EntityQuery':
-        """ Explode parts of LWPOLYLINE as LINE or ARC entities into target layout,
+    def explode(self, target_layout: "BaseLayout" = None) -> "EntityQuery":
+        """Explode parts of LWPOLYLINE as LINE or ARC entities into target layout,
         if target layout is ``None``, the target layout is the layout of the
         LWPOLYLINE.
 
@@ -371,7 +390,7 @@ class LWPolyline(DXFGraphic):
 
 
 class LWPolylinePoints(VertexArray):
-    __slots__ = ('values',)
+    __slots__ = ("values",)
     VERTEX_CODE = 10
     START_WIDTH_CODE = 40
     END_WIDTH_CODE = 41
@@ -379,8 +398,8 @@ class LWPolylinePoints(VertexArray):
     VERTEX_SIZE = 5
 
     @classmethod
-    def from_tags(cls, tags: Tags) -> Tuple['LWPolylinePoints', Tags]:
-        """ Setup point array from tags. """
+    def from_tags(cls, tags: Tags) -> Tuple["LWPolylinePoints", Tags]:
+        """Setup point array from tags."""
 
         def get_vertex() -> LWPointType:
             point.append(attribs.get(cls.START_WIDTH_CODE, 0))
@@ -408,8 +427,9 @@ class LWPolylinePoints(VertexArray):
             data.extend(get_vertex())
         return cls(data=data), unprocessed_tags
 
-    def append(self, point: Sequence[float],
-               format: str = DEFAULT_FORMAT) -> None:
+    def append(
+        self, point: Sequence[float], format: str = DEFAULT_FORMAT
+    ) -> None:
         super().append(compile_array(point, format=format))
 
     def dxftags(self) -> Iterable[DXFTag]:
@@ -425,9 +445,10 @@ class LWPolylinePoints(VertexArray):
                 yield DXFTag(self.BULGE_CODE, bulge)
 
 
-def format_point(point: Sequence[float],
-                 format: str = 'xyseb') -> Sequence[float]:
-    """    Reformat point components.
+def format_point(
+    point: Sequence[float], format: str = "xyseb"
+) -> Sequence[float]:
+    """Reformat point components.
 
     Format codes:
 
@@ -452,8 +473,8 @@ def format_point(point: Sequence[float],
     return tuple(vars[code] for code in format.lower() if code in FORMAT_CODES)
 
 
-def compile_array(data: Sequence[float], format='xyseb') -> array.array:
-    """ Gather point components from input data.
+def compile_array(data: Sequence[float], format="xyseb") -> array.array:
+    """Gather point components from input data.
 
     Format codes:
 
@@ -472,15 +493,15 @@ def compile_array(data: Sequence[float], format='xyseb') -> array.array:
         array.array: array.array('d', (x, y, start_width, end_width, bulge))
 
     """
-    a = array.array('d', (0., 0., 0., 0., 0.))
+    a = array.array("d", (0.0, 0.0, 0.0, 0.0, 0.0))
     format = [code for code in format.lower() if code in FORMAT_CODES]
     for code, value in zip(format, data):
         if code not in FORMAT_CODES:
             continue
-        if code == 'v':
-            value = cast('Vertex', value)
+        if code == "v":
+            value = cast("Vertex", value)
             a[0] = value[0]
             a[1] = value[1]
         else:
-            a['xyseb'.index(code)] = value
+            a["xyseb".index(code)] = value
     return a
