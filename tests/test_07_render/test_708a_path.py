@@ -437,16 +437,6 @@ def test_make_path_from_full_circle_lwpolyline_issue_424():
     assert len(path) == 2
 
 
-S_SHAPE = [
-    (0, 0, 0),
-    (5, 0, 1),
-    (5, 1, 0),
-    (0, 1, -1),
-    (0, 2, 0),
-    (5, 2, 0),
-]
-
-
 class TestIssue414:
     # Issue 414 shows an error in the bounding box calculation for a closed
     # LWPOLYLINE representing a filled circle (const_width=0.45) and an
@@ -480,9 +470,26 @@ class TestIssue414:
         assert p.is_closed is True
 
     def test_bounding_box_calculation(self, lwpolyline):
-        box = tools.bbox([make_path(lwpolyline)])
+        box = tools.bbox([make_path(lwpolyline)], flatten=0)
         assert box.extmin.isclose((9.775, 1.0))
         assert box.extmax.isclose((10.225, 1.45))
+        assert box.center.isclose((10, 1.225))
+        assert box.size.isclose((0.45, 0.45))
+
+    # Conclusion: Everything works fine at the path level, therefore the
+    # error has to be in the ezdxf.disassemble module which converts entities
+    # into primitives and which is also the base for the bounding box
+    # calculation of the ezdxf.bbox module.
+
+
+S_SHAPE = [
+    (0, 0, 0),
+    (5, 0, 1),
+    (5, 1, 0),
+    (0, 1, -1),
+    (0, 2, 0),
+    (5, 2, 0),
+]
 
 
 def test_lwpolyline_s_shape():
