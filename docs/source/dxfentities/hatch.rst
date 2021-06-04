@@ -297,9 +297,12 @@ Hatch Boundary Helper Classes
 
 .. class:: EdgePath
 
-    Boundary path build by edges. There are four different edge types: :class:`LineEdge`, :class:`ArcEdge`,
-    :class:`EllipseEdge` of :class:`SplineEdge`. Make sure there are no gaps between edges. AutoCAD in this regard is
-    very picky. `ezdxf` performs no checks on gaps between the edges.
+    Boundary path build by edges. There are four different edge types:
+    :class:`LineEdge`, :class:`ArcEdge`, :class:`EllipseEdge` of :class:`SplineEdge`.
+    Make sure there are no gaps between edges and the edge path must be closed
+    to be recognized as path. AutoCAD is very picky in this regard.
+    `Ezdxf` performs no checks on gaps between the edges and does not prevent
+    creating open loops.
 
     .. attribute:: type
 
