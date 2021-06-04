@@ -804,6 +804,37 @@ def test_extend_path_by_another_multi_path():
     assert path.end == (5, 0, 0)
 
 
+def test_append_empty_path():
+    path = Path((1, 0, 0))
+    path.line_to((2, 0, 0))
+    start = path.start
+    end = path.end
+    path.append_path(Path())
+    assert start == path.start and end == path.end, "path should be unchanged"
+
+
+def test_append_path_without_a_gap():
+    p1 = Path((1, 0, 0))
+    p1.line_to((2, 0, 0))
+    p2 = Path((2, 0, 0))
+    p2.line_to((3, 0, 0))
+    p1.append_path(p2)
+    assert p1.start == (1, 0)
+    assert p1.end == (3, 0)
+    assert len(p1) == 2
+
+
+def test_append_path_with_a_gap():
+    p1 = Path((1, 0, 0))
+    p1.line_to((2, 0, 0))
+    p2 = Path((3, 0, 0))
+    p2.line_to((4, 0, 0))
+    p1.append_path(p2)
+    assert p1.start == (1, 0)
+    assert p1.end == (4, 0)
+    assert len(p1) == 3
+
+
 class TestCloseSubPath:
     def test_close_last_sub_path(self):
         p = Path()

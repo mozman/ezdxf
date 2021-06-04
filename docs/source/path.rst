@@ -277,7 +277,10 @@ The Path Class
 
     .. automethod:: flattening(distance: float, segments: int=16) -> Iterable[Vec3]
 
+    .. automethod:: append_path(path: Path)
+
     .. automethod:: extend_multi_path(path: Path)
+
 
 .. _PathPatch: https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.patches.PathPatch.html#matplotlib.patches.PathPatch
 .. _QPainterPath: https://doc.qt.io/qt-5/qpainterpath.html

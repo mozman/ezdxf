@@ -600,3 +600,19 @@ class Path(abc.Sequence):
         """
         self.move_to(path.start)
         self._commands.extend(path._commands)  # immutable data!
+
+    def append_path(self, path: "Path") -> None:
+        """Append another path to this path. Adds a :code:`self.line_to(path.start)`
+        if the end of this path != the start of appended path.
+
+        .. versionadded:: 0.17
+
+        """
+        if len(path) == 0:
+            return  # do not append an empty path
+        if len(self._commands):
+            if not self.end.isclose(path.start):
+                self.line_to(path.start)
+        else:
+            self._start = path.start
+        self._commands.extend(path._commands)  # immutable data!
