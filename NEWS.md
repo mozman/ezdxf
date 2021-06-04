@@ -17,6 +17,7 @@ Version 0.16.4b1 - dev
 - BUGFIX: HATCH spline edge from fit points require start- and end tangents
 - BUGFIX: `disassemble.make_primitive()` transform LWPOLYLINE including width 
   into WCS
+- BUGFIX: ignore open edge path loops in `HATCH`
 
 Version 0.16.3 - 2021-05-22
 ---------------------------

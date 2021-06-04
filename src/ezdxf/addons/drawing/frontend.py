@@ -332,10 +332,14 @@ class Frontend:
 
     def draw_hatch_entity(self, entity: DXFGraphic,
         properties: Properties) -> None:
-        def to_path(p):
-            path = from_hatch_boundary_path(p, ocs, elevation)
-            path.close()
-            return path
+        def to_path(paths):
+            loops = []
+            for boundary in paths:
+                path = from_hatch_boundary_path(boundary, ocs, elevation)
+                for sub_path in path.sub_paths():
+                    sub_path.close()
+                    loops.append(sub_path)
+            return loops
 
         if not self.out.show_hatch:
             return
@@ -350,14 +354,14 @@ class Frontend:
         holes = []
         paths = hatch.paths.rendering_paths(hatch.dxf.hatch_style)
         if self.nested_polygon_detection:
-            polygons = self.nested_polygon_detection(map(to_path, paths))
+            polygons = self.nested_polygon_detection(to_path(paths))
             external_paths, holes = winding_deconstruction(polygons)
         else:
             for p in paths:
                 if p.path_type_flags & const.BOUNDARY_PATH_EXTERNAL:
-                    external_paths.append(to_path(p))
+                    external_paths.extend(to_path(p))
                 else:
-                    holes.append(to_path(p))
+                    holes.extend(to_path(p))
 
         if external_paths:
             self.out.draw_filled_paths(external_paths, holes, properties)

@@ -769,7 +769,25 @@ def edge_path():
 
 def test_from_edge_path(edge_path):
     path = converter.from_hatch_edge_path(edge_path)
+    assert path.has_sub_paths is False
     assert len(path) == 19
+
+
+def test_from_edge_path_with_two_closed_loops():
+    ep = EdgePath()
+    # 1st loop: closed segments
+    ep.add_line((0, 0), (0, 1))
+    ep.add_line((0, 1), (1, 1))
+    ep.add_line((1, 1), (0, 1))
+    ep.add_line((0, 1), (0, 0))
+
+    # 2nd loop: closed segments
+    ep.add_line((2, 0), (3, 0))
+    ep.add_line((3, 0), (3, 1))
+    ep.add_line((3, 1), (2, 1))
+    ep.add_line((2, 1), (2, 0))
+    path = converter.from_hatch_edge_path(ep)
+    assert path.has_sub_paths is True
 
 
 def test_extend_path_by_another_path():

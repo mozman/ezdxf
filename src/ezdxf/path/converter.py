@@ -253,7 +253,11 @@ def from_hatch(hatch: Hatch) -> Iterable[Path]:
     ocs = hatch.ocs()
     elevation = hatch.dxf.elevation.z
     for boundary in hatch.paths:
-        yield from_hatch_boundary_path(boundary, ocs, elevation)
+        p = from_hatch_boundary_path(boundary, ocs, elevation)
+        if p.has_sub_paths:
+            yield from p.sub_paths()
+        else:
+            yield p
 
 
 def from_hatch_boundary_path(
@@ -292,25 +296,14 @@ def from_hatch_edge_path(
     edge path.
     """
 
-    def add_line_edge(edge):
+    def line(edge):
         start = wcs(edge.start)
         end = wcs(edge.end)
-        if len(path):
-            if path.end.isclose(start):
-                # path-end -> line-end
-                path.line_to(end)
-            elif path.end.isclose(end):
-                # path-end (==line-end) -> line-start
-                path.line_to(start)
-            else:
-                # path-end -> edge-start -> edge-end
-                path.line_to(start)
-                path.line_to(end)
-        else:  # start path
-            path.start = start
-            path.line_to(end)
+        segment = Path(start)
+        segment.line_to(end)
+        return segment
 
-    def add_arc_edge(edge):
+    def arc(edge):
         x, y, *_ = edge.center
         # from_arc() requires OCS data:
         ellipse = ConstructionEllipse.from_arc(
@@ -320,9 +313,11 @@ def from_hatch_edge_path(
             start_angle=edge.start_angle,
             end_angle=edge.end_angle,
         )
-        tools.add_ellipse(path, ellipse, reset=not bool(path))
+        segment = Path()
+        tools.add_ellipse(segment, ellipse, reset=True)
+        return segment
 
-    def add_ellipse_edge(edge):
+    def ellipse(edge):
         ocs_ellipse = edge.construction_tool()
         # ConstructionEllipse has WCS representation:
         ellipse = ConstructionEllipse(
@@ -333,9 +328,11 @@ def from_hatch_edge_path(
             start_param=ocs_ellipse.start_param,
             end_param=ocs_ellipse.end_param,
         )
-        tools.add_ellipse(path, ellipse, reset=not bool(path))
+        segment = Path()
+        tools.add_ellipse(segment, ellipse, reset=True)
+        return segment
 
-    def add_spline_edge(edge):
+    def spline(edge):
         control_points = [wcs(p) for p in edge.control_points]
         if len(control_points) == 0:
             fit_points = [wcs(p) for p in edge.fit_points]
@@ -347,7 +344,9 @@ def from_hatch_edge_path(
                 return
         else:
             bspline = from_control_points(edge, control_points)
-        tools.add_spline(path, bspline, reset=not bool(path))
+        segment = Path()
+        tools.add_spline(segment, bspline, reset=True)
+        return segment
 
     def from_fit_points(edge, fit_points):
         tangents = None
@@ -375,19 +374,41 @@ def from_hatch_edge_path(
 
     extrusion = ocs.uz if ocs else Z_AXIS
     path = Path()
+    loop: Optional[Path] = None
     for edge in edges:
+        next_segment: Optional[Path] = None
         if edge.type == EdgeType.LINE:
-            add_line_edge(edge)
+            next_segment = line(edge)
         elif edge.type == EdgeType.ARC:
             if not math.isclose(edge.radius, 0):
-                add_arc_edge(edge)
+                next_segment = arc(edge)
         elif edge.type == EdgeType.ELLIPSE:
             if not NULLVEC.isclose(edge.major_axis):
-                add_ellipse_edge(edge)
+                next_segment = ellipse(edge)
         elif edge.type == EdgeType.SPLINE:
-            add_spline_edge(edge)
+            next_segment = spline(edge)
 
-    return path
+        if next_segment is None:
+            continue
+
+        if loop is None:
+            loop = next_segment
+            continue
+
+        if loop.end.isclose(next_segment.start):
+            # only append segments with continuity
+            loop.append_path(next_segment)
+        elif loop.end.isclose(next_segment.end):
+            # or reversed continuity
+            loop.append_path(next_segment.reversed())
+        else:  # gap between current loop and next segment
+            if loop.is_closed:  # only append closed loops to multi path
+                path.extend_multi_path(loop)
+            loop = next_segment  # start a new loop
+
+    if loop is not None and loop.is_closed:
+        path.extend_multi_path(loop)
+    return path  # multi path
 
 
 def from_vertices(vertices: Iterable["Vertex"], close=False) -> Path:
