@@ -28,9 +28,32 @@ def test_init():
     assert path.end == (0, 0)
 
 
+def test_if_path_is_empty():
+    path = Path()
+    assert bool(path) is False, "should work in boolean tests"
+    assert not len(path), "len() should work in boolean tests"
+    assert len(path) == 0, "len() should be 0"
+
+
+def test_if_path_is_not_empty():
+    path = Path(start=(1, 0))
+    path.line_to((2, 0))
+    assert bool(path) is True, "should work in boolean tests"
+    assert len(path), "len() should work boolean tests"
+    assert len(path) > 0, "len() should be > 0"
+
+
 def test_init_start():
     path = Path(start=(1, 2))
     assert path.start == (1, 2)
+
+
+def test_if_path_with_only_a_start_point_is_still_empty():
+    # Path() can not represent a point with any command
+    path = Path(start=(1, 1))
+    assert bool(path) is False, "should work in boolean tests"
+    assert not len(path), "len() should work in boolean tests"
+    assert len(path) == 0, "len() should be 0"
 
 
 def test_line_to():
@@ -38,6 +61,13 @@ def test_line_to():
     path.line_to((1, 2, 3))
     assert path[0] == (Vec3(1, 2, 3),)
     assert path.end == (1, 2, 3)
+
+
+def test_path_requires_a_command_to_represent_a_point():
+    path = Path((1, 1))
+    path.line_to((1, 1))
+    assert bool(path)
+    assert len(path) > 0
 
 
 def test_curve3_to():
@@ -787,7 +817,18 @@ def test_from_edge_path_with_two_closed_loops():
     ep.add_line((3, 1), (2, 1))
     ep.add_line((2, 1), (2, 0))
     path = converter.from_hatch_edge_path(ep)
-    assert path.has_sub_paths is True
+    assert path.has_sub_paths is True, "should return a multi-path"
+    assert len(list(path.sub_paths())) == 2, "expected two sub paths"
+
+
+def test_edge_path_has_to_be_closed_to_create_a_loop():
+    ep = EdgePath()
+    # open segments do not create a path
+    ep.add_line((0, 0), (0, 1))
+    ep.add_line((0, 1), (1, 1))
+    ep.add_line((1, 1), (0, 1))
+    path = converter.from_hatch_edge_path(ep)
+    assert bool(path) is False, "expected an empty path"
 
 
 def test_extend_path_by_another_path():
