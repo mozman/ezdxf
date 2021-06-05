@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import DXFGraphic, Vertex
 
 __all__ = [
+    "TransformError",
     "NonUniformScalingError",
     "InsertTransformationError",
     "transform_extrusion",

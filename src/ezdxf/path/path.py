@@ -15,7 +15,7 @@ from ezdxf.math import (
     BSpline,
     has_clockwise_orientation,
 )
-from ezdxf.entities import LWPolyline, Polyline, Spline
+
 from .commands import (
     Command,
     LineTo,
@@ -27,7 +27,15 @@ from .commands import (
 )
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, Ellipse, Arc, Circle
+    from ezdxf.eztypes import (
+        Vertex,
+        Ellipse,
+        Arc,
+        Circle,
+        LWPolyline,
+        Polyline,
+        Spline,
+    )
 
 __all__ = ["Path"]
 

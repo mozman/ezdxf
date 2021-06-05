@@ -187,3 +187,22 @@ def test_fix_insert_scale(doc, auditor):
     assert insert.dxf.xscale == 1.0
     assert insert.dxf.xscale == 1.0
     assert insert.dxf.xscale == 1.0
+
+
+def test_check_dimensions_geometry_location():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    dimline = msp.add_linear_dim(base=(0, 10), p1=(0, 0), p2=(100, 0))
+    dimline.render()
+
+    dim = dimline.dimension
+    blk = dim.get_geometry_block()
+    for point in blk.query("POINT"):
+        point.translate(10, 10, 0)
+
+    auditor = Auditor(doc)
+    auditor.check_dimensions_geometry_locations()
+    assert len(auditor.errors) == 1
+    assert (
+        auditor.errors[0].code == AuditError.INVALID_DIMENSION_GEOMETRY_LOCATION
+    )

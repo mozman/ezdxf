@@ -15,8 +15,9 @@ import sys
 from enum import IntEnum
 from ezdxf.lldxf import const, validator
 from ezdxf.entities import factory, DXFEntity
-from ezdxf.math import NULLVEC
+from ezdxf.math import NULLVEC, Vec3
 from ezdxf.sections.table import table_key
+from ezdxf.query import EntityQuery
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
         DXFGraphic,
         BlocksSection,
         EntityDB,
+        Dimension,
     )
 
 __all__ = ["Auditor", "AuditError", "audit", "BlockCycleDetector"]
@@ -79,6 +81,7 @@ class AuditError(IntEnum):
     INVALID_SPLINE_FIT_POINT_COUNT = 219
     INVALID_SPLINE_KNOT_VALUE_COUNT = 220
     INVALID_SPLINE_WEIGHT_COUNT = 221
+    INVALID_DIMENSION_GEOMETRY_LOCATION = 222
 
 
 REQUIRED_ROOT_DICT_ENTRIES = ("ACAD_GROUP", "ACAD_PLOTSTYLENAME")
@@ -451,6 +454,65 @@ class Auditor:
                     f'block "{block.name}".',
                     dxf_entity=block.block_record,
                 )
+
+    def check_dimensions_geometry_locations(self):
+        def match_defpoint(block, defpoint):
+            for p in block.query("POINT[layer=='defpoints']i"):
+                if defpoint.isclose(p.dxf.location):
+                    return p.dxf.location
+            return None
+
+        def check_dimension_location(dim: "Dimension"):
+            if dim.is_dimensional_constraint:  # same TYPE different concept ;)
+                return
+            if dim.virtual_block_content:
+                block = EntityQuery(dim.virtual_block_content)
+                block_name = "*VIRTUAL"
+            else:
+                block_name = dim.dxf.get("geometry", "*")
+                if block_name in processed_geometry_blocks:
+                    return
+                processed_geometry_blocks.add(block_name)
+                block = dim.get_geometry_block()
+
+            if block is None:  # block geometry does not exist
+                return
+
+            defpoint: Vec3 = dim.dxf.get("defpoint", None)
+            if defpoint is None:  # defpoint does not exist
+                return
+
+            # Find any POINT entity at layer "Defpoints" which matches defpoint
+            if match_defpoint(block, defpoint) is not None:
+                return
+
+            msg = f'Invalid {str(dim)} geometry location in BLOCK "{block_name}"'
+            if block_name == "*VIRTUAL":
+                msg += f', parent block name: "{layout_names[-1]}"'
+            self.add_error(
+                code=AuditError.INVALID_DIMENSION_GEOMETRY_LOCATION,
+                message=msg,
+            )
+
+        def process_entities(entities):
+            for entity in entities:
+                if entity.dxftype() == "INSERT":
+                    layout_names.append(entity.dxf.name)
+                    process_entities(entity.virtual_entities())
+                    layout_names.pop()
+                elif entity.dxftype() in DXF_DIMENSION_TYPES:
+                    check_dimension_location(entity)
+
+        if self.doc is None:
+            return
+        # circular imports:
+        from ezdxf.entities import DXF_DIMENSION_TYPES
+
+        # names of fixed geometry blocks:
+        processed_geometry_blocks: Set[str] = {"*"}
+        for layout in self.doc.layouts:
+            layout_names = [layout.name]
+            process_entities(layout)
 
 
 class BlockCycleDetector:
