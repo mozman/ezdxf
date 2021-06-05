@@ -1,7 +1,15 @@
 # Copyright (c) 2017-2021, Manfred Moitzi
 # License: MIT License
 from typing import (
-    TYPE_CHECKING, Iterable, List, Set, TextIO, Any, Dict, Optional, Callable,
+    TYPE_CHECKING,
+    Iterable,
+    List,
+    Set,
+    TextIO,
+    Any,
+    Dict,
+    Optional,
+    Callable,
 )
 import sys
 from enum import IntEnum
@@ -12,10 +20,14 @@ from ezdxf.sections.table import table_key
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        DXFEntity, Drawing, DXFGraphic, BlocksSection, EntityDB,
+        DXFEntity,
+        Drawing,
+        DXFGraphic,
+        BlocksSection,
+        EntityDB,
     )
 
-__all__ = ['Auditor', 'AuditError', 'audit', 'BlockCycleDetector']
+__all__ = ["Auditor", "AuditError", "audit", "BlockCycleDetector"]
 
 
 class AuditError(IntEnum):
@@ -69,26 +81,32 @@ class AuditError(IntEnum):
     INVALID_SPLINE_WEIGHT_COUNT = 221
 
 
-REQUIRED_ROOT_DICT_ENTRIES = ('ACAD_GROUP', 'ACAD_PLOTSTYLENAME')
+REQUIRED_ROOT_DICT_ENTRIES = ("ACAD_GROUP", "ACAD_PLOTSTYLENAME")
 
 
 class ErrorEntry:
-    def __init__(self, code: int, message: str = '',
-                 dxf_entity: 'DXFEntity' = None, data: Any = None):
+    def __init__(
+        self,
+        code: int,
+        message: str = "",
+        dxf_entity: "DXFEntity" = None,
+        data: Any = None,
+    ):
         self.code: int = code  # error code AuditError()
-        self.entity: 'DXFEntity' = dxf_entity  # source entity of error
+        self.entity: "DXFEntity" = dxf_entity  # source entity of error
         self.message: str = message  # error message
         self.data: Any = data  # additional data as an arbitrary object
 
 
 class Auditor:
-    def __init__(self, doc: Optional['Drawing']):
-        self.doc: Optional['Drawing'] = doc
-        self._rootdict_handle = doc.rootdict.dxf.handle if doc else '0'
+    def __init__(self, doc: Optional["Drawing"]):
+        self.doc: Optional["Drawing"] = doc
+        self._rootdict_handle = doc.rootdict.dxf.handle if doc else "0"
         self.errors: List[ErrorEntry] = []
         self.fixes: List[ErrorEntry] = []
-        self._trashcan: Optional['EntityDB.Trashcan'] = \
+        self._trashcan: Optional["EntityDB.Trashcan"] = (
             doc.entitydb.new_trashcan() if doc else None
+        )
         self._post_audit_jobs = []
 
     def reset(self) -> None:
@@ -97,15 +115,15 @@ class Auditor:
         self.empty_trashcan()
 
     def __len__(self) -> int:
-        """ Returns count of unfixed errors. """
+        """Returns count of unfixed errors."""
         return len(self.errors)
 
     def __bool__(self) -> bool:
-        """ Returns ``True`` if any unfixed errors exist. """
+        """Returns ``True`` if any unfixed errors exist."""
         return self.__len__() > 0
 
     def __iter__(self) -> Iterable[ErrorEntry]:
-        """ Iterate over all unfixed errors. """
+        """Iterate over all unfixed errors."""
         return iter(self.errors)
 
     @property
@@ -123,8 +141,9 @@ class Auditor:
     def has_fixes(self) -> bool:
         return bool(self.fixes)
 
-    def print_error_report(self, errors: List[ErrorEntry] = None,
-                           stream: TextIO = None) -> None:
+    def print_error_report(
+        self, errors: List[ErrorEntry] = None, stream: TextIO = None
+    ) -> None:
         def entity_str(count, code, entity):
             if entity is not None:
                 return f"{count:4d}. Issue [{code}] in {str(entity)}."
@@ -140,13 +159,14 @@ class Auditor:
             stream = sys.stdout
 
         if len(errors) == 0:
-            stream.write('No issues found.\n\n')
+            stream.write("No issues found.\n\n")
         else:
-            stream.write(f'{len(errors)} issues found.\n\n')
+            stream.write(f"{len(errors)} issues found.\n\n")
             for count, error in enumerate(errors):
                 stream.write(
-                    entity_str(count + 1, error.code, error.entity) + '\n')
-                stream.write('   ' + error.message + '\n\n')
+                    entity_str(count + 1, error.code, error.entity) + "\n"
+                )
+                stream.write("   " + error.message + "\n\n")
 
     def print_fixed_errors(self, stream: TextIO = None) -> None:
         def entity_str(count, code, entity):
@@ -159,24 +179,35 @@ class Auditor:
             stream = sys.stdout
 
         if len(self.fixes) == 0:
-            stream.write('No issues fixed.\n\n')
+            stream.write("No issues fixed.\n\n")
         else:
-            stream.write(f'{len(self.fixes)} issues fixed.\n\n')
+            stream.write(f"{len(self.fixes)} issues fixed.\n\n")
             for count, error in enumerate(self.fixes):
                 stream.write(
-                    entity_str(count + 1, error.code, error.entity) + '\n')
-                stream.write('   ' + error.message + '\n\n')
+                    entity_str(count + 1, error.code, error.entity) + "\n"
+                )
+                stream.write("   " + error.message + "\n\n")
 
-    def add_error(self, code: int, message: str = '',
-                  dxf_entity: 'DXFEntity' = None, data: Any = None) -> None:
+    def add_error(
+        self,
+        code: int,
+        message: str = "",
+        dxf_entity: "DXFEntity" = None,
+        data: Any = None,
+    ) -> None:
         self.errors.append(ErrorEntry(code, message, dxf_entity, data))
 
-    def fixed_error(self, code: int, message: str = '',
-                    dxf_entity: 'DXFEntity' = None, data: Any = None) -> None:
+    def fixed_error(
+        self,
+        code: int,
+        message: str = "",
+        dxf_entity: "DXFEntity" = None,
+        data: Any = None,
+    ) -> None:
         self.fixes.append(ErrorEntry(code, message, dxf_entity, data))
 
     def purge(self, codes: Set[int]):
-        """ Remove error messages defined by integer error `codes`.
+        """Remove error messages defined by integer error `codes`.
 
         This is useful to remove errors which are not important for a specific
         file usage.
@@ -200,7 +231,7 @@ class Auditor:
         if self.has_trashcan:
             self._trashcan.clear()
 
-    def trash(self, entity: 'DXFEntity') -> None:
+    def trash(self, entity: "DXFEntity") -> None:
         if entity is None or not entity.is_alive:
             return
         if self.has_trashcan:
@@ -221,7 +252,7 @@ class Auditor:
             if name not in root_dict:
                 self.add_error(
                     code=AuditError.MISSING_REQUIRED_ROOT_DICT_ENTRY,
-                    message=f'Missing root dict entry: {name}',
+                    message=f"Missing root dict entry: {name}",
                     dxf_entity=root_dict,
                 )
 
@@ -230,15 +261,15 @@ class Auditor:
             head = table.head
             # Another exception for an invalid owner tag, but this usage is
             # covered in Auditor.check_owner_exist():
-            head.dxf.owner = '0'
+            head.dxf.owner = "0"
             handle = head.dxf.handle
-            if handle is None or handle == '0':
+            if handle is None or handle == "0":
                 # Entity database does not assign new handle:
                 head.dxf.handle = self.entitydb.next_handle()
                 self.entitydb.add(head)
                 self.fixed_error(
                     code=AuditError.INVALID_TABLE_HANDLE,
-                    message=f'Fixed invalid table handle in {table.name}',
+                    message=f"Fixed invalid table handle in {table.name}",
                 )
             # Just to be sure owner handle is valid in every circumstance:
             table.update_owner_handles()
@@ -255,7 +286,7 @@ class Auditor:
         fix_table_head(table_section.block_records)
 
     def audit_all_database_entities(self) -> None:
-        """ Audit all entities stored in the entity database. """
+        """Audit all entities stored in the entity database."""
         # Destruction of entities can occur while auditing.
         # Best practice to delete entities is to move them into the trashcan:
         # Auditor.trash(entity)
@@ -277,37 +308,37 @@ class Auditor:
             call()
         self._post_audit_jobs = []
 
-    def check_entity_linetype(self, entity: 'DXFEntity') -> None:
-        """ Check for usage of undefined line types. AutoCAD does not load
+    def check_entity_linetype(self, entity: "DXFEntity") -> None:
+        """Check for usage of undefined line types. AutoCAD does not load
         DXF files with undefined line types.
         """
-        assert self.doc is entity.doc, 'Entity from different DXF document.'
-        if not entity.dxf.hasattr('linetype'):
+        assert self.doc is entity.doc, "Entity from different DXF document."
+        if not entity.dxf.hasattr("linetype"):
             return
         linetype = table_key(entity.dxf.linetype)
         # No table entry in linetypes required:
-        if linetype in ('bylayer', 'byblock'):
+        if linetype in ("bylayer", "byblock"):
             return
 
         if linetype not in self.doc.linetypes:
             # Defaults to 'BYLAYER'
-            entity.dxf.discard('linetype')
+            entity.dxf.discard("linetype")
             self.fixed_error(
                 code=AuditError.UNDEFINED_LINETYPE,
-                message=f'Removed undefined linetype {linetype} in {str(entity)}',
+                message=f"Removed undefined linetype {linetype} in {str(entity)}",
                 dxf_entity=entity,
                 data=linetype,
             )
 
-    def check_text_style(self, entity: 'DXFEntity') -> None:
-        """ Check for usage of undefined text styles. """
-        assert self.doc is entity.doc, 'Entity from different DXF document.'
-        if not entity.dxf.hasattr('style'):
+    def check_text_style(self, entity: "DXFEntity") -> None:
+        """Check for usage of undefined text styles."""
+        assert self.doc is entity.doc, "Entity from different DXF document."
+        if not entity.dxf.hasattr("style"):
             return
         style = entity.dxf.style
         if style not in self.doc.styles:
             # Defaults to 'Standard'
-            entity.dxf.discard('style')
+            entity.dxf.discard("style")
             self.fixed_error(
                 code=AuditError.UNDEFINED_TEXT_STYLE,
                 message=f'Removed undefined text style "{style}" from {str(entity)}.',
@@ -315,25 +346,25 @@ class Auditor:
                 data=style,
             )
 
-    def check_dimension_style(self, entity: 'DXFGraphic') -> None:
-        """  Check for usage of undefined dimension styles. """
-        assert self.doc is entity.doc, 'Entity from different DXF document.'
-        if not entity.dxf.hasattr('dimstyle'):
+    def check_dimension_style(self, entity: "DXFGraphic") -> None:
+        """Check for usage of undefined dimension styles."""
+        assert self.doc is entity.doc, "Entity from different DXF document."
+        if not entity.dxf.hasattr("dimstyle"):
             return
         dimstyle = entity.dxf.dimstyle
         if dimstyle not in self.doc.dimstyles:
             # The dimstyle attribute is not optional:
-            entity.dxf.dimstyle = 'Standard'
+            entity.dxf.dimstyle = "Standard"
             self.fixed_error(
                 code=AuditError.UNDEFINED_DIMENSION_STYLE,
                 message=f'Replaced undefined dimstyle "{dimstyle}" in '
-                        f'{str(entity)} by "Standard".',
+                f'{str(entity)} by "Standard".',
                 dxf_entity=entity,
                 data=dimstyle,
             )
 
-    def check_for_valid_layer_name(self, entity: 'DXFEntity') -> None:
-        """ Check layer names for invalid characters: <>/\":;?*|=' """
+    def check_for_valid_layer_name(self, entity: "DXFEntity") -> None:
+        """Check layer names for invalid characters: <>/\":;?*|='"""
         name = entity.dxf.layer
         if not validator.is_valid_layer_name(name):
             # This error can't be fixed !?
@@ -344,69 +375,69 @@ class Auditor:
                 data=name,
             )
 
-    def check_entity_color_index(self, entity: 'DXFGraphic') -> None:
+    def check_entity_color_index(self, entity: "DXFGraphic") -> None:
         color = entity.dxf.color
         # 0 == BYBLOCK
         # 256 == BYLAYER
         # 257 == BYOBJECT
         if color < 0 or color > 257:
-            entity.dxf.discard('color')
+            entity.dxf.discard("color")
             self.fixed_error(
                 code=AuditError.INVALID_COLOR_INDEX,
-                message=f'Removed invalid color index of {str(entity)}.',
+                message=f"Removed invalid color index of {str(entity)}.",
                 dxf_entity=entity,
                 data=color,
             )
 
-    def check_entity_lineweight(self, entity: 'DXFGraphic') -> None:
+    def check_entity_lineweight(self, entity: "DXFGraphic") -> None:
         weight = entity.dxf.lineweight
         if weight not in const.VALID_DXF_LINEWEIGHT_VALUES:
             entity.dxf.lineweight = validator.fix_lineweight(weight)
             self.fixed_error(
                 code=AuditError.INVALID_LINEWEIGHT,
-                message=f'Fixed invalid lineweight of {str(entity)}.',
+                message=f"Fixed invalid lineweight of {str(entity)}.",
                 dxf_entity=entity,
             )
 
-    def check_owner_exist(self, entity: 'DXFEntity') -> None:
-        assert self.doc is entity.doc, 'Entity from different DXF document.'
-        if not entity.dxf.hasattr('owner'):
+    def check_owner_exist(self, entity: "DXFEntity") -> None:
+        assert self.doc is entity.doc, "Entity from different DXF document."
+        if not entity.dxf.hasattr("owner"):
             return
         doc = self.doc
         owner_handle = entity.dxf.owner
-        handle = entity.dxf.get('handle', '0')
-        if owner_handle == '0':
+        handle = entity.dxf.get("handle", "0")
+        if owner_handle == "0":
             # Root-Dictionary or Table-Head:
-            if handle == self._rootdict_handle or entity.dxftype() == 'TABLE':
+            if handle == self._rootdict_handle or entity.dxftype() == "TABLE":
                 return  # '0' handle as owner is valid
         if owner_handle not in doc.entitydb:
             if handle == self._rootdict_handle:
-                entity.dxf.owner = '0'
+                entity.dxf.owner = "0"
                 self.fixed_error(
                     code=AuditError.INVALID_OWNER_HANDLE,
-                    message=f'Fixed invalid owner handle in root {str(self)}.',
+                    message=f"Fixed invalid owner handle in root {str(self)}.",
                 )
-            elif entity.dxftype() == 'TABLE':
-                name = entity.dxf.get('name', 'UNKNOWN')
-                entity.dxf.owner = '0'
+            elif entity.dxftype() == "TABLE":
+                name = entity.dxf.get("name", "UNKNOWN")
+                entity.dxf.owner = "0"
                 self.fixed_error(
                     code=AuditError.INVALID_OWNER_HANDLE,
-                    message=f'Fixed invalid owner handle for {name} table.',
+                    message=f"Fixed invalid owner handle for {name} table.",
                 )
             else:
                 self.fixed_error(
                     code=AuditError.INVALID_OWNER_HANDLE,
-                    message=f'Deleted {str(entity)} entity with invalid owner '
-                            f'handle #{owner_handle}.',
+                    message=f"Deleted {str(entity)} entity with invalid owner "
+                    f"handle #{owner_handle}.",
                 )
                 self.trash(doc.entitydb.get(handle))
 
-    def check_extrusion_vector(self, entity: 'DXFEntity') -> None:
+    def check_extrusion_vector(self, entity: "DXFEntity") -> None:
         if NULLVEC.isclose(entity.dxf.extrusion):
-            entity.dxf.discard('extrusion')
+            entity.dxf.discard("extrusion")
             self.fixed_error(
                 code=AuditError.INVALID_EXTRUSION_VECTOR,
-                message=f'Fixed extrusion vector for entity: {str(self)}.',
+                message=f"Fixed extrusion vector for entity: {str(self)}.",
                 dxf_entity=entity,
             )
 
@@ -416,23 +447,25 @@ class Auditor:
             if cycle_detector.has_cycle(block.name):
                 self.add_error(
                     code=AuditError.INVALID_BLOCK_REFERENCE_CYCLE,
-                    message=f'Invalid block reference cycle detected in '
-                            f'block "{block.name}".',
+                    message=f"Invalid block reference cycle detected in "
+                    f'block "{block.name}".',
                     dxf_entity=block.block_record,
                 )
 
 
 class BlockCycleDetector:
-    def __init__(self, doc: 'Drawing'):
+    def __init__(self, doc: "Drawing"):
         self.key = doc.blocks.key
         self.blocks = self._build_block_ledger(doc.blocks)
 
     def _build_block_ledger(
-            self, blocks: 'BlocksSection') -> Dict[str, Set[str]]:
+        self, blocks: "BlocksSection"
+    ) -> Dict[str, Set[str]]:
         ledger = dict()
         for block in blocks:
-            inserts = {self.key(insert.dxf.name) for insert in
-                       block.query('INSERT')}
+            inserts = {
+                self.key(insert.dxf.name) for insert in block.query("INSERT")
+            }
             ledger[self.key(block.name)] = inserts
         return ledger
 
@@ -458,8 +491,8 @@ class BlockCycleDetector:
         return check(block_name)
 
 
-def audit(entity: 'DXFEntity', doc: 'Drawing') -> Auditor:
-    """ Setup an :class:`Auditor` object, run the audit process for `entity`
+def audit(entity: "DXFEntity", doc: "Drawing") -> Auditor:
+    """Setup an :class:`Auditor` object, run the audit process for `entity`
     and return result as :class:`Auditor` object.
 
     Args:
@@ -468,12 +501,12 @@ def audit(entity: 'DXFEntity', doc: 'Drawing') -> Auditor:
 
     """
     if not entity.is_alive:
-        raise TypeError('Entity is destroyed.')
+        raise TypeError("Entity is destroyed.")
 
     # Validation of unbound entities is possible, but it is not useful
     # to validate entities against a different DXF document:
     if entity.dxf.handle is not None and not factory.is_bound(entity, doc):
-        raise ValueError('Entity is bound to different DXF document.')
+        raise ValueError("Entity is bound to different DXF document.")
 
     auditor = Auditor(doc)
     entity.audit(auditor)
