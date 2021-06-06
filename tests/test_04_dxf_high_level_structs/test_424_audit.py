@@ -201,7 +201,7 @@ def test_check_dimensions_geometry_location():
         point.translate(10, 10, 0)
 
     auditor = Auditor(doc)
-    auditor.check_dimensions_geometry_locations()
+    auditor.check_dimension_geometry_location()
     assert len(auditor.errors) == 1
     assert (
         auditor.errors[0].code == AuditError.INVALID_DIMENSION_GEOMETRY_LOCATION

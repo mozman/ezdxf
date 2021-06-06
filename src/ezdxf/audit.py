@@ -10,6 +10,7 @@ from typing import (
     Dict,
     Optional,
     Callable,
+    cast,
 )
 import sys
 from enum import IntEnum
@@ -27,6 +28,7 @@ if TYPE_CHECKING:
         BlocksSection,
         EntityDB,
         Dimension,
+        GenericLayoutType,
     )
 
 __all__ = ["Auditor", "AuditError", "audit", "BlockCycleDetector"]
@@ -455,53 +457,71 @@ class Auditor:
                     dxf_entity=block.block_record,
                 )
 
-    def check_dimensions_geometry_locations(self):
-        def match_defpoint(block, defpoint):
-            for p in block.query("POINT[layer=='defpoints']i"):
-                if defpoint.isclose(p.dxf.location):
-                    return p.dxf.location
-            return None
+    def check_dimension_geometry_location(self):
+        def quick_exit_test(p1: Vec3, p2: Vec3, markers: List[Vec3]):
+            return matches_defpoint_any_marker(
+                p1, markers
+            ) and matches_defpoint_any_marker(p2, markers)
 
         def check_dimension_location(dim: "Dimension"):
             if dim.is_dimensional_constraint:  # same TYPE different concept ;)
                 return
-            if dim.virtual_block_content:
-                block = EntityQuery(dim.virtual_block_content)
-                block_name = "*VIRTUAL"
-            else:
-                block_name = dim.dxf.get("geometry", "*")
-                if block_name in processed_geometry_blocks:
-                    return
-                processed_geometry_blocks.add(block_name)
-                block = dim.get_geometry_block()
+            # do not process virtual DIMENSIONS
+            block_name = dim.dxf.get("geometry", "*")
+            if block_name in processed_geometry_blocks:
+                return
+            processed_geometry_blocks.add(block_name)
+            block = dim.get_geometry_block()
 
             if block is None:  # block geometry does not exist
                 return
 
-            defpoint: Vec3 = dim.dxf.get("defpoint", None)
-            if defpoint is None:  # defpoint does not exist
+            defpoints = list(get_defpoints(dim))
+            if not len(defpoints):
+                # no defpoints found, invalid DIMENSION entity
                 return
 
-            # Find any POINT entity at layer "Defpoints" which matches defpoint
-            if match_defpoint(block, defpoint) is not None:
+            markers = list(get_defpoint_markers(block))
+            if not len(markers):
+                # no defpoint markers found, no checks or repair possible
                 return
 
-            msg = f'Invalid {str(dim)} geometry location in BLOCK "{block_name}"'
-            if block_name == "*VIRTUAL":
-                msg += f', parent block name: "{layout_names[-1]}"'
-            self.add_error(
-                code=AuditError.INVALID_DIMENSION_GEOMETRY_LOCATION,
-                message=msg,
-            )
+            if len(defpoints) < 2 or len(markers) < 2:
+                # If only one defpoint or only one marker exists (invalid
+                # DIMENSION entity), a reliable repair cannot be performed.
+                # Do a quick test to check if the DIMENSION geometry could be
+                # at the correct location: find any marker which matches
+                # defpoint, but could also be a random match, without a second
+                # defpoint is a verification not possible!
+                if not matches_defpoint_any_marker(defpoints[0], markers):
+                    return
+                self.add_error(
+                    code=AuditError.INVALID_DIMENSION_GEOMETRY_LOCATION,
+                    message=f'Invalid {str(dim)} geometry location in BLOCK "{block_name}"',
+                )
+            else:  # 2 or more defpoints and markers
+                # If two defpoints matches any markers the geometry location
+                # should be correct:
+                if quick_exit_test(defpoints[0], defpoints[1], markers):
+                    return
+                success = repair_dimension_geometry_block(
+                    block, defpoints, markers
+                )
+                if success:
+                    self.fixed_error(
+                        code=AuditError.INVALID_DIMENSION_GEOMETRY_LOCATION,
+                        message=f'Fixed invalid {str(dim)} geometry location in BLOCK "{block_name}"',
+                    )
+                else:
+                    self.add_error(
+                        code=AuditError.INVALID_DIMENSION_GEOMETRY_LOCATION,
+                        message=f'Invalid {str(dim)} geometry location in BLOCK "{block_name}"',
+                    )
 
-        def process_entities(entities):
+        def check_dimensions(entities: Iterable["DXFEntity"]):
             for entity in entities:
-                if entity.dxftype() == "INSERT":
-                    layout_names.append(entity.dxf.name)
-                    process_entities(entity.virtual_entities())
-                    layout_names.pop()
-                elif entity.dxftype() in DXF_DIMENSION_TYPES:
-                    check_dimension_location(entity)
+                if entity.dxftype() in DXF_DIMENSION_TYPES:
+                    check_dimension_location(cast("Dimension", entity))
 
         if self.doc is None:
             return
@@ -511,8 +531,49 @@ class Auditor:
         # names of fixed geometry blocks:
         processed_geometry_blocks: Set[str] = {"*"}
         for layout in self.doc.layouts:
-            layout_names = [layout.name]
-            process_entities(layout)
+            check_dimensions(layout)
+        for block in self.doc.blocks:
+            if not block.name.startswith("*"):
+                check_dimensions(block)
+
+
+DEFDPOINT_NAMES = (
+    "defpoint",
+    "defpoint2",
+    "defpoint3",
+    "defpoint4",
+    "defpoint5",
+)
+
+
+def get_defpoints(dim: "Dimension") -> Iterable[Vec3]:
+    dxf = dim.dxf
+    for name in DEFDPOINT_NAMES:
+        if dxf.hasattr(name):
+            yield dxf.get(name)
+
+
+def get_defpoint_markers(block: "GenericLayoutType") -> Iterable[Vec3]:
+    for e in block:
+        if (
+            e.dxftype() == "POINT"
+            and e.dxf.layer.lower() == "defpoints"
+            and e.dxf.hasattr("location")
+        ):
+            yield e.dxf.location
+
+
+def matches_defpoint_any_marker(defpoint: Vec3, markers: List[Vec3]):
+    for marker in markers:
+        if defpoint.isclose(marker):
+            return True
+    return False
+
+
+def repair_dimension_geometry_block(
+    block: "GenericLayoutType", defpoints: List[Vec3], markers: List[Vec3]
+) -> bool:
+    return False
 
 
 class BlockCycleDetector:
