@@ -81,7 +81,7 @@ acdb_dimension = DefSubclass(
         "defpoint": DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
         # Midpoint of dimension text in OCS:
         "text_midpoint": DXFAttr(11, xtype=XType.point3d),
-        # Insertion point for clones of a  dimension—Baseline and Continue (in OCS)
+        # Insertion point for clones of a dimension (Baseline and Continue?) (in OCS)
         # located in AcDbDimension? Another error in the DXF reference?
         "insert": DXFAttr(
             12, xtype=XType.point3d, default=NULLVEC, optional=True
@@ -504,6 +504,9 @@ class Dimension(DXFGraphic, OverrideMixin):
             # entity is a new virtual copy of self and can not share the same
             # geometry block to be independently transformable:
             virtual_content = EntitySpace(self.virtual_entities())
+            # virtual_entities() returns the entities already translated
+            # to the insert location:
+            entity.dxf.discard("insert")
         entity.virtual_block_content = virtual_content
 
     def post_bind_hook(self):
@@ -738,11 +741,21 @@ class Dimension(DXFGraphic, OverrideMixin):
         layout.
 
         """
+        transform = False
+        insert = self.dxf.get("insert", None)
+        if insert:
+            transform = True
+            insert = self.ocs().to_wcs(insert)
+            m = Matrix44.translate(insert.x, insert.y, insert.z)
+
         for entity in self._block_content():
             try:
-                yield entity.copy()
+                copy = entity.copy()
             except DXFTypeError:
-                pass
+                continue
+            if transform:
+                copy.transform(m)
+            yield copy
 
     def explode(self, target_layout: "BaseLayout" = None) -> "EntityQuery":
         """

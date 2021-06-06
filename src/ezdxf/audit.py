@@ -364,7 +364,7 @@ class Auditor:
             self.fixed_error(
                 code=AuditError.UNDEFINED_DIMENSION_STYLE,
                 message=f'Replaced undefined dimstyle "{dimstyle}" in '
-                f'{str(entity)} by "Standard".',
+                        f'{str(entity)} by "Standard".',
                 dxf_entity=entity,
                 data=dimstyle,
             )
@@ -434,7 +434,7 @@ class Auditor:
                 self.fixed_error(
                     code=AuditError.INVALID_OWNER_HANDLE,
                     message=f"Deleted {str(entity)} entity with invalid owner "
-                    f"handle #{owner_handle}.",
+                            f"handle #{owner_handle}.",
                 )
                 self.trash(doc.entitydb.get(handle))
 
@@ -454,7 +454,7 @@ class Auditor:
                 self.add_error(
                     code=AuditError.INVALID_BLOCK_REFERENCE_CYCLE,
                     message=f"Invalid block reference cycle detected in "
-                    f'block "{block.name}".',
+                            f'block "{block.name}".',
                     dxf_entity=block.block_record,
                 )
 
@@ -486,7 +486,6 @@ class Auditor:
             if not len(defpoints):
                 # no defpoints found, invalid DIMENSION entity
                 return
-
             markers = list(get_defpoint_markers(block))
             if not len(markers):
                 # no defpoint markers found, no checks or repair possible
@@ -558,12 +557,13 @@ DEFPOINT_NAMES = (
 
 
 def get_wcs_defpoints(dim: "Dimension") -> Iterable[Vec3]:
+    insert = dim.dxf.insert
     ocs = dim.ocs()
     to_wcs = ocs.to_wcs
     dxf = dim.dxf
     for name in DEFPOINT_NAMES:
         if dxf.hasattr(name):
-            yield to_wcs(dxf.get(name))
+            yield to_wcs(dxf.get(name) - insert)
 
 
 def get_defpoint_markers(block: "GenericLayoutType") -> Iterable[Vec3]:

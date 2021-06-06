@@ -139,9 +139,11 @@ Factory Functions
 
     .. attribute:: dxf.insert
 
-        Insertion point for clones of a linear dimensions—Baseline and Continue. (3D Point in :ref:`OCS`)
+        Insertion point for clones of a linear dimensions. (3D Point in :ref:`OCS`)
 
-        This value is used by CAD application (Baseline and Continue) and ignored by `ezdxf`.
+        This value translates the content of the associated anonymous block for
+        cloned linear dimensions, similar to the :attr:`insert` attribute of
+        the :class:`Insert` entity.
 
     .. attribute:: dxf.attachment_point
 
