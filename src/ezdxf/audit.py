@@ -4,6 +4,7 @@ from typing import (
     TYPE_CHECKING,
     Iterable,
     List,
+    Tuple,
     Set,
     TextIO,
     Any,
@@ -14,11 +15,11 @@ from typing import (
 )
 import sys
 from enum import IntEnum
+from itertools import permutations
 from ezdxf.lldxf import const, validator
 from ezdxf.entities import factory, DXFEntity
-from ezdxf.math import NULLVEC, Vec3
+from ezdxf.math import NULLVEC, Vec3, Matrix44
 from ezdxf.sections.table import table_key
-from ezdxf.query import EntityQuery
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -457,11 +458,16 @@ class Auditor:
                     dxf_entity=block.block_record,
                 )
 
-    def check_dimension_geometry_location(self):
+    def check_dimension_geometry_location(self, abs_tol: float = 1e-9):
         def quick_exit_test(p1: Vec3, p2: Vec3, markers: List[Vec3]):
-            return matches_defpoint_any_marker(
-                p1, markers
-            ) and matches_defpoint_any_marker(p2, markers)
+            return (
+                matches_defpoint_any_marker(
+                    p1,
+                    markers,
+                    abs_tol=abs_tol,
+                )
+                and matches_defpoint_any_marker(p2, markers, abs_tol=abs_tol)
+            )
 
         def check_dimension_location(dim: "Dimension"):
             if dim.is_dimensional_constraint:  # same TYPE different concept ;)
@@ -476,7 +482,7 @@ class Auditor:
             if block is None:  # block geometry does not exist
                 return
 
-            defpoints = list(get_defpoints(dim))
+            defpoints = list(get_wcs_defpoints(dim))
             if not len(defpoints):
                 # no defpoints found, invalid DIMENSION entity
                 return
@@ -493,7 +499,9 @@ class Auditor:
                 # at the correct location: find any marker which matches
                 # defpoint, but could also be a random match, without a second
                 # defpoint is a verification not possible!
-                if not matches_defpoint_any_marker(defpoints[0], markers):
+                if not matches_defpoint_any_marker(
+                    defpoints[0], markers, abs_tol=abs_tol
+                ):
                     return
                 self.add_error(
                     code=AuditError.INVALID_DIMENSION_GEOMETRY_LOCATION,
@@ -505,7 +513,10 @@ class Auditor:
                 if quick_exit_test(defpoints[0], defpoints[1], markers):
                     return
                 success = repair_dimension_geometry_block(
-                    block, defpoints, markers
+                    block,
+                    defpoints,
+                    markers,
+                    abs_tol=abs_tol,
                 )
                 if success:
                     self.fixed_error(
@@ -537,7 +548,7 @@ class Auditor:
                 check_dimensions(block)
 
 
-DEFDPOINT_NAMES = (
+DEFPOINT_NAMES = (
     "defpoint",
     "defpoint2",
     "defpoint3",
@@ -546,11 +557,13 @@ DEFDPOINT_NAMES = (
 )
 
 
-def get_defpoints(dim: "Dimension") -> Iterable[Vec3]:
+def get_wcs_defpoints(dim: "Dimension") -> Iterable[Vec3]:
+    ocs = dim.ocs()
+    to_wcs = ocs.to_wcs
     dxf = dim.dxf
-    for name in DEFDPOINT_NAMES:
+    for name in DEFPOINT_NAMES:
         if dxf.hasattr(name):
-            yield dxf.get(name)
+            yield to_wcs(dxf.get(name))
 
 
 def get_defpoint_markers(block: "GenericLayoutType") -> Iterable[Vec3]:
@@ -563,17 +576,62 @@ def get_defpoint_markers(block: "GenericLayoutType") -> Iterable[Vec3]:
             yield e.dxf.location
 
 
-def matches_defpoint_any_marker(defpoint: Vec3, markers: List[Vec3]):
+def matches_defpoint_any_marker(
+    defpoint: Vec3, markers: List[Vec3], abs_tol: float = 1e-9
+):
     for marker in markers:
-        if defpoint.isclose(marker):
+        if defpoint.isclose(marker, abs_tol=abs_tol):
             return True
     return False
 
 
 def repair_dimension_geometry_block(
-    block: "GenericLayoutType", defpoints: List[Vec3], markers: List[Vec3]
+    block: "GenericLayoutType",
+    defpoints: List[Vec3],
+    markers: List[Vec3],
+    abs_tol: float = 1e-9,
 ) -> bool:
-    return False
+    count = min(3, len(markers))
+    offset = find_marker_offset(defpoints[:count], markers, abs_tol=abs_tol)
+    if offset is None:
+        return False
+    else:
+        translate_block_content(block, offset)
+        return True
+
+
+def find_marker_offset(
+    defpoints: List[Vec3],
+    markers: List[Vec3],
+    abs_tol: float = 1e-9,
+) -> Optional[Vec3]:
+    """Find `defpoints` in `markers` with the same relative distances and
+    return the offset as Vec3 or ``None`` if not found.
+    The order of `markers` is unknown.
+
+    """
+    len_defpoints = len(defpoints)
+    if len_defpoints > len(markers):
+        return None
+    for candidate in permutations(markers):
+        offset = defpoints[0] - candidate[0]
+        matches = 1
+        for defpoint in defpoints[1:]:
+            for marker in candidate[1:]:
+                if offset.isclose(defpoint - marker, abs_tol=abs_tol):
+                    matches += 1
+                    break
+        if matches == len_defpoints:
+            # found for every defpoint a marker with the same offset
+            return offset
+
+    return None
+
+
+def translate_block_content(block: "GenericLayoutType", offset: Vec3):
+    m = Matrix44.translate(offset.x, offset.y, offset.z)
+    for entity in block:
+        entity.transform(m)
 
 
 class BlockCycleDetector:
