@@ -55,8 +55,6 @@ Render Tools
 Construction Tools
 ------------------
 
-- (v0.17) Path to MPOLYGON converter? MPOLYGON does not support spline edges!
-
 DXF Entities
 ------------
 
@@ -101,3 +99,5 @@ DXF Audit & Repair
   - dimstyle exist; repair: set to 'Standard'
   - arrows exist; repair: set to '' = default open filled arrow
   - text style exist; repair: set to 'Standard'
+  - check consistent defpoint and POINT entity locations in the associated 
+    geometry block 

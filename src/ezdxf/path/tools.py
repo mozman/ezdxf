@@ -46,6 +46,7 @@ __all__ = [
     "render_polylines3d",
     "render_lines",
     "render_hatches",
+    "render_mpolygons",
     "render_splines_and_polylines",
     "add_bezier4p",
     "add_bezier3p",
@@ -374,7 +375,7 @@ def render_hatches(
         edge_path: ``True`` for edge paths build of LINE and SPLINE edges,
             ``False`` for only LWPOLYLINE paths as boundary paths
         distance:  maximum distance, see :meth:`Path.flattening`
-        segments: minimum segment count per Bézier curve to flatten LWPOLYLINE paths
+        segments: minimum segment count per Bézier curve to flatten polyline paths
         g1_tol: tolerance for G1 continuity check to separate SPLINE edges
         extrusion: extrusion vector for all paths
         dxfattribs: additional DXF attribs
@@ -399,6 +400,52 @@ def render_hatches(
     for hatch in hatches:
         layout.add_entity(hatch)
     return EntityQuery(hatches)
+
+
+def render_mpolygons(
+    layout: "Layout",
+    paths: Iterable[Path],
+    *,
+    distance: float = MAX_DISTANCE,
+    segments: int = MIN_SEGMENTS,
+    extrusion: "Vertex" = Z_AXIS,
+    dxfattribs: Optional[Dict] = None
+) -> EntityQuery:
+    """Render the given `paths` into `layout` as
+    :class:`~ezdxf.entities.MPolygon` entities. The MPOLYGON entity supports
+    only polyline boundary paths. All curves will be approximated.
+
+    The `extrusion` vector is applied to all paths, all vertices are projected
+    onto the plane normal to this extrusion vector. The default extrusion vector
+    is the WCS z-axis. The plane elevation is the distance from the WCS origin
+    to the start point of the first path.
+
+    Args:
+        layout: the modelspace, a paperspace layout or a block definition
+        paths: iterable of :class:`Path` objects
+        distance:  maximum distance, see :meth:`Path.flattening`
+        segments: minimum segment count per Bézier curve to flatten polyline paths
+        extrusion: extrusion vector for all paths
+        dxfattribs: additional DXF attribs
+
+    Returns:
+        created entities in an :class:`~ezdxf.query.EntityQuery` object
+
+    .. versionadded:: 0.17
+
+    """
+    polygons = list(
+        converter.to_mpolygons(
+            paths,
+            distance=distance,
+            segments=segments,
+            extrusion=extrusion,
+            dxfattribs=dxfattribs,
+        )
+    )
+    for polygon in polygons:
+        layout.add_entity(polygon)
+    return EntityQuery(polygons)
 
 
 def render_polylines3d(
