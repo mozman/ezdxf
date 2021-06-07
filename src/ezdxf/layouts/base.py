@@ -248,9 +248,9 @@ class BaseLayout(_AbstractLayout):
         foreign_doc = entity.doc
         dxftype = entity.dxftype()
         if dxftype not in SUPPORTED_FOREIGN_ENTITY_TYPES:
-            raise DXFValueError(f"Unsupported entity type: {dxftype}.")
+            raise DXFTypeError(f"unsupported DXF type: {dxftype}")
         if foreign_doc is self.doc:
-            raise DXFValueError("Entity from same DXF document.")
+            raise DXFValueError("entity from same DXF document")
 
         if foreign_doc is not None:
             if copy:
