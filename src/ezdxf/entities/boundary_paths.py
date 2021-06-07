@@ -684,7 +684,7 @@ class EdgePath:
             edge.transform(ocs, elevation=elevation)
 
     def add_line(
-        self, start: Sequence[float], end: Sequence[float]
+        self, start: "Vertex", end: "Vertex"
     ) -> "LineEdge":
         """Add a :class:`LineEdge` from `start` to `end`.
 
@@ -701,7 +701,7 @@ class EdgePath:
 
     def add_arc(
         self,
-        center: Tuple[float, float],
+        center: "Vertex",
         radius: float = 1.0,
         start_angle: float = 0.0,
         end_angle: float = 360.0,
@@ -719,7 +719,7 @@ class EdgePath:
 
         """
         arc = ArcEdge()
-        arc.center = center
+        arc.center = Vec2(center)
         arc.radius = radius
         arc.start_angle = start_angle
         arc.end_angle = end_angle
@@ -729,8 +729,8 @@ class EdgePath:
 
     def add_ellipse(
         self,
-        center: Tuple[float, float],
-        major_axis: Tuple[float, float] = (1.0, 0.0),
+        center: "Vertex",
+        major_axis: "Vertex" = (1.0, 0.0),
         ratio: float = 1.0,
         start_angle: float = 0.0,
         end_angle: float = 360.0,
@@ -749,10 +749,10 @@ class EdgePath:
 
         """
         if ratio > 1.0:
-            raise const.DXFValueError("Parameter 'ratio' has to be <= 1.0")
+            raise const.DXFValueError("argument 'ratio' has to be <= 1.0")
         ellipse = EllipseEdge()
-        ellipse.center = center
-        ellipse.major_axis = major_axis
+        ellipse.center = Vec2(center)
+        ellipse.major_axis = Vec2(major_axis)
         ellipse.ratio = ratio
         ellipse.start_angle = start_angle
         ellipse.end_angle = end_angle
