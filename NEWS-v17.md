@@ -14,3 +14,4 @@ Version 0.17 - dev
 - NEW: `text2path.make_path_from_str()` returns a multi-path object  
 - NEW: `text2path.make_path_from_enity()` returns a multi-path object  
 - NEW: `MPOLYGON` load/write/create support
+- NEW: `ezdxf.path.to_mpolygons()` function: Path() to MPOLYGON converter

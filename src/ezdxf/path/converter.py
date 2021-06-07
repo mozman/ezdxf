@@ -9,8 +9,10 @@ from typing import (
     Optional,
     Dict,
     Callable,
+    Type,
+    TypeVar,
 )
-from functools import singledispatch
+from functools import singledispatch, partial
 import enum
 import math
 from ezdxf.math import (
@@ -45,6 +47,7 @@ from ezdxf.entities import (
     Helix,
     Wipeout,
     MPolygon,
+    BoundaryPaths,
     BoundaryPathType,
     EdgeType,
 )
@@ -63,6 +66,7 @@ __all__ = [
     "to_lwpolylines",
     "to_polylines2d",
     "to_hatches",
+    "to_mpolygons",
     "to_bsplines_and_vertices",
     "to_splines_and_polylines",
     "from_hatch",
@@ -79,6 +83,8 @@ __all__ = [
 MAX_DISTANCE = 0.01
 MIN_SEGMENTS = 4
 G1_TOL = 1e-4
+TPolygon = TypeVar("TPolygon", Hatch, MPolygon)
+BoundaryFactory = Callable[[BoundaryPaths, Path, int], None]
 
 
 @singledispatch
@@ -571,47 +577,110 @@ def to_hatches(
 
     """
 
-    def build_edge_path(hatch: Hatch, path: Path, flags: int):
-        if path.has_curves:  # Edge path with LINE and SPLINE edges
-            edge_path = hatch.paths.add_edge_path(flags)
-            for edge in to_bsplines_and_vertices(path, g1_tol=g1_tol):
-                if isinstance(edge, BSpline):
-                    edge_path.add_spline(
-                        control_points=edge.control_points,
-                        degree=edge.degree,
-                        knot_values=edge.knots(),
-                    )
-                else:  # add LINE edges
-                    prev = edge[0]
-                    for p in edge[1:]:
-                        edge_path.add_line(prev, p)
-                        prev = p
-        else:  # Polyline boundary path
-            hatch.paths.add_polyline_path(
-                Vec2.generate(path.flattening(distance, segments)), flags=flags
-            )
-
-    def build_poly_path(hatch: Hatch, path: Path, flags: int):
-        hatch.paths.add_polyline_path(
-            # Vec2 removes the z-axis, which would be interpreted as bulge value!
-            Vec2.generate(path.flattening(distance, segments)),
-            flags=flags,
+    if edge_path:
+        # noinspection PyTypeChecker
+        boundary_factory: BoundaryFactory = partial(
+            build_edge_path, distance=distance, segments=segments, g1_tol=g1_tol
+        )
+    else:
+        # noinspection PyTypeChecker
+        boundary_factory: BoundaryFactory = partial(
+            build_poly_path, distance=distance, segments=segments
         )
 
-    if edge_path:
-        boundary_factory = build_edge_path
-    else:
-        boundary_factory = build_poly_path
-
-    yield from _hatch_converter(paths, boundary_factory, extrusion, dxfattribs)
+    yield from _polygon_converter(
+        Hatch, paths, boundary_factory, extrusion, dxfattribs
+    )
 
 
-def _hatch_converter(
+def to_mpolygons(
     paths: Iterable[Path],
-    add_boundary: Callable[[Hatch, Path, int], None],
+    *,
+    distance: float = MAX_DISTANCE,
+    segments: int = MIN_SEGMENTS,
     extrusion: "Vertex" = Z_AXIS,
     dxfattribs: Optional[Dict] = None,
 ) -> Iterable[Hatch]:
+    """Convert the given `paths` into :class:`~ezdxf.entities.MPolygon` entities.
+    In contrast to HATCH, MPOLYGON supports only polyline boundary paths.
+    All curves will be approximated.
+
+    The `extrusion` vector is applied to all paths, all vertices are projected
+    onto the plane normal to this extrusion vector. The default extrusion vector
+    is the WCS z-axis. The plane elevation is the distance from the WCS origin
+    to the start point of the first path.
+
+    Args:
+        paths: iterable of :class:`Path` objects
+        distance:  maximum distance, see :meth:`Path.flattening`
+        segments: minimum segment count per Bézier curve to flatten LWPOLYLINE paths
+        extrusion: extrusion vector to all paths
+        dxfattribs: additional DXF attribs
+
+    Returns:
+        iterable of :class:`~ezdxf.entities.MPolygon` objects
+
+    .. versionadded:: 0.17
+
+    """
+    # noinspection PyTypeChecker
+    boundary_factory: BoundaryFactory = partial(
+        build_poly_path, distance=distance, segments=segments
+    )
+    dxfattribs = dxfattribs or dict()
+    dxfattribs.setdefault("fill_color", const.BYLAYER)
+
+    yield from _polygon_converter(
+        MPolygon, paths, boundary_factory, extrusion, dxfattribs
+    )
+
+
+def build_edge_path(
+    boundaries: BoundaryPaths,
+    path: Path,
+    flags: int,
+    distance: float,
+    segments: int,
+    g1_tol: float,
+):
+    if path.has_curves:  # Edge path with LINE and SPLINE edges
+        edge_path = boundaries.add_edge_path(flags)
+        for edge in to_bsplines_and_vertices(path, g1_tol=g1_tol):
+            if isinstance(edge, BSpline):
+                edge_path.add_spline(
+                    control_points=edge.control_points,
+                    degree=edge.degree,
+                    knot_values=edge.knots(),
+                )
+            else:  # add LINE edges
+                prev = edge[0]
+                for p in edge[1:]:
+                    edge_path.add_line(prev, p)
+                    prev = p
+    else:  # Polyline boundary path
+        boundaries.add_polyline_path(
+            Vec2.generate(path.flattening(distance, segments)), flags=flags
+        )
+
+
+def build_poly_path(
+    boundaries: BoundaryPaths, path: Path, flags: int, distance: float,
+    segments: int
+):
+    boundaries.add_polyline_path(
+        # Vec2 removes the z-axis, which would be interpreted as bulge value!
+        Vec2.generate(path.flattening(distance, segments)),
+        flags=flags,
+    )
+
+
+def _polygon_converter(
+    cls: Type[TPolygon],
+    paths: Iterable[Path],
+    add_boundary: BoundaryFactory,
+    extrusion: "Vertex" = Z_AXIS,
+    dxfattribs: Optional[Dict] = None,
+) -> Iterable[TPolygon]:
     if isinstance(paths, Path):
         paths = [paths]
     else:
@@ -636,14 +705,15 @@ def _hatch_converter(
     for group in group_paths(tools.single_paths(paths)):
         if len(group) == 0:
             continue
-        hatch = Hatch.new(dxfattribs=dxfattribs)
+        polygon = cls.new(dxfattribs=dxfattribs)
+        boundaries = polygon.paths
         external = group[0]
         external.close()
-        add_boundary(hatch, external, 1)
+        add_boundary(boundaries, external, 1)
         for hole in group[1:]:
             hole.close()
-            add_boundary(hatch, hole, 0)
-        yield hatch
+            add_boundary(boundaries, hole, 0)
+        yield polygon
 
 
 def to_polylines3d(

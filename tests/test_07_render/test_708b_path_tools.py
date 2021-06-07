@@ -15,6 +15,7 @@ from ezdxf.path import (
     to_lwpolylines,
     to_polylines2d,
     to_hatches,
+    to_mpolygons,
     to_bsplines_and_vertices,
     to_splines_and_polylines,
     from_vertices,
@@ -490,6 +491,20 @@ class TestToEntityConverter:
             Vec3.generate(spline.control_points),
             [(4, 0, 0), (3, 1, 1), (1, 1, 1), (0, 0, 0)],
         )
+
+    def test_to_mpolygons_returns_expected_dxf_type(self, path):
+        # Works internally like to_hatches() but with polyline paths
+        # as boundaries only.
+        polygons = list(to_mpolygons(path, dxfattribs={
+            "color": 6,  # boundary line color
+            "fill_color": 1,
+        }))
+        assert len(polygons) == 1
+        mp = polygons[0]
+        assert mp.dxftype() == "MPOLYGON"
+        assert len(mp.paths) == 1
+        assert mp.dxf.color == 6
+        assert mp.dxf.fill_color == 1
 
 
 # Issue #224 regression test
