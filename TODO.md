@@ -14,7 +14,6 @@ Add-ons
     - (>v1.0) support for switching plot styles (DXF_DEFAULT_PAPERSPACE_COLORS)
   
 - geo: (v0.17) MPOLYGON support
-- dxf2code: (v0.17) MPOLYGON support
   
 - (>v1.0) Native SVG exporter, planned after the matplotlib backend supports 
   all v1.0 features. 

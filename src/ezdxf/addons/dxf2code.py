@@ -20,9 +20,11 @@ if TYPE_CHECKING:
         Image,
         Mesh,
         Hatch,
+        MPolygon,
         Wipeout,
     )
     from ezdxf.eztypes import DXFEntity, Linetype, DXFTag, BlockLayout
+    from ezdxf.entities.polygon import BasePolygon
 
 __all__ = ["entities_to_code", "block_to_code", "table_entries_to_code"]
 
@@ -683,12 +685,26 @@ class _SourceCodeGenerator:
             )
 
     def _hatch(self, entity: "Hatch"):
-        add_line = self.add_source_code_line
         dxfattribs = entity.dxfattribs()
         dxfattribs["associative"] = 0  # associative hatch not supported
         self.add_source_code_lines(
             self.api_call("add_hatch(", ["color"], dxfattribs)
         )
+        self._polygon(entity)
+
+    def _mpolygon(self, entity: "MPolygon"):
+        dxfattribs = entity.dxfattribs()
+        self.add_source_code_lines(
+            self.api_call("add_mpolygon(", ["color"], dxfattribs)
+        )
+        if entity.dxf.solid_fill:
+            self.add_source_code_line(
+                f"e.set_solid_fill(color={entity.dxf.fill_color})\n"
+            )
+        self._polygon(entity)
+
+    def _polygon(self, entity: "BasePolygon"):
+        add_line = self.add_source_code_line
         if len(entity.seeds):
             add_line(f"e.set_seed_points({entity.seeds})")
         if entity.pattern:
