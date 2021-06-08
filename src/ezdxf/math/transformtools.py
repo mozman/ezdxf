@@ -114,6 +114,22 @@ class OCSTransform:
 
     transform_scale_factor = transform_length
 
+    def transform_thickness(self, thickness: float) -> float:
+        """Transform the thickness attribute from the old OCS into the new OCS
+        system.
+
+        Thickness is always applied in the z-axis direction of the OCS.
+
+        """
+        old_wcs_thickness = self.old_ocs.to_wcs(Vec3(0, 0, thickness))
+        new_wcs_thickness = self.m.transform_direction(old_wcs_thickness)
+        # Only the z-component of the thickness vector transformed into the
+        # new OCS is relevant for the extrusion in the direction of the new
+        # OCS z-axis.
+        # Input and output thickness can be negative!
+        new_ocs_thickness = self.new_ocs.from_wcs(new_wcs_thickness)
+        return new_ocs_thickness.z
+
     def transform_vertex(self, vertex: "Vertex") -> Vec3:
         """Returns vertex transformed from old OCS into new OCS."""
         return self.new_ocs.from_wcs(
