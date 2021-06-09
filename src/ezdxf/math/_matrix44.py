@@ -503,7 +503,7 @@ class Matrix44:
     def transform(self, vector: 'Vertex') -> Vec3:
         """ Returns a transformed vertex. """
         m = self._matrix
-        x, y, z = vector
+        x, y, z = Vec3(vector)
         return Vec3(x * m[0] + y * m[4] + z * m[8] + m[12],
                     x * m[1] + y * m[5] + z * m[9] + m[13],
                     x * m[2] + y * m[6] + z * m[10] + m[14])
@@ -511,7 +511,7 @@ class Matrix44:
     def transform_direction(self, vector: 'Vertex', normalize=False) -> Vec3:
         """ Returns a transformed direction vector without translation. """
         m = self._matrix
-        x, y, z = vector
+        x, y, z = Vec3(vector)
         v = Vec3(x * m[0] + y * m[4] + z * m[8],
                  x * m[1] + y * m[5] + z * m[9],
                  x * m[2] + y * m[6] + z * m[10])
@@ -523,7 +523,7 @@ class Matrix44:
         """ Returns an iterable of transformed vertices. """
         m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15 = self._matrix
         for vector in vectors:
-            x, y, z = vector
+            x, y, z = Vec3(vector)
             yield Vec3(
                 x * m0 + y * m4 + z * m8 + m12,
                 x * m1 + y * m5 + z * m9 + m13,
@@ -538,7 +538,7 @@ class Matrix44:
         """
         m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, *_ = self._matrix
         for vector in vectors:
-            x, y, z = vector
+            x, y, z = Vec3(vector)
             v = Vec3(
                 x * m0 + y * m4 + z * m8,
                 x * m1 + y * m5 + z * m9,
