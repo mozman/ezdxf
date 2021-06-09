@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple, Sequence, Iterable, cast, List, Union
 import array
@@ -346,16 +346,22 @@ class LWPolyline(DXFGraphic):
             # Parent function has to catch this Exception and explode this
             # LWPOLYLINE into LINE and ELLIPSE entities.
         vertices = list(ocs.transform_vertex(v) for v in self.vertices_in_ocs())
-        lwpoints = [
-            (v[0], v[1], p[2], p[3], p[4])
-            for v, p in zip(vertices, self.lwpoints)
-        ]
+        lwpoints = []
+        for v, p in zip(vertices, self.lwpoints):
+            _, _, start_width, end_width, bulge = p
+            # assume a uniform scaling!
+            start_width = ocs.transform_width(start_width)
+            end_width = ocs.transform_width(end_width)
+            lwpoints.append((v.x, v.y, start_width, end_width, bulge))
         self.set_points(lwpoints)
 
         # All new OCS vertices must have the same z-axis, which is the elevation
         # of the polyline:
         if vertices:
-            dxf.elevation = vertices[0][2]
+            dxf.elevation = vertices[0].z
+
+        if dxf.hasattr("const_width"):  # assume a uniform scaling!
+            dxf.const_width = ocs.transform_width(dxf.const_width)
 
         if dxf.hasattr("thickness"):
             dxf.thickness = ocs.transform_thickness(dxf.thickness)

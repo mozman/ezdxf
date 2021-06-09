@@ -123,6 +123,5 @@ class TestTransformWidth:
         ), "current implementation scales by biggest x- or y-axis factor"
 
 
-
 if __name__ == "__main__":
     pytest.main([__file__])
