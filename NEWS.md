@@ -20,6 +20,7 @@ Version 0.16.4b1 - dev
 - BUGFIX: ignore open loops in `HATCH` edge paths 
 - BUGFIX: correct application of the `Dimension.dxf.insert` attribute
 - BUGFIX: fixed incorrect "thickness" transformation of OCS entities
+- BUGFIX: add missing "width" transformation to POLYLINE and LWPOLYLINE
 
 Version 0.16.3 - 2021-05-22
 ---------------------------

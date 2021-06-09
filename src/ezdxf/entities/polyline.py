@@ -477,7 +477,7 @@ class Polyline(LinkedEntities):
                 z_axis = dxf.elevation.z
             else:
                 z_axis = None
-
+            # TODO: const-, start- and end-width transformation
             vertices = [
                 ocs.transform_vertex(vertex)
                 for vertex in _ocs_locations(z_axis)
@@ -488,8 +488,21 @@ class Polyline(LinkedEntities):
                 dxf.elevation = vertices[0].replace(x=0, y=0)
 
             for vertex, location in zip(self.vertices, vertices):
-                vertex.dxf.location = location
+                vdxf = vertex.dxf
+                vdxf.location = location
+                if vdxf.hasattr("start_width"):
+                    vdxf.start_width = ocs.transform_width(vdxf.start_width)
+                if vdxf.hasattr("end_width"):
+                    vdxf.end_width = ocs.transform_width(vdxf.end_width)
 
+            if dxf.hasattr("default_start_width"):
+                dxf.default_start_width = ocs.transform_width(
+                    dxf.default_start_width
+                )
+            if dxf.hasattr("default_end_width"):
+                dxf.default_end_width = ocs.transform_width(
+                    dxf.default_end_width
+                )
             if dxf.hasattr("thickness"):
                 dxf.thickness = ocs.transform_thickness(dxf.thickness)
 
