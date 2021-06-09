@@ -358,9 +358,7 @@ class LWPolyline(DXFGraphic):
             dxf.elevation = vertices[0][2]
 
         if dxf.hasattr("thickness"):
-            dxf.thickness = ocs.transform_length(
-                (0, 0, dxf.thickness), reflection=dxf.thickness
-            )
+            dxf.thickness = ocs.transform_thickness(dxf.thickness)
         dxf.extrusion = ocs.new_extrusion
         return self
 
