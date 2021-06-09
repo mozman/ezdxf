@@ -154,6 +154,7 @@ class CurvePrimitive(Primitive):
 
 
 class LinePrimitive(Primitive):
+    # TODO: apply thickness if not 0
     @property
     def path(self) -> Optional[Path]:
         """Create path representation on demand."""
@@ -168,6 +169,7 @@ class LinePrimitive(Primitive):
 
 
 class LwPolylinePrimitive(ConvertedPrimitive):
+    # TODO: apply thickness if not 0
     def _convert_entity(self):
         e: "LWPolyline" = cast("LWPolyline", self.entity)
         if e.has_width:  # use a mesh representation:
@@ -206,11 +208,13 @@ class MeshPrimitive(ConvertedPrimitive):
 
 
 class QuadrilateralPrimitive(ConvertedPrimitive):
+    # TODO: apply thickness if not 0
     def _convert_entity(self):
         self._path = make_path(self.entity)
 
 
 class PolylinePrimitive(ConvertedPrimitive):
+    # TODO: apply thickness if not 0
     def _convert_entity(self):
         e: "Polyline" = cast("Polyline", self.entity)
         if e.is_2d_polyline and e.has_width:

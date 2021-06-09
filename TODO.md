@@ -54,6 +54,8 @@ Render Tools
 Construction Tools
 ------------------
 
+- (<v1.0) `make_primitive()`: apply thickness if not 0
+
 DXF Entities
 ------------
 
@@ -63,6 +65,9 @@ DXF Entities
 - (v0.17) Remove generic "Embedded Object" support in DXFEntity because this is 
   always a special case which should be handled by DXF load/export procedure, 
   and it is used only by ATTRIB/ATTDEF/MTEXT yet.
+- (<v1.0) do more entities support the DXF "thickness" attribute (group code 39)?
+  possible candidates: HATCH, MPOLYGON, planar SPLINE, ELLIPSE, MLINE 
+  -> `make_primitive()` 
 - (>v1.0) GEODATA version 1 support, see mpolygon examples and DXF reference R2009
 - (>v1.0) FIELD, used by ACAD_TABLE and MTEXT
 - (>v1.0) ACAD_TABLE
