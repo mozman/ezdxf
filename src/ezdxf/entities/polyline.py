@@ -444,7 +444,7 @@ class Polyline(LinkedEntities):
                 vertex.dxf.location = location
 
             if dxf.hasattr('thickness'):
-                dxf.thickness = ocs.transform_length((0, 0, dxf.thickness))
+                dxf.thickness = ocs.transform_thickness(dxf.thickness)
 
             dxf.extrusion = ocs.new_extrusion
         else:

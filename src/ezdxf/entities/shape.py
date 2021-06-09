@@ -96,8 +96,7 @@ class Shape(DXFGraphic):
         dxf.x_scale = ocs.transform_length(
             (dxf.x_scale, 0, 0), reflection=dxf.x_scale)
         if dxf.hasattr('thickness'):
-            dxf.thickness = ocs.transform_length(
-                (0, 0, dxf.thickness), reflection=dxf.thickness)
+            dxf.thickness = ocs.transform_thickness(dxf.thickness)
 
         dxf.extrusion = ocs.new_extrusion
         return self

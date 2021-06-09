@@ -298,8 +298,7 @@ class Text(DXFGraphic):
         dxf.rotation = new_rotation
 
         if dxf.hasattr('thickness'):  # can be negative
-            dxf.thickness = ocs.transform_length((0, 0, dxf.thickness),
-                                                 reflection=dxf.thickness)
+            dxf.thickness = ocs.transform_thickness(dxf.thickness)
         dxf.extrusion = ocs.new_extrusion
         return self
 

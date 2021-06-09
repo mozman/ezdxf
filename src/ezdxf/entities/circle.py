@@ -117,8 +117,7 @@ class Circle(DXFGraphic):
             if dxf.hasattr('thickness'):
                 # thickness vector points in the z-direction of the old_ocs,
                 # thickness can be negative
-                dxf.thickness = ocs.transform_length((0, 0, dxf.thickness),
-                                                     reflection=dxf.thickness)
+                dxf.thickness = ocs.transform_thickness(dxf.thickness)
         else:
             # Caller has to catch this Exception and convert this
             # CIRCLE/ARC into an ELLIPSE.

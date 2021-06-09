@@ -18,7 +18,8 @@ Version 0.16.4b1 - dev
 - BUGFIX: `disassemble.make_primitive()` transform LWPOLYLINE including width 
   values into WCS
 - BUGFIX: ignore open loops in `HATCH` edge paths 
-- BUGFIX: correct application of the `Dimension.dxf.insert` attribute 
+- BUGFIX: correct application of the `Dimension.dxf.insert` attribute
+- BUGFIX: fixed incorrect "thickness" transformation of OCS entities
 
 Version 0.16.3 - 2021-05-22
 ---------------------------
