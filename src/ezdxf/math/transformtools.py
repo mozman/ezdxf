@@ -112,6 +112,17 @@ class OCSTransform:
             self.old_ocs.to_wcs(length)
         ).magnitude * sign(reflection)
 
+    def transform_width(self, width: float) -> float:
+        """Transform the width of a linear OCS entity from the old OCS
+        into the new OCS. (LWPOLYLINE!)
+        """
+        if abs(width) > 1e-12:  # assume a uniform scaling!
+            return max(
+                self.transform_length((abs(width), 0, 0)),
+                self.transform_length((0, abs(width), 0))
+            )
+        return 0.0
+
     transform_scale_factor = transform_length
 
     def transform_ocs_direction(self, direction: Vec3) -> Vec3:
