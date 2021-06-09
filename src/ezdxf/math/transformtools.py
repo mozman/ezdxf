@@ -130,21 +130,6 @@ class OCSTransform:
         # Input and output thickness can be negative!
         return new_ocs_thickness.z
 
-    def transform_scaling_factors(
-        self, sx: float, sy: float, sz: float
-    ) -> tuple[float, float, float]:
-        """Transform the scaling factors in x-, y- and z-axis from the old OCS
-        into the new OCS.
-
-        """
-        old_wcs_scale = self.old_ocs.to_wcs(Vec3(sx, sy, sz))
-        new_wcs_scale = self.m.transform_direction(old_wcs_scale)
-        new_ocs_scale = self.new_ocs.from_wcs(new_wcs_scale)
-        # The x-, y- and z-component for the `new_ocs_scale` are the scaling
-        # factors for the x-, y-, and z-axis of the new OCS.
-        # Scaling factors can be negative!
-        return new_ocs_scale.xyz
-
     def transform_vertex(self, vertex: "Vertex") -> Vec3:
         """Returns vertex transformed from old OCS into new OCS."""
         return self.new_ocs.from_wcs(
