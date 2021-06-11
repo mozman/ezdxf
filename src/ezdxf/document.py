@@ -607,6 +607,7 @@ class Drawing:
 
     def _create_appids(self):
         self._create_appid_if_not_exist('HATCHBACKGROUNDCOLOR', 0)
+        self._create_appid_if_not_exist('EZDXF', 0)
 
     @property
     def acad_release(self) -> str:
