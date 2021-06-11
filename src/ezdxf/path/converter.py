@@ -71,6 +71,8 @@ __all__ = [
     "to_splines_and_polylines",
     "from_hatch",
     "from_hatch_boundary_path",
+    "from_hatch_edge_path",
+    "from_hatch_polyline_path",
     "from_vertices",
     "from_matplotlib_path",
     "from_qpainter_path",
@@ -296,10 +298,16 @@ def from_hatch_polyline_path(
 
 
 def from_hatch_edge_path(
-    edges: "EdgePath", ocs: OCS = None, elevation: float = 0
+    edges: "EdgePath",
+    ocs: OCS = None,
+    elevation: float = 0,
+    open_loops: bool = False,
 ) -> "Path":
     """Returns a :class:`Path` object from a :class:`~ezdxf.entities.Hatch`
     edge path.
+
+    In general open loops should be ignored, but for testing it is maybe
+    necessary to override this behavior, by setting `open_loops` to ``True``.
     """
 
     def line(edge):
@@ -402,17 +410,25 @@ def from_hatch_edge_path(
             continue
 
         if loop.end.isclose(next_segment.start):
-            # only append segments with continuity
+            # end of current loop connects to the start of the next segment
             loop.append_path(next_segment)
         elif loop.end.isclose(next_segment.end):
-            # or reversed continuity
+            # end of current loop connects to the end of the next segment
             loop.append_path(next_segment.reversed())
+        elif loop.start.isclose(next_segment.end):
+            # start of the current loop connects to the end of the next segment
+            next_segment.append_path(loop)
+            loop = next_segment
+        elif loop.start.isclose(next_segment.start):
+            # start of the current loop connects to the start of the next segment
+            loop = loop.reversed()
+            loop.append_path(next_segment)
         else:  # gap between current loop and next segment
-            if loop.is_closed:  # only append closed loops to multi path
+            if loop.is_closed or open_loops:
                 path.extend_multi_path(loop)
             loop = next_segment  # start a new loop
 
-    if loop is not None and loop.is_closed:
+    if loop is not None and (loop.is_closed or open_loops):
         path.extend_multi_path(loop)
     return path  # multi path
 
@@ -664,8 +680,11 @@ def build_edge_path(
 
 
 def build_poly_path(
-    boundaries: BoundaryPaths, path: Path, flags: int, distance: float,
-    segments: int
+    boundaries: BoundaryPaths,
+    path: Path,
+    flags: int,
+    distance: float,
+    segments: int,
 ):
     boundaries.add_polyline_path(
         # Vec2 removes the z-axis, which would be interpreted as bulge value!

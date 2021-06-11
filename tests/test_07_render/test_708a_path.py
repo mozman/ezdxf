@@ -10,7 +10,15 @@ from ezdxf.path import (
     Command,
     tools,
 )
-from ezdxf.math import Vec3, Matrix44, Bezier4P, Bezier3P, close_vectors, OCS
+from ezdxf.math import (
+    Vec3,
+    Vec2,
+    Matrix44,
+    Bezier4P,
+    Bezier3P,
+    close_vectors,
+    OCS,
+)
 from ezdxf.entities import (
     factory,
     DXFEntity,
@@ -931,14 +939,63 @@ def test_from_edge_path_with_two_closed_loops():
     assert len(list(path.sub_paths())) == 2, "expected two sub paths"
 
 
-def test_edge_path_has_to_be_closed_to_create_a_loop():
+LOOP = Vec2(0, 0), Vec2(1, 0), Vec2(1, 1), Vec2(0, 1)
+A, B, C, D = LOOP
+
+
+def test_edge_path_open_loop():
     ep = EdgePath()
     # open segments do not create a path
-    ep.add_line((0, 0), (0, 1))
-    ep.add_line((0, 1), (1, 1))
-    ep.add_line((1, 1), (0, 1))
+    ep.add_line(A, B)
+    ep.add_line(B, C)
+    ep.add_line(C, D)
     path = converter.from_hatch_edge_path(ep)
-    assert bool(path) is False, "expected an empty path"
+    assert bool(path) is False, "expected an open loop"
+
+
+@pytest.mark.parametrize(
+    "e0,e1,e2,e3",
+    [
+        [(A, B), (B, C), (C, D), (D, A)],  # case 0: consecutive order
+        #    0---->  1---->  2---->        # end - start
+        # <--------------------------3
+        [(D, C), (C, B), (B, A), (A, D)],  # case 1: reversed order
+        [(A, B), (C, B), (C, D), (D, A)],  # case 2
+        #    0------->       2---->        # 0: end - end, reversing (C, B)
+        #         1------->                # 1: end - start
+        # <--------------------------3
+        [(A, B), (C, B), (D, C), (D, A)],  # case 3
+        #    0------->    2------->        # 0: end - end, reversing (C, B)
+        #         1---------->             # 1: end - end
+        # <--------------------------3
+        [(A, B), (D, A), (D, C), (B, C)],  # case 4
+        # 0---------->       2------->     # 0: start - end; 2: end - end, rev: B, C
+        #         1------->                # 1: start - start
+        #    <--------------------3
+        [(A, B), (D, A), (D, C), (C, B)],  # case 5
+        # 0---------->       2---->        # 0: start - end
+        #         1------->                # 1: start - start
+        #    <-----------------------3
+        [(A, B), (D, A), (C, D), (B, C)],  # case 6
+        # 0---------->    2---------->     # 0: start - end
+        #         1---------->             # 1: start - end
+        #    <--------------------3
+        [(A, B), (B, C), (A, D), (C, D)],  # case 7
+        #    0---->          2------->     # 0: start - end
+        # <---------------1                # 1: start - start
+        #            <------------3
+    ],
+)
+def test_edge_path_closed_loop(e0, e1, e2, e3):
+    ep = EdgePath()
+    ep.add_line(e0[0], e0[1])
+    ep.add_line(e1[0], e1[1])
+    ep.add_line(e2[0], e2[1])
+    ep.add_line(e3[0], e3[1])
+    path = converter.from_hatch_edge_path(ep)
+    assert len(list(path.sub_paths())) == 1, "expected one closed loop"
+    assert len(list(path.control_vertices())) == 5
+    assert path.is_closed is True, "expected a closed loop"
 
 
 def test_extend_path_by_another_path():
