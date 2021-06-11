@@ -424,7 +424,7 @@ class Path(abc.Sequence):
         size = len(commands)
         if size == 0:  # empty path
             return
-        remove = []
+        remove = set()
         start = self.start
         for index, cmd in enumerate(commands):
             if cmd.type == Command.LINE_TO:
@@ -436,7 +436,7 @@ class Path(abc.Sequence):
                         # 2. removing the last segment turns the path into
                         #    an empty path - unexpected behavior?
                         return
-                    remove.append(index)
+                    remove.add(index)
                     continue  # keep start deliberately unchanged!
                 else:
                     vertices = linear_vertex_spacing(start, cmd.end, count)

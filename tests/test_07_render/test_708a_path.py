@@ -124,7 +124,7 @@ class TestAllLinesToCurveConverter:
     def test_remove_line_segments_of_zero_length_at_the_start(self):
         # CURVE3_TO and CURVE4_TO can not process zero length segments
         path = Path()
-        path.line_to((0, 0))   # line segment of length==0 should be removed
+        path.line_to((0, 0))  # line segment of length==0 should be removed
         path.line_to((1, 0))
         path.all_lines_to_curve4()
         assert len(path) == 1
@@ -163,6 +163,38 @@ class TestAllLinesToCurveConverter:
         path.all_lines_to_curve4()
         assert len(path) == 1
         assert path[0].type == Command.LINE_TO
+
+    @pytest.mark.parametrize(
+        "start,delta",
+        [
+            (0, 1e-11),  # uses absolute tolerance of 1e-12 near zero!
+            (10, 1e-8),  # uses relative tolerance of 1e-9 away from zero!
+        ],
+    )
+    def test_for_very_short_line_segments(self, start, delta):
+        path = Path((start, 0, 0))
+        path.line_to((start + delta, 0, 0))
+        path.all_lines_to_curve4()
+        assert len(path) == 1
+        assert path[0].type == Command.CURVE4_TO
+        assert len(list(path.flattening(1))) > 3
+
+    @pytest.mark.parametrize(
+        "start,delta",
+        [
+            (0, 1e-12),  # uses absolute tolerance of 1e-12 near zero!
+            (10, 1e-9),  # uses relative tolerance of 1e-9 away from zero!
+        ],
+    )
+    def test_which_length_is_too_short_to_create_a_curve(self, start, delta):
+        path = Path((start, 0, 0))
+        path.line_to((start + delta, 0, 0))
+        path.all_lines_to_curve4()
+        assert len(path) == 1
+        assert (
+            path[0].type == Command.LINE_TO
+        ), "should not remove a single line segment representing a point"
+        assert len(list(path.flattening(1))) == 2
 
 
 def test_add_curves3():
