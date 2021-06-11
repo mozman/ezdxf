@@ -436,11 +436,16 @@ class RenderContext:
         """ Resolve the visibility state of `entity`.
         Returns ``True`` if `entity` is visible.
         """
+        dxftype = entity.dxftype()
+        if dxftype == "INSERT":
+            # depends only on the invisible flag, the layer state has no effect!
+            return not bool(entity.dxf.invisible)
+
         entity_layer = resolved_layer or layer_key(self.resolve_layer(entity))
         layer_properties = self.layers.get(entity_layer)
         if layer_properties and not layer_properties.is_visible:
             return False
-        elif entity.dxftype() == 'ATTRIB':
+        elif dxftype == 'ATTRIB':
             return (not bool(entity.dxf.invisible) and
                     not cast(Attrib, entity).is_invisible)
         else:

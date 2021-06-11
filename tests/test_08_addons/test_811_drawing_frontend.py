@@ -401,9 +401,9 @@ def test_visibility_insert_0():
         'L1']
     assert _get_text_visible_when(doc, {'0', 'Layer2'}) == ['L0']
     assert _get_text_visible_when(doc, {'0', 'Layer1'}) == ['L0', 'L1']
-    # assert _get_text_visible_when(doc, {'Layer1', 'Layer2'}) == ['L1']  # result: []
+    assert _get_text_visible_when(doc, {'Layer1', 'Layer2'}) == ['L1']  # result: []
     assert _get_text_visible_when(doc, {'Layer2'}) == []
-    # assert _get_text_visible_when(doc, {'Layer1'}) == ['L1']  # result = []
+    assert _get_text_visible_when(doc, {'Layer1'}) == ['L1']  # result = []
     assert _get_text_visible_when(doc, set()) == []
 
 
@@ -423,10 +423,10 @@ def test_visibility_insert_2():
     assert _get_text_visible_when(doc, {'0', 'Layer1', 'Layer2'}) == ['L0',
         'L1']
     assert _get_text_visible_when(doc, {'0', 'Layer2'}) == ['L0']
-    # assert _get_text_visible_when(doc, {'0', 'Layer1'}) == ['L1']  # result = []
+    assert _get_text_visible_when(doc, {'0', 'Layer1'}) == ['L1']  # result = []
     assert _get_text_visible_when(doc, {'Layer1', 'Layer2'}) == ['L0', 'L1']
     assert _get_text_visible_when(doc, {'Layer2'}) == ['L0']
-    # assert _get_text_visible_when(doc, {'Layer1'}) == ['L1']  # result = []
+    assert _get_text_visible_when(doc, {'Layer1'}) == ['L1']  # result = []
     assert _get_text_visible_when(doc, set()) == []
 
 
