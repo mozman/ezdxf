@@ -14,6 +14,7 @@ from ezdxf.math import (
     ConstructionEllipse,
     BSpline,
     has_clockwise_orientation,
+    linear_vertex_spacing,
 )
 
 from .commands import (
@@ -400,6 +401,65 @@ class Path(abc.Sequence):
             else:
                 path._commands.append(cmd)  # immutable data!
         yield path
+
+    def all_lines_to_curve3(self) -> None:
+        """Inline conversion of all LINE_TO commands into CURVE3_TO commands."""
+        self._all_lines_to_curve(count=3)
+
+    def all_lines_to_curve4(self) -> None:
+        """Inline conversion of all LINE_TO commands into CURVE4_TO commands."""
+        self._all_lines_to_curve(count=4)
+
+    def _all_lines_to_curve(self, count: int = 4) -> None:
+        """Inline conversion of all LINE_TO commands into CURVE3_TO or CURVE4_TO
+        commands.
+
+        Args:
+            count: 3 to create CURVE3_TO commands, 4 to create CURVE4_to
+                commands
+        Raise:
+            ValueError: for count not in {3, 4}
+
+        """
+        if count not in {3, 4}:
+            raise ValueError(f"invalid count: {count}")
+
+        commands = self._commands
+        size = len(commands)
+        if size < 1:  # empty path
+            return
+        remove = []
+        start = self.start
+        for index, cmd in enumerate(commands):
+            if cmd.type == Command.LINE_TO:
+                if start.isclose(cmd.end):
+                    if size == 1:
+                        # Path has only one LINE_TO command which should not be
+                        # removed:
+                        # 1. may represent a point
+                        # 2. removing the last segment turns the path into
+                        #    an empty path - unexpected behavior?
+                        return
+                    remove.append(index)
+                    continue  # keep start deliberately unchanged!
+                else:
+                    vertices = linear_vertex_spacing(start, cmd.end, count)
+                    if count == 3:
+                        commands[index] = Curve3To(
+                            end=vertices[2], ctrl=vertices[1]
+                        )
+                    else:  # count == 4
+                        commands[index] = Curve4To(
+                            end=vertices[3],
+                            ctrl1=vertices[1],
+                            ctrl2=vertices[2],
+                        )
+            start = cmd.end
+
+        if remove:
+            self._commands = [
+                cmd for index, cmd in enumerate(commands) if index not in remove
+            ]
 
     def add_curves(self, curves: Iterable[Bezier4P]) -> None:
         """Add multiple cubic Bèzier-curves to the path.

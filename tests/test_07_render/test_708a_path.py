@@ -84,6 +84,63 @@ def test_curve4_to():
     assert path.end == (1, 2, 3)
 
 
+class TestAllLinesToCurveConverter:
+    def test_create_a_curve3_command(self):
+        path = Path()
+        path.line_to((1, 0))
+        path.all_lines_to_curve3()
+        assert path[0].type == Command.CURVE3_TO
+
+    def test_create_a_curve4_command(self):
+        path = Path()
+        path.line_to((1, 0))
+        path.all_lines_to_curve4()
+        assert path[0].type == Command.CURVE4_TO
+
+    @pytest.mark.parametrize("method_name", [
+        "all_lines_to_curve3",
+        "all_lines_to_curve4",
+    ])
+    def test_line_to_curve_creates_a_linear_segment(self, method_name):
+        path = Path()
+        path.line_to((1, 0))
+        getattr(path, method_name)()
+        vertices = list(path.flattening(1))
+        assert len(vertices) > 2
+        assert (
+            all([v.y == 0 and v.z == 0 for v in vertices]),
+            "all vertices have to be located along the x-axis"
+        )
+
+    def test_remove_unnecessary_line_to_commands_at_the_end(self):
+        path = Path()
+        path.line_to((1, 0))
+        path.line_to((1, 0))  # same point
+        path.all_lines_to_curve4()
+        assert len(path) == 1
+        assert path[0].type == Command.CURVE4_TO
+        assert path[0].end == (1, 0)
+
+    def test_remove_unnecessary_line_to_commands_in_between_commands(self):
+        path = Path()
+        path.line_to((1, 0))
+        path.line_to((1, 0))  # same point
+        path.line_to((2, 0))
+        path.all_lines_to_curve4()
+        assert len(path) == 2
+        assert path[0].type == Command.CURVE4_TO
+        assert path[0].end == (1, 0)
+        assert path[1].type == Command.CURVE4_TO
+        assert path[1].end == (2, 0)
+
+    def test_does_not_remove_a_single_line_to_command(self):
+        path = Path((1, 0))
+        path.line_to((1, 0))  # represents the point (1, 0)
+        path.all_lines_to_curve4()
+        assert len(path) == 1
+        assert path[0].type == Command.LINE_TO
+
+
 def test_add_curves3():
     path = Path()
     c1 = Bezier3P(((0, 0), (1, 1), (2, 0)))

@@ -10,7 +10,11 @@ Version 0.16.4b1 - dev
 - NEW: `MPOLYGON` load/write/create support as beta feature, official release in v0.17
 - NEW: `PolylinePath.type` and `EdgePath.type` as `ezdxf.entities.BoundaryPathType` enum 
 - NEW: `LineEdge.type`, `ArcEdge.type`, `EllipseEdge.type` and `SplineEdge.type` 
-  as `ezdxf.entities.EdgeType` enum  
+  as `ezdxf.entities.EdgeType` enum
+- NEW: `Path.all_lines_to_curve3()`, convert all LINE_TO commands into linear 
+  CURVE3_TO commands  
+- NEW: `Path.all_lines_to_curve4()`, convert all LINE_TO commands into linear 
+  CURVE4_TO commands 
 - BUGFIX: loading crash of the PyQt `CADViewer` class
 - BUGFIX: loading `GEODATA` version 1, perhaps data is incorrect, 
   logged as warning

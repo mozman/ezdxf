@@ -100,6 +100,8 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: normal_vector_3p(a: Vec3, b: Vec3, c: Vec3) -> Vec3
 
+.. autofunction:: linear_vertex_spacing(start: Vec3, end: Vec3, count: int) -> List[Vec3]
+
 .. autofunction:: best_fit_normal(vertices: Iterable[Vertex]) -> Vec3
 
 .. autofunction:: is_planar_face(face: Sequence[Vec3], abs_tol=1e-9) -> bool

@@ -285,6 +285,10 @@ The Path Class
 
     .. automethod:: extend_multi_path(path: Path)
 
+    .. automethod:: all_lines_to_curve3
+
+    .. automethod:: all_lines_to_curve4
+
 
 .. _PathPatch: https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.patches.PathPatch.html#matplotlib.patches.PathPatch
 .. _QPainterPath: https://doc.qt.io/qt-5/qpainterpath.html
