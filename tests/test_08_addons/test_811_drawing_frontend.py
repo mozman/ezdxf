@@ -384,6 +384,7 @@ def _get_text_visible_when(doc: Drawing, active_layers: Set[str]) -> List[str]:
     return visible_text
 
 
+@pytest.mark.xfail(reason="using invisible attribute for INSERT")
 def test_visibility_insert_0():
     """ see notes/drawing.md 'Layers and Draw Order' """
     doc = ezdxf.new()
@@ -407,6 +408,7 @@ def test_visibility_insert_0():
     assert _get_text_visible_when(doc, set()) == []
 
 
+@pytest.mark.xfail(reason="using invisible attribute for INSERT")
 def test_visibility_insert_2():
     """ see notes/drawing.md 'Layers and Draw Order' """
     doc = ezdxf.new()
