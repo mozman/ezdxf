@@ -97,34 +97,45 @@ class TestAllLinesToCurveConverter:
         path.all_lines_to_curve4()
         assert path[0].type == Command.CURVE4_TO
 
-    @pytest.mark.parametrize("method_name", [
-        "all_lines_to_curve3",
-        "all_lines_to_curve4",
-    ])
+    @pytest.mark.parametrize(
+        "method_name",
+        [
+            "all_lines_to_curve3",
+            "all_lines_to_curve4",
+        ],
+    )
     def test_line_to_curve_creates_a_linear_segment(self, method_name):
-        path = Path()
-        path.line_to((1, 0))
+        v1, v2 = 1, 2
+        path = Path(start=(v1, v1, v1))
+        path.line_to((v2, v2, v2))
         getattr(path, method_name)()
         vertices = list(path.flattening(1))
         assert len(vertices) > 2
         assert (
-            all([v.y == 0 and v.z == 0 for v in vertices]),
-            "all vertices have to be located along the x-axis"
+            all(
+                [
+                    math.isclose(v.x, v.y) and math.isclose(v.x, v.z)
+                    for v in vertices
+                ]
+            ),
+            "all vertices have to be located along a line (x == y == z)",
         )
 
-    def test_remove_unnecessary_line_to_commands_at_the_end(self):
+    def test_remove_line_segments_of_zero_length_at_the_end(self):
+        # CURVE3_TO and CURVE4_TO can not process zero length segments
         path = Path()
         path.line_to((1, 0))
-        path.line_to((1, 0))  # same point
+        path.line_to((1, 0))  # line segment of length==0 should be removed
         path.all_lines_to_curve4()
         assert len(path) == 1
         assert path[0].type == Command.CURVE4_TO
         assert path[0].end == (1, 0)
 
-    def test_remove_unnecessary_line_to_commands_in_between_commands(self):
+    def test_remove_line_segments_of_zero_length_between_commands(self):
+        # CURVE3_TO and CURVE4_TO can not process zero length segments
         path = Path()
         path.line_to((1, 0))
-        path.line_to((1, 0))  # same point
+        path.line_to((1, 0))  # line segment of length==0 should be removed
         path.line_to((2, 0))
         path.all_lines_to_curve4()
         assert len(path) == 2
@@ -133,7 +144,7 @@ class TestAllLinesToCurveConverter:
         assert path[1].type == Command.CURVE4_TO
         assert path[1].end == (2, 0)
 
-    def test_does_not_remove_a_single_line_to_command(self):
+    def test_does_not_remove_a_line_representing_a_single_point(self):
         path = Path((1, 0))
         path.line_to((1, 0))  # represents the point (1, 0)
         path.all_lines_to_curve4()

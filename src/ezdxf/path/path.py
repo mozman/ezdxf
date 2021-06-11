@@ -417,16 +417,12 @@ class Path(abc.Sequence):
         Args:
             count: 3 to create CURVE3_TO commands, 4 to create CURVE4_to
                 commands
-        Raise:
-            ValueError: for count not in {3, 4}
-
         """
-        if count not in {3, 4}:
-            raise ValueError(f"invalid count: {count}")
+        assert count == 4 or count == 3, f"invalid count: {count}"
 
         commands = self._commands
         size = len(commands)
-        if size < 1:  # empty path
+        if size == 0:  # empty path
             return
         remove = []
         start = self.start
