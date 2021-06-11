@@ -121,13 +121,14 @@ class TestAllLinesToCurveConverter:
             "all vertices have to be located along a line (x == y == z)",
         )
 
-    def test_remove_line_segments_of_zero_length_at_the_end(self):
+    def test_remove_line_segments_of_zero_length_at_the_start(self):
         # CURVE3_TO and CURVE4_TO can not process zero length segments
         path = Path()
+        path.line_to((0, 0))   # line segment of length==0 should be removed
         path.line_to((1, 0))
-        path.line_to((1, 0))  # line segment of length==0 should be removed
         path.all_lines_to_curve4()
         assert len(path) == 1
+        assert path.start == (0, 0)
         assert path[0].type == Command.CURVE4_TO
         assert path[0].end == (1, 0)
 
@@ -139,10 +140,22 @@ class TestAllLinesToCurveConverter:
         path.line_to((2, 0))
         path.all_lines_to_curve4()
         assert len(path) == 2
+        assert path.start == (0, 0)
         assert path[0].type == Command.CURVE4_TO
         assert path[0].end == (1, 0)
         assert path[1].type == Command.CURVE4_TO
         assert path[1].end == (2, 0)
+
+    def test_remove_line_segments_of_zero_length_at_the_end(self):
+        # CURVE3_TO and CURVE4_TO can not process zero length segments
+        path = Path()
+        path.line_to((1, 0))
+        path.line_to((1, 0))  # line segment of length==0 should be removed
+        path.all_lines_to_curve4()
+        assert len(path) == 1
+        assert path.start == (0, 0)
+        assert path[0].type == Command.CURVE4_TO
+        assert path[0].end == (1, 0)
 
     def test_does_not_remove_a_line_representing_a_single_point(self):
         path = Path((1, 0))
