@@ -170,9 +170,6 @@ class Frontend:
             properties = self.ctx.resolve_all(entity)
             self.override_properties(entity, properties)
 
-            # >> The content of a block reference does not depend
-            # >> on the visibility state of the INSERT entity.
-            # This is not correct: Discussion/Issues #465
             if properties.is_visible:
                 self.draw_entity(entity, properties)
             else:
