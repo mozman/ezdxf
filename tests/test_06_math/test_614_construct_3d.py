@@ -6,6 +6,7 @@ from ezdxf.math import (
     is_planar_face, Vec3, Vec2, subdivide_face, intersection_ray_ray_3d,
     normal_vector_3p, NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, subdivide_ngons,
     distance_point_line_3d, best_fit_normal, Matrix44, BarycentricCoordinates,
+    linear_vertex_spacing,
 )
 
 from ezdxf.render.forms import square, circle
@@ -197,6 +198,31 @@ class TestBarycentricCoords:
         b = bc.from_cartesian(p)
         assert all(0 <= b0 <= 1 for b0 in b) is True
         assert sum(b) == pytest.approx(1.0)
+
+
+class TestLinearVertexSpacing:
+    @pytest.mark.parametrize("count", [-1, 0, 1, 2, 3])
+    def test_returns_always_two_or_more_vertices(self, count):
+        assert len(linear_vertex_spacing(Vec3(), Vec3(1, 0), count)) >= 2
+
+    def test_works_if_start_is_equal_to_end(self):
+        assert len(linear_vertex_spacing(Vec3(), Vec3(), 5)) == 5
+
+    @pytest.mark.parametrize("count", [2, 3, 4, 5])
+    def test_correct_spacing_in_Q1(self, count):
+        x = count - 1
+        vertices = linear_vertex_spacing(Vec3(), Vec3(x, x, x), count)
+        assert len(vertices) == count
+        for x in range(count):
+            assert vertices[x].isclose((x, x, x))
+
+    @pytest.mark.parametrize("count", [2, 3, 4, 5])
+    def test_correct_spacing_in_Q3(self, count):
+        x = count - 1
+        vertices = linear_vertex_spacing(Vec3(), Vec3(-x, -x, -x), count)
+        assert len(vertices) == count
+        for x in range(count):
+            assert vertices[x].isclose((-x, -x, -x))
 
 
 if __name__ == '__main__':

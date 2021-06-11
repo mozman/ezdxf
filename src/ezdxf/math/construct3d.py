@@ -11,7 +11,8 @@ if TYPE_CHECKING:
 __all__ = [
     "is_planar_face", "subdivide_face", "subdivide_ngons", "Plane",
     "LocationState", "normal_vector_3p", "distance_point_line_3d",
-    "basic_transformation", "best_fit_normal", "BarycentricCoordinates"
+    "basic_transformation", "best_fit_normal", "BarycentricCoordinates",
+    "linear_vertex_spacing"
 ]
 
 
@@ -297,3 +298,20 @@ class BarycentricCoordinates:
     def to_cartesian(self, b: 'Vertex') -> Vec3:
         b1, b2, b3 = Vec3(b).xyz
         return self.a * b1 + self.b * b2 + self.c * b3
+
+
+def linear_vertex_spacing(start: Vec3, end: Vec3, count: int) -> List[Vec3]:
+    """Returns `count` evenly spaced vertices from `start` to `end`.
+    """
+    if count <= 2:
+        return [start, end]
+    distance = (end - start)
+    if distance.is_null:
+        return [start] * count
+
+    vertices = [start]
+    step = distance.normalize(distance.magnitude / (count-1))
+    for index in range(1, count - 1):
+        vertices.append(start + (step * index))
+    vertices.append(end)
+    return vertices
