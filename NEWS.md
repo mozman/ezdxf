@@ -16,6 +16,7 @@ Version 0.16.4b1 - dev
 - NEW: `Path.all_lines_to_curve4()`, convert all LINE_TO commands into linear 
   CURVE4_TO commands
 - NEW: create an AppID `EZDXF` when saving a DXF file by *ezdxf*  
+- NEW: store *ezdxf* metadata in the top level DICTIONARY "EZDXF_META"  
 - BUGFIX: loading crash of the PyQt `CADViewer` class
 - BUGFIX: loading `GEODATA` version 1, perhaps data is incorrect, 
   logged as warning

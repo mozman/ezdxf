@@ -111,15 +111,12 @@ class TestAllLinesToCurveConverter:
         getattr(path, method_name)()
         vertices = list(path.flattening(1))
         assert len(vertices) > 2
-        assert (
-            all(
-                [
-                    math.isclose(v.x, v.y) and math.isclose(v.x, v.z)
-                    for v in vertices
-                ]
-            ),
-            "all vertices have to be located along a line (x == y == z)",
-        )
+        assert all(
+            [
+                math.isclose(v.x, v.y) and math.isclose(v.x, v.z)
+                for v in vertices
+            ]
+        ), "all vertices have to be located along a line (x == y == z)"
 
     def test_remove_line_segments_of_zero_length_at_the_start(self):
         # CURVE3_TO and CURVE4_TO can not process zero length segments

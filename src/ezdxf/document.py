@@ -2,7 +2,7 @@
 # License: MIT License
 from typing import (
     TYPE_CHECKING, TextIO, BinaryIO, Iterable, Union, Tuple, Callable,
-    cast, Optional, List,
+    cast, Optional, List, Dict,
 )
 from datetime import datetime
 import io
@@ -10,6 +10,7 @@ import base64
 import logging
 from itertools import chain
 
+import ezdxf
 from ezdxf.layouts import Modelspace
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import (
@@ -52,6 +53,10 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 FIXED_GUID = '{00000000-0000-0000-0000-000000000000}'
+CREATED_BY_EZDXF = "CREATED_BY_EZDXF"
+WRITTEN_BY_EZDXF = "WRITTEN_BY_EZDXF"
+EZDXF_META = "EZDXF_META"
+
 
 def _validate_handle_seed(seed: str) -> str:
     from ezdxf.tools.handle import START_HANDLE
@@ -128,6 +133,7 @@ class Drawing:
         """
         doc = cls(dxfversion)
         doc._setup()
+        doc._create_ezdxf_metadata()
         return doc
 
     def _setup(self):
@@ -424,7 +430,7 @@ class Drawing:
             self.block_records.new('*Paper_Space')
 
     def saveas(self, filename: Union[str, 'Path'], encoding: str = None,
-               fmt: str = 'asc') -> None:
+        fmt: str = 'asc') -> None:
         """ Set :class:`Drawing` attribute :attr:`filename` to `filename` and
         write drawing to the file system. Override file encoding by argument
         `encoding`, handle with care, but this option allows you to create DXF
@@ -465,7 +471,7 @@ class Drawing:
 
         if fmt.startswith('asc'):
             fp = io.open(self.filename, mode='wt', encoding=enc,
-                         errors='dxfreplace')
+                errors='dxfreplace')
         elif fmt.startswith('bin'):
             fp = open(self.filename, 'wb')
         else:
@@ -514,7 +520,7 @@ class Drawing:
 
         if fmt.startswith('asc'):
             tagwriter = TagWriter(stream, write_handles=handles,
-                                  dxfversion=dxfversion)
+                dxfversion=dxfversion)
         elif fmt.startswith('bin'):
             tagwriter = BinaryTagWriter(
                 stream, write_handles=handles, dxfversion=dxfversion,
@@ -585,6 +591,7 @@ class Drawing:
         self.header['$ACADMAINTVER'] = acad_maint_ver.get(self.dxfversion, 0)
 
     def _update_metadata(self):
+        self._update_ezdxf_metadata()
         if options.write_fixed_meta_data_for_testing:
             fixed_date = juliandate(datetime(2000, 1, 1, 0, 0))
             self.header['$TDCREATE'] = fixed_date
@@ -597,9 +604,16 @@ class Drawing:
             now = datetime.now()
             self.header['$TDUPDATE'] = juliandate(now)
             self.reset_version_guid()
-
         self.header['$HANDSEED'] = str(self.entitydb.handles)  # next handle
         self.header['$DWGCODEPAGE'] = tocodepage(self.encoding)
+
+    def _create_ezdxf_metadata(self):
+        ezdxf_meta = self.rootdict.get_required_dict(EZDXF_META)
+        ezdxf_meta.set_or_add_dict_var(CREATED_BY_EZDXF, ezdxf.__version__)
+
+    def _update_ezdxf_metadata(self):
+        ezdxf_meta = self.rootdict.get_required_dict(EZDXF_META)
+        ezdxf_meta.set_or_add_dict_var(WRITTEN_BY_EZDXF, ezdxf.__version__)
 
     def _create_appid_if_not_exist(self, name: str, flags: int = 0) -> None:
         if name not in self.appids:
@@ -608,6 +622,22 @@ class Drawing:
     def _create_appids(self):
         self._create_appid_if_not_exist('HATCHBACKGROUNDCOLOR', 0)
         self._create_appid_if_not_exist('EZDXF', 0)
+
+    def ezdxf_metadata(self) -> Dict:
+        def load_value(name):
+            v = metadata.get(name, None)
+            if v is not None and v.dxftype() == "DICTIONARYVAR":
+                data[name] = v.dxf.value
+
+        data = {
+            CREATED_BY_EZDXF: None,
+            WRITTEN_BY_EZDXF: None,
+        }
+        metadata = cast("Dictionary", self.rootdict.get(EZDXF_META, None))
+        if metadata is not None and metadata.dxftype() == "DICTIONARY":
+            load_value(CREATED_BY_EZDXF)
+            load_value(WRITTEN_BY_EZDXF)
+        return data
 
     @property
     def acad_release(self) -> str:
@@ -811,7 +841,7 @@ class Drawing:
             raise const.DXFValueError(f'Arrow block "{name}" does not exist.')
 
     def add_image_def(self, filename: str, size_in_pixel: Tuple[int, int],
-                      name=None):
+        name=None):
         """ Add an image definition to the objects section.
 
         Add an :class:`~ezdxf.entities.image.ImageDef` entity to the drawing
@@ -846,7 +876,7 @@ class Drawing:
         return self.objects.add_image_def(filename, size_in_pixel, name)
 
     def set_raster_variables(self, frame: int = 0, quality: int = 1,
-                             units: str = 'm'):
+        units: str = 'm'):
         """
         Set raster variables.
 
@@ -870,7 +900,7 @@ class Drawing:
 
         """
         self.objects.set_raster_variables(frame=frame, quality=quality,
-                                          units=units)
+            units=units)
 
     def set_wipeout_variables(self, frame=0):
         """
@@ -885,7 +915,7 @@ class Drawing:
         var_dict.set_or_add_dict_var('WIPEOUTFRAME', str(frame))
 
     def add_underlay_def(self, filename: str, format: str = 'ext',
-                         name: str = None):
+        name: str = None):
         """ Add an :class:`~ezdxf.entities.underlay.UnderlayDef` entity to the
         drawing (OBJECTS section).
         `filename` is the underlay file name as relative or absolute path and
@@ -909,7 +939,7 @@ class Drawing:
         return self.objects.add_underlay_def(filename, format, name)
 
     def add_xref_def(self, filename: str, name: str,
-                     flags: int = BLK_XREF | BLK_EXTERNAL):
+        flags: int = BLK_XREF | BLK_EXTERNAL):
         """
         Add an external reference (xref) definition to the blocks section.
 
