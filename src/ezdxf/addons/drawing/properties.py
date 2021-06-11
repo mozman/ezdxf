@@ -421,7 +421,7 @@ class RenderContext:
                                             resolved_layer=resolved_layer)
         if entity.is_supported_dxf_attrib('style'):
             p.font = self.resolve_font(entity)
-        if entity.dxftype() == 'HATCH':
+        if entity.dxftype() == 'HATCH':  # TODO: MPOLYGON
             p.filling = self.resolve_filling(entity)
         return p
 

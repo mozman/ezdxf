@@ -167,15 +167,15 @@ class Frontend:
             if isinstance(entity, DXFTagStorage):
                 self.skip_entity(entity, 'Cannot parse DXF entity')
                 continue
-
             properties = self.ctx.resolve_all(entity)
             self.override_properties(entity, properties)
 
-            # The content of a block reference does not depend
-            # on the visibility state of the INSERT entity:
-            if properties.is_visible or entity.dxftype() == 'INSERT':
+            # >> The content of a block reference does not depend
+            # >> on the visibility state of the INSERT entity.
+            # This is not correct: Discussion/Issues #465
+            if properties.is_visible:
                 self.draw_entity(entity, properties)
-            elif not properties.is_visible:
+            else:
                 self.skip_entity(entity, 'invisible')
 
     def draw_entity(self, entity: DXFGraphic, properties: Properties) -> None:
