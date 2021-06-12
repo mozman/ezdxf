@@ -90,3 +90,56 @@ $VERSIONGUID     every saved version gets a new GUID
 
     - Howto: :ref:`set/get header variables`
     - Howto: :ref:`set drawing units`
+
+.. _ezdxf_metadata:
+
+Ezdxf Metadata
+~~~~~~~~~~~~~~
+
+Store internal metadata like *ezdxf* version and creation time for
+an new created document as metadata in the DXF file. The :class:`MetaData`
+object can also store custom metadata.
+
+The :class:`MetaData` object has a dict-like interface::
+
+    metadata = doc.ezdxf_metadata()
+
+    # set data
+    metadata["MY_CUSTOM_META_DATA"] = "a string with max. length of 254"
+
+    # get data, raises a KeyError() if key not exist
+    value = metadata["MY_CUSTOM_META_DATA"]
+
+    # get data, returns an empty string if key not exist
+    value = metadata.get("MY_CUSTOM_META_DATA")
+
+    # delete entry, raises a KeyError() if key not exist
+    del metadata["MY_CUSTOM_META_DATA"]
+
+    # discard entry, does not raise a KeyError() if key not exist
+    metadata.discard("MY_CUSTOM_META_DATA")
+
+Keys and values are limited to strings with a max. length of 254 characters
+and line ending ``\n`` will be replaced by ``\\P``.
+
+Keys used by *ezdxf*:
+
+    - ``WRITTEN_BY_EZDXF``: *ezdxf* version and UTC time in ISO format
+    - ``CREATED_BY_EZDXF``: *ezdxf* version and UTC time in ISO format
+
+Example of the ezdxf marker string: ``0.16.4b1 @ 2021-06-12T07:35:34.898808+00:00``
+
+.. class:: ezdxf.document.MetaData
+
+    .. automethod:: __contains__
+
+    .. automethod:: __getitem__
+
+    .. automethod:: get
+
+    .. automethod:: __setitem__
+
+    .. automethod:: __delitem__
+
+    .. automethod:: discard
+

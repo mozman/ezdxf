@@ -40,6 +40,7 @@ from ezdxf.entitydb import EntityDB
 from ezdxf.layouts.layouts import Layouts
 from ezdxf.tools.codepage import tocodepage, toencoding
 from ezdxf.tools.juliandate import juliandate
+from ezdxf.tools.text import escape_dxf_line_endings
 from ezdxf.options import options
 
 from ezdxf.tools import guid
@@ -650,23 +651,9 @@ class Drawing:
         self.header["$DWGCODEPAGE"] = tocodepage(self.encoding)
 
     def ezdxf_metadata(self) -> "MetaData":
-        """Returns the *ezdxf* :class:`Metadata` object, which manages
-        *ezdxf* and custom metadata in DXF files.
-
-        The :class:`Metadata` object has a dict-like interface::
-
-            metadata = doc.ezdxf_metadata()
-
-            # set data
-            metadata["MY_CUSTOM_META_DATA"] = "a string with max. length of 254"
-
-            # get data, returns an empty string if not exist
-            value = metadata["MY_CUSTOM_META_DATA"]
-
-        Keys used by *ezdxf*:
-
-            - "WRITTEN_BY_EZDXF"
-            - "CREATED_BY_EZDXF"
+        """Returns the *ezdxf* :class:`ezdxf.document.MetaData` object, which
+        manages  *ezdxf* and custom metadata in DXF files.
+        For more information see:  :ref:`ezdxf_metadata`.
 
         """
         return (
@@ -1068,25 +1055,51 @@ class MetaData(abc.ABC):
     """
 
     @abc.abstractmethod
-    def __getitem__(self, key) -> str:
+    def __getitem__(self, key: str) -> str:
+        """Returns the value for `key`. Raises a :class:`KeyError` exception
+        if `key` not exist.
+        """
+        ...
+
+    def get(self, key: str, default: str = "") -> str:
+        """Returns the value for `key`. Returns `default` if `key` not exist."""
+        try:
+            return self.__getitem__(key)
+        except KeyError:
+            return safe_string(default)
+
+    @abc.abstractmethod
+    def __setitem__(self, key: str, value: str) -> None:
+        """Set `key` to `value`. """
         ...
 
     @abc.abstractmethod
-    def __setitem__(self, key, value) -> None:
+    def __delitem__(self, key: str) -> None:
+        """Remove `key`, raises a :class:`KeyError` exception if `key` not
+        exist.
+        """
         ...
 
     @abc.abstractmethod
-    def __delitem__(self, key) -> None:
+    def __contains__(self, key: str) -> bool:
+        """Returns ``True`` if `key` exist. """
         ...
 
-    @abc.abstractmethod
-    def __contains__(self, key) -> bool:
-        ...
+    def discard(self, key: str) -> None:
+        """Remove `key`, does **not** raise an exception if `key` not exist. """
+        try:
+            self.__delitem__(key)
+        except KeyError:
+            pass
 
 
 def ezdxf_marker_string():
     now = datetime.now(tz=timezone.utc)
     return ezdxf.__version__ + " @ " + now.isoformat()
+
+
+def safe_string(s: str) -> str:
+    return escape_dxf_line_endings(s)[:254]
 
 
 class R12MetaData(MetaData):
@@ -1102,17 +1115,17 @@ class R12MetaData(MetaData):
         self._data = self._load()
 
     def __contains__(self, key: str) -> bool:
-        return key in self._data
+        return safe_string(key) in self._data
 
     def __getitem__(self, key: str) -> str:
-        return self._data.get(key, "")
+        return self._data[safe_string(key)]
 
     def __setitem__(self, key: str, value: str) -> None:
-        self._data[key] = str(value)[:254]
+        self._data[safe_string(key)] = safe_string(value)
         self._commit()
 
     def __delitem__(self, key: str) -> None:
-        del self._data[key]
+        del self._data[safe_string(key)]
         self._commit()
 
     def _commit(self) -> None:
@@ -1147,16 +1160,14 @@ class R2000MetaData(MetaData):
         )
 
     def __contains__(self, key: str) -> bool:
-        return key in self._data
+        return safe_string(key) in self._data
 
     def __getitem__(self, key: str) -> str:
-        v = self._data.get(key, None)
-        if v:
-            return v.dxf.get("value", "")
-        return ""
+        v = self._data.get(safe_string(key))
+        return v.dxf.get("value", "")
 
     def __setitem__(self, key: str, value: str) -> None:
-        self._data.set_or_add_dict_var(key, str(value)[:254])
+        self._data.set_or_add_dict_var(safe_string(key), safe_string(value))
 
     def __delitem__(self, key: str) -> None:
-        self._data.remove(key)
+        self._data.remove(safe_string(key))
