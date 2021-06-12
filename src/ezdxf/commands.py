@@ -374,6 +374,43 @@ class View(Command):
         sys.exit(app.exec_())
 
 
+@register
+class Browse(Command):
+    """Launcher sub-command: browse"""
+
+    NAME = "browse"
+
+    @staticmethod
+    def add_parser(subparsers):
+        parser = subparsers.add_parser(
+            Browse.NAME, help="browse DXF files structure"
+        )
+        parser.add_argument(
+            "file",
+            metavar="FILE",
+            nargs="?",
+            help="DXF file to browse",
+        )
+
+    @staticmethod
+    def run(args):
+        try:
+            from PyQt5.QtWidgets import QApplication
+        except ImportError:
+            print("PyQt5 package not found.")
+            sys.exit(1)
+        from ezdxf.addons import browser
+
+        signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
+        app = QApplication(sys.argv)
+        set_app_icon(app)
+        filename = args.file
+        if filename:
+            main_window = browser.DXFBrowser(filename)
+            main_window.show()
+        sys.exit(app.exec_())
+
+
 def set_app_icon(app):
     from PyQt5 import QtGui, QtCore
 
