@@ -13,7 +13,7 @@ from typing import (
     List,
     Dict,
 )
-from datetime import datetime
+from datetime import datetime, timezone
 import io
 import abc
 import base64
@@ -1085,7 +1085,8 @@ class MetaData(abc.ABC):
 
 
 def ezdxf_marker_string():
-    return ezdxf.__version__ + " @ " + datetime.now().isoformat()
+    now = datetime.now(tz=timezone.utc)
+    return ezdxf.__version__ + " @ " + now.isoformat()
 
 
 class R12MetaData(MetaData):
