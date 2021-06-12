@@ -97,7 +97,7 @@ Ezdxf Metadata
 ~~~~~~~~~~~~~~
 
 Store internal metadata like *ezdxf* version and creation time for
-an new created document as metadata in the DXF file. The :class:`MetaData`
+a new created document as metadata in the DXF file. The :class:`MetaData`
 object can also store custom metadata.
 
 The :class:`MetaData` object has a dict-like interface::
@@ -120,7 +120,7 @@ The :class:`MetaData` object has a dict-like interface::
     metadata.discard("MY_CUSTOM_META_DATA")
 
 Keys and values are limited to strings with a max. length of 254 characters
-and line ending ``\n`` will be replaced by ``\\P``.
+and line ending ``\n`` will be replaced by ``\P``.
 
 Keys used by *ezdxf*:
 
