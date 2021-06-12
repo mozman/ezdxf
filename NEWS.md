@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.16.4b1 - dev
+Version 0.16.4b2 - dev
 ----------------------
 
 - NEW: `move_to()` command and multi-path support for the `ezdxf.path.Path` class 
