@@ -1,9 +1,8 @@
 # Copyright (c) 2011-2019, Manfred Moitzi
 # License: MIT License
 import pytest
-import ezdxf
 from ezdxf.lldxf.tagger import internal_tag_compiler
-from ezdxf.document import Drawing, CREATED_BY_EZDXF, WRITTEN_BY_EZDXF
+from ezdxf.document import Drawing
 from ezdxf import DXFValueError, decode_base64
 
 
@@ -154,28 +153,6 @@ def test_set_drawing_units(dwg_r12):
     assert dwg_r12.header["$INSUNITS"] == 6
     dwg_r12.units = 5
     assert dwg_r12.header["$INSUNITS"] == 5
-
-
-def test_created_by_ezdxf_metadata_r2000(dwg_r2000):
-    metadata = dwg_r2000.ezdxf_metadata().load()
-    assert metadata[CREATED_BY_EZDXF].startswith(ezdxf.__version__)
-
-
-def test_created_by_ezdxf_metadata_r12(dwg_r12):
-    metadata = dwg_r12.ezdxf_metadata().load()
-    assert metadata[CREATED_BY_EZDXF].startswith(ezdxf.__version__)
-
-
-def test_written_by_ezdxf_metadata_r2000(dwg_r2000, tmp_path):
-    dwg_r2000.saveas(tmp_path / "r2000.dxf")
-    metadata = dwg_r2000.ezdxf_metadata().load()
-    assert metadata[WRITTEN_BY_EZDXF].startswith(ezdxf.__version__)
-
-
-def test_written_by_ezdxf_metadata_r12(dwg_r12, tmp_path):
-    dwg_r12.saveas(tmp_path / "r12.dxf")
-    metadata = dwg_r12.ezdxf_metadata().load()
-    assert metadata[WRITTEN_BY_EZDXF].startswith(ezdxf.__version__)
 
 
 MINIMALISTIC_DXF12 = """  0

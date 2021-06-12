@@ -207,3 +207,5 @@ Drawing Object
     .. automethod:: audit
 
     .. automethod:: validate
+
+    .. automethod:: ezdxf_metadata() -> MetaData

@@ -650,6 +650,25 @@ class Drawing:
         self.header["$DWGCODEPAGE"] = tocodepage(self.encoding)
 
     def ezdxf_metadata(self) -> "MetaData":
+        """Returns the *ezdxf* :class:`Metadata` object, which manages
+        *ezdxf* and custom metadata in DXF files.
+
+        The :class:`Metadata` object has a dict-like interface::
+
+            metadata = doc.ezdxf_metadata()
+
+            # set data
+            metadata["MY_CUSTOM_META_DATA"] = "a string with max. length of 254"
+
+            # get data, returns an empty string if not exist
+            value = metadata["MY_CUSTOM_META_DATA"]
+
+        Keys used by *ezdxf*:
+
+            - "WRITTEN_BY_EZDXF"
+            - "CREATED_BY_EZDXF"
+
+        """
         return (
             R12MetaData(self)
             if self.dxfversion <= DXF12
@@ -658,11 +677,11 @@ class Drawing:
 
     def _create_ezdxf_metadata(self):
         ezdxf_meta = self.ezdxf_metadata()
-        ezdxf_meta.create()
+        ezdxf_meta[CREATED_BY_EZDXF] = ezdxf_marker_string()
 
     def _update_ezdxf_metadata(self):
         ezdxf_meta = self.ezdxf_metadata()
-        ezdxf_meta.update()
+        ezdxf_meta[WRITTEN_BY_EZDXF] = ezdxf_marker_string()
 
     def _create_appid_if_not_exist(self, name: str, flags: int = 0) -> None:
         if name not in self.appids:
@@ -1044,18 +1063,24 @@ class Drawing:
 
 
 class MetaData(abc.ABC):
-    """Manage ezdxf meta data."""
+    """Manage ezdxf meta data by dict-like interface. Values are limited to
+    strings with a maximum length of 254 characters.
+    """
 
     @abc.abstractmethod
-    def create(self) -> None:
+    def __getitem__(self, key) -> str:
         ...
 
     @abc.abstractmethod
-    def update(self) -> None:
+    def __setitem__(self, key, value) -> None:
         ...
 
     @abc.abstractmethod
-    def load(self) -> Dict:
+    def __delitem__(self, key) -> None:
+        ...
+
+    @abc.abstractmethod
+    def __contains__(self, key) -> bool:
         ...
 
 
@@ -1075,44 +1100,39 @@ class R12MetaData(MetaData):
         self._msp_block = doc.modelspace().block_record.block
         self._data = self._load()
 
-    def create(self) -> None:
-        self._data[CREATED_BY_EZDXF] = ezdxf_marker_string()
-        self.commit()
+    def __contains__(self, key: str) -> bool:
+        return key in self._data
 
-    def update(self) -> None:
-        self._data[WRITTEN_BY_EZDXF] = ezdxf_marker_string()
-        self.commit()
+    def __getitem__(self, key: str) -> str:
+        return self._data.get(key, "")
 
-    def commit(self) -> None:
+    def __setitem__(self, key: str, value: str) -> None:
+        self._data[key] = str(value)[:254]
+        self._commit()
+
+    def __delitem__(self, key: str) -> None:
+        del self._data[key]
+        self._commit()
+
+    def _commit(self) -> None:
         # write all metadata as strings with group code 1000
-        group_code = 1000
-        tags = [
-            (group_code, CREATED_BY_EZDXF),
-            (group_code, self._data.get(CREATED_BY_EZDXF)),
-            (group_code, WRITTEN_BY_EZDXF),
-            (group_code, self._data.get(WRITTEN_BY_EZDXF)),
-        ]
+        tags = []
+        for key, value in self._data.items():
+            tags.append((1000, str(key)))
+            tags.append((1000, str(value)))
         self._msp_block.set_xdata("EZDXF", tags)
 
     def _load(self) -> Dict:
-        data = {
-            CREATED_BY_EZDXF: None,
-            WRITTEN_BY_EZDXF: None,
-        }
+        data = dict()
         if self._msp_block.has_xdata("EZDXF"):
-            keys = set(data.keys())
             xdata = self._msp_block.get_xdata("EZDXF")
             index = 0
             count = len(xdata) - 1
             while index < count:
                 name = xdata[index].value
-                if name in keys:
-                    data[name] = xdata[index + 1].value
+                data[name] = xdata[index + 1].value
                 index += 2
         return data
-
-    def load(self) -> Dict:
-        return dict(self._data)
 
 
 class R2000MetaData(MetaData):
@@ -1121,24 +1141,21 @@ class R2000MetaData(MetaData):
     """
 
     def __init__(self, doc: Drawing):
-        self._metadata: "Dictionary" = doc.rootdict.get_required_dict(
+        self._data: "Dictionary" = doc.rootdict.get_required_dict(
             EZDXF_META
         )
 
-    def create(self) -> None:
-        self._metadata.set_or_add_dict_var(CREATED_BY_EZDXF, ezdxf.__version__)
+    def __contains__(self, key: str) -> bool:
+        return key in self._data
 
-    def update(self) -> None:
-        self._metadata.set_or_add_dict_var(WRITTEN_BY_EZDXF, ezdxf.__version__)
+    def __getitem__(self, key: str) -> str:
+        v = self._data.get(key, None)
+        if v:
+            return v.dxf.get("value", "")
+        return ""
 
-    def load(self) -> Dict:
-        def load_value(name):
-            v = self._metadata.get(name, None)
-            if v is not None:
-                return v.dxf.get("value", None)
-            return None
+    def __setitem__(self, key: str, value: str) -> None:
+        self._data.set_or_add_dict_var(key, str(value)[:254])
 
-        return {
-            CREATED_BY_EZDXF: load_value(CREATED_BY_EZDXF),
-            WRITTEN_BY_EZDXF: load_value(WRITTEN_BY_EZDXF),
-        }
+    def __delitem__(self, key: str) -> None:
+        self._data.remove(key)
