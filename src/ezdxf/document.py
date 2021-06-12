@@ -1059,6 +1059,10 @@ class MetaData(abc.ABC):
         ...
 
 
+def ezdxf_marker_string():
+    return ezdxf.__version__ + " @ " + datetime.now().isoformat()
+
+
 class R12MetaData(MetaData):
     """Manage ezdxf meta data for DXF version R12 as XDATA of layer "0".
 
@@ -1068,20 +1072,18 @@ class R12MetaData(MetaData):
 
     def __init__(self, doc: Drawing):
         # storing XDATA in layer 0 does not work (Autodesk!)
-        self._layer0 = doc.layers.get("0")
+        self._msp_block = doc.modelspace().block_record.block
         self._data = self._load()
 
     def create(self) -> None:
-        self._data[CREATED_BY_EZDXF] = ezdxf.__version__
+        self._data[CREATED_BY_EZDXF] = ezdxf_marker_string()
         self.commit()
 
     def update(self) -> None:
-        self._data[WRITTEN_BY_EZDXF] = ezdxf.__version__
+        self._data[WRITTEN_BY_EZDXF] = ezdxf_marker_string()
         self.commit()
 
     def commit(self) -> None:
-        # storing XDATA in layer 0 does not work (Autodesk!)
-        return
         # write all metadata as strings with group code 1000
         group_code = 1000
         tags = [
@@ -1090,16 +1092,16 @@ class R12MetaData(MetaData):
             (group_code, WRITTEN_BY_EZDXF),
             (group_code, self._data.get(WRITTEN_BY_EZDXF)),
         ]
-        self._layer0.set_xdata("EZDXF", tags)
+        self._msp_block.set_xdata("EZDXF", tags)
 
     def _load(self) -> Dict:
         data = {
             CREATED_BY_EZDXF: None,
             WRITTEN_BY_EZDXF: None,
         }
-        if self._layer0.has_xdata("EZDXF"):
+        if self._msp_block.has_xdata("EZDXF"):
             keys = set(data.keys())
-            xdata = self._layer0.get_xdata("EZDXF")
+            xdata = self._msp_block.get_xdata("EZDXF")
             index = 0
             count = len(xdata) - 1
             while index < count:
