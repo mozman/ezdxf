@@ -40,25 +40,49 @@ class DXFTagsModel(QAbstractListModel):
         return self._dxftype
 
 
+class Header(QStandardItem):
+    def __init__(self, name: str, header_vars: Tags):
+        super().__init__()
+        self._header_vars = header_vars
+        self._section_name = name
+        self.setText(self._section_name)
+
+
 class Section(QStandardItem):
-    def __init__(self, entities: List[Tags]):
-        self._entities = entities
-        self._section_name = "INVALID SECTION HEADER!"
-        if len(entities) > 0:
-            header = entities[0]
-            if len(header) > 1 and header[0].code == 0 and header[1].code == 2:
-                self._section_name = header[1].value
-        super().__init__(self._section_name)
-        if self._section_name == "HEADER":
-            pass  # has no entities
-        elif self._section_name == "CLASSES":
-            self.appendRow([Class(e) for e in self._entities])
-        else:
-            self.appendRow([Entity(e) for e in self._entities])
+    def __init__(self, name: str, entities: List[Tags]):
+        super().__init__()
+        self._section_name = name
+        self.setText(self._section_name)
+        self.setup_content(entities)
+
+    def setup_content(self, entities):
+        self.appendRows(Entity(e) for e in entities)
+
+
+class Classes(Section):
+    def setup_content(self, entities):
+        self.appendRows(Class(e) for e in entities)
+
+
+class Tables(Section):
+    ...
+
+
+class Blocks(Section):
+    ...
+
+
+def get_section_name(section: List[Tags]) -> str:
+    if len(section) > 0:
+        header = section[0]
+        if len(header) > 1 and header[0].code == 0 and header[1].code == 2:
+            return header[1].value
+    return "INVALID SECTION HEADER!"
 
 
 class Entity(QStandardItem):
     def __init__(self, tags: Tags):
+        super().__init__()
         self._tags = tags
         self._entity_name = "INVALID ENTITY!"
         try:
@@ -67,21 +91,36 @@ class Entity(QStandardItem):
             self._handle = None
         if tags and tags[0].code == 0:
             self._entity_name = tags[0].value + f"(#{str(self._handle)})"
-        super().__init__(self._entity_name)
+        self.setText(self._entity_name)
 
 
 class Class(QStandardItem):
     def __init__(self, tags: Tags):
+        super().__init__()
         self._tags = tags
         self._class_name = "INVALID CLASS!"
         if len(tags) > 1 and tags[0].code == 0 and tags[1].code == 1:
             self._class_name = tags[1].value
-        super().__init__(self._class_name)
+        self.setText(self._class_name)
 
 
 class DXFStructureModel(QStandardItemModel):
-    def __init__(self, sections: SectionDict):
+    def __init__(self, filename: str, sections: SectionDict):
         super().__init__()
+        root = QStandardItem(filename)
+        self.appendRow(root)
         self._sections = sections
         for section in self._sections.values():
-            self.appendRow([Section(section)])
+            name = get_section_name(section)
+            if name == "HEADER":
+                header_vars = section[0]
+                row = Header(name, header_vars)
+            elif name == "CLASSES":
+                row = Classes(name, section[1:])
+            elif name == "TABLES":
+                row = Tables(name, section[1:])
+            elif name == "BLOCKS":
+                row = Blocks(name, section[1:])
+            else:
+                row = Section(name, section[1:])
+            root.appendRow(row)

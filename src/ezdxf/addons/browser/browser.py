@@ -2,6 +2,7 @@
 #  License: MIT License
 import sys
 from PyQt5 import QtWidgets as qw
+from PyQt5.QtCore import QModelIndex
 from .loader import load_section_dict
 from .model import DXFStructureModel
 __all__ = ["DXFStructureBrowser"]
@@ -29,5 +30,8 @@ class DXFStructureBrowser(qw.QMainWindow):
 
     def open(self, filename: str):
         section_dict = load_section_dict(filename)
-        model = DXFStructureModel(section_dict)
+        model = DXFStructureModel(filename, section_dict)
         self._tree_view.setModel(model)
+        model.index(0, 0, QModelIndex())
+        self._tree_view.expand(model.index(0, 0, QModelIndex()))
+        self._tree_view.setHeaderHidden(True)

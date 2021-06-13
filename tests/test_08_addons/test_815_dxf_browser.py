@@ -72,13 +72,14 @@ AcDbPoint
 
 def test_setup_dxf_structure_model():
     sections = load_dxf_structure(Tags.from_text(ENTITIES))
-    model = DXFStructureModel(sections)
-    item = model.item(0, 0)
-    assert item.data(Qt.DisplayRole) == "ENTITIES"
-    child1 = item.child(0, 1)
-    assert child1.data(Qt.DisplayRole) == "LINE(#100)"
-    child2 = item.child(0, 2)
-    assert child2.data(Qt.DisplayRole) == "LINE(#101)"
+    model = DXFStructureModel("ez.dxf", sections)
+    parent = model.item(0, 0)
+    assert parent.data(Qt.DisplayRole) == "ez.dxf"
+    assert parent.child(0, 0).data(Qt.DisplayRole) == "ENTITIES"
+    # one level down
+    parent = parent.child(0, 0)
+    assert parent.child(0, 0).data(Qt.DisplayRole) == "LINE(#100)"
+    assert parent.child(1, 0).data(Qt.DisplayRole) == "LINE(#101)"
 
 
 ENTITIES = """0
