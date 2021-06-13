@@ -78,8 +78,8 @@ def test_setup_dxf_structure_model():
     assert parent.child(0, 0).data(Qt.DisplayRole) == "ENTITIES"
     # one level down
     parent = parent.child(0, 0)
-    assert parent.child(0, 0).data(Qt.DisplayRole) == "LINE(#100)"
-    assert parent.child(1, 0).data(Qt.DisplayRole) == "LINE(#101)"
+    assert parent.child(0, 0).data(Qt.DisplayRole) == "#100 LINE"
+    assert parent.child(1, 0).data(Qt.DisplayRole) == "#101 LINE"
 
 
 ENTITIES = """0
