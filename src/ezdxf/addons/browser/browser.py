@@ -32,6 +32,5 @@ class DXFStructureBrowser(qw.QMainWindow):
         section_dict = load_section_dict(filename)
         model = DXFStructureModel(filename, section_dict)
         self._tree_view.setModel(model)
-        model.index(0, 0, QModelIndex())
         self._tree_view.expand(model.index(0, 0, QModelIndex()))
         self._tree_view.setHeaderHidden(True)
