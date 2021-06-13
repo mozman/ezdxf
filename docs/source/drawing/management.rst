@@ -96,6 +96,8 @@ $VERSIONGUID     every saved version gets a new GUID
 Ezdxf Metadata
 ~~~~~~~~~~~~~~
 
+.. versionadded:: 0.17
+
 Store internal metadata like *ezdxf* version and creation time for
 a new created document as metadata in the DXF file. The :class:`MetaData`
 object can also store custom metadata.

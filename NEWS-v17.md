@@ -16,3 +16,5 @@ Version 0.17 - dev
 - NEW: `MPOLYGON` load/write/create support
 - NEW: `ezdxf.path.to_mpolygons()` function: Path() to MPOLYGON converter
 - NEW: `ezdxf.path.render_mpolygons()` function: render MPOLYGON entities form paths
+- NEW: store *ezdxf* and custom metadata in DXF files
+- NEW: command `ezdxf browse FILE ...`, PyQt DXF structure browser

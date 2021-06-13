@@ -655,6 +655,8 @@ class Drawing:
         manages  *ezdxf* and custom metadata in DXF files.
         For more information see:  :ref:`ezdxf_metadata`.
 
+        .. versionadded:: 0.17
+
         """
         return (
             R12MetaData(self)
