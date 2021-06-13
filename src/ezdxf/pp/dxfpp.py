@@ -113,13 +113,6 @@ def build_ref_link_button(name: str) -> str:
     return REF_LINK_TPL.format(target=link, name=name)
 
 
-TAG_TYPES = {
-    int: "<int>",
-    float: "<float>",
-    str: "<str>",
-}
-
-
 def with_bitmask(value: int) -> str:
     return "{0}, b{0:08b}".format(int(value))
 
