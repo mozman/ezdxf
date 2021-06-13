@@ -75,11 +75,11 @@ def test_setup_dxf_structure_model():
     model = DXFStructureModel("ez.dxf", sections)
     parent = model.item(0, 0)
     assert parent.data(Qt.DisplayRole) == "ez.dxf"
-    assert parent.child(0, 0).data(Qt.DisplayRole) == "ENTITIES"
+    assert "ENTITIES" in parent.child(0, 0).data(Qt.DisplayRole)
     # one level down
     parent = parent.child(0, 0)
-    assert parent.child(0, 0).data(Qt.DisplayRole) == "#100 LINE"
-    assert parent.child(1, 0).data(Qt.DisplayRole) == "#101 LINE"
+    assert "LINE" in parent.child(0, 0).data(Qt.DisplayRole)
+    assert "LINE" in parent.child(1, 0).data(Qt.DisplayRole)
 
 
 ENTITIES = """0
