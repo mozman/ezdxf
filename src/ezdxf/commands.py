@@ -383,7 +383,7 @@ class Browse(Command):
     @staticmethod
     def add_parser(subparsers):
         parser = subparsers.add_parser(
-            Browse.NAME, help="browse DXF files structure"
+            Browse.NAME, help="browse DXF file structure"
         )
         parser.add_argument(
             "file",
@@ -406,7 +406,7 @@ class Browse(Command):
         set_app_icon(app)
         filename = args.file
         if filename:
-            main_window = browser.DXFBrowser(filename)
+            main_window = browser.DXFStructureBrowser(filename)
             main_window.show()
         sys.exit(app.exec_())
 

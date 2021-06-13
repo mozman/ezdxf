@@ -29,4 +29,4 @@ def get_tag_loader(
 
     info = dxf_file_info(filename)
     with open(filename, mode="rt", encoding=info.encoding, errors=errors) as fp:
-        return ascii_tags_loader(fp)
+        return list(ascii_tags_loader(fp))
