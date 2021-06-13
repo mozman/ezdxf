@@ -15,6 +15,10 @@ __all__ = [
 ]
 
 
+def name_fmt(handle, name: str) -> str:
+    return f"<{handle}> {name}"
+
+
 class DXFTagsModel(QAbstractListModel):
     def __init__(self, tags: Tags):
         super().__init__()
@@ -88,7 +92,7 @@ class Tables(EntityContainer):
                 except ValueError:
                     handle = None
                 name = e.get_first_value(2, default="UNDEFINED")
-                name += f"(#{str(handle)})"
+                name = name_fmt(handle, name)
             elif dxftype == "ENDTAB":
                 if container:
                     self.appendRow(NamedEntityContainer(name, container))
@@ -109,7 +113,7 @@ class Blocks(EntityContainer):
                 except ValueError:
                     handle = None
                 name = e.get_first_value(2, default="UNDEFINED")
-                name += f"(#{str(handle)})"
+                name = name_fmt(handle, name)
             elif dxftype == "ENDBLK":
                 if container:
                     self.appendRow(EntityContainer(name, container))
@@ -137,7 +141,7 @@ class Entity(QStandardItem):
         except ValueError:
             self._handle = None
         if tags and tags[0].code == 0:
-            self._entity_name = f"#{str(self._handle)} " + tags[0].value
+            self._entity_name = name_fmt(str(self._handle), tags[0].value)
         self.setText(self._entity_name)
 
 
@@ -145,7 +149,7 @@ class NamedEntity(Entity):
     def __init__(self, tags: Tags):
         super().__init__(tags)
         name = tags.get_first_value(2, "<noname>")
-        self._entity_name = f"#{str(self._handle)} " + name
+        self._entity_name = name_fmt(str(self._handle), name)
         self.setText(self._entity_name)
 
 
