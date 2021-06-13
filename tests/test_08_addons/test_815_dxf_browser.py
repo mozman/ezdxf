@@ -5,7 +5,9 @@ import pytest
 pytest.importorskip("PyQt5")
 
 from ezdxf.lldxf.tags import Tags
-from ezdxf.addons.browser import DXFTagsModel
+from ezdxf.lldxf.loader import load_dxf_structure
+
+from ezdxf.addons.browser import DXFTagsModel, DXFStructureModel
 from PyQt5.QtCore import Qt, QModelIndex
 
 
@@ -65,6 +67,36 @@ AcDbPoint
 0.0
 30
 0.0
+"""
+
+
+def test_setup_dxf_structure_model():
+    sections = load_dxf_structure(Tags.from_text(ENTITIES))
+    model = DXFStructureModel(sections)
+    item = model.item(0, 0)
+    assert item.data(Qt.DisplayRole) == "ENTITIES"
+    child1 = item.child(0, 1)
+    assert child1.data(Qt.DisplayRole) == "LINE(#100)"
+    child2 = item.child(0, 2)
+    assert child2.data(Qt.DisplayRole) == "LINE(#101)"
+
+
+ENTITIES = """0
+SECTION
+2
+ENTITIES
+0
+LINE
+5
+100
+0
+LINE
+5
+101
+0
+ENDSEC
+0
+EOF
 """
 
 if __name__ == "__main__":

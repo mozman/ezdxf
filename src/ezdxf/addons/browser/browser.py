@@ -1,6 +1,7 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 from PyQt5 import QtWidgets as qw
+from .loader import load_section_dict
 
 __all__ = ["DXFBrowser"]
 
