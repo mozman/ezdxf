@@ -334,3 +334,22 @@ def cast_value(code: int, value):
         return TYPE_TABLE.get(code, str)(value)
     else:
         return None
+
+TAG_TYPES = {
+    int: '<int>',
+    float: '<float>',
+    str: '<str>',
+}
+
+
+def tag_type_str(code: int) -> str:
+    if code in GROUP_MARKERS:
+        return '<ctrl>'
+    elif code in HEX_HANDLE_CODES:
+        return '<hex>'
+    elif is_point_code(code):
+        return '<point>'
+    elif is_binary_data(code):
+        return '<bin>'
+    else:
+        return TAG_TYPES[tag_type(code)]
