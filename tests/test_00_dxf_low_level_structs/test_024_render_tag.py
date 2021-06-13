@@ -51,6 +51,10 @@ class TestRenderTag:
         assert render_tag(tag, 1) == "<bin>"
         assert render_tag(tag, 2) == "FEFE"
 
+    def test_raise_index_error_for_invalid_column_index(self):
+        tag = dxftag(1, "text")
+        pytest.raises(IndexError, render_tag, tag, 3)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

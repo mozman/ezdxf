@@ -401,3 +401,5 @@ def render_tag(tag: DXFTag, col: int) -> Any:
         return tag_type_str(code)
     elif col == 2:
         return str(value)
+    else:
+        raise IndexError(col)
