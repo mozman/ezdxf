@@ -49,7 +49,11 @@ class Section(QStandardItem):
             if len(header) > 1 and header[0].code == 0 and header[1].code == 2:
                 self._section_name = header[1].value
         super().__init__(self._section_name)
-        if entities:
+        if self._section_name == "HEADER":
+            pass  # has no entities
+        elif self._section_name == "CLASSES":
+            self.appendRow([Class(e) for e in self._entities])
+        else:
             self.appendRow([Entity(e) for e in self._entities])
 
 
@@ -64,6 +68,15 @@ class Entity(QStandardItem):
         if tags and tags[0].code == 0:
             self._entity_name = tags[0].value + f"(#{str(self._handle)})"
         super().__init__(self._entity_name)
+
+
+class Class(QStandardItem):
+    def __init__(self, tags: Tags):
+        self._tags = tags
+        self._class_name = "INVALID CLASS!"
+        if len(tags) > 1 and tags[0].code == 0 and tags[1].code == 1:
+            self._class_name = tags[1].value
+        super().__init__(self._class_name)
 
 
 class DXFStructureModel(QStandardItemModel):
