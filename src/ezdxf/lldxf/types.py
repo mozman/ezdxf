@@ -353,3 +353,13 @@ def tag_type_str(code: int) -> str:
         return '<bin>'
     else:
         return TAG_TYPES[tag_type(code)]
+
+
+def render_tag(tag: DXFTag, col: int) -> Any:
+    code, value = tag
+    if col == 0:
+        return str(code)
+    elif col == 1:
+        return tag_type_str(code)
+    elif col == 2:
+        return str(value)
