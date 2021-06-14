@@ -59,20 +59,6 @@ class DXFTagsModel(QAbstractTableModel):
         return self._dxftype
 
 
-class Header(QStandardItem):
-    def __init__(self, name: str, header_vars: Tags):
-        super().__init__()
-        self.setEditable(False)
-        self._header_vars = header_vars
-        self.setText(name)
-
-    def data(self, role: int = ...) -> Any:
-        if role == DXFTagsRole:
-            return self._header_vars
-        else:
-            return super().data(role)
-
-
 class EntityContainer(QStandardItem):
     def __init__(self, name: str, entities: List[Tags]):
         super().__init__()
@@ -174,6 +160,11 @@ class Entity(QStandardItem):
             return super().data(role)
 
 
+class Header(Entity):
+    def entity_name(self):
+        return "HEADER"
+
+
 class NamedEntity(Entity):
     def entity_name(self):
         name = self._tags.get_first_value(2, "<noname>")
@@ -205,7 +196,7 @@ class DXFStructureModel(QStandardItemModel):
             name = get_section_name(section)
             if name == "HEADER":
                 header_vars = section[0]
-                row = Header(name, header_vars)
+                row = Header(header_vars)
             elif name == "CLASSES":
                 row = Classes(name, section[1:])
             elif name == "TABLES":
