@@ -404,10 +404,8 @@ class Browse(Command):
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
         app = QApplication(sys.argv)
         set_app_icon(app)
-        filename = args.file
-        if filename:
-            main_window = browser.DXFStructureBrowser(filename)
-            main_window.show()
+        main_window = browser.DXFStructureBrowser(args.file)
+        main_window.show()
         sys.exit(app.exec_())
 
 
