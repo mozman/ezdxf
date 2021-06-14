@@ -40,9 +40,6 @@ class TestDXFTagsModel:
     def test_row_count(self, model):
         assert model.rowCount() == len(self.tags())
 
-    def test_dxf_entity_type(self, model):
-        assert model.dxftype() == "POINT"
-
     def test_render_display_role(self, model):
         assert model.data(ModelIndex(0, 0), role=Qt.DisplayRole) == "0"
         assert model.data(ModelIndex(0, 1), role=Qt.DisplayRole) == "<ctrl>"

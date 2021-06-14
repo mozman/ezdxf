@@ -38,7 +38,6 @@ class DXFTagsModel(QAbstractTableModel):
     def __init__(self, tags: Tags):
         super().__init__()
         self._tags = tags
-        self._dxftype = ""
         if tags and tags[0].code == 0:
             self._dxftype = tags[0].value
 
@@ -54,9 +53,6 @@ class DXFTagsModel(QAbstractTableModel):
 
     def columnCount(self, parent: QModelIndex = ...) -> int:
         return 3
-
-    def dxftype(self) -> str:
-        return self._dxftype
 
 
 class EntityContainer(QStandardItem):
