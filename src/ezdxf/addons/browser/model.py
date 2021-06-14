@@ -64,8 +64,7 @@ class Header(QStandardItem):
         super().__init__()
         self.setEditable(False)
         self._header_vars = header_vars
-        self._section_name = name
-        self.setText(self._section_name)
+        self.setText(name)
 
     def data(self, role: int = ...) -> Any:
         if role == DXFTagsRole:
@@ -155,14 +154,18 @@ class Entity(QStandardItem):
         super().__init__()
         self.setEditable(False)
         self._tags = tags
-        self._entity_name = "INVALID ENTITY!"
         try:
             self._handle = tags.get_handle()
         except ValueError:
             self._handle = None
+        self.setText(self.entity_name())
+
+    def entity_name(self):
+        name = "INVALID ENTITY!"
+        tags = self._tags
         if tags and tags[0].code == 0:
-            self._entity_name = name_fmt(str(self._handle), tags[0].value)
-        self.setText(self._entity_name)
+            name = name_fmt(str(self._handle), tags[0].value)
+        return name
 
     def data(self, role: int = ...) -> Any:
         if role == DXFTagsRole:
@@ -172,37 +175,23 @@ class Entity(QStandardItem):
 
 
 class NamedEntity(Entity):
-    def __init__(self, tags: Tags):
-        super().__init__(tags)
-        name = tags.get_first_value(2, "<noname>")
-        self._entity_name = name_fmt(str(self._handle), name)
-        self.setText(self._entity_name)
+    def entity_name(self):
+        name = self._tags.get_first_value(2, "<noname>")
+        return name_fmt(str(self._handle), name)
 
 
-class Class(QStandardItem):
-    def __init__(self, tags: Tags):
-        super().__init__()
-        self.setEditable(False)
-        self._tags = tags
-        self._class_name = "INVALID CLASS!"
+class Class(Entity):
+    def entity_name(self):
+        tags = self._tags
+        name = "INVALID CLASS!"
         if len(tags) > 1 and tags[0].code == 0 and tags[1].code == 1:
-            self._class_name = tags[1].value
-        self.setText(self._class_name)
-
-    def data(self, role: int = ...) -> Any:
-        if role == DXFTagsRole:
-            return self._tags
-        else:
-            return super().data(role)
+            name = tags[1].value
+        return name
 
 
-class AcDsEntry(QStandardItem):
-    def __init__(self, tags: Tags):
-        super().__init__()
-        self.setEditable(False)
-        self._tags = tags
-        self._name = tags[0].value
-        self.setText(self._name)
+class AcDsEntry(Entity):
+    def entity_name(self):
+        return self._tags[0].value
 
 
 class DXFStructureModel(QStandardItemModel):
