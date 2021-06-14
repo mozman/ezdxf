@@ -1,10 +1,10 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 from typing import Any, List
+from .typehints import SectionDict, EntityIndex
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.types import render_tag
-from ezdxf.lldxf.loader import SectionDict
-from PyQt5.QtCore import QModelIndex, QAbstractListModel, Qt
+from PyQt5.QtCore import QModelIndex, QAbstractTableModel, Qt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
 __all__ = [
@@ -12,6 +12,7 @@ __all__ = [
     "DXFStructureModel",
     "EntityContainer",
     "Entity",
+    "build_entity_index"
 ]
 
 
@@ -19,7 +20,19 @@ def name_fmt(handle, name: str) -> str:
     return f"<{handle}> {name}"
 
 
-class DXFTagsModel(QAbstractListModel):
+def build_entity_index(sections: SectionDict) -> EntityIndex:
+    entity_index = dict()
+    for section in sections.values():
+        for entity in section:
+            try:
+                handle = entity.get_handle()
+                entity_index[handle] = entity
+            except ValueError:
+                pass
+    return entity_index
+
+
+class DXFTagsModel(QAbstractTableModel):
     def __init__(self, tags: Tags):
         super().__init__()
         self._tags = tags
