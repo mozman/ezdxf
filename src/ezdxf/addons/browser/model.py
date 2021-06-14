@@ -12,8 +12,10 @@ __all__ = [
     "DXFStructureModel",
     "EntityContainer",
     "Entity",
-    "build_entity_index"
+    "build_entity_index",
 ]
+
+DXFTagsRole = Qt.UserRole + 1
 
 
 def name_fmt(handle, name: str) -> str:
@@ -65,13 +67,18 @@ class Header(QStandardItem):
         self._section_name = name
         self.setText(self._section_name)
 
+    def data(self, role: int = ...) -> Any:
+        if role == DXFTagsRole:
+            return self._header_vars
+        else:
+            return super().data(role)
+
 
 class EntityContainer(QStandardItem):
     def __init__(self, name: str, entities: List[Tags]):
         super().__init__()
         self.setEditable(False)
-        self._name = name
-        self.setText(self._name)
+        self.setText(name)
         self.setup_content(entities)
 
     def setup_content(self, entities):
@@ -157,6 +164,12 @@ class Entity(QStandardItem):
             self._entity_name = name_fmt(str(self._handle), tags[0].value)
         self.setText(self._entity_name)
 
+    def data(self, role: int = ...) -> Any:
+        if role == DXFTagsRole:
+            return self._tags
+        else:
+            return super().data(role)
+
 
 class NamedEntity(Entity):
     def __init__(self, tags: Tags):
@@ -175,6 +188,12 @@ class Class(QStandardItem):
         if len(tags) > 1 and tags[0].code == 0 and tags[1].code == 1:
             self._class_name = tags[1].value
         self.setText(self._class_name)
+
+    def data(self, role: int = ...) -> Any:
+        if role == DXFTagsRole:
+            return self._tags
+        else:
+            return super().data(role)
 
 
 class AcDsEntry(QStandardItem):

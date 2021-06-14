@@ -8,12 +8,17 @@ from PyQt5.QtWidgets import (
     QFileDialog,
     QMessageBox,
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QModelIndex
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.tags import Tags
 from .typehints import EntityIndex, SectionDict
 from .loader import load_section_dict
-from .model import DXFStructureModel, DXFTagsModel, build_entity_index
+from .model import (
+    DXFStructureModel,
+    DXFTagsModel,
+    build_entity_index,
+    DXFTagsRole,
+)
 from .views import StructureTree, DXFTagsTable
 
 __all__ = ["DXFStructureBrowser"]
@@ -39,6 +44,7 @@ class DXFStructureBrowser(QMainWindow):
 
         self.setCentralWidget(self.build_central_widget())
         self.resize(800, 600)
+        self.connect_slots()
 
     def build_central_widget(self):
         container = QSplitter(Qt.Horizontal)
@@ -47,6 +53,9 @@ class DXFStructureBrowser(QMainWindow):
         container.setCollapsible(0, False)
         container.setCollapsible(1, False)
         return container
+
+    def connect_slots(self):
+        self._structure_tree.activated.connect(self.entity_activated)
 
     def setup_actions(self):
         self._open_action = QAction("&Open DXF file...", self)
@@ -107,3 +116,8 @@ class DXFStructureBrowser(QMainWindow):
             # TODO: compile tags - compiling may fail!
             model = DXFTagsModel(entity)
             self._dxf_tags_table.setModel(model)
+
+    def entity_activated(self, index: QModelIndex):
+        tags = index.data(role=DXFTagsRole)
+        if isinstance(tags, Tags):
+            self.set_current_entity(tags)
