@@ -1,6 +1,5 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-import sys
 import pathlib
 from PyQt5.QtWidgets import (
     QMainWindow,
@@ -11,6 +10,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 from ezdxf.lldxf.const import DXFStructureError
+from ezdxf.lldxf.tags import Tags
 from .typehints import EntityIndex, SectionDict
 from .loader import load_section_dict
 from .model import DXFStructureModel, DXFTagsModel, build_entity_index
@@ -34,7 +34,6 @@ class DXFStructureBrowser(QMainWindow):
 
         if filename:
             self.load_dxf(filename)
-            self.update_title()
         else:
             self.setWindowTitle(APP_NAME)
 
@@ -78,15 +77,18 @@ class DXFStructureBrowser(QMainWindow):
                 "DXF Structure Error",
                 f'Invalid DXF file "{path}": {str(e)}',
             )
-        self.update_title()
+        else:
+            self.update_title()
 
     def _load(self, filename: str):
-        self._sections = load_section_dict(filename)
         self._filename = filename
+        self._sections = load_section_dict(filename)
+        self._entity_index = build_entity_index(self._sections)
         model = DXFStructureModel(pathlib.Path(filename).name, self._sections)
         self._structure_tree.set_structure(model)
-        index = build_entity_index(self._sections)
-        self.update_entity_index(index)
+        self.view_header_section()
+
+    def view_header_section(self):
         header = self._sections.get("HEADER")
         if header:
             self.set_current_entity(header[0])
@@ -97,15 +99,11 @@ class DXFStructureBrowser(QMainWindow):
 
     def set_current_entity_by_handle(self, handle: str):
         entity = self._entity_index.get(handle)
-        if entity is not None:
+        if entity:
+            self.set_current_entity(entity)
+
+    def set_current_entity(self, entity: Tags):
+        if entity:
+            # TODO: compile tags - compiling may fail!
             model = DXFTagsModel(entity)
             self._dxf_tags_table.setModel(model)
-
-    def set_current_entity(self, entity):
-        if entity is not None:
-            model = DXFTagsModel(entity)
-            self._dxf_tags_table.setModel(model)
-
-    def update_entity_index(self, index: EntityIndex):
-        self._entity_index = index
-        self._dxf_tags_table.set_index(index)

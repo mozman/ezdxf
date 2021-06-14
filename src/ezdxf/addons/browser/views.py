@@ -1,7 +1,6 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 
-from .typehints import EntityIndex
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QModelIndex
 
@@ -19,7 +18,3 @@ class DXFTagsTable(QtWidgets.QTableView):
         self.verticalHeader().hide()
         header = self.horizontalHeader()
         header.setStretchLastSection(True)
-        self._entity_index: EntityIndex = dict()
-
-    def set_index(self, index: EntityIndex):
-        self._entity_index = index
