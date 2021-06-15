@@ -13,6 +13,7 @@ __all__ = [
     "EntityContainer",
     "Entity",
     "build_entity_index",
+    "DXFTagsRole",
 ]
 
 DXFTagsRole = Qt.UserRole + 1
@@ -34,6 +35,9 @@ def build_entity_index(sections: SectionDict) -> EntityIndex:
     return entity_index
 
 
+HEADER_LABELS = ["Group Code", "Data Type", "Content", "4", "5"]
+
+
 class DXFTagsModel(QAbstractTableModel):
     def __init__(self, tags: Tags):
         super().__init__()
@@ -47,6 +51,14 @@ class DXFTagsModel(QAbstractTableModel):
         if role == Qt.DisplayRole:
             tag = self._tags[row]
             return render_tag(tag, col)
+
+    def headerData(self, section: int, orientation: Qt.Orientation,
+        role: int = ...) -> Any:
+        if orientation == Qt.Horizontal:
+            if role == Qt.DisplayRole:
+                return HEADER_LABELS[section]
+            elif role == Qt.TextAlignmentRole:
+                return Qt.AlignLeft
 
     def rowCount(self, parent: QModelIndex = ...) -> int:
         return len(self._tags)
