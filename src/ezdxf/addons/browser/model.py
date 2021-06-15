@@ -2,17 +2,19 @@
 #  License: MIT License
 from typing import Any, List
 from .typehints import SectionDict, EntityIndex
+from .loader import load_section_dict
+from pathlib import Path
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.types import render_tag
 from PyQt5.QtCore import QModelIndex, QAbstractTableModel, Qt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
 __all__ = [
+    "DXFDocument",
     "DXFTagsModel",
     "DXFStructureModel",
     "EntityContainer",
     "Entity",
-    "build_entity_index",
     "DXFTagsRole",
 ]
 
@@ -35,6 +37,31 @@ def build_entity_index(sections: SectionDict) -> EntityIndex:
     return entity_index
 
 
+class DXFDocument:
+    def __init__(self):
+        self.sections: SectionDict = dict()
+        self.entity_index: EntityIndex = dict()
+        self.filename = ""
+
+    @property
+    def filepath(self):
+        return Path(self.filename)
+
+    def load(self, filename: str):
+        self.filename = filename
+        self.sections = load_section_dict(filename)
+        self.entity_index = build_entity_index(self.sections)
+
+    def absolute_filepath(self):
+        return self.filepath.absolute()
+
+    def get_header_section(self):
+        return self.sections.get("HEADER")
+
+    def get_entity(self, handle: str) -> Tags:
+        return self.entity_index.get(handle)
+
+
 HEADER_LABELS = ["Group Code", "Data Type", "Content", "4", "5"]
 
 
@@ -52,8 +79,9 @@ class DXFTagsModel(QAbstractTableModel):
             tag = self._tags[row]
             return render_tag(tag, col)
 
-    def headerData(self, section: int, orientation: Qt.Orientation,
-        role: int = ...) -> Any:
+    def headerData(
+        self, section: int, orientation: Qt.Orientation, role: int = ...
+    ) -> Any:
         if orientation == Qt.Horizontal:
             if role == Qt.DisplayRole:
                 return HEADER_LABELS[section]
@@ -98,6 +126,7 @@ class Tables(EntityContainer):
         container = []
         name = ""
         for e in entities:
+            container.append(e)
             dxftype = e.dxftype()
             if dxftype == "TABLE":
                 try:
@@ -108,10 +137,9 @@ class Tables(EntityContainer):
                 name = name_fmt(handle, name)
             elif dxftype == "ENDTAB":
                 if container:
+                    container.pop()  # remove ENDTAB
                     self.appendRow(NamedEntityContainer(name, container))
                 container.clear()
-            else:
-                container.append(e)
 
 
 class Blocks(EntityContainer):
@@ -119,6 +147,7 @@ class Blocks(EntityContainer):
         container = []
         name = "UNDEFINED"
         for e in entities:
+            container.append(e)
             dxftype = e.dxftype()
             if dxftype == "BLOCK":
                 try:
@@ -131,8 +160,6 @@ class Blocks(EntityContainer):
                 if container:
                     self.appendRow(EntityContainer(name, container))
                 container.clear()
-            else:
-                container.append(e)
 
 
 def get_section_name(section: List[Tags]) -> str:

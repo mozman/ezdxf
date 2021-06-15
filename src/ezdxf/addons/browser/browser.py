@@ -1,6 +1,5 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-import pathlib
 from PyQt5.QtWidgets import (
     QMainWindow,
     QSplitter,
@@ -12,8 +11,8 @@ from PyQt5.QtCore import Qt, QModelIndex
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.tags import Tags
 from .typehints import EntityIndex, SectionDict
-from .loader import load_section_dict
 from .model import (
+    DXFDocument,
     DXFStructureModel,
     DXFTagsModel,
     build_entity_index,
@@ -29,9 +28,7 @@ APP_NAME = "DXF Structure Browser"
 class DXFStructureBrowser(QMainWindow):
     def __init__(self, filename: str = ""):
         super().__init__()
-        self._filename: str = filename
-        self._sections: SectionDict = dict()
-        self._entity_index: EntityIndex = dict()
+        self.doc = DXFDocument()
         self._structure_tree = StructureTree()
         self._dxf_tags_table = DXFTagsTable()
         self.setup_actions()
@@ -90,24 +87,21 @@ class DXFStructureBrowser(QMainWindow):
             self.update_title()
 
     def _load(self, filename: str):
-        self._filename = filename
-        self._sections = load_section_dict(filename)
-        self._entity_index = build_entity_index(self._sections)
-        model = DXFStructureModel(pathlib.Path(filename).name, self._sections)
+        self.doc.load(filename)
+        model = DXFStructureModel(self.doc.filepath.name, self.doc.sections)
         self._structure_tree.set_structure(model)
         self.view_header_section()
 
     def view_header_section(self):
-        header = self._sections.get("HEADER")
+        header = self.doc.get_header_section()
         if header:
             self.set_current_entity(header[0])
 
     def update_title(self):
-        filepath = pathlib.Path(self._filename)
-        self.setWindowTitle(f"{APP_NAME} - {filepath.absolute()}")
+        self.setWindowTitle(f"{APP_NAME} - {self.doc.absolute_filepath()}")
 
     def set_current_entity_by_handle(self, handle: str):
-        entity = self._entity_index.get(handle)
+        entity = self.doc.get_entity(handle)
         if entity:
             self.set_current_entity(entity)
 
