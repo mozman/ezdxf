@@ -64,6 +64,8 @@ AcDbPoint
 0.0
 30
 0.0
+999
+Dummy - a vertex is never the last tag in a DXF file
 """
 
 

@@ -10,12 +10,10 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QModelIndex
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.tags import Tags
-from .typehints import EntityIndex, SectionDict
 from .model import (
     DXFDocument,
     DXFStructureModel,
     DXFTagsModel,
-    build_entity_index,
     DXFTagsRole,
 )
 from .views import StructureTree, DXFTagsTable
