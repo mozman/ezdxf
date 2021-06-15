@@ -4,7 +4,9 @@ from typing import Any, List
 from .typehints import SectionDict, EntityIndex
 from .loader import load_section_dict
 from pathlib import Path
+from ezdxf.lldxf import const
 from ezdxf.lldxf.tags import Tags
+from ezdxf.lldxf.tagger import tag_compiler
 from ezdxf.lldxf.types import render_tag
 from PyQt5.QtCore import QModelIndex, QAbstractTableModel, Qt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
@@ -65,10 +67,18 @@ class DXFDocument:
 HEADER_LABELS = ["Group Code", "Data Type", "Content", "4", "5"]
 
 
+def compile_tags(tags: Tags) -> Tags:
+    try:
+        tags = list(tag_compiler(iter(tags)))
+    except const.DXFStructureError:
+        pass
+    return tags
+
+
 class DXFTagsModel(QAbstractTableModel):
     def __init__(self, tags: Tags):
         super().__init__()
-        self._tags = tags
+        self._tags = compile_tags(tags)
         if tags and tags[0].code == 0:
             self._dxftype = tags[0].value
 
