@@ -1,7 +1,6 @@
 # Copyright (c) 2021, Manfred Moitzi
 # License: MIT License
 from ezdxf.lldxf.tags import Tags
-from ezdxf.lldxf.const import DXFStructureError
 from typing import Iterable
 from ezdxf.lldxf.types import (
     DXFTag,
@@ -21,6 +20,7 @@ def tag_compiler(tags: Tags) -> Iterable[DXFTag]:
         - invalid floats are returned as string
 
     """
+
     def to_float(v: str) -> float:
         try:
             return float(v)

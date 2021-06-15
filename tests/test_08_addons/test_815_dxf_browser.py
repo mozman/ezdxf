@@ -145,10 +145,6 @@ class TestTagCompiler:
         assert tags[0] == (20, 2.2), "expected coords as single tags"
         assert tags[1] == (10, 1.1), "expected coords as single tags"
 
-    def test_preserve_comments(self):
-        tags = compile_tags(txt2tags("999\ncomment"))
-        assert tags[0] == (999, "comment")
-
 
 ENTITIES = """0
 SECTION
