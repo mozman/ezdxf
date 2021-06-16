@@ -1,11 +1,10 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 from typing import Any, List
-from ezdxf.lldxf.types import render_tag
+from ezdxf.lldxf.types import render_tag, DXFVertex
 from PyQt5.QtCore import QModelIndex, QAbstractTableModel, Qt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from .tags import compile_tags, Tags
-
 
 __all__ = [
     "DXFTagsModel",
@@ -25,10 +24,23 @@ def name_fmt(handle, name: str) -> str:
 HEADER_LABELS = ["Group Code", "Data Type", "Content", "4", "5"]
 
 
+def calc_line_numbers(start: int, tags: Tags) -> List[int]:
+    numbers = [start]
+    index = start
+    for tag in tags:
+        if isinstance(tag, DXFVertex):
+            index += len(tag.value) * 2
+        else:
+            index += 2
+        numbers.append(index)
+    return numbers
+
+
 class DXFTagsModel(QAbstractTableModel):
-    def __init__(self, tags: Tags):
+    def __init__(self, tags: Tags, start_line_number: int = 1):
         super().__init__()
         self._tags = compile_tags(tags)
+        self._line_numbers = calc_line_numbers(start_line_number, self._tags)
         if tags and tags[0].code == 0:
             self._dxftype = tags[0].value
 
@@ -47,6 +59,9 @@ class DXFTagsModel(QAbstractTableModel):
                 return HEADER_LABELS[section]
             elif role == Qt.TextAlignmentRole:
                 return Qt.AlignLeft
+        elif orientation == Qt.Vertical:
+            if role == Qt.DisplayRole:
+                return self._line_numbers[section]
 
     def rowCount(self, parent: QModelIndex = ...) -> int:
         return len(self._tags)

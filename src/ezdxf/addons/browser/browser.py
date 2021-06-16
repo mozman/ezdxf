@@ -105,8 +105,8 @@ class DXFStructureBrowser(QMainWindow):
 
     def set_current_entity(self, entity: Tags):
         if entity:
-            # TODO: compile tags - compiling may fail!
-            model = DXFTagsModel(entity)
+            line_number = self.doc.get_line_number(entity)
+            model = DXFTagsModel(entity, line_number)
             self._dxf_tags_table.setModel(model)
 
     def entity_activated(self, index: QModelIndex):

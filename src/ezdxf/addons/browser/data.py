@@ -103,13 +103,14 @@ class LineIndex:
             for entity in section:
                 index[id(entity)] = line_number, entity
                 line_number += len(entity) * 2  # group code, value
+            line_number += 2  # for missing ENDSEC tag
         return index
 
     @staticmethod
     def build_line_index(sections: SectionDict) -> List:
         index: List[Tuple[int, int, Tags]] = list()
         start_line_number = 1
-        for section in sections.values():
+        for name, section in sections.items():
             # the section dict contain raw string tags
             for entity in section:
                 line_count = len(entity) * 2  # group code, value
@@ -118,6 +119,7 @@ class LineIndex:
                     (start_line_number, next_start_line_number, entity)
                 )
                 start_line_number = next_start_line_number
+            start_line_number += 2  # for missing ENDSEC tag
         return index
 
     def get_start_line_for_entity(self, entity: Tags) -> Optional[int]:

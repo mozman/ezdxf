@@ -15,6 +15,5 @@ class StructureTree(QtWidgets.QTreeView):
 class DXFTagsTable(QtWidgets.QTableView):
     def __init__(self):
         super().__init__()
-        self.verticalHeader().hide()
         header = self.horizontalHeader()
         header.setStretchLastSection(True)
