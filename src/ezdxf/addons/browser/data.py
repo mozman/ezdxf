@@ -76,7 +76,7 @@ class EntityIndex:
             for entity in section:
                 try:
                     handle = entity.get_handle()
-                    entity_index[handle] = entity
+                    entity_index[handle.upper()] = entity
                 except ValueError:
                     pass
         return entity_index
