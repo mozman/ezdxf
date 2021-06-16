@@ -129,8 +129,6 @@ class Frontend:
         `properties` object. It is recommended to modify only the `properties`
         object in this filter.
         """
-        if entity.dxftype() == 'HATCH':
-            properties.color = set_color_alpha(properties.color, 200)
 
     def draw_layout(
         self, layout: 'Layout',
