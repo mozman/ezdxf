@@ -76,7 +76,7 @@ class EntityContainer(QStandardItem):
     def __init__(self, name: str, entities: List[Tags]):
         super().__init__()
         self.setEditable(False)
-        self.setText(name)
+        self.setText(name + f" ({len(entities)})")
         self.setup_content(entities)
 
     def setup_content(self, entities):
