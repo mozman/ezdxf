@@ -24,6 +24,8 @@ tox-all.ini
 /examples_dxf/points_pdmode_*.dxf
 /examples_dxf/linetypes_*.dxf
 /examples_dxf/hatch_*.dxf
+/examples_dxf/insert_nesting_level_0.dxf
+/examples_dxf/insert_nesting_level_1.dxf
 /src/ezdxf/acc/bezier3p.cpp
 /src/ezdxf/acc/bezier4p.cpp
 /src/ezdxf/acc/bspline.cpp
