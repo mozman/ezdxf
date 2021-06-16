@@ -38,7 +38,7 @@ class DXFStructureBrowser(QMainWindow):
             self.setWindowTitle(APP_NAME)
 
         self.setCentralWidget(self.build_central_widget())
-        self.resize(800, 600)
+        self.resize(1024, 768)
         self.connect_slots()
 
     def build_central_widget(self):

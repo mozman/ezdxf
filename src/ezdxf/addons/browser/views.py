@@ -2,7 +2,7 @@
 #  License: MIT License
 
 from PyQt5.QtWidgets import QTableView, QTreeView
-from PyQt5.QtCore import QModelIndex, Qt
+from PyQt5.QtCore import QModelIndex
 
 
 class StructureTree(QTreeView):
@@ -15,6 +15,8 @@ class StructureTree(QTreeView):
 class DXFTagsTable(QTableView):
     def __init__(self):
         super().__init__()
-        header = self.horizontalHeader()
-        header.setStretchLastSection(True)
+        col_header = self.horizontalHeader()
+        col_header.setStretchLastSection(True)
+        row_header = self.verticalHeader()
+        row_header.setDefaultSectionSize(24)  # default row height in pixels
         self.setSelectionBehavior(QTableView.SelectRows)

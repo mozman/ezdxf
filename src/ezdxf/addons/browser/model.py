@@ -64,6 +64,8 @@ class DXFTagsModel(QAbstractTableModel):
         elif orientation == Qt.Vertical:
             if role == Qt.DisplayRole:
                 return self._line_numbers[section]
+            elif role == Qt.ToolTipRole:
+                return "Line number in DXF file"
 
     def rowCount(self, parent: QModelIndex = ...) -> int:
         return len(self._tags)
