@@ -1,9 +1,9 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 from typing import Any, List
-from ezdxf.lldxf.types import render_tag, DXFVertex
+from ezdxf.lldxf.types import render_tag, DXFVertex, GROUP_MARKERS
 from PyQt5.QtCore import QModelIndex, QAbstractTableModel, Qt
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor
 from .tags import compile_tags, Tags
 
 __all__ = [
@@ -45,11 +45,13 @@ class DXFTagsModel(QAbstractTableModel):
             self._dxftype = tags[0].value
 
     def data(self, index: QModelIndex, role: int = ...) -> Any:
-        row = index.row()
-        col = index.column()
         if role == Qt.DisplayRole:
-            tag = self._tags[row]
-            return render_tag(tag, col)
+            tag = self._tags[index.row()]
+            return render_tag(tag, index.column())
+        elif role == Qt.ForegroundRole:
+            tag = self._tags[index.row()]
+            if tag.code in GROUP_MARKERS:
+                return QColor("blue")
 
     def headerData(
         self, section: int, orientation: Qt.Orientation, role: int = ...
