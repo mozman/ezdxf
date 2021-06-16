@@ -1,16 +1,13 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 from typing import Any, List
-from .typehints import SectionDict, EntityIndex
-from .loader import load_section_dict
-from .tags import compile_tags, Tags
-from pathlib import Path
 from ezdxf.lldxf.types import render_tag
 from PyQt5.QtCore import QModelIndex, QAbstractTableModel, Qt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from .tags import compile_tags, Tags
+
 
 __all__ = [
-    "DXFDocument",
     "DXFTagsModel",
     "DXFStructureModel",
     "EntityContainer",
@@ -23,43 +20,6 @@ DXFTagsRole = Qt.UserRole + 1
 
 def name_fmt(handle, name: str) -> str:
     return f"<{handle}> {name}"
-
-
-def build_entity_index(sections: SectionDict) -> EntityIndex:
-    entity_index = dict()
-    for section in sections.values():
-        for entity in section:
-            try:
-                handle = entity.get_handle()
-                entity_index[handle] = entity
-            except ValueError:
-                pass
-    return entity_index
-
-
-class DXFDocument:
-    def __init__(self):
-        self.sections: SectionDict = dict()
-        self.entity_index: EntityIndex = dict()
-        self.filename = ""
-
-    @property
-    def filepath(self):
-        return Path(self.filename)
-
-    def load(self, filename: str):
-        self.filename = filename
-        self.sections = load_section_dict(filename)
-        self.entity_index = build_entity_index(self.sections)
-
-    def absolute_filepath(self):
-        return self.filepath.absolute()
-
-    def get_header_section(self):
-        return self.sections.get("HEADER")
-
-    def get_entity(self, handle: str) -> Tags:
-        return self.entity_index.get(handle)
 
 
 HEADER_LABELS = ["Group Code", "Data Type", "Content", "4", "5"]
@@ -221,13 +181,12 @@ class AcDsEntry(Entity):
 
 
 class DXFStructureModel(QStandardItemModel):
-    def __init__(self, filename: str, sections: SectionDict):
+    def __init__(self, filename: str, doc):
         super().__init__()
         root = QStandardItem(filename)
         root.setEditable(False)
         self.appendRow(root)
-        self._sections = sections
-        for section in self._sections.values():
+        for section in doc.sections.values():
             name = get_section_name(section)
             if name == "HEADER":
                 header_vars = section[0]

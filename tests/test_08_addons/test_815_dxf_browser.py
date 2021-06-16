@@ -10,11 +10,17 @@ from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.loader import load_dxf_structure
 from ezdxf.lldxf.tagger import ascii_tags_loader
 
-from ezdxf.addons.browser import DXFTagsModel, DXFStructureModel
+from ezdxf.addons.browser import DXFTagsModel, DXFStructureModel, DXFDocument
 from ezdxf.addons.browser.tags import compile_tags
 
 from PyQt5.QtCore import Qt, QModelIndex
 
+
+def txt2tags(s: str) -> Tags:
+    return Tags(ascii_tags_loader(StringIO(s), skip_comments=False))
+
+
+NAN = float("nan")
 
 # noinspection PyMissingConstructor
 class ModelIndex(QModelIndex):
@@ -69,14 +75,13 @@ AcDbPoint
 0.0
 30
 0.0
-999
-Dummy - a vertex is never the last tag in a DXF file
 """
 
 
 def test_setup_dxf_structure_model():
-    sections = load_dxf_structure(Tags.from_text(ENTITIES))
-    model = DXFStructureModel("ez.dxf", sections)
+    sections = load_dxf_structure(txt2tags(ENTITIES))
+    doc = DXFDocument(sections)
+    model = DXFStructureModel("ez.dxf", doc)
     parent = model.item(0, 0)
     assert parent.data(Qt.DisplayRole) == "ez.dxf"
     assert "ENTITIES" in parent.child(0, 0).data(Qt.DisplayRole)
@@ -86,11 +91,28 @@ def test_setup_dxf_structure_model():
     assert "LINE" in parent.child(1, 0).data(Qt.DisplayRole)
 
 
-def txt2tags(s: str) -> Tags:
-    return Tags(ascii_tags_loader(StringIO(s), skip_comments=False))
+class TestDXFDocument:
+    @pytest.fixture
+    def doc(self):
+        sections = load_dxf_structure(txt2tags(ENTITIES))
+        return DXFDocument(sections)
 
+    def test_get_entity_returns_entity_tags(self, doc):
+        entity = doc.get_entity("100")
+        assert entity[0] == (0, "LINE")
 
-NAN = float("nan")
+    def test_get_entity_by_invalid_handle_returns_none(self, doc):
+        assert doc.get_entity("XXX") is None
+
+    def test_get_start_line_number_for_entity(self, doc):
+        entity = doc.get_entity("101")
+        assert doc.get_line_number(entity) == 9
+
+    def test_get_entity_by_line_number(self, doc):
+        entity = doc.get_entity("101")
+        assert doc.get_entity_at_line(9) is entity
+        assert doc.get_entity_at_line(10) is entity
+        assert doc.get_entity_at_line(99) is None
 
 
 class TestTagCompiler:

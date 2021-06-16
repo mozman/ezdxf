@@ -11,11 +11,11 @@ from PyQt5.QtCore import Qt, QModelIndex
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.tags import Tags
 from .model import (
-    DXFDocument,
     DXFStructureModel,
     DXFTagsModel,
     DXFTagsRole,
 )
+from .data import DXFDocument
 from .views import StructureTree, DXFTagsTable
 
 __all__ = ["DXFStructureBrowser"]
@@ -86,7 +86,7 @@ class DXFStructureBrowser(QMainWindow):
 
     def _load(self, filename: str):
         self.doc.load(filename)
-        model = DXFStructureModel(self.doc.filepath.name, self.doc.sections)
+        model = DXFStructureModel(self.doc.filepath.name, self.doc)
         self._structure_tree.set_structure(model)
         self.view_header_section()
 
