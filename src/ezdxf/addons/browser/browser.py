@@ -18,7 +18,7 @@ from .model import (
     DXFTagsModel,
     DXFTagsRole,
 )
-from .data import DXFDocument, get_row_from_line_number
+from .data import DXFDocument, get_row_from_line_number, dxfstr
 from .views import StructureTree, DXFTagsTable
 
 __all__ = ["DXFStructureBrowser"]
@@ -73,6 +73,12 @@ class DXFStructureBrowser(QMainWindow):
         self._open_action.setShortcut("Ctrl+O")
         self._open_action.triggered.connect(self.open_dxf)
 
+        self._export_entity_action = QAction(
+            "&Export Activated Entity...", self
+        )
+        self._export_entity_action.setShortcut("Ctrl+E")
+        self._export_entity_action.triggered.connect(self.export_entity)
+
         self._quit_action = QAction("&Quit", self)
         self._quit_action.setShortcut("Ctrl+Q")
         self._quit_action.triggered.connect(qApp.quit)
@@ -93,6 +99,7 @@ class DXFStructureBrowser(QMainWindow):
         menu = self.menuBar()
         file_menu = menu.addMenu("&File")
         file_menu.addAction(self._open_action)
+        file_menu.addAction(self._export_entity_action)
         file_menu.addAction(self._quit_action)
         navigate_menu = menu.addMenu("&Navigate")
         navigate_menu.addAction(self._goto_handle_action)
@@ -127,6 +134,19 @@ class DXFStructureBrowser(QMainWindow):
         model = DXFStructureModel(self.doc.filepath.name, self.doc)
         self._structure_tree.set_structure(model)
         self.view_header_section()
+
+    def export_entity(self):
+        if self._dxf_tags_table is None:
+            return
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            caption="Export DXF Entity",
+            filter="Text Files (*.txt *.TXT)",
+        )
+        if path:
+            model = self._dxf_tags_table.model()
+            tags = model.compiled_tags()
+            self.export_tags(path, tags)
 
     def view_header_section(self):
         header = self.doc.get_header_section()
@@ -206,3 +226,10 @@ class DXFStructureBrowser(QMainWindow):
 
     def find_text(self):
         pass
+
+    def export_tags(self, filename: str, tags: Tags):
+        try:
+            with open(filename, "wt", encoding="utf8") as fp:
+                fp.write(dxfstr(tags))
+        except IOError as e:
+            QMessageBox.critical(self, "IOError", str(e))
