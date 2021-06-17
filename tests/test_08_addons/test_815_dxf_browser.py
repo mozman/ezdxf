@@ -113,7 +113,9 @@ class TestDXFDocument:
         entity = doc.get_entity("101")
         assert doc.get_entity_at_line(9) is entity
         assert doc.get_entity_at_line(10) is entity
-        assert doc.get_entity_at_line(99) is None
+        assert (
+            doc.get_entity_at_line(99) is entity
+        ), "should return the last entity"
 
 
 class TestTagCompiler:
