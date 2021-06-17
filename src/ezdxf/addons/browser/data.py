@@ -8,7 +8,13 @@ from ezdxf.addons.browser.loader import load_section_dict
 from ezdxf.lldxf.types import DXFVertex
 from ezdxf.lldxf.tags import Tags
 
-__all__ = ["DXFDocument", "get_row_from_line_number", "dxfstr"]
+__all__ = [
+    "DXFDocument",
+    "get_row_from_line_number",
+    "dxfstr",
+    "row_to_dxf_lines",
+    "EntityHistory"
+]
 
 
 class DXFDocument:
@@ -192,6 +198,19 @@ def get_row_from_line_number(
             lines += 2
         row += 1
     return row
+
+
+def row_to_dxf_lines(row: int, tags: Tags) -> int:
+    lines = 0
+    for tag in tags:
+        if row <= 0:
+            return lines
+        if isinstance(tag, DXFVertex):
+            lines += len(tag.value) * 2
+        else:
+            lines += 2
+        row -= 1
+    return lines
 
 
 def dxfstr(tags: Tags) -> str:

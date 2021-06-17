@@ -1,6 +1,8 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 from typing import Optional
+import os
+import subprocess
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -20,12 +22,21 @@ from .model import (
     DXFTagsModel,
     DXFTagsRole,
 )
-from .data import DXFDocument, get_row_from_line_number, dxfstr, EntityHistory
+from .data import (
+    DXFDocument,
+    get_row_from_line_number,
+    dxfstr,
+    EntityHistory,
+    row_to_dxf_lines,
+)
 from .views import StructureTree, DXFTagsTable
 
 __all__ = ["DXFStructureBrowser"]
 
 APP_NAME = "DXF Structure Browser"
+TEXT_EDITOR = os.environ.get(
+    "EZDXF_TEXT_EDITOR", r"C:\Program Files\Notepad++\notepad++.exe"
+)
 
 
 class DXFStructureBrowser(QMainWindow):
@@ -108,9 +119,7 @@ class DXFStructureBrowser(QMainWindow):
         self._find_text_action.setShortcut("Ctrl+F")
         self._find_text_action.triggered.connect(self.find_text)
 
-        self._goto_predecessor_entity_action = QAction(
-            "&Previous Entity", self
-        )
+        self._goto_predecessor_entity_action = QAction("&Previous Entity", self)
         self._goto_predecessor_entity_action.setShortcut("Ctrl+Left")
         self._goto_predecessor_entity_action.triggered.connect(
             self.goto_predecessor_entity
@@ -134,6 +143,14 @@ class DXFStructureBrowser(QMainWindow):
             self.go_forward_entity_history
         )
 
+        self._open_entity_in_text_editor_action = QAction(
+            "&Open Entity in Notepad++", self
+        )
+        self._open_entity_in_text_editor_action.setShortcut("Ctrl+N")
+        self._open_entity_in_text_editor_action.triggered.connect(
+            self.open_entity_in_text_editor
+        )
+
     def setup_menu(self):
         menu = self.menuBar()
         file_menu = menu.addMenu("&File")
@@ -153,6 +170,8 @@ class DXFStructureBrowser(QMainWindow):
         navigate_menu.addSeparator()
         navigate_menu.addAction(self._entity_history_back_action)
         navigate_menu.addAction(self._entity_history_forward_action)
+        navigate_menu.addSeparator()
+        navigate_menu.addAction(self._open_entity_in_text_editor_action)
 
     def open_dxf(self):
         path, _ = QFileDialog.getOpenFileName(
@@ -332,6 +351,25 @@ class DXFStructureBrowser(QMainWindow):
         entity = self.history.forward()
         if entity:
             self.set_current_entity(entity)  # do not change history
+
+    def open_entity_in_text_editor(self):
+        current_entity = self.get_current_entity()
+        offset = 0
+        if self._dxf_tags_table:
+            indices = self._dxf_tags_table.selectedIndexes()
+            if indices:
+                row = indices[0].row()
+                model = self._dxf_tags_table.model()
+                tags = model.compiled_tags()
+                offset = row_to_dxf_lines(row, tags)
+
+        start_line_number = self.doc.get_line_number(current_entity) + offset
+        args = [
+            TEXT_EDITOR,
+            str(self.doc.absolute_filepath()),
+            "-n" + str(start_line_number),
+        ]
+        subprocess.Popen(args)
 
 
 def copy_dxf_to_clipboard(tags: Tags):
