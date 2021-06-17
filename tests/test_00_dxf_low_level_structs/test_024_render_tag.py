@@ -30,7 +30,13 @@ class TestRenderTag:
     def test_render_handle_type(self):
         tag = dxftag(5, "ABBA")
         assert render_tag(tag, 0) == "5"
-        assert render_tag(tag, 1) == "<hex>"
+        assert render_tag(tag, 1) == "<handle>"
+        assert render_tag(tag, 2) == "ABBA"
+
+    def test_render_reference_type(self):
+        tag = dxftag(330, "ABBA")
+        assert render_tag(tag, 0) == "330"
+        assert render_tag(tag, 1) == "<ref>"
         assert render_tag(tag, 2) == "ABBA"
 
     def test_render_ctrl_type(self):
