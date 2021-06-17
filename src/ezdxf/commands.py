@@ -391,6 +391,16 @@ class Browse(Command):
             nargs="?",
             help="DXF file to browse",
         )
+        parser.add_argument(
+            "-l", "--line", type=int, required=False, help="go to line number"
+        )
+        parser.add_argument(
+            "-g",
+            "--handle",
+            required=False,
+            help="go to entity by HANDLE, HANDLE has to be a hex value without "
+                 "any prefix like 'fefe'",
+        )
 
     @staticmethod
     def run(args):
@@ -401,10 +411,21 @@ class Browse(Command):
             sys.exit(1)
         from ezdxf.addons import browser
 
+        line_number = args.line
+        handle = args.handle
+        if handle is not None:
+            try:
+                int(handle, 16)
+            except ValueError:
+                print(f"Given handle is not a hex value: {handle}")
+                sys.exit(1)
+
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
         app = QApplication(sys.argv)
         set_app_icon(app)
-        main_window = browser.DXFStructureBrowser(args.file)
+        main_window = browser.DXFStructureBrowser(
+            args.file, line=line_number, handle=handle
+        )
         main_window.show()
         sys.exit(app.exec_())
 

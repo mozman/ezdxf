@@ -26,8 +26,9 @@ APP_NAME = "DXF Structure Browser"
 
 
 class DXFStructureBrowser(QMainWindow):
-    def __init__(self, filename: str = "", line: int = None,
-        handle: str = None):
+    def __init__(
+        self, filename: str = "", line: int = None, handle: str = None
+    ):
         super().__init__()
         self.doc = DXFDocument()
         self._structure_tree = StructureTree()
@@ -44,9 +45,15 @@ class DXFStructureBrowser(QMainWindow):
         self.resize(1024, 768)
         self.connect_slots()
         if line is not None:
-            self.goto_line(line)
+            try:
+                line = int(line)
+            except ValueError:
+                pass
+            else:
+                self.goto_line(line)
         if handle is not None:
-            self.goto_handle(handle)
+            if not self.goto_handle(handle):
+                print(f"Handle {handle} not found.")
 
     def build_central_widget(self):
         container = QSplitter(Qt.Horizontal)
