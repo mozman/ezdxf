@@ -67,7 +67,7 @@ class DXFStructureBrowser(QMainWindow):
         self._structure_tree.activated.connect(self.entity_activated)
 
     def setup_actions(self):
-        self._open_action = QAction("&Open DXF file ...", self)
+        self._open_action = QAction("&Open DXF File...", self)
         self._open_action.setShortcut("Ctrl+O")
         self._open_action.triggered.connect(self.open_dxf)
 
@@ -75,15 +75,15 @@ class DXFStructureBrowser(QMainWindow):
         self._quit_action.setShortcut("Ctrl+Q")
         self._quit_action.triggered.connect(qApp.quit)
 
-        self._goto_handle_action = QAction("Go to &Handle ...", self)
-        self._goto_handle_action.setShortcut("Ctrl+H")
+        self._goto_handle_action = QAction("&Go to Handle...", self)
+        self._goto_handle_action.setShortcut("Ctrl+G")
         self._goto_handle_action.triggered.connect(self.ask_for_handle)
 
-        self._goto_line_action = QAction("Go to &Line ...", self)
+        self._goto_line_action = QAction("Go to &Line...", self)
         self._goto_line_action.setShortcut("Ctrl+L")
         self._goto_line_action.triggered.connect(self.ask_for_line_number)
 
-        self._find_text_action = QAction("&Find text ...", self)
+        self._find_text_action = QAction("&Find Text...", self)
         self._find_text_action.setShortcut("Ctrl+F")
         self._find_text_action.triggered.connect(self.find_text)
 
