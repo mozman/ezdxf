@@ -5,9 +5,10 @@ from pathlib import Path
 
 from ezdxf.lldxf.loader import SectionDict
 from ezdxf.addons.browser.loader import load_section_dict
+from ezdxf.lldxf.types import DXFVertex
 from ezdxf.lldxf.tags import Tags
 
-__all__ = ["DXFDocument"]
+__all__ = ["DXFDocument", "get_row_from_line_number"]
 
 
 class DXFDocument:
@@ -151,3 +152,20 @@ class LineIndex:
                 return entity
             entity = e
         return entity
+
+
+def get_row_from_line_number(
+    entity: Tags, start_line_number: int, select_line_number: int
+) -> int:
+    count = select_line_number - start_line_number
+    lines = 0
+    row = 0
+    for tag in entity:
+        if lines >= count:
+            return row
+        if isinstance(tag, DXFVertex):
+            lines += len(tag.value) * 2
+        else:
+            lines += 2
+        row += 1
+    return row

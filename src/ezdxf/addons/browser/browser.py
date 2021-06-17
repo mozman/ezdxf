@@ -17,7 +17,7 @@ from .model import (
     DXFTagsModel,
     DXFTagsRole,
 )
-from .data import DXFDocument
+from .data import DXFDocument, get_row_from_line_number
 from .views import StructureTree, DXFTagsTable
 
 __all__ = ["DXFStructureBrowser"]
@@ -48,7 +48,7 @@ class DXFStructureBrowser(QMainWindow):
             try:
                 line = int(line)
             except ValueError:
-                pass
+                print(f"Invalid line number: {line}")
             else:
                 self.goto_line(line)
         if handle is not None:
@@ -139,11 +139,18 @@ class DXFStructureBrowser(QMainWindow):
         if entity:
             self.set_current_entity(entity)
 
-    def set_current_entity(self, entity: Tags):
+    def set_current_entity(self, entity: Tags, select_line_number: int = None):
         if entity:
-            line_number = self.doc.get_line_number(entity)
-            model = DXFTagsModel(entity, line_number)
+            start_line_number = self.doc.get_line_number(entity)
+            model = DXFTagsModel(entity, start_line_number)
             self._dxf_tags_table.setModel(model)
+            if select_line_number is not None:
+                row = get_row_from_line_number(
+                    model.compiled_tags(), start_line_number, select_line_number
+                )
+                self._dxf_tags_table.selectRow(row)
+                index = self._dxf_tags_table.model().index(row, 0)
+                self._dxf_tags_table.scrollTo(index)
 
     def entity_activated(self, index: QModelIndex):
         tags = index.data(role=DXFTagsRole)
@@ -185,7 +192,7 @@ class DXFStructureBrowser(QMainWindow):
     def goto_line(self, number: int) -> bool:
         entity = self.doc.get_entity_at_line(int(number))
         if entity:
-            self.set_current_entity(entity)
+            self.set_current_entity(entity, number)
             return True
         return False
 

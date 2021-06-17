@@ -73,6 +73,9 @@ class DXFTagsModel(QAbstractTableModel):
     def columnCount(self, parent: QModelIndex = ...) -> int:
         return 3
 
+    def compiled_tags(self):
+        return self._tags
+
 
 class EntityContainer(QStandardItem):
     def __init__(self, name: str, entities: List[Tags]):
