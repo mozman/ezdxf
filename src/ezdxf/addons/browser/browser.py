@@ -54,8 +54,13 @@ class DXFStructureBrowser(QMainWindow):
             else:
                 self.goto_line(line)
         if handle is not None:
-            if not self.goto_handle(handle):
-                print(f"Handle {handle} not found.")
+            try:
+                int(handle, 16)
+            except ValueError:
+                print(f"Given handle is not a hex value: {handle}")
+            else:
+                if not self.goto_handle(handle):
+                    print(f"Handle {handle} not found.")
 
     def build_central_widget(self):
         container = QSplitter(Qt.Horizontal)
@@ -74,9 +79,7 @@ class DXFStructureBrowser(QMainWindow):
         self._open_action.setShortcut("Ctrl+O")
         self._open_action.triggered.connect(self.open_dxf)
 
-        self._export_entity_action = QAction(
-            "&Export DXF Entity...", self
-        )
+        self._export_entity_action = QAction("&Export DXF Entity...", self)
         self._export_entity_action.setShortcut("Ctrl+E")
         self._export_entity_action.triggered.connect(self.export_entity)
 
