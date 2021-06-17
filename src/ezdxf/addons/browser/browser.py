@@ -274,8 +274,9 @@ class DXFStructureBrowser(QMainWindow):
     def tag_activated(self, index: QModelIndex):
         tag = index.data(role=DXFTagsRole)
         if isinstance(tag, DXFTag) and is_pointer_code(tag.code):
-            entity = self.doc.get_entity(tag.value)
-            self.set_current_entity_with_history(entity)
+            handle = tag.value
+            if not self.goto_handle(handle):
+                self.show_error_handle_not_found(handle)
 
     def ask_for_handle(self):
         handle, ok = QInputDialog.getText(
@@ -285,16 +286,19 @@ class DXFStructureBrowser(QMainWindow):
         )
         if ok:
             if not self.goto_handle(handle):
-                QMessageBox.information(
-                    self, "Error", f"Handle {handle} not found!"
-                )
+                self.show_error_handle_not_found(handle)
 
     def goto_handle(self, handle: str) -> bool:
         entity = self.doc.get_entity(handle)
         if entity:
-            self.set_current_entity(entity)
+            self.set_current_entity_with_history(entity)
             return True
         return False
+
+    def show_error_handle_not_found(self, handle: str):
+        QMessageBox.critical(
+            self, "Error", f"Handle {handle} not found!"
+        )
 
     def ask_for_line_number(self):
         max_line_number = self.doc.max_line_number
