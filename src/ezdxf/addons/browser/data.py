@@ -217,8 +217,9 @@ class EntityHistory:
     def back(self) -> Optional[Tags]:
         entity = None
         if self._history:
-            entity = self._history[self._index]
-            self._index = max(0, self._index - 1)
+            index = self._index - 1
+            entity = self._history[index]
+            self._index = max(0, index)
         return entity
 
     def forward(self) -> Tags:

@@ -262,24 +262,15 @@ class TestEntityHistory:
 
         entity = history2.back()
         assert len(history2) == 2, "entity is still in history"
-        assert history2.index == 0
-        assert entity is second
-
-        entity = history2.back()
-        assert len(history2) == 2, "entity is still in history"
-        assert history2.index == 0
         assert entity is first
+        assert history2.index == 0
 
     def test_go_back_and_forward_in_history(self, history2):
         first, second = history2.content()
-        history2.back()  # second
-        history2.back()  # first
-        entity = history2.forward()  # second
-        assert history2.index == 1
-        assert entity is second
+        assert history2.back()  is first
+        assert history2.forward() is second
 
     def test_append_moves_index_to_top_of_history(self, history2):
-        history2.back()  # second
         history2.back()  # first
         assert history2.index == 0
         history2.append(Tags())

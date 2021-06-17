@@ -244,10 +244,8 @@ class DXFStructureBrowser(QMainWindow):
                 self._dxf_tags_table.scrollTo(index)
 
     def set_current_entity_with_history(self, entity: Tags):
-        current_entity = self.get_current_entity()
-        if current_entity:
-            self.history.append(current_entity)
         self.set_current_entity(entity)
+        self.history.append(entity)
 
     def entity_activated(self, index: QModelIndex):
         tags = index.data(role=DXFTagsRole)
