@@ -5,9 +5,6 @@ News
 Version 0.16.4b2 - dev
 ----------------------
 
-- NEW: `move_to()` command and multi-path support for the `ezdxf.path.Path` class 
-  as beta feature, official release in v0.17
-- NEW: `MPOLYGON` load/write/create support as beta feature, official release in v0.17
 - NEW: `PolylinePath.type` and `EdgePath.type` as `ezdxf.entities.BoundaryPathType` enum 
 - NEW: `LineEdge.type`, `ArcEdge.type`, `EllipseEdge.type` and `SplineEdge.type` 
   as `ezdxf.entities.EdgeType` enum
@@ -16,11 +13,10 @@ Version 0.16.4b2 - dev
 - NEW: `Path.all_lines_to_curve4()`, convert all LINE_TO commands into linear 
   CURVE4_TO commands
 - NEW: create an AppID `EZDXF` when saving a DXF file by *ezdxf*  
-- NEW: store *ezdxf* and custom metadata in DXF files as beta feature, official release in v0.17 
 - BUGFIX: loading crash of the PyQt `CADViewer` class
 - BUGFIX: loading `GEODATA` version 1, perhaps data is incorrect, 
   logged as warning
-- BUGFIX: HATCH spline edge from fit points require start- and end tangents
+- BUGFIX: `HATCH` spline edge from fit points require start- and end tangents
 - BUGFIX: `disassemble.make_primitive()` transform LWPOLYLINE including width 
   values into WCS
 - BUGFIX: ignore open loops in `HATCH` edge paths 
@@ -28,6 +24,12 @@ Version 0.16.4b2 - dev
 - BUGFIX: fixed incorrect "thickness" transformation of OCS entities
 - BUGFIX: add missing "width" transformation to POLYLINE and LWPOLYLINE
 - BUGFIX: drawing add-on handles the invisible flag for INSERT correct
+- BETA: new features for testing, API may change until official release in v0.17
+- BETA: `move_to()` command and multi-path support for the `ezdxf.path.Path` class 
+- BETA: `MPOLYGON` load/write/create support as beta feature
+- BETA: store *ezdxf* and custom metadata in DXF files, see [docs](https://ezdxf.mozman.at/docs/drawing/management.html#ezdxf-metadata)
+- BETA: command `ezdxf browse FILE ...`, PyQt DXF structure browser
+
 
 Version 0.16.3 - 2021-05-22
 ---------------------------

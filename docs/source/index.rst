@@ -82,6 +82,7 @@ Contents
    howto/index
    faq
    reference
+   cmdline
    render/index
    addons/index
    dxfinternals/index
