@@ -1,6 +1,7 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 from PyQt5.QtWidgets import (
+    QApplication,
     QMainWindow,
     QSplitter,
     QAction,
@@ -74,10 +75,16 @@ class DXFStructureBrowser(QMainWindow):
         self._open_action.triggered.connect(self.open_dxf)
 
         self._export_entity_action = QAction(
-            "&Export Activated Entity...", self
+            "&Export DXF Entity...", self
         )
         self._export_entity_action.setShortcut("Ctrl+E")
         self._export_entity_action.triggered.connect(self.export_entity)
+
+        self._copy_entity_action = QAction(
+            "&Copy DXF Entity to Clipboard", self
+        )
+        self._copy_entity_action.setShortcut("Ctrl+C")
+        self._copy_entity_action.triggered.connect(self.copy_entity)
 
         self._quit_action = QAction("&Quit", self)
         self._quit_action.setShortcut("Ctrl+Q")
@@ -99,7 +106,10 @@ class DXFStructureBrowser(QMainWindow):
         menu = self.menuBar()
         file_menu = menu.addMenu("&File")
         file_menu.addAction(self._open_action)
+        file_menu.addSeparator()
         file_menu.addAction(self._export_entity_action)
+        file_menu.addAction(self._copy_entity_action)
+        file_menu.addSeparator()
         file_menu.addAction(self._quit_action)
         navigate_menu = menu.addMenu("&Navigate")
         navigate_menu.addAction(self._goto_handle_action)
@@ -147,6 +157,13 @@ class DXFStructureBrowser(QMainWindow):
             model = self._dxf_tags_table.model()
             tags = model.compiled_tags()
             self.export_tags(path, tags)
+
+    def copy_entity(self):
+        if self._dxf_tags_table is None:
+            return
+        model = self._dxf_tags_table.model()
+        tags = model.compiled_tags()
+        copy_dxf_to_clipboard(tags)
 
     def view_header_section(self):
         header = self.doc.get_header_section()
@@ -233,3 +250,8 @@ class DXFStructureBrowser(QMainWindow):
                 fp.write(dxfstr(tags))
         except IOError as e:
             QMessageBox.critical(self, "IOError", str(e))
+
+
+def copy_dxf_to_clipboard(tags: Tags):
+    clipboard = QApplication.clipboard()
+    clipboard.setText(dxfstr(tags), mode=clipboard.Clipboard)
