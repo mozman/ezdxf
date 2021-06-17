@@ -12,7 +12,7 @@ from ezdxf.lldxf.tagger import ascii_tags_loader
 
 from ezdxf.addons.browser import DXFTagsModel, DXFStructureModel, DXFDocument
 from ezdxf.addons.browser.tags import compile_tags
-from ezdxf.addons.browser.data import LineIndex
+from ezdxf.addons.browser.data import LineIndex, EntityHistory
 
 from PyQt5.QtCore import Qt, QModelIndex
 
@@ -22,6 +22,7 @@ def txt2tags(s: str) -> Tags:
 
 
 NAN = float("nan")
+
 
 # noinspection PyMissingConstructor
 class ModelIndex(QModelIndex):
@@ -222,6 +223,68 @@ ENDSEC
 0
 EOF
 """
+
+
+class TestEntityHistory:
+    @pytest.fixture
+    def history2(self):
+        history = EntityHistory()
+        history.append(Tags())
+        history.append(Tags())
+        return history
+
+    def test_setup_history(self):
+        history = EntityHistory()
+        assert len(history) == 0
+        assert history.index == 0
+
+    def test_empty_history_returns_none(self):
+        history = EntityHistory()
+        assert history.back() is None
+        assert history.forward() is None
+
+    def test_append_one_entity(self):
+        history = EntityHistory()
+        history.append(Tags())
+        assert len(history) == 1
+        assert history.index == 0
+
+    def test_append_two_entities(self):
+        history = EntityHistory()
+        history.append(Tags())
+        history.append(Tags())
+        assert len(history) == 2
+        assert history.index == 1
+
+    def test_go_back_in_history(self, history2):
+        first, second = history2.content()
+        assert history2.index == 1
+
+        entity = history2.back()
+        assert len(history2) == 2, "entity is still in history"
+        assert history2.index == 0
+        assert entity is second
+
+        entity = history2.back()
+        assert len(history2) == 2, "entity is still in history"
+        assert history2.index == 0
+        assert entity is first
+
+    def test_go_back_and_forward_in_history(self, history2):
+        first, second = history2.content()
+        history2.back()  # second
+        history2.back()  # first
+        entity = history2.forward()  # second
+        assert history2.index == 1
+        assert entity is second
+
+    def test_append_moves_index_to_top_of_history(self, history2):
+        history2.back()  # second
+        history2.back()  # first
+        assert history2.index == 0
+        history2.append(Tags())
+        assert history2.index == 2
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

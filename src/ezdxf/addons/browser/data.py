@@ -201,3 +201,41 @@ def get_row_from_line_number(
 
 def dxfstr(tags: Tags) -> str:
     return "".join(tag.dxfstr() for tag in tags)
+
+
+class EntityHistory:
+    def __init__(self):
+        self._history: List[Tags] = list()
+        self._index: int = 0
+
+    def __len__(self):
+        return len(self._history)
+
+    @property
+    def index(self):
+        return self._index
+
+    def append(self, entity: Tags):
+        self._index = len(self._history)
+        self._history.append(entity)
+
+    def back(self) -> Optional[Tags]:
+        entity = None
+        if self._history:
+            entity = self._history[self._index]
+            self._index = max(0, self._index - 1)
+        return entity
+
+    def forward(self) -> Tags:
+        entity = None
+        if self._history:
+            self._index = min(len(self._history) - 1, self._index + 1)
+            entity = self._history[self._index]
+        return entity
+
+    def clear(self):
+        self._history.clear()
+        self._index = 0
+
+    def content(self) -> List[Tags]:
+        return list(self._history)
