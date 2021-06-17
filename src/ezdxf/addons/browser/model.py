@@ -73,12 +73,14 @@ class DXFTagsModel(QAbstractTableModel):
         elif role == DXFTagsRole:
             return self._tags[index.row()]
         elif role == Qt.ToolTipRole:
-            tag = self._tags[index.row()]
-            if tag.code in POINTER_CODES:
-                if tag.value.upper() in self._valid_handles:
+            code, value = self._tags[index.row()]
+            if code in POINTER_CODES:
+                if value.upper() in self._valid_handles:
                     return f"Double click to go to the referenced entity"
                 else:
                     return f"Handle does not exist"
+            elif code == 0:
+                return f"Double click to go to the DXF reference provided by Autodesk"
 
     def headerData(
         self, section: int, orientation: Qt.Orientation, role: int = ...

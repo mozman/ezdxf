@@ -17,6 +17,8 @@ from PyQt5.QtCore import Qt, QModelIndex
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.types import DXFTag, is_pointer_code
 from ezdxf.lldxf.tags import Tags
+from ezdxf.pp.reflinks import get_reference_link
+
 from .model import (
     DXFStructureModel,
     DXFTagsModel,
@@ -274,10 +276,13 @@ class DXFStructureBrowser(QMainWindow):
 
     def tag_activated(self, index: QModelIndex):
         tag = index.data(role=DXFTagsRole)
-        if isinstance(tag, DXFTag) and is_pointer_code(tag.code):
-            handle = tag.value
-            if not self.goto_handle(handle):
-                self.show_error_handle_not_found(handle)
+        if isinstance(tag, DXFTag):
+            code, value = tag
+            if is_pointer_code(code):
+                if not self.goto_handle(value):
+                    self.show_error_handle_not_found(value)
+            elif code == 0:
+                self.open_web_browser(get_reference_link(value))
 
     def ask_for_handle(self):
         handle, ok = QInputDialog.getText(
@@ -370,6 +375,10 @@ class DXFStructureBrowser(QMainWindow):
             "-n" + str(line_number),
         ]
         subprocess.Popen(args)
+
+    def open_web_browser(self, url: str):
+        import webbrowser
+        webbrowser.open(url)
 
 
 def copy_dxf_to_clipboard(tags: Tags):
