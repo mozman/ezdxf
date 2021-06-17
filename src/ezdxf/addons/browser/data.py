@@ -89,9 +89,9 @@ class LineIndex:
             int, Tuple[int, Tags]
         ] = LineIndex.build_entity_index(sections)
 
-        # (start_line_number, next_start_line_number, entity)
+        # entity index of sorted (start_line_number, entity) tuples
         self._line_index: List[
-            Tuple[int, int, Tags]
+            Tuple[int, Tags]
         ] = LineIndex.build_line_index(sections)
 
     @staticmethod
@@ -108,18 +108,18 @@ class LineIndex:
 
     @staticmethod
     def build_line_index(sections: SectionDict) -> List:
-        index: List[Tuple[int, int, Tags]] = list()
+        index: List[Tuple[int, Tags]] = list()
         start_line_number = 1
         for name, section in sections.items():
             # the section dict contain raw string tags
             for entity in section:
-                line_count = len(entity) * 2  # group code, value
-                next_start_line_number = start_line_number + line_count
                 index.append(
-                    (start_line_number, next_start_line_number, entity)
+                    (start_line_number,  entity)
                 )
-                start_line_number = next_start_line_number
+                # add 2 lines for each tag: group code, value
+                start_line_number += len(entity) * 2
             start_line_number += 2  # for missing ENDSEC tag
+        index.sort()  # sort index by line number
         return index
 
     def get_start_line_for_entity(self, entity: Tags) -> Optional[int]:
@@ -129,7 +129,13 @@ class LineIndex:
         return None
 
     def get_entity_at_line(self, number: int) -> Optional[Tags]:
-        for start, end, e in self._line_index:
-            if start <= number < end:
-                return e
-        return None
+        index = self._line_index
+        if len(index) == 0:
+            return None
+
+        _, entity = index[0]  # first entity
+        for start, e in index:
+            if start > number:
+                return entity
+            entity = e
+        return entity
