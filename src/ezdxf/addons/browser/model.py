@@ -76,7 +76,14 @@ class DXFTagsModel(QAbstractTableModel):
         return 3
 
     def compiled_tags(self):
+        """Returns the compiled tags. Only points codes are compiled, group
+        code 10, ...
+        """
         return self._tags
+
+    def line_number(self, row: int):
+        """Return the DXF file line number of the widget-row. """
+        return self._line_numbers[row]
 
 
 class EntityContainer(QStandardItem):

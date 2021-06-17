@@ -27,7 +27,6 @@ from .data import (
     get_row_from_line_number,
     dxfstr,
     EntityHistory,
-    row_to_dxf_lines,
 )
 from .views import StructureTree, DXFTagsTable
 
@@ -122,7 +121,7 @@ class DXFStructureBrowser(QMainWindow):
         self._goto_predecessor_entity_action = QAction("&Previous Entity", self)
         self._goto_predecessor_entity_action.setShortcut("Ctrl+Left")
         self._goto_predecessor_entity_action.triggered.connect(
-            self.goto_predecessor_entity
+            self.goto_previous_entity
         )
 
         self._goto_next_entity_action = QAction("&Next Entity", self)
@@ -296,9 +295,7 @@ class DXFStructureBrowser(QMainWindow):
         return False
 
     def show_error_handle_not_found(self, handle: str):
-        QMessageBox.critical(
-            self, "Error", f"Handle {handle} not found!"
-        )
+        QMessageBox.critical(self, "Error", f"Handle {handle} not found!")
 
     def ask_for_line_number(self):
         max_line_number = self.doc.max_line_number
@@ -338,7 +335,7 @@ class DXFStructureBrowser(QMainWindow):
                 if next_entity is not None:
                     self.set_current_entity_with_history(next_entity)
 
-    def goto_predecessor_entity(self):
+    def goto_previous_entity(self):
         if self._dxf_tags_table:
             current_entity = self.get_current_entity()
             if current_entity is not None:
@@ -358,20 +355,17 @@ class DXFStructureBrowser(QMainWindow):
 
     def open_entity_in_text_editor(self):
         current_entity = self.get_current_entity()
-        offset = 0
+        line_number = self.doc.get_line_number(current_entity)
         if self._dxf_tags_table:
             indices = self._dxf_tags_table.selectedIndexes()
             if indices:
-                row = indices[0].row()
                 model = self._dxf_tags_table.model()
-                tags = model.compiled_tags()
-                offset = row_to_dxf_lines(row, tags)
-
-        start_line_number = self.doc.get_line_number(current_entity) + offset
+                row = indices[0].row()
+                line_number = model.line_number(row)
         args = [
             TEXT_EDITOR,
             str(self.doc.absolute_filepath()),
-            "-n" + str(start_line_number),
+            "-n" + str(line_number),
         ]
         subprocess.Popen(args)
 
