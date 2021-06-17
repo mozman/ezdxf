@@ -383,8 +383,10 @@ TAG_TYPES = {
 def tag_type_str(code: int) -> str:
     if code in GROUP_MARKERS:
         return "<ctrl>"
-    elif code in HEX_HANDLE_CODES:
-        return "<hex>"
+    elif code in HANDLE_CODES:
+        return "<handle>"
+    elif code in POINTER_CODES:
+        return "<ref>"
     elif is_point_code(code):
         return "<point>"
     elif is_binary_data(code):
