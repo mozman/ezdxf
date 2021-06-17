@@ -1,7 +1,12 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 from typing import Any, List
-from ezdxf.lldxf.types import render_tag, DXFVertex, GROUP_MARKERS
+from ezdxf.lldxf.types import (
+    render_tag,
+    DXFVertex,
+    GROUP_MARKERS,
+    POINTER_CODES,
+)
 from PyQt5.QtCore import QModelIndex, QAbstractTableModel, Qt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor
 from .tags import compile_tags, Tags
@@ -37,14 +42,25 @@ def calc_line_numbers(start: int, tags: Tags) -> List[int]:
 
 
 class DXFTagsModel(QAbstractTableModel):
-    def __init__(self, tags: Tags, start_line_number: int = 1):
+    def __init__(
+        self, tags: Tags, start_line_number: int = 1, valid_handles=None
+    ):
         super().__init__()
         self._tags = compile_tags(tags)
         self._line_numbers = calc_line_numbers(start_line_number, self._tags)
+        self._valid_handles = valid_handles or set()
         if tags and tags[0].code == 0:
             self._dxftype = tags[0].value
 
     def data(self, index: QModelIndex, role: int = ...) -> Any:
+        def is_invalid_handle(tag):
+            if (
+                tag.code in POINTER_CODES
+                and not tag.value.upper() in self._valid_handles
+            ):
+                return True
+            return False
+
         if role == Qt.DisplayRole:
             tag = self._tags[index.row()]
             return render_tag(tag, index.column())
@@ -52,8 +68,14 @@ class DXFTagsModel(QAbstractTableModel):
             tag = self._tags[index.row()]
             if tag.code in GROUP_MARKERS:
                 return QColor("blue")
+            elif is_invalid_handle(tag):
+                return QColor("red")
         elif role == DXFTagsRole:
             return self._tags[index.row()]
+        elif role == Qt.ToolTipRole:
+            tag = self._tags[index.row()]
+            if is_invalid_handle(tag):
+                return f"Handle {tag.value} does not exist."
 
     def headerData(
         self, section: int, orientation: Qt.Orientation, role: int = ...
@@ -82,7 +104,7 @@ class DXFTagsModel(QAbstractTableModel):
         return self._tags
 
     def line_number(self, row: int):
-        """Return the DXF file line number of the widget-row. """
+        """Return the DXF file line number of the widget-row."""
         return self._line_numbers[row]
 
 

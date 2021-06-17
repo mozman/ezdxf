@@ -251,7 +251,9 @@ class DXFStructureBrowser(QMainWindow):
         if entity:
             self._current_entity = entity
             start_line_number = self.doc.get_line_number(entity)
-            model = DXFTagsModel(entity, start_line_number)
+            model = DXFTagsModel(
+                entity, start_line_number, self.doc.handle_index
+            )
             self._dxf_tags_table.setModel(model)
             if select_line_number is not None:
                 row = get_row_from_line_number(

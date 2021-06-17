@@ -29,6 +29,7 @@ class DXFDocument:
         self.sections: SectionDict = dict()
         self.handle_index: Optional[HandleIndex] = None
         self.line_index: Optional[LineIndex] = None
+        self.valid_handles = None
         self.filename = ""
         if sections:
             self.update(sections)
@@ -84,6 +85,9 @@ class DXFDocument:
 class HandleIndex:
     def __init__(self, sections: SectionDict):
         self._index = HandleIndex.build(sections)
+
+    def __contains__(self, handle: str) -> bool:
+        return handle.upper() in self._index
 
     def get(self, handle: str):
         return self._index.get(handle.upper())
