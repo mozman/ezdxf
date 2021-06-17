@@ -2,7 +2,6 @@
 #  License: MIT License
 from typing import Optional, Dict, List, Tuple
 from pathlib import Path
-from functools import cache
 
 from ezdxf.lldxf.loader import SectionDict
 from ezdxf.addons.browser.loader import load_section_dict
@@ -70,13 +69,11 @@ class DXFDocument:
             return self.line_index.get_entity_at_line(number)
         return None
 
-    @cache
-    def successor(self, handle: str) -> Optional[str]:
-        return self.handle_index.successor(handle)
+    def next_entity(self, entity: Tags) -> Optional[Tags]:
+        return self.handle_index.next_entity(entity)
 
-    @cache
-    def predecessor(self, handle: str) -> Optional[str]:
-        return self.handle_index.predecessor(handle)
+    def previous_entity(self, entity: Tags) -> Optional[Tags]:
+        return self.handle_index.previous_entity(entity)
 
 
 class HandleIndex:
@@ -98,24 +95,22 @@ class HandleIndex:
                     pass
         return entity_index
 
-    def successor(self, handle) -> str:
-        handle = handle.upper()
+    def next_entity(self, entity: Tags) -> Tags:
         return_next = False
-        for h in self._index.keys():
+        for e in self._index.values():
             if return_next:
-                return h
-            if h == handle:
+                return e
+            if e is entity:
                 return_next = True
-        return handle
+        return entity
 
-    def predecessor(self, handle) -> str:
-        handle = handle.upper()
-        prev = handle
-        for h in self._index.keys():
-            if h == handle:
+    def previous_entity(self, entity: Tags) -> Tags:
+        prev = entity
+        for e in self._index.values():
+            if e is entity:
                 return prev
-            prev = h
-        return handle
+            prev = e
+        return entity
 
 
 class LineIndex:

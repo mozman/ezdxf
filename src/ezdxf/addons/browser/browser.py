@@ -20,7 +20,7 @@ from .model import (
     DXFTagsModel,
     DXFTagsRole,
 )
-from .data import DXFDocument, get_row_from_line_number, dxfstr
+from .data import DXFDocument, get_row_from_line_number, dxfstr, EntityHistory
 from .views import StructureTree, DXFTagsTable
 
 __all__ = ["DXFStructureBrowser"]
@@ -36,6 +36,8 @@ class DXFStructureBrowser(QMainWindow):
         self.doc = DXFDocument()
         self._structure_tree = StructureTree()
         self._dxf_tags_table = DXFTagsTable()
+        self._current_entity: Optional[Tags] = None
+        self.history = EntityHistory()
         self.setup_actions()
         self.setup_menu()
 
@@ -173,6 +175,7 @@ class DXFStructureBrowser(QMainWindow):
                 f'Invalid DXF file "{path}": {str(e)}',
             )
         else:
+            self.history.clear()
             self.update_title()
 
     def _load(self, filename: str):
@@ -209,8 +212,8 @@ class DXFStructureBrowser(QMainWindow):
     def update_title(self):
         self.setWindowTitle(f"{APP_NAME} - {self.doc.absolute_filepath()}")
 
-    def get_active_entity_handle(self) -> Optional[str]:
-        active_entity = self.get_active_entity()
+    def get_current_entity_handle(self) -> Optional[str]:
+        active_entity = self.get_current_entity()
         if active_entity:
             try:
                 return active_entity.get_handle()
@@ -218,12 +221,8 @@ class DXFStructureBrowser(QMainWindow):
                 pass
         return None
 
-    def get_active_entity(self) -> Optional[Tags]:
-        entity = None
-        if self._dxf_tags_table:
-            model = self._dxf_tags_table.model()
-            return model.compiled_tags()
-        return entity
+    def get_current_entity(self) -> Optional[Tags]:
+        return self._current_entity
 
     def set_current_entity_by_handle(self, handle: str):
         entity = self.doc.get_entity(handle)
@@ -232,6 +231,7 @@ class DXFStructureBrowser(QMainWindow):
 
     def set_current_entity(self, entity: Tags, select_line_number: int = None):
         if entity:
+            self._current_entity = entity
             start_line_number = self.doc.get_line_number(entity)
             model = DXFTagsModel(entity, start_line_number)
             self._dxf_tags_table.setModel(model)
@@ -243,16 +243,22 @@ class DXFStructureBrowser(QMainWindow):
                 index = self._dxf_tags_table.model().index(row, 0)
                 self._dxf_tags_table.scrollTo(index)
 
+    def set_current_entity_with_history(self, entity: Tags):
+        current_entity = self.get_current_entity()
+        if current_entity:
+            self.history.append(current_entity)
+        self.set_current_entity(entity)
+
     def entity_activated(self, index: QModelIndex):
         tags = index.data(role=DXFTagsRole)
         if isinstance(tags, Tags):
-            self.set_current_entity(tags)
+            self.set_current_entity_with_history(tags)
 
     def tag_activated(self, index: QModelIndex):
         tag = index.data(role=DXFTagsRole)
         if isinstance(tag, DXFTag) and is_pointer_code(tag.code):
             entity = self.doc.get_entity(tag.value)
-            self.set_current_entity(entity)
+            self.set_current_entity_with_history(entity)
 
     def ask_for_handle(self):
         handle, ok = QInputDialog.getText(
@@ -305,25 +311,29 @@ class DXFStructureBrowser(QMainWindow):
 
     def goto_next_entity(self):
         if self._dxf_tags_table:
-            current_handle = self.get_active_entity_handle()
-            if current_handle is not None:
-                next_handle = self.doc.successor(current_handle)
-                if next_handle is not None:
-                    self.set_current_entity_by_handle(next_handle)
+            current_entity = self.get_current_entity()
+            if current_entity is not None:
+                next_entity = self.doc.next_entity(current_entity)
+                if next_entity is not None:
+                    self.set_current_entity_with_history(next_entity)
 
     def goto_predecessor_entity(self):
         if self._dxf_tags_table:
-            current_handle = self.get_active_entity_handle()
-            if current_handle is not None:
-                prev_handle = self.doc.predecessor(current_handle)
-                if prev_handle is not None:
-                    self.set_current_entity_by_handle(prev_handle)
+            current_entity = self.get_current_entity()
+            if current_entity is not None:
+                prev_entity = self.doc.previous_entity(current_entity)
+                if prev_entity is not None:
+                    self.set_current_entity_with_history(prev_entity)
 
     def go_back_entity_history(self):
-        pass
+        entity = self.history.back()
+        if entity:
+            self.set_current_entity(entity)  # do not change history
 
     def go_forward_entity_history(self):
-        pass
+        entity = self.history.forward()
+        if entity:
+            self.set_current_entity(entity)  # do not change history
 
 
 def copy_dxf_to_clipboard(tags: Tags):
