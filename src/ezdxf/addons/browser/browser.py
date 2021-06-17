@@ -26,7 +26,8 @@ APP_NAME = "DXF Structure Browser"
 
 
 class DXFStructureBrowser(QMainWindow):
-    def __init__(self, filename: str = ""):
+    def __init__(self, filename: str = "", line: int = None,
+        handle: str = None):
         super().__init__()
         self.doc = DXFDocument()
         self._structure_tree = StructureTree()
@@ -42,6 +43,10 @@ class DXFStructureBrowser(QMainWindow):
         self.setCentralWidget(self.build_central_widget())
         self.resize(1024, 768)
         self.connect_slots()
+        if line is not None:
+            self.goto_line(line)
+        if handle is not None:
+            self.goto_handle(handle)
 
     def build_central_widget(self):
         container = QSplitter(Qt.Horizontal)
@@ -65,11 +70,11 @@ class DXFStructureBrowser(QMainWindow):
 
         self._goto_handle_action = QAction("Go to &Handle ...", self)
         self._goto_handle_action.setShortcut("Ctrl+H")
-        self._goto_handle_action.triggered.connect(self.goto_handle)
+        self._goto_handle_action.triggered.connect(self.ask_for_handle)
 
         self._goto_line_action = QAction("Go to &Line ...", self)
         self._goto_line_action.setShortcut("Ctrl+L")
-        self._goto_line_action.triggered.connect(self.goto_line)
+        self._goto_line_action.triggered.connect(self.ask_for_line_number)
 
         self._find_text_action = QAction("&Find text ...", self)
         self._find_text_action.setShortcut("Ctrl+F")
@@ -138,19 +143,44 @@ class DXFStructureBrowser(QMainWindow):
         if isinstance(tags, Tags):
             self.set_current_entity(tags)
 
-    def goto_handle(self):
-        handle, ok = QInputDialog.getText(self, 'Go to', 'Go to entity handle:')
+    def ask_for_handle(self):
+        handle, ok = QInputDialog.getText(
+            self,
+            "Go to",
+            "Go to entity handle:",
+        )
         if ok:
-            entity = self.doc.get_entity(handle.upper())
-            if entity:
-                self.set_current_entity(entity)
+            if not self.goto_handle(handle):
+                QMessageBox.information(
+                    self, "Error", f"Handle {handle} not found!"
+                )
 
-    def goto_line(self):
-        number, ok = QInputDialog.getText(self, 'Go to', 'Go to line number:')
+    def goto_handle(self, handle: str) -> bool:
+        entity = self.doc.get_entity(handle)
+        if entity:
+            self.set_current_entity(entity)
+            return True
+        return False
+
+    def ask_for_line_number(self):
+        max_line_number = self.doc.max_line_number
+        number, ok = QInputDialog.getInt(
+            self,
+            "Go to",
+            f"Go to line number: (max. {max_line_number})",
+            value=1,
+            min=1,
+            max=max_line_number,
+        )
         if ok:
-            entity = self.doc.get_entity_at_line(int(number))
-            if entity:
-                self.set_current_entity(entity)
+            self.goto_line(number)
+
+    def goto_line(self, number: int) -> bool:
+        entity = self.doc.get_entity_at_line(int(number))
+        if entity:
+            self.set_current_entity(entity)
+            return True
+        return False
 
     def find_text(self):
         pass
