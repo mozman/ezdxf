@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QModelIndex
 from ezdxf.lldxf.const import DXFStructureError
+from ezdxf.lldxf.types import DXFTag, is_pointer_code
 from ezdxf.lldxf.tags import Tags
 from .model import (
     DXFStructureModel,
@@ -65,6 +66,7 @@ class DXFStructureBrowser(QMainWindow):
 
     def connect_slots(self):
         self._structure_tree.activated.connect(self.entity_activated)
+        self._dxf_tags_table.activated.connect(self.tag_activated)
 
     def setup_actions(self):
         self._open_action = QAction("&Open DXF File...", self)
@@ -156,6 +158,12 @@ class DXFStructureBrowser(QMainWindow):
         tags = index.data(role=DXFTagsRole)
         if isinstance(tags, Tags):
             self.set_current_entity(tags)
+
+    def tag_activated(self, index: QModelIndex):
+        tag = index.data(role=DXFTagsRole)
+        if isinstance(tag, DXFTag) and is_pointer_code(tag.code):
+            entity = self.doc.get_entity(tag.value)
+            self.set_current_entity(entity)
 
     def ask_for_handle(self):
         handle, ok = QInputDialog.getText(

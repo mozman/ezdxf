@@ -52,6 +52,8 @@ class DXFTagsModel(QAbstractTableModel):
             tag = self._tags[index.row()]
             if tag.code in GROUP_MARKERS:
                 return QColor("blue")
+        elif role == DXFTagsRole:
+            return self._tags[index.row()]
 
     def headerData(
         self, section: int, orientation: Qt.Orientation, role: int = ...
