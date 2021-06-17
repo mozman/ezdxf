@@ -2,6 +2,7 @@
 #  License: MIT License
 from typing import Optional, Dict, List, Tuple
 from pathlib import Path
+from functools import cache
 
 from ezdxf.lldxf.loader import SectionDict
 from ezdxf.addons.browser.loader import load_section_dict
@@ -69,6 +70,14 @@ class DXFDocument:
             return self.line_index.get_entity_at_line(number)
         return None
 
+    @cache
+    def successor(self, handle: str) -> Optional[str]:
+        return self.handle_index.successor(handle)
+
+    @cache
+    def predecessor(self, handle: str) -> Optional[str]:
+        return self.handle_index.predecessor(handle)
+
 
 class HandleIndex:
     def __init__(self, sections: SectionDict):
@@ -88,6 +97,25 @@ class HandleIndex:
                 except ValueError:
                     pass
         return entity_index
+
+    def successor(self, handle) -> str:
+        handle = handle.upper()
+        return_next = False
+        for h in self._index.keys():
+            if return_next:
+                return h
+            if h == handle:
+                return_next = True
+        return handle
+
+    def predecessor(self, handle) -> str:
+        handle = handle.upper()
+        prev = handle
+        for h in self._index.keys():
+            if h == handle:
+                return prev
+            prev = h
+        return handle
 
 
 class LineIndex:

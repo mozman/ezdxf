@@ -1,5 +1,6 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
+from typing import Optional
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -101,9 +102,35 @@ class DXFStructureBrowser(QMainWindow):
         self._goto_line_action.setShortcut("Ctrl+L")
         self._goto_line_action.triggered.connect(self.ask_for_line_number)
 
-        self._find_text_action = QAction("&Find Text...", self)
+        self._find_text_action = QAction("Find &Text...", self)
         self._find_text_action.setShortcut("Ctrl+F")
         self._find_text_action.triggered.connect(self.find_text)
+
+        self._goto_predecessor_entity_action = QAction(
+            "&Previous Entity", self
+        )
+        self._goto_predecessor_entity_action.setShortcut("Ctrl+Left")
+        self._goto_predecessor_entity_action.triggered.connect(
+            self.goto_predecessor_entity
+        )
+
+        self._goto_next_entity_action = QAction("&Next Entity", self)
+        self._goto_next_entity_action.setShortcut("Ctrl+Right")
+        self._goto_next_entity_action.triggered.connect(self.goto_next_entity)
+
+        self._entity_history_back_action = QAction("Entity History &Back", self)
+        self._entity_history_back_action.setShortcut("Alt+Left")
+        self._entity_history_back_action.triggered.connect(
+            self.go_back_entity_history
+        )
+
+        self._entity_history_forward_action = QAction(
+            "Entity History &Forward", self
+        )
+        self._entity_history_forward_action.setShortcut("Alt+Right")
+        self._entity_history_forward_action.triggered.connect(
+            self.go_forward_entity_history
+        )
 
     def setup_menu(self):
         menu = self.menuBar()
@@ -118,6 +145,12 @@ class DXFStructureBrowser(QMainWindow):
         navigate_menu.addAction(self._goto_handle_action)
         navigate_menu.addAction(self._goto_line_action)
         navigate_menu.addAction(self._find_text_action)
+        navigate_menu.addSeparator()
+        navigate_menu.addAction(self._goto_next_entity_action)
+        navigate_menu.addAction(self._goto_predecessor_entity_action)
+        navigate_menu.addSeparator()
+        navigate_menu.addAction(self._entity_history_back_action)
+        navigate_menu.addAction(self._entity_history_forward_action)
 
     def open_dxf(self):
         path, _ = QFileDialog.getOpenFileName(
@@ -175,6 +208,22 @@ class DXFStructureBrowser(QMainWindow):
 
     def update_title(self):
         self.setWindowTitle(f"{APP_NAME} - {self.doc.absolute_filepath()}")
+
+    def get_active_entity_handle(self) -> Optional[str]:
+        active_entity = self.get_active_entity()
+        if active_entity:
+            try:
+                return active_entity.get_handle()
+            except ValueError:
+                pass
+        return None
+
+    def get_active_entity(self) -> Optional[Tags]:
+        entity = None
+        if self._dxf_tags_table:
+            model = self._dxf_tags_table.model()
+            return model.compiled_tags()
+        return entity
 
     def set_current_entity_by_handle(self, handle: str):
         entity = self.doc.get_entity(handle)
@@ -253,6 +302,28 @@ class DXFStructureBrowser(QMainWindow):
                 fp.write(dxfstr(tags))
         except IOError as e:
             QMessageBox.critical(self, "IOError", str(e))
+
+    def goto_next_entity(self):
+        if self._dxf_tags_table:
+            current_handle = self.get_active_entity_handle()
+            if current_handle is not None:
+                next_handle = self.doc.successor(current_handle)
+                if next_handle is not None:
+                    self.set_current_entity_by_handle(next_handle)
+
+    def goto_predecessor_entity(self):
+        if self._dxf_tags_table:
+            current_handle = self.get_active_entity_handle()
+            if current_handle is not None:
+                prev_handle = self.doc.predecessor(current_handle)
+                if prev_handle is not None:
+                    self.set_current_entity_by_handle(prev_handle)
+
+    def go_back_entity_history(self):
+        pass
+
+    def go_forward_entity_history(self):
+        pass
 
 
 def copy_dxf_to_clipboard(tags: Tags):
