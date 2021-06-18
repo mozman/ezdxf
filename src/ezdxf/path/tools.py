@@ -602,7 +602,7 @@ def add_bezier4p(path: Path, curves: Iterable[Bezier4P]) -> None:
         add linear Bézier curve segments as LINE_TO commands
 
     """
-    rel_tol = 1e-12
+    rel_tol = 1e-15
     abs_tol = 0.0
     curves = list(curves)
     if not len(curves):
@@ -640,7 +640,7 @@ def add_bezier3p(path: Path, curves: Iterable[Bezier3P]) -> None:
         add linear Bézier curve segments as LINE_TO commands
 
     """
-    rel_tol = 1e-12
+    rel_tol = 1e-15
     abs_tol = 0.0
     curves = list(curves)
     if not len(curves):
