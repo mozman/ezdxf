@@ -34,7 +34,7 @@ def strip_comments(source: Path, target: Path, verbose=False) -> int:
                     code = raw_code_str.strip()
                     code = code.decode(encoding="utf8", errors="ignore")
                     print(
-                        f'CANCELED: "{target.name}" - found invalid '
+                        f'CANCELED: "{source.name}" - found invalid '
                         f'group code "{code}" at line {line_number}.'
                     )
                     break
@@ -43,7 +43,7 @@ def strip_comments(source: Path, target: Path, verbose=False) -> int:
                 except (IOError, EOFError):
                     raw_value_str = b""
                 if raw_value_str == b"":
-                    print(f'CANCELED: "{target.name}" - premature end of file.')
+                    print(f'CANCELED: "{source.name}" - premature end of file.')
                     break
 
                 line_number += 2
@@ -56,11 +56,36 @@ def strip_comments(source: Path, target: Path, verbose=False) -> int:
                         value = value.decode(encoding="utf8", errors="ignore")
                         print(f'removing comment: "{value}"')
                     removed_tags += 1
-        # non regular exit by break:
-        restore_backup(source, target)
     except IOError as e:
         print(str(e))
     return -1
+
+
+def safe_rename(source: Path, target: Path, backup=True, verbose=False) -> bool:
+    backup_file = target.with_suffix(".bak")
+    backup_file.unlink(missing_ok=True)
+    _target = Path(target)
+    if _target.exists():
+        if verbose:
+            print(f'renaming "{_target.name}" to "{backup_file.name}"')
+        try:
+            _target.rename(backup_file)
+        except IOError as e:
+            print(f"IOError: {str(e)}")
+            return False
+
+    if verbose:
+        print(f'renaming "{source.name}" to "{target.name}"')
+    try:
+        source.rename(target)
+    except IOError as e:
+        print(f"IOError: {str(e)}")
+        return False
+
+    if not backup:
+        if verbose:
+            print(f'deleting backup file "{backup_file.name}"')
+        backup_file.unlink(missing_ok=True)
 
 
 def strip(filename: str, comments=True, backup=False, verbose=False):
@@ -77,30 +102,23 @@ def strip(filename: str, comments=True, backup=False, verbose=False):
         print(f"IOError: {str(e)}")
         return
     source_file = Path(filename)
-    backup_file = source_file.with_suffix(".bak")
-    if verbose:
-        print(f'renaming "{source_file.name}" to "{backup_file.name}"')
-    make_backup(source_file, backup_file)
+    tmp_file = source_file.with_suffix(".ezdxf.tmp")
 
-    target_file = source_file
-    source_file = backup_file
     if comments:
         if verbose:
-            print(
-                f'copying "{source_file.name}" to "{target_file.name}" without '
-                f"comment tags"
-            )
-        removed_tags = strip_comments(source_file, target_file, verbose)
+            print(f'creating temp file without comments: "{tmp_file.name}"')
+        removed_tags = strip_comments(source_file, tmp_file, verbose)
         if removed_tags > 0:
             tags = "tag" if removed_tags == 1 else "tags"
             print(
-                f'DONE: "{target_file.name}" - {removed_tags} comment {tags} '
+                f'DONE: "{source_file.name}" - {removed_tags} comment {tags} '
                 f"removed"
             )
+            safe_rename(tmp_file, source_file, backup, verbose)
         elif removed_tags == 0:
-            print(f'DONE: "{target_file.name}" - no comment tags found')
+            print(f'SKIP: "{source_file.name}" - no comment tags found')
 
-    if not backup:
+    if tmp_file.exists():
         if verbose:
-            print(f'deleting backup file "{backup_file.name}"')
-        backup_file.unlink(missing_ok=True)
+            print(f'deleting temp file: "{tmp_file.name}"')
+        tmp_file.unlink(missing_ok=True)

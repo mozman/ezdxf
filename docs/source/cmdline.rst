@@ -219,7 +219,7 @@ not supported:
 .. code-block:: Text
 
     C:\> ezdxf strip *.dxf
-    DONE: "gear.dxf" - no comment tags found
+    SKIP: "gear.dxf" - no comment tags found
 
 .. code-block:: Text
 
