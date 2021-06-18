@@ -218,6 +218,11 @@ class Header(Entity):
         return "HEADER"
 
 
+class ThumbnailImage(Entity):
+    def entity_name(self):
+        return "THUMBNAILIMAGE"
+
+
 class NamedEntity(Entity):
     def entity_name(self):
         name = self._tags.get_first_value(2, "<noname>")
@@ -247,8 +252,9 @@ class DXFStructureModel(QStandardItemModel):
         for section in doc.sections.values():
             name = get_section_name(section)
             if name == "HEADER":
-                header_vars = section[0]
-                row = Header(header_vars)
+                row = Header(section[0])
+            elif name == "THUMBNAILIMAGE":
+                row = ThumbnailImage(section[0])
             elif name == "CLASSES":
                 row = Classes(name, section[1:])
             elif name == "TABLES":
