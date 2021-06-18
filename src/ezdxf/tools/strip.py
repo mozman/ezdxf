@@ -145,7 +145,7 @@ def strip(filename: str, backup=False, thumbnail=False, verbose=False):
     tmp_file = source_file.with_suffix(".ezdxf.tmp")
     error = False
     if verbose:
-        print(f'creating temp file without comments: "{tmp_file.name}"')
+        print(f'make a temporary copy: "{tmp_file.name}"')
     with open(tmp_file, "wb") as fp, open(source_file, "rb") as infile:
         if thumbnail:
             tagwriter = ThumbnailRemover(fp)
