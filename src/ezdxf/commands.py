@@ -89,7 +89,7 @@ class PrettyPrint(Command):
             "--nocompile",
             action="store_true",
             help="don't compile points coordinates into single tags "
-            "(only in raw mode)",
+                 "(only in raw mode)",
         )
         parser.add_argument(
             "-l",
@@ -103,7 +103,7 @@ class PrettyPrint(Command):
             action="store",
             default="hctbeo",
             help="choose sections to include and their order, h=HEADER, c=CLASSES, "
-            "t=TABLES, b=BLOCKS, e=ENTITIES, o=OBJECTS",
+                 "t=TABLES, b=BLOCKS, e=ENTITIES, o=OBJECTS",
         )
 
     @staticmethod
@@ -344,7 +344,7 @@ class View(Command):
             type=float,
             default=0,
             help="set custom line weight scaling, default is 0 to disable "
-            "line weights at all",
+                 "line weights at all",
         )
 
     @staticmethod
@@ -419,6 +419,53 @@ class Browse(Command):
         )
         main_window.show()
         sys.exit(app.exec_())
+
+
+@register
+class Strip(Command):
+    """Launcher sub-command: strip"""
+
+    NAME = "strip"
+
+    @staticmethod
+    def add_parser(subparsers):
+        parser = subparsers.add_parser(
+            Strip.NAME, help="strip comments from DXF files"
+        )
+        parser.add_argument(
+            "file",
+            metavar="FILE",
+            nargs="+",
+            help='DXF file to process, wildcards "*" and "?" supported',
+        )
+        parser.add_argument(
+            "-b",
+            "--backup",
+            action="store_true",
+            required=False,
+            help='make a backup copy with extension ".bak" from the '
+                 "DXF file, overwrites existing backup files",
+        )
+        parser.add_argument(
+            "-v",
+            "--verbose",
+            action="store_true",
+            required=False,
+            help="give more output",
+        )
+
+    @staticmethod
+    def run(args):
+        from ezdxf.tools.strip import strip
+
+        for pattern in args.file:
+            for filename in glob.glob(pattern):
+                strip(
+                    filename,
+                    comments=True,
+                    backup=args.backup,
+                    verbose=args.verbose,
+                )
 
 
 def set_app_icon(app):
