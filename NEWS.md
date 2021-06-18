@@ -28,7 +28,9 @@ Version 0.16.4b2 - dev
 - BETA: `move_to()` command and multi-path support for the `ezdxf.path.Path` class 
 - BETA: `MPOLYGON` load/write/create support as beta feature
 - BETA: store *ezdxf* and custom metadata in DXF files, see [docs](https://ezdxf.mozman.at/docs/drawing/management.html#ezdxf-metadata)
-- BETA: command `ezdxf browse FILE ...`, PyQt DXF structure browser
+- BETA: command `ezdxf browse FILE`, PyQt DXF structure browser
+- BETA: command `ezdxf strip FILE [FILE ...]`, remove comment tags (999) and the 
+  THUMBNAILIMAGE section
 
 
 Version 0.16.3 - 2021-05-22

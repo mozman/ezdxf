@@ -9,6 +9,7 @@ The command line script `ezdxf` launches various sub-commands:
 ``draw``    and convert DXF files by the Matplotlib backend
 ``view``    DXF files by the PyQt viewer
 ``browse``  PyQt DXF structure browser for DXF debugging and curios people
+``strip``   Strip comments and THUMBNAILIMAGE section from DXF files
 =========== ====================================================================
 
 The help option ``-h`` is supported by the main script and all sub-commands:
@@ -213,13 +214,8 @@ Browse the internal structure of a DXF file like a file system:
 Strip
 -----
 
-Strip comment tags (group code 999) from ASCII DXF files, binary DXF files are
-not supported:
-
-.. code-block:: Text
-
-    C:\> ezdxf strip *.dxf
-    SKIP: "gear.dxf" - no comment tags found
+Strip comment tags (group code 999) from ASCII DXF files and can remove the
+THUMBNAILIMAGE section. Binary DXF files are not supported.
 
 .. code-block:: Text
 
@@ -227,13 +223,14 @@ not supported:
     usage: ezdxf strip [-h] [-b] [-v] FILE [FILE ...]
 
     positional arguments:
-      FILE           DXF file to process, wildcards "*" and "?" supported
+      FILE           DXF file to process, wildcards "*" and "?" are supported
 
     optional arguments:
-      -h, --help     show this help message and exit
-      -b, --backup   make a backup copy with extension ".bak" from the DXF file,
-                     overwrites existing backup files
-      -v, --verbose  give more output
+      -h, --help       show this help message and exit
+      -b, --backup     make a backup copy with extension ".bak" from the DXF file,
+                       overwrites existing backup files
+      -t, --thumbnail  strip THUMBNAILIMAGE section
+      -v, --verbose    give more output
 
 Show Config
 -----------

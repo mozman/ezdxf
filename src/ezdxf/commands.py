@@ -436,7 +436,7 @@ class Strip(Command):
             "file",
             metavar="FILE",
             nargs="+",
-            help='DXF file to process, wildcards "*" and "?" supported',
+            help='DXF file to process, wildcards "*" and "?" are supported',
         )
         parser.add_argument(
             "-b",
@@ -445,6 +445,13 @@ class Strip(Command):
             required=False,
             help='make a backup copy with extension ".bak" from the '
                  "DXF file, overwrites existing backup files",
+        )
+        parser.add_argument(
+            "-t",
+            "--thumbnail",
+            action="store_true",
+            required=False,
+            help="strip THUMBNAILIMAGE section",
         )
         parser.add_argument(
             "-v",
@@ -462,8 +469,8 @@ class Strip(Command):
             for filename in glob.glob(pattern):
                 strip(
                     filename,
-                    comments=True,
                     backup=args.backup,
+                    thumbnail=args.thumbnail,
                     verbose=args.verbose,
                 )
 
