@@ -602,6 +602,8 @@ def add_bezier4p(path: Path, curves: Iterable[Bezier4P]) -> None:
         add linear Bézier curve segments as LINE_TO commands
 
     """
+    rel_tol = 1e-12
+    abs_tol = 0.0
     curves = list(curves)
     if not len(curves):
         return
@@ -616,7 +618,10 @@ def add_bezier4p(path: Path, curves: Iterable[Bezier4P]) -> None:
             path.line_to(start)
 
         # add linear bezier segments as LINE_TO commands
-        if start.isclose(ctrl1) and end.isclose(ctrl2):
+        if (
+            start.isclose(ctrl1, rel_tol=rel_tol, abs_tol=abs_tol)
+            and end.isclose(ctrl2, rel_tol=rel_tol, abs_tol=abs_tol)
+        ):
             path.line_to(end)
         else:
             path.curve4_to(end, ctrl1, ctrl2)
@@ -635,6 +640,8 @@ def add_bezier3p(path: Path, curves: Iterable[Bezier3P]) -> None:
         add linear Bézier curve segments as LINE_TO commands
 
     """
+    rel_tol = 1e-12
+    abs_tol = 0.0
     curves = list(curves)
     if not len(curves):
         return
@@ -645,11 +652,13 @@ def add_bezier3p(path: Path, curves: Iterable[Bezier3P]) -> None:
 
     for curve in curves:
         start, ctrl, end = curve.control_points
-        if not start.isclose(path.end, abs_tol=0):  # only rel_tol=1e-9
+        if not start.isclose(path.end, rel_tol=rel_tol, abs_tol=abs_tol):
             path.line_to(start)
 
-        # add linear bezier segments as LINE_TO commands, use only rel_tol=1e-9
-        if start.isclose(ctrl, abs_tol=0) or end.isclose(ctrl, abs_tol=0):
+        if (
+            start.isclose(ctrl, rel_tol=rel_tol, abs_tol=abs_tol)
+            or end.isclose(ctrl, rel_tol=rel_tol, abs_tol=abs_tol)
+        ):
             path.line_to(end)
         else:
             path.curve3_to(end, ctrl)
