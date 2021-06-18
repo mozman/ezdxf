@@ -184,7 +184,7 @@ def _from_arc(arc: Arc, **kwargs) -> "Path":
     segments = kwargs.get("segments", 1)
     path = Path()
     radius = abs(arc.dxf.radius)
-    if not math.isclose(radius, 0):
+    if radius > 1e-12:
         ellipse = ConstructionEllipse.from_arc(
             center=arc.dxf.center,
             radius=radius,
@@ -201,7 +201,7 @@ def _from_circle(circle: Circle, **kwargs) -> "Path":
     segments = kwargs.get("segments", 1)
     path = Path()
     radius = abs(circle.dxf.radius)
-    if not math.isclose(radius, 0):
+    if radius > 1e-12:
         ellipse = ConstructionEllipse.from_arc(
             center=circle.dxf.center,
             radius=radius,
