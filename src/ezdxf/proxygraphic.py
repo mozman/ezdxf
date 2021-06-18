@@ -512,6 +512,7 @@ class ProxyGraphic:
             if self._doc:
                 self._doc.styles.new(font, dxfattribs={'font': font,
                                                        'bigfont': bigfont})
+                self.textstyles[font] = style
         return style
 
     def _load_vertices(self, data: bytes, load_normal=False):
