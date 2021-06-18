@@ -16,17 +16,18 @@ The help option ``-h`` is supported by the main script and all sub-commands:
 .. code-block:: Text
 
     C:\> ezdxf -h
-    usage: ezdxf [-h] [-V] [-v] [--log LOG] {pp,audit,draw,view,browse} ...
+    usage: ezdxf [-h] [-V] [-v] [--log LOG] {pp,audit,draw,view,browse,strip} ...
 
     Command launcher for the Python package "ezdxf": https://pypi.org/project/ezdxf/
 
     positional arguments:
-      {pp,audit,draw,view,browse}
+      {pp,audit,draw,view,browse,strip}
         pp                  pretty print DXF files as HTML file
         audit               audit and repair DXF files
         draw                draw and convert DXF files by Matplotlib
         view                view DXF files by the PyQt viewer
         browse              browse DXF file structure
+        strip               strip comments from DXF files
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -208,6 +209,31 @@ Browse the internal structure of a DXF file like a file system:
       -g HANDLE, --handle HANDLE
                             go to entity by HANDLE, HANDLE has to be a hex value without
                             any prefix like 'fefe'
+
+Strip
+-----
+
+Strip comment tags (group code 999) from ASCII DXF files, binary DXF files are
+not supported:
+
+.. code-block:: Text
+
+    C:\> ezdxf strip *.dxf
+    DONE: "gear.dxf" - no comment tags found
+
+.. code-block:: Text
+
+    C:\> ezdxf strip -h
+    usage: ezdxf strip [-h] [-b] [-v] FILE [FILE ...]
+
+    positional arguments:
+      FILE           DXF file to process, wildcards "*" and "?" supported
+
+    optional arguments:
+      -h, --help     show this help message and exit
+      -b, --backup   make a backup copy with extension ".bak" from the DXF file,
+                     overwrites existing backup files
+      -v, --verbose  give more output
 
 Show Config
 -----------
