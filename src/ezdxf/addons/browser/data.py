@@ -8,12 +8,7 @@ from ezdxf.addons.browser.loader import load_section_dict
 from ezdxf.lldxf.types import DXFVertex
 from ezdxf.lldxf.tags import Tags
 
-__all__ = [
-    "DXFDocument",
-    "get_row_from_line_number",
-    "dxfstr",
-    "EntityHistory"
-]
+__all__ = ["DXFDocument", "get_row_from_line_number", "dxfstr", "EntityHistory"]
 
 
 class DXFDocument:
