@@ -1,14 +1,20 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Optional, Dict, List, Tuple
+from typing import Optional, Dict, List, Tuple, Iterable
 from pathlib import Path
 
 from ezdxf.lldxf.loader import SectionDict
 from ezdxf.addons.browser.loader import load_section_dict
-from ezdxf.lldxf.types import DXFVertex
+from ezdxf.lldxf.types import DXFVertex, tag_type
 from ezdxf.lldxf.tags import Tags
 
-__all__ = ["DXFDocument", "get_row_from_line_number", "dxfstr", "EntityHistory"]
+__all__ = [
+    "DXFDocument",
+    "get_row_from_line_number",
+    "dxfstr",
+    "EntityHistory",
+    "SearchIndex",
+]
 
 
 class DXFDocument:
@@ -257,3 +263,51 @@ class EntityHistory:
 
     def content(self) -> List[Tags]:
         return list(self._history)
+
+
+class SearchIndex:
+    def __init__(self, entities: Iterable[Tags]):
+        # raw tags from the ascii loader
+        self.entities: List[Tags] = list(entities)
+        self._index: int = 0
+        self._search_term: Optional[str] = None
+        self.case_insensitive = True
+        self.numbers = False
+
+    def reset(self):
+        self._index = 0
+        self._search_term = None
+
+    def find(self, term: str) -> Tuple[Optional[Tags], int]:
+        self._search_term = str(term)
+        self._index = 0
+        return self.find_next()
+
+    def find_next(self) -> Tuple[Optional[Tags], int]:
+        count = len(self.entities)
+        while self._index < count:
+            entity = self.entities[self._index]
+            self._index += 1
+            tag_index = self.match(entity)
+            if tag_index >= 0:
+                return entity, tag_index
+        return None, -1
+
+    def match(self, entity: Tags) -> int:
+        if self._search_term:
+            if self.case_insensitive:
+                search_term = self._search_term.lower()
+            else:
+                search_term = self._search_term
+            not_numbers = not self.numbers
+            for index, (code, value) in enumerate(entity):
+                if tag_type(code) is not str:
+                    if not_numbers:
+                        continue
+                    value = str(value)
+
+                if self.case_insensitive:
+                    value = value.lower()
+                if search_term in value:
+                    return index
+        return -1

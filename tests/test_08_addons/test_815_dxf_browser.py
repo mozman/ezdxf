@@ -12,7 +12,7 @@ from ezdxf.lldxf.tagger import ascii_tags_loader
 
 from ezdxf.addons.browser import DXFTagsModel, DXFStructureModel, DXFDocument
 from ezdxf.addons.browser.tags import compile_tags
-from ezdxf.addons.browser.data import LineIndex, EntityHistory
+from ezdxf.addons.browser.data import LineIndex, EntityHistory, SearchIndex
 
 from PyQt5.QtCore import Qt, QModelIndex
 
@@ -285,6 +285,103 @@ class TestEntityHistory:
         assert len(content) == 5
         #                                 time wraps ->  append
         assert content == [first, second, first, second, third]
+
+
+SEARCH_EXAMPLE1 = """0
+SEARCH1
+8
+LayerName1
+62
+7
+"""
+
+SEARCH_EXAMPLE2 = """0
+SEARCH2
+8
+LayerName2
+62
+6
+"""
+
+
+class TestSearchIndex:
+    @pytest.fixture(scope="class")
+    def entities(self):
+        return [txt2tags(SEARCH_EXAMPLE1), txt2tags(SEARCH_EXAMPLE2)]
+
+    @pytest.fixture
+    def search(self, entities):
+        return SearchIndex(entities)
+
+    def test_valid_setup_and_default_settings(self, search):
+        assert len(search.entities) == 2
+        assert (
+            search.case_insensitive is True
+        ), "should be case insensitive by default"
+        assert (
+            search.numbers is False
+        ), "should not search in number tags by default"
+
+    def test_failing_search(self, search):
+        entity, index = search.find("XDATA")
+        assert entity is None
+        assert index == -1
+
+    def test_find_entity_type(self, search):
+        entity, index = search.find("SEARCH1")
+        assert entity is search.entities[0]
+        assert index == 0
+
+    def test_find_next_entity_type(self, search):
+        search.find("SEARCH")
+        entity, index = search.find_next()
+        assert entity is search.entities[1]
+        assert index == 0
+
+    def test_find_content(self, search):
+        entity, index = search.find("LayerName1")
+        assert entity is search.entities[0]
+        assert index == 1
+
+    def test_find_next_content(self, search):
+        search.find("LayerName")
+        entity, index = search.find_next()
+        assert entity is search.entities[1]
+        assert index == 1
+
+    def test_failing_find_next_returns_none(self, search):
+        search.find("LayerName")
+        search.find_next()
+        entity, index = search.find_next()
+        assert entity is None
+        assert index == -1
+
+    def test_not_initiated_find_next_returns_none(self, search):
+        entity, index = search.find_next()
+        assert entity is None
+        assert index == -1
+
+    def test_case_insensitive_search(self, search):
+        search.case_insensitive = True
+        entity, index = search.find("LAYERNAME1")
+        assert entity is search.entities[0]
+        assert index == 1
+
+    def test_case_sensitive_search(self, search):
+        search.case_insensitive = False
+        entity, index = search.find("LAYERNAME1")
+        assert entity is None
+
+    def test_ignore_number_tags(self, search):
+        search.numbers = False
+        entity, index = search.find("6")
+        assert entity is None
+
+    def test_search_in_number_tags(self, search):
+        search.numbers = True
+        entity, index = search.find("6")
+        assert entity is search.entities[1]
+        assert index == 2
 
 
 if __name__ == "__main__":
