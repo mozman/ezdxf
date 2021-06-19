@@ -266,10 +266,13 @@ class EntityHistory:
 
 
 class SearchIndex:
+    NOT_FOUND = None, -1
+
     def __init__(self, entities: Iterable[Tags]):
         self.entities: List[Tags] = list(entities)
         self._index: int = 0
         self._search_term: Optional[str] = None
+        self._backward = False
         self.case_insensitive = True
         self.whole_words = False
         self.numbers = False
@@ -281,14 +284,22 @@ class SearchIndex:
         except ValueError:
             self._index = 0
 
-    def reset(self):
+    def reset(self, search_term: str, backward=False):
         self._index = 0
-        self._search_term = None
+        self._search_term = str(search_term)
+        count = len(self.entities)
+        if backward and count:
+            self._index = count - 1
 
-    def find(self, term: str) -> Tuple[Optional[Tags], int]:
-        self._search_term = str(term)
-        self._index = 0
-        return self.find_next()
+    def find(self, term: str, backward=False) -> Tuple[Optional[Tags], int]:
+        self.reset(term, backward)
+        if len(self.entities):
+            if backward:
+                return self.find_backward()
+            else:
+                return self.find_next()
+        else:
+            return self.NOT_FOUND
 
     def find_next(self) -> Tuple[Optional[Tags], int]:
         count = len(self.entities)
@@ -298,7 +309,16 @@ class SearchIndex:
             tag_index = self.match(entity)
             if tag_index >= 0:
                 return entity, tag_index
-        return None, -1
+        return self.NOT_FOUND
+
+    def find_backward(self) -> Tuple[Optional[Tags], int]:
+        while self._index >= 0:
+            entity = self.entities[self._index]
+            self._index -= 1
+            tag_index = self.match(entity)
+            if tag_index >= 0:
+                return entity, tag_index
+        return self.NOT_FOUND
 
     def match(self, entity: Tags) -> int:
         if self._search_term:
