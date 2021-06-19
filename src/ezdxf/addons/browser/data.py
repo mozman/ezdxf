@@ -206,6 +206,7 @@ class EntityHistory:
     def __init__(self):
         self._history: List[Tags] = list()
         self._index: int = 0
+        self._time_travel: List[Tags] = list()
 
     def __len__(self):
         return len(self._history)
@@ -214,7 +215,16 @@ class EntityHistory:
     def index(self):
         return self._index
 
+    def clear(self):
+        self._history.clear()
+        self._time_travel.clear()
+        self._index = 0
+
     def append(self, entity: Tags):
+        if self._time_travel:
+            self._history.extend(self._time_travel)
+            self._time_travel.clear()
+
         self._index = len(self._history)
         self._history.append(entity)
 
@@ -222,20 +232,28 @@ class EntityHistory:
         entity = None
         if self._history:
             index = self._index - 1
-            entity = self._history[index]
-            self._index = max(0, index)
+            if index >= 0:
+                entity = self._time_wrap(index)
+            else:
+                entity = self._history[0]
         return entity
 
     def forward(self) -> Tags:
         entity = None
-        if self._history:
-            self._index = min(len(self._history) - 1, self._index + 1)
-            entity = self._history[self._index]
+        history = self._history
+        if history:
+            index = self._index + 1
+            if index < len(history):
+                entity = self._time_wrap(index)
+            else:
+                entity = history[-1]
         return entity
 
-    def clear(self):
-        self._history.clear()
-        self._index = 0
+    def _time_wrap(self, index) -> Tags:
+        self._index = index
+        entity = self._history[index]
+        self._time_travel.append(entity)
+        return entity
 
     def content(self) -> List[Tags]:
         return list(self._history)

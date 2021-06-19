@@ -6,7 +6,7 @@ pytest.importorskip("PyQt5")
 
 from io import StringIO
 import math
-from ezdxf.lldxf.tags import Tags
+from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.lldxf.loader import load_dxf_structure
 from ezdxf.lldxf.tagger import ascii_tags_loader
 
@@ -229,8 +229,8 @@ class TestEntityHistory:
     @pytest.fixture
     def history2(self):
         history = EntityHistory()
-        history.append(Tags())
-        history.append(Tags())
+        history.append(Tags([DXFTag(1, "first")]))
+        history.append(Tags([DXFTag(2, "second")]))
         return history
 
     def test_setup_history(self):
@@ -259,22 +259,32 @@ class TestEntityHistory:
     def test_go_back_in_history(self, history2):
         first, second = history2.content()
         assert history2.index == 1
-
-        entity = history2.back()
+        assert history2.back() is first
         assert len(history2) == 2, "entity is still in history"
-        assert entity is first
         assert history2.index == 0
 
     def test_go_back_and_forward_in_history(self, history2):
         first, second = history2.content()
-        assert history2.back()  is first
+        assert history2.back() is first
         assert history2.forward() is second
 
-    def test_append_moves_index_to_top_of_history(self, history2):
-        history2.back()  # first
+    def test_append_should_add_time_travel_history(self, history2):
+        first, second = history2.content()
+        assert history2.back() is first  # 1st time travel
         assert history2.index == 0
-        history2.append(Tags())
-        assert history2.index == 2
+
+        assert history2.forward() is second  # 2nd time travel
+        assert history2.index == 1
+
+        third = Tags([DXFTag(3, "third")])
+        history2.append(third)
+        assert history2.index == 4
+
+        # complete travel history
+        content = history2.content()
+        assert len(content) == 5
+        #                                 time wraps ->  append
+        assert content == [first, second, first, second, third]
 
 
 if __name__ == "__main__":

@@ -196,13 +196,13 @@ class DXFStructureBrowser(QMainWindow):
             )
         else:
             self.history.clear()
+            self.view_header_section()
             self.update_title()
 
     def _load(self, filename: str):
         self.doc.load(filename)
         model = DXFStructureModel(self.doc.filepath.name, self.doc)
         self._structure_tree.set_structure(model)
-        self.view_header_section()
 
     def export_entity(self):
         if self._dxf_tags_table is None:
@@ -227,7 +227,7 @@ class DXFStructureBrowser(QMainWindow):
     def view_header_section(self):
         header = self.doc.get_header_section()
         if header:
-            self.set_current_entity(header[0])
+            self.set_current_entity_with_history(header[0])
 
     def update_title(self):
         self.setWindowTitle(f"{APP_NAME} - {self.doc.absolute_filepath()}")
@@ -352,12 +352,12 @@ class DXFStructureBrowser(QMainWindow):
 
     def go_back_entity_history(self):
         entity = self.history.back()
-        if entity:
+        if entity is not None:
             self.set_current_entity(entity)  # do not change history
 
     def go_forward_entity_history(self):
         entity = self.history.forward()
-        if entity:
+        if entity is not None:
             self.set_current_entity(entity)  # do not change history
 
     def open_entity_in_text_editor(self):
