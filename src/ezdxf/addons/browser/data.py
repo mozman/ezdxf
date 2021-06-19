@@ -2,7 +2,7 @@
 #  License: MIT License
 from typing import Optional, Dict, List, Tuple, Iterable
 from pathlib import Path
-
+import enum
 from ezdxf.lldxf.loader import SectionDict
 from ezdxf.addons.browser.loader import load_section_dict
 from ezdxf.lldxf.types import DXFVertex, tag_type
@@ -272,7 +272,9 @@ class SearchIndex:
         self._index: int = 0
         self._search_term: Optional[str] = None
         self.case_insensitive = True
+        self.whole_words = False
         self.numbers = False
+        self.regex = False  # False = normal mode
 
     def reset(self):
         self._index = 0
@@ -295,6 +297,13 @@ class SearchIndex:
 
     def match(self, entity: Tags) -> int:
         if self._search_term:
+            regex = self.regex
+            whole_words = self.whole_words
+            case_insensitive = self.case_insensitive
+            if regex:
+                case_insensitive = False
+                whole_words = False
+
             if self.case_insensitive:
                 search_term = self._search_term.lower()
             else:
@@ -306,8 +315,16 @@ class SearchIndex:
                         continue
                     value = str(value)
 
-                if self.case_insensitive:
+                if case_insensitive:
                     value = value.lower()
-                if search_term in value:
-                    return index
+
+                if regex:
+                    pass
+                elif whole_words:
+                    for word in value.split():
+                        if search_term == word:
+                            return index
+                else:
+                    if search_term in value:
+                        return index
         return -1

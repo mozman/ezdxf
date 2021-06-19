@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QInputDialog,
     qApp,
+    QDialog,
 )
 from PyQt5.QtCore import Qt, QModelIndex
 from ezdxf.lldxf.const import DXFStructureError
@@ -31,6 +32,8 @@ from .data import (
     EntityHistory,
 )
 from .views import StructureTree, DXFTagsTable
+from .find_dialog import Ui_FindDialog
+
 
 __all__ = ["DXFStructureBrowser"]
 
@@ -325,7 +328,8 @@ class DXFStructureBrowser(QMainWindow):
         return False
 
     def find_text(self):
-        pass
+        dialog = FindDialog(self)
+        dialog.show()
 
     def export_tags(self, filename: str, tags: Tags):
         try:
@@ -384,3 +388,9 @@ class DXFStructureBrowser(QMainWindow):
 def copy_dxf_to_clipboard(tags: Tags):
     clipboard = QApplication.clipboard()
     clipboard.setText(dxfstr(tags), mode=clipboard.Clipboard)
+
+
+class FindDialog(QDialog, Ui_FindDialog):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setupUi(self)
