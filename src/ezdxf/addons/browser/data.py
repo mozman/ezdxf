@@ -284,15 +284,21 @@ class SearchIndex:
         except ValueError:
             self._index = 0
 
-    def reset(self, search_term: str, backward=False):
+    def reset_index(self, backward=False):
         self._index = 0
-        self._search_term = str(search_term)
         count = len(self.entities)
         if backward and count:
             self._index = count - 1
 
-    def find(self, term: str, backward=False) -> Tuple[Optional[Tags], int]:
-        self.reset(term, backward)
+    def reset_search_term(self, term: str):
+        self._search_term = str(term)
+
+    def find(
+        self, term: str, backward=False, reset_index=True
+    ) -> Tuple[Optional[Tags], int]:
+        self.reset_search_term(term)
+        if reset_index:
+            self.reset_index(backward)
         if len(self.entities):
             if backward:
                 return self.find_backward()
