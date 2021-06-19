@@ -267,7 +267,6 @@ class EntityHistory:
 
 class SearchIndex:
     def __init__(self, entities: Iterable[Tags]):
-        # raw tags from the ascii loader
         self.entities: List[Tags] = list(entities)
         self._index: int = 0
         self._search_term: Optional[str] = None
@@ -275,6 +274,12 @@ class SearchIndex:
         self.whole_words = False
         self.numbers = False
         self.regex = False  # False = normal mode
+
+    def set_current_entity(self, entity: Tags):
+        try:
+            self._index = self.entities.index(entity)
+        except ValueError:
+            self._index = 0
 
     def reset(self):
         self._index = 0
