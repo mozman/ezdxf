@@ -1,8 +1,7 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Optional, Dict, List, Tuple, Iterable
+from typing import Optional, Dict, List, Tuple, Iterable, Any
 from pathlib import Path
-import enum
 from ezdxf.lldxf.loader import SectionDict
 from ezdxf.addons.browser.loader import load_section_dict
 from ezdxf.lldxf.types import DXFVertex, tag_type
@@ -273,12 +272,18 @@ class SearchIndex:
         self._current_entity_index: int = 0
         self._current_tag_index: int = 0
         self._search_term: Optional[str] = None
+        self._search_term_lower: Optional[str] = None
         self._backward = False
+        self._end_of_index = not bool(self.entities)
         self.case_insensitive = True
         self.whole_words = False
         self.numbers = False
         self.regex = False  # False = normal mode
         self.wrap_around = False
+
+    @property
+    def is_end_of_index(self) -> bool:
+        return self._end_of_index
 
     def set_current_entity(self, entity: Tags, tag_index: int = 0):
         self._current_tag_index = tag_index
@@ -287,42 +292,50 @@ class SearchIndex:
         except ValueError:
             self._current_entity_index = 0
             self._current_tag_index = 0
+            self._end_of_index = False
 
     def current_entity(self) -> Tuple[Optional[Tags], int]:
-        if self.entities:
+        if self.entities and not self._end_of_index:
             return (
                 self.entities[self._current_entity_index],
                 self._current_tag_index,
             )
         return self.NOT_FOUND
 
-    def reset_cursor(self, backward=False):
+    def reset_cursor(self, backward: bool = False):
         self._current_entity_index = 0
         self._current_tag_index = 0
         count = len(self.entities)
-        if backward and count:
-            self._current_entity_index = count - 1
-            entity = self.entities[-1]
-            self._current_tag_index = len(entity) - 1
+        if count:
+            self._end_of_index = False
+            if backward:
+                self._current_entity_index = count - 1
+                entity = self.entities[-1]
+                self._current_tag_index = len(entity) - 1
+        else:
+            self._end_of_index = True
 
     def cursor(self) -> Tuple[int, int]:
         return self._current_entity_index, self._current_tag_index
 
-    def move_cursor_forward(self):
+    def move_cursor_forward(self) -> None:
         if self.entities:
-            entity = self.entities[self._current_entity_index]
+            entity: Tags = self.entities[self._current_entity_index]
             tag_index = self._current_tag_index + 1
             if tag_index >= len(entity):
                 entity_index = self._current_entity_index + 1
                 if entity_index < len(self.entities):
                     self._current_entity_index = entity_index
                     self._current_tag_index = 0
-                elif self.wrap_around:
-                    self.reset_cursor()
+                else:
+                    if self.wrap_around:
+                        self.reset_cursor()
+                    else:
+                        self._end_of_index = True
             else:
                 self._current_tag_index = tag_index
 
-    def move_cursor_backward(self):
+    def move_cursor_backward(self) -> None:
         if self.entities:
             tag_index = self._current_tag_index - 1
             if tag_index < 0:
@@ -332,21 +345,25 @@ class SearchIndex:
                     self._current_tag_index = (
                         len(self.entities[entity_index]) - 1
                     )
-                elif self.wrap_around:
-                    self.reset_cursor(backward=True)
+                else:
+                    if self.wrap_around:
+                        self.reset_cursor(backward=True)
+                    else:
+                        self._end_of_index = True
             else:
                 self._current_tag_index = tag_index
 
-    def reset_search_term(self, term: str):
+    def reset_search_term(self, term: str) -> None:
         self._search_term = str(term)
+        self._search_term_lower = self._search_term.lower()
 
     def find(
-        self, term: str, backward=False, reset_index=True
+        self, term: str, backward: bool = False, reset_index: bool = True
     ) -> Tuple[Optional[Tags], int]:
         self.reset_search_term(term)
         if reset_index:
             self.reset_cursor(backward)
-        if len(self.entities):
+        if len(self.entities) and not self._end_of_index:
             if backward:
                 return self.find_backward()
             else:
@@ -355,54 +372,47 @@ class SearchIndex:
             return self.NOT_FOUND
 
     def find_next(self) -> Tuple[Optional[Tags], int]:
-        count = len(self.entities)
-        while self._current_entity_index < count:
-            entity = self.entities[self._current_entity_index]
-            self._current_entity_index += 1
-            tag_index = self.match(entity)
-            if tag_index >= 0:
-                return entity, tag_index
-        return self.NOT_FOUND
+        return self._find(self.move_cursor_forward)
 
     def find_backward(self) -> Tuple[Optional[Tags], int]:
-        while self._current_entity_index >= 0:
-            entity = self.entities[self._current_entity_index]
-            self._current_entity_index -= 1
-            tag_index = self.match(entity)
-            if tag_index >= 0:
-                return entity, tag_index
+        return self._find(self.move_cursor_backward)
+
+    def _find(self, move_cursor) -> Tuple[Optional[Tags], int]:
+        if self.entities and self._search_term and not self._end_of_index:
+            start_cursor = self.cursor()
+            wrap_around = self.wrap_around
+            while not self._end_of_index:
+                entity, tag_index = self.current_entity()
+                move_cursor()
+                if self._match(*entity[tag_index]):
+                    return entity, tag_index
+                if wrap_around and self.cursor() == start_cursor:
+                    break
         return self.NOT_FOUND
 
-    def match(self, entity: Tags) -> int:
-        if self._search_term:
-            regex = self.regex
-            whole_words = self.whole_words
-            case_insensitive = self.case_insensitive
-            if regex:
-                case_insensitive = False
-                whole_words = False
+    def _match(self, code: int, value: Any) -> bool:
+        if tag_type(code) is not str:
+            if not self.numbers:
+                return False
+            value = str(value)
 
-            if self.case_insensitive:
-                search_term = self._search_term.lower()
-            else:
-                search_term = self._search_term
-            not_numbers = not self.numbers
-            for index, (code, value) in enumerate(entity):
-                if tag_type(code) is not str:
-                    if not_numbers:
-                        continue
-                    value = str(value)
+        regex = self.regex
+        whole_words = self.whole_words
+        case_insensitive = self.case_insensitive
+        if regex:
+            case_insensitive = False
+            whole_words = False
 
-                if case_insensitive:
-                    value = value.lower()
+        if case_insensitive:
+            search_term = self._search_term_lower
+            value = value.lower()
+        else:
+            search_term = self._search_term
 
-                if regex:
-                    pass
-                elif whole_words:
-                    for word in value.split():
-                        if search_term == word:
-                            return index
-                else:
-                    if search_term in value:
-                        return index
-        return -1
+        if regex:
+            pass
+        elif whole_words:
+            return any(search_term == word for word in value.split())
+        else:
+            return search_term in value
+        return False

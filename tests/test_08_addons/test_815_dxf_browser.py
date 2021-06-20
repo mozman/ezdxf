@@ -12,7 +12,11 @@ from ezdxf.lldxf.tagger import ascii_tags_loader
 
 from ezdxf.addons.browser import DXFTagsModel, DXFStructureModel, DXFDocument
 from ezdxf.addons.browser.tags import compile_tags
-from ezdxf.addons.browser.data import LineIndex, EntityHistory, SearchIndex
+from ezdxf.addons.browser.data import (
+    LineIndex,
+    EntityHistory,
+    SearchIndex,
+)
 
 from PyQt5.QtCore import Qt, QModelIndex
 
@@ -314,7 +318,7 @@ class TestSearchIndex:
         return SearchIndex(entities)
 
     @staticmethod
-    def move_cursor_foward(s: SearchIndex, count: int):
+    def move_cursor_forward(s: SearchIndex, count: int):
         for _ in range(count):
             s.move_cursor_forward()
 
@@ -325,6 +329,7 @@ class TestSearchIndex:
 
     def test_valid_setup_and_default_settings(self, search):
         assert len(search.entities) == 2
+        assert search.is_end_of_index is False
         assert (
             search.case_insensitive is True
         ), "should be case insensitive by default"
@@ -332,12 +337,17 @@ class TestSearchIndex:
             search.numbers is False
         ), "should not search in number tags by default"
 
+    def test_empty_search_index(self):
+        search_index = SearchIndex([])
+        assert search_index.is_end_of_index is True
+
     def test_reset_cursor_forward(self, search):
         search.reset_cursor(backward=False)
         assert search.cursor() == (
             0,
             0,
         ), "cursor should be the first tag of the first entity"
+        assert search.is_end_of_index is False
 
     def test_move_cursor_forward(self, search):
         search.reset_cursor()
@@ -346,12 +356,13 @@ class TestSearchIndex:
 
     def test_move_cursor_forward_beyond_entity_border(self, search):
         search.reset_cursor()
-        self.move_cursor_foward(search, 3)
+        self.move_cursor_forward(search, 3)
         assert search.cursor() == (1, 0)
 
-    def test_move_cursor_forward_to_the_end(self, search):
+    def test_move_cursor_forward_to_the_end_of_index(self, search):
         search.reset_cursor()
-        self.move_cursor_foward(search, 10)
+        self.move_cursor_forward(search, 10)
+        assert search.is_end_of_index is True
         assert search.cursor() == (
             1,
             2,
@@ -360,7 +371,7 @@ class TestSearchIndex:
     def test_move_cursor_forward_wrap_around(self, search):
         search.reset_cursor()
         search.wrap_around = True
-        self.move_cursor_foward(search, 7)
+        self.move_cursor_forward(search, 7)
         assert search.cursor() == (
             0,
             1,
@@ -372,6 +383,7 @@ class TestSearchIndex:
             1,
             2,
         ), "cursor should be the last tag of the last entity"
+        assert search.is_end_of_index is False
 
     def test_move_cursor_backward(self, search):
         search.reset_cursor(backward=True)
@@ -383,9 +395,10 @@ class TestSearchIndex:
         self.move_cursor_backward(search, 3)
         assert search.cursor() == (0, 2)
 
-    def test_move_cursor_backward_to_the_start(self, search):
+    def test_move_cursor_backward_to_the_end_of_index(self, search):
         search.reset_cursor()
         self.move_cursor_backward(search, 10)
+        assert search.is_end_of_index is True
         assert search.cursor() == (
             0,
             0,
@@ -404,6 +417,7 @@ class TestSearchIndex:
         entity, index = search.find("XDATA")
         assert entity is None
         assert index == -1
+        assert search.is_end_of_index is True
 
     def test_find_entity_type(self, search):
         entity, index = search.find("SEARCH1")
@@ -460,6 +474,17 @@ class TestSearchIndex:
         entity, index = search.find("6")
         assert entity is search.entities[1]
         assert index == 2
+
+    def test_wrap_around_search(self, search):
+        search.wrap_around = True
+        search.set_current_entity(search.entities[1], 0)
+        entity, index = search.find("SEARCH1")
+        assert entity is search.entities[0]
+        assert index == 0
+
+    def test_failing_search_stops_if_wrap_around(self, search):
+        search.wrap_around = True
+        assert search.find("XXX") is search.NOT_FOUND
 
 
 if __name__ == "__main__":
