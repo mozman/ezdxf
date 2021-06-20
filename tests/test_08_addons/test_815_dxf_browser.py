@@ -313,6 +313,16 @@ class TestSearchIndex:
     def search(self, entities):
         return SearchIndex(entities)
 
+    @staticmethod
+    def move_cursor_foward(s: SearchIndex, count: int):
+        for _ in range(count):
+            s.move_cursor_forward()
+
+    @staticmethod
+    def move_cursor_backward(s: SearchIndex, count: int):
+        for _ in range(count):
+            s.move_cursor_backward()
+
     def test_valid_setup_and_default_settings(self, search):
         assert len(search.entities) == 2
         assert (
@@ -321,6 +331,74 @@ class TestSearchIndex:
         assert (
             search.numbers is False
         ), "should not search in number tags by default"
+
+    def test_reset_cursor_forward(self, search):
+        search.reset_cursor(backward=False)
+        assert search.cursor() == (
+            0,
+            0,
+        ), "cursor should be the first tag of the first entity"
+
+    def test_move_cursor_forward(self, search):
+        search.reset_cursor()
+        search.move_cursor_forward()
+        assert search.cursor() == (0, 1)
+
+    def test_move_cursor_forward_beyond_entity_border(self, search):
+        search.reset_cursor()
+        self.move_cursor_foward(search, 3)
+        assert search.cursor() == (1, 0)
+
+    def test_move_cursor_forward_to_the_end(self, search):
+        search.reset_cursor()
+        self.move_cursor_foward(search, 10)
+        assert search.cursor() == (
+            1,
+            2,
+        ), "index should stop at the last tag of the last entity"
+
+    def test_move_cursor_forward_wrap_around(self, search):
+        search.reset_cursor()
+        search.wrap_around = True
+        self.move_cursor_foward(search, 7)
+        assert search.cursor() == (
+            0,
+            1,
+        ), "index should be at the second tag of the first entity"
+
+    def test_reset_cursor_backward(self, search):
+        search.reset_cursor(backward=True)
+        assert search.cursor() == (
+            1,
+            2,
+        ), "cursor should be the last tag of the last entity"
+
+    def test_move_cursor_backward(self, search):
+        search.reset_cursor(backward=True)
+        search.move_cursor_backward()
+        assert search.cursor() == (1, 1)
+
+    def test_move_cursor_backward_beyond_entity_border(self, search):
+        search.reset_cursor(backward=True)
+        self.move_cursor_backward(search, 3)
+        assert search.cursor() == (0, 2)
+
+    def test_move_cursor_backward_to_the_start(self, search):
+        search.reset_cursor()
+        self.move_cursor_backward(search, 10)
+        assert search.cursor() == (
+            0,
+            0,
+        ), "index should stop at the first tag of the first entity"
+
+    def test_move_cursor_backward_wrap_around(self, search):
+        search.reset_cursor(backward=True)
+        search.wrap_around = True
+        self.move_cursor_backward(search, 7)
+        assert search.cursor() == (
+            1,
+            1,
+        ), "index should be at the penultimate tag of the last entity"
 
     def test_failing_search(self, search):
         entity, index = search.find("XDATA")

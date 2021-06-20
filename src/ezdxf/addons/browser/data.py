@@ -270,25 +270,72 @@ class SearchIndex:
 
     def __init__(self, entities: Iterable[Tags]):
         self.entities: List[Tags] = list(entities)
-        self._index: int = 0
+        self._current_entity_index: int = 0
+        self._current_tag_index: int = 0
         self._search_term: Optional[str] = None
         self._backward = False
         self.case_insensitive = True
         self.whole_words = False
         self.numbers = False
         self.regex = False  # False = normal mode
+        self.wrap_around = False
 
-    def set_current_entity(self, entity: Tags):
+    def set_current_entity(self, entity: Tags, tag_index: int = 0):
+        self._current_tag_index = tag_index
         try:
-            self._index = self.entities.index(entity)
+            self._current_entity_index = self.entities.index(entity)
         except ValueError:
-            self._index = 0
+            self._current_entity_index = 0
+            self._current_tag_index = 0
 
-    def reset_index(self, backward=False):
-        self._index = 0
+    def current_entity(self) -> Tuple[Optional[Tags], int]:
+        if self.entities:
+            return (
+                self.entities[self._current_entity_index],
+                self._current_tag_index,
+            )
+        return self.NOT_FOUND
+
+    def reset_cursor(self, backward=False):
+        self._current_entity_index = 0
+        self._current_tag_index = 0
         count = len(self.entities)
         if backward and count:
-            self._index = count - 1
+            self._current_entity_index = count - 1
+            entity = self.entities[-1]
+            self._current_tag_index = len(entity) - 1
+
+    def cursor(self) -> Tuple[int, int]:
+        return self._current_entity_index, self._current_tag_index
+
+    def move_cursor_forward(self):
+        if self.entities:
+            entity = self.entities[self._current_entity_index]
+            tag_index = self._current_tag_index + 1
+            if tag_index >= len(entity):
+                entity_index = self._current_entity_index + 1
+                if entity_index < len(self.entities):
+                    self._current_entity_index = entity_index
+                    self._current_tag_index = 0
+                elif self.wrap_around:
+                    self.reset_cursor()
+            else:
+                self._current_tag_index = tag_index
+
+    def move_cursor_backward(self):
+        if self.entities:
+            tag_index = self._current_tag_index - 1
+            if tag_index < 0:
+                entity_index = self._current_entity_index - 1
+                if entity_index >= 0:
+                    self._current_entity_index = entity_index
+                    self._current_tag_index = (
+                        len(self.entities[entity_index]) - 1
+                    )
+                elif self.wrap_around:
+                    self.reset_cursor(backward=True)
+            else:
+                self._current_tag_index = tag_index
 
     def reset_search_term(self, term: str):
         self._search_term = str(term)
@@ -298,7 +345,7 @@ class SearchIndex:
     ) -> Tuple[Optional[Tags], int]:
         self.reset_search_term(term)
         if reset_index:
-            self.reset_index(backward)
+            self.reset_cursor(backward)
         if len(self.entities):
             if backward:
                 return self.find_backward()
@@ -309,18 +356,18 @@ class SearchIndex:
 
     def find_next(self) -> Tuple[Optional[Tags], int]:
         count = len(self.entities)
-        while self._index < count:
-            entity = self.entities[self._index]
-            self._index += 1
+        while self._current_entity_index < count:
+            entity = self.entities[self._current_entity_index]
+            self._current_entity_index += 1
             tag_index = self.match(entity)
             if tag_index >= 0:
                 return entity, tag_index
         return self.NOT_FOUND
 
     def find_backward(self) -> Tuple[Optional[Tags], int]:
-        while self._index >= 0:
-            entity = self.entities[self._index]
-            self._index -= 1
+        while self._current_entity_index >= 0:
+            entity = self.entities[self._current_entity_index]
+            self._current_entity_index -= 1
             tag_index = self.match(entity)
             if tag_index >= 0:
                 return entity, tag_index
