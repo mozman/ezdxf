@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import (
     qApp,
     QDialog,
 )
-from PyQt5.QtCore import Qt, QModelIndex
+from PyQt5.QtCore import Qt, QModelIndex, QSettings
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.types import DXFTag, is_pointer_code
 from ezdxf.lldxf.tags import Tags
@@ -192,8 +192,11 @@ class DXFStructureBrowser(QMainWindow):
 
     def create_find_dialog(self) -> "FindDialog":
         dialog = FindDialog(self)
+        dialog.setModal(True)
         dialog.find_next_button.clicked.connect(self.find_next)
         dialog.find_backward_button.clicked.connect(self.find_backward)
+        dialog.find_next_button.setShortcut("F3")
+        dialog.find_backward_button.setShortcut("F4")
         return dialog
 
     def open_dxf(self):
@@ -352,6 +355,7 @@ class DXFStructureBrowser(QMainWindow):
         return False
 
     def find_text(self):
+        self._find_dialog.restore_geometry()
         self._find_dialog.show()
 
     def update_search(self):
@@ -379,11 +383,12 @@ class DXFStructureBrowser(QMainWindow):
         return searchable_entities
 
     def find_next(self):
-        self.update_search()
-        entity, index = self._active_search.find_next()
-        if entity:
-            self.set_current_entity_and_row_index(entity, index)
-            self._print_search_debug(entity, index)
+        if self._find_dialog.isVisible():
+            self.update_search()
+            entity, index = self._active_search.find_next()
+            if entity:
+                self.set_current_entity_and_row_index(entity, index)
+                self._print_search_debug(entity, index)
 
     def _print_search_debug(self, entity: Tags, index: int):
         try:
@@ -395,11 +400,12 @@ class DXFStructureBrowser(QMainWindow):
         )
 
     def find_backward(self):
-        self.update_search()
-        entity, index = self._active_search.find_backward()
-        if entity:
-            self.set_current_entity_and_row_index(entity, index)
-            self._print_search_debug(entity, index)
+        if self._find_dialog.isVisible():
+            self.update_search()
+            entity, index = self._active_search.find_backward()
+            if entity:
+                self.set_current_entity_and_row_index(entity, index)
+                self._print_search_debug(entity, index)
 
     def export_tags(self, filename: str, tags: Tags):
         try:
@@ -471,6 +477,12 @@ class FindDialog(QDialog, Ui_FindDialog):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.close_button.clicked.connect(lambda: self.close())
+        self.settings = QSettings("ezdxf", "DXFBrowser")
+
+    def restore_geometry(self):
+        geometry = self.settings.value("find.dialog.geometry")
+        if geometry is not None:
+            self.restoreGeometry(geometry)
 
     def set_arguments(
         self, args: SearchIndex, search_sections: SearchSections
@@ -511,3 +523,7 @@ class FindDialog(QDialog, Ui_FindDialog):
         search.numbers = self.number_tags_check_box.isChecked()
         search.wrap_around = self.wrap_around_check_box.isChecked()
         search.regex = self.regex_radio_button.isChecked()
+
+    def closeEvent(self, event):
+        self.settings.setValue("find.dialog.geometry", self.saveGeometry())
+        super().closeEvent(event)

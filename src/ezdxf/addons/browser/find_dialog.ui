@@ -256,6 +256,9 @@
          <height>30</height>
         </size>
        </property>
+       <property name="toolTip">
+        <string>Find Next (F3)</string>
+       </property>
        <property name="text">
         <string>Find &amp;Next</string>
        </property>
@@ -275,6 +278,9 @@
          <height>30</height>
         </size>
        </property>
+       <property name="toolTip">
+        <string>Find Backward (F4)</string>
+       </property>
        <property name="text">
         <string>Find &amp;Backward</string>
        </property>
@@ -293,6 +299,9 @@
          <width>80</width>
          <height>30</height>
         </size>
+       </property>
+       <property name="toolTip">
+        <string>Close Dialog (ESC)</string>
        </property>
        <property name="text">
         <string>Close</string>
