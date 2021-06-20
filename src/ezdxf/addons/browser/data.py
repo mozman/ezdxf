@@ -283,7 +283,6 @@ class SearchIndex:
         self.whole_words = False
         self.numbers = False
         self.regex = False  # False = normal mode
-        self.wrap_around = False
 
     @property
     def is_end_of_index(self) -> bool:
@@ -340,10 +339,7 @@ class SearchIndex:
                     self._current_entity_index = entity_index
                     self._current_tag_index = 0
                 else:
-                    if self.wrap_around:
-                        self.reset_cursor()
-                    else:
-                        self._end_of_index = True
+                    self._end_of_index = True
             else:
                 self._current_tag_index = tag_index
 
@@ -358,10 +354,7 @@ class SearchIndex:
                         len(self.entities[entity_index]) - 1
                     )
                 else:
-                    if self.wrap_around:
-                        self.reset_cursor(backward=True)
-                    else:
-                        self._end_of_index = True
+                    self._end_of_index = True
             else:
                 self._current_tag_index = tag_index
 
@@ -391,15 +384,11 @@ class SearchIndex:
 
     def _find(self, move_cursor) -> Tuple[Optional[Tags], int]:
         if self.entities and self._search_term and not self._end_of_index:
-            start_cursor = self.cursor()
-            wrap_around = self.wrap_around
             while not self._end_of_index:
                 entity, tag_index = self.current_entity()
                 move_cursor()
                 if self._match(*entity[tag_index]):
                     return entity, tag_index
-                if wrap_around and self.cursor() == start_cursor:
-                    break
         return self.NOT_FOUND
 
     def _match(self, code: int, value: Any) -> bool:

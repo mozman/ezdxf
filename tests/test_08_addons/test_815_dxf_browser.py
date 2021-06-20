@@ -368,15 +368,6 @@ class TestSearchIndex:
             2,
         ), "index should stop at the last tag of the last entity"
 
-    def test_move_cursor_forward_wrap_around(self, search):
-        search.reset_cursor()
-        search.wrap_around = True
-        self.move_cursor_forward(search, 7)
-        assert search.cursor() == (
-            0,
-            1,
-        ), "index should be at the second tag of the first entity"
-
     def test_reset_cursor_backward(self, search):
         search.reset_cursor(backward=True)
         assert search.cursor() == (
@@ -403,15 +394,6 @@ class TestSearchIndex:
             0,
             0,
         ), "index should stop at the first tag of the first entity"
-
-    def test_move_cursor_backward_wrap_around(self, search):
-        search.reset_cursor(backward=True)
-        search.wrap_around = True
-        self.move_cursor_backward(search, 7)
-        assert search.cursor() == (
-            1,
-            1,
-        ), "index should be at the penultimate tag of the last entity"
 
     def test_failing_search(self, search):
         entity, index = search.find("XDATA")
@@ -475,16 +457,13 @@ class TestSearchIndex:
         assert entity is search.entities[1]
         assert index == 2
 
-    def test_wrap_around_search(self, search):
-        search.wrap_around = True
-        search.set_current_entity(search.entities[1], 0)
-        entity, index = search.find("SEARCH1")
-        assert entity is search.entities[0]
-        assert index == 0
-
-    def test_failing_search_stops_if_wrap_around(self, search):
-        search.wrap_around = True
+    def test_failing_find_next_stops_at_the_end(self, search):
         assert search.find("XXX") is search.NOT_FOUND
+        assert search.is_end_of_index is True
+
+    def test_failing_find_backward_stops_at_the_beginning(self, search):
+        assert search.find("XXX", backward=True) is search.NOT_FOUND
+        assert search.is_end_of_index is True
 
 
 if __name__ == "__main__":
