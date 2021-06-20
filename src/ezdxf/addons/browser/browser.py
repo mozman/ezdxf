@@ -1,6 +1,6 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Optional
+from typing import Optional, Set, List
 import os
 import subprocess
 from PyQt5.QtWidgets import (
@@ -30,6 +30,7 @@ from .data import (
     get_row_from_line_number,
     dxfstr,
     EntityHistory,
+    SearchIndex,
 )
 from .views import StructureTree, DXFTagsTable
 from .find_dialog import Ui_FindDialog
@@ -41,6 +42,8 @@ TEXT_EDITOR = os.environ.get(
     "EZDXF_TEXT_EDITOR", r"C:\Program Files\Notepad++\notepad++.exe"
 )
 
+SearchSections = Set[str]
+
 
 class DXFStructureBrowser(QMainWindow):
     def __init__(
@@ -51,6 +54,9 @@ class DXFStructureBrowser(QMainWindow):
         self._structure_tree = StructureTree()
         self._dxf_tags_table = DXFTagsTable()
         self._current_entity: Optional[Tags] = None
+        self._active_search: Optional[SearchIndex] = None
+        self._search_sections = set()
+        self._find_dialog: "FindDialog" = self.create_find_dialog()
         self.history = EntityHistory()
         self.setup_actions()
         self.setup_menu()
@@ -184,6 +190,12 @@ class DXFStructureBrowser(QMainWindow):
         navigate_menu.addAction(self._open_entity_in_text_editor_action)
         navigate_menu.addAction(self._show_entity_in_tree_view_action)
 
+    def create_find_dialog(self) -> "FindDialog":
+        dialog = FindDialog(self)
+        dialog.find_next_button.clicked.connect(self.find_next)
+        dialog.find_backward_button.clicked.connect(self.find_backward)
+        return dialog
+
     def open_dxf(self):
         path, _ = QFileDialog.getOpenFileName(
             self,
@@ -279,6 +291,11 @@ class DXFStructureBrowser(QMainWindow):
         self.set_current_entity(entity)
         self.history.append(entity)
 
+    def set_current_entity_and_row_index(self, entity: Tags, index: int):
+        line = self.doc.get_line_number(entity) + 2 * index
+        self.set_current_entity(entity, select_line_number=line)
+        self.history.append(entity)
+
     def entity_activated(self, index: QModelIndex):
         tags = index.data(role=DXFTagsRole)
         if isinstance(tags, Tags):
@@ -335,8 +352,54 @@ class DXFStructureBrowser(QMainWindow):
         return False
 
     def find_text(self):
-        dialog = FindDialog(self)
-        dialog.show()
+        self._find_dialog.show()
+
+    def update_search(self):
+        def setup_search():
+            self._search_sections = dialog.search_sections()
+            entities = self.collect_searchable_entities(self._search_sections)
+            self._active_search = SearchIndex(entities)
+
+        dialog = self._find_dialog
+        if self._active_search is None:
+            setup_search()
+        else:
+            search_sections = dialog.search_sections()
+            if search_sections != self._search_sections:
+                setup_search()
+        dialog.update_options(self._active_search)
+
+    def collect_searchable_entities(
+        self, search_sections: SearchSections
+    ) -> List[Tags]:
+        searchable_entities = []
+        for name, entities in self.doc.sections.items():
+            if name in search_sections:
+                searchable_entities.extend(entities)
+        return searchable_entities
+
+    def find_next(self):
+        self.update_search()
+        entity, index = self._active_search.find_next()
+        if entity:
+            self.set_current_entity_and_row_index(entity, index)
+            self._print_search_debug(entity, index)
+
+    def _print_search_debug(self, entity: Tags, index: int):
+        try:
+            handle = entity.get_handle()
+        except ValueError:
+            handle = None
+        print(
+            f"found {entity.dxftype()}<{handle}> index:{index}"
+        )
+
+    def find_backward(self):
+        self.update_search()
+        entity, index = self._active_search.find_backward()
+        if entity:
+            self.set_current_entity_and_row_index(entity, index)
+            self._print_search_debug(entity, index)
 
     def export_tags(self, filename: str, tags: Tags):
         try:
@@ -407,3 +470,44 @@ class FindDialog(QDialog, Ui_FindDialog):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.close_button.clicked.connect(lambda: self.close())
+
+    def set_arguments(
+        self, args: SearchIndex, search_sections: SearchSections
+    ) -> None:
+        self.find_text_edit.setText(args.search_term)
+        self.whole_words_check_box.setChecked(args.whole_words)
+        self.match_case_check_box.setChecked(not args.case_insensitive)
+        self.number_tags_check_box.setChecked(args.numbers)
+        self.regex_radio_button.setChecked(args.regex)
+        self.wrap_around_check_box.setChecked(args.wrap_around)
+        self.header_check_box.setChecked("HEADER" in search_sections)
+        self.classes_check_box.setChecked("CLASSES" in search_sections)
+        self.tables_check_box.setChecked("TABLES" in search_sections)
+        self.blocks_check_box.setChecked("BLOCKS" in search_sections)
+        self.entities_check_box.setChecked("ENTITIES" in search_sections)
+        self.objects_check_box.setChecked("OBJECTS" in search_sections)
+
+    def search_sections(self) -> SearchSections:
+        sections = set()
+        if self.header_check_box.isChecked():
+            sections.add("HEADER")
+        if self.classes_check_box.isChecked():
+            sections.add("CLASSES")
+        if self.tables_check_box.isChecked():
+            sections.add("TABLES")
+        if self.blocks_check_box.isChecked():
+            sections.add("BLOCKS")
+        if self.entities_check_box.isChecked():
+            sections.add("ENTITIES")
+        if self.objects_check_box.isChecked():
+            sections.add("OBJECTS")
+        return sections
+
+    def update_options(self, search: SearchIndex) -> None:
+        search.reset_search_term(self.find_text_edit.text())
+        search.case_insensitive = not self.match_case_check_box.isChecked()
+        search.whole_words = self.whole_words_check_box.isChecked()
+        search.numbers = self.number_tags_check_box.isChecked()
+        search.wrap_around = self.wrap_around_check_box.isChecked()
+        search.regex = self.regex_radio_button.isChecked()

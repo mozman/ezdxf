@@ -90,6 +90,9 @@
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
          <widget class="QCheckBox" name="whole_words_check_box">
+          <property name="toolTip">
+           <string>Search only whole words in normal mode if checked.</string>
+          </property>
           <property name="text">
            <string>Whole Words</string>
           </property>
@@ -97,6 +100,9 @@
         </item>
         <item>
          <widget class="QCheckBox" name="match_case_check_box">
+          <property name="toolTip">
+           <string>Case sensitive search in normal mode if checked.</string>
+          </property>
           <property name="text">
            <string>Match Case</string>
           </property>
@@ -104,8 +110,21 @@
         </item>
         <item>
          <widget class="QCheckBox" name="number_tags_check_box">
+          <property name="toolTip">
+           <string>Ignore numeric DXF tags if checked.</string>
+          </property>
           <property name="text">
            <string>Search in Numeric Tags</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="wrap_around_check_box">
+          <property name="toolTip">
+           <string/>
+          </property>
+          <property name="text">
+           <string>Wrap Around</string>
           </property>
          </widget>
         </item>
@@ -119,6 +138,9 @@
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Select included sections for the search.</string>
        </property>
        <property name="title">
         <string>Search in Sections</string>
@@ -155,7 +177,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QCheckBox" name="blocks_section">
+         <widget class="QCheckBox" name="blocks_check_box">
           <property name="text">
            <string>BLOCKS</string>
           </property>

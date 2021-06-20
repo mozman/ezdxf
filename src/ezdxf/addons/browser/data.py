@@ -285,14 +285,22 @@ class SearchIndex:
     def is_end_of_index(self) -> bool:
         return self._end_of_index
 
+    @property
+    def search_term(self) -> str:
+        return self._search_term
+
     def set_current_entity(self, entity: Tags, tag_index: int = 0):
         self._current_tag_index = tag_index
         try:
             self._current_entity_index = self.entities.index(entity)
         except ValueError:
-            self._current_entity_index = 0
-            self._current_tag_index = 0
-            self._end_of_index = False
+            self.reset_cursor()
+
+    def update_entities(self, entities: List[Tags]):
+        current_entity, index = self.current_entity()
+        self.entities = entities
+        if current_entity:
+            self.set_current_entity(current_entity, index)
 
     def current_entity(self) -> Tuple[Optional[Tags], int]:
         if self.entities and not self._end_of_index:
