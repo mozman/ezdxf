@@ -229,8 +229,12 @@ class EntityHistory:
         if self._time_travel:
             self._history.extend(self._time_travel)
             self._time_travel.clear()
-
-        self._index = len(self._history)
+        count = len(self._history)
+        if count:
+            # only append if different to last entity
+            if self._history[-1] is entity:
+                return
+        self._index = count
         self._history.append(entity)
 
     def back(self) -> Optional[Tags]:
