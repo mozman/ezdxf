@@ -357,6 +357,7 @@ class DXFStructureBrowser(QMainWindow):
     def find_text(self):
         self._active_search = None
         self._find_dialog.restore_geometry()
+        self.show_message("")
         self._find_dialog.show()
 
     def update_search(self):
@@ -387,27 +388,42 @@ class DXFStructureBrowser(QMainWindow):
     def find_next(self):
         if self._find_dialog.isVisible():
             self.update_search()
-            entity, index = self._active_search.find_next()
+            search = self._active_search
+            if search.is_end_of_index:
+                search.reset_cursor()
+            entity, index = search.find_next()
             if entity:
                 self.set_current_entity_and_row_index(entity, index)
                 self._print_search_debug(entity, index)
+            else:
+                self.show_message("not found")
+            if search.is_end_of_index:
+                self.show_message("End of File!")
+
+    def show_message(self, msg: str):
+        self._find_dialog.show_message(msg)
 
     def _print_search_debug(self, entity: Tags, index: int):
         try:
             handle = entity.get_handle()
+            handle = f"(#{handle})"
         except ValueError:
-            handle = None
-        print(
-            f"found {entity.dxftype()}<{handle}> index:{index}"
-        )
+            handle = ""
+        self.show_message(f"found {entity.dxftype()}{handle} index: {index}")
 
     def find_backward(self):
         if self._find_dialog.isVisible():
+            search = self._active_search
             self.update_search()
-            entity, index = self._active_search.find_backward()
+            if search.is_end_of_index:
+                search.reset_cursor(backward=True)
+            entity, index = search.find_backward()
             if entity:
                 self.set_current_entity_and_row_index(entity, index)
                 self._print_search_debug(entity, index)
+
+            if search.is_end_of_index:
+                self.show_message("End of File!")
 
     def export_tags(self, filename: str, tags: Tags):
         try:
@@ -494,7 +510,6 @@ class FindDialog(QDialog, Ui_FindDialog):
         self.match_case_check_box.setChecked(not args.case_insensitive)
         self.number_tags_check_box.setChecked(args.numbers)
         self.regex_radio_button.setChecked(args.regex)
-        self.wrap_around_check_box.setChecked(args.wrap_around)
         self.header_check_box.setChecked("HEADER" in search_sections)
         self.classes_check_box.setChecked("CLASSES" in search_sections)
         self.tables_check_box.setChecked("TABLES" in search_sections)
@@ -523,9 +538,11 @@ class FindDialog(QDialog, Ui_FindDialog):
         search.case_insensitive = not self.match_case_check_box.isChecked()
         search.whole_words = self.whole_words_check_box.isChecked()
         search.numbers = self.number_tags_check_box.isChecked()
-        search.wrap_around = self.wrap_around_check_box.isChecked()
         search.regex = self.regex_radio_button.isChecked()
 
     def closeEvent(self, event):
         self.settings.setValue("find.dialog.geometry", self.saveGeometry())
         super().closeEvent(event)
+
+    def show_message(self, msg: str):
+        self.message.setText(msg)

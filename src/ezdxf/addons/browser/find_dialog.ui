@@ -118,16 +118,6 @@
           </property>
          </widget>
         </item>
-        <item>
-         <widget class="QCheckBox" name="wrap_around_check_box">
-          <property name="toolTip">
-           <string/>
-          </property>
-          <property name="text">
-           <string>Wrap Around</string>
-          </property>
-         </widget>
-        </item>
        </layout>
       </widget>
      </item>
@@ -236,6 +226,13 @@
       </widget>
      </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="message">
+     <property name="text">
+      <string>TextLabel</string>
+     </property>
+    </widget>
    </item>
    <item>
     <layout class="QHBoxLayout" name="buttons_layout">
