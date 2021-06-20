@@ -355,6 +355,7 @@ class DXFStructureBrowser(QMainWindow):
         return False
 
     def find_text(self):
+        self._active_search = None
         self._find_dialog.restore_geometry()
         self._find_dialog.show()
 
@@ -367,6 +368,7 @@ class DXFStructureBrowser(QMainWindow):
         dialog = self._find_dialog
         if self._active_search is None:
             setup_search()
+            self._active_search.set_current_entity(self._current_entity)
         else:
             search_sections = dialog.search_sections()
             if search_sections != self._search_sections:
