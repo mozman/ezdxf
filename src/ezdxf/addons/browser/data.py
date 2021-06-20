@@ -397,23 +397,13 @@ class SearchIndex:
                 return False
             value = str(value)
 
-        regex = self.regex
-        whole_words = self.whole_words
-        case_insensitive = self.case_insensitive
-        if regex:
-            case_insensitive = False
-            whole_words = False
-
-        if case_insensitive:
+        if self.case_insensitive:
             search_term = self._search_term_lower
             value = value.lower()
         else:
             search_term = self._search_term
 
-        if regex:
-            pass
-        elif whole_words:
+        if self.whole_words:
             return any(search_term == word for word in value.split())
         else:
             return search_term in value
-        return False

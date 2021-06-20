@@ -356,9 +356,11 @@ class DXFStructureBrowser(QMainWindow):
 
     def find_text(self):
         self._active_search = None
-        self._find_dialog.restore_geometry()
-        self.show_message("")
-        self._find_dialog.show()
+        dialog = self._find_dialog
+        dialog.restore_geometry()
+        dialog.show_message("")
+        dialog.find_text_edit.setFocus()
+        dialog.show()
 
     def update_search(self):
         def setup_search():
@@ -386,44 +388,41 @@ class DXFStructureBrowser(QMainWindow):
         return searchable_entities
 
     def find_next(self):
+        self._find(backward=False)
+
+    def find_backward(self):
+        self._find(backward=True)
+
+    def _find(self, backward=False):
         if self._find_dialog.isVisible():
             self.update_search()
             search = self._active_search
             if search.is_end_of_index:
-                search.reset_cursor()
-            entity, index = search.find_next()
+                search.reset_cursor(backward=backward)
+
+            entity, index = (
+                search.find_backward() if backward else search.find_next()
+            )
+
             if entity:
                 self.set_current_entity_and_row_index(entity, index)
-                self._print_search_debug(entity, index)
+                self.show_entity_found_message(entity, index)
             else:
-                self.show_message("not found")
-            if search.is_end_of_index:
-                self.show_message("End of File!")
+                if search.is_end_of_index:
+                    self.show_message("Not found and end of file!")
+                else:
+                    self.show_message("Not found!")
 
     def show_message(self, msg: str):
         self._find_dialog.show_message(msg)
 
-    def _print_search_debug(self, entity: Tags, index: int):
+    def show_entity_found_message(self, entity: Tags, index: int):
         try:
             handle = entity.get_handle()
             handle = f"(#{handle})"
         except ValueError:
             handle = ""
-        self.show_message(f"found {entity.dxftype()}{handle} index: {index}")
-
-    def find_backward(self):
-        if self._find_dialog.isVisible():
-            search = self._active_search
-            self.update_search()
-            if search.is_end_of_index:
-                search.reset_cursor(backward=True)
-            entity, index = search.find_backward()
-            if entity:
-                self.set_current_entity_and_row_index(entity, index)
-                self._print_search_debug(entity, index)
-
-            if search.is_end_of_index:
-                self.show_message("End of File!")
+        self.show_message(f"Found {entity.dxftype()}{handle} Index: {index}")
 
     def export_tags(self, filename: str, tags: Tags):
         try:
@@ -502,21 +501,6 @@ class FindDialog(QDialog, Ui_FindDialog):
         if geometry is not None:
             self.restoreGeometry(geometry)
 
-    def set_arguments(
-        self, args: SearchIndex, search_sections: SearchSections
-    ) -> None:
-        self.find_text_edit.setText(args.search_term)
-        self.whole_words_check_box.setChecked(args.whole_words)
-        self.match_case_check_box.setChecked(not args.case_insensitive)
-        self.number_tags_check_box.setChecked(args.numbers)
-        self.regex_radio_button.setChecked(args.regex)
-        self.header_check_box.setChecked("HEADER" in search_sections)
-        self.classes_check_box.setChecked("CLASSES" in search_sections)
-        self.tables_check_box.setChecked("TABLES" in search_sections)
-        self.blocks_check_box.setChecked("BLOCKS" in search_sections)
-        self.entities_check_box.setChecked("ENTITIES" in search_sections)
-        self.objects_check_box.setChecked("OBJECTS" in search_sections)
-
     def search_sections(self) -> SearchSections:
         sections = set()
         if self.header_check_box.isChecked():
@@ -538,7 +522,6 @@ class FindDialog(QDialog, Ui_FindDialog):
         search.case_insensitive = not self.match_case_check_box.isChecked()
         search.whole_words = self.whole_words_check_box.isChecked()
         search.numbers = self.number_tags_check_box.isChecked()
-        search.regex = self.regex_radio_button.isChecked()
 
     def closeEvent(self, event):
         self.settings.setValue("find.dialog.geometry", self.saveGeometry())
