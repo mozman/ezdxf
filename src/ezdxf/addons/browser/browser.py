@@ -34,7 +34,6 @@ from .data import (
 from .views import StructureTree, DXFTagsTable
 from .find_dialog import Ui_FindDialog
 
-
 __all__ = ["DXFStructureBrowser"]
 
 APP_NAME = "DXF Structure Browser"
@@ -154,6 +153,13 @@ class DXFStructureBrowser(QMainWindow):
         self._open_entity_in_text_editor_action.triggered.connect(
             self.open_entity_in_text_editor
         )
+        self._show_entity_in_tree_view_action = QAction(
+            "Show Entity in &TreeView", self
+        )
+        self._show_entity_in_tree_view_action.setShortcut("Ctrl+T")
+        self._show_entity_in_tree_view_action.triggered.connect(
+            self.show_current_entity_in_tree_view
+        )
 
     def setup_menu(self):
         menu = self.menuBar()
@@ -176,6 +182,7 @@ class DXFStructureBrowser(QMainWindow):
         navigate_menu.addAction(self._entity_history_forward_action)
         navigate_menu.addSeparator()
         navigate_menu.addAction(self._open_entity_in_text_editor_action)
+        navigate_menu.addAction(self._show_entity_in_tree_view_action)
 
     def open_dxf(self):
         path, _ = QFileDialog.getOpenFileName(
@@ -382,7 +389,13 @@ class DXFStructureBrowser(QMainWindow):
 
     def open_web_browser(self, url: str):
         import webbrowser
+
         webbrowser.open(url)
+
+    def show_current_entity_in_tree_view(self):
+        entity = self.get_current_entity()
+        if entity:
+            self._structure_tree.expand_to_entity(entity)
 
 
 def copy_dxf_to_clipboard(tags: Tags):

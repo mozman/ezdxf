@@ -1,6 +1,6 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Optional
 import textwrap
 from ezdxf.lldxf.types import (
     render_tag,
@@ -271,6 +271,30 @@ class DXFStructureModel(QStandardItemModel):
             else:
                 row = EntityContainer(name, section[1:])
             root.appendRow(row)
+
+    def index_of_entity(self, entity: Tags) -> QModelIndex:
+        root = self.item(0, 0)
+        index = find_index(root, entity)
+        if index is None:
+            return root.index()
+        else:
+            return index
+
+
+def find_index(item: QStandardItem, entity: Tags) -> Optional[QModelIndex]:
+    def _find(sub_item: QStandardItem):
+        for index in range(sub_item.rowCount()):
+            child = sub_item.child(index, 0)
+            tags = child.data(DXFTagsRole)
+            if tags and tags is entity:
+                return child.index()
+            if child.rowCount() > 0:
+                index2 = _find(child)
+                if index2 is not None:
+                    return index2
+        return None
+
+    return _find(item)
 
 
 GROUP_CODE_TOOLTIPS = [

@@ -1,8 +1,11 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-
+import typing
 from PyQt5.QtWidgets import QTableView, QTreeView
 from PyQt5.QtCore import QModelIndex
+
+if typing.TYPE_CHECKING:
+    from ezdxf.eztypes import Tags
 
 
 class StructureTree(QTreeView):
@@ -10,6 +13,11 @@ class StructureTree(QTreeView):
         self.setModel(model)
         self.expand(model.index(0, 0, QModelIndex()))
         self.setHeaderHidden(True)
+
+    def expand_to_entity(self, entity: "Tags"):
+        model = self.model()
+        index = model.index_of_entity(entity)
+        self.setCurrentIndex(index)
 
 
 class DXFTagsTable(QTableView):
