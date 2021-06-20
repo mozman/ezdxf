@@ -2,8 +2,8 @@
 News
 ====
 
-Version 0.16.4b2 - dev
-----------------------
+Version 0.16.4 - 2021-06-20
+---------------------------
 
 - NEW: `PolylinePath.type` and `EdgePath.type` as `ezdxf.entities.BoundaryPathType` enum 
 - NEW: `LineEdge.type`, `ArcEdge.type`, `EllipseEdge.type` and `SplineEdge.type` 
@@ -26,7 +26,7 @@ Version 0.16.4b2 - dev
 - BUGFIX: drawing add-on handles the invisible flag for INSERT correct
 - BETA: new features for testing, API may change until official release in v0.17
 - BETA: `move_to()` command and multi-path support for the `ezdxf.path.Path` class 
-- BETA: `MPOLYGON` load/write/create support as beta feature
+- BETA: `MPOLYGON` load/write/create support
 - BETA: store *ezdxf* and custom metadata in DXF files, see [docs](https://ezdxf.mozman.at/docs/drawing/management.html#ezdxf-metadata)
 - BETA: command `ezdxf browse FILE`, PyQt DXF structure browser
 - BETA: command `ezdxf strip FILE [FILE ...]`, remove comment tags (999) and the 
