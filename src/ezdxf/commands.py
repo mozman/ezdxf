@@ -258,6 +258,15 @@ class Draw(Command):
             help="show all supported export formats and exit",
         )
         parser.add_argument(
+            "--layout",
+            default="Model",
+            help="select the layout to draw",
+        )
+        parser.add_argument(
+            "--all-layers-visible",
+            help="draw all layers including the ones marked as invisible",
+        )
+        parser.add_argument(
             "-o", "--out", required=False, help="output filename for export"
         )
         parser.add_argument(
@@ -302,11 +311,22 @@ class Draw(Command):
             sys.exit(1)
 
         doc, _ = load_document(filename)
+
+        try:
+            layout = doc.layouts.get(args.layout)
+        except KeyError:
+            print(f'Could not find layout "{args.layout}". '
+                  f'Valid layouts: {[l.name for l in doc.layouts]}')
+            sys.exit(1)
+
         fig = plt.figure()
         ax = fig.add_axes([0, 0, 1, 1])
         ctx = RenderContext(doc)
         out = MatplotlibBackend(ax, params={"linetype_renderer": args.ltype})
-        Frontend(ctx, out).draw_layout(doc.modelspace(), finalize=True)
+        if args.all_layers_visible:
+            for layer_properties in ctx.layers.values():
+                layer_properties.is_visible = True
+        Frontend(ctx, out).draw_layout(layout, finalize=True)
         if args.out is not None:
             print(f'exporting to "{args.out}"')
             fig.savefig(args.out, dpi=args.dpi)
