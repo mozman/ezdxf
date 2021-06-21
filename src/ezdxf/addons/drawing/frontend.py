@@ -136,6 +136,7 @@ class Frontend:
         *,
         filter_func: FilterFunc = None
     ) -> None:
+        self.ctx.set_current_layout(layout)
         self.parent_stack = []
         handle_mapping = list(layout.get_redraw_order())
         if handle_mapping:
