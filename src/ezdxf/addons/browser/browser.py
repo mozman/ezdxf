@@ -35,6 +35,7 @@ from .data import (
 )
 from .views import StructureTree, DXFTagsTable
 from .find_dialog import Ui_FindDialog
+from .bookmarks import Bookmarks
 
 __all__ = ["DXFStructureBrowser"]
 
@@ -74,6 +75,7 @@ class DXFStructureBrowser(QMainWindow):
         self._search_sections = set()
         self._find_dialog: "FindDialog" = self.create_find_dialog()
         self.history = EntityHistory()
+        self.bookmarks = Bookmarks()
         self.setup_actions()
         self.setup_menu()
 
@@ -183,6 +185,16 @@ class DXFStructureBrowser(QMainWindow):
             partial(self.go_to_section, name="OBJECTS"),
             "Shift+O",
         )
+        self._store_bookmark = self.make_action(
+            "Store Bookmark...",
+            self.store_bookmark,
+            "Shift+Ctrl+B",
+        )
+        self._go_to_bookmark = self.make_action(
+            "Go to Bookmark...",
+            self.go_to_bookmark,
+            "Ctrl+B",
+        )
 
     def make_action(self, name, slot, shortcut=None) -> QAction:
         action = QAction(name, self)
@@ -200,6 +212,7 @@ class DXFStructureBrowser(QMainWindow):
         file_menu.addAction(self._copy_entity_action)
         file_menu.addSeparator()
         file_menu.addAction(self._quit_action)
+
         navigate_menu = menu.addMenu("&Navigate")
         navigate_menu.addAction(self._goto_handle_action)
         navigate_menu.addAction(self._goto_line_action)
@@ -218,6 +231,10 @@ class DXFStructureBrowser(QMainWindow):
         navigate_menu.addAction(self._goto_objects_action)
         navigate_menu.addSeparator()
         navigate_menu.addAction(self._open_entity_in_text_editor_action)
+
+        bookmarks_menu = menu.addMenu("&Bookmarks")
+        bookmarks_menu.addAction(self._store_bookmark)
+        bookmarks_menu.addAction(self._go_to_bookmark)
 
     def create_find_dialog(self) -> "FindDialog":
         dialog = FindDialog(self)
@@ -518,6 +535,53 @@ class DXFStructureBrowser(QMainWindow):
         entity = self.get_current_entity()
         if entity:
             self._structure_tree.expand_to_entity(entity)
+
+    def store_bookmark(self):
+        if self._current_entity is not None:
+            bookmarks = self.bookmarks.names()
+            if len(bookmarks) == 0:
+                bookmarks = ["0"]
+            name, ok = QInputDialog.getItem(
+                self,
+                "Store Bookmark",
+                "Bookmark:",
+                bookmarks,
+                editable=True,
+            )
+            if ok:
+                entity = self._current_entity
+                rows = self._dxf_tags_table.selectedIndexes()
+                if rows:
+                    offset = rows[0].row()
+                else:
+                    offset = 0
+                handle = self.doc.get_handle(entity)
+                self.bookmarks.add(name, handle, offset)
+
+    def go_to_bookmark(self):
+        bookmarks = self.bookmarks.names()
+        if len(bookmarks) == 0:
+            QMessageBox.information(self, "Info", "No Bookmarks defined!")
+            return
+
+        name, ok = QInputDialog.getItem(
+            self,
+            "Go to Bookmark",
+            "Bookmark:",
+            self.bookmarks.names(),
+            editable=False,
+        )
+        if ok:
+            bookmark = self.bookmarks.get(name)
+            if bookmark is not None:
+                self.set_current_entity_by_handle(bookmark.handle)
+                self._dxf_tags_table.selectRow(bookmark.offset)
+                model = self._dxf_tags_table.model()
+                index = QModelIndex(model.index(bookmark.offset, 0))
+                self._dxf_tags_table.scrollTo(index)
+
+            else:
+                QMessageBox.critical(self, "Bookmark not found!", str(name))
 
 
 def copy_dxf_to_clipboard(tags: Tags):

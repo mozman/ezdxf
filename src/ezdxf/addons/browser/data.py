@@ -83,6 +83,9 @@ class DXFDocument:
     def previous_entity(self, entity: Tags) -> Optional[Tags]:
         return self.handle_index.previous_entity(entity)
 
+    def get_handle(self, entity) -> Optional[str]:
+        return self.handle_index.get_handle(entity)
+
 
 class HandleIndex:
     def __init__(self, sections: SectionDict):
@@ -93,6 +96,17 @@ class HandleIndex:
 
     def get(self, handle: str):
         return self._index.get(handle.upper())
+
+    def get_handle(self, entity: Tags) -> Optional[str]:
+        try:
+            return entity.get_handle()
+        except ValueError:
+            pass
+        # get dummy handle
+        for handle, e in self._index.items():
+            if e is entity:
+                return handle
+        return None
 
     @staticmethod
     def build(sections: SectionDict) -> Dict:
