@@ -142,7 +142,10 @@ Print help:
 .. code-block:: Text
 
     C:\> ezdxf draw -h
-    usage: ezdxf draw [-h] [--formats] [-o OUT] [--dpi DPI] [--ltype {internal,ezdxf}] [FILE]
+    usage: ezdxf draw [-h] [--formats] [--layout LAYOUT] [--all-layers-visible]
+                      [--all-entities-visible] [-o OUT] [--dpi DPI]
+                      [--ltype {internal,ezdxf}]
+                      [FILE]
 
     positional arguments:
       FILE                  DXF file to view or convert
@@ -150,6 +153,12 @@ Print help:
     optional arguments:
       -h, --help            show this help message and exit
       --formats             show all supported export formats and exit
+      --layout LAYOUT       select the layout to draw
+      --all-layers-visible  draw all layers including the ones marked as invisible
+      --all-entities-visible
+                            draw all entities including the ones marked as invisible (some
+                            entities are individually marked as invisible even if the layer
+                            is visible)
       -o OUT, --out OUT     output filename for export
       --dpi DPI             target render resolution, default is 300
       --ltype {internal,ezdxf}
