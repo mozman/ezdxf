@@ -1,6 +1,7 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 from typing import Optional, Set, List
+from functools import partial
 import os
 import subprocess
 from PyQt5.QtWidgets import (
@@ -55,6 +56,11 @@ def searchable_entities(
     return entities
 
 
+BROWSER_WIDTH = 1024
+BROWSER_HEIGHT = 768
+TREE_WIDTH_FACTOR = 0.33
+
+
 class DXFStructureBrowser(QMainWindow):
     def __init__(
         self, filename: str = "", line: int = None, handle: str = None
@@ -77,7 +83,7 @@ class DXFStructureBrowser(QMainWindow):
             self.setWindowTitle(APP_NAME)
 
         self.setCentralWidget(self.build_central_widget())
-        self.resize(1024, 768)
+        self.resize(BROWSER_WIDTH, BROWSER_HEIGHT)
         self.connect_slots()
         if line is not None:
             try:
@@ -99,6 +105,9 @@ class DXFStructureBrowser(QMainWindow):
         container = QSplitter(Qt.Horizontal)
         container.addWidget(self._structure_tree)
         container.addWidget(self._dxf_tags_table)
+        tree_width = int(BROWSER_WIDTH * TREE_WIDTH_FACTOR)
+        table_width = BROWSER_WIDTH - tree_width
+        container.setSizes([tree_width, table_width])
         container.setCollapsible(0, False)
         container.setCollapsible(1, False)
         return container
@@ -152,7 +161,27 @@ class DXFStructureBrowser(QMainWindow):
         self._show_entity_in_tree_view_action = self.make_action(
             "Show Entity in &TreeView",
             self.show_current_entity_in_tree_view,
-            "Ctrl+T",
+            "Ctrl+Down",
+        )
+        self._goto_header_action = self.make_action(
+            "Go to HEADER Section",
+            partial(self.go_to_section, name="HEADER"),
+            "Shift+H",
+        )
+        self._goto_blocks_action = self.make_action(
+            "Go to BLOCKS Section",
+            partial(self.go_to_section, name="BLOCKS"),
+            "Shift+B",
+        )
+        self._goto_entities_action = self.make_action(
+            "Go to ENTITIES Section",
+            partial(self.go_to_section, name="ENTITIES"),
+            "Shift+E",
+        )
+        self._goto_objects_action = self.make_action(
+            "Go to OBJECTS Section",
+            partial(self.go_to_section, name="OBJECTS"),
+            "Shift+O",
         )
 
     def make_action(self, name, slot, shortcut=None) -> QAction:
@@ -178,12 +207,17 @@ class DXFStructureBrowser(QMainWindow):
         navigate_menu.addSeparator()
         navigate_menu.addAction(self._goto_next_entity_action)
         navigate_menu.addAction(self._goto_predecessor_entity_action)
+        navigate_menu.addAction(self._show_entity_in_tree_view_action)
         navigate_menu.addSeparator()
         navigate_menu.addAction(self._entity_history_back_action)
         navigate_menu.addAction(self._entity_history_forward_action)
         navigate_menu.addSeparator()
+        navigate_menu.addAction(self._goto_header_action)
+        navigate_menu.addAction(self._goto_blocks_action)
+        navigate_menu.addAction(self._goto_entities_action)
+        navigate_menu.addAction(self._goto_objects_action)
+        navigate_menu.addSeparator()
         navigate_menu.addAction(self._open_entity_in_text_editor_action)
-        navigate_menu.addAction(self._show_entity_in_tree_view_action)
 
     def create_find_dialog(self) -> "FindDialog":
         dialog = FindDialog(self)
@@ -245,9 +279,13 @@ class DXFStructureBrowser(QMainWindow):
         copy_dxf_to_clipboard(tags)
 
     def view_header_section(self):
-        header = self.doc.get_header_section()
+        header = self.doc.get_section("HEADER")
         if header:
             self.set_current_entity_with_history(header[0])
+        else:  # DXF R12 with only a ENTITIES section
+            entities = self.doc.get_section("ENTITIES")
+            if entities:
+                self.set_current_entity_with_history(entities[1])
 
     def update_title(self):
         self.setWindowTitle(f"{APP_NAME} - {self.doc.absolute_filepath()}")
@@ -448,6 +486,12 @@ class DXFStructureBrowser(QMainWindow):
         entity = self.history.forward()
         if entity is not None:
             self.set_current_entity(entity)  # do not change history
+
+    def go_to_section(self, name: str):
+        section = self.doc.get_section(name)
+        if section:
+            index = 0 if name == "HEADER" else 1
+            self.set_current_entity_with_history(section[index])
 
     def open_entity_in_text_editor(self):
         current_entity = self.get_current_entity()

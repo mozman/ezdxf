@@ -57,8 +57,8 @@ class DXFDocument:
     def absolute_filepath(self):
         return self.filepath.absolute()
 
-    def get_header_section(self):
-        return self.sections.get("HEADER")
+    def get_section(self, name: str) -> List[Tags]:
+        return self.sections.get(name)
 
     def get_entity(self, handle: str) -> Optional[Tags]:
         if self.handle_index:
