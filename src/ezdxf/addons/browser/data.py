@@ -22,10 +22,10 @@ class DXFDocument:
         # else an association of line numbers to entities is not possible.
         # Comment tags (999) are ignored, because the load_section_dict()
         # function can not handle and store comments.
-        # Therefore comments causes error in the line number associations and
-        # should be stripped off before processing for precise debugging of
-        # DXF files.
-        # TODO: ezdxf strip-comments FILE
+        # Therefore comments causes incorrect results for the line number
+        # associations and should be stripped off before processing for precise
+        # debugging of DXF files (-b for backup):
+        # ezdxf strip -b <your.dxf>
         self.sections: SectionDict = dict()
         self.handle_index: Optional[HandleIndex] = None
         self.line_index: Optional[LineIndex] = None
