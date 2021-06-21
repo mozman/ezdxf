@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>300</width>
+    <width>320</width>
     <height>376</height>
    </rect>
   </property>
@@ -18,19 +18,19 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>300</width>
+    <width>320</width>
     <height>376</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>300</width>
+    <width>320</width>
     <height>376</height>
    </size>
   </property>
   <property name="baseSize">
    <size>
-    <width>300</width>
+    <width>320</width>
     <height>376</height>
    </size>
   </property>
@@ -220,61 +220,92 @@
       <enum>QLayout::SetNoConstraint</enum>
      </property>
      <item alignment="Qt::AlignBottom">
-      <widget class="QPushButton" name="find_next_button">
+      <widget class="QPushButton" name="find_forward_button">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimumSize">
         <size>
-         <width>80</width>
-         <height>30</height>
+         <width>0</width>
+         <height>0</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>80</width>
-         <height>30</height>
+         <width>200</width>
+         <height>100</height>
         </size>
        </property>
        <property name="toolTip">
         <string>or press F3</string>
        </property>
        <property name="text">
-        <string>Find &amp;Next</string>
+        <string>Find &amp;Forward</string>
        </property>
       </widget>
      </item>
      <item alignment="Qt::AlignBottom">
-      <widget class="QPushButton" name="find_backward_button">
+      <widget class="QPushButton" name="find_backwards_button">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimumSize">
         <size>
-         <width>80</width>
-         <height>30</height>
+         <width>0</width>
+         <height>0</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>80</width>
-         <height>30</height>
+         <width>200</width>
+         <height>100</height>
         </size>
        </property>
        <property name="toolTip">
         <string>or press F4</string>
        </property>
        <property name="text">
-        <string>Find &amp;Backward</string>
+        <string>Find &amp;Backwards</string>
        </property>
       </widget>
      </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
      <item alignment="Qt::AlignRight|Qt::AlignBottom">
       <widget class="QPushButton" name="close_button">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimumSize">
         <size>
-         <width>80</width>
-         <height>30</height>
+         <width>0</width>
+         <height>0</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>80</width>
-         <height>30</height>
+         <width>200</width>
+         <height>100</height>
         </size>
        </property>
        <property name="toolTip">

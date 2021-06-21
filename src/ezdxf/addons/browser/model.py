@@ -50,8 +50,6 @@ class DXFTagsModel(QAbstractTableModel):
         self._tags = compile_tags(tags)
         self._line_numbers = calc_line_numbers(start_line_number, self._tags)
         self._valid_handles = valid_handles or set()
-        if tags and tags[0].code == 0:
-            self._dxftype = tags[0].value
 
     def data(self, index: QModelIndex, role: int = ...) -> Any:
         def is_invalid_handle(tag):
@@ -107,15 +105,18 @@ class DXFTagsModel(QAbstractTableModel):
     def columnCount(self, parent: QModelIndex = ...) -> int:
         return 3
 
-    def compiled_tags(self):
+    def compiled_tags(self) -> Tags:
         """Returns the compiled tags. Only points codes are compiled, group
         code 10, ...
         """
         return self._tags
 
-    def line_number(self, row: int):
+    def line_number(self, row: int) -> int:
         """Return the DXF file line number of the widget-row."""
-        return self._line_numbers[row]
+        try:
+            return self._line_numbers[row]
+        except IndexError:
+            return 0
 
 
 class EntityContainer(QStandardItem):

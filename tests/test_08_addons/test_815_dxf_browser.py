@@ -406,9 +406,9 @@ class TestSearchIndex:
         assert entity is search.entities[0]
         assert index == 0
 
-    def test_find_next_entity_type(self, search):
+    def test_find_forward_entity_type(self, search):
         search.find("SEARCH")
-        entity, index = search.find_next()
+        entity, index = search.find_forward()
         assert entity is search.entities[1]
         assert index == 0
 
@@ -417,21 +417,21 @@ class TestSearchIndex:
         assert entity is search.entities[0]
         assert index == 1
 
-    def test_find_next_content(self, search):
+    def test_find_forward_content(self, search):
         search.find("LayerName")
-        entity, index = search.find_next()
+        entity, index = search.find_forward()
         assert entity is search.entities[1]
         assert index == 1
 
-    def test_failing_find_next_returns_none(self, search):
+    def test_failing_find_forward_returns_none(self, search):
         search.find("LayerName")
-        search.find_next()
-        entity, index = search.find_next()
+        search.find_forward()
+        entity, index = search.find_forward()
         assert entity is None
         assert index == -1
 
-    def test_not_initiated_find_next_returns_none(self, search):
-        entity, index = search.find_next()
+    def test_not_initiated_find_forward_returns_none(self, search):
+        entity, index = search.find_forward()
         assert entity is None
         assert index == -1
 
@@ -457,11 +457,11 @@ class TestSearchIndex:
         assert entity is search.entities[1]
         assert index == 2
 
-    def test_failing_find_next_stops_at_the_end(self, search):
+    def test_failing_find_forward_stops_at_the_end(self, search):
         assert search.find("XXX") is search.NOT_FOUND
         assert search.is_end_of_index is True
 
-    def test_failing_find_backward_stops_at_the_beginning(self, search):
+    def test_failing_find_backwards_stops_at_the_beginning(self, search):
         assert search.find("XXX", backward=True) is search.NOT_FOUND
         assert search.is_end_of_index is True
 

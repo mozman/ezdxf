@@ -65,10 +65,12 @@ class DXFDocument:
             return self.handle_index.get(handle)
         return None
 
-    def get_line_number(self, entity: Tags) -> Optional[int]:
+    def get_line_number(self, entity: Tags, offset: int = 0) -> int:
         if self.line_index:
-            return self.line_index.get_start_line_for_entity(entity)
-        return None
+            return (
+                self.line_index.get_start_line_for_entity(entity) + offset * 2
+            )
+        return 0
 
     def get_entity_at_line(self, number: int) -> Optional[Tags]:
         if self.line_index:
@@ -370,16 +372,16 @@ class SearchIndex:
             self.reset_cursor(backward)
         if len(self.entities) and not self._end_of_index:
             if backward:
-                return self.find_backward()
+                return self.find_backwards()
             else:
-                return self.find_next()
+                return self.find_forward()
         else:
             return self.NOT_FOUND
 
-    def find_next(self) -> Tuple[Optional[Tags], int]:
+    def find_forward(self) -> Tuple[Optional[Tags], int]:
         return self._find(self.move_cursor_forward)
 
-    def find_backward(self) -> Tuple[Optional[Tags], int]:
+    def find_backwards(self) -> Tuple[Optional[Tags], int]:
         return self._find(self.move_cursor_backward)
 
     def _find(self, move_cursor) -> Tuple[Optional[Tags], int]:

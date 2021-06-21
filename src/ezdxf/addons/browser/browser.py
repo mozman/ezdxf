@@ -45,6 +45,16 @@ TEXT_EDITOR = os.environ.get(
 SearchSections = Set[str]
 
 
+def searchable_entities(
+    doc: DXFDocument, search_sections: SearchSections
+) -> List[Tags]:
+    entities = []
+    for name, section_entities in doc.sections.items():
+        if name in search_sections:
+            entities.extend(section_entities)
+    return entities
+
+
 class DXFStructureBrowser(QMainWindow):
     def __init__(
         self, filename: str = "", line: int = None, handle: str = None
@@ -193,10 +203,10 @@ class DXFStructureBrowser(QMainWindow):
     def create_find_dialog(self) -> "FindDialog":
         dialog = FindDialog(self)
         dialog.setModal(True)
-        dialog.find_next_button.clicked.connect(self.find_next)
-        dialog.find_backward_button.clicked.connect(self.find_backward)
-        dialog.find_next_button.setShortcut("F3")
-        dialog.find_backward_button.setShortcut("F4")
+        dialog.find_forward_button.clicked.connect(self.find_forward)
+        dialog.find_backwards_button.clicked.connect(self.find_backwards)
+        dialog.find_forward_button.setShortcut("F3")
+        dialog.find_backwards_button.setShortcut("F4")
         return dialog
 
     def open_dxf(self):
@@ -295,7 +305,7 @@ class DXFStructureBrowser(QMainWindow):
         self.history.append(entity)
 
     def set_current_entity_and_row_index(self, entity: Tags, index: int):
-        line = self.doc.get_line_number(entity) + 2 * index
+        line = self.doc.get_line_number(entity, index)
         self.set_current_entity(entity, select_line_number=line)
         self.history.append(entity)
 
@@ -358,19 +368,20 @@ class DXFStructureBrowser(QMainWindow):
         self._active_search = None
         dialog = self._find_dialog
         dialog.restore_geometry()
-        dialog.show_message("")
+        dialog.show_message("F3 searches forward, F4 searches backwards")
         dialog.find_text_edit.setFocus()
         dialog.show()
 
     def update_search(self):
         def setup_search():
             self._search_sections = dialog.search_sections()
-            entities = self.collect_searchable_entities(self._search_sections)
+            entities = searchable_entities(self.doc, self._search_sections)
             self._active_search = SearchIndex(entities)
 
         dialog = self._find_dialog
         if self._active_search is None:
             setup_search()
+            # noinspection PyUnresolvedReferences
             self._active_search.set_current_entity(self._current_entity)
         else:
             search_sections = dialog.search_sections()
@@ -378,19 +389,10 @@ class DXFStructureBrowser(QMainWindow):
                 setup_search()
         dialog.update_options(self._active_search)
 
-    def collect_searchable_entities(
-        self, search_sections: SearchSections
-    ) -> List[Tags]:
-        searchable_entities = []
-        for name, entities in self.doc.sections.items():
-            if name in search_sections:
-                searchable_entities.extend(entities)
-        return searchable_entities
-
-    def find_next(self):
+    def find_forward(self):
         self._find(backward=False)
 
-    def find_backward(self):
+    def find_backwards(self):
         self._find(backward=True)
 
     def _find(self, backward=False):
@@ -401,7 +403,7 @@ class DXFStructureBrowser(QMainWindow):
                 search.reset_cursor(backward=backward)
 
             entity, index = (
-                search.find_backward() if backward else search.find_next()
+                search.find_backwards() if backward else search.find_forward()
             )
 
             if entity:
@@ -417,12 +419,17 @@ class DXFStructureBrowser(QMainWindow):
         self._find_dialog.show_message(msg)
 
     def show_entity_found_message(self, entity: Tags, index: int):
-        try:
-            handle = entity.get_handle()
-            handle = f"(#{handle})"
-        except ValueError:
-            handle = ""
-        self.show_message(f"Found {entity.dxftype()}{handle} Index: {index}")
+        dxftype = entity.dxftype()
+        if dxftype == "SECTION":
+            tail = " @ {0} Section".format(entity.get_first_value(2))
+        else:
+            try:
+                handle = entity.get_handle()
+                tail = f" @ {dxftype}(#{handle})"
+            except ValueError:
+                tail = ""
+        line = self.doc.get_line_number(entity, index)
+        self.show_message(f"Found in Line: {line}{tail}")
 
     def export_tags(self, filename: str, tags: Tags):
         try:
