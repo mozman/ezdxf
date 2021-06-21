@@ -95,6 +95,7 @@ setup(
         'tools/font_face_cache.json',
         'tools/font_measurement_cache.json',
         'resources/*.png',
+        'py.typed',
     ]},
     entry_points={
         'console_scripts': [
