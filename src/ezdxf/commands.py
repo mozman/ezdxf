@@ -267,6 +267,12 @@ class Draw(Command):
             help="draw all layers including the ones marked as invisible",
         )
         parser.add_argument(
+            "--all-entities-visible",
+            help="draw all entities including the ones marked as invisible "
+                 "(some entities are individually marked as invisible even "
+                 "if the layer is visible)",
+        )
+        parser.add_argument(
             "-o", "--out", required=False, help="output filename for export"
         )
         parser.add_argument(
@@ -323,10 +329,23 @@ class Draw(Command):
         ax = fig.add_axes([0, 0, 1, 1])
         ctx = RenderContext(doc)
         out = MatplotlibBackend(ax, params={"linetype_renderer": args.ltype})
+
         if args.all_layers_visible:
             for layer_properties in ctx.layers.values():
                 layer_properties.is_visible = True
-        Frontend(ctx, out).draw_layout(layout, finalize=True)
+
+        if args.all_entities_visible:
+            class AllVisibleFrontend(Frontend):
+                def override_properties(self, entity: "DXFGraphic",
+                                        properties: "Properties") -> None:
+                    properties.is_visible = True
+
+            frontend = AllVisibleFrontend(ctx, out)
+        else:
+            frontend = Frontend(ctx, out)
+
+        frontend.draw_layout(layout, finalize=True)
+
         if args.out is not None:
             print(f'exporting to "{args.out}"')
             fig.savefig(args.out, dpi=args.dpi)
