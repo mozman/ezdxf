@@ -107,75 +107,60 @@ class DXFStructureBrowser(QMainWindow):
         self._structure_tree.activated.connect(self.entity_activated)
         self._dxf_tags_table.activated.connect(self.tag_activated)
 
+    # noinspection PyAttributeOutsideInit
     def setup_actions(self):
-        self._open_action = QAction("&Open DXF File...", self)
-        self._open_action.setShortcut("Ctrl+O")
-        self._open_action.triggered.connect(self.open_dxf)
-
-        self._export_entity_action = QAction("&Export DXF Entity...", self)
-        self._export_entity_action.setShortcut("Ctrl+E")
-        self._export_entity_action.triggered.connect(self.export_entity)
-
-        self._copy_entity_action = QAction(
-            "&Copy DXF Entity to Clipboard", self
+        self._open_action = self.make_action(
+            "&Open DXF File...", self.open_dxf, "Ctrl+O"
         )
-        self._copy_entity_action.setShortcut("Ctrl+C")
-        self._copy_entity_action.triggered.connect(self.copy_entity)
-
-        self._quit_action = QAction("&Quit", self)
-        self._quit_action.setShortcut("Ctrl+Q")
-        self._quit_action.triggered.connect(qApp.quit)
-
-        self._goto_handle_action = QAction("&Go to Handle...", self)
-        self._goto_handle_action.setShortcut("Ctrl+G")
-        self._goto_handle_action.triggered.connect(self.ask_for_handle)
-
-        self._goto_line_action = QAction("Go to &Line...", self)
-        self._goto_line_action.setShortcut("Ctrl+L")
-        self._goto_line_action.triggered.connect(self.ask_for_line_number)
-
-        self._find_text_action = QAction("Find &Text...", self)
-        self._find_text_action.setShortcut("Ctrl+F")
-        self._find_text_action.triggered.connect(self.find_text)
-
-        self._goto_predecessor_entity_action = QAction("&Previous Entity", self)
-        self._goto_predecessor_entity_action.setShortcut("Ctrl+Left")
-        self._goto_predecessor_entity_action.triggered.connect(
-            self.goto_previous_entity
+        self._export_entity_action = self.make_action(
+            "&Export DXF Entity...", self.export_entity, "Ctrl+E"
+        )
+        self._copy_entity_action = self.make_action(
+            "&Copy DXF Entity to Clipboard", self.copy_entity, "Ctrl+C"
+        )
+        self._quit_action = self.make_action("&Quit", qApp.quit, "Ctrl+Q")
+        self._goto_handle_action = self.make_action(
+            "&Go to Handle...", self.ask_for_handle, "Ctrl+G"
+        )
+        self._goto_line_action = self.make_action(
+            "Go to &Line...", self.ask_for_line_number, "Ctrl+L"
         )
 
-        self._goto_next_entity_action = QAction("&Next Entity", self)
-        self._goto_next_entity_action.setShortcut("Ctrl+Right")
-        self._goto_next_entity_action.triggered.connect(self.goto_next_entity)
-
-        self._entity_history_back_action = QAction("Entity History &Back", self)
-        self._entity_history_back_action.setShortcut("Alt+Left")
-        self._entity_history_back_action.triggered.connect(
-            self.go_back_entity_history
+        self._find_text_action = self.make_action(
+            "Find &Text...", self.find_text, "Ctrl+F"
+        )
+        self._goto_predecessor_entity_action = self.make_action(
+            "&Previous Entity", self.goto_previous_entity, "Ctrl+Left"
         )
 
-        self._entity_history_forward_action = QAction(
-            "Entity History &Forward", self
+        self._goto_next_entity_action = self.make_action(
+            "&Next Entity", self.goto_next_entity, "Ctrl+Right"
         )
-        self._entity_history_forward_action.setShortcut("Alt+Right")
-        self._entity_history_forward_action.triggered.connect(
-            self.go_forward_entity_history
+        self._entity_history_back_action = self.make_action(
+            "Entity History &Back", self.go_back_entity_history, "Alt+Left"
+        )
+        self._entity_history_forward_action = self.make_action(
+            "Entity History &Forward",
+            self.go_forward_entity_history,
+            "Alt+Right",
+        )
+        self._open_entity_in_text_editor_action = self.make_action(
+            "&Open Entity in Notepad++",
+            self.open_entity_in_text_editor,
+            "Ctrl+N",
+        )
+        self._show_entity_in_tree_view_action = self.make_action(
+            "Show Entity in &TreeView",
+            self.show_current_entity_in_tree_view,
+            "Ctrl+T",
         )
 
-        self._open_entity_in_text_editor_action = QAction(
-            "&Open Entity in Notepad++", self
-        )
-        self._open_entity_in_text_editor_action.setShortcut("Ctrl+N")
-        self._open_entity_in_text_editor_action.triggered.connect(
-            self.open_entity_in_text_editor
-        )
-        self._show_entity_in_tree_view_action = QAction(
-            "Show Entity in &TreeView", self
-        )
-        self._show_entity_in_tree_view_action.setShortcut("Ctrl+T")
-        self._show_entity_in_tree_view_action.triggered.connect(
-            self.show_current_entity_in_tree_view
-        )
+    def make_action(self, name, slot, shortcut=None) -> QAction:
+        action = QAction(name, self)
+        if shortcut:
+            action.setShortcut(shortcut)
+        action.triggered.connect(slot)
+        return action
 
     def setup_menu(self):
         menu = self.menuBar()
