@@ -264,10 +264,12 @@ class Draw(Command):
         )
         parser.add_argument(
             "--all-layers-visible",
+            action="store_true",
             help="draw all layers including the ones marked as invisible",
         )
         parser.add_argument(
             "--all-entities-visible",
+            action="store_true",
             help="draw all entities including the ones marked as invisible "
                  "(some entities are individually marked as invisible even "
                  "if the layer is visible)",
