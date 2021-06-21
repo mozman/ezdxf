@@ -372,6 +372,11 @@ class View(Command):
             help="DXF file to view",
         )
         parser.add_argument(
+            "--layout",
+            default="Model",
+            help="select the layout to draw",
+        )
+        parser.add_argument(
             "--ltype",
             default="internal",
             choices=["internal", "ezdxf"],
@@ -409,7 +414,7 @@ class View(Command):
         if filename:
             doc, auditor = load_document(filename)
             viewer.set_document(doc, auditor)
-            viewer.draw_layout("Model")
+            viewer.draw_layout(args.layout)
         sys.exit(app.exec_())
 
 
