@@ -96,14 +96,16 @@ class HandleIndex:
 
     @staticmethod
     def build(sections: SectionDict) -> Dict:
+        dummy_handle = 1
         entity_index = dict()
         for section in sections.values():
             for entity in section:
                 try:
                     handle = entity.get_handle()
-                    entity_index[handle.upper()] = entity
                 except ValueError:
-                    pass
+                    handle = f"*{dummy_handle:X}"
+                    dummy_handle += 1
+                entity_index[handle.upper()] = entity
         return entity_index
 
     def next_entity(self, entity: Tags) -> Tags:

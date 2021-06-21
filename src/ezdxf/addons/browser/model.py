@@ -24,7 +24,10 @@ DXFTagsRole = Qt.UserRole + 1
 
 
 def name_fmt(handle, name: str) -> str:
-    return f"<{handle}> {name}"
+    if handle is None:
+        return name
+    else:
+        return f"<{handle}> {name}"
 
 
 HEADER_LABELS = ["Group Code", "Data Type", "Content", "4", "5"]
@@ -209,7 +212,7 @@ class Entity(QStandardItem):
         name = "INVALID ENTITY!"
         tags = self._tags
         if tags and tags[0].code == 0:
-            name = name_fmt(str(self._handle), tags[0].value)
+            name = name_fmt(self._handle, tags[0].value)
         return name
 
     def data(self, role: int = ...) -> Any:
