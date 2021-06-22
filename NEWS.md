@@ -2,6 +2,11 @@
 News
 ====
 
+Version 0.16.5b0 - dev
+----------------------
+
+- CHANGED: replaced `ezdxf.tools.rgb` by `ezdxf.colors`
+
 Version 0.16.4 - 2021-06-20
 ---------------------------
 

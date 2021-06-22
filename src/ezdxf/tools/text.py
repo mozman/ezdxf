@@ -29,8 +29,9 @@ from ezdxf.lldxf.const import (
     TOP,
 )
 from ezdxf.math import Vec3, Vec2, Vertex
+from ezdxf.colors import rgb2int, RGB, int2rgb
 from .fonts import FontMeasurements, AbstractFont, FontFace
-from .rgb import rgb2int, RGB, int2rgb
+
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Text, MText, DXFEntity
