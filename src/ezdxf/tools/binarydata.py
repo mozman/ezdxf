@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2020, Manfred Moitzi
+# Copyright (c) 2014-2021, Manfred Moitzi
 # License: MIT License
 from typing import Iterable, Any, Sequence, Union, Tuple
 from array import array
@@ -10,19 +10,19 @@ Bytes = Union[bytes, bytearray, memoryview]
 
 
 def hex_strings_to_bytes(data: Iterable[str]) -> bytes:
-    """ Returns multiple hex strings `data` as bytes. """
-    byte_array = array('B')
+    """Returns multiple hex strings `data` as bytes."""
+    byte_array = array("B")
     for hexstr in data:
         byte_array.extend(unhexlify(hexstr))
     return byte_array.tobytes()
 
 
 def bytes_to_hexstr(data: bytes) -> str:
-    """ Returns `data` bytes as plain hex string. """
-    return ''.join("%0.2X" % byte for byte in data)
+    """Returns `data` bytes as plain hex string."""
+    return "".join("%0.2X" % byte for byte in data)
 
 
-NULL_NULL = b'\x00\x00'
+NULL_NULL = b"\x00\x00"
 
 
 class EndOfBufferError(EOFError):
@@ -30,7 +30,7 @@ class EndOfBufferError(EOFError):
 
 
 class ByteStream:
-    """ Process little endian binary data organized as bytes, data is padded to
+    """Process little endian binary data organized as bytes, data is padded to
     4 byte boundaries by default.
     """
 
@@ -49,31 +49,31 @@ class ByteStream:
         return index + self._align - modulo if modulo else index
 
     def read_struct(self, fmt: str) -> Any:
-        """ Read data defined by a struct format string. Insert little endian
+        """Read data defined by a struct format string. Insert little endian
         format character '<' as first character, if machine has native big
         endian byte order.
         """
         if not self.has_data:
-            raise EndOfBufferError('Unexpected end of buffer.')
+            raise EndOfBufferError("Unexpected end of buffer.")
 
         result = struct.unpack_from(fmt, self.buffer, offset=self.index)
         self.index = self.align(self.index + struct.calcsize(fmt))
         return result
 
     def read_float(self):
-        return self.read_struct('<d')[0]
+        return self.read_struct("<d")[0]
 
     def read_long(self):
-        return self.read_struct('<L')[0]
+        return self.read_struct("<L")[0]
 
     def read_signed_long(self):
-        return self.read_struct('<l')[0]
+        return self.read_struct("<l")[0]
 
     def read_vertex(self):
-        return self.read_struct('<3d')
+        return self.read_struct("<3d")
 
-    def read_padded_string(self, encoding: str = 'utf_8') -> str:
-        """ PS: Padded String. This is a string, terminated with a zero byte.
+    def read_padded_string(self, encoding: str = "utf_8") -> str:
+        """PS: Padded String. This is a string, terminated with a zero byte.
         The file’s text encoding (code page) is used to encode/decode the bytes
         into a string.
         """
@@ -85,31 +85,38 @@ class ByteStream:
                 # noinspection PyTypeChecker
                 return decode(buffer[start_index:end_index], encoding=encoding)
         raise EndOfBufferError(
-            'Unexpected end of buffer, did not detect terminating zero byte.')
+            "Unexpected end of buffer, did not detect terminating zero byte."
+        )
 
     def read_padded_unicode_string(self) -> str:
-        """ PUS: Padded Unicode String. The bytes are encoded using Unicode
+        """PUS: Padded Unicode String. The bytes are encoded using Unicode
         encoding. The bytes consist of byte pairs and the string is terminated
         by 2 zero bytes.
         """
         buffer = self.buffer
         for end_index in range(self.index, len(buffer), 2):
-            if buffer[end_index:end_index + 2] == NULL_NULL:
+            if buffer[end_index : end_index + 2] == NULL_NULL:
                 start_index = self.index
                 self.index = self.align(end_index + 2)
                 # noinspection PyTypeChecker
-                return decode(buffer[start_index:end_index],
-                              encoding='utf_16_le')
+                return decode(
+                    buffer[start_index:end_index], encoding="utf_16_le"
+                )
         raise EndOfBufferError(
-            'Unexpected end of buffer, did not detect terminating zero bytes.')
+            "Unexpected end of buffer, did not detect terminating zero bytes."
+        )
 
 
 class BitStream:
-    """ Process little endian binary data organized as bit stream. """
+    """Process little endian binary data organized as bit stream."""
 
     # Created for Proxy Entity Graphic decoding and DWG bit stream decoding
-    def __init__(self, buffer: Bytes, dxfversion: str = 'AC1015',
-                 encoding: str = 'cp1252'):
+    def __init__(
+        self,
+        buffer: Bytes,
+        dxfversion: str = "AC1015",
+        encoding: str = "cp1252",
+    ):
         self.buffer = memoryview(buffer)
         self.bit_index: int = 0
         self.dxfversion = dxfversion
@@ -120,7 +127,7 @@ class BitStream:
         return self.bit_index >> 3 < len(self.buffer)
 
     def align(self, count: int) -> None:
-        """ Align to byte border. """
+        """Align to byte border."""
         byte_index = (self.bit_index >> 3) + bool(self.bit_index & 7)
         modulo = byte_index % count
         if modulo:
@@ -128,20 +135,20 @@ class BitStream:
         self.bit_index = byte_index << 3
 
     def skip(self, count: int) -> None:
-        """ Skip `count` bits. """
+        """Skip `count` bits."""
         self.bit_index += count
 
     def read_bit(self) -> int:
-        """ Read one bit from buffer. """
+        """Read one bit from buffer."""
         index = self.bit_index
         self.bit_index += 1
         try:
             return 1 if self.buffer[index >> 3] & (0x80 >> (index & 7)) else 0
         except IndexError:
-            raise EndOfBufferError('Unexpected end of buffer.')
+            raise EndOfBufferError("Unexpected end of buffer.")
 
     def read_bits(self, count) -> int:
-        """ Read `count` bits from buffer. """
+        """Read `count` bits from buffer."""
         index = self.bit_index
         buffer = self.buffer
         # index of next bit after reading `count` bits
@@ -149,7 +156,7 @@ class BitStream:
 
         if (next_bit_index - 1) >> 3 > len(buffer):
             # not enough data to read all bits
-            raise EndOfBufferError('Unexpected end of buffer.')
+            raise EndOfBufferError("Unexpected end of buffer.")
         self.bit_index = next_bit_index
 
         test_bit = 0x80 >> (index & 7)
@@ -169,15 +176,15 @@ class BitStream:
         return value
 
     def read_unsigned_byte(self) -> int:
-        """ Read an unsigned byte (8 bit) from buffer. """
+        """Read an unsigned byte (8 bit) from buffer."""
         return self.read_bits(8)
 
     def read_signed_byte(self) -> int:
-        """ Read a signed byte (8 bit) from buffer. """
+        """Read a signed byte (8 bit) from buffer."""
         value = self.read_bits(8)
         if value & 0x80:
             # 2er complement
-            return -((~value & 0xff) + 1)
+            return -((~value & 0xFF) + 1)
         else:
             return value
 
@@ -187,12 +194,12 @@ class BitStream:
         end_index = start_index + count
         if end_index <= len(buffer):
             self.bit_index += count << 3
-            return buffer[start_index: end_index]
+            return buffer[start_index:end_index]
         else:
-            raise EndOfBufferError('Unexpected end of buffer.')
+            raise EndOfBufferError("Unexpected end of buffer.")
 
     def read_unsigned_short(self) -> int:
-        """ Read an unsigned short (16 bit) from buffer. """
+        """Read an unsigned short (16 bit) from buffer."""
         if self.bit_index & 7:
             s1 = self.read_bits(8)
             s2 = self.read_bits(8)
@@ -201,16 +208,16 @@ class BitStream:
         return (s2 << 8) + s1
 
     def read_signed_short(self) -> int:
-        """ Read a signed short (16 bit) from buffer. """
+        """Read a signed short (16 bit) from buffer."""
         value = self.read_unsigned_short()
         if value & 0x8000:
             # 2er complement
-            return -((~value & 0xffff) + 1)
+            return -((~value & 0xFFFF) + 1)
         else:
             return value
 
     def read_unsigned_long(self) -> int:
-        """ Read an unsigned long (32 bit) from buffer. """
+        """Read an unsigned long (32 bit) from buffer."""
         if self.bit_index & 7:
             read_bits = self.read_bits
             l1 = read_bits(8)
@@ -222,11 +229,11 @@ class BitStream:
         return (l4 << 24) + (l3 << 16) + (l2 << 8) + l1
 
     def read_signed_long(self) -> int:
-        """ Read a signed long (32 bit) from buffer. """
+        """Read a signed long (32 bit) from buffer."""
         value = self.read_unsigned_long()
         if value & 0x80000000:
             # 2er complement
-            return -((~value & 0xffffffff) + 1)
+            return -((~value & 0xFFFFFFFF) + 1)
         else:
             return value
 
@@ -236,7 +243,7 @@ class BitStream:
             data = bytes(read_bits(8) for _ in range(8))
         else:  # aligned data
             data = bytes(self.read_aligned_bytes(8))
-        return struct.unpack('<d', data)[0]
+        return struct.unpack("<d", data)[0]
 
     def read_3_bits(self) -> int:
         bit = self.read_bit()
@@ -252,7 +259,7 @@ class BitStream:
         else:
             return 0  # 0
 
-    def read_bit_short(self, count=1) -> Union[int, Sequence[int]]:
+    def read_bit_short(self, count: int = 1) -> Union[int, Sequence[int]]:
         def _read():
             bits = self.read_bits(2)
             if bits == 0:
@@ -297,7 +304,7 @@ class BitStream:
         shifting = 0
         length = self.read_bits(3)  # or read_3_bits() ?
         while length > 0:
-            value += (self.read_unsigned_byte() << shifting)
+            value += self.read_unsigned_byte() << shifting
             length -= 1
             shifting += 8
         return value
@@ -326,17 +333,20 @@ class BitStream:
             return tuple(_read() for _ in range(count))
 
     def read_bit_double_default(
-            self, count: int = 1, default=0.0) -> Union[float, Sequence[float]]:
-        data = struct.pack('<d', default)
+        self, count: int = 1, default=0.0
+    ) -> Union[float, Sequence[float]]:
+        data = struct.pack("<d", default)
 
         def _read():
             bits = self.read_bits(2)
             if bits == 0:
                 return default
             elif bits == 1:
-                _data = bytes(self.read_unsigned_byte()
-                              for _ in range(4)) + data[4:]
-                return struct.unpack('<d', _data)
+                _data = (
+                    bytes(self.read_unsigned_byte() for _ in range(4))
+                    + data[4:]
+                )
+                return struct.unpack("<d", _data)
             elif bits == 2:
                 _data = bytearray(data)
                 _data[4] = self.read_unsigned_byte()
@@ -345,7 +355,7 @@ class BitStream:
                 _data[1] = self.read_unsigned_byte()
                 _data[2] = self.read_unsigned_byte()
                 _data[3] = self.read_unsigned_byte()
-                return struct.unpack('<d', _data)
+                return struct.unpack("<d", _data)
             else:
                 return self.read_float()
 
@@ -355,7 +365,7 @@ class BitStream:
             return tuple(_read() for _ in range(count))
 
     def read_signed_modular_chars(self) -> int:
-        """ Modular characters are a method of storing compressed integer
+        """Modular characters are a method of storing compressed integer
         values. They consist of a stream of bytes, terminating when the high
         bit (8) of the byte is 0 else another byte follows. Negative numbers
         are indicated by bit 7 set in the last byte.
@@ -367,16 +377,16 @@ class BitStream:
             char = self.read_unsigned_byte()
             if char & 0x80:
                 # bit 8 set = another char follows
-                value |= ((char & 0x7f) << shifting)
+                value |= (char & 0x7F) << shifting
                 shifting += 7
             else:
                 # bit 8 clear = end of modular char
                 # bit 7 set = negative number
-                value |= ((char & 0x3f) << shifting)
+                value |= (char & 0x3F) << shifting
                 return -value if char & 0x40 else value
 
     def read_unsigned_modular_chars(self) -> int:
-        """ Modular characters are a method of storing compressed integer
+        """Modular characters are a method of storing compressed integer
         values. They consist of a stream of bytes, terminating when the high
         bit (8) of the byte is 0 else another byte follows.
 
@@ -385,32 +395,32 @@ class BitStream:
         value = 0
         while True:
             char = self.read_unsigned_byte()
-            value |= ((char & 0x7f) << shifting)
+            value |= (char & 0x7F) << shifting
             shifting += 7
             # bit 8 set = another char follows
             if not (char & 0x80):
                 return value
 
     def read_modular_shorts(self) -> int:
-        """ Modular shorts are a method of storing compressed unsigned integer
+        """Modular shorts are a method of storing compressed unsigned integer
         values. Only 1 or 2 shorts in practical usage (1GB), if the high
         bit (16) of the first short is set another short follows.
 
         """
         short = self.read_unsigned_short()
         if short & 0x8000:
-            return (self.read_unsigned_short() << 15) | (short & 0x7fff)
+            return (self.read_unsigned_short() << 15) | (short & 0x7FFF)
         else:
             return short
 
-    def read_bit_extrusion(self) -> Tuple[float, float, float]:
+    def read_bit_extrusion(self) -> Sequence[float]:
         if self.read_bit():
             return 0.0, 0.0, 1.0
         else:
             return self.read_bit_double(3)
 
-    def read_bit_thickness(self, dxfversion='AC1015') -> float:
-        if dxfversion >= 'AC1015':
+    def read_bit_thickness(self, dxfversion="AC1015") -> float:
+        if dxfversion >= "AC1015":
             if self.read_bit():
                 return 0.0
         return self.read_bit_double()
@@ -428,20 +438,19 @@ class BitStream:
         # see the main Object description section for details.
         length = self.read_bit_short()
         data = bytes(self.read_unsigned_byte() for _ in range(length * 2))
-        return data.decode(encoding='utf16')
+        return data.decode(encoding="utf16")
 
     def read_text_variable(self) -> str:
-        if self.dxfversion < 'AC1018':  # R2004
+        if self.dxfversion < "AC1018":  # R2004
             return self.read_text()
         else:
             return self.read_text_unicode()
 
     def read_cm_color_cms(self) -> Tuple[int, str, str]:
-        """ Returns tuple (rgb, color_name, book_name).
-        """
+        """Returns tuple (rgb, color_name, book_name)."""
         _ = self.read_bit_short()  # index always 0
-        color_name = ''
-        book_name = ''
+        color_name = ""
+        book_name = ""
         rgb = self.read_bit_long()
         rc = self.read_unsigned_byte()
         if rc & 1:
@@ -451,25 +460,25 @@ class BitStream:
         return rgb, color_name, book_name
 
     def read_cm_color_enc(self) -> Union[int, Tuple[int, int, int, int]]:
-        """ Returns color index as int or tuple (rgb, color_handle,
+        """Returns color index as int or tuple (rgb, color_handle,
         transparency_type, transparency).
         """
         flags_and_index = self.read_bit_short()
         flags = flags_and_index >> 8
-        index = flags_and_index & 0xff
+        index = flags_and_index & 0xFF
         if flags:
             rgb = None
             color_handle = None
             transparency_type = None
             transparency = None
             if flags & 0x80:
-                rgb = self.read_bit_short() & 0x00ffffff
+                rgb = self.read_bit_short() & 0x00FFFFFF
             if flags & 0x40:
                 _, color_handle = self.read_handle()
             if flags & 0x20:
                 data = self.read_bit_long()
                 transparency_type = data >> 24
-                transparency = data & 0xff
+                transparency = data & 0xFF
             return rgb, color_handle, transparency_type, transparency
         else:
             return index
@@ -479,12 +488,12 @@ class BitStream:
         if bits == 0:
             return self.read_unsigned_byte()
         elif bits == 1:
-            return self.read_unsigned_byte() + 0x1f0
+            return self.read_unsigned_byte() + 0x1F0
         else:
             return self.read_unsigned_short()
 
     def read_handle(self, reference: int = 0) -> int:
-        """ Returns handle as integer value. """
+        """Returns handle as integer value."""
         code = self.read_bits(4)
         length = self.read_bits(4)
         if code == 6:
@@ -492,10 +501,10 @@ class BitStream:
         if code == 8:
             return reference - 1
 
-        data = bytearray(b'\x00\x00\x00\x00\x00\x00\x00\x00')
+        data = bytearray(b"\x00\x00\x00\x00\x00\x00\x00\x00")
         for index in range(length):
             data[index] = self.read_unsigned_byte()
-        offset = struct.unpack('<Q', data)[0]
+        offset = struct.unpack("<Q", data)[0]
 
         if code < 6:
             return offset
@@ -506,44 +515,44 @@ class BitStream:
                 return reference - offset
 
     def read_hex_handle(self, reference: int = 0) -> str:
-        """ Returns handle as hex string. """
-        return '%X' % self.read_handle(reference)
+        """Returns handle as hex string."""
+        return "%X" % self.read_handle(reference)
 
     def read_code(self, code: str):
-        """ Read data from bit stream by data codes defined in the
+        """Read data from bit stream by data codes defined in the
         ODA reference.
 
         """
-        if code == 'B':
+        if code == "B":
             return self.read_bit()
-        elif code == 'RC':
+        elif code == "RC":
             return self.read_unsigned_byte()
-        elif code == 'RS':
+        elif code == "RS":
             return self.read_signed_short()
-        elif code == 'BS':
+        elif code == "BS":
             return self.read_bit_short()
-        elif code == 'RL':
+        elif code == "RL":
             return self.read_signed_long()
-        elif code == 'BL':
+        elif code == "BL":
             return self.read_bit_long()
-        elif code == 'RD':
+        elif code == "RD":
             return self.read_raw_double()
-        elif code == '2RD':
+        elif code == "2RD":
             return self.read_raw_double(2)
-        elif code == 'BD':
+        elif code == "BD":
             return self.read_bit_double()
-        elif code == '2BD':
+        elif code == "2BD":
             return self.read_bit_double(2)
-        elif code == '3BD':
+        elif code == "3BD":
             return self.read_bit_double(3)
-        elif code == 'T':
+        elif code == "T":
             return self.read_text()
-        elif code == 'TV':
+        elif code == "TV":
             return self.read_text_variable()
-        elif code == 'H':
+        elif code == "H":
             return self.read_hex_handle()
-        elif code == 'BLL':
+        elif code == "BLL":
             return self.read_bit_long_long()
-        elif code == 'CMC':
+        elif code == "CMC":
             return self.read_cm_color()
-        raise ValueError(f'Unknown code: {code}')
+        raise ValueError(f"Unknown code: {code}")
