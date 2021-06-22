@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2020, Manfred Moitzi
+# Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
 from typing import Tuple
 import math
@@ -30,10 +30,9 @@ def aci2rgb(index: int) -> RGB:
 
 def luminance(color: RGB) -> float:
     """ Returns perceived luminance for a RGB color in the range [0.0, 1.0]  from dark to light. """
-    r, g, b = color
-    r = float(r) / 255.0
-    g = float(g) / 255.0
-    b = float(b) / 255.0
+    r = float(color[0]) / 255
+    g = float(color[1]) / 255
+    b = float(color[2]) / 255
     return round(math.sqrt(0.299 * r ** 2 + 0.587 * g ** 2 + 0.114 * b ** 2), 3)
 
 
