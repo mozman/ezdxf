@@ -14,7 +14,7 @@ from ezdxf.entities.boundary_paths import (
     SplineEdge,
 )
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError
-from ezdxf.math import OCS
+from ezdxf.math import OCS, Vec3
 from ezdxf.math.transformtools import (
     NonUniformScalingError,
     InsertTransformationError,
@@ -32,10 +32,6 @@ if TYPE_CHECKING:
         Attrib,
         Text,
         LWPolyline,
-        Line,
-        Arc,
-        Ellipse,
-        Spline,
     )
 
 
@@ -296,16 +292,18 @@ def explode_entity(
 
 def virtual_boundary_paths(polygon: "BasePolygon") -> List[List["DXFGraphic"]]:
     graphic_attribs = polygon.graphic_properties()
+    elevation: float = polygon.dxf.elevation.z
     ocs = polygon.ocs()
     entities = []
     for path in polygon.paths:
         if isinstance(path, PolylinePath):
             attribs = dict(graphic_attribs)
             attribs["extrusion"] = ocs.uz
+            attribs["elevation"] = elevation
             entities.append([_virtual_polyline_path(path, attribs)])
         elif isinstance(path, EdgePath):
             attribs = dict(graphic_attribs)
-            entities.append(_virtual_edge_path(path, attribs, ocs))
+            entities.append(_virtual_edge_path(path, attribs, ocs, elevation))
     return entities
 
 
@@ -321,21 +319,27 @@ def _virtual_polyline_path(
 
 
 def _virtual_edge_path(
-    path: EdgePath, dxfattribs: Dict, ocs: OCS,
+    path: EdgePath, dxfattribs: Dict, ocs: OCS, elevation: float
 ) -> List["DXFGraphic"]:
+    from ezdxf.entities import Line, Arc, Ellipse, Spline
+
+    def pnt_to_wcs(v):
+        return ocs.to_wcs(Vec3(v).replace(z=elevation))
+
+    def dir_to_wcs(v):
+        return ocs.to_wcs(v)
+
     edges = []
     for edge in path.edges:
         attribs = dict(dxfattribs)
         if isinstance(edge, LineEdge):
-            attribs["start"] = ocs.to_wcs(edge.start)
-            attribs["end"] = ocs.to_wcs(edge.end)
-            line = cast(
-                "Line", factory.new("LINE", dxfattribs=attribs)
-            )
-            edges.append(line)
+            attribs["start"] = pnt_to_wcs(edge.start)
+            attribs["end"] = pnt_to_wcs(edge.end)
+            edges.append(Line.new(dxfattribs=attribs))
         elif isinstance(edge, ArcEdge):
             attribs["center"] = edge.center
             attribs["radius"] = edge.radius
+            attribs["elevation"] = elevation
             if edge.ccw:
                 start_angle = edge.start_angle
                 end_angle = edge.end_angle
@@ -345,12 +349,32 @@ def _virtual_edge_path(
             attribs["start_angle"] = start_angle
             attribs["end_angle"] = end_angle
             attribs["extrusion"] = ocs.uz
-            arc = cast(
-                "Arc", factory.new("ARC", dxfattribs=attribs)
-            )
-            edges.append(arc)
+            edges.append(Arc.new(dxfattribs=attribs))
         elif isinstance(edge, EllipseEdge):
-            pass  # todo
+            attribs["center"] = pnt_to_wcs(edge.center)
+            attribs["major_axis"] = dir_to_wcs(edge.major_axis)
+            attribs["ratio"] = edge.ratio
+            if edge.ccw:
+                start_param = edge.start_param
+                end_param = edge.end_param
+            else:
+                start_param = edge.end_param
+                end_param = edge.start_param
+            attribs["start_param"] = start_param
+            attribs["end_param"] = end_param
+            edges.append(Ellipse.new(dxfattribs=attribs))
         elif isinstance(edge, SplineEdge):
-            pass  # todo
+            spline = Spline.new(dxfattribs=attribs)
+            spline.dxf.degree = edge.degree
+            spline.knots = edge.knot_values
+            spline.control_points = (pnt_to_wcs(v) for v in edge.control_points)
+            if edge.weights:
+                spline.weights = edge.weights
+            if edge.fit_points:
+                spline.fit_points = (pnt_to_wcs(v) for v in edge.fit_points)
+            if edge.start_tangent is not None:
+                spline.dxf.start_tangent = dir_to_wcs(edge.start_tangent)
+            if edge.end_tangent is not None:
+                spline.dxf.end_tangent = dir_to_wcs(edge.end_tangent)
+            edges.append(spline)
     return edges
