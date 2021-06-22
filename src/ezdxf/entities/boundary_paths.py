@@ -142,7 +142,7 @@ class BoundaryPaths:
 
         paths = sorted(
             (path_type_enum(p.path_type_flags), i, p)
-                for i, p in enumerate(self.paths)
+            for i, p in enumerate(self.paths)
         )
         ignore = 1  # EXTERNAL only
         if hatch_style == const.HATCH_STYLE_NESTED:
@@ -683,9 +683,7 @@ class EdgePath:
         for edge in self.edges:
             edge.transform(ocs, elevation=elevation)
 
-    def add_line(
-        self, start: "Vertex", end: "Vertex"
-    ) -> "LineEdge":
+    def add_line(self, start: "Vertex", end: "Vertex") -> "LineEdge":
         """Add a :class:`LineEdge` from `start` to `end`.
 
         Args:
