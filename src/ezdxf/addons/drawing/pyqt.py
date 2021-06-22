@@ -197,9 +197,17 @@ class PyQtBackend(Backend):
                           properties: Properties) -> None:
         qt_path = qg.QPainterPath()
         for path in paths:
-            _extend_qt_path(qt_path, path.counter_clockwise())
+            try:
+                path = path.counter_clockwise()
+            except ValueError:  # cannot detect path orientation
+                continue
+            _extend_qt_path(qt_path, path)
         for path in holes:
-            _extend_qt_path(qt_path, path.clockwise())
+            try:
+                path = path.clockwise()
+            except ValueError:  # cannot detect path orientation
+                continue
+            _extend_qt_path(qt_path, path)
         item = _CosmeticPath(qt_path)
         item.setPen(self._get_pen(properties))
         item.setBrush(self._get_brush(properties))

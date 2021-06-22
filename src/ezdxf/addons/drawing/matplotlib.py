@@ -125,12 +125,20 @@ class MatplotlibBackend(Backend):
         vertices = []
         codes = []
         for path in paths:
-            v1, c1 = _get_path_patch_data(path.counter_clockwise())
+            try:
+                path = path.counter_clockwise()
+            except ValueError:  # cannot detect path orientation
+                continue
+            v1, c1 = _get_path_patch_data(path)
             vertices.extend(v1)
             codes.extend(c1)
 
         for hole in holes:
-            v1, c1 = _get_path_patch_data(hole.clockwise())
+            try:
+                hole = hole.clockwise()
+            except ValueError:  # cannot detect path orientation
+                continue
+            v1, c1 = _get_path_patch_data(hole)
             vertices.extend(v1)
             codes.extend(c1)
 
