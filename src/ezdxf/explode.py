@@ -7,11 +7,12 @@ from typing import TYPE_CHECKING, Iterable, Callable, Optional, cast
 from ezdxf.entities import factory
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError
 from ezdxf.math.transformtools import (
-    NonUniformScalingError, InsertTransformationError,
+    NonUniformScalingError,
+    InsertTransformationError,
 )
 from ezdxf.query import EntityQuery
 
-logger = logging.getLogger('ezdxf')
+logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, Attrib, Text
@@ -19,12 +20,14 @@ if TYPE_CHECKING:
 
 def default_logging_callback(entity, reason):
     logger.debug(
-        f'(Virtual Block Reference Entities) Ignoring {str(entity)}: "{reason}"')
+        f'(Virtual Block Reference Entities) Ignoring {str(entity)}: "{reason}"'
+    )
 
 
-def explode_block_reference(block_ref: 'Insert',
-                            target_layout: 'BaseLayout') -> EntityQuery:
-    """ Explode a block reference into DXF primitives.
+def explode_block_reference(
+    block_ref: "Insert", target_layout: "BaseLayout"
+) -> EntityQuery:
+    """Explode a block reference into DXF primitives.
 
     Transforms the block entities into the required WCS location by applying the
     block reference attributes `insert`, `extrusion`, `rotation` and the scaling
@@ -48,20 +51,21 @@ def explode_block_reference(block_ref: 'Insert',
 
     """
     if target_layout is None:
-        raise DXFStructureError('Target layout is None.')
+        raise DXFStructureError("Target layout is None.")
 
     if block_ref.doc is None:
         raise DXFStructureError(
-            'Block reference has to be assigned to a DXF document.')
+            "Block reference has to be assigned to a DXF document."
+        )
 
     def _explode_single_block_ref(block_ref):
         for entity in virtual_block_reference_entities(block_ref):
             dxftype = entity.dxftype()
             target_layout.add_entity(entity)
-            if dxftype == 'DIMENSION':
+            if dxftype == "DIMENSION":
                 # Render a graphical representation for each exploded DIMENSION
                 # entity as anonymous block.
-                cast('Dimension', entity).render()
+                cast("Dimension", entity).render()
             entities.append(entity)
 
         # Convert attached ATTRIB entities to TEXT entities:
@@ -73,8 +77,9 @@ def explode_block_reference(block_ref: 'Insert',
             entities.append(text)
 
     entitydb = block_ref.doc.entitydb
-    assert entitydb is not None, \
-        'Exploding a block reference requires an entity database.'
+    assert (
+        entitydb is not None
+    ), "Exploding a block reference requires an entity database."
 
     entities = []
     if block_ref.mcount > 1:
@@ -93,27 +98,34 @@ def explode_block_reference(block_ref: 'Insert',
 
 
 IGNORE_FROM_ATTRIB = {
-    'version', 'prompt', 'tag', 'flags', 'field_length', 'lock_position'
+    "version",
+    "prompt",
+    "tag",
+    "flags",
+    "field_length",
+    "lock_position",
 }
 
 
-def attrib_to_text(attrib: 'Attrib') -> 'Text':
+def attrib_to_text(attrib: "Attrib") -> "Text":
     dxfattribs = attrib.dxfattribs(drop=IGNORE_FROM_ATTRIB)
     # ATTRIB has same owner as INSERT but does not reside in any EntitySpace()
     # and must not deleted from any layout.
     # New TEXT entity has same handle as the replaced ATTRIB entity and replaces
     # the ATTRIB entity in the database.
-    text = factory.new('TEXT', dxfattribs=dxfattribs)
+    text = factory.new("TEXT", dxfattribs=dxfattribs)
     if attrib.doc:
         factory.bind(text, attrib.doc)
     return text
 
 
 def virtual_block_reference_entities(
-        block_ref: 'Insert', skipped_entity_callback: Optional[
-            Callable[['DXFGraphic', str], None]] = None) -> Iterable[
-    'DXFGraphic']:
-    """ Yields 'virtual' parts of block reference `block_ref`. This method is meant
+    block_ref: "Insert",
+    skipped_entity_callback: Optional[
+        Callable[["DXFGraphic", str], None]
+    ] = None,
+) -> Iterable["DXFGraphic"]:
+    """Yields 'virtual' parts of block reference `block_ref`. This method is meant
     to examine the the block reference entities without the need to explode the
     block reference. The `skipped_entity_callback()` will be called for all
     entities which are not processed, signature:
@@ -137,21 +149,23 @@ def virtual_block_reference_entities(
     (internal API)
 
     """
-    assert block_ref.dxftype() == 'INSERT'
-    Ellipse = cast('Ellipse', factory.cls('ELLIPSE'))
-    skipped_entity_callback = skipped_entity_callback or default_logging_callback
+    assert block_ref.dxftype() == "INSERT"
+    Ellipse = cast("Ellipse", factory.cls("ELLIPSE"))
+    skipped_entity_callback = (
+        skipped_entity_callback or default_logging_callback
+    )
 
-    def disassemble(layout) -> Iterable['DXFGraphic']:
+    def disassemble(layout) -> Iterable["DXFGraphic"]:
         for entity in layout:
             # Do not explode ATTDEF entities. Already available in Insert.attribs
-            if entity.dxftype() == 'ATTDEF':
+            if entity.dxftype() == "ATTDEF":
                 continue
             try:
                 copy = entity.copy()
             except DXFTypeError:
-                skipped_entity_callback(entity, 'non copyable')
+                skipped_entity_callback(entity, "non copyable")
             else:
-                if hasattr(copy, 'remove_association'):
+                if hasattr(copy, "remove_association"):
                     copy.remove_association()
                 yield copy
 
@@ -160,28 +174,32 @@ def virtual_block_reference_entities(
             try:
                 entity.transform(m)
             except NotImplementedError:
-                skipped_entity_callback(entity, 'non transformable')
+                skipped_entity_callback(entity, "non transformable")
             except NonUniformScalingError:
                 dxftype = entity.dxftype()
-                if dxftype in {'ARC', 'CIRCLE'}:
+                if dxftype in {"ARC", "CIRCLE"}:
                     if not math.isclose(entity.dxf.radius, 0.0):
                         # radius < 0 is ok.
                         yield Ellipse.from_arc(entity).transform(m)
                     else:
                         skipped_entity_callback(
-                            entity, f'Invalid radius in entity {str(entity)}.')
-                elif dxftype in {'LWPOLYLINE', 'POLYLINE'}:  # has arcs
+                            entity, f"Invalid radius in entity {str(entity)}."
+                        )
+                elif dxftype in {"LWPOLYLINE", "POLYLINE"}:  # has arcs
                     yield from transform(entity.virtual_entities())
                 else:
                     skipped_entity_callback(
-                        entity, 'unsupported non-uniform scaling')
+                        entity, "unsupported non-uniform scaling"
+                    )
             except InsertTransformationError:
                 # INSERT entity can not represented in the target coordinate
                 # system defined by transformation matrix `m`.
                 # Yield transformed sub-entities of the INSERT entity:
                 yield from transform(
                     virtual_block_reference_entities(
-                        entity, skipped_entity_callback))
+                        entity, skipped_entity_callback
+                    )
+                )
             else:
                 yield entity
 
@@ -189,18 +207,19 @@ def virtual_block_reference_entities(
     block_layout = block_ref.block()
     if block_layout is None:
         raise DXFStructureError(
-            f'Required block definition for "{block_ref.dxf.name}" does not exist.')
+            f'Required block definition for "{block_ref.dxf.name}" does not exist.'
+        )
 
     yield from transform(disassemble(block_layout))
 
 
-EXCLUDE_FROM_EXPLODE = {'POINT'}
+EXCLUDE_FROM_EXPLODE = {"POINT"}
 
 
 def explode_entity(
-        entity: 'DXFGraphic',
-        target_layout: 'BaseLayout' = None) -> 'EntityQuery':
-    """ Explode parts of an entity as primitives into target layout, if target
+    entity: "DXFGraphic", target_layout: "BaseLayout" = None
+) -> "EntityQuery":
+    """Explode parts of an entity as primitives into target layout, if target
     layout is ``None``, the target layout is the layout of the source entity.
 
     Returns an :class:`~ezdxf.query.EntityQuery` container with all DXF parts.
@@ -216,24 +235,29 @@ def explode_entity(
     """
     dxftype = entity.dxftype()
 
-    if not hasattr(entity, 'virtual_entities') or \
-            dxftype in EXCLUDE_FROM_EXPLODE:
-        raise DXFTypeError(f'Can not explode entity {dxftype}.')
+    if (
+        not hasattr(entity, "virtual_entities")
+        or dxftype in EXCLUDE_FROM_EXPLODE
+    ):
+        raise DXFTypeError(f"Can not explode entity {dxftype}.")
 
     if entity.doc is None:
         raise DXFStructureError(
-            f'{dxftype} has to be assigned to a DXF document.')
+            f"{dxftype} has to be assigned to a DXF document."
+        )
 
     entitydb = entity.doc.entitydb
     if entitydb is None:
         raise DXFStructureError(
-            f'Exploding {dxftype} requires an entity database.')
+            f"Exploding {dxftype} requires an entity database."
+        )
 
     if target_layout is None:
         target_layout = entity.get_layout()
         if target_layout is None:
             raise DXFStructureError(
-                f'{dxftype} without layout assigment, specify target layout.')
+                f"{dxftype} without layout assigment, specify target layout."
+            )
 
     entities = []
 
