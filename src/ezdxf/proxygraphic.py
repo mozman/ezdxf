@@ -27,15 +27,15 @@ CHUNK_SIZE = 127
 
 
 def load_proxy_graphic(tags: 'Tags', length_code: int = 160,
-                       data_code: int = 310) -> Optional[bytes]:
+    data_code: int = 310) -> Optional[bytes]:
     binary_data = [tag.value for tag in
-                   tags.pop_tags(codes=(length_code, data_code)) if
-                   tag.code == data_code]
+        tags.pop_tags(codes=(length_code, data_code)) if
+        tag.code == data_code]
     return b''.join(binary_data) if len(binary_data) else None
 
 
 def export_proxy_graphic(data: bytes, tagwriter: 'TagWriter',
-                         length_code: int = 160, data_code: int = 310) -> None:
+    length_code: int = 160, data_code: int = 310) -> None:
     # Do not export proxy graphic for DXF R12 files
     assert tagwriter.dxfversion > const.DXF12
 
@@ -122,7 +122,7 @@ class ProxyGraphic:
             self.linetypes = list(
                 linetype.dxf.name for linetype in self._doc.linetypes)
             self.textstyles = {style.dxf.font: style.dxf.name for style in
-                               self._doc.styles}
+                self._doc.styles}
 
     def info(self) -> Iterable[Tuple[int, int, str]]:
         index = self._index
@@ -296,7 +296,7 @@ class ProxyGraphic:
         else:
             attribs['flags'] = const.POLYLINE_3D_POLYLINE
             polyline = cast('Polyline',
-                            self._factory('POLYLINE', dxfattribs=attribs))
+                self._factory('POLYLINE', dxfattribs=attribs))
             polyline.append_vertices(vertices)
             if close:
                 polyline.close()
@@ -360,7 +360,7 @@ class ProxyGraphic:
         bulges = [bs.read_bit_double() for _ in range(num_bulges)]
         vertex_ids = [bs.read_bit_long() for _ in range(vertex_id_count)]
         widths = [(bs.read_bit_double(), bs.read_bit_double()) for _ in
-                  range(num_width)]
+            range(num_width)]
         if len(bulges) == 0:
             bulges = list(repeat(0, num_points))
         if len(widths) == 0:
@@ -369,7 +369,7 @@ class ProxyGraphic:
         for v, w, b in zip(vertices, widths, bulges):
             points.append((v[0], v[1], w[0], w[1], b))
         lwpolyline = cast('LWPolyline',
-                          self._factory('LWPOLYLINE', dxfattribs=attribs))
+            self._factory('LWPOLYLINE', dxfattribs=attribs))
         lwpolyline.set_points(points)
         return lwpolyline
 
@@ -382,7 +382,7 @@ class ProxyGraphic:
         attribs['n_count'] = columns
         attribs['flags'] = const.POLYLINE_3D_POLYMESH
         polymesh = cast('Polymesh',
-                        self._factory('POLYLINE', dxfattribs=attribs))
+            self._factory('POLYLINE', dxfattribs=attribs))
         polymesh.append_vertices(
             Vec3(bs.read_vertex()) for _ in range(rows * columns))
         return polymesh
@@ -393,7 +393,7 @@ class ProxyGraphic:
         attribs = self._build_dxf_attribs()
         attribs['flags'] = const.POLYLINE_POLYFACE
         polyface = cast('Polyface',
-                        self._factory('POLYLINE', dxfattribs=attribs))
+            self._factory('POLYLINE', dxfattribs=attribs))
         vertex_count = bs.read_long()
         vertices = [Vec3(bs.read_vertex()) for _ in range(vertex_count)]
         face_count = bs.read_long()
@@ -509,9 +509,11 @@ class ProxyGraphic:
             style = self.textstyles[font]
         else:
             style = font
-            if self._doc:
-                self._doc.styles.new(font, dxfattribs={'font': font,
-                                                       'bigfont': bigfont})
+            if self._doc and not self._doc.styles.has_entry(style):
+                self._doc.styles.new(font, dxfattribs={
+                    'font': font,
+                    'bigfont': bigfont
+                })
                 self.textstyles[font] = style
         return style
 
