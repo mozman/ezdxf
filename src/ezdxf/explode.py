@@ -2,10 +2,19 @@
 # License: MIT License
 import logging
 import math
-from typing import TYPE_CHECKING, Iterable, Callable, Optional, cast
+from typing import TYPE_CHECKING, Iterable, Callable, Optional, cast, Dict, List
 
 from ezdxf.entities import factory
+from ezdxf.entities.boundary_paths import (
+    PolylinePath,
+    EdgePath,
+    LineEdge,
+    ArcEdge,
+    EllipseEdge,
+    SplineEdge,
+)
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError
+from ezdxf.math import OCS
 from ezdxf.math.transformtools import (
     NonUniformScalingError,
     InsertTransformationError,
@@ -15,7 +24,19 @@ from ezdxf.query import EntityQuery
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Insert, BaseLayout, DXFGraphic, Attrib, Text
+    from ezdxf.entities.polygon import BasePolygon
+    from ezdxf.eztypes import (
+        Insert,
+        BaseLayout,
+        DXFGraphic,
+        Attrib,
+        Text,
+        LWPolyline,
+        Line,
+        Arc,
+        Ellipse,
+        Spline,
+    )
 
 
 def default_logging_callback(entity, reason):
@@ -271,3 +292,65 @@ def explode_entity(
     else:
         entitydb.delete_entity(entity)
     return EntityQuery(entities)
+
+
+def virtual_boundary_paths(polygon: "BasePolygon") -> List[List["DXFGraphic"]]:
+    graphic_attribs = polygon.graphic_properties()
+    ocs = polygon.ocs()
+    entities = []
+    for path in polygon.paths:
+        if isinstance(path, PolylinePath):
+            attribs = dict(graphic_attribs)
+            attribs["extrusion"] = ocs.uz
+            entities.append([_virtual_polyline_path(path, attribs)])
+        elif isinstance(path, EdgePath):
+            attribs = dict(graphic_attribs)
+            entities.append(_virtual_edge_path(path, attribs, ocs))
+    return entities
+
+
+def _virtual_polyline_path(
+    path: PolylinePath, dxfattribs: Dict
+) -> "LWPolyline":
+    polyline = cast(
+        "LWPolyline", factory.new("LWPOLYLINE", dxfattribs=dxfattribs)
+    )
+    polyline.append_formatted_vertices(path.vertices, format="xyb")
+    polyline.closed = path.is_closed
+    return polyline
+
+
+def _virtual_edge_path(
+    path: EdgePath, dxfattribs: Dict, ocs: OCS,
+) -> List["DXFGraphic"]:
+    edges = []
+    for edge in path.edges:
+        attribs = dict(dxfattribs)
+        if isinstance(edge, LineEdge):
+            attribs["start"] = ocs.to_wcs(edge.start)
+            attribs["end"] = ocs.to_wcs(edge.end)
+            line = cast(
+                "Line", factory.new("LINE", dxfattribs=attribs)
+            )
+            edges.append(line)
+        elif isinstance(edge, ArcEdge):
+            attribs["center"] = edge.center
+            attribs["radius"] = edge.radius
+            if edge.ccw:
+                start_angle = edge.start_angle
+                end_angle = edge.end_angle
+            else:
+                start_angle = edge.end_angle
+                end_angle = edge.start_angle
+            attribs["start_angle"] = start_angle
+            attribs["end_angle"] = end_angle
+            attribs["extrusion"] = ocs.uz
+            arc = cast(
+                "Arc", factory.new("ARC", dxfattribs=attribs)
+            )
+            edges.append(arc)
+        elif isinstance(edge, EllipseEdge):
+            pass  # todo
+        elif isinstance(edge, SplineEdge):
+            pass  # todo
+    return edges
