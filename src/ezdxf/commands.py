@@ -1,6 +1,6 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Callable, Optional, Dict
+from typing import Callable, Optional, Dict, TYPE_CHECKING, Type
 import abc
 import sys
 import os
@@ -12,6 +12,10 @@ from pathlib import Path
 from ezdxf import recover
 from ezdxf.lldxf import const
 from ezdxf.lldxf.validator import is_dxf_file
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import DXFGraphic
+    from ezdxf.addons.drawing.properties import Properties
 
 __all__ = ["get", "add_parsers"]
 
@@ -46,10 +50,10 @@ class Command:
         pass
 
 
-_commands: Dict[str, Command] = dict()
+_commands: Dict[str, Type[Command]] = dict()
 
 
-def register(cls: Command):
+def register(cls: Type[Command]):
     """Register a launcher sub-command."""
     _commands[cls.NAME] = cls
     return cls
@@ -89,7 +93,7 @@ class PrettyPrint(Command):
             "--nocompile",
             action="store_true",
             help="don't compile points coordinates into single tags "
-                 "(only in raw mode)",
+            "(only in raw mode)",
         )
         parser.add_argument(
             "-l",
@@ -103,7 +107,7 @@ class PrettyPrint(Command):
             action="store",
             default="hctbeo",
             help="choose sections to include and their order, h=HEADER, c=CLASSES, "
-                 "t=TABLES, b=BLOCKS, e=ENTITIES, o=OBJECTS",
+            "t=TABLES, b=BLOCKS, e=ENTITIES, o=OBJECTS",
         )
 
     @staticmethod
@@ -141,7 +145,7 @@ class Audit(Command):
     def run(args):
         def build_outname(name: str) -> str:
             p = Path(name)
-            return p.parent / (p.stem + ".rec.dxf")
+            return str(p.parent / (p.stem + ".rec.dxf"))
 
         def log_fixes(auditor):
             for error in auditor.fixes:
@@ -271,8 +275,8 @@ class Draw(Command):
             "--all-entities-visible",
             action="store_true",
             help="draw all entities including the ones marked as invisible "
-                 "(some entities are individually marked as invisible even "
-                 "if the layer is visible)",
+            "(some entities are individually marked as invisible even "
+            "if the layer is visible)",
         )
         parser.add_argument(
             "-o", "--out", required=False, help="output filename for export"
@@ -323,8 +327,10 @@ class Draw(Command):
         try:
             layout = doc.layouts.get(args.layout)
         except KeyError:
-            print(f'Could not find layout "{args.layout}". '
-                  f'Valid layouts: {[l.name for l in doc.layouts]}')
+            print(
+                f'Could not find layout "{args.layout}". '
+                f"Valid layouts: {[l.name for l in doc.layouts]}"
+            )
             sys.exit(1)
 
         fig = plt.figure()
@@ -337,9 +343,11 @@ class Draw(Command):
                 layer_properties.is_visible = True
 
         if args.all_entities_visible:
+
             class AllVisibleFrontend(Frontend):
-                def override_properties(self, entity: "DXFGraphic",
-                                        properties: "Properties") -> None:
+                def override_properties(
+                    self, entity: "DXFGraphic", properties: "Properties"
+                ) -> None:
                     properties.is_visible = True
 
             frontend = AllVisibleFrontend(ctx, out)
@@ -390,7 +398,7 @@ class View(Command):
             type=float,
             default=0,
             help="set custom line weight scaling, default is 0 to disable "
-                 "line weights at all",
+            "line weights at all",
         )
 
     @staticmethod
@@ -445,7 +453,7 @@ class Browse(Command):
             "--handle",
             required=False,
             help="go to entity by HANDLE, HANDLE has to be a hex value without "
-                 "any prefix like 'fefe'",
+            "any prefix like 'fefe'",
         )
 
     @staticmethod
@@ -490,7 +498,7 @@ class Strip(Command):
             action="store_true",
             required=False,
             help='make a backup copy with extension ".bak" from the '
-                 "DXF file, overwrites existing backup files",
+            "DXF file, overwrites existing backup files",
         )
         parser.add_argument(
             "-t",
