@@ -148,7 +148,7 @@ class ObjectsSection:
         an index slice ``objects[:10]`` to get the first 10 or less objects as ``List[DXFObject]``.
 
         """
-        return self._entity_space[index]  # type: DXFObject
+        return self._entity_space[index]
 
     def __contains__(self, entity: Union['DXFObject', str]) -> bool:
         """ Returns ``True`` if `entity` stored in OBJECTS section.

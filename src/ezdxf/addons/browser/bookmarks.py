@@ -11,7 +11,7 @@ class Bookmark(NamedTuple):
 
 class Bookmarks:
     def __init__(self):
-        self.bookmarks: Dict[str: Bookmark] = dict()
+        self.bookmarks: Dict[str, Bookmark] = dict()
 
     def add(self, name: str, handle: str, offset: int):
         self.bookmarks[name] = Bookmark(name, handle, offset)

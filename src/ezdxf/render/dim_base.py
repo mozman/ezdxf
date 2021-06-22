@@ -521,8 +521,8 @@ class BaseDimensionRenderer:
     def default_attributes(self) -> dict:
         """ Returns default DXF attributes as dict. """
         return {
-            'layer': self.default_layer,  # type: str
-            'color': self.default_color,  # type: int
+            'layer': self.default_layer,
+            'color': self.default_color,
         }
 
     def dim_line_attributes(self) -> dict:

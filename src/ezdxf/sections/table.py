@@ -343,7 +343,7 @@ class ViewportTable(Table):
     def _append(self, entry: 'DXFEntity') -> None:
         key = self.key(entry.dxf.name)
         if key in self.entries:
-            self.entries[key].append(entry)  # type: List[DXFEntity]
+            self.entries[key].append(entry)
         else:
             self.entries[key] = [entry]  # store list of VPORT
 
