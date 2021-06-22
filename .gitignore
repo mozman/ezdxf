@@ -32,3 +32,4 @@ tox-all.ini
 /src/ezdxf/acc/construct.cpp
 /src/ezdxf/acc/matrix44.cpp
 /src/ezdxf/acc/vector.cpp
+/src/mypy-reports/
