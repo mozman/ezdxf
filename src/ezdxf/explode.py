@@ -1,7 +1,6 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
 import logging
-import math
 from typing import TYPE_CHECKING, Iterable, Callable, Optional, cast, Dict, List
 
 from ezdxf.entities import factory
@@ -14,7 +13,7 @@ from ezdxf.entities.boundary_paths import (
     SplineEdge,
 )
 from ezdxf.lldxf.const import DXFStructureError, DXFTypeError
-from ezdxf.math import OCS, Vec3
+from ezdxf.math import OCS, Vec3, ABS_TOL
 from ezdxf.math.transformtools import (
     NonUniformScalingError,
     InsertTransformationError,
@@ -33,6 +32,14 @@ if TYPE_CHECKING:
         Text,
         LWPolyline,
     )
+
+__all__ = [
+    "virtual_block_reference_entities",
+    "virtual_boundary_path_entities",
+    "explode_block_reference",
+    "explode_entity",
+    "attrib_to_text",
+]
 
 
 def default_logging_callback(entity, reason):
@@ -98,7 +105,7 @@ def explode_block_reference(
         entitydb is not None
     ), "Exploding a block reference requires an entity database."
 
-    entities = []
+    entities: List["DXFGraphic"] = []
     if block_ref.mcount > 1:
         for virtual_insert in block_ref.multi_insert():
             _explode_single_block_ref(virtual_insert)
@@ -133,7 +140,7 @@ def attrib_to_text(attrib: "Attrib") -> "Text":
     text = factory.new("TEXT", dxfattribs=dxfattribs)
     if attrib.doc:
         factory.bind(text, attrib.doc)
-    return text
+    return cast("Text", text)
 
 
 def virtual_block_reference_entities(
@@ -167,7 +174,8 @@ def virtual_block_reference_entities(
 
     """
     assert block_ref.dxftype() == "INSERT"
-    Ellipse = cast("Ellipse", factory.cls("ELLIPSE"))
+    from ezdxf.entities import Ellipse
+
     skipped_entity_callback = (
         skipped_entity_callback or default_logging_callback
     )
@@ -195,8 +203,7 @@ def virtual_block_reference_entities(
             except NonUniformScalingError:
                 dxftype = entity.dxftype()
                 if dxftype in {"ARC", "CIRCLE"}:
-                    if not math.isclose(entity.dxf.radius, 0.0):
-                        # radius < 0 is ok.
+                    if abs(entity.dxf.radius) > ABS_TOL:
                         yield Ellipse.from_arc(entity).transform(m)
                     else:
                         skipped_entity_callback(
@@ -251,11 +258,8 @@ def explode_entity(
 
     """
     dxftype = entity.dxftype()
-
-    if (
-        not hasattr(entity, "virtual_entities")
-        or dxftype in EXCLUDE_FROM_EXPLODE
-    ):
+    virtual_entities = getattr(entity, "virtual_entities")
+    if virtual_entities is None or dxftype in EXCLUDE_FROM_EXPLODE:
         raise DXFTypeError(f"Can not explode entity {dxftype}.")
 
     if entity.doc is None:
@@ -273,12 +277,11 @@ def explode_entity(
         target_layout = entity.get_layout()
         if target_layout is None:
             raise DXFStructureError(
-                f"{dxftype} without layout assigment, specify target layout."
+                f"{dxftype} without layout assignment, specify target layout."
             )
 
     entities = []
-
-    for e in entity.virtual_entities():
+    for e in virtual_entities():
         target_layout.add_entity(e)
         entities.append(e)
 
@@ -290,32 +293,31 @@ def explode_entity(
     return EntityQuery(entities)
 
 
-def virtual_boundary_paths(polygon: "BasePolygon") -> List[List["DXFGraphic"]]:
+def virtual_boundary_path_entities(
+    polygon: "BasePolygon",
+) -> List[List["DXFGraphic"]]:
+    from ezdxf.entities import LWPolyline
+
+    def polyline():
+        p = LWPolyline.new(dxfattribs=dict(graphic_attribs))
+        p.append_formatted_vertices(path.vertices, format="xyb")
+        p.dxf.extrusion = ocs.uz
+        p.dxf.elevation = elevation
+        p.closed = path.is_closed
+        return p
+
     graphic_attribs = polygon.graphic_properties()
-    elevation: float = polygon.dxf.elevation.z
+    elevation = float(polygon.dxf.elevation.z)
     ocs = polygon.ocs()
     entities = []
     for path in polygon.paths:
         if isinstance(path, PolylinePath):
-            attribs = dict(graphic_attribs)
-            attribs["extrusion"] = ocs.uz
-            attribs["elevation"] = elevation
-            entities.append([_virtual_polyline_path(path, attribs)])
+            entities.append([polyline()])
         elif isinstance(path, EdgePath):
-            attribs = dict(graphic_attribs)
-            entities.append(_virtual_edge_path(path, attribs, ocs, elevation))
+            entities.append(
+                _virtual_edge_path(path, dict(graphic_attribs), ocs, elevation)
+            )
     return entities
-
-
-def _virtual_polyline_path(
-    path: PolylinePath, dxfattribs: Dict
-) -> "LWPolyline":
-    polyline = cast(
-        "LWPolyline", factory.new("LWPOLYLINE", dxfattribs=dxfattribs)
-    )
-    polyline.append_formatted_vertices(path.vertices, format="xyb")
-    polyline.closed = path.is_closed
-    return polyline
 
 
 def _virtual_edge_path(
