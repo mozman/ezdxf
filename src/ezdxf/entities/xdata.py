@@ -18,9 +18,9 @@ import logging
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter
+    from ezdxf.eztypes import TagWriter, DXFEntity
 
-__all__ = ["XData", "EmbeddedObjects"]
+__all__ = ["XData", "XDataList", "XDataDict", "EmbeddedObjects"]
 
 
 class XData:
@@ -175,3 +175,11 @@ class EmbeddedObjects:  # TODO: remove
     def export_dxf(self, tagwriter: "TagWriter") -> None:
         for tags in self.embedded_objects:
             tagwriter.write_tags(tags)
+
+
+class XDataList:
+    """Manage named XDATA lists as a list-like object."""
+
+
+class XDataDict:
+    """Manage named XDATA lists as a dict-like object."""
