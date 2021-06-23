@@ -3,8 +3,10 @@
 
 import pytest
 import copy
+from ezdxf.math import Vec3
 from ezdxf.lldxf.const import DXFValueError, DXFStructureError
 from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.lldxf.types import dxftag
 from ezdxf.lldxf.tags import (
     Tags,
     find_begin_and_end_of_encoded_xdata_tags,
@@ -387,8 +389,145 @@ class TestEncodedXDATATags:
             )
 
 
+LIST1 = """1001
+EZDXF
+1000
+DefaultList
+1002
+{
+1000
+VALUE
+1000
+CONTENT
+1002
+}
+"""
+
+USER_LIST = """1001
+USER
+1000
+UserList
+1002
+{
+1000
+VALUE
+1000
+CONTENT
+1002
+}
+"""
+
+
 class TestXDataList:
-    pass
+    @pytest.fixture
+    def list1(self):
+        return Tags.from_text(LIST1)
+
+    @pytest.fixture
+    def user_list(self):
+        return Tags.from_text(USER_LIST)
+
+    def test_load_not_existing_list(self):
+        xlist = XDataList(XData())
+        assert len(xlist) == 0
+
+    def test_load_existing_list(self, list1):
+        xlist = XDataList(XData([list1]))
+        assert len(xlist) == 2
+        assert xlist[0] == "VALUE"
+        assert xlist[1] == "CONTENT"
+
+    def test_load_user_list(self, user_list):
+        xlist = XDataList(XData([user_list]), name="UserList", appid="USER")
+        assert len(xlist) == 2
+        assert xlist[0] == "VALUE"
+        assert xlist[1] == "CONTENT"
+
+    def test_list_like_getitem_interface(self, list1):
+        xlist = XDataList(XData([list1]))
+        assert len(xlist) == 2
+        assert xlist[-1] == "CONTENT"
+        assert xlist[:] == ["VALUE", "CONTENT"]
+
+    def test_list_like_setitem_interface(self, list1):
+        xlist = XDataList(XData([list1]))
+        xlist[0] = 15
+        assert xlist[0] == 15
+
+    def test_list_like_insert_interface(self, list1):
+        xlist = XDataList(XData([list1]))
+        xlist.insert(0, 17)
+        assert xlist[0] == 17
+        assert len(xlist) == 3
+
+    def test_list_like_delitem_interface(self, list1):
+        xlist = XDataList(XData([list1]))
+        del xlist[0]
+        assert len(xlist) == 1
+        assert xlist[0] == "CONTENT"
+
+    def test_commit_creates_valid_xdata_list(self):
+        xlist = XDataList()
+        xlist.extend(["String", Vec3(1, 2, 3), 3.1415, 256])
+        xlist.commit()
+        tags = xlist.xdata.get("EZDXF")
+        assert tags == [
+            dxftag(1001, "EZDXF"),
+            dxftag(1000, "DefaultList"),
+            dxftag(1002, "{"),
+            dxftag(1000, "String"),
+            dxftag(1010, (1, 2, 3)),
+            dxftag(1040, 3.1415),
+            dxftag(1071, 256),
+            dxftag(1002, "}"),
+        ]
+
+    def test_commit_replaces_existing_xdata_list(self, list1):
+        xlist = XDataList(XData([list1]))
+        xlist.clear()
+        xlist.extend(["String", Vec3(1, 2, 3), 3.1415, 256])
+        xlist.commit()
+        tags = xlist.xdata.get("EZDXF")
+        assert tags == [
+            dxftag(1001, "EZDXF"),
+            dxftag(1000, "DefaultList"),
+            dxftag(1002, "{"),
+            dxftag(1000, "String"),
+            dxftag(1010, (1, 2, 3)),
+            dxftag(1040, 3.1415),
+            dxftag(1071, 256),
+            dxftag(1002, "}"),
+        ]
+
+    def test_modify_existing_xdata_list(self, list1):
+        xlist = XDataList(XData([list1]))
+        xlist[0] = 3.1415
+        xlist[1] = 256
+        xlist.commit()
+        tags = xlist.xdata.get("EZDXF")
+        assert tags == [
+            dxftag(1001, "EZDXF"),
+            dxftag(1000, "DefaultList"),
+            dxftag(1002, "{"),
+            dxftag(1040, 3.1415),
+            dxftag(1071, 256),
+            dxftag(1002, "}"),
+        ]
+
+    def test_modify_existing_user_list(self, user_list):
+        xlist = XDataList(XData([user_list]), name="UserList", appid="USER")
+        xlist[0] = 3.1415
+        xlist[1] = 256
+        xlist.commit()
+        tags = xlist.xdata.get("USER")
+        assert tags == [
+            dxftag(1001, "USER"),
+            dxftag(1000, "UserList"),
+            dxftag(1002, "{"),
+            dxftag(1040, 3.1415),
+            dxftag(1071, 256),
+            dxftag(1002, "}"),
+        ]
 
 
 class TestXDataDict:

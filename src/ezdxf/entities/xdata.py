@@ -1,10 +1,11 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List, Iterable, Tuple
-from collections import OrderedDict
-from ezdxf.lldxf.types import dxftag
+from typing import TYPE_CHECKING, List, Iterable, Tuple, Any
+from collections import OrderedDict, MutableSequence
+from ezdxf.math import Vec3
+from ezdxf.lldxf.types import dxftag, DXFTag
 from ezdxf.lldxf.tags import Tags
-from ezdxf.lldxf.const import XDATA_MARKER, DXFValueError
+from ezdxf.lldxf.const import XDATA_MARKER, DXFValueError, DXFTypeError
 from ezdxf.lldxf.tags import (
     xdata_list,
     remove_named_list_from_xdata,
@@ -18,7 +19,7 @@ import logging
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFEntity
+    from ezdxf.eztypes import TagWriter
 
 __all__ = ["XData", "XDataList", "XDataDict", "EmbeddedObjects"]
 
@@ -177,8 +178,79 @@ class EmbeddedObjects:  # TODO: remove
             tagwriter.write_tags(tags)
 
 
-class XDataList:
-    """Manage named XDATA lists as a list-like object."""
+class XDataList(MutableSequence):
+    """Manage named XDATA lists as a list-like object.
+
+    Stores just a few data types with fixed group codes:
+
+        1000 str
+        1010 Vec3
+        1040 float
+        1071 32bit int
+
+    This class can not manage arbitrary XDATA!
+
+    """
+
+    converter = {
+        1000: str,
+        1010: Vec3,
+        1040: float,
+        1071: int,
+    }
+    group_codes = {
+        str: 1000,
+        Vec3: 1010,
+        float: 1040,
+        int: 1071,
+    }
+
+    def __init__(self, xdata: XData = None, name="DefaultList", appid="EZDXF"):
+        xdata = xdata or XData()
+        self.xdata = xdata
+        self._appid = str(appid)
+        self._name = str(name)
+        try:
+            data = xdata.get_xlist(self._appid, self._name)
+        except DXFValueError:
+            data = []
+        self._data: List = self._parse_list(data)
+
+    def insert(self, index: int, value) -> None:
+        self._data.insert(index, value)
+
+    def __getitem__(self, item):
+        return self._data[item]
+
+    def __setitem__(self, item, value) -> Any:
+        self._data.__setitem__(item, value)
+
+    def __delitem__(self, item) -> None:
+        self._data.__delitem__(item)
+
+    def _parse_list(self, tags: Iterable[Tuple]) -> List:
+        data = list(tags)
+        content = []
+        for code, value in data[2:-1]:
+            factory = self.converter.get(code)
+            if factory:
+                content.append(factory(value))
+            else:
+                raise DXFValueError(f"unsupported group code: {code}")
+        return content
+
+    def __len__(self) -> int:
+        return len(self._data)
+
+    def commit(self):
+        data = []
+        for value in self._data:
+            code = self.group_codes.get(type(value))
+            if code:
+                data.append(dxftag(code, value))
+            else:
+                raise DXFTypeError(f"invalid type: {type(value)}")
+        self.xdata.set_xlist(self._appid, self._name, data)
 
 
 class XDataDict:
