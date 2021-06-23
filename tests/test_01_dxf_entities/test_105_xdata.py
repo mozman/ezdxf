@@ -404,9 +404,9 @@ CONTENT
 """
 
 USER_LIST = """1001
-USER
+MyAppID
 1000
-UserList
+MyUserList
 1002
 {
 1000
@@ -438,7 +438,9 @@ class TestXDataUserList:
         assert xlist[1] == "CONTENT"
 
     def test_load_user_list(self, user_list):
-        xlist = XDataUserList(XData([user_list]), name="UserList", appid="USER")
+        xlist = XDataUserList(
+            XData([user_list]), name="MyUserList", appid="MyAppID"
+        )
         assert len(xlist) == 2
         assert xlist[0] == "VALUE"
         assert xlist[1] == "CONTENT"
@@ -466,7 +468,7 @@ class TestXDataUserList:
         assert len(xlist) == 1
         assert xlist[0] == "CONTENT"
 
-    def test_commit_creates_valid_xdata_list(self):
+    def test_commit_creates_valid_XDATA(self):
         xlist = XDataUserList()
         xlist.extend(["String", Vec3(1, 2, 3), 3.1415, 256])
         xlist.commit()
@@ -482,7 +484,7 @@ class TestXDataUserList:
             dxftag(1002, "}"),
         ]
 
-    def test_commit_replaces_existing_xdata_list(self, list1):
+    def test_commit_replaces_existing_XDATA(self, list1):
         xlist = XDataUserList(XData([list1]))
         xlist.clear()
         xlist.extend(["String", Vec3(1, 2, 3), 3.1415, 256])
@@ -499,7 +501,7 @@ class TestXDataUserList:
             dxftag(1002, "}"),
         ]
 
-    def test_modify_existing_xdata_list(self, list1):
+    def test_modify_existing_XDATA(self, list1):
         xlist = XDataUserList(XData([list1]))
         xlist[0] = 3.1415
         xlist[1] = 256
@@ -515,23 +517,163 @@ class TestXDataUserList:
         ]
 
     def test_modify_existing_user_list(self, user_list):
-        xlist = XDataUserList(XData([user_list]), name="UserList", appid="USER")
+        xlist = XDataUserList(
+            XData([user_list]), name="MyUserList", appid="MyAppID"
+        )
         xlist[0] = 3.1415
         xlist[1] = 256
         xlist.commit()
-        tags = xlist.xdata.get("USER")
+        tags = xlist.xdata.get("MyAppID")
         assert tags == [
-            dxftag(1001, "USER"),
-            dxftag(1000, "UserList"),
+            dxftag(1001, "MyAppID"),
+            dxftag(1000, "MyUserList"),
             dxftag(1002, "{"),
             dxftag(1040, 3.1415),
             dxftag(1071, 256),
             dxftag(1002, "}"),
         ]
 
+    def test_context_manager_interface(self):
+        xdata = XData()
+        with XDataUserList(xdata) as xlist:
+            xlist.extend(["String", Vec3(1, 2, 3), 3.1415, 256])
+
+        tags = xdata.get("EZDXF")
+        assert tags == [
+            dxftag(1001, "EZDXF"),
+            dxftag(1000, "DefaultList"),
+            dxftag(1002, "{"),
+            dxftag(1000, "String"),
+            dxftag(1010, (1, 2, 3)),
+            dxftag(1040, 3.1415),
+            dxftag(1071, 256),
+            dxftag(1002, "}"),
+        ]
+
+
+DICT1 = """1001
+EZDXF
+1000
+DefaultDict
+1002
+{
+1000
+Key0
+1000
+StringValue
+1000
+Float
+1040
+3.1415
+1002
+}
+"""
+
+USER_DICT = """1001
+MyAppID
+1000
+MyUserDict
+1002
+{
+1000
+MyKey
+1000
+MyString
+1000
+Int
+1071
+65535
+1002
+}
+"""
+
 
 class TestXDataUserDict:
-    pass
+    @pytest.fixture
+    def dict1(self):
+        return Tags.from_text(DICT1)
+
+    @pytest.fixture
+    def user_dict(self):
+        return Tags.from_text(USER_DICT)
+
+    def test_load_not_existing_dict(self):
+        xdict = XDataUserDict(XData())
+        assert len(xdict) == 0
+
+    def test_load_existing_dict(self, dict1):
+        xdict = XDataUserDict(XData([dict1]))
+        assert len(xdict) == 2
+        assert xdict["Key0"] == "StringValue"
+        assert xdict["Float"] == 3.1415
+
+    def test_load_user_dict(self, user_dict):
+        xdict = XDataUserDict(
+            XData([user_dict]), name="MyUserDict", appid="MyAppID"
+        )
+        assert len(xdict) == 2
+        assert xdict["MyKey"] == "MyString"
+        assert xdict["Int"] == 65535
+
+    def test_dict_like_interface(self, dict1):
+        xdict = XDataUserDict(XData([dict1]))
+        assert len(xdict) == 2
+        assert "Key0" in xdict
+        assert list(xdict.keys()) == ["Key0", "Float"]
+        assert list(xdict.values()) == ["StringValue", 3.1415]
+
+    def test_dict_like_setitem_interface(self):
+        xdict = XDataUserDict()
+        xdict["Test"] = 17
+        assert len(xdict) == 1
+        assert "Test" in xdict
+
+    def test_dict_like_del_interface(self, dict1):
+        xdict = XDataUserDict(XData([dict1]))
+        del xdict["Key0"]
+        assert len(xdict) == 1
+        xdict.clear()
+        assert len(xdict) == 0
+
+    def test_discard_non_existing_key(self):
+        xdict = XDataUserDict()
+        xdict.discard("XXX")
+        assert len(xdict) == 0
+
+    def test_commit_creates_valid_XDATA(self):
+        xdict = XDataUserDict()
+        xdict["Key0"] = "StringValue"
+        xdict["Float"] = 3.1415
+        xdict.commit()
+        tags = xdict.xdata.get("EZDXF")
+        assert tags == [
+            dxftag(1001, "EZDXF"),
+            dxftag(1000, "DefaultDict"),
+            dxftag(1002, "{"),
+            dxftag(1000, "Key0"),
+            dxftag(1000, "StringValue"),
+            dxftag(1000, "Float"),
+            dxftag(1040, 3.1415),
+            dxftag(1002, "}"),
+        ]
+
+    def test_context_manager_interface(self):
+        xdata = XData()
+        with XDataUserDict(xdata) as xdict:
+            xdict["Key1"] = 256
+            xdict["Key2"] = "Value2"
+
+        tags = xdata.get("EZDXF")
+        assert tags == [
+            dxftag(1001, "EZDXF"),
+            dxftag(1000, "DefaultDict"),
+            dxftag(1002, "{"),
+            dxftag(1000, "Key1"),
+            dxftag(1071, 256),
+            dxftag(1000, "Key2"),
+            dxftag(1000, "Value2"),
+            dxftag(1002, "}"),
+        ]
 
 
 if __name__ == "__main__":

@@ -1,9 +1,9 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List, Iterable, Tuple, Any
-from collections import OrderedDict, MutableSequence
+from typing import TYPE_CHECKING, List, Iterable, Tuple, Any, Dict
+from collections import OrderedDict, MutableSequence, MutableMapping
 from ezdxf.math import Vec3
-from ezdxf.lldxf.types import dxftag, DXFTag
+from ezdxf.lldxf.types import dxftag
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.const import XDATA_MARKER, DXFValueError, DXFTypeError
 from ezdxf.lldxf.tags import (
@@ -12,6 +12,7 @@ from ezdxf.lldxf.tags import (
     get_named_list_from_xdata,
     NotFoundException,
 )
+from ezdxf.tools import take2
 from ezdxf import options
 from ezdxf.lldxf.repair import filter_invalid_xdata_group_codes
 import logging
@@ -19,7 +20,7 @@ import logging
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter
+    from ezdxf.eztypes import TagWriter, DXFEntity
 
 __all__ = ["XData", "XDataUserList", "XDataUserDict", "EmbeddedObjects"]
 
@@ -206,7 +207,8 @@ class XDataUserList(MutableSequence):
     }
 
     def __init__(self, xdata: XData = None, name="DefaultList", appid="EZDXF"):
-        xdata = xdata or XData()
+        if xdata is None:
+            xdata = XData()
         self.xdata = xdata
         self._appid = str(appid)
         self._name = str(name)
@@ -215,6 +217,18 @@ class XDataUserList(MutableSequence):
         except DXFValueError:
             data = []
         self._data: List = self._parse_list(data)
+
+    @classmethod
+    def from_dxf_entity(
+        cls, entity: "DXFEntity", name="DefaultList", appid="EZDXF"
+    ) -> "XDataUserList":
+        return cls(entity.xdata, name, appid)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.commit()
 
     def insert(self, index: int, value) -> None:
         self._data.insert(index, value)
@@ -253,5 +267,64 @@ class XDataUserList(MutableSequence):
         self.xdata.set_xlist(self._appid, self._name, data)
 
 
-class XDataUserDict:
-    """Manage named XDATA lists as a dict-like object."""
+class XDataUserDict(MutableMapping):
+    """Manage named XDATA lists as a dict-like object.
+
+    Uses XDataUserList to store key, value pairs in XDATA.
+
+    """
+
+    def __init__(self, xdata: XData = None, name="DefaultDict", appid="EZDXF"):
+        self._xlist = XDataUserList(xdata, name, appid)
+        self._user_dict: Dict = self._parse_xlist()
+
+    def _parse_xlist(self) -> Dict:
+        if self._xlist:
+            return dict(take2(self._xlist))
+        else:
+            return dict()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.commit()
+
+    @classmethod
+    def from_dxf_entity(
+        cls, entity: "DXFEntity", name="DefaultDict", appid="EZDXF"
+    ) -> "XDataUserDict":
+        return cls(entity.xdata, name, appid)
+
+    @property
+    def xdata(self):
+        return self._xlist.xdata
+
+    def __len__(self):
+        return len(self._user_dict)
+
+    def __getitem__(self, key):
+        return self._user_dict[key]
+
+    def __setitem__(self, key, item):
+        self._user_dict[key] = item
+
+    def __delitem__(self, key):
+        del self._user_dict[key]
+
+    def __iter__(self):
+        return iter(self._user_dict)
+
+    def discard(self, key):
+        try:
+            del self._user_dict[key]
+        except KeyError:
+            pass
+
+    def commit(self) -> None:
+        xlist = self._xlist
+        xlist.clear()
+        for key, value in self._user_dict.items():
+            xlist.append(key)
+            xlist.append(value)
+        xlist.commit()
