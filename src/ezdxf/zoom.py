@@ -7,7 +7,7 @@ from ezdxf.layouts import Layout
 from ezdxf.entities import DXFEntity
 from ezdxf import bbox
 
-__all__ = ["center", "entities", "extents", "window"]
+__all__ = ["center", "objects", "extents", "window"]
 
 
 def center(layout: Layout, point: Vertex, size: 'Vertex'):

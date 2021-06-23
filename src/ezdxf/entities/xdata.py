@@ -192,6 +192,9 @@ class XDataUserList(MutableSequence):
 
     This class can not manage arbitrary XDATA!
 
+    This class does not create the required AppID table entry, only the
+    default AppID "EZDXF" exist by default.
+
     """
 
     converter = {
@@ -238,6 +241,9 @@ class XDataUserList(MutableSequence):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.commit()
 
+    def __str__(self):
+        return str(self._data)
+
     def insert(self, index: int, value) -> None:
         self._data.insert(index, value)
 
@@ -280,6 +286,9 @@ class XDataUserDict(MutableMapping):
 
     Uses XDataUserList to store key, value pairs in XDATA.
 
+    This class does not create the required AppID table entry, only the
+    default AppID "EZDXF" exist by default.
+
     """
 
     def __init__(self, xdata: XData = None, name="DefaultDict", appid="EZDXF"):
@@ -297,6 +306,9 @@ class XDataUserDict(MutableMapping):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.commit()
+
+    def __str__(self):
+        return str(self._user_dict)
 
     @classmethod
     @contextmanager
