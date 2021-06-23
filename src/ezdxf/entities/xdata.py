@@ -2,6 +2,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, List, Iterable, Tuple, Any, Dict
 from collections import OrderedDict, MutableSequence, MutableMapping
+from contextlib import contextmanager
 from ezdxf.math import Vec3
 from ezdxf.lldxf.types import dxftag
 from ezdxf.lldxf.tags import Tags
@@ -219,10 +220,17 @@ class XDataUserList(MutableSequence):
         self._data: List = self._parse_list(data)
 
     @classmethod
-    def from_dxf_entity(
+    @contextmanager
+    def entity(
         cls, entity: "DXFEntity", name="DefaultList", appid="EZDXF"
     ) -> "XDataUserList":
-        return cls(entity.xdata, name, appid)
+        xdata = entity.xdata
+        if xdata is None:
+            xdata = XData()
+            entity.xdata = xdata
+        xlist = cls(xdata, name, appid)
+        yield xlist
+        xlist.commit()
 
     def __enter__(self):
         return self
@@ -291,10 +299,17 @@ class XDataUserDict(MutableMapping):
         self.commit()
 
     @classmethod
-    def from_dxf_entity(
+    @contextmanager
+    def entity(
         cls, entity: "DXFEntity", name="DefaultDict", appid="EZDXF"
     ) -> "XDataUserDict":
-        return cls(entity.xdata, name, appid)
+        xdata = entity.xdata
+        if xdata is None:
+            xdata = XData()
+            entity.xdata = xdata
+        xdict = cls(xdata, name, appid)
+        yield xdict
+        xdict.commit()
 
     @property
     def xdata(self):
