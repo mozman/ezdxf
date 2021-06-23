@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, List, Iterable, Tuple
 from collections import OrderedDict
@@ -6,25 +6,27 @@ from ezdxf.lldxf.types import dxftag
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.const import XDATA_MARKER, DXFValueError
 from ezdxf.lldxf.tags import (
-    xdata_list, remove_named_list_from_xdata, get_named_list_from_xdata,
+    xdata_list,
+    remove_named_list_from_xdata,
+    get_named_list_from_xdata,
     NotFoundException,
 )
 from ezdxf import options
 from ezdxf.lldxf.repair import filter_invalid_xdata_group_codes
 import logging
 
-logger = logging.getLogger('ezdxf')
+logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
 
-__all__ = ['XData', 'EmbeddedObjects']
+__all__ = ["XData", "EmbeddedObjects"]
 
 
 class XData:
     def __init__(self, xdata: List[Tags] = None):
         self.data = OrderedDict()
-        for data in (xdata or []):
+        for data in xdata or []:
             self._add(data)
 
     def __len__(self):
@@ -38,7 +40,7 @@ class XData:
         if len(tags):
             appid = tags[0].value
             if appid in self.data:
-                logger.info(f'Duplicate XDATA appid {appid} in one entity')
+                logger.info(f"Duplicate XDATA appid {appid} in one entity")
             self.data[appid] = tags
 
     def add(self, appid: str, tags: Iterable) -> None:
@@ -57,14 +59,14 @@ class XData:
         if appid in self.data:
             del self.data[appid]
 
-    def export_dxf(self, tagwriter: 'TagWriter') -> None:
+    def export_dxf(self, tagwriter: "TagWriter") -> None:
         for appid, tags in self.data.items():
             if options.filter_invalid_xdata_group_codes:
                 tags = list(filter_invalid_xdata_group_codes(tags))
             tagwriter.write_tags(tags)
 
     def has_xlist(self, appid: str, name: str) -> bool:
-        """ Returns True if list `name` from XDATA `appid` exists.
+        """Returns True if list `name` from XDATA `appid` exists.
 
         Args:
             appid: APPID
@@ -79,7 +81,7 @@ class XData:
             return True
 
     def get_xlist(self, appid: str, name: str) -> List[Tuple]:
-        """ Get list `name` from XDATA `appid`.
+        """Get list `name` from XDATA `appid`.
 
         Args:
             appid: APPID
@@ -97,10 +99,11 @@ class XData:
             return get_named_list_from_xdata(name, xdata)
         except NotFoundException:
             raise DXFValueError(
-                f'No data list "{name}" not found for APPID "{appid}"')
+                f'No data list "{name}" not found for APPID "{appid}"'
+            )
 
     def set_xlist(self, appid: str, name: str, tags: Iterable) -> None:
-        """ Create new list `name` of XDATA `appid` with `xdata_tags` and
+        """Create new list `name` of XDATA `appid` with `xdata_tags` and
         replaces list `name` if already exists.
 
         Args:
@@ -117,7 +120,7 @@ class XData:
             self.replace_xlist(appid, name, tags)
 
     def discard_xlist(self, appid: str, name: str) -> None:
-        """ Deletes list `name` from XDATA `appid`. Ignores silently if XDATA
+        """Deletes list `name` from XDATA `appid`. Ignores silently if XDATA
         `appid` or list `name` not exist.
 
         Args:
@@ -138,7 +141,7 @@ class XData:
                 self.add(appid, tags)
 
     def replace_xlist(self, appid: str, name: str, tags: Iterable) -> None:
-        """ Replaces list `name` of existing XDATA `appid` by `tags`. Appends
+        """Replaces list `name` of existing XDATA `appid` by `tags`. Appends
         new list if list `name` do not exist, but raises `DXFValueError` if
         XDATA `appid` do not exist.
 
@@ -164,11 +167,11 @@ class XData:
 
 
 class EmbeddedObjects:  # TODO: remove
-    """ Introduced in DXF R2018. """
+    """Introduced in DXF R2018."""
 
     def __init__(self, embedded_objects: List[Tags]):
         self.embedded_objects = embedded_objects
 
-    def export_dxf(self, tagwriter: 'TagWriter') -> None:
+    def export_dxf(self, tagwriter: "TagWriter") -> None:
         for tags in self.embedded_objects:
             tagwriter.write_tags(tags)
