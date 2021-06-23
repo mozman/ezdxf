@@ -114,6 +114,19 @@ def test_write_dxf(txt, ver):
     assert collector.has_all_tags(collector2)
 
 
+def test_get_pass_through_ocs():
+    line = Line.new(
+        dxfattribs={
+            'start': (0, 0, 0),
+            'end': (1, 0, 0),
+            'extrusion': (0, 0, -1)
+        }
+    )
+    ocs = line.ocs()
+    assert ocs.to_wcs((0, 0, 0)) == (0, 0, 0)
+    assert ocs.to_wcs((1, 0, 0)) == (1, 0, 0)
+
+
 def test_transform():
     line = Line.new(dxfattribs={'start': (0, 0, 0), 'end': (1, 0, 0), 'extrusion': (0, 1, 0)})
     m = Matrix44.translate(1, 2, 3)

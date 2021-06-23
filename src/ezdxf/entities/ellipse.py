@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Iterable
 import math
 from ezdxf.lldxf import validator
 from ezdxf.math import (
-    Vec3, Matrix44, NULLVEC, X_AXIS, Z_AXIS, ellipse, ConstructionEllipse,
+    Vec3, Matrix44, NULLVEC, X_AXIS, Z_AXIS, ellipse, ConstructionEllipse, OCS
 )
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
@@ -234,3 +234,8 @@ class Ellipse(DXFGraphic):
         else:
             add_entity(spline, layout)
         return spline
+
+    def ocs(self) -> OCS:
+        # WCS entity which supports the "extrusion" attribute in a
+        # different way!
+        return OCS()

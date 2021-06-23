@@ -1197,3 +1197,8 @@ class MText(DXFGraphic):
         if self.has_columns:
             for column in self._columns.linked_columns:
                 column.remove_dependencies(other)
+
+    def ocs(self) -> OCS:
+        # WCS entity which supports the "extrusion" attribute in a
+        # different way!
+        return OCS()

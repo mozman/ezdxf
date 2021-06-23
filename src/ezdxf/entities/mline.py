@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2020, Manfred Moitzi
+# Copyright (c) 2018-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Dict, Iterable, List, Optional
 from collections import OrderedDict, namedtuple
@@ -8,11 +8,15 @@ from ezdxf.audit import AuditError
 from ezdxf.entities.factory import register_entity
 from ezdxf.lldxf import const, validator
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    DXFAttr,
+    DXFAttributes,
+    DefSubclass,
+    XType,
+    RETURN_DEFAULT,
     group_code_mapping,
 )
 from ezdxf.lldxf.tags import Tags, group_tags
-from ezdxf.math import NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, Vertex, Vec3, UCS
+from ezdxf.math import NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, Vertex, Vec3, UCS, OCS
 
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
@@ -23,19 +27,25 @@ import logging
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, Drawing, DXFNamespace, EntityQuery, BaseLayout, Matrix44,
+        TagWriter,
+        Drawing,
+        DXFNamespace,
+        EntityQuery,
+        BaseLayout,
+        Matrix44,
         Auditor,
     )
 
-__all__ = ['MLine', 'MLineVertex', 'MLineStyle', 'MLineStyleCollection']
+__all__ = ["MLine", "MLineVertex", "MLineStyle", "MLineStyleCollection"]
 
 # Usage example: CADKitSamples\Lock-Off.dxf
 
-logger = logging.getLogger('ezdxf')
+logger = logging.getLogger("ezdxf")
 
 
-def filter_close_vertices(vertices: Iterable[Vec3],
-                          abs_tol: float = 1e-12) -> Iterable[Vec3]:
+def filter_close_vertices(
+    vertices: Iterable[Vec3], abs_tol: float = 1e-12
+) -> Iterable[Vec3]:
     prev = None
     for vertex in vertices:
         if prev is None:
@@ -47,65 +57,68 @@ def filter_close_vertices(vertices: Iterable[Vec3],
                 prev = vertex
 
 
-acdb_mline = DefSubclass('AcDbMline', OrderedDict({
-    'style_name': DXFAttr(2, default='Standard'),
-    'style_handle': DXFAttr(340),
-    'scale_factor': DXFAttr(
-        40, default=1,
-        validator=validator.is_not_zero,
-        fixer=RETURN_DEFAULT,
+acdb_mline = DefSubclass(
+    "AcDbMline",
+    OrderedDict(
+        {
+            "style_name": DXFAttr(2, default="Standard"),
+            "style_handle": DXFAttr(340),
+            "scale_factor": DXFAttr(
+                40,
+                default=1,
+                validator=validator.is_not_zero,
+                fixer=RETURN_DEFAULT,
+            ),
+            # Justification
+            # 0 = Top (Right)
+            # 1 = Zero (Center)
+            # 2 = Bottom (Left)
+            "justification": DXFAttr(
+                70,
+                default=0,
+                validator=validator.is_in_integer_range(0, 3),
+                fixer=RETURN_DEFAULT,
+            ),
+            # Flags (bit-coded values):
+            # 1 = Has at least one vertex (code 72 is greater than 0)
+            # 2 = Closed
+            # 4 = Suppress start caps
+            # 8 = Suppress end caps
+            "flags": DXFAttr(71, default=1),
+            # Number of MLINE vertices
+            "count": DXFAttr(72, xtype=XType.callback, getter="__len__"),
+            # Number of elements in MLINESTYLE definition
+            "style_element_count": DXFAttr(73, default=2),
+            # start location in WCS!
+            "start_location": DXFAttr(
+                10, xtype=XType.callback, getter="start_location"
+            ),
+            # Normal vector of the entity plane, but all vertices in WCS!
+            "extrusion": DXFAttr(
+                210,
+                xtype=XType.point3d,
+                default=Z_AXIS,
+                validator=validator.is_not_null_vector,
+                fixer=RETURN_DEFAULT,
+            ),
+            # MLine data:
+            # 11: vertex coordinates
+            #     Multiple entries; one entry for each vertex.
+            # 12: Direction vector of segment starting at this vertex
+            #     Multiple entries; one for each vertex.
+            # 13: Direction vector of miter at this vertex
+            #     Multiple entries: one for each vertex.
+            # 74: Number of parameters for this element,
+            #     repeats for each element in segment
+            # 41: Element parameters,
+            #     repeats based on previous code 74
+            # 75: Number of area fill parameters for this element,
+            #     repeats for each element in segment
+            # 42: Area fill parameters,
+            #     repeats based on previous code 75
+        }
     ),
-
-    # Justification
-    # 0 = Top (Right)
-    # 1 = Zero (Center)
-    # 2 = Bottom (Left)
-    'justification': DXFAttr(
-        70, default=0,
-        validator=validator.is_in_integer_range(0, 3),
-        fixer=RETURN_DEFAULT,
-    ),
-
-    # Flags (bit-coded values):
-    # 1 = Has at least one vertex (code 72 is greater than 0)
-    # 2 = Closed
-    # 4 = Suppress start caps
-    # 8 = Suppress end caps
-    'flags': DXFAttr(71, default=1),
-
-    # Number of MLINE vertices
-    'count': DXFAttr(72, xtype=XType.callback, getter='__len__'),
-
-    # Number of elements in MLINESTYLE definition
-    'style_element_count': DXFAttr(73, default=2),
-
-    # start location in WCS!
-    'start_location': DXFAttr(10, xtype=XType.callback,
-                              getter='start_location'),
-
-    # Normal vector of the entity plane, but all vertices in WCS!
-    'extrusion': DXFAttr(
-        210, xtype=XType.point3d, default=Z_AXIS,
-        validator=validator.is_not_null_vector,
-        fixer=RETURN_DEFAULT,
-    ),
-
-    # MLine data:
-    # 11: vertex coordinates
-    #     Multiple entries; one entry for each vertex.
-    # 12: Direction vector of segment starting at this vertex
-    #     Multiple entries; one for each vertex.
-    # 13: Direction vector of miter at this vertex
-    #     Multiple entries: one for each vertex.
-    # 74: Number of parameters for this element,
-    #     repeats for each element in segment
-    # 41: Element parameters,
-    #     repeats based on previous code 74
-    # 75: Number of area fill parameters for this element,
-    #     repeats for each element in segment
-    # 42: Area fill parameters,
-    #     repeats based on previous code 75
-}))
+)
 acdb_mline_group_codes = group_code_mapping(acdb_mline)
 
 
@@ -198,7 +211,7 @@ class MLineVertex:
         # [dash-length, gap-length, ...]?
         self.fill_params: List[List[float]] = []
 
-    def __copy__(self) -> 'MLineVertex':
+    def __copy__(self) -> "MLineVertex":
         vtx = self.__class__()
         vtx.location = self.location
         vtx.line_direction = self.line_direction
@@ -210,7 +223,7 @@ class MLineVertex:
     copy = __copy__
 
     @classmethod
-    def load(cls, tags: Tags) -> 'MLineVertex':
+    def load(cls, tags: Tags) -> "MLineVertex":
         vtx = MLineVertex()
         line_params = []
         line_params_count = 0
@@ -248,7 +261,7 @@ class MLineVertex:
                     vtx.fill_params.append(tuple(fill_params))
         return vtx
 
-    def export_dxf(self, tagwriter: 'TagWriter'):
+    def export_dxf(self, tagwriter: "TagWriter"):
         tagwriter.write_vertex(11, self.location)
         tagwriter.write_vertex(12, self.line_direction)
         tagwriter.write_vertex(13, self.miter_direction)
@@ -261,9 +274,14 @@ class MLineVertex:
                 tagwriter.write_tag2(42, param)
 
     @classmethod
-    def new(cls, start: Vertex, line_direction: Vertex, miter_direction: Vertex,
-            line_params: Iterable = None,
-            fill_params: Iterable = None) -> 'MLineVertex':
+    def new(
+        cls,
+        start: Vertex,
+        line_direction: Vertex,
+        miter_direction: Vertex,
+        line_params: Iterable = None,
+        fill_params: Iterable = None,
+    ) -> "MLineVertex":
         vtx = MLineVertex()
         vtx.location = Vec3(start)
         vtx.line_direction = Vec3(line_direction)
@@ -272,11 +290,12 @@ class MLineVertex:
         vtx.fill_params = list(fill_params or [])
         if len(vtx.line_params) != len(vtx.fill_params):
             raise const.DXFValueError(
-                'Count mismatch of line- and fill parameters')
+                "Count mismatch of line- and fill parameters"
+            )
         return vtx
 
-    def transform(self, m: 'Matrix44') -> 'MLineVertex':
-        """ Transform MLineVertex by transformation matrix `m` inplace. """
+    def transform(self, m: "Matrix44") -> "MLineVertex":
+        """Transform MLineVertex by transformation matrix `m` inplace."""
         self.location = m.transform(self.location)
         self.line_direction = m.transform_direction(self.line_direction)
         self.miter_direction = m.transform_direction(self.miter_direction)
@@ -285,7 +304,7 @@ class MLineVertex:
 
 @register_entity
 class MLine(DXFGraphic):
-    DXFTYPE = 'MLINE'
+    DXFTYPE = "MLINE"
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mline)
     TOP = const.MLINE_TOP
     ZERO = const.MLINE_ZERO
@@ -304,18 +323,20 @@ class MLine(DXFGraphic):
         self.vertices: List[MLineVertex] = []
 
     def __len__(self):
-        """ Count of MLINE vertices. """
+        """Count of MLINE vertices."""
         return len(self.vertices)
 
-    def _copy_data(self, entity: 'MLine') -> None:
+    def _copy_data(self, entity: "MLine") -> None:
         entity.vertices = [v.copy() for v in self.vertices]
 
     def load_dxf_attribs(
-            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        self, processor: SubclassProcessor = None
+    ) -> "DXFNamespace":
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.fast_load_dxfattribs(
-                dxf, acdb_mline_group_codes, 2, log=False)
+                dxf, acdb_mline_group_codes, 2, log=False
+            )
             self.load_vertices(tags)
         return dxf
 
@@ -324,13 +345,13 @@ class MLine(DXFGraphic):
             MLineVertex.load(tags) for tags in group_tags(tags, splitcode=11)
         )
 
-    def preprocess_export(self, tagwriter: 'TagWriter') -> bool:
+    def preprocess_export(self, tagwriter: "TagWriter") -> bool:
         # Do not export MLines without vertices
         return len(self.vertices) > 1
         # todo: check if line- and fill parametrization is compatible with
         #  MLINE style, requires same count of elements!
 
-    def export_entity(self, tagwriter: 'TagWriter') -> None:
+    def export_entity(self, tagwriter: "TagWriter") -> None:
         # ezdxf does not export MLINE entities without vertices,
         # see method preprocess_export()
         self.set_flag_state(self.HAS_VERTICES, True)
@@ -339,19 +360,19 @@ class MLine(DXFGraphic):
         self.dxf.export_dxf_attribs(tagwriter, acdb_mline.attribs.keys())
         self.export_vertices(tagwriter)
 
-    def export_vertices(self, tagwriter: 'TagWriter') -> None:
+    def export_vertices(self, tagwriter: "TagWriter") -> None:
         for vertex in self.vertices:
             vertex.export_dxf(tagwriter)
 
     @property
     def is_closed(self) -> bool:
-        """ Returns ``True`` if MLINE is closed.
+        """Returns ``True`` if MLINE is closed.
         Compatibility interface to :class:`Polyline`
         """
         return self.get_flag_state(self.CLOSED)
 
     def close(self, state: bool = True) -> None:
-        """ Get/set closed state of MLINE and update geometry accordingly.
+        """Get/set closed state of MLINE and update geometry accordingly.
         Compatibility interface to :class:`Polyline`
         """
         state = bool(state)
@@ -361,35 +382,35 @@ class MLine(DXFGraphic):
 
     @property
     def start_caps(self) -> bool:
-        """ Get/Set start caps state. ``True`` to enable start caps and
-        ``False`` tu suppress start caps. """
+        """Get/Set start caps state. ``True`` to enable start caps and
+        ``False`` tu suppress start caps."""
         return not self.get_flag_state(self.SUPPRESS_START_CAPS)
 
     @start_caps.setter
     def start_caps(self, value: bool) -> None:
-        """ Set start caps state. """
+        """Set start caps state."""
         self.set_flag_state(self.SUPPRESS_START_CAPS, not bool(value))
 
     @property
     def end_caps(self) -> bool:
-        """ Get/Set end caps state. ``True`` to enable end caps and
+        """Get/Set end caps state. ``True`` to enable end caps and
         ``False`` tu suppress start caps."""
         return not self.get_flag_state(self.SUPPRESS_END_CAPS)
 
     @end_caps.setter
     def end_caps(self, value: bool) -> None:
-        """ Set start caps state. """
+        """Set start caps state."""
         self.set_flag_state(self.SUPPRESS_END_CAPS, not bool(value))
 
     def set_scale_factor(self, value: float) -> None:
-        """ Set the scale factor and update geometry accordingly. """
+        """Set the scale factor and update geometry accordingly."""
         value = float(value)
         if not math.isclose(self.dxf.scale_factor, value):
             self.dxf.scale_factor = value
             self.update_geometry()
 
     def set_justification(self, value: int) -> None:
-        """ Set MLINE justification and update geometry accordingly.
+        """Set MLINE justification and update geometry accordingly.
         See :attr:`dxf.justification` for valid settings.
         """
         value = int(value)
@@ -398,8 +419,8 @@ class MLine(DXFGraphic):
             self.update_geometry()
 
     @property
-    def style(self) -> Optional['MLineStyle']:
-        """ Get associated MLINESTYLE. """
+    def style(self) -> Optional["MLineStyle"]:
+        """Get associated MLINESTYLE."""
         if self.doc is None:
             return None
         _style = self.doc.entitydb.get(self.dxf.style_handle)
@@ -408,7 +429,7 @@ class MLine(DXFGraphic):
         return _style
 
     def set_style(self, name: str) -> None:
-        """ Set MLINESTYLE by name and update geometry accordingly.
+        """Set MLINESTYLE by name and update geometry accordingly.
         The MLINESTYLE definition must exist.
         """
         if self.doc is None:
@@ -417,7 +438,7 @@ class MLine(DXFGraphic):
         try:
             style = self.doc.mline_styles.get(name)
         except const.DXFKeyError:
-            raise const.DXFValueError(f'Undefined MLINE style: {name}')
+            raise const.DXFValueError(f"Undefined MLINE style: {name}")
 
         # Line- and fill parametrization depends on the count of
         # elements, a change in the number of elements triggers a
@@ -436,7 +457,7 @@ class MLine(DXFGraphic):
             self.update_geometry()
 
     def start_location(self) -> Vec3:
-        """ Returns the start location of the reference line. Callback function
+        """Returns the start location of the reference line. Callback function
         for :attr:`dxf.start_location`.
         """
         if len(self.vertices):
@@ -445,11 +466,11 @@ class MLine(DXFGraphic):
             return NULLVEC
 
     def get_locations(self) -> List[Vec3]:
-        """ Returns the vertices of the reference line. """
+        """Returns the vertices of the reference line."""
         return [v.location for v in self.vertices]
 
-    def extend(self, vertices: Iterable['Vertex']) -> None:
-        """ Append multiple vertices to the reference line.
+    def extend(self, vertices: Iterable["Vertex"]) -> None:
+        """Append multiple vertices to the reference line.
 
         It is possible to work with 3D vertices, but all vertices have to be in
         the same plane and the normal vector of this plan is stored as
@@ -466,11 +487,11 @@ class MLine(DXFGraphic):
         self.generate_geometry(all_vertices)
 
     def update_geometry(self) -> None:
-        """ Regenerate the MLINE geometry based on current settings. """
+        """Regenerate the MLINE geometry based on current settings."""
         self.generate_geometry(self.get_locations())
 
     def generate_geometry(self, vertices: List[Vec3]) -> None:
-        """ Regenerate the MLINE geometry for new reference line defined by
+        """Regenerate the MLINE geometry for new reference line defined by
         `vertices`.
         """
         vertices = list(filter_close_vertices(vertices, abs_tol=1e-6))
@@ -484,7 +505,8 @@ class MLine(DXFGraphic):
         style = self.style
         if len(style.elements) == 0:
             raise const.DXFStructureError(
-                f'No line elements defined in {str(style)}.')
+                f"No line elements defined in {str(style)}."
+            )
 
         def miter(dir1: Vec3, dir2: Vec3):
             return ((dir1 + dir2) * 0.5).normalize().orthogonal()
@@ -501,8 +523,7 @@ class MLine(DXFGraphic):
         end_angle = style.dxf.end_angle
 
         line_directions = [
-            (v2 - v1).normalize() for v1, v2 in
-            zip(vertices, vertices[1:])
+            (v2 - v1).normalize() for v1, v2 in zip(vertices, vertices[1:])
         ]
 
         if self.is_closed:
@@ -554,17 +575,17 @@ class MLine(DXFGraphic):
             except ZeroDivisionError:
                 stretch = 1.0
             vertex.line_params = [
-                ((element.offset + shift) * stretch, 0.0) for element in
-                style.elements
+                ((element.offset + shift) * stretch, 0.0)
+                for element in style.elements
             ]
             vertex.fill_params = [tuple() for _ in style.elements]
 
     def clear(self) -> None:
-        """ Remove all MLINE vertices. """
+        """Remove all MLINE vertices."""
         self.vertices.clear()
 
-    def remove_dependencies(self, other: 'Drawing' = None) -> None:
-        """ Remove all dependencies from current document.
+    def remove_dependencies(self, other: "Drawing" = None) -> None:
+        """Remove all dependencies from current document.
 
         (internal API)
         """
@@ -572,31 +593,31 @@ class MLine(DXFGraphic):
             return
 
         super().remove_dependencies(other)
-        self.dxf.style_handle = '0'
+        self.dxf.style_handle = "0"
         if other:
             style = other.mline_styles.get(self.dxf.style_name)
             if style:
                 self.dxf.style_handle = style.dxf.handle
                 return
-        self.dxf.style_name = 'Standard'
+        self.dxf.style_name = "Standard"
 
-    def transform(self, m: 'Matrix44') -> 'DXFGraphic':
-        """ Transform MLINE entity by transformation matrix `m` inplace.
-        """
+    def transform(self, m: "Matrix44") -> "DXFGraphic":
+        """Transform MLINE entity by transformation matrix `m` inplace."""
         for vertex in self.vertices:
             vertex.transform(m)
         self.dxf.extrusion = m.transform_direction(self.dxf.extrusion)
         scale = self.dxf.scale_factor
         scale_vec = m.transform_direction(Vec3(scale, scale, scale))
-        if math.isclose(scale_vec.x, scale_vec.y, abs_tol=1e-6) and \
-                math.isclose(scale_vec.y, scale_vec.z, abs_tol=1e-6):
+        if math.isclose(
+            scale_vec.x, scale_vec.y, abs_tol=1e-6
+        ) and math.isclose(scale_vec.y, scale_vec.z, abs_tol=1e-6):
             self.dxf.scale_factor = sum(scale_vec) / 3  # average error
         # None uniform scaling will not be applied to the scale_factor!
         self.update_geometry()
         return self
 
     def virtual_entities(self) -> Iterable[DXFGraphic]:
-        """ Yields 'virtual' parts of MLINE as LINE, ARC and HATCH entities.
+        """Yields 'virtual' parts of MLINE as LINE, ARC and HATCH entities.
 
         This entities are located at the original positions, but are not stored
         in the entity database, have no handle and are not assigned to any
@@ -604,10 +625,11 @@ class MLine(DXFGraphic):
 
         """
         from ezdxf.render.mline import virtual_entities
+
         return virtual_entities(self)
 
-    def explode(self, target_layout: 'BaseLayout' = None) -> 'EntityQuery':
-        """ Explode parts of MLINE as LINE, ARC and HATCH entities into target
+    def explode(self, target_layout: "BaseLayout" = None) -> "EntityQuery":
+        """Explode parts of MLINE as LINE, ARC and HATCH entities into target
         layout, if target layout is ``None``, the target layout is the layout
         of the MLINE.
 
@@ -618,12 +640,13 @@ class MLine(DXFGraphic):
                 as source entity.
         """
         from ezdxf.explode import explode_entity
+
         return explode_entity(self, target_layout)
 
-    def audit(self, auditor: 'Auditor') -> None:
-        """ Validity check. """
+    def audit(self, auditor: "Auditor") -> None:
+        """Validity check."""
 
-        def reset_mline_style(name='Standard'):
+        def reset_mline_style(name="Standard"):
             auditor.fixed_error(
                 code=AuditError.RESET_MLINE_STYLE,
                 message=f'Reset MLINESTYLE to "{name}" in {str(self)}.',
@@ -647,7 +670,7 @@ class MLine(DXFGraphic):
             else:  # fix MLINESTYLE handle:
                 auditor.fixed_error(
                     code=AuditError.INVALID_MLINESTYLE_HANDLE,
-                    message=f'Fixed invalid style handle in {str(self)}.',
+                    message=f"Fixed invalid style handle in {str(self)}.",
                     dxf_entity=self,
                 )
                 self.dxf.style_handle = style.dxf.handle
@@ -676,52 +699,55 @@ class MLine(DXFGraphic):
         # Invalid vertices found:
         auditor.fixed_error(
             code=AuditError.INVALID_MLINE_VERTEX,
-            message=f'Execute geometry update for {str(self)}.',
+            message=f"Execute geometry update for {str(self)}.",
             dxf_entity=self,
         )
         self.update_geometry()
 
+    def ocs(self) -> OCS:
+        # WCS entity which supports the "extrusion" attribute in a
+        # different way!
+        return OCS()
 
-acdb_mline_style = DefSubclass('AcDbMlineStyle', {
-    'name': DXFAttr(2, default='Standard'),
 
-    # Flags (bit-coded):
-    # 1 =Fill on
-    # 2 = Display miters
-    # 16 = Start square end (line) cap
-    # 32 = Start inner arcs cap
-    # 64 = Start round (outer arcs) cap
-    # 256 = End square (line) cap
-    # 512 = End inner arcs cap
-    # 1024 = End round (outer arcs) cap
-    'flags': DXFAttr(70, default=0),
-
-    # Style description (string, 255 characters maximum):
-    'description': DXFAttr(3, default=''),
-
-    # Fill color (integer, default = 256):
-    'fill_color': DXFAttr(
-        62, default=256,
-        validator=validator.is_valid_aci_color,
-        fixer=RETURN_DEFAULT,
-    ),
-
-    # Start angle (real, default is 90 degrees):
-    'start_angle': DXFAttr(51, default=90),
-
-    # End angle (real, default is 90 degrees):
-    'end_angle': DXFAttr(52, default=90),
-
-    # 71: Number of elements
-    # 49: Element offset (real, no default).
-    #     Multiple entries can exist; one entry for each element
-    # 62: Element color (integer, default = 0).
-    #     Multiple entries can exist; one entry for each element
-    # 6:  Element linetype (string, default = BYLAYER).
-    #     Multiple entries can exist; one entry for each element
-})
+acdb_mline_style = DefSubclass(
+    "AcDbMlineStyle",
+    {
+        "name": DXFAttr(2, default="Standard"),
+        # Flags (bit-coded):
+        # 1 =Fill on
+        # 2 = Display miters
+        # 16 = Start square end (line) cap
+        # 32 = Start inner arcs cap
+        # 64 = Start round (outer arcs) cap
+        # 256 = End square (line) cap
+        # 512 = End inner arcs cap
+        # 1024 = End round (outer arcs) cap
+        "flags": DXFAttr(70, default=0),
+        # Style description (string, 255 characters maximum):
+        "description": DXFAttr(3, default=""),
+        # Fill color (integer, default = 256):
+        "fill_color": DXFAttr(
+            62,
+            default=256,
+            validator=validator.is_valid_aci_color,
+            fixer=RETURN_DEFAULT,
+        ),
+        # Start angle (real, default is 90 degrees):
+        "start_angle": DXFAttr(51, default=90),
+        # End angle (real, default is 90 degrees):
+        "end_angle": DXFAttr(52, default=90),
+        # 71: Number of elements
+        # 49: Element offset (real, no default).
+        #     Multiple entries can exist; one entry for each element
+        # 62: Element color (integer, default = 0).
+        #     Multiple entries can exist; one entry for each element
+        # 6:  Element linetype (string, default = BYLAYER).
+        #     Multiple entries can exist; one entry for each element
+    },
+)
 acdb_mline_style_group_codes = group_code_mapping(acdb_mline_style)
-MLineStyleElement = namedtuple('MLineStyleElement', 'offset color linetype')
+MLineStyleElement = namedtuple("MLineStyleElement", "offset color linetype")
 
 
 class MLineStyleElements:
@@ -729,8 +755,11 @@ class MLineStyleElements:
         self.elements: List[MLineStyleElement] = []
         if tags:
             for e in self.parse_tags(tags):
-                data = MLineStyleElement(e.get('offset', 1.), e.get('color', 0),
-                                         e.get('linetype', 'BYLAYER'))
+                data = MLineStyleElement(
+                    e.get("offset", 1.0),
+                    e.get("color", 0),
+                    e.get("linetype", "BYLAYER"),
+                )
                 self.elements.append(data)
 
     def __len__(self):
@@ -742,7 +771,7 @@ class MLineStyleElements:
     def __iter__(self):
         return iter(self.elements)
 
-    def export_dxf(self, tagwriter: 'TagWriter'):
+    def export_dxf(self, tagwriter: "TagWriter"):
         write_tag = tagwriter.write_tag2
         write_tag(71, len(self.elements))
         for offset, color, linetype in self.elements:
@@ -750,9 +779,10 @@ class MLineStyleElements:
             write_tag(62, color)
             write_tag(6, linetype)
 
-    def append(self, offset: float, color: int = 0,
-               linetype: str = 'BYLAYER') -> None:
-        """ Append a new line element.
+    def append(
+        self, offset: float, color: int = 0, linetype: str = "BYLAYER"
+    ) -> None:
+        """Append a new line element.
 
         Args:
             offset: normal offset from the reference line: if justification is
@@ -762,8 +792,9 @@ class MLineStyleElements:
             linetype: linetype name
 
         """
-        self.elements.append(MLineStyleElement(
-            float(offset), int(color), str(linetype)))
+        self.elements.append(
+            MLineStyleElement(float(offset), int(color), str(linetype))
+        )
 
     @staticmethod
     def parse_tags(tags: Tags) -> Iterable[Dict]:
@@ -772,11 +803,11 @@ class MLineStyleElements:
             if code == 49:
                 if collector is not None:
                     yield collector
-                collector = {'offset': value}
+                collector = {"offset": value}
             elif code == 62:
-                collector['color'] = value
+                collector["color"] = value
             elif code == 6:
-                collector['linetype'] = value
+                collector["linetype"] = value
         if collector is not None:
             yield collector
 
@@ -787,7 +818,7 @@ class MLineStyleElements:
 
 @register_entity
 class MLineStyle(DXFObject):
-    DXFTYPE = 'MLINESTYLE'
+    DXFTYPE = "MLINESTYLE"
     DXFATTRIBS = DXFAttributes(base_class, acdb_mline_style)
     FILL = const.MLINESTYLE_FILL
     MITER = const.MLINESTYLE_MITER
@@ -803,10 +834,11 @@ class MLineStyle(DXFObject):
         self.elements = MLineStyleElements()
 
     def copy(self):
-        raise const.DXFTypeError('Copying of MLINESTYLE not supported.')
+        raise const.DXFTypeError("Copying of MLINESTYLE not supported.")
 
     def load_dxf_attribs(
-            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        self, processor: SubclassProcessor = None
+    ) -> "DXFNamespace":
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.subclass_by_index(1)
@@ -817,21 +849,22 @@ class MLineStyle(DXFObject):
                 # The count tag does not exist: DXF structure error?
                 pass
             else:
-                self.elements = MLineStyleElements(tags[index71 + 1:])
+                self.elements = MLineStyleElements(tags[index71 + 1 :])
                 # Remove processed tags:
                 del tags[index71:]
             processor.fast_load_dxfattribs(
-                dxf, acdb_mline_style_group_codes, tags)
+                dxf, acdb_mline_style_group_codes, tags
+            )
         return dxf
 
-    def export_entity(self, tagwriter: 'TagWriter') -> None:
+    def export_entity(self, tagwriter: "TagWriter") -> None:
         super().export_entity(tagwriter)
         tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_mline_style.name)
         self.dxf.export_dxf_attribs(tagwriter, acdb_mline_style.attribs.keys())
         self.elements.export_dxf(tagwriter)
 
     def update_all(self):
-        """ Update all MLINE entities using this MLINESTYLE.
+        """Update all MLINE entities using this MLINESTYLE.
 
         The update is required if elements were added or removed or the offset
         of any element was changed.
@@ -840,8 +873,7 @@ class MLineStyle(DXFObject):
         if self.doc:
             handle = self.dxf.handle
             mlines = (
-                e for e in self.doc.entitydb.values()
-                if e.dxftype() == 'MLINE'
+                e for e in self.doc.entitydb.values() if e.dxftype() == "MLINE"
             )
             for mline in mlines:
                 if mline.dxf.style_handle == handle:
@@ -850,24 +882,25 @@ class MLineStyle(DXFObject):
     def ordered_indices(self) -> List[int]:
         return self.elements.ordered_indices()
 
-    def audit(self, auditor: 'Auditor') -> None:
+    def audit(self, auditor: "Auditor") -> None:
         super().audit(auditor)
         if len(self.elements) == 0:
             auditor.add_error(
                 code=AuditError.INVALID_MLINESTYLE_ELEMENT_COUNT,
                 message=f"No line elements defined in {str(self)}.",
-                dxf_entity=self
+                dxf_entity=self,
             )
 
 
 class MLineStyleCollection(ObjectCollection):
-    def __init__(self, doc: 'Drawing'):
-        super().__init__(doc, dict_name='ACAD_MLINESTYLE',
-                         object_type='MLINESTYLE')
+    def __init__(self, doc: "Drawing"):
+        super().__init__(
+            doc, dict_name="ACAD_MLINESTYLE", object_type="MLINESTYLE"
+        )
         self.create_required_entries()
 
     def create_required_entries(self) -> None:
-        if 'Standard' not in self.object_dict:
-            entity: MLineStyle = self.new('Standard')
-            entity.elements.append(.5, 256)
-            entity.elements.append(-.5, 256)
+        if "Standard" not in self.object_dict:
+            entity: MLineStyle = self.new("Standard")
+            entity.elements.append(0.5, 256)
+            entity.elements.append(-0.5, 256)

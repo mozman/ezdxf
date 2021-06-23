@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, List
 from ezdxf.lldxf import validator
@@ -7,7 +7,7 @@ from ezdxf.lldxf.attributes import (
     group_code_mapping
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
-from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS
+from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS, OCS
 from ezdxf.math.transformtools import (
     transform_thickness_and_extrusion_without_ocs
 )
@@ -117,3 +117,8 @@ class Point(DXFGraphic):
 
         """
         return point.virtual_entities(self, pdsize, pdmode)
+
+    def ocs(self) -> OCS:
+        # WCS entity which supports the "extrusion" attribute in a
+        # different way!
+        return OCS()

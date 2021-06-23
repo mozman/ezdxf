@@ -7,7 +7,7 @@ from ezdxf.lldxf.attributes import (
     group_code_mapping
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
-from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS
+from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS, OCS
 from ezdxf.math.transformtools import (
     transform_thickness_and_extrusion_without_ocs,
 )
@@ -60,6 +60,11 @@ class Line(DXFGraphic):
         self.dxf.export_dxf_attribs(tagwriter, [
             'start', 'end', 'thickness', 'extrusion',
         ])
+
+    def ocs(self) -> OCS:
+        # WCS entity which supports the "extrusion" attribute in a
+        # different way!
+        return OCS()
 
     def transform(self, m: Matrix44) -> 'Line':
         """ Transform the LINE entity by transformation matrix `m` inplace.

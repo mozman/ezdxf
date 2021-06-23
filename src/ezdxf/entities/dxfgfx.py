@@ -226,10 +226,10 @@ class DXFGraphic(DXFEntity):
                 attribs[key] = self.dxf.get(key)
         return attribs
 
-    def ocs(self) -> Optional[OCS]:
+    def ocs(self) -> OCS:
         """ Returns object coordinate system (:ref:`ocs`) for 2D entities like
-        :class:`Text` or :class:`Circle`, returns ``None`` for entities without
-        OCS support.
+        :class:`Text` or :class:`Circle`, returns a pass-through OCS for
+        entities without OCS support.
 
         """
         # extrusion is only defined for 2D entities like Text, Circle, ...
@@ -237,7 +237,7 @@ class DXFGraphic(DXFEntity):
             extrusion = self.dxf.get('extrusion', default=(0, 0, 1))
             return OCS(extrusion)
         else:
-            return None
+            return OCS()
 
     def set_owner(self, owner: str, paperspace: int = 0) -> None:
         """ Set owner attribute and paperspace flag. (internal API)"""

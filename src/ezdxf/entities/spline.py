@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Sequence, cast
 import array
@@ -13,7 +13,7 @@ from ezdxf.lldxf.attributes import (
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFValueError
 from ezdxf.lldxf.packedtags import VertexArray, Tags
 from ezdxf.math import (
-    Vec3, Matrix44, ConstructionEllipse, Z_AXIS, NULLVEC,
+    Vec3, Matrix44, ConstructionEllipse, Z_AXIS, NULLVEC, OCS,
     uniform_knot_vector, open_uniform_knot_vector, BSpline,
     required_knot_values, required_fit_points, required_control_points,
 )
@@ -557,3 +557,8 @@ class Spline(DXFGraphic):
                         f"defined by fit points."
             )
             self.weights = []
+
+    def ocs(self) -> OCS:
+        # WCS entity which supports the "extrusion" attribute in a
+        # different way!
+        return OCS()
