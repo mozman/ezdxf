@@ -12,7 +12,7 @@ from ezdxf.lldxf.tags import (
     find_begin_and_end_of_encoded_xdata_tags,
     NotFoundException,
 )
-from ezdxf.entities.xdata import XData, XDataDict, XDataList
+from ezdxf.entities.xdata import XData, XDataUserDict, XDataUserList
 from ezdxf.lldxf.repair import filter_invalid_xdata_group_codes
 
 
@@ -418,7 +418,7 @@ CONTENT
 """
 
 
-class TestXDataList:
+class TestXDataUserList:
     @pytest.fixture
     def list1(self):
         return Tags.from_text(LIST1)
@@ -428,46 +428,46 @@ class TestXDataList:
         return Tags.from_text(USER_LIST)
 
     def test_load_not_existing_list(self):
-        xlist = XDataList(XData())
+        xlist = XDataUserList(XData())
         assert len(xlist) == 0
 
     def test_load_existing_list(self, list1):
-        xlist = XDataList(XData([list1]))
+        xlist = XDataUserList(XData([list1]))
         assert len(xlist) == 2
         assert xlist[0] == "VALUE"
         assert xlist[1] == "CONTENT"
 
     def test_load_user_list(self, user_list):
-        xlist = XDataList(XData([user_list]), name="UserList", appid="USER")
+        xlist = XDataUserList(XData([user_list]), name="UserList", appid="USER")
         assert len(xlist) == 2
         assert xlist[0] == "VALUE"
         assert xlist[1] == "CONTENT"
 
     def test_list_like_getitem_interface(self, list1):
-        xlist = XDataList(XData([list1]))
+        xlist = XDataUserList(XData([list1]))
         assert len(xlist) == 2
         assert xlist[-1] == "CONTENT"
         assert xlist[:] == ["VALUE", "CONTENT"]
 
     def test_list_like_setitem_interface(self, list1):
-        xlist = XDataList(XData([list1]))
+        xlist = XDataUserList(XData([list1]))
         xlist[0] = 15
         assert xlist[0] == 15
 
     def test_list_like_insert_interface(self, list1):
-        xlist = XDataList(XData([list1]))
+        xlist = XDataUserList(XData([list1]))
         xlist.insert(0, 17)
         assert xlist[0] == 17
         assert len(xlist) == 3
 
     def test_list_like_delitem_interface(self, list1):
-        xlist = XDataList(XData([list1]))
+        xlist = XDataUserList(XData([list1]))
         del xlist[0]
         assert len(xlist) == 1
         assert xlist[0] == "CONTENT"
 
     def test_commit_creates_valid_xdata_list(self):
-        xlist = XDataList()
+        xlist = XDataUserList()
         xlist.extend(["String", Vec3(1, 2, 3), 3.1415, 256])
         xlist.commit()
         tags = xlist.xdata.get("EZDXF")
@@ -483,7 +483,7 @@ class TestXDataList:
         ]
 
     def test_commit_replaces_existing_xdata_list(self, list1):
-        xlist = XDataList(XData([list1]))
+        xlist = XDataUserList(XData([list1]))
         xlist.clear()
         xlist.extend(["String", Vec3(1, 2, 3), 3.1415, 256])
         xlist.commit()
@@ -500,7 +500,7 @@ class TestXDataList:
         ]
 
     def test_modify_existing_xdata_list(self, list1):
-        xlist = XDataList(XData([list1]))
+        xlist = XDataUserList(XData([list1]))
         xlist[0] = 3.1415
         xlist[1] = 256
         xlist.commit()
@@ -515,7 +515,7 @@ class TestXDataList:
         ]
 
     def test_modify_existing_user_list(self, user_list):
-        xlist = XDataList(XData([user_list]), name="UserList", appid="USER")
+        xlist = XDataUserList(XData([user_list]), name="UserList", appid="USER")
         xlist[0] = 3.1415
         xlist[1] = 256
         xlist.commit()
@@ -530,7 +530,7 @@ class TestXDataList:
         ]
 
 
-class TestXDataDict:
+class TestXDataUserDict:
     pass
 
 

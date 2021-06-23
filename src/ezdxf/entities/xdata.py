@@ -21,7 +21,7 @@ logger = logging.getLogger("ezdxf")
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
 
-__all__ = ["XData", "XDataList", "XDataDict", "EmbeddedObjects"]
+__all__ = ["XData", "XDataUserList", "XDataUserDict", "EmbeddedObjects"]
 
 
 class XData:
@@ -178,7 +178,7 @@ class EmbeddedObjects:  # TODO: remove
             tagwriter.write_tags(tags)
 
 
-class XDataList(MutableSequence):
+class XDataUserList(MutableSequence):
     """Manage named XDATA lists as a list-like object.
 
     Stores just a few data types with fixed group codes:
@@ -253,5 +253,5 @@ class XDataList(MutableSequence):
         self.xdata.set_xlist(self._appid, self._name, data)
 
 
-class XDataDict:
+class XDataUserDict:
     """Manage named XDATA lists as a dict-like object."""
