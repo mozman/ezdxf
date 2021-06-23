@@ -1,6 +1,6 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Sequence, cast
+from typing import TYPE_CHECKING, Iterable, Sequence, cast, List
 import array
 import copy
 from itertools import chain
@@ -203,7 +203,7 @@ class Spline(DXFGraphic):
         self.set_flag_state(self.CLOSED, state=status, name='flags')
 
     @property
-    def knots(self) -> 'array.array':
+    def knots(self) -> 'array.array[float]':
         """ Knot values as :code:`array.array('d')`. """
         return self._knots
 
@@ -217,7 +217,7 @@ class Spline(DXFGraphic):
         return len(self._knots)
 
     @property
-    def weights(self) -> 'array.array':
+    def weights(self) -> 'array.array[float]':
         """ Control point weights as :code:`array.array('d')`. """
         return self._weights
 

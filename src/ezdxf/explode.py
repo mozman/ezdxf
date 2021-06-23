@@ -1,7 +1,16 @@
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
 import logging
-from typing import TYPE_CHECKING, Iterable, Callable, Optional, cast, Dict, List
+from typing import (
+    TYPE_CHECKING,
+    Iterable,
+    Callable,
+    Optional,
+    cast,
+    Dict,
+    List,
+    Any,
+)
 
 from ezdxf.entities import factory
 from ezdxf.entities.boundary_paths import (
@@ -188,7 +197,7 @@ def virtual_block_reference_entities(
             try:
                 copy = entity.copy()
             except DXFTypeError:
-                skipped_entity_callback(entity, "non copyable")
+                skipped_entity_callback(entity, "non copyable")  # type: ignore
             else:
                 if hasattr(copy, "remove_association"):
                     copy.remove_association()
@@ -331,7 +340,7 @@ def _virtual_edge_path(
     def dir_to_wcs(v):
         return ocs.to_wcs(v)
 
-    edges = []
+    edges: List["DXFGraphic"] = []
     for edge in path.edges:
         attribs = dict(dxfattribs)
         if isinstance(edge, LineEdge):
@@ -366,7 +375,8 @@ def _virtual_edge_path(
             attribs["end_param"] = end_param
             edges.append(Ellipse.new(dxfattribs=attribs))
         elif isinstance(edge, SplineEdge):
-            spline = Spline.new(dxfattribs=attribs)
+            # TODO: remove Any, make SPLINE property assignments mypy compatible
+            spline: Any = Spline.new(dxfattribs=attribs)
             spline.dxf.degree = edge.degree
             spline.knots = edge.knot_values
             spline.control_points = (pnt_to_wcs(v) for v in edge.control_points)
