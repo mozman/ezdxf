@@ -1,6 +1,6 @@
 # Copyright (c) 2014-2021, Manfred Moitzi
 # License: MIT License
-from typing import Iterable, Any, Sequence, Union, Tuple
+from typing import Iterable, Any, Sequence, Union, Tuple, overload, Optional
 from array import array
 import struct
 from binascii import unhexlify
@@ -95,7 +95,7 @@ class ByteStream:
         """
         buffer = self.buffer
         for end_index in range(self.index, len(buffer), 2):
-            if buffer[end_index : end_index + 2] == NULL_NULL:
+            if buffer[end_index: end_index + 2] == NULL_NULL:
                 start_index = self.index
                 self.index = self.align(end_index + 2)
                 # noinspection PyTypeChecker
@@ -259,6 +259,14 @@ class BitStream:
         else:
             return 0  # 0
 
+    @overload
+    def read_bit_short(self) -> int:
+        ...
+
+    @overload
+    def read_bit_short(self, count: int) -> Sequence[int]:
+        ...
+
     def read_bit_short(self, count: int = 1) -> Union[int, Sequence[int]]:
         def _read():
             bits = self.read_bits(2)
@@ -275,6 +283,14 @@ class BitStream:
             return _read()
         else:
             return tuple(_read() for _ in range(count))
+
+    @overload
+    def read_bit_long(self) -> int:
+        ...
+
+    @overload
+    def read_bit_long(self, count: int) -> Sequence[int]:
+        ...
 
     def read_bit_long(self, count: int = 1) -> Union[int, Sequence[int]]:
         def _read():
@@ -309,11 +325,27 @@ class BitStream:
             shifting += 8
         return value
 
+    @overload
+    def read_raw_double(self) -> float:
+        ...
+
+    @overload
+    def read_raw_double(self, count: int) -> Sequence[float]:
+        ...
+
     def read_raw_double(self, count: int = 1) -> Union[float, Sequence[float]]:
         if count == 1:
             return self.read_float()
         else:
             return tuple(self.read_float() for _ in range(count))
+
+    @overload
+    def read_bit_double(self) -> float:
+        ...
+
+    @overload
+    def read_bit_double(self, count: int) -> Sequence[float]:
+        ...
 
     def read_bit_double(self, count: int = 1) -> Union[float, Sequence[float]]:
         def _read():
@@ -331,6 +363,14 @@ class BitStream:
             return _read()
         else:
             return tuple(_read() for _ in range(count))
+
+    @overload
+    def read_bit_double_default(self) -> float:
+        ...
+
+    @overload
+    def read_bit_double_default(self, count: int) -> Sequence[float]:
+        ...
 
     def read_bit_double_default(
         self, count: int = 1, default=0.0
@@ -459,7 +499,7 @@ class BitStream:
             book_name = self.read_text_variable()
         return rgb, color_name, book_name
 
-    def read_cm_color_enc(self) -> Union[int, Tuple[int, int, int, int]]:
+    def read_cm_color_enc(self) -> Union[int, Sequence[Optional[int]]]:
         """Returns color index as int or tuple (rgb, color_handle,
         transparency_type, transparency).
         """
@@ -474,7 +514,7 @@ class BitStream:
             if flags & 0x80:
                 rgb = self.read_bit_short() & 0x00FFFFFF
             if flags & 0x40:
-                _, color_handle = self.read_handle()
+                color_handle = self.read_handle()
             if flags & 0x20:
                 data = self.read_bit_long()
                 transparency_type = data >> 24
@@ -513,6 +553,7 @@ class BitStream:
                 return reference + offset
             if code == 12:
                 return reference - offset
+        return 0
 
     def read_hex_handle(self, reference: int = 0) -> str:
         """Returns handle as hex string."""
