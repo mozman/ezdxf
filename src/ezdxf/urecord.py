@@ -19,7 +19,7 @@ The UserRecord can store nested list and dict objects.
 
 """
 
-from typing import List, Any, Dict, Iterable, Sequence, Mapping
+from typing import Iterable, Sequence, Mapping, MutableSequence, List
 from ezdxf.lldxf import const
 from ezdxf.entities import XRecord
 from ezdxf.lldxf.tags import Tags
@@ -47,7 +47,7 @@ class UserRecord:
             xrecord = XRecord.new()
         self.xrecord = xrecord
         self.name = str(name)
-        self.data: List = parse_xrecord(self.xrecord, self.name)
+        self.data: MutableSequence = parse_xrecord(self.xrecord, self.name)
 
     def __enter__(self):
         return self
@@ -76,7 +76,7 @@ def parse_xrecord(xrecord: XRecord, name: str) -> List:
     return data
 
 
-def parse_items(tags: Tags) -> List[Any]:
+def parse_items(tags: Tags) -> List:
     stack = []
     items = []
     for tag in tags:
@@ -118,7 +118,7 @@ def parse_items(tags: Tags) -> List[Any]:
     return items
 
 
-def compile_user_record(name: str, data: List) -> Tags:
+def compile_user_record(name: str, data: Iterable) -> Tags:
     tags = Tags()
     tags.append(dxftag(TYPE_GROUP_CODE, name))
     tags.extend(tags_from_list(data))
@@ -155,4 +155,3 @@ def key_value_list(data: Mapping) -> Iterable:
     for k, v in data.items():
         yield k
         yield v
-
