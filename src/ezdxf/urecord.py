@@ -19,7 +19,7 @@ The UserRecord can store nested list and dict objects.
 
 """
 
-from typing import List, Any, Dict, Iterable
+from typing import List, Any, Dict, Iterable, Sequence, Mapping
 from ezdxf.lldxf import const
 from ezdxf.entities import XRecord
 from ezdxf.lldxf.tags import Tags
@@ -138,11 +138,11 @@ def tags_from_list(items: Iterable) -> Tags:
             tags.append(dxftag(VEC3_GROUP_CODE, item))
         elif isinstance(item, Vec2):
             tags.append(dxftag(VEC3_GROUP_CODE, Vec3(item)))
-        elif isinstance(item, (list, tuple)):
+        elif isinstance(item, Sequence):
             tags.append(dxftag(COLLECTION_GROUP_CODE, START_LIST))
             tags.extend(tags_from_list(item))
             tags.append(dxftag(COLLECTION_GROUP_CODE, END_LIST))
-        elif isinstance(item, dict):
+        elif isinstance(item, Mapping):
             tags.append(dxftag(COLLECTION_GROUP_CODE, START_DICT))
             tags.extend(tags_from_list(key_value_list(item)))
             tags.append(dxftag(COLLECTION_GROUP_CODE, END_DICT))
@@ -151,7 +151,7 @@ def tags_from_list(items: Iterable) -> Tags:
     return tags
 
 
-def key_value_list(data: Dict) -> Iterable:
+def key_value_list(data: Mapping) -> Iterable:
     for k, v in data.items():
         yield k
         yield v
