@@ -1,7 +1,16 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List, Iterable, Tuple, Any, Dict
-from collections import OrderedDict, MutableSequence, MutableMapping
+from typing import (
+    TYPE_CHECKING,
+    List,
+    Iterable,
+    Tuple,
+    Any,
+    Dict,
+    MutableSequence,
+    MutableMapping,
+)
+from collections import OrderedDict
 from contextlib import contextmanager
 from ezdxf.math import Vec3
 from ezdxf.lldxf.types import dxftag
