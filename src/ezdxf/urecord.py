@@ -64,7 +64,7 @@ class UserRecord:
 
 
 def parse_xrecord(xrecord: XRecord, name: str) -> List:
-    data = []
+    data: List = []
     tags = xrecord.tags
     if tags:
         code, value = tags[0]
@@ -77,8 +77,8 @@ def parse_xrecord(xrecord: XRecord, name: str) -> List:
 
 
 def parse_items(tags: Tags) -> List:
-    stack = []
-    items = []
+    stack: List = []
+    items: List = []
     for tag in tags:
         code, value = tag
         if code == STR_GROUP_CODE:
@@ -105,8 +105,9 @@ def parse_items(tags: Tags) -> List:
                     f" ({COLLECTION_GROUP_CODE}, ...)"
                 )
             if value == END_DICT:
-                items = dict(take2(items))
-            prev_level.append(items)
+                prev_level.append(dict(take2(items)))
+            else:
+                prev_level.append(items)
             items = prev_level
         else:
             raise ValueError(f"invalid group code in tag: ({code}, {value})")
