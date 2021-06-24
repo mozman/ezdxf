@@ -1,20 +1,25 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-"""Store user data in a XRECORD entity
+"""Store user data in a XRECORD entity.
 
-The implementation has a list like interface.
+The group code 302 is used as a structure tag.
+
 All supported data types have a fixed group code:
+    - str: 1
+    - int: 90 - 32-bit values
+    - float: 40 - doubles
+    - Vec3, Vec2: 10, 20, 30 - Vec2 is stored as Vec3
+    - list, tuple: starts with tag (302, "[") and ends with tag (302, "]")
+    - dict: starts with tag (302, "{") and ends with tag (302, "}")
 
-- str: 1
-- int: 90 - 32-bit values
-- float: 40 - doubles
-- Vec3: 10, 20, 30
-- Vec2: 11, 21
-- list: starts with tag (3, "[") and ends with tag (3, "]")
-- dict: starts with tag (4, "{") and ends with tag (4, "}")
+This is an advanced feature for experienced programmers, handle with care!
+The attribute UserRecord.data is a simple Python list with read/write access.
+
+The UserRecord can store nested list and dict objects.
 
 """
-from typing import List, Any
+
+from typing import List, Any, Dict, Iterable
 from ezdxf.lldxf import const
 from ezdxf.entities import XRecord
 from ezdxf.lldxf.tags import Tags
@@ -27,7 +32,6 @@ STR_GROUP_CODE = 1
 INT_GROUP_CODE = 90
 FLOAT_GROUP_CODE = 40
 VEC3_GROUP_CODE = 10
-VEC2_GROUP_CODE = 11
 COLLECTION_GROUP_CODE = 302
 START_LIST = "["
 END_LIST = "]"
@@ -43,7 +47,7 @@ class UserRecord:
             xrecord = XRecord.new()
         self.xrecord = xrecord
         self.name = str(name)
-        self._data = parse_xrecord(self.xrecord, self.name)
+        self.data: List = parse_xrecord(self.xrecord, self.name)
 
     def __enter__(self):
         return self
@@ -52,24 +56,10 @@ class UserRecord:
         self.commit()
 
     def __str__(self):
-        return str(self._data)
-
-    def insert(self, index: int, value) -> None:
-        self._data.insert(index, value)
-
-    def __getitem__(self, item):
-        return self._data[item]
-
-    def __setitem__(self, item, value) -> Any:
-        self._data.__setitem__(item, value)
-
-    def __delitem__(self, item) -> None:
-        self._data.__delitem__(item)
+        return str(self.data)
 
     def commit(self) -> XRecord:
-        tags = Tags()
-        tags.append(dxftag(TYPE_GROUP_CODE, self.name))
-        self.xrecord.tags = tags
+        self.xrecord.tags = compile_user_record(self.name, self.data)
         return self.xrecord
 
 
@@ -99,8 +89,6 @@ def parse_items(tags: Tags) -> List[Any]:
             items.append(float(value))
         elif code == VEC3_GROUP_CODE:
             items.append(Vec3(value))
-        elif code == VEC2_GROUP_CODE:
-            items.append(Vec2(value))
         elif code == COLLECTION_GROUP_CODE and (
             value == START_LIST or value == START_DICT
         ):
@@ -128,3 +116,43 @@ def parse_items(tags: Tags) -> List[Any]:
             f"({COLLECTION_GROUP_CODE}, ...)"
         )
     return items
+
+
+def compile_user_record(name: str, data: List) -> Tags:
+    tags = Tags()
+    tags.append(dxftag(TYPE_GROUP_CODE, name))
+    tags.extend(tags_from_list(data))
+    return tags
+
+
+def tags_from_list(items: Iterable) -> Tags:
+    tags = Tags()
+    for item in items:
+        if isinstance(item, str):
+            tags.append(dxftag(STR_GROUP_CODE, item))
+        elif isinstance(item, int):
+            tags.append(dxftag(INT_GROUP_CODE, item))
+        elif isinstance(item, float):
+            tags.append(dxftag(FLOAT_GROUP_CODE, item))
+        elif isinstance(item, Vec3):
+            tags.append(dxftag(VEC3_GROUP_CODE, item))
+        elif isinstance(item, Vec2):
+            tags.append(dxftag(VEC3_GROUP_CODE, Vec3(item)))
+        elif isinstance(item, (list, tuple)):
+            tags.append(dxftag(COLLECTION_GROUP_CODE, START_LIST))
+            tags.extend(tags_from_list(item))
+            tags.append(dxftag(COLLECTION_GROUP_CODE, END_LIST))
+        elif isinstance(item, dict):
+            tags.append(dxftag(COLLECTION_GROUP_CODE, START_DICT))
+            tags.extend(tags_from_list(key_value_list(item)))
+            tags.append(dxftag(COLLECTION_GROUP_CODE, END_DICT))
+        else:
+            raise TypeError(f"unsupported type: {type(item)}")
+    return tags
+
+
+def key_value_list(data: Dict) -> Iterable:
+    for k, v in data.items():
+        yield k
+        yield v
+

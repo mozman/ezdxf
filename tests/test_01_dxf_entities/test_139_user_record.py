@@ -3,9 +3,9 @@
 
 import pytest
 from ezdxf.lldxf import const
-from ezdxf.math import Vec3, Vec2
+from ezdxf.math import Vec3
 from ezdxf.lldxf.tags import Tags
-from ezdxf.urecord import parse_items
+from ezdxf.urecord import parse_items, compile_user_record
 
 
 class TestFlatRecord:
@@ -15,7 +15,7 @@ class TestFlatRecord:
 
     def test_parse_all(self, tags):
         data = parse_items(tags)
-        assert len(data) == 5
+        assert len(data) == 4
 
     def test_parse_str(self, tags):
         data = parse_items(tags)[0]
@@ -36,11 +36,6 @@ class TestFlatRecord:
         data = parse_items(tags)[3]
         assert data == (7, 8, 9)
         assert type(data) is Vec3
-
-    def test_parse_vec2(self, tags):
-        data = parse_items(tags)[4]
-        assert data == (3, 4)
-        assert type(data) is Vec2
 
 
 def test_top_level_list():
@@ -101,6 +96,50 @@ def test_invalid_group_code_raises_value_error():
         parse_items(tags)
 
 
+class TestCompileData:
+    def test_compile_empty_data(self):
+        tags = compile_user_record("TEST", [])
+        assert tags[0] == (2, "TEST")
+        assert len(tags) == 1
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            "MyString",
+            257,
+            3.1415,
+            Vec3(5, 6, 7),
+        ],
+        ids=["str", "int", "float", "Vec3"],
+    )
+    def test_compile_simple_types(self, value):
+        tags = compile_user_record("TEST", [value])
+        assert parse_items(tags[1:]) == [value]
+
+    @pytest.mark.parametrize(
+        "struct",
+        [
+            [1, 2, 3],  # simple flat list
+            [{"key": "value"}],  # top level structure has to be a list!
+            ["head", [1, 2, 3], "tail"],  # nested list
+            ["head", {"key": "value"}, "tail"],  # nested dict
+            ["head", {"key": [1, 2, 3]}, "tail"],  # list as dict value
+            ["head", [1, 2, {"key": "value"}], "tail"],  # dict inside a list
+        ],
+        ids=[
+            "flat list",
+            "flat dict",
+            "nested list",
+            "nested dict",
+            "list as dict value",
+            "dict inside a list",
+        ],
+    )
+    def test_compile_complex_structures(self, struct):
+        tags = compile_user_record("TEST", struct)
+        assert parse_items(tags[1:]) == struct
+
+
 FLAT_RECORD = """1
 MyString
 40
@@ -113,10 +152,6 @@ MyString
 8
 30
 9
-11
-3
-12
-4
 """
 
 LIST1 = """1
