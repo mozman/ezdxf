@@ -2,6 +2,7 @@
 # License: MIT License
 from binascii import unhexlify
 from ezdxf.lldxf.types import DXFBinaryTag
+from ezdxf.lldxf.tags import binary_data_to_dxf_tags
 
 
 def test_init():
@@ -44,3 +45,21 @@ def test_hexstr_to_bytes():
         assert x == y
     tag = DXFBinaryTag(310, bytes_)
     assert tag.tostring() == s
+
+
+class TestBinaryDataToDXFTags:
+    def test_empty_data_creates_a_length_tag(self):
+        tags = binary_data_to_dxf_tags(b"")
+        assert len(tags) == 1
+        assert tags[0] == (160, 0)
+
+    def test_chunk_size(self):
+        data = b"0123456789" * 10
+        tags = binary_data_to_dxf_tags(data, value_size=10)
+        assert len(tags) == 11
+        assert tags[0] == (160, 100)
+
+    def test_hex_encoding(self):
+        tags = binary_data_to_dxf_tags(b"0123456789\xab\xba")
+        assert tags[1].value == "30313233343536373839ABBA"
+

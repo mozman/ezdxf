@@ -22,10 +22,11 @@ The UserRecord can store nested list and dict objects.
 from typing import Iterable, Sequence, Mapping, MutableSequence, List
 from ezdxf.lldxf import const
 from ezdxf.entities import XRecord
-from ezdxf.lldxf.tags import Tags
+from ezdxf.lldxf.tags import Tags, binary_data_to_dxf_tags
 from ezdxf.lldxf.types import dxftag
 from ezdxf.math import Vec3, Vec2
 from ezdxf.tools import take2
+from ezdxf.tools.binarydata import hex_strings_to_bytes
 
 TYPE_GROUP_CODE = 2
 STR_GROUP_CODE = 1
@@ -156,3 +157,36 @@ def key_value_list(data: Mapping) -> Iterable:
     for k, v in data.items():
         yield k
         yield v
+
+
+class BinaryRecord:
+    def __init__(self, xrecord: XRecord = None):
+        if xrecord is None:
+            xrecord = XRecord.new()
+        self.xrecord = xrecord
+        self.data: bytes = parse_binary_data(self.xrecord.tags)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.commit()
+
+    def __str__(self):
+        return self.data.decode()
+
+    def commit(self) -> XRecord:
+        self.xrecord.tags = binary_data_to_dxf_tags(
+            self.data,
+            length_group_code=160,
+            value_group_code=310,
+            value_size=127,
+        )
+        return self.xrecord
+
+
+def parse_binary_data(tags: Tags) -> bytes:
+    if tags and tags[0].code == 160:
+        return b"".join(t.value for t in tags if t.code == 310)
+    else:
+        return b""

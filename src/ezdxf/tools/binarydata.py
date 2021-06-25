@@ -3,7 +3,7 @@
 from typing import Iterable, Any, Sequence, Union, Tuple, overload, Optional
 from array import array
 import struct
-from binascii import unhexlify
+from binascii import unhexlify, hexlify
 from codecs import decode
 
 Bytes = Union[bytes, bytearray, memoryview]
@@ -19,7 +19,7 @@ def hex_strings_to_bytes(data: Iterable[str]) -> bytes:
 
 def bytes_to_hexstr(data: bytes) -> str:
     """Returns `data` bytes as plain hex string."""
-    return "".join("%0.2X" % byte for byte in data)
+    return hexlify(data).upper().decode()
 
 
 NULL_NULL = b"\x00\x00"

@@ -5,7 +5,7 @@ import pytest
 from ezdxf.lldxf import const
 from ezdxf.math import Vec3
 from ezdxf.lldxf.tags import Tags
-from ezdxf.urecord import parse_items, compile_user_record
+from ezdxf.urecord import parse_items, compile_user_record, parse_binary_data
 
 
 class TestFlatRecord:
@@ -140,6 +140,13 @@ class TestCompileData:
         assert parse_items(tags[1:]) == struct
 
 
+def test_parse_binary_data():
+    assert (
+        parse_binary_data(
+            Tags.from_text(BINARY_DATA)) == b"0123456789\xab\xba" * 2
+    )
+
+
 FLAT_RECORD = """1
 MyString
 40
@@ -256,6 +263,14 @@ ListItem2
 ]
 1
 Tail
+"""
+
+BINARY_DATA = """160
+24
+310
+30313233343536373839ABBA
+310
+30313233343536373839ABBA
 """
 
 if __name__ == "__main__":
