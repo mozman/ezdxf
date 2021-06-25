@@ -26,7 +26,6 @@ from ezdxf.lldxf.tags import Tags, binary_data_to_dxf_tags
 from ezdxf.lldxf.types import dxftag
 from ezdxf.math import Vec3, Vec2
 from ezdxf.tools import take2
-from ezdxf.tools.binarydata import hex_strings_to_bytes
 
 TYPE_GROUP_CODE = 2
 STR_GROUP_CODE = 1
@@ -39,7 +38,7 @@ END_LIST = "]"
 START_DICT = "{"
 END_DICT = "}"
 
-__all__ = ["UserRecord"]
+__all__ = ["UserRecord", "BinaryRecord"]
 
 
 class UserRecord:
