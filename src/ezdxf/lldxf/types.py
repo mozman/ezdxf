@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2020, Manfred Moitzi
+# Copyright (c) 2014-2021, Manfred Moitzi
 # License: MIT License
 """
 DXF Types
@@ -16,14 +16,14 @@ from typing import (
     Union,
     Tuple,
     Iterable,
-    Callable,
+    Type,
     Sequence,
     Any,
     TYPE_CHECKING,
 )
 from array import array
 from itertools import chain
-from binascii import unhexlify
+from binascii import unhexlify, hexlify
 import reprlib
 from ezdxf.math import Vec3
 
@@ -31,7 +31,6 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import TagValue
 
 TAG_STRING_FORMAT = "%3d\n%s\n"
-INT_TO_HEX = "%0.2X"
 POINT_CODES = {
     10,
     11,
@@ -168,7 +167,7 @@ class DXFTag:
         """
         return (self.code, self.value)[index]
 
-    def __iter__(self) -> Iterable:
+    def __iter__(self):
         """Returns (code, value) tuples."""
         yield self.code
         yield self.value
@@ -195,7 +194,7 @@ class DXFTag:
 
 
 # Special marker tag
-NONE_TAG = DXFTag(None, None)
+NONE_TAG = DXFTag(0, 0)
 
 
 def uniform_appid(appid: str) -> str:
@@ -206,7 +205,7 @@ def uniform_appid(appid: str) -> str:
 
 
 def is_app_data_marker(tag: DXFTag) -> bool:
-    return tag.code == APP_DATA_MARKER and tag.value.startswith("{")
+    return tag.code == APP_DATA_MARKER and tag.value.startswith("{")  # type: ignore
 
 
 def is_embedded_object_marker(tag: DXFTag) -> bool:
@@ -242,8 +241,8 @@ class DXFVertex(DXFTag):
         return hash((self.code, x, y, z))
 
     @property
-    def value(self) -> Tuple:
-        return tuple(self._value)
+    def value(self) -> Tuple[float, ...]:
+        return tuple(self._value)  # type: ignore
 
     def dxftags(self) -> Iterable[DXFTag]:
         """Returns all vertex components as single :class:`DXFTag` objects."""
@@ -271,7 +270,8 @@ class DXFBinaryTag(DXFTag):
 
     def tostring(self) -> str:
         """Returns binary value as single hex-string."""
-        return "".join(INT_TO_HEX % b for b in self.value)
+        assert isinstance(self.value, bytes)
+        return hexlify(self.value).upper().decode()
 
     def dxfstr(self) -> str:
         """Returns the DXF string for all vertex components."""
@@ -295,7 +295,7 @@ def dxftag(code: int, value: "TagValue") -> DXFTag:
     if code in BINARY_DATA:
         return DXFBinaryTag(code, value)
     elif code in POINT_CODES:
-        return DXFVertex(code, value)
+        return DXFVertex(code, value)  # type: ignore
     else:
         return DXFTag(code, cast_tag_value(code, value))
 
@@ -308,8 +308,9 @@ def tuples_to_tags(
     """
     for code, value in iterable:
         if code in POINT_CODES:
-            yield DXFVertex(code, value)
+            yield DXFVertex(code, value)  # type: ignore
         elif code in BINARY_DATA:
+            assert isinstance(value, (str, bytes))
             yield DXFBinaryTag.from_string(code, value)
         else:
             yield DXFTag(code, value)
@@ -343,12 +344,12 @@ def cast_tag_value(code: int, value: "TagValue") -> "TagValue":
     return TYPE_TABLE.get(code, str)(value)
 
 
-def tag_type(code: int) -> Callable:
+def tag_type(code: int) -> Type:
     return TYPE_TABLE.get(code, str)
 
 
 def strtag(tag: Union[DXFTag, Tuple[int, Any]]) -> str:
-    return TAG_STRING_FORMAT % tuple(tag)
+    return TAG_STRING_FORMAT % tuple(tag)  # type: ignore
 
 
 def get_xcode_for(code) -> int:
