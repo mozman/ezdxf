@@ -175,6 +175,9 @@ class BinaryRecord:
         return self.data.decode()
 
     def commit(self) -> XRecord:
+        assert isinstance(
+            self.data, (bytes, bytearray, memoryview)
+        ), "expected binary data"
         self.xrecord.tags = binary_data_to_dxf_tags(
             self.data,
             length_group_code=160,
