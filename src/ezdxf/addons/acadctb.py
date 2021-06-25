@@ -191,10 +191,14 @@ class PlotStyle:
         """Set `lineweight` in millimeters. Use ``0.0`` to set lineweight by
         object.
         """
+        assert self.parent is not None
         self.lineweight = self.parent.get_lineweight_index(lineweight)
 
     def get_lineweight(self) -> float:
-        """Returns the lineweight in millimeters or `0.0` for use entity lineweight."""
+        """Returns the lineweight in millimeters or `0.0` for use entity
+        lineweight.
+        """
+        assert self.parent is not None
         return self.parent.lineweights[self.lineweight]
 
     def has_object_color(self) -> bool:
@@ -203,16 +207,20 @@ class PlotStyle:
 
     @property
     def aci(self) -> int:
-        """:ref:`ACI` in range from ``1`` to ``255``. Has no meaning for named plot styles. (int)"""
+        """:ref:`ACI` in range from ``1`` to ``255``. Has no meaning for named
+        plot styles. (int)
+        """
         return self.index + 1
 
     @property
     def dithering(self) -> bool:
-        """Depending on the capabilities of your plotter, dithering approximates the colors with dot patterns.
-        When this option is ``False``, the colors are mapped to the nearest color, resulting in a smaller range of
+        """Depending on the capabilities of your plotter, dithering approximates
+        the colors with dot patterns. When this option is ``False``, the colors
+        are mapped to the nearest color, resulting in a smaller range of
         colors when plotting.
 
-        Dithering is available only whether you select the object’s color or assign a plot style color.
+        Dithering is available only whether you select the object’s color or
+        assign a plot style color.
 
         """
         return bool(self._color_policy & DITHERING_ON)
@@ -409,7 +417,7 @@ class ColorDependentPlotStyles(PlotStyleTable):
         else:
             raise IndexError(aci)
 
-    def __iter__(self) -> Iterable[PlotStyle]:
+    def __iter__(self):
         """Iterable of all plot styles."""
         return iter(self._styles[1:])
 
@@ -607,19 +615,17 @@ class NamedPlotStyles(PlotStyleTable):
 
 def _read_ctb(stream: BinaryIO) -> ColorDependentPlotStyles:
     """Read a CTB-file from from binary `stream`."""
-    content = _decompress(stream)
-    content = content.decode()
+    content: bytes = _decompress(stream)
     styles = ColorDependentPlotStyles()
-    styles.parse(content)
+    styles.parse(content.decode())
     return styles
 
 
 def _read_stb(stream: BinaryIO) -> NamedPlotStyles:
     """Read a STB-file from from binary `stream`."""
-    content = _decompress(stream)
-    content = content.decode()
+    content: bytes = _decompress(stream)
     styles = NamedPlotStyles()
-    styles.parse(content)
+    styles.parse(content.decode())
     return styles
 
 
@@ -628,12 +634,11 @@ def load(filename: str) -> Union[ColorDependentPlotStyles, NamedPlotStyles]:
 
     with open(filename, "rb") as stream:
         if filename.lower().endswith(".ctb"):
-            table = _read_ctb(stream)
+            return _read_ctb(stream)
         elif filename.lower().endswith(".stb"):
-            table = _read_stb(stream)
+            return _read_stb(stream)
         else:
             raise ValueError('Invalid file type: "{}"'.format(filename))
-    return table
 
 
 def new_ctb() -> ColorDependentPlotStyles:
@@ -662,14 +667,9 @@ def _decompress(stream: BinaryIO) -> bytes:
 
 def _compress(stream: BinaryIO, content: str):
     """Compress `content` and write to binary `stream`."""
-
-    def writestr(s):
-        stream.write(s.encode())
-
-    content = content.encode()
-    comp_body = zlib.compress(content)
+    comp_body = zlib.compress(content.encode())
     adler_chksum = zlib.adler32(comp_body)
-    writestr("PIAFILEVERSION_2.0,CTBVER1,compress\r\npmzlibcodec")
+    stream.write(b"PIAFILEVERSION_2.0,CTBVER1,compress\r\npmzlibcodec")
     stream.write(pack("LLL", adler_chksum, len(content), len(comp_body)))
     stream.write(comp_body)
 
@@ -691,6 +691,7 @@ class PlotStyleFileParser:
     @staticmethod
     def iteritems(text: str):
         """Iterate over all first level (start at col 0) elements."""
+        line_index = 0
 
         def get_name() -> str:
             """Get element name of line <line_index>."""
@@ -707,11 +708,11 @@ class PlotStyleFileParser:
             e. g. lineweights, plot_styles, aci_table
 
             """
-            nonlocal line_index
 
             def end_of_list():
                 return lines[line_index].endswith("}")
 
+            nonlocal line_index
             data = dict()
             while not end_of_list():
                 name = get_name()
@@ -728,9 +729,9 @@ class PlotStyleFileParser:
             line = lines[line_index]
             if line.endswith("{"):  # start of a list
                 line_index += 1
-                value = get_mapping()
+                return get_mapping()
             else:  # it's a simple name=value line
-                value = line.split("=", 1)[1]  # type: str
+                value: str = line.split("=", 1)[1]
                 value = value.lstrip('"')  # strings look like this: name="value
                 line_index += 1
             return value
@@ -741,7 +742,6 @@ class PlotStyleFileParser:
                 line_index += 1
 
         lines = text.split("\n")
-        line_index = 0
         while line_index < len(lines):
             name = get_name()
             value = get_value()
