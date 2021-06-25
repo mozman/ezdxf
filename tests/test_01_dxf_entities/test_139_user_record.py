@@ -5,7 +5,12 @@ import pytest
 from ezdxf.lldxf import const
 from ezdxf.math import Vec3
 from ezdxf.lldxf.tags import Tags
-from ezdxf.urecord import parse_items, compile_user_record, parse_binary_data
+from ezdxf.urecord import (
+    parse_items,
+    compile_user_record,
+    parse_binary_data,
+    BinaryRecord,
+)
 
 
 class TestFlatRecord:
@@ -142,9 +147,16 @@ class TestCompileData:
 
 def test_parse_binary_data():
     assert (
-        parse_binary_data(
-            Tags.from_text(BINARY_DATA)) == b"0123456789\xab\xba" * 2
+        parse_binary_data(Tags.from_text(BINARY_DATA))
+        == b"0123456789\xab\xba" * 2
     )
+
+
+class TestBinaryRecord:
+    def test_to_str(self):
+        record = BinaryRecord()
+        record.data = b"\xfe\xfe"
+        assert str(record) == "FEFE"
 
 
 FLAT_RECORD = """1

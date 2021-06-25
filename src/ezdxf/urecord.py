@@ -26,6 +26,7 @@ from ezdxf.lldxf.tags import Tags, binary_data_to_dxf_tags
 from ezdxf.lldxf.types import dxftag
 from ezdxf.math import Vec3, Vec2
 from ezdxf.tools import take2
+from ezdxf.tools.binarydata import bytes_to_hexstr
 
 TYPE_GROUP_CODE = 2
 STR_GROUP_CODE = 1
@@ -171,8 +172,8 @@ class BinaryRecord:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.commit()
 
-    def __str__(self):
-        return self.data.decode()
+    def __str__(self) -> str:
+        return bytes_to_hexstr(self.data)
 
     def commit(self) -> XRecord:
         assert isinstance(
