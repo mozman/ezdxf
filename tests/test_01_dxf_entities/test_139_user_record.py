@@ -103,6 +103,18 @@ def test_invalid_group_code_raises_value_error():
         parse_items(tags)
 
 
+@pytest.mark.parametrize("char", ["\n", "\r"])
+def test_invalid_line_break_characters_raise_exception(char):
+    with pytest.raises(ValueError):
+        compile_user_record("TEST", [f"{char}"])
+
+
+def test_too_long_string_raise_exception():
+    # max. str length is 2049 - DXF R2000 limit for group codes 0-9
+    with pytest.raises(ValueError):
+        compile_user_record("TEST", ["0123456789" * 205])
+
+
 class TestCompileData:
     def test_compile_empty_data(self):
         tags = compile_user_record("TEST", [])

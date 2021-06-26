@@ -13,6 +13,9 @@ All supported data types have a fixed group code:
     - list, tuple: starts with tag (302, "[") and ends with tag (302, "]")
     - dict: starts with tag (302, "{") and ends with tag (302, "}")
 
+The str type can have a max. length of 2049 characters and cannot contain "\n"
+or "\r".
+
 This is an advanced feature for experienced programmers, handle with care!
 The attribute UserRecord.data is a simple Python list with read/write access.
 
@@ -163,6 +166,10 @@ def tags_from_list(items: Iterable) -> Tags:
     tags = Tags()
     for item in items:
         if isinstance(item, str):
+            if len(item) > 2049:  # DXF R2000 limit for group codes 0-9
+                raise ValueError("string too long, max. 2049 characters")
+            if "\n" in item or "\r" in item:
+                raise ValueError("found invalid line break '\\n' or '\\r'")
             tags.append(dxftag(STR_GROUP_CODE, item))
         elif isinstance(item, int):
             tags.append(dxftag(INT_GROUP_CODE, item))
@@ -181,7 +188,7 @@ def tags_from_list(items: Iterable) -> Tags:
             tags.extend(tags_from_list(key_value_list(item)))
             tags.append(dxftag(COLLECTION_GROUP_CODE, END_DICT))
         else:
-            raise TypeError(f"unsupported type: {type(item)}")
+            raise const.DXFTypeError(f"unsupported type: {type(item)}")
     return tags
 
 
