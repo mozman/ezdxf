@@ -1,6 +1,6 @@
 # Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
-from typing import TextIO
+from typing import TextIO, List
 import os
 import sys
 from pathlib import Path
@@ -40,18 +40,24 @@ def default_config() -> ConfigParser:
     return config
 
 
-def load_config_files(name: str = "ezdxf.ini") -> ConfigParser:
+def config_files(name: str = "ezdxf.ini") -> List[Path]:
     # Priority
     # 1. config file in EZDXF_CONFIG_FILE
     # 2. "ezdxf.ini" current working directory
     # 3. "ezdxf.ini" in home directory "~/.ezdxf"
-    config_files = [
+    names = [
         Path(f"~/.ezdxf/{name}").expanduser(),
-        f"./{name}",
-        os.getenv("EZDXF_CONFIG_FILE", ""),
+        Path(f"./{name}"),
     ]
+    env_cfg = os.getenv("EZDXF_CONFIG_FILE", "")
+    if env_cfg:
+        names.append(Path(env_cfg))
+    return names
+
+
+def load_config_files(name: str = "ezdxf.ini") -> ConfigParser:
     config = default_config()
-    config.read(config_files, encoding="utf8")
+    config.read(config_files(name), encoding="utf8")
 
     # environment variables override config files
     for name in ["TEST_FILES"]:

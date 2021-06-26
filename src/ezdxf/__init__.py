@@ -13,7 +13,7 @@ PYPY = hasattr(sys, "pypy_version_info")
 PYPY_ON_WINDOWS = sys.platform.startswith("win") and PYPY
 
 # name space imports - do not remove
-from ezdxf.options import options
+from ezdxf.options import options, config_files
 from ezdxf.colors import (
     int2rgb,
     rgb2int,
@@ -96,3 +96,8 @@ def print_config(
         func("\nEnvironment Variables:")
         for v in options.CONFIG_VARS:
             func(f"{v}={os.environ.get(v, '')}")
+
+        func("\nExisting Configuration Files:")
+        for name in [p for p in config_files() if p.exists()]:
+            func(str(name))
+
