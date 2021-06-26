@@ -10,15 +10,17 @@ try:
 except ImportError:
     MATPLOTLIB = False
 
-TRUE_STATE = {'True', 'true', 'On', 'on', '1'}
-EZDXF_FONT_CACHE_DIRECTORY = os.getenv(
-    'EZDXF_FONT_CACHE_DIRECTORY', False)
-EZDXF_PRESERVE_PROXY_GRAPHICS = os.getenv(
-    'EZDXF_PRESERVE_PROXY_GRAPHICS', 'True') in TRUE_STATE
-EZDXF_LOG_UNPROCESSED_TAGS = os.getenv(
-    'EZDXF_LOG_UNPROCESSED_TAGS', 'True') in TRUE_STATE
-EZDXF_FILTER_INVALID_XDATA_GROUP_CODES = os.getenv(
-    'EZDXF_FILTER_INVALID_XDATA_GROUP_CODES', 'False') in TRUE_STATE
+TRUE_STATE = {"True", "true", "On", "on", "1"}
+EZDXF_FONT_CACHE_DIRECTORY = os.getenv("EZDXF_FONT_CACHE_DIRECTORY", False)
+EZDXF_PRESERVE_PROXY_GRAPHICS = (
+    os.getenv("EZDXF_PRESERVE_PROXY_GRAPHICS", "True") in TRUE_STATE
+)
+EZDXF_LOG_UNPROCESSED_TAGS = (
+    os.getenv("EZDXF_LOG_UNPROCESSED_TAGS", "True") in TRUE_STATE
+)
+EZDXF_FILTER_INVALID_XDATA_GROUP_CODES = (
+    os.getenv("EZDXF_FILTER_INVALID_XDATA_GROUP_CODES", "False") in TRUE_STATE
+)
 
 
 class Options:
@@ -33,9 +35,11 @@ class Options:
     ]
 
     def __init__(self):
-        self.filter_invalid_xdata_group_codes = EZDXF_FILTER_INVALID_XDATA_GROUP_CODES
-        self.default_text_style = 'OpenSans'
-        self.default_dimension_text_style = 'OpenSansCondensed-Light'
+        self.filter_invalid_xdata_group_codes = (
+            EZDXF_FILTER_INVALID_XDATA_GROUP_CODES
+        )
+        self.default_text_style = "OpenSans"
+        self.default_dimension_text_style = "OpenSansCondensed-Light"
 
         # Set path to an external font cache directory: e.g. "~/ezdxf", see
         # docs for ezdxf.options for an example how to create your own
@@ -60,7 +64,7 @@ class Options:
 
     @property
     def use_matplotlib(self) -> bool:
-        """ Activate/deactivate Matplotlib support e.g. for testing """
+        """Activate/deactivate Matplotlib support e.g. for testing"""
         return self._use_matplotlib
 
     @use_matplotlib.setter
@@ -71,7 +75,7 @@ class Options:
             self._use_matplotlib = False
 
     def preserve_proxy_graphics(self, state=True):
-        """ Enable/disable proxy graphic load/store support. """
+        """Enable/disable proxy graphic load/store support."""
         self.load_proxy_graphics = state
         self.store_proxy_graphics = state
 
