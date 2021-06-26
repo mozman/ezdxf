@@ -1,6 +1,7 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-"""Store user data in a XRECORD entity.
+"""
+UserRecord(): store user data in a XRECORD entity.
 
 The group code 302 is used as a structure tag.
 
@@ -17,9 +18,20 @@ The attribute UserRecord.data is a simple Python list with read/write access.
 
 The UserRecord can store nested list and dict objects.
 
+BinaryData(): store arbitrary binary data in a XRECORD entity
+
 """
 
-from typing import Iterable, Sequence, Mapping, MutableSequence, List
+from typing import (
+    TYPE_CHECKING,
+    Optional,
+    Iterable,
+    Sequence,
+    Mapping,
+    MutableSequence,
+    List,
+    cast,
+)
 from ezdxf.lldxf import const
 from ezdxf.entities import XRecord
 from ezdxf.lldxf.tags import Tags, binary_data_to_dxf_tags
@@ -27,6 +39,9 @@ from ezdxf.lldxf.types import dxftag
 from ezdxf.math import Vec3, Vec2
 from ezdxf.tools import take2
 from ezdxf.tools.binarydata import bytes_to_hexstr
+
+if TYPE_CHECKING:
+    from ezdxf.eztypes import Drawing
 
 TYPE_GROUP_CODE = 2
 STR_GROUP_CODE = 1
@@ -38,17 +53,34 @@ START_LIST = "["
 END_LIST = "]"
 START_DICT = "{"
 END_DICT = "}"
+DEFAULT_NAME = "UserRecord"
 
 __all__ = ["UserRecord", "BinaryRecord"]
 
 
 class UserRecord:
-    def __init__(self, xrecord: XRecord = None, name: str = "UserRecord"):
+    def __init__(
+        self,
+        xrecord: XRecord = None,
+        *,
+        name: str = DEFAULT_NAME,
+        doc: "Drawing" = None,
+    ):
         if xrecord is None:
-            xrecord = XRecord()
+            if doc is None:
+                xrecord = XRecord.new()
+            else:
+                xrecord = cast(
+                    XRecord, doc.objects.new_entity("XRECORD", {})
+                )
+
         self.xrecord = xrecord
         self.name = str(name)
         self.data: MutableSequence = parse_xrecord(self.xrecord, self.name)
+
+    @property
+    def handle(self) -> Optional[str]:
+        return self.xrecord.dxf.get("handle")
 
     def __enter__(self):
         return self
@@ -160,11 +192,26 @@ def key_value_list(data: Mapping) -> Iterable:
 
 
 class BinaryRecord:
-    def __init__(self, xrecord: XRecord = None):
+    def __init__(
+        self,
+        xrecord: XRecord = None,
+        *,
+        doc: "Drawing" = None,
+    ):
         if xrecord is None:
-            xrecord = XRecord.new()
+            if doc is None:
+                xrecord = XRecord.new()
+            else:
+                xrecord = cast(
+                    XRecord, doc.objects.new_entity("XRECORD", {})
+                )
+
         self.xrecord = xrecord
         self.data: bytes = parse_binary_data(self.xrecord.tags)
+
+    @property
+    def handle(self) -> Optional[str]:
+        return self.xrecord.dxf.get("handle")
 
     def __enter__(self):
         return self

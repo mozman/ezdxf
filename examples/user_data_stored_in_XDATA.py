@@ -1,9 +1,12 @@
+#  Copyright (c) 2021, Manfred Moitzi
+#  License: MIT License
+
 from pathlib import Path
 import ezdxf
 from ezdxf.math import Vec3
 from ezdxf.render.forms import gear
-from ezdxf.entities.xdata import XDataUserDict, XDataUserList
 from ezdxf import zoom
+from ezdxf.entities.xdata import XDataUserDict, XDataUserList
 
 DIR = Path("~/Desktop/Outbox").expanduser()
 
