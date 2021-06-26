@@ -1,6 +1,6 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Union, Optional
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.const import (
@@ -51,6 +51,9 @@ class ExtensionDict:
 
     def __contains__(self, key: str):
         return key in self.dictionary
+
+    def get(self, key: str, default=None) -> Optional['DXFEntity']:
+        return self._xdict.get(key, default)
 
     @classmethod
     def new(cls, owner_handle: str, doc: 'Drawing'):

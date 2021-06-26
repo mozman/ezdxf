@@ -41,6 +41,11 @@ def test_direct_interface(doc, entity):
     xdict['TEST2'] = placeholder2
 
 
+def test_get_returns_none_for_non_existing_entries(doc):
+    xdict = ExtensionDict(doc.objects.add_dictionary())
+    assert xdict.get("ABC") is None
+
+
 def test_supports_handle_property(doc):
     xdict = ExtensionDict.new("ABBA", doc)
     assert isinstance(xdict.handle, str)
