@@ -1,9 +1,39 @@
 Options Module
 ==============
 
+Configuration file support was added in version v0.16.5. The configuration files
+are loaded from the user home directory as "~/.ezdxf/ezdxf.ini", the current
+work directory as "./ezdxf.ini" and the file specified by the environment
+variable ``EZDXF_CONFIG_FILE``.
+
+INI File Structure:
+
+.. code:: INI
+
+    [CORE]
+    test_files = D:\Source\dxftest
+    font_cache_directory =
+    auto_load_fonts = true
+    load_proxy_graphics = true
+    store_proxy_graphics = true
+    log_unprocessed_tags = true
+    filter_invalid_xdata_group_codes = true
+    write_fixed_meta_data_for_testing = false
+    default_text_style = OpenSans
+    default_dimension_text_style = OpenSansCondensed-Light
+
+    [DXF STRUCTURE BROWSER]
+    text_editor = C:\Program Files\Notepad++\notepad++.exe
+    goto_line_argument = -n{num}
+
+
 .. module:: ezdxf.options
 
 Global options stored in :mod:`ezdxf.options`
+
+.. attribute:: config
+
+    The :class:`ConfigParser` object.
 
 .. attribute:: default_text_style
 
@@ -73,6 +103,19 @@ Global options stored in :mod:`ezdxf.options`
 
     Enable/disable proxy graphic load/store support.
 
+.. method:: write(fp: TextIO)
+
+    Write current configuration into given file object `fp`, the file object
+    must be a writeable text file with "utf8" encoding.
+
+.. method:: print()
+
+    Print current configuration to `stdout`.
+
+.. method:: write_home_config()
+
+    Write current configuration into file "~/.ezdxf/ezdxf.ini".
+
 .. _environment_variables:
 
 Environment Variables
@@ -86,36 +129,21 @@ for disabling the optional C-extensions on Windows::
 .. important::
 
     If you change any environment variable, you have to restart
-    the Python interpreter!
+    the Python interpreter! The C-extensions cannot be disabled by a config
+    file option.
 
 EZDXF_DISABLE_C_EXT
     Set environment variable EZDXF_DISABLE_C_EXT to ``1`` or ``True`` to disable
     the usage of C extensions implemented by Cython. Disabling the C-extensions
     can only be done on interpreter startup, before the first import of `ezdxf`.
 
-EZDXF_AUTO_LOAD_FONTS
-    Set EZDXF_AUTO_LOAD_FONTS to ``0`` or ``False`` to deactivate font cache
-    loading at startup, if this slows down the interpreter startup too much and
-    font measuring is not important to you. The font cache can always be loaded
-    manually by calling :func:`ezdxf.fonts.load`
-
-EZDXF_FONT_CACHE_DIRECTORY
-    Set path to an external font cache directory, see
-    :attr:`font_cache_directory` for more information
-
 EZDXF_TEST_FILES
     Path to the `ezdxf` test files required by some tests, for instance the
     `CADKit`_ sample files should be located in the
-    "EZDXF_TEST_FILES/CADKitSamples" folder.
+    "EZDXF_TEST_FILES/CADKitSamples" folder. See also config file
+    ``CORE`` option ``TEST_FILES``.
 
-EZDXF_PRESERVE_PROXY_GRAPHICS
-    Enable proxy graphic load/store support if ``1`` or ``True``, default
-    value is ``True``.
-
-EZDXF_LOG_UNPROCESSED_TAGS
-    Log unprocessed DXF tags for debugging, default value is ``True``.
-
-EZDXF_FILTER_INVALID_XDATA_GROUP_CODES
-    Filter invalid XDATA group codes, default value is ``False``.
+EZDXF_CONFIG_FILE
+    Use specified configuration file
 
 .. _CADKit: https://cadkit.blogspot.com/p/sample-dxf-files.html?view=magazine

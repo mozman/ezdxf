@@ -7,7 +7,7 @@ from ezdxf import commands
 from ezdxf.tools import fonts
 
 YES_NO = {True: 'yes', False: 'no'}
-options.load_proxy_graphics = True
+options.config.set("CORE", "LOAD_PROXY_GRAPHICS", "true")
 
 
 def add_common_arguments(parser):

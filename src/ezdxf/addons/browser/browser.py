@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import (
     QDialog,
 )
 from PyQt5.QtCore import Qt, QModelIndex, QSettings, QFileSystemWatcher
+import ezdxf
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError
 from ezdxf.lldxf.types import DXFTag, is_pointer_code
 from ezdxf.lldxf.tags import Tags
@@ -40,8 +41,10 @@ from .bookmarks import Bookmarks
 __all__ = ["DXFStructureBrowser"]
 
 APP_NAME = "DXF Structure Browser"
-TEXT_EDITOR = os.environ.get(
-    "EZDXF_TEXT_EDITOR", r"C:\Program Files\Notepad++\notepad++.exe"
+BROWSER_SECTION = "DXF STRUCTURE BROWSER"
+TEXT_EDITOR = ezdxf.options.config.get(BROWSER_SECTION, "TEXT_EDITOR")
+GOTO_LINE_ARGUMENT = ezdxf.options.config.get(
+    BROWSER_SECTION, "GOTO_LINE_ARGUMENT"
 )
 
 SearchSections = Set[str]
@@ -308,9 +311,9 @@ class DXFStructureBrowser(QMainWindow):
                 self,
                 "Reload",
                 f'"{self.doc.absolute_filepath()}"\n\nThis file has been '
-                f'modified by another program, reload file?',
+                f"modified by another program, reload file?",
                 buttons=QMessageBox.Yes | QMessageBox.No,
-                defaultButton=QMessageBox.Yes
+                defaultButton=QMessageBox.Yes,
             )
             if ok == QMessageBox.Yes:
                 self.reload_dxf()
@@ -572,7 +575,7 @@ class DXFStructureBrowser(QMainWindow):
         args = [
             TEXT_EDITOR,
             str(self.doc.absolute_filepath()),
-            "-n" + str(line_number),
+            GOTO_LINE_ARGUMENT.format(num=str(line_number)),
         ]
         subprocess.Popen(args)
 

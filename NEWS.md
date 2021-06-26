@@ -6,6 +6,23 @@ Version 0.16.5b0 - dev
 ----------------------
 
 - CHANGED: replaced `ezdxf.tools.rgb` by `ezdxf.colors`
+- NEW: config file support, config files read in order:
+  - environment variable `EZDXF_CONFIG_FILE=myconfig.ini`
+  - current working directory `./ezdxf.ini`
+  - home directory `~/.ezdxf/ezdxf.ini`
+  - `EZDXF_DISABLE_C_EXT` is an environment variable only option, has to be 
+    evaluated before any import
+- NEW: `ezdxf.options.write(fp)` write current configuration to file object `fp`    
+- NEW: `ezdxf.options.print()` print current configuration to `stdout`    
+- NEW: `ezdxf.options.write_home_config()` create configuration file `~\.ezdxf\ezdxf.ini`    
+- REMOVED: environment variable options, these are config file only options:
+  - `EZDXF_TEST_FILES`
+  - `EZDXF_AUTO_LOAD_FONTS`
+  - `EZDXF_FONT_CACHE_DIRECTORY`
+  - `EZDXF_PRESERVE_PROXY_GRAPHICS`
+  - `EZDXF_LOG_UNPROCESSED_TAGS`
+  - `EZDXF_FILTER_INVALID_XDATA_GROUP_CODES`
+  
 
 Version 0.16.4 - 2021-06-20
 ---------------------------

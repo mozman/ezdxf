@@ -11,12 +11,6 @@ __author__ = "mozman <me@mozman.at>"
 TRUE_STATE = {"True", "true", "On", "on", "1"}
 PYPY = hasattr(sys, "pypy_version_info")
 PYPY_ON_WINDOWS = sys.platform.startswith("win") and PYPY
-EZDXF_TEST_FILES = os.getenv("EZDXF_TEST_FILES", "")
-
-# Set EZDXF_AUTO_LOAD_FONTS to "False" to deactivate auto font loading,
-# if this this procedure slows down your startup time and font measuring is not
-# important to you. Fonts can always loaded manually: ezdxf.fonts.load()
-EZDXF_AUTO_LOAD_FONTS = os.getenv("EZDXF_AUTO_LOAD_FONTS", "True") in TRUE_STATE
 
 # name space imports - do not remove
 from ezdxf.options import options
@@ -75,8 +69,9 @@ from ezdxf.lldxf.encoding import (
 codecs.register_error("dxfreplace", dxf_backslash_replace)
 
 # Load font support automatically:
-if EZDXF_AUTO_LOAD_FONTS:
+if options.auto_load_fonts:
     fonts.load()
+EZDXF_TEST_FILES = options.test_files
 
 YES_NO = {True: "yes", False: "no"}
 
@@ -86,27 +81,18 @@ def print_config(
 ) -> None:
     from pathlib import Path
     from ezdxf.acc import USE_C_EXT
+    from io import StringIO
 
     func(f"ezdxf v{__version__} @ {Path(__file__).parent}")
     func(f"Python version: {sys.version}")
     func(f"using C-extensions: {YES_NO[USE_C_EXT]}")
     func(f"using Matplotlib: {YES_NO[options.use_matplotlib]}")
     if verbose:
-        font_cache_dir = options.font_cache_directory
-        if font_cache_dir is False:
-            font_cache_dir = "internal"
-        func(f"font cache directory: {font_cache_dir}")
-        func(f"default text style: {options.default_text_style}")
-        func(
-            f"default dimension text style: "
-            f"{options.default_dimension_text_style}"
-        )
-        func(f"load proxy graphic: {YES_NO[options.load_proxy_graphics]}")
-        func(f"store proxy graphic: {YES_NO[options.store_proxy_graphics]}")
-        func(f"log unprocessed tags: {YES_NO[options.log_unprocessed_tags]}")
-        func(
-            f"filter invalid XDATA group codes: "
-            f"{YES_NO[options.filter_invalid_xdata_group_codes]}"
-        )
+        func("\nOptions:")
+        fp = StringIO()
+        options.write(fp)
+        for line in fp.getvalue().splitlines():
+            func(line)
+        func("\nEnvironment Variables:")
         for v in options.CONFIG_VARS:
             func(f"{v}={os.environ.get(v, '')}")
