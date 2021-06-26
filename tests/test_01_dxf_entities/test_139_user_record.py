@@ -5,10 +5,12 @@ import pytest
 from ezdxf.lldxf import const
 from ezdxf.math import Vec3
 from ezdxf.lldxf.tags import Tags
+# noinspection PyProtectedMember
 from ezdxf.urecord import (
     parse_items,
     compile_user_record,
     parse_binary_data,
+    UserRecord,
     BinaryRecord,
 )
 
@@ -145,6 +147,39 @@ class TestCompileData:
         assert parse_items(tags[1:]) == struct
 
 
+class TestUserRecord:
+    def test_required_final_commit_to_store_data_in_xrecord(self):
+        user_record = UserRecord(name="MyRecord")
+        user_record.data.extend(["str", 1, 3.1415])
+        assert len(user_record.xrecord.tags) == 0
+
+        # calling commit() stores the data in the xrecord
+        user_record.commit()
+        assert user_record.xrecord.tags == [
+            (2, "MyRecord"),
+            (1, "str"),
+            (90, 1),
+            (40, 3.1415),
+        ]
+
+    def test_works_as_context_manager(self):
+        with UserRecord(name="MyRecord") as user_record:
+            user_record.data.extend(["str", 1, 3.1415])
+            # calls commit() at exit
+
+        assert user_record.xrecord.tags == [
+            (2, "MyRecord"),
+            (1, "str"),
+            (90, 1),
+            (40, 3.1415),
+        ]
+
+    def test_str(self):
+        with UserRecord(name="MyRecord") as user_record:
+            user_record.data.extend(["str", 1, 3.1415])
+        assert str(user_record) == "['str', 1, 3.1415]"
+
+
 def test_parse_binary_data():
     assert (
         parse_binary_data(Tags.from_text(BINARY_DATA))
@@ -153,7 +188,21 @@ def test_parse_binary_data():
 
 
 class TestBinaryRecord:
-    def test_to_str(self):
+    def test_required_final_commit_to_store_data_in_xrecord(self):
+        user_record = BinaryRecord()
+        user_record.data = b"\xfe\xfe"
+        assert len(user_record.xrecord.tags) == 0
+        # calling commit() stores the data in the xrecord
+        user_record.commit()
+        assert user_record.xrecord.tags == [(160, 2), (310, "FEFE")]
+
+    def test_works_as_context_manager(self):
+        with BinaryRecord() as user_record:
+            user_record.data = b"\xfe\xfe"
+            # calls commit() at exit
+        assert user_record.xrecord.tags == [(160, 2), (310, "FEFE")]
+
+    def test_str(self):
         record = BinaryRecord()
         record.data = b"\xfe\xfe"
         assert str(record) == "FEFE"

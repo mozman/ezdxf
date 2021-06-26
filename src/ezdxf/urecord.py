@@ -45,7 +45,7 @@ __all__ = ["UserRecord", "BinaryRecord"]
 class UserRecord:
     def __init__(self, xrecord: XRecord = None, name: str = "UserRecord"):
         if xrecord is None:
-            xrecord = XRecord.new()
+            xrecord = XRecord()
         self.xrecord = xrecord
         self.name = str(name)
         self.data: MutableSequence = parse_xrecord(self.xrecord, self.name)
