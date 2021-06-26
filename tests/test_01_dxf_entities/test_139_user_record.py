@@ -99,19 +99,19 @@ def test_missing_close_tag_raises_dxf_structure_error():
 
 def test_invalid_group_code_raises_value_error():
     tags = Tags.from_text("5\ninvalid\n")
-    with pytest.raises(ValueError):
+    with pytest.raises(const.DXFValueError):
         parse_items(tags)
 
 
 @pytest.mark.parametrize("char", ["\n", "\r"])
 def test_invalid_line_break_characters_raise_exception(char):
-    with pytest.raises(ValueError):
+    with pytest.raises(const.DXFValueError):
         compile_user_record("TEST", [f"{char}"])
 
 
 def test_too_long_string_raise_exception():
     # max. str length is 2049 - DXF R2000 limit for group codes 0-9
-    with pytest.raises(ValueError):
+    with pytest.raises(const.DXFValueError):
         compile_user_record("TEST", ["0123456789" * 205])
 
 

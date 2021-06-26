@@ -550,6 +550,20 @@ class TestXDataUserList:
             dxftag(1002, "}"),
         ]
 
+    @pytest.mark.parametrize("char", ["\n", "\r"])
+    def test_invalid_line_break_characters_raise_exception(self, char):
+        xlist = XDataUserList()
+        xlist.append(char)
+        with pytest.raises(DXFValueError):
+            xlist.commit()
+
+    def test_too_long_string_raise_exception(self):
+        # The XDATA limit for group code 1000 is 255 characters
+        xlist = XDataUserList()
+        xlist.append("0123456789" * 26)
+        with pytest.raises(DXFValueError):
+            xlist.commit()
+
 
 DICT1 = """1001
 EZDXF

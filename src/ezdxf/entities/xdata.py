@@ -282,6 +282,13 @@ class XDataUserList(MutableSequence):
     def commit(self):
         data = []
         for value in self._data:
+            if isinstance(value, str):
+                if len(value) > 255:  # XDATA limit for group code 1000
+                    raise DXFValueError("string too long, max. 255 characters")
+                if "\n" in value or "\r" in value:
+                    raise DXFValueError(
+                        "found invalid line break '\\n' or '\\r'"
+                    )
             code = self.group_codes.get(type(value))
             if code:
                 data.append(dxftag(code, value))

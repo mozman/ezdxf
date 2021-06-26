@@ -73,9 +73,7 @@ class UserRecord:
             if doc is None:
                 xrecord = XRecord.new()
             else:
-                xrecord = cast(
-                    XRecord, doc.objects.new_entity("XRECORD", {})
-                )
+                xrecord = cast(XRecord, doc.objects.new_entity("XRECORD", {}))
 
         self.xrecord = xrecord
         self.name = str(name)
@@ -105,7 +103,7 @@ def parse_xrecord(xrecord: XRecord, name: str) -> List:
     if tags:
         code, value = tags[0]
         if code != TYPE_GROUP_CODE and value != name:
-            raise TypeError(
+            raise const.DXFTypeError(
                 f"{str(xrecord)} is not an user record of type {name}"
             )
         data.extend(item for item in parse_items(tags[1:]))
@@ -146,7 +144,9 @@ def parse_items(tags: Tags) -> List:
                 prev_level.append(items)
             items = prev_level
         else:
-            raise ValueError(f"invalid group code in tag: ({code}, {value})")
+            raise const.DXFValueError(
+                f"invalid group code in tag: ({code}, {value})"
+            )
     if stack:
         raise const.DXFStructureError(
             f"invalid nested structure, mismatch of structure tags"
@@ -167,9 +167,13 @@ def tags_from_list(items: Iterable) -> Tags:
     for item in items:
         if isinstance(item, str):
             if len(item) > 2049:  # DXF R2000 limit for group codes 0-9
-                raise ValueError("string too long, max. 2049 characters")
+                raise const.DXFValueError(
+                    "string too long, max. 2049 characters"
+                )
             if "\n" in item or "\r" in item:
-                raise ValueError("found invalid line break '\\n' or '\\r'")
+                raise const.DXFValueError(
+                    "found invalid line break '\\n' or '\\r'"
+                )
             tags.append(dxftag(STR_GROUP_CODE, item))
         elif isinstance(item, int):
             tags.append(dxftag(INT_GROUP_CODE, item))
@@ -209,9 +213,7 @@ class BinaryRecord:
             if doc is None:
                 xrecord = XRecord.new()
             else:
-                xrecord = cast(
-                    XRecord, doc.objects.new_entity("XRECORD", {})
-                )
+                xrecord = cast(XRecord, doc.objects.new_entity("XRECORD", {}))
 
         self.xrecord = xrecord
         self.data: bytes = parse_binary_data(self.xrecord.tags)
