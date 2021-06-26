@@ -15,7 +15,7 @@ from PyQt5.QtWidgets import (
     qApp,
     QDialog,
 )
-from PyQt5.QtCore import Qt, QModelIndex, QSettings
+from PyQt5.QtCore import Qt, QModelIndex, QSettings, QFileSystemWatcher
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError
 from ezdxf.lldxf.types import DXFTag, is_pointer_code
 from ezdxf.lldxf.tags import Tags
@@ -74,6 +74,8 @@ class DXFStructureBrowser(QMainWindow):
         self._active_search: Optional[SearchIndex] = None
         self._search_sections = set()
         self._find_dialog: "FindDialog" = self.create_find_dialog()
+        self._file_watcher = QFileSystemWatcher()
+        self._exclusive_reload_dialog = True  # see ask_for_reloading() method
         self.history = EntityHistory()
         self.bookmarks = Bookmarks()
         self.setup_actions()
@@ -117,6 +119,8 @@ class DXFStructureBrowser(QMainWindow):
     def connect_slots(self):
         self._structure_tree.activated.connect(self.entity_activated)
         self._dxf_tags_table.activated.connect(self.tag_activated)
+        # noinspection PyUnresolvedReferences
+        self._file_watcher.fileChanged.connect(self.ask_for_reloading)
 
     # noinspection PyAttributeOutsideInit
     def setup_actions(self):
@@ -295,11 +299,31 @@ class DXFStructureBrowser(QMainWindow):
             self.set_current_entity_and_row_index(entity, first_row)
             self._structure_tree.expand_to_entity(entity)
 
+    def ask_for_reloading(self):
+        if self.doc.filename and self._exclusive_reload_dialog:
+            # Ignore further reload signals until first signal is processed.
+            # Saving files by ezdxf triggers two "fileChanged" signals!?
+            self._exclusive_reload_dialog = False
+            ok = QMessageBox.question(
+                self,
+                "Reload",
+                f'"{self.doc.absolute_filepath()}"\n\nThis file has been '
+                f'modified by another program, reload file?',
+                buttons=QMessageBox.Yes | QMessageBox.No,
+                defaultButton=QMessageBox.Yes
+            )
+            if ok == QMessageBox.Yes:
+                self.reload_dxf()
+            self._exclusive_reload_dialog = True
+
     def _load(self, filename: str):
+        if self.doc.filename:
+            self._file_watcher.removePath(self.doc.filename)
         self.doc.load(filename)
         model = DXFStructureModel(self.doc.filepath.name, self.doc)
         self._structure_tree.set_structure(model)
         self.history.clear()
+        self._file_watcher.addPath(self.doc.filename)
 
     def export_entity(self):
         if self._dxf_tags_table is None:
