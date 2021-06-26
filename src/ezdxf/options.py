@@ -60,8 +60,8 @@ def load_config_files(name: str = "ezdxf.ini") -> ConfigParser:
     config.read(config_files(name), encoding="utf8")
 
     # environment variables override config files
-    for name in ["TEST_FILES"]:
-        value = os.environ.get("EZDXF_TEST_FILES", "")
+    for name, env_name in [("TEST_FILES", "EZDXF_TEST_FILES")]:
+        value = os.environ.get(env_name, "")
         if value:
             config[CORE][name] = value
     return config
