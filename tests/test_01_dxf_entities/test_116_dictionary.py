@@ -160,6 +160,7 @@ def test_add_sub_dict(doc):
     new_dict = rootdict.get_required_dict('MOZMAN_TEST')
     assert 'DICTIONARY' == new_dict.dxftype()
     assert 'MOZMAN_TEST' in rootdict
+    assert new_dict.dxf.owner == rootdict.dxf.handle
 
 
 def test_add_dict_var(doc):
@@ -169,6 +170,16 @@ def test_add_dict_var(doc):
     assert new_var.dxftype() == 'DICTIONARYVAR'
     assert 'MOZMAN_VAR' in rootdict
     assert new_var.dxf.value == 'Hallo'
+    assert new_var.dxf.owner == rootdict.dxf.handle
+
+
+def test_add_xrecord(doc):
+    rootdict = doc.rootdict
+    assert 'MOZMAN_XRECORD' not in rootdict
+    xrecord = rootdict.add_xrecord('MOZMAN_XRECORD')
+    assert xrecord.dxftype() == 'XRECORD'
+    assert 'MOZMAN_XRECORD' in rootdict
+    assert xrecord.dxf.owner == rootdict.dxf.handle
 
 
 def test_audit_fix_invalid_root_dict_owner():

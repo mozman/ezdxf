@@ -20,7 +20,7 @@ from .dxfobj import DXFObject
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace, Auditor
+    from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace, Auditor, XRecord
 
 __all__ = ['Dictionary', 'DictionaryWithDefault', 'DictionaryVar']
 
@@ -296,7 +296,7 @@ class Dictionary(DXFObject):
         return dxf_dict
 
     def add_dict_var(self, key: str, value: str) -> 'DictionaryVar':
-        """ Add new :class:`DictionaryVar`.
+        """ Add a new :class:`DictionaryVar`.
 
         Args:
              key: entry name as string
@@ -309,6 +309,19 @@ class Dictionary(DXFObject):
         )
         self.add(key, new_var)
         return new_var
+
+    def add_xrecord(self, key: str) -> 'XRecord':
+        """ Add a new :class:`XRecord`.
+
+        Args:
+             key: entry name as string
+
+        """
+        new_xrecord = self.doc.objects.add_xrecord(
+            owner=self.dxf.handle,
+        )
+        self.add(key, new_xrecord)
+        return new_xrecord
 
     def set_or_add_dict_var(self, key: str, value: str) -> 'DictionaryVar':
         """ Set or add new :class:`DictionaryVar`.

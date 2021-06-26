@@ -78,6 +78,8 @@ Factory function         :meth:`ezdxf.sections.objects.ObjectsSection.add_dictio
 
     .. automethod:: add_dict_var(key: str, value: str) -> DictionaryVar
 
+    .. automethod:: add_xrecord(key: str) -> XRecord
+
     .. automethod:: link_dxf_object(name: str, obj: DXFObject) -> None
 
 
