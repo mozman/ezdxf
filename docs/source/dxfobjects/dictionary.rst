@@ -62,7 +62,7 @@ Factory function         :meth:`ezdxf.sections.objects.ObjectsSection.add_dictio
 
     .. automethod:: count
 
-    .. automethod:: get(key: str, default: Any = DXFKeyError) -> DXFEntity
+    .. automethod:: get(key: str, default: DXFEntity = None) -> Optional[DXFEntity]
 
     .. automethod:: add(key: str, value: DXFEntity) -> None
 
