@@ -429,7 +429,7 @@ def binary_data_to_dxf_tags(
     tags.append(dxftag(length_group_code, length))
     index = 0
     while index < length:
-        hex_str = bytes_to_hexstr(data[index : index + value_size])
-        tags.append(dxftag(value_group_code, hex_str))
+        chunk = data[index: index + value_size]
+        tags.append(dxftag(value_group_code, chunk))
         index += value_size
     return tags

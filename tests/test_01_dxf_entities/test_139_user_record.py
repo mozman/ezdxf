@@ -206,13 +206,18 @@ class TestBinaryRecord:
         assert len(user_record.xrecord.tags) == 0
         # calling commit() stores the data in the xrecord
         user_record.commit()
-        assert user_record.xrecord.tags == [(160, 2), (310, "FEFE")]
+        assert user_record.xrecord.tags == [(160, 2), (310, b"\xfe\xfe")]
 
     def test_works_as_context_manager(self):
         with BinaryRecord() as user_record:
             user_record.data = b"\xfe\xfe"
             # calls commit() at exit
-        assert user_record.xrecord.tags == [(160, 2), (310, "FEFE")]
+        assert user_record.xrecord.tags == [(160, 2), (310, b"\xfe\xfe")]
+
+    def test_stores_line_endings(self):
+        with BinaryRecord() as user_record:
+            user_record.data = b"\r\n"
+        assert user_record.xrecord.tags == [(160, 2), (310, b"\r\n")]
 
     def test_str(self):
         record = BinaryRecord()
