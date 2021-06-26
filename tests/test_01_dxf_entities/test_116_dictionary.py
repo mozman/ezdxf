@@ -228,6 +228,15 @@ def test_audit_fix_invalid_pointer():
     assert 'TEST_VAR_3' not in d
 
 
+def test_link_dxf_object_to_dictionary():
+    from ezdxf.entities import DXFObject
+    dictionary = Dictionary.new(handle="ABBA")
+    obj = DXFObject.new(handle="FEFE")
+    dictionary.link_dxf_object("MyEntry", obj)
+    assert "MyEntry" in dictionary
+    assert obj.dxf.owner == "ABBA"
+
+
 class TestDXFDictWithDefault:
     @pytest.fixture
     def dxfdict(self):

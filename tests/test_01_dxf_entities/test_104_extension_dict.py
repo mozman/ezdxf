@@ -6,6 +6,7 @@ import ezdxf
 from ezdxf.entities import factory
 from ezdxf.entities.xdict import ExtensionDict
 
+
 @pytest.fixture(scope='module')
 def doc():
     return ezdxf.new()
@@ -38,6 +39,11 @@ def test_direct_interface(doc, entity):
     placeholder2 = xdict['TEST']
     assert placeholder is placeholder2
     xdict['TEST2'] = placeholder2
+
+
+def test_supports_handle_property(doc):
+    xdict = ExtensionDict.new("ABBA", doc)
+    assert isinstance(xdict.handle, str)
 
 
 def test_copy_entity(doc, entity):
@@ -91,3 +97,13 @@ def test_multiple_destroy_calls(doc, entity):
     xdict.destroy(), '2nd call should not raise an exception'
     assert xdict.is_alive is False
     assert entity.has_extension_dict is False
+
+
+def test_link_dxf_object_to_extension_dict(doc):
+    from ezdxf.entities import DXFObject
+    xdict = ExtensionDict.new("ABBA", doc)
+    owner = xdict.handle
+    obj = DXFObject.new(handle="FEFE")
+    xdict.link_dxf_object("MyEntry", obj)
+    assert "MyEntry" in xdict
+    assert obj.dxf.owner == owner

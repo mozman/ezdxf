@@ -78,6 +78,8 @@ Factory function         :meth:`ezdxf.sections.objects.ObjectsSection.add_dictio
 
     .. automethod:: add_dict_var(key: str, value: str) -> DictionaryVar
 
+    .. automethod:: link_dxf_object(name: str, obj: DXFObject) -> None
+
 
 .. _DICTIONARY: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-40B92C63-26F0-485B-A9C2-B349099B26D0
 

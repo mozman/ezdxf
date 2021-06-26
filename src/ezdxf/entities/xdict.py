@@ -99,7 +99,7 @@ class ExtensionDict:
 
     def add_dictionary(self, name: str, doc: 'Drawing',
         hard_owned: bool = False) -> 'DXFEntity':
-        dictionary = self.dictionary
+        dictionary = self._xdict
         new_dict = doc.objects.add_dictionary(
             owner=dictionary.dxf.hande,
             hard_owned=hard_owned,
@@ -109,11 +109,10 @@ class ExtensionDict:
 
     def add_placeholder(self, name: str,
         doc: 'Drawing') -> 'DXFEntity':
-        dictionary = self.dictionary
+        dictionary = self._xdict
         placeholder = doc.objects.add_placeholder(dictionary.dxf.handle)
         dictionary[name] = placeholder
         return placeholder
 
     def link_dxf_object(self, name: str, obj: 'DXFObject') -> None:
-        self.dictionary[name] = obj.dxf.handle
-        obj.dxf.owner = self.handle
+        self._xdict.link_dxf_object(name, obj)

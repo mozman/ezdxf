@@ -329,6 +329,11 @@ class Dictionary(DXFObject):
             dict_var.dxf.value = str(value)
         return dict_var
 
+    def link_dxf_object(self, name: str, obj: 'DXFObject') -> None:
+        """ Add `obj` and set owner of `obj` to this dictionary. """
+        self.add(name, obj)
+        obj.dxf.owner = self.dxf.handle
+
     def get_required_dict(self, key: str) -> 'Dictionary':
         """ Get entry `key` or create a new :class:`Dictionary`,
         if `Key` not exist.
