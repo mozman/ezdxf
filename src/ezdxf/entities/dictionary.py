@@ -214,7 +214,7 @@ class Dictionary(DXFObject):
         for key in self.keys():
             yield key, self.get(key)  # maybe handle -> DXFEntity
 
-    def __getitem__(self, key: str) -> "DXFEntity":
+    def __getitem__(self, key: str) -> DXFEntity:
         """Return the value for `key`, raises a :class:`DXFKeyError` if `key`
         does not exist.
 
@@ -224,7 +224,7 @@ class Dictionary(DXFObject):
         else:
             raise DXFKeyError(key)
 
-    def __setitem__(self, key: str, value: "DXFEntity") -> None:
+    def __setitem__(self, key: str, value: DXFEntity) -> None:
         """Add item as ``(key, value)`` pair to dictionary."""
         return self.add(key, value)
 
@@ -246,12 +246,12 @@ class Dictionary(DXFObject):
     count = __len__
 
     def get(
-        self, key: str, default: Optional["DXFEntity"] = None
-    ) -> Optional["DXFEntity"]:
+        self, key: str, default: Optional[DXFEntity] = None
+    ) -> Optional[DXFEntity]:
         """Returns :class:`DXFEntity` for `key`, if `key` exist else `default`."""
         return self._data.get(key, default)
 
-    def add(self, key: str, value: "DXFEntity") -> None:
+    def add(self, key: str, value: DXFEntity) -> None:
         """Add entry ``(key, value)``."""
         if isinstance(value, str):
             if not is_valid_handle(value):
@@ -269,7 +269,7 @@ class Dictionary(DXFObject):
             raise DXFKeyError(key)
 
         if self.is_hard_owner:
-            entity = self.get(key)
+            entity = self.__getitem__(key)
             # Presumption: hard owned DXF objects always reside in the OBJECTS
             # section.
             self.doc.objects.delete_entity(entity)
@@ -357,7 +357,7 @@ class Dictionary(DXFObject):
             dict_var.dxf.value = str(value)
         return dict_var
 
-    def link_dxf_object(self, name: str, obj: "DXFObject") -> None:
+    def link_dxf_object(self, name: str, obj: DXFEntity) -> None:
         """Add `obj` and set owner of `obj` to this dictionary."""
         self.add(name, obj)
         obj.dxf.owner = self.dxf.handle
@@ -451,12 +451,12 @@ class DictionaryWithDefault(Dictionary):
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_dict_with_default.name)
         self.dxf.export_dxf_attribs(tagwriter, "default")
 
-    def __getitem__(self, key: str) -> Optional["DXFEntity"]:
+    def __getitem__(self, key: str) -> Optional[DXFEntity]:
         return self.get(key)
 
     def get(
-        self, key: str, default: Optional["DXFEntity"] = None
-    ) -> Optional["DXFEntity"]:
+        self, key: str, default: Optional[DXFEntity] = None
+    ) -> Optional[DXFEntity]:
         # `default` argument is ignored, exist only for API compatibility,
         """Returns :class:`DXFEntity` for `key` or the predefined dictionary
         wide :attr:`dxf.default` entity if `key` does not exist or ``None``
