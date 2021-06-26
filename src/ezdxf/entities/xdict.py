@@ -9,7 +9,7 @@ from ezdxf.lldxf.const import (
 
 if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import TagWriter
-    from ezdxf.eztypes import Dictionary, Drawing, DXFEntity
+    from ezdxf.eztypes import Dictionary, Drawing, DXFEntity, DXFObject
 
 __all__ = ['ExtensionDict']
 
@@ -38,6 +38,10 @@ class ExtensionDict:
         """
         assert self._xdict is not None
         return self._xdict
+
+    @property
+    def handle(self) -> str:
+        return self._xdict.dxf.handle
 
     def __getitem__(self, key: str):
         return self.dictionary[key]
@@ -94,7 +98,7 @@ class ExtensionDict:
             self._xdict = None
 
     def add_dictionary(self, name: str, doc: 'Drawing',
-                       hard_owned: bool = False) -> 'DXFEntity':
+        hard_owned: bool = False) -> 'DXFEntity':
         dictionary = self.dictionary
         new_dict = doc.objects.add_dictionary(
             owner=dictionary.dxf.hande,
@@ -104,8 +108,12 @@ class ExtensionDict:
         return new_dict
 
     def add_placeholder(self, name: str,
-                        doc: 'Drawing') -> 'DXFEntity':
+        doc: 'Drawing') -> 'DXFEntity':
         dictionary = self.dictionary
         placeholder = doc.objects.add_placeholder(dictionary.dxf.handle)
         dictionary[name] = placeholder
         return placeholder
+
+    def link_dxf_object(self, name: str, obj: 'DXFObject') -> None:
+        self.dictionary[name] = obj.dxf.handle
+        obj.dxf.owner = self.handle
