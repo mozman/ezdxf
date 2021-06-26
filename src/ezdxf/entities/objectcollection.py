@@ -1,6 +1,6 @@
 # Copyright (c) 2018-2020 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, cast
+from typing import TYPE_CHECKING, Iterable, cast, Optional
 from ezdxf.lldxf.const import DXFValueError, DXFKeyError
 
 if TYPE_CHECKING:
@@ -10,8 +10,12 @@ if TYPE_CHECKING:
 
 
 class ObjectCollection:
-    def __init__(self, doc: 'Drawing', dict_name: str = 'ACAD_MATERIAL',
-                 object_type: str = 'MATERIAL'):
+    def __init__(
+        self,
+        doc: 'Drawing',
+        dict_name: str = 'ACAD_MATERIAL',
+        object_type: str = 'MATERIAL'
+    ):
         self.doc: 'Drawing' = doc
         self.object_type: str = object_type
         self.object_dict: 'Dictionary' = doc.rootdict.get_required_dict(
@@ -34,21 +38,22 @@ class ObjectCollection:
     def __contains__(self, name: str) -> bool:
         return name in self.object_dict
 
-    def __getitem__(self, item):
-        return self.get(item)
+    def __getitem__(self, name: str) -> 'DXFObject':
+        return cast('DXFObject', self.object_dict.__getitem__(name))
 
-    def get(self, name: str, default=DXFKeyError) -> 'DXFObject':
+    def get(
+        self,
+        name: str,
+        default: 'DXFObject' = None
+    ) -> Optional['DXFObject']:
         """ Get object by name.
 
         Args:
             name: object name as string
             default: default value
 
-        Raises:
-            DXFKeyError: if name does not exist
-
         """
-        return cast('DXFObject', self.object_dict.get(name, default))
+        return self.object_dict.get(name, default)
 
     def new(self, name: str) -> 'DXFObject':
         """  Create a new object of type `self.object_type` and store its handle
@@ -80,11 +85,9 @@ class ObjectCollection:
         return cast('DXFObject', obj)
 
     def delete(self, name: str) -> None:
-        try:
-            obj = self.object_dict.get(name)
-        except DXFKeyError:
-            return
-        else:
+        obj = self.object_dict.get(name)
+        if obj is not None:
+            obj = cast('DXFObject', obj)
             self.object_dict.discard(name)
             self.objects.delete_entity(obj)
 

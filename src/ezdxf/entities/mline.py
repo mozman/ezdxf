@@ -436,7 +436,7 @@ class MLine(DXFGraphic):
             logger.debug("Can't change style of unbounded MLINE entity.")
             return
         try:
-            style = self.doc.mline_styles.get(name)
+            style = self.doc.mline_styles[name]
         except const.DXFKeyError:
             raise const.DXFValueError(f"Undefined MLINE style: {name}")
 

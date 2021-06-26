@@ -9,7 +9,7 @@ from ezdxf.lldxf.const import (
     SUBCLASS_MARKER, DXFKeyError, DXFValueError,
 )
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT, group_code_mapping
+    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT, group_code_mapping,
 )
 from ezdxf.lldxf.types import is_valid_handle
 from ezdxf.audit import AuditError
@@ -105,7 +105,7 @@ class Dictionary(DXFObject):
             doc.objects.add_object(entity)
 
     def load_dxf_attribs(
-            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.fast_load_dxfattribs(
@@ -200,7 +200,10 @@ class Dictionary(DXFObject):
         does not exist.
 
         """
-        return self.get(key)
+        if key in self._data:
+            return self._data[key]
+        else:
+            raise DXFKeyError(key)
 
     def __setitem__(self, key: str, value: 'DXFEntity') -> None:
         """ Add item as ``(key, value)`` pair to dictionary.  """
@@ -223,18 +226,13 @@ class Dictionary(DXFObject):
 
     count = __len__
 
-    def get(self, key: str, default: Any = DXFKeyError) -> 'DXFEntity':
-        """ Returns :class:`DXFEntity` for `key`, if `key` exist,
-        else `default` or raises a :class:`DXFKeyError` for
-        `default` = :class:`DXFKeyError`.
+    def get(
+        self, key: str,
+        default: Optional['DXFEntity'] = None
+    ) -> Optional['DXFEntity']:
+        """ Returns :class:`DXFEntity` for `key`, if `key` exist else `default`.
         """
-        try:
-            return self._data[key]
-        except KeyError:
-            if default is DXFKeyError:
-                raise DXFKeyError(f"KeyError: '{key}'")
-            else:
-                return default
+        return self._data.get(key, default)
 
     def add(self, key: str, value: 'DXFEntity') -> None:
         """ Add entry ``(key, value)``. """
@@ -291,7 +289,7 @@ class Dictionary(DXFObject):
 
         """
         dxf_dict = self.doc.objects.add_dictionary(owner=self.dxf.handle,
-                                                   hard_owned=hard_owned)
+            hard_owned=hard_owned)
         self.add(key, dxf_dict)
         return dxf_dict
 
@@ -352,7 +350,7 @@ class Dictionary(DXFObject):
         if `Key` not exist.
         """
         try:
-            dxf_dict = self.get(key)
+            dxf_dict = self.__getitem__(key)
         except DXFKeyError:
             dxf_dict = self.add_new_dict(key)
         return dxf_dict
@@ -402,7 +400,7 @@ acdb_dict_with_default_group_codes = group_code_mapping(acdb_dict_with_default)
 class DictionaryWithDefault(Dictionary):
     DXFTYPE = 'ACDBDICTIONARYWDFLT'
     DXFATTRIBS = DXFAttributes(base_class, acdb_dictionary,
-                               acdb_dict_with_default)
+        acdb_dict_with_default)
 
     def __init__(self):
         super().__init__()
@@ -419,7 +417,7 @@ class DictionaryWithDefault(Dictionary):
         super().post_load_hook(doc)
 
     def load_dxf_attribs(
-            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.fast_load_dxfattribs(
@@ -431,7 +429,14 @@ class DictionaryWithDefault(Dictionary):
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_dict_with_default.name)
         self.dxf.export_dxf_attribs(tagwriter, 'default')
 
-    def get(self, key: str, default: Any = DXFKeyError) -> DXFEntity:
+    def __getitem__(self, key: str) -> Optional['DXFEntity']:
+        return self.get(key)
+
+    def get(
+        self,
+        key: str,
+        default: Optional['DXFEntity'] = None
+    ) -> Optional['DXFEntity']:
         # `default` argument is ignored, exist only for API compatibility,
         """ Returns :class:`DXFEntity` for `key` or the predefined dictionary
         wide :attr:`dxf.default` entity if `key` does not exist or ``None``
@@ -511,7 +516,7 @@ class DictionaryVar(DXFObject):
     DXFATTRIBS = DXFAttributes(base_class, acdb_dict_var)
 
     def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+        processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.fast_load_dxfattribs(dxf, acdb_dict_var_group_codes, 1)

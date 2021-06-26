@@ -49,9 +49,8 @@ class TestNoneEmptyDXFDict:
         # returns just the handle, because no associated drawing exists
         assert 'E' == dxfdict.get('ACAD_PLOTSTYLENAME')
 
-    def test_get_with_keyerror(self, dxfdict):
-        with pytest.raises(ezdxf.DXFKeyError):
-            _ = dxfdict.get('ACAD_MOZMAN')
+    def test_get_without_keyerror(self, dxfdict):
+        assert dxfdict.get('ACAD_MOZMAN') is None
 
     def test_contains(self, dxfdict):
         assert 'ACAD_PLOTSTYLENAME' in dxfdict

@@ -1165,7 +1165,7 @@ class R2000MetaData(MetaData):
         return safe_string(key) in self._data
 
     def __getitem__(self, key: str) -> str:
-        v = self._data.get(safe_string(key))
+        v = self._data[safe_string(key)]
         return v.dxf.get("value", "")
 
     def __setitem__(self, key: str, value: str) -> None:
