@@ -28,3 +28,10 @@ class DXFTagsTable(QTableView):
         row_header = self.verticalHeader()
         row_header.setDefaultSectionSize(24)  # default row height in pixels
         self.setSelectionBehavior(QTableView.SelectRows)
+
+    def first_selected_row(self) -> int:
+        first_row: int = 0
+        selection = self.selectedIndexes()
+        if selection:
+            first_row = selection[0].row()
+        return first_row

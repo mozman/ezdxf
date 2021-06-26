@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import (
     QDialog,
 )
 from PyQt5.QtCore import Qt, QModelIndex, QSettings
-from ezdxf.lldxf.const import DXFStructureError
+from ezdxf.lldxf.const import DXFStructureError, DXFValueError
 from ezdxf.lldxf.types import DXFTag, is_pointer_code
 from ezdxf.lldxf.tags import Tags
 from ezdxf.pp.reflinks import get_reference_link
@@ -195,6 +195,11 @@ class DXFStructureBrowser(QMainWindow):
             self.go_to_bookmark,
             "Ctrl+B",
         )
+        self._reload_action = self.make_action(
+            "Reload DXF File",
+            self.reload_dxf,
+            "Ctrl+R",
+        )
 
     def make_action(self, name, slot, shortcut=None) -> QAction:
         action = QAction(name, self)
@@ -207,6 +212,7 @@ class DXFStructureBrowser(QMainWindow):
         menu = self.menuBar()
         file_menu = menu.addMenu("&File")
         file_menu.addAction(self._open_action)
+        file_menu.addAction(self._reload_action)
         file_menu.addSeparator()
         file_menu.addAction(self._export_entity_action)
         file_menu.addAction(self._copy_entity_action)
@@ -270,10 +276,30 @@ class DXFStructureBrowser(QMainWindow):
             self.view_header_section()
             self.update_title()
 
+    def reload_dxf(self):
+        if self._current_entity is not None:
+            entity = self.get_current_entity()
+            handle = self.get_current_entity_handle()
+            first_row = self._dxf_tags_table.first_selected_row()
+            line_number = self.doc.get_line_number(entity, first_row)
+
+            self._load(self.doc.filename)
+            if handle is not None:
+                entity = self.doc.get_entity(handle)
+                if entity is not None:  # select entity with same handle
+                    self.set_current_entity_and_row_index(entity, first_row)
+                    self._structure_tree.expand_to_entity(entity)
+                    return
+            # select entity at the same line number
+            entity = self.doc.get_entity_at_line(line_number)
+            self.set_current_entity_and_row_index(entity, first_row)
+            self._structure_tree.expand_to_entity(entity)
+
     def _load(self, filename: str):
         self.doc.load(filename)
         model = DXFStructureModel(self.doc.filepath.name, self.doc)
         self._structure_tree.set_structure(model)
+        self.history.clear()
 
     def export_entity(self):
         if self._dxf_tags_table is None:
@@ -312,7 +338,7 @@ class DXFStructureBrowser(QMainWindow):
         if active_entity:
             try:
                 return active_entity.get_handle()
-            except ValueError:
+            except DXFValueError:
                 pass
         return None
 
