@@ -162,9 +162,9 @@ class DXFStructureBrowser(QMainWindow):
             "Alt+Right",
         )
         self._open_entity_in_text_editor_action = self.make_action(
-            "&Open Entity in Notepad++",
+            "&Open in Text Editor",
             self.open_entity_in_text_editor,
-            "Ctrl+N",
+            "Ctrl+T",
         )
         self._show_entity_in_tree_view_action = self.make_action(
             "Show Entity in &TreeView",
@@ -219,6 +219,7 @@ class DXFStructureBrowser(QMainWindow):
         file_menu = menu.addMenu("&File")
         file_menu.addAction(self._open_action)
         file_menu.addAction(self._reload_action)
+        file_menu.addAction(self._open_entity_in_text_editor_action)
         file_menu.addSeparator()
         file_menu.addAction(self._export_entity_action)
         file_menu.addAction(self._copy_entity_action)
@@ -241,8 +242,6 @@ class DXFStructureBrowser(QMainWindow):
         navigate_menu.addAction(self._goto_blocks_action)
         navigate_menu.addAction(self._goto_entities_action)
         navigate_menu.addAction(self._goto_objects_action)
-        navigate_menu.addSeparator()
-        navigate_menu.addAction(self._open_entity_in_text_editor_action)
 
         bookmarks_menu = menu.addMenu("&Bookmarks")
         bookmarks_menu.addAction(self._store_bookmark)
@@ -571,12 +570,23 @@ class DXFStructureBrowser(QMainWindow):
                 model = self._dxf_tags_table.model()
                 row = indices[0].row()
                 line_number = model.line_number(row)
+            self._open_text_editor(str(self.doc.absolute_filepath()),
+                line_number)
+
+    def _open_text_editor(self, filename: str, line_number: int) -> None:
         args = [
             TEXT_EDITOR,
-            str(self.doc.absolute_filepath()),
-            GOTO_LINE_ARGUMENT.format(num=str(line_number)),
+            filename,
+            GOTO_LINE_ARGUMENT.format(num=line_number),
         ]
-        subprocess.Popen(args)
+        try:
+            subprocess.Popen(args)
+        except FileNotFoundError:
+            QMessageBox.critical(
+                self,
+                "Text Editor",
+                f"Executable \"{TEXT_EDITOR}\" not found."
+            )
 
     def open_web_browser(self, url: str):
         import webbrowser
