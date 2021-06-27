@@ -44,12 +44,11 @@ File Structure:
 .. module:: ezdxf.options
 
 The global `ezdxf` options are stored in :mod:`ezdxf.options`. This is a wrapper
-around the :class:`ConfigParser` class. The option attributes are read only
-properties as shortcuts into the :class:`ConfigParser` object stored as
-attribute :attr:`config`.
+around the :class:`ConfigParser` class. The option most attributes are read only
+properties as shortcuts.
 
 To change options you have to edit the config file with a text editor, or
-modify the :attr:`config` object and :meth:`write` the current configuration
+set options by the :meth:`set` method and write the current configuration
 into a config file.
 
 Modify and Save Changes
@@ -96,9 +95,52 @@ from the current working directory:
 That is all and because this is the last loaded config file, it overrides all
 default config files and the config file specified by ``EZDXF_CONFIG_FILE``.
 
-.. attribute:: config
+.. function:: set(section: str, key: str, value: str)
 
-    The :class:`ConfigParser` object.
+    Set option `key`in `section` to `values` as string.
+
+.. function:: get(section: str, key: str, default: str = "")
+
+    Get option `key`in `section` as string.
+
+.. function:: get_bool(section: str, key: str, default: bool = False)
+
+    Get option `key`in `section` as bool.
+
+.. function:: write(fp: TextIO)
+
+    Write configuration into given file object `fp`, the file object
+    must be a writeable text file with "utf8" encoding.
+
+.. function:: write_file(filename: str = "ezdxf.ini")
+
+    Write current configuration into file `filename`, default is "ezdxf.ini" in
+    the current working directory.
+
+.. function:: write_home_config()
+
+    Write configuration into file "~/.ezdxf/ezdxf.ini".
+
+.. function:: read_file(filename: str)
+
+    Append content from config file `filename`, but does not reset the
+    configuration.
+
+.. function:: print()
+
+    Print configuration to `stdout`.
+
+.. function:: reset()
+
+    Factory reset, delete config files "./ezdxf.ini" and "~/.ezdxf/ezdxf.ini".
+
+.. function:: preserve_proxy_graphics(state=True)
+
+    Enable/disable proxy graphic load/store support.
+
+.. attribute:: loaded_config_files
+
+    Returns the loaded config files as tuple for :class:`Path` objects.
 
 .. attribute:: default_text_style
 
@@ -118,7 +160,7 @@ default config files and the config file specified by ``EZDXF_CONFIG_FILE``.
     Get the current font cache directory or an empty string if the bundled
     font cache is used. Expands "~" construct automatically.
 
-.. method:: set_font_cache_directory(dirname: str)
+.. function:: set_font_cache_directory(dirname: str)
 
     Set path to an external font cache directory: e.g. ``"~/.ezdxf"``
     By default the bundled font cache will be loaded. Expands "~" construct
@@ -171,40 +213,6 @@ default config files and the config file specified by ``EZDXF_CONFIG_FILE``.
 
     Path to test files as :class:`pathlib.Path` object.
 
-.. method:: preserve_proxy_graphics(state=True)
-
-    Enable/disable proxy graphic load/store support.
-
-.. method:: set(section: str, key: str, value: str)
-
-    Shortcut for the :meth:`options.config.set` method.
-
-.. method:: write(fp: TextIO)
-
-    Write configuration into given file object `fp`, the file object
-    must be a writeable text file with "utf8" encoding.
-
-.. method:: write_file(filename: str = "ezdxf.ini")
-
-    Write current configuration into file `filename`, default is "ezdxf.ini" in
-    the current working directory.
-
-.. method:: write_home_config()
-
-    Write configuration into file "~/.ezdxf/ezdxf.ini".
-
-.. method:: read_file(filename: str)
-
-    Append content from config file `filename`, but does not reset the
-    configuration.
-
-.. method:: print()
-
-    Print configuration to `stdout`.
-
-.. method:: reset()
-
-    Factory reset, delete config files "./ezdxf.ini" and "~/.ezdxf/ezdxf.ini".
 
 .. _environment_variables:
 

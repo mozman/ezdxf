@@ -41,8 +41,8 @@ from .bookmarks import Bookmarks
 __all__ = ["DXFStructureBrowser"]
 
 APP_NAME = "DXF Structure Browser"
-TEXT_EDITOR = ezdxf.options.config.get(BROWSE_COMMAND, "TEXT_EDITOR")
-GOTO_LINE_ARGUMENT = ezdxf.options.config.get(
+TEXT_EDITOR = ezdxf.options.get(BROWSE_COMMAND, "TEXT_EDITOR")
+GOTO_LINE_ARGUMENT = ezdxf.options.get(
     BROWSE_COMMAND, "GOTO_LINE_ARGUMENT"
 )
 

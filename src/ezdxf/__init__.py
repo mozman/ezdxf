@@ -94,6 +94,6 @@ def print_config(verbose: bool = False, stream: TextIO = None) -> None:
         for v in options.CONFIG_VARS:
             stream.write(f"{v}={os.environ.get(v, '')}\n")
 
-        stream.write("\nExisting Default Config Files:\n")
-        for name in [p for p in config_files() if p.exists()]:
-            stream.write(str(name.absolute()) + "\n")
+        stream.write("\nLoaded Config Files:\n")
+        for path in options.loaded_config_files:
+            stream.write(str(path.absolute()) + "\n")

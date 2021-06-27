@@ -1,6 +1,6 @@
 # Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
-from typing import TextIO, List, Union
+from typing import TextIO, List, Union, Tuple
 import os
 import sys
 from pathlib import Path
@@ -53,16 +53,16 @@ def config_files() -> List[Path]:
     # 2. current working directory "./ezdxf.ini"
     # 3. config file specified by EZDXF_CONFIG_FILE (highest priority)
 
-    names = list(DEFAULT_FILES)
+    paths = list(DEFAULT_FILES)
     env_cfg = os.getenv("EZDXF_CONFIG_FILE", "")
     if env_cfg:
-        names.append(Path(env_cfg))
-    return names
+        paths.append(Path(env_cfg))
+    return paths
 
 
-def load_config_files() -> ConfigParser:
+def load_config_files(paths: List[Path]) -> ConfigParser:
     config = default_config()
-    config.read(config_files(), encoding="utf8")
+    config.read(paths, encoding="utf8")
 
     # environment variables override config files
     for name, env_name in [("TEST_FILES", "EZDXF_TEST_FILES")]:
@@ -89,7 +89,9 @@ class Options:
     ]
 
     def __init__(self):
-        self.config = load_config_files()
+        paths = config_files()
+        self._loaded_paths = [p for p in paths if p.exists()]
+        self._config = load_config_files(paths)
         # needs fast access:
         self.log_unprocessed_tags = True
         # Activate/deactivate Matplotlib support (e.g. for testing)
@@ -97,30 +99,41 @@ class Options:
         self.update_cached_options()
 
     def set(self, section: str, key: str, value: str) -> None:
-        self.config.set(section, key, value)
+        self._config.set(section, key, value)
+
+    def get(self, section: str, key: str, default: str = "") -> str:
+        return self._config.get(section, key, fallback=default)
+
+    def get_bool(self, section: str, key: str, default: bool = False) -> bool:
+        return self._config.getboolean(section, key, fallback=default)
 
     def update_cached_options(self) -> None:
-        self.log_unprocessed_tags = self.config.getboolean(
-            Options.CORE, "LOG_UNPROCESSED_TAGS", fallback=True
+        self.log_unprocessed_tags = self.get_bool(
+            Options.CORE, "LOG_UNPROCESSED_TAGS", default=True
         )
 
     def rewrite_cached_options(self):
         # rewrite cached options
-        self.config.set(
+        self._config.set(
             Options.CORE,
             "LOG_UNPROCESSED_TAGS",
             boolstr(self.log_unprocessed_tags),
         )
+
+    @property
+    def loaded_config_files(self) -> Tuple[Path]:
+        return tuple(self._loaded_paths)
 
     def read_file(self, filename: str) -> None:
         """Append content from config file `filename`, but does not reset the
         configuration.
         """
         try:
-            self.config.read(filename)
+            self._config.read(filename)
         except IOError as e:
             print(str(e))
         else:
+            self._loaded_paths.append(Path(filename))
             self.update_cached_options()
 
     def write(self, fp: TextIO) -> None:
@@ -129,40 +142,37 @@ class Options:
         """
         self.rewrite_cached_options()
         try:
-            self.config.write(fp)
+            self._config.write(fp)
         except IOError as e:
             print(str(e))
 
     def write_file(self, filename: str = INI_NAME) -> None:
-        """Write current configuration into file `filename`. """
+        """Write current configuration into file `filename`."""
         with open(os.path.expanduser(filename), "wt", encoding="utf8") as fp:
             self.write(fp)
 
     @property
     def filter_invalid_xdata_group_codes(self) -> bool:
-        return self.config.getboolean(
-            CORE, "FILTER_INVALID_XDATA_GROUP_CODES", fallback=True
-        )
+        return self.get_bool(CORE, "FILTER_INVALID_XDATA_GROUP_CODES", default=True)
 
     @property
     def default_text_style(self) -> str:
-        return self.config.get(CORE, "DEFAULT_TEXT_STYLE", fallback="OpenSans")
+        return self.get(CORE, "DEFAULT_TEXT_STYLE", default="OpenSans")
 
     @property
     def default_dimension_text_style(self) -> str:
         # Set path to an external font cache directory: e.g. "~/ezdxf", see
         # docs for ezdxf.options for an example how to create your own
         # external font cache:
-        return self.config.get(
+        return self.get(
             CORE,
             "DEFAULT_DIMENSION_TEXT_STYLE",
-            fallback="OpenSansCondensed-Light",
+            default="OpenSansCondensed-Light",
         )
 
     @property
     def font_cache_directory(self) -> str:
-        dirname = self.config.get(CORE, "FONT_CACHE_DIRECTORY", fallback="")
-        return os.path.expanduser(dirname)
+        return os.path.expanduser(self.get(CORE, "FONT_CACHE_DIRECTORY"))
 
     def set_font_cache_directory(self, dirname: Union[str, Path]) -> None:
         p = Path(dirname).expanduser()
@@ -177,39 +187,32 @@ class Options:
 
     @property
     def test_files(self) -> str:
-        dirname = self.config.get(CORE, "TEST_FILES", fallback="")
-        return os.path.expanduser(dirname)
+        return os.path.expanduser(self.get(CORE, "TEST_FILES"))
 
     @property
     def test_files_path(self) -> Path:
         return Path(self.test_files)
 
     @property
-    def load_proxy_graphics(self):
-        return self.config.getboolean(
-            CORE, "LOAD_PROXY_GRAPHICS", fallback=True
-        )
+    def load_proxy_graphics(self) -> bool:
+        return self.get_bool(CORE, "LOAD_PROXY_GRAPHICS", default=True)
 
     @property
     def store_proxy_graphics(self) -> bool:
-        return self.config.getboolean(
-            CORE, "STORE_PROXY_GRAPHICS", fallback=True
-        )
+        return self.get_bool(CORE, "STORE_PROXY_GRAPHICS", default=True)
 
     @property
     def write_fixed_meta_data_for_testing(self) -> bool:
         # Enable this option to always create same meta data for testing
         # scenarios, e.g. to use a diff like tool to compare DXF documents.
-        return self.config.getboolean(
-            CORE, "WRITE_FIXED_META_DATA_FOR_TESTING", fallback=False
-        )
+        return self.get_bool(CORE, "WRITE_FIXED_META_DATA_FOR_TESTING", default=False)
 
     @property
     def auto_load_fonts(self) -> bool:
         # Set "AUTO_LOAD_FONTS = false" to deactivate auto font loading,
         # if this this procedure slows down your startup time and font measuring is not
         # important to you. Fonts can always loaded manually: ezdxf.fonts.load()
-        return self.config.getboolean(CORE, "AUTO_LOAD_FONTS", fallback=True)
+        return self.get_bool(CORE, "AUTO_LOAD_FONTS", default=True)
 
     @property
     def use_matplotlib(self) -> bool:
@@ -231,7 +234,7 @@ class Options:
 
     def print(self):
         """Print current configuration to `stdout`."""
-        self.config.write(sys.stdout)
+        self._config.write(sys.stdout)
 
     def write_home_config(self):
         """Write current configuration into file "~/.ezdxf/ezdxf.ini"."""
@@ -251,7 +254,8 @@ class Options:
             print(f"created config file: '{fp.name}'")
 
     def reset(self):
-        self.config = default_config()
+        self._loaded_paths = []
+        self._config = default_config()
         self.update_cached_options()
         delete_config_files()
 
