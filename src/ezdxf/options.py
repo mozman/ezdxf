@@ -181,6 +181,10 @@ class Options:
         return os.path.expanduser(dirname)
 
     @property
+    def test_files_path(self) -> Path:
+        return Path(self.test_files)
+
+    @property
     def load_proxy_graphics(self):
         return self.config.getboolean(
             CORE, "LOAD_PROXY_GRAPHICS", fallback=True

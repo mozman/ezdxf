@@ -167,6 +167,10 @@ default config files and the config file specified by ``EZDXF_CONFIG_FILE``.
     Returns the path to the `ezdxf` test files, expands "~" construct
     automatically.
 
+.. attribute:: test_files_path
+
+    Path to test files as :class:`pathlib.Path` object.
+
 .. method:: preserve_proxy_graphics(state=True)
 
     Enable/disable proxy graphic load/store support.
