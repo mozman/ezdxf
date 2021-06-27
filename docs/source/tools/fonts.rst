@@ -158,7 +158,7 @@ It is possible to create your own font cache specific for your system:
 see :attr:`ezdxf.options.font_cache_directory`
 
 The font cache is loaded automatically at startup, if not disabled by setting
-environment variable ``EZDXF_AUTO_LOAD_FONTS`` to ``False``:
+config variable ``auto_load_fonts`` in ``[core]`` section to ``False`` :
 see :ref:`environment_variables`
 
 .. autofunction:: get_font_face

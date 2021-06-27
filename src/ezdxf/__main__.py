@@ -74,7 +74,7 @@ def main():
     if args.config:
         config = Path(args.config)
         if config.exists():
-            options.read(args.config)
+            options.read_file(args.config)
             if args.verbose:
                 print(f'using config file: "{config}"')
         else:

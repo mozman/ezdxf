@@ -1,12 +1,26 @@
 Options Module
 ==============
 
-Configuration file support was added in version v0.16.5. The configuration files
-are loaded from the user home directory as "~/.ezdxf/ezdxf.ini", the current
-work directory as "./ezdxf.ini" and the file specified by the environment
-variable ``EZDXF_CONFIG_FILE``.
+Configuration file support was added in version v0.16.5. The default
+config files are loaded from the user home directory as "~/.ezdxf/ezdxf.ini",
+and the current working directory as "./ezdxf.ini". A custom config file can be
+specified  by the environment variable ``EZDXF_CONFIG_FILE``.
 
-INI File Structure:
+The config file loading order:
+
+1. user home directory: "~/.ezdxf/ezdxf.ini" (lowest priority)
+2. working directory: "./ezdxf.ini"
+3. config file specified by ``EZDXF_CONFIG_FILE`` (highest priority)
+
+.. _config_file:
+
+Config Files
+============
+
+Configuration files are regular INI files, managed by the standard Python
+`ConfigParser`_ class.
+
+File Structure:
 
 .. code:: INI
 
@@ -29,7 +43,53 @@ INI File Structure:
 
 .. module:: ezdxf.options
 
-Global options stored in :mod:`ezdxf.options`
+The global `ezdxf` options are stored in :mod:`ezdxf.options`. This is a wrapper
+around the :class:`ConfigParser` class. The option attributes are read only
+properties as shortcuts into the :class:`ConfigParser` object stored as
+attribute :attr:`config`.
+
+To change options you have to edit the config file with a text editor, or
+modify the :attr:`config` object and :meth:`write` the current configuration
+into a config file.
+
+Modify and Save Changes
+-----------------------
+
+This example shows how to change the ``test_files`` path and save the
+changes into a custom config file "my.ini":
+
+.. code-block:: Python
+
+    import ezdxf
+
+    test_files = Path("~/my-dxf-test-files").expand_user()
+    ezdxf.options.config.set(
+        ezdxf.options.CORE,  # section
+        "test_files",  # key
+        "~/my-dxf-test-files",  # value
+    )
+    ezdxf.options.write_file("my.ini")
+
+.. _use_a_custom_config_file:
+
+Use a Custom Config File
+------------------------
+
+You can specify a config file by the environment variable ``EZDXF_CONFIG_FILE``,
+which is loaded after the default config files.
+
+Custom config files are not loaded automatically like the default config files.
+
+This example shows how to load the previous created custom config file "my.ini":
+
+.. code-block:: Python
+
+    import ezdxf
+
+    ezdxf.options.read("my.ini")
+
+That is all and because this is the last loaded config file, it overrides all
+default config files and the config file specified by ``EZDXF_CONFIG_FILE``.
 
 .. attribute:: config
 
@@ -50,9 +110,14 @@ Global options stored in :mod:`ezdxf.options`
 
 .. attribute:: font_cache_directory
 
-    Set path to an external font cache directory: e.g. ``"~/.ezdxf"``
+    Get the current font cache directory or an empty string if the bundled
+    font cache is used. Expands "~" construct automatically.
 
-    By default the bundled font cache will be loaded.
+.. method:: set_font_cache_directory(dirname: str)
+
+    Set path to an external font cache directory: e.g. ``"~/.ezdxf"``
+    By default the bundled font cache will be loaded. Expands "~" construct
+    automatically.
 
     This example shows, how to create an external font cache in
     ``"~/.ezdxf"``. This has to be done only once after the `ezdxf` installation
@@ -60,23 +125,16 @@ Global options stored in :mod:`ezdxf.options`
 
     .. code-block:: Python
 
+        import ezdxf
         from ezdxf.tools import fonts
 
-        fonts.build_system_font_cache(path="~/.ezdxf")
+        font_cache_dir = "~/.ezdxf"
+        fonts.build_system_font_cache(path=font_cache_dir)
+        ezdxf.options.set_font_cache_directory(font_cache_dir)
+        # Save changes to the user config file "~/.ezdxf/ezdxf.ini" to load
+        # the font cache always from the new location.
+        ezdxf.options.write_home_config()
 
-    How to use this cached font data in your script:
-
-    .. code-block:: Python
-
-        from ezdxf import options, fonts
-
-        option.font_cache_directory = "~/.ezdxf"
-        # Default cache is loaded automatically, if auto load is not disabled:
-        fonts.load(reload=True)
-
-    Maybe it is better to set an environment variable before `ezdxf` is loaded::
-
-        C:\> set EZDXF_FONT_CACHE_DIRECTORY=~/.ezdxf
 
 .. attribute:: filter_invalid_xdata_group_codes
 
@@ -99,6 +157,11 @@ Global options stored in :mod:`ezdxf.options`
 
     Export proxy graphics if ``True``, default is ``False``.
 
+.. attribute:: test_files
+
+    Returns the path to the `ezdxf` test files, expands "~" construct
+    automatically.
+
 .. method:: preserve_proxy_graphics(state=True)
 
     Enable/disable proxy graphic load/store support.
@@ -108,18 +171,23 @@ Global options stored in :mod:`ezdxf.options`
     Write configuration into given file object `fp`, the file object
     must be a writeable text file with "utf8" encoding.
 
-.. method:: read(filename: str)
+.. method:: write_file(filename: str = "ezdxf.ini")
 
-    Add content from config file `filename`, but does not reset the
+    Write current configuration into file `filename`, default is "ezdxf.ini" in
+    the current working directory.
+
+.. method:: write_home_config()
+
+    Write configuration into file "~/.ezdxf/ezdxf.ini".
+
+.. method:: read_file(filename: str)
+
+    Append content from config file `filename`, but does not reset the
     configuration.
 
 .. method:: print()
 
     Print configuration to `stdout`.
-
-.. method:: write_home_config()
-
-    Write configuration into file "~/.ezdxf/ezdxf.ini".
 
 .. method:: reset()
 
@@ -156,3 +224,4 @@ EZDXF_CONFIG_FILE
     Use specified configuration file
 
 .. _CADKit: https://cadkit.blogspot.com/p/sample-dxf-files.html?view=magazine
+.. _ConfigParser: https://docs.python.org/3/library/configparser.html

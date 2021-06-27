@@ -1,6 +1,6 @@
 # Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
-from typing import TextIO, List
+from typing import TextIO, List, Union
 import os
 import sys
 from pathlib import Path
@@ -48,10 +48,11 @@ def default_config() -> ConfigParser:
 
 
 def config_files() -> List[Path]:
-    # Priority
-    # 1. config file in EZDXF_CONFIG_FILE
-    # 2. "ezdxf.ini" current working directory
-    # 3. "ezdxf.ini" in home directory "~/.ezdxf"
+    # loading order
+    # 1. user home directory "~/.ezdxf/ezdxf.ini" (lowest priority)
+    # 2. current working directory "./ezdxf.ini"
+    # 3. config file specified by EZDXF_CONFIG_FILE (highest priority)
+
     names = list(DEFAULT_FILES)
     env_cfg = os.getenv("EZDXF_CONFIG_FILE", "")
     if env_cfg:
@@ -108,7 +109,10 @@ class Options:
             boolstr(self.log_unprocessed_tags),
         )
 
-    def read(self, filename: str) -> None:
+    def read_file(self, filename: str) -> None:
+        """Append content from config file `filename`, but does not reset the
+        configuration.
+        """
         try:
             self.config.read(filename)
         except IOError as e:
@@ -125,6 +129,11 @@ class Options:
             self.config.write(fp)
         except IOError as e:
             print(str(e))
+
+    def write_file(self, filename: str = INI_NAME) -> None:
+        """Write current configuration into file `filename`. """
+        with open(os.path.expanduser(filename), "wt", encoding="utf8") as fp:
+            self.write(fp)
 
     @property
     def filter_invalid_xdata_group_codes(self) -> bool:
@@ -149,11 +158,24 @@ class Options:
 
     @property
     def font_cache_directory(self) -> str:
-        return self.config.get(CORE, "FONT_CACHE_DIRECTORY", fallback="")
+        dirname = self.config.get(CORE, "FONT_CACHE_DIRECTORY", fallback="")
+        return os.path.expanduser(dirname)
+
+    def set_font_cache_directory(self, dirname: Union[str, Path]) -> None:
+        p = Path(dirname).expanduser()
+        if p.exists():
+            absolute = p.absolute()
+            if p.is_dir():
+                self.config.set(CORE, "FONT_CACHE_DIRECTORY", str(absolute))
+            else:
+                raise ValueError(f'"{absolute}" is not a directory')
+        else:
+            raise ValueError(f'directory "{dirname}" does not exist')
 
     @property
     def test_files(self) -> str:
-        return self.config.get(CORE, "TEST_FILES", fallback="")
+        dirname = self.config.get(CORE, "TEST_FILES", fallback="")
+        return os.path.expanduser(dirname)
 
     @property
     def load_proxy_graphics(self):

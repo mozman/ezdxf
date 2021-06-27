@@ -322,7 +322,7 @@ def get_cache_file_path(path, name: str = FONT_FACE_CACHE_FILE) -> Path:
         path = Path(directory).expanduser()
         path.mkdir(exist_ok=True)
     path = Path(path) if path else Path(__file__).parent
-    return path / name
+    return path.expanduser() / name
 
 
 def load(path=None, reload=False):
@@ -375,6 +375,8 @@ def save(path=None):
     options.font_cache_directory or into the ezdxf.tools folder.
 
     """
+    if path:
+        Path(path).expanduser().mkdir(exist_ok=True)
     p = get_cache_file_path(path, FONT_FACE_CACHE_FILE)
     with open(p, 'wt') as fp:
         json.dump(list(font_face_cache.values()), fp, indent=2)

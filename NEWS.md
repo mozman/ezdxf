@@ -7,11 +7,9 @@ Version 0.16.5b0 - dev
 
 - CHANGED: replaced `ezdxf.tools.rgb` by `ezdxf.colors`
 - NEW: config file support, config files read in order:
-  - environment variable `EZDXF_CONFIG_FILE=myconfig.ini`
-  - current working directory `./ezdxf.ini`
-  - home directory `~/.ezdxf/ezdxf.ini`
-  - `EZDXF_DISABLE_C_EXT` is an environment variable only option, has to be 
-    evaluated before any import
+  1. home directory `~/.ezdxf/ezdxf.ini`
+  2. current working directory `./ezdxf.ini`
+  3. environment variable `EZDXF_CONFIG_FILE=myconfig.ini`
 - NEW: `ezdxf config` command to manage config files    
 - REMOVED: environment variable options, these are config file only options:
   - `EZDXF_AUTO_LOAD_FONTS`
