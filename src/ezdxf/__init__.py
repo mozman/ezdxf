@@ -88,7 +88,7 @@ def print_config(verbose: bool = False, stream: TextIO = None) -> None:
         f"using Matplotlib: {YES_NO[options.use_matplotlib]}\n",
     ])
     if verbose:
-        stream.write("\nOptions:\n")
+        stream.write("\nConfiguration:\n")
         options.write(stream)
         stream.write("\nEnvironment Variables:\n")
         for v in options.CONFIG_VARS:

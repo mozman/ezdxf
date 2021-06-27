@@ -4,12 +4,13 @@ Launcher
 The command line script `ezdxf` launches various sub-commands:
 
 =========== ====================================================================
-``pp``      the previous `dxfpp` command, the DXF pretty printer
-``audit``   DXF files
-``draw``    and convert DXF files by the Matplotlib backend
-``view``    DXF files by the PyQt viewer
-``browse``  PyQt DXF structure browser for DXF debugging and curios people
+``pp``      DXF pretty printer, replacement for the previous `dxfpp` command
+``audit``   Audit and repair DXF files
+``draw``    Draw and convert DXF files by the Matplotlib backend
+``view``    PyQt DXF file viewer
+``browse``  PyQt DXF structure browser for DXF debugging and curious people
 ``strip``   Strip comments and THUMBNAILIMAGE section from DXF files
+``config``  Manage config files
 =========== ====================================================================
 
 The help option ``-h`` is supported by the main script and all sub-commands:
@@ -17,9 +18,11 @@ The help option ``-h`` is supported by the main script and all sub-commands:
 .. code-block:: Text
 
     C:\> ezdxf -h
-    usage: ezdxf [-h] [-V] [-v] [--log LOG] {pp,audit,draw,view,browse,strip} ...
+    usage: ezdxf [-h] [-V] [-v] [--config CONFIG] [--log LOG]
+                 {pp,audit,draw,view,browse,strip,config} ...
 
-    Command launcher for the Python package "ezdxf": https://pypi.org/project/ezdxf/
+    Command launcher for the Python package "ezdxf":
+    https://pypi.org/project/ezdxf/
 
     positional arguments:
       {pp,audit,draw,view,browse,strip}
@@ -29,11 +32,13 @@ The help option ``-h`` is supported by the main script and all sub-commands:
         view                view DXF files by the PyQt viewer
         browse              browse DXF file structure
         strip               strip comments from DXF files
+        config              manage config files
 
     optional arguments:
       -h, --help            show this help message and exit
       -V, --version         show version and exit
       -v, --verbose         give more output
+      --config CONFIG       path to a config file
       --log LOG             path to a verbose appending log
 
 .. note::
@@ -220,6 +225,28 @@ Browse the internal structure of a DXF file like a file system:
                             go to entity by HANDLE, HANDLE has to be a hex value without
                             any prefix like 'fefe'
 
+The `browse` command stores options in the config file,
+e.g. for the `Notepad++` on Windows:
+
+.. code-block:: ini
+
+    [browse-command]
+
+    text_editor = C:\Program Files\Notepad++\notepad++.exe
+    goto_line_argument = -n{num}
+
+The ``goto_line_argument`` is a simple format string:
+:code:`goto_line_argument.format(num=100)`
+
+For `gedit` on Linux use (untested):
+
+.. code-block:: ini
+
+    [browse-command]
+
+    text_editor = gedit
+    goto_line_argument = +{num}
+
 Strip
 -----
 
@@ -241,8 +268,34 @@ THUMBNAILIMAGE section. Binary DXF files are not supported.
       -t, --thumbnail  strip THUMBNAILIMAGE section
       -v, --verbose    give more output
 
-Show Config
------------
+Config
+------
+
+Manage config files.
+
+.. code-block:: Text
+
+    C:\> ezdxf config -h
+    usage: ezdxf config [-h] [-p] [--home] [--reset]
+
+    optional arguments:
+      -h, --help   show this help message and exit
+      -p, --print  print configuration, to store the configuration use:
+                   "ezdxf config -p > my.ini"
+      --home       create config file 'ezdxf.ini' in user home directory
+                   '~/.ezdxf'
+      --reset      factory reset, delete config files './ezdxf.ini' and
+                   '~/.ezdxf/ezdxf.ini'
+
+To create a new config file "my.ini" by printing the configuration into a file:
+
+.. code-block:: Text
+
+    C:\> ezdxf config -p > my.ini
+
+
+Show Version & Configuration
+----------------------------
 
 Show the *ezdxf* version and configuration:
 
@@ -250,24 +303,36 @@ Show the *ezdxf* version and configuration:
 
     C:\> ezdxf -Vv
 
-    ezdxf v0.16b2 @ d:\source\ezdxf.git\src\ezdxf
-    Python version: 3.9.2 (tags/v3.9.2:1a79785, Feb 19 2021, ...
+    ezdxf v0.16.5b0 @ d:\source\ezdxf.git\src\ezdxf
+    Python version: 3.9.2 (tags/v3.9.2:1a79785, Feb 19 2021, 13:44:55) [MSC v.1928 64 bit (AMD64)]
     using C-extensions: yes
     using Matplotlib: yes
-    font cache directory: internal
-    default text style: OpenSans
-    default dimension text style: OpenSansCondensed-Light
-    load proxy graphic: yes
-    store proxy graphic: yes
-    log unprocessed tags: yes
-    filter invalid XDATA group codes: no
+
+    Configuration:
+    [core]
+    test_files = D:\Source\dxftest
+    font_cache_directory =
+    auto_load_fonts = true
+    load_proxy_graphics = true
+    store_proxy_graphics = true
+    log_unprocessed_tags = true
+    filter_invalid_xdata_group_codes = true
+    write_fixed_meta_data_for_testing = false
+    default_text_style = OpenSans
+    default_dimension_text_style = OpenSansCondensed-Light
+
+    [browse-command]
+    text_editor = C:\Program Files\Notepad++\notepad++.exe
+    goto_line_argument = -n{num}
+
+
+    Environment Variables:
     EZDXF_DISABLE_C_EXT=
     EZDXF_TEST_FILES=D:\Source\dxftest
-    EZDXF_FONT_CACHE_DIRECTORY=
-    EZDXF_AUTO_LOAD_FONTS=
-    EZDXF_PRESERVE_PROXY_GRAPHICS=
-    EZDXF_LOG_UNPROCESSED_TAGS=
-    EZDXF_FILTER_INVALID_XDATA_GROUP_CODES=
+    EZDXF_CONFIG_FILE=
+
+    Existing Configuration Files:
+    C:\Users\manfred\.ezdxf\ezdxf.ini
 
 .. seealso::
 
