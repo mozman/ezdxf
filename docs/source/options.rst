@@ -105,16 +105,25 @@ Global options stored in :mod:`ezdxf.options`
 
 .. method:: write(fp: TextIO)
 
-    Write current configuration into given file object `fp`, the file object
+    Write configuration into given file object `fp`, the file object
     must be a writeable text file with "utf8" encoding.
+
+.. method:: read(filename: str)
+
+    Add content from config file `filename`, but does not reset the
+    configuration.
 
 .. method:: print()
 
-    Print current configuration to `stdout`.
+    Print configuration to `stdout`.
 
 .. method:: write_home_config()
 
-    Write current configuration into file "~/.ezdxf/ezdxf.ini".
+    Write configuration into file "~/.ezdxf/ezdxf.ini".
+
+.. method:: reset()
+
+    Factory reset, delete config files "./ezdxf.ini" and "~/.ezdxf/ezdxf.ini".
 
 .. _environment_variables:
 

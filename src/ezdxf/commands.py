@@ -529,6 +529,46 @@ class Strip(Command):
                 )
 
 
+@register
+class Config(Command):
+    """Launcher sub-command: config"""
+
+    NAME = "config"
+
+    @staticmethod
+    def add_parser(subparsers):
+        parser = subparsers.add_parser(Config.NAME, help="manage config files")
+        parser.add_argument(
+            "-p",
+            "--print",
+            action="store_true",
+            help="print configuration, to store the configuration use: "
+                 "\"ezdxf config -p > my.ini\"",
+        )
+        parser.add_argument(
+            "--home",
+            action="store_true",
+            help="create config file 'ezdxf.ini' in user home directory '~/.ezdxf'",
+        )
+        parser.add_argument(
+            "--reset",
+            action="store_true",
+            help="factory reset, delete config files './ezdxf.ini' and "
+            "'~/.ezdxf/ezdxf.ini'",
+        )
+
+    @staticmethod
+    def run(args):
+        from ezdxf import options
+
+        if args.reset:
+            options.reset()
+        if args.home:
+            options.write_home_config()
+        if args.print:
+            options.print()
+
+
 def set_app_icon(app):
     from PyQt5 import QtGui, QtCore
 

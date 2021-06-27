@@ -12,11 +12,8 @@ Version 0.16.5b0 - dev
   - home directory `~/.ezdxf/ezdxf.ini`
   - `EZDXF_DISABLE_C_EXT` is an environment variable only option, has to be 
     evaluated before any import
-- NEW: `ezdxf.options.write(fp)` write current configuration to file object `fp`    
-- NEW: `ezdxf.options.print()` print current configuration to `stdout`    
-- NEW: `ezdxf.options.write_home_config()` create configuration file `~\.ezdxf\ezdxf.ini`    
+- NEW: `ezdxf config` command to manage config files    
 - REMOVED: environment variable options, these are config file only options:
-  - `EZDXF_TEST_FILES`
   - `EZDXF_AUTO_LOAD_FONTS`
   - `EZDXF_FONT_CACHE_DIRECTORY`
   - `EZDXF_PRESERVE_PROXY_GRAPHICS`

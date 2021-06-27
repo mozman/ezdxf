@@ -19,6 +19,11 @@ CORE = "core"
 BROWSE_COMMAND = "browse-command"
 VIEW_COMMAND = "view-command"
 DRAW_COMMAND = "draw-command"
+INI_NAME = "ezdxf.ini"
+DEFAULT_FILES = [
+    Path(f"~/.ezdxf/{INI_NAME}").expanduser(),
+    Path(f"./{INI_NAME}"),
+]
 
 
 def default_config() -> ConfigParser:
@@ -42,24 +47,21 @@ def default_config() -> ConfigParser:
     return config
 
 
-def config_files(name: str = "ezdxf.ini") -> List[Path]:
+def config_files() -> List[Path]:
     # Priority
     # 1. config file in EZDXF_CONFIG_FILE
     # 2. "ezdxf.ini" current working directory
     # 3. "ezdxf.ini" in home directory "~/.ezdxf"
-    names = [
-        Path(f"~/.ezdxf/{name}").expanduser(),
-        Path(f"./{name}"),
-    ]
+    names = list(DEFAULT_FILES)
     env_cfg = os.getenv("EZDXF_CONFIG_FILE", "")
     if env_cfg:
         names.append(Path(env_cfg))
     return names
 
 
-def load_config_files(name: str = "ezdxf.ini") -> ConfigParser:
+def load_config_files() -> ConfigParser:
     config = default_config()
-    config.read(config_files(name), encoding="utf8")
+    config.read(config_files(), encoding="utf8")
 
     # environment variables override config files
     for name, env_name in [("TEST_FILES", "EZDXF_TEST_FILES")]:
@@ -67,6 +69,10 @@ def load_config_files(name: str = "ezdxf.ini") -> ConfigParser:
         if value:
             config[CORE][name] = value
     return config
+
+
+def boolstr(value: bool) -> str:
+    return str(value).lower()
 
 
 class Options:
@@ -87,16 +93,38 @@ class Options:
         self.log_unprocessed_tags = True
         # Activate/deactivate Matplotlib support (e.g. for testing)
         self._use_matplotlib = MATPLOTLIB
-        self.update()
+        self.update_cached_options()
 
-    def update(self) -> None:
+    def update_cached_options(self) -> None:
         self.log_unprocessed_tags = self.config.getboolean(
-            CORE, "LOG_UNPROCESSED_TAGS", fallback=True
+            Options.CORE, "LOG_UNPROCESSED_TAGS", fallback=True
+        )
+
+    def rewrite_cached_options(self):
+        # rewrite cached options
+        self.config.set(
+            Options.CORE,
+            "LOG_UNPROCESSED_TAGS",
+            boolstr(self.log_unprocessed_tags),
         )
 
     def read(self, filename: str) -> None:
-        self.config.read(filename)
-        self.update()
+        try:
+            self.config.read(filename)
+        except IOError as e:
+            print(str(e))
+        else:
+            self.update_cached_options()
+
+    def write(self, fp: TextIO) -> None:
+        """Write current configuration into given file object, the file object
+        must be a writeable text file with 'utf8' encoding.
+        """
+        self.rewrite_cached_options()
+        try:
+            self.config.write(fp)
+        except IOError as e:
+            print(str(e))
 
     @property
     def filter_invalid_xdata_group_codes(self) -> bool:
@@ -152,9 +180,7 @@ class Options:
         # Set "AUTO_LOAD_FONTS = false" to deactivate auto font loading,
         # if this this procedure slows down your startup time and font measuring is not
         # important to you. Fonts can always loaded manually: ezdxf.fonts.load()
-        return self.config.getboolean(
-            CORE, "AUTO_LOAD_FONTS", fallback=True
-        )
+        return self.config.getboolean(CORE, "AUTO_LOAD_FONTS", fallback=True)
 
     @property
     def use_matplotlib(self) -> bool:
@@ -174,25 +200,41 @@ class Options:
         self.config.set(CORE, "LOAD_PROXY_GRAPHICS", value)
         self.config.set(CORE, "STORE_PROXY_GRAPHICS", value)
 
-    def write(self, fp: TextIO) -> None:
-        """Write current configuration into given file object, the file object
-        must be a writeable text file with 'utf8' encoding.
-        """
-        self.config.write(fp)
-
     def print(self):
-        """Print current configuration to `stdout`. """
+        """Print current configuration to `stdout`."""
         self.config.write(sys.stdout)
 
     def write_home_config(self):
-        """Write current configuration into file "~/.ezdxf/ezdxf.ini". """
+        """Write current configuration into file "~/.ezdxf/ezdxf.ini"."""
         p = Path("~/.ezdxf").expanduser()
         if not p.exists():
-            p.mkdir()
+            try:
+                p.mkdir()
+            except IOError as e:
+                print(str(e))
+                return
+        try:
+            with open(p / "ezdxf.ini", "wt", encoding="utf8") as fp:
+                self.write(fp)
+        except IOError as e:
+            print(str(e))
+        else:
+            print(f"created config file: '{fp.name}'")
 
-        with open(p / "ezdxf.ini", "wt", encoding="utf8") as fp:
-            self.write(fp)
-        print(f'ezdxf configuration written to file: "{fp.name}"')
+    def reset(self):
+        self.config = default_config()
+        self.update_cached_options()
+        delete_config_files()
+
+
+def delete_config_files():
+    for file in DEFAULT_FILES:
+        if file.exists():
+            try:
+                file.unlink()
+                print(f"deleted config file: '{file}'")
+            except IOError as e:
+                print(str(e))
 
 
 # Global Options
