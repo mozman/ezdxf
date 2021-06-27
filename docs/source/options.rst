@@ -63,7 +63,7 @@ changes into a custom config file "my.ini":
     import ezdxf
 
     test_files = Path("~/my-dxf-test-files").expand_user()
-    ezdxf.options.config.set(
+    ezdxf.options.set(
         ezdxf.options.CORE,  # section
         "test_files",  # key
         "~/my-dxf-test-files",  # value
@@ -170,6 +170,10 @@ default config files and the config file specified by ``EZDXF_CONFIG_FILE``.
 .. method:: preserve_proxy_graphics(state=True)
 
     Enable/disable proxy graphic load/store support.
+
+.. method:: set(section: str, key: str, value: str)
+
+    Shortcut for the :meth:`options.config.set` method.
 
 .. method:: write(fp: TextIO)
 

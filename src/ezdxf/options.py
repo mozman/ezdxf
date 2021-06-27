@@ -96,6 +96,9 @@ class Options:
         self._use_matplotlib = MATPLOTLIB
         self.update_cached_options()
 
+    def set(self, section: str, key: str, value: str) -> None:
+        self.config.set(section, key, value)
+
     def update_cached_options(self) -> None:
         self.log_unprocessed_tags = self.config.getboolean(
             Options.CORE, "LOG_UNPROCESSED_TAGS", fallback=True
@@ -166,7 +169,7 @@ class Options:
         if p.exists():
             absolute = p.absolute()
             if p.is_dir():
-                self.config.set(CORE, "FONT_CACHE_DIRECTORY", str(absolute))
+                self.set(CORE, "FONT_CACHE_DIRECTORY", str(absolute))
             else:
                 raise ValueError(f'"{absolute}" is not a directory')
         else:
@@ -219,8 +222,8 @@ class Options:
     def preserve_proxy_graphics(self, state: bool = True) -> None:
         """Enable/disable proxy graphic load/store support."""
         value = "true" if state else "false"
-        self.config.set(CORE, "LOAD_PROXY_GRAPHICS", value)
-        self.config.set(CORE, "STORE_PROXY_GRAPHICS", value)
+        self.set(CORE, "LOAD_PROXY_GRAPHICS", value)
+        self.set(CORE, "STORE_PROXY_GRAPHICS", value)
 
     def print(self):
         """Print current configuration to `stdout`."""
