@@ -84,25 +84,32 @@ class Options:
     def __init__(self):
         self.config = load_config_files()
         # needs fast access:
+        self.log_unprocessed_tags = True
+        # Activate/deactivate Matplotlib support (e.g. for testing)
+        self._use_matplotlib = MATPLOTLIB
+        self.update()
+
+    def update(self) -> None:
         self.log_unprocessed_tags = self.config.getboolean(
             CORE, "LOG_UNPROCESSED_TAGS", fallback=True
         )
 
-        # Activate/deactivate Matplotlib support (e.g. for testing)
-        self._use_matplotlib = MATPLOTLIB
+    def read(self, filename: str) -> None:
+        self.config.read(filename)
+        self.update()
 
     @property
-    def filter_invalid_xdata_group_codes(self):
+    def filter_invalid_xdata_group_codes(self) -> bool:
         return self.config.getboolean(
             CORE, "FILTER_INVALID_XDATA_GROUP_CODES", fallback=True
         )
 
     @property
-    def default_text_style(self):
+    def default_text_style(self) -> str:
         return self.config.get(CORE, "DEFAULT_TEXT_STYLE", fallback="OpenSans")
 
     @property
-    def default_dimension_text_style(self):
+    def default_dimension_text_style(self) -> str:
         # Set path to an external font cache directory: e.g. "~/ezdxf", see
         # docs for ezdxf.options for an example how to create your own
         # external font cache:
@@ -113,11 +120,11 @@ class Options:
         )
 
     @property
-    def font_cache_directory(self):
+    def font_cache_directory(self) -> str:
         return self.config.get(CORE, "FONT_CACHE_DIRECTORY", fallback="")
 
     @property
-    def test_files(self):
+    def test_files(self) -> str:
         return self.config.get(CORE, "TEST_FILES", fallback="")
 
     @property
@@ -127,13 +134,13 @@ class Options:
         )
 
     @property
-    def store_proxy_graphics(self):
+    def store_proxy_graphics(self) -> bool:
         return self.config.getboolean(
             CORE, "STORE_PROXY_GRAPHICS", fallback=True
         )
 
     @property
-    def write_fixed_meta_data_for_testing(self):
+    def write_fixed_meta_data_for_testing(self) -> bool:
         # Enable this option to always create same meta data for testing
         # scenarios, e.g. to use a diff like tool to compare DXF documents.
         return self.config.getboolean(
@@ -141,8 +148,8 @@ class Options:
         )
 
     @property
-    def auto_load_fonts(self):
-        # Set "AUTO_LOAD_FONTS=false" to deactivate auto font loading,
+    def auto_load_fonts(self) -> bool:
+        # Set "AUTO_LOAD_FONTS = false" to deactivate auto font loading,
         # if this this procedure slows down your startup time and font measuring is not
         # important to you. Fonts can always loaded manually: ezdxf.fonts.load()
         return self.config.getboolean(
