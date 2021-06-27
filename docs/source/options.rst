@@ -75,12 +75,17 @@ changes into a custom config file "my.ini":
 Use a Custom Config File
 ------------------------
 
-You can specify a config file by the environment variable ``EZDXF_CONFIG_FILE``,
-which is loaded after the default config files.
+You can specify a config file by the environment variable
+``EZDXF_CONFIG_FILE``, which is loaded after the default config files.
+
+.. code-block:: Text
+
+    C:\> set EZDXF_CONFIG_FILE=D:\user\path\custom.ini
 
 Custom config files are not loaded automatically like the default config files.
 
-This example shows how to load the previous created custom config file "my.ini":
+This example shows how to load the previous created custom config file "my.ini"
+from the current working directory:
 
 .. code-block:: Python
 
