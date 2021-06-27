@@ -15,8 +15,10 @@ except ImportError:
     MATPLOTLIB = False
 
 TRUE_STATE = {"True", "true", "On", "on", "1"}
-CORE = "CORE"
-DXF_STRUCTURE_BROWSER = "DXF STRUCTURE BROWSER"
+CORE = "core"
+BROWSE_COMMAND = "browse-command"
+VIEW_COMMAND = "view-command"
+DRAW_COMMAND = "draw-command"
 
 
 def default_config() -> ConfigParser:
@@ -33,7 +35,7 @@ def default_config() -> ConfigParser:
         "DEFAULT_TEXT_STYLE": "OpenSans",
         "DEFAULT_DIMENSION_TEXT_STYLE": "OpenSansCondensed-Light",
     }
-    config[DXF_STRUCTURE_BROWSER] = {
+    config[BROWSE_COMMAND] = {
         "TEXT_EDITOR": r"C:\Program Files\Notepad++\notepad++.exe",
         "GOTO_LINE_ARGUMENT": "-n{num}",  # .format(num=line_number)
     }
@@ -68,6 +70,11 @@ def load_config_files(name: str = "ezdxf.ini") -> ConfigParser:
 
 
 class Options:
+    CORE = CORE
+    BROWSE_COMMAND = BROWSE_COMMAND
+    VIEW_COMMAND = VIEW_COMMAND
+    DRAW_COMMAND = DRAW_COMMAND
+
     CONFIG_VARS = [
         "EZDXF_DISABLE_C_EXT",
         "EZDXF_TEST_FILES",

@@ -7,7 +7,7 @@ from ezdxf import commands
 from ezdxf.tools import fonts
 
 YES_NO = {True: 'yes', False: 'no'}
-options.config.set("CORE", "LOAD_PROXY_GRAPHICS", "true")
+options.config.set(options.CORE, "LOAD_PROXY_GRAPHICS", "true")
 
 
 def add_common_arguments(parser):
@@ -29,19 +29,22 @@ def add_common_arguments(parser):
 
 
 def print_version(verbose=False):
-    print_config(print, verbose=verbose)
+    print_config(verbose=verbose)
 
 
 def setup_log(args):
     import logging
     from datetime import datetime
+    from io import StringIO
     level = "DEBUG" if args.verbose else "INFO"
     logging.basicConfig(filename=args.log, level=level)
     print(f"Appending logs to file \"{args.log}\", logging level: {level}\n")
     logger = logging.getLogger('ezdxf')
     logger.info("***** Launch time: " + datetime.now().isoformat() + " *****")
     if args.verbose:
-        print_config(logger.info, verbose=True)
+        s = StringIO()
+        print_config(verbose=True, stream=s)
+        logger.info("configuration\n" + s.getvalue())
 
 
 DESCRIPTION = """

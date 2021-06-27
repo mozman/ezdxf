@@ -2,7 +2,6 @@
 #  License: MIT License
 from typing import Optional, Set, List
 from functools import partial
-import os
 import subprocess
 from PyQt5.QtWidgets import (
     QApplication,
@@ -17,6 +16,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QModelIndex, QSettings, QFileSystemWatcher
 import ezdxf
+from ezdxf.options import BROWSE_COMMAND
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError
 from ezdxf.lldxf.types import DXFTag, is_pointer_code
 from ezdxf.lldxf.tags import Tags
@@ -41,10 +41,9 @@ from .bookmarks import Bookmarks
 __all__ = ["DXFStructureBrowser"]
 
 APP_NAME = "DXF Structure Browser"
-BROWSER_SECTION = "DXF STRUCTURE BROWSER"
-TEXT_EDITOR = ezdxf.options.config.get(BROWSER_SECTION, "TEXT_EDITOR")
+TEXT_EDITOR = ezdxf.options.config.get(BROWSE_COMMAND, "TEXT_EDITOR")
 GOTO_LINE_ARGUMENT = ezdxf.options.config.get(
-    BROWSER_SECTION, "GOTO_LINE_ARGUMENT"
+    BROWSE_COMMAND, "GOTO_LINE_ARGUMENT"
 )
 
 SearchSections = Set[str]

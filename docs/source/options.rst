@@ -10,7 +10,7 @@ INI File Structure:
 
 .. code:: INI
 
-    [CORE]
+    [core]
     test_files = D:\Source\dxftest
     font_cache_directory =
     auto_load_fonts = true
@@ -22,7 +22,7 @@ INI File Structure:
     default_text_style = OpenSans
     default_dimension_text_style = OpenSansCondensed-Light
 
-    [DXF STRUCTURE BROWSER]
+    [browse-command]
     text_editor = C:\Program Files\Notepad++\notepad++.exe
     goto_line_argument = -n{num}
 

@@ -1,6 +1,6 @@
 # Copyright (C) 2011-2021, Manfred Moitzi
 # License: MIT License
-from typing import Callable
+from typing import TextIO
 import sys
 import os
 from .version import version, __version__
@@ -76,28 +76,24 @@ EZDXF_TEST_FILES = options.test_files
 YES_NO = {True: "yes", False: "no"}
 
 
-def print_config(
-    func: Callable[[str], None] = print, verbose: bool = False
-) -> None:
+def print_config(verbose: bool = False, stream: TextIO = None) -> None:
     from pathlib import Path
     from ezdxf.acc import USE_C_EXT
-    from io import StringIO
-
-    func(f"ezdxf v{__version__} @ {Path(__file__).parent}")
-    func(f"Python version: {sys.version}")
-    func(f"using C-extensions: {YES_NO[USE_C_EXT]}")
-    func(f"using Matplotlib: {YES_NO[options.use_matplotlib]}")
+    if stream is None:
+        stream = sys.stdout
+    stream.writelines([
+        f"ezdxf v{__version__} @ {Path(__file__).parent}\n",
+        f"Python version: {sys.version}\n",
+        f"using C-extensions: {YES_NO[USE_C_EXT]}\n",
+        f"using Matplotlib: {YES_NO[options.use_matplotlib]}\n",
+    ])
     if verbose:
-        func("\nOptions:")
-        fp = StringIO()
-        options.write(fp)
-        for line in fp.getvalue().splitlines():
-            func(line)
-        func("\nEnvironment Variables:")
+        stream.write("\nOptions:\n")
+        options.write(stream)
+        stream.write("\nEnvironment Variables:\n")
         for v in options.CONFIG_VARS:
-            func(f"{v}={os.environ.get(v, '')}")
+            stream.write(f"{v}={os.environ.get(v, '')}\n")
 
-        func("\nExisting Configuration Files:")
+        stream.write("\nExisting Configuration Files:\n")
         for name in [p for p in config_files() if p.exists()]:
-            func(str(name))
-
+            stream.write(f"{name}\n")
