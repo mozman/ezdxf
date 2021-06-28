@@ -4,10 +4,21 @@
 # drawing, and without dependencies to other ezdxf modules.
 # The created DXF file contains no HEADER, TABLES or BLOCKS section only the
 # ENTITIES section is present.
-from typing import TextIO, BinaryIO, Union, Sequence, Iterable, Tuple
+from typing import (
+    TextIO,
+    BinaryIO,
+    Union,
+    Sequence,
+    Iterable,
+    Tuple,
+    cast,
+    Iterator,
+    Optional,
+)
 from contextlib import contextmanager
 from functools import partial
 from io import StringIO
+from pathlib import Path
 from ezdxf.lldxf.tagwriter import BinaryTagWriter
 
 Vertex = Sequence[float]
@@ -48,10 +59,10 @@ class BinaryDXFWriter:
 
 @contextmanager
 def r12writer(
-    stream: Union[TextIO, BinaryIO, str],
+    stream: Union[TextIO, BinaryIO, str, Path],
     fixed_tables: bool = False,
     fmt: str = "asc",
-) -> "R12FastStreamWriter":
+) -> Iterator["R12FastStreamWriter"]:
     """Context manager for writing DXF entities to a stream/file. `stream` can
     be any file like object with a :func:`write` method or just a string for
     writing DXF entities to the file system. If `fixed_tables` is ``True``, a
@@ -63,21 +74,24 @@ def r12writer(
     Binary DXF require a :class:`BinaryIO` stream.
 
     """
-    _stream = None
+    _stream: Union[TextIO, BinaryIO, None] = None
+
     if fmt.startswith("asc"):
-        if not hasattr(stream, "write"):
+        if isinstance(stream, (str, Path)):
             _stream = open(stream, "wt", encoding="cp1252")
             stream = _stream
     elif fmt.startswith("bin"):
-        if hasattr(stream, "write"):
-            stream = BinaryDXFWriter(stream)
-        else:
+        if isinstance(stream, (str, Path)):
             _stream = open(stream, "wb")
-            stream = BinaryDXFWriter(_stream)
+            stream = cast(TextIO, BinaryDXFWriter(_stream))
+        else:
+            stream = cast(TextIO, BinaryDXFWriter(cast(BinaryIO, stream)))
+
     else:
         raise ValueError(f"Unknown format '{fmt}'.")
-
-    writer = R12FastStreamWriter(stream, fixed_tables)
+    # TODO: Py38 replace TextIO by user defined Protocol
+    #  SupportsWrite(Protocol): def write(...)
+    writer = R12FastStreamWriter(cast(TextIO, stream), fixed_tables)
     try:
         yield writer
     finally:
@@ -97,7 +111,7 @@ class R12FastStreamWriter:
 
     """
 
-    def __init__(self, stream: [TextIO, BinaryDXFWriter], fixed_tables=False):
+    def __init__(self, stream: Union[TextIO], fixed_tables=False):
         self.stream = stream
         if fixed_tables:
             stream.write(PREFACE)
@@ -174,7 +188,7 @@ class R12FastStreamWriter:
         color: int = None,
         linetype: str = None,
     ) -> None:
-        """ Add an ARC entity. The arc goes counter clockwise from `start` angle
+        """Add an ARC entity. The arc goes counter clockwise from `start` angle
         to `end` angle.
 
         Args:
@@ -225,7 +239,7 @@ class R12FastStreamWriter:
         color: int = None,
         linetype: str = None,
     ) -> None:
-        """ Add a 3DFACE entity. 3DFACE is a spatial area with 3 or 4 vertices,
+        """Add a 3DFACE entity. 3DFACE is a spatial area with 3 or 4 vertices,
         all vertices have to be in the same plane.
 
         Args:
@@ -275,8 +289,8 @@ class R12FastStreamWriter:
         vertices: Iterable[Vertex],
         flags: int,
         layer: str,
-        color: int,
-        linetype: str,
+        color: Optional[int],
+        linetype: Optional[str],
     ) -> None:
         dxf = ["0\n%s\n" % dxftype]
         dxf.append(dxf_attribs(layer, color, linetype))
@@ -287,7 +301,7 @@ class R12FastStreamWriter:
             vertices.append(vertices[-1])  # double last vertex
         dxf.extend(
             dxf_vertex(vertex, code)
-                for code, vertex in enumerate(vertices, start=10)
+            for code, vertex in enumerate(vertices, start=10)
         )
         if flags:
             dxf.append(dxf_tag(70, str(flags)))
