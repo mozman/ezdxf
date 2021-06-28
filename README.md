@@ -19,7 +19,9 @@ Quick-Info
 - OS independent
 - tested with CPython and pypy3
 - C-extensions for CPython as binary wheels available on PyPI for Windows, Linux and macOS
-- additional required packages: [pyparsing](https://pypi.org/project/pyparsing/) 
+- additional required packages: 
+  [typing_extensions](https://pypi.org/project/typing-extensions/), 
+  [pyparsing](https://pypi.org/project/pyparsing/) 
 - optional Cython implementation of some low level math classes
 - MIT-License
 - read/write/new support for DXF versions: R12, R2000, R2004, R2007, R2010, R2013 and R2018

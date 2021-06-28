@@ -5,6 +5,7 @@ News
 Version 0.16.5b0 - dev
 ----------------------
 
+- NEW: hard dependency `typing_extensions`
 - CHANGED: replaced `ezdxf.tools.rgb` by `ezdxf.colors`
 - NEW: config file support, config files read in order:
   1. home directory `~/.ezdxf/ezdxf.ini`
