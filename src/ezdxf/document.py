@@ -1096,8 +1096,11 @@ class MetaData(abc.ABC):
 
 
 def ezdxf_marker_string():
-    now = datetime.now(tz=timezone.utc)
-    return ezdxf.__version__ + " @ " + now.isoformat()
+    if options.write_fixed_meta_data_for_testing:
+        return "0.0 @ 2000-01-01T00:00:00.000000+00:00"
+    else:
+        now = datetime.now(tz=timezone.utc)
+        return ezdxf.__version__ + " @ " + now.isoformat()
 
 
 def safe_string(s: str) -> str:
