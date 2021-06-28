@@ -1,44 +1,45 @@
-# Purpose: fast & simple but restricted DXF R12 writer, with no in-memory drawing, and without dependencies to other
-# ezdxf modules. The created DXF file contains no HEADER, TABLES or BLOCKS section only the ENTITIES section is present.
-# Created: 14.04.2016
-# Copyright (c) 2016-2020, Manfred Moitzi
+# Copyright (c) 2016-2021, Manfred Moitzi
 # License: MIT License
+# Purpose: fast & simple but restricted DXF R12 writer, with no in-memory
+# drawing, and without dependencies to other ezdxf modules.
+# The created DXF file contains no HEADER, TABLES or BLOCKS section only the
+# ENTITIES section is present.
 from typing import TextIO, BinaryIO, Union, Sequence, Iterable, Tuple
 from contextlib import contextmanager
+from functools import partial
 from io import StringIO
 from ezdxf.lldxf.tagwriter import BinaryTagWriter
 
-
-# types
 Vertex = Sequence[float]
-
-
-def rnd(x: float) -> float:  # adjust output precision of floats by changing 'ndigits'
-    return round(x, ndigits=6)
-
+rnd = partial(round, ndigits=6)
 
 TEXT_ALIGN_FLAGS = {
-    'LEFT': (0, 0),
-    'CENTER': (1, 0),
-    'RIGHT': (2, 0),
-    'BOTTOM_LEFT': (0, 1),
-    'BOTTOM_CENTER': (1, 1),
-    'BOTTOM_RIGHT': (2, 1),
-    'MIDDLE_LEFT': (0, 2),
-    'MIDDLE_CENTER': (1, 2),
-    'MIDDLE_RIGHT': (2, 2),
-    'TOP_LEFT': (0, 3),
-    'TOP_CENTER': (1, 3),
-    'TOP_RIGHT': (2, 3),
+    "LEFT": (0, 0),
+    "CENTER": (1, 0),
+    "RIGHT": (2, 0),
+    "BOTTOM_LEFT": (0, 1),
+    "BOTTOM_CENTER": (1, 1),
+    "BOTTOM_RIGHT": (2, 1),
+    "MIDDLE_LEFT": (0, 2),
+    "MIDDLE_CENTER": (1, 2),
+    "MIDDLE_RIGHT": (2, 2),
+    "TOP_LEFT": (0, 3),
+    "TOP_CENTER": (1, 3),
+    "TOP_RIGHT": (2, 3),
 }
 
-VERTEX_GROUP_CODES = {'x': 10, 'y': 20, 's': 40, 'e': 41, 'b': 42}
+VERTEX_GROUP_CODES = {"x": 10, "y": 20, "s": 40, "e": 41, "b": 42}
 
 
 class BinaryDXFWriter:
     def __init__(self, stream: BinaryIO):
         self._stream = stream
-        self._tagwriter = BinaryTagWriter(self._stream, dxfversion='AC1009', write_handles=False, encoding='cp1252')
+        self._tagwriter = BinaryTagWriter(
+            self._stream,
+            dxfversion="AC1009",
+            write_handles=False,
+            encoding="cp1252",
+        )
         self._tagwriter.write_signature()
 
     def write(self, s: str) -> None:
@@ -46,9 +47,12 @@ class BinaryDXFWriter:
 
 
 @contextmanager
-def r12writer(stream: Union[TextIO, BinaryIO, str], fixed_tables: bool = False,
-              fmt: str = 'asc') -> 'R12FastStreamWriter':
-    """ Context manager for writing DXF entities to a stream/file. `stream` can
+def r12writer(
+    stream: Union[TextIO, BinaryIO, str],
+    fixed_tables: bool = False,
+    fmt: str = "asc",
+) -> "R12FastStreamWriter":
+    """Context manager for writing DXF entities to a stream/file. `stream` can
     be any file like object with a :func:`write` method or just a string for
     writing DXF entities to the file system. If `fixed_tables` is ``True``, a
     standard TABLES section is written in front of the ENTITIES
@@ -60,15 +64,15 @@ def r12writer(stream: Union[TextIO, BinaryIO, str], fixed_tables: bool = False,
 
     """
     _stream = None
-    if fmt.startswith('asc'):
-        if not hasattr(stream, 'write'):
-            _stream = open(stream, 'wt', encoding='cp1252')
+    if fmt.startswith("asc"):
+        if not hasattr(stream, "write"):
+            _stream = open(stream, "wt", encoding="cp1252")
             stream = _stream
-    elif fmt.startswith('bin'):
-        if hasattr(stream, 'write'):
+    elif fmt.startswith("bin"):
+        if hasattr(stream, "write"):
             stream = BinaryDXFWriter(stream)
         else:
-            _stream = open(stream, 'wb')
+            _stream = open(stream, "wb")
             stream = BinaryDXFWriter(_stream)
     else:
         raise ValueError(f"Unknown format '{fmt}'.")
@@ -83,12 +87,13 @@ def r12writer(stream: Union[TextIO, BinaryIO, str], fixed_tables: bool = False,
 
 
 class R12FastStreamWriter:
-    """ Fast stream writer to create simple DXF R12 drawings.
+    """Fast stream writer to create simple DXF R12 drawings.
 
     Args:
         stream: a file like object with a :func:`write` method.
-        fixed_tables: if `fixed_tables` is ``True``, a standard TABLES section is written in front of the
-                      ENTITIES section and some predefined text styles and line types can be used.
+        fixed_tables: if `fixed_tables` is ``True``, a standard TABLES section
+            is written in front of the ENTITIES section and some predefined text
+            styles and line types can be used.
 
     """
 
@@ -99,44 +104,51 @@ class R12FastStreamWriter:
         stream.write("0\nSECTION\n2\nENTITIES\n")  # write header
 
     def close(self) -> None:
-        """ Writes the DXF tail. Call is not necessary when using the context manager :func:`r12writer`. """
+        """Writes the DXF tail. Call is not necessary when using the context
+        manager :func:`r12writer`.
+        """
         self.stream.write("0\nENDSEC\n0\nEOF\n")  # write tail
 
-    def add_line(self,
-                 start: Vertex,
-                 end: Vertex,
-                 layer: str = "0",
-                 color: int = None,
-                 linetype: str = None) -> None:
-        """
-        Add a LINE entity from `start` to `end`.
+    def add_line(
+        self,
+        start: Vertex,
+        end: Vertex,
+        layer: str = "0",
+        color: int = None,
+        linetype: str = None,
+    ) -> None:
+        """Add a LINE entity from `start` to `end`.
 
         Args:
             start: start vertex as ``(x, y[, z])`` tuple
             end: end vertex as  as ``(x, y[, z])`` tuple
-            layer: layer name as string, without a layer definition the assigned color = ``7`` (black/white) and
-                   line type is ``'Continuous'``.
+            layer: layer name as string, without a layer definition the assigned
+                color = ``7`` (black/white) and line type is ``'Continuous'``.
             color: color as :ref:`ACI` in the range from ``0`` to ``256``,
-                   ``0`` is `ByBlock` and ``256`` is `ByLayer`, default is `ByLayer` which is always
-                   color = ``7`` (black/white) without a layer definition.
-            linetype: line type as string, if FIXED-TABLES are written some predefined line types are available, else
-                      line type is always `ByLayer`, which is always ``'Continuous'`` without a LAYERS table.
+                ``0`` is `ByBlock` and ``256`` is `ByLayer`, default is `ByLayer`
+                which is always color = ``7`` (black/white) without a layer
+                definition.
+            linetype: line type as string, if FIXED-TABLES are written some
+                predefined line types are available, else line type is always
+                `ByLayer`, which is always ``'Continuous'`` without a LAYERS
+                table.
 
         """
         dxf = ["0\nLINE\n"]
         dxf.append(dxf_attribs(layer, color, linetype))
         dxf.append(dxf_vertex(start, code=10))
         dxf.append(dxf_vertex(end, code=11))
-        self.stream.write(''.join(dxf))
+        self.stream.write("".join(dxf))
 
-    def add_circle(self,
-                   center: Vertex,
-                   radius: float,
-                   layer: str = "0",
-                   color: int = None,
-                   linetype: str = None) -> None:
-        """
-        Add a CIRCLE entity.
+    def add_circle(
+        self,
+        center: Vertex,
+        radius: float,
+        layer: str = "0",
+        color: int = None,
+        linetype: str = None,
+    ) -> None:
+        """Add a CIRCLE entity.
 
         Args:
             center: circle center point as ``(x, y)`` tuple
@@ -150,18 +162,20 @@ class R12FastStreamWriter:
         dxf.append(dxf_attribs(layer, color, linetype))
         dxf.append(dxf_vertex(center))
         dxf.append(dxf_tag(40, str(rnd(radius))))
-        self.stream.write(''.join(dxf))
+        self.stream.write("".join(dxf))
 
-    def add_arc(self,
-                center: Vertex,
-                radius: float,
-                start: float = 0,
-                end: float = 360,
-                layer: str = "0",
-                color: int = None,
-                linetype: str = None) -> None:
-        """
-        Add an ARC entity. The arc goes counter clockwise from `start` angle to `end` angle.
+    def add_arc(
+        self,
+        center: Vertex,
+        radius: float,
+        start: float = 0,
+        end: float = 360,
+        layer: str = "0",
+        color: int = None,
+        linetype: str = None,
+    ) -> None:
+        """ Add an ARC entity. The arc goes counter clockwise from `start` angle
+        to `end` angle.
 
         Args:
             center: arc center point as ``(x, y)`` tuple
@@ -179,13 +193,15 @@ class R12FastStreamWriter:
         dxf.append(dxf_tag(40, str(rnd(radius))))
         dxf.append(dxf_tag(50, str(rnd(start))))
         dxf.append(dxf_tag(51, str(rnd(end))))
-        self.stream.write(''.join(dxf))
+        self.stream.write("".join(dxf))
 
-    def add_point(self,
-                  location: Vertex,
-                  layer: str = "0",
-                  color: int = None,
-                  linetype: str = None) -> None:
+    def add_point(
+        self,
+        location: Vertex,
+        layer: str = "0",
+        color: int = None,
+        linetype: str = None,
+    ) -> None:
         """
         Add a POINT entity.
 
@@ -199,59 +215,69 @@ class R12FastStreamWriter:
         dxf = ["0\nPOINT\n"]
         dxf.append(dxf_attribs(layer, color, linetype))
         dxf.append(dxf_vertex(location))
-        self.stream.write(''.join(dxf))
+        self.stream.write("".join(dxf))
 
-    def add_3dface(self,
-                   vertices: Iterable[Vertex],
-                   invisible: int = 0,
-                   layer: str = "0",
-                   color: int = None,
-                   linetype: str = None) -> None:
-        """
-        Add a 3DFACE entity. 3DFACE is a spatial area with 3 or 4 vertices, all vertices have to be in the same plane.
+    def add_3dface(
+        self,
+        vertices: Iterable[Vertex],
+        invisible: int = 0,
+        layer: str = "0",
+        color: int = None,
+        linetype: str = None,
+    ) -> None:
+        """ Add a 3DFACE entity. 3DFACE is a spatial area with 3 or 4 vertices,
+        all vertices have to be in the same plane.
 
         Args:
             vertices: iterable of 3 or 4 ``(x, y, z)`` vertices.
             invisible: bit coded flag to define the invisible edges,
 
-                       1. edge = 1
-                       2. edge = 2
-                       3. edge = 4
-                       4. edge = 8
+                1. edge = 1
+                2. edge = 2
+                3. edge = 4
+                4. edge = 8
 
-                       Add edge values to set multiple edges invisible, 1. edge + 3. edge = 1 + 4 = 5, all edges = 15
+                Add edge values to set multiple edges invisible,
+                1. edge + 3. edge = 1 + 4 = 5, all edges = 15
 
             layer: layer name as string see :meth:`add_line`
             color: color as :ref:`ACI` see :meth:`add_line`
             linetype: line type as string see :meth:`add_line`
 
         """
-        self._add_quadrilateral('3DFACE', vertices, invisible, layer, color, linetype)
+        self._add_quadrilateral(
+            "3DFACE", vertices, invisible, layer, color, linetype
+        )
 
-    def add_solid(self,
-                  vertices: Iterable[Vertex],
-                  layer: str = "0",
-                  color: int = None,
-                  linetype: str = None) -> None:
-        """
-        Add a SOLID entity. SOLID is a solid filled area with 3 or 4 edges and SOLID is a 2D entity.
+    def add_solid(
+        self,
+        vertices: Iterable[Vertex],
+        layer: str = "0",
+        color: int = None,
+        linetype: str = None,
+    ) -> None:
+        """Add a SOLID entity. SOLID is a solid filled area with 3 or 4 edges
+        and SOLID is a 2D entity.
 
         Args:
-            vertices: iterable of 3 or 4 ``(x, y[, z])`` tuples, z-axis will be ignored.
+            vertices: iterable of 3 or 4 ``(x, y[, z])`` tuples, z-axis will be
+                ignored.
             layer: layer name as string see :meth:`add_line`
             color: color as :ref:`ACI` see :meth:`add_line`
             linetype: line type as string see :meth:`add_line`
 
         """
-        self._add_quadrilateral('SOLID', vertices, 0, layer, color, linetype)
+        self._add_quadrilateral("SOLID", vertices, 0, layer, color, linetype)
 
-    def _add_quadrilateral(self,
-                           dxftype: str,
-                           vertices: Iterable[Vertex],
-                           flags: int,
-                           layer: str,
-                           color: int,
-                           linetype: str) -> None:
+    def _add_quadrilateral(
+        self,
+        dxftype: str,
+        vertices: Iterable[Vertex],
+        flags: int,
+        layer: str,
+        color: int,
+        linetype: str,
+    ) -> None:
         dxf = ["0\n%s\n" % dxftype]
         dxf.append(dxf_attribs(layer, color, linetype))
         vertices = list(vertices)
@@ -259,22 +285,27 @@ class R12FastStreamWriter:
             raise ValueError("%s needs 3 or 4 vertices." % dxftype)
         elif len(vertices) == 3:
             vertices.append(vertices[-1])  # double last vertex
-        dxf.extend(dxf_vertex(vertex, code) for code, vertex in enumerate(vertices, start=10))
+        dxf.extend(
+            dxf_vertex(vertex, code)
+                for code, vertex in enumerate(vertices, start=10)
+        )
         if flags:
             dxf.append(dxf_tag(70, str(flags)))
-        self.stream.write(''.join(dxf))
+        self.stream.write("".join(dxf))
 
-    def add_polyline(self,
-                     vertices: Iterable[Vertex],
-                     closed: bool = False,
-                     layer: str = "0",
-                     color: int = None,
-                     linetype: str = None) -> None:
-        """
-        Add a 3D POLYLINE entity.
+    def add_polyline(
+        self,
+        vertices: Iterable[Vertex],
+        closed: bool = False,
+        layer: str = "0",
+        color: int = None,
+        linetype: str = None,
+    ) -> None:
+        """Add a 3D POLYLINE entity.
 
         Args:
-            vertices: iterable of ``(x, y[, z])`` tuples, z-axis is ``0`` by default
+            vertices: iterable of ``(x, y[, z])`` tuples, z-axis is ``0`` by
+                default
             closed: ``True`` creates a closed polyline
             layer: layer name as string see :meth:`add_line`
             color: color as :ref:`ACI` see :meth:`add_line`
@@ -288,7 +319,7 @@ class R12FastStreamWriter:
         dxf.append(dxf_attribs(layer, color, linetype))
         dxf.append(dxf_tag(66, 1))  # entities follow
         dxf.append(dxf_tag(70, 8 + int(closed)))  # bit 1 is the closed state
-        self.stream.write(''.join(dxf))
+        self.stream.write("".join(dxf))
 
         vertex_template = "0\nVERTEX\n" + dxf_attribs(layer) + dxf_tag(70, 32)
         for vertex in vertices:
@@ -296,23 +327,25 @@ class R12FastStreamWriter:
             vertex = tuple(vertex)
             len_vertex = len(vertex)
             if len_vertex < 2:
-                raise ValueError('Vertices require at least a x- and a y-axis.')
+                raise ValueError("Vertices require at least a x- and a y-axis.")
             elif len_vertex == 2:
                 vertex = (vertex[0], vertex[1], 0)
             self.stream.write(dxf_vertex(vertex[:3]))
         self.stream.write("0\nSEQEND\n")
 
-    def add_polyline_2d(self,
-                        points: Iterable[Sequence],
-                        format: str = 'xy',
-                        closed: bool = False,
-                        start_width: float = 0,
-                        end_width: float = 0,
-                        layer: str = "0",
-                        color: int = None,
-                        linetype: str = None) -> None:
-        """
-        Add a 2D POLYLINE entity with start width, end width and bulge value support.
+    def add_polyline_2d(
+        self,
+        points: Iterable[Sequence],
+        format: str = "xy",
+        closed: bool = False,
+        start_width: float = 0,
+        end_width: float = 0,
+        layer: str = "0",
+        color: int = None,
+        linetype: str = None,
+    ) -> None:
+        """Add a 2D POLYLINE entity with start width, end width and bulge value
+        support.
 
         Format codes:
 
@@ -326,8 +359,9 @@ class R12FastStreamWriter:
         === =================================
 
         Args:
-            points: iterable of (x, y, [start_width, [end_width, [bulge]]]) tuple, value order according to the
-                    `format` string, unset values default to ``0``
+            points: iterable of (x, y, [start_width, [end_width, [bulge]]])
+                tuple, value order according to the `format` string, unset
+                values default to ``0``
             format: format: format string, default is ``'xy'``
             closed: ``True`` creates a closed polyline
             start_width: default start width, default is ``0``
@@ -341,10 +375,10 @@ class R12FastStreamWriter:
         def vertex_attribs(data: Sequence) -> dict:
             attribs = dict()
             for code, value in zip(format, data):
-                if code == 'v':
+                if code == "v":
                     location = tuple(value)
-                    attribs['x'] = location[0]
-                    attribs['y'] = location[1]
+                    attribs["x"] = location[0]
+                    attribs["y"] = location[1]
                 else:
                     attribs[code] = value
             return attribs
@@ -357,7 +391,7 @@ class R12FastStreamWriter:
             dxf.append(dxf_tag(40, start_width))
         if end_width:  # default end width
             dxf.append(dxf_tag(41, end_width))
-        self.stream.write(''.join(dxf))
+        self.stream.write("".join(dxf))
 
         vertex_template = "0\nVERTEX\n" + dxf_attribs(layer) + dxf_tag(70, 0)
         for point in points:
@@ -365,20 +399,24 @@ class R12FastStreamWriter:
             attribs = vertex_attribs(point)
             for format_code in format:
                 value = attribs.get(format_code, 0)
-                if value == 0 and format_code in 'seb':
+                if value == 0 and format_code in "seb":
                     continue  # do not write default values
-                self.stream.write(dxf_tag(VERTEX_GROUP_CODES[format_code], value))
+                self.stream.write(
+                    dxf_tag(VERTEX_GROUP_CODES[format_code], value)
+                )
         self.stream.write("0\nSEQEND\n")
 
-    def add_polyface(self,
-                     vertices: Iterable[Vertex],
-                     faces: Iterable[Sequence[int]],
-                     layer: str = "0",
-                     color: int = None,
-                     linetype: str = None) -> None:
-        """
-        Add a POLYFACE entity. The POLYFACE entity supports only faces of maximum 4 vertices, more indices
-        will be ignored. A simple square would be::
+    def add_polyface(
+        self,
+        vertices: Iterable[Vertex],
+        faces: Iterable[Sequence[int]],
+        layer: str = "0",
+        color: int = None,
+        linetype: str = None,
+    ) -> None:
+        """Add a POLYFACE entity. The POLYFACE entity supports only faces of
+        maximum 4 vertices, more indices will be ignored. A simple square would
+        be::
 
             v0 = (0, 0, 0)
             v1 = (1, 0, 0)
@@ -386,8 +424,9 @@ class R12FastStreamWriter:
             v3 = (0, 1, 0)
             dxf.add_polyface(vertices=[v0, v1, v2, v3], faces=[(0, 1, 2, 3)])
 
-        All 3D form functions of the :mod:`ezdxf.render.forms` module return :class:`~ezdxf.render.MeshBuilder`
-        objects, which provide the required vertex and face lists.
+        All 3D form functions of the :mod:`ezdxf.render.forms` module return
+        :class:`~ezdxf.render.MeshBuilder` objects, which provide the required
+        vertex and face lists.
 
         See sphere example: https://github.com/mozman/ezdxf/blob/master/examples/r12writer.py
 
@@ -407,7 +446,7 @@ class R12FastStreamWriter:
             dxf.append(dxf_tag(70, flags))
             dxf.append(dxf_tag(71, vertex_count))
             dxf.append(dxf_tag(72, face_count))
-            self.stream.write(''.join(dxf))
+            self.stream.write("".join(dxf))
 
         def write_vertices(flags: int = 64 + 128):
             buf = StringIO()
@@ -424,7 +463,12 @@ class R12FastStreamWriter:
         def write_faces(flags: int = 128):
             buf = StringIO()
             count = 0
-            s = "0\nVERTEX\n" + dxf_attribs(layer, color) + dxf_tag(70, flags) + dxf_vertex((0, 0, 0))
+            s = (
+                "0\nVERTEX\n"
+                + dxf_attribs(layer, color)
+                + dxf_tag(70, flags)
+                + dxf_vertex((0, 0, 0))
+            )
             for face in faces:
                 count += 1
                 buf.write(s)
@@ -441,24 +485,28 @@ class R12FastStreamWriter:
         self.stream.write(face_str)
         self.stream.write("0\nSEQEND\n")
 
-    def add_polymesh(self,
-                     vertices: Iterable[Vertex],
-                     size: Tuple[int, int],
-                     closed=(False, False),
-                     layer: str = "0",
-                     color: int = None,
-                     linetype: str = None) -> None:
-        """
-        Add a POLYMESH entity. A POLYMESH is a mesh of m rows and n columns, each mesh vertex has its own
-        x-, y- and z coordinates. The mesh can be closed in m- and/or n-direction. The vertices have to be in
-        column order:  (m0, n0), (m0, n1), (m0, n2), (m1, n0), (m1, n1), (m1, n2), ...
+    def add_polymesh(
+        self,
+        vertices: Iterable[Vertex],
+        size: Tuple[int, int],
+        closed=(False, False),
+        layer: str = "0",
+        color: int = None,
+        linetype: str = None,
+    ) -> None:
+        """Add a POLYMESH entity. A POLYMESH is a mesh of m rows and n columns,
+        each mesh vertex has its own x-, y- and z coordinates. The mesh can be
+        closed in m- and/or n-direction. The vertices have to be in column
+        order:  (m0, n0), (m0, n1), (m0, n2), (m1, n0), (m1, n1), (m1, n2), ...
 
         See example: https://github.com/mozman/ezdxf/blob/master/examples/r12writer.py
 
         Args:
             vertices: iterable of ``(x, y, z)`` tuples, in column order
-            size: mesh dimension as (m, n)-tuple, requirement: ``len(vertices) == m*n``
-            closed: (m_closed, n_closed) tuple, for closed mesh in m and/or n direction
+            size: mesh dimension as (m, n)-tuple, requirement:
+                ``len(vertices) == m*n``
+            closed: (m_closed, n_closed) tuple, for closed mesh in m and/or n
+                direction
             layer: layer name as string see :meth:`add_line`
             color: color as :ref:`ACI` see :meth:`add_line`
             linetype: line type as string see :meth:`add_line`
@@ -479,7 +527,7 @@ class R12FastStreamWriter:
             dxf.append(dxf_tag(70, flags))
             dxf.append(dxf_tag(71, m))
             dxf.append(dxf_tag(72, n))
-            self.stream.write(''.join(dxf))
+            self.stream.write("".join(dxf))
 
         def write_vertices(flags: int = 64) -> int:
             count = 0
@@ -493,23 +541,24 @@ class R12FastStreamWriter:
         write_polyline()
         count = write_vertices()
         if m * n != count:
-            raise ValueError('Invalid mesh dimensions.')
+            raise ValueError("Invalid mesh dimensions.")
 
         self.stream.write("0\nSEQEND\n")
 
-    def add_text(self,
-                 text: str,
-                 insert: Vertex = (0, 0),
-                 height: float = 1.,
-                 width: float = 1.,
-                 align: str = "LEFT",
-                 rotation: float = 0.,
-                 oblique: float = 0.,
-                 style: str = 'STANDARD',
-                 layer: str = "0",
-                 color: int = None) -> None:
-        """
-        Add a one line TEXT entity.
+    def add_text(
+        self,
+        text: str,
+        insert: Vertex = (0, 0),
+        height: float = 1.0,
+        width: float = 1.0,
+        align: str = "LEFT",
+        rotation: float = 0.0,
+        oblique: float = 0.0,
+        style: str = "STANDARD",
+        layer: str = "0",
+        color: int = None,
+    ) -> None:
+        """Add a one line TEXT entity.
 
         Args:
             text: the text as string
@@ -519,8 +568,9 @@ class R12FastStreamWriter:
             align: text alignment, see table below
             rotation: text rotation in degrees as float
             oblique: oblique in degrees as float, vertical = ``0`` (default)
-            style: text style name as string, if FIXED-TABLES are written some predefined text styles are available,
-                   else text style is always ``'STANDARD'``.
+            style: text style name as string, if FIXED-TABLES are written some
+                predefined text styles are available, else text style is
+                always ``'STANDARD'``.
             layer: layer name as string see :meth:`add_line`
             color: color as :ref:`ACI` see :meth:`add_line`
 
@@ -542,11 +592,11 @@ class R12FastStreamWriter:
         dxf.append(dxf_vertex(insert, code=10))
         dxf.append(dxf_tag(1, str(text)))
         dxf.append(dxf_tag(40, str(rnd(height))))
-        if width != 1.:
+        if width != 1.0:
             dxf.append(dxf_tag(41, str(rnd(width))))
-        if rotation != 0.:
+        if rotation != 0.0:
             dxf.append(dxf_tag(50, str(rnd(rotation))))
-        if oblique != 0.:
+        if oblique != 0.0:
             dxf.append(dxf_tag(51, str(rnd(oblique))))
         if style != "STANDARD":
             dxf.append(dxf_tag(7, str(style)))
@@ -554,7 +604,7 @@ class R12FastStreamWriter:
         dxf.append(dxf_tag(72, str(halign)))
         dxf.append(dxf_tag(73, str(valign)))
         dxf.append(dxf_vertex(insert, code=11))  # align point
-        self.stream.write(''.join(dxf))
+        self.stream.write("".join(dxf))
 
 
 def dxf_attribs(layer: str, color: int = None, linetype: str = None) -> str:
@@ -565,7 +615,9 @@ def dxf_attribs(layer: str, color: int = None, linetype: str = None) -> str:
         if 0 <= int(color) < 257:
             dxf.append("62\n%d\n" % color)
         else:
-            raise ValueError("color has to be an integer in the range from 0 to 256.")
+            raise ValueError(
+                "color has to be an integer in the range from 0 to 256."
+            )
     return "".join(dxf)
 
 
@@ -581,7 +633,7 @@ def dxf_tag(code: int, value) -> str:
     return "%d\n%s\n" % (code, value)
 
 
-FORMAT_CODES = frozenset('xysebv')
+FORMAT_CODES = frozenset("xysebv")
 
 PREFACE = """  0
 SECTION
