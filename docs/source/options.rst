@@ -44,12 +44,13 @@ File Structure:
 .. module:: ezdxf.options
 
 The global `ezdxf` options are stored in :mod:`ezdxf.options`. This is a wrapper
-around the :class:`ConfigParser` class. The option most attributes are read only
-properties as shortcuts.
+around the :class:`ConfigParser` class. Shortcut attributes like :attr:`test_files`
+are simple properties and mMost shortcuts are read only marked by (Read only),
+read and writeable attributes are marked by (Read/Write).
 
-To change options you have to edit the config file with a text editor, or
-set options by the :meth:`set` method and write the current configuration
-into a config file.
+To change options, especially the read only attributes, you have to edit the
+config file with a text editor, or set options by the :meth:`set` method and
+write the current configuration into a config file.
 
 Modify and Save Changes
 -----------------------
@@ -95,17 +96,20 @@ from the current working directory:
 That is all and because this is the last loaded config file, it overrides all
 default config files and the config file specified by ``EZDXF_CONFIG_FILE``.
 
+Functions
+---------
+
 .. function:: set(section: str, key: str, value: str)
 
-    Set option `key`in `section` to `values` as string.
+    Set option `key` in `section` to `values` as string.
 
 .. function:: get(section: str, key: str, default: str = "")
 
-    Get option `key`in `section` as string.
+    Get option `key` in `section` as string.
 
 .. function:: get_bool(section: str, key: str, default: bool = False)
 
-    Get option `key`in `section` as bool.
+    Get option `key` in `section` as bool.
 
 .. function:: write(fp: TextIO)
 
@@ -136,31 +140,34 @@ default config files and the config file specified by ``EZDXF_CONFIG_FILE``.
 
 .. function:: preserve_proxy_graphics(state=True)
 
-    Enable/disable proxy graphic load/store support.
+    Enable/disable proxy graphic load/store support by setting the
+    options ``load_proxy_graphics`` and ``store_proxy_graphics`` to `state`.
 
 .. attribute:: loaded_config_files
 
-    Returns the loaded config files as tuple for :class:`Path` objects.
+    Returns the loaded config files as tuple for :class:`Path`
+    objects.
+
+Shortcut Attributes
+-------------------
 
 .. attribute:: default_text_style
 
-    Default text styles, default value is ``OpenSans``.
+    (Read only) Default text styles, default value is ``OpenSans``.
 
 .. attribute:: default_dimension_text_style
 
-    Default text style for Dimensions, default value is ``OpenSansCondensed-Light``.
+    (Read only) Default text style for Dimensions, default value is ``OpenSansCondensed-Light``.
 
 .. attribute:: use_matplotlib
 
-    Activate/deactivate Matplotlib support (e.g. for testing) if Matplotlib is
-    installed, else :attr:`use_matplotlib` is always ``False``.
+    (Read/Write) Activate/deactivate Matplotlib support (e.g. for testing) if
+    Matplotlib is installed, else :attr:`use_matplotlib` is always ``False``.
 
 .. attribute:: font_cache_directory
 
-    Get the current font cache directory or an empty string if the bundled
-    font cache is used. Expands "~" construct automatically.
-
-.. function:: set_font_cache_directory(dirname: str)
+    (Read/Write) Get the current font cache directory or an empty string if the
+    bundled font cache is used. Expands "~" construct automatically.
 
     Set path to an external font cache directory: e.g. ``"~/.ezdxf"``
     By default the bundled font cache will be loaded. Expands "~" construct
@@ -177,7 +184,7 @@ default config files and the config file specified by ``EZDXF_CONFIG_FILE``.
 
         font_cache_dir = "~/.ezdxf"
         fonts.build_system_font_cache(path=font_cache_dir)
-        ezdxf.options.set_font_cache_directory(font_cache_dir)
+        ezdxf.options.font_cache_directory = font_cache_dir
         # Save changes to the user config file "~/.ezdxf/ezdxf.ini" to load
         # the font cache always from the new location.
         ezdxf.options.write_home_config()
@@ -185,33 +192,35 @@ default config files and the config file specified by ``EZDXF_CONFIG_FILE``.
 
 .. attribute:: filter_invalid_xdata_group_codes
 
-    Filter invalid XDATA group codes, default value is ``False``.
+    (Read only) Filter invalid XDATA group codes, default value is ``False``.
 
 .. attribute:: log_unprocessed_tags
 
-    Log unprocessed DXF tags for debugging, default value is ``True``.
+    (Read/Write) Log unprocessed DXF tags for debugging, default value is
+    ``True``.
 
 .. attribute:: write_fixed_meta_data_for_testing
 
-    Enable this option to always create same meta data for testing scenarios,
-    e.g. to use a diff like tool to compare DXF documents, default is ``False``.
+    (Read/Write) Enable this option to always create same meta data for testing
+    scenarios, e.g. to use a diff like tool to compare DXF documents,
+    default is ``False``.
 
 .. attribute:: load_proxy_graphics
 
-    Load proxy graphics if ``True``, default is ``False``.
+    (Read only) Load proxy graphics if ``True``, default is ``False``.
 
 .. attribute:: store_proxy_graphics
 
-    Export proxy graphics if ``True``, default is ``False``.
+    (Read only)  Export proxy graphics if ``True``, default is ``False``.
 
 .. attribute:: test_files
 
-    Returns the path to the `ezdxf` test files, expands "~" construct
+    (Read only) Returns the path to the `ezdxf` test files, expands "~" construct
     automatically.
 
 .. attribute:: test_files_path
 
-    Path to test files as :class:`pathlib.Path` object.
+    (Read only) Path to test files as :class:`pathlib.Path` object.
 
 
 .. _environment_variables:

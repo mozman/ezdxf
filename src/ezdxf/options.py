@@ -153,7 +153,9 @@ class Options:
 
     @property
     def filter_invalid_xdata_group_codes(self) -> bool:
-        return self.get_bool(CORE, "FILTER_INVALID_XDATA_GROUP_CODES", default=True)
+        return self.get_bool(
+            CORE, "FILTER_INVALID_XDATA_GROUP_CODES", default=True
+        )
 
     @property
     def default_text_style(self) -> str:
@@ -174,7 +176,8 @@ class Options:
     def font_cache_directory(self) -> str:
         return os.path.expanduser(self.get(CORE, "FONT_CACHE_DIRECTORY"))
 
-    def set_font_cache_directory(self, dirname: Union[str, Path]) -> None:
+    @font_cache_directory.setter
+    def font_cache_directory(self, dirname: Union[str, Path]) -> None:
         p = Path(dirname).expanduser()
         if p.exists():
             absolute = p.absolute()
@@ -205,7 +208,13 @@ class Options:
     def write_fixed_meta_data_for_testing(self) -> bool:
         # Enable this option to always create same meta data for testing
         # scenarios, e.g. to use a diff like tool to compare DXF documents.
-        return self.get_bool(CORE, "WRITE_FIXED_META_DATA_FOR_TESTING", default=False)
+        return self.get_bool(
+            CORE, "WRITE_FIXED_META_DATA_FOR_TESTING", default=False
+        )
+
+    @write_fixed_meta_data_for_testing.setter
+    def write_fixed_meta_data_for_testing(self, state: bool) -> None:
+        self.set(CORE, "write_fixed_meta_data_for_testing", boolstr(state))
 
     @property
     def auto_load_fonts(self) -> bool:
