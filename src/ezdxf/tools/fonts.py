@@ -376,7 +376,7 @@ def save(path=None):
 
     """
     if path:
-        Path(path).expanduser().mkdir(exist_ok=True)
+        Path(path).expanduser().mkdir(parents=True, exist_ok=True)
     p = get_cache_file_path(path, FONT_FACE_CACHE_FILE)
     with open(p, 'wt') as fp:
         json.dump(list(font_face_cache.values()), fp, indent=2)

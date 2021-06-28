@@ -19,11 +19,33 @@ CORE = "core"
 BROWSE_COMMAND = "browse-command"
 VIEW_COMMAND = "view-command"
 DRAW_COMMAND = "draw-command"
-INI_NAME = "ezdxf.ini"
-DEFAULT_FILES = [
-    Path(f"~/.ezdxf/{INI_NAME}").expanduser(),
-    Path(f"./{INI_NAME}"),
-]
+EZDXF_INI = "ezdxf.ini"
+EZDXF = "ezdxf"
+XDG_CONFIG_HOME = "XDG_CONFIG_HOME"
+CONFIG_DIRECTORY = ".config"
+
+
+def xdg_path(xdg_var: str, directory: str) -> Path:
+    xdg_home = os.environ.get(xdg_var)
+    if xdg_home:
+        # should default to $HOME/<directory> e.g. $HOME/.config
+        home = Path(xdg_home).expanduser()
+    else:
+        # replicate structure
+        home = Path("~").expanduser() / directory
+    return home / EZDXF
+
+
+def config_home_path() -> Path:
+    return xdg_path(XDG_CONFIG_HOME, CONFIG_DIRECTORY)
+
+
+def default_config_files() -> List[Path]:
+    config_paths = [
+        config_home_path() / EZDXF_INI,
+        Path(f"./{EZDXF_INI}"),
+    ]
+    return config_paths
 
 
 def default_config() -> ConfigParser:
@@ -48,12 +70,14 @@ def default_config() -> ConfigParser:
 
 
 def config_files() -> List[Path]:
-    # loading order
-    # 1. user home directory "~/.ezdxf/ezdxf.ini" (lowest priority)
+    # Loading order for config files:
+    # 1. user home directory:
+    #    "$XDG_CONFIG_HOME/ezdxf/ezdxf.ini" or
+    #    "~/.config/ezdxf/ezdxf.ini"
     # 2. current working directory "./ezdxf.ini"
-    # 3. config file specified by EZDXF_CONFIG_FILE (highest priority)
+    # 3. config file specified by EZDXF_CONFIG_FILE
 
-    paths = list(DEFAULT_FILES)
+    paths = default_config_files()
     env_cfg = os.getenv("EZDXF_CONFIG_FILE", "")
     if env_cfg:
         paths.append(Path(env_cfg))
@@ -146,7 +170,7 @@ class Options:
         except IOError as e:
             print(str(e))
 
-    def write_file(self, filename: str = INI_NAME) -> None:
+    def write_file(self, filename: str = EZDXF_INI) -> None:
         """Write current configuration into file `filename`."""
         with open(os.path.expanduser(filename), "wt", encoding="utf8") as fp:
             self.write(fp)
@@ -246,16 +270,19 @@ class Options:
         self._config.write(sys.stdout)
 
     def write_home_config(self):
-        """Write current configuration into file "~/.ezdxf/ezdxf.ini"."""
-        p = Path("~/.ezdxf").expanduser()
-        if not p.exists():
+        """Write current configuration into file "~/.config/ezdxf/ezdxf.ini" or
+        "XDG_CONFIG_HOME/ezdxf/ezdxf.ini".
+        """
+
+        home_path = config_home_path()
+        if not home_path.exists():
             try:
-                p.mkdir()
+                home_path.mkdir(parents=True)
             except IOError as e:
                 print(str(e))
                 return
         try:
-            with open(p / "ezdxf.ini", "wt", encoding="utf8") as fp:
+            with open(home_path / EZDXF_INI, "wt", encoding="utf8") as fp:
                 self.write(fp)
         except IOError as e:
             print(str(e))
@@ -268,9 +295,13 @@ class Options:
         self.update_cached_options()
         delete_config_files()
 
+    @staticmethod
+    def xdg_path(xdg_var: str, directory: str) -> Path:
+        return xdg_path(xdg_var, directory)
+
 
 def delete_config_files():
-    for file in DEFAULT_FILES:
+    for file in default_config_files():
         if file.exists():
             try:
                 file.unlink()

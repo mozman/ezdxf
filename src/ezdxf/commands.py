@@ -543,18 +543,18 @@ class Config(Command):
             "--print",
             action="store_true",
             help="print configuration, to store the configuration use: "
-                 "\"ezdxf config -p > my.ini\"",
+            '"ezdxf config -p > my.ini"',
         )
         parser.add_argument(
             "--home",
             action="store_true",
-            help="create config file 'ezdxf.ini' in user home directory '~/.ezdxf'",
+            help="create config file 'ezdxf.ini' in the user home directory "
+            "'~/.config/ezdxf', $XDG_CONFIG_HOME is supported if set",
         )
         parser.add_argument(
             "--reset",
             action="store_true",
-            help="factory reset, delete config files './ezdxf.ini' and "
-            "'~/.ezdxf/ezdxf.ini'",
+            help="factory reset, delete default config files 'ezdxf.ini'",
         )
 
     @staticmethod

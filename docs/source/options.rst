@@ -2,15 +2,22 @@ Options Module
 ==============
 
 Configuration file support was added in version v0.16.5. The default
-config files are loaded from the user home directory as "~/.ezdxf/ezdxf.ini",
-and the current working directory as "./ezdxf.ini". A custom config file can be
-specified  by the environment variable ``EZDXF_CONFIG_FILE``.
+config files are loaded from the user home directory as
+"~/.config/ezdxf/ezdxf.ini", and the current working directory as "
+./ezdxf.ini". A custom config file can be specified  by the
+environment variable ``EZDXF_CONFIG_FILE``. Ezdxf follows the
+`XDG Base Directory specification`_ if the environment variable
+``XDG_CONFIG_HOME`` is set.
 
 The config file loading order:
 
-1. user home directory: "~/.ezdxf/ezdxf.ini" (lowest priority)
-2. working directory: "./ezdxf.ini"
-3. config file specified by ``EZDXF_CONFIG_FILE`` (highest priority)
+1. user home directory: "~/.config/ezdxf/ezdxf.ini"
+2. current working directory: "./ezdxf.ini"
+3. config file specified by ``EZDXF_CONFIG_FILE``
+
+A configuration file that is loaded later does not replace the previously loaded
+ones, only the existing options in the newly loaded file are added to the
+configuration and can overwrite existing options.
 
 .. _config_file:
 
@@ -123,7 +130,8 @@ Functions
 
 .. function:: write_home_config()
 
-    Write configuration into file "~/.ezdxf/ezdxf.ini".
+    Write configuration into file "~/.config/ezdxf/ezdxf.ini",
+    ``$XDG_CONFIG_HOME`` is supported if set.
 
 .. function:: read_file(filename: str)
 
@@ -136,7 +144,9 @@ Functions
 
 .. function:: reset()
 
-    Factory reset, delete config files "./ezdxf.ini" and "~/.ezdxf/ezdxf.ini".
+    Factory reset, delete default config files "ezdxf.ini" in the current
+    working and in the user home directory "~/.config/ezdxf",
+    ``$XDG_CONFIG_HOME`` is supported if set.
 
 .. function:: preserve_proxy_graphics(state=True)
 
@@ -169,24 +179,27 @@ Shortcut Attributes
     (Read/Write) Get the current font cache directory or an empty string if the
     bundled font cache is used. Expands "~" construct automatically.
 
-    Set path to an external font cache directory: e.g. ``"~/.ezdxf"``
+    Set path to an external font cache directory: e.g. ``"~/.cache/ezdxf"``
     By default the bundled font cache will be loaded. Expands "~" construct
     automatically.
 
     This example shows, how to create an external font cache in
-    ``"~/.ezdxf"``. This has to be done only once after the `ezdxf` installation
-    or to add new installed fonts to the cache. This requires Matplotlib:
+    ``"~/.cache/ezdxf"``. This has to be done only once after the `ezdxf`
+    installation or to add new installed fonts to the cache.
+    This requires Matplotlib:
 
     .. code-block:: Python
 
         import ezdxf
         from ezdxf.tools import fonts
 
-        font_cache_dir = "~/.ezdxf"
+        # xdg_path() returns "$XDG_CACHE_HOME/ezdxf" or "~/.cache/ezdxf" if
+        # $XDG_CACHE_HOME is not set
+        font_cache_dir = ezdxf.options.xdg_path("XDG_CACHE_HOME", ".cache")
         fonts.build_system_font_cache(path=font_cache_dir)
         ezdxf.options.font_cache_directory = font_cache_dir
-        # Save changes to the user config file "~/.ezdxf/ezdxf.ini" to load
-        # the font cache always from the new location.
+        # Save changes to the default config file "~/.config/ezdxf/ezdxf.ini"
+        # to load the font cache always from the new location.
         ezdxf.options.write_home_config()
 
 
@@ -255,3 +268,4 @@ EZDXF_CONFIG_FILE
 
 .. _CADKit: https://cadkit.blogspot.com/p/sample-dxf-files.html?view=magazine
 .. _ConfigParser: https://docs.python.org/3/library/configparser.html
+.. _XDG Base Directory specification: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html

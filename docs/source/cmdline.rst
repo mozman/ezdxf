@@ -282,10 +282,10 @@ Manage config files.
       -h, --help   show this help message and exit
       -p, --print  print configuration, to store the configuration use:
                    "ezdxf config -p > my.ini"
-      --home       create config file 'ezdxf.ini' in user home directory
-                   '~/.ezdxf'
-      --reset      factory reset, delete config files './ezdxf.ini' and
-                   '~/.ezdxf/ezdxf.ini'
+      --home       create config file 'ezdxf.ini' in the user home directory
+                   '~/.config/ezdxf', $XDG_CONFIG_HOME is supported if set
+
+      --reset      factory reset, delete default config files 'ezdxf.ini'
 
 To create a new config file "my.ini" by printing the configuration into a file:
 
