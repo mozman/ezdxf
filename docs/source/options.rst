@@ -176,16 +176,12 @@ Shortcut Attributes
 
 .. attribute:: font_cache_directory
 
-    (Read/Write) Get the current font cache directory or an empty string if the
-    bundled font cache is used. Expands "~" construct automatically.
+    (Read/Write) Get/set the font cache directory, if the directory is an empty
+    string, the bundled font cache is used. Expands "~" construct automatically.
 
-    Set path to an external font cache directory: e.g. ``"~/.cache/ezdxf"``
-    By default the bundled font cache will be loaded. Expands "~" construct
-    automatically.
-
-    This example shows, how to create an external font cache in
-    ``"~/.cache/ezdxf"``. This has to be done only once after the `ezdxf`
-    installation or to add new installed fonts to the cache.
+    This example shows, how to create an external font cache in directory
+    ``"~/.cache/ezdxf"``. This has to be done only once after `ezdxf` was
+    installed, or to add new installed fonts to the cache.
     This requires Matplotlib:
 
     .. code-block:: Python
