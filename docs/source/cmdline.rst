@@ -232,11 +232,12 @@ e.g. for the `Notepad++` on Windows:
 
     [browse-command]
 
-    text_editor = C:\Program Files\Notepad++\notepad++.exe
-    goto_line_argument = -n{num}
+    text_editor = "C:\Program Files\Notepad++\notepad++.exe" "{filename}" -n{num}
 
-The ``goto_line_argument`` is a simple format string:
-:code:`goto_line_argument.format(num=100)`
+``text_editor`` is a simple format string:
+:code:`text_editor.format(filename="test.dxf", num=100)`
+
+Quote commands including spaces and always quote the filename argument!
 
 For `gedit` on Linux use (untested):
 
@@ -244,8 +245,7 @@ For `gedit` on Linux use (untested):
 
     [browse-command]
 
-    text_editor = gedit
-    goto_line_argument = +{num}
+    text_editor = gedit +{num} "{filename}"
 
 Strip
 -----

@@ -42,9 +42,6 @@ __all__ = ["DXFStructureBrowser"]
 
 APP_NAME = "DXF Structure Browser"
 TEXT_EDITOR = ezdxf.options.get(BROWSE_COMMAND, "TEXT_EDITOR")
-GOTO_LINE_ARGUMENT = ezdxf.options.get(
-    BROWSE_COMMAND, "GOTO_LINE_ARGUMENT"
-)
 
 SearchSections = Set[str]
 
@@ -574,18 +571,17 @@ class DXFStructureBrowser(QMainWindow):
                 line_number)
 
     def _open_text_editor(self, filename: str, line_number: int) -> None:
-        args = [
-            TEXT_EDITOR,
-            filename,
-            GOTO_LINE_ARGUMENT.format(num=line_number),
-        ]
+        cmd = TEXT_EDITOR.format(
+            filename=filename,
+            num=line_number,
+        )
         try:
-            subprocess.Popen(args)
+            subprocess.Popen(cmd)
         except FileNotFoundError:
             QMessageBox.critical(
                 self,
                 "Text Editor",
-                f"Executable \"{TEXT_EDITOR}\" not found."
+                "Error calling text editor:\n" + cmd
             )
 
     def open_web_browser(self, url: str):

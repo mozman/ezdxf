@@ -44,8 +44,7 @@ File Structure:
     default_dimension_text_style = OpenSansCondensed-Light
 
     [browse-command]
-    text_editor = C:\Program Files\Notepad++\notepad++.exe
-    goto_line_argument = -n{num}
+    text_editor = "C:\Program Files\Notepad++\notepad++.exe" "{filename}" -n{num}
 
 
 .. module:: ezdxf.options

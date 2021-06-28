@@ -63,8 +63,8 @@ def default_config() -> ConfigParser:
         "DEFAULT_DIMENSION_TEXT_STYLE": "OpenSansCondensed-Light",
     }
     config[BROWSE_COMMAND] = {
-        "TEXT_EDITOR": r"C:\Program Files\Notepad++\notepad++.exe",
-        "GOTO_LINE_ARGUMENT": "-n{num}",  # .format(num=line_number)
+        "TEXT_EDITOR": r'"C:\Program Files\Notepad++\notepad++.exe" '
+                       r'"{filename}" -n{num}',
     }
     return config
 
