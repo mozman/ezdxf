@@ -51,6 +51,7 @@ def default_config_files() -> List[Path]:
 def default_config() -> ConfigParser:
     config = ConfigParser()
     config[CORE] = {
+        "DEFAULT_DIMENSION_TEXT_STYLE": "OpenSansCondensed-Light",
         "TEST_FILES": "",
         "FONT_CACHE_DIRECTORY": "",
         "AUTO_LOAD_FONTS": "true",
@@ -59,8 +60,6 @@ def default_config() -> ConfigParser:
         "LOG_UNPROCESSED_TAGS": "true",
         "FILTER_INVALID_XDATA_GROUP_CODES": "true",
         "WRITE_FIXED_META_DATA_FOR_TESTING": "false",
-        "DEFAULT_TEXT_STYLE": "OpenSans",
-        "DEFAULT_DIMENSION_TEXT_STYLE": "OpenSansCondensed-Light",
     }
     config[BROWSE_COMMAND] = {
         "TEXT_EDITOR": r'"C:\Program Files\Notepad++\notepad++.exe" '
@@ -180,10 +179,6 @@ class Options:
         return self.get_bool(
             CORE, "FILTER_INVALID_XDATA_GROUP_CODES", default=True
         )
-
-    @property
-    def default_text_style(self) -> str:
-        return self.get(CORE, "DEFAULT_TEXT_STYLE", default="OpenSans")
 
     @property
     def default_dimension_text_style(self) -> str:

@@ -32,6 +32,7 @@ File Structure:
 .. code:: INI
 
     [core]
+    default_dimension_text_style = OpenSansCondensed-Light
     test_files = D:\Source\dxftest
     font_cache_directory =
     auto_load_fonts = true
@@ -40,8 +41,6 @@ File Structure:
     log_unprocessed_tags = true
     filter_invalid_xdata_group_codes = true
     write_fixed_meta_data_for_testing = false
-    default_text_style = OpenSans
-    default_dimension_text_style = OpenSansCondensed-Light
 
     [browse-command]
     text_editor = "C:\Program Files\Notepad++\notepad++.exe" "{filename}" -n{num}
@@ -157,12 +156,11 @@ Functions
     Returns the loaded config files as tuple for :class:`Path`
     objects.
 
-Shortcut Attributes
--------------------
+Core Options
+------------
 
-.. attribute:: default_text_style
-
-    (Read only) Default text styles, default value is ``OpenSans``.
+Default Dimension Text Style
+++++++++++++++++++++++++++++
 
 .. attribute:: default_dimension_text_style
 
