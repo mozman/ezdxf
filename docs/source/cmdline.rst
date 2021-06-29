@@ -310,20 +310,17 @@ Show the *ezdxf* version and configuration:
 
     Configuration:
     [core]
+    default_dimension_text_style = OpenSansCondensed-Light
     test_files = D:\Source\dxftest
     font_cache_directory =
-    auto_load_fonts = true
     load_proxy_graphics = true
     store_proxy_graphics = true
-    log_unprocessed_tags = true
+    log_unprocessed_tags = false
     filter_invalid_xdata_group_codes = true
     write_fixed_meta_data_for_testing = false
-    default_text_style = OpenSans
-    default_dimension_text_style = OpenSansCondensed-Light
 
     [browse-command]
-    text_editor = C:\Program Files\Notepad++\notepad++.exe
-    goto_line_argument = -n{num}
+    text_editor = "C:\Program Files\Notepad++\notepad++.exe" "{filename}" -n{num}
 
 
     Environment Variables:
@@ -332,7 +329,7 @@ Show the *ezdxf* version and configuration:
     EZDXF_CONFIG_FILE=
 
     Existing Configuration Files:
-    C:\Users\manfred\.ezdxf\ezdxf.ini
+    C:\Users\manfred\.config\ezdxf\ezdxf.ini
 
 .. seealso::
 

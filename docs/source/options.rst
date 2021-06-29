@@ -244,7 +244,7 @@ own external font cache. This has to be done only once after `ezdxf` was
 installed, or to add new installed fonts to the cache, and this requires the
 `Matplotlib` package.
 
-This example shows, how to create an external font cache in recommended
+This example shows, how to create an external font cache in the recommended
 directory of the `XDG Base Directory specification`_: ``"~/.cache/ezdxf"``.
 
 .. code-block:: Python

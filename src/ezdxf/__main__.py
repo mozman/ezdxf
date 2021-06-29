@@ -70,7 +70,6 @@ def main():
 
     args = parser.parse_args(sys.argv[1:])
     help_ = True
-    options.log_unprocessed_tags = args.verbose
     if args.config:
         config = Path(args.config)
         if config.exists():
