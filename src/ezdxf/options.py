@@ -54,10 +54,9 @@ def default_config() -> ConfigParser:
         "DEFAULT_DIMENSION_TEXT_STYLE": "OpenSansCondensed-Light",
         "TEST_FILES": "",
         "FONT_CACHE_DIRECTORY": "",
-        "AUTO_LOAD_FONTS": "true",
         "LOAD_PROXY_GRAPHICS": "true",
         "STORE_PROXY_GRAPHICS": "true",
-        "LOG_UNPROCESSED_TAGS": "true",
+        "LOG_UNPROCESSED_TAGS": "false",
         "FILTER_INVALID_XDATA_GROUP_CODES": "true",
         "WRITE_FIXED_META_DATA_FOR_TESTING": "false",
     }
@@ -130,6 +129,12 @@ class Options:
     def get_bool(self, section: str, key: str, default: bool = False) -> bool:
         return self._config.getboolean(section, key, fallback=default)
 
+    def get_int(self, section: str, key: str, default: int = 0) -> int:
+        return self._config.getint(section, key, fallback=default)
+
+    def get_float(self, section: str, key: str, default: float = 0.0) -> float:
+        return self._config.getfloat(section, key, fallback=default)
+
     def update_cached_options(self) -> None:
         self.log_unprocessed_tags = self.get_bool(
             Options.CORE, "LOG_UNPROCESSED_TAGS", default=True
@@ -182,13 +187,18 @@ class Options:
 
     @property
     def default_dimension_text_style(self) -> str:
-        # Set path to an external font cache directory: e.g. "~/ezdxf", see
-        # docs for ezdxf.options for an example how to create your own
-        # external font cache:
         return self.get(
             CORE,
             "DEFAULT_DIMENSION_TEXT_STYLE",
             default="OpenSansCondensed-Light",
+        )
+
+    @default_dimension_text_style.setter
+    def default_dimension_text_style(self, style: str) -> None:
+        self.set(
+            CORE,
+            "DEFAULT_DIMENSION_TEXT_STYLE",
+            style,
         )
 
     @property
@@ -236,13 +246,6 @@ class Options:
         self.set(CORE, "write_fixed_meta_data_for_testing", boolstr(state))
 
     @property
-    def auto_load_fonts(self) -> bool:
-        # Set "AUTO_LOAD_FONTS = false" to deactivate auto font loading,
-        # if this this procedure slows down your startup time and font measuring is not
-        # important to you. Fonts can always loaded manually: ezdxf.fonts.load()
-        return self.get_bool(CORE, "AUTO_LOAD_FONTS", default=True)
-
-    @property
     def use_matplotlib(self) -> bool:
         """Activate/deactivate Matplotlib support e.g. for testing"""
         return self._use_matplotlib
@@ -288,21 +291,20 @@ class Options:
         self._loaded_paths = []
         self._config = default_config()
         self.update_cached_options()
-        delete_config_files()
+
+    @staticmethod
+    def delete_default_config_files():
+        for file in default_config_files():
+            if file.exists():
+                try:
+                    file.unlink()
+                    print(f"deleted config file: '{file}'")
+                except IOError as e:
+                    print(str(e))
 
     @staticmethod
     def xdg_path(xdg_var: str, directory: str) -> Path:
         return xdg_path(xdg_var, directory)
-
-
-def delete_config_files():
-    for file in default_config_files():
-        if file.exists():
-            try:
-                file.unlink()
-                print(f"deleted config file: '{file}'")
-            except IOError as e:
-                print(str(e))
 
 
 # Global Options

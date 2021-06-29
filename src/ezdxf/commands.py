@@ -563,6 +563,7 @@ class Config(Command):
 
         if args.reset:
             options.reset()
+            options.delete_default_config_files()
         if args.home:
             options.write_home_config()
         if args.print:

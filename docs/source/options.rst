@@ -60,8 +60,41 @@ write the current configuration into a config file.
 Modify and Save Changes
 -----------------------
 
+This code shows how to get and set values of the underlying :class:`ConfigParser`
+object, but use the shortcut attributes if available:
+
+.. code-block:: Python
+
+    # Set options, value has to ba a str, use "true"/"false" for boolean values
+    ezdxf.options.set(section, key, value)
+
+    # Get option as string
+    value = ezdxf.get(section, key, default="")
+
+    # Special getter for boolean, int and float
+    value = ezdxf.get_bool(section, key, default=False)
+    value = ezdxf.get_int(section, key, default=0)
+    value = ezdxf.get_float(section, key, default=0.0)
+
+If you set options, they are not stored automatically in a config file, you have
+to write back the config file manually:
+
+.. code-block:: Python
+
+    # write back the default user config file "ezdxf.ini" in the home directory
+    ezdxf.options.write_home_config()
+
+    # write back to the default config file "ezdxf.ini" in the current
+    # working directory
+    ezdxf.options.write_file()
+
+    # write back to a specific config file
+    ezdxf.options.write_file("my_config.ini")
+    # which has to be loaded manually at startup
+    ezdxf.options.read_file("my_config.ini")
+
 This example shows how to change the ``test_files`` path and save the
-changes into a custom config file "my.ini":
+changes into a custom config file "my_config.ini":
 
 .. code-block:: Python
 
@@ -73,7 +106,7 @@ changes into a custom config file "my.ini":
         "test_files",  # key
         "~/my-dxf-test-files",  # value
     )
-    ezdxf.options.write_file("my.ini")
+    ezdxf.options.write_file("my_config.ini")
 
 .. _use_a_custom_config_file:
 
@@ -89,14 +122,14 @@ You can specify a config file by the environment variable
 
 Custom config files are not loaded automatically like the default config files.
 
-This example shows how to load the previous created custom config file "my.ini"
-from the current working directory:
+This example shows how to load the previous created custom config file
+"my_config.ini" from the current working directory:
 
 .. code-block:: Python
 
     import ezdxf
 
-    ezdxf.options.read("my.ini")
+    ezdxf.options.read("my_config.ini")
 
 That is all and because this is the last loaded config file, it overrides all
 default config files and the config file specified by ``EZDXF_CONFIG_FILE``.
@@ -106,15 +139,23 @@ Functions
 
 .. function:: set(section: str, key: str, value: str)
 
-    Set option `key` in `section` to `values` as string.
+    Set option `key` in `section` to `values` as ``str``.
 
-.. function:: get(section: str, key: str, default: str = "")
+.. function:: get(section: str, key: str, default: str = "") -> str
 
     Get option `key` in `section` as string.
 
-.. function:: get_bool(section: str, key: str, default: bool = False)
+.. function:: get_bool(section: str, key: str, default: bool = False) -> bool
 
-    Get option `key` in `section` as bool.
+    Get option `key` in `section` as ``bool``.
+
+.. function:: get_int(section: str, key: str, default: int = 0) -> int
+
+    Get option `key` in `section` as ``int``.
+
+.. function:: get_float(section: str, key: str, default: float = 0.0) -> flot
+
+    Get option `key` in `section` as ``float``.
 
 .. function:: write(fp: TextIO)
 
@@ -142,9 +183,13 @@ Functions
 
 .. function:: reset()
 
-    Factory reset, delete default config files "ezdxf.ini" in the current
-    working and in the user home directory "~/.config/ezdxf",
-    ``$XDG_CONFIG_HOME`` is supported if set.
+    Reset options to factory default values.
+
+.. function:: delete_default_config_files()
+
+    Delete the default config files "ezdxf.ini" in the current working and in
+    the user home directory "~/.config/ezdxf", ``$XDG_CONFIG_HOME`` is supported
+    if set.
 
 .. function:: preserve_proxy_graphics(state=True)
 
@@ -159,51 +204,156 @@ Functions
 Core Options
 ------------
 
+For all core options the section name is ``core``.
+
+
+
 Default Dimension Text Style
 ++++++++++++++++++++++++++++
 
+The default dimension text style is used by the DIMENSION renderer of `ezdxf`,
+if the specified text style exist in the STYLE table. To use any of the default
+style of `ezdxf` you have to setup the styles at the creation of the DXF
+document: :code:`ezdxf.new(setup=True)`, or setup the `ezdxf` default styles
+for a loaded DXF document:
+
+.. code-block:: Python
+
+    import ezdxf
+    from ezdxf.tool.standard import setup_drawing
+
+    doc = ezdxf.readfile("your.dxf")
+    setup_drawing(doc)
+
+Config file key: ``default_dimension_text_style``
+
+Shortcut attribute:
+
 .. attribute:: default_dimension_text_style
 
-    (Read only) Default text style for Dimensions, default value is ``OpenSansCondensed-Light``.
+    (Read/Write) Get/Set default text style for DIMENSION rendering, default
+    value is ``OpenSansCondensed-Light``.
 
-.. attribute:: use_matplotlib
+Font Cache Directory
+++++++++++++++++++++
 
-    (Read/Write) Activate/deactivate Matplotlib support (e.g. for testing) if
-    Matplotlib is installed, else :attr:`use_matplotlib` is always ``False``.
+`Ezdxf` has a bundled font cache to have faster access to font metrics.
+This font cache includes only fonts installed on the developing workstation.
+To add the fonts of your computer to this cache, you have to create your
+own external font cache. This has to be done only once after `ezdxf` was
+installed, or to add new installed fonts to the cache, and this requires the
+`Matplotlib` package.
+
+This example shows, how to create an external font cache in recommended
+directory of the `XDG Base Directory specification`_: ``"~/.cache/ezdxf"``.
+
+.. code-block:: Python
+
+    import ezdxf
+    from ezdxf.tools import fonts
+
+    # xdg_path() returns "$XDG_CACHE_HOME/ezdxf" or "~/.cache/ezdxf" if
+    # $XDG_CACHE_HOME is not set
+    font_cache_dir = ezdxf.options.xdg_path("XDG_CACHE_HOME", ".cache")
+    fonts.build_system_font_cache(path=font_cache_dir)
+    ezdxf.options.font_cache_directory = font_cache_dir
+    # Save changes to the default config file "~/.config/ezdxf/ezdxf.ini"
+    # to load the font cache always from the new location.
+    ezdxf.options.write_home_config()
+
+Config file key: ``font_cache_directory``
+
+Shortcut attribute:
 
 .. attribute:: font_cache_directory
 
     (Read/Write) Get/set the font cache directory, if the directory is an empty
     string, the bundled font cache is used. Expands "~" construct automatically.
 
-    This example shows, how to create an external font cache in directory
-    ``"~/.cache/ezdxf"``. This has to be done only once after `ezdxf` was
-    installed, or to add new installed fonts to the cache.
-    This requires Matplotlib:
+Load Proxy Graphic
+++++++++++++++++++
 
-    .. code-block:: Python
+Proxy graphics are not essential for DXF files, but they can provide a simple
+graphical representation for complex entities, but extra memory is needed to
+store this information. You can save some memory by not loading the proxy
+graphic, but the proxy graphic is lost if you write back the DXF file.
 
-        import ezdxf
-        from ezdxf.tools import fonts
+The current version of `ezdxf` uses this proxy graphic to render MLEADER
+entities by the :mod:`~ezdxf.addons.drawing` add-on.
 
-        # xdg_path() returns "$XDG_CACHE_HOME/ezdxf" or "~/.cache/ezdxf" if
-        # $XDG_CACHE_HOME is not set
-        font_cache_dir = ezdxf.options.xdg_path("XDG_CACHE_HOME", ".cache")
-        fonts.build_system_font_cache(path=font_cache_dir)
-        ezdxf.options.font_cache_directory = font_cache_dir
-        # Save changes to the default config file "~/.config/ezdxf/ezdxf.ini"
-        # to load the font cache always from the new location.
-        ezdxf.options.write_home_config()
+Config file key: ``load_proxy_graphics``
 
+Shortcut attribute:
+
+.. attribute:: load_proxy_graphics
+
+    (Read only) Load proxy graphics if ``True``, default is ``True``.
+
+Store Proxy Graphic
++++++++++++++++++++
+
+Prevent exporting proxy graphics if set to ``False``.
+
+Config file key: ``store_proxy_graphics``
+
+Shortcut attribute:
+
+.. attribute:: store_proxy_graphics
+
+    (Read only)  Export proxy graphics if ``True``, default is ``True``.
+
+
+Debugging Options
+-----------------
+
+For all debugging options the section name is ``core``.
+
+Test Files
+++++++++++
+
+Path to test files. Some of the `CADKit`_ test files are used by the
+integration tests, these files should be located in the
+:code:`ezdxf.options.test_files_path / "CADKitSamples"` folder.
+
+Config file key: ``test_files``
+
+Shortcut attributes:
+
+.. attribute:: test_files
+
+    (Read only) Returns the path to the `ezdxf` test files as ``str``,
+    expands "~" construct automatically.
+
+.. attribute:: test_files_path
+
+    (Read only) Path to test files as :class:`pathlib.Path` object.
+
+
+Filter invalid XDATA group code
++++++++++++++++++++++++++++++++
+
+Config file key: ``filter_invalid_xdata_group_codes``
 
 .. attribute:: filter_invalid_xdata_group_codes
 
     (Read only) Filter invalid XDATA group codes, default value is ``False``.
 
+Log Unprocessed Tags
+++++++++++++++++++++
+
+Logs unprocessed DXF tags, help finding new and undocumented DXF features.
+
+Config file key: ``log_unprocessed_tags``
+
 .. attribute:: log_unprocessed_tags
 
     (Read/Write) Log unprocessed DXF tags for debugging, default value is
-    ``True``.
+    ``False``.
+
+Write Fixed Meta Data for Testing
++++++++++++++++++++++++++++++++++
+
+Config file key: ``write_fixed_meta_data_for_testing``
 
 .. attribute:: write_fixed_meta_data_for_testing
 
@@ -211,22 +361,19 @@ Default Dimension Text Style
     scenarios, e.g. to use a diff like tool to compare DXF documents,
     default is ``False``.
 
-.. attribute:: load_proxy_graphics
+Use Matplotlib
+++++++++++++++
 
-    (Read only) Load proxy graphics if ``True``, default is ``False``.
+This option can deactivate Matplotlib support for testing. This option is not
+stored in the :class:`ConfigParser` object and is therefore not supported by
+config files!
 
-.. attribute:: store_proxy_graphics
+Only attribute access is supported:
 
-    (Read only)  Export proxy graphics if ``True``, default is ``False``.
+.. attribute:: use_matplotlib
 
-.. attribute:: test_files
-
-    (Read only) Returns the path to the `ezdxf` test files, expands "~" construct
-    automatically.
-
-.. attribute:: test_files_path
-
-    (Read only) Path to test files as :class:`pathlib.Path` object.
+    (Read/Write) Activate/deactivate Matplotlib support (e.g. for testing) if
+    Matplotlib is installed, else :attr:`use_matplotlib` is always ``False``.
 
 
 .. _environment_variables:
@@ -253,8 +400,8 @@ EZDXF_DISABLE_C_EXT
 EZDXF_TEST_FILES
     Path to the `ezdxf` test files required by some tests, for instance the
     `CADKit`_ sample files should be located in the
-    "EZDXF_TEST_FILES/CADKitSamples" folder. See also config file
-    ``CORE`` option ``TEST_FILES``.
+    "EZDXF_TEST_FILES/CADKitSamples" folder. See also option
+    :attr:`ezdxf.options.test_files`.
 
 EZDXF_CONFIG_FILE
     Use specified configuration file
