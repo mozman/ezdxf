@@ -35,10 +35,9 @@ File Structure:
     default_dimension_text_style = OpenSansCondensed-Light
     test_files = D:\Source\dxftest
     font_cache_directory =
-    auto_load_fonts = true
     load_proxy_graphics = true
     store_proxy_graphics = true
-    log_unprocessed_tags = true
+    log_unprocessed_tags = false
     filter_invalid_xdata_group_codes = true
     write_fixed_meta_data_for_testing = false
 
@@ -50,7 +49,7 @@ File Structure:
 
 The global `ezdxf` options are stored in :mod:`ezdxf.options`. This is a wrapper
 around the :class:`ConfigParser` class. Shortcut attributes like :attr:`test_files`
-are simple properties and mMost shortcuts are read only marked by (Read only),
+are simple properties and most shortcuts are read only marked by (Read only),
 read and writeable attributes are marked by (Read/Write).
 
 To change options, especially the read only attributes, you have to edit the
@@ -69,23 +68,24 @@ object, but use the shortcut attributes if available:
     ezdxf.options.set(section, key, value)
 
     # Get option as string
-    value = ezdxf.get(section, key, default="")
+    value = ezdxf.options.get(section, key, default="")
 
     # Special getter for boolean, int and float
-    value = ezdxf.get_bool(section, key, default=False)
-    value = ezdxf.get_int(section, key, default=0)
-    value = ezdxf.get_float(section, key, default=0.0)
+    value = ezdxf.options.get_bool(section, key, default=False)
+    value = ezdxf.options.get_int(section, key, default=0)
+    value = ezdxf.options.get_float(section, key, default=0.0)
 
 If you set options, they are not stored automatically in a config file, you have
 to write back the config file manually:
 
 .. code-block:: Python
 
-    # write back the default user config file "ezdxf.ini" in the home directory
+    # write back the default user config file "ezdxf.ini" in the
+    # user home directory
     ezdxf.options.write_home_config()
 
-    # write back to the default config file "ezdxf.ini" in the current
-    # working directory
+    # write back to the default config file "ezdxf.ini" in the
+    # current working directory
     ezdxf.options.write_file()
 
     # write back to a specific config file
@@ -93,7 +93,7 @@ to write back the config file manually:
     # which has to be loaded manually at startup
     ezdxf.options.read_file("my_config.ini")
 
-This example shows how to change the ``test_files`` path and save the
+This example shows how to change the :attr:`test_files` path and save the
 changes into a custom config file "my_config.ini":
 
 .. code-block:: Python
@@ -198,7 +198,7 @@ Functions
 
 .. attribute:: loaded_config_files
 
-    Returns the loaded config files as tuple for :class:`Path`
+    Read only property of loaded config files as tuple for :class:`Path`
     objects.
 
 Core Options
@@ -329,19 +329,24 @@ Shortcut attributes:
     (Read only) Path to test files as :class:`pathlib.Path` object.
 
 
-Filter invalid XDATA group code
-+++++++++++++++++++++++++++++++
+Filter Invalid XDATA Group Codes
+++++++++++++++++++++++++++++++++
+
+Only a very limited set of group codes is valid in the XDATA section and
+AutoCAD is very picky about that. `Ezdxf` removes invalid XDATA group codes
+if this option is set to ``true``, but this needs processing time, which is
+wasted if you get your DXF files from trusted sources like AutoCAD or BricsCAD.
 
 Config file key: ``filter_invalid_xdata_group_codes``
 
 .. attribute:: filter_invalid_xdata_group_codes
 
-    (Read only) Filter invalid XDATA group codes, default value is ``False``.
+    (Read only) Filter invalid XDATA group codes, default value is ``True``.
 
 Log Unprocessed Tags
 ++++++++++++++++++++
 
-Logs unprocessed DXF tags, help finding new and undocumented DXF features.
+Logs unprocessed DXF tags, this helps to find new and undocumented DXF features.
 
 Config file key: ``log_unprocessed_tags``
 
@@ -353,12 +358,17 @@ Config file key: ``log_unprocessed_tags``
 Write Fixed Meta Data for Testing
 +++++++++++++++++++++++++++++++++
 
+Write the DXF files with fixed meta data to test your DXF files by a diff-like
+command, this is necessary to get always the same meta data like the saving
+time stored in the HEADER section. This may not work across different `ezdxf`
+versions!
+
 Config file key: ``write_fixed_meta_data_for_testing``
 
 .. attribute:: write_fixed_meta_data_for_testing
 
     (Read/Write) Enable this option to always create same meta data for testing
-    scenarios, e.g. to use a diff like tool to compare DXF documents,
+    scenarios, e.g. to use a diff-like tool to compare DXF documents,
     default is ``False``.
 
 Use Matplotlib

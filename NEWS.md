@@ -11,14 +11,15 @@ Version 0.16.5b0 - dev
   1. home directory `~/.ezdxf/ezdxf.ini`
   2. current working directory `./ezdxf.ini`
   3. environment variable `EZDXF_CONFIG_FILE=myconfig.ini`
-- NEW: `ezdxf config` command to manage config files    
+- NEW: `ezdxf config` command to manage config files
 - REMOVED: environment variable options, these are config file only options:
   - `EZDXF_AUTO_LOAD_FONTS`
   - `EZDXF_FONT_CACHE_DIRECTORY`
   - `EZDXF_PRESERVE_PROXY_GRAPHICS`
   - `EZDXF_LOG_UNPROCESSED_TAGS`
   - `EZDXF_FILTER_INVALID_XDATA_GROUP_CODES`
-  
+ - REMOVED: `ezdxf.options.default_text_style`, was not used  
+ - REMOVED: `ezdxf.options.auto_load_fonts`, disabling auto load has no advantage  
 
 Version 0.16.4 - 2021-06-20
 ---------------------------
