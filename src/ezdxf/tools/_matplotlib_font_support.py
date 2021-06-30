@@ -12,8 +12,7 @@ _font_manager = None
 
 
 def rebuild_system_fonts():
-    import matplotlib.font_manager
-    matplotlib.font_manager._rebuild()
+    # matplotlib.font_manager._rebuild() was removed in Matplotlib 3.4.2
     global _font_manager
     _font_manager = FontManager()
 
