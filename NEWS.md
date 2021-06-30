@@ -7,6 +7,8 @@ Version 0.16.5b0 - dev
 
 - NEW: hard dependency `typing_extensions`
 - CHANGED: replaced `ezdxf.tools.rgb` by `ezdxf.colors`
+- CHANGE: `options` module renamed to `_options`; This eliminates the possibility 
+  of confusion between the `options` module and the global object `options`.
 - NEW: config file support, config files read in order:
   1. home directory `~/.ezdxf/ezdxf.ini`
   2. current working directory `./ezdxf.ini`

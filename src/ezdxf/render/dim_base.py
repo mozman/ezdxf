@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Tuple, Iterable, Optional
 from ezdxf.math import Vec3, Vec2, ConstructionLine, ConstructionBox
 from ezdxf.math import UCS, PassTroughUCS, xround, Z_AXIS
 from ezdxf.lldxf import const
-from ezdxf.options import options
+from ezdxf._options import options
 from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError
 from ezdxf.tools import suppress_zeros
 from ezdxf.render.arrows import ARROWS

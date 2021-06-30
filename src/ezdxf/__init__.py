@@ -13,7 +13,7 @@ PYPY = hasattr(sys, "pypy_version_info")
 PYPY_ON_WINDOWS = sys.platform.startswith("win") and PYPY
 
 # name space imports - do not remove
-from ezdxf.options import options, config_files
+from ezdxf._options import options, config_files
 from ezdxf.colors import (
     int2rgb,
     rgb2int,

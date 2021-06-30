@@ -41,7 +41,6 @@ from ezdxf.layouts.layouts import Layouts
 from ezdxf.tools.codepage import tocodepage, toencoding
 from ezdxf.tools.juliandate import juliandate
 from ezdxf.tools.text import escape_dxf_line_endings
-from ezdxf.options import options
 
 from ezdxf.tools import guid
 from ezdxf.query import EntityQuery
@@ -78,7 +77,8 @@ if TYPE_CHECKING:
     )
     from pathlib import Path
 
-FIXED_GUID = "{00000000-0000-0000-0000-000000000000}"
+CONST_GUID = "{00000000-0000-0000-0000-000000000000}"
+CONST_MARKER_STRING = "0.0 @ 2000-01-01T00:00:00.000000+00:00"
 CREATED_BY_EZDXF = "CREATED_BY_EZDXF"
 WRITTEN_BY_EZDXF = "WRITTEN_BY_EZDXF"
 EZDXF_META = "EZDXF_META"
@@ -635,14 +635,14 @@ class Drawing:
 
     def _update_metadata(self):
         self._update_ezdxf_metadata()
-        if options.write_fixed_meta_data_for_testing:
+        if ezdxf.options.write_fixed_meta_data_for_testing:
             fixed_date = juliandate(datetime(2000, 1, 1, 0, 0))
             self.header["$TDCREATE"] = fixed_date
             self.header["$TDUCREATE"] = fixed_date
             self.header["$TDUPDATE"] = fixed_date
             self.header["$TDUUPDATE"] = fixed_date
-            self.header["$VERSIONGUID"] = FIXED_GUID
-            self.header["$FINGERPRINTGUID"] = FIXED_GUID
+            self.header["$VERSIONGUID"] = CONST_GUID
+            self.header["$FINGERPRINTGUID"] = CONST_GUID
         else:
             now = datetime.now()
             self.header["$TDUPDATE"] = juliandate(now)
@@ -1096,8 +1096,8 @@ class MetaData(abc.ABC):
 
 
 def ezdxf_marker_string():
-    if options.write_fixed_meta_data_for_testing:
-        return "0.0 @ 2000-01-01T00:00:00.000000+00:00"
+    if ezdxf.options.write_fixed_meta_data_for_testing:
+        return CONST_MARKER_STRING
     else:
         now = datetime.now(tz=timezone.utc)
         return ezdxf.__version__ + " @ " + now.isoformat()

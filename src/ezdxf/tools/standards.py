@@ -1,8 +1,8 @@
-# Copyright (c) 2016-2020, Manfred Moitzi
+# Copyright (c) 2016-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, List, Tuple, Sequence, Union, cast
+from ezdxf._options import options
 from ezdxf.render.arrows import ARROWS
-from ezdxf.options import options
 from ezdxf.lldxf.const import DXF12
 import logging
 

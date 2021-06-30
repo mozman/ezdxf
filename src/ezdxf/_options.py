@@ -6,6 +6,13 @@ import sys
 from pathlib import Path
 from configparser import ConfigParser
 
+# Recommended uses of the global object "options":
+# import ezdxf
+# value = ezdxf.options.<attribute>
+#
+# If the import of "ezdxf" is not wanted:
+# from ezdxf._options import options
+
 # The MATPLOTLIB global shows that Matplotlib is installed:
 try:
     import matplotlib
