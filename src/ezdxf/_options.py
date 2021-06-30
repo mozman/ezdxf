@@ -66,6 +66,7 @@ def default_config() -> ConfigParser:
         "LOG_UNPROCESSED_TAGS": "false",
         "FILTER_INVALID_XDATA_GROUP_CODES": "true",
         "WRITE_FIXED_META_DATA_FOR_TESTING": "false",
+        "DISABLE_C_EXT": "false",
     }
     config[BROWSE_COMMAND] = {
         "TEXT_EDITOR": r'"C:\Program Files\Notepad++\notepad++.exe" '
@@ -94,7 +95,10 @@ def load_config_files(paths: List[Path]) -> ConfigParser:
     config.read(paths, encoding="utf8")
 
     # environment variables override config files
-    for name, env_name in [("TEST_FILES", "EZDXF_TEST_FILES")]:
+    for name, env_name in [
+        ("TEST_FILES", "EZDXF_TEST_FILES"),
+        ("DISABLE_C_EXT", "EZDXF_DISABLE_C_EXT"),
+    ]:
         value = os.environ.get(env_name, "")
         if value:
             config[CORE][name] = value
@@ -125,6 +129,7 @@ class Options:
         self.log_unprocessed_tags = True
         # Activate/deactivate Matplotlib support (e.g. for testing)
         self._use_matplotlib = MATPLOTLIB
+        self._use_c_ext = False  # set ezdxf.acc.__init__!
         self.update_cached_options()
 
     def set(self, section: str, key: str, value: str) -> None:
@@ -253,6 +258,11 @@ class Options:
         self.set(CORE, "write_fixed_meta_data_for_testing", boolstr(state))
 
     @property
+    def disable_c_ext(self) -> bool:
+        """Disable C-extensions if ``True``. """
+        return self.get_bool(CORE, "DISABLE_C_EXT", default=False)
+
+    @property
     def use_matplotlib(self) -> bool:
         """Activate/deactivate Matplotlib support e.g. for testing"""
         return self._use_matplotlib
@@ -263,6 +273,11 @@ class Options:
             self._use_matplotlib = state
         else:  # Matplotlib is not installed
             self._use_matplotlib = False
+
+    @property
+    def use_c_ext(self) -> bool:
+        """Returns ``True`` if the C-extensions are in use."""
+        return self._use_c_ext
 
     def preserve_proxy_graphics(self, state: bool = True) -> None:
         """Enable/disable proxy graphic load/store support."""

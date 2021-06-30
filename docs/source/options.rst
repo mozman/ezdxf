@@ -60,6 +60,7 @@ File Structure:
     log_unprocessed_tags = false
     filter_invalid_xdata_group_codes = true
     write_fixed_meta_data_for_testing = false
+    disable_c_ext = false
 
     [browse-command]
     text_editor = "C:\Program Files\Notepad++\notepad++.exe" "{filename}" -n{num}
@@ -379,6 +380,36 @@ Config file key: ``write_fixed_meta_data_for_testing``
     scenarios, e.g. to use a diff-like tool to compare DXF documents,
     default is ``False``.
 
+Disable C-Extension
++++++++++++++++++++
+
+It is possible to deactivate the optional C-extensions if there are any issues
+with the C-extensions. This has to be done in a default config file or by
+environment variable before the first import of `ezdxf`. For ``pypy3`` the
+C-extensions are always disabled, because the JIT complied Python code is
+much faster.
+
+.. important::
+
+    This option works only in the **default config files**, user config files which
+    are loaded by :func:`ezdxf.options.read_file()` cannot disable the C-Extensions,
+    because at this point the setup process of `ezdxf` is already finished!
+
+Config file key: ``disable_c_ext``
+
+.. attribute:: disable_c_ext
+
+    (Read only) This option disables the C-extensions if ``True``.
+    This can only be done before the first import of `ezdxf` by using a config
+    file or the environment variable ``EZDXF_DISABLE_C_EXT``.
+
+Use C-Extensions
+++++++++++++++++
+
+.. attribute:: use_c_ext
+
+    (Read only) Shows the actual state of C-extensions usage.
+
 Use Matplotlib
 ++++++++++++++
 
@@ -412,8 +443,7 @@ for disabling the optional C-extensions on Windows::
 
 EZDXF_DISABLE_C_EXT
     Set environment variable EZDXF_DISABLE_C_EXT to ``1`` or ``True`` to disable
-    the usage of C extensions implemented by Cython. Disabling the C-extensions
-    can only be done on interpreter startup, before the first import of `ezdxf`.
+    the usage of C extensions implemented by Cython.
 
 EZDXF_TEST_FILES
     Path to the `ezdxf` test files required by some tests, for instance the

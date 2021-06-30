@@ -304,7 +304,7 @@ Show the *ezdxf* version and configuration:
     C:\> ezdxf -Vv
 
     ezdxf v0.16.5b0 @ d:\source\ezdxf.git\src\ezdxf
-    Python version: 3.9.2 (tags/v3.9.2:1a79785, Feb 19 2021, 13:44:55) [MSC v.1928 64 bit (AMD64)]
+    Python version: 3.9.6 (tags/v3.9.6:db3ff76, Jun 28 2021, 15:26:21) [MSC v.1929 64 bit (AMD64)]
     using C-extensions: yes
     using Matplotlib: yes
 
@@ -318,6 +318,7 @@ Show the *ezdxf* version and configuration:
     log_unprocessed_tags = false
     filter_invalid_xdata_group_codes = true
     write_fixed_meta_data_for_testing = false
+    disable_c_ext = false
 
     [browse-command]
     text_editor = "C:\Program Files\Notepad++\notepad++.exe" "{filename}" -n{num}
