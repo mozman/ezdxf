@@ -173,3 +173,4 @@ results in %BUILDDIR%/doctest/output.txt.
 )
 
 :end
+set EZDXF_DISABLE_C_EXT=

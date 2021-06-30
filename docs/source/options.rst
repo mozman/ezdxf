@@ -1,8 +1,31 @@
-Options Module
-==============
+Global Options Object
+=====================
 
-Configuration file support was added in version v0.16.5. The default
-config files are loaded from the user home directory as
+.. module:: ezdxf.options
+
+The global `ezdxf` options are stored in the object :mod:`ezdxf.options`.
+
+Recommended usage of the global :attr:`options` object::
+
+    import ezdxf
+
+    value = ezdxf.options.attribute
+
+The :attr:`options` object uses the Standard Python class :class:`ConfigParser`
+to manage the configuration. Shortcut attributes like :attr:`test_files` are
+simple properties and most shortcuts are read only marked by (Read only),
+read and writeable attributes are marked by (Read/Write).
+
+To change options, especially the read only attributes, you have to edit the
+config file with a text editor, or set options by the :meth:`set` method and
+write the current configuration into a config file.
+
+Config Files
+============
+
+ .. versionadded:: 0.16.5
+
+The default config files are loaded from the user home directory as
 "~/.config/ezdxf/ezdxf.ini", and the current working directory as "
 ./ezdxf.ini". A custom config file can be specified  by the
 environment variable ``EZDXF_CONFIG_FILE``. Ezdxf follows the
@@ -20,9 +43,6 @@ ones, only the existing options in the newly loaded file are added to the
 configuration and can overwrite existing options.
 
 .. _config_file:
-
-Config Files
-============
 
 Configuration files are regular INI files, managed by the standard Python
 `ConfigParser`_ class.
@@ -43,18 +63,6 @@ File Structure:
 
     [browse-command]
     text_editor = "C:\Program Files\Notepad++\notepad++.exe" "{filename}" -n{num}
-
-
-.. module:: ezdxf.options
-
-The global `ezdxf` options are stored in :mod:`ezdxf.options`. This is a wrapper
-around the :class:`ConfigParser` class. Shortcut attributes like :attr:`test_files`
-are simple properties and most shortcuts are read only marked by (Read only),
-read and writeable attributes are marked by (Read/Write).
-
-To change options, especially the read only attributes, you have to edit the
-config file with a text editor, or set options by the :meth:`set` method and
-write the current configuration into a config file.
 
 Modify and Save Changes
 -----------------------
