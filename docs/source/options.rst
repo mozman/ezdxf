@@ -414,7 +414,8 @@ EZDXF_TEST_FILES
     :attr:`ezdxf.options.test_files`.
 
 EZDXF_CONFIG_FILE
-    Use specified configuration file
+    Specified a config file which will be loaded automatically after to
+    default config files at the first import of ezdxf.
 
 .. _CADKit: https://cadkit.blogspot.com/p/sample-dxf-files.html?view=magazine
 .. _ConfigParser: https://docs.python.org/3/library/configparser.html
