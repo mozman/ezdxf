@@ -1,11 +1,11 @@
 # Copyright (c) 2016-2021, Manfred Moitzi
 # License: MIT License
-from typing import Iterable, Optional, List, TYPE_CHECKING, Sequence
+from typing import Iterable, Optional, List, TYPE_CHECKING, Sequence, Any
 from functools import partial
 import logging
 import warnings
 from .tags import DXFTag
-from .types import POINT_CODES
+from .types import POINT_CODES, NONE_TAG
 
 logger = logging.getLogger("ezdxf")
 
@@ -41,13 +41,13 @@ def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
             if value(tag.value) in COORDINATE_FIXING_TOOLBOX:
                 collector = [tag]
                 # do not yield collected tag yet
-                tag = None
+                tag = NONE_TAG
         else:  # tag.code != 0
             if collector is not None:
                 collector.append(tag)
                 # do not yield collected tag yet
-                tag = None
-        if tag is not None:
+                tag = NONE_TAG
+        if tag is not NONE_TAG:
             yield tag
 
 
@@ -81,7 +81,7 @@ def filter_invalid_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
 
     expected_code = -1
     z_code = 0
-    point = []
+    point: List[Any] = []
     handle_tag = None
     for tag in tagger:
         code = tag[0]
