@@ -123,7 +123,7 @@ class Options:
 
     def __init__(self):
         paths = config_files()
-        self._loaded_paths = [p for p in paths if p.exists()]
+        self._loaded_paths: List[Path] = [p for p in paths if p.exists()]
         self._config = load_config_files(paths)
         # needs fast access:
         self.log_unprocessed_tags = True
@@ -161,7 +161,7 @@ class Options:
         )
 
     @property
-    def loaded_config_files(self) -> Tuple[Path]:
+    def loaded_config_files(self) -> Tuple[Path, ...]:
         return tuple(self._loaded_paths)
 
     def read_file(self, filename: str) -> None:
