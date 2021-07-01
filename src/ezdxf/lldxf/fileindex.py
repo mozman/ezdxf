@@ -1,11 +1,15 @@
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
-from typing import Tuple, List, Iterable
-from collections import namedtuple
+from typing import Tuple, List, Iterable, NamedTuple, BinaryIO
 from .const import DXFStructureError
 from ezdxf.tools.codepage import toencoding
 
-IndexEntry = namedtuple("IndexEntry", field_names="code value location line")
+
+class IndexEntry(NamedTuple):
+    code: int
+    value: str
+    location: int
+    line: int
 
 
 class FileStructure:
@@ -30,14 +34,14 @@ class FileStructure:
 
     def __init__(self, filename: str):
         # stores the file system name of the DXF document.
-        self.filename = filename
+        self.filename: str = filename
         # DXF version if header variable $ACADVER is present, default is DXFR12
-        self.version = "AC1009"
+        self.version: str = "AC1009"
         # Python encoding required to read the DXF document as text file.
-        self.encoding = "cp1252"
+        self.encoding: str = "cp1252"
         self.index: List[IndexEntry] = []
 
-    def print(self):
+    def print(self) -> None:
         print(f"Filename: {self.filename}")
         print(f"DXF Version: {self.version}")
         print(f"encoding: {self.encoding}")
@@ -47,8 +51,8 @@ class FileStructure:
     def get(self, code: int, value: str, start: int = 0) -> int:
         """Returns index of first entry matching `code` and `value`."""
         self_index = self.index
-        index = start
-        count = len(self_index)
+        index: int = start
+        count: int = len(self_index)
         while index < count:
             entry = self_index[index]
             if entry.code == code and entry.value == value:
@@ -80,14 +84,14 @@ def load(filename: str) -> FileStructure:
 
     """
     file_structure = FileStructure(filename)
-    file = open(filename, mode="rb")
+    file: BinaryIO = open(filename, mode="rb")
     line: int = 1
-    eof = False
-    header = False
+    eof: bool = False
+    header: bool = False
     index: List[IndexEntry] = []
     prev_code: int = -1
     prev_value: bytes = b""
-    structure = None  # the actual structure tag: 'SECTION', 'LINE', ...
+    structure = None  # the current structure tag: 'SECTION', 'LINE', ...
 
     def load_tag() -> Tuple[int, bytes]:
         nonlocal line
