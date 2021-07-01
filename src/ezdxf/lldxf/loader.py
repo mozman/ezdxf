@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2020, Manfred Moitzi
+# Copyright (c) 2018-2021, Manfred Moitzi
 # License: MIT License
 import logging
 from typing import Dict, Iterable, List, Union, TYPE_CHECKING
@@ -12,13 +12,14 @@ from ezdxf.entities import factory
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFEntity, Drawing
 
-logger = logging.getLogger('ezdxf')
+logger = logging.getLogger("ezdxf")
 SectionDict = Dict[str, List[Union[Tags, ExtendedTags]]]
 
 
-def load_dxf_structure(tagger: Iterable[DXFTag],
-                       ignore_missing_eof: bool = False) -> SectionDict:
-    """ Divide input tag stream from tagger into DXF structure entities.
+def load_dxf_structure(
+    tagger: Iterable[DXFTag], ignore_missing_eof: bool = False
+) -> SectionDict:
+    """Divide input tag stream from tagger into DXF structure entities.
     Each DXF structure entity starts with a DXF structure (0, ...) tag,
     and ends before the next DXF structure tag.
 
@@ -70,12 +71,12 @@ def load_dxf_structure(tagger: Iterable[DXFTag],
 
     def inside_section() -> bool:
         if len(section):
-            return section[0][0] == (0, 'SECTION')  # first entity, first tag
+            return section[0][0] == (0, "SECTION")  # first entity, first tag
         return False
 
     def outside_section() -> bool:
         if len(section):
-            return section[0][0] != (0, 'SECTION')  # first entity, first tag
+            return section[0][0] != (0, "SECTION")  # first entity, first tag
         return True
 
     sections: SectionDict = OrderedDict()
@@ -87,54 +88,59 @@ def load_dxf_structure(tagger: Iterable[DXFTag],
 
     for entity in group_tags(tagger):
         tag = entity[0]
-        if tag == (0, 'SECTION'):
+        if tag == (0, "SECTION"):
             if inside_section():
                 raise DXFStructureError(
-                    "DXFStructureError: missing ENDSEC tag.")
+                    "DXFStructureError: missing ENDSEC tag."
+                )
             if len(section):
                 logger.warning(
-                    'DXF Structure Warning: found tags outside a SECTION, '
-                    'ignored by ezdxf.')
+                    "DXF Structure Warning: found tags outside a SECTION, "
+                    "ignored by ezdxf."
+                )
             section = [entity]
-        elif tag == (0, 'ENDSEC'):
+        elif tag == (0, "ENDSEC"):
             # ENDSEC tag is not collected.
             if outside_section():
                 raise DXFStructureError(
                     "DXFStructureError: found ENDSEC tag without previous "
-                    "SECTION tag.")
+                    "SECTION tag."
+                )
             section_header = section[0]
 
             if len(section_header) < 2 or section_header[1].code != 2:
                 raise DXFStructureError(
-                    'DXFStructureError: missing required section NAME tag '
-                    '(2, name) at start of section.')
+                    "DXFStructureError: missing required section NAME tag "
+                    "(2, name) at start of section."
+                )
             name_tag = section_header[1]
-            sections[name_tag.value] = section
+            sections[name_tag.value] = section  # type: ignore
             # Collect tags outside of sections, but ignore it.
             section = []
-        elif tag == (0, 'EOF'):
+        elif tag == (0, "EOF"):
             # EOF tag is not collected.
             if eof:
                 logger.warning(
-                    'DXF Structure Warning: found more than one EOF tags.')
+                    "DXF Structure Warning: found more than one EOF tags."
+                )
             eof = True
         else:
             section.append(entity)
     if inside_section():
         raise DXFStructureError("DXFStructureError: missing ENDSEC tag.")
     if not eof and not ignore_missing_eof:
-        raise DXFStructureError('DXFStructureError: missing EOF tag.')
+        raise DXFStructureError("DXFStructureError: missing EOF tag.")
     return sections
 
 
-def load_dxf_entities(entities: Iterable[Tags]) -> Iterable['DXFEntity']:
+def load_dxf_entities(entities: Iterable[Tags]) -> Iterable["DXFEntity"]:
     for entity in entities:
         yield factory.load(ExtendedTags(entity))
 
 
-def load_and_bind_dxf_content(sections: Dict, doc: 'Drawing') -> None:
+def load_and_bind_dxf_content(sections: Dict, doc: "Drawing") -> None:
     # HEADER has no database entries.
-    for name in ['TABLES', 'CLASSES', 'ENTITIES', 'BLOCKS', 'OBJECTS']:
+    for name in ["TABLES", "CLASSES", "ENTITIES", "BLOCKS", "OBJECTS"]:
         if name in sections:
             section = sections[name]
             for index, entity in enumerate(load_dxf_entities(section)):
