@@ -1,6 +1,4 @@
-# Purpose: validate DXF tag structures
-# Created: 03.01.2018
-# Copyright (C) 2018-2020, Manfred Moitzi
+# Copyright (C) 2018-2021, Manfred Moitzi
 # License: MIT License
 import logging
 import io
@@ -9,10 +7,19 @@ import math
 from typing import TextIO, Iterable, List, Optional, Set
 
 from .const import (
-    DXFStructureError, DXFError, DXFValueError, DXFAppDataError, DXFXDataError,
-    APP_DATA_MARKER, HEADER_VAR_MARKER, XDATA_MARKER,
-    INVALID_LAYER_NAME_CHARACTERS, acad_release, VALID_DXF_LINEWEIGHT_VALUES,
-    VALID_DXF_LINEWEIGHTS, LINEWEIGHT_BYLAYER,
+    DXFStructureError,
+    DXFError,
+    DXFValueError,
+    DXFAppDataError,
+    DXFXDataError,
+    APP_DATA_MARKER,
+    HEADER_VAR_MARKER,
+    XDATA_MARKER,
+    INVALID_LAYER_NAME_CHARACTERS,
+    acad_release,
+    VALID_DXF_LINEWEIGHT_VALUES,
+    VALID_DXF_LINEWEIGHTS,
+    LINEWEIGHT_BYLAYER,
 )
 
 from .tagger import ascii_tags_loader
@@ -20,23 +27,23 @@ from .types import is_embedded_object_marker, DXFTag, NONE_TAG
 from ezdxf.tools.codepage import toencoding
 from ezdxf.math import NULLVEC
 
-logger = logging.getLogger('ezdxf')
+logger = logging.getLogger("ezdxf")
 
 
 class DXFInfo:
     def __init__(self):
-        self.release = 'R12'
-        self.version = 'AC1009'
-        self.encoding = 'cp1252'
-        self.handseed = '0'
+        self.release = "R12"
+        self.version = "AC1009"
+        self.encoding = "cp1252"
+        self.handseed = "0"
 
     def set_header_var(self, name: str, value: str) -> int:
-        if name == '$ACADVER':
+        if name == "$ACADVER":
             self.version = value
-            self.release = acad_release.get(value, 'R12')
-        elif name == '$DWGCODEPAGE':
+            self.release = acad_release.get(value, "R12")
+        elif name == "$DWGCODEPAGE":
             self.encoding = toencoding(value)
-        elif name == '$HANDSEED':
+        elif name == "$HANDSEED":
             self.handseed = value
         else:
             return 0
@@ -47,15 +54,15 @@ def dxf_info(stream: TextIO) -> DXFInfo:
     info = DXFInfo()
     tagger = ascii_tags_loader(stream)
     # comments already removed
-    if next(tagger) != (0, 'SECTION'):
+    if next(tagger) != (0, "SECTION"):
         # maybe a DXF structure error, handled by later processing
         return info
-    if next(tagger) != (2, 'HEADER'):
+    if next(tagger) != (2, "HEADER"):
         # no leading HEADER section like DXF R12 with only ENTITIES section
         return info
     tag = NONE_TAG
     found = 0
-    while tag != (0, 'ENDSEC'):  # until end of HEADER section
+    while tag != (0, "ENDSEC"):  # until end of HEADER section
         tag = next(tagger)
         if tag.code != HEADER_VAR_MARKER:
             continue
@@ -68,7 +75,7 @@ def dxf_info(stream: TextIO) -> DXFInfo:
 
 
 def header_validator(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
-    """ Checks the tag structure of the content of the header section.
+    """Checks the tag structure of the content of the header section.
 
     Do not feed (0, 'SECTION') (2, 'HEADER') and (0, 'ENDSEC') tags!
 
@@ -86,9 +93,9 @@ def header_validator(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
         if variable_name_tag:
             if code != HEADER_VAR_MARKER:
                 raise DXFStructureError(
-                    f'Invalid header variable tag {code}, {value}).'
+                    f"Invalid header variable tag {code}, {value})."
                 )
-            if not value.startswith('$'):
+            if not value.startswith("$"):
                 raise DXFValueError(
                     f'Invalid header variable name "{value}", missing leading "$".'
                 )
@@ -99,7 +106,7 @@ def header_validator(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
 
 
 def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
-    """ Checks for valid DXF entity tag structure.
+    """Checks for valid DXF entity tag structure.
 
     - APP DATA can not be nested and every opening tag (102, '{...') needs a
       closing tag (102, '}')
@@ -122,15 +129,15 @@ def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
     """
     assert isinstance(tags, list)
     dxftype = tags[0].value  # type: str
-    is_xrecord = dxftype == 'XRECORD'
-    handle = '???'
+    is_xrecord = dxftype == "XRECORD"
+    handle = "???"
     app_data = False
     xdata = False
     xdata_list_level = 0
-    app_data_closing_tag = '}'
+    app_data_closing_tag = "}"
     embedded_object = False
     for tag in tags:
-        if tag.code == 5 and handle == '???':
+        if tag.code == 5 and handle == "???":
             handle = tag.value
 
         if is_embedded_object_marker(tag):
@@ -144,50 +151,50 @@ def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
             if tag.code < 1000:
                 dxftype = tags[0].value
                 raise DXFXDataError(
-                    f'Invalid XDATA structure in entity {dxftype}(#{handle}), '
-                    f'only group code >=1000 allowed in XDATA section'
+                    f"Invalid XDATA structure in entity {dxftype}(#{handle}), "
+                    f"only group code >=1000 allowed in XDATA section"
                 )
             if tag.code == 1002:
                 value = tag.value
-                if value == '{':
+                if value == "{":
                     xdata_list_level += 1
-                elif value == '}':
+                elif value == "}":
                     xdata_list_level -= 1
                 else:
                     raise DXFXDataError(
                         f'Invalid XDATA control string (1002, "{value}") entity'
-                        f' {dxftype}(#{handle}).'
+                        f" {dxftype}(#{handle})."
                     )
                 if xdata_list_level < 0:  # more closing than opening tags
                     raise DXFXDataError(
-                        f'Invalid XDATA structure in entity {dxftype}(#{handle}), '
+                        f"Invalid XDATA structure in entity {dxftype}(#{handle}), "
                         f'unbalanced list markers, missing  (1002, "{{").'
                     )
 
         if tag.code == APP_DATA_MARKER and not is_xrecord:
             # Ignore control tags (102, ...) tags in XRECORD
             value = tag.value
-            if value.startswith('{'):
+            if value.startswith("{"):
                 if app_data:  # already in app data mode
                     raise DXFAppDataError(
-                        f'Invalid APP DATA structure in entity {dxftype}'
-                        f'(#{handle}), APP DATA can not be nested.'
+                        f"Invalid APP DATA structure in entity {dxftype}"
+                        f"(#{handle}), APP DATA can not be nested."
                     )
                 app_data = True
                 # 'APPID}' is also a valid closing tag
-                app_data_closing_tag = value[1:] + '}'
-            elif value == '}' or value == app_data_closing_tag:
+                app_data_closing_tag = value[1:] + "}"
+            elif value == "}" or value == app_data_closing_tag:
                 if not app_data:
                     raise DXFAppDataError(
-                        f'Invalid APP DATA structure in entity {dxftype}'
+                        f"Invalid APP DATA structure in entity {dxftype}"
                         f'(#{handle}), found (102, "}}") tag without opening tag.'
                     )
                 app_data = False
-                app_data_closing_tag = '}'
+                app_data_closing_tag = "}"
             else:
                 raise DXFAppDataError(
                     f'Invalid APP DATA structure tag (102, "{value}") in '
-                    f'entity {dxftype}(#{handle}).'
+                    f"entity {dxftype}(#{handle})."
                 )
 
         # XDATA section starts with (1001, APPID) and is always at the end of
@@ -196,51 +203,52 @@ def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
             xdata = True
             if app_data:
                 raise DXFAppDataError(
-                    f'Invalid APP DATA structure in entity {dxftype}'
+                    f"Invalid APP DATA structure in entity {dxftype}"
                     f'(#{handle}), missing closing tag (102, "}}").'
                 )
         yield tag
 
     if app_data:
         raise DXFAppDataError(
-            f'Invalid APP DATA structure in entity {dxftype}(#{handle}), '
+            f"Invalid APP DATA structure in entity {dxftype}(#{handle}), "
             f'missing closing tag (102, "}}").'
         )
     if xdata:
         if xdata_list_level < 0:
             raise DXFXDataError(
-                f'Invalid XDATA structure in entity {dxftype}(#{handle}), '
+                f"Invalid XDATA structure in entity {dxftype}(#{handle}), "
                 f'unbalanced list markers, missing  (1002, "{{").'
             )
         elif xdata_list_level > 0:
             raise DXFXDataError(
-                f'Invalid XDATA structure in entity {dxftype}(#{handle}), '
-                f'unbalanced list markers, missing  (1002, "}}").')
+                f"Invalid XDATA structure in entity {dxftype}(#{handle}), "
+                f'unbalanced list markers, missing  (1002, "}}").'
+            )
 
 
 def is_dxf_file(filename: str) -> bool:
-    """ Returns ``True`` if `filename` is an ASCII DXF file. """
-    with io.open(filename, errors='ignore') as fp:
+    """Returns ``True`` if `filename` is an ASCII DXF file."""
+    with io.open(filename, errors="ignore") as fp:
         return is_dxf_stream(fp)
 
 
 def is_binary_dxf_file(filename: str) -> bool:
-    """ Returns ``True`` if `filename` is a binary DXF file. """
-    with open(filename, 'rb') as fp:
+    """Returns ``True`` if `filename` is a binary DXF file."""
+    with open(filename, "rb") as fp:
         sentinel = fp.read(22)
-    return sentinel == b'AutoCAD Binary DXF\r\n\x1a\x00'
+    return sentinel == b"AutoCAD Binary DXF\r\n\x1a\x00"
 
 
 def is_dwg_file(filename: str) -> bool:
-    """ Returns ``True`` if `filename` is a DWG file. """
+    """Returns ``True`` if `filename` is a DWG file."""
     return dwg_version(filename) is not None
 
 
 def dwg_version(filename: str) -> Optional[str]:
-    """ Returns DWG version of `filename` as string or ``None``. """
-    with open(str(filename), 'rb') as fp:
+    """Returns DWG version of `filename` as string or ``None``."""
+    with open(str(filename), "rb") as fp:
         try:
-            version = fp.read(6).decode(errors='ignore')
+            version = fp.read(6).decode(errors="ignore")
         except IOError:
             return None
         if version not in acad_release:
@@ -256,7 +264,7 @@ def is_dxf_stream(stream: TextIO) -> bool:
     try:
         for tag in reader:
             # The common case for well formed DXF files
-            if tag == (0, 'SECTION'):
+            if tag == (0, "SECTION"):
                 return True
             # Accept/Ignore tags in front of first SECTION - like AutoCAD and
             # BricsCAD, but group code should be < 1000, until reality proofs
@@ -280,6 +288,7 @@ def is_dxf_stream(stream: TextIO) -> bool:
 #   sign (=).
 # http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-83ABF20A-57D4-4AB3-8A49-D91E0F70DBFF
 
+
 def is_valid_table_name(name: str) -> bool:
     return not bool(INVALID_LAYER_NAME_CHARACTERS.intersection(set(name)))
 
@@ -292,28 +301,28 @@ def is_valid_layer_name(name: str) -> bool:
 
 
 def is_adsk_special_layer(name: str) -> bool:
-    if name.startswith('*'):
+    if name.startswith("*"):
         # special Autodesk layers starts with invalid character *
         name = name.upper()
-        if name.startswith('*ADSK_'):
+        if name.startswith("*ADSK_"):
             return True
-        if name.startswith('*ACMAP'):
+        if name.startswith("*ACMAP"):
             return True
-        if name.startswith('*TEMPORARY'):
+        if name.startswith("*TEMPORARY"):
             return True
     return False
 
 
 def is_valid_block_name(name: str) -> bool:
-    if name.startswith('*'):
+    if name.startswith("*"):
         return is_valid_table_name(name[1:])
     else:
         return is_valid_table_name(name)
 
 
 def is_valid_vport_name(name: str) -> bool:
-    if name.startswith('*'):
-        return name.upper() == '*ACTIVE'
+    if name.startswith("*"):
+        return name.upper() == "*ACTIVE"
     else:
         return is_valid_table_name(name)
 
@@ -338,7 +347,7 @@ def is_valid_aci_color(aci: int) -> bool:
 
 
 def is_in_integer_range(start: int, end: int):
-    """ Range of integer values, excluding the `end` value. """
+    """Range of integer values, excluding the `end` value."""
 
     def _validator(value: int) -> bool:
         return start <= value < end
@@ -361,7 +370,7 @@ def fit_into_float_range(start: float, end: float):
 
 
 def is_in_float_range(start: float, end: float):
-    """ Range of float values, including the `end` value. """
+    """Range of float values, including the `end` value."""
 
     def _validator(value: float) -> bool:
         return start <= value <= end
@@ -421,12 +430,12 @@ def is_one_of(values: Set):
 
 
 def is_valid_one_line_text(text: str) -> bool:
-    has_line_breaks = bool(set(text).intersection({'\n', '\r'}))
-    return not has_line_breaks and not text.endswith('^')
+    has_line_breaks = bool(set(text).intersection({"\n", "\r"}))
+    return not has_line_breaks and not text.endswith("^")
 
 
 def fix_one_line_text(text: str) -> str:
-    return text.replace('\n', '').replace('\r', '').rstrip('^')
+    return text.replace("\n", "").replace("\r", "").rstrip("^")
 
 
 def is_valid_attrib_tag(tag: str) -> bool:
