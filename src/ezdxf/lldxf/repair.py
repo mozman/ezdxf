@@ -1,5 +1,4 @@
-# Created: 05.03.2016
-# Copyright (c) 2016-2020, Manfred Moitzi
+# Copyright (c) 2016-2021, Manfred Moitzi
 # License: MIT License
 from typing import Iterable, Optional, List, TYPE_CHECKING, Sequence
 from functools import partial
@@ -8,14 +7,14 @@ import warnings
 from .tags import DXFTag
 from .types import POINT_CODES
 
-logger = logging.getLogger('ezdxf')
+logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Tags
 
 
 def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
-    """ Reorder coordinates of legacy DXF Entities, for now only LINE.
+    """Reorder coordinates of legacy DXF Entities, for now only LINE.
 
     Input Raw tag filter.
 
@@ -26,7 +25,7 @@ def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
 
     def value(v) -> str:
         if type(v) is bytes:
-            return v.decode('ascii', errors='ignore')
+            return v.decode("ascii", errors="ignore")
         else:
             return v
 
@@ -63,7 +62,7 @@ X_CODES = POINT_CODES
 
 
 def filter_invalid_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
-    """ Filter invalid and misplaced point group codes.
+    """Filter invalid and misplaced point group codes.
 
     - removes x-axis without following y-axis
     - removes y- and z-axis without leading x-axis
@@ -75,7 +74,7 @@ def filter_invalid_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
 
     def entity() -> str:
         if handle_tag:
-            handle = handle_tag[1].decode(errors='ignore')
+            handle = handle_tag[1].decode(errors="ignore")
             return f"in entity #{handle}"
         else:
             return ""
@@ -94,7 +93,8 @@ def filter_invalid_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
                 yield from point
             else:
                 logger.info(
-                    f'remove misplaced x-axis tag: {str(point[0])}' + entity())
+                    f"remove misplaced x-axis tag: {str(point[0])}" + entity()
+                )
             point.clear()
 
         if code in X_CODES:
@@ -111,17 +111,18 @@ def filter_invalid_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
             if code not in INVALID_CODES:
                 yield tag
             else:
-                axis = 'y-axis' if code in INVALID_Y_CODES else 'z-axis'
+                axis = "y-axis" if code in INVALID_Y_CODES else "z-axis"
                 logger.info(
-                    f'remove misplaced {axis} tag: {str(tag)}' + entity())
+                    f"remove misplaced {axis} tag: {str(tag)}" + entity()
+                )
 
     if len(point) == 1:
-        logger.info(f'remove misplaced x-axis tag: {str(point[0])}' + entity())
+        logger.info(f"remove misplaced x-axis tag: {str(point[0])}" + entity())
     elif len(point) > 1:
         yield from point
 
 
-def fix_coordinate_order(tags: 'Tags', codes: Sequence[int] = (10, 11)):
+def fix_coordinate_order(tags: "Tags", codes: Sequence[int] = (10, 11)):
     def extend_codes():
         for code in codes:
             yield code  # x tag
@@ -169,18 +170,20 @@ def fix_coordinate_order(tags: 'Tags', codes: Sequence[int] = (10, 11)):
     remaining_tags[insert_pos:insert_pos] = ordered_coords
     return remaining_tags
 
+
 with warnings.catch_warnings():
-    warnings.filterwarnings('ignore', category=BytesWarning)
+    warnings.filterwarnings("ignore", category=BytesWarning)
     COORDINATE_FIXING_TOOLBOX = {
-        'LINE': partial(fix_coordinate_order, codes=(10, 11)),
-        b'LINE': partial(fix_coordinate_order, codes=(10, 11)),
+        "LINE": partial(fix_coordinate_order, codes=(10, 11)),
+        b"LINE": partial(fix_coordinate_order, codes=(10, 11)),
     }
 
 VALID_XDATA_CODES = set(range(1000, 1019)) | set(range(1040, 1072))
 
 
 def filter_invalid_xdata_group_codes(
-        tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
+    tagger: Iterable[DXFTag],
+) -> Iterable[DXFTag]:
     for tag in tagger:
         if tag.code < 1000 or tag.code in VALID_XDATA_CODES:
             yield tag
