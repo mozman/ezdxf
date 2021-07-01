@@ -296,7 +296,7 @@ Shortcut attribute:
 
 .. attribute:: load_proxy_graphics
 
-    (Read only) Load proxy graphics if ``True``, default is ``True``.
+    (Read/Write) Load proxy graphics if ``True``, default is ``True``.
 
 Store Proxy Graphic
 +++++++++++++++++++
@@ -309,7 +309,7 @@ Shortcut attribute:
 
 .. attribute:: store_proxy_graphics
 
-    (Read only)  Export proxy graphics if ``True``, default is ``True``.
+    (Read/Write)  Export proxy graphics if ``True``, default is ``True``.
 
 
 Debugging Options
@@ -343,7 +343,7 @@ Filter Invalid XDATA Group Codes
 
 Only a very limited set of group codes is valid in the XDATA section and
 AutoCAD is very picky about that. `Ezdxf` removes invalid XDATA group codes
-if this option is set to ``true``, but this needs processing time, which is
+if this option is set to ``True``, but this needs processing time, which is
 wasted if you get your DXF files from trusted sources like AutoCAD or BricsCAD.
 
 Config file key: ``filter_invalid_xdata_group_codes``
@@ -438,22 +438,21 @@ for disabling the optional C-extensions on Windows::
 .. important::
 
     If you change any environment variable, you have to restart
-    the Python interpreter! The C-extensions cannot be disabled by a config
-    file option.
+    the Python interpreter!
 
 EZDXF_DISABLE_C_EXT
-    Set environment variable EZDXF_DISABLE_C_EXT to ``1`` or ``True`` to disable
-    the usage of C extensions implemented by Cython.
+    Set environment variable ``EZDXF_DISABLE_C_EXT`` to ``1`` or ``True`` to
+    disable the usage of the C-extensions.
 
 EZDXF_TEST_FILES
     Path to the `ezdxf` test files required by some tests, for instance the
     `CADKit`_ sample files should be located in the
-    "EZDXF_TEST_FILES/CADKitSamples" folder. See also option
+    ``EZDXF_TEST_FILES/CADKitSamples`` folder. See also option
     :attr:`ezdxf.options.test_files`.
 
 EZDXF_CONFIG_FILE
-    Specified a config file which will be loaded automatically after to
-    default config files at the first import of ezdxf.
+    Specifies a user config file which will be loaded automatically after the
+    default config files at the first import of `ezdxf`.
 
 .. _CADKit: https://cadkit.blogspot.com/p/sample-dxf-files.html?view=magazine
 .. _ConfigParser: https://docs.python.org/3/library/configparser.html

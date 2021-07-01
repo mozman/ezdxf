@@ -241,9 +241,17 @@ class Options:
     def load_proxy_graphics(self) -> bool:
         return self.get_bool(CORE, "LOAD_PROXY_GRAPHICS", default=True)
 
+    @load_proxy_graphics.setter
+    def load_proxy_graphics(self, value: bool) -> None:
+        self.set(CORE, "LOAD_PROXY_GRAPHICS", boolstr(value))
+
     @property
     def store_proxy_graphics(self) -> bool:
         return self.get_bool(CORE, "STORE_PROXY_GRAPHICS", default=True)
+
+    @store_proxy_graphics.setter
+    def store_proxy_graphics(self, value: bool) -> None:
+        self.set(CORE, "STORE_PROXY_GRAPHICS", boolstr(value))
 
     @property
     def write_fixed_meta_data_for_testing(self) -> bool:
@@ -281,7 +289,7 @@ class Options:
 
     def preserve_proxy_graphics(self, state: bool = True) -> None:
         """Enable/disable proxy graphic load/store support."""
-        value = "true" if state else "false"
+        value = boolstr(state)
         self.set(CORE, "LOAD_PROXY_GRAPHICS", value)
         self.set(CORE, "STORE_PROXY_GRAPHICS", value)
 
