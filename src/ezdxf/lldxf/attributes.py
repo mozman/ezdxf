@@ -5,11 +5,13 @@ from enum import Enum
 from typing import (
     Optional,
     Dict,
+    List,
     Tuple,
     TYPE_CHECKING,
     Iterable,
     Callable,
     Any,
+    Union,
 )
 from .const import DXFAttributeError, DXF12
 import copy
@@ -32,25 +34,26 @@ class XType(Enum):
 
 def group_code_mapping(
     subclass: DefSubclass, *, ignore: Iterable[int] = None
-) -> Dict[int, str]:
+) -> Dict[int, Union[str, List[str]]]:
     # Unique group codes are stored as group_code <int>: name <str>
     # Duplicate group codes are stored as group_code <int>: [name1, name2, ...] <list>
     # The order of appearance is important, therefore also callback attributes
     # have to be included, but they should not be loaded into the DXF namespace.
-    mapping = dict()
+    mapping: Dict[int, Union[str, List[str]]] = dict()
     for name, dxfattrib in subclass.attribs.items():
         if dxfattrib.xtype == XType.callback:
             # Mark callback attributes for special treatment as invalid
             # Python name:
             name = "*" + name
         code = dxfattrib.code
-        existing_data = mapping.get(code)
+        existing_data: Union[None, str, List[str]] = mapping.get(code)
         if existing_data is None:
             mapping[code] = name
         else:
             if isinstance(existing_data, str):
                 existing_data = [existing_data]
                 mapping[code] = existing_data
+            assert isinstance(existing_data, list)
             existing_data.append(name)
 
     if ignore:
@@ -89,11 +92,11 @@ class DXFAttr:
         code: int,
         xtype: XType = None,
         default=None,
-        optional=False,
+        optional: bool = False,
         dxfversion: str = DXF12,
-        getter: str = None,
-        setter: str = None,
-        alias: str = None,
+        getter: str = "",
+        setter: str = "",
+        alias: str = "",
         validator: Optional[Callable[[Any], bool]] = None,
         fixer: Optional[Callable[[Any], Any]] = None,
     ):
@@ -105,7 +108,7 @@ class DXFAttr:
         self.code: int = code
 
         # Extended attribute type:
-        self.xtype: XType = xtype
+        self.xtype: Optional[XType] = xtype
 
         # DXF default value
         self.default: TagValue = default
