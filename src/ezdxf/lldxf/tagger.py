@@ -85,7 +85,7 @@ def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
 
 def ascii_tags_loader(
     stream: TextIO, skip_comments: bool = True
-) -> Iterable[DXFTag]:
+) -> Iterator[DXFTag]:
     """Yields :class:``DXFTag`` objects from a text `stream` (untrusted
     external source) and does not optimize coordinates. Comment tags (group
     code == 999) will be skipped if argument `skip_comments` is `True`.

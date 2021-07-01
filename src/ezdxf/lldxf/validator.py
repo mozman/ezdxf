@@ -4,7 +4,7 @@ import logging
 import io
 import bisect
 import math
-from typing import TextIO, Iterable, List, Optional, Set
+from typing import TextIO, Iterable, List, Optional, Set, cast
 
 from .const import (
     DXFStructureError,
@@ -61,13 +61,13 @@ def dxf_info(stream: TextIO) -> DXFInfo:
         # no leading HEADER section like DXF R12 with only ENTITIES section
         return info
     tag = NONE_TAG
-    found = 0
+    found: int = 0
     while tag != (0, "ENDSEC"):  # until end of HEADER section
         tag = next(tagger)
         if tag.code != HEADER_VAR_MARKER:
             continue
-        name = tag.value
-        value = next(tagger).value
+        name = cast(str, tag.value)
+        value = cast(str, next(tagger).value)
         found += info.set_header_var(name, value)
         if found > 2:  # all expected values collected
             break
@@ -128,17 +128,17 @@ def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
 
     """
     assert isinstance(tags, list)
-    dxftype = tags[0].value  # type: str
+    dxftype = cast(str, tags[0].value)
     is_xrecord = dxftype == "XRECORD"
-    handle = "???"
-    app_data = False
-    xdata = False
-    xdata_list_level = 0
-    app_data_closing_tag = "}"
-    embedded_object = False
+    handle: str = "???"
+    app_data: bool = False
+    xdata: bool = False
+    xdata_list_level: int = 0
+    app_data_closing_tag: str = "}"
+    embedded_object: bool = False
     for tag in tags:
         if tag.code == 5 and handle == "???":
-            handle = tag.value
+            handle = cast(str, tag.value)
 
         if is_embedded_object_marker(tag):
             embedded_object = True
@@ -149,13 +149,13 @@ def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
 
         if xdata and not embedded_object:
             if tag.code < 1000:
-                dxftype = tags[0].value
+                dxftype = cast(str, tags[0].value)
                 raise DXFXDataError(
                     f"Invalid XDATA structure in entity {dxftype}(#{handle}), "
                     f"only group code >=1000 allowed in XDATA section"
                 )
             if tag.code == 1002:
-                value = tag.value
+                value = cast(str, tag.value)
                 if value == "{":
                     xdata_list_level += 1
                 elif value == "}":
@@ -173,7 +173,7 @@ def entity_structure_validator(tags: List[DXFTag]) -> Iterable[DXFTag]:
 
         if tag.code == APP_DATA_MARKER and not is_xrecord:
             # Ignore control tags (102, ...) tags in XRECORD
-            value = tag.value
+            value = cast(str, tag.value)
             if value.startswith("{"):
                 if app_data:  # already in app data mode
                     raise DXFAppDataError(
