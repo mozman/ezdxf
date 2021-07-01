@@ -76,13 +76,12 @@ YES_NO = {True: "yes", False: "no"}
 
 def print_config(verbose: bool = False, stream: TextIO = None) -> None:
     from pathlib import Path
-    from ezdxf.acc import USE_C_EXT
     if stream is None:
         stream = sys.stdout
     stream.writelines([
-        f"ezdxf v{__version__} @ {Path(__file__).parent}\n",
+        f"ezdxf {__version__} from {Path(__file__).parent}\n",
         f"Python version: {sys.version}\n",
-        f"using C-extensions: {YES_NO[USE_C_EXT]}\n",
+        f"using C-extensions: {YES_NO[options.use_c_ext]}\n",
         f"using Matplotlib: {YES_NO[options.use_matplotlib]}\n",
     ])
     if verbose:
