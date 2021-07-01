@@ -1,6 +1,6 @@
-# Copyright (c) 2016-2020, Manfred Moitzi
+# Copyright (c) 2016-2021, Manfred Moitzi
 # License: MIT License
-from typing import Iterable, TextIO, Iterator
+from typing import Iterable, TextIO, Iterator, List, Tuple, Any, Optional
 import struct
 from .types import (
     DXFTag,
@@ -29,13 +29,14 @@ def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
 
     """
     assert isinstance(s, str)
-    lines = s.split("\n")
+    lines: List[str] = s.split("\n")
     # split() creates an extra item, if s ends with '\n',
     # but lines[-1] can be an empty string!!!
     if s.endswith("\n"):
         lines.pop()
-    pos = 0
-    count = len(lines)
+    pos: int = 0
+    count: int = len(lines)
+    point: Tuple[float, ...]
     while pos < count:
         code = int(lines[pos])
         value = lines[pos + 1]
@@ -50,7 +51,7 @@ def internal_tag_compiler(s: str) -> Iterable[DXFTag]:
                 z_code = int(lines[pos])
                 z = lines[pos + 1]
             else:  # if string s ends with a 2d point
-                z_code, z = None, 0.0
+                z_code, z = -1, ""
             if z_code == code + 20:  # 3d point
                 pos += 2
                 point = (float(value), float(y), float(z))
@@ -101,17 +102,17 @@ def ascii_tags_loader(
         DXFStructureError: Found invalid group code.
 
     """
-    line = 1
-    yield_comments = not skip_comments
+    line: int = 1
+    yield_comments: bool = not skip_comments
     # localize attributes
     readline = stream.readline
     _DXFTag = DXFTag
     # readline() returns an empty string at EOF, not exception will be raised!
     while True:
-        code = readline()
+        code: str = readline()
         if code:  # empty string indicates EOF
             try:
-                code = int(code)
+                group_code = int(code)
             except ValueError:
                 raise DXFStructureError(
                     f'Invalid group code "{code}" at line {line}.'
@@ -119,10 +120,10 @@ def ascii_tags_loader(
         else:
             return
 
-        value = readline()
+        value: str = readline()
         if value:  # empty string indicates EOF
-            if code != 999 or yield_comments:
-                yield _DXFTag(code, value.rstrip("\n"))
+            if group_code != 999 or yield_comments:
+                yield _DXFTag(group_code, value.rstrip("\n"))
             line += 2
         else:
             return
@@ -165,7 +166,7 @@ def binary_tags_loader(
         else:
             if data[start] != 65:  # not 'A' = 2-byte group code
                 start += 1
-            dxfversion = data[start : start + 6].decode()
+            dxfversion = data[start: start + 6].decode()
 
         if dxfversion >= "AC1021":
             encoding = "utf8"
@@ -189,9 +190,10 @@ def binary_tags_loader(
 
     encoding, dxfversion = scan_params()
     r12 = dxfversion <= "AC1009"
-    index = 22
-    data_length = len(data)
+    index: int = 22
+    data_length: int = len(data)
     unpack = struct.unpack_from
+    value: Any
 
     while index < data_length:
         # decode next group code
@@ -210,7 +212,7 @@ def binary_tags_loader(
         if code in BINARY_DATA:
             length = data[index]
             index += 1
-            value = data[index : index + length]
+            value = data[index: index + length]
             index += length
             yield DXFBinaryTag(code, value)
         else:
@@ -272,8 +274,12 @@ def tag_compiler(tags: Iterator[DXFTag]) -> Iterable[DXFTag]:
             f"near line: {line}."
         )
 
-    undo_tag = None
-    line = 0
+    undo_tag: Optional[DXFTag] = None
+    line: int = 0
+    point: Tuple[float, ...]
+    # Silencing mypy by "type: ignore", because this is a work horse function
+    # and should not be slowed down by isinstance(...) checks or unnecessary
+    # cast() calls
     while True:
         try:
             if undo_tag is not None:
@@ -282,7 +288,7 @@ def tag_compiler(tags: Iterator[DXFTag]) -> Iterable[DXFTag]:
             else:
                 x = next(tags)
                 line += 2
-            code = x.code
+            code: int = x.code
             if code in POINT_CODES:
                 # y-axis is mandatory
                 y = next(tags)
@@ -297,9 +303,9 @@ def tag_compiler(tags: Iterator[DXFTag]) -> Iterable[DXFTag]:
                 try:
                     # z-axis like (30, 0.0) for base x-code 10
                     if z.code == code + 20:
-                        point = (float(x.value), float(y.value), float(z.value))
+                        point = (float(x.value), float(y.value), float(z.value))  # type: ignore
                     else:
-                        point = (float(x.value), float(y.value))
+                        point = (float(x.value), float(y.value))  # type: ignore
                         undo_tag = z
                 except ValueError:
                     raise DXFStructureError(
@@ -312,7 +318,7 @@ def tag_compiler(tags: Iterator[DXFTag]) -> Iterable[DXFTag]:
                     tag = x
                 else:
                     try:
-                        tag = DXFBinaryTag.from_string(code, x.value)
+                        tag = DXFBinaryTag.from_string(code, x.value)  # type: ignore
                     except ValueError:
                         raise DXFStructureError(
                             f"Invalid binary data near line: {line}."
@@ -322,7 +328,7 @@ def tag_compiler(tags: Iterator[DXFTag]) -> Iterable[DXFTag]:
                 try:
                     # Fast path!
                     if code == 0:
-                        value = x.value.strip()
+                        value = x.value.strip()  # type: ignore
                     else:
                         value = x.value
                     yield DXFTag(code, TYPE_TABLE.get(code, str)(value))
@@ -330,7 +336,7 @@ def tag_compiler(tags: Iterator[DXFTag]) -> Iterable[DXFTag]:
                     # ProE stores int values as floats :((
                     if TYPE_TABLE.get(code, str) is int:
                         try:
-                            yield DXFTag(code, int(float(x.value)))
+                            yield DXFTag(code, int(float(x.value)))  # type: ignore
                         except ValueError:
                             raise DXFStructureError(error_msg(x))
                     else:
