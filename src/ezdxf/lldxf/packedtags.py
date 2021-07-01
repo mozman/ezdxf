@@ -1,14 +1,14 @@
 # Copyright (c) 2018-2021 Manfred Moitzi
 # License: MIT License
 from array import array
-from typing import Iterable, Sequence
+from typing import Iterable, MutableSequence, Sequence
 
 from .types import DXFTag
 from .const import DXFTypeError, DXFIndexError, DXFValueError
 from .tags import Tags
 from ezdxf.tools.indexing import Index
 from ezdxf.lldxf.tagwriter import TagWriter
-from ezdxf.math import UCS, Matrix44
+from ezdxf.math import Matrix44
 
 
 class TagList:
@@ -17,7 +17,7 @@ class TagList:
     __slots__ = ("values",)
 
     def __init__(self, data: Iterable = None):
-        self.values = list(data or [])
+        self.values: MutableSequence = list(data or [])
 
     def clone(self) -> "TagList":
         """Returns a deep copy."""
@@ -46,11 +46,11 @@ class TagArray(TagList):
     """
 
     __slots__ = ("values",)
-    #: Defines the data type of array.array()
+    # Defines the data type of array.array()
     DTYPE = "i"
 
     def __init__(self, data: Iterable = None):
-        self.values = array(self.DTYPE, data or [])
+        self.values: array = array(self.DTYPE, data or [])
 
     def set_values(self, values: Iterable) -> None:
         """Replace data by `values`."""
@@ -62,7 +62,7 @@ class VertexArray:
     class variable ``VERTEX_SIZE``.
     """
 
-    #: Defines the vertex size
+    # Defines the vertex size
     VERTEX_SIZE = 3  # set to 2 for 2d points
     __slots__ = ("values",)
 
@@ -97,7 +97,7 @@ class VertexArray:
     def __str__(self) -> str:
         """String representation."""
         name = self.__class__.__name__
-        data = ",\n".join(str(p) for p in self)
+        data = ",\n".join(str(p) for p in self)  # type: ignore
         return "{} = [\n{}\n]".format(name, data)
 
     def __iter__(self) -> Iterable[Sequence[float]]:
@@ -145,7 +145,7 @@ class VertexArray:
         vertices = array("d")
         for tag in tags:
             if tag.code == code:
-                vertices.extend(tag.value)
+                vertices.extend(tag.value)  # type: ignore
         return cls(data=vertices)
 
     def _index(self, item) -> int:
@@ -170,7 +170,7 @@ class VertexArray:
         if isinstance(point, (tuple, list)):
             point = array("d", point)
         index = index * size
-        self.values[index : index + size] = point
+        self.values[index : index + size] = point  # type: ignore
 
     def _del_point(self, index: int) -> None:
         size = self.VERTEX_SIZE
