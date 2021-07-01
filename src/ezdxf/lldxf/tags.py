@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2020, Manfred Moitzi
+# Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
 """
 Tags
@@ -8,7 +8,7 @@ A list of :class:`~ezdxf.lldxf.types.DXFTag`, inherits from Python standard list
 Unlike the statement in the DXF Reference "Do not write programs that rely on
 the order given here", tag order is sometimes essential and some group codes
 may appear multiples times in one entity. At the worst case
-(:class:`~ezdxf.entities.matrial.Material`: normal map shares group codes with
+(:class:`~ezdxf.entities.material.Material`: normal map shares group codes with
 diffuse map) using same group codes with different meanings.
 
 """
@@ -17,7 +17,6 @@ from typing import Iterable, List, TYPE_CHECKING, Tuple, Any
 from .const import DXFStructureError, DXFValueError, STRUCTURE_MARKER
 from .types import DXFTag, EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR, dxftag
 from .tagger import internal_tag_compiler
-from ezdxf.tools.binarydata import bytes_to_hexstr
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagValue
@@ -429,7 +428,7 @@ def binary_data_to_dxf_tags(
     tags.append(dxftag(length_group_code, length))
     index = 0
     while index < length:
-        chunk = data[index: index + value_size]
+        chunk = data[index : index + value_size]
         tags.append(dxftag(value_group_code, chunk))
         index += value_size
     return tags
