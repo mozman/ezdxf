@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2020, Matthew Broadway
+# Copyright (c) 2020-2021, Matthew Broadway
 # License: MIT License
 import argparse
 import signal
@@ -9,9 +9,7 @@ from PyQt5 import QtWidgets as qw
 
 import ezdxf
 from ezdxf import recover
-from ezdxf.acc import USE_C_EXT
 from ezdxf.addons.drawing.qtviewer import CadViewer
-from ezdxf.tools import fonts
 
 # IMPORTANT: This example is just a remaining skeleton, the implementation
 # details moved into module: ezdxf.addon.drawing.qtviewer
@@ -20,10 +18,7 @@ from ezdxf.tools import fonts
 # C:\> ezdxf view FILE
 
 # Load and draw proxy graphic:
-ezdxf.options.load_proxy_graphics = True
-
-# Load default font definitions, included in ezdxf:
-fonts.load()
+ezdxf.options.preserve_proxy_graphics()
 
 
 def _main():
@@ -64,5 +59,5 @@ def _main():
 
 
 if __name__ == '__main__':
-    print(f'C-Extension: {USE_C_EXT}')
+    print(f'C-Extension: {ezdxf.options.use_c_ext}')
     _main()
