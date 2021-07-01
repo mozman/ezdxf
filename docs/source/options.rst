@@ -26,11 +26,10 @@ Config Files
  .. versionadded:: 0.16.5
 
 The default config files are loaded from the user home directory as
-"~/.config/ezdxf/ezdxf.ini", and the current working directory as "
-./ezdxf.ini". A custom config file can be specified  by the
-environment variable ``EZDXF_CONFIG_FILE``. Ezdxf follows the
-`XDG Base Directory specification`_ if the environment variable
-``XDG_CONFIG_HOME`` is set.
+"~/.config/ezdxf/ezdxf.ini", and the current working directory as "./ezdxf.ini".
+A custom config file can be specified  by the environment variable
+``EZDXF_CONFIG_FILE``. Ezdxf follows the `XDG Base Directory specification`_
+if the environment variable ``XDG_CONFIG_HOME`` is set.
 
 The config file loading order:
 
