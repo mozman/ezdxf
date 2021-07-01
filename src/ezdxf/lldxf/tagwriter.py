@@ -205,19 +205,19 @@ class TagCollector(AbstractTagWriter):
 
     def __init__(
         self,
-        dxfversion=LATEST_DXF_VERSION,
+        dxfversion: str = LATEST_DXF_VERSION,
         write_handles: bool = True,
         optional: bool = True,
     ):
-        self.tags = []
-        self.dxfversion = dxfversion
-        self.write_handles = write_handles
-        self.force_optional = optional
+        self.tags: List[DXFTag] = []
+        self.dxfversion: str = dxfversion
+        self.write_handles: bool = write_handles
+        self.force_optional: bool = optional
 
     # Start of low level interface:
     def write_tag(self, tag: DXFTag) -> None:
         if hasattr(tag, "dxftags"):
-            self.tags.extend(tag.dxftags())
+            self.tags.extend(tag.dxftags())  # type: ignore
         else:
             self.tags.append(tag)
 

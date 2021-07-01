@@ -1,6 +1,6 @@
 # Copyright (c) 2011-2020, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Optional, List
+from typing import TYPE_CHECKING, Iterable, Optional, List, Iterator
 from itertools import chain
 import logging
 from .types import tuples_to_tags, NONE_TAG
@@ -307,7 +307,7 @@ class ExtendedTags:
             raise DXFStructureError(
                 "Unexpected tag '%r' at end of entity." % tag)
 
-    def __iter__(self) -> Iterable[DXFTag]:
+    def __iter__(self) -> Iterator[DXFTag]:
         for subclass in self.subclasses:
             for tag in subclass:
                 if tag.code == APP_DATA_MARKER and isinstance(tag.value, int):
