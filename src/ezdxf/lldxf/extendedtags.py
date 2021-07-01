@@ -1,6 +1,6 @@
 # Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Optional, List, Iterator
+from typing import TYPE_CHECKING, Iterable, Optional, List, Iterator, cast
 from itertools import chain
 import logging
 from .types import tuples_to_tags, NONE_TAG
@@ -60,7 +60,7 @@ class ExtendedTags:
         self.embedded_objects: Optional[List[Tags]] = None
 
         if tags is not None:
-            self._setup(tags)
+            self._setup(iter(tags))
             if legacy:
                 self.legacy_repair()
 
@@ -146,8 +146,7 @@ class ExtendedTags:
         """Replace the existing entity handle by a new value."""
         self.noclass.replace_handle(handle)
 
-    def _setup(self, tags: Iterable[DXFTag]) -> None:
-        tags = iter(tags)
+    def _setup(self, tags: Iterator[DXFTag]) -> None:
 
         def is_end_of_class(tag):
             # fast path
@@ -221,7 +220,7 @@ class ExtendedTags:
             """
             data = Tags([starttag])
             # Alternative closing tag 'APPID}':
-            closing_strings = ("}", starttag.value[1:] + "}")
+            closing_strings = ("}", starttag.value[1:] + "}")  # type: ignore
             while True:
                 try:
                     tag = next(tags)
