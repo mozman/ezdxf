@@ -75,7 +75,7 @@ def groupby(
             "but not both."
         )
 
-    result = dict()
+    result: Dict[Hashable, List["DXFEntity"]] = dict()
     for dxf_entity in entities:
         if not dxf_entity.is_alive:
             continue
