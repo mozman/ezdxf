@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2020, Manfred Moitzi
+# Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Optional, List, Iterator
 from itertools import chain
@@ -7,20 +7,23 @@ from .types import tuples_to_tags, NONE_TAG
 from .tags import Tags, DXFTag
 from .const import DXFStructureError, DXFValueError, DXFKeyError
 from .types import (
-    APP_DATA_MARKER, SUBCLASS_MARKER, XDATA_MARKER, EMBEDDED_OBJ_MARKER,
-    EMBEDDED_OBJ_STR
+    APP_DATA_MARKER,
+    SUBCLASS_MARKER,
+    XDATA_MARKER,
+    EMBEDDED_OBJ_MARKER,
+    EMBEDDED_OBJ_STR,
 )
 from .types import is_app_data_marker, is_embedded_object_marker
 from .tagger import internal_tag_compiler
 
-logger = logging.getLogger('ezdxf')
+logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import IterableTags
 
 
 class ExtendedTags:
-    """ Manages DXF tags located in sub structures:
+    """Manages DXF tags located in sub structures:
 
         - Subclasses
         - AppData
@@ -32,12 +35,14 @@ class ExtendedTags:
         legacy: flag for DXF R12 tags
 
     """
-    __slots__ = ('subclasses', 'appdata', 'xdata', 'embedded_objects')
+
+    __slots__ = ("subclasses", "appdata", "xdata", "embedded_objects")
 
     def __init__(self, tags: Iterable[DXFTag] = None, legacy=False):
         if isinstance(tags, str):
             raise DXFValueError(
-                "use ExtendedTags.from_text() to create tags from a string.")
+                "use ExtendedTags.from_text() to create tags from a string."
+            )
 
         # code == 102, keys are "{<arbitrary name>", values are Tags()
         self.appdata: List[Tags] = list()
@@ -60,24 +65,24 @@ class ExtendedTags:
                 self.legacy_repair()
 
     def legacy_repair(self):
-        """ Legacy (DXF R12) tags handling and repair. """
+        """Legacy (DXF R12) tags handling and repair."""
         self.flatten_subclasses()
         # ... and we can do some checks:
         # DXF R12 does not support (102, '{APPID') ... structures
         if len(self.appdata):
             # Just a debug message, do not delete appdata, this would corrupt
             # the data structure.
-            self.debug('Found application defined entity data in DXF R12.')
+            self.debug("Found application defined entity data in DXF R12.")
 
         # That is really unlikely, but...
         if self.embedded_objects is not None:
             # Removing embedded objects from DXF R12 does not corrupt the
             # data structure:
             self.embedded_objects = None
-            self.debug('Found embedded object in DXF R12.')
+            self.debug("Found embedded object in DXF R12.")
 
     def flatten_subclasses(self):
-        """ Flatten subclasses in legacy mode (DXF R12).
+        """Flatten subclasses in legacy mode (DXF R12).
 
         There exists DXF R12 with subclass markers, technical incorrect but
         works if the reader ignore subclass marker tags, unfortunately ezdxf
@@ -95,18 +100,18 @@ class ExtendedTags:
             # Exclude first tag (100, subclass marker):
             noclass.extend(subclass[1:])
         self.subclasses = [noclass]
-        self.debug('Removed subclass marker from entity for DXF R12.')
+        self.debug("Removed subclass marker from entity for DXF R12.")
 
     def debug(self, msg: str) -> None:
         try:
-            handle = f'(#{self.get_handle()})'
+            handle = f"(#{self.get_handle()})"
         except DXFValueError:
-            handle = ''
-        msg += f' <{self.dxftype()}{handle}>'
+            handle = ""
+        msg += f" <{self.dxftype()}{handle}>"
         logger.debug(msg)
 
-    def __copy__(self) -> 'ExtendedTags':
-        """ Shallow copy. """
+    def __copy__(self) -> "ExtendedTags":
+        """Shallow copy."""
 
         def copy(tag_lists):
             return [tags.clone() for tags in tag_lists]
@@ -126,19 +131,19 @@ class ExtendedTags:
 
     @property
     def noclass(self) -> Tags:
-        """ Short cut to access first subclass. """
+        """Short cut to access first subclass."""
         return self.subclasses[0]
 
     def get_handle(self) -> str:
-        """ Returns handle as hex string. """
+        """Returns handle as hex string."""
         return self.noclass.get_handle()
 
     def dxftype(self) -> str:
-        """ Returns DXF type as string like "LINE"."""
+        """Returns DXF type as string like "LINE"."""
         return self.noclass[0].value
 
     def replace_handle(self, handle: str) -> None:
-        """ Replace the existing entity handle by a new value. """
+        """Replace the existing entity handle by a new value."""
         self.noclass.replace_handle(handle)
 
     def _setup(self, tags: Iterable[DXFTag]) -> None:
@@ -146,20 +151,17 @@ class ExtendedTags:
 
         def is_end_of_class(tag):
             # fast path
-            if tag.code not in {
-                SUBCLASS_MARKER, EMBEDDED_OBJ_MARKER, XDATA_MARKER
-            }:
+            if tag.code not in {SUBCLASS_MARKER, EMBEDDED_OBJ_MARKER, XDATA_MARKER}:
                 return False
             else:
                 # really an embedded object
-                if tag.code == EMBEDDED_OBJ_MARKER and \
-                        tag.value != EMBEDDED_OBJ_STR:
+                if tag.code == EMBEDDED_OBJ_MARKER and tag.value != EMBEDDED_OBJ_STR:
                     return False
                 else:
                     return True
 
         def collect_base_class() -> DXFTag:
-            """ The base class contains AppData, but not XDATA and ends with
+            """The base class contains AppData, but not XDATA and ends with
             SUBCLASS_MARKER, XDATA_MARKER or EMBEDDED_OBJ_MARKER.
             """
             # All subclasses begin with (100, subclass name) EXCEPT DIMASSOC
@@ -191,7 +193,7 @@ class ExtendedTags:
             return NONE_TAG
 
         def collect_subclass(starttag: DXFTag) -> DXFTag:
-            """ A subclass does NOT contain AppData or XDATA, and ends with
+            """A subclass does NOT contain AppData or XDATA, and ends with
             SUBCLASS_MARKER, XDATA_MARKER or EMBEDDED_OBJ_MARKER.
             """
             # All subclasses begin with (100, subclass name)
@@ -213,28 +215,28 @@ class ExtendedTags:
             return NONE_TAG
 
         def collect_app_data(starttag: DXFTag) -> None:
-            """ AppData can't contain XDATA or subclasses.
+            """AppData can't contain XDATA or subclasses.
 
             AppData can only appear in the first unnamed subclass
             """
             data = Tags([starttag])
             # Alternative closing tag 'APPID}':
-            closing_strings = ('}', starttag.value[1:] + '}')
+            closing_strings = ("}", starttag.value[1:] + "}")
             while True:
                 try:
                     tag = next(tags)
                 except StopIteration:
                     raise DXFStructureError(
-                        "Missing closing (102, '}') tag in appdata structure.")
+                        "Missing closing (102, '}') tag in appdata structure."
+                    )
                 data.append(tag)
-                if (tag.code == APP_DATA_MARKER) and \
-                        (tag.value in closing_strings):
+                if (tag.code == APP_DATA_MARKER) and (tag.value in closing_strings):
                     break
                     # Other (102, ) tags are treated as usual DXF tags.
             self.appdata.append(data)
 
         def collect_xdata(starttag: DXFTag) -> DXFTag:
-            """ XDATA is always at the end of the entity even if an embedded
+            """XDATA is always at the end of the entity even if an embedded
             object is present and can not contain AppData or subclasses.
 
             """
@@ -253,7 +255,7 @@ class ExtendedTags:
             return NONE_TAG
 
         def collect_embedded_object(starttag: DXFTag) -> DXFTag:
-            """ Since AutoCAD 2018, DXF entities can contain embedded objects
+            """Since AutoCAD 2018, DXF entities can contain embedded objects
             starting with a (101, 'Embedded Object') tag.
 
             All embedded object data is collected in a simple Tags() object,
@@ -277,8 +279,7 @@ class ExtendedTags:
             try:
                 while True:
                     tag = next(tags)
-                    if is_embedded_object_marker(tag) or \
-                            tag.code == XDATA_MARKER:
+                    if is_embedded_object_marker(tag) or tag.code == XDATA_MARKER:
                         # Another embedded object found: maybe in the future
                         # DXF entities can contain more than one embedded
                         # object.
@@ -304,8 +305,7 @@ class ExtendedTags:
             tag = collect_xdata(tag)
 
         if tag is not NONE_TAG:
-            raise DXFStructureError(
-                "Unexpected tag '%r' at end of entity." % tag)
+            raise DXFStructureError("Unexpected tag '%r' at end of entity." % tag)
 
     def __iter__(self) -> Iterator[DXFTag]:
         for subclass in self.subclasses:
@@ -319,7 +319,7 @@ class ExtendedTags:
             yield from chain.from_iterable(self.embedded_objects)
 
     def get_subclass(self, name: str, pos: int = 0) -> Tags:
-        """ Get subclass `name`.
+        """Get subclass `name`.
 
         Args:
             name: subclass name as string like "AcDbEntity"
@@ -336,23 +336,23 @@ class ExtendedTags:
         raise DXFKeyError(f'Subclass "{name}" does not exist.')
 
     def has_xdata(self, appid: str) -> bool:
-        """ ``True`` if has XDATA for `appid`. """
+        """``True`` if has XDATA for `appid`."""
         return any(xdata[0].value == appid for xdata in self.xdata)
 
     def get_xdata(self, appid: str) -> Tags:
-        """ Returns XDATA for `appid` as :class:`Tags`. """
+        """Returns XDATA for `appid` as :class:`Tags`."""
         for xdata in self.xdata:
             if xdata[0].value == appid:
                 return xdata
         raise DXFValueError(f'No extended data for APPID "{appid}".')
 
-    def set_xdata(self, appid: str, tags: 'IterableTags') -> None:
-        """ Set `tags` as XDATA for `appid`. """
+    def set_xdata(self, appid: str, tags: "IterableTags") -> None:
+        """Set `tags` as XDATA for `appid`."""
         xdata = self.get_xdata(appid)
         xdata[1:] = tuples_to_tags(tags)
 
-    def new_xdata(self, appid: str, tags: 'IterableTags' = None) -> Tags:
-        """ Append a new XDATA block.
+    def new_xdata(self, appid: str, tags: "IterableTags" = None) -> Tags:
+        """Append a new XDATA block.
 
         Assumes that no XDATA block with the same `appid` already exist::
 
@@ -368,33 +368,32 @@ class ExtendedTags:
         return xtags
 
     def has_app_data(self, appid: str) -> bool:
-        """ ``True`` if has application defined data for `appid`. """
+        """``True`` if has application defined data for `appid`."""
         return any(appdata[0].value == appid for appdata in self.appdata)
 
     def get_app_data(self, appid: str) -> Tags:
-        """ Returns application defined data for `appid` as :class:`Tags`
-        including marker tags. """
+        """Returns application defined data for `appid` as :class:`Tags`
+        including marker tags."""
         for appdata in self.appdata:
             if appdata[0].value == appid:
                 return appdata
-        raise DXFValueError(f'Application defined group "{appid}"'
-                            f' does not exist.')
+        raise DXFValueError(f'Application defined group "{appid}" does not exist.')
 
     def get_app_data_content(self, appid: str) -> Tags:
-        """ Returns application defined data for `appid` as :class:`Tags`
+        """Returns application defined data for `appid` as :class:`Tags`
         without first and last marker tag.
         """
         return Tags(self.get_app_data(appid)[1:-1])
 
-    def set_app_data_content(self, appid: str, tags: 'IterableTags') -> None:
-        """ Set application defined data for `appid` for already exiting data.
-        """
+    def set_app_data_content(self, appid: str, tags: "IterableTags") -> None:
+        """Set application defined data for `appid` for already exiting data."""
         app_data = self.get_app_data(appid)
         app_data[1:-1] = tuples_to_tags(tags)
 
-    def new_app_data(self, appid: str, tags: 'IterableTags' = None,
-                     subclass_name: str = None) -> Tags:
-        """ Append a new application defined data to subclass `subclass_name`.
+    def new_app_data(
+        self, appid: str, tags: "IterableTags" = None, subclass_name: str = None
+    ) -> Tags:
+        """Append a new application defined data to subclass `subclass_name`.
 
         Assumes that no app data block with the same `appid` already exist::
 
@@ -404,13 +403,15 @@ class ExtendedTags:
                 app_data = tags.new_app_data('{ACAD_REACTORS', tags)
 
         """
-        if not appid.startswith('{'):
+        if not appid.startswith("{"):
             raise DXFValueError("Appid has to start with '{'.")
 
-        app_tags = Tags([
-            DXFTag(APP_DATA_MARKER, appid),
-            DXFTag(APP_DATA_MARKER, '}'),
-        ])
+        app_tags = Tags(
+            [
+                DXFTag(APP_DATA_MARKER, appid),
+                DXFTag(APP_DATA_MARKER, "}"),
+            ]
+        )
         if tags is not None:
             app_tags[1:1] = tuples_to_tags(tags)
 
@@ -425,6 +426,6 @@ class ExtendedTags:
         return app_tags
 
     @classmethod
-    def from_text(cls, text: str, legacy=False) -> 'ExtendedTags':
-        """ Create :class:`ExtendedTags` from DXF text. """
+    def from_text(cls, text: str, legacy=False) -> "ExtendedTags":
+        """Create :class:`ExtendedTags` from DXF text."""
         return cls(internal_tag_compiler(text), legacy=legacy)
