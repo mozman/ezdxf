@@ -12,8 +12,7 @@ win32 = "win32"
 
 def test_rebuild_system_fonts():
     mpl_fs._font_manager = None
-    mpl_fs.rebuild_system_fonts()
-    assert mpl_fs._font_manager is not None
+    assert mpl_fs._get_font_manager() is not None
 
 
 @pytest.mark.skipif(sys.platform != win32,
