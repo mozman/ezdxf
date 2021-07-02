@@ -4,7 +4,7 @@
 # Download-URL: http://code.google.com/p/gameobjects/downloads/list
 # Copyright (c) 2010-2021 Manfred Moitzi
 # License: MIT License
-from typing import Sequence, Iterable, List, Tuple, TYPE_CHECKING
+from typing import Sequence, Iterable, List, Tuple, TYPE_CHECKING, Iterator
 import math
 from math import sin, cos, tan
 from itertools import chain
@@ -211,9 +211,9 @@ class Matrix44:
         uy = self.uy.normalize()
         uz = self.uz.normalize()
         return (
-            math.isclose(ux.dot(uy), 0.0, abs_tol=1e-9)
-            and math.isclose(ux.dot(uz), 0.0, abs_tol=1e-9)
-            and math.isclose(uy.dot(uz), 0.0, abs_tol=1e-9)
+            abs(ux.dot(uy)) <= 1e-9
+            and abs(ux.dot(uz)) <= 1e-9
+            and abs(uy.dot(uz)) <= 1e-9
         )
 
     @classmethod
@@ -479,7 +479,7 @@ class Matrix44:
         else:
             raise IndexError(f"index out of range: {index}")
 
-    def __iter__(self) -> Iterable[float]:
+    def __iter__(self) -> Iterator[float]:
         """Iterates over all matrix values."""
         return iter(self._matrix)
 

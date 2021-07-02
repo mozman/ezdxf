@@ -1,6 +1,6 @@
 # Copyright (c) 2018-2021, Manfred Moitzi
 # License: MIT License
-from typing import Tuple, List, Any, Iterable, Sequence, TYPE_CHECKING
+from typing import Tuple, List, Any, Iterable, Sequence, TYPE_CHECKING, Iterator
 from functools import partial
 import math
 import random
@@ -236,7 +236,7 @@ class Vec3:
         else:
             raise IndexError(f"invalid index {index}")
 
-    def __iter__(self) -> Iterable[float]:
+    def __iter__(self) -> Iterator[float]:
         """Returns iterable of x-, y- and z-axis."""
         yield self._x
         yield self._y
@@ -662,7 +662,7 @@ class Vec2:
         else:
             raise IndexError(f"invalid index {index}")
 
-    def __iter__(self) -> Iterable[float]:
+    def __iter__(self) -> Iterator[float]:
         yield self.x
         yield self.y
 

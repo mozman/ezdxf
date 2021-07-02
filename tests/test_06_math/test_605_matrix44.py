@@ -171,6 +171,12 @@ class TestMatrix44:
         with pytest.raises(IndexError):
             m44().set_col(4, (0,))
 
+    def test_is_orthogonal(self, m44):
+        assert m44().is_orthogonal is True
+
+    def test_is_cartesian(self, m44):
+        assert m44().is_cartesian is True
+
     def test_translate(self, m44):
         t = m44.translate(10, 20, 30)
         x = diag((1., 1., 1., 1.), m44)
