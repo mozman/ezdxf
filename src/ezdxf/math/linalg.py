@@ -1,6 +1,6 @@
 # Copyright (c) 2018-2021 Manfred Moitzi
 # License: MIT License
-from typing import Iterable, Tuple, List, Sequence, Union, Any
+from typing import Iterable, Tuple, List, Sequence, Union, Any, Optional
 from functools import lru_cache
 from itertools import repeat
 import math
@@ -46,7 +46,7 @@ def freeze_matrix(A: Union[MatrixData, "Matrix"]) -> "Matrix":
     if isinstance(A, Matrix):
         A = A.matrix
     m = Matrix()
-    m.matrix = tuple(tuple(float(v) for v in row) for row in A)
+    m.matrix = tuple(tuple(float(v) for v in row) for row in A)  # type: ignore
     return m
 
 
@@ -96,7 +96,7 @@ class Matrix:
     def __init__(
         self, items: Any = None, shape: Shape = None, matrix: MatrixData = None
     ):
-        self.matrix: MatrixData = matrix
+        self.matrix: MatrixData = matrix  # type: ignore
         self.abs_tol: float = 1e-12
         if items is None:
             if shape is not None:
@@ -106,13 +106,13 @@ class Matrix:
         elif isinstance(items, Matrix):
             if shape is None:
                 shape = items.shape
-            self.matrix = Matrix.reshape(items, shape=shape).matrix
+            self.matrix = Matrix.reshape(items, shape=shape).matrix  # type: ignore
         else:
             items = list(items)
             try:
                 self.matrix = [list(row) for row in items]
             except TypeError:
-                self.matrix = Matrix.reshape(items, shape).matrix
+                self.matrix = Matrix.reshape(items, shape).matrix  # type: ignore
 
     def __iter__(self) -> Iterable[float]:
         for row in self.matrix:
@@ -208,7 +208,7 @@ class Matrix:
         return [self.col(i) for i in range(self.ncols)]
 
     def set_row(
-        self, index: int, items: Union[float, Iterable[float]] = 1.0
+        self, index: int, items: Union[float, Sequence[float]] = 1.0
     ) -> None:
         """Set row values to a fixed value or from an iterable of floats."""
         if isinstance(items, (float, int)):
@@ -216,7 +216,7 @@ class Matrix:
 
         if len(items) != self.ncols:
             raise ValueError("Invalid item count")
-        self.matrix[index] = items
+        self.matrix[index] = list(items)
 
     def set_col(
         self, index: int, items: Union[float, Iterable[float]] = 1.0
@@ -267,7 +267,7 @@ class Matrix:
         if self.matrix is None:
             self.matrix = [list(items)]
         elif len(items) == self.ncols:
-            self.matrix.append(items)
+            self.matrix.append(list(items))
         else:
             raise ValueError("Invalid item count.")
 
