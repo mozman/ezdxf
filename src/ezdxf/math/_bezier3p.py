@@ -37,7 +37,10 @@ class Bezier3P:
         if len(defpoints) == 3:
             is3d = any(len(p) > 2 for p in defpoints)
             vector_class = Vec3 if is3d else Vec2
-            self._control_points = vector_class.tuple(defpoints)
+            # mypy error:
+            # ezdxf\math\_bezier3p.py:41: error: "type" has no attribute "tuple"
+            # Vec3 and Vec2 have a class method .tuple()
+            self._control_points = vector_class.tuple(defpoints)  # type: ignore
         else:
             raise ValueError("Three control points required.")
 
