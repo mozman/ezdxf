@@ -11,15 +11,21 @@ import bisect
 from ._vector import Vec3, NULLVEC
 from .linalg import binomial_coefficient
 
-__all__ = ['Basis', 'Evaluator']
+__all__ = ["Basis", "Evaluator"]
 
 
 class Basis:
-    """ Immutable Basis function class. """
-    __slots__ = ('_knots', '_weights', '_order', '_count')
+    """Immutable Basis function class."""
 
-    def __init__(self, knots: Iterable[float], order: int, count: int,
-                 weights: Sequence[float] = None):
+    __slots__ = ("_knots", "_weights", "_order", "_count")
+
+    def __init__(
+        self,
+        knots: Iterable[float],
+        order: int,
+        count: int,
+        weights: Sequence[float] = None,
+    ):
         self._knots = tuple(knots)
         self._weights = tuple(weights or [])
         self._order: int = int(order)
@@ -28,9 +34,9 @@ class Basis:
         # validation checks:
         len_weights = len(self._weights)
         if len_weights != 0 and len_weights != self._count:
-            raise ValueError('invalid weight count')
+            raise ValueError("invalid weight count")
         if len(self._knots) != self._order + self._count:
-            raise ValueError('invalid knot count')
+            raise ValueError("invalid knot count")
 
     @property
     def max_t(self) -> float:
@@ -54,11 +60,11 @@ class Basis:
 
     @property
     def is_rational(self) -> bool:
-        """ Returns ``True`` if curve is a rational B-spline. (has weights) """
+        """Returns ``True`` if curve is a rational B-spline. (has weights)"""
         return bool(self._weights)
 
     def basis_vector(self, t: float) -> List[float]:
-        """ Returns the expanded basis vector. """
+        """Returns the expanded basis vector."""
         span = self.find_span(t)
         p = self._order - 1
         front = span - p
@@ -67,7 +73,7 @@ class Basis:
         return ([0.0] * front) + basis + ([0.0] * back)
 
     def find_span(self, u: float) -> int:
-        """ Determine the knot span index. """
+        """Determine the knot span index."""
         # Linear search is more reliable than binary search of the Algorithm A2.1
         # from The NURBS Book by Piegl & Tiller.
         knots = self._knots
@@ -112,7 +118,7 @@ class Basis:
 
     def span_weighting(self, nbasis: List[float], span: int) -> List[float]:
         size = len(nbasis)
-        weights = self._weights[span - self._order + 1: span + 1]
+        weights = self._weights[span - self._order + 1 : span + 1]
         products = [nb * w for nb, w in zip(nbasis, weights)]
         s = sum(products)
         return [0.0] * size if s == 0.0 else [p / s for p in products]
@@ -172,10 +178,10 @@ class Basis:
                     j2 = p - r
                 for j in range(j1, j2 + 1):
                     a[s2][j] = (a[s1][j] - a[s1][j - 1]) / ndu[pk + 1][rk + j]
-                    d += (a[s2][j] * ndu[rk + j][pk])
+                    d += a[s2][j] * ndu[rk + j][pk]
                 if r <= pk:
                     a[s2][k] = -a[s1][k - 1] / ndu[pk + 1][r]
-                    d += (a[s2][k] * ndu[r][pk])
+                    d += a[s2][k] * ndu[r][pk]
                 derivatives[k][r] = d
 
                 # Switch rows
@@ -186,13 +192,14 @@ class Basis:
         for k in range(1, n + 1):
             for j in range(order):
                 derivatives[k][j] *= r
-            r *= (p - k)
-        return derivatives[:n + 1]
+            r *= p - k
+        return derivatives[: n + 1]
 
 
 class Evaluator:
-    """ B-spline curve point and curve derivative evaluator. """
-    __slots__ = ['_basis', '_control_points']
+    """B-spline curve point and curve derivative evaluator."""
+
+    __slots__ = ["_basis", "_control_points"]
 
     def __init__(self, basis: Basis, control_points: Sequence[Vec3]):
         self._basis = basis
@@ -209,14 +216,15 @@ class Evaluator:
         span = basis.find_span(u)
         N = basis.basis_funcs(span, u)
         return Vec3.sum(
-            N[i] * control_points[span - p + i] for i in range(p + 1))
+            N[i] * control_points[span - p + i] for i in range(p + 1)
+        )
 
     def points(self, t: Iterable[float]) -> Iterable[Vec3]:
         for u in t:
             yield self.point(u)
 
     def derivative(self, u: float, n: int = 1) -> List[Vec3]:
-        """ Return point and derivatives up to n <= degree for parameter u. """
+        """Return point and derivatives up to n <= degree for parameter u."""
         # Source: The NURBS Book: Algorithm A3.2
         basis = self._basis
         control_points = self._control_points
@@ -255,12 +263,14 @@ class Evaluator:
             CK = [
                 Vec3.sum(
                     basis_funcs_ders[k][j] * control_points[span - p + j]
-                    for j in range(p + 1))
+                    for j in range(p + 1)
+                )
                 for k in range(n + 1)
             ]
         return CK
 
     def derivatives(
-            self, t: Iterable[float], n: int = 1) -> Iterable[List[Vec3]]:
+        self, t: Iterable[float], n: int = 1
+    ) -> Iterable[List[Vec3]]:
         for u in t:
             yield self.derivative(u, n)

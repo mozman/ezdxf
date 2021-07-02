@@ -2,6 +2,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Sequence, Optional, Tuple
 import math
+
 # The pure Python implementation can't import from ._ctypes or ezdxf.math!
 from ._vector import Vec2, Vec3
 
@@ -10,8 +11,8 @@ if TYPE_CHECKING:
 TOLERANCE = 1e-10
 
 
-def has_clockwise_orientation(vertices: Iterable['Vertex']) -> bool:
-    """ Returns True if 2D `vertices` have clockwise orientation. Ignores
+def has_clockwise_orientation(vertices: Iterable["Vertex"]) -> bool:
+    """Returns True if 2D `vertices` have clockwise orientation. Ignores
     z-axis of all vertices.
 
     Args:
@@ -23,23 +24,27 @@ def has_clockwise_orientation(vertices: Iterable['Vertex']) -> bool:
     """
     vertices = Vec2.list(vertices)
     if len(vertices) < 3:
-        raise ValueError('At least 3 vertices required.')
+        raise ValueError("At least 3 vertices required.")
 
     # Close polygon:
     if not vertices[0].isclose(vertices[-1]):
         vertices.append(vertices[0])
 
-    return sum(
-        (p2.x - p1.x) * (p2.y + p1.y)
-        for p1, p2 in zip(vertices, vertices[1:])
-    ) > 0
+    return (
+        sum(
+            (p2.x - p1.x) * (p2.y + p1.y)
+            for p1, p2 in zip(vertices, vertices[1:])
+        )
+        > 0
+    )
 
 
 def intersection_line_line_2d(
-        line1: Sequence[Vec2],
-        line2: Sequence[Vec2],
-        virtual=True,
-        abs_tol=TOLERANCE) -> Optional[Vec2]:
+    line1: Sequence[Vec2],
+    line2: Sequence[Vec2],
+    virtual=True,
+    abs_tol=TOLERANCE,
+) -> Optional[Vec2]:
     """
     Compute the intersection of two lines in the xy-plane.
 
@@ -121,19 +126,24 @@ def intersection_line_line_2d(
 
 
 def _determinant(v1, v2, v3) -> float:
-    """ Returns determinant. """
+    """Returns determinant."""
     e11, e12, e13 = v1
     e21, e22, e23 = v2
     e31, e32, e33 = v3
 
-    return e11 * e22 * e33 + e12 * e23 * e31 + \
-           e13 * e21 * e32 - e13 * e22 * e31 - \
-           e11 * e23 * e32 - e12 * e21 * e33
+    return (
+        e11 * e22 * e33
+        + e12 * e23 * e31
+        + e13 * e21 * e32
+        - e13 * e22 * e31
+        - e11 * e23 * e32
+        - e12 * e21 * e33
+    )
 
 
-def intersection_ray_ray_3d(ray1: Tuple[Vec3, Vec3],
-                            ray2: Tuple[Vec3, Vec3],
-                            abs_tol=TOLERANCE) -> Sequence[Vec3]:
+def intersection_ray_ray_3d(
+    ray1: Tuple[Vec3, Vec3], ray2: Tuple[Vec3, Vec3], abs_tol=TOLERANCE
+) -> Sequence[Vec3]:
     """
     Calculate intersection of two 3D rays, returns a 0-tuple for parallel rays,
     a 1-tuple for intersecting rays and a 2-tuple for not intersecting and not
@@ -171,7 +181,7 @@ def intersection_ray_ray_3d(ray1: Tuple[Vec3, Vec3],
 
 
 def arc_angle_span_deg(start: float, end: float) -> float:
-    """ Returns the counter clockwise angle span from `start` to `end` in degrees.
+    """Returns the counter clockwise angle span from `start` to `end` in degrees.
 
     Returns the angle span in the range of [0, 360], 360 is a full circle.
     Full circle handling is a special case, because normalization of angles
