@@ -2,6 +2,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Union, Sequence
 import math
+
 # The pure Python implementation can't import from ._ctypes or ezdxf.math!
 from ._vector import Vec3, Vec2
 from ._matrix44 import Matrix44
@@ -9,16 +10,16 @@ from ._matrix44 import Matrix44
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
-__all__ = ['Bezier3P']
+__all__ = ["Bezier3P"]
 
 
-def check_if_in_valid_range(t: float):
-    if not (0 <= t <= 1.):
+def check_if_in_valid_range(t: float) -> None:
+    if not (0 <= t <= 1.0):
         raise ValueError("t not in range [0 to 1]")
 
 
 class Bezier3P:
-    """ Implements an optimized quadratic `Bézier curve`_ for exact 3 control
+    """Implements an optimized quadratic `Bézier curve`_ for exact 3 control
     points.
 
     Special behavior:
@@ -33,7 +34,7 @@ class Bezier3P:
 
     """
 
-    def __init__(self, defpoints: Sequence['Vertex']):
+    def __init__(self, defpoints: Sequence["Vertex"]):
         if len(defpoints) == 3:
             is3d = any(len(p) > 2 for p in defpoints)
             vector_class = Vec3 if is3d else Vec2
@@ -46,13 +47,13 @@ class Bezier3P:
 
     @property
     def control_points(self) -> Sequence[Union[Vec3, Vec2]]:
-        """ Control points as tuple of :class:`~ezdxf.math.Vec3` or
+        """Control points as tuple of :class:`~ezdxf.math.Vec3` or
         :class:`~ezdxf.math.Vec2` objects.
         """
         return self._control_points
 
     def tangent(self, t: float) -> Union[Vec3, Vec2]:
-        """ Returns direction vector of tangent for location `t` at the
+        """Returns direction vector of tangent for location `t` at the
         Bèzier-curve.
 
         Args:
@@ -63,7 +64,7 @@ class Bezier3P:
         return self._get_curve_tangent(t)
 
     def point(self, t: float) -> Union[Vec3, Vec2]:
-        """ Returns point for location `t`` at the Bèzier-curve.
+        """Returns point for location `t`` at the Bèzier-curve.
 
         Args:
             t: curve position in the range ``[0, 1]``
@@ -73,7 +74,7 @@ class Bezier3P:
         return self._get_curve_point(t)
 
     def approximate(self, segments: int) -> Iterable[Union[Vec3, Vec2]]:
-        """ Approximate `Bézier curve`_ by vertices, yields `segments` + 1
+        """Approximate `Bézier curve`_ by vertices, yields `segments` + 1
         vertices as ``(x, y[, z])`` tuples.
 
         Args:
@@ -82,17 +83,17 @@ class Bezier3P:
         """
         if segments < 1:
             raise ValueError(segments)
-        delta_t = 1. / segments
+        delta_t = 1.0 / segments
         yield self._control_points[0]
         for segment in range(1, segments):
             yield self._get_curve_point(delta_t * segment)
         yield self._control_points[2]
 
     def approximated_length(self, segments: int = 128) -> float:
-        """ Returns estimated length of Bèzier-curve as approximation by line
+        """Returns estimated length of Bèzier-curve as approximation by line
         `segments`.
         """
-        length = 0.
+        length = 0.0
         prev_point = None
         for point in self.approximate(segments):
             if prev_point is not None:
@@ -100,9 +101,10 @@ class Bezier3P:
             prev_point = point
         return length
 
-    def flattening(self, distance: float,
-                   segments: int = 4) -> Iterable[Union[Vec3, Vec2]]:
-        """ Adaptive recursive flattening. The argument `segments` is the
+    def flattening(
+        self, distance: float, segments: int = 4
+    ) -> Iterable[Union[Vec3, Vec2]]:
+        """Adaptive recursive flattening. The argument `segments` is the
         minimum count of approximation segments, if the distance from the center
         of the approximation segment to the curve is bigger than `distance` the
         segment will be subdivided.
@@ -158,12 +160,12 @@ class Bezier3P:
         c = 2.0 * t
         return p0 * a + p1 * b + p2 * c
 
-    def reverse(self) -> 'Bezier3P':
-        """ Returns a new Bèzier-curve with reversed control point order. """
+    def reverse(self) -> "Bezier3P":
+        """Returns a new Bèzier-curve with reversed control point order."""
         return Bezier3P(list(reversed(self.control_points)))
 
-    def transform(self, m: Matrix44) -> 'Bezier3P':
-        """ General transformation interface, returns a new :class:`Bezier3P`
+    def transform(self, m: Matrix44) -> "Bezier3P":
+        """General transformation interface, returns a new :class:`Bezier3P`
         curve and it is always a 3D curve.
 
         Args:
