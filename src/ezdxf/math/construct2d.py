@@ -64,12 +64,12 @@ def linspace(
         yield start
         return
 
-    start = Decimal(start)
+    start_dec = Decimal(start)
     count = (num - 1) if endpoint else num
-    delta = (Decimal(stop) - start) / count
+    delta = (Decimal(stop) - start_dec) / count
     for _ in range(num):
-        yield float(start)
-        start += delta
+        yield float(start_dec)
+        start_dec += delta
 
 
 def sign(f: float) -> float:
@@ -336,18 +336,18 @@ def area(vertices: Iterable["Vertex"]) -> float:
     """Returns the area of a polygon, returns the projected area in the
     xy-plane for 3D vertices.
     """
-    vertices = Vec3.list(vertices)
-    if len(vertices) < 3:
+    _vertices = Vec3.list(vertices)
+    if len(_vertices) < 3:
         raise ValueError("At least 3 vertices required.")
 
     # Close polygon:
-    if not vertices[0].isclose(vertices[-1]):
-        vertices.append(vertices[0])
+    if not _vertices[0].isclose(_vertices[-1]):
+        _vertices.append(_vertices[0])
 
     return abs(
         sum(
             (p1.x * p2.y - p1.y * p2.x)
-            for p1, p2 in zip(vertices, vertices[1:])
+            for p1, p2 in zip(_vertices, _vertices[1:])
         )
         / 2
     )
