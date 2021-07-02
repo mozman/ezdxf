@@ -41,11 +41,11 @@ def clip_polygon_2d(
     """
 
     def polygon(vertices: Iterable["Vertex"]) -> List[Vec2]:
-        vertices = Vec2.list(vertices)
-        if len(vertices) > 1:
-            if vertices[0].isclose(vertices[-1]):
-                vertices.pop()
-        return vertices
+        _vertices = Vec2.list(vertices)
+        if len(_vertices) > 1:
+            if _vertices[0].isclose(_vertices[-1]):
+                _vertices.pop()
+        return _vertices
 
     def is_inside(point: Vec2) -> bool:
         return (
