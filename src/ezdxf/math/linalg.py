@@ -300,7 +300,7 @@ class Matrix:
         a faster linear equation solver.
 
         """
-        return LUDecomposition(self)
+        return LUDecomposition(self.matrix)
 
     def __getitem__(self, item: Tuple[int, int]) -> float:
         """Get value by (row, col) index tuple, fancy slicing as known from
@@ -318,7 +318,7 @@ class Matrix:
         row, col = item
         self.matrix[row][col] = value
 
-    def __eq__(self, other: "Matrix") -> bool:
+    def __eq__(self, other: object) -> bool:
         """Returns ``True`` if matrices are equal, tolerance value for
         comparison is adjustable by the attribute :attr:`Matrix.abs_tol`.
 
@@ -361,7 +361,7 @@ class Matrix:
         """Matrix addition by another matrix or a float, returns a new matrix."""
         if isinstance(other, Matrix):
             matrix = Matrix.reshape(
-                [a + b for a, b in zip(self, other)], shape=self.shape
+                [a + b for a, b in zip(self, other)], shape=self.shape  # type: ignore
             )
         else:
             value = float(other)
@@ -379,7 +379,7 @@ class Matrix:
         """
         if isinstance(other, Matrix):
             matrix = Matrix.reshape(
-                [a - b for a, b in zip(self, other)], shape=self.shape
+                [a - b for a, b in zip(self, other)], shape=self.shape  # type: ignore
             )
         else:
             value = float(other)
@@ -400,16 +400,16 @@ class Matrix:
             raise TypeError("Inverse of non-square matrix not supported.")
 
         if self.nrows > 10:
-            return LUDecomposition(self).inverse()
+            return LUDecomposition(self.matrix).inverse()
         else:  # faster for small matrices
-            return gauss_jordan_inverse(self)
+            return gauss_jordan_inverse(self.matrix)
 
     def determinant(self) -> float:
         """Returns determinant of matrix, raises :class:`ZeroDivisionError`
         if matrix is singular.
 
         """
-        return LUDecomposition(self).determinant()
+        return LUDecomposition(self.matrix).determinant()
 
 
 def quadratic_equation(a: float, b: float, c: float) -> Tuple[float, float]:
@@ -635,8 +635,8 @@ def gauss_jordan_solver(
         irow = row_indices[i]
         icol = col_indices[i]
         if irow != icol:
-            for row in A:
-                row[irow], row[icol] = row[icol], row[irow]
+            for _row in A:
+                _row[irow], _row[icol] = _row[icol], _row[irow]
     return Matrix(matrix=A), Matrix(matrix=B)
 
 
@@ -785,7 +785,8 @@ class LUDecomposition:
 
         """
         if not isinstance(B, Matrix):
-            B = Matrix(matrix=[list(row) for row in B])
+            B = Matrix(matrix=[list(row) for row in B])  # type: ignore
+        assert isinstance(B, Matrix)
         if B.nrows != self.nrows:
             raise ValueError("Row count of self and matrix B has to match.")
 
@@ -799,7 +800,7 @@ class LUDecomposition:
 
         """
         return self.solve_matrix(
-            Matrix.identity(shape=(self.nrows, self.nrows))
+            Matrix.identity(shape=(self.nrows, self.nrows)).matrix
         )
 
     def determinant(self) -> float:
@@ -883,7 +884,8 @@ def tridiagonal_matrix_solver(
     """
     a, b, c = [list(v) for v in A]
     if not isinstance(B, Matrix):
-        B = Matrix(matrix=[list(row) for row in B])
+        B = Matrix(matrix=[list(row) for row in B])  # type: ignore
+    assert isinstance(B, Matrix)
     if B.nrows != len(b):
         raise ValueError("Row count of matrices A and B has to match.")
 
@@ -1125,7 +1127,8 @@ class BandedMatrixLU:
 
         """
         if not isinstance(B, Matrix):
-            B = Matrix(matrix=[list(row) for row in B])
+            B = Matrix(matrix=[list(row) for row in B])  # type: ignore
+        assert isinstance(B, Matrix)
         if B.nrows != self.nrows:
             raise ValueError("Row count of self and matrix B has to match.")
 
