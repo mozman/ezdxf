@@ -154,13 +154,13 @@ def fit_points_to_cad_cv(
         raise ValueError("two ore more points required ")
     m1, m2 = estimate_end_tangent_magnitude(points, method="chord")
     if tangents is None:
-        tangents = estimate_tangents(points, method=estimate, normalize=False)
-        start_tangent = tangents[0].normalize(m1)
-        end_tangent = tangents[-1].normalize(m2)
+        t = estimate_tangents(points, method=estimate, normalize=False)
+        start_tangent = t[0].normalize(m1)
+        end_tangent = t[-1].normalize(m2)
     else:
-        tangents = Vec3.list(tangents)
-        start_tangent = Vec3(tangents[0]).normalize(m1)
-        end_tangent = Vec3(tangents[-1]).normalize(m2)
+        t = Vec3.list(tangents)
+        start_tangent = t[0].normalize(m1)
+        end_tangent = t[-1].normalize(m2)
 
     return global_bspline_interpolation(
         points,
@@ -237,9 +237,9 @@ def global_bspline_interpolation(
         :class:`BSpline`
 
     """
-    fit_points = Vec3.list(fit_points)
-    count = len(fit_points)
-    order = degree + 1
+    _fit_points = Vec3.list(fit_points)
+    count = len(_fit_points)
+    order: int = degree + 1
 
     if tangents:
         # two control points for tangents will be added
@@ -247,26 +247,26 @@ def global_bspline_interpolation(
     if order > count and tangents is None:
         raise ValueError(f"More fit points required for degree {degree}")
 
-    t_vector = list(create_t_vector(fit_points, method))
+    t_vector = list(create_t_vector(_fit_points, method))
     # natural knot generation for uneven degrees else averaged
     knot_generation_method = "natural" if degree % 2 else "average"
     if tangents is not None:
-        tangents = Vec3.list(tangents)
-        if len(tangents) == 2:
+        _tangents = Vec3.list(tangents)
+        if len(_tangents) == 2:
             control_points, knots = global_bspline_interpolation_end_tangents(
-                fit_points,
-                tangents[0],
-                tangents[1],
+                _fit_points,
+                _tangents[0],
+                _tangents[1],
                 degree,
                 t_vector,
                 knot_generation_method,
             )
-        elif len(tangents) == len(fit_points):
+        elif len(_tangents) == len(_fit_points):
             (
                 control_points,
                 knots,
             ) = global_bspline_interpolation_first_derivatives(
-                fit_points, tangents, degree, t_vector
+                _fit_points, _tangents, degree, t_vector
             )
         else:
             raise ValueError(
@@ -275,7 +275,7 @@ def global_bspline_interpolation(
             )
     else:
         control_points, knots = unconstrained_global_bspline_interpolation(
-            fit_points, degree, t_vector, knot_generation_method
+            _fit_points, degree, t_vector, knot_generation_method
         )
     bspline = BSpline(control_points, order=order, knots=knots)
     return bspline
@@ -312,13 +312,13 @@ def local_cubic_bspline_interpolation(
     """
     from .parametrize import estimate_tangents
 
-    fit_points = Vec3.list(fit_points)
+    _fit_points = Vec3.list(fit_points)
     if tangents:
-        tangents = Vec3.list(tangents)
+        _tangents = Vec3.list(tangents)
     else:
-        tangents = estimate_tangents(fit_points, method)
+        _tangents = estimate_tangents(_fit_points, method)
     control_points, knots = local_cubic_bspline_interpolation_from_tangents(
-        fit_points, tangents
+        _fit_points, _tangents
     )
     return BSpline(control_points, order=4, knots=knots)
 
@@ -609,7 +609,7 @@ def _get_best_solver(matrix: Union[List, Matrix], degree: int):
     else:
         limit = USE_BANDED_MATRIX_SOLVER_CPYTHON_LIMIT
     if A.nrows < limit:  # use default equation solver
-        lu = LUDecomposition(A)
+        return LUDecomposition(A.matrix)
     else:
         # Theory: band parameters m1, m2 are at maximum degree-1, for
         # B-spline interpolation and approximation:
@@ -617,8 +617,7 @@ def _get_best_solver(matrix: Union[List, Matrix], degree: int):
         # But the speed gain is not that big and just to be sure:
         m1, m2 = detect_banded_matrix(A, check_all=False)
         A = compact_banded_matrix(A, m1, m2)
-        lu = BandedMatrixLU(A, m1, m2)
-    return lu
+        return BandedMatrixLU(A, m1, m2)
 
 
 def unconstrained_global_bspline_interpolation(
@@ -761,7 +760,7 @@ def global_bspline_interpolation_first_derivatives(
     A.append([0.0] * (count - 1) + [+1.0])  # Qn
 
     # Build right handed matrix B
-    B = []
+    B: List[Vec3] = []
     for rows in zip(fit_points, derivatives):
         B.extend(rows)  # Qi, Di
 
@@ -1076,7 +1075,7 @@ class BSpline:
             lower_bound = knots[self.order - 1]
             knots = knots[: self.count + 1]
 
-        knots = list(set(knots))  # set() must preserve order!
+        knots = tuple(set(knots))  # set() must preserve order!
         t = lower_bound
         start_point = evaluator.point(t)
         yield start_point
@@ -1350,8 +1349,8 @@ def open_uniform_bspline(
         weights: iterable of weight values
 
     """
-    control_points = Vec3.tuple(control_points)
-    knots = uniform_knot_vector(len(control_points), order, normalize=False)
+    _control_points = Vec3.tuple(control_points)
+    knots = uniform_knot_vector(len(_control_points), order, normalize=False)
     return BSpline(control_points, order=order, knots=knots, weights=weights)
 
 
@@ -1371,12 +1370,12 @@ def closed_uniform_bspline(
         weights: iterable of weight values
 
     """
-    control_points = Vec3.list(control_points)
-    control_points.extend(control_points[: order - 1])
+    _control_points = Vec3.list(control_points)
+    _control_points.extend(_control_points[: order - 1])
     if weights is not None:
         weights = list(weights)
         weights.extend(weights[: order - 1])
-    return open_uniform_bspline(control_points, order, weights)
+    return open_uniform_bspline(_control_points, order, weights)
 
 
 def rational_bspline_from_arc(
