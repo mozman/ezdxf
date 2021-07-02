@@ -80,8 +80,8 @@ class ConstructionArc:
         """
         if num < 2:
             raise ValueError("num >= 2")
-        start = self.start_angle % 360
-        stop = self.end_angle % 360
+        start: float = self.start_angle % 360
+        stop: float = self.end_angle % 360
         if stop <= start:
             stop += 360
         for angle in linspace(start, stop, num=num, endpoint=True):
@@ -90,7 +90,7 @@ class ConstructionArc:
     @property
     def angle_span(self) -> float:
         """Returns angle span of arc from start- to end param."""
-        end = self.end_angle
+        end: float = self.end_angle
         if end < self.start_angle:
             end += 360.0
         return end - self.start_angle
@@ -118,17 +118,17 @@ class ConstructionArc:
         .. versionadded:: 0.15
 
         """
-        radius = abs(self.radius)
+        radius: float = abs(self.radius)
         if radius > 0:
-            start = self.start_angle
-            stop = self.end_angle
+            start: float = self.start_angle
+            stop: float = self.end_angle
             if math.isclose(start, stop):
                 return
             start %= 360
             stop %= 360
             if stop <= start:
                 stop += 360
-            angle_span = math.radians(stop - start)
+            angle_span: float = math.radians(stop - start)
             count = arc_segment_count(radius, angle_span, sagitta)
             yield from self.vertices(linspace(start, stop, count + 1))
 
@@ -142,14 +142,14 @@ class ConstructionArc:
 
         """
         for angle in a:
-            r = math.radians(angle)
+            r: float = math.radians(angle)
             yield Vec2((-math.sin(r), math.cos(r)))
 
     def main_axis_points(self):
-        center = self.center
-        radius = self.radius
-        start = math.radians(self.start_angle)
-        end = math.radians(self.end_angle)
+        center: Vec2 = self.center
+        radius: float = self.radius
+        start: float = math.radians(self.start_angle)
+        end: float = math.radians(self.end_angle)
         for angle in QUARTER_ANGLES:
             if enclosing_angles(angle, start, end):
                 yield center + Vec2.from_angle(angle, radius)
@@ -163,7 +163,7 @@ class ConstructionArc:
             dy: translation in y-axis
 
         """
-        self.center += Vec2((dx, dy))
+        self.center += Vec2(dx, dy)
         return self
 
     def scale_uniform(self, s: float) -> "ConstructionArc":
@@ -234,16 +234,16 @@ class ConstructionArc:
             raise ValueError("Angle can not be 0.")
         if ccw is False:
             start_point, end_point = end_point, start_point
-        alpha2 = angle / 2.0
-        distance = end_point.distance(start_point)
-        distance2 = distance / 2.0
-        radius = distance2 / math.sin(alpha2)
-        height = distance2 / math.tan(alpha2)
-        mid_point = end_point.lerp(start_point, factor=0.5)
+        alpha2: float = angle / 2.0
+        distance: float = end_point.distance(start_point)
+        distance2: float = distance / 2.0
+        radius: float = distance2 / math.sin(alpha2)
+        height: float = distance2 / math.tan(alpha2)
+        mid_point: Vec2 = end_point.lerp(start_point, factor=0.5)
 
-        distance_vector = end_point - start_point
-        height_vector = distance_vector.orthogonal().normalize(height)
-        center = mid_point + height_vector
+        distance_vector: Vec2 = end_point - start_point
+        height_vector: Vec2 = distance_vector.orthogonal().normalize(height)
+        center: Vec2 = mid_point + height_vector
 
         return ConstructionArc(
             center=center,
@@ -290,11 +290,11 @@ class ConstructionArc:
         if ccw is False:
             start_point, end_point = end_point, start_point
 
-        mid_point = end_point.lerp(start_point, factor=0.5)
-        distance = end_point.distance(start_point)
-        distance2 = distance / 2.0
-        height = math.sqrt(radius ** 2 - distance2 ** 2)
-        center = mid_point + (end_point - start_point).orthogonal(
+        mid_point: Vec2 = end_point.lerp(start_point, factor=0.5)
+        distance: float = end_point.distance(start_point)
+        distance2: float = distance / 2.0
+        height: float = math.sqrt(radius ** 2 - distance2 ** 2)
+        center: Vec2 = mid_point + (end_point - start_point).orthogonal(
             ccw=center_is_left
         ).normalize(height)
 
@@ -395,6 +395,6 @@ def arc_segment_count(radius: float, angle: float, sagitta: float) -> int:
             center of its chord
 
     """
-    chord_length = arc_chord_length(radius, sagitta)
-    alpha = math.asin(chord_length / 2.0 / radius) * 2.0
+    chord_length: float = arc_chord_length(radius, sagitta)
+    alpha: float = math.asin(chord_length / 2.0 / radius) * 2.0
     return math.ceil(angle / alpha)
