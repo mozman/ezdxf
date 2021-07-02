@@ -1,6 +1,6 @@
 # Copyright (c) 2019-2021, Manfred Moitzi
 # License: MIT License
-from typing import List, Sequence, TYPE_CHECKING, Iterable, Tuple
+from typing import List, Sequence, TYPE_CHECKING, Iterable
 import math
 from ezdxf.math import Vec2
 from .bbox import BoundingBox2d
@@ -8,7 +8,9 @@ from .line import ConstructionLine
 from .construct2d import point_to_line_relation
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
+    from ezdxf.math import Vertex
+
+ABS_TOL = 1e-12
 
 __all__ = ["ConstructionBox"]
 
@@ -33,11 +35,11 @@ class ConstructionBox:
         angle: float = 0,
     ):
         self._center = Vec2(center)
-        self._width = abs(width)  # type: float
-        self._height = abs(height)  # type: float
-        self._angle = angle  # type: float  # in degrees
-        self._corners = None  # type: Tuple[Vec2, Vec2, Vec2, Vec2]
-        self._tainted = True
+        self._width: float = abs(width)
+        self._height: float = abs(height)
+        self._angle: float = angle  # in degrees
+        self._corners: Sequence[Vec2] = tuple()
+        self._tainted: bool = True
 
     @classmethod
     def from_points(cls, p1: "Vertex", p2: "Vertex") -> "ConstructionBox":
@@ -51,9 +53,9 @@ class ConstructionBox:
         """
         p1 = Vec2(p1)
         p2 = Vec2(p2)
-        width = abs(p2.x - p1.x)
-        height = abs(p2.y - p1.y)
-        center = p1.lerp(p2)
+        width: float = abs(p2.x - p1.x)
+        height: float = abs(p2.y - p1.y)
+        center: Vec2 = p1.lerp(p2)
         return cls(center=center, width=width, height=height)
 
     def update(self) -> None:
@@ -175,7 +177,7 @@ class ConstructionBox:
         """Returns ``True`` if `point` is inside of box."""
         point = Vec2(point)
         delta = self.center - point
-        if math.isclose(self.angle, 0.0):  # fast path for horizontal rectangles
+        if abs(self.angle) < ABS_TOL:  # fast path for horizontal rectangles
             return abs(delta.x) <= (self._width / 2.0) and abs(delta.y) <= (
                 self._height / 2.0
             )
@@ -221,14 +223,10 @@ class ConstructionBox:
 
         t1, t2, t3, t4 = other.corners
         test_diag = ConstructionLine(t1, t3)
-        if test_diag.has_intersection(diag1) or test_diag.has_intersection(
-            diag2
-        ):
+        if test_diag.has_intersection(diag1) or test_diag.has_intersection(diag2):
             return True
         test_diag = ConstructionLine(t2, t4)
-        if test_diag.has_intersection(diag1) or test_diag.has_intersection(
-            diag2
-        ):
+        if test_diag.has_intersection(diag1) or test_diag.has_intersection(diag2):
             return True
 
         return False
