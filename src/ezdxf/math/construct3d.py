@@ -6,7 +6,7 @@ import math
 from ezdxf.math import Vec3, Vec2, Matrix44
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
+    from ezdxf.math import Vertex, AnyVec
 
 __all__ = [
     "is_planar_face",
@@ -44,7 +44,7 @@ def is_planar_face(face: Sequence[Vec3], abs_tol=1e-9) -> bool:
         return True
     first_normal = None
     for index in range(len(face) - 2):
-        a, b, c = face[index : index + 3]
+        a, b, c = face[index: index + 3]
         normal = (b - a).cross(c - b).normalize()
         if first_normal is None:
             first_normal = normal
@@ -54,8 +54,8 @@ def is_planar_face(face: Sequence[Vec3], abs_tol=1e-9) -> bool:
 
 
 def subdivide_face(
-    face: Sequence[Union[Vec3, Vec2]], quads=True
-) -> Iterable[List[Vec3]]:
+    face: Sequence["AnyVec"], quads: bool = True
+) -> Iterable[Tuple[Vec3, ...]]:
     """Yields new subdivided faces. Creates new faces from subdivided edges and
     the face midpoint by linear interpolation.
 
@@ -67,9 +67,9 @@ def subdivide_face(
     """
     if len(face) < 3:
         raise ValueError("3 or more vertices required.")
-    len_face = len(face)
+    len_face: int = len(face)
     mid_pos = Vec3.sum(face) / len_face
-    subdiv_location = [
+    subdiv_location: List[Vec3] = [
         face[i].lerp(face[(i + 1) % len_face]) for i in range(len_face)
     ]
 
@@ -84,8 +84,8 @@ def subdivide_face(
 
 
 def subdivide_ngons(
-    faces: Iterable[Sequence[Union[Vec3, Vec2]]]
-) -> Iterable[List[Vec3]]:
+    faces: Iterable[Sequence["AnyVec"]]
+) -> Iterable[Tuple[Vec3, ...]]:
     """Yields only triangles or quad faces, subdivides ngons into triangles.
 
     Args:
@@ -95,7 +95,7 @@ def subdivide_ngons(
     """
     for face in faces:
         if len(face) < 5:
-            yield face
+            yield Vec3.tuple(face)
         else:
             mid_pos = Vec3.sum(face) / len(face)
             for index, vertex in enumerate(face):
@@ -116,17 +116,17 @@ def best_fit_normal(vertices: Iterable["Vertex"]) -> Vec3:
 
     """
     # Source: https://gamemath.com/book/geomprims.html#plane_best_fit (9.5.3)
-    vertices = Vec3.list(vertices)
-    if len(vertices) < 3:
+    _vertices = Vec3.list(vertices)
+    if len(_vertices) < 3:
         raise ValueError("3 or more vertices required")
-    first = vertices[0]
-    if not first.isclose(vertices[-1]):
-        vertices.append(first)  # close polygon
+    first = _vertices[0]
+    if not first.isclose(_vertices[-1]):
+        _vertices.append(first)  # close polygon
     prev_x, prev_y, prev_z = first.xyz
     nx = 0.0
     ny = 0.0
     nz = 0.0
-    for v in vertices[1:]:
+    for v in _vertices[1:]:
         x, y, z = v.xyz
         nx += (prev_z + z) * (prev_y - y)
         ny += (prev_x + x) * (prev_z - z)
@@ -228,11 +228,10 @@ class Plane:
     def __repr__(self):
         return f"Plane({repr(self._normal)}, {self._distance_from_origin})"
 
-    def __eq__(self, other: "Plane"):
-        if isinstance(other, Plane):
-            return self.vector == other.vector
-        else:
-            raise TypeError
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Plane):
+            return NotImplemented
+        return self.vector == other.vector
 
     def signed_distance_to(self, v: Vec3) -> float:
         """Returns signed distance of vertex `v` to plane, if distance is > 0,

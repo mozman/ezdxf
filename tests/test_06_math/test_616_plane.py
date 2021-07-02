@@ -21,14 +21,6 @@ def test_equal():
     p2 = Plane.from_vector((5, 0, 0))
     assert p1 is not p2
     assert p1 == p1
-    with pytest.raises(TypeError):
-        p1 == Vec3(5, 0, 0)
-    with pytest.raises(TypeError):
-        p1 != Vec3(5, 0, 0)
-    with pytest.raises(TypeError):
-        p1 == 5
-    with pytest.raises(TypeError):
-        p1 != 5
 
 
 def test_init_form_vector():
