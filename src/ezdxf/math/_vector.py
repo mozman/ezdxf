@@ -524,7 +524,6 @@ class Vec3:
         return self.rotate(math.radians(angle))
 
 
-Vector = Vec3
 X_AXIS = Vec3(1, 0, 0)
 Y_AXIS = Vec3(0, 1, 0)
 Z_AXIS = Vec3(0, 0, 1)

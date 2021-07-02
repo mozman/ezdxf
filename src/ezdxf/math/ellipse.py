@@ -490,7 +490,7 @@ class ConstructionEllipse:
         ocs = OCS(self.extrusion)
         return self.__class__(
             center=ocs.from_wcs(self.center),
-            major_axis=ocs.from_wcs(self.major_axis).replace(z=0),
+            major_axis=ocs.from_wcs(self.major_axis).replace(z=0),  # type: ignore
             ratio=self.ratio,
             start_param=self.start_param,
             end_param=self.end_param,

@@ -11,7 +11,6 @@ __all__ = [
     "NULLVEC",
     "distance",
     "lerp",
-    "Vector",
     "Matrix44",
     "Bezier4P",
     "Bezier3P",
@@ -36,7 +35,6 @@ if USE_C_EXT:
         NULLVEC,
         distance,
         lerp,
-        Vector,
     )
     from ezdxf.acc.matrix44 import Matrix44
     from ezdxf.acc.bezier4p import (
@@ -63,7 +61,6 @@ else:
         NULLVEC,
         distance,
         lerp,
-        Vector,
     )
     from ._matrix44 import Matrix44
     from ._bezier4p import (

@@ -709,7 +709,6 @@ X_AXIS = Vec3(1, 0, 0)
 Y_AXIS = Vec3(0, 1, 0)
 Z_AXIS = Vec3(0, 0, 1)
 NULLVEC = Vec3(0, 0, 0)
-Vector = Vec3
 
 cdef Vec3 v3_add(Vec3 a, Vec3 b):
     res = Vec3()
