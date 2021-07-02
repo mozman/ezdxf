@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     # Low level stuff
     from ezdxf.math import (
         Vec3, Vec2, Vertex, VecXY, Matrix44, BoundingBox, BoundingBox2d ,UCS,
-        OCS, Vector
+        OCS, Vector, AnyVec
     )
     from ezdxf.tools.handle import HandleGenerator
     from ezdxf.lldxf.types import DXFTag, DXFBinaryTag, DXFVertex

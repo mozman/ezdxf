@@ -32,6 +32,7 @@ from .clipping import *
 
 Vertex = Union[Sequence[float], Vec3, Vec2]
 VecXY = Union[Vec2, Vec3]  # Vector with x and y attributes
+AnyVec = Union[Vec2, Vec3]
 ABS_TOL = 1e-12
 REL_TOL = 1e-9
 

@@ -6,7 +6,7 @@ import math
 import random
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import VecXY, Vertex
+    from ezdxf.eztypes import Vertex, AnyVec
 
 ABS_TOL = 1e-12
 isclose = partial(math.isclose, abs_tol=ABS_TOL)
@@ -710,7 +710,7 @@ class Vec2:
         else:
             return self.__class__(self.y, -self.x)
 
-    def lerp(self, other: "VecXY", factor: float = 0.5) -> "Vec2":
+    def lerp(self, other: "AnyVec", factor: float = 0.5) -> "Vec2":
         """
         Linear interpolation between `self` and `other`.
 
@@ -725,7 +725,7 @@ class Vec2:
         y = self.y + (other.y - self.y) * factor
         return self.__class__(x, y)
 
-    def project(self, other: "VecXY") -> "Vec2":
+    def project(self, other: "AnyVec") -> "Vec2":
         """
         Project vector `other` onto `self`.
 
@@ -745,7 +745,7 @@ class Vec2:
         return not self.is_null
 
     def isclose(
-        self, other: "VecXY", *, rel_tol: float = 1e-9, abs_tol: float = 1e-12
+        self, other: "AnyVec", *, rel_tol: float = 1e-9, abs_tol: float = 1e-12
     ) -> bool:
         if not isinstance(other, Vec2):
             other = Vec2(other)
@@ -766,13 +766,13 @@ class Vec2:
         else:
             return self.x < x
 
-    def __add__(self, other: "VecXY") -> "Vec2":
+    def __add__(self, other: "AnyVec") -> "Vec2":
         try:
             return self.__class__(self.x + other.x, self.y + other.y)
         except AttributeError:
             raise TypeError("invalid argument")
 
-    def __iadd__(self, other: "VecXY") -> "Vec2":
+    def __iadd__(self, other: "AnyVec") -> "Vec2":
         try:
             self.x += other.x
             self.y += other.y
@@ -780,19 +780,19 @@ class Vec2:
             raise TypeError("invalid argument")
         return self
 
-    def __sub__(self, other: "VecXY") -> "Vec2":
+    def __sub__(self, other: "AnyVec") -> "Vec2":
         try:
             return self.__class__(self.x - other.x, self.y - other.y)
         except AttributeError:
             raise TypeError("invalid argument")
 
-    def __rsub__(self, other: "VecXY") -> "Vec2":
+    def __rsub__(self, other: "AnyVec") -> "Vec2":
         try:
             return self.__class__(other.x - self.x, other.y - self.y)
         except AttributeError:
             raise TypeError("invalid argument")
 
-    def __isub__(self, other: "VecXY") -> "Vec2":
+    def __isub__(self, other: "AnyVec") -> "Vec2":
         try:
             self.x -= other.x
             self.y -= other.y
@@ -819,16 +819,16 @@ class Vec2:
         self.y /= other
         return self
 
-    def dot(self, other: "VecXY") -> float:
+    def dot(self, other: "AnyVec") -> float:
         return self.x * other.x + self.y * other.y
 
-    def det(self, other: "VecXY") -> float:
+    def det(self, other: "AnyVec") -> float:
         return self.x * other.y - self.y * other.x
 
-    def distance(self, other: "VecXY") -> float:
+    def distance(self, other: "AnyVec") -> float:
         return math.hypot(self.x - other.x, self.y - other.y)
 
-    def angle_between(self, other: "VecXY") -> float:
+    def angle_between(self, other: "AnyVec") -> float:
         """Calculate angle between `self` and `other` in radians. +angle is
         counter clockwise orientation.
 

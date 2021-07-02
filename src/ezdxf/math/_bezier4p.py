@@ -1,6 +1,6 @@
 # Copyright (c) 2010-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Union, Sequence, Tuple
+from typing import TYPE_CHECKING, Iterable, Union, Sequence, Tuple, Type
 import math
 from functools import lru_cache
 
@@ -10,7 +10,7 @@ from ._matrix44 import Matrix44
 from ._construct import arc_angle_span_deg
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
+    from ezdxf.eztypes import Vertex, AnyVec
     from ezdxf.math.ellipse import ConstructionEllipse
 
 __all__ = [
@@ -19,11 +19,6 @@ __all__ = [
     "cubic_bezier_from_arc",
     "cubic_bezier_from_ellipse",
 ]
-
-
-def check_if_in_valid_range(t: float):
-    if not (0 <= t <= 1.0):
-        raise ValueError("t not in range [0 to 1]")
 
 
 # Optimization:
@@ -75,19 +70,21 @@ class Bezier4P:
     def __init__(self, defpoints: Sequence["Vertex"]):
         if len(defpoints) == 4:
             is3d = any(len(p) > 2 for p in defpoints)
-            vector_class = Vec3 if is3d else Vec2
-            self._control_points = vector_class.tuple(defpoints)
+            vector_class: Type["AnyVec"] = Vec3 if is3d else Vec2
+            self._control_points: Sequence["AnyVec"] = vector_class.tuple(
+                defpoints
+            )
         else:
             raise ValueError("Four control points required.")
 
     @property
-    def control_points(self) -> Sequence[Union[Vec3, Vec2]]:
+    def control_points(self) -> Sequence["AnyVec"]:
         """Control points as tuple of :class:`~ezdxf.math.Vec3` or
         :class:`~ezdxf.math.Vec2` objects.
         """
         return self._control_points
 
-    def tangent(self, t: float) -> Union[Vec3, Vec2]:
+    def tangent(self, t: float) -> "AnyVec":
         """Returns direction vector of tangent for location `t` at the
         Bèzier-curve.
 
@@ -95,20 +92,22 @@ class Bezier4P:
             t: curve position in the range ``[0, 1]``
 
         """
-        check_if_in_valid_range(t)
+        if not (0 <= t <= 1.0):
+            raise ValueError("t not in range [0 to 1]")
         return self._get_curve_tangent(t)
 
-    def point(self, t: float) -> Union[Vec3, Vec2]:
+    def point(self, t: float) -> "AnyVec":
         """Returns point for location `t`` at the Bèzier-curve.
 
         Args:
             t: curve position in the range ``[0, 1]``
 
         """
-        check_if_in_valid_range(t)
+        if not (0 <= t <= 1.0):
+            raise ValueError("t not in range [0 to 1]")
         return self._get_curve_point(t)
 
-    def approximate(self, segments: int) -> Iterable[Union[Vec3, Vec2]]:
+    def approximate(self, segments: int) -> Iterable["AnyVec"]:
         """Approximate `Bézier curve`_ by vertices, yields `segments` + 1
         vertices as ``(x, y[, z])`` tuples.
 
@@ -143,10 +142,15 @@ class Bezier4P:
 
         """
 
-        def subdiv(start_point, end_point, start_t: float, end_t: float):
-            mid_t = (start_t + end_t) * 0.5
-            mid_point = self._get_curve_point(mid_t)
-            chk_point = start_point.lerp(end_point)
+        def subdiv(
+            start_point: "AnyVec",
+            end_point: "AnyVec",
+            start_t: float,
+            end_t: float,
+        ) -> Iterable["AnyVec"]:
+            mid_t: float = (start_t + end_t) * 0.5
+            mid_point: "AnyVec" = self._get_curve_point(mid_t)  # type: ignore
+            chk_point: "AnyVec" = start_point.lerp(end_point)
             # center point point is faster than projecting mid point onto
             # vector start -> end:
             if chk_point.distance(mid_point) < distance:
@@ -155,9 +159,11 @@ class Bezier4P:
                 yield from subdiv(start_point, mid_point, start_t, mid_t)
                 yield from subdiv(mid_point, end_point, mid_t, end_t)
 
-        dt = 1.0 / segments
-        t0 = 0.0
-        start_point = self._control_points[0]
+        dt: float = 1.0 / segments
+        t0: float = 0.0
+        t1: float
+        start_point: "AnyVec" = self._control_points[0]
+        end_point: "AnyVec"
         yield start_point
         while t0 < 1.0:
             t1 = t0 + dt
@@ -206,17 +212,16 @@ class Bezier4P:
         .. versionadded:: 0.14
 
         """
+        defpoints: Iterable["AnyVec"]
         if len(self._control_points[0]) == 2:
             defpoints = Vec3.generate(self._control_points)
         else:
             defpoints = self._control_points
-
-        defpoints = tuple(m.transform_vertices(defpoints))
-        return Bezier4P(defpoints)
+        return Bezier4P(tuple(m.transform_vertices(defpoints)))
 
 
 def cubic_bezier_from_arc(
-    center: Vec3 = (0, 0),
+    center: "Vertex" = (0, 0, 0),
     radius: float = 1,
     start_angle: float = 0,
     end_angle: float = 360,
@@ -234,13 +239,13 @@ def cubic_bezier_from_arc(
             quarter (90 deg), 1 for as few as possible.
 
     """
-    center = Vec3(center)
+    center_: Vec3 = Vec3(center)
     radius = float(radius)
-    angle_span = arc_angle_span_deg(start_angle, end_angle)
+    angle_span: float = arc_angle_span_deg(start_angle, end_angle)
     if abs(angle_span) < 1e-9:
         return
 
-    s = start_angle
+    s: float = start_angle
     start_angle = math.radians(s) % math.tau
     end_angle = math.radians(s + angle_span)
     while start_angle > end_angle:
@@ -249,11 +254,11 @@ def cubic_bezier_from_arc(
     for control_points in cubic_bezier_arc_parameters(
         start_angle, end_angle, segments
     ):
-        defpoints = [center + (p * radius) for p in control_points]
+        defpoints = [center_ + (p * radius) for p in control_points]
         yield Bezier4P(defpoints)
 
 
-PI_2 = math.pi / 2.0
+PI_2: float = math.pi / 2.0
 
 
 def cubic_bezier_from_ellipse(
@@ -269,18 +274,18 @@ def cubic_bezier_from_ellipse(
             quarter (π/2), 1 for as few as possible.
 
     """
-    param_span = ellipse.param_span
+    param_span: float = ellipse.param_span
     if abs(param_span) < 1e-9:
         return
-    start_angle = ellipse.start_param % math.tau
-    end_angle = start_angle + param_span
+    start_angle: float = ellipse.start_param % math.tau
+    end_angle: float = start_angle + param_span
     while start_angle > end_angle:
         end_angle += math.tau
 
     def transform(points: Iterable[Vec3]) -> Iterable[Vec3]:
         center = Vec3(ellipse.center)
-        x_axis = ellipse.major_axis
-        y_axis = ellipse.minor_axis
+        x_axis: Vec3 = ellipse.major_axis
+        y_axis: Vec3 = ellipse.minor_axis
         for p in points:
             yield center + x_axis * p.x + y_axis * p.y
 
@@ -318,17 +323,17 @@ def cubic_bezier_arc_parameters(
     """
     if segments < 1:
         raise ValueError("Invalid argument segments (>= 1).")
-    delta_angle = end_angle - start_angle
+    delta_angle: float = end_angle - start_angle
     if delta_angle > 0:
         arc_count = max(math.ceil(delta_angle / math.pi * 2.0), segments)
     else:
         raise ValueError("Delta angle from start- to end angle has to be > 0.")
 
-    segment_angle = delta_angle / arc_count
-    tangent_length = TANGENT_FACTOR * math.tan(segment_angle / 4.0)
+    segment_angle: float = delta_angle / arc_count
+    tangent_length: float = TANGENT_FACTOR * math.tan(segment_angle / 4.0)
 
-    angle = start_angle
-    end_point = Vec3.from_angle(angle)
+    angle: float = start_angle
+    end_point: Vec3 = Vec3.from_angle(angle)
     for _ in range(arc_count):
         start_point = end_point
         angle += segment_angle
