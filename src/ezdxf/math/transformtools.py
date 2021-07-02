@@ -119,7 +119,7 @@ class OCSTransform:
         if abs(width) > 1e-12:  # assume a uniform scaling!
             return max(
                 self.transform_length((abs(width), 0, 0)),
-                self.transform_length((0, abs(width), 0))
+                self.transform_length((0, abs(width), 0)),
             )
         return 0.0
 

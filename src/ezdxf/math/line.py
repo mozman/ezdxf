@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2020, Manfred Moitzi
+# Copyright (c) 2010-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Optional
 import math
@@ -16,14 +16,13 @@ class ParallelRaysError(ArithmeticError):
     pass
 
 
-HALF_PI = math.pi / 2.
+HALF_PI = math.pi / 2.0
 THREE_PI_HALF = 1.5 * math.pi
-DOUBLE_PI = math.pi * 2.
+DOUBLE_PI = math.pi * 2.0
 
 
 class ConstructionRay:
-    """
-    Infinite 2D construction ray as immutable object.
+    """Infinite 2D construction ray as immutable object.
 
     Args:
         p1: definition point 1
@@ -32,7 +31,7 @@ class ConstructionRay:
 
     """
 
-    def __init__(self, p1: 'Vertex', p2: 'Vertex' = None, angle: float = None):
+    def __init__(self, p1: "Vertex", p2: "Vertex" = None, angle: float = None):
         self._location = Vec2(p1)
         if p2 is not None:
             p2 = Vec2(p2)
@@ -45,58 +44,62 @@ class ConstructionRay:
             self._angle = angle
             self._direction = Vec2.from_angle(angle)
         else:
-            raise ValueError('p2 or angle required.')
+            raise ValueError("p2 or angle required.")
 
-        if math.isclose(self._direction.x, 0., abs_tol=1e-12):
+        if math.isclose(self._direction.x, 0.0, abs_tol=1e-12):
             self._slope = None
             self._yof0 = None
         else:
             self._slope = self._direction.y / self._direction.x
             self._yof0 = self._location.y - self._slope * self._location.x
         self._is_vertical = self._slope is None
-        self._is_horizontal = math.isclose(self._direction.y, 0., abs_tol=1e-12)
+        self._is_horizontal = math.isclose(
+            self._direction.y, 0.0, abs_tol=1e-12
+        )
 
     @property
     def location(self) -> Vec2:
-        """ Location vector as :class:`Vec2`. """
+        """Location vector as :class:`Vec2`."""
         return self._location
 
     @property
     def direction(self) -> Vec2:
-        """ Direction vector as :class:`Vec2`. """
+        """Direction vector as :class:`Vec2`."""
         return self._direction
 
     @property
     def slope(self) -> float:
-        """ Slope of ray or ``None`` if vertical. """
+        """Slope of ray or ``None`` if vertical."""
         return self._slope
 
     @property
     def angle(self) -> float:
-        """ Angle between x-axis and ray in radians. """
+        """Angle between x-axis and ray in radians."""
         return self._angle
 
     @property
     def angle_deg(self) -> float:
-        """ Angle between x-axis and ray in degrees. """
+        """Angle between x-axis and ray in degrees."""
         return math.degrees(self._angle)
 
     @property
     def is_vertical(self) -> bool:
-        """ ``True`` if ray is vertical (parallel to y-axis). """
+        """``True`` if ray is vertical (parallel to y-axis)."""
         return self._is_vertical
 
     @property
     def is_horizontal(self) -> bool:
-        """ ``True`` if ray is horizontal (parallel to x-axis). """
+        """``True`` if ray is horizontal (parallel to x-axis)."""
         return self._is_horizontal
 
     def __repr__(self) -> str:
-        return 'ConstructionRay(p1=({0.location.x:.3f}, {0.location.y:.3f}), ' \
-               'angle={0.angle:.5f})'.format(self)
+        return (
+            "ConstructionRay(p1=({0.location.x:.3f}, {0.location.y:.3f}), "
+            "angle={0.angle:.5f})".format(self)
+        )
 
-    def is_parallel(self, other: 'ConstructionRay') -> bool:
-        """ Returns ``True`` if rays are parallel. """
+    def is_parallel(self, other: "ConstructionRay") -> bool:
+        """Returns ``True`` if rays are parallel."""
         if self._is_vertical:
             return other._is_vertical
         if other._is_vertical:
@@ -105,9 +108,9 @@ class ConstructionRay:
             return other._is_horizontal
         return math.isclose(self._slope, other._slope, abs_tol=1e-12)
 
-    def intersect(self, other: 'ConstructionRay') -> Vec2:
-        """
-        Returns the intersection point as ``(x, y)`` tuple of `self` and `other`.
+    def intersect(self, other: "ConstructionRay") -> Vec2:
+        """Returns the intersection point as ``(x, y)`` tuple of `self` and
+        `other`.
 
         Raises:
              ParallelRaysError: if rays are parallel
@@ -143,12 +146,12 @@ class ConstructionRay:
             y = ray1.yof(x)
         return Vec2((x, y))
 
-    def orthogonal(self, location: 'Vertex') -> 'ConstructionRay':
-        """ Returns orthogonal ray at `location`. """
+    def orthogonal(self, location: "Vertex") -> "ConstructionRay":
+        """Returns orthogonal ray at `location`."""
         return ConstructionRay(location, angle=self._angle + HALF_PI)
 
     def yof(self, x: float) -> float:
-        """ Returns y-value of ray for `x` location.
+        """Returns y-value of ray for `x` location.
 
         Raises:
             ArithmeticError: for vertical rays
@@ -159,7 +162,7 @@ class ConstructionRay:
         return self._yof0 + float(x) * self._slope
 
     def xof(self, y: float) -> float:
-        """ Returns x-value of ray for `y` location.
+        """Returns x-value of ray for `y` location.
 
         Raises:
             ArithmeticError: for horizontal rays
@@ -172,18 +175,17 @@ class ConstructionRay:
         else:
             raise ArithmeticError
 
-    def bisectrix(self, other: 'ConstructionRay') -> 'ConstructionRay':
-        """ Bisectrix between `self` and `other`. """
+    def bisectrix(self, other: "ConstructionRay") -> "ConstructionRay":
+        """Bisectrix between `self` and `other`."""
         intersection = self.intersect(other)
-        alpha = (self._angle + other._angle) / 2.
+        alpha = (self._angle + other._angle) / 2.0
         return ConstructionRay(intersection, angle=alpha)
 
 
 class ConstructionLine:
-    """
-    2D ConstructionLine is similar to :class:`ConstructionRay`, but has a start- and endpoint.
-    The direction of line goes from start- to endpoint, "left of line" is always in relation
-    to this line direction.
+    """2D ConstructionLine is similar to :class:`ConstructionRay`, but has a
+    start- and endpoint. The direction of line goes from start- to endpoint,
+    "left of line" is always in relation to this line direction.
 
     Args:
         start: start point of line as :class:`Vec2` compatible object
@@ -191,16 +193,16 @@ class ConstructionLine:
 
     """
 
-    def __init__(self, start: 'Vertex', end: 'Vertex'):
+    def __init__(self, start: "Vertex", end: "Vertex"):
         self.start = Vec2(start)
         self.end = Vec2(end)
 
     def __repr__(self) -> str:
-        return 'ConstructionLine({0.start}, {0.end})'.format(self)
+        return "ConstructionLine({0.start}, {0.end})".format(self)
 
     @property
     def bounding_box(self) -> BoundingBox2d:
-        """ bounding box of line as :class:`BoundingBox2d` object. """
+        """bounding box of line as :class:`BoundingBox2d` object."""
         return BoundingBox2d((self.start, self.end))
 
     def translate(self, dx: float, dy: float) -> None:
@@ -218,46 +220,50 @@ class ConstructionLine:
 
     @property
     def sorted_points(self):
-        return (self.end, self.start) if self.start > self.end else (
-            self.start, self.end)
+        return (
+            (self.end, self.start)
+            if self.start > self.end
+            else (self.start, self.end)
+        )
 
     @property
     def ray(self):
-        """ collinear :class:`ConstructionRay`. """
+        """collinear :class:`ConstructionRay`."""
         return ConstructionRay(self.start, self.end)
 
-    def __eq__(self, other: 'ConstructionLine') -> bool:
+    def __eq__(self, other: "ConstructionLine") -> bool:
         return self.sorted_points == other.sorted_points
 
-    def __lt__(self, other: 'ConstructionLine') -> bool:
+    def __lt__(self, other: "ConstructionLine") -> bool:
         return self.sorted_points < other.sorted_points
 
     def length(self) -> float:
-        """ Returns length of line. """
+        """Returns length of line."""
         return (self.end - self.start).magnitude
 
-    def midpoint(self) -> 'Vec2':
-        """ Returns mid point of line. """
+    def midpoint(self) -> "Vec2":
+        """Returns mid point of line."""
         return self.start.lerp(self.end)
 
     @property
     def is_vertical(self) -> bool:
-        """ ``True`` if line is vertical. """
+        """``True`` if line is vertical."""
         return math.isclose(self.start.x, self.end.x)
-    
+
     @property
     def is_horizontal(self) -> bool:
-        """ ``True`` if line is horizontal. """
+        """``True`` if line is horizontal."""
         return math.isclose(self.start.y, self.end.y)
-    
-    def inside_bounding_box(self, point: 'Vertex') -> bool:
-        """ Returns ``True`` if `point` is inside of line bounding box. """
+
+    def inside_bounding_box(self, point: "Vertex") -> bool:
+        """Returns ``True`` if `point` is inside of line bounding box."""
         return self.bounding_box.inside(point)
 
-    def intersect(self, other: 'ConstructionLine',
-                  abs_tol: float = TOLERANCE) -> Optional['Vec2']:
-        """
-        Returns the intersection point of to lines or ``None`` if they have no intersection point.
+    def intersect(
+        self, other: "ConstructionLine", abs_tol: float = TOLERANCE
+    ) -> Optional["Vec2"]:
+        """Returns the intersection point of to lines or ``None`` if they have
+        no intersection point.
 
         Args:
             other: other :class:`ConstructionLine`
@@ -265,20 +271,25 @@ class ConstructionLine:
 
         """
         return intersection_line_line_2d(
-            (self.start, self.end), (other.start, other.end), virtual=False,
-            abs_tol=abs_tol)
+            (self.start, self.end),
+            (other.start, other.end),
+            virtual=False,
+            abs_tol=abs_tol,
+        )
 
-    def has_intersection(self, other: 'ConstructionLine',
-                         abs_tol: float = TOLERANCE) -> bool:
-        """ Returns ``True`` if has intersection with `other` line. """
+    def has_intersection(
+        self, other: "ConstructionLine", abs_tol: float = TOLERANCE
+    ) -> bool:
+        """Returns ``True`` if has intersection with `other` line."""
         return self.intersect(other, abs_tol=abs_tol) is not None
 
-    def is_point_left_of_line(self, point: 'Vertex', colinear=False) -> bool:
-        """
-        Returns ``True`` if `point` is left of construction line in relation to the line direction from start to end.
+    def is_point_left_of_line(self, point: "Vertex", colinear=False) -> bool:
+        """Returns ``True`` if `point` is left of construction line in relation
+        to the line direction from start to end.
 
         If `colinear` is ``True``, a colinear point is also left of the line.
 
         """
-        return is_point_left_of_line(point, self.start, self.end,
-                                     colinear=colinear)
+        return is_point_left_of_line(
+            point, self.start, self.end, colinear=colinear
+        )

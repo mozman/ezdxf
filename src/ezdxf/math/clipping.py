@@ -3,7 +3,9 @@
 from typing import TYPE_CHECKING, Iterable, List
 
 from ezdxf.math import (
-    Vec2, intersection_line_line_2d, has_clockwise_orientation,
+    Vec2,
+    intersection_line_line_2d,
+    has_clockwise_orientation,
     point_to_line_relation,
 )
 
@@ -13,10 +15,12 @@ if TYPE_CHECKING:
 __all__ = ["clip_polygon_2d"]
 
 
-def clip_polygon_2d(clip: Iterable['Vertex'],
-                    subject: Iterable['Vertex'],
-                    ccw_check: bool = True) -> List['Vec2']:
-    """ Clip the `subject` polygon by the **convex** clipping polygon `clip`.
+def clip_polygon_2d(
+    clip: Iterable["Vertex"],
+    subject: Iterable["Vertex"],
+    ccw_check: bool = True,
+) -> List["Vec2"]:
+    """Clip the `subject` polygon by the **convex** clipping polygon `clip`.
 
     Implements the `Sutherland–Hodgman`_ algorithm for clipping polygons.
 
@@ -36,7 +40,7 @@ def clip_polygon_2d(clip: Iterable['Vertex'],
 
     """
 
-    def polygon(vertices: Iterable['Vertex']) -> List[Vec2]:
+    def polygon(vertices: Iterable["Vertex"]) -> List[Vec2]:
         vertices = Vec2.list(vertices)
         if len(vertices) > 1:
             if vertices[0].isclose(vertices[-1]):
@@ -44,12 +48,14 @@ def clip_polygon_2d(clip: Iterable['Vertex'],
         return vertices
 
     def is_inside(point: Vec2) -> bool:
-        return point_to_line_relation(
-            point, clip_start, clip_end) == -1  # left of line
+        return (
+            point_to_line_relation(point, clip_start, clip_end) == -1
+        )  # left of line
 
     def edge_intersection() -> Vec2:
         return intersection_line_line_2d(
-            (edge_start, edge_end), (clip_start, clip_end))
+            (edge_start, edge_end), (clip_start, clip_end)
+        )
 
     clipping_polygon = polygon(clip)
     if ccw_check and has_clockwise_orientation(clipping_polygon):
@@ -57,7 +63,7 @@ def clip_polygon_2d(clip: Iterable['Vertex'],
     if len(clipping_polygon) > 2:
         clip_start = clipping_polygon[-1]
     else:
-        raise ValueError('invalid clipping polygon')
+        raise ValueError("invalid clipping polygon")
     clipped = polygon(subject)
 
     for clip_end in clipping_polygon:

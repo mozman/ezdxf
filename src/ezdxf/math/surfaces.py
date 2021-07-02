@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2020, Manfred Moitzi
+# Copyright (c) 2012-2021, Manfred Moitzi
 # License: MIT License
 from typing import List, TYPE_CHECKING
 from .bezier import bernstein_basis
@@ -11,7 +11,7 @@ __all__ = ["BezierSurface"]
 
 
 class BezierSurface:
-    """ :class:`BezierSurface` defines a mesh of `m` x `n` control points.
+    """:class:`BezierSurface` defines a mesh of `m` x `n` control points.
     This is a parametric surface, which means the `m`-dimension goes from ``0``
     to ``1`` as parameter `u` and the `n`-dimension goes from ``0`` to ``1`` as
     parameter `v`.
@@ -22,21 +22,22 @@ class BezierSurface:
                    3D location as ``(x, y, z)`` tuple.
 
     """
-    def __init__(self, defpoints: List[List['Vertex']]):
+
+    def __init__(self, defpoints: List[List["Vertex"]]):
         self._defpoints = defpoints
 
     @property
     def nrows(self):
-        """ count of rows (m-dimension) """
+        """count of rows (m-dimension)"""
         return len(self._defpoints)
 
     @property
     def ncols(self):
-        """ count of columns (n-dimension) """
+        """count of columns (n-dimension)"""
         return len(self._defpoints[0])
 
     def approximate(self, usegs: int, vsegs: int) -> List[List[Vec3]]:
-        """ Approximate surface as grid of ``(x, y, z)`` :class:`Vec3`.
+        """Approximate surface as grid of ``(x, y, z)`` :class:`Vec3`.
 
         Args:
             usegs: count of segments in `u`-direction (m-dimension)
@@ -58,7 +59,7 @@ class BezierSurface:
         return result
 
     def point(self, u: float, v: float) -> Vec3:
-        """ Returns a point for location (`u`, `v`) at the Bézier surface as
+        """Returns a point for location (`u`, `v`) at the Bézier surface as
         ``(x, y, z)`` tuple, parameters `u` and `v` in the range of ``[0, 1]``.
 
         """

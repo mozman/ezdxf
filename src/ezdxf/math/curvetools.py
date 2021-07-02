@@ -5,15 +5,18 @@ import math
 from ezdxf.math import BSpline, Bezier4P, Bezier3P
 
 __all__ = [
-    "bezier_to_bspline", "quadratic_to_cubic_bezier",
-    "have_bezier_curves_g1_continuity", "AnyBezier", "reverse_bezier_curves"
+    "bezier_to_bspline",
+    "quadratic_to_cubic_bezier",
+    "have_bezier_curves_g1_continuity",
+    "AnyBezier",
+    "reverse_bezier_curves",
 ]
 
 AnyBezier = Union[Bezier3P, Bezier4P]
 
 
 def quadratic_to_cubic_bezier(curve: Bezier3P) -> Bezier4P:
-    """ Convert quadratic Bèzier curves (:class:`ezdxf.math.Bezier3P`) into
+    """Convert quadratic Bèzier curves (:class:`ezdxf.math.Bezier3P`) into
     cubic Bèzier curves (:class:`ezdxf.math.Bezier4P`).
 
     .. versionadded: 0.16
@@ -26,7 +29,7 @@ def quadratic_to_cubic_bezier(curve: Bezier3P) -> Bezier4P:
 
 
 def bezier_to_bspline(curves: Iterable[AnyBezier]) -> BSpline:
-    """ Convert multiple quadratic or cubic Bèzier curves into a single cubic
+    """Convert multiple quadratic or cubic Bèzier curves into a single cubic
     B-spline (:class:`ezdxf.math.BSpline`).
     For good results the curves must be lined up seamlessly, i.e. the starting
     point of the following curve must be the same as the end point of the
@@ -47,7 +50,7 @@ def bezier_to_bspline(curves: Iterable[AnyBezier]) -> BSpline:
 
     bezier_curve_points = [get_points(c) for c in curves]
     if len(bezier_curve_points) == 0:
-        raise ValueError('one or more Bézier curves required')
+        raise ValueError("one or more Bézier curves required")
     # Control points of the B-spline are the same as of the Bézier curves.
     # Remove duplicate control points at start and end of the curves.
     control_points = list(bezier_curve_points[0])
@@ -61,9 +64,10 @@ def bezier_to_bspline(curves: Iterable[AnyBezier]) -> BSpline:
     return BSpline(control_points, order=4, knots=knots)
 
 
-def have_bezier_curves_g1_continuity(b1: AnyBezier, b2: AnyBezier,
-                                     g1_tol: float = 1e-4) -> bool:
-    """ Return ``True`` if the given adjacent bezier curves have G1 continuity.
+def have_bezier_curves_g1_continuity(
+    b1: AnyBezier, b2: AnyBezier, g1_tol: float = 1e-4
+) -> bool:
+    """Return ``True`` if the given adjacent bezier curves have G1 continuity.
 
     .. versionadded: 0.16
 

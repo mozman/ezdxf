@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2020 Manfred Moitzi
+# Copyright (c) 2010-2021 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Tuple, Sequence
 from functools import lru_cache
@@ -9,7 +9,7 @@ from .construct2d import linspace
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
-__all__ = ['Bezier']
+__all__ = ["Bezier"]
 
 """
 
@@ -73,7 +73,7 @@ continuous to any degree.
 
 
 class Bezier:
-    """ A `Bézier curve`_ is a parametric curve used in computer graphics and
+    """A `Bézier curve`_ is a parametric curve used in computer graphics and
     related fields. Bézier curves are used to model smooth curves that can be
     scaled indefinitely. "Paths", as they are commonly referred to in image
     manipulation programs, are combinations of linked Bézier curves.
@@ -91,23 +91,22 @@ class Bezier:
 
     """
 
-    def __init__(self, defpoints: Iterable['Vertex']):
+    def __init__(self, defpoints: Iterable["Vertex"]):
         self._defpoints: Sequence[Vec3] = Vec3.tuple(defpoints)
 
     @property
     def control_points(self) -> Sequence[Vec3]:
-        """ Control points as tuple of :class:`Vec3` objects. """
+        """Control points as tuple of :class:`Vec3` objects."""
         return self._defpoints
 
     def approximate(self, segments: int = 20) -> Iterable[Vec3]:
-        """ Approximates curve by vertices as :class:`Vec3` objects, vertices
+        """Approximates curve by vertices as :class:`Vec3` objects, vertices
         count = segments + 1.
         """
         return self.points(self.params(segments))
 
-    def flattening(self, distance: float,
-                   segments: int = 4) -> Iterable[Vec3]:
-        """ Adaptive recursive flattening. The argument `segments` is the
+    def flattening(self, distance: float, segments: int = 4) -> Iterable[Vec3]:
+        """Adaptive recursive flattening. The argument `segments` is the
         minimum count of approximation segments, if the distance from the center
         of the approximation segment to the curve is bigger than `distance` the
         segment will be subdivided.
@@ -151,15 +150,15 @@ class Bezier:
             start_point = end_point
 
     def params(self, segments: int) -> Iterable[float]:
-        """ Yield evenly spaced parameters from 0 to 1 for given segment count. """
+        """Yield evenly spaced parameters from 0 to 1 for given segment count."""
         yield from linspace(0.0, 1.0, segments + 1)
 
     def point(self, t: float) -> Vec3:
-        """
-        Returns a point for parameter `t` in range [0, 1] as :class:`Vec3` object.
+        """ Returns a point for parameter `t` in range [0, 1] as :class:`Vec3`
+        object.
         """
         if t < 0.0 or t > 1.0:
-            raise ValueError('Parameter t not in range [0, 1]')
+            raise ValueError("Parameter t not in range [0, 1]")
         if (1.0 - t) < 5e-6:
             t = 1.0
         point = NULLVEC
@@ -171,19 +170,18 @@ class Bezier:
         return point
 
     def points(self, t: Iterable[float]) -> Iterable[Vec3]:
-        """ Yields multiple points for parameters in vector `t` as :class:`Vec3` objects.
-        Parameters have to be in range [0, 1].
+        """Yields multiple points for parameters in vector `t` as :class:`Vec3`
+        objects. Parameters have to be in range [0, 1].
         """
         for u in t:
             yield self.point(u)
 
     def derivative(self, t: float) -> Tuple[Vec3, Vec3, Vec3]:
-        """
-        Returns (point, 1st derivative, 2nd derivative) tuple for parameter `t` in range [0, 1]
-        as :class:`Vec3` objects.
+        """Returns (point, 1st derivative, 2nd derivative) tuple for parameter `t`
+        in range [0, 1] as :class:`Vec3` objects.
         """
         if t < 0.0 or t > 1.0:
-            raise ValueError('Parameter t not in range [0, 1]')
+            raise ValueError("Parameter t not in range [0, 1]")
 
         if (1.0 - t) < 5e-6:
             t = 1.0
@@ -197,7 +195,7 @@ class Bezier:
         n0_1 = n0 - 1
         if t == 0.0:
             d1 = n0 * (pts[1] - pts[0])
-            d2 = n0 * n0_1 * (pts[0] - 2. * pts[1] + pts[2])
+            d2 = n0 * n0_1 * (pts[0] - 2.0 * pts[1] + pts[2])
         for i in range(n):
             tmp_bas = bernstein_basis(n0, i, t)
             point += tmp_bas * pts[i]
@@ -205,31 +203,36 @@ class Bezier:
                 _1_t = 1.0 - t
                 i_n0_t = i - n0 * t
                 d1 += i_n0_t / (t * _1_t) * tmp_bas * pts[i]
-                d2 += (i_n0_t * i_n0_t - n0 * t2 - i * (1. - 2. * t)) / (t2 * _1_t * _1_t) * tmp_bas * pts[i]
+                d2 += (
+                    (i_n0_t * i_n0_t - n0 * t2 - i * (1.0 - 2.0 * t))
+                    / (t2 * _1_t * _1_t)
+                    * tmp_bas
+                    * pts[i]
+                )
             if t == 1.0:
                 d1 = n0 * (pts[n0] - pts[n0_1])
                 d2 = n0 * n0_1 * (pts[n0] - 2 * pts[n0_1] + pts[n0 - 2])
         return point, d1, d2
 
-    def derivatives(self, t: Iterable[float]) -> Iterable[Tuple[Vec3, Vec3, Vec3]]:
-        """
-        Returns multiple (point, 1st derivative, 2nd derivative) tuples for parameter vector  `t` as :class:`Vec3` objects.
+    def derivatives(
+        self, t: Iterable[float]
+    ) -> Iterable[Tuple[Vec3, Vec3, Vec3]]:
+        """Returns multiple (point, 1st derivative, 2nd derivative) tuples for
+        parameter vector  `t` as :class:`Vec3` objects.
         Parameters in range [0, 1]
         """
         for u in t:
             yield self.derivative(u)
 
-    def reverse(self) -> 'Bezier':
-        """ Returns a new Bèzier-curve with reversed control point order. """
+    def reverse(self) -> "Bezier":
+        """Returns a new Bèzier-curve with reversed control point order."""
         return Bezier(list(reversed(self.control_points)))
 
-    def transform(self, m: Matrix44) -> 'Bezier':
-        """ General transformation interface, returns a new :class:`Bezier` curve.
+    def transform(self, m: Matrix44) -> "Bezier":
+        """General transformation interface, returns a new :class:`Bezier` curve.
 
         Args:
              m: 4x4 transformation matrix (:class:`ezdxf.math.Matrix44`)
-
-        .. versionadded:: 0.14
 
         """
         defpoints = tuple(m.transform_vertices(self.control_points))
