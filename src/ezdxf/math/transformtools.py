@@ -2,7 +2,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple
 import math
-from ezdxf.math import Vec3, X_AXIS, Y_AXIS, Vec2, Matrix44, sign, OCS
+from ezdxf.math import Vec3, X_AXIS, Y_AXIS, Z_AXIS, Vec2, Matrix44, sign, OCS
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFGraphic, Vertex
@@ -74,13 +74,20 @@ def transform_extrusion(extrusion: "Vertex", m: Matrix44) -> Tuple[Vec3, bool]:
     return new_extrusion, is_uniform
 
 
+_PLACEHOLDER_OCS = OCS()
+
+
 class OCSTransform:
     def __init__(self, extrusion: Vec3 = None, m: Matrix44 = None):
-        self.m = m
-        if extrusion is None:
-            self.old_ocs = None
+        if m is None:
+            self.m = Matrix44()
+        else:
+            self.m = m
+        self.scale_uniform: bool = True
+        if extrusion is None:  # fill in dummy values
+            self.old_ocs = _PLACEHOLDER_OCS
             self.scale_uniform = False
-            self.new_ocs = None
+            self.new_ocs = _PLACEHOLDER_OCS
         else:
             self.old_ocs = OCS(extrusion)
             new_extrusion, self.scale_uniform = transform_extrusion(
@@ -97,11 +104,13 @@ class OCSTransform:
         return self.new_ocs.uz
 
     @classmethod
-    def from_ocs(cls, old: OCS, new: OCS, m: Matrix44) -> "OCSTransform":
-        ocs = cls()
-        ocs.m = m
+    def from_ocs(
+        cls, old: OCS, new: OCS, m: Matrix44, scale_uniform=True
+    ) -> "OCSTransform":
+        ocs = cls(m=m)
         ocs.old_ocs = old
         ocs.new_ocs = new
+        ocs.scale_uniform = scale_uniform
         return ocs
 
     def transform_length(self, length: "Vertex", reflection=1.0) -> float:
@@ -156,9 +165,9 @@ class OCSTransform:
     def transform_2d_vertex(self, vertex: "Vertex", elevation: float) -> Vec2:
         """Returns 2D vertex transformed from old OCS into new OCS."""
         v = Vec3(vertex).replace(z=elevation)
-        return self.new_ocs.from_wcs(
+        return Vec2(self.new_ocs.from_wcs(
             self.m.transform(self.old_ocs.to_wcs(v))
-        ).vec2
+        ))
 
     def transform_direction(self, direction: "Vertex") -> Vec3:
         """Returns direction transformed from old OCS into new OCS."""
