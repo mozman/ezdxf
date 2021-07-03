@@ -1,6 +1,6 @@
 # Copyright (c) 2018-2021 Manfred Moitzi
 # License: MIT License
-from typing import Iterable, Tuple, List, Sequence, Union, Any, Optional
+from typing import Iterable, Tuple, List, Sequence, Union, Any, Iterator, cast
 from functools import lru_cache
 from itertools import repeat
 import math
@@ -31,6 +31,7 @@ def zip_to_list(*args) -> Iterable[List]:
 
 
 MatrixData = List[List[float]]
+IterableMatrixData = Iterable[Iterable[float]]
 FrozenMatrixData = Tuple[Tuple[float, ...]]
 Shape = Tuple[int, int]
 
@@ -41,7 +42,7 @@ def copy_float_matrix(A) -> MatrixData:
     return [[float(v) for v in row] for row in A]
 
 
-def freeze_matrix(A: Union[MatrixData, "Matrix"]) -> "Matrix":
+def freeze_matrix(A: Union[IterableMatrixData, "Matrix"]) -> "Matrix":
     """Returns a frozen matrix, all data is stored in immutable tuples."""
     if isinstance(A, Matrix):
         A = A.matrix
@@ -67,9 +68,9 @@ def binomial_coefficient(k: int, i: int) -> float:
     if i > k:
         return float(0)
     # Compute binomial coefficient
-    k_fact = math.factorial(k)
-    i_fact = math.factorial(i)
-    k_i_fact = math.factorial(k - i)
+    k_fact: int = math.factorial(k)
+    i_fact: int = math.factorial(i)
+    k_i_fact: int = math.factorial(k - i)
     return float(k_fact / (k_i_fact * i_fact))
 
 
@@ -106,15 +107,16 @@ class Matrix:
         elif isinstance(items, Matrix):
             if shape is None:
                 shape = items.shape
-            self.matrix = Matrix.reshape(items, shape=shape).matrix  # type: ignore
+            self.matrix = Matrix.reshape(items, shape=shape).matrix
         else:
             items = list(items)
             try:
                 self.matrix = [list(row) for row in items]
             except TypeError:
-                self.matrix = Matrix.reshape(items, shape).matrix  # type: ignore
+                self.matrix = Matrix.reshape(items,
+                    shape).matrix  # type: ignore
 
-    def __iter__(self) -> Iterable[float]:
+    def __iter__(self) -> Iterator[float]:
         for row in self.matrix:
             yield from row
 
@@ -156,23 +158,23 @@ class Matrix:
         """Shape of matrix as (n, m) tuple for n rows and m columns."""
         return self.nrows, self.ncols
 
-    def row(self, index) -> List[float]:
+    def row(self, index: int) -> List[float]:
         """Returns row `index` as list of floats."""
         return self.matrix[index]
 
-    def iter_row(self, index) -> Iterable[float]:
+    def iter_row(self, index: int) -> Iterator[float]:
         """Yield values of row `index`."""
         return iter(self.matrix[index])
 
-    def col(self, index) -> List[float]:
+    def col(self, index: int) -> List[float]:
         """Return column `index` as list of floats."""
         return [row[index] for row in self.matrix]
 
-    def iter_col(self, index) -> Iterable[float]:
+    def iter_col(self, index: int) -> Iterator[float]:
         """Yield values of column `index`."""
         return (row[index] for row in self.matrix)
 
-    def diag(self, index) -> List[float]:
+    def diag(self, index: int) -> List[float]:
         """Returns diagonal `index` as list of floats.
 
         An `index` of 0 specifies the main diagonal, negative values
@@ -188,7 +190,7 @@ class Matrix:
         """
         return list(self.iter_diag(index))
 
-    def iter_diag(self, index) -> Iterable[float]:
+    def iter_diag(self, index: int) -> Iterator[float]:
         """Yield values of diagonal `index`, see also :meth:`diag`."""
         get = self.__getitem__
         col_offset = max(index, 0)
@@ -246,8 +248,8 @@ class Matrix:
         if isinstance(items, (float, int)):
             items = repeat(float(items))
 
-        col_offset = max(index, 0)
-        row_offset = abs(min(index, 0))
+        col_offset: int = max(index, 0)
+        row_offset: int = abs(min(index, 0))
 
         for index, value in zip(range(max(self.nrows, self.ncols)), items):
             try:
@@ -361,7 +363,7 @@ class Matrix:
         """Matrix addition by another matrix or a float, returns a new matrix."""
         if isinstance(other, Matrix):
             matrix = Matrix.reshape(
-                [a + b for a, b in zip(self, other)], shape=self.shape  # type: ignore
+                [a + b for a, b in zip(self, other)], shape=self.shape
             )
         else:
             value = float(other)
@@ -379,7 +381,7 @@ class Matrix:
         """
         if isinstance(other, Matrix):
             matrix = Matrix.reshape(
-                [a - b for a, b in zip(self, other)], shape=self.shape  # type: ignore
+                [a - b for a, b in zip(self, other)], shape=self.shape
             )
         else:
             value = float(other)
@@ -457,7 +459,7 @@ def gauss_vector_solver(
 
 
 def gauss_matrix_solver(
-    A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]
+    A: IterableMatrixData, B: IterableMatrixData
 ) -> Matrix:
     """Solves the linear equation system given by a nxn Matrix A . x = B,
     right-hand side quantities as nxm Matrix B by the `Gauss-Elimination`_
@@ -478,22 +480,22 @@ def gauss_matrix_solver(
 
     """
     # copy input data
-    A = copy_float_matrix(A)
-    B = copy_float_matrix(B)
+    matrix_a = copy_float_matrix(A)
+    matrix_b = copy_float_matrix(B)
 
-    num = len(A)
-    if len(A[0]) != num:
+    num = len(matrix_a)
+    if len(matrix_a[0]) != num:
         raise ValueError("A square nxn matrix A is required.")
-    if len(B) != num:
+    if len(matrix_b) != num:
         raise ValueError("Row count of matrices A and B has to match.")
 
     # inplace modification of A & B
-    _build_upper_triangle(A, B)
+    _build_upper_triangle(matrix_a, matrix_b)
 
-    columns = Matrix(matrix=B).cols()
+    columns = Matrix(matrix=matrix_b).cols()
     result = Matrix()
     for col in columns:
-        result.append_col(_backsubstitution(A, col))
+        result.append_col(_backsubstitution(matrix_a, col))
     return result
 
 
@@ -559,7 +561,7 @@ def _backsubstitution(A: MatrixData, B: List[float]) -> List[float]:
 
 
 def gauss_jordan_solver(
-    A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]
+    A: IterableMatrixData, B: IterableMatrixData
 ) -> Tuple[Matrix, Matrix]:
     """Solves the linear equation system given by a nxn Matrix A . x = B,
     right-hand side quantities as nxm Matrix B by the `Gauss-Jordan`_ algorithm,
@@ -581,15 +583,15 @@ def gauss_jordan_solver(
 
     """
     # copy input data
-    A = copy_float_matrix(A)
-    B = copy_float_matrix(B)
+    matrix_a = copy_float_matrix(A)
+    matrix_b = copy_float_matrix(B)
 
-    n = len(A)
-    m = len(B[0])
+    n = len(matrix_a)
+    m = len(matrix_b[0])
 
-    if len(A[0]) != n:
+    if len(matrix_a[0]) != n:
         raise ValueError("A square nxn matrix A is required.")
-    if len(B) != n:
+    if len(matrix_b) != n:
         raise ValueError("Row count of matrices A and B has to match.")
 
     icol = 0
@@ -604,43 +606,43 @@ def gauss_jordan_solver(
             if ipiv[j] != 1:
                 for k in range(n):
                     if ipiv[k] == 0:
-                        if abs(A[j][k]) >= big:
-                            big = abs(A[j][k])
+                        if abs(matrix_a[j][k]) >= big:
+                            big = abs(matrix_a[j][k])
                             irow = j
                             icol = k
 
         ipiv[icol] += 1
         if irow != icol:
-            A[irow], A[icol] = A[icol], A[irow]
-            B[irow], B[icol] = B[icol], B[irow]
+            matrix_a[irow], matrix_a[icol] = matrix_a[icol], matrix_a[irow]
+            matrix_b[irow], matrix_b[icol] = matrix_b[icol], matrix_b[irow]
 
         row_indices[i] = irow
         col_indices[i] = icol
 
-        pivinv = 1.0 / A[icol][icol]
-        A[icol][icol] = 1.0
-        A[icol] = [v * pivinv for v in A[icol]]
-        B[icol] = [v * pivinv for v in B[icol]]
+        pivinv = 1.0 / matrix_a[icol][icol]
+        matrix_a[icol][icol] = 1.0
+        matrix_a[icol] = [v * pivinv for v in matrix_a[icol]]
+        matrix_b[icol] = [v * pivinv for v in matrix_b[icol]]
         for row in range(n):
             if row == icol:
                 continue
-            dum = A[row][icol]
-            A[row][icol] = 0.0
+            dum = matrix_a[row][icol]
+            matrix_a[row][icol] = 0.0
             for col in range(n):
-                A[row][col] -= A[icol][col] * dum
+                matrix_a[row][col] -= matrix_a[icol][col] * dum
             for col in range(m):
-                B[row][col] -= B[icol][col] * dum
+                matrix_b[row][col] -= matrix_b[icol][col] * dum
 
     for i in range(n - 1, -1, -1):
         irow = row_indices[i]
         icol = col_indices[i]
         if irow != icol:
-            for _row in A:
+            for _row in matrix_a:
                 _row[irow], _row[icol] = _row[icol], _row[irow]
-    return Matrix(matrix=A), Matrix(matrix=B)
+    return Matrix(matrix=matrix_a), Matrix(matrix=matrix_b)
 
 
-def gauss_jordan_inverse(A: Iterable[Iterable[float]]) -> Matrix:
+def gauss_jordan_inverse(A: IterableMatrixData) -> Matrix:
     """Returns the inverse of matrix `A` as :class:`Matrix` object.
 
     .. hint::
@@ -654,11 +656,11 @@ def gauss_jordan_inverse(A: Iterable[Iterable[float]]) -> Matrix:
 
     """
     if isinstance(A, Matrix):
-        A = A.matrix
+        matrix_a = A.matrix
     else:
-        A = list(A)
-    nrows = len(A)
-    return gauss_jordan_solver(A, repeat([0.0], nrows))[0]
+        matrix_a = list(A)
+    nrows = len(matrix_a)
+    return gauss_jordan_solver(matrix_a, repeat([0.0], nrows))[0]
 
 
 class LUDecomposition:
@@ -683,20 +685,20 @@ class LUDecomposition:
 
     __slots__ = ("matrix", "index", "_det")
 
-    def __init__(self, A: Iterable[Iterable[float]]):
-        lu = copy_float_matrix(A)
-        n = len(lu)
-        det = 1.0
-        index = []
+    def __init__(self, A: IterableMatrixData):
+        lu: MatrixData = copy_float_matrix(A)
+        n: int = len(lu)
+        det: float = 1.0
+        index: List[int] = []
 
         # find max value for each row, raises ZeroDivisionError for singular matrix!
-        scaling = [1.0 / max(abs(v) for v in row) for row in lu]
+        scaling: List[float] = [1.0 / max(abs(v) for v in row) for row in lu]
 
         for k in range(n):
-            big = 0.0
-            imax = k
+            big: float = 0.0
+            imax: int = k
             for i in range(k, n):
-                temp = scaling[i] * abs(lu[i][k])
+                temp: float = scaling[i] * abs(lu[i][k])
                 if temp > big:
                     big = temp
                     imax = i
@@ -719,7 +721,7 @@ class LUDecomposition:
 
         self.index: List[int] = index
         self.matrix: MatrixData = lu
-        self._det = det
+        self._det: float = det
 
     def __str__(self) -> str:
         return str(self.matrix)
@@ -743,11 +745,11 @@ class LUDecomposition:
             vector as list of floats
 
         """
-        X = [float(v) for v in B]
-        lu = self.matrix
-        index = self.index
-        n = self.nrows
-        ii = 0
+        X: List[float] = [float(v) for v in B]
+        lu: MatrixData = self.matrix
+        index: List[int] = self.index
+        n: int = self.nrows
+        ii: int = 0
 
         if len(X) != n:
             raise ValueError(
@@ -755,8 +757,8 @@ class LUDecomposition:
             )
 
         for i in range(n):
-            ip = index[i]
-            sum_ = X[ip]
+            ip: int = index[i]
+            sum_: float = X[ip]
             X[ip] = X[i]
             if ii != 0:
                 for j in range(ii - 1, i):
@@ -772,7 +774,7 @@ class LUDecomposition:
             X[row] = sum_ / lu[row][row]
         return X
 
-    def solve_matrix(self, B: Iterable[Iterable[float]]) -> Matrix:
+    def solve_matrix(self, B: IterableMatrixData) -> Matrix:
         """Solves the linear equation system given by the nxn Matrix A . x = B,
         right-hand side quantities as nxm Matrix B.
 
@@ -785,13 +787,15 @@ class LUDecomposition:
 
         """
         if not isinstance(B, Matrix):
-            B = Matrix(matrix=[list(row) for row in B])  # type: ignore
-        assert isinstance(B, Matrix)
-        if B.nrows != self.nrows:
+            matrix_b = Matrix(matrix=[list(row) for row in B])
+        else:
+            matrix_b = cast(Matrix, B)
+
+        if matrix_b.nrows != self.nrows:
             raise ValueError("Row count of self and matrix B has to match.")
 
         return Matrix(
-            matrix=[self.solve_vector(col) for col in B.cols()]
+            matrix=[self.solve_vector(col) for col in matrix_b.cols()]
         ).transpose()
 
     def inverse(self) -> Matrix:
@@ -808,15 +812,15 @@ class LUDecomposition:
         if matrix is singular.
 
         """
-        det = self._det
-        lu = self.matrix
+        det: float = self._det
+        lu: MatrixData = self.matrix
         for i in range(self.nrows):
             det *= lu[i][i]
         return det
 
 
 def tridiagonal_vector_solver(
-    A: Iterable[Iterable[float]], B: Iterable[float]
+    A: IterableMatrixData, B: Iterable[float]
 ) -> List[float]:
     """Solves the linear equation system given by a tri-diagonal nxn Matrix
     A . x = B, right-hand side quantities as vector B. Matrix A is diagonal
@@ -850,7 +854,7 @@ def tridiagonal_vector_solver(
 
 
 def tridiagonal_matrix_solver(
-    A: Iterable[Iterable[float]], B: Iterable[Iterable[float]]
+    A: IterableMatrixData, B: IterableMatrixData
 ) -> Matrix:
     """Solves the linear equation system given by a tri-diagonal nxn Matrix
     A . x = B, right-hand side quantities as nxm Matrix B. Matrix A is diagonal
@@ -884,13 +888,16 @@ def tridiagonal_matrix_solver(
     """
     a, b, c = [list(v) for v in A]
     if not isinstance(B, Matrix):
-        B = Matrix(matrix=[list(row) for row in B])  # type: ignore
-    assert isinstance(B, Matrix)
-    if B.nrows != len(b):
+        matrix_b = Matrix(matrix=[list(row) for row in B])
+    else:
+        matrix_b = cast(Matrix, B)
+    if matrix_b.nrows != len(b):
         raise ValueError("Row count of matrices A and B has to match.")
 
     return Matrix(
-        matrix=[_solve_tridiagonal_matrix(a, b, c, col) for col in B.cols()]
+        matrix=[
+            _solve_tridiagonal_matrix(a, b, c, col) for col in matrix_b.cols()
+        ]
     ).transpose()
 
 
@@ -920,10 +927,10 @@ def _solve_tridiagonal_matrix(
         ZeroDivisionError: singular matrix
 
     """
-    n = len(a)
-    u = [0.0] * n
-    gam = [0.0] * n
-    bet = b[0]
+    n: int = len(a)
+    u: List[float] = [0.0] * n
+    gam: List[float] = [0.0] * n
+    bet: float = b[0]
     u[0] = r[0] / bet
     for j in range(1, n):
         gam[j] = c[j - 1] / bet
@@ -962,7 +969,7 @@ def detect_banded_matrix(A: Matrix, check_all=True) -> Tuple[int, int]:
     """
 
     def detect_m2() -> int:
-        m2 = 0
+        m2: int = 0
         for d in range(1, A.ncols):
             if any(A.iter_diag(d)):
                 m2 = d
@@ -971,7 +978,7 @@ def detect_banded_matrix(A: Matrix, check_all=True) -> Tuple[int, int]:
         return m2
 
     def detect_m1() -> int:
-        m1 = 0
+        m1: int = 0
         for d in range(1, A.nrows):
             if any(A.iter_diag(-d)):
                 m1 = d
@@ -1015,23 +1022,23 @@ class BandedMatrixLU:
 
     def __init__(self, A: Matrix, m1: int, m2: int):
         # upper triangle of LU decomposition
-        self.upper = copy_float_matrix(A)
-        self.m1 = int(m1)
-        self.m2 = int(m2)
+        self.upper: MatrixData = copy_float_matrix(A)
+        self.m1: int = int(m1)
+        self.m2: int = int(m2)
 
         # lower triangle of LU decomposition
-        n = self.nrows
-        self.lower = [[0.0] * m1 for _ in range(n)]
-        self.index = [0] * n
-        self._det = 1.0
+        n: int = self.nrows
+        self.lower: MatrixData = [[0.0] * m1 for _ in range(n)]
+        self.index: List[int] = [0] * n
+        self._det: float = 1.0
 
         m1 = self.m1
         m2 = self.m2
-        upper = self.upper
-        lower = self.lower
+        upper: MatrixData = self.upper
+        lower: MatrixData = self.lower
 
-        mm = m1 + m2 + 1
-        l = m1
+        mm: int = m1 + m2 + 1
+        l: int = m1
         for i in range(m1):
             for j in range(m1 - i, mm):
                 upper[i][j - l] = upper[i][j]
@@ -1063,7 +1070,7 @@ class BandedMatrixLU:
                 upper[i][mm - 1] = 0.0
 
     @property
-    def nrows(self):
+    def nrows(self) -> int:
         """Count of matrix rows."""
         return len(self.upper)
 
@@ -1078,21 +1085,21 @@ class BandedMatrixLU:
             vector as list of floats
 
         """
-        x = list(B)
+        x: List[float] = list(B)
         if len(x) != self.nrows:
             raise ValueError(
                 "Item count of vector B has to be equal to matrix row count."
             )
 
-        n = self.nrows
-        m1 = self.m1
-        m2 = self.m2
-        index = self.index
-        al = self.lower
-        au = self.upper
+        n: int = self.nrows
+        m1: int = self.m1
+        m2: int = self.m2
+        index: List[int] = self.index
+        al: MatrixData = self.lower
+        au: MatrixData = self.upper
 
-        mm = m1 + m2 + 1
-        l = m1
+        mm: int = m1 + m2 + 1
+        l: int = m1
         for k in range(n):
             j = index[k] - 1
             if j != k:
@@ -1113,7 +1120,7 @@ class BandedMatrixLU:
 
         return x
 
-    def solve_matrix(self, B: Iterable[Iterable[float]]) -> Matrix:
+    def solve_matrix(self, B: IterableMatrixData) -> Matrix:
         """
         Solves the linear equation system given by the banded nxn Matrix
         A . x = B, right-hand side quantities as nxm Matrix B.
@@ -1127,19 +1134,20 @@ class BandedMatrixLU:
 
         """
         if not isinstance(B, Matrix):
-            B = Matrix(matrix=[list(row) for row in B])  # type: ignore
-        assert isinstance(B, Matrix)
-        if B.nrows != self.nrows:
+            matrix_b = Matrix(matrix=[list(row) for row in B])
+        else:
+            matrix_b = cast(Matrix, B)
+        if matrix_b.nrows != self.nrows:
             raise ValueError("Row count of self and matrix B has to match.")
 
         return Matrix(
-            matrix=[self.solve_vector(col) for col in B.cols()]
+            matrix=[self.solve_vector(col) for col in matrix_b.cols()]
         ).transpose()
 
     def determinant(self) -> float:
         """Returns the determinant of matrix."""
-        dd = self._det
-        au = self.upper
+        dd: float = self._det
+        au: MatrixData = self.upper
 
         for i in range(0, len(au)):
             dd *= au[i][0]
