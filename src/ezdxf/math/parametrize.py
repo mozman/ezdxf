@@ -73,7 +73,7 @@ def arc_t_vector(fit_points: List[Vec3]) -> Iterable[float]:
 def arc_distances(fit_points: List[Vec3]) -> Iterable[float]:
     p = fit_points
 
-    def _radii() -> List[float]:
+    def _radii() -> Iterable[float]:
         for i in range(len(p) - 2):
             try:
                 radius = circle_radius_3p(p[i], p[i + 1], p[i + 2])
@@ -81,7 +81,7 @@ def arc_distances(fit_points: List[Vec3]) -> Iterable[float]:
                 radius = 0.0
             yield radius
 
-    r = list(_radii())
+    r: List[float] = list(_radii())
     r.append(r[-1])  # 2x last radius
     for k in range(0, len(p) - 1):
         distance = (p[k + 1] - p[k]).magnitude
@@ -175,7 +175,7 @@ def tangents_3_point_interpolation(
     delta_t = [t1 - t0 for t0, t1 in zip(t, t[1:])]
     d = [qk / dtk for qk, dtk in zip(q, delta_t)]
     alpha = [dt0 / (dt0 + dt1) for dt0, dt1 in zip(delta_t, delta_t[1:])]
-    tangents = [0.0]  # placeholder
+    tangents: List[Vec3] = [Vec3()]  # placeholder
     tangents.extend(
         [
             (1.0 - alpha[k]) * d[k] + alpha[k] * d[k + 1]

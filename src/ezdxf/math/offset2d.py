@@ -35,17 +35,17 @@ def offset_vertices_2d(
         closed: ``True`` to handle as closed shape
 
     """
-    vertices = Vec2.list(vertices)
-    if len(vertices) < 2:
+    _vertices = Vec2.list(vertices)
+    if len(_vertices) < 2:
         raise ValueError("2 or more vertices required.")
 
-    if closed and not vertices[0].isclose(vertices[-1]):
+    if closed and not _vertices[0].isclose(_vertices[-1]):
         # append first vertex as last vertex to close shape
-        vertices.append(vertices[0])
+        _vertices.append(_vertices[0])
 
     # create offset segments
     offset_segments = list()
-    for start, end in zip(vertices[:-1], vertices[1:]):
+    for start, end in zip(_vertices[:-1], _vertices[1:]):
         offset_vec = (end - start).orthogonal().normalize(offset)
         offset_segments.append((start + offset_vec, end + offset_vec))
 
