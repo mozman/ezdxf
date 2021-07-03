@@ -113,7 +113,7 @@ class Matrix44:
         """
         if 0 <= row < 4:
             index = row * 4
-            return tuple(self._matrix[index : index + 4])
+            return tuple(self._matrix[index: index + 4])
         else:
             raise IndexError(f"invalid row index: {row}")
 
@@ -128,7 +128,7 @@ class Matrix44:
         """
         if 0 <= row < 4:
             index = row * 4
-            self._matrix[index : index + len(values)] = floats(values)
+            self._matrix[index: index + len(values)] = floats(values)
         else:
             raise IndexError(f"invalid row index: {row}")
 
@@ -439,7 +439,12 @@ class Matrix44:
         return transformation
 
     @staticmethod
-    def ucs(ux=X_AXIS, uy=Y_AXIS, uz=Z_AXIS, origin=NULLVEC) -> "Matrix44":
+    def ucs(
+        ux: Vec3 = X_AXIS,
+        uy: Vec3 = Y_AXIS,
+        uz: Vec3 = Z_AXIS,
+        origin: Vec3 = NULLVEC,
+    ) -> "Matrix44":
         """Returns a matrix for coordinate transformation from WCS to UCS.
         For transformation from UCS to WCS, transpose the returned matrix.
 
@@ -567,24 +572,14 @@ class Matrix44:
 
     def transform_vertices(self, vectors: Iterable["Vertex"]) -> Iterable[Vec3]:
         """Returns an iterable of transformed vertices."""
+        # fmt: off
         (
-            m0,
-            m1,
-            m2,
-            m3,
-            m4,
-            m5,
-            m6,
-            m7,
-            m8,
-            m9,
-            m10,
-            m11,
-            m12,
-            m13,
-            m14,
-            m15,
+            m0, m1, m2, m3,
+            m4, m5, m6, m7,
+            m8, m9, m10, m11,
+            m12, m13, m14, m15,
         ) = self._matrix
+        # fmt: on
         for vector in vectors:
             x, y, z = Vec3(vector)
             # fmt: off
@@ -646,25 +641,13 @@ class Matrix44:
 
     def transpose(self) -> None:
         """Swaps the rows for columns inplace."""
-        (
-            m00,
-            m01,
-            m02,
-            m03,
-            m10,
-            m11,
-            m12,
-            m13,
-            m20,
-            m21,
-            m22,
-            m23,
-            m30,
-            m31,
-            m32,
-            m33,
-        ) = self._matrix
         # fmt: off
+        (
+            m00, m01, m02, m03,
+            m10, m11, m12, m13,
+            m20, m21, m22, m23,
+            m30, m31, m32, m33,
+        ) = self._matrix
         self._matrix = [
             m00, m10, m20, m30,
             m01, m11, m21, m31,
@@ -675,25 +658,14 @@ class Matrix44:
 
     def determinant(self) -> float:
         """Returns determinant."""
-        (
-            m00,
-            m01,
-            m02,
-            m03,
-            m10,
-            m11,
-            m12,
-            m13,
-            m20,
-            m21,
-            m22,
-            m23,
-            m30,
-            m31,
-            m32,
-            m33,
-        ) = self._matrix
         # fmt: off
+        (
+            m00, m01, m02, m03,
+            m10, m11, m12, m13,
+            m20, m21, m22, m23,
+            m30, m31, m32, m33,
+        ) = self._matrix
+
         return (
             m00 * m11 * m22 * m33 - m00 * m11 * m23 * m32 +
             m00 * m12 * m23 * m31 - m00 * m12 * m21 * m33 +
@@ -719,25 +691,13 @@ class Matrix44:
         """
         det = self.determinant()
         f = 1.0 / det  # catch ZeroDivisionError by caller
-        (
-            m00,
-            m01,
-            m02,
-            m03,
-            m10,
-            m11,
-            m12,
-            m13,
-            m20,
-            m21,
-            m22,
-            m23,
-            m30,
-            m31,
-            m32,
-            m33,
-        ) = self._matrix
         # fmt: off
+        (
+            m00, m01, m02, m03,
+            m10, m11, m12, m13,
+            m20, m21, m22, m23,
+            m30, m31, m32, m33,
+        ) = self._matrix
         self._matrix = [
             (
                 m12 * m23 * m31 - m13 * m22 * m31 + m13 * m21 * m32 -

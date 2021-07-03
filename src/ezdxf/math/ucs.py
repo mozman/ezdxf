@@ -3,9 +3,8 @@
 from typing import TYPE_CHECKING, Tuple, Sequence, Iterable
 from ezdxf.math import Vec3, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
 
-
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, BaseLayout
+    from ezdxf.eztypes import Vertex, BaseLayout, RGB
 
 __all__ = ["OCS", "UCS", "PassTroughUCS"]
 
@@ -14,10 +13,13 @@ def render_axis(
     layout: "BaseLayout",
     start: "Vertex",
     points: Sequence["Vertex"],
-    colors: Tuple[int, int, int] = (1, 3, 5),
+    colors: "RGB" = (1, 3, 5),
 ) -> None:
     for point, color in zip(points, colors):
         layout.add_line(start, point, dxfattribs={"color": color})
+
+
+_1_OVER_64 = 1.0 / 64.0
 
 
 class OCS:
@@ -32,7 +34,7 @@ class OCS:
         Az = Vec3(extrusion).normalize()
         self.transform = not Az.isclose(Z_AXIS)
         if self.transform:
-            if (abs(Az.x) < 1 / 64.0) and (abs(Az.y) < 1 / 64.0):
+            if (abs(Az.x) < _1_OVER_64) and (abs(Az.y) < _1_OVER_64):
                 Ax = Y_AXIS.cross(Az)
             else:
                 Ax = Z_AXIS.cross(Az)
@@ -92,7 +94,7 @@ class OCS:
         layout: "BaseLayout",
         length: float = 1,
         colors: Tuple[int, int, int] = (1, 3, 5),
-    ):
+    ) -> None:
         """Render axis as 3D lines into a `layout`."""
         render_axis(
             layout,
@@ -134,27 +136,27 @@ class UCS:
         uz: "Vertex" = None,
     ):
         if ux is None and uy is None:
-            ux = X_AXIS
-            uy = Y_AXIS
-            uz = Z_AXIS
+            _ux: Vec3 = X_AXIS
+            _uy: Vec3 = Y_AXIS
+            _uz: Vec3 = Z_AXIS
         elif ux is None:
-            uy = Vec3(uy).normalize()
-            uz = Vec3(uz).normalize()
-            ux = Vec3(uy).cross(uz).normalize()
+            _uy = Vec3(uy).normalize()
+            _uz = Vec3(uz).normalize()
+            _ux = Vec3(uy).cross(uz).normalize()
         elif uy is None:
-            ux = Vec3(ux).normalize()
-            uz = Vec3(uz).normalize()
-            uy = Vec3(uz).cross(ux).normalize()
+            _ux = Vec3(ux).normalize()
+            _uz = Vec3(uz).normalize()
+            _uy = Vec3(uz).cross(ux).normalize()
         elif uz is None:
-            ux = Vec3(ux).normalize()
-            uy = Vec3(uy).normalize()
-            uz = Vec3(ux).cross(uy).normalize()
+            _ux = Vec3(ux).normalize()
+            _uy = Vec3(uy).normalize()
+            _uz = Vec3(ux).cross(uy).normalize()
         else:  # all axis are given
-            ux = Vec3(ux).normalize()
-            uy = Vec3(uy).normalize()
-            uz = Vec3(uz).normalize()
+            _ux = Vec3(ux).normalize()
+            _uy = Vec3(uy).normalize()
+            _uz = Vec3(uz).normalize()
 
-        self.matrix: Matrix44 = Matrix44.ucs(ux, uy, uz, origin)
+        self.matrix: Matrix44 = Matrix44.ucs(_ux, _uy, _uz, Vec3(origin))
 
     @property
     def ux(self) -> Vec3:
