@@ -2,17 +2,14 @@
 News
 ====
 
-Version 0.16.5b0 - dev
+Version 0.16.5b1 - dev
 ----------------------
 
 - NEW: hard dependency `typing_extensions`
 - CHANGED: replaced `ezdxf.tools.rgb` by `ezdxf.colors`
 - CHANGE: `options` module renamed to `_options`; this eliminates the confusion 
   between the `options` module and the global object `ezdxf.options`
-- NEW: config file support, config files read in order:
-  1. home directory `~/.ezdxf/ezdxf.ini`
-  2. current working directory `./ezdxf.ini`
-  3. environment variable `EZDXF_CONFIG_FILE=myconfig.ini`
+- NEW: config file support, see [docs](https://ezdxf.mozman.at/docs/options.html#config-files)
 - NEW: `ezdxf config` command to manage config files
 - REMOVED: environment variable options, these are config file only options:
   - `EZDXF_AUTO_LOAD_FONTS`
@@ -22,7 +19,7 @@ Version 0.16.5b0 - dev
   - `EZDXF_FILTER_INVALID_XDATA_GROUP_CODES`
 - REMOVED: `ezdxf.options.default_text_style`, was not used  
 - REMOVED: `ezdxf.options.auto_load_fonts`, disabling auto load has no advantage
-- REMOVED: `Vector`alias for `Vec3`
+- REMOVED: `Vector` alias for `Vec3`
 
 Version 0.16.4 - 2021-06-20
 ---------------------------
