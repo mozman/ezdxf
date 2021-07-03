@@ -33,6 +33,7 @@ __all__ = [
     "sign",
     "area",
     "circle_radius_3p",
+    "TOLERANCE"
 ]
 
 

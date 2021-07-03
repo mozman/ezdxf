@@ -19,6 +19,7 @@ class ParallelRaysError(ArithmeticError):
 HALF_PI = math.pi / 2.0
 THREE_PI_HALF = 1.5 * math.pi
 DOUBLE_PI = math.pi * 2.0
+ABS_TOL = 1e-12
 
 
 class ConstructionRay:
@@ -33,6 +34,13 @@ class ConstructionRay:
 
     def __init__(self, p1: "Vertex", p2: "Vertex" = None, angle: float = None):
         self._location = Vec2(p1)
+        self._angle: Optional[float]
+        self._slope: Optional[float]
+        self._yof0: Optional[float]
+        self._direction: Vec2
+        self._is_vertical: bool
+        self._is_horizontal: bool
+
         if p2 is not None:
             p2 = Vec2(p2)
             if self._location.x < p2.x:
@@ -46,16 +54,14 @@ class ConstructionRay:
         else:
             raise ValueError("p2 or angle required.")
 
-        if math.isclose(self._direction.x, 0.0, abs_tol=1e-12):
+        if abs(self._direction.x) <= ABS_TOL:
             self._slope = None
             self._yof0 = None
         else:
             self._slope = self._direction.y / self._direction.x
             self._yof0 = self._location.y - self._slope * self._location.x
         self._is_vertical = self._slope is None
-        self._is_horizontal = math.isclose(
-            self._direction.y, 0.0, abs_tol=1e-12
-        )
+        self._is_horizontal = abs(self._direction.y) <= ABS_TOL
 
     @property
     def location(self) -> Vec2:
@@ -68,19 +74,22 @@ class ConstructionRay:
         return self._direction
 
     @property
-    def slope(self) -> float:
+    def slope(self) -> Optional[float]:
         """Slope of ray or ``None`` if vertical."""
         return self._slope
 
     @property
     def angle(self) -> float:
         """Angle between x-axis and ray in radians."""
-        return self._angle
+        if self._angle is None:
+            return self._direction.angle
+        else:
+            return self._angle
 
     @property
     def angle_deg(self) -> float:
         """Angle between x-axis and ray in degrees."""
-        return math.degrees(self._angle)
+        return math.degrees(self.angle)
 
     @property
     def is_vertical(self) -> bool:
@@ -106,7 +115,8 @@ class ConstructionRay:
             return False
         if self._is_horizontal:
             return other._is_horizontal
-        return math.isclose(self._slope, other._slope, abs_tol=1e-12)
+        # guards above guarantee that no slope is None
+        return math.isclose(self._slope, other._slope, abs_tol=ABS_TOL)  # type: ignore
 
     def intersect(self, other: "ConstructionRay") -> Vec2:
         """Returns the intersection point as ``(x, y)`` tuple of `self` and
@@ -142,13 +152,14 @@ class ConstructionRay:
         else:
             # calc intersection with the 'straight-line-equation'
             # based on y(x) = y0 + x*slope
-            x = (ray1._yof0 - ray2._yof0) / (ray2._slope - ray1._slope)
+            # guards above guarantee that no slope is None
+            x = (ray1._yof0 - ray2._yof0) / (ray2._slope - ray1._slope)  # type: ignore
             y = ray1.yof(x)
         return Vec2((x, y))
 
     def orthogonal(self, location: "Vertex") -> "ConstructionRay":
         """Returns orthogonal ray at `location`."""
-        return ConstructionRay(location, angle=self._angle + HALF_PI)
+        return ConstructionRay(location, angle=self.angle + HALF_PI)
 
     def yof(self, x: float) -> float:
         """Returns y-value of ray for `x` location.
@@ -159,7 +170,8 @@ class ConstructionRay:
         """
         if self._is_vertical:
             raise ArithmeticError
-        return self._yof0 + float(x) * self._slope
+        # guard above guarantee that slope is not None
+        return self._yof0 + float(x) * self._slope  # type: ignore
 
     def xof(self, y: float) -> float:
         """Returns x-value of ray for `y` location.
@@ -168,17 +180,17 @@ class ConstructionRay:
             ArithmeticError: for horizontal rays
 
         """
-        if self._is_vertical:
+        if self._is_vertical:  # slope == None
             return self._location.x
-        elif not self._is_horizontal:
-            return (float(y) - self._yof0) / self._slope
+        elif not self._is_horizontal:  # slope != None & slope != 0
+            return (float(y) - self._yof0) / self._slope  # type: ignore
         else:
             raise ArithmeticError
 
     def bisectrix(self, other: "ConstructionRay") -> "ConstructionRay":
         """Bisectrix between `self` and `other`."""
         intersection = self.intersect(other)
-        alpha = (self._angle + other._angle) / 2.0
+        alpha = (self.angle + other.angle) / 2.0
         return ConstructionRay(intersection, angle=alpha)
 
 
@@ -231,10 +243,14 @@ class ConstructionLine:
         """collinear :class:`ConstructionRay`."""
         return ConstructionRay(self.start, self.end)
 
-    def __eq__(self, other: "ConstructionLine") -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ConstructionLine):
+            raise TypeError(type(other))
         return self.sorted_points == other.sorted_points
 
-    def __lt__(self, other: "ConstructionLine") -> bool:
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, ConstructionLine):
+            raise TypeError(type(other))
         return self.sorted_points < other.sorted_points
 
     def length(self) -> float:
