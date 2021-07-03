@@ -30,14 +30,14 @@ from .transformtools import *
 from .curvetools import *
 from .clipping import *
 
-Vertex = Union[Sequence[float], Vec3, Vec2]
-VecXY = Union[Vec2, Vec3]  # Vector with x and y attributes
 AnyVec = Union[Vec2, Vec3]
+Vertex = Union[Sequence[float], AnyVec]
+
 ABS_TOL = 1e-12
 REL_TOL = 1e-9
 
 
-def close_vectors(a: Iterable[VecXY], b: Iterable[Vertex], *,
+def close_vectors(a: Iterable[AnyVec], b: Iterable[Vertex], *,
                   rel_tol=REL_TOL, abs_tol=ABS_TOL) -> bool:
     return all(v1.isclose(v2, rel_tol=rel_tol, abs_tol=abs_tol)
                for v1, v2 in zip(a, b))

@@ -10,7 +10,7 @@ DEF ABS_TOL = 1e-12
 DEF REL_TOL = 1e-9
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import VecXY, Vertex
+    from ezdxf.eztypes import AnyVec, Vertex
 
 cdef bint isclose(double a, double b, double rel_tol, double abs_tol):
     # Has to match the Python implementation!
@@ -97,28 +97,28 @@ cdef class Vec2:
     def vec3(self) -> 'Vec3':
         return Vec3(self)
 
-    def round(self, ndigits=None) -> 'Vec2':
+    def round(self, ndigits=None) -> "Vec2":
         # only used for testing
         return Vec2(round(self.x, ndigits), round(self.y, ndigits))
 
     @staticmethod
-    def list(items: Iterable['Vertex']) -> List['Vec2']:
+    def list(items: Iterable['Vertex']) -> List["Vec2"]:
         return list(Vec2.generate(items))
 
     @staticmethod
-    def tuple(items: Iterable['Vertex']) -> Sequence['Vec2']:
+    def tuple(items: Iterable['Vertex']) -> Sequence["Vec2"]:
         return tuple(Vec2.generate(items))
 
     @staticmethod
-    def generate(items: Iterable['Vertex']) -> Iterable['Vec2']:
+    def generate(items: Iterable['Vertex']) -> Iterable["Vec2"]:
         return (Vec2(item) for item in items)
 
     @staticmethod
-    def from_angle(double angle, double length = 1.0) -> 'Vec2':
+    def from_angle(double angle, double length = 1.0) -> "Vec2":
         return v2_from_angle(angle, length)
 
     @staticmethod
-    def from_deg_angle(double angle, double length = 1.0) -> 'Vec2':
+    def from_deg_angle(double angle, double length = 1.0) -> "Vec2":
         return v2_from_angle(angle * DEG2RAD, length)
 
     def __str__(self) -> str:
@@ -133,13 +133,13 @@ cdef class Vec2:
     def __hash__(self) -> int:
         return hash((self.x, self.y))
 
-    def copy(self) -> 'Vec2':
+    def copy(self) -> "Vec2":
         return self  # immutable
 
-    def __copy__(self) -> 'Vec2':
+    def __copy__(self) -> "Vec2":
         return self  # immutable
 
-    def __deepcopy__(self, memodict: dict) -> 'Vec2':
+    def __deepcopy__(self, memodict: dict) -> "Vec2":
         return self  # immutable
 
     def __getitem__(self, int index) -> float:
@@ -173,21 +173,21 @@ cdef class Vec2:
     def angle_deg(self) -> float:
         return atan2(self.y, self.x) * RAD2DEG
 
-    def orthogonal(self, ccw: bool = True) -> 'Vec2':
+    def orthogonal(self, ccw: bool = True) -> "Vec2":
         return v2_ortho(self, ccw)
 
-    def lerp(self, other: 'VecXY', double factor = 0.5) -> 'Vec2':
+    def lerp(self, other: "AnyVec", double factor = 0.5) -> "Vec2":
         cdef Vec2 o = Vec2(other)
         return v2_lerp(self, o, factor)
 
     def normalize(self, double length = 1.) -> Vec2:
         return v2_normalize(self, length)
 
-    def project(self, other: 'VecXY') -> 'Vec2':
+    def project(self, other: "AnyVec") -> "Vec2":
         cdef Vec2 o = Vec2(other)
         return v2_project(self, o)
 
-    def __neg__(self) -> 'Vec2':
+    def __neg__(self) -> "Vec2":
         cdef Vec2 res = Vec2()
         res.x = -self.x
         res.y = -self.y
@@ -198,7 +198,7 @@ cdef class Vec2:
     def __bool__(self) -> bool:
         return self.x != 0 or self.y != 0
 
-    def isclose(self, other: 'VecXY', *, double rel_tol=REL_TOL,
+    def isclose(self, other: "AnyVec", *, double rel_tol=REL_TOL,
                 double abs_tol = ABS_TOL) -> bool:
         cdef Vec2 o = Vec2(other)
         return isclose(self.x, o.x, rel_tol, abs_tol) and \
@@ -216,7 +216,7 @@ cdef class Vec2:
         else:
             return self.x < o.x
 
-    def __add__(self, other: 'VecXY') -> 'Vec2':
+    def __add__(self, other: "AnyVec") -> "Vec2":
         if not isinstance(other, Vec2):
             other = Vec2(other)
         return v2_add(self, <Vec2> other)
@@ -225,7 +225,7 @@ cdef class Vec2:
 
     __iadd__ = __add__  # immutable
 
-    def __sub__(self, other: 'VecXY') -> 'Vec2':
+    def __sub__(self, other: "AnyVec") -> "Vec2":
         if not isinstance(other, Vec2):
             other = Vec2(other)
         return v2_sub(self, <Vec2> other)
@@ -234,7 +234,7 @@ cdef class Vec2:
 
     __isub__ = __sub__  # immutable
 
-    def __mul__(self, factor) -> 'Vec2':
+    def __mul__(self, factor) -> "Vec2":
         if isinstance(self, Vec2):
             return v2_mul(self, factor)
         elif isinstance(factor, Vec2):
@@ -244,43 +244,43 @@ cdef class Vec2:
 
     # Special Cython <(3.0) feature: __rmul__ == __mul__(factor, self)
 
-    def __rmul__(self, double factor) -> 'Vec2':
+    def __rmul__(self, double factor) -> "Vec2":
         # for Cython >= 3.0
         return v2_mul(self, factor)
 
     __imul__ = __mul__  # immutable
 
-    def __truediv__(self, double factor) -> 'Vec2':
+    def __truediv__(self, double factor) -> "Vec2":
         return v2_mul(self, 1.0 / factor)
 
     # __rtruediv__ not supported -> TypeError
 
-    def dot(self, other: 'VecXY') -> float:
+    def dot(self, other: "AnyVec") -> float:
         cdef Vec2 o = Vec2(other)
         return v2_dot(self, o)
 
-    def det(self, other: 'VecXY') -> float:
+    def det(self, other: "AnyVec") -> float:
         cdef Vec2 o = Vec2(other)
         return v2_det(self, o)
 
-    def distance(self, other: 'VecXY') -> float:
+    def distance(self, other: "AnyVec") -> float:
         cdef Vec2 o = Vec2(other)
         return v2_dist(self, o)
 
-    def angle_between(self, other: 'VecXY') -> float:
+    def angle_between(self, other: "AnyVec") -> float:
         cdef Vec2 o = Vec2(other)
         return v2_angle_between(self, o)
 
-    def rotate(self, double angle: float):
+    def rotate(self, double angle: float) -> "Vec2":
         cdef double self_angle = atan2(self.y, self.x)
         cdef double magnitude = hypot(self.x, self.y)
         return v2_from_angle(self_angle + angle, magnitude)
 
-    def rotate_deg(self, double angle) -> 'Vec2':
+    def rotate_deg(self, double angle) -> "Vec2":
         return self.rotate(angle * DEG2RAD)
 
     @staticmethod
-    def sum(items: Iterable['Vec2']) -> 'Vec2':
+    def sum(items: Iterable["Vec2"]) -> "Vec2":
         cdef Vec2 res = Vec2()
         cdef Vec2 tmp
         res.x = 0.0
@@ -439,7 +439,7 @@ cdef class Vec3:
         return self.x, self.y, self.z
 
     @property
-    def vec2(self) -> 'Vec2':
+    def vec2(self) -> "Vec2":
         cdef Vec2 res = Vec2()
         res.x = self.x
         res.y = self.y

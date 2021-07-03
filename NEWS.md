@@ -20,8 +20,9 @@ Version 0.16.5b0 - dev
   - `EZDXF_PRESERVE_PROXY_GRAPHICS`
   - `EZDXF_LOG_UNPROCESSED_TAGS`
   - `EZDXF_FILTER_INVALID_XDATA_GROUP_CODES`
- - REMOVED: `ezdxf.options.default_text_style`, was not used  
- - REMOVED: `ezdxf.options.auto_load_fonts`, disabling auto load has no advantage  
+- REMOVED: `ezdxf.options.default_text_style`, was not used  
+- REMOVED: `ezdxf.options.auto_load_fonts`, disabling auto load has no advantage
+- REMOVED: `Vector`alias for `Vec3`
 
 Version 0.16.4 - 2021-06-20
 ---------------------------

@@ -13,8 +13,8 @@ from typing import *
 if TYPE_CHECKING:
     # Low level stuff
     from ezdxf.math import (
-        Vec3, Vec2, Vertex, VecXY, Matrix44, BoundingBox, BoundingBox2d ,UCS,
-        OCS, AnyVec
+        Vec3, Vec2, AnyVec, Vertex, Matrix44, BoundingBox, BoundingBox2d ,UCS,
+        OCS
     )
     from ezdxf.tools.handle import HandleGenerator
     from ezdxf.lldxf.types import DXFTag, DXFBinaryTag, DXFVertex
