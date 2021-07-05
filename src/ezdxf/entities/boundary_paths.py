@@ -142,7 +142,7 @@ class BoundaryPaths:
 
         paths = sorted(
             (path_type_enum(p.path_type_flags), i, p)
-            for i, p in enumerate(self.paths)
+                for i, p in enumerate(self.paths)
         )
         ignore = 1  # EXTERNAL only
         if hatch_style == const.HATCH_STYLE_NESTED:
@@ -221,6 +221,8 @@ class BoundaryPaths:
 
                 if prev_bulge != 0:
                     arc = ArcEdge()
+                    # bulge_to_arc returns always counter-clockwise oriented
+                    # start- and end angles:
                     (
                         arc.center,
                         start_angle,
@@ -231,6 +233,7 @@ class BoundaryPaths:
                         start_angle, arc.radius
                     )
                     arc.ccw = chk_point.isclose(prev_point, abs_tol=1e-9)
+                    # todo: swap start- and end angles for clockwise oriented arcs
                     arc.start_angle = math.degrees(start_angle) % 360.0
                     arc.end_angle = math.degrees(end_angle) % 360.0
                     if math.isclose(
@@ -249,7 +252,7 @@ class BoundaryPaths:
 
         def to_edge_path(polyline_path) -> EdgePath:
             edge_path = EdgePath()
-            vertices = list(polyline_path.vertices)
+            vertices: List = list(polyline_path.vertices)
             if polyline_path.is_closed:
                 vertices.append(vertices[0])
             edge_path.edges = list(_edges(vertices))
@@ -311,10 +314,7 @@ class BoundaryPaths:
         def to_spline_edge(e: EllipseEdge) -> SplineEdge:
             # No OCS transformation needed, source ellipse and target spline
             # reside in the same OCS.
-            # ezdxf stores angles always in counter-clockwise orientation.
-            # DXF conversion is done at export, see also ArcEdge.load_tags()
-            # for explanation.
-
+            # todo: swap start- and end angles for clockwise oriented ellipses
             ellipse = ConstructionEllipse(
                 center=e.center,
                 major_axis=e.major_axis,
@@ -395,6 +395,7 @@ class BoundaryPaths:
         """
 
         def to_line_edges(edge):
+            # Start- and end params are always stored in counter clockwise order!
             ellipse = ConstructionEllipse(
                 center=edge.center,
                 major_axis=edge.major_axis,
@@ -406,6 +407,8 @@ class BoundaryPaths:
                 int(float(num) * ellipse.param_span / math.tau), 3
             )
             params = ellipse.params(segment_count + 1)
+
+            # Reverse path if necessary!
             if not edge.ccw:
                 params = reversed(list(params))
             vertices = list(ellipse.vertices(params))
@@ -719,6 +722,7 @@ class EdgePath:
         arc = ArcEdge()
         arc.center = Vec2(center)
         arc.radius = radius
+        # todo: swap start- and end angles for clockwise oriented arcs!
         arc.start_angle = start_angle
         arc.end_angle = end_angle
         arc.ccw = bool(ccw)
@@ -746,12 +750,14 @@ class EdgePath:
                 clockwise orientation
 
         """
+
         if ratio > 1.0:
             raise const.DXFValueError("argument 'ratio' has to be <= 1.0")
         ellipse = EllipseEdge()
         ellipse.center = Vec2(center)
         ellipse.major_axis = Vec2(major_axis)
         ellipse.ratio = ratio
+        # todo: swap start- and end angles for clockwise oriented ellipses!
         ellipse.start_angle = start_angle
         ellipse.end_angle = end_angle
         ellipse.ccw = bool(ccw)
@@ -886,9 +892,29 @@ class ArcEdge:
     def __init__(self):
         self.center = Vec2(0.0, 0.0)
         self.radius: float = 1.0
+        # start- and end angles are always stored in counter clockwise order!
         self.start_angle: float = 0.0
         self.end_angle: float = 360.0
+        # This is just an indicator flag, see comment above!
         self.ccw: bool = True
+
+    @property
+    def true_start_angle(self) -> float:
+        """ Return the start angle according to the ccw flag.
+
+        The start- and end angles are always stored in counter clockwise order!
+
+        """
+        return self.start_angle if self.ccw else self.end_angle
+
+    @property
+    def true_end_angle(self) -> float:
+        """ Return the end angle according to the ccw flag.
+
+        The start- and end angles are always stored in counter clockwise order!
+
+        """
+        return self.end_angle if self.ccw else self.start_angle
 
     @classmethod
     def load_tags(cls, tags: Tags) -> "ArcEdge":
@@ -977,12 +1003,48 @@ class EllipseEdge:
         self.start_angle = math.degrees(param_to_angle(self.ratio, param))
 
     @property
+    def true_start_param(self) -> float:
+        """ Return the start param according to the ccw flag.
+
+        The start- and end params are always stored in counter clockwise order!
+
+        """
+        return self.start_param if self.ccw else self.end_param
+
+    @property
+    def true_start_angle(self) -> float:
+        """ Return the start angle according to the ccw flag.
+
+        The start- and end angles are always stored in counter clockwise order!
+
+        """
+        return self.start_angle if self.ccw else self.end_angle
+
+    @property
     def end_param(self) -> float:
         return angle_to_param(self.ratio, math.radians(self.end_angle))
 
     @end_param.setter
     def end_param(self, param: float) -> None:
         self.end_angle = math.degrees(param_to_angle(self.ratio, param))
+
+    @property
+    def true_end_param(self) -> float:
+        """ Return the end param according to the ccw flag.
+
+        The start- and end params are always stored in counter clockwise order!
+
+        """
+        return self.end_param if self.ccw else self.end_angle
+
+    @property
+    def true_end_angle(self) -> float:
+        """ Return the end angle according to the ccw flag.
+
+        The start- and end angles are always stored in counter clockwise order!
+
+        """
+        return self.end_angle if self.ccw else self.start_angle
 
     @classmethod
     def load_tags(cls, tags: Tags) -> "EllipseEdge":
@@ -1008,7 +1070,12 @@ class EllipseEdge:
             edge.start_angle = start
             edge.end_angle = end
         else:
-            # swap and convert to complementary angles: see ArcEdge.load_tags()
+            # The DXF format stores the clockwise oriented start- and end angles
+            # for HATCH arc- and ellipse edges as complementary angle (360-angle).
+            # This is a problem in many ways for processing clockwise oriented
+            # angles correct, especially rotation transformation won't work.
+            # Solution: convert clockwise angles into counter-clockwise angles
+            # and swap start- and end angle at loading and exporting:
             # for explanation
             edge.start_angle = 360.0 - end
             edge.end_angle = 360.0 - start
@@ -1028,7 +1095,7 @@ class EllipseEdge:
             start = self.start_angle
             end = self.end_angle
         else:
-            # swap and convert to complementary angles: see ArcEdge.load_tags()
+            # swap and convert to complementary angles: see EllipseEdge.load_tags()
             # for explanation
             start = 360.0 - self.end_angle
             end = 360.0 - self.start_angle
@@ -1044,7 +1111,9 @@ class EllipseEdge:
             major_axis=Vec3(self.major_axis),
             extrusion=Vec3(0, 0, 1),
             ratio=self.ratio,
-            # ConstructionEllipse() is always in ccw orientation
+            # 1. ConstructionEllipse() is always in ccw orientation
+            # 2. start- and end params are always stored in ccw orientation
+            # todo: do not swap params!
             start_param=self.start_param if self.ccw else self.end_param,
             end_param=self.end_param if self.ccw else self.start_param,
         )
@@ -1068,6 +1137,9 @@ class EllipseEdge:
         self.ratio = e.ratio
 
         # ConstructionEllipse() is always in ccw orientation
+        # 1. ConstructionEllipse() is always in ccw orientation
+        # 2. start- and end params are always stored in ccw orientation
+        # todo: do not swap params!
         self.start_param = e.start_param if self.ccw else e.end_param
         self.end_param = e.end_param if self.ccw else e.start_param
 

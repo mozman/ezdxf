@@ -320,6 +320,9 @@ def from_hatch_edge_path(
     def arc(edge):
         x, y, *_ = edge.center
         # from_arc() requires OCS data:
+        # Note: clockwise oriented arcs are converted to counter
+        # clockwise arcs at the loading stage!
+        # See: ezdxf.entities.boundary_paths.ArcEdge.load_tags()
         ellipse = ConstructionEllipse.from_arc(
             center=(x, y, elevation),
             radius=edge.radius,
@@ -334,6 +337,9 @@ def from_hatch_edge_path(
     def ellipse(edge):
         ocs_ellipse = edge.construction_tool()
         # ConstructionEllipse has WCS representation:
+        # Note: clockwise oriented ellipses are converted to counter
+        # clockwise ellipses at the loading stage!
+        # See: ezdxf.entities.boundary_paths.EllipseEdge.load_tags()
         ellipse = ConstructionEllipse(
             center=wcs(ocs_ellipse.center.replace(z=elevation)),
             major_axis=wcs(ocs_ellipse.major_axis),

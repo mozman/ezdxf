@@ -1,5 +1,4 @@
-# Created: 17.05.2019
-# Copyright (c) 2019, Manfred Moitzi
+# Copyright (c) 2019-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Mapping, Set
 import json
@@ -747,18 +746,26 @@ class _SourceCodeGenerator:
                     if edge.type == EdgeType.LINE:
                         add_line(f"ep.add_line({edge.start}, {str(edge.end)})")
                     elif edge.type == EdgeType.ARC:
+                        # Start- and end angles are always stored in ccw
+                        # orientation:
                         add_line("ep.add_arc(")
                         add_line(arg.format("center", str(edge.center)))
                         add_line(arg.format("radius", edge.radius))
+                        # todo: add_arc() swap start- and end angle for
+                        #  clockwise oriented arcs!
                         add_line(arg.format("start_angle", edge.start_angle))
                         add_line(arg.format("end_angle", edge.end_angle))
                         add_line(arg.format("ccw", edge.ccw))
                         add_line(")")
                     elif edge.type == EdgeType.ELLIPSE:
+                        # Start- and end params are always stored in ccw
+                        # orientation:
                         add_line("ep.add_ellipse(")
                         add_line(arg.format("center", str(edge.center)))
                         add_line(arg.format("major_axis", str(edge.major_axis)))
                         add_line(arg.format("ratio", edge.ratio))
+                        # todo: add_ellipse() swap start- and end angle for
+                        #  clockwise oriented ellipses!
                         add_line(arg.format("start_angle", edge.start_angle))
                         add_line(arg.format("end_angle", edge.end_angle))
                         add_line(arg.format("ccw", edge.ccw))
