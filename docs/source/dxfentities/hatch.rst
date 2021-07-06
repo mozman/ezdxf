@@ -304,6 +304,14 @@ Hatch Boundary Helper Classes
     `Ezdxf` performs no checks on gaps between the edges and does not prevent
     creating open loops.
 
+    .. note::
+
+        :class:`ArcEdge` and :class:`EllipseEdge` are ALWAYS represented in
+        counter-clockwise orientation, even if an clockwise oriented edge is
+        required to build a closed loop. To add a clockwise oriented curve swap
+        start- and end angles and set the `ccw` flag to `False` and `ezdxf`
+        will export a correct clockwise orientated curve.
+
     .. attribute:: type
 
         Path type as :attr:`BoundaryPathType.EDGE` enum
@@ -322,11 +330,13 @@ Hatch Boundary Helper Classes
 
     .. attribute:: edges
 
-        List of boundary edges of type :class:`LineEdge`, :class:`ArcEdge`, :class:`EllipseEdge` of :class:`SplineEdge`
+        List of boundary edges of type :class:`LineEdge`, :class:`ArcEdge`,
+        :class:`EllipseEdge` of :class:`SplineEdge`
 
     .. attribute:: source_boundary_objects
 
-        Required for associative hatches, list of handles to the associated DXF entities.
+        Required for associative hatches, list of handles to the associated DXF
+        entities.
 
     .. automethod:: clear
 
@@ -369,7 +379,8 @@ Hatch Boundary Helper Classes
 
 .. class:: ArcEdge
 
-    Arc as boundary edge.
+    Arc as boundary edge in counter-clockwise orientation,
+    see :meth:`EdgePath.add_arc`.
 
     .. attribute:: type
 
@@ -385,11 +396,11 @@ Hatch Boundary Helper Classes
 
     .. attribute:: start_angle
 
-        Arc start angle in degrees. (read/write)
+        Arc start angle in counter-clockwise orientation in degrees. (read/write)
 
     .. attribute:: end_angle
 
-        Arc end angle in degrees. (read/write)
+        Arc end angle in counter-clockwise orientation in degrees. (read/write)
 
     .. attribute:: ccw
 
@@ -398,7 +409,8 @@ Hatch Boundary Helper Classes
 
 .. class:: EllipseEdge
 
-    Elliptic arc as boundary edge.
+    Elliptic arc as boundary edge in counter-clockwise orientation,
+    see :meth:`EdgePath.add_ellipse`.
 
     .. attribute:: type
 
@@ -418,11 +430,11 @@ Hatch Boundary Helper Classes
 
     .. attribute:: start_angle
 
-        Ellipse start angle in degrees. (read/write)
+        Ellipse start angle in counter-clockwise orientation in degrees. (read/write)
 
     .. attribute:: end_angle
 
-        Ellipse end angle in degrees. (read/write)
+        Ellipse end angle in counter-clockwise orientation in degrees. (read/write)
 
     .. attribute:: ccw
 

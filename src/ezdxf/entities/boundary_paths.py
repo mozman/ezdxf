@@ -233,7 +233,6 @@ class BoundaryPaths:
                         start_angle, arc.radius
                     )
                     arc.ccw = chk_point.isclose(prev_point, abs_tol=1e-9)
-                    # todo: swap start- and end angles for clockwise oriented arcs
                     arc.start_angle = math.degrees(start_angle) % 360.0
                     arc.end_angle = math.degrees(end_angle) % 360.0
                     if math.isclose(
@@ -314,7 +313,6 @@ class BoundaryPaths:
         def to_spline_edge(e: EllipseEdge) -> SplineEdge:
             # No OCS transformation needed, source ellipse and target spline
             # reside in the same OCS.
-            # todo: swap start- and end angles for clockwise oriented ellipses
             ellipse = ConstructionEllipse(
                 center=e.center,
                 major_axis=e.major_axis,
@@ -710,11 +708,26 @@ class EdgePath:
     ) -> "ArcEdge":
         """Add an :class:`ArcEdge`.
 
+        **Adding Clockwise Oriented Arcs:**
+
+        Clockwise oriented :class:`ArcEdge` objects are sometimes necessary to
+        build closed loops, but the :class:`ArcEdge` objects are always
+        represented in counter-clockwise orientation.
+        To add a clockwise oriented :class:`ArcEdge` you have to swap the
+        start- and end angle and set the `ccw` flag to ``False``,
+        e.g. to add a clockwise oriented :class:`ArcEdge` from 180 to 90 degree,
+        add the :class:`ArcEdge` in counter-clockwise orientation with swapped
+        angles::
+
+            edge_path.add_arc(center, radius, start_angle=90, end_angle=180, ccw=False)
+
         Args:
             center: center point of arc, (x, y)-tuple
             radius: radius of circle
-            start_angle: start angle of arc in degrees
-            end_angle: end angle of arc in degrees
+            start_angle: start angle of arc in degrees (`end_angle` for a
+                clockwise oriented arc)
+            end_angle: end angle of arc in degrees (`start_angle` for a
+                clockwise oriented arc)
             ccw: ``True`` for counter clockwise ``False`` for
                 clockwise orientation
 
@@ -722,9 +735,11 @@ class EdgePath:
         arc = ArcEdge()
         arc.center = Vec2(center)
         arc.radius = radius
-        # todo: swap start- and end angles for clockwise oriented arcs!
+        # Start- and end angles always for counter-clockwise oriented arcs!
         arc.start_angle = start_angle
         arc.end_angle = end_angle
+        # Flag to export the counter-clockwise oriented arc in
+        # correct clockwise orientation:
         arc.ccw = bool(ccw)
         self.edges.append(arc)
         return arc
@@ -740,12 +755,27 @@ class EdgePath:
     ) -> "EllipseEdge":
         """Add an :class:`EllipseEdge`.
 
+        **Adding Clockwise Oriented Ellipses:**
+
+        Clockwise oriented :class:`EllipseEdge` objects are sometimes necessary
+        to build closed loops, but the :class:`EllipseEdge` objects are always
+        represented in counter-clockwise orientation.
+        To add a clockwise oriented :class:`EllipseEdge` you have to swap the
+        start- and end angle and set the `ccw` flag to ``False``,
+        e.g. to add a clockwise oriented :class:`EllipseEdge` from 180 to 90
+        degree, add the :class:`EllipseEdge` in counter-clockwise orientation
+        with swapped angles::
+
+            edge_path.add_ellipse(center, major_axis, ratio, start_angle=90, end_angle=180, ccw=False)
+
         Args:
             center: center point of ellipse, (x, y)-tuple
             major_axis: vector of major axis as (x, y)-tuple
             ratio: ratio of minor axis to major axis as float
-            start_angle: start angle of arc in degrees
-            end_angle: end angle of arc in degrees
+            start_angle: start angle of ellipse in degrees (`end_angle` for a
+                clockwise oriented ellipse)
+            end_angle: end angle of ellipse in degrees (`start_angle` for a
+                clockwise oriented ellipse)
             ccw: ``True`` for counter clockwise ``False`` for
                 clockwise orientation
 
@@ -757,9 +787,12 @@ class EdgePath:
         ellipse.center = Vec2(center)
         ellipse.major_axis = Vec2(major_axis)
         ellipse.ratio = ratio
-        # todo: swap start- and end angles for clockwise oriented ellipses!
+        # Start- and end angles are always stored in counter-clockwise
+        # orientation!
         ellipse.start_angle = start_angle
         ellipse.end_angle = end_angle
+        # Flag to export the counter-clockwise oriented ellipse in
+        # correct clockwise orientation:
         ellipse.ccw = bool(ccw)
         self.edges.append(ellipse)
         return ellipse
@@ -892,29 +925,11 @@ class ArcEdge:
     def __init__(self):
         self.center = Vec2(0.0, 0.0)
         self.radius: float = 1.0
-        # start- and end angles are always stored in counter clockwise order!
+        # start- and end angles are always stored in counter-clockwise order!
         self.start_angle: float = 0.0
         self.end_angle: float = 360.0
         # This is just an indicator flag, see comment above!
         self.ccw: bool = True
-
-    @property
-    def true_start_angle(self) -> float:
-        """ Return the start angle according to the ccw flag.
-
-        The start- and end angles are always stored in counter clockwise order!
-
-        """
-        return self.start_angle if self.ccw else self.end_angle
-
-    @property
-    def true_end_angle(self) -> float:
-        """ Return the end angle according to the ccw flag.
-
-        The start- and end angles are always stored in counter clockwise order!
-
-        """
-        return self.end_angle if self.ccw else self.start_angle
 
     @classmethod
     def load_tags(cls, tags: Tags) -> "ArcEdge":
@@ -1003,48 +1018,12 @@ class EllipseEdge:
         self.start_angle = math.degrees(param_to_angle(self.ratio, param))
 
     @property
-    def true_start_param(self) -> float:
-        """ Return the start param according to the ccw flag.
-
-        The start- and end params are always stored in counter clockwise order!
-
-        """
-        return self.start_param if self.ccw else self.end_param
-
-    @property
-    def true_start_angle(self) -> float:
-        """ Return the start angle according to the ccw flag.
-
-        The start- and end angles are always stored in counter clockwise order!
-
-        """
-        return self.start_angle if self.ccw else self.end_angle
-
-    @property
     def end_param(self) -> float:
         return angle_to_param(self.ratio, math.radians(self.end_angle))
 
     @end_param.setter
     def end_param(self, param: float) -> None:
         self.end_angle = math.degrees(param_to_angle(self.ratio, param))
-
-    @property
-    def true_end_param(self) -> float:
-        """ Return the end param according to the ccw flag.
-
-        The start- and end params are always stored in counter clockwise order!
-
-        """
-        return self.end_param if self.ccw else self.end_angle
-
-    @property
-    def true_end_angle(self) -> float:
-        """ Return the end angle according to the ccw flag.
-
-        The start- and end angles are always stored in counter clockwise order!
-
-        """
-        return self.end_angle if self.ccw else self.start_angle
 
     @classmethod
     def load_tags(cls, tags: Tags) -> "EllipseEdge":

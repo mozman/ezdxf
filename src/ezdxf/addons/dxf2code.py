@@ -751,8 +751,6 @@ class _SourceCodeGenerator:
                         add_line("ep.add_arc(")
                         add_line(arg.format("center", str(edge.center)))
                         add_line(arg.format("radius", edge.radius))
-                        # todo: add_arc() swap start- and end angle for
-                        #  clockwise oriented arcs!
                         add_line(arg.format("start_angle", edge.start_angle))
                         add_line(arg.format("end_angle", edge.end_angle))
                         add_line(arg.format("ccw", edge.ccw))
@@ -764,8 +762,6 @@ class _SourceCodeGenerator:
                         add_line(arg.format("center", str(edge.center)))
                         add_line(arg.format("major_axis", str(edge.major_axis)))
                         add_line(arg.format("ratio", edge.ratio))
-                        # todo: add_ellipse() swap start- and end angle for
-                        #  clockwise oriented ellipses!
                         add_line(arg.format("start_angle", edge.start_angle))
                         add_line(arg.format("end_angle", edge.end_angle))
                         add_line(arg.format("ccw", edge.ccw))
