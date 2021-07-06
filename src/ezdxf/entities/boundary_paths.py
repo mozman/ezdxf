@@ -925,10 +925,10 @@ class ArcEdge:
     def __init__(self):
         self.center = Vec2(0.0, 0.0)
         self.radius: float = 1.0
-        # start- and end angles are always stored in counter-clockwise order!
+        # Start- and end angles are always stored in counter-clockwise order!
         self.start_angle: float = 0.0
         self.end_angle: float = 360.0
-        # This is just an indicator flag, see comment above!
+        # Flag to preserve the required orientation for DXF export:
         self.ccw: bool = True
 
     @classmethod
@@ -954,7 +954,8 @@ class ArcEdge:
         # This is a problem in many ways for processing clockwise oriented
         # angles correct, especially rotation transformation won't work.
         # Solution: convert clockwise angles into counter-clockwise angles
-        # and swap start- and end angle at loading and exporting:
+        # and swap start- and end angle at loading and exporting, the ccw flag
+        # preserves the required orientation of the arc:
         if edge.ccw:
             edge.start_angle = start
             edge.end_angle = end
@@ -991,9 +992,10 @@ class ArcEdge:
             self.end_angle = ocs.transform_deg_angle(self.end_angle)
         else:
             # Transform only start point to preserve the connection point to
-            # adjacent edges and add +/-360 degree for the end angle:
+            # adjacent edges:
             self.start_angle = ocs.transform_deg_angle(self.start_angle)
-            self.end_angle = self.start_angle + (360 if self.ccw else -360)
+            # ArcEdge is represented in counter-clockwise orientation:
+            self.end_angle = self.start_angle + 360.0
 
 
 class EllipseEdge:
@@ -1005,8 +1007,10 @@ class EllipseEdge:
         # Endpoint of major axis relative to center point (in OCS)
         self.major_axis = Vec2((1.0, 0.0))
         self.ratio: float = 1.0
+        # Start- and end angles are always stored in counter-clockwise order!
         self.start_angle: float = 0.0  # start param, not a real angle
         self.end_angle: float = 360.0  # end param, not a real angle
+        # Flag to preserve the required orientation for DXF export:
         self.ccw: bool = True
 
     @property
@@ -1054,8 +1058,8 @@ class EllipseEdge:
             # This is a problem in many ways for processing clockwise oriented
             # angles correct, especially rotation transformation won't work.
             # Solution: convert clockwise angles into counter-clockwise angles
-            # and swap start- and end angle at loading and exporting:
-            # for explanation
+            # and swap start- and end angle at loading and exporting, the ccw flag
+            # preserves the required orientation of the ellipse:
             edge.start_angle = 360.0 - end
             edge.end_angle = 360.0 - start
 
