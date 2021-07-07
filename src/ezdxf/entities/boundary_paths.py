@@ -988,11 +988,11 @@ class ArcEdge:
         if not math.isclose(
             arc_angle_span_deg(self.start_angle, self.end_angle), 360.0
         ):  # open arc
-            # The transformation of the ccw flag is not necessary in the current
-            # implementation of OCS transformations. The arc orientation is
-            # around the extrusion vector and stays always the same, even for
-            # mirroring, which flips the extrusion vector to (0, 0, -1) for
-            # entities in the xy-plane.
+            # The transformation of the ccw flag is not necessary for the current
+            # implementation of OCS transformations. The arc angles have always
+            # a counter clockwise orientation around the extrusion vector and
+            # this orientation is preserved even for mirroring, which flips the
+            # extrusion vector to (0, 0, -1) for entities in the xy-plane.
 
             self.start_angle = ocs.transform_deg_angle(self.start_angle)
             self.end_angle = ocs.transform_deg_angle(self.end_angle)
@@ -1129,19 +1129,13 @@ class EllipseEdge:
         self.start_param = e.start_param
         self.end_param = e.end_param
 
-        if ocs.new_extrusion.isclose(e.extrusion, abs_tol=1e-9):
-            # ellipse extrusion matches new hatch extrusion
-            pass
-        elif ocs.new_extrusion.isclose(-e.extrusion, abs_tol=1e-9):
-            # ellipse extrusion is opposite to new hatch extrusion
-            self.start_angle, self.end_angle = (
-                -self.end_angle,
-                -self.start_angle,
-            )
-        else:
-            raise ArithmeticError(
-                "Invalid EllipseEdge() transformation, please send bug report."
-            )
+        # The transformation of the ccw flag is not necessary for the current
+        # implementation of OCS transformations.
+        # An ellipse as boundary edge is an OCS entity!
+        # The ellipse angles have always a counter clockwise orientation around
+        # the extrusion vector and this orientation is preserved even for
+        # mirroring, which flips the extrusion vector to (0, 0, -1) for
+        # entities in the xy-plane.
 
         # normalize angles in range 0 to 360 degrees
         self.start_angle = self.start_angle % 360.0
