@@ -230,7 +230,7 @@ class BasePolygon(DXFGraphic):
         """
         if self.doc is not None and self.doc.dxfversion < const.DXF2004:
             raise const.DXFVersionError("Gradient support requires DXF R2004")
-        if name not in const.GRADIENT_TYPES:
+        if name and name not in const.GRADIENT_TYPES:
             raise const.DXFValueError(f"Invalid gradient type name: {name}")
 
         self.pattern = None
