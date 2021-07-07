@@ -351,28 +351,21 @@ def _virtual_edge_path(
             attribs["center"] = edge.center
             attribs["radius"] = edge.radius
             attribs["elevation"] = elevation
-            if edge.ccw:
-                start_angle = edge.start_angle
-                end_angle = edge.end_angle
-            else:
-                start_angle = edge.end_angle
-                end_angle = edge.start_angle
-            attribs["start_angle"] = start_angle
-            attribs["end_angle"] = end_angle
+            # Arcs angles are always stored in counter clockwise orientation
+            # around the extrusion vector!
+            attribs["start_angle"] = edge.start_angle
+            attribs["end_angle"] = edge.end_angle
             attribs["extrusion"] = ocs.uz
             edges.append(Arc.new(dxfattribs=attribs))
         elif isinstance(edge, EllipseEdge):
             attribs["center"] = pnt_to_wcs(edge.center)
             attribs["major_axis"] = dir_to_wcs(edge.major_axis)
             attribs["ratio"] = edge.ratio
-            if edge.ccw:
-                start_param = edge.start_param
-                end_param = edge.end_param
-            else:
-                start_param = edge.end_param
-                end_param = edge.start_param
-            attribs["start_param"] = start_param
-            attribs["end_param"] = end_param
+            # Ellipse angles are always stored in counter clockwise orientation
+            # around the extrusion vector!
+            attribs["start_param"] = edge.start_param
+            attribs["end_param"] = edge.end_param
+            attribs["extrusion"] = ocs.uz
             edges.append(Ellipse.new(dxfattribs=attribs))
         elif isinstance(edge, SplineEdge):
             # TODO: remove Any, make SPLINE property assignments mypy compatible
