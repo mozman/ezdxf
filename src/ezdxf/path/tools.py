@@ -55,6 +55,7 @@ __all__ = [
     "add_spline",
     "to_multi_path",
     "single_paths",
+    "equal_paths"
 ]
 
 MAX_DISTANCE = 0.01
@@ -618,10 +619,9 @@ def add_bezier4p(path: Path, curves: Iterable[Bezier4P]) -> None:
             path.line_to(start)
 
         # add linear bezier segments as LINE_TO commands
-        if (
-            start.isclose(ctrl1, rel_tol=rel_tol, abs_tol=abs_tol)
-            and end.isclose(ctrl2, rel_tol=rel_tol, abs_tol=abs_tol)
-        ):
+        if start.isclose(
+            ctrl1, rel_tol=rel_tol, abs_tol=abs_tol
+        ) and end.isclose(ctrl2, rel_tol=rel_tol, abs_tol=abs_tol):
             path.line_to(end)
         else:
             path.curve4_to(end, ctrl1, ctrl2)
@@ -655,9 +655,8 @@ def add_bezier3p(path: Path, curves: Iterable[Bezier3P]) -> None:
         if not start.isclose(path.end, rel_tol=rel_tol, abs_tol=abs_tol):
             path.line_to(start)
 
-        if (
-            start.isclose(ctrl, rel_tol=rel_tol, abs_tol=abs_tol)
-            or end.isclose(ctrl, rel_tol=rel_tol, abs_tol=abs_tol)
+        if start.isclose(ctrl, rel_tol=rel_tol, abs_tol=abs_tol) or end.isclose(
+            ctrl, rel_tol=rel_tol, abs_tol=abs_tol
         ):
             path.line_to(end)
         else:
@@ -759,3 +758,11 @@ def add_spline(path: Path, spline: BSpline, level=4, reset=True) -> None:
     else:
         curves = spline.cubic_bezier_approximation(level=level)
     add_bezier4p(path, curves)
+
+
+def equal_paths(a: Path, b: Path, rel_tol=1e-9, abs_tol=1e-12) -> bool:
+    """Returns ``True`` if control points of given paths are close."""
+    return all(
+        cp_a.isclose(cp_b, rel_tol=rel_tol, abs_tol=abs_tol)
+        for cp_a, cp_b in zip(a.control_vertices(), b.control_vertices())
+    )
