@@ -1101,10 +1101,9 @@ class EllipseEdge:
             extrusion=Vec3(0, 0, 1),
             ratio=self.ratio,
             # 1. ConstructionEllipse() is always in ccw orientation
-            # 2. start- and end params are always stored in ccw orientation
-            # todo: do not swap params!
-            start_param=self.start_param if self.ccw else self.end_param,
-            end_param=self.end_param if self.ccw else self.start_param,
+            # 2. Start- and end params are always stored in ccw orientation
+            start_param=self.start_param,
+            end_param=self.end_param,
         )
 
     def transform(self, ocs: OCSTransform, elevation: float) -> None:
@@ -1126,11 +1125,9 @@ class EllipseEdge:
         self.ratio = e.ratio
 
         # ConstructionEllipse() is always in ccw orientation
-        # 1. ConstructionEllipse() is always in ccw orientation
-        # 2. start- and end params are always stored in ccw orientation
-        # todo: do not swap params!
-        self.start_param = e.start_param if self.ccw else e.end_param
-        self.end_param = e.end_param if self.ccw else e.start_param
+        # Start- and end params are always stored in ccw orientation
+        self.start_param = e.start_param
+        self.end_param = e.end_param
 
         if ocs.new_extrusion.isclose(e.extrusion, abs_tol=1e-9):
             # ellipse extrusion matches new hatch extrusion
