@@ -55,7 +55,7 @@ __all__ = [
     "add_spline",
     "to_multi_path",
     "single_paths",
-    "equal_paths"
+    "have_close_control_points",
 ]
 
 MAX_DISTANCE = 0.01
@@ -760,8 +760,14 @@ def add_spline(path: Path, spline: BSpline, level=4, reset=True) -> None:
     add_bezier4p(path, curves)
 
 
-def equal_paths(a: Path, b: Path, rel_tol=1e-9, abs_tol=1e-12) -> bool:
-    """Returns ``True`` if control points of given paths are close."""
+def have_close_control_points(
+    a: Path, b: Path, *, rel_tol=1e-9, abs_tol=1e-12
+) -> bool:
+    """Returns ``True`` if the control points of given paths are close.
+
+    .. versionadded:: 0.16.5
+
+    """
     return all(
         cp_a.isclose(cp_b, rel_tol=rel_tol, abs_tol=abs_tol)
         for cp_a, cp_b in zip(a.control_vertices(), b.control_vertices())

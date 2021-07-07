@@ -11,6 +11,8 @@ Version 0.16.5b1 - dev
   between the `options` module and the global object `ezdxf.options`
 - NEW: config file support, see [docs](https://ezdxf.mozman.at/docs/options.html#config-files)
 - NEW: `ezdxf config` command to manage config files
+- NEW: `ezdxf.path.have_close_control_points(a, b)`, test for close control points 
+  of two `Path` objects  
 - REMOVED: environment variable options, these are config file only options:
   - `EZDXF_AUTO_LOAD_FONTS`
   - `EZDXF_FONT_CACHE_DIRECTORY`
