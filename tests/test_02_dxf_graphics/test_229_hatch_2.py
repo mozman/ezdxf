@@ -599,6 +599,7 @@ def transformed_copy(entity, matrix):
     return _copy
 
 
+
 @pytest.mark.parametrize(
     "sx, sy, extrusion",
     [
@@ -608,12 +609,24 @@ def transformed_copy(entity, matrix):
     ],
     ids=["mirror-x", "mirror-y", "mirror-xy"],
 )
-def test_ocs_mirror_transformations_of_clockwise_oriented_arcs(
-    sx, sy, extrusion
+@pytest.mark.parametrize("kind", ["arc", "ellipse"])
+def test_ocs_mirror_transformations_of_clockwise_oriented_curves(
+    sx,
+    sy,
+    extrusion,
+    kind,
 ):
     hatch = Hatch()
     edge_path = hatch.paths.add_edge_path()
-    edge_path.add_arc((0, 0), 5, start_angle=0, end_angle=180, ccw=False)
+    if kind == "arc":
+        edge_path.add_arc((7, 0), 5, start_angle=0, end_angle=180, ccw=False)
+    elif kind == "ellipse":
+        edge_path.add_ellipse(
+            (7, 0), (5, 0), ratio=0.7, start_angle=0, end_angle=180, ccw=False
+        )
+    else:
+        pytest.fail(f"unknown kind: {kind}")
+
     transformed_hatch = transformed_copy(hatch, Matrix44.scale(sx, sy, 1))
 
     # This tests the current implementation of OCS transformations!
@@ -628,14 +641,22 @@ def test_ocs_mirror_transformations_of_clockwise_oriented_arcs(
     [(-1, 1), (1, -1), (-1, -1)],
     ids=["mirror-x", "mirror-y", "mirror-xy"],
 )
-def test_wcs_mirror_transformations_of_clockwise_oriented_arcs(sx, sy):
+@pytest.mark.parametrize("kind", ["arc", "ellipse"])
+def test_wcs_mirror_transformations_of_clockwise_oriented_curves(sx, sy, kind):
     from ezdxf.path import make_path, have_close_control_vertices
 
     hatch = Hatch()
     edge_path = hatch.paths.add_edge_path()
     # A closed loop is required to get a path!
     edge_path.add_line((15, 5), (5, 5))
-    edge_path.add_arc((10, 5), 5, start_angle=0, end_angle=180, ccw=False)
+    if kind == "arc":
+        edge_path.add_arc((10, 5), 5, start_angle=0, end_angle=180, ccw=False)
+    elif kind == "ellipse":
+        edge_path.add_ellipse(
+            (10, 5), (5, 0), ratio=0.7, start_angle=0, end_angle=180, ccw=False
+        )
+    else:
+        pytest.fail(f"unknown kind: {kind}")
     src_path = make_path(hatch)
     assert len(src_path) > 1, "expected non empty path"
 
