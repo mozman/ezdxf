@@ -629,7 +629,7 @@ def test_ocs_mirror_transformations_of_clockwise_oriented_arcs(
     ids=["mirror-x", "mirror-y", "mirror-xy"],
 )
 def test_wcs_mirror_transformations_of_clockwise_oriented_arcs(sx, sy):
-    from ezdxf.path import make_path, have_close_control_points
+    from ezdxf.path import make_path, have_close_control_vertices
 
     hatch = Hatch()
     edge_path = hatch.paths.add_edge_path()
@@ -644,7 +644,7 @@ def test_wcs_mirror_transformations_of_clockwise_oriented_arcs(sx, sy):
 
     expected_path = src_path.transform(m)
     transformed_path = make_path(transformed_hatch)
-    assert have_close_control_points(transformed_path, expected_path) is True
+    assert have_close_control_vertices(transformed_path, expected_path) is True
 
 
 PATH_HATCH = """  0

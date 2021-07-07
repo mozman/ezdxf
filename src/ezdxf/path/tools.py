@@ -55,7 +55,7 @@ __all__ = [
     "add_spline",
     "to_multi_path",
     "single_paths",
-    "have_close_control_points",
+    "have_close_control_vertices",
 ]
 
 MAX_DISTANCE = 0.01
@@ -760,10 +760,10 @@ def add_spline(path: Path, spline: BSpline, level=4, reset=True) -> None:
     add_bezier4p(path, curves)
 
 
-def have_close_control_points(
+def have_close_control_vertices(
     a: Path, b: Path, *, rel_tol=1e-9, abs_tol=1e-12
 ) -> bool:
-    """Returns ``True`` if the control points of given paths are close.
+    """Returns ``True`` if the control vertices of given paths are close.
 
     .. versionadded:: 0.16.5
 

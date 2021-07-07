@@ -211,7 +211,7 @@ Utility Functions
 
 .. autofunction:: single_paths(paths: Iterable[Path]) -> Iterable[Path]
 
-.. autofunction:: have_close_control_points(a: Path, b: Path, *, rel_tol=1e-9, abs_tol=1e-12) -> bool
+.. autofunction:: have_close_control_vertices(a: Path, b: Path, *, rel_tol=1e-9, abs_tol=1e-12) -> bool
 
 Basic Shapes
 ------------
