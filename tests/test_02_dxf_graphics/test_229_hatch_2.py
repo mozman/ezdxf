@@ -589,6 +589,33 @@ def test_can_not_associate_destroyed_entity(msp):
         hatch.associate(path, [pline])
 
 
+@pytest.mark.parametrize(
+    "sx, sy, extrusion",
+    [
+        (-1, 1, (0, 0, -1)),
+        (1, -1, (0, 0, -1)),
+        (-1, -1, (0, 0, 1)),
+    ],
+    ids=["mirror-x", "mirror-y", "mirror-xy"],
+)
+def test_mirror_transformations_of_clockwise_oriented_arcs(sx, sy, extrusion):
+    def copy(entity, matrix):
+        _copy = entity.copy()
+        _copy.transform(matrix)
+        return _copy
+
+    hatch = Hatch()
+    edge_path = hatch.paths.add_edge_path()
+    edge_path.add_arc((0, 0), 5, start_angle=0, end_angle=180, ccw=False)
+
+    transformed = copy(hatch, Matrix44.scale(sx, sy, 1))
+    # This tests the current implementation of OCS transformations!
+    assert transformed.dxf.extrusion.isclose(extrusion)
+    assert (
+        transformed.paths[0].edges[0].ccw is False
+    ), "ccw flag should not change"
+
+
 PATH_HATCH = """  0
 HATCH
   5

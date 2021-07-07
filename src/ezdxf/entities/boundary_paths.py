@@ -987,10 +987,16 @@ class ArcEdge:
         self.radius = ocs.transform_length(Vec3(self.radius, 0, 0))
         if not math.isclose(
             arc_angle_span_deg(self.start_angle, self.end_angle), 360.0
-        ):
+        ):  # open arc
+            # The transformation of the ccw flag is not necessary in the current
+            # implementation of OCS transformations. The arc orientation is
+            # around the extrusion vector and stays always the same, even for
+            # mirroring, which flips the extrusion vector to (0, 0, -1) for
+            # entities in the xy-plane.
+
             self.start_angle = ocs.transform_deg_angle(self.start_angle)
             self.end_angle = ocs.transform_deg_angle(self.end_angle)
-        else:
+        else:  # full circle
             # Transform only start point to preserve the connection point to
             # adjacent edges:
             self.start_angle = ocs.transform_deg_angle(self.start_angle)
