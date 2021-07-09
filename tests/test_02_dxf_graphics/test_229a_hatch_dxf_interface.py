@@ -1,6 +1,5 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-# created 2019-03-08
 import pytest
 
 from ezdxf.entities.hatch import Hatch
