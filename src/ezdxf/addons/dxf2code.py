@@ -25,7 +25,39 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import DXFEntity, Linetype, DXFTag, BlockLayout
     from ezdxf.entities.polygon import BasePolygon
 
-__all__ = ["entities_to_code", "block_to_code", "table_entries_to_code"]
+__all__ = [
+    "entities_to_code",
+    "block_to_code",
+    "table_entries_to_code",
+    "black",
+]
+
+
+def black(code: str, line_length=88, fast: bool = True) -> str:
+    """Returns the source `code` as a single string formatted by `Black`_
+
+    Requires the installed `Black`_ formatter::
+
+        pip3 install black
+
+    Args:
+        code: source code
+        line_length: max. source code line length
+        fast: ``True`` for fast mode, ``False`` to check that the reformatted
+            code is valid
+
+    Raises:
+        ImportError: Black is not available
+
+    .. _black: https://pypi.org/project/black/
+
+    """
+
+    import black
+
+    mode = black.FileMode()
+    mode.line_length = line_length
+    return black.format_file_contents(code, fast=fast, mode=mode)
 
 
 def entities_to_code(
@@ -120,25 +152,14 @@ class Code:
     def black_code_str(self, line_length=88) -> str:
         """Returns the source code as a single string formatted by `Black`_
 
-        Requires the installed `Black`_ formatter::
-
-            pip3 install black
-
         Args:
             line_length: max. source code line length
 
         Raises:
             ImportError: Black is not available
 
-        .. _black: https://pypi.org/project/black/
-
         """
-        import black
-
-        code = self.code_str()
-        mode = black.FileMode()
-        mode.line_length = line_length
-        return black.format_file_contents(code, fast=True, mode=mode)
+        return black(self.code_str(), line_length)
 
     def __str__(self) -> str:
         """Returns the source code as a single string."""

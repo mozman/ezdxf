@@ -37,6 +37,8 @@ Short example:
 
 .. autofunction:: table_entries_to_code
 
+.. autofunction:: black
+
 .. class:: Code
 
     Source code container.
