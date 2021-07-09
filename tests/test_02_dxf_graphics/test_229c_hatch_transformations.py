@@ -5,7 +5,8 @@ import math
 
 from ezdxf.entities import Hatch
 from ezdxf.render.forms import box
-from ezdxf.math import Vec3, Matrix44, arc_angle_span_deg
+from ezdxf.math import Vec2, Vec3, Matrix44, arc_angle_span_deg
+from ezdxf.path import make_path, have_close_control_vertices
 
 
 @pytest.fixture()
@@ -160,8 +161,6 @@ def test_ocs_mirror_transformations_of_clockwise_oriented_curves(
 )
 @pytest.mark.parametrize("kind", ["arc", "ellipse"])
 def test_wcs_mirror_transformations_of_clockwise_oriented_curves(sx, sy, kind):
-    from ezdxf.path import make_path, have_close_control_vertices
-
     hatch = Hatch()
     edge_path = hatch.paths.add_edge_path()
     # A closed loop is required to get a path!
@@ -181,5 +180,103 @@ def test_wcs_mirror_transformations_of_clockwise_oriented_curves(sx, sy, kind):
     transformed_hatch = transformed_copy(hatch, m)
 
     expected_path = src_path.transform(m)
-    transformed_path = make_path(transformed_hatch)
-    assert have_close_control_vertices(transformed_path, expected_path) is True
+    path_of_transformed_hatch = make_path(transformed_hatch)
+    assert (
+        have_close_control_vertices(path_of_transformed_hatch, expected_path)
+        is True
+    )
+
+
+def all_edge_types_hatch():
+    hatch = Hatch.new(
+        dxfattribs={
+            "layer": "0",
+            "color": "2",
+            "elevation": (0.0, 0.0, 0.0),
+            "extrusion": (0.0, 0.0, 1.0),
+            "pattern_name": "SOLID",
+            "solid_fill": 1,
+            "associative": 0,
+            "hatch_style": 0,
+            "pattern_type": 1,
+        },
+    )
+    # edge-path contains all supported edge types:
+    ep = hatch.paths.add_edge_path(flags=1)
+    ep.add_arc(  # clockwise oriented ARC
+        center=(0.0, 13.0),
+        radius=3.0,
+        start_angle=-90.0,
+        end_angle=90.0,
+        ccw=False,
+    )
+    ep.add_ellipse(  # clockwise oriented ELLIPSE
+        center=(0.0, 5.0),
+        major_axis=(0.0, 5.0),
+        ratio=0.6,
+        start_angle=180.0,
+        end_angle=360.0,
+        ccw=False,
+    )
+    ep.add_line((0.0, 0.0), (10.0, 0.0))  # LINE
+    ep.add_ellipse(  # counter-clockwise oriented ELLIPSE
+        center=(10.0, 5.0),
+        major_axis=(0.0, -5.0),
+        ratio=0.6,
+        start_angle=0.0,
+        end_angle=180.0,
+        ccw=True,
+    )
+    ep.add_arc(  # counter-clockwise oriented ARC
+        center=(10.0, 13.0),
+        radius=3.0,
+        start_angle=270.0,
+        end_angle=450.0,
+        ccw=True,
+    )
+    ep.add_spline(  # SPLINE
+        control_points=[
+            Vec2(10.0, 16.0),
+            Vec2(9.028174684192452, 16.0),
+            Vec2(6.824943218065775, 12.14285714285714),
+            Vec2(3.175056781934232, 19.85714285714287),
+            Vec2(0.9718253158075516, 16.0),
+            Vec2(0, 16.0),
+        ],
+        knot_values=[
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.91547594742265,
+            8.746427842267952,
+            11.6619037896906,
+            11.6619037896906,
+            11.6619037896906,
+            11.6619037896906,
+        ],
+        degree=3,
+        periodic=0,
+    )
+    return hatch
+
+
+@pytest.mark.parametrize(
+    "sx, sy",
+    [(-1, 1), (1, -1), (-1, -1)],
+    ids=["mirror-x", "mirror-y", "mirror-xy"],
+)
+def test_wcs_mirror_transformations_for_all_edge_types(sx, sy):
+    hatch = all_edge_types_hatch()
+    src_path = make_path(hatch)
+    assert len(src_path) > 1, "expected non empty path"
+
+    m = Matrix44.scale(sx, sy, 1)
+    transformed_hatch = transformed_copy(hatch, m)
+
+    expected_path = src_path.transform(m)
+    path_of_transformed_hatch = make_path(transformed_hatch)
+    assert (
+        have_close_control_vertices(path_of_transformed_hatch, expected_path)
+        is True
+    )
