@@ -117,6 +117,29 @@ class Code:
         lead_str = " " * indent
         return "\n".join(lead_str + line for line in self.code)
 
+    def black_code_str(self, line_length=88) -> str:
+        """Returns the source code as a single string formatted by `Black`_
+
+        Requires the installed `Black`_ formatter::
+
+            pip3 install black
+
+        Args:
+            line_length: max. source code line length
+
+        Raises:
+            ImportError: Black is not available
+
+        .. _black: https://pypi.org/project/black/
+
+        """
+        import black
+
+        code = self.code_str()
+        mode = black.FileMode()
+        mode.line_length = line_length
+        return black.format_file_contents(code, fast=True, mode=mode)
+
     def __str__(self) -> str:
         """Returns the source code as a single string."""
 

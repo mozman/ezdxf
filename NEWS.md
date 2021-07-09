@@ -22,6 +22,8 @@ Version 0.16.5b1 - dev
 - REMOVED: `ezdxf.options.default_text_style`, was not used  
 - REMOVED: `ezdxf.options.auto_load_fonts`, disabling auto load has no advantage
 - REMOVED: `Vector` alias for `Vec3`
+- BETA: `dxf2code` add-on: `black_code_str()` returns the code string 
+  formatted by [Black](https://pypi.org/project/black/)
 
 Version 0.16.4 - 2021-06-20
 ---------------------------

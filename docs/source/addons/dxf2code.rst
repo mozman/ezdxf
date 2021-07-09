@@ -71,6 +71,8 @@ Short example:
 
     .. automethod:: code_str
 
+    .. automethod:: black_code_str
+
     .. automethod:: import_str
 
     .. automethod:: merge

@@ -18,3 +18,6 @@ Version 0.17 - dev
 - NEW: `ezdxf.path.render_mpolygons()` function: render MPOLYGON entities form paths
 - NEW: store *ezdxf* and custom metadata in DXF files
 - NEW: command `ezdxf browse FILE ...`, PyQt DXF structure browser
+- NEW: `dxf2code` add-on: `black_code_str()` returns the code string 
+  formatted by [Black](https://pypi.org/project/black/)
+  
