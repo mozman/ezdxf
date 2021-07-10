@@ -368,15 +368,14 @@ def _virtual_edge_path(
             attribs["extrusion"] = ocs.uz
             edges.append(Ellipse.new(dxfattribs=attribs))
         elif isinstance(edge, SplineEdge):
-            # TODO: remove Any, make SPLINE property assignments mypy compatible
-            spline: Any = Spline.new(dxfattribs=attribs)
+            spline = Spline.new(dxfattribs=attribs)
             spline.dxf.degree = edge.degree
             spline.knots = edge.knot_values
-            spline.control_points = (pnt_to_wcs(v) for v in edge.control_points)
+            spline.control_points = [pnt_to_wcs(v) for v in edge.control_points]
             if edge.weights:
                 spline.weights = edge.weights
             if edge.fit_points:
-                spline.fit_points = (pnt_to_wcs(v) for v in edge.fit_points)
+                spline.fit_points = [pnt_to_wcs(v) for v in edge.fit_points]
             if edge.start_tangent is not None:
                 spline.dxf.start_tangent = dir_to_wcs(edge.start_tangent)
             if edge.end_tangent is not None:

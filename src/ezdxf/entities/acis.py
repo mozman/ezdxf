@@ -111,7 +111,6 @@ class Body(DXFGraphic):
         """ Loading interface. (internal API)"""
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            # TODO: fast loader?
             processor.fast_load_dxfattribs(
                 dxf, acdb_modeler_geometry_group_codes, 2, log=False)
             if not self.has_binary_data:
@@ -294,7 +293,6 @@ class Surface(Body):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            # TODO: fast loader?
             processor.fast_load_dxfattribs(dxf, acdb_surface_group_codes, 3)
         return dxf
 

@@ -477,7 +477,6 @@ class Polyline(LinkedEntities):
                 z_axis = dxf.elevation.z
             else:
                 z_axis = None
-            # TODO: const-, start- and end-width transformation
             vertices = [
                 ocs.transform_vertex(vertex)
                 for vertex in _ocs_locations(z_axis)
