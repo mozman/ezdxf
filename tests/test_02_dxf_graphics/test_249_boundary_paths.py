@@ -66,6 +66,51 @@ def test_add_edge_path():
     assert (0, 0) == edge.end
 
 
+def test_polyline_path_with_arcs_to_edge_path():
+    paths = BoundaryPaths()
+    # <-- 2 ----
+    #  \        \
+    #   3 cw     1 ccw
+    #  /        /
+    # --- 0 --->
+    paths.add_polyline_path(
+        [(0, 0), (10, 0, 1), (10, 4), (0, 4, -1), (0, 0)]
+    )
+    paths.polyline_to_edge_paths()
+    path = paths[0]
+    assert (
+        path.type == BoundaryPathType.EDGE
+    ), "polyline path not converted to edge path"
+
+    line = path.edges[0]
+    assert line.type == EdgeType.LINE
+    assert line.start == (0, 0)
+    assert line.end == (10, 0)
+
+    # counter-clockwise arc edge
+    arc = path.edges[1]
+    assert arc.type == EdgeType.ARC
+    assert arc.center.isclose((10, 2))
+    assert arc.start_angle == pytest.approx(270)
+    assert arc.end_angle == pytest.approx(90)
+    assert arc.ccw is True
+
+    line = path.edges[2]
+    assert line.type == EdgeType.LINE
+    assert line.start == (10, 4)
+    assert line.end == (0, 4)
+
+    # clockwise arc edge
+    arc = path.edges[3]
+    assert arc.type == EdgeType.ARC
+    assert arc.center.isclose((0, 2))
+    # angles are in counter-clockwise order
+    assert arc.start_angle == pytest.approx(270)
+    assert arc.end_angle == pytest.approx(90)
+    # but ccw flag forces clockwise DXF export
+    assert arc.ccw is False
+
+
 def test_arc_to_ellipse_edges():
     paths = BoundaryPaths()
     paths.add_polyline_path(
