@@ -6,7 +6,7 @@ import math
 
 from ezdxf.explode import virtual_boundary_path_entities
 from ezdxf.entities import Spline
-from ezdxf.math import Vec3
+from ezdxf.math import Vec3, Matrix44, OCSTransform
 
 
 class TestVirtualEntitiesFromEdgePath:
@@ -115,6 +115,94 @@ class TestVirtualEntitiesFromEdgePath:
             11.6619037896906,
         ]
         assert spline.knots == pytest.approx(expected_knot_values)
+
+
+class TestSpatialTransformation:
+    # fixture "all_edge_types_hatch" from conftest.py
+    @pytest.fixture(scope="class")
+    def matrix(self):
+        return Matrix44.y_rotate(math.radians(-90))
+
+    @pytest.fixture
+    def paths(self, all_edge_types_hatch, matrix):
+        all_edge_types_hatch.transform(matrix)
+        return virtual_boundary_path_entities(all_edge_types_hatch)
+
+    @pytest.fixture
+    def spline(self, paths) -> Spline:
+        return cast(Spline, paths[0][5])
+
+    def test_wcs_line(self, paths, matrix):
+        line = paths[0][2]
+        assert line.dxf.start.isclose(matrix.transform((0, 0)))
+        assert line.dxf.end.isclose(matrix.transform((10, 0)))
+
+    def test_wcs_spline(self, spline, matrix):
+        expected_control_points = matrix.transform_vertices(
+            [
+                Vec3(10.0, 16.0),
+                Vec3(9.028174684192452, 16.0),
+                Vec3(6.824943218065775, 12.14285714285714),
+                Vec3(3.175056781934232, 19.85714285714287),
+                Vec3(0.9718253158075516, 16.0),
+                Vec3(0, 16.0),
+            ]
+        )
+        assert (
+            all(
+                expected_cp.isclose(cp)
+                for cp, expected_cp in zip(
+                    spline.control_points, expected_control_points
+                )
+            )
+            is True
+        )
+
+    def test_ocs_clockwise_arc(self, paths, matrix):
+        arc = paths[0][0]
+        ocs_transform = OCSTransform(Vec3(0, 0, 1), matrix)
+
+        wcs_center = ocs_transform.new_ocs.to_wcs(arc.dxf.center)
+        assert wcs_center.isclose(matrix.transform((0, 13)))
+
+        expected_start_angle = ocs_transform.transform_deg_angle(-90)
+        assert arc.dxf.start_angle == pytest.approx(expected_start_angle)
+
+        expected_end_angle = ocs_transform.transform_deg_angle(90)
+        assert arc.dxf.end_angle == pytest.approx(expected_end_angle)
+
+    def test_ocs_counter_clockwise_arc(self, paths, matrix):
+        arc = paths[0][4]
+        ocs_transform = OCSTransform(Vec3(0, 0, 1), matrix)
+
+        wcs_center = ocs_transform.new_ocs.to_wcs(arc.dxf.center)
+        assert wcs_center.isclose(matrix.transform((10, 13)))
+
+        expected_start_angle = ocs_transform.transform_deg_angle(270)
+        assert arc.dxf.start_angle == pytest.approx(expected_start_angle)
+
+        expected_end_angle = ocs_transform.transform_deg_angle(450)
+        assert arc.dxf.end_angle == pytest.approx(expected_end_angle)
+
+    def test_wcs_clockwise_ellipse(self, paths, matrix):
+        ellipse = paths[0][1]
+        assert ellipse.dxf.center.isclose(matrix.transform((0, 5)))
+        assert ellipse.dxf.major_axis.isclose(
+            matrix.transform_direction((0, 5))
+        )
+        # only the center and the major axis are transformed:
+        assert ellipse.dxf.start_param == pytest.approx(math.radians(180))
+        assert ellipse.dxf.end_param == pytest.approx(math.radians(360))
+
+    def test_wcs_counter_clockwise_ellipse(self, paths, matrix):
+        ellipse = paths[0][3]
+        assert ellipse.dxf.center.isclose(matrix.transform((10, 5)))
+        assert ellipse.dxf.major_axis.isclose(
+            matrix.transform_direction((0, -5))
+        )
+        # only the center and the major axis are transformed:
+        assert ellipse.dxf.start_param == pytest.approx(math.radians(0))
+        assert ellipse.dxf.end_param == pytest.approx(math.radians(180))
 
 
 if __name__ == "__main__":
