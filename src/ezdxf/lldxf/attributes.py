@@ -12,6 +12,8 @@ from typing import (
     Callable,
     Any,
     Union,
+    NewType,
+    cast,
 )
 from .const import DXFAttributeError, DXF12
 import copy
@@ -65,7 +67,8 @@ def group_code_mapping(
 
 
 # Unique object as marker
-RETURN_DEFAULT = object()
+ReturnDefault = NewType("ReturnDefault", object)
+RETURN_DEFAULT = cast(ReturnDefault, object())
 
 
 class DXFAttr:
@@ -98,7 +101,7 @@ class DXFAttr:
         setter: str = "",
         alias: str = "",
         validator: Optional[Callable[[Any], bool]] = None,
-        fixer: Optional[Callable[[Any], Any]] = None,
+        fixer: Union[Callable[[Any], Any], None, ReturnDefault] = None,
     ):
 
         # Attribute name set by DXFAttributes.__init__()
@@ -138,7 +141,8 @@ class DXFAttr:
         # only if the validator returns False.
         if fixer is RETURN_DEFAULT:
             fixer = self._return_default
-        self.fixer: Optional[Callable[[Any], Any]] = fixer
+        # excluding ReturnDefault type
+        self.fixer = cast(Optional[Callable[[Any], Any]], fixer)
 
     def _return_default(self, x: Any) -> Any:
         return self.default

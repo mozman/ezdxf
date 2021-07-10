@@ -100,7 +100,7 @@ acdb_spline = DefSubclass(
             default=Z_AXIS,
             optional=True,
             validator=validator.is_not_null_vector,
-            fixer=RETURN_DEFAULT,  # type: ignore
+            fixer=RETURN_DEFAULT,
         ),
         # 10: Control points (in WCS); one entry per control point
         # 11: Fit points (in WCS); one entry per fit point
