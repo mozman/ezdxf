@@ -190,6 +190,10 @@ class TestSpatialTransformation:
         assert ellipse.dxf.major_axis.isclose(
             matrix.transform_direction((0, 5))
         )
+        # ellipse normal vector
+        assert ellipse.dxf.extrusion.isclose(
+            matrix.transform_direction((0, 0, 1))
+        )
         # only the center and the major axis are transformed:
         assert ellipse.dxf.start_param == pytest.approx(math.radians(180))
         assert ellipse.dxf.end_param == pytest.approx(math.radians(360))
@@ -199,6 +203,10 @@ class TestSpatialTransformation:
         assert ellipse.dxf.center.isclose(matrix.transform((10, 5)))
         assert ellipse.dxf.major_axis.isclose(
             matrix.transform_direction((0, -5))
+        )
+        # ellipse normal vector
+        assert ellipse.dxf.extrusion.isclose(
+            matrix.transform_direction((0, 0, 1))
         )
         # only the center and the major axis are transformed:
         assert ellipse.dxf.start_param == pytest.approx(math.radians(0))
