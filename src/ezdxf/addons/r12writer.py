@@ -89,8 +89,6 @@ def r12writer(
 
     else:
         raise ValueError(f"Unknown format '{fmt}'.")
-    # TODO: Py38 replace TextIO by user defined Protocol
-    #  SupportsWrite(Protocol): def write(...)
     writer = R12FastStreamWriter(cast(TextIO, stream), fixed_tables)
     try:
         yield writer

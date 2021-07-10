@@ -282,7 +282,7 @@ def simplified_text_chunks(text: AnyText, out: Backend,
     """
     # TODO: if MTEXT has its own renderer, this function can be simplified to
     #  render just a single line for TEXT, ATTRIB, ATTDEF.
-    #  MTEXT rendering will slower, but rendering of single-line entities
+    #  MTEXT rendering will be slower, but rendering of single-line entities
     #  will be faster.
     alignment = _get_alignment(text)
     box_width = _get_text_width(text)

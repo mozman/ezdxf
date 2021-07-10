@@ -249,7 +249,7 @@ class PyQtBackend(Backend):
             italic = "italic" in font.style.lower()
             weight = _map_weight(font.weight)
             qfont = qg.QFont(family, weight=weight, italic=italic)
-            # TODO: setting the stretch value makes results worse!
+            # INFO: setting the stretch value makes results worse!
             # qfont.setStretch(_map_stretch(font.stretch))
         return qfont
 

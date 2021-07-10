@@ -69,7 +69,7 @@ def test_random_ellipse_transformations(sx, sy, sz, start, end):
 
     for angle in linspace(0, math.tau, 19):
         for dx, dy, dz in product([2, 0, -2], repeat=3):
-            axis = Vec3.random()  # TODO: fixed rotation axis
+            axis = Vec3.random()
 
             config = f"CONFIG sx={sx}, sy={sy}, sz={sz}; " \
                      f"start={start:.4f}, end={end:.4f}; angle={angle};" \

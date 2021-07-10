@@ -471,7 +471,6 @@ class Frontend:
         properties: Properties) -> None:
         def set_opaque(entities: Iterable[DXFGraphic]):
             for child in entities:
-                # todo: defaults to 1.0 (fully transparent)???
                 child.transparency = 0.0
                 yield child
 
