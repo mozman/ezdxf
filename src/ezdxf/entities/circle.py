@@ -96,13 +96,14 @@ class Circle(DXFGraphic):
 
         Args:
             angles: iterable of angles in OCS as degrees, angle goes counter
-                clockwise around the extrusion vector, ocs x-axis = 0 deg.
+                clockwise around the extrusion vector, OCS x-axis = 0 deg.
 
         """
         ocs = self.ocs()
+        radius: float = abs(self.dxf.radius)  # AutoCAD ignores the sign too
+        center = Vec3(self.dxf.center)
         for angle in angles:
-            v = Vec3.from_deg_angle(angle, self.dxf.radius) + self.dxf.center
-            yield ocs.to_wcs(v)
+            yield ocs.to_wcs(Vec3.from_deg_angle(angle, radius) + center)
 
     def flattening(self, sagitta: float) -> Iterable[Vec3]:
         """Approximate the circle by vertices in WCS, argument `segment` is the
