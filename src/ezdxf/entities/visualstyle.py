@@ -3,7 +3,7 @@
 from typing import TYPE_CHECKING
 import copy
 from ezdxf.lldxf import validator
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFStructureError
 from ezdxf.lldxf.attributes import (
     DXFAttributes, DefSubclass, DXFAttr, group_code_mapping,
 )
@@ -147,9 +147,15 @@ class VisualStyle(DXFObject):
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.subclass_by_index(1)
-            self.acad_xdata = self.store_acad_xdata(tags)
-            processor.fast_load_dxfattribs(
-                dxf, acdb_visualstyle_group_codes, subclass=tags)
+            if tags:
+                self.acad_xdata = self.store_acad_xdata(tags)
+                processor.fast_load_dxfattribs(
+                    dxf, acdb_visualstyle_group_codes, subclass=tags)
+            else:
+                raise DXFStructureError(
+                    f"missing 'AcDbVisualStyle' subclass in VISUALSTYLE(#{dxf.handle})"
+                )
+
         return dxf
 
     @staticmethod

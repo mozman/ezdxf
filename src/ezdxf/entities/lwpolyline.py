@@ -15,7 +15,12 @@ from ezdxf.lldxf.attributes import (
     RETURN_DEFAULT,
     group_code_mapping,
 )
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, LWPOLYLINE_CLOSED, DXFStructureError
+from ezdxf.lldxf.const import (
+    SUBCLASS_MARKER,
+    DXF2000,
+    LWPOLYLINE_CLOSED,
+    DXFStructureError,
+)
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.types import DXFTag, DXFVertex
 from ezdxf.lldxf.packedtags import VertexArray
@@ -109,12 +114,14 @@ class LWPolyline(DXFGraphic):
             if tags:
                 tags = self.load_vertices(tags)
                 processor.fast_load_dxfattribs(
-                    dxf, acdb_lwpolyline_group_codes, subclass=tags, recover=True
+                    dxf,
+                    acdb_lwpolyline_group_codes,
+                    subclass=tags,
+                    recover=True,
                 )
             else:
-                handle = dxf.get("handle")
                 raise DXFStructureError(
-                    f"missing 'AcDbPolyline' subclass in LWPOLYLINE(#{handle})"
+                    f"missing 'AcDbPolyline' subclass in LWPOLYLINE(#{dxf.handle})"
                 )
         return dxf
 

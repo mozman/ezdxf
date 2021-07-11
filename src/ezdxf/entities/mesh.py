@@ -199,11 +199,16 @@ class Mesh(DXFGraphic):
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.subclass_by_index(2)
-            # Load mesh data and remove their tags from subclass
-            self.load_mesh_data(tags, dxf.handle)
-            # Load remaining data into name space
-            processor.fast_load_dxfattribs(
-                dxf, acdb_mesh_group_codes, 2, recover=True)
+            if tags:
+                # Load mesh data and remove their tags from subclass
+                self.load_mesh_data(tags, dxf.handle)
+                # Load remaining data into name space
+                processor.fast_load_dxfattribs(
+                    dxf, acdb_mesh_group_codes, 2, recover=True)
+            else:
+                raise DXFStructureError(
+                    f"missing 'AcDbSubMesh' subclass in MESH(#{dxf.handle})"
+                )
         return dxf
 
     def load_mesh_data(self, mesh_tags: 'Tags', handle: str) -> None:

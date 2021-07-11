@@ -9,7 +9,7 @@ from ezdxf.lldxf.attributes import (
     group_code_mapping,
 )
 from ezdxf.lldxf.tags import Tags, DXFTag
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
+from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFStructureError
 from ezdxf.math import Vec3, X_AXIS, Z_AXIS, NULLVEC
 from ezdxf.math.transformtools import transform_extrusion
 from ezdxf.explode import explode_entity
@@ -157,9 +157,16 @@ class Leader(DXFGraphic, OverrideMixin):
             self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = Tags(self.load_vertices(processor.subclass_by_index(2)))
-            processor.fast_load_dxfattribs(
-                dxf, acdb_leader_group_codes, tags, recover=True)
+            tags = processor.subclass_by_index(2)
+            if tags:
+                tags = Tags(self.load_vertices(tags))
+                processor.fast_load_dxfattribs(
+                    dxf, acdb_leader_group_codes, tags, recover=True)
+            else:
+                raise DXFStructureError(
+                    f"missing 'AcDbLeader' subclass in LEADER(#{dxf.handle})"
+                )
+
         return dxf
 
     def load_vertices(self, tags: Tags) -> Iterable[DXFTag]:

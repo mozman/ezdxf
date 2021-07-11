@@ -842,6 +842,11 @@ class MLineStyle(DXFObject):
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.subclass_by_index(1)
+            if tags is None:
+                raise const.DXFStructureError(
+                    f"missing 'AcDbMLine' subclass in MLINE(#{dxf.handle})"
+                )
+
             try:
                 # Find index of the count tag:
                 index71 = tags.tag_index(71)

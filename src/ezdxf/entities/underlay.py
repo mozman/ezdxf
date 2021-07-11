@@ -90,15 +90,24 @@ class Underlay(DXFGraphic):
         raise DXFTypeError('Copying of underlay not supported.')
 
     def load_dxf_attribs(
-            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        self, processor: SubclassProcessor = None
+    ) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = Tags(self.load_boundary_path(processor.subclass_by_index(2)))
-            processor.fast_load_dxfattribs(
-                dxf, acdb_underlay_group_codes, subclass=tags)
-            if len(self.boundary_path) < 2:
-                self.dxf = dxf
-                self.reset_boundary_path()
+            tags = processor.subclass_by_index(2)
+
+            if tags:
+                tags = Tags(self.load_boundary_path(tags))
+                processor.fast_load_dxfattribs(
+                    dxf, acdb_underlay_group_codes, subclass=tags)
+                if len(self.boundary_path) < 2:
+                    self.dxf = dxf
+                    self.reset_boundary_path()
+            else:
+                raise const.DXFStructureError(
+                    f"missing 'AcDbUnderlayReference' subclass in "
+                    f"{self.DXFTYPE}(#{dxf.handle})"
+                )
         return dxf
 
     def load_boundary_path(self, tags: 'Tags') -> Iterable:
@@ -250,7 +259,7 @@ class UnderlayDefinition(DXFObject):
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
     def load_dxf_attribs(
-            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         dxf = super().load_dxf_attribs(processor)
         if processor:
             processor.fast_load_dxfattribs(

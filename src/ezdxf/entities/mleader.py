@@ -244,14 +244,19 @@ class MultiLeader(DXFGraphic):
         if processor is None:
             return dxf
         tags = processor.subclass_by_index(2)
-        context = self.extract_context_data(tags)
-        if context:
-            try:
-                self.context = self.load_context(context)
-            except const.DXFStructureError:
-                logger.info(
-                    f"Context structure error in entity MULTILEADER(#{dxf.handle})"
-                )
+        if tags:
+            context = self.extract_context_data(tags)
+            if context:
+                try:
+                    self.context = self.load_context(context)
+                except const.DXFStructureError:
+                    logger.info(
+                        f"Context structure error in entity MULTILEADER(#{dxf.handle})"
+                    )
+        else:
+            raise const.DXFStructureError(
+                f"missing 'AcDbMLeader' subclass in MULTILEADER(#{dxf.handle})"
+            )
 
         self.arrow_heads = self.extract_arrow_heads(tags)
         self.block_attribs = self.extract_block_attribs(tags)

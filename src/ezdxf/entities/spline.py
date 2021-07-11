@@ -14,7 +14,12 @@ from ezdxf.lldxf.attributes import (
     RETURN_DEFAULT,
     group_code_mapping,
 )
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFValueError
+from ezdxf.lldxf.const import (
+    SUBCLASS_MARKER,
+    DXF2000,
+    DXFValueError,
+    DXFStructureError,
+)
 from ezdxf.lldxf.packedtags import VertexArray, Tags
 from ezdxf.math import (
     Vec3,
@@ -158,10 +163,16 @@ class Spline(DXFGraphic):
     ) -> "DXFNamespace":
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = Tags(self.load_spline_data(processor.subclass_by_index(2)))
-            processor.fast_load_dxfattribs(
-                dxf, acdb_spline_group_codes, subclass=tags, recover=True
-            )
+            tags = processor.subclass_by_index(2)
+            if tags:
+                tags = Tags(self.load_spline_data(tags))
+                processor.fast_load_dxfattribs(
+                    dxf, acdb_spline_group_codes, subclass=tags, recover=True
+                )
+            else:
+                raise DXFStructureError(
+                    f"missing 'AcDbSpline' subclass in SPLINE(#{dxf.handle})"
+                )
         return dxf
 
     def load_spline_data(self, tags) -> Iterable:

@@ -668,15 +668,22 @@ class MText(DXFGraphic):
     ) -> "DXFNamespace":
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            tags = Tags(self.load_mtext_content(processor.subclass_by_index(2)))
-            processor.fast_load_dxfattribs(
-                dxf, acdb_mtext_group_codes, subclass=tags, recover=True
-            )
-            if processor.embedded_objects:
-                obj = processor.embedded_objects[0]
-                self._columns = load_columns_from_embedded_object(dxf, obj)
-            elif self.xdata:
-                self._columns = load_columns_from_xdata(dxf, self.xdata)
+            tags = processor.subclass_by_index(2)
+            if tags:
+                tags = Tags(self.load_mtext_content(tags))
+                processor.fast_load_dxfattribs(
+                    dxf, acdb_mtext_group_codes, subclass=tags, recover=True
+                )
+                if processor.embedded_objects:
+                    obj = processor.embedded_objects[0]
+                    self._columns = load_columns_from_embedded_object(dxf, obj)
+                elif self.xdata:
+                    self._columns = load_columns_from_xdata(dxf, self.xdata)
+            else:
+                raise const.DXFStructureError(
+                    f"missing 'AcDbMText' subclass in MTEXT(#{dxf.handle})"
+                )
+
         self.embedded_objects = None  # todo: remove
         return dxf
 
