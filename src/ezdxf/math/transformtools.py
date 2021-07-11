@@ -213,16 +213,14 @@ class OCSTransform:
             new_angle_span = ellipse_param_span(new_start, check)
         elif math.isclose(old_angle_span, math.tau):
             # preserve full circle span
-            new_end = new_start + math.tau
-            new_angle_span = old_angle_span
+            return new_start, new_start + math.tau
         else:
             new_angle_span = ellipse_param_span(new_start, new_end)
 
-        # reversed angle direction?
-        if not math.isclose(old_angle_span, new_angle_span):
-            new_end, new_start = new_start, new_end
-
-        return new_start, new_end
+        if math.isclose(old_angle_span, new_angle_span):
+            return new_start, new_end
+        else:  # reversed angle orientation
+            return new_end, new_start
 
     def transform_ccw_arc_angles_deg(
         self, start: float, end: float
