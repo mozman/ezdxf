@@ -2,7 +2,18 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple
 import math
-from ezdxf.math import Vec3, Vec2, X_AXIS, Y_AXIS, Matrix44, sign, OCS
+from ezdxf.math import (
+    Vec3,
+    Vec2,
+    X_AXIS,
+    Y_AXIS,
+    Z_AXIS,
+    Matrix44,
+    sign,
+    OCS,
+    arc_angle_span_deg,
+    ellipse_param_span,
+)
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFGraphic, Vertex
@@ -15,6 +26,10 @@ __all__ = [
     "transform_thickness_and_extrusion_without_ocs",
     "OCSTransform",
 ]
+
+_FLIPPED_Z_AXIS = Vec3(0, 0, -1)
+_PI2: float = math.pi / 2.0
+_PLACEHOLDER_OCS = OCS()
 
 
 class TransformError(Exception):
@@ -71,10 +86,10 @@ def transform_extrusion(extrusion: "Vertex", m: Matrix44) -> Tuple[Vec3, bool]:
         x_axis.magnitude_square, y_axis.magnitude_square, abs_tol=1e-9
     )
     new_extrusion = x_axis.cross(y_axis).normalize()
+    #     if new_extrusion.isclose(_FLIPPED_Z_AXIS):
+    #         return Z_AXIS, is_uniform
+    #     else:
     return new_extrusion, is_uniform
-
-
-_PLACEHOLDER_OCS = OCS()
 
 
 class OCSTransform:
@@ -166,9 +181,9 @@ class OCSTransform:
     def transform_2d_vertex(self, vertex: "Vertex", elevation: float) -> Vec2:
         """Returns 2D vertex transformed from old OCS into new OCS."""
         v = Vec3(vertex).replace(z=elevation)
-        return Vec2(self.new_ocs.from_wcs(
-            self.m.transform(self.old_ocs.to_wcs(v))
-        ))
+        return Vec2(
+            self.new_ocs.from_wcs(self.m.transform(self.old_ocs.to_wcs(v)))
+        )
 
     def transform_direction(self, direction: "Vertex") -> Vec3:
         """Returns direction transformed from old OCS into new OCS."""
@@ -183,3 +198,40 @@ class OCSTransform:
     def transform_deg_angle(self, angle: float) -> float:
         """Returns angle (in degrees) from old OCS transformed into new OCS."""
         return math.degrees(self.transform_angle(math.radians(angle)))
+
+    def transform_ccw_arc_angles(
+        self, start: float, end: float
+    ) -> Tuple[float, float]:
+        """Returns arc start- and end angle (in radians) from old OCS
+        transformed into new OCS in counter-clockwise orientation.
+        """
+        old_angle_span = ellipse_param_span(start, end)  # always >= 0
+        new_start = self.transform_angle(start)
+        new_end = self.transform_angle(end)
+        if math.isclose(old_angle_span, math.pi):  # semicircle
+            old_angle_span = _PI2
+            check = self.transform_angle(start + _PI2)
+            new_angle_span = ellipse_param_span(new_start, check)
+        elif math.isclose(old_angle_span, math.tau):
+            # preserve full circle span
+            new_end = new_start + math.tau
+            new_angle_span = old_angle_span
+        else:
+            new_angle_span = ellipse_param_span(new_start, new_end)
+
+        # reversed angle direction?
+        if not math.isclose(old_angle_span, new_angle_span):
+            new_end, new_start = new_start, new_end
+
+        return new_start, new_end
+
+    def transform_ccw_arc_angles_deg(
+        self, start: float, end: float
+    ) -> Tuple[float, float]:
+        """Returns start- and end angle (in degrees) from old OCS transformed
+        into new OCS in counter-clockwise orientation.
+        """
+        start, end = self.transform_ccw_arc_angles(
+            math.radians(start), math.radians(end)
+        )
+        return math.degrees(start), math.degrees(end)
