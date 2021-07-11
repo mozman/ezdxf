@@ -2,7 +2,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple
 import math
-from ezdxf.math import Vec3, X_AXIS, Y_AXIS, Z_AXIS, Vec2, Matrix44, sign, OCS
+from ezdxf.math import Vec3, Vec2, X_AXIS, Y_AXIS, Matrix44, sign, OCS
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFGraphic, Vertex
@@ -125,10 +125,11 @@ class OCSTransform:
         """Transform the width of a linear OCS entity from the old OCS
         into the new OCS. (LWPOLYLINE!)
         """
-        if abs(width) > 1e-12:  # assume a uniform scaling!
+        abs_width = abs(width)
+        if abs_width > 1e-12:  # assume a uniform scaling!
             return max(
-                self.transform_length((abs(width), 0, 0)),
-                self.transform_length((0, abs(width), 0)),
+                self.transform_length((abs_width, 0, 0)),
+                self.transform_length((0, abs_width, 0)),
             )
         return 0.0
 
