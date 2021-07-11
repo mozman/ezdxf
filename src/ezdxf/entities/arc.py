@@ -115,11 +115,13 @@ class Arc(Circle):
         """
         ocs = OCSTransform(self.dxf.extrusion, m)
         super()._transform(ocs)
-        s = self.dxf.start_angle
-        e = self.dxf.end_angle
+        s: float = self.dxf.start_angle
+        e: float = self.dxf.end_angle
         if not math.isclose(arc_angle_span_deg(s, e), 360.0):
-            self.dxf.start_angle = ocs.transform_deg_angle(s)
-            self.dxf.end_angle = ocs.transform_deg_angle(e)
+            (
+                self.dxf.start_angle,
+                self.dxf.end_angle,
+            ) = ocs.transform_ccw_arc_angles_deg(s, e)
         return self
 
     def construction_tool(self) -> ConstructionArc:

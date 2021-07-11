@@ -28,7 +28,6 @@ __all__ = [
 ]
 
 _FLIPPED_Z_AXIS = Vec3(0, 0, -1)
-_PI2: float = math.pi / 2.0
 _PLACEHOLDER_OCS = OCS()
 
 
@@ -209,8 +208,8 @@ class OCSTransform:
         new_start = self.transform_angle(start)
         new_end = self.transform_angle(end)
         if math.isclose(old_angle_span, math.pi):  # semicircle
-            old_angle_span = _PI2
-            check = self.transform_angle(start + _PI2)
+            old_angle_span = 1.0  # arbitrary angle span
+            check = self.transform_angle(start + old_angle_span)
             new_angle_span = ellipse_param_span(new_start, check)
         elif math.isclose(old_angle_span, math.tau):
             # preserve full circle span
