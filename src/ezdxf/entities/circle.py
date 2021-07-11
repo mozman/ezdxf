@@ -125,7 +125,9 @@ class Circle(DXFGraphic):
         Raises ``NonUniformScalingError()`` for non uniform scaling.
 
         """
-        ocs = OCSTransform(self.dxf.extrusion, m)
+        return self._transform(OCSTransform(self.dxf.extrusion, m))
+
+    def _transform(self, ocs: OCSTransform) -> "Circle":
         dxf = self.dxf
         if ocs.scale_uniform:
             dxf.extrusion = ocs.new_extrusion

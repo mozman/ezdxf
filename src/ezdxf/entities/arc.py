@@ -114,7 +114,7 @@ class Arc(Circle):
 
         """
         ocs = OCSTransform(self.dxf.extrusion, m)
-        super().transform(m)
+        super()._transform(ocs)
         s = self.dxf.start_angle
         e = self.dxf.end_angle
         if not math.isclose(arc_angle_span_deg(s, e), 360.0):
