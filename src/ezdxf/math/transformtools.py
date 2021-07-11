@@ -104,15 +104,17 @@ class OCSTransform:
             self.m = m
         self.scale_uniform: bool = True
         if extrusion is None:  # fill in dummy values
-            self.old_ocs = _PLACEHOLDER_OCS
-            self.scale_uniform = False
-            self.new_ocs = _PLACEHOLDER_OCS
+            self._reset_ocs(_PLACEHOLDER_OCS, _PLACEHOLDER_OCS, True)
         else:
-            self.old_ocs = OCS(extrusion)
-            new_extrusion, self.scale_uniform = transform_extrusion(
-                extrusion, m
-            )
-            self.new_ocs = OCS(new_extrusion)
+            new_extrusion, scale_uniform = transform_extrusion(extrusion, m)
+            self._reset_ocs(OCS(extrusion), OCS(new_extrusion), scale_uniform)
+
+    def _reset_ocs(
+        self, old_ocs: OCS, new_ocs: OCS, scale_uniform: bool
+    ) -> None:
+        self.old_ocs = old_ocs
+        self.new_ocs = new_ocs
+        self.scale_uniform = scale_uniform
 
     @property
     def old_extrusion(self) -> Vec3:
@@ -127,9 +129,7 @@ class OCSTransform:
         cls, old: OCS, new: OCS, m: Matrix44, scale_uniform=True
     ) -> "OCSTransform":
         ocs = cls(m=m)
-        ocs.old_ocs = old
-        ocs.new_ocs = new
-        ocs.scale_uniform = scale_uniform
+        ocs._reset_ocs(old, new, scale_uniform)
         return ocs
 
     def transform_length(self, length: "Vertex", reflection=1.0) -> float:
