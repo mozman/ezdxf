@@ -5,7 +5,7 @@ import pytest
 
 from ezdxf.entities.lwpolyline import LWPolyline
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-from ezdxf.lldxf.const import DXFAttributeError
+from ezdxf.lldxf.const import DXFAttributeError, DXFStructureError
 
 LWPOLYLINE = """0
 LWPOLYLINE
@@ -25,6 +25,18 @@ AcDbPolyline
 0
 43
 0.0
+"""
+
+LWPOLYLINE_ERR = """0
+LWPOLYLINE
+5
+0
+330
+0
+100
+AcDbEntity
+8
+0
 """
 
 
@@ -110,6 +122,11 @@ def test_has_arc():
     assert pline.has_arc is True
 
 
+def test_raises_dxf_structure_error_for_missing_AcDbPolyline_subclass():
+    with pytest.raises(DXFStructureError):
+        LWPolyline.from_text(LWPOLYLINE_ERR)
+
+
 RESULT1 = """0
 LWPOLYLINE
 5
@@ -133,4 +150,3 @@ AcDbPolyline
 20
 2.
 """
-
