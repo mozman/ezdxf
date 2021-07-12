@@ -85,14 +85,6 @@ def transform_extrusion(extrusion: "Vertex", m: Matrix44) -> Tuple[Vec3, bool]:
         x_axis.magnitude_square, y_axis.magnitude_square, abs_tol=1e-9
     )
     new_extrusion = x_axis.cross(y_axis).normalize()
-    # TODO: Avoid flipped extrusion vector (0, 0, -1)?
-    # if new_extrusion.isclose(_FLIPPED_Z_AXIS):
-    #    return Z_AXIS, is_uniform
-    # else:
-    #    return new_extrusion, is_uniform
-    #
-    # Current state: 91 tests fail, including explicit tests for an expected
-    # extrusion vector of (0, 0, 1) or (0, 0, -1).
     return new_extrusion, is_uniform
 
 
