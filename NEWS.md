@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.16.5b1 - dev
+Version 0.16.5b2 - dev
 ----------------------
 
 - NEW: hard dependency `typing_extensions`
