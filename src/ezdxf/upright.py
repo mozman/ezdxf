@@ -1,10 +1,10 @@
 # Copyright (c) 2021, Manfred Moitzi
 # License: MIT License
-
+from typing import Iterable
 from ezdxf.math import Z_AXIS, Vec3, OCS, Vertex
 from ezdxf.entities import DXFGraphic, DXFNamespace
 
-__all__ = ["upright"]
+__all__ = ["upright", "upright_all"]
 
 
 def upright(entity: DXFGraphic) -> None:
@@ -49,6 +49,17 @@ def upright(entity: DXFGraphic) -> None:
         complex_tool = COMPLEX_UPRIGHT_TOOLS.get(entity.dxftype())
         if complex_tool:
             complex_tool(entity)
+
+
+def upright_all(entities: Iterable[DXFGraphic]) -> None:
+    """Call function :func:`upright` for all DXF entities in iterable
+    `entities`::
+
+        upright_all(doc.modelspace())
+
+    """
+    for e in entities:
+        upright(e)
 
 
 FLIPPED_Z_AXIS = -Z_AXIS
