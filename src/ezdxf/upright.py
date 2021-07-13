@@ -42,11 +42,12 @@ def upright(entity: DXFGraphic) -> None:
     extrusion = Vec3(entity.dxf.extrusion).normalize()
     if not extrusion.isclose(FLIPPED_Z_AXIS):
         return
-    simple_tool = SIMPLE_UPRIGHT_TOOLS.get(entity.dxftype())
+    dxftype: str = entity.dxftype()
+    simple_tool = SIMPLE_UPRIGHT_TOOLS.get(dxftype)
     if simple_tool:
         simple_tool(entity.dxf)
     else:
-        complex_tool = COMPLEX_UPRIGHT_TOOLS.get(entity.dxftype())
+        complex_tool = COMPLEX_UPRIGHT_TOOLS.get(dxftype)
         if complex_tool:
             complex_tool(entity)
 
@@ -67,7 +68,7 @@ FLIPPED_OCS = OCS(FLIPPED_Z_AXIS)
 
 
 def _flip_deg_angle(angle: float) -> float:
-    return 180.0 - angle if angle >= 0.0 else -180.0 - angle
+    return (180.0 if angle >= 0.0 else -180.0) - angle
 
 
 def _flip_vertex(vertex: Vertex) -> Vertex:
@@ -110,6 +111,7 @@ def _flip_complex_entity(entity: DXFGraphic) -> None:
 COMPLEX_UPRIGHT_TOOLS = {
     "LWPOLYLINE": _flip_complex_entity,
     "POLYLINE": None,  # only 2D POLYLINE
-    "POLYGON": None,  # HATCH, MPOLYGON
+    "HATCH": None,
+    "MPOLYGON": None,
     "INSERT": None,
 }
