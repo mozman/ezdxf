@@ -5,7 +5,7 @@ import pytest
 import math
 from ezdxf.upright import upright, _flip_deg_angle
 from ezdxf import path
-from ezdxf.entities import Circle, Arc
+from ezdxf.entities import Circle, Arc, DXFEntity, Text
 from ezdxf.math import Z_AXIS, Matrix44, OCS, OCSTransform
 
 
@@ -40,6 +40,16 @@ def circle():
     return Circle.new(
         dxfattribs={"center": (3, 4), "radius": 2.0, "extrusion": (0, 0, -1)}
     )
+
+
+def test_safety_checks(circle):
+    # invalid entities should be ignored silently
+    upright(None)  # ignore None values
+    upright(DXFEntity())  # ignore invalid DXF entity types
+    upright(Text())  # ignore unsupported DXF entity types
+    circle.destroy()
+    upright(circle)  # ignore destroyed entities
+    assert True is True
 
 
 def test_upright_circle_params(circle):

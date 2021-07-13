@@ -33,8 +33,11 @@ def upright(entity: DXFGraphic) -> None:
     # represented by an extrusion vector (0, 0, 1), therefore this CANNOT work
     # for text entities or entities including text:
     # TEXT, ATTRIB, ATTDEF, MTEXT, DIMENSION, LEADER, MLEADER
-
-    if not entity.dxf.hasattr("extrusion"):
+    if not (
+        isinstance(entity, DXFGraphic)
+        and entity.is_alive
+        and entity.dxf.hasattr("extrusion")
+    ):
         return
     extrusion = Vec3(entity.dxf.extrusion).normalize()
     if not extrusion.isclose(FLIPPED_Z_AXIS):
