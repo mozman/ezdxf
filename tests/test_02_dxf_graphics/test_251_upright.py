@@ -52,7 +52,7 @@ def test_safety_checks(circle):
     assert True is True
 
 
-def test_upright_circle_params(circle):
+def test_upright_circle_dxf_attributes(circle):
     upright(circle)
     assert circle.dxf.extrusion.isclose(Z_AXIS)
     assert circle.dxf.center.isclose((-3, 4))
@@ -83,7 +83,7 @@ def arc():
     )
 
 
-def test_upright_arc(arc):
+def test_upright_arc_dxf_attributes(arc):
     upright(arc)
     assert arc.dxf.extrusion.isclose(Z_AXIS)
     assert arc.dxf.center.isclose((-3, 4))
