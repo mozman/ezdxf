@@ -138,9 +138,9 @@ def test_upright_ellipse():
 
     upright(ellipse)
     assert ellipse.dxf.extrusion.isclose(Z_AXIS)
-    p1 = path.make_path(ellipse).reversed()
-    # reversed vertex order as source entity
-    assert path.have_close_control_vertices(p0, p1)
+    p1 = path.make_path(ellipse)
+    # has reversed vertex order of source entity:
+    assert path.have_close_control_vertices(p0, p1.reversed())
 
 
 if __name__ == "__main__":

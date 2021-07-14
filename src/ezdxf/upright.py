@@ -96,7 +96,7 @@ def _flip_thickness(dxf: DXFNamespace) -> None:
 
 
 def _flip_circle(dxf: DXFNamespace) -> None:
-    dxf.center = _flip_vertex(dxf.center)
+    _flip_existing_vertex(dxf, "center")
     _flip_thickness(dxf)
     dxf.discard("extrusion")
 
