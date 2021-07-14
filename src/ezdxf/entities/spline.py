@@ -34,6 +34,7 @@ from ezdxf.math import (
     required_knot_values,
     required_fit_points,
     required_control_points,
+    fit_points_to_cad_cv,
 )
 from .dxfentity import base_class, SubclassProcessor, DXFEntity
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -320,8 +321,16 @@ class Spline(DXFGraphic):
                 weights=weights,
             )
         elif self.fit_point_count():
-            return BSpline.from_fit_points(
-                self.fit_points, degree=self.dxf.degree
+            tangents = None
+            if (
+                self.dxf.hasattr("start_tangent")
+                and self.dxf.hasattr("end_tangent")
+            ):
+                tangents = [self.dxf.start_tangent, self.dxf.end_tangent]
+            # SPLINE from fit points has always a degree of 3!
+            return fit_points_to_cad_cv(
+                self.fit_points,
+                tangents=tangents,
             )
         else:
             raise ValueError(

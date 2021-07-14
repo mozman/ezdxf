@@ -565,3 +565,20 @@ def test_issue_224_end_points(ellipse):
     # end point locations measured in BricsCAD:
     assert ellipse.start_point.isclose((2191.3054, -1300.8375), abs_tol=1e-4)
     assert ellipse.end_point.isclose((2609.7870, -1520.6677), abs_tol=1e-4)
+
+
+def test_issue_494_make_path_from_spline_defined_by_fit_points_and_tangents():
+    from ezdxf.entities import Spline
+    spline = Spline.new(
+        dxfattribs={
+            "degree": 3,
+            "start_tangent": (0.9920663924871818, 0.1257150464243202, 0.0),
+            "end_tangent": (0.9999448476387669, -0.0105024606965807, 0.0),
+        },
+    )
+    spline.fit_points = [
+        (209.5080107190219, 206.963463282597, 0.0),
+        (209.55254921431026, 206.96662062623636, 0.0),
+    ]
+    p = make_path(spline)
+    assert len(p) > 0

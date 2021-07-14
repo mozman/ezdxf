@@ -24,6 +24,8 @@ Version 0.16.5b2 - dev
 - REMOVED: `Vector` alias for `Vec3`
 - BETA: `dxf2code` add-on: function `black()` and method `Code.black_code_str()` 
   returns the code string formatted by [Black](https://pypi.org/project/black/)
+- BUGFIX: `Spline.construction_tool()` recognizes start- and end tangents for 
+  B-splines from fit points if defined  
 
 Version 0.16.4 - 2021-06-20
 ---------------------------
