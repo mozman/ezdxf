@@ -1,5 +1,21 @@
 # Copyright (c) 2021, Manfred Moitzi
 # License: MIT License
+#
+# Purpose:
+# Flips an inverted OCS defined by extrusion vector (0, 0, -1) into a WCS
+# aligned OCS defined by extrusion vector (0, 0, 1).
+#
+# This simplifies 2D entity processing for ezdxf users and creates DXF
+# output for 3rd party DXF libraries which ignore the existence of the OCS.
+#
+# Warning:
+# The WCS representation of OCS entities with flipped extrusion vector
+# is not 100% identical to the source entity, curve orientation and vertex order
+# may change. A mirrored text represented by an extrusion vector (0, 0, -1)
+# cannot represented by an extrusion vector (0, 0, 1), therefore this CANNOT
+# work for text entities or entities including text:
+# TEXT, ATTRIB, ATTDEF, MTEXT, DIMENSION, LEADER, MLEADER
+
 from typing import Iterable
 import math
 from ezdxf.math import Z_AXIS, Vec3, OCS, Vertex
@@ -17,9 +33,9 @@ def upright(entity: DXFGraphic) -> None:
 
     .. warning::
 
-        The WCS representation as :class:`~ezdxf.path.Path` objects is the same
-        overall but not always 100% identical, the orientation or the starting
-        points of curves can be different.
+        The WCS representation of OCS entities with flipped extrusion vector
+        is not 100% identical to the source entity, curve orientation and vertex
+        order may change.
 
         E.g. arc angles are always counter-clockwise oriented around the
         extrusion vector, therefore flipping the extrusion vector creates a
@@ -34,10 +50,6 @@ def upright(entity: DXFGraphic) -> None:
     - TRACE
 
     """
-    # A mirrored text represented by an extrusion vector (0, 0, -1) cannot
-    # represented by an extrusion vector (0, 0, 1), therefore this CANNOT work
-    # for text entities or entities including text:
-    # TEXT, ATTRIB, ATTDEF, MTEXT, DIMENSION, LEADER, MLEADER
     if not (
         isinstance(entity, DXFGraphic)
         and entity.is_alive
