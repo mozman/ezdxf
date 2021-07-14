@@ -5,7 +5,7 @@ import pytest
 import math
 from ezdxf.upright import upright, _flip_deg_angle
 from ezdxf import path
-from ezdxf.entities import Circle, Arc, DXFEntity, Text
+from ezdxf.entities import Circle, Arc, DXFEntity, Text, Solid, Trace, Ellipse
 from ezdxf.math import Z_AXIS, Matrix44, OCS, OCSTransform
 
 
@@ -98,6 +98,48 @@ def test_upright_arc_geometry(arc):
     # ARC angles are always in counter-clockwise orientation around the
     # extrusion vector, therefore a reversed path vertex order:
     p1 = path.make_path(arc).reversed()
+    assert path.have_close_control_vertices(p0, p1)
+
+
+@pytest.mark.parametrize("cls", [Solid, Trace])
+def test_upright_quadrilaterals(cls):
+    solid = cls.new(
+        dxfattribs={
+            "vtx0": (1, 1),
+            "vtx1": (2, 1),
+            "vtx2": (2, 2),
+            "vtx3": (1, 2),
+            "extrusion": (0, 0, -1),
+        }
+    )
+    p0 = path.make_path(solid)
+    assert len(p0) == 4
+
+    upright(solid)
+    assert solid.dxf.extrusion.isclose(Z_AXIS)
+    p1 = path.make_path(solid)
+    # same vertex order as source entity
+    assert path.have_close_control_vertices(p0, p1)
+
+
+def test_upright_ellipse():
+    ellipse = Ellipse.new(
+        dxfattribs={
+            "center": (5, 5, 5),
+            "major_axis": (5, 0, 0),
+            "ratio": 0.5,
+            "start_param": 0.5,
+            "end_param": 1.5,
+            "extrusion": (0, 0, -1),
+        }
+    )
+    p0 = path.make_path(ellipse)
+    assert len(p0) > 0
+
+    upright(ellipse)
+    assert ellipse.dxf.extrusion.isclose(Z_AXIS)
+    p1 = path.make_path(ellipse).reversed()
+    # reversed vertex order as source entity
     assert path.have_close_control_vertices(p0, p1)
 
 

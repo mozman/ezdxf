@@ -1,8 +1,10 @@
 # Copyright (c) 2021, Manfred Moitzi
 # License: MIT License
 from typing import Iterable
+import math
 from ezdxf.math import Z_AXIS, Vec3, OCS, Vertex
 from ezdxf.entities import DXFGraphic, DXFNamespace
+from ezdxf.lldxf import const
 
 __all__ = ["upright", "upright_all"]
 
@@ -27,6 +29,9 @@ def upright(entity: DXFGraphic) -> None:
 
     - CIRCLE
     - ARC
+    - ELLIPSE (WCS entity, flips only the extrusion vector)
+    - SOLID
+    - TRACE
 
     """
     # A mirrored text represented by an extrusion vector (0, 0, -1) cannot
@@ -71,8 +76,18 @@ def _flip_deg_angle(angle: float) -> float:
     return (180.0 if angle >= 0.0 else -180.0) - angle
 
 
+def _flip_rad_angle(angle: float) -> float:
+    return (math.pi if angle >= 0.0 else -math.pi) - angle
+
+
 def _flip_vertex(vertex: Vertex) -> Vertex:
     return FLIPPED_OCS.to_wcs(vertex)
+
+
+def _flip_existing_vertex(dxf: DXFNamespace, name: str) -> None:
+    if dxf.hasattr(name):
+        vertex = _flip_vertex(dxf.get(name))
+        dxf.set(name, vertex)
 
 
 def _flip_thickness(dxf: DXFNamespace) -> None:
@@ -93,13 +108,29 @@ def _flip_arc(dxf: DXFNamespace) -> None:
     dxf.start_angle = _flip_deg_angle(end_angle)
 
 
+def _flip_solid(dxf: DXFNamespace) -> None:
+    for name in const.VERTEXNAMES:
+        _flip_existing_vertex(dxf, name)
+    _flip_thickness(dxf)
+    dxf.discard("extrusion")
+
+
+def _flip_ellipse(dxf: DXFNamespace) -> None:
+    # ELLIPSE is a WCS entity!
+    # just process start- and end params
+    end_param = -dxf.end_param
+    dxf.end_param = -dxf.start_param
+    dxf.start_param = end_param
+    dxf.discard("extrusion")
+
+
 # All properties stored as DXF attributes
 SIMPLE_UPRIGHT_TOOLS = {
     "CIRCLE": _flip_circle,
     "ARC": _flip_arc,
-    "SOLID": None,
-    "TRACE": None,
-    "ELLIPSE": None,  # WCS entity!
+    "SOLID": _flip_solid,
+    "TRACE": _flip_solid,
+    "ELLIPSE": _flip_ellipse,
 }
 
 
