@@ -19,7 +19,7 @@
 from typing import Iterable, List, Sequence
 import math
 from ezdxf.math import Z_AXIS, Vec3
-from ezdxf.entities import DXFGraphic, DXFNamespace, LWPolyline
+from ezdxf.entities import DXFGraphic, DXFNamespace, LWPolyline, Polyline
 from ezdxf.lldxf import const
 
 __all__ = ["upright", "upright_all"]
@@ -49,6 +49,7 @@ def upright(entity: DXFGraphic) -> None:
     - SOLID
     - TRACE
     - LWPOLYLINE
+    - POLYLINE (only 2D entities)
 
     """
     if not (
@@ -160,16 +161,31 @@ def _flip_lwpolyline(entity: DXFGraphic) -> None:
         v = _flip_vertex(Vec3(x, y))
         flipped_points.append((v.x, v.y, start_width, end_width, bulge))
     entity.set_points(flipped_points, format="xyseb")
-    dxf = entity.dxf
+    _finalize_polyline(entity.dxf)
+
+
+def _finalize_polyline(dxf: DXFNamespace):
     _flip_thickness(dxf)
     _flip_elevation(dxf)
     dxf.discard("extrusion")
 
 
+def _flip_polyline2d(entity: DXFGraphic) -> None:
+    assert isinstance(entity, Polyline)
+    if not entity.is_2d_polyline:
+        return  # ignore silently
+    for vertex in entity.vertices:
+        dxf = vertex.dxf
+        _flip_existing_vertex(dxf, "location")
+        if dxf.hasattr("bulge"):
+            dxf.bulge = -dxf.bulge
+    _finalize_polyline(entity.dxf)
+
+
 # Additional vertices or paths to transform
 COMPLEX_UPRIGHT_TOOLS = {
     "LWPOLYLINE": _flip_lwpolyline,
-    "POLYLINE": None,  # only 2D POLYLINE
+    "POLYLINE": _flip_polyline2d,
     "HATCH": None,
     "MPOLYGON": None,
     "INSERT": None,

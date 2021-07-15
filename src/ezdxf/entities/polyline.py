@@ -110,6 +110,7 @@ acdb_polyline = DefSubclass(
 )
 acdb_polyline_group_codes = group_code_mapping(acdb_polyline, ignore=(66,))
 
+
 # Notes to SEQEND:
 # todo: A loaded entity should have a valid SEQEND, a POLYLINE without vertices
 #  makes no sense - has to be tested
@@ -147,8 +148,8 @@ class Polyline(LinkedEntities):
     ANY3D = POLYLINE_3D | POLYMESH | POLYFACE
 
     @property
-    def vertices(self):
-        return self._sub_entities
+    def vertices(self) -> List["DXFVertex"]:
+        return self._sub_entities  # type: ignore
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
@@ -277,7 +278,7 @@ class Polyline(LinkedEntities):
         if self.is_2d_polyline:
             return any(
                 v.dxf.hasattr("bulge") and bool(v.dxf.bulge)
-                for v in self.vertices
+                    for v in self.vertices
             )
         else:
             return False

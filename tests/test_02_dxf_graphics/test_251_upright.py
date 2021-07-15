@@ -152,26 +152,49 @@ def test_upright_ellipse():
     assert path.have_close_control_vertices(p0, p1.reversed())
 
 
-def test_upright_lwpolyline():
+POLYLINE_POINTS = [
+    # x, y, s, e, b
+    (0, 0, 0, 0, 0),
+    (2, 2, 1, 2, -1),
+    (4, 0, 2, 1, 1),
+    (6, 0, 0, 0, 0),
+]
+
+
+def lwpolyline():
     pline = LWPolyline.new(
         dxfattribs={
             "elevation": 4,
             "extrusion": (0, 0, -1),
         }
     )
-    pline.set_points([
-        # x, y, s, e, b
-        (0, 0, 0, 0, 0),
-        (2, 2, 1, 2, -1),
-        (4, 0, 2, 1, 1),
-        (6, 0, 0, 0, 0),
-    ])
-    p0 = path.make_path(pline)
+    pline.set_points(POLYLINE_POINTS)
+    return pline
+
+
+def polyline2d():
+    from ezdxf.layouts import VirtualLayout
+
+    layout = VirtualLayout()
+    return layout.add_polyline2d(
+        POLYLINE_POINTS,
+        format="xyseb",
+        dxfattribs={
+            "elevation": (0, 0, 4),
+            "extrusion": (0, 0, -1),
+        },
+    )
+
+
+@pytest.mark.parametrize("factory", [lwpolyline, polyline2d])
+def test_upright_polyline(factory):
+    polyline = factory()
+    p0 = path.make_path(polyline)
     assert p0.has_curves is True
 
-    upright(pline)
-    assert pline.dxf.extrusion.isclose(Z_AXIS)
-    p1 = path.make_path(pline)
+    upright(polyline)
+    assert polyline.dxf.extrusion.isclose(Z_AXIS)
+    p1 = path.make_path(polyline)
     # vertex order do not change:
     assert path.have_close_control_vertices(p0, p1)
 
