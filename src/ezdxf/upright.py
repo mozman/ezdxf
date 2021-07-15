@@ -16,14 +16,11 @@
 # work for text entities or entities including text:
 # TEXT, ATTRIB, ATTDEF, MTEXT, DIMENSION, LEADER, MLEADER
 
-from typing import Iterable, cast, TYPE_CHECKING, List, Sequence
+from typing import Iterable, List, Sequence
 import math
 from ezdxf.math import Z_AXIS, Vec3
-from ezdxf.entities import DXFGraphic, DXFNamespace
+from ezdxf.entities import DXFGraphic, DXFNamespace, LWPolyline
 from ezdxf.lldxf import const
-
-if TYPE_CHECKING:
-    from ezdxf.entities import LWPolyline, Polyline
 
 __all__ = ["upright", "upright_all"]
 
@@ -156,14 +153,14 @@ SIMPLE_UPRIGHT_TOOLS = {
 
 
 def _flip_lwpolyline(entity: DXFGraphic) -> None:
-    pline = cast("LWPolyline", entity)
+    assert isinstance(entity, LWPolyline)
     flipped_points: List[Sequence[float]] = []
-    for x, y, start_width, end_width, bulge in pline.lwpoints:
+    for x, y, start_width, end_width, bulge in entity.lwpoints:
         bulge = -bulge
         v = _flip_vertex(Vec3(x, y))
         flipped_points.append((v.x, v.y, start_width, end_width, bulge))
-    pline.set_points(flipped_points, format="xyseb")
-    dxf = pline.dxf
+    entity.set_points(flipped_points, format="xyseb")
+    dxf = entity.dxf
     _flip_thickness(dxf)
     _flip_elevation(dxf)
     dxf.discard("extrusion")
