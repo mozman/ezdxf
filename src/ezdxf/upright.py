@@ -16,7 +16,7 @@
 # work for text entities or entities including text:
 # TEXT, ATTRIB, ATTDEF, MTEXT, DIMENSION, LEADER, MLEADER
 
-from typing import Iterable, cast, TYPE_CHECKING
+from typing import Iterable, cast, TYPE_CHECKING, List, Sequence
 import math
 from ezdxf.math import Z_AXIS, Vec3, Vertex
 from ezdxf.entities import DXFGraphic, DXFNamespace
@@ -110,6 +110,12 @@ def _flip_thickness(dxf: DXFNamespace) -> None:
         dxf.thickness = -dxf.thickness
 
 
+def _flip_elevation(dxf: DXFNamespace) -> None:
+    if dxf.hasattr("elevation"):
+        # works with float (LWPOLYLINE) and Vec3 (POLYLINE)
+        dxf.elevation = -dxf.elevation
+
+
 def _flip_circle(dxf: DXFNamespace) -> None:
     _flip_existing_vertex(dxf, "center")
     _flip_thickness(dxf)
@@ -148,9 +154,25 @@ SIMPLE_UPRIGHT_TOOLS = {
     "ELLIPSE": _flip_ellipse,
 }
 
+
+def _flip_lwpolyline(entity: DXFGraphic) -> None:
+    pline = cast("LWPolyline", entity)
+    flipped_points: List[Sequence[float]] = []
+    for x, y, start_width, end_width, bulge in pline.lwpoints:
+        bulge = -bulge
+        x, y, _ = _flip_vertex((x, y))
+        flipped_points.append((x, y, start_width, end_width, bulge))
+    pline.set_points(flipped_points, format="xyseb")
+
+    dxf = pline.dxf
+    _flip_thickness(dxf)
+    _flip_elevation(dxf)
+    dxf.discard("extrusion")
+
+
 # Additional vertices or paths to transform
 COMPLEX_UPRIGHT_TOOLS = {
-    "LWPOLYLINE": None,
+    "LWPOLYLINE": _flip_lwpolyline,
     "POLYLINE": None,  # only 2D POLYLINE
     "HATCH": None,
     "MPOLYGON": None,
