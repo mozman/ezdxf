@@ -18,7 +18,7 @@
 
 from typing import Iterable, cast, TYPE_CHECKING, List, Sequence
 import math
-from ezdxf.math import Z_AXIS, Vec3, Vertex
+from ezdxf.math import Z_AXIS, Vec3
 from ezdxf.entities import DXFGraphic, DXFNamespace
 from ezdxf.lldxf import const
 
@@ -51,6 +51,7 @@ def upright(entity: DXFGraphic) -> None:
     - ELLIPSE (WCS entity, flips only the extrusion vector)
     - SOLID
     - TRACE
+    - LWPOLYLINE
 
     """
     if not (
@@ -94,9 +95,8 @@ def _flip_rad_angle(angle: float) -> float:
     return (math.pi if angle >= 0.0 else -math.pi) - angle
 
 
-def _flip_vertex(vertex: Vertex) -> Vec3:
-    v = Vec3(vertex)
-    return Vec3(-v.x, v.y, -v.z)
+def _flip_vertex(vertex: Vec3) -> Vec3:
+    return Vec3(-vertex.x, vertex.y, -vertex.z)
 
 
 def _flip_existing_vertex(dxf: DXFNamespace, name: str) -> None:
@@ -160,10 +160,9 @@ def _flip_lwpolyline(entity: DXFGraphic) -> None:
     flipped_points: List[Sequence[float]] = []
     for x, y, start_width, end_width, bulge in pline.lwpoints:
         bulge = -bulge
-        x, y, _ = _flip_vertex((x, y))
-        flipped_points.append((x, y, start_width, end_width, bulge))
+        v = _flip_vertex(Vec3(x, y))
+        flipped_points.append((v.x, v.y, start_width, end_width, bulge))
     pline.set_points(flipped_points, format="xyseb")
-
     dxf = pline.dxf
     _flip_thickness(dxf)
     _flip_elevation(dxf)
