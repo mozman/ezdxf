@@ -322,9 +322,8 @@ class Spline(DXFGraphic):
             )
         elif self.fit_point_count():
             tangents = None
-            if (
-                self.dxf.hasattr("start_tangent")
-                and self.dxf.hasattr("end_tangent")
+            if self.dxf.hasattr("start_tangent") and self.dxf.hasattr(
+                "end_tangent"
             ):
                 tangents = [self.dxf.start_tangent, self.dxf.end_tangent]
             # SPLINE from fit points has always a degree of 3!
