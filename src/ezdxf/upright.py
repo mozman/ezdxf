@@ -16,11 +16,14 @@
 # work for text entities or entities including text:
 # TEXT, ATTRIB, ATTDEF, MTEXT, DIMENSION, LEADER, MLEADER
 
-from typing import Iterable
+from typing import Iterable, cast, TYPE_CHECKING
 import math
-from ezdxf.math import Z_AXIS, Vec3, OCS, Vertex
+from ezdxf.math import Z_AXIS, Vec3, Vertex
 from ezdxf.entities import DXFGraphic, DXFNamespace
 from ezdxf.lldxf import const
+
+if TYPE_CHECKING:
+    from ezdxf.entities import LWPolyline, Polyline
 
 __all__ = ["upright", "upright_all"]
 
@@ -81,7 +84,6 @@ def upright_all(entities: Iterable[DXFGraphic]) -> None:
 
 
 FLIPPED_Z_AXIS = -Z_AXIS
-FLIPPED_OCS = OCS(FLIPPED_Z_AXIS)
 
 
 def _flip_deg_angle(angle: float) -> float:
@@ -92,8 +94,9 @@ def _flip_rad_angle(angle: float) -> float:
     return (math.pi if angle >= 0.0 else -math.pi) - angle
 
 
-def _flip_vertex(vertex: Vertex) -> Vertex:
-    return FLIPPED_OCS.to_wcs(vertex)
+def _flip_vertex(vertex: Vertex) -> Vec3:
+    v = Vec3(vertex)
+    return Vec3(-v.x, v.y, -v.z)
 
 
 def _flip_existing_vertex(dxf: DXFNamespace, name: str) -> None:
@@ -145,14 +148,9 @@ SIMPLE_UPRIGHT_TOOLS = {
     "ELLIPSE": _flip_ellipse,
 }
 
-
-def _flip_complex_entity(entity: DXFGraphic) -> None:
-    pass
-
-
 # Additional vertices or paths to transform
 COMPLEX_UPRIGHT_TOOLS = {
-    "LWPOLYLINE": _flip_complex_entity,
+    "LWPOLYLINE": None,
     "POLYLINE": None,  # only 2D POLYLINE
     "HATCH": None,
     "MPOLYGON": None,

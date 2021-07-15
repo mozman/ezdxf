@@ -74,7 +74,7 @@ def test_upright_circle_geometry(circle):
 def arc():
     return Arc.new(
         dxfattribs={
-            "center": (3, 4),
+            "center": (3, 4, 5),
             "radius": 2.0,
             "start_angle": 15,
             "end_angle": 75,
@@ -86,7 +86,7 @@ def arc():
 def test_upright_arc_dxf_attributes(arc):
     upright(arc)
     assert arc.dxf.extrusion.isclose(Z_AXIS)
-    assert arc.dxf.center.isclose((-3, 4))
+    assert arc.dxf.center.isclose((-3, 4, -5))
     assert arc.dxf.radius == 2.0
     assert arc.dxf.start_angle == pytest.approx(105.0)
     assert arc.dxf.end_angle == pytest.approx(165.0)
