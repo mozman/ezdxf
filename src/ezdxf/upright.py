@@ -20,10 +20,25 @@ from typing import Iterable, List, Sequence, Tuple
 from functools import singledispatch
 import math
 from ezdxf.math import Z_AXIS, Vec3, Vec2
-from ezdxf.entities import DXFGraphic, DXFNamespace, LWPolyline, Polyline
+from ezdxf.entities import (
+    DXFGraphic,
+    DXFNamespace,
+    Circle,
+    Arc,
+    Ellipse,
+    Solid,
+    Insert,
+    LWPolyline,
+    Polyline,
+)
 from ezdxf.entities.polygon import BasePolygon
 from ezdxf.entities.boundary_paths import (
-    PolylinePath, EdgePath, LineEdge, ArcEdge, EllipseEdge, SplineEdge,
+    PolylinePath,
+    EdgePath,
+    LineEdge,
+    ArcEdge,
+    EllipseEdge,
+    SplineEdge,
 )
 from ezdxf.lldxf import const
 
@@ -66,16 +81,8 @@ def upright(entity: DXFGraphic) -> None:
     ):
         return
     extrusion = Vec3(entity.dxf.extrusion).normalize()
-    if not extrusion.isclose(FLIPPED_Z_AXIS):
-        return
-    dxftype: str = entity.dxftype()
-    simple_tool = SIMPLE_UPRIGHT_TOOLS.get(dxftype)
-    if simple_tool:
-        simple_tool(entity.dxf)
-    else:
-        complex_tool = COMPLEX_UPRIGHT_TOOLS.get(dxftype)
-        if complex_tool:
-            complex_tool(entity)
+    if extrusion.isclose(FLIPPED_Z_AXIS):
+        _flip_dxf_graphic(entity)
 
 
 def upright_all(entities: Iterable[DXFGraphic]) -> None:
@@ -125,55 +132,58 @@ def _flip_elevation(dxf: DXFNamespace) -> None:
         dxf.elevation = -dxf.elevation
 
 
-def _flip_circle(dxf: DXFNamespace) -> None:
+@singledispatch
+def _flip_dxf_graphic(entity: DXFGraphic) -> None:
+    pass  # ignore unsupported types on purpose
+
+
+@_flip_dxf_graphic.register(Circle)
+def _flip_circle(circle: Circle) -> None:
+    dxf = circle.dxf
     _flip_existing_vertex(dxf, "center")
     _flip_thickness(dxf)
     dxf.discard("extrusion")
 
 
-def _flip_arc(dxf: DXFNamespace) -> None:
-    _flip_circle(dxf)
+@_flip_dxf_graphic.register(Arc)
+def _flip_arc(arc: Arc) -> None:
+    _flip_circle(arc)
+    dxf = arc.dxf
     end_angle = dxf.end_angle
     dxf.end_angle = _flip_deg_angle(dxf.start_angle)
     dxf.start_angle = _flip_deg_angle(end_angle)
 
 
-def _flip_solid(dxf: DXFNamespace) -> None:
+# SOLID and TRACE - but not 3DFACE!
+@_flip_dxf_graphic.register(Solid)
+def _flip_solid(solid: Solid) -> None:
+    dxf = solid.dxf
     for name in const.VERTEXNAMES:
         _flip_existing_vertex(dxf, name)
     _flip_thickness(dxf)
     dxf.discard("extrusion")
 
 
-def _flip_ellipse(dxf: DXFNamespace) -> None:
+@_flip_dxf_graphic.register(Ellipse)
+def _flip_ellipse(ellipse: Ellipse) -> None:
     # ELLIPSE is a WCS entity!
     # just process start- and end params
+    dxf = ellipse.dxf
     end_param = -dxf.end_param
     dxf.end_param = -dxf.start_param
     dxf.start_param = end_param
     dxf.discard("extrusion")
 
 
-# All properties stored as DXF attributes
-SIMPLE_UPRIGHT_TOOLS = {
-    "CIRCLE": _flip_circle,
-    "ARC": _flip_arc,
-    "SOLID": _flip_solid,
-    "TRACE": _flip_solid,
-    "ELLIPSE": _flip_ellipse,
-    "INSERT": None,
-}
-
-
-def _flip_lwpolyline(entity: DXFGraphic) -> None:
-    assert isinstance(entity, LWPolyline)
+@_flip_dxf_graphic.register(LWPolyline)
+def _flip_lwpolyline(polyline: LWPolyline) -> None:
     flipped_points: List[Sequence[float]] = []
-    for x, y, start_width, end_width, bulge in entity.lwpoints:
+    for x, y, start_width, end_width, bulge in polyline.lwpoints:
         bulge = -bulge
         v = _flip_2d_vertex(Vec2(x, y))
         flipped_points.append((v.x, v.y, start_width, end_width, bulge))
-    entity.set_points(flipped_points, format="xyseb")
-    _finalize_polyline(entity.dxf)
+    polyline.set_points(flipped_points, format="xyseb")
+    _finalize_polyline(polyline.dxf)
 
 
 def _finalize_polyline(dxf: DXFNamespace):
@@ -182,24 +192,25 @@ def _finalize_polyline(dxf: DXFNamespace):
     dxf.discard("extrusion")
 
 
-def _flip_polyline2d(entity: DXFGraphic) -> None:
-    assert isinstance(entity, Polyline)
-    if not entity.is_2d_polyline:
+@_flip_dxf_graphic.register(Polyline)
+def _flip_polyline2d(polyline: Polyline) -> None:
+    if not polyline.is_2d_polyline:
         return  # ignore silently
-    for vertex in entity.vertices:
+    for vertex in polyline.vertices:
         dxf = vertex.dxf
         _flip_existing_vertex(dxf, "location")
         if dxf.hasattr("bulge"):
             dxf.bulge = -dxf.bulge
-    _finalize_polyline(entity.dxf)
+    _finalize_polyline(polyline.dxf)
 
 
-def _flip_polygon(entity: DXFGraphic) -> None:
-    assert isinstance(entity, BasePolygon)
-    for p in entity.paths:
+# HATCH and MPOLYGON
+@_flip_dxf_graphic.register(BasePolygon)
+def _flip_polygon(polygon: BasePolygon) -> None:
+    for p in polygon.paths:
         _flip_boundary_path(p)
-    _flip_elevation(entity.dxf)
-    entity.dxf.discard("extrusion")
+    _flip_elevation(polygon.dxf)
+    polygon.dxf.discard("extrusion")
 
 
 @singledispatch
@@ -261,12 +272,3 @@ def _flip_spline_edge(edge: SplineEdge) -> None:
         edge.end_tangent = flip_vertex(edge.end_tangent)
     edge.control_points = [flip_vertex(v) for v in edge.control_points]
     edge.fit_points = [flip_vertex(v) for v in edge.fit_points]
-
-
-# Additional vertices or paths to transform
-COMPLEX_UPRIGHT_TOOLS = {
-    "LWPOLYLINE": _flip_lwpolyline,
-    "POLYLINE": _flip_polyline2d,
-    "HATCH": _flip_polygon,
-    "MPOLYGON": _flip_polygon,
-}
