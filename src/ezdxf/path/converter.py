@@ -387,10 +387,11 @@ def from_hatch_edge_path(
         )
 
     def wcs(vertex):
+        vec3 = Vec3(vertex.x, vertex.y, elevation)
         if ocs and ocs.transform:
-            return ocs.to_wcs((vertex.x, vertex.y, elevation))
+            return ocs.to_wcs(vec3)
         else:
-            return Vec3(vertex)
+            return vec3
 
     extrusion = ocs.uz if ocs else Z_AXIS
     path = Path()

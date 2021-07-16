@@ -26,6 +26,7 @@ from ezdxf.entities import (
     LWPolyline,
     PolylinePath,
     EdgePath,
+    Hatch,
 )
 
 
@@ -643,6 +644,29 @@ def test_3d_polyline():
     assert path.start == (1, 1, 1)
     assert path.end == (2, 2, 2)
     assert len(path) == 2
+
+
+POLYLINE_POINTS = [
+    # x, y, b
+    (0, 0, 0),
+    (2, 2, -1),
+    (4, 0, 1),
+    (6, 0, 0),
+]
+
+
+def test_make_path_from_hatch_polyline_path_elevation_and_flipped_extrusion():
+    hatch = Hatch.new(
+        dxfattribs={
+            "elevation": (0, 0, 4),
+            "extrusion": (0, 0, -1),
+        }
+    )
+    hatch.paths.add_polyline_path(POLYLINE_POINTS)
+    path = make_path(hatch)
+    assert path.has_curves is True
+    assert len(path) > 5
+    assert all(math.isclose(v.z, -4) for v in path.control_vertices())
 
 
 def test_approximate_lines():
