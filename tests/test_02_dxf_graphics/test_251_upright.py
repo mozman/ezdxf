@@ -14,6 +14,7 @@ from ezdxf.entities import (
     Trace,
     Ellipse,
     LWPolyline,
+    Hatch,
 )
 from ezdxf.math import Z_AXIS, Matrix44, OCS, OCSTransform
 
@@ -196,6 +197,41 @@ def test_upright_polyline(factory):
     assert polyline.dxf.extrusion.isclose(Z_AXIS)
     p1 = path.make_path(polyline)
     # vertex order do not change:
+    assert path.have_close_control_vertices(p0, p1)
+
+
+def test_upright_hatch_with_polyline_path():
+    hatch = Hatch.new(
+        dxfattribs={
+            "elevation": (0, 0, 4),
+            "extrusion": (0, 0, -1),
+        }
+    )
+    hatch.paths.add_polyline_path(
+        [(x, y, b) for x, y, s, e, b in POLYLINE_POINTS]
+    )
+    p0 = path.make_path(hatch)
+    assert p0.has_curves is True
+
+    upright(hatch)
+    assert hatch.dxf.extrusion.isclose(Z_AXIS)
+    p1 = path.make_path(hatch)
+    assert path.have_close_control_vertices(p0, p1)
+
+
+@pytest.mark.xfail(reason="Error in make_path() for HATCH")
+def test_upright_hatch_with_edge_path(all_edge_types_hatch):
+    hatch = all_edge_types_hatch
+    hatch.dxf.elevation = (0, 0, 4)
+    hatch.transform(Matrix44.scale(-1, 1, 1))
+    assert hatch.dxf.extrusion.isclose(-Z_AXIS)
+
+    p0 = path.make_path(hatch)  # ERROR
+    assert p0.has_curves is True
+
+    upright(hatch)
+    assert hatch.dxf.extrusion.isclose(Z_AXIS)
+    p1 = path.make_path(hatch)
     assert path.have_close_control_vertices(p0, p1)
 
 

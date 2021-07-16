@@ -248,8 +248,10 @@ def _flip_line_edge(edge: LineEdge) -> None:
 @_flip_edge.register(ArcEdge)
 def _flip_arc_edge(edge: ArcEdge) -> None:
     edge.center = _flip_2d_vertex(edge.center)
-    edge.start_angle = _flip_deg_angle(edge.start_angle)
-    edge.end_angle = _flip_deg_angle(edge.end_angle)
+    # Start- and end angles are always stored in counter-clockwise order!
+    end_angle = edge.end_angle
+    edge.end_angle = _flip_deg_angle(edge.start_angle)
+    edge.start_angle = _flip_deg_angle(end_angle)
     edge.ccw = not edge.ccw
 
 
@@ -257,9 +259,11 @@ def _flip_arc_edge(edge: ArcEdge) -> None:
 def _flip_ellipse_edge(edge: EllipseEdge) -> None:
     edge.center = _flip_2d_vertex(edge.center)
     edge.major_axis = _flip_2d_vertex(edge.major_axis)
-    # ellipse params as angles in degrees - not radians!
-    edge.start_angle = _flip_deg_angle(edge.start_angle)
-    edge.end_angle = _flip_deg_angle(edge.end_angle)
+    # Ellipse params as angles in degrees - not radians!
+    # Start- and end angles are always stored in counter-clockwise order!
+    end_angle = edge.end_angle
+    edge.end_angle = _flip_deg_angle(edge.start_angle)
+    edge.start_angle = _flip_deg_angle(end_angle)
     edge.ccw = not edge.ccw
 
 
