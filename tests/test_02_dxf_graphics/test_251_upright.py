@@ -3,6 +3,7 @@
 
 import pytest
 import math
+import ezdxf
 from ezdxf.upright import upright, _flip_deg_angle
 from ezdxf import path
 from ezdxf.entities import (
@@ -232,6 +233,43 @@ def test_upright_hatch_with_edge_path(all_edge_types_hatch):
     assert hatch.dxf.extrusion.isclose(Z_AXIS)
     p1 = path.make_path(hatch)
     assert path.have_close_control_vertices(p0, p1)
+
+
+def test_upright_insert():
+    doc = ezdxf.new()
+    blk = doc.blocks.new("example")
+    blk.add_arc(
+        center=(5, 0, 2),
+        radius=3,
+        start_angle=30,
+        end_angle=150,
+    )
+    blk.add_lwpolyline(POLYLINE_POINTS)
+    msp = doc.modelspace()
+    blk_ref = msp.add_blockref(
+        name="example",
+        insert=(0, 0, 4),
+        dxfattribs={
+            "extrusion": (0, 0, -1),
+            "rotation": -37,
+        },
+    )
+    blk_ref_copy = blk_ref.copy()
+    upright(blk_ref_copy)
+    msp.add_entity(blk_ref_copy)
+
+    assert blk_ref_copy.dxf.extrusion.isclose(Z_AXIS)
+    for e0, e1 in zip(
+        blk_ref.virtual_entities(), blk_ref_copy.virtual_entities()
+    ):
+        assert e0.dxftype() == e1.dxftype(), "same DXF type expected"
+        p0 = path.make_path(e0)
+        assert len(p0) > 0, "source path cannot be empty"
+        p1 = path.make_path(e1)
+        assert len(p1) > 0, "upright path cannot be empty"
+        assert path.have_close_control_vertices(
+            p0, p1
+        ), "expected same WCS representation"
 
 
 if __name__ == "__main__":

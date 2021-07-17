@@ -72,6 +72,7 @@ def upright(entity: DXFGraphic) -> None:
     - POLYLINE (only 2D entities)
     - HATCH
     - MPOLYGON
+    - INSERT (block references)
 
     """
     if not (
@@ -164,6 +165,18 @@ def _flip_solid(solid: Solid) -> None:
     dxf.discard("extrusion")
 
 
+@_flip_dxf_graphic.register(Insert)
+def _flip_insert(insert: Insert) -> None:
+    # see exploration/upright_insert.py
+    dxf = insert.dxf
+    _flip_existing_vertex(dxf, "insert")
+    dxf.rotation = -dxf.rotation
+    dxf.xscale = -dxf.xscale
+    dxf.zscale = -dxf.zscale
+    # Attached attributes cannot be flipped!
+    dxf.discard("extrusion")
+
+
 @_flip_dxf_graphic.register(Ellipse)
 def _flip_ellipse(ellipse: Ellipse) -> None:
     # ELLIPSE is a WCS entity!
@@ -230,6 +243,7 @@ def _flip_polyline_path(polyline: PolylinePath) -> None:
 
 @_flip_boundary_path.register(EdgePath)
 def _flip_edge_path(edges: EdgePath) -> None:
+    # see exploration/upright_hatch.py
     for edge in edges:
         _flip_edge(edge)
 
