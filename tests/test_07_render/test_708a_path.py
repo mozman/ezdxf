@@ -655,18 +655,22 @@ POLYLINE_POINTS = [
 ]
 
 
-def test_make_path_from_hatch_polyline_path_elevation_and_flipped_extrusion():
-    hatch = Hatch.new(
-        dxfattribs={
-            "elevation": (0, 0, 4),
-            "extrusion": (0, 0, -1),
-        }
-    )
-    hatch.paths.add_polyline_path(POLYLINE_POINTS)
-    path = make_path(hatch)
-    assert path.has_curves is True
-    assert len(path) > 5
-    assert all(math.isclose(v.z, -4) for v in path.control_vertices())
+class TestPathFromBoundaryWithElevationAndFlippedExtrusion:
+    @pytest.fixture
+    def hatch(self):
+        return Hatch.new(
+            dxfattribs={
+                "elevation": (0, 0, 4),
+                "extrusion": (0, 0, -1),
+            }
+        )
+
+    def test_from_hatch_polyline_path(self, hatch):
+        hatch.paths.add_polyline_path(POLYLINE_POINTS)
+        path = make_path(hatch)
+        assert path.has_curves is True
+        assert len(path) > 5
+        assert all(math.isclose(v.z, -4) for v in path.control_vertices())
 
 
 def test_approximate_lines():
@@ -1020,6 +1024,75 @@ def test_edge_path_closed_loop(e0, e1, e2, e3):
     assert len(list(path.sub_paths())) == 1, "expected one closed loop"
     assert len(list(path.control_vertices())) == 5
     assert path.is_closed is True, "expected a closed loop"
+
+
+class TestPathFromEdgePathWithElevationAndFlippedExtrusion:
+    def test_line_edge(self):
+        ep = EdgePath()
+        ep.add_line(A, B)
+        ep.add_line(B, C)
+        ep.add_line(C, D)
+        ep.add_line(D, A)
+        path = converter.from_hatch_edge_path(
+            ep, ocs=OCS((0, 0, -1)), elevation=4
+        )
+        assert len(list(path.sub_paths())) == 1, "expected one closed loop"
+        assert len(list(path.control_vertices())) == 5
+        assert all(math.isclose(v.z, -4) for v in path.control_vertices())
+        assert path.is_closed is True, "expected a closed loop"
+
+    def test_arc_edge(self):
+        ep = EdgePath()
+        ep.add_arc(
+            center=(5., 5.),
+            radius=5.,
+            start_angle=0,
+            end_angle=90,
+            ccw=True,
+        )
+        ep.add_line((5, 10), (10, 5))
+        path = converter.from_hatch_edge_path(
+            ep, ocs=OCS((0, 0, -1)), elevation=4
+        )
+        assert len(path) == 2
+        assert all(math.isclose(v.z, -4) for v in path.control_vertices())
+
+    def test_ellipse_edge(self):
+        ep = EdgePath()
+        ep.add_ellipse(
+            center=(5., 5.),
+            major_axis=(5., 0.),
+            ratio=1,
+            start_angle=0,
+            end_angle=90,
+            ccw=True,
+        )
+        ep.add_line((5, 10), (10, 5))
+        path = converter.from_hatch_edge_path(
+            ep, ocs=OCS((0, 0, -1)), elevation=4
+        )
+        assert len(path) == 2
+        assert all(math.isclose(v.z, -4) for v in path.control_vertices())
+
+    def test_spline_edge(self):
+        ep = EdgePath()
+        ep.add_spline(
+            fit_points=[(10, 5), (8, 5), (6, 8), (5, 10)]
+        )
+        ep.add_line((5, 10), (10, 5))
+        path = converter.from_hatch_edge_path(
+            ep, ocs=OCS((0, 0, -1)), elevation=4
+        )
+        assert len(path) > 2
+        assert all(math.isclose(v.z, -4) for v in path.control_vertices())
+
+    def test_from_complex_edge_path(self, edge_path):
+        path = converter.from_hatch_edge_path(
+            edge_path, ocs=OCS((0, 0, -1)), elevation=4
+        )
+        assert path.has_sub_paths is False
+        assert len(path) == 19
+        assert all(math.isclose(v.z, -4) for v in path.control_vertices())
 
 
 def test_extend_path_by_another_path():

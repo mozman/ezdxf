@@ -219,17 +219,17 @@ def test_upright_hatch_with_polyline_path():
     assert path.have_close_control_vertices(p0, p1)
 
 
-@pytest.mark.xfail(reason="Error in make_path() for HATCH")
+@pytest.mark.xfail(reason="Error in upright() for HATCH")
 def test_upright_hatch_with_edge_path(all_edge_types_hatch):
     hatch = all_edge_types_hatch
     hatch.dxf.elevation = (0, 0, 4)
     hatch.transform(Matrix44.scale(-1, 1, 1))
     assert hatch.dxf.extrusion.isclose(-Z_AXIS)
 
-    p0 = path.make_path(hatch)  # ERROR
+    p0 = path.make_path(hatch)
     assert p0.has_curves is True
 
-    upright(hatch)
+    upright(hatch)  # ERROR
     assert hatch.dxf.extrusion.isclose(Z_AXIS)
     p1 = path.make_path(hatch)
     assert path.have_close_control_vertices(p0, p1)
