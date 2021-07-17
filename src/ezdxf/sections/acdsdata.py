@@ -1,10 +1,9 @@
 # Purpose: acdsdata section manager
-# Created: 05.05.2014
-# Copyright (c) 2014-2019, Manfred Moitzi
+# Copyright (c) 2014-2021, Manfred Moitzi
 # License: MIT License
 """
-ACDSDATA entities have NO handles, therefore they can not be stored in the drawing entity database.
-every routine written until now (2014-05-05), expects entities with valid handle
+ACDSDATA entities have NO handles, therefore they can not be stored in the
+drawing entity database.
 
 section structure (work in progress):
 0 <str> SECTION
@@ -74,14 +73,25 @@ section structure (work in progress):
 
 0 <str> ENDSEC
 """
-from typing import TYPE_CHECKING, Iterator, Iterable, List, Any
+from typing import TYPE_CHECKING, Iterator, Iterable, List, Any, Union
+import abc
 from itertools import islice
 
 from ezdxf.lldxf.tags import group_tags, Tags
 from ezdxf.lldxf.const import DXFKeyError, DXFStructureError
 
-if TYPE_CHECKING:  # import forward declarations
+if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Drawing
+
+
+class AcDsEntity(abc.ABC):
+    @abc.abstractmethod
+    def export_dxf(self, tagwriter: "TagWriter"):
+        ...
+
+    @abc.abstractmethod
+    def dxftype(self) -> str:
+        ...
 
 
 class AcDsDataSection:
@@ -89,8 +99,8 @@ class AcDsDataSection:
 
     def __init__(self, doc: "Drawing", entities: Iterable[Tags] = None):
         self.doc = doc
-        self.entities = []  # type: List[AcDsData]
-        self.section_info = []  # type: Tags
+        self.entities: List[AcDsEntity] = []
+        self.section_info = Tags()
         if entities is not None:
             self.load_tags(iter(entities))
 
@@ -114,8 +124,8 @@ class AcDsDataSection:
 
     def append(self, entity: "AcDsData") -> None:
         cls = ACDSDATA_TYPES.get(entity.dxftype(), AcDsData)
-        entity = cls(entity.tags)
-        self.entities.append(entity)
+        data = cls(entity.tags)
+        self.entities.append(data)
 
     def export_dxf(self, tagwriter: "TagWriter") -> None:
         if not self.is_valid:
@@ -147,7 +157,7 @@ class AcDsDataSection:
         return []
 
 
-class AcDsData:
+class AcDsData(AcDsEntity):
     def __init__(self, tags: Tags):
         self.tags = tags
 
@@ -169,10 +179,10 @@ class Section(Tags):
 
     @property
     def data(self) -> Tags:
-        return self[2:]
+        return Tags(self[2:])
 
 
-class AcDsRecord:
+class AcDsRecord(AcDsEntity):
     def __init__(self, tags: Tags):
         self._dxftype = tags[0]
         self.flags = tags[1]
