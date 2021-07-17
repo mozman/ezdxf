@@ -70,12 +70,12 @@ structures which are optimized for a usage by a CAD kernel. This means
 that the content of complex entities like block references or leaders has
 to be created on demand by DXF primitives on the fly. These temporarily
 created entities are called virtual entities and have no handle and are not
-stored in the entities database.
+stored in the entity database.
 
 All this is required to calculate the bounding box of complex entities,
 and it is therefore a very time consuming task. By using a :class:`Cache` object
-it is possible to speedup this calculations, but this is not a magically feature
-which requires an understanding of what is happening under the hood to achieve
+it is possible to speedup this calculations, but this is not a magically feature,
+it requires an understanding of what is happening under the hood to achieve
 any performance gains.
 
 For a single bounding box calculation, without any reuse of entities it makes
@@ -163,7 +163,7 @@ Using UUID for stable virtual entities leads to more hits::
 But caching virtual entities needs also more memory.
 
 In conclusion: Using a cache is only useful, if you often process
-**nearly the same data**; only then can a performance gain be expected.
+**nearly the same data**; only then can an increase in performance be expected.
 
 Cache Class
 -----------

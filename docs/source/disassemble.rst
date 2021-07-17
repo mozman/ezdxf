@@ -32,43 +32,26 @@ Text Boundary Calculation
 
 Text boundary calculations are based on monospaced (fixed-pitch, fixed-width,
 non-proportional) font metrics, which do not provide a good accuracy for text
-height calculation and much less accuracy for text width calculation.
-
-It is possible to improve this results by using font support from the
-`Matplotlib` package, but this is an **optional** feature and has to be
-activated explicit::
-
-    from  ezdxf import options
-
-    options.use_matplotlib_font_support = True
-
-This is a global option for the current running Interpreter and it is active
-until deactivated::
-
-    options.use_matplotlib_font_support = False
-
-.. warning::
-
-    This feature requires a working Matplotlib installation else an ``ImportError``
-    exception will be raised sooner or later. This feature also depends on the
-    :mod:`~ezdxf.addons.drawing` add-on, which is installed by default. Using
-    the Matplotlib font support adds **runtime overhead** at the first
-    usage of any of the text related primitives.
-
-.. seealso::
-
-    Global option to set the font caching directory:
-    :attr:`ezdxf.options.font_cache_directory`
+height calculation and much less accuracy for text width calculation. It is
+possible to improve this results by using the font support from the
+**optional**  `Matplotlib` package.
 
 Install Matplotlib from command line::
 
-    pip3 install matplotlib
+    C:\> pip3 install matplotlib
 
 The `Matplotlib` font support will improve the results for TEXT, ATTRIB and
 ATTDEF. The MTEXT entity has many advanced features which would require a full
 "Rich Text Format" rendering and that is far beyond the goals and capabilities
 of this library, therefore the boundary box for MTEXT will **never** be as
 accurate as in a dedicated CAD application.
+
+Using the `Matplotlib` font support adds **runtime overhead**, therefore it is
+possible to deactivate the `Matplotlib` font support by setting the
+global option::
+
+    options.use_matplotlib_font_support = False
+
 
 Flatten Complex DXF Entities
 ----------------------------
