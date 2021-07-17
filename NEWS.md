@@ -22,6 +22,9 @@ Version 0.16.5b2 - dev
 - REMOVED: `ezdxf.options.default_text_style`, was not used  
 - REMOVED: `ezdxf.options.auto_load_fonts`, disabling auto load has no advantage
 - REMOVED: `Vector` alias for `Vec3`
+- REMOVED: `get_acis_data()`, `set_acis_data()` and context manager `edit_data()` 
+  from ACIS based entities, use `acis_data` property instead as `List[str]` or 
+  `List[bytes]`  
 - BETA: `dxf2code` add-on: function `black()` and method `Code.black_code_str()` 
   returns the code string formatted by [Black](https://pypi.org/project/black/)
 - BUGFIX: `Spline.construction_tool()` recognizes start- and end tangents for 

@@ -22,16 +22,6 @@ def test_body_getting_acis_data(layout):
     assert TEST_DATA == body.tostring()
 
 
-def test_backward_compatibility(layout):
-    body = layout.add_body()
-    with body.edit_data() as data:
-        data.text_lines.extend(TEST_DATA.splitlines())
-
-    assert TEST_DATA == "\n".join(body.get_acis_data())
-    body.set_acis_data(TEST_DATA.splitlines())
-    assert TEST_DATA == body.tostring()
-
-
 def test_region_default_settings(layout):
     region = layout.add_region()
     assert region.dxf.layer == '0'

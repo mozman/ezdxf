@@ -47,7 +47,6 @@ acdb_modeler_geometry = DefSubclass(
 )
 acdb_modeler_geometry_group_codes = group_code_mapping(acdb_modeler_geometry)
 
-
 # with R2013/AC1027 Modeler Geometry of ACIS data is stored in the ACDSDATA
 # section as binary encoded information detection:
 # group code 70, 1, 3 is missing
@@ -72,6 +71,8 @@ acdb_modeler_geometry_group_codes = group_code_mapping(acdb_modeler_geometry)
 # 310
 # 414349532042696E61727946696C6...
 
+ACIS_DATA = Union[List[str], List[bytes]]
+
 
 @register_entity
 class Body(DXFGraphic):
@@ -83,15 +84,15 @@ class Body(DXFGraphic):
 
     def __init__(self):
         super().__init__()
-        self._acis_data: List[Union[str, bytes]] = []
+        self._acis_data: ACIS_DATA = []
 
     @property
-    def acis_data(self) -> List[Union[str, bytes]]:
+    def acis_data(self) -> ACIS_DATA:
         """Get ACIS text data as list of strings for DXF R2000 to DXF R2010 and
         binary encoded ACIS data for DXF R2013 and later as list of bytes.
 
         """
-        if self.has_binary_data:
+        if self.doc is not None and self.has_binary_data:
             return self.doc.acdsdata.get_acis_data(self.dxf.handle)
         else:
             return self._acis_data
@@ -140,7 +141,7 @@ class Body(DXFGraphic):
     def load_acis_data(self, tags: Tags):
         """Loading interface. (internal API)"""
         text_lines = tags2textlines(tag for tag in tags if tag.code in (1, 3))
-        self.acis_data = crypt.decode(text_lines)
+        self.acis_data = crypt.decode(text_lines)  # type: ignore
 
     def export_entity(self, tagwriter: "TagWriter") -> None:
         """Export entity specific data as DXF tags. (internal API)"""
@@ -176,45 +177,14 @@ class Body(DXFGraphic):
         if self.has_binary_data:
             return ""
         else:
-            return "\n".join(self.acis_data)
+            return "\n".join(self.acis_data)  # type: ignore
 
     def tobytes(self) -> bytes:
         """Returns ACIS data as joined bytes for DXF R2013 and later."""
         if self.has_binary_data:
-            return b"".join(self.acis_data)
+            return b"".join(self.acis_data)  # type: ignore
         else:
             return b""
-
-    def get_acis_data(self):
-        """Get the ACIS source code as a list of strings."""
-        # for backward compatibility
-        return self.acis_data
-
-    def set_acis_data(self, text_lines: Iterable[str]) -> None:
-        """Set the ACIS source code as a list of strings **without** line
-        endings.
-        """
-        # for backward compatibility
-        self.acis_data = text_lines
-
-    @contextmanager
-    def edit_data(self) -> "ModelerGeometry":
-        # for backward compatibility
-        data = ModelerGeometry(self)
-        yield data
-        self.acis_data = data.text_lines
-
-
-class ModelerGeometry:
-    # for backward compatibility
-    def __init__(self, body: "Body"):
-        self.text_lines = body.acis_data
-
-    def __str__(self) -> str:
-        return "\n".join(self.text_lines)
-
-    def set_text(self, text: str, sep: str = "\n") -> None:
-        self.text_lines = text.split(sep)
 
 
 def tags2textlines(tags: Iterable) -> Iterable[str]:

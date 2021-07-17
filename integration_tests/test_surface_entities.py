@@ -1,10 +1,9 @@
-# Copyright 2018-2020, Manfred Moitzi
+# Copyright 2018-2021, Manfred Moitzi
 # License: MIT License
-from pathlib import Path
 import pytest
 import ezdxf
 
-DXF_PATH = Path(ezdxf.EZDXF_TEST_FILES) / "DXF_with_ACIS_data"
+DXF_PATH = ezdxf.options.test_files_path / "DXF_with_ACIS_data"
 SURFACES = DXF_PATH / "All_Surfaces_R2010.dxf"
 DELIMITER = '\n' + '=' * 80 + '\n'
 
@@ -21,4 +20,4 @@ def test_get_acis_data_from_surfaces():
             f.write(DELIMITER)
             f.write(str(surface) + ':')
             f.write(DELIMITER)
-            f.write('\n'.join(surface.get_acis_data()))
+            f.write('\n'.join(surface.acis_data))
