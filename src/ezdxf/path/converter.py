@@ -14,19 +14,18 @@ from typing import (
 )
 from functools import singledispatch, partial
 import enum
-import math
 from ezdxf.math import (
+    ABS_TOL,
     Vec2,
     Vec3,
     Z_AXIS,
-    NULLVEC,
     OCS,
     Bezier3P,
     Bezier4P,
     ConstructionEllipse,
     BSpline,
     have_bezier_curves_g1_continuity,
-    global_bspline_interpolation,
+    fit_points_to_cad_cv,
     Vertex,
 )
 from ezdxf.lldxf import const
@@ -371,10 +370,12 @@ def from_hatch_edge_path(
     def from_fit_points(edge, fit_points):
         tangents = None
         if edge.start_tangent and edge.end_tangent:
-            tangents = (wcs(edge.start_tangent), wcs(edge.end_tangent))
-        return global_bspline_interpolation(
+            tangents = (
+                wcs_tangent(edge.start_tangent),
+                wcs_tangent(edge.end_tangent),
+            )
+        return fit_points_to_cad_cv(  # only a degree of 3 is supported
             fit_points,
-            degree=edge.degree,
             tangents=tangents,
         )
 
@@ -386,8 +387,13 @@ def from_hatch_edge_path(
             weights=edge.weights if edge.weights else None,
         )
 
-    def wcs(vertex):
-        vec3 = Vec3(vertex.x, vertex.y, elevation)
+    def wcs(vertex: Vec2) -> Vec3:
+        return _wcs(Vec3(vertex.x, vertex.y, elevation))
+
+    def wcs_tangent(vertex: Vec2) -> Vec3:
+        return _wcs(Vec3(vertex.x, vertex.y, 0))
+
+    def _wcs(vec3: Vec3) -> Vec3:
         if ocs and ocs.transform:
             return ocs.to_wcs(vec3)
         else:
@@ -401,10 +407,10 @@ def from_hatch_edge_path(
         if edge.type == EdgeType.LINE:
             next_segment = line(edge)
         elif edge.type == EdgeType.ARC:
-            if not math.isclose(edge.radius, 0):
+            if abs(edge.radius) > ABS_TOL:
                 next_segment = arc(edge)
         elif edge.type == EdgeType.ELLIPSE:
-            if not NULLVEC.isclose(edge.major_axis):
+            if not Vec2(edge.major_axis).is_null:
                 next_segment = ellipse(edge)
         elif edge.type == EdgeType.SPLINE:
             next_segment = spline(edge)
