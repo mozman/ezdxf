@@ -248,7 +248,7 @@ def _flip_line_edge(edge: LineEdge) -> None:
 @_flip_edge.register(ArcEdge)
 def _flip_arc_edge(edge: ArcEdge) -> None:
     edge.center = _flip_2d_vertex(edge.center)
-    # Start- and end angles are always stored in counter-clockwise order!
+    # Start- and end angles are always stored in counter-clockwise orientation!
     end_angle = edge.end_angle
     edge.end_angle = _flip_deg_angle(edge.start_angle)
     edge.start_angle = _flip_deg_angle(end_angle)
@@ -260,19 +260,19 @@ def _flip_ellipse_edge(edge: EllipseEdge) -> None:
     edge.center = _flip_2d_vertex(edge.center)
     edge.major_axis = _flip_2d_vertex(edge.major_axis)
     # Ellipse params as angles in degrees - not radians!
-    # Start- and end angles are always stored in counter-clockwise order!
-    end_angle = edge.end_angle
-    edge.end_angle = _flip_deg_angle(edge.start_angle)
-    edge.start_angle = _flip_deg_angle(end_angle)
+    # Do not exchange start- and end angles!
+    # see exploration/upright_hatch.py
+    edge.start_angle = _flip_deg_angle(edge.start_angle)
+    edge.end_angle = _flip_deg_angle(edge.end_angle)
     edge.ccw = not edge.ccw
 
 
 @_flip_edge.register(SplineEdge)
 def _flip_spline_edge(edge: SplineEdge) -> None:
-    flip_vertex = _flip_2d_vertex
+    flip_2d_vertex = _flip_2d_vertex
     if edge.start_tangent is not None:
-        edge.start_tangent = flip_vertex(edge.start_tangent)
+        edge.start_tangent = flip_2d_vertex(edge.start_tangent)
     if edge.end_tangent is not None:
-        edge.end_tangent = flip_vertex(edge.end_tangent)
-    edge.control_points = [flip_vertex(v) for v in edge.control_points]
-    edge.fit_points = [flip_vertex(v) for v in edge.fit_points]
+        edge.end_tangent = flip_2d_vertex(edge.end_tangent)
+    edge.control_points = [flip_2d_vertex(v) for v in edge.control_points]
+    edge.fit_points = [flip_2d_vertex(v) for v in edge.fit_points]

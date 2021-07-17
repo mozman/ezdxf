@@ -16,7 +16,7 @@ from ezdxf.entities import (
     LWPolyline,
     Hatch,
 )
-from ezdxf.math import Z_AXIS, Matrix44, OCS, OCSTransform
+from ezdxf.math import Z_AXIS, Matrix44, OCS, OCSTransform, Vec3
 
 
 @pytest.mark.parametrize(
@@ -219,17 +219,16 @@ def test_upright_hatch_with_polyline_path():
     assert path.have_close_control_vertices(p0, p1)
 
 
-@pytest.mark.xfail(reason="Error in upright() for HATCH")
 def test_upright_hatch_with_edge_path(all_edge_types_hatch):
     hatch = all_edge_types_hatch
-    hatch.dxf.elevation = (0, 0, 4)
-    hatch.transform(Matrix44.scale(-1, 1, 1))
+    hatch.dxf.elevation = Vec3(0, 0, 4)
+    hatch.dxf.extrusion = Vec3(0, 0, -1)
     assert hatch.dxf.extrusion.isclose(-Z_AXIS)
 
     p0 = path.make_path(hatch)
     assert p0.has_curves is True
 
-    upright(hatch)  # ERROR
+    upright(hatch)
     assert hatch.dxf.extrusion.isclose(Z_AXIS)
     p1 = path.make_path(hatch)
     assert path.have_close_control_vertices(p0, p1)
