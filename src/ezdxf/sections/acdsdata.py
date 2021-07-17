@@ -85,9 +85,9 @@ if TYPE_CHECKING:  # import forward declarations
 
 
 class AcDsDataSection:
-    name = 'ACDSDATA'
+    name = "ACDSDATA"
 
-    def __init__(self, doc: 'Drawing', entities: Iterable[Tags] = None):
+    def __init__(self, doc: "Drawing", entities: Iterable[Tags] = None):
         self.doc = doc
         self.entities = []  # type: List[AcDsData]
         self.section_info = []  # type: Tags
@@ -100,40 +100,47 @@ class AcDsDataSection:
 
     def load_tags(self, entities: Iterator[Tags]) -> None:
         section_head = next(entities)
-        if section_head[0] != (0, 'SECTION') or section_head[1] != (2, 'ACDSDATA'):
-            raise DXFStructureError("Critical structure error in ACDSDATA section.")
+        if section_head[0] != (0, "SECTION") or section_head[1] != (
+            2,
+            "ACDSDATA",
+        ):
+            raise DXFStructureError(
+                "Critical structure error in ACDSDATA section."
+            )
 
         self.section_info = section_head
         for entity in entities:
             self.append(AcDsData(entity))  # tags have no subclasses
 
-    def append(self, entity: 'AcDsData') -> None:
+    def append(self, entity: "AcDsData") -> None:
         cls = ACDSDATA_TYPES.get(entity.dxftype(), AcDsData)
         entity = cls(entity.tags)
         self.entities.append(entity)
 
-    def export_dxf(self, tagwriter: 'TagWriter') -> None:
+    def export_dxf(self, tagwriter: "TagWriter") -> None:
         if not self.is_valid:
             return
         tagwriter.write_tags(self.section_info)
         for entity in self.entities:
             entity.export_dxf(tagwriter)
-        tagwriter.write_tag2(0, 'ENDSEC')
+        tagwriter.write_tag2(0, "ENDSEC")
 
     @property
-    def acdsrecords(self) -> Iterable['AcDsRecord']:
-        return (entity for entity in self.entities if entity.dxftype() == 'ACDSRECORD')
+    def acdsrecords(self) -> Iterable["AcDsRecord"]:
+        return (
+            entity for entity in self.entities if isinstance(entity, AcDsRecord)
+        )
 
-    def get_acis_data(self, handle: str) -> List[str]:
+    def get_acis_data(self, handle: str) -> List[bytes]:
         for record in self.acdsrecords:
             try:
-                section = record.get_section('AcDbDs::ID')
+                section = record.get_section("AcDbDs::ID")
             except DXFKeyError:  # not present
                 continue
             asm_handle = section.get_first_value(320, None)
             if asm_handle == handle:
                 try:
-                    asm_data = record.get_section('ASM_Data')
+                    asm_data = record.get_section("ASM_Data")
                 except DXFKeyError:  # no data stored
                     break
                 return [tag.value for tag in asm_data if tag.code == 310]
@@ -144,7 +151,7 @@ class AcDsData:
     def __init__(self, tags: Tags):
         self.tags = tags
 
-    def export_dxf(self, tagwriter: 'TagWriter'):
+    def export_dxf(self, tagwriter: "TagWriter"):
         tagwriter.write_tags(self.tags)
 
     def dxftype(self) -> str:
@@ -169,10 +176,13 @@ class AcDsRecord:
     def __init__(self, tags: Tags):
         self._dxftype = tags[0]
         self.flags = tags[1]
-        self.sections = [Section(group) for group in group_tags(islice(tags, 2, None), splitcode=2)]
+        self.sections = [
+            Section(group)
+            for group in group_tags(islice(tags, 2, None), splitcode=2)
+        ]
 
     def dxftype(self) -> str:
-        return 'ACDSRECORD'
+        return "ACDSRECORD"
 
     def has_section(self, name: str) -> bool:
         return self.get_section(name, default=None) is not None
@@ -192,15 +202,15 @@ class AcDsRecord:
     def __getitem__(self, item) -> Section:
         return self.sections[item]
 
-    def _write_header(self, tagwriter: 'TagWriter') -> None:
+    def _write_header(self, tagwriter: "TagWriter") -> None:
         tagwriter.write_tags(Tags([self._dxftype, self.flags]))
 
-    def export_dxf(self, tagwriter: 'TagWriter') -> None:
+    def export_dxf(self, tagwriter: "TagWriter") -> None:
         self._write_header(tagwriter)
         for section in self.sections:
             tagwriter.write_tags(section)
 
 
 ACDSDATA_TYPES = {
-    'ACDSRECORD': AcDsRecord,
+    "ACDSRECORD": AcDsRecord,
 }
