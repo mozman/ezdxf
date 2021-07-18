@@ -6,7 +6,7 @@ Version 0.16.5 - 2021-07-18
 ---------------------------
 
 - NEW: hard dependency `typing_extensions`
-- CHANGED: replaced `ezdxf.tools.rgb` by `ezdxf.colors`
+- CHANGE: replaced `ezdxf.tools.rgb` by `ezdxf.colors`
 - CHANGE: `options` module renamed to `_options`; this eliminates the confusion 
   between the `options` module and the global object `ezdxf.options`
 - NEW: config file support, see [docs](https://ezdxf.mozman.at/docs/options.html#config-files)
