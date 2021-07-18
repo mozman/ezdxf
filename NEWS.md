@@ -2,8 +2,8 @@
 News
 ====
 
-Version 0.16.5b2 - dev
-----------------------
+Version 0.16.5 - 2021-07-18
+---------------------------
 
 - NEW: hard dependency `typing_extensions`
 - CHANGED: replaced `ezdxf.tools.rgb` by `ezdxf.colors`
@@ -27,6 +27,9 @@ Version 0.16.5b2 - dev
   `List[bytes]`  
 - BETA: `dxf2code` add-on: function `black()` and method `Code.black_code_str()` 
   returns the code string formatted by [Black](https://pypi.org/project/black/)
+- BETA: `ezdxf.upright` module to flip inverted extrusion vectors, for more 
+  information read the [docs](https://ezdxf.mozman.at/docs/upright.html)  
+
 - BUGFIX: `Spline.construction_tool()` recognizes start- and end tangents for 
   B-splines from fit points if defined  
 

@@ -49,30 +49,8 @@ def upright(entity: DXFGraphic) -> None:
     """Flips an inverted :ref:`OCS` defined by extrusion vector (0, 0, -1) into
     a :ref:`WCS` aligned :ref:`OCS` defined by extrusion vector (0, 0, 1).
     DXF entities with other extrusion vectors and unsupported DXF entities will
-    be silently ignored.
-
-    .. warning::
-
-        The WCS representation of OCS entities with flipped extrusion vector
-        is not 100% identical to the source entity, curve orientation and vertex
-        order may change.
-
-        E.g. arc angles are always counter-clockwise oriented around the
-        extrusion vector, therefore flipping the extrusion vector creates a
-        similar but not a 100% identical arc.
-
-    Supported DXF entities:
-
-    - CIRCLE
-    - ARC
-    - ELLIPSE (WCS entity, flips only the extrusion vector)
-    - SOLID
-    - TRACE
-    - LWPOLYLINE
-    - POLYLINE (only 2D entities)
-    - HATCH
-    - MPOLYGON
-    - INSERT (block references)
+    be silently ignored. For more information about the limitations read the
+    documentation of the :mod:`ezdxf.upright` module.
 
     """
     if not (

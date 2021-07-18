@@ -20,4 +20,6 @@ Version 0.17 - dev
 - NEW: command `ezdxf browse FILE ...`, PyQt DXF structure browser
 - NEW: `dxf2code` add-on: function `black()` and method `Code.black_code_str()` 
   returns the code string formatted by [Black](https://pypi.org/project/black/)
+- NEW: `ezdxf.upright` module to flip inverted extrusion vectors, for more 
+  information read the [docs](https://ezdxf.mozman.at/docs/upright.html)  
   

@@ -66,6 +66,7 @@ Construction
     path
     disassemble
     bbox
+    upright
 
 Tools
 -----
