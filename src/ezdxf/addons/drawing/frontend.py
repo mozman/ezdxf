@@ -194,9 +194,14 @@ class Frontend:
         if filter_func is not None:
             entities = filter(filter_func, entities)
         for entity in entities:
-            # Skip unsupported DXF entities - just tag storage to preserve data
             if isinstance(entity, DXFTagStorage):
-                self.skip_entity(entity, "Cannot parse DXF entity")
+                # also ProxyEntity()
+                if entity.proxy_graphic and self.proxy_graphics > 0:
+                    self.draw_proxy_graphic(entity.proxy_graphic, entity.doc)
+                else:
+                    # Skip unsupported DXF entities - just tag storage to
+                    # preserve data
+                    self.skip_entity(entity, "Cannot parse DXF entity")
                 continue
             properties = self.ctx.resolve_all(entity)
             self.override_properties(entity, properties)
@@ -215,12 +220,11 @@ class Frontend:
 
         """
         self.out.enter_entity(entity, properties)
-
         if (
             entity.proxy_graphic
             and self.proxy_graphics == PREFER_PROXY_GRAPHICS
         ):
-            self.draw_proxy_graphic(entity)
+            self.draw_proxy_graphic(entity.proxy_graphic, entity.doc)
         else:
             draw_method = self._dispatch.get(entity.dxftype(), None)
             if draw_method is not None:
@@ -229,7 +233,7 @@ class Frontend:
                 entity.proxy_graphic
                 and self.proxy_graphics == USE_PROXY_GRAPHICS
             ):
-                self.draw_proxy_graphic(entity)
+                self.draw_proxy_graphic(entity.proxy_graphic, entity.doc)
             else:
                 self.skip_entity(entity, "Unsupported entity")
         self.out.exit_entity(entity)
@@ -414,6 +418,7 @@ class Frontend:
             return self.ctx.resolve_aci_color(
                 entity.dxf.fill_color, properties.layer
             )
+
         polygon = cast(BasePolygon, entity)
         ocs = polygon.ocs()
         elevation: float = polygon.dxf.elevation.z
@@ -582,9 +587,9 @@ class Frontend:
         else:
             raise TypeError(dxftype)
 
-    def draw_proxy_graphic(self, entity: DXFGraphic) -> None:
-        if entity.proxy_graphic:
-            gfx = ProxyGraphic(entity.proxy_graphic, entity.doc)
+    def draw_proxy_graphic(self, data: bytes, doc) -> None:
+        if data:
+            gfx = ProxyGraphic(data, doc)
             self.draw_entities(gfx.virtual_entities())
 
 

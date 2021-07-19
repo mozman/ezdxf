@@ -844,7 +844,7 @@ class DXFTagStorage(DXFEntity):
             entity.load_proxy_graphic()
         return entity
 
-    def load_proxy_graphic(self) -> Optional[bytes]:
+    def load_proxy_graphic(self) -> None:
         try:
             tags = self.xtags.get_subclass('AcDbEntity')
         except const.DXFKeyError:

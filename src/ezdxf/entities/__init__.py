@@ -28,6 +28,7 @@ from .appid import AppID
 from .blockrecord import BlockRecord
 
 # register DXF objects R2000
+from .proxy_entity import ProxyEntity
 from .dxfobj import XRecord, Placeholder, VBAProject, SortEntsTable
 from .dictionary import Dictionary, DictionaryVar, DictionaryWithDefault
 from .layout import DXFLayout
