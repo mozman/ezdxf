@@ -22,6 +22,7 @@ from ezdxf.sections.table import table_key as layer_key
 from ezdxf.colors import luminance, DXF_DEFAULT_COLORS, int2rgb
 from ezdxf.tools.pattern import scale_pattern, HatchPatternType
 from ezdxf.entities.ltype import CONTINUOUS_PATTERN
+from ezdxf.entities.polygon import BasePolygon
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -457,7 +458,7 @@ class RenderContext:
         )
         if entity.is_supported_dxf_attrib("style"):
             p.font = self.resolve_font(entity)
-        if entity.dxftype() == "HATCH":  # TODO: MPOLYGON
+        if isinstance(entity, BasePolygon):
             p.filling = self.resolve_filling(entity)
         return p
 
@@ -533,6 +534,22 @@ class RenderContext:
             return color
         else:
             return set_color_alpha(color, alpha)
+
+    def resolve_aci_color(self, aci: int, resolved_layer: str) -> Color:
+        """ Resolve the `aci` color as hex color string: "#RRGGBB" """
+        if aci == const.BYLAYER:
+            layer = self.layers.get(resolved_layer, DEFAULT_LAYER_PROPERTIES)
+            color = layer.get_entity_color_from_layer(
+                self.current_layout.default_color
+            )
+        elif aci == const.BYBLOCK:
+            if not self.inside_block_reference:
+                color = self.current_layout.default_color
+            else:
+                color = self.current_block_reference.color
+        else:  # BYOBJECT
+            color = self._true_entity_color(None, aci)
+        return color
 
     def _true_entity_color(
         self, true_color: Optional[Tuple[int, int, int]], aci: int
@@ -674,10 +691,10 @@ class RenderContext:
 
         def setup_pattern():
             filling.type = Filling.PATTERN
-            filling.name = hatch.dxf.pattern_name.upper()
-            filling.pattern_scale = hatch.dxf.pattern_scale
-            filling.angle = hatch.dxf.pattern_angle
-            if hatch.dxf.pattern_double:
+            filling.name = polygon.dxf.pattern_name.upper()
+            filling.pattern_scale = polygon.dxf.pattern_scale
+            filling.angle = polygon.dxf.pattern_angle
+            if polygon.dxf.pattern_double:
                 # This value is not editable by CAD-App-GUI:
                 filling.pattern_scale *= 2  # todo: is this correct?
 
@@ -685,7 +702,7 @@ class RenderContext:
             if filling.pattern:
                 return
 
-            pattern = hatch.pattern
+            pattern = polygon.pattern
             if not pattern:
                 return
 
@@ -704,13 +721,13 @@ class RenderContext:
             )
             self._hatch_pattern_cache[filling.name] = filling.pattern
 
-        if entity.dxftype() != "HATCH":
+        if not isinstance(entity, BasePolygon):
             return None
 
-        hatch = cast("Hatch", entity)
+        polygon = cast(BasePolygon, entity)
         filling = Filling()
-        if hatch.dxf.solid_fill:
-            gradient = hatch.gradient
+        if polygon.dxf.solid_fill:
+            gradient = polygon.gradient
             if gradient is None:
                 filling.type = Filling.SOLID
             else:

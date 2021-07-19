@@ -8,7 +8,6 @@ from ezdxf.addons.drawing.properties import (
     RenderContext,
     VIEWPORT_COLOR,
     Properties,
-    set_color_alpha,
     Filling,
 )
 from ezdxf.addons.drawing.text import simplified_text_chunks
@@ -19,8 +18,6 @@ from ezdxf.entities import (
     MText,
     Polyline,
     LWPolyline,
-    Spline,
-    Hatch,
     Attrib,
     Text,
     Polyface,
@@ -29,10 +26,12 @@ from ezdxf.entities import (
     Solid,
     Face3d,
 )
+from ezdxf.entities.polygon import BasePolygon
 from ezdxf.entities.dxfentity import DXFTagStorage, DXFEntity
 from ezdxf.layouts import Layout
-from ezdxf.math import Vec3, Z_AXIS
+from ezdxf.math import Vec3, Z_AXIS, OCS
 from ezdxf.path import (
+    Path,
     make_path,
     from_hatch_boundary_path,
     fast_bbox_detection,
@@ -112,6 +111,7 @@ class Frontend:
         dispatch_table = {
             "POINT": self.draw_point_entity,
             "HATCH": self.draw_hatch_entity,
+            "MPOLYGON": self.draw_mpolygon_entity,
             "MESH": self.draw_mesh_entity,
             "VIEWPORT": self.draw_viewport_entity,
             "WIPEOUT": self.draw_wipeout_entity,
@@ -373,44 +373,69 @@ class Frontend:
             self.out.draw_filled_polygon(points, properties)
 
     def draw_hatch_entity(
-        self, entity: DXFGraphic, properties: Properties
+        self,
+        entity: DXFGraphic,
+        properties: Properties,
+        *,
+        loops: List[Path] = None,
     ) -> None:
-        def to_path(paths):
-            loops = []
-            for boundary in paths:
-                path = from_hatch_boundary_path(boundary, ocs, elevation)
-                for sub_path in path.sub_paths():
-                    sub_path.close()
-                    loops.append(sub_path)
-            return loops
-
         if not self.out.show_hatch:
             return
 
-        hatch = cast(Hatch, entity)
-        ocs = hatch.ocs()
+        polygon = cast(BasePolygon, entity)
+        ocs = polygon.ocs()
         # all OCS coordinates have the same z-axis stored as vector (0, 0, z),
         # default (0, 0, 0)
         elevation = entity.dxf.elevation.z
 
         external_paths = []
         holes = []
-        paths = hatch.paths.rendering_paths(hatch.dxf.hatch_style)
+        paths = polygon.paths.rendering_paths(polygon.dxf.hatch_style)
         if self.nested_polygon_detection:
-            polygons = self.nested_polygon_detection(to_path(paths))
+            if loops is None:
+                loops = closed_loops(paths, ocs, elevation)
+            polygons = self.nested_polygon_detection(loops)
             external_paths, holes = winding_deconstruction(polygons)
         else:
             for p in paths:
                 if p.path_type_flags & const.BOUNDARY_PATH_EXTERNAL:
-                    external_paths.extend(to_path(p))
+                    external_paths.extend(closed_loops(p, ocs, elevation))
                 else:
-                    holes.extend(to_path(p))
+                    holes.extend(closed_loops(p, ocs, elevation))
 
         if external_paths:
             self.out.draw_filled_paths(external_paths, holes, properties)
         elif holes:
             # First path is the exterior path, everything else is a hole
             self.out.draw_filled_paths([holes[0]], holes[1:], properties)
+
+    def draw_mpolygon_entity(self, entity: DXFGraphic, properties: Properties):
+        def resolve_fill_color():
+            return self.ctx.resolve_aci_color(
+                entity.dxf.fill_color, properties.layer
+            )
+        polygon = cast(BasePolygon, entity)
+        ocs = polygon.ocs()
+        elevation: float = polygon.dxf.elevation.z
+        loops = closed_loops(polygon.paths, ocs, elevation)
+
+        line_color = properties.color
+        # 1. draw filling
+        if polygon.dxf.solid_fill:
+            # TODO: true color filling by gradient
+            properties.filling.type = Filling.SOLID
+            properties.color = resolve_fill_color()
+            self.draw_hatch_entity(entity, properties, loops=loops)
+        else:
+            # TODO: pattern filling
+            # TODO: pattern filling with bgcolor
+            pass
+
+        # 2. draw boundary paths
+        properties.color = line_color
+        # draw boundary paths as lines
+        for loop in loops:
+            self.out.draw_path(loop, properties)
 
     def draw_wipeout_entity(
         self, entity: DXFGraphic, properties: Properties
@@ -566,3 +591,13 @@ class Frontend:
 def is_spatial_text(extrusion: Vec3) -> bool:
     # note: the magnitude of the extrusion vector has no effect on text scale
     return not math.isclose(extrusion.x, 0) or not math.isclose(extrusion.y, 0)
+
+
+def closed_loops(paths, ocs: OCS, elevation: float) -> List[Path]:
+    loops = []
+    for boundary in paths:
+        path = from_hatch_boundary_path(boundary, ocs, elevation)
+        for sub_path in path.sub_paths():
+            sub_path.close()
+            loops.append(sub_path)
+    return loops
