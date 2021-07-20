@@ -29,7 +29,7 @@ from ezdxf.entities import (
 from ezdxf.entities.polygon import BasePolygon
 from ezdxf.entities.dxfentity import DXFTagStorage, DXFEntity
 from ezdxf.layouts import Layout
-from ezdxf.math import Vec3, Z_AXIS, OCS
+from ezdxf.math import Vec3, Z_AXIS, OCS, NULLVEC
 from ezdxf.path import (
     Path,
     make_path,
@@ -394,13 +394,17 @@ class Frontend:
 
         external_paths = []
         holes = []
-        paths = polygon.paths.rendering_paths(polygon.dxf.hatch_style)
+        if loops:  # only MPOLYGON
+            paths = loops
+        else:  # only HATCH
+            paths = polygon.paths.rendering_paths(polygon.dxf.hatch_style)
+
         if self.nested_polygon_detection:
-            if loops is None:
+            if loops is None:  # only HATCH
                 loops = closed_loops(paths, ocs, elevation)
             polygons = self.nested_polygon_detection(loops)
             external_paths, holes = winding_deconstruction(polygons)
-        else:
+        else:  # only HATCH
             for p in paths:
                 if p.path_type_flags & const.BOUNDARY_PATH_EXTERNAL:
                     external_paths.extend(closed_loops(p, ocs, elevation))
@@ -422,8 +426,9 @@ class Frontend:
         polygon = cast(BasePolygon, entity)
         ocs = polygon.ocs()
         elevation: float = polygon.dxf.elevation.z
+        offset = Vec3(polygon.dxf.get("offset_vector", NULLVEC))
         # MPOLYGON does not support hatch styles, all paths are rendered.
-        loops = closed_loops(polygon.paths, ocs, elevation)
+        loops = closed_loops(polygon.paths, ocs, elevation, offset)
 
         line_color: str = properties.color
         pattern_name: str = properties.filling.name  # normalized pattern name
@@ -607,10 +612,12 @@ def is_spatial_text(extrusion: Vec3) -> bool:
     return not math.isclose(extrusion.x, 0) or not math.isclose(extrusion.y, 0)
 
 
-def closed_loops(paths, ocs: OCS, elevation: float) -> List[Path]:
+def closed_loops(
+    paths, ocs: OCS, elevation: float, offset: Vec3 = NULLVEC
+) -> List[Path]:
     loops = []
     for boundary in paths:
-        path = from_hatch_boundary_path(boundary, ocs, elevation)
+        path = from_hatch_boundary_path(boundary, ocs, elevation, offset)
         for sub_path in path.sub_paths():
             sub_path.close()
             loops.append(sub_path)

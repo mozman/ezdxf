@@ -18,6 +18,7 @@ from ezdxf.math import (
     ABS_TOL,
     Vec2,
     Vec3,
+    NULLVEC,
     Z_AXIS,
     OCS,
     Bezier3P,
@@ -27,6 +28,7 @@ from ezdxf.math import (
     have_bezier_curves_g1_continuity,
     fit_points_to_cad_cv,
     Vertex,
+    Matrix44,
 )
 from ezdxf.lldxf import const
 from ezdxf.entities import (
@@ -244,8 +246,11 @@ def _from_image(image: "Image", **kwargs) -> Path:
 def _from_hatch(hatch: Hatch, **kwargs) -> Path:
     ocs = hatch.ocs()
     elevation = hatch.dxf.elevation.z
+    offset = NULLVEC
+    if isinstance(hatch, MPolygon):
+        offset = hatch.dxf.get("offset_vector", NULLVEC)
     paths = [
-        from_hatch_boundary_path(boundary, ocs, elevation)
+        from_hatch_boundary_path(boundary, ocs, elevation, offset=offset)
         for boundary in hatch.paths
     ]
     return tools.to_multi_path(paths)
@@ -268,15 +273,24 @@ def from_hatch(hatch: Hatch) -> Iterable[Path]:
 
 
 def from_hatch_boundary_path(
-    boundary: "TPath", ocs: OCS = None, elevation: float = 0
+    boundary: "TPath",
+    ocs: OCS = None,
+    elevation: float = 0,
+    offset: Vec3 = NULLVEC,  # ocs offset!
 ) -> "Path":
     """Returns a :class:`Path` object from a :class:`~ezdxf.entities.Hatch`
     polyline- or edge path.
     """
+
     if boundary.type == BoundaryPathType.EDGE:
-        return from_hatch_edge_path(boundary, ocs, elevation)
+        p = from_hatch_edge_path(boundary, ocs, elevation)
     else:
-        return from_hatch_polyline_path(boundary, ocs, elevation)
+        p = from_hatch_polyline_path(boundary, ocs, elevation)
+    if offset:  # only for MPOLYGON
+        # assume offset is in OCS
+        offset = ocs.to_wcs(offset.replace(z=elevation))
+        p = p.transform(Matrix44.translate(offset.x, offset.y, offset.z))
+    return p
 
 
 def from_hatch_polyline_path(
