@@ -68,7 +68,9 @@ def create_simple_pattern_filled_mpolygon(dxfversion="R2000"):
 def create_pattern_filled_mpolygon_with_bgcolor():
     doc = ezdxf.new("R2010")
     msp = doc.modelspace()
-    mpolygon = msp.add_hatch()  # by default a SOLID fill
+    # This is not supported by TrueView/BricsCAD!
+    # TrueView doesn't show this MPOLYGON at all!
+    mpolygon = msp.add_mpolygon()
     mpolygon.set_pattern_fill("ANSI33", color=7, scale=0.01)
     mpolygon.paths.add_polyline_path(
         [(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)]
