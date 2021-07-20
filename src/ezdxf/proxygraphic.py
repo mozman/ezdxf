@@ -11,7 +11,7 @@ from ezdxf.tools.binarydata import bytes_to_hexstr, ByteStream, BitStream
 from ezdxf import colors
 from ezdxf.math import (
     Vec3, Matrix44, Z_AXIS, ConstructionCircle,
-    ConstructionArc, OCS, UCS
+    ConstructionArc, OCS, UCS, X_AXIS,
 )
 from ezdxf.entities import factory
 import logging
@@ -252,24 +252,30 @@ class ProxyGraphic:
         attribs['radius'] = bs.read_float()
         normal = Vec3(bs.read_vertex())  # UCS z-axis
         start_vec = Vec3(bs.read_vertex())  # UCS x-axis
-        sweep_angle = bs.read_float()
-        # arc_type = bs.read_long()  # unused yet
-        # just do 2D for now
-        start_angle = start_vec.angle_deg
-
+        # sweep angle around normal vector!
+        sweep_angle = bs.read_float()  # in radians
+        # arc_type = bs.read_long()  # unused yet - meaning?
+        start_angle: float  # in degrees
+        end_angle: float  # in degrees
         if not normal.isclose(Z_AXIS):
-            # ucs = UCS(ux=start_vec, uz=normal)
-            # TODO: proper UCS handling
-            pass
-        # TODO: remove quick hack for normal == (0, 0, -1)
-        if normal.isclose((0, 0, -1)):
-            end_angle = start_angle - math.degrees(sweep_angle)
-            attribs['start_angle'] = end_angle
-            attribs['end_angle'] = start_angle
+            # local UCS
+            ucs = UCS(ux=start_vec, uz=normal)
+            # target OCS
+            ocs = OCS(normal)
+            # convert start angle == UCS x-axis to OCS
+            start_angle = ocs.from_wcs(ucs.to_wcs(X_AXIS)).angle_deg
+            # convert end angle to OCS
+            end_vec = Vec3.from_angle(sweep_angle)
+            end_angle = ocs.from_wcs(ucs.to_wcs(end_vec)).angle_deg
+            # setup OCS for ARC entity
+            attribs["extrusion"] = normal
+            # convert WCS center to OCS center
+            attribs["center"] = ocs.from_wcs(attribs["center"])
         else:
+            start_angle = start_vec.angle_deg
             end_angle = start_angle + math.degrees(sweep_angle)
-            attribs['start_angle'] = start_angle
-            attribs['end_angle'] = end_angle
+        attribs['start_angle'] = start_angle
+        attribs['end_angle'] = end_angle
         return self._factory('ARC', dxfattribs=attribs)
 
     def circular_arc_3p(self, data: bytes):
