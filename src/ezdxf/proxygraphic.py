@@ -11,7 +11,7 @@ from ezdxf.tools.binarydata import bytes_to_hexstr, ByteStream, BitStream
 from ezdxf import colors
 from ezdxf.math import (
     Vec3, Matrix44, Z_AXIS, ConstructionCircle,
-    ConstructionArc,
+    ConstructionArc, OCS, UCS
 )
 from ezdxf.entities import factory
 import logging
@@ -248,19 +248,28 @@ class ProxyGraphic:
     def circular_arc(self, data: bytes):
         bs = ByteStream(data)
         attribs = self._build_dxf_attribs()
-        attribs['center'] = Vec3(bs.read_vertex())
+        attribs['center'] = Vec3(bs.read_vertex())  # in WCS
         attribs['radius'] = bs.read_float()
-        normal = Vec3(bs.read_vertex())
-        if normal != (0, 0, 1):
-            logger.debug('ProxyGraphic: unsupported 3D ARC.')
-        start_vec = Vec3(bs.read_vertex())
+        normal = Vec3(bs.read_vertex())  # UCS z-axis
+        start_vec = Vec3(bs.read_vertex())  # UCS x-axis
         sweep_angle = bs.read_float()
         # arc_type = bs.read_long()  # unused yet
         # just do 2D for now
         start_angle = start_vec.angle_deg
-        end_angle = start_angle + math.degrees(sweep_angle)
-        attribs['start_angle'] = start_angle
-        attribs['end_angle'] = end_angle
+
+        if not normal.isclose(Z_AXIS):
+            # ucs = UCS(ux=start_vec, uz=normal)
+            # TODO: proper UCS handling
+            pass
+        # TODO: remove quick hack for normal == (0, 0, -1)
+        if normal.isclose((0, 0, -1)):
+            end_angle = start_angle - math.degrees(sweep_angle)
+            attribs['start_angle'] = end_angle
+            attribs['end_angle'] = start_angle
+        else:
+            end_angle = start_angle + math.degrees(sweep_angle)
+            attribs['start_angle'] = start_angle
+            attribs['end_angle'] = end_angle
         return self._factory('ARC', dxfattribs=attribs)
 
     def circular_arc_3p(self, data: bytes):
