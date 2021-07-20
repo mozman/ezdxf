@@ -414,7 +414,7 @@ class Frontend:
             self.out.draw_filled_paths([holes[0]], holes[1:], properties)
 
     def draw_mpolygon_entity(self, entity: DXFGraphic, properties: Properties):
-        def resolve_fill_color():
+        def resolve_fill_color() -> str:
             return self.ctx.resolve_aci_color(
                 entity.dxf.fill_color, properties.layer
             )
@@ -422,11 +422,12 @@ class Frontend:
         polygon = cast(BasePolygon, entity)
         ocs = polygon.ocs()
         elevation: float = polygon.dxf.elevation.z
+        # MPOLYGON does not support hatch styles, all paths are rendered.
         loops = closed_loops(polygon.paths, ocs, elevation)
 
-        line_color = properties.color
+        line_color: str = properties.color
+        pattern_name: str = properties.filling.name  # normalized pattern name
         # 1. draw filling
-        pattern_name = polygon.dxf.pattern_name.upper()
         if polygon.dxf.solid_fill:
             properties.filling.type = Filling.SOLID
             if (
@@ -438,6 +439,8 @@ class Frontend:
             else:
                 properties.color = resolve_fill_color()
             self.draw_hatch_entity(entity, properties, loops=loops)
+
+        # checking properties.filling.type == Filling.PATTERN is not sufficient:
         elif pattern_name and pattern_name != "SOLID":
             # line color is also pattern color: properties.color
             self.draw_hatch_entity(entity, properties, loops=loops)
