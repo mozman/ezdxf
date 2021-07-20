@@ -427,9 +427,15 @@ class Frontend:
         line_color = properties.color
         # 1. draw filling
         if polygon.dxf.solid_fill:
-            # TODO: true color filling by gradient
             properties.filling.type = Filling.SOLID
-            properties.color = resolve_fill_color()
+            if (
+                polygon.gradient is not None
+                and polygon.gradient.number_of_colors > 0
+            ):
+                # true color filling is stored as gradient
+                properties.color = properties.filling.gradient_color1
+            else:
+                properties.color = resolve_fill_color()
             self.draw_hatch_entity(entity, properties, loops=loops)
         else:
             # TODO: pattern filling

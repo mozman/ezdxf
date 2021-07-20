@@ -679,12 +679,12 @@ class RenderContext:
             filling.type = Filling.GRADIENT
             filling.name = gradient.name.upper()
             # todo: no idea when to use aci1 and aci2
-            filling.color1 = rgb_to_hex(gradient.color1)
+            filling.gradient_color1 = rgb_to_hex(gradient.color1)
             if gradient.one_color:
                 c = round(gradient.tint * 255)  # channel value
-                filling.color2 = rgb_to_hex((c, c, c))
+                filling.gradient_color2 = rgb_to_hex((c, c, c))
             else:
-                filling.color2 = rgb_to_hex(gradient.color2)
+                filling.gradient_color2 = rgb_to_hex(gradient.color2)
 
             filling.angle = gradient.rotation
             filling.gradient_centered = gradient.centered
@@ -733,7 +733,7 @@ class RenderContext:
             else:
                 if gradient.kind == 0:  # Solid
                     filling.type = Filling.SOLID
-                    filling.color1 = rgb_to_hex(gradient.color1)
+                    filling.gradient_color1 = rgb_to_hex(gradient.color1)
                 else:
                     setup_gradient()
         else:
