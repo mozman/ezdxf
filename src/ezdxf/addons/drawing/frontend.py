@@ -196,23 +196,25 @@ class Frontend:
             entities = filter(filter_func, entities)
         for entity in entities:
             if isinstance(entity, DXFTagStorage):
-                # also ProxyEntity()
-                if entity.proxy_graphic and self.proxy_graphics > 0:
-                    self.draw_proxy_graphic(entity.proxy_graphic, entity.doc)
-                elif entity.dxftype() == 'OLE2FRAME':
-                    self.draw_ole_frame_entity(entity)
-                else:
-                    # Skip unsupported DXF entities - just tag storage to
-                    # preserve data
-                    self.skip_entity(entity, "Cannot parse DXF entity")
-                continue
-            properties = self.ctx.resolve_all(entity)
-            self.override_properties(entity, properties)
-
-            if properties.is_visible:
-                self.draw_entity(entity, properties)
+                self.handle_dxf_tag_storage(entity)
             else:
-                self.skip_entity(entity, "invisible")
+                properties = self.ctx.resolve_all(entity)
+                self.override_properties(entity, properties)
+                if properties.is_visible:
+                    self.draw_entity(entity, properties)
+                else:
+                    self.skip_entity(entity, "invisible")
+
+    def handle_dxf_tag_storage(self, entity: DXFTagStorage) -> None:
+        # also ProxyEntity()
+        if entity.proxy_graphic and self.proxy_graphics > 0:
+            self.draw_proxy_graphic(entity.proxy_graphic, entity.doc)
+        elif entity.dxftype() == "OLE2FRAME":
+            self.draw_ole_frame_entity(entity)
+        else:
+            # Skip unsupported DXF entities - just tag storage to
+            # preserve data
+            self.skip_entity(entity, "Cannot parse DXF entity")
 
     def draw_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         """Draw a single DXF entity.
@@ -503,7 +505,7 @@ class Frontend:
     def draw_ole_frame_entity(self, entity: DXFTagStorage) -> None:
         assert entity.dxftype() == "OLE2FRAME"
         # group codes from http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-77747CE6-82C6-4452-97ED-4CEEB38BE960
-        tags = entity.xtags.get_subclass('AcDbOle2Frame')
+        tags = entity.xtags.get_subclass("AcDbOle2Frame")
         corner1 = Vec3(tags.get_first_value(10, default=None))
         corner2 = Vec3(tags.get_first_value(11, default=None))
         if corner1 is not None and corner2 is not None:
@@ -512,10 +514,10 @@ class Frontend:
             self._draw_rect(bottom_left, top_right, OLE2FRAME_COLOR)
 
     def _draw_rect(
-            self,
-            bottom_left: Tuple[float, float],
-            top_right: Tuple[float, float],
-            color: str
+        self,
+        bottom_left: Tuple[float, float],
+        top_right: Tuple[float, float],
+        color: str,
     ) -> None:
         minx, miny = bottom_left
         maxx, maxy = top_right
