@@ -52,6 +52,7 @@ table_key = layer_key
 MODEL_SPACE_BG_COLOR = "#212830"
 PAPER_SPACE_BG_COLOR = "#ffffff"
 VIEWPORT_COLOR = "#aaaaaa"  # arbitrary choice
+OLE2FRAME_COLOR = "#89adba"  # arbitrary choice
 
 
 def is_dark_color(color: Color, dark: float = 0.2) -> bool:
