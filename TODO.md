@@ -8,7 +8,6 @@ Add-ons
     - (v0.17) MLEADER full rendering support, requires `MLeader.virtual_entities()`
     - (v0.17) add support for ATTRIB with embedded MTEXT
     - (v0.17) global fonts cache usage
-    - (v0.17) MPOLYGON support  
     - (v0.17) extended MTEXT renderer  
     - (>v1.0) ACAD_TABLE
     - (>v1.0) support for switching plot styles (DXF_DEFAULT_PAPERSPACE_COLORS)

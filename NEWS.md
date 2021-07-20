@@ -2,6 +2,11 @@
 News
 ====
 
+Version 0.16.6b0 - dev
+----------------------
+
+- NEW: `MPOLYGON` support for the `drawing`add-on
+
 Version 0.16.5 - 2021-07-18
 ---------------------------
 
@@ -12,7 +17,7 @@ Version 0.16.5 - 2021-07-18
 - NEW: config file support, see [docs](https://ezdxf.mozman.at/docs/options.html#config-files)
 - NEW: `ezdxf config` command to manage config files
 - NEW: `ezdxf.path.have_close_control_vertices(a, b)`, test for close control 
-  vertices of two `Path` objects  
+  vertices of two `Path` objects
 - REMOVED: environment variable options, these are config file only options:
   - `EZDXF_AUTO_LOAD_FONTS`
   - `EZDXF_FONT_CACHE_DIRECTORY`
