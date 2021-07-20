@@ -506,9 +506,11 @@ class Frontend:
         assert entity.dxftype() == "OLE2FRAME"
         # group codes from http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-77747CE6-82C6-4452-97ED-4CEEB38BE960
         tags = entity.xtags.get_subclass("AcDbOle2Frame")
-        corner1 = Vec3(tags.get_first_value(10, default=None))
-        corner2 = Vec3(tags.get_first_value(11, default=None))
+        corner1 = tags.get_first_value(10, default=None)
+        corner2 = tags.get_first_value(11, default=None)
         if corner1 is not None and corner2 is not None:
+            corner1 = Vec3(corner1)
+            corner2 = Vec3(corner2)
             bottom_left = min(corner1.x, corner2.x), min(corner1.y, corner2.y)
             top_right = max(corner1.x, corner2.x), max(corner1.y, corner2.y)
             self._draw_rect(bottom_left, top_right, OLE2FRAME_COLOR)
