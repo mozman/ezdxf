@@ -1,12 +1,13 @@
 # Copyright (c) 2020-2021, Matthew Broadway
 # License: MIT License
 import math
-from typing import Iterable, cast, Union, List, Dict, Callable
+from typing import Iterable, cast, Union, List, Dict, Callable, Tuple
 from ezdxf.lldxf import const
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.properties import (
     RenderContext,
     VIEWPORT_COLOR,
+    OLE2FRAME_COLOR,
     Properties,
     Filling,
 )
@@ -198,6 +199,8 @@ class Frontend:
                 # also ProxyEntity()
                 if entity.proxy_graphic and self.proxy_graphics > 0:
                     self.draw_proxy_graphic(entity.proxy_graphic, entity.doc)
+                elif entity.dxftype() == 'OLE2FRAME':
+                    self.draw_ole_frame_entity(entity)
                 else:
                     # Skip unsupported DXF entities - just tag storage to
                     # preserve data
@@ -493,8 +496,29 @@ class Frontend:
         cx, cy = dxf.center.x, dxf.center.y
         dx = dxf.width / 2
         dy = dxf.height / 2
-        minx, miny = cx - dx, cy - dy
-        maxx, maxy = cx + dx, cy + dy
+        bottom_left = cx - dx, cy - dy
+        top_right = cx + dx, cy + dy
+        self._draw_rect(bottom_left, top_right, VIEWPORT_COLOR)
+
+    def draw_ole_frame_entity(self, entity: DXFTagStorage) -> None:
+        assert entity.dxftype() == "OLE2FRAME"
+        # group codes from http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-77747CE6-82C6-4452-97ED-4CEEB38BE960
+        tags = entity.xtags.get_subclass('AcDbOle2Frame')
+        corner1 = Vec3(tags.get_first_value(10, default=None))
+        corner2 = Vec3(tags.get_first_value(11, default=None))
+        if corner1 is not None and corner2 is not None:
+            bottom_left = min(corner1.x, corner2.x), min(corner1.y, corner2.y)
+            top_right = max(corner1.x, corner2.x), max(corner1.y, corner2.y)
+            self._draw_rect(bottom_left, top_right, OLE2FRAME_COLOR)
+
+    def _draw_rect(
+            self,
+            bottom_left: Tuple[float, float],
+            top_right: Tuple[float, float],
+            color: str
+    ) -> None:
+        minx, miny = bottom_left
+        maxx, maxy = top_right
         points = [
             (minx, miny),
             (maxx, miny),
@@ -503,8 +527,8 @@ class Frontend:
             (minx, miny),
         ]
         props = Properties()
-        props.color = VIEWPORT_COLOR
-        # Set default SOLID filling for VIEWPORT
+        props.color = color
+        # default SOLID filling
         props.filling = Filling()
         self.out.draw_filled_polygon([Vec3(x, y, 0) for x, y in points], props)
 
