@@ -426,6 +426,7 @@ class Frontend:
 
         line_color = properties.color
         # 1. draw filling
+        pattern_name = polygon.dxf.pattern_name.upper()
         if polygon.dxf.solid_fill:
             properties.filling.type = Filling.SOLID
             if (
@@ -437,10 +438,9 @@ class Frontend:
             else:
                 properties.color = resolve_fill_color()
             self.draw_hatch_entity(entity, properties, loops=loops)
-        else:
-            # TODO: pattern filling
-            # TODO: pattern filling with bgcolor
-            pass
+        elif pattern_name and pattern_name != "SOLID":
+            # line color is also pattern color: properties.color
+            self.draw_hatch_entity(entity, properties, loops=loops)
 
         # 2. draw boundary paths
         properties.color = line_color
