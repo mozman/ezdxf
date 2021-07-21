@@ -133,9 +133,11 @@ def load_dxf_structure(
     return sections
 
 
-def load_dxf_entities(entities: Iterable[Tags]) -> Iterable["DXFEntity"]:
+def load_dxf_entities(
+    entities: Iterable[Tags], doc: "Drawing" = None
+) -> Iterable["DXFEntity"]:
     for entity in entities:
-        yield factory.load(ExtendedTags(entity))
+        yield factory.load(ExtendedTags(entity), doc)
 
 
 def load_and_bind_dxf_content(sections: Dict, doc: "Drawing") -> None:
@@ -143,7 +145,7 @@ def load_and_bind_dxf_content(sections: Dict, doc: "Drawing") -> None:
     for name in ["TABLES", "CLASSES", "ENTITIES", "BLOCKS", "OBJECTS"]:
         if name in sections:
             section = sections[name]
-            for index, entity in enumerate(load_dxf_entities(section)):
+            for index, entity in enumerate(load_dxf_entities(section, doc)):
                 # Replace Tags() by DXFEntity() objects
                 section[index] = entity
                 # Bind entities to the DXF document:

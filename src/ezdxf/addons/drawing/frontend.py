@@ -117,6 +117,7 @@ class Frontend:
             "VIEWPORT": self.draw_viewport_entity,
             "WIPEOUT": self.draw_wipeout_entity,
             "MTEXT": self.draw_mtext_entity,
+            "ACAD_PROXY_ENTITY": self.draw_proxy_entity,
         }
         for dxftype in ("LINE", "XLINE", "RAY"):
             dispatch_table[dxftype] = self.draw_line_entity
@@ -206,14 +207,12 @@ class Frontend:
                     self.skip_entity(entity, "invisible")
 
     def handle_dxf_tag_storage(self, entity: DXFTagStorage) -> None:
-        # also ProxyEntity()
         if entity.proxy_graphic and self.proxy_graphics > 0:
             self.draw_proxy_graphic(entity.proxy_graphic, entity.doc)
         elif entity.dxftype() == "OLE2FRAME":
             self.draw_ole_frame_entity(entity)
         else:
-            # Skip unsupported DXF entities - just tag storage to
-            # preserve data
+            # Skip unsupported DXF entities
             self.skip_entity(entity, "Cannot parse DXF entity")
 
     def draw_entity(self, entity: DXFGraphic, properties: Properties) -> None:
@@ -633,6 +632,12 @@ class Frontend:
         if data:
             gfx = ProxyGraphic(data, doc)
             self.draw_entities(gfx.virtual_entities())
+
+    def draw_proxy_entity(
+        self, entity: DXFGraphic, properties: Properties
+    ) -> None:
+        assert entity.dxftype() == "ACAD_PROXY_ENTITY"
+        self.draw_proxy_graphic(entity.proxy_graphic, entity.doc)
 
 
 def is_spatial_text(extrusion: Vec3) -> bool:

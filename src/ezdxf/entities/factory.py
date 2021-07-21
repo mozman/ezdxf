@@ -53,8 +53,8 @@ def create_db_entry(dxftype, dxfattribs: dict, doc: 'Drawing') -> 'DXFEntity':
     return entity
 
 
-def load(tags: 'ExtendedTags') -> 'DXFEntity':
-    entity = cls(tags.dxftype()).load(tags)
+def load(tags: 'ExtendedTags', doc: 'Drawing' = None) -> 'DXFEntity':
+    entity = cls(tags.dxftype()).load(tags, doc)
     return entity.cast() if hasattr(entity, 'cast') else entity
 
 
