@@ -3,7 +3,11 @@
 import pytest
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.tagwriter import TagCollector
-from ezdxf.proxygraphic import load_proxy_graphic, export_proxy_graphic, ProxyGraphic
+from ezdxf.proxygraphic import (
+    load_proxy_graphic,
+    export_proxy_graphic,
+    ProxyGraphic,
+)
 
 
 def test_load_proxy_graphic():
@@ -15,12 +19,12 @@ def test_export_proxy_graphic():
     tagwriter = TagCollector()
     binary_data = load_proxy_graphic(Tags.from_text(DATA))
     export_proxy_graphic(binary_data, tagwriter)
-    s = ''.join(tag.dxfstr() for tag in tagwriter.tags)
+    s = "".join(tag.dxfstr() for tag in tagwriter.tags)
     assert s == DATA
 
 
 class TestProxyGraphic:
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def data(self) -> bytes:
         return load_proxy_graphic(Tags.from_text(DATA))
 
@@ -32,7 +36,7 @@ class TestProxyGraphic:
         indices = list(parser.info())
         assert len(indices) == 13
         index, size, type_ = indices[0]
-        assert (index, size, type_) == (8, 84, 'POLYLINE_WITH_NORMALS')
+        assert (index, size, type_) == (8, 84, "POLYLINE_WITH_NORMALS")
 
     def test_multi_leader_entities(self):
         # ATTRIBUTE_TRUE_COLOR; size: 12
@@ -64,35 +68,35 @@ class TestProxyGraphic:
         entities = list(parser.virtual_entities())
         assert len(entities) == 4
         text = entities[0]
-        assert text.dxftype() == 'TEXT'
-        assert text.dxf.text == 'W410'
-        assert text.dxf.layer == '0'  # no DXF document available
+        assert text.dxftype() == "TEXT"
+        assert text.dxf.text == "W410"
+        assert text.dxf.layer == "0"  # no DXF document available
         assert text.dxf.color == 256  # by layer
-        assert text.dxf.linetype == 'BYLAYER'  # no DXF document available
+        assert text.dxf.linetype == "BYLAYER"  # no DXF document available
         assert text.dxf.true_color is None
 
         hatch = entities[1]  # POLYGON
-        assert hatch.dxftype() == 'HATCH'
+        assert hatch.dxftype() == "HATCH"
         assert len(hatch.paths[0].vertices) == 3
-        assert hatch.dxf.layer == '0'  # no DXF document available
+        assert hatch.dxf.layer == "0"  # no DXF document available
         assert hatch.dxf.color == 256  # by layer
-        assert hatch.dxf.linetype == 'BYLAYER'  # no DXF document available
+        assert hatch.dxf.linetype == "BYLAYER"  # no DXF document available
 
         polyline = entities[2]
         assert polyline.is_closed is False
-        assert polyline.dxftype() == 'POLYLINE'
+        assert polyline.dxftype() == "POLYLINE"
         assert len(polyline.vertices) == 2
-        assert polyline.dxf.layer == '0'  # no DXF document available
+        assert polyline.dxf.layer == "0"  # no DXF document available
         assert polyline.dxf.color == 256  # by layer
-        assert polyline.dxf.linetype == 'BYLAYER'  # no DXF document available
+        assert polyline.dxf.linetype == "BYLAYER"  # no DXF document available
 
         polyline = entities[3]
         assert polyline.is_closed is False
-        assert polyline.dxftype() == 'POLYLINE'
+        assert polyline.dxftype() == "POLYLINE"
         assert len(polyline.vertices) == 2
-        assert polyline.dxf.layer == '0'  # no DXF document available
+        assert polyline.dxf.layer == "0"  # no DXF document available
         assert polyline.dxf.color == 256  # by layer
-        assert polyline.dxf.linetype == 'BYLAYER'  # no DXF document available
+        assert polyline.dxf.linetype == "BYLAYER"  # no DXF document available
 
     def test_image_entities(self):
         # UNICODE_TEXT2; size: 204
@@ -105,19 +109,19 @@ class TestProxyGraphic:
         assert len(indices) == 2
 
         text = entities[0]
-        assert text.dxftype() == 'TEXT'
-        assert text.dxf.text == 'AcDbRasterImage'
-        assert text.dxf.layer == '0'  # no DXF document available
+        assert text.dxftype() == "TEXT"
+        assert text.dxf.text == "AcDbRasterImage"
+        assert text.dxf.layer == "0"  # no DXF document available
         assert text.dxf.color == 256  # by layer
-        assert text.dxf.linetype == 'BYLAYER'  # no DXF document available
+        assert text.dxf.linetype == "BYLAYER"  # no DXF document available
 
         polyline = entities[1]
         assert polyline.is_closed is False
-        assert polyline.dxftype() == 'POLYLINE'
+        assert polyline.dxftype() == "POLYLINE"
         assert len(polyline.vertices) == 5
-        assert text.dxf.layer == '0'  # no DXF document available
+        assert text.dxf.layer == "0"  # no DXF document available
         assert text.dxf.color == 256  # by layer
-        assert text.dxf.linetype == 'BYLAYER'  # no DXF document available
+        assert text.dxf.linetype == "BYLAYER"  # no DXF document available
 
     def test_circular_arc_entities(self):
         # example "aec_doors_walls.dxf" of issue #497; ACAD_PROXY_ENTITY <59D>
@@ -137,10 +141,10 @@ class TestProxyGraphic:
         assert len(entities) == 6
         # 1. ARC - clockwise oriented
         arc1 = entities[2]
-        assert (
-            arc1.dxf.extrusion.isclose((0, 0, -1)),
-            "expected inverted extrusion vector"
-        )
+        assert arc1.dxf.extrusion.isclose(
+            (0, 0, -1)
+        ), "expected inverted extrusion vector"
+
         assert arc1.dxf.center.isclose(
             (-9333.398890018769, 10110.240054080468, 0.0)  # OCS!
         )
@@ -150,10 +154,10 @@ class TestProxyGraphic:
 
         # 2. ARC - regular counter clockwise oriented arc
         arc2 = entities[3]
-        assert (
-            arc2.dxf.extrusion.isclose((0, 0, 1)),
-            "expected WCS aligned extrusion vector"
-        )
+        assert arc2.dxf.extrusion.isclose(
+            (0, 0, 1)
+        ), "expected WCS aligned extrusion vector"
+
         assert arc2.dxf.center.isclose(
             (9333.41034197779, 11810.240054041897, 0.0)  # OCS == WCS
         )
@@ -224,5 +228,5 @@ C7400000000000000000D3771F91B43AC2402C3F17BA1E2AC740000000000000000064FF1586B43A
 86B43AC2409C4117BA1E11C740000000000000000069955F7CB43AC240C14317BA1EFBC6400000000000000000FE6B5F7CB4E3C340634476FE1DFBC6400000000000000000F9D51586B4E3C3403E4276FE1D11C7400000000000000000
 """
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])
