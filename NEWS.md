@@ -6,6 +6,9 @@ Version 0.16.6b0 - dev
 ----------------------
 
 - NEW: `MPOLYGON` support for the `drawing`add-on
+- BETA: support for `ACAD_PROXY_ENTITY`  
+- BUGFIX: add missing "doc" argument to DXF loaders, DXF version was not 
+  available at loading stage 
 
 Version 0.16.5 - 2021-07-18
 ---------------------------
