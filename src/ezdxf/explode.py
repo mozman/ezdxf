@@ -197,7 +197,10 @@ def virtual_block_reference_entities(
             try:
                 copy = entity.copy()
             except DXFTypeError:
-                skipped_entity_callback(entity, "non copyable")  # type: ignore
+                if hasattr(entity, "virtual_entities"):
+                    yield from entity.virtual_entities()
+                else:
+                    skipped_entity_callback(entity, "non copyable")  # type: ignore
             else:
                 if hasattr(copy, "remove_association"):
                     copy.remove_association()
