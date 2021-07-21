@@ -1,6 +1,6 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Iterable
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tags import Tags
 from .dxfentity import DXFTagStorage, SubclassProcessor
@@ -63,6 +63,8 @@ class ProxyEntity(DXFGraphic):
 
     def load_proxy_graphic(self, dxfversion: str) -> None:
         if self.acdb_proxy_entity is not None:
+            if not dxfversion:
+                dxfversion = _detect_dxf_version(self.acdb_proxy_entity)
             length_code = 92 if dxfversion < const.DXF2013 else 160
             self.proxy_graphic = load_proxy_data(
                 self.acdb_proxy_entity, length_code, 310
@@ -84,6 +86,12 @@ class ProxyEntity(DXFGraphic):
             tagwriter.write_tags(self.acdb_proxy_entity)
         # XDATA export is done by the parent class
 
+    def virtual_entities(self) -> Iterable[DXFGraphic]:
+        """Yields proxy graphic as "virtual" entities. """
+        from ezdxf.proxygraphic import ProxyGraphic
+        if self.proxy_graphic:
+            return ProxyGraphic(self.proxy_graphic, self.doc).virtual_entities()
+
 
 def load_proxy_data(
     tags: Tags, length_code: int, data_code: int = 310
@@ -93,9 +101,16 @@ def load_proxy_data(
     except const.DXFValueError:
         return None
     binary_data = []
-    for code, value in tags[index + 1 :]:
+    for code, value in tags[index + 1:]:
         if code == data_code:
             binary_data.append(value)
         else:
             break  # at first tag with group code != data_code
     return b"".join(binary_data)
+
+
+def _detect_dxf_version(tags: Tags) -> str:
+    for tag in tags:
+        if 160 <= tag.code < 163:
+            return const.DXF2013
+    return const.DXF2000
