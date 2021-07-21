@@ -248,7 +248,7 @@ class ProxyGraphic:
     def circular_arc(self, data: bytes):
         bs = ByteStream(data)
         attribs = self._build_dxf_attribs()
-        attribs['center'] = Vec3(bs.read_vertex())  # in WCS
+        center = Vec3(bs.read_vertex())  # in WCS
         attribs['radius'] = bs.read_float()
         normal = Vec3(bs.read_vertex())  # UCS z-axis
         start_vec = Vec3(bs.read_vertex())  # UCS x-axis
@@ -270,10 +270,11 @@ class ProxyGraphic:
             # setup OCS for ARC entity
             attribs["extrusion"] = normal
             # convert WCS center to OCS center
-            attribs["center"] = ocs.from_wcs(attribs["center"])
+            center = ocs.from_wcs(center)
         else:
             start_angle = start_vec.angle_deg
             end_angle = start_angle + math.degrees(sweep_angle)
+        attribs['center'] = center
         attribs['start_angle'] = start_angle
         attribs['end_angle'] = end_angle
         return self._factory('ARC', dxfattribs=attribs)
