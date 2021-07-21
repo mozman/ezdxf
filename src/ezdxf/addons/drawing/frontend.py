@@ -82,6 +82,8 @@ class Frontend:
         # 0 = ignore proxy graphics
         # 1 = use proxy graphics if no rendering support by ezdxf exist
         # 2 = prefer proxy graphics over ezdxf rendering
+        # This can not prevent drawing proxy graphic inside of blocks,
+        # because this is outside of the domain of the drawing add-on!
         self.proxy_graphics = proxy_graphics
 
         # Transfer render context info to backend:
@@ -131,7 +133,7 @@ class Frontend:
 
         # These types have a virtual_entities() method, which returns
         # the content of the associated block or anonymous block
-        for dxftype in [
+        composite_types = [
             "INSERT",
             "DIMENSION",
             "ARC_DIMENSION",
@@ -139,8 +141,12 @@ class Frontend:
             "LEADER",
             "MLINE",
             "ACAD_TABLE",
-            "ACAD_PROXY_ENTITY"
-        ]:
+        ]
+        if self.proxy_graphics != IGNORE_PROXY_GRAPHICS:
+            composite_types.extend([
+                "ACAD_PROXY_ENTITY",
+            ])
+        for dxftype in composite_types:
             dispatch_table[dxftype] = self.draw_composite_entity
 
         return dispatch_table
@@ -207,7 +213,11 @@ class Frontend:
                     self.skip_entity(entity, "invisible")
 
     def handle_dxf_tag_storage(self, entity: DXFTagStorage) -> None:
-        if entity.proxy_graphic and self.proxy_graphics > 0:
+        if (
+            entity.proxy_graphic
+            and self.proxy_graphics > 0
+            and self.proxy_graphics != IGNORE_PROXY_GRAPHICS
+        ):
             self.draw_proxy_graphic(entity.proxy_graphic, entity.doc)
         elif entity.dxftype() == "OLE2FRAME":
             self.draw_ole_frame_entity(entity)
