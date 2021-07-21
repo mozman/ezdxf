@@ -1,3 +1,5 @@
+# Copyright (c) 2021 Manfred Moitzi
+# License: MIT License
 import pytest
 
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
@@ -23,6 +25,10 @@ def test_dxf_export(entity):
     entity.export_dxf(collector)
     result = collector.tags
     assert result == control_tags
+
+
+def test_virtual_entities(entity):
+    assert len(list(entity.virtual_entities())) == 0
 
 
 THE_KNOWN_UNKNOWN = r"""0
@@ -101,4 +107,3 @@ Embedded Object
 
 if __name__ == '__main__':
     pytest.main([__file__])
-

@@ -91,6 +91,7 @@ class ProxyEntity(DXFGraphic):
         from ezdxf.proxygraphic import ProxyGraphic
         if self.proxy_graphic:
             return ProxyGraphic(self.proxy_graphic, self.doc).virtual_entities()
+        return []
 
 
 def load_proxy_data(

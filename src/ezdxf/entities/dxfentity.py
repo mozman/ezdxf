@@ -36,7 +36,7 @@ from .xdict import ExtensionDict
 logger = logging.getLogger('ezdxf')
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Auditor, TagWriter, Drawing, DXFAttr
+    from ezdxf.eztypes import Auditor, TagWriter, Drawing, DXFAttr, DXFGraphic
 
 __all__ = ['DXFEntity', 'DXFTagStorage', 'base_class', 'SubclassProcessor']
 
@@ -876,3 +876,11 @@ class DXFTagStorage(DXFEntity):
 
         del self.xtags
         super().destroy()
+
+    def virtual_entities(self) -> Iterable["DXFGraphic"]:
+        """Yields proxy graphic as "virtual" entities. """
+        from ezdxf.proxygraphic import ProxyGraphic
+        if self.proxy_graphic:
+            return ProxyGraphic(self.proxy_graphic, self.doc).virtual_entities()
+        return []
+

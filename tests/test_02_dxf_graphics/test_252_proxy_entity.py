@@ -40,6 +40,13 @@ def test_virtual_entities_support(proxy):
     ]
 
 
+def test_virtual_entities_if_no_proxy_graphic_exists(proxy):
+    data = proxy.proxy_graphic
+    proxy.proxy_graphic = None
+    assert len(list(proxy.virtual_entities())) == 0
+    proxy.proxy_graphic = data
+
+
 def test_proxy_entity_is_not_transformable(proxy):
     # Transformation is only for the virtual entities possible!
     with pytest.raises(NotImplementedError):
