@@ -13,6 +13,7 @@ from ezdxf.addons.drawing.properties import (
 )
 from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.addons.drawing.type_hints import FilterFunc
+from ezdxf.addons.drawing.gfxproxy import DXFGraphicProxy
 from ezdxf.entities import (
     DXFGraphic,
     Insert,
@@ -202,28 +203,18 @@ class Frontend:
         if filter_func is not None:
             entities = filter(filter_func, entities)
         for entity in entities:
-            if isinstance(entity, DXFTagStorage):
-                self.handle_dxf_tag_storage(entity)
-            else:
-                properties = self.ctx.resolve_all(entity)
-                self.override_properties(entity, properties)
-                if properties.is_visible:
-                    self.draw_entity(entity, properties)
+            if not isinstance(entity, DXFGraphic):
+                if self.proxy_graphics != USE_PROXY_GRAPHICS:
+                    entity = DXFGraphicProxy(entity)
                 else:
-                    self.skip_entity(entity, "invisible")
-
-    def handle_dxf_tag_storage(self, entity: DXFTagStorage) -> None:
-        if (
-            entity.proxy_graphic
-            and self.proxy_graphics > 0
-            and self.proxy_graphics != IGNORE_PROXY_GRAPHICS
-        ):
-            self.draw_proxy_graphic(entity.proxy_graphic, entity.doc)
-        elif entity.dxftype() == "OLE2FRAME":
-            self.draw_ole_frame_entity(entity)
-        else:
-            # Skip unsupported DXF entities
-            self.skip_entity(entity, "Cannot parse DXF entity")
+                    self.skip_entity(entity, "Cannot parse DXF entity")
+                    continue
+            properties = self.ctx.resolve_all(entity)
+            self.override_properties(entity, properties)
+            if properties.is_visible:
+                self.draw_entity(entity, properties)
+            else:
+                self.skip_entity(entity, "invisible")
 
     def draw_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         """Draw a single DXF entity.
