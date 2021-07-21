@@ -27,6 +27,7 @@ from ezdxf.entities import (
     AttDef,
     Solid,
     Face3d,
+    OLE2Frame,
 )
 from ezdxf.entities.polygon import BasePolygon
 from ezdxf.entities.dxfentity import DXFTagStorage, DXFEntity
@@ -120,6 +121,7 @@ class Frontend:
             "VIEWPORT": self.draw_viewport_entity,
             "WIPEOUT": self.draw_wipeout_entity,
             "MTEXT": self.draw_mtext_entity,
+            "OLE2FRAME": self.draw_ole2frame_entity,
         }
         for dxftype in ("LINE", "XLINE", "RAY"):
             dispatch_table[dxftype] = self.draw_line_entity
@@ -144,9 +146,11 @@ class Frontend:
             "ACAD_TABLE",
         ]
         if self.proxy_graphics != IGNORE_PROXY_GRAPHICS:
-            composite_types.extend([
-                "ACAD_PROXY_ENTITY",
-            ])
+            composite_types.extend(
+                [
+                    "ACAD_PROXY_ENTITY",
+                ]
+            )
         for dxftype in composite_types:
             dispatch_table[dxftype] = self.draw_composite_entity
 
@@ -204,7 +208,7 @@ class Frontend:
             entities = filter(filter_func, entities)
         for entity in entities:
             if not isinstance(entity, DXFGraphic):
-                if self.proxy_graphics != USE_PROXY_GRAPHICS:
+                if self.proxy_graphics != IGNORE_PROXY_GRAPHICS:
                     entity = DXFGraphicProxy(entity)
                 else:
                     self.skip_entity(entity, "Cannot parse DXF entity")
@@ -502,18 +506,13 @@ class Frontend:
         top_right = cx + dx, cy + dy
         self._draw_rect(bottom_left, top_right, VIEWPORT_COLOR)
 
-    def draw_ole_frame_entity(self, entity: DXFTagStorage) -> None:
-        assert entity.dxftype() == "OLE2FRAME"
-        # group codes from http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-77747CE6-82C6-4452-97ED-4CEEB38BE960
-        tags = entity.xtags.get_subclass("AcDbOle2Frame")
-        corner1 = tags.get_first_value(10, default=None)
-        corner2 = tags.get_first_value(11, default=None)
-        if corner1 is not None and corner2 is not None:
-            corner1 = Vec3(corner1)
-            corner2 = Vec3(corner2)
-            bottom_left = min(corner1.x, corner2.x), min(corner1.y, corner2.y)
-            top_right = max(corner1.x, corner2.x), max(corner1.y, corner2.y)
-            self._draw_rect(bottom_left, top_right, OLE2FRAME_COLOR)
+    def draw_ole2frame_entity(
+        self, entity: OLE2Frame, properties: Properties
+    ) -> None:
+        assert isinstance(entity, OLE2Frame)
+        bbox = entity.bbox()
+        if not bbox.is_empty:
+            self._draw_rect(bbox.extmin.vec2, bbox.extmax.vec2, OLE2FRAME_COLOR)
 
     def _draw_rect(
         self,

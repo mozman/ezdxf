@@ -3,7 +3,7 @@
 from typing import TYPE_CHECKING, Optional, Iterable
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tags import Tags
-from .dxfentity import DXFTagStorage, SubclassProcessor
+from .dxfentity import SubclassProcessor
 from .dxfgfx import DXFGraphic
 from . import factory
 
