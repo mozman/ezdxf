@@ -45,7 +45,9 @@ __all__ = [
     "MODEL_SPACE_BG_COLOR",
     "PAPER_SPACE_BG_COLOR",
     "VIEWPORT_COLOR",
+    "OLE2FRAME_COLOR",
     "set_color_alpha",
+    "Filling",
 ]
 
 table_key = layer_key

@@ -1,6 +1,6 @@
 # Copyright (c) 2019-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING, Iterator
 from ezdxf.entities import factory
 from ezdxf.lldxf.const import (
     DXFValueError,
@@ -58,7 +58,7 @@ class _AbstractLayout(CreatorInterface):
         """Returns count of entities owned by the layout."""
         return len(self.entity_space)
 
-    def __iter__(self) -> Iterable["DXFGraphic"]:
+    def __iter__(self) -> Iterator["DXFGraphic"]:
         """Returns iterable of all drawing entities in this layout."""
         return iter(self.entity_space)
 

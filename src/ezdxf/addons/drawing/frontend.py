@@ -15,6 +15,7 @@ from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.addons.drawing.type_hints import FilterFunc
 from ezdxf.addons.drawing.gfxproxy import DXFGraphicProxy
 from ezdxf.entities import (
+    DXFEntity,
     DXFGraphic,
     Insert,
     MText,
@@ -30,9 +31,8 @@ from ezdxf.entities import (
     OLE2Frame,
 )
 from ezdxf.entities.polygon import BasePolygon
-from ezdxf.entities.dxfentity import DXFTagStorage, DXFEntity
 from ezdxf.layouts import Layout
-from ezdxf.math import Vec3, Z_AXIS, OCS, NULLVEC
+from ezdxf.math import Vec3, OCS, NULLVEC
 from ezdxf.path import (
     Path,
     make_path,
@@ -46,13 +46,16 @@ from ezdxf import reorder
 from ezdxf.proxygraphic import ProxyGraphic
 
 __all__ = ["Frontend"]
-NEG_Z_AXIS = -Z_AXIS
+
 INFINITE_LINE_LENGTH = 25
 DEFAULT_PDSIZE = 1
 
 IGNORE_PROXY_GRAPHICS = 0
 USE_PROXY_GRAPHICS = 1
 PREFER_PROXY_GRAPHICS = 2
+
+# typedef
+TDispatchTable = Dict[str, Callable[[DXFGraphic, Properties], None]]
 
 
 class Frontend:
@@ -112,8 +115,8 @@ class Frontend:
 
     def _build_dispatch_table(
         self,
-    ) -> Dict[str, Callable[[DXFGraphic, Properties], None]]:
-        dispatch_table = {
+    ) -> TDispatchTable:
+        dispatch_table: TDispatchTable = {
             "POINT": self.draw_point_entity,
             "HATCH": self.draw_hatch_entity,
             "MPOLYGON": self.draw_mpolygon_entity,
@@ -134,8 +137,8 @@ class Frontend:
         for dxftype in ("POLYLINE", "LWPOLYLINE"):
             dispatch_table[dxftype] = self.draw_polyline_entity
 
-        # These types have a virtual_entities() method, which returns
-        # the content of the associated block or anonymous block
+        # Composite types have a virtual_entities() method, which returns
+        # the entity content as virtual DXF primitives (LINE, ARC, ...).
         composite_types = [
             "INSERT",
             "DIMENSION",
@@ -292,7 +295,10 @@ class Frontend:
     ) -> None:
         self.skip_entity(entity, "3D text not supported")
 
-    def draw_mtext_entity(self, mtext: "MText", properties: Properties) -> None:
+    def draw_mtext_entity(
+        self, entity: DXFGraphic, properties: Properties
+    ) -> None:
+        mtext = cast(MText, entity)
         if is_spatial_text(Vec3(mtext.dxf.extrusion)):
             self.skip_entity(mtext, "3D MTEXT not supported")
             return
@@ -507,10 +513,10 @@ class Frontend:
         self._draw_rect(bottom_left, top_right, VIEWPORT_COLOR)
 
     def draw_ole2frame_entity(
-        self, entity: OLE2Frame, properties: Properties
+        self, entity: DXFGraphic, properties: Properties
     ) -> None:
-        assert isinstance(entity, OLE2Frame)
-        bbox = entity.bbox()
+        ole2frame = cast(OLE2Frame, entity)
+        bbox = ole2frame.bbox()
         if not bbox.is_empty:
             self._draw_rect(bbox.extmin.vec2, bbox.extmax.vec2, OLE2FRAME_COLOR)
 
