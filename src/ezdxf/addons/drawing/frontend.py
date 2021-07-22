@@ -29,6 +29,7 @@ from ezdxf.entities import (
     Solid,
     Face3d,
     OLE2Frame,
+    Point,
 )
 from ezdxf.entities.polygon import BasePolygon
 from ezdxf.layouts import Layout
@@ -304,6 +305,7 @@ class Frontend:
             return
         if mtext.has_columns:
             columns = mtext.columns
+            assert columns is not None
             if len(columns.linked_columns):
                 has_linked_content = any(c.text for c in columns.linked_columns)
                 if has_linked_content:
@@ -313,7 +315,7 @@ class Frontend:
                     # This is not granted and AutoCAD/BricsCAD do the column
                     # content distribution always by themself!
                     self.draw_mtext_column(mtext, properties)
-                    for column in mtext.columns.linked_columns:
+                    for column in columns.linked_columns:
                         self.draw_mtext_column(column, properties)
                     return
             self.distribute_mtext_columns_content(mtext, properties)
@@ -347,8 +349,11 @@ class Frontend:
     def draw_point_entity(
         self, entity: DXFGraphic, properties: Properties
     ) -> None:
-        point = cast("Point", entity)
-        pdmode = self.out.pdmode
+        point = cast(Point, entity)
+        if self.out.pdmode is None:
+            pdmode = 0
+        else:
+            pdmode = int(self.out.pdmode)
 
         # Defpoints are regular POINT entities located at the "defpoints" layer:
         if properties.layer.lower() == "defpoints":
@@ -357,7 +362,11 @@ class Frontend:
             else:  # Render defpoints as dimensionless points:
                 pdmode = 0
 
-        pdsize = self.out.pdsize
+        if self.out.pdsize is None:
+            pdsize = 0
+        else:
+            pdsize = int(self.out.pdsize)
+
         if pdsize <= 0:  # relative points size is not supported
             pdsize = DEFAULT_PDSIZE
 
@@ -407,8 +416,8 @@ class Frontend:
         # default (0, 0, 0)
         elevation = entity.dxf.elevation.z
 
-        external_paths = []
-        holes = []
+        external_paths: List[Path] = []
+        holes: List[Path] = []
         if loops:  # only MPOLYGON
             paths = loops
         else:  # only HATCH
@@ -417,7 +426,7 @@ class Frontend:
         if self.nested_polygon_detection:
             if loops is None:  # only HATCH
                 loops = closed_loops(paths, ocs, elevation)
-            polygons = self.nested_polygon_detection(loops)
+            polygons = self.nested_polygon_detection(loops)  # type: ignore
             external_paths, holes = winding_deconstruction(polygons)
         else:  # only HATCH
             for p in paths:
@@ -446,6 +455,7 @@ class Frontend:
         loops = closed_loops(polygon.paths, ocs, elevation, offset)
 
         line_color: str = properties.color
+        assert properties.filling is not None
         pattern_name: str = properties.filling.name  # normalized pattern name
         # 1. draw filling
         if polygon.dxf.solid_fill:
@@ -455,7 +465,7 @@ class Frontend:
                 and polygon.gradient.number_of_colors > 0
             ):
                 # true color filling is stored as gradient
-                properties.color = properties.filling.gradient_color1
+                properties.color = str(properties.filling.gradient_color1)
             else:
                 properties.color = resolve_fill_color()
             self.draw_hatch_entity(entity, properties, loops=loops)
@@ -518,7 +528,9 @@ class Frontend:
         ole2frame = cast(OLE2Frame, entity)
         bbox = ole2frame.bbox()
         if not bbox.is_empty:
-            self._draw_rect(bbox.extmin.vec2, bbox.extmax.vec2, OLE2FRAME_COLOR)
+            self._draw_rect(
+                bbox.extmin.vec2, bbox.extmax.vec2, OLE2FRAME_COLOR  # type: ignore
+            )
 
     def _draw_rect(
         self,
@@ -630,7 +642,9 @@ class Frontend:
 
         elif hasattr(entity, "virtual_entities"):
             # draw_entities() includes the visibility check:
-            self.draw_entities(set_opaque(entity.virtual_entities()))
+            self.draw_entities(
+                set_opaque(entity.virtual_entities())  # type: ignore
+            )
         else:
             raise TypeError(dxftype)
 
