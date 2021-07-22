@@ -19,13 +19,13 @@ if TYPE_CHECKING:
 # show_hatch: frontend filters all HATCH entities if option is 0
 DEFAULT_PARAMS = {
     # Updated by Frontend() class, if not set by user:
-    "pdsize": None,
+    "pdsize": 0,
     # 0   5% of draw area height
     # <0  Specifies a percentage of the viewport size
     # >0  Specifies an absolute size
 
     # See POINT docs:
-    "pdmode": None,
+    "pdmode": 0,
 
     # Do not show defpoints by default.
     # Filtering is handled by the Frontend().

@@ -350,10 +350,7 @@ class Frontend:
         self, entity: DXFGraphic, properties: Properties
     ) -> None:
         point = cast(Point, entity)
-        if self.out.pdmode is None:
-            pdmode = 0
-        else:
-            pdmode = int(self.out.pdmode)
+        pdmode = cast(int, self.out.pdmode)
 
         # Defpoints are regular POINT entities located at the "defpoints" layer:
         if properties.layer.lower() == "defpoints":
@@ -362,11 +359,7 @@ class Frontend:
             else:  # Render defpoints as dimensionless points:
                 pdmode = 0
 
-        if self.out.pdsize is None:
-            pdsize = 0
-        else:
-            pdsize = int(self.out.pdsize)
-
+        pdsize = cast(int, self.out.pdsize)
         if pdsize <= 0:  # relative points size is not supported
             pdsize = DEFAULT_PDSIZE
 
