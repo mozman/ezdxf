@@ -1,6 +1,15 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Optional, Iterable, Tuple, List, Dict, cast
+from typing import (
+    TYPE_CHECKING,
+    Optional,
+    Iterable,
+    Tuple,
+    List,
+    Dict,
+    cast,
+    Sequence,
+)
 import sys
 import struct
 import math
@@ -68,6 +77,70 @@ def export_proxy_graphic(
         hex_str = bytes_to_hexstr(data[index : index + CHUNK_SIZE])
         tagwriter.write_tag2(data_code, hex_str)
         index += CHUNK_SIZE
+
+
+def has_prim_traits(flags: int) -> bool:
+    return bool(flags & 0xFFFF)
+
+
+def prims_have_colors(flags: int) -> bool:
+    return bool(flags & 0x0001)
+
+
+def prims_have_layers(flags: int) -> bool:
+    return bool(flags & 0x0002)
+
+
+def prims_have_linetypes(flags: int) -> bool:
+    return bool(flags & 0x0004)
+
+
+def prims_have_markers(flags: int) -> bool:
+    return bool(flags & 0x0020)
+
+
+def prims_have_visibilities(flags: int) -> bool:
+    return bool(flags & 0x0040)
+
+
+def prims_have_normals(flags: int) -> bool:
+    return bool(flags & 0x0080)
+
+
+def prims_have_orientation(flags: int) -> bool:
+    return bool(flags & 0x0400)
+
+
+TRAIT_TESTER = {
+    "colors": (prims_have_colors, "RL"),
+    "layers": (prims_have_layers, "RL"),
+    "linetypes": (prims_have_linetypes, "RL"),
+    "markers": (prims_have_markers, "RL"),
+    "visibilities": (prims_have_visibilities, "RL"),
+    "normals": (prims_have_normals, "3RD"),
+}
+
+
+def read_prim_traits(
+    bs: ByteStream, types: Sequence[str], prim_flags: int, count: int
+) -> Dict:
+    def read_float_list():
+        return [bs.read_long() for _ in range(count)]
+
+    def read_vertices():
+        return [bs.read_vertex() for _ in range(count)]
+
+    data = dict()
+    for t in types:
+        test_trait, data_type = TRAIT_TESTER[t]
+        if test_trait(prim_flags):
+            if data_type == "3RD":
+                data[t] = read_vertices()
+            elif data_type == "RL":
+                data[t] = read_float_list()
+            else:
+                raise TypeError(data_type)
+    return data
 
 
 class ProxyGraphicTypes(IntEnum):
@@ -361,7 +434,7 @@ class ProxyGraphic:
             "Untested proxy graphic entity: LWPOLYLINE - Need examples!"
         )
         bs = BitStream(data)
-        flag = bs.read_bit_short()
+        flag: int = bs.read_bit_short()
         attribs = self._build_dxf_attribs()
         if flag & 4:
             attribs["const_width"] = bs.read_bit_double()
@@ -389,16 +462,18 @@ class ProxyGraphic:
             num_width = 0
         # ignore DXF R13/14 special vertex order
 
-        vertices = [bs.read_raw_double(2)]
+        vertices: List[Tuple[float, float]] = [bs.read_raw_double(2)]
         prev_point = vertices[-1]
         for _ in range(num_points - 1):
             x = bs.read_bit_double_default(default=prev_point[0])
             y = bs.read_bit_double_default(default=prev_point[1])
             prev_point = (x, y)
             vertices.append(prev_point)
-        bulges = [bs.read_bit_double() for _ in range(num_bulges)]
-        vertex_ids = [bs.read_bit_long() for _ in range(vertex_id_count)]
-        widths = [
+        bulges: List[float] = [bs.read_bit_double() for _ in range(num_bulges)]
+        vertex_ids: List[int] = [
+            bs.read_bit_long() for _ in range(vertex_id_count)
+        ]
+        widths: List[Tuple[float, float]] = [
             (bs.read_bit_double(), bs.read_bit_double())
             for _ in range(num_width)
         ]
@@ -406,7 +481,7 @@ class ProxyGraphic:
             bulges = list(repeat(0, num_points))
         if len(widths) == 0:
             widths = list(repeat((0, 0), num_points))
-        points = []
+        points: List[Sequence[float]] = []
         for v, w, b in zip(vertices, widths, bulges):
             points.append((v[0], v[1], w[0], w[1], b))
         lwpolyline = cast(
@@ -432,6 +507,9 @@ class ProxyGraphic:
         return polymesh
 
     def shell(self, data: bytes):
+        # Limitations of the PolyFacMesh entity:
+        # - all VERTEX entities have to reside on the same layer
+        # - does not support vertex normals
         logger.warning("Untested proxy graphic entity: SHELL - Need examples!")
         bs = ByteStream(data)
         attribs = self._build_dxf_attribs()
@@ -439,21 +517,55 @@ class ProxyGraphic:
         polyface = cast(
             "Polyface", self._factory("POLYLINE", dxfattribs=attribs)
         )
-        vertex_count = bs.read_long()
-        vertices = [Vec3(bs.read_vertex()) for _ in range(vertex_count)]
+        total_vertex_count = bs.read_long()
+        vertices = [Vec3(bs.read_vertex()) for _ in range(total_vertex_count)]
         face_entry_count = bs.read_long()
         faces = []
-        read: int = 0
-        while read < face_entry_count:
-            index_count = abs(bs.read_signed_long())
-            read += (1 + index_count)
-            face_indices = [bs.read_long() for _ in range(index_count)]
+        read_count: int = 0
+        total_face_count: int = 0
+        total_edge_count: int = 0
+        while read_count < face_entry_count:
+            edge_count = abs(bs.read_signed_long())
+            read_count += 1 + edge_count
+            face_indices = [bs.read_long() for _ in range(edge_count)]
             face = [vertices[index] for index in face_indices]
+            total_face_count += 1
+            total_edge_count += edge_count
             faces.append(face)
+
+        edge_prim_data = None
+        edge_flags = bs.read_long()
+        if has_prim_traits(edge_flags):
+            edge_prim_data = read_prim_traits(
+                bs,
+                ["colors", "layers", "linetypes", "markers", "visibilities"],
+                edge_flags,
+                total_edge_count
+            )
+        if edge_prim_data:
+            pass
+
+        face_prim_data = None
+        face_flags = bs.read_long()
+        if has_prim_traits(face_flags):
+            face_prim_data = read_prim_traits(
+                bs,
+                ["colors", "layers", "markers", "normals", "visibilities"],
+                face_flags,
+                total_face_count
+            )
+        if face_prim_data:
+            pass
+
+        # last data set - vertex normals are not supported by PolyFaceMesh
+        # vertex_normals = None
+        # vertex_flags = bs.read_long()
+        # if has_prim_traits(vertex_flags):
+        #     if prims_have_normals(vertex_flags):
+        #         vertex_normals = [bs.read_vertex() for _ in vertices]
 
         polyface.append_faces(faces)
         polyface.optimize()
-        # todo: SHELL - read face properties, but requires an example.
         return polyface
 
     def text(self, data: bytes):
