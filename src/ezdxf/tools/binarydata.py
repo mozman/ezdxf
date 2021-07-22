@@ -60,16 +60,16 @@ class ByteStream:
         self.index = self.align(self.index + struct.calcsize(fmt))
         return result
 
-    def read_float(self):
+    def read_float(self) -> float:
         return self.read_struct("<d")[0]
 
-    def read_long(self):
+    def read_long(self) -> int:
         return self.read_struct("<L")[0]
 
-    def read_signed_long(self):
+    def read_signed_long(self) -> int:
         return self.read_struct("<l")[0]
 
-    def read_vertex(self):
+    def read_vertex(self) -> Sequence[float]:
         return self.read_struct("<3d")
 
     def read_padded_string(self, encoding: str = "utf_8") -> str:
@@ -372,8 +372,14 @@ class BitStream:
     def read_bit_double_default(self, count: int) -> Sequence[float]:
         ...
 
+    @overload
     def read_bit_double_default(
-        self, count: int = 1, default=0.0
+        self, count: int, default: float
+    ) -> Sequence[float]:
+        ...
+
+    def read_bit_double_default(
+        self, count: int = 1, default: float = 0.0
     ) -> Union[float, Sequence[float]]:
         data = struct.pack("<d", default)
 
