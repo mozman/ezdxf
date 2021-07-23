@@ -5,7 +5,7 @@ import pytest
 
 import ezdxf
 from ezdxf.entities.dimension import ArcDimension
-from ezdxf.lldxf.const import DXF2013, DXF2010
+from ezdxf.lldxf.const import DXF2013, DXF2010, DXF2018
 from ezdxf.lldxf.tagwriter import TagCollector
 
 ezdxf.options.preserve_proxy_graphics()
@@ -25,26 +25,38 @@ def test_dimtype_is_8_for_R2018(arcdim):
     assert arcdim.dimtype == 8
 
 
-def test_export_arc_dimension_R2010(arcdim):
+# fmt: off
+def test_export_proxy_graphic_R2010(arcdim):
     tagwriter = TagCollector(dxfversion=DXF2010)
     arcdim.export_dxf(tagwriter)
-    assert (
-        92,
-        968,
-    ) in tagwriter.tags, (
+    assert (92, 968) in tagwriter.tags, (
         "Expected group code 92 for proxy graphic length tag. (< DXF R2013)"
     )
 
 
-def test_export_arc_dimension_R2013(arcdim):
+def test_export_proxy_graphic_R2013(arcdim):
     tagwriter = TagCollector(dxfversion=DXF2013)
     arcdim.export_dxf(tagwriter)
-    assert (
-        160,
-        968,
-    ) in tagwriter.tags, (
+    assert (160, 968) in tagwriter.tags, (
         "Expected group code 160 for proxy graphic length tag. (>= DXF R2013)"
     )
+
+
+def test_export_dimtype_R2013(arcdim):
+    tagwriter = TagCollector(dxfversion=DXF2013)
+    arcdim.export_dxf(tagwriter)
+    assert (70, 37) in tagwriter.tags, (
+        "Expected dimtype 32+5 for DXF version < R2018"
+    )
+
+
+def test_export_dimtype_R2018(arcdim):
+    tagwriter = TagCollector(dxfversion=DXF2018)
+    arcdim.export_dxf(tagwriter)
+    assert (70, 40) in tagwriter.tags, (
+        "Expected dimtype 32+8 for DXF version R2018+"
+    )
+# fmt: on
 
 
 ARC_DIM = """  0

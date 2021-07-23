@@ -642,7 +642,7 @@ class Dimension(DXFGraphic, OverrideMixin):
     @property
     def dimtype(self) -> int:
         """:attr:`dxf.dimtype` without binary flags (32, 62, 128)."""
-        # undocumented ARC_DIMENSION = 8
+        # undocumented ARC_DIMENSION = 8 (DXF R2018)
         return self.dxf.dimtype & 15
 
     # Special DIMENSION - Dimensional constraints
@@ -828,8 +828,16 @@ class ArcDimension(Dimension):
             )
         return dxf
 
+    def versioned_dimtype(self, dxfversion: str) -> int:
+        if dxfversion > const.DXF2013:
+            return (self.dxf.dimtype & 0xFFF0) | 8
+        else:
+            return (self.dxf.dimtype & 0xFFF0) | 5
+
     def export_entity(self, tagwriter: "TagWriter") -> None:
         """Export entity specific data as DXF tags."""
+        dimtype = self.dxf.dimtype
+        self.dxf.dimtype = self.versioned_dimtype(tagwriter.dxfversion)
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, "AcDbArcDimension")
         self.dxf.export_dxf_attribs(
@@ -846,6 +854,7 @@ class ArcDimension(Dimension):
                 "leader_point2",
             ],
         )
+        self.dxf.dimtype = dimtype
 
     def transform(self, m: "Matrix44") -> "Dimension":
         """Transform the ARC_DIMENSION entity by transformation matrix `m` inplace.
