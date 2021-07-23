@@ -510,6 +510,13 @@ class ProxyGraphic:
         # Limitations of the PolyFacMesh entity:
         # - all VERTEX entities have to reside on the same layer
         # - does not support vertex normals
+        def read_vertex_normals(vertex_flags: int) -> List[Vec3]:
+            if prims_have_normals(vertex_flags):
+                return [
+                    Vec3(bs.read_vertex()) for _ in range(total_vertex_count)
+                ]
+            return []
+
         logger.warning("Untested proxy graphic entity: SHELL - Need examples!")
         bs = ByteStream(data)
         attribs = self._build_dxf_attribs()
@@ -540,7 +547,7 @@ class ProxyGraphic:
                 bs,
                 ["colors", "layers", "linetypes", "markers", "visibilities"],
                 edge_flags,
-                total_edge_count
+                total_edge_count,
             )
         if edge_prim_data:
             pass
@@ -552,17 +559,15 @@ class ProxyGraphic:
                 bs,
                 ["colors", "layers", "markers", "normals", "visibilities"],
                 face_flags,
-                total_face_count
+                total_face_count,
             )
         if face_prim_data:
             pass
 
         # last data set - vertex normals are not supported by PolyFaceMesh
-        # vertex_normals = None
         # vertex_flags = bs.read_long()
         # if has_prim_traits(vertex_flags):
-        #     if prims_have_normals(vertex_flags):
-        #         vertex_normals = [bs.read_vertex() for _ in vertices]
+        #     vertex_normals = read_vertex_normals(vertex_flags)
 
         polyface.append_faces(faces)
         polyface.optimize()
