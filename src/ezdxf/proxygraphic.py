@@ -74,7 +74,7 @@ def export_proxy_graphic(
     tagwriter.write_tag2(length_code, length)
     index = 0
     while index < length:
-        hex_str = bytes_to_hexstr(data[index : index + CHUNK_SIZE])
+        hex_str = bytes_to_hexstr(data[index: index + CHUNK_SIZE])
         tagwriter.write_tag2(data_code, hex_str)
         index += CHUNK_SIZE
 
@@ -128,7 +128,7 @@ def read_prim_traits(
         return [bs.read_long() for _ in range(count)]
 
     def read_vertices():
-        return [bs.read_vertex() for _ in range(count)]
+        return [Vec3(bs.read_vertex()) for _ in range(count)]
 
     data = dict()
     for t in types:
@@ -141,6 +141,64 @@ def read_prim_traits(
             else:
                 raise TypeError(data_type)
     return data
+
+
+def read_mesh_traits(
+    bs: ByteStream,
+    edge_count: int,
+    face_count: int,
+    vertex_count: int
+):
+    # Traits data format:
+    # all entries are optional
+    # traits: Dict[str, Dict]
+    #     "edges": Dict[str, List]
+    #         "colors": List[int]
+    #         "layers": List[int] as layer ids
+    #         "linetypes": List[int] as linetype ids
+    #         "markers": List[int]
+    #         "visibilities": List[int]
+    #     "faces": Dict[str, List]
+    #         "colors": List[int]
+    #         "layers": List[int] as layer ids
+    #         "markers": List[int]
+    #         "normals": List[Vec3]
+    #         "visibilities": List[int]
+    #     "vertices": Dict
+    #         "normals": List[Vec3]
+    #         "orientation": bool
+    traits = dict()
+    edge_flags = bs.read_long()
+    if has_prim_traits(edge_flags):
+        traits["edges"] = read_prim_traits(
+            bs,
+            ["colors", "layers", "linetypes", "markers", "visibilities"],
+            edge_flags,
+            edge_count,
+        )
+    face_flags = bs.read_long()
+    if has_prim_traits(face_flags):
+        traits["faces"] = read_prim_traits(
+            bs,
+            ["colors", "layers", "markers", "normals", "visibilities"],
+            face_flags,
+            face_count,
+        )
+
+    # Note: DXF entities PolyFaceMesh and Mesh do not support vertex normals!
+    # disable useless reading process by vertex_count = 0
+    if vertex_count > 0:
+        vertex_flags = bs.read_long()
+        if has_prim_traits(vertex_flags):
+            vertices = dict()
+            if prims_have_normals(vertex_flags):
+                vertices["normals"] = [
+                    Vec3(bs.read_vertex()) for _ in range(vertex_count)
+                ]
+            if prims_have_orientation(vertex_flags):
+                vertices["orientation"] = bool(bs.read_long())
+            traits["vertices"] = vertices
+    return traits
 
 
 class ProxyGraphicTypes(IntEnum):
@@ -249,7 +307,7 @@ class ProxyGraphic:
                 continue
             method = getattr(self, name, None)
             if method:
-                result = method(self._buffer[index + 8 : index + size])
+                result = method(self._buffer[index + 8: index + size])
                 if isinstance(result, tuple):
                     for entity in result:
                         yield transform(entity)
@@ -494,6 +552,26 @@ class ProxyGraphic:
         logger.warning("Untested proxy graphic entity: MESH - Need examples!")
         bs = ByteStream(data)
         rows, columns = bs.read_struct("<2L")
+        total_edge_count = (rows - 1) * columns + (columns - 1) * rows
+        total_face_count = (rows - 1) * (columns - 1)
+        total_vertex_count = rows * columns
+        vertices = [
+            Vec3(bs.read_vertex()) for _ in range(total_vertex_count)
+        ]
+        traits = dict()
+        try:
+            traits = read_mesh_traits(
+                bs, total_edge_count, total_face_count, vertex_count=0
+            )
+        except struct.error:
+            logger.error(
+                "Structure error while parsing traits for MESH proxy graphic"
+            )
+        if traits:
+            # apply traits
+            pass
+
+        # create PolyMesh entity
         attribs = self._build_dxf_attribs()
         attribs["m_count"] = rows
         attribs["n_count"] = columns
@@ -501,23 +579,13 @@ class ProxyGraphic:
         polymesh = cast(
             "Polymesh", self._factory("POLYLINE", dxfattribs=attribs)
         )
-        polymesh.append_vertices(
-            Vec3(bs.read_vertex()) for _ in range(rows * columns)
-        )
+        polymesh.append_vertices(vertices)
         return polymesh
 
     def shell(self, data: bytes):
         # Limitations of the PolyFacMesh entity:
         # - all VERTEX entities have to reside on the same layer
         # - does not support vertex normals
-        def read_vertex_normals(vertex_flags: int) -> List[Vec3]:
-            if prims_have_normals(vertex_flags):
-                return [
-                    Vec3(bs.read_vertex()) for _ in range(total_vertex_count)
-                ]
-            return []
-
-        logger.warning("Untested proxy graphic entity: SHELL - Need examples!")
         bs = ByteStream(data)
         attribs = self._build_dxf_attribs()
         attribs["flags"] = const.POLYLINE_POLYFACE
@@ -540,35 +608,18 @@ class ProxyGraphic:
             total_edge_count += edge_count
             faces.append(face)
 
-        edge_prim_data = None
-        edge_flags = bs.read_long()
-        if has_prim_traits(edge_flags):
-            edge_prim_data = read_prim_traits(
-                bs,
-                ["colors", "layers", "linetypes", "markers", "visibilities"],
-                edge_flags,
-                total_edge_count,
+        traits = dict()
+        try:
+            traits = read_mesh_traits(
+                bs, total_edge_count, total_face_count, vertex_count=0
             )
-        if edge_prim_data:
-            pass
-
-        face_prim_data = None
-        face_flags = bs.read_long()
-        if has_prim_traits(face_flags):
-            face_prim_data = read_prim_traits(
-                bs,
-                ["colors", "layers", "markers", "normals", "visibilities"],
-                face_flags,
-                total_face_count,
+        except struct.error:
+            logger.error(
+                "Structure error while parsing traits for SHELL proxy graphic"
             )
-        if face_prim_data:
+        if traits:
+            # apply traits
             pass
-
-        # last data set - vertex normals are not supported by PolyFaceMesh
-        # vertex_flags = bs.read_long()
-        # if has_prim_traits(vertex_flags):
-        #     vertex_normals = read_vertex_normals(vertex_flags)
-
         polyface.append_faces(faces)
         polyface.optimize()
         return polyface
