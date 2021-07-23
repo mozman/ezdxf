@@ -96,9 +96,9 @@ acdb_dimension = DefSubclass(
         # 2 = Angular;
         # 3 = Diameter;
         # 4 = Radius
-        # 5 = Angular 3 point;
+        # 5 = Angular 3 point and ARC_DIMENSION < DXF R2018
         # 6 = Ordinate
-        # 8 = Arc Dimension -> ARC_DIMENSION
+        # 8 = ARC_DIMENSION >= DXF R2018
         # 32 = Indicates that the block reference (group code 2) is referenced by
         # this dimension only
         # 64 = Ordinate type. This is a bit value (bit 7) used only with integer
@@ -596,6 +596,12 @@ class Dimension(DXFGraphic, OverrideMixin):
                 "extrusion",
             ],
         )
+        # Processing by dimtype works only for the original DIMENSION entity.
+        # Until DXF R2018 dimtype 5 was shared between ARC_DIMENSION and
+        # angular & angular3p DIMENSION, which have different subclass
+        # structures!
+        if self.dxftype() != "DIMENSION":
+            return
 
         if dim_type == 0:  # linear
             tagwriter.write_tag2(SUBCLASS_MARKER, "AcDbAlignedDimension")
@@ -799,6 +805,8 @@ acdb_arc_dimension_group_codes = group_code_mapping(acdb_arc_dimension)
 @register_entity
 class ArcDimension(Dimension):
     """DXF ARC_DIMENSION entity"""
+    # dimtype is 5 for DXF version <= R2013
+    # dimtype is 8 for DXF version >= R2018
 
     DXFTYPE = "ARC_DIMENSION"
     DXFATTRIBS = DXFAttributes(

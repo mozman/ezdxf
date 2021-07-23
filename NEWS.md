@@ -9,6 +9,7 @@ Version 0.16.6b0 - dev
 - BETA: support for `ACAD_PROXY_ENTITY`  
 - BUGFIX: add missing "doc" argument to DXF loaders, DXF version was not 
   available at loading stage 
+- BUGFIX: DXF export for `ARC_DIMENSION`
 
 Version 0.16.5 - 2021-07-18
 ---------------------------

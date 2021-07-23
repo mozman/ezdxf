@@ -12,7 +12,7 @@ ezdxf.options.preserve_proxy_graphics()
 
 
 @pytest.fixture()
-def arcdim():
+def arcdim() -> ArcDimension:
     return ArcDimension.from_text(ARC_DIM)
 
 
@@ -21,16 +21,30 @@ def test_load_arc_dimension(arcdim):
     assert len(arcdim.proxy_graphic) == 968
 
 
+def test_dimtype_is_8_for_R2018(arcdim):
+    assert arcdim.dimtype == 8
+
+
 def test_export_arc_dimension_R2010(arcdim):
     tagwriter = TagCollector(dxfversion=DXF2010)
     arcdim.export_dxf(tagwriter)
-    assert (92, 968) in tagwriter.tags, 'Expected group code 92 for proxy graphic length tag. (< DXF R2013)'
+    assert (
+        92,
+        968,
+    ) in tagwriter.tags, (
+        "Expected group code 92 for proxy graphic length tag. (< DXF R2013)"
+    )
 
 
 def test_export_arc_dimension_R2013(arcdim):
     tagwriter = TagCollector(dxfversion=DXF2013)
     arcdim.export_dxf(tagwriter)
-    assert (160, 968) in tagwriter.tags, 'Expected group code 160 for proxy graphic length tag. (>= DXF R2013)'
+    assert (
+        160,
+        968,
+    ) in tagwriter.tags, (
+        "Expected group code 160 for proxy graphic length tag. (>= DXF R2013)"
+    )
 
 
 ARC_DIM = """  0
@@ -56,7 +70,7 @@ AcDbEntity
   8
 0
 160
-               968
+968
 310
 C80300000D000000540000002000000002000000033E695D8B227240B00D3CF1FB7B5540000000000000000082C85BAC2FDE7240FB1040429FB05740000000000000000000000000000000000000000000000000000000000000F03F5400000020000000020000004AF9442AE7FA60405A2D686189715A4000000000000000
 310
@@ -147,5 +161,5 @@ AcDbArcDimension
 0.0
 """
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])
