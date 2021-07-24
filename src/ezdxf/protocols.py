@@ -14,13 +14,13 @@ if TYPE_CHECKING:
 # - INSERT
 # - DIMENSION
 # - ProxyGraphic
+# - DXFGraphicProxy (drawing add-on)
 #
 # TODO:
 #  - LEADER
 #  - MLEADER
 #  - MLINE
 #  - POINT ???
-#  - DXFGraphicProxy (drawing add-on)
 #  - AbstractTrace (ezdxf.render.trace)
 #  - TraceBuilder (ezdxf.render.trace)
 #  - _Arrows (ezdxf.render.arrows)

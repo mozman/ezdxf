@@ -290,6 +290,7 @@ class ProxyGraphic:
             index += size
 
     def __virtual_entities__(self) -> Iterable["DXFGraphic"]:
+        """Implements the SupportsVirtualEntities protocol. """
         def transform(entity):
             if self.matrices:
                 return entity.transform(self.matrices[-1])

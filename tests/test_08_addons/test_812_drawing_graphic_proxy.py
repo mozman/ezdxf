@@ -5,6 +5,7 @@ import pytest
 from ezdxf.addons.drawing.gfxproxy import DXFGraphicProxy
 from ezdxf.entities import DXFObject, factory
 from ezdxf.lldxf.extendedtags import ExtendedTags
+from ezdxf.protocols import SupportsVirtualEntities, query_virtual_entities
 
 
 class TestDXFGraphicProxy:
@@ -32,16 +33,17 @@ class TestDXFGraphicProxy:
         with pytest.raises(TypeError):
             proxy.copy()
 
-    def test_virtual_entities(self, proxy):
-        assert len(list(proxy.virtual_entities())) == 0
+    def test_supports_virtual_entities_protocol(self, proxy):
+        assert isinstance(proxy, SupportsVirtualEntities)
+        assert len(query_virtual_entities(proxy)) == 0
 
 
 def test_support_for_proxy_graphic_stored_in_acdb_entity():
     tag_storage = factory.load(ExtendedTags.from_text(DXF_STORAGE))
     assert tag_storage.dxftype() == "TAG_STORAGE"
     proxy = DXFGraphicProxy(tag_storage)
-    # reusing test data from 252
-    types = [e.dxftype() for e in proxy.virtual_entities()]
+    # reusing data from test suite 252
+    types = [e.dxftype() for e in query_virtual_entities(proxy)]
     assert types == [
         "POLYLINE",
         "POLYLINE",

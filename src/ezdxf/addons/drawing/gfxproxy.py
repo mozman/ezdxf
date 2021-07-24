@@ -30,10 +30,14 @@ class DXFGraphicProxy(DXFGraphic):
     def dxftype(self) -> str:
         return self.entity.dxftype()
 
-    def virtual_entities(self) -> Iterable[DXFGraphic]:
+    def __virtual_entities__(self) -> Iterable[DXFGraphic]:
+        """Implements the SupportsVirtualEntities protocol."""
         if hasattr(self.entity, "virtual_entities"):
             return self.entity.virtual_entities()
         return []
+
+    def virtual_entities(self) -> Iterable[DXFGraphic]:
+        return self.__virtual_entities__()
 
     def copy(self) -> "DXFGraphic":
         raise const.DXFTypeError(f"Cloning of DXFGraphicProxy() not supported.")
