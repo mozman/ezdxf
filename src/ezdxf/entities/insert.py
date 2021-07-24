@@ -504,9 +504,17 @@ class Insert(LinkedEntities):
             target_layout = self.get_layout()
             if target_layout is None:
                 raise DXFStructureError(
-                    'INSERT without layout assigment, specify target layout.'
+                    'INSERT without layout assignment, specify target layout.'
                 )
         return explode_block_reference(self, target_layout=target_layout)
+
+    def __virtual_entities__(self) -> Iterable[DXFGraphic]:
+        """Implements the SupportsVirtualEntities protocol.
+
+        This protocol is for consistent internal usage and does not replace
+        the method :meth:`virtual_entities`!
+        """
+        return virtual_block_reference_entities(self)
 
     def virtual_entities(self,
                          skipped_entity_callback: Optional[

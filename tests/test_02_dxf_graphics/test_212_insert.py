@@ -6,8 +6,9 @@ import ezdxf
 from ezdxf.entities.insert import Insert
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-from ezdxf.math import Matrix44, InsertTransformationError
+from ezdxf.math import Matrix44
 from ezdxf.entities import factory
+from ezdxf.protocols import SupportsVirtualEntities, query_virtual_entities
 
 ENTITY_R12 = """0
 INSERT
@@ -370,3 +371,24 @@ def test_add_virtual_insert_with_attribs_to_layout(doc):
     assert factory.is_bound(insert.attribs[0], doc) is True, \
         'ATTRIB must be bound to document'
 
+
+class TestSupportsVirtualEntitiesProtocol:
+    @pytest.fixture(scope='class')
+    def doc(self):
+        doc = ezdxf.new()
+        blk = doc.blocks.new('POINT')
+        blk.add_point(location=(0, 0))
+        return doc
+
+    @pytest.fixture
+    def insert(self, doc):
+        msp = doc.modelspace()
+        return msp.add_blockref('POINT', (0, 0))
+
+    def test_supports_virtual_entities_protocol(self, insert):
+        assert isinstance(insert, SupportsVirtualEntities) is True
+
+    def test_query_virtual_entities(self, insert):
+        entities = query_virtual_entities(insert)
+        assert len(entities) == 1
+        assert entities[0].dxftype() == "POINT"
