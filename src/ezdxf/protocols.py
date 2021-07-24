@@ -8,11 +8,29 @@ if TYPE_CHECKING:
     from ezdxf.entities import DXFGraphic
 
 
+# Protocol implemented for:
+# - DXFTagStorage
+# - ACAD_PROXY_ENTITY
+# - INSERT
+#
+# TODO:
+#  - DIMENSION
+#  - LEADER
+#  - MLEADER
+#  - MLINE
+#  - POINT ???
+#  - DXFGraphicProxy (drawing add-on)
+#  - ProxyGraphic
+#  - AbstractTrace (ezdxf.render.trace)
+#  - TraceBuilder (ezdxf.render.trace)
+#  - _Arrows (ezdxf.render.arrows)
+
 @runtime_checkable
 class SupportsVirtualEntities(Protocol):
     """ The virtual entities protocol is used to disassemble complex entities
-    into DXF primitives like LINE, ARC, ... as REQUIREMENT to process this
-    entities.
+    into DXF primitives like LINE, ARC, ... as REQUIREMENT to render these
+    entities. Which means the entity does not have :func:`ezdxf.path.make_path`
+    support, except the text entities TEXT, ATTRIB and MTEXT.
 
     Optional DECONSTRUCTION of entities into DXF primitives like LWPOLYLINE
     into LINE and ARC entities is NOT the intended usage of this protocol!
@@ -31,7 +49,6 @@ class SupportsVirtualEntities(Protocol):
     # ACAD_PROXY_ENTITY
     #
     # Misused for DECONSTRUCTION:
-    # POINT
     # POLYLINE (2D, 3D, Mesh, Polyface)
     # LWPOLYLINE
 
