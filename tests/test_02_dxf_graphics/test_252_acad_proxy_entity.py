@@ -8,6 +8,7 @@ from ezdxf.entities import factory
 from ezdxf.entities import ACADProxyEntity
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Matrix44
+from ezdxf.protocols import SupportsVirtualEntities, virtual_entities
 
 
 @pytest.fixture(scope="module")
@@ -28,16 +29,19 @@ def test_export_exact_original_data(proxy):
     assert collector.tags == expected, "expected exact same DXF tags"
 
 
+EXPECTED_VIRTUAL_ENTITY_TYPES = [
+    "POLYLINE",
+    "POLYLINE",
+    "ARC",
+    "ARC",
+    "POLYLINE",
+    "POLYLINE",
+]
+
+
 def test_virtual_entities_support(proxy):
     types = [e.dxftype() for e in proxy.virtual_entities()]
-    assert types == [
-        "POLYLINE",
-        "POLYLINE",
-        "ARC",
-        "ARC",
-        "POLYLINE",
-        "POLYLINE",
-    ]
+    assert types == EXPECTED_VIRTUAL_ENTITY_TYPES
 
 
 def test_virtual_entities_if_no_proxy_graphic_exists(proxy):
@@ -45,6 +49,12 @@ def test_virtual_entities_if_no_proxy_graphic_exists(proxy):
     proxy.proxy_graphic = None
     assert len(list(proxy.virtual_entities())) == 0
     proxy.proxy_graphic = data
+
+
+def test_supports_virtual_entities_protocol(proxy):
+    assert isinstance(proxy, SupportsVirtualEntities)
+    types = [e.dxftype() for e in virtual_entities(proxy)]
+    assert types == EXPECTED_VIRTUAL_ENTITY_TYPES
 
 
 def test_proxy_entity_is_not_transformable(proxy):

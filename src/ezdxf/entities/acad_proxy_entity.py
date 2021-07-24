@@ -8,7 +8,7 @@ from .dxfgfx import DXFGraphic
 from . import factory
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFNamespace, TagWriter
+    from ezdxf.eztypes import DXFNamespace, TagWriter, DXFEntity
 
 
 # Group Codes of AcDbProxyEntity
@@ -49,7 +49,7 @@ class ACADProxyEntity(DXFGraphic):
         super().__init__()
         self.acdb_proxy_entity: Optional[Tags] = None
 
-    def copy(self) -> "DXFGraphic":
+    def copy(self):
         raise const.DXFTypeError(f"Cloning of {self.dxftype()} not supported.")
 
     def load_dxf_attribs(
@@ -61,7 +61,7 @@ class ACADProxyEntity(DXFGraphic):
             self.load_proxy_graphic(processor.dxfversion)
         return dxf
 
-    def load_proxy_graphic(self, dxfversion: str) -> None:
+    def load_proxy_graphic(self, dxfversion: Optional[str]) -> None:
         if self.acdb_proxy_entity is not None:
             if not dxfversion:
                 dxfversion = _detect_dxf_version(self.acdb_proxy_entity)
@@ -86,12 +86,16 @@ class ACADProxyEntity(DXFGraphic):
             tagwriter.write_tags(self.acdb_proxy_entity)
         # XDATA export is done by the parent class
 
-    def virtual_entities(self) -> Iterable[DXFGraphic]:
-        """Yields proxy graphic as "virtual" entities. """
+    def __virtual_entities__(self) -> Iterable[DXFGraphic]:
+        """Implements the SupportsVirtualEntities protocol. """
         from ezdxf.proxygraphic import ProxyGraphic
         if self.proxy_graphic:
             return ProxyGraphic(self.proxy_graphic, self.doc).virtual_entities()
         return []
+
+    def virtual_entities(self) -> Iterable[DXFGraphic]:
+        """Yields proxy graphic as "virtual" entities. """
+        return self.__virtual_entities__()
 
 
 def load_proxy_data(
