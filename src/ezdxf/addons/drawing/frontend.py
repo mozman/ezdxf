@@ -1,7 +1,7 @@
 # Copyright (c) 2020-2021, Matthew Broadway
 # License: MIT License
 import math
-from typing import Iterable, cast, Union, List, Dict, Callable, Tuple
+from typing import Iterable, cast, Union, List, Dict, Callable, Tuple, Set
 from ezdxf.lldxf import const
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.properties import (
@@ -45,6 +45,8 @@ from ezdxf.path import (
 from ezdxf.render import MeshBuilder, TraceBuilder
 from ezdxf import reorder
 from ezdxf.proxygraphic import ProxyGraphic
+from ezdxf.protocols import SupportsVirtualEntities, virtual_entities
+
 
 __all__ = ["Frontend"]
 
@@ -114,6 +116,13 @@ class Frontend:
 
         self._dispatch = self._build_dispatch_table()
 
+        # Supported DXF entities which use only proxy graphic for rendering:
+        self._proxy_graphic_only_entities: Set[str] = {
+            "MLEADER",  # todo: remove if MLeader.virtual_entities() is implemented
+            "MULTILEADER",
+            "ACAD_PROXY_ENTITY",
+        }
+
     def _build_dispatch_table(
         self,
     ) -> TDispatchTable:
@@ -137,27 +146,8 @@ class Frontend:
             dispatch_table[dxftype] = self.draw_solid_entity
         for dxftype in ("POLYLINE", "LWPOLYLINE"):
             dispatch_table[dxftype] = self.draw_polyline_entity
-
-        # Composite types have a virtual_entities() method, which returns
-        # the entity content as virtual DXF primitives (LINE, ARC, ...).
-        composite_types = [
-            "INSERT",
-            "DIMENSION",
-            "ARC_DIMENSION",
-            "LARGE_RADIAL_DIMENSION",
-            "LEADER",
-            "MLINE",
-            "ACAD_TABLE",
-        ]
-        if self.proxy_graphics != IGNORE_PROXY_GRAPHICS:
-            composite_types.extend(
-                [
-                    "ACAD_PROXY_ENTITY",
-                ]
-            )
-        for dxftype in composite_types:
-            dispatch_table[dxftype] = self.draw_composite_entity
-
+        # Composite entities are detected by implementing the
+        # __virtual_entities__() protocol.
         return dispatch_table
 
     def log_message(self, message: str):
@@ -228,7 +218,7 @@ class Frontend:
         """Draw a single DXF entity.
 
         Args:
-            entity: DXF Entity
+            entity: DXF entity inherited from DXFGraphic()
             properties: resolved entity properties
 
         """
@@ -242,13 +232,25 @@ class Frontend:
             draw_method = self._dispatch.get(entity.dxftype(), None)
             if draw_method is not None:
                 draw_method(entity, properties)
-            elif (
-                entity.proxy_graphic
-                and self.proxy_graphics == USE_PROXY_GRAPHICS
-            ):
-                self.draw_proxy_graphic(entity.proxy_graphic, entity.doc)
-            else:
-                self.skip_entity(entity, "Unsupported entity")
+            # Composite entities (INSERT, DIMENSION, ...) have to implement the
+            # __virtual_entities__() protocol.
+            # Unsupported DXF types which have proxy graphic, are wrapped into
+            # DXFGraphicProxy, which also implements the __virtual_entities__()
+            # protocol.
+            elif isinstance(entity, SupportsVirtualEntities):
+                assert isinstance(entity, DXFGraphic)
+                # The __virtual_entities__() protocol does not distinguish
+                # content from DXF entities or from proxy graphic.
+                # In the long run ACAD_PROXY_ENTITY should be the only
+                # supported DXF entity which uses proxy graphic. Unsupported
+                # DXF entities (DXFGraphicProxy) do not get to this point if
+                # proxy graphic is ignored.
+                if (
+                    self.proxy_graphics != IGNORE_PROXY_GRAPHICS
+                    or entity.dxftype() not in self._proxy_graphic_only_entities
+                ):
+                    self.draw_composite_entity(entity, properties)
+
         self.out.exit_entity(entity)
 
     def draw_line_entity(
@@ -622,8 +624,7 @@ class Frontend:
                 )
             )
 
-        dxftype = entity.dxftype()
-        if dxftype == "INSERT":
+        if isinstance(entity, Insert):
             entity = cast(Insert, entity)
             self.ctx.push_state(properties)
             if entity.mcount > 1:
@@ -632,19 +633,15 @@ class Frontend:
             else:
                 draw_insert(entity)
             self.ctx.pop_state()
-
-        elif hasattr(entity, "virtual_entities"):
+        elif isinstance(entity, SupportsVirtualEntities):
             # draw_entities() includes the visibility check:
-            self.draw_entities(
-                set_opaque(entity.virtual_entities())  # type: ignore
-            )
+            self.draw_entities(set_opaque(virtual_entities(entity)))
         else:
-            raise TypeError(dxftype)
+            raise TypeError(entity.dxftype())
 
     def draw_proxy_graphic(self, data: bytes, doc) -> None:
         if data:
-            gfx = ProxyGraphic(data, doc)
-            self.draw_entities(gfx.virtual_entities())
+            self.draw_entities(virtual_entities(ProxyGraphic(data, doc)))
 
 
 def is_spatial_text(extrusion: Vec3) -> bool:
