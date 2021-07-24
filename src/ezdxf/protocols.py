@@ -13,17 +13,17 @@ if TYPE_CHECKING:
 # - ACAD_PROXY_ENTITY
 # - INSERT
 # - DIMENSION
+# - LEADER
 # - ProxyGraphic
 # - DXFGraphicProxy (drawing add-on)
 #
 # TODO:
-#  - LEADER
-#  - MLEADER
 #  - MLINE
 #  - POINT ???
 #  - AbstractTrace (ezdxf.render.trace)
 #  - TraceBuilder (ezdxf.render.trace)
 #  - _Arrows (ezdxf.render.arrows)
+#  - MLEADER (not implemented yet)
 
 @runtime_checkable
 class SupportsVirtualEntities(Protocol):

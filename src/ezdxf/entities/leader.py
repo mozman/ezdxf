@@ -263,20 +263,20 @@ class Leader(DXFGraphic, OverrideMixin):
         )
         return self
 
+    def __virtual_entities__(self) -> Iterable["DXFGraphic"]:
+        """Implements the SupportsVirtualEntities protocol. """
+        from ezdxf.render.leader import virtual_entities
+        return virtual_entities(self)
+
     def virtual_entities(self) -> Iterable["DXFGraphic"]:
-        """
-        Yields 'virtual' parts of LEADER as DXF primitives.
+        """Yields 'virtual' parts of LEADER as DXF primitives.
 
         This entities are located at the original positions, but are not stored
         in the entity database, have no handle and are not assigned to any
         layout.
 
-        .. versionadded:: 0.14
-
         """
-        from ezdxf.render.leader import virtual_entities
-
-        return virtual_entities(self)
+        return self.__virtual_entities__()
 
     def explode(self, target_layout: "BaseLayout" = None) -> "EntityQuery":
         """
@@ -302,7 +302,7 @@ class Leader(DXFGraphic, OverrideMixin):
             auditor.fixed_error(
                 code=AuditError.INVALID_VERTEX_COUNT,
                 message=f"Deleted entity {str(self)} with invalid vertex count "
-                f"= {len(self.vertices)}.",
+                        f"= {len(self.vertices)}.",
                 dxf_entity=self,
             )
             self.destroy()
