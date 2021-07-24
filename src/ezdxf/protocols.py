@@ -12,9 +12,9 @@ if TYPE_CHECKING:
 # - DXFTagStorage
 # - ACAD_PROXY_ENTITY
 # - INSERT
+# - DIMENSION
 #
 # TODO:
-#  - DIMENSION
 #  - LEADER
 #  - MLEADER
 #  - MLINE

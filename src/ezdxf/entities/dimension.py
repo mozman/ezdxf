@@ -737,16 +737,8 @@ class Dimension(DXFGraphic, OverrideMixin):
             except (NotImplementedError, NonUniformScalingError):
                 pass  # ignore transformation errors
 
-    def virtual_entities(self) -> Iterable["DXFGraphic"]:
-        """
-        Yields 'virtual' parts of DIMENSION as basic DXF entities like LINE, ARC
-        or TEXT.
-
-        This entities are located at the original positions, but are not stored
-        in the entity database, have no handle and are not assigned to any
-        layout.
-
-        """
+    def __virtual_entities__(self) -> Iterable["DXFGraphic"]:
+        """Implements the SupportsVirtualEntities protocol. """
         transform = False
         insert = self.dxf.get("insert", None)
         if insert:
@@ -760,8 +752,21 @@ class Dimension(DXFGraphic, OverrideMixin):
             except DXFTypeError:
                 continue
             if transform:
+                # noinspection PyUnboundLocalVariable
                 copy.transform(m)
             yield copy
+
+    def virtual_entities(self) -> Iterable["DXFGraphic"]:
+        """
+        Yields 'virtual' parts of DIMENSION as basic DXF entities like LINE, ARC
+        or TEXT.
+
+        This entities are located at the original positions, but are not stored
+        in the entity database, have no handle and are not assigned to any
+        layout.
+
+        """
+        return self.__virtual_entities__()
 
     def explode(self, target_layout: "BaseLayout" = None) -> "EntityQuery":
         """
@@ -805,6 +810,7 @@ acdb_arc_dimension_group_codes = group_code_mapping(acdb_arc_dimension)
 @register_entity
 class ArcDimension(Dimension):
     """DXF ARC_DIMENSION entity"""
+
     # dimtype is 5 for DXF version <= R2013
     # dimtype is 8 for DXF version >= R2018
 

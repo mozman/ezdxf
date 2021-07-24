@@ -3,7 +3,7 @@
 import pytest
 import ezdxf
 from ezdxf.entities.dimension import Dimension
-
+from ezdxf.protocols import SupportsVirtualEntities, query_virtual_entities
 
 @pytest.fixture(scope='module')
 def dxf2000():
@@ -211,6 +211,12 @@ def test_add_virtual_dimension_copy_to_layout(dxf2000):
         "all entities should be stored in the entity database"
     assert all(e.doc is dxf2000 for e in content), \
         "all entities should be bound to the document"
+
+
+def test_supports_virtual_entities_protocol(dxf2000):
+    dimline = add_linear_dimension(dxf2000)
+    assert isinstance(dimline, SupportsVirtualEntities) is True
+    assert len(query_virtual_entities(dimline)) > 0
 
 
 def test_dimstyle_override(dxf2000):
