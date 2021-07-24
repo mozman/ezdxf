@@ -39,7 +39,7 @@ if TYPE_CHECKING:
 
 
 @factory.register_entity
-class ProxyEntity(DXFGraphic):
+class ACADProxyEntity(DXFGraphic):
     """READ ONLY ACAD_PROXY_ENTITY CLASS! DO NOT MODIFY!"""
 
     DXFTYPE = "ACAD_PROXY_ENTITY"

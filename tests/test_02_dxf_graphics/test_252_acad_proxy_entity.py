@@ -5,15 +5,15 @@ import pytest
 import ezdxf
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.entities import factory
-from ezdxf.entities import ProxyEntity
+from ezdxf.entities import ACADProxyEntity
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Matrix44
 
 
 @pytest.fixture(scope="module")
-def proxy() -> ProxyEntity:
+def proxy() -> ACADProxyEntity:
     xtags = ExtendedTags.from_text(AEC_DOOR)
-    return cast(ProxyEntity, factory.load(xtags, ezdxf.new("R2018")))
+    return cast(ACADProxyEntity, factory.load(xtags, ezdxf.new("R2018")))
 
 
 def test_load_acad_proxy_entity(proxy):
