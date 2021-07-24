@@ -18,12 +18,7 @@ if TYPE_CHECKING:
 # - ProxyGraphic
 # - DXFGraphicProxy (drawing add-on)
 #
-# TODO:
-#  - AbstractTrace (ezdxf.render.trace)
-#  - TraceBuilder (ezdxf.render.trace)
-#  - _Arrows (ezdxf.render.arrows)
-#  - POINT ???
-#  - MLEADER (not implemented yet)
+# TODO: MLEADER, virtual_entities() not implemented yet
 
 @runtime_checkable
 class SupportsVirtualEntities(Protocol):
