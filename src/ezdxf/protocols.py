@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 # - ACAD_PROXY_ENTITY
 # - INSERT
 # - DIMENSION
+# - ProxyGraphic
 #
 # TODO:
 #  - LEADER
@@ -20,7 +21,6 @@ if TYPE_CHECKING:
 #  - MLINE
 #  - POINT ???
 #  - DXFGraphicProxy (drawing add-on)
-#  - ProxyGraphic
 #  - AbstractTrace (ezdxf.render.trace)
 #  - TraceBuilder (ezdxf.render.trace)
 #  - _Arrows (ezdxf.render.arrows)

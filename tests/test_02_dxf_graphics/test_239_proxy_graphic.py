@@ -8,6 +8,7 @@ from ezdxf.proxygraphic import (
     export_proxy_graphic,
     ProxyGraphic,
 )
+from ezdxf.protocols import SupportsVirtualEntities, query_virtual_entities
 
 
 def test_load_proxy_graphic():
@@ -37,6 +38,10 @@ class TestProxyGraphic:
         assert len(indices) == 13
         index, size, type_ = indices[0]
         assert (index, size, type_) == (8, 84, "POLYLINE_WITH_NORMALS")
+
+    def test_supports_virtual_entities_protocol(self, parser):
+        assert isinstance(parser, SupportsVirtualEntities) is True
+        assert len(query_virtual_entities(parser)) > 0
 
     def test_multi_leader_entities(self):
         # ATTRIBUTE_TRUE_COLOR; size: 12

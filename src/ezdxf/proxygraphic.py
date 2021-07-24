@@ -36,6 +36,7 @@ if TYPE_CHECKING:
         Tags,
         TagWriter,
         Drawing,
+        DXFGraphic,
         Polymesh,
         Polyface,
         Polyline,
@@ -288,7 +289,7 @@ class ProxyGraphic:
             yield index, size, name
             index += size
 
-    def virtual_entities(self):
+    def __virtual_entities__(self) -> Iterable["DXFGraphic"]:
         def transform(entity):
             if self.matrices:
                 return entity.transform(self.matrices[-1])
@@ -318,6 +319,9 @@ class ProxyGraphic:
             else:
                 logger.debug(f"Unsupported feature ProxyGraphic.{name}()")
             index += size
+
+    def virtual_entities(self) -> Iterable["DXFGraphic"]:
+        return self.__virtual_entities__()
 
     def push_matrix(self, data: bytes):
         values = struct.unpack("<16d", data)
