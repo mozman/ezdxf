@@ -34,19 +34,6 @@ class SupportsVirtualEntities(Protocol):
     the :meth:`virtual_entities` methods!
 
     """
-
-    # The current state of the virtual_entities() method is a mixed usage of
-    # these two use cases.
-    #
-    # Valid usage as REQUIREMENT:
-    # INSERT
-    # DIMENSION
-    # ACAD_PROXY_ENTITY
-    #
-    # Misused for DECONSTRUCTION:
-    # POLYLINE (2D, 3D, Mesh, Polyface)
-    # LWPOLYLINE
-
     def __virtual_entities__(self) -> Iterable["DXFGraphic"]:
         ...
 

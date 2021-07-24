@@ -625,7 +625,6 @@ class Frontend:
             )
 
         if isinstance(entity, Insert):
-            entity = cast(Insert, entity)
             self.ctx.push_state(properties)
             if entity.mcount > 1:
                 for virtual_insert in entity.multi_insert():
