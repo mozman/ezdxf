@@ -1361,8 +1361,8 @@ class CreatorInterface:
         underlay.set_underlay_def(underlay_def)
         return underlay
 
-    def _save_dimstyle(self, name: str) -> str:
-        if name in self.doc.dimstyles:
+    def _safe_dimstyle(self, name: str) -> str:
+        if self.doc and self.doc.dimstyles.has_entry(name):
             return name
         logger.debug(
             f'Replacing undefined DIMSTYLE "{name}" by "Standard" DIMSTYLE.'
@@ -1428,7 +1428,7 @@ class CreatorInterface:
             "Dimension", self.new_entity("DIMENSION", dxfattribs=type_)
         )
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs["dimstyle"] = self._save_dimstyle(dimstyle)
+        dxfattribs["dimstyle"] = self._safe_dimstyle(dimstyle)
         dxfattribs["defpoint"] = Vec3(base)  # group code 10
         dxfattribs["text"] = str(text)
         dxfattribs["defpoint2"] = Vec3(p1)  # group code 13
@@ -1630,7 +1630,7 @@ class CreatorInterface:
         )
 
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs["dimstyle"] = self._save_dimstyle(dimstyle)
+        dxfattribs["dimstyle"] = self._safe_dimstyle(dimstyle)
         dxfattribs["text"] = str(text)
 
         dxfattribs["defpoint2"] = Vec3(line1[0])  # group code 13
@@ -1711,7 +1711,7 @@ class CreatorInterface:
             "Dimension", self.new_entity("DIMENSION", dxfattribs=type_)
         )
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs["dimstyle"] = self._save_dimstyle(dimstyle)
+        dxfattribs["dimstyle"] = self._safe_dimstyle(dimstyle)
         dxfattribs["text"] = str(text)
         dxfattribs["defpoint"] = Vec3(base)
         dxfattribs["defpoint2"] = Vec3(p1)
@@ -1808,7 +1808,7 @@ class CreatorInterface:
         p1 = center + radius_vec
         p2 = center - radius_vec
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs["dimstyle"] = self._save_dimstyle(dimstyle)
+        dxfattribs["dimstyle"] = self._safe_dimstyle(dimstyle)
         dxfattribs["defpoint"] = Vec3(p1)  # group code 10
         dxfattribs["defpoint4"] = Vec3(p2)  # group code 15
         dxfattribs["text"] = str(text)
@@ -1964,7 +1964,7 @@ class CreatorInterface:
                 mpoint = center + Vec3.from_deg_angle(angle, radius)
 
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs["dimstyle"] = self._save_dimstyle(dimstyle)
+        dxfattribs["dimstyle"] = self._safe_dimstyle(dimstyle)
         dxfattribs["defpoint4"] = Vec3(mpoint)  # group code 15
         dxfattribs["defpoint"] = Vec3(center)  # group code 10
         dxfattribs["text"] = str(text)
@@ -2118,7 +2118,7 @@ class CreatorInterface:
             "Dimension", self.new_entity("DIMENSION", dxfattribs=type_)
         )
         dxfattribs = dict(dxfattribs or {})
-        dxfattribs["dimstyle"] = self._save_dimstyle(dimstyle)
+        dxfattribs["dimstyle"] = self._safe_dimstyle(dimstyle)
         dxfattribs["defpoint"] = Vec3(origin)  # group code 10
         dxfattribs["defpoint2"] = Vec3(feature_location)  # group code 13
         dxfattribs["defpoint3"] = Vec3(leader_endpoint)  # group code 14
@@ -2209,7 +2209,7 @@ class CreatorInterface:
             raise DXFVersionError("LEADER requires DXF R2000")
 
         dxfattribs = dxfattribs or {}
-        dxfattribs["dimstyle"] = self._save_dimstyle(dimstyle)
+        dxfattribs["dimstyle"] = self._safe_dimstyle(dimstyle)
         dxfattribs.setdefault("annotation_type", 3)
         leader = cast("Leader", self.new_entity("LEADER", dxfattribs))
         leader.set_vertices(vertices)
