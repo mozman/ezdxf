@@ -877,10 +877,13 @@ class DXFTagStorage(DXFEntity):
         del self.xtags
         super().destroy()
 
-    def virtual_entities(self) -> Iterable["DXFGraphic"]:
-        """Yields proxy graphic as "virtual" entities. """
+    def __virtual_entities__(self) -> Iterable["DXFGraphic"]:
+        """Implements the SupportsVirtualEntities protocol. """
         from ezdxf.proxygraphic import ProxyGraphic
         if self.proxy_graphic:
             return ProxyGraphic(self.proxy_graphic, self.doc).virtual_entities()
         return []
 
+    def virtual_entities(self) -> Iterable["DXFGraphic"]:
+        """Yields proxy graphic as "virtual" entities. """
+        return self.__virtual_entities__()

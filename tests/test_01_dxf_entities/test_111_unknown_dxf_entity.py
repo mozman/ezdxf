@@ -4,6 +4,7 @@ import pytest
 
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.entities.dxfentity import DXFTagStorage
+from ezdxf.protocols import SupportsVirtualEntities, query_virtual_entities
 
 
 @pytest.fixture
@@ -12,11 +13,11 @@ def entity():
 
 
 def test_default_attribs(entity):
-    assert entity.dxftype() == 'MTEXT'
-    assert entity.dxf.handle == '278'
-    assert entity.dxf.owner == '1F'
-    assert entity.base_class[0] == (0, 'MTEXT')
-    assert entity.base_class[1] == (5, '278')
+    assert entity.dxftype() == "MTEXT"
+    assert entity.dxf.handle == "278"
+    assert entity.dxf.owner == "1F"
+    assert entity.base_class[0] == (0, "MTEXT")
+    assert entity.base_class[1] == (5, "278")
 
 
 def test_dxf_export(entity):
@@ -29,6 +30,11 @@ def test_dxf_export(entity):
 
 def test_virtual_entities(entity):
     assert len(list(entity.virtual_entities())) == 0
+
+
+def test_supports_virtual_entities_protocol(entity):
+    assert isinstance(entity, SupportsVirtualEntities) is True
+    assert len(query_virtual_entities(entity)) == 0
 
 
 THE_KNOWN_UNKNOWN = r"""0
@@ -105,5 +111,5 @@ Embedded Object
 0.0
 """
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])
