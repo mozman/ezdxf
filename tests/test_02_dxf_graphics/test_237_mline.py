@@ -13,11 +13,12 @@ from ezdxf.lldxf.tagwriter import TagCollector
 from ezdxf.lldxf.tags import Tags
 from ezdxf.entities.mline import MLineVertex, MLine, MLineStyle
 from ezdxf.math import Matrix44, Vec3
+from ezdxf.protocols import SupportsVirtualEntities, query_virtual_entities
 
 
 # noinspection PyUnresolvedReferences
 class TestMLine:
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def msp(self):
         return ezdxf.new().modelspace()
 
@@ -30,13 +31,13 @@ class TestMLine:
     def test_unbounded_mline(self):
         mline = MLine()
         assert mline.dxf.style_handle is None
-        assert mline.dxf.style_name == 'Standard'
+        assert mline.dxf.style_name == "Standard"
         assert mline.style is None
 
     def test_generic_mline(self, msp):
         mline = msp.add_mline()
-        assert mline.dxftype() == 'MLINE'
-        assert mline.dxf.style_name == 'Standard'
+        assert mline.dxftype() == "MLINE"
+        assert mline.dxf.style_name == "Standard"
         assert mline.dxf.count == 0
         assert mline.dxf.start_location == (0, 0, 0)
 
@@ -64,7 +65,7 @@ class TestMLine:
         mline.load_vertices(Tags.from_text(VTX_2))
         assert len(mline.vertices) == 2
         assert len(mline) == 2
-        assert mline.dxf.count == 2, 'should be a callback to __len__()'
+        assert mline.dxf.count == 2, "should be a callback to __len__()"
 
     def test_add_first_vertex(self):
         mline = MLine()
@@ -79,8 +80,9 @@ class TestMLine:
         assert len(mline) == 2
         assert mline.vertices[0].line_direction.isclose((1, 0))
         assert mline.vertices[0].miter_direction.isclose((0, 1))
-        assert mline.vertices[1].line_direction.isclose((1, 0)), \
-            'continue last line segment'
+        assert mline.vertices[1].line_direction.isclose(
+            (1, 0)
+        ), "continue last line segment"
         assert mline.vertices[1].miter_direction.isclose((0, 1))
 
     def test_x_rotation(self, msp):
@@ -110,38 +112,43 @@ class TestMLine:
         m = Matrix44.scale(2, 1, 3)
         mline.transform(m)
         assert mline.start_location().isclose((2, 2, 9))
-        assert mline.dxf.scale_factor == 1, 'ignore non-uniform scaling'
+        assert mline.dxf.scale_factor == 1, "ignore non-uniform scaling"
+
+    def test_support_virtual_entities_protocol(self, msp):
+        mline = msp.add_mline([(1, 2, 3), (3, 4, 3)])
+        assert isinstance(mline, SupportsVirtualEntities)
+        assert len(query_virtual_entities(mline)) > 0
 
 
 class TestMLineStyle:
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def doc(self):
         return ezdxf.new()
 
     def test_standard_mline_style(self, doc):
-        mline_style = cast('MLineStyle', doc.mline_styles.get('Standard'))
-        assert mline_style.dxftype() == 'MLINESTYLE'
+        mline_style = cast("MLineStyle", doc.mline_styles.get("Standard"))
+        assert mline_style.dxftype() == "MLINESTYLE"
 
         elements = mline_style.elements
         assert len(elements) == 2
         assert elements[0].offset == 0.5
         assert elements[0].color == 256
-        assert elements[0].linetype == 'BYLAYER'
+        assert elements[0].linetype == "BYLAYER"
         assert elements[1].offset == -0.5
         assert elements[1].color == 256
-        assert elements[1].linetype == 'BYLAYER'
+        assert elements[1].linetype == "BYLAYER"
 
     def test_set_defined_style(self, doc):
-        style = doc.mline_styles.new('DefinedStyle')
+        style = doc.mline_styles.new("DefinedStyle")
         mline = doc.modelspace().add_mline()
-        mline.set_style('DefinedStyle')
-        assert mline.dxf.style_name == 'DefinedStyle'
+        mline.set_style("DefinedStyle")
+        assert mline.dxf.style_name == "DefinedStyle"
         assert mline.dxf.style_handle == style.dxf.handle
 
     def test_set_undefined_style(self, doc):
         mline = doc.modelspace().add_mline()
         with pytest.raises(const.DXFValueError):
-            mline.set_style('UndefinedStyle')
+            mline.set_style("UndefinedStyle")
 
     def test_ordered_indices(self):
         style = MLineStyle()
@@ -152,11 +159,11 @@ class TestMLineStyle:
         assert style.ordered_indices() == [1, 2, 3, 0]
 
     def test_invalid_element_count(self, doc):
-        style = doc.mline_styles.new('InvalidMLineStyle')
+        style = doc.mline_styles.new("InvalidMLineStyle")
         assert len(style.elements) == 0
         auditor = Auditor(doc)
         style.audit(auditor)
-        assert auditor.has_errors is True, 'invalid element count'
+        assert auditor.has_errors is True, "invalid element count"
 
 
 class TestMLineVertex:
@@ -177,7 +184,9 @@ class TestMLineVertex:
 
     def test_new(self):
         vtx = MLineVertex.new(
-            (1, 1), (1, 0), (0, 1),
+            (1, 1),
+            (1, 0),
+            (0, 1),
             [(0.5, 0), (0, 0)],
             [tuple(), tuple()],
         )
@@ -215,15 +224,15 @@ class TestMLineVertex:
 
 
 class TestMLineAudit:
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def doc(self):
         d = ezdxf.new()
-        new_style = d.mline_styles.new('NewStyle1')
+        new_style = d.mline_styles.new("NewStyle1")
         new_style.elements.append(0.5)
         new_style.elements.append(0)
         return d
 
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def msp(self, doc):
         return doc.modelspace()
 
@@ -241,24 +250,26 @@ class TestMLineAudit:
         assert auditor.has_fixes is False
 
     def test_fix_invalid_style_name(self, mline1, auditor):
-        mline1.dxf.style_name = 'test'
+        mline1.dxf.style_name = "test"
         mline1.audit(auditor)
-        assert mline1.dxf.style_name == 'Standard'
-        assert auditor.has_fixes is False, 'silent fix'
+        assert mline1.dxf.style_name == "Standard"
+        assert auditor.has_fixes is False, "silent fix"
 
     def test_fix_invalid_style_handle(self, mline1, auditor):
-        mline1.dxf.style_name = 'test'
-        mline1.dxf.style_handle = '0'
+        mline1.dxf.style_name = "test"
+        mline1.dxf.style_handle = "0"
         mline1.audit(auditor)
-        assert mline1.dxf.style_name == 'Standard'
-        assert mline1.dxf.style_handle == auditor.doc.mline_styles[
-            'Standard'].dxf.handle
+        assert mline1.dxf.style_name == "Standard"
+        assert (
+            mline1.dxf.style_handle
+            == auditor.doc.mline_styles["Standard"].dxf.handle
+        )
         assert auditor.has_fixes is True
 
     def test_fix_invalid_style_handle_by_name(self, mline1, doc, auditor):
-        new_style = doc.mline_styles.get('NewStyle1')
-        mline1.dxf.style_name = 'NewStyle1'
-        mline1.dxf.style_handle = '0'
+        new_style = doc.mline_styles.get("NewStyle1")
+        mline1.dxf.style_name = "NewStyle1"
+        mline1.dxf.style_handle = "0"
         mline1.audit(auditor)
         assert mline1.dxf.style_name == new_style.dxf.name
         assert mline1.dxf.style_handle == new_style.dxf.handle

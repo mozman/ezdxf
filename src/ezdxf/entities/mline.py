@@ -616,6 +616,16 @@ class MLine(DXFGraphic):
         self.update_geometry()
         return self
 
+    def __virtual_entities__(self) -> Iterable[DXFGraphic]:
+        """Implements the SupportsVirtualEntities protocol.
+
+        This protocol is for consistent internal usage and does not replace
+        the method :meth:`virtual_entities`!
+        """
+        from ezdxf.render.mline import virtual_entities
+
+        return virtual_entities(self)
+
     def virtual_entities(self) -> Iterable[DXFGraphic]:
         """Yields 'virtual' parts of MLINE as LINE, ARC and HATCH entities.
 
@@ -624,9 +634,7 @@ class MLine(DXFGraphic):
         layout.
 
         """
-        from ezdxf.render.mline import virtual_entities
-
-        return virtual_entities(self)
+        return self.__virtual_entities__()
 
     def explode(self, target_layout: "BaseLayout" = None) -> "EntityQuery":
         """Explode parts of MLINE as LINE, ARC and HATCH entities into target
