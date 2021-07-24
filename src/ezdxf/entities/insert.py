@@ -1,24 +1,46 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 from typing import (
-    TYPE_CHECKING, Iterable, cast, Tuple, Union, Optional,
-    Callable, Dict,
+    TYPE_CHECKING,
+    Iterable,
+    cast,
+    Tuple,
+    Union,
+    Optional,
+    Callable,
+    Dict,
 )
 import math
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass, XType, RETURN_DEFAULT,
+    DXFAttr,
+    DXFAttributes,
+    DefSubclass,
+    XType,
+    RETURN_DEFAULT,
     group_code_mapping,
 )
 from ezdxf.lldxf.const import (
-    DXF12, SUBCLASS_MARKER, DXFValueError, DXFKeyError, DXFStructureError,
+    DXF12,
+    SUBCLASS_MARKER,
+    DXFValueError,
+    DXFKeyError,
+    DXFStructureError,
 )
 from ezdxf.math import (
-    Vec3, X_AXIS, Y_AXIS, Z_AXIS, Matrix44, OCS, UCS, NULLVEC,
+    Vec3,
+    X_AXIS,
+    Y_AXIS,
+    Z_AXIS,
+    Matrix44,
+    OCS,
+    UCS,
+    NULLVEC,
 )
 from ezdxf.math.transformtools import OCSTransform, InsertTransformationError
 from ezdxf.explode import (
-    explode_block_reference, virtual_block_reference_entities,
+    explode_block_reference,
+    virtual_block_reference_entities,
 )
 from ezdxf.entities import factory
 from ezdxf.query import EntityQuery
@@ -30,62 +52,83 @@ from .attrib import Attrib
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, Vertex, DXFNamespace, AttDef, BlockLayout, BaseLayout,
+        TagWriter,
+        Vertex,
+        DXFNamespace,
+        AttDef,
+        BlockLayout,
+        BaseLayout,
         Auditor,
     )
 
-__all__ = ['Insert']
+__all__ = ["Insert"]
 
 ABS_TOL = 1e-9
 
 # Multi-INSERT has subclass id AcDbMInsertBlock
-acdb_block_reference = DefSubclass('AcDbBlockReference', {
-    'attribs_follow': DXFAttr(66, default=0, optional=True),
-    'name': DXFAttr(2, validator=validator.is_valid_block_name),
-    'insert': DXFAttr(10, xtype=XType.any_point),
-
-    # Elevation is a legacy feature from R11 and prior, do not use this
-    # attribute, store the entity elevation in the z-axis of the vertices.
-    # ezdxf does not export the elevation attribute!
-    'elevation': DXFAttr(38, default=0, optional=True),
-
-    'xscale': DXFAttr(
-        41, default=1, optional=True,
-        validator=validator.is_not_zero,
-        fixer=RETURN_DEFAULT,
-    ),
-    'yscale': DXFAttr(
-        42, default=1, optional=True,
-        validator=validator.is_not_zero,
-        fixer=RETURN_DEFAULT,
-    ),
-    'zscale': DXFAttr(
-        43, default=1, optional=True,
-        validator=validator.is_not_zero,
-        fixer=RETURN_DEFAULT,
-    ),
-    'rotation': DXFAttr(50, default=0, optional=True),
-    'column_count': DXFAttr(
-        70, default=1, optional=True,
-        validator=validator.is_greater_zero,
-        fixer=RETURN_DEFAULT,
-    ),
-    'row_count': DXFAttr(
-        71, default=1, optional=True,
-        validator=validator.is_greater_zero,
-        fixer=RETURN_DEFAULT,
-    ),
-    'column_spacing': DXFAttr(44, default=0, optional=True),
-    'row_spacing': DXFAttr(45, default=0, optional=True),
-    'extrusion': DXFAttr(
-        210, xtype=XType.point3d, default=Z_AXIS, optional=True,
-        validator=validator.is_not_null_vector,
-        fixer=RETURN_DEFAULT,
-    ),
-})
+acdb_block_reference = DefSubclass(
+    "AcDbBlockReference",
+    {
+        "attribs_follow": DXFAttr(66, default=0, optional=True),
+        "name": DXFAttr(2, validator=validator.is_valid_block_name),
+        "insert": DXFAttr(10, xtype=XType.any_point),
+        # Elevation is a legacy feature from R11 and prior, do not use this
+        # attribute, store the entity elevation in the z-axis of the vertices.
+        # ezdxf does not export the elevation attribute!
+        "elevation": DXFAttr(38, default=0, optional=True),
+        "xscale": DXFAttr(
+            41,
+            default=1,
+            optional=True,
+            validator=validator.is_not_zero,
+            fixer=RETURN_DEFAULT,
+        ),
+        "yscale": DXFAttr(
+            42,
+            default=1,
+            optional=True,
+            validator=validator.is_not_zero,
+            fixer=RETURN_DEFAULT,
+        ),
+        "zscale": DXFAttr(
+            43,
+            default=1,
+            optional=True,
+            validator=validator.is_not_zero,
+            fixer=RETURN_DEFAULT,
+        ),
+        "rotation": DXFAttr(50, default=0, optional=True),
+        "column_count": DXFAttr(
+            70,
+            default=1,
+            optional=True,
+            validator=validator.is_greater_zero,
+            fixer=RETURN_DEFAULT,
+        ),
+        "row_count": DXFAttr(
+            71,
+            default=1,
+            optional=True,
+            validator=validator.is_greater_zero,
+            fixer=RETURN_DEFAULT,
+        ),
+        "column_spacing": DXFAttr(44, default=0, optional=True),
+        "row_spacing": DXFAttr(45, default=0, optional=True),
+        "extrusion": DXFAttr(
+            210,
+            xtype=XType.point3d,
+            default=Z_AXIS,
+            optional=True,
+            validator=validator.is_not_null_vector,
+            fixer=RETURN_DEFAULT,
+        ),
+    },
+)
 acdb_block_reference_group_codes = group_code_mapping(acdb_block_reference)
-NON_ORTHO_MSG = 'INSERT entity can not represent a non-orthogonal target ' \
-                'coordinate system.'
+NON_ORTHO_MSG = (
+    "INSERT entity can not represent a non-orthogonal target "
+    "coordinate system."
+)
 
 
 # Notes to SEQEND:
@@ -100,10 +143,12 @@ NON_ORTHO_MSG = 'INSERT entity can not represent a non-orthogonal target ' \
 # Nonetheless the Insert.add_attrib() method also creates a requires SEQEND if
 # necessary.
 
+
 @factory.register_entity
 class Insert(LinkedEntities):
-    """ DXF INSERT entity """
-    DXFTYPE = 'INSERT'
+    """DXF INSERT entity"""
+
+    DXFTYPE = "INSERT"
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_block_reference)
 
     @property
@@ -114,36 +159,49 @@ class Insert(LinkedEntities):
     def attribs_follow(self) -> bool:
         return bool(len(self.attribs))
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+        self, processor: SubclassProcessor = None
+    ) -> "DXFNamespace":
         dxf = super().load_dxf_attribs(processor)
         if processor:
             # Always use the 2nd subclass, could be AcDbBlockReference or
             # AcDbMInsertBlock:
             processor.fast_load_dxfattribs(
-                dxf, acdb_block_reference_group_codes, 2, recover=True)
+                dxf, acdb_block_reference_group_codes, 2, recover=True
+            )
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:
-                elevation_to_z_axis(dxf, ('insert',))
+                elevation_to_z_axis(dxf, ("insert",))
         return dxf
 
-    def export_entity(self, tagwriter: 'TagWriter') -> None:
-        """ Export entity specific data as DXF tags. """
+    def export_entity(self, tagwriter: "TagWriter") -> None:
+        """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         if tagwriter.dxfversion > DXF12:
             if (self.dxf.column_count > 1) or (self.dxf.row_count > 1):
-                tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbMInsertBlock')
+                tagwriter.write_tag2(SUBCLASS_MARKER, "AcDbMInsertBlock")
             else:
-                tagwriter.write_tag2(SUBCLASS_MARKER, 'AcDbBlockReference')
+                tagwriter.write_tag2(SUBCLASS_MARKER, "AcDbBlockReference")
         if self.attribs_follow:
             tagwriter.write_tag2(66, 1)
-        self.dxf.export_dxf_attribs(tagwriter, [
-            'name', 'insert', 'xscale', 'yscale', 'zscale', 'rotation',
-            'column_count', 'row_count', 'column_spacing', 'row_spacing',
-            'extrusion',
-        ])
+        self.dxf.export_dxf_attribs(
+            tagwriter,
+            [
+                "name",
+                "insert",
+                "xscale",
+                "yscale",
+                "zscale",
+                "rotation",
+                "column_count",
+                "row_count",
+                "column_spacing",
+                "row_spacing",
+                "extrusion",
+            ],
+        )
 
-    def export_dxf(self, tagwriter: 'TagWriter'):
+    def export_dxf(self, tagwriter: "TagWriter"):
         super().export_dxf(tagwriter)
         # Do no export SEQEND if no ATTRIBS attached:
         if self.attribs_follow:
@@ -151,50 +209,56 @@ class Insert(LinkedEntities):
 
     @property
     def has_scaling(self) -> bool:
-        """ Returns ``True`` if any axis scaling is applied. """
-        if self.dxf.hasattr('xscale') and self.dxf.xscale != 1:
+        """Returns ``True`` if any axis scaling is applied."""
+        if self.dxf.hasattr("xscale") and self.dxf.xscale != 1:
             return True
-        if self.dxf.hasattr('yscale') and self.dxf.yscale != 1:
+        if self.dxf.hasattr("yscale") and self.dxf.yscale != 1:
             return True
-        if self.dxf.hasattr('zscale') and self.dxf.zscale != 1:
+        if self.dxf.hasattr("zscale") and self.dxf.zscale != 1:
             return True
         return False
 
     @property
     def has_uniform_scaling(self) -> bool:
-        """ Returns ``True`` if scaling is uniform in x-, y- and z-axis ignoring
+        """Returns ``True`` if scaling is uniform in x-, y- and z-axis ignoring
         reflections e.g. (1, 1, -1) is uniform scaling.
 
         """
-        return abs(self.dxf.xscale) == abs(self.dxf.yscale) == abs(
-            self.dxf.zscale)
+        return (
+            abs(self.dxf.xscale) == abs(self.dxf.yscale) == abs(self.dxf.zscale)
+        )
 
     def set_scale(self, factor: float):
-        """ Set uniform scaling. """
+        """Set uniform scaling."""
         if factor == 0:
-            raise ValueError('Invalid scaling factor.')
+            raise ValueError("Invalid scaling factor.")
         self.dxf.xscale = factor
         self.dxf.yscale = factor
         self.dxf.zscale = factor
         return self
 
     def is_xref(self) -> bool:
-        """ Return ``True`` if XREF or XREF_OVERLAY. """
-        assert self.doc is not None, 'Requires a document object'
+        """Return ``True`` if XREF or XREF_OVERLAY."""
+        assert self.doc is not None, "Requires a document object"
         block_layout = self.doc.blocks.get(self.dxf.name)
-        if block_layout is not None and block_layout.block.dxf.flags & 12:  # XREF(4) & XREF_OVERLAY(8)
+        if (
+            block_layout is not None and block_layout.block.dxf.flags & 12
+        ):  # XREF(4) & XREF_OVERLAY(8)
             return True
         return False
 
-    def block(self) -> Optional['BlockLayout']:
-        """  Returns associated :class:`~ezdxf.layouts.BlockLayout`. """
+    def block(self) -> Optional["BlockLayout"]:
+        """Returns associated :class:`~ezdxf.layouts.BlockLayout`."""
         if self.doc is None:
             return None
         return self.doc.blocks.get(self.dxf.name)
 
-    def place(self, insert: 'Vertex' = None,
-              scale: Tuple[float, float, float] = None,
-              rotation: float = None) -> 'Insert':
+    def place(
+        self,
+        insert: "Vertex" = None,
+        scale: Tuple[float, float, float] = None,
+        rotation: float = None,
+    ) -> "Insert":
         """
         Set block reference placing location `insert`, scaling and rotation
         attributes. Parameters which are ``None`` will not be altered.
@@ -220,9 +284,12 @@ class Insert(LinkedEntities):
             self.dxf.rotation = rotation
         return self
 
-    def grid(self, size: Tuple[int, int] = (1, 1),
-             spacing: Tuple[float, float] = (1, 1)) -> 'Insert':
-        """ Place block reference in a grid layout, grid `size` defines the
+    def grid(
+        self,
+        size: Tuple[int, int] = (1, 1),
+        spacing: Tuple[float, float] = (1, 1),
+    ) -> "Insert":
+        """Place block reference in a grid layout, grid `size` defines the
         row- and column count, `spacing` defines the distance between two block
         references.
 
@@ -250,9 +317,10 @@ class Insert(LinkedEntities):
         self.dxf.column_spacing = col_spacing
         return self
 
-    def get_attrib(self, tag: str, search_const: bool = False) -> Optional[
-        Union['Attrib', 'AttDef']]:
-        """ Get attached :class:`Attrib` entity with :code:`dxf.tag == tag`,
+    def get_attrib(
+        self, tag: str, search_const: bool = False
+    ) -> Optional[Union["Attrib", "AttDef"]]:
+        """Get attached :class:`Attrib` entity with :code:`dxf.tag == tag`,
         returns ``None`` if not found. Some applications may not attach constant
         ATTRIB entities, set `search_const` to ``True``, to get at least the
         associated :class:`AttDef` entity.
@@ -272,9 +340,10 @@ class Insert(LinkedEntities):
                     return attdef
         return None
 
-    def get_attrib_text(self, tag: str, default: str = None,
-                        search_const: bool = False) -> str:
-        """ Get content text of attached :class:`Attrib` entity with
+    def get_attrib_text(
+        self, tag: str, default: str = None, search_const: bool = False
+    ) -> str:
+        """Get content text of attached :class:`Attrib` entity with
         :code:`dxf.tag == tag`, returns `default` if not found.
         Some applications may not attach constant ATTRIB entities, set
         `search_const` to ``True``, to get content text of the
@@ -292,7 +361,7 @@ class Insert(LinkedEntities):
         return attrib.dxf.text
 
     def has_attrib(self, tag: str, search_const: bool = False) -> bool:
-        """ Returns ``True`` if ATTRIB `tag` exist, for `search_const` doc see
+        """Returns ``True`` if ATTRIB `tag` exist, for `search_const` doc see
         :meth:`get_attrib`.
 
         Args:
@@ -302,9 +371,14 @@ class Insert(LinkedEntities):
         """
         return self.get_attrib(tag, search_const) is not None
 
-    def add_attrib(self, tag: str, text: str, insert: 'Vertex' = (0, 0),
-                   dxfattribs: dict = None) -> 'Attrib':
-        """ Attach an :class:`Attrib` entity to the block reference.
+    def add_attrib(
+        self,
+        tag: str,
+        text: str,
+        insert: "Vertex" = (0, 0),
+        dxfattribs: dict = None,
+    ) -> "Attrib":
+        """Attach an :class:`Attrib` entity to the block reference.
 
         Example for appending an attribute to an INSERT entity with none
         standard alignment::
@@ -321,11 +395,10 @@ class Insert(LinkedEntities):
 
         """
         dxfattribs = dxfattribs or {}
-        dxfattribs['tag'] = tag
-        dxfattribs['text'] = text
-        dxfattribs['insert'] = insert
-        attrib = cast('Attrib',
-                      self._new_compound_entity('ATTRIB', dxfattribs))
+        dxfattribs["tag"] = tag
+        dxfattribs["text"] = text
+        dxfattribs["insert"] = insert
+        attrib = cast("Attrib", self._new_compound_entity("ATTRIB", dxfattribs))
         self.attribs.append(attrib)
 
         # This case is only possible if INSERT is read from file without
@@ -335,7 +408,7 @@ class Insert(LinkedEntities):
         return attrib
 
     def delete_attrib(self, tag: str, ignore=False) -> None:
-        """ Delete an attached :class:`Attrib` entity from INSERT. If `ignore`
+        """Delete an attached :class:`Attrib` entity from INSERT. If `ignore`
         is ``False``, an :class:`DXFKeyError` exception is raised, if
         ATTRIB `tag` does not exist.
 
@@ -357,8 +430,7 @@ class Insert(LinkedEntities):
             raise DXFKeyError(tag)
 
     def delete_all_attribs(self) -> None:
-        """ Delete all :class:`Attrib` entities attached to the INSERT entity.
-        """
+        """Delete all :class:`Attrib` entities attached to the INSERT entity."""
         if not self.is_alive:
             return
 
@@ -366,8 +438,8 @@ class Insert(LinkedEntities):
             attrib.destroy()
         self._sub_entities = []
 
-    def transform(self, m: 'Matrix44') -> 'Insert':
-        """ Transform INSERT entity by transformation matrix `m` inplace.
+    def transform(self, m: "Matrix44") -> "Insert":
+        """Transform INSERT entity by transformation matrix `m` inplace.
 
         Unlike the transformation matrix `m`, the INSERT entity can not
         represent a non orthogonal target coordinate system, for this case an
@@ -390,8 +462,11 @@ class Insert(LinkedEntities):
         uy = uy.normalize()
         uz = uz.normalize()
         # check for orthogonal x-, y- and z-axis
-        if (abs(ux.dot(uz)) > ABS_TOL or abs(ux.dot(uy)) > ABS_TOL or
-                abs(uz.dot(uy)) > ABS_TOL):
+        if (
+            abs(ux.dot(uz)) > ABS_TOL
+            or abs(ux.dot(uy)) > ABS_TOL
+            or abs(uz.dot(uy)) > ABS_TOL
+        ):
             raise InsertTransformationError(NON_ORTHO_MSG)
 
         # expected y-axis for an orthogonal right handed coordinate system:
@@ -413,20 +488,21 @@ class Insert(LinkedEntities):
             attrib.transform(m)
         return self
 
-    def translate(self, dx: float, dy: float, dz: float) -> 'Insert':
-        """ Optimized INSERT translation about `dx` in x-axis, `dy` in y-axis
+    def translate(self, dx: float, dy: float, dz: float) -> "Insert":
+        """Optimized INSERT translation about `dx` in x-axis, `dy` in y-axis
         and `dz` in z-axis.
 
         """
         ocs = self.ocs()
         self.dxf.insert = ocs.from_wcs(
-            Vec3(dx, dy, dz) + ocs.to_wcs(self.dxf.insert))
+            Vec3(dx, dy, dz) + ocs.to_wcs(self.dxf.insert)
+        )
         for attrib in self.attribs:
             attrib.translate(dx, dy, dz)
         return self
 
     def matrix44(self) -> Matrix44:
-        """ Returns a transformation matrix of type :class:`Matrix44` to
+        """Returns a transformation matrix of type :class:`Matrix44` to
         transform the block entities into :ref:`WCS`.
 
         """
@@ -446,7 +522,7 @@ class Insert(LinkedEntities):
         if angle:
             m *= Matrix44.axis_rotate(extrusion, angle)
 
-        insert = ocs.to_wcs(dxf.get('insert', Vec3()))
+        insert = ocs.to_wcs(dxf.get("insert", Vec3()))
 
         block_layout = self.block()
         if block_layout is not None:
@@ -458,7 +534,7 @@ class Insert(LinkedEntities):
         return m
 
     def ucs(self):
-        """ Returns the block reference coordinate system as
+        """Returns the block reference coordinate system as
         :class:`ezdxf.math.UCS` object.
         """
         m = self.matrix44()
@@ -467,16 +543,16 @@ class Insert(LinkedEntities):
         return ucs
 
     def reset_transformation(self) -> None:
-        """ Reset block reference parameters `location`, `rotation` and
+        """Reset block reference parameters `location`, `rotation` and
         `extrusion` vector.
 
         """
         self.dxf.insert = NULLVEC
-        self.dxf.discard('rotation')
-        self.dxf.discard('extrusion')
+        self.dxf.discard("rotation")
+        self.dxf.discard("extrusion")
 
-    def explode(self, target_layout: 'BaseLayout' = None) -> 'EntityQuery':
-        """ Explode block reference entities into target layout, if target
+    def explode(self, target_layout: "BaseLayout" = None) -> "EntityQuery":
+        """Explode block reference entities into target layout, if target
         layout is ``None``, the target layout is the layout of the block
         reference. This method destroys the source block reference entity.
 
@@ -504,7 +580,7 @@ class Insert(LinkedEntities):
             target_layout = self.get_layout()
             if target_layout is None:
                 raise DXFStructureError(
-                    'INSERT without layout assignment, specify target layout.'
+                    "INSERT without layout assignment, specify target layout."
                 )
         return explode_block_reference(self, target_layout=target_layout)
 
@@ -516,10 +592,12 @@ class Insert(LinkedEntities):
         """
         return virtual_block_reference_entities(self)
 
-    def virtual_entities(self,
-                         skipped_entity_callback: Optional[
-                             Callable[[DXFGraphic, str], None]] = None
-                         ) -> Iterable[DXFGraphic]:
+    def virtual_entities(
+        self,
+        skipped_entity_callback: Optional[
+            Callable[[DXFGraphic, str], None]
+        ] = None,
+    ) -> Iterable[DXFGraphic]:
         """
         Yields "virtual" entities of a block reference. This method is meant to
         examine the block reference entities at the "exploded" location without
@@ -556,21 +634,23 @@ class Insert(LinkedEntities):
 
         """
         return virtual_block_reference_entities(
-            self, skipped_entity_callback=skipped_entity_callback)
+            self, skipped_entity_callback=skipped_entity_callback
+        )
 
     @property
     def mcount(self):
-        """ Returns the multi-insert count, MINSERT (multi-insert) processing
+        """Returns the multi-insert count, MINSERT (multi-insert) processing
         is required if :attr:`mcount` > 1.
 
         .. versionadded:: 0.14
 
         """
         return (self.dxf.row_count if self.dxf.row_spacing else 1) * (
-            self.dxf.column_count if self.dxf.column_spacing else 1)
+            self.dxf.column_count if self.dxf.column_spacing else 1
+        )
 
-    def multi_insert(self) -> Iterable['Insert']:
-        """ Yields a virtual INSERT entity for each grid element of a MINSERT
+    def multi_insert(self) -> Iterable["Insert"]:
+        """Yields a virtual INSERT entity for each grid element of a MINSERT
         entity (multi-insert).
 
         .. versionadded:: 0.14
@@ -584,10 +664,10 @@ class Insert(LinkedEntities):
         def adjust_dxf_attribs(insert, offset):
             dxf = insert.dxf
             dxf.insert += offset
-            dxf.discard('row_count')
-            dxf.discard('column_count')
-            dxf.discard('row_spacing')
-            dxf.discard('column_spacing')
+            dxf.discard("row_count")
+            dxf.discard("column_count")
+            dxf.discard("row_spacing")
+            dxf.discard("column_spacing")
 
         done = set()
         row_spacing = self.dxf.row_spacing
@@ -608,7 +688,7 @@ class Insert(LinkedEntities):
                     transform_attached_attrib_entities(insert, offset)
                     yield insert
 
-    def add_auto_attribs(self, values: Dict[str, str]) -> 'Insert':
+    def add_auto_attribs(self, values: Dict[str, str]) -> "Insert":
         """
         Attach for each :class:`~ezdxf.entities.Attdef` entity, defined in the
         block definition, automatically an :class:`Attrib` entity to the block
@@ -629,15 +709,15 @@ class Insert(LinkedEntities):
 
         """
 
-        def unpack(dxfattribs) -> Tuple[str, str, 'Vertex']:
-            tag = dxfattribs.pop('tag')
+        def unpack(dxfattribs) -> Tuple[str, str, "Vertex"]:
+            tag = dxfattribs.pop("tag")
             text = values.get(tag, "")
-            location = dxfattribs.pop('insert')
+            location = dxfattribs.pop("insert")
             return tag, text, location
 
         def autofill() -> None:
             for attdef in blockdef.attdefs():
-                dxfattribs = attdef.dxfattribs(drop={'prompt', 'handle'})
+                dxfattribs = attdef.dxfattribs(drop={"prompt", "handle"})
                 tag, text, location = unpack(dxfattribs)
                 attrib = self.add_attrib(tag, text, location, dxfattribs)
                 attrib.transform(m)
@@ -647,15 +727,15 @@ class Insert(LinkedEntities):
         autofill()
         return self
 
-    def audit(self, auditor: 'Auditor') -> None:
-        """ Validity check. """
+    def audit(self, auditor: "Auditor") -> None:
+        """Validity check."""
         super().audit(auditor)
         doc = auditor.doc
         if doc and doc.blocks:
             if self.dxf.name not in doc.blocks:
                 auditor.fixed_error(
                     code=AuditError.UNDEFINED_BLOCK,
-                    message=f'Deleted entity {str(self)} without required BLOCK'
-                            f' definition.',
+                    message=f"Deleted entity {str(self)} without required BLOCK"
+                    f" definition.",
                 )
                 auditor.trash(self)
