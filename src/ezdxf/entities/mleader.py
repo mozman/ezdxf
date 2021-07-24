@@ -1,6 +1,6 @@
 # Copyright (c) 2018-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List, Union, Optional
+from typing import TYPE_CHECKING, List, Union, Optional, Iterable
 import copy
 import logging
 from collections import namedtuple
@@ -16,6 +16,8 @@ from ezdxf.lldxf.attributes import (
 from ezdxf.lldxf.tags import Tags
 from ezdxf.math import Vec3, NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
 from ezdxf import colors
+from ezdxf.proxygraphic import ProxyGraphic
+
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -436,6 +438,14 @@ class MultiLeader(DXFGraphic):
             tagwriter.write_tag2(177, attrib.index)
             tagwriter.write_tag2(44, attrib.width)
             tagwriter.write_tag2(302, attrib.text)
+
+    def __virtual_entities__(self) -> Iterable["DXFGraphic"]:
+        # As long as MLeader.virtual_entities() is not implemented,
+        # use existing proxy graphic:
+        if self.proxy_graphic:
+            return ProxyGraphic(self.proxy_graphic, self.doc).virtual_entities()
+        else:
+            return []
 
 
 class MultiLeaderContext:

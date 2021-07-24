@@ -3,13 +3,13 @@
 from typing import Iterable, Optional, cast, TYPE_CHECKING, List
 import abc
 import math
-from ezdxf.entities import DXFEntity
+from ezdxf.entities import DXFEntity, Insert
 from ezdxf.lldxf import const
 from ezdxf.math import Vec3, UCS, Z_AXIS, X_AXIS
 from ezdxf.path import Path, make_path, from_vertices
 from ezdxf.render import MeshBuilder, MeshVertexMerger, TraceBuilder
+from ezdxf.protocols import SupportsVirtualEntities, virtual_entities
 
-from ezdxf.proxygraphic import ProxyGraphic
 from ezdxf.tools.text import (
     TextLine,
     unified_alignment,
@@ -540,26 +540,16 @@ def recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]:
 
     """
     for entity in entities:
-        dxftype = entity.dxftype()
-        # ignore this virtual_entities() methods:
-        if dxftype in ("POINT", "LWPOLYLINE", "POLYLINE"):
-            yield entity
-        elif dxftype == "INSERT":
-            entity = cast("Insert", entity)
+        if isinstance(entity, Insert):
             if entity.mcount > 1:
                 yield from recursive_decompose(entity.multi_insert())
             else:
                 yield from entity.attribs
-                yield from recursive_decompose(entity.virtual_entities())
-        elif hasattr(entity, "virtual_entities"):
+                yield from recursive_decompose(virtual_entities(entity))
+        # has a required __virtual_entities__() to be rendered?
+        elif isinstance(entity, SupportsVirtualEntities):
             # could contain block references:
-            yield from recursive_decompose(entity.virtual_entities())
-        # As long as MLeader.virtual_entities() is not implemented,
-        # use existing proxy graphic:
-        elif dxftype in ("MLEADER", "MULTILEADER") and entity.proxy_graphic:
-            yield from ProxyGraphic(
-                entity.proxy_graphic, entity.doc
-            ).virtual_entities()
+            yield from recursive_decompose(virtual_entities(entity))
         else:
             yield entity
 
