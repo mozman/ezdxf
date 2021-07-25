@@ -1,6 +1,6 @@
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
-from typing import List, Set
+from typing import List, Set, cast
 import pytest
 import ezdxf
 from ezdxf.addons.drawing import Frontend, RenderContext, Properties
@@ -522,9 +522,10 @@ class TestBackendScaler:
 def test_draw_scaled_entities(msp, ctx):
     msp.add_point((1, 1))
     msp.add_point((2, 3))
-    frontend = Frontend(ctx, PathBackend(), overall_scaling_factor=2)
+    out = cast(PathBackend, BackendScaler(PathBackend(), factor=2))
+    frontend = Frontend(ctx, out)
     frontend.draw_entities(msp)
-    result = frontend.out.collector
+    result = frontend.out.collector  # type: ignore
     assert len(result) == 2
     assert result[0][1] == (2, 2)
     assert result[1][1] == (4, 6)

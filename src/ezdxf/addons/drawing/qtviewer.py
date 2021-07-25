@@ -12,6 +12,7 @@ import ezdxf
 from ezdxf import recover
 from ezdxf.addons import odafc
 from ezdxf.addons.drawing import Frontend, RenderContext
+from ezdxf.addons.drawing.backend import BackendScaler
 
 from ezdxf.addons.drawing.properties import is_dark_color
 from ezdxf.addons.drawing.pyqt import (
@@ -203,10 +204,12 @@ class CadViewer(qw.QMainWindow):
         self.resize(1600, 900)
         self.show()
 
-    def _reset_backend(self):
+    def _reset_backend(self, scale: float = 1.0):
+        backend = PyQtBackend(use_text_cache=True, params=self._render_params)
+        if scale != 1.0:
+            backend = BackendScaler(backend, factor=scale)
         # clear caches
-        self._backend = PyQtBackend(use_text_cache=True,
-            params=self._render_params)
+        self._backend = backend
 
     def _select_doc(self):
         path, _ = qw.QFileDialog.getOpenFileName(
@@ -251,12 +254,12 @@ class CadViewer(qw.QMainWindow):
                 return
         self.doc = document
         self._render_context = RenderContext(document)
-        self._reset_backend()  # clear caches
+        self._reset_backend(scale=overall_scaling_factor)  # clear caches
         self._visible_layers = None
         self._current_layout = None
         self._populate_layouts()
         self._populate_layer_list()
-        self.draw_layout(layout, overall_scaling_factor=overall_scaling_factor)
+        self.draw_layout(layout)
         self.setWindowTitle('CAD Viewer - ' + str(document.filename))
 
     def _populate_layer_list(self):
@@ -289,8 +292,6 @@ class CadViewer(qw.QMainWindow):
         self,
         layout_name: str,
         reset_view: bool = True,
-        *,
-        overall_scaling_factor: float = 1.0
     ):
         print(f'drawing {layout_name}')
         self._current_layout = layout_name
@@ -301,11 +302,7 @@ class CadViewer(qw.QMainWindow):
         self._update_render_context(layout)
         try:
             start = time.perf_counter()
-            Frontend(
-                self._render_context,
-                self._backend,
-                overall_scaling_factor=overall_scaling_factor
-            ).draw_layout(layout)
+            Frontend(self._render_context, self._backend).draw_layout(layout)
             duration = time.perf_counter() - start
             print(f'took {duration:.4f} seconds')
         except DXFStructureError as e:
