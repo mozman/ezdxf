@@ -296,5 +296,5 @@ class BackendScaler:
             text,
             transform * self._scaling_matrix,
             properties,
-            cap_height * self._factor,
+            cap_height,  # scaling not necessary
         )
