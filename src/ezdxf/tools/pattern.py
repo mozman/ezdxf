@@ -10,7 +10,7 @@ from ._iso_pattern import ISO_PATTERN
 
 __all__ = [
     'load', 'scale_pattern', 'scale_all', 'parse', 'ISO_PATTERN',
-    'IMPERIAL_PATTERN', 'PatternAnalyser'
+    'IMPERIAL_PATTERN', 'HatchPatternLineType', 'HatchPatternType', 'PatternAnalyser'
 ]
 IMPERIAL_SCALE_FACTOR = 1.0 / 25.4
 HatchPatternLineType = Tuple[
