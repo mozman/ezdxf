@@ -3,7 +3,7 @@
 import math
 from typing import Iterable, cast, Union, List, Dict, Callable, Tuple, Set
 from ezdxf.lldxf import const
-from ezdxf.addons.drawing.backend import Backend, BackendScaler
+from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.properties import (
     RenderContext,
     VIEWPORT_COLOR,

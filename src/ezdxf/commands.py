@@ -404,7 +404,7 @@ class View(Command):
             "--scale",
             type=float,
             default=1.0,
-            help="set set overall scaling factor > 1e-9 to scale the output",
+            help="set set overall scaling factor > 1e-9 to scale the content",
         )
 
     @staticmethod
@@ -416,8 +416,9 @@ class View(Command):
             print("PyQt5 package not found.")
             sys.exit(1)
         from ezdxf.addons.drawing.qtviewer import CadViewer
+
         if args.scale < 1e-9:
-            print("Scaling factor too smale or negative!")
+            print("Scaling factor too small or negative!")
             sys.exit(2)
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
         app = QtWidgets.QApplication(sys.argv)
@@ -432,9 +433,10 @@ class View(Command):
         if filename:
             doc, auditor = load_document(filename)
             viewer.set_document(
-                doc, auditor,
+                doc,
+                auditor,
                 layout=args.layout,
-                overall_scaling_factor=args.scale
+                overall_scaling_factor=args.scale,
             )
         sys.exit(app.exec_())
 
