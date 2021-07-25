@@ -23,22 +23,17 @@ DEFAULT_PARAMS = {
     # 0   5% of draw area height
     # <0  Specifies a percentage of the viewport size
     # >0  Specifies an absolute size
-
     # See POINT docs:
     "pdmode": 0,
-
     # Do not show defpoints by default.
     # Filtering is handled by the Frontend().
     "show_defpoints": 0,
-
     # linetype render:
     # "internal" or "ezdxf"
     "linetype_renderer": "internal",
-
     # overall linetype scaling: None as default is important!
     # 0.0 = disable line types at all, only supported by PyQt backend yet!
     "linetype_scaling": 1.0,
-
     # lineweight_scaling: 0.0 to disable lineweights at all - the current
     # result is correct, in SVG the line width is 0.7 points for 0.25mm as
     # required, but it often looks too thick
@@ -46,12 +41,10 @@ DEFAULT_PARAMS = {
     "min_lineweight": 0.24,  # 1/300 inch
     "min_dash_length": 0.1,  # just guessing
     "max_flattening_distance": 0.01,  # just guessing
-
     # 0 = disable HATCH entities
     # 1 = show HATCH entities
     # Filtering is  handled by the Frontend().
     "show_hatch": 1,
-
     # 0 = disable hatch pattern
     # 1 = use predefined matplotlib pattern by pattern-name matching
     # 2 = draw as solid fillings
@@ -65,19 +58,19 @@ class Backend(ABC):
         if params:
             err = set(params.keys()) - set(DEFAULT_PARAMS.keys())
             if err:
-                raise ValueError(f'Invalid parameter(s): {str(err)}')
+                raise ValueError(f"Invalid parameter(s): {str(err)}")
             params_.update(params)
         self.entity_stack: List[Tuple[DXFGraphic, Properties]] = []
-        self.pdsize = params_['pdsize']
-        self.pdmode = params_['pdmode']
-        self.show_defpoints = params_['show_defpoints']
-        self.show_hatch = params_['show_hatch']
-        self.hatch_pattern = params_['hatch_pattern']
-        self.linetype_renderer = params_['linetype_renderer'].lower()
-        self.linetype_scaling = params_['linetype_scaling']
-        self.lineweight_scaling = params_['lineweight_scaling']
-        self.min_lineweight = params_['min_lineweight']
-        self.min_dash_length = params_['min_dash_length']
+        self.pdsize = params_["pdsize"]
+        self.pdmode = params_["pdmode"]
+        self.show_defpoints = params_["show_defpoints"]
+        self.show_hatch = params_["show_hatch"]
+        self.hatch_pattern = params_["hatch_pattern"]
+        self.linetype_renderer = params_["linetype_renderer"].lower()
+        self.linetype_scaling = params_["linetype_scaling"]
+        self.lineweight_scaling = params_["lineweight_scaling"]
+        self.min_lineweight = params_["min_lineweight"]
+        self.min_dash_length = params_["min_dash_length"]
 
         # Real document measurement value will be updated by the Frontend():
         # 0=Imperial (in, ft, yd, ...); 1=ISO meters
@@ -90,18 +83,18 @@ class Backend(ABC):
         # should calculate an appropriate value, like 1 screen- or paper pixel
         # on the output medium, but converted into drawing units.
         # Set Path() approximation accuracy:
-        self.max_flattening_distance = params_['max_flattening_distance']
+        self.max_flattening_distance = params_["max_flattening_distance"]
 
     def enter_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         self.entity_stack.append((entity, properties))
 
     def exit_entity(self, entity: DXFGraphic) -> None:
         e, p = self.entity_stack.pop()
-        assert e is entity, 'entity stack mismatch'
+        assert e is entity, "entity stack mismatch"
 
     @property
     def current_entity(self) -> Optional[DXFGraphic]:
-        """ Obtain the current entity being drawn """
+        """Obtain the current entity being drawn"""
         return self.entity_stack[-1][0] if self.entity_stack else None
 
     @abstractmethod
@@ -110,18 +103,17 @@ class Backend(ABC):
 
     @abstractmethod
     def draw_point(self, pos: Vec3, properties: Properties) -> None:
-        """ Draw a real dimensionless point, because not all backends support
+        """Draw a real dimensionless point, because not all backends support
         zero-length lines!
         """
         raise NotImplementedError
 
     @abstractmethod
-    def draw_line(self, start: Vec3, end: Vec3,
-                  properties: Properties) -> None:
+    def draw_line(self, start: Vec3, end: Vec3, properties: Properties) -> None:
         raise NotImplementedError
 
     def draw_path(self, path: Path, properties: Properties) -> None:
-        """ Draw an outline path (connected string of line segments and Bezier
+        """Draw an outline path (connected string of line segments and Bezier
         curves).
 
         The :meth:`draw_path` implementation is a fall-back implementation
@@ -139,9 +131,13 @@ class Backend(ABC):
                 self.draw_line(prev, vertex, properties)
                 prev = vertex
 
-    def draw_filled_paths(self, paths: Iterable[Path], holes: Iterable[Path],
-                          properties: Properties) -> None:
-        """ Draw multiple filled paths (connected string of line segments and
+    def draw_filled_paths(
+        self,
+        paths: Iterable[Path],
+        holes: Iterable[Path],
+        properties: Properties,
+    ) -> None:
+        """Draw multiple filled paths (connected string of line segments and
         Bezier curves) with holes.
 
         The strategy to draw multiple paths at once was chosen, because a HATCH
@@ -170,43 +166,51 @@ class Backend(ABC):
         for path in paths:
             self.draw_filled_polygon(
                 path.flattening(distance=self.max_flattening_distance),
-                properties
+                properties,
             )
 
     @abstractmethod
-    def draw_filled_polygon(self, points: Iterable[Vec3],
-                            properties: Properties) -> None:
-        """ Fill a polygon whose outline is defined by the given points.
+    def draw_filled_polygon(
+        self, points: Iterable[Vec3], properties: Properties
+    ) -> None:
+        """Fill a polygon whose outline is defined by the given points.
         Used to draw entities with simple outlines where :meth:`draw_path` may
         be an inefficient way to draw such a polygon.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def draw_text(self, text: str, transform: Matrix44, properties: Properties,
-                  cap_height: float) -> None:
-        """ Draw a single line of text with the anchor point at the baseline
+    def draw_text(
+        self,
+        text: str,
+        transform: Matrix44,
+        properties: Properties,
+        cap_height: float,
+    ) -> None:
+        """Draw a single line of text with the anchor point at the baseline
         left point.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def get_font_measurements(self, cap_height: float,
-                              font: 'FontFace' = None) -> 'FontMeasurements':
-        """ Note: backends might want to cache the results of these calls """
+    def get_font_measurements(
+        self, cap_height: float, font: "FontFace" = None
+    ) -> "FontMeasurements":
+        """Note: backends might want to cache the results of these calls"""
         raise NotImplementedError
 
     @abstractmethod
-    def get_text_line_width(self, text: str, cap_height: float,
-                            font: 'FontFace' = None) -> float:
-        """ Get the width of a single line of text. """
+    def get_text_line_width(
+        self, text: str, cap_height: float, font: "FontFace" = None
+    ) -> float:
+        """Get the width of a single line of text."""
         # https://stackoverflow.com/questions/32555015/how-to-get-the-visual-length-of-a-text-string-in-python
         # https://stackoverflow.com/questions/4190667/how-to-get-width-of-a-truetype-font-character-in-1200ths-of-an-inch-with-python
         raise NotImplementedError
 
     @abstractmethod
     def clear(self) -> None:
-        """ Clear the canvas. Does not reset the internal state of the backend.
+        """Clear the canvas. Does not reset the internal state of the backend.
         Make sure that the previous drawing is finished before clearing.
 
         """
@@ -217,13 +221,13 @@ class Backend(ABC):
 
 
 def prepare_string_for_rendering(text: str, dxftype: str) -> str:
-    assert '\n' not in text, 'not a single line of text'
-    if dxftype in {'TEXT', 'ATTRIB', 'ATTDEF'}:
-        text = replace_non_printable_characters(text, replacement='?')
-        text = text.replace('\t', '?')
-    elif dxftype == 'MTEXT':
-        text = replace_non_printable_characters(text, replacement='▯')
-        text = text.replace('\t', '        ')
+    assert "\n" not in text, "not a single line of text"
+    if dxftype in {"TEXT", "ATTRIB", "ATTDEF"}:
+        text = replace_non_printable_characters(text, replacement="?")
+        text = text.replace("\t", "?")
+    elif dxftype == "MTEXT":
+        text = replace_non_printable_characters(text, replacement="▯")
+        text = text.replace("\t", "        ")
     else:
         raise TypeError(dxftype)
     return text
