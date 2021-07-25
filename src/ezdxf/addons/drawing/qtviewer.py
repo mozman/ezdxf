@@ -26,8 +26,8 @@ from ezdxf.lldxf.const import DXFStructureError
 
 class CADGraphicsView(qw.QGraphicsView):
     def __init__(self, *, view_buffer: float = 0.2,
-                 zoom_per_scroll_notch: float = 0.2,
-                 loading_overlay: bool = True):
+        zoom_per_scroll_notch: float = 0.2,
+        loading_overlay: bool = True):
         super().__init__()
         self._zoom = 1
         self._default_zoom = 1
@@ -145,7 +145,7 @@ class CADGraphicsViewWithOverlay(CADGraphicsView):
     def _emit_selected(self):
         self.element_selected.emit(self._selected_items, self._selected_index)
         self.scene().invalidate(self.sceneRect(),
-                                qw.QGraphicsScene.ForegroundLayer)
+            qw.QGraphicsScene.ForegroundLayer)
 
 
 class CadViewer(qw.QMainWindow):
@@ -206,7 +206,7 @@ class CadViewer(qw.QMainWindow):
     def _reset_backend(self):
         # clear caches
         self._backend = PyQtBackend(use_text_cache=True,
-                                    params=self._render_params)
+            params=self._render_params)
 
     def _select_doc(self):
         path, _ = qw.QFileDialog.getOpenFileName(
@@ -230,9 +230,16 @@ class CadViewer(qw.QMainWindow):
                 qw.QMessageBox.critical(self, 'Loading Error', str(e))
             except DXFStructureError as e:
                 qw.QMessageBox.critical(self, 'DXF Structure Error',
-                                        f'Invalid DXF file "{path}": {str(e)}')
+                    f'Invalid DXF file "{path}": {str(e)}')
 
-    def set_document(self, document: Drawing, auditor: Auditor):
+    def set_document(
+        self,
+        document: Drawing,
+        auditor: Auditor,
+        *,
+        layout: str = "Model",
+        overall_scaling_factor: float = 1.0
+    ):
         error_count = len(auditor.errors)
         if error_count > 0:
             ret = qw.QMessageBox.question(
@@ -249,7 +256,7 @@ class CadViewer(qw.QMainWindow):
         self._current_layout = None
         self._populate_layouts()
         self._populate_layer_list()
-        self.draw_layout('Model')
+        self.draw_layout(layout, overall_scaling_factor=overall_scaling_factor)
         self.setWindowTitle('CAD Viewer - ' + str(document.filename))
 
     def _populate_layer_list(self):
@@ -264,7 +271,7 @@ class CadViewer(qw.QMainWindow):
                 qc.Qt.Checked if layer.is_visible else qc.Qt.Unchecked)
             checkbox.stateChanged.connect(self._layers_updated)
             text_color = '#FFFFFF' if is_dark_color(layer.color,
-                                                    0.4) else '#000000'
+                0.4) else '#000000'
             checkbox.setStyleSheet(
                 f'color: {text_color}; background-color: {layer.color}')
             self.layers.setItemWidget(item, checkbox)
@@ -278,7 +285,13 @@ class CadViewer(qw.QMainWindow):
                 lambda: self.draw_layout(layout_name, reset_view=True))
             self.select_layout_menu.addAction(action)
 
-    def draw_layout(self, layout_name: str, reset_view: bool = True):
+    def draw_layout(
+        self,
+        layout_name: str,
+        reset_view: bool = True,
+        *,
+        overall_scaling_factor: float = 1.0
+    ):
         print(f'drawing {layout_name}')
         self._current_layout = layout_name
         self.view.begin_loading()
@@ -288,7 +301,11 @@ class CadViewer(qw.QMainWindow):
         self._update_render_context(layout)
         try:
             start = time.perf_counter()
-            Frontend(self._render_context, self._backend).draw_layout(layout)
+            Frontend(
+                self._render_context,
+                self._backend,
+                overall_scaling_factor=overall_scaling_factor
+            ).draw_layout(layout)
             duration = time.perf_counter() - start
             print(f'took {duration:.4f} seconds')
         except DXFStructureError as e:
@@ -308,7 +325,7 @@ class CadViewer(qw.QMainWindow):
         # Direct modification of RenderContext.layers would be more flexible, but would also expose the internals.
         if self._visible_layers is not None:
             self._render_context.set_layers_state(self._visible_layers,
-                                                  state=True)
+                state=True)
 
     def resizeEvent(self, event: qg.QResizeEvent) -> None:
         self.view.fit_to_scene()
@@ -344,7 +361,7 @@ class CadViewer(qw.QMainWindow):
 
     @qc.pyqtSlot(object, int)
     def _on_element_selected(self, elements: List[qw.QGraphicsItem],
-                             index: int):
+        index: int):
         if not elements:
             text = 'No element selected'
         else:

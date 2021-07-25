@@ -400,6 +400,12 @@ class View(Command):
             help="set custom line weight scaling, default is 0 to disable "
             "line weights at all",
         )
+        parser.add_argument(
+            "--scale",
+            type=float,
+            default=1.0,
+            help="set set overall scaling factor > 1e-9 to scale the output",
+        )
 
     @staticmethod
     def run(args):
@@ -410,7 +416,9 @@ class View(Command):
             print("PyQt5 package not found.")
             sys.exit(1)
         from ezdxf.addons.drawing.qtviewer import CadViewer
-
+        if args.scale < 1e-9:
+            print("Scaling factor too smale or negative!")
+            sys.exit(2)
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
         app = QtWidgets.QApplication(sys.argv)
         set_app_icon(app)
@@ -423,8 +431,11 @@ class View(Command):
         filename = args.file
         if filename:
             doc, auditor = load_document(filename)
-            viewer.set_document(doc, auditor)
-            viewer.draw_layout(args.layout)
+            viewer.set_document(
+                doc, auditor,
+                layout=args.layout,
+                overall_scaling_factor=args.scale
+            )
         sys.exit(app.exec_())
 
 
