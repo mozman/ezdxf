@@ -525,7 +525,7 @@ def test_draw_scaled_entities(msp, ctx):
     out = cast(PathBackend, BackendScaler(PathBackend(), factor=2))
     frontend = Frontend(ctx, out)
     frontend.draw_entities(msp)
-    result = frontend.out.collector  # type: ignore
+    result = out.collector
     assert len(result) == 2
     assert result[0][1] == (2, 2)
     assert result[1][1] == (4, 6)
