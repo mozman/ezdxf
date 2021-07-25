@@ -229,11 +229,11 @@ class LayoutProperties:
         return self._has_dark_background
 
     @staticmethod
-    def modelspace(units: Optional[int] = None) -> "LayoutProperties":
+    def modelspace(units: int = 0) -> "LayoutProperties":
         return LayoutProperties('Model', MODEL_SPACE_BG_COLOR, units=units)
 
     @staticmethod
-    def paperspace(name: str = '', units: Optional[int] = None) -> "LayoutProperties":
+    def paperspace(name: str = '', units: int = 0) -> "LayoutProperties":
         return LayoutProperties(name, PAPER_SPACE_BG_COLOR, units=units)
 
     @staticmethod
