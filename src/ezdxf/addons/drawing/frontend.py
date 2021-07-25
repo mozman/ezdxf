@@ -3,7 +3,7 @@
 import math
 from typing import Iterable, cast, Union, List, Dict, Callable, Tuple, Set
 from ezdxf.lldxf import const
-from ezdxf.addons.drawing.backend import Backend
+from ezdxf.addons.drawing.backend import Backend, BackendScaler
 from ezdxf.addons.drawing.properties import (
     RenderContext,
     VIEWPORT_COLOR,
@@ -68,7 +68,11 @@ class Frontend:
     Args:
         ctx: actual render context of a DXF document
         out: backend
-
+        proxy_graphics: o to ignore proxy graphics, 1 to show proxy graphics
+            and 2 to prefer proxy graphics over internal renderings
+        overall_scaling_factor: scale output by given factor, raises
+            :class:`ValueError` for a factor smaller than 1e-9 or a negative
+            factor
     """
 
     def __init__(
@@ -76,13 +80,18 @@ class Frontend:
         ctx: RenderContext,
         out: Backend,
         proxy_graphics: int = USE_PROXY_GRAPHICS,
+        *,
+        overall_scaling_factor: float = 1.0
     ):
         # RenderContext contains all information to resolve resources for a
         # specific DXF document.
         self.ctx = ctx
 
         # DrawingBackend is the interface to the render engine
-        self.out = out
+        if overall_scaling_factor == 1.0:
+            self.out = out
+        else:
+            self.out = cast(Backend, BackendScaler(out, overall_scaling_factor))
 
         # To get proxy graphics support proxy graphics have to be loaded:
         # Set the global option ezdxf.options.load_proxy_graphics to True.

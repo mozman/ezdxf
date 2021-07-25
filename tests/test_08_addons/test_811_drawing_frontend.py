@@ -1,10 +1,10 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
 from typing import List, Set
 import pytest
 import ezdxf
 from ezdxf.addons.drawing import Frontend, RenderContext, Properties
-from ezdxf.addons.drawing.backend import Backend
+from ezdxf.addons.drawing.backend import Backend, BackendScaler, DEFAULT_PARAMS
 from ezdxf.tools.fonts import FontMeasurements
 from ezdxf.document import Drawing
 from ezdxf.entities import DXFGraphic
@@ -401,7 +401,8 @@ def test_visibility_insert_0():
         'L1']
     assert _get_text_visible_when(doc, {'0', 'Layer2'}) == ['L0']
     assert _get_text_visible_when(doc, {'0', 'Layer1'}) == ['L0', 'L1']
-    assert _get_text_visible_when(doc, {'Layer1', 'Layer2'}) == ['L1']  # result: []
+    assert _get_text_visible_when(doc, {'Layer1', 'Layer2'}) == [
+        'L1']  # result: []
     assert _get_text_visible_when(doc, {'Layer2'}) == []
     assert _get_text_visible_when(doc, {'Layer1'}) == ['L1']  # result = []
     assert _get_text_visible_when(doc, set()) == []
@@ -487,6 +488,46 @@ def test_override_filter(msp, ctx):
     assert result[0] == 'text'
     assert result[1] == 'T2'
     assert result[3].layer == 'T2'
+
+
+class TestBackendScaler:
+    @pytest.fixture
+    def backend(self):
+        return BackendScaler(PathBackend(), 2)
+
+    def test_has_access_to_attributes(self, backend):
+        for k, v in DEFAULT_PARAMS.items():
+            assert getattr(backend, k) == v
+
+    def test_can_call_delegate_methods(self, backend):
+        backend.set_background("#000000")
+        backend.clear()
+        backend.finalize()
+
+    def test_draw_scaled_point(self, backend):
+        backend.draw_point(Vec3(1, 2, 3), Properties())
+        assert backend.collector[0][1] == Vec3(2, 4, 6)
+
+    def test_draw_scaled_path(self, backend):
+        p1 = Path((1, 2))
+        p1.line_to((2, 3))
+        backend.draw_path(p1, Properties())
+        f = backend.factor
+        expected_p2 = p1.transform(Matrix44.scale(f, f, f))
+        p2 = backend.collector[0][1]
+        for v1, v2 in zip(p2.control_vertices(), expected_p2.control_vertices()):
+            assert v1.isclose(v2)
+
+
+def test_draw_scaled_entities(msp, ctx):
+    msp.add_point((1, 1))
+    msp.add_point((2, 3))
+    frontend = Frontend(ctx, PathBackend(), overall_scaling_factor=2)
+    frontend.draw_entities(msp)
+    result = frontend.out.collector
+    assert len(result) == 2
+    assert result[0][1] == (2, 2)
+    assert result[1][1] == (4, 6)
 
 
 if __name__ == '__main__':
