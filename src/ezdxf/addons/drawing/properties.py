@@ -38,8 +38,10 @@ if TYPE_CHECKING:
 __all__ = [
     "Properties",
     "LayerProperties",
+    "LayoutProperties",
     "RenderContext",
     "layer_key",
+    "is_valid_color",
     "rgb_to_hex",
     "hex_to_rgb",
     "MODEL_SPACE_BG_COLOR",
@@ -211,25 +213,27 @@ class LayoutProperties:
         """Returns ``True`` if the actual background-color is "dark"."""
         return self._has_dark_background
 
-    def set_layout(
-        self,
+    @staticmethod
+    def from_layout(
         layout: "Layout",
         bg: Optional[Color] = None,
         fg: Optional[Color] = None,
         units: Optional[int] = None,
-    ) -> None:
+    ) -> "LayoutProperties":
         """Setup default layout properties."""
-        self.name = layout.name
+        properties = LayoutProperties()
+        properties.name = layout.name
         if bg is None:
-            if self.name == "Model":
+            if properties.name == "Model":
                 bg = MODEL_SPACE_BG_COLOR
             else:
                 bg = PAPER_SPACE_BG_COLOR
-        self.set_colors(bg, fg)
+        properties.set_colors(bg, fg)
         if units is None:
-            self.units = layout.units
+            properties.units = layout.units
         else:
-            self.units = int(units)
+            properties.units = int(units)
+        return properties
 
     def set_colors(self, bg: Color, fg: Color = None) -> None:
         """Setup default layout colors.
@@ -426,7 +430,7 @@ class RenderContext:
                 layer.is_visible = not state
 
     def set_current_layout(self, layout: "Layout"):
-        self.current_layout.set_layout(layout, units=self.units)
+        self.current_layout = LayoutProperties.from_layout(layout, units=self.units)
 
     @property
     def inside_block_reference(self) -> bool:

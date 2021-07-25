@@ -1,7 +1,7 @@
 # Copyright (c) 2020-2021, Matthew Broadway
 # License: MIT License
 import math
-from typing import Iterable, cast, Union, List, Dict, Callable, Tuple, Set
+from typing import Iterable, cast, Union, List, Dict, Callable, Tuple, Set, Optional
 from ezdxf.lldxf import const
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.properties import (
@@ -10,6 +10,7 @@ from ezdxf.addons.drawing.properties import (
     OLE2FRAME_COLOR,
     Properties,
     Filling,
+    LayoutProperties,
 )
 from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.addons.drawing.type_hints import FilterFunc
@@ -173,8 +174,12 @@ class Frontend:
         finalize: bool = True,
         *,
         filter_func: FilterFunc = None,
+        layout_properties: Optional[LayoutProperties] = None,
     ) -> None:
-        self.ctx.set_current_layout(layout)
+        if layout_properties is not None:
+            self.ctx.current_layout = layout_properties
+        else:
+            self.ctx.set_current_layout(layout)
         self.parent_stack = []
         handle_mapping = list(layout.get_redraw_order())
         if handle_mapping:
