@@ -224,29 +224,19 @@ during the development of this add-on.
 Limitations
 -----------
 
-- Line types and hatch patterns/gradients are ignored by the :class:`PyQtBackend`
 - Rich text formatting is ignored (drawn as plain text)
 - If the backend does not match the font then the exact text placement and
   wrapping may appear slightly different
-- No support for MULTILEADER
-- The style which POINT entities are drawn in are not stored in the dxf file and
-  so cannot be replicated exactly
+- MULTILEADER renders only proxy graphic if available
+- relative size of POINT entities cannot be replicated exactly
 - only basic support for:
 
   - infinite lines (rendered as lines with a finite length)
-  - viewports (rendered as rectangles)
-  - 3D (some entities may not display correctly in 3D (see possible improvements below))
-    however many things should already work in 3D.
+  - VIEWPORT and OLE2FRAME entities (rendered as rectangles)
+  - 3D entities are projected into the xy-plane and 3D text is not supported
   - vertical text (will render as horizontal text)
   - multiple columns of text (placement of additional columns may be incorrect)
 
-
-Future Possible Improvements
-----------------------------
-
-- pass the font to backend if available
-- text formatting commands could be interpreted and broken into text chunks
-  which can be drawn with a single font weight or modification such as italics
 
 .. _Triangulation: https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
 .. _MatplotlibHatch: https://matplotlib.org/3.2.1/gallery/shapes_and_collections/hatch_demo.html

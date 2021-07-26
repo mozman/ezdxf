@@ -5,10 +5,10 @@ Add-ons
 -------
 
 - drawing
-    - (v0.17) MLEADER full rendering support, requires `MLeader.virtual_entities()`
     - (v0.17) add support for ATTRIB with embedded MTEXT
     - (v0.17) global fonts cache usage
     - (v0.17) extended MTEXT renderer  
+    - (v0.18) MLEADER full rendering support, requires `MLeader.virtual_entities()`
     - (>v1.0) ACAD_TABLE
     - (>v1.0) support for switching plot styles (DXF_DEFAULT_PAPERSPACE_COLORS)
   
@@ -39,26 +39,27 @@ Add-ons
 Render Tools
 ------------
 
-- (v0.17) `MLeader.virtual_entities()` 
 - (v0.17) `EulerSpiral()` conversion to B-spline with end tangent constraints
 - (v0.17) Text layout engine for better MTEXT rendering support by the 
   `drawing` add-on and exploding MTEXT into DXF primitives (TEXT & LINE).
+- (v0.18) `MLeader.virtual_entities()`
 - (<v1.0) DIMENSION rendering
     - angular dim
     - angular 3 point dim
     - ordinate dim
     - arc dim
 - (>v1.0) `ACADTable.virtual_entities()`, requires basic ACAD_TABLE support
+- (>v1.0) tool to create proxy graphic 
 
 Construction Tools
 ------------------
 
-- (<v1.0) `make_primitive()`: apply thickness if not 0
+- (<v1.0) `make_primitive()`: apply thickness if not 0, which creates meshes 
 
 DXF Entities
 ------------
 
-- (v0.17) MLEADER: factory methods to create new MLEADER entities  
+- (v0.18) MLEADER: factory methods to create new MLEADER entities  
 - (v0.17) ATTRIB/ATTDEF support for embedded MTEXT entity,
   example: `dxftest/attrib_attdef_with_embedded_mtext.dxf`
 - (v0.17) Remove generic "Embedded Object" support in DXFEntity because this is 
