@@ -295,8 +295,8 @@ class RenderContext:
         """
         self._saved_states: List[Properties] = []
         self.line_pattern = _load_line_pattern(doc.linetypes) if doc else dict()
-        self.current_layout = LayoutProperties.modelspace()
-        self.current_block_reference: Optional[Properties] = None
+        self.current_layout_properties = LayoutProperties.modelspace()
+        self.current_block_reference_properties: Optional[Properties] = None
         self.plot_styles = self._load_plot_style_table(ctb)
         self.export_mode = export_mode
         # Always consider: entity layer may not exist
@@ -325,7 +325,7 @@ class RenderContext:
                     self.units = 6  # 1 m
                 else:
                     self.units = 1  # 1 in
-        self.current_layout.units = self.units
+        self.current_layout_properties.units = self.units
         self._hatch_pattern_cache: Dict[str, HatchPatternType] = dict()
 
     def update_backend_configuration(self, backend):
@@ -447,7 +447,7 @@ class RenderContext:
                 layer.is_visible = not state
 
     def set_current_layout(self, layout: "Layout"):
-        self.current_layout = LayoutProperties.from_layout(
+        self.current_layout_properties = LayoutProperties.from_layout(
             layout, units=self.units
         )
 
@@ -456,14 +456,14 @@ class RenderContext:
         """Returns ``True`` if current processing state is inside of a block
         reference (INSERT).
         """
-        return bool(self.current_block_reference)
+        return bool(self.current_block_reference_properties)
 
     def push_state(self, block_reference: Properties) -> None:
-        self._saved_states.append(self.current_block_reference)
-        self.current_block_reference = block_reference
+        self._saved_states.append(self.current_block_reference_properties)
+        self.current_block_reference_properties = block_reference
 
     def pop_state(self) -> None:
-        self.current_block_reference = self._saved_states.pop()
+        self.current_block_reference_properties = self._saved_states.pop()
 
     def resolve_all(self, entity: "DXFGraphic") -> Properties:
         """Resolve all properties of `entity`."""
@@ -489,7 +489,7 @@ class RenderContext:
         return p
 
     def resolve_units(self) -> int:
-        return self.current_layout.units
+        return self.current_layout_properties.units
 
     def resolve_linetype_scale(self, entity: "DXFGraphic") -> float:
         return entity.dxf.ltscale * self.linetype_scale
@@ -523,7 +523,7 @@ class RenderContext:
         """
         layer = entity.dxf.layer
         if layer == "0" and self.inside_block_reference:
-            layer = self.current_block_reference.layer
+            layer = self.current_block_reference_properties.layer
         return layer
 
     def resolve_color(
@@ -545,13 +545,13 @@ class RenderContext:
             )
             layer = self.layers.get(entity_layer, DEFAULT_LAYER_PROPERTIES)
             color = layer.get_entity_color_from_layer(
-                self.current_layout.default_color
+                self.current_layout_properties.default_color
             )
         elif aci == const.BYBLOCK:
             if not self.inside_block_reference:
-                color = self.current_layout.default_color
+                color = self.current_layout_properties.default_color
             else:
-                color = self.current_block_reference.color
+                color = self.current_block_reference_properties.color
         else:  # BYOBJECT
             color = self._true_entity_color(entity.rgb, aci)
 
@@ -566,13 +566,13 @@ class RenderContext:
         if aci == const.BYLAYER:
             layer = self.layers.get(resolved_layer, DEFAULT_LAYER_PROPERTIES)
             color = layer.get_entity_color_from_layer(
-                self.current_layout.default_color
+                self.current_layout_properties.default_color
             )
         elif aci == const.BYBLOCK:
             if not self.inside_block_reference:
-                color = self.current_layout.default_color
+                color = self.current_layout_properties.default_color
             else:
-                color = self.current_block_reference.color
+                color = self.current_block_reference_properties.color
         else:  # BYOBJECT
             color = self._true_entity_color(None, aci)
         return color
@@ -589,14 +589,16 @@ class RenderContext:
         elif 0 < aci < 256:
             return self._aci_to_true_color(aci)
         else:
-            return self.current_layout.default_color  # unknown / invalid
+            return (
+                self.current_layout_properties.default_color
+            )  # unknown / invalid
 
     def _aci_to_true_color(self, aci: int) -> Color:
         """Returns the `aci` value (AutoCAD Color Index) as rgb value in
         hex format: "#RRGGBB".
         """
         if aci == 7:  # black/white; todo: this bypasses the plot style table
-            if self.current_layout.has_dark_background:
+            if self.current_layout_properties.has_dark_background:
                 return "#ffffff"
             else:
                 return "#000000"
@@ -629,8 +631,10 @@ class RenderContext:
 
         elif name == "BYBLOCK":
             if self.inside_block_reference:
-                name = self.current_block_reference.linetype_name
-                pattern = self.current_block_reference.linetype_pattern
+                name = self.current_block_reference_properties.linetype_name
+                pattern = (
+                    self.current_block_reference_properties.linetype_pattern
+                )
             else:
                 # There is no default layout linetype
                 name = "STANDARD"
@@ -674,7 +678,7 @@ class RenderContext:
 
             elif lineweight == const.LINEWEIGHT_BYBLOCK:
                 if self.inside_block_reference:
-                    return self.current_block_reference.lineweight
+                    return self.current_block_reference_properties.lineweight
                 else:
                     # There is no default layout lineweight
                     return self.default_lineweight()

@@ -1,7 +1,17 @@
 # Copyright (c) 2020-2021, Matthew Broadway
 # License: MIT License
 import math
-from typing import Iterable, cast, Union, List, Dict, Callable, Tuple, Set, Optional
+from typing import (
+    Iterable,
+    cast,
+    Union,
+    List,
+    Dict,
+    Callable,
+    Tuple,
+    Set,
+    Optional,
+)
 from ezdxf.lldxf import const
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.properties import (
@@ -177,7 +187,7 @@ class Frontend:
         layout_properties: Optional[LayoutProperties] = None,
     ) -> None:
         if layout_properties is not None:
-            self.ctx.current_layout = layout_properties
+            self.ctx.current_layout_properties = layout_properties
         else:
             self.ctx.set_current_layout(layout)
         self.parent_stack = []
@@ -192,7 +202,9 @@ class Frontend:
                 layout,
                 filter_func=filter_func,
             )
-        self.out.set_background(self.ctx.current_layout.background_color)
+        self.out.set_background(
+            self.ctx.current_layout_properties.background_color
+        )
         if finalize:
             self.out.finalize()
 
@@ -485,7 +497,7 @@ class Frontend:
     ) -> None:
         wipeout = cast(Wipeout, entity)
         properties.filling = Filling()
-        properties.color = self.ctx.current_layout.background_color
+        properties.color = self.ctx.current_layout_properties.background_color
         path = wipeout.boundary_path_wcs()
         self.out.draw_filled_polygon(path, properties)
 

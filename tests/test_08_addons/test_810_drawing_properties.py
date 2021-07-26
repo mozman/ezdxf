@@ -227,17 +227,17 @@ class TestResolveLayerACIColor7:
         return context
 
     def test_dark_background(self, ctx, entity):
-        ctx.current_layout.set_colors(bg='#000000')
+        ctx.current_layout_properties.set_colors(bg='#000000')
         assert ctx.resolve_color(entity).upper() == '#FFFFFF'
 
     def test_light_background(self, ctx, entity):
-        ctx.current_layout.set_colors(bg='#FFFFFF')
+        ctx.current_layout_properties.set_colors(bg='#FFFFFF')
         assert ctx.resolve_color(entity) == '#000000'
 
     def test_switch_layout_colors(self, ctx, entity):
-        ctx.current_layout.set_colors(bg='#FFFFFF', fg='#A0A0A0')
+        ctx.current_layout_properties.set_colors(bg='#FFFFFF', fg='#A0A0A0')
         assert ctx.resolve_color(entity) == '#A0A0A0'
-        ctx.current_layout.set_colors(bg='#EEEEEE', fg='#010101')
+        ctx.current_layout_properties.set_colors(bg='#EEEEEE', fg='#010101')
         assert ctx.resolve_color(entity) == '#010101'
 
     def test_color_from_true_color_layer(self, ctx, entity):
@@ -247,7 +247,7 @@ class TestResolveLayerACIColor7:
         # Entity ACI color is BYLAYER by default:
         assert entity.dxf.color == const.BYLAYER
 
-        ctx.current_layout.set_colors(bg='#EEEEEE', fg='#010101')
+        ctx.current_layout_properties.set_colors(bg='#EEEEEE', fg='#010101')
         # But has no meaning if true color is set:
         assert ctx.resolve_color(entity).upper() == '#B0B0B0'
 
