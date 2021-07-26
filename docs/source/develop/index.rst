@@ -5,6 +5,24 @@ Developer Guides
 
 Information about `ezdxf` internals.
 
+Source Code Formatting
+----------------------
+
+Reformat code by `Black`_ for a column width of 80::
+
+    C:\> black -l 80 <python-file>
+
+Reformatting the `ezdxf` code base is an ongoing process, commit
+reformatted code in a separated commit with no logic changes.
+
+Type Annotations
+----------------
+
+The use of type annotations is encouraged. New modules should pass `mypy`_
+without errors in non-strict mode. Using ``# type: ignore`` is fine in tricky
+situations - type annotations should be helpful in understanding the code
+and not be a burden.
+
 Design
 ------
 
@@ -36,3 +54,6 @@ Documentation Guide
     :maxdepth: 1
 
     doc_formatting_guide
+
+.. _Black: https://pypi.org/project/black/
+.. _mypy: https://pypi.org/project/mypy/
