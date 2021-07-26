@@ -15,7 +15,7 @@ from matplotlib.textpath import TextPath
 import numpy as np
 
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
-from ezdxf.addons.drawing.properties import Properties
+from ezdxf.addons.drawing.properties import Properties, LayoutProperties
 from ezdxf.addons.drawing.type_hints import FilterFunc
 from ezdxf.tools.fonts import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
@@ -420,14 +420,15 @@ def qsave(
         fig: plt.Figure = plt.figure()
         ax: plt.Axes = fig.add_axes((0, 0, 1, 1))
         ctx = RenderContext(layout.doc)
-        ctx.set_current_layout(layout)
+        layout_properties = LayoutProperties.from_layout(layout)
         if bg is not None:
-            ctx.current_layout.set_colors(bg, fg)
+            layout_properties.set_colors(bg, fg)
         out = MatplotlibBackend(ax, params=params)
         Frontend(ctx, out).draw_layout(
             layout,
             finalize=True,
             filter_func=filter_func,
+            layout_properties=layout_properties,
         )
         # transparent=True sets the axes color to fully transparent
         # facecolor sets the figure color

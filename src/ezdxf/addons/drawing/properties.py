@@ -2,6 +2,7 @@
 # Copyright (c) 2020, Matthew Broadway
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
+import re
 from typing import (
     TYPE_CHECKING,
     Dict,
@@ -12,17 +13,17 @@ from typing import (
     Set,
     cast,
 )
-import re
-from ezdxf.entities import Attrib
-from ezdxf.lldxf import const
-from ezdxf.addons.drawing.type_hints import Color, RGB
-from ezdxf.tools import fonts
+
 from ezdxf.addons import acadctb
-from ezdxf.sections.table import table_key as layer_key
+from ezdxf.addons.drawing.type_hints import Color, RGB
 from ezdxf.colors import luminance, DXF_DEFAULT_COLORS, int2rgb
-from ezdxf.tools.pattern import scale_pattern, HatchPatternType
+from ezdxf.entities import Attrib
 from ezdxf.entities.ltype import CONTINUOUS_PATTERN
 from ezdxf.entities.polygon import BasePolygon
+from ezdxf.lldxf import const
+from ezdxf.sections.table import table_key as layer_key
+from ezdxf.tools import fonts
+from ezdxf.tools.pattern import scale_pattern, HatchPatternType
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -38,8 +39,10 @@ if TYPE_CHECKING:
 __all__ = [
     "Properties",
     "LayerProperties",
+    "LayoutProperties",
     "RenderContext",
     "layer_key",
+    "is_valid_color",
     "rgb_to_hex",
     "hex_to_rgb",
     "MODEL_SPACE_BG_COLOR",
@@ -189,12 +192,26 @@ DEFAULT_LAYER_PROPERTIES = LayerProperties()
 class LayoutProperties:
     # The LAYOUT, BLOCK and BLOCK_RECORD entities do not have
     # explicit graphic properties.
-    def __init__(self):
-        self.name: str = "Model"  # tab/display name
-        self.units = 0  # default is unit less
-        self._background_color: Color = MODEL_SPACE_BG_COLOR
-        self._default_color: Color = "#ffffff"
-        self._has_dark_background: bool = True
+    def __init__(self, name: str,
+                 background_color: Color,
+                 foreground_color: Optional[Color] = None,
+                 units: int = 0,
+                 dark_background: Optional[bool] = None):
+        """
+        Args:
+            name: tab/display name
+            units: see InsertUnits for valid values
+        """
+        self.name = name
+        self.units = int(units)
+
+        self._background_color = ''
+        self._default_color = ''
+        self._has_dark_background = False
+        self.set_colors(background_color, foreground_color)
+
+        if dark_background is not None:
+            self._has_dark_background = dark_background
 
     @property
     def background_color(self) -> Color:
@@ -211,25 +228,24 @@ class LayoutProperties:
         """Returns ``True`` if the actual background-color is "dark"."""
         return self._has_dark_background
 
-    def set_layout(
-        self,
-        layout: "Layout",
-        bg: Optional[Color] = None,
-        fg: Optional[Color] = None,
-        units: Optional[int] = None,
-    ) -> None:
+    @staticmethod
+    def modelspace(units: int = 0) -> "LayoutProperties":
+        return LayoutProperties('Model', MODEL_SPACE_BG_COLOR, units=units)
+
+    @staticmethod
+    def paperspace(name: str = '', units: int = 0) -> "LayoutProperties":
+        return LayoutProperties(name, PAPER_SPACE_BG_COLOR, units=units)
+
+    @staticmethod
+    def from_layout(layout: "Layout", units: Optional[int] = None) -> "LayoutProperties":
         """Setup default layout properties."""
-        self.name = layout.name
-        if bg is None:
-            if self.name == "Model":
-                bg = MODEL_SPACE_BG_COLOR
-            else:
-                bg = PAPER_SPACE_BG_COLOR
-        self.set_colors(bg, fg)
-        if units is None:
-            self.units = layout.units
+        if layout.name == "Model":
+            bg = MODEL_SPACE_BG_COLOR
         else:
-            self.units = int(units)
+            bg = PAPER_SPACE_BG_COLOR
+        if units is None:
+            units = layout.units
+        return LayoutProperties(layout.name, bg, units=units)
 
     def set_colors(self, bg: Color, fg: Color = None) -> None:
         """Setup default layout colors.
@@ -274,7 +290,7 @@ class RenderContext:
         """
         self._saved_states: List[Properties] = []
         self.line_pattern = _load_line_pattern(doc.linetypes) if doc else dict()
-        self.current_layout = LayoutProperties()  # default is 'Model'
+        self.current_layout = LayoutProperties.modelspace()
         self.current_block_reference: Optional[Properties] = None
         self.plot_styles = self._load_plot_style_table(ctb)
         self.export_mode = export_mode
@@ -426,7 +442,7 @@ class RenderContext:
                 layer.is_visible = not state
 
     def set_current_layout(self, layout: "Layout"):
-        self.current_layout.set_layout(layout, units=self.units)
+        self.current_layout = LayoutProperties.from_layout(layout, units=self.units)
 
     @property
     def inside_block_reference(self) -> bool:
