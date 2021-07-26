@@ -8,10 +8,11 @@ Version 0.16.6b0 - dev
 - NEW: `MPOLYGON` support for the `drawing`add-on
 - CHANGE: renamed `RenderContext.current_layer` to `RenderContext.current_layer_properties` 
 - CHANGE: renamed `RenderContext.current_block_reference` to `RenderContext.current_block_reference_properties` 
-- BETA: support for `ACAD_PROXY_ENTITY`  
 - BUGFIX: add missing "doc" argument to DXF loaders, DXF version was not 
   available at loading stage 
 - BUGFIX: DXF export for `ARC_DIMENSION`
+- BETA: new features for testing, API may change until official release in v0.17
+- BETA: support for `ACAD_PROXY_ENTITY`  
 
 Version 0.16.5 - 2021-07-18
 ---------------------------
@@ -36,11 +37,11 @@ Version 0.16.5 - 2021-07-18
 - REMOVED: `get_acis_data()`, `set_acis_data()` and context manager `edit_data()` 
   from ACIS based entities, use `acis_data` property instead as `List[str]` or 
   `List[bytes]`  
+- BETA: new features for testing, API may change until official release in v0.17
 - BETA: `dxf2code` add-on: function `black()` and method `Code.black_code_str()` 
   returns the code string formatted by [Black](https://pypi.org/project/black/)
 - BETA: `ezdxf.upright` module to flip inverted extrusion vectors, for more 
   information read the [docs](https://ezdxf.mozman.at/docs/upright.html)  
-
 - BUGFIX: `Spline.construction_tool()` recognizes start- and end tangents for 
   B-splines from fit points if defined  
 
