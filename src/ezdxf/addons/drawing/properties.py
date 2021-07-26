@@ -192,11 +192,14 @@ DEFAULT_LAYER_PROPERTIES = LayerProperties()
 class LayoutProperties:
     # The LAYOUT, BLOCK and BLOCK_RECORD entities do not have
     # explicit graphic properties.
-    def __init__(self, name: str,
-                 background_color: Color,
-                 foreground_color: Optional[Color] = None,
-                 units: int = 0,
-                 dark_background: Optional[bool] = None):
+    def __init__(
+        self,
+        name: str,
+        background_color: Color,
+        foreground_color: Optional[Color] = None,
+        units: int = 0,
+        dark_background: Optional[bool] = None,
+    ):
         """
         Args:
             name: tab/display name
@@ -205,8 +208,8 @@ class LayoutProperties:
         self.name = name
         self.units = int(units)
 
-        self._background_color = ''
-        self._default_color = ''
+        self._background_color = ""
+        self._default_color = ""
         self._has_dark_background = False
         self.set_colors(background_color, foreground_color)
 
@@ -230,14 +233,16 @@ class LayoutProperties:
 
     @staticmethod
     def modelspace(units: int = 0) -> "LayoutProperties":
-        return LayoutProperties('Model', MODEL_SPACE_BG_COLOR, units=units)
+        return LayoutProperties("Model", MODEL_SPACE_BG_COLOR, units=units)
 
     @staticmethod
-    def paperspace(name: str = '', units: int = 0) -> "LayoutProperties":
+    def paperspace(name: str = "", units: int = 0) -> "LayoutProperties":
         return LayoutProperties(name, PAPER_SPACE_BG_COLOR, units=units)
 
     @staticmethod
-    def from_layout(layout: "Layout", units: Optional[int] = None) -> "LayoutProperties":
+    def from_layout(
+        layout: "Layout", units: Optional[int] = None
+    ) -> "LayoutProperties":
         """Setup default layout properties."""
         if layout.name == "Model":
             bg = MODEL_SPACE_BG_COLOR
@@ -442,7 +447,9 @@ class RenderContext:
                 layer.is_visible = not state
 
     def set_current_layout(self, layout: "Layout"):
-        self.current_layout = LayoutProperties.from_layout(layout, units=self.units)
+        self.current_layout = LayoutProperties.from_layout(
+            layout, units=self.units
+        )
 
     @property
     def inside_block_reference(self) -> bool:
@@ -555,7 +562,7 @@ class RenderContext:
             return set_color_alpha(color, alpha)
 
     def resolve_aci_color(self, aci: int, resolved_layer: str) -> Color:
-        """ Resolve the `aci` color as hex color string: "#RRGGBB" """
+        """Resolve the `aci` color as hex color string: "#RRGGBB" """
         if aci == const.BYLAYER:
             layer = self.layers.get(resolved_layer, DEFAULT_LAYER_PROPERTIES)
             color = layer.get_entity_color_from_layer(
