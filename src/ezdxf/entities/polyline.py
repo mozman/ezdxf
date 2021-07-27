@@ -3,12 +3,14 @@
 from typing import (
     TYPE_CHECKING,
     Iterable,
+    Iterator,
     Union,
     List,
     cast,
     Tuple,
     Sequence,
     Dict,
+    Any,
 )
 from itertools import chain
 from ezdxf.lldxf import validator
@@ -278,7 +280,7 @@ class Polyline(LinkedEntities):
         if self.is_2d_polyline:
             return any(
                 v.dxf.hasattr("bulge") and bool(v.dxf.bulge)
-                    for v in self.vertices
+                for v in self.vertices
             )
         else:
             return False
@@ -336,7 +338,7 @@ class Polyline(LinkedEntities):
         """
         return self.vertices[pos]
 
-    def points(self) -> Iterable[Vec3]:
+    def points(self) -> Iterator[Vec3]:
         """Returns iterable of all polyline vertices as ``(x, y, z)`` tuples,
         not as :class:`Vertex` objects.
         """
@@ -388,7 +390,9 @@ class Polyline(LinkedEntities):
         for point in points:
             attribs = vertex_attribs(point, format)
             attribs.update(dxfattribs)
-            vertex = self._new_compound_entity("VERTEX", attribs)
+            vertex = cast(
+                DXFVertex, self._new_compound_entity("VERTEX", attribs)
+            )
             self._append_vertex(vertex)
 
     def append_vertex(self, point: "Vertex", dxfattribs: dict = None) -> None:
@@ -422,7 +426,7 @@ class Polyline(LinkedEntities):
 
     def _build_dxf_vertices(
         self, points: Iterable["Vertex"], dxfattribs: dict
-    ) -> List["DXFVertex"]:
+    ) -> Iterator["DXFVertex"]:
         """Converts point (x, y, z)-tuples into DXFVertex objects.
 
         Args:
@@ -440,7 +444,9 @@ class Polyline(LinkedEntities):
             dxfattribs["linetype"] = self.dxf.linetype
         for point in points:
             dxfattribs["location"] = Vec3(point)
-            yield self._new_compound_entity("VERTEX", dxfattribs)
+            yield cast(
+                DXFVertex, self._new_compound_entity("VERTEX", dxfattribs)
+            )
 
     def cast(self) -> Union["Polyline", "Polymesh", "Polyface"]:
         mode = self.get_mode()
@@ -645,11 +651,13 @@ class Polyface(Polyline):
 
         """
 
-        def new_face_record() -> "DXFVertex":
+        def new_face_record():
             dxfattribs["flags"] = const.VTX_3D_POLYFACE_MESH_VERTEX
             # location of face record vertex is always (0, 0, 0)
             dxfattribs["location"] = Vec3()
-            return self._new_compound_entity("VERTEX", dxfattribs)
+            return cast(
+                DXFVertex, self._new_compound_entity("VERTEX", dxfattribs)
+            )
 
         dxfattribs = dxfattribs or {}
 
@@ -679,8 +687,9 @@ class Polyface(Polyline):
 
         """
         polyface_builder = PolyfaceBuilder(faces, precision=precision)
-        self._sub_entities = []
-        self._sub_entities = polyface_builder.get_vertices()
+        # Why is List[DXFGraphic] incompatible to List[DXFVertex] when DXFVertex
+        # is a subclass of DXFGraphic?
+        self._sub_entities = polyface_builder.get_vertices()  # type: ignore
         self.update_count(polyface_builder.nvertices, polyface_builder.nfaces)
 
     def update_count(self, nvertices: int, nfaces: int) -> None:
@@ -693,7 +702,7 @@ class Polyface(Polyline):
 
         Args:
             precision: floating point precision for determining identical
-                       vertex locations
+                vertex locations
 
         """
         vertices, faces = self.indexed_faces()
@@ -718,9 +727,9 @@ class Polyface(Polyline):
 
         (internal API)
         """
-        vertices = []
-        face_records = []
-        for vertex in self.vertices:  # type: DXFVertex
+        vertices: List[DXFVertex] = []
+        face_records: List[DXFVertex] = []
+        for vertex in self.vertices:
             (
                 vertices if vertex.is_poly_face_mesh_vertex else face_records
             ).append(vertex)
@@ -775,10 +784,10 @@ class FaceProxy:
         """
         return self.vertices[self.indices[pos]]
 
-    def __iter__(self) -> Iterable["DXFVertex"]:
+    def __iter__(self) -> Iterator["DXFVertex"]:
         return (self.vertices[index] for index in self.indices)
 
-    def points(self) -> Iterable["Vertex"]:
+    def points(self) -> Iterator["Vertex"]:
         """Returns iterable of all face vertex locations as (x, y, z)-tuples."""
         return (vertex.dxf.location for vertex in self)
 
@@ -898,8 +907,7 @@ class Polymesh(Polyline):
         n_count = self.dxf.n_count
         m, n = pos
         if 0 <= m < m_count and 0 <= n < n_count:
-            pos = m * n_count + n
-            return self.vertices[pos]
+            return self.vertices[m * n_count + n]
         else:
             raise const.DXFIndexError(repr(pos))
 
