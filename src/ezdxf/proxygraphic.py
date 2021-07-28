@@ -75,7 +75,7 @@ def export_proxy_graphic(
     tagwriter.write_tag2(length_code, length)
     index = 0
     while index < length:
-        hex_str = bytes_to_hexstr(data[index: index + CHUNK_SIZE])
+        hex_str = bytes_to_hexstr(data[index : index + CHUNK_SIZE])
         tagwriter.write_tag2(data_code, hex_str)
         index += CHUNK_SIZE
 
@@ -145,10 +145,7 @@ def read_prim_traits(
 
 
 def read_mesh_traits(
-    bs: ByteStream,
-    edge_count: int,
-    face_count: int,
-    vertex_count: int
+    bs: ByteStream, edge_count: int, face_count: int, vertex_count: int
 ):
     # Traits data format:
     # all entries are optional
@@ -290,7 +287,8 @@ class ProxyGraphic:
             index += size
 
     def __virtual_entities__(self) -> Iterable["DXFGraphic"]:
-        """Implements the SupportsVirtualEntities protocol. """
+        """Implements the SupportsVirtualEntities protocol."""
+
         def transform(entity):
             if self.matrices:
                 return entity.transform(self.matrices[-1])
@@ -309,7 +307,7 @@ class ProxyGraphic:
                 continue
             method = getattr(self, name, None)
             if method:
-                result = method(self._buffer[index + 8: index + size])
+                result = method(self._buffer[index + 8 : index + size])
                 if isinstance(result, tuple):
                     for entity in result:
                         yield transform(entity)
@@ -554,15 +552,19 @@ class ProxyGraphic:
         return lwpolyline
 
     def mesh(self, data: bytes):
+        # Limitations of the PolyFacMesh entity:
+        # - all VERTEX entities have to reside on the same layer
+        # - does not support vertex normals
+        # - all faces have the same color (no face record)
+
         logger.warning("Untested proxy graphic entity: MESH - Need examples!")
         bs = ByteStream(data)
         rows, columns = bs.read_struct("<2L")
         total_edge_count = (rows - 1) * columns + (columns - 1) * rows
         total_face_count = (rows - 1) * (columns - 1)
         total_vertex_count = rows * columns
-        vertices = [
-            Vec3(bs.read_vertex()) for _ in range(total_vertex_count)
-        ]
+        vertices = [Vec3(bs.read_vertex()) for _ in range(total_vertex_count)]
+
         traits = dict()
         try:
             traits = read_mesh_traits(
@@ -622,10 +624,18 @@ class ProxyGraphic:
             logger.error(
                 "Structure error while parsing traits for SHELL proxy graphic"
             )
-        if traits:
-            # apply traits
-            pass
         polyface.append_faces(faces)
+        if traits:
+            face_traits = traits.get("faces")
+            if face_traits:
+                face_colors = face_traits.get("colors")
+                if face_colors:
+                    logger.warning(
+                        "Untested proxy graphic feature for SHELL: "
+                        "apply face colors - Need examples!"
+                    )
+                    assert isinstance(face_colors, list)
+                    _apply_face_colors(polyface, face_colors)
         polyface.optimize()
         return polyface
 
@@ -863,3 +873,17 @@ class ProxyGraphicDebugger(ProxyGraphic):
         self.log_message("Command: set FILL")
         super().attribute_fill(data)
         self.log_state()
+
+
+def _apply_face_colors(polyface: "Polyface", colors: List[int]) -> None:
+    color_count: int = len(colors)
+    if color_count == 0:
+        return
+
+    index: int = 0
+    for vertex in polyface.vertices:
+        if vertex.is_face_record:
+            vertex.dxf.color = colors[index]
+            index += 1
+            if index >= color_count:
+                return
