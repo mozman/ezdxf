@@ -6,9 +6,11 @@ from typing import (
     Iterable,
     Tuple,
     List,
+    Set,
     Dict,
     cast,
     Sequence,
+    Any,
 )
 import sys
 import struct
@@ -41,6 +43,7 @@ if TYPE_CHECKING:
         Polyface,
         Polyline,
         Hatch,
+        LWPolyline,
     )
 
 logger = logging.getLogger("ezdxf")
@@ -56,7 +59,7 @@ def load_proxy_graphic(
         for tag in tags.pop_tags(codes=(length_code, data_code))
         if tag.code == data_code
     ]
-    return b"".join(binary_data) if len(binary_data) else None
+    return b"".join(binary_data) if len(binary_data) else None  # type: ignore
 
 
 def export_proxy_graphic(
@@ -194,7 +197,7 @@ def read_mesh_traits(
                     Vec3(bs.read_vertex()) for _ in range(vertex_count)
                 ]
             if prims_have_orientation(vertex_flags):
-                vertices["orientation"] = bool(bs.read_long())
+                vertices["orientation"] = bool(bs.read_long())  # type: ignore
             traits["vertices"] = vertices
     return traits
 
@@ -261,9 +264,9 @@ class ProxyGraphic:
         # Linetypes list in storage order
         self.linetypes: List[str] = []
         # List of text styles, with font name as key
-        self.textstyles = dict()
-        self.required_fonts = set()
-        self.matrices = []
+        self.textstyles: Dict[str, str] = dict()
+        self.required_fonts: Set[str] = set()
+        self.matrices: List[Matrix44] = []
 
         if self._doc:
             self.layers = list(layer.dxf.name for layer in self._doc.layers)
@@ -364,9 +367,9 @@ class ProxyGraphic:
         self.reset_colors()
         code, value = colors.decode_raw_color(struct.unpack("<L", data)[0])
         if code == colors.COLOR_TYPE_RGB:
-            self.true_color = colors.rgb2int(value)
+            self.true_color = colors.rgb2int(value)  # type: ignore
         else:  # ACI colors, BYLAYER, BYBLOCK
-            self.color = value
+            self.color = value  # type: ignore
 
     def attribute_lineweight(self, data: bytes):
         lw = struct.unpack("<L", data)[0]
@@ -418,10 +421,10 @@ class ProxyGraphic:
             # target OCS
             ocs = OCS(normal)
             # convert start angle == UCS x-axis to OCS
-            start_angle = ocs.from_wcs(ucs.to_wcs(X_AXIS)).angle_deg
+            start_angle = ocs.from_wcs(ucs.to_wcs(X_AXIS)).angle_deg  # type: ignore
             # convert end angle to OCS
             end_vec = Vec3.from_angle(sweep_angle)
-            end_angle = ocs.from_wcs(ucs.to_wcs(end_vec)).angle_deg
+            end_angle = ocs.from_wcs(ucs.to_wcs(end_vec)).angle_deg  # type: ignore
             # setup OCS for ARC entity
             attribs["extrusion"] = normal
             # convert WCS center to OCS center
@@ -523,11 +526,11 @@ class ProxyGraphic:
             num_width = 0
         # ignore DXF R13/14 special vertex order
 
-        vertices: List[Tuple[float, float]] = [bs.read_raw_double(2)]
+        vertices: List[Tuple[float, float]] = [bs.read_raw_double(2)]  # type: ignore
         prev_point = vertices[-1]
         for _ in range(num_points - 1):
-            x = bs.read_bit_double_default(default=prev_point[0])
-            y = bs.read_bit_double_default(default=prev_point[1])
+            x = bs.read_bit_double_default(default=prev_point[0])  # type: ignore
+            y = bs.read_bit_double_default(default=prev_point[1])  # type: ignore
             prev_point = (x, y)
             vertices.append(prev_point)
         bulges: List[float] = [bs.read_bit_double() for _ in range(num_bulges)]
@@ -781,7 +784,7 @@ class ProxyGraphic:
         return vertices, normal
 
     def _build_dxf_attribs(self) -> Dict:
-        attribs = dict()
+        attribs: Dict[str, Any] = dict()
         if self.layer != "0":
             attribs["layer"] = self.layer
         if self.color != const.BYLAYER:

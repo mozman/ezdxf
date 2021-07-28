@@ -94,7 +94,7 @@ class Table:
         """ Count of table entries. """
         return len(self.entries)
 
-    def __iter__(self) -> Iterable['DXFEntity']:
+    def __iter__(self) -> Iterator['DXFEntity']:
         """ Iterable of all table entries. """
         for e in self.entries.values():
             if e.is_alive:
