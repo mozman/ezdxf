@@ -9,50 +9,83 @@ from setuptools import Extension
 # setuptools docs: https://setuptools.readthedocs.io/en/latest/setuptools.html
 # All Cython accelerated modules are optional:
 ext_modules = [
-    Extension("ezdxf.acc.vector", [
-        "src/ezdxf/acc/vector.pyx",
-    ], optional=True, language='c++'),
-    Extension("ezdxf.acc.matrix44", [
-        "src/ezdxf/acc/matrix44.pyx",
-    ], optional=True, language='c++'),
-    Extension("ezdxf.acc.bezier4p", [
-        "src/ezdxf/acc/bezier4p.pyx",
-        "src/ezdxf/acc/_cpp_cubic_bezier.cpp",
-    ], optional=True, language='c++'),
-    Extension("ezdxf.acc.bezier3p", [
-        "src/ezdxf/acc/bezier3p.pyx",
-        "src/ezdxf/acc/_cpp_quad_bezier.cpp",
-    ], optional=True, language='c++'),
-    Extension("ezdxf.acc.bspline", [
-        "src/ezdxf/acc/bspline.pyx",
-    ], optional=True, language='c++'),
-    Extension("ezdxf.acc.construct", [
-        "src/ezdxf/acc/construct.pyx",
-    ], optional=True, language='c++'),
+    Extension(
+        "ezdxf.acc.vector",
+        [
+            "src/ezdxf/acc/vector.pyx",
+        ],
+        optional=True,
+        language="c++",
+    ),
+    Extension(
+        "ezdxf.acc.matrix44",
+        [
+            "src/ezdxf/acc/matrix44.pyx",
+        ],
+        optional=True,
+        language="c++",
+    ),
+    Extension(
+        "ezdxf.acc.bezier4p",
+        [
+            "src/ezdxf/acc/bezier4p.pyx",
+            "src/ezdxf/acc/_cpp_cubic_bezier.cpp",
+        ],
+        optional=True,
+        language="c++",
+    ),
+    Extension(
+        "ezdxf.acc.bezier3p",
+        [
+            "src/ezdxf/acc/bezier3p.pyx",
+            "src/ezdxf/acc/_cpp_quad_bezier.cpp",
+        ],
+        optional=True,
+        language="c++",
+    ),
+    Extension(
+        "ezdxf.acc.bspline",
+        [
+            "src/ezdxf/acc/bspline.pyx",
+        ],
+        optional=True,
+        language="c++",
+    ),
+    Extension(
+        "ezdxf.acc.construct",
+        [
+            "src/ezdxf/acc/construct.pyx",
+        ],
+        optional=True,
+        language="c++",
+    ),
 ]
 try:
     from Cython.Distutils import build_ext
-    commands = {'build_ext': build_ext}
+
+    commands = {"build_ext": build_ext}
 except ImportError:
     ext_modules = []
     commands = {}
 
 
-PYPY = hasattr(sys, 'pypy_version_info')
+PYPY = hasattr(sys, "pypy_version_info")
 if PYPY:
-    print("C-extensions are disabled for pypy, because JIT complied "
-          "Python code is much faster!")
+    print(
+        "C-extensions are disabled for pypy, because JIT complied Python code "
+        "is much faster!"
+    )
     ext_modules = []
     commands = {}
 
 
 def get_version():
     v = {}
-    for line in open('./src/ezdxf/version.py').readlines():
-        if line.strip().startswith('__version__'):
+    for line in open("./src/ezdxf/version.py").readlines():
+        if line.strip().startswith("__version__"):
             exec(line, v)
-            return v['__version__']
-    raise IOError('__version__ string not found')
+            return v["__version__"]
+    raise IOError("__version__ string not found")
 
 
 def read(fname, until=""):
@@ -76,45 +109,48 @@ TEST = ["pytest", "geomdl"]
 DEV = ["setuptools", "wheel", "Cython"]
 
 setup(
-    name='ezdxf',
+    name="ezdxf",
     version=get_version(),
-    description='A Python package to create/manipulate DXF drawings.',
-    author='Manfred Moitzi',
-    url='https://ezdxf.mozman.at',
-    download_url='https://pypi.org/project/ezdxf/',
-    author_email='me@mozman.at',
-    python_requires='>=3.7',
-    package_dir={'': 'src'},
-    packages=find_packages('src'),
+    description="A Python package to create/manipulate DXF drawings.",
+    author="Manfred Moitzi",
+    url="https://ezdxf.mozman.at",
+    download_url="https://pypi.org/project/ezdxf/",
+    author_email="me@mozman.at",
+    python_requires=">=3.7",
+    package_dir={"": "src"},
+    packages=find_packages("src"),
     zip_safe=False,
-    package_data={'ezdxf': [
-        'pp/*.html',
-        'pp/*.js',
-        'pp/*.css',
-        'tools/font_face_cache.json',
-        'tools/font_measurement_cache.json',
-        'resources/*.png',
-        'py.typed',
-    ]},
-    entry_points={
-        'console_scripts': [
-            'ezdxf = ezdxf.__main__:main',  # ezdxf launcher
+    package_data={
+        "ezdxf": [
+            "pp/*.html",
+            "pp/*.js",
+            "pp/*.css",
+            "tools/font_face_cache.json",
+            "tools/font_measurement_cache.json",
+            "resources/*.png",
+            "py.typed",
         ]
     },
-    provides=['ezdxf'],
+    entry_points={
+        "console_scripts": [
+            "ezdxf = ezdxf.__main__:main",  # ezdxf launcher
+        ]
+    },
+    provides=["ezdxf"],
     cmdclass=commands,
     ext_modules=ext_modules,
-    install_requires=['pyparsing>=2.0.1', 'typing_extensions'],
-    setup_requires=['wheel'],
-    tests_require=['pytest', 'geomdl'],
+    install_requires=["pyparsing>=2.0.1", "typing_extensions"],
+    setup_requires=["wheel"],
+    tests_require=["pytest", "geomdl"],
     extras_require={
         "draw": DRAW,
         "test": TEST,
         "dev": DEV + TEST,
         "all": DRAW + DEV + TEST,
     },
-    keywords=['DXF', 'CAD'],
-    long_description=read('README.md') + read('NEWS.md', until='Version 0.10.0'),
+    keywords=["DXF", "CAD"],
+    long_description=read("README.md")
+    + read("NEWS.md", until="Version 0.10.0"),
     long_description_content_type="text/markdown",
     platforms="OS Independent",
     license="MIT License",
@@ -130,7 +166,7 @@ setup(
         "Programming Language :: Python :: Implementation :: PyPy",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries :: Python Modules",
-    ]
+    ],
 )
 
 # Development Status :: 3 - Alpha
