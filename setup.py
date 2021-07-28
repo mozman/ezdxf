@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2011-2020 Manfred Moitzi
+# Copyright (c) 2011-2021 Manfred Moitzi
 # License: MIT License
 import os
 import sys
@@ -7,42 +7,41 @@ from setuptools import setup, find_packages
 from setuptools import Extension
 
 # setuptools docs: https://setuptools.readthedocs.io/en/latest/setuptools.html
-
-# Cython accelerated modules are optional:
+# All Cython accelerated modules are optional:
+ext_modules = [
+    Extension("ezdxf.acc.vector", [
+        "src/ezdxf/acc/vector.pyx",
+    ], optional=True, language='c++'),
+    Extension("ezdxf.acc.matrix44", [
+        "src/ezdxf/acc/matrix44.pyx",
+    ], optional=True, language='c++'),
+    Extension("ezdxf.acc.bezier4p", [
+        "src/ezdxf/acc/bezier4p.pyx",
+        "src/ezdxf/acc/_cpp_cubic_bezier.cpp",
+    ], optional=True, language='c++'),
+    Extension("ezdxf.acc.bezier3p", [
+        "src/ezdxf/acc/bezier3p.pyx",
+        "src/ezdxf/acc/_cpp_quad_bezier.cpp",
+    ], optional=True, language='c++'),
+    Extension("ezdxf.acc.bspline", [
+        "src/ezdxf/acc/bspline.pyx",
+    ], optional=True, language='c++'),
+    Extension("ezdxf.acc.construct", [
+        "src/ezdxf/acc/construct.pyx",
+    ], optional=True, language='c++'),
+]
 try:
     from Cython.Distutils import build_ext
-
-    ext_modules = [
-        Extension("ezdxf.acc.vector", [
-            "src/ezdxf/acc/vector.pyx",
-        ], optional=True, language='c++'),
-        Extension("ezdxf.acc.matrix44", [
-            "src/ezdxf/acc/matrix44.pyx",
-        ], optional=True, language='c++'),
-        Extension("ezdxf.acc.bezier4p", [
-            "src/ezdxf/acc/bezier4p.pyx",
-            "src/ezdxf/acc/_cpp_cubic_bezier.cpp",
-        ], optional=True, language='c++'),
-        Extension("ezdxf.acc.bezier3p", [
-            "src/ezdxf/acc/bezier3p.pyx",
-            "src/ezdxf/acc/_cpp_quad_bezier.cpp",
-        ], optional=True, language='c++'),
-        Extension("ezdxf.acc.bspline", [
-            "src/ezdxf/acc/bspline.pyx",
-        ], optional=True, language='c++'),
-        Extension("ezdxf.acc.construct", [
-            "src/ezdxf/acc/construct.pyx",
-        ], optional=True, language='c++'),
-    ]
     commands = {'build_ext': build_ext}
 except ImportError:
     ext_modules = []
     commands = {}
 
+
 PYPY = hasattr(sys, 'pypy_version_info')
 if PYPY:
-    print("C-extensions are disabled for pypy because JIT complied Python code "
-          "is much faster!")
+    print("C-extensions are disabled for pypy, because JIT complied "
+          "Python code is much faster!")
     ext_modules = []
     commands = {}
 
