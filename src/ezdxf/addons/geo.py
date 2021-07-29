@@ -10,7 +10,6 @@ and examples : https://tools.ietf.org/html/rfc7946#appendix-A
 
 """
 from typing import (
-    TYPE_CHECKING,
     Dict,
     Iterable,
     List,
@@ -23,15 +22,13 @@ from typing import (
 import numbers
 import copy
 import math
-from ezdxf.math import Vec3, has_clockwise_orientation
+from ezdxf.math import Vec3, has_clockwise_orientation, Matrix44
 from ezdxf.path import make_path, from_hatch_boundary_path, fast_bbox_detection
-from ezdxf.entities import DXFGraphic, LWPolyline, Point
+from ezdxf.entities import DXFGraphic, LWPolyline, Point, Polyline
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.lldxf import const
 from ezdxf.entities import factory
 
-if TYPE_CHECKING:
-    from ezdxf.eztypes import Matrix44
 
 __all__ = ["proxy", "dxf_entities", "gfilter", "GeoProxy"]
 
@@ -125,12 +122,10 @@ def gfilter(entities: Iterable[DXFGraphic]) -> Iterable[DXFGraphic]:
     the ``__geo_reference__`` interface.
     """
     for e in entities:
-        dxftype = e.dxftype()
-        if dxftype == "POLYLINE":
-            e = cast("Polyline", e)
+        if isinstance(e, Polyline):
             if e.is_2d_polyline or e.is_3d_polyline:
                 yield e
-        elif dxftype in SUPPORTED_DXF_TYPES:
+        elif e.dxftype() in SUPPORTED_DXF_TYPES:
             yield e
 
 
@@ -159,7 +154,7 @@ class GeoProxy:
         self.places = places
 
     @classmethod
-    def parse(cls, geo_mapping: Dict) -> "GeoProxy":
+    def parse(cls, geo_mapping) -> "GeoProxy":
         """Parse and compile a ``__geo_interface__`` mapping as :class:`dict`
         or a Python object with a ``__geo_interface__`` property, does some
         basic syntax checks, converts all coordinates into :class:`Vec3`
@@ -305,7 +300,7 @@ class GeoProxy:
             func = wgs84_3395_to_4326
         self.apply(func)
 
-    def crs_to_wcs(self, crs: "Matrix44") -> None:
+    def crs_to_wcs(self, crs: Matrix44) -> None:
         """Transform all coordinates recursive from CRS into
         :ref:`WCS` coordinates by transformation matrix `crs` inplace,
         see also :meth:`GeoProxy.wcs_to_crs`.
@@ -316,7 +311,7 @@ class GeoProxy:
         """
         self.apply(crs.ucs_vertex_from_wcs)
 
-    def wcs_to_crs(self, crs: "Matrix44") -> None:
+    def wcs_to_crs(self, crs: Matrix44) -> None:
         """Transform all coordinates recursive from :ref:`WCS` coordinates into
         Coordinate Reference System (CRS) by transformation matrix `crs`
         inplace.
@@ -470,7 +465,7 @@ class GeoProxy:
         def mpolygon_(exterior: Sequence, holes: Sequence) -> DXFPolygon:
             return dxf_polygon_("MPOLYGON", exterior, holes)
 
-        def entity(type_, coordinates) -> DXFGraphic:
+        def entity(type_, coordinates) -> Iterable[DXFGraphic]:
             if type_ == POINT:
                 yield point(coordinates)
             elif type_ == LINE_STRING:
@@ -578,7 +573,7 @@ def _parse_polygon(coordinates: Sequence) -> Sequence:
     """Returns polygon definition as tuple (exterior, [holes])."""
     if _is_coordinate_sequence(coordinates):
         exterior = coordinates
-        holes = []
+        holes: Sequence = []
     else:
         exterior = coordinates[0]
         holes = coordinates[1:]
@@ -672,11 +667,11 @@ def mapping(
         return _line_string_or_polygon_mapping(points, force_line_string)
     elif dxftype in {"CIRCLE", "ARC", "ELLIPSE", "SPLINE"}:
         return _line_string_or_polygon_mapping(
-            list(entity.flattening(distance)), force_line_string
+            list(entity.flattening(distance)), force_line_string  # type: ignore
         )
     elif dxftype in {"SOLID", "TRACE", "3DFACE"}:
         return _line_string_or_polygon_mapping(
-            entity.wcs_vertices(close=True), force_line_string
+            entity.wcs_vertices(close=True), force_line_string  # type: ignore
         )
     elif isinstance(entity, DXFPolygon):
         return _hatch_as_polygon(entity, distance, force_line_string)
