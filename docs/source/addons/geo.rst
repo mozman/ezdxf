@@ -46,7 +46,8 @@ proxy by :meth:`GeoProxy.parse` from an external ``__geo_interface__`` mapping.
 Returns "Point" as :class:`~ezdxf.entities.Point` entity,  "LineString" as
 :class:`~ezdxf.entities.LWPolyline` entity and "Polygon" as
 :class:`~ezdxf.entities.Hatch` entity or as separated
-:class:`~ezdxf.entities.LWPolyline` entities (or both).
+:class:`~ezdxf.entities.LWPolyline` entities (or both) and new in v0.16.6 as
+:class:`~ezdxf.entities.MPolygon`.
 Supports "MultiPoint", "MultiLineString", "MultiPolygon",
 "GeometryCollection", "Feature"  and "FeatureCollection".
 Add new DXF entities to a layout by the :meth:`Layout.add_entity` method.
@@ -69,7 +70,11 @@ Supported DXF entities are:
 - SOLID, TRACE, 3DFACE as "Polygon"
 - CIRCLE, ARC, ELLIPSE and SPLINE by approximation as "LineString" if open and
   "Polygon" if closed
-- HATCH as "Polygon", holes are supported
+- HATCH and MPOLYGON as "Polygon", holes are supported
+
+.. versionadded:: 0.16.6
+
+    MPOLYGON support
 
 .. warning::
 

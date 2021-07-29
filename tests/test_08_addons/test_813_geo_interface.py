@@ -1,4 +1,4 @@
-#  Copyright (c) 2020, Manfred Moitzi
+#  Copyright (c) 2020-2021, Manfred Moitzi
 #  License: MIT License
 from typing import cast
 import pytest
@@ -7,10 +7,12 @@ from ezdxf.math import Vec3
 from ezdxf.entities import (
     factory,
     Hatch,
+    MPolygon,
     LWPolyline,
     BoundaryPathType,
     EdgeType,
 )
+from ezdxf.entities.polygon import BasePolygon as DXFPolygon
 from ezdxf.addons import geo
 from ezdxf.render.forms import square, translate
 
@@ -105,11 +107,12 @@ def test_map_polyline():
     }
 
 
-def test_map_hatch():
+@pytest.mark.parametrize("dxftype", ["HATCH", "MPOLYGON"])
+def test_map_dxf_polygon(dxftype: str):
     hatch = cast(
         Hatch,
         factory.new(
-            "HATCH",
+            dxftype,
             dxfattribs={
                 "hatch_style": 0,
             },
@@ -253,24 +256,42 @@ def test_line_string_to_dxf_entity():
     assert list(res.vertices()) == Vec3.list(EXTERIOR)
 
 
-def test_polygon_without_holes_to_dxf_entity():
-    res = cast(Hatch, list(geo.dxf_entities(POLYGON_0))[0])
-    assert res.dxftype() == "HATCH"
-    assert len(res.paths) == 1
-    p = res.paths[0]
+@pytest.mark.parametrize("dxftype, polygon", [("HATCH", 1), ("MPOLYGON", 4)])
+def test_polygon_without_holes_to_dxf_polygon(dxftype, polygon):
+    entity = cast(
+        DXFPolygon, list(geo.dxf_entities(POLYGON_0, polygon=polygon))[0]
+    )
+    assert entity.dxftype() == dxftype
+    assert len(entity.paths) == 1
+    p = entity.paths[0]
     assert p.type == BoundaryPathType.POLYLINE
     assert p.vertices == Vec3.list(EXTERIOR)
 
 
-def test_polygon_with_holes_to_dxf_entity():
-    res = cast(Hatch, list(geo.dxf_entities(POLYGON_2))[0])
-    assert len(res.paths) == 3
-    p = res.paths[1]
+@pytest.mark.parametrize("dxftype, polygon", [("HATCH", 1), ("MPOLYGON", 4)])
+def test_polygon_with_holes_to_dxf_polygon(dxftype, polygon):
+    entity = cast(
+        DXFPolygon, list(geo.dxf_entities(POLYGON_2, polygon=polygon))[0]
+    )
+    assert entity.dxftype() == dxftype
+    assert len(entity.paths) == 3
+    p = entity.paths[1]
     assert p.type == BoundaryPathType.POLYLINE
     assert p.vertices == Vec3.list(HOLE1)
-    p = res.paths[2]
+    p = entity.paths[2]
     assert p.type == BoundaryPathType.POLYLINE
     assert p.vertices == Vec3.list(HOLE2)
+
+
+def test_mpolygon_supports_fill_and_border_color():
+    attribs = {"color": 2, "fill_color": 3}
+    mpolygon = cast(
+        MPolygon,
+        list(geo.dxf_entities(POLYGON_2, polygon=4, dxfattribs=attribs))[0],
+    )
+    assert mpolygon.dxftype() == "MPOLYGON"
+    assert mpolygon.dxf.color == 2
+    assert mpolygon.dxf.fill_color == 3
 
 
 def test_geometry_collection_to_dxf_entities():

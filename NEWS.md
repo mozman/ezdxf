@@ -5,14 +5,15 @@ News
 Version 0.16.6b0 - dev
 ----------------------
 
-- NEW: `MPOLYGON` support for the `drawing`add-on
+- NEW: `MPOLYGON` support for the `drawing` add-on
+- NEW: `MPOLYGON` support for the `geo` add-on
 - CHANGE: renamed `RenderContext.current_layer` to `RenderContext.current_layer_properties` 
 - CHANGE: renamed `RenderContext.current_block_reference` to `RenderContext.current_block_reference_properties` 
 - BUGFIX: add missing "doc" argument to DXF loaders, DXF version was not 
   available at loading stage 
 - BUGFIX: DXF export for `ARC_DIMENSION`
 - BETA: new features for testing, API may change until official release in v0.17
-- BETA: support for `ACAD_PROXY_ENTITY`  
+- BETA: support for `ACAD_PROXY_ENTITY`   
 
 Version 0.16.5 - 2021-07-18
 ---------------------------

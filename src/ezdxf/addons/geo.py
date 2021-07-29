@@ -25,7 +25,8 @@ import copy
 import math
 from ezdxf.math import Vec3, has_clockwise_orientation
 from ezdxf.path import make_path, from_hatch_boundary_path, fast_bbox_detection
-from ezdxf.entities import DXFGraphic, LWPolyline, Hatch, Point
+from ezdxf.entities import DXFGraphic, LWPolyline, Point
+from ezdxf.entities.polygon import BasePolygon as DXFPolygon
 from ezdxf.lldxf import const
 from ezdxf.entities import factory
 
@@ -55,6 +56,7 @@ SUPPORTED_DXF_TYPES = {
     "LWPOLYLINE",
     "POLYLINE",
     "HATCH",
+    "MPOLYGON",
     "SOLID",
     "TRACE",
     "3DFACE",
@@ -98,14 +100,22 @@ def dxf_entities(
 
     Yields :class:`Hatch` always before :class:`LWPolyline` entities.
 
+    :class:`~ezdxf.entities.MPolygon` support was added in v0.16.6, which is
+    like a :class:`~ezdxf.entities.Hatch` entity  with additional border
+    lines, but the MPOLYGON entity is not a core DXF entity and DXF viewers,
+    applications and libraries my not support this entity. The DXF attribute
+    `color` defines the border line color and `fill_color` the color of the
+    solid filling.
+
     The returned DXF entities can be added to a layout by the
     :meth:`Layout.add_entity` method.
 
     Args:
         geo_mapping: ``__geo__interface__`` mapping as :class:`dict` or a Python
             object with a :attr:`__geo__interface__` property
-        polygon: method to convert polygons (1-2-3)
+        polygon: method to convert polygons (1-2-3-4)
         dxfattribs: dict with additional DXF attributes
+
     """
     return GeoProxy.parse(geo_mapping).to_dxf_entities(polygon, dxfattribs)
 
@@ -394,12 +404,24 @@ class GeoProxy:
 
         Yields :class:`Hatch` always before :class:`LWPolyline` entities.
 
+        :class:`~ezdxf.entities.MPolygon` support was added in v0.16.6, which is
+        like a :class:`~ezdxf.entities.Hatch` entity  with additional border
+        lines, but the MPOLYGON entity is not a core DXF entity and DXF viewers,
+        applications and libraries my not support this entity. The DXF attribute
+        `color` defines the border line color and `fill_color` the color of the
+        solid filling.
+
         The returned DXF entities can be added to a layout by the
         :meth:`Layout.add_entity` method.
 
         Args:
-            polygon: method to convert polygons (1-2-3)
+            polygon: method to convert polygons (1-2-3-4)
             dxfattribs: dict with additional DXF attributes
+
+        .. versionadded:: 0.16.6
+
+            MPOLYGON support
+
         """
 
         def point(vertex: Sequence) -> Point:
@@ -414,26 +436,39 @@ class GeoProxy:
             polyline.append_points(vertices, format="xy")
             return polyline
 
-        def polygon_(
-            exterior: List, holes: List
-        ) -> Iterable[Union[Hatch, LWPolyline]]:
-            if polygon & 1:  # hatches first
+        def polygon_(exterior: List, holes: List) -> Iterable[DXFGraphic]:
+            if polygon & 4:  # MPOLYGON
+                yield mpolygon_(exterior, holes)
+                # the following DXF entities do not support the
+                # "fill_color" attribute
+                return
+            if polygon & 1:  # HATCH
                 yield hatch_(exterior, holes)
-            if polygon & 2:
+            if polygon & 2:  # LWPOLYLINE
                 for path in [exterior] + holes:
                     yield lwpolyline(path)
 
-        def hatch_(exterior: Sequence, holes: Sequence) -> Hatch:
-            hatch = cast(Hatch, factory.new("HATCH", dxfattribs=dxfattribs))
-            hatch.dxf.hatch_style = const.HATCH_STYLE_OUTERMOST
-            hatch.paths.add_polyline_path(
+        def dxf_polygon_(
+            dxftype: str, exterior: Sequence, holes: Sequence
+        ) -> DXFPolygon:
+            dxf_polygon = cast(
+                DXFPolygon, factory.new(dxftype, dxfattribs=dxfattribs)
+            )
+            dxf_polygon.dxf.hatch_style = const.HATCH_STYLE_OUTERMOST
+            dxf_polygon.paths.add_polyline_path(
                 exterior, flags=const.BOUNDARY_PATH_EXTERNAL
             )
             for hole in holes:
-                hatch.paths.add_polyline_path(
+                dxf_polygon.paths.add_polyline_path(
                     hole, flags=const.BOUNDARY_PATH_OUTERMOST
                 )
-            return hatch
+            return dxf_polygon
+
+        def hatch_(exterior: Sequence, holes: Sequence) -> DXFPolygon:
+            return dxf_polygon_("HATCH", exterior, holes)
+
+        def mpolygon_(exterior: Sequence, holes: Sequence) -> DXFPolygon:
+            return dxf_polygon_("MPOLYGON", exterior, holes)
 
         def entity(type_, coordinates) -> DXFGraphic:
             if type_ == POINT:
@@ -453,6 +488,9 @@ class GeoProxy:
                 for data in coordinates:
                     exterior, holes = data
                     yield from polygon_(exterior, holes)
+
+        if polygon < 1 or polygon > 4:
+            raise ValueError(f"invalid value for polygon: {polygon}")
 
         dxfattribs = dxfattribs or dict()
         for _mapping in self.__iter__():
@@ -640,7 +678,7 @@ def mapping(
         return _line_string_or_polygon_mapping(
             entity.wcs_vertices(close=True), force_line_string
         )
-    elif dxftype == "HATCH":
+    elif isinstance(entity, DXFPolygon):
         return _hatch_as_polygon(entity, distance, force_line_string)
     else:
         raise TypeError(dxftype)
@@ -662,7 +700,7 @@ def _line_string_or_polygon_mapping(
 
 
 def _hatch_as_polygon(
-    hatch: Hatch, distance: float, force_line_string: bool
+    hatch: DXFPolygon, distance: float, force_line_string: bool
 ) -> Dict:
     def boundary_to_vertices(boundary) -> List[Vec3]:
         path = from_hatch_boundary_path(boundary, ocs, elevation)
@@ -684,7 +722,7 @@ def _hatch_as_polygon(
     boundaries = list(hatch.paths.rendering_paths(hatch_style))
     count = len(boundaries)
     if count == 0:
-        raise ValueError("HATCH without any boundary path.")
+        raise ValueError(f"{hatch.dxftype()} without any boundary path.")
     # Take first path as exterior path, multiple EXTERNAL paths are possible
     exterior = boundaries[0]
     if count == 1 or hatch_style == const.HATCH_STYLE_IGNORE:
