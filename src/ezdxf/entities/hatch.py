@@ -18,7 +18,7 @@ from .boundary_paths import TPath
 from .dxfentity import base_class
 from .dxfgfx import acdb_entity
 from .factory import register_entity
-from .polygon import BasePolygon
+from .polygon import DXFPolygon
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Drawing, DXFEntity, RGB
@@ -184,7 +184,7 @@ acdb_hatch_group_code = group_code_mapping(acdb_hatch)
 
 
 @register_entity
-class Hatch(BasePolygon):
+class Hatch(DXFPolygon):
     """DXF HATCH entity"""
 
     DXFTYPE = "HATCH"

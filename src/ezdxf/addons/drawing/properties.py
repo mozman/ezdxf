@@ -19,7 +19,7 @@ from ezdxf.addons.drawing.type_hints import Color, RGB
 from ezdxf.colors import luminance, DXF_DEFAULT_COLORS, int2rgb
 from ezdxf.entities import Attrib
 from ezdxf.entities.ltype import CONTINUOUS_PATTERN
-from ezdxf.entities.polygon import BasePolygon
+from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.lldxf import const
 from ezdxf.sections.table import table_key as layer_key
 from ezdxf.tools import fonts
@@ -484,7 +484,7 @@ class RenderContext:
         )
         if entity.is_supported_dxf_attrib("style"):
             p.font = self.resolve_font(entity)
-        if isinstance(entity, BasePolygon):
+        if isinstance(entity, DXFPolygon):
             p.filling = self.resolve_filling(entity)
         return p
 
@@ -751,10 +751,10 @@ class RenderContext:
             )
             self._hatch_pattern_cache[filling.name] = filling.pattern
 
-        if not isinstance(entity, BasePolygon):
+        if not isinstance(entity, DXFPolygon):
             return None
 
-        polygon = cast(BasePolygon, entity)
+        polygon = cast(DXFPolygon, entity)
         filling = Filling()
         if polygon.dxf.solid_fill:
             gradient = polygon.gradient

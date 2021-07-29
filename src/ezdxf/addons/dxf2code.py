@@ -23,7 +23,7 @@ if TYPE_CHECKING:
         Wipeout,
     )
     from ezdxf.eztypes import DXFEntity, Linetype, DXFTag, BlockLayout
-    from ezdxf.entities.polygon import BasePolygon
+    from ezdxf.entities.polygon import DXFPolygon
 
 __all__ = [
     "entities_to_code",
@@ -746,7 +746,7 @@ class _SourceCodeGenerator:
             )
         self._polygon(entity)
 
-    def _polygon(self, entity: "BasePolygon"):
+    def _polygon(self, entity: "DXFPolygon"):
         add_line = self.add_source_code_line
         if len(entity.seeds):
             add_line(f"e.set_seed_points({entity.seeds})")

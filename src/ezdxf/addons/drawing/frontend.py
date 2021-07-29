@@ -42,7 +42,7 @@ from ezdxf.entities import (
     OLE2Frame,
     Point,
 )
-from ezdxf.entities.polygon import BasePolygon
+from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.layouts import Layout
 from ezdxf.math import Vec3, OCS, NULLVEC
 from ezdxf.path import (
@@ -421,7 +421,7 @@ class Frontend:
         if not self.out.show_hatch:
             return
 
-        polygon = cast(BasePolygon, entity)
+        polygon = cast(DXFPolygon, entity)
         ocs = polygon.ocs()
         # all OCS coordinates have the same z-axis stored as vector (0, 0, z),
         # default (0, 0, 0)
@@ -458,7 +458,7 @@ class Frontend:
                 entity.dxf.fill_color, properties.layer
             )
 
-        polygon = cast(BasePolygon, entity)
+        polygon = cast(DXFPolygon, entity)
         ocs = polygon.ocs()
         elevation: float = polygon.dxf.elevation.z
         offset = Vec3(polygon.dxf.get("offset_vector", NULLVEC))

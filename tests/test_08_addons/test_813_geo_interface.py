@@ -10,9 +10,8 @@ from ezdxf.entities import (
     MPolygon,
     LWPolyline,
     BoundaryPathType,
-    EdgeType,
 )
-from ezdxf.entities.polygon import BasePolygon as DXFPolygon
+from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.addons import geo
 from ezdxf.render.forms import square, translate
 

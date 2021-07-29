@@ -31,7 +31,7 @@ from ezdxf.entities import (
     LWPolyline,
     Polyline,
 )
-from ezdxf.entities.polygon import BasePolygon
+from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.entities.boundary_paths import (
     PolylinePath,
     EdgePath,
@@ -196,8 +196,8 @@ def _flip_polyline2d(polyline: Polyline) -> None:
 
 
 # HATCH and MPOLYGON
-@_flip_dxf_graphic.register(BasePolygon)
-def _flip_polygon(polygon: BasePolygon) -> None:
+@_flip_dxf_graphic.register(DXFPolygon)
+def _flip_polygon(polygon: DXFPolygon) -> None:
     for p in polygon.paths:
         _flip_boundary_path(p)
     _flip_elevation(polygon.dxf)

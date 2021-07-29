@@ -18,7 +18,7 @@ from .pattern import Pattern, PatternLine
 
 RGB = colors.RGB
 
-__all__ = ["BasePolygon"]
+__all__ = ["DXFPolygon"]
 
 PATH_CODES = {
     10,
@@ -44,7 +44,7 @@ PATH_CODES = {
 PATTERN_DEFINITION_LINE_CODES = {53, 43, 44, 45, 46, 79, 49}
 
 
-class BasePolygon(DXFGraphic):
+class DXFPolygon(DXFGraphic):
     """Base class for the HATCH and the MPOLYGON entity."""
 
     LOAD_GROUP_CODES = {}
@@ -56,7 +56,7 @@ class BasePolygon(DXFGraphic):
         self.gradient: Optional[Gradient] = None
         self.seeds = []  # not supported/exported by MPOLYGON
 
-    def _copy_data(self, entity: "BasePolygon") -> None:
+    def _copy_data(self, entity: "DXFPolygon") -> None:
         """Copy paths, pattern, gradient, seeds."""
         entity.paths = copy.deepcopy(self.paths)
         entity.pattern = copy.deepcopy(self.pattern)
@@ -373,7 +373,7 @@ class BasePolygon(DXFGraphic):
         self.pattern.scale(angle=angle - dxf.pattern_angle)
         dxf.pattern_angle = angle % 360.0
 
-    def transform(self, m: "Matrix44") -> "BasePolygon":
+    def transform(self, m: "Matrix44") -> "DXFPolygon":
         """Transform entity by transformation matrix `m` inplace."""
         dxf = self.dxf
         ocs = OCSTransform(dxf.extrusion, m)

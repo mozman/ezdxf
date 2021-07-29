@@ -26,7 +26,7 @@ import math
 from ezdxf.math import Vec3, has_clockwise_orientation
 from ezdxf.path import make_path, from_hatch_boundary_path, fast_bbox_detection
 from ezdxf.entities import DXFGraphic, LWPolyline, Point
-from ezdxf.entities.polygon import BasePolygon as DXFPolygon
+from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.lldxf import const
 from ezdxf.entities import factory
 

@@ -32,7 +32,7 @@ from ezdxf.query import EntityQuery
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.entities.polygon import BasePolygon
+    from ezdxf.entities.polygon import DXFPolygon
     from ezdxf.eztypes import (
         Insert,
         BaseLayout,
@@ -306,7 +306,7 @@ def explode_entity(
 
 
 def virtual_boundary_path_entities(
-    polygon: "BasePolygon",
+    polygon: "DXFPolygon",
 ) -> List[List["DXFGraphic"]]:
     from ezdxf.entities import LWPolyline
 

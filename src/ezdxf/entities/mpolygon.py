@@ -15,7 +15,7 @@ from ezdxf.math import NULLVEC, Z_AXIS
 from .dxfentity import base_class
 from .dxfgfx import acdb_entity
 from .factory import register_entity
-from .polygon import BasePolygon
+from .polygon import DXFPolygon
 from .gradient import Gradient, GradientType
 
 __all__ = ["MPolygon"]
@@ -125,7 +125,7 @@ acdb_mpolygon_group_code = group_code_mapping(acdb_mpolygon)
 
 
 @register_entity
-class MPolygon(BasePolygon):
+class MPolygon(DXFPolygon):
     """DXF MPOLYGON entity
 
     The MPOLYGON is not a core DXF entity, and requires a CLASS definition.
