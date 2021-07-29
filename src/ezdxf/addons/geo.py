@@ -24,7 +24,7 @@ import copy
 import math
 from ezdxf.math import Vec3, has_clockwise_orientation, Matrix44
 from ezdxf.path import make_path, from_hatch_boundary_path, fast_bbox_detection
-from ezdxf.entities import DXFGraphic, LWPolyline, Point, Polyline
+from ezdxf.entities import DXFGraphic, LWPolyline, Point, Polyline, Line, Solid
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.lldxf import const
 from ezdxf.entities import factory
@@ -647,12 +647,11 @@ def mapping(
     """
 
     dxftype = entity.dxftype()
-    if dxftype == "POINT":
+    if isinstance(entity, Point):
         return {TYPE: POINT, COORDINATES: entity.dxf.location}
-    elif dxftype == "LINE":
+    elif isinstance(entity, Line):
         return line_string_mapping([entity.dxf.start, entity.dxf.end])
-    elif dxftype == "POLYLINE":
-        entity = cast("Polyline", entity)
+    elif isinstance(entity, Polyline):
         if entity.is_3d_polyline or entity.is_2d_polyline:
             # May contain arcs as bulge values:
             path = make_path(entity)
@@ -660,7 +659,7 @@ def mapping(
             return _line_string_or_polygon_mapping(points, force_line_string)
         else:
             raise TypeError("Polymesh and Polyface not supported.")
-    elif dxftype == "LWPOLYLINE":
+    elif isinstance(entity, LWPolyline):
         # May contain arcs as bulge values:
         path = make_path(entity)
         points = list(path.flattening(distance))
