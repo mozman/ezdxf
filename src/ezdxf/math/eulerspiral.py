@@ -1,7 +1,7 @@
 # Copyright (c) 2010-2021, Manfred Moitzi
 # License: MIT License
-from typing import Dict, Iterable, List
-from ezdxf.math import Vec3
+from typing import Dict, Iterable, List, Optional
+from ezdxf.math import Vec3, chord_length
 from ezdxf.math.bspline import global_bspline_interpolation, BSpline
 
 __all__ = ["EulerSpiral"]
@@ -15,6 +15,12 @@ def powers(base: float, count: int) -> List[float]:
         next_value *= base
         values.append(next_value)
     return values
+
+
+def _params(length: float, segments: int) -> Iterable[float]:
+    delta_l = float(length) / float(segments)
+    for index in range(0, segments + 1):
+        yield delta_l * index
 
 
 class EulerSpiral:
@@ -82,10 +88,8 @@ class EulerSpiral:
         Generates segments+1 vertices as :class:`Vec3` objects.
 
         """
-        delta_l = float(length) / float(segments)
-        yield Vec3(0, 0)
-        for index in range(1, segments + 1):
-            yield self.point(delta_l * index)
+        for t in _params(length, segments):
+            yield self.point(t)
 
     def circle_center(self, t: float) -> Vec3:
         """Get circle center at distance `t`."""
@@ -113,7 +117,14 @@ class EulerSpiral:
 
         """
         fit_points = list(self.approximate(length, segments=segments))
-        spline = global_bspline_interpolation(fit_points, degree, method=method)
+        tangent_length = chord_length(fit_points)
+        tangents = [
+            self.tangent(t).normalize(tangent_length)
+            for t in _params(length, segments)
+        ]
+        spline = global_bspline_interpolation(
+            fit_points, degree, method=method, tangents=tangents
+        )
         return BSpline(
             spline.control_points,
             spline.order,

@@ -58,7 +58,6 @@ def tmatrix(dx, dy, sx=1, sy=1, angle=0):
     )
 
 
-
 doc = ezdxf.new("R2000", setup=True)
 msp = doc.modelspace()
 

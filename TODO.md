@@ -37,7 +37,6 @@ Add-ons
 Render Tools
 ------------
 
-- (v0.17) `EulerSpiral()` conversion to B-spline with end tangent constraints
 - (v0.18) `MLeader.virtual_entities()`
 - (v0.18) DIMENSION rendering
     - angular dim
