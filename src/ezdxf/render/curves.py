@@ -4,9 +4,16 @@ from typing import TYPE_CHECKING, Iterable, List, Tuple, Optional
 import random
 import math
 from ezdxf.math import (
-    Vec3, Vec2, Matrix44, perlin, Bezier4P, global_bspline_interpolation,
-    BSpline, open_uniform_bspline, closed_uniform_bspline,
-    EulerSpiral as _EulerSpiral
+    Vec3,
+    Vec2,
+    Matrix44,
+    perlin,
+    Bezier4P,
+    global_bspline_interpolation,
+    BSpline,
+    open_uniform_bspline,
+    closed_uniform_bspline,
+    EulerSpiral as _EulerSpiral,
 )
 
 if TYPE_CHECKING:
@@ -22,10 +29,13 @@ def rnd_perlin(max_value, walker):
     return max_value / 2.0 - r * max_value
 
 
-def random_2d_path(steps: int = 100, max_step_size: float = 1.0,
-                   max_heading: float = math.pi / 2,
-                   retarget: int = 20) -> Iterable[Vec2]:
-    """ Returns a random 2D path as iterable of :class:`~ezdxf.math.Vec2`
+def random_2d_path(
+    steps: int = 100,
+    max_step_size: float = 1.0,
+    max_heading: float = math.pi / 2,
+    retarget: int = 20,
+) -> Iterable[Vec2]:
+    """Returns a random 2D path as iterable of :class:`~ezdxf.math.Vec2`
     objects.
 
     Args:
@@ -53,11 +63,14 @@ def random_2d_path(steps: int = 100, max_step_size: float = 1.0,
         yield walker
 
 
-def random_3d_path(steps: int = 100, max_step_size: float = 1.0,
-                   max_heading: float = math.pi / 2.0,
-                   max_pitch: float = math.pi / 8.0,
-                   retarget: int = 20) -> Iterable[Vec3]:
-    """ Returns a random 3D path as iterable of :class:`~ezdxf.math.Vec3`
+def random_3d_path(
+    steps: int = 100,
+    max_step_size: float = 1.0,
+    max_heading: float = math.pi / 2.0,
+    max_pitch: float = math.pi / 8.0,
+    retarget: int = 20,
+) -> Iterable[Vec3]:
+    """Returns a random 3D path as iterable of :class:`~ezdxf.math.Vec3`
     objects.
 
     Args:
@@ -90,7 +103,7 @@ def random_3d_path(steps: int = 100, max_step_size: float = 1.0,
 
 
 class Bezier:
-    """ Render a bezier curve as 2D/3D :class:`~ezdxf.entities.Polyline`.
+    """Render a bezier curve as 2D/3D :class:`~ezdxf.entities.Polyline`.
 
     The :class:`Bezier` class is implemented with multiple segments, each
     segment is an optimized 4 point bezier curve, the 4 control points of the
@@ -106,13 +119,19 @@ class Bezier:
     """
 
     class Segment:
-        def __init__(self, start: 'Vertex', end: 'Vertex',
-                     start_tangent: 'Vertex', end_tangent: 'Vertex',
-                     segments: int):
+        def __init__(
+            self,
+            start: "Vertex",
+            end: "Vertex",
+            start_tangent: "Vertex",
+            end_tangent: "Vertex",
+            segments: int,
+        ):
             self.start = Vec3(start)
             self.end = Vec3(end)
             self.start_tangent = Vec3(
-                start_tangent)  # as vector, from start point
+                start_tangent
+            )  # as vector, from start point
             self.end_tangent = Vec3(end_tangent)  # as vector, from end point
             self.segments = segments
 
@@ -129,10 +148,11 @@ class Bezier:
     def __init__(self):
         # fit point, first control vector, second control vector, segment count
         self.points: List[
-            Tuple[Vec3, Optional[Vec3], Optional[Vec3], Optional[int]]] = []
+            Tuple[Vec3, Optional[Vec3], Optional[Vec3], Optional[int]]
+        ] = []
 
-    def start(self, point: 'Vertex', tangent: 'Vertex') -> None:
-        """ Set start point and start tangent.
+    def start(self, point: "Vertex", tangent: "Vertex") -> None:
+        """Set start point and start tangent.
 
         Args:
             point: start point
@@ -141,9 +161,14 @@ class Bezier:
         """
         self.points.append((point, None, tangent, None))
 
-    def append(self, point: 'Vertex', tangent1: 'Vertex',
-               tangent2: 'Vertex' = None, segments: int = 20):
-        """ Append a control point with two control tangents.
+    def append(
+        self,
+        point: "Vertex",
+        tangent1: "Vertex",
+        tangent2: "Vertex" = None,
+        segments: int = 20,
+    ):
+        """Append a control point with two control tangents.
 
         Args:
             point: control point
@@ -170,14 +195,19 @@ class Bezier:
                 end_point = to_point[0]
                 end_tangent = to_point[1]  # tangent1
                 count = to_point[3]
-                yield Bezier.Segment(start_point, end_point,
-                                     start_tangent, end_tangent, count)
+                yield Bezier.Segment(
+                    start_point, end_point, start_tangent, end_tangent, count
+                )
         else:
-            raise ValueError('Two or more points needed!')
+            raise ValueError("Two or more points needed!")
 
-    def render(self, layout: 'BaseLayout', force3d: bool = False,
-               dxfattribs: dict = None) -> None:
-        """ Render bezier curve as 2D/3D :class:`~ezdxf.entities.Polyline`.
+    def render(
+        self,
+        layout: "BaseLayout",
+        force3d: bool = False,
+        dxfattribs: dict = None,
+    ) -> None:
+        """Render bezier curve as 2D/3D :class:`~ezdxf.entities.Polyline`.
 
         Args:
             layout: :class:`~ezdxf.layouts.BaseLayout` object
@@ -195,7 +225,7 @@ class Bezier:
 
 
 class Spline:
-    """ This class can be used to render B-splines into DXF R12 files as
+    """This class can be used to render B-splines into DXF R12 files as
     approximated :class:`~ezdxf.entities.Polyline` entities.
     The advantage of this class over the :class:`R12Spline` class is,
     that this is a real 3D curve, which means that the B-spline vertices do
@@ -209,7 +239,7 @@ class Spline:
 
     """
 
-    def __init__(self, points: Iterable['Vertex'] = None, segments: int = 100):
+    def __init__(self, points: Iterable["Vertex"] = None, segments: int = 100):
         """
         Args:
             points: spline definition points
@@ -223,7 +253,7 @@ class Spline:
         self.segments = int(segments)
 
     def subdivide(self, segments: int = 4) -> None:
-        """ Calculate overall segment count, where segments is the sub-segment
+        """Calculate overall segment count, where segments is the sub-segment
         count, `segments` = 4, means 4 line segments between two definition
         points e.g. 4 definition points and 4 segments = 12 overall segments,
         useful for fit point rendering.
@@ -234,10 +264,14 @@ class Spline:
         """
         self.segments = (len(self.points) - 1) * segments
 
-    def render_as_fit_points(self, layout: 'BaseLayout', degree: int = 3,
-                             method: str = 'chord',
-                             dxfattribs: dict = None) -> None:
-        """ Render a B-spline as 2D/3D :class:`~ezdxf.entities.Polyline`, where
+    def render_as_fit_points(
+        self,
+        layout: "BaseLayout",
+        degree: int = 3,
+        method: str = "chord",
+        dxfattribs: dict = None,
+    ) -> None:
+        """Render a B-spline as 2D/3D :class:`~ezdxf.entities.Polyline`, where
         the definition points are fit points.
 
            - 2D spline vertices uses: :meth:`~ezdxf.layouts.BaseLayout.add_polyline2d`
@@ -251,19 +285,21 @@ class Spline:
             dxfattribs: DXF attributes for :class:`~ezdxf.entities.Polyline`
 
         """
-        spline = global_bspline_interpolation(self.points, degree=degree,
-                                              method=method)
+        spline = global_bspline_interpolation(
+            self.points, degree=degree, method=method
+        )
         vertices = list(spline.approximate(self.segments))
-        if any(vertex.z != 0. for vertex in vertices):
+        if any(vertex.z != 0.0 for vertex in vertices):
             layout.add_polyline3d(vertices, dxfattribs=dxfattribs)
         else:
             layout.add_polyline2d(vertices, dxfattribs=dxfattribs)
 
     render = render_as_fit_points
 
-    def render_open_bspline(self, layout: 'BaseLayout', degree: int = 3,
-                            dxfattribs: dict = None) -> None:
-        """ Render an open uniform B-spline as 3D :class:`~ezdxf.entities.Polyline`.
+    def render_open_bspline(
+        self, layout: "BaseLayout", degree: int = 3, dxfattribs: dict = None
+    ) -> None:
+        """Render an open uniform B-spline as 3D :class:`~ezdxf.entities.Polyline`.
         Definition points are control points.
 
         Args:
@@ -273,12 +309,14 @@ class Spline:
 
         """
         spline = BSpline(self.points, order=degree + 1)
-        layout.add_polyline3d(list(spline.approximate(self.segments)),
-                              dxfattribs=dxfattribs)
+        layout.add_polyline3d(
+            list(spline.approximate(self.segments)), dxfattribs=dxfattribs
+        )
 
-    def render_uniform_bspline(self, layout: 'BaseLayout', degree: int = 3,
-                               dxfattribs: dict = None) -> None:
-        """ Render a uniform B-spline as 3D :class:`~ezdxf.entities.Polyline`.
+    def render_uniform_bspline(
+        self, layout: "BaseLayout", degree: int = 3, dxfattribs: dict = None
+    ) -> None:
+        """Render a uniform B-spline as 3D :class:`~ezdxf.entities.Polyline`.
         Definition points are control points.
 
         Args:
@@ -288,12 +326,14 @@ class Spline:
 
         """
         spline = open_uniform_bspline(self.points, order=degree + 1)
-        layout.add_polyline3d(list(spline.approximate(self.segments)),
-                              dxfattribs=dxfattribs)
+        layout.add_polyline3d(
+            list(spline.approximate(self.segments)), dxfattribs=dxfattribs
+        )
 
-    def render_closed_bspline(self, layout: 'BaseLayout', degree: int = 3,
-                              dxfattribs: dict = None) -> None:
-        """ Render a closed uniform B-spline as 3D :class:`~ezdxf.entities.Polyline`.
+    def render_closed_bspline(
+        self, layout: "BaseLayout", degree: int = 3, dxfattribs: dict = None
+    ) -> None:
+        """Render a closed uniform B-spline as 3D :class:`~ezdxf.entities.Polyline`.
         Definition points are control points.
 
         Args:
@@ -303,13 +343,18 @@ class Spline:
 
         """
         spline = closed_uniform_bspline(self.points, order=degree + 1)
-        layout.add_polyline3d(list(spline.approximate(self.segments)),
-                              dxfattribs=dxfattribs)
+        layout.add_polyline3d(
+            list(spline.approximate(self.segments)), dxfattribs=dxfattribs
+        )
 
-    def render_open_rbspline(self, layout: 'BaseLayout',
-                             weights: Iterable[float], degree: int = 3,
-                             dxfattribs: dict = None) -> None:
-        """ Render a rational open uniform BSpline as 3D :class:`~ezdxf.entities.Polyline`.
+    def render_open_rbspline(
+        self,
+        layout: "BaseLayout",
+        weights: Iterable[float],
+        degree: int = 3,
+        dxfattribs: dict = None,
+    ) -> None:
+        """Render a rational open uniform BSpline as 3D :class:`~ezdxf.entities.Polyline`.
         Definition points are control points.
 
         Args:
@@ -321,13 +366,18 @@ class Spline:
 
         """
         spline = BSpline(self.points, order=degree + 1, weights=weights)
-        layout.add_polyline3d(list(spline.approximate(self.segments)),
-                              dxfattribs=dxfattribs)
+        layout.add_polyline3d(
+            list(spline.approximate(self.segments)), dxfattribs=dxfattribs
+        )
 
-    def render_uniform_rbspline(self, layout: 'BaseLayout',
-                                weights: Iterable[float], degree: int = 3,
-                                dxfattribs: dict = None) -> None:
-        """ Render a rational uniform B-spline as 3D :class:`~ezdxf.entities.Polyline`.
+    def render_uniform_rbspline(
+        self,
+        layout: "BaseLayout",
+        weights: Iterable[float],
+        degree: int = 3,
+        dxfattribs: dict = None,
+    ) -> None:
+        """Render a rational uniform B-spline as 3D :class:`~ezdxf.entities.Polyline`.
         Definition points are control points.
 
         Args:
@@ -339,14 +389,20 @@ class Spline:
 
         """
         spline = closed_uniform_bspline(
-            self.points, order=degree + 1, weights=weights)
-        layout.add_polyline3d(list(spline.approximate(self.segments)),
-                              dxfattribs=dxfattribs)
+            self.points, order=degree + 1, weights=weights
+        )
+        layout.add_polyline3d(
+            list(spline.approximate(self.segments)), dxfattribs=dxfattribs
+        )
 
-    def render_closed_rbspline(self, layout: 'BaseLayout',
-                               weights: Iterable[float], degree: int = 3,
-                               dxfattribs: dict = None) -> None:
-        """ Render a rational B-spline as 3D :class:`~ezdxf.entities.Polyline`.
+    def render_closed_rbspline(
+        self,
+        layout: "BaseLayout",
+        weights: Iterable[float],
+        degree: int = 3,
+        dxfattribs: dict = None,
+    ) -> None:
+        """Render a rational B-spline as 3D :class:`~ezdxf.entities.Polyline`.
         Definition points are control points.
 
         Args:
@@ -358,13 +414,15 @@ class Spline:
 
         """
         spline = closed_uniform_bspline(
-            self.points, order=degree + 1, weights=weights)
-        layout.add_polyline3d(list(spline.approximate(self.segments)),
-                              dxfattribs=dxfattribs)
+            self.points, order=degree + 1, weights=weights
+        )
+        layout.add_polyline3d(
+            list(spline.approximate(self.segments)), dxfattribs=dxfattribs
+        )
 
 
 class EulerSpiral:
-    """ Render an `euler spiral <https://en.wikipedia.org/wiki/Euler_spiral>`_
+    """Render an `euler spiral <https://en.wikipedia.org/wiki/Euler_spiral>`_
     as a 3D :class:`~ezdxf.entities.Polyline` or a
     :class:`~ezdxf.entities.Spline` entity.
 
@@ -380,10 +438,15 @@ class EulerSpiral:
         """
         self.spiral = _EulerSpiral(float(curvature))
 
-    def render_polyline(self, layout: 'BaseLayout', length: float = 1,
-                        segments: int = 100,
-                        matrix: 'Matrix44' = None, dxfattribs: dict = None):
-        """ Render curve as :class:`~ezdxf.entities.Polyline`.
+    def render_polyline(
+        self,
+        layout: "BaseLayout",
+        length: float = 1,
+        segments: int = 100,
+        matrix: "Matrix44" = None,
+        dxfattribs: dict = None,
+    ):
+        """Render curve as :class:`~ezdxf.entities.Polyline`.
 
         Args:
             layout: :class:`~ezdxf.layouts.BaseLayout` object
@@ -401,9 +464,15 @@ class EulerSpiral:
             points = matrix.transform_vertices(points)
         return layout.add_polyline3d(list(points), dxfattribs=dxfattribs)
 
-    def render_spline(self, layout: 'BaseLayout', length: float = 1,
-                      fit_points: int = 10, degree: int = 3,
-                      matrix: 'Matrix44' = None, dxfattribs: dict = None):
+    def render_spline(
+        self,
+        layout: "BaseLayout",
+        length: float = 1,
+        fit_points: int = 10,
+        degree: int = 3,
+        matrix: "Matrix44" = None,
+        dxfattribs: dict = None,
+    ):
         """
         Render curve as :class:`~ezdxf.entities.Spline`.
 
