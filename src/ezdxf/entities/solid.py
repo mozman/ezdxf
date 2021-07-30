@@ -187,18 +187,38 @@ class Face3d(_Base):
     DXFTYPE = "3DFACE"
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_face)
 
-    def is_invisible_edge(self, num) -> bool:
+    def is_invisible_edge(self, num: int) -> bool:
         """Returns True if edge `num` is an invisible edge."""
+        if num < 0 or num >= self.num_vertices:
+            raise ValueError(f'invalid edge: {num}')
         return bool(self.dxf.invisible & (1 << num))
 
-    def set_edge_visibility(self, num, status=False):
+    def set_edge_visibility(self, num: int, visible: bool = False) -> None:
         """Set visibility of edge `num`, status `True` for visible, status
         `False` for invisible.
         """
-        if not status:
+        if num < 0 or num >= self.num_vertices:
+            raise ValueError(f'invalid edge: {num}')
+        if not visible:
             self.dxf.invisible = self.dxf.invisible | (1 << num)
         else:
             self.dxf.invisible = self.dxf.invisible & ~(1 << num)
+
+    def get_edges_visibility(self) -> List[bool]:
+        # if the face is a triangle, a fourth visibility flag
+        # may be present but is ignored
+        return [not self.is_invisible_edge(i) for i in range(self.num_vertices)]
+
+    @property
+    def is_triangle(self) -> bool:
+        dxf = self.dxf
+        return (not dxf.hasattr("vtx3")
+                or dxf.vtx3 == dxf.vtx2
+                or dxf.vtx3 == dxf.vtx0)
+
+    @property
+    def num_vertices(self) -> int:
+        return 3 if self.is_triangle else 4
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
@@ -240,7 +260,7 @@ class Face3d(_Base):
         """
         dxf = self.dxf
         vertices = [dxf.vtx0, dxf.vtx1, dxf.vtx2]
-        if dxf.vtx3 != dxf.vtx2:  # when the face is a triangle, vtx2 == vtx3
+        if not self.is_triangle:
             vertices.append(dxf.vtx3)
 
         if close and not vertices[0].isclose(vertices[-1]):
