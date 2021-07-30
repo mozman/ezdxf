@@ -1,10 +1,20 @@
 # Copyright (c) 2010-2021, Manfred Moitzi
 # License: MIT License
-from typing import Dict, Iterable
+from typing import Dict, Iterable, List
 from ezdxf.math import Vec3
 from ezdxf.math.bspline import global_bspline_interpolation, BSpline
 
 __all__ = ["EulerSpiral"]
+
+
+def powers(base: float, count: int) -> List[float]:
+    assert count > 2, "requires count > 2"
+    values = [1.0, base]
+    next_value = base
+    for _ in range(count - 2):
+        next_value *= base
+        values.append(next_value)
+    return values
 
 
 class EulerSpiral:
@@ -20,9 +30,10 @@ class EulerSpiral:
     """
 
     def __init__(self, curvature: float = 1.0):
+        curvature = float(curvature)
         self.curvature = curvature  # Radius of curvature
-        self.curvature_powers = [curvature ** power for power in range(19)]
-        self._cache = {}  # type: Dict[float, Vec3] # coordinates cache
+        self.curvature_powers: List[float] = powers(curvature, 19)
+        self._cache: Dict[float, Vec3] = {}  # coordinates cache
 
     def radius(self, t: float) -> float:
         """Get radius of circle at distance `t`."""

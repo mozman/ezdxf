@@ -217,7 +217,7 @@ def global_bspline_interpolation(
     It is possible to constraint the curve by tangents, by start- and end
     tangent if only two tangents are given or by one tangent for each fit point.
 
-    If tangents are given, they represent 1st derivatives and and should be
+    If tangents are given, they represent 1st derivatives and should be
     scaled if they are unit vectors, if only start- and end tangents given the
     function :func:`~ezdxf.math.estimate_end_tangent_magnitude` helps with an
     educated guess, if all tangents are given, scaling by chord length is a
