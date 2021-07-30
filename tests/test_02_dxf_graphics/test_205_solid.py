@@ -190,7 +190,16 @@ def test_3dface():
     assert face.is_invisible_edge(0) is False
     assert face.is_invisible_edge(1) is True
     assert face.is_invisible_edge(2) is False
-    assert face.is_invisible_edge(3) is True
+    assert face.is_invisible_edge(3) is True  # accessible even when triangle
+
+    assert face.get_edges_visibility() == [True, False, True]
+    assert face.is_triangle
+    assert face.num_vertices == 3
+
+    face.dxf.vtx3 = (1, 2, 3)
+    assert face.get_edges_visibility() == [True, False, True, False]
+    assert not face.is_triangle
+    assert face.num_vertices == 4
 
     face.dxf.invisible = 0
     face.set_edge_visibility(3, False)
@@ -263,6 +272,9 @@ def test_3dface_quad_vertices():
     face = Face3d()
     for index, vertex in enumerate([(0, 0), (1, 0), (1, 1), (0, 1)]):
         face[index] = vertex
+    assert not face.is_triangle
+    assert face.get_edges_visibility() == [True, True, True, True]
+    assert face.num_vertices == 4
     # no weird vertex order:
     assert face.wcs_vertices() == [(0, 0), (1, 0), (1, 1), (0, 1)]
     assert face.wcs_vertices(close=True) == [(0, 0), (1, 0), (1, 1), (0, 1),
@@ -273,6 +285,9 @@ def test_3dface_triangle_vertices():
     face = Face3d()
     for index, vertex in enumerate([(0, 0), (1, 0), (1, 1), (1, 1)]):
         face[index] = vertex
+    assert face.is_triangle
+    assert face.get_edges_visibility() == [True, True, True]
+    assert face.num_vertices == 3
     assert face.wcs_vertices() == [(0, 0), (1, 0), (1, 1)]
     assert face.wcs_vertices(close=True) == [(0, 0), (1, 0), (1, 1), (0, 0)]
 

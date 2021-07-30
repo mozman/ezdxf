@@ -189,7 +189,7 @@ class Face3d(_Base):
 
     def is_invisible_edge(self, num: int) -> bool:
         """Returns True if edge `num` is an invisible edge."""
-        if num < 0 or num >= self.num_vertices:
+        if num < 0 or num > 4:  # allow accessing 4th value even when triangle
             raise ValueError(f'invalid edge: {num}')
         return bool(self.dxf.invisible & (1 << num))
 
@@ -197,7 +197,7 @@ class Face3d(_Base):
         """Set visibility of edge `num`, status `True` for visible, status
         `False` for invisible.
         """
-        if num < 0 or num >= self.num_vertices:
+        if num < 0 or num >= 4:  # allow accessing 4th value even when triangle
             raise ValueError(f'invalid edge: {num}')
         if not visible:
             self.dxf.invisible = self.dxf.invisible | (1 << num)
