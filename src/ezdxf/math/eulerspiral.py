@@ -1,7 +1,7 @@
 # Copyright (c) 2010-2021, Manfred Moitzi
 # License: MIT License
-from typing import Dict, Iterable, List, Optional
-from ezdxf.math import Vec3, chord_length
+from typing import Dict, Iterable, List
+from ezdxf.math import Vec3
 from ezdxf.math.bspline import global_bspline_interpolation, BSpline
 
 __all__ = ["EulerSpiral"]
@@ -116,14 +116,16 @@ class EulerSpiral:
             :class:`BSpline`
 
         """
+        length = float(length)
         fit_points = list(self.approximate(length, segments=segments))
-        tangent_length = chord_length(fit_points)
-        tangents = [
-            self.tangent(t).normalize(tangent_length)
+        derivatives = [
+            # Scaling derivatives by chord length (< real length) is suggested
+            # by Piegl & Tiller.
+            self.tangent(t).normalize(length)
             for t in _params(length, segments)
         ]
         spline = global_bspline_interpolation(
-            fit_points, degree, method=method, tangents=tangents
+            fit_points, degree, method=method, tangents=derivatives
         )
         return BSpline(
             spline.control_points,
