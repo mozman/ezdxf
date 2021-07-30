@@ -13,6 +13,7 @@ __all__ = [
     "estimate_tangents",
     "estimate_end_tangent_magnitude",
     "create_t_vector",
+    "chord_length",
 ]
 
 
@@ -63,6 +64,10 @@ def linear_distances(points: Iterable[Vec3]) -> Iterable[float]:
             continue
         yield prev.distance(p)
         prev = p
+
+
+def chord_length(points: Iterable[Vec3]) -> float:
+    return sum(linear_distances(points))
 
 
 def arc_t_vector(fit_points: List[Vec3]) -> Iterable[float]:
