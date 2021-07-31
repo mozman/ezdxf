@@ -26,21 +26,23 @@ class LinkedEntities(DXFGraphic):
         self._sub_entities: List[DXFGraphic] = []
         self.seqend: Optional["SeqEnd"] = None
 
-    def _copy_data(self, entity: "LinkedEntities") -> None:
+    def _copy_data(self, entity: "DXFEntity") -> None:
         """Copy all sub-entities ands SEQEND. (internal API)"""
+        assert isinstance(entity, LinkedEntities)
         entity._sub_entities = [e.copy() for e in self._sub_entities]
         if self.seqend:
             entity.seqend = self.seqend.copy()
 
-    def link_entity(self, entity: "DXFGraphic") -> None:
+    def link_entity(self, entity: "DXFEntity") -> None:
         """Link VERTEX ot ATTRIB entities."""
+        assert isinstance(entity, DXFGraphic)
         entity.set_owner(self.dxf.owner, self.dxf.paperspace)
         self._sub_entities.append(entity)
 
     def link_seqend(self, seqend: "DXFEntity") -> None:
         """Link SEQEND entity. (internal API)"""
         seqend.dxf.owner = self.dxf.owner
-        self.seqend = seqend
+        self.seqend = seqend  # type: ignore
 
     def post_bind_hook(self):
         """Create always a SEQEND entity."""
@@ -155,14 +157,14 @@ def entity_linker() -> Callable[[DXFEntity], bool]:
             # the entity space.
             are_linked_entities = True
             if dxftype == "SEQEND":
-                main_entity.link_seqend(entity)
+                main_entity.link_seqend(entity)  # type: ignore
                 # Marks also the end of the main entity
                 main_entity = None
             # Check for valid DXF structure:
             #   VERTEX follows POLYLINE
             #   ATTRIB follows INSERT
             elif dxftype == expected_dxftype:
-                main_entity.link_entity(entity)
+                main_entity.link_entity(entity)  # type: ignore
             else:
                 raise const.DXFStructureError(
                     f"Expected DXF entity {dxftype} or SEQEND"
