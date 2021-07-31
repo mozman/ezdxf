@@ -1,17 +1,17 @@
 # Purpose: Query language and manipulation object for DXF entities
-# Created: 27.04.13
-# Copyright (C) 2013, Manfred Moitzi
+# Copyright (c) 2013-2021, Manfred Moitzi
 # License: MIT License
 from typing import (
     TYPE_CHECKING,
     Iterable,
+    Iterator,
     Callable,
     Hashable,
     Dict,
     List,
-    Any,
     Sequence,
     Union,
+    cast
 )
 import re
 import operator
@@ -20,45 +20,49 @@ from collections import abc
 from ezdxf.queryparser import EntityQueryParser
 from ezdxf.groupby import groupby
 
-if TYPE_CHECKING:  # import forward references
-    from ezdxf.eztypes import DXFEntity
+if TYPE_CHECKING:
+    from ezdxf.entities import DXFEntity
 
 
 class EntityQuery(abc.Sequence):
-    """
-
-    EntityQuery is a result container, which is filled with dxf entities matching the query string.
-    It is possible to add entities to the container (extend), remove entities from the container and
-    to filter the container.
+    """EntityQuery is a result container, which is filled with dxf entities
+    matching the query string. It is possible to add entities to the container
+    (extend), remove entities from the container and to filter the container.
 
     Query String
     ============
 
     QueryString := EntityQuery ("[" AttribQuery "]")*
 
-    The query string is the combination of two queries, first the required entity query and second the
-    optional attribute query, enclosed in square brackets.
+    The query string is the combination of two queries, first the required
+    entity query and second the optional attribute query, enclosed in square
+    brackets.
 
     Entity Query
     ------------
 
-    The entity query is a whitespace separated list of DXF entity names or the special name ``*``.
-    Where ``*`` means all DXF entities, exclude some entity types by appending their names with a preceding ``!``
-    (e.g. all entities except LINE = ``* !LINE``). All DXF names have to be uppercase.
+    The entity query is a whitespace separated list of DXF entity names or the
+    special name ``*``. Where ``*`` means all DXF entities, exclude some entity
+    types by appending their names with a preceding ``!`` (e.g. all entities
+    except LINE = ``* !LINE``). All DXF names have to be uppercase.
 
     Attribute Query
     ---------------
 
-    The attribute query is used to select DXF entities by its DXF attributes. The attribute query is an addition to the
-    entity query and matches only if the entity already match the entity query.
+    The attribute query is used to select DXF entities by its DXF attributes.
+    The attribute query is an addition to the entity query and matches only if
+    the entity already match the entity query.
     The attribute query is a boolean expression, supported operators are:
+
       - not: !term is true, if term is false
       - and: term & term is true, if both terms are true
       - or: term | term is true, if one term is true
       - and arbitrary nested round brackets
 
-    Attribute selection is a term: "name comparator value", where name is a DXF entity attribute in lowercase,
-    value is a integer, float or double quoted string, valid comparators are:
+    Attribute selection is a term: "name comparator value", where name is a DXF
+    entity attribute in lowercase, value is a integer, float or double quoted
+    string, valid comparators are:
+
       - "==" equal "value"
       - "!=" not equal "value"
       - "<" lower than "value"
@@ -71,14 +75,20 @@ class EntityQuery(abc.Sequence):
     Query Result
     ------------
 
-    The EntityQuery() class based on the abstract Sequence() class, contains all DXF entities of the source collection,
-    which matches one name of the entity query AND the whole attribute query.
-    If a DXF entity does not have or support a required attribute, the corresponding attribute search term is false.
-    example: 'LINE[text ? ".*"]' is always empty, because the LINE entity has no text attribute.
+    The EntityQuery() class based on the abstract Sequence() class, contains all
+    DXF entities of the source collection, which matches one name of the entity
+    query AND the whole attribute query. If a DXF entity does not have or
+    support a required attribute, the corresponding attribute search term is
+    false.
 
-    examples:
-        'LINE CIRCLE[layer=="construction"]' => all LINE and CIRCLE entities on layer "construction"
-        '*[!(layer=="construction" & color<7)]' => all entities except those on layer == "construction" and color < 7
+    Examples:
+
+        - 'LINE[text ? ".*"]' is always empty, because the LINE entity has no
+          text attribute.
+        - 'LINE CIRCLE[layer=="construction"]' => all LINE and CIRCLE entities
+          on layer "construction"
+        - '*[!(layer=="construction" & color<7)]' => all entities except those
+          on layer == "construction" and color < 7
 
     """
 
@@ -93,6 +103,7 @@ class EntityQuery(abc.Sequence):
             query: query string, see class documentation
 
         """
+        self.entities: List["DXFEntity"]
         if entities is None:
             self.entities = []
         elif query == "*":
@@ -105,11 +116,14 @@ class EntityQuery(abc.Sequence):
         """Returns count of DXF entities."""
         return len(self.entities)
 
-    def __getitem__(self, item: int) -> "DXFEntity":
-        """Returns DXFEntity at index `item`, supports negative indices and slicing."""
+    def __getitem__(self, item):
+        """Returns DXFEntity at index `item`, supports negative indices and
+        slicing.
+
+        """
         return self.entities.__getitem__(item)
 
-    def __iter__(self) -> Iterable["DXFEntity"]:
+    def __iter__(self) -> Iterator["DXFEntity"]:
         """Returns iterable of DXFEntity objects."""
         return iter(self.entities)
 
@@ -135,14 +149,20 @@ class EntityQuery(abc.Sequence):
         query: str = "*",
         unique: bool = True,
     ) -> "EntityQuery":
-        """Extent the :class:`EntityQuery` container by entities matching an additional query."""
+        """Extent the :class:`EntityQuery` container by entities matching an
+        additional query.
+
+        """
         self.entities.extend(EntityQuery(entities, query))
         if unique:
             self.entities = list(unique_entities(self.entities))
         return self
 
     def remove(self, query: str = "*") -> None:
-        """Remove all entities from :class:`EntityQuery` container matching this additional query."""
+        """Remove all entities from :class:`EntityQuery` container matching this
+        additional query.
+
+        """
         handles_of_entities_to_remove = frozenset(
             entity.dxf.handle for entity in self.query(query)
         )
@@ -153,8 +173,8 @@ class EntityQuery(abc.Sequence):
         ]
 
     def query(self, query: str = "*") -> "EntityQuery":
-        """
-        Returns a new :class:`EntityQuery` container with all entities matching this additional query.
+        """Returns a new :class:`EntityQuery` container with all entities
+        matching this additional query.
 
         raises: ParseException (pyparsing.py)
 
@@ -164,13 +184,15 @@ class EntityQuery(abc.Sequence):
     def groupby(
         self, dxfattrib: str = "", key: Callable[["DXFEntity"], Hashable] = None
     ) -> Dict[Hashable, List["DXFEntity"]]:
-        """
-        Returns a dict of entity lists, where entities are grouped by a DXF attribute or a key function.
+        """Returns a dict of entity lists, where entities are grouped by a DXF
+        attribute or a key function.
 
         Args:
             dxfattrib: grouping DXF attribute as string like ``'layer'``
-            key: key function, which accepts a DXFEntity as argument, returns grouping key of this entity or None for
-                 ignore this object. Reason for ignoring: a queried DXF attribute is not supported by this entity
+            key: key function, which accepts a DXFEntity as argument, returns
+                grouping key of this entity or None for ignore this object.
+                Reason for ignoring: a queried DXF attribute is not supported by
+                this entity
 
         """
         return groupby(self.entities, dxfattrib, key)
@@ -265,7 +287,7 @@ class BoolExpression:
                 values.append(token.evaluate(entity))
             else:  # bool operator
                 operators.append(token)
-        values.reverse()  # revert values -> pop() == pop(0) & append(value) == insert(0, value)
+        values.reverse()
         for op in operators:  # as queue -> first in, first out
             if op == "!":
                 value = not values.pop()
@@ -299,7 +321,7 @@ def build_entity_attributes_matcher(
     if not len(tokens):
         return lambda x: True
     ignore_case = "i" == options  # at this time just one option is supported
-    expr = BoolExpression(_compile_tokens(tokens, ignore_case))
+    expr = BoolExpression(_compile_tokens(tokens, ignore_case))  # type: ignore
 
     def match_bool_expr(entity: "DXFEntity") -> bool:
         return expr.evaluate(entity)
@@ -308,9 +330,7 @@ def build_entity_attributes_matcher(
 
 
 def unique_entities(entities: Iterable["DXFEntity"]) -> Iterable["DXFEntity"]:
-    """
-    Yield all unique entities, order of all entities will be preserved.
-    """
+    """Yield all unique entities, order of all entities will be preserved. """
     handles = set()
     for entity in entities:
         handle = entity.dxf.handle
@@ -320,11 +340,11 @@ def unique_entities(entities: Iterable["DXFEntity"]) -> Iterable["DXFEntity"]:
 
 
 def name_query(names: Iterable[str], query: str = "*") -> Iterable[str]:
-    """
-    Filters `names` by `query` string. The `query` string of entity names divided by spaces. The special name "*"
-    matches any given name, a preceding "!" means exclude this name. Excluding names is only useful if the match any
-    name is also given (e.g. "LINE !CIRCLE" is equal to just "LINE", where "* !CIRCLE" matches everything except
-    CIRCLE").
+    """ Filters `names` by `query` string. The `query` string of entity names
+    divided by spaces. The special name "*" matches any given name, a
+    preceding "!" means exclude this name. Excluding names is only useful if
+    the match any name is also given (e.g. "LINE !CIRCLE" is equal to just
+    "LINE", where "* !CIRCLE" matches everything except CIRCLE").
 
     Args:
         names: iterable of names to test
@@ -362,9 +382,9 @@ def name_matcher(query: str = "*") -> Callable[[str], bool]:
 def new(
     entities: Iterable["DXFEntity"] = None, query: str = "*"
 ) -> EntityQuery:
-    """
-    Start a new query based on sequence `entities`. The `entities` argument has to be an iterable of
-    :class:`~ezdxf.entities.DXFEntity` or inherited objects and returns an :class:`EntityQuery` object.
+    """Start a new query based on sequence `entities`. The `entities` argument
+    has to be an iterable of :class:`~ezdxf.entities.DXFEntity` or inherited
+    objects and returns an :class:`EntityQuery` object.
 
     """
     return EntityQuery(entities, query)
