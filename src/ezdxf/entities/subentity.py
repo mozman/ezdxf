@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Callable, List, Optional
 
@@ -9,13 +9,13 @@ import logging
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFEntity, EntityDB, Drawing
 
-__all__ = ['entity_linker', 'LinkedEntities']
+__all__ = ["entity_linker", "LinkedEntities"]
 
 logger = logging.getLogger("ezdxf")
 
 
 class LinkedEntities(DXFGraphic):
-    """ Super class for common features of the INSERT and the POLYLINE entity.
+    """Super class for common features of the INSERT and the POLYLINE entity.
     Both have linked entities like the VERTEX or ATTRIB entity and a
     SEQEND entity.
 
@@ -24,48 +24,47 @@ class LinkedEntities(DXFGraphic):
     def __init__(self):
         super().__init__()
         self._sub_entities: List[DXFGraphic] = []
-        self.seqend: Optional['SeqEnd'] = None
+        self.seqend: Optional["SeqEnd"] = None
 
-    def _copy_data(self, entity: 'LinkedEntities') -> None:
-        """ Copy all sub-entities ands SEQEND. (internal API) """
+    def _copy_data(self, entity: "LinkedEntities") -> None:
+        """Copy all sub-entities ands SEQEND. (internal API)"""
         entity._sub_entities = [e.copy() for e in self._sub_entities]
         if self.seqend:
             entity.seqend = self.seqend.copy()
 
-    def link_entity(self, entity: 'DXFGraphic') -> None:
-        """ Link VERTEX ot ATTRIB entities. """
+    def link_entity(self, entity: "DXFGraphic") -> None:
+        """Link VERTEX ot ATTRIB entities."""
         entity.set_owner(self.dxf.owner, self.dxf.paperspace)
         self._sub_entities.append(entity)
 
-    def link_seqend(self, seqend: 'DXFEntity') -> None:
-        """ Link SEQEND entity. (internal API) """
+    def link_seqend(self, seqend: "DXFEntity") -> None:
+        """Link SEQEND entity. (internal API)"""
         seqend.dxf.owner = self.dxf.owner
         self.seqend = seqend
 
     def post_bind_hook(self):
-        """ Create always a SEQEND entity. """
+        """Create always a SEQEND entity."""
         if self.seqend is None:
             self.new_seqend()
 
-    def all_sub_entities(self) -> Iterable['DXFEntity']:
-        """ Yields all sub-entities ans SEQEND. (internal API) """
+    def all_sub_entities(self) -> Iterable["DXFEntity"]:
+        """Yields all sub-entities ans SEQEND. (internal API)"""
         yield from self._sub_entities
         if self.seqend:
             yield self.seqend
 
-    def process_sub_entities(self, func: Callable[['DXFEntity'], None]):
-        """ Call `func` for all sub-entities and SEQEND. (internal API)
-        """
+    def process_sub_entities(self, func: Callable[["DXFEntity"], None]):
+        """Call `func` for all sub-entities and SEQEND. (internal API)"""
         for entity in self.all_sub_entities():
             if entity.is_alive:
                 func(entity)
 
-    def add_sub_entities_to_entitydb(self, db: 'EntityDB') -> None:
-        """ Add sub-entities (VERTEX, ATTRIB, SEQEND) to entity database `db`,
+    def add_sub_entities_to_entitydb(self, db: "EntityDB") -> None:
+        """Add sub-entities (VERTEX, ATTRIB, SEQEND) to entity database `db`,
         called from EntityDB. (internal API)
         """
 
-        def add(entity: 'DXFEntity'):
+        def add(entity: "DXFEntity"):
             entity.doc = self.doc  # grant same document
             db.add(entity)
 
@@ -74,16 +73,16 @@ class LinkedEntities(DXFGraphic):
         self.process_sub_entities(add)
 
     def new_seqend(self):
-        """ Create and bind new SEQEND. (internal API) """
-        attribs = {'layer': self.dxf.layer}
+        """Create and bind new SEQEND. (internal API)"""
+        attribs = {"layer": self.dxf.layer}
         if self.doc:
-            seqend = factory.create_db_entry('SEQEND', attribs, self.doc)
+            seqend = factory.create_db_entry("SEQEND", attribs, self.doc)
         else:
-            seqend = factory.new('SEQEND', attribs)
+            seqend = factory.new("SEQEND", attribs)
         self.link_seqend(seqend)
 
     def set_owner(self, owner: str, paperspace: int = 0):
-        """ Set owner of all sub-entities and SEQEND. (internal API) """
+        """Set owner of all sub-entities and SEQEND. (internal API)"""
         # Loading from file: POLYLINE/INSERT will be added to layout before
         # vertices/attrib entities are linked, so set_owner() of POLYLINE does
         # not set owner of vertices at loading time.
@@ -97,15 +96,15 @@ class LinkedEntities(DXFGraphic):
 
         self.process_sub_entities(set_owner)
 
-    def remove_dependencies(self, other: 'Drawing' = None):
-        """ Remove all dependencies from current document to bind entity to
+    def remove_dependencies(self, other: "Drawing" = None):
+        """Remove all dependencies from current document to bind entity to
         `other` document. (internal API)
         """
         self.process_sub_entities(lambda e: e.remove_dependencies(other))
         super().remove_dependencies(other)
 
     def destroy(self) -> None:
-        """ Destroy all data and references. """
+        """Destroy all data and references."""
         if not self.is_alive:
             return
 
@@ -123,20 +122,17 @@ class LinkedEntities(DXFGraphic):
 # INSERT & POLYLINE do not have attached entities, so reuse of API for
 # ATTRIB & ATTDEF should be safe.
 
-LINKED_ENTITIES = {
-    'INSERT': 'ATTRIB',
-    'POLYLINE': 'VERTEX'
-}
+LINKED_ENTITIES = {"INSERT": "ATTRIB", "POLYLINE": "VERTEX"}
 
 
 def entity_linker() -> Callable[[DXFEntity], bool]:
-    """ Create an DXF entities linker. """
+    """Create an DXF entities linker."""
     main_entity: Optional[DXFEntity] = None
     prev: Optional[DXFEntity] = None
     expected_dxftype = ""
 
     def entity_linker_(entity: DXFEntity) -> bool:
-        """ Collect and link entities which are linked to a parent entity:
+        """Collect and link entities which are linked to a parent entity:
 
         - VERTEX -> POLYLINE
         - ATTRIB -> INSERT
@@ -158,7 +154,7 @@ def entity_linker() -> Callable[[DXFEntity], bool]:
             # VERTEX, ATTRIB & SEQEND are linked tags, they are NOT stored in
             # the entity space.
             are_linked_entities = True
-            if dxftype == 'SEQEND':
+            if dxftype == "SEQEND":
                 main_entity.link_seqend(entity)
                 # Marks also the end of the main entity
                 main_entity = None
@@ -174,7 +170,7 @@ def entity_linker() -> Callable[[DXFEntity], bool]:
 
         elif dxftype in LINKED_ENTITIES:
             # Only INSERT and POLYLINE have a linked entities structure:
-            if dxftype == 'INSERT' and not entity.dxf.get('attribs_follow', 0):
+            if dxftype == "INSERT" and not entity.dxf.get("attribs_follow", 0):
                 # INSERT must not have following ATTRIBS, ATTRIB can be a stand
                 # alone entity:
                 #
@@ -193,7 +189,7 @@ def entity_linker() -> Callable[[DXFEntity], bool]:
                 expected_dxftype = LINKED_ENTITIES[dxftype]
 
         # Attached MTEXT entity - this feature most likely does not exist!
-        elif (dxftype == 'MTEXT') and (entity.dxf.handle is None):
+        elif (dxftype == "MTEXT") and (entity.dxf.handle is None):
             logger.error(
                 "Found attached MTEXT entity. Please open an issue at github: "
                 "https://github.com/mozman/ezdxf/issues and provide a DXF "
