@@ -152,11 +152,12 @@ class BaseAttrib(Text):
         self.xrecord: Optional["Tags"] = None
         self.attached_mtext: Optional["DXFEntity"] = None
 
-    def _copy_data(self, entity: "BaseAttrib") -> None:
+    def _copy_data(self, entity: "DXFEntity") -> None:
         """Copy entity data, xrecord data and attached MTEXT are not stored
         in the entity database.
 
         """
+        assert isinstance(entity, BaseAttrib)
         entity.xrecord = copy.deepcopy(self.xrecord)
         if self.attached_mtext:
             entity.attached_mtext = self.attached_mtext.copy()
@@ -174,7 +175,7 @@ class BaseAttrib(Text):
             # Attached MTEXT has no handle and owner and can not exported
             # by the usual export process:
             # self.attached_mtext.export_dxf(tagwriter)
-            raise NotImplemented("Attached MTEXT export")
+            raise NotImplementedError("Attached MTEXT export")
 
     @property
     def is_const(self) -> bool:
