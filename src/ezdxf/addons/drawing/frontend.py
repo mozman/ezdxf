@@ -399,17 +399,24 @@ class Frontend:
     def draw_solid_entity(
         self, entity: DXFGraphic, properties: Properties
     ) -> None:
-        assert isinstance(
-            entity, (Solid, Face3d)
-        ), "API error, requires a SOLID, TRACE or 3DFACE entity"
-        dxf, dxftype = entity.dxf, entity.dxftype()
-        points = entity.wcs_vertices()
-        if dxftype == "3DFACE":
-            self.out.draw_path(from_vertices(points, close=True), properties)
-        else:
+        if isinstance(entity, Face3d):
+            points = entity.wcs_vertices(close=True)
+            edge_visibility = entity.get_edges_visibility()
+            if all(edge_visibility):
+                self.out.draw_path(from_vertices(points), properties)
+            else:
+                assert len(points) - 1 == len(edge_visibility)
+                for a, b, visible in zip(points, points[1:], edge_visibility):
+                    if visible:
+                        self.out.draw_line(a, b, properties)
+
+        elif isinstance(entity, Solid):
             # set solid fill type for SOLID and TRACE
             properties.filling = Filling()
-            self.out.draw_filled_polygon(points, properties)
+            self.out.draw_filled_polygon(entity.wcs_vertices(close=False), properties)
+
+        else:
+            raise TypeError("API error, requires a SOLID, TRACE or 3DFACE entity")
 
     def draw_hatch_entity(
         self,

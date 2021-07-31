@@ -504,6 +504,8 @@ class RenderContext:
         if dxftype == "INSERT":
             # depends only on the invisible flag, the layer state has no effect!
             return not bool(entity.dxf.invisible)
+        elif dxftype == "3DFACE":
+            return any(entity.get_edges_visibility())
 
         entity_layer = resolved_layer or layer_key(self.resolve_layer(entity))
         layer_properties = self.layers.get(entity_layer)
