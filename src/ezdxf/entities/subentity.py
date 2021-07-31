@@ -116,21 +116,12 @@ class LinkedEntities(DXFGraphic):
         super().destroy()
 
 
-# This attached MTEXT is a limited MTEXT entity, starting with (0, 'MTEXT')
-# therefore separated entity, but without the base class: no handle, no owner
-# nor AppData, and a limited AcDbEntity subclass.
-# Detect attached entities (more than MTEXT?) by required but missing handle and
-# owner tags use DXFEntity.link_entity() for linking to preceding entity,
-# INSERT & POLYLINE do not have attached entities, so reuse of API for
-# ATTRIB & ATTDEF should be safe.
-
 LINKED_ENTITIES = {"INSERT": "ATTRIB", "POLYLINE": "VERTEX"}
 
 
 def entity_linker() -> Callable[[DXFEntity], bool]:
     """Create an DXF entities linker."""
     main_entity: Optional[DXFEntity] = None
-    prev: Optional[DXFEntity] = None
     expected_dxftype = ""
 
     def entity_linker_(entity: DXFEntity) -> bool:
@@ -138,7 +129,6 @@ def entity_linker() -> Callable[[DXFEntity], bool]:
 
         - VERTEX -> POLYLINE
         - ATTRIB -> INSERT
-        - attached MTEXT entity
 
         Args:
              entity: examined DXF entity
@@ -147,7 +137,7 @@ def entity_linker() -> Callable[[DXFEntity], bool]:
              True if `entity` is linked to a parent entity
 
         """
-        nonlocal main_entity, expected_dxftype, prev
+        nonlocal main_entity, expected_dxftype
         dxftype: str = entity.dxftype()
         # INSERT & POLYLINE are not linked entities, they are stored in the
         # entity space.
@@ -173,11 +163,12 @@ def entity_linker() -> Callable[[DXFEntity], bool]:
         elif dxftype in LINKED_ENTITIES:
             # Only INSERT and POLYLINE have a linked entities structure:
             if dxftype == "INSERT" and not entity.dxf.get("attribs_follow", 0):
-                # INSERT must not have following ATTRIBS, ATTRIB can be a stand
-                # alone entity:
+                # INSERT must not have following ATTRIBS:
                 #
                 #   INSERT with no ATTRIBS, attribs_follow == 0
-                #   ATTRIB as stand alone entity
+                #   ATTRIB as a stand alone entity, which is a DXF structure
+                #   error, but this error should be handled in the audit
+                #   process.
                 #   ....
                 #   INSERT with ATTRIBS, attribs_follow == 1
                 #   ATTRIB as connected entity
@@ -197,7 +188,6 @@ def entity_linker() -> Callable[[DXFEntity], bool]:
                 "https://github.com/mozman/ezdxf/issues and provide a DXF "
                 "example file."
             )
-        prev = entity
         return are_linked_entities
 
     return entity_linker_
