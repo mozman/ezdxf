@@ -1,6 +1,5 @@
-# Created: 06.2020
-# Copyright (c) 2020, Matthew Broadway
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2021, Matthew Broadway
+# Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
 import re
 from typing import (
@@ -17,7 +16,7 @@ from typing import (
 from ezdxf.addons import acadctb
 from ezdxf.addons.drawing.type_hints import Color, RGB
 from ezdxf.colors import luminance, DXF_DEFAULT_COLORS, int2rgb
-from ezdxf.entities import Attrib
+from ezdxf.entities import Attrib, Insert, Face3d, Linetype
 from ezdxf.entities.ltype import CONTINUOUS_PATTERN
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.lldxf import const
@@ -31,7 +30,6 @@ if TYPE_CHECKING:
         Layout,
         Table,
         Layer,
-        Linetype,
         Drawing,
         Textstyle,
     )
@@ -344,12 +342,12 @@ class RenderContext:
         backend.measurement = self.measurement
 
     def _setup_layers(self, doc: "Drawing"):
-        for layer in doc.layers:  # type: Layer
-            self.add_layer(layer)
+        for layer in doc.layers:
+            self.add_layer(cast("Layer", layer))
 
     def _setup_text_styles(self, doc: "Drawing"):
-        for text_style in doc.styles:  # type: Textstyle
-            self.add_text_style(text_style)
+        for text_style in doc.styles:
+            self.add_text_style(cast("Textstyle", text_style))
 
     def add_layer(self, layer: "Layer") -> None:
         """Setup layer properties."""
@@ -396,7 +394,7 @@ class RenderContext:
 
     def _true_layer_color(self, layer: "Layer") -> Color:
         if layer.dxf.hasattr("true_color"):
-            return rgb_to_hex(layer.rgb)
+            return rgb_to_hex(layer.rgb)  # type: ignore
         else:
             # Don't use layer.dxf.color: color < 0 is layer state off
             aci = layer.color
@@ -425,7 +423,7 @@ class RenderContext:
         # therefore initialize color without RGB values by the
         # default AutoCAD palette:
         for aci in range(1, 256):
-            entry = ctb[aci]
+            entry = ctb[aci]  # type: ignore
             if entry.has_object_color():
                 # initialize with default AutoCAD palette
                 entry.color = int2rgb(DXF_DEFAULT_COLORS[aci])
@@ -459,7 +457,7 @@ class RenderContext:
         return bool(self.current_block_reference_properties)
 
     def push_state(self, block_reference: Properties) -> None:
-        self._saved_states.append(self.current_block_reference_properties)
+        self._saved_states.append(self.current_block_reference_properties)  # type: ignore
         self.current_block_reference_properties = block_reference
 
     def pop_state(self) -> None:
@@ -497,25 +495,21 @@ class RenderContext:
     def resolve_visible(
         self, entity: "DXFGraphic", *, resolved_layer: Optional[str] = None
     ) -> bool:
-        """Resolve the visibility state of `entity`.
-        Returns ``True`` if `entity` is visible.
+        """Resolve the visibility state of `entity`. Returns ``True`` if
+        `entity` is visible.
         """
-        dxftype = entity.dxftype()
-        if dxftype == "INSERT":
+        if isinstance(entity, Insert):
             # depends only on the invisible flag, the layer state has no effect!
             return not bool(entity.dxf.invisible)
-        elif dxftype == "3DFACE":
+        elif isinstance(entity, Face3d):
             return any(entity.get_edges_visibility())
 
         entity_layer = resolved_layer or layer_key(self.resolve_layer(entity))
         layer_properties = self.layers.get(entity_layer)
         if layer_properties and not layer_properties.is_visible:
             return False
-        elif dxftype == "ATTRIB":
-            return (
-                not bool(entity.dxf.invisible)
-                and not cast(Attrib, entity).is_invisible
-            )
+        elif isinstance(entity, Attrib):
+            return not bool(entity.dxf.invisible) and not entity.is_invisible
         else:
             return not bool(entity.dxf.invisible)
 
@@ -525,7 +519,7 @@ class RenderContext:
         """
         layer = entity.dxf.layer
         if layer == "0" and self.inside_block_reference:
-            layer = self.current_block_reference_properties.layer
+            layer = self.current_block_reference_properties.layer  # type: ignore
         return layer
 
     def resolve_color(
@@ -553,7 +547,7 @@ class RenderContext:
             if not self.inside_block_reference:
                 color = self.current_layout_properties.default_color
             else:
-                color = self.current_block_reference_properties.color
+                color = self.current_block_reference_properties.color  # type: ignore
         else:  # BYOBJECT
             color = self._true_entity_color(entity.rgb, aci)
 
@@ -574,7 +568,7 @@ class RenderContext:
             if not self.inside_block_reference:
                 color = self.current_layout_properties.default_color
             else:
-                color = self.current_block_reference_properties.color
+                color = self.current_block_reference_properties.color  # type: ignore
         else:  # BYOBJECT
             color = self._true_entity_color(None, aci)
         return color
@@ -633,9 +627,9 @@ class RenderContext:
 
         elif name == "BYBLOCK":
             if self.inside_block_reference:
-                name = self.current_block_reference_properties.linetype_name
+                name = self.current_block_reference_properties.linetype_name  # type: ignore
                 pattern = (
-                    self.current_block_reference_properties.linetype_pattern
+                    self.current_block_reference_properties.linetype_pattern  # type: ignore
                 )
             else:
                 # There is no default layout linetype
@@ -825,7 +819,8 @@ def _load_line_pattern(linetypes: "Table") -> Dict[str, Tuple]:
     see :func:`compile_line_pattern`.
     """
     pattern = dict()
-    for linetype in linetypes:  # type: Linetype
+    for linetype in linetypes:
+        assert isinstance(linetype, Linetype)
         name = linetype.dxf.name.upper()
         pattern[name] = linetype.pattern_tags.compile()
     return pattern
