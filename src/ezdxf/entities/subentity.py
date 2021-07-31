@@ -4,11 +4,14 @@ from typing import TYPE_CHECKING, Iterable, Callable, List, Optional
 
 from ezdxf.entities import factory, DXFGraphic, SeqEnd, DXFEntity
 from ezdxf.lldxf import const
+import logging
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFEntity, EntityDB, Drawing
 
 __all__ = ['entity_linker', 'LinkedEntities']
+
+logger = logging.getLogger("ezdxf")
 
 
 class LinkedEntities(DXFGraphic):
@@ -189,15 +192,13 @@ def entity_linker() -> Callable[[DXFEntity], bool]:
                 main_entity = entity
                 expected_dxftype = LINKED_ENTITIES[dxftype]
 
-        # Attached MTEXT entity:
+        # Attached MTEXT entity - this feature most likely does not exist!
         elif (dxftype == 'MTEXT') and (entity.dxf.handle is None):
-            if prev:
-                prev.link_entity(entity)
-                are_linked_entities = True
-            else:
-                raise const.DXFStructureError(
-                    "Found attached MTEXT entity without a preceding entity."
-                )
+            logger.error(
+                "Found attached MTEXT entity. Please open an issue at github: "
+                "https://github.com/mozman/ezdxf/issues and provide a DXF "
+                "example file."
+            )
         prev = entity
         return are_linked_entities
 

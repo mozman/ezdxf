@@ -18,6 +18,7 @@ from ezdxf.tools import set_flag_state
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import acdb_entity, elevation_to_z_axis
 from .text import Text, acdb_text, acdb_text_group_codes
+from .mtext import acdb_mtext
 from .factory import register_entity
 
 if TYPE_CHECKING:
@@ -125,20 +126,22 @@ acdb_attdef_xrecord = DefSubclass(
     ],
 )
 
-
-# A special MTEXT entity can follow the ATTDEF and ATTRIB entity, which starts
-# as a usual DXF entity with (0, 'MTEXT'), so processing can't be done here,
-# because for ezdxf is this a separated Entity.
+# Just for documentation:
+# The "attached" MTEXT feature most likely does not exist!
 #
-# The attached MTEXT entity: owner is None and handle is None
-# Linked as attribute `attached_mtext`.
-# I don't have seen this combination of entities in real world examples and is
-# ignored by ezdxf for now.
+#   A special MTEXT entity can follow the ATTDEF and ATTRIB entity, which starts
+#   as a usual DXF entity with (0, 'MTEXT'), so processing can't be done here,
+#   because for ezdxf is this a separated Entity.
+#
+#   The attached MTEXT entity: owner is None and handle is None
+#   Linked as attribute `attached_mtext`.
+#   I don't have seen this combination of entities in real world examples and is
+#   ignored by ezdxf for now.
+#
+# No DXF files available which uses this feature - misleading DXF Reference!?
 
 # Attrib and Attdef can have embedded MTEXT entities located in the
 # <Embedded Object> subclass, see issue #258
-
-# QUESTION: How are the attached MTEXT and the embedded MTEXT related?
 
 
 class BaseAttrib(Text):
@@ -147,10 +150,13 @@ class BaseAttrib(Text):
     def __init__(self):
         """Default constructor"""
         super().__init__()
+        # This DXF entity and the associated DXF documentation is a real MESS!
+        # Does subclass AcDbXrecord really exist?
+        self.xrecord: Optional["Tags"] = None
         # TODO: implement embedded MTEXT support
         #  remove DXFEntity.embedded_objects if done
-        self.xrecord: Optional["Tags"] = None
-        self.attached_mtext: Optional["DXFEntity"] = None
+        #  (101, "Embedded Object") does exist!
+        self.embedded_mtext: Optional["EmbeddedMText"] = None
 
     def _copy_data(self, entity: "DXFEntity") -> None:
         """Copy entity data, xrecord data and attached MTEXT are not stored
@@ -159,23 +165,6 @@ class BaseAttrib(Text):
         """
         assert isinstance(entity, BaseAttrib)
         entity.xrecord = copy.deepcopy(self.xrecord)
-        if self.attached_mtext:
-            entity.attached_mtext = self.attached_mtext.copy()
-            # attached mtext entity is not stored in the entity database
-            # no further action required
-
-    def link_entity(self, entity: "DXFEntity"):
-        self.attached_mtext = entity
-
-    def export_dxf(self, tagwriter: "TagWriter"):
-        """Export attached MTEXT entity."""
-        super().export_dxf(tagwriter)
-        if self.attached_mtext:
-            # todo: export MTEXT attached to ATTRIB
-            # Attached MTEXT has no handle and owner and can not exported
-            # by the usual export process:
-            # self.attached_mtext.export_dxf(tagwriter)
-            raise NotImplementedError("Attached MTEXT export")
 
     @property
     def is_const(self) -> bool:
@@ -380,16 +369,34 @@ def copy_attrib_as_text(attrib: BaseAttrib):
 
 
 class EmbeddedMText:
-    """Representation of the embedded object in ATTRIB and ATTDEF.
+    """Representation of the embedded MTEXT object in ATTRIB and ATTDEF.
+
+    Introduced in DXF R2018? The DXF reference of the `MTEXT`_ entity
+    documents only the attached MTEXT entity. The ODA DWG specs includes all
+    MTEXT attributes of MTEXT starting at group code 10
 
     Stores the required parameters to be shown as as MTEXT.
+    The AcDbText subclass contains  the first line of the embedded MTEXT as
+    plain text content as group code 1, but this tag seems not to be maintained
+    if the ATTRIB entity is copied.
 
     Some DXF attributes are duplicated and maintained by the CAD application:
 
         - textstyle: same group code 7 (AcDbText, EmbeddedObject)
         - text (char) height: same group code 40 (AcDbText, EmbeddedObject)
 
+    .. _MTEXT: https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-7DD8B495-C3F8-48CD-A766-14F9D7D0DD9B
+
     """
 
     def __init__(self):
-        pass
+        # Attribute "dxf" contains the DXF attributes defined in subclass
+        # "AcDbMText"
+        self.dxf = DXFNamespace()
+
+    def copy(self) -> "EmbeddedMText":
+        copy_ = EmbeddedMText()
+        copy_.dxf = copy.deepcopy(self.dxf)
+        return copy_
+
+    __copy__ = copy
