@@ -154,8 +154,8 @@ class BaseAttrib(Text):
     def __init__(self):
         super().__init__()
         # Does subclass AcDbXrecord really exist?
-        self.xrecord: Optional["Tags"] = None
-        self.embedded_mtext: Optional["EmbeddedMText"] = None
+        self._xrecord: Optional["Tags"] = None
+        self._embedded_mtext: Optional["EmbeddedMText"] = None
 
     def _copy_data(self, entity: "DXFEntity") -> None:
         """Copy entity data, xrecord data and embedded MTEXT are not stored
@@ -163,8 +163,8 @@ class BaseAttrib(Text):
 
         """
         assert isinstance(entity, BaseAttrib)
-        entity.xrecord = copy.deepcopy(self.xrecord)
-        entity.embedded_mtext = copy.deepcopy(self.embedded_mtext)
+        entity._xrecord = copy.deepcopy(self._xrecord)
+        entity._embedded_mtext = copy.deepcopy(self._embedded_mtext)
 
     def load_embedded_mtext(self, processor: SubclassProcessor) -> None:
         if not processor.embedded_objects:
@@ -172,8 +172,8 @@ class BaseAttrib(Text):
         embedded_object = processor.embedded_objects[0]
         if embedded_object:
             mtext = EmbeddedMText()
-            mtext.load_dxf_tags(processor, embedded_object)
-            self.embedded_mtext = mtext
+            mtext.load_dxf_tags(processor)
+            self._embedded_mtext = mtext
 
     @property
     def is_const(self) -> bool:
@@ -235,30 +235,42 @@ class BaseAttrib(Text):
         line support.
 
         """
-        return bool(self.embedded_mtext)
+        return bool(self._embedded_mtext)
 
     def virtual_mtext_entity(self) -> MText:
         """Returns the embedded MTEXT entity as regular but virtual MTEXT
         entity with the same same graphical attributes as the
         host entity.
         """
-        if not self.embedded_mtext:
+        if not self._embedded_mtext:
             raise TypeError("no embedded MTEXT entity exist")
-        mtext = self.embedded_mtext.virtual_mtext_entity()
+        mtext = self._embedded_mtext.virtual_mtext_entity()
         mtext.update_dxf_attribs(self.graphic_properties())
         return mtext
 
     def plain_mtext(self, fast=True) -> str:
-        """Returns MText content without formatting codes. Returns an empty
-        string "" if no embedded MTEXT entity exist.
+        """Returns the embedded MTEXT content without formatting codes.
+        Returns an empty string if no embedded MTEXT entity exist.
+
+        The "fast" mode is accurate if the DXF content was created by
+        reliable (and newer) CAD applications like AutoCAD or BricsCAD.
+        The "accurate" mode is for some rare cases where the content was
+        created by older CAD applications or unreliable DXF libraries and CAD
+        applications.
+
+        The "accurate" mode is **much** slower than the "fast" mode.
+
+        Args:
+            fast: uses the "fast" mode to extract the plain MTEXT content if
+                ``True`` or the "accurate" mode if set to``False``
 
         """
-        if self.embedded_mtext:
-            text = self.embedded_mtext.text
+        if self._embedded_mtext:
+            text = self._embedded_mtext.text
             if fast:
-                return fast_plain_mtext(text, split=False)
+                return fast_plain_mtext(text, split=False)  # type: ignore
             else:
-                return plain_mtext(text, split=False)
+                return plain_mtext(text, split=False)  # type: ignore
         return ""
 
 
@@ -282,7 +294,7 @@ class AttDef(BaseAttrib):
             processor.fast_load_dxfattribs(
                 dxf, acdb_attdef_group_codes, 3, recover=True
             )
-            self.xrecord = processor.find_subclass(self.XRECORD_DEF.name)
+            self._xrecord = processor.find_subclass(self.XRECORD_DEF.name)
             self.load_embedded_mtext(processor)
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:
@@ -295,8 +307,8 @@ class AttDef(BaseAttrib):
         self.export_acdb_entity(tagwriter)
         self.export_acdb_text(tagwriter)
         self.export_acdb_attdef(tagwriter)
-        if self.xrecord:
-            tagwriter.write_tags(self.xrecord)
+        if self._xrecord:
+            tagwriter.write_tags(self._xrecord)
 
     def export_acdb_attdef(self, tagwriter: "TagWriter") -> None:
         if tagwriter.dxfversion > DXF12:
@@ -335,7 +347,7 @@ class Attrib(BaseAttrib):
             processor.fast_load_dxfattribs(
                 dxf, acdb_attrib_group_codes, 3, recover=True
             )
-            self.xrecord = processor.find_subclass(self.XRECORD_DEF.name)
+            self._xrecord = processor.find_subclass(self.XRECORD_DEF.name)
             self.load_embedded_mtext(processor)
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:
@@ -347,8 +359,8 @@ class Attrib(BaseAttrib):
         self.export_acdb_entity(tagwriter)
         self.export_acdb_attrib_text(tagwriter)
         self.export_acdb_attrib(tagwriter)
-        if self.xrecord:
-            tagwriter.write_tags(self.xrecord)
+        if self._xrecord:
+            tagwriter.write_tags(self._xrecord)
 
     def export_acdb_attrib_text(self, tagwriter: "TagWriter") -> None:
         # Despite the similarities to TEXT, it is different to
@@ -445,11 +457,11 @@ class EmbeddedMText:
 
     __copy__ = copy
 
-    def load_dxf_tags(self, processor: SubclassProcessor, tags: "Tags") -> None:
-        processor.fast_load_dxfattribs(
+    def load_dxf_tags(self, processor: SubclassProcessor) -> None:
+        tags = processor.fast_load_dxfattribs(
             self.dxf,
             group_code_mapping=acdb_mtext_group_codes,
-            subclass=tags,
+            subclass=processor.embedded_objects[0],
             recover=False,
         )
         self.text = load_mtext_content(tags)
