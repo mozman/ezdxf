@@ -42,6 +42,7 @@ from ezdxf.entities import (
     OLE2Frame,
     Point,
 )
+from ezdxf.entities.attrib import BaseAttrib
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.layouts import Layout
 from ezdxf.math import Vec3, OCS, NULLVEC
@@ -291,7 +292,10 @@ class Frontend:
     def draw_text_entity(
         self, entity: DXFGraphic, properties: Properties
     ) -> None:
-        if is_spatial_text(Vec3(entity.dxf.extrusion)):
+        # Draw embedded MTEXT entity as virtual MTEXT entity:
+        if isinstance(entity, BaseAttrib) and entity.has_embedded_mtext_entity:
+            self.draw_mtext_entity(entity.virtual_mtext_entity(), properties)
+        elif is_spatial_text(Vec3(entity.dxf.extrusion)):
             self.draw_text_entity_3d(entity, properties)
         else:
             self.draw_text_entity_2d(entity, properties)
@@ -299,15 +303,13 @@ class Frontend:
     def draw_text_entity_2d(
         self, entity: DXFGraphic, properties: Properties
     ) -> None:
-        d, dxftype = entity.dxf, entity.dxftype()
-        if dxftype in ("TEXT", "ATTRIB", "ATTDEF"):
-            entity = cast(Union[Text, Attrib, AttDef], entity)
+        if isinstance(entity, Text):
             for line, transform, cap_height in simplified_text_chunks(
                 entity, self.out, font=properties.font
             ):
                 self.out.draw_text(line, transform, properties, cap_height)
         else:
-            raise TypeError(dxftype)
+            raise TypeError(entity.dxftype())
 
     def draw_text_entity_3d(
         self, entity: DXFGraphic, properties: Properties
@@ -413,10 +415,14 @@ class Frontend:
         elif isinstance(entity, Solid):
             # set solid fill type for SOLID and TRACE
             properties.filling = Filling()
-            self.out.draw_filled_polygon(entity.wcs_vertices(close=False), properties)
+            self.out.draw_filled_polygon(
+                entity.wcs_vertices(close=False), properties
+            )
 
         else:
-            raise TypeError("API error, requires a SOLID, TRACE or 3DFACE entity")
+            raise TypeError(
+                "API error, requires a SOLID, TRACE or 3DFACE entity"
+            )
 
     def draw_hatch_entity(
         self,

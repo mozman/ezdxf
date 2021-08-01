@@ -36,7 +36,7 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Tags, DXFEntity
 
-__all__ = ["AttDef", "Attrib", "copy_attrib_as_text"]
+__all__ = ["AttDef", "Attrib", "copy_attrib_as_text", "BaseAttrib"]
 
 # DXF Reference for ATTRIB is a total mess and incorrect, the AcDbText subclass
 # for the ATTRIB entity is the same as for the TEXT entity, but the valign field
