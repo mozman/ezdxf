@@ -1,6 +1,6 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Any
 import copy
 from ezdxf.lldxf import validator
 from ezdxf.math import NULLVEC
@@ -12,16 +12,25 @@ from ezdxf.lldxf.attributes import (
     RETURN_DEFAULT,
     group_code_mapping,
 )
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010
 from ezdxf.lldxf import const
+from ezdxf.lldxf.types import EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR
 from ezdxf.tools import set_flag_state
-from ezdxf.tools.text import load_mtext_content, fast_plain_mtext, plain_mtext
+from ezdxf.tools.text import (
+    load_mtext_content,
+    fast_plain_mtext,
+    plain_mtext,
+)
 
 from .dxfns import SubclassProcessor, DXFNamespace
 from .dxfentity import base_class
 from .dxfgfx import acdb_entity, elevation_to_z_axis
 from .text import Text, acdb_text, acdb_text_group_codes
-from .mtext import acdb_mtext_group_codes, MText
+from .mtext import (
+    acdb_mtext_group_codes,
+    MText,
+    export_mtext_content,
+    acdb_mtext,
+)
 from .factory import register_entity
 
 if TYPE_CHECKING:
@@ -35,7 +44,7 @@ __all__ = ["AttDef", "Attrib", "copy_attrib_as_text"]
 # AcDbAttribute subclass:
 attrib_fields = {
     # Version number: 0 = 2010
-    "version": DXFAttr(280, default=0, dxfversion=DXF2010),
+    "version": DXFAttr(280, default=0, dxfversion=const.DXF2010),
     # Tag string (cannot contain spaces):
     "tag": DXFAttr(
         2,
@@ -63,7 +72,19 @@ attrib_fields = {
     "lock_position": DXFAttr(
         280,
         default=0,
-        dxfversion=DXF2010,
+        dxfversion=const.DXF2010,
+        optional=True,
+        validator=validator.is_integer_bool,
+        fixer=RETURN_DEFAULT,
+    ),
+    # Attribute type:
+    # 1 = single line
+    # 2 = multiline ATTRIB
+    # 4 = multiline ATTDEF
+    "attribute_type": DXFAttr(
+        71,
+        default=1,
+        dxfversion=const.DXF2018,
         optional=True,
         validator=validator.is_integer_bool,
         fixer=RETURN_DEFAULT,
@@ -174,6 +195,18 @@ class BaseAttrib(Text):
             mtext = EmbeddedMText()
             mtext.load_dxf_tags(processor)
             self._embedded_mtext = mtext
+
+    def export_dxf_r2018_features(self, tagwriter: "TagWriter") -> None:
+        self.dxf.export_dxf_attribs(tagwriter, ["attribute_type"])
+        tagwriter.write_tag2(72, 0)  # unknown tag
+        if self.dxf.hasattr("align_point"):
+            # duplicate align point - why?
+            tagwriter.write_vertex(11, self.dxf.align_point)
+
+        if self._xrecord:
+            tagwriter.write_tags(self._xrecord)
+        if self._embedded_mtext:
+            self._embedded_mtext.export_dxf_tags(tagwriter)
 
     @property
     def is_const(self) -> bool:
@@ -308,12 +341,12 @@ class AttDef(BaseAttrib):
         self.export_acdb_entity(tagwriter)
         self.export_acdb_text(tagwriter)
         self.export_acdb_attdef(tagwriter)
-        if self._xrecord:
-            tagwriter.write_tags(self._xrecord)
+        if tagwriter.dxfversion >= const.DXF2018:
+            self.export_dxf_r2018_features(tagwriter)
 
     def export_acdb_attdef(self, tagwriter: "TagWriter") -> None:
-        if tagwriter.dxfversion > DXF12:
-            tagwriter.write_tag2(SUBCLASS_MARKER, acdb_attdef.name)
+        if tagwriter.dxfversion > const.DXF12:
+            tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_attdef.name)
         self.dxf.export_dxf_attribs(
             tagwriter,
             [
@@ -360,14 +393,14 @@ class Attrib(BaseAttrib):
         self.export_acdb_entity(tagwriter)
         self.export_acdb_attrib_text(tagwriter)
         self.export_acdb_attrib(tagwriter)
-        if self._xrecord:
-            tagwriter.write_tags(self._xrecord)
+        if tagwriter.dxfversion >= const.DXF2018:
+            self.export_dxf_r2018_features(tagwriter)
 
     def export_acdb_attrib_text(self, tagwriter: "TagWriter") -> None:
         # Despite the similarities to TEXT, it is different to
         # Text.export_acdb_text():
-        if tagwriter.dxfversion > DXF12:
-            tagwriter.write_tag2(SUBCLASS_MARKER, acdb_text.name)
+        if tagwriter.dxfversion > const.DXF12:
+            tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_text.name)
         self.dxf.export_dxf_attribs(
             tagwriter,
             [
@@ -387,8 +420,8 @@ class Attrib(BaseAttrib):
         )
 
     def export_acdb_attrib(self, tagwriter: "TagWriter") -> None:
-        if tagwriter.dxfversion > DXF12:
-            tagwriter.write_tag2(SUBCLASS_MARKER, acdb_attrib.name)
+        if tagwriter.dxfversion > const.DXF12:
+            tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_attrib.name)
         self.dxf.export_dxf_attribs(
             tagwriter,
             [
@@ -424,6 +457,14 @@ def copy_attrib_as_text(attrib: BaseAttrib):
     return Text.new(dxfattribs=dxfattribs, doc=attrib.doc)
 
 
+class EmbeddedMTextNS(DXFNamespace):
+    DXFATTRIBS = DXFAttributes(acdb_mtext)
+
+    @property
+    def dxfattribs(self) -> DXFAttributes:
+        return self.DXFATTRIBS
+
+
 class EmbeddedMText:
     """Representation of the embedded MTEXT object in ATTRIB and ATTDEF.
 
@@ -448,7 +489,7 @@ class EmbeddedMText:
     def __init__(self):
         # Attribute "dxf" contains the DXF attributes defined in subclass
         # "AcDbMText"
-        self.dxf = DXFNamespace()
+        self.dxf = EmbeddedMTextNS()
         self.text: str = ""
 
     def copy(self) -> "EmbeddedMText":
@@ -476,3 +517,56 @@ class EmbeddedMText:
         mtext = MText.new(dxfattribs=self.dxf.all_existing_dxf_attribs())
         mtext.text = self.text
         return mtext
+
+    def set_required_dxf_attributes(self):
+        # These attributes are always present in DXF files created by Autocad:
+        dxf = self.dxf
+        for key, default in (
+            ("insert", NULLVEC),
+            ("char_height", 2.5),
+            ("width", 0.0),
+            ("defined_height", 0.0),
+            ("attachment_point", 1),
+            ("flow_direction", 5),
+            ("style", "Standard"),
+            ("line_spacing_style", 1),
+            ("line_spacing_factor", 1.0),
+        ):
+            if not dxf.hasattr(key):
+                dxf.set(key, default)
+
+    def export_dxf_tags(self, tagwriter: "TagWriter") -> None:
+        """Export embedded MTEXT as "Embedded Object". """
+        tagwriter.write_tag2(EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR)
+        self.set_required_dxf_attributes()
+        self.dxf.export_dxf_attribs(
+            tagwriter,
+            [
+                "insert",
+                "char_height",
+                "width",
+                "defined_height",
+                "attachment_point",
+                "flow_direction",
+            ],
+        )
+        export_mtext_content(self.text, tagwriter)
+        self.dxf.export_dxf_attribs(
+            tagwriter,
+            [
+                "style",
+                "extrusion",
+                "text_direction",
+                "rect_width",
+                "rect_height",
+                "rotation",
+                "line_spacing_style",
+                "line_spacing_factor",
+                "box_fill_scale",
+                "bg_fill",
+                "bg_fill_color",
+                "bg_fill_true_color",
+                "bg_fill_color_name",
+                "bg_fill_transparency",
+            ],
+        )

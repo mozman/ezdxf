@@ -223,6 +223,11 @@ class TestEmbeddedMTextSupport:
         assert mtext.dxf.line_spacing_style == 1
         assert mtext.dxf.line_spacing_factor == 1.0
 
+    def test_dxf_export_matches_test_data(self, attrib):
+        result = TagCollector.dxftags(attrib, dxfversion=ezdxf.const.DXF2018)
+        expected = basic_tags_from_text(EMBEDDED_MTEXT)
+        assert result == expected
+
 
 EMBEDDED_MTEXT = r"""0
 ATTRIB

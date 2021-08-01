@@ -62,6 +62,7 @@ __all__ = [
     "ColumnType",
     "acdb_mtext",
     "acdb_mtext_group_codes",
+    "export_mtext_content"
 ]
 
 logger = logging.getLogger("ezdxf")
@@ -763,7 +764,7 @@ class MText(DXFGraphic):
                 "flow_direction",
             ],
         )
-        self.export_mtext_content(tagwriter)
+        export_mtext_content(self.text, tagwriter)
         self.dxf.export_dxf_attribs(
             tagwriter,
             [
@@ -805,15 +806,6 @@ class MText(DXFGraphic):
                 yield tag
         parts.append(tail)
         self.text = escape_dxf_line_endings("".join(parts))
-
-    def export_mtext_content(self, tagwriter: "TagWriter") -> None:
-        txt = escape_dxf_line_endings(self.text)
-        str_chunks = split_mtext_string(txt, size=250)
-        if len(str_chunks) == 0:
-            str_chunks.append("")
-        while len(str_chunks) > 1:
-            tagwriter.write_tag2(3, str_chunks.pop(0))
-        tagwriter.write_tag2(1, str_chunks[0])
 
     def export_embedded_object(self, tagwriter: "TagWriter"):
         dxf = self.dxf
@@ -1228,3 +1220,13 @@ class MText(DXFGraphic):
         # WCS entity which supports the "extrusion" attribute in a
         # different way!
         return OCS()
+
+
+def export_mtext_content(text, tagwriter: "TagWriter") -> None:
+    txt = escape_dxf_line_endings(text)
+    str_chunks = split_mtext_string(txt, size=250)
+    if len(str_chunks) == 0:
+        str_chunks.append("")
+    while len(str_chunks) > 1:
+        tagwriter.write_tag2(3, str_chunks.pop(0))
+    tagwriter.write_tag2(1, str_chunks[0])
