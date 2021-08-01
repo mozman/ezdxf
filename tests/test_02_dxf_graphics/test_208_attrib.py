@@ -151,7 +151,7 @@ def test_load_from_text(entity):
 
 
 @pytest.mark.parametrize("txt,ver",
-                         [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
+    [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
     attdef = TEST_CLASS.from_text(txt)
@@ -176,3 +176,96 @@ def test_removing_invalid_chars_at_setting_content(invalid_text):
     txt.dxf.text = invalid_text
     assert txt.dxf.text == 'testtext'
 
+
+class TestEmbeddedMTextSupport:
+    @pytest.fixture
+    def attrib(self) -> Attrib:
+        return Attrib.from_text(EMBEDDED_MTEXT)
+
+    def test_has_embedded_mtext(self, attrib):
+        assert attrib.has_mtext is True
+
+
+EMBEDDED_MTEXT = """0
+ATTRIB
+5
+2AE
+330
+2AD
+100
+AcDbEntity
+8
+0
+62
+7
+100
+AcDbText
+10
+574.8
+20
+961.1
+30
+0.0
+40
+3.0
+1
+TEST VENUE
+7
+Arial_3 NARROW
+72
+1
+11
+592.3
+21
+962.6
+31
+0.0
+100
+AcDbAttribute
+280
+0
+2
+DRAWING-NAME
+70
+0
+74
+2
+280
+0
+71
+2
+72
+0
+11
+592.3
+21
+962.6
+31
+0.0
+101
+Embedded Object
+10
+592.3
+20
+962.6
+30
+0.0
+40
+3.0
+41
+0.0
+46
+0.0
+71
+5
+72
+5
+1
+TEST VENUE\PTEST FLOOR PLAN
+7
+Arial_3 NARROW
+73
+1
+44
+1.0
+"""

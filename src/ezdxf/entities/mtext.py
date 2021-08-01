@@ -55,7 +55,13 @@ if TYPE_CHECKING:
         EntityDB,
     )
 
-__all__ = ["MText", "MTextColumns", "ColumnType"]
+__all__ = [
+    "MText",
+    "MTextColumns",
+    "ColumnType",
+    "acdb_mtext",
+    "acdb_mtext_group_codes",
+]
 
 logger = logging.getLogger("ezdxf")
 
@@ -492,7 +498,7 @@ def load_mtext_column_info(tags: Tags) -> Optional[MTextColumns]:
     columns = MTextColumns()
     height_count = 0
     group_code = None
-    for code, value in tags[start + 1: end]:
+    for code, value in tags[start + 1 : end]:
         if height_count:
             if code == 1040:
                 columns.heights.append(value)

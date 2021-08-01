@@ -15,14 +15,15 @@ from ezdxf.lldxf.attributes import (
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010
 from ezdxf.lldxf import const
 from ezdxf.tools import set_flag_state
-from .dxfentity import base_class, SubclassProcessor
+from .dxfns import SubclassProcessor, DXFNamespace
+from .dxfentity import base_class
 from .dxfgfx import acdb_entity, elevation_to_z_axis
 from .text import Text, acdb_text, acdb_text_group_codes
-from .mtext import acdb_mtext
+from .mtext import acdb_mtext, acdb_mtext_group_codes
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Tags, DXFNamespace, DXFEntity
+    from ezdxf.eztypes import TagWriter, Tags, DXFEntity
 
 __all__ = ["AttDef", "Attrib", "copy_attrib_as_text"]
 
@@ -148,23 +149,33 @@ class BaseAttrib(Text):
     XRECORD_DEF = acdb_attdef_xrecord
 
     def __init__(self):
-        """Default constructor"""
         super().__init__()
-        # This DXF entity and the associated DXF documentation is a real MESS!
         # Does subclass AcDbXrecord really exist?
         self.xrecord: Optional["Tags"] = None
-        # TODO: implement embedded MTEXT support
-        #  remove DXFEntity.embedded_objects if done
-        #  (101, "Embedded Object") does exist!
         self.embedded_mtext: Optional["EmbeddedMText"] = None
 
     def _copy_data(self, entity: "DXFEntity") -> None:
-        """Copy entity data, xrecord data and attached MTEXT are not stored
+        """Copy entity data, xrecord data and embedded MTEXT are not stored
         in the entity database.
 
         """
         assert isinstance(entity, BaseAttrib)
         entity.xrecord = copy.deepcopy(self.xrecord)
+        entity.embedded_mtext = copy.deepcopy(self.embedded_mtext)
+
+    def load_embedded_mtext(self, processor: SubclassProcessor) -> None:
+        if not processor.embedded_objects:
+            return
+        embedded_object = processor.embedded_objects[0]
+        if embedded_object:
+            mtext = EmbeddedMText()
+            processor.fast_load_dxfattribs(
+                mtext.dxf,
+                group_code_mapping=acdb_mtext_group_codes,
+                subclass=embedded_object,
+                recover=False,
+            )
+            self.embedded_mtext = mtext
 
     @property
     def is_const(self) -> bool:
@@ -220,6 +231,14 @@ class BaseAttrib(Text):
             self.dxf.flags, const.ATTRIB_IS_PRESET, state
         )
 
+    @property
+    def has_mtext(self) -> bool:
+        """Returns ``True`` if the entity has an embedded MTEXT entity for multi
+        line support.
+
+        """
+        return bool(self.embedded_mtext)
+
 
 @register_entity
 class AttDef(BaseAttrib):
@@ -242,6 +261,7 @@ class AttDef(BaseAttrib):
                 dxf, acdb_attdef_group_codes, 3, recover=True
             )
             self.xrecord = processor.find_subclass(self.XRECORD_DEF.name)
+            self.load_embedded_mtext(processor)
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:
                 elevation_to_z_axis(dxf, ("insert", "align_point"))
@@ -294,6 +314,7 @@ class Attrib(BaseAttrib):
                 dxf, acdb_attrib_group_codes, 3, recover=True
             )
             self.xrecord = processor.find_subclass(self.XRECORD_DEF.name)
+            self.load_embedded_mtext(processor)
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:
                 elevation_to_z_axis(dxf, ("insert", "align_point"))

@@ -30,7 +30,7 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Vertex, DXFNamespace, Drawing
 
-__all__ = ["Text", "acdb_text"]
+__all__ = ["Text", "acdb_text", "acdb_text_group_codes"]
 
 acdb_text = DefSubclass(
     "AcDbText",
