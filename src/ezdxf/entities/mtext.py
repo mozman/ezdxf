@@ -62,7 +62,7 @@ __all__ = [
     "ColumnType",
     "acdb_mtext",
     "acdb_mtext_group_codes",
-    "export_mtext_content"
+    "export_mtext_content",
 ]
 
 logger = logging.getLogger("ezdxf")
@@ -533,7 +533,7 @@ def load_mtext_column_info(tags: Tags) -> Optional[MTextColumns]:
 
 
 def load_mtext_linked_column_handles(tags: Tags) -> List[str]:
-    handles = []
+    handles: List[str] = []
     try:
         start, end = find_begin_and_end_of_encoded_xdata_tags(
             "ACAD_MTEXT_COLUMNS", tags
@@ -615,7 +615,7 @@ def extract_mtext_text_frame_handles(xdata: XData) -> List[str]:
     # Stores information about the text frame until DXF R2018.
     # Newer CAD applications do not need that information nor the separated
     # LWPOLYLINE as text frame entity.
-    handles = []
+    handles: List[str] = []
     if "ACAD" in xdata:
         acad = xdata.get("ACAD")
     else:
@@ -665,11 +665,12 @@ class MText(DXFGraphic):
     def has_columns(self) -> bool:
         return self._columns is not None
 
-    def _copy_data(self, entity: "MText") -> None:
+    def _copy_data(self, entity: "DXFEntity") -> None:
+        assert isinstance(entity, MText)
         entity.text = self.text
         if self.has_columns:
             # copies also the linked MTEXT column entities!
-            entity._columns = self._columns.deep_copy()
+            entity._columns = self._columns.deep_copy()  # type: ignore
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
@@ -719,7 +720,7 @@ class MText(DXFGraphic):
         if self.has_columns:
             # Link columns, one MTEXT entity for each column, to the main MTEXT
             # entity (DXF version <R2018).
-            self._columns.link_columns(doc)
+            self._columns.link_columns(doc)  # type: ignore
             return unlink_mtext_columns_from_layout
         return None
 
@@ -810,6 +811,7 @@ class MText(DXFGraphic):
     def export_embedded_object(self, tagwriter: "TagWriter"):
         dxf = self.dxf
         cols = self._columns
+        assert cols is not None
 
         tagwriter.write_tag2(101, "Embedded Object")
         tagwriter.write_tag2(70, 1)  # unknown meaning
@@ -835,7 +837,7 @@ class MText(DXFGraphic):
             tagwriter.write_tag2(46, height)
 
     def export_linked_entities(self, tagwriter: "TagWriter"):
-        for mtext in self._columns.linked_columns:
+        for mtext in self._columns.linked_columns:  # type: ignore
             if mtext.dxf.handle is None:
                 raise const.DXFStructureError(
                     "Linked MTEXT column has no handle."
@@ -1044,7 +1046,7 @@ class MText(DXFGraphic):
             vscale = m.transform_direction(
                 old_vertical_direction.normalize()
             ).magnitude
-            self._columns.transform(m, hscale, vscale)
+            self._columns.transform(m, hscale, vscale)  # type: ignore
         return self
 
     def plain_text(self, split=False, fast=True) -> Union[List[str], str]:
@@ -1115,7 +1117,7 @@ class MText(DXFGraphic):
         """
         content = [self.text]
         if self.has_columns:
-            for column in self._columns.linked_columns:
+            for column in self._columns.linked_columns:  # type: ignore
                 content.append(column.text)
         return "".join(content)
 
@@ -1137,7 +1139,7 @@ class MText(DXFGraphic):
             return
 
         if self.has_columns:
-            for column in self._columns.linked_columns:
+            for column in self._columns.linked_columns:  # type: ignore
                 column.destroy()
 
         del self._columns
@@ -1191,6 +1193,7 @@ class MText(DXFGraphic):
         attribs = self.dxfattribs(drop={"handle", "owner"})
         doc = self.doc
         cols = self._columns
+        assert cols is not None
 
         insert = dxf.get("insert", Vec3())
         default_direction = Vec3.from_deg_angle(dxf.get("rotation", 0))
@@ -1208,12 +1211,12 @@ class MText(DXFGraphic):
             return
 
         super().remove_dependencies()
-        has_style = bool(other) and (self.dxf.style in other.styles)
-        if not has_style:
+        style_exist = bool(other) and self.dxf.style in other.styles  # type: ignore
+        if not style_exist:
             self.dxf.style = "Standard"
 
         if self.has_columns:
-            for column in self._columns.linked_columns:
+            for column in self._columns.linked_columns:  # type: ignore
                 column.remove_dependencies(other)
 
     def ocs(self) -> OCS:

@@ -1,6 +1,6 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Optional, Any
+from typing import TYPE_CHECKING, Optional
 import copy
 from ezdxf.lldxf import validator
 from ezdxf.math import NULLVEC
