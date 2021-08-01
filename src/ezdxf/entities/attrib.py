@@ -448,11 +448,12 @@ IGNORE_FROM_ATTRIB = {
 
 
 def copy_attrib_as_text(attrib: BaseAttrib):
-    """Returns the content of the ATTRIB/ATTDEF entity as a new virtual TEXT
-    entity.
+    """Returns the content of the ATTRIB/ATTDEF entity as a new virtual TEXT or
+    MTEXT entity.
 
     """
-    # TODO: MTEXT feature of DXF R2018+ is not supported yet!
+    if attrib.has_embedded_mtext_entity:
+        return attrib.virtual_mtext_entity()
     dxfattribs = attrib.dxfattribs(drop=IGNORE_FROM_ATTRIB)
     return Text.new(dxfattribs=dxfattribs, doc=attrib.doc)
 
