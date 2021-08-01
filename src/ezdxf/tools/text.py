@@ -34,7 +34,7 @@ from .fonts import FontMeasurements, AbstractFont, FontFace
 
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Text, MText, DXFEntity
+    from ezdxf.eztypes import Text, MText, DXFEntity, Tags
 
 X_MIDDLE = 4  # special case for overall alignment "MIDDLE"
 
@@ -517,7 +517,7 @@ def split_mtext_string(s: str, size: int = 250) -> List[str]:
     chunks = []
     pos = 0
     while True:
-        chunk = s[pos: pos + size]
+        chunk = s[pos : pos + size]
         if len(chunk):
             if len(chunk) < size:
                 chunks.append(chunk)
@@ -1004,7 +1004,7 @@ class MTextEditor:
         items.append(
             "".join(
                 b + self.TAB + c + self.NEW_PARAGRAPH
-                    for b, c in zip(bullets, content)
+                for b, c in zip(bullets, content)
             )
         )
         return self.group(str(items))
@@ -1172,7 +1172,7 @@ class TextScanner:
 
         """
 
-        scanner = self.__class__(self._text[self._index:])
+        scanner = self.__class__(self._text[self._index :])
         while scanner.has_data:
             c = scanner.peek()
             if escape and c == "\\" and scanner.peek(1) == char:
@@ -1187,11 +1187,11 @@ class TextScanner:
         """Returns the substring from the current location until index < stop."""
         if stop < self._index:
             raise IndexError(stop)
-        return self._text[self._index: stop]
+        return self._text[self._index : stop]
 
     def tail(self) -> str:
         """Returns the unprocessed part of the content."""
-        return self._text[self._index:]
+        return self._text[self._index :]
 
 
 class TokenType(enum.IntEnum):
@@ -1622,3 +1622,14 @@ class MTextParser:
     def consume_optional_terminator(self):
         if self.scanner.peek() == ";":
             self.scanner.consume(1)
+
+
+def load_mtext_content(tags: "Tags") -> str:
+    tail = ""
+    content = ""
+    for code, value in tags:
+        if code == 1:
+            tail = value
+        elif code == 3:
+            content += value
+    return escape_dxf_line_endings(content + tail)
