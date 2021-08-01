@@ -15,11 +15,13 @@ from ezdxf.lldxf.attributes import (
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXF2010
 from ezdxf.lldxf import const
 from ezdxf.tools import set_flag_state
+from ezdxf.tools.text import load_mtext_content, fast_plain_mtext, plain_mtext
+
 from .dxfns import SubclassProcessor, DXFNamespace
 from .dxfentity import base_class
 from .dxfgfx import acdb_entity, elevation_to_z_axis
 from .text import Text, acdb_text, acdb_text_group_codes
-from .mtext import acdb_mtext, acdb_mtext_group_codes
+from .mtext import acdb_mtext_group_codes, MText
 from .factory import register_entity
 
 if TYPE_CHECKING:
@@ -127,6 +129,7 @@ acdb_attdef_xrecord = DefSubclass(
     ],
 )
 
+
 # Just for documentation:
 # The "attached" MTEXT feature most likely does not exist!
 #
@@ -169,12 +172,7 @@ class BaseAttrib(Text):
         embedded_object = processor.embedded_objects[0]
         if embedded_object:
             mtext = EmbeddedMText()
-            processor.fast_load_dxfattribs(
-                mtext.dxf,
-                group_code_mapping=acdb_mtext_group_codes,
-                subclass=embedded_object,
-                recover=False,
-            )
+            mtext.load_dxf_tags(processor, embedded_object)
             self.embedded_mtext = mtext
 
     @property
@@ -232,12 +230,36 @@ class BaseAttrib(Text):
         )
 
     @property
-    def has_mtext(self) -> bool:
+    def has_embedded_mtext_entity(self) -> bool:
         """Returns ``True`` if the entity has an embedded MTEXT entity for multi
         line support.
 
         """
         return bool(self.embedded_mtext)
+
+    def virtual_mtext_entity(self) -> MText:
+        """Returns the embedded MTEXT entity as regular but virtual MTEXT
+        entity with the same same graphical attributes as the
+        host entity.
+        """
+        if not self.embedded_mtext:
+            raise TypeError("no embedded MTEXT entity exist")
+        mtext = self.embedded_mtext.virtual_mtext_entity()
+        mtext.update_dxf_attribs(self.graphic_properties())
+        return mtext
+
+    def plain_mtext(self, fast=True) -> str:
+        """Returns MText content without formatting codes. Returns an empty
+        string "" if no embedded MTEXT entity exist.
+
+        """
+        if self.embedded_mtext:
+            text = self.embedded_mtext.text
+            if fast:
+                return fast_plain_mtext(text, split=False)
+            else:
+                return plain_mtext(text, split=False)
+        return ""
 
 
 @register_entity
@@ -414,6 +436,7 @@ class EmbeddedMText:
         # Attribute "dxf" contains the DXF attributes defined in subclass
         # "AcDbMText"
         self.dxf = DXFNamespace()
+        self.text: str = ""
 
     def copy(self) -> "EmbeddedMText":
         copy_ = EmbeddedMText()
@@ -421,3 +444,22 @@ class EmbeddedMText:
         return copy_
 
     __copy__ = copy
+
+    def load_dxf_tags(self, processor: SubclassProcessor, tags: "Tags") -> None:
+        processor.fast_load_dxfattribs(
+            self.dxf,
+            group_code_mapping=acdb_mtext_group_codes,
+            subclass=tags,
+            recover=False,
+        )
+        self.text = load_mtext_content(tags)
+
+    def virtual_mtext_entity(self) -> MText:
+        """Returns the embedded MTEXT entity as regular but virtual MTEXT
+        entity. This entity does not have the graphical attributes of the host
+        entity (ATTRIB/ATTDEF).
+
+        """
+        mtext = MText.new(dxfattribs=self.dxf.all_existing_dxf_attribs())
+        mtext.text = self.text
+        return mtext

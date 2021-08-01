@@ -183,10 +183,39 @@ class TestEmbeddedMTextSupport:
         return Attrib.from_text(EMBEDDED_MTEXT)
 
     def test_has_embedded_mtext(self, attrib):
-        assert attrib.has_mtext is True
+        assert attrib.has_embedded_mtext_entity is True
+
+    def test_get_plain_mtext(self, attrib):
+        assert attrib.plain_mtext() == "TEST VENUE\nTEST FLOOR PLAN"
+
+    def test_get_virtual_mtext_entity(self, attrib):
+        mtext = attrib.virtual_mtext_entity()
+        assert mtext.plain_text() == "TEST VENUE\nTEST FLOOR PLAN"
+
+    def test_attrib_graphic_attributes(self, attrib):
+        assert attrib.dxf.color == 7
+        assert attrib.dxf.layer == "AttribLayer"
+
+    def test_mtext_graphic_attributes_inherited_from_host(self, attrib):
+        mtext = attrib.virtual_mtext_entity()
+        assert mtext.dxf.color == 7
+        assert mtext.dxf.layer == "AttribLayer"
+
+    def test_mtext_entity_attributes(self, attrib):
+        mtext = attrib.virtual_mtext_entity()
+        # These seems to be the required DXF tag for the embedded MTEXT entity:
+        assert mtext.dxf.insert.isclose((592.3, 962.6, 0))
+        assert mtext.dxf.char_height == 3.0
+        assert mtext.dxf.width == 0
+        assert mtext.dxf.defined_height == 0
+        assert mtext.dxf.attachment_point == 5
+        assert mtext.dxf.flow_direction == 5
+        assert mtext.dxf.style == "Arial_3 NARROW"
+        assert mtext.dxf.line_spacing_style == 1
+        assert mtext.dxf.line_spacing_factor == 1.0
 
 
-EMBEDDED_MTEXT = """0
+EMBEDDED_MTEXT = r"""0
 ATTRIB
 5
 2AE
@@ -195,7 +224,7 @@ ATTRIB
 100
 AcDbEntity
 8
-0
+AttribLayer
 62
 7
 100
