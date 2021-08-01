@@ -32,7 +32,7 @@ logger = logging.getLogger("ezdxf")
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFEntity
 
-__all__ = ["XData", "XDataUserList", "XDataUserDict", "EmbeddedObjects"]
+__all__ = ["XData", "XDataUserList", "XDataUserDict"]
 
 
 class XData:
@@ -176,17 +176,6 @@ class XData:
         xlist = xdata_list(name, tags)
         data.extend(xlist)
         self.add(appid, data)
-
-
-class EmbeddedObjects:  # TODO: remove
-    """Introduced in DXF R2018."""
-
-    def __init__(self, embedded_objects: List[Tags]):
-        self.embedded_objects = embedded_objects
-
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
-        for tags in self.embedded_objects:
-            tagwriter.write_tags(tags)
 
 
 class XDataUserList(MutableSequence):

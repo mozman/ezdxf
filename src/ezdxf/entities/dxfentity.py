@@ -30,7 +30,7 @@ from ezdxf.tools import set_flag_state
 from . import factory
 from .appdata import AppData, Reactors
 from .dxfns import DXFNamespace, SubclassProcessor
-from .xdata import XData, EmbeddedObjects
+from .xdata import XData
 from .xdict import ExtensionDict
 
 logger = logging.getLogger('ezdxf')
@@ -83,12 +83,6 @@ class DXFEntity:
         self.reactors: Optional[Reactors] = None
         self.extension_dict: Optional[ExtensionDict] = None
         self.xdata: Optional[XData] = None
-        # TODO: remove embedded_objects - no need to waste memory for every entity,
-        #  this is a seldom used feature (ATTRIB, ATTDEF), and this entities have to
-        #  manage the embedded objects by itself at loading stage and DXF export.
-        #  Removing is possible if ATTRIB and ATTDEF have explicit
-        #  support for embedded MTEXT objects
-        self.embedded_objects: Optional[EmbeddedObjects] = None
         self.proxy_graphic: Optional[bytes] = None
         # self._uuid  # uuid generated at first request
 
@@ -108,7 +102,7 @@ class DXFEntity:
 
     @classmethod
     def new(cls: Type[T], handle: str = None, owner: str = None,
-            dxfattribs: Dict = None, doc: 'Drawing' = None) -> T:
+        dxfattribs: Dict = None, doc: 'Drawing' = None) -> T:
         """ Constructor for building new entities from scratch by ezdxf.
 
         NEW process:
@@ -212,14 +206,11 @@ class DXFEntity:
                 self.setup_app_data(tags.appdata)
             if len(tags.xdata):
                 self.xdata = XData(tags.xdata)
-            if tags.embedded_objects:  # TODO: remove
-                self.embedded_objects = EmbeddedObjects(
-                    tags.embedded_objects)
             processor = SubclassProcessor(tags, dxfversion=dxfversion)
             self.dxf = self.load_dxf_attribs(processor)
 
     def load_dxf_attribs(
-            self, processor: SubclassProcessor = None) -> DXFNamespace:
+        self, processor: SubclassProcessor = None) -> DXFNamespace:
         """ Load DXF attributes into DXF namespace. """
         return DXFNamespace(processor, self)
 
@@ -264,7 +255,6 @@ class DXFEntity:
         entity.reactors = other.reactors
         entity.appdata = other.appdata
         entity.xdata = other.xdata
-        entity.embedded_objects = other.embedded_objects  # todo: remove
         entity.proxy_graphic = other.proxy_graphic
         entity.dxf.rewire(entity)
         return entity
@@ -304,8 +294,6 @@ class DXFEntity:
         # if xdata contains handles, they are treated as shared resources
         entity.xdata = copy.deepcopy(self.xdata)
 
-        # if embedded objects contains handles, they are treated as shared resources
-        entity.embedded_objects = copy.deepcopy(self.embedded_objects)  # todo: remove
         self._copy_data(entity)
         return entity
 
@@ -458,7 +446,7 @@ class DXFEntity:
             return all_attribs
 
     def set_flag_state(self, flag: int, state: bool = True,
-                       name: str = 'flags') -> None:
+        name: str = 'flags') -> None:
         """ Set binary coded `flag` of DXF attribute `name` to ``1`` (on)
         if `state` is ``True``, set `flag` to ``0`` (off)
         if `state` is ``False``.
@@ -492,7 +480,6 @@ class DXFEntity:
             self.extension_dict = None
             self.appdata = None
             self.xdata = None
-            self.embedded_objects = None  # todo: remove
 
     def destroy(self) -> None:
         """ Delete all data and references. Does not delete entity from
@@ -513,7 +500,6 @@ class DXFEntity:
         del self.appdata
         del self.reactors
         del self.xdata
-        del self.embedded_objects  # todo: remove
         del self.doc
         del self.dxf  # check mark for is_alive
 
@@ -543,16 +529,13 @@ class DXFEntity:
             return
         if not self.preprocess_export(tagwriter):
             return
-        # ! first step !
         # write handle, AppData, Reactors, ExtensionDict, owner
         self.export_base_class(tagwriter)
 
         # this is the entity specific part
         self.export_entity(tagwriter)
 
-        # ! Last step !
-        # write xdata, embedded objects
-        self.export_embedded_objects(tagwriter)
+        # write xdata at the end of the entity
         self.export_xdata(tagwriter)
 
     def export_base_class(self, tagwriter: 'TagWriter') -> None:
@@ -595,11 +578,6 @@ class DXFEntity:
         """ Export DXF XDATA by `tagwriter`. (internal API)"""
         if self.xdata:
             self.xdata.export_dxf(tagwriter)
-
-    def export_embedded_objects(self, tagwriter: 'TagWriter') -> None:
-        """ Export embedded objects by `tagwriter`. (internal API)"""
-        if self.embedded_objects:  # todo: remove
-            self.embedded_objects.export_dxf(tagwriter)  # todo: remove
 
     def audit(self, auditor: 'Auditor') -> None:
         """ Validity check. (internal API) """
@@ -823,6 +801,7 @@ class DXFTagStorage(DXFEntity):
         """ Default constructor """
         super().__init__()
         self.xtags: Optional[ExtendedTags] = None
+        self.embedded_objects: Optional[List[Tags]] = None
 
     def copy(self) -> 'DXFEntity':
         raise const.DXFTypeError(
@@ -840,6 +819,7 @@ class DXFTagStorage(DXFEntity):
         dxfversion = doc.dxfversion if doc else None
         entity.load_tags(tags, dxfversion=dxfversion)
         entity.store_tags(tags)
+        entity.store_embedded_objects(tags)
         if options.load_proxy_graphics:
             entity.load_proxy_graphic()
         return entity
@@ -865,10 +845,17 @@ class DXFTagStorage(DXFEntity):
             # just fake it
             self.dxf.__dict__['paperspace'] = 0
 
+    def store_embedded_objects(self, tags: ExtendedTags) -> None:
+        self.embedded_objects = tags.embedded_objects
+
     def export_entity(self, tagwriter: 'TagWriter') -> None:
         """ Write subclass tags as they are. """
         for subclass in self.xtags.subclasses[1:]:
             tagwriter.write_tags(subclass)
+
+        if self.embedded_objects:
+            for tags in self.embedded_objects:
+                tagwriter.write_tags(tags)
 
     def destroy(self) -> None:
         if not self.is_alive:

@@ -106,7 +106,7 @@ def test_mtext_structure(mtext_tags):
     assert mtext.dxf.line_spacing_factor == 1.0
 
 
-def test_mtext_set_text(mtext_tags):
+def test_mtext_set_text():
     mtext = MText.from_text(MTEXT)
     mtext.text = 'Hello?'
     assert mtext.text == 'Hello?'

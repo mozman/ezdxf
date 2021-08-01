@@ -5,7 +5,7 @@ from . import factory
 
 # basic classes
 from .xdict import ExtensionDict
-from .xdata import XData, EmbeddedObjects
+from .xdata import XData
 from .appdata import AppData, Reactors
 from .dxfentity import DXFEntity
 from .dxfgfx import DXFGraphic, SeqEnd

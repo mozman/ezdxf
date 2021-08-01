@@ -56,9 +56,6 @@ DXF Entities
 
 - (v0.17) ATTRIB/ATTDEF support for embedded MTEXT entity,
   example: `dxftest/attrib_attdef_with_embedded_mtext.dxf`
-- (v0.17) Remove generic "Embedded Object" support in DXFEntity because this is 
-  always a special case which should be handled by DXF load/export procedure, 
-  and it is used only by ATTRIB/ATTDEF/MTEXT yet.
 - (v0.18) MLEADER: factory methods to create new MLEADER entities
 - (<v1.0) do more entities support the DXF "thickness" attribute (group code 39)?
   possible candidates: HATCH, MPOLYGON, planar SPLINE, ELLIPSE, MLINE 

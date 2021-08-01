@@ -683,8 +683,6 @@ class MText(DXFGraphic):
                 raise const.DXFStructureError(
                     f"missing 'AcDbMText' subclass in MTEXT(#{dxf.handle})"
                 )
-
-        self.embedded_objects = None  # todo: remove
         return dxf
 
     def post_load_hook(self, doc: "Drawing") -> Optional[Callable]:
