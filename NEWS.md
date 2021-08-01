@@ -7,6 +7,7 @@ Version 0.16.6b0 - dev
 
 - NEW: `MPOLYGON` support for the `drawing` add-on
 - NEW: `MPOLYGON` support for the `geo` add-on
+- NEW: `fast` argument for method `MText.plain_text()`
 - CHANGE: renamed `RenderContext.current_layer` to `RenderContext.current_layer_properties` 
 - CHANGE: renamed `RenderContext.current_block_reference` to `RenderContext.current_block_reference_properties` 
 - BUGFIX: add missing "doc" argument to DXF loaders, DXF version was not 

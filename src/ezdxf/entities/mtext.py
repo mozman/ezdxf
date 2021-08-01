@@ -38,6 +38,7 @@ from ezdxf.tools.text import (
     split_mtext_string,
     escape_dxf_line_endings,
     fast_plain_mtext,
+    plain_mtext,
 )
 from . import factory
 from .dxfentity import base_class, SubclassProcessor
@@ -1054,15 +1055,29 @@ class MText(DXFGraphic):
             self._columns.transform(m, hscale, vscale)
         return self
 
-    def plain_text(self, split=False) -> Union[List[str], str]:
+    def plain_text(self, split=False, fast=True) -> Union[List[str], str]:
         """Returns the text content without inline formatting codes.
+
+        The "fast" mode is accurate if the DXF content was created by
+        reliable (and newer) CAD applications like AutoCAD or BricsCAD.
+        The "accurate" mode is for some rare cases where the content was
+        created by older CAD applications or unreliable DXF libraries and CAD
+        applications.
 
         Args:
             split: split content text at line breaks if ``True`` and
                 returns a list of strings without line endings
+            fast: uses the "fast" mode to extract the plain MTEXT content if
+                ``True`` or the "accurate" mode if set to ``False``
+
+        .. versionadded:: 0.16.6
+            `fast` argument
 
         """
-        return fast_plain_mtext(self.text, split=split)
+        if fast:
+            return fast_plain_mtext(self.text, split=split)
+        else:
+            return plain_mtext(self.text, split=split)
 
     def all_columns_plain_text(self, split=False) -> Union[List[str], str]:
         """Returns the text content of all columns without inline formatting
@@ -1072,7 +1087,7 @@ class MText(DXFGraphic):
             split: split content text at line breaks if ``True`` and
                 returns a list of strings without line endings
 
-        .. versionadded: 0.17
+        .. versionadded:: 0.17
 
         """
 
@@ -1103,7 +1118,7 @@ class MText(DXFGraphic):
         """Returns the text content of all columns as a single string
         including the inline formatting codes.
 
-        .. versionadded: 0.17
+        .. versionadded:: 0.17
 
         """
         content = [self.text]

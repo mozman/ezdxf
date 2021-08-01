@@ -238,9 +238,10 @@ class BaseAttrib(Text):
         return bool(self._embedded_mtext)
 
     def virtual_mtext_entity(self) -> MText:
-        """Returns the embedded MTEXT entity as regular but virtual MTEXT
-        entity with the same same graphical attributes as the
+        """Returns the embedded MTEXT entity as regular but virtual
+        :class:`MText` entity with the same graphical attributes as the
         host entity.
+
         """
         if not self._embedded_mtext:
             raise TypeError("no embedded MTEXT entity exist")
@@ -262,7 +263,7 @@ class BaseAttrib(Text):
 
         Args:
             fast: uses the "fast" mode to extract the plain MTEXT content if
-                ``True`` or the "accurate" mode if set to``False``
+                ``True`` or the "accurate" mode if set to ``False``
 
         """
         if self._embedded_mtext:
