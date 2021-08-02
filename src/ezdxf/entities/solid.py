@@ -189,7 +189,7 @@ class Face3d(_Base):
 
     def is_invisible_edge(self, num: int) -> bool:
         """Returns True if edge `num` is an invisible edge."""
-        if num < 0 or num > 4:  # allow accessing 4th value even when triangle
+        if num < 0 or num > 4:
             raise ValueError(f'invalid edge: {num}')
         return bool(self.dxf.invisible & (1 << num))
 
@@ -197,7 +197,7 @@ class Face3d(_Base):
         """Set visibility of edge `num`, status `True` for visible, status
         `False` for invisible.
         """
-        if num < 0 or num >= 4:  # allow accessing 4th value even when triangle
+        if num < 0 or num >= 4:
             raise ValueError(f'invalid edge: {num}')
         if not visible:
             self.dxf.invisible = self.dxf.invisible | (1 << num)
@@ -207,18 +207,7 @@ class Face3d(_Base):
     def get_edges_visibility(self) -> List[bool]:
         # if the face is a triangle, a fourth visibility flag
         # may be present but is ignored
-        return [not self.is_invisible_edge(i) for i in range(self.num_vertices)]
-
-    @property
-    def is_triangle(self) -> bool:
-        dxf = self.dxf
-        return (not dxf.hasattr("vtx3")
-                or dxf.vtx3 == dxf.vtx2
-                or dxf.vtx3 == dxf.vtx0)
-
-    @property
-    def num_vertices(self) -> int:
-        return 3 if self.is_triangle else 4
+        return [not self.is_invisible_edge(i) for i in range(4)]
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
@@ -250,19 +239,17 @@ class Face3d(_Base):
         return self
 
     def wcs_vertices(self, close: bool = False) -> List[Vec3]:
-        """Returns WCS vertices, if argument `close` is
-        ``True``, last vertex == first vertex.
-        Does **not** return duplicated last vertex if represents a triangle.
+        """Returns WCS vertices, if argument `close` is ``True``,
+        last vertex == first vertex.
+
+        returns 4 vertices when close=False and 5 vertices when close=True.
+        Some edges may have 0 length.
 
         Compatibility interface to SOLID and TRACE. The 3DFACE entity returns
         already WCS vertices.
-
         """
         dxf = self.dxf
-        vertices = [dxf.vtx0, dxf.vtx1, dxf.vtx2]
-        if not self.is_triangle:
-            vertices.append(dxf.vtx3)
-
-        if close and not vertices[0].isclose(vertices[-1]):
+        vertices = [dxf.vtx0, dxf.vtx1, dxf.vtx2, dxf.vtx3]
+        if close:
             vertices.append(vertices[0])
         return vertices
