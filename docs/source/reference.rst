@@ -40,6 +40,14 @@ DXF Structures
     dxfentities/index
     dxfobjects/index
 
+DXF Entity Creation
+-------------------
+
+.. toctree::
+    :maxdepth: 1
+
+    entity_creation
+
 Data Query
 ----------
 
