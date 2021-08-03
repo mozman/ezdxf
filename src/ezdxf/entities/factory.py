@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020, Manfred Moitzi
+# Copyright (c) 2019-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING
 
@@ -6,8 +6,15 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, DXFEntity, ExtendedTags
 
 __all__ = [
-    'register_entity', 'ENTITY_CLASSES', 'replace_entity',
-    'new', 'cls', 'is_bound', 'create_db_entry', 'load', 'bind'
+    "register_entity",
+    "ENTITY_CLASSES",
+    "replace_entity",
+    "new",
+    "cls",
+    "is_bound",
+    "create_db_entry",
+    "load",
+    "bind",
 ]
 # Stores all registered classes:
 ENTITY_CLASSES = {}
@@ -30,48 +37,49 @@ def replace_entity(cls):
 def register_entity(cls):
     name = cls.DXFTYPE
     if name in ENTITY_CLASSES:
-        raise TypeError(f'Double registration for DXF type {name}.')
+        raise TypeError(f"Double registration for DXF type {name}.")
     ENTITY_CLASSES[name] = cls
     return cls
 
 
-def new(dxftype: str, dxfattribs: dict = None,
-        doc: 'Drawing' = None) -> 'DXFEntity':
-    """ Create a new entity, does not require an instantiated DXF document. """
+def new(
+    dxftype: str, dxfattribs: dict = None, doc: "Drawing" = None
+) -> "DXFEntity":
+    """Create a new entity, does not require an instantiated DXF document."""
     entity = cls(dxftype).new(
         handle=None,
         owner=None,
         dxfattribs=dxfattribs,
         doc=doc,
     )
-    return entity.cast() if hasattr(entity, 'cast') else entity
+    return entity.cast() if hasattr(entity, "cast") else entity
 
 
-def create_db_entry(dxftype, dxfattribs: dict, doc: 'Drawing') -> 'DXFEntity':
+def create_db_entry(dxftype, dxfattribs: dict, doc: "Drawing") -> "DXFEntity":
     entity = new(dxftype=dxftype, dxfattribs=dxfattribs)
     bind(entity, doc)
     return entity
 
 
-def load(tags: 'ExtendedTags', doc: 'Drawing' = None) -> 'DXFEntity':
+def load(tags: "ExtendedTags", doc: "Drawing" = None) -> "DXFEntity":
     entity = cls(tags.dxftype()).load(tags, doc)
-    return entity.cast() if hasattr(entity, 'cast') else entity
+    return entity.cast() if hasattr(entity, "cast") else entity
 
 
-def cls(dxftype: str) -> 'DXFEntity':
-    """ Returns registered class for `dxftype`. """
+def cls(dxftype: str) -> "DXFEntity":
+    """Returns registered class for `dxftype`."""
     return ENTITY_CLASSES.get(dxftype, DEFAULT_CLASS)
 
 
-def bind(entity: 'DXFEntity', doc: 'Drawing') -> None:
-    """ Bind `entity` to the DXF document `doc`.
+def bind(entity: "DXFEntity", doc: "Drawing") -> None:
+    """Bind `entity` to the DXF document `doc`.
 
     The bind process stores the DXF `entity` in the entity database of the DXF
     document.
 
     """
-    assert entity.is_alive, 'Can not bind destroyed entity.'
-    assert doc.entitydb is not None, 'Missing entity database.'
+    assert entity.is_alive, "Can not bind destroyed entity."
+    assert doc.entitydb is not None, "Missing entity database."
     entity.doc = doc
     doc.entitydb.add(entity)
 
@@ -81,8 +89,8 @@ def bind(entity: 'DXFEntity', doc: 'Drawing') -> None:
         entity.post_bind_hook()
 
 
-def unbind(entity: 'DXFEntity'):
-    """ Unbind `entity` from document and layout, but does not destroy the
+def unbind(entity: "DXFEntity"):
+    """Unbind `entity` from document and layout, but does not destroy the
     entity.
 
     Turns `entity` into a virtual entity: no handle, no owner, no document.
@@ -97,7 +105,7 @@ def unbind(entity: 'DXFEntity'):
             else:
                 layout.unlink_entity(entity)
 
-        process_sub_entities = getattr(entity, 'process_sub_entities', None)
+        process_sub_entities = getattr(entity, "process_sub_entities", None)
         if process_sub_entities:
             process_sub_entities(lambda e: unbind(e))
 
@@ -105,12 +113,11 @@ def unbind(entity: 'DXFEntity'):
         entity.doc = None
 
 
-def is_bound(entity: 'DXFEntity', doc: 'Drawing') -> bool:
-    """ Returns ``True`` if `entity`is bound to DXF document `doc`.
-    """
+def is_bound(entity: "DXFEntity", doc: "Drawing") -> bool:
+    """Returns ``True`` if `entity`is bound to DXF document `doc`."""
     if not entity.is_alive:
         return False
     if entity.is_virtual or entity.doc is not doc:
         return False
-    assert doc.entitydb, 'Missing entity database.'
+    assert doc.entitydb, "Missing entity database."
     return entity.dxf.handle in doc.entitydb
