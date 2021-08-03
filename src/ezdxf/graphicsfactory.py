@@ -212,9 +212,13 @@ class CreatorInterface:
     def add_solid(
         self, points: Iterable["Vertex"], dxfattribs: Dict = None
     ) -> "Solid":
-        """
-        Add a :class:`~ezdxf.entities.Solid` entity, `points` is an iterable
+        """Add a :class:`~ezdxf.entities.Solid` entity, `points` is an iterable
         of 3 or 4 points.
+
+        .. hint::
+
+                The last two vertices are in reversed order: a square has the
+                vertex order 0-1-3-2
 
         Args:
             points: iterable of 3 or 4 2D/3D points in :ref:`WCS`
@@ -228,9 +232,13 @@ class CreatorInterface:
     def add_trace(
         self, points: Iterable["Vertex"], dxfattribs: Dict = None
     ) -> "Trace":
-        """
-        Add a :class:`~ezdxf.entities.Trace` entity, `points` is an iterable
+        """Add a :class:`~ezdxf.entities.Trace` entity, `points` is an iterable
         of 3 or 4 points.
+
+        .. hint::
+
+                The last two vertices are in reversed order: a square has the
+                vertex order 0-1-3-2
 
         Args:
             points: iterable of 3 or 4 2D/3D points in :ref:`WCS`
@@ -248,6 +256,11 @@ class CreatorInterface:
         """
         Add a :class:`~ezdxf.entities.3DFace` entity, `points` is an iterable
         3 or 4 2D/3D points.
+
+        .. hint::
+
+                In contrast to SOLID and TRACE, the last two vertices are in
+                regular order: a square has the vertex order 0-1-2-3
 
         Args:
             points: iterable of 3 or 4 2D/3D points in :ref:`WCS`

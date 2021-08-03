@@ -25,6 +25,9 @@ __all__ = ["Solid", "Trace", "Face3d"]
 acdb_trace = DefSubclass(
     "AcDbTrace",
     {
+        # IMPORTANT: all 4 vertices have to be present in the DXF file,
+        # otherwise AutoCAD shows a DXF structure error and does not load the
+        # file! (SOLID, TRACE and 3DFACE)
         # 1. corner Solid WCS; Trace OCS
         "vtx0": DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
         # 2. corner Solid WCS; Trace OCS
@@ -35,6 +38,8 @@ acdb_trace = DefSubclass(
         # If only three corners are entered to define the SOLID, then the fourth
         # corner coordinate is the same as the third.
         "vtx3": DXFAttr(13, xtype=XType.point3d, default=NULLVEC),
+        # IMPORTANT: for TRACE and SOLID the last two vertices are in reversed
+        # order: a square has the vertex order 0-1-3-2
         # Elevation is a legacy feature from R11 and prior, do not use this
         # attribute, store the entity elevation in the z-axis of the vertices.
         # ezdxf does not export the elevation attribute!
@@ -183,6 +188,8 @@ acdb_face_group_codes = group_code_mapping(acdb_face)
 @register_entity
 class Face3d(_Base):
     """DXF 3DFACE entity"""
+    # IMPORTANT: for 3DFACE the last two vertices are in regular order:
+    # a square has the vertex order 0-1-2-3
 
     DXFTYPE = "3DFACE"
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_face)
