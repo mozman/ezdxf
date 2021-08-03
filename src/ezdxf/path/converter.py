@@ -467,7 +467,8 @@ def from_vertices(vertices: Iterable["Vertex"], close=False) -> Path:
         return Path()
     path = Path(start=vertices[0])
     for vertex in vertices[1:]:
-        path.line_to(vertex)
+        if not path.end.isclose(vertex):
+            path.line_to(vertex)
     if close:
         path.close()
     return path
