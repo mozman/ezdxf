@@ -14,8 +14,11 @@ from ezdxf.entities import Text, Hatch
 from ezdxf.layouts import VirtualLayout
 
 NOTO_SANS_SC = "Noto Sans SC"
-noto_sans_sc_not_found = "Noto" not in findfont(
-    FontProperties(family=NOTO_SANS_SC)
+noto_sans_sc_not_found = (
+    "noto" not in findfont(FontProperties(family=NOTO_SANS_SC)).lower()
+)
+arial_not_found = (
+    "arial" not in findfont(FontProperties(family="Arial")).lower()
 )
 
 
@@ -23,9 +26,22 @@ def _to_paths(s, f="Arial"):
     return text2path.make_paths_from_str(s, font=FontFace(family=f))
 
 
-@pytest.mark.parametrize(
-    "s,c",
-    [
+# Font 'Arial' required, a replacement fonts may return a different
+# path/hole configuration! issue #515
+if arial_not_found:
+    CHAR_TO_PATH = [
+        ["1", 1],
+        ["2", 1],
+        [".", 1],
+        ["0", 2],
+        ["a", 2],
+        ["!", 2],
+        ["@", 2],
+        ["8", 3],
+        ["ü", 3],
+    ]
+else:
+    CHAR_TO_PATH = [
         ["1", 1],
         ["2", 1],
         [".", 1],
@@ -39,8 +55,10 @@ def _to_paths(s, f="Arial"):
         ["ä", 4],
         ["ö", 4],
         ["%", 5],
-    ],
-)
+    ]
+
+
+@pytest.mark.parametrize("s,c", CHAR_TO_PATH)
 def test_make_paths_from_str(s, c):
     assert len(_to_paths(s)) == c
 
@@ -102,6 +120,11 @@ def test_group_three_contours_and_ignore_holes(s):
     assert isinstance(contour, Path)
 
 
+@pytest.mark.skipif(
+    arial_not_found,
+    reason="Font 'Arial' required, a replacement fonts may return different "
+           "paths, issue #515",
+)
 def test_group_percent_sign():
     # Special case %: lower o is inside of the slash bounding box, but HATCH
     # creation works as expected!
@@ -343,7 +366,9 @@ class TestMakePathsFromEntity:
         assert (
             bbox.size.x == length
         ), "expected text length fits into given length"
-        assert bbox.size.y == height, "expected unscaled text height"
+        assert bbox.size.y == pytest.approx(
+            height
+        ), "expected unscaled text height"
         assert bbox.extmin.isclose((1, 0))
 
     def test_alignment_aligned(self, get_bbox):
