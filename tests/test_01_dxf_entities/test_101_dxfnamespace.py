@@ -197,6 +197,67 @@ def test_dxf_export_two_attribute(entity, processor):
     assert tagwriter.tags[1] == (330, "ABBA")
 
 
+class TestUpdateDXFAttributes:
+    """Tests for DXFNamespace.update()"""
+
+    @pytest.fixture
+    def dxf(self, processor, entity):
+        ns = DXFNamespace(processor, entity)
+        ns.color = 7
+        ns.handle = "ABBA"
+        ns.owner = "FEFE"
+        return ns
+
+    def test_regular_usage(self, dxf):
+        dxf.update({"color": 1})
+        assert dxf.color == 1
+
+    def test_protect_entity_back_link_from_update(self, dxf):
+        entity = dxf._entity
+        dxf.update({"_entity": None})
+        assert entity is dxf._entity
+
+    def test_protect_handle_and_owner_from_update_by_default(self, dxf):
+        dxf.update({"handle": "BAAB", "owner": "DEDE"})
+        assert dxf.handle == "ABBA"
+        assert dxf.owner == "FEFE"
+
+    def test_can_exclude_attributes_from_update(self, dxf):
+        entity = dxf._entity
+        dxf.update({"color": 1, "_entity": None}, exclude={"color"})
+        assert dxf.color == 7
+        assert (
+            dxf._entity is entity
+        ), "entity back-link has to be protected from update"
+
+    def test_can_update_handle_and_owner_on_demand(self, dxf):
+        entity = dxf._entity
+        # do not include "handle" and "owner" in custom exclude set:
+        exclude = set()
+        dxf.update(
+            {"handle": "BAAB", "owner": "DEDE", "_entity": None},
+            exclude=exclude,
+        )
+        assert dxf.handle == "BAAB"
+        assert dxf.owner == "DEDE"
+        assert (
+            dxf._entity is entity
+        ), "entity back-link always has to be protected from update"
+
+    def test_raises_attribute_error_for_invalid_attribute(self, dxf):
+        with pytest.raises(AttributeError):
+            dxf.update({"xxx": "yyy"})
+
+    def test_raises_value_error_for_invalid_attribute_value(self, dxf):
+        with pytest.raises(ValueError):
+            dxf.update({"color": "yyy"})
+
+    def test_update_can_ignore_errors_on_demand(self, dxf):
+        dxf.update({"xxx": "yyy", "color": "zzz"}, ignore_errors=True)
+        assert dxf.hasattr("xxx") is False
+        assert dxf.color == 7
+
+
 @pytest.fixture
 def subclass():
     return DefSubclass(

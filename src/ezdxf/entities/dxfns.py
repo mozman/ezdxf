@@ -1,6 +1,15 @@
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
-from typing import Any, Optional, Union, Iterable, List, TYPE_CHECKING, Dict
+from typing import (
+    Any,
+    Optional,
+    Union,
+    Iterable,
+    List,
+    TYPE_CHECKING,
+    Dict,
+    Set,
+)
 import logging
 from ezdxf import options
 from ezdxf.lldxf import const
@@ -29,6 +38,7 @@ SETTER_EVENTS = {
     "style": "on_style_change",
     "dimstyle": "on_dimstyle_change",
 }
+EXCLUDE_FROM_UPDATE = frozenset(["_entity", "handle", "owner"])
 
 
 class DXFNamespace:
@@ -229,10 +239,32 @@ class DXFNamespace:
         self.__dict__[key] = value
 
     def all_existing_dxf_attribs(self) -> dict:
-        """Returns all existing DXF attributes, except DXFEntity parent link."""
+        """Returns all existing DXF attributes, except DXFEntity back-link."""
         attribs = dict(self.__dict__)
         del attribs["_entity"]
         return attribs
+
+    def update(
+        self,
+        dxfattribs: Dict[str, Any],
+        *,
+        exclude: Set[str] = None,
+        ignore_errors=False,
+    ) -> None:
+        """Update DXF namespace attributes from a dict."""
+        if exclude is None:
+            exclude = EXCLUDE_FROM_UPDATE
+        else:  # always exclude "_entity" back-link
+            exclude = {"_entity"} | exclude
+
+        set_attribute = self.__setattr__
+        for k, v in dxfattribs.items():
+            if k not in exclude:
+                try:
+                    set_attribute(k, v)
+                except (AttributeError, ValueError):
+                    if not ignore_errors:
+                        raise
 
     def discard(self, key: str) -> None:
         """Delete DXF attribute `key` silently without any exception."""
