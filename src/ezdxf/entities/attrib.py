@@ -307,6 +307,19 @@ class BaseAttrib(Text):
                 return plain_mtext(text, split=False)  # type: ignore
         return ""
 
+    def set_mtext(self, mtext: MText) -> None:
+        """Set multi-line attribute, requires DXF R2018."""
+        # Can be set for all DXF versions, but the DXF export will ignore
+        # the multi-line setup for DXF versions < R2018.
+        if self._embedded_mtext is None:
+            self._embedded_mtext = EmbeddedMText()
+        self._embedded_mtext.set_mtext(mtext)
+        self._update_from_embedded_mtext()
+
+    def _update_from_embedded_mtext(self) -> None:
+        # TODO
+        pass
+
 
 @register_entity
 class AttDef(BaseAttrib):
@@ -459,11 +472,15 @@ def copy_attrib_as_text(attrib: BaseAttrib):
 
 
 class EmbeddedMTextNS(DXFNamespace):
-    DXFATTRIBS = DXFAttributes(acdb_mtext)
+    _DXFATTRIBS = DXFAttributes(acdb_mtext)
 
     @property
     def dxfattribs(self) -> DXFAttributes:
-        return self.DXFATTRIBS
+        return self._DXFATTRIBS
+
+    @property
+    def dxftype(self) -> str:
+        return "Embedded MText"
 
 
 class EmbeddedMText:
@@ -519,6 +536,14 @@ class EmbeddedMText:
         mtext.text = self.text
         return mtext
 
+    def set_mtext(self, mtext: MText) -> None:
+        """Set embedded MTEXT attributes from given `mtext` entity."""
+        self.text = mtext.text
+        dxf = self.dxf
+        for k, v in mtext.dxf.all_existing_dxf_attribs().items():
+            if dxf.is_supported(k):
+                dxf.set(k, v)
+
     def set_required_dxf_attributes(self):
         # These attributes are always present in DXF files created by Autocad:
         dxf = self.dxf
@@ -537,7 +562,7 @@ class EmbeddedMText:
                 dxf.set(key, default)
 
     def export_dxf_tags(self, tagwriter: "TagWriter") -> None:
-        """Export embedded MTEXT as "Embedded Object". """
+        """Export embedded MTEXT as "Embedded Object"."""
         tagwriter.write_tag2(EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR)
         self.set_required_dxf_attributes()
         self.dxf.export_dxf_attribs(

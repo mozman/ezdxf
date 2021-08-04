@@ -3,7 +3,8 @@
 import pytest
 
 import ezdxf
-from ezdxf.entities.attrib import Attrib
+from ezdxf.entities import Attrib, MText
+from ezdxf.entities.attrib import EmbeddedMText, EmbeddedMTextNS
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
@@ -227,6 +228,36 @@ class TestEmbeddedMTextSupport:
         result = TagCollector.dxftags(attrib, dxfversion=ezdxf.const.DXF2018)
         expected = basic_tags_from_text(EMBEDDED_MTEXT)
         assert result == expected
+
+    def test_set_mtext(self):
+        attrib = Attrib.new(dxfattribs={"color": 3, "text": "TEST"})
+        mtext = MText.new(dxfattribs={"color": 3})
+        mtext.text = "LINE1\nLINE2"
+        attrib.set_mtext(mtext)
+        assert attrib.has_embedded_mtext_entity is True
+
+
+class TestEmbeddedMText:
+    def test_special_namespace(self):
+        ns = EmbeddedMTextNS()
+        assert "char_height" in ns.dxfattribs
+        assert "color" not in ns.dxfattribs
+
+    def test_setup(self):
+        txt = EmbeddedMText()
+        assert "char_height" in txt.dxf.dxfattribs
+        assert "color" not in txt.dxf.dxfattribs
+
+    def test_set_mtext_attribute(self):
+        txt = EmbeddedMText()
+        txt.dxf.char_height = 2.5
+        assert txt.dxf.char_height == 2.5
+
+    def test_set_invalid_mtext_attribute(self):
+        txt = EmbeddedMText()
+        assert txt.dxf.hasattr("color") is False
+        with pytest.raises(AttributeError):
+            txt.dxf.color = 3
 
 
 EMBEDDED_MTEXT = r"""0
