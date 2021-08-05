@@ -50,5 +50,9 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: plain_mtext
 
+    .. automethod:: set_mtext
+
+    .. automethod:: embed_mtext
+
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-7DD8B495-C3F8-48CD-A766-14F9D7D0DD9B

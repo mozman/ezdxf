@@ -50,4 +50,14 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. autoproperty:: is_preset
 
+    .. autoproperty:: has_embedded_mtext_entity
+
+    .. automethod:: virtual_mtext_entity
+
+    .. automethod:: plain_mtext
+
+    .. automethod:: set_mtext
+
+    .. automethod:: embed_mtext
+
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-F0EA099B-6F88-4BCC-BEC7-247BA64838A4

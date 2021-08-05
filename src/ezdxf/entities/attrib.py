@@ -3,7 +3,7 @@
 from typing import TYPE_CHECKING, Optional
 import copy
 from ezdxf.lldxf import validator
-from ezdxf.math import NULLVEC
+from ezdxf.math import NULLVEC, Vec3
 from ezdxf.lldxf.attributes import (
     DXFAttr,
     DXFAttributes,
@@ -271,8 +271,8 @@ class BaseAttrib(Text):
         return bool(self._embedded_mtext)
 
     def virtual_mtext_entity(self) -> MText:
-        """Returns the embedded MTEXT entity as regular but virtual
-        :class:`MText` entity with the same graphical attributes as the
+        """Returns the embedded MTEXT entity as a regular but virtual
+        :class:`MText` entity with the same graphical properties as the
         host entity.
 
         """
@@ -307,18 +307,57 @@ class BaseAttrib(Text):
                 return plain_mtext(text, split=False)  # type: ignore
         return ""
 
-    def set_mtext(self, mtext: MText) -> None:
-        """Set multi-line attribute, requires DXF R2018."""
-        # Can be set for all DXF versions, but the DXF export will ignore
-        # the multi-line setup for DXF versions < R2018.
+    def set_mtext(self, mtext: MText, graphic_properties=True) -> None:
+        """Set multi-line properties from a :class:`MText` entity.
+
+        The multi-line ATTRIB/ATTDEF entity requires DXF R2018, otherwise an
+        ordinary single line ATTRIB/ATTDEF entity will be exported.
+
+        Args:
+            mtext: source :class:`MText` entity
+            graphic_properties: copy graphic properties (color, layer, ...) from
+                source MTEXT if ``True``
+
+        """
         if self._embedded_mtext is None:
             self._embedded_mtext = EmbeddedMText()
         self._embedded_mtext.set_mtext(mtext)
-        self._update_from_embedded_mtext()
+        _update_content_from_mtext(self, mtext)
+        _update_location_from_mtext(self, mtext)
+        if graphic_properties:
+            self.update_dxf_attribs(mtext.graphic_properties())
 
-    def _update_from_embedded_mtext(self) -> None:
-        # TODO
-        pass
+    def embed_mtext(self, mtext: MText, graphic_properties=True) -> None:
+        """Set multi-line properties from a :class:`MText` entity and destroy the
+        source entity afterwards.
+
+        The multi-line ATTRIB/ATTDEF entity requires DXF R2018, otherwise an
+        ordinary single line ATTRIB/ATTDEF entity will be exported.
+
+        Args:
+            mtext: source :class:`MText` entity
+            graphic_properties: copy graphic properties (color, layer, ...) from
+                source MTEXT if ``True``
+
+        """
+        self.set_mtext(mtext, graphic_properties)
+        mtext.destroy()
+
+
+def _update_content_from_mtext(text: Text, mtext: MText) -> None:
+    content = mtext.plain_text(split=True, fast=True)
+    if content:
+        # In contrast to AutoCAD, just set the first line as single line
+        # ATTRIB content. AutoCAD concatenates all lines into a single
+        # "Line1\PLine2\P...", which (imho) is not very useful.
+        text.dxf.text = content[0]
+
+
+def _update_location_from_mtext(text: Text, mtext: MText) -> None:
+    insert = Vec3(mtext.dxf.insert)
+    extrusion = Vec3(mtext.dxf.extrusion)
+    text_direction = mtext.get_text_direction()
+    # todo
 
 
 @register_entity
