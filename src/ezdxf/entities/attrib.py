@@ -3,7 +3,7 @@
 from typing import TYPE_CHECKING, Optional
 import copy
 from ezdxf.lldxf import validator
-from ezdxf.math import NULLVEC, Vec3
+from ezdxf.math import NULLVEC, Vec3, Z_AXIS, OCS
 from ezdxf.lldxf.attributes import (
     DXFAttr,
     DXFAttributes,
@@ -19,6 +19,7 @@ from ezdxf.tools.text import (
     load_mtext_content,
     fast_plain_mtext,
     plain_mtext,
+    MTEXT_ALIGN_FLAGS,
 )
 
 from .dxfns import SubclassProcessor, DXFNamespace
@@ -86,7 +87,7 @@ attrib_fields = {
         default=1,
         dxfversion=const.DXF2018,
         optional=True,
-        validator=validator.is_integer_bool,
+        validator=validator.is_one_of({1, 2, 4}),
         fixer=RETURN_DEFAULT,
     ),
 }
@@ -197,7 +198,7 @@ class BaseAttrib(Text):
             self._embedded_mtext = mtext
 
     def export_dxf_r2018_features(self, tagwriter: "TagWriter") -> None:
-        self.dxf.export_dxf_attribs(tagwriter, ["attribute_type"])
+        tagwriter.write_tag2(71, self.dxf.attribute_type)
         tagwriter.write_tag2(72, 0)  # unknown tag
         if self.dxf.hasattr("align_point"):
             # duplicate align point - why?
@@ -324,6 +325,12 @@ class BaseAttrib(Text):
         self._embedded_mtext.set_mtext(mtext)
         _update_content_from_mtext(self, mtext)
         _update_location_from_mtext(self, mtext)
+        # misc properties
+        self.dxf.style = mtext.dxf.style
+        self.dxf.height = mtext.dxf.char_height
+        self.dxf.discard("width")  # controlled in MTEXT by inline codes!
+        self.dxf.discard("oblique")  # controlled in MTEXT by inline codes!
+        self.dxf.discard("text_generation_flag")
         if graphic_properties:
             self.update_dxf_attribs(mtext.graphic_properties())
 
@@ -354,10 +361,24 @@ def _update_content_from_mtext(text: Text, mtext: MText) -> None:
 
 
 def _update_location_from_mtext(text: Text, mtext: MText) -> None:
+    # TEXT is an OCS entity, MTEXT is a WCS entity
+    dxf = text.dxf
     insert = Vec3(mtext.dxf.insert)
     extrusion = Vec3(mtext.dxf.extrusion)
     text_direction = mtext.get_text_direction()
-    # todo
+    if extrusion.isclose(Z_AXIS):  # most common case
+        dxf.rotation = text_direction.angle_deg
+    else:
+        ocs = OCS(extrusion)
+        insert = ocs.from_wcs(insert)
+        dxf.extrusion = extrusion.normalize()
+        dxf.rotation = ocs.from_wcs(text_direction).angle_deg  # type: ignore
+
+    dxf.insert = insert
+    dxf.align_point = insert  # the same point for all MTEXT alignments!
+    dxf.halign, dxf.valign = MTEXT_ALIGN_FLAGS.get(
+        mtext.dxf.attachment_point, (1, 3)  # default: LEFT, TOP
+    )
 
 
 @register_entity
@@ -394,6 +415,7 @@ class AttDef(BaseAttrib):
         self.export_acdb_text(tagwriter)
         self.export_acdb_attdef(tagwriter)
         if tagwriter.dxfversion >= const.DXF2018:
+            self.dxf.attribute_type = 4 if self.has_embedded_mtext_entity else 1
             self.export_dxf_r2018_features(tagwriter)
 
     def export_acdb_attdef(self, tagwriter: "TagWriter") -> None:
@@ -446,6 +468,7 @@ class Attrib(BaseAttrib):
         self.export_acdb_attrib_text(tagwriter)
         self.export_acdb_attrib(tagwriter)
         if tagwriter.dxfversion >= const.DXF2018:
+            self.dxf.attribute_type = 2 if self.has_embedded_mtext_entity else 1
             self.export_dxf_r2018_features(tagwriter)
 
     def export_acdb_attrib_text(self, tagwriter: "TagWriter") -> None:
