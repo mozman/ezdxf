@@ -72,7 +72,8 @@ def to_multi_path(paths: Iterable[Path]) -> Path:
     """
     multi_path = Path()
     for p in paths:
-        multi_path.extend_multi_path(p)
+        if len(p):
+            multi_path.extend_multi_path(p)
     return multi_path
 
 

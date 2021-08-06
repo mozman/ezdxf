@@ -495,10 +495,15 @@ class TestToEntityConverter:
     def test_to_mpolygons_returns_expected_dxf_type(self, path):
         # Works internally like to_hatches() but with polyline paths
         # as boundaries only.
-        polygons = list(to_mpolygons(path, dxfattribs={
-            "color": 6,  # boundary line color
-            "fill_color": 1,
-        }))
+        polygons = list(
+            to_mpolygons(
+                path,
+                dxfattribs={
+                    "color": 6,  # boundary line color
+                    "fill_color": 1,
+                },
+            )
+        )
         assert len(polygons) == 1
         mp = polygons[0]
         assert mp.dxftype() == "MPOLYGON"
@@ -541,6 +546,16 @@ def test_to_multi_path():
     assert path[1].end == (4, 0, 0)
 
 
+def test_to_multi_path_ignores_empty_paths():
+    p0 = Path((1, 0, 0))
+    p0.line_to((2, 0, 0))
+    empty = Path((100, 0, 0))
+    path = to_multi_path([p0, empty])
+    assert len(path) == 1
+    assert path.has_sub_paths is False
+    assert path.end.isclose((2, 0, 0))
+
+
 def test_single_paths_from_a_single_path_object():
     p = Path((1, 0, 0))
     assert len(list(single_paths([p]))) == 1
@@ -569,6 +584,7 @@ def test_issue_224_end_points(ellipse):
 
 def test_issue_494_make_path_from_spline_defined_by_fit_points_and_tangents():
     from ezdxf.entities import Spline
+
     spline = Spline.new(
         dxfattribs={
             "degree": 3,
