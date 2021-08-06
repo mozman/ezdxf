@@ -19,7 +19,7 @@ from ezdxf.tools.text import (
 from ezdxf.tools import fonts
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import LWPolyline, Polyline, MText, Hatch, Insert
+    from ezdxf.eztypes import LWPolyline, Polyline, MText
 
 __all__ = [
     "make_primitive",
@@ -132,9 +132,9 @@ class ConvertedPrimitive(Primitive):
 
     def vertices(self) -> Iterable[Vec3]:
         if self.path:
-            yield from self._path.flattening(self.max_flattening_distance)
+            yield from self._path.flattening(self.max_flattening_distance)  # type: ignore
         elif self.mesh:
-            yield from self._mesh.vertices
+            yield from self._mesh.vertices  # type: ignore
 
 
 class CurvePrimitive(Primitive):
@@ -150,7 +150,7 @@ class CurvePrimitive(Primitive):
         # perfectly represent elliptic arcs (CIRCLE, ARC, ELLIPSE).
         # SPLINE: cubic bezier curves do not perfectly represent splines with
         # degree != 3.
-        yield from self.entity.flattening(self.max_flattening_distance)
+        yield from self.entity.flattening(self.max_flattening_distance)  # type: ignore
 
 
 class LinePrimitive(Primitive):
@@ -263,13 +263,13 @@ class TextLinePrimitive(ConvertedPrimitive):
 
         """
 
-        def text_rotation() -> float:
+        def text_rotation():
             if fit_or_aligned and not p1.isclose(p2):
                 return (p2 - p1).angle
             else:
                 return math.radians(text.dxf.rotation)
 
-        def location() -> Vec3:
+        def location():
             if alignment == "LEFT":
                 return p1
             elif fit_or_aligned:
@@ -333,7 +333,7 @@ class MTextPrimitive(ConvertedPrimitive):
 
         def get_content() -> List[str]:
             text = mtext.plain_text(split=False)
-            return text_wrap(text, box_width, font.text_width)
+            return text_wrap(text, box_width, font.text_width)  # type: ignore
 
         def get_max_str() -> str:
             return max(content, key=lambda s: len(s))
@@ -449,7 +449,7 @@ class PathPrimitive(Primitive):
         return self._path
 
     def vertices(self) -> Iterable[Vec3]:
-        yield from self._path.flattening(self.max_flattening_distance)
+        yield from self._path.flattening(self.max_flattening_distance)  # type: ignore
 
 
 class ImagePrimitive(ConvertedPrimitive):
