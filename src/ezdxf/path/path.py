@@ -1,6 +1,6 @@
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List, Iterable, Optional
+from typing import TYPE_CHECKING, List, Iterable, Optional, Iterator, no_type_check
 from collections import abc
 import warnings
 
@@ -59,7 +59,7 @@ class Path(abc.Sequence):
     def __getitem__(self, item) -> PathElement:
         return self._commands[item]
 
-    def __iter__(self) -> Iterable[PathElement]:
+    def __iter__(self) -> Iterator[PathElement]:
         return iter(self._commands)
 
     def __copy__(self) -> "Path":
@@ -209,7 +209,9 @@ class Path(abc.Sequence):
             if cmd.type == move_to:
                 return cmd.end
             index -= 1
+        return None
 
+    @no_type_check
     def reversed(self) -> "Path":
         """Returns a new :class:`Path` with reversed segments and control
         vertices.
@@ -315,6 +317,7 @@ class Path(abc.Sequence):
 
         yield from self._approximate(approx_curve3, approx_curve4)
 
+    @no_type_check
     def _approximate(self, approx_curve3, approx_curve4) -> Iterable[Vec3]:
         if not self._commands:
             return
@@ -346,6 +349,7 @@ class Path(abc.Sequence):
                 raise ValueError(f"Invalid command: {cmd.type}")
             start = end_location
 
+    @no_type_check
     def transform(self, m: "Matrix44") -> "Path":
         """Returns a new transformed path.
 
