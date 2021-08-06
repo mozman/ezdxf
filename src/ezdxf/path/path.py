@@ -657,13 +657,15 @@ class Path(abc.Sequence):
     def extend_multi_path(self, path: "Path") -> None:
         """Extend the path by another path. The source path is automatically a
         :term:`Multi-Path` object, even if the previous end point matches the
-        start point of the appended path.
+        start point of the appended path. Ignores paths without any commands
+        (empty paths).
 
         .. versionadded:: 0.17
 
         """
-        self.move_to(path.start)
-        self._commands.extend(path._commands)  # immutable data!
+        if len(path):
+            self.move_to(path.start)
+            self._commands.extend(path._commands)  # immutable data!
 
     def append_path(self, path: "Path") -> None:
         """Append another path to this path. Adds a :code:`self.line_to(path.start)`

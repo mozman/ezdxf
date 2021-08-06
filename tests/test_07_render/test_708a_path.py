@@ -1095,13 +1095,15 @@ class TestPathFromEdgePathWithElevationAndFlippedExtrusion:
         assert all(math.isclose(v.z, -4) for v in path.control_vertices())
 
 
-def test_extend_path_by_another_path():
-    path = Path((1, 0, 0))
-    path.line_to((2, 0, 0))
-    path.extend_multi_path(Path((3, 0, 0)))
-    assert path.has_sub_paths is True
-    assert path.start == (1, 0, 0)
-    assert path.end == (3, 0, 0)
+def test_extend_path_by_another_none_empty_path():
+    p0 = Path((1, 0, 0))
+    p0.line_to((2, 0, 0))
+    p1 =Path((3, 0, 0))
+    p1.line_to((3, 0, 0))
+    p0.extend_multi_path(p1)
+    assert p0.has_sub_paths is True
+    assert p0.start == (1, 0, 0)
+    assert p0.end == (3, 0, 0)
 
 
 def test_extend_path_by_another_single_path():

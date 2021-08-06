@@ -66,14 +66,14 @@ IS_CLOSE_TOL = 1e-10
 
 def to_multi_path(paths: Iterable[Path]) -> Path:
     """Returns a multi-path object from all given paths and their sub-paths.
+    Ignores paths without any commands (empty paths).
 
     .. versionadded:: 0.17
 
     """
     multi_path = Path()
     for p in paths:
-        if len(p):
-            multi_path.extend_multi_path(p)
+        multi_path.extend_multi_path(p)
     return multi_path
 
 
