@@ -11,7 +11,7 @@ MAX_FLATTENING_DISTANCE = disassemble.Primitive.max_flattening_distance
 
 
 class Cache:
-    """ Caching object for :class:`ezdxf.math.BoundingBox` objects.
+    """Caching object for :class:`ezdxf.math.BoundingBox` objects.
 
     Args:
         uuid: use UUIDs for virtual entities
@@ -25,11 +25,13 @@ class Cache:
         self.misses: int = 0
 
     def __str__(self):
-        return f"Cache(n={len(self._boxes)}, " \
-               f"hits={self.hits}, " \
-               f"misses={self.misses})"
+        return (
+            f"Cache(n={len(self._boxes)}, "
+            f"hits={self.hits}, "
+            f"misses={self.misses})"
+        )
 
-    def get(self, entity: 'DXFEntity') -> Optional[BoundingBox]:
+    def get(self, entity: "DXFEntity") -> Optional[BoundingBox]:
         assert entity is not None
         key = self._get_key(entity)
         if key is None:
@@ -42,15 +44,15 @@ class Cache:
             self.hits += 1
         return box
 
-    def store(self, entity: 'DXFEntity', box: BoundingBox) -> None:
+    def store(self, entity: "DXFEntity", box: BoundingBox) -> None:
         assert entity is not None
         key = self._get_key(entity)
         if key is None:
             return
         self._boxes[key] = box
 
-    def invalidate(self, entities: Iterable['DXFEntity']) -> None:
-        """ Invalidate cache entries for the given DXF `entities`.
+    def invalidate(self, entities: Iterable["DXFEntity"]) -> None:
+        """Invalidate cache entries for the given DXF `entities`.
 
         If entities are changed by the user, it is possible to invalidate
         individual entities. Use with care - discarding the whole cache is
@@ -61,12 +63,12 @@ class Cache:
         """
         for entity in entities:
             try:
-                del self._boxes[self._get_key(entity)]
+                del self._boxes[self._get_key(entity)]  # type: ignore
             except KeyError:
                 pass
 
-    def _get_key(self, entity: 'DXFEntity') -> Optional[str]:
-        if entity.dxftype() == 'HATCH':
+    def _get_key(self, entity: "DXFEntity") -> Optional[str]:
+        if entity.dxftype() == "HATCH":
             # Special treatment for multiple primitives for the same
             # HATCH entity - all have the same handle:
             # Do not store boundary path they are not distinguishable,
@@ -74,16 +76,19 @@ class Cache:
             return None
 
         key = entity.dxf.handle
-        if key is None or key == '0':
+        if key is None or key == "0":
             return str(entity.uuid) if self._use_uuid else None
         else:
             return key
 
 
-def multi_recursive(entities: Iterable['DXFEntity'], *,
-                    flatten: float = MAX_FLATTENING_DISTANCE,
-                    cache: Cache = None) -> Iterable[BoundingBox]:
-    """ Yields all bounding boxes for the given `entities` **or** all bounding
+def multi_recursive(
+    entities: Iterable["DXFEntity"],
+    *,
+    flatten: float = MAX_FLATTENING_DISTANCE,
+    cache: Cache = None,
+) -> Iterable[BoundingBox]:
+    """Yields all bounding boxes for the given `entities` **or** all bounding
     boxes for their sub entities. If an entity (INSERT) has sub entities, only
     the bounding boxes of these sub entities will be yielded, **not** the
     bounding box of entity (INSERT) itself.
@@ -120,10 +125,13 @@ def multi_recursive(entities: Iterable['DXFEntity'], *,
             yield box
 
 
-def extents(entities: Iterable['DXFEntity'], *,
-            flatten: float = MAX_FLATTENING_DISTANCE,
-            cache: Cache = None) -> BoundingBox:
-    """ Returns a single bounding box for all given `entities`.
+def extents(
+    entities: Iterable["DXFEntity"],
+    *,
+    flatten: float = MAX_FLATTENING_DISTANCE,
+    cache: Cache = None,
+) -> BoundingBox:
+    """Returns a single bounding box for all given `entities`.
 
     Calculate bounding boxes from flattened curves, if argument `flatten`
     is not 0 (max flattening distance), else from control points.
@@ -135,17 +143,20 @@ def extents(entities: Iterable['DXFEntity'], *,
     return _extends
 
 
-def multi_flat(entities: Iterable['DXFEntity'], *,
-               flatten: float = MAX_FLATTENING_DISTANCE,
-               cache: Cache = None) -> Iterable[BoundingBox]:
-    """ Yields a bounding box for each of the given `entities`.
+def multi_flat(
+    entities: Iterable["DXFEntity"],
+    *,
+    flatten: float = MAX_FLATTENING_DISTANCE,
+    cache: Cache = None,
+) -> Iterable[BoundingBox]:
+    """Yields a bounding box for each of the given `entities`.
 
     Calculate bounding boxes from flattened curves, if argument `flatten`
     is not 0 (max flattening distance), else from control points.
 
     """
 
-    def extends_(entities_: Iterable['DXFEntity']) -> BoundingBox:
+    def extends_(entities_: Iterable["DXFEntity"]) -> BoundingBox:
         _extends = BoundingBox()
         for _box in multi_recursive(entities_, flatten=flatten, cache=cache):
             _extends.extend(_box)
