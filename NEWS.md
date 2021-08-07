@@ -14,6 +14,7 @@ Version 0.16.6b0 - dev
 - BUGFIX: add missing "doc" argument to DXF loaders, DXF version was not 
   available at loading stage 
 - BUGFIX: DXF export for `ARC_DIMENSION`
+- BUGFIX: `Arc.flattening()` always have to return `Vec3` instances
 - BETA: new features for testing, API may change until official release in v0.17
 - BETA: support for `ACAD_PROXY_ENTITY`   
 

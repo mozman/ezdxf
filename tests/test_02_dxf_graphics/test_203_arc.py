@@ -188,11 +188,20 @@ def test_arc_default_ocs():
     (-1, 0, 180, 0.35, 3),  # negative radius same as positive radius
     (1, 270, 90, 0.10, 5),  # start angle > end angle
 ])
-def test_circle_flattening(r, s, e, sagitta, count):
+def test_arc_flattening(r, s, e, sagitta, count):
     arc = Arc.new(dxfattribs={
         'radius': r, 'start_angle': s, 'end_angle': e,
     })
-    assert len(list(arc.flattening(sagitta))) == count
+    points = list(arc.flattening(sagitta))
+    assert len(points) == count
+
+
+def test_arc_flattening_returns_Vec3():
+    arc = Arc.new(dxfattribs={
+        'radius': 1, 'start_angle': 0, 'end_angle': 180,
+    })
+    points = list(arc.flattening(0.1))
+    assert isinstance(points[0], Vec3), "must return Vec3() instances"
 
 
 def test_360_deg_arc_transformation():

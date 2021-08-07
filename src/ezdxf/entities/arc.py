@@ -104,7 +104,11 @@ class Arc(Circle):
 
         """
         arc = self.construction_tool()
-        to_wcs = self.ocs().points_to_wcs
+        ocs = self.ocs()
+        if ocs.transform:
+            to_wcs = ocs.points_to_wcs
+        else:
+            to_wcs = Vec3.generate
         yield from to_wcs(arc.flattening(sagitta))
 
     def transform(self, m: Matrix44) -> "Arc":

@@ -3,7 +3,7 @@
 from typing import cast
 import pytest
 import copy
-from ezdxf.math import Vec3
+from ezdxf.math import Vec3, Matrix44
 from ezdxf.entities import (
     factory,
     Hatch,
@@ -136,6 +136,26 @@ def test_map_circle():
     assert len(m["coordinates"][0]) == 8
     m = geo.mapping(circle, force_line_string=True)
     assert m["type"] == "LineString"
+
+
+def test_map_arc():
+    arc = factory.new("ARC", dxfattribs={
+        "start_angle": 0,
+        "end_angle": 90,
+    })
+    m = geo.mapping(arc)
+    assert m["type"] == "LineString"
+    assert len(m["coordinates"][0]) > 1
+
+
+def test_arc_geo_proxy_wcs_to_crs():
+    arc = factory.new("ARC", dxfattribs={
+        "start_angle": 0,
+        "end_angle": 90,
+    })
+    geo_proxy = geo.proxy(arc)
+    geo_proxy.wcs_to_crs(Matrix44())
+    assert len(geo_proxy.__geo_interface__["coordinates"][0]) > 1
 
 
 @pytest.mark.parametrize(
