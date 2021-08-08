@@ -1,6 +1,6 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Union, Optional
+from typing import TYPE_CHECKING, Union, Optional, no_type_check
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.const import (
@@ -34,17 +34,18 @@ class ExtensionDict:
     def __init__(self, xdict: Union[str, "Dictionary"]):
         # 1st loading stage: xdict as string -> handle to dict
         # 2nd loading stage: xdict as DXF Dictionary
+        # This is not suitable for "mypy"
         self._xdict = xdict
 
     @property
     def dictionary(self) -> "Dictionary":
         """Get associated extension dictionary as :class:`Dictionary` object."""
         assert self._xdict is not None
-        return self._xdict
+        return self._xdict  # type: ignore
 
     @property
     def handle(self) -> str:
-        return self._xdict.dxf.handle
+        return self._xdict.dxf.handle  # type: ignore
 
     def __getitem__(self, key: str):
         return self.dictionary[key]
@@ -56,7 +57,7 @@ class ExtensionDict:
         return key in self.dictionary
 
     def get(self, key: str, default=None) -> Optional["DXFEntity"]:
-        return self._xdict.get(key, default)
+        return self._xdict.get(key, default)  # type: ignore
 
     @classmethod
     def new(cls, owner_handle: str, doc: "Drawing"):
@@ -98,11 +99,12 @@ class ExtensionDict:
         tagwriter.write_tag2(XDICT_HANDLE_CODE, handle)
         tagwriter.write_tag2(APP_DATA_MARKER, "}")
 
-    def destroy(self) -> None:
+    def destroy(self):
         if self._xdict is not None:
             self._xdict.destroy()
             self._xdict = None
 
+    @no_type_check
     def add_dictionary(
         self, name: str, doc: "Drawing", hard_owned: bool = False
     ) -> "DXFEntity":
@@ -114,6 +116,7 @@ class ExtensionDict:
         dictionary[name] = new_dict
         return new_dict
 
+    @no_type_check
     def add_placeholder(self, name: str, doc: "Drawing") -> "DXFEntity":
         dictionary = self._xdict
         placeholder = doc.objects.add_placeholder(dictionary.dxf.handle)
@@ -121,4 +124,4 @@ class ExtensionDict:
         return placeholder
 
     def link_dxf_object(self, name: str, obj: "DXFObject") -> None:
-        self._xdict.link_dxf_object(name, obj)
+        self._xdict.link_dxf_object(name, obj)  # type: ignore
