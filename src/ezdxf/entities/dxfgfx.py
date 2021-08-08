@@ -239,7 +239,7 @@ class DXFGraphic(DXFEntity):
         else:
             return OCS()
 
-    def set_owner(self, owner: str, paperspace: int = 0) -> None:
+    def set_owner(self, owner: Optional[str], paperspace: int = 0) -> None:
         """ Set owner attribute and paperspace flag. (internal API)"""
         self.dxf.owner = owner
         if paperspace:

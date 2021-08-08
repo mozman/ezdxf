@@ -21,18 +21,17 @@ class BlockLayout(BaseLayout):
         """
         if isinstance(entity, str):
             entity = self.entitydb[entity]
-        assert isinstance(entity, DXFGraphic)
         return entity in self.entity_space  # type: ignore
 
     @property
-    def block(self) -> Block:
+    def block(self) -> Optional[Block]:
         """the associated :class:`~ezdxf.entities.Block` entity."""
-        return self.block_record.block  # type: ignore
+        return self.block_record.block
 
     @property
-    def endblk(self) -> EndBlk:
+    def endblk(self) -> Optional[EndBlk]:
         """the associated :class:`~ezdxf.entities.EndBlk` entity."""
-        return self.block_record.endblk  # type: ignore
+        return self.block_record.endblk
 
     @property
     def name(self) -> str:
