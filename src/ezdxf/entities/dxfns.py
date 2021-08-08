@@ -95,7 +95,10 @@ class DXFNamespace:
         self.__dict__["owner"] = None
 
     def rewire(
-        self, entity: "DXFEntity", handle: str = None, owner: str = None
+        self,
+        entity: Optional["DXFEntity"],
+        handle: str = None,
+        owner: str = None,
     ) -> None:
         """Rewire DXF namespace with parent entity
 
@@ -253,13 +256,13 @@ class DXFNamespace:
     ) -> None:
         """Update DXF namespace attributes from a dict."""
         if exclude is None:
-            exclude = EXCLUDE_FROM_UPDATE
+            exclude = EXCLUDE_FROM_UPDATE  # type: ignore
         else:  # always exclude "_entity" back-link
             exclude = {"_entity"} | exclude
 
         set_attribute = self.__setattr__
         for k, v in dxfattribs.items():
-            if k not in exclude:
+            if k not in exclude:  # type: ignore
                 try:
                     set_attribute(k, v)
                 except (AttributeError, ValueError):
@@ -400,10 +403,11 @@ class SubclassProcessor:
             len(self.subclasses) == 1
         )
         self.name: str = tags.dxftype()
+        self.handle: str
         try:
-            self.handle: str = tags.get_handle()
+            self.handle = tags.get_handle()
         except const.DXFValueError:
-            self.handle: str = "<?>"
+            self.handle = "<?>"
 
     @property
     def base_class(self):
@@ -470,9 +474,9 @@ class SubclassProcessor:
             tags = self.subclasses[0]
         else:
             if isinstance(subclass, int):
-                tags = self.subclass_by_index(subclass)
+                tags = self.subclass_by_index(subclass)  # type: ignore
             elif isinstance(subclass, str):
-                tags = self.find_subclass(subclass)
+                tags = self.find_subclass(subclass)  # type: ignore
             else:
                 tags = subclass
 
@@ -480,7 +484,7 @@ class SubclassProcessor:
         if tags is None or len(tags) == 0:
             return unprocessed_tags
 
-        processed_names = set()
+        processed_names: Set[str] = set()
         # Localize attributes:
         get_attrib_name = group_code_mapping.get
         append_unprocessed_tag = unprocessed_tags.append
@@ -508,7 +512,7 @@ class SubclassProcessor:
                 # as "*IGNORE":
                 if name[0] != "*":
                     unprotected_set_attrib(
-                        name, cast_value(tag.code, tag.value)
+                        name, cast_value(tag.code, tag.value)  # type: ignore
                     )
             else:
                 append_unprocessed_tag(tag)
