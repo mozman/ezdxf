@@ -432,7 +432,7 @@ class DXFEntity:
         if key in self.DXFATTRIBS:
             if self.doc:
                 return (
-                    self.doc.dxfversion >= self.DXFATTRIBS.get(key).dxfversion
+                    self.doc.dxfversion >= self.DXFATTRIBS.get(key).dxfversion  # type: ignore
                 )
             else:
                 return True
@@ -566,11 +566,11 @@ class DXFEntity:
         if tagwriter.dxfversion >= const.DXF2000:
             tagwriter.write_tag2(_handle_code, self.dxf.handle)
             if self.appdata:
-                self.appdata.export_dxf(tagwriter)
+                self.appdata.export_dxf(tagwriter)  # type: ignore
             if self.has_extension_dict:
-                self.extension_dict.export_dxf(tagwriter)
+                self.extension_dict.export_dxf(tagwriter)  # type: ignore
             if self.reactors:
-                self.reactors.export_dxf(tagwriter)
+                self.reactors.export_dxf(tagwriter)  # type: ignore
             tagwriter.write_tag2(const.OWNER_CODE, self.dxf.owner)
         else:  # DXF R12
             if tagwriter.write_handles:
@@ -630,13 +630,15 @@ class DXFEntity:
 
         """
         if self.has_extension_dict:
-            return self.extension_dict
+            return self.extension_dict  # type: ignore
         else:
             raise AttributeError("Entity has no extension dictionary.")
 
     def new_extension_dict(self) -> "ExtensionDict":
-        self.extension_dict = ExtensionDict.new(self.dxf.handle, self.doc)
-        return self.extension_dict
+        assert self.doc is not None
+        xdict = ExtensionDict.new(self.dxf.handle, self.doc)
+        self.extension_dict = xdict
+        return xdict
 
     def has_app_data(self, appid: str) -> bool:
         """Returns ``True`` if application defined data for `appid` exist."""
@@ -656,7 +658,7 @@ class DXFEntity:
 
         """
         if self.appdata:
-            return self.appdata.get(appid)[1:-1]
+            return Tags(self.appdata.get(appid)[1:-1])
         else:
             raise const.DXFValueError(appid)
 
@@ -725,7 +727,7 @@ class DXFEntity:
         exist.
         """
         if self.has_xdata(appid):
-            return self.xdata.has_xlist(appid, name)
+            return self.xdata.has_xlist(appid, name)  # type: ignore
         else:
             return False
 
@@ -781,6 +783,7 @@ class DXFEntity:
             DXFValueError: no extended data for `appid` found
 
         """
+        assert self.xdata is not None
         self.xdata.replace_xlist(appid, name, tags)
 
     def has_reactors(self) -> bool:
@@ -818,10 +821,10 @@ class DXFTagStorage(DXFEntity):
     def __init__(self):
         """Default constructor"""
         super().__init__()
-        self.xtags: Optional[ExtendedTags] = None
+        self.xtags = ExtendedTags()
         self.embedded_objects: Optional[List[Tags]] = None
 
-    def copy(self) -> "DXFEntity":
+    def copy(self: T) -> T:
         raise const.DXFTypeError(
             f"Cloning of tag storage {self.dxftype()} not supported."
         )
