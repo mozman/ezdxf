@@ -96,8 +96,15 @@ class DXFGroup(DXFObject):
                 self._handles.add(value)
 
     def preprocess_export(self, tagwriter: "TagWriter") -> bool:
-        self.purge(self.doc.entitydb)
-        return True  # export even empty groups
+        # remove invalid entities
+        self.purge(self.doc)
+        # export GROUP only if all entities reside on the same layout
+        if not all_entities_on_same_layout(self._data):
+            raise const.DXFStructureError(
+                "All entities have to be in the same layout and are not allowed"
+                " to be in a block layout."
+            )
+        return True
 
     def export_entity(self, tagwriter: "TagWriter") -> None:
         """Export entity specific data as DXF tags."""
@@ -139,9 +146,20 @@ class DXFGroup(DXFObject):
         """Iterable of handles of all DXF entities in :class:`DXFGroup`."""
         return (entity.dxf.handle for entity in self)
 
-    def post_load_hook(self, doc: "Drawing") -> None:
+    def post_load_hook(self, doc: "Drawing"):
         super().post_load_hook(doc)
         db_get = doc.entitydb.get
+
+        def set_group_entities():  # post init command
+            name = str(self)
+            entities = filter_invalid_entities(self._data, self.doc, name)
+            if not all_entities_on_same_layout(entities):
+                self.clear()
+                logger.debug(
+                    f"Cleared {name}, had entities from different layouts."
+                )
+            else:
+                self._data = entities
 
         def entities():
             for handle in self._handles:
@@ -149,11 +167,11 @@ class DXFGroup(DXFObject):
                 if entity and entity.is_alive:
                     yield entity
 
-        try:
-            self.set_data(entities())
-        except const.DXFStructureError as e:
-            logger.error(str(e))
+        # Filtering invalid DXF entities is not possible at this stage, just
+        # store entities as they are:
+        self._data = list(entities())
         del self._handles  # all referenced entities are stored in _data
+        return set_group_entities
 
     @contextmanager
     def edit_data(self) -> List[DXFEntity]:
@@ -178,17 +196,25 @@ class DXFGroup(DXFObject):
         (modelspace or any paperspace layout but not block)
 
         """
+        assert self.doc is not None
         entities = list(entities)
-        if not all_entities_on_same_layout(entities):
+        valid_entities = filter_invalid_entities(entities, self.doc, str(self))
+        if len(valid_entities) != len(entities):
+            raise const.DXFStructureError("invalid entities found")
+        if not all_entities_on_same_layout(valid_entities):
             raise const.DXFStructureError(
                 "All entities have to be in the same layout and are not allowed"
                 " to be in a block layout."
             )
         self.clear()
-        self._data = entities
+        self._data = valid_entities
 
     def extend(self, entities: Iterable[DXFEntity]) -> None:
-        """Add `entities` to :class:`DXFGroup`."""
+        """Add `entities` to :class:`DXFGroup` without immediate verification!
+
+        Validation at DXF export may raise a :class:`DXFStructureError`!
+
+        """
         self._data.extend(entities)
 
     def clear(self) -> None:
@@ -199,14 +225,24 @@ class DXFGroup(DXFObject):
         self._data = []
 
     def audit(self, auditor: "Auditor") -> None:
-        """Remove invalid handles from :class:`DXFGroup`.
+        """Remove invalid entities from :class:`DXFGroup`.
 
-        Invalid handles are: deleted entities, not all entities in the same
-        layout or entities in a block layout.
+        Invalid entities are:
+
+        - deleted entities
+        - all entities which do not reside in model- or paper space
+        - all entities if they do not reside in the same layout
 
         """
+        entity_count = len(self)
         # Remove destroyed or invalid entities:
-        self.purge(auditor.entitydb)
+        self.purge(auditor.doc)
+        removed_entity_count = entity_count - len(self)
+        if removed_entity_count > 0:
+            auditor.fixed_error(
+                code=AuditError.INVALID_GROUP_ENTITIES,
+                message=f"Removed {removed_entity_count} invalid entities from {str(self)}",
+            )
         if not all_entities_on_same_layout(self._data):
             auditor.fixed_error(
                 code=AuditError.GROUP_ENTITIES_IN_DIFFERENT_LAYOUTS,
@@ -215,33 +251,55 @@ class DXFGroup(DXFObject):
             )
             self.clear()
 
-    def _has_valid_owner(self, entity, db: "EntityDB") -> bool:
-        # no owner -> no layout association
-        if entity.dxf.owner is None:
-            return False
-        owner = db.get(entity.dxf.owner)
-        # owner does not exist or is destroyed -> no layout association
-        if owner is None or not owner.is_alive:
-            return False
-        # owner block_record.layout is 0 if entity is in a block definition,
-        # which is not allowed:
-        valid = owner.dxf.layout != "0"
-        if not valid:
-            logger.debug(
-                f"{str(entity)} in {str(self)} is located in a block layout, "
-                f"which is not allowed"
-            )
-        return valid
-
-    def _filter_invalid_entities(self, db: "EntityDB") -> List[DXFEntity]:
-        assert db is not None
-        return [
-            e for e in self._data if e.is_alive and self._has_valid_owner(e, db)
-        ]
-
-    def purge(self, db: "EntityDB") -> None:
+    def purge(self, doc: "Drawing") -> None:
         """Remove invalid group entities."""
-        self._data = self._filter_invalid_entities(db)
+        self._data = filter_invalid_entities(
+            entities=self._data, doc=doc, group_name=str(self)
+        )
+
+
+def filter_invalid_entities(
+    entities: Iterable[DXFEntity],
+    doc: "Drawing",
+    group_name: str = "",
+) -> List[DXFEntity]:
+    assert doc is not None
+    db = doc.entitydb
+    valid_owner_handles = valid_layout_handles(doc.layouts)
+    valid_entities: List[DXFEntity] = []
+    for entity in entities:
+        if entity.is_alive and _has_valid_owner(
+            entity.dxf.owner, db, valid_owner_handles
+        ):
+            valid_entities.append(entity)
+        elif group_name:
+            if entity.is_alive:
+                logger.debug(
+                    f"{str(entity)} in {group_name} has an invalid owner."
+                )
+            else:
+                logger.debug(f"Removed deleted entity in {group_name}")
+    return valid_entities
+
+
+def _has_valid_owner(
+    owner: str, db: "EntityDB", valid_owner_handles: Set[str]
+) -> bool:
+    # no owner -> no layout association
+    if owner is None:
+        return False
+    # The check for owner.dxf.layout != "0" is not sufficient #521
+    if valid_owner_handles and owner not in valid_owner_handles:
+        return False
+    layout = db.get(owner)
+    # owner layout does not exist or is destroyed -> no layout association
+    if layout is None or not layout.is_alive:
+        return False
+    # If "valid_owner_handles" is not empty, entities located on BLOCK
+    # layouts are already removed.
+    # DXF attribute block_record.layout is "0" if entity is located in a
+    # block definition, which is invalid:
+    return layout.dxf.layout != "0"
 
 
 def all_entities_on_same_layout(entities: Iterable[DXFEntity]):
@@ -255,7 +313,8 @@ def all_entities_on_same_layout(entities: Iterable[DXFEntity]):
 
 
 def valid_layout_handles(layouts: "Layouts") -> Set[str]:
-    pass
+    """Returns valid layout keys for group entities."""
+    return set(layout.layout_key for layout in layouts if layout.is_any_layout)
 
 
 class GroupCollection(ObjectCollection):

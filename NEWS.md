@@ -11,6 +11,7 @@ Version 0.16.6b0 - dev
 - NEW: support for multi-line `ATTRIB` and `ATTDEF` entities in DXF R2018 
 - CHANGE: renamed `RenderContext.current_layer` to `RenderContext.current_layer_properties` 
 - CHANGE: renamed `RenderContext.current_block_reference` to `RenderContext.current_block_reference_properties` 
+- CHANGE: extended entity validation for `GROUP`
 - BUGFIX: add missing "doc" argument to DXF loaders, DXF version was not 
   available at loading stage 
 - BUGFIX: DXF export for `ARC_DIMENSION`
