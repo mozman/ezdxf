@@ -1,6 +1,6 @@
 # Copyright (c) 2019-2021, Manfred Moitzi
 # License: MIT-License
-from typing import TYPE_CHECKING, Iterable, cast, Union, List, Set
+from typing import TYPE_CHECKING, Iterable, Iterator, cast, Union, List, Set
 from contextlib import contextmanager
 import logging
 from ezdxf.lldxf import validator, const
@@ -26,6 +26,7 @@ if TYPE_CHECKING:
         DXFNamespace,
         Auditor,
         EntityDB,
+        Dictionary,
     )
     from ezdxf.layouts import Layouts
 
@@ -97,6 +98,7 @@ class DXFGroup(DXFObject):
 
     def preprocess_export(self, tagwriter: "TagWriter") -> bool:
         # remove invalid entities
+        assert self.doc is not None
         self.purge(self.doc)
         # export GROUP only if all entities reside on the same layout
         if not all_entities_on_same_layout(self._data):
@@ -119,7 +121,7 @@ class DXFGroup(DXFObject):
         for entity in self._data:
             tagwriter.write_tag2(GROUP_ITEM_CODE, entity.dxf.handle)
 
-    def __iter__(self) -> Iterable[DXFEntity]:
+    def __iter__(self) -> Iterator[DXFEntity]:
         """Iterate over all DXF entities in :class:`DXFGroup` as instances of
         :class:`DXFGraphic` or inherited (LINE, CIRCLE, ...).
 
@@ -173,8 +175,8 @@ class DXFGroup(DXFObject):
         del self._handles  # all referenced entities are stored in _data
         return set_group_entities
 
-    @contextmanager
-    def edit_data(self) -> List[DXFEntity]:
+    @contextmanager  # type: ignore
+    def edit_data(self) -> List[DXFEntity]:  # type: ignore
         """Context manager which yields all the group entities as
         standard Python list::
 
@@ -235,6 +237,7 @@ class DXFGroup(DXFObject):
 
         """
         entity_count = len(self)
+        assert auditor.doc is not None
         # Remove destroyed or invalid entities:
         self.purge(auditor.doc)
         removed_entity_count = entity_count - len(self)
@@ -325,7 +328,7 @@ class GroupCollection(ObjectCollection):
     def groups(self) -> Iterable[DXFGroup]:
         """Iterable of all existing groups."""
         for name, group in self:
-            yield group
+            yield group  # type: ignore
 
     def next_name(self) -> str:
         name = self._next_name()
@@ -349,7 +352,7 @@ class GroupCollection(ObjectCollection):
             selectable: group is selectable if ``True``
 
         """
-        if name in self:
+        if name in self:  # type: ignore
             raise const.DXFValueError(f"GROUP '{name}' already exists.")
 
         if name is None:
@@ -387,6 +390,7 @@ class GroupCollection(ObjectCollection):
         """Removes empty groups and invalid handles from all groups."""
         trash = []
         for name, group in self:
+            group = cast(DXFGroup, group)
             group.audit(auditor)
             if not len(group):  # remove empty group
                 # do not delete groups while iterating over groups!
@@ -407,3 +411,4 @@ def get_group_name(group: DXFGroup, db: "EntityDB") -> str:
     for name, entity in group_table.items():
         if entity is group:
             return name
+    return ""

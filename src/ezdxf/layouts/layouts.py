@@ -1,6 +1,6 @@
-# Copyright (c) 2011-2020, Manfred Moitzi
+# Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Dict, Iterable, List, cast, Optional
+from typing import TYPE_CHECKING, Dict, Iterator, List, cast, Optional
 import logging
 from ezdxf.lldxf.const import DXFKeyError, DXFValueError, DXFInternalEzdxfError
 from ezdxf.lldxf.const import (
@@ -54,7 +54,7 @@ class Layouts:
         assert isinstance(name, str), type(str)
         return key(name) in self._layouts
 
-    def __iter__(self) -> Iterable['Layout']:
+    def __iter__(self) -> Iterator['Layout']:
         """ Returns iterable of all layouts as :class:`~ezdxf.layouts.Layout`
         objects, including the modelspace layout.
         """

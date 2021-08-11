@@ -1,6 +1,6 @@
 # Copyright (c) 2018-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, cast, Optional, Tuple
+from typing import TYPE_CHECKING, Iterator, cast, Optional, Tuple
 from ezdxf.lldxf.const import DXFValueError
 
 if TYPE_CHECKING:
@@ -34,7 +34,7 @@ class ObjectCollection:
     def entitydb(self) -> "EntityDB":
         return self.doc.entitydb
 
-    def __iter__(self) -> Iterable[Tuple[str, "DXFObject"]]:
+    def __iter__(self) -> Iterator[Tuple[str, "DXFObject"]]:
         return self.object_dict.items()
 
     def __len__(self) -> int:
