@@ -86,7 +86,6 @@ DXF Audit & Repair
   and block layout?). Important for exploding INSERT entities with ATTRIBS, 
   the current implementation already convert ATTRIB to TEXT. 
   BricsCAD removes them and TrueView crashes, more testing is required. 
-- (v0.17) Remove invalid standalone ATTRIB/ATTDEF entities
 - (<v1.0) check DIMENSION
   - overridden properties in XDATA have to be checked!
   - dimstyle exist; repair: set to 'Standard'
