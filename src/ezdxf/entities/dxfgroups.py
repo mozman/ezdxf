@@ -1,11 +1,15 @@
-# Copyright (c) 2019-2020, Manfred Moitzi
+# Copyright (c) 2019-2021, Manfred Moitzi
 # License: MIT-License
 from typing import TYPE_CHECKING, Iterable, cast, Union, List, Set
 from contextlib import contextmanager
 import logging
 from ezdxf.lldxf import validator, const
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT, group_code_mapping,
+    DXFAttr,
+    DXFAttributes,
+    DefSubclass,
+    RETURN_DEFAULT,
+    group_code_mapping,
 )
 from ezdxf.audit import AuditError
 from .dxfentity import base_class, SubclassProcessor, DXFEntity
@@ -13,47 +17,56 @@ from .dxfobj import DXFObject
 from .factory import register_entity
 from .objectcollection import ObjectCollection
 
-logger = logging.getLogger('ezdxf')
+logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, Drawing, DXFNamespace, Auditor, EntityDB,
+        TagWriter,
+        Drawing,
+        DXFNamespace,
+        Auditor,
+        EntityDB,
     )
+    from ezdxf.layouts import Layouts
 
-__all__ = ['DXFGroup', 'GroupCollection']
+__all__ = ["DXFGroup", "GroupCollection"]
 
-acdb_group = DefSubclass('AcDbGroup', {
-    # Group description
-    'description': DXFAttr(300, default=''),
-
-    # 1 = Unnamed
-    # 0 = Named
-    'unnamed': DXFAttr(
-        70, default=1, validator=validator.is_integer_bool,
-        fixer=RETURN_DEFAULT,
-    ),
-
-    # 1 = Selectable
-    # 0 = Not selectable
-    'selectable': DXFAttr(
-        71, default=1,
-        validator=validator.is_integer_bool,
-        fixer=RETURN_DEFAULT,
-    ),
-
-    # 340: Hard-pointer handle to entity in group (one entry per object)
-})
+acdb_group = DefSubclass(
+    "AcDbGroup",
+    {
+        # Group description
+        "description": DXFAttr(300, default=""),
+        # 1 = Unnamed
+        # 0 = Named
+        "unnamed": DXFAttr(
+            70,
+            default=1,
+            validator=validator.is_integer_bool,
+            fixer=RETURN_DEFAULT,
+        ),
+        # 1 = Selectable
+        # 0 = Not selectable
+        "selectable": DXFAttr(
+            71,
+            default=1,
+            validator=validator.is_integer_bool,
+            fixer=RETURN_DEFAULT,
+        ),
+        # 340: Hard-pointer handle to entity in group (one entry per object)
+    },
+)
 acdb_group_group_codes = group_code_mapping(acdb_group)
 GROUP_ITEM_CODE = 340
 
 
 @register_entity
 class DXFGroup(DXFObject):
-    """ Groups are not allowed in block definitions, and each entity can only
+    """Groups are not allowed in block definitions, and each entity can only
     reside in one group, so cloning of groups creates also new entities.
 
     """
-    DXFTYPE = 'GROUP'
+
+    DXFTYPE = "GROUP"
     DXFATTRIBS = DXFAttributes(base_class, acdb_group)
 
     def __init__(self):
@@ -62,14 +75,16 @@ class DXFGroup(DXFObject):
         self._data: List[DXFEntity] = []
 
     def copy(self):
-        raise const.DXFTypeError('Copying of GROUP not supported.')
+        raise const.DXFTypeError("Copying of GROUP not supported.")
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+        self, processor: SubclassProcessor = None
+    ) -> "DXFNamespace":
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.fast_load_dxfattribs(
-                dxf, acdb_group_group_codes, 1, log=False)
+                dxf, acdb_group_group_codes, 1, log=False
+            )
             self.load_group(tags)
         return dxf
 
@@ -80,39 +95,40 @@ class DXFGroup(DXFObject):
                 # are not stored in the EntityDB:
                 self._handles.add(value)
 
-    def preprocess_export(self, tagwriter: 'TagWriter') -> bool:
+    def preprocess_export(self, tagwriter: "TagWriter") -> bool:
         self.purge(self.doc.entitydb)
         return True  # export even empty groups
 
-    def export_entity(self, tagwriter: 'TagWriter') -> None:
-        """ Export entity specific data as DXF tags. """
+    def export_entity(self, tagwriter: "TagWriter") -> None:
+        """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_group.name)
-        self.dxf.export_dxf_attribs(tagwriter, [
-            'description', 'unnamed', 'selectable'])
+        self.dxf.export_dxf_attribs(
+            tagwriter, ["description", "unnamed", "selectable"]
+        )
         self.export_group(tagwriter)
 
-    def export_group(self, tagwriter: 'TagWriter'):
+    def export_group(self, tagwriter: "TagWriter"):
         for entity in self._data:
             tagwriter.write_tag2(GROUP_ITEM_CODE, entity.dxf.handle)
 
     def __iter__(self) -> Iterable[DXFEntity]:
-        """ Iterate over all DXF entities in :class:`DXFGroup` as instances of
+        """Iterate over all DXF entities in :class:`DXFGroup` as instances of
         :class:`DXFGraphic` or inherited (LINE, CIRCLE, ...).
 
         """
         return (e for e in self._data if e.is_alive)
 
     def __len__(self) -> int:
-        """ Returns the count of DXF entities in :class:`DXFGroup`. """
+        """Returns the count of DXF entities in :class:`DXFGroup`."""
         return len(self._data)
 
     def __getitem__(self, item):
-        """ Returns entities by standard Python indexing and slicing. """
+        """Returns entities by standard Python indexing and slicing."""
         return self._data[item]
 
     def __contains__(self, item: Union[str, DXFEntity]) -> bool:
-        """ Returns ``True`` if item is in :class:`DXFGroup`. `item` has to be
+        """Returns ``True`` if item is in :class:`DXFGroup`. `item` has to be
         a handle string or an object of type :class:`DXFEntity` or inherited.
 
         """
@@ -120,10 +136,10 @@ class DXFGroup(DXFObject):
         return handle in set(self.handles())
 
     def handles(self) -> Iterable[str]:
-        """ Iterable of handles of all DXF entities in :class:`DXFGroup`. """
+        """Iterable of handles of all DXF entities in :class:`DXFGroup`."""
         return (entity.dxf.handle for entity in self)
 
-    def post_load_hook(self, doc: 'Drawing') -> None:
+    def post_load_hook(self, doc: "Drawing") -> None:
         super().post_load_hook(doc)
         db_get = doc.entitydb.get
 
@@ -141,7 +157,7 @@ class DXFGroup(DXFObject):
 
     @contextmanager
     def edit_data(self) -> List[DXFEntity]:
-        """ Context manager which yields all the group entities as
+        """Context manager which yields all the group entities as
         standard Python list::
 
             with group.edit_data() as data:
@@ -156,7 +172,7 @@ class DXFGroup(DXFObject):
         self.set_data(data)
 
     def set_data(self, entities: Iterable[DXFEntity]) -> None:
-        """  Set `entities` as new group content, entities should be an iterable
+        """Set `entities` as new group content, entities should be an iterable
         :class:`DXFGraphic` or inherited (LINE, CIRCLE, ...).
         Raises :class:`DXFValueError` if not all entities be on the same layout
         (modelspace or any paperspace layout but not block)
@@ -172,18 +188,18 @@ class DXFGroup(DXFObject):
         self._data = entities
 
     def extend(self, entities: Iterable[DXFEntity]) -> None:
-        """ Add `entities` to :class:`DXFGroup`. """
+        """Add `entities` to :class:`DXFGroup`."""
         self._data.extend(entities)
 
     def clear(self) -> None:
-        """ Remove all entities from :class:`DXFGroup`, does not delete any
+        """Remove all entities from :class:`DXFGroup`, does not delete any
         drawing entities referenced by this group.
 
         """
         self._data = []
 
-    def audit(self, auditor: 'Auditor') -> None:
-        """ Remove invalid handles from :class:`DXFGroup`.
+    def audit(self, auditor: "Auditor") -> None:
+        """Remove invalid handles from :class:`DXFGroup`.
 
         Invalid handles are: deleted entities, not all entities in the same
         layout or entities in a block layout.
@@ -194,12 +210,12 @@ class DXFGroup(DXFObject):
         if not all_entities_on_same_layout(self._data):
             auditor.fixed_error(
                 code=AuditError.GROUP_ENTITIES_IN_DIFFERENT_LAYOUTS,
-                message=f'Cleared {str(self)}, not all entities are located in '
-                        f'the same layout.',
+                message=f"Cleared {str(self)}, not all entities are located in "
+                f"the same layout.",
             )
             self.clear()
 
-    def _has_valid_owner(self, entity, db: 'EntityDB') -> bool:
+    def _has_valid_owner(self, entity, db: "EntityDB") -> bool:
         # no owner -> no layout association
         if entity.dxf.owner is None:
             return False
@@ -209,25 +225,27 @@ class DXFGroup(DXFObject):
             return False
         # owner block_record.layout is 0 if entity is in a block definition,
         # which is not allowed:
-        valid = owner.dxf.layout != '0'
+        valid = owner.dxf.layout != "0"
         if not valid:
             logger.debug(
                 f"{str(entity)} in {str(self)} is located in a block layout, "
-                f"which is not allowed")
+                f"which is not allowed"
+            )
         return valid
 
-    def _filter_invalid_entities(self, db: 'EntityDB') -> List[DXFEntity]:
+    def _filter_invalid_entities(self, db: "EntityDB") -> List[DXFEntity]:
         assert db is not None
-        return [e for e in self._data
-                if e.is_alive and self._has_valid_owner(e, db)]
+        return [
+            e for e in self._data if e.is_alive and self._has_valid_owner(e, db)
+        ]
 
-    def purge(self, db: 'EntityDB') -> None:
-        """ Remove invalid group entities. """
+    def purge(self, db: "EntityDB") -> None:
+        """Remove invalid group entities."""
         self._data = self._filter_invalid_entities(db)
 
 
 def all_entities_on_same_layout(entities: Iterable[DXFEntity]):
-    """ Check if all entities are on the same layout (model space or any paper
+    """Check if all entities are on the same layout (model space or any paper
     layout but not block).
 
     """
@@ -236,13 +254,17 @@ def all_entities_on_same_layout(entities: Iterable[DXFEntity]):
     return len(owners) < 2
 
 
+def valid_layout_handles(layouts: "Layouts") -> Set[str]:
+    pass
+
+
 class GroupCollection(ObjectCollection):
-    def __init__(self, doc: 'Drawing'):
-        super().__init__(doc, dict_name='ACAD_GROUP', object_type='GROUP')
+    def __init__(self, doc: "Drawing"):
+        super().__init__(doc, dict_name="ACAD_GROUP", object_type="GROUP")
         self._next_unnamed_number = 0
 
     def groups(self) -> Iterable[DXFGroup]:
-        """ Iterable of all existing groups. """
+        """Iterable of all existing groups."""
         for name, group in self:
             yield group
 
@@ -256,9 +278,10 @@ class GroupCollection(ObjectCollection):
         self._next_unnamed_number += 1
         return f"*A{self._next_unnamed_number}"
 
-    def new(self, name: str = None, description: str = "",
-            selectable: bool = True) -> DXFGroup:
-        r""" Creates a new group. If `name` is ``None`` an unnamed group is
+    def new(
+        self, name: str = None, description: str = "", selectable: bool = True
+    ) -> DXFGroup:
+        r"""Creates a new group. If `name` is ``None`` an unnamed group is
         created, which has an automatically generated name like "\*Annnn".
 
         Args:
@@ -277,21 +300,21 @@ class GroupCollection(ObjectCollection):
             unnamed = 0
         # The group name isn't stored in the group entity itself.
         dxfattribs = {
-            'description': description,
-            'unnamed': unnamed,
-            'selectable': int(bool(selectable)),
+            "description": description,
+            "unnamed": unnamed,
+            "selectable": int(bool(selectable)),
         }
         return cast(DXFGroup, self._new(name, dxfattribs))
 
     def delete(self, group: Union[DXFGroup, str]) -> None:
-        """ Delete `group`, `group` can be an object of type :class:`DXFGroup`
+        """Delete `group`, `group` can be an object of type :class:`DXFGroup`
         or a group name as string.
 
         """
         # Delete group by name:
         if isinstance(group, str):
             name = group
-        elif group.dxftype() == 'GROUP':
+        elif group.dxftype() == "GROUP":
             name = get_group_name(group, self.entitydb)
         else:
             raise TypeError(group.dxftype())
@@ -301,8 +324,8 @@ class GroupCollection(ObjectCollection):
         else:
             raise const.DXFValueError("GROUP not in group table registered.")
 
-    def audit(self, auditor: 'Auditor') -> None:
-        """ Removes empty groups and invalid handles from all groups. """
+    def audit(self, auditor: "Auditor") -> None:
+        """Removes empty groups and invalid handles from all groups."""
         trash = []
         for name, group in self:
             group.audit(auditor)
@@ -319,9 +342,9 @@ class GroupCollection(ObjectCollection):
             self.delete(name)
 
 
-def get_group_name(group: DXFGroup, db: 'EntityDB') -> str:
-    """ Get name of `group`. """
-    group_table = cast('Dictionary', db[group.dxf.owner])
+def get_group_name(group: DXFGroup, db: "EntityDB") -> str:
+    """Get name of `group`."""
+    group_table = cast("Dictionary", db[group.dxf.owner])
     for name, entity in group_table.items():
         if entity is group:
             return name
