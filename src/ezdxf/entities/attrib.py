@@ -39,6 +39,28 @@ if TYPE_CHECKING:
 
 __all__ = ["AttDef", "Attrib", "copy_attrib_as_text", "BaseAttrib"]
 
+# Where is it valid to place an ATTRIB entity:
+# - YES: attached to an INSERT entity
+# - NO: stand-alone entity in model space - ignored by BricsCAD and TrueView
+# - NO: stand-alone entity in paper space - ignored by BricsCAD and TrueView
+# - NO: stand-alone entity in block layout - ignored by BricsCAD and TrueView
+#
+# The RECOVER command of BricsCAD removes the stand-alone ATTRIB entities:
+# "Invalid subentity type AcDbAttribute(<handle>)"
+#
+# IMPORTANT: placing ATTRIB at an invalid layout does NOT create an invalid DXF file!
+#
+# Where is it valid to place an ATTDEF entity:
+# - NO: attached to an INSERT entity
+# - YES: stand-alone entity in a BLOCK layout - BricsCAD and TrueView render the
+#        TAG in the block editor and does not render the ATTDEF as block content
+#        for the INSERT entity.
+# - YES: stand-alone entity in model space - BricsCAD and TrueView render the
+#        TAG not the default text - the model space is also a block content
+#        (XREF, see also INSERT entity)
+# - YES: stand-alone entity in paper space - same as model space, although a
+#        paper space can not be used as XREF.
+
 # DXF Reference for ATTRIB is a total mess and incorrect, the AcDbText subclass
 # for the ATTRIB entity is the same as for the TEXT entity, but the valign field
 # from the 2nd AcDbText subclass of the TEXT entity is stored in the

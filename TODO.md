@@ -82,10 +82,9 @@ DXF Document
 DXF Audit & Repair
 ------------------
 
-- (v0.17) Standalone ATTRIBS are not allowed in model space (also paper space- 
-  and block layout?). Important for exploding INSERT entities with ATTRIBS, 
-  the current implementation already convert ATTRIB to TEXT. 
-  BricsCAD removes them and TrueView crashes, more testing is required. 
+- (v0.17) Stand-alone ATTRIB entities are not supported in model space, paper 
+  space layouts and blocks. BricsCAD and TrueView removes them silently. 
+  The RECOVER command of BricsCAD report them as errors.   
 - (<v1.0) check DIMENSION
   - overridden properties in XDATA have to be checked!
   - dimstyle exist; repair: set to 'Standard'
