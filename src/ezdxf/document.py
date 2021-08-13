@@ -66,6 +66,7 @@ logger = logging.getLogger("ezdxf")
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         DXFTag,
+        Tags,
         Table,
         ViewportTable,
         VPort,
@@ -118,26 +119,32 @@ class Drawing:
         self.encoding: str = "cp1252"  # read/write
         self.filename: Optional[str] = None
 
+        # Reason for using "type: ignore".
+        # I won't use "Optional" for the following attributes because these
+        # objects are required, just not yet! Setting up an empty DXF Document
+        # is not necessary if the document is read from the file system,
+        # see class-methods new() and read().
+
         # named objects dictionary
-        self.rootdict: "Dictionary" = None
+        self.rootdict: "Dictionary" = None  # type: ignore
 
         # DXF sections
-        self.header: HeaderSection = None
-        self.classes: ClassesSection = None
-        self.tables: TablesSection = None
-        self.blocks: BlocksSection = None
-        self.entities: EntitySection = None
-        self.objects: ObjectsSection = None
+        self.header: HeaderSection = None  # type: ignore
+        self.classes: ClassesSection = None  # type: ignore
+        self.tables: TablesSection = None  # type: ignore
+        self.blocks: BlocksSection = None  # type: ignore
+        self.entities: EntitySection = None  # type: ignore
+        self.objects: ObjectsSection = None  # type: ignore
 
         # DXF R2013 and later
-        self.acdsdata: AcDsDataSection = None
+        self.acdsdata: AcDsDataSection = None  # type: ignore
 
-        self.stored_sections = []
-        self.layouts: Layouts = None
-        self.groups: GroupCollection = None
-        self.materials: MaterialCollection = None
-        self.mleader_styles: MLeaderStyleCollection = None
-        self.mline_styles: MLineStyleCollection = None
+        self.stored_sections: List[StoredSection] = []
+        self.layouts: Layouts = None  # type: ignore
+        self.groups: GroupCollection = None  # type: ignore
+        self.materials: MaterialCollection = None  # type: ignore
+        self.mleader_styles: MLeaderStyleCollection = None  # type: ignore
+        self.mline_styles: MLineStyleCollection = None  # type: ignore
 
         # Set to False if the generated DXF file will be incompatible to AutoCAD
         self._acad_compatible = True
@@ -330,7 +337,7 @@ class Drawing:
         """
         from .lldxf.tagger import tag_compiler
 
-        tag_loader = tag_compiler(tag_loader)
+        tag_loader = tag_compiler(tag_loader)  # type: ignore
         doc = cls()
         doc._load(tag_loader)
         return doc
@@ -342,7 +349,7 @@ class Drawing:
         doc._load(tagger=compiled_tags)
         return doc
 
-    def _load(self, tagger: Optional[Iterable["DXFTag"]]) -> None:
+    def _load(self, tagger: Iterable["DXFTag"]) -> None:
         # 1st Loading stage: load complete DXF entity structure
         self.is_loading = True
         sections = loader.load_dxf_structure(tagger)
@@ -354,15 +361,16 @@ class Drawing:
         """Internal API to load a DXF document from a section dict."""
         self.is_loading = True
         # Create header section:
-        # All header tags are the first DXF structure entity
-        header_entities = sections.get("HEADER", [None])[0]
-        if header_entities is None:
+        header_entities: List["Tags"] = sections.get(
+            "HEADER", []  # type: ignore
+        )
+        if header_entities:
+            # All header tags are the first DXF structure entity
+            self.header = HeaderSection.load(header_entities[0])  # type: ignore
+        else:
             # Create default header, files without header are by default DXF R12
             self.header = HeaderSection.new(dxfversion=DXF12)
-        else:
-            self.header = HeaderSection.load(header_entities)
-
-        self._dxfversion: str = self.header.get("$ACADVER", DXF12)
+        self._dxfversion = self.header.get("$ACADVER", DXF12)
 
         # Store original DXF version of loaded file.
         self._loaded_dxfversion = self._dxfversion
@@ -381,25 +389,37 @@ class Drawing:
         # stored in the entity database.
 
         # Create sections:
-        self.classes = ClassesSection(self, sections.get("CLASSES", None))
-        self.tables = TablesSection(self, sections.get("TABLES", None))
+        self.classes = ClassesSection(
+            self, sections.get("CLASSES", None)  # type: ignore
+        )
+        self.tables = TablesSection(
+            self, sections.get("TABLES", None)  # type: ignore
+        )
 
         # Create *Model_Space and *Paper_Space BLOCK_RECORDS
         # BlockSection setup takes care about the rest:
         self._create_required_block_records()
 
         # At this point all table entries are required:
-        self.blocks = BlocksSection(self, sections.get("BLOCKS", None))
-        self.entities = EntitySection(self, sections.get("ENTITIES", None))
-        self.objects = ObjectsSection(self, sections.get("OBJECTS", None))
+        self.blocks = BlocksSection(
+            self, sections.get("BLOCKS", None)  # type: ignore
+        )
+        self.entities = EntitySection(
+            self, sections.get("ENTITIES", None)  # type: ignore
+        )
+        self.objects = ObjectsSection(
+            self, sections.get("OBJECTS", None)  # type: ignore
+        )
 
         # only DXF R2013+
-        self.acdsdata = AcDsDataSection(self, sections.get("ACDSDATA", None))
+        self.acdsdata = AcDsDataSection(
+            self, sections.get("ACDSDATA", None)  # type: ignore
+        )
 
         # Store unmanaged sections as raw tags:
         for name, data in sections.items():
             if name not in const.MANAGED_SECTIONS:
-                self.stored_sections.append(StoredSection(data))
+                self.stored_sections.append(StoredSection(data))  # type: ignore
 
         # Objects section is not initialized!
         self._2nd_loading_stage()
@@ -509,14 +529,14 @@ class Drawing:
 
         if fmt.startswith("asc"):
             fp = io.open(
-                self.filename, mode="wt", encoding=enc, errors="dxfreplace"
+                self.filename, mode="wt", encoding=enc, errors="dxfreplace"  # type: ignore
             )
         elif fmt.startswith("bin"):
-            fp = open(self.filename, "wb")
+            fp = open(self.filename, "wb")  # type: ignore
         else:
             raise ValueError(f"Unknown output format: '{fmt}'.")
         try:
-            self.write(fp, fmt=fmt)
+            self.write(fp, fmt=fmt)  # type: ignore
         finally:
             fp.close()
 
@@ -559,16 +579,18 @@ class Drawing:
 
         if fmt.startswith("asc"):
             tagwriter = TagWriter(
-                stream, write_handles=handles, dxfversion=dxfversion
+                stream,  # type: ignore
+                write_handles=handles,
+                dxfversion=dxfversion,
             )
         elif fmt.startswith("bin"):
-            tagwriter = BinaryTagWriter(
-                stream,
+            tagwriter = BinaryTagWriter(  # type: ignore
+                stream,  # type: ignore
                 write_handles=handles,
                 dxfversion=dxfversion,
                 encoding=self.output_encoding,
             )
-            tagwriter.write_signature()
+            tagwriter.write_signature()  # type: ignore
         else:
             raise ValueError(f"Unknown output format: '{fmt}'.")
 
@@ -687,43 +709,43 @@ class Drawing:
 
     @property
     def layers(self) -> "Table":
-        return self.tables.layers
+        return self.tables.layers  # type: ignore
 
     @property
     def linetypes(self) -> "Table":
-        return self.tables.linetypes
+        return self.tables.linetypes  # type: ignore
 
     @property
     def styles(self) -> "Table":
-        return self.tables.styles
+        return self.tables.styles  # type: ignore
 
     @property
     def dimstyles(self) -> "Table":
-        return self.tables.dimstyles
+        return self.tables.dimstyles  # type: ignore
 
     @property
     def ucs(self) -> "Table":
-        return self.tables.ucs
+        return self.tables.ucs  # type: ignore
 
     @property
     def appids(self) -> "Table":
-        return self.tables.appids
+        return self.tables.appids  # type: ignore
 
     @property
     def views(self) -> "Table":
-        return self.tables.views
+        return self.tables.views  # type: ignore
 
     @property
     def block_records(self) -> "Table":
-        return self.tables.block_records
+        return self.tables.block_records  # type: ignore
 
     @property
     def viewports(self) -> "ViewportTable":
-        return self.tables.viewports
+        return self.tables.viewports  # type: ignore
 
     @property
     def plotstyles(self) -> "Dictionary":
-        return self.rootdict["ACAD_PLOTSTYLENAME"]
+        return self.rootdict["ACAD_PLOTSTYLENAME"]  # type: ignore
 
     @property
     def dimension_renderer(self) -> DimensionRenderer:
@@ -835,7 +857,7 @@ class Drawing:
         block definitions.
 
         """
-        return iter(self.blocks)
+        return iter(self.blocks)  # type: ignore
 
     def delete_layout(self, name: str) -> None:
         """
@@ -1070,7 +1092,7 @@ class MetaData(abc.ABC):
 
     @abc.abstractmethod
     def __setitem__(self, key: str, value: str) -> None:
-        """Set `key` to `value`. """
+        """Set `key` to `value`."""
         ...
 
     @abc.abstractmethod
@@ -1082,11 +1104,11 @@ class MetaData(abc.ABC):
 
     @abc.abstractmethod
     def __contains__(self, key: str) -> bool:
-        """Returns ``True`` if `key` exist. """
+        """Returns ``True`` if `key` exist."""
         ...
 
     def discard(self, key: str) -> None:
-        """Remove `key`, does **not** raise an exception if `key` not exist. """
+        """Remove `key`, does **not** raise an exception if `key` not exist."""
         try:
             self.__delitem__(key)
         except KeyError:
@@ -1137,12 +1159,12 @@ class R12MetaData(MetaData):
         for key, value in self._data.items():
             tags.append((1000, str(key)))
             tags.append((1000, str(value)))
-        self._msp_block.set_xdata("EZDXF", tags)
+        self._msp_block.set_xdata("EZDXF", tags)  # type: ignore
 
     def _load(self) -> Dict:
         data = dict()
-        if self._msp_block.has_xdata("EZDXF"):
-            xdata = self._msp_block.get_xdata("EZDXF")
+        if self._msp_block.has_xdata("EZDXF"):  # type: ignore
+            xdata = self._msp_block.get_xdata("EZDXF")  # type: ignore
             index = 0
             count = len(xdata) - 1
             while index < count:
@@ -1158,9 +1180,7 @@ class R2000MetaData(MetaData):
     """
 
     def __init__(self, doc: Drawing):
-        self._data: "Dictionary" = doc.rootdict.get_required_dict(
-            EZDXF_META
-        )
+        self._data: "Dictionary" = doc.rootdict.get_required_dict(EZDXF_META)
 
     def __contains__(self, key: str) -> bool:
         return safe_string(key) in self._data
