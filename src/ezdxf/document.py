@@ -59,6 +59,7 @@ from ezdxf.entities.dxfgroups import GroupCollection
 from ezdxf.entities.material import MaterialCollection
 from ezdxf.entities.mleader import MLeaderStyleCollection
 from ezdxf.entities.mline import MLineStyleCollection
+from ezdxf.audit import Auditor
 
 logger = logging.getLogger("ezdxf")
 
@@ -72,7 +73,6 @@ if TYPE_CHECKING:
         Layout,
         DXFEntity,
         Layer,
-        Auditor,
         GenericLayoutType,
     )
     from pathlib import Path
@@ -1000,7 +1000,7 @@ class Drawing:
             name=name, dxfattribs={"flags": flags, "xref_path": filename}
         )
 
-    def audit(self) -> "Auditor":
+    def audit(self) -> Auditor:
         """Checks document integrity and fixes all fixable problems, not
         fixable problems are stored in :attr:`Auditor.errors`.
 
@@ -1009,8 +1009,6 @@ class Drawing:
         this is a long running task.
 
         """
-        from ezdxf.audit import Auditor
-
         auditor = Auditor(self)
         auditor.run()
         return auditor

@@ -4,32 +4,26 @@ from typing import (
     TYPE_CHECKING,
     Iterable,
     List,
-    Tuple,
     Set,
     TextIO,
     Any,
     Dict,
     Optional,
     Callable,
-    cast,
 )
 import sys
 from enum import IntEnum
-from itertools import permutations
 from ezdxf.lldxf import const, validator
 from ezdxf.entities import factory, DXFEntity
-from ezdxf.math import NULLVEC, Vec3, Matrix44
+from ezdxf.math import NULLVEC
 from ezdxf.sections.table import table_key
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        DXFEntity,
         Drawing,
         DXFGraphic,
         BlocksSection,
         EntityDB,
-        Dimension,
-        GenericLayoutType,
     )
 
 __all__ = ["Auditor", "AuditError", "audit", "BlockCycleDetector"]
@@ -96,11 +90,11 @@ class ErrorEntry:
         self,
         code: int,
         message: str = "",
-        dxf_entity: "DXFEntity" = None,
+        dxf_entity: DXFEntity = None,
         data: Any = None,
     ):
         self.code: int = code  # error code AuditError()
-        self.entity: "DXFEntity" = dxf_entity  # source entity of error
+        self.entity: Optional[DXFEntity] = dxf_entity  # source entity of error
         self.message: str = message  # error message
         self.data: Any = data  # additional data as an arbitrary object
 
@@ -199,7 +193,7 @@ class Auditor:
         self,
         code: int,
         message: str = "",
-        dxf_entity: "DXFEntity" = None,
+        dxf_entity: DXFEntity = None,
         data: Any = None,
     ) -> None:
         self.errors.append(ErrorEntry(code, message, dxf_entity, data))
@@ -208,7 +202,7 @@ class Auditor:
         self,
         code: int,
         message: str = "",
-        dxf_entity: "DXFEntity" = None,
+        dxf_entity: DXFEntity = None,
         data: Any = None,
     ) -> None:
         self.fixes.append(ErrorEntry(code, message, dxf_entity, data))
@@ -238,7 +232,7 @@ class Auditor:
         if self.has_trashcan:
             self._trashcan.clear()
 
-    def trash(self, entity: "DXFEntity") -> None:
+    def trash(self, entity: DXFEntity) -> None:
         if entity is None or not entity.is_alive:
             return
         if self.has_trashcan:
@@ -315,7 +309,7 @@ class Auditor:
             call()
         self._post_audit_jobs = []
 
-    def check_entity_linetype(self, entity: "DXFEntity") -> None:
+    def check_entity_linetype(self, entity: DXFEntity) -> None:
         """Check for usage of undefined line types. AutoCAD does not load
         DXF files with undefined line types.
         """
@@ -337,7 +331,7 @@ class Auditor:
                 data=linetype,
             )
 
-    def check_text_style(self, entity: "DXFEntity") -> None:
+    def check_text_style(self, entity: DXFEntity) -> None:
         """Check for usage of undefined text styles."""
         assert self.doc is entity.doc, "Entity from different DXF document."
         if not entity.dxf.hasattr("style"):
@@ -370,7 +364,7 @@ class Auditor:
                 data=dimstyle,
             )
 
-    def check_for_valid_layer_name(self, entity: "DXFEntity") -> None:
+    def check_for_valid_layer_name(self, entity: DXFEntity) -> None:
         """Check layer names for invalid characters: <>/\":;?*|='"""
         name = entity.dxf.layer
         if not validator.is_valid_layer_name(name):
@@ -406,7 +400,7 @@ class Auditor:
                 dxf_entity=entity,
             )
 
-    def check_owner_exist(self, entity: "DXFEntity") -> None:
+    def check_owner_exist(self, entity: DXFEntity) -> None:
         assert self.doc is entity.doc, "Entity from different DXF document."
         if not entity.dxf.hasattr("owner"):
             return
@@ -439,7 +433,7 @@ class Auditor:
                 )
                 self.trash(doc.entitydb.get(handle))
 
-    def check_extrusion_vector(self, entity: "DXFEntity") -> None:
+    def check_extrusion_vector(self, entity: DXFEntity) -> None:
         if NULLVEC.isclose(entity.dxf.extrusion):
             entity.dxf.discard("extrusion")
             self.fixed_error(
@@ -498,7 +492,7 @@ class BlockCycleDetector:
         return check(block_name)
 
 
-def audit(entity: "DXFEntity", doc: "Drawing") -> Auditor:
+def audit(entity: DXFEntity, doc: "Drawing") -> Auditor:
     """Setup an :class:`Auditor` object, run the audit process for `entity`
     and return result as :class:`Auditor` object.
 
