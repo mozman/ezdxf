@@ -9,6 +9,7 @@ from typing import (
     Optional,
     Callable,
     Dict,
+    List,
 )
 import math
 from ezdxf.lldxf import validator
@@ -160,8 +161,8 @@ class Insert(LinkedEntities):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_block_reference)
 
     @property
-    def attribs(self):
-        return self._sub_entities
+    def attribs(self) -> List[Attrib]:
+        return self._sub_entities  # type: ignore
 
     @property
     def attribs_follow(self) -> bool:
@@ -248,9 +249,9 @@ class Insert(LinkedEntities):
     def is_xref(self) -> bool:
         """Return ``True`` if XREF or XREF_OVERLAY."""
         assert self.doc is not None, "Requires a document object"
-        block_layout = self.doc.blocks.get(self.dxf.name)
+        block_layout = self.doc.blocks.get(self.dxf.name)  # type: ignore
         if (
-            block_layout is not None and block_layout.block.dxf.flags & 12
+            block_layout is not None and block_layout.block.dxf.flags & 12  # type: ignore
         ):  # XREF(4) & XREF_OVERLAY(8)
             return True
         return False
@@ -349,7 +350,7 @@ class Insert(LinkedEntities):
         return None
 
     def get_attrib_text(
-        self, tag: str, default: str = None, search_const: bool = False
+        self, tag: str, default: str = "", search_const: bool = False
     ) -> str:
         """Get content text of attached :class:`Attrib` entity with
         :code:`dxf.tag == tag`, returns `default` if not found.
@@ -483,9 +484,9 @@ class Insert(LinkedEntities):
             # new y-axis points into opposite direction:
             y_scale = -y_scale
 
-        ocs = OCSTransform.from_ocs(OCS(dxf.extrusion), OCS(uz), m)
-        dxf.insert = ocs.transform_vertex(dxf.insert)
-        dxf.rotation = ocs.transform_deg_angle(dxf.rotation)
+        ocs_transform = OCSTransform.from_ocs(OCS(dxf.extrusion), OCS(uz), m)
+        dxf.insert = ocs_transform.transform_vertex(dxf.insert)
+        dxf.rotation = ocs_transform.transform_deg_angle(dxf.rotation)
 
         dxf.extrusion = uz
         dxf.xscale = x_scale
@@ -530,15 +531,15 @@ class Insert(LinkedEntities):
         if angle:
             m *= Matrix44.axis_rotate(extrusion, angle)
 
-        insert = ocs.to_wcs(dxf.get("insert", Vec3()))
+        insert = ocs.to_wcs(dxf.get("insert", NULLVEC))
 
         block_layout = self.block()
         if block_layout is not None:
             # transform block base point into WCS without translation
-            insert -= m.transform_direction(block_layout.block.dxf.base_point)
+            insert -= m.transform_direction(block_layout.block.dxf.base_point)  # type: ignore
 
         # set translation
-        m.set_row(3, insert.xyz)
+        m.set_row(3, insert.xyz)  # type: ignore
         return m
 
     def ucs(self):
@@ -724,7 +725,7 @@ class Insert(LinkedEntities):
             return tag, text, location
 
         def autofill() -> None:
-            for attdef in blockdef.attdefs():
+            for attdef in blockdef.attdefs():  # type: ignore
                 dxfattribs = attdef.dxfattribs(drop={"prompt", "handle"})
                 tag, text, location = unpack(dxfattribs)
                 attrib = self.add_attrib(tag, text, location, dxfattribs)
@@ -744,6 +745,6 @@ class Insert(LinkedEntities):
                 auditor.fixed_error(
                     code=AuditError.UNDEFINED_BLOCK,
                     message=f"Deleted entity {str(self)} without required BLOCK"
-                    f" definition.",
+                            f" definition.",
                 )
                 auditor.trash(self)

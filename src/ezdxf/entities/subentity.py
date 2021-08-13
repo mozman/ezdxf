@@ -83,7 +83,7 @@ class LinkedEntities(DXFGraphic):
             seqend = factory.new("SEQEND", attribs)
         self.link_seqend(seqend)
 
-    def set_owner(self, owner: str, paperspace: int = 0):
+    def set_owner(self, owner: Optional[str], paperspace: int = 0):
         """Set owner of all sub-entities and SEQEND. (internal API)"""
         # Loading from file: POLYLINE/INSERT will be added to layout before
         # vertices/attrib entities are linked, so set_owner() of POLYLINE does
