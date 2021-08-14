@@ -432,7 +432,9 @@ class DXFEntity:
         if key in self.DXFATTRIBS:
             if self.doc:
                 return (
-                    self.doc.dxfversion >= self.DXFATTRIBS.get(key).dxfversion  # type: ignore
+                    self.doc.dxfversion
+                    >= self.DXFATTRIBS.get(key).dxfversion
+                    # type: ignore
                 )
             else:
                 return True
@@ -832,6 +834,15 @@ class DXFTagStorage(DXFEntity):
     @property
     def base_class(self):
         return self.xtags.subclasses[0]
+
+    @property
+    def is_graphic_entity(self) -> bool:
+        """Returns ``True`` if the entity has a graphical representations and
+        can reside in the model space, a paper space or a block layout,
+        otherwise the entity is a table or class entry or a DXF object from the
+        OBJECTS section.
+        """
+        return self.xtags.has_subclass("AcDbEntity")
 
     @classmethod
     def load(cls, tags: ExtendedTags, doc: "Drawing" = None) -> "DXFTagStorage":

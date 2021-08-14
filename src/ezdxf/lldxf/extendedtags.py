@@ -150,7 +150,8 @@ class ExtendedTags:
 
         def is_end_of_class(tag):
             # fast path
-            if tag.code not in {SUBCLASS_MARKER, EMBEDDED_OBJ_MARKER, XDATA_MARKER}:
+            if tag.code not in {SUBCLASS_MARKER, EMBEDDED_OBJ_MARKER,
+                XDATA_MARKER}:
                 return False
             else:
                 # really an embedded object
@@ -229,7 +230,8 @@ class ExtendedTags:
                         "Missing closing (102, '}') tag in appdata structure."
                     )
                 data.append(tag)
-                if (tag.code == APP_DATA_MARKER) and (tag.value in closing_strings):
+                if (tag.code == APP_DATA_MARKER) and (
+                    tag.value in closing_strings):
                     break
                     # Other (102, ) tags are treated as usual DXF tags.
             self.appdata.append(data)
@@ -278,7 +280,8 @@ class ExtendedTags:
             try:
                 while True:
                     tag = next(tags)
-                    if is_embedded_object_marker(tag) or tag.code == XDATA_MARKER:
+                    if is_embedded_object_marker(
+                        tag) or tag.code == XDATA_MARKER:
                         # Another embedded object found: maybe in the future
                         # DXF entities can contain more than one embedded
                         # object.
@@ -304,7 +307,8 @@ class ExtendedTags:
             tag = collect_xdata(tag)
 
         if tag is not NONE_TAG:
-            raise DXFStructureError("Unexpected tag '%r' at end of entity." % tag)
+            raise DXFStructureError(
+                "Unexpected tag '%r' at end of entity." % tag)
 
     def __iter__(self) -> Iterator[DXFTag]:
         for subclass in self.subclasses:
@@ -333,6 +337,15 @@ class ExtendedTags:
                 pass  # subclass[0]: ignore empty subclasses
 
         raise DXFKeyError(f'Subclass "{name}" does not exist.')
+
+    def has_subclass(self, name: str) -> bool:
+        for subclass in self.subclasses:
+            try:
+                if subclass[0].value == name:
+                    return True
+            except IndexError:
+                pass  # ignore empty subclasses
+        return False
 
     def has_xdata(self, appid: str) -> bool:
         """``True`` if has XDATA for `appid`."""
@@ -376,7 +389,8 @@ class ExtendedTags:
         for appdata in self.appdata:
             if appdata[0].value == appid:
                 return appdata
-        raise DXFValueError(f'Application defined group "{appid}" does not exist.')
+        raise DXFValueError(
+            f'Application defined group "{appid}" does not exist.')
 
     def get_app_data_content(self, appid: str) -> Tags:
         """Returns application defined data for `appid` as :class:`Tags`

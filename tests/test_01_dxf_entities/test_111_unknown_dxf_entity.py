@@ -20,6 +20,14 @@ def test_default_attribs(entity):
     assert entity.base_class[1] == (5, "278")
 
 
+def test_wrapped_mtext_is_a_graphic_entity(entity):
+    assert entity.is_graphic_entity is True
+
+
+def test_dxf_tag_storage_is_a_non_graphical_entity_by_default():
+    assert DXFTagStorage().is_graphic_entity is False
+
+
 def test_dxf_export(entity):
     control_tags = basic_tags_from_text(THE_KNOWN_UNKNOWN)
     collector = TagCollector()
