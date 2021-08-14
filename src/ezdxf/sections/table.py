@@ -1,6 +1,6 @@
 # Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Iterator, Optional, List
+from typing import TYPE_CHECKING, Iterable, Iterator, Optional, List, Dict, cast
 from collections import OrderedDict
 import logging
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
         Drawing,
         DXFEntity,
         Layer,
-        LineType,
+        Linetype,
     )
 
 logger = logging.getLogger("ezdxf")
@@ -53,15 +53,17 @@ class Table:
         self, doc: "Drawing" = None, entities: Iterable["DXFEntity"] = None
     ):
         self.doc = doc
-        self.entries = OrderedDict()
+        self.entries: Dict[str, DXFEntity] = OrderedDict()
         self._head = TableHead()
         if entities is not None:
             self.load(iter(entities))
 
     def load(self, entities: Iterator["DXFEntity"]) -> None:
         """Loading interface. (internal API)"""
-        self._head = next(entities)
-        if self._head.dxftype() != "TABLE":
+        table_head = next(entities)
+        if isinstance(table_head, TableHead):
+            self._head = table_head
+        else:
             raise const.DXFStructureError(
                 "Critical structure error in TABLES section."
             )
@@ -188,17 +190,16 @@ class Table:
 
     @property
     def entitydb(self) -> "EntityDB":
-        return self.doc.entitydb
+        return self.doc.entitydb  # type: ignore
 
     def new_entry(self, dxfattribs: dict) -> "DXFEntity":
-        """Create new table-entry of type 'self._dxfname', and add new entry
-        to table.
+        """Create and add new table-entry of type 'self.entry_dxftype'.
 
         Does not check if an entry dxfattribs['name'] already exists!
         Duplicate entries are possible for Viewports.
         """
         entry = factory.create_db_entry(
-            self._head.dxf.name, dxfattribs, self.doc
+            self._head.dxf.name, dxfattribs, self.doc  # type: ignore
         )
         self._append(entry)
         return entry
@@ -225,7 +226,7 @@ class Table:
                 f"{self._head.dxf.name} {name} already exists!"
             )
         entry.doc = self.doc
-        entry.owner = self._head.dxf.handle
+        entry.dxf.owner = self._head.dxf.handle
         self._append(entry)
 
     def export_dxf(self, tagwriter: "TagWriter") -> None:
@@ -270,7 +271,7 @@ class Table:
 
 class LayerTable(Table):
     def new_entry(self, dxfattribs: dict) -> "DXFEntity":
-        layer: "Layer" = super().new_entry(dxfattribs)
+        layer = cast("Layer", super().new_entry(dxfattribs))
         if self.doc:
             layer.set_required_attributes()
         return layer
@@ -280,7 +281,7 @@ class LineTypeTable(Table):
     def new_entry(self, dxfattribs: dict) -> "DXFEntity":
         pattern = dxfattribs.pop("pattern", [0.0])
         length = dxfattribs.pop("length", 0)  # required for complex types
-        ltype: "LineType" = super().new_entry(dxfattribs)
+        ltype = cast("Linetype", super().new_entry(dxfattribs))
         ltype.setup_pattern(pattern, length)
         return ltype
 
@@ -327,7 +328,7 @@ class ViewportTable(Table):
     # each table entry is a list of VPORT entries
 
     def new(self, name: str, dxfattribs: dict = None) -> "DXFEntity":
-        """Creat a new table entry."""
+        """Create a new table entry."""
         dxfattribs = dxfattribs or {}
         dxfattribs["name"] = name
         return self.new_entry(dxfattribs)
@@ -335,32 +336,31 @@ class ViewportTable(Table):
     def remove(self, name: str) -> None:
         """Remove table-entry from table and entitydb by name."""
         key = self.key(name)
-        entries: List["DXFEntity"] = self.get(name)
+        entries = cast(List["DXFEntity"], self.get(name))
         for entry in entries:
             self.entitydb.delete_entity(entry)
         del self.entries[key]
 
-    def __iter__(self) -> Iterable["DXFEntity"]:
+    def __iter__(self) -> Iterator["DXFEntity"]:
         for entries in self.entries.values():
-            yield from iter(entries)
+            yield from iter(entries)  # type: ignore
 
-    def _flatten(self):
+    def _flatten(self) -> Iterator["DXFEntity"]:
         for entries in self.entries.values():
-            yield from iter(entries)
+            yield from iter(entries)  # type: ignore
 
     def __len__(self):
         # calling __iter__() invokes recursion!
         return len(list(self._flatten()))
 
     def new_entry(self, dxfattribs: dict) -> "DXFEntity":
-        """Create new table-entry of type 'self._dxfname', and add new entry
-        to table.
+        """Create and add new table-entry of type 'self.entry_dxftype'.
 
         Does not check if an entry dxfattribs['name'] already exists!
         Duplicate entries are possible for Viewports.
         """
         entry = factory.create_db_entry(
-            self._head.dxf.name, dxfattribs, self.doc
+            self._head.dxf.name, dxfattribs, self.doc  # type: ignore
         )
         self._append(entry)
         return entry
@@ -371,14 +371,14 @@ class ViewportTable(Table):
     def _append(self, entry: "DXFEntity") -> None:
         key = self.key(entry.dxf.name)
         if key in self.entries:
-            self.entries[key].append(entry)
+            self.entries[key].append(entry)  # type: ignore
         else:
-            self.entries[key] = [entry]  # store list of VPORT
+            self.entries[key] = [entry]  # type: ignore # store list of VPORT
 
     def update_owner_handles(self) -> None:
         owner_handle = self._head.dxf.handle
         for entries in self.entries.values():
-            for entry in entries:
+            for entry in entries:  # type: ignore
                 entry.dxf.owner = owner_handle
 
     def get_config(self, name: str) -> List["DXFEntity"]:
@@ -386,7 +386,7 @@ class ViewportTable(Table):
         the multi-viewport configuration `name`.
         """
         try:
-            return self.entries[self.key(name)]
+            return self.entries[self.key(name)]  # type: ignore
         except KeyError:
             raise const.DXFTableEntryError(name)
 
