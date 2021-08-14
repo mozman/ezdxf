@@ -217,7 +217,6 @@ class Auditor:
         self.errors = [err for err in self.errors if err.code in codes]
 
     def run(self) -> List[ErrorEntry]:
-        # Check database integrity:
         self.doc.entitydb.audit(self)
         self.check_root_dict()
         self.check_tables()
@@ -359,7 +358,7 @@ class Auditor:
             self.fixed_error(
                 code=AuditError.UNDEFINED_DIMENSION_STYLE,
                 message=f'Replaced undefined dimstyle "{dimstyle}" in '
-                        f'{str(entity)} by "Standard".',
+                f'{str(entity)} by "Standard".',
                 dxf_entity=entity,
                 data=dimstyle,
             )
@@ -429,7 +428,7 @@ class Auditor:
                 self.fixed_error(
                     code=AuditError.INVALID_OWNER_HANDLE,
                     message=f"Deleted {str(entity)} entity with invalid owner "
-                            f"handle #{owner_handle}.",
+                    f"handle #{owner_handle}.",
                 )
                 self.trash(doc.entitydb.get(handle))
 
@@ -449,7 +448,7 @@ class Auditor:
                 self.add_error(
                     code=AuditError.INVALID_BLOCK_REFERENCE_CYCLE,
                     message=f"Invalid block reference cycle detected in "
-                            f'block "{block.name}".',
+                    f'block "{block.name}".',
                     dxf_entity=block.block_record,
                 )
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2020, Manfred Moitzi
+# Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
 import pytest
 
@@ -8,64 +8,64 @@ from ezdxf.sections.table import Table
 from ezdxf.lldxf.tagwriter import TagCollector
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def table():
     doc = ezdxf.new()
     return doc.appids
 
 
 def test_ac1009_load_table():
-    doc = ezdxf.new('R12')
-    entities = list(load_entities(AC1009TABLE, 'TABLES'))
+    doc = ezdxf.new("R12")
+    entities = list(load_entities(AC1009TABLE, "TABLES"))
     table = Table(doc, entities[1:-1])  # without SECTION tags and ENDTAB
     assert 10 == len(table)
 
 
 def test_ac1009_write(table):
-    collector = TagCollector(dxfversion='AC1009')
+    collector = TagCollector(dxfversion="AC1009")
     table.export_dxf(collector)
     tags = collector.tags
-    assert tags[0] == (0, 'TABLE')
-    assert tags[1] == (2, 'APPID')
+    assert tags[0] == (0, "TABLE")
+    assert tags[1] == (2, "APPID")
     # exporting table entries is tested by associated class tests
-    assert tags[-1] == (0, 'ENDTAB')
+    assert tags[-1] == (0, "ENDTAB")
 
 
 def test_ac1024_load_table():
-    doc = ezdxf.new('R2010')
-    entities = list(load_entities(AC1024TABLE, 'TABLES'))
+    doc = ezdxf.new("R2010")
+    entities = list(load_entities(AC1024TABLE, "TABLES"))
     table = Table(doc, entities[1:-1])  # without SECTION tags and ENDTAB
     assert 10 == len(table)
 
 
 def test_ac1024_write(table):
-    collector = TagCollector(dxfversion='R2004')
+    collector = TagCollector(dxfversion="R2004")
     table.export_dxf(collector)
     tags = collector.tags
-    assert tags[0] == (0, 'TABLE')
-    assert tags[1] == (2, 'APPID')
+    assert tags[0] == (0, "TABLE")
+    assert tags[1] == (2, "APPID")
     # exporting table entries is tested by associated class tests
-    assert tags[-1] == (0, 'ENDTAB')
+    assert tags[-1] == (0, "ENDTAB")
 
 
 def test_get_table_entry(table):
-    entry = table.get('ACAD')
-    assert 'ACAD' == entry.dxf.name
+    entry = table.get("ACAD")
+    assert "ACAD" == entry.dxf.name
 
 
 def test_entry_names_are_case_insensitive(table):
-    entry = table.get('acad')
-    assert 'ACAD' == entry.dxf.name
+    entry = table.get("acad")
+    assert "ACAD" == entry.dxf.name
 
 
 def test_duplicate_entry(table):
-    new_entry = table.duplicate_entry('ACAD', 'ACAD2018')
-    assert new_entry.dxf.name == 'ACAD2018'
+    new_entry = table.duplicate_entry("ACAD", "ACAD2018")
+    assert new_entry.dxf.name == "ACAD2018"
 
-    entry2 = table.get('ACAD2018')
+    entry2 = table.get("ACAD2018")
     assert new_entry.dxf.handle == entry2.dxf.handle
 
-    new_entry2 = table.duplicate_entry('ACAD2018', 'ACAD2019')
+    new_entry2 = table.duplicate_entry("ACAD2018", "ACAD2019")
     new_entry.dxf.flags = 71
     new_entry2.dxf.flags = 17
     # really different entities
@@ -77,16 +77,16 @@ def test_create_vport_table():
     doc = ezdxf.new()
     assert len(doc.viewports) == 1
     # standard viewport exists
-    assert '*Active' in doc.viewports
+    assert "*Active" in doc.viewports
 
     # create a multi-viewport configuration
     # create two entries with same name
-    vp1 = doc.viewports.new('V1')
-    vp2 = doc.viewports.new('V1')
+    vp1 = doc.viewports.new("V1")
+    vp2 = doc.viewports.new("V1")
     assert len(doc.viewports) == 3
 
     # get multi-viewport configuration as list
-    conf = doc.viewports.get_config('V1')
+    conf = doc.viewports.get_config("V1")
     assert len(conf) == 2
 
     # check handles
@@ -94,16 +94,16 @@ def test_create_vport_table():
     assert conf[0] in vports
     assert conf[1] in vports
 
-    assert 'Test' not in doc.viewports
+    assert "Test" not in doc.viewports
     with pytest.raises(ezdxf.DXFTableEntryError):
-        _ = doc.viewports.get_config('test')
+        _ = doc.viewports.get_config("test")
 
     # delete: ignore not existing configurations
     with pytest.raises(ezdxf.DXFTableEntryError):
-        doc.viewports.delete_config('test')
+        doc.viewports.delete_config("test")
 
     # delete multi config
-    doc.viewports.delete_config('V1')
+    doc.viewports.delete_config("V1")
     assert len(doc.viewports) == 1
 
 
