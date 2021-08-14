@@ -1,6 +1,6 @@
 # Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Tuple, cast, Iterator, Union
+from typing import TYPE_CHECKING, Iterable, Tuple, cast, Iterator
 import logging
 
 from ezdxf.entities.dictionary import Dictionary
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import (
         ImageDefReactor,
         ImageDef,
-        UnderlayDef,
+        UnderlayDefinition,
         DictionaryWithDefault,
         XRecord,
         Placeholder,
@@ -60,13 +60,13 @@ class ObjectsSection:
                 return key
 
     def _build(self, entities: Iterator["DXFObject"]) -> None:
-        section_head = next(entities)  # type: DXFTagStorage
+        section_head = cast("DXFTagStorage", next(entities))
 
         if section_head.dxftype() != "SECTION" or section_head.base_class[
             1
         ] != (2, "OBJECTS"):
             raise DXFStructureError(
-                "Critical structure error in 'OBJECTS' section."
+                "Critical structure error in the OBJECTS section."
             )
 
         for entity in entities:
@@ -90,11 +90,10 @@ class ObjectsSection:
         """
         dxf_entity = factory.create_db_entry(_type, dxfattribs, self.doc)
         self._entity_space.add(dxf_entity)
-        return dxf_entity
+        return dxf_entity  # type: ignore
 
     def delete_entity(self, entity: "DXFObject") -> None:
-        """Remove `entity` from entity space and destroy object. (internal API)
-        """
+        """Remove `entity` from entity space and destroy object. (internal API)"""
         self._entity_space.remove(entity)
         self.entitydb.delete_entity(entity)
 
@@ -160,7 +159,7 @@ class ObjectsSection:
     def rootdict(self) -> Dictionary:
         """Root dictionary."""
         if len(self):
-            return self._entity_space[0]
+            return self._entity_space[0]  # type: ignore
         else:
             return self.setup_rootdict()
 
@@ -168,7 +167,7 @@ class ObjectsSection:
         """Returns count of DXF objects."""
         return len(self._entity_space)
 
-    def __iter__(self) -> Iterable["DXFObject"]:
+    def __iter__(self):
         """Returns iterable of all DXF objects in the OBJECTS section."""
         return iter(self._entity_space)
 
@@ -182,9 +181,9 @@ class ObjectsSection:
         objects as ``List[DXFObject]``.
 
         """
-        return self._entity_space[index]
+        return self._entity_space[index]  # type: ignore
 
-    def __contains__(self, entity: Union["DXFObject", str]) -> bool:
+    def __contains__(self, entity):
         """Returns ``True`` if `entity` stored in OBJECTS section.
 
         Args:
@@ -199,7 +198,7 @@ class ObjectsSection:
         return entity in self._entity_space
 
     def query(self, query: str = "*") -> EntityQuery:
-        """Get all DXF objects matching the :ref:`entity query string`. """
+        """Get all DXF objects matching the :ref:`entity query string`."""
         return EntityQuery(iter(self), query)
 
     def add_dictionary(
@@ -252,7 +251,7 @@ class ObjectsSection:
             value: value as string
 
         """
-        return self.new_entity(
+        return self.new_entity(  # type: ignore
             "DICTIONARYVAR", dxfattribs={"owner": owner, "value": value}
         )
 
@@ -263,7 +262,9 @@ class ObjectsSection:
             owner: handle to owner as hex string.
 
         """
-        return self.new_entity("XRECORD", dxfattribs={"owner": owner})
+        return self.new_entity(  # type: ignore
+            "XRECORD", dxfattribs={"owner": owner}
+        )
 
     def add_placeholder(self, owner: str = "0") -> "Placeholder":
         """Add a new :class:`~ezdxf.entities.Placeholder` object.
@@ -272,7 +273,9 @@ class ObjectsSection:
             owner: handle to owner as hex string.
 
         """
-        return self.new_entity("ACDBPLACEHOLDER", dxfattribs={"owner": owner})
+        return self.new_entity(  # type: ignore
+            "ACDBPLACEHOLDER", dxfattribs={"owner": owner}
+        )
 
     # end of public interface
 
@@ -301,7 +304,7 @@ class ObjectsSection:
         (internal API), public interface :meth:`~ezdxf.drawing.Drawing.set_raster_variables`
 
         """
-        units = RASTER_UNITS.get(units, 0)
+        units_: int = RASTER_UNITS.get(units, 0)
         try:
             raster_vars = self.rootdict["ACAD_IMAGE_VARS"]
         except DXFKeyError:
@@ -311,14 +314,14 @@ class ObjectsSection:
                     "owner": self.rootdict.dxf.handle,
                     "frame": frame,
                     "quality": quality,
-                    "units": units,
+                    "units": units_,
                 },
             )
             self.rootdict["ACAD_IMAGE_VARS"] = raster_vars
         else:
             raster_vars.dxf.frame = frame
             raster_vars.dxf.quality = quality
-            raster_vars.dxf.units = units
+            raster_vars.dxf.units = units_
 
     def set_wipeout_variables(self, frame: int = 0) -> None:
         """Set wipeout variables.
@@ -399,10 +402,10 @@ class ObjectsSection:
 
     def add_underlay_def(
         self, filename: str, format: str = "pdf", name: str = None
-    ) -> "UnderlayDef":
-        """Add an :class:`~ezdxf.entities.underlay.UnderlayDef` entity to the
-        drawing (OBJECTS section). `filename` is the underlay file name as
-        relative or absolute path and `format` as string (pdf, dwf, dgn).
+    ) -> "UnderlayDefinition":
+        """Add an :class:`~ezdxf.entities.underlay.UnderlayDefinition` entity
+        to the drawing (OBJECTS section). `filename` is the underlay file name
+        as relative or absolute path and `format` as string (pdf, dwf, dgn).
         The underlay definition is required to create an underlay reference.
 
         Args:
@@ -440,7 +443,7 @@ class ObjectsSection:
         # auto-generated underlay key
         key = self.next_underlay_key(lambda k: k not in underlay_dict)
         underlay_dict[key] = underlay_def.dxf.handle
-        return cast("UnderlayDef", underlay_def)
+        return cast("UnderlayDefinition", underlay_def)
 
     def add_geodata(
         self, owner: str = "0", dxfattribs: dict = None
