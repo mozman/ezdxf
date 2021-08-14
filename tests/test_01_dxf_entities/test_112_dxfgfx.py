@@ -1,9 +1,9 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
 
-from ezdxf.entities.dxfgfx import DXFGraphic, DXFValueError
+from ezdxf.entities.dxfgfx import DXFGraphic, DXFValueError, is_graphic_entity
 from ezdxf.math import Matrix44
 from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.entities.dxfns import recover_graphic_attributes
@@ -14,15 +14,22 @@ def entity():
     return DXFGraphic.from_text(LINE)
 
 
+def test_is_graphic_entity(entity):
+    assert is_graphic_entity(entity) is True
+
+
 def test_init_from_tags(entity):
-    assert entity.dxf.layer == 'Layer'
+    assert entity.dxf.layer == "Layer"
 
 
 def test_true_color(entity):
     entity.dxf.true_color = 0x0F0F0F
     assert 0x0F0F0F == entity.dxf.true_color
-    assert (0x0F, 0x0F,
-            0x0F) == entity.rgb  # shortcut for modern graphic entities
+    assert (
+               0x0F,
+               0x0F,
+               0x0F,
+           ) == entity.rgb  # shortcut for modern graphic entities
     entity.rgb = (255, 255, 255)  # shortcut for modern graphic entities
     assert 0xFFFFFF == entity.dxf.true_color
 
@@ -33,22 +40,24 @@ def test_color_name(entity):
 
 
 def test_transparency(entity):
-    entity.dxf.transparency = 0x020000FF  # 0xFF = opaque; 0x00 = 100% transparent
+    entity.dxf.transparency = (
+        0x020000FF  # 0xFF = opaque; 0x00 = 100% transparent
+    )
     assert 0x020000FF == entity.dxf.transparency
     # recommend usage: helper property ModernGraphicEntity.transparency
-    assert 0. == entity.transparency  # 0. =  opaque; 1. = 100% transparent
+    assert 0.0 == entity.transparency  # 0. =  opaque; 1. = 100% transparent
     entity.transparency = 1.0
     assert 0x02000000 == entity.dxf.transparency
 
 
 def test_default_attributes():
     entity = DXFGraphic.new()
-    assert entity.dxf.layer == '0'
-    assert entity.dxf.hasattr('layer') is True, 'real attribute required'
+    assert entity.dxf.layer == "0"
+    assert entity.dxf.hasattr("layer") is True, "real attribute required"
     assert entity.dxf.color == 256
-    assert entity.dxf.hasattr('color') is False, 'just the default value'
-    assert entity.dxf.linetype == 'BYLAYER'
-    assert entity.dxf.hasattr('linetype') is False, 'just the default value'
+    assert entity.dxf.hasattr("color") is False, "just the default value"
+    assert entity.dxf.linetype == "BYLAYER"
+    assert entity.dxf.hasattr("linetype") is False, "just the default value"
 
 
 def test_aci_color_index_fixer(entity):
@@ -69,47 +78,47 @@ def test_lineweight_fixer(entity):
 
 def test_is_linetype_validator_active(entity):
     with pytest.raises(DXFValueError):
-        entity.dxf.linetype = '*Invalid'
+        entity.dxf.linetype = "*Invalid"
 
 
 def test_is_layer_name_validator_active(entity):
     with pytest.raises(DXFValueError):
-        entity.dxf.layer = '*Invalid'
+        entity.dxf.layer = "*Invalid"
 
 
 def test_clone_graphical_entity(entity):
-    entity.dxf.handle = 'EFEF'
-    entity.dxf.owner = 'ABBA'
-    entity.dxf.layer = 'Layer1'
+    entity.dxf.handle = "EFEF"
+    entity.dxf.owner = "ABBA"
+    entity.dxf.layer = "Layer1"
     entity.dxf.color = 13
-    entity.set_reactors(['A', 'F'])
-    entity.set_xdata('MOZMAN', [(1000, 'extended data')])
+    entity.set_reactors(["A", "F"])
+    entity.set_xdata("MOZMAN", [(1000, "extended data")])
 
     clone = entity.copy()
-    assert clone.dxf is not entity.dxf, 'should be different objects'
-    assert clone.dxf.handle is None, 'should not have a handle'
+    assert clone.dxf is not entity.dxf, "should be different objects"
+    assert clone.dxf.handle is None, "should not have a handle"
     assert clone.dxf.owner is None
-    assert clone.dxf.layer == 'Layer1'
+    assert clone.dxf.layer == "Layer1"
     assert clone.dxf.color == 13
-    assert clone.reactors is not entity.reactors, 'should be different objects'
+    assert clone.reactors is not entity.reactors, "should be different objects"
     assert len(clone.get_reactors()) == 0
-    assert clone.xdata is not entity.xdata, 'should be different objects'
-    assert clone.get_xdata('MOZMAN') == [(1000, 'extended data')]
+    assert clone.xdata is not entity.xdata, "should be different objects"
+    assert clone.get_xdata("MOZMAN") == [(1000, "extended data")]
 
-    clone.dxf.handle = 'CDCD'
-    clone.dxf.owner = 'FEFE'
-    clone.dxf.layer = 'Layer2'
+    clone.dxf.handle = "CDCD"
+    clone.dxf.owner = "FEFE"
+    clone.dxf.layer = "Layer2"
     clone.dxf.color = 77
     clone.set_reactors([])
-    clone.set_xdata('MOZMAN', [(1000, 'extended data1')])
+    clone.set_xdata("MOZMAN", [(1000, "extended data1")])
 
     # don't change source entity
-    assert entity.dxf.handle == 'EFEF'
-    assert entity.dxf.owner == 'ABBA'
-    assert entity.dxf.layer == 'Layer1'
+    assert entity.dxf.handle == "EFEF"
+    assert entity.dxf.owner == "ABBA"
+    assert entity.dxf.layer == "Layer1"
     assert entity.dxf.color == 13
-    assert entity.get_reactors() == ['A', 'F']
-    assert entity.get_xdata('MOZMAN') == [(1000, 'extended data')]
+    assert entity.get_reactors() == ["A", "F"]
+    assert entity.get_xdata("MOZMAN") == [(1000, "extended data")]
 
 
 def test_basic_transformation_interfaces():
@@ -135,7 +144,9 @@ def test_unlink_from_layout(entity):
     assert point.dxf.owner is not None
     point.unlink_from_layout()
     assert point.dxf.owner is None
-    assert point.dxf.handle in doc.entitydb, 'Do not delete unlinked entity from entitydb.'
+    assert (
+        point.dxf.handle in doc.entitydb
+    ), "Do not delete unlinked entity from entitydb."
 
     # unlinking an already unlinked entity should pass silently
     point.unlink_from_layout()
@@ -154,34 +165,34 @@ def test_unlink_destroyed_entity_from_layout(entity):
 
 def test_recover_acdb_entity_tags():
     entity = DXFGraphic()
-    tags = Tags([DXFTag(62, 1), DXFTag(8, 'Layer'), DXFTag(6, 'Linetype')])
+    tags = Tags([DXFTag(62, 1), DXFTag(8, "Layer"), DXFTag(6, "Linetype")])
 
     recover_graphic_attributes(tags, entity.dxf)
     assert entity.dxf.color == 1
-    assert entity.dxf.layer == 'Layer'
-    assert entity.dxf.linetype == 'Linetype'
+    assert entity.dxf.layer == "Layer"
+    assert entity.dxf.linetype == "Linetype"
 
 
 def test_recover_acdb_entity_tags_does_not_replace_existing_attribs():
     entity = DXFGraphic()
     entity.dxf.color = 7
-    entity.dxf.layer = 'HasLayer'
-    entity.dxf.linetype = 'HasLinetype'
-    tags = Tags([DXFTag(62, 1), DXFTag(8, 'Layer'), DXFTag(6, 'Linetype')])
+    entity.dxf.layer = "HasLayer"
+    entity.dxf.linetype = "HasLinetype"
+    tags = Tags([DXFTag(62, 1), DXFTag(8, "Layer"), DXFTag(6, "Linetype")])
 
     recover_graphic_attributes(tags, entity.dxf)
     assert entity.dxf.color == 7
-    assert entity.dxf.layer == 'HasLayer'
-    assert entity.dxf.linetype == 'HasLinetype'
+    assert entity.dxf.layer == "HasLayer"
+    assert entity.dxf.linetype == "HasLinetype"
 
 
 def test_recover_acdb_entity_tags_ignores_unknown_tags():
     entity = DXFGraphic()
-    tags = Tags([DXFTag(62, 1), DXFTag(8, 'Layer'), DXFTag(99, 'Unknown')])
+    tags = Tags([DXFTag(62, 1), DXFTag(8, "Layer"), DXFTag(99, "Unknown")])
 
     unprocessed_tags = recover_graphic_attributes(tags, entity.dxf)
     assert len(unprocessed_tags) == 1
-    assert unprocessed_tags[0] == (99, 'Unknown')
+    assert unprocessed_tags[0] == (99, "Unknown")
 
 
 LINE = """0

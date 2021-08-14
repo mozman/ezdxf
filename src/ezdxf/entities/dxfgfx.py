@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Dict
 from ezdxf.entities import factory
@@ -14,7 +14,7 @@ from ezdxf.lldxf.const import (
 )
 from ezdxf.math import OCS, Matrix44
 from ezdxf.proxygraphic import load_proxy_graphic, export_proxy_graphic
-from .dxfentity import DXFEntity, base_class, SubclassProcessor
+from .dxfentity import DXFEntity, base_class, SubclassProcessor, DXFTagStorage
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     'DXFGraphic', 'acdb_entity', 'SeqEnd', 'add_entity',
-    'replace_entity', 'elevation_to_z_axis',
+    'replace_entity', 'elevation_to_z_axis', 'is_graphic_entity'
 ]
 
 GRAPHIC_PROPERTIES = {
@@ -93,7 +93,7 @@ acdb_entity = DefSubclass('AcDbEntity', {
     # PlotStyleName type enum (AcDb::PlotStyleNameType). Stored and moved around
     # as a 16-bit integer. Custom non-entity
     'plotstyle_enum': DXFAttr(380, dxfversion=DXF2007, default=1,
-                              optional=True),
+        optional=True),
 
     # Handle value of the PlotStyleName object, basically a hard pointer, but
     # has a different range to make backward compatibility easier to deal with.
@@ -146,7 +146,7 @@ class DXFGraphic(DXFEntity):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity)
 
     def load_dxf_attribs(
-            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        self, processor: SubclassProcessor = None) -> 'DXFNamespace':
         """ Adds subclass processing for 'AcDbEntity', requires previous base
         class processing by parent class.
 
@@ -322,7 +322,7 @@ class DXFGraphic(DXFEntity):
             layout.unlink_entity(self)
 
     def move_to_layout(self, layout: 'BaseLayout',
-                       source: 'BaseLayout' = None) -> None:
+        source: 'BaseLayout' = None) -> None:
         """
         Move entity from model space or a paper space layout to another layout.
         For block layout as source, the block layout has to be specified. Moving
@@ -476,7 +476,7 @@ class DXFGraphic(DXFEntity):
         return bool(self.xdata) and ('PE_URL' in self.xdata)
 
     def set_hyperlink(self, link: str, description: str = None,
-                      location: str = None):
+        location: str = None):
         """ Set hyperlink of an entity. """
         xdata = [(1001, 'PE_URL'), (1000, str(link))]
         if description:
@@ -499,7 +499,7 @@ class DXFGraphic(DXFEntity):
         location = ""
         if self.xdata and 'PE_URL' in self.xdata:
             xdata = [tag.value for tag in self.get_xdata('PE_URL') if
-                     tag.code == 1000]
+                tag.code == 1000]
             if len(xdata):
                 link = xdata[0]
             if len(xdata) > 1:
@@ -529,7 +529,7 @@ class DXFGraphic(DXFEntity):
         self.dxf.discard('plotstyle_handle')
 
     def _new_compound_entity(self, type_: str,
-                             dxfattribs: dict) -> 'DXFGraphic':
+        dxfattribs: dict) -> 'DXFGraphic':
         """ Create and bind  new entity with same layout settings as `self`.
 
         Used by INSERT & POLYLINE to create appended DXF entities, don't use it
@@ -569,7 +569,7 @@ def add_entity(entity: 'DXFGraphic', layout: 'BaseLayout') -> None:
 
 
 def replace_entity(source: 'DXFGraphic', target: 'DXFGraphic',
-                   layout: 'BaseLayout') -> None:
+    layout: 'BaseLayout') -> None:
     """ Add `target` entity to the entity database and to the given `layout`
     and replace the `source` entity by the `target` entity.
 
@@ -584,3 +584,11 @@ def replace_entity(source: 'DXFGraphic', target: 'DXFGraphic',
         layout.add_entity(target)
     else:
         source.destroy()
+
+
+def is_graphic_entity(entity: DXFEntity) -> bool:
+    if isinstance(entity, DXFGraphic):
+        return True
+    if isinstance(entity, DXFTagStorage) and entity.is_graphic_entity:
+        return True
+    return False

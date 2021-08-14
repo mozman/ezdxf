@@ -6,7 +6,7 @@ import ezdxf
 
 from ezdxf.lldxf.const import DXFAttributeError, DXF12, DXFValueError
 from ezdxf.lldxf.tagwriter import TagCollector
-from ezdxf.entities.dxfentity import DXFEntity
+from ezdxf.entities import DXFEntity, is_graphic_entity
 from ezdxf.lldxf.extendedtags import DXFTag
 from ezdxf.entities.line import Line
 
@@ -22,6 +22,10 @@ ABBA
 @pytest.fixture
 def entity():
     return DXFEntity.from_text(ENTITY)
+
+
+def test_is_not_graphic_entity(entity):
+    assert is_graphic_entity(entity) is False
 
 
 def test_default_constructor():
@@ -291,7 +295,7 @@ class TestXData:
             (1002, '}'),
         ]
         entity.set_xdata_list('ACAD', 'DSTYLE',
-                              [(1070, 2), (1000, 'mozman'), (1000, 'data')])
+            [(1070, 2), (1000, 'mozman'), (1000, 'data')])
         xdata_list = entity.get_xdata_list('ACAD', 'DSTYLE')
         assert len(xdata_list) == 6
         assert xdata_list == [
