@@ -86,7 +86,8 @@ class XRecord(DXFObject):
         super().__init__()
         self.tags = Tags()
 
-    def _copy_data(self, entity: "XRecord") -> None:
+    def _copy_data(self, entity: DXFEntity) -> None:
+        assert isinstance(entity, XRecord)
         entity.tags = Tags(entity.tags)
 
     def load_dxf_attribs(
@@ -147,8 +148,9 @@ class VBAProject(DXFObject):
         super().__init__()
         self.data = b""
 
-    def _copy_data(self, entity: "VBAProject") -> None:
-        entity.tags = Tags(entity.tags)
+    def _copy_data(self, entity: DXFEntity) -> None:
+        assert isinstance(entity, VBAProject)
+        entity.data = entity.data
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
@@ -229,8 +231,9 @@ class SortEntsTable(DXFObject):
         super().__init__()
         self.table: Dict[str, str] = dict()
 
-    def _copy_data(self, entity: "SortEntsTable") -> None:
-        entity.tags = dict(entity.table)
+    def _copy_data(self, entity: DXFEntity) -> None:
+        assert isinstance(entity, SortEntsTable)
+        entity.table = dict(entity.table)
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
@@ -309,6 +312,8 @@ class SortEntsTable(DXFObject):
 
     def remove_invalid_handles(self) -> None:
         """Remove all handles which do not exists in the drawing database."""
+        if self.doc is None:
+            return
         entitydb = self.doc.entitydb
         self.table = {
             handle: sort_handle

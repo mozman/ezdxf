@@ -433,8 +433,7 @@ class DXFEntity:
             if self.doc:
                 return (
                     self.doc.dxfversion
-                    >= self.DXFATTRIBS.get(key).dxfversion
-                    # type: ignore
+                    >= self.DXFATTRIBS.get(key).dxfversion  # type: ignore
                 )
             else:
                 return True

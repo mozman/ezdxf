@@ -340,7 +340,7 @@ class DXFGraphic(DXFEntity):
         """Returns the owner layout or returns ``None`` if entity is not
         assigned to any layout.
         """
-        if self.dxf.owner is None:  # unlinked entity
+        if self.dxf.owner is None or self.doc is None:  # unlinked entity
             return None
         try:
             return self.doc.layouts.get_layout_by_key(self.dxf.owner)
@@ -526,7 +526,7 @@ class DXFGraphic(DXFEntity):
 
     def has_hyperlink(self) -> bool:
         """Returns ``True`` if entity has an attached hyperlink."""
-        return bool(self.xdata) and ("PE_URL" in self.xdata)
+        return bool(self.xdata) and ("PE_URL" in self.xdata)  # type: ignore
 
     def set_hyperlink(
         self, link: str, description: str = None, location: str = None
@@ -577,7 +577,9 @@ class DXFGraphic(DXFEntity):
         # The layer attribute is preserved because layer doesn't need a layer
         # table entry, the layer attributes are reset to default attributes
         # like color is 7 and linetype is CONTINUOUS
-        has_linetype = bool(other) and self.dxf.linetype in other.linetypes
+        has_linetype = other is not None and (
+            self.dxf.linetype in other.linetypes  # type: ignore
+        )
         if not has_linetype:
             self.dxf.linetype = "BYLAYER"
         self.dxf.discard("material_handle")
@@ -608,7 +610,7 @@ class DXFGraphic(DXFEntity):
             entity = factory.new(type_, dxfattribs)
         entity.dxf.owner = self.dxf.owner
         entity.dxf.paperspace = self.dxf.paperspace
-        return entity
+        return entity  # type: ignore
 
 
 @factory.register_entity
