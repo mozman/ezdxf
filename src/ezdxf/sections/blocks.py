@@ -8,7 +8,13 @@ from ezdxf.lldxf.const import (
     DXFKeyError,
 )
 from ezdxf.lldxf import const
-from ezdxf.entities import factory, entity_linker
+from ezdxf.entities import (
+    factory,
+    entity_linker,
+    is_graphic_entity,
+    Block,
+    EndBlk,
+)
 from ezdxf.layouts.blocklayout import BlockLayout
 from ezdxf.render.arrows import ARROWS
 from .table import table_key
@@ -98,11 +104,10 @@ class BlocksSection:
         """
 
         def load_block_record(
-            block_entities: Sequence["DXFEntity"],
+            block: Block,
+            endblk: EndBlk,
+            block_entities: List["DXFEntity"],
         ) -> "BlockRecord":
-            block = cast("Block", block_entities[0])
-            endblk = cast("EndBlk", block_entities[-1])
-
             try:
                 block_record = cast(
                     "BlockRecord", block_records.get(block.dxf.name)
@@ -118,8 +123,8 @@ class BlocksSection:
             # information about a BLOCK and also owns all the entities of
             # this block definition.
             block_record.set_block(block, endblk)
-            for entity in block_entities[1:-1]:
-                block_record.add_entity(entity)
+            for entity in block_entities:
+                block_record.add_entity(entity)  # type: ignore
             return block_record
 
         def link_entities() -> Iterable["DXFEntity"]:
@@ -132,7 +137,7 @@ class BlocksSection:
                     yield entity
 
         block_records = self.block_records
-        section_head: "DXFTagStorage" = cast("DXFTagStorage", entities[0])
+        section_head = cast("DXFTagStorage", entities[0])
         if section_head.dxftype() != "SECTION" or section_head.base_class[
             1
         ] != (2, "BLOCKS"):
@@ -141,20 +146,28 @@ class BlocksSection:
             )
         # Remove SECTION entity
         del entities[0]
-        block_entities = []
+        content: List["DXFEntity"] = []
+        block = Block()
         for entity in link_entities():
-            block_entities.append(entity)
-            if entity.dxftype() == "ENDBLK":
-                block_record = load_block_record(block_entities)
+            if isinstance(entity, Block):
+                block = entity
+                content.clear()
+            elif isinstance(entity, EndBlk):
+                block_record = load_block_record(block, entity, content)
                 self.add(block_record)
-                block_entities = []
+            elif is_graphic_entity(entity):
+                content.append(entity)
+            else:
+                logger.warning(
+                    f"Ignored invalid DXF entity {entity.dxftype()} in {str(block)}"
+                )
 
     def _reconstruct_orphaned_block_records(self):
         """Find BLOCK_RECORD entries without block definition in the blocks
         section and create block definitions for this orphaned block records.
 
         """
-        for block_record in self.block_records:  # type: BlockRecord
+        for block_record in self.block_records:
             if block_record.block is None:
                 block = factory.create_db_entry(
                     "BLOCK",
