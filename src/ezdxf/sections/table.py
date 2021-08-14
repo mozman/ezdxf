@@ -2,6 +2,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Iterator, Optional, List
 from collections import OrderedDict
+import logging
 
 from ezdxf.lldxf import const
 from ezdxf.entities.table import TableHead
@@ -16,6 +17,8 @@ if TYPE_CHECKING:
         Layer,
         LineType,
     )
+
+logger = logging.getLogger("ezdxf")
 
 TABLENAMES = {
     "LAYER": "LAYERS",
@@ -51,7 +54,7 @@ class Table:
     ):
         self.doc = doc
         self.entries = OrderedDict()
-        self._head = None
+        self._head = TableHead()
         if entities is not None:
             self.load(iter(entities))
 
@@ -62,8 +65,15 @@ class Table:
             raise const.DXFStructureError(
                 "Critical structure error in TABLES section."
             )
+        expected_entry_dxftype = self.entry_dxftype
         for table_entry in entities:
-            self._append(table_entry)
+            if table_entry.dxftype() == expected_entry_dxftype:
+                self._append(table_entry)
+            else:
+                logger.warning(
+                    f"Ignored invalid DXF entity type '{table_entry.dxftype()}'"
+                    f" in table '{self.name}'"
+                )
 
     @classmethod
     def new_table(cls, name: str, handle: str, doc: "Drawing") -> "Table":
@@ -94,7 +104,7 @@ class Table:
     @property
     def name(self) -> str:
         """Table name like ``layers``."""
-        return tablename(self._head.dxf.name)
+        return tablename(self.entry_dxftype)
 
     def has_entry(self, name: str) -> bool:
         """Returns ``True`` if an table entry `name` exist."""
@@ -197,13 +207,14 @@ class Table:
         """Add a table entry, replaces existing entries with same name.
         (internal API).
         """
+        assert entry.dxftype() == self.entry_dxftype
         self.entries[self.key(entry.dxf.name)] = entry
 
     def add_entry(self, entry: "DXFEntity") -> None:
         """Add a table `entry`, created by other object than this table.
         (internal API)
         """
-        if entry.dxftype() != self._head.dxf.name:
+        if entry.dxftype() != self.entry_dxftype:
             raise const.DXFTypeError(
                 f"Invalid table entry type {entry.dxftype()} "
                 f"for table {self.name}"

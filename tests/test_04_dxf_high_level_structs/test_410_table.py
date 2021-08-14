@@ -14,11 +14,25 @@ def table():
     return doc.appids
 
 
+def test_table_entry_dxf_type(table):
+    assert table.entry_dxftype == "APPID"
+
+
 def test_ac1009_load_table():
     doc = ezdxf.new("R12")
     entities = list(load_entities(AC1009TABLE, "TABLES"))
     table = Table(doc, entities[1:-1])  # without SECTION tags and ENDTAB
-    assert 10 == len(table)
+    assert len(table) == 10
+
+
+def test_ignore_invalid_table_entry():
+    """ This LAYERS table has an invalid APPID table entry, which should be
+    ignored at the loading stage.
+    """
+    doc = ezdxf.new("R12")
+    entities = list(load_entities(INVALID_TABLE_ENTRY, "TABLES"))
+    table = Table(doc, entities[1:-1])  # without SECTION tags and ENDTAB
+    assert len(table) == 0
 
 
 def test_ac1009_write(table):
@@ -342,5 +356,27 @@ ACAD_PSEXT
   0
 ENDTAB
   0
+ENDSEC
+"""
+
+INVALID_TABLE_ENTRY = """0
+SECTION
+2
+TABLES
+0
+TABLE
+2
+LAYERS
+70
+10
+0
+APPID
+2
+ACAD
+70
+0
+0
+ENDTAB
+0
 ENDSEC
 """
