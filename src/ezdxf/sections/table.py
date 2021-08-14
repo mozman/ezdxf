@@ -74,7 +74,7 @@ class Table:
             else:
                 logger.warning(
                     f"Ignored invalid DXF entity type '{table_entry.dxftype()}'"
-                    f" in table '{self.name}'"
+                    f" in table '{self.name}'."
                 )
 
     @classmethod

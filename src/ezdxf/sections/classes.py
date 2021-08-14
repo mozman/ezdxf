@@ -1,7 +1,8 @@
-# Copyright (c) 2011-2020, Manfred Moitzi
+# Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterator, Iterable, Union, cast
 from collections import Counter, OrderedDict
+import logging
 
 from ezdxf.lldxf.const import DXFStructureError, DXF2004, DXF2000, DXFKeyError
 from ezdxf.entities.dxfclass import DXFClass
@@ -9,6 +10,8 @@ from ezdxf.entities.dxfentity import DXFEntity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, Drawing, DXFEntity, DXFTagStorage
+
+logger = logging.getLogger("ezdxf")
 
 # name: cpp_class_name (2), app_name (3), flags(90), was_a_proxy (280),
 # is_an_entity (281)
@@ -202,7 +205,13 @@ class ClassesSection:
             )
 
         for cls_entity in entities:
-            self.register(cast(DXFClass, cls_entity))
+            if isinstance(cls_entity, DXFClass):
+                self.register(cls_entity)
+            else:
+                logger.warning(
+                    f"Ignored invalid DXF entity type '{cls_entity.dxftype()}'"
+                    f" in section CLASSES."
+                )
 
     def register(
         self, classes: Union[DXFClass, Iterable[DXFClass]] = None
