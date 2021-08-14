@@ -1,15 +1,15 @@
 # Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterator, Iterable, Union, cast
+from typing import TYPE_CHECKING, Iterator, Iterable, Union, cast, Dict, Tuple
 from collections import Counter, OrderedDict
 import logging
 
 from ezdxf.lldxf.const import DXFStructureError, DXF2004, DXF2000, DXFKeyError
 from ezdxf.entities.dxfclass import DXFClass
-from ezdxf.entities.dxfentity import DXFEntity
+from ezdxf.entities.dxfentity import DXFEntity, DXFTagStorage
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing, DXFEntity, DXFTagStorage
+    from ezdxf.eztypes import TagWriter, Drawing
 
 logger = logging.getLogger("ezdxf")
 
@@ -186,7 +186,7 @@ class ClassesSection:
         # Multiple entries for 'name' possible -> key is (name, cpp_class_name)
         # DXFClasses are not stored in the entities database, because CLASS has
         # no handle.
-        self.classes = OrderedDict()
+        self.classes: Dict[Tuple[str, str], DXFClass] = OrderedDict()
         self.doc = doc
         if entities is not None:
             self.load(iter(entities))
@@ -195,7 +195,7 @@ class ClassesSection:
         return (cls for cls in self.classes.values())
 
     def load(self, entities: Iterator[DXFEntity]) -> None:
-        section_head: "DXFTagStorage" = cast("DXFTagStorage", next(entities))
+        section_head = cast(DXFTagStorage, next(entities))
 
         if section_head.dxftype() != "SECTION" or section_head.base_class[
             1
@@ -309,9 +309,10 @@ class ClassesSection:
         """Update CLASS instance counter for all registered classes, requires
         DXF R2004+.
         """
+        assert self.doc is not None
         if self.doc.dxfversion < DXF2004:
             return  # instance counter not supported
-        counter = Counter()
+        counter: Dict[str, int] = Counter()
         # count all entities in the entity database
         for entity in self.doc.entitydb.values():
             counter[entity.dxftype()] += 1
