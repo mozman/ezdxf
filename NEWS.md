@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.16.6b0 - dev
+Version 0.16.6b1 - dev
 ----------------------
 
 - NEW: `MPOLYGON` support for the `drawing` add-on
