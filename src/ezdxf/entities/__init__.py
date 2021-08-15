@@ -7,7 +7,7 @@ from . import factory
 from .xdict import ExtensionDict
 from .xdata import XData
 from .appdata import AppData, Reactors
-from .dxfentity import DXFEntity
+from .dxfentity import DXFEntity, DXFTagStorage
 from .dxfgfx import DXFGraphic, SeqEnd, is_graphic_entity
 from .dxfobj import DXFObject
 from .dxfns import DXFNamespace, SubclassProcessor

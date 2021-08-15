@@ -2,9 +2,10 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Iterator, cast
 from itertools import chain
+import logging
 
 from ezdxf.lldxf.tags import DXFStructureError
-from ezdxf.entities import entity_linker
+from ezdxf.entities import entity_linker, is_graphic_entity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -12,10 +13,12 @@ if TYPE_CHECKING:
         Drawing,
         DXFEntity,
         Tags,
-        DXFTagStorage,
         DXFGraphic,
+        DXFTagStorage,
         BlockRecord,
     )
+
+logger = logging.getLogger("ezdxf")
 
 
 class StoredSection:
@@ -84,13 +87,19 @@ class EntitySection:
 
         msp = cast("BlockRecord", self.doc.block_records.get("*Model_Space"))
         psp = cast("BlockRecord", self.doc.block_records.get("*Paper_Space"))
-        msp_layout_key = msp.dxf.handle
-        psp_layout_key = psp.dxf.handle
+        msp_layout_key: str = msp.dxf.handle
+        psp_layout_key: str = psp.dxf.handle
         linked_entities = entity_linker()
         # Don't store linked entities (VERTEX, ATTRIB, SEQEND) in entity space
         for entity in entities:
-            if not linked_entities(entity):
-                add(entity)  # type: ignore
+            if is_graphic_entity(entity):
+                if not linked_entities(entity):
+                    add(entity)  # type: ignore
+            else:
+                logger.warning(
+                    f"Ignored invalid DXF entity {entity.dxftype()} "
+                    f"in ENTITIES section."
+                )
 
     def export_dxf(self, tagwriter: "TagWriter") -> None:
         assert self.doc is not None
