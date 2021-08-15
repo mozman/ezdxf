@@ -1,6 +1,6 @@
 # Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List, Iterator
+from typing import TYPE_CHECKING, Iterable, List, Iterator, cast
 from itertools import chain
 
 from ezdxf.lldxf.tags import DXFStructureError
@@ -42,21 +42,24 @@ class EntitySection:
         if entities is not None:
             self._build(iter(entities))
 
-    def __iter__(self) -> Iterable["DXFEntity"]:
+    def __iter__(self) -> Iterator["DXFEntity"]:
         """Iterable for all entities of modelspace and active paperspace."""
+        assert self.doc is not None
         layouts = self.doc.layouts
         for entity in chain(layouts.modelspace(), layouts.active_layout()):
             yield entity
 
     def __len__(self) -> int:
         """Returns count of all entities of modelspace and active paperspace."""
+        assert self.doc is not None
         layouts = self.doc.layouts
         return len(layouts.modelspace()) + len(layouts.active_layout())
 
     # none public interface
 
     def _build(self, entities: Iterator["DXFEntity"]) -> None:
-        section_head: "DXFTagStorage" = next(entities)
+        assert self.doc is not None
+        section_head = cast("DXFTagStorage", next(entities))
         if section_head.dxftype() != "SECTION" or section_head.base_class[
             1
         ] != (2, "ENTITIES"):
@@ -79,21 +82,22 @@ class EntitySection:
             else:
                 msp.add_entity(entity)
 
-        msp: "BlockRecord" = self.doc.block_records.get("*Model_Space")
-        psp: "BlockRecord" = self.doc.block_records.get("*Paper_Space")
+        msp = cast("BlockRecord", self.doc.block_records.get("*Model_Space"))
+        psp = cast("BlockRecord", self.doc.block_records.get("*Paper_Space"))
         msp_layout_key = msp.dxf.handle
         psp_layout_key = psp.dxf.handle
         linked_entities = entity_linker()
         # Don't store linked entities (VERTEX, ATTRIB, SEQEND) in entity space
         for entity in entities:
             if not linked_entities(entity):
-                add(entity)
+                add(entity)  # type: ignore
 
     def export_dxf(self, tagwriter: "TagWriter") -> None:
+        assert self.doc is not None
         layouts = self.doc.layouts
         tagwriter.write_str("  0\nSECTION\n  2\nENTITIES\n")
         # Just write *Model_Space and the active *Paper_Space into the
         # ENTITIES section.
-        layouts.modelspace().entity_space.export_dxf(tagwriter)
-        layouts.active_layout().entity_space.export_dxf(tagwriter)
+        layouts.modelspace().entity_space.export_dxf(tagwriter)  # type: ignore
+        layouts.active_layout().entity_space.export_dxf(tagwriter)  # type: ignore
         tagwriter.write_tag2(0, "ENDSEC")
