@@ -19,7 +19,6 @@ from ezdxf.lldxf import const
 from ezdxf.entities import (
     factory,
     entity_linker,
-    is_graphic_entity,
     Block,
     EndBlk,
     BlockRecord,
@@ -175,12 +174,10 @@ class BlocksSection:
                     self.add(block_record)
                     block = _MISSING_BLOCK_
                 content.clear()
-            elif is_graphic_entity(entity):
-                content.append(entity)
             else:
-                logger.warning(
-                    f"Ignored invalid DXF entity {entity.dxftype()} in {str(block)}"
-                )
+                # No check for valid entities here:
+                # Use the audit- or the recover module to fix invalid DXF files!
+                content.append(entity)
 
     def _reconstruct_orphaned_block_records(self):
         """Find BLOCK_RECORD entries without block definition in the blocks

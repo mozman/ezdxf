@@ -18,7 +18,8 @@ def test_load_section():
 def test_auditor_removes_invalid_entities():
     doc = ezdxf.new()
     count = len(doc.objects)
-    doc.objects.add_object(Point())
+    # hack hack hack!
+    doc.objects._entity_space.add(Point())
     auditor = doc.audit()
     assert len(auditor.fixes) == 1
     assert len(doc.objects) == count, "should call purge() automatically"

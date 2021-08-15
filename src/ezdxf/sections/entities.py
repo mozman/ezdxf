@@ -5,7 +5,7 @@ from itertools import chain
 import logging
 
 from ezdxf.lldxf.tags import DXFStructureError
-from ezdxf.entities import entity_linker, is_graphic_entity
+from ezdxf.entities import entity_linker
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -92,14 +92,10 @@ class EntitySection:
         linked_entities = entity_linker()
         # Don't store linked entities (VERTEX, ATTRIB, SEQEND) in entity space
         for entity in entities:
-            if is_graphic_entity(entity):
-                if not linked_entities(entity):
-                    add(entity)  # type: ignore
-            else:
-                logger.warning(
-                    f"Ignored invalid DXF entity {entity.dxftype()} "
-                    f"in ENTITIES section."
-                )
+            # No check for valid entities here:
+            # Use the audit- or the recover module to fix invalid DXF files!
+            if not linked_entities(entity):
+                add(entity)  # type: ignore
 
     def export_dxf(self, tagwriter: "TagWriter") -> None:
         assert self.doc is not None

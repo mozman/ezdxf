@@ -5,12 +5,7 @@ import logging
 
 from ezdxf.entities.dictionary import Dictionary
 from ezdxf.entities import factory, is_dxf_object
-from ezdxf.lldxf.const import (
-    DXFStructureError,
-    DXFValueError,
-    RASTER_UNITS,
-    DXFKeyError,
-)
+from ezdxf.lldxf import const
 from ezdxf.entitydb import EntitySpace
 from ezdxf.query import EntityQuery
 from ezdxf.tools.handle import UnderlayKeyGenerator
@@ -66,18 +61,14 @@ class ObjectsSection:
         if section_head.dxftype() != "SECTION" or section_head.base_class[
             1
         ] != (2, "OBJECTS"):
-            raise DXFStructureError(
+            raise const.DXFStructureError(
                 "Critical structure error in the OBJECTS section."
             )
 
         for entity in entities:
-            if is_dxf_object(entity):
-                self._entity_space.add(entity)
-            else:
-                logger.warning(
-                    f"Ignored invalid DXF entity {entity.dxftype()} "
-                    f"in OBJECTS section."
-                )
+            # No check for valid entities here:
+            # Use the audit- or the recover module to fix invalid DXF files!
+            self._entity_space.add(entity)
 
     def export_dxf(self, tagwriter: "TagWriter") -> None:
         """Export DXF entity by `tagwriter`. (internal API)"""
@@ -115,7 +106,7 @@ class ObjectsSection:
         """Create a root dictionary. Has to be the first object in the objects
         section. (internal API)"""
         if len(self):
-            raise DXFStructureError(
+            raise const.DXFStructureError(
                 "Can not create root dictionary in none empty objects section."
             )
         logger.debug("Creating ROOT dictionary.")
@@ -147,7 +138,12 @@ class ObjectsSection:
 
     def add_object(self, entity: "DXFObject") -> None:
         """Add `entity` to OBJECTS section. (internal API)"""
-        self._entity_space.add(entity)
+        if is_dxf_object(entity):
+            self._entity_space.add(entity)
+        else:
+            raise const.DXFTypeError(
+                f"invalid DXF type {entity.dxftype()} for OBJECTS section"
+            )
 
     def add_dxf_object_with_reactor(
         self, dxftype: str, dxfattribs: dict
@@ -227,7 +223,7 @@ class ObjectsSection:
                 auditor.fixed_error(
                     code=AuditError.REMOVED_INVALID_DXF_OBJECT,
                     message=f"Removed invalid DXF entity {str(entity)} "
-                            f"from OBJECTS section.",
+                    f"from OBJECTS section.",
                 )
                 auditor.trash(entity)
 
@@ -334,10 +330,10 @@ class ObjectsSection:
         (internal API), public interface :meth:`~ezdxf.drawing.Drawing.set_raster_variables`
 
         """
-        units_: int = RASTER_UNITS.get(units, 0)
+        units_: int = const.RASTER_UNITS.get(units, 0)
         try:
             raster_vars = self.rootdict["ACAD_IMAGE_VARS"]
-        except DXFKeyError:
+        except const.DXFKeyError:
             raster_vars = self.add_dxf_object_with_reactor(
                 "RASTERVARIABLES",
                 dxfattribs={
@@ -363,7 +359,7 @@ class ObjectsSection:
         """
         try:
             wipeout_vars = self.rootdict["ACAD_WIPEOUT_VARS"]
-        except DXFKeyError:
+        except const.DXFKeyError:
             wipeout_vars = self.add_dxf_object_with_reactor(
                 "WIPEOUTVARIABLES",
                 dxfattribs={
@@ -450,7 +446,9 @@ class ObjectsSection:
             underlay_dict_name = "ACAD_{}DEFINITIONS".format(fmt)
             underlay_def_entity = "{}DEFINITION".format(fmt)
         else:
-            raise DXFValueError("Unsupported file format: '{}'".format(fmt))
+            raise const.DXFValueError(
+                "Unsupported file format: '{}'".format(fmt)
+            )
 
         if name is None:
             if fmt == "PDF":
