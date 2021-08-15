@@ -15,7 +15,7 @@ from ezdxf.lldxf.attributes import (
     group_code_mapping,
 )
 from ezdxf.tools import take2
-from .dxfentity import DXFEntity, base_class, SubclassProcessor
+from .dxfentity import DXFEntity, base_class, SubclassProcessor, DXFTagStorage
 from .factory import register_entity
 
 logger = logging.getLogger("ezdxf")
@@ -29,6 +29,7 @@ __all__ = [
     "VBAProject",
     "SortEntsTable",
     "Field",
+    "is_dxf_object",
 ]
 
 
@@ -372,3 +373,15 @@ class Field(DXFObject):
 
     DXFTYPE = "FIELD"
     DXFATTRIBS = DXFAttributes(base_class, acdb_field)
+
+
+def is_dxf_object(entity: DXFEntity) -> bool:
+    """Returns ``True`` if the `entity` is a DXF object from the OBJECTS section,
+    otherwise the entity is a table or class entry or a graphic entity which can
+    not reside in the OBJECTS section.
+    """
+    if isinstance(entity, DXFObject):
+        return True
+    if isinstance(entity, DXFTagStorage) and not entity.is_graphic_entity:
+        return True
+    return False
