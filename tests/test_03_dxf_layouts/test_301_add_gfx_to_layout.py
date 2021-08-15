@@ -2,8 +2,7 @@
 # License: MIT License
 import pytest
 import ezdxf
-from ezdxf.entities.dxfgfx import DXFGraphic
-from ezdxf.entities.dxfentity import DXFTagStorage
+from ezdxf.entities import DXFGraphic, DXFTagStorage
 
 
 @pytest.fixture(scope='module')
@@ -44,7 +43,7 @@ def test_delete_polyline3d(msp):
 
 def test_unlink_unsupported_entity(msp):
     size = len(msp)
-    alien = DXFTagStorage.new()
+    alien = DXFTagStorage.from_text(ALIEN_ENTITY)
     msp.add_entity(alien)
     assert alien.dxf.handle is not None
     assert alien.dxf.owner is None
@@ -56,11 +55,16 @@ def test_unlink_unsupported_entity(msp):
 
 def test_delete_unsupported_entity(msp):
     size = len(msp)
-    alien = DXFTagStorage.new()
+    alien = DXFTagStorage.from_text(ALIEN_ENTITY)
     msp.add_entity(alien)
     msp.delete_entity(alien)
     assert len(msp) == size
     assert alien.is_alive is False
+
+
+def test_cannot_add_invalid_dxf_objects(msp):
+    with pytest.raises(ezdxf.DXFTypeError):
+        msp.add_entity(DXFTagStorage())
 
 
 def test_create_line(msp):
@@ -137,3 +141,19 @@ def test_post_bind_hook_call(msp):
     checker.doc = msp.doc
     msp.add_entity(checker)
     assert checker._post_bind_hook is True
+
+ALIEN_ENTITY = """0
+POINT
+100
+AcDbEntity
+8
+0
+100
+AcDbPoint
+10
+0.0
+20
+0.0
+30
+0.0
+"""

@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterator
-from ezdxf.entities import factory
+from ezdxf.entities import factory, is_graphic_entity
 from ezdxf.lldxf.const import (
     DXFValueError,
     DXFStructureError,
@@ -196,6 +196,8 @@ class BaseLayout(_AbstractLayout):
             raise DXFStructureError(
                 "Adding entities from a different DXF drawing is not supported."
             )
+        if not is_graphic_entity(entity):
+            raise DXFTypeError(f"invalid entity {str(entity)}")
         self.block_record.add_entity(entity)
 
     def add_foreign_entity(self, entity: "DXFGraphic", copy=True) -> None:
