@@ -63,6 +63,9 @@ def is_anonymous_block(name: str) -> bool:
     return len(name) > 1 and name[0] == "*" and name[1] in "UEXDAT"
 
 
+_MISSING_BLOCK_ = Block()
+
+
 class BlocksSection:
     """
     Manages BLOCK definitions in a dict(), block names are case insensitive
@@ -147,14 +150,25 @@ class BlocksSection:
         # Remove SECTION entity
         del entities[0]
         content: List["DXFEntity"] = []
-        block = Block()
+        block: Block = _MISSING_BLOCK_
         for entity in link_entities():
             if isinstance(entity, Block):
+                if block is not _MISSING_BLOCK_:
+                    logger.warning(
+                        "Missing required ENDBLK, ignoring content."
+                    )
                 block = entity
                 content.clear()
             elif isinstance(entity, EndBlk):
-                block_record = load_block_record(block, entity, content)
-                self.add(block_record)
+                if block is _MISSING_BLOCK_:
+                    logger.warning(
+                        "Found ENDBLK without a preceding BLOCK, ignoring content."
+                    )
+                else:
+                    block_record = load_block_record(block, entity, content)
+                    self.add(block_record)
+                    block = _MISSING_BLOCK_
+                content.clear()
             elif is_graphic_entity(entity):
                 content.append(entity)
             else:
