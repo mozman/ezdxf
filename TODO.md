@@ -82,9 +82,6 @@ DXF Document
 DXF Audit & Repair
 ------------------
 
-- (v0.17) Stand-alone ATTRIB entities are not supported in model space, paper 
-  space layouts and blocks. BricsCAD and TrueView removes them silently. 
-  The RECOVER command of BricsCAD report them as errors.   
 - (<v1.0) check DIMENSION
   - overridden properties in XDATA have to be checked!
   - dimstyle exist; repair: set to 'Standard'

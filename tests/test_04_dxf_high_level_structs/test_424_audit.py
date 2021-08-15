@@ -3,7 +3,7 @@
 import pytest
 import ezdxf
 from ezdxf.audit import Auditor, AuditError, BlockCycleDetector
-from ezdxf.entities import factory, DXFTagStorage
+from ezdxf.entities import factory, DXFTagStorage, Attrib
 
 
 @pytest.fixture(scope="module")
@@ -190,10 +190,21 @@ def test_fix_insert_scale(doc, auditor):
 
 
 def test_remove_invalid_entities_from_blocks():
+    # The model space is just a BLOCK!
     doc = ezdxf.new()
     msp = doc.modelspace()
     # hack hack hack!
     msp.entity_space.add(DXFTagStorage())
+    auditor = doc.audit()
+    assert len(list(msp)) == 0
+    assert len(auditor.fixes) == 1
+
+
+def test_remove_standalone_attrib_entities_from_blocks():
+    # The model space is just a BLOCK!
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    msp.add_entity(Attrib())
     auditor = doc.audit()
     assert len(list(msp)) == 0
     assert len(auditor.fixes) == 1

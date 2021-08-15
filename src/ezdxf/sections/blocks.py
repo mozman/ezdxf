@@ -23,6 +23,7 @@ from ezdxf.entities import (
     EndBlk,
     BlockRecord,
     is_graphic_entity,
+    Attrib,
 )
 from ezdxf.layouts.blocklayout import BlockLayout
 from ezdxf.render.arrows import ARROWS
@@ -436,3 +437,13 @@ class BlocksSection:
                                 f" BLOCK '{block_record.dxf.name}'.",
                     )
                     auditor.trash(entity)
+                elif isinstance(entity, Attrib):
+                    # ATTRIB can only exist as an attached entity of the INSERT
+                    # entity!
+                    auditor.fixed_error(
+                        code=AuditError.REMOVED_STANDALONE_ATTRIB_ENTITY,
+                        message=f"Removed standalone {str(entity)} entity from"
+                                f" BLOCK '{block_record.dxf.name}'.",
+                    )
+                    auditor.trash(entity)
+
