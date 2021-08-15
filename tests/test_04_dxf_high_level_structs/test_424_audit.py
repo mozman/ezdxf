@@ -1,9 +1,9 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
 from ezdxf.audit import Auditor, AuditError, BlockCycleDetector
-from ezdxf.entities import factory
+from ezdxf.entities import factory, DXFTagStorage
 
 
 @pytest.fixture(scope="module")
@@ -187,3 +187,13 @@ def test_fix_insert_scale(doc, auditor):
     assert insert.dxf.xscale == 1.0
     assert insert.dxf.xscale == 1.0
     assert insert.dxf.xscale == 1.0
+
+
+def test_remove_invalid_entities_from_blocks():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    # hack hack hack!
+    msp.entity_space.add(DXFTagStorage())
+    auditor = doc.audit()
+    assert len(list(msp)) == 0
+    assert len(auditor.fixes) == 1

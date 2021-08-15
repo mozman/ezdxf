@@ -9,6 +9,8 @@ Version 0.16.6b0 - dev
 - NEW: `MPOLYGON` support for the `geo` add-on
 - NEW: `fast` argument for method `MText.plain_text()`
 - NEW: support for multi-line `ATTRIB` and `ATTDEF` entities in DXF R2018 
+- NEW: `Auditor` removes invalid DXF entities from layouts, blocks and the 
+       OBJECTS section
 - CHANGE: renamed `RenderContext.current_layer` to `RenderContext.current_layer_properties` 
 - CHANGE: renamed `RenderContext.current_block_reference` to `RenderContext.current_block_reference_properties` 
 - CHANGE: extended entity validation for `GROUP`

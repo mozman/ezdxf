@@ -22,9 +22,11 @@ from ezdxf.entities import (
     Block,
     EndBlk,
     BlockRecord,
+    is_graphic_entity,
 )
 from ezdxf.layouts.blocklayout import BlockLayout
 from ezdxf.render.arrows import ARROWS
+from ezdxf.audit import Auditor, AuditError
 from .table import table_key
 import warnings
 import logging
@@ -408,3 +410,29 @@ class BlocksSection:
         warnings.warn(
             "Blocks.purge() deactivated, unsafe operation!", DeprecationWarning
         )
+
+    def audit(self, auditor: Auditor) -> None:
+        """Audit and repair BLOCKS section.
+
+        .. important::
+
+            Do not delete entities while auditing process, because this
+            would alter the entity database while iterating, instead use::
+
+                auditor.trash(entity)
+
+            to delete invalid entities after auditing automatically.
+
+        """
+        assert self.doc is auditor.doc, "Auditor for different DXF document."
+
+        for block_record in self.block_records:
+            assert isinstance(block_record, BlockRecord)
+            for entity in block_record.entity_space:
+                if not is_graphic_entity(entity):
+                    auditor.fixed_error(
+                        code=AuditError.REMOVED_INVALID_GRAPHIC_ENTITY,
+                        message=f"Removed invalid DXF entity {str(entity)} from"
+                                f" BLOCK '{block_record.dxf.name}'.",
+                    )
+                    auditor.trash(entity)

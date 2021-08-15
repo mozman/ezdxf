@@ -224,6 +224,7 @@ class Auditor:
         self.check_tables()
         self.audit_all_database_entities()
         self.doc.objects.audit(self)
+        self.doc.blocks.audit(self)
         self.doc.groups.audit(self)
         self.check_block_reference_cycles()
         self.doc.layouts.audit(self)
