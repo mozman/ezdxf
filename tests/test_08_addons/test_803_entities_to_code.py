@@ -186,18 +186,6 @@ def test_insert_to_code():
         assert new_entity.get_dxf_attrib(name) == entity.get_dxf_attrib(name)
 
 
-def test_attrib_to_code():
-    from ezdxf.entities.attrib import Attrib
-    entity = Attrib.new(handle='ABBA', owner='0', dxfattribs={
-        'tag': 'TAG1',
-        'text': 'Text1',
-        'insert': (2, 3, 4),
-    })
-    new_entity = translate_to_code_and_execute(entity)
-    for name in ('tag', 'text', 'insert'):
-        assert new_entity.get_dxf_attrib(name) == entity.get_dxf_attrib(name)
-
-
 def test_attdef_to_code():
     from ezdxf.entities.attrib import AttDef
     entity = AttDef.new(handle='ABBA', owner='0', dxfattribs={

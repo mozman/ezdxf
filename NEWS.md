@@ -10,11 +10,13 @@ Version 0.16.6b0 - dev
 - NEW: `fast` argument for method `MText.plain_text()`
 - NEW: support for multi-line `ATTRIB` and `ATTDEF` entities in DXF R2018 
 - NEW: `Auditor` removes invalid DXF entities from layouts, blocks and the 
-       OBJECTS section
+  OBJECTS section
 - NEW: `Auditor` removes standalone ATTRIB entities from layouts and blocks
 - CHANGE: renamed `RenderContext.current_layer` to `RenderContext.current_layer_properties` 
 - CHANGE: renamed `RenderContext.current_block_reference` to `RenderContext.current_block_reference_properties` 
 - CHANGE: extended entity validation for `GROUP`
+- REMOVED: `BaseLayout.add_attrib()` factory method to add standalone `ATTRIB` 
+  entities. `ATTRIB` entities cannot exist as standalone entities.
 - BUGFIX: add missing "doc" argument to DXF loaders, DXF version was not 
   available at loading stage 
 - BUGFIX: DXF export for `ARC_DIMENSION`

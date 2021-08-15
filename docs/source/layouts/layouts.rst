@@ -100,8 +100,6 @@ BaseLayout
 
     .. automethod:: add_auto_blockref
 
-    .. automethod:: add_attrib
-
     .. automethod:: add_attdef
 
     .. automethod:: add_polyline2d

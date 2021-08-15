@@ -367,29 +367,6 @@ class CreatorInterface:
         autofill()
         return self.add_blockref(autoblock.name, insert, dxfattribs)
 
-    def add_attrib(
-        self,
-        tag: str,
-        text: str,
-        insert: "Vertex" = (0, 0),
-        dxfattribs: Dict = None,
-    ) -> "Attrib":
-        """
-        Add an :class:`~ezdxf.entities.Attrib` as stand alone DXF entity.
-
-        Args:
-            tag: tag name as string
-            text: tag value as string
-            insert: insert location as 2D/3D point in :ref:`WCS`
-            dxfattribs: additional DXF attributes for :class:`Attrib` entity
-
-        """
-        dxfattribs = dict(dxfattribs or {})
-        dxfattribs["tag"] = str(tag)
-        dxfattribs["text"] = str(text)
-        dxfattribs["insert"] = Vec3(insert)
-        return self.new_entity("ATTRIB", dxfattribs)
-
     def add_attdef(
         self,
         tag: str,
