@@ -426,7 +426,7 @@ class DXFGraphic(DXFEntity):
             Do not delete entities while auditing process, because this
             would alter the entity database while iterating, instead use::
 
-                auditor.trash(entity.dxf.handle)
+                auditor.trash(entity)
 
             to delete invalid entities after auditing automatically.
 

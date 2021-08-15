@@ -41,6 +41,8 @@ class AuditError(IntEnum):
     FOUND_TAG_OUTSIDE_SECTION = 8
     REMOVED_UNSUPPORTED_SECTION = 9
     REMOVED_UNSUPPORTED_TABLE = 10
+    REMOVED_INVALID_GRAPHIC_ENTITY = 11
+    REMOVED_INVALID_DXF_OBJECT = 12
 
     UNDEFINED_LINETYPE = 100
     UNDEFINED_DIMENSION_STYLE = 101
@@ -221,10 +223,12 @@ class Auditor:
         self.check_root_dict()
         self.check_tables()
         self.audit_all_database_entities()
+        self.doc.objects.audit(self)
         self.doc.groups.audit(self)
         self.check_block_reference_cycles()
         self.doc.layouts.audit(self)
         self.empty_trashcan()
+        self.doc.objects.purge()
         return self.errors
 
     def empty_trashcan(self):
@@ -234,7 +238,7 @@ class Auditor:
     def trash(self, entity: DXFEntity) -> None:
         if entity is None or not entity.is_alive:
             return
-        if self.has_trashcan:
+        if self.has_trashcan and entity.dxf.handle is not None:
             self._trashcan.add(entity.dxf.handle)
         else:
             entity.destroy()

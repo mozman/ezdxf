@@ -14,6 +14,7 @@ from ezdxf.lldxf.const import (
 from ezdxf.entitydb import EntitySpace
 from ezdxf.query import EntityQuery
 from ezdxf.tools.handle import UnderlayKeyGenerator
+from ezdxf.audit import Auditor, AuditError
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import GeoData, DictionaryVar
@@ -206,6 +207,29 @@ class ObjectsSection:
     def query(self, query: str = "*") -> EntityQuery:
         """Get all DXF objects matching the :ref:`entity query string`."""
         return EntityQuery(iter(self), query)
+
+    def audit(self, auditor: Auditor) -> None:
+        """Audit and repair OBJECTS section.
+
+        .. important::
+
+            Do not delete entities while auditing process, because this
+            would alter the entity database while iterating, instead use::
+
+                auditor.trash(entity)
+
+            to delete invalid entities after auditing automatically.
+
+        """
+        assert self.doc is auditor.doc, "Auditor for different DXF document."
+        for entity in self._entity_space:
+            if not is_dxf_object(entity):
+                auditor.fixed_error(
+                    code=AuditError.REMOVED_INVALID_DXF_OBJECT,
+                    message=f"Removed invalid DXF entity {str(entity)} "
+                            f"from OBJECTS section.",
+                )
+                auditor.trash(entity)
 
     def add_dictionary(
         self, owner: str = "0", hard_owned: bool = False

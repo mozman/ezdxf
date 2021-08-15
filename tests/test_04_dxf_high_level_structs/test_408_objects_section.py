@@ -1,17 +1,27 @@
-# Copyright (c) 2011-2019, Manfred Moitzi
+# Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
 import ezdxf
 from ezdxf.tools.test import load_entities
 from ezdxf.sections.objects import ObjectsSection
+from ezdxf.entities import Point
 
 
 def test_load_section():
-    doc = ezdxf.new('R2000')
-    ent = load_entities(TESTOBJECTS, 'OBJECTS')
+    doc = ezdxf.new("R2000")
+    ent = load_entities(TESTOBJECTS, "OBJECTS")
 
     section = ObjectsSection(doc, ent)
     assert len(section) == 6
-    assert section[0].dxftype() == 'DICTIONARY'
+    assert section[0].dxftype() == "DICTIONARY"
+
+
+def test_auditor_removes_invalid_entities():
+    doc = ezdxf.new()
+    count = len(doc.objects)
+    doc.objects.add_object(Point())
+    auditor = doc.audit()
+    assert len(auditor.fixes) == 1
+    assert len(doc.objects) == count, "should call purge() automatically"
 
 
 TESTOBJECTS = """  0
