@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Iterable, Tuple, cast, Iterator
 import logging
 
 from ezdxf.entities.dictionary import Dictionary
-from ezdxf.entities import factory
+from ezdxf.entities import factory, is_dxf_object
 from ezdxf.lldxf.const import (
     DXFStructureError,
     DXFValueError,
@@ -70,7 +70,13 @@ class ObjectsSection:
             )
 
         for entity in entities:
-            self._entity_space.add(entity)
+            if is_dxf_object(entity):
+                self._entity_space.add(entity)
+            else:
+                logger.warning(
+                    f"Ignored invalid DXF entity {entity.dxftype()} "
+                    f"in OBJECTS section."
+                )
 
     def export_dxf(self, tagwriter: "TagWriter") -> None:
         """Export DXF entity by `tagwriter`. (internal API)"""
