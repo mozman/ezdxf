@@ -1,14 +1,14 @@
 # Purpose: menger sponge addon for ezdxf
-# Created: 06.12.2016
-# Copyright (c) 2016-2020 Manfred Moitzi
+# Copyright (c) 2016-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List, Tuple
+from typing import TYPE_CHECKING, Iterable, List, Tuple, Iterator
 from ezdxf.math import Vec3
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, GenericLayoutType, Matrix44, UCS
 
+# fmt: off
 all_cubes_size_3_template = [
     (0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0), (1, 1, 0), (2, 1, 0), (0, 2, 0), (1, 2, 0), (2, 2, 0),
     (0, 0, 1), (1, 0, 1), (2, 0, 1), (0, 1, 1), (1, 1, 1), (2, 1, 1), (0, 2, 1), (1, 2, 1), (2, 2, 1),
@@ -76,6 +76,8 @@ cube_faces = [
     [0, 4, 7, 3],
 ]
 
+# fmt: on
+
 
 class MengerSponge:
     """
@@ -95,38 +97,53 @@ class MengerSponge:
 
     """
 
-    def __init__(self, location: 'Vertex' = (0., 0., 0.), length: float = 1., level: int = 1, kind: int = 0):
-        self.cube_definitions = _menger_sponge(location=location, length=length, level=level, kind=kind)
+    def __init__(
+        self,
+        location: "Vertex" = (0.0, 0.0, 0.0),
+        length: float = 1.0,
+        level: int = 1,
+        kind: int = 0,
+    ):
+        self.cube_definitions = _menger_sponge(
+            location=location, length=length, level=level, kind=kind
+        )
 
-    def vertices(self) -> Iterable['Vertex']:
-        """
-        Yields the cube vertices as list of (x, y, z) tuples.
-
-        """
+    def vertices(self) -> Iterator["Vertex"]:
+        """Yields the cube vertices as list of (x, y, z) tuples."""
         for location, length in self.cube_definitions:
             x, y, z = location
-            yield [Vec3(x + xf * length, y + yf * length, z + zf * length) for xf, yf, zf in _cube_vertices]
+            yield [
+                Vec3(x + xf * length, y + yf * length, z + zf * length)
+                for xf, yf, zf in _cube_vertices
+            ]
 
     __iter__ = vertices
 
     @staticmethod
     def faces() -> List[List[int]]:
-        """
-        Returns list of cube faces. All cube vertices have the same order, so one faces list fits them all.
+        """Returns list of cube faces. All cube vertices have the same order, so
+        one faces list fits them all.
 
         """
         return cube_faces
 
-    def render(self, layout: 'GenericLayoutType', merge: bool = False, dxfattribs: dict = None,
-               matrix: 'Matrix44' = None, ucs: 'UCS' = None) -> None:
-        """
-        Renders the menger sponge into layout, set `merge` to ``True`` for rendering the whole menger sponge into
-        one MESH entity, set `merge` to ``False`` for rendering the individual cubes of the menger sponge as
+    def render(
+        self,
+        layout: "GenericLayoutType",
+        merge: bool = False,
+        dxfattribs: dict = None,
+        matrix: "Matrix44" = None,
+        ucs: "UCS" = None,
+    ) -> None:
+        """Renders the menger sponge into layout, set `merge` to ``True`` for
+        rendering the whole menger sponge into one MESH entity, set `merge` to
+        ``False`` for rendering the individual cubes of the menger sponge as
         MESH entities.
 
         Args:
             layout: DXF target layout
-            merge: ``True`` for one MESH entity, ``False`` for individual MESH entities per cube
+            merge: ``True`` for one MESH entity, ``False`` for individual MESH
+                entities per cube
             dxfattribs: DXF attributes for the MESH entities
             matrix: apply transformation matrix at rendering
             ucs: apply UCS transformation at rendering
@@ -134,41 +151,47 @@ class MengerSponge:
         """
         if merge:
             mesh = self.mesh()
-            mesh.render_mesh(layout, dxfattribs=dxfattribs, matrix=matrix, ucs=ucs)
+            mesh.render_mesh(
+                layout, dxfattribs=dxfattribs, matrix=matrix, ucs=ucs
+            )
         else:
             for cube in self.cubes():
                 cube.render_mesh(layout, dxfattribs, matrix=matrix, ucs=ucs)
 
-    def cubes(self) -> Iterable[MeshTransformer]:
-        """ Yields all cubes of the menger sponge as individual :class:`MeshTransformer` objects.
+    def cubes(self) -> Iterator[MeshTransformer]:
+        """Yields all cubes of the menger sponge as individual
+        :class:`MeshTransformer` objects.
         """
         faces = self.faces()
         for vertices in self:
             mesh = MeshVertexMerger()
-            mesh.add_mesh(vertices=vertices, faces=faces)
-            yield MeshTransformer.from_builder(mesh)
+            mesh.add_mesh(vertices=vertices, faces=faces)  # type: ignore
+            yield MeshTransformer.from_builder(mesh)  # type: ignore
 
     def mesh(self) -> MeshTransformer:
-        """ Returns geometry as one :class:`MeshTransformer` object.
-        """
+        """Returns geometry as one :class:`MeshTransformer` object."""
         faces = self.faces()
         mesh = MeshVertexMerger()
         for vertices in self:
-            mesh.add_mesh(vertices=vertices, faces=faces)
-        return MeshTransformer.from_builder(mesh)
+            mesh.add_mesh(vertices=vertices, faces=faces)  # type: ignore
+        return MeshTransformer.from_builder(mesh)  # type: ignore
 
 
-def _subdivide(location: 'Vertex' = (0., 0., 0.), length: float = 1., kind: int = 0) -> List[Tuple['Vertex', float]]:
-    """
-    Divides a cube in sub-cubes and keeps only cubes determined by the building schema.
+def _subdivide(
+    location: "Vertex" = (0.0, 0.0, 0.0), length: float = 1.0, kind: int = 0
+) -> List[Tuple["Vertex", float]]:
+    """Divides a cube in sub-cubes and keeps only cubes determined by the
+    building schema.
 
-    All sides are parallel to x-, y- and z-axis, location is a (x, y, z) tuple and represents the coordinates of the
-    lower left corner (nearest to the axis origin) of the cube, length is the side-length of the cube
+    All sides are parallel to x-, y- and z-axis, location is a (x, y, z) tuple
+    and represents the coordinates of the lower left corner (nearest to the axis
+    origin) of the cube, length is the side-length of the cube
 
     Args:
         location: (x, y, z) tuple, coordinates of the lower left corner of the cube
         length: side length of the cube
-        kind: int for 0: original menger sponge; 1: Variant XOX; 2: Variant OXO; 3: Jerusalem Cube;
+        kind: int for 0: original menger sponge; 1: Variant XOX; 2: Variant OXO;
+            3: Jerusalem Cube;
 
     Returns: list of sub-cubes (location, length)
 
@@ -189,23 +212,27 @@ def _subdivide(location: 'Vertex' = (0., 0., 0.), length: float = 1., kind: int 
     return [(sub_location(indices), step_size) for indices in remaining_cubes]
 
 
-def _menger_sponge(location: 'Vertex' = (0., 0., 0.), length: float = 1., level: int = 1, kind: int = 0) -> List[
-    Tuple[Vec3, float]]:
-    """
-    Builds a menger sponge for given level.
+def _menger_sponge(
+    location: "Vertex" = (0.0, 0.0, 0.0),
+    length: float = 1.0,
+    level: int = 1,
+    kind: int = 0,
+) -> List[Tuple[Vec3, float]]:
+    """Builds a menger sponge for given level.
 
     Args:
         location: (x, y, z) tuple, coordinates of the lower left corner of the cube
         length: side length of the cube
         level: level of menger sponge, has to be 1 or bigger
-        kind: int for 0: original menger sponge; 1: Variant XOX; 2: Variant OXO; 3: Jerusalem Cube;
+        kind: int for 0: original menger sponge; 1: Variant XOX; 2: Variant OXO;
+            3: Jerusalem Cube;
 
     Returns: list of sub-cubes (location, length)
 
     """
     kind = int(kind)
     if kind not in (0, 1, 2, 3):
-        raise ValueError('kind has to be 0, 1, 2 or 3.')
+        raise ValueError("kind has to be 0, 1, 2 or 3.")
     level = int(level)
     if level < 1:
         raise ValueError("level has to be 1 or bigger.")
