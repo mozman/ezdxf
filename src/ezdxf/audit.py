@@ -103,15 +103,14 @@ class ErrorEntry:
 
 
 class Auditor:
-    def __init__(self, doc: Optional["Drawing"]):
-        self.doc: Optional["Drawing"] = doc
-        self._rootdict_handle = doc.rootdict.dxf.handle if doc else "0"
+    def __init__(self, doc: "Drawing"):
+        assert doc is not None
+        self.doc = doc
+        self._rootdict_handle = doc.rootdict.dxf.handle
         self.errors: List[ErrorEntry] = []
         self.fixes: List[ErrorEntry] = []
-        self._trashcan: Optional["EntityDB.Trashcan"] = (
-            doc.entitydb.new_trashcan() if doc else None
-        )
-        self._post_audit_jobs = []
+        self._trashcan = doc.entitydb.new_trashcan()
+        self._post_audit_jobs: List[Callable[[], None]] = []
 
     def reset(self) -> None:
         self.errors = []
@@ -492,7 +491,7 @@ class BlockCycleDetector:
             path.pop()
             return False
 
-        path = []
+        path: List[str] = []
         block_name = self.key(block_name)
         return check(block_name)
 
