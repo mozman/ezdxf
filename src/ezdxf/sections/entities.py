@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING, Iterable, List, Iterator, cast
 from itertools import chain
 import logging
 
-from ezdxf.lldxf.tags import DXFStructureError
-from ezdxf.entities import entity_linker
+from ezdxf.lldxf import const
+from ezdxf.entities import entity_linker, is_graphic_entity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -66,18 +66,19 @@ class EntitySection:
         if section_head.dxftype() != "SECTION" or section_head.base_class[
             1
         ] != (2, "ENTITIES"):
-            raise DXFStructureError(
+            raise const.DXFStructureError(
                 "Critical structure error in ENTITIES section."
             )
 
         def add(entity: "DXFGraphic"):
             handle = entity.dxf.owner
             # higher priority for owner handle
+            paperspace = 0
             if handle == msp_layout_key:
                 paperspace = 0
             elif handle == psp_layout_key:
                 paperspace = 1
-            else:  # paperspace flag as fallback
+            elif entity.dxf.hasattr("paperspace"):  # paperspace flag as fallback
                 paperspace = entity.dxf.paperspace
 
             if paperspace:

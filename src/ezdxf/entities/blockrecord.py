@@ -226,7 +226,11 @@ class BlockRecord(DXFEntity):
                 self.dxf.handle, paperspace=int(self.is_any_paperspace)
             )
         except AttributeError:
-            logger.debug(f"Unexpected entity {str(entity)}")
+            logger.debug(
+                f"Unexpected DXF entity {str(entity)} in {str(self.block)}"
+            )
+        # Add unexpected entities also to the entity space - auditor should fix
+        # errors!
         self.entity_space.add(entity)
 
     def unlink_entity(self, entity: "DXFGraphic") -> None:

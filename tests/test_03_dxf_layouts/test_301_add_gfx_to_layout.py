@@ -41,7 +41,7 @@ def test_delete_polyline3d(msp):
     assert len(db) == db_count
 
 
-def test_unlink_unsupported_entity(msp):
+def test_unlink_unsupported_graphic_entity(msp):
     size = len(msp)
     alien = DXFTagStorage.from_text(ALIEN_ENTITY)
     msp.add_entity(alien)
@@ -53,7 +53,7 @@ def test_unlink_unsupported_entity(msp):
     assert alien.is_alive is True
 
 
-def test_delete_unsupported_entity(msp):
+def test_delete_unsupported_graphic_entity(msp):
     size = len(msp)
     alien = DXFTagStorage.from_text(ALIEN_ENTITY)
     msp.add_entity(alien)

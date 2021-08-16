@@ -1,5 +1,6 @@
-#  Copyright (c) 2020, Manfred Moitzi
+#  Copyright (c) 2020-2021, Manfred Moitzi
 #  License: MIT License
+import typing
 from typing import (
     TYPE_CHECKING,
     BinaryIO,
@@ -167,8 +168,8 @@ class Recover:
         self.section_dict: "SectionDict" = dict()
 
         # Store error messages from low level processes
-        self.errors = []
-        self.fixes = []
+        self.errors: List[Tuple[int, str]] = []
+        self.fixes: List[Tuple[int, str]] = []
 
         # Detected DXF version
         self.dxfversion = const.DXF12
@@ -187,13 +188,15 @@ class Recover:
         recover_tool.load_section_dict(sections)
         tables = recover_tool.section_dict.get("TABLES")
         if tables:
-            tables = recover_tool.rebuild_tables(tables)
+            tables = recover_tool.rebuild_tables(tables)  # type: ignore
             recover_tool.section_dict["TABLES"] = tables
 
         section_dict = recover_tool.section_dict
         for name, entities in section_dict.items():
             if name in {"TABLES", "BLOCKS", "OBJECTS", "ENTITIES"}:
-                section_dict[name] = list(recover_tool.check_entities(entities))
+                section_dict[name] = list(
+                    recover_tool.check_entities(entities)  # type: ignore
+                )
 
         return recover_tool
 
@@ -213,6 +216,7 @@ class Recover:
 
         """
 
+        # Invalid placed DXF entities are removed in the audit process!
         def close_section():
             # ENDSEC tag is not collected
             nonlocal collector, inside_section
@@ -272,9 +276,9 @@ class Recover:
                 )
                 orphans.append(tag)
 
-        orphans = []
-        sections = []
-        collector = []
+        orphans: List[DXFTag] = []
+        sections: List[List[DXFTag]] = []
+        collector: List[DXFTag] = []
         inside_section = False
         for tag in tags:
             code, value = tag
@@ -318,7 +322,7 @@ class Recover:
             sections.append(orphans)
             orphans = []
 
-        section_dict = dict()
+        section_dict: "SectionDict" = dict()
         for section in sections:
             code, name = section[1]
             if code == 2:
@@ -331,14 +335,14 @@ class Recover:
                     )
                 )
 
-        header = section_dict.setdefault(
+        header = section_dict.setdefault(  # type: ignore
             "HEADER",
-            [
-                DXFTag(0, "SECTION"),
-                DXFTag(2, "HEADER"),
+            [  # type: ignore
+                DXFTag(0, "SECTION"),  # type: ignore
+                DXFTag(2, "HEADER"),  # type: ignore
             ],
         )
-        self.rescue_orphaned_header_vars(header, orphans)
+        self.rescue_orphaned_header_vars(header, orphans)  # type: ignore
         self.dxfversion = _detect_dxf_version(header)
         if self.dxfversion <= const.DXF12:
             _remove_unsupported_sections(section_dict)
@@ -346,6 +350,10 @@ class Recover:
 
     def rebuild_tables(self, tables: List[Tags]) -> List[Tags]:
         """Rebuild TABLES section."""
+
+        # Note: the recover module does not report invalid placed table entries,
+        # it just recovers them. The "normal" loading process ignore these
+        # misplaced table entries and logs a warning.
 
         def append_table(name: str):
             if name not in content:
@@ -460,8 +468,8 @@ def safe_tag_loader(
     encoding = detect_encoding(detector_stream)
 
     # Apply repair filter:
-    tags = repair.tag_reorder_layer(tags)
-    tags = repair.filter_invalid_point_codes(tags)
+    tags = repair.tag_reorder_layer(tags)  # type: ignore
+    tags = repair.filter_invalid_point_codes(tags)  # type: ignore
     return byte_tag_compiler(tags, encoding, messages=messages, errors=errors)
 
 
@@ -475,7 +483,9 @@ def _search_int(s: Union[str, bytes]) -> int:
     an exception. e.g. "42xyz" is a valid integer 42
 
     """
-    res = re.search(INT_PATTERN_S if isinstance(s, str) else INT_PATTERN_B, s)
+    res = re.search(  # type: ignore
+        INT_PATTERN_S if isinstance(s, str) else INT_PATTERN_B, s
+    )
     if res:
         s = res.group()
     return int(s)
@@ -491,7 +501,7 @@ def _search_float(s: Union[str, bytes]) -> float:
     an exception. e.g. "47.11xyz" is a valid double 47.11
 
     """
-    res = re.search(
+    res = re.search(  # type: ignore
         FLOAT_PATTERN_S if isinstance(s, str) else FLOAT_PATTERN_B, s
     )
     if res:
@@ -499,6 +509,7 @@ def _search_float(s: Union[str, bytes]) -> float:
     return float(s)
 
 
+@typing.no_type_check
 def bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
     """Yields :class:``DXFTag`` objects from a bytes `stream`
     (untrusted external  source), skips all comment tags (group code == 999).
@@ -561,10 +572,10 @@ def synced_bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
     while True:
         seeking_valid_group_code = True
         while seeking_valid_group_code:
-            code = readline()
+            code = readline()  # type: ignore
             if code:
                 try:  # hard to find an int
-                    code = _search_int(code)
+                    code = _search_int(code)  # type: ignore
                 except ValueError:
                     pass
                 else:
@@ -621,6 +632,7 @@ def detect_encoding(tags: Iterable[DXFTag]) -> str:
     return const.DEFAULT_ENCODING
 
 
+@typing.no_type_check
 def byte_tag_compiler(
     tags: Iterable[DXFTag],
     encoding=const.DEFAULT_ENCODING,
