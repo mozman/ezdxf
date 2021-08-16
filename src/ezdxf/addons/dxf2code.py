@@ -100,6 +100,7 @@ def block_to_code(
         :class:`Code`
 
     """
+    assert block.block is not None
     dxfattribs = _purge_handles(block.block.dxfattribs())
     block_name = dxfattribs.pop("name")
     base_point = dxfattribs.pop("base_point")
@@ -758,7 +759,7 @@ class _SourceCodeGenerator:
             )
         arg = "    {}={},"
 
-        if entity.has_gradient_data:
+        if entity.gradient is not None:
             g = entity.gradient
             add_line("e.set_gradient(")
             add_line(arg.format("color1", str(g.color1)))
