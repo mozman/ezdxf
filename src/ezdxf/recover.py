@@ -1,7 +1,14 @@
 #  Copyright (c) 2020, Manfred Moitzi
 #  License: MIT License
 from typing import (
-    TYPE_CHECKING, BinaryIO, Iterable, List, Callable, Tuple, Dict, Union,
+    TYPE_CHECKING,
+    BinaryIO,
+    Iterable,
+    List,
+    Callable,
+    Tuple,
+    Dict,
+    Union,
 )
 import itertools
 import re
@@ -15,7 +22,12 @@ from ezdxf.lldxf.encoding import (
     decode_dxf_unicode,
 )
 from ezdxf.lldxf.types import (
-    DXFTag, DXFVertex, DXFBinaryTag, POINT_CODES, BINARY_DATA, TYPE_TABLE,
+    DXFTag,
+    DXFVertex,
+    DXFBinaryTag,
+    POINT_CODES,
+    BINARY_DATA,
+    TYPE_TABLE,
     MAX_GROUP_CODE,
 )
 from ezdxf.lldxf.tags import group_tags, Tags
@@ -26,16 +38,23 @@ from ezdxf.audit import Auditor, AuditError
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, SectionDict
 
-__all__ = ['read', 'readfile']
+__all__ = ["read", "readfile"]
 
 EXCLUDE_STRUCTURE_CHECK = {
-    'SECTION', 'ENDSEC', 'EOF', 'TABLE', 'ENDTAB', 'ENDBLK', 'SEQEND'
+    "SECTION",
+    "ENDSEC",
+    "EOF",
+    "TABLE",
+    "ENDTAB",
+    "ENDBLK",
+    "SEQEND",
 }
 
 
-def readfile(filename: Union[str, Path],
-             errors: str = 'surrogateescape') -> Tuple['Drawing', 'Auditor']:
-    """ Read a DXF document from file system similar to :func:`ezdxf.readfile`,
+def readfile(
+    filename: Union[str, Path], errors: str = "surrogateescape"
+) -> Tuple["Drawing", "Auditor"]:
+    """Read a DXF document from file system similar to :func:`ezdxf.readfile`,
     but this function will repair as much flaws as possible, runs the required
     audit process automatically the DXF document and the :class:`Auditor`.
 
@@ -53,15 +72,16 @@ def readfile(filename: Union[str, Path],
 
     """
     filename = str(filename)
-    with open(filename, mode='rb') as fp:
+    with open(filename, mode="rb") as fp:
         doc, auditor = read(fp, errors=errors)
     doc.filename = filename
     return doc, auditor
 
 
-def read(stream: BinaryIO,
-         errors: str = 'surrogateescape') -> Tuple['Drawing', 'Auditor']:
-    """ Read a DXF document from a binary-stream similar to :func:`ezdxf.read`,
+def read(
+    stream: BinaryIO, errors: str = "surrogateescape"
+) -> Tuple["Drawing", "Auditor"]:
+    """Read a DXF document from a binary-stream similar to :func:`ezdxf.read`,
     but this function will detect the text encoding automatically and repair
     as much flaws as possible, runs the required audit process afterwards
     and returns the DXF document and the :class:`Auditor`.
@@ -83,9 +103,10 @@ def read(stream: BinaryIO,
     return _load_and_audit_document(recover_tool)
 
 
-def explore(filename: Union[str, Path],
-            errors: str = 'ignore') -> Tuple['Drawing', 'Auditor']:
-    """ Read a DXF document from file system similar to :func:`readfile`,
+def explore(
+    filename: Union[str, Path], errors: str = "ignore"
+) -> Tuple["Drawing", "Auditor"]:
+    """Read a DXF document from file system similar to :func:`readfile`,
     but this function will use a special tag loader, which synchronise the tag
     stream if invalid tags occur. This function is intended to load corrupted
     DXF files and should only be used to explore such files, data loss is very
@@ -107,15 +128,16 @@ def explore(filename: Union[str, Path],
 
     """
     filename = str(filename)
-    with open(filename, mode='rb') as fp:
-        recover_tool = Recover.run(fp, errors=errors,
-                                   loader=synced_bytes_loader)
+    with open(filename, mode="rb") as fp:
+        recover_tool = Recover.run(
+            fp, errors=errors, loader=synced_bytes_loader
+        )
         doc, auditor = _load_and_audit_document(recover_tool)
     doc.filename = filename
     return doc, auditor
 
 
-def _load_and_audit_document(recover_tool) -> Tuple['Drawing', 'Auditor']:
+def _load_and_audit_document(recover_tool) -> Tuple["Drawing", "Auditor"]:
     from ezdxf.document import Drawing
 
     doc = Drawing()
@@ -132,7 +154,7 @@ def _load_and_audit_document(recover_tool) -> Tuple['Drawing', 'Auditor']:
 
 # noinspection PyMethodMayBeStatic
 class Recover:
-    """ Loose coupled recovering tools. """
+    """Loose coupled recovering tools."""
 
     def __init__(self, loader: Callable = None):
         # different tag loading strategies can be used:
@@ -142,7 +164,7 @@ class Recover:
         self.tag_loader = loader or bytes_loader
 
         # The main goal of all efforts, a Drawing compatible dict of sections:
-        self.section_dict: 'SectionDict' = dict()
+        self.section_dict: "SectionDict" = dict()
 
         # Store error messages from low level processes
         self.errors = []
@@ -152,31 +174,36 @@ class Recover:
         self.dxfversion = const.DXF12
 
     @classmethod
-    def run(cls, stream: BinaryIO, loader: Callable = None,
-            errors: str = 'surrogateescape') -> 'Recover':
-        """ Execute the recover process. """
+    def run(
+        cls,
+        stream: BinaryIO,
+        loader: Callable = None,
+        errors: str = "surrogateescape",
+    ) -> "Recover":
+        """Execute the recover process."""
         recover_tool = Recover(loader)
         tags = recover_tool.load_tags(stream, errors)
         sections = recover_tool.rebuild_sections(tags)
         recover_tool.load_section_dict(sections)
-        tables = recover_tool.section_dict.get('TABLES')
+        tables = recover_tool.section_dict.get("TABLES")
         if tables:
             tables = recover_tool.rebuild_tables(tables)
-            recover_tool.section_dict['TABLES'] = tables
+            recover_tool.section_dict["TABLES"] = tables
 
         section_dict = recover_tool.section_dict
         for name, entities in section_dict.items():
-            if name in {'TABLES', 'BLOCKS', 'OBJECTS', 'ENTITIES'}:
+            if name in {"TABLES", "BLOCKS", "OBJECTS", "ENTITIES"}:
                 section_dict[name] = list(recover_tool.check_entities(entities))
 
         return recover_tool
 
     def load_tags(self, stream: BinaryIO, errors: str) -> Iterable[DXFTag]:
-        return safe_tag_loader(stream, self.tag_loader,
-                               messages=self.errors, errors=errors)
+        return safe_tag_loader(
+            stream, self.tag_loader, messages=self.errors, errors=errors
+        )
 
     def rebuild_sections(self, tags: Iterable[DXFTag]) -> List[List[DXFTag]]:
-        """ Collect tags between SECTION and ENDSEC or next SECTION tag
+        """Collect tags between SECTION and ENDSEC or next SECTION tag
         as list of DXFTag objects, collects tags outside of sections
         as an extra section.
 
@@ -193,35 +220,41 @@ class Recover:
                 sections.append(collector)
             else:  # missing SECTION
                 # ignore this tag, it is even not an orphan
-                self.fixes.append((
-                    AuditError.MISSING_SECTION_TAG,
-                    'DXF structure error: missing SECTION tag.'
-                ))
+                self.fixes.append(
+                    (
+                        AuditError.MISSING_SECTION_TAG,
+                        "DXF structure error: missing SECTION tag.",
+                    )
+                )
             collector = []
             inside_section = False
 
         def open_section():
             nonlocal inside_section
             if inside_section:  # missing ENDSEC
-                self.fixes.append((
-                    AuditError.MISSING_ENDSEC_TAG,
-                    'DXF structure error: missing ENDSEC tag.'
-                ))
+                self.fixes.append(
+                    (
+                        AuditError.MISSING_ENDSEC_TAG,
+                        "DXF structure error: missing ENDSEC tag.",
+                    )
+                )
                 close_section()
             collector.append(tag)
             inside_section = True
 
         def process_structure_tag():
-            if value == 'SECTION':
+            if value == "SECTION":
                 open_section()
-            elif value == 'ENDSEC':
+            elif value == "ENDSEC":
                 close_section()
-            elif value == 'EOF':
+            elif value == "EOF":
                 if inside_section:
-                    self.fixes.append((
-                        AuditError.MISSING_ENDSEC_TAG,
-                        'DXF structure error: missing ENDSEC tag.'
-                    ))
+                    self.fixes.append(
+                        (
+                            AuditError.MISSING_ENDSEC_TAG,
+                            "DXF structure error: missing ENDSEC tag.",
+                        )
+                    )
                     close_section()
             else:
                 collect()
@@ -230,11 +263,13 @@ class Recover:
             if inside_section:
                 collector.append(tag)
             else:
-                self.fixes.append((
-                    AuditError.FOUND_TAG_OUTSIDE_SECTION,
-                    f'DXF structure error: found tag outside section: '
-                    f'({code}, {value})'
-                ))
+                self.fixes.append(
+                    (
+                        AuditError.FOUND_TAG_OUTSIDE_SECTION,
+                        f"DXF structure error: found tag outside section: "
+                        f"({code}, {value})",
+                    )
+                )
                 orphans.append(tag)
 
         orphans = []
@@ -252,7 +287,7 @@ class Recover:
         return sections
 
     def load_section_dict(self, sections: List[List[DXFTag]]) -> None:
-        """ Merge sections of same type. """
+        """Merge sections of same type."""
 
         def add_section(name: str, tags) -> None:
             if name in section_dict:
@@ -266,17 +301,19 @@ class Recover:
                     self.section_dict[name] = list(group_tags(section, 0))
 
         def _remove_unsupported_sections(d: Dict):
-            for name in ('CLASSES', 'OBJECTS', 'ACDSDATA'):
+            for name in ("CLASSES", "OBJECTS", "ACDSDATA"):
                 if name in d:
                     del d[name]
-                    self.fixes.append((
-                        AuditError.REMOVED_UNSUPPORTED_SECTION,
-                        f'Removed unsupported {name} section for DXF R12.'
-                    ))
+                    self.fixes.append(
+                        (
+                            AuditError.REMOVED_UNSUPPORTED_SECTION,
+                            f"Removed unsupported {name} section for DXF R12.",
+                        )
+                    )
 
         # Last section could be orphaned tags:
         orphans = sections.pop()
-        if orphans and orphans[0] == (0, 'SECTION'):
+        if orphans and orphans[0] == (0, "SECTION"):
             # The last section contains not the orphaned tags:
             sections.append(orphans)
             orphans = []
@@ -287,15 +324,20 @@ class Recover:
             if code == 2:
                 add_section(name, section)
             else:  # invalid section name tag e.g. (2, "HEADER")
-                self.fixes.append((
-                    AuditError.MISSING_SECTION_NAME_TAG,
-                    'DXF structure error: missing section name tag, ignore section.'
-                ))
+                self.fixes.append(
+                    (
+                        AuditError.MISSING_SECTION_NAME_TAG,
+                        "DXF structure error: missing section name tag, ignore section.",
+                    )
+                )
 
-        header = section_dict.setdefault('HEADER', [
-            DXFTag(0, 'SECTION'),
-            DXFTag(2, 'HEADER'),
-        ])
+        header = section_dict.setdefault(
+            "HEADER",
+            [
+                DXFTag(0, "SECTION"),
+                DXFTag(2, "HEADER"),
+            ],
+        )
         self.rescue_orphaned_header_vars(header, orphans)
         self.dxfversion = _detect_dxf_version(header)
         if self.dxfversion <= const.DXF12:
@@ -303,7 +345,7 @@ class Recover:
         _build_section_dict(section_dict)
 
     def rebuild_tables(self, tables: List[Tags]) -> List[Tags]:
-        """ Rebuild TABLES section. """
+        """Rebuild TABLES section."""
 
         def append_table(name: str):
             if name not in content:
@@ -314,9 +356,9 @@ class Recover:
                 tables.append(head)
             else:
                 # The new table head gets a valid handle from Auditor.
-                tables.append(Tags([DXFTag(0, 'TABLE'), DXFTag(2, name)]))
+                tables.append(Tags([DXFTag(0, "TABLE"), DXFTag(2, name)]))
             tables.extend(content[name])
-            tables.append(Tags([DXFTag(0, 'ENDTAB')]))
+            tables.append(Tags([DXFTag(0, "ENDTAB")]))
 
         heads = dict()
         content = defaultdict(list)
@@ -324,7 +366,7 @@ class Recover:
 
         for entry in tables:
             name = entry[0].value.upper()
-            if name == 'TABLE':
+            if name == "TABLE":
                 try:
                     table_name = entry[1].value.upper()
                 except (IndexError, AttributeError):
@@ -333,26 +375,27 @@ class Recover:
                     heads[table_name] = entry
             elif name in valid_tables:
                 content[name].append(entry)
-        tables = [Tags([DXFTag(0, 'SECTION'), DXFTag(2, 'TABLES')])]
+        tables = [Tags([DXFTag(0, "SECTION"), DXFTag(2, "TABLES")])]
 
         names = list(const.TABLE_NAMES_ACAD_ORDER)
         if self.dxfversion <= const.DXF12:
             # Ignore BLOCK_RECORD table
-            names.remove('BLOCK_RECORD')
-            if 'BLOCK_RECORD' in content:
-                self.fixes.append((
-                    AuditError.REMOVED_UNSUPPORTED_TABLE,
-                    f'Removed unsupported BLOCK_RECORD table for DXF R12.'
-                ))
+            names.remove("BLOCK_RECORD")
+            if "BLOCK_RECORD" in content:
+                self.fixes.append(
+                    (
+                        AuditError.REMOVED_UNSUPPORTED_TABLE,
+                        f"Removed unsupported BLOCK_RECORD table for DXF R12.",
+                    )
+                )
 
         for name in names:
             append_table(name)
         return tables
 
     def rescue_orphaned_header_vars(
-            self,
-            header: List[DXFTag],
-            orphans: Iterable[DXFTag]) -> None:
+        self, header: List[DXFTag], orphans: Iterable[DXFTag]
+    ) -> None:
         var_name = None
         for tag in orphans:
             code, value = tag
@@ -382,17 +425,18 @@ def _detect_dxf_version(header: List) -> str:
                 return dxfversion
             else:
                 break
-        if tag == (9, '$ACADVER'):
+        if tag == (9, "$ACADVER"):
             next_is_dxf_version = True
     return const.DXF12
 
 
-def safe_tag_loader(stream: BinaryIO,
-                    loader: Callable = None,
-                    messages: List = None,
-                    errors: str = 'surrogateescape',
-                    ) -> Iterable[DXFTag]:
-    """ Yields :class:``DXFTag`` objects from a bytes `stream`
+def safe_tag_loader(
+    stream: BinaryIO,
+    loader: Callable = None,
+    messages: List = None,
+    errors: str = "surrogateescape",
+) -> Iterable[DXFTag]:
+    """Yields :class:``DXFTag`` objects from a bytes `stream`
     (untrusted external  source), skips all comment tags (group code == 999).
 
     - Fixes unordered and invalid vertex tags.
@@ -426,7 +470,7 @@ INT_PATTERN_B = re.compile(rb"[+-]?\d+")
 
 
 def _search_int(s: Union[str, bytes]) -> int:
-    """ Emulate the behavior of the C function stoll(), which just stop
+    """Emulate the behavior of the C function stoll(), which just stop
     converting strings to integers at the first invalid char without raising
     an exception. e.g. "42xyz" is a valid integer 42
 
@@ -442,20 +486,21 @@ FLOAT_PATTERN_B = re.compile(rb"[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?")
 
 
 def _search_float(s: Union[str, bytes]) -> float:
-    """ Emulate the behavior of the C function stod(), which just stop
+    """Emulate the behavior of the C function stod(), which just stop
     converting strings to doubles at the first invalid char without raising
     an exception. e.g. "47.11xyz" is a valid double 47.11
 
     """
     res = re.search(
-        FLOAT_PATTERN_S if isinstance(s, str) else FLOAT_PATTERN_B, s)
+        FLOAT_PATTERN_S if isinstance(s, str) else FLOAT_PATTERN_B, s
+    )
     if res:
         s = res.group()
     return float(s)
 
 
 def bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
-    """ Yields :class:``DXFTag`` objects from a bytes `stream`
+    """Yields :class:``DXFTag`` objects from a bytes `stream`
     (untrusted external  source), skips all comment tags (group code == 999).
 
     ``DXFTag.code`` is always an ``int`` and ``DXFTag.value`` is always a
@@ -478,9 +523,10 @@ def bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
                 try:  # harder to find an int
                     code = _search_int(code)
                 except ValueError:
-                    code = code.decode(errors='ignore')
+                    code = code.decode(errors="ignore")
                     raise const.DXFStructureError(
-                        f'Invalid group code "{code}" at line {line}.')
+                        f'Invalid group code "{code}" at line {line}.'
+                    )
         else:
             return
 
@@ -488,14 +534,14 @@ def bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
         # ByteIO(): empty strings indicates EOF
         if value:
             if code != 999:
-                yield DXFTag(code, value.rstrip(b'\r\n'))
+                yield DXFTag(code, value.rstrip(b"\r\n"))
             line += 2
         else:
             return
 
 
 def synced_bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
-    """ Yields :class:``DXFTag`` objects from a bytes `stream`
+    """Yields :class:``DXFTag`` objects from a bytes `stream`
     (untrusted external source), skips all comment tags (group code == 999).
 
     ``DXFTag.code`` is always an ``int`` and ``DXFTag.value`` is always a
@@ -529,17 +575,17 @@ def synced_bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
         value = readline()
         if value:
             if code != 999:
-                yield DXFTag(code, value.rstrip(b'\r\n'))
+                yield DXFTag(code, value.rstrip(b"\r\n"))
         else:
             return  # empty string is EOF
 
 
-DWGCODEPAGE = b'$DWGCODEPAGE'
-ACADVER = b'$ACADVER'
+DWGCODEPAGE = b"$DWGCODEPAGE"
+ACADVER = b"$ACADVER"
 
 
 def detect_encoding(tags: Iterable[DXFTag]) -> str:
-    """ Detect text encoding from header variables $DWGCODEPAGE and $ACADVER
+    """Detect text encoding from header variables $DWGCODEPAGE and $ACADVER
     out of a stream of DXFTag objects.
 
     Assuming a malformed DXF file:
@@ -570,17 +616,18 @@ def detect_encoding(tags: Iterable[DXFTag]) -> str:
             next_tag = None
 
         if encoding and dxfversion:
-            return 'utf8' if dxfversion >= const.DXF2007 else encoding
+            return "utf8" if dxfversion >= const.DXF2007 else encoding
 
     return const.DEFAULT_ENCODING
 
 
-def byte_tag_compiler(tags: Iterable[DXFTag],
-                      encoding=const.DEFAULT_ENCODING,
-                      messages: List = None,
-                      errors: str = 'surrogateescape',
-                      ) -> Iterable[DXFTag]:
-    """ Compiles DXF tag values imported by bytes_loader() into Python types.
+def byte_tag_compiler(
+    tags: Iterable[DXFTag],
+    encoding=const.DEFAULT_ENCODING,
+    messages: List = None,
+    errors: str = "surrogateescape",
+) -> Iterable[DXFTag]:
+    """Compiles DXF tag values imported by bytes_loader() into Python types.
 
     Raises DXFStructureError() for invalid float values and invalid coordinate
     values.
@@ -628,7 +675,8 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
                 # e.g. y-code for x-code=10 is 20
                 if y.code != code + 10:
                     raise const.DXFStructureError(
-                        f"Missing required y-coordinate near line: {line}.")
+                        f"Missing required y-coordinate near line: {line}."
+                    )
                 # optional z coordinate
                 z = next(tags)
                 line += 2
@@ -637,13 +685,15 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
                     if z.code == code + 20:
                         try:
                             point = (
-                                float(x.value), float(y.value), float(z.value)
+                                float(x.value),
+                                float(y.value),
+                                float(z.value),
                             )
                         except ValueError:  # search for any float values
                             point = (
                                 _search_float(x.value),
                                 _search_float(y.value),
-                                _search_float(z.value)
+                                _search_float(z.value),
                             )
                     else:
                         try:
@@ -656,7 +706,8 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
                         undo_tag = z
                 except ValueError:
                     raise const.DXFStructureError(
-                        f'Invalid floating point values near line: {line}.')
+                        f"Invalid floating point values near line: {line}."
+                    )
                 yield DXFVertex(code, point)
             elif code in BINARY_DATA:
                 # maybe pre compiled in low level tagger (binary DXF)
@@ -667,7 +718,8 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
                         tag = DXFBinaryTag.from_string(code, x.value)
                     except ValueError:
                         raise const.DXFStructureError(
-                            f'Invalid binary data near line: {line}.')
+                            f"Invalid binary data near line: {line}."
+                        )
                 yield tag
             else:  # just a single tag
                 type_ = TYPE_TABLE.get(code, str)
@@ -677,13 +729,15 @@ def byte_tag_compiler(tags: Iterable[DXFTag],
                         # remove white space from structure tags
                         value = x.value.strip().upper()
                     try:  # 2 stages to document decoding errors
-                        str_ = value.decode(encoding, errors='strict')
+                        str_ = value.decode(encoding, errors="strict")
                     except UnicodeDecodeError:
                         str_ = value.decode(encoding, errors=errors)
-                        messages.append((
-                            AuditError.DECODING_ERROR,
-                            f'Fixed unicode decoding error near line {line}'
-                        ))
+                        messages.append(
+                            (
+                                AuditError.DECODING_ERROR,
+                                f"Fixed unicode decoding error near line {line}",
+                            )
+                        )
 
                     # Convert DXF unicode notation "\U+xxxx" to unicode,
                     # but exclude structure tags (code>0):
