@@ -1,13 +1,12 @@
-# Purpose: The MText entity is a composite entity, consisting of basic TEXT entities.
-# Created: 09.03.2010, adapted 2018 for ezdxf
-# Copyright (c) 2010-2018, Manfred Moitzi
+# Copyright (c) 2010-2021, Manfred Moitzi
 # License: MIT License
-"""
-MText -- MultiLine-Text-Entity, created by simple TEXT-Entities.
+"""MText - MultiLine-Text-Entity, build by simple TEXT-Entities.
 
 MTEXT was introduced in R13, so this is a replacement with multiple simple
 TEXT entities. Supports valign (TOP, MIDDLE, BOTTOM), halign (LEFT, CENTER,
 RIGHT), rotation for an arbitrary (!) angle and mirror.
+
+This add-on exist only for porting 'dxfwrite' projects to 'ezdxf'.
 
 """
 from typing import TYPE_CHECKING
@@ -21,15 +20,13 @@ if TYPE_CHECKING:
 
 
 class MText(SubscriptAttributes):
-    """
-    MultiLine-Text buildup with simple Text-Entities.
-
+    """MultiLine-Text buildup with simple Text-Entities.
 
     Caution: align point is always the insert point, I don't need a second
     alignpoint because horizontal alignment FIT, ALIGN, BASELINE_MIDDLE is not
     supported.
 
-    linespacing -- linespacing in percent of height, 1.5 = 150% = 1+1/2 lines
+    linespacing -- line spacing in percent of height, 1.5 = 150% = 1+1/2 lines
 
     supported align values:
         'BOTTOM_LEFT', 'BOTTOM_CENTER', 'BOTTOM_RIGHT'
@@ -37,6 +34,7 @@ class MText(SubscriptAttributes):
         'TOP_LEFT',    'TOP_CENTER',    'TOP_RIGHT'
 
     """
+
     MIRROR_X = const.MIRROR_X
     MIRROR_Y = const.MIRROR_Y
     TOP = const.TOP
@@ -45,50 +43,56 @@ class MText(SubscriptAttributes):
     LEFT = const.LEFT
     CENTER = const.CENTER
     RIGHT = const.RIGHT
-    VALID_ALIGN = frozenset([
-        'BOTTOM_LEFT',
-        'BOTTOM_CENTER',
-        'BOTTOM_RIGHT',
-        'MIDDLE_LEFT',
-        'MIDDLE_CENTER',
-        'MIDDLE_RIGHT',
-        'TOP_LEFT',
-        'TOP_CENTER',
-        'TOP_RIGHT',
-    ])
+    VALID_ALIGN = frozenset(
+        [
+            "BOTTOM_LEFT",
+            "BOTTOM_CENTER",
+            "BOTTOM_RIGHT",
+            "MIDDLE_LEFT",
+            "MIDDLE_CENTER",
+            "MIDDLE_RIGHT",
+            "TOP_LEFT",
+            "TOP_CENTER",
+            "TOP_RIGHT",
+        ]
+    )
 
-    def __init__(self, text: str, insert: 'Vertex', linespacing: float = 1.5, **kwargs):
-        self.textlines = text.split('\n')
+    def __init__(
+        self, text: str, insert: "Vertex", linespacing: float = 1.5, **kwargs
+    ):
+        self.textlines = text.split("\n")
         self.insert = insert
         self.linespacing = linespacing
-        if 'align' in kwargs:
-            self.align = kwargs.get('align', 'TOP_LEFT').upper()
+        if "align" in kwargs:
+            self.align = kwargs.get("align", "TOP_LEFT").upper()
         else:  # support for compatibility: valign, halign
-            halign = kwargs.get('halign', 0)
-            valign = kwargs.get('valign', 3)
-            self.align = const.TEXT_ALIGNMENT_BY_FLAGS.get((halign, valign), 'TOP_LEFT')
+            halign = kwargs.get("halign", 0)
+            valign = kwargs.get("valign", 3)
+            self.align = const.TEXT_ALIGNMENT_BY_FLAGS.get(
+                (halign, valign), "TOP_LEFT"
+            )
 
         if self.align not in MText.VALID_ALIGN:
-            raise ezdxf.DXFValueError('Invalid align parameter: {}'.format(self.align))
+            raise ezdxf.DXFValueError(f"Invalid align parameter: {self.align}")
 
-        self.height = kwargs.get('height', 1.0)
-        self.style = kwargs.get('style', 'STANDARD')
-        self.oblique = kwargs.get('oblique', 0.0)  # in degree
-        self.rotation = kwargs.get('rotation', 0.0)  # in degree
-        self.xscale = kwargs.get('xscale', 1.0)
-        self.mirror = kwargs.get('mirror', 0)  # renamed to text_generation_flag in ezdxf
-        self.layer = kwargs.get('layer', '0')
-        self.color = kwargs.get('color', const.BYLAYER)
+        self.height = kwargs.get("height", 1.0)
+        self.style = kwargs.get("style", "STANDARD")
+        self.oblique = kwargs.get("oblique", 0.0)  # in degree
+        self.rotation = kwargs.get("rotation", 0.0)  # in degree
+        self.xscale = kwargs.get("xscale", 1.0)
+        self.mirror = kwargs.get(
+            "mirror", 0
+        )  # renamed to text_generation_flag in ezdxf
+        self.layer = kwargs.get("layer", "0")
+        self.color = kwargs.get("color", const.BYLAYER)
 
     @property
     def lineheight(self) -> float:
-        """ Absolute linespacing in drawing units. 
-        """
+        """Absolute line spacing in drawing units."""
         return self.height * self.linespacing
 
-    def render(self, layout: 'GenericLayoutType') -> None:
-        """ Create the DXF-TEXT entities. 
-        """
+    def render(self, layout: "GenericLayoutType") -> None:
+        """Create the DXF-TEXT entities."""
         textlines = self.textlines
         if len(textlines) > 1:
             if self.mirror & const.MIRROR_Y:
@@ -105,20 +109,19 @@ class MText(SubscriptAttributes):
                 dxfattribs=self._dxfattribs(self.insert),
             )
 
-    def _get_align_point(self, linenum: int) -> 'Vertex':
-        """ Calculate the align point depending on the line number. 
-        """
+    def _get_align_point(self, linenum: int) -> "Vertex":
+        """Calculate the align point depending on the line number."""
         x = self.insert[0]
         y = self.insert[1]
         try:
             z = self.insert[2]
         except IndexError:
-            z = 0.
+            z = 0.0
         # rotation not respected
 
-        if self.align.startswith('TOP'):
+        if self.align.startswith("TOP"):
             y -= linenum * self.lineheight
-        elif self.align.startswith('MIDDLE'):
+        elif self.align.startswith("MIDDLE"):
             y0 = linenum * self.lineheight
             fullheight = (len(self.textlines) - 1) * self.lineheight
             y += (fullheight / 2) - y0
@@ -126,10 +129,8 @@ class MText(SubscriptAttributes):
             y += (len(self.textlines) - 1 - linenum) * self.lineheight
         return self._rotate((x, y, z))  # consider rotation
 
-    def _rotate(self, alignpoint: 'Vertex') -> 'Vertex':
-        """
-        Rotate alignpoint around insert point about rotation degrees.
-        """
+    def _rotate(self, alignpoint: "Vertex") -> "Vertex":
+        """Rotate alignpoint around insert point about rotation degrees."""
         dx = alignpoint[0] - self.insert[0]
         dy = alignpoint[1] - self.insert[1]
         beta = math.radians(self.rotation)
@@ -137,22 +138,20 @@ class MText(SubscriptAttributes):
         y = self.insert[1] + dy * math.cos(beta) + dx * math.sin(beta)
         return round(x, 6), round(y, 6), alignpoint[2]
 
-    def _dxfattribs(self, alignpoint: 'Vertex') -> dict:
-        """
-        Build keyword arguments for TEXT entity creation.
-        """
-        halign, valign = const.TEXT_ALIGN_FLAGS.get(self.align)
+    def _dxfattribs(self, alignpoint: "Vertex") -> dict:
+        """Build keyword arguments for TEXT entity creation."""
+        halign, valign = const.TEXT_ALIGN_FLAGS.get(self.align, (0, 3))
         return {
-            'insert': alignpoint,
-            'align_point': alignpoint,
-            'layer': self.layer,
-            'color': self.color,
-            'style': self.style,
-            'height': self.height,
-            'width': self.xscale,
-            'text_generation_flag': self.mirror,
-            'rotation': self.rotation,
-            'oblique': self.oblique,
-            'halign': halign,
-            'valign': valign,
+            "insert": alignpoint,
+            "align_point": alignpoint,
+            "layer": self.layer,
+            "color": self.color,
+            "style": self.style,
+            "height": self.height,
+            "width": self.xscale,
+            "text_generation_flag": self.mirror,
+            "rotation": self.rotation,
+            "oblique": self.oblique,
+            "halign": halign,
+            "valign": valign,
         }
