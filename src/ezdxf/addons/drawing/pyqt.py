@@ -1,7 +1,7 @@
 # Copyright (c) 2020-2021, Matthew Broadway
 # License: MIT License
 import math
-from typing import Optional, Iterable, Dict, Sequence, Union
+from typing import Optional, Iterable, Dict, Union, Tuple, no_type_check
 import warnings
 from collections import defaultdict
 from functools import lru_cache
@@ -17,6 +17,8 @@ from ezdxf.math import Vec3, Matrix44
 from ezdxf.path import Path, Command
 from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer
 from ezdxf.tools.pattern import PatternAnalyser
+
+PatternKey = Tuple[str, float]
 
 
 class _Point(qw.QAbstractGraphicsShapeItem):
@@ -82,13 +84,14 @@ class PyQtBackend(Backend):
                 "will be removed in v0.16.",
                 DeprecationWarning,
             )
-
-        self._scene = scene
-        self._color_cache = {}
-        self._pattern_cache = {}
+        self._scene = scene or qw.QGraphicsScene()  # avoids many type errors
+        self._color_cache: Dict[Color, qg.QColor] = {}
+        self._pattern_cache: Dict[PatternKey, int] = {}
         self._no_line = qg.QPen(qc.Qt.NoPen)
         self._no_fill = qg.QBrush(qc.Qt.NoBrush)
         self._text_renderer = TextRenderer(qg.QFont(), use_text_cache)
+
+        self._line_renderer: PyQtLineRenderer
         if self.linetype_renderer == "ezdxf":
             self._line_renderer = EzdxfLineRenderer(self)
         else:
@@ -134,8 +137,8 @@ class PyQtBackend(Backend):
             if filling.type == filling.PATTERN:
                 if self.hatch_pattern == 1:
                     # Default pattern scaling is not supported by PyQt:
-                    key = (filling.name, filling.angle)
-                    qt_pattern = self._pattern_cache.get(key)
+                    key: PatternKey = (filling.name, filling.angle)
+                    qt_pattern = self._pattern_cache.get(key)  # type: ignore
                     if qt_pattern is None:
                         qt_pattern = self._get_qt_pattern(filling.pattern)
                         self._pattern_cache[key] = qt_pattern
@@ -190,17 +193,17 @@ class PyQtBackend(Backend):
         if start.isclose(end):
             self.draw_point(start, properties)
         else:
-            item = self._line_renderer.draw_line(start, end, properties)
+            item = self._line_renderer.draw_line(start, end, properties)  # type: ignore
             self._set_item_data(item)
 
     def draw_path(self, path: Path, properties: Properties) -> None:
-        item = self._line_renderer.draw_path(path, properties)
+        item = self._line_renderer.draw_path(path, properties)  # type: ignore
         self._set_item_data(item)
 
     def draw_filled_paths(
         self,
-        paths: Sequence[Path],
-        holes: Sequence[Path],
+        paths: Iterable[Path],
+        holes: Iterable[Path],
         properties: Properties,
     ) -> None:
         qt_path = qg.QPainterPath()
@@ -244,7 +247,7 @@ class PyQtBackend(Backend):
     ) -> None:
         if not text.strip():
             return  # no point rendering empty strings
-        text = prepare_string_for_rendering(text, self.current_entity.dxftype())
+        text = prepare_string_for_rendering(text, self.current_entity.dxftype())  # type: ignore
         qfont = self.get_qfont(properties.font)
         scale = self._text_renderer.get_scale(cap_height, qfont)
         transform = Matrix44.scale(scale, -scale, 0) @ transform
@@ -328,7 +331,9 @@ class _CosmeticPolygon(qw.QGraphicsPolygonItem):
         super().paint(painter, option, widget)
 
 
-def _set_cosmetic_brush(item: qw.QGraphicsItem, painter: qg.QPainter) -> None:
+def _set_cosmetic_brush(
+    item: qw.QAbstractGraphicsShapeItem, painter: qg.QPainter
+) -> None:
     """like a cosmetic pen, this sets the brush pattern to appear the same independent of the view"""
     brush = item.brush()
     # scale by -1 in y because the view is always mirrored in y and undoing the view transformation entirely would make
@@ -337,6 +342,7 @@ def _set_cosmetic_brush(item: qw.QGraphicsItem, painter: qg.QPainter) -> None:
     item.setBrush(brush)
 
 
+@no_type_check
 def _extend_qt_path(qt_path: qg.QPainterPath, path: Path) -> None:
     start = path.start
     qt_path.moveTo(start.x, start.y)
@@ -472,17 +478,17 @@ class TextRenderer:
 class PyQtLineRenderer(AbstractLineRenderer):
     @property
     def scene(self) -> qw.QGraphicsScene:
-        return self._backend._scene
+        return self._backend._scene  # type: ignore
 
     @property
     def no_fill(self):
         return self._backend._no_fill
 
     def get_color(self, color: Color) -> qg.QColor:
-        return self._backend._get_color(color)
+        return self._backend._get_color(color)  # type: ignore
 
     def get_pen(self, properties: Properties) -> qg.QPen:
-        return self._backend._get_pen(properties)
+        return self._backend._get_pen(properties)  # type: ignore
 
 
 # Just guessing here: this values assume a cosmetic pen!
