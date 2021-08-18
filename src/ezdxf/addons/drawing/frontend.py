@@ -32,15 +32,14 @@ from ezdxf.entities import (
     MText,
     Polyline,
     LWPolyline,
-    Attrib,
     Text,
     Polyface,
     Wipeout,
-    AttDef,
     Solid,
     Face3d,
     OLE2Frame,
     Point,
+    Mesh,
 )
 from ezdxf.entities.attrib import BaseAttrib
 from ezdxf.entities.polygon import DXFPolygon
@@ -580,7 +579,7 @@ class Frontend:
     def draw_mesh_entity(
         self, entity: DXFGraphic, properties: Properties
     ) -> None:
-        builder = MeshBuilder.from_mesh(entity)
+        builder = MeshBuilder.from_mesh(entity)  # type: ignore
         self.draw_mesh_builder_entity(builder, properties)
 
     def draw_mesh_builder_entity(

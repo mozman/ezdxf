@@ -23,7 +23,14 @@ from ezdxf.math import (
 )
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, UCS, Polyface, Polymesh, GenericLayoutType
+    from ezdxf.eztypes import (
+        Vertex,
+        UCS,
+        Polyface,
+        Polymesh,
+        GenericLayoutType,
+        Mesh,
+    )
 
 T = TypeVar("T")
 
@@ -230,7 +237,7 @@ class MeshBuilder:
             layout.add_line(center, center + n * _length, dxfattribs=dxfattribs)
 
     @classmethod
-    def from_mesh(cls: Type[T], other: "MeshBuilder") -> T:
+    def from_mesh(cls: Type[T], other: Union["MeshBuilder", "Mesh"]) -> T:
         """Create new mesh from other mesh as class method.
 
         Args:

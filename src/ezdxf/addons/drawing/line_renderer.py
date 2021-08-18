@@ -1,10 +1,12 @@
 #  Copyright (c) 2020-2021, Manfred Moitzi
 #  License: MIT License
-from typing import Sequence, Optional
+from typing import Sequence, Optional, Dict, Tuple
 import abc
 from ezdxf.math import Vec3
 from .backend import Backend
 from .properties import Properties
+
+PatternKey = Tuple[str, float]
 
 
 class AbstractLineRenderer:
@@ -14,7 +16,7 @@ class AbstractLineRenderer:
     """
 
     def __init__(self, backend: Backend):
-        self._pattern_cache = dict()
+        self._pattern_cache: Dict[PatternKey, Sequence[float]] = dict()
         self._backend = backend
 
     @abc.abstractmethod
@@ -58,12 +60,13 @@ class AbstractLineRenderer:
 
     def pattern(self, properties: Properties) -> Sequence[float]:
         """Get pattern - implements pattern caching."""
+        # PatternKey = Tuple[str, float]
         scale = (
             self.measurement_scale
             * self.linetype_scaling
             * properties.linetype_scale
         )
-        key = (properties.linetype_name, scale)
+        key: PatternKey = (properties.linetype_name, scale)
         pattern_ = self._pattern_cache.get(key)
         if pattern_ is None:
             pattern_ = self.create_pattern(properties, scale)

@@ -1,7 +1,16 @@
 # Copyright (c) 2020-2021, Matthew Broadway
 # License: MIT License
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple, TYPE_CHECKING, Iterable, List, Dict
+from typing import (
+    Optional,
+    Tuple,
+    TYPE_CHECKING,
+    Iterable,
+    List,
+    Dict,
+    SupportsFloat,
+    Union,
+)
 
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color
@@ -17,7 +26,7 @@ if TYPE_CHECKING:
 # attributes:
 # show_defpoints: frontend filters defpoints if option is 0
 # show_hatch: frontend filters all HATCH entities if option is 0
-DEFAULT_PARAMS = {
+DEFAULT_PARAMS: Dict[str, Union[SupportsFloat, str]] = {
     # Updated by Frontend() class, if not set by user:
     "pdsize": 0,
     # 0   5% of draw area height
@@ -53,7 +62,7 @@ DEFAULT_PARAMS = {
 
 
 class Backend(ABC):
-    def __init__(self, params: Dict = None):
+    def __init__(self, params: Dict[str, Union[SupportsFloat, str]] = None):
         params_ = dict(DEFAULT_PARAMS)
         if params:
             err = set(params.keys()) - set(DEFAULT_PARAMS.keys())
@@ -61,20 +70,20 @@ class Backend(ABC):
                 raise ValueError(f"Invalid parameter(s): {str(err)}")
             params_.update(params)
         self.entity_stack: List[Tuple[DXFGraphic, Properties]] = []
-        self.pdsize = params_["pdsize"]
-        self.pdmode = params_["pdmode"]
-        self.show_defpoints = params_["show_defpoints"]
-        self.show_hatch = params_["show_hatch"]
-        self.hatch_pattern = params_["hatch_pattern"]
-        self.linetype_renderer = params_["linetype_renderer"].lower()
-        self.linetype_scaling = params_["linetype_scaling"]
-        self.lineweight_scaling = params_["lineweight_scaling"]
-        self.min_lineweight = params_["min_lineweight"]
-        self.min_dash_length = params_["min_dash_length"]
+        self.pdsize = float(params_["pdsize"])
+        self.pdmode = int(params_["pdmode"])  # type: ignore
+        self.show_defpoints = int(params_["show_defpoints"])  # type: ignore
+        self.show_hatch = int(params_["show_hatch"])  # type: ignore
+        self.hatch_pattern = int(params_["hatch_pattern"])  # type: ignore
+        self.linetype_renderer = str(params_["linetype_renderer"]).lower()
+        self.linetype_scaling = float(params_["linetype_scaling"])
+        self.lineweight_scaling = float(params_["lineweight_scaling"])
+        self.min_lineweight = float(params_["min_lineweight"])
+        self.min_dash_length = float(params_["min_dash_length"])
 
         # Real document measurement value will be updated by the Frontend():
         # 0=Imperial (in, ft, yd, ...); 1=ISO meters
-        self.measurement = 0
+        self.measurement: int = 0
 
         # Deprecated: instead use Path.flattening() for approximation
         self.bezier_approximation_count: int = 32
@@ -83,7 +92,7 @@ class Backend(ABC):
         # should calculate an appropriate value, like 1 screen- or paper pixel
         # on the output medium, but converted into drawing units.
         # Set Path() approximation accuracy:
-        self.max_flattening_distance = params_["max_flattening_distance"]
+        self.max_flattening_distance = float(params_["max_flattening_distance"])
 
     def enter_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         self.entity_stack.append((entity, properties))
