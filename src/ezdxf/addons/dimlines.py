@@ -1,9 +1,11 @@
-# Purpose: dimension lines as composite entities build with basic dxf entities, but not the DIMENSION entity.
+# Purpose: dimension lines as composite entities build with basic dxf entities,
+#   but not the DIMENSION entity.
 # Created: 10.03.2010, 2018 adapted for ezdxf
-# Copyright (c) 2010-2018, Manfred Moitzi
+# Copyright (c) 2010-2021, Manfred Moitzi
 # License: MIT License
 """
-Dimension lines as composite entities build with basic dxf entities, but not the DIMENSION entity.
+Dimension lines as composite entities build with basic dxf entities, but not the
+DIMENSION entity.
 
 OBJECTS
 
@@ -20,6 +22,13 @@ dimstyles
     - new(name, kwargs) to create a new dimstyle
     - get(name) to get a dimstyle, 'Default' if name does not exist
     - setup(drawing) create Blocks and Layers in drawing
+
+This add-on exist only for porting 'dxfwrite' projects to 'ezdxf'.
+
+This add-on was written long before I had any understanding of the DIMENSION
+entity and therefore, they have completely different implementations and
+parameters.
+
 """
 from typing import Any, Dict, TYPE_CHECKING, Iterable, List, Tuple
 from math import radians, degrees, pi
