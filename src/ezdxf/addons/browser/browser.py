@@ -48,10 +48,10 @@ SearchSections = Set[str]
 def searchable_entities(
     doc: DXFDocument, search_sections: SearchSections
 ) -> List[Tags]:
-    entities = []
+    entities: List[Tags] = []
     for name, section_entities in doc.sections.items():
         if name in search_sections:
-            entities.extend(section_entities)
+            entities.extend(section_entities)  # type: ignore
     return entities
 
 
@@ -70,7 +70,7 @@ class DXFStructureBrowser(QMainWindow):
         self._dxf_tags_table = DXFTagsTable()
         self._current_entity: Optional[Tags] = None
         self._active_search: Optional[SearchIndex] = None
-        self._search_sections = set()
+        self._search_sections: Set[str] = set()
         self._find_dialog: "FindDialog" = self.create_find_dialog()
         self._file_watcher = QFileSystemWatcher()
         self._exclusive_reload_dialog = True  # see ask_for_reloading() method
@@ -508,7 +508,7 @@ class DXFStructureBrowser(QMainWindow):
     def show_entity_found_message(self, entity: Tags, index: int):
         dxftype = entity.dxftype()
         if dxftype == "SECTION":
-            tail = " @ {0} Section".format(entity.get_first_value(2))
+            tail = " @ {0} Section".format(entity.get_first_value(2))  # type: ignore
         else:
             try:
                 handle = entity.get_handle()

@@ -58,7 +58,7 @@ class DXFDocument:
         return self.filepath.absolute()
 
     def get_section(self, name: str) -> List[Tags]:
-        return self.sections.get(name)
+        return self.sections.get(name)  # type: ignore
 
     def get_entity(self, handle: str) -> Optional[Tags]:
         if self.handle_index:
@@ -78,13 +78,13 @@ class DXFDocument:
         return None
 
     def next_entity(self, entity: Tags) -> Optional[Tags]:
-        return self.handle_index.next_entity(entity)
+        return self.handle_index.next_entity(entity)  # type: ignore
 
     def previous_entity(self, entity: Tags) -> Optional[Tags]:
-        return self.handle_index.previous_entity(entity)
+        return self.handle_index.previous_entity(entity)  # type: ignore
 
     def get_handle(self, entity) -> Optional[str]:
-        return self.handle_index.get_handle(entity)
+        return self.handle_index.get_handle(entity)  # type: ignore
 
 
 class HandleIndex:
@@ -166,8 +166,8 @@ class LineIndex:
         for section in sections.values():
             # the section dict contain raw string tags
             for entity in section:
-                index[id(entity)] = line_number, entity
-                line_number += len(entity) * 2  # group code, value
+                index[id(entity)] = line_number, entity  # type: ignore
+                line_number += len(entity) * 2  # type: ignore # group code, value
             line_number += 2  # for missing ENDSEC tag
         return index
 
@@ -178,18 +178,18 @@ class LineIndex:
         for name, section in sections.items():
             # the section dict contain raw string tags
             for entity in section:
-                index.append((start_line_number, entity))
+                index.append((start_line_number, entity))  # type: ignore
                 # add 2 lines for each tag: group code, value
-                start_line_number += len(entity) * 2
+                start_line_number += len(entity) * 2  # type: ignore
             start_line_number += 2  # for missing ENDSEC tag
         index.sort()  # sort index by line number
         return index
 
-    def get_start_line_for_entity(self, entity: Tags) -> Optional[int]:
+    def get_start_line_for_entity(self, entity: Tags) -> int:
         entry = self._entity_index.get(id(entity))
         if entry:
             return entry[0]
-        return None
+        return 0
 
     def get_entity_at_line(self, number: int) -> Optional[Tags]:
         index = self._line_index
@@ -274,7 +274,7 @@ class EntityHistory:
                 entity = self._time_wrap(index)
             else:
                 entity = history[-1]
-        return entity
+        return entity  # type: ignore
 
     def _time_wrap(self, index) -> Tags:
         self._index = index
@@ -307,7 +307,7 @@ class SearchIndex:
         return self._end_of_index
 
     @property
-    def search_term(self) -> str:
+    def search_term(self) -> Optional[str]:
         return self._search_term
 
     def set_current_entity(self, entity: Tags, tag_index: int = 0):
@@ -405,7 +405,7 @@ class SearchIndex:
             while not self._end_of_index:
                 entity, tag_index = self.current_entity()
                 move_cursor()
-                if self._match(*entity[tag_index]):
+                if self._match(*entity[tag_index]):  # type: ignore
                     return entity, tag_index
         return self.NOT_FOUND
 
