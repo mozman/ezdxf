@@ -152,7 +152,7 @@ def _split_into_lines(
         # ATTDEF outside of an Insert renders the tag rather than the value
         text = plain_text(entity.dxf.tag)
     else:
-        text = entity.plain_text()
+        text = entity.plain_text()  # type: ignore
     if isinstance(entity, (Text, Attrib, AttDef)):
         assert "\n" not in text
         return [text]
@@ -175,7 +175,7 @@ def _get_extra_transform(text: AnyText, line_width: float) -> Matrix44:
     if isinstance(text, Text):  # Attrib and AttDef are sub-classes of Text
         # 'width' is the width *scale factor* so 1.0 by default:
         scale_x = text.dxf.width
-        scale_y = 1
+        scale_y = 1.
 
         # Calculate text stretching for FIT and ALIGNED:
         alignment = text.get_align()
@@ -188,23 +188,23 @@ def _get_extra_transform(text: AnyText, line_width: float) -> Matrix44:
                 scale_y = stretch_factor
 
         if text.dxf.text_generation_flag & DXFConstants.MIRROR_X:
-            scale_x *= -1
+            scale_x *= -1.
         if text.dxf.text_generation_flag & DXFConstants.MIRROR_Y:
-            scale_y *= -1
+            scale_y *= -1.
 
         # Magnitude of extrusion does not have any effect.
         # An extrusion of (0, 0, 0) acts like (0, 0, 1)
         scale_x *= sign(text.dxf.extrusion.z)
 
-        if scale_x != 1 or scale_y != 1:
+        if scale_x != 1. or scale_y != 1.:
             extra_transform = Matrix44.scale(scale_x, scale_y)
 
     elif isinstance(text, MText):
         # Not sure about the rationale behind this but it does match AutoCAD
         # behavior...
         scale_y = sign(text.dxf.extrusion.z)
-        if scale_y != 1:
-            extra_transform = Matrix44.scale(1, scale_y)
+        if scale_y != 1.:
+            extra_transform = Matrix44.scale(1., scale_y)
 
     return extra_transform
 
@@ -232,8 +232,8 @@ def _apply_alignment(
     last_baseline = line_ys[-1]
 
     if halign == HAlignment.LEFT:
-        anchor_x = 0
-        line_xs = [0] * len(line_widths)
+        anchor_x = 0.
+        line_xs = [0.] * len(line_widths)
     elif halign == HAlignment.CENTER:
         anchor_x = box_width / 2
         line_xs = [anchor_x - w / 2 for w in line_widths]
@@ -244,7 +244,7 @@ def _apply_alignment(
         raise ValueError(halign)
 
     if valign == VAlignment.TOP:
-        anchor_y = 0
+        anchor_y = 0.
     elif valign == VAlignment.LOWER_CASE_CENTER:
         first_line_lower_case_top = line_ys[0] + font_measurements.x_height
         anchor_y = (first_line_lower_case_top + last_baseline) / 2
