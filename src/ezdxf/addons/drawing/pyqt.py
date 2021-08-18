@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Matthew Broadway
+# Copyright (c) 2020-2021, Matthew Broadway
 # License: MIT License
 import math
 from typing import Optional, Iterable, Dict, Sequence, Union
@@ -20,7 +20,7 @@ from ezdxf.tools.pattern import PatternAnalyser
 
 
 class _Point(qw.QAbstractGraphicsShapeItem):
-    """ A dimensionless point which is drawn 'cosmetically' (scale depends on
+    """A dimensionless point which is drawn 'cosmetically' (scale depends on
     view)
     """
 
@@ -31,8 +31,12 @@ class _Point(qw.QAbstractGraphicsShapeItem):
         self.setPen(qg.QPen(qc.Qt.NoPen))
         self.setBrush(brush)
 
-    def paint(self, painter: qg.QPainter, option: qw.QStyleOptionGraphicsItem,
-              widget: Optional[qw.QWidget] = None) -> None:
+    def paint(
+        self,
+        painter: qg.QPainter,
+        option: qw.QStyleOptionGraphicsItem,
+        widget: Optional[qw.QWidget] = None,
+    ) -> None:
         view_scale = _get_x_scale(painter.transform())
         radius = self.radius / view_scale
         painter.setBrush(self.brush())
@@ -49,7 +53,7 @@ CorrespondingDXFParentStack = qc.Qt.UserRole + 1
 
 PYQT_DEFAULT_PARAMS = {
     # For my taste without scaling the default line width looks to thin:
-    'lineweight_scaling': 2.0,
+    "lineweight_scaling": 2.0,
 }
 
 
@@ -60,20 +64,24 @@ def get_params(params: Optional[Dict]) -> Dict:
 
 
 class PyQtBackend(Backend):
-    def __init__(self,
-                 scene: Optional[qw.QGraphicsScene] = None,
-                 point_radius=None,  # deprecated
-                 *,
-                 use_text_cache: bool = True,
-                 debug_draw_rect: bool = False,
-                 params: Dict = None):
+    def __init__(
+        self,
+        scene: Optional[qw.QGraphicsScene] = None,
+        point_radius=None,  # deprecated
+        *,
+        use_text_cache: bool = True,
+        debug_draw_rect: bool = False,
+        params: Dict = None,
+    ):
         super().__init__(get_params(params))
         if point_radius is not None:
             self.point_size = point_radius * 2.0
             warnings.warn(
                 'The "point_radius" argument is deprecated use the params  dict '
-                'to pass arguments to the PyQtBackend, '
-                'will be removed in v0.16.', DeprecationWarning)
+                "to pass arguments to the PyQtBackend, "
+                "will be removed in v0.16.",
+                DeprecationWarning,
+            )
 
         self._scene = scene
         self._color_cache = {}
@@ -101,7 +109,7 @@ class PyQtBackend(Backend):
             elif len(color) == 9:
                 rgb = color[1:7]
                 alpha = color[7:9]
-                qt_color = qg.QColor(f'#{alpha}{rgb}')  # '#AARRGGBB'
+                qt_color = qg.QColor(f"#{alpha}{rgb}")  # '#AARRGGBB'
             else:
                 raise TypeError(color)
 
@@ -109,7 +117,7 @@ class PyQtBackend(Backend):
         return qt_color
 
     def _get_pen(self, properties: Properties) -> qg.QPen:
-        """ Returns a cosmetic pen with applied lineweight but without line type
+        """Returns a cosmetic pen with applied lineweight but without line type
         support.
         """
         px = properties.lineweight / 0.3527 * self.lineweight_scaling
@@ -133,10 +141,7 @@ class PyQtBackend(Backend):
                         self._pattern_cache[key] = qt_pattern
                 elif self.hatch_pattern == 0:
                     return self._no_fill
-            return qg.QBrush(
-                self._get_color(properties.color),
-                qt_pattern
-            )
+            return qg.QBrush(self._get_color(properties.color), qt_pattern)
         else:
             return self._no_fill
 
@@ -174,14 +179,13 @@ class PyQtBackend(Backend):
         self._scene.setBackgroundBrush(qg.QBrush(self._get_color(color)))
 
     def draw_point(self, pos: Vec3, properties: Properties) -> None:
-        """ Draw a real dimensionless point. """
+        """Draw a real dimensionless point."""
         brush = qg.QBrush(self._get_color(properties.color), qc.Qt.SolidPattern)
         item = _Point(pos.x, pos.y, brush)
         self._set_item_data(item)
         self._scene.addItem(item)
 
-    def draw_line(self, start: Vec3, end: Vec3,
-                  properties: Properties) -> None:
+    def draw_line(self, start: Vec3, end: Vec3, properties: Properties) -> None:
         # PyQt draws a long line for a zero-length line:
         if start.isclose(end):
             self.draw_point(start, properties)
@@ -193,8 +197,12 @@ class PyQtBackend(Backend):
         item = self._line_renderer.draw_path(path, properties)
         self._set_item_data(item)
 
-    def draw_filled_paths(self, paths: Sequence[Path], holes: Sequence[Path],
-                          properties: Properties) -> None:
+    def draw_filled_paths(
+        self,
+        paths: Sequence[Path],
+        holes: Sequence[Path],
+        properties: Properties,
+    ) -> None:
         qt_path = qg.QPainterPath()
         for path in paths:
             try:
@@ -214,8 +222,9 @@ class PyQtBackend(Backend):
         self._scene.addItem(item)
         self._set_item_data(item)
 
-    def draw_filled_polygon(self, points: Iterable[Vec3],
-                            properties: Properties) -> None:
+    def draw_filled_polygon(
+        self, points: Iterable[Vec3], properties: Properties
+    ) -> None:
         brush = self._get_brush(properties)
         polygon = qg.QPolygonF()
         for p in points:
@@ -226,8 +235,13 @@ class PyQtBackend(Backend):
         self._scene.addItem(item)
         self._set_item_data(item)
 
-    def draw_text(self, text: str, transform: Matrix44, properties: Properties,
-                  cap_height: float) -> None:
+    def draw_text(
+        self,
+        text: str,
+        transform: Matrix44,
+        properties: Properties,
+        cap_height: float,
+    ) -> None:
         if not text.strip():
             return  # no point rendering empty strings
         text = prepare_string_for_rendering(text, self.current_entity.dxftype())
@@ -237,8 +251,9 @@ class PyQtBackend(Backend):
 
         path = self._text_renderer.get_text_path(text, qfont)
         path = _matrix_to_qtransform(transform).map(path)
-        item = self._scene.addPath(path, self._no_line,
-                                   self._get_color(properties.color))
+        item = self._scene.addPath(
+            path, self._no_line, self._get_color(properties.color)
+        )
         self._set_item_data(item)
 
     @lru_cache(maxsize=256)  # fonts.Font is a named tuple
@@ -253,18 +268,23 @@ class PyQtBackend(Backend):
             # qfont.setStretch(_map_stretch(font.stretch))
         return qfont
 
-    def get_font_measurements(self, cap_height: float,
-                              font: fonts.FontFace = None) -> FontMeasurements:
+    def get_font_measurements(
+        self, cap_height: float, font: fonts.FontFace = None
+    ) -> FontMeasurements:
         qfont = self.get_qfont(font)
         return self._text_renderer.get_font_measurements(
-            qfont).scale_from_baseline(desired_cap_height=cap_height)
+            qfont
+        ).scale_from_baseline(desired_cap_height=cap_height)
 
-    def get_text_line_width(self, text: str, cap_height: float,
-                            font: fonts.FontFace = None) -> float:
+    def get_text_line_width(
+        self, text: str, cap_height: float, font: fonts.FontFace = None
+    ) -> float:
         if not text.strip():
             return 0
 
-        dxftype = self.current_entity.dxftype() if self.current_entity else 'TEXT'
+        dxftype = (
+            self.current_entity.dxftype() if self.current_entity else "TEXT"
+        )
         text = prepare_string_for_rendering(text, dxftype)
         qfont = self.get_qfont(font)
         scale = self._text_renderer.get_scale(cap_height, qfont)
@@ -278,30 +298,38 @@ class PyQtBackend(Backend):
         self._scene.setSceneRect(self._scene.itemsBoundingRect())
         if self._debug_draw_rect:
             properties = Properties()
-            properties.color = '#000000'
+            properties.color = "#000000"
             self._scene.addRect(
                 self._scene.sceneRect(),
                 self._get_pen(properties),
-                self._no_fill
+                self._no_fill,
             )
 
 
 class _CosmeticPath(qw.QGraphicsPathItem):
-    def paint(self, painter: qg.QPainter, option: qw.QStyleOptionGraphicsItem,
-              widget: Optional[qw.QWidget] = None) -> None:
+    def paint(
+        self,
+        painter: qg.QPainter,
+        option: qw.QStyleOptionGraphicsItem,
+        widget: Optional[qw.QWidget] = None,
+    ) -> None:
         _set_cosmetic_brush(self, painter)
         super().paint(painter, option, widget)
 
 
 class _CosmeticPolygon(qw.QGraphicsPolygonItem):
-    def paint(self, painter: qg.QPainter, option: qw.QStyleOptionGraphicsItem,
-              widget: Optional[qw.QWidget] = None) -> None:
+    def paint(
+        self,
+        painter: qg.QPainter,
+        option: qw.QStyleOptionGraphicsItem,
+        widget: Optional[qw.QWidget] = None,
+    ) -> None:
         _set_cosmetic_brush(self, painter)
         super().paint(painter, option, widget)
 
 
 def _set_cosmetic_brush(item: qw.QGraphicsItem, painter: qg.QPainter) -> None:
-    """ like a cosmetic pen, this sets the brush pattern to appear the same independent of the view """
+    """like a cosmetic pen, this sets the brush pattern to appear the same independent of the view"""
     brush = item.brush()
     # scale by -1 in y because the view is always mirrored in y and undoing the view transformation entirely would make
     # the hatch mirrored w.r.t the view
@@ -320,11 +348,9 @@ def _extend_qt_path(qt_path: qg.QPainterPath, path: Path) -> None:
             end = cmd.end
             ctrl1 = cmd.ctrl1
             ctrl2 = cmd.ctrl2
-            qt_path.cubicTo(
-                ctrl1.x, ctrl1.y, ctrl2.x, ctrl2.y, end.x, end.y
-            )
+            qt_path.cubicTo(ctrl1.x, ctrl1.y, ctrl2.x, ctrl2.y, end.x, end.y)
         else:
-            raise ValueError(f'Unknown path command: {cmd.type}')
+            raise ValueError(f"Unknown path command: {cmd.type}")
 
 
 # https://doc.qt.io/qt-5/qfont.html#Weight-enum
@@ -367,7 +393,7 @@ def _get_x_scale(t: qg.QTransform) -> float:
 
 
 def _matrix_to_qtransform(matrix: Matrix44) -> qg.QTransform:
-    """ Qt also uses row-vectors so the translation elements are placed in the
+    """Qt also uses row-vectors so the translation elements are placed in the
     bottom row.
 
     This is only a simple conversion which assumes that although the
@@ -387,7 +413,8 @@ class TextRenderer:
         # Each font has its own text path cache
         # key is QFont.key()
         self._text_path_cache: Dict[
-            str, Dict[str, qg.QPainterPath]] = defaultdict(dict)
+            str, Dict[str, qg.QPainterPath]
+        ] = defaultdict(dict)
 
         # Each font has its own font measurements cache
         # key is QFont.key()
@@ -409,9 +436,9 @@ class TextRenderer:
         key = font.key() if font is not None else None
         measurements = self._font_measurement_cache.get(key)
         if measurements is None:
-            upper_x = self.get_text_rect('X', font)
-            lower_x = self.get_text_rect('x', font)
-            lower_p = self.get_text_rect('p', font)
+            upper_x = self.get_text_rect("X", font)
+            lower_x = self.get_text_rect("x", font)
+            lower_p = self.get_text_rect("p", font)
             baseline = lower_x.bottom()
             measurements = FontMeasurements(
                 baseline=baseline,
@@ -443,7 +470,6 @@ class TextRenderer:
 
 # noinspection PyUnresolvedReferences,PyProtectedMember
 class PyQtLineRenderer(AbstractLineRenderer):
-
     @property
     def scene(self) -> qw.QGraphicsScene:
         return self._backend._scene
@@ -465,12 +491,15 @@ ANSI_LIN_PATTERN_FACTOR = ISO_LIN_PATTERN_FACTOR * 2.54
 
 
 class InternalLineRenderer(PyQtLineRenderer):
-    """ PyQt internal linetype rendering """
+    """PyQt internal linetype rendering"""
 
     @property
     def measurement_scale(self) -> float:
-        return ISO_LIN_PATTERN_FACTOR if self.measurement \
+        return (
+            ISO_LIN_PATTERN_FACTOR
+            if self.measurement
             else ISO_LIN_PATTERN_FACTOR
+        )
 
     def get_pen(self, properties: Properties) -> qg.QPen:
         pen = super().get_pen(properties)
@@ -482,11 +511,9 @@ class InternalLineRenderer(PyQtLineRenderer):
                 pen.setDashPattern(pattern)
         return pen
 
-    def draw_line(self, start: Vec3, end: Vec3,
-                  properties: Properties, z=0):
+    def draw_line(self, start: Vec3, end: Vec3, properties: Properties, z=0):
         return self.scene.addLine(
-            start.x, start.y, end.x, end.y,
-            self.get_pen(properties)
+            start.x, start.y, end.x, end.y, self.get_pen(properties)
         )
 
     def draw_path(self, path: Path, properties: Properties, z=0):
@@ -500,13 +527,12 @@ class InternalLineRenderer(PyQtLineRenderer):
 
 
 class EzdxfLineRenderer(PyQtLineRenderer):
-    """ Replicate AutoCAD linetype rendering oriented on drawing units and
+    """Replicate AutoCAD linetype rendering oriented on drawing units and
     various ltscale factors. This rendering method break lines into small
     segments which causes a longer rendering time!
     """
 
-    def draw_line(self, start: Vec3, end: Vec3,
-                  properties: Properties, z=0):
+    def draw_line(self, start: Vec3, end: Vec3, properties: Properties, z=0):
         pattern = self.pattern(properties)
         render_linetypes = bool(self.linetype_scaling)
         pen = self.get_pen(properties)
@@ -533,8 +559,9 @@ class EzdxfLineRenderer(PyQtLineRenderer):
         else:
             add_line = self.scene.addLine
             renderer = EzdxfLineTypeRenderer(pattern)
-            segments = renderer.line_segments(path.flattening(
-                self.max_flattening_distance, segments=16))
+            segments = renderer.line_segments(
+                path.flattening(self.max_flattening_distance, segments=16)
+            )
             return [
                 add_line(s.x, s.y, e.x, e.y, pen)
                 for s, e in segments

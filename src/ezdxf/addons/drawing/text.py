@@ -1,4 +1,3 @@
-# Created: 06.2020
 # Copyright (c) 2020-2021, Matthew Broadway
 # License: MIT License
 import enum
@@ -36,7 +35,9 @@ class VAlignment(enum.Enum):
     LOWER_CASE_CENTER = 1  # the midpoint between the baseline and the x-height
     BASELINE = 2  # the line which text rests on, characters with descenders (like 'p') are partially below this line
     BOTTOM = 3  # the lowest point on a character with a descender (like 'p')
-    UPPER_CASE_CENTER = 4  # the midpoint between the baseline and the cap-height
+    UPPER_CASE_CENTER = (
+        4  # the midpoint between the baseline and the cap-height
+    )
 
 
 Alignment = Tuple[HAlignment, VAlignment]
@@ -47,46 +48,50 @@ AnyText = Union[Text, MText, Attrib, AttDef]
 DEFAULT_LINE_SPACING = 5 / 3
 
 DXF_TEXT_ALIGNMENT_TO_ALIGNMENT: Dict[str, Alignment] = {
-    'LEFT': (HAlignment.LEFT, VAlignment.BASELINE),
-    'CENTER': (HAlignment.CENTER, VAlignment.BASELINE),
-    'RIGHT': (HAlignment.RIGHT, VAlignment.BASELINE),
-    'ALIGNED': (HAlignment.CENTER, VAlignment.BASELINE),
-    'MIDDLE': (HAlignment.CENTER, VAlignment.LOWER_CASE_CENTER),
-    'FIT': (HAlignment.CENTER, VAlignment.BASELINE),
-    'BOTTOM_LEFT': (HAlignment.LEFT, VAlignment.BOTTOM),
-    'BOTTOM_CENTER': (HAlignment.CENTER, VAlignment.BOTTOM),
-    'BOTTOM_RIGHT': (HAlignment.RIGHT, VAlignment.BOTTOM),
-    'MIDDLE_LEFT': (HAlignment.LEFT, VAlignment.UPPER_CASE_CENTER),
-    'MIDDLE_CENTER': (HAlignment.CENTER, VAlignment.UPPER_CASE_CENTER),
-    'MIDDLE_RIGHT': (HAlignment.RIGHT, VAlignment.UPPER_CASE_CENTER),
-    'TOP_LEFT': (HAlignment.LEFT, VAlignment.TOP),
-    'TOP_CENTER': (HAlignment.CENTER, VAlignment.TOP),
-    'TOP_RIGHT': (HAlignment.RIGHT, VAlignment.TOP),
+    "LEFT": (HAlignment.LEFT, VAlignment.BASELINE),
+    "CENTER": (HAlignment.CENTER, VAlignment.BASELINE),
+    "RIGHT": (HAlignment.RIGHT, VAlignment.BASELINE),
+    "ALIGNED": (HAlignment.CENTER, VAlignment.BASELINE),
+    "MIDDLE": (HAlignment.CENTER, VAlignment.LOWER_CASE_CENTER),
+    "FIT": (HAlignment.CENTER, VAlignment.BASELINE),
+    "BOTTOM_LEFT": (HAlignment.LEFT, VAlignment.BOTTOM),
+    "BOTTOM_CENTER": (HAlignment.CENTER, VAlignment.BOTTOM),
+    "BOTTOM_RIGHT": (HAlignment.RIGHT, VAlignment.BOTTOM),
+    "MIDDLE_LEFT": (HAlignment.LEFT, VAlignment.UPPER_CASE_CENTER),
+    "MIDDLE_CENTER": (HAlignment.CENTER, VAlignment.UPPER_CASE_CENTER),
+    "MIDDLE_RIGHT": (HAlignment.RIGHT, VAlignment.UPPER_CASE_CENTER),
+    "TOP_LEFT": (HAlignment.LEFT, VAlignment.TOP),
+    "TOP_CENTER": (HAlignment.CENTER, VAlignment.TOP),
+    "TOP_RIGHT": (HAlignment.RIGHT, VAlignment.TOP),
 }
-assert DXF_TEXT_ALIGNMENT_TO_ALIGNMENT.keys() == DXFConstants.TEXT_ALIGN_FLAGS.keys()
+assert (
+    DXF_TEXT_ALIGNMENT_TO_ALIGNMENT.keys()
+    == DXFConstants.TEXT_ALIGN_FLAGS.keys()
+)
 
 DXF_MTEXT_ALIGNMENT_TO_ALIGNMENT: Dict[int, Alignment] = {
-    DXFConstants.MTEXT_TOP_LEFT:
-        (HAlignment.LEFT, VAlignment.TOP),
-    DXFConstants.MTEXT_TOP_CENTER:
-        (HAlignment.CENTER, VAlignment.TOP),
-    DXFConstants.MTEXT_TOP_RIGHT:
-        (HAlignment.RIGHT, VAlignment.TOP),
-    DXFConstants.MTEXT_MIDDLE_LEFT:
-        (HAlignment.LEFT, VAlignment.LOWER_CASE_CENTER),
-    DXFConstants.MTEXT_MIDDLE_CENTER:
-        (HAlignment.CENTER, VAlignment.LOWER_CASE_CENTER),
-    DXFConstants.MTEXT_MIDDLE_RIGHT:
-        (HAlignment.RIGHT, VAlignment.LOWER_CASE_CENTER),
-    DXFConstants.MTEXT_BOTTOM_LEFT:
-        (HAlignment.LEFT, VAlignment.BOTTOM),
-    DXFConstants.MTEXT_BOTTOM_CENTER:
-        (HAlignment.CENTER, VAlignment.BOTTOM),
-    DXFConstants.MTEXT_BOTTOM_RIGHT:
-        (HAlignment.RIGHT, VAlignment.BOTTOM)
+    DXFConstants.MTEXT_TOP_LEFT: (HAlignment.LEFT, VAlignment.TOP),
+    DXFConstants.MTEXT_TOP_CENTER: (HAlignment.CENTER, VAlignment.TOP),
+    DXFConstants.MTEXT_TOP_RIGHT: (HAlignment.RIGHT, VAlignment.TOP),
+    DXFConstants.MTEXT_MIDDLE_LEFT: (
+        HAlignment.LEFT,
+        VAlignment.LOWER_CASE_CENTER,
+    ),
+    DXFConstants.MTEXT_MIDDLE_CENTER: (
+        HAlignment.CENTER,
+        VAlignment.LOWER_CASE_CENTER,
+    ),
+    DXFConstants.MTEXT_MIDDLE_RIGHT: (
+        HAlignment.RIGHT,
+        VAlignment.LOWER_CASE_CENTER,
+    ),
+    DXFConstants.MTEXT_BOTTOM_LEFT: (HAlignment.LEFT, VAlignment.BOTTOM),
+    DXFConstants.MTEXT_BOTTOM_CENTER: (HAlignment.CENTER, VAlignment.BOTTOM),
+    DXFConstants.MTEXT_BOTTOM_RIGHT: (HAlignment.RIGHT, VAlignment.BOTTOM),
 }
 assert len(DXF_MTEXT_ALIGNMENT_TO_ALIGNMENT) == len(
-    DXFConstants.MTEXT_ALIGN_FLAGS)
+    DXFConstants.MTEXT_ALIGN_FLAGS
+)
 
 
 def _calc_aligned_rotation(text: Text) -> float:
@@ -138,15 +143,18 @@ def _get_line_spacing(text: AnyText, cap_height: float) -> float:
         raise TypeError(type(text))
 
 
-def _split_into_lines(entity: AnyText, box_width: Optional[float],
-                      get_text_width: Callable[[str], float]) -> List[str]:
+def _split_into_lines(
+    entity: AnyText,
+    box_width: Optional[float],
+    get_text_width: Callable[[str], float],
+) -> List[str]:
     if isinstance(entity, AttDef):
         # ATTDEF outside of an Insert renders the tag rather than the value
         text = plain_text(entity.dxf.tag)
     else:
         text = entity.plain_text()
     if isinstance(entity, (Text, Attrib, AttDef)):
-        assert '\n' not in text
+        assert "\n" not in text
         return [text]
     else:
         return text_wrap(text, box_width, get_text_width)
@@ -201,19 +209,22 @@ def _get_extra_transform(text: AnyText, line_width: float) -> Matrix44:
     return extra_transform
 
 
-def _apply_alignment(alignment: Alignment,
-                     line_widths: List[float],
-                     line_spacing: float,
-                     box_width: Optional[float],
-                     font_measurements: FontMeasurements
-                     ) -> Tuple[Tuple[float, float], List[float], List[float]]:
+def _apply_alignment(
+    alignment: Alignment,
+    line_widths: List[float],
+    line_spacing: float,
+    box_width: Optional[float],
+    font_measurements: FontMeasurements,
+) -> Tuple[Tuple[float, float], List[float], List[float]]:
     if not line_widths:
         return (0, 0), [], []
 
     halign, valign = alignment
-    line_ys = [-font_measurements.baseline -
-               (font_measurements.cap_height + i * line_spacing)
-               for i in range(len(line_widths))]
+    line_ys = [
+        -font_measurements.baseline
+        - (font_measurements.cap_height + i * line_spacing)
+        for i in range(len(line_widths))
+    ]
 
     if box_width is None:
         box_width = max(line_widths)
@@ -269,12 +280,14 @@ def _get_wcs_insert(text: AnyText) -> Vec3:
         return text.dxf.insert
 
 
-def simplified_text_chunks(text: AnyText, out: Backend,
-                           *,
-                           font: fonts.FontFace = None,
-                           debug_draw_rect: bool = False
-                           ) -> Iterable[Tuple[str, Matrix44, float]]:
-    """ Splits a complex text entity into simple chunks of text which can all be
+def simplified_text_chunks(
+    text: AnyText,
+    out: Backend,
+    *,
+    font: fonts.FontFace = None,
+    debug_draw_rect: bool = False
+) -> Iterable[Tuple[str, Matrix44, float]]:
+    """Splits a complex text entity into simple chunks of text which can all be
     rendered the same way:
     render the string (which will not contain any newlines) with the given
     cap_height with (left, baseline) at (0, 0) then transform it with the given
@@ -288,16 +301,19 @@ def simplified_text_chunks(text: AnyText, out: Backend,
     box_width = _get_text_width(text)
 
     cap_height = _get_cap_height(text)
-    lines = _split_into_lines(text, box_width,
-                              lambda s: out.get_text_line_width(s, cap_height,
-                                                                font=font))
+    lines = _split_into_lines(
+        text,
+        box_width,
+        lambda s: out.get_text_line_width(s, cap_height, font=font),
+    )
     line_spacing = _get_line_spacing(text, cap_height)
-    line_widths = [out.get_text_line_width(line, cap_height, font=font) for line
-                   in lines]
+    line_widths = [
+        out.get_text_line_width(line, cap_height, font=font) for line in lines
+    ]
     font_measurements = out.get_font_measurements(cap_height, font=font)
-    anchor, line_xs, line_ys = \
-        _apply_alignment(alignment, line_widths, line_spacing, box_width,
-                         font_measurements)
+    anchor, line_xs, line_ys = _apply_alignment(
+        alignment, line_widths, line_spacing, box_width, font_measurements
+    )
     rotation = _get_rotation(text)
 
     # first_line_width is used for TEXT, ATTRIB and ATTDEF stretching
@@ -310,10 +326,10 @@ def simplified_text_chunks(text: AnyText, out: Backend,
     insert = _get_wcs_insert(text)
 
     whole_text_transform = (
-            Matrix44.translate(-anchor[0], -anchor[1], 0) @
-            extra_transform @
-            rotation @
-            Matrix44.translate(*insert.xyz)
+        Matrix44.translate(-anchor[0], -anchor[1], 0)
+        @ extra_transform
+        @ rotation
+        @ Matrix44.translate(*insert.xyz)
     )
     for i, (line, line_x, line_y) in enumerate(zip(lines, line_xs, line_ys)):
         transform = Matrix44.translate(line_x, line_y, 0) @ whole_text_transform
@@ -321,7 +337,15 @@ def simplified_text_chunks(text: AnyText, out: Backend,
 
         if debug_draw_rect:
             width = out.get_text_line_width(line, cap_height, font)
-            ps = list(transform.transform_vertices(
-                [Vec3(0, 0, 0), Vec3(width, 0, 0), Vec3(width, cap_height, 0),
-                 Vec3(0, cap_height, 0), Vec3(0, 0, 0)]))
-            draw_rect(ps, '#ff0000', out)
+            ps = list(
+                transform.transform_vertices(
+                    [
+                        Vec3(0, 0, 0),
+                        Vec3(width, 0, 0),
+                        Vec3(width, cap_height, 0),
+                        Vec3(0, cap_height, 0),
+                        Vec3(0, 0, 0),
+                    ]
+                )
+            )
+            draw_rect(ps, "#ff0000", out)

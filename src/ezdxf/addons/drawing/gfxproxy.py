@@ -10,8 +10,7 @@ if TYPE_CHECKING:
 
 
 class DXFGraphicProxy(DXFGraphic):
-    """ DO NOT USE THIS WRAPPER AS REAL DXF ENTITY OUTSIDE THE DRAWING ADD-ON!
-    """
+    """DO NOT USE THIS WRAPPER AS REAL DXF ENTITY OUTSIDE THE DRAWING ADD-ON!"""
 
     def __init__(self, entity: DXFEntity):
         super().__init__()
@@ -42,6 +41,6 @@ class DXFGraphicProxy(DXFGraphic):
     def copy(self) -> "DXFGraphic":
         raise const.DXFTypeError(f"Cloning of DXFGraphicProxy() not supported.")
 
-    def preprocess_export(self, tagwriter: 'TagWriter') -> bool:
+    def preprocess_export(self, tagwriter: "TagWriter") -> bool:
         # prevent dxf export
         return False

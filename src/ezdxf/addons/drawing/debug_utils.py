@@ -1,3 +1,5 @@
+# Copyright (c) 2020-2021, Matthew Broadway
+# License: MIT License
 from typing import List
 
 from ezdxf.addons.drawing.backend import Backend

@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Matthew Broadway
+# Copyright (c) 2020-2021, Matthew Broadway
 # License: MIT License
 from abc import ABC, abstractmethod
 from typing import Optional, Tuple, TYPE_CHECKING, Iterable, List, Dict
@@ -237,6 +237,7 @@ class BackendScaler:
     """Scales the input data by the given factor before passing the data to
     wrapped Backend class.
     """
+
     def __init__(self, backend: Backend, factor: float):
         self._backend = backend
         self._factor = float(factor)
