@@ -5,7 +5,7 @@ import enum
 from matplotlib.textpath import TextPath
 from matplotlib.font_manager import FontProperties, findfont
 
-from ezdxf.entities import Text, Attrib, Hatch
+from ezdxf.entities import Text, Attrib, Hatch, DXFGraphic
 from ezdxf.lldxf import const
 from ezdxf.math import Matrix44, BoundingBox
 from ezdxf import path
@@ -151,17 +151,19 @@ def basic_alignment_transformation(
     fm: fonts.FontMeasurements, bbox: BoundingBox, halign: int, valign: int
 ) -> Matrix44:
     if halign == const.LEFT:
-        shift_x = 0
+        shift_x = 0.0
     elif halign == const.RIGHT:
+        assert bbox.extmax is not None,  "invalid empty bounding box"
         shift_x = -bbox.extmax.x
     elif halign == const.CENTER or halign > 2:  # ALIGNED, MIDDLE, FIT
+        assert bbox.center is not None,  "invalid empty bounding box"
         shift_x = -bbox.center.x
     else:
         raise ValueError(f"invalid halign argument: {halign}")
     cap_height = fm.cap_height
     descender_height = fm.descender_height
     if valign == const.BASELINE:
-        shift_y = 0
+        shift_y = 0.0
     elif valign == const.TOP:
         shift_y = -cap_height
     elif valign == const.MIDDLE:
@@ -211,7 +213,7 @@ def make_hatches_from_str(
     hatches = path.to_hatches(paths, edge_path=True, dxfattribs=dxfattribs)
     if m is not None:
         # Transform HATCH entities as a unit:
-        return [hatch.transform(m) for hatch in hatches]
+        return [hatch.transform(m) for hatch in hatches]  # type: ignore
     else:
         return list(hatches)
 
@@ -315,7 +317,7 @@ def virtual_entities(entity: AnyText, kind: int = Kind.HATCHES) -> EntityQuery:
     check_entity_type(entity)
     extrusion = entity.dxf.extrusion
     attribs = entity.graphic_properties()
-    entities = []
+    entities: List[DXFGraphic] = []
 
     if kind & Kind.HATCHES:
         entities.extend(make_hatches_from_entity(entity))
