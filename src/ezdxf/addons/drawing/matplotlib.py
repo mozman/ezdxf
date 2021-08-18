@@ -1,7 +1,15 @@
 # Copyright (c) 2020-2021, Matthew Broadway
 # License: MIT License
 import math
-from typing import Iterable, TYPE_CHECKING, Optional, Dict, Sequence
+from typing import (
+    Iterable,
+    TYPE_CHECKING,
+    Optional,
+    Dict,
+    SupportsFloat,
+    Union,
+    Any,
+)
 from collections import defaultdict
 from functools import lru_cache
 
@@ -40,7 +48,7 @@ if TYPE_CHECKING:
 # points unit (pt), 1pt = 1/72 inch, 1pt = 0.3527mm
 POINTS = 1.0 / 0.3527  # mm -> points
 CURVE4x3 = (Path.CURVE4, Path.CURVE4, Path.CURVE4)
-MATPLOTLIB_DEFAULT_PARAMS = {}
+MATPLOTLIB_DEFAULT_PARAMS: Dict[str, Union[SupportsFloat, str]] = {}
 
 
 def get_params(params: Optional[Dict]) -> Dict:
@@ -78,6 +86,7 @@ class MatplotlibBackend(Backend):
         self._text_renderer = TextRenderer(font, use_text_cache)
 
         # Setup line rendering component:
+        self._line_renderer: MatplotlibLineRenderer
         if self.linetype_renderer == "ezdxf":
             # This linetype renderer should only be used by "hardcopy" backends!
             # It is just too slow for interactive backends, and the result of
@@ -113,7 +122,10 @@ class MatplotlibBackend(Backend):
         self._line_renderer.draw_path(path, properties, self._get_z())
 
     def draw_filled_paths(
-        self, paths: Sequence, holes: Sequence, properties: Properties
+        self,
+        paths: Iterable[Path],
+        holes: Iterable[Path],
+        properties: Properties,
     ):
         fill, hatch = self._get_filling(properties)
         if fill is False and hatch is None:
@@ -172,6 +184,7 @@ class MatplotlibBackend(Backend):
         if not text.strip():
             return  # no point rendering empty strings
         font_properties = self.get_font_properties(properties.font)
+        assert self.current_entity is not None
         text = prepare_string_for_rendering(text, self.current_entity.dxftype())
         transformed_path = _transform_path(
             self._text_renderer.get_text_path(text, font_properties),
@@ -247,7 +260,8 @@ class MatplotlibBackend(Backend):
 
     def _get_filling(self, properties: Properties):
         fill = True
-        hatch = None
+        hatch: Any = None
+        assert properties.filling is not None
         name = properties.filling.name.upper()
         if properties.filling.type == 1 and name != "SOLID":
             if self.hatch_pattern == 0:
@@ -450,7 +464,7 @@ class MatplotlibLineRenderer(AbstractLineRenderer):
     # noinspection PyUnresolvedReferences
     @property
     def ax(self) -> plt.Axes:
-        return self._backend.ax  # MatplotlibBackend
+        return self._backend.ax  # type: ignore # MatplotlibBackend
 
 
 # Scaling factor for internal renderer, just guessing here:
@@ -521,7 +535,9 @@ class EzdxfLineRenderer(MatplotlibLineRenderer):
     segments which causes a longer rendering time!
     """
 
-    def draw_line(self, start: Vec3, end: Vec3, properties: Properties, z: int):
+    def draw_line(
+        self, start: Vec3, end: Vec3, properties: Properties, z: float
+    ):
         pattern = self.pattern(properties)
         lineweight = self.lineweight(properties)
         render_linetypes = bool(self.linetype_scaling)
@@ -550,7 +566,7 @@ class EzdxfLineRenderer(MatplotlibLineRenderer):
             lines.set_capstyle("butt")
             self.ax.add_collection(lines)
 
-    def draw_path(self, path, properties: Properties, z: int):
+    def draw_path(self, path, properties: Properties, z: float):
         pattern = self.pattern(properties)
         lineweight = self.lineweight(properties)
         render_linetypes = bool(self.linetype_scaling)
