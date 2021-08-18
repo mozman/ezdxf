@@ -5,6 +5,7 @@ import math
 import ezdxf
 from ezdxf.entities import MText, DXFGraphic, Textstyle
 from ezdxf.layouts import BaseLayout
+from ezdxf.document import Drawing
 from ezdxf.math import Matrix44
 from ezdxf.tools import text_layout as tl, fonts
 from ezdxf.tools.text import (
@@ -12,6 +13,7 @@ from ezdxf.tools.text import (
     MTextContext,
     TokenType,
     MTextParagraphAlignment,
+    AbstractFont,
 )
 
 __all__ = ["MTextExplode"]
@@ -119,10 +121,11 @@ class TextRenderer(FrameRenderer):
         m: Matrix44 = None,
     ):
         """Create/render the text content"""
+        # mypy: The 'Text' entity is not a str!
         text = self.layout.add_text(self.text, dxfattribs=self.text_attribs)
-        text.set_pos((left, bottom), align="LEFT")
+        text.set_pos((left, bottom), align="LEFT")  # type: ignore
         if m:
-            text.transform(m)
+            text.transform(m)  # type: ignore
 
 
 class Word(tl.Text):
@@ -220,7 +223,7 @@ def mtext_context(mtext: MText) -> MTextContext:
     ctx = MTextContext()
     ctx.font_face = get_font_face(mtext)
     ctx.cap_height = mtext.dxf.char_height
-    ctx.color = mtext.dxf.color
+    ctx.aci = mtext.dxf.color
     rgb = mtext.rgb
     if rgb is not None:
         ctx.rgb = rgb
@@ -295,10 +298,11 @@ def new_paragraph(
         left = p.left * cap_height
         right = p.right * cap_height
         first = left + p.indent * cap_height  # relative to left
-        tab_stops = default_stops
+        _default_stops: Sequence[tl.TabStop] = default_stops or []
+        tab_stops = _default_stops
         if p.tab_stops:
             tab_stops = make_tab_stops(
-                cap_height, width, p.tab_stops, default_stops
+                cap_height, width, p.tab_stops, _default_stops
             )
         paragraph = tl.Paragraph(
             align=align,
@@ -308,7 +312,7 @@ def new_paragraph(
         )
         paragraph.append_content(cells)
     else:
-        paragraph = tl.EmptyParagraph(
+        paragraph = tl.EmptyParagraph(  # type: ignore
             cap_height=ctx.cap_height, line_spacing=line_spacing
         )
     return paragraph
@@ -390,15 +394,18 @@ class MTextExplode:
     """
 
     def __init__(
-        self, layout: BaseLayout, doc=None, spacing_factor: float = 1.0
+        self,
+        layout: BaseLayout,
+        doc: Drawing = None,
+        spacing_factor: float = 1.0,
     ):
-        self.layout = layout
-        self._doc = doc if doc else layout.doc
+        self.layout: BaseLayout = layout
+        self._doc: Drawing = doc if doc else layout.doc
         assert self._doc is not None, "DXF document required"
         # scale the width of spaces by this factor:
-        self._spacing_factor = spacing_factor
-        self._required_text_styles: Dict = {}
-        self._font_cache = {}
+        self._spacing_factor = float(spacing_factor)
+        self._required_text_styles: Dict[str, fonts.FontFace] = {}
+        self._font_cache: Dict[Tuple[str, float, float], AbstractFont] = {}
 
     def __enter__(self):
         return self
@@ -412,9 +419,9 @@ class MTextExplode:
             style += 1
         if font_face.is_italic:
             style += 2
-        style = str(style) if style > 0 else ""
+        style_str = str(style) if style > 0 else ""
         # BricsCAD naming convention for exploded MTEXT styles:
-        text_style = f"MtXpl_{font_face.family}" + style
+        text_style = f"MtXpl_{font_face.family}" + style_str
         self._required_text_styles[text_style] = font_face
         return text_style
 
@@ -482,6 +489,7 @@ class MTextExplode:
         layout = tl.Layout(width=width)
         if mtext.has_columns:
             columns = mtext.columns
+            assert columns is not None
             for height in column_heights():
                 layout.append_column(
                     width=columns.width,
