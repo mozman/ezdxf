@@ -1,6 +1,5 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
-# Created: 2020-04-01
 from typing import Dict
 
 from ezdxf.document import Drawing
@@ -19,11 +18,11 @@ from .fileheader import FileHeader
 from .header_section import load_header_section
 from .classes_section import load_classes_section
 
-__all__ = ['readfile', 'load']
+__all__ = ["readfile", "load"]
 
 
-def readfile(filename: str, crc_check=False) -> 'Drawing':
-    data = open(filename, 'rb').read()
+def readfile(filename: str, crc_check=False) -> "Drawing":
+    data = open(filename, "rb").read()
     return load(data, crc_check)
 
 
@@ -48,9 +47,9 @@ class DwgDocument:
         doc.header = HeaderSection.new()
 
         # Setup basic header variables not stored in the header section of the DWG file.
-        doc.header['$ACADVER'] = self.specs.version
-        doc.header['$ACADMAINTVER'] = self.specs.maintenance_release_version
-        doc.header['$DWGCODEPAGE'] = codepage.tocodepage(self.specs.encoding)
+        doc.header["$ACADVER"] = self.specs.version
+        doc.header["$ACADMAINTVER"] = self.specs.maintenance_release_version
+        doc.header["$DWGCODEPAGE"] = codepage.tocodepage(self.specs.encoding)
 
         doc.classes = ClassesSection(doc)
         # doc.tables = TablesSection(doc)
@@ -75,7 +74,9 @@ class DwgDocument:
         pass
 
     def load_classes(self) -> None:
-        cls_section = load_classes_section(self.specs, self.data, self.crc_check)
+        cls_section = load_classes_section(
+            self.specs, self.data, self.crc_check
+        )
         for class_num, dxfclass in cls_section.load_classes():
             self.doc.classes.register(dxfclass)
             self.dxf_object_types[class_num] = dxfclass.dxf.name

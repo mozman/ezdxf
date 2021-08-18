@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
 from typing import Dict, Any, List, Tuple
 from abc import abstractmethod
@@ -35,28 +35,42 @@ class DwgHeaderSectionR2000(DwgSectionLoader):
         if self.specs.version > ACAD_2000:
             raise DwgVersionError(self.specs.version)
         seeker, section_size = self.specs.sections[HEADER_ID]
-        return data[seeker:seeker + section_size]
+        return data[seeker : seeker + section_size]
 
     def load_header_vars(self) -> Dict:
         data = self.data
         sentinel = data[:16]
-        if sentinel != b'\xCF\x7B\x1F\x23\xFD\xDE\x38\xA9\x5F\x7C\x68\xB8\x4E\x6D\x33\x5F':
-            raise DwgCorruptedHeaderSection('Sentinel for start of HEADER section not found.')
+        if (
+            sentinel
+            != b"\xCF\x7B\x1F\x23\xFD\xDE\x38\xA9\x5F\x7C\x68\xB8\x4E\x6D\x33\x5F"
+        ):
+            raise DwgCorruptedHeaderSection(
+                "Sentinel for start of HEADER section not found."
+            )
         index = 16
-        size = struct.unpack_from('<L', data, index)[0]
+        size = struct.unpack_from("<L", data, index)[0]
         index += 4
-        bs = BitStream(data[index: index + size], dxfversion=self.specs.version, encoding=self.specs.encoding)
+        bs = BitStream(
+            data[index : index + size],
+            dxfversion=self.specs.version,
+            encoding=self.specs.encoding,
+        )
         hdr_vars = parse_header(bs)
         index += size
         if self.crc_check:
-            check = struct.unpack_from('<H', data, index)[0]
+            check = struct.unpack_from("<H", data, index)[0]
             # CRC of data from end of sentinel until start of crc value
-            crc = crc8(data[16:-18], seed=0xc0c1)
+            crc = crc8(data[16:-18], seed=0xC0C1)
             if check != crc:
-                raise CRCError('CRC error in header section.')
+                raise CRCError("CRC error in header section.")
         sentinel = data[-16:]
-        if sentinel != b'\x30\x84\xE0\xDC\x02\x21\xC7\x56\xA0\x83\x97\x47\xB1\x92\xCC\xA0':
-            raise DwgCorruptedHeaderSection('Sentinel for end of HEADER section not found.')
+        if (
+            sentinel
+            != b"\x30\x84\xE0\xDC\x02\x21\xC7\x56\xA0\x83\x97\x47\xB1\x92\xCC\xA0"
+        ):
+            raise DwgCorruptedHeaderSection(
+                "Sentinel for end of HEADER section not found."
+            )
         return hdr_vars
 
 
@@ -65,23 +79,23 @@ class DwgHeaderSectionR2004(DwgHeaderSectionR2000):
         raise NotImplementedError()
 
 
-CMD_SET_VERSION = 'ver'
-CMD_SKIP_BITS = 'skip_bits'
-CMD_SKIP_NEXT_IF = 'skip_next_if'
-CMD_SET_VAR = 'var'
+CMD_SET_VERSION = "ver"
+CMD_SKIP_BITS = "skip_bits"
+CMD_SKIP_NEXT_IF = "skip_next_if"
+CMD_SET_VAR = "var"
 
 
 def _min_max_versions(version: str) -> Tuple[str, str]:
     min_ver = ACAD_13
     max_ver = ACAD_LATEST
-    if version != 'all':
-        v = version.split('-')
+    if version != "all":
+        v = version.split("-")
         if len(v) > 1:
             min_ver = acad_release_to_dxf_version[v[0].strip()]
             max_ver = acad_release_to_dxf_version[v[1].strip()]
         else:
             v = v[0].strip()
-            if v[-1] == '+':
+            if v[-1] == "+":
                 min_ver = acad_release_to_dxf_version[v[:-1]]
             else:
                 min_ver = max_ver = acad_release_to_dxf_version[v]
@@ -90,29 +104,31 @@ def _min_max_versions(version: str) -> Tuple[str, str]:
 
 def load_commands(desc: str) -> List[Tuple[str, Any]]:
     commands = []
-    lines = desc.split('\n')
+    lines = desc.split("\n")
     for line in lines:
         line = line.strip()
-        if not line or line[0] == '#':
+        if not line or line[0] == "#":
             continue
         try:
-            command, param = line.split(':')
+            command, param = line.split(":")
         except ValueError:
-            raise ValueError(f'Unpack Error in line: {line}')
+            raise ValueError(f"Unpack Error in line: {line}")
         command = command.strip()
-        param = param.split('#')[0].strip()
+        param = param.split("#")[0].strip()
         if command == CMD_SET_VERSION:
             commands.append((CMD_SET_VERSION, _min_max_versions(param)))
         elif command in {CMD_SKIP_BITS, CMD_SKIP_NEXT_IF}:
             commands.append((command, param))
-        elif command[0] == '$':
+        elif command[0] == "$":
             commands.append((CMD_SET_VAR, (command, param)))
         else:
-            raise ValueError(f'Unknown command: {command}')
+            raise ValueError(f"Unknown command: {command}")
     return commands
 
 
-def parse_bitstream(bs: BitStream, commands: List[Tuple[str, Any]]) -> Dict[str, Any]:
+def parse_bitstream(
+    bs: BitStream, commands: List[Tuple[str, Any]]
+) -> Dict[str, Any]:
     version = bs.dxfversion
     min_ver = ACAD_13
     max_ver = ACAD_LATEST
@@ -128,13 +144,13 @@ def parse_bitstream(bs: BitStream, commands: List[Tuple[str, Any]]) -> Dict[str,
         elif cmd == CMD_SKIP_BITS:
             bs.skip(int(params))
         elif cmd == CMD_SKIP_NEXT_IF:
-            skip_next_cmd = eval(params, None, {'header': hdr_vars})
+            skip_next_cmd = eval(params, None, {"header": hdr_vars})
         elif cmd == CMD_SET_VAR:
             if min_ver <= version <= max_ver:
                 name, code = params
                 hdr_vars[name] = bs.read_code(code)
         else:
-            raise ValueError(f'Unknown command: {cmd}')
+            raise ValueError(f"Unknown command: {cmd}")
     return hdr_vars
 
 
