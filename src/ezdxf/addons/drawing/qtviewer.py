@@ -36,8 +36,8 @@ class CADGraphicsView(qw.QGraphicsView):
         loading_overlay: bool = True,
     ):
         super().__init__()
-        self._zoom = 1
-        self._default_zoom = 1
+        self._zoom = 1.
+        self._default_zoom = 1.
         self._zoom_limits = (0.5, 100)
         self._zoom_per_scroll_notch = zoom_per_scroll_notch
         self._view_buffer = view_buffer
@@ -51,7 +51,7 @@ class CADGraphicsView(qw.QGraphicsView):
         self.setDragMode(qw.QGraphicsView.ScrollHandDrag)
         self.setFrameShape(qw.QFrame.NoFrame)
         self.setRenderHints(
-            qg.QPainter.Antialiasing
+            qg.QPainter.Antialiasing  # type: ignore
             | qg.QPainter.TextAntialiasing
             | qg.QPainter.SmoothPixmapTransform
         )
@@ -92,7 +92,7 @@ class CADGraphicsView(qw.QGraphicsView):
         # See QWheelEvent documentation
         delta_notches = event.angleDelta().y() / 120
         direction = math.copysign(1, delta_notches)
-        factor = (1 + self._zoom_per_scroll_notch * direction) ** abs(
+        factor = (1. + self._zoom_per_scroll_notch * direction) ** abs(
             delta_notches
         )
         resulting_zoom = self._zoom * factor
@@ -225,7 +225,7 @@ class CadViewer(qw.QMainWindow):
     def _reset_backend(self, scale: float = 1.0):
         backend = PyQtBackend(use_text_cache=True, params=self._render_params)
         if scale != 1.0:
-            backend = BackendScaler(backend, factor=scale)
+            backend = BackendScaler(backend, factor=scale)  # type: ignore
         # clear caches
         self._backend = backend
 
@@ -326,11 +326,11 @@ class CadViewer(qw.QMainWindow):
         self.view.begin_loading()
         new_scene = qw.QGraphicsScene()
         self._backend.set_scene(new_scene)
-        layout = self.doc.layout(layout_name)
+        layout = self.doc.layout(layout_name)  # type: ignore
         self._update_render_context(layout)
         try:
             start = time.perf_counter()
-            Frontend(self._render_context, self._backend).draw_layout(layout)
+            Frontend(self._render_context, self._backend).draw_layout(layout)  # type: ignore
             duration = time.perf_counter() - start
             print(f"took {duration:.4f} seconds")
         except DXFStructureError as e:
@@ -362,11 +362,11 @@ class CadViewer(qw.QMainWindow):
     def _layer_checkboxes(self) -> Iterable[Tuple[int, qw.QCheckBox]]:
         for i in range(self.layers.count()):
             item = self.layers.itemWidget(self.layers.item(i))
-            yield i, item
+            yield i, item  # type: ignore
 
     @qc.pyqtSlot(int)
     def _layers_updated(self, item_state: qc.Qt.CheckState):
-        shift_held = qw.QApplication.keyboardModifiers() & qc.Qt.ShiftModifier
+        shift_held = qw.QApplication.keyboardModifiers() & qc.Qt.ShiftModifier  # type: ignore
         if shift_held:
             for i, item in self._layer_checkboxes():
                 item.blockSignals(True)
@@ -377,7 +377,7 @@ class CadViewer(qw.QMainWindow):
         for i, layer in self._layer_checkboxes():
             if layer.checkState() == qc.Qt.Checked:
                 self._visible_layers.add(layer.text())
-        self.draw_layout(self._current_layout, reset_view=False)
+        self.draw_layout(self._current_layout, reset_view=False)  # type: ignore
 
     @qc.pyqtSlot()
     def _toggle_sidebar(self):
