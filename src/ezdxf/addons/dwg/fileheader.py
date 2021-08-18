@@ -1,5 +1,6 @@
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
+from typing import Dict, Tuple
 import struct
 from .const import *
 from .crc import crc8
@@ -42,7 +43,7 @@ class FileHeader:
         codepage: int = struct.unpack_from("<h", data, 0x13)[0]
         self.encoding = codepage_to_encoding.get(codepage, "cp1252")
         self.maintenance_release_version = data[0xB]
-        self.sections = dict()
+        self.sections: Dict[int, Tuple[int, int]] = dict()
         if self.version <= ACAD_2000:
             self.r2000_header(data)
         else:

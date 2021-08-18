@@ -94,11 +94,11 @@ def _min_max_versions(version: str) -> Tuple[str, str]:
             min_ver = acad_release_to_dxf_version[v[0].strip()]
             max_ver = acad_release_to_dxf_version[v[1].strip()]
         else:
-            v = v[0].strip()
-            if v[-1] == "+":
-                min_ver = acad_release_to_dxf_version[v[:-1]]
+            v_str: str = v[0].strip()
+            if v_str[-1] == "+":
+                min_ver = acad_release_to_dxf_version[v_str[:-1]]
             else:
-                min_ver = max_ver = acad_release_to_dxf_version[v]
+                min_ver = max_ver = acad_release_to_dxf_version[v_str]
     return min_ver, max_ver
 
 
@@ -118,7 +118,7 @@ def load_commands(desc: str) -> List[Tuple[str, Any]]:
         if command == CMD_SET_VERSION:
             commands.append((CMD_SET_VERSION, _min_max_versions(param)))
         elif command in {CMD_SKIP_BITS, CMD_SKIP_NEXT_IF}:
-            commands.append((command, param))
+            commands.append((command, param))  # type: ignore
         elif command[0] == "$":
             commands.append((CMD_SET_VAR, (command, param)))
         else:
@@ -132,7 +132,7 @@ def parse_bitstream(
     version = bs.dxfversion
     min_ver = ACAD_13
     max_ver = ACAD_LATEST
-    hdr_vars = dict()
+    hdr_vars: Dict[str, Any] = dict()
     skip_next_cmd = False
     for cmd, params in commands:
         if skip_next_cmd:
