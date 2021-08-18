@@ -1,7 +1,7 @@
 # Copyright (c) 2021, Manfred Moitzi
 # License: MIT License
 from ezdxf.lldxf.tags import Tags
-from typing import Iterable
+from typing import Iterable, Sequence
 from ezdxf.lldxf.types import (
     DXFTag,
     DXFVertex,
@@ -48,7 +48,7 @@ def tag_compiler(tags: Tags) -> Iterable[DXFTag]:
             except IndexError:  # no z-coord exist
                 z_code = 0
                 z_value = 0
-
+            point: Sequence[float]
             if z_code == code + 20:  # is a z-coord?
                 point = (to_float(value), to_float(y_value), to_float(z_value))
                 index += 3

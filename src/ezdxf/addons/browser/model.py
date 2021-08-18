@@ -54,7 +54,7 @@ class DXFTagsModel(QAbstractTableModel):
         self._line_numbers = calc_line_numbers(start_line_number, self._tags)
         self._valid_handles = valid_handles or set()
 
-    def data(self, index: QModelIndex, role: int = ...) -> Any:
+    def data(self, index: QModelIndex, role: int = ...) -> Any:  # type: ignore
         def is_invalid_handle(tag):
             if (
                 tag.code in POINTER_CODES
@@ -89,7 +89,7 @@ class DXFTagsModel(QAbstractTableModel):
                 return f"Double click to go to the DXF reference provided by Autodesk"
 
     def headerData(
-        self, section: int, orientation: Qt.Orientation, role: int = ...
+        self, section: int, orientation: Qt.Orientation, role: int = ...  # type: ignore
     ) -> Any:
         if orientation == Qt.Horizontal:
             if role == Qt.DisplayRole:
@@ -102,10 +102,10 @@ class DXFTagsModel(QAbstractTableModel):
             elif role == Qt.ToolTipRole:
                 return "Line number in DXF file"
 
-    def rowCount(self, parent: QModelIndex = ...) -> int:
+    def rowCount(self, parent: QModelIndex = ...) -> int:  # type: ignore
         return len(self._tags)
 
-    def columnCount(self, parent: QModelIndex = ...) -> int:
+    def columnCount(self, parent: QModelIndex = ...) -> int:  # type: ignore
         return 3
 
     def compiled_tags(self) -> Tags:
@@ -202,6 +202,7 @@ class Entity(QStandardItem):
         super().__init__()
         self.setEditable(False)
         self._tags = tags
+        self._handle: Optional[str]
         try:
             self._handle = tags.get_handle()
         except ValueError:
@@ -215,7 +216,7 @@ class Entity(QStandardItem):
             name = name_fmt(self._handle, tags[0].value)
         return name
 
-    def data(self, role: int = ...) -> Any:
+    def data(self, role: int = ...) -> Any:  # type: ignore
         if role == DXFTagsRole:
             return self._tags
         else:
@@ -258,6 +259,7 @@ class DXFStructureModel(QStandardItemModel):
         root = QStandardItem(filename)
         root.setEditable(False)
         self.appendRow(root)
+        row: Any
         for section in doc.sections.values():
             name = get_section_name(section)
             if name == "HEADER":
