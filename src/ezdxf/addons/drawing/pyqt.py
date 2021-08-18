@@ -26,7 +26,7 @@ class _Point(qw.QAbstractGraphicsShapeItem):
 
     def __init__(self, x: float, y: float, brush: qg.QBrush):
         super().__init__()
-        self.pos = qc.QPointF(x, y)
+        self.location = qc.QPointF(x, y)
         self.radius = 1.0
         self.setPen(qg.QPen(qc.Qt.NoPen))
         self.setBrush(brush)
@@ -41,10 +41,10 @@ class _Point(qw.QAbstractGraphicsShapeItem):
         radius = self.radius / view_scale
         painter.setBrush(self.brush())
         painter.setPen(qc.Qt.NoPen)
-        painter.drawEllipse(self.pos, radius, radius)
+        painter.drawEllipse(self.location, radius, radius)
 
     def boundingRect(self) -> qc.QRectF:
-        return qc.QRectF(self.pos, qc.QSizeF(1, 1))
+        return qc.QRectF(self.location, qc.QSizeF(1, 1))
 
 
 # The key used to store the dxf entity corresponding to each graphics element
