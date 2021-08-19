@@ -44,7 +44,7 @@ SUPPORTED_FOREIGN_ENTITY_TYPES = {
 
 
 class _AbstractLayout(CreatorInterface):
-    entity_space = None
+    entity_space = EntitySpace()
 
     @property
     def entitydb(self) -> "EntityDB":
@@ -60,7 +60,7 @@ class _AbstractLayout(CreatorInterface):
 
     def __iter__(self) -> Iterator["DXFGraphic"]:
         """Returns iterable of all drawing entities in this layout."""
-        return iter(self.entity_space)
+        return iter(self.entity_space)  # type: ignore
 
     def __getitem__(self, index):
         """Get entity at `index`.
@@ -103,7 +103,9 @@ class _AbstractLayout(CreatorInterface):
 
 class BaseLayout(_AbstractLayout):
     def __init__(self, block_record: "BlockRecord"):
-        super().__init__(block_record.doc)
+        doc = block_record.doc
+        assert doc is not None
+        super().__init__(doc)
         self.entity_space = block_record.entity_space
         # This is the real central layout management structure:
         self.block_record = block_record
@@ -328,7 +330,7 @@ class VirtualLayout(_AbstractLayout):
     """
 
     def __init__(self):
-        super().__init__(None)
+        super().__init__(None)  # type: ignore
         self.entity_space = EntitySpace()
 
     @property
@@ -341,7 +343,7 @@ class VirtualLayout(_AbstractLayout):
     def new_entity(self, type_: str, dxfattribs: dict) -> "DXFGraphic":
         entity = factory.new(type_, dxfattribs=dxfattribs)
         self.entity_space.add(entity)
-        return entity
+        return entity  # type: ignore
 
     def unlink_entity(self, entity: "DXFGraphic") -> None:
         self.entity_space.remove(entity)
@@ -363,7 +365,7 @@ class VirtualLayout(_AbstractLayout):
                 continue
             clone.doc = doc
             entitydb.add(clone)
-            layout.add_entity(clone)
+            layout.add_entity(clone)  # type: ignore
 
     def move_all_to_layout(self, layout: BaseLayout) -> None:
         """Move all entities to a real document layout."""
@@ -372,5 +374,5 @@ class VirtualLayout(_AbstractLayout):
         for entity in self.entity_space:
             entity.doc = doc
             entitydb.add(entity)
-            layout.add_entity(entity)
+            layout.add_entity(entity)  # type: ignore
         self.delete_all_entities()
