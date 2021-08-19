@@ -381,9 +381,11 @@ def make_bg_renderer(mtext: MText, attribs: Dict, layout: BaseLayout):
 
 
 def defined_width(mtext: MText) -> float:
-    width = mtext.dxf.width
+    width = mtext.dxf.get("width", 0.0)  # optional without default value
     if width < 1e-6:  # no defined width
-        width = 100 * mtext.dxf.char_height
+        content = mtext.plain_text(split=True, fast=True)
+        max_line_length = max(len(t) for t in content)
+        width = max_line_length * mtext.dxf.char_height
     return width
 
 
