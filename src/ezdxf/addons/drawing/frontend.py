@@ -386,7 +386,7 @@ class Frontend:
             Frontend.complex_mtext_rendering = True
 
         """
-        complex_mtext_renderer(self.out, mtext, properties)
+        complex_mtext_renderer(self.ctx, self.out, mtext, properties)
 
     def draw_curve_entity(
         self, entity: DXFGraphic, properties: Properties

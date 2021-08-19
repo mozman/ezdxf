@@ -330,7 +330,7 @@ class CadViewer(qw.QMainWindow):
         self._update_render_context(layout)
         try:
             start = time.perf_counter()
-            Frontend(self._render_context, self._backend).draw_layout(layout)  # type: ignore
+            self.create_frontend().draw_layout(layout)  # type: ignore
             duration = time.perf_counter() - start
             print(f"took {duration:.4f} seconds")
         except DXFStructureError as e:
@@ -345,6 +345,9 @@ class CadViewer(qw.QMainWindow):
         self.view.buffer_scene_rect()
         if reset_view:
             self.view.fit_to_scene()
+
+    def create_frontend(self):
+        return Frontend(self._render_context, self._backend)
 
     def _update_render_context(self, layout):
         assert self._render_context
