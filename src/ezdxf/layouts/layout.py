@@ -114,14 +114,14 @@ class Layout(BaseLayout):
             }
         )
         dxf_layout = doc.objects.new_entity("LAYOUT", dxfattribs=dxfattribs)
-        return cls(dxf_layout, doc)
+        return cls(dxf_layout, doc)  # type: ignore
 
     @classmethod
     def load(cls, layout: "DXFLayout", doc: "Drawing"):
         """Loading interface. (internal API)"""
-        layout = cls(layout, doc)
-        layout._repair_owner_tags()
-        return layout
+        _layout = cls(layout, doc)
+        _layout._repair_owner_tags()
+        return _layout
 
     @property
     def name(self) -> str:
@@ -164,8 +164,8 @@ class Layout(BaseLayout):
 
         """
         if isinstance(entity, str):  # entity is a handle string
-            entity = self.entitydb[entity]
-        return entity.dxf.owner == self.layout_key
+            entity = self.entitydb[entity]  # type: ignore
+        return entity.dxf.owner == self.layout_key  # type: ignore
 
     def destroy(self) -> None:
         """Delete all entities and the layout itself from entity database and
@@ -197,7 +197,7 @@ class Layout(BaseLayout):
                 sortents_table = self.doc.objects.new_entity(
                     "SORTENTSTABLE",
                     dxfattribs={
-                        "owner": xdict.dxf.handle,
+                        "owner": xdict.handle,
                         "block_record_handle": self.layout_key,
                     },
                 )
@@ -241,16 +241,15 @@ class Layout(BaseLayout):
         sort_handle) pairs, see also :meth:`~Layout.set_redraw_order`.
 
         """
-        empty = []
         if self.block_record.has_extension_dict:
             xdict = self.get_extension_dict()
         else:
-            return empty
+            return tuple()
 
         try:
             sortents_table = xdict["ACAD_SORTENTS"]
         except const.DXFKeyError:
-            return empty
+            return tuple()
         return iter(sortents_table)
 
     def reset_extents(
@@ -498,7 +497,7 @@ class Paperspace(Layout):
         """
         vports = [entity for entity in self if entity.dxftype() == "VIEWPORT"]
         vports.sort(key=lambda e: e.dxf.id)
-        return vports
+        return vports  # type: ignore
 
     def main_viewport(self) -> Optional["Viewport"]:
         """Returns the main viewport of this paper space layout, or ``None``
@@ -649,7 +648,7 @@ class Paperspace(Layout):
         units: str = "mm",
         offset: Tuple[float, float] = (0, 0),
         rotation: int = 0,
-        scale: int = 16,
+        scale: Union[int, Tuple[float, float]] = 16,
         name: str = "ezdxf",
         device: str = "DWG to PDF.pc3",
     ) -> None:
@@ -684,16 +683,19 @@ class Paperspace(Layout):
 
         if isinstance(scale, tuple):
             standard_scale = 16
+            scale_num, scale_denom = scale
         elif isinstance(scale, int):
             standard_scale = scale
-            scale = const.STD_SCALES.get(standard_scale, (1, 1))
+            scale_num, scale_denom = const.STD_SCALES.get(
+                standard_scale, (1.0, 1.0)
+            )
         else:
             raise const.DXFTypeError(
                 "Scale has to be an int or a tuple(numerator, denominator)"
             )
-        if scale[0] == 0:
+        if scale_num == 0:
             raise const.DXFValueError("Scale numerator can't be 0.")
-        if scale[1] == 0:
+        if scale_denom == 0:
             raise const.DXFValueError("Scale denominator can't be 0.")
 
         self.use_standard_scale(False)  # works best, don't know why
@@ -725,8 +727,8 @@ class Paperspace(Layout):
         dxf.top_margin = margin_top * unit_factor
         dxf.paper_width = paper_width * unit_factor
         dxf.paper_height = paper_height * unit_factor
-        dxf.scale_numerator = scale[0]
-        dxf.scale_denominator = scale[1]
+        dxf.scale_numerator = scale_num
+        dxf.scale_denominator = scale_denom
         dxf.plot_paper_units = plot_paper_units
         dxf.plot_rotation = rotation
 
@@ -785,7 +787,7 @@ class Paperspace(Layout):
         units: str = "mm",
         offset: Tuple[int, int] = (0, 0),
         rotation: float = 0,
-        scale: int = 16,
+        scale: Union[int, Tuple[float, float]] = 16,
     ) -> None:
 
         # remove existing viewports
@@ -796,14 +798,16 @@ class Paperspace(Layout):
             raise const.DXFValueError("Valid rotation values: 0-3")
 
         if isinstance(scale, int):
-            scale = const.STD_SCALES.get(scale, (1, 1))
+            scale_num, scale_denom = const.STD_SCALES.get(scale, (1, 1))
+        else:
+            scale_num, scale_denom = scale
 
-        if scale[0] == 0:
+        if scale_num == 0:
             raise const.DXFValueError("Scale numerator can't be 0.")
-        if scale[1] == 0:
+        if scale_denom == 0:
             raise const.DXFValueError("Scale denominator can't be 0.")
 
-        scale_factor = scale[1] / scale[0]
+        scale_factor = scale_denom / scale_num
 
         # TODO: don't know how to set inch or mm mode in R12
         units = units.lower()
@@ -863,8 +867,7 @@ class Paperspace(Layout):
         )
         main_viewport.dxf.id = 1  # set as main viewport
         main_viewport.dxf.status = 2  # AutoCAD default value
-        with main_viewport.edit_data() as vpdata:
-            vpdata.view_mode = 1000  # AutoDesk default
+        main_viewport.dxf.render_mode = 1000  # AutoDesk default (view mode?)
 
     def get_paper_limits_r12(self) -> Tuple[Vec2, Vec2]:
         """Returns paper limits in plot paper units."""
