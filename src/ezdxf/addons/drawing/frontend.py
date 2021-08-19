@@ -25,6 +25,7 @@ from ezdxf.addons.drawing.properties import (
 from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.addons.drawing.type_hints import FilterFunc
 from ezdxf.addons.drawing.gfxproxy import DXFGraphicProxy
+from ezdxf.addons.drawing.mtext_complex import complex_mtext_renderer
 from ezdxf.entities import (
     DXFEntity,
     DXFGraphic,
@@ -81,13 +82,18 @@ class Frontend:
         out: backend
         proxy_graphics: o to ignore proxy graphics, 1 to show proxy graphics
             and 2 to prefer proxy graphics over internal renderings
+        complex_mtext_rendering: use complex but slow MTEXT renderer with inline
+            code support if ``True``
+
     """
 
     def __init__(
         self,
         ctx: RenderContext,
         out: Backend,
+        *,
         proxy_graphics: int = USE_PROXY_GRAPHICS,
+        complex_mtext_rendering=False,
     ):
         # RenderContext contains all information to resolve resources for a
         # specific DXF document.
@@ -123,6 +129,12 @@ class Frontend:
 
         # set to None to disable nested polygon detection:
         self.nested_polygon_detection = fast_bbox_detection
+
+        # "complex_mtext_rendering":
+        # False: fast MTEXT renderer without support of inline codes
+        # True: complex MTEXT renderer with inline code support but MUCH slower
+        # Rendering method can be changed on the fly.
+        self.complex_mtext_rendering = complex_mtext_rendering
 
         self._dispatch = self._build_dispatch_table()
 
@@ -322,6 +334,10 @@ class Frontend:
         if is_spatial_text(Vec3(mtext.dxf.extrusion)):
             self.skip_entity(mtext, "3D MTEXT not supported")
             return
+        if self.complex_mtext_rendering:
+            self.draw_complex_mtext(mtext, properties)
+            return
+        # Simple MTEXT rendering without inline code support:
         if mtext.has_columns:
             columns = mtext.columns
             assert columns is not None
@@ -344,17 +360,33 @@ class Frontend:
     def distribute_mtext_columns_content(
         self, mtext: MText, properties: Properties
     ):
-        """Distribute the content of the MTEXT entity across multiple columns"""
-        # TODO: complex MTEXT renderer
+        """Distribute the content of the MTEXT entity across multiple columns
+
+        For the distribution of the MTEXT content across multiple columns is
+        a complex rendering of the MTEXT content absolutely necessary!
+
+        """
+        # TODO: activate complex MTEXT rendering when implemented
+        # self.draw_complex_mtext(mtext, properties)
         self.draw_mtext_column(mtext, properties)
 
     def draw_mtext_column(self, mtext: MText, properties: Properties) -> None:
         """Draw the content of a MTEXT entity as a single column."""
-        # TODO: complex MTEXT renderer
         for line, transform, cap_height in simplified_text_chunks(
             mtext, self.out, font=properties.font
         ):
             self.out.draw_text(line, transform, properties, cap_height)
+
+    def draw_complex_mtext(self, mtext: MText, properties: Properties) -> None:
+        """Draw MTEXT entity with inline code support. This method is much
+        slower than the simple MTEXT rendering.
+
+        Activate complex MTEXT rendering::
+
+            Frontend.complex_mtext_rendering = True
+
+        """
+        complex_mtext_renderer(self.out, mtext, properties)
 
     def draw_curve_entity(
         self, entity: DXFGraphic, properties: Properties
