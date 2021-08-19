@@ -13,6 +13,7 @@ from ezdxf.addons.mtxpl import (
     new_paragraph,
     get_stroke,
     STACKING,
+    defined_width,
 )
 
 from .backend import Backend
@@ -260,7 +261,7 @@ class ComplexMTextRenderer:
         ctx = mtext_context(mtext, self.properties)
         parser = MTextParser(content, ctx)
         bg_renderer = self.make_bg_renderer()
-        width = mtext.dxf.width
+        width = defined_width(mtext)
         default_stops = make_default_tab_stops(initial_cap_height, width)
         layout = tl.Layout(width=width)
         if mtext.has_columns:

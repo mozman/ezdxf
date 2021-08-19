@@ -380,6 +380,13 @@ def make_bg_renderer(mtext: MText, attribs: Dict, layout: BaseLayout):
     )
 
 
+def defined_width(mtext: MText) -> float:
+    width = mtext.dxf.width
+    if width < 1e-6:  # no defined width
+        width = 100 * mtext.dxf.char_height
+    return width
+
+
 class MTextExplode:
     """The :class:`MTextExplode` class is a tool to disassemble MTEXT entities
     into single line TEXT entities and additional LINE entities if required to
@@ -484,7 +491,7 @@ class MTextExplode:
         ctx = mtext_context(mtext)
         parser = MTextParser(content, ctx)
         bg_renderer = make_bg_renderer(mtext, base_attribs, self.layout)
-        width = mtext.dxf.width
+        width = defined_width(mtext)
         default_stops = make_default_tab_stops(initial_cap_height, width)
         layout = tl.Layout(width=width)
         if mtext.has_columns:
