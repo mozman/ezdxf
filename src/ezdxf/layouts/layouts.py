@@ -13,7 +13,7 @@ from .layout import Layout, Modelspace, Paperspace
 from ezdxf.entities import DXFEntity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Dictionary, Drawing, Auditor
+    from ezdxf.eztypes import Dictionary, Drawing, Auditor, DXFLayout
 
 logger = logging.getLogger("ezdxf")
 
@@ -133,7 +133,7 @@ class Layouts:
         # Reset limits to (0, 0) and (paper width, paper height)
         layout.reset_limits()
         self._add_layout(name, layout)
-        return layout
+        return layout  # type: ignore
 
     @classmethod
     def load(cls, doc: "Drawing") -> "Layouts":
@@ -178,6 +178,7 @@ class Layouts:
 
     def setup_from_rootdict(self) -> None:
         """Setup layout manger from root dictionary. (internal API)"""
+        layout: Layout
         for name, dxf_layout in self._dxf_layouts.items():
             if key(name) == MODEL:
                 layout = Modelspace(dxf_layout, self.doc)
