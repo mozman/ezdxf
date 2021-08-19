@@ -12,13 +12,6 @@ from ezdxf import recover
 from ezdxf.addons.drawing.qtviewer import CadViewer
 
 
-class ExperimentalCadViewer(CadViewer):
-    def create_frontend(self):
-        frontend = super().create_frontend()
-        frontend.complex_mtext_rendering = True
-        return frontend
-
-
 # IMPORTANT: This example is used to test new features
 # Load and draw proxy graphic:
 ezdxf.options.preserve_proxy_graphics()
@@ -37,11 +30,13 @@ def _main():
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
     app = qw.QApplication(sys.argv)
-    v = ExperimentalCadViewer(params={
+    v = CadViewer(params={
         'linetype_renderer': args.ltype,
         'lineweight_scaling': args.lineweight_scaling,
         # 'hatch_pattern': 2,  # draw pattern as solid fill
     })
+    # Enable complex MTEXT rendering
+    v.complex_mtext_rendering = True
     if args.cad_file is not None:
         try:
             doc, auditor = recover.readfile(args.cad_file)

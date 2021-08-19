@@ -9,6 +9,7 @@ import signal
 import logging
 from pathlib import Path
 
+import ezdxf
 from ezdxf import recover
 from ezdxf.lldxf import const
 from ezdxf.lldxf.validator import is_dxf_file
@@ -353,7 +354,9 @@ class Draw(Command):
             frontend = AllVisibleFrontend(ctx, out)
         else:
             frontend = Frontend(ctx, out)
-
+        frontend.complex_mtext_rendering = ezdxf.options.get_bool(
+            "draw-command", "complex_mtext_rendering"
+        )
         frontend.draw_layout(layout, finalize=True)
 
         if args.out is not None:
@@ -429,6 +432,10 @@ class View(Command):
                 "lineweight_scaling": args.lwscale,
             }
         )
+        viewer.complex_mtext_rendering = ezdxf.options.get_bool(
+            "view-command", "complex_mtext_rendering"
+        )
+
         filename = args.file
         if filename:
             doc, auditor = load_document(filename)

@@ -36,8 +36,8 @@ class CADGraphicsView(qw.QGraphicsView):
         loading_overlay: bool = True,
     ):
         super().__init__()
-        self._zoom = 1.
-        self._default_zoom = 1.
+        self._zoom = 1.0
+        self._default_zoom = 1.0
         self._zoom_limits = (0.5, 100)
         self._zoom_per_scroll_notch = zoom_per_scroll_notch
         self._view_buffer = view_buffer
@@ -92,7 +92,7 @@ class CADGraphicsView(qw.QGraphicsView):
         # See QWheelEvent documentation
         delta_notches = event.angleDelta().y() / 120
         direction = math.copysign(1, delta_notches)
-        factor = (1. + self._zoom_per_scroll_notch * direction) ** abs(
+        factor = (1.0 + self._zoom_per_scroll_notch * direction) ** abs(
             delta_notches
         )
         resulting_zoom = self._zoom * factor
@@ -174,6 +174,7 @@ class CadViewer(qw.QMainWindow):
         self._visible_layers = None
         self._current_layout = None
         self._reset_backend()
+        self.complex_mtext_rendering = False
 
         self.view = CADGraphicsViewWithOverlay()
         self.view.setScene(qw.QGraphicsScene())
@@ -347,7 +348,11 @@ class CadViewer(qw.QMainWindow):
             self.view.fit_to_scene()
 
     def create_frontend(self):
-        return Frontend(self._render_context, self._backend)
+        return Frontend(
+            self._render_context,
+            self._backend,
+            complex_mtext_rendering=self.complex_mtext_rendering,
+        )
 
     def _update_render_context(self, layout):
         assert self._render_context

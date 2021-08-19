@@ -72,6 +72,12 @@ def default_config() -> ConfigParser:
         "TEXT_EDITOR": r'"C:\Program Files\Notepad++\notepad++.exe" '
                        r'"{filename}" -n{num}',
     }
+    config[VIEW_COMMAND] = {
+        "COMPLEX_MTEXT_RENDERING": "false"
+    }
+    config[DRAW_COMMAND] = {
+        "COMPLEX_MTEXT_RENDERING": "false"
+    }
     return config
 
 
