@@ -1022,7 +1022,7 @@ class MTextContext:
         self.cap_height: float = 1.0
         self.width_factor: float = 1.0
         self.char_tracking_factor: float = 1.0
-        self.oblique: float = 0.0
+        self.oblique: float = 0.0  # in degrees, where 0 is vertical (TEXT entity)
         self.paragraph = ParagraphProperties()
 
     def __copy__(self) -> "MTextContext":
