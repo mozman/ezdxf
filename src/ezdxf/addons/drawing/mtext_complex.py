@@ -142,57 +142,6 @@ class TextRenderer(FrameRenderer):
         self.backend.draw_text(self.text, m, self.properties, self.cap_height)
 
 
-class Word(tl.Text):
-    """Represent a word as content box for the layout engine."""
-
-    def __init__(
-        self,
-        text: str,
-        ctx: MTextContext,
-        properties: Properties,
-        cmr: "ComplexMTextRenderer",
-    ):
-        font = cmr.get_font(ctx)
-        stroke = cmr.get_stroke(ctx)
-        super().__init__(
-            # Width and height of the content are fixed given values and will
-            # not be changed by the layout engine:
-            width=font.text_width(text),
-            height=ctx.cap_height,
-            valign=tl.CellAlignment(ctx.align),
-            stroke=stroke,
-            # Each content box can have it's own rendering object:
-            renderer=TextRenderer(
-                text,
-                ctx.cap_height,
-                ctx.width_factor,
-                ctx.oblique,
-                cmr.new_text_properties(properties, ctx),
-                cmr.backend,
-            ),
-        )
-
-
-class Fraction(tl.Fraction):
-    def __init__(
-        self,
-        upr: str,
-        lwr: str,
-        type_: str,
-        ctx: MTextContext,
-        properties: Properties,
-        cmr: "ComplexMTextRenderer",
-    ):
-        super().__init__(
-            top=Word(upr, ctx, properties, cmr),
-            bottom=Word(lwr, ctx, properties, cmr),
-            stacking=cmr.get_stacking(type_),
-            # Uses only the generic line renderer to render the divider line,
-            # the top- and bottom content boxes use their own render objects.
-            renderer=FrameRenderer(properties, cmr.backend),
-        )
-
-
 def complex_mtext_renderer(
     ctx: RenderContext, backend: Backend, mtext: MText, properties: Properties
 ) -> None:
@@ -218,16 +167,36 @@ class ComplexMTextRenderer(AbstractMTextRenderer):
     # Implementation of required AbstractMTextRenderer methods:
 
     def word(self, text: str, ctx: MTextContext) -> tl.ContentCell:
-        return Word(text, ctx, self._properties, self)
+        font = self.get_font(ctx)
+        stroke = self.get_stroke(ctx)
+        return tl.Text(
+            width=font.text_width(text),
+            height=ctx.cap_height,
+            valign=tl.CellAlignment(ctx.align),
+            stroke=stroke,
+            renderer=TextRenderer(
+                text,
+                ctx.cap_height,
+                ctx.width_factor,
+                ctx.oblique,
+                self.new_text_properties(self._properties, ctx),
+                self._backend,
+            ))
 
     def fraction(
         self, data: Tuple[str, str, str], ctx: MTextContext
     ) -> tl.ContentCell:
         upr, lwr, type_ = data
         if type_:
-            return Fraction(upr, lwr, type_, ctx, self._properties, self)
+            return tl.Fraction(
+                top=self.word(upr, ctx),
+                bottom=self.word(lwr, ctx),
+                stacking=self.get_stacking(type_),
+                # renders the divider line:
+                renderer=FrameRenderer(self._properties, self._backend),
+            )
         else:
-            return Word(upr, ctx, self._properties, self)
+            return self.word(upr, ctx)
 
     def get_font_face(self, mtext: MText) -> MTextContext:
         return self._properties.font  # type: ignore
