@@ -1,30 +1,21 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Iterable, List, Optional, Tuple, Dict
+from typing import Iterable, List, Optional, Tuple
 import copy
 from ezdxf import colors
 from ezdxf.lldxf import const
 from ezdxf.entities import MText
-from ezdxf.tools import text_layout as tl, fonts
+from ezdxf.tools import text_layout as tl
 from ezdxf.math import Matrix44, Vec3
-from ezdxf.addons.mtxpl import (
-    make_default_tab_stops,
-    super_glue,
-    new_paragraph,
+from ezdxf.render.abstract_mtext_renderer import (
+    AbstractMTextRenderer,
     get_stroke,
     STACKING,
-    defined_width,
 )
-
 from .backend import Backend
 from .properties import Properties, RenderContext, rgb_to_hex
 from .type_hints import Color
-from ezdxf.tools.text import (
-    MTextParser,
-    MTextContext,
-    TokenType,
-    AbstractFont,
-)
+from ezdxf.tools.text import MTextContext
 
 __all__ = ["complex_mtext_renderer"]
 
@@ -216,7 +207,7 @@ def complex_mtext_renderer(
     layout_engine.render(mtext.ucs().matrix)
 
 
-class ComplexMTextRenderer:
+class ComplexMTextRenderer(AbstractMTextRenderer):
     def __init__(
         self,
         ctx: RenderContext,
@@ -224,89 +215,42 @@ class ComplexMTextRenderer:
         mtext: MText,
         properties: Properties,
     ):
-        self.ctx = ctx
-        self.backend = backend
-        self.mtext = mtext
-        self.properties = properties
-        self._font_cache: Dict[Tuple[str, float, float], AbstractFont] = {}
+        super().__init__()
+        self._render_ctx = ctx
+        self._backend = backend
+        self._mtext = mtext
+        self._properties = properties
 
-    def layout_engine(self) -> tl.Layout:
-        def append_paragraph():
-            paragraph = new_paragraph(
-                cells,
-                ctx,
-                initial_cap_height,
-                line_spacing,
-                width,
-                default_stops,
-            )
-            layout.append_paragraphs([paragraph])
-            cells.clear()
+    # Implementation of required AbstractMTextRenderer properties and methods:
 
-        def column_heights():
-            if columns.heights:  # dynamic manual
-                heights = list(columns.heights)
-                # last height has to be auto height = None
-                heights[-1] = None
-            else:  # static, dynamic auto
-                heights = [columns.defined_height] * columns.count
-            return heights
+    @property
+    def mtext(self) -> MText:
+        return self._mtext
 
-        mtext = self.mtext
-        content = mtext.all_columns_raw_content()
-        initial_cap_height = mtext.dxf.char_height
+    def word(self, text: str, ctx: MTextContext) -> tl.ContentCell:
+        return Word(text, ctx, self._properties, self)
 
-        # same line spacing for all paragraphs
-        line_spacing = mtext.dxf.line_spacing_factor
-        ctx = mtext_context(mtext, self.properties)
-        parser = MTextParser(content, ctx)
-        bg_renderer = self.make_bg_renderer()
-        width = defined_width(mtext)
-        default_stops = make_default_tab_stops(initial_cap_height, width)
-        layout = tl.Layout(width=width)
-        if mtext.has_columns:
-            columns = mtext.columns
-            assert columns is not None
-            for height in column_heights():
-                layout.append_column(
-                    width=columns.width,
-                    height=height,
-                    gutter=columns.gutter_width,
-                    renderer=bg_renderer,
-                )
+    def fraction(
+        self, data: Tuple[str, str, str], ctx: MTextContext
+    ) -> tl.ContentCell:
+        upr, lwr, type_ = data
+        if type_:
+            return Fraction(upr, lwr, type_, ctx, self._properties, self)
         else:
-            # column with auto height and default width
-            layout.append_column(renderer=bg_renderer)
+            return Word(upr, ctx, self._properties, self)
 
-        cells = []
-        for token in parser:
-            ctx = token.ctx
-            if token.type == TokenType.NEW_PARAGRAPH:
-                append_paragraph()
-            elif token.type == TokenType.NEW_COLUMN:
-                append_paragraph()
-                layout.next_column()
-            elif token.type == TokenType.SPACE:
-                cells.append(self.space(ctx))
-            elif token.type == TokenType.NBSP:
-                cells.append(self.non_breaking_space(ctx))
-            elif token.type == TokenType.TABULATOR:
-                cells.append(self.tabulator(ctx))
-            elif token.type == TokenType.WORD:
-                if cells and isinstance(cells[-1], Word):
-                    # property change inside a word, create an unbreakable
-                    # connection between those two parts of the same word.
-                    cells.append(super_glue())
-                cells.append(self.word(token.data, ctx))
-            elif token.type == TokenType.STACK:
-                cells.append(self.fraction(token.data, ctx))
+    def make_mtext_context(self) -> MTextContext:
+        mtext = self._mtext
+        ctx = MTextContext()
+        ctx.font_face = self._properties.font  # type: ignore
+        ctx.cap_height = mtext.dxf.char_height
+        ctx.aci = mtext.dxf.color
+        rgb = mtext.rgb
+        if rgb is not None:
+            ctx.rgb = rgb
+        return ctx
 
-        if cells:
-            append_paragraph()
-
-        return layout
-
-    def make_bg_renderer(self):
+    def make_bg_renderer(self) -> tl.ContentRenderer:
         dxf = self.mtext.dxf
         bg_fill = dxf.get("bg_fill", 0)
 
@@ -339,46 +283,21 @@ class ComplexMTextRenderer:
             bg_properties = self.new_bg_properties(bg_aci, bg_true_color)
 
         return ColumnBackgroundRenderer(
-            self.properties,
-            self.backend,
+            self._properties,
+            self._backend,
             bg_properties,
             offset=offset,
             text_frame=has_text_frame,
         )
 
-    def space_width(self, ctx: MTextContext) -> float:
-        return self.get_font(ctx).space_width()
+    # Details of ComplexMTextRenderer implementation:
 
-    def space(self, ctx: MTextContext):
-        return tl.Space(width=self.space_width(ctx))
-
-    def tabulator(self, ctx: MTextContext):
-        return tl.Tabulator(width=self.space_width(ctx))
-
-    def non_breaking_space(self, ctx: MTextContext):
-        return tl.NonBreakingSpace(width=self.space_width(ctx))
-
-    def word(self, text: str, ctx: MTextContext):
-        return Word(text, ctx, self.properties, self)
-
-    def fraction(self, data: Tuple, ctx: MTextContext):
-        upr, lwr, type_ = data
-        if type_:
-            return Fraction(upr, lwr, type_, ctx, self.properties, self)
-        else:
-            return Word(upr, ctx, self.properties, self)
+    @property
+    def backend(self) -> Backend:
+        return self._backend
 
     def resolve_aci_color(self, aci: int) -> Color:
-        return self.ctx.resolve_aci_color(aci, self.properties.layer)
-
-    def get_font(self, ctx: MTextContext) -> fonts.AbstractFont:
-        ttf = fonts.find_ttf_path(ctx.font_face)
-        key = (ttf, ctx.cap_height, ctx.width_factor)
-        font = self._font_cache.get(key)
-        if font is None:
-            font = fonts.make_font(ttf, ctx.cap_height, ctx.width_factor)
-            self._font_cache[key] = font
-        return font
+        return self._render_ctx.resolve_aci_color(aci, self._properties.layer)
 
     def new_text_properties(
         self, properties: Properties, ctx: MTextContext
@@ -394,9 +313,9 @@ class ComplexMTextRenderer:
     def new_bg_properties(
         self, aci: Optional[int], true_color: Optional[int]
     ) -> Properties:
-        new_properties = copy.copy(self.properties)
+        new_properties = copy.copy(self._properties)
         new_properties.color = (  # canvas background color
-            self.ctx.current_layout_properties.background_color
+            self._render_ctx.current_layout_properties.background_color
         )
         if true_color is None:
             if aci is not None:
@@ -405,15 +324,3 @@ class ComplexMTextRenderer:
         else:
             new_properties.color = rgb_to_hex(colors.int2rgb(true_color))
         return new_properties
-
-
-def mtext_context(mtext: MText, properties: Properties) -> MTextContext:
-    """Setup initial MTEXT context."""
-    ctx = MTextContext()
-    ctx.font_face = properties.font  # type: ignore
-    ctx.cap_height = mtext.dxf.char_height
-    ctx.aci = mtext.dxf.color
-    rgb = mtext.rgb
-    if rgb is not None:
-        ctx.rgb = rgb
-    return ctx

@@ -1,0 +1,262 @@
+#  Copyright (c) 2021, Manfred Moitzi
+#  License: MIT License
+
+# This is the abstract link between the text layout engine implemented in
+# ezdxf.tools.text_layout and a concrete MTEXT renderer implementation like
+# MTextExplode or ComplexMTextRenderer.
+
+from typing import List, Sequence, Dict, Tuple
+import abc
+from ezdxf.entities import MText
+from ezdxf.tools import text_layout as tl, fonts
+from ezdxf.tools.text import (
+    MTextParser,
+    MTextContext,
+    TokenType,
+    MTextParagraphAlignment,
+    AbstractFont,
+)
+
+__all__ = ["AbstractMTextRenderer", "get_stroke", "STACKING"]
+
+ALIGN = {
+    MTextParagraphAlignment.LEFT: tl.ParagraphAlignment.LEFT,
+    MTextParagraphAlignment.RIGHT: tl.ParagraphAlignment.RIGHT,
+    MTextParagraphAlignment.CENTER: tl.ParagraphAlignment.CENTER,
+    MTextParagraphAlignment.JUSTIFIED: tl.ParagraphAlignment.JUSTIFIED,
+    MTextParagraphAlignment.DISTRIBUTED: tl.ParagraphAlignment.JUSTIFIED,
+    MTextParagraphAlignment.DEFAULT: tl.ParagraphAlignment.LEFT,
+}
+
+STACKING = {
+    "^": tl.Stacking.OVER,
+    "/": tl.Stacking.LINE,
+    "#": tl.Stacking.SLANTED,
+}
+
+
+def make_default_tab_stops(cap_height: float, width: float) -> List[tl.TabStop]:
+    tab_stops = []
+    step = 4.0 * cap_height
+    pos = step
+    while pos < width:
+        tab_stops.append(tl.TabStop(pos, tl.TabStopType.LEFT))
+        pos += step
+    return tab_stops
+
+
+def append_default_tab_stops(
+    tab_stops: List[tl.TabStop], default_stops: Sequence[tl.TabStop]
+) -> None:
+    last_pos = 0.0
+    if tab_stops:
+        last_pos = tab_stops[-1].pos
+    tab_stops.extend(stop for stop in default_stops if stop.pos > last_pos)
+
+
+def make_tab_stops(
+    cap_height: float,
+    width: float,
+    tab_stops: Sequence,
+    default_stops: Sequence[tl.TabStop],
+) -> List[tl.TabStop]:
+    _tab_stops = []
+    for stop in tab_stops:
+        if isinstance(stop, str):
+            value = float(stop[1:])
+            if stop[0] == "c":
+                kind = tl.TabStopType.CENTER
+            else:
+                kind = tl.TabStopType.RIGHT
+        else:
+            kind = tl.TabStopType.LEFT
+            value = float(stop)
+        pos = value * cap_height
+        if pos < width:
+            _tab_stops.append(tl.TabStop(pos, kind))
+
+    append_default_tab_stops(_tab_stops, default_stops)
+    return _tab_stops
+
+
+def get_stroke(ctx: MTextContext) -> int:
+    stroke = 0
+    if ctx.underline:
+        stroke += tl.Stroke.UNDERLINE
+    if ctx.strike_through:
+        stroke += tl.Stroke.STRIKE_THROUGH
+    if ctx.overline:
+        stroke += tl.Stroke.OVERLINE
+    return stroke
+
+
+def new_paragraph(
+    cells: List,
+    ctx: MTextContext,
+    cap_height: float,
+    line_spacing: float = 1,
+    width: float = 0,
+    default_stops: Sequence[tl.TabStop] = None,
+):
+    if cells:
+        p = ctx.paragraph
+        align = ALIGN.get(p.align, tl.ParagraphAlignment.LEFT)
+        left = p.left * cap_height
+        right = p.right * cap_height
+        first = left + p.indent * cap_height  # relative to left
+        _default_stops: Sequence[tl.TabStop] = default_stops or []
+        tab_stops = _default_stops
+        if p.tab_stops:
+            tab_stops = make_tab_stops(
+                cap_height, width, p.tab_stops, _default_stops
+            )
+        paragraph = tl.Paragraph(
+            align=align,
+            indent=(first, left, right),
+            line_spacing=line_spacing,
+            tab_stops=tab_stops,
+        )
+        paragraph.append_content(cells)
+    else:
+        paragraph = tl.EmptyParagraph(  # type: ignore
+            cap_height=ctx.cap_height, line_spacing=line_spacing
+        )
+    return paragraph
+
+
+def super_glue():
+    return tl.NonBreakingSpace(width=0, min_width=0, max_width=0)
+
+
+def defined_width(mtext: MText) -> float:
+    width = mtext.dxf.get("width", 0.0)  # optional without default value
+    if width < 1e-6:  # no defined width
+        content = mtext.plain_text(split=True, fast=True)
+        max_line_length = max(len(t) for t in content)
+        width = max_line_length * mtext.dxf.char_height
+    return width
+
+
+class AbstractMTextRenderer(abc.ABC):
+    def __init__(self):
+        self._font_cache: Dict[Tuple[str, float, float], AbstractFont] = {}
+
+    @property
+    @abc.abstractmethod
+    def mtext(self) -> MText:
+        ...
+
+    @abc.abstractmethod
+    def word(self, test: str, ctx: MTextContext) -> tl.ContentCell:
+        ...
+
+    @abc.abstractmethod
+    def fraction(
+        self, data: Tuple[str, str, str], ctx: MTextContext
+    ) -> tl.ContentCell:
+        ...
+
+    @abc.abstractmethod
+    def make_mtext_context(self) -> MTextContext:
+        ...
+
+    @abc.abstractmethod
+    def make_bg_renderer(self) -> tl.ContentRenderer:
+        ...
+
+    def get_font(self, ctx: MTextContext) -> fonts.AbstractFont:
+        ttf = fonts.find_ttf_path(ctx.font_face)
+        key = (ttf, ctx.cap_height, ctx.width_factor)
+        font = self._font_cache.get(key)
+        if font is None:
+            font = fonts.make_font(ttf, ctx.cap_height, ctx.width_factor)
+            self._font_cache[key] = font
+        return font
+
+    def space_width(self, ctx: MTextContext) -> float:
+        return self.get_font(ctx).space_width()
+
+    def space(self, ctx: MTextContext):
+        return tl.Space(width=self.space_width(ctx))
+
+    def tabulator(self, ctx: MTextContext):
+        return tl.Tabulator(width=self.space_width(ctx))
+
+    def non_breaking_space(self, ctx: MTextContext):
+        return tl.NonBreakingSpace(width=self.space_width(ctx))
+
+    def layout_engine(self) -> tl.Layout:
+        def append_paragraph():
+            paragraph = new_paragraph(
+                cells,
+                ctx,
+                initial_cap_height,
+                line_spacing,
+                width,
+                default_stops,
+            )
+            layout.append_paragraphs([paragraph])
+            cells.clear()
+
+        def column_heights():
+            if columns.heights:  # dynamic manual
+                heights = list(columns.heights)
+                # last height has to be auto height = None
+                heights[-1] = None
+            else:  # static, dynamic auto
+                heights = [columns.defined_height] * columns.count
+            return heights
+
+        mtext = self.mtext
+        content = mtext.all_columns_raw_content()
+        initial_cap_height = mtext.dxf.char_height
+
+        # same line spacing for all paragraphs
+        line_spacing = mtext.dxf.line_spacing_factor
+        ctx = self.make_mtext_context()
+        parser = MTextParser(content, ctx)
+        bg_renderer = self.make_bg_renderer()
+        width = defined_width(mtext)
+        default_stops = make_default_tab_stops(initial_cap_height, width)
+        layout = tl.Layout(width=width)
+        if mtext.has_columns:
+            columns = mtext.columns
+            assert columns is not None
+            for height in column_heights():
+                layout.append_column(
+                    width=columns.width,
+                    height=height,
+                    gutter=columns.gutter_width,
+                    renderer=bg_renderer,
+                )
+        else:
+            # column with auto height and default width
+            layout.append_column(renderer=bg_renderer)
+
+        cells = []
+        for token in parser:
+            ctx = token.ctx
+            if token.type == TokenType.NEW_PARAGRAPH:
+                append_paragraph()
+            elif token.type == TokenType.NEW_COLUMN:
+                append_paragraph()
+                layout.next_column()
+            elif token.type == TokenType.SPACE:
+                cells.append(self.space(ctx))
+            elif token.type == TokenType.NBSP:
+                cells.append(self.non_breaking_space(ctx))
+            elif token.type == TokenType.TABULATOR:
+                cells.append(self.tabulator(ctx))
+            elif token.type == TokenType.WORD:
+                if cells and isinstance(cells[-1], tl.Text):
+                    # property change inside a word, create an unbreakable
+                    # connection between those two parts of the same word.
+                    cells.append(super_glue())
+                cells.append(self.word(token.data, ctx))
+            elif token.type == TokenType.STACK:
+                cells.append(self.fraction(token.data, ctx))
+
+        if cells:
+            append_paragraph()
+
+        return layout
