@@ -560,7 +560,9 @@ class RenderContext:
     def resolve_aci_color(self, aci: int, resolved_layer: str) -> Color:
         """Resolve the `aci` color as hex color string: "#RRGGBB" """
         if aci == const.BYLAYER:
-            layer = self.layers.get(resolved_layer, DEFAULT_LAYER_PROPERTIES)
+            layer = self.layers.get(
+                layer_key(resolved_layer), DEFAULT_LAYER_PROPERTIES
+            )
             color = layer.get_entity_color_from_layer(
                 self.current_layout_properties.default_color
             )

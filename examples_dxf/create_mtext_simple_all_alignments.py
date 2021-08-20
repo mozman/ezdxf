@@ -11,10 +11,12 @@ from ezdxf.math import Vec3
 CONTENT = "This is a long MTEXT line without line wrapping!\\PThe second line."
 
 doc = ezdxf.new(setup=True)
+doc.layers.new("MTEXT", dxfattribs={"color": ezdxf.const.RED})
 msp = doc.modelspace()
 attribs = {
     "char_height": 0.7,
     "style": "OpenSans",
+    "layer": "MTEXT",
 }
 
 Alignment = ezdxf.const.MTextEntityAlignment
