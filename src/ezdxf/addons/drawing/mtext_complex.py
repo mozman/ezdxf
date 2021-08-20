@@ -5,7 +5,7 @@ import copy
 from ezdxf import colors
 from ezdxf.lldxf import const
 from ezdxf.entities import MText
-from ezdxf.tools import text_layout as tl
+from ezdxf.tools import text_layout as tl, fonts
 from ezdxf.math import Matrix44, Vec3
 from ezdxf.render.abstract_mtext_renderer import AbstractMTextRenderer
 from .backend import Backend
@@ -198,7 +198,7 @@ class ComplexMTextRenderer(AbstractMTextRenderer):
         else:
             return self.word(upr, ctx)
 
-    def get_font_face(self, mtext: MText) -> MTextContext:
+    def get_font_face(self, mtext: MText) -> fonts.FontFace:
         return self._properties.font  # type: ignore
 
     def make_bg_renderer(self, mtext: MText) -> tl.ContentRenderer:
