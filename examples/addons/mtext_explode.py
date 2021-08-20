@@ -74,7 +74,7 @@ def load(filename):
 
 
 if __name__ == "__main__":
-    # doc = create("mtext_source.dxf")
-    doc = load("mtext_tab_stops.dxf")
-    explode_mtext(doc, "mtext_xpl_tabs.dxf", destroy=False)
-    # explode_mtext_to_block(doc, "mtext_xpl_blk.dxf", destroy=True)
+    doc = create("mtext_source.dxf")
+    explode_mtext_to_block(doc, "mtext_xpl_blk.dxf", destroy=True)
+    # doc = load("mtext_tab_stops.dxf")
+    # explode_mtext(doc, "mtext_xpl_tabs.dxf", destroy=False)

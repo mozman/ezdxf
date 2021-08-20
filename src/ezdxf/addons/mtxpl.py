@@ -1,6 +1,6 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import cast, Dict, Tuple, List, Sequence
+from typing import cast, Dict, Tuple
 import math
 import ezdxf
 from ezdxf.entities import MText, DXFGraphic, Textstyle
@@ -8,18 +8,8 @@ from ezdxf.layouts import BaseLayout
 from ezdxf.document import Drawing
 from ezdxf.math import Matrix44
 from ezdxf.tools import text_layout as tl, fonts
-from ezdxf.tools.text import (
-    MTextParser,
-    MTextContext,
-    TokenType,
-    MTextParagraphAlignment,
-    AbstractFont,
-)
-from ezdxf.render.abstract_mtext_renderer import (
-    AbstractMTextRenderer,
-    STACKING,
-    get_stroke,
-)
+from ezdxf.tools.text import MTextContext
+from ezdxf.render.abstract_mtext_renderer import AbstractMTextRenderer
 
 __all__ = ["MTextExplode"]
 
@@ -137,16 +127,16 @@ class Word(tl.Text):
     """Represent a word as content box for the layout engine."""
 
     def __init__(
-        self, text: str, ctx: MTextContext, attribs: Dict, xpl: "MTextExplode"
+        self, text: str, ctx: MTextContext, xpl: "MTextExplode"
     ):
         # Each content box can have individual properties:
-        line_attribs = dict(attribs or {})
+        line_attribs = dict(xpl.current_base_attribs or {})
         line_attribs.update(get_color_attribs(ctx))
         text_attribs = dict(line_attribs)
         text_attribs.update(xpl.get_text_attribs(ctx))
 
         font = xpl.get_font(ctx)
-        stroke = get_stroke(ctx)
+        stroke = xpl.get_stroke(ctx)
         super().__init__(
             # Width and height of the content are fixed given values and will
             # not be changed by the layout engine:
@@ -166,16 +156,15 @@ class Fraction(tl.Fraction):
         lwr: str,
         type_: str,
         ctx: MTextContext,
-        attribs: Dict,
         xpl: "MTextExplode",
     ):
         super().__init__(
-            top=Word(upr, ctx, attribs, xpl),
-            bottom=Word(lwr, ctx, attribs, xpl),
-            stacking=STACKING.get(type_, tl.Stacking.LINE),
+            top=Word(upr, ctx, xpl),
+            bottom=Word(lwr, ctx, xpl),
+            stacking=xpl.get_stacking(type_),
             # Uses only the generic line renderer to render the divider line,
             # the top- and bottom content boxes use their own render objects.
-            renderer=FrameRenderer(attribs, xpl.layout),
+            renderer=FrameRenderer(xpl.current_base_attribs, xpl.layout),
         )
 
 
@@ -216,106 +205,6 @@ def get_font_face(entity: DXFGraphic, doc=None) -> fonts.FontFace:
     return font_face
 
 
-def mtext_context(mtext: MText) -> MTextContext:
-    """Setup initial MTEXT context."""
-    ctx = MTextContext()
-    ctx.font_face = get_font_face(mtext)
-    ctx.cap_height = mtext.dxf.char_height
-    ctx.aci = mtext.dxf.color
-    rgb = mtext.rgb
-    if rgb is not None:
-        ctx.rgb = rgb
-    return ctx
-
-
-ALIGN = {
-    MTextParagraphAlignment.LEFT: tl.ParagraphAlignment.LEFT,
-    MTextParagraphAlignment.RIGHT: tl.ParagraphAlignment.RIGHT,
-    MTextParagraphAlignment.CENTER: tl.ParagraphAlignment.CENTER,
-    MTextParagraphAlignment.JUSTIFIED: tl.ParagraphAlignment.JUSTIFIED,
-    MTextParagraphAlignment.DISTRIBUTED: tl.ParagraphAlignment.JUSTIFIED,
-    MTextParagraphAlignment.DEFAULT: tl.ParagraphAlignment.LEFT,
-}
-
-
-def make_default_tab_stops(cap_height: float, width: float) -> List[tl.TabStop]:
-    tab_stops = []
-    step = 4.0 * cap_height
-    pos = step
-    while pos < width:
-        tab_stops.append(tl.TabStop(pos, tl.TabStopType.LEFT))
-        pos += step
-    return tab_stops
-
-
-def append_default_tab_stops(
-    tab_stops: List[tl.TabStop], default_stops: Sequence[tl.TabStop]
-) -> None:
-    last_pos = 0.0
-    if tab_stops:
-        last_pos = tab_stops[-1].pos
-    tab_stops.extend(stop for stop in default_stops if stop.pos > last_pos)
-
-
-def make_tab_stops(
-    cap_height: float,
-    width: float,
-    tab_stops: Sequence,
-    default_stops: Sequence[tl.TabStop],
-) -> List[tl.TabStop]:
-    _tab_stops = []
-    for stop in tab_stops:
-        if isinstance(stop, str):
-            value = float(stop[1:])
-            if stop[0] == "c":
-                kind = tl.TabStopType.CENTER
-            else:
-                kind = tl.TabStopType.RIGHT
-        else:
-            kind = tl.TabStopType.LEFT
-            value = float(stop)
-        pos = value * cap_height
-        if pos < width:
-            _tab_stops.append(tl.TabStop(pos, kind))
-
-    append_default_tab_stops(_tab_stops, default_stops)
-    return _tab_stops
-
-
-def new_paragraph(
-    cells: List,
-    ctx: MTextContext,
-    cap_height: float,
-    line_spacing: float = 1,
-    width: float = 0,
-    default_stops: Sequence[tl.TabStop] = None,
-):
-    if cells:
-        p = ctx.paragraph
-        align = ALIGN.get(p.align, tl.ParagraphAlignment.LEFT)
-        left = p.left * cap_height
-        right = p.right * cap_height
-        first = left + p.indent * cap_height  # relative to left
-        _default_stops: Sequence[tl.TabStop] = default_stops or []
-        tab_stops = _default_stops
-        if p.tab_stops:
-            tab_stops = make_tab_stops(
-                cap_height, width, p.tab_stops, _default_stops
-            )
-        paragraph = tl.Paragraph(
-            align=align,
-            indent=(first, left, right),
-            line_spacing=line_spacing,
-            tab_stops=tab_stops,
-        )
-        paragraph.append_content(cells)
-    else:
-        paragraph = tl.EmptyParagraph(  # type: ignore
-            cap_height=ctx.cap_height, line_spacing=line_spacing
-        )
-    return paragraph
-
-
 def get_color_attribs(ctx: MTextContext) -> Dict:
     attribs = {"color": ctx.aci}
     if ctx.rgb is not None:
@@ -323,11 +212,10 @@ def get_color_attribs(ctx: MTextContext) -> Dict:
     return attribs
 
 
-def super_glue():
-    return tl.NonBreakingSpace(width=0, min_width=0, max_width=0)
-
-
-def make_bg_renderer(mtext: MText, attribs: Dict, layout: BaseLayout):
+def make_bg_renderer(mtext: MText):
+    assert mtext.doc is not None, "valid DXF document required"
+    layout = mtext.get_layout()
+    attribs = get_base_attribs(mtext)
     dxf = mtext.dxf
     bg_fill = dxf.get("bg_fill", 0)
 
@@ -367,16 +255,16 @@ def make_bg_renderer(mtext: MText, attribs: Dict, layout: BaseLayout):
     )
 
 
-def defined_width(mtext: MText) -> float:
-    width = mtext.dxf.get("width", 0.0)  # optional without default value
-    if width < 1e-6:  # no defined width
-        content = mtext.plain_text(split=True, fast=True)
-        max_line_length = max(len(t) for t in content)
-        width = max_line_length * mtext.dxf.char_height
-    return width
+def get_base_attribs(mtext: MText) -> Dict:
+    dxf = mtext.dxf
+    attribs = {
+        "layer": dxf.layer,
+        "color": dxf.color,
+    }
+    return attribs
 
 
-class MTextExplode:
+class MTextExplode(AbstractMTextRenderer):
     """The :class:`MTextExplode` class is a tool to disassemble MTEXT entities
     into single line TEXT entities and additional LINE entities if required to
     emulate strokes.
@@ -395,13 +283,38 @@ class MTextExplode:
         doc: Drawing = None,
         spacing_factor: float = 1.0,
     ):
+        super().__init__()
         self.layout: BaseLayout = layout
         self._doc: Drawing = doc if doc else layout.doc
         assert self._doc is not None, "DXF document required"
         # scale the width of spaces by this factor:
         self._spacing_factor = float(spacing_factor)
         self._required_text_styles: Dict[str, fonts.FontFace] = {}
-        self._font_cache: Dict[Tuple[str, float, float], AbstractFont] = {}
+        self.current_base_attribs = dict()
+
+    # Implementation of required AbstractMTextRenderer methods and overrides:
+
+    def layout_engine(self, mtext: MText) -> tl.Layout:
+        self.current_base_attribs = get_base_attribs(mtext)
+        return super().layout_engine(mtext)
+
+    def word(self, text: str, ctx: MTextContext):
+        return Word(text, ctx, self)
+
+    def fraction(self, data: Tuple, ctx: MTextContext):
+        upr, lwr, type_ = data
+        if type_:
+            return Fraction(upr, lwr, type_, ctx, self)
+        else:
+            return Word(upr, ctx, self)
+
+    def get_font_face(self, mtext: MText) -> fonts.FontFace:
+        return get_font_face(mtext)
+
+    def make_bg_renderer(self, mtext: MText) -> tl.ContentRenderer:
+        return make_bg_renderer(mtext)
+
+    # Implementation details of MTextExplode:
 
     def __enter__(self):
         return self
@@ -440,112 +353,6 @@ class MTextExplode:
         if abs(ctx.oblique) > 1e-6:
             attribs["oblique"] = ctx.oblique
         return attribs
-
-    def layout_engine(self, mtext: MText) -> tl.Layout:
-        def get_base_attribs() -> Dict:
-            dxf = mtext.dxf
-            attribs = {
-                "layer": dxf.layer,
-                "color": dxf.color,
-            }
-            return attribs
-
-        def append_paragraph():
-            paragraph = new_paragraph(
-                cells,
-                ctx,
-                initial_cap_height,
-                line_spacing,
-                width,
-                default_stops,
-            )
-            layout.append_paragraphs([paragraph])
-            cells.clear()
-
-        def column_heights():
-            if columns.heights:  # dynamic manual
-                heights = list(columns.heights)
-                # last height has to be auto height = None
-                heights[-1] = None
-            else:  # static, dynamic auto
-                heights = [columns.defined_height] * columns.count
-            return heights
-
-        content = mtext.all_columns_raw_content()
-        initial_cap_height = mtext.dxf.char_height
-
-        # same line spacing for all paragraphs
-        line_spacing = mtext.dxf.line_spacing_factor
-        base_attribs = get_base_attribs()
-        ctx = mtext_context(mtext)
-        parser = MTextParser(content, ctx)
-        bg_renderer = make_bg_renderer(mtext, base_attribs, self.layout)
-        width = defined_width(mtext)
-        default_stops = make_default_tab_stops(initial_cap_height, width)
-        layout = tl.Layout(width=width)
-        if mtext.has_columns:
-            columns = mtext.columns
-            assert columns is not None
-            for height in column_heights():
-                layout.append_column(
-                    width=columns.width,
-                    height=height,
-                    gutter=columns.gutter_width,
-                    renderer=bg_renderer,
-                )
-        else:
-            # column with auto height and default width
-            layout.append_column(renderer=bg_renderer)
-
-        cells = []
-        for token in parser:
-            ctx = token.ctx
-            if token.type == TokenType.NEW_PARAGRAPH:
-                append_paragraph()
-            elif token.type == TokenType.NEW_COLUMN:
-                append_paragraph()
-                layout.next_column()
-            elif token.type == TokenType.SPACE:
-                cells.append(self.space(ctx))
-            elif token.type == TokenType.NBSP:
-                cells.append(self.non_breaking_space(ctx))
-            elif token.type == TokenType.TABULATOR:
-                cells.append(self.tabulator(ctx))
-            elif token.type == TokenType.WORD:
-                if cells and isinstance(cells[-1], Word):
-                    # property change inside a word, create an unbreakable
-                    # connection between those two parts of the same word.
-                    cells.append(super_glue())
-                cells.append(self.word(token.data, ctx, base_attribs))
-            elif token.type == TokenType.STACK:
-                cells.append(self.fraction(token.data, ctx, base_attribs))
-
-        if cells:
-            append_paragraph()
-
-        return layout
-
-    def space_width(self, ctx: MTextContext) -> float:
-        return self.get_font(ctx).space_width() * self._spacing_factor
-
-    def space(self, ctx: MTextContext):
-        return tl.Space(width=self.space_width(ctx))
-
-    def tabulator(self, ctx: MTextContext):
-        return tl.Tabulator(width=self.space_width(ctx))
-
-    def non_breaking_space(self, ctx: MTextContext):
-        return tl.NonBreakingSpace(width=self.space_width(ctx))
-
-    def word(self, text: str, ctx: MTextContext, attribs: Dict):
-        return Word(text, ctx, attribs, self)
-
-    def fraction(self, data: Tuple, ctx: MTextContext, attribs: Dict):
-        upr, lwr, type_ = data
-        if type_:
-            return Fraction(upr, lwr, type_, ctx, attribs, self)
-        else:
-            return Word(upr, ctx, attribs, self)
 
     def explode(self, mtext: MText, destroy=True):
         """Explode `mtext` and destroy the source entity if argument `destroy`
