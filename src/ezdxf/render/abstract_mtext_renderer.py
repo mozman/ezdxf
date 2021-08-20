@@ -277,12 +277,14 @@ class AbstractMTextRenderer(abc.ABC):
             elif token.type == TokenType.TABULATOR:
                 cells.append(self.tabulator(ctx))
             elif token.type == TokenType.WORD:
-                if cells and isinstance(cells[-1], tl.Text):
-                    # property change inside a word, create an unbreakable
-                    # connection between those two parts of the same word.
+                if cells and isinstance(cells[-1], (tl.Text, tl.Fraction)):
+                    # Create an unbreakable connection between those two parts.
                     cells.append(super_glue())
                 cells.append(self.word(token.data, ctx))
             elif token.type == TokenType.STACK:
+                if cells and isinstance(cells[-1], (tl.Text, tl.Fraction)):
+                    # Create an unbreakable connection between those two parts.
+                    cells.append(super_glue())
                 cells.append(self.fraction(token.data, ctx))
 
         if cells:
