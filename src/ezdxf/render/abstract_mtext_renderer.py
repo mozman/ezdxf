@@ -7,6 +7,7 @@
 
 from typing import List, Sequence, Dict, Tuple, Optional
 import abc
+from ezdxf.lldxf import const
 from ezdxf.entities.mtext import MText, MTextColumns
 from ezdxf.tools import text_layout as tl, fonts
 from ezdxf.tools.text import (
@@ -14,6 +15,7 @@ from ezdxf.tools.text import (
     MTextContext,
     TokenType,
     MTextParagraphAlignment,
+    ParagraphProperties,
     AbstractFont,
 )
 
@@ -26,6 +28,18 @@ ALIGN = {
     MTextParagraphAlignment.JUSTIFIED: tl.ParagraphAlignment.JUSTIFIED,
     MTextParagraphAlignment.DISTRIBUTED: tl.ParagraphAlignment.JUSTIFIED,
     MTextParagraphAlignment.DEFAULT: tl.ParagraphAlignment.LEFT,
+}
+
+ATTACHMENT_POINT_TO_ALIGN = {
+    const.MTEXT_TOP_LEFT: tl.ParagraphAlignment.LEFT,
+    const.MTEXT_MIDDLE_LEFT: tl.ParagraphAlignment.LEFT,
+    const.MTEXT_BOTTOM_LEFT: tl.ParagraphAlignment.LEFT,
+    const.MTEXT_TOP_CENTER: tl.ParagraphAlignment.CENTER,
+    const.MTEXT_MIDDLE_CENTER: tl.ParagraphAlignment.CENTER,
+    const.MTEXT_BOTTOM_CENTER: tl.ParagraphAlignment.CENTER,
+    const.MTEXT_TOP_RIGHT: tl.ParagraphAlignment.RIGHT,
+    const.MTEXT_MIDDLE_RIGHT: tl.ParagraphAlignment.RIGHT,
+    const.MTEXT_BOTTOM_RIGHT: tl.ParagraphAlignment.RIGHT,
 }
 
 STACKING = {
@@ -172,6 +186,11 @@ class AbstractMTextRenderer(abc.ABC):
 
     def make_mtext_context(self, mtext: MText) -> MTextContext:
         ctx = MTextContext()
+        ctx.paragraph = ParagraphProperties(
+            align=ATTACHMENT_POINT_TO_ALIGN.get(
+                mtext.dxf.attachment_point, tl.ParagraphAlignment.LEFT
+            )
+        )
         ctx.font_face = self.get_font_face(mtext)
         ctx.cap_height = mtext.dxf.char_height
         ctx.aci = mtext.dxf.color
