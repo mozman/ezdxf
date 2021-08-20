@@ -200,9 +200,9 @@ class Fraction(tl.Fraction):
 def complex_mtext_renderer(
     ctx: RenderContext, backend: Backend, mtext: MText, properties: Properties
 ) -> None:
-    renderer = ComplexMTextRenderer(ctx, backend, mtext, properties)
+    renderer = ComplexMTextRenderer(ctx, backend, properties)
     align = tl.LayoutAlignment(mtext.dxf.attachment_point)
-    layout_engine = renderer.layout_engine()
+    layout_engine = renderer.layout_engine(mtext)
     layout_engine.place(align=align)
     layout_engine.render(mtext.ucs().matrix)
 
@@ -212,20 +212,14 @@ class ComplexMTextRenderer(AbstractMTextRenderer):
         self,
         ctx: RenderContext,
         backend: Backend,
-        mtext: MText,
         properties: Properties,
     ):
         super().__init__()
         self._render_ctx = ctx
         self._backend = backend
-        self._mtext = mtext
         self._properties = properties
 
     # Implementation of required AbstractMTextRenderer properties and methods:
-
-    @property
-    def mtext(self) -> MText:
-        return self._mtext
 
     def word(self, text: str, ctx: MTextContext) -> tl.ContentCell:
         return Word(text, ctx, self._properties, self)
@@ -239,8 +233,7 @@ class ComplexMTextRenderer(AbstractMTextRenderer):
         else:
             return Word(upr, ctx, self._properties, self)
 
-    def make_mtext_context(self) -> MTextContext:
-        mtext = self._mtext
+    def make_mtext_context(self, mtext: MText) -> MTextContext:
         ctx = MTextContext()
         ctx.font_face = self._properties.font  # type: ignore
         ctx.cap_height = mtext.dxf.char_height
@@ -250,8 +243,8 @@ class ComplexMTextRenderer(AbstractMTextRenderer):
             ctx.rgb = rgb
         return ctx
 
-    def make_bg_renderer(self) -> tl.ContentRenderer:
-        dxf = self.mtext.dxf
+    def make_bg_renderer(self, mtext: MText) -> tl.ContentRenderer:
+        dxf = mtext.dxf
         bg_fill = dxf.get("bg_fill", 0)
 
         bg_aci = None

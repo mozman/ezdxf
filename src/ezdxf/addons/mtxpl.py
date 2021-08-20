@@ -15,6 +15,11 @@ from ezdxf.tools.text import (
     MTextParagraphAlignment,
     AbstractFont,
 )
+from ezdxf.render.abstract_mtext_renderer import (
+    AbstractMTextRenderer,
+    STACKING,
+    get_stroke,
+)
 
 __all__ = ["MTextExplode"]
 
@@ -152,13 +157,6 @@ class Word(tl.Text):
             # Each content box can have it's own rendering object:
             renderer=TextRenderer(text, text_attribs, line_attribs, xpl.layout),
         )
-
-
-STACKING = {
-    "^": tl.Stacking.OVER,
-    "/": tl.Stacking.LINE,
-    "#": tl.Stacking.SLANTED,
-}
 
 
 class Fraction(tl.Fraction):
@@ -316,17 +314,6 @@ def new_paragraph(
             cap_height=ctx.cap_height, line_spacing=line_spacing
         )
     return paragraph
-
-
-def get_stroke(ctx: MTextContext) -> int:
-    stroke = 0
-    if ctx.underline:
-        stroke += tl.Stroke.UNDERLINE
-    if ctx.strike_through:
-        stroke += tl.Stroke.STRIKE_THROUGH
-    if ctx.overline:
-        stroke += tl.Stroke.OVERLINE
-    return stroke
 
 
 def get_color_attribs(ctx: MTextContext) -> Dict:

@@ -141,11 +141,6 @@ class AbstractMTextRenderer(abc.ABC):
     def __init__(self):
         self._font_cache: Dict[Tuple[str, float, float], AbstractFont] = {}
 
-    @property
-    @abc.abstractmethod
-    def mtext(self) -> MText:
-        ...
-
     @abc.abstractmethod
     def word(self, test: str, ctx: MTextContext) -> tl.ContentCell:
         ...
@@ -157,11 +152,11 @@ class AbstractMTextRenderer(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def make_mtext_context(self) -> MTextContext:
+    def make_mtext_context(self, mtext: MText) -> MTextContext:
         ...
 
     @abc.abstractmethod
-    def make_bg_renderer(self) -> tl.ContentRenderer:
+    def make_bg_renderer(self, mtext: MText) -> tl.ContentRenderer:
         ...
 
     def get_font(self, ctx: MTextContext) -> fonts.AbstractFont:
@@ -185,7 +180,7 @@ class AbstractMTextRenderer(abc.ABC):
     def non_breaking_space(self, ctx: MTextContext):
         return tl.NonBreakingSpace(width=self.space_width(ctx))
 
-    def layout_engine(self) -> tl.Layout:
+    def layout_engine(self, mtext: MText) -> tl.Layout:
         def append_paragraph():
             paragraph = new_paragraph(
                 cells,
@@ -207,15 +202,14 @@ class AbstractMTextRenderer(abc.ABC):
                 heights = [columns.defined_height] * columns.count
             return heights
 
-        mtext = self.mtext
         content = mtext.all_columns_raw_content()
         initial_cap_height = mtext.dxf.char_height
 
         # same line spacing for all paragraphs
         line_spacing = mtext.dxf.line_spacing_factor
-        ctx = self.make_mtext_context()
+        ctx = self.make_mtext_context(mtext)
         parser = MTextParser(content, ctx)
-        bg_renderer = self.make_bg_renderer()
+        bg_renderer = self.make_bg_renderer(mtext)
         width = defined_width(mtext)
         default_stops = make_default_tab_stops(initial_cap_height, width)
         layout = tl.Layout(width=width)
