@@ -1,6 +1,6 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import cast, Dict, Tuple
+from typing import cast, Dict, Tuple, Any
 import math
 import ezdxf
 from ezdxf.entities import MText, DXFGraphic, Textstyle
@@ -123,51 +123,6 @@ class TextRenderer(FrameRenderer):
             text.transform(m)  # type: ignore
 
 
-class Word(tl.Text):
-    """Represent a word as content box for the layout engine."""
-
-    def __init__(
-        self, text: str, ctx: MTextContext, xpl: "MTextExplode"
-    ):
-        # Each content box can have individual properties:
-        line_attribs = dict(xpl.current_base_attribs or {})
-        line_attribs.update(get_color_attribs(ctx))
-        text_attribs = dict(line_attribs)
-        text_attribs.update(xpl.get_text_attribs(ctx))
-
-        font = xpl.get_font(ctx)
-        stroke = xpl.get_stroke(ctx)
-        super().__init__(
-            # Width and height of the content are fixed given values and will
-            # not be changed by the layout engine:
-            width=font.text_width(text),
-            height=ctx.cap_height,
-            valign=tl.CellAlignment(ctx.align),
-            stroke=stroke,
-            # Each content box can have it's own rendering object:
-            renderer=TextRenderer(text, text_attribs, line_attribs, xpl.layout),
-        )
-
-
-class Fraction(tl.Fraction):
-    def __init__(
-        self,
-        upr: str,
-        lwr: str,
-        type_: str,
-        ctx: MTextContext,
-        xpl: "MTextExplode",
-    ):
-        super().__init__(
-            top=Word(upr, ctx, xpl),
-            bottom=Word(lwr, ctx, xpl),
-            stacking=xpl.get_stacking(type_),
-            # Uses only the generic line renderer to render the divider line,
-            # the top- and bottom content boxes use their own render objects.
-            renderer=FrameRenderer(xpl.current_base_attribs, xpl.layout),
-        )
-
-
 def get_font_face(entity: DXFGraphic, doc=None) -> fonts.FontFace:
     """Returns the :class:`~ezdxf.tools.fonts.FontFace` defined by the
     associated text style. Returns the default font face if the `entity` does
@@ -215,6 +170,7 @@ def get_color_attribs(ctx: MTextContext) -> Dict:
 def make_bg_renderer(mtext: MText):
     assert mtext.doc is not None, "valid DXF document required"
     layout = mtext.get_layout()
+    assert layout is not None, "valid layout required"
     attribs = get_base_attribs(mtext)
     dxf = mtext.dxf
     bg_fill = dxf.get("bg_fill", 0)
@@ -290,7 +246,7 @@ class MTextExplode(AbstractMTextRenderer):
         # scale the width of spaces by this factor:
         self._spacing_factor = float(spacing_factor)
         self._required_text_styles: Dict[str, fonts.FontFace] = {}
-        self.current_base_attribs = dict()
+        self.current_base_attribs: Dict[str, Any] = dict()
 
     # Implementation of required AbstractMTextRenderer methods and overrides:
 
@@ -298,15 +254,35 @@ class MTextExplode(AbstractMTextRenderer):
         self.current_base_attribs = get_base_attribs(mtext)
         return super().layout_engine(mtext)
 
-    def word(self, text: str, ctx: MTextContext):
-        return Word(text, ctx, self)
+    def word(self, text: str, ctx: MTextContext) -> tl.ContentCell:
+        line_attribs = dict(self.current_base_attribs or {})
+        line_attribs.update(get_color_attribs(ctx))
+        text_attribs = dict(line_attribs)
+        text_attribs.update(self.get_text_attribs(ctx))
 
-    def fraction(self, data: Tuple, ctx: MTextContext):
+        font = self.get_font(ctx)
+        stroke = self.get_stroke(ctx)
+        return tl.Text(
+            width=font.text_width(text),
+            height=ctx.cap_height,
+            valign=tl.CellAlignment(ctx.align),
+            stroke=stroke,
+            renderer=TextRenderer(
+                text, text_attribs, line_attribs, self.layout
+            ),
+        )
+
+    def fraction(self, data: Tuple, ctx: MTextContext) -> tl.ContentCell:
         upr, lwr, type_ = data
         if type_:
-            return Fraction(upr, lwr, type_, ctx, self)
+            return tl.Fraction(
+                top=self.word(upr, ctx),
+                bottom=self.word(lwr, ctx),
+                stacking=self.get_stacking(type_),
+                renderer=FrameRenderer(self.current_base_attribs, self.layout),
+            )
         else:
-            return Word(upr, ctx, self)
+            return self.word(upr, ctx)
 
     def get_font_face(self, mtext: MText) -> fonts.FontFace:
         return get_font_face(mtext)
