@@ -7,11 +7,7 @@ from ezdxf.lldxf import const
 from ezdxf.entities import MText
 from ezdxf.tools import text_layout as tl
 from ezdxf.math import Matrix44, Vec3
-from ezdxf.render.abstract_mtext_renderer import (
-    AbstractMTextRenderer,
-    get_stroke,
-    STACKING,
-)
+from ezdxf.render.abstract_mtext_renderer import AbstractMTextRenderer
 from .backend import Backend
 from .properties import Properties, RenderContext, rgb_to_hex
 from .type_hints import Color
@@ -154,10 +150,10 @@ class Word(tl.Text):
         text: str,
         ctx: MTextContext,
         properties: Properties,
-        renderer: "ComplexMTextRenderer",
+        cmr: "ComplexMTextRenderer",
     ):
-        font = renderer.get_font(ctx)
-        stroke = get_stroke(ctx)
+        font = cmr.get_font(ctx)
+        stroke = cmr.get_stroke(ctx)
         super().__init__(
             # Width and height of the content are fixed given values and will
             # not be changed by the layout engine:
@@ -171,8 +167,8 @@ class Word(tl.Text):
                 ctx.cap_height,
                 ctx.width_factor,
                 ctx.oblique,
-                renderer.new_text_properties(properties, ctx),
-                renderer.backend,
+                cmr.new_text_properties(properties, ctx),
+                cmr.backend,
             ),
         )
 
@@ -185,24 +181,24 @@ class Fraction(tl.Fraction):
         type_: str,
         ctx: MTextContext,
         properties: Properties,
-        renderer: "ComplexMTextRenderer",
+        cmr: "ComplexMTextRenderer",
     ):
         super().__init__(
-            top=Word(upr, ctx, properties, renderer),
-            bottom=Word(lwr, ctx, properties, renderer),
-            stacking=STACKING.get(type_, tl.Stacking.LINE),
+            top=Word(upr, ctx, properties, cmr),
+            bottom=Word(lwr, ctx, properties, cmr),
+            stacking=cmr.get_stacking(type_),
             # Uses only the generic line renderer to render the divider line,
             # the top- and bottom content boxes use their own render objects.
-            renderer=FrameRenderer(properties, renderer.backend),
+            renderer=FrameRenderer(properties, cmr.backend),
         )
 
 
 def complex_mtext_renderer(
     ctx: RenderContext, backend: Backend, mtext: MText, properties: Properties
 ) -> None:
-    renderer = ComplexMTextRenderer(ctx, backend, properties)
+    cmr = ComplexMTextRenderer(ctx, backend, properties)
     align = tl.LayoutAlignment(mtext.dxf.attachment_point)
-    layout_engine = renderer.layout_engine(mtext)
+    layout_engine = cmr.layout_engine(mtext)
     layout_engine.place(align=align)
     layout_engine.render(mtext.ucs().matrix)
 
@@ -219,7 +215,7 @@ class ComplexMTextRenderer(AbstractMTextRenderer):
         self._backend = backend
         self._properties = properties
 
-    # Implementation of required AbstractMTextRenderer properties and methods:
+    # Implementation of required AbstractMTextRenderer methods:
 
     def word(self, text: str, ctx: MTextContext) -> tl.ContentCell:
         return Word(text, ctx, self._properties, self)
@@ -233,15 +229,8 @@ class ComplexMTextRenderer(AbstractMTextRenderer):
         else:
             return Word(upr, ctx, self._properties, self)
 
-    def make_mtext_context(self, mtext: MText) -> MTextContext:
-        ctx = MTextContext()
-        ctx.font_face = self._properties.font  # type: ignore
-        ctx.cap_height = mtext.dxf.char_height
-        ctx.aci = mtext.dxf.color
-        rgb = mtext.rgb
-        if rgb is not None:
-            ctx.rgb = rgb
-        return ctx
+    def get_font_face(self, mtext: MText) -> MTextContext:
+        return self._properties.font  # type: ignore
 
     def make_bg_renderer(self, mtext: MText) -> tl.ContentRenderer:
         dxf = mtext.dxf
@@ -283,7 +272,7 @@ class ComplexMTextRenderer(AbstractMTextRenderer):
             text_frame=has_text_frame,
         )
 
-    # Details of ComplexMTextRenderer implementation:
+    # Implementation details of ComplexMTextRenderer:
 
     @property
     def backend(self) -> Backend:

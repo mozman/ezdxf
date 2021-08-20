@@ -17,7 +17,7 @@ from ezdxf.tools.text import (
     AbstractFont,
 )
 
-__all__ = ["AbstractMTextRenderer", "get_stroke", "STACKING"]
+__all__ = ["AbstractMTextRenderer"]
 
 ALIGN = {
     MTextParagraphAlignment.LEFT: tl.ParagraphAlignment.LEFT,
@@ -152,12 +152,22 @@ class AbstractMTextRenderer(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def make_mtext_context(self, mtext: MText) -> MTextContext:
+    def get_font_face(self, mtext: MText) -> fonts.FontFace:
         ...
 
     @abc.abstractmethod
     def make_bg_renderer(self, mtext: MText) -> tl.ContentRenderer:
         ...
+
+    def make_mtext_context(self, mtext: MText) -> MTextContext:
+        ctx = MTextContext()
+        ctx.font_face = self.get_font_face(mtext)
+        ctx.cap_height = mtext.dxf.char_height
+        ctx.aci = mtext.dxf.color
+        rgb = mtext.rgb
+        if rgb is not None:
+            ctx.rgb = rgb
+        return ctx
 
     def get_font(self, ctx: MTextContext) -> fonts.AbstractFont:
         ttf = fonts.find_ttf_path(ctx.font_face)
@@ -167,6 +177,12 @@ class AbstractMTextRenderer(abc.ABC):
             font = fonts.make_font(ttf, ctx.cap_height, ctx.width_factor)
             self._font_cache[key] = font
         return font
+
+    def get_stroke(self, ctx: MTextContext) -> int:
+        return get_stroke(ctx)
+
+    def get_stacking(self, type_: str) -> tl.Stacking:
+        return STACKING.get(type_, tl.Stacking.LINE)
 
     def space_width(self, ctx: MTextContext) -> float:
         return self.get_font(ctx).space_width()
