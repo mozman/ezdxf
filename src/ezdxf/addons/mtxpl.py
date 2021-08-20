@@ -135,11 +135,11 @@ def get_font_face(entity: DXFGraphic, doc=None) -> fonts.FontFace:
     """
     if entity.doc and doc is None:
         doc = entity.doc
-    assert doc is not None, "DXF document required"
+    assert doc is not None, "valid DXF document required"
 
     style_name = ""
-    # This also works for entities which do not support "style",
-    # where :code:`style_name = entity.dxf.get("style")` would fail.
+    # This works also for entities which do not support "style",
+    # where style_name = entity.dxf.get("style") would fail.
     if entity.dxf.is_supported("style"):
         style_name = entity.dxf.style
 
@@ -259,14 +259,11 @@ class MTextExplode(AbstractMTextRenderer):
         line_attribs.update(get_color_attribs(ctx))
         text_attribs = dict(line_attribs)
         text_attribs.update(self.get_text_attribs(ctx))
-
-        font = self.get_font(ctx)
-        stroke = self.get_stroke(ctx)
         return tl.Text(
-            width=font.text_width(text),
+            width=self.get_font(ctx).text_width(text),
             height=ctx.cap_height,
             valign=tl.CellAlignment(ctx.align),
-            stroke=stroke,
+            stroke=self.get_stroke(ctx),
             renderer=TextRenderer(
                 text, text_attribs, line_attribs, self.layout
             ),
@@ -279,6 +276,7 @@ class MTextExplode(AbstractMTextRenderer):
                 top=self.word(upr, ctx),
                 bottom=self.word(lwr, ctx),
                 stacking=self.get_stacking(type_),
+                # renders just the divider line:
                 renderer=FrameRenderer(self.current_base_attribs, self.layout),
             )
         else:

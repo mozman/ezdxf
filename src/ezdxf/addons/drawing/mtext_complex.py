@@ -167,13 +167,11 @@ class ComplexMTextRenderer(AbstractMTextRenderer):
     # Implementation of required AbstractMTextRenderer methods:
 
     def word(self, text: str, ctx: MTextContext) -> tl.ContentCell:
-        font = self.get_font(ctx)
-        stroke = self.get_stroke(ctx)
         return tl.Text(
-            width=font.text_width(text),
+            width=self.get_font(ctx).text_width(text),
             height=ctx.cap_height,
             valign=tl.CellAlignment(ctx.align),
-            stroke=stroke,
+            stroke=self.get_stroke(ctx),
             renderer=TextRenderer(
                 text,
                 ctx.cap_height,
@@ -192,7 +190,7 @@ class ComplexMTextRenderer(AbstractMTextRenderer):
                 top=self.word(upr, ctx),
                 bottom=self.word(lwr, ctx),
                 stacking=self.get_stacking(type_),
-                # renders the divider line:
+                # renders just the divider line:
                 renderer=FrameRenderer(self._properties, self._backend),
             )
         else:

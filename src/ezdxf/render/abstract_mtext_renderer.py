@@ -5,9 +5,9 @@
 # ezdxf.tools.text_layout and a concrete MTEXT renderer implementation like
 # MTextExplode or ComplexMTextRenderer.
 
-from typing import List, Sequence, Dict, Tuple
+from typing import List, Sequence, Dict, Tuple, Optional
 import abc
-from ezdxf.entities import MText
+from ezdxf.entities.mtext import MText, MTextColumns
 from ezdxf.tools import text_layout as tl, fonts
 from ezdxf.tools.text import (
     MTextParser,
@@ -137,6 +137,17 @@ def defined_width(mtext: MText) -> float:
     return width
 
 
+def column_heights(columns: MTextColumns) -> List[Optional[float]]:
+    heights: List[Optional[float]]
+    if columns.heights:  # dynamic manual
+        heights = list(columns.heights)
+        # last height has to be auto height = None
+        heights[-1] = None
+    else:  # static, dynamic auto
+        heights = [columns.defined_height] * columns.count
+    return heights
+
+
 class AbstractMTextRenderer(abc.ABC):
     def __init__(self):
         self._font_cache: Dict[Tuple[str, float, float], AbstractFont] = {}
@@ -197,6 +208,9 @@ class AbstractMTextRenderer(abc.ABC):
         return tl.NonBreakingSpace(width=self.space_width(ctx))
 
     def layout_engine(self, mtext: MText) -> tl.Layout:
+        initial_cap_height = mtext.dxf.char_height
+        line_spacing = mtext.dxf.line_spacing_factor
+
         def append_paragraph():
             paragraph = new_paragraph(
                 cells,
@@ -209,22 +223,6 @@ class AbstractMTextRenderer(abc.ABC):
             layout.append_paragraphs([paragraph])
             cells.clear()
 
-        def column_heights():
-            if columns.heights:  # dynamic manual
-                heights = list(columns.heights)
-                # last height has to be auto height = None
-                heights[-1] = None
-            else:  # static, dynamic auto
-                heights = [columns.defined_height] * columns.count
-            return heights
-
-        content = mtext.all_columns_raw_content()
-        initial_cap_height = mtext.dxf.char_height
-
-        # same line spacing for all paragraphs
-        line_spacing = mtext.dxf.line_spacing_factor
-        ctx = self.make_mtext_context(mtext)
-        parser = MTextParser(content, ctx)
         bg_renderer = self.make_bg_renderer(mtext)
         width = defined_width(mtext)
         default_stops = make_default_tab_stops(initial_cap_height, width)
@@ -232,7 +230,7 @@ class AbstractMTextRenderer(abc.ABC):
         if mtext.has_columns:
             columns = mtext.columns
             assert columns is not None
-            for height in column_heights():
+            for height in column_heights(columns):
                 layout.append_column(
                     width=columns.width,
                     height=height,
@@ -243,8 +241,10 @@ class AbstractMTextRenderer(abc.ABC):
             # column with auto height and default width
             layout.append_column(renderer=bg_renderer)
 
-        cells = []
-        for token in parser:
+        content = mtext.all_columns_raw_content()
+        ctx = self.make_mtext_context(mtext)
+        cells: List[tl.Cell] = []
+        for token in MTextParser(content, ctx):
             ctx = token.ctx
             if token.type == TokenType.NEW_PARAGRAPH:
                 append_paragraph()
