@@ -32,7 +32,6 @@ from ezdxf.math import Vec3, Vec2, Vertex
 from ezdxf.colors import rgb2int, RGB, int2rgb
 from .fonts import FontMeasurements, AbstractFont, FontFace
 
-
 if TYPE_CHECKING:
     from ezdxf.eztypes import Text, MText, DXFEntity, Tags
 
@@ -1015,6 +1014,7 @@ class MTextContext:
 
     def __init__(self):
         self._stroke: int = 0
+        self.continue_stroke: bool = False
         self._aci = 7  # used if rgb is None
         self.rgb: Optional[RGB] = None  # overrules aci
         self.align: MTextLineAlignment = MTextLineAlignment.BOTTOM
@@ -1022,12 +1022,15 @@ class MTextContext:
         self.cap_height: float = 1.0
         self.width_factor: float = 1.0
         self.char_tracking_factor: float = 1.0
-        self.oblique: float = 0.0  # in degrees, where 0 is vertical (TEXT entity)
+        self.oblique: float = (
+            0.0  # in degrees, where 0 is vertical (TEXT entity)
+        )
         self.paragraph = ParagraphProperties()
 
     def __copy__(self) -> "MTextContext":
         p = MTextContext()
         p._stroke = self._stroke
+        p.continue_stroke = self.continue_stroke
         p._aci = self._aci
         p.rgb = self.rgb
         p.align = self.align
@@ -1045,6 +1048,7 @@ class MTextContext:
         return hash(
             (
                 self._stroke,
+                self.continue_stroke,
                 self._aci,
                 self.rgb,
                 self.align,
@@ -1110,6 +1114,10 @@ class MTextContext:
     @overline.setter
     def overline(self, value: bool) -> None:
         self._set_stroke_state(MTextStroke.OVERLINE, value)
+
+    @property
+    def has_any_stroke(self) -> bool:
+        return bool(self._stroke)
 
 
 class TextScanner:
@@ -1241,7 +1249,7 @@ class MTextParser:
 
     """
 
-    __slots__ = ("ctx", "scanner", "_ctx_stack")
+    __slots__ = ("ctx", "scanner", "_ctx_stack", "_continue_stroke")
 
     def __init__(self, content: str, ctx: MTextContext = None):
         if ctx is None:
@@ -1249,6 +1257,7 @@ class MTextParser:
         self.ctx = ctx
         self.scanner = TextScanner(caret_decode(content))
         self._ctx_stack = []
+        self._continue_stroke = False
 
     def __iter__(self):
         return self.parse()
@@ -1418,18 +1427,28 @@ class MTextParser:
     def parse_properties(self, cmd: str) -> None:
         # Treat the existing context as immutable, create a new one:
         new_ctx = self.ctx.copy()
+        new_ctx.continue_stroke = self._continue_stroke
         if cmd == "L":
             new_ctx.underline = True
+            self._continue_stroke = True
         elif cmd == "l":
             new_ctx.underline = False
+            if not new_ctx.has_any_stroke:
+                self._continue_stroke = False
         elif cmd == "O":
             new_ctx.overline = True
+            self._continue_stroke = True
         elif cmd == "o":
             new_ctx.overline = False
+            if not new_ctx.has_any_stroke:
+                self._continue_stroke = False
         elif cmd == "K":
             new_ctx.strike_through = True
+            self._continue_stroke = True
         elif cmd == "k":
             new_ctx.strike_through = False
+            if not new_ctx.has_any_stroke:
+                self._continue_stroke = False
         elif cmd == "A":
             self.parse_align(new_ctx)
         elif cmd == "C":
