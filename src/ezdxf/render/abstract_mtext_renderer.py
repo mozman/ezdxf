@@ -101,6 +101,8 @@ def get_stroke(ctx: MTextContext) -> int:
         stroke += tl.Stroke.STRIKE_THROUGH
     if ctx.overline:
         stroke += tl.Stroke.OVERLINE
+    if ctx.continue_stroke:
+        stroke += tl.Stroke.CONTINUE
     return stroke
 
 
