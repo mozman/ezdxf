@@ -2,6 +2,7 @@
 #  License: MIT License
 from typing import Iterable, List, Optional, Tuple
 import copy
+import math
 from ezdxf import colors
 from ezdxf.lldxf import const
 from ezdxf.entities import MText
@@ -114,7 +115,7 @@ class TextRenderer(FrameRenderer):
         text: str,
         cap_height: float,
         width_factor: float,
-        oblique: float,
+        oblique: float,  # angle in degrees
         properties: Properties,
         backend: Backend,
     ):
@@ -122,7 +123,7 @@ class TextRenderer(FrameRenderer):
         self.text = text
         self.cap_height = cap_height
         self.width_factor = width_factor
-        self.oblique = oblique
+        self.oblique = oblique  # angle in degrees
 
     def render(
         self,
@@ -133,13 +134,23 @@ class TextRenderer(FrameRenderer):
         m: Matrix44 = None,
     ):
         """Create/render the text content"""
-        # TODO: apply width_factor and oblique angle
-        t = Matrix44.translate(left, bottom, 0)
-        if m is None:
-            m = t
-        else:
-            m = t * m
-        self.backend.draw_text(self.text, m, self.properties, self.cap_height)
+        sx = 1.0
+        tx = 0.0
+        if not math.isclose(self.width_factor, 1.0, rel_tol=1e-6):
+            sx = self.width_factor
+        if abs(self.oblique) > 1e-3:  # degrees
+            tx = math.tan(math.radians(self.oblique))
+        # fmt: off
+        t = Matrix44((
+            sx, 0.0, 0.0, 0.0,
+            tx, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            left, bottom, 0.0, 1.0
+        ))
+        # fmt: on
+        if m is not None:
+            t *= m
+        self.backend.draw_text(self.text, t, self.properties, self.cap_height)
 
 
 def complex_mtext_renderer(
