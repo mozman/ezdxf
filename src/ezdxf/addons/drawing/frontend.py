@@ -278,6 +278,8 @@ class Frontend:
                     or entity.dxftype() not in self._proxy_graphic_only_entities
                 ):
                     self.draw_composite_entity(entity, properties)
+            else:
+                self.skip_entity(entity, "unsupported")
 
         self.out.exit_entity(entity)
 
