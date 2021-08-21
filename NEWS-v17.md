@@ -22,4 +22,6 @@ Version 0.17 - dev
   returns the code string formatted by [Black](https://pypi.org/project/black/)
 - NEW: `ezdxf.upright` module to flip inverted extrusion vectors, for more 
   information read the [docs](https://ezdxf.mozman.at/docs/upright.html)  
-- NEW: support for `ACAD_PROXY_ENTITY`  
+- NEW: support for `ACAD_PROXY_ENTITY`
+- NEW: rendering support for inline codes in `MTEXT` entities for the `drawing`
+  add-on
