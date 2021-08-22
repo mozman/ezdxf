@@ -5,7 +5,6 @@ Add-ons
 -------
 
 - drawing
-    - (v0.17) global fonts cache usage
     - (v0.18) MLEADER full rendering support, requires `MLeader.virtual_entities()`
     - (>v1.0) ACAD_TABLE
     - (>v1.0) support for switching plot styles (DXF_DEFAULT_PAPERSPACE_COLORS)

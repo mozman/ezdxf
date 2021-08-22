@@ -23,8 +23,7 @@ Version 0.16.6b2 - dev
 - BUGFIX: `Arc.flattening()` always have to return `Vec3` instances
 - BETA: new features for testing, API may change until official release in v0.17
 - BETA: support for `ACAD_PROXY_ENTITY`
-- BETA: Rendering support for inline codes in `MTEXT` entities for the `drawing`
-  add-on. This feature is not activated by default.
+- BETA: Rendering support for inline codes in `MTEXT` entities for the `drawing` add-on.
 
 Version 0.16.5 - 2021-07-18
 ---------------------------
