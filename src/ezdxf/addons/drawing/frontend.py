@@ -58,7 +58,7 @@ from ezdxf.render import MeshBuilder, TraceBuilder
 from ezdxf import reorder
 from ezdxf.proxygraphic import ProxyGraphic
 from ezdxf.protocols import SupportsVirtualEntities, virtual_entities
-
+from ezdxf.tools.text import has_inline_formatting_codes
 
 __all__ = ["Frontend"]
 
@@ -82,8 +82,6 @@ class Frontend:
         out: backend
         proxy_graphics: o to ignore proxy graphics, 1 to show proxy graphics
             and 2 to prefer proxy graphics over internal renderings
-        complex_mtext_rendering: use complex but slow MTEXT renderer with inline
-            code support if ``True``
 
     """
 
@@ -93,7 +91,6 @@ class Frontend:
         out: Backend,
         *,
         proxy_graphics: int = USE_PROXY_GRAPHICS,
-        complex_mtext_rendering=False,
     ):
         # RenderContext contains all information to resolve resources for a
         # specific DXF document.
@@ -129,12 +126,6 @@ class Frontend:
 
         # set to None to disable nested polygon detection:
         self.nested_polygon_detection = fast_bbox_detection
-
-        # "complex_mtext_rendering":
-        # False: fast MTEXT renderer without support of inline codes
-        # True: complex MTEXT renderer with inline code support but MUCH slower
-        # Rendering method can be changed on the fly.
-        self.complex_mtext_rendering = complex_mtext_rendering
 
         self._dispatch = self._build_dispatch_table()
 
@@ -336,57 +327,21 @@ class Frontend:
         if is_spatial_text(Vec3(mtext.dxf.extrusion)):
             self.skip_entity(mtext, "3D MTEXT not supported")
             return
-        if self.complex_mtext_rendering:
+        if mtext.has_columns or has_inline_formatting_codes(mtext.text):
             self.draw_complex_mtext(mtext, properties)
-            return
-        # Simple MTEXT rendering without inline code support:
-        if mtext.has_columns:
-            columns = mtext.columns
-            assert columns is not None
-            if len(columns.linked_columns):
-                has_linked_content = any(c.text for c in columns.linked_columns)
-                if has_linked_content:
-                    # Column content is spread across multiple MTEXT entities.
-                    # For now we trust the DXF creator that each MTEXT entity
-                    # has exact the required column content.
-                    # This is not granted and AutoCAD/BricsCAD do the column
-                    # content distribution always by themself!
-                    self.draw_mtext_column(mtext, properties)
-                    for column in columns.linked_columns:
-                        self.draw_mtext_column(column, properties)
-                    return
-            self.distribute_mtext_columns_content(mtext, properties)
         else:
-            self.draw_mtext_column(mtext, properties)
+            self.draw_simple_mtext(mtext, properties)
 
-    def distribute_mtext_columns_content(
-        self, mtext: MText, properties: Properties
-    ):
-        """Distribute the content of the MTEXT entity across multiple columns
-
-        For the distribution of the MTEXT content across multiple columns is
-        a complex rendering of the MTEXT content absolutely necessary!
-
+    def draw_simple_mtext(self, mtext: MText, properties: Properties) -> None:
+        """Draw the content of a MTEXT entity without inline formatting codes.
         """
-        # TODO: activate complex MTEXT rendering when implemented
-        # self.draw_complex_mtext(mtext, properties)
-        self.draw_mtext_column(mtext, properties)
-
-    def draw_mtext_column(self, mtext: MText, properties: Properties) -> None:
-        """Draw the content of a MTEXT entity as a single column."""
         for line, transform, cap_height in simplified_text_chunks(
             mtext, self.out, font=properties.font
         ):
             self.out.draw_text(line, transform, properties, cap_height)
 
     def draw_complex_mtext(self, mtext: MText, properties: Properties) -> None:
-        """Draw MTEXT entity with inline code support. This method is much
-        slower than the simple MTEXT rendering.
-
-        Activate complex MTEXT rendering::
-
-            Frontend.complex_mtext_rendering = True
-
+        """Draw the content of a MTEXT entity including inline formatting codes.
         """
         complex_mtext_renderer(self.ctx, self.out, mtext, properties)
 

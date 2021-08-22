@@ -174,7 +174,6 @@ class CadViewer(qw.QMainWindow):
         self._visible_layers = None
         self._current_layout = None
         self._reset_backend()
-        self.complex_mtext_rendering = False
 
         self.view = CADGraphicsViewWithOverlay()
         self.view.setScene(qw.QGraphicsScene())
@@ -351,7 +350,6 @@ class CadViewer(qw.QMainWindow):
         return Frontend(
             self._render_context,
             self._backend,
-            complex_mtext_rendering=self.complex_mtext_rendering,
         )
 
     def _update_render_context(self, layout):
