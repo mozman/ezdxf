@@ -1652,3 +1652,18 @@ def load_mtext_content(tags: "Tags") -> str:
         elif code == 3:
             content += value
     return escape_dxf_line_endings(content + tail)
+
+
+def has_inline_formatting_codes(text: str) -> bool:
+    """Returns `True` if `text` contains any MTEXT inline formatting codes."""
+    # Each inline formatting code starts with a backslash "\".
+    # Remove all special chars starting with a "\" and test if any backslashes
+    # remain. Escaped backslashes "\\" may return false positive,
+    # but they are rare.
+    # Replacing multiple strings at once by "re" is much slower,
+    # see profiling/string_replace.py
+    return "\\" in text.replace(  # line breaks
+        r"\P", ""
+    ).replace(  # non breaking spaces
+        r"\~", ""
+    )

@@ -16,6 +16,7 @@ from ezdxf.tools.text import (
     is_text_vertical_stacked,
     fast_plain_mtext,
     plain_mtext,
+    has_inline_formatting_codes,
 )
 from ezdxf.tools.fonts import MonospaceFont
 from ezdxf.math import Vec3
@@ -425,6 +426,20 @@ class TestIsTextVerticalStacked:
     def test_raise_type_error_for_unsupported_types(self):
         with pytest.raises(TypeError):
             is_text_vertical_stacked(DXFEntity())
+
+
+class TestMTextContentHasInlineFormattingCodes:
+    def test_line_breaks_is_not_an_inline_code(self):
+        assert has_inline_formatting_codes(r"line\Pline") is False
+
+    def test_non_breaking_space_is_not_an_inline_code(self):
+        assert has_inline_formatting_codes(r"line\~line") is False
+
+    def test_inline_formatting_code(self):
+        assert has_inline_formatting_codes(r"\Lline") is True
+
+    def test_line_break_and_inline_formatting_code(self):
+        assert has_inline_formatting_codes(r"\Kline\Pline\k") is True
 
 
 if __name__ == "__main__":
