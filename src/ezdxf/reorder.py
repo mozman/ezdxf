@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Tuple, Dict, Union, List
 import heapq
@@ -6,19 +6,20 @@ import heapq
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFGraphic
 
-__all__ = ['ascending', 'descending']
+__all__ = ["ascending", "descending"]
 
 # ODA DWG Specs: 2.13. Handle References
 # COUNTER is 4 bits, which allows handles up to 16 * 1 byte = 128-bit
 # Example for 128-bit handles: "CADKitSamples\AEC Plan Elev Sample.dxf"
-MAX_HANDLE = 'FFFFFFFFFFFFFFFF'
-NULL_HANDLE = '0'
+MAX_HANDLE = "FFFFFFFFFFFFFFFF"
+NULL_HANDLE = "0"
 
 
-def ascending(entities: Iterable['DXFGraphic'],
-              mapping: Union[Dict, Iterable[Tuple[str, str]]] = None,
-              ) -> Iterable['DXFGraphic']:
-    """ Yields entities in ascending handle order.
+def ascending(
+    entities: Iterable["DXFGraphic"],
+    mapping: Union[Dict, Iterable[Tuple[str, str]]] = None,
+) -> Iterable["DXFGraphic"]:
+    """Yields entities in ascending handle order.
 
     The sort handle doesn't have to be the entity handle, every entity handle
     in `mapping` will be replaced by the given sort handle, `mapping` is an
@@ -37,10 +38,11 @@ def ascending(entities: Iterable['DXFGraphic'],
     return _sorted(heap)
 
 
-def descending(entities: Iterable['DXFGraphic'],
-               mapping: Union[Dict, Iterable[Tuple[str, str]]] = None,
-               ) -> Iterable['DXFGraphic']:
-    """ Yields entities in descending handle order.
+def descending(
+    entities: Iterable["DXFGraphic"],
+    mapping: Union[Dict, Iterable[Tuple[str, str]]] = None,
+) -> Iterable["DXFGraphic"]:
+    """Yields entities in descending handle order.
 
     The sort handle doesn't have to be the entity handle, every entity handle
     in `mapping` will be replaced by the given sort handle, `mapping` is an
@@ -59,14 +61,16 @@ def descending(entities: Iterable['DXFGraphic'],
     return _sorted(heap)
 
 
-def _sorted(heap) -> Iterable['DXFGraphic']:
-    """ Yields heap content in order. """
+def _sorted(heap) -> Iterable["DXFGraphic"]:
+    """Yields heap content in order."""
     while heap:
         yield heapq.heappop(heap)[-1]
 
 
-def _build(entities: Iterable['DXFGraphic'], mapping: Dict, order: int) -> List:
-    """ Returns a heap structure.
+def _build(
+    entities: Iterable["DXFGraphic"], mapping: Dict, order: int
+) -> List[Tuple[int, int, "DXFGraphic"]]:
+    """Returns a heap structure.
 
     Args:
         entities: DXF entities to order
@@ -75,7 +79,7 @@ def _build(entities: Iterable['DXFGraphic'], mapping: Dict, order: int) -> List:
 
     """
 
-    def sort_handle(entity: 'DXFGraphic') -> int:
+    def sort_handle(entity: "DXFGraphic") -> int:
         handle = entity.dxf.handle
         sort_handle_ = mapping.get(handle, handle)
         if sort_handle_ == NULL_HANDLE:
@@ -84,14 +88,17 @@ def _build(entities: Iterable['DXFGraphic'], mapping: Dict, order: int) -> List:
             sort_handle_ = MAX_HANDLE
         return int(sort_handle_, 16)
 
-    heap = []
+    heap: List[Tuple[int, int, "DXFGraphic"]] = []
     for index, entity in enumerate(entities):
         # DXFGraphic is not sortable, using the index as second value avoids
         # a key function and preserves explicit the source order of
         # equal sort handles.
-        heapq.heappush(heap, (
-            sort_handle(entity) * order,
-            index * order,
-            entity,
-        ))
+        heapq.heappush(
+            heap,
+            (
+                sort_handle(entity) * order,
+                index * order,
+                entity,
+            ),
+        )
     return heap
