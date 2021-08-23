@@ -3,15 +3,15 @@
 from typing import Iterable, cast
 
 from ezdxf.math import Vertex, Vec2, BoundingBox2d
-from ezdxf.layouts import Layout
+from ezdxf.layouts import Layout, Paperspace
 from ezdxf.entities import DXFEntity
 from ezdxf import bbox
 
 __all__ = ["center", "objects", "extents", "window"]
 
 
-def center(layout: Layout, point: Vertex, size: 'Vertex'):
-    """ Resets the active viewport center of `layout` to the given `point`,
+def center(layout: Layout, point: Vertex, size: "Vertex"):
+    """Resets the active viewport center of `layout` to the given `point`,
     argument `size` defines the width and height of the viewport.
     Replaces the current viewport configuration by a single window
     configuration.
@@ -23,10 +23,10 @@ def center(layout: Layout, point: Vertex, size: 'Vertex'):
             height = guess_height(Vec2(size))
             doc.set_modelspace_vport(height, Vec2(point))
         elif layout.is_any_paperspace:
-            psp = cast('Paperspace', layout)
+            psp = cast(Paperspace, layout)
             psp.reset_main_viewport(Vec2(point), Vec2(size))
         else:
-            raise TypeError('unsupported layout type')
+            raise TypeError("unsupported layout type")
 
 
 def guess_height(size):
@@ -37,7 +37,7 @@ def guess_height(size):
 
 
 def zoom_to_entities(layout: Layout, entities: Iterable[DXFEntity], factor):
-    if layout.is_any_paperspace:  # filter main viewport
+    if isinstance(layout, Paperspace):  # filter main viewport
         main_viewport = layout.main_viewport()
         if main_viewport is not None:
             entities = (e for e in entities if e is not main_viewport)
@@ -47,7 +47,7 @@ def zoom_to_entities(layout: Layout, entities: Iterable[DXFEntity], factor):
 
 
 def objects(layout: Layout, entities: Iterable[DXFEntity], factor: float = 1):
-    """ Resets the active viewport limits of `layout` to the extents of the
+    """Resets the active viewport limits of `layout` to the extents of the
     given `entities`. Only entities in the given `layout` are taken into
     account. The argument `factor` scales the viewport limits.
     Replaces the current viewport configuration by a single window
@@ -60,7 +60,7 @@ def objects(layout: Layout, entities: Iterable[DXFEntity], factor: float = 1):
 
 
 def extents(layout: Layout, factor: float = 1):
-    """ Resets the active viewport limits of `layout` to the extents of all
+    """Resets the active viewport limits of `layout` to the extents of all
     entities in this `layout`. The argument `factor` scales the viewport limits.
     Replaces the current viewport configuration by a single window
     configuration.
@@ -70,7 +70,7 @@ def extents(layout: Layout, factor: float = 1):
 
 
 def window(layout: Layout, p1: Vertex, p2: Vertex):
-    """ Resets the active viewport limits of `layout` to the lower left corner
+    """Resets the active viewport limits of `layout` to the lower left corner
     `p1` and the upper right corner `p2`.
     Replaces the current viewport configuration by a single window
     configuration.
