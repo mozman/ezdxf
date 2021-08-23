@@ -1,6 +1,6 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import BinaryIO
+from typing import BinaryIO, Optional
 from ezdxf.lldxf.validator import is_dxf_file, DXFStructureError
 from pathlib import Path
 
@@ -19,8 +19,8 @@ class ThumbnailRemover(TagWriter):
         super().__init__(fp)
         self._start_section = False
         self._skip_tags = False
-        self._section_code = None
-        self._section_value = None
+        self._section_code: Optional[bytes] = None
+        self._section_value: Optional[bytes] = None
         self.removed_thumbnail_image = False
 
     def write(self, raw_code_str: bytes, raw_value_str: bytes):
@@ -33,7 +33,7 @@ class ThumbnailRemover(TagWriter):
                 self.removed_thumbnail_image = True
             else:
                 # write buffered section tag:
-                super().write(self._section_code, self._section_value)
+                super().write(self._section_code, self._section_value)  # type: ignore
 
         if code == b"0":
             if value == b"SECTION":
@@ -56,8 +56,8 @@ class ThumbnailRemover(TagWriter):
 def strip_comments(
     infile: BinaryIO, tagwriter: TagWriter, verbose=False
 ) -> int:
-    line_number = 1
-    removed_tags = 0
+    line_number: int = 1
+    removed_tags: int = 0
     while True:
         try:
             raw_code_str = infile.readline()
@@ -68,11 +68,12 @@ def strip_comments(
         try:
             code = int(raw_code_str)
         except ValueError:
-            code = raw_code_str.strip()
-            code = code.decode(encoding="utf8", errors="ignore")
+            code_str = raw_code_str.strip().decode(
+                encoding="utf8", errors="ignore"
+            )
             raise DXFStructureError(
                 f'CANCELED: "{infile.name}" - found invalid '
-                f'group code "{code}" at line {line_number}'
+                f'group code "{code_str}" at line {line_number}'
             )
 
         try:
@@ -97,7 +98,7 @@ def strip_comments(
 
 def safe_rename(source: Path, target: Path, backup=True, verbose=False) -> bool:
     backup_file = target.with_suffix(".bak")
-    backup_file.unlink(missing_ok=True)
+    backup_file.unlink(missing_ok=True)  # type: ignore
     _target = Path(target)
     if _target.exists():
         if verbose:
@@ -119,7 +120,8 @@ def safe_rename(source: Path, target: Path, backup=True, verbose=False) -> bool:
     if not backup:
         if verbose:
             print(f'deleting backup file "{backup_file.name}"')
-        backup_file.unlink(missing_ok=True)
+        backup_file.unlink(missing_ok=True)  # type: ignore
+    return True
 
 
 def strip(filename: str, backup=False, thumbnail=False, verbose=False):
@@ -144,6 +146,7 @@ def strip(filename: str, backup=False, thumbnail=False, verbose=False):
     source_file = Path(filename)
     tmp_file = source_file.with_suffix(".ezdxf.tmp")
     error = False
+    tagwriter: TagWriter
     if verbose:
         print(f'make a temporary copy: "{tmp_file.name}"')
     with open(tmp_file, "wb") as fp, open(source_file, "rb") as infile:
@@ -162,7 +165,7 @@ def strip(filename: str, backup=False, thumbnail=False, verbose=False):
 
     if not error:
         rename = False
-        if thumbnail and tagwriter.removed_thumbnail_image:
+        if thumbnail and tagwriter.removed_thumbnail_image:  # type: ignore
             print(f'"{source_file.name}" - removed THUMBNAILIMAGE section')
             rename = True
 
