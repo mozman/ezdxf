@@ -563,7 +563,7 @@ def plain_mtext(
         new_paragraph,
         new_column,
         *_,
-    ) = TokenType
+    ) = iter(TokenType)
     tab_replacement = " " * tabsize
 
     for token in MTextParser(text):
@@ -624,8 +624,8 @@ def text_wrap(
         return []
     manual_lines = re.split(r"(\n)", text)  # includes \n as it's own token
     tokens = [t for line in manual_lines for t in re.split(r"(\s+)", line) if t]
-    lines = []
-    current_line = ""
+    lines: List[str] = []
+    current_line: str = ""
     line_just_wrapped = False
 
     for t in tokens:
@@ -670,7 +670,7 @@ def is_text_vertical_stacked(text: "DXFEntity") -> bool:
     if text.doc:
         style = text.doc.styles.get(text.dxf.style)
         if style:
-            return style.is_vertical_stacked
+            return style.is_vertical_stacked  # type: ignore
     return False
 
 
@@ -1061,7 +1061,7 @@ class MTextContext:
             )
         )
 
-    def __eq__(self, other: "MTextContext") -> bool:
+    def __eq__(self, other) -> bool:
         return hash(self) == hash(other)
 
     @property
@@ -1256,7 +1256,7 @@ class MTextParser:
             ctx = MTextContext()
         self.ctx = ctx
         self.scanner = TextScanner(caret_decode(content))
-        self._ctx_stack = []
+        self._ctx_stack: List[MTextContext] = []
         self._continue_stroke = False
 
     def __iter__(self):
