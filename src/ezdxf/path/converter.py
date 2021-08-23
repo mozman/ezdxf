@@ -281,12 +281,11 @@ def from_hatch_boundary_path(
     """Returns a :class:`Path` object from a :class:`~ezdxf.entities.Hatch`
     polyline- or edge path.
     """
-
     if boundary.type == BoundaryPathType.EDGE:
-        p = from_hatch_edge_path(boundary, ocs, elevation)
+        p = from_hatch_edge_path(boundary, ocs, elevation)  # type: ignore
     else:
-        p = from_hatch_polyline_path(boundary, ocs, elevation)
-    if offset:  # only for MPOLYGON
+        p = from_hatch_polyline_path(boundary, ocs, elevation)  # type: ignore
+    if offset and ocs is not None:  # only for MPOLYGON
         # assume offset is in OCS
         offset = ocs.to_wcs(offset.replace(z=elevation))
         p = p.transform(Matrix44.translate(offset.x, offset.y, offset.z))
@@ -449,7 +448,7 @@ def from_hatch_edge_path(
         elif loop.start.isclose(next_segment.start):
             # start of the current loop connects to the start of the next segment
             loop = loop.reversed()
-            loop.append_path(next_segment)
+            loop.append_path(next_segment)  # type: ignore
         else:  # gap between current loop and next segment
             if loop.is_closed or open_loops:
                 path.extend_multi_path(loop)
@@ -527,9 +526,9 @@ def to_lwpolylines(
             yield p
 
 
-def _get_ocs(extrusion: Vec3, referenc_point: Vec3) -> Tuple[OCS, float]:
+def _get_ocs(extrusion: Vec3, reference_point: Vec3) -> Tuple[OCS, float]:
     ocs = OCS(extrusion)
-    elevation = ocs.from_wcs(referenc_point).z
+    elevation = ocs.from_wcs(reference_point).z  # type: ignore
     return ocs, elevation
 
 
@@ -620,15 +619,15 @@ def to_hatches(
     .. versionadded:: 0.16
 
     """
-
+    boundary_factory: BoundaryFactory
     if edge_path:
         # noinspection PyTypeChecker
-        boundary_factory: BoundaryFactory = partial(
+        boundary_factory = partial(
             build_edge_path, distance=distance, segments=segments, g1_tol=g1_tol
         )
     else:
         # noinspection PyTypeChecker
-        boundary_factory: BoundaryFactory = partial(
+        boundary_factory = partial(
             build_poly_path, distance=distance, segments=segments
         )
 
@@ -644,7 +643,7 @@ def to_mpolygons(
     segments: int = MIN_SEGMENTS,
     extrusion: "Vertex" = Z_AXIS,
     dxfattribs: Optional[Dict] = None,
-) -> Iterable[Hatch]:
+) -> Iterable[MPolygon]:
     """Convert the given `paths` into :class:`~ezdxf.entities.MPolygon` entities.
     In contrast to HATCH, MPOLYGON supports only polyline boundary paths.
     All curves will be approximated.
@@ -883,9 +882,9 @@ def to_bsplines_and_vertices(
         prev = path.start
         for cmd in path:
             if cmd.type == Command.CURVE3_TO:
-                curve = Bezier3P([prev, cmd.ctrl, cmd.end])
+                curve = Bezier3P([prev, cmd.ctrl, cmd.end])  # type: ignore
             elif cmd.type == Command.CURVE4_TO:
-                curve = Bezier4P([prev, cmd.ctrl1, cmd.ctrl2, cmd.end])
+                curve = Bezier4P([prev, cmd.ctrl1, cmd.ctrl2, cmd.end])  # type: ignore
             elif cmd.type == Command.LINE_TO:
                 curve = (prev, cmd.end)
             else:
@@ -893,8 +892,8 @@ def to_bsplines_and_vertices(
             curves.append(curve)
             prev = cmd.end
 
-    bezier = []
-    polyline = []
+    bezier: List = []
+    polyline: List = []
     for curve in curves:
         if isinstance(curve, tuple):
             if bezier:
@@ -1038,7 +1037,7 @@ def to_matplotlib_path(paths: Iterable[Path], extrusion: "Vertex" = Z_AXIS):
     """
     from matplotlib.path import Path as MatplotlibPath
 
-    if not extrusion.isclose(Z_AXIS):
+    if not Z_AXIS.isclose(extrusion):
         paths = tools.transform_paths_to_ocs(paths, OCS(extrusion))
     else:
         paths = list(paths)
@@ -1049,8 +1048,8 @@ def to_matplotlib_path(paths: Iterable[Path], extrusion: "Vertex" = Z_AXIS):
         codes.append(code)
         vertices.append((point.x, point.y))
 
-    vertices = []
-    codes = []
+    vertices: List[Tuple[float, float]] = []
+    codes: List[MplCmd] = []
     for path in paths:
         add_command(MplCmd.MOVETO, path.start)
         for cmd in path:
@@ -1059,11 +1058,11 @@ def to_matplotlib_path(paths: Iterable[Path], extrusion: "Vertex" = Z_AXIS):
             elif cmd.type == Command.MOVE_TO:
                 add_command(MplCmd.MOVETO, cmd.end)
             elif cmd.type == Command.CURVE3_TO:
-                add_command(MplCmd.CURVE3, cmd.ctrl)
+                add_command(MplCmd.CURVE3, cmd.ctrl)  # type: ignore
                 add_command(MplCmd.CURVE3, cmd.end)
             elif cmd.type == Command.CURVE4_TO:
-                add_command(MplCmd.CURVE4, cmd.ctrl1)
-                add_command(MplCmd.CURVE4, cmd.ctrl2)
+                add_command(MplCmd.CURVE4, cmd.ctrl1)  # type: ignore
+                add_command(MplCmd.CURVE4, cmd.ctrl2)  # type: ignore
                 add_command(MplCmd.CURVE4, cmd.end)
 
     # STOP command is currently not required
@@ -1085,7 +1084,7 @@ def multi_path_from_qpainter_path(qpath) -> Path:
     """
     # QPainterPath stores only cubic Bèzier curves
     path = Path()
-    vertices = list()
+    vertices: List[Vec3] = []
     for index in range(qpath.elementCount()):
         element = qpath.elementAt(index)
         cmd = element.type
@@ -1147,7 +1146,7 @@ def to_qpainter_path(paths: Iterable[Path], extrusion: "Vertex" = Z_AXIS):
     from PyQt5.QtGui import QPainterPath
     from PyQt5.QtCore import QPointF
 
-    if not extrusion.isclose(Z_AXIS):
+    if not Z_AXIS.isclose(extrusion):
         paths = tools.transform_paths_to_ocs(paths, OCS(extrusion))
     else:
         paths = list(paths)
@@ -1166,7 +1165,7 @@ def to_qpainter_path(paths: Iterable[Path], extrusion: "Vertex" = Z_AXIS):
             elif cmd.type == Command.MOVE_TO:
                 qpath.moveTo(qpnt(cmd.end))
             elif cmd.type == Command.CURVE3_TO:
-                qpath.quadTo(qpnt(cmd.ctrl), qpnt(cmd.end))
+                qpath.quadTo(qpnt(cmd.ctrl), qpnt(cmd.end))  # type: ignore
             elif cmd.type == Command.CURVE4_TO:
-                qpath.cubicTo(qpnt(cmd.ctrl1), qpnt(cmd.ctrl2), qpnt(cmd.end))
+                qpath.cubicTo(qpnt(cmd.ctrl1), qpnt(cmd.ctrl2), qpnt(cmd.end))  # type: ignore
     return qpath
