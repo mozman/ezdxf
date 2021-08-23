@@ -1,6 +1,4 @@
-# Purpose: julian date
-# Created: 21.03.2011
-# Copyright (c) 2011-2018, Manfred Moitzi
+# Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
 from typing import Tuple
 from math import floor
@@ -14,17 +12,19 @@ def frac(number: float) -> float:
 class JulianDate:
     def __init__(self, date: datetime):
         self.date = date
-        self.result = self.julian_date() + self.fractional_day()  # type: float
+        self.result: float = self.julian_date() + self.fractional_day()
 
     def fractional_day(self) -> float:
-        seconds = self.date.hour * 3600. + self.date.minute * 60. + self.date.second
-        return seconds / 86400.
+        seconds = (
+            self.date.hour * 3600.0 + self.date.minute * 60.0 + self.date.second
+        )
+        return seconds / 86400.0
 
     def julian_date(self) -> float:
-        y = self.date.year + (float(self.date.month) - 2.85) / 12.
-        A = floor(367. * y) - 1.75 * floor(y) + self.date.day
-        B = floor(A) - 0.75 * floor(y / 100.)
-        return floor(B) + 1721115.
+        y = self.date.year + (float(self.date.month) - 2.85) / 12.0
+        A = floor(367.0 * y) - 1.75 * floor(y) + self.date.day
+        B = floor(A) - 0.75 * floor(y / 100.0)
+        return floor(B) + 1721115.0
 
 
 class CalendarDate:
@@ -41,7 +41,7 @@ class CalendarDate:
             A = Z  # julian calendar
         else:
             g = floor((Z - 1867216.25) / 36524.25)  # gregorian calendar
-            A = Z + 1. + g - floor(g / 4.)
+            A = Z + 1 + g - floor(g / 4.0)
 
         B = A + 1524.
         C = floor((B - 122.1) / 365.25)
@@ -55,7 +55,7 @@ class CalendarDate:
 
 
 def frac2time(jdate) -> Tuple[int, int, int]:
-    seconds = int(frac(jdate) * 86400.)
+    seconds = int(frac(jdate) * 86400.0)
     hour = int(seconds / 3600)
     seconds = seconds % 3600
     minute = int(seconds / 60)
