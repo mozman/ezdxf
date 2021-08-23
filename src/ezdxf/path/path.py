@@ -1,6 +1,13 @@
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List, Iterable, Optional, Iterator, no_type_check
+from typing import (
+    TYPE_CHECKING,
+    List,
+    Iterable,
+    Optional,
+    Iterator,
+    no_type_check,
+)
 from collections import abc
 import warnings
 
