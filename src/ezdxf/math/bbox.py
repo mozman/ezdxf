@@ -268,8 +268,8 @@ def extends3d(vertices: Iterable["Vertex"]) -> Tuple[Vec3, Vec3]:
     for v in vertices:
         v = Vec3(v)
         if minx is None:
-            minx, miny, minz = v.xyz
-            maxx, maxy, maxz = v.xyz
+            minx, miny, minz = v.xyz  # type: ignore
+            maxx, maxy, maxz = v.xyz  # type: ignore
         else:
             x, y, z = v.xyz
             if x < minx:
@@ -294,7 +294,7 @@ def extends2d(vertices: Iterable["Vertex"]) -> Tuple[Vec2, Vec2]:
     maxx, maxy = None, None
     for v in vertices:
         v = Vec2(v)
-        x, y = v.x, v.y
+        x, y = v.x, v.y  # type: ignore
         if minx is None:
             minx = x
             maxx = x
