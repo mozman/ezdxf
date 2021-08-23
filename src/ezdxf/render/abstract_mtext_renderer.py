@@ -189,7 +189,7 @@ class AbstractMTextRenderer(abc.ABC):
     def make_mtext_context(self, mtext: MText) -> MTextContext:
         ctx = MTextContext()
         ctx.paragraph = ParagraphProperties(
-            align=ATTACHMENT_POINT_TO_ALIGN.get(
+            align=ATTACHMENT_POINT_TO_ALIGN.get(  # type: ignore
                 mtext.dxf.attachment_point, tl.ParagraphAlignment.LEFT
             )
         )
