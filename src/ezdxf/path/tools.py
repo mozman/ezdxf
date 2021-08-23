@@ -136,9 +136,9 @@ def transform_paths(paths: Iterable[Path], m: Matrix44) -> List[Path]:
         if path is not None:
             transformed_paths.append(path)
 
-    vertices = []
-    commands = []
-    transformed_paths = []
+    vertices: List[Vec3] = []
+    commands: List[Command] = []
+    transformed_paths: List[Path] = []
 
     for path in paths:
         decompose(path)
@@ -697,8 +697,8 @@ def add_2d_polyline(
     if len(path):
         raise ValueError("Requires an empty path.")
 
-    prev_point = None
-    prev_bulge = 0
+    prev_point: Optional[Vec3] = None
+    prev_bulge: float = 0
     for x, y, bulge in points:
         # Bulge values near 0 but != 0 cause crashes! #329
         if abs(bulge) < 1e-6:
@@ -754,6 +754,7 @@ def add_spline(path: Path, spline: BSpline, level=4, reset=True) -> None:
     """
     if len(path) == 0 and reset:
         path.start = spline.point(0)
+    curves: Iterable[Bezier4P]
     if spline.degree == 3 and not spline.is_rational and spline.is_clamped:
         curves = [Bezier4P(points) for points in spline.bezier_decomposition()]
     else:
