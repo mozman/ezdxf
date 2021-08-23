@@ -2,24 +2,33 @@
 #  License: MIT License
 import math
 from ezdxf.math import (
-    cubic_bezier_arc_parameters, Matrix44, Vertex, basic_transformation,
+    cubic_bezier_arc_parameters,
+    Matrix44,
+    Vertex,
+    basic_transformation,
 )
 from ezdxf.render import forms
 from .path import Path
 from . import converter
 
 __all__ = [
-    "unit_circle", "elliptic_transformation", "rect", "ngon", "wedge", "star",
-    "gear"
+    "unit_circle",
+    "elliptic_transformation",
+    "rect",
+    "ngon",
+    "wedge",
+    "star",
+    "gear",
 ]
 
 
 def unit_circle(
-        start_angle: float = 0,
-        end_angle: float = math.tau,
-        segments: int = 1,
-        transform: Matrix44 = None) -> Path:
-    """ Returns an unit circle as a :class:`Path` object, with the center at
+    start_angle: float = 0,
+    end_angle: float = math.tau,
+    segments: int = 1,
+    transform: Matrix44 = None,
+) -> Path:
+    """Returns an unit circle as a :class:`Path` object, with the center at
     (0, 0, 0) and the radius of 1 drawing unit.
 
     The arc spans from the start- to the end angle in counter clockwise
@@ -37,7 +46,8 @@ def unit_circle(
     path = Path()
     start_flag = True
     for start, ctrl1, ctrl2, end in cubic_bezier_arc_parameters(
-            start_angle, end_angle, segments):
+        start_angle, end_angle, segments
+    ):
         if start_flag:
             path.start = start
             start_flag = False
@@ -48,11 +58,13 @@ def unit_circle(
         return path.transform(transform)
 
 
-def wedge(start_angle: float,
-          end_angle: float,
-          segments: int = 1,
-          transform: Matrix44 = None) -> Path:
-    """ Returns a wedge as a :class:`Path` object, with the center at
+def wedge(
+    start_angle: float,
+    end_angle: float,
+    segments: int = 1,
+    transform: Matrix44 = None,
+) -> Path:
+    """Returns a wedge as a :class:`Path` object, with the center at
     (0, 0, 0) and the radius of 1 drawing unit.
 
     The arc spans from the start- to the end angle in counter clockwise
@@ -70,7 +82,8 @@ def wedge(start_angle: float,
     path = Path()
     start_flag = True
     for start, ctrl1, ctrl2, end in cubic_bezier_arc_parameters(
-            start_angle, end_angle, segments):
+        start_angle, end_angle, segments
+    ):
         if start_flag:
             path.line_to(start)
             start_flag = False
@@ -83,11 +96,12 @@ def wedge(start_angle: float,
 
 
 def elliptic_transformation(
-        center: Vertex = (0, 0, 0),
-        radius: float = 1,
-        ratio: float = 1,
-        rotation: float = 0) -> Matrix44:
-    """ Returns the transformation matrix to transform an unit circle into
+    center: Vertex = (0, 0, 0),
+    radius: float = 1,
+    ratio: float = 1,
+    rotation: float = 0,
+) -> Matrix44:
+    """Returns the transformation matrix to transform an unit circle into
     an arbitrary circular- or elliptic arc.
 
     Example how to create an ellipse with an major axis length of 3, a minor
@@ -104,17 +118,18 @@ def elliptic_transformation(
 
     """
     if radius < 1e-6:
-        raise ValueError(f'invalid radius: {radius}')
+        raise ValueError(f"invalid radius: {radius}")
     if ratio < 1e-6:
-        raise ValueError(f'invalid ratio: {ratio}')
+        raise ValueError(f"invalid ratio: {ratio}")
     scale_x = radius
     scale_y = radius * ratio
     return basic_transformation(center, (scale_x, scale_y, 1), rotation)
 
 
-def rect(width: float = 1, height: float = 1,
-         transform: Matrix44 = None) -> Path:
-    """ Returns a closed rectangle as a :class:`Path` object, with the center at
+def rect(
+    width: float = 1, height: float = 1, transform: Matrix44 = None
+) -> Path:
+    """Returns a closed rectangle as a :class:`Path` object, with the center at
     (0, 0, 0) and the given `width` and `height` in drawing units.
 
     Args:
@@ -131,8 +146,7 @@ def rect(width: float = 1, height: float = 1,
     w2 = float(width) / 2.0
     h2 = float(height) / 2.0
     path = converter.from_vertices(
-        [(w2, h2), (-w2, h2), (-w2, -h2), (w2, h2)],
-        close=True
+        [(w2, h2), (-w2, h2), (-w2, -h2), (w2, h2)], close=True
     )
     if transform is None:
         return path
@@ -140,9 +154,13 @@ def rect(width: float = 1, height: float = 1,
         return path.transform(transform)
 
 
-def ngon(count: int, length: float = None, radius: float = 1.0,
-         transform: Matrix44 = None) -> Path:
-    """ Returns a `regular polygon <https://en.wikipedia.org/wiki/Regular_polygon>`_
+def ngon(
+    count: int,
+    length: float = None,
+    radius: float = 1.0,
+    transform: Matrix44 = None,
+) -> Path:
+    """Returns a `regular polygon <https://en.wikipedia.org/wiki/Regular_polygon>`_
     a :class:`Path` object, with the center at (0, 0, 0).
     The polygon size is determined by the edge `length` or the circum `radius`
     argument. If both are given `length` has higher priority. Default size is
@@ -163,7 +181,7 @@ def ngon(count: int, length: float = None, radius: float = 1.0,
 
 
 def star(count: int, r1: float, r2: float, transform: Matrix44 = None) -> Path:
-    """ Returns a `star shape <https://en.wikipedia.org/wiki/Star_polygon>`_ as
+    """Returns a `star shape <https://en.wikipedia.org/wiki/Star_polygon>`_ as
     a :class:`Path` object, with the center at (0, 0, 0).
 
     Argument `count` defines the count of star spikes, `r1` defines the radius
@@ -185,8 +203,14 @@ def star(count: int, r1: float, r2: float, transform: Matrix44 = None) -> Path:
     return converter.from_vertices(vertices, close=True)
 
 
-def gear(count: int, top_width: float, bottom_width: float, height: float,
-         outside_radius: float, transform: Matrix44 = None) -> Path:
+def gear(
+    count: int,
+    top_width: float,
+    bottom_width: float,
+    height: float,
+    outside_radius: float,
+    transform: Matrix44 = None,
+) -> Path:
     """
     Returns a `gear <https://en.wikipedia.org/wiki/Gear>`_ (cogwheel) shape as
     a :class:`Path` object, with the center at (0, 0, 0).
@@ -205,8 +229,9 @@ def gear(count: int, top_width: float, bottom_width: float, height: float,
         transform: transformation Matrix applied to the gear shape
 
     """
-    vertices = forms.gear(count, top_width, bottom_width, height,
-                          outside_radius)
+    vertices = forms.gear(
+        count, top_width, bottom_width, height, outside_radius
+    )
     if transform is not None:
         vertices = transform.transform_vertices(vertices)
     return converter.from_vertices(vertices, close=True)
