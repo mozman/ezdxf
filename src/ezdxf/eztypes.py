@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2020, Manfred Moitzi
+# Copyright (c) 2018-2021, Manfred Moitzi
 # License: MIT License
 """ ezdxf typing hints
 
@@ -8,16 +8,19 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import DXFTag
 
 """
-from typing import *
+from typing import (
+    TYPE_CHECKING, List, Union, Sequence, Tuple, Iterable, Hashable, Dict,
+    Callable
+)
 
 if TYPE_CHECKING:
     # Low level stuff
     from ezdxf.math import (
-        Vec3, Vec2, AnyVec, Vertex, Matrix44, BoundingBox, BoundingBox2d ,UCS,
+        Vec3, Vec2, AnyVec, Vertex, Matrix44, BoundingBox, BoundingBox2d, UCS,
         OCS
     )
     from ezdxf.tools.handle import HandleGenerator
-    from ezdxf.lldxf.types import DXFTag, DXFBinaryTag, DXFVertex
+    from ezdxf.lldxf.types import DXFTag, DXFBinaryTag
     from ezdxf.lldxf.attributes import XType, DXFAttr
     from ezdxf.lldxf.tags import Tags
     from ezdxf.lldxf.extendedtags import ExtendedTags
@@ -88,7 +91,7 @@ if TYPE_CHECKING:
     from ezdxf.entities.solid import Solid, Trace, Face3d
 
     from ezdxf.entities.subentity import LinkedEntities
-    from ezdxf.entities.polyline import Polyline, Polyface, Polymesh, DXFVertex
+    from ezdxf.entities.polyline import Polyline, Polyface, Polymesh
     from ezdxf.entities.insert import Insert
     from ezdxf.entities.attrib import AttDef, Attrib
     from ezdxf.entities.dimension import Dimension, ArcDimension
