@@ -1,8 +1,8 @@
 # Autodesk DXF 2018 Reference
-link_tpl = 'https://help.autodesk.com/view/OARX/2018/ENU/?guid={guid}'
+link_tpl = "https://help.autodesk.com/view/OARX/2018/ENU/?guid={guid}"
 # Autodesk DXF 2014 Reference
 # link_tpl = 'https://docs.autodesk.com/ACD/2014/ENU/files/{guid}.htm'
-main_index_guid = 'GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3'  # main index
+main_index_guid = "GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3"  # main index
 
 reference_guids = {
     "HEADER": "GUID-EA9CDD11-19D1-4EBC-9F56-979ACF679E3C",
