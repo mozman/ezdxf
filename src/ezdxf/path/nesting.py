@@ -91,7 +91,7 @@ Sort by Area
 It is not possible for a path to contain another path with a larger area.
 
 """
-from typing import TypeVar, Tuple, Optional, List, Iterable
+from typing import Tuple, Optional, List, Iterable, TypeVar
 from collections import namedtuple
 from .path import Path
 from ezdxf.math import BoundingBox2d
@@ -105,8 +105,7 @@ __all__ = [
 
 Exterior = Path
 Polygon = TypeVar("Polygon")
-Hole = Polygon
-Polygon = Tuple[Exterior, Optional[List[Hole]]]
+Polygon = Tuple[Exterior, Optional[List[Polygon]]]
 BoxStruct = namedtuple("BoxStruct", "bbox, path")
 
 
@@ -124,8 +123,8 @@ def fast_bbox_detection(paths: Iterable[Path]) -> List[Polygon]:
     def separate(
         exterior: BoundingBox2d, candidates: List[BoxStruct]
     ) -> Tuple[List[BoxStruct], List[BoxStruct]]:
-        holes = []
-        outside = []
+        holes: List[BoxStruct] = []
+        outside: List[BoxStruct] = []
         for candidate in candidates:
             # Fast inside check:
             (
@@ -144,7 +143,7 @@ def fast_bbox_detection(paths: Iterable[Path]) -> List[Polygon]:
                 # build nested hole structure:
                 # the largest hole could contain the smaller holes,
                 # and so on ...
-                holes = polygon_structure(holes)
+                holes = polygon_structure(holes)  # type: ignore
             polygons.append([exterior, *holes])
         return polygons
 
@@ -186,8 +185,8 @@ def winding_deconstruction(
             else:
                 deconstruct(polygon, level + 1)
 
-    cw_paths = []
-    ccw_paths = []
+    cw_paths: List[Path] = []
+    ccw_paths: List[Path] = []
     deconstruct(polygons, 0)
     return ccw_paths, cw_paths
 
@@ -198,7 +197,7 @@ def flatten_polygons(polygons: Polygon) -> Iterable[Path]:
         if isinstance(polygon, Path):
             yield polygon
         else:
-            yield from flatten_polygons(polygon)
+            yield from flatten_polygons(polygon)  # type: ignore
 
 
 def group_paths(paths: Iterable[Path]) -> List[List[Path]]:
