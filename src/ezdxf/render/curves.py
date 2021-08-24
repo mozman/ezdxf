@@ -196,7 +196,7 @@ class Bezier:
                 end_tangent = to_point[1]  # tangent1
                 count = to_point[3]
                 yield Bezier.Segment(
-                    start_point, end_point, start_tangent, end_tangent, count
+                    start_point, end_point, start_tangent, end_tangent, count  # type: ignore
                 )
         else:
             raise ValueError("Two or more points needed!")
@@ -215,7 +215,7 @@ class Bezier:
             dxfattribs: DXF attributes for :class:`~ezdxf.entities.Polyline`
 
         """
-        points = []
+        points: List[Vec3] = []
         for segment in self._build_bezier_segments():
             points.extend(segment.approximate())
         if force3d or any(p[2] for p in points):
@@ -249,7 +249,7 @@ class Spline:
         """
         if points is None:
             points = []
-        self.points = points
+        self.points: List[Vec3] = Vec3.list(points)
         self.segments = int(segments)
 
     def subdivide(self, segments: int = 4) -> None:
