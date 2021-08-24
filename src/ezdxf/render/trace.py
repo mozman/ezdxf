@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
 from typing import (
     List,
@@ -16,6 +16,7 @@ import math
 from ezdxf.math import (
     Vec2,
     Vec3,
+    Vertex,
     BSpline,
     linspace,
     ConstructionRay,
@@ -26,7 +27,15 @@ from ezdxf.math import (
 )
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, Drawing, DXFGraphic
+    from ezdxf.eztypes import (
+        Drawing,
+        DXFGraphic,
+        Solid,
+        Trace,
+        Face3d,
+        LWPolyline,
+        Polyline
+    )
 
 __all__ = ["TraceBuilder", "LinearTrace", "CurvedTrace"]
 
@@ -53,7 +62,7 @@ class AbstractTrace:
         pass
 
     def polygon(self) -> Polygon:
-        def merge(vertices: Polygon) -> Polygon:
+        def merge(vertices: Polygon) -> Iterable[Vertex]:
             if not len(vertices):
                 return
 
@@ -77,7 +86,7 @@ class AbstractTrace:
 
     def virtual_entities(
         self, dxftype="TRACE", dxfattribs: Dict = None, doc: "Drawing" = None
-    ) -> Quadrilateral:
+    ) -> Iterable[Quadrilateral]:
         """
         Yields faces as SOLID, TRACE or 3DFACE entities with DXF attributes
         given in `dxfattribs`.
@@ -108,7 +117,7 @@ class AbstractTrace:
             entity = new(dxftype, dxfattribs, doc)
             if doc:
                 doc.entitydb.add(entity)
-            yield entity
+            yield entity  # type: ignore
 
 
 class LinearTrace(AbstractTrace):
@@ -260,8 +269,8 @@ class LinearTrace(AbstractTrace):
                 prev_offset_ray2 = offset_ray2
             else:
                 # Compute first two vertices for the actual face.
-                vtx0 = intersect(prev_offset_ray1, offset_ray1, up1)
-                vtx1 = intersect(prev_offset_ray2, offset_ray2, down1)
+                vtx0 = intersect(prev_offset_ray1, offset_ray1, up1)  # type: ignore
+                vtx1 = intersect(prev_offset_ray2, offset_ray2, down1)  # type: ignore
 
             if i < len(segments) - 1:
                 # Compute last two vertices for the actual face.
@@ -477,7 +486,7 @@ class TraceBuilder(Sequence):
 
     def virtual_entities(
         self, dxftype="TRACE", dxfattribs: Dict = None, doc: "Drawing" = None
-    ) -> Quadrilateral:
+    ) -> Iterable[Quadrilateral]:
         """Yields faces as SOLID, TRACE or 3DFACE entities with DXF attributes
         given in `dxfattribs`.
 
@@ -531,7 +540,7 @@ class TraceBuilder(Sequence):
         """
         dxftype = polyline.dxftype()
         if dxftype == "LWPOLYLINE":
-            polyline = cast("LWPOLYLINE", polyline)
+            polyline = cast("LWPolyline", polyline)
             const_width = polyline.dxf.const_width
             points = []
             for x, y, start_width, end_width, bulge in polyline.lwpoints:
@@ -544,7 +553,7 @@ class TraceBuilder(Sequence):
                 points.append((location, start_width, end_width, bulge))
             closed = polyline.closed
         elif dxftype == "POLYLINE":
-            polyline = cast("POLYLINE", polyline)
+            polyline = cast("Polyline", polyline)
             if not polyline.is_2d_polyline:
                 raise TypeError("2D POLYLINE required")
             closed = polyline.is_closed
