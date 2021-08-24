@@ -1,4 +1,4 @@
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-2021 Manfred Moitzi
 # License: MIT License
 """
 DXF R12 Splines
@@ -100,7 +100,7 @@ Vertex 70=0, Vertex 70=1, Vertex 70=0, Vertex 70=1
 """
 from typing import TYPE_CHECKING, Iterable, List
 from ezdxf.lldxf import const
-from ezdxf.math import BSpline, closed_uniform_bspline
+from ezdxf.math import BSpline, closed_uniform_bspline, Vec3
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, BaseLayout, Polyline
@@ -108,7 +108,7 @@ if TYPE_CHECKING:
 
 
 class R12Spline:
-    """ DXF R12 supports 2D B-splines, but Autodesk do not document the usage
+    """DXF R12 supports 2D B-splines, but Autodesk do not document the usage
     in the DXF Reference. The base entity for splines in DXF R12 is the POLYLINE
     entity. The spline itself is always in a plane, but as any 2D entity, the
     spline can be transformed into the 3D object by elevation and extrusion
@@ -122,7 +122,13 @@ class R12Spline:
     future.
 
     """
-    def __init__(self, control_points: Iterable['Vertex'], degree: int = 2, closed: bool = True):
+
+    def __init__(
+        self,
+        control_points: Iterable["Vertex"],
+        degree: int = 2,
+        closed: bool = True,
+    ):
         """
         Args:
             control_points: B-spline control frame vertices
@@ -130,12 +136,14 @@ class R12Spline:
             closed: ``True`` for closed curve
 
         """
-        self.control_points = list(control_points)
+        self.control_points = Vec3.list(control_points)
         self.degree = degree
         self.closed = closed
 
-    def approximate(self, segments: int = 40, ucs: 'UCS' = None) -> List['Vertex']:
-        """ Approximate the B-spline by a polyline with `segments` line segments.
+    def approximate(
+        self, segments: int = 40, ucs: "UCS" = None
+    ) -> List["Vertex"]:
+        """Approximate the B-spline by a polyline with `segments` line segments.
         If `ucs` is not ``None``, ucs defines an :class:`~ezdxf.math.UCS`, to
         transformed the curve into :ref:`OCS`. The control points are placed
         xy-plane of the UCS, don't use z-axis coordinates, if so make sure all
@@ -156,7 +164,8 @@ class R12Spline:
         """
         if self.closed:
             spline = closed_uniform_bspline(
-                self.control_points, order=self.degree + 1)
+                self.control_points, order=self.degree + 1
+            )
         else:
             spline = BSpline(self.control_points, order=self.degree + 1)
         vertices = spline.approximate(segments)
@@ -164,9 +173,14 @@ class R12Spline:
             vertices = (ucs.to_ocs(vertex) for vertex in vertices)
         return list(vertices)
 
-    def render(self, layout: 'BaseLayout', segments: int = 40, ucs: 'UCS' = None,
-               dxfattribs: dict = None) -> 'Polyline':
-        """ Renders the B-spline into `layout` as 2D :class:`~ezdxf.entities.Polyline`
+    def render(
+        self,
+        layout: "BaseLayout",
+        segments: int = 40,
+        ucs: "UCS" = None,
+        dxfattribs: dict = None,
+    ) -> "Polyline":
+        """Renders the B-spline into `layout` as 2D :class:`~ezdxf.entities.Polyline`
         entity. Use an :class:`~ezdxf.math.UCS` to place the 2D spline in the
         3D space, see :meth:`approximate` for more information.
 
@@ -190,7 +204,7 @@ class R12Spline:
         elif self.degree == 3:
             smooth_type = polyline.CUBIC_BSPLINE
         else:
-            raise ValueError('invalid degree of spline')
+            raise ValueError("invalid degree of spline")
         polyline.dxf.smooth_type = smooth_type
 
         # set OCS extrusion vector
@@ -201,17 +215,21 @@ class R12Spline:
         polyline.append_vertices(
             self.approximate(segments, ucs),
             dxfattribs={
-                'layer': polyline.dxf.layer,
-                'flags': const.VTX_SPLINE_VERTEX_CREATED,
-            })
+                "layer": polyline.dxf.layer,
+                "flags": const.VTX_SPLINE_VERTEX_CREATED,
+            },
+        )
 
         # add control frame points in OCS
         control_points = self.control_points
         if ucs is not None:
             control_points = list(ucs.points_to_ocs(control_points))
             polyline.dxf.elevation = (0, 0, control_points[0].z)
-        polyline.append_vertices(control_points, dxfattribs={
-            'layer': polyline.dxf.layer,
-            'flags': const.VTX_SPLINE_FRAME_CONTROL_POINT,
-        })
+        polyline.append_vertices(
+            control_points,
+            dxfattribs={
+                "layer": polyline.dxf.layer,
+                "flags": const.VTX_SPLINE_FRAME_CONTROL_POINT,
+            },
+        )
         return polyline
