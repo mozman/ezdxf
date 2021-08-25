@@ -37,12 +37,16 @@ Layer Table
 
     Collection of :class:`~ezdxf.entities.Layer` objects.
 
+    .. automethod:: add
+
 Linetype Table
 --------------
 
-Generic table class  of :class:`Table`.
+.. class:: LineTypeTable
 
-Collection of :class:`~ezdxf.entities.Linetype` objects.
+    Subclass of :class:`Table`.
+
+    Collection of :class:`~ezdxf.entities.Linetype` objects.
 
 
 Style Table
@@ -62,32 +66,40 @@ Style Table
 DimStyle Table
 --------------
 
-Generic table class of :class:`Table`.
 
-Collection of :class:`~ezdxf.entities.DimStyle` objects.
 
+.. class:: DimStyleTable
+
+    Subclass of :class:`Table`.
+
+    Collection of :class:`~ezdxf.entities.DimStyle` objects.
 
 AppID Table
 -----------
 
-Generic table class of :class:`Table`.
+.. class:: AppIDTable
 
-Collection of :class:`~ezdxf.entities.AppID` objects.
+    Subclass of :class:`Table`.
+
+    Collection of :class:`~ezdxf.entities.AppID` objects.
 
 UCS Table
 ---------
 
-Generic table class of :class:`Table`.
+.. class:: UCSTable
 
-Collection of :class:`~ezdxf.entities.UCSTable` objects.
+    Subclass of :class:`Table`.
+
+    Collection of :class:`~ezdxf.entities.UCSTable` objects.
 
 View Table
 ----------
 
-Generic table class of :class:`Table`.
+.. class:: ViewTable
 
-Collection of :class:`~ezdxf.entities.View` objects.
+    Subclass of :class:`Table`.
 
+    Collection of :class:`~ezdxf.entities.View` objects.
 
 Viewport Table
 --------------
@@ -111,6 +123,8 @@ Viewport Table
 Block Record Table
 ------------------
 
-Generic table class of :class:`Table`.
+.. class:: BlockRecordTable
 
-Collection of :class:`~ezdxf.entities.BlockRecord` objects.
+    Subclass of :class:`Table`.
+
+    Collection of :class:`~ezdxf.entities.BlockRecord` objects.

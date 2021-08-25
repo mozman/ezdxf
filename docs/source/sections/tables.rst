@@ -17,7 +17,7 @@ The TABLES section is the home of all TABLE objects of a DXF document.
 
     .. attribute:: linetypes
 
-        Generic :class:`~ezdxf.sections.table.Table` object for :class:`~ezdxf.entities.Linetype` objects
+        :class:`~ezdxf.sections.table.LineTypesTable` object for :class:`~ezdxf.entities.Linetype` objects
 
     .. attribute:: styles
 
@@ -25,19 +25,19 @@ The TABLES section is the home of all TABLE objects of a DXF document.
 
     .. attribute:: dimstyles
 
-        Generic :class:`~ezdxf.sections.table.Table` object for :class:`~ezdxf.entities.DimStyle` objects
+        :class:`~ezdxf.sections.table.DimStyleTable` object for :class:`~ezdxf.entities.DimStyle` objects
 
     .. attribute:: appids
 
-        Generic :class:`~ezdxf.sections.table.Table` object for :class:`~ezdxf.entities.AppID` objects
+        :class:`~ezdxf.sections.table.AppIDTable` object for :class:`~ezdxf.entities.AppID` objects
 
     .. attribute:: ucs
 
-        Generic :class:`~ezdxf.sections.table.Table` object for :class:`~ezdxf.entities.UCSTable` objects
+        :class:`~ezdxf.sections.table.UCSTable` object for :class:`~ezdxf.entities.UCSTable` objects
 
     .. attribute:: views
 
-        Generic :class:`~ezdxf.sections.table.Table` object for :class:`~ezdxf.entities.View` objects
+        :class:`~ezdxf.sections.table.ViewTable` object for :class:`~ezdxf.entities.View` objects
 
     .. attribute:: viewports
 
@@ -45,6 +45,6 @@ The TABLES section is the home of all TABLE objects of a DXF document.
 
     .. attribute:: block_records
 
-        Generic :class:`~ezdxf.sections.table.Table` object for :class:`~ezdxf.entities.BlockRecord` objects
+        :class:`~ezdxf.sections.table.BlockRecordTable` object for :class:`~ezdxf.entities.BlockRecord` objects
 
 

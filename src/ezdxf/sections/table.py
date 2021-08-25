@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Iterable, Iterator, Optional, List, Dict, cast
 from collections import OrderedDict
 import logging
 
-from ezdxf.lldxf import const
+from ezdxf.lldxf import const, validator
 from ezdxf.entities.table import TableHead
 from ezdxf.entities import factory
 
@@ -275,6 +275,47 @@ class LayerTable(Table):
         if self.doc:
             layer.set_required_attributes()
         return layer
+
+    def add(
+        self,
+        name: str,
+        *,
+        color: int = const.BYLAYER,
+        true_color: int = None,
+        linetype: str = "Continuous",
+        lineweight: int = const.LINEWEIGHT_BYLAYER,
+        plot: bool = True,
+        dxfattribs: Dict = None,
+    ) -> "Layer":
+        """Add a new :class:`~ezdxf.entities.Layer`.
+
+        Args:
+            name (str): layer name
+            color (int): :ref:`ACI` value, default is BYLAYER
+            true_color (int): true color value, use :func:`ezdxf.rgb2int` to
+                create ``int`` values from RGB values
+            linetype (str): line type name, default is "Continuous"
+            lineweight (int): line weight, default is BYLAYER
+            plot (bool): plot layer as bool, default is ``True``
+            dxfattribs (dict): additional DXF attributes
+
+        .. versionadded:: 0.17
+
+        """
+        dxfattribs = dxfattribs or {}
+        if validator.is_valid_aci_color(color):
+            dxfattribs["color"] = color
+        else:
+            raise const.DXFValueError(f"invalid color: {color}")
+        dxfattribs["linetype"] = linetype
+        if validator.is_valid_lineweight(lineweight):
+            dxfattribs["lineweight"] = lineweight
+        else:
+            raise const.DXFValueError(f"invalid lineweight: {lineweight}")
+        if true_color is not None:
+            dxfattribs["true_color"] = int(true_color)
+        dxfattribs["plot"] = int(plot)
+        return self.new(name, dxfattribs)  # type: ignore
 
 
 class LineTypeTable(Table):
