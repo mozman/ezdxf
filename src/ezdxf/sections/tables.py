@@ -3,7 +3,18 @@
 from typing import TYPE_CHECKING, Iterable, List
 import logging
 from ezdxf.lldxf.const import DXFStructureError, DXF12
-from .table import Table, ViewportTable, StyleTable, LayerTable, LineTypeTable
+from .table import (
+    Table,
+    ViewportTable,
+    StyleTable,
+    LayerTable,
+    LineTypeTable,
+    AppIDTable,
+    ViewTable,
+    BlockRecordTable,
+    DimStyleTable,
+    UCSTable,
+)
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -48,13 +59,13 @@ class TablesSection:
         # In the end all tables are not None and using "Optional" is awful!
         self.layers: LayerTable = None  # type: ignore
         self.linetypes: LineTypeTable = None  # type: ignore
-        self.appids: Table = None  # type: ignore
-        self.dimstyles: Table = None  # type: ignore
+        self.appids: AppIDTable = None  # type: ignore
+        self.dimstyles: DimStyleTable = None  # type: ignore
         self.styles: StyleTable = None  # type: ignore
-        self.ucs: Table = None  # type: ignore
-        self.views: Table = None   # type: ignore
-        self.viewports: ViewportTable = None   # type: ignore
-        self.block_records: Table = None  # type: ignore
+        self.ucs: UCSTable = None  # type: ignore
+        self.views: ViewTable = None  # type: ignore
+        self.viewports: ViewportTable = None  # type: ignore
+        self.block_records: BlockRecordTable = None  # type: ignore
 
         if entities is not None:
             self._load(entities)

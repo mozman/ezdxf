@@ -395,3 +395,23 @@ class ViewportTable(Table):
         multi-viewport configuration `name`.
         """
         self.remove(name)
+
+
+class AppIDTable(Table):
+    pass
+
+
+class ViewTable(Table):
+    pass
+
+
+class BlockRecordTable(Table):
+    pass
+
+
+class DimStyleTable(Table):
+    pass
+
+
+class UCSTable(Table):
+    pass
