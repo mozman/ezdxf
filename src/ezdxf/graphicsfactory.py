@@ -22,6 +22,7 @@ if TYPE_CHECKING:
         Attrib,
         Body,
         Circle,
+        Dimension,
         DXFGraphic,
         Drawing,
         Ellipse,
@@ -60,6 +61,7 @@ if TYPE_CHECKING:
         Vertex,
         Wipeout,
         XLine,
+        GenericLayoutType,
     )
 
 
@@ -86,8 +88,8 @@ class CreatorInterface:
 
         """
         entity = factory.create_db_entry(type_, dxfattribs, self.doc)
-        self.add_entity(entity)
-        return entity
+        self.add_entity(entity)  # type: ignore
+        return entity  # type: ignore
 
     def add_entity(self, entity: "DXFGraphic") -> None:
         pass
@@ -103,7 +105,7 @@ class CreatorInterface:
         """
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["location"] = Vec3(location)
-        return self.new_entity("POINT", dxfattribs)
+        return self.new_entity("POINT", dxfattribs)  # type: ignore
 
     def add_line(
         self, start: "Vertex", end: "Vertex", dxfattribs: Dict = None
@@ -120,7 +122,7 @@ class CreatorInterface:
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["start"] = Vec3(start)
         dxfattribs["end"] = Vec3(end)
-        return self.new_entity("LINE", dxfattribs)
+        return self.new_entity("LINE", dxfattribs)  # type: ignore
 
     def add_circle(
         self, center: "Vertex", radius: float, dxfattribs: Dict = None
@@ -138,7 +140,7 @@ class CreatorInterface:
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["center"] = Vec3(center)
         dxfattribs["radius"] = float(radius)
-        return self.new_entity("CIRCLE", dxfattribs)
+        return self.new_entity("CIRCLE", dxfattribs)  # type: ignore
 
     def add_ellipse(
         self,
@@ -173,7 +175,7 @@ class CreatorInterface:
         dxfattribs["ratio"] = float(ratio)
         dxfattribs["start_param"] = float(start_param)
         dxfattribs["end_param"] = float(end_param)
-        return self.new_entity("ELLIPSE", dxfattribs)
+        return self.new_entity("ELLIPSE", dxfattribs)  # type: ignore
 
     def add_arc(
         self,
@@ -207,7 +209,7 @@ class CreatorInterface:
         else:
             dxfattribs["start_angle"] = float(end_angle)
             dxfattribs["end_angle"] = float(start_angle)
-        return self.new_entity("ARC", dxfattribs)
+        return self.new_entity("ARC", dxfattribs)  # type: ignore
 
     def add_solid(
         self, points: Iterable["Vertex"], dxfattribs: Dict = None
@@ -225,9 +227,7 @@ class CreatorInterface:
             dxfattribs: additional DXF attributes for :class:`Solid` entity
 
         """
-        return cast(
-            "Solid", self._add_quadrilateral("SOLID", points, dxfattribs)
-        )
+        return self._add_quadrilateral("SOLID", points, dxfattribs)  # type: ignore
 
     def add_trace(
         self, points: Iterable["Vertex"], dxfattribs: Dict = None
@@ -246,9 +246,7 @@ class CreatorInterface:
                 entity
 
         """
-        return cast(
-            "Trace", self._add_quadrilateral("TRACE", points, dxfattribs)
-        )
+        return self._add_quadrilateral("TRACE", points, dxfattribs)  # type: ignore
 
     def add_3dface(
         self, points: Iterable["Vertex"], dxfattribs: Dict = None
@@ -267,9 +265,7 @@ class CreatorInterface:
             dxfattribs: additional DXF attributes for :class:`3DFace` entity
 
         """
-        return cast(
-            "Face", self._add_quadrilateral("3DFACE", points, dxfattribs)
-        )
+        return self._add_quadrilateral("3DFACE", points, dxfattribs)  # type: ignore
 
     def add_text(self, text: str, dxfattribs: Dict = None) -> "Text":
         """
@@ -282,8 +278,8 @@ class CreatorInterface:
         """
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["text"] = str(text)
-        dxfattribs.setdefault("insert", Vec3())
-        return self.new_entity("TEXT", dxfattribs)
+        dxfattribs.setdefault("insert", Vec3())  # type: ignore
+        return self.new_entity("TEXT", dxfattribs)  # type: ignore
 
     def add_blockref(
         self, name: str, insert: "Vertex", dxfattribs: Dict = None
@@ -309,8 +305,7 @@ class CreatorInterface:
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["name"] = name
         dxfattribs["insert"] = Vec3(insert)
-        blockref = self.new_entity("INSERT", dxfattribs)  # type: Insert
-        return blockref
+        return self.new_entity("INSERT", dxfattribs)  # type: ignore
 
     def add_auto_blockref(
         self,
@@ -392,7 +387,7 @@ class CreatorInterface:
         dxfattribs["tag"] = str(tag)
         dxfattribs["insert"] = Vec3(insert)
         dxfattribs["text"] = str(text)
-        return self.new_entity("ATTDEF", dxfattribs)
+        return self.new_entity("ATTDEF", dxfattribs)  # type: ignore
 
     def add_polyline2d(
         self,
@@ -422,7 +417,7 @@ class CreatorInterface:
             )
 
         close = dxfattribs.pop("closed", close)
-        polyline: "Polyline" = self.new_entity("POLYLINE", dxfattribs)
+        polyline: "Polyline" = self.new_entity("POLYLINE", dxfattribs)  # type: ignore
         polyline.close(close)
         if format is not None:
             polyline.append_formatted_vertices(points, format=format)
@@ -478,7 +473,7 @@ class CreatorInterface:
         m_close = dxfattribs.pop("m_close", False)
         n_close = dxfattribs.pop("n_close", False)
         # returns casted entity
-        polymesh = self.new_entity("POLYLINE", dxfattribs)  # type: Polymesh
+        polymesh: "Polymesh" = self.new_entity("POLYLINE", dxfattribs)  # type: ignore
 
         points = [(0, 0, 0)] * (m_size * n_size)
         polymesh.append_vertices(points)  # init mesh vertices
@@ -503,7 +498,7 @@ class CreatorInterface:
         )
         m_close = dxfattribs.pop("m_close", False)
         n_close = dxfattribs.pop("n_close", False)
-        polyface = self.new_entity("POLYLINE", dxfattribs)  # type: Polyface
+        polyface: "Polyface" = self.new_entity("POLYLINE", dxfattribs)  # type: ignore
         polyface.close(m_close, n_close)
         if self.doc:
             polyface.add_sub_entities_to_entitydb(self.doc.entitydb)
@@ -516,7 +511,7 @@ class CreatorInterface:
         dxfattribs = dict(dxfattribs or {})
         entity = self.new_entity(type_, dxfattribs)
         for x, point in enumerate(self._four_points(points)):
-            entity[x] = Vec3(point)
+            entity[x] = Vec3(point)  # type: ignore
         return entity
 
     @staticmethod
@@ -550,7 +545,7 @@ class CreatorInterface:
         dxfattribs["name"] = str(name)
         dxfattribs["insert"] = Vec3(insert)
         dxfattribs["size"] = float(size)
-        return self.new_entity("SHAPE", dxfattribs)
+        return self.new_entity("SHAPE", dxfattribs)  # type: ignore
 
     # new entities in DXF AC1015 (R2000)
 
@@ -599,7 +594,7 @@ class CreatorInterface:
                 DeprecationWarning,
             )
         close = dxfattribs.pop("closed", close)
-        lwpolyline: "LWPolyline" = self.new_entity("LWPOLYLINE", dxfattribs)
+        lwpolyline: "LWPolyline" = self.new_entity("LWPOLYLINE", dxfattribs)  # type: ignore
         lwpolyline.set_points(points, format=format)
         lwpolyline.closed = close
         return lwpolyline
@@ -618,7 +613,7 @@ class CreatorInterface:
         if self.dxfversion < DXF2000:
             raise DXFVersionError("MTEXT requires DXF R2000")
         dxfattribs = dict(dxfattribs or {})
-        mtext: "MText" = self.new_entity("MTEXT", dxfattribs)
+        mtext: "MText" = self.new_entity("MTEXT", dxfattribs)  # type: ignore
         mtext.text = str(text)
         return mtext
 
@@ -796,7 +791,7 @@ class CreatorInterface:
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["start"] = Vec3(start)
         dxfattribs["unit_vector"] = Vec3(unit_vector).normalize()
-        return self.new_entity("RAY", dxfattribs)
+        return self.new_entity("RAY", dxfattribs)  # type: ignore
 
     def add_xline(
         self, start: "Vertex", unit_vector: "Vertex", dxfattribs: Dict = None
@@ -815,7 +810,7 @@ class CreatorInterface:
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["start"] = Vec3(start)
         dxfattribs["unit_vector"] = Vec3(unit_vector).normalize()
-        return self.new_entity("XLINE", dxfattribs)
+        return self.new_entity("XLINE", dxfattribs)  # type: ignore
 
     def add_spline(
         self,
@@ -854,7 +849,7 @@ class CreatorInterface:
             raise DXFVersionError("SPLINE requires DXF R2000")
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["degree"] = int(degree)
-        spline = self.new_entity("SPLINE", dxfattribs)
+        spline: "Spline" = self.new_entity("SPLINE", dxfattribs)  # type: ignore
         if fit_points is not None:
             spline.fit_points = Vec3.generate(fit_points)
         return spline
@@ -954,7 +949,7 @@ class CreatorInterface:
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_open_uniform(list(control_points), degree)
         if knots is not None:
-            spline.knots = knots
+            spline.knots = knots  # type: ignore
         return spline
 
     def add_rational_spline(
@@ -987,7 +982,7 @@ class CreatorInterface:
         spline = self.add_spline(dxfattribs=dxfattribs)
         spline.set_open_rational(list(control_points), weights, degree)
         if knots is not None:
-            spline.knots = knots
+            spline.knots = knots  # type: ignore
         return spline
 
     def add_body(
@@ -1007,7 +1002,7 @@ class CreatorInterface:
             dxfattribs: additional DXF attributes
 
         """
-        return self._add_acis_entiy("BODY", acis_data, dxfattribs)
+        return self._add_acis_entiy("BODY", acis_data, dxfattribs)  # type: ignore
 
     def add_region(
         self, acis_data: Iterable[str] = None, dxfattribs: Dict = None
@@ -1026,9 +1021,7 @@ class CreatorInterface:
             dxfattribs: additional DXF attributes
 
         """
-        return cast(
-            "Region", self._add_acis_entiy("REGION", acis_data, dxfattribs)
-        )
+        return self._add_acis_entiy("REGION", acis_data, dxfattribs)  # type: ignore
 
     def add_3dsolid(
         self, acis_data: Iterable[str] = None, dxfattribs: Dict = None
@@ -1048,9 +1041,7 @@ class CreatorInterface:
             dxfattribs: additional DXF attributes
 
         """
-        return cast(
-            "Solid3d", self._add_acis_entiy("3DSOLID", acis_data, dxfattribs)
-        )
+        return self._add_acis_entiy("3DSOLID", acis_data, dxfattribs)  # type: ignore
 
     def add_surface(
         self, acis_data: Iterable[str] = None, dxfattribs: Dict = None
@@ -1071,9 +1062,7 @@ class CreatorInterface:
         """
         if not (const.DXF2007 <= self.dxfversion <= const.DXF2010):
             raise DXFVersionError("SURFACE requires DXF R2007-R2010")
-        return cast(
-            "Surface", self._add_acis_entiy("SURFACE", acis_data, dxfattribs)
-        )
+        return self._add_acis_entiy("SURFACE", acis_data, dxfattribs)  # type: ignore
 
     def add_extruded_surface(
         self, acis_data: Iterable[str] = None, dxfattribs: Dict = None
@@ -1095,10 +1084,7 @@ class CreatorInterface:
         """
         if not (const.DXF2007 <= self.dxfversion <= const.DXF2010):
             raise DXFVersionError("EXTRUDEDSURFACE requires DXF R2007-R2010")
-        return cast(
-            "ExtrudedSurface",
-            self._add_acis_entiy("EXTRUDEDSURFACE", acis_data, dxfattribs),
-        )
+        return self._add_acis_entiy("EXTRUDEDSURFACE", acis_data, dxfattribs)  # type: ignore
 
     def add_lofted_surface(
         self, acis_data: Iterable[str] = None, dxfattribs: Dict = None
@@ -1120,10 +1106,7 @@ class CreatorInterface:
         """
         if not (const.DXF2007 <= self.dxfversion <= const.DXF2010):
             raise DXFVersionError("LOFTEDSURFACE requires DXF R2007-R2010")
-        return cast(
-            "LoftedSurface",
-            self._add_acis_entiy("LOFTEDSURFACE", acis_data, dxfattribs),
-        )
+        return self._add_acis_entiy("LOFTEDSURFACE", acis_data, dxfattribs)  # type: ignore
 
     def add_revolved_surface(
         self, acis_data: Iterable[str] = None, dxfattribs: Dict = None
@@ -1145,10 +1128,7 @@ class CreatorInterface:
         """
         if not (const.DXF2007 <= self.dxfversion <= const.DXF2010):
             raise DXFVersionError("REVOLVEDSURFACE requires DXF R2007-R2010")
-        return cast(
-            "RevolvedSurface",
-            self._add_acis_entiy("REVOLVEDSURFACE", acis_data, dxfattribs),
-        )
+        return self._add_acis_entiy("REVOLVEDSURFACE", acis_data, dxfattribs)  # type: ignore
 
     def add_swept_surface(
         self, acis_data: Iterable[str] = None, dxfattribs: Dict = None
@@ -1170,10 +1150,7 @@ class CreatorInterface:
         """
         if not (const.DXF2007 <= self.dxfversion <= const.DXF2010):
             raise DXFVersionError("SWEPTSURFACE requires DXF R2007-R2010")
-        return cast(
-            "SweptSurface",
-            self._add_acis_entiy("SWEPTSURFACE", acis_data, dxfattribs),
-        )
+        return self._add_acis_entiy("SWEPTSURFACE", acis_data, dxfattribs)  # type: ignore
 
     def _add_acis_entiy(
         self, name, acis_data: Iterable[str], dxfattribs: Dict
@@ -1181,10 +1158,10 @@ class CreatorInterface:
         if not (const.DXF2000 <= self.dxfversion <= const.DXF2010):
             raise DXFVersionError(f"{name} requires DXF R2000-R2010")
         dxfattribs = dict(dxfattribs or {})
-        entity = cast("Body", self.new_entity(name, dxfattribs))
+        entity: "Body" = self.new_entity(name, dxfattribs)  # type: ignore
         if acis_data is not None:
-            entity.acis_data = acis_data
-        return entity
+            entity.acis_data = acis_data  # type: ignore
+        return entity  # type: ignore
 
     def add_hatch(self, color: int = 7, dxfattribs: Dict = None) -> "Hatch":
         """Add a :class:`~ezdxf.entities.Hatch` entity. (requires DXF R2000)
@@ -1200,7 +1177,7 @@ class CreatorInterface:
         dxfattribs["solid_fill"] = 1
         dxfattribs["color"] = int(color)
         dxfattribs["pattern_name"] = "SOLID"
-        return self.new_entity("HATCH", dxfattribs)
+        return self.new_entity("HATCH", dxfattribs)  # type: ignore
 
     def add_mpolygon(
         self,
@@ -1235,7 +1212,7 @@ class CreatorInterface:
         dxfattribs["pattern_name"] = "SOLID"
         dxfattribs["pattern_type"] = const.HATCH_TYPE_PREDEFINED
         dxfattribs["color"] = int(color)
-        return cast("MPolygon", self.new_entity("MPOLYGON", dxfattribs))
+        return self.new_entity("MPOLYGON", dxfattribs)  # type: ignore
 
     def add_mesh(self, dxfattribs: Dict = None) -> "Mesh":
         """
@@ -1248,7 +1225,7 @@ class CreatorInterface:
         if self.dxfversion < DXF2000:
             raise DXFVersionError("MESH requires DXF R2000")
         dxfattribs = dict(dxfattribs or {})
-        return self.new_entity("MESH", dxfattribs)
+        return self.new_entity("MESH", dxfattribs)  # type: ignore
 
     def add_image(
         self,
@@ -1293,7 +1270,7 @@ class CreatorInterface:
         dxfattribs["u_pixel"] = to_vector(x_units_per_pixel, x_angle_rad)
         dxfattribs["v_pixel"] = to_vector(y_units_per_pixel, y_angle_rad)
         dxfattribs["image_def"] = image_def  # is not a real DXF attrib
-        return cast("Image", self.new_entity("IMAGE", dxfattribs))
+        return self.new_entity("IMAGE", dxfattribs)  # type: ignore
 
     def add_wipeout(
         self, vertices: Iterable["Vertex"], dxfattribs: Dict = None
@@ -1305,9 +1282,7 @@ class CreatorInterface:
         the z-axis of the input vertices are ignored.
 
         """
-        wipeout = cast(
-            "Wipeout", self.new_entity("WIPEOUT", dxfattribs=dxfattribs)
-        )
+        wipeout: "Wipeout" = self.new_entity("WIPEOUT", dxfattribs=dxfattribs)  # type: ignore
         wipeout.set_masking_area(vertices)
         doc = self.doc
         if doc and ("ACAD_WIPEOUT_VARS" not in doc.rootdict):
@@ -1344,8 +1319,8 @@ class CreatorInterface:
         dxfattribs["underlay_def_handle"] = underlay_def.dxf.handle
         dxfattribs["rotation"] = float(rotation)
 
-        underlay = cast(
-            "Underlay", self.new_entity(underlay_def.entity_name, dxfattribs)
+        underlay: "Underlay" = self.new_entity(  # type: ignore
+            underlay_def.entity_name, dxfattribs
         )
         underlay.scaling = scale
         underlay.set_underlay_def(underlay_def)
@@ -1414,9 +1389,7 @@ class CreatorInterface:
 
         """
         type_ = {"dimtype": const.DIM_LINEAR | const.DIM_BLOCK_EXCLUSIVE}
-        dimline = cast(
-            "Dimension", self.new_entity("DIMENSION", dxfattribs=type_)
-        )
+        dimline: "Dimension" = self.new_entity("DIMENSION", dxfattribs=type_)  # type: ignore
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["dimstyle"] = self._safe_dimstyle(dimstyle)
         dxfattribs["defpoint"] = Vec3(base)  # group code 10
@@ -1615,9 +1588,7 @@ class CreatorInterface:
 
         """
         type_ = {"dimtype": const.DIM_ANGULAR | const.DIM_BLOCK_EXCLUSIVE}
-        dimline = cast(
-            "Dimension", self.new_entity("DIMENSION", dxfattribs=type_).cast()
-        )
+        dimline: "Dimension" = self.new_entity("DIMENSION", dxfattribs=type_).cast()  # type: ignore
 
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["dimstyle"] = self._safe_dimstyle(dimstyle)
@@ -2129,7 +2100,7 @@ class CreatorInterface:
         dxfattribs: Dict = None,
     ) -> Vec3:
         return ARROWS.render_arrow(
-            self,
+            self,  # type: ignore
             name=name,
             insert=insert,
             size=size,
@@ -2146,7 +2117,7 @@ class CreatorInterface:
         dxfattribs: Dict = None,
     ) -> Vec3:
         return ARROWS.insert_arrow(
-            self,
+            self,  # type: ignore
             name=name,
             insert=insert,
             size=size,
@@ -2233,7 +2204,7 @@ class CreatorInterface:
             raise DXFVersionError("MLine requires DXF R2000")
         dxfattribs = dxfattribs or {}
         style_name = dxfattribs.pop("style_name", "Standard")
-        mline = cast("MLine", self.new_entity("MLINE", dxfattribs))
+        mline: "MLine" = self.new_entity("MLINE", dxfattribs)  # type: ignore
         # close() method regenerates geometry!
         mline.set_flag_state(mline.CLOSED, close)
         mline.set_style(style_name)
