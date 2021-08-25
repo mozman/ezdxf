@@ -242,7 +242,7 @@ class HeaderSection:
                 value = HeaderVar((group_code, value.value))
             tagwriter.write_str(str(value))
 
-        dxfversion = tagwriter.dxfversion
+        dxfversion: str = tagwriter.dxfversion
         write_handles = tagwriter.write_handles
 
         tagwriter.write_str("  0\nSECTION\n  2\nHEADER\n")

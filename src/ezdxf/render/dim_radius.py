@@ -55,7 +55,7 @@ class RadiusDimension(BaseDimensionRenderer):
         self.center = self._center()  # override in diameter dimension
         self.point_on_circle: Vec2 = Vec2(self.dimension.dxf.defpoint4)
         # modify parameters for special scenarios
-        if self.user_location is None:  # default location
+        if self.user_location is None:  # type: ignore # default location
             if (
                 self.text_inside
                 and self.text_inside_horizontal
@@ -91,7 +91,7 @@ class RadiusDimension(BaseDimensionRenderer):
             # text width and required space
             self.dim_text_width: float = self.text_width(self.text)
             if self.dim_tolerance:
-                self.dim_text_width += self.tol_text_width
+                self.dim_text_width += self.tol_text_width  # type: ignore
 
             elif self.dim_limits:
                 # limits show the upper and lower limit of the measurement as stacked values
