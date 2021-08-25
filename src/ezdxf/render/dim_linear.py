@@ -125,7 +125,7 @@ class LinearDimension(BaseDimensionRenderer):
             # text width and required space
             self.dim_text_width = self.text_width(self.text)
             if self.dim_tolerance:
-                self.dim_text_width += self.tol_text_width
+                self.dim_text_width += self.tol_text_width  # type: ignore
 
             elif self.dim_limits:
                 # limits show the upper and lower limit of the measurement as

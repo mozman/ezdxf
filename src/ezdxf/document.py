@@ -1136,7 +1136,7 @@ class R12MetaData(MetaData):
 
     def __init__(self, doc: Drawing):
         # storing XDATA in layer 0 does not work (Autodesk!)
-        self._msp_block = doc.modelspace().block_record.block
+        self._msp_block = doc.modelspace().block_record.block  # type: ignore
         self._data = self._load()
 
     def __contains__(self, key: str) -> bool:
