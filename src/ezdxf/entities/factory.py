@@ -52,7 +52,7 @@ def new(
         dxfattribs=dxfattribs,
         doc=doc,
     )
-    return entity.cast() if hasattr(entity, "cast") else entity
+    return entity.cast() if hasattr(entity, "cast") else entity  # type: ignore
 
 
 def create_db_entry(dxftype, dxfattribs: dict, doc: "Drawing") -> "DXFEntity":
@@ -63,7 +63,7 @@ def create_db_entry(dxftype, dxfattribs: dict, doc: "Drawing") -> "DXFEntity":
 
 def load(tags: "ExtendedTags", doc: "Drawing" = None) -> "DXFEntity":
     entity = cls(tags.dxftype()).load(tags, doc)
-    return entity.cast() if hasattr(entity, "cast") else entity
+    return entity.cast() if hasattr(entity, "cast") else entity  # type: ignore
 
 
 def cls(dxftype: str) -> "DXFEntity":
@@ -99,17 +99,17 @@ def unbind(entity: "DXFEntity"):
         doc = entity.doc
         if entity.dxf.owner is not None:
             try:
-                layout = doc.layouts.get_layout_for_entity(entity)
+                layout = doc.layouts.get_layout_for_entity(entity)  # type: ignore
             except KeyError:
                 pass
             else:
-                layout.unlink_entity(entity)
+                layout.unlink_entity(entity)  # type: ignore
 
         process_sub_entities = getattr(entity, "process_sub_entities", None)
         if process_sub_entities:
             process_sub_entities(lambda e: unbind(e))
 
-        doc.entitydb.discard(entity)
+        doc.entitydb.discard(entity)  # type: ignore
         entity.doc = None
 
 
