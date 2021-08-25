@@ -171,7 +171,7 @@ class EntityDB:
         # Add sub entities ATTRIB, VERTEX and SEQEND to database:
         # Add linked MTEXT columns to database:
         if hasattr(entity, "add_sub_entities_to_entitydb"):
-            entity.add_sub_entities_to_entitydb(self)
+            entity.add_sub_entities_to_entitydb(self)  # type: ignore
 
     def delete_entity(self, entity: DXFEntity) -> None:
         """Remove `entity` from database and destroy the `entity`."""
@@ -183,7 +183,7 @@ class EntityDB:
         """Discard `entity` from database without destroying the `entity`."""
         if entity.is_alive:
             if hasattr(entity, "process_sub_entities"):
-                entity.process_sub_entities(lambda e: self.discard(e))
+                entity.process_sub_entities(lambda e: self.discard(e))  # type: ignore
 
             handle = entity.dxf.handle
             try:
@@ -207,7 +207,7 @@ class EntityDB:
         """
         new_entity: DXFEntity = entity.copy()
         new_entity.dxf.handle = self.next_handle()
-        factory.bind(new_entity, entity.doc)
+        factory.bind(new_entity, entity.doc)  # type: ignore
         return new_entity
 
     def audit(self, auditor: "Auditor"):
@@ -222,7 +222,7 @@ class EntityDB:
         assert self.locked is False, "Database is locked!"
         add_entities = []
 
-        with self.trashcan() as trash:
+        with self.trashcan() as trash:  # type: ignore
             for handle, entity in self.items():
                 # Destroyed entities are already filtered!
                 if not is_valid_handle(handle):
@@ -235,7 +235,7 @@ class EntityDB:
                 if handle != entity.dxf.get("handle"):
                     # database handle != stored entity handle
                     # prevent entity from being destroyed:
-                    self._database[handle] = None
+                    self._database[handle] = None  # type: ignore
                     trash.add(handle)
                     add_entities.append(entity)
 
@@ -266,8 +266,8 @@ class EntityDB:
         """
         return EntityDB.Trashcan(self)
 
-    @contextmanager
-    def trashcan(self) -> "EntityDB.Trashcan":
+    @contextmanager  # type: ignore
+    def trashcan(self) -> "EntityDB.Trashcan":  # type: ignore
         """Returns a new trashcan in context manager mode, trashcan will be
         emptied when leaving context.
         """
