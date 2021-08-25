@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2020, Manfred Moitzi
+# Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List
 import logging
@@ -7,82 +7,102 @@ from .table import Table, ViewportTable, StyleTable, LayerTable, LineTypeTable
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, Drawing, DXFEntity, DXFTagStorage, DimStyle
+        TagWriter,
+        Drawing,
+        DXFEntity,
+        DXFTagStorage,
+        DimStyle,
     )
 
-logger = logging.getLogger('ezdxf')
+logger = logging.getLogger("ezdxf")
 
 TABLENAMES = {
-    'LAYER': 'layers',
-    'LTYPE': 'linetypes',
-    'APPID': 'appids',
-    'DIMSTYLE': 'dimstyles',
-    'STYLE': 'styles',
-    'UCS': 'ucs',
-    'VIEW': 'views',
-    'VPORT': 'viewports',
-    'BLOCK_RECORD': 'block_records',
+    "LAYER": "layers",
+    "LTYPE": "linetypes",
+    "APPID": "appids",
+    "DIMSTYLE": "dimstyles",
+    "STYLE": "styles",
+    "UCS": "ucs",
+    "VIEW": "views",
+    "VPORT": "viewports",
+    "BLOCK_RECORD": "block_records",
 }
 
 TABLESMAP = {
-    'LAYER': LayerTable,
-    'LTYPE': LineTypeTable,
-    'STYLE': StyleTable,
-    'DIMSTYLE': Table,
-    'VPORT': ViewportTable,
-    'VIEW': Table,
-    'UCS': Table,
-    'APPID': Table,
-    'BLOCK_RECORD': Table,
+    "LAYER": LayerTable,
+    "LTYPE": LineTypeTable,
+    "STYLE": StyleTable,
+    "DIMSTYLE": Table,
+    "VPORT": ViewportTable,
+    "VIEW": Table,
+    "UCS": Table,
+    "APPID": Table,
+    "BLOCK_RECORD": Table,
 }
 
 
 class TablesSection:
-    def __init__(self, doc: 'Drawing', entities: List['DXFEntity'] = None):
+    def __init__(self, doc: "Drawing", entities: List["DXFEntity"] = None):
         assert doc is not None
         self.doc = doc
-        self.layers = None
-        self.linetypes = None
-        self.appids = None
-        self.dimstyles = None
-        self.styles = None
-        self.ucs = None
-        self.views = None
-        self.viewports = None
-        self.block_records = None
+        # In the end all tables are not None and using "Optional" is awful!
+        self.layers: LayerTable = None  # type: ignore
+        self.linetypes: LineTypeTable = None  # type: ignore
+        self.appids: Table = None  # type: ignore
+        self.dimstyles: Table = None  # type: ignore
+        self.styles: StyleTable = None  # type: ignore
+        self.ucs: Table = None  # type: ignore
+        self.views: Table = None   # type: ignore
+        self.viewports: ViewportTable = None   # type: ignore
+        self.block_records: Table = None  # type: ignore
 
         if entities is not None:
             self._load(entities)
         self._create_missing_tables()
+        # An this time all tables are not None!
 
-    def _load(self, entities: List['DXFEntity']) -> None:
-        section_head = entities[0]  # type: DXFTagStorage
-        if section_head.dxftype() != 'SECTION' or section_head.base_class[1] != (2, 'TABLES'):
-            raise DXFStructureError("Critical structure error in TABLES section.")
+    def _load(self, entities: List["DXFEntity"]) -> None:
+        section_head: "DXFTagStorage" = entities[0]  # type: ignore
+        if section_head.dxftype() != "SECTION" or section_head.base_class[
+            1
+        ] != (2, "TABLES"):
+            raise DXFStructureError(
+                "Critical structure error in TABLES section."
+            )
         del entities[0]  # delete first entity (0, SECTION)
 
-        table_records = []
+        table_records: List["DXFEntity"] = []
         table_name = None
         for entity in entities:
-            if entity.dxftype() == 'TABLE':
+            if entity.dxftype() == "TABLE":
                 if len(table_records):
                     # TABLE entity without preceding ENDTAB entity, should we care?
-                    logger.debug('Ignore missing ENDTAB entity in table "{}".'.format(table_name))
-                    self._load_table(table_name, table_records)
+                    logger.debug(
+                        'Ignore missing ENDTAB entity in table "{}".'.format(
+                            table_name
+                        )
+                    )
+                    self._load_table(table_name, table_records)  # type: ignore
                 table_name = entity.dxf.name
                 table_records = [entity]  # collect table head
-            elif entity.dxftype() == 'ENDTAB':  # do not collect (0, 'ENDTAB')
-                self._load_table(table_name, table_records)
-                table_records = []  # collect entities outside of tables, but ignore it
+            elif entity.dxftype() == "ENDTAB":  # do not collect (0, 'ENDTAB')
+                self._load_table(table_name, table_records)  # type: ignore
+                table_records = (
+                    []
+                )  # collect entities outside of tables, but ignore it
             else:  # collect table entries
                 table_records.append(entity)
 
         if len(table_records):
             # last ENDTAB entity is missing, should we care?
-            logger.debug('Ignore missing ENDTAB entity in table "{}".'.format(table_name))
-            self._load_table(table_name, table_records)
+            logger.debug(
+                'Ignore missing ENDTAB entity in table "{}".'.format(table_name)
+            )
+            self._load_table(table_name, table_records)  # type: ignore
 
-    def _load_table(self, name: str, table_entities: Iterable['DXFEntity']) -> None:
+    def _load_table(
+        self, name: str, table_entities: Iterable["DXFEntity"]
+    ) -> None:
         """
         Load table from tags.
 
@@ -114,8 +134,8 @@ class TablesSection:
         table = table_class.new_table(record_name, handle, self.doc)
         setattr(self, table_name, table)
 
-    def export_dxf(self, tagwriter: 'TagWriter') -> None:
-        tagwriter.write_str('  0\nSECTION\n  2\nTABLES\n')
+    def export_dxf(self, tagwriter: "TagWriter") -> None:
+        tagwriter.write_str("  0\nSECTION\n  2\nTABLES\n")
         version = tagwriter.dxfversion
         self.viewports.export_dxf(tagwriter)
         self.linetypes.export_dxf(tagwriter)
@@ -127,7 +147,7 @@ class TablesSection:
         self.dimstyles.export_dxf(tagwriter)
         if version > DXF12:
             self.block_records.export_dxf(tagwriter)
-        tagwriter.write_tag2(0, 'ENDSEC')
+        tagwriter.write_tag2(0, "ENDSEC")
 
     def create_table_handles(self):
         # DXF R12: TABLE does not require a handle and owner tag
