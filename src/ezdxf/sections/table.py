@@ -302,7 +302,7 @@ class LayerTable(Table):
         .. versionadded:: 0.17
 
         """
-        dxfattribs = dxfattribs or {}
+        dxfattribs = dict(dxfattribs or {})
         if validator.is_valid_aci_color(color):
             dxfattribs["color"] = color
         else:
