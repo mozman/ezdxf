@@ -188,7 +188,7 @@ class Basis:
                 s1, s2 = s2, s1
 
         # Multiply through by the the correct factors
-        r = float(p)
+        r = float(p)  # type: ignore
         for k in range(1, n + 1):
             for j in range(order):
                 derivatives[k][j] *= r
@@ -237,8 +237,8 @@ class Evaluator:
         if basis.is_rational:
             # Homogeneous point representation required:
             # (x*w, y*w, z*w, w)
-            CKw = []
-            wders = []
+            CKw: List[Vec3] = []
+            wders: List[float] = []
             weights = basis.weights
             for k in range(n + 1):
                 v = NULLVEC
@@ -253,7 +253,7 @@ class Evaluator:
                 wders.append(wder)
 
             # Source: The NURBS Book: Algorithm A4.2
-            CK = []
+            CK: List[Vec3] = []
             for k in range(n + 1):
                 v = CKw[k]
                 for i in range(1, k + 1):
