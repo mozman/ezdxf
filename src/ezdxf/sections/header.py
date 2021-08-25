@@ -1,8 +1,16 @@
 # Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
 from typing import (
-    TYPE_CHECKING, Iterable, List, Tuple, KeysView, Any, Iterator, Union,
-    Sequence, Dict,
+    TYPE_CHECKING,
+    Iterable,
+    List,
+    Tuple,
+    KeysView,
+    Any,
+    Iterator,
+    Union,
+    Sequence,
+    Dict,
 )
 
 from collections import OrderedDict
@@ -11,11 +19,12 @@ from ezdxf.lldxf.tags import group_tags, Tags, DXFTag
 from ezdxf.lldxf import const
 from ezdxf.lldxf.validator import header_validator
 from ezdxf.sections.headervars import (
-    HEADER_VAR_MAP, version_specific_group_code,
+    HEADER_VAR_MAP,
+    version_specific_group_code,
 )
 import logging
 
-logger = logging.getLogger('ezdxf')
+logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
@@ -40,7 +49,7 @@ FF
 
 
 class CustomVars:
-    """ Stores custom properties in the DXF header as $CUSTOMPROPERTYTAG and
+    """Stores custom properties in the DXF header as $CUSTOMPROPERTYTAG and
     $CUSTOMPROPERTY values. Custom properties are just supported by DXF R2004
     (AC1018) or later. `ezdxf` can create custom properties at older DXF
     versions, but AutoCAD will not show this properties.
@@ -51,24 +60,24 @@ class CustomVars:
         self.properties: List[Tuple[str, str]] = list()
 
     def __len__(self) -> int:
-        """ Count of custom properties. """
+        """Count of custom properties."""
         return len(self.properties)
 
     def __iter__(self) -> Iterable[Tuple[str, str]]:
-        """ Iterate over all custom properties as ``(tag, value)`` tuples. """
+        """Iterate over all custom properties as ``(tag, value)`` tuples."""
         return iter(self.properties)
 
     def clear(self) -> None:
-        """ Remove all custom properties. """
+        """Remove all custom properties."""
         self.properties.clear()
 
     def append(self, tag: str, value: str) -> None:
-        """ Add custom property as ``(tag, value)`` tuple. """
+        """Add custom property as ``(tag, value)`` tuple."""
         # custom properties always stored as strings
         self.properties.append((tag, str(value)))
 
     def get(self, tag: str, default: str = None):
-        """ Returns the value of the first custom property `tag`. """
+        """Returns the value of the first custom property `tag`."""
         for key, value in self.properties:
             if key == tag:
                 return value
@@ -76,11 +85,11 @@ class CustomVars:
             return default
 
     def has_tag(self, tag: str) -> bool:
-        """ Returns ``True`` if custom property `tag` exist. """
+        """Returns ``True`` if custom property `tag` exist."""
         return self.get(tag) is not None
 
     def remove(self, tag: str, all: bool = False) -> None:
-        """ Removes the first occurrence of custom property `tag`, removes all
+        """Removes the first occurrence of custom property `tag`, removes all
         occurrences if `all` is ``True``.
 
         Raises `:class:`DXFValueError` if `tag`  does not exist.
@@ -97,7 +106,7 @@ class CustomVars:
             raise const.DXFValueError(f"Tag '{tag}' does not exist")
 
     def replace(self, tag: str, value: str) -> None:
-        """ Replaces the value of the first custom property `tag` by a new
+        """Replaces the value of the first custom property `tag` by a new
         `value`.
 
         Raises :class:`DXFValueError` if `tag`  does not exist.
@@ -112,8 +121,8 @@ class CustomVars:
 
         raise const.DXFValueError(f"Tag '{tag}' does not exist")
 
-    def write(self, tagwriter: 'TagWriter') -> None:
-        """ Export custom properties as DXF tags. (internal API) """
+    def write(self, tagwriter: "TagWriter") -> None:
+        """Export custom properties as DXF tags. (internal API)"""
         for tag, value in self.properties:
             s = f"  9\n$CUSTOMPROPERTYTAG\n  1\n{tag}\n  9\n$CUSTOMPROPERTY\n  1\n{value}\n"
             tagwriter.write_str(s)
@@ -128,15 +137,15 @@ def default_vars() -> OrderedDict:
 
 class HeaderSection:
     MIN_HEADER_TAGS = Tags.from_text(MIN_HEADER_TEXT)
-    name = 'HEADER'
+    name = "HEADER"
 
     def __init__(self):
-        self.hdrvars: Dict[str, 'HeaderVar'] = OrderedDict()
+        self.hdrvars: Dict[str, "HeaderVar"] = OrderedDict()
         self.custom_vars = CustomVars()
 
     @classmethod
-    def load(cls, tags: Iterator[DXFTag] = None) -> 'HeaderSection':
-        """ Constructor to generate header variables loaded from DXF files
+    def load(cls, tags: Iterator[DXFTag] = None) -> "HeaderSection":
+        """Constructor to generate header variables loaded from DXF files
         (untrusted environment).
 
         Args:
@@ -152,14 +161,14 @@ class HeaderSection:
         return section
 
     @classmethod
-    def new(cls, dxfversion=const.LATEST_DXF_VERSION) -> 'HeaderSection':
+    def new(cls, dxfversion=const.LATEST_DXF_VERSION) -> "HeaderSection":
         section = HeaderSection()
         section.hdrvars = default_vars()
-        section['$ACADVER'] = dxfversion
+        section["$ACADVER"] = dxfversion
         return section
 
     def load_tags(self, tags: Iterator[DXFTag]) -> None:
-        """ Constructor to generate header variables loaded from DXF files
+        """Constructor to generate header variables loaded from DXF files
         (untrusted environment).
 
         Args:
@@ -167,19 +176,20 @@ class HeaderSection:
 
         """
         tags = tags or self.MIN_HEADER_TAGS
-        section_tag = next(tags)
-        name_tag = next(tags)
+        section_tag = next(tags)  # type: ignore
+        name_tag = next(tags)  # type: ignore
 
-        if section_tag != (0, 'SECTION') or name_tag != (2, 'HEADER'):
+        if section_tag != (0, "SECTION") or name_tag != (2, "HEADER"):
             raise const.DXFStructureError(
-                "Critical structure error in HEADER section.")
+                "Critical structure error in HEADER section."
+            )
 
         groups = group_tags(header_validator(tags), splitcode=9)
         custom_property_stack = []  # collect $CUSTOMPROPERTY/TAG
         for group in groups:
             name = group[0].value
             value = group[1]
-            if name in ('$CUSTOMPROPERTYTAG', '$CUSTOMPROPERTY'):
+            if name in ("$CUSTOMPROPERTYTAG", "$CUSTOMPROPERTY"):
                 custom_property_stack.append(value.value)
             else:
                 self.hdrvars[name] = HeaderVar(value)
@@ -187,15 +197,17 @@ class HeaderSection:
         custom_property_stack.reverse()
         while len(custom_property_stack):
             try:
-                self.custom_vars.append(tag=custom_property_stack.pop(),
-                                        value=custom_property_stack.pop())
+                self.custom_vars.append(
+                    tag=custom_property_stack.pop(),
+                    value=custom_property_stack.pop(),
+                )
             except IndexError:  # internal exception
                 break
 
     @classmethod
-    def from_text(cls, text: str) -> 'HeaderSection':
-        """ Load constructor from text for testing """
-        return cls.load(Tags.from_text(text))
+    def from_text(cls, text: str) -> "HeaderSection":
+        """Load constructor from text for testing"""
+        return cls.load(Tags.from_text(text))  # type: ignore
 
     def _headervar_factory(self, key: str, value: Any) -> DXFTag:
         if key in HEADER_VAR_MAP:
@@ -205,24 +217,23 @@ class HeaderSection:
             raise const.DXFKeyError(f"Invalid header variable {key}.")
 
     def __len__(self) -> int:
-        """ Returns count of header variables. """
+        """Returns count of header variables."""
         return len(self.hdrvars)
 
     def __contains__(self, key) -> bool:
-        """ Returns ``True`` if header variable `key` exist. """
+        """Returns ``True`` if header variable `key` exist."""
         return key in self.hdrvars
 
     def varnames(self) -> KeysView:
-        """ Returns an iterable of all header variable names. """
+        """Returns an iterable of all header variable names."""
         return self.hdrvars.keys()
 
-    def export_dxf(self, tagwriter: 'TagWriter') -> None:
-        """ Exports header section as DXF tags. (internal API) """
+    def export_dxf(self, tagwriter: "TagWriter") -> None:
+        """Exports header section as DXF tags. (internal API)"""
 
         def _write(name: str, value: Any) -> None:
             if value.value is None:
-                logger.info(
-                    f"did not write header var {name}, value is None.")
+                logger.info(f"did not write header var {name}, value is None.")
                 return
             tagwriter.write_tag2(9, name)
             group_code = version_specific_group_code(name, dxfversion)
@@ -235,19 +246,19 @@ class HeaderSection:
         write_handles = tagwriter.write_handles
 
         tagwriter.write_str("  0\nSECTION\n  2\nHEADER\n")
-        save = self['$ACADVER']
-        self['$ACADVER'] = dxfversion
+        save = self["$ACADVER"]
+        self["$ACADVER"] = dxfversion
         for name, value in header_vars_by_priority(self.hdrvars, dxfversion):
-            if not write_handles and name == '$HANDSEED':
+            if not write_handles and name == "$HANDSEED":
                 continue  # skip $HANDSEED
             _write(name, value)
-            if name == '$LASTSAVEDBY':  # ugly hack, but necessary for AutoCAD
+            if name == "$LASTSAVEDBY":  # ugly hack, but necessary for AutoCAD
                 self.custom_vars.write(tagwriter)
-        self['$ACADVER'] = save
+        self["$ACADVER"] = save
         tagwriter.write_str("  0\nENDSEC\n")
 
     def get(self, key: str, default: Any = None) -> Any:
-        """ Returns value of header variable `key` if exist, else the `default`
+        """Returns value of header variable `key` if exist, else the `default`
         value.
 
         """
@@ -257,7 +268,7 @@ class HeaderSection:
             return default
 
     def __getitem__(self, key: str) -> Any:
-        """ Get header variable `key` by index operator like:
+        """Get header variable `key` by index operator like:
         :code:`drawing.header['$ACADVER']`
 
         """
@@ -267,7 +278,7 @@ class HeaderSection:
             raise const.DXFKeyError(str(key))
 
     def __setitem__(self, key: str, value: Any) -> None:
-        """ Set header variable `key` to `value` by index operator like:
+        """Set header variable `key` to `value` by index operator like:
         :code:`drawing.header['$ANGDIR'] = 1`
 
         """
@@ -278,7 +289,7 @@ class HeaderSection:
         self.hdrvars[key] = HeaderVar(tags)
 
     def __delitem__(self, key: str) -> None:
-        """ Delete header variable `key` by index operator like:
+        """Delete header variable `key` by index operator like:
         :code:`del drawing.header['$ANGDIR']`
 
         """
@@ -288,14 +299,16 @@ class HeaderSection:
             raise const.DXFKeyError(str(key))
 
 
-def header_vars_by_priority(header_vars: Dict[str, 'HeaderVar'],
-                            dxfversion: str) -> Tuple:
+def header_vars_by_priority(
+    header_vars: Dict[str, "HeaderVar"], dxfversion: str
+) -> Iterable[Tuple]:
     order = []
     for name, value in header_vars.items():
         vardef = HEADER_VAR_MAP.get(name, None)
         if vardef is None:
             logger.info(
-                f"Header variable {name} ignored, dxfversion={dxfversion}.")
+                f"Header variable {name} ignored, dxfversion={dxfversion}."
+            )
             continue
         if vardef.mindxf <= dxfversion <= vardef.maxdxf:
             order.append((vardef.priority, (name, value)))
@@ -329,4 +342,4 @@ class HeaderVar:
                 code += 10
             return "".join(s)
         else:
-            return strtag(self.tag)
+            return strtag(self.tag)  # type: ignore
