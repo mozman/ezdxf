@@ -16,6 +16,7 @@ if TYPE_CHECKING:
         DXFEntity,
         Layer,
         Linetype,
+        Textstyle,
     )
 
 logger = logging.getLogger("ezdxf")
@@ -328,39 +329,99 @@ class LineTypeTable(Table):
 
 
 class StyleTable(Table):
-    def get_shx(self, shxname: str) -> "DXFEntity":
-        """Get existing shx entry, or create a new entry.
+    def add(
+        self, name: str, *, font: str, dxfattribs: Dict = None
+    ) -> "Textstyle":
+        """Add a new text style entry for TTF fonts. The entry must not yet
+        exist, otherwise an :class:`DXFTableEntryError` exception will be
+        raised.
+
+        Finding the TTF font files is the task of the DXF viewer and each
+        viewer is different (hint: support files).
 
         Args:
-            shxname: shape file name like 'ltypeshp.lin'
+            name (str): text style name
+            font (str): TTF font file name like "Arial.ttf", the real font file
+                name from the file system is required and remember only Windows
+                is case insensitive.
+            dxfattribs (dict): additional DXF attributes
+
+        .. versionadded:: 0.17
 
         """
-        shape_file = self.find_shx(shxname)
-        if shape_file is None:
-            dxfattribs = {
-                "font": shxname,
-                "flags": 1,
-                "name": "",  # shape file entry has no name
-                "last_height": 2.5,  # just if this is required by AutoCAD
+        dxfattribs = dict(dxfattribs or {})
+        dxfattribs.update(
+            {
+                "name": name,
+                "font": str(font),
+                "last_height": 2.5,  # maybe required by AutoCAD
             }
-            return self.new_entry(dxfattribs)
-        else:
-            return shape_file
+        )
+        return self.new_entry(dxfattribs)  # type: ignore
 
-    def find_shx(self, shxname: str) -> Optional["DXFEntity"]:
-        """Find .shx shape file table entry, by a case insensitive search.
+    def add_shx(self, shx_file: str, *, dxfattribs: Dict = None) -> "Textstyle":
+        """Add a new shape font (SHX file) entry. These are special text style
+        entries and have no name. The entry must not yet exist, otherwise an
+        :class:`DXFTableEntryError` exception will be raised.
 
-        A .shx shape file table entry has no name, so you have to search by the
+        Finding the SHX files is the task of the DXF viewer and each
+        viewer is different (hint: support files).
+
+        Args:
+            shx_file (str): shape file name like "gdt.shx"
+            dxfattribs (dict): additional DXF attributes
+
+        .. versionadded:: 0.17
+
+        """
+        if self.find_shx(shx_file) is not None:
+            raise const.DXFTableEntryError(
+                f"{self._head.dxf.name} shape file entry for "
+                f"'{shx_file}' already exists!"
+            )
+
+        dxfattribs = dict(dxfattribs or {})
+        dxfattribs.update(
+            {
+                "name": "",  # shape file entry has no name
+                "flags": 1,  # shape file flag
+                "font": shx_file,
+                "last_height": 2.5,  # maybe required by AutoCAD
+            }
+        )
+        return self.new_entry(dxfattribs)  # type: ignore
+
+    def get_shx(self, shx_file: str) -> "Textstyle":
+        """Get existing entry for a shape file (SHX file), or create a new
+        entry.
+
+        Finding the SHX files is the task of the DXF viewer and each
+        viewer is different (hint: support files).
+
+        Args:
+            shx_file (str): shape file name like "gdt.shx"
+
+        """
+        shape_file = self.find_shx(shx_file)
+        if shape_file is None:
+            return self.add_shx(shx_file)
+        return shape_file
+
+    def find_shx(self, shx_file: str) -> Optional["Textstyle"]:
+        """Find the shape file (SHX file) text style table entry, by a case
+        insensitive search.
+
+        A shape file table entry has no name, so you have to search by the
         font attribute.
 
         Args:
-            shxname: .shx shape file name
+            shx_file (str): shape file name like "gdt.shx"
 
         """
-        lower_name = shxname.lower()
+        lower_name = shx_file.lower()
         for entry in iter(self):
             if entry.dxf.font.lower() == lower_name:
-                return entry
+                return entry  # type: ignore
         return None
 
 

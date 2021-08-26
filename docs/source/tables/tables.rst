@@ -58,9 +58,13 @@ Style Table
 
     Collection of :class:`~ezdxf.entities.Textstyle` objects.
 
-    .. automethod:: get_shx(shxname: str) -> Textstyle
+    .. automethod:: add
 
-    .. automethod:: find_shx(shxname: str) -> Optional[Textstyle]
+    .. automethod:: add_shx
+
+    .. automethod:: get_shx
+
+    .. automethod:: find_shx
 
 
 DimStyle Table
