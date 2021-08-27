@@ -95,3 +95,11 @@ class TestTextStyleTable:
     def test_if_shape_file_entry_exist(self, tables: TablesSection):
         assert tables.styles.find_shx("unknown.shx") is None
 
+
+def test_add_new_line_type(tables: TablesSection):
+    ltype = tables.linetypes.add(
+        "SIMPLE_LINE_TYPE", [0.2, 0.1, -0.1], description="description"
+    )
+    assert ltype.dxf.name == "SIMPLE_LINE_TYPE"
+    assert ltype.dxf.description == "description"
+    # Correct pattern creation is tested in test suite 121.

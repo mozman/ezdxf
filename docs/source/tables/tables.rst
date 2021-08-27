@@ -48,6 +48,7 @@ Linetype Table
 
     Collection of :class:`~ezdxf.entities.Linetype` objects.
 
+    .. automethod:: add
 
 Style Table
 -----------

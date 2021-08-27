@@ -12,9 +12,10 @@ Version 0.16.6b2 - dev
 - NEW: `Auditor` removes invalid DXF entities from layouts, blocks and the 
   OBJECTS section
 - NEW: `Auditor` removes standalone ATTRIB entities from layouts and blocks
-- NEW: `Drawing.layers.add()` factory method
-- NEW: `Drawing.styles.add()` factory method
-- NEW: `Drawing.styles.add_shx()` factory method
+- NEW: `Drawing.layers.add()` factory method to create new layers
+- NEW: `Drawing.styles.add()` factory method to create new text styles
+- NEW: `Drawing.styles.add_shx()` factory method to create new SHX styles
+- NEW: `Drawing.linetypes.add()` factory method to create new line types
 - CHANGE: renamed `RenderContext.current_layer` to `RenderContext.current_layer_properties` 
 - CHANGE: renamed `RenderContext.current_block_reference` to `RenderContext.current_block_reference_properties` 
 - CHANGE: extended entity validation for `GROUP`

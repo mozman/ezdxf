@@ -1,6 +1,6 @@
 # Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Iterator, Optional, List, Dict, cast
+from typing import TYPE_CHECKING, Iterable, Iterator, Optional, List, Dict, cast, Union
 from collections import OrderedDict
 import logging
 
@@ -326,6 +326,51 @@ class LineTypeTable(Table):
         ltype = cast("Linetype", super().new_entry(dxfattribs))
         ltype.setup_pattern(pattern, length)
         return ltype
+
+    def add(
+        self,
+        name: str,
+        pattern: Union[List[float], str],
+        *,
+        description: str = "",
+        length: float = 0.,
+        dxfattribs: Dict = None
+    ) -> "Linetype":
+        """Add a new line type entry. The simple line type pattern is a list of
+        floats :code:`[total_pattern_length, elem1, elem2, ...]`
+        where an element > 0 is a line, an element < 0 is a gap and  an
+        element == 0.0 is a dot. The definition for complex line types are
+        strings, like: ``'A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25'``
+        similar to the line type definitions stored in the line definition
+        `.lin` files, for more information see the tutorial about complex line
+        types. Be aware that not many CAD applications and DXF viewers support
+        complex linetypes.
+
+        .. seealso::
+
+            - `Tutorial for simple line types <https://ezdxf.mozman.at/docs/tutorials/linetypes.html>`_
+            - `Tutorial for complex line types <https://ezdxf.mozman.at/docs/tutorials/linetypes.html#tutorial-for-complex-linetypes>`_
+
+        Args:
+            name (str): line type  name
+            pattern: line type pattern as list of floats or as a string
+            description (str): line type description, optional
+            length (float): total pattern length, only for complex line types required
+            dxfattribs (dict): additional DXF attributes
+
+        .. versionadded:: 0.17
+
+        """
+        dxfattribs = dict(dxfattribs or {})
+        dxfattribs.update(
+            {
+                "name": name,
+                "description": str(description),
+                "pattern": pattern,
+                "length": float(length),
+            }
+        )
+        return self.new_entry(dxfattribs)  # type: ignore
 
 
 class StyleTable(Table):
