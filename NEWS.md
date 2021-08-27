@@ -16,6 +16,7 @@ Version 0.16.6b2 - dev
 - NEW: `Drawing.styles.add()` factory method to create new text styles
 - NEW: `Drawing.styles.add_shx()` factory method to create new SHX styles
 - NEW: `Drawing.linetypes.add()` factory method to create new line types
+- NEW: `Drawing.viewports.add()` factory method to create new modelspace viewports
 - CHANGE: renamed `RenderContext.current_layer` to `RenderContext.current_layer_properties` 
 - CHANGE: renamed `RenderContext.current_block_reference` to `RenderContext.current_block_reference_properties` 
 - CHANGE: extended entity validation for `GROUP`

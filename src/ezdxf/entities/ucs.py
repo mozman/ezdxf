@@ -18,7 +18,7 @@ logger = logging.getLogger('ezdxf')
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFNamespace
 
-__all__ = ['UCSTable']
+__all__ = ['UCSTableEntry']
 
 acdb_ucs = DefSubclass('AcDbUCSTableRecord', {
     'name': DXFAttr(2, validator=validator.is_valid_table_name),
@@ -39,7 +39,7 @@ acdb_ucs_group_codes = group_code_mapping(acdb_ucs)
 
 
 @register_entity
-class UCSTable(DXFEntity):
+class UCSTableEntry(DXFEntity):
     """ DXF UCS table entity """
     DXFTYPE = 'UCS'
     DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record, acdb_ucs)

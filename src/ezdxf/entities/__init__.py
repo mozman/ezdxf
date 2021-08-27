@@ -23,7 +23,7 @@ from .textstyle import Textstyle
 from .dimstyle import DimStyle
 from .view import View
 from .vport import VPort
-from .ucs import UCSTable
+from .ucs import UCSTableEntry
 from .appid import AppID
 from .blockrecord import BlockRecord
 

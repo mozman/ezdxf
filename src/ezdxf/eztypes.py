@@ -58,7 +58,7 @@ if TYPE_CHECKING:
     from ezdxf.entities.textstyle import Textstyle
     from ezdxf.entities.dimstyle import DimStyle
     from ezdxf.entities.appid import AppID
-    from ezdxf.entities.ucs import UCSTable
+    from ezdxf.entities.ucs import UCSTableEntry
     from ezdxf.entities.view import View
     from ezdxf.entities.vport import VPort
 

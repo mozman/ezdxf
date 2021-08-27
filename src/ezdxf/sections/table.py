@@ -17,6 +17,11 @@ if TYPE_CHECKING:
         Layer,
         Linetype,
         Textstyle,
+        VPort,
+        View,
+        AppID,
+        BlockRecord,
+        DimStyle,
     )
 
 logger = logging.getLogger("ezdxf")
@@ -479,6 +484,27 @@ class ViewportTable(Table):
         dxfattribs = dxfattribs or {}
         dxfattribs["name"] = name
         return self.new_entry(dxfattribs)
+
+    def add(
+        self,
+        name: str,
+        *,
+        dxfattribs: Dict = None
+    ) -> "VPort":
+        """Add a new modelspace viewport entry. A modelspace viewport
+        configuration can consist of multiple viewport entries with the same
+        name.
+
+        Args:
+            name (str): viewport name, multiple entries possible
+            dxfattribs (dict): additional DXF attributes
+
+        .. versionadded:: 0.17
+
+        """
+        dxfattribs = dict(dxfattribs or {})
+        dxfattribs["name"] = name
+        return self.new_entry(dxfattribs)  # type: ignore
 
     def remove(self, name: str) -> None:
         """Remove table-entry from table and entitydb by name."""

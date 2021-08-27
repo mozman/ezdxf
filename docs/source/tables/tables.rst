@@ -120,9 +120,12 @@ Viewport Table
 
     Duplication of table entries is not supported: :meth:`duplicate_entry` raises :class:`NotImplementedError`
 
+    .. automethod:: add
+
     .. automethod:: get_config(self, name: str) -> List[Viewport]
 
     .. automethod:: delete_config
+
 
 
 Block Record Table
