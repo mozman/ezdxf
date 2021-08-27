@@ -79,6 +79,8 @@ DimStyle Table
 
     Collection of :class:`~ezdxf.entities.DimStyle` objects.
 
+    .. automethod:: add
+
 AppID Table
 -----------
 
@@ -88,6 +90,8 @@ AppID Table
 
     Collection of :class:`~ezdxf.entities.AppID` objects.
 
+    .. automethod:: add
+
 UCS Table
 ---------
 
@@ -95,7 +99,9 @@ UCS Table
 
     Subclass of :class:`Table`.
 
-    Collection of :class:`~ezdxf.entities.UCSTable` objects.
+    Collection of :class:`~ezdxf.entities.UCSTableEntry` objects.
+
+    .. automethod:: add
 
 View Table
 ----------
@@ -105,6 +111,8 @@ View Table
     Subclass of :class:`Table`.
 
     Collection of :class:`~ezdxf.entities.View` objects.
+
+    .. automethod:: add
 
 Viewport Table
 --------------
@@ -122,7 +130,7 @@ Viewport Table
 
     .. automethod:: add
 
-    .. automethod:: get_config(self, name: str) -> List[Viewport]
+    .. automethod:: get_config(self, name: str) -> List[VPort]
 
     .. automethod:: delete_config
 
@@ -136,3 +144,5 @@ Block Record Table
     Subclass of :class:`Table`.
 
     Collection of :class:`~ezdxf.entities.BlockRecord` objects.
+
+    .. automethod:: add

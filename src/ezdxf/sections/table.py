@@ -1,6 +1,15 @@
 # Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Iterator, Optional, List, Dict, cast, Union
+from typing import (
+    TYPE_CHECKING,
+    Iterable,
+    Iterator,
+    Optional,
+    List,
+    Dict,
+    cast,
+    Union,
+)
 from collections import OrderedDict
 import logging
 
@@ -20,6 +29,7 @@ if TYPE_CHECKING:
         VPort,
         View,
         AppID,
+        UCSTableEntry,
         BlockRecord,
         DimStyle,
     )
@@ -338,8 +348,8 @@ class LineTypeTable(Table):
         pattern: Union[List[float], str],
         *,
         description: str = "",
-        length: float = 0.,
-        dxfattribs: Dict = None
+        length: float = 0.0,
+        dxfattribs: Dict = None,
     ) -> "Linetype":
         """Add a new line type entry. The simple line type pattern is a list of
         floats :code:`[total_pattern_length, elem1, elem2, ...]`
@@ -485,12 +495,7 @@ class ViewportTable(Table):
         dxfattribs["name"] = name
         return self.new_entry(dxfattribs)
 
-    def add(
-        self,
-        name: str,
-        *,
-        dxfattribs: Dict = None
-    ) -> "VPort":
+    def add(self, name: str, *, dxfattribs: Dict = None) -> "VPort":
         """Add a new modelspace viewport entry. A modelspace viewport
         configuration can consist of multiple viewport entries with the same
         name.
@@ -555,7 +560,7 @@ class ViewportTable(Table):
                 entry.dxf.owner = owner_handle
 
     def get_config(self, name: str) -> List["DXFEntity"]:
-        """Returns a list of :class:`~ezdxf.entities.Viewport` objects, for
+        """Returns a list of :class:`~ezdxf.entities.VPort` objects, for
         the multi-viewport configuration `name`.
         """
         try:
@@ -564,27 +569,87 @@ class ViewportTable(Table):
             raise const.DXFTableEntryError(name)
 
     def delete_config(self, name: str) -> None:
-        """Delete all :class:`~ezdxf.entities.Viewport` objects of the
+        """Delete all :class:`~ezdxf.entities.VPort` objects of the
         multi-viewport configuration `name`.
         """
         self.remove(name)
 
 
 class AppIDTable(Table):
-    pass
+    def add(self, name: str, *, dxfattribs: Dict = None) -> "AppID":
+        """Add a new appid table entry.
+
+        Args:
+            name (str): appid name
+            dxfattribs (dict): DXF attributes
+
+        .. versionadded:: 0.17
+
+        """
+        dxfattribs = dict(dxfattribs or {})
+        dxfattribs["name"] = name
+        return self.new_entry(dxfattribs)  # type: ignore
 
 
 class ViewTable(Table):
-    pass
+    def add(self, name: str, *, dxfattribs: Dict = None) -> "View":
+        """Add a new view table entry.
+
+        Args:
+            name (str): view name
+            dxfattribs (dict): DXF attributes
+
+        .. versionadded:: 0.17
+
+        """
+        dxfattribs = dict(dxfattribs or {})
+        dxfattribs["name"] = name
+        return self.new_entry(dxfattribs)  # type: ignore
 
 
 class BlockRecordTable(Table):
-    pass
+    def add(self, name: str, *, dxfattribs: Dict = None) -> "BlockRecord":
+        """Add a new block record table entry.
+
+        Args:
+            name (str): block record name
+            dxfattribs (dict): DXF attributes
+
+        .. versionadded:: 0.17
+
+        """
+        dxfattribs = dict(dxfattribs or {})
+        dxfattribs["name"] = name
+        return self.new_entry(dxfattribs)  # type: ignore
 
 
 class DimStyleTable(Table):
-    pass
+    def add(self, name: str, *, dxfattribs: Dict = None) -> "DimStyle":
+        """Add a new dimension style table entry.
+
+        Args:
+            name (str): dimension style name
+            dxfattribs (dict): DXF attributes
+
+        .. versionadded:: 0.17
+
+        """
+        dxfattribs = dict(dxfattribs or {})
+        dxfattribs["name"] = name
+        return self.new_entry(dxfattribs)  # type: ignore
 
 
 class UCSTable(Table):
-    pass
+    def add(self, name: str, *, dxfattribs: Dict = None) -> "UCSTableEntry":
+        """Add a new UCS table entry.
+
+        Args:
+            name (str): UCS name
+            dxfattribs (dict): DXF attributes
+
+        .. versionadded:: 0.17
+
+        """
+        dxfattribs = dict(dxfattribs or {})
+        dxfattribs["name"] = name
+        return self.new_entry(dxfattribs)  # type: ignore

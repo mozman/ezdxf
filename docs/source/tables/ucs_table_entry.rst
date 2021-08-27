@@ -18,7 +18,7 @@ Factory function         :meth:`Drawing.ucs.new`
 
     :ref:`ucs` and :ref:`ocs`
 
-.. class:: UCSTable
+.. class:: UCSTableEntry
 
     .. attribute:: dxf.owner
 
