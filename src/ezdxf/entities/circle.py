@@ -21,7 +21,7 @@ from ezdxf.lldxf.attributes import (
     RETURN_DEFAULT,
     group_code_mapping,
 )
-from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
+from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFValueError
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import (
     DXFGraphic,
@@ -173,6 +173,8 @@ class Circle(DXFGraphic):
         from ezdxf.entities import Ellipse
 
         layout = self.get_layout()
+        if layout is None:
+            raise DXFValueError("valid layout required")
         ellipse = Ellipse.from_arc(self)
         if replace:
             replace_entity(self, ellipse, layout)
@@ -193,6 +195,8 @@ class Circle(DXFGraphic):
         from ezdxf.entities import Spline
 
         layout = self.get_layout()
+        if layout is None:
+            raise DXFValueError("valid layout required")
         spline = Spline.from_arc(self)
         if replace:
             replace_entity(self, spline, layout)
