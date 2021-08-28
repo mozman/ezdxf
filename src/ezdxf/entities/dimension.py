@@ -229,12 +229,12 @@ acdb_dimension_dummy_group_codes = group_code_mapping(acdb_dimension_dummy)
 class OverrideMixin:
     def get_dim_style(self) -> "DimStyle":
         """Returns the associated :class:`DimStyle` entity."""
-        assert self.doc, "Dimension.doc attribute not initialized."
+        assert self.doc is not None, "valid DXF document required"  # type: ignore
 
-        dim_style_name = self.dxf.dimstyle
+        dim_style_name = self.dxf.dimstyle  # type: ignore
         # raises ValueError if not exist, but all dim styles in use should
         # exist!
-        return self.doc.dimstyles.get(dim_style_name)
+        return self.doc.dimstyles.get(dim_style_name)  # type: ignore
 
     def dim_style_attributes(self) -> "DXFAttributes":
         """Returns all valid DXF attributes (internal API)."""
@@ -262,7 +262,7 @@ class OverrideMixin:
 
         """
         data = dict(data)
-        blocks = self.doc.blocks
+        blocks = self.doc.blocks  # type: ignore
 
         def set_arrow_handle(attrib_name, block_name):
             attrib_name += "_handle"
@@ -302,7 +302,7 @@ class OverrideMixin:
             except KeyError:
                 pass
             else:
-                txtstyle = self.doc.styles.get(dimtxsty)
+                txtstyle = self.doc.styles.get(dimtxsty)  # type: ignore
                 data["dimtxsty_handle"] = txtstyle.dxf.handle
 
         if dxfversion >= DXF2007:
@@ -326,11 +326,11 @@ class OverrideMixin:
         (internal API)
 
         """
-        assert self.doc, "Dimension.doc attribute not initialized."
+        assert self.doc, "valid DXF document required"  # type: ignore
         # ezdxf uses internally only resource names for arrows, line types and
         # text styles, but DXF 2000 and later requires handles for these
         # resources:
-        actual_dxfversion = self.doc.dxfversion
+        actual_dxfversion = self.doc.dxfversion  # type: ignore
         data = self.dim_style_attr_names_to_handles(data, actual_dxfversion)
         tags = []
         dim_style_attributes = self.dim_style_attributes()
@@ -344,7 +344,7 @@ class OverrideMixin:
                 if dxf_attr.dxfversion > actual_dxfversion:
                     logging.warning(
                         f'Unsupported DIMSTYLE attribute "{key}" for '
-                        f"DXF version {self.doc.acad_release}"
+                        f"DXF version {self.doc.acad_release}"  # type: ignore
                     )
                     continue
                 code = dxf_attr.code
@@ -356,7 +356,7 @@ class OverrideMixin:
                     tags.append((get_xcode_for(code), value))
 
         if len(tags):
-            self.set_xdata_list("ACAD", "DSTYLE", tags)
+            self.set_xdata_list("ACAD", "DSTYLE", tags)  # type: ignore
 
     def dim_style_attr_handles_to_names(self, data: dict) -> dict:
         """`ezdxf` uses internally only resource names for arrows, line types
@@ -378,7 +378,7 @@ class OverrideMixin:
 
         """
         data = dict(data)
-        db = self.doc.entitydb
+        db = self.doc.entitydb  # type: ignore
 
         def set_arrow_name(attrib_name: str, handle: str):
             # Special handle for default arrow CLOSEDFILLED:
@@ -447,7 +447,7 @@ class OverrideMixin:
         (internal API)
         """
         try:
-            data = self.get_xdata_list("ACAD", "DSTYLE")
+            data = self.get_xdata_list("ACAD", "DSTYLE")  # type: ignore
         except DXFValueError:
             return {}
         attribs = {}
@@ -487,14 +487,15 @@ class Dimension(DXFGraphic, OverrideMixin):
         # store the content of the geometry block for virtual entities
         self.virtual_block_content: Optional[EntitySpace] = None
 
-    def copy(self) -> "DXFEntity":
+    def copy(self) -> "Dimension":
         virtual_copy = super().copy()
         # The new virtual copy can not reference the same geometry block as the
         # original dimension entity:
         virtual_copy.dxf.discard("geometry")
-        return virtual_copy
+        return virtual_copy  # type: ignore
 
-    def _copy_data(self, entity: "Dimension") -> None:
+    def _copy_data(self, entity: "DXFEntity") -> None:
+        assert isinstance(entity, Dimension)
         if self.virtual_block_content:
             # another copy of a virtual entity:
             virtual_content = EntitySpace(
@@ -668,7 +669,7 @@ class Dimension(DXFGraphic, OverrideMixin):
 
         """
         block_name = self.dxf.get("geometry", "*")
-        return self.doc.blocks.get(block_name)
+        return self.doc.blocks.get(block_name)  # type: ignore
 
     def get_measurement(self) -> Union[float, Vec3]:
         """Returns the actual dimension measurement in :ref:`WCS` units, no
@@ -727,8 +728,8 @@ class Dimension(DXFGraphic, OverrideMixin):
         if self.virtual_block_content or self.is_virtual:
             content = self.virtual_block_content
         else:
-            content = self.get_geometry_block()
-        return content or []
+            content = self.get_geometry_block()  # type: ignore
+        return content or []  # type: ignore
 
     def _transform_block_content(self, m: Matrix44) -> None:
         for entity in self._block_content():
@@ -1103,8 +1104,8 @@ def linear_measurement(
         # angle in WCS xy-plane
         measurement_direction = Vec3.from_angle(angle)
 
-    t1 = measurement_direction.project(p1)
-    t2 = measurement_direction.project(p2)
+    t1 = measurement_direction.project(p1)  # type: ignore
+    t2 = measurement_direction.project(p2)  # type: ignore
     return (t2 - t1).magnitude
 
 
