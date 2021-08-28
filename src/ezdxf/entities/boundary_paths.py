@@ -81,7 +81,7 @@ class BoundaryPaths:
         for path_tags in grouped_path_tags:
             path_type_flags = path_tags[0].value
             is_polyline_path = bool(path_type_flags & 2)
-            path = (
+            path: Union[PolylinePath, EdgePath] = (
                 PolylinePath.load_tags(path_tags)
                 if is_polyline_path
                 else EdgePath.load_tags(path_tags)
@@ -258,7 +258,7 @@ class BoundaryPaths:
             return edge_path
 
         for path_index, path in enumerate(self.paths):
-            if path.type == BoundaryPathType.POLYLINE:
+            if isinstance(path, PolylinePath):
                 if just_with_bulge and not path.has_bulge():
                     continue
                 self.paths[path_index] = to_edge_path(path)
@@ -294,7 +294,7 @@ class BoundaryPaths:
             return ellipse
 
         for path in self.paths:
-            if path.type == BoundaryPathType.EDGE:
+            if isinstance(path, EdgePath):
                 edges = path.edges
                 for edge_index, edge in enumerate(edges):
                     if edge.type == EdgeType.ARC:
@@ -328,12 +328,12 @@ class BoundaryPaths:
                 tool = tool.reverse()
 
             spline.control_points = Vec2.list(tool.control_points)
-            spline.knot_values = tool.knots()
-            spline.weights = tool.weights()
+            spline.knot_values = tool.knots()  # type: ignore
+            spline.weights = tool.weights()  # type: ignore
             return spline
 
         for path_index, path in enumerate(self.paths):
-            if path.type == BoundaryPathType.EDGE:
+            if isinstance(path, EdgePath):
                 edges = path.edges
                 for edge_index, edge in enumerate(edges):
                     if edge.type == EdgeType.ELLIPSE:
@@ -374,7 +374,7 @@ class BoundaryPaths:
                 yield edge
 
         for path in self.paths:
-            if path.type == BoundaryPathType.EDGE:
+            if isinstance(path, EdgePath):
                 new_edges = []
                 for edge in path.edges:
                     if edge.type == EdgeType.SPLINE:
@@ -417,10 +417,10 @@ class BoundaryPaths:
                 yield line
 
         for path in self.paths:
-            if path.type == BoundaryPathType.EDGE:
+            if isinstance(path, EdgePath):
                 new_edges = []
                 for edge in path.edges:
-                    if edge.type == EdgeType.ELLIPSE:
+                    if isinstance(edge, EllipseEdge):
                         new_edges.extend(to_line_edges(edge))
                     else:
                         new_edges.append(edge)
@@ -463,7 +463,7 @@ class BoundaryPaths:
 
         """
         for path in self.paths:
-            if path.type == BoundaryPathType.POLYLINE:
+            if isinstance(path, PolylinePath):
                 return path.has_bulge()
             else:
                 for edge in path.edges:
@@ -498,8 +498,9 @@ def pop_source_boundary_objects_tags(path_tags: Tags) -> List[str]:
                 source_boundary_object_tags.reverse()
                 return source_boundary_object_tags
         else:
+            break
             # No source boundary objects found - entity is not valid for AutoCAD
-            return []
+    return []
 
 
 def export_source_boundary_objects(
@@ -580,7 +581,7 @@ class PolylinePath:
         for vertex in vertices:
             if len(vertex) == 2:
                 x, y = vertex
-                bulge = 0
+                bulge = 0.
             elif len(vertex) == 3:
                 x, y, bulge = vertex
             else:
@@ -1120,8 +1121,8 @@ class EllipseEdge:
 
         # Transform WCS representation to new OCS
         wcs_to_ocs = ocs.new_ocs.from_wcs
-        self.center = wcs_to_ocs(e.center).vec2
-        self.major_axis = wcs_to_ocs(e.major_axis).vec2
+        self.center = wcs_to_ocs(e.center).vec2  # type: ignore
+        self.major_axis = wcs_to_ocs(e.major_axis).vec2  # type: ignore
         self.ratio = e.ratio
 
         # ConstructionEllipse() is always in ccw orientation
