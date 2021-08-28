@@ -2,8 +2,8 @@
 News
 ====
 
-Version 0.16.6b2 - dev
-----------------------
+Version 0.16.6 - 2021-08-28
+---------------------------
 
 - NEW: `MPOLYGON` support for the `drawing` add-on
 - NEW: `MPOLYGON` support for the `geo` add-on
@@ -24,9 +24,9 @@ Version 0.16.6b2 - dev
   available at loading stage 
 - BUGFIX: DXF export for `ARC_DIMENSION`
 - BUGFIX: `Arc.flattening()` always have to return `Vec3` instances
-- BETA: new features for testing, API may change until official release in v0.17
-- BETA: support for `ACAD_PROXY_ENTITY`
-- BETA: Rendering support for inline codes in `MTEXT` entities for the `drawing` add-on.
+- PREVIEW: new features to try out, API may change until official release in v0.17
+- PREVIEW: support for `ACAD_PROXY_ENTITY`
+- PREVIEW: Rendering support for inline codes in `MTEXT` entities for the `drawing` add-on.
 
 Version 0.16.5 - 2021-07-18
 ---------------------------
@@ -51,13 +51,13 @@ Version 0.16.5 - 2021-07-18
 - REMOVED: `get_acis_data()`, `set_acis_data()` and context manager `edit_data()` 
   from ACIS based entities, use `acis_data` property instead as `List[str]` or 
   `List[bytes]`  
-- BETA: new features for testing, API may change until official release in v0.17
-- BETA: `dxf2code` add-on: function `black()` and method `Code.black_code_str()` 
-  returns the code string formatted by [Black](https://pypi.org/project/black/)
-- BETA: `ezdxf.upright` module to flip inverted extrusion vectors, for more 
-  information read the [docs](https://ezdxf.mozman.at/docs/upright.html)  
 - BUGFIX: `Spline.construction_tool()` recognizes start- and end tangents for 
   B-splines from fit points if defined  
+- PREVIEW: new features to try out, API may change until official release in v0.17
+- PREVIEW: `dxf2code` add-on: function `black()` and method `Code.black_code_str()` 
+  returns the code string formatted by [Black](https://pypi.org/project/black/)
+- PREVIEW: `ezdxf.upright` module to flip inverted extrusion vectors, for more 
+  information read the [docs](https://ezdxf.mozman.at/docs/upright.html)  
 
 Version 0.16.4 - 2021-06-20
 ---------------------------
@@ -81,12 +81,12 @@ Version 0.16.4 - 2021-06-20
 - BUGFIX: fixed incorrect "thickness" transformation of OCS entities
 - BUGFIX: add missing "width" transformation to POLYLINE and LWPOLYLINE
 - BUGFIX: drawing add-on handles the invisible flag for INSERT correct
-- BETA: new features for testing, API may change until official release in v0.17
-- BETA: `move_to()` command and multi-path support for the `ezdxf.path.Path` class 
-- BETA: `MPOLYGON` load/write/create support
-- BETA: store *ezdxf* and custom metadata in DXF files, see [docs](https://ezdxf.mozman.at/docs/drawing/management.html#ezdxf-metadata)
-- BETA: command `ezdxf browse FILE`, PyQt DXF structure browser
-- BETA: command `ezdxf strip FILE [FILE ...]`, remove comment tags (999) and the 
+- PREVIEW: new features to try out, API may change until official release in v0.17
+- PREVIEW: `move_to()` command and multi-path support for the `ezdxf.path.Path` class 
+- PREVIEW: `MPOLYGON` load/write/create support
+- PREVIEW: store *ezdxf* and custom metadata in DXF files, see [docs](https://ezdxf.mozman.at/docs/drawing/management.html#ezdxf-metadata)
+- PREVIEW: command `ezdxf browse FILE`, PyQt DXF structure browser
+- PREVIEW: command `ezdxf strip FILE [FILE ...]`, remove comment tags (999) and the 
   THUMBNAILIMAGE section
 
 
