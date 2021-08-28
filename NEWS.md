@@ -2,8 +2,8 @@
 News
 ====
 
-Version 0.17 - dev
-------------------
+Version 0.17b0 - dev
+--------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-17.html
 - NEW: column support for MTEXT read and create, but no editing
