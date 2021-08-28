@@ -2,11 +2,10 @@
 # License: MIT-License
 from typing import (
     TYPE_CHECKING,
-    KeysView,
-    ItemsView,
     Union,
     Dict,
     Optional,
+    List,
 )
 import logging
 from ezdxf.lldxf import validator
@@ -94,10 +93,11 @@ class Dictionary(DXFObject):
         self._data: Dict[str, Union[str, DXFEntity]] = dict()
         self._value_code = VALUE_CODE
 
-    def _copy_data(self, entity: "Dictionary") -> None:
+    def _copy_data(self, entity: DXFEntity) -> None:
         """Copy hard owned entities but do not store the copies in the entity
         database, this is a second step, this is just real copying.
         """
+        assert isinstance(entity, Dictionary)
         entity._value_code = self._value_code
         if self.dxf.hard_owned:
             # Reactors are removed from the cloned DXF objects.
@@ -114,6 +114,7 @@ class Dictionary(DXFObject):
             return
         # copied or new dictionary:
         doc = self.doc
+        assert doc is not None
         owner_handle = self.dxf.handle
         for _, entity in self.items():
             entity.dxf.owner = owner_handle
@@ -202,11 +203,11 @@ class Dictionary(DXFObject):
         """
         return bool(self.dxf.hard_owned)
 
-    def keys(self) -> KeysView:
+    def keys(self):
         """Returns :class:`KeysView` of all dictionary keys."""
         return self._data.keys()
 
-    def items(self) -> ItemsView:
+    def items(self):
         """Returns :class:`ItemsView` for all dictionary entries as
         (:attr:`key`, :class:`DXFEntity`) pairs.
 
@@ -220,7 +221,7 @@ class Dictionary(DXFObject):
 
         """
         if key in self._data:
-            return self._data[key]
+            return self._data[key]  # type: ignore
         else:
             raise DXFKeyError(key)
 
@@ -249,7 +250,7 @@ class Dictionary(DXFObject):
         self, key: str, default: Optional[DXFEntity] = None
     ) -> Optional[DXFEntity]:
         """Returns :class:`DXFEntity` for `key`, if `key` exist else `default`."""
-        return self._data.get(key, default)
+        return self._data.get(key, default)  # type: ignore
 
     def add(self, key: str, value: DXFEntity) -> None:
         """Add entry ``(key, value)``."""
@@ -269,10 +270,11 @@ class Dictionary(DXFObject):
             raise DXFKeyError(key)
 
         if self.is_hard_owner:
+            assert self.doc is not None
             entity = self.__getitem__(key)
             # Presumption: hard owned DXF objects always reside in the OBJECTS
             # section.
-            self.doc.objects.delete_entity(entity)
+            self.doc.objects.delete_entity(entity)  # type: ignore
         del data[key]
 
     def discard(self, key: str) -> None:
@@ -294,9 +296,9 @@ class Dictionary(DXFObject):
 
     def _delete_hard_owned_entries(self) -> None:
         # Presumption: hard owned DXF objects always reside in the OBJECTS section
-        objects = self.doc.objects
+        objects = self.doc.objects  # type: ignore
         for key, entity in self.items():
-            objects.delete_entity(entity)
+            objects.delete_entity(entity)  # type: ignore
 
     def add_new_dict(self, key: str, hard_owned: bool = False) -> "Dictionary":
         """Create a new sub :class:`Dictionary`.
@@ -306,7 +308,7 @@ class Dictionary(DXFObject):
             hard_owned: entries of the new dictionary are hard owned
 
         """
-        dxf_dict = self.doc.objects.add_dictionary(
+        dxf_dict = self.doc.objects.add_dictionary(  # type: ignore
             owner=self.dxf.handle, hard_owned=hard_owned
         )
         self.add(key, dxf_dict)
@@ -320,7 +322,7 @@ class Dictionary(DXFObject):
              value: entry value as string
 
         """
-        new_var = self.doc.objects.add_dictionary_var(
+        new_var = self.doc.objects.add_dictionary_var(  # type: ignore
             owner=self.dxf.handle, value=value
         )
         self.add(key, new_var)
@@ -333,7 +335,7 @@ class Dictionary(DXFObject):
              key: entry name as string
 
         """
-        new_xrecord = self.doc.objects.add_xrecord(
+        new_xrecord = self.doc.objects.add_xrecord(  # type: ignore
             owner=self.dxf.handle,
         )
         self.add(key, new_xrecord)
@@ -348,13 +350,13 @@ class Dictionary(DXFObject):
 
         """
         if key not in self:
-            dict_var = self.doc.objects.add_dictionary_var(
+            dict_var = self.doc.objects.add_dictionary_var(  # type: ignore
                 owner=self.dxf.handle, value=value
             )
             self.add(key, dict_var)
         else:
             dict_var = self.get(key)
-            dict_var.dxf.value = str(value)
+            dict_var.dxf.value = str(value)  # type: ignore
         return dict_var
 
     def link_dxf_object(self, name: str, obj: DXFEntity) -> None:
@@ -369,14 +371,14 @@ class Dictionary(DXFObject):
         dxf_dict = self.get(key)
         if dxf_dict is None:
             dxf_dict = self.add_new_dict(key)
-        return dxf_dict
+        return dxf_dict  # type: ignore
 
     def audit(self, auditor: "Auditor") -> None:
         super().audit(auditor)
         self._check_invalid_entries(auditor)
 
     def _check_invalid_entries(self, auditor: "Auditor"):
-        trash = []  # do not delete content while iterating
+        trash: List[str] = []  # do not delete content while iterating
         append = trash.append
         db = auditor.entitydb
         for key, entry in self._data.items():
@@ -426,7 +428,8 @@ class DictionaryWithDefault(Dictionary):
         super().__init__()
         self._default: Optional[DXFEntity] = None
 
-    def _copy_data(self, entity: "Dictionary") -> None:
+    def _copy_data(self, entity: DXFEntity) -> None:
+        assert isinstance(entity, DictionaryWithDefault)
         entity._default = self._default
 
     def post_load_hook(self, doc: "Drawing") -> None:
@@ -451,7 +454,7 @@ class DictionaryWithDefault(Dictionary):
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_dict_with_default.name)
         self.dxf.export_dxf_attribs(tagwriter, "default")
 
-    def __getitem__(self, key: str) -> Optional[DXFEntity]:
+    def __getitem__(self, key: str):
         return self.get(key)
 
     def get(
