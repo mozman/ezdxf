@@ -67,14 +67,23 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import (
         DXFTag,
         Tags,
-        Table,
-        ViewportTable,
         VPort,
         Dictionary,
         Layout,
         DXFEntity,
         Layer,
         GenericLayoutType,
+    )
+    from ezdxf.sections.tables import (
+        LayerTable,
+        LineTypeTable,
+        StyleTable,
+        DimStyleTable,
+        AppIDTable,
+        UCSTable,
+        ViewTable,
+        ViewportTable,
+        BlockRecordTable,
     )
     from pathlib import Path
 
@@ -708,40 +717,40 @@ class Drawing:
         return const.acad_release.get(self.dxfversion, "unknown")
 
     @property
-    def layers(self) -> "Table":
-        return self.tables.layers  # type: ignore
+    def layers(self) -> "LayerTable":
+        return self.tables.layers
 
     @property
-    def linetypes(self) -> "Table":
-        return self.tables.linetypes  # type: ignore
+    def linetypes(self) -> "LineTypeTable":
+        return self.tables.linetypes
 
     @property
-    def styles(self) -> "Table":
-        return self.tables.styles  # type: ignore
+    def styles(self) -> "StyleTable":
+        return self.tables.styles
 
     @property
-    def dimstyles(self) -> "Table":
-        return self.tables.dimstyles  # type: ignore
+    def dimstyles(self) -> "DimStyleTable":
+        return self.tables.dimstyles
 
     @property
-    def ucs(self) -> "Table":
-        return self.tables.ucs  # type: ignore
+    def ucs(self) -> "UCSTable":
+        return self.tables.ucs
 
     @property
-    def appids(self) -> "Table":
-        return self.tables.appids  # type: ignore
+    def appids(self) -> "AppIDTable":
+        return self.tables.appids
 
     @property
-    def views(self) -> "Table":
-        return self.tables.views  # type: ignore
+    def views(self) -> "ViewTable":
+        return self.tables.views
 
     @property
-    def block_records(self) -> "Table":
-        return self.tables.block_records  # type: ignore
+    def block_records(self) -> "BlockRecordTable":
+        return self.tables.block_records
 
     @property
     def viewports(self) -> "ViewportTable":
-        return self.tables.viewports  # type: ignore
+        return self.tables.viewports
 
     @property
     def plotstyles(self) -> "Dictionary":
