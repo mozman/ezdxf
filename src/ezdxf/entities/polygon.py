@@ -1,6 +1,6 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-from typing import Sequence, Optional
+from typing import Sequence, Optional, Dict, Union, List
 import abc
 import copy
 
@@ -15,6 +15,7 @@ from .dxfns import SubclassProcessor, DXFNamespace
 from .dxfgfx import DXFGraphic
 from .gradient import Gradient
 from .pattern import Pattern, PatternLine
+from .dxfentity import DXFEntity
 
 RGB = colors.RGB
 
@@ -47,7 +48,7 @@ PATTERN_DEFINITION_LINE_CODES = {53, 43, 44, 45, 46, 79, 49}
 class DXFPolygon(DXFGraphic):
     """Base class for the HATCH and the MPOLYGON entity."""
 
-    LOAD_GROUP_CODES = {}
+    LOAD_GROUP_CODES: Dict[int, Union[str, List[str]]] = {}
 
     def __init__(self):
         super().__init__()
@@ -56,8 +57,9 @@ class DXFPolygon(DXFGraphic):
         self.gradient: Optional[Gradient] = None
         self.seeds = []  # not supported/exported by MPOLYGON
 
-    def _copy_data(self, entity: "DXFPolygon") -> None:
+    def _copy_data(self, entity: DXFEntity) -> None:
         """Copy paths, pattern, gradient, seeds."""
+        assert isinstance(entity, DXFPolygon)
         entity.paths = copy.deepcopy(self.paths)
         entity.pattern = copy.deepcopy(self.pattern)
         entity.gradient = copy.deepcopy(self.gradient)
@@ -130,7 +132,7 @@ class DXFPolygon(DXFGraphic):
             return tags
 
         # Gradient data is always at the end of the AcDbHatch subclass.
-        self.gradient = Gradient.load_tags(tags[index:])
+        self.gradient = Gradient.load_tags(tags[index:])  # type: ignore
         # Remove gradient data from tags
         del tags[index:]
         return tags
@@ -173,7 +175,10 @@ class DXFPolygon(DXFGraphic):
         except const.DXFValueError:
             return None
         color = xdata_bgcolor.get_first_value(1071, 0)
-        return colors.int2rgb(color)
+        try:
+            return colors.int2rgb(int(color))  # type: ignore
+        except ValueError:  # invalid data type
+            return 0, 0, 0
 
     @bgcolor.setter
     def bgcolor(self, rgb: RGB) -> None:
@@ -350,7 +355,7 @@ class DXFPolygon(DXFGraphic):
         if not self.has_pattern_fill:
             return
         dxf = self.dxf
-        self.pattern.scale(factor=1.0 / dxf.pattern_scale * scale)
+        self.pattern.scale(factor=1.0 / dxf.pattern_scale * scale)  # type: ignore
         dxf.pattern_scale = scale
 
     def set_pattern_angle(self, angle: float) -> None:
@@ -370,7 +375,7 @@ class DXFPolygon(DXFGraphic):
         if not self.has_pattern_fill:
             return
         dxf = self.dxf
-        self.pattern.scale(angle=angle - dxf.pattern_angle)
+        self.pattern.scale(angle=angle - dxf.pattern_angle)  # type: ignore
         dxf.pattern_angle = angle % 360.0
 
     def transform(self, m: "Matrix44") -> "DXFPolygon":
