@@ -194,7 +194,7 @@ class MeshBuilder:
             # data will be copied at setting in edit_data()
             data.vertices = vertices
             data.edges = self.edges
-            data.faces = self.faces
+            data.faces = self.faces  # type: ignore
         return mesh
 
     render = render_mesh  # TODO: 2021-02-10 - compatibility alias
