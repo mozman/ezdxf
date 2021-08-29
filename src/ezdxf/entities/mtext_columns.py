@@ -101,7 +101,7 @@ def make_dynamic_auto_height_columns_r2018(
         dxfattribs: Dict = None) -> MText:
     columns = MTextColumns.new_dynamic_auto_height_columns(
         count, width, gutter_width, height)
-    return _make_dynamic_columns_r2018(content, columns, dxfattribs)
+    return _make_dynamic_columns_r2018(content, columns, dxfattribs or {})
 
 
 def make_dynamic_manual_height_columns_r2018(
@@ -110,7 +110,7 @@ def make_dynamic_manual_height_columns_r2018(
         dxfattribs: Dict = None) -> MText:
     columns = MTextColumns.new_dynamic_manual_height_columns(
         width, gutter_width, heights)
-    return _make_dynamic_columns_r2018(content, columns, dxfattribs)
+    return _make_dynamic_columns_r2018(content, columns, dxfattribs or {})
 
 
 def _make_dynamic_columns_r2018(
