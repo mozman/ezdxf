@@ -20,7 +20,7 @@ class OLE2Frame(DXFGraphic):
         super().__init__()
         self.acdb_ole2frame: Optional["Tags"] = None
 
-    def copy(self) -> "DXFGraphic":
+    def copy(self) -> "OLE2Frame":
         raise const.DXFTypeError(f"Cloning of {self.dxftype()} not supported.")
 
     def load_dxf_attribs(
