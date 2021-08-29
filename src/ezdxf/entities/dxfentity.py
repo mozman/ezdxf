@@ -78,7 +78,7 @@ class DXFEntity:
     # really set, this means there is an real object in the dxf namespace
     # defined, where default attribute values get returned on access without
     # an existing object in the dxf namespace.
-    DEFAULT_ATTRIBS: Dict = {}
+    DEFAULT_ATTRIBS: Dict[str, Any] = {}
     MIN_DXF_VERSION_FOR_EXPORT = const.DXF12
 
     def __init__(self):

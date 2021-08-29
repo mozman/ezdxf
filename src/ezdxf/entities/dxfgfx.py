@@ -1,6 +1,6 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Dict
+from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Dict, Any
 from ezdxf.entities import factory
 from ezdxf import options
 from ezdxf.lldxf import validator
@@ -180,7 +180,7 @@ class DXFGraphic(DXFEntity):
     """
 
     DXFTYPE = "DXFGFX"
-    DEFAULT_ATTRIBS = {"layer": "0"}
+    DEFAULT_ATTRIBS: Dict[str, Any] = {"layer": "0"}
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity)
 
     def load_dxf_attribs(
