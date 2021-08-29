@@ -1,6 +1,6 @@
 # Copyright (c) 2018-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List, Union, Optional, Iterable
+from typing import TYPE_CHECKING, List, Union, Optional, Iterable, Dict, Any
 import copy
 import logging
 from collections import namedtuple
@@ -26,7 +26,13 @@ from .factory import register_entity
 from .objectcollection import ObjectCollection
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Drawing, DXFNamespace, DXFTag
+    from ezdxf.eztypes import (
+        TagWriter,
+        Drawing,
+        DXFNamespace,
+        DXFTag,
+        DXFEntity,
+    )
 
 __all__ = ["MultiLeader", "MLeader", "MLeaderStyle", "MLeaderStyleCollection"]
 
@@ -203,15 +209,15 @@ def compile_context_tags(
         tag = next(tags)
         while tag.code != stop:
             if tag.code == START_LEADER:
-                collector.append(build_structure(tag, END_LEADER))
+                collector.append(build_structure(tag, END_LEADER))  # type: ignore
             # Group code 304 is used also for MTEXT content, therefore always
             # test for group code AND and value string:
             elif tag.code == START_LEADER_LINE and tag.value == LEADER_LINE_STR:
-                collector.append(build_structure(tag, END_LEADER_LINE))
+                collector.append(build_structure(tag, END_LEADER_LINE))  # type: ignore
             else:
                 collector.append(tag)
             tag = next(tags)
-        return collector
+        return collector  # type: ignore
 
     tags = iter(data)
     return build_structure(next(tags), stop_code)
@@ -233,8 +239,9 @@ class MultiLeader(DXFGraphic):
         self.arrow_heads: List[ArrowHeadData] = []
         self.block_attribs: List[AttribData] = []
 
-    def _copy_data(self, entity: "MultiLeader") -> None:
+    def _copy_data(self, entity: "DXFEntity") -> None:
         """Copy leaders"""
+        assert isinstance(entity, MultiLeader)
         entity.context = copy.deepcopy(self.context)
         entity.arrow_heads = copy.deepcopy(self.arrow_heads)
         entity.block_attribs = copy.deepcopy(self.block_attribs)
@@ -304,7 +311,7 @@ class MultiLeader(DXFGraphic):
             )
             collector.clear()
 
-        heads = []
+        heads: List[ArrowHeadData] = []
         try:
             start = data.tag_index(94)
         except const.DXFValueError:
@@ -335,14 +342,14 @@ class MultiLeader(DXFGraphic):
             )
             collector.clear()
 
-        attribs = []
+        attribs: List[AttribData] = []
         try:
             start = data.tag_index(330)
         except const.DXFValueError:
             return attribs
 
         end = start
-        collector = dict()
+        collector: Dict[int, Any] = dict()
         for code, value in data.collect_consecutive_tags(
             {330, 177, 44, 302}, start
         ):
@@ -508,7 +515,7 @@ class MultiLeaderContext:
                 content = MTextData()
                 ctx.mtext = content
             elif code == 296 and value == 1:
-                content = BlockData()
+                content = BlockData()  # type: ignore
                 ctx.block = content
             else:
                 name = MultiLeaderContext.ATTRIBS.get(code)
