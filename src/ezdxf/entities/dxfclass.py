@@ -1,7 +1,8 @@
 # Copyright (c) 2019-2020 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Tuple
-from .dxfentity import DXFEntity, SubclassProcessor, DXFNamespace
+from .dxfns import SubclassProcessor, DXFNamespace
+from .dxfentity import DXFEntity
 from ezdxf.lldxf.attributes import (
     DXFAttr, DXFAttributes, DefSubclass, group_code_mapping,
 )
