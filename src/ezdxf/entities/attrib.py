@@ -133,7 +133,7 @@ acdb_attrib_group_codes = group_code_mapping(acdb_attrib)
 # therefore this attribute definition needs a special treatment!
 acdb_attdef_xrecord = DefSubclass(
     "AcDbXrecord",
-    [
+    [  # type: ignore
         # Duplicate record cloning flag (determines how to merge duplicate entries):
         # 1 = Keep existing
         ("cloning", DXFAttr(280, default=1)),
@@ -423,7 +423,7 @@ class AttDef(BaseAttrib):
             processor.fast_load_dxfattribs(
                 dxf, acdb_attdef_group_codes, 3, recover=True
             )
-            self._xrecord = processor.find_subclass(self.XRECORD_DEF.name)
+            self._xrecord = processor.find_subclass(self.XRECORD_DEF.name)  # type: ignore
             self.load_embedded_mtext(processor)
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:
@@ -477,7 +477,7 @@ class Attrib(BaseAttrib):
             processor.fast_load_dxfattribs(
                 dxf, acdb_attrib_group_codes, 3, recover=True
             )
-            self._xrecord = processor.find_subclass(self.XRECORD_DEF.name)
+            self._xrecord = processor.find_subclass(self.XRECORD_DEF.name)  # type: ignore
             self.load_embedded_mtext(processor)
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:

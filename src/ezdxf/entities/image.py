@@ -309,7 +309,7 @@ class Image(ImageBase):
     DXFTYPE = "IMAGE"
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_image)
     _CLS_GROUP_CODES = acdb_image_group_codes
-    _SUBCLASS_NAME = acdb_image.name
+    _SUBCLASS_NAME = acdb_image.name  # type: ignore
     DEFAULT_ATTRIBS = {"layer": "0", "flags": 3}
 
     def __init__(self):
@@ -456,7 +456,7 @@ class Wipeout(ImageBase):
         "clip_mode": 0,
     }
     _CLS_GROUP_CODES = acdb_wipeout_group_codes
-    _SUBCLASS_NAME = acdb_wipeout.name
+    _SUBCLASS_NAME = acdb_wipeout.name  # type: ignore
 
     def set_masking_area(self, vertices: Iterable["Vertex"]) -> None:
         """Set a new masking area, the area is placed in the layout xy-plane."""

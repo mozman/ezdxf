@@ -1,6 +1,5 @@
 # Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
-from collections import namedtuple
 from enum import Enum
 from typing import (
     Optional,
@@ -14,6 +13,7 @@ from typing import (
     Union,
     NewType,
     cast,
+    NamedTuple,
 )
 from .const import DXFAttributeError, DXF12
 import copy
@@ -21,7 +21,12 @@ import copy
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFEntity, TagValue
 
-DefSubclass = namedtuple("DefSubclass", "name attribs")
+
+class DefSubclass(NamedTuple):
+    name: Optional[str]
+    attribs: Dict[str, "DXFAttr"]
+
+
 VIRTUAL_TAG = -666
 
 
