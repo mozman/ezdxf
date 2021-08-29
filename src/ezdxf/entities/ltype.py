@@ -1,11 +1,19 @@
-# Copyright (c) 2019-2020, Manfred Moitzi
+# Copyright (c) 2019-2021, Manfred Moitzi
 # License: MIT License
 from typing import (
-    TYPE_CHECKING, Union, Iterable, cast, Tuple, Sequence, Optional,
+    TYPE_CHECKING,
+    Union,
+    Iterable,
+    cast,
+    Sequence,
+    Optional,
 )
 from copy import deepcopy
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass, group_code_mapping,
+    DXFAttr,
+    DXFAttributes,
+    DefSubclass,
+    group_code_mapping,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from ezdxf.lldxf.types import DXFTag
@@ -19,34 +27,37 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing
 
-__all__ = ['Linetype', 'compile_line_pattern', 'CONTINUOUS_PATTERN']
+__all__ = ["Linetype", "compile_line_pattern", "CONTINUOUS_PATTERN"]
 
-acdb_linetype = DefSubclass('AcDbLinetypeTableRecord', {
-    'name': DXFAttr(2, validator=is_valid_table_name),
-    'description': DXFAttr(3, default=''),
-    'flags': DXFAttr(70, default=0),
-    # 'length': DXFAttr(40),
-    # 'items': DXFAttr(73),
-})
+acdb_linetype = DefSubclass(
+    "AcDbLinetypeTableRecord",
+    {
+        "name": DXFAttr(2, validator=is_valid_table_name),
+        "description": DXFAttr(3, default=""),
+        "flags": DXFAttr(70, default=0),
+        # 'length': DXFAttr(40),
+        # 'items': DXFAttr(73),
+    },
+)
 acdb_linetype_group_codes = group_code_mapping(acdb_linetype)
-CONTINUOUS_PATTERN = tuple()
+CONTINUOUS_PATTERN: Sequence[float] = tuple()
 
 
 class LinetypePattern:
     def __init__(self, tags: Tags):
-        """ For now just store tags """
+        """For now just store tags"""
         self.tags = tags
 
     def __len__(self):
         return len(self.tags)
 
-    def export_dxf(self, tagwriter: 'TagWriter'):
+    def export_dxf(self, tagwriter: "TagWriter"):
         if tagwriter.dxfversion <= DXF12:
             self.export_r12_dxf(tagwriter)
         else:
             tagwriter.write_tags(self.tags)
 
-    def export_r12_dxf(self, tagwriter: 'TagWriter'):
+    def export_r12_dxf(self, tagwriter: "TagWriter"):
         tags49 = Tags(tag for tag in self.tags if tag.code == 49)
         tagwriter.write_tag2(72, 65)
         tagwriter.write_tag2(73, len(tags49))
@@ -58,13 +69,13 @@ class LinetypePattern:
         return self.tags.has_tag(340)
 
     def get_style_handle(self):
-        return self.tags.get_first_value(340, '0')
+        return self.tags.get_first_value(340, "0")
 
     def set_style_handle(self, handle):
         return self.tags.update(DXFTag(340, handle))
 
-    def compile(self) -> Tuple[float, ...]:
-        """ Returns the simplified dash-gap-dash... line pattern,
+    def compile(self) -> Sequence[float]:
+        """Returns the simplified dash-gap-dash... line pattern,
         a dash-length of 0 represents a point.
         """
         # complex line types with text and shapes are not supported
@@ -85,8 +96,7 @@ class LinetypePattern:
 
 
 def _merge_dashes(elements: Sequence[float]) -> Iterable[float]:
-    """ Merge multiple consecutive lines, gaps or points into a single element.
-    """
+    """Merge multiple consecutive lines, gaps or points into a single element."""
 
     def sign(v):
         if v < 0:
@@ -108,9 +118,9 @@ def _merge_dashes(elements: Sequence[float]) -> Iterable[float]:
 
 
 def compile_line_pattern(
-        total_length: Optional[float],
-        elements: Sequence[float]) -> Tuple[float, ...]:
-    """ Returns the simplified dash-gap-dash... line pattern,
+    total_length: Optional[float], elements: Sequence[float]
+) -> Sequence[float]:
+    """Returns the simplified dash-gap-dash... line pattern,
     a dash-length of 0 represents a point.
     """
     elements = list(_merge_dashes(elements))
@@ -137,30 +147,35 @@ def compile_line_pattern(
 
 @register_entity
 class Linetype(DXFEntity):
-    """ DXF LTYPE entity """
-    DXFTYPE = 'LTYPE'
-    DXFATTRIBS = DXFAttributes(base_class, acdb_symbol_table_record,
-                               acdb_linetype)
+    """DXF LTYPE entity"""
+
+    DXFTYPE = "LTYPE"
+    DXFATTRIBS = DXFAttributes(
+        base_class, acdb_symbol_table_record, acdb_linetype
+    )
 
     def __init__(self):
-        """ Default constructor """
+        """Default constructor"""
         super().__init__()
         self.pattern_tags = LinetypePattern(Tags())
 
-    def _copy_data(self, entity: 'Linetype') -> None:
-        """ Copy pattern_tags. """
+    def _copy_data(self, entity: "DXFEntity") -> None:
+        """Copy pattern_tags."""
+        assert isinstance(entity, Linetype)
         entity.pattern_tags = deepcopy(self.pattern_tags)
 
-    def load_dxf_attribs(self,
-                         processor: SubclassProcessor = None) -> 'DXFNamespace':
+    def load_dxf_attribs(
+        self, processor: SubclassProcessor = None
+    ) -> "DXFNamespace":
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.fast_load_dxfattribs(
-                dxf, acdb_linetype_group_codes, 2, log=False)
+                dxf, acdb_linetype_group_codes, 2, log=False
+            )
             self.pattern_tags = LinetypePattern(tags)
         return dxf
 
-    def preprocess_export(self, tagwriter: 'TagWriter'):
+    def preprocess_export(self, tagwriter: "TagWriter"):
         if len(self.pattern_tags) == 0:
             return False
         # Do not export complex linetypes for DXF12
@@ -168,31 +183,34 @@ class Linetype(DXFEntity):
             return not self.pattern_tags.is_complex_type()
         return True
 
-    def export_entity(self, tagwriter: 'TagWriter') -> None:
+    def export_entity(self, tagwriter: "TagWriter") -> None:
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         if tagwriter.dxfversion > DXF12:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_symbol_table_record.name)
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_linetype.name)
-        self.dxf.export_dxf_attribs(tagwriter, ['name', 'flags', 'description'])
+        self.dxf.export_dxf_attribs(tagwriter, ["name", "flags", "description"])
         if self.pattern_tags:
             self.pattern_tags.export_dxf(tagwriter)
 
-    def setup_pattern(self, pattern: Union[Iterable[float], str],
-                      length: float = 0) -> None:
+    def setup_pattern(
+        self, pattern: Union[Sequence[float], str], length: float = 0
+    ) -> None:
         # The new() function gets no doc reference, therefore complex linetype
         # setup has to be done later. See also: LineTypeTable.new_entry()
         complex_line_type = True if isinstance(pattern, str) else False
         if complex_line_type:  # a .lin like line type definition string
-            tags = self._setup_complex_pattern(pattern, length)
+            tags = self._setup_complex_pattern(pattern, length)  # type: ignore
         else:
             # pattern: [2.0, 1.25, -0.25, 0.25, -0.25] - 1. element is total
             # pattern length pattern elements: >0 line, <0 gap, =0 point
-            tags = Tags([
-                DXFTag(72, 65),  # letter 'A'
-                DXFTag(73, len(pattern) - 1),
-                DXFTag(40, float(pattern[0])),
-            ])
+            tags = Tags(
+                [
+                    DXFTag(72, 65),  # letter 'A'
+                    DXFTag(73, len(pattern) - 1),  # type: ignore
+                    DXFTag(40, float(pattern[0])),  # type: ignore
+                ]
+            )
             for element in pattern[1:]:
                 tags.append(DXFTag(49, float(element)))
                 tags.append(DXFTag(74, 0))
@@ -200,9 +218,11 @@ class Linetype(DXFEntity):
 
     def _setup_complex_pattern(self, pattern: str, length: float) -> Tags:
         tokens = lin_compiler(pattern)
-        tags = Tags([
-            DXFTag(72, 65),  # letter 'A'
-        ])
+        tags = Tags(
+            [
+                DXFTag(72, 65),  # letter 'A'
+            ]
+        )
 
         tags2 = [DXFTag(73, 0), DXFTag(40, length)]  # temp length of 0
         count = 0
@@ -213,8 +233,7 @@ class Linetype(DXFEntity):
                 tags2.append(token)
                 count += 1
             else:  # TEXT or SHAPE
-                tags2.extend(cast(
-                    'ComplexLineTypePart', token).complex_ltype_tags(self.doc))
+                tags2.extend(token.complex_ltype_tags(self.doc))  # type: ignore
         tags2.append(DXFTag(74, 0))  # useless 74 at the end :))
         tags2[0] = DXFTag(73, count)
         tags.extend(tags2)
