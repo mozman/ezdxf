@@ -1,7 +1,6 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, List, Iterable
-import copy
 import logging
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
@@ -34,6 +33,7 @@ if TYPE_CHECKING:
         BaseLayout,
         EntityQuery,
         Auditor,
+        DXFEntity,
     )
 
 __all__ = ["Leader"]
@@ -171,9 +171,10 @@ class Leader(DXFGraphic, OverrideMixin):
         super().__init__()
         self.vertices: List[Vec3] = []
 
-    def _copy_data(self, entity: "Leader") -> None:
+    def _copy_data(self, entity: "DXFEntity") -> None:
         """Copy vertices."""
-        entity.vertices = copy.deepcopy(self.vertices)
+        assert isinstance(entity, Leader)
+        entity.vertices = Vec3.list(self.vertices)
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
