@@ -9,6 +9,7 @@ from typing import (
     Dict,
     MutableSequence,
     MutableMapping,
+    Iterator,
 )
 from collections import OrderedDict
 from contextlib import contextmanager
@@ -37,7 +38,7 @@ __all__ = ["XData", "XDataUserList", "XDataUserDict"]
 
 class XData:
     def __init__(self, xdata: List[Tags] = None):
-        self.data = OrderedDict()
+        self.data: Dict[str, Tags] = OrderedDict()
         for data in xdata or []:
             self._add(data)
 
@@ -74,7 +75,7 @@ class XData:
     def export_dxf(self, tagwriter: "TagWriter") -> None:
         for appid, tags in self.data.items():
             if options.filter_invalid_xdata_group_codes:
-                tags = list(filter_invalid_xdata_group_codes(tags))
+                tags = Tags(filter_invalid_xdata_group_codes(tags))
             tagwriter.write_tags(tags)
 
     def has_xlist(self, appid: str, name: str) -> bool:
@@ -224,7 +225,7 @@ class XDataUserList(MutableSequence):
     @contextmanager
     def entity(
         cls, entity: "DXFEntity", name="DefaultList", appid="EZDXF"
-    ) -> "XDataUserList":
+    ) -> Iterator["XDataUserList"]:
         xdata = entity.xdata
         if xdata is None:
             xdata = XData()
@@ -319,7 +320,7 @@ class XDataUserDict(MutableMapping):
     @contextmanager
     def entity(
         cls, entity: "DXFEntity", name="DefaultDict", appid="EZDXF"
-    ) -> "XDataUserDict":
+    ) -> Iterator["XDataUserDict"]:
         xdata = entity.xdata
         if xdata is None:
             xdata = XData()
