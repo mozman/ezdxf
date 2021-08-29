@@ -1,6 +1,6 @@
 # Copyright (c) 2018-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Sequence
 from collections import OrderedDict, namedtuple
 import math
 
@@ -34,6 +34,7 @@ if TYPE_CHECKING:
         BaseLayout,
         Matrix44,
         Auditor,
+        DXFEntity,
     )
 
 __all__ = ["MLine", "MLineVertex", "MLineStyle", "MLineStyleCollection"]
@@ -186,7 +187,7 @@ class MLineVertex:
         # 1. line element: [miter-offset, line-start-offset, dash, gap, dash, ...]
         # 2. line element: [...]
         # ...
-        self.line_params: List[List[float]] = []
+        self.line_params: List[Sequence[float]] = []
         """ The line parameterization is a list of float values.
         The list may contain zero or more items.
         """
@@ -209,7 +210,7 @@ class MLineVertex:
         # start.
         #
         # [dash-length, gap-length, ...]?
-        self.fill_params: List[List[float]] = []
+        self.fill_params: List[Sequence[float]] = []
 
     def __copy__(self) -> "MLineVertex":
         vtx = self.__class__()
@@ -225,9 +226,9 @@ class MLineVertex:
     @classmethod
     def load(cls, tags: Tags) -> "MLineVertex":
         vtx = MLineVertex()
-        line_params = []
+        line_params: List[float] = []
         line_params_count = 0
-        fill_params = []
+        fill_params: List[float] = []
         fill_params_count = 0
         for code, value in tags:
             if code == 11:
@@ -326,7 +327,8 @@ class MLine(DXFGraphic):
         """Count of MLINE vertices."""
         return len(self.vertices)
 
-    def _copy_data(self, entity: "MLine") -> None:
+    def _copy_data(self, entity: "DXFEntity") -> None:
+        assert isinstance(entity, MLine)
         entity.vertices = [v.copy() for v in self.vertices]
 
     def load_dxf_attribs(
@@ -439,16 +441,16 @@ class MLine(DXFGraphic):
             style = self.doc.mline_styles[name]
         except const.DXFKeyError:
             raise const.DXFValueError(f"Undefined MLINE style: {name}")
-
+        assert isinstance(style, MLineStyle)
         # Line- and fill parametrization depends on the count of
         # elements, a change in the number of elements triggers a
         # reset of the parametrization:
         old_style = self.style
         new_element_count = len(style.elements)
         reset = False
-        if old_style:
+        if old_style is not None:
             # Do not trust the stored "style_element_count" value
-            reset = len(self.style.elements) != new_element_count
+            reset = len(old_style.elements) != new_element_count
 
         self.dxf.style_name = name
         self.dxf.style_handle = style.dxf.handle
@@ -503,6 +505,7 @@ class MLine(DXFGraphic):
             return
 
         style = self.style
+        assert style is not None, "valid MLINE style required"
         if len(style.elements) == 0:
             raise const.DXFStructureError(
                 f"No line elements defined in {str(style)}."
@@ -687,6 +690,7 @@ class MLine(DXFGraphic):
 
         # Get current (maybe fixed) MLINESTYLE:
         style = self.style
+        assert style is not None, "valid MLINE style required"
 
         # Update style element count silently:
         element_count = len(style.elements)
@@ -813,9 +817,9 @@ class MLineStyleElements:
                     yield collector
                 collector = {"offset": value}
             elif code == 62:
-                collector["color"] = value
+                collector["color"] = value  # type: ignore
             elif code == 6:
-                collector["linetype"] = value
+                collector["linetype"] = value  # type: ignore
         if collector is not None:
             yield collector
 
@@ -862,7 +866,7 @@ class MLineStyle(DXFObject):
                 # The count tag does not exist: DXF structure error?
                 pass
             else:
-                self.elements = MLineStyleElements(tags[index71 + 1 :])
+                self.elements = MLineStyleElements(tags[index71 + 1 :])  # type: ignore
                 # Remove processed tags:
                 del tags[index71:]
             processor.fast_load_dxfattribs(
@@ -914,6 +918,6 @@ class MLineStyleCollection(ObjectCollection):
 
     def create_required_entries(self) -> None:
         if "Standard" not in self.object_dict:
-            entity: MLineStyle = self.new("Standard")
+            entity: MLineStyle = self.new("Standard")  # type: ignore
             entity.elements.append(0.5, 256)
             entity.elements.append(-0.5, 256)
