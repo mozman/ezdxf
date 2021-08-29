@@ -1,16 +1,32 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Sequence, Tuple, Union, List, Dict
+from typing import (
+    TYPE_CHECKING,
+    Iterable,
+    Sequence,
+    Tuple,
+    Union,
+    List,
+    Dict,
+    Iterator,
+)
 import array
 import copy
 from itertools import chain
 from contextlib import contextmanager
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
-    DXFAttr, DXFAttributes, DefSubclass, RETURN_DEFAULT, group_code_mapping
+    DXFAttr,
+    DXFAttributes,
+    DefSubclass,
+    RETURN_DEFAULT,
+    group_code_mapping,
 )
 from ezdxf.lldxf.const import (
-    SUBCLASS_MARKER, DXF2000, DXFValueError, DXFStructureError,
+    SUBCLASS_MARKER,
+    DXF2000,
+    DXFValueError,
+    DXFStructureError,
 )
 from ezdxf.lldxf.packedtags import VertexArray, TagArray, TagList
 from ezdxf.tools import take2
@@ -20,54 +36,63 @@ from .factory import register_entity
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        TagWriter, DXFNamespace, Vertex, Tags, Matrix44,
+        TagWriter,
+        DXFNamespace,
+        Vertex,
+        Tags,
+        Matrix44,
+        DXFEntity,
     )
 
-__all__ = ['Mesh', 'MeshData']
+__all__ = ["Mesh", "MeshData"]
 
-acdb_mesh = DefSubclass('AcDbSubDMesh', {
-    'version': DXFAttr(71, default=2),
-    'blend_crease': DXFAttr(
-        72, default=0,
-        validator=validator.is_integer_bool,
-        fixer=RETURN_DEFAULT,
-    ),
-
-    # 0 is no smoothing
-    'subdivision_levels': DXFAttr(
-        91, default=0,
-        validator=validator.is_greater_or_equal_zero,
-        fixer=RETURN_DEFAULT,
-    ),
-    # 92: Vertex count of level 0
-    # 10: Vertex position, multiple entries
-    # 93: Size of face list of level 0
-    # 90: Face list item, >=3 possible
-    #     90: length of face list
-    #     90: 1st vertex index
-    #     90: 2nd vertex index ...
-    # 94: Edge count of level 0
-    #     90: Vertex index of 1st edge
-    #     90: Vertex index of 2nd edge
-    # 95: Edge crease count of level 0
-    #     95 same as 94, or how is the 'edge create value' associated to edge index
-    # 140: Edge crease value
-    #
-    # Overriding properties: how does this work?
-    # 90: Count of sub-entity which property has been overridden
-    # 91: Sub-entity marker
-    # 92: Count of property was overridden
-    # 90: Property type
-    #     0 = Color
-    #     1 = Material
-    #     2 = Transparency
-    #     3 = Material mapper
-})
+acdb_mesh = DefSubclass(
+    "AcDbSubDMesh",
+    {
+        "version": DXFAttr(71, default=2),
+        "blend_crease": DXFAttr(
+            72,
+            default=0,
+            validator=validator.is_integer_bool,
+            fixer=RETURN_DEFAULT,
+        ),
+        # 0 is no smoothing
+        "subdivision_levels": DXFAttr(
+            91,
+            default=0,
+            validator=validator.is_greater_or_equal_zero,
+            fixer=RETURN_DEFAULT,
+        ),
+        # 92: Vertex count of level 0
+        # 10: Vertex position, multiple entries
+        # 93: Size of face list of level 0
+        # 90: Face list item, >=3 possible
+        #     90: length of face list
+        #     90: 1st vertex index
+        #     90: 2nd vertex index ...
+        # 94: Edge count of level 0
+        #     90: Vertex index of 1st edge
+        #     90: Vertex index of 2nd edge
+        # 95: Edge crease count of level 0
+        #     95 same as 94, or how is the 'edge create value' associated to edge index
+        # 140: Edge crease value
+        #
+        # Overriding properties: how does this work?
+        # 90: Count of sub-entity which property has been overridden
+        # 91: Sub-entity marker
+        # 92: Count of property was overridden
+        # 90: Property type
+        #     0 = Color
+        #     1 = Material
+        #     2 = Transparency
+        #     3 = Material mapper
+    },
+)
 acdb_mesh_group_codes = group_code_mapping(acdb_mesh)
 
 
 class EdgeArray(TagArray):
-    DTYPE = 'L'
+    DTYPE = "L"
 
     def __len__(self) -> int:
         return len(self.values) // 2
@@ -79,7 +104,7 @@ class EdgeArray(TagArray):
     def set_data(self, edges: Iterable[Tuple[int, int]]) -> None:
         self.values = array.array(self.DTYPE, chain.from_iterable(edges))
 
-    def export_dxf(self, tagwriter: 'TagWriter'):
+    def export_dxf(self, tagwriter: "TagWriter"):
         # count = count of edges not tags!
         tagwriter.write_tag2(94, len(self.values) // 2)
         for index in self.values:
@@ -93,7 +118,7 @@ class FaceList(TagList):
     def __iter__(self) -> Iterable[array.array]:
         return iter(self.values)
 
-    def export_dxf(self, tagwriter: 'TagWriter'):
+    def export_dxf(self, tagwriter: "TagWriter"):
         # count = count of tags not faces!
         tagwriter.write_tag2(93, self.tag_count())
         for face in self.values:
@@ -114,23 +139,23 @@ class FaceList(TagList):
 def face_to_array(face: Sequence[int]) -> array.array:
     max_index = max(face)
     if max_index < 256:
-        dtype = 'B'
+        dtype = "B"
     elif max_index < 65536:
-        dtype = 'I'
+        dtype = "I"
     else:
-        dtype = 'L'
+        dtype = "L"
     return array.array(dtype, face)
 
 
-def create_vertex_array(tags: 'Tags', start_index: int) -> 'VertexArray':
+def create_vertex_array(tags: "Tags", start_index: int) -> "VertexArray":
     vertex_tags = tags.collect_consecutive_tags(codes=(10,), start=start_index)
     return VertexArray(data=chain.from_iterable(t.value for t in vertex_tags))
 
 
-def create_face_list(tags: 'Tags', start_index: int) -> 'FaceList':
+def create_face_list(tags: "Tags", start_index: int) -> "FaceList":
     faces = FaceList()
     faces_list = faces.values
-    face = []
+    face: List[int] = []
     counter = 0
     for tag in tags.collect_consecutive_tags(codes=(90,), start=start_index):
         if not counter:
@@ -153,21 +178,23 @@ def create_face_list(tags: 'Tags', start_index: int) -> 'FaceList':
     return faces
 
 
-def create_edge_array(tags: 'Tags', start_index: int) -> 'EdgeArray':
-    return EdgeArray(data=collect_values(
-        tags, start_index, code=90))  # int values
+def create_edge_array(tags: "Tags", start_index: int) -> "EdgeArray":
+    return EdgeArray(
+        data=collect_values(tags, start_index, code=90)
+    )  # int values
 
 
-def collect_values(tags: 'Tags',
-                   start_index: int,
-                   code: int) -> Iterable[Union[float, int]]:
+def collect_values(
+    tags: "Tags", start_index: int, code: int
+) -> Iterable[Union[float, int]]:
     values = tags.collect_consecutive_tags(codes=(code,), start=start_index)
     return (t.value for t in values)
 
 
-def create_crease_array(tags: 'Tags', start_index: int) -> 'array.array':
-    return array.array('f', collect_values(
-        tags, start_index, code=140))  # float values
+def create_crease_array(tags: "Tags", start_index: int) -> "array.array":
+    return array.array(
+        "f", collect_values(tags, start_index, code=140)
+    )  # float values
 
 
 COUNT_ERROR_MSG = "'MESH (#{}) without {} count.'"
@@ -175,8 +202,9 @@ COUNT_ERROR_MSG = "'MESH (#{}) without {} count.'"
 
 @register_entity
 class Mesh(DXFGraphic):
-    """ DXF MESH entity """
-    DXFTYPE = 'MESH'
+    """DXF MESH entity"""
+
+    DXFTYPE = "MESH"
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_mesh)
     MIN_DXF_VERSION_FOR_EXPORT = DXF2000
 
@@ -185,17 +213,19 @@ class Mesh(DXFGraphic):
         self._vertices = VertexArray()  # vertices stored as array.array('d')
         self._faces = FaceList()  # face lists data
         self._edges = EdgeArray()  # edge indices stored as array.array('L')
-        self._creases = array.array('f')  # creases stored as array.array('f')
+        self._creases = array.array("f")  # creases stored as array.array('f')
 
-    def _copy_data(self, entity: 'Mesh') -> None:
-        """ Copy data: vertices, faces, edges, creases. """
+    def _copy_data(self, entity: "DXFEntity") -> None:
+        """Copy data: vertices, faces, edges, creases."""
+        assert isinstance(entity, Mesh)
         entity._vertices = copy.deepcopy(self._vertices)
         entity._faces = copy.deepcopy(self._faces)
         entity._edges = copy.deepcopy(self._edges)
         entity._creases = copy.deepcopy(self._creases)
 
     def load_dxf_attribs(
-            self, processor: SubclassProcessor = None) -> 'DXFNamespace':
+        self, processor: SubclassProcessor = None
+    ) -> "DXFNamespace":
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.subclass_by_index(2)
@@ -204,20 +234,22 @@ class Mesh(DXFGraphic):
                 self.load_mesh_data(tags, dxf.handle)
                 # Load remaining data into name space
                 processor.fast_load_dxfattribs(
-                    dxf, acdb_mesh_group_codes, 2, recover=True)
+                    dxf, acdb_mesh_group_codes, 2, recover=True
+                )
             else:
                 raise DXFStructureError(
                     f"missing 'AcDbSubMesh' subclass in MESH(#{dxf.handle})"
                 )
         return dxf
 
-    def load_mesh_data(self, mesh_tags: 'Tags', handle: str) -> None:
+    def load_mesh_data(self, mesh_tags: "Tags", handle: str) -> None:
         def process_vertices():
             try:
                 vertex_count_index = mesh_tags.tag_index(92)
             except DXFValueError:
                 raise DXFStructureError(
-                    COUNT_ERROR_MSG.format(handle, 'vertex'))
+                    COUNT_ERROR_MSG.format(handle, "vertex")
+                )
             vertices = create_vertex_array(mesh_tags, vertex_count_index + 1)
             # Remove vertex count tag and all vertex tags
             end_index = vertex_count_index + 1 + len(vertices)
@@ -228,7 +260,7 @@ class Mesh(DXFGraphic):
             try:
                 face_count_index = mesh_tags.tag_index(93)
             except DXFValueError:
-                raise DXFStructureError(COUNT_ERROR_MSG.format(handle, 'face'))
+                raise DXFStructureError(COUNT_ERROR_MSG.format(handle, "face"))
             else:
                 # Remove face count tag and all face tags
                 faces = create_face_list(mesh_tags, face_count_index + 1)
@@ -240,7 +272,7 @@ class Mesh(DXFGraphic):
             try:
                 edge_count_index = mesh_tags.tag_index(94)
             except DXFValueError:
-                raise DXFStructureError(COUNT_ERROR_MSG.format(handle, 'edge'))
+                raise DXFStructureError(COUNT_ERROR_MSG.format(handle, "edge"))
             else:
                 edges = create_edge_array(mesh_tags, edge_count_index + 1)
                 # Remove edge count tag and all edge tags
@@ -253,7 +285,8 @@ class Mesh(DXFGraphic):
                 crease_count_index = mesh_tags.tag_index(95)
             except DXFValueError:
                 raise DXFStructureError(
-                    COUNT_ERROR_MSG.format(handle, 'crease'))
+                    COUNT_ERROR_MSG.format(handle, "crease")
+                )
             else:
                 creases = create_crease_array(mesh_tags, crease_count_index + 1)
                 # Remove crease count tag and all crease tags
@@ -266,17 +299,17 @@ class Mesh(DXFGraphic):
         self._edges = process_edges()
         self._creases = process_creases()
 
-    def export_entity(self, tagwriter: 'TagWriter') -> None:
-        """ Export entity specific data as DXF tags. """
+    def export_entity(self, tagwriter: "TagWriter") -> None:
+        """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_mesh.name)
-        self.dxf.export_dxf_attribs(tagwriter, [
-            'version', 'blend_crease', 'subdivision_levels'
-        ])
+        self.dxf.export_dxf_attribs(
+            tagwriter, ["version", "blend_crease", "subdivision_levels"]
+        )
         self.export_mesh_data(tagwriter)
         self.export_override_data(tagwriter)
 
-    def export_mesh_data(self, tagwriter: 'TagWriter'):
+    def export_mesh_data(self, tagwriter: "TagWriter"):
         tagwriter.write_tag2(92, len(self.vertices))
         self._vertices.export_dxf(tagwriter, code=10)
         self._faces.export_dxf(tagwriter)
@@ -286,32 +319,32 @@ class Mesh(DXFGraphic):
         for crease_value in self.creases:
             tagwriter.write_tag2(140, crease_value)
 
-    def export_override_data(self, tagwriter: 'TagWriter'):
+    def export_override_data(self, tagwriter: "TagWriter"):
         tagwriter.write_tag2(90, 0)
 
     @property
-    def creases(self) -> 'array.array':
-        """ Creases as :class:`array.array`. (read/write)"""
+    def creases(self) -> "array.array":
+        """Creases as :class:`array.array`. (read/write)"""
         return self._creases
 
     @creases.setter
     def creases(self, values: Iterable[float]) -> None:
-        self._creases = array.array('f', values)
+        self._creases = array.array("f", values)
 
     @property
     def vertices(self):
-        """ Vertices as list like :class:`~ezdxf.lldxf.packedtags.VertexArray`.
+        """Vertices as list like :class:`~ezdxf.lldxf.packedtags.VertexArray`.
         (read/write)
         """
         return self._vertices
 
     @vertices.setter
-    def vertices(self, points: Iterable['Vertex']) -> None:
+    def vertices(self, points: Iterable["Vertex"]) -> None:
         self._vertices = VertexArray(chain.from_iterable(points))
 
     @property
     def edges(self):
-        """ Edges as list like :class:`~ezdxf.lldxf.packedtags.TagArray`.
+        """Edges as list like :class:`~ezdxf.lldxf.packedtags.TagArray`.
         (read/write)
         """
         return self._edges
@@ -322,7 +355,7 @@ class Mesh(DXFGraphic):
 
     @property
     def faces(self):
-        """ Faces as list like :class:`~ezdxf.lldxf.packedtags.TagList`.
+        """Faces as list like :class:`~ezdxf.lldxf.packedtags.TagList`.
         (read/write)
         """
         return self._faces
@@ -331,18 +364,18 @@ class Mesh(DXFGraphic):
     def faces(self, faces: Iterable[Sequence[int]]) -> None:
         self._faces.set_data(faces)
 
-    def get_data(self) -> 'MeshData':
+    def get_data(self) -> "MeshData":
         return MeshData(self)
 
-    def set_data(self, data: 'MeshData') -> None:
+    def set_data(self, data: "MeshData") -> None:
         self.vertices = data.vertices
         self._faces.set_data(data.faces)
         self._edges.set_data(data.edges)
         self.creases = data.edge_crease_values
 
     @contextmanager
-    def edit_data(self) -> 'MeshData':
-        """ Context manager various mesh data, returns :class:`MeshData`.
+    def edit_data(self) -> Iterator["MeshData"]:
+        """Context manager various mesh data, returns :class:`MeshData`.
 
         Despite that vertices, edge and faces since `ezdxf` v0.8.9 are
         accessible as packed data types, the usage of :class:`MeshData`
@@ -353,8 +386,8 @@ class Mesh(DXFGraphic):
         yield data
         self.set_data(data)
 
-    def transform(self, m: 'Matrix44') -> 'Mesh':
-        """ Transform the MESH entity by transformation matrix `m` inplace. """
+    def transform(self, m: "Matrix44") -> "Mesh":
+        """Transform the MESH entity by transformation matrix `m` inplace."""
         self._vertices.transform(m)
         return self
 
@@ -367,23 +400,25 @@ class MeshData:
         self.edge_crease_values: array.array = mesh.creases
 
     def add_face(self, vertices: Iterable[Sequence[float]]) -> Sequence[int]:
-        """ Add a face by coordinates, vertices is a list of ``(x, y, z)``
+        """Add a face by coordinates, vertices is a list of ``(x, y, z)``
         tuples.
         """
         return self.add_entity(vertices, self.faces)
 
     def add_edge(self, vertices: Sequence[Sequence[float]]) -> Sequence[int]:
-        """ Add an edge by coordinates, vertices is a list of two ``(x, y, z)``
+        """Add an edge by coordinates, vertices is a list of two ``(x, y, z)``
         tuples.
         """
         if len(vertices) != 2:
             raise DXFValueError(
                 "Parameter vertices has to be a list/tuple of 2 vertices "
-                "[(x1, y1, z1), (x2, y2, z2)].")
+                "[(x1, y1, z1), (x2, y2, z2)]."
+            )
         return self.add_entity(vertices, self.edges)
 
-    def add_entity(self, vertices: Iterable[Sequence[float]],
-                   entity_list: List) -> Sequence[int]:
+    def add_entity(
+        self, vertices: Iterable[Sequence[float]], entity_list: List
+    ) -> Sequence[int]:
         indices = [self.add_vertex(vertex) for vertex in vertices]
         entity_list.append(indices)
         return indices
@@ -391,9 +426,10 @@ class MeshData:
     def add_vertex(self, vertex: Sequence[float]) -> int:
         if len(vertex) != 3:
             raise DXFValueError(
-                'Parameter vertex has to be a 3-tuple (x, y, z).')
+                "Parameter vertex has to be a 3-tuple (x, y, z)."
+            )
         index = len(self.vertices)
-        self.vertices.append(vertex)
+        self.vertices.append(vertex)  # type: ignore
         return index
 
     def optimize(self, precision: int = 6):
@@ -404,13 +440,15 @@ class MeshData:
         """
 
         def remove_doublette_vertices() -> Dict[int, int]:
-            def prepare_vertices() -> Iterable[Tuple[float, float, float]]:
+            def prepare_vertices() -> Iterable[Tuple[float, float, float, int]]:
                 for index, vertex in enumerate(self.vertices):
                     x, y, z = vertex
-                    yield (round(x, precision),
-                           round(y, precision),
-                           round(z, precision),
-                           index)
+                    yield (
+                        round(x, precision),
+                        round(y, precision),
+                        round(z, precision),
+                        index,
+                    )
 
             sorted_vertex_list = list(sorted(prepare_vertices()))
             original_vertices = self.vertices
@@ -433,13 +471,13 @@ class MeshData:
             return index_map
 
         def remap_faces() -> None:
-            self.faces = remap_indices(self.faces)
+            self.faces = remap_indices(self.faces)  # type: ignore
 
         def remap_edges() -> None:
-            self.edges = remap_indices(self.edges)
+            self.edges = remap_indices(self.edges)  # type: ignore
 
         def remap_indices(entity_list: Sequence[Sequence[int]]) -> List[Tuple]:
-            mapped_indices = []  # type: List[Tuple]
+            mapped_indices: List[Tuple] = []
             for entity in entity_list:
                 index_list = [index_map[index] for index in entity]
                 mapped_indices.append(tuple(index_list))
