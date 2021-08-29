@@ -1,7 +1,6 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Union
-from contextlib import contextmanager
 from ezdxf.lldxf.attributes import (
     DXFAttr,
     DXFAttributes,
