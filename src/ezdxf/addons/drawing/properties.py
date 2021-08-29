@@ -11,6 +11,7 @@ from typing import (
     List,
     Set,
     cast,
+    Sequence,
 )
 
 from ezdxf.addons import acadctb
@@ -123,7 +124,7 @@ class Properties:
         # (maybe inferred from linewidth?) has to be used, which may alter the
         # overall line appearance - but linetype mapping will never be perfect.
         # The continuous pattern is an empty tuple ()
-        self.linetype_pattern: Tuple[float, ...] = CONTINUOUS_PATTERN
+        self.linetype_pattern: Sequence[float] = CONTINUOUS_PATTERN
         self.linetype_scale: float = 1.0
         # line weight in mm, todo: default lineweight is 0.25?
         self.lineweight: float = 0.25
@@ -292,7 +293,7 @@ class RenderContext:
                 CAD application.
         """
         self._saved_states: List[Properties] = []
-        self.line_pattern = _load_line_pattern(doc.linetypes) if doc else dict()
+        self.line_pattern: Dict[str, Sequence[float]] = _load_line_pattern(doc.linetypes) if doc else dict()
         self.current_layout_properties = LayoutProperties.modelspace()
         self.current_block_reference_properties: Optional[Properties] = None
         self.plot_styles = self._load_plot_style_table(ctb)
@@ -605,7 +606,7 @@ class RenderContext:
 
     def resolve_linetype(
         self, entity: "DXFGraphic", *, resolved_layer: str = None
-    ) -> Tuple[str, Tuple[float, ...]]:
+    ) -> Tuple[str, Sequence[float]]:
         """Resolve the linetype of `entity`. Returns a tuple of the linetype
         name as upper-case string and the simplified linetype pattern as tuple
         of floats.
@@ -815,12 +816,12 @@ def set_color_alpha(color: Color, alpha: int) -> Color:
     return f"{color[:7]}{alpha:02x}"
 
 
-def _load_line_pattern(linetypes: "Table") -> Dict[str, Tuple]:
+def _load_line_pattern(linetypes: "Table") -> Dict[str, Sequence[float]]:
     """Load linetypes defined in a DXF document into  as dictionary,
     key is the upper case linetype name, value is the simplified line pattern,
     see :func:`compile_line_pattern`.
     """
-    pattern = dict()
+    pattern: Dict[str, Sequence[float]] = dict()
     for linetype in linetypes:
         assert isinstance(linetype, Linetype)
         name = linetype.dxf.name.upper()
