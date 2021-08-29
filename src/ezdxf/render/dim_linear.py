@@ -46,7 +46,7 @@ class LinearDimension(BaseDimensionRenderer):
         override: "DimStyleOverride" = None,
     ):
         super().__init__(dimension, ucs, override)
-        if self.text_movement_rule == 0:
+        if self.text_movement_rule == 0:  # type: ignore
             # moves the dimension line with dimension text, this makes no sense
             # for ezdxf (just set `base` argument)
             self.text_movement_rule = 2
@@ -61,7 +61,7 @@ class LinearDimension(BaseDimensionRenderer):
 
         # text is aligned to dimension line
         self.text_rotation: float = self.dim_line_angle
-        if self.text_halign in (
+        if self.text_halign in (  # type: ignore
             3,
             4,
         ):  # text above extension line, is always aligned with extension lines
@@ -161,7 +161,7 @@ class LinearDimension(BaseDimensionRenderer):
             if not self.force_text_inside:
                 # place text outside if wide text and not forced inside
                 self.text_outside = self.is_wide_text
-            elif self.is_wide_text and self.text_halign < 3:
+            elif self.is_wide_text and self.text_halign < 3:  # type: ignore
                 # center wide text horizontal
                 self.text_halign = 0
 
