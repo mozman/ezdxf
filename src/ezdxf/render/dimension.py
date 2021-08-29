@@ -1,5 +1,4 @@
-# Created: 28.12.2018
-# Copyright (c) 2018-2020, Manfred Moitzi
+# Copyright (c) 2018-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING
 from ezdxf.math import UCS
@@ -15,7 +14,9 @@ if TYPE_CHECKING:
 
 
 class DimensionRenderer:
-    def dispatch(self, override: 'DimStyleOverride', ucs: 'UCS') -> 'BaseDimensionRenderer':
+    def dispatch(
+        self, override: "DimStyleOverride", ucs: "UCS" = None
+    ) -> "BaseDimensionRenderer":
         dimension = override.dimension
         dim_type = dimension.dimtype
 
@@ -32,25 +33,55 @@ class DimensionRenderer:
         elif dim_type == 6:
             return self.ordinate(dimension, ucs, override)
         else:
-            raise DXFValueError(f'Unknown DIMENSION type: {dim_type}')
+            raise DXFValueError(f"Unknown DIMENSION type: {dim_type}")
 
-    def linear(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
-        """ Call renderer for linear dimension lines: horizontal, vertical and rotated """
+    def linear(
+        self,
+        dimension: "Dimension",
+        ucs: "UCS" = None,
+        override: "DimStyleOverride" = None,
+    ):
+        """Call renderer for linear dimension lines: horizontal, vertical and rotated"""
         return LinearDimension(dimension, ucs, override)
 
-    def angular(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
+    def angular(
+        self,
+        dimension: "Dimension",
+        ucs: "UCS" = None,
+        override: "DimStyleOverride" = None,
+    ):
         raise NotImplementedError()
 
-    def diameter(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
-        """ Call renderer for diameter dimension """
+    def diameter(
+        self,
+        dimension: "Dimension",
+        ucs: "UCS" = None,
+        override: "DimStyleOverride" = None,
+    ):
+        """Call renderer for diameter dimension"""
         return DiameterDimension(dimension, ucs, override)
 
-    def radius(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
-        """ Call renderer for radius dimension """
+    def radius(
+        self,
+        dimension: "Dimension",
+        ucs: "UCS" = None,
+        override: "DimStyleOverride" = None,
+    ):
+        """Call renderer for radius dimension"""
         return RadiusDimension(dimension, ucs, override)
 
-    def angular3p(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
+    def angular3p(
+        self,
+        dimension: "Dimension",
+        ucs: "UCS" = None,
+        override: "DimStyleOverride" = None,
+    ):
         raise NotImplementedError()
 
-    def ordinate(self, dimension: 'Dimension', ucs: 'UCS', override: 'DimStyleOverride' = None):
+    def ordinate(
+        self,
+        dimension: "Dimension",
+        ucs: "UCS" = None,
+        override: "DimStyleOverride" = None,
+    ):
         raise NotImplementedError()
