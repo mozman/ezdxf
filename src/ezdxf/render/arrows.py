@@ -598,4 +598,4 @@ def connection_point(
         return insert - Vec2.from_deg_angle(rotation, scale)
 
 
-ARROWS = _Arrows()
+ARROWS: _Arrows = _Arrows()
