@@ -60,7 +60,7 @@ GRAPHIC_PROPERTIES = {
     "transparency",
 }
 
-acdb_entity = DefSubclass(
+acdb_entity: DefSubclass = DefSubclass(
     "AcDbEntity",
     {
         # Layer name as string, no auto fix for invalid names!

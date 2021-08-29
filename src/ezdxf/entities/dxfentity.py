@@ -48,7 +48,7 @@ if TYPE_CHECKING:
 
 __all__ = ["DXFEntity", "DXFTagStorage", "base_class", "SubclassProcessor"]
 
-base_class = DefSubclass(
+base_class: DefSubclass = DefSubclass(
     None,
     {
         "handle": DXFAttr(5),

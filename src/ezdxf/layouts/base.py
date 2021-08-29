@@ -108,7 +108,7 @@ class BaseLayout(_AbstractLayout):
         super().__init__(doc)
         self.entity_space = block_record.entity_space
         # This is the real central layout management structure:
-        self.block_record = block_record
+        self.block_record: "BlockRecord" = block_record
 
     @property
     def block_record_handle(self):

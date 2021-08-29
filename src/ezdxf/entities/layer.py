@@ -56,7 +56,7 @@ def fix_layer_lineweight(lw: int) -> int:
         return validator.fix_lineweight(lw)
 
 
-acdb_symbol_table_record = DefSubclass("AcDbSymbolTableRecord", {})
+acdb_symbol_table_record: DefSubclass = DefSubclass("AcDbSymbolTableRecord", {})
 
 acdb_layer_table_record = DefSubclass(
     "AcDbLayerTableRecord",
