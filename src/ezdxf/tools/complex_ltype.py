@@ -54,8 +54,8 @@ Token = Union[str, float, list]
 
 def lin_compiler(definition: str) -> Sequence[DXFTag]:
     """
-    Compiles line type definitions like 'A,.5,-.25,.5,-.25,0,-.25' or 'A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25'
-    into DXFTags().
+    Compiles line type definitions like 'A,.5,-.25,.5,-.25,0,-.25' or
+    'A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25' into DXFTags().
 
     Args:
         definition: definition string
@@ -93,9 +93,9 @@ class ComplexLineTypePart:
             else:
                 try:
                     # Case insensitive search for text style:
-                    font = doc.styles.get(self.font)
+                    font = doc.styles.get(self.font)  # type: ignore
                 except DXFTableEntryError:
-                    font = doc.styles.new(self.font)
+                    font = doc.styles.new(self.font)  # type: ignore
             return font.dxf.handle
 
         # Note: AutoCAD/BricsCAD do NOT report an error or even crash, if the
