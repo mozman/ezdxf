@@ -10,7 +10,6 @@ from typing import (
     Tuple,
     Sequence,
     Dict,
-    Any,
 )
 from itertools import chain
 from ezdxf.lldxf import validator

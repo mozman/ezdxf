@@ -5,7 +5,6 @@ from typing import (
     Tuple,
     Sequence,
     Iterable,
-    cast,
     List,
     Union,
     Iterator,
@@ -51,7 +50,7 @@ if TYPE_CHECKING:
         DXFEntity,
     )
 
-__all__ = ["LWPolyline"]
+__all__ = ["LWPolyline", "FORMAT_CODES"]
 
 LWPointType = Tuple[float, float, float, float, float]
 
