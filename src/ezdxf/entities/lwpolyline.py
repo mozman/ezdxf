@@ -1,6 +1,15 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple, Sequence, Iterable, cast, List, Union
+from typing import (
+    TYPE_CHECKING,
+    Tuple,
+    Sequence,
+    Iterable,
+    cast,
+    List,
+    Union,
+    Iterator,
+)
 import array
 import copy
 from contextlib import contextmanager
@@ -39,6 +48,7 @@ if TYPE_CHECKING:
         Line,
         Arc,
         BaseLayout,
+        DXFEntity,
     )
 
 __all__ = ["LWPolyline"]
@@ -97,8 +107,9 @@ class LWPolyline(DXFGraphic):
         super().__init__()
         self.lwpoints = LWPolylinePoints()
 
-    def _copy_data(self, entity: "LWPolyline") -> None:
+    def _copy_data(self, entity: "DXFEntity") -> None:
         """Copy lwpoints."""
+        assert isinstance(entity, LWPolyline)
         entity.lwpoints = copy.deepcopy(self.lwpoints)
 
     def load_dxf_attribs(
@@ -193,7 +204,7 @@ class LWPolyline(DXFGraphic):
         """Returns count of polyline points."""
         return len(self.lwpoints)
 
-    def __iter__(self) -> Iterable[LWPointType]:
+    def __iter__(self) -> Iterator[LWPointType]:
         """Returns iterable of tuples (x, y, start_width, end_width, bulge)."""
         return iter(self.lwpoints)
 
@@ -228,7 +239,7 @@ class LWPolyline(DXFGraphic):
         """Delete point at position `index`, supports extended slicing."""
         del self.lwpoints[index]
 
-    def vertices(self) -> Iterable[Tuple[float, float]]:
+    def vertices(self) -> Iterator[Tuple[float, float]]:
         """
         Returns iterable of all polyline points as (x, y) tuples in :ref:`OCS`
         (:attr:`dxf.elevation` is the z-axis value).
@@ -301,7 +312,9 @@ class LWPolyline(DXFGraphic):
             self.lwpoints.append(point, format=format)
 
     @contextmanager
-    def points(self, format: str = DEFAULT_FORMAT) -> List[Sequence[float]]:
+    def points(
+        self, format: str = DEFAULT_FORMAT
+    ) -> Iterator[List[Sequence[float]]]:
         """Context manager for polyline points. Returns a standard Python list
         of points, according to the format string.
 
@@ -415,10 +428,10 @@ class LWPolylinePoints(VertexArray):
     VERTEX_SIZE = 5
 
     @classmethod
-    def from_tags(cls, tags: Tags) -> Tuple["LWPolylinePoints", Tags]:
+    def from_tags(cls, tags):
         """Setup point array from tags."""
 
-        def get_vertex() -> LWPointType:
+        def get_vertex():
             point.append(attribs.get(cls.START_WIDTH_CODE, 0))
             point.append(attribs.get(cls.END_WIDTH_CODE, 0))
             point.append(attribs.get(cls.BULGE_CODE, 0))
@@ -516,9 +529,9 @@ def compile_array(data: Sequence[float], format="xyseb") -> array.array:
         if code not in FORMAT_CODES:
             continue
         if code == "v":
-            value = cast("Vertex", value)
-            a[0] = value[0]
-            a[1] = value[1]
+            vertex = Vec3(value)
+            a[0] = vertex.x
+            a[1] = vertex.y
         else:
             a["xyseb".index(code)] = value
     return a

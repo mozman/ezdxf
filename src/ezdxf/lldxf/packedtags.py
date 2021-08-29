@@ -1,7 +1,7 @@
 # Copyright (c) 2018-2021 Manfred Moitzi
 # License: MIT License
 from array import array
-from typing import Iterable, MutableSequence, Sequence
+from typing import Iterable, MutableSequence, Sequence, Iterator
 
 from .types import DXFTag
 from .const import DXFTypeError, DXFIndexError, DXFValueError
@@ -100,7 +100,7 @@ class VertexArray:
         data = ",\n".join(str(p) for p in self)  # type: ignore
         return "{} = [\n{}\n]".format(name, data)
 
-    def __iter__(self) -> Iterable[Sequence[float]]:
+    def __iter__(self) -> Iterator[Sequence[float]]:
         """Returns iterable of vertices."""
         size = self.VERTEX_SIZE
         values = self.values
