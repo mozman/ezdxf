@@ -298,7 +298,7 @@ class GeoData(DXFObject):
         # group codes of version 1 and 2 differ, see DXF reference R2009
         src, target = mesh_group_codes(version)
         face_indices = {97, 98, 99}
-        face = []
+        face: List[int] = []
         for code, value in tags:
             if code == src:
                 self.source_vertices.append(value)
@@ -456,12 +456,17 @@ class GeoData(DXFObject):
 
         crs = None
         for alias in root.findall("Alias"):
+            try:
+                namespace = alias.find("Namespace").text  # type: ignore
+            except AttributeError:
+                namespace = ""
+
             if (
                 alias.get("type") == "CoordinateSystem"
-                and alias.find("Namespace").text == "EPSG Code"
+                and namespace == "EPSG Code"
             ):
                 try:
-                    crs = int(alias.get("id"))
+                    crs = int(alias.get("id"))  # type: ignore
                 except ValueError:
                     raise InvalidGeoDataException(
                         f'invalid epsg number: {alias.get("id")}'
@@ -470,8 +475,17 @@ class GeoData(DXFObject):
 
         xy_ordering = None
         for axis in root.findall(".//CoordinateSystemAxis"):
-            if axis.find("AxisOrder").text == "1":
-                first_axis = axis.find("AxisAbbreviation").text
+            try:
+                axis_order = axis.find("AxisOrder").text  # type: ignore
+            except AttributeError:
+                axis_order = ""
+
+            if axis_order == "1":
+                try:
+                    first_axis = axis.find("AxisAbbreviation").text  # type: ignore
+                except AttributeError:
+                    raise InvalidGeoDataException("first axis not defined")
+
                 if first_axis in ("E", "W"):
                     xy_ordering = True
                 elif first_axis in ("N", "S"):
@@ -537,8 +551,8 @@ class GeoData(DXFObject):
         transformation = (
             Matrix44.translate(-source.x, -source.y, 0)
             @ Matrix44.scale(
-            self.dxf.horizontal_unit_scale, self.dxf.vertical_unit_scale, 1
-        )
+                self.dxf.horizontal_unit_scale, self.dxf.vertical_unit_scale, 1
+            )
             @ Matrix44.z_rotate(theta)
             @ Matrix44.translate(target.x, target.y, 0)
         )
