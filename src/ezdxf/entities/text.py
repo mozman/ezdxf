@@ -354,7 +354,7 @@ class Text(DXFGraphic):
             return
 
         super().remove_dependencies()
-        has_style = bool(other) and (self.dxf.style in other.styles)
+        has_style = other is not None and (self.dxf.style in other.styles)
         if not has_style:
             self.dxf.style = "Standard"
 
