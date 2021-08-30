@@ -198,30 +198,30 @@ class TextLine:
         # IMPORTANT: this assumptions are not verified by profiling!
 
         # Use 2D vectors:
-        vertices = Vec2.generate(vertices)
+        vertices_: Iterable[Vec2] = Vec2.generate(vertices)
 
         # 1. slanting at the original location (very rare):
         if oblique:
             slant_x = math.tan(oblique)
-            vertices = (Vec2(v.x + v.y * slant_x, v.y) for v in vertices)
+            vertices_ = (Vec2(v.x + v.y * slant_x, v.y) for v in vertices_)
 
         # 2. apply alignment shifting (frequently):
         shift_vector = Vec2(shift)
         if shift_vector:
-            vertices = (v + shift_vector for v in vertices)
+            vertices_ = (v + shift_vector for v in vertices_)
 
         # 3. scale (and mirror) at the aligned location (more often):
         scale_x, scale_y = scale
         if scale_x != 1 or scale_y != 1:
-            vertices = (Vec2(v.x * scale_x, v.y * scale_y) for v in vertices)
+            vertices_ = (Vec2(v.x * scale_x, v.y * scale_y) for v in vertices_)
 
         # 4. apply rotation (rare):
         if rotation:
-            vertices = (v.rotate(rotation) for v in vertices)
+            vertices_ = (v.rotate(rotation) for v in vertices_)
 
         # 5. move to insert location in OCS/3D! (every time)
         insert = Vec3(insert)
-        return [insert + v for v in vertices]
+        return [insert + v for v in vertices_]
 
 
 def _shift_x(total_width: float, halign: int) -> float:
