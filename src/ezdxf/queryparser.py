@@ -1,6 +1,6 @@
-# Created: 28.04.13
-# Copyright (C) 2013, Manfred Moitzi
+# Copyright (c) 2013-2021, Manfred Moitzi
 # License: MIT-License
+# mypy: ignore_errors=True
 """
 EntityQueryParser implemented with the pyparsing module created by Paul T. McGuire.
 
@@ -43,29 +43,36 @@ examples:
 
 from pyparsing import *
 
-LBRK = Suppress('[')
-RBRK = Suppress(']')
+LBRK = Suppress("[")
+RBRK = Suppress("]")
 
 number = Regex(r"[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?")
 number.addParseAction(lambda t: float(t[0]))  # convert to float
 string_ = quotedString.addParseAction(lambda t: t[0][1:-1])  # remove quotes
 
-EntityName = Word(alphanums + '_')
+EntityName = Word(alphanums + "_")
 # ExcludeEntityName = Word(alphanums + '_!')
 ExcludeEntityName = Regex(r"[!][\w]+")
-AttribName = Word(alphanums + '_')
-Relation = oneOf(['==', '!=', '<', '<=', '>', '>=', '?', '!?'])
+AttribName = Word(alphanums + "_")
+Relation = oneOf(["==", "!=", "<", "<=", ">", ">=", "?", "!?"])
 
 AttribValue = string_ | number
 AttribQuery = Group(AttribName + Relation + AttribValue)
-EntityNames = Group((Literal('*') + ZeroOrMore(ExcludeEntityName)) | OneOrMore(EntityName)).setResultsName('EntityQuery')
+EntityNames = Group(
+    (Literal("*") + ZeroOrMore(ExcludeEntityName)) | OneOrMore(EntityName)
+).setResultsName("EntityQuery")
 
-InfixBoolQuery = infixNotation(AttribQuery, (
-    ('!', 1, opAssoc.RIGHT),
-    ('&', 2, opAssoc.LEFT),
-    ('|', 2, opAssoc.LEFT),
-)).setResultsName('AttribQuery')
+InfixBoolQuery = infixNotation(
+    AttribQuery,
+    (
+        ("!", 1, opAssoc.RIGHT),
+        ("&", 2, opAssoc.LEFT),
+        ("|", 2, opAssoc.LEFT),
+    ),
+).setResultsName("AttribQuery")
 
-AttribQueryOptions = Literal('i').setResultsName('AttribQueryOptions')
+AttribQueryOptions = Literal("i").setResultsName("AttribQueryOptions")
 
-EntityQueryParser = EntityNames + Optional(LBRK + InfixBoolQuery + RBRK + Optional(AttribQueryOptions))
+EntityQueryParser = EntityNames + Optional(
+    LBRK + InfixBoolQuery + RBRK + Optional(AttribQueryOptions)
+)
