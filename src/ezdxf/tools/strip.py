@@ -91,8 +91,8 @@ def strip_comments(
         else:
             if verbose:
                 value = raw_value_str.strip()
-                value = value.decode(encoding="utf8", errors="ignore")
-                print(f'removing comment: "{value}"')
+                _value = value.decode(encoding="utf8", errors="ignore")
+                print(f'removing comment: "{_value}"')
             removed_tags += 1
 
 

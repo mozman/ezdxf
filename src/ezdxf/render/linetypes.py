@@ -24,21 +24,21 @@ class LineTypeRenderer:
             self._is_dash = True
 
     def line_segment(self, start: Vertex, end: Vertex) -> Iterable[LineSegment]:
-        start = Vec3(start)
-        end = Vec3(end)
-        if self.is_solid or start.isclose(end):
-            yield start, end
+        _start = Vec3(start)
+        _end = Vec3(end)
+        if self.is_solid or _start.isclose(_end):
+            yield _start, _end
             return
 
-        segment_vec = end - start
+        segment_vec = _end - _start
         segment_length = segment_vec.magnitude
         segment_dir = segment_vec / segment_length  # normalize
 
         for is_dash, dash_length in self._render_dashes(segment_length):
-            end = start + segment_dir * dash_length
+            _end = _start + segment_dir * dash_length
             if is_dash:
-                yield start, end
-            start = end
+                yield _start, _end
+            _start = _end
 
     def line_segments(
         self, vertices: Iterable[Vertex]

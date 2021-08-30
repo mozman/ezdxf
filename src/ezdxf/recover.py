@@ -468,8 +468,8 @@ def safe_tag_loader(
     encoding = detect_encoding(detector_stream)
 
     # Apply repair filter:
-    tags = repair.tag_reorder_layer(tags)
-    tags = repair.filter_invalid_point_codes(tags)
+    tags = repair.tag_reorder_layer(tags)  # type: ignore
+    tags = repair.filter_invalid_point_codes(tags)  # type: ignore
     return byte_tag_compiler(tags, encoding, messages=messages, errors=errors)
 
 
