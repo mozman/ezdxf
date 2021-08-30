@@ -1517,15 +1517,15 @@ class CreatorInterface:
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
         """
-        p1 = Vec3(p1)
-        p2 = Vec3(p2)
-        direction = p2 - p1
+        _p1 = Vec3(p1)
+        _p2 = Vec3(p2)
+        direction = _p2 - _p1
         angle = direction.angle_deg
-        base = direction.orthogonal().normalize(distance) + p1
+        base = direction.orthogonal().normalize(distance) + _p1
         return self.add_linear_dim(
             base=base,
-            p1=p1,
-            p2=p2,
+            p1=_p1,
+            p2=_p2,
             dimstyle=dimstyle,
             text=text,
             angle=angle,

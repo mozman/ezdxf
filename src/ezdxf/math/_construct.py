@@ -81,7 +81,7 @@ def intersection_line_line_2d(
 
     d = x1_x2 * y3_y4 - y1_y2 * x3_x4
 
-    if math.fabs(d) <= abs_tol:
+    if math.fabs(d) <= abs_tol:  # type: ignore
         return None
 
     a = x1 * y2 - y1 * x2
