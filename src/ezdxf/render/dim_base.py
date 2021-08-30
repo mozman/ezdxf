@@ -111,13 +111,14 @@ class BaseDimensionRenderer:
         self.block: Optional["GenericLayoutType"] = None
 
         # DimStyleOverride object, manages dimension style overriding
+        self.dim_style: DimStyleOverride
         if override:
             self.dim_style = override
         else:
             self.dim_style = DimStyleOverride(dimension)
 
         # User defined coordinate system for DIMENSION entity
-        self.ucs = ucs or PassTroughUCS()
+        self.ucs: UCS = ucs or PassTroughUCS()
         self.requires_extrusion: bool = not self.ucs.uz.isclose(Z_AXIS)
 
         # ezdxf specific attributes beyond DXF reference, therefore not stored

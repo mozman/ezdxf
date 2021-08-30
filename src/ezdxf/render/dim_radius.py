@@ -75,7 +75,7 @@ class RadiusDimension(BaseDimensionRenderer):
         self.outside_default_defpoint = self.center + (
             self.dim_line_vec * self.outside_default_distance
         )
-        self.outside_text_force_dimline = self.dim_style.get("dimtofl", 1)
+        self.outside_text_force_dimline = self.dim_style.get("dimtofl", 1)  # type: ignore
         # final dimension text (without limits or tolerance)
         self.text: str = self.text_override(
             self.measurement * self.dim_measurement_factor

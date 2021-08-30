@@ -16,7 +16,7 @@ STEP360 = TWO_PI / 360
 
 
 def maurer_rose(n: int, d: int, radius: float) -> Iterable[Tuple[float, float]]:
-    i = 0
+    i: float = 0.
     while i < TWO_PI:
         k = i * d
         r = radius * math.sin(n * k)
@@ -42,4 +42,4 @@ def main(filename: str, n: int, d: int) -> None:
 
 
 if __name__ == '__main__':
-    main(DIR / "maurer_rose.dxf", N, D)
+    main(str(DIR / "maurer_rose.dxf"), N, D)
