@@ -12,8 +12,8 @@ Reformat code by `Black`_ for a column width of 80::
 
     C:\> black -l 80 <python-file>
 
-Reformatting the `ezdxf` code base is an ongoing process, commit
-reformatted code in a separated commit with no logic changes.
+Reformatting the `ezdxf` code base is an ongoing process, add
+reformatted code in a separate commit without changing the runtime logic.
 
 Type Annotations
 ----------------
@@ -34,6 +34,14 @@ messages:
 
 Read `this <https://mypy.readthedocs.io/en/stable/config_file.html>`_ to learn
 where `mypy`_ searches for config files.
+
+Use the `mypy`_ command line option ``--ignore-missing-imports`` and ``-p`` to
+check the whole package from any location in the file system:
+
+.. code-block:: Powershell
+
+    PS D:\Source\ezdxf.git> mypy --ignore-missing-imports -p ezdxf
+    Success: no issues found in 255 source files
 
 Design
 ------
