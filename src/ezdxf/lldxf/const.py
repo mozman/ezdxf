@@ -1,31 +1,31 @@
-# Copyright (c) 2011-2020, Manfred Moitzi
+# Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
 from enum import IntEnum, IntFlag
 
-DXF9 = 'AC1004'
-DXF10 = 'AC1006'
-DXF12 = 'AC1009'
-DXF13 = 'AC1012'
-DXF14 = 'AC1014'
-DXF2000 = 'AC1015'
-DXF2004 = 'AC1018'
-DXF2007 = 'AC1021'
-DXF2010 = 'AC1024'
-DXF2013 = 'AC1027'
-DXF2018 = 'AC1032'
+DXF9 = "AC1004"
+DXF10 = "AC1006"
+DXF12 = "AC1009"
+DXF13 = "AC1012"
+DXF14 = "AC1014"
+DXF2000 = "AC1015"
+DXF2004 = "AC1018"
+DXF2007 = "AC1021"
+DXF2010 = "AC1024"
+DXF2013 = "AC1027"
+DXF2018 = "AC1032"
 
 acad_release = {
-    DXF9: 'R9',
-    DXF10: 'R10',
-    DXF12: 'R12',
-    DXF13: 'R13',
-    DXF14: 'R14',
-    DXF2000: 'R2000',
-    DXF2004: 'R2004',
-    DXF2007: 'R2007',
-    DXF2010: 'R2010',
-    DXF2013: 'R2013',
-    DXF2018: 'R2018',
+    DXF9: "R9",
+    DXF10: "R10",
+    DXF12: "R12",
+    DXF13: "R13",
+    DXF14: "R14",
+    DXF2000: "R2000",
+    DXF2004: "R2004",
+    DXF2007: "R2007",
+    DXF2010: "R2010",
+    DXF2013: "R2013",
+    DXF2018: "R2018",
 }
 
 acad_maint_ver = {
@@ -39,13 +39,18 @@ acad_maint_ver = {
 }
 
 versions_supported_by_new = [
-    DXF12, DXF2000, DXF2004, DXF2007, DXF2010, DXF2013, DXF2018]
+    DXF12,
+    DXF2000,
+    DXF2004,
+    DXF2007,
+    DXF2010,
+    DXF2013,
+    DXF2018,
+]
 versions_supported_by_save = versions_supported_by_new
 LATEST_DXF_VERSION = versions_supported_by_new[-1]
 
-acad_release_to_dxf_version = {
-    acad: dxf for dxf, acad in acad_release.items()
-}
+acad_release_to_dxf_version = {acad: dxf for dxf, acad in acad_release.items()}
 
 
 class DXFError(Exception):
@@ -69,19 +74,22 @@ class DXFXDataError(DXFStructureError):
 
 
 class DXFVersionError(DXFError):
-    """ Errors related to features not supported by the chosen DXF Version """
+    """Errors related to features not supported by the chosen DXF Version"""
+
     pass
 
 
 class DXFInternalEzdxfError(DXFError):
-    """ Indicates internal errors -  should be fixed by mozman """
+    """Indicates internal errors -  should be fixed by mozman"""
+
     pass
 
 
 class DXFUnsupportedFeature(DXFError):
-    """ Indicates unsupported features for DXFEntities e.g. translation for
+    """Indicates unsupported features for DXFEntities e.g. translation for
     ACIS data
     """
+
     pass
 
 
@@ -130,19 +138,25 @@ class DXFUndefinedBlockError(DXFKeyError):
 
 
 MANAGED_SECTIONS = {
-    'HEADER', 'CLASSES', 'TABLES', 'BLOCKS', 'ENTITIES', 'OBJECTS', 'ACDSDATA'
+    "HEADER",
+    "CLASSES",
+    "TABLES",
+    "BLOCKS",
+    "ENTITIES",
+    "OBJECTS",
+    "ACDSDATA",
 }
 
 TABLE_NAMES_ACAD_ORDER = [
-    'VPORT',
-    'LTYPE',
-    'LAYER',
-    'STYLE',
-    'VIEW',
-    'UCS',
-    'APPID',
-    'DIMSTYLE',
-    'BLOCK_RECORD',
+    "VPORT",
+    "LTYPE",
+    "LAYER",
+    "STYLE",
+    "VIEW",
+    "UCS",
+    "APPID",
+    "DIMSTYLE",
+    "BLOCK_RECORD",
 ]
 
 APP_DATA_MARKER = 102
@@ -151,8 +165,8 @@ XDATA_MARKER = 1001
 COMMENT_MARKER = 999
 STRUCTURE_MARKER = 0
 HEADER_VAR_MARKER = 9
-ACAD_REACTORS = '{ACAD_REACTORS'
-ACAD_XDICTIONARY = '{ACAD_XDICTIONARY'
+ACAD_REACTORS = "{ACAD_REACTORS"
+ACAD_XDICTIONARY = "{ACAD_XDICTIONARY"
 XDICT_HANDLE_CODE = 360
 REACTOR_HANDLE_CODE = 330
 OWNER_CODE = 330
@@ -196,12 +210,37 @@ LINEWEIGHT_BYBLOCK = -2
 LINEWEIGHT_DEFAULT = -3
 
 VALID_DXF_LINEWEIGHTS = (
-    0, 5, 9, 13, 15, 18, 20, 25, 30, 35, 40, 50, 53, 60, 70, 80, 90,
-    100, 106, 120, 140, 158, 200, 211,
+    0,
+    5,
+    9,
+    13,
+    15,
+    18,
+    20,
+    25,
+    30,
+    35,
+    40,
+    50,
+    53,
+    60,
+    70,
+    80,
+    90,
+    100,
+    106,
+    120,
+    140,
+    158,
+    200,
+    211,
 )
 MAX_VALID_LINEWEIGHT = VALID_DXF_LINEWEIGHTS[-1]
 VALID_DXF_LINEWEIGHT_VALUES = set(VALID_DXF_LINEWEIGHTS) | {
-    LINEWEIGHT_DEFAULT, LINEWEIGHT_BYLAYER, LINEWEIGHT_BYBLOCK}
+    LINEWEIGHT_DEFAULT,
+    LINEWEIGHT_BYLAYER,
+    LINEWEIGHT_BYBLOCK,
+}
 
 # Entity: Polyline, Polymesh
 # 70 flags
@@ -224,7 +263,7 @@ POLYMESH_BEZIER_SURFACE = 8
 
 # Entity: Vertex
 # 70 flags
-VERTEXNAMES = ('vtx0', 'vtx1', 'vtx2', 'vtx3')
+VERTEXNAMES = ("vtx0", "vtx1", "vtx2", "vtx3")
 VTX_EXTRA_VERTEX_CREATED = 1  # Extra vertex created by curve-fitting
 VTX_CURVE_FIT_TANGENT = 2  # Curve-fit tangent defined for this vertex.
 # A curve-fit tangent direction of 0 may be omitted from the DXF output, but is
@@ -237,16 +276,17 @@ VTX_3D_POLYGON_MESH_VERTEX = 64
 VTX_3D_POLYFACE_MESH_VERTEX = 128
 
 VERTEX_FLAGS = {
-    'AcDb2dPolyline': 0,
-    'AcDb3dPolyline': VTX_3D_POLYLINE_VERTEX,
-    'AcDbPolygonMesh': VTX_3D_POLYGON_MESH_VERTEX,
-    'AcDbPolyFaceMesh': VTX_3D_POLYGON_MESH_VERTEX | VTX_3D_POLYFACE_MESH_VERTEX,
+    "AcDb2dPolyline": 0,
+    "AcDb3dPolyline": VTX_3D_POLYLINE_VERTEX,
+    "AcDbPolygonMesh": VTX_3D_POLYGON_MESH_VERTEX,
+    "AcDbPolyFaceMesh": VTX_3D_POLYGON_MESH_VERTEX
+    | VTX_3D_POLYFACE_MESH_VERTEX,
 }
 POLYLINE_FLAGS = {
-    'AcDb2dPolyline': 0,
-    'AcDb3dPolyline': POLYLINE_3D_POLYLINE,
-    'AcDbPolygonMesh': POLYLINE_3D_POLYMESH,
-    'AcDbPolyFaceMesh': POLYLINE_POLYFACE,
+    "AcDb2dPolyline": 0,
+    "AcDb3dPolyline": POLYLINE_3D_POLYLINE,
+    "AcDbPolygonMesh": POLYLINE_3D_POLYMESH,
+    "AcDbPolyFaceMesh": POLYLINE_POLYFACE,
 }
 
 # block-type flags (bit coded values, may be combined):
@@ -282,21 +322,21 @@ LWPOLYLINE_CLOSED = 1
 LWPOLYLINE_PLINEGEN = 128
 
 TEXT_ALIGN_FLAGS = {
-    'LEFT': (0, 0),
-    'CENTER': (1, 0),
-    'RIGHT': (2, 0),
-    'ALIGNED': (3, 0),
-    'MIDDLE': (4, 0),
-    'FIT': (5, 0),
-    'BOTTOM_LEFT': (0, 1),
-    'BOTTOM_CENTER': (1, 1),
-    'BOTTOM_RIGHT': (2, 1),
-    'MIDDLE_LEFT': (0, 2),
-    'MIDDLE_CENTER': (1, 2),
-    'MIDDLE_RIGHT': (2, 2),
-    'TOP_LEFT': (0, 3),
-    'TOP_CENTER': (1, 3),
-    'TOP_RIGHT': (2, 3),
+    "LEFT": (0, 0),
+    "CENTER": (1, 0),
+    "RIGHT": (2, 0),
+    "ALIGNED": (3, 0),
+    "MIDDLE": (4, 0),
+    "FIT": (5, 0),
+    "BOTTOM_LEFT": (0, 1),
+    "BOTTOM_CENTER": (1, 1),
+    "BOTTOM_RIGHT": (2, 1),
+    "MIDDLE_LEFT": (0, 2),
+    "MIDDLE_CENTER": (1, 2),
+    "MIDDLE_RIGHT": (2, 2),
+    "TOP_LEFT": (0, 3),
+    "TOP_CENTER": (1, 3),
+    "TOP_RIGHT": (2, 3),
 }
 TEXT_ALIGNMENT_BY_FLAGS = dict(
     (flags, name) for name, flags in TEXT_ALIGN_FLAGS.items()
@@ -323,9 +363,9 @@ VERTICAL_STACKED = 4  # only stored in TextStyle.dxf.flags!
 # Special char and encodings used in TEXT, ATTRIB and ATTDEF:
 # "%%d" -> "°"
 SPECIAL_CHAR_ENCODING = {
-    'c': 'Ø',  # alt-0216
-    'd': '°',  # alt-0176
-    'p': '±',  # alt-0177
+    "c": "Ø",  # alt-0216
+    "d": "°",  # alt-0176
+    "p": "±",  # alt-0177
 }
 # Inline codes for strokes in TEXT, ATTRIB and ATTDEF
 # %%u underline
@@ -346,15 +386,15 @@ MTEXT_BOTTOM_CENTER = 8
 MTEXT_BOTTOM_RIGHT = 9
 
 MTEXT_ALIGN_FLAGS = {
-    'TOP_LEFT': 1,
-    'TOP_CENTER': 2,
-    'TOP_RIGHT': 3,
-    'MIDDLE_LEFT': 4,
-    'MIDDLE_CENTER': 5,
-    'MIDDLE_RIGHT': 6,
-    'BOTTOM_LEFT': 7,
-    'BOTTOM_CENTER': 8,
-    'BOTTOM_RIGHT': 9,
+    "TOP_LEFT": 1,
+    "TOP_CENTER": 2,
+    "TOP_RIGHT": 3,
+    "MIDDLE_LEFT": 4,
+    "MIDDLE_CENTER": 5,
+    "MIDDLE_RIGHT": 6,
+    "BOTTOM_LEFT": 7,
+    "BOTTOM_CENTER": 8,
+    "BOTTOM_RIGHT": 9,
 }
 
 
@@ -412,13 +452,13 @@ class MTextLineSpacing(IntEnum):
 
 
 MTEXT_COLOR_INDEX = {
-    'red': RED,
-    'yellow': YELLOW,
-    'green': GREEN,
-    'cyan': CYAN,
-    'blue': BLUE,
-    'magenta': MAGENTA,
-    'white': WHITE,
+    "red": RED,
+    "yellow": YELLOW,
+    "green": GREEN,
+    "cyan": CYAN,
+    "blue": BLUE,
+    "magenta": MAGENTA,
+    "white": WHITE,
 }
 
 MTEXT_BG_OFF = 0
@@ -436,9 +476,9 @@ class MTextBackgroundColor(IntEnum):
 
 
 MTEXT_INLINE_ALIGN = {
-    'BOTTOM': MTextLineAlignment.BOTTOM,
-    'MIDDLE': MTextLineAlignment.MIDDLE,
-    'TOP': MTextLineAlignment.TOP,
+    "BOTTOM": MTextLineAlignment.BOTTOM,
+    "MIDDLE": MTextLineAlignment.MIDDLE,
+    "TOP": MTextLineAlignment.TOP,
 }
 
 CLOSED_SPLINE = 1
@@ -464,17 +504,19 @@ BOUNDARY_PATH_DERIVED = 4
 BOUNDARY_PATH_TEXTBOX = 8
 BOUNDARY_PATH_OUTERMOST = 16
 
-GRADIENT_TYPES = frozenset([
-    'LINEAR',
-    'CYLINDER',
-    'INVCYLINDER',
-    'SPHERICAL',
-    'INVSPHERICAL',
-    'HEMISPHERICAL',
-    'INVHEMISPHERICAL',
-    'CURVED',
-    'INVCURVED'
-])
+GRADIENT_TYPES = frozenset(
+    [
+        "LINEAR",
+        "CYLINDER",
+        "INVCYLINDER",
+        "SPHERICAL",
+        "INVSPHERICAL",
+        "HEMISPHERICAL",
+        "INVHEMISPHERICAL",
+        "CURVED",
+        "INVCURVED",
+    ]
+)
 
 # Viewport Status Flags (VSF) group code=90
 VSF_PERSPECTIVE_MODE = 0x1  # enabled if set
@@ -554,56 +596,56 @@ INVALID_NAME_CHARACTERS = '<>/\\":;?*=`'
 INVALID_LAYER_NAME_CHARACTERS = set(INVALID_NAME_CHARACTERS)
 
 STD_SCALES = {
-    1: (1. / 128., 12.),
-    2: (1. / 64., 12.),
-    3: (1. / 32., 12.),
-    4: (1. / 16., 12.),
-    5: (3. / 32., 12.),
-    6: (1. / 8., 12.),
-    7: (3. / 16., 12.),
-    8: (1. / 4., 12.),
-    9: (3. / 8., 12.),
-    10: (1. / 2., 12.),
-    11: (3. / 4., 12.),
-    12: (1., 12.),
-    13: (3., 12.),
-    14: (6., 12.),
-    15: (12., 12.),
-    16: (1., 1.),
-    17: (1., 2.),
-    18: (1., 4.),
-    19: (1., 8.),
-    20: (1., 10.),
-    21: (1., 16.),
-    22: (1., 20.),
-    23: (1., 30.),
-    24: (1., 40.),
-    25: (1., 50.),
-    26: (1., 100.),
-    27: (2., 1.),
-    28: (4., 1.),
-    29: (8., 1.),
-    30: (10., 1.),
-    31: (100., 1.),
-    32: (1000., 1.),
+    1: (1.0 / 128.0, 12.0),
+    2: (1.0 / 64.0, 12.0),
+    3: (1.0 / 32.0, 12.0),
+    4: (1.0 / 16.0, 12.0),
+    5: (3.0 / 32.0, 12.0),
+    6: (1.0 / 8.0, 12.0),
+    7: (3.0 / 16.0, 12.0),
+    8: (1.0 / 4.0, 12.0),
+    9: (3.0 / 8.0, 12.0),
+    10: (1.0 / 2.0, 12.0),
+    11: (3.0 / 4.0, 12.0),
+    12: (1.0, 12.0),
+    13: (3.0, 12.0),
+    14: (6.0, 12.0),
+    15: (12.0, 12.0),
+    16: (1.0, 1.0),
+    17: (1.0, 2.0),
+    18: (1.0, 4.0),
+    19: (1.0, 8.0),
+    20: (1.0, 10.0),
+    21: (1.0, 16.0),
+    22: (1.0, 20.0),
+    23: (1.0, 30.0),
+    24: (1.0, 40.0),
+    25: (1.0, 50.0),
+    26: (1.0, 100.0),
+    27: (2.0, 1.0),
+    28: (4.0, 1.0),
+    29: (8.0, 1.0),
+    30: (10.0, 1.0),
+    31: (100.0, 1.0),
+    32: (1000.0, 1.0),
 }
 
 RASTER_UNITS = {
-    'mm': 1,
-    'cm': 2,
-    'm': 3,
-    'km': 4,
-    'in': 5,
-    'ft': 6,
-    'yd': 7,
-    'mi': 8,
+    "mm": 1,
+    "cm": 2,
+    "m": 3,
+    "km": 4,
+    "in": 5,
+    "ft": 6,
+    "yd": 7,
+    "mi": 8,
 }
 
-MODEL_SPACE_R2000 = '*Model_Space'
-MODEL_SPACE_R12 = '$Model_Space'
-PAPER_SPACE_R2000 = '*Paper_Space'
-PAPER_SPACE_R12 = '$Paper_Space'
-TMP_PAPER_SPACE_NAME = '*Paper_Space999999'
+MODEL_SPACE_R2000 = "*Model_Space"
+MODEL_SPACE_R12 = "$Model_Space"
+PAPER_SPACE_R2000 = "*Paper_Space"
+PAPER_SPACE_R12 = "$Paper_Space"
+TMP_PAPER_SPACE_NAME = "*Paper_Space999999"
 
 MODEL_SPACE = {
     MODEL_SPACE_R2000.lower(),
@@ -635,17 +677,17 @@ class SortEntities:
 
 
 DIMJUST = {
-    'center': 0,
-    'left': 1,
-    'right': 2,
-    'above1': 3,
-    'above2': 4,
+    "center": 0,
+    "left": 1,
+    "right": 2,
+    "above1": 3,
+    "above2": 4,
 }
 
 DIMTAD = {
-    'above': 1,
-    'center': 0,
-    'below': 4,
+    "above": 1,
+    "center": 0,
+    "below": 4,
 }
 
 
@@ -677,7 +719,7 @@ class InsertUnits(IntEnum):
     USSurveyMile = 24
 
 
-DEFAULT_ENCODING = 'cp1252'
+DEFAULT_ENCODING = "cp1252"
 
 MLINE_TOP = 0
 MLINE_ZERO = 1
