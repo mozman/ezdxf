@@ -461,11 +461,11 @@ def from_hatch_edge_path(
 
 def from_vertices(vertices: Iterable["Vertex"], close=False) -> Path:
     """Returns a :class:`Path` object from the given `vertices`."""
-    vertices = Vec3.list(vertices)
-    if len(vertices) < 2:
+    _vertices = Vec3.list(vertices)
+    if len(_vertices) < 2:
         return Path()
-    path = Path(start=vertices[0])
-    for vertex in vertices[1:]:
+    path = Path(start=_vertices[0])
+    for vertex in _vertices[1:]:
         if not path.end.isclose(vertex):
             path.line_to(vertex)
     if close:
@@ -511,7 +511,7 @@ def to_lwpolylines(
     extrusion = Vec3(extrusion)
     reference_point = paths[0].start
     dxfattribs = dxfattribs or dict()
-    if not extrusion.isclose(Z_AXIS):
+    if not Z_AXIS.isclose(extrusion):
         ocs, elevation = _get_ocs(extrusion, reference_point)
         paths = tools.transform_paths_to_ocs(paths, ocs)
         dxfattribs["elevation"] = elevation
@@ -570,7 +570,7 @@ def to_polylines2d(
     extrusion = Vec3(extrusion)
     reference_point = paths[0].start
     dxfattribs = dxfattribs or dict()
-    if not extrusion.isclose(Z_AXIS):
+    if not Z_AXIS.isclose(extrusion):
         ocs, elevation = _get_ocs(extrusion, reference_point)
         paths = tools.transform_paths_to_ocs(paths, ocs)
         dxfattribs["elevation"] = Vec3(0, 0, elevation)
@@ -737,7 +737,7 @@ def _polygon_converter(
     extrusion = Vec3(extrusion)
     reference_point = paths[0].start
     dxfattribs = dxfattribs or dict()
-    if not extrusion.isclose(Z_AXIS):
+    if not Z_AXIS.isclose(extrusion):
         ocs, elevation = _get_ocs(extrusion, reference_point)
         paths = tools.transform_paths_to_ocs(paths, ocs)
         dxfattribs["elevation"] = Vec3(0, 0, elevation)

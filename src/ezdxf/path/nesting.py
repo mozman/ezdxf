@@ -105,7 +105,7 @@ __all__ = [
 
 Exterior = Path
 Polygon = TypeVar("Polygon")
-Polygon = Tuple[Exterior, Optional[List[Polygon]]]
+Polygon = Tuple[Exterior, Optional[List[Polygon]]]  # type: ignore
 BoxStruct = namedtuple("BoxStruct", "bbox, path")
 
 
@@ -193,7 +193,7 @@ def winding_deconstruction(
 
 def flatten_polygons(polygons: Polygon) -> Iterable[Path]:
     """Yield a flat representation of the given nested polygons."""
-    for polygon in polygons:
+    for polygon in polygons:  # type: ignore
         if isinstance(polygon, Path):
             yield polygon
         else:
@@ -202,5 +202,5 @@ def flatten_polygons(polygons: Polygon) -> Iterable[Path]:
 
 def group_paths(paths: Iterable[Path]) -> List[List[Path]]:
     """Group separated paths and their inner holes as flat lists."""
-    polygons = fast_bbox_detection(paths)
+    polygons = fast_bbox_detection(paths)  # type: ignore
     return [list(flatten_polygons(polygon)) for polygon in polygons]
