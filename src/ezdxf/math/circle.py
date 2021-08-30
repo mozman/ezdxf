@@ -42,15 +42,15 @@ class ConstructionCircle:
         """Creates a circle from three points, all points have to be compatible
         to :class:`Vec2` class.
         """
-        p1 = Vec2(p1)
-        p2 = Vec2(p2)
-        p3 = Vec2(p3)
-        ray1 = ConstructionRay(p1, p2)
-        ray2 = ConstructionRay(p1, p3)
-        center_ray1 = ray1.orthogonal(p1.lerp(p2))
-        center_ray2 = ray2.orthogonal(p1.lerp(p3))
+        _p1 = Vec2(p1)
+        _p2 = Vec2(p2)
+        _p3 = Vec2(p3)
+        ray1 = ConstructionRay(_p1, _p2)
+        ray2 = ConstructionRay(_p1, _p3)
+        center_ray1 = ray1.orthogonal(_p1.lerp(_p2))
+        center_ray2 = ray2.orthogonal(_p1.lerp(_p3))
         center = center_ray1.intersect(center_ray2)
-        return ConstructionCircle(center, center.distance(p1))
+        return ConstructionCircle(center, center.distance(_p1))
 
     @property
     def bounding_box(self) -> "BoundingBox2d":
