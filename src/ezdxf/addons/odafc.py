@@ -285,11 +285,11 @@ def _run_with_no_gui(
 
     elif system == "Windows":
         # New code from George-Jiang to solve the GUI pop-up problem
-        startupinfo = subprocess.STARTUPINFO()
+        startupinfo = subprocess.STARTUPINFO()  # type:ignore  # only a Linux issue?
         startupinfo.dwFlags = (
-            subprocess.CREATE_NEW_CONSOLE | subprocess.STARTF_USESHOWWINDOW
+            subprocess.CREATE_NEW_CONSOLE | subprocess.STARTF_USESHOWWINDOW  # type:ignore  # only a Linux issue?
         )
-        startupinfo.wShowWindow = subprocess.SW_HIDE
+        startupinfo.wShowWindow = subprocess.SW_HIDE  # type:ignore  # only a Linux issue?
         proc = subprocess.Popen(
             [command] + arguments,
             stdout=subprocess.PIPE,

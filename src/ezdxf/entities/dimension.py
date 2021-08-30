@@ -343,7 +343,7 @@ class OverrideMixin:
             if dxf_attr and dxf_attr.code > 0:
                 if dxf_attr.dxfversion > actual_dxfversion:
                     logging.warning(
-                        f'Unsupported DIMSTYLE attribute "{key}" for '
+                        f'Unsupported DIMSTYLE attribute "{key}" for '  # type: ignore
                         f"DXF version {self.doc.acad_release}"  # type: ignore
                     )
                     continue
