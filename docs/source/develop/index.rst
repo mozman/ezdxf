@@ -33,6 +33,9 @@ messages:
     ignore_missing_imports = True
     allow_redefinition = True
 
+Read `this <https://mypy.readthedocs.io/en/stable/config_file.html>`_ to learn
+where `mypy`_ searches for config files.
+
 Design
 ------
 
