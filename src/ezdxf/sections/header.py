@@ -175,16 +175,16 @@ class HeaderSection:
             tags: DXF tags as Tags() or ExtendedTags()
 
         """
-        tags = tags or self.MIN_HEADER_TAGS
-        section_tag = next(tags)  # type: ignore
-        name_tag = next(tags)  # type: ignore
+        _tags = iter(tags) or iter(self.MIN_HEADER_TAGS)
+        section_tag = next(_tags)
+        name_tag = next(_tags)
 
         if section_tag != (0, "SECTION") or name_tag != (2, "HEADER"):
             raise const.DXFStructureError(
                 "Critical structure error in HEADER section."
             )
 
-        groups = group_tags(header_validator(tags), splitcode=9)
+        groups = group_tags(header_validator(_tags), splitcode=9)
         custom_property_stack = []  # collect $CUSTOMPROPERTY/TAG
         for group in groups:
             name = group[0].value

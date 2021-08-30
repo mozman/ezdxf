@@ -251,23 +251,23 @@ def setup_dimstyle(
 
     """
     style = style or options.default_dimension_text_style
-    fmt = DimStyleFmt(fmt)
-    name = name or fmt.name
+    dim_style_fmt = DimStyleFmt(fmt)
+    name = name or dim_style_fmt.name
     if doc.dimstyles.has_entry(name):
         logging.debug('DimStyle "{}" already exists.'.format(name))
         return cast("DimStyle", doc.dimstyles.get(name))
 
     dimstyle = cast("DimStyle", doc.dimstyles.new(name))
-    dimstyle.dxf.dimtxt = fmt.dimtxt
+    dimstyle.dxf.dimtxt = dim_style_fmt.dimtxt
     dimstyle.dxf.dimlfac = (
-        fmt.dimlfac
+        dim_style_fmt.dimlfac
     )  # factor for measurement; dwg in m : measurement in cm -> dimlfac=100
     dimstyle.dxf.dimgap = (
-        fmt.dimtxt * 0.4
+        dim_style_fmt.dimtxt * 0.4
     )  # gap between text and dimension line
     dimstyle.dxf.dimtad = 1  # text above dimline
-    dimstyle.dxf.dimexe = fmt.dimexe
-    dimstyle.dxf.dimexo = fmt.dimexo
+    dimstyle.dxf.dimexe = dim_style_fmt.dimexe
+    dimstyle.dxf.dimexo = dim_style_fmt.dimexo
     dimstyle.dxf.dimdle = 0  # dimension extension beyond extension lines
     dimstyle.dxf.dimtix = 0  # Draws dimension text between the extension lines even if it would ordinarily be placed outside those lines
     dimstyle.dxf.dimtih = 0  # Aligns text inside extension lines with dimension line; 1 = Draws text horizontally
@@ -275,11 +275,11 @@ def setup_dimstyle(
     dimstyle.dxf.dimzin = 8  # Suppresses trailing zeros in decimal dimensions
     dimstyle.dxf.dimsah = 0
     if blk is None:  # oblique stroke
-        dimstyle.dxf.dimtsz = fmt.dimtsz  # tick size
-        dimstyle.dxf.dimasz = fmt.dimasz  # arrow size
+        dimstyle.dxf.dimtsz = dim_style_fmt.dimtsz  # tick size
+        dimstyle.dxf.dimasz = dim_style_fmt.dimasz  # arrow size
     else:  # arrow or block
         dimstyle.set_arrows(blk=blk)
-        dimstyle.dxf.dimasz = fmt.dimasz
+        dimstyle.dxf.dimasz = dim_style_fmt.dimasz
     if doc.dxfversion > DXF12:
         # set text style
         dimstyle.dxf.dimtmove = 2  # move freely without leader
