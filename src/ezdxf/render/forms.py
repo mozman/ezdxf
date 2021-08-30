@@ -418,9 +418,9 @@ def translate(
     Returns: yields transformed vertices
 
     """
-    vec = Vec3(vec)
+    _vec = Vec3(vec)
     for p in vertices:
-        yield vec + p
+        yield _vec + p
 
 
 def rotate(
@@ -665,14 +665,14 @@ def cylinder_2p(
 
 
 def ngon_to_triangles(face: Iterable["Vertex"]) -> Iterable[Sequence[Vec3]]:
-    face = [Vec3(v) for v in face]
-    if face[0].isclose(face[-1]):  # closed shape
-        center = Vec3.sum(face[:-1]) / (len(face) - 1)
+    _face = Vec3.list(face)
+    if _face[0].isclose(_face[-1]):  # closed shape
+        center = Vec3.sum(_face[:-1]) / (len(_face) - 1)
     else:
-        center = Vec3.sum(face) / len(face)
-        face.append(face[0])
+        center = Vec3.sum(_face) / len(_face)
+        _face.append(_face[0])
 
-    for v1, v2 in zip(face[:-1], face[1:]):
+    for v1, v2 in zip(_face[:-1], _face[1:]):
         yield v1, v2, center
 
 
@@ -758,16 +758,16 @@ def spline_interpolated_profiles(
     Returns: yields profiles as list of vertices
 
     """
-    profiles = [list(p) for p in profiles]
-    if len(set(len(p) for p in profiles)) != 1:
+    _profiles = [list(p) for p in profiles]
+    if len(set(len(p) for p in _profiles)) != 1:
         raise ValueError("All profiles have to have the same vertex count")
 
-    vertex_count = len(profiles[0])
+    vertex_count = len(_profiles[0])
     edges = (
         []
     )  # interpolated spline vertices, where profile vertices are fit points
     for index in range(vertex_count):
-        edge_vertices = [p[index] for p in profiles]
+        edge_vertices = [p[index] for p in _profiles]
         edges.append(spline_interpolation(edge_vertices, subdivide=subdivide))
 
     profile_count = len(edges[0])
