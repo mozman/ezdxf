@@ -51,11 +51,11 @@ class ConstructionBox:
             p2: second corner as :class:`Vec2` compatible object
 
         """
-        p1 = Vec2(p1)
-        p2 = Vec2(p2)
-        width: float = abs(p2.x - p1.x)
-        height: float = abs(p2.y - p1.y)
-        center: Vec2 = p1.lerp(p2)
+        _p1 = Vec2(p1)
+        _p2 = Vec2(p2)
+        width: float = abs(_p2.x - _p1.x)
+        height: float = abs(_p2.y - _p1.y)
+        center: Vec2 = _p1.lerp(_p2)
         return cls(center=center, width=width, height=height)
 
     def update(self) -> None:

@@ -226,30 +226,30 @@ class ConstructionArc:
             ccw: counter clockwise direction if ``True``
 
         """
-        start_point, end_point = cls.validate_start_and_end_point(
+        _start_point, _end_point = cls.validate_start_and_end_point(
             start_point, end_point
         )
         angle = math.radians(angle)
         if angle == 0:
             raise ValueError("Angle can not be 0.")
         if ccw is False:
-            start_point, end_point = end_point, start_point
+            _start_point, _end_point = _end_point, _start_point
         alpha2: float = angle / 2.0
-        distance: float = end_point.distance(start_point)
+        distance: float = _end_point.distance(_start_point)
         distance2: float = distance / 2.0
         radius: float = distance2 / math.sin(alpha2)
         height: float = distance2 / math.tan(alpha2)
-        mid_point: Vec2 = end_point.lerp(start_point, factor=0.5)
+        mid_point: Vec2 = _end_point.lerp(_start_point, factor=0.5)
 
-        distance_vector: Vec2 = end_point - start_point
+        distance_vector: Vec2 = _end_point - _start_point
         height_vector: Vec2 = distance_vector.orthogonal().normalize(height)
         center: Vec2 = mid_point + height_vector
 
         return ConstructionArc(
             center=center,
             radius=radius,
-            start_angle=(start_point - center).angle_deg,
-            end_angle=(end_point - center).angle_deg,
+            start_angle=(_start_point - center).angle_deg,
+            end_angle=(_end_point - center).angle_deg,
             is_counter_clockwise=True,
         )
 
@@ -281,28 +281,28 @@ class ConstructionArc:
                 end point if ``True``
 
         """
-        start_point, end_point = cls.validate_start_and_end_point(
+        _start_point, _end_point = cls.validate_start_and_end_point(
             start_point, end_point
         )
         radius = float(radius)
         if radius <= 0:
             raise ValueError("Radius has to be > 0.")
         if ccw is False:
-            start_point, end_point = end_point, start_point
+            _start_point, _end_point = _end_point, _start_point
 
-        mid_point: Vec2 = end_point.lerp(start_point, factor=0.5)
-        distance: float = end_point.distance(start_point)
+        mid_point: Vec2 = _end_point.lerp(_start_point, factor=0.5)
+        distance: float = _end_point.distance(_start_point)
         distance2: float = distance / 2.0
         height: float = math.sqrt(radius ** 2 - distance2 ** 2)
-        center: Vec2 = mid_point + (end_point - start_point).orthogonal(
+        center: Vec2 = mid_point + (_end_point - _start_point).orthogonal(
             ccw=center_is_left
         ).normalize(height)
 
         return ConstructionArc(
             center=center,
             radius=radius,
-            start_angle=(start_point - center).angle_deg,
-            end_angle=(end_point - center).angle_deg,
+            start_angle=(_start_point - center).angle_deg,
+            end_angle=(_end_point - center).angle_deg,
             is_counter_clockwise=True,
         )
 
