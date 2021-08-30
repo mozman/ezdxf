@@ -330,7 +330,7 @@ class VirtualLayout(_AbstractLayout):
     """
 
     def __init__(self):
-        super().__init__(None)  # type: ignore
+        super().__init__(None)
         self.entity_space = EntitySpace()
 
     @property

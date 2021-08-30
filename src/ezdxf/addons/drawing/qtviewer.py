@@ -330,7 +330,7 @@ class CadViewer(qw.QMainWindow):
         self._update_render_context(layout)
         try:
             start = time.perf_counter()
-            self.create_frontend().draw_layout(layout)  # type: ignore
+            self.create_frontend().draw_layout(layout)
             duration = time.perf_counter() - start
             print(f"took {duration:.4f} seconds")
         except DXFStructureError as e:

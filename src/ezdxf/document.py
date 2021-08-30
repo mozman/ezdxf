@@ -5,6 +5,7 @@ from typing import (
     TextIO,
     BinaryIO,
     Iterable,
+    Iterator,
     Union,
     Tuple,
     Callable,
@@ -853,7 +854,7 @@ class Drawing:
         """
         return groupby(self.chain_layouts_and_blocks(), dxfattrib, key)
 
-    def chain_layouts_and_blocks(self) -> Iterable["DXFEntity"]:
+    def chain_layouts_and_blocks(self) -> Iterator["DXFEntity"]:
         """Chain entity spaces of all layouts and blocks. Yields an iterator
         for all entities in all layouts and blocks.
 
@@ -861,12 +862,12 @@ class Drawing:
         layouts = list(self.layouts_and_blocks())
         return chain.from_iterable(layouts)
 
-    def layouts_and_blocks(self) -> Iterable["GenericLayoutType"]:
+    def layouts_and_blocks(self) -> Iterator["GenericLayoutType"]:
         """Iterate over all layouts (modelspace and paperspace) and all
         block definitions.
 
         """
-        return iter(self.blocks)  # type: ignore
+        return iter(self.blocks)
 
     def delete_layout(self, name: str) -> None:
         """
@@ -1145,7 +1146,7 @@ class R12MetaData(MetaData):
 
     def __init__(self, doc: Drawing):
         # storing XDATA in layer 0 does not work (Autodesk!)
-        self._msp_block = doc.modelspace().block_record.block  # type: ignore
+        self._msp_block = doc.modelspace().block_record.block
         self._data = self._load()
 
     def __contains__(self, key: str) -> bool:

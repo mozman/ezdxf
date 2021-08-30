@@ -88,8 +88,8 @@ def virtual_entities(mline: "MLine") -> List["DXFGraphic"]:
         return entities
 
     def round_caps(miter_index: int, start_index: int, end_index: int):
-        color1 = style.elements[start_index].color  # type: ignore
-        color2 = style.elements[end_index].color  # type: ignore
+        color1 = style.elements[start_index].color
+        color2 = style.elements[end_index].color
         start = ocs.from_wcs(miter_points[miter_index][start_index])
         end = ocs.from_wcs(miter_points[miter_index][end_index])
         return _arc_caps(start, end, color1, color2)

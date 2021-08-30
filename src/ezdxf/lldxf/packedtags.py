@@ -97,7 +97,7 @@ class VertexArray:
     def __str__(self) -> str:
         """String representation."""
         name = self.__class__.__name__
-        data = ",\n".join(str(p) for p in self)  # type: ignore
+        data = ",\n".join(str(p) for p in self)
         return "{} = [\n{}\n]".format(name, data)
 
     def __iter__(self) -> Iterator[Sequence[float]]:

@@ -334,7 +334,7 @@ class CSG:
         for face in self.polygons:
             if meshid == face.meshid:
                 mesh.add_face(face.vertices)
-        return MeshTransformer.from_builder(mesh)  # type: ignore
+        return MeshTransformer.from_builder(mesh)
 
     def clone(self) -> "CSG":
         return self.from_polygons([p.clone() for p in self.polygons])

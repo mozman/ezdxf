@@ -196,7 +196,7 @@ class RadiusDimension(BaseDimensionRenderer):
                 self.vertical_placement == 0
             ):  # shift text horizontal if vertical centered
                 hdist += self.arrow_size
-            if self.user_location.x <= self.point_on_circle.x:  # type: ignore
+            if self.user_location.x <= self.point_on_circle.x:
                 hdist = -hdist
             vdist = self.text_vertical_distance()
             return self.user_location + Vec2((hdist, vdist))
@@ -379,7 +379,7 @@ class RadiusDimension(BaseDimensionRenderer):
             hdist = self.arrow_size
         else:
             hdist = self.dim_text_width
-        if self.user_location.x <= self.point_on_circle.x:  # type: ignore
+        if self.user_location.x <= self.point_on_circle.x:
             hdist = -hdist
         end = self.user_location + Vec2((hdist, 0))
         self.add_line(self.user_location, end, dxfattribs=attribs)

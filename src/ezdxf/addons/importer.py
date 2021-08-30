@@ -233,9 +233,9 @@ class Importer:
 
         """
         for font in fonts:
-            table_entry = self.source.styles.find_shx(font)  # type: ignore
+            table_entry = self.source.styles.find_shx(font)
             # copy is not necessary, just create a new entry:
-            new_table_entry = self.target.styles.get_shx(font)  # type: ignore
+            new_table_entry = self.target.styles.get_shx(font)
             if table_entry:
                 # Register resource handles for mapping:
                 self.handle_mapping[

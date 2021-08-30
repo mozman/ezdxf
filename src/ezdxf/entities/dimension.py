@@ -492,7 +492,7 @@ class Dimension(DXFGraphic, OverrideMixin):
         # The new virtual copy can not reference the same geometry block as the
         # original dimension entity:
         virtual_copy.dxf.discard("geometry")
-        return virtual_copy  # type: ignore
+        return virtual_copy
 
     def _copy_data(self, entity: "DXFEntity") -> None:
         assert isinstance(entity, Dimension)

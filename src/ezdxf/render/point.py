@@ -89,4 +89,4 @@ def virtual_entities(
         dxfattribs["radius"] = radius
         entities.append(cast("DXFGraphic", factory.new("CIRCLE", dxfattribs)))
 
-    return entities  # type: ignore
+    return entities

@@ -190,7 +190,7 @@ class MeshBuilder:
         if ucs is not None:
             vertices = ucs.points_to_wcs(vertices)  # type: ignore
         mesh = layout.add_mesh(dxfattribs=dxfattribs)
-        with mesh.edit_data() as data:  # type: ignore
+        with mesh.edit_data() as data:
             # data will be copied at setting in edit_data()
             data.vertices = vertices
             data.edges = self.edges

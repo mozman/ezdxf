@@ -298,7 +298,7 @@ class Dictionary(DXFObject):
         # Presumption: hard owned DXF objects always reside in the OBJECTS section
         objects = self.doc.objects  # type: ignore
         for key, entity in self.items():
-            objects.delete_entity(entity)  # type: ignore
+            objects.delete_entity(entity)
 
     def add_new_dict(self, key: str, hard_owned: bool = False) -> "Dictionary":
         """Create a new sub :class:`Dictionary`.

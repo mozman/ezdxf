@@ -278,7 +278,7 @@ class CreatorInterface:
         """
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["text"] = str(text)
-        dxfattribs.setdefault("insert", Vec3())  # type: ignore
+        dxfattribs.setdefault("insert", Vec3())
         return self.new_entity("TEXT", dxfattribs)  # type: ignore
 
     def add_blockref(
@@ -1161,7 +1161,7 @@ class CreatorInterface:
         entity: "Body" = self.new_entity(name, dxfattribs)  # type: ignore
         if acis_data is not None:
             entity.acis_data = acis_data  # type: ignore
-        return entity  # type: ignore
+        return entity
 
     def add_hatch(self, color: int = 7, dxfattribs: Dict = None) -> "Hatch":
         """Add a :class:`~ezdxf.entities.Hatch` entity. (requires DXF R2000)

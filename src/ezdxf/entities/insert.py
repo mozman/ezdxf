@@ -249,7 +249,7 @@ class Insert(LinkedEntities):
     def is_xref(self) -> bool:
         """Return ``True`` if XREF or XREF_OVERLAY."""
         assert self.doc is not None, "Requires a document object"
-        block_layout = self.doc.blocks.get(self.dxf.name)  # type: ignore
+        block_layout = self.doc.blocks.get(self.dxf.name)
         if (
             block_layout is not None and block_layout.block.dxf.flags & 12  # type: ignore
         ):  # XREF(4) & XREF_OVERLAY(8)

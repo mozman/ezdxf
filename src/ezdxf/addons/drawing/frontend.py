@@ -438,7 +438,7 @@ class Frontend:
         if self.nested_polygon_detection:
             if loops is None:  # only HATCH
                 loops = closed_loops(paths, ocs, elevation)
-            polygons = self.nested_polygon_detection(loops)  # type: ignore
+            polygons = self.nested_polygon_detection(loops)
             external_paths, holes = winding_deconstruction(polygons)
         else:  # only HATCH
             for p in paths:

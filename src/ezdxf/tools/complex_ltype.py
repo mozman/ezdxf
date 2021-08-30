@@ -89,7 +89,7 @@ class ComplexLineTypePart:
         def get_font_handle() -> str:
             if self.type == "SHAPE":
                 # Create new shx or returns existing entry:
-                font = doc.styles.get_shx(self.font)  # type: ignore
+                font = doc.styles.get_shx(self.font)
             else:
                 try:
                     # Case insensitive search for text style:
@@ -155,7 +155,7 @@ def lin_parser(definition: str) -> Sequence[Token]:
 
         try:
             value = float(token)  # only outside of TEXT or SHAPE definition
-            bag.append(value)  # type: ignore
+            bag.append(value)
             continue
         except ValueError:
             pass

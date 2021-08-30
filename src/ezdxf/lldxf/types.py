@@ -227,7 +227,7 @@ class DXFVertex(DXFTag):
     __slots__ = ()
 
     def __init__(self, code: int, value: Sequence[float]):
-        super(DXFVertex, self).__init__(code, array("d", value))  # type: ignore
+        super(DXFVertex, self).__init__(code, array("d", value))
 
     def __str__(self) -> str:
         return str(self.value)
@@ -349,7 +349,7 @@ def tag_type(code: int) -> Type:
 
 
 def strtag(tag: Union[DXFTag, Tuple[int, Any]]) -> str:
-    return TAG_STRING_FORMAT % tuple(tag)  # type: ignore
+    return TAG_STRING_FORMAT % tuple(tag)
 
 
 def get_xcode_for(code) -> int:

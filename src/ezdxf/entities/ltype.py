@@ -207,8 +207,8 @@ class Linetype(DXFEntity):
             tags = Tags(
                 [
                     DXFTag(72, 65),  # letter 'A'
-                    DXFTag(73, len(pattern) - 1),  # type: ignore
-                    DXFTag(40, float(pattern[0])),  # type: ignore
+                    DXFTag(73, len(pattern) - 1),
+                    DXFTag(40, float(pattern[0])),
                 ]
             )
             for element in pattern[1:]:
@@ -233,7 +233,7 @@ class Linetype(DXFEntity):
                 tags2.append(token)
                 count += 1
             else:  # TEXT or SHAPE
-                tags2.extend(token.complex_ltype_tags(self.doc))  # type: ignore
+                tags2.extend(token.complex_ltype_tags(self.doc))
         tags2.append(DXFTag(74, 0))  # useless 74 at the end :))
         tags2[0] = DXFTag(73, count)
         tags.extend(tags2)

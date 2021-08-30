@@ -454,7 +454,7 @@ class Auditor:
                     code=AuditError.INVALID_BLOCK_REFERENCE_CYCLE,
                     message=f"Invalid block reference cycle detected in "
                     f'block "{block.name}".',
-                    dxf_entity=block.block_record,  # type: ignore
+                    dxf_entity=block.block_record,
                 )
 
 

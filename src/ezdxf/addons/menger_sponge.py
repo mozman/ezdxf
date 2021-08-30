@@ -166,7 +166,7 @@ class MengerSponge:
         for vertices in self:
             mesh = MeshVertexMerger()
             mesh.add_mesh(vertices=vertices, faces=faces)  # type: ignore
-            yield MeshTransformer.from_builder(mesh)  # type: ignore
+            yield MeshTransformer.from_builder(mesh)
 
     def mesh(self) -> MeshTransformer:
         """Returns geometry as one :class:`MeshTransformer` object."""
@@ -174,7 +174,7 @@ class MengerSponge:
         mesh = MeshVertexMerger()
         for vertices in self:
             mesh.add_mesh(vertices=vertices, faces=faces)  # type: ignore
-        return MeshTransformer.from_builder(mesh)  # type: ignore
+        return MeshTransformer.from_builder(mesh)
 
 
 def _subdivide(

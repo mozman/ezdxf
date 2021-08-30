@@ -21,7 +21,7 @@ class BlockLayout(BaseLayout):
         """
         if isinstance(entity, str):
             entity = self.entitydb[entity]
-        return entity in self.entity_space  # type: ignore
+        return entity in self.entity_space
 
     @property
     def block(self) -> Optional[Block]:

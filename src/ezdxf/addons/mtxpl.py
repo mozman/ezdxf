@@ -116,11 +116,10 @@ class TextRenderer(FrameRenderer):
         m: Matrix44 = None,
     ):
         """Create/render the text content"""
-        # mypy: The 'Text' entity is not a str!
         text = self.layout.add_text(self.text, dxfattribs=self.text_attribs)
-        text.set_pos((left, bottom), align="LEFT")  # type: ignore
+        text.set_pos((left, bottom), align="LEFT")
         if m:
-            text.transform(m)  # type: ignore
+            text.transform(m)
 
 
 def get_font_face(entity: DXFGraphic, doc=None) -> fonts.FontFace:

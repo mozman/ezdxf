@@ -417,7 +417,7 @@ class LinearDimension(_DimensionBase):
         for section in range(self.section_count):
             dimvalue_text = self._get_dimvalue_text(section)
             insert_point = self._get_text_insert_point(section)
-            layout.add_text(  # type: ignore
+            layout.add_text(
                 text=dimvalue_text,
                 dxfattribs=attribs,
             ).set_pos(insert_point, align="MIDDLE_CENTER")
@@ -565,7 +565,7 @@ class AngularDimension(_DimensionBase):
             "style": self.prop("style"),
             "color": self.prop("textcolor"),
         }
-        layout.add_text(  # type: ignore
+        layout.add_text(
             text=self._get_dimtext(),
             dxfattribs=attribs,
         ).set_pos(self._get_text_insert_point(), align="MIDDLE_CENTER")
@@ -718,7 +718,7 @@ class RadialDimension(_DimensionBase):
         )
 
     def _draw_dimension_text(self, layout: "GenericLayoutType") -> None:
-        layout.add_text(  # type: ignore
+        layout.add_text(
             text=self._get_dimtext(),
             dxfattribs={
                 "height": self.prop("height"),

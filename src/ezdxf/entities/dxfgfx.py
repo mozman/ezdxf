@@ -578,7 +578,7 @@ class DXFGraphic(DXFEntity):
         # table entry, the layer attributes are reset to default attributes
         # like color is 7 and linetype is CONTINUOUS
         has_linetype = other is not None and (
-            self.dxf.linetype in other.linetypes  # type: ignore
+            self.dxf.linetype in other.linetypes
         )
         if not has_linetype:
             self.dxf.linetype = "BYLAYER"
