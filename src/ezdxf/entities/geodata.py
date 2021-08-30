@@ -271,7 +271,7 @@ class GeoData(DXFObject):
             tags = processor.fast_load_dxfattribs(
                 dxf, acdb_geo_data_group_codes, 1, log=False
             )
-            tags = self.load_coordinate_system_definition(tags)
+            tags = self.load_coordinate_system_definition(tags)  # type: ignore
             if version > 1:
                 self.load_mesh_data(tags, version)
             else:

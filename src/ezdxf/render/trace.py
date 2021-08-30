@@ -66,10 +66,10 @@ class AbstractTrace:
             if not len(vertices):
                 return
 
-            vertices = iter(vertices)
-            prev = next(vertices)
+            _vertices = iter(vertices)
+            prev = next(_vertices)
             yield prev
-            for vertex in vertices:
+            for vertex in _vertices:
                 if not prev.isclose(vertex):
                     yield vertex
                     prev = vertex

@@ -182,7 +182,7 @@ class Bezier:
         """
         tangent1 = Vec3(tangent1)
         if tangent2 is None:
-            tangent2 = -tangent1
+            tangent2 = -tangent1  # type: ignore
         else:
             tangent2 = Vec3(tangent2)
         self.points.append((point, tangent1, tangent2, int(segments)))
