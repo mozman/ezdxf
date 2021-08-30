@@ -147,15 +147,15 @@ class ImageBase(DXFGraphic):
         as clipping path.
 
         """
-        vertices = Vec2.list(vertices)
-        if len(vertices):
-            if len(vertices) > 2 and not vertices[-1].isclose(vertices[0]):
+        _vertices = Vec2.list(vertices)
+        if len(_vertices):
+            if len(_vertices) > 2 and not _vertices[-1].isclose(_vertices[0]):
                 # Close path, otherwise AutoCAD crashes
-                vertices.append(vertices[0])
-            self._boundary_path = vertices
+                _vertices.append(_vertices[0])
+            self._boundary_path = _vertices
             self.set_flag_state(self.USE_CLIPPING_BOUNDARY, state=True)
             self.dxf.clipping = 1
-            self.dxf.clipping_boundary_type = 1 if len(vertices) < 3 else 2
+            self.dxf.clipping_boundary_type = 1 if len(_vertices) < 3 else 2
             self.dxf.count_boundary_points = len(self._boundary_path)
         else:
             self.reset_boundary_path()
