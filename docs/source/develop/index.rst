@@ -23,6 +23,16 @@ without errors in non-strict mode. Using ``# type: ignore`` is fine in tricky
 situations - type annotations should be helpful in understanding the code
 and not be a burden.
 
+The following global options are required to pass `mypy`_ without error
+messages:
+
+.. code-block:: ini
+
+    [mypy]
+    python_version = 3.7
+    ignore_missing_imports = True
+    allow_redefinition = True
+
 Design
 ------
 
