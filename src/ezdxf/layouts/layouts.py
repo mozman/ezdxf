@@ -180,6 +180,11 @@ class Layouts:
         """Setup layout manger from root dictionary. (internal API)"""
         layout: Layout
         for name, dxf_layout in self._dxf_layouts.items():
+            if isinstance(dxf_layout, str):
+                logger.debug(
+                    f"ignore missing LAYOUT(#{dxf_layout}) entity '{name}'"
+                )
+                continue
             if key(name) == MODEL:
                 layout = Modelspace(dxf_layout, self.doc)
             else:
