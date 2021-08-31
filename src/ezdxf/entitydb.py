@@ -292,6 +292,18 @@ class EntityDB:
     def dxf_types_in_use(self) -> Set[str]:
         return set(entity.dxftype() for entity in self.values())
 
+    def reset_handle(self, entity: DXFEntity, handle: str) -> bool:
+        """Try to reset the entity handle to a certain value.
+        Returns ``True`` if successful and ``False`` otherwise.
+
+        """
+        if handle in self._database:
+            return False
+        self.discard(entity)
+        entity.dxf.handle = handle
+        self.add(entity)
+        return True
+
 
 class EntitySpace:
     """

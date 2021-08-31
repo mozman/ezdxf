@@ -194,3 +194,27 @@ def test_trashcan_context_manager():
     assert len(db) == 3
     assert entities[0].is_alive is False
     assert entities[1].is_alive is False
+
+
+def test_reset_entity_handle():
+    db = EntityDB()
+    entity = DXFEntity()
+    db.add(entity)
+    assert db.reset_handle(entity, "FEFE") is True
+    assert entity.dxf.handle == "FEFE"
+    assert "FEFE" in db
+
+
+def test_can_not_reset_entity_handle():
+    """Can not reset the DXF handle of an entity to a handle, which is already
+    used by another entity.
+    """
+    db = EntityDB()
+    entity1 = DXFEntity()
+    entity2 = DXFEntity()
+    db.add(entity1)
+    db.add(entity2)
+    handle = entity1.dxf.handle
+
+    assert db.reset_handle(entity1, entity2.dxf.handle) is False
+    assert entity1.dxf.handle == handle
