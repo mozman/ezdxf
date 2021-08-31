@@ -457,8 +457,7 @@ def fast_plain_mtext(text: str, split=False) -> Union[List[str], str]:
                     # until columns are supported, better to at least remove the
                     # escape character
                     chars.append(" ")
-                else:
-                    pass  # discard other commands
+                # else: discard other commands
             else:  # multiple character commands are terminated by ';'
                 stacking = char == "S"  # stacking command surrounds user data
                 first_char = char
