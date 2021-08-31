@@ -128,9 +128,12 @@ class ObjectsSection:
             rootdict["ACAD_PLOTSTYLENAME"] = plot_style_name_dict
 
         for name in _OBJECT_TABLE_NAMES:
-            if name in rootdict:
+            obj_dict = rootdict.get(name)
+            if isinstance(obj_dict, Dictionary):
                 continue  # just create not existing tables
-            logger.info("creating {} dictionary".format(name))
+            # Entry does not exist or is just a handle, which also means
+            # the entry does not exist!
+            logger.info(f"creating {name} dictionary")
             if name == "ACAD_PLOTSTYLENAME":
                 setup_plot_style_name_table()
             else:
