@@ -444,3 +444,11 @@ def is_valid_attrib_tag(tag: str) -> bool:
 
 def fix_attrib_tag(tag: str) -> str:
     return fix_one_line_text(tag)
+
+
+def is_handle(handle) -> bool:
+    try:
+        int(handle, 16)
+    except (ValueError, TypeError):
+        return False
+    return True

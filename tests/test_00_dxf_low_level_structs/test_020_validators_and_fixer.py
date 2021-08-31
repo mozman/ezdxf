@@ -9,7 +9,7 @@ from ezdxf.lldxf.validator import (
     fix_one_line_text, is_not_zero, is_not_negative, is_one_of,
     is_in_float_range, fit_into_float_range, fix_integer_bool,
     fit_into_integer_range, is_valid_bitmask, fix_bitmask,
-    is_greater_or_equal_zero
+    is_greater_or_equal_zero, is_handle
 )
 from ezdxf.entities.layer import is_valid_layer_color_index, fix_layer_color
 
@@ -212,6 +212,16 @@ def test_is_valid_layer_color(aci):
 def test_is_not_valid_layer_color(aci):
     assert is_valid_layer_color_index(aci) is False
     assert fix_layer_color(aci) == 7
+
+
+@pytest.mark.parametrize('handle', ["0", "100", "FEFE"])
+def test_is_a_handle(handle):
+    assert is_handle(handle) is True
+
+
+@pytest.mark.parametrize('handle', [None, 0, 0x200000, "xyz"])
+def test_is_not_a_handle(handle):
+    assert is_handle(handle) is False
 
 
 if __name__ == '__main__':
