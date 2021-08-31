@@ -5,7 +5,7 @@ import logging
 
 from ezdxf.entities.dictionary import Dictionary
 from ezdxf.entities import factory, is_dxf_object
-from ezdxf.lldxf import const
+from ezdxf.lldxf import const, validator
 from ezdxf.entitydb import EntitySpace
 from ezdxf.query import EntityQuery
 from ezdxf.tools.handle import UnderlayKeyGenerator
@@ -131,13 +131,20 @@ class ObjectsSection:
             obj_dict = rootdict.get(name)
             if isinstance(obj_dict, Dictionary):
                 continue  # just create not existing tables
-            # Entry does not exist or is just a handle, which also means
+            # Entry does not exist or it is just a handle, which also means
             # the entry does not exist!
             logger.info(f"creating {name} dictionary")
             if name == "ACAD_PLOTSTYLENAME":
                 setup_plot_style_name_table()
             else:
                 rootdict.add_new_dict(name)
+            # The original object table does not exist, but the handle is maybe
+            # used by some DXF entities.
+            # Try to restore the original object table handle:
+            if isinstance(obj_dict, str) and validator.is_handle(obj_dict):
+                handle: str = obj_dict
+                table = rootdict.get(name)
+                self.doc.entitydb.reset_handle(table, handle)
 
     def add_object(self, entity: "DXFObject") -> None:
         """Add `entity` to OBJECTS section. (internal API)"""
