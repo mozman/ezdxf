@@ -86,11 +86,6 @@ def read(stream: TextIO) -> "Drawing":
     Raises:
         DXFStructureError: for invalid or corrupted DXF structures
 
-    .. deprecated:: v0.14
-
-        argument `legacy_mode`, use module :mod:`ezdxf.recover`
-        to load DXF documents with structural flaws.
-
     """
     from ezdxf.document import Drawing
 
@@ -130,11 +125,6 @@ def readfile(
         IOError: not a DXF file or file does not exist
         DXFStructureError: for invalid or corrupted DXF structures
         UnicodeDecodeError: if `errors` is "strict" and a decoding error occurs
-
-    .. deprecated:: v0.14
-
-        argument `legacy_mode`, use module :mod:`ezdxf.recover`
-        to load DXF documents with structural flaws.
 
     """
     from ezdxf.lldxf.validator import is_dxf_file, is_binary_dxf_file
