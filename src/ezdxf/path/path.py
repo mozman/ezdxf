@@ -8,7 +8,6 @@ from typing import (
     no_type_check,
 )
 from collections import abc
-import warnings
 
 from ezdxf.math import (
     Vec3,
@@ -17,8 +16,6 @@ from ezdxf.math import (
     Bezier3P,
     Bezier4P,
     Matrix44,
-    ConstructionEllipse,
-    BSpline,
     has_clockwise_orientation,
     linear_vertex_spacing,
     Vertex,
@@ -456,48 +453,6 @@ class Path(abc.Sequence):
             self._commands = [
                 cmd for index, cmd in enumerate(commands) if index not in remove
             ]
-
-    def add_bezier3p(self, curves: Iterable[Bezier3P]) -> None:
-        """Add multiple quadratic Bèzier-curves to the path."""
-        warnings.warn(
-            "use tool function add_bezier3p()," "will be removed in v0.17.",
-            DeprecationWarning,
-        )
-        from .tools import add_bezier3p
-
-        add_bezier3p(self, curves)
-
-    def add_ellipse(
-        self, ellipse: ConstructionEllipse, segments=1, reset=True
-    ) -> None:
-        """Add an elliptical arc as multiple cubic Bèzier-curves
-
-        .. deprecated:: 0.15.3
-            replaced by factory function :func:`add_ellipse`
-
-        """
-        warnings.warn(
-            "use tool function add_ellipse()," "will be removed in v0.17.",
-            DeprecationWarning,
-        )
-        from .tools import add_ellipse
-
-        add_ellipse(self, ellipse, segments, reset)
-
-    def add_spline(self, spline: BSpline, level=4, reset=True) -> None:
-        """Add a B-spline as multiple cubic Bèzier-curves.
-
-        .. deprecated:: 0.15.3
-            replaced by factory function :func:`add_spline`
-
-        """
-        warnings.warn(
-            "use tool function add_spline()," "will be removed in v0.17.",
-            DeprecationWarning,
-        )
-        from .tools import add_spline
-
-        add_spline(self, spline, level, reset)
 
     def control_vertices(self):
         """Yields all path control vertices in consecutive order."""
