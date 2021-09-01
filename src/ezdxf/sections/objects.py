@@ -144,7 +144,8 @@ class ObjectsSection:
             if isinstance(obj_dict, str) and validator.is_handle(obj_dict):
                 handle: str = obj_dict
                 table = rootdict.get(name)
-                self.doc.entitydb.reset_handle(table, handle)
+                if self.doc.entitydb.reset_handle(table, handle):
+                    logger.debug(f"reset handle of table {name} to #{handle}")
 
     def add_object(self, entity: "DXFObject") -> None:
         """Add `entity` to OBJECTS section. (internal API)"""
