@@ -29,6 +29,7 @@ Version 0.17b0 - dev
 - NEW: support for `ACAD_PROXY_ENTITY`
 - NEW: rendering support for inline codes in `MTEXT` entities for the `drawing`
   add-on
+- REMOVED: deprecated class methods `from_...(entity)` from `Path`, use `make_path(entity)` instead
 
 Version 0.16.6 - 2021-08-28
 ---------------------------

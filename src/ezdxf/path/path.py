@@ -1,7 +1,6 @@
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
 from typing import (
-    TYPE_CHECKING,
     List,
     Iterable,
     Optional,
@@ -22,6 +21,7 @@ from ezdxf.math import (
     BSpline,
     has_clockwise_orientation,
     linear_vertex_spacing,
+    Vertex,
 )
 
 from .commands import (
@@ -34,17 +34,6 @@ from .commands import (
     PathElement,
 )
 
-if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        Vertex,
-        Ellipse,
-        Arc,
-        Circle,
-        LWPolyline,
-        Polyline,
-        Spline,
-    )
-
 __all__ = ["Path"]
 
 MAX_DISTANCE = 0.01
@@ -55,7 +44,7 @@ G1_TOL = 1e-4
 class Path(abc.Sequence):
     __slots__ = ("_start", "_commands", "_has_sub_paths")
 
-    def __init__(self, start: "Vertex" = NULLVEC):
+    def __init__(self, start: Vertex = NULLVEC):
         self._start = Vec3(start)
         self._has_sub_paths = False
         self._commands: List[PathElement] = []
@@ -87,7 +76,7 @@ class Path(abc.Sequence):
         return self._start
 
     @start.setter
-    def start(self, location: "Vertex") -> None:
+    def start(self, location: Vertex) -> None:
         if self._commands:
             raise ValueError("Requires an empty path.")
         else:
@@ -138,11 +127,11 @@ class Path(abc.Sequence):
             raise TypeError("can't detect orientation of a multi-path object")
         return has_clockwise_orientation(self.control_vertices())
 
-    def line_to(self, location: "Vertex") -> None:
+    def line_to(self, location: Vertex) -> None:
         """Add a line from actual path end point to `location`."""
         self._commands.append(LineTo(end=Vec3(location)))
 
-    def move_to(self, location: "Vertex") -> None:
+    def move_to(self, location: Vertex) -> None:
         """Start a new sub-path at `location`. This creates a gap between the
         current end-point and the start-point of the new sub-path. This converts
         the instance into a :term:`Multi-Path` object.
@@ -163,14 +152,14 @@ class Path(abc.Sequence):
                 commands.pop()
             commands.append(MoveTo(end=Vec3(location)))
 
-    def curve3_to(self, location: "Vertex", ctrl: "Vertex") -> None:
+    def curve3_to(self, location: Vertex, ctrl: Vertex) -> None:
         """Add a quadratic Bèzier-curve from actual path end point to
         `location`, `ctrl` is the control point for the quadratic Bèzier-curve.
         """
         self._commands.append(Curve3To(end=Vec3(location), ctrl=Vec3(ctrl)))
 
     def curve4_to(
-        self, location: "Vertex", ctrl1: "Vertex", ctrl2: "Vertex"
+        self, location: Vertex, ctrl1: Vertex, ctrl2: Vertex
     ) -> None:
         """Add a cubic Bèzier-curve from actual path end point to `location`,
         `ctrl1` and `ctrl2` are the control points for the cubic Bèzier-curve.
@@ -468,21 +457,6 @@ class Path(abc.Sequence):
                 cmd for index, cmd in enumerate(commands) if index not in remove
             ]
 
-    def add_curves(self, curves: Iterable[Bezier4P]) -> None:
-        """Add multiple cubic Bèzier-curves to the path.
-
-        .. deprecated:: 0.15.3
-            replaced by factory function :func:`add_bezier4p`
-
-        """
-        warnings.warn(
-            "use tool function add_bezier4p()," "will be removed in v0.17.",
-            DeprecationWarning,
-        )
-        from .tools import add_bezier4p
-
-        add_bezier4p(self, curves)
-
     def add_bezier3p(self, curves: Iterable[Bezier3P]) -> None:
         """Add multiple quadratic Bèzier-curves to the path."""
         warnings.warn(
@@ -524,125 +498,6 @@ class Path(abc.Sequence):
         from .tools import add_spline
 
         add_spline(self, spline, level, reset)
-
-    @classmethod
-    def from_vertices(cls, vertices: Iterable["Vertex"], close=False) -> "Path":
-        """Returns a :class:`Path` from given `vertices`.
-
-        .. deprecated:: 0.15.3
-            replaced by factory function :func:`from_vertices()`
-
-        """
-        warnings.warn(
-            "use factory function from_vertices()," "will be removed in v0.17.",
-            DeprecationWarning,
-        )
-        from .converter import from_vertices
-
-        return from_vertices(vertices, close)
-
-    @classmethod
-    def from_lwpolyline(cls, lwpolyline: "LWPolyline") -> "Path":
-        """Returns a :class:`Path` from a :class:`~ezdxf.entities.LWPolyline`
-        entity, all vertices transformed to WCS.
-
-        .. deprecated:: 0.15.2
-            replaced by factory function :func:`make_path()`
-
-        """
-        warnings.warn(
-            "use factory function make_path(lwpolyline),"
-            "will be removed in v0.17.",
-            DeprecationWarning,
-        )
-        from .converter import make_path
-
-        return make_path(lwpolyline)
-
-    @classmethod
-    def from_polyline(cls, polyline: "Polyline") -> "Path":
-        """Returns a :class:`Path` from a :class:`~ezdxf.entities.Polyline`
-        entity, all vertices transformed to WCS.
-
-        .. deprecated:: 0.15.2
-            replaced by factory function :func:`make_path()`
-
-        """
-        warnings.warn(
-            "use factory function make_path(polyline),"
-            "will be removed in v0.17.",
-            DeprecationWarning,
-        )
-        from .converter import make_path
-
-        return make_path(polyline)
-
-    @classmethod
-    def from_spline(cls, spline: "Spline", level: int = 4) -> "Path":
-        """Returns a :class:`Path` from a :class:`~ezdxf.entities.Spline`.
-
-        .. deprecated:: 0.15.2
-            replaced by factory function :func:`make_path()`
-
-        """
-        warnings.warn(
-            "use factory function make_path(polyline),"
-            "will be removed in v0.17.",
-            DeprecationWarning,
-        )
-        from .converter import make_path
-
-        return make_path(spline, level=level)
-
-    @classmethod
-    def from_ellipse(cls, ellipse: "Ellipse", segments: int = 1) -> "Path":
-        """Returns a :class:`Path` from a :class:`~ezdxf.entities.Ellipse`.
-
-        .. deprecated:: 0.15.2
-            replaced by factory function :func:`make_path()`
-
-        """
-        warnings.warn(
-            "use factory function make_path(ellipse),"
-            "will be removed in v0.17.",
-            DeprecationWarning,
-        )
-        from .converter import make_path
-
-        return make_path(ellipse, segments=segments)
-
-    @classmethod
-    def from_arc(cls, arc: "Arc", segments: int = 1) -> "Path":
-        """Returns a :class:`Path` from an :class:`~ezdxf.entities.Arc`.
-
-        .. deprecated:: 0.15.2
-            replaced by factory function :func:`make_path()`
-
-        """
-        warnings.warn(
-            "use factory function make_path(arc)," "will be removed in v0.17.",
-            DeprecationWarning,
-        )
-        from .converter import make_path
-
-        return make_path(arc, segments=segments)
-
-    @classmethod
-    def from_circle(cls, circle: "Circle", segments: int = 1) -> "Path":
-        """Returns a :class:`Path` from a :class:`~ezdxf.entities.Circle`.
-
-        .. deprecated:: 0.15.2
-            replaced by factory function :func:`make_path()`
-
-        """
-        warnings.warn(
-            "use factory function make_path(circle),"
-            "will be removed in v0.17.",
-            DeprecationWarning,
-        )
-        from .converter import make_path
-
-        return make_path(circle, segments=segments)
 
     def control_vertices(self):
         """Yields all path control vertices in consecutive order."""
