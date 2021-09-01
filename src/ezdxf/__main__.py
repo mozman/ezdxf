@@ -7,30 +7,33 @@ from ezdxf import options, print_config
 from ezdxf import commands
 from ezdxf.tools import fonts
 
-YES_NO = {True: 'yes', False: 'no'}
+YES_NO = {True: "yes", False: "no"}
 options.set(options.CORE, "LOAD_PROXY_GRAPHICS", "true")
 
 
 def add_common_arguments(parser):
     parser.add_argument(
-        '-V', '--version',
-        action='store_true',
+        "-V",
+        "--version",
+        action="store_true",
         help="show version and exit",
     )
     parser.add_argument(
-        '-v', '--verbose',
-        action='store_true',
+        "-v",
+        "--verbose",
+        action="store_true",
         help="give more output",
     )
     parser.add_argument(
-        '--config',
-        action='store',
+        "--config",
+        action="store",
         help="path to a config file",
     )
     parser.add_argument(
-        '--log',
-        action='store',
-        help="path to a verbose appending log",
+        "--log",
+        action="store",
+        help='path to a verbose appending log, "stderr" logs to the '
+        "standard error stream",
     )
 
 
@@ -42,10 +45,14 @@ def setup_log(args):
     import logging
     from datetime import datetime
     from io import StringIO
+
     level = "DEBUG" if args.verbose else "INFO"
-    logging.basicConfig(filename=args.log, level=level)
-    print(f"Appending logs to file \"{args.log}\", logging level: {level}\n")
-    logger = logging.getLogger('ezdxf')
+    if args.log.lower() == "stderr":
+        logging.basicConfig(stream=sys.stderr, level=level)
+    else:
+        logging.basicConfig(filename=args.log, level=level)
+    print(f'Appending logs to file "{args.log}", logging level: {level}\n')
+    logger = logging.getLogger("ezdxf")
     logger.info("***** Launch time: " + datetime.now().isoformat() + " *****")
     if args.verbose:
         s = StringIO()
