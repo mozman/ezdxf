@@ -193,7 +193,7 @@ class Drawing:
         self.acdsdata = AcDsDataSection(self)
         self.rootdict = self.objects.rootdict
         # Create missing tables:
-        self.objects.setup_objects_management_tables(self.rootdict)
+        self.objects.setup_object_management_tables(self.rootdict)
         self.layouts = Layouts.setup(self)
         self._finalize_setup()
 
@@ -450,7 +450,7 @@ class Drawing:
         # Objects section setup:
         self.rootdict = self.objects.rootdict
         # Create missing management tables (DICTIONARY):
-        self.objects.setup_objects_management_tables(self.rootdict)
+        self.objects.setup_object_management_tables(self.rootdict)
 
         # Setup modelspace- and paperspace layouts:
         self.layouts = Layouts.load(self)

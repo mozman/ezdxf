@@ -1,6 +1,6 @@
 # Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Tuple, cast, Iterator
+from typing import TYPE_CHECKING, Iterable, Tuple, cast, Iterator, Union
 import logging
 
 from ezdxf.entities.dictionary import Dictionary
@@ -113,7 +113,7 @@ class ObjectsSection:
         # root directory has no owner
         return self.add_dictionary(owner="0")
 
-    def setup_objects_management_tables(self, rootdict: Dictionary) -> None:
+    def setup_object_management_tables(self, rootdict: Dictionary) -> None:
         """Setup required management tables. (internal API)"""
 
         def setup_plot_style_name_table():
@@ -127,25 +127,33 @@ class ObjectsSection:
             plot_style_name_dict["Normal"] = placeholder
             rootdict["ACAD_PLOTSTYLENAME"] = plot_style_name_dict
 
+        def restore_table_handle(table_name: str, handle: str) -> None:
+            # The original object table does not exist, but the handle is maybe
+            # used by some DXF entities. Try to restore the original table
+            # handle.
+            new_table = rootdict.get(table_name)
+            if isinstance(
+                new_table, Dictionary
+            ) and self.doc.entitydb.reset_handle(new_table, handle):
+                logger.debug(f"reset handle of table {table_name} to #{handle}")
+
+        # check required object tables:
         for name in _OBJECT_TABLE_NAMES:
-            obj_dict = rootdict.get(name)
-            if isinstance(obj_dict, Dictionary):
-                continue  # just create not existing tables
-            # Entry does not exist or it is just a handle, which also means
-            # the entry does not exist!
+            table: Union[Dictionary, str, None] = rootdict.get(name)  # type: ignore
+            # Dictionary: existing table object
+            # str: handle of not existing table object
+            # None: no entry in the rootdict for "name"
+            if isinstance(table, Dictionary):
+                continue  # skip existing tables
+
             logger.info(f"creating {name} dictionary")
             if name == "ACAD_PLOTSTYLENAME":
                 setup_plot_style_name_table()
             else:
                 rootdict.add_new_dict(name)
-            # The original object table does not exist, but the handle is maybe
-            # used by some DXF entities.
-            # Try to restore the original object table handle:
-            if isinstance(obj_dict, str) and validator.is_handle(obj_dict):
-                handle: str = obj_dict
-                table = rootdict.get(name)
-                if self.doc.entitydb.reset_handle(table, handle):
-                    logger.debug(f"reset handle of table {name} to #{handle}")
+
+            if isinstance(table, str) and validator.is_handle(table):
+                restore_table_handle(name, handle=table)
 
     def add_object(self, entity: "DXFObject") -> None:
         """Add `entity` to OBJECTS section. (internal API)"""
