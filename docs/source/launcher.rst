@@ -207,6 +207,7 @@ Browse the internal structure of a DXF file like a file system:
 
     C:\> ezdxf browse gear.dxf
 
+
 .. image:: gfx/gear-browse.png
    :align: center
 
@@ -246,6 +247,77 @@ For `gedit` on Linux use (untested):
     [browse-command]
 
     text_editor = gedit +{num} "{filename}"
+
+The *browse* command opens a DXF structure browser to investigate the
+internals of a DXF file without interpreting the content. The functionality of
+the DXF browser is similar to the DXF `Pretty Printer`_ (*pp* command), but without
+the disadvantage of creating giant HTML files. The intended usage is debugging
+invalid DXF files, which can not be loaded by the :func:`ezdxf.readfile()` or
+the :func:`ezdxf.recover.readfile()` functions.
+
+Line Numbers
+~~~~~~~~~~~~
+
+The low level tag loader ignores DXF comments (group code 999). If there are
+comments in the DXF file the line numbers displayed in the DXF browser are
+not synchronized, use the `strip`_ command beforehand to remove all comments
+from the DXF file in order to keep the line numbers synchronized.
+
+GUI Features
+~~~~~~~~~~~~
+
+The tree view on the left shows the outline of the DXF file. The number in round
+brackets on the right side of each item shows the count of structure entities
+within the structure layer, the value in angle brackets on the left side is
+the entity handle.
+
+The right list view shows the entity content as DXF tags.
+Structure tags (data type <ctrl>) are shown in blue, a double click on a reference
+handle (datatype <ref>) jumps to the referenced entity, reference handles of
+non-existent targets are shown in red.
+
+Clicking on the first structure tag in the list opens the DXF reference provided
+by Autodesk in the standard web browser.
+
+Auto Reload
+~~~~~~~~~~~
+
+The browser automatically displays a dialog for reloading DXF files if they have
+been modified by an external application.
+
+Menus and Shortcuts
+~~~~~~~~~~~~~~~~~~~
+
+- File Menu
+    - **Open DXF file...** *Ctrl+O*
+    - **Reload DXF file** *Ctrl+R*
+    - **Open in Text Editor** *Ctrl+T*, open the DXF file in the associated text
+      editor at the current location
+    - **Export DXF Entity...** *Ctrl+E*, export the current DXF entity shown in the
+      list view as text file
+    - **Copy DXF Entity to Clipboard** *Ctrl+C*, copy the current DXF entity shown
+      in the list view into the clipboard
+    - **Quit** *Ctrl+Q*
+
+- Navigate Menu
+    - **Go to Handle...** *Ctrl+G*
+    - **Go to Line...** *Ctrl+L*
+    - **Find Text...** *Ctrl+F*, opens the find text dialog
+    - **Next Entity** *Ctrl+Right*, go to the next entity in the DXF structure
+    - **Previous Entity** *Ctrl+Right*, go to the previous entity in the DXF structure
+    - **Show Entity in TreeView** *Ctrl+Down*, expand the left tree view to the
+      currently displayed entity in the list view - this does not happen
+      automatically for performance reasons
+    - **Entity History Back** *Alt+Left*
+    - **Entity History Forward** *Alt+Right*
+    - **Go to HEADERS Section** *Shift+H*
+    - **Go to BLOCKS Section** *Shift+B*
+    - **Go to ENTITIES Section** *Shift+E*
+    - **Go to OBJECTS Section** *Shift+O*
+
+- Bookmarks Menu
+    - **Store Bookmark...** *Ctrl+Shift+B*, store current location as named bookmark
+    - **Go to Bookmark...** *Ctrl+B*, go to stored location
 
 Strip
 -----
