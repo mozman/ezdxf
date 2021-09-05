@@ -99,10 +99,20 @@ Ezdxf Metadata
 .. versionadded:: 0.17
 
 Store internal metadata like *ezdxf* version and creation time for
-a new created document as metadata in the DXF file. The :class:`MetaData`
-object can also store custom metadata.
+a new created document as metadata in the DXF file. Only standard DXF features
+are used to store meta data and this meta data is preserved by Autodesk products,
+BricsCAD and of course *ezdxf*. Other 3rd party DXF libraries may remove this
+meta data.
 
-The :class:`MetaData` object has a dict-like interface::
+For DXF R12 the meta data is stored as XDATA by AppID ``EZDXF`` in the model
+space BLOCK entity in the BLOCKS section.
+
+For DXF R2000+ the meta data is stored in the "root" DICTIONARY in the
+OBJECTS section as a DICTIONARY object by the key ``EZDXF_META``.
+
+
+The :class:`MetaData` object has a dict-like interface and can also store
+custom metadata::
 
     metadata = doc.ezdxf_metadata()
 
