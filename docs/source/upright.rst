@@ -29,7 +29,7 @@ Supported DXF entities:
 
     The WCS representation of OCS entities with flipped extrusion vector
     is not 100% identical to the source entity, curve orientation and vertex order
-    may change, see `additional Explanation`_ below.
+    may change, see `additional explanation`_ below.
     A mirrored text represented by an extrusion vector (0, 0, -1)
     cannot represented by an extrusion vector (0, 0, 1), therefore this CANNOT
     work for text entities or entities including text:
