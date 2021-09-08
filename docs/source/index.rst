@@ -13,7 +13,7 @@ Quick-Info
 ==========
 
 - *ezdxf* is a Python package to create new DXF files and read/modify/write existing DXF files
-- the intended audience are developers
+- the intended audience are programmers
 - requires at least Python 3.7
 - OS independent
 - additional required packages: `pyparsing <https://pypi.python.org/pypi/pyparsing/>`_
@@ -39,6 +39,8 @@ Included Extensions
   documents as starting point for parametric DXF entity creation
 - :mod:`~ezdxf.addons.acadctb` add-on to read/write :ref:`plot_style_files`
 - :mod:`~ezdxf.addons.pycsg` add-on for Constructive Solid Geometry (CSG) modeling technique
+- :class:`~ezdxf.addons.MTextExplode` add-on for exploding MTEXT entities into
+  single line TEXT entities
 
 Website
 -------
