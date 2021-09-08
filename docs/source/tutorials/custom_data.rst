@@ -1,7 +1,9 @@
-Storing User Data
-=================
+.. _tut_custom_data:
 
-This section describes how to store arbitrary user data in DXF files using
+Storing Custom Data in DXF Files
+================================
+
+This tutorial describes how to store custom data in DXF files using
 standard DXF features.
 
 Saving data in comments is not covered in this section, because comments are not
@@ -11,13 +13,13 @@ other DXF libraries when loading DXF files, but there is a :mod:`ezdxf.comments`
 module to load comments from DXF files.
 
 The DXF data format is a very versatile and flexible data format and supports
-various ways to store user data. This starts by setting special header variables,
+various ways to store custom data. This starts by setting special header variables,
 storing XData, AppData and extension dictionaries in DXF entities and objects,
 storing XRecords in the OBJECTS section and ends by using proxy entities or
 even extending the DXF format by user defined entities and objects.
 
 Retrieving User Data
-====================
+--------------------
 
 Retrieving the is a simple task by `ezdxf`, but often not possible in CAD
 applications without using the scripting features (AutoLisp) or even the SDK.
@@ -30,25 +32,24 @@ applications without using the scripting features (AutoLisp) or even the SDK.
     AutoCAD or any other CAD application.
 
 Header Section
-==============
+--------------
 
 Meta Data
-=========
+---------
 
 XDATA
-=====
+-----
 
 AppData
-=======
+-------
 
 Extension Dictionaries
-======================
+----------------------
 
 XRecord
-=======
+-------
 
 UserRecord
-==========
+----------
 
-.. module:: ezdxf.urecord
 

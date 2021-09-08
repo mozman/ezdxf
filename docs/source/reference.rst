@@ -39,6 +39,10 @@ DXF Structures
     groups
     dxfentities/index
     dxfobjects/index
+    xdata
+    xdict
+    appdata
+    reactors
 
 DXF Entity Creation
 -------------------
@@ -76,13 +80,14 @@ Construction
     bbox
     upright
 
-User Data
----------
+Custom Data
+-----------
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
 
-    userdata
+    user_xdata
+    user_record
 
 Tools
 -----
