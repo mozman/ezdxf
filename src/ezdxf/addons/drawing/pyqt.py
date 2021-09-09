@@ -69,21 +69,12 @@ class PyQtBackend(Backend):
     def __init__(
         self,
         scene: Optional[qw.QGraphicsScene] = None,
-        point_radius=None,  # deprecated
         *,
         use_text_cache: bool = True,
         debug_draw_rect: bool = False,
         params: Dict = None,
     ):
         super().__init__(get_params(params))
-        if point_radius is not None:
-            self.point_size = point_radius * 2.0
-            warnings.warn(
-                'The "point_radius" argument is deprecated use the params  dict '
-                "to pass arguments to the PyQtBackend, "
-                "will be removed in v0.16.",
-                DeprecationWarning,
-            )
         self._scene = scene or qw.QGraphicsScene()  # avoids many type errors
         self._color_cache: Dict[Color, qg.QColor] = {}
         self._pattern_cache: Dict[PatternKey, int] = {}
