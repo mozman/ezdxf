@@ -12,14 +12,11 @@ may appear multiples times in one entity. At the worst case
 diffuse map) using same group codes with different meanings.
 
 """
-from typing import Iterable, List, TYPE_CHECKING, Tuple, Any
+from typing import Iterable, Tuple, Iterator, Any
 
 from .const import DXFStructureError, DXFValueError, STRUCTURE_MARKER
 from .types import DXFTag, EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR, dxftag
 from .tagger import internal_tag_compiler
-
-if TYPE_CHECKING:
-    from ezdxf.eztypes import TagValue
 
 COMMENT_CODE = 999
 
@@ -89,7 +86,7 @@ class Tags(list):
         """
         return any(tag.code == code for tag in self)
 
-    def get_first_value(self, code: int, default=DXFValueError) -> "TagValue":
+    def get_first_value(self, code: int, default=DXFValueError) -> Any:
         """Returns value of first :class:`~ezdxf.lldxf.types.DXFTag` with given
         group code or default if `default` != :class:`DXFValueError`, else
         raises :class:`DXFValueError`.
@@ -123,9 +120,9 @@ class Tags(list):
         if default is DXFValueError:
             raise DXFValueError(code)
         else:
-            return default
+            return default  # type: ignore
 
-    def find_all(self, code: int) -> List[DXFTag]:
+    def find_all(self, code: int) -> "Tags":
         """Returns a list of :class:`~ezdxf.lldxf.types.DXFTag` with given
         group code.
 
@@ -133,7 +130,7 @@ class Tags(list):
             code: group code as int
 
         """
-        return [tag for tag in self if tag.code == code]
+        return self.__class__(tag for tag in self if tag.code == code)
 
     def tag_index(self, code: int, start: int = 0, end: int = None) -> int:
         """Return index of first :class:`~ezdxf.lldxf.types.DXFTag` with given
@@ -178,7 +175,7 @@ class Tags(list):
         """
         self[:] = [tag for tag in self if tag.code not in set(codes)]
 
-    def pop_tags(self, codes: Iterable[int]) -> Iterable[DXFTag]:
+    def pop_tags(self, codes: Iterable[int]) -> Iterator[DXFTag]:
         """Pop tags with group codes specified in `codes`.
 
         Args:
@@ -204,7 +201,7 @@ class Tags(list):
         """
         self[:] = [tag for tag in self if tag.code in set(codes)]
 
-    def filter(self, codes: Iterable[int]) -> Iterable[DXFTag]:
+    def filter(self, codes: Iterable[int]) -> Iterator[DXFTag]:
         """Iterate and filter tags by group `codes`.
 
         Args:
@@ -302,7 +299,7 @@ def group_tags(
 
 def text_to_multi_tags(
     text: str, code: int = 303, size: int = 255, line_ending: str = "^J"
-) -> List[DXFTag]:
+) -> Tags:
     text = "".join(text).replace("\n", line_ending)
 
     def chop():
@@ -313,10 +310,10 @@ def text_to_multi_tags(
             start = end
             end += size
 
-    return [DXFTag(code, part) for part in chop()]
+    return Tags(DXFTag(code, part) for part in chop())
 
 
-def multi_tags_to_text(tags, line_ending: str = "^J") -> str:
+def multi_tags_to_text(tags: Tags, line_ending: str = "^J") -> str:
     return "".join(tag.value for tag in tags).replace(line_ending, "\n")
 
 
@@ -324,8 +321,8 @@ OPEN_LIST = (1002, "{")
 CLOSE_LIST = (1002, "}")
 
 
-def xdata_list(name: str, xdata_tags: Iterable) -> List[Tuple[int, Any]]:
-    tags = []
+def xdata_list(name: str, xdata_tags: Iterable) -> Tags:
+    tags = Tags()
     if name:
         tags.append((1000, name))
     tags.append(OPEN_LIST)
@@ -334,15 +331,15 @@ def xdata_list(name: str, xdata_tags: Iterable) -> List[Tuple[int, Any]]:
     return tags
 
 
-def remove_named_list_from_xdata(name: str, tags: Tags) -> List[Tuple]:
+def remove_named_list_from_xdata(name: str, tags: Tags) -> Tags:
     start, end = get_start_and_end_of_named_list_in_xdata(name, tags)
     del tags[start:end]
     return tags
 
 
-def get_named_list_from_xdata(name: str, tags: Tags) -> List[Tuple]:
+def get_named_list_from_xdata(name: str, tags: Tags) -> Tags:
     start, end = get_start_and_end_of_named_list_in_xdata(name, tags)
-    return tags[start:end]
+    return Tags(tags[start:end])
 
 
 class NotFoundException(Exception):
@@ -350,7 +347,7 @@ class NotFoundException(Exception):
 
 
 def get_start_and_end_of_named_list_in_xdata(
-    name: str, tags: List[Tuple]
+    name: str, tags: Tags
 ) -> Tuple[int, int]:
     start = None
     end = None
@@ -382,7 +379,7 @@ def get_start_and_end_of_named_list_in_xdata(
 
 
 def find_begin_and_end_of_encoded_xdata_tags(
-    name: str, tags: List[Tuple]
+    name: str, tags: Tags
 ) -> Tuple[int, int]:
     """Find encoded XDATA tags, surrounded by group code 1000 tags
     name_BEGIN and name_END (e.g. MTEXT column specification).
