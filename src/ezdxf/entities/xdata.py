@@ -10,6 +10,7 @@ from typing import (
     MutableSequence,
     MutableMapping,
     Iterator,
+    Union,
 )
 from collections import OrderedDict
 from contextlib import contextmanager
@@ -31,7 +32,7 @@ import logging
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFEntity
+    from ezdxf.eztypes import TagWriter, DXFEntity, DXFTag
 
 __all__ = ["XData", "XDataUserList", "XDataUserDict"]
 
@@ -46,6 +47,7 @@ class XData:
         return len(self.data)
 
     def __contains__(self, appid: str) -> bool:
+        """Returns ``True`` if  DXF tags for `appid` exist."""
         return appid in self.data
 
     def _add(self, tags: Tags) -> None:
@@ -56,19 +58,45 @@ class XData:
                 logger.info(f"Duplicate XDATA appid {appid} in one entity")
             self.data[appid] = tags
 
-    def add(self, appid: str, tags: Iterable) -> None:
+    def add(
+        self, appid: str, tags: Iterable[Union[Tuple[int, Any], "DXFTag"]]
+    ) -> None:
+        """Add a list of DXF tags for `appid`. The `tags` argument is an
+        iterable of (group code, value) tuples, where the group code has to be
+        an integer value. The mandatory XDATA marker (1001, appid) is added
+        automatically if front of the tags if missing.
+
+        Each entity can contain only one list of tags for each `appid`.
+        Adding a second list of tags for the same `appid` replaces the
+        existing list of tags.
+
+        The valid XDATA group codes are restricted to some specific values in
+        the range from 1000 to 1071, for more information see also the
+        internals about :ref:`xdata_internals`.
+
+        """
         data = Tags(dxftag(code, value) for code, value in tags)
         if len(data) == 0 or data[0] != (XDATA_MARKER, appid):
             data.insert(0, dxftag(XDATA_MARKER, appid))
         self._add(data)
 
     def get(self, appid: str) -> Tags:
+        """Returns the DXF tags as :class:`~ezdxf.lldxf.tags.Tags` list
+        stored by `appid`.
+
+        Raises:
+             DXFValueError: no data for `appid` exist
+
+        """
         if appid in self.data:
             return self.data[appid]
         else:
             raise DXFValueError(appid)
 
     def discard(self, appid):
+        """Delete DXF tags for `appid`. None existing appids are silently
+        ignored.
+        """
         if appid in self.data:
             del self.data[appid]
 
@@ -79,7 +107,7 @@ class XData:
             tagwriter.write_tags(tags)
 
     def has_xlist(self, appid: str, name: str) -> bool:
-        """Returns True if list `name` from XDATA `appid` exists.
+        """Returns ``True`` if list `name` from XDATA `appid` exists.
 
         Args:
             appid: APPID
