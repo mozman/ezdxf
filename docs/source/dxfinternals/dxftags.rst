@@ -111,12 +111,13 @@ For explanation of all group codes see: `DXF Group Codes in Numerical Order Refe
 Extended Data
 -------------
 
-Extended data (XDATA) is created by AutoLISP or ObjectARX applications but any other application like *ezdxf* can also
-define XDATA. If an entity contains extended data, it **follows** the entity's normal definition data but ends
-**before** `Embedded Objects`_.
+Extended data (XDATA) is created by AutoLISP or ObjectARX applications but any
+other application like *ezdxf* can also define XDATA. If an entity contains
+extended data, it **follows** the entity's normal definition.
 
-But extended group codes (>=1000) can appear **before** the XDATA section, an example is the BLOCKBASEPOINTPARAMETER
-entity in AutoCAD Civil 3D or AutoCAD Map 3D.
+But extended group codes (>=1000) can appear **before** the XDATA section, an
+example is the BLOCKBASEPOINTPARAMETER entity in AutoCAD Civil 3D or AutoCAD
+Map 3D.
 
 ================= ===================================================================================
 Group Code        Description
@@ -333,34 +334,40 @@ should be treated as usual group codes.
 Embedded Objects
 ~~~~~~~~~~~~~~~~
 
-The concept of embedded objects was introduced with AutoCAD 2018 (DXF version AC1032) and this is the only information
-I found about it at the Autodesk knowledge base: `Embedded and Encapsulated Objects`_
+The concept of embedded objects was introduced with AutoCAD 2018 (DXF version
+AC1032) and this is the only information I found about it at the Autodesk
+knowledge base: `Embedded and Encapsulated Objects`_
 
 Quote from `Embedded and Encapsulated Objects`_:
 
-    For DXF filing, the embedded object must be filed out and in after all the data of the encapsulating object
-    has been filed out and in.
+    For DXF filing, the embedded object must be filed out and in after all the
+    data of the encapsulating object has been filed out and in.
 
-    A separator is needed between the encapsulating object's data and the subsequent embedded object's data.
-    The separator must be similar in function to the group 0 or 100 in that it must cause the filer to stop
-    reading data. The normal DXF group code 0 cannot be used because DXF proxies use it to determine when to
-    stop reading data. The group code 100 could have been used, but it might have caused confusion when manually
-    reading a DXF file, and there was a need to distinguish when an embedded object is about to be written out in
-    order to do some internal bookkeeping. Therefore, the DXF group code 101 was introduced.
+    A separator is needed between the encapsulating object's data and the
+    subsequent embedded object's data. The separator must be similar in function
+    to the group 0 or 100 in that it must cause the filer to stop reading data.
+    The normal DXF group code 0 cannot be used because DXF proxies use it to
+    determine when to stop reading data. The group code 100 could have been
+    used, but it might have caused confusion when manually reading a DXF file,
+    and there was a need to distinguish when an embedded object is about to be
+    written out in order to do some internal bookkeeping. Therefore, the DXF
+    group code 101 was introduced.
 
 **Hard facts:**
 
+- Only used in ATTRIB, ATTDEF (embedded MTEXT) and MTEXT (columns) in DXF R2018.
 - Embedded object start with :code:`(101, "Embedded Object")` tag
 - Embedded object is appended to the encapsulated object
-- :code:`(101, "Embedded Object")` tag is the end of the encapsulating object, also of its `Extended Data`_
 - Embedded object tags can contain any group code except the DXF structure tag :code:`(0, ...)`
 
 **Unconfirmed assumptions:**
 
+- The embedded object is written before the `Extended Data`_. No examples for
+  entities including embedded objects and XDATA at the same time.
+- XDATA sections replaced by embedded objects, at least for the MTEXT entity
 - The encapsulating object can contain more than one embedded object.
 - Embedded objects separated by :code:`(101, "Embedded Object")` tags
 - every entity can contain embedded objects
-- XDATA sections replaced by embedded objects, at least for the MTEXT entity
 
 Real world example from an AutoCAD 2018 file:
 

@@ -66,6 +66,7 @@ Internal Data Structures
     entitydb
     dxftags
     dxftag_collections
+    xdata
 
 Documentation Guide
 -------------------
