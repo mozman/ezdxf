@@ -721,7 +721,11 @@ class Dimension(DXFGraphic, OverrideMixin):
             transform_if_exist(vertex_name, m.transform)
 
         dxf.extrusion = ocs.new_extrusion
-        self._transform_block_content(m)
+
+        # ignore cloned geometry, this would transform the block content
+        # multiple times:
+        if not dxf.hasattr("insert"):
+            self._transform_block_content(m)
         return self
 
     def _block_content(self) -> Iterable["DXFGraphic"]:
