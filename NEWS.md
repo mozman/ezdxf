@@ -27,6 +27,8 @@ Version 0.17b0 - dev
 - NEW: `ezdxf.upright` module to flip inverted extrusion vectors, for more 
   information read the [docs](https://ezdxf.mozman.at/docs/upright.html)  
 - NEW: support for `ACAD_PROXY_ENTITY`
+- NEW: `BaseLayout.add_mtext_static_columns()`
+- NEW: `BaseLayout.add_mtext_dynamic_manual_height_columns()`
 - NEW: rendering support for inline codes in `MTEXT` entities for the `drawing`
   add-on
 - REMOVED: deprecated class methods `from_...(entity)` from `Path` class, 
