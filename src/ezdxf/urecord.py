@@ -69,6 +69,23 @@ class UserRecord:
         name: str = DEFAULT_NAME,
         doc: "Drawing" = None,
     ):
+        """Setup a :class:`UserRecord` with the given `name`.
+
+        The data is stored in the given `xrecord` object, or in a new created
+        :class:`~ezdxf.entities.XRecord` instance if ``None``. If `doc` is not
+        ``None`` the new xrecord is added to the OBJECTS section of the DXF
+        document.
+
+        Changes of the content has to be committed at the end to be stored in
+        the underlying :attr:`xrecord` object.
+
+        Args:
+            xrecord (XRecord): underlying :class:`~ezdxf.entities.XRecord` instance,
+                if ``None`` a new one will be created
+            name (str): name of the user list
+            doc (Drawing): DXF document or ``None``
+
+        """
         if xrecord is None:
             if doc is None:
                 xrecord = XRecord.new()
@@ -81,6 +98,7 @@ class UserRecord:
 
     @property
     def handle(self) -> Optional[str]:
+        """DXF handle of the underlying :class:`~ezdxf.entities.XRecord` instance."""
         return self.xrecord.dxf.get("handle")
 
     def __enter__(self):
@@ -90,9 +108,19 @@ class UserRecord:
         self.commit()
 
     def __str__(self):
+        """Return str(self)."""
         return str(self.data)
 
     def commit(self) -> XRecord:
+        """Store :attr:`data` in the underlying :class:`~ezdxf.entities.XRecord`
+        instance. This call is not required if using the class by the ``with``
+        statement.
+
+        Raises:
+            DXFValueError: invalid chars ``"\\n"`` or ``"\\r"`` in a string
+            DXFTypeError: invalid data type
+
+        """
         self.xrecord.tags = compile_user_record(self.name, self.data)
         return self.xrecord
 
@@ -209,6 +237,22 @@ class BinaryRecord:
         *,
         doc: "Drawing" = None,
     ):
+        """Setup a :class:`BinaryRecord`.
+
+        The data is stored in the given `xrecord` object, or in a new created
+        :class:`~ezdxf.entities.XRecord` instance if ``None``. If `doc` is not
+        ``None`` the new xrecord is added to the OBJECTS section of the DXF
+        document.
+
+        Changes of the content has to be committed at the end to be stored in
+        the underlying :attr:`xrecord` object.
+
+        Args:
+            xrecord (XRecord): underlying :class:`~ezdxf.entities.XRecord` instance,
+                if ``None`` a new one will be created
+            doc (Drawing): DXF document or ``None``
+
+        """
         if xrecord is None:
             if doc is None:
                 xrecord = XRecord.new()
@@ -220,6 +264,7 @@ class BinaryRecord:
 
     @property
     def handle(self) -> Optional[str]:
+        """DXF handle of the underlying :class:`~ezdxf.entities.XRecord` instance."""
         return self.xrecord.dxf.get("handle")
 
     def __enter__(self):
@@ -229,9 +274,16 @@ class BinaryRecord:
         self.commit()
 
     def __str__(self) -> str:
+        """Return str(self)."""
         return bytes_to_hexstr(self.data)
 
     def commit(self) -> XRecord:
+        """Store binary :attr:`data` in the underlying :class:`~ezdxf.entities.XRecord`
+        instance. This call is not required if using the class by the ``with``
+        statement.
+
+        """
+
         assert isinstance(
             self.data, (bytes, bytearray, memoryview)
         ), "expected binary data"

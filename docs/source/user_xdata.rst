@@ -20,7 +20,7 @@ Group Code  Data Type
             are not allowed
 1010        Vec3
 1040        float
-1071        32bit int, restricted by the DXF standard not by Python!
+1071        32-bit int, restricted by the DXF standard not by Python!
 =========== ============
 
 Strings are limited to 255 characters, line breaks ``"\n"`` and ``"\r"`` are
@@ -33,11 +33,16 @@ This classes do not create the required AppID table entry, only the
 default AppID "EZDXF" exist by default. Setup a new AppID in the AppID
 table: :code:`doc.appids.add("MYAPP")`.
 
+For usage look at this `example`_ at github or go to the tutorial:
+:ref:`tut_custom_data`.
+
 .. seealso::
 
+    - Tutorial: :ref:`tut_custom_data`
+    - `Example`_ at github
     - XDATA reference: :ref:`extended_data`
     - XDATA management class: :class:`XData`
-    - Tutorial: :ref:`tut_custom_data`
+
 
 XDataUserList
 -------------
@@ -146,3 +151,6 @@ XDataUserDict
     .. automethod:: entity
 
     .. automethod:: commit
+
+
+.. _example: https://github.com/mozman/ezdxf/blob/master/examples/user_data_stored_in_XDATA.py
