@@ -114,11 +114,13 @@ DXF type                 ``'DICTIONARYVAR'``
 Factory function         :meth:`ezdxf.entities.Dictionary.add_dict_var`
 ======================== =========================================================================
 
-.. attribute:: dxf.schema
+.. class:: DictionaryVar
 
-    Object schema number (currently set to ``0``)
+    .. attribute:: dxf.schema
 
-.. attribute:: dxf.value
+        Object schema number (currently set to ``0``)
 
-    Value as string.
+    .. attribute:: dxf.value
+
+        Value as string.
 
