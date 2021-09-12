@@ -4,7 +4,7 @@
 import pytest
 import copy
 from ezdxf.math import Vec3
-from ezdxf.lldxf.const import DXFValueError, DXFStructureError
+from ezdxf.lldxf.const import DXFValueError, DXFStructureError, DXFTypeError
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.types import dxftag
 from ezdxf.lldxf.tags import (
@@ -642,6 +642,12 @@ class TestXDataUserDict:
         assert len(xdict) == 1
         assert "Test" in xdict
 
+    @pytest.mark.parametrize("data", [0, 3.14, (1, 1), Vec3()])
+    def test_setitem_accepts_only_strings(self, data):
+        xdict = XDataUserDict()
+        with pytest.raises(DXFTypeError):
+            xdict[data] = "abc"
+
     def test_dict_like_del_interface(self, dict1):
         xdict = XDataUserDict(XData([dict1]))
         del xdict["Key0"]
@@ -688,6 +694,17 @@ class TestXDataUserDict:
             dxftag(1000, "Value2"),
             dxftag(1002, "}"),
         ]
+
+    def test_update_from_dict(self):
+        xdict = XDataUserDict()
+        xdict.update({"a": 1, "b": "str"})
+        assert xdict["a"] == 1
+        assert xdict["b"] == "str"
+
+    def test_update_supports_only_string_keys(self):
+        xdict = XDataUserDict()
+        with pytest.raises(DXFTypeError):
+            xdict.update({0: 1})
 
 
 if __name__ == "__main__":

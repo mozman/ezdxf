@@ -217,11 +217,6 @@ class XDataUserList(MutableSequence):
         1040 float
         1071 32bit int
 
-    This class can not manage arbitrary XDATA!
-
-    This class does not create the required AppID table entry, only the
-    default AppID "EZDXF" exist by default.
-
     """
 
     converter = {
@@ -238,6 +233,20 @@ class XDataUserList(MutableSequence):
     }
 
     def __init__(self, xdata: XData = None, name="DefaultList", appid="EZDXF"):
+        """Setup a XDATA user list `name` for the given `appid`.
+
+        The data is stored in the given `xdata` object, or in a new created
+        :class:`XData` instance if ``None``.
+        Changes of the content has to be committed at the end to be stored in
+        the underlying `xdata` object.
+
+        Args:
+            xdata (XData): underlying :class:`XData` instance, if ``None`` a
+                new one will be created
+            name (str): name of the user list
+            appid (str): application specific AppID
+
+        """
         if xdata is None:
             xdata = XData()
         self.xdata = xdata
@@ -254,6 +263,16 @@ class XDataUserList(MutableSequence):
     def entity(
         cls, entity: "DXFEntity", name="DefaultList", appid="EZDXF"
     ) -> Iterator["XDataUserList"]:
+        """Context manager to manage a XDATA list `name` for a given DXF
+        `entity`. Appends the user list to the existing :class:`XData` instance
+        or creates new :class:`XData` instance.
+
+        Args:
+            entity (DXFEntity): target DXF entity for the XDATA
+            name (str): name of the user list
+            appid (str): application specific AppID
+
+        """
         xdata = entity.xdata
         if xdata is None:
             xdata = XData()
@@ -269,18 +288,22 @@ class XDataUserList(MutableSequence):
         self.commit()
 
     def __str__(self):
+        """Return str(self). """
         return str(self._data)
 
     def insert(self, index: int, value) -> None:
         self._data.insert(index, value)
 
     def __getitem__(self, item):
+        """Get self[item]. """
         return self._data[item]
 
-    def __setitem__(self, item, value) -> Any:
+    def __setitem__(self, item, value):
+        """Set self[item] to value. """
         self._data.__setitem__(item, value)
 
-    def __delitem__(self, item) -> None:
+    def __delitem__(self, item):
+        """Delete self[item]. """
         self._data.__delitem__(item)
 
     def _parse_list(self, tags: Iterable[Tuple]) -> List:
@@ -295,9 +318,18 @@ class XDataUserList(MutableSequence):
         return content
 
     def __len__(self) -> int:
+        """ Returns len(self). """
         return len(self._data)
 
-    def commit(self):
+    def commit(self) -> None:
+        """ Store all changes to the underlying :class:`XData` instance.
+        This call is not required if using the :meth:`entity` context manager.
+
+        Raises:
+            DXFValueError: invalid chars ``"\\n"`` or ``"\\r"`` in a string
+            DXFTypeError: invalid data type
+
+        """
         data = []
         for value in self._data:
             if isinstance(value, str):
@@ -323,11 +355,27 @@ class XDataUserDict(MutableMapping):
     This class does not create the required AppID table entry, only the
     default AppID "EZDXF" exist by default.
 
+    Implements the :class:`MutableMapping` interface.
+
     """
 
     def __init__(self, xdata: XData = None, name="DefaultDict", appid="EZDXF"):
+        """Setup a XDATA user dict `name` for the given `appid`.
+
+        The data is stored in the given `xdata` object, or in a new created
+        :class:`XData` instance if ``None``.
+        Changes of the content has to be committed at the end to be stored in
+        the underlying `xdata` object.
+
+        Args:
+            xdata (XData): underlying :class:`XData` instance, if ``None`` a
+                new one will be created
+            name (str): name of the user list
+            appid (str): application specific AppID
+
+        """
         self._xlist = XDataUserList(xdata, name, appid)
-        self._user_dict: Dict = self._parse_xlist()
+        self._user_dict: Dict[str, Any] = self._parse_xlist()
 
     def _parse_xlist(self) -> Dict:
         if self._xlist:
@@ -342,6 +390,7 @@ class XDataUserDict(MutableMapping):
         self.commit()
 
     def __str__(self):
+        """Return str(self). """
         return str(self._user_dict)
 
     @classmethod
@@ -349,6 +398,16 @@ class XDataUserDict(MutableMapping):
     def entity(
         cls, entity: "DXFEntity", name="DefaultDict", appid="EZDXF"
     ) -> Iterator["XDataUserDict"]:
+        """Context manager to manage a XDATA dict `name` for a given DXF
+        `entity`. Appends the user dict to the existing :class:`XData` instance
+        or creates new :class:`XData` instance.
+
+        Args:
+            entity (DXFEntity): target DXF entity for the XDATA
+            name (str): name of the user list
+            appid (str): application specific AppID
+
+        """
         xdata = entity.xdata
         if xdata is None:
             xdata = XData()
@@ -362,27 +421,51 @@ class XDataUserDict(MutableMapping):
         return self._xlist.xdata
 
     def __len__(self):
+        """ Returns len(self). """
         return len(self._user_dict)
 
     def __getitem__(self, key):
+        """Get self[key]. """
         return self._user_dict[key]
 
     def __setitem__(self, key, item):
+        """Set self[key] to value, key has to be a string.
+
+        Raises:
+            DXFTypeError: key is not a string
+
+        """
+        if not isinstance(key, str):
+            raise DXFTypeError("key is not a string")
         self._user_dict[key] = item
 
     def __delitem__(self, key):
+        """Delete self[key]. """
         del self._user_dict[key]
 
     def __iter__(self):
+        """Implement iter(self). """
         return iter(self._user_dict)
 
     def discard(self, key):
+        """Delete self[key], without raising a :class:`KeyError` if `key` does
+        not exist.
+
+        """
         try:
             del self._user_dict[key]
         except KeyError:
             pass
 
     def commit(self) -> None:
+        """ Store all changes to the underlying :class:`XData` instance.
+        This call is not required if using the :meth:`entity` context manager.
+
+        Raises:
+            DXFValueError: invalid chars ``"\\n"`` or ``"\\r"`` in a string
+            DXFTypeError: invalid data type
+
+        """
         xlist = self._xlist
         xlist.clear()
         for key, value in self._user_dict.items():

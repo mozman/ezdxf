@@ -1,3 +1,5 @@
+.. _extended_data:
+
 Extended Data (XDATA)
 =====================
 
