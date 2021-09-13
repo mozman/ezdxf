@@ -111,6 +111,8 @@ For explanation of all group codes see: `DXF Group Codes in Numerical Order Refe
 Extended Data
 -------------
 
+`DXF R2018 Reference <https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-A2A628B0-3699-4740-A215-C560E7242F63>`_
+
 Extended data (XDATA) is created by AutoLISP or ObjectARX applications but any
 other application like *ezdxf* can also define XDATA. If an entity contains
 extended data, it **follows** the entity's normal definition.
@@ -278,8 +280,9 @@ The extension dictionary tag sequence:
 Persistent Reactors
 ~~~~~~~~~~~~~~~~~~~
 
-Persistent reactors are an optional sequence that stores object handles of objects registering themselves as reactors on
-the current object. Any object or entity may have this section.
+Persistent reactors are an optional sequence that stores object handles of
+objects registering themselves as reactors on the current object. Any object or
+entity may have this section.
 
 The persistent reactors tag sequence:
 
@@ -300,9 +303,10 @@ The persistent reactors tag sequence:
 Application-Defined Codes
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Starting at DXF R13, DXF objects can contain application-defined codes outside of XDATA. This application-defined
-codes can contain any tag except :code:`(0, ...)` and :code:`(102, '{...')`. "{YOURAPPID" means the APPID string with an
-preceding "{". The application defined data tag sequence:
+Starting at DXF R13, DXF objects can contain application-defined codes outside
+of XDATA. This application-defined codes can contain any tag except
+:code:`(0, ...)` and :code:`(102, '{...')`. "{YOURAPPID" means the APPID string
+with an preceding "{". The application defined data tag sequence:
 
 .. code-block:: none
 
@@ -322,12 +326,14 @@ preceding "{". The application defined data tag sequence:
     102
     YOURAPPID}
 
-All groups defined with a beginning :code:`(102, ...)` appear in the DXF reference before the first subclass marker,
-I don't know if these groups can appear after the first or any subclass marker. ezdxf accepts them at any position,
-and by default ezdxf adds new app data in front of the first subclass marker to the first tag section of an DXF object.
+All groups defined with a beginning :code:`(102, ...)` appear in the DXF
+reference before the first subclass marker, I don't know if these groups can
+appear after the first or any subclass marker. Ezdxf accepts them at any position,
+and by default ezdxf adds new app data in front of the first subclass marker to
+the first tag section of an DXF object.
 
-**Exception XRECORD:** Tags with group code 102 and a value string without a preceding "{" or the scheme "YOURAPPID}",
-should be treated as usual group codes.
+**Exception XRECORD:** Tags with group code 102 and a value string without a
+preceding "{" or the scheme "YOURAPPID}", should be treated as usual group codes.
 
 .. _embedded_objects_internals:
 

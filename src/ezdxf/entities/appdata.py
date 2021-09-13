@@ -25,23 +25,38 @@ class AppData:
         self.data = OrderedDict()
 
     def __contains__(self, appid: str) -> bool:
+        """Returns ``True`` if application-defined data exist for `appid`. """
         return uniform_appid(appid) in self.data
 
     def __len__(self) -> int:
+        """Returns the count of AppData. """
         return len(self.data)
 
     def get(self, appid: str) -> Tags:
+        """Get application-defined data for `appid` as
+        :class:`~ezdxf.lldxf.tags.Tags` container.
+        The first tag is always (102, "{APPID").
+        The last tag is always (102, "}").
+        """
         try:
             return self.data[uniform_appid(appid)]
         except KeyError:
             raise DXFKeyError(appid)
 
     def set(self, tags: Tags) -> None:
+        """Store raw application-defined data tags.
+        The first tag has to be (102, "{APPID").
+        The last tag has to be (102, "}").
+        """
         if len(tags):
             appid = tags[0].value
             self.data[appid] = tags
 
     def add(self, appid: str, data: Iterable[Sequence]) -> None:
+        """Add application-defined tags for `appid`.
+        Adds first tag (102, "{APPID") if not exist.
+        Adds last tag (102, "}" if not exist.
+        """
         data = Tags(dxftag(code, value) for code, value in data)
         appid = uniform_appid(appid)
         if data[0] != (APP_DATA_MARKER, appid):
@@ -51,6 +66,9 @@ class AppData:
         self.set(data)
 
     def discard(self, appid: str):
+        """Delete application-defined data for `appid` without raising and error
+        if `appid` doesn't exist.
+        """
         _appid = uniform_appid(appid)
         if _appid in self.data:
             del self.data[_appid]

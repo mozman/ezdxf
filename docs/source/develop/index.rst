@@ -67,6 +67,7 @@ Internal Data Structures
     dxftags
     dxftag_collections
     xdata
+    appdata
 
 Documentation Guide
 -------------------

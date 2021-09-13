@@ -1,8 +1,14 @@
 
-.. module:: ezdxf.entities.appdata
+.. _application_defined_data:
 
-AppData
-=======
+Application-Defined Data (AppData)
+==================================
 
-.. class:: AppData
+
+
+.. seealso::
+
+    - Internals about :ref:`app_data_internals` tags
+    - Internal AppData management class: :class:`~ezdxf.entities.appdata.AppData`
+
 

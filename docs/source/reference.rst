@@ -40,8 +40,8 @@ DXF Structures
     dxfentities/index
     dxfobjects/index
     xdata
-    xdict
     appdata
+    xdict
     reactors
 
 DXF Entity Creation
