@@ -250,7 +250,7 @@ class Relation:
 
     def evaluate(self, entity: "DXFEntity") -> bool:
         try:
-            value = self.convert_case(entity.get_dxf_attrib(self.dxf_attrib))
+            value = self.convert_case(entity.dxf.get_default(self.dxf_attrib))
             return self.compare(value, self.value)
         except AttributeError:  # entity does not support this attribute
             return False

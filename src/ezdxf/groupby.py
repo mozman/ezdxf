@@ -68,7 +68,7 @@ def groupby(
             "Specify a dxfattrib or a key function, but not both."
         )
     if dxfattrib != "":
-        key = lambda entity: entity.get_dxf_attrib(dxfattrib, None)
+        key = lambda entity: entity.dxf.get_default(dxfattrib)
     if key is None:
         raise DXFValueError(
             "no valid argument found, specify a dxfattrib or a key function, "

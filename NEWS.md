@@ -35,6 +35,8 @@ Version 0.17b0 - dev
   use `path.make_path(entity)` instead
 - REMOVED: deprecated `Path` methods `add_...(entity)`, 
   use `path.add_...(path, entity)` function instead
+- BUGFIX: entity query did not match default values if the attribute was not present
+- BUGFIX: groupby query did not match default values if the attribute was not present
 
 Version 0.16.6 - 2021-08-28
 ---------------------------
