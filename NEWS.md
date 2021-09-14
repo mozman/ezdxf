@@ -37,6 +37,7 @@ Version 0.17b0 - dev
   use `path.add_...(path, entity)` function instead
 - BUGFIX: entity query did not match default values if the attribute was not present
 - BUGFIX: groupby query did not match default values if the attribute was not present
+- BUGFIX: ODAFC add-on - reintroduce accidentally removed global variable `exec_path` as `win_exec_path` 
 
 Version 0.16.6 - 2021-08-28
 ---------------------------

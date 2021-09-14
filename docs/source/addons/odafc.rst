@@ -38,6 +38,19 @@ ACAD2013    R2013           AC1027
 ACAD2018    R2018           AC1032
 =========== =============== ===========
 
+On Windows systems the path of the ``ODAFileConverter.exe`` application is
+stored in the config file (see :mod:`ezdxf.options`) in the "odafc-addon"
+section as key "win_exec_path", the default entry is:
+
+.. code-block:: INI
+
+    [odafc-addon]
+    win_exec_path = "C:\Program Files\ODA\ODAFileConverter\ODAFileConverter.exe"
+
+On Linux and macOS the ``ODAFileConverter`` command is located by the
+:func:`shutil.which` function.
+
+
 Usage:
 
 .. code-block:: Python
@@ -56,15 +69,10 @@ Usage:
     odafc.export_dwg(doc, 'my_R2018.dwg', version='R2018')
 
 
-.. attribute:: exec_path
+.. attribute:: win_exec_path
 
     Path to installed `ODA File Converter` executable, default is
     ``"C:\Program Files\ODA\ODAFileConverter\ODAFileConverter.exe"``.
-
-.. attribute:: temp_path
-
-    Path to a temporary folder by default the system temp folder defined by environment variable
-    ``TMP`` or ``TEMP``.
 
 .. autofunction:: readfile(filename: str, version: str = None, audit=False) -> Drawing
 

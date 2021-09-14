@@ -21,6 +21,7 @@ from ezdxf.lldxf.validator import (
 )
 
 logger = logging.getLogger("ezdxf")
+win_exec_path = ezdxf.options.get("odafc-addon", "win_exec_path").strip('"')
 
 
 class ODAFCError(IOError):
@@ -223,7 +224,7 @@ def _odafc_arguments(
 def _get_odafc_path(system: str) -> str:
     path = shutil.which("ODAFileConverter")
     if not path and system == "Windows":
-        path = r"C:\Program Files\ODA\ODAFileConverter\ODAFileConverter.exe"
+        path = win_exec_path
         if not Path(path).is_file():
             path = None
 

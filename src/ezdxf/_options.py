@@ -30,6 +30,7 @@ EZDXF_INI = "ezdxf.ini"
 EZDXF = "ezdxf"
 XDG_CONFIG_HOME = "XDG_CONFIG_HOME"
 CONFIG_DIRECTORY = ".config"
+ODAFC_ADDON = "odafc-addon"
 
 
 def xdg_path(xdg_var: str, directory: str) -> Path:
@@ -71,6 +72,9 @@ def default_config() -> ConfigParser:
     config[BROWSE_COMMAND] = {
         "TEXT_EDITOR": r'"C:\Program Files\Notepad++\notepad++.exe" '
                        r'"{filename}" -n{num}',
+    }
+    config[ODAFC_ADDON] = {
+        "WIN_EXEC_PATH": r'"C:\Program Files\ODA\ODAFileConverter\ODAFileConverter.exe"'
     }
     return config
 
