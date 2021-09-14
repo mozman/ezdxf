@@ -5,7 +5,8 @@
 ODA File Converter Support
 ==========================
 
-Use an installed `ODA File Converter`_ for converting between different versions of `.dwg`, `.dxb` and `.dxf`.
+Use an installed `ODA File Converter`_ for converting between different versions
+of `.dwg`, `.dxb` and `.dxf`.
 
 .. warning::
 
@@ -14,13 +15,15 @@ Use an installed `ODA File Converter`_ for converting between different versions
 
     To avoid this problem delete the ``ezdxf.addons.odafc.py`` module.
 
-The `ODA File Converter`_ has to be installed by the user, the application is available for Windows XP,
-Windows 7 or later, Mac OS X, and Linux in 32/64-bit RPM and DEB format.
+The `ODA File Converter`_ has to be installed by the user, the application is
+available for Windows XP, Windows 7 or later, Mac OS X, and Linux in 32/64-bit
+RPM and DEB format.
 
 At least at Windows the GUI of the ODA File Converter pops up on every call.
 
-ODA File Converter version strings, you can use any of this strings to specify a version, ``'R..'`` and
-``'AC....'`` strings will be automatically mapped to ``'ACAD....'`` strings:
+ODA File Converter version strings, you can use any of this strings to specify
+a version, ``'R..'`` and ``'AC....'`` strings will be automatically mapped to
+``'ACAD....'`` strings:
 
 =========== =============== ===========
 ODAFC       ezdxf           Version
@@ -71,8 +74,8 @@ Usage:
 
 .. attribute:: win_exec_path
 
-    Path to installed `ODA File Converter` executable, default is
-    ``"C:\Program Files\ODA\ODAFileConverter\ODAFileConverter.exe"``.
+    Path to installed `ODA File Converter` executable on Windows systems,
+    default is ``"C:\Program Files\ODA\ODAFileConverter\ODAFileConverter.exe"``.
 
 .. autofunction:: readfile(filename: str, version: str = None, audit=False) -> Drawing
 
