@@ -68,6 +68,7 @@ Internal Data Structures
     dxftag_collections
     xdata
     appdata
+    reactors
 
 Documentation Guide
 -------------------
