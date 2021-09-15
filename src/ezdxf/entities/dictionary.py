@@ -81,7 +81,7 @@ class Dictionary(DXFObject):
 
     Dictionary entries are (key, DXFEntity) pairs. DXFEntity could be a string,
     because at loading time not all objects are already stored in the EntityDB,
-    and have to acquired later.
+    and have to be acquired later.
 
     """
 
@@ -198,25 +198,26 @@ class Dictionary(DXFObject):
 
     @property
     def is_hard_owner(self) -> bool:
-        """Returns ``True`` if :class:`Dictionary` is hard owner of entities.
+        """Returns ``True`` if the dictionary is hard owner of entities.
         Hard owned entities will be destroyed by deleting the dictionary.
         """
         return bool(self.dxf.hard_owned)
 
     def keys(self):
-        """Returns :class:`KeysView` of all dictionary keys."""
+        """Returns a :class:`KeysView` of all dictionary keys. """
         return self._data.keys()
 
     def items(self):
-        """Returns :class:`ItemsView` for all dictionary entries as
-        (:attr:`key`, :class:`DXFEntity`) pairs.
-
+        """Returns an :class:`ItemsView` for all dictionary entries as
+        (key, entity) pairs. An entity can be a handle string if the entity
+        does not exist.
         """
         for key in self.keys():
             yield key, self.get(key)  # maybe handle -> DXFEntity
 
     def __getitem__(self, key: str) -> DXFEntity:
-        """Return the value for `key`, raises a :class:`DXFKeyError` if `key`
+        """Return the entity for `key`, raises a :class:`DXFKeyError` if `key`
+        does not exist. An entity can be a handle string if the entity
         does not exist.
 
         """
@@ -225,23 +226,23 @@ class Dictionary(DXFObject):
         else:
             raise DXFKeyError(key)
 
-    def __setitem__(self, key: str, value: DXFEntity) -> None:
-        """Add item as ``(key, value)`` pair to dictionary."""
-        return self.add(key, value)
+    def __setitem__(self, key: str, entity: DXFEntity) -> None:
+        """Add item as (`key`, `entity`) pair to dictionary. """
+        return self.add(key, entity)
 
     def __delitem__(self, key: str) -> None:
         """Delete entry `key` from the dictionary, raises :class:`DXFKeyError`
-        if key does not exist.
+        if `key` does not exist.
 
         """
         return self.remove(key)
 
     def __contains__(self, key: str) -> bool:
-        """Returns ``True`` if `key` exist."""
+        """Returns ``True`` if `key` exist. """
         return key in self._data
 
     def __len__(self) -> int:
-        """Returns count of items."""
+        """Returns count of dictionary entries."""
         return len(self._data)
 
     count = __len__
@@ -249,21 +250,26 @@ class Dictionary(DXFObject):
     def get(
         self, key: str, default: Optional[DXFEntity] = None
     ) -> Optional[DXFEntity]:
-        """Returns :class:`DXFEntity` for `key`, if `key` exist else `default`."""
+        """Returns the :class:`DXFEntity` for `key`, if `key` exist else
+        `default`. An entity can be a handle string if the entity
+        does not exist.
+
+        """
         return self._data.get(key, default)  # type: ignore
 
-    def add(self, key: str, value: DXFEntity) -> None:
+    def add(self, key: str, entity: DXFEntity) -> None:
         """Add entry ``(key, value)``."""
-        if isinstance(value, str):
-            if not is_valid_handle(value):
+        if isinstance(entity, str):
+            if not is_valid_handle(entity):
                 raise DXFValueError(
-                    f"Invalid entity handle #{value} for key {key}"
+                    f"Invalid entity handle #{entity} for key {key}"
                 )
-        self._data[key] = value
+        self._data[key] = entity
 
     def remove(self, key: str) -> None:
         """Delete entry `key`. Raises :class:`DXFKeyError`, if `key` does not
-        exist. Deletes also hard owned DXF objects from OBJECTS section.
+        exist. Destroys hard owned DXF entities.
+
         """
         data = self._data
         if key not in data:
@@ -274,12 +280,14 @@ class Dictionary(DXFObject):
             entity = self.__getitem__(key)
             # Presumption: hard owned DXF objects always reside in the OBJECTS
             # section.
+            # TODO: use entity.destroy()?
             self.doc.objects.delete_entity(entity)  # type: ignore
         del data[key]
 
     def discard(self, key: str) -> None:
-        """Delete entry `key` if exists. Does NOT raise an exception if `key`
-        not exist and does not delete hard owned DXF objects.
+        """Delete entry `key` if exists. Does not raise an exception if `key`
+        doesn't exist and does not destroy hard owned DXF entities.
+
         """
         try:
             del self._data[key]
@@ -287,8 +295,8 @@ class Dictionary(DXFObject):
             pass
 
     def clear(self) -> None:
-        """Delete all entries from :class:`Dictionary`, deletes hard owned
-        DXF objects from OBJECTS section.
+        """Delete all entries from the dictionary and destroys hard owned
+        DXF entities.
         """
         if self.is_hard_owner:
             self._delete_hard_owned_entries()
@@ -298,13 +306,15 @@ class Dictionary(DXFObject):
         # Presumption: hard owned DXF objects always reside in the OBJECTS section
         objects = self.doc.objects  # type: ignore
         for key, entity in self.items():
-            objects.delete_entity(entity)
+            # TODO: is entity a string?
+            # TODO: use entity.destroy()?
+            objects.delete_entity(entity)  # type: ignore
 
     def add_new_dict(self, key: str, hard_owned: bool = False) -> "Dictionary":
-        """Create a new sub :class:`Dictionary`.
+        """Create a new sub-dictionary of type :class:`Dictionary`.
 
         Args:
-            key: name of the sub dictionary
+            key: name of the sub-dictionary
             hard_owned: entries of the new dictionary are hard owned
 
         """

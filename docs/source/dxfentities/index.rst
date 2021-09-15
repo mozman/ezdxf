@@ -3,6 +3,10 @@ DXF Entities
 
 .. module:: ezdxf.entities
 
+All DXF entities can only reside in the :class:`~ezdxf.layouts.BaseLayout`
+and inherited classes like :class:`~ezdxf.layouts.Modelspace`,
+:class:`~ezdxf.layouts.Paperspace` and :class:`~ezdxf.layouts.BlockLayout`.
+
 .. warning::
 
     Do not instantiate entity classes by yourself - always use the provided factory functions!
