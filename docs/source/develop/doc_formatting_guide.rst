@@ -3,8 +3,9 @@
 Formatting Guide
 ================
 
-This section is only for me, because of the long pauses between develop
-iterations, I often forget to be consistent in documentation formatting.
+This section is only for `myself <https://github.com/mozman>`_, because of the
+long pauses between develop iterations, I often forget to be consistent in
+documentation formatting.
 
 Documentation is written with `Sphinx`_ and `reSturcturedText`_.
 
