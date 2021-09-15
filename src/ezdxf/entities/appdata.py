@@ -1,6 +1,14 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List, Iterable, Set, Sequence, Optional
+from typing import (
+    TYPE_CHECKING,
+    List,
+    Iterable,
+    Set,
+    Sequence,
+    Optional,
+    Iterator,
+)
 from collections import OrderedDict
 from ezdxf.lldxf.types import dxftag, uniform_appid
 from ezdxf.lldxf.tags import Tags
@@ -25,11 +33,11 @@ class AppData:
         self.data = OrderedDict()
 
     def __contains__(self, appid: str) -> bool:
-        """Returns ``True`` if application-defined data exist for `appid`. """
+        """Returns ``True`` if application-defined data exist for `appid`."""
         return uniform_appid(appid) in self.data
 
     def __len__(self) -> int:
-        """Returns the count of AppData. """
+        """Returns the count of AppData."""
         return len(self.data)
 
     def get(self, appid: str) -> Tags:
@@ -90,12 +98,15 @@ class Reactors:
         self.reactors: Set[str] = set(handles or [])
 
     def __len__(self) -> int:
+        """Returns count of registered handles."""
         return len(self.reactors)
 
-    def __contains__(self, handle):
+    def __contains__(self, handle: str) -> bool:
+        """Returns ``True`` if `handle` is registered."""
         return handle in self.reactors
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
+        """Returns an iterator for all registered handles."""
         return iter(self.get())
 
     @classmethod
@@ -117,15 +128,19 @@ class Reactors:
         return cls((handle.value for handle in tags[1:-1]))
 
     def get(self) -> List[str]:
+        """Returns all registered handles as sorted list."""
         return sorted(self.reactors, key=lambda x: int(x, base=16))
 
     def set(self, handles: Optional[Iterable[str]]) -> None:
+        """Reset all handles."""
         self.reactors = set(handles or [])
 
     def add(self, handle: str) -> None:
+        """Add a single `handle`."""
         self.reactors.add(handle)
 
     def discard(self, handle: str):
+        """Discard a single `handle`."""
         self.reactors.discard(handle)
 
     def export_dxf(self, tagwriter: "TagWriter") -> None:
