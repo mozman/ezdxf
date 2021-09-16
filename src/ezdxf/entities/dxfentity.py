@@ -609,22 +609,17 @@ class DXFEntity:
     @property
     def has_extension_dict(self) -> bool:
         """Returns ``True`` if entity has an attached
-        :class:`~ezdxf.entities.xdict.ExtensionDict`.
+        :class:`~ezdxf.entities.xdict.ExtensionDict` instance.
         """
         xdict = self.extension_dict
         # Don't use None check: bool(xdict) for an empty extension dict is False
         if xdict is not None and xdict.is_alive:
-            # Check the associated Dictionary object
-            dictionary = xdict.dictionary
-            if isinstance(dictionary, str):
-                # just a handle string - SUT
-                return True
-            else:
-                return dictionary.is_alive
+            return xdict.dictionary.is_alive
         return False
 
     def get_extension_dict(self) -> "ExtensionDict":
-        """Returns the existing :class:`~ezdxf.entities.xdict.ExtensionDict`.
+        """Returns the existing :class:`~ezdxf.entities.xdict.ExtensionDict`
+        instance.
 
         Raises:
             AttributeError: extension dict does not exist
@@ -636,10 +631,19 @@ class DXFEntity:
             raise AttributeError("Entity has no extension dictionary.")
 
     def new_extension_dict(self) -> "ExtensionDict":
+        """Create a new :class:`~ezdxf.entities.xdict.ExtensionDict` instance .
+        """
         assert self.doc is not None
         xdict = ExtensionDict.new(self.dxf.handle, self.doc)
         self.extension_dict = xdict
         return xdict
+
+    def discard_extension_dict(self) -> None:
+        """Delete :class:`~ezdxf.entities.xdict.ExtensionDict` instance .
+        """
+        if isinstance(self.extension_dict, ExtensionDict):
+            self.extension_dict.destroy()
+        self.extension_dict = None
 
     def has_app_data(self, appid: str) -> bool:
         """Returns ``True`` if application defined data for `appid` exist."""

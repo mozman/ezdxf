@@ -13,6 +13,7 @@ from ezdxf.lldxf.const import (
     SUBCLASS_MARKER,
     DXFKeyError,
     DXFValueError,
+    DXFTypeError,
 )
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -369,8 +370,18 @@ class Dictionary(DXFObject):
             dict_var.dxf.value = str(value)  # type: ignore
         return dict_var
 
-    def link_dxf_object(self, name: str, obj: DXFEntity) -> None:
-        """Add `obj` and set owner of `obj` to this dictionary."""
+    def link_dxf_object(self, name: str, obj: DXFObject) -> None:
+        """Add `obj` and set owner of `obj` to this dictionary.
+
+        Graphical DXF entities have to reside in a layout and therefore can not
+        be owned by a :class:`Dictionary`.
+
+        Raises:
+            DXFTypeError: `obj` has invalid DXF type
+
+        """
+        if not isinstance(obj, DXFObject):
+            raise DXFTypeError(f"invalid DXF type: {obj.dxftype()}")
         self.add(name, obj)
         obj.dxf.owner = self.dxf.handle
 

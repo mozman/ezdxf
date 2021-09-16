@@ -1,8 +1,8 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Union, Optional, no_type_check
+from typing import TYPE_CHECKING, Union, Optional
 from ezdxf.lldxf.tags import Tags
-from ezdxf.lldxf.const import DXFStructureError
+from ezdxf.lldxf.const import DXFStructureError, DXFValueError
 from ezdxf.lldxf.const import (
     ACAD_XDICTIONARY,
     XDICT_HANDLE_CODE,
@@ -11,7 +11,15 @@ from ezdxf.lldxf.const import (
 
 if TYPE_CHECKING:
     from ezdxf.lldxf.tagwriter import TagWriter
-    from ezdxf.eztypes import Dictionary, Drawing, DXFEntity, DXFObject
+    from ezdxf.eztypes import (
+        Dictionary,
+        Drawing,
+        DXFEntity,
+        DXFObject,
+        Placeholder,
+        DictionaryVar,
+        XRecord,
+    )
 
 __all__ = ["ExtensionDict"]
 
@@ -39,13 +47,18 @@ class ExtensionDict:
 
     @property
     def dictionary(self) -> "Dictionary":
-        """Get associated extension dictionary as :class:`Dictionary` object."""
-        assert self._xdict is not None
-        return self._xdict  # type: ignore
+        """Returns the underlying :class:`~ezdxf.entities.Dictionary` object."""
+        xdict = self._xdict
+        assert xdict is not None, "destroyed extension dictionary"
+        assert not isinstance(xdict, str), "dictionary handle not resolved"
+        return xdict
 
     @property
     def handle(self) -> str:
-        return self._xdict.dxf.handle  # type: ignore
+        """Returns the handle of the underlying :class:`~ezdxf.entities.Dictionary`
+        object.
+        """
+        return self.dictionary.dxf.handle
 
     def __getitem__(self, key: str):
         return self.dictionary[key]
@@ -57,7 +70,7 @@ class ExtensionDict:
         return key in self.dictionary
 
     def get(self, key: str, default=None) -> Optional["DXFEntity"]:
-        return self._xdict.get(key, default)  # type: ignore
+        return self.dictionary.get(key, default)
 
     @classmethod
     def new(cls, owner_handle: str, doc: "Drawing"):
@@ -70,11 +83,19 @@ class ExtensionDict:
 
     @property
     def is_alive(self):
+        """Returns ``True`` if the underlying :class:`~ezdxf.entities.Dictionary`
+        object is not deleted.
+        """
         # Can not check if _xdict (as handle or Dictionary) really exist:
         return self._xdict is not None
 
     def update_owner(self, handle: str) -> None:
-        """Update owner tag of contained DXF Dictionary."""
+        """Update owner tag of underlying :class:`~ezdxf.entities.Dictionary`
+        object.
+
+        Internal API.
+        """
+        assert self.is_alive, "destroyed extension dictionary"
         self.dictionary.dxf.owner = handle
 
     @classmethod
@@ -100,15 +121,18 @@ class ExtensionDict:
         tagwriter.write_tag2(APP_DATA_MARKER, "}")
 
     def destroy(self):
-        if self._xdict is not None:
-            self._xdict.destroy()
-            self._xdict = None
+        """Destroy the underlying :class:`Dictionary` object."""
+        xdict = self._xdict
+        if xdict is not None and not isinstance(xdict, str) and xdict.is_alive:
+            xdict.destroy()
+        self._xdict = None
 
-    @no_type_check
     def add_dictionary(
-        self, name: str, doc: "Drawing", hard_owned: bool = False
-    ) -> "DXFEntity":
-        dictionary = self._xdict
+        self, name: str, hard_owned: bool = False
+    ) -> "Dictionary":
+        dictionary = self.dictionary
+        doc = dictionary.doc
+        assert doc is not None, "valid DXF document required"
         new_dict = doc.objects.add_dictionary(
             owner=dictionary.dxf.hande,
             hard_owned=hard_owned,
@@ -116,12 +140,43 @@ class ExtensionDict:
         dictionary[name] = new_dict
         return new_dict
 
-    @no_type_check
-    def add_placeholder(self, name: str, doc: "Drawing") -> "DXFEntity":
-        dictionary = self._xdict
-        placeholder = doc.objects.add_placeholder(dictionary.dxf.handle)
+    def add_xrecord(self, name: str) -> "XRecord":
+        dictionary = self.dictionary
+        doc = dictionary.doc
+        assert doc is not None, "valid DXF document required"
+        xrecord = doc.objects.add_xrecord(dictionary.dxf.handle)
+        dictionary[name] = xrecord
+        return xrecord
+
+    def add_dictionary_var(self, name: str, value: str) -> "DictionaryVar":
+        dictionary = self.dictionary
+        doc = dictionary.doc
+        assert doc is not None, "valid DXF document required"
+        dict_var = doc.objects.add_dictionary_var(
+            dictionary.dxf.handle, value
+        )
+        dictionary[name] = dict_var
+        return dict_var
+
+    def add_placeholder(self, name: str) -> "Placeholder":
+        dictionary = self.dictionary
+        doc = dictionary.doc
+        assert doc is not None, "valid DXF document required"
+        placeholder = doc.objects.add_placeholder(
+            dictionary.dxf.handle
+        )
         dictionary[name] = placeholder
         return placeholder
 
     def link_dxf_object(self, name: str, obj: "DXFObject") -> None:
-        self._xdict.link_dxf_object(name, obj)  # type: ignore
+        """Link `obj` to the extension dictionary.
+
+        Linked objects are owned by the extensions dictionary and therefore
+        cannot be a graphical entity, which have to be owned by a
+        :class:`~ezdxf.layouts.BaseLayout`.
+
+        Raises:
+            DXFTypeError: `obj` has invalid DXF type
+
+        """
+        self.dictionary.link_dxf_object(name, obj)
