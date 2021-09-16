@@ -205,7 +205,7 @@ class Dictionary(DXFObject):
         return bool(self.dxf.hard_owned)
 
     def keys(self):
-        """Returns a :class:`KeysView` of all dictionary keys. """
+        """Returns a :class:`KeysView` of all dictionary keys."""
         return self._data.keys()
 
     def items(self):
@@ -228,7 +228,7 @@ class Dictionary(DXFObject):
             raise DXFKeyError(key)
 
     def __setitem__(self, key: str, entity: DXFEntity) -> None:
-        """Add item as (`key`, `entity`) pair to dictionary. """
+        """Add item as (`key`, `entity`) pair to dictionary."""
         return self.add(key, entity)
 
     def __delitem__(self, key: str) -> None:
@@ -239,7 +239,7 @@ class Dictionary(DXFObject):
         return self.remove(key)
 
     def __contains__(self, key: str) -> bool:
-        """Returns ``True`` if `key` exist. """
+        """Returns ``True`` if `key` exist."""
         return key in self._data
 
     def __len__(self) -> int:

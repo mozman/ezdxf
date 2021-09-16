@@ -27,10 +27,6 @@ extension dictionaries.
         - DXF Internals: :ref:`extension_dict_internals`
         - `DXF R2018 Reference`_
 
-    .. autoproperty:: dictionary
-
-    .. autoproperty:: handle
-
     .. autoproperty:: is_alive
 
     .. automethod:: __contains__
@@ -39,9 +35,17 @@ extension dictionaries.
 
     .. automethod:: __setitem__
 
+    .. automethod:: __delitem__
+
+    .. automethod:: __len__
+
     .. automethod:: get
 
-    .. automethod:: destroy
+    .. automethod:: keys
+
+    .. automethod:: items
+
+    .. automethod:: discard
 
     .. automethod:: add_dictionary
 
@@ -52,5 +56,7 @@ extension dictionaries.
     .. automethod:: add_placeholder
 
     .. automethod:: link_dxf_object
+
+    .. automethod:: destroy
 
 .. _DXF R2018 Reference: https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-A55D4A3D-67CF-417E-B63F-3124CD8027FD

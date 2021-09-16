@@ -2,7 +2,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Union, Optional
 from ezdxf.lldxf.tags import Tags
-from ezdxf.lldxf.const import DXFStructureError, DXFValueError
+from ezdxf.lldxf.const import DXFStructureError
 from ezdxf.lldxf.const import (
     ACAD_XDICTIONARY,
     XDICT_HANDLE_CODE,
@@ -42,7 +42,6 @@ class ExtensionDict:
     def __init__(self, xdict: Union[str, "Dictionary"]):
         # 1st loading stage: xdict as string -> handle to dict
         # 2nd loading stage: xdict as DXF Dictionary
-        # This is not suitable for "mypy"
         self._xdict = xdict
 
     @property
@@ -61,16 +60,43 @@ class ExtensionDict:
         return self.dictionary.dxf.handle
 
     def __getitem__(self, key: str):
+        """Get self[key]. """
         return self.dictionary[key]
 
     def __setitem__(self, key: str, value):
+        """Set self[key] to value. """
         self.dictionary[key] = value
 
+    def __delitem__(self, key: str):
+        """Delete self[key], destroys referenced entity. """
+        del self.dictionary[key]
+
     def __contains__(self, key: str):
+        """Return `key` in self. """
         return key in self.dictionary
 
+    def __len__(self):
+        """Returns count of extension dictionary entries."""
+        return len(self.dictionary)
+
+    def keys(self):
+        """Returns a :class:`KeysView` of all extension dictionary keys."""
+        return self.dictionary.keys()
+
+    def items(self):
+        """Returns an :class:`ItemsView` for all extension dictionary entries as
+        (key, entity) pairs. An entity can be a handle string if the entity
+        does not exist.
+        """
+        return self.dictionary.items()
+
     def get(self, key: str, default=None) -> Optional["DXFEntity"]:
+        """Return extension dictionary entry `key`. """
         return self.dictionary.get(key, default)
+
+    def discard(self, key: str) -> None:
+        """Discard extension dictionary entry `key`. """
+        return self.dictionary.discard(key)
 
     @classmethod
     def new(cls, owner_handle: str, doc: "Drawing"):
@@ -121,7 +147,7 @@ class ExtensionDict:
         tagwriter.write_tag2(APP_DATA_MARKER, "}")
 
     def destroy(self):
-        """Destroy the underlying :class:`Dictionary` object."""
+        """Destroy the underlying :class:`~ezdxf.entities.Dictionary` object."""
         xdict = self._xdict
         if xdict is not None and not isinstance(xdict, str) and xdict.is_alive:
             xdict.destroy()
@@ -130,6 +156,9 @@ class ExtensionDict:
     def add_dictionary(
         self, name: str, hard_owned: bool = False
     ) -> "Dictionary":
+        """Create a new :class:`~ezdxf.entities.Dictionary` object as
+        extension dictionary entry `name`.
+        """
         dictionary = self.dictionary
         doc = dictionary.doc
         assert doc is not None, "valid DXF document required"
@@ -141,6 +170,9 @@ class ExtensionDict:
         return new_dict
 
     def add_xrecord(self, name: str) -> "XRecord":
+        """Create a new :class:`~ezdxf.entities.XRecord` object as
+        extension dictionary entry `name`.
+        """
         dictionary = self.dictionary
         doc = dictionary.doc
         assert doc is not None, "valid DXF document required"
@@ -149,6 +181,9 @@ class ExtensionDict:
         return xrecord
 
     def add_dictionary_var(self, name: str, value: str) -> "DictionaryVar":
+        """Create a new :class:`~ezdxf.entities.DictionaryVar` object as
+        extension dictionary entry `name`.
+        """
         dictionary = self.dictionary
         doc = dictionary.doc
         assert doc is not None, "valid DXF document required"
@@ -159,6 +194,9 @@ class ExtensionDict:
         return dict_var
 
     def add_placeholder(self, name: str) -> "Placeholder":
+        """Create a new :class:`~ezdxf.entities.Placeholder` object as
+        extension dictionary entry `name`.
+        """
         dictionary = self.dictionary
         doc = dictionary.doc
         assert doc is not None, "valid DXF document required"
@@ -169,7 +207,7 @@ class ExtensionDict:
         return placeholder
 
     def link_dxf_object(self, name: str, obj: "DXFObject") -> None:
-        """Link `obj` to the extension dictionary.
+        """Link `obj` to the extension dictionary as entry `name`.
 
         Linked objects are owned by the extensions dictionary and therefore
         cannot be a graphical entity, which have to be owned by a
