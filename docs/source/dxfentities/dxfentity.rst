@@ -79,6 +79,8 @@ Common base class for all DXF entities and objects.
 
     .. automethod:: new_extension_dict() -> ExtensionDict
 
+    .. automethod:: discard_extension_dict
+
     .. automethod:: has_app_data
 
     .. automethod:: get_app_data(appid: str) -> Tags

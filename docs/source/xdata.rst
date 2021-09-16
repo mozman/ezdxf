@@ -56,6 +56,7 @@ Replace or set new XDATA tags::
 
 .. seealso::
 
+    - Tutorial: :ref:`tut_custom_data`
     - Internals about :ref:`xdata_internals` tags
     - Internal XDATA management class: :class:`~ezdxf.entities.xdata.XData`
     - `DXF R2018 Reference <https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-A2A628B0-3699-4740-A215-C560E7242F63>`_
