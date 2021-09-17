@@ -12,7 +12,9 @@ dictionaries as they see fit. The prefix ``'ACAD_'`` is reserved for use by
 AutoCAD applications.
 
 Dictionary entries are (key, :class:`DXFEntity`) pairs for fully loaded or
-new created DXF documents.
+new created DXF documents. The referenced entities are owned by the dictionary
+and cannot be graphical entities that always belong to the layout in which they
+are located.
 
 Loading DXF files is done in two passes, because at the first loading stage not
 all referenced objects are already stored in the entity database. Therefore the

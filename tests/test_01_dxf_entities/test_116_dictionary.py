@@ -4,7 +4,7 @@ import pytest
 import ezdxf
 
 from ezdxf.entities.dictionary import Dictionary, DictionaryWithDefault
-from ezdxf.entities import DXFEntity, factory
+from ezdxf.entities import DXFEntity, factory, DXFGraphic
 from ezdxf import DXFKeyError, DXFValueError
 from ezdxf.audit import Auditor, AuditError
 
@@ -180,6 +180,13 @@ def test_add_xrecord(doc):
     assert xrecord.dxftype() == "XRECORD"
     assert "MOZMAN_XRECORD" in rootdict
     assert xrecord.dxf.owner == rootdict.dxf.handle
+
+
+def test_cannot_add_graphical_entities_to_dict(doc):
+    line = doc.modelspace().add_line((0, 0), (10, 0))
+    assert isinstance(line, DXFGraphic)
+    with pytest.raises(ezdxf.DXFTypeError):
+        doc.rootdict["LINE"] = line
 
 
 def test_audit_fix_invalid_root_dict_owner():

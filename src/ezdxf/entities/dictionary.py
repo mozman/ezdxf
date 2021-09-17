@@ -24,7 +24,7 @@ from ezdxf.lldxf.attributes import (
 )
 from ezdxf.lldxf.types import is_valid_handle
 from ezdxf.audit import AuditError
-from ezdxf.entities import factory
+from ezdxf.entities import factory, DXFGraphic
 from .dxfentity import base_class, SubclassProcessor, DXFEntity
 from .dxfobj import DXFObject
 
@@ -217,9 +217,12 @@ class Dictionary(DXFObject):
             yield key, self.get(key)  # maybe handle -> DXFEntity
 
     def __getitem__(self, key: str) -> DXFEntity:
-        """Return the entity for `key`, raises a :class:`DXFKeyError` if `key`
-        does not exist. An entity can be a handle string if the entity
-        does not exist.
+        """Return self[`key`].
+
+        The returned value can be a handle string if the entity does not exist.
+
+        Raises:
+            DXFKeyError: `key` does not exist
 
         """
         if key in self._data:
@@ -228,18 +231,29 @@ class Dictionary(DXFObject):
             raise DXFKeyError(key)
 
     def __setitem__(self, key: str, entity: DXFEntity) -> None:
-        """Add item as (`key`, `entity`) pair to dictionary."""
+        """Set self[`key`] = `entity`.
+
+        Only DXF objects stored in the OBJECTS section are allowed as content
+        of :class:`Dictionary` objects. DXF entities stored in layouts are not
+        allowed.
+
+        Raises:
+            DXFTypeError: invalid DXF type
+
+        """
         return self.add(key, entity)
 
     def __delitem__(self, key: str) -> None:
-        """Delete entry `key` from the dictionary, raises :class:`DXFKeyError`
-        if `key` does not exist.
+        """Delete self[`key`].
+
+        Raises:
+            DXFKeyError: `key` does not exist
 
         """
         return self.remove(key)
 
     def __contains__(self, key: str) -> bool:
-        """Returns ``True`` if `key` exist."""
+        """Returns `key` ``in`` self."""
         return key in self._data
 
     def __len__(self) -> int:
@@ -259,12 +273,22 @@ class Dictionary(DXFObject):
         return self._data.get(key, default)  # type: ignore
 
     def add(self, key: str, entity: DXFEntity) -> None:
-        """Add entry ``(key, value)``."""
+        """Add entry ``(key, value)``.
+
+        Raises:
+            DXFValueError: invalid entity handle
+            DXFTypeError: invalid DXF type
+
+        """
         if isinstance(entity, str):
             if not is_valid_handle(entity):
                 raise DXFValueError(
                     f"Invalid entity handle #{entity} for key {key}"
                 )
+        elif isinstance(entity, DXFGraphic):
+            raise DXFTypeError(
+                f"Graphic entities not allowed: {entity.dxftype()}"
+            )
         self._data[key] = entity
 
     def remove(self, key: str) -> None:
@@ -407,6 +431,7 @@ class Dictionary(DXFObject):
                 if entry not in db:
                     append(key)
             elif entry.is_alive:
+                # TODO: remove graphical entities without destroying them
                 if entry.dxf.handle not in db:
                     append(key)
             else:  # entry is destroyed
