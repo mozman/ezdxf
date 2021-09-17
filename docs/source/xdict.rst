@@ -1,9 +1,15 @@
 .. _extension_dictionary:
 
+.. module:: ezdxf.entities.xdict
+
 Extension Dictionary
 ====================
 
-.. module:: ezdxf.entities.xdict
+Every entity can have an extension dictionary, which can reference arbitrary
+DXF objects from the OBJECTS section but not graphical entities. Using this
+mechanism, several applications can attach data to the same entity.
+The usage of extension dictionaries is more complex than :ref:`extended_data`
+but also more flexible with higher capacity for adding data.
 
 Use the high level methods of :class:`~ezdxf.entities.DXFEntity` to manage
 extension dictionaries.
@@ -12,6 +18,12 @@ extension dictionaries.
 - :meth:`~ezdxf.entities.DXFEntity.get_extension_dict`
 - :meth:`~ezdxf.entities.DXFEntity.new_extension_dict`
 - :meth:`~ezdxf.entities.DXFEntity.discard_extension_dict`
+
+The main data storage objects referenced by extension dictionaries are:
+
+- :class:`~ezdxf.entities.Dictionary`, structural container
+- :class:`~ezdxf.entities.DictionaryVar`, stores a single string
+- :class:`~ezdxf.entities.XRecord`, stores arbitrary data
 
 .. seealso::
 
@@ -52,8 +64,6 @@ extension dictionaries.
     .. automethod:: add_dictionary_var
 
     .. automethod:: add_xrecord
-
-    .. automethod:: add_placeholder
 
     .. automethod:: link_dxf_object
 

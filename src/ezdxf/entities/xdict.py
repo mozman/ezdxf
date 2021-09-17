@@ -64,7 +64,16 @@ class ExtensionDict:
         return self.dictionary[key]
 
     def __setitem__(self, key: str, value):
-        """Set self[key] to value. """
+        """Set self[key] to value.
+
+        Only DXF objects stored in the OBJECTS section are allowed as content
+        of the extension dictionary. DXF entities stored in layouts are not
+        allowed.
+
+        Raises:
+            DXFTypeError: invalid DXF type
+
+        """
         self.dictionary[key] = value
 
     def __delitem__(self, key: str):
