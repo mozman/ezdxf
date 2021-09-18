@@ -26,12 +26,13 @@ applications without using the scripting features (AutoLisp) or even the SDK.
 
 .. warning::
 
-    Here you will not find any documentation about how to use the stored
-    user data outside of `ezdxf`. I have no experience with AutoLisp and
-    therefore there are not many examples how to read and use the user data in
-    AutoCAD or any other CAD application.
+    I have no experience with AutoLisp so far and I created this scripts for
+    AutoLisp while writing this tutorial. There may be better ways to accomplish
+    these tasks, and feedback on this is very welcome.
+    Everything is tested with BricsCAD and should also work with the
+    full version of AutoCAD.
 
-This is the common prolog for all code examples shown in this tutorial:
+This is the common prolog for all Python code examples shown in this tutorial:
 
 .. code-block:: Python
 
@@ -104,8 +105,36 @@ variable:
 
 .. image:: gfx/custom_header_property.png
 
-Getting document properties by AutoLisp is beyond my knowledge, but see
-`link1`_ for more information.
+AutoLisp script for getting the custom document properties:
+
+.. code-block:: Lisp
+
+    (defun C:CUSTOMDOCPROPS (/ Info Num Index Custom)
+      (vl-load-com)
+      (setq acadObject (vlax-get-acad-object))
+      (setq acadDocument (vla-get-ActiveDocument acadObject))
+
+      ;;Get the SummaryInfo
+      (setq Info (vlax-get-Property acadDocument 'SummaryInfo))
+      (setq Num (vla-NumCustomInfo Info))
+      (setq Index 0)
+      (repeat Num
+        (vla-getCustomByIndex Info Index 'ID 'Value)
+        (setq Custom (cons (cons ID Value) Custom))
+        (setq Index (1+ Index))
+      )  ;repeat
+
+      (if Custom (reverse Custom))
+    )
+
+Running the script in BricsCAD:
+
+.. code-block:: Text
+
+    : (load "customdocprops.lsp")
+    C:CUSTOMDOCPROPS
+    : CUSTOMDOCPROPS
+    (("MyFirstVar" . "First Value"))
 
 Meta Data
 ---------
