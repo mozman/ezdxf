@@ -139,6 +139,32 @@ Running the script in BricsCAD:
 Meta Data
 ---------
 
+Starting with version v0.16.4 `ezdxf` stores some meta data in the DXF file and
+the AppID ``EZDXF`` will be created.
+Two entries will be added to the :class:`~ezdxf.document.MetaData`
+instance, the ``CREATED_BY_EZDXF`` for DXF documents created by `ezdxf` and the
+entry ``WRITTEN_BY_EZDXF`` if the DXF document will be saved by `ezdxf`.
+The marker string looks like this ``"0.17b0 @ 2021-09-18T05:14:37.921826+00:00"``
+and contains the `ezdxf` version and an UTC timestamp in ISO format.
+
+You can add your own data to the :class:`~ezdxf.document.MetaData`
+instance as a string with a maximum of 254 characters and choose a good name
+which may never be used by `ezdxf` in the future.
+
+.. code-block:: Python
+
+    metadata = doc.ezdxf_metadata()
+    metadata["MY_UNIQUE_KEY"] = "my additional meta data"
+
+    print(metadata.get("CREATED_BY_EZDXF"))
+    print(metadata.get("MY_UNIQUE_KEY"))
+
+
+The data is stored as XDATA in then BLOCK entity of the model space for DXF R12
+and for DXF R2000 and later as a DXF :class:`~ezdxf.entities.Dictionary`
+in the root dictionary by the key ``EZDXF_META``.
+See following chapters for accessing such data by AutoLisp.
+
 XDATA
 -----
 
@@ -153,6 +179,3 @@ XRecord
 
 UserRecord
 ----------
-
-
-.. _link1: https://adndevblog.typepad.com/autocad/2012/08/lisp-example-for-setting-and-getting-drawing-properties.html

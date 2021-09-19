@@ -3,12 +3,10 @@
 Document Management
 ===================
 
-.. module:: ezdxf
-
 Create New Drawings
 -------------------
 
-.. autofunction:: new(dxfversion='AC1027', setup=False, units=6) -> Drawing
+.. autofunction:: ezdxf.new(dxfversion='AC1027', setup=False, units=6) -> Drawing
 
 Open Drawings
 -------------
@@ -35,13 +33,13 @@ AC1027      R2013      UTF-8          AutoCAD R2013
 AC1032      R2018      UTF-8          AutoCAD R2018
 =========== ========== ============== ===================================
 
-.. autofunction:: readfile(filename: str, encoding: str = None, errors: str="surrogateescape") -> Drawing
+.. autofunction:: ezdxf.readfile(filename: str, encoding: str = None, errors: str="surrogateescape") -> Drawing
 
-.. autofunction:: read(stream: TextIO) -> Drawing
+.. autofunction:: ezdxf.read(stream: TextIO) -> Drawing
 
-.. autofunction:: readzip(zipfile: str, filename: str = None, errors: str="surrogateescape") -> Drawing
+.. autofunction:: ezdxf.readzip(zipfile: str, filename: str = None, errors: str="surrogateescape") -> Drawing
 
-.. autofunction:: decode_base64(data: bytes, errors: str="surrogateescape") -> Drawing
+.. autofunction:: ezdxf.decode_base64(data: bytes, errors: str="surrogateescape") -> Drawing
 
 .. hint::
 

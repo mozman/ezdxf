@@ -1088,8 +1088,10 @@ class MetaData(abc.ABC):
 
     @abc.abstractmethod
     def __getitem__(self, key: str) -> str:
-        """Returns the value for `key`. Raises a :class:`KeyError` exception
-        if `key` not exist.
+        """Returns the value for self[`key`].
+
+        Raises:
+             KeyError: `key` does not exist
         """
         ...
 
@@ -1102,19 +1104,21 @@ class MetaData(abc.ABC):
 
     @abc.abstractmethod
     def __setitem__(self, key: str, value: str) -> None:
-        """Set `key` to `value`."""
+        """Set self[`key`] to `value`."""
         ...
 
     @abc.abstractmethod
     def __delitem__(self, key: str) -> None:
-        """Remove `key`, raises a :class:`KeyError` exception if `key` not
-        exist.
+        """Delete self[`key`].
+
+        Raises:
+             KeyError: `key` does not exist
         """
         ...
 
     @abc.abstractmethod
     def __contains__(self, key: str) -> bool:
-        """Returns ``True`` if `key` exist."""
+        """Returns `key` ``in`` self."""
         ...
 
     def discard(self, key: str) -> None:
