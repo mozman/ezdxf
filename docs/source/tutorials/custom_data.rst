@@ -168,8 +168,12 @@ See following chapters for accessing such data by AutoLisp.
 XDATA
 -----
 
-AppData
--------
+:ref:`extended_data` is a way to attach arbitrary data to DXF entities.
+Each application needs a unique AppID registered in the AppID table to add
+XDATA to an entity. The AppID ``ACAD`` is reserved and by using `ezdxf`
+the AppID ``EZDXF`` is also registered automatically.
+The total size of XDATA for a single DXF entity is limited to 16kB for AutoCAD.
+XDATA is supported by all DXF versions and is accessible by AutoLisp.
 
 Extension Dictionaries
 ----------------------
@@ -179,3 +183,28 @@ XRecord
 
 UserRecord
 ----------
+
+AppData
+-------
+
+:ref:`application_defined_data` was introduced in DXF R13/14 and is used by
+AutoCAD internally to store the handle to the :ref:`extension_dictionary` and
+the :ref:`reactors` in DXF entities.
+`Ezdxf` supports these kind of data storage for any AppID and the data is
+preserved by AutoCAD and BricsCAD, but I haven't found a way to access this
+data by AutoLisp or even the SDK.
+So I don't recommend this feature to store application defined data,
+because :ref:`extended_data` and the :ref:`extension_dictionary` are well
+documented and safe ways to attach custom data to entities.
+
+.. literalinclude:: src/customdata/appdata.py
+    :lines: 10-26
+
+Printed output:
+
+.. code-block:: Text
+
+    LINE(#30) has 3 tags of AppData for AppID 'YOUR_UNIQUE_ID'
+    (300, 'custom text')
+    (370, 4711)
+    (460, 3.141592)

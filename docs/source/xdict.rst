@@ -1,9 +1,9 @@
 .. _extension_dictionary:
 
-.. module:: ezdxf.entities.xdict
-
 Extension Dictionary
 ====================
+
+.. module:: ezdxf.entities.xdict
 
 Every entity can have an extension dictionary, which can reference arbitrary
 DXF objects from the OBJECTS section but not graphical entities. Using this
