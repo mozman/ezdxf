@@ -43,12 +43,12 @@ TABLESMAP = {
     "LAYER": LayerTable,
     "LTYPE": LineTypeTable,
     "STYLE": StyleTable,
-    "DIMSTYLE": Table,
+    "DIMSTYLE": DimStyleTable,
     "VPORT": ViewportTable,
-    "VIEW": Table,
-    "UCS": Table,
-    "APPID": Table,
-    "BLOCK_RECORD": Table,
+    "VIEW": ViewTable,
+    "UCS": UCSTable,
+    "APPID": AppIDTable,
+    "BLOCK_RECORD": BlockRecordTable,
 }
 
 
