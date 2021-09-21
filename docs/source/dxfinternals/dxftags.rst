@@ -146,14 +146,14 @@ Group Code        Description
 1005              Database Handle of entities in the drawing database, see also:
                   :ref:`About 1005 Group Codes`
 1010, 1020, 1030  Three real values, in the order X, Y, Z. They can be used as a
-                  point or vector record.
-1011, 1021, 1031  Unlike a simple 3D point, the world space coordinates are moved,
-                  scaled, rotated, mirrored, and stretched along with the parent
-                  entity to which the extended data belongs.
-1012, 1012, 1022  Also a 3D point that is scaled, rotated, and mirrored along
-                  with the parent (but is not moved or stretched)
-1013, 1023, 1033  Also a 3D point that is scaled, rotated, and mirrored along
-                  with the parent (but is not moved or stretched)
+                  point or vector record that will not be modified at any
+                  transformation of the entity.
+1011, 1021, 1031  a WCS point that is moved, scaled, rotated and mirrored
+                  along with the entity
+1012, 1012, 1022  a WCS displacement that is scaled, rotated and mirrored
+                  along with the entity, but is not moved
+1013, 1023, 1033  a WCS direction that is rotated and mirrored along with the
+                  entity, but is not moved or scaled
 1040              A real value
 1041              Distance, a real value that is scaled along with the parent entity
 1042              Scale Factor, also a real value that is scaled along with the parent.

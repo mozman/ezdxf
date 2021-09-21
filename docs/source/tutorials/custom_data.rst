@@ -186,13 +186,14 @@ Group Code        Description
 1002              (fixed) An extended data control string ``'{'``  or ``'}'``
 1004              Binary data
 1005              Database Handle of entities in the drawing database
-1010              Simple 3D point in WCS, in the order X, Y, Z
-1011              3D point in WCS That is moved, scaled, rotated, mirrored,
-                  and stretched along with the entity
-1012              3D point in WCS that is scaled, rotated, and mirrored along
-                  with the entity
-1013              3D point in WCS that is scaled, rotated, and mirrored along
-                  with the entity
+1010              3D point, in the order X, Y, Z that will not be modified at
+                  any transformation of the entity
+1011              A WCS point that is moved, scaled, rotated and mirrored
+                  along with the entity
+1012              A WCS displacement that is scaled, rotated and
+                  mirrored along with the entity, but not moved
+1013              A WCS direction that is rotated and mirrored along
+                  with the entity but not moved and scaled.
 1040              A real value
 1041              Distance, a real value that is scaled along with the entity
 1042              Scale Factor, a real value that is scaled along with the entity

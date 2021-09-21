@@ -14,8 +14,8 @@ from typing import (
 )
 from collections import OrderedDict
 from contextlib import contextmanager
-from ezdxf.math import Vec3
-from ezdxf.lldxf.types import dxftag, VALID_XDATA_GROUP_CODES
+from ezdxf.math import Vec3, Matrix44
+from ezdxf.lldxf.types import dxftag, VALID_XDATA_GROUP_CODES, DXFTag
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.const import XDATA_MARKER, DXFValueError, DXFTypeError
 from ezdxf.lldxf.tags import (
@@ -32,7 +32,7 @@ import logging
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFEntity, DXFTag
+    from ezdxf.eztypes import TagWriter, DXFEntity
 
 __all__ = ["XData", "XDataUserList", "XDataUserDict"]
 
@@ -219,6 +219,42 @@ class XData:
         xlist = xdata_list(name, tags)
         data.extend(xlist)
         self.add(appid, data)
+
+    def transform(self, m: Matrix44) -> None:
+        """Transform XDATA group codes 1011, 1012, 1013, 1041 and 1042. For more
+        information see :ref:`xdata_internals`.
+
+        """
+        transformed_data = OrderedDict()
+        for key, tags in self.data.items():
+            transformed_data[key] = Tags(transform_xdata_tags(tags, m))
+        self.data = transformed_data
+
+
+def transform_xdata_tags(tags: Tags, m: Matrix44) -> Iterator[DXFTag]:
+    for tag in tags:
+        code, value = tag
+        if code == 1011:
+            # move, scale, rotate and mirror
+            yield dxftag(code, m.transform(Vec3(value)))
+        elif code == 1012:
+            # scale, rotate and mirror
+            yield dxftag(code, m.transform_direction(Vec3(value)))
+        elif code == 1013:
+            # rotate and mirror
+            vec = Vec3(value)
+            length = vec.magnitude
+            if length > 1e-12:
+                vec = m.transform_direction(vec).normalize(length)
+                yield dxftag(code, vec)
+            else:
+                yield tag
+        elif code == 1041 or code == 1042:
+            # scale distance and factor, works only for uniform scaling
+            vec = m.transform_direction(Vec3(value, 0, 0))
+            yield dxftag(code, vec.magnitude)
+        else:
+            yield tag
 
 
 class XDataUserList(MutableSequence):

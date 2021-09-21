@@ -3,16 +3,22 @@
 
 import pytest
 import copy
-from ezdxf.math import Vec3
+import math
+from ezdxf.math import Vec3, Matrix44
 from ezdxf.lldxf.const import DXFValueError, DXFStructureError, DXFTypeError
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.lldxf.types import dxftag
+from ezdxf.lldxf.types import dxftag, tuples_to_tags
 from ezdxf.lldxf.tags import (
     Tags,
     find_begin_and_end_of_encoded_xdata_tags,
     NotFoundException,
 )
-from ezdxf.entities.xdata import XData, XDataUserDict, XDataUserList
+from ezdxf.entities.xdata import (
+    XData,
+    XDataUserDict,
+    XDataUserList,
+    transform_xdata_tags,
+)
 from ezdxf.lldxf.repair import filter_invalid_xdata_group_codes
 
 
@@ -712,6 +718,105 @@ class TestXDataUserDict:
         xdict = XDataUserDict()
         with pytest.raises(DXFTypeError):
             xdict.update({0: 1})
+
+
+class TestXDataTransformation:
+    @pytest.fixture
+    def tags(self):
+        return Tags(
+            tuples_to_tags(
+                [
+                    (1001, "EZDXF"),
+                    (1010, (10, 20, 30)),
+                    (1011, (11, 21, 31)),
+                    (1012, (12, 22, 32)),
+                    (1013, (13, 23, 33)),
+                    (1041, 2),
+                    (1042, 2),
+                ]
+            )
+        )
+
+    def test_move(self, tags):
+        data = Tags(
+            transform_xdata_tags(tags, Matrix44.translate(100, 100, 100))
+        )
+        # 1010 - fixed 3D point -> no transformation
+        assert Vec3((10, 20, 30)).isclose(data[1].value)
+        # 1011 - move, scale, rotate and mirror
+        assert Vec3((111, 121, 131)).isclose(data[2].value)
+        # 1012 - scale, rotate and mirror
+        assert Vec3((12, 22, 32)).isclose(data[3].value)
+        # 1013 - rotate and mirror
+        assert Vec3((13, 23, 33)).isclose(data[4].value)
+        # 1041 - scale distance
+        assert math.isclose(2, data[5].value)
+        # 1042 - scale factor
+        assert math.isclose(2, data[6].value)
+
+    def test_scale(self, tags):
+        data = Tags(
+            transform_xdata_tags(tags, Matrix44.scale(2, 2, 2))
+        )
+        # 1010 - fixed 3D point -> no transformation
+        assert Vec3((10, 20, 30)).isclose(data[1].value)
+        # 1011 - move, scale, rotate and mirror
+        assert Vec3((22, 42, 62)).isclose(data[2].value)
+        # 1012 - scale, rotate and mirror
+        assert Vec3((24, 44, 64)).isclose(data[3].value)
+        # 1013 - rotate and mirror
+        assert Vec3((13, 23, 33)).isclose(data[4].value)
+        # 1041 - scale distance
+        assert math.isclose(4, data[5].value)
+        # 1042 - scale factor
+        assert math.isclose(4, data[6].value)
+
+    def test_mirror_x(self, tags):
+        data = Tags(
+            transform_xdata_tags(tags, Matrix44.scale(-1, 1, 1))
+        )
+        # 1010 - fixed 3D point -> no transformation
+        assert Vec3((10, 20, 30)).isclose(data[1].value)
+        # 1011 - move, scale, rotate and mirror
+        assert Vec3((-11, 21, 31)).isclose(data[2].value)
+        # 1012 - scale, rotate and mirror
+        assert Vec3((-12, 22, 32)).isclose(data[3].value)
+        # 1013 - rotate and mirror
+        assert Vec3((-13, 23, 33)).isclose(data[4].value)
+        # 1041 - scale distance - BricsCAD transforms to -2 ???
+        assert math.isclose(2, data[5].value)
+        # 1042 - scale factor - BricsCAD transforms to -2 ???
+        assert math.isclose(2, data[6].value)
+
+    def test_scale_and_mirror_y(self, tags):
+        data = Tags(
+            transform_xdata_tags(tags, Matrix44.scale(2, -2, 2))
+        )
+        # 1011 - move, scale, rotate and mirror
+        assert Vec3((22, -42, 62)).isclose(data[2].value)
+        # 1012 - scale, rotate and mirror
+        assert Vec3((24, -44, 64)).isclose(data[3].value)
+        # 1013 - rotate and mirror
+        assert Vec3((13, -23, 33)).isclose(data[4].value)
+        # 1041 - scale distance
+        assert math.isclose(4, data[5].value)
+        # 1042 - scale factor
+        assert math.isclose(4, data[6].value)
+
+    def test_rotate(self, tags):
+        data = Tags(
+            transform_xdata_tags(tags, Matrix44.z_rotate(math.pi/2))
+        )
+        # 1011 - move, scale, rotate and mirror
+        assert Vec3((-21, 11, 31)).isclose(data[2].value)
+        # 1012 - scale, rotate and mirror
+        assert Vec3((-22, 12, 32)).isclose(data[3].value)
+        # 1013 - rotate and mirror
+        assert Vec3((-23, 13, 33)).isclose(data[4].value)
+        # 1041 - scale distance
+        assert math.isclose(2, data[5].value)
+        # 1042 - scale factor
+        assert math.isclose(2, data[6].value)
 
 
 if __name__ == "__main__":
