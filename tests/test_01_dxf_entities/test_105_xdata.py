@@ -227,11 +227,10 @@ def test_poyline_with_xdata():
     assert len(xdata.get("AVE_ENTITY_MATERIAL")) == 27
 
 
-def test_group_tags_polyline_with_xdata():
+def test_remove_all_none_xdata_group_codes():
     tags = Tags.from_text(POLYLINE_WITH_INVALID_XDATA)
-    assert len(tags) == 49
-    tags2 = list(filter_invalid_xdata_group_codes(tags))
-    assert len(tags2) == 41
+    tags = list(filter_invalid_xdata_group_codes(tags))
+    assert len(tags) == 32
 
 
 POLYLINE_WITH_INVALID_XDATA = """  0

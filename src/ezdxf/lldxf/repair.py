@@ -1,6 +1,14 @@
 # Copyright (c) 2016-2021, Manfred Moitzi
 # License: MIT License
-from typing import Iterable, Optional, List, TYPE_CHECKING, Sequence, Any
+from typing import (
+    Iterable,
+    Optional,
+    List,
+    TYPE_CHECKING,
+    Sequence,
+    Any,
+    Iterator,
+)
 from functools import partial
 import logging
 import warnings
@@ -180,8 +188,6 @@ with warnings.catch_warnings():
 
 
 def filter_invalid_xdata_group_codes(
-    tagger: Iterable[DXFTag],
-) -> Iterable[DXFTag]:
-    for tag in tagger:
-        if tag.code < 1000 or tag.code in VALID_XDATA_GROUP_CODES:
-            yield tag
+    tags: Iterable[DXFTag],
+) -> Iterator[DXFTag]:
+    return (tag for tag in tags if tag.code in VALID_XDATA_GROUP_CODES)
