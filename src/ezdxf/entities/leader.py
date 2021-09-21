@@ -262,6 +262,7 @@ class Leader(DXFGraphic, OverrideMixin):
         self.dxf.horizontal_direction = m.transform_direction(
             self.dxf.horizontal_direction
         )
+        self.post_transform(m)
         return self
 
     def __virtual_entities__(self) -> Iterable["DXFGraphic"]:

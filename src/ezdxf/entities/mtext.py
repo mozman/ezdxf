@@ -1047,6 +1047,7 @@ class MText(DXFGraphic):
                 old_vertical_direction.normalize()
             ).magnitude
             self._columns.transform(m, hscale, vscale)  # type: ignore
+        self.post_transform(m)
         return self
 
     def plain_text(self, split=False, fast=True) -> Union[List[str], str]:

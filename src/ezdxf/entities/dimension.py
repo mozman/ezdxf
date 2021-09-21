@@ -726,6 +726,7 @@ class Dimension(DXFGraphic, OverrideMixin):
         # multiple times:
         if not dxf.hasattr("insert"):
             self._transform_block_content(m)
+        self.post_transform(m)
         return self
 
     def _block_content(self) -> Iterable["DXFGraphic"]:

@@ -516,7 +516,7 @@ class Spline(DXFGraphic):
         for name in ("start_tangent", "end_tangent", "extrusion"):
             if dxf.hasattr(name):
                 dxf.set(name, m.transform_direction(dxf.get(name)))
-
+        self.post_transform(m)
         return self
 
     def audit(self, auditor: "Auditor") -> None:

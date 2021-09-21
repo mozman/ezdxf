@@ -391,6 +391,7 @@ class LWPolyline(DXFGraphic):
         if dxf.hasattr("thickness"):
             dxf.thickness = ocs.transform_thickness(dxf.thickness)
         dxf.extrusion = ocs.new_extrusion
+        self.post_transform(m)
         return self
 
     def virtual_entities(self) -> Iterable[Union["Line", "Arc"]]:

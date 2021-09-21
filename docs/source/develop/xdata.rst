@@ -33,3 +33,5 @@ XData
     .. automethod:: discard_xlist
 
     .. automethod:: replace_xlist
+
+    .. automethod:: transform(m: Matrix44) -> None

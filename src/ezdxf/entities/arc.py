@@ -126,6 +126,7 @@ class Arc(Circle):
                 self.dxf.start_angle,
                 self.dxf.end_angle,
             ) = ocs.transform_ccw_arc_angles_deg(s, e)
+        self.post_transform(m)
         return self
 
     def construction_tool(self) -> ConstructionArc:

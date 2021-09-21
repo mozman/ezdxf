@@ -617,6 +617,7 @@ class MLine(DXFGraphic):
             self.dxf.scale_factor = sum(scale_vec) / 3  # average error
         # None uniform scaling will not be applied to the scale_factor!
         self.update_geometry()
+        self.post_transform(m)
         return self
 
     def __virtual_entities__(self) -> Iterable[DXFGraphic]:

@@ -87,4 +87,5 @@ class Tolerance(DXFGraphic):
         self.dxf.insert = m.transform(self.dxf.insert)
         self.dxf.x_axis_vector = m.transform_direction(self.dxf.x_axis_vector)
         self.dxf.extrusion, _ = transform_extrusion(self.dxf.extrusion, m)
+        self.post_transform(m)
         return self

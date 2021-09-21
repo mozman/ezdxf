@@ -515,6 +515,7 @@ class Polyline(LinkedEntities):
         else:
             for vertex in self.vertices:
                 vertex.transform(m)
+        self.post_transform(m)
         return self
 
     def explode(self, target_layout: "BaseLayout" = None) -> "EntityQuery":

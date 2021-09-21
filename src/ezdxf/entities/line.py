@@ -91,6 +91,7 @@ class Line(DXFGraphic):
         self.dxf.start = start
         self.dxf.end = end
         transform_thickness_and_extrusion_without_ocs(self, m)
+        self.post_transform(m)
         return self
 
     def translate(self, dx: float, dy: float, dz: float) -> "Line":
@@ -101,4 +102,7 @@ class Line(DXFGraphic):
         vec = Vec3(dx, dy, dz)
         self.dxf.start = vec + self.dxf.start
         self.dxf.end = vec + self.dxf.end
+        # Avoid Matrix44 instantiation if not required:
+        if self.is_post_transform_required:
+            self.post_transform(Matrix44.translate(dx, dy, dz))
         return self

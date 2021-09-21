@@ -390,6 +390,7 @@ class DXFPolygon(DXFGraphic):
         )
         dxf.extrusion = ocs.new_extrusion
         # todo scale pattern
+        self.post_transform(m)
         return self
 
     @abc.abstractmethod

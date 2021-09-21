@@ -31,6 +31,7 @@ Version 0.17b1 - dev
 - NEW: `BaseLayout.add_mtext_dynamic_manual_height_columns()`
 - NEW: rendering support for inline codes in `MTEXT` entities for the `drawing`
   add-on
+- NEW: `XDATA` transformation support
 - REMOVED: deprecated class methods `from_...(entity)` from `Path` class, 
   use `path.make_path(entity)` instead
 - REMOVED: deprecated `Path` methods `add_...(entity)`, 

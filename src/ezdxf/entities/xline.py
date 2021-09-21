@@ -68,6 +68,7 @@ class XLine(DXFGraphic):
         self.dxf.unit_vector = m.transform_direction(
             self.dxf.unit_vector
         ).normalize()
+        self.post_transform(m)
         return self
 
     def translate(self, dx: float, dy: float, dz: float) -> "XLine":
@@ -76,6 +77,9 @@ class XLine(DXFGraphic):
 
         """
         self.dxf.start = Vec3(dx, dy, dz) + self.dxf.start
+        # Avoid Matrix44 instantiation if not required:
+        if self.is_post_transform_required:
+            self.post_transform(Matrix44.translate(dx, dy, dz))
         return self
 
 

@@ -145,4 +145,5 @@ class Light(DXFGraphic):
         """Transform the LIGHT entity by transformation matrix `m` inplace."""
         self.dxf.location = m.transform(self.dxf.location)
         self.dxf.target = m.transform(self.dxf.target)
+        self.post_transform(m)
         return self

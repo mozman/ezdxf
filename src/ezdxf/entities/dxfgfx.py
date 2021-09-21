@@ -459,6 +459,17 @@ class DXFGraphic(DXFEntity):
         """
         raise NotImplementedError()
 
+    def post_transform(self, m: "Matrix44") -> None:
+        """Should be called if the main entity transformation was successful.
+        """
+        if self.xdata is not None:
+            self.xdata.transform(m)
+
+    @property
+    def is_post_transform_required(self) -> bool:
+        """Check if post transform call is required. """
+        return self.xdata is not None
+
     def translate(self, dx: float, dy: float, dz: float) -> "DXFGraphic":
         """Translate entity inplace about `dx` in x-axis, `dy` in y-axis and
         `dz` in z-axis, returns `self` (floating interface).

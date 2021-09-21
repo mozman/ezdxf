@@ -221,8 +221,8 @@ class XData:
         self.add(appid, data)
 
     def transform(self, m: Matrix44) -> None:
-        """Transform XDATA group codes 1011, 1012, 1013, 1041 and 1042. For more
-        information see :ref:`xdata_internals`.
+        """Transform XDATA tags with group codes 1011, 1012, 1013, 1041 and
+        1042 inplace. For more information see :ref:`xdata_internals` Internals.
 
         """
         transformed_data = OrderedDict()

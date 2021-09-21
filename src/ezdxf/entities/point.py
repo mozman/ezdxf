@@ -99,6 +99,7 @@ class Point(DXFGraphic):
         self.dxf.location = m.transform(self.dxf.location)
         transform_thickness_and_extrusion_without_ocs(self, m)
         # ignore dxf.angle!
+        self.post_transform(m)
         return self
 
     def translate(self, dx: float, dy: float, dz: float) -> "Point":
@@ -106,6 +107,9 @@ class Point(DXFGraphic):
         `dz` in z-axis.
         """
         self.dxf.location = Vec3(dx, dy, dz) + self.dxf.location
+        # Avoid Matrix44 instantiation if not required:
+        if self.is_post_transform_required:
+            self.post_transform(Matrix44.translate(dx, dy, dz))
         return self
 
     def virtual_entities(

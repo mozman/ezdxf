@@ -226,6 +226,7 @@ class Ellipse(DXFGraphic):
         e = self.construction_tool()
         e.transform(m)
         self.update_dxf_attribs(e.dxfattribs())
+        self.post_transform(m)
         return self
 
     def translate(self, dx: float, dy: float, dz: float) -> "Ellipse":
@@ -234,6 +235,9 @@ class Ellipse(DXFGraphic):
 
         """
         self.dxf.center = Vec3(dx, dy, dz) + self.dxf.center
+        # Avoid Matrix44 instantiation if not required:
+        if self.is_post_transform_required:
+            self.post_transform(Matrix44.translate(dx, dy, dz))
         return self
 
     def to_spline(self, replace=True) -> "Spline":

@@ -329,6 +329,7 @@ class Text(DXFGraphic):
         if dxf.hasattr("thickness"):  # can be negative
             dxf.thickness = ocs.transform_thickness(dxf.thickness)
         dxf.extrusion = ocs.new_extrusion
+        self.post_transform(m)
         return self
 
     def translate(self, dx: float, dy: float, dz: float) -> "Text":
@@ -343,6 +344,9 @@ class Text(DXFGraphic):
         dxf.insert = ocs.from_wcs(vec + ocs.to_wcs(dxf.insert))
         if dxf.hasattr("align_point"):
             dxf.align_point = ocs.from_wcs(vec + ocs.to_wcs(dxf.align_point))
+        # Avoid Matrix44 instantiation if not required:
+        if self.is_post_transform_required:
+            self.post_transform(Matrix44.translate(dx, dy, dz))
         return self
 
     def remove_dependencies(self, other: "Drawing" = None) -> None:

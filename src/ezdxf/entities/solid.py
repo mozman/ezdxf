@@ -118,6 +118,7 @@ class Solid(_Base):
         if dxf.hasattr("thickness"):
             dxf.thickness = ocs.transform_thickness(dxf.thickness)
         dxf.extrusion = ocs.new_extrusion
+        self.post_transform(m)
         return self
 
     def wcs_vertices(self, close: bool = False) -> List[Vec3]:
@@ -243,6 +244,7 @@ class Face3d(_Base):
         dxf.vtx0, dxf.vtx1, dxf.vtx2, dxf.vtx3 = m.transform_vertices(
             (dxf.vtx0, dxf.vtx1, dxf.vtx2, dxf.vtx3)
         )
+        self.post_transform(m)
         return self
 
     def wcs_vertices(self, close: bool = False) -> List[Vec3]:

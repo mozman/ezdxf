@@ -178,6 +178,7 @@ class ImageBase(DXFGraphic):
         self.dxf.insert = m.transform(self.dxf.insert)
         self.dxf.u_pixel = m.transform_direction(self.dxf.u_pixel)
         self.dxf.v_pixel = m.transform_direction(self.dxf.v_pixel)
+        self.post_transform(m)
         return self
 
     def boundary_path_wcs(self) -> List[Vec3]:

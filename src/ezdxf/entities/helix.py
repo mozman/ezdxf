@@ -115,4 +115,5 @@ class Helix(Spline):
         self.dxf.radius = m.transform_direction(
             (self.dxf.radius, 0, 0)
         ).magnitude
+        self.post_transform(m)
         return self

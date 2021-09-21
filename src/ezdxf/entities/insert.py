@@ -495,6 +495,7 @@ class Insert(LinkedEntities):
 
         for attrib in self.attribs:
             attrib.transform(m)
+        self.post_transform(m)
         return self
 
     def translate(self, dx: float, dy: float, dz: float) -> "Insert":
