@@ -63,6 +63,14 @@ def test_add_data(xdata):
     assert "XXX" in xdata
 
 
+@pytest.mark.parametrize("group_code", [1, 0, 1003])
+def test_prevent_adding_invalid_data(group_code):
+    xdata = XData()
+    with pytest.raises(DXFValueError):
+        xdata.add("INVALID", [(group_code, "String")])
+    assert "INVALID" not in xdata
+
+
 def test_get_data(xdata):
     assert "MOZMAN" in xdata
     tags = xdata.get("MOZMAN")
@@ -219,7 +227,7 @@ def test_poyline_with_xdata():
     assert len(xdata.get("AVE_ENTITY_MATERIAL")) == 27
 
 
-def test_group_tags_poyline_with_xdata():
+def test_group_tags_polyline_with_xdata():
     tags = Tags.from_text(POLYLINE_WITH_INVALID_XDATA)
     assert len(tags) == 49
     tags2 = list(filter_invalid_xdata_group_codes(tags))

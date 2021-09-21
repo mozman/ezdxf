@@ -15,7 +15,7 @@ from typing import (
 from collections import OrderedDict
 from contextlib import contextmanager
 from ezdxf.math import Vec3
-from ezdxf.lldxf.types import dxftag
+from ezdxf.lldxf.types import dxftag, VALID_XDATA_GROUP_CODES
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.const import XDATA_MARKER, DXFValueError, DXFTypeError
 from ezdxf.lldxf.tags import (
@@ -37,6 +37,10 @@ if TYPE_CHECKING:
 __all__ = ["XData", "XDataUserList", "XDataUserDict"]
 
 
+def has_valid_xdata_group_codes(tags: Tags) -> bool:
+    return all(tag.code in VALID_XDATA_GROUP_CODES for tag in tags)
+
+
 class XData:
     def __init__(self, xdata: List[Tags] = None):
         self.data: Dict[str, Tags] = OrderedDict()
@@ -56,7 +60,10 @@ class XData:
             appid = tags[0].value
             if appid in self.data:
                 logger.info(f"Duplicate XDATA appid {appid} in one entity")
-            self.data[appid] = tags
+            if has_valid_xdata_group_codes(tags):
+                self.data[appid] = tags
+            else:
+                raise DXFValueError(f"found invalid XDATA group code in {tags}")
 
     def add(
         self, appid: str, tags: Iterable[Union[Tuple[int, Any], "DXFTag"]]
@@ -288,22 +295,22 @@ class XDataUserList(MutableSequence):
         self.commit()
 
     def __str__(self):
-        """Return str(self). """
+        """Return str(self)."""
         return str(self._data)
 
     def insert(self, index: int, value) -> None:
         self._data.insert(index, value)
 
     def __getitem__(self, item):
-        """Get self[item]. """
+        """Get self[item]."""
         return self._data[item]
 
     def __setitem__(self, item, value):
-        """Set self[item] to value. """
+        """Set self[item] to value."""
         self._data.__setitem__(item, value)
 
     def __delitem__(self, item):
-        """Delete self[item]. """
+        """Delete self[item]."""
         self._data.__delitem__(item)
 
     def _parse_list(self, tags: Iterable[Tuple]) -> List:
@@ -318,11 +325,11 @@ class XDataUserList(MutableSequence):
         return content
 
     def __len__(self) -> int:
-        """ Returns len(self). """
+        """Returns len(self)."""
         return len(self._data)
 
     def commit(self) -> None:
-        """ Store all changes to the underlying :class:`XData` instance.
+        """Store all changes to the underlying :class:`XData` instance.
         This call is not required if using the :meth:`entity` context manager.
 
         Raises:
@@ -390,7 +397,7 @@ class XDataUserDict(MutableMapping):
         self.commit()
 
     def __str__(self):
-        """Return str(self). """
+        """Return str(self)."""
         return str(self._user_dict)
 
     @classmethod
@@ -421,11 +428,11 @@ class XDataUserDict(MutableMapping):
         return self._xlist.xdata
 
     def __len__(self):
-        """ Returns len(self). """
+        """Returns len(self)."""
         return len(self._user_dict)
 
     def __getitem__(self, key):
-        """Get self[key]. """
+        """Get self[key]."""
         return self._user_dict[key]
 
     def __setitem__(self, key, item):
@@ -440,11 +447,11 @@ class XDataUserDict(MutableMapping):
         self._user_dict[key] = item
 
     def __delitem__(self, key):
-        """Delete self[key]. """
+        """Delete self[key]."""
         del self._user_dict[key]
 
     def __iter__(self):
-        """Implement iter(self). """
+        """Implement iter(self)."""
         return iter(self._user_dict)
 
     def discard(self, key):
@@ -458,7 +465,7 @@ class XDataUserDict(MutableMapping):
             pass
 
     def commit(self) -> None:
-        """ Store all changes to the underlying :class:`XData` instance.
+        """Store all changes to the underlying :class:`XData` instance.
         This call is not required if using the :meth:`entity` context manager.
 
         Raises:

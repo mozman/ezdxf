@@ -110,6 +110,22 @@ DOUBLE = set(
     )
 )
 
+VALID_XDATA_GROUP_CODES = {
+    1000,
+    1001,
+    1002,
+    1004,
+    1005,
+    1010,
+    1011,
+    1012,
+    1013,
+    1040,
+    1041,
+    1042,
+    1070,
+    1071,
+}
 
 def _build_type_table(types):
     table = {}

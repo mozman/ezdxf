@@ -5,7 +5,7 @@ from functools import partial
 import logging
 import warnings
 from .tags import DXFTag
-from .types import POINT_CODES, NONE_TAG
+from .types import POINT_CODES, NONE_TAG, VALID_XDATA_GROUP_CODES
 
 logger = logging.getLogger("ezdxf")
 
@@ -178,12 +178,10 @@ with warnings.catch_warnings():
         b"LINE": partial(fix_coordinate_order, codes=(10, 11)),
     }
 
-VALID_XDATA_CODES = set(range(1000, 1019)) | set(range(1040, 1072))
-
 
 def filter_invalid_xdata_group_codes(
     tagger: Iterable[DXFTag],
 ) -> Iterable[DXFTag]:
     for tag in tagger:
-        if tag.code < 1000 or tag.code in VALID_XDATA_CODES:
+        if tag.code < 1000 or tag.code in VALID_XDATA_GROUP_CODES:
             yield tag
