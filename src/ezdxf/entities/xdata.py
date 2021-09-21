@@ -42,10 +42,17 @@ def has_valid_xdata_group_codes(tags: Tags) -> bool:
 
 
 class XData:
-    def __init__(self, xdata: List[Tags] = None):
+    def __init__(self, xdata: Iterable[Tags] = None):
         self.data: Dict[str, Tags] = OrderedDict()
-        for data in xdata or []:
-            self._add(data)
+        if xdata is not None:
+            for data in xdata:
+                self._add(data)
+
+    @classmethod
+    def safe_init(cls, xdata: Iterable[Tags]):
+        return cls(
+            [Tags(filter_invalid_xdata_group_codes(tags) for tags in xdata)]
+        )
 
     def __len__(self):
         return len(self.data)

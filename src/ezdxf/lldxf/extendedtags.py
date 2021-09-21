@@ -103,12 +103,15 @@ class ExtendedTags:
         self.debug("Removed subclass marker from entity for DXF R12.")
 
     def debug(self, msg: str) -> None:
+        msg += f" <{self.entity_name()}>"
+        logger.debug(msg)
+
+    def entity_name(self) -> str:
         try:
             handle = f"(#{self.get_handle()})"
         except DXFValueError:
             handle = ""
-        msg += f" <{self.dxftype()}{handle}>"
-        logger.debug(msg)
+        return self.dxftype() + handle
 
     def __copy__(self) -> "ExtendedTags":
         """Shallow copy."""

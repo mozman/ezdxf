@@ -220,7 +220,14 @@ class DXFEntity:
             if len(tags.appdata):
                 self.setup_app_data(tags.appdata)
             if len(tags.xdata):
-                self.xdata = XData(tags.xdata)
+                try:  # the common case - fast path
+                    self.xdata = XData(tags.xdata)
+                except const.DXFValueError:  # contains invalid group codes
+                    self.xdata = XData.safe_init(tags.xdata)
+                    logger.debug(
+                        f"removed invalid XDATA from {tags.entity_name()}"
+                    )
+
             processor = SubclassProcessor(tags, dxfversion=dxfversion)
             self.dxf = self.load_dxf_attribs(processor)
 
@@ -631,16 +638,14 @@ class DXFEntity:
             raise AttributeError("Entity has no extension dictionary.")
 
     def new_extension_dict(self) -> "ExtensionDict":
-        """Create a new :class:`~ezdxf.entities.xdict.ExtensionDict` instance .
-        """
+        """Create a new :class:`~ezdxf.entities.xdict.ExtensionDict` instance ."""
         assert self.doc is not None
         xdict = ExtensionDict.new(self.dxf.handle, self.doc)
         self.extension_dict = xdict
         return xdict
 
     def discard_extension_dict(self) -> None:
-        """Delete :class:`~ezdxf.entities.xdict.ExtensionDict` instance .
-        """
+        """Delete :class:`~ezdxf.entities.xdict.ExtensionDict` instance ."""
         if isinstance(self.extension_dict, ExtensionDict):
             self.extension_dict.destroy()
         self.extension_dict = None

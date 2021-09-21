@@ -175,6 +175,34 @@ the AppID ``EZDXF`` is also registered automatically.
 The total size of XDATA for a single DXF entity is limited to 16kB for AutoCAD.
 XDATA is supported by all DXF versions and is accessible by AutoLisp.
 
+The valid group codes for extended data are limited to the following values,
+see also the internals of :ref:`xdata_internals`:
+
+================= ==============================================================
+Group Code        Description
+================= ==============================================================
+1000              Strings up to 255 bytes long
+1001              (fixed) Registered application name up to 31 bytes long
+1002              (fixed) An extended data control string ``'{'``  or ``'}'``
+1004              Binary data
+1005              Database Handle of entities in the drawing database
+1010              Simple 3D point in WCS, in the order X, Y, Z
+1011              3D point in WCS That is moved, scaled, rotated, mirrored,
+                  and stretched along with the entity
+1012              3D point in WCS that is scaled, rotated, and mirrored along
+                  with the entity
+1013              3D point in WCS that is scaled, rotated, and mirrored along
+                  with the entity
+1040              A real value
+1041              Distance, a real value that is scaled along with the entity
+1042              Scale Factor, a real value that is scaled along with the entity
+1070              A 16-bit integer (signed or unsigned)
+1071              A 32-bit signed (long) integer
+================= ==============================================================
+
+.. literalinclude:: src/customdata/xdata.py
+    :lines: 10-40
+
 Extension Dictionaries
 ----------------------
 
