@@ -18,20 +18,6 @@ storing XData, AppData and extension dictionaries in DXF entities and objects,
 storing XRecords in the OBJECTS section and ends by using proxy entities or
 even extending the DXF format by user defined entities and objects.
 
-Retrieving User Data
---------------------
-
-Retrieving the is a simple task by `ezdxf`, but often not possible in CAD
-applications without using the scripting features (AutoLisp) or even the SDK.
-
-.. warning::
-
-    I have no experience with AutoLisp so far and I created this scripts for
-    AutoLisp while writing this tutorial. There may be better ways to accomplish
-    these tasks, and feedback on this is very welcome.
-    Everything is tested with BricsCAD and should also work with the
-    full version of AutoCAD.
-
 This is the common prolog for all Python code examples shown in this tutorial:
 
 .. code-block:: Python
@@ -40,6 +26,27 @@ This is the common prolog for all Python code examples shown in this tutorial:
 
     doc = ezdxf.new()
     msp = doc.modelspace()
+
+Retrieving User Data
+--------------------
+
+Retrieving the is a simple task by `ezdxf`, but often not possible in CAD
+applications without using the scripting features (AutoLISP) or even the SDK.
+
+AutoLISP Resources
+++++++++++++++++++
+
+- `Autodesk Developer Documentation <http://help.autodesk.com/view/OARX/2018/ENU/>`_
+- `AfraLISP <https://www.afralisp.net/index.php>`_
+- `Lee Mac Programming <http://www.lee-mac.com>`_
+
+.. warning::
+
+    I have no experience with AutoLISP so far and I created this scripts for
+    AutoLISP while writing this tutorial. There may be better ways to accomplish
+    these tasks, and feedback on this is very welcome.
+    Everything is tested with BricsCAD and should also work with the
+    full version of AutoCAD.
 
 Header Section
 --------------
@@ -71,12 +78,12 @@ Getting the data in `BricsCAD` at the command line::
     : USERI1
     New current value for USERI1 (-32768 to 32767) <4711>:
 
-Getting the data by AutoLisp::
+Getting the data by AutoLISP::
 
     : (getvar 'USERI1)
     4711
 
-Setting the value by AutoLisp::
+Setting the value by AutoLISP::
 
     : (setvar 'USERI1 1234)
     1234
@@ -105,7 +112,7 @@ variable:
 
 .. image:: gfx/custom_header_property.png
 
-AutoLisp script for getting the custom document properties:
+AutoLISP script for getting the custom document properties:
 
 .. code-block:: Lisp
 
@@ -163,7 +170,7 @@ which may never be used by `ezdxf` in the future.
 The data is stored as XDATA in then BLOCK entity of the model space for DXF R12
 and for DXF R2000 and later as a DXF :class:`~ezdxf.entities.Dictionary`
 in the root dictionary by the key ``EZDXF_META``.
-See following chapters for accessing such data by AutoLisp.
+See following chapters for accessing such data by AutoLISP.
 
 XDATA
 -----
@@ -173,7 +180,7 @@ Each application needs a unique AppID registered in the AppID table to add
 XDATA to an entity. The AppID ``ACAD`` is reserved and by using `ezdxf`
 the AppID ``EZDXF`` is also registered automatically.
 The total size of XDATA for a single DXF entity is limited to 16kB for AutoCAD.
-XDATA is supported by all DXF versions and is accessible by AutoLisp.
+XDATA is supported by all DXF versions and is accessible by AutoLISP.
 
 The valid group codes for extended data are limited to the following values,
 see also the internals of :ref:`xdata_internals`:
@@ -204,6 +211,27 @@ Group Code        Description
 .. literalinclude:: src/customdata/xdata.py
     :lines: 10-40
 
+AutoLISP script for getting XDATA for AppID ``YOUR_UNIQUE_ID``:
+
+.. code-block:: Lisp
+
+    (defun C:SHOWXDATA (/ entity_list xdata_list)
+        (setq entity_list (entget (car (entsel)) '("YOUR_UNIQUE_ID")))
+        (setq xdata_list (assoc -3 entity_list))
+        (car (cdr xdata_list))
+    )
+
+Script output:
+
+.. code-block:: Text
+
+    : SHOWXDATA
+    Select entity: ("YOUR_UNIQUE_ID" (1000 . "custom text") (1040 . 3.141592) ...
+
+.. seealso::
+
+    `AfraLISP XDATA tutorial <https://www.afralisp.net/autolisp/tutorials/extended-entity-data-part-1.php>`_
+
 Extension Dictionaries
 ----------------------
 
@@ -221,7 +249,7 @@ AutoCAD internally to store the handle to the :ref:`extension_dictionary` and
 the :ref:`reactors` in DXF entities.
 `Ezdxf` supports these kind of data storage for any AppID and the data is
 preserved by AutoCAD and BricsCAD, but I haven't found a way to access this
-data by AutoLisp or even the SDK.
+data by AutoLISP or even the SDK.
 So I don't recommend this feature to store application defined data,
 because :ref:`extended_data` and the :ref:`extension_dictionary` are well
 documented and safe ways to attach custom data to entities.
