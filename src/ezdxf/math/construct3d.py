@@ -1,9 +1,9 @@
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
-from typing import Sequence, List, Iterable, Union, TYPE_CHECKING, Tuple
+from typing import Sequence, List, Iterable, TYPE_CHECKING, Tuple
 from enum import IntEnum
 import math
-from ezdxf.math import Vec3, Vec2, Matrix44
+from ezdxf.math import Vec3, Matrix44, X_AXIS, Y_AXIS, Z_AXIS
 
 if TYPE_CHECKING:
     from ezdxf.math import Vertex, AnyVec
@@ -20,6 +20,7 @@ __all__ = [
     "best_fit_normal",
     "BarycentricCoordinates",
     "linear_vertex_spacing",
+    "has_matrix_3d_stretching",
 ]
 
 
@@ -44,7 +45,7 @@ def is_planar_face(face: Sequence[Vec3], abs_tol=1e-9) -> bool:
         return True
     first_normal = None
     for index in range(len(face) - 2):
-        a, b, c = face[index: index + 3]
+        a, b, c = face[index : index + 3]
         normal = (b - a).cross(c - b).normalize()
         if first_normal is None:
             first_normal = normal
@@ -84,7 +85,7 @@ def subdivide_face(
 
 
 def subdivide_ngons(
-    faces: Iterable[Sequence["AnyVec"]]
+    faces: Iterable[Sequence["AnyVec"]],
 ) -> Iterable[Tuple[Vec3, ...]]:
     """Yields only triangles or quad faces, subdivides ngons into triangles.
 
@@ -332,3 +333,19 @@ def linear_vertex_spacing(start: Vec3, end: Vec3, count: int) -> List[Vec3]:
         vertices.append(start + (step * index))
     vertices.append(end)
     return vertices
+
+
+def has_matrix_3d_stretching(m: Matrix44) -> bool:
+    """Returns ``True`` if matrix `m` performs a non-uniform xyz-scaling.
+    Uniform scaling is not stretching in this context.
+
+    Does not check if the target system is a cartesian coordinate system, use the
+    :class:`~ezdxf.math.Matrix44` property :attr:`~ezdxf.math.Matrix44.is_cartesian`
+    for that.
+    """
+    ux_mag_sqr = m.transform_direction(X_AXIS).magnitude_square
+    uy = m.transform_direction(Y_AXIS)
+    uz = m.transform_direction(Z_AXIS)
+    return not math.isclose(
+        ux_mag_sqr, uy.magnitude_square
+    ) or not math.isclose(ux_mag_sqr, uz.magnitude_square)

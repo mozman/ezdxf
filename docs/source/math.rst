@@ -25,6 +25,10 @@ Functions
 
 .. autofunction:: ellipse_param_span
 
+.. autofunction:: has_matrix_2d_stretching(m: Matrix44) -> bool
+
+.. autofunction:: has_matrix_3d_stretching(m: Matrix44) -> bool
+
 .. _bulge_related_functions:
 
 Bulge Related Functions
@@ -305,6 +309,10 @@ Matrix44
     .. automethod:: determinant
 
     .. automethod:: inverse
+
+    .. autoproperty:: is_cartesian
+
+    .. autoproperty:: is_orthogonal
 
 Construction Tools
 ==================

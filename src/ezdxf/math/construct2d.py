@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Iterable, List, Union
 from functools import partial
 import math
 import warnings
-from ezdxf.math import Vec3, Vec2
+from ezdxf.math import Vec3, Vec2, Matrix44, X_AXIS, Y_AXIS
 from decimal import Decimal
 
 if TYPE_CHECKING:
@@ -33,7 +33,8 @@ __all__ = [
     "sign",
     "area",
     "circle_radius_3p",
-    "TOLERANCE"
+    "TOLERANCE",
+    "has_matrix_2d_stretching"
 ]
 
 
@@ -348,7 +349,20 @@ def area(vertices: Iterable["Vertex"]) -> float:
     return abs(
         sum(
             (p1.x * p2.y - p1.y * p2.x)
-            for p1, p2 in zip(_vertices, _vertices[1:])
+                for p1, p2 in zip(_vertices, _vertices[1:])
         )
         / 2
     )
+
+
+def has_matrix_2d_stretching(m: Matrix44) -> bool:
+    """Returns ``True`` if matrix `m` performs a non-uniform xy-scaling.
+    Uniform scaling is not stretching in this context.
+
+    Does not check if the target system is a cartesian coordinate system, use the
+    :class:`~ezdxf.math.Matrix44` property :attr:`~ezdxf.math.Matrix44.is_cartesian`
+    for that.
+    """
+    ux = m.transform_direction(X_AXIS)
+    uy = m.transform_direction(Y_AXIS)
+    return not math.isclose(ux.magnitude_square, uy.magnitude_square)

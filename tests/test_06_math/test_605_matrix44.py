@@ -3,8 +3,13 @@
 import pytest
 import pickle
 from math import radians, sin, cos, pi, isclose
+
 # Import from 'ezdxf.math._matrix44' to test Python implementation
-from ezdxf.math import close_vectors
+from ezdxf.math import (
+    close_vectors,
+    has_matrix_2d_stretching,
+    has_matrix_3d_stretching,
+)
 from ezdxf.math._matrix44 import Matrix44
 from ezdxf.acc import USE_C_EXT
 
@@ -37,10 +42,10 @@ def equal_matrix(m1, m2, abs_tol=1e-9):
 
 
 class TestMatrix44:
-    @pytest.mark.parametrize('index', [0, 1, 2, 3])
+    @pytest.mark.parametrize("index", [0, 1, 2, 3])
     def test_default_constructor(self, index, m44):
         matrix = m44()
-        assert matrix[index, index] == 1.
+        assert matrix[index, index] == 1.0
 
     def test_numbers_constructor(self, m44):
         matrix = m44([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
@@ -51,10 +56,7 @@ class TestMatrix44:
 
     def test_row_constructor(self, m44):
         matrix = m44(
-            (0, 1, 2, 3),
-            (4, 5, 6, 7),
-            (8, 9, 10, 11),
-            (12, 13, 14, 15)
+            (0, 1, 2, 3), (4, 5, 6, 7), (8, 9, 10, 11), (12, 13, 14, 15)
         )
         assert matrix.get_row(0) == (0.0, 1.0, 2.0, 3.0)
         assert matrix.get_row(1) == (4.0, 5.0, 6.0, 7.0)
@@ -64,17 +66,18 @@ class TestMatrix44:
     def test_invalid_row_constructor(self, m44):
         with pytest.raises(ValueError):
             m44(
-                (0, 1, 2, 3),
-                (4, 5, 6, 7),
-                (8, 9, 10, 11),
-                (12, 13, 14, 15, 16)
+                (0, 1, 2, 3), (4, 5, 6, 7), (8, 9, 10, 11), (12, 13, 14, 15, 16)
             )
         with pytest.raises(ValueError):
             m44(
                 (0, 1, 2, 3),
                 (4, 5, 6, 7),
                 (8, 9, 10, 11),
-                (12, 13, 14,),
+                (
+                    12,
+                    13,
+                    14,
+                ),
             )
 
     def test_invalid_number_constructor(self, m44):
@@ -126,13 +129,13 @@ class TestMatrix44:
 
     def test_set_row(self, m44):
         matrix = m44()
-        matrix.set_row(0, (2., 3., 4., 5.))
+        matrix.set_row(0, (2.0, 3.0, 4.0, 5.0))
         assert matrix.get_row(0) == (2.0, 3.0, 4.0, 5.0)
-        matrix.set_row(1, (6., 7., 8., 9.))
+        matrix.set_row(1, (6.0, 7.0, 8.0, 9.0))
         assert matrix.get_row(1) == (6.0, 7.0, 8.0, 9.0)
-        matrix.set_row(2, (10., 11., 12., 13.))
+        matrix.set_row(2, (10.0, 11.0, 12.0, 13.0))
         assert matrix.get_row(2) == (10.0, 11.0, 12.0, 13.0)
-        matrix.set_row(3, (14., 15., 16., 17.))
+        matrix.set_row(3, (14.0, 15.0, 16.0, 17.0))
         assert matrix.get_row(3) == (14.0, 15.0, 16.0, 17.0)
 
     def test_set_row_index_error(self, m44):
@@ -156,13 +159,13 @@ class TestMatrix44:
 
     def test_set_col(self, m44):
         matrix = m44()
-        matrix.set_col(0, (2., 3., 4., 5.))
+        matrix.set_col(0, (2.0, 3.0, 4.0, 5.0))
         assert matrix.get_col(0) == (2.0, 3.0, 4.0, 5.0)
-        matrix.set_col(1, (6., 7., 8., 9.))
+        matrix.set_col(1, (6.0, 7.0, 8.0, 9.0))
         assert matrix.get_col(1) == (6.0, 7.0, 8.0, 9.0)
-        matrix.set_col(2, (10., 11., 12., 13.))
+        matrix.set_col(2, (10.0, 11.0, 12.0, 13.0))
         assert matrix.get_col(2) == (10.0, 11.0, 12.0, 13.0)
-        matrix.set_col(3, (14., 15., 16., 17.))
+        matrix.set_col(3, (14.0, 15.0, 16.0, 17.0))
         assert matrix.get_col(3) == (14.0, 15.0, 16.0, 17.0)
 
     def test_set_col_index_error(self, m44):
@@ -179,21 +182,21 @@ class TestMatrix44:
 
     def test_translate(self, m44):
         t = m44.translate(10, 20, 30)
-        x = diag((1., 1., 1., 1.), m44)
-        x[3, 0] = 10.
-        x[3, 1] = 20.
-        x[3, 2] = 30.
+        x = diag((1.0, 1.0, 1.0, 1.0), m44)
+        x[3, 0] = 10.0
+        x[3, 1] = 20.0
+        x[3, 2] = 30.0
         assert equal_matrix(t, x) is True
 
     def test_scale(self, m44):
         t = m44.scale(10, 20, 30)
-        x = diag((10., 20., 30., 1.), m44)
+        x = diag((10.0, 20.0, 30.0, 1.0), m44)
         assert equal_matrix(t, x) is True
 
     def test_x_rotate(self, m44):
         alpha = radians(25)
         t = m44.x_rotate(alpha)
-        x = diag((1., 1., 1., 1.), m44)
+        x = diag((1.0, 1.0, 1.0, 1.0), m44)
         x[1, 1] = cos(alpha)
         x[2, 1] = -sin(alpha)
         x[1, 2] = sin(alpha)
@@ -203,7 +206,7 @@ class TestMatrix44:
     def test_y_rotate(self, m44):
         alpha = radians(25)
         t = m44.y_rotate(alpha)
-        x = diag((1., 1., 1., 1.), m44)
+        x = diag((1.0, 1.0, 1.0, 1.0), m44)
         x[0, 0] = cos(alpha)
         x[2, 0] = sin(alpha)
         x[0, 2] = -sin(alpha)
@@ -213,7 +216,7 @@ class TestMatrix44:
     def test_z_rotate(self, m44):
         alpha = radians(25)
         t = m44.z_rotate(alpha)
-        x = diag((1., 1., 1., 1.), m44)
+        x = diag((1.0, 1.0, 1.0, 1.0), m44)
         x[0, 0] = cos(alpha)
         x[1, 0] = -sin(alpha)
         x[0, 1] = sin(alpha)
@@ -225,17 +228,17 @@ class TestMatrix44:
         t = m44.translate(10, 20, 30)
 
         c = m44.chain(s, t)
-        x = diag((10., 20., 30., 1.), m44)
-        x[3, 0] = 10.
-        x[3, 1] = 20.
-        x[3, 2] = 30.
+        x = diag((10.0, 20.0, 30.0, 1.0), m44)
+        x[3, 0] = 10.0
+        x[3, 1] = 20.0
+        x[3, 2] = 30.0
         assert equal_matrix(c, x) is True
 
     def test_chain2(self, m44):
         s = m44.scale(10, 20, 30)
         t = m44.translate(10, 20, 30)
-        r = m44.axis_rotate(angle=pi / 2, axis=(0., 0., 1.))
-        points = ((23., 97., .5), (2., 7., 13.))
+        r = m44.axis_rotate(angle=pi / 2, axis=(0.0, 0.0, 1.0))
+        points = ((23.0, 97.0, 0.5), (2.0, 7.0, 13.0))
 
         p1 = s.transform_vertices(points)
         p1 = t.transform_vertices(p1)
@@ -246,9 +249,9 @@ class TestMatrix44:
         assert close_vectors(p1, p2) is True
 
     def test_transform(self, m44):
-        t = m44.scale(2., .5, 1.)
-        r = t.transform((10., 20., 30.))
-        assert r == (20., 10., 30.)
+        t = m44.scale(2.0, 0.5, 1.0)
+        r = t.transform((10.0, 20.0, 30.0))
+        assert r == (20.0, 10.0, 30.0)
 
     def test_multiply(self, m44):
         m1 = m44(range(16))
@@ -258,7 +261,7 @@ class TestMatrix44:
             (56.0, 62.0, 68.0, 74.0),
             (152.0, 174.0, 196.0, 218.0),
             (248.0, 286.0, 324.0, 362.0),
-            (344.0, 398.0, 452.0, 506.0)
+            (344.0, 398.0, 452.0, 506.0),
         )
         assert equal_matrix(res, expected)
         # __matmul__()
@@ -266,10 +269,9 @@ class TestMatrix44:
         assert equal_matrix(res, expected)
 
     def test_transpose(self, m44):
-        matrix = m44((0, 1, 2, 3),
-                     (4, 5, 6, 7),
-                     (8, 9, 10, 11),
-                     (12, 13, 14, 15))
+        matrix = m44(
+            (0, 1, 2, 3), (4, 5, 6, 7), (8, 9, 10, 11), (12, 13, 14, 15)
+        )
         matrix.transpose()
         assert matrix.get_row(0) == (0.0, 4.0, 8.0, 12.0)
         assert matrix.get_row(1) == (1.0, 5.0, 9.0, 13.0)
@@ -299,10 +301,9 @@ class TestMatrix44:
         assert matrix[0, 0] == 12
 
     def test_picklable(self, m44):
-        matrix = m44((0.1, 1, 2, 3),
-                     (4, 5, 6, 7),
-                     (8, 9, 10, 11),
-                     (12, 13, 14, 15))
+        matrix = m44(
+            (0.1, 1, 2, 3), (4, 5, 6, 7), (8, 9, 10, 11), (12, 13, 14, 15)
+        )
         pickled_matrix = pickle.loads(pickle.dumps(matrix))
         assert equal_matrix(matrix, pickled_matrix)
         assert type(matrix) is type(pickled_matrix)
@@ -314,3 +315,21 @@ class TestMatrix44:
         matrix = m44.shear_xy(angle_x=angle, angle_y=-angle)
         assert matrix[0, 1] == pytest.approx(-1.0)
         assert matrix[1, 0] == pytest.approx(1.0)
+
+
+def test_has_matrix_2d_stretching():
+    """Note: Uniform scaling is not stretching in this context. """
+    assert has_matrix_2d_stretching(Matrix44.scale(1, 1, 1)) is False
+    assert has_matrix_2d_stretching(Matrix44.scale(2, 2, 2)) is False
+    assert has_matrix_2d_stretching(Matrix44.scale(1, 1, 2)) is False, "ignore z-axis"
+    assert has_matrix_2d_stretching(Matrix44.scale(2, 1, 1)) is True
+    assert has_matrix_2d_stretching(Matrix44.scale(1, 2, 1)) is True
+
+
+def test_has_matrix_3d_stretching():
+    """Note: Uniform scaling is not stretching in this context. """
+    assert has_matrix_3d_stretching(Matrix44.scale(1, 1, 1)) is False
+    assert has_matrix_3d_stretching(Matrix44.scale(2, 2, 2)) is False
+    assert has_matrix_3d_stretching(Matrix44.scale(2, 1, 1)) is True
+    assert has_matrix_3d_stretching(Matrix44.scale(1, 2, 1)) is True
+    assert has_matrix_3d_stretching(Matrix44.scale(1, 1, 2)) is True
