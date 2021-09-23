@@ -47,14 +47,14 @@ class Primitive(abc.ABC):
 
     max_flattening_distance: float = 0.01
 
-    def __init__(self, entity: DXFEntity, max_flattening_distance=None):
+    def __init__(self, entity: DXFEntity, max_flattening_distance: Optional[float] = None):
         self.entity: DXFEntity = entity
         # Path representation for linear entities:
         self._path: Optional[Path] = None
         # MeshBuilder representation for mesh based entities:
         # PolygonMesh, PolyFaceMesh, Mesh
         self._mesh: Optional[MeshBuilder] = None
-        if max_flattening_distance:
+        if max_flattening_distance is not None:
             self.max_flattening_distance = max_flattening_distance
 
     @property

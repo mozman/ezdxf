@@ -1,18 +1,19 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Iterable, List, Optional, Tuple
 import copy
 import math
+from typing import Iterable, List, Optional, Tuple
+
 from ezdxf import colors
-from ezdxf.lldxf import const
 from ezdxf.entities import MText
-from ezdxf.tools import text_layout as tl, fonts
+from ezdxf.lldxf import const
 from ezdxf.math import Matrix44, Vec3
 from ezdxf.render.abstract_mtext_renderer import AbstractMTextRenderer
-from .backend import Backend
+from ezdxf.tools import text_layout as tl, fonts
+from ezdxf.tools.text import MTextContext
+from .backend import BackendInterface
 from .properties import Properties, RenderContext, rgb_to_hex
 from .type_hints import Color
-from ezdxf.tools.text import MTextContext
 
 __all__ = ["complex_mtext_renderer"]
 
@@ -38,7 +39,7 @@ def corner_vertices(
 
 
 class FrameRenderer(tl.ContentRenderer):
-    def __init__(self, properties: Properties, backend: Backend):
+    def __init__(self, properties: Properties, backend: BackendInterface):
         self.properties = properties
         self.backend = backend
 
@@ -75,7 +76,7 @@ class ColumnBackgroundRenderer(FrameRenderer):
     def __init__(
         self,
         properties: Properties,
-        backend: Backend,
+        backend: BackendInterface,
         bg_properties: Properties = None,
         offset: float = 0,
         text_frame: bool = False,
@@ -117,7 +118,7 @@ class TextRenderer(FrameRenderer):
         width_factor: float,
         oblique: float,  # angle in degrees
         properties: Properties,
-        backend: Backend,
+        backend: BackendInterface,
     ):
         super().__init__(properties, backend)
         self.text = text
@@ -154,7 +155,7 @@ class TextRenderer(FrameRenderer):
 
 
 def complex_mtext_renderer(
-    ctx: RenderContext, backend: Backend, mtext: MText, properties: Properties
+    ctx: RenderContext, backend: BackendInterface, mtext: MText, properties: Properties
 ) -> None:
     cmr = ComplexMTextRenderer(ctx, backend, properties)
     align = tl.LayoutAlignment(mtext.dxf.attachment_point)
@@ -167,7 +168,7 @@ class ComplexMTextRenderer(AbstractMTextRenderer):
     def __init__(
         self,
         ctx: RenderContext,
-        backend: Backend,
+        backend: BackendInterface,
         properties: Properties,
     ):
         super().__init__()
@@ -253,7 +254,7 @@ class ComplexMTextRenderer(AbstractMTextRenderer):
     # Implementation details of ComplexMTextRenderer:
 
     @property
-    def backend(self) -> Backend:
+    def backend(self) -> BackendInterface:
         return self._backend
 
     def resolve_aci_color(self, aci: int) -> Color:

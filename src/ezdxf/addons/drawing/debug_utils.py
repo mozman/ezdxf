@@ -2,12 +2,12 @@
 # License: MIT License
 from typing import List
 
-from ezdxf.addons.drawing.backend import Backend
+from ezdxf.addons.drawing.backend import BackendInterface
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.math import Vec3
 
 
-def draw_rect(points: List[Vec3], color: Color, out: Backend):
+def draw_rect(points: List[Vec3], color: Color, out: BackendInterface):
     from ezdxf.addons.drawing import Properties
 
     props = Properties()

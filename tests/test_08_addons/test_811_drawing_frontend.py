@@ -4,7 +4,8 @@ from typing import List, Set, cast
 import pytest
 import ezdxf
 from ezdxf.addons.drawing import Frontend, RenderContext, Properties
-from ezdxf.addons.drawing.backend import Backend, BackendScaler, DEFAULT_PARAMS
+from ezdxf.addons.drawing.backend import Backend, BackendScaler
+from ezdxf.addons.drawing.config import Configuration
 from ezdxf.tools.fonts import FontMeasurements
 from ezdxf.document import Drawing
 from ezdxf.entities import DXFGraphic
@@ -21,6 +22,7 @@ class BasicBackend(Backend):
     def __init__(self):
         super().__init__()
         self.collector = []
+        self.configure(Configuration())
 
     def draw_point(self, pos: Vec3, properties: Properties) -> None:
         self.collector.append(('point', pos, properties))
@@ -494,10 +496,6 @@ class TestBackendScaler:
     @pytest.fixture
     def backend(self):
         return BackendScaler(PathBackend(), 2)
-
-    def test_has_access_to_attributes(self, backend):
-        for k, v in DEFAULT_PARAMS.items():
-            assert getattr(backend, k) == v
 
     def test_can_call_delegate_methods(self, backend):
         backend.set_background("#000000")
