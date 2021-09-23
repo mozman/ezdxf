@@ -113,23 +113,41 @@ class Configuration:
         nested_polygon_detection: required to draw polygons with holes, can be disabled
     """
 
-    pdsize: Optional[int] = 1
-    pdmode: Optional[int] = 0
-    measurement: Optional[int] = None
-    show_defpoints: bool = False
-    proxy_graphic_policy: ProxyGraphicPolicy = ProxyGraphicPolicy.SHOW
-    line_policy: LinePolicy = LinePolicy.APPROXIMATE
-    hatch_policy: HatchPolicy = HatchPolicy.SHOW_APPROXIMATE_PATTERN
-    infinite_line_length: float = 20
-    lineweight_scaling: float = 1.0
-    min_lineweight: Optional[float] = None
-    min_dash_length: float = 0.1
-    max_flattening_distance: float = disassemble.Primitive.max_flattening_distance
-    circle_approximation_count: int = 128
-    approximation_max_sagitta = 0.01
-    nested_polygon_detection: NestedPolygonDetectionMethod = (
-        NestedPolygonDetectionMethod.FAST
-    )
+    pdsize: Optional[int]
+    pdmode: Optional[int]
+    measurement: Optional[int]
+    show_defpoints: bool
+    proxy_graphic_policy: ProxyGraphicPolicy
+    line_policy: LinePolicy
+    hatch_policy: HatchPolicy
+    infinite_line_length: float
+    lineweight_scaling: float
+    min_lineweight: Optional[float]
+    min_dash_length: float
+    max_flattening_distance: float
+    circle_approximation_count: int
+    approximation_max_sagitta: float
+    nested_polygon_detection: NestedPolygonDetectionMethod
+
+    @staticmethod
+    def defaults() -> "Configuration":
+        return Configuration(
+            pdsize=1,
+            pdmode=0,
+            measurement=None,
+            show_defpoints=False,
+            proxy_graphic_policy=ProxyGraphicPolicy.SHOW,
+            line_policy=LinePolicy.APPROXIMATE,
+            hatch_policy=HatchPolicy.SHOW_APPROXIMATE_PATTERN,
+            infinite_line_length=20,
+            lineweight_scaling=1.0,
+            min_lineweight=None,
+            min_dash_length=0.1,
+            max_flattening_distance=disassemble.Primitive.max_flattening_distance,
+            circle_approximation_count=128,
+            approximation_max_sagitta=0.01,
+            nested_polygon_detection=NestedPolygonDetectionMethod.FAST,
+        )
 
     def with_changes(self, **kwargs) -> "Configuration":
         params = dataclasses.asdict(self)

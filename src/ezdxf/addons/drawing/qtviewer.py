@@ -167,7 +167,7 @@ class CADGraphicsViewWithOverlay(CADGraphicsView):
 
 
 class CadViewer(qw.QMainWindow):
-    def __init__(self, config: Configuration = Configuration()):
+    def __init__(self, config: Configuration = Configuration.defaults()):
         super().__init__()
         self._config = config
         self.doc = None

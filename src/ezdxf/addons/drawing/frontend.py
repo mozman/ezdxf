@@ -83,7 +83,7 @@ class Frontend:
         self,
         ctx: RenderContext,
         out: BackendInterface,
-        config: Configuration = Configuration()
+        config: Configuration = Configuration.defaults()
     ):
         # RenderContext contains all information to resolve resources for a
         # specific DXF document.

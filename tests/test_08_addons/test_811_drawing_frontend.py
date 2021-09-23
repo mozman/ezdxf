@@ -22,7 +22,7 @@ class BasicBackend(Backend):
     def __init__(self):
         super().__init__()
         self.collector = []
-        self.configure(Configuration())
+        self.configure(Configuration.defaults())
 
     def draw_point(self, pos: Vec3, properties: Properties) -> None:
         self.collector.append(('point', pos, properties))

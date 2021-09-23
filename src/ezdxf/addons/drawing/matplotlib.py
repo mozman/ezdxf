@@ -377,7 +377,7 @@ def qsave(
     fg: Optional[Color] = None,
     dpi: int = 300,
     backend: str = "agg",
-    config: Configuration = Configuration(),
+    config: Configuration = Configuration.defaults(),
     filter_func: FilterFunc = None,
 ) -> None:
     """Quick and simplified render export by matplotlib.
