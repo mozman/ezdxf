@@ -163,14 +163,22 @@ def test_add_sub_dict(doc):
     assert new_dict.dxf.owner == rootdict.dxf.handle
 
 
-def test_add_dict_var(doc):
-    rootdict = doc.rootdict
-    assert "MOZMAN_VAR" not in rootdict
-    new_var = rootdict.add_dict_var("MOZMAN_VAR", "Hallo")
-    assert new_var.dxftype() == "DICTIONARYVAR"
-    assert "MOZMAN_VAR" in rootdict
-    assert new_var.dxf.value == "Hallo"
-    assert new_var.dxf.owner == rootdict.dxf.handle
+class TestDictionaryVar:
+    def test_add_dict_var(self, doc):
+        rootdict = doc.rootdict
+        assert "MOZMAN_VAR" not in rootdict
+        new_var = rootdict.add_dict_var("MOZMAN_VAR", "Hallo")
+        assert new_var.dxftype() == "DICTIONARYVAR"
+        assert "MOZMAN_VAR" in rootdict
+        assert new_var.dxf.value == "Hallo"
+        assert new_var.dxf.owner == rootdict.dxf.handle
+
+    def test_value_property(self, doc):
+        rootdict = doc.rootdict
+        new_var = rootdict.add_dict_var("MOZMAN_VAR2", "")
+        assert new_var.value == ""
+        new_var.value = "Hello"
+        assert new_var.value == "Hello"
 
 
 def test_add_xrecord(doc):

@@ -589,6 +589,15 @@ class DictionaryVar(DXFObject):
     DXFTYPE = "DICTIONARYVAR"
     DXFATTRIBS = DXFAttributes(base_class, acdb_dict_var)
 
+    @property
+    def value(self) -> str:
+        """ Get/set the value of the :class:`DictionaryVar` as string. """
+        return self.dxf.get("value", "")
+
+    @value.setter
+    def value(self, data: str) -> None:
+        self.dxf.set("value", str(data))
+
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
     ) -> "DXFNamespace":

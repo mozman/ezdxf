@@ -139,3 +139,4 @@ Factory function         :meth:`ezdxf.entities.Dictionary.add_dict_var`
 
         Value as string.
 
+    .. autoproperty:: value
