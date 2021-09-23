@@ -882,7 +882,9 @@ class BSpline:
             if knots[0] != 0.0:
                 knots = normalize_knots(knots)
         self._basis = Basis(knots, order, count, weights=weights)
-        self._clamped = not any(knots[:order])
+        self._clamped = (
+            len(set(knots[:order])) == 1 and len(set(knots[-order:])) == 1
+        )
 
     def __str__(self):
         return (

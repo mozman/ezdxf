@@ -16,6 +16,44 @@ def test_is_clamped(weired_spline1):
     assert weired_spline1.is_clamped is False
 
 
+@pytest.mark.parametrize("knots", [
+    [0., 0., 0., 0., .5, 1., 1., 1., 1.],
+    [2., 2., 2., 2., 3., 6., 6., 6., 6.],
+])
+def test_is_a_clamped_bspline(knots):
+    s = BSpline(
+        control_points=DEFPOINTS,
+        knots=knots,
+        order=4,
+    )
+    assert s.is_clamped is True
+
+
+@pytest.mark.parametrize("knots", [
+    [0., 1., 2., 3., 4., 5., 6., 7., 8.],
+    [0., 0., 2., 3., 4., 5., 6., 8., 8.],
+    [0., 0., 0., 3., 4., 5., 8., 8., 8.],
+    [0., 0., 0., 0., .5, 1., 1., 1., 1.0000001],
+    [0., 0., 0., 0.0000001, .5, 1., 1., 1., 1.],
+], ids=[
+    "no repetitive knot values",
+    "2 repetitive knot values",
+    "3 repetitive knot values",
+    "inaccuracy at the end",
+    "inaccuracy at the start",
+])
+def test_is_not_a_clamped_bspline(knots):
+    """ To be a clamped B-spline 4 repetitive knot values at the start and at
+    the end of the knot vector are required.
+    """
+    s = BSpline(
+        control_points=DEFPOINTS,
+        knots=knots,
+        order=4,
+    )
+    assert s.is_clamped is False
+
+
 def test_normalize_knots():
     assert normalize_knots([0, 0.25, 0.5, 0.75, 1.0]) == [0, 0.25, 0.5, 0.75,
                                                           1.0]
