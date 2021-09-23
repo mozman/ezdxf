@@ -37,7 +37,7 @@ AutoLISP Resources
 ++++++++++++++++++
 
 - `Autodesk Developer Documentation <http://help.autodesk.com/view/OARX/2018/ENU/>`_
-- `AfraLISP <https://www.afralisp.net/index.php>`_
+- `AfraLISP`_
 - `Lee Mac Programming <http://www.lee-mac.com>`_
 
 .. warning::
@@ -230,13 +230,63 @@ Script output:
 
 .. seealso::
 
-    `AfraLISP XDATA tutorial <https://www.afralisp.net/autolisp/tutorials/extended-entity-data-part-1.php>`_
+    - `AfraLISP XDATA tutorial <https://www.afralisp.net/autolisp/tutorials/extended-entity-data-part-1.php>`_
+    - :ref:`extended_data` Reference
 
 Extension Dictionaries
 ----------------------
 
+Extension dictionaries are another way to attach custom data to any DXF
+entity. This method requires DXF R13/14 or later. I will use the short term
+XDICT for extension dictionaries in this tutorial.
+
+The :ref:`extension_dictionary` is a regular DXF :class:`~ezdxf.entities.Dictionary`
+which can store (key, value) pairs where the key is a string and the value is a
+DXF object from the OBJECTS section but not graphical DXF entities.
+The usual objects to store custom data are :class:`~ezdxf.entities.DictionaryVar`
+to store simple strings and :class:`~ezdxf.entities.XRecord` to store complex
+data.
+
+This example shows how to manage the XDICT and to store simple strings as
+:class:`~ezdxf.entities.DictionaryVar` objects in the XDICT, to store more
+complex data go to the next section `XRecord`_.
+
+1. Get or create the XDICT for an entity:
+
+.. literalinclude:: src/customdata/xdict.py
+    :lines: 10-18
+
+2. Add strings as :class:`~ezdxf.entities.DictionaryVar` objects to the XDICT.
+No AppIDs required, but existing keys will be overridden, so be careful by
+choosing your keys:
+
+.. literalinclude:: src/customdata/xdict.py
+    :lines: 20-21
+
+3. Retrieve the strings from the XDICT as :class:`~ezdxf.entities.DictionaryVar`
+objects:
+
+.. literalinclude:: src/customdata/xdict.py
+    :lines: 23-24
+
+
+The AutoLISP access to DICTIONARIES is possible, but it gets complex and I'm
+only referring to the `AfraLISP Dictionaries and XRecords`_ tutorial.
+
+.. seealso::
+
+    - `AfraLISP Dictionaries and XRecords`_ Tutorial
+    - :ref:`extension_dictionary` Reference
+    - DXF :class:`~ezdxf.entities.Dictionary` Reference
+    - :class:`~ezdxf.entities.DictionaryVar` Reference
+
 XRecord
 -------
+
+.. seealso::
+
+    - `AfraLISP Dictionaries and XRecords`_ Tutorial
+    - :class:`~ezdxf.entities.XRecord` Reference
 
 UserRecord
 ----------
@@ -265,3 +315,6 @@ Printed output:
     (300, 'custom text')
     (370, 4711)
     (460, 3.141592)
+
+.. _AfraLISP: https://www.afralisp.net/index.php
+.. _AfraLISP Dictionaries and XRecords: https://www.afralisp.net/autolisp/tutorials/dictionaries-and-xrecords.php
