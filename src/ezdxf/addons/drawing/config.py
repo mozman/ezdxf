@@ -76,25 +76,33 @@ class Configuration:
         pdsize: the size to draw POINT entities (in drawing units)
             set to None to use the $PDSIZE value from the dxf document header
         pdmode: point styling mode (see POINT documentation)
-            0     5% of draw area height
-            <0    Specifies a percentage of the viewport size
-            >0    Specifies an absolute size
-            None  use the $PDMODE value from the dxf document header
+
+            ======= ====================================================
+            0       5% of draw area height
+            <0      Specifies a percentage of the viewport size
+            >0      Specifies an absolute size
+            None    use the $PDMODE value from the dxf document header
+            ======= ====================================================
+
         measurement: whether to use metric or imperial units
-            0     use imperial units (in, ft, yd, ...)
-            1     use metric units (ISO meters)
-            None  use the $MEASUREMENT value from the dxf document header
+
+            ======= ======================================================
+            0       use imperial units (in, ft, yd, ...)
+            1       use metric units (ISO meters)
+            None    use the $MEASUREMENT value from the dxf document header
+            ======= ======================================================
+
         show_defpoints: whether to show or filter out POINT entities on the defpoints layer
         proxy_graphic_policy: the action to take when a proxy graphic is encountered
         line_policy: the method to use when drawing styled lines (eg dashed, dotted etc)
         hatch_policy: the method to use when drawing HATCH entities
         infinite_line_length: the length to use when drawing infinite lines
         lineweight_scaling:
-            set to 0.0 for a constant minimal width
-            the current result is correct, in SVG the line width is 0.7 points for 0.25mm as
+            set to 0.0 for a constant minimal width the current result is
+            correct, in SVG the line width is 0.7 points for 0.25mm as
             required, but it often looks too thick
-        min_lineweight: the minimum line width in 1/300 inch
-            None    let the backend choose
+        min_lineweight: the minimum line width in 1/300 inch, set to None for
+            let the the backend choose.
         min_dash_length: the minimum length for a dash when drawing a styled line
             (default value is arbitrary)
         max_flattening_distance: Max flattening distance in drawing units
@@ -103,13 +111,8 @@ class Configuration:
             like 1 screen- or paper pixel on the output medium, but converted
             into drawing units. Sets Path() approximation accuracy
         circle_approximation_count: Approximate a full circle by `n` segments, arcs
-            have proportional less segments
-        approximation_max_sagitta:
-            The sagitta (also known as the versine) is a line segment drawn
-            perpendicular to a chord, between the midpoint of that chord and the
-            arc of the circle. https://en.wikipedia.org/wiki/Circle not used yet!
-            Could be used for all curves CIRCLE, ARC, ELLIPSE and SPLINE
-            the default value of 0.01 => for drawing unit = 1m, max sagitta = 1cm
+            have proportional less segments. Only used for approximation of arcs
+            in banded polylines.
     """
 
     pdsize: Optional[int]
@@ -125,7 +128,6 @@ class Configuration:
     min_dash_length: float
     max_flattening_distance: float
     circle_approximation_count: int
-    approximation_max_sagitta: float
 
     @staticmethod
     def defaults() -> "Configuration":
@@ -143,7 +145,6 @@ class Configuration:
             min_dash_length=0.1,
             max_flattening_distance=disassemble.Primitive.max_flattening_distance,
             circle_approximation_count=128,
-            approximation_max_sagitta=0.01,
         )
 
     def with_changes(self, **kwargs) -> "Configuration":
