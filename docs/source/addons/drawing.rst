@@ -93,6 +93,19 @@ option will be supported by all backends.
 
 .. autoclass:: ezdxf.addons.drawing.config.Configuration
 
+    .. method:: defaults()
+
+        Returns a frozen :class:`Configuration` object with default values.
+
+    .. method:: with_changes()
+
+        Returns a new frozen :class:`Configuration` object with modified values.
+
+        Usage::
+
+            my_config = Configuration.defaults()
+            my_config = my_config.with_changes(lineweight_scaling=2)
+
 LinePolicy
 ----------
 
