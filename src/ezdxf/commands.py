@@ -306,7 +306,7 @@ class Draw(Command):
 
         from ezdxf.addons.drawing import RenderContext, Frontend
         from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
-        from ezdxf.addons.drawing import config
+        from ezdxf.addons.drawing.config import Configuration, LinePolicy
 
         # Print all supported export formats:
         if args.formats:
@@ -344,10 +344,10 @@ class Draw(Command):
             for layer_properties in ctx.layers.values():
                 layer_properties.is_visible = True
 
-        configuration = config.Configuration.defaults()
-        line_policy = config.LinePolicy.APPROXIMATE
+        configuration = Configuration.defaults()
+        line_policy = configuration.line_policy
         if args.ltype == "ezdxf":
-            line_policy = config.LinePolicy.ACCURATE
+            line_policy = LinePolicy.ACCURATE
         configuration = configuration.with_changes(line_policy=line_policy)
         if args.all_entities_visible:
 
@@ -422,6 +422,17 @@ class View(Command):
             print("PyQt5 package not found.")
             sys.exit(1)
         from ezdxf.addons.drawing.qtviewer import CadViewer
+        from ezdxf.addons.drawing.config import Configuration, LinePolicy
+
+        configuration = Configuration.defaults()
+        line_policy = configuration.line_policy
+        lineweight_scaling = args.lwscale
+        if args.ltype == "ezdxf":
+            line_policy = LinePolicy.ACCURATE
+        configuration = configuration.with_changes(
+            line_policy=line_policy,
+            lineweight_scaling=lineweight_scaling,
+        )
 
         if args.scale < 1e-9:
             print("Scaling factor too small or negative!")
@@ -429,12 +440,7 @@ class View(Command):
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
         app = QtWidgets.QApplication(sys.argv)
         set_app_icon(app)
-        viewer = CadViewer(
-            params={
-                "linetype_renderer": args.ltype,
-                "lineweight_scaling": args.lwscale,
-            }
-        )
+        viewer = CadViewer(config=configuration)
         filename = args.file
         if filename:
             doc, auditor = load_document(filename)
