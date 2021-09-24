@@ -36,12 +36,11 @@ def _main():
 
     # setup drawing add-on configuration
     config = Configuration.defaults()
-    line_policy = config.line_policy
-    lineweight_scaling = args.lineweight_scaling
-    if args.ltype == "ezdxf":
-        line_policy = LinePolicy.ACCURATE
     config = config.with_changes(
-        line_policy=line_policy, lineweight_scaling=lineweight_scaling
+        line_policy=LinePolicy.ACCURATE
+        if args.ltype == "ezdxf"
+        else config.line_policy,
+        lineweight_scaling=args.lineweight_scaling,
     )
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
