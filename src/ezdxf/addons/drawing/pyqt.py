@@ -1,13 +1,14 @@
 # Copyright (c) 2020-2021, Matthew Broadway
 # License: MIT License
 import math
+from abc import ABCMeta
 from typing import Optional, Iterable, Dict, Union, Tuple, no_type_check
-import warnings
 from collections import defaultdict
 from functools import lru_cache
 from PyQt5 import QtCore as qc, QtGui as qg, QtWidgets as qw
 
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
+from ezdxf.addons.drawing.config import Configuration, LinePolicy, HatchPolicy
 from ezdxf.tools.fonts import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons.drawing.properties import Properties
@@ -53,17 +54,6 @@ class _Point(qw.QAbstractGraphicsShapeItem):
 CorrespondingDXFEntity = qc.Qt.UserRole + 0
 CorrespondingDXFParentStack = qc.Qt.UserRole + 1
 
-PYQT_DEFAULT_PARAMS = {
-    # For my taste without scaling the default line width looks to thin:
-    "lineweight_scaling": 2.0,
-}
-
-
-def get_params(params: Optional[Dict]) -> Dict:
-    default_params = dict(PYQT_DEFAULT_PARAMS)
-    default_params.update(params or {})
-    return default_params
-
 
 class PyQtBackend(Backend):
     def __init__(
@@ -72,22 +62,37 @@ class PyQtBackend(Backend):
         *,
         use_text_cache: bool = True,
         debug_draw_rect: bool = False,
-        params: Dict = None,
+        extra_lineweight_scaling: float = 2.0,
     ):
-        super().__init__(get_params(params))
+        """
+        Args:
+            extra_lineweight_scaling: compared to other backends,
+                PyQt draws lines which appear thinner
+        """
+        super().__init__()
         self._scene = scene or qw.QGraphicsScene()  # avoids many type errors
         self._color_cache: Dict[Color, qg.QColor] = {}
         self._pattern_cache: Dict[PatternKey, int] = {}
         self._no_line = qg.QPen(qc.Qt.NoPen)
         self._no_fill = qg.QBrush(qc.Qt.NoBrush)
-        self._text_renderer = TextRenderer(qg.QFont(), use_text_cache)
 
+        self._text_renderer = TextRenderer(qg.QFont(), use_text_cache)
         self._line_renderer: PyQtLineRenderer
-        if self.linetype_renderer == "ezdxf":
-            self._line_renderer = EzdxfLineRenderer(self)
-        else:
-            self._line_renderer = InternalLineRenderer(self)
+        self._extra_lineweight_scaling = extra_lineweight_scaling
         self._debug_draw_rect = debug_draw_rect
+
+    def configure(self, config: Configuration) -> None:
+        if config.min_lineweight is None:
+            config = config.with_changes(min_lineweight=0.24)
+        super().configure(config)
+        if config.line_policy == LinePolicy.SOLID:
+            self._line_renderer = InternalLineRenderer(self, config, solid_only=True)
+        elif config.line_policy == LinePolicy.APPROXIMATE:
+            self._line_renderer = InternalLineRenderer(self, config, solid_only=False)
+        elif config.line_policy == LinePolicy.ACCURATE:
+            self._line_renderer = EzdxfLineRenderer(self, config)
+        else:
+            raise ValueError(config.line_policy)
 
     def set_scene(self, scene: qw.QGraphicsScene):
         self._scene = scene
@@ -114,7 +119,7 @@ class PyQtBackend(Backend):
         """Returns a cosmetic pen with applied lineweight but without line type
         support.
         """
-        px = properties.lineweight / 0.3527 * self.lineweight_scaling
+        px = properties.lineweight / 0.3527 * self.config.lineweight_scaling
         pen = qg.QPen(self._get_color(properties.color), px)
         # Use constant width in pixel:
         pen.setCosmetic(True)
@@ -124,17 +129,23 @@ class PyQtBackend(Backend):
     def _get_brush(self, properties: Properties) -> qg.QBrush:
         filling = properties.filling
         if filling:
-            qt_pattern = qc.Qt.SolidPattern
             if filling.type == filling.PATTERN:
-                if self.hatch_pattern == 1:
+                if self.config.hatch_policy == HatchPolicy.SHOW_APPROXIMATE_PATTERN:
                     # Default pattern scaling is not supported by PyQt:
                     key: PatternKey = (filling.name, filling.angle)
                     qt_pattern = self._pattern_cache.get(key)  # type: ignore
                     if qt_pattern is None:
                         qt_pattern = self._get_qt_pattern(filling.pattern)
                         self._pattern_cache[key] = qt_pattern
-                elif self.hatch_pattern == 0:
+                elif self.config.hatch_policy == HatchPolicy.SHOW_SOLID:
+                    qt_pattern = qc.Qt.SolidPattern
+                elif self.config.hatch_policy == HatchPolicy.SHOW_OUTLINE:
                     return self._no_fill
+                else:
+                    raise ValueError(self.config.hatch_policy)
+            else:
+                qt_pattern = qc.Qt.SolidPattern
+
             return qg.QBrush(self._get_color(properties.color), qt_pattern)
         else:
             return self._no_fill
@@ -465,21 +476,25 @@ class TextRenderer:
         return self.get_text_path(text, font).boundingRect()
 
 
-# noinspection PyUnresolvedReferences,PyProtectedMember
-class PyQtLineRenderer(AbstractLineRenderer):
-    @property
-    def scene(self) -> qw.QGraphicsScene:
-        return self._backend._scene  # type: ignore
+# noinspection PyProtectedMember
+class PyQtLineRenderer(AbstractLineRenderer, metaclass=ABCMeta):
+    def __init__(self, backend: PyQtBackend, config: Configuration):
+        super().__init__(config)
+        self._backend = backend
 
     @property
-    def no_fill(self):
+    def scene(self) -> qw.QGraphicsScene:
+        return self._backend._scene
+
+    @property
+    def no_fill(self) -> qg.QBrush:
         return self._backend._no_fill
 
     def get_color(self, color: Color) -> qg.QColor:
-        return self._backend._get_color(color)  # type: ignore
+        return self._backend._get_color(color)
 
     def get_pen(self, properties: Properties) -> qg.QPen:
-        return self._backend._get_pen(properties)  # type: ignore
+        return self._backend._get_pen(properties)
 
 
 # Just guessing here: this values assume a cosmetic pen!
@@ -490,17 +505,21 @@ ANSI_LIN_PATTERN_FACTOR = ISO_LIN_PATTERN_FACTOR * 2.54
 class InternalLineRenderer(PyQtLineRenderer):
     """PyQt internal linetype rendering"""
 
+    def __init__(self, backend: PyQtBackend, config: Configuration, solid_only: bool):
+        super().__init__(backend, config)
+        self._solid_only = solid_only
+
     @property
     def measurement_scale(self) -> float:
         return (
             ISO_LIN_PATTERN_FACTOR
-            if self.measurement
+            if self._config.measurement
             else ISO_LIN_PATTERN_FACTOR
         )
 
     def get_pen(self, properties: Properties) -> qg.QPen:
         pen = super().get_pen(properties)
-        if len(properties.linetype_pattern) > 1 and self.linetype_scaling != 0:
+        if not self._solid_only and len(properties.linetype_pattern) > 1:
             # The dash pattern is specified in units of the pens width; e.g. a
             # dash of length 5 in width 10 is 50 pixels long.
             pattern = self.pattern(properties)
@@ -531,9 +550,8 @@ class EzdxfLineRenderer(PyQtLineRenderer):
 
     def draw_line(self, start: Vec3, end: Vec3, properties: Properties, z=0):
         pattern = self.pattern(properties)
-        render_linetypes = bool(self.linetype_scaling)
         pen = self.get_pen(properties)
-        if len(pattern) < 2 or not render_linetypes:
+        if len(pattern) < 2:
             return self.scene.addLine(start.x, start.y, end.x, end.y, pen)
         else:
             add_line = self.scene.addLine
@@ -548,8 +566,7 @@ class EzdxfLineRenderer(PyQtLineRenderer):
     def draw_path(self, path, properties: Properties, z=0):
         pattern = self.pattern(properties)
         pen = self.get_pen(properties)
-        render_linetypes = bool(self.linetype_scaling)
-        if len(pattern) < 2 or not render_linetypes:
+        if len(pattern) < 2:
             qt_path = qg.QPainterPath()
             _extend_qt_path(qt_path, path)
             return self.scene.addPath(qt_path, pen, self.no_fill)
@@ -557,7 +574,7 @@ class EzdxfLineRenderer(PyQtLineRenderer):
             add_line = self.scene.addLine
             renderer = EzdxfLineTypeRenderer(pattern)
             segments = renderer.line_segments(
-                path.flattening(self.max_flattening_distance, segments=16)
+                path.flattening(self._config.max_flattening_distance, segments=16)
             )
             return [
                 add_line(s.x, s.y, e.x, e.y, pen)

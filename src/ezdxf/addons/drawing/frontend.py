@@ -12,8 +12,10 @@ from typing import (
     Set,
     Optional,
 )
+
+from ezdxf.addons.drawing.config import Configuration, ProxyGraphicPolicy, NestedPolygonDetectionMethod, HatchPolicy
 from ezdxf.lldxf import const
-from ezdxf.addons.drawing.backend import Backend
+from ezdxf.addons.drawing.backend import BackendInterface
 from ezdxf.addons.drawing.properties import (
     RenderContext,
     VIEWPORT_COLOR,
@@ -40,7 +42,6 @@ from ezdxf.entities import (
     Face3d,
     OLE2Frame,
     Point,
-    Mesh,
 )
 from ezdxf.entities.attrib import BaseAttrib
 from ezdxf.entities.polygon import DXFPolygon
@@ -62,70 +63,42 @@ from ezdxf.tools.text import has_inline_formatting_codes
 
 __all__ = ["Frontend"]
 
-INFINITE_LINE_LENGTH = 25
-DEFAULT_PDSIZE = 1
-
-IGNORE_PROXY_GRAPHICS = 0
-USE_PROXY_GRAPHICS = 1
-PREFER_PROXY_GRAPHICS = 2
 
 # typedef
 TDispatchTable = Dict[str, Callable[[DXFGraphic, Properties], None]]
 
 
 class Frontend:
-    """Drawing frontend, responsible for decomposing entities into graphic
+    """ Drawing frontend, responsible for decomposing entities into graphic
     primitives and resolving entity properties.
 
     Args:
-        ctx: actual render context of a DXF document
-        out: backend
-        proxy_graphics: o to ignore proxy graphics, 1 to show proxy graphics
-            and 2 to prefer proxy graphics over internal renderings
+        ctx: the properties relevant to rendering derived from a DXF document
+        out: the backend to draw to
+        config: settings to configure the drawing frontend and backend
 
     """
 
     def __init__(
         self,
         ctx: RenderContext,
-        out: Backend,
-        *,
-        proxy_graphics: int = USE_PROXY_GRAPHICS,
+        out: BackendInterface,
+        config: Configuration = Configuration.defaults()
     ):
         # RenderContext contains all information to resolve resources for a
         # specific DXF document.
         self.ctx = ctx
         self.out = out
+        self.config = ctx.update_configuration(config)
 
-        # To get proxy graphics support proxy graphics have to be loaded:
-        # Set the global option ezdxf.options.load_proxy_graphics to True.
-        # How to handle proxy graphics:
-        # 0 = ignore proxy graphics
-        # 1 = use proxy graphics if no rendering support by ezdxf exist
-        # 2 = prefer proxy graphics over ezdxf rendering
-        # This can not prevent drawing proxy graphic inside of blocks,
-        # because this is outside of the domain of the drawing add-on!
-        self.proxy_graphics = proxy_graphics
+        if self.config.pdsize is None or self.config.pdsize <= 0:
+            self.log_message('relative point size is not supported')
+            self.config = self.config.with_changes(pdsize=1)
 
-        # Transfer render context info to backend:
-        ctx.update_backend_configuration(out)
+        self.out.configure(self.config)
 
         # Parents entities of current entity/sub-entity
         self.parent_stack: List[DXFGraphic] = []
-
-        # Approximate a full circle by `n` segments, arcs have proportional
-        # less segments
-        self.circle_approximation_count = 128
-
-        # The sagitta (also known as the versine) is a line segment drawn
-        # perpendicular to a chord, between the midpoint of that chord and the
-        # arc of the circle. https://en.wikipedia.org/wiki/Circle not used yet!
-        # Could be used for all curves CIRCLE, ARC, ELLIPSE and SPLINE
-        # self.approximation_max_sagitta = 0.01  # for drawing unit = 1m, max
-        # sagitta = 1cm
-
-        # set to None to disable nested polygon detection:
-        self.nested_polygon_detection = fast_bbox_detection
 
         self._dispatch = self._build_dispatch_table()
 
@@ -136,9 +109,7 @@ class Frontend:
             "ACAD_PROXY_ENTITY",
         }
 
-    def _build_dispatch_table(
-        self,
-    ) -> TDispatchTable:
+    def _build_dispatch_table(self) -> TDispatchTable:
         dispatch_table: TDispatchTable = {
             "POINT": self.draw_point_entity,
             "HATCH": self.draw_hatch_entity,
@@ -221,7 +192,7 @@ class Frontend:
             entities = filter(filter_func, entities)
         for entity in entities:
             if not isinstance(entity, DXFGraphic):
-                if self.proxy_graphics != IGNORE_PROXY_GRAPHICS:
+                if self.config.proxy_graphic_policy != ProxyGraphicPolicy.IGNORE:
                     entity = DXFGraphicProxy(entity)
                 else:
                     self.skip_entity(entity, "Cannot parse DXF entity")
@@ -244,7 +215,7 @@ class Frontend:
         self.out.enter_entity(entity, properties)
         if (
             entity.proxy_graphic
-            and self.proxy_graphics == PREFER_PROXY_GRAPHICS
+            and self.config.proxy_graphic_policy == ProxyGraphicPolicy.PREFER
         ):
             self.draw_proxy_graphic(entity.proxy_graphic, entity.doc)
         else:
@@ -265,7 +236,7 @@ class Frontend:
                 # DXF entities (DXFGraphicProxy) do not get to this point if
                 # proxy graphic is ignored.
                 if (
-                    self.proxy_graphics != IGNORE_PROXY_GRAPHICS
+                    self.config.proxy_graphic_policy != ProxyGraphicPolicy.IGNORE
                     or entity.dxftype() not in self._proxy_graphic_only_entities
                 ):
                     self.draw_composite_entity(entity, properties)
@@ -283,7 +254,7 @@ class Frontend:
 
         elif dxftype in ("XLINE", "RAY"):
             start = d.start
-            delta = d.unit_vector * INFINITE_LINE_LENGTH
+            delta = d.unit_vector * self.config.infinite_line_length
             if dxftype == "XLINE":
                 self.out.draw_line(
                     start - delta / 2, start + delta / 2, properties
@@ -358,24 +329,24 @@ class Frontend:
         self, entity: DXFGraphic, properties: Properties
     ) -> None:
         point = cast(Point, entity)
-        pdmode = cast(int, self.out.pdmode)
+        pdmode = self.config.pdmode
+        pdsize = self.config.pdsize
+        assert pdmode is not None
+        assert pdsize is not None
 
         # Defpoints are regular POINT entities located at the "defpoints" layer:
         if properties.layer.lower() == "defpoints":
-            if not self.out.show_defpoints:
+            if not self.config.show_defpoints:
                 return
             else:  # Render defpoints as dimensionless points:
                 pdmode = 0
-
-        pdsize = cast(int, self.out.pdsize)
-        if pdsize <= 0:  # relative points size is not supported
-            pdsize = DEFAULT_PDSIZE
 
         if pdmode == 0:
             self.out.draw_point(entity.dxf.location, properties)
         else:
             for entity in point.virtual_entities(pdsize, pdmode):
-                if entity.dxftype() == "LINE":
+                dxftype = entity.dxftype()
+                if dxftype == "LINE":
                     start = Vec3(entity.dxf.start)
                     end = entity.dxf.end
                     if start.isclose(end):
@@ -383,8 +354,10 @@ class Frontend:
                     else:
                         self.out.draw_line(start, end, properties)
                     pass
-                else:  # CIRCLE
+                elif dxftype == 'CIRCLE':
                     self.draw_curve_entity(entity, properties)
+                else:
+                    raise ValueError(dxftype)
 
     def draw_solid_entity(
         self, entity: DXFGraphic, properties: Properties
@@ -419,7 +392,7 @@ class Frontend:
         *,
         loops: List[Path] = None,
     ) -> None:
-        if not self.out.show_hatch:
+        if self.config.hatch_policy == HatchPolicy.IGNORE:
             return
 
         polygon = cast(DXFPolygon, entity)
@@ -435,17 +408,19 @@ class Frontend:
         else:  # only HATCH
             paths = polygon.paths.rendering_paths(polygon.dxf.hatch_style)
 
-        if self.nested_polygon_detection:
+        if self.config.nested_polygon_detection == NestedPolygonDetectionMethod.FAST:
             if loops is None:  # only HATCH
                 loops = closed_loops(paths, ocs, elevation)
-            polygons: List = self.nested_polygon_detection(loops)
+            polygons: List = fast_bbox_detection(loops)
             external_paths, holes = winding_deconstruction(polygons)
-        else:  # only HATCH
+        elif self.config.nested_polygon_detection == NestedPolygonDetectionMethod.NONE:
             for p in paths:
                 if p.path_type_flags & const.BOUNDARY_PATH_EXTERNAL:
                     external_paths.extend(closed_loops(p, ocs, elevation))
                 else:
                     holes.extend(closed_loops(p, ocs, elevation))
+        else:
+            raise ValueError(self.config.nested_polygon_detection)
 
         if external_paths:
             self.out.draw_filled_paths(external_paths, holes, properties)
@@ -607,7 +582,7 @@ class Frontend:
                     elevation = Vec3(entity.dxf.elevation).z
 
             trace = TraceBuilder.from_polyline(
-                entity, segments=self.circle_approximation_count // 2
+                entity, segments=self.config.circle_approximation_count // 2
             )
             for polygon in trace.polygons():  # polygon is a sequence of Vec2()
                 if transform:

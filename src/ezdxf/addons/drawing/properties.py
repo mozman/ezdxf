@@ -15,6 +15,7 @@ from typing import (
 )
 
 from ezdxf.addons import acadctb
+from ezdxf.addons.drawing.config import Configuration
 from ezdxf.addons.drawing.type_hints import Color, RGB
 from ezdxf.colors import luminance, DXF_DEFAULT_COLORS, int2rgb
 from ezdxf.entities import Attrib, Insert, Face3d, Linetype
@@ -327,20 +328,18 @@ class RenderContext:
         self.current_layout_properties.units = self.units
         self._hatch_pattern_cache: Dict[str, HatchPatternType] = dict()
 
-    def update_backend_configuration(self, backend):
-        """Configuration parameters are stored in the backend and may be
-        changed by the backend at runtime. Some parameters are stored globally
-        in the header section of the DXF document. This method must be called
-        if a new DXF document was loaded.
-
+    def update_configuration(self, config: Configuration) -> Configuration:
+        """ Where the user has not specified a value, populate configuration
+        fields based on the dxf header values
         """
-        # This DXF document parameters are not accessible by the backend
-        # in a direct way:
-        if backend.pdsize is None:
-            backend.pdsize = self.pdsize
-        if backend.pdmode is None:
-            backend.pdmode = self.pdmode
-        backend.measurement = self.measurement
+        changes = {}
+        if config.pdsize is None:
+            changes['pdsize'] = self.pdsize
+        if config.pdmode is None:
+            changes['pdmode'] = self.pdmode
+        if config.measurement is None:
+            changes['measurement'] = self.measurement
+        return config.with_changes(**changes)
 
     def _setup_layers(self, doc: "Drawing"):
         for layer in doc.layers:

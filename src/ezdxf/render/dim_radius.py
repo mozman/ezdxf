@@ -430,7 +430,7 @@ class RadiusDimension(BaseDimensionRenderer):
             self.dimension.dxf.extrusion = self.ucs.uz
 
 
-def add_center_mark(dim):
+def add_center_mark(dim: RadiusDimension) -> None:
     """Add center mark/lines to radius and diameter dimensions.
 
     Args:

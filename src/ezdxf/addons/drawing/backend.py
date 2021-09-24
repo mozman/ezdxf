@@ -1,6 +1,6 @@
 # Copyright (c) 2020-2021, Matthew Broadway
 # License: MIT License
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, ABCMeta
 from typing import (
     Optional,
     Tuple,
@@ -12,6 +12,7 @@ from typing import (
     Union,
 )
 
+from ezdxf.addons.drawing.config import Configuration
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.entities import DXFGraphic
@@ -22,77 +23,91 @@ from ezdxf.path import Path, transform_paths
 if TYPE_CHECKING:
     from ezdxf.tools.fonts import FontFace, FontMeasurements
 
-# Some params are also used by the Frontend() which has access to the backend
-# attributes:
-# show_defpoints: frontend filters defpoints if option is 0
-# show_hatch: frontend filters all HATCH entities if option is 0
-DEFAULT_PARAMS: Dict[str, Union[SupportsFloat, str]] = {
-    # Updated by Frontend() class, if not set by user:
-    "pdsize": 0,
-    # 0   5% of draw area height
-    # <0  Specifies a percentage of the viewport size
-    # >0  Specifies an absolute size
-    # See POINT docs:
-    "pdmode": 0,
-    # Do not show defpoints by default.
-    # Filtering is handled by the Frontend().
-    "show_defpoints": 0,
-    # linetype render:
-    # "internal" or "ezdxf"
-    "linetype_renderer": "internal",
-    # overall linetype scaling: None as default is important!
-    # 0.0 = disable line types at all, only supported by PyQt backend yet!
-    "linetype_scaling": 1.0,
-    # lineweight_scaling: 0.0 to disable lineweights at all - the current
-    # result is correct, in SVG the line width is 0.7 points for 0.25mm as
-    # required, but it often looks too thick
-    "lineweight_scaling": 1.0,
-    "min_lineweight": 0.24,  # 1/300 inch
-    "min_dash_length": 0.1,  # just guessing
-    "max_flattening_distance": 0.01,  # just guessing
-    # 0 = disable HATCH entities
-    # 1 = show HATCH entities
-    # Filtering is  handled by the Frontend().
-    "show_hatch": 1,
-    # 0 = disable hatch pattern
-    # 1 = use predefined matplotlib pattern by pattern-name matching
-    # 2 = draw as solid fillings
-    "hatch_pattern": 1,
-}
+
+class BackendInterface(ABC):
+    """ the public interface which a rendering backend is used through """
+
+    @abstractmethod
+    def configure(self, config: Configuration) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def enter_entity(self, entity: DXFGraphic, properties: Properties) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def exit_entity(self, entity: DXFGraphic) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_background(self, color: Color) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def draw_point(self, pos: Vec3, properties: Properties) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def draw_line(self, start: Vec3, end: Vec3, properties: Properties) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def draw_path(self, path: Path, properties: Properties) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def draw_filled_paths(
+            self,
+            paths: Iterable[Path],
+            holes: Iterable[Path],
+            properties: Properties,
+    ) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def draw_filled_polygon(
+            self, points: Iterable[Vec3], properties: Properties
+    ) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def draw_text(
+            self,
+            text: str,
+            transform: Matrix44,
+            properties: Properties,
+            cap_height: float,
+    ) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_font_measurements(
+            self, cap_height: float, font: "FontFace" = None
+    ) -> "FontMeasurements":
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_text_line_width(
+            self, text: str, cap_height: float, font: "FontFace" = None
+    ) -> float:
+        raise NotImplementedError
+
+    @abstractmethod
+    def clear(self) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def finalize(self) -> None:
+        raise NotImplementedError
 
 
-class Backend(ABC):
-    def __init__(self, params: Dict[str, Union[SupportsFloat, str]] = None):
-        params_ = dict(DEFAULT_PARAMS)
-        if params:
-            err = set(params.keys()) - set(DEFAULT_PARAMS.keys())
-            if err:
-                raise ValueError(f"Invalid parameter(s): {str(err)}")
-            params_.update(params)
+class Backend(BackendInterface, metaclass=ABCMeta):
+    def __init__(self):
         self.entity_stack: List[Tuple[DXFGraphic, Properties]] = []
-        self.pdsize = float(params_["pdsize"])
-        self.pdmode = int(params_["pdmode"])  # type: ignore
-        self.show_defpoints = int(params_["show_defpoints"])  # type: ignore
-        self.show_hatch = int(params_["show_hatch"])  # type: ignore
-        self.hatch_pattern = int(params_["hatch_pattern"])  # type: ignore
-        self.linetype_renderer = str(params_["linetype_renderer"]).lower()
-        self.linetype_scaling = float(params_["linetype_scaling"])
-        self.lineweight_scaling = float(params_["lineweight_scaling"])
-        self.min_lineweight = float(params_["min_lineweight"])
-        self.min_dash_length = float(params_["min_dash_length"])
+        self.config: Configuration
 
-        # Real document measurement value will be updated by the Frontend():
-        # 0=Imperial (in, ft, yd, ...); 1=ISO meters
-        self.measurement: int = 0
-
-        # Deprecated: instead use Path.flattening() for approximation
-        self.bezier_approximation_count: int = 32
-
-        # Max flattening distance in drawing units: the backend implementation
-        # should calculate an appropriate value, like 1 screen- or paper pixel
-        # on the output medium, but converted into drawing units.
-        # Set Path() approximation accuracy:
-        self.max_flattening_distance = float(params_["max_flattening_distance"])
+    def configure(self, config: Configuration) -> None:
+        self.config = config
 
     def enter_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         self.entity_stack.append((entity, properties))
@@ -133,7 +148,7 @@ class Backend(ABC):
         """
         if len(path):
             vertices = iter(
-                path.flattening(distance=self.max_flattening_distance)
+                path.flattening(distance=self.config.max_flattening_distance)
             )
             prev = next(vertices)
             for vertex in vertices:
@@ -174,7 +189,7 @@ class Backend(ABC):
         """
         for path in paths:
             self.draw_filled_polygon(
-                path.flattening(distance=self.max_flattening_distance),
+                path.flattening(distance=self.config.max_flattening_distance),
                 properties,
             )
 

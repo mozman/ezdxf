@@ -13,6 +13,7 @@ from ezdxf import recover
 from ezdxf.addons import odafc
 from ezdxf.addons.drawing import Frontend, RenderContext
 from ezdxf.addons.drawing.backend import BackendScaler
+from ezdxf.addons.drawing.config import Configuration
 
 from ezdxf.addons.drawing.properties import is_dark_color
 from ezdxf.addons.drawing.pyqt import (
@@ -166,10 +167,10 @@ class CADGraphicsViewWithOverlay(CADGraphicsView):
 
 
 class CadViewer(qw.QMainWindow):
-    def __init__(self, params: Dict):
+    def __init__(self, config: Configuration = Configuration.defaults()):
         super().__init__()
+        self._config = config
         self.doc = None
-        self._render_params = params
         self._render_context = None
         self._visible_layers = None
         self._current_layout = None
@@ -223,7 +224,7 @@ class CadViewer(qw.QMainWindow):
         self.show()
 
     def _reset_backend(self, scale: float = 1.0):
-        backend = PyQtBackend(use_text_cache=True, params=self._render_params)
+        backend = PyQtBackend(use_text_cache=True)
         if scale != 1.0:
             backend = BackendScaler(backend, factor=scale)  # type: ignore
         # clear caches
@@ -350,6 +351,7 @@ class CadViewer(qw.QMainWindow):
         return Frontend(
             self._render_context,
             self._backend,
+            self._config,
         )
 
     def _update_render_context(self, layout):
