@@ -58,7 +58,7 @@ from . import tools
 from .nesting import group_paths
 
 if TYPE_CHECKING:
-    from ezdxf.entities import TPath, PolylinePath, EdgePath
+    from ezdxf.entities import TBoundaryPath, PolylinePath, EdgePath
 
 __all__ = [
     "make_path",
@@ -273,7 +273,7 @@ def from_hatch(hatch: Hatch) -> Iterable[Path]:
 
 
 def from_hatch_boundary_path(
-    boundary: "TPath",
+    boundary: "TBoundaryPath",
     ocs: OCS = None,
     elevation: float = 0,
     offset: Vec3 = NULLVEC,  # ocs offset!

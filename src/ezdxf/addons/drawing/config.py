@@ -110,7 +110,6 @@ class Configuration:
             arc of the circle. https://en.wikipedia.org/wiki/Circle not used yet!
             Could be used for all curves CIRCLE, ARC, ELLIPSE and SPLINE
             the default value of 0.01 => for drawing unit = 1m, max sagitta = 1cm
-        nested_polygon_detection: required to draw polygons with holes, can be disabled
     """
 
     pdsize: Optional[int]
@@ -127,7 +126,6 @@ class Configuration:
     max_flattening_distance: float
     circle_approximation_count: int
     approximation_max_sagitta: float
-    nested_polygon_detection: NestedPolygonDetectionMethod
 
     @staticmethod
     def defaults() -> "Configuration":
@@ -146,7 +144,6 @@ class Configuration:
             max_flattening_distance=disassemble.Primitive.max_flattening_distance,
             circle_approximation_count=128,
             approximation_max_sagitta=0.01,
-            nested_polygon_detection=NestedPolygonDetectionMethod.FAST,
         )
 
     def with_changes(self, **kwargs) -> "Configuration":

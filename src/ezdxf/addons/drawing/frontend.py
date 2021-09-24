@@ -13,8 +13,11 @@ from typing import (
     Optional,
 )
 
-from ezdxf.addons.drawing.config import Configuration, ProxyGraphicPolicy, NestedPolygonDetectionMethod, HatchPolicy
-from ezdxf.lldxf import const
+from ezdxf.addons.drawing.config import (
+    Configuration,
+    ProxyGraphicPolicy,
+    HatchPolicy,
+)
 from ezdxf.addons.drawing.backend import BackendInterface
 from ezdxf.addons.drawing.properties import (
     RenderContext,
@@ -45,6 +48,7 @@ from ezdxf.entities import (
 )
 from ezdxf.entities.attrib import BaseAttrib
 from ezdxf.entities.polygon import DXFPolygon
+from ezdxf.entities.boundary_paths import TBoundaryPath
 from ezdxf.layouts import Layout
 from ezdxf.math import Vec3, OCS, NULLVEC
 from ezdxf.path import (
@@ -69,7 +73,7 @@ TDispatchTable = Dict[str, Callable[[DXFGraphic, Properties], None]]
 
 
 class Frontend:
-    """ Drawing frontend, responsible for decomposing entities into graphic
+    """Drawing frontend, responsible for decomposing entities into graphic
     primitives and resolving entity properties.
 
     Args:
@@ -83,7 +87,7 @@ class Frontend:
         self,
         ctx: RenderContext,
         out: BackendInterface,
-        config: Configuration = Configuration.defaults()
+        config: Configuration = Configuration.defaults(),
     ):
         # RenderContext contains all information to resolve resources for a
         # specific DXF document.
@@ -92,7 +96,7 @@ class Frontend:
         self.config = ctx.update_configuration(config)
 
         if self.config.pdsize is None or self.config.pdsize <= 0:
-            self.log_message('relative point size is not supported')
+            self.log_message("relative point size is not supported")
             self.config = self.config.with_changes(pdsize=1)
 
         self.out.configure(self.config)
@@ -192,7 +196,10 @@ class Frontend:
             entities = filter(filter_func, entities)
         for entity in entities:
             if not isinstance(entity, DXFGraphic):
-                if self.config.proxy_graphic_policy != ProxyGraphicPolicy.IGNORE:
+                if (
+                    self.config.proxy_graphic_policy
+                    != ProxyGraphicPolicy.IGNORE
+                ):
                     entity = DXFGraphicProxy(entity)
                 else:
                     self.skip_entity(entity, "Cannot parse DXF entity")
@@ -236,7 +243,8 @@ class Frontend:
                 # DXF entities (DXFGraphicProxy) do not get to this point if
                 # proxy graphic is ignored.
                 if (
-                    self.config.proxy_graphic_policy != ProxyGraphicPolicy.IGNORE
+                    self.config.proxy_graphic_policy
+                    != ProxyGraphicPolicy.IGNORE
                     or entity.dxftype() not in self._proxy_graphic_only_entities
                 ):
                     self.draw_composite_entity(entity, properties)
@@ -304,16 +312,14 @@ class Frontend:
             self.draw_simple_mtext(mtext, properties)
 
     def draw_simple_mtext(self, mtext: MText, properties: Properties) -> None:
-        """Draw the content of a MTEXT entity without inline formatting codes.
-        """
+        """Draw the content of a MTEXT entity without inline formatting codes."""
         for line, transform, cap_height in simplified_text_chunks(
             mtext, self.out, font=properties.font
         ):
             self.out.draw_text(line, transform, properties, cap_height)
 
     def draw_complex_mtext(self, mtext: MText, properties: Properties) -> None:
-        """Draw the content of a MTEXT entity including inline formatting codes.
-        """
+        """Draw the content of a MTEXT entity including inline formatting codes."""
         complex_mtext_renderer(self.ctx, self.out, mtext, properties)
 
     def draw_curve_entity(
@@ -354,7 +360,7 @@ class Frontend:
                     else:
                         self.out.draw_line(start, end, properties)
                     pass
-                elif dxftype == 'CIRCLE':
+                elif dxftype == "CIRCLE":
                     self.draw_curve_entity(entity, properties)
                 else:
                     raise ValueError(dxftype)
@@ -401,26 +407,19 @@ class Frontend:
         # default (0, 0, 0)
         elevation = entity.dxf.elevation.z
 
-        external_paths: List[Path] = []
-        holes: List[Path] = []
-        if loops:  # only MPOLYGON
-            paths = loops
+        external_paths: List[Path]
+        holes: List[Path]
+
+        if loops is not None:  # only MPOLYGON
+            external_paths, holes = winding_deconstruction(
+                fast_bbox_detection(loops)
+            )
         else:  # only HATCH
             paths = polygon.paths.rendering_paths(polygon.dxf.hatch_style)
-
-        if self.config.nested_polygon_detection == NestedPolygonDetectionMethod.FAST:
-            if loops is None:  # only HATCH
-                loops = closed_loops(paths, ocs, elevation)
-            polygons: List = fast_bbox_detection(loops)
+            polygons: List = fast_bbox_detection(
+                closed_loops(paths, ocs, elevation)
+            )
             external_paths, holes = winding_deconstruction(polygons)
-        elif self.config.nested_polygon_detection == NestedPolygonDetectionMethod.NONE:
-            for p in paths:
-                if p.path_type_flags & const.BOUNDARY_PATH_EXTERNAL:
-                    external_paths.extend(closed_loops(p, ocs, elevation))
-                else:
-                    holes.extend(closed_loops(p, ocs, elevation))
-        else:
-            raise ValueError(self.config.nested_polygon_detection)
 
         if external_paths:
             self.out.draw_filled_paths(external_paths, holes, properties)
@@ -641,7 +640,10 @@ def is_spatial_text(extrusion: Vec3) -> bool:
 
 
 def closed_loops(
-    paths, ocs: OCS, elevation: float, offset: Vec3 = NULLVEC
+    paths: List[TBoundaryPath],
+    ocs: OCS,
+    elevation: float,
+    offset: Vec3 = NULLVEC,
 ) -> List[Path]:
     loops = []
     for boundary in paths:

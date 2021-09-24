@@ -86,9 +86,13 @@ class PyQtBackend(Backend):
             config = config.with_changes(min_lineweight=0.24)
         super().configure(config)
         if config.line_policy == LinePolicy.SOLID:
-            self._line_renderer = InternalLineRenderer(self, config, solid_only=True)
+            self._line_renderer = InternalLineRenderer(
+                self, config, solid_only=True
+            )
         elif config.line_policy == LinePolicy.APPROXIMATE:
-            self._line_renderer = InternalLineRenderer(self, config, solid_only=False)
+            self._line_renderer = InternalLineRenderer(
+                self, config, solid_only=False
+            )
         elif config.line_policy == LinePolicy.ACCURATE:
             self._line_renderer = EzdxfLineRenderer(self, config)
         else:
@@ -130,7 +134,10 @@ class PyQtBackend(Backend):
         filling = properties.filling
         if filling:
             if filling.type == filling.PATTERN:
-                if self.config.hatch_policy == HatchPolicy.SHOW_APPROXIMATE_PATTERN:
+                if (
+                    self.config.hatch_policy
+                    == HatchPolicy.SHOW_APPROXIMATE_PATTERN
+                ):
                     # Default pattern scaling is not supported by PyQt:
                     key: PatternKey = (filling.name, filling.angle)
                     qt_pattern = self._pattern_cache.get(key)  # type: ignore
@@ -146,7 +153,7 @@ class PyQtBackend(Backend):
             else:
                 qt_pattern = qc.Qt.SolidPattern
 
-            return qg.QBrush(self._get_color(properties.color), qt_pattern)
+            return qg.QBrush(self._get_color(properties.color), qt_pattern)  # type: ignore
         else:
             return self._no_fill
 
@@ -505,7 +512,9 @@ ANSI_LIN_PATTERN_FACTOR = ISO_LIN_PATTERN_FACTOR * 2.54
 class InternalLineRenderer(PyQtLineRenderer):
     """PyQt internal linetype rendering"""
 
-    def __init__(self, backend: PyQtBackend, config: Configuration, solid_only: bool):
+    def __init__(
+        self, backend: PyQtBackend, config: Configuration, solid_only: bool
+    ):
         super().__init__(backend, config)
         self._solid_only = solid_only
 
@@ -574,7 +583,9 @@ class EzdxfLineRenderer(PyQtLineRenderer):
             add_line = self.scene.addLine
             renderer = EzdxfLineTypeRenderer(pattern)
             segments = renderer.line_segments(
-                path.flattening(self._config.max_flattening_distance, segments=16)
+                path.flattening(
+                    self._config.max_flattening_distance, segments=16
+                )
             )
             return [
                 add_line(s.x, s.y, e.x, e.y, pen)

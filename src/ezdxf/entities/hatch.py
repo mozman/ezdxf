@@ -14,7 +14,7 @@ from ezdxf.lldxf.attributes import (
 )
 from ezdxf.lldxf.tags import Tags
 from ezdxf.math import NULLVEC, Z_AXIS
-from .boundary_paths import TPath
+from .boundary_paths import TBoundaryPath
 from .dxfentity import base_class
 from .dxfgfx import acdb_entity
 from .factory import register_entity
@@ -228,7 +228,7 @@ class Hatch(DXFPolygon):
         )
 
         # Remove seed data from tags:
-        del tags[start_index: start_index + len(seed_data) + 1]
+        del tags[start_index : start_index + len(seed_data) + 1]
 
         # Just process vertices with group code 10
         self.seeds = [value for code, value in seed_data if code == 10]
@@ -278,7 +278,7 @@ class Hatch(DXFPolygon):
         if rgb is not None:
             self.rgb = rgb
 
-    def associate(self, path: TPath, entities: Iterable["DXFEntity"]):
+    def associate(self, path: TBoundaryPath, entities: Iterable["DXFEntity"]):
         """Set association from hatch boundary `path` to DXF geometry `entities`.
 
         A HATCH entity can be associative to a base geometry, this association

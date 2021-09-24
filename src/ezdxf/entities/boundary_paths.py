@@ -41,12 +41,12 @@ __all__ = [
     "ArcEdge",
     "EllipseEdge",
     "SplineEdge",
-    "TPath",
+    "TBoundaryPath",
     "EdgeType",
     "BoundaryPathType",
 ]
 
-TPath = Union["PolylinePath", "EdgePath"]
+TBoundaryPath = Union["PolylinePath", "EdgePath"]
 
 
 @enum.unique
@@ -64,8 +64,8 @@ class EdgeType(enum.IntEnum):
 
 
 class BoundaryPaths:
-    def __init__(self, paths: List[TPath] = None):
-        self.paths: List[TPath] = paths or []
+    def __init__(self, paths: List[TBoundaryPath] = None):
+        self.paths: List[TBoundaryPath] = paths or []
 
     def __len__(self):
         return len(self.paths)
@@ -98,19 +98,19 @@ class BoundaryPaths:
         """Remove all boundary paths."""
         self.paths = []
 
-    def external_paths(self) -> Iterable[TPath]:
+    def external_paths(self) -> Iterable[TBoundaryPath]:
         """Iterable of external paths, could be empty."""
         for b in self.paths:
             if b.path_type_flags & const.BOUNDARY_PATH_EXTERNAL:
                 yield b
 
-    def outermost_paths(self) -> Iterable[TPath]:
+    def outermost_paths(self) -> Iterable[TBoundaryPath]:
         """Iterable of outermost paths, could be empty."""
         for b in self.paths:
             if b.path_type_flags & const.BOUNDARY_PATH_OUTERMOST:
                 yield b
 
-    def default_paths(self) -> Iterable[TPath]:
+    def default_paths(self) -> Iterable[TBoundaryPath]:
         """Iterable of default paths, could be empty."""
         not_default = (
             const.BOUNDARY_PATH_OUTERMOST + const.BOUNDARY_PATH_EXTERNAL
@@ -121,7 +121,7 @@ class BoundaryPaths:
 
     def rendering_paths(
         self, hatch_style: int = const.HATCH_STYLE_NESTED
-    ) -> Iterable[TPath]:
+    ) -> Iterable[TBoundaryPath]:
         """Iterable of paths to process for rendering, filters unused
         boundary paths according to the given hatch style:
 
@@ -142,7 +142,7 @@ class BoundaryPaths:
 
         paths = sorted(
             (path_type_enum(p.path_type_flags), i, p)
-                for i, p in enumerate(self.paths)
+            for i, p in enumerate(self.paths)
         )
         ignore = 1  # EXTERNAL only
         if hatch_style == const.HATCH_STYLE_NESTED:
@@ -473,7 +473,7 @@ class BoundaryPaths:
 
 
 def flatten_to_polyline_path(
-    path: TPath, distance: float, segments: int = 16
+    path: TBoundaryPath, distance: float, segments: int = 16
 ) -> "PolylinePath":
     import ezdxf.path  # avoid cyclic imports
 
@@ -581,7 +581,7 @@ class PolylinePath:
         for vertex in vertices:
             if len(vertex) == 2:
                 x, y = vertex
-                bulge = 0.
+                bulge = 0.0
             elif len(vertex) == 3:
                 x, y, bulge = vertex
             else:
