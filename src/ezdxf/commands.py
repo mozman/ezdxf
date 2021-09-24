@@ -344,11 +344,13 @@ class Draw(Command):
             for layer_properties in ctx.layers.values():
                 layer_properties.is_visible = True
 
-        configuration = Configuration.defaults()
-        line_policy = configuration.line_policy
-        if args.ltype == "ezdxf":
-            line_policy = LinePolicy.ACCURATE
-        configuration = configuration.with_changes(line_policy=line_policy)
+        config = Configuration.defaults()
+        config = config.with_changes(
+            line_policy=LinePolicy.ACCURATE
+            if args.ltype == "ezdxf"
+            else config.line_policy
+        )
+
         if args.all_entities_visible:
 
             class AllVisibleFrontend(Frontend):
@@ -357,9 +359,9 @@ class Draw(Command):
                 ) -> None:
                     properties.is_visible = True
 
-            frontend = AllVisibleFrontend(ctx, out, config=configuration)
+            frontend = AllVisibleFrontend(ctx, out, config=config)
         else:
-            frontend = Frontend(ctx, out, config=configuration)
+            frontend = Frontend(ctx, out, config=config)
         frontend.draw_layout(layout, finalize=True)
 
         if args.out is not None:
@@ -424,14 +426,12 @@ class View(Command):
         from ezdxf.addons.drawing.qtviewer import CadViewer
         from ezdxf.addons.drawing.config import Configuration, LinePolicy
 
-        configuration = Configuration.defaults()
-        line_policy = configuration.line_policy
-        lineweight_scaling = args.lwscale
-        if args.ltype == "ezdxf":
-            line_policy = LinePolicy.ACCURATE
-        configuration = configuration.with_changes(
-            line_policy=line_policy,
-            lineweight_scaling=lineweight_scaling,
+        config = Configuration.defaults()
+        config = config.with_changes(
+            line_policy=LinePolicy.ACCURATE
+            if args.ltype == "ezdxf"
+            else config.line_policy,
+            lineweight_scaling=args.lwscale,
         )
 
         if args.scale < 1e-9:
@@ -440,7 +440,7 @@ class View(Command):
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
         app = QtWidgets.QApplication(sys.argv)
         set_app_icon(app)
-        viewer = CadViewer(config=configuration)
+        viewer = CadViewer(config=config)
         filename = args.file
         if filename:
             doc, auditor = load_document(filename)
