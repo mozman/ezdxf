@@ -123,7 +123,12 @@ class PyQtBackend(Backend):
         """Returns a cosmetic pen with applied lineweight but without line type
         support.
         """
-        px = properties.lineweight / 0.3527 * self.config.lineweight_scaling
+        px = (
+            properties.lineweight
+            / 0.3527
+            * self.config.lineweight_scaling
+            * self._extra_lineweight_scaling
+        )
         pen = qg.QPen(self._get_color(properties.color), px)
         # Use constant width in pixel:
         pen.setCosmetic(True)
