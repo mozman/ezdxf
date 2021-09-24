@@ -306,6 +306,7 @@ class Draw(Command):
 
         from ezdxf.addons.drawing import RenderContext, Frontend
         from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
+        from ezdxf.addons.drawing import config
 
         # Print all supported export formats:
         if args.formats:
@@ -337,12 +338,17 @@ class Draw(Command):
         fig = plt.figure()
         ax = fig.add_axes([0, 0, 1, 1])
         ctx = RenderContext(doc)
-        out = MatplotlibBackend(ax, params={"linetype_renderer": args.ltype})
+        out = MatplotlibBackend(ax)
 
         if args.all_layers_visible:
             for layer_properties in ctx.layers.values():
                 layer_properties.is_visible = True
 
+        configuration = config.Configuration.defaults()
+        line_policy = config.LinePolicy.APPROXIMATE
+        if args.ltype == "ezdxf":
+            line_policy = config.LinePolicy.ACCURATE
+        configuration = configuration.with_changes(line_policy=line_policy)
         if args.all_entities_visible:
 
             class AllVisibleFrontend(Frontend):
@@ -351,9 +357,9 @@ class Draw(Command):
                 ) -> None:
                     properties.is_visible = True
 
-            frontend = AllVisibleFrontend(ctx, out)
+            frontend = AllVisibleFrontend(ctx, out, config=configuration)
         else:
-            frontend = Frontend(ctx, out)
+            frontend = Frontend(ctx, out, config=configuration)
         frontend.draw_layout(layout, finalize=True)
 
         if args.out is not None:
