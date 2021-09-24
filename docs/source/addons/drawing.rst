@@ -74,94 +74,39 @@ MatplotlibBackend
 
 .. class:: ezdxf.addons.drawing.matplotlib.MatplotlibBackend
 
-    .. method:: __init__(ax: plt.Axes, *, adjust_figure: bool = True, font: FontProperties,  use_text_cache: bool = True, params: Dict = None)
+    .. method:: __init__(ax: plt.Axes, *, adjust_figure: bool = True, font: FontProperties,  use_text_cache: bool = True)
+
 
 PyQtBackend
 -----------
 
 .. class:: ezdxf.addons.drawing.pyqt.PyQtBackend
 
-    .. method:: __init__(scene: qw.QGraphicsScene = None, *, use_text_cache: bool = True, debug_draw_rect: bool = False, params: Dict = None)
+    .. method:: __init__(scene: qw.QGraphicsScene = None, *, use_text_cache: bool = True, debug_draw_rect: bool = False)
 
-Backend Options `params`
-------------------------
+Configuration
+-------------
 
-Additional options for a backend can be passed by the `params` argument of the
-backend constructor :meth:`__init__()`. Not every option will be supported by
-all backends and currently most options are only supported by the Matplotlib
-backend.
+Additional options for the drawing add-on can be passed by the `config`
+argument of the :class:`Frontend` constructor :meth:`__init__()`. Not every
+option will be supported by all backends.
 
+.. autoclass:: ezdxf.addons.drawing.config.Configuration
 
-pdsize
-    size for the POINT entity:
+LinePolicy
+----------
 
-    - 0 for 5% of draw area height
-    - < 0 specifies a percentage of the viewport size
-    - > 0 specifies an absolute size
+.. autoclass:: ezdxf.addons.drawing.config.LinePolicy
 
+HatchPolicy
+-----------
 
-pdmode
-    see :class:`~ezdxf.entities.Point` class documentation
+.. autoclass:: ezdxf.addons.drawing.config.HatchPolicy
 
-linetype_renderer
-    - "internal" uses the Matplotlib linetype renderer which is oriented on the
-      output medium and dpi setting, This method is simpler and faster but may
-      not replicate the results of CAD applications.
-    - "ezdxf" replicate AutoCAD linetype rendering oriented on drawing units and
-      various ltscale factors.This rendering method break lines into small
-      segments which causes a longer rendering time!
+ProxyGraphicPolicy
+------------------
 
-linetype_scaling
-    Overall linetype scaling factor. Set to 0 to disable linetype support at
-    all.
-
-lineweight_scaling
-    Overall lineweight scaling factor. Set to 0 to disable lineweight support
-    at all. The current result is correct, in SVG the line width is 0.7 points
-    for 0.25mm as required, but this often looks too thick.
-
-min_lineweight
-    Minimum lineweight.
-
-min_dash_length
-    Minimum dash length.
-
-max_flattening_distance
-    Maximum flattening distance in drawing units for curve approximations.
-
-show_defpoints
-    - 0 to disable defpoints (default)
-    - 1 to show defpoints
-
-show_hatch
-    - 0 to disable HATCH entities
-    - 1 to show HATCH entities
-
-hatch_pattern
-    - 0 to disable hatch pattern
-    - 1 to use predefined Matplotlib pattern by pattern-name matching, or a
-      simplified pattern in the PyQt backend. The PyQt support for hatch pattern
-      is not good, it is often better to turn hatch pattern support off and
-      disable HATCHES by setting **show_hatch** to 0 or use a solid filling.
-    - 2 to draw HATCH pattern as solid fillings.
-
-Default Values
-++++++++++++++
-
-=========================== ======================= ===================
-Backend Option              MatplotlibBackend       PyQtBackend
-=========================== ======================= ===================
-point_size                  2.0                     1.0
-point_size_relative         ``True``                not supported
-linetype_renderer           "internal"              "internal"
-linetype_scaling            1.0                     1.0
-lineweight_scaling          1.0                     2.0
-min_lineweight              0.24                    0.24
-min_dash_length             0.1                     0.1
-max_flattening_distance     0.01                    0.01
-show_hatch                  1                       1
-hatch_pattern               1                       1
-=========================== ======================= ===================
+.. autoclass:: ezdxf.addons.drawing.config.ProxyGraphicPolicy
 
 Properties
 ----------

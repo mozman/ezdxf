@@ -25,10 +25,13 @@ class LinePolicy(Enum):
 class ProxyGraphicPolicy(Enum):
     """The action to take when an entity with a proxy graphic is encountered
 
-    Note: To get proxy graphics support proxy graphics have to be loaded:
-        Set the global option ezdxf.options.load_proxy_graphics to True.
+    .. note::
 
-    Note: This can not prevent drawing proxy graphic inside of blocks,
+        To get proxy graphics support proxy graphics have to be loaded:
+        Set the global option :attr:`ezdxf.options.load_proxy_graphics` to
+        ``True``, which is the default value.
+
+        This can not prevent drawing proxy graphic inside of blocks,
         because this is outside of the domain of the drawing add-on!
 
     Attributes:
@@ -63,19 +66,13 @@ class HatchPolicy(Enum):
     SHOW_APPROXIMATE_PATTERN = auto()
 
 
-class NestedPolygonDetectionMethod(Enum):
-    NONE = auto()
-    FAST = auto()
-
-
 @dataclass(frozen=True)
 class Configuration:
-    """Configuration options for the rendering frontend
+    """Configuration options for the drawing add-on.
 
     Attributes:
         pdsize: the size to draw POINT entities (in drawing units)
             set to None to use the $PDSIZE value from the dxf document header
-        pdmode: point styling mode (see POINT documentation)
 
             ======= ====================================================
             0       5% of draw area height
@@ -83,6 +80,10 @@ class Configuration:
             >0      Specifies an absolute size
             None    use the $PDMODE value from the dxf document header
             ======= ====================================================
+
+        pdmode: point styling mode (see POINT documentation)
+
+            see :class:`~ezdxf.entities.Point` class documentation
 
         measurement: whether to use metric or imperial units
 
@@ -94,7 +95,8 @@ class Configuration:
 
         show_defpoints: whether to show or filter out POINT entities on the defpoints layer
         proxy_graphic_policy: the action to take when a proxy graphic is encountered
-        line_policy: the method to use when drawing styled lines (eg dashed, dotted etc)
+        line_policy: the method to use when drawing styled lines (eg dashed,
+            dotted etc)
         hatch_policy: the method to use when drawing HATCH entities
         infinite_line_length: the length to use when drawing infinite lines
         lineweight_scaling:

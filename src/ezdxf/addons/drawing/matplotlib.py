@@ -417,6 +417,9 @@ def qsave(
     .. versionadded:: 0.17
         added argument `filter_func` to filter DXF entities
 
+    .. versionchanged:: 0.17
+        params [dict] argument replaced by config [Configuration] argument
+
     """
     from .properties import RenderContext
     from .frontend import Frontend
