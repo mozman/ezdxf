@@ -208,6 +208,9 @@ Group Code        Description
 1071              A 32-bit signed (long) integer
 ================= ==============================================================
 
+Group codes are not unique in the XDATA section and can be repeated, therefore
+tag order matters.
+
 .. literalinclude:: src/customdata/xdata.py
     :lines: 10-40
 
@@ -289,16 +292,41 @@ XRecord
 The :class:`~ezdxf.entities.XRecord` object can store arbitrary data like the
 XDATA section, but is not limited by size and can use all group codes in the
 range from 1 to 369 for :ref:`dxf_tags_internals`.
-The :class:`~ezdxf.entities.XRecord` can be used to attach custom data to DXF
-entities by linking :class:`~ezdxf.entities.XRecord` objects by
-:ref:`extension_dictionary`.
+The :class:`~ezdxf.entities.XRecord` can be referenced by any DXF
+:class:`~ezdxf.entities.Dictionary`, other :class:`XRecord` objects (tricky
+ownership!), the XDATA section (store handle by group code 1005) or any other
+DXF object by adding the :class:`XRecord` object to the
+:ref:`extension_dictionary` of the DXF entity.
+
+It is recommend to follow the DXF reference to assign appropriate group codes
+to :ref:`dxf_tags_internals`. My recommendation is shown in the table
+below, but all group codes from 1 to 369 are valid. I advice against using the
+group codes 100 and 102 (structure tags) to avoid confusing generic tag loaders.
+Unfortunately, Autodesk doesn't like general rules and uses DXF format
+exceptions everywhere.
+
+=== ======================
+1   strings
+2   structure tags as strings like ``"{"`` and  ``"}"``
+10  points and vectors
+40  floats
+90  integers
+330 handles
+=== ======================
+
+Group codes are not unique in :class:`XRecord` and can be repeated, therefore
+tag order matters.
+
+This example shows how to attach a :class:`~ezdxf.entities.XRecord` object to a
+LINE entity by :ref:`extension_dictionary`:
+
+.. literalinclude:: src/customdata/xrecord.py
+    :lines: 10-32
 
 Unlike XDATA, custom data attached by extension dictionary will not be
-transformed along with the DXF entity!
-
-To react to entity modifications by a CAD applications it is possible to
-write event handlers by Visual AutoLISP, see the `AfraLISP Reactors Tutorial`_
-for more information.
+transformed along with the DXF entity! To react to entity modifications by a
+CAD applications it is possible to write event handlers by AutoLISP, see the
+`AfraLISP Reactors Tutorial`_ for more information. This very advanced stuff!
 
 .. seealso::
 

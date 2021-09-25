@@ -19,7 +19,6 @@ Group Code   Value Type
              characters not including the newline at the end of the line)
 10-39        Double precision 3D point value
 40-59        Double-precision floating-point value
-40-59        Double-precision floating-point value
 60-79        16-bit integer value
 90-99        32-bit integer value
 100          String (255-character maximum, less for Unicode strings)
