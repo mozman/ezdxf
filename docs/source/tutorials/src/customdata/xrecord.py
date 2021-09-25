@@ -8,15 +8,12 @@ DIR = Path("~/Desktop/Outbox").expanduser()
 doc = ezdxf.new()
 msp = doc.modelspace()
 
-# create a DXF entity
 line = msp.add_line((0, 0), (1, 0))
 line2 = msp.add_line((0, 2), (1, 2))
 
 if line.has_extension_dict:
-    # get the extension dictionary
     xdict = line.get_extension_dict()
 else:
-    # create a new extension dictionary
     xdict = line.new_extension_dict()
 
 xrecord = xdict.add_xrecord("DATA1")
@@ -28,7 +25,6 @@ xrecord.reset([
     (330, line2.dxf.handle)  # handles
 ])
 
-print(f"DATA1:")
 print(xrecord.tags)
 
 

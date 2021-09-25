@@ -119,7 +119,7 @@ class DXFAttr:
         self.xtype: Optional[XType] = xtype
 
         # DXF default value
-        self.default: TagValue = default
+        self.default: Any = default
 
         # If optional is True, this attribute will be exported to DXF files
         # only if the given value differs from default value.

@@ -321,7 +321,17 @@ This example shows how to attach a :class:`~ezdxf.entities.XRecord` object to a
 LINE entity by :ref:`extension_dictionary`:
 
 .. literalinclude:: src/customdata/xrecord.py
-    :lines: 10-32
+    :lines: 10-29
+
+Script output:
+
+.. code-block:: Text
+
+    [DXFTag(1, 'text1'),
+     DXFTag(40, 3.141592),
+     DXFTag(90, 256),
+     DXFVertex(10, (1.0, 2.0, 0.0)),
+     DXFTag(330, '30')]
 
 Unlike XDATA, custom data attached by extension dictionary will not be
 transformed along with the DXF entity! To react to entity modifications by a
