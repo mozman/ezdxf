@@ -348,6 +348,72 @@ CAD applications it is possible to write event handlers by AutoLISP, see the
 UserRecord
 ----------
 
+The :class:`~ezdxf.urecord.UserRecord` and :class:`~ezdxf.urecord.BinaryRecord`
+are helper classes to manage XRECORD content in a simple way.
+The :class:`~ezdxf.urecord.UserRecord` manages the data as plain
+Python types: ``dict``, ``list``, ``int``, ``float``, ``str`` and the `ezdxf`
+types :class:`~ezdxf.math.Vec2` and :class:`~ezdxf.math.Vec3`.
+The :class:`~ezdxf.urecord.BinaryRecord` stores arbitrary binary data as `BLOB`_.
+These helper classes uses fixed group codes to manage the data in XRECORD,
+you have no choice to change them.
+
+The following examples need more imports:
+
+.. literalinclude:: src/customdata/urecord.py
+    :lines: 6-11
+
+Example 1: Store entity specific data in the :ref:`extension_dictionary`:
+
+
+.. literalinclude:: src/customdata/urecord.py
+    :lines: 23-37
+
+Example 1: Get entity specific data back from the :ref:`extension_dictionary`:
+
+.. literalinclude:: src/customdata/urecord.py
+    :lines: 42-47
+
+If you modify the content of :attr:`UserRecord.data` without using the context
+manager, you have to call :meth:`~ezdxf.urecord.UserRecord.commit` by yourself,
+to store the modified data back into the XRECORD.
+
+Example 2: Store arbitrary data in DICTIONARY objects.
+The XRECORD is stored in the named DICTIONARY, called :attr:`rootdict` in `ezdxf`.
+This DICTIONARY is the root entity for the tree-like data structure
+stored in the OBJECTS section, see also the documentation of the
+:mod:`ezdxf.sections.objects` module.
+
+.. literalinclude:: src/customdata/urecord.py
+    :lines: 52-69
+
+Example 2:  Get user data back from the DICTIONARY object
+
+.. literalinclude:: src/customdata/urecord.py
+    :lines: 74-78
+
+Example 3: Store arbitrary binary data
+
+.. literalinclude:: src/customdata/urecord.py
+    :lines: 83-91
+
+Example 3: Get binary data back from the DICTIONARY object
+
+.. literalinclude:: src/customdata/urecord.py
+    :lines: 99-106
+
+.. hint::
+
+    Don't be fooled, the ability to save any binary data such as images, office
+    documents, etc. in the DXF file doesn't impress AutoCAD, it simply ignores
+    this data, this data only has a meaning for your application!
+
+.. seealso::
+
+    - :mod:`~ezdxf.urecord` module
+    - :class:`~ezdxf.urecord.UserRecord` class
+    - :class:`~ezdxf.urecord.BinaryRecord` class
+
+
 AppData
 -------
 
@@ -377,3 +443,4 @@ Printed output:
 .. _AfraLISP Dictionaries and XRecords: https://www.afralisp.net/autolisp/tutorials/dictionaries-and-xrecords.php
 .. _Visual AutoLISP: https://www.afralisp.net/visual-lisp/
 .. _AfraLISP Reactors Tutorial: https://www.afralisp.net/visual-lisp/tutorials/reactors-part-1.php
+.. _BLOB: https://en.wikipedia.org/wiki/Binary_large_object

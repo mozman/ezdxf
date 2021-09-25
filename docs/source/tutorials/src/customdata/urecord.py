@@ -1,14 +1,13 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Optional
+
 from pathlib import Path
+from ezdxf import zoom
 from pprint import pprint
 import ezdxf
 from ezdxf.math import Vec3
-from ezdxf.render.forms import gear
-from ezdxf import zoom
 from ezdxf.urecord import UserRecord, BinaryRecord
-from ezdxf.entities import XRecord, DXFEntity
+from ezdxf.entities import XRecord
 import zlib
 
 DIR = Path("~/Desktop/Outbox").expanduser()
@@ -17,28 +16,15 @@ DIR = Path("~/Desktop/Outbox").expanduser()
 
 doc = ezdxf.new()
 msp = doc.modelspace()
-gear_ = msp.add_lwpolyline(
-    gear(16, top_width=1, bottom_width=3, height=2, outside_radius=10),
-    close=True,
-)
-handle = gear_.dxf.handle
 
 # ------------------------------------------------------------------------------
 # Example 1: Store entity specific data in the associated extension dict
 
-with UserRecord(doc=doc) as user_record:
-    # A new XRECORD object was created in the DXF document `doc` and stored
-    # in the attribute `user_record.xrecord`.
-    # Create a new extension dict for the LWPOLYLINE entity.
-    xdict = gear_.new_extension_dict()
+line = msp.add_line((0, 0), (1, 0))
+xdict = line.new_extension_dict()
+xrecord = xdict.add_xrecord("MyData")
 
-    # Store the `user_record` in the extension dict by key "MyData".
-    # The extension dict is the owner the XRECORD!
-    xdict.link_dxf_object("MyData", user_record.xrecord)
-
-    # Supported types: string, int, float, Vec3, (nested) list, (nested) dict
-    # The str type has a DXF format limit of 2049 characters and cannot contain
-    # the line endings '\n' or '\r'.
+with UserRecord(xrecord) as user_record:
     user_record.data = [
         "MyString",
         4711,
@@ -49,9 +35,16 @@ with UserRecord(doc=doc) as user_record:
             "MyFloatList": [4.5, 5.6, 7.8],
         },
     ]
-    # Important!
-    # Geometric properties like length values, scale factors or vertices
-    # stored in XRECORD entities will NOT be transformed with the owner entity!
+
+# ------------------------------------------------------------------------------
+# Example 1: Get entity specific data from the associated extension dict
+
+if line.has_extension_dict:
+    xdict = line.get_extension_dict()
+    xrecord = xdict.get("MyData")
+    if isinstance(xrecord, XRecord):
+        user_record = UserRecord(xrecord)
+        pprint(user_record.data)
 
 # ------------------------------------------------------------------------------
 # Example 2: Store arbitrary data in DICTIONARY objects.
@@ -76,6 +69,15 @@ user_record.data = [
 user_record.commit()
 
 # ------------------------------------------------------------------------------
+# Example 2: Get user data from DICTIONARY object
+
+my_dict = doc.rootdict.get_required_dict("MyDict")
+entity = my_dict["MyData"]
+if isinstance(entity, XRecord):
+    user_record = UserRecord(entity)
+    pprint(user_record.data)
+
+# ------------------------------------------------------------------------------
 # Example 3: Store arbitrary binary data
 
 my_dict = doc.rootdict.get_required_dict("MyDict")
@@ -88,42 +90,12 @@ with BinaryRecord(xrecord) as binary_record:
     # compress data if required
     binary_record.data = zlib.compress(data, level=9)
 
-zoom.objects(msp, [gear_])
+zoom.objects(msp, [line])
 doc.saveas(DIR / "gear_with_user_data.dxf")
-
-# ------------------------------------------------------------------------------
-# Retrieving data from reloaded DXF file
-# ------------------------------------------------------------------------------
-
-doc = ezdxf.readfile(DIR / "gear_with_user_data.dxf")
-gear_ = doc.entitydb.get(handle)
-entity: Optional[DXFEntity]
-
-# ------------------------------------------------------------------------------
-# Example 1: Get entity specific data from the associated extension dict
-
-print("\nContent of example 1:")
-if gear_.has_extension_dict:
-    xdict = gear_.get_extension_dict()
-    entity = xdict.get("MyData")
-    if isinstance(entity, XRecord):
-        user_record = UserRecord(entity)
-        pprint(user_record.data)
-
-# ------------------------------------------------------------------------------
-# Example 2: Get user data from DICTIONARY object
-
-print("\nContent of example 2:")
-my_dict = doc.rootdict.get_required_dict("MyDict")
-entity = my_dict["MyData"]
-if isinstance(entity, XRecord):
-    user_record = UserRecord(entity)
-    pprint(user_record.data)
 
 # ------------------------------------------------------------------------------
 # Example 3: Get binary data from DICTIONARY object
 
-print("\nContent of example 3:")
 entity = my_dict["MyBinaryData"]
 if isinstance(entity, XRecord):
     binary_record = BinaryRecord(entity)
