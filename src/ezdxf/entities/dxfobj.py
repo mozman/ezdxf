@@ -1,6 +1,6 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Dict, Tuple
+from typing import TYPE_CHECKING, Iterable, Dict, Tuple, Union, Any
 import logging
 import array
 from ezdxf.lldxf import validator
@@ -125,6 +125,19 @@ class XRecord(DXFObject):
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_xrecord.name)
         tagwriter.write_tag2(280, self.dxf.cloning)
         tagwriter.write_tags(Tags(totags(self.tags)))
+
+    def reset(self, tags: Iterable[Union[DXFTag, Tuple[int, Any]]]) -> None:
+        """Reset DXF tags. """
+        self.tags.clear()
+        self.tags.extend(totags(tags))
+
+    def extend(self, tags: Iterable[Union[DXFTag, Tuple[int, Any]]]) -> None:
+        """Extend DXF tags. """
+        self.tags.extend(totags(tags))
+
+    def clear(self) -> None:
+        """Remove all DXF tags. """
+        self.tags.clear()
 
 
 acdb_vba_project = DefSubclass(

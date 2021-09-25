@@ -51,3 +51,9 @@ Factory function         :meth:`ezdxf.sections.objects.ObjectsSection.add_xrecor
 
         Raw DXF tag container :class:`~ezdxf.lldxf.tags.Tags`. Be careful `ezdxf` does not validate the content of
         XRECORDS.
+
+    .. automethod:: clear
+
+    .. automethod:: reset
+
+    .. automethod:: extend

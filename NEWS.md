@@ -32,6 +32,9 @@ Version 0.17b1 - dev
 - NEW: rendering support for inline codes in `MTEXT` entities for the `drawing`
   add-on
 - NEW: `XDATA` transformation support
+- CHANGE: `drawing` add-on: replaced the backend `params` argument (untyped dict) 
+  by the new typed `Configuration` object passed to the frontend class as 
+  argument `config`
 - REMOVED: deprecated class methods `from_...(entity)` from `Path` class, 
   use `path.make_path(entity)` instead
 - REMOVED: deprecated `Path` methods `add_...(entity)`, 
