@@ -19,7 +19,6 @@ from typing import (
     Type,
     Sequence,
     Any,
-    TYPE_CHECKING,
 )
 from array import array
 from itertools import chain
@@ -27,8 +26,6 @@ from binascii import unhexlify, hexlify
 import reprlib
 from ezdxf.math import Vec3
 
-if TYPE_CHECKING:
-    from ezdxf.eztypes import TagValue
 
 TAG_STRING_FORMAT = "%3d\n%s\n"
 POINT_CODES = {
@@ -154,16 +151,13 @@ class DXFTag:
         code: group code as int
         value: tag value, type depends on group code
 
-    :ivar code: group code as int (do not change)
-    :ivar value: tag value (read-only property)
-
     """
 
     __slots__ = ("code", "_value")
 
-    def __init__(self, code: int, value: "TagValue"):
+    def __init__(self, code: int, value: Any):
         self.code: int = code
-        self._value: TagValue = value
+        self._value = value
 
     def __str__(self) -> str:
         """Returns content string ``'(code, value)'``."""
@@ -174,7 +168,7 @@ class DXFTag:
         return f"DXFTag{str(self)}"
 
     @property
-    def value(self) -> "TagValue":
+    def value(self) -> Any:
         return self._value
 
     def __getitem__(self, index: int):
@@ -298,7 +292,7 @@ class DXFBinaryTag(DXFTag):
         return cls(code, unhexlify(value))
 
 
-def dxftag(code: int, value: "TagValue") -> DXFTag:
+def dxftag(code: int, value: Any) -> DXFTag:
     """DXF tag factory function.
 
     Args:
@@ -317,9 +311,9 @@ def dxftag(code: int, value: "TagValue") -> DXFTag:
 
 
 def tuples_to_tags(
-    iterable: Iterable[Tuple[int, "TagValue"]]
+    iterable: Iterable[Tuple[int, Any]]
 ) -> Iterable[DXFTag]:
-    """Returns an iterable if :class: `DXFTag` or inherited, accepts an
+    """Returns an iterable if :class:`DXFTag` or inherited, accepts an
     iterable of (code, value) tuples as input.
     """
     for code, value in iterable:
@@ -356,7 +350,7 @@ def is_point_tag(tag: Tuple) -> bool:
     return tag[0] in POINT_CODES
 
 
-def cast_tag_value(code: int, value: "TagValue") -> "TagValue":
+def cast_tag_value(code: int, value: Any) -> Any:
     return TYPE_TABLE.get(code, str)(value)
 
 

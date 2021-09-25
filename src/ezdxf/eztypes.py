@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 """
 from typing import (
     TYPE_CHECKING, List, Union, Sequence, Tuple, Iterable, Hashable, Dict,
-    Callable
+    Callable, Any
 )
 
 if TYPE_CHECKING:
@@ -130,9 +130,8 @@ if TYPE_CHECKING:
     from ezdxf.lldxf.validator import DXFInfo
 
     # Type compositions
-    TagValue = Union[str, bytes, int, float, Sequence[float], Vec3]
     RGB = Tuple[int, int, int]
-    IterableTags = Iterable[Tuple[int, TagValue]]
+    IterableTags = Iterable[Tuple[int, Any]]
     SectionDict = Dict[str, List[Union[Tags, ExtendedTags]]]
     KeyFunc = Callable[['DXFEntity'], Hashable]
     FaceType = Sequence[Vertex]

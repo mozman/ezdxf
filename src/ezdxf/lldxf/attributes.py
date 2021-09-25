@@ -19,7 +19,7 @@ from .const import DXFAttributeError, DXF12
 import copy
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import DXFEntity, TagValue
+    from ezdxf.eztypes import DXFEntity
 
 
 class DefSubclass(NamedTuple):
@@ -158,7 +158,7 @@ class DXFAttr:
     def __repr__(self) -> str:
         return "DXFAttr" + self.__str__()
 
-    def get_callback_value(self, entity: "DXFEntity") -> "TagValue":
+    def get_callback_value(self, entity: "DXFEntity") -> Any:
         """
         Executes a callback function in 'entity' to get a DXF value.
 
@@ -185,7 +185,7 @@ class DXFAttr:
             raise DXFAttributeError(f"DXF attribute {self.name} has no getter.")
 
     def set_callback_value(
-        self, entity: "DXFEntity", value: "TagValue"
+        self, entity: "DXFEntity", value: Any
     ) -> None:
         """Executes a callback function in 'entity' to set a DXF value.
 

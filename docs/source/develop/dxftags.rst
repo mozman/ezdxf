@@ -14,6 +14,13 @@ DXFTag
 .. autoclass:: DXFTag
     :members: __str__, __repr__, __getitem__, __iter__, __eq__, __hash__, dxfstr, clone
 
+    .. attribute:: code
+
+        group code as int (do not change)
+
+    .. attribute:: value
+
+        tag value (read-only property)
 
 DXFBinaryTag
 ============

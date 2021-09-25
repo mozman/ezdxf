@@ -247,6 +247,9 @@ The usual objects to store custom data are :class:`~ezdxf.entities.DictionaryVar
 to store simple strings and :class:`~ezdxf.entities.XRecord` to store complex
 data.
 
+Unlike XDATA, custom data attached by extension dictionary will not be
+transformed along with the DXF entity!
+
 This example shows how to manage the XDICT and to store simple strings as
 :class:`~ezdxf.entities.DictionaryVar` objects in the XDICT, to store more
 complex data go to the next section `XRecord`_.
@@ -283,10 +286,26 @@ only referring to the `AfraLISP Dictionaries and XRecords`_ tutorial.
 XRecord
 -------
 
+The :class:`~ezdxf.entities.XRecord` object can store arbitrary data like the
+XDATA section, but is not limited by size and can use all group codes in the
+range from 1 to 369 for :ref:`dxf_tags_internals`.
+The :class:`~ezdxf.entities.XRecord` can be used to attach custom data to DXF
+entities by linking :class:`~ezdxf.entities.XRecord` objects by
+:ref:`extension_dictionary`.
+
+Unlike XDATA, custom data attached by extension dictionary will not be
+transformed along with the DXF entity!
+
+To react to entity modifications by a CAD applications it is possible to
+write event handlers by Visual AutoLISP, see the `AfraLISP Reactors Tutorial`_
+for more information.
+
 .. seealso::
 
     - `AfraLISP Dictionaries and XRecords`_ Tutorial
+    - `AfraLISP Reactors Tutorial`_
     - :class:`~ezdxf.entities.XRecord` Reference
+    - helper functions: :func:`ezdxf.lldxf.types.dxftag` and :func:`ezdxf.lldxf.types.tuples_to_tags`
 
 UserRecord
 ----------
@@ -318,3 +337,5 @@ Printed output:
 
 .. _AfraLISP: https://www.afralisp.net/index.php
 .. _AfraLISP Dictionaries and XRecords: https://www.afralisp.net/autolisp/tutorials/dictionaries-and-xrecords.php
+.. _Visual AutoLISP: https://www.afralisp.net/visual-lisp/
+.. _AfraLISP Reactors Tutorial: https://www.afralisp.net/visual-lisp/tutorials/reactors-part-1.php
