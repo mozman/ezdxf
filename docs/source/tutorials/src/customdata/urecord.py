@@ -25,7 +25,7 @@ xdict = line.new_extension_dict()
 xrecord = xdict.add_xrecord("MyData")
 
 with UserRecord(xrecord) as user_record:
-    user_record.data = [
+    user_record.data = [  # top level has to be a list!
         "MyString",
         4711,
         3.1415,

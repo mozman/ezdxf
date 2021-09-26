@@ -21,7 +21,7 @@ handle = gear.dxf.handle
 # default dict name = "DefaultDict"
 # default appid = "EZDXF"
 # If using an own AppID, don't forget to create the requited AppID table entry
-# e.g. doc.appids.new("MyAppID"), else AutoCAD will not open the DXF file.
+# e.g. doc.appids.new("MyAppID"), otherwise AutoCAD will not open the DXF file.
 
 # Supported data: str, int, float and Vec3
 
@@ -121,11 +121,11 @@ with XDataUserDict.entity(loaded_gear) as user_dict:
     # acts like any other dict()
     storage = dict(user_dict)
 
-print(f"Copy of UserDict: {storage}")
+print(f"Copy of XDataUserDict: {storage}")
 
 
 with XDataUserList.entity(loaded_gear, name="AppendedPoints") as user_list:
     print(user_list)
     storage = list(user_list)
 
-print(f"Copy of UserList: {storage}")
+print(f"Copy of XDataUserList: {storage}")

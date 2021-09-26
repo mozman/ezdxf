@@ -236,6 +236,79 @@ Script output:
     - `AfraLISP XDATA tutorial <https://www.afralisp.net/autolisp/tutorials/extended-entity-data-part-1.php>`_
     - :ref:`extended_data` Reference
 
+XDATA Helper Classes
+--------------------
+
+The :class:`~ezdxf.entities.xdata.XDataUserList` and
+:class:`~ezdxf.entities.xdata.XDataUserDict` are helper classes to manage XDATA
+content in a simple way.
+
+Both classes store the Python types ``int``, ``float`` and ``str`` and the
+`ezdxf` type :class:`~ezdxf.math.Vec3`. As the names suggests has the
+:class:`XDataUserList` a list-like interface and the :class:`XDataUserDict` a
+dict-like interface. This classes can not contain additional container types,
+but multiple lists and/or dicts can be stored in the same XDATA section for the
+same AppID.
+
+These helper classes uses a fixed group code for each data type:
+
+==== ========================
+1001 strings (max. 255 chars)
+1040 floats
+1071 32-bit ints
+1010 Vec3
+==== ========================
+
+Additional required imports for these examples:
+
+.. code-block:: Python
+
+    from ezdxf.math import Vec3
+    from ezdxf.entities.xdata import XDataUserDict, XDataUserList
+
+Example for :class:`~ezdxf.entities.xdata.XDataUserDict`:
+
+Each :class:`XDataUserDict` has a unique name, the default name is "DefaultDict"
+and the default AppID is ``EZDXF``.
+If you use your own AppID, don't forget to create the requited AppID table entry
+like :code:`doc.appids.new("MyAppID")`, otherwise AutoCAD will not open the
+DXF file.
+
+.. literalinclude:: src/customdata/xdata_helper.py
+    :lines: 11-19
+
+If you modify the content of without using the context manager
+:meth:`~ezdxf.entities.xdata.XDataUserDict.entity`, you have to call
+:meth:`~ezdxf.entities.xdata.XDataUserDict.commit` by yourself, to transfer the
+modified data back into the XDATA section.
+
+Getting the data back from an entity:
+
+.. literalinclude:: src/customdata/xdata_helper.py
+    :lines: 22-25
+
+Example for :class:`~ezdxf.entities.xdata.XDataUserList`:
+
+This example stores the data in a :class:`XDataUserList` named "AppendedPoints",
+the default name is "DefaultList" and the default AppID is ``EZDXF``.
+
+.. literalinclude:: src/customdata/xdata_helper.py
+    :lines: 29-32
+
+Now the content of both classes are stored in the same XDATA section for AppID
+``EZDXF``. The :class:`XDataUserDict` is stored by the name "DefaultDict" and
+the :class:`XDataUserList` is stored by the name "AppendedPoints".
+
+Getting the data back from an entity:
+
+.. literalinclude:: src/customdata/xdata_helper.py
+    :lines: 35-39
+
+.. seealso::
+
+    - :class:`~ezdxf.entities.xdata.XDataUserList` class
+    - :class:`~ezdxf.entities.xdata.XDataUserDict` class
+
 Extension Dictionaries
 ----------------------
 
@@ -306,7 +379,7 @@ Unfortunately, Autodesk doesn't like general rules and uses DXF format
 exceptions everywhere.
 
 === ======================
-1   strings
+1   strings (max. 2049 chars)
 2   structure tags as strings like ``"{"`` and  ``"}"``
 10  points and vectors
 40  floats
@@ -345,19 +418,20 @@ CAD applications it is possible to write event handlers by AutoLISP, see the
     - :class:`~ezdxf.entities.XRecord` Reference
     - helper functions: :func:`ezdxf.lldxf.types.dxftag` and :func:`ezdxf.lldxf.types.tuples_to_tags`
 
-UserRecord
-----------
+XRecord Helper Classes
+----------------------
 
 The :class:`~ezdxf.urecord.UserRecord` and :class:`~ezdxf.urecord.BinaryRecord`
 are helper classes to manage XRECORD content in a simple way.
 The :class:`~ezdxf.urecord.UserRecord` manages the data as plain
 Python types: ``dict``, ``list``, ``int``, ``float``, ``str`` and the `ezdxf`
-types :class:`~ezdxf.math.Vec2` and :class:`~ezdxf.math.Vec3`.
+types :class:`~ezdxf.math.Vec2` and :class:`~ezdxf.math.Vec3`. The top level
+type for the :attr:`UserRecord.data` attribute has to be a ``list``.
 The :class:`~ezdxf.urecord.BinaryRecord` stores arbitrary binary data as `BLOB`_.
 These helper classes uses fixed group codes to manage the data in XRECORD,
 you have no choice to change them.
 
-The following examples need more imports:
+Additional required imports for these examples:
 
 .. literalinclude:: src/customdata/urecord.py
     :lines: 6-11
