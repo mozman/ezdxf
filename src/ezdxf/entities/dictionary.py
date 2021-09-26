@@ -593,7 +593,7 @@ class DictionaryVar(DXFObject):
 
     @property
     def value(self) -> str:
-        """ Get/set the value of the :class:`DictionaryVar` as string. """
+        """Get/set the value of the :class:`DictionaryVar` as string."""
         return self.dxf.get("value", "")
 
     @value.setter

@@ -3,7 +3,7 @@
 # Created 2019-02-13
 import pytest
 import ezdxf
-from ezdxf.entities import factory
+from ezdxf.entities import factory, DXFEntity
 from ezdxf.entities.xdict import ExtensionDict
 
 
@@ -51,18 +51,28 @@ def test_supports_handle_property(doc):
     assert isinstance(xdict.handle, str)
 
 
-def test_copy_entity(doc, entity):
+def test_copy_entity_with_extension_dict(doc, entity: DXFEntity):
     factory.bind(entity, doc)
     try:
         xdict = entity.get_extension_dict()
     except AttributeError:
         xdict = entity.new_extension_dict()
 
-    xdict.add_placeholder("Test")
-
+    placeholder = xdict.add_placeholder("Test")
     new_entity = entity.copy()
-    # copying of extension dict is not supported
-    assert new_entity.has_extension_dict is False
+    # copying the extension dict is supported since v0.17
+    assert new_entity.has_extension_dict is True
+    new_xdict = new_entity.get_extension_dict()
+    new_dictionary = new_xdict.dictionary
+    assert new_dictionary is not xdict.dictionary
+    assert new_dictionary.dxftype() == "DICTIONARY"
+    assert new_dictionary in doc.objects
+    assert new_dictionary.dxf.owner == new_entity.dxf.handle
+
+    new_placeholder = new_xdict["Test"]
+    assert new_placeholder.dxftype() == "ACDBPLACEHOLDER"
+    assert new_placeholder is not placeholder
+    assert new_placeholder in doc.objects
 
 
 def test_line_new_extension_dict(doc):

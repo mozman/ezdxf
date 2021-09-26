@@ -285,8 +285,9 @@ class DXFEntity:
     def copy(self: T) -> T:
         """Returns a copy of `self` but without handle, owner and reactors.
         This copy is NOT stored in the entity database and does NOT reside
-        in any layout, block, table or objects section! Extension dictionary
-        and reactors are not copied.
+        in any layout, block, table or objects section!
+        The extension dictionary will be copied for entities bound to a valid
+        DXF document. The reactors are not copied.
 
         Don't use this function to duplicate DXF entities in drawing,
         use :meth:`EntityDB.duplicate_entity` instead for this task.
@@ -298,17 +299,21 @@ class DXFEntity:
         (internal API)
         """
         entity = self.__class__()
-        entity.doc = self.doc
+        doc = self.doc
+        entity.doc = doc
         # copy and bind dxf namespace to new entity
         entity.dxf = self.dxf.copy(entity)
         entity.dxf.reset_handles()
 
-        # Do not copy extension dict: if the extension dict should be copied
-        # in the future - a deep copy is maybe required!
-        entity.extension_dict = None
+        xdict = self.extension_dict
+        if xdict is not None and doc is not None and xdict.is_alive:
+            # All linked DXF objects are copied and added to the OBJECTS section:
+            entity.extension_dict = xdict.copy(doc)
+        else:
+            entity.extension_dict = None
+
         # Do not copy reactors:
         entity.reactors = None
-
         entity.proxy_graphic = self.proxy_graphic  # immutable bytes
 
         # if appdata contains handles, they are treated as shared resources

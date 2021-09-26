@@ -116,6 +116,11 @@ class ExtensionDict:
         )
         return cls(xdict)
 
+    def copy(self, doc: "Drawing") -> "ExtensionDict":
+        """Deep copy of the extension dictionary."""
+        new_xdict = doc.entitydb.duplicate_entity(self.dictionary)
+        return ExtensionDict(new_xdict)
+
     @property
     def is_alive(self):
         """Returns ``True`` if the underlying :class:`~ezdxf.entities.Dictionary`

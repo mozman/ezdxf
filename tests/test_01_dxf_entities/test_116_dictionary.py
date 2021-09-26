@@ -364,6 +364,12 @@ class TestCopyHardOwnerDictionary:
         assert copy[key] in doc.objects
         assert factory.is_bound(copy[key], doc)
 
+    def test_copied_xrecord(self, source: Dictionary):
+        doc = source.doc
+        copy = doc.entitydb.duplicate_entity(source)
+        xrecord = copy["XRECORD"]
+        assert xrecord.tags == [(1, "String"), (40, 3.1415), (90, 4711)]
+
     def test_copied_objects_are_owned_by_copy(self, source: Dictionary):
         copy = source.copy()
         assert copy["DICTVAR"].dxf.owner == copy.dxf.handle

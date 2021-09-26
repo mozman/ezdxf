@@ -32,6 +32,7 @@ Version 0.17b2 - dev
 - NEW: rendering support for inline codes in `MTEXT` entities for the `drawing`
   add-on
 - NEW: `XDATA` transformation support
+- NEW: copy support for extension dictionaries
 - CHANGE: `drawing` add-on: replaced the backend `params` argument (untyped dict) 
   by the new typed `Configuration` object passed to the frontend class as 
   argument `config`
@@ -44,6 +45,7 @@ Version 0.17b2 - dev
 - BUGFIX: ODAFC add-on - reintroduce accidentally removed global variable `exec_path` as `win_exec_path` 
 - BUGFIX: graphic entities are not allowed as `DICTIONARY` entries 
 - BUGFIX: copied `DICTIONARY` was not added to the OBJECTS section by calling `factory.bind()`
+- BUGFIX: `XRecord.copy()` copies content tags
 
 Version 0.16.6 - 2021-08-28
 ---------------------------
