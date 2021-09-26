@@ -341,11 +341,13 @@ class TestCopyHardOwnerDictionary:
         assert factory.is_bound(copy["DICTVAR"], source.doc) is False
         assert factory.is_bound(copy["XRECORD"], source.doc) is False
 
-    def test_copied_dictionary_is_bound(self, source: Dictionary):
+    def test_fully_manual_dictionary_copy(self, source: Dictionary):
         doc = source.doc
+        # manual copy procedure:
         copy = source.copy()
-        factory.bind(copy, doc)  # manual bind() call
-        # this is done automatically if you use:
+        factory.bind(copy, doc)
+        doc.objects.add_object(copy)
+        # this is all done automatically if you use:
         # doc.entitydb.duplicate_entity(source)
         assert copy in doc.objects
         assert factory.is_bound(copy, doc)
@@ -424,8 +426,7 @@ class TestCopyNotHardOwnerDictionary:
 
     def test_copied_dictionary_is_bound(self, source: Dictionary):
         doc = source.doc
-        copy = source.copy()
-        factory.bind(copy, doc)
+        copy = doc.entitydb.duplicate_entity(source)
         assert copy in doc.objects
         assert factory.is_bound(copy, doc)
 

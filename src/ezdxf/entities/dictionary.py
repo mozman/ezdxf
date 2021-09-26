@@ -111,15 +111,13 @@ class Dictionary(DXFObject):
         bind hard owned sub-entities to the same document and add them to the
         objects section.
         """
+        if not self.dxf.hard_owned:
+            return
+
         # copied or new dictionary:
         doc = self.doc
         assert doc is not None
         object_section = doc.objects
-        assert self not in object_section
-        object_section.add_object(self)
-        if not self.dxf.hard_owned:
-            return
-
         owner_handle = self.dxf.handle
         for _, entity in self.items():
             entity.dxf.owner = owner_handle

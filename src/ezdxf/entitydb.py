@@ -14,6 +14,7 @@ from contextlib import contextmanager
 from ezdxf.tools.handle import HandleGenerator
 from ezdxf.lldxf.types import is_valid_handle
 from ezdxf.entities.dxfentity import DXFEntity
+from ezdxf.entities.dxfobj import DXFObject
 from ezdxf.audit import AuditError, Auditor
 from ezdxf.lldxf.const import DXFInternalEzdxfError
 from ezdxf.entities import factory
@@ -196,7 +197,8 @@ class EntityDB:
         """Duplicates `entity` and its sub entities (VERTEX, ATTRIB, SEQEND)
         and store them with new handles in the entity database.
         Graphical entities have to be added to a layout by
-        :meth:`~ezdxf.layouts.BaseLayout.add_entity`.
+        :meth:`~ezdxf.layouts.BaseLayout.add_entity`. DXF objects will
+        automatically added to the OBJECTS section.
 
         To import DXF entities from another drawing use the
         :class:`~ezdxf.addons.importer.Importer` add-on.
@@ -205,9 +207,14 @@ class EntityDB:
         layout.
 
         """
+        doc = entity.doc
+        assert doc is not None, "valid DXF document required"
         new_entity: DXFEntity = entity.copy()
         new_entity.dxf.handle = self.next_handle()
-        factory.bind(new_entity, entity.doc)  # type: ignore
+        factory.bind(new_entity, doc)
+        if isinstance(new_entity, DXFObject):
+            # add DXF objects automatically to the OBJECTS section
+            doc.objects.add_object(new_entity)
         return new_entity
 
     def audit(self, auditor: "Auditor"):
