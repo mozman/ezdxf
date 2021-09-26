@@ -89,7 +89,7 @@ class XRecord(DXFObject):
 
     def _copy_data(self, entity: DXFEntity) -> None:
         assert isinstance(entity, XRecord)
-        entity.tags = Tags(entity.tags)
+        entity.tags = Tags(self.tags)
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
