@@ -91,7 +91,7 @@ class Dictionary(DXFObject):
 
     def __init__(self):
         super().__init__()
-        self._data: Dict[str, Union[str, DXFEntity]] = dict()
+        self._data: Dict[str, Union[str, DXFObject]] = dict()
         self._value_code = VALUE_CODE
 
     def _copy_data(self, entity: DXFEntity) -> None:
@@ -232,7 +232,7 @@ class Dictionary(DXFObject):
         else:
             raise DXFKeyError(key)
 
-    def __setitem__(self, key: str, entity: DXFEntity) -> None:
+    def __setitem__(self, key: str, entity: DXFObject) -> None:
         """Set self[`key`] = `entity`.
 
         Only DXF objects stored in the OBJECTS section are allowed as content
@@ -265,8 +265,8 @@ class Dictionary(DXFObject):
     count = __len__
 
     def get(
-        self, key: str, default: Optional[DXFEntity] = None
-    ) -> Optional[DXFEntity]:
+        self, key: str, default: Optional[DXFObject] = None
+    ) -> Optional[DXFObject]:
         """Returns the :class:`DXFEntity` for `key`, if `key` exist else
         `default`. An entity can be a handle string if the entity
         does not exist.
@@ -274,7 +274,7 @@ class Dictionary(DXFObject):
         """
         return self._data.get(key, default)  # type: ignore
 
-    def add(self, key: str, entity: DXFEntity) -> None:
+    def add(self, key: str, entity: DXFObject) -> None:
         """Add entry ``(key, value)``.
 
         Raises:
@@ -474,7 +474,7 @@ class DictionaryWithDefault(Dictionary):
 
     def __init__(self):
         super().__init__()
-        self._default: Optional[DXFEntity] = None
+        self._default: Optional[DXFObject] = None
 
     def _copy_data(self, entity: DXFEntity) -> None:
         assert isinstance(entity, DictionaryWithDefault)
@@ -484,7 +484,7 @@ class DictionaryWithDefault(Dictionary):
         # Set _default to None if default object not exist - audit() replaces
         # a not existing default object by a place holder object.
         # AutoCAD ignores not existing default objects!
-        self._default = doc.entitydb.get(self.dxf.default)
+        self._default = doc.entitydb.get(self.dxf.default)  # type: ignore
         super().post_load_hook(doc)
 
     def load_dxf_attribs(
@@ -506,8 +506,8 @@ class DictionaryWithDefault(Dictionary):
         return self.get(key)
 
     def get(
-        self, key: str, default: Optional[DXFEntity] = None
-    ) -> Optional[DXFEntity]:
+        self, key: str, default: Optional[DXFObject] = None
+    ) -> Optional[DXFObject]:
         # `default` argument is ignored, exist only for API compatibility,
         """Returns :class:`DXFEntity` for `key` or the predefined dictionary
         wide :attr:`dxf.default` entity if `key` does not exist or ``None``
@@ -516,7 +516,7 @@ class DictionaryWithDefault(Dictionary):
         """
         return super().get(key, default=self._default)
 
-    def set_default(self, default: DXFEntity) -> None:
+    def set_default(self, default: DXFObject) -> None:
         """Set dictionary wide default entry.
 
         Args:
