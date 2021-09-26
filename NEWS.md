@@ -43,6 +43,7 @@ Version 0.17b2 - dev
 - BUGFIX: groupby query did not match default values if the attribute was not present
 - BUGFIX: ODAFC add-on - reintroduce accidentally removed global variable `exec_path` as `win_exec_path` 
 - BUGFIX: graphic entities are not allowed as `DICTIONARY` entries 
+- BUGFIX: copied `DICTIONARY` was not added to the OBJECTS section by calling `factory.bind()`
 
 Version 0.16.6 - 2021-08-28
 ---------------------------

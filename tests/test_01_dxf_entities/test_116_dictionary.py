@@ -3,8 +3,16 @@
 import pytest
 import ezdxf
 
-from ezdxf.entities.dictionary import Dictionary, DictionaryWithDefault
-from ezdxf.entities import DXFEntity, factory, DXFGraphic
+from ezdxf.entities import (
+    Dictionary,
+    DictionaryWithDefault,
+    DictionaryVar,
+    DXFEntity,
+    factory,
+    DXFGraphic,
+    XRecord,
+)
+
 from ezdxf import DXFKeyError, DXFValueError
 from ezdxf.audit import Auditor, AuditError
 
@@ -298,6 +306,61 @@ class TestDXFDictWithDefault:
         default = d.get("xxx")
         assert default.is_alive is True
         assert default.dxftype() == "ACDBPLACEHOLDER"
+
+
+class TestCopyHardOwnerDictionary:
+
+    @pytest.fixture(scope="class")
+    def source(self, doc) -> Dictionary:
+        doc = ezdxf.new()
+        dictionary = doc.rootdict.get_required_dict(
+            "COPYTEST", hard_owned=True
+        )
+        dictionary.add_dict_var("DICTVAR", "VarContent")
+        xrecord = dictionary.add_xrecord("XRECORD")
+        xrecord.reset([(1, "String"), (40, 3.1415), (90, 4711)])
+        return dictionary
+
+    def test_keys_are_copied(self, source: Dictionary):
+        copy = source.copy()
+        assert "DICTVAR" in copy
+        assert "XRECORD" in copy
+
+    def test_objects_exist(self, source: Dictionary):
+        copy = source.copy()
+        assert isinstance(copy["DICTVAR"], DictionaryVar)
+        assert isinstance(copy["XRECORD"], XRecord)
+
+    def test_objects_are_copied(self, source: Dictionary):
+        copy = source.copy()
+        assert copy["DICTVAR"] is not source["DICTVAR"]
+        assert copy["XRECORD"] is not source["XRECORD"]
+
+    def test_copied_objects_are_not_bound_to_document(self, source: Dictionary):
+        copy = source.copy()
+        assert factory.is_bound(copy["DICTVAR"], source.doc) is False
+        assert factory.is_bound(copy["XRECORD"], source.doc) is False
+
+    def test_copied_dictionary_is_bound(self, source: Dictionary):
+        doc = source.doc
+        copy = source.copy()
+        factory.bind(copy, doc)  # manual bind() call
+        # this is done automatically if you use:
+        # doc.entitydb.duplicate_entity(source)
+        assert copy in doc.objects
+        assert factory.is_bound(copy, doc)
+
+    @pytest.mark.parametrize("key", ["DICTVAR", "XRECORD"])
+    def test_copied_data_is_bound(self, source: Dictionary, key: str):
+        doc = source.doc
+        copy = doc.entitydb.duplicate_entity(source)
+        source_handle = source[key].dxf.handle
+        copied_handle = copy[key].dxf.handle
+        assert copied_handle is not None
+        assert source_handle != copied_handle
+        assert copied_handle in doc.entitydb
+        assert copy[key] in doc.objects
+        assert factory.is_bound(copy[key], doc)
 
 
 ROOTDICT = """0

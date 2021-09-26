@@ -96,7 +96,7 @@ class Dictionary(DXFObject):
 
     def _copy_data(self, entity: DXFEntity) -> None:
         """Copy hard owned entities but do not store the copies in the entity
-        database, this is a second step, this is just real copying.
+        database, this is a second step (factory.bind), this is just real copying.
         """
         assert isinstance(entity, Dictionary)
         entity._value_code = self._value_code
@@ -116,12 +116,15 @@ class Dictionary(DXFObject):
         # copied or new dictionary:
         doc = self.doc
         assert doc is not None
+        object_section = doc.objects
+        assert self not in object_section
+        object_section.add_object(self)
         owner_handle = self.dxf.handle
         for _, entity in self.items():
             entity.dxf.owner = owner_handle
             factory.bind(entity, doc)
             # For a correct DXF export add entities to the objects section:
-            doc.objects.add_object(entity)
+            object_section.add_object(entity)
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
@@ -409,13 +412,13 @@ class Dictionary(DXFObject):
         self.add(name, obj)
         obj.dxf.owner = self.dxf.handle
 
-    def get_required_dict(self, key: str) -> "Dictionary":
+    def get_required_dict(self, key: str, hard_owned=False) -> "Dictionary":
         """Get entry `key` or create a new :class:`Dictionary`,
         if `Key` not exist.
         """
         dxf_dict = self.get(key)
         if dxf_dict is None:
-            dxf_dict = self.add_new_dict(key)
+            dxf_dict = self.add_new_dict(key, hard_owned=hard_owned)
         return dxf_dict  # type: ignore
 
     def audit(self, auditor: "Auditor") -> None:

@@ -179,7 +179,9 @@ class ObjectsSection:
 
     @property
     def rootdict(self) -> Dictionary:
-        """Root dictionary."""
+        """Returns the root DICTIONARY, or as AutoCAD calls it:
+        the named DICTIONARY.
+        """
         if len(self):
             return self._entity_space[0]  # type: ignore
         else:
