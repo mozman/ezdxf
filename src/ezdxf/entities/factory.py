@@ -86,6 +86,15 @@ def bind(entity: "DXFEntity", doc: "Drawing") -> None:
     # Do not call the post_bind_hook() while loading from external sources,
     # not all entities and resources are loaded at this point of time!
     if not doc.is_loading:
+        # bind extension dictionary
+        if entity.extension_dict is not None:
+            xdict = entity.extension_dict
+            if xdict.has_valid_dictionary:
+                xdict.update_owner(entity.dxf.handle)
+                dictionary = xdict.dictionary
+                if not is_bound(dictionary, doc):
+                    bind(dictionary, doc)
+                    doc.objects.add_object(dictionary)
         entity.post_bind_hook()
 
 

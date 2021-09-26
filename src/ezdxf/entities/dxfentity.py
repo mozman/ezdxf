@@ -308,7 +308,7 @@ class DXFEntity:
         xdict = self.extension_dict
         if xdict is not None and doc is not None and xdict.is_alive:
             # All linked DXF objects are copied and added to the OBJECTS section:
-            entity.extension_dict = xdict.copy(doc)
+            entity.extension_dict = xdict.copy()
         else:
             entity.extension_dict = None
 

@@ -116,9 +116,11 @@ class ExtensionDict:
         )
         return cls(xdict)
 
-    def copy(self, doc: "Drawing") -> "ExtensionDict":
-        """Deep copy of the extension dictionary."""
-        new_xdict = doc.entitydb.duplicate_entity(self.dictionary)
+    def copy(self) -> "ExtensionDict":
+        """Deep copy of the extension dictionary all entries are virtual
+        entities.
+        """
+        new_xdict = self.dictionary.copy()
         return ExtensionDict(new_xdict)
 
     @property
@@ -128,6 +130,16 @@ class ExtensionDict:
         """
         # Can not check if _xdict (as handle or Dictionary) really exist:
         return self._xdict is not None
+
+    @property
+    def has_valid_dictionary(self):
+        """Returns ``True`` if the underlying :class:`~ezdxf.entities.Dictionary`
+        really exist and is valid.
+        """
+        xdict = self._xdict
+        if xdict is None or isinstance(xdict, str):
+            return False
+        return xdict.is_alive
 
     def update_owner(self, handle: str) -> None:
         """Update owner tag of underlying :class:`~ezdxf.entities.Dictionary`

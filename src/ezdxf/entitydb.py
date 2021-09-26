@@ -212,8 +212,6 @@ class EntityDB:
         new_handle = self.next_handle()
         new_entity: DXFEntity = entity.copy()
         new_entity.dxf.handle = new_handle
-        if new_entity.has_extension_dict:
-            new_entity.get_extension_dict().update_owner(new_handle)
         factory.bind(new_entity, doc)
         if isinstance(new_entity, DXFObject):
             # add DXF objects automatically to the OBJECTS section
