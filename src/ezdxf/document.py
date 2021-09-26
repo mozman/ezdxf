@@ -1194,7 +1194,9 @@ class R2000MetaData(MetaData):
     """
 
     def __init__(self, doc: Drawing):
-        self._data: "Dictionary" = doc.rootdict.get_required_dict(EZDXF_META)
+        self._data: "Dictionary" = doc.rootdict.get_required_dict(
+            EZDXF_META, hard_owned=True
+        )
 
     def __contains__(self, key: str) -> bool:
         return safe_string(key) in self._data

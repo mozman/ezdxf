@@ -362,6 +362,73 @@ class TestCopyHardOwnerDictionary:
         assert copy[key] in doc.objects
         assert factory.is_bound(copy[key], doc)
 
+    def test_copied_objects_are_owned_by_copy(self, source: Dictionary):
+        copy = source.copy()
+        assert copy["DICTVAR"].dxf.owner == copy.dxf.handle
+        assert copy["XRECORD"].dxf.owner == copy.dxf.handle
+
+    def test_copy_sub_dictionary(self, source: Dictionary):
+        doc = source.doc
+        source = doc.entitydb.duplicate_entity(source)
+        sub_dict = source.add_new_dict("SUBDICT", hard_owned=True)
+        sub_dict.add_dict_var("SUBDICTVAR", "SubVarContent")
+        copy = doc.entitydb.duplicate_entity(source)
+
+        sub_dict_copy = copy["SUBDICT"]
+        assert sub_dict is not sub_dict_copy
+        assert sub_dict["SUBDICTVAR"] is not sub_dict_copy["SUBDICTVAR"]
+        assert factory.is_bound(sub_dict_copy, doc) is True
+        assert factory.is_bound(sub_dict_copy["SUBDICTVAR"], doc) is True
+
+
+class TestCopyNotHardOwnerDictionary:
+
+    @pytest.fixture(scope="class")
+    def source(self, doc) -> Dictionary:
+        doc = ezdxf.new()
+        dictionary = doc.rootdict.get_required_dict(
+            "COPYTEST", hard_owned=True
+        )
+        dict_var = dictionary.add_dict_var("DICTVAR", "VarContent")
+        xrecord = dictionary.add_xrecord("XRECORD")
+        xrecord.reset([(1, "String"), (40, 3.1415), (90, 4711)])
+        dictionary2 = doc.rootdict.get_required_dict(
+            "COPYTEST2", hard_owned=False
+        )
+        dictionary2["DICTVAR"] = dict_var
+        dictionary2["XRECORD"] = xrecord
+        return dictionary2
+
+    def test_is_not_hard_owner(self, source: Dictionary):
+        assert source.is_hard_owner is False
+
+    def test_keys_are_copied(self, source: Dictionary):
+        copy = source.copy()
+        assert "DICTVAR" in copy
+        assert "XRECORD" in copy
+
+    def test_objects_exist(self, source: Dictionary):
+        copy = source.copy()
+        assert isinstance(copy["DICTVAR"], DictionaryVar)
+        assert isinstance(copy["XRECORD"], XRecord)
+
+    def test_objects_are_not_copied(self, source: Dictionary):
+        copy = source.copy()
+        assert copy["DICTVAR"] is source["DICTVAR"]
+        assert copy["XRECORD"] is source["XRECORD"]
+
+    def test_objects_are_not_owned_by_copy(self, source: Dictionary):
+        copy = source.copy()
+        assert copy["DICTVAR"].dxf.owner != copy.dxf.handle
+        assert copy["XRECORD"].dxf.owner != copy.dxf.handle
+
+    def test_copied_dictionary_is_bound(self, source: Dictionary):
+        doc = source.doc
+        copy = source.copy()
+        factory.bind(copy, doc)
+        assert copy in doc.objects
+        assert factory.is_bound(copy, doc)
+
 
 ROOTDICT = """0
 DICTIONARY
