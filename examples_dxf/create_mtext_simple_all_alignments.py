@@ -46,4 +46,3 @@ for location, attachment_point in params:
 
 doc.set_modelspace_vport(300, (100, 100))
 doc.saveas("mtext_simple_all_alignments.dxf")
-

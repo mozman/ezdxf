@@ -11,15 +11,16 @@ def create_doc(filename: str, dxfversion: str):
     def add_mtext_columns(msp):
         insert = Vec3(0, 0, 0)
         attribs = {
-            'layer': 'STATIC',
-            'char_height': 1,
-            'insert': insert,
+            "layer": "STATIC",
+            "char_height": 1,
+            "insert": insert,
         }
 
         content = [
             " ".join(lorem_ipsum(50)),
             " ".join(lorem_ipsum(100)),
-            " ".join(lorem_ipsum(70))]
+            " ".join(lorem_ipsum(70)),
+        ]
         # Create 3 static columns, the content if each column is
         # clearly defined: [content0, content1, content2, ...]
         # The height of the columns is defined by their content, ezdxf adds
@@ -30,11 +31,12 @@ def create_doc(filename: str, dxfversion: str):
         # This is the simplest way to define columns without the need to render
         # the content to determine the required column heights.
         mtext = msp.add_mtext_static_columns(
-            content, width=20, gutter_width=1, height=100, dxfattribs=attribs)
+            content, width=20, gutter_width=1, height=100, dxfattribs=attribs
+        )
 
         insert += Vec3(mtext.columns.total_width + 5, 0, 0)
-        attribs['layer'] = 'DYNAMIC'
-        attribs['insert'] = insert
+        attribs["layer"] = "DYNAMIC"
+        attribs["insert"] = insert
         content = " ".join(lorem_ipsum(300))
 
         # Create as much columns as needed for the given common fixed height:
@@ -45,11 +47,16 @@ def create_doc(filename: str, dxfversion: str):
         # the future.
         # DO NOT USE THIS INTERFACE IN PRODUCTION CODE!
         mtext = msp.add_mtext_dynamic_auto_height_columns(
-            content, width=20, gutter_width=1, height=50, count=3,
-            dxfattribs=attribs)
+            content,
+            width=20,
+            gutter_width=1,
+            height=50,
+            count=3,
+            dxfattribs=attribs,
+        )
 
         insert += Vec3(mtext.columns.total_width + 5, 0, 0)
-        attribs['insert'] = insert
+        attribs["insert"] = insert
 
         # Create 3 columns with given individual column heights,
         # the last column height is required but ignored and therefore 0,
@@ -57,8 +64,12 @@ def create_doc(filename: str, dxfversion: str):
         # as needed.
         # Easy for R2018, very hard for <R2018
         msp.add_mtext_dynamic_manual_height_columns(
-            content, width=20, gutter_width=1, heights=[20, 30, 0],
-            dxfattribs=attribs)
+            content,
+            width=20,
+            gutter_width=1,
+            heights=[20, 30, 0],
+            dxfattribs=attribs,
+        )
 
     doc = ezdxf.new(dxfversion=dxfversion)
     msp = doc.modelspace()
@@ -68,7 +79,7 @@ def create_doc(filename: str, dxfversion: str):
     print(f"created {filename}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     create_doc("mtext_columns_R2000.dxf", const.DXF2000)
     create_doc("mtext_columns_R2007.dxf", const.DXF2007)
     create_doc("mtext_columns_R2018.dxf", const.DXF2018)
