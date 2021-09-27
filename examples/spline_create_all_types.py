@@ -1,14 +1,13 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
-# import os; os.environ["EZDXF_DISABLE_C_EXT"] = "1"
 import math
 from pathlib import Path
 import ezdxf
 from ezdxf import zoom
-from ezdxf.math import Vec3, linspace, BSpline
+from ezdxf.math import Vec3, BSpline
 
 
-DIR = Path('~/Desktop/outbox').expanduser()
+DIR = Path("~/Desktop/outbox").expanduser()
 
 points = Vec3.list([(1, 1), (4, 5), (7, 4), (10, 7), (12, 3), (7, 1)])
 closed_points = list(points)
@@ -17,12 +16,12 @@ closed_points.append(closed_points[0])
 
 def new_doc():
     doc = ezdxf.new()
-    doc.layers.new("SPLINE", dxfattribs={'color': 1})
-    doc.layers.new("ENTITY", dxfattribs={'color': 4})
-    doc.layers.new("EZDXF", dxfattribs={'color': 2})
-    doc.layers.new("FLATTEN", dxfattribs={'color': 3})
-    doc.layers.new("FRAME", dxfattribs={'color': 5})
-    doc.layers.new("FIT", dxfattribs={'color': 1})
+    doc.layers.add("SPLINE", color=1)
+    doc.layers.add("ENTITY", color=4)
+    doc.layers.add("EZDXF", color=2)
+    doc.layers.add("FLATTEN", color=3)
+    doc.layers.add("FRAME", color=5)
+    doc.layers.add("FIT", color=1)
     msp = doc.modelspace()
     return doc, msp
 
@@ -34,19 +33,19 @@ def save(name):
 
 def add_control_polyline(spline):
     s = spline.construction_tool()
-    msp.add_lwpolyline(s.flattening(0.01), dxfattribs={'layer': 'FLATTEN'})
+    msp.add_lwpolyline(s.flattening(0.01), dxfattribs={"layer": "FLATTEN"})
 
 
 def add_control_frame(spline):
     cpoints = spline.control_points
-    msp.add_lwpolyline(cpoints, dxfattribs={'layer': 'FRAME'})
+    msp.add_lwpolyline(cpoints, dxfattribs={"layer": "FRAME"})
     for point in cpoints:
-        msp.add_circle(point, radius=0.05, dxfattribs={'layer': 'FRAME'})
+        msp.add_circle(point, radius=0.05, dxfattribs={"layer": "FRAME"})
 
 
 def add_fit_points(points):
     for point in points:
-        msp.add_circle(point, radius=0.05, dxfattribs={'layer': 'FIT'})
+        msp.add_circle(point, radius=0.05, dxfattribs={"layer": "FIT"})
 
 
 # A B-spline is only defined by the control points and the knot values and the
@@ -80,12 +79,13 @@ def add_fit_points(points):
 # CAD application.
 # ------------------------------------------------------------------------------
 doc, msp = new_doc()
-msp.add_spline(fit_points=points, dxfattribs={'layer': 'SPLINE'})
+msp.add_spline(fit_points=points, dxfattribs={"layer": "SPLINE"})
 
 # ezdxf provides a method to calculate the control points from the fit points
 # without given end tangents like AutoCAD, but the result is not a perfect match.
 spline = msp.add_cad_spline_control_frame(
-    points, estimate='5-p', dxfattribs={'layer': 'EZDXF'})
+    points, estimate="5-p", dxfattribs={"layer": "EZDXF"}
+)
 
 add_fit_points(points)
 add_control_frame(spline)
@@ -106,11 +106,14 @@ save(DIR / "open_spline_from_fit_points.dxf")
 # ------------------------------------------------------------------------------
 # noinspection PyRedeclaration
 doc, msp = new_doc()
-msp.add_spline(fit_points=points, dxfattribs={
-    'start_tangent': (0, 1),
-    'end_tangent': (-1, 0),
-    'layer': 'SPLINE'
-})
+msp.add_spline(
+    fit_points=points,
+    dxfattribs={
+        "start_tangent": (0, 1),
+        "end_tangent": (-1, 0),
+        "layer": "SPLINE",
+    },
+)
 
 # ------------------------------------------------------------------------------
 # Add SPLINE defined by CONTROL POINTS
@@ -125,7 +128,8 @@ msp.add_spline(fit_points=points, dxfattribs={
 # CAD application without any ambiguity.
 # ------------------------------------------------------------------------------
 spline = msp.add_cad_spline_control_frame(
-    points, tangents=[(0, 1), (-1, 0)], dxfattribs={'layer': 'EZDXF'})
+    points, tangents=[(0, 1), (-1, 0)], dxfattribs={"layer": "EZDXF"}
+)
 add_fit_points(points)
 add_control_frame(spline)
 save(DIR / "open_spline_from_fit_points_with_end_tangents.dxf")
@@ -141,8 +145,9 @@ save(DIR / "open_spline_from_fit_points_with_end_tangents.dxf")
 # looks always the same, no matter which CAD application renders the SPLINE.
 # ------------------------------------------------------------------------------
 doc, msp = new_doc()
-spline = msp.add_spline_control_frame(fit_points=points,
-                                      dxfattribs={'layer': 'SPLINE'})
+spline = msp.add_spline_control_frame(
+    fit_points=points, dxfattribs={"layer": "SPLINE"}
+)
 add_fit_points(points)
 add_control_frame(spline)
 add_control_polyline(spline)
@@ -158,7 +163,8 @@ save(DIR / "open_spline_by_add_spline_control_frame.dxf")
 # ------------------------------------------------------------------------------
 doc, msp = new_doc()
 spline = msp.add_cad_spline_control_frame(
-    closed_points, dxfattribs={'layer': 'EZDXF'})
+    closed_points, dxfattribs={"layer": "EZDXF"}
+)
 add_control_frame(spline)
 add_control_polyline(spline)
 add_fit_points(points)
@@ -178,7 +184,8 @@ save(DIR / "closed_spline_from_fit_points.dxf")
 doc, msp = new_doc()
 tangent = (0, 1)
 spline = msp.add_cad_spline_control_frame(
-    closed_points, tangents=[tangent, tangent], dxfattribs={'layer': 'EZDXF'})
+    closed_points, tangents=[tangent, tangent], dxfattribs={"layer": "EZDXF"}
+)
 add_control_frame(spline)
 add_control_polyline(spline)
 add_fit_points(points)
@@ -200,7 +207,7 @@ save(DIR / "closed_spline_from_fit_points_smooth.dxf")
 # ------------------------------------------------------------------------------
 
 doc, msp = new_doc()
-spline = msp.add_open_spline(points, dxfattribs={'layer': 'SPLINE'})
+spline = msp.add_open_spline(points, dxfattribs={"layer": "SPLINE"})
 
 add_control_frame(spline)
 add_control_polyline(spline)
@@ -213,11 +220,15 @@ save(DIR / "open_clamped_spline_by_control_points.dxf")
 # circular arc.
 # ------------------------------------------------------------------------------
 doc, msp = new_doc()
-arc = msp.add_arc((0, 0), radius=3, start_angle=30, end_angle=330, dxfattribs={
-    'layer': "ENTITY"
-})
+arc = msp.add_arc(
+    (0, 0),
+    radius=3,
+    start_angle=30,
+    end_angle=330,
+    dxfattribs={"layer": "ENTITY"},
+)
 s = BSpline.from_arc(arc.construction_tool())
-spline = msp.add_spline(dxfattribs={'layer': "SPLINE"})
+spline = msp.add_spline(dxfattribs={"layer": "SPLINE"})
 spline.apply_construction_tool(s)
 
 add_control_frame(spline)
@@ -231,12 +242,16 @@ save(DIR / "spline_from_arc.dxf")
 # perfect elliptic arc.
 # ------------------------------------------------------------------------------
 doc, msp = new_doc()
-ellipse = msp.add_ellipse((0, 0), major_axis=(3, 0), ratio=0.7,
-                      start_param=math.radians(30),
-                      end_param=math.radians(330),
-                      dxfattribs={'layer': "ENTITY"})
+ellipse = msp.add_ellipse(
+    (0, 0),
+    major_axis=(3, 0),
+    ratio=0.7,
+    start_param=math.radians(30),
+    end_param=math.radians(330),
+    dxfattribs={"layer": "ENTITY"},
+)
 s = BSpline.from_ellipse(ellipse.construction_tool())
-spline = msp.add_spline(dxfattribs={'layer': "SPLINE"})
+spline = msp.add_spline(dxfattribs={"layer": "SPLINE"})
 spline.apply_construction_tool(s)
 
 add_control_frame(spline)
@@ -248,10 +263,9 @@ save(DIR / "spline_from_ellipse.dxf")
 # ------------------------------------------------------------------------------
 
 doc, msp = new_doc()
-spline = msp.add_spline(dxfattribs={'layer': 'SPLINE'})
+spline = msp.add_spline(dxfattribs={"layer": "SPLINE"})
 spline.set_uniform(points)
 
 add_control_frame(spline)
 add_control_polyline(spline)
 save(DIR / "open_unclamped_spline_by_control_points.dxf")
-

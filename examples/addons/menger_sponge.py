@@ -5,11 +5,11 @@ from time import perf_counter
 import ezdxf
 from ezdxf.addons import MengerSponge
 
-DIR = Path('~/Desktop/Outbox').expanduser()
+DIR = Path("~/Desktop/Outbox").expanduser()
 
 
 def write(filename, sponge, merge=False):
-    doc = ezdxf.new('R2000')
+    doc = ezdxf.new("R2000")
     doc.set_modelspace_vport(3)
     sponge.render(doc.modelspace(), merge=merge)
     doc.saveas(filename)
@@ -19,7 +19,7 @@ def main(filename, level=3, kind=0, merge=False):
     t0 = perf_counter()
     sponge = MengerSponge(level=level, kind=kind)
     t1 = perf_counter()
-    print(f'Build menger sponge <{kind}> in {t1 - t0:.5f}s.')
+    print(f"Build menger sponge <{kind}> in {t1 - t0:.5f}s.")
 
     try:
         write(filename, sponge, merge)
@@ -29,7 +29,7 @@ def main(filename, level=3, kind=0, merge=False):
         print(f'saved as "{filename}".')
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(DIR / "menger_sponge_0.dxf", level=3, kind=0)
     main(DIR / "menger_sponge_1.dxf", level=3, kind=1)
     main(DIR / "menger_sponge_2.dxf", level=3, kind=2)

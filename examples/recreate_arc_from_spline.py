@@ -1,3 +1,5 @@
+# Copyright (c) 2021, Manfred Moitzi
+# License: MIT License
 from pathlib import Path
 import ezdxf
 from ezdxf import zoom
@@ -17,15 +19,17 @@ arc = msp.add_arc(
     dxfattribs={
         "layer": "source arc",
         "color": ezdxf.const.RED,
-    }
+    },
 )
 
 # create a SPLINE entity from ARC, in your scenario these are the source
 # entities of your DXF document!
-spline = msp.add_spline(dxfattribs={
-    "layer": "B-Spline",
-    "color": ezdxf.const.YELLOW,
-})
+spline = msp.add_spline(
+    dxfattribs={
+        "layer": "B-Spline",
+        "color": ezdxf.const.YELLOW,
+    }
+)
 # create a B-spline construction tool from ARC
 arc_tool = arc.construction_tool()
 bspline = BSpline.from_arc(arc_tool)
@@ -39,16 +43,19 @@ bspline = spline.construction_tool()
 max_t = bspline.max_t
 
 # calculate 3 significant points and 2 check points of the SPLINE:
-start, chk1, middle, chk2, end = bspline.points([
-    0, max_t * 0.25, max_t * 0.5, max_t * 0.75, max_t
-])
+start, chk1, middle, chk2, end = bspline.points(
+    [0, max_t * 0.25, max_t * 0.5, max_t * 0.75, max_t]
+)
 
 # create an arc from 3 points:
 arc_tool = ConstructionArc.from_3p(start, end, middle)
-arc_tool.add_to_layout(msp, dxfattribs={
-    "layer": "recreated arc",
-    "color": ezdxf.const.MAGENTA,
-})
+arc_tool.add_to_layout(
+    msp,
+    dxfattribs={
+        "layer": "recreated arc",
+        "color": ezdxf.const.MAGENTA,
+    },
+)
 
 # This only works for flat B-splines in the xy-plane, a.k.a. 2D splines!
 
@@ -63,10 +70,13 @@ print(f"max error: {err:.6f}")
 
 foul = (4.5, 1)
 fit_points = [start, foul, chk1, middle, chk2, end]
-msp.add_spline(fit_points, dxfattribs={
-    "layer": "foul B-spline",
-    "color": ezdxf.const.RED,
-})
+msp.add_spline(
+    fit_points,
+    dxfattribs={
+        "layer": "foul B-spline",
+        "color": ezdxf.const.RED,
+    },
+)
 
 # add check marks
 for p in fit_points:

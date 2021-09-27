@@ -3,11 +3,11 @@
 import pathlib
 import ezdxf
 
-DIR = pathlib.Path('~/Desktop/Outbox').expanduser()
+DIR = pathlib.Path("~/Desktop/Outbox").expanduser()
 
 
 def custom_header_vars():
-    doc = ezdxf.new('R2000')
+    doc = ezdxf.new("R2000")
     msp = doc.modelspace()
 
     points = [(0, 0), (3, 0), (6, 3), (6, 6)]

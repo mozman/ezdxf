@@ -7,7 +7,7 @@ from ezdxf.lldxf.const import SortEntities
 
 
 def random_in_range(a, b):
-    return random.random() * float(b-a) + a
+    return random.random() * float(b - a) + a
 
 
 def random_pos(lower_left=(0, 0), upper_right=(100, 100)):
@@ -18,7 +18,9 @@ def random_pos(lower_left=(0, 0), upper_right=(100, 100)):
     return Vec3(x, y)
 
 
-def add_solids(msp, count=20, min_size=1, max_size=5, color=None, layer='SOLIDS'):
+def add_solids(
+    msp, count=20, min_size=1, max_size=5, color=None, layer="SOLIDS"
+):
     def add_solid(pos, size, dxfattribs):
         points = [
             pos,
@@ -29,15 +31,15 @@ def add_solids(msp, count=20, min_size=1, max_size=5, color=None, layer='SOLIDS'
         msp.add_solid(points, dxfattribs=dxfattribs)
 
     dxfattribs = {
-        'color': color,
-        'layer': layer,
+        "color": color,
+        "layer": layer,
     }
     for _ in range(count):
         pos = random_pos((0, 0), (100, 100))
         size = random_in_range(min_size, max_size)
         if color is None:
-            dxfattribs['color'] = random.randint(1, 7)
-            dxfattribs['layer'] = 'color_'+str(dxfattribs['color'])
+            dxfattribs["color"] = random.randint(1, 7)
+            dxfattribs["layer"] = "color_" + str(dxfattribs["color"])
         add_solid(pos, size, dxfattribs)
 
 
@@ -49,46 +51,49 @@ def order_solids_by_color(msp):
     #
     # just use color as sort handle, '%X': uppercase hex-value without 0x prefix, like 'FF'
     msp.set_redraw_order(
-        (solid.dxf.handle, '%X' % solid.dxf.color) for solid in msp.query('SOLID')
+        (solid.dxf.handle, "%X" % solid.dxf.color)
+        for solid in msp.query("SOLID")
     )
 
 
 def reverse_order_solids_by_color(msp):
     msp.set_redraw_order(
-        (solid.dxf.handle, '%X' % (10-solid.dxf.color)) for solid in msp.query('SOLID')
+        (solid.dxf.handle, "%X" % (10 - solid.dxf.color))
+        for solid in msp.query("SOLID")
     )
 
 
-def move_solids_on_top(msp, color, sort_handle='FFFF'):
+def move_solids_on_top(msp, color, sort_handle="FFFF"):
     # This also works if a redraw order is already set
-    order = dict(msp.get_redraw_order())  # returns a list of [(object_handle, sort_handle), ...] -> dict
-    for solid in msp.query(f'SOLID[color=={color}]'):
+    # returns a list of [(object_handle, sort_handle), ...] -> dict
+    order = dict(msp.get_redraw_order())
+    for solid in msp.query(f"SOLID[color=={color}]"):
         order[solid.dxf.handle] = sort_handle
     msp.set_redraw_order(order)  # accepts also a dict
 
 
 def remove_solids(msp, color=6):
-    for solid in msp.query(f'SOLID[color=={color}]'):
+    for solid in msp.query(f"SOLID[color=={color}]"):
         msp.delete_entity(solid)
 
 
 def run():
-    doc = ezdxf.new('R2004')  # does not work with AC1015/R2000, but it should
-    doc.header['$SORTENTS'] = SortEntities.REGEN
+    doc = ezdxf.new("R2004")  # does not work with AC1015/R2000, but it should
+    doc.header["$SORTENTS"] = SortEntities.REGEN
     msp = doc.modelspace()
 
     add_solids(msp, count=1000, min_size=3, max_size=7)
-    doc.saveas('sort_solids_unordered.dxf')
+    doc.saveas("sort_solids_unordered.dxf")
     order_solids_by_color(msp)  # 1 -> 7
-    doc.saveas('sort_solids_ordered.dxf')
+    doc.saveas("sort_solids_ordered.dxf")
     reverse_order_solids_by_color(msp)  # 7 -> 1
-    doc.saveas('sort_solids_reversed_ordered.dxf')
+    doc.saveas("sort_solids_reversed_ordered.dxf")
     move_solids_on_top(msp, 6)  # 7, 5, 4, 3, 2, 1, 6
-    doc.saveas('sort_solids_6_on_top.dxf')  # 6 is magenta
+    doc.saveas("sort_solids_6_on_top.dxf")  # 6 is magenta
     # AutoCAD has no problem with removed entities in the redraw order table (SORTENTSTABLE)
     remove_solids(msp, 6)
-    doc.saveas('sort_solids_removed_color_6.dxf')
+    doc.saveas("sort_solids_removed_color_6.dxf")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run()

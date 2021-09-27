@@ -1,3 +1,6 @@
+#  Copyright (c) 2021, Manfred Moitzi
+#  License: MIT License
+
 from pathlib import Path
 import ezdxf
 

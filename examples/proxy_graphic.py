@@ -7,7 +7,7 @@ import logging
 import ezdxf
 
 logging.basicConfig(level=logging.ERROR)
-DIR = Path('~/Desktop/outbox').expanduser()
+DIR = Path("~/Desktop/outbox").expanduser()
 
 DATA = """160
 968
@@ -36,11 +36,11 @@ data = load_proxy_graphic(Tags.from_text(DATA))
 proxy = ProxyGraphic(data, doc)
 
 for index, size, name in proxy.info():
-    print(f'Index: {index}, Size: {size}, Type: {name}')
+    print(f"Index: {index}, Size: {size}, Type: {name}")
 
 for entity in proxy.virtual_entities():
     print(str(entity))
     doc.entitydb.add(entity)
     msp.add_entity(entity)
 
-doc.saveas(DIR / 'proxy.dxf')
+doc.saveas(DIR / "proxy.dxf")

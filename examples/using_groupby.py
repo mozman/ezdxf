@@ -1,6 +1,5 @@
 # Purpose: example for using the groupby feature
-# Created: 03.02.2017
-# Copyright (c) 2017 Manfred Moitzi
+# Copyright (c) 2017-2021 Manfred Moitzi
 # License: MIT License
 import os
 import glob
@@ -10,7 +9,7 @@ import ezdxf
 
 def outname(fname):
     name, ext = os.path.splitext(fname)
-    return name + '.txt'
+    return name + ".txt"
 
 
 def length(lines):
@@ -32,12 +31,20 @@ def calc(dxffile):
     msp = doc.modelspace()
     groups = msp.groupby(key=group_key)
     # using get(): returns None if key does not exist
-    columns = groups.get(('CIRCLE', 'AR_ME_ST'))  # all CIRCLE entities on layer 'AR_ME_ST'
-    outer_walls = groups.get(('LINE', 'AR_ME_AW'))  # all LINE entities on layer 'AR_ME_AW'
-    inner_walls = groups.get(('LINE', 'AR_ME_IW'))  # all LINE entities on layer 'AR_ME_IW'
-    beams = groups.get(('LINE', 'AR_ME_TR'))  # all LINE entities on layer 'AR_ME_TR'
+    columns = groups.get(
+        ("CIRCLE", "AR_ME_ST")
+    )  # all CIRCLE entities on layer 'AR_ME_ST'
+    outer_walls = groups.get(
+        ("LINE", "AR_ME_AW")
+    )  # all LINE entities on layer 'AR_ME_AW'
+    inner_walls = groups.get(
+        ("LINE", "AR_ME_IW")
+    )  # all LINE entities on layer 'AR_ME_IW'
+    beams = groups.get(
+        ("LINE", "AR_ME_TR")
+    )  # all LINE entities on layer 'AR_ME_TR'
 
-    with open(outname(dxffile), 'wt', encoding='utf-8') as f:
+    with open(outname(dxffile), "wt", encoding="utf-8") as f:
         f.write("File: {}\n".format(dxffile))
         if columns is not None:
             f.write(f"Stützen Anzahl={len(columns)}\n")
@@ -52,6 +59,6 @@ def calc(dxffile):
             f.write(f"Träger Gesamtlänge={length(beams)}\n")
 
 
-if __name__ == '__main__':
-    for fname in glob.glob('*.dxf'):
+if __name__ == "__main__":
+    for fname in glob.glob("*.dxf"):
         calc(fname)

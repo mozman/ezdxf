@@ -5,11 +5,11 @@ from pathlib import Path
 import ezdxf
 from ezdxf.addons import odafc
 
-OUTDIR = Path('~/Desktop/Outbox').expanduser()
+DIR = Path("~/Desktop/Outbox").expanduser()
 
 doc = ezdxf.new(setup=True)
 msp = doc.modelspace()
 
-msp.add_text('DXF File created by ezdxf.')
+msp.add_text("DXF File created by ezdxf.")
 
-odafc.export_dwg(doc, OUTDIR / 'xyz.dwg')
+odafc.export_dwg(doc, str(DIR / "xyz.dwg"))

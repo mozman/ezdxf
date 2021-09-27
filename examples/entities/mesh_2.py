@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2019 Manfred Moitzi
+# Copyright (c) 2016-2021 Manfred Moitzi
 # License: MIT License
 import ezdxf
 
@@ -14,7 +14,7 @@ p = [
     (0, 1, 1),
 ]
 
-doc = ezdxf.new('R2000')  # mesh requires the DXF 2000 or newer format
+doc = ezdxf.new("R2000")  # mesh requires the DXF 2000 or newer format
 msp = doc.modelspace()
 mesh = msp.add_mesh()
 

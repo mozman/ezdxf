@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2019, Manfred Moitzi
+# Copyright (c) 2010-2021, Manfred Moitzi
 # License: MIT License
 import ezdxf
 from ezdxf.math import Vec3
@@ -8,17 +8,15 @@ from ezdxf.render import Bezier
 def draw_control_point(point, tangent1, tangent2=(0, 0)):
     tp1 = Vec3(point) + Vec3(tangent1)
     tp2 = Vec3(point) + Vec3(tangent2)
-    attribs = {
-        'color': 1
-    }
+    attribs = {"color": 1}
     msp.add_circle(radius=0.05, center=point, dxfattribs=attribs)
-    attribs['color'] = 2
+    attribs["color"] = 2
     msp.add_line(point, tp1, dxfattribs=attribs)
     msp.add_line(point, tp2, dxfattribs=attribs)
 
 
-NAME = 'bezier.dxf'
-doc = ezdxf.new('R12')
+NAME = "bezier.dxf"
+doc = ezdxf.new("R12")
 msp = doc.modelspace()
 
 bezier = Bezier()
@@ -39,6 +37,6 @@ draw_control_point((12, 5, 2), (-2, 0, 0), (2, 0, 0))
 bezier.append((16, 9, 20), tangent1=(-0.5, -3, 0))
 draw_control_point((16, 9, 20), (-0.5, -3, 0))
 
-bezier.render(msp, dxfattribs={'color': 4})
+bezier.render(msp, dxfattribs={"color": 4})
 doc.saveas(NAME)
 print("drawing '%s' created.\n" % NAME)

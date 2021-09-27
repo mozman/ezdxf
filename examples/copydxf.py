@@ -11,8 +11,8 @@ def copydxf(fromfile, tofile):
     doc = ezdxf.readfile(fromfile)
     doc.saveas(tofile)
     endtime = time.time()
-    print(f'copy time: {endtime - starttime:.2f} seconds')
+    print(f"copy time: {endtime - starttime:.2f} seconds")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     copydxf(sys.argv[1], sys.argv[2])

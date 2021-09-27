@@ -1,10 +1,15 @@
+# Copyright (c) 2021 Manfred Moitzi
+# License: MIT License
+
 import ezdxf
 from ezdxf.math import Matrix44, TransformError
 from ezdxf.layouts import BaseLayout
 from pathlib import Path
 
 DIR = Path("~/Desktop/Outbox").expanduser()
-EXAMPLE = ezdxf.options.test_files_path / "CADKitSamples" / "AEC Plan Elev Sample.dxf"
+EXAMPLE = (
+    ezdxf.options.test_files_path / "CADKitSamples" / "AEC Plan Elev Sample.dxf"
+)
 
 
 def transform_layout(layout: BaseLayout, m: Matrix44) -> None:

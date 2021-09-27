@@ -61,7 +61,7 @@ def print_layouts(layouts):
 
 def process_file(filename):
     doc = ezdxf.readfile(filename)
-    if doc.dxfversion > 'AC1009':
+    if doc.dxfversion > "AC1009":
         print_layouts(doc.layouts)
     else:
         print(f"DXF R12 not supported: {filename}")
@@ -72,5 +72,5 @@ def run(files):
         process_file(filename)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run(sys.argv[1:])

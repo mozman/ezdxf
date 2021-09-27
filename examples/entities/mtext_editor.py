@@ -3,7 +3,9 @@
 from pathlib import Path
 import ezdxf
 from ezdxf.tools.text import (
-    MTextEditor, ParagraphProperties, MTextParagraphAlignment,
+    MTextEditor,
+    ParagraphProperties,
+    MTextParagraphAlignment,
 )
 from ezdxf.tools.text_layout import lorem_ipsum
 
@@ -21,10 +23,15 @@ def recreate_mtext_py_example(msp, location):
     # replicate example "mtext.py":
     attribs = dict(ATTRIBS)
     attribs["width"] = 15.0
-    editor = MTextEditor(f"recreate mtext.py result:{NP}normal ").overline(
-        "over line").append(" normal" + NP + "normal ").strike_through(
-        "strike through").append(" normal" + NP).underline(
-        "under line").append(" normal")
+    editor = (
+        MTextEditor(f"recreate mtext.py result:{NP}normal ")
+        .overline("over line")
+        .append(" normal" + NP + "normal ")
+        .strike_through("strike through")
+        .append(" normal" + NP)
+        .underline("under line")
+        .append(" normal")
+    )
     msp.add_mtext(str(editor), attribs).set_location(insert=location)
 
 
@@ -47,7 +54,8 @@ def changing_text_height_absolute(msp, location):
     attribs = dict(ATTRIBS)
     attribs["width"] = 40.0  # need mor space to avoid text wrapping
     editor = MTextEditor(
-        "changing text height absolute: default height is 0.7" + NP)
+        "changing text height absolute: default height is 0.7" + NP
+    )
     # doubling the default height = 1.4
     editor.height(1.4)
     editor.append("text height: 1.4" + NP)
@@ -60,7 +68,8 @@ def changing_text_height_relative(msp, location):
     attribs = dict(ATTRIBS)
     attribs["width"] = 40.0  # need mor space to avoid text wrapping
     editor = MTextEditor(
-        "changing text height relative: default height is 0.7" + NP)
+        "changing text height relative: default height is 0.7" + NP
+    )
     # this is the default text height in the beginning:
     current_height = attribs["char_height"]
     # The text height can only be changed by a factor:
@@ -75,7 +84,8 @@ def changing_text_height_relative(msp, location):
     current_height = desired_height
     # and back to 0.7
     editor.scale_height(0.7 / current_height).append(
-        "back to default height: 0.7" + NP)
+        "back to default height: 0.7" + NP
+    )
     msp.add_mtext(str(editor), attribs).set_location(insert=location)
 
 
@@ -110,7 +120,7 @@ def indent_first_line(msp, location):
     editor = MTextEditor("Indent the first line:" + NP)
     props = ParagraphProperties(
         indent=1,  # indent first line = 1x0.25 drawing units
-        align=MTextParagraphAlignment.JUSTIFIED
+        align=MTextParagraphAlignment.JUSTIFIED,
     )
     editor.paragraph(props)
     editor.append(" ".join(lorem_ipsum(100)))
@@ -130,7 +140,7 @@ def indent_except_fist_line(msp, location):
         indent=-indent,  # first line
         # indent left paragraph side:
         left=indent,
-        align=MTextParagraphAlignment.JUSTIFIED
+        align=MTextParagraphAlignment.JUSTIFIED,
     )
     editor.paragraph(props)
     editor.append(" ".join(lorem_ipsum(100)))
@@ -153,7 +163,8 @@ def bullet_list(msp, location):
             "First item",
             "Second item",
             " ".join(lorem_ipsum(30)),
-        ])
+        ],
+    )
     msp.add_mtext(str(editor), attribs).set_location(insert=location)
 
 
@@ -172,7 +183,8 @@ def numbered_list(msp, location):
             "First item",
             "Second item",
             " ".join(lorem_ipsum(30)),
-        ])
+        ],
+    )
     # Indentation and tab stops are multiples of the default text height (MTEXT
     # char_height)!
     msp.add_mtext(str(editor), attribs).set_location(insert=location)

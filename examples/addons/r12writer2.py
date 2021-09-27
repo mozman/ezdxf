@@ -4,7 +4,7 @@ from random import random
 from pathlib import Path
 from ezdxf.addons import r12writer
 
-OUTBOX = Path('~/Desktop/Outbox').expanduser()
+OUTBOX = Path("~/Desktop/Outbox").expanduser()
 MAX_X_COORD = 1000.0
 MAX_Y_COORD = 1000.0
 CIRCLE_COUNT = 10000
@@ -21,35 +21,39 @@ with r12writer(OUTBOX / "quick_and_dirty_dxf_r12.dxf") as dxf:
 
 with r12writer(OUTBOX / "many_circles.dxf") as dxf:
     for i in range(CIRCLE_COUNT):
-        dxf.add_circle((MAX_X_COORD * random(), MAX_Y_COORD * random()), radius=2)
+        dxf.add_circle(
+            (MAX_X_COORD * random(), MAX_Y_COORD * random()), radius=2
+        )
 
-with r12writer(OUTBOX / "many_circles_bin.dxf", fmt='bin') as dxf:
+with r12writer(OUTBOX / "many_circles_bin.dxf", fmt="bin") as dxf:
     for i in range(CIRCLE_COUNT):
-        dxf.add_circle((MAX_X_COORD * random(), MAX_Y_COORD * random()), radius=2)
+        dxf.add_circle(
+            (MAX_X_COORD * random(), MAX_Y_COORD * random()), radius=2
+        )
 
 LINETYPES = [
-    'CONTINUOUS',
-    'CENTER',
-    'CENTERX2',
-    'CENTER2',
-    'DASHED',
-    'DASHEDX2',
-    'DASHED2',
-    'PHANTOM',
-    'PHANTOMX2',
-    'PHANTOM2',
-    'DASHDOT',
-    'DASHDOTX2',
-    'DASHDOT2',
-    'DOT',
-    'DOTX2',
-    'DOT2',
-    'DIVIDE',
-    'DIVIDEX2',
-    'DIVIDE2',
+    "CONTINUOUS",
+    "CENTER",
+    "CENTERX2",
+    "CENTER2",
+    "DASHED",
+    "DASHEDX2",
+    "DASHED2",
+    "PHANTOM",
+    "PHANTOMX2",
+    "PHANTOM2",
+    "DASHDOT",
+    "DASHDOTX2",
+    "DASHDOT2",
+    "DOT",
+    "DOTX2",
+    "DOT2",
+    "DIVIDE",
+    "DIVIDEX2",
+    "DIVIDE2",
 ]
 
-with r12writer(OUTBOX / 'r12_linetypes.dxf', fixed_tables=True) as dxf:
+with r12writer(OUTBOX / "r12_linetypes.dxf", fixed_tables=True) as dxf:
     for n, ltype in enumerate(LINETYPES):
         dxf.add_line((0, n), (10, n), linetype=ltype)
-        dxf.add_text(ltype, (0, n + 0.1), height=0.25, style='OpenSans')
+        dxf.add_text(ltype, (0, n + 0.1), height=0.25, style="OpenSans")

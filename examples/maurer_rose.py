@@ -8,7 +8,7 @@ import math
 import ezdxf
 from ezdxf import zoom
 
-DIR = pathlib.Path('~/Desktop/Outbox').expanduser()
+DIR = pathlib.Path("~/Desktop/Outbox").expanduser()
 N = 6  # The rose has n petals if N is odd, and 2N petals if N is even.
 D = 71  # delta angle in degrees
 TWO_PI = math.pi * 2
@@ -16,7 +16,7 @@ STEP360 = TWO_PI / 360
 
 
 def maurer_rose(n: int, d: int, radius: float) -> Iterable[Tuple[float, float]]:
-    i: float = 0.
+    i: float = 0.0
     while i < TWO_PI:
         k = i * d
         r = radius * math.sin(n * k)
@@ -28,18 +28,20 @@ def maurer_rose(n: int, d: int, radius: float) -> Iterable[Tuple[float, float]]:
 
 def main(filename: str, n: int, d: int) -> None:
     doc = ezdxf.new()
-    doc.layers.new('PETALS', dxfattribs={'color': 1})
-    doc.layers.new('NET', dxfattribs={'color': 5})
+    doc.layers.add("PETALS", color=1)
+    doc.layers.add("NET", color=5)
 
     msp = doc.modelspace()
-    msp.add_lwpolyline(maurer_rose(n, 1, 250), close=True,
-                       dxfattribs={'layer': 'PETALS'})
-    msp.add_lwpolyline(maurer_rose(n, d, 250), close=True,
-                       dxfattribs={'layer': 'NET'})
+    msp.add_lwpolyline(
+        maurer_rose(n, 1, 250), close=True, dxfattribs={"layer": "PETALS"}
+    )
+    msp.add_lwpolyline(
+        maurer_rose(n, d, 250), close=True, dxfattribs={"layer": "NET"}
+    )
 
     zoom.extents(msp)
     doc.saveas(filename)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(str(DIR / "maurer_rose.dxf"), N, D)

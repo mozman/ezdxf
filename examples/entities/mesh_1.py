@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2019 Manfred Moitzi
+# Copyright (c) 2016-2021 Manfred Moitzi
 # License: MIT License
 import ezdxf
 
@@ -32,11 +32,9 @@ polygon5_vertices = [
     (0, 2, 0),
 ]
 
-polygon5_face = [
-    [0, 1, 2, 3, 4]
-]
+polygon5_face = [[0, 1, 2, 3, 4]]
 
-doc = ezdxf.new('R2000')
+doc = ezdxf.new("R2000")
 msp = doc.modelspace()
 mesh = msp.add_mesh()
 with mesh.edit_data() as mesh_data:

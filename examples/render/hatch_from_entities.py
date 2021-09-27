@@ -6,16 +6,14 @@ from ezdxf.render.forms import box, translate
 from ezdxf import disassemble
 from ezdxf.render import path
 
-DIR = Path('~/Desktop/Outbox').expanduser()
+DIR = Path("~/Desktop/Outbox").expanduser()
 
 doc = ezdxf.new()
-doc.layers.new('FORMS', dxfattribs={'color': 1})
-doc.layers.new('HATCHES')
+doc.layers.new("FORMS", dxfattribs={"color": 1})
+doc.layers.new("HATCHES")
 
 msp = doc.modelspace()
-attribs = {
-    'layer': 'FORMS'
-}
+attribs = {"layer": "FORMS"}
 
 # Create DXF primitives:
 msp.add_circle((2, 3), radius=2, dxfattribs=attribs)
@@ -37,7 +35,7 @@ primitives = disassemble.to_primitives(msp)
 paths = [p.path for p in primitives if p.path]
 
 # Render this paths as HATCH entities
-path.render_hatches(msp, paths, dxfattribs={'layer': 'HATCHES', 'color': 2})
+path.render_hatches(msp, paths, dxfattribs={"layer": "HATCHES", "color": 2})
 
 doc.set_modelspace_vport(15, (4, 4))
-doc.saveas(DIR / 'hatches_from_entities.dxf')
+doc.saveas(DIR / "hatches_from_entities.dxf")

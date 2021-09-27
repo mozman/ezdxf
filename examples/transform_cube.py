@@ -1,10 +1,13 @@
+# Copyright (c) 2020-2021 Manfred Moitzi
+# License: MIT License
+
 from pathlib import Path
 import math
 import ezdxf
 from ezdxf import zoom
 from ezdxf.math import UCS
 
-DIR = Path('~/Desktop/Outbox').expanduser()
+DIR = Path("~/Desktop/Outbox").expanduser()
 
 p = [
     (0, 0, 0),
@@ -19,7 +22,7 @@ p = [
 
 doc = ezdxf.new()
 msp = doc.modelspace()
-block = doc.blocks.new('block_4m3')
+block = doc.blocks.new("block_4m3")
 
 cube = block.add_mesh()
 with cube.edit_data() as mesh_data:
@@ -35,7 +38,7 @@ with cube.edit_data() as mesh_data:
 # Place untransformed cube, don't use the rotation
 # attribute unless you really need it, just
 # transform the UCS.
-blockref = msp.add_blockref(name='block_4m3', insert=(0, 0, 0))
+blockref = msp.add_blockref(name="block_4m3", insert=(0, 0, 0))
 
 # First rotation about the local x-axis
 ucs = UCS().rotate_local_x(angle=math.radians(45))
@@ -49,4 +52,4 @@ ucs = ucs.rotate(axis=(0, 0, 1), angle=math.radians(45))
 blockref.transform(ucs.matrix)
 
 zoom.extents(msp)
-doc.saveas(DIR / 'cube.dxf')
+doc.saveas(DIR / "cube.dxf")
