@@ -174,13 +174,12 @@ class ExtensionDict:
 
     def destroy(self):
         """Destroy the underlying :class:`~ezdxf.entities.Dictionary` object."""
-        xdict = self._xdict
-        if xdict is not None and not isinstance(xdict, str) and xdict.is_alive:
-            xdict.destroy()
+        if self.has_valid_dictionary:
+            self._xdict.destroy()
         self._xdict = None
 
     def add_dictionary(
-        self, name: str, hard_owned: bool = False
+        self, name: str, hard_owned: bool = True
     ) -> "Dictionary":
         """Create a new :class:`~ezdxf.entities.Dictionary` object as
         extension dictionary entry `name`.

@@ -111,14 +111,15 @@ class ObjectsSection:
             )
         logger.debug("Creating ROOT dictionary.")
         # root directory has no owner
-        return self.add_dictionary(owner="0")
+        return self.add_dictionary(owner="0", hard_owned=False)
 
     def setup_object_management_tables(self, rootdict: Dictionary) -> None:
         """Setup required management tables. (internal API)"""
 
         def setup_plot_style_name_table():
             plot_style_name_dict = self.add_dictionary_with_default(
-                owner=rootdict.dxf.handle
+                owner=rootdict.dxf.handle,
+                hard_owned=False,
             )
             placeholder = self.add_placeholder(
                 owner=plot_style_name_dict.dxf.handle
@@ -150,7 +151,7 @@ class ObjectsSection:
             if name == "ACAD_PLOTSTYLENAME":
                 setup_plot_style_name_table()
             else:
-                rootdict.add_new_dict(name)
+                rootdict.add_new_dict(name, hard_owned=False)
 
             if isinstance(table, str) and validator.is_handle(table):
                 restore_table_handle(name, handle=table)
@@ -249,7 +250,7 @@ class ObjectsSection:
                 auditor.trash(entity)
 
     def add_dictionary(
-        self, owner: str = "0", hard_owned: bool = False
+        self, owner: str = "0", hard_owned: bool = True
     ) -> Dictionary:
         """Add new :class:`~ezdxf.entities.Dictionary` object.
 
@@ -268,7 +269,7 @@ class ObjectsSection:
         return cast(Dictionary, entity)
 
     def add_dictionary_with_default(
-        self, owner="0", default="0", hard_owned: bool = False
+        self, owner="0", default="0", hard_owned: bool = True
     ) -> "DictionaryWithDefault":
         """Add new :class:`~ezdxf.entities.DictionaryWithDefault` object.
 
