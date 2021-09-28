@@ -7,8 +7,6 @@ from typing import (
     TYPE_CHECKING,
     Optional,
     Dict,
-    SupportsFloat,
-    Union,
     Any,
 )
 from collections import defaultdict
@@ -84,12 +82,18 @@ class MatplotlibBackend(Backend):
     def configure(self, config: Configuration) -> None:
         if config.min_lineweight is None:
             # If not set by user, use ~1 pixel
-            config = config.with_changes(min_lineweight=72 / self.ax.get_figure().dpi)
+            config = config.with_changes(
+                min_lineweight=72 / self.ax.get_figure().dpi
+            )
         super().configure(config)
         if config.line_policy == LinePolicy.SOLID:
-            self._line_renderer = InternalLineRenderer(config, self.ax, solid_only=True)
+            self._line_renderer = InternalLineRenderer(
+                config, self.ax, solid_only=True
+            )
         elif config.line_policy == LinePolicy.APPROXIMATE:
-            self._line_renderer = InternalLineRenderer(config, self.ax, solid_only=False)
+            self._line_renderer = InternalLineRenderer(
+                config, self.ax, solid_only=False
+            )
         elif config.line_policy == LinePolicy.ACCURATE:
             # This linetype renderer should only be used by "hardcopy" backends!
             # It is just too slow for interactive backends, and the result of
@@ -270,7 +274,9 @@ class MatplotlibBackend(Backend):
             if self.config.hatch_policy == HatchPolicy.SHOW_OUTLINE:
                 fill = False
                 hatch = False
-            elif self.config.hatch_policy == HatchPolicy.SHOW_APPROXIMATE_PATTERN:
+            elif (
+                self.config.hatch_policy == HatchPolicy.SHOW_APPROXIMATE_PATTERN
+            ):
                 # Use predefined hatch pattern by name matching:
                 fill = False
                 hatch = HATCH_NAME_MAPPING.get(name, r"\\\\")
@@ -377,7 +383,7 @@ def qsave(
     fg: Optional[Color] = None,
     dpi: int = 300,
     backend: str = "agg",
-    config: Configuration = Configuration.defaults(),
+    config: Configuration = None,
     filter_func: FilterFunc = None,
 ) -> None:
     """Quick and simplified render export by matplotlib.
@@ -418,7 +424,7 @@ def qsave(
         added argument `filter_func` to filter DXF entities
 
     .. versionchanged:: 0.17
-        params [dict] argument replaced by config [Configuration] argument
+        `params` argument replaced by `config` argument
 
     """
     from .properties import RenderContext
@@ -429,6 +435,8 @@ def qsave(
     # other than the main thread.
     old_backend = matplotlib.get_backend()
     matplotlib.use(backend)
+    if config is None:
+        config = Configuration.defaults()
 
     try:
         fig: plt.Figure = plt.figure()
@@ -489,7 +497,9 @@ class InternalLineRenderer(MatplotlibLineRenderer):
                 (start.x, end.x),
                 (start.y, end.y),
                 linewidth=self.lineweight(properties),
-                linestyle='solid' if self._solid_only else self.linetype(properties),
+                linestyle="solid"
+                if self._solid_only
+                else self.linetype(properties),
                 color=properties.color,
                 zorder=z,
             )
@@ -499,7 +509,9 @@ class InternalLineRenderer(MatplotlibLineRenderer):
         vertices, codes = _get_path_patch_data(path)
         patch = PathPatch(
             Path(vertices, codes),
-            linewidth='solid' if self._solid_only else self.lineweight(properties),
+            linewidth="solid"
+            if self._solid_only
+            else self.lineweight(properties),
             linestyle=self.linetype(properties),
             fill=False,
             color=properties.color,
@@ -585,7 +597,9 @@ class EzdxfLineRenderer(MatplotlibLineRenderer):
         else:
             renderer = EzdxfLineTypeRenderer(pattern)
             segments = renderer.line_segments(
-                path.flattening(self._config.max_flattening_distance, segments=16)
+                path.flattening(
+                    self._config.max_flattening_distance, segments=16
+                )
             )
             lines = LineCollection(
                 [((s.x, s.y), (e.x, e.y)) for s, e in segments],

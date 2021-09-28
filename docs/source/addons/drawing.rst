@@ -67,7 +67,7 @@ Simplified render workflow but with less control:
     if not auditor.has_errors:
         matplotlib.qsave(doc.modelspace(), 'your.png')
 
-.. autofunction:: ezdxf.addons.drawing.matplotlib.qsave
+.. autofunction:: ezdxf.addons.drawing.matplotlib.qsave(layout: Layout, filename: str, *, bg: Color = None, fg: Color = None, dpi: int = 300, backend: str = "agg", config: Configuration = None, filter_func: FilterFunc = None) -> None
 
 MatplotlibBackend
 -----------------
@@ -91,7 +91,7 @@ Additional options for the drawing add-on can be passed by the `config`
 argument of the :class:`Frontend` constructor :meth:`__init__()`. Not every
 option will be supported by all backends.
 
-.. autoclass:: ezdxf.addons.drawing.config.Configuration
+.. autoclass:: ezdxf.addons.drawing.config.Configuration()
 
     .. method:: defaults()
 

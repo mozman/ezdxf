@@ -68,7 +68,7 @@ class HatchPolicy(Enum):
 
 @dataclass(frozen=True)
 class Configuration:
-    """Configuration options for the drawing add-on.
+    """Configuration options for the :mod:`drawing` add-on.
 
     Attributes:
         pdsize: the size to draw POINT entities (in drawing units)
