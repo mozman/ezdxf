@@ -1426,7 +1426,6 @@ class MTextParser:
     def parse_properties(self, cmd: str) -> None:
         # Treat the existing context as immutable, create a new one:
         new_ctx = self.ctx.copy()
-        new_ctx.continue_stroke = self._continue_stroke
         if cmd == "L":
             new_ctx.underline = True
             self._continue_stroke = True
@@ -1468,6 +1467,7 @@ class MTextParser:
             self.parse_font_properties(new_ctx)
         else:  # unknown commands
             raise ValueError("unknown command")
+        new_ctx.continue_stroke = self._continue_stroke
         self.ctx = new_ctx
 
     def parse_align(self, ctx: MTextContext):
