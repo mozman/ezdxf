@@ -87,7 +87,7 @@ def test_new_pdf_underlay_def(new_doc):
     rootdict = new_doc.rootdict
     assert "ACAD_PDFDEFINITIONS" not in rootdict
     underlay_def = new_doc.add_underlay_def(
-        "underlay.pdf", format="pdf", name="u1"
+        "underlay.pdf", fmt="pdf", name="u1"
     )
 
     # check internals pdf_def_owner -> ACAD_PDFDEFINITIONS

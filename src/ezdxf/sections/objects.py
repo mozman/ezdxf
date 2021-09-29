@@ -449,28 +449,25 @@ class ObjectsSection:
         return cast("ImageDefReactor", image_def_reactor)
 
     def add_underlay_def(
-        self, filename: str, format: str = "pdf", name: str = None
+        self, filename: str, fmt: str = "pdf", name: str = None
     ) -> "UnderlayDefinition":
         """Add an :class:`~ezdxf.entities.underlay.UnderlayDefinition` entity
         to the drawing (OBJECTS section). `filename` is the underlay file name
-        as relative or absolute path and `format` as string (pdf, dwf, dgn).
+        as relative or absolute path and `fmt` as string (pdf, dwf, dgn).
         The underlay definition is required to create an underlay reference.
 
         Args:
             filename: underlay file name
-            format: file format as string ``'pdf'|'dwf'|'dgn'`` or ``'ext'`` for
-                getting file format from filename extension
+            fmt: file format as string ``'pdf'|'dwf'|'dgn'``
             name: pdf format = page number to display; dgn format = ``'default'``; dwf: ????
 
         """
-        fmt = format.upper()
+        fmt = fmt.upper()
         if fmt in ("PDF", "DWF", "DGN"):
-            underlay_dict_name = "ACAD_{}DEFINITIONS".format(fmt)
-            underlay_def_entity = "{}DEFINITION".format(fmt)
+            underlay_dict_name = f"ACAD_{fmt}DEFINITIONS"
+            underlay_def_entity = f"{fmt}DEFINITION"
         else:
-            raise const.DXFValueError(
-                "Unsupported file format: '{}'".format(fmt)
-            )
+            raise const.DXFValueError(f"Unsupported file format: '{fmt}'")
 
         if name is None:
             if fmt == "PDF":

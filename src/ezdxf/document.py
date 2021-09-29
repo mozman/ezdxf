@@ -992,17 +992,17 @@ class Drawing:
         var_dict.set_or_add_dict_var("WIPEOUTFRAME", str(frame))
 
     def add_underlay_def(
-        self, filename: str, format: str = "ext", name: str = None
+        self, filename: str, fmt: str = "ext", name: str = None
     ):
         """Add an :class:`~ezdxf.entities.underlay.UnderlayDef` entity to the
         drawing (OBJECTS section).
         `filename` is the underlay file name as relative or absolute path and
-        `format` as string (pdf, dwf, dgn).
+        `fmt` as string (pdf, dwf, dgn).
         The underlay definition is required to create an underlay reference.
 
         Args:
             filename: underlay file name
-            format: file format as string ``'pdf'|'dwf'|'dgn'`` or ``'ext'``
+            fmt: file format as string ``'pdf'|'dwf'|'dgn'`` or ``'ext'``
                 for getting file format from filename extension
             name: pdf format = page number to display; dgn format =
                 ``'default'``; dwf: ????
@@ -1012,9 +1012,9 @@ class Drawing:
             :ref:`tut_underlay`
 
         """
-        if format == "ext":
-            format = filename[-3:]
-        return self.objects.add_underlay_def(filename, format, name)
+        if fmt == "ext":
+            fmt = filename[-3:]
+        return self.objects.add_underlay_def(filename, fmt, name)
 
     def add_xref_def(
         self, filename: str, name: str, flags: int = BLK_XREF | BLK_EXTERNAL
