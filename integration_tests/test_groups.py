@@ -4,8 +4,8 @@ from pathlib import Path
 import pytest
 import ezdxf
 
-DATA = Path(__file__).parent / 'data'
-GROUPS = 'groups.dxf'
+DATA = Path(__file__).parent / "data"
+GROUPS = "groups.dxf"
 
 
 @pytest.fixture
@@ -48,5 +48,5 @@ def test_reload_dxf_with_empty_group_content(doc, tmp_path):
     assert len(g2) == 8
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

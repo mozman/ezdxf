@@ -12,30 +12,31 @@ import subprocess
 #       subprocess.run(["ezdxf", "-V"])
 
 TEST_DATA = Path(__file__).parent / "data"
-CRLF = b'\r\n'
+CRLF = b"\r\n"
 
 
 def test_version():
-    result = subprocess.run(["ezdxf", "-V"],
-                            capture_output=True)
+    result = subprocess.run(["ezdxf", "-V"], capture_output=True)
     assert result.returncode == 0
-    assert result.stdout.startswith(b'ezdxf')
+    assert result.stdout.startswith(b"ezdxf")
 
 
 def test_audit_existing_file():
     result = subprocess.run(
         ["ezdxf", "audit", str(TEST_DATA / "POLI-ALL210_12.DXF")],
-        capture_output=True)
+        capture_output=True,
+    )
     assert result.returncode == 0
     assert result.stdout.rstrip(CRLF).endswith(b"No errors found.")
 
 
 def test_audit_file_not_found():
-    result = subprocess.run(["ezdxf", "audit", "nofile.dxf"],
-                            capture_output=True)
+    result = subprocess.run(
+        ["ezdxf", "audit", "nofile.dxf"], capture_output=True
+    )
     assert result.returncode == 0
     assert result.stderr.rstrip(CRLF) == b"File(s) 'nofile.dxf' not found."
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

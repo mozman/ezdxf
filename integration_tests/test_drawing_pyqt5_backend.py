@@ -3,7 +3,7 @@
 # License: MIT License
 import pytest
 
-qc = pytest.importorskip('PyQt5.QtCore')
+qc = pytest.importorskip("PyQt5.QtCore")
 from PyQt5 import QtWidgets as qw
 from ezdxf.addons.drawing.pyqt import PyQtBackend
 
@@ -19,7 +19,11 @@ def backend():
 
 
 def test_get_text_width(backend):
-    assert backend.get_text_line_width('   abc', 100) > backend.get_text_line_width('abc', 100)
-    assert backend.get_text_line_width('  abc ', 100) == backend.get_text_line_width('  abc', 100)
-    assert backend.get_text_line_width('   ', 100) == 0
-    assert backend.get_text_line_width('  ', 100) == 0
+    assert backend.get_text_line_width(
+        "   abc", 100
+    ) > backend.get_text_line_width("abc", 100)
+    assert backend.get_text_line_width(
+        "  abc ", 100
+    ) == backend.get_text_line_width("  abc", 100)
+    assert backend.get_text_line_width("   ", 100) == 0
+    assert backend.get_text_line_width("  ", 100) == 0

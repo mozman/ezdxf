@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import ezdxf
+
 p = Path(__file__).with_name("disable.ini")
 
 ezdxf.options.read_file(str(p))

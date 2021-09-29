@@ -7,38 +7,38 @@ import ezdxf
 from ezdxf import recover
 from ezdxf.entities import MText
 
-DATA = Path(__file__).parent / 'data'
-COLUMNS_R2007 = 'mtext_columns_R2007.dxf'
-COLUMNS_R2018 = 'mtext_columns_R2018.dxf'
+DATA = Path(__file__).parent / "data"
+COLUMNS_R2007 = "mtext_columns_R2007.dxf"
+COLUMNS_R2018 = "mtext_columns_R2018.dxf"
 
 
 def load_mtext_entities(name: str) -> Iterable[MText]:
     doc = ezdxf.readfile(DATA / name)
     msp = doc.modelspace()
-    entities = msp.query('MTEXT')
+    entities = msp.query("MTEXT")
     return entities
 
 
 def recover_mtext_entities(name: str) -> Iterable[MText]:
     doc, auditor = recover.readfile(DATA / name)
     msp = doc.modelspace()
-    entities = msp.query('MTEXT')
+    entities = msp.query("MTEXT")
     return entities
 
 
-@pytest.fixture(scope='module', params=['load', 'recover'])
+@pytest.fixture(scope="module", params=["load", "recover"])
 def r2007(request):
-    if request.param == 'load':
+    if request.param == "load":
         return load_mtext_entities(COLUMNS_R2007)
-    elif request.param == 'recover':
+    elif request.param == "recover":
         return recover_mtext_entities(COLUMNS_R2007)
 
 
-@pytest.fixture(scope='module', params=['load', 'recover'])
+@pytest.fixture(scope="module", params=["load", "recover"])
 def r2018(request):
-    if request.param == 'load':
+    if request.param == "load":
         return load_mtext_entities(COLUMNS_R2018)
-    elif request.param == 'recover':
+    elif request.param == "recover":
         return recover_mtext_entities(COLUMNS_R2018)
 
 
@@ -53,10 +53,10 @@ def test_load_mtext_columns_from_dxf_r2007(r2007):
             column = cast(MText, column)
             assert column.is_alive is True
             assert column.has_columns is False, "should not have columns"
-            assert column.dxf.handle in db, \
-                "should be stored in the entity database"
-            assert column.dxf.owner is None, \
-                "should not be stored in a layout"
+            assert (
+                column.dxf.handle in db
+            ), "should be stored in the entity database"
+            assert column.dxf.owner is None, "should not be stored in a layout"
 
 
 def test_load_mtext_columns_from_dxf_r2018(r2018):
@@ -67,5 +67,5 @@ def test_load_mtext_columns_from_dxf_r2018(r2018):
         assert len(columns.linked_columns) == 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

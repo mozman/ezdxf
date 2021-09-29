@@ -1,6 +1,7 @@
 # This test is hard to do in pytest!
 
 import os
+
 os.environ["EZDXF_DISABLE_C_EXT"] = "1"
 
 import ezdxf

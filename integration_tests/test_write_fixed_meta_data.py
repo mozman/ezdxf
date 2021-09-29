@@ -35,5 +35,5 @@ def test_meta_data_is_different(version):
     assert txt1 != txt2
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])
