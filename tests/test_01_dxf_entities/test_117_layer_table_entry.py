@@ -8,15 +8,15 @@ from ezdxf.lldxf.const import DXFValueError
 
 @pytest.fixture
 def layer():
-    return Layer.new(handle='FFFF')
+    return Layer.new(handle="FFFF")
 
 
 def test_get_handle(layer):
-    assert 'FFFF' == layer.dxf.handle
+    assert "FFFF" == layer.dxf.handle
 
 
 def test_get_name(layer):
-    assert '0' == layer.dxf.name
+    assert "0" == layer.dxf.name
 
 
 def test_get_flags(layer):
@@ -28,16 +28,16 @@ def test_get_color(layer):
 
 
 def test_get_linetype(layer):
-    assert layer.dxf.linetype.upper() == 'CONTINUOUS'
+    assert layer.dxf.linetype.upper() == "CONTINUOUS"
 
 
 def test_set_name(layer):
-    layer.dxf.name = 'MOZMAN'
-    assert 'MOZMAN' == layer.dxf.name
+    layer.dxf.name = "MOZMAN"
+    assert "MOZMAN" == layer.dxf.name
 
 
 def test_set_color(layer):
-    layer.dxf.color = '1'
+    layer.dxf.color = "1"
     assert 1 == layer.dxf.color
 
 
@@ -98,7 +98,7 @@ def test_thaw(layer):
 
 def test_invald_layer_name():
     with pytest.raises(DXFValueError):
-        Layer.new('FFFF', dxfattribs={'name': 'Layer/'})
+        Layer.new("FFFF", dxfattribs={"name": "Layer/"})
 
 
 def test_set_true_color_as_rgb(layer):
@@ -116,17 +116,17 @@ def test_get_default_description(layer):
 
 
 def test_get_default_description_at_existing_xdata(layer):
-    layer.set_xdata('mozman', [(1000, 'test')])
+    layer.set_xdata("mozman", [(1000, "test")])
     assert layer.description == ""
 
 
 def test_description_for_unusual_xdata_structure(layer):
     # Just one group code 1000 tag - not reproducible with BricsCAD
-    layer.set_xdata('AcAecLayerStandard', [(1000, 'test')])
+    layer.set_xdata("AcAecLayerStandard", [(1000, "test")])
     assert layer.description == ""
 
     # or empty XDATA section - not reproducible with BricsCAD
-    layer.set_xdata('AcAecLayerStandard', [])
+    layer.set_xdata("AcAecLayerStandard", [])
     assert layer.description == ""
 
 

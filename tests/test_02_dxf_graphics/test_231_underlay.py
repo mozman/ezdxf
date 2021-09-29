@@ -50,20 +50,20 @@ def entity():
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert 'PDFUNDERLAY' in ENTITY_CLASSES
+
+    assert "PDFUNDERLAY" in ENTITY_CLASSES
 
 
 def test_default_init():
     entity = PdfUnderlay()
-    assert entity.dxftype() == 'PDFUNDERLAY'
+    assert entity.dxftype() == "PDFUNDERLAY"
     assert entity.dxf.handle is None
     assert entity.dxf.owner is None
 
 
 def test_default_new():
-    entity = PdfUnderlay.new(handle='ABBA', owner='0', dxfattribs={
-    })
-    assert entity.dxf.layer == '0'
+    entity = PdfUnderlay.new(handle="ABBA", owner="0", dxfattribs={})
+    assert entity.dxf.layer == "0"
     assert entity.dxf.insert == (0, 0, 0)
     assert entity.dxf.underlay_def_handle is None  # set by add_underlay()
     assert entity.dxf.scale_x == 1
@@ -78,9 +78,9 @@ def test_default_new():
 
 
 def test_load_from_text(entity):
-    assert entity.dxf.layer == '0'
+    assert entity.dxf.layer == "0"
     assert entity.dxf.insert == (0, 0, 0)
-    assert entity.dxf.underlay_def_handle == '0'
+    assert entity.dxf.underlay_def_handle == "0"
     assert entity.dxf.scale_x == 1
     assert entity.dxf.scale_y == 1
     assert entity.dxf.scale_y == 1
@@ -100,8 +100,8 @@ def test_write_dxf():
 
 
 def test_dwf_underlay():
-    assert DwfUnderlay.DXFTYPE == 'DWFUNDERLAY'
+    assert DwfUnderlay.DXFTYPE == "DWFUNDERLAY"
 
 
 def test_dgn_underlay():
-    assert DgnUnderlay.DXFTYPE == 'DGNUNDERLAY'
+    assert DgnUnderlay.DXFTYPE == "DGNUNDERLAY"

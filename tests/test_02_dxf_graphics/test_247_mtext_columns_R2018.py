@@ -3,7 +3,10 @@
 
 import pytest
 from ezdxf.entities.mtext import (
-    load_columns_from_embedded_object, MText, ColumnType, MTextColumns,
+    load_columns_from_embedded_object,
+    MText,
+    ColumnType,
+    MTextColumns,
 )
 from ezdxf.lldxf import const
 from ezdxf.lldxf.types import EMBEDDED_OBJ_STR, EMBEDDED_OBJ_MARKER
@@ -135,11 +138,11 @@ Embedded Object
 # important for CAD applications, but not for the DXF format itself.
 
 
-@pytest.mark.parametrize('obj', [
-    DYNAMIC_MANUAL_HEIGHT,
-    DYNAMIC_AUTO_HEIGHT,
-    STATIC
-], ids=['DYN_MANUAL', 'DYN_AUTO', 'STATIC'])
+@pytest.mark.parametrize(
+    "obj",
+    [DYNAMIC_MANUAL_HEIGHT, DYNAMIC_AUTO_HEIGHT, STATIC],
+    ids=["DYN_MANUAL", "DYN_AUTO", "STATIC"],
+)
 def test_load_mtext_attribs_from_embedded_object(obj):
     embedded_obj = Tags.from_text(obj)
     dxf = MText().dxf
@@ -148,12 +151,12 @@ def test_load_mtext_attribs_from_embedded_object(obj):
     load_columns_from_embedded_object(dxf, embedded_obj)
     assert dxf.width == 62.6
     assert dxf.text_direction == (1, 0, 0)
-    assert dxf.hasattr('rotation') is False, "remove rotation attribute"
+    assert dxf.hasattr("rotation") is False, "remove rotation attribute"
     assert dxf.insert == (69.8, 276.1, 0)
 
 
 def test_load_dynamic_cols_manual_height():
-    """ Every column can have a different height. """
+    """Every column can have a different height."""
     embedded_obj = Tags.from_text(DYNAMIC_MANUAL_HEIGHT)
     cols = load_columns_from_embedded_object(MText().dxf, embedded_obj)
     assert cols.count == 3
@@ -174,7 +177,7 @@ def test_load_dynamic_cols_manual_height():
 
 
 def test_load_dynamic_cols_with_auto_height():
-    """ All columns have the same column height. """
+    """All columns have the same column height."""
     embedded_obj = Tags.from_text(DYNAMIC_AUTO_HEIGHT)
     cols = load_columns_from_embedded_object(MText().dxf, embedded_obj)
     # Count is a calculated value, group code 72 (column height count) is 0!
@@ -192,7 +195,7 @@ def test_load_dynamic_cols_with_auto_height():
 
 
 def test_load_static_cols():
-    """ All columns have the same column height. """
+    """All columns have the same column height."""
     embedded_obj = Tags.from_text(STATIC)
     cols = load_columns_from_embedded_object(MText().dxf, embedded_obj)
     assert cols.count == 3
@@ -322,5 +325,5 @@ def test_create_new_mtext_with_columns():
     assert mtext.dxf.text_direction == (1, 0, 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

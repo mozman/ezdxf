@@ -7,19 +7,22 @@ from ezdxf.entities.textstyle import Textstyle
 
 @pytest.fixture
 def style():
-    return Textstyle.new('FFFF', dxfattribs={
-        'name': 'TEST',
-        'font': 'NOFONT.ttf',
-        'width': 2.0,
-    })
+    return Textstyle.new(
+        "FFFF",
+        dxfattribs={
+            "name": "TEST",
+            "font": "NOFONT.ttf",
+            "width": 2.0,
+        },
+    )
 
 
 def test_name(style):
-    assert 'TEST' == style.dxf.name
+    assert "TEST" == style.dxf.name
 
 
 def test_font(style):
-    assert 'NOFONT.ttf' == style.dxf.font
+    assert "NOFONT.ttf" == style.dxf.font
 
 
 def test_width(style):
@@ -35,7 +38,7 @@ def test_oblique(style):
 
 
 def test_bigfont(style):
-    assert '' == style.dxf.bigfont
+    assert "" == style.dxf.bigfont
 
 
 def test_is_backward(style):
@@ -68,11 +71,14 @@ def test_not_existing_extended_font_data(style):
 
 @pytest.fixture
 def xstyle():
-    style = Textstyle.new('FFFF', dxfattribs={
-        'name': 'OpenSans-BoldItalic',
-        'font': 'OpenSans-BoldItalic.ttf',
-    })
-    style.set_xdata('ACAD', [(1000, "Open Sans"), [1071, 50331682]])
+    style = Textstyle.new(
+        "FFFF",
+        dxfattribs={
+            "name": "OpenSans-BoldItalic",
+            "font": "OpenSans-BoldItalic.ttf",
+        },
+    )
+    style.set_xdata("ACAD", [(1000, "Open Sans"), [1071, 50331682]])
     return style
 
 
@@ -93,7 +99,7 @@ def test_set_extended_font_data(style):
 
 def test_dxf_details_for_extended_font_data(style):
     style.set_extended_font_data("Arial", italic=True, bold=True)
-    xdata = style.get_xdata('ACAD')
+    xdata = style.get_xdata("ACAD")
     assert len(xdata) == 2
 
     group_code, family = xdata[0]

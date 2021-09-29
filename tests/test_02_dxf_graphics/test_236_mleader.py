@@ -11,7 +11,11 @@ from ezdxf.math import Matrix44
 
 # noinspection PyProtectedMember
 from ezdxf.entities.mleader import (
-    LeaderLine, Leader, compile_context_tags, MultiLeaderContext, MultiLeader,
+    LeaderLine,
+    Leader,
+    compile_context_tags,
+    MultiLeaderContext,
+    MultiLeader,
     BlockData,
 )
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
@@ -24,27 +28,27 @@ def msp():
 
 # todo: real MLEADER tests
 def test_generic_mleader(msp):
-    mleader = msp.new_entity('MLEADER', {})
-    assert mleader.dxftype() == 'MLEADER'
+    mleader = msp.new_entity("MLEADER", {})
+    assert mleader.dxftype() == "MLEADER"
     assert mleader.dxf.style_handle is None
 
 
 def test_synonym_multileader(msp):
-    mleader = msp.new_entity('MULTILEADER', {})
-    assert mleader.dxftype() == 'MULTILEADER'
+    mleader = msp.new_entity("MULTILEADER", {})
+    assert mleader.dxftype() == "MULTILEADER"
     assert mleader.dxf.style_handle is None
 
 
 # todo: real MLEADERSTYLE tests
 def test_standard_mleader_style():
-    doc = ezdxf.new('R2007')
-    mleader_style = doc.mleader_styles.get('Standard')
-    assert mleader_style.dxftype() == 'MLEADERSTYLE'
+    doc = ezdxf.new("R2007")
+    mleader_style = doc.mleader_styles.get("Standard")
+    assert mleader_style.dxftype() == "MLEADERSTYLE"
     assert mleader_style.dxf.content_type == 2
 
 
 class TestLeaderLine:
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def tags(self):
         return Tags.from_text(LEADER_LINE_1)
 
@@ -95,7 +99,7 @@ LEADER_LINE{
 
 
 class TestLeader:
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def tags(self):
         return Tags.from_text(LEADER_1)
 
@@ -176,16 +180,16 @@ LEADER_LINE{
 
 
 class MLeaderTesting:
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def tags(self, text):
         tags = Tags.from_text(text)
         return MultiLeader.extract_context_data(tags)
 
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def ctx(self, tags):
         return MultiLeaderContext.load(compile_context_tags(tags, 301))
 
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def mleader(self, text):
         return MultiLeader.load(ExtendedTags.from_text(text))
 
@@ -201,7 +205,7 @@ class MLeaderTesting:
 
 
 class TestMTextContext(MLeaderTesting):
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def text(self):
         return MTEXT_MLEADER_R2010
 
@@ -232,9 +236,9 @@ class TestMTextContext(MLeaderTesting):
 
     def test_mtext_data(self, ctx):
         mtext = ctx.mtext
-        assert mtext.default_content == 'MTEXT-DATA-CONTENT'
+        assert mtext.default_content == "MTEXT-DATA-CONTENT"
         assert mtext.normal_direction == (1, 0, 0)
-        assert mtext.style_handle == 'FEFE'  # handle of TextStyle() table entry
+        assert mtext.style_handle == "FEFE"  # handle of TextStyle() table entry
         assert mtext.location == (236.6, 187.0, 0)
         assert mtext.direction == (0, 1, 0)
         assert mtext.rotation == 0.2  # in radians!
@@ -534,7 +538,7 @@ LEADER_LINE{
 
 
 class TestBlockContext(MLeaderTesting):
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def text(self):
         return BLOCK_MLEADER_R2010
 
@@ -565,7 +569,7 @@ class TestBlockContext(MLeaderTesting):
 
     def test_block_data(self, ctx):
         block = ctx.block
-        assert block.block_record_handle == 'FEFE'
+        assert block.block_record_handle == "FEFE"
         assert block.normal_direction == (0, 0, 1)
         assert block.location == (18.42, 0.70, 0)
         assert block.scale == (1.0, 2.0, 3.0)
@@ -576,10 +580,22 @@ class TestBlockContext(MLeaderTesting):
         # The transformation matrix is stored in transposed order
         # of ezdxf.math.Matrix44()!
         assert ctx.block._matrix == [
-            1, 0, 0, 18.42,
-            0, 1, 0, 0.70,
-            0, 0, 1, 0,
-            0, 0, 0, 1,
+            1,
+            0,
+            0,
+            18.42,
+            0,
+            1,
+            0,
+            0.70,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
         ]
         assert ctx.block.matrix44.get_row(3) == (18.42, 0.70, 0, 1)
 
@@ -591,10 +607,22 @@ class TestBlockContext(MLeaderTesting):
         # The transformation matrix is stored in transposed order
         # of ezdxf.math.Matrix44()!
         assert block._matrix == [
-            1, 0, 0, 4,
-            0, 1, 0, 3,
-            0, 0, 1, 2,
-            0, 0, 0, 1,
+            1,
+            0,
+            0,
+            4,
+            0,
+            1,
+            0,
+            3,
+            0,
+            0,
+            1,
+            2,
+            0,
+            0,
+            0,
+            1,
         ]
 
 

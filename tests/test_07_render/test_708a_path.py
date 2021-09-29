@@ -1044,8 +1044,8 @@ class TestPathFromEdgePathWithElevationAndFlippedExtrusion:
     def test_arc_edge(self):
         ep = EdgePath()
         ep.add_arc(
-            center=(5., 5.),
-            radius=5.,
+            center=(5.0, 5.0),
+            radius=5.0,
             start_angle=0,
             end_angle=90,
             ccw=True,
@@ -1060,8 +1060,8 @@ class TestPathFromEdgePathWithElevationAndFlippedExtrusion:
     def test_ellipse_edge(self):
         ep = EdgePath()
         ep.add_ellipse(
-            center=(5., 5.),
-            major_axis=(5., 0.),
+            center=(5.0, 5.0),
+            major_axis=(5.0, 0.0),
             ratio=1,
             start_angle=0,
             end_angle=90,
@@ -1076,9 +1076,7 @@ class TestPathFromEdgePathWithElevationAndFlippedExtrusion:
 
     def test_spline_edge(self):
         ep = EdgePath()
-        ep.add_spline(
-            fit_points=[(10, 5), (8, 5), (6, 8), (5, 10)]
-        )
+        ep.add_spline(fit_points=[(10, 5), (8, 5), (6, 8), (5, 10)])
         ep.add_line((5, 10), (10, 5))
         path = converter.from_hatch_edge_path(
             ep, ocs=OCS((0, 0, -1)), elevation=4
@@ -1098,7 +1096,7 @@ class TestPathFromEdgePathWithElevationAndFlippedExtrusion:
 def test_extend_path_by_another_none_empty_path():
     p0 = Path((1, 0, 0))
     p0.line_to((2, 0, 0))
-    p1 =Path((3, 0, 0))
+    p1 = Path((3, 0, 0))
     p1.line_to((3, 0, 0))
     p0.extend_multi_path(p1)
     assert p0.has_sub_paths is True

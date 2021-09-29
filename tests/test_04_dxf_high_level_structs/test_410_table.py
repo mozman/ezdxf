@@ -26,7 +26,7 @@ def test_ac1009_load_table():
 
 
 def test_load_table_with_invalid_table_entry():
-    """ This LAYERS table has an invalid APPID table entry, which should be
+    """This LAYERS table has an invalid APPID table entry, which should be
     ignored at the loading stage.
     """
     doc = ezdxf.new("R12")

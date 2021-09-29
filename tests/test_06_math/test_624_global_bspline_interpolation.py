@@ -5,14 +5,23 @@ import math
 from math import isclose
 from ezdxf.math import Vec3, global_bspline_interpolation, close_vectors
 from ezdxf.math.parametrize import (
-    uniform_t_vector, distance_t_vector, centripetal_t_vector, arc_t_vector,
-    arc_distances, estimate_tangents,
+    uniform_t_vector,
+    distance_t_vector,
+    centripetal_t_vector,
+    arc_t_vector,
+    arc_distances,
+    estimate_tangents,
 )
 from ezdxf.math.bspline import (
-    knots_from_parametrization, required_knot_values,
-    averaged_knots_unconstrained, natural_knots_constrained,
+    knots_from_parametrization,
+    required_knot_values,
+    averaged_knots_unconstrained,
+    natural_knots_constrained,
     averaged_knots_constrained,
-    natural_knots_unconstrained, double_knots, create_t_vector, normalize_knots,
+    natural_knots_unconstrained,
+    double_knots,
+    create_t_vector,
+    normalize_knots,
 )
 
 POINTS1 = Vec3.list([(1, 1), (2, 4), (4, 1), (7, 6)])
@@ -27,8 +36,8 @@ def fit_points(request):
 def test_uniform_t_array(fit_points):
     t_vector = list(uniform_t_vector(len(fit_points)))
     assert len(t_vector) == len(fit_points)
-    assert t_vector[0] == 0.
-    assert t_vector[-1] == 1.
+    assert t_vector[0] == 0.0
+    assert t_vector[-1] == 1.0
     for t1, t2 in zip(t_vector, t_vector[1:]):
         assert t1 <= t2
 
@@ -36,8 +45,8 @@ def test_uniform_t_array(fit_points):
 def test_chord_length_t_array(fit_points):
     t_vector = list(distance_t_vector(fit_points))
     assert len(t_vector) == len(fit_points)
-    assert t_vector[0] == 0.
-    assert t_vector[-1] == 1.
+    assert t_vector[0] == 0.0
+    assert t_vector[-1] == 1.0
     for t1, t2 in zip(t_vector, t_vector[1:]):
         assert t1 <= t2
 
@@ -45,8 +54,8 @@ def test_chord_length_t_array(fit_points):
 def test_centripetal_length_t_array(fit_points):
     t_vector = list(centripetal_t_vector(fit_points))
     assert len(t_vector) == len(fit_points)
-    assert t_vector[0] == 0.
-    assert t_vector[-1] == 1.
+    assert t_vector[0] == 0.0
+    assert t_vector[-1] == 1.0
     for t1, t2 in zip(t_vector, t_vector[1:]):
         assert t1 <= t2
 
@@ -70,8 +79,8 @@ def test_arc_distances():
 def test_arc_length_t_array(fit_points):
     t_vector = list(arc_t_vector(fit_points))
     assert len(t_vector) == len(fit_points)
-    assert t_vector[0] == 0.
-    assert t_vector[-1] == 1.
+    assert t_vector[0] == 0.0
+    assert t_vector[-1] == 1.0
     for t1, t2 in zip(t_vector, t_vector[1:]):
         assert t1 <= t2
 
@@ -87,18 +96,28 @@ def test_invalid_order_count_combination():
 
 def check_knots(count: int, order: int, knots: List[float]):
     assert len(knots) == required_knot_values(count, order)
-    assert len(set(knots[:order])) == 1, 'first order elements have to be equal'
-    assert len(set(knots[-order:])) == 1, 'last order elements have to be equal'
+    assert len(set(knots[:order])) == 1, "first order elements have to be equal"
+    assert len(set(knots[-order:])) == 1, "last order elements have to be equal"
     for k1, k2 in zip(knots, knots[1:]):
         assert k1 <= k2
 
 
-@pytest.mark.parametrize('p', (2, 3, 4))
-@pytest.mark.parametrize('method', ('average', 'natural'))
+@pytest.mark.parametrize("p", (2, 3, 4))
+@pytest.mark.parametrize("method", ("average", "natural"))
 def test_knot_generation(p, method):
     fit_points = Vec3.list(
-        [(0, 0), (0, 10), (10, 10), (20, 10), (20, 0), (30, 0), (30, 10),
-         (40, 10), (40, 0)])
+        [
+            (0, 0),
+            (0, 10),
+            (10, 10),
+            (20, 10),
+            (20, 0),
+            (30, 0),
+            (30, 10),
+            (40, 10),
+            (40, 0),
+        ]
+    )
     count = len(fit_points)
     n = count - 1
     order = p + 1
@@ -110,11 +129,21 @@ def test_knot_generation(p, method):
 @pytest.fixture
 def fit_points_2():
     return Vec3.list(
-        [(0, 0), (0, 10), (10, 10), (20, 10), (20, 0), (30, 0), (30, 10),
-         (40, 10), (40, 0)])
+        [
+            (0, 0),
+            (0, 10),
+            (10, 10),
+            (20, 10),
+            (20, 0),
+            (30, 0),
+            (30, 10),
+            (40, 10),
+            (40, 0),
+        ]
+    )
 
 
-@pytest.mark.parametrize('p', (2, 3, 4, 5))
+@pytest.mark.parametrize("p", (2, 3, 4, 5))
 def test_unconstrained_averaged_knots(p, fit_points_2):
     t_vector = list(distance_t_vector(fit_points_2))
     n = len(fit_points_2) - 1
@@ -123,7 +152,7 @@ def test_unconstrained_averaged_knots(p, fit_points_2):
     check_knots(n + 1, p + 1, knots)
 
 
-@pytest.mark.parametrize('p', (2, 3, 4, 5))
+@pytest.mark.parametrize("p", (2, 3, 4, 5))
 def test_constrained_averaged_knots(p, fit_points_2):
     t_vector = list(distance_t_vector(fit_points_2))
     n = len(fit_points_2) - 1
@@ -133,7 +162,7 @@ def test_constrained_averaged_knots(p, fit_points_2):
     check_knots(n + 3, p + 1, knots)
 
 
-@pytest.mark.parametrize('p', (2, 3, 4, 5))
+@pytest.mark.parametrize("p", (2, 3, 4, 5))
 def test_unconstrained_natural_knots(p, fit_points_2):
     t_vector = list(distance_t_vector(fit_points_2))
     n = len(fit_points_2) - 1
@@ -143,7 +172,7 @@ def test_unconstrained_natural_knots(p, fit_points_2):
     check_knots(n + 1, p + 1, knots)
 
 
-@pytest.mark.parametrize('p', (2, 3, 4, 5))
+@pytest.mark.parametrize("p", (2, 3, 4, 5))
 def test_constrained_natural_knots(p, fit_points_2):
     t_vector = list(distance_t_vector(fit_points_2))
     n = len(fit_points_2) - 1
@@ -153,7 +182,7 @@ def test_constrained_natural_knots(p, fit_points_2):
     check_knots(n + 3, p + 1, knots)
 
 
-@pytest.mark.parametrize('p', (2, 3, 4, 5))
+@pytest.mark.parametrize("p", (2, 3, 4, 5))
 def test_double_knots(p, fit_points_2):
     t_vector = list(distance_t_vector(fit_points_2))
     n = len(fit_points_2) - 1
@@ -163,14 +192,13 @@ def test_double_knots(p, fit_points_2):
     check_knots((n + 1) * 2, p + 1, knots)
 
 
-
 def test_bspline_interpolation(fit_points):
-    spline = global_bspline_interpolation(fit_points, degree=3, method='chord')
+    spline = global_bspline_interpolation(fit_points, degree=3, method="chord")
     assert len(spline.control_points) == len(fit_points)
 
-    t_array = list(create_t_vector(fit_points, 'chord'))
-    assert t_array[0] == 0.
-    assert t_array[-1] == 1.
+    t_array = list(create_t_vector(fit_points, "chord"))
+    assert t_array[0] == 0.0
+    assert t_array[-1] == 1.0
     assert len(t_array) == len(fit_points)
 
     t_points = [spline.point(t) for t in t_array]
@@ -179,8 +207,9 @@ def test_bspline_interpolation(fit_points):
 
 def test_bspline_interpolation_first_derivatives(fit_points):
     tangents = estimate_tangents(fit_points)
-    spline = global_bspline_interpolation(fit_points, degree=3,
-                                          tangents=tangents)
+    spline = global_bspline_interpolation(
+        fit_points, degree=3, tangents=tangents
+    )
     assert len(spline.control_points) == 2 * len(fit_points)
 
 
@@ -234,14 +263,15 @@ expected = [
     (4.8155393600463867, 2.0859043598175049),
     (4.8846230506896973, 2.3575356006622314),
     (4.9462337493896484, 2.6617558002471924),
-    (5.0, 3.0)
+    (5.0, 3.0),
 ]
 
 
 def test_check_values():
-    test_points = [(0., 0.), (1., 2.), (3., 1.), (5., 3.)]
-    spline = global_bspline_interpolation(test_points, degree=3,
-                                          method='distance')
+    test_points = [(0.0, 0.0), (1.0, 2.0), (3.0, 1.0), (5.0, 3.0)]
+    spline = global_bspline_interpolation(
+        test_points, degree=3, method="distance"
+    )
     result = list(spline.approximate(49))
     assert len(result) == 50
     for p1, p2 in zip(result, expected):

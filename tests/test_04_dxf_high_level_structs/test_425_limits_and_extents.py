@@ -5,7 +5,7 @@ import pytest
 import ezdxf
 
 
-@pytest.fixture(scope='module', params=['R12', 'R2000'])
+@pytest.fixture(scope="module", params=["R12", "R2000"])
 def doc(request):
     return ezdxf.new(request.param)
 
@@ -41,7 +41,7 @@ def test_default_modelspace_limits(doc):
 
 
 def test_default_layout1_extents(doc):
-    layout1 = doc.layout('Layout1')
+    layout1 = doc.layout("Layout1")
     extmin = layout1.dxf.extmin
     extmax = layout1.dxf.extmax
     assert extmin == (1e20, 1e20, 1e20)
@@ -49,7 +49,7 @@ def test_default_layout1_extents(doc):
 
 
 def test_default_layout1_limits(doc):
-    layout1 = doc.layout('Layout1')
+    layout1 = doc.layout("Layout1")
     limmin = layout1.dxf.limmin
     limmax = layout1.dxf.limmax
     assert limmin == (0, 0)
@@ -98,7 +98,7 @@ def test_reset_modelspace_limits(doc):
 
 def test_default_active_msp_vport_config(doc):
     # A viewport configuration is always a list of one or more VPORT entities:
-    vport_config = doc.viewports.get('*ACTIVE')
+    vport_config = doc.viewports.get("*ACTIVE")
     assert len(vport_config) == 1
     vport = vport_config[0]
 
@@ -113,7 +113,7 @@ def test_default_active_layout1_viewport(doc):
 
 def test_reset_layout1_active_viewport(doc):
     doc = ezdxf.new()
-    layout1 = cast('Paperspace', doc.layout("Layout1"))
+    layout1 = cast("Paperspace", doc.layout("Layout1"))
     viewport = layout1.reset_main_viewport()
     assert viewport.dxf.center == (202.5, 128.5)
     paper_width = layout1.dxf.paper_width
@@ -122,5 +122,5 @@ def test_reset_layout1_active_viewport(doc):
     assert viewport.dxf.height == paper_height * 1.1  # AutoCAD default factor
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

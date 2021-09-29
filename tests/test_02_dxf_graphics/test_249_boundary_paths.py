@@ -73,9 +73,7 @@ def test_polyline_path_with_arcs_to_edge_path():
     #   3 cw     1 ccw
     #  /        /
     # --- 0 --->
-    paths.add_polyline_path(
-        [(0, 0), (10, 0, 1), (10, 4), (0, 4, -1), (0, 0)]
-    )
+    paths.add_polyline_path([(0, 0), (10, 0, 1), (10, 4), (0, 4, -1), (0, 0)])
     paths.polyline_to_edge_paths()
     path = paths[0]
     assert (

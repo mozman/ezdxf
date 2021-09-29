@@ -15,17 +15,17 @@ def test_init(groups):
 
 
 def test_first_group(groups):
-    assert 'SECTION' == groups[0][0].value
+    assert "SECTION" == groups[0][0].value
     assert 2 == len(groups[0])
 
 
 def test_second_group(groups):
-    assert 'TABLE' == groups[1][0].value
+    assert "TABLE" == groups[1][0].value
     assert 3 == len(groups[1])
 
 
 def test_last_group(groups):
-    assert 'ENDTAB' == groups[-1][0].value
+    assert "ENDTAB" == groups[-1][0].value
     assert 1 == len(groups[-1])
 
 

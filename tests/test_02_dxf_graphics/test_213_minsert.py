@@ -23,17 +23,17 @@ def test_mcount_property():
 
 class TestSimpleBlock:
     # without ATTRIB, no rotation, no extrusion
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def doc(self):
         doc = ezdxf.new()
-        blk = doc.blocks.new('POINT')
+        blk = doc.blocks.new("POINT")
         blk.add_point(location=(0, 0))
         return doc
 
     @pytest.fixture
     def insert(self, doc):
         msp = doc.modelspace()
-        return msp.add_blockref('POINT', (0, 0))
+        return msp.add_blockref("POINT", (0, 0))
 
     @pytest.fixture
     def db(self, doc):
@@ -51,10 +51,10 @@ class TestSimpleBlock:
     def test_discard_minsert_attribs_from_virtual_insert(self, insert):
         insert.grid(size=(2, 2), spacing=(10, 10))
         vinsert = next(insert.multi_insert())
-        assert vinsert.dxf.hasattr('row_count') is False
-        assert vinsert.dxf.hasattr('column_count') is False
-        assert vinsert.dxf.hasattr('row_spacing') is False
-        assert vinsert.dxf.hasattr('column_spacing') is False
+        assert vinsert.dxf.hasattr("row_count") is False
+        assert vinsert.dxf.hasattr("column_count") is False
+        assert vinsert.dxf.hasattr("row_spacing") is False
+        assert vinsert.dxf.hasattr("column_spacing") is False
 
     def test_minsert_zero_column_spacing(self, insert):
         insert.grid(size=(2, 2), spacing=(10, 0))
@@ -80,24 +80,24 @@ class TestSimpleBlock:
         assert handle not in db
         assert len(points) == 4
         point = cast(Point, points[3])
-        assert point.dxf.owner is not None, 'not assigned to a layout'
-        assert point.get_layout().name == 'Model'
+        assert point.dxf.owner is not None, "not assigned to a layout"
+        assert point.get_layout().name == "Model"
         assert point.dxf.location == (10, 10)
 
 
 class TestInsertAttributes:
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def doc(self):
         doc = ezdxf.new()
-        blk = doc.blocks.new('POINT')
+        blk = doc.blocks.new("POINT")
         blk.add_point(location=(0, 0))
         return doc
 
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def insert(self, doc):
         msp = doc.modelspace()
-        insert = msp.add_blockref('POINT', (0, 0))
-        insert.add_attrib('TEST', text='text', insert=(0, 0))
+        insert = msp.add_blockref("POINT", (0, 0))
+        insert.add_attrib("TEST", text="text", insert=(0, 0))
         return insert
 
     def test_attribs_transformation(self, insert):
@@ -122,27 +122,27 @@ class TestInsertAttributes:
         assert handle not in db
         assert len(entities) == 8
         # ATTRIB -> TEXT
-        attrib = cast(Attrib, entities.query('TEXT')[3])
-        assert attrib.dxf.owner is not None, 'not assigned to a layout'
-        assert attrib.get_layout().name == 'Model'
+        attrib = cast(Attrib, entities.query("TEXT")[3])
+        assert attrib.dxf.owner is not None, "not assigned to a layout"
+        assert attrib.get_layout().name == "Model"
         assert attrib.dxf.insert == (10, 10)
 
 
 class TestRotatedInsert:
     angle = 90
 
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def insert(self):
         doc = ezdxf.new()
-        blk = doc.blocks.new('POINT')
+        blk = doc.blocks.new("POINT")
         blk.add_point(location=(0, 0))
         msp = doc.modelspace()
 
-        insert = msp.add_blockref('POINT', (0, 0))
+        insert = msp.add_blockref("POINT", (0, 0))
         insert.dxf.rotation = self.angle
         # ATTRIB is placed outside of BLOCK in WCS, INSERT rotation is not
         # applied automatically:
-        attrib = insert.add_attrib('TEST', text='text', insert=(0, 0))
+        attrib = insert.add_attrib("TEST", text="text", insert=(0, 0))
         attrib.dxf.rotation = self.angle
         return insert
 
@@ -168,5 +168,5 @@ class TestRotatedInsert:
         assert attribs[3].dxf.insert.isclose((-10, 10))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

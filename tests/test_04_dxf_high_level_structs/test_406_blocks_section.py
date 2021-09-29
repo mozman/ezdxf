@@ -12,17 +12,17 @@ from ezdxf.lldxf.const import BLK_NON_CONSTANT_ATTRIBUTES
 
 @pytest.fixture
 def dxf12():
-    return ezdxf.new('R12')
+    return ezdxf.new("R12")
 
 
 @pytest.fixture
 def blocks(dxf12):
-    return BlocksSection(dxf12, list(load_entities(TESTBLOCKS, 'BLOCKS')))
+    return BlocksSection(dxf12, list(load_entities(TESTBLOCKS, "BLOCKS")))
 
 
 @pytest.fixture
 def bounded_blocks(dxf12):
-    entities = list(load_entities(TESTBLOCKS, 'BLOCKS'))
+    entities = list(load_entities(TESTBLOCKS, "BLOCKS"))
     for entity in entities:
         factory.bind(entity, dxf12)
     return BlocksSection(dxf12, entities)
@@ -31,81 +31,82 @@ def bounded_blocks(dxf12):
 @pytest.fixture
 def doc():
     doc = ezdxf.new()
-    doc.blocks.new('_ARCHTICK')
-    doc.blocks.new('_OPEN30')
+    doc.blocks.new("_ARCHTICK")
+    doc.blocks.new("_OPEN30")
     return doc
 
 
 def test_empty_section(dxf12):
-    blocks = BlocksSection(dxf12,
-                           list(load_entities(EMPTYSEC, 'BLOCKS')))
+    blocks = BlocksSection(dxf12, list(load_entities(EMPTYSEC, "BLOCKS")))
     # the NES creates automatically *Model_Space and *Paper_Space blocks
-    assert '*Model_Space' in blocks
-    assert '*Paper_Space' in blocks
+    assert "*Model_Space" in blocks
+    assert "*Paper_Space" in blocks
 
     collector = TagCollector(dxfversion=dxf12.dxfversion)
     blocks.export_dxf(collector)
 
-    assert collector.tags[0] == (0, 'SECTION')
-    assert collector.tags[1] == (2, 'BLOCKS')
-    assert collector.tags[2] == (0, 'BLOCK')
+    assert collector.tags[0] == (0, "SECTION")
+    assert collector.tags[1] == (2, "BLOCKS")
+    assert collector.tags[2] == (0, "BLOCK")
     # tag[3] is a arbitrary handle
     assert collector.tags[3][0] == 5
-    assert collector.tags[4] == (8, '0')  # default layer '0'
+    assert collector.tags[4] == (8, "0")  # default layer '0'
     assert collector.tags[5] == (
-        2, '$Model_Space')  # export modelspace with leading '$' for R12
-    assert collector.tags[-1] == (0, 'ENDSEC')
+        2,
+        "$Model_Space",
+    )  # export modelspace with leading '$' for R12
+    assert collector.tags[-1] == (0, "ENDSEC")
 
 
 def test_key(blocks):
-    assert blocks.key('Test') == 'test'
-    block = blocks.new('TEST')
-    assert blocks.key(block) == 'test'
+    assert blocks.key("Test") == "test"
+    block = blocks.new("TEST")
+    assert blocks.key(block) == "test"
 
 
 def test_is_layout_block(blocks):
-    block = blocks.new('TEST')
+    block = blocks.new("TEST")
     assert block.is_any_layout is False
 
     # required modelspace block already created
-    msp = blocks.get('*Model_Space')
+    msp = blocks.get("*Model_Space")
     assert msp.is_modelspace is True
 
     # required paperspace block already created
-    psp = blocks.get('*Paper_Space')
+    psp = blocks.get("*Paper_Space")
     assert psp.is_any_paperspace is True
     assert psp.is_active_paperspace is True
 
 
 def test_overwrite_existing_block(blocks):
-    block = blocks.new('TEST')
+    block = blocks.new("TEST")
     assert block.dxf.name in blocks
     old_len = len(blocks)
     with pytest.raises(ezdxf.DXFTableEntryError):
         # can not create block with existing name
-        blocks.new('Test')  # block names are case insensitive
+        blocks.new("Test")  # block names are case insensitive
     assert len(blocks) == old_len, 'should not create block "TEST"'
 
-    blocks.delete_block('Test', safe=False)
+    blocks.delete_block("Test", safe=False)
     assert len(blocks) == old_len - 1, 'should remove existing block "TEST"'
-    blocks.new('Test')
+    blocks.new("Test")
     assert len(blocks) == old_len, 'should create new block "Test"'
 
 
 def test_not_in_blocks_section(blocks):
-    assert 'TEST' not in blocks
+    assert "TEST" not in blocks
 
 
 def test_getitem(blocks):
-    blocks.new('TEST')
-    block = blocks['TEST']
-    assert 'TEST' == block.name
-    block = blocks['Test']
-    assert 'TEST' == block.name
+    blocks.new("TEST")
+    block = blocks["TEST"]
+    assert "TEST" == block.name
+    block = blocks["Test"]
+    assert "TEST" == block.name
 
 
 def test_new_block_layout(doc):
-    block = doc.blocks.new('NewBlockLayout')
+    block = doc.blocks.new("NewBlockLayout")
     block.add_point((0, 0, 0))
     assert len(block) == 1
     assert block.can_explode is True
@@ -119,9 +120,9 @@ def test_new_block_layout(doc):
 
 
 def test_case_insensitivity(blocks):
-    blocks.new('TEST')
-    assert 'TEST' in blocks
-    assert 'Test' in blocks
+    blocks.new("TEST")
+    assert "TEST" in blocks
+    assert "Test" in blocks
 
 
 def test_iter_blocks(blocks):
@@ -130,13 +131,13 @@ def test_iter_blocks(blocks):
 
 
 def test_block_content_entity_drawing_attribute(blocks, dxf12):
-    archtick = blocks['_ARCHTICK']
+    archtick = blocks["_ARCHTICK"]
     entities = list(archtick)
     assert 1 == len(entities)  # VERTEX & SEQEND doesn't count
 
 
 def test_delete_block(bounded_blocks, dxf12):
-    archtick = bounded_blocks['_ARCHTICK']
+    archtick = bounded_blocks["_ARCHTICK"]
     entities = list(archtick)
     archtick_name = archtick.name
     bounded_blocks.delete_block(archtick_name, safe=False)
@@ -149,41 +150,45 @@ def test_delete_block(bounded_blocks, dxf12):
 def test_safe_delete_block(blocks, dxf12):
     # block names are case insensitive
     with pytest.raises(ezdxf.DXFBlockInUseError):
-        blocks.delete_block('_ArchTick', safe=True)
+        blocks.delete_block("_ArchTick", safe=True)
 
 
 def test_do_not_delete_layouts_and_special_arrow_blocks(doc):
     doc.blocks.delete_all_blocks()
     assert len(doc.blocks) == 4
     block_names = set(block.name for block in doc.blocks)
-    assert block_names == {'*Model_Space', '*Paper_Space', '_ARCHTICK',
-                           '_OPEN30'}
+    assert block_names == {
+        "*Model_Space",
+        "*Paper_Space",
+        "_ARCHTICK",
+        "_OPEN30",
+    }
 
 
 def test_rename_block(blocks):
-    block = blocks.new('RENAME_ME')
+    block = blocks.new("RENAME_ME")
     assert block.dxf.name in blocks
 
-    blocks.rename_block('RENAME_ME', 'NEW_NAME')
-    assert 'NEW_NAME' in blocks
+    blocks.rename_block("RENAME_ME", "NEW_NAME")
+    assert "NEW_NAME" in blocks
 
     # block names are case insensitive
-    blocks.rename_block('New_Name', 'check_lower_case')
-    assert 'Check_Lower_Case' in blocks
+    blocks.rename_block("New_Name", "check_lower_case")
+    assert "Check_Lower_Case" in blocks
 
     # but originals name is preserved
-    assert blocks['Check_Lower_Case'].name == 'check_lower_case'
+    assert blocks["Check_Lower_Case"].name == "check_lower_case"
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def dxf2000():
-    return ezdxf.new('R2000')
+    return ezdxf.new("R2000")
 
 
 @pytest.fixture
 def dxf2000_blocks(dxf2000):
-    if 'TestBlock' not in dxf2000.blocks:
-        block = dxf2000.blocks.new('TestBlock')
+    if "TestBlock" not in dxf2000.blocks:
+        block = dxf2000.blocks.new("TestBlock")
         block.add_line((0, 0), (10, 10))
         block.add_line((0, 0), (10, 10))
         block.add_line((0, 0), (10, 10))
@@ -191,8 +196,8 @@ def dxf2000_blocks(dxf2000):
 
 
 def test_dxf2000_dxf_block_structure(dxf2000_blocks, dxf2000):
-    assert 'TestBlock' in dxf2000_blocks
-    block = dxf2000_blocks['TestBlock']
+    assert "TestBlock" in dxf2000_blocks
+    block = dxf2000_blocks["TestBlock"]
     block_record_handle = block.block_record_handle
 
     # exists an associated block record entry?
@@ -202,7 +207,7 @@ def test_dxf2000_dxf_block_structure(dxf2000_blocks, dxf2000):
 
 
 def test_dxf2000_delete_block(dxf2000_blocks, dxf2000):
-    block = dxf2000_blocks['TestBlock']
+    block = dxf2000_blocks["TestBlock"]
     block_name = block.name
     entities = list(block)
     block_record_handle = block.block_record_handle
@@ -235,20 +240,20 @@ def test_dxf2000_delete_all_blocks(dxf2000_blocks):
 
     block_names = [block.name for block in blocks]
     block_names.sort()
-    assert ['*Model_Space', '*Paper_Space'] == block_names
+    assert ["*Model_Space", "*Paper_Space"] == block_names
 
 
 def test_dxf2000_rename_block(dxf2000_blocks):
-    block = dxf2000_blocks.new('RENAME_ME')
+    block = dxf2000_blocks.new("RENAME_ME")
     assert block.dxf.name in dxf2000_blocks
 
-    dxf2000_blocks.rename_block('RENAME_ME', 'NEW_NAME')
-    assert 'NEW_NAME' in dxf2000_blocks
+    dxf2000_blocks.rename_block("RENAME_ME", "NEW_NAME")
+    assert "NEW_NAME" in dxf2000_blocks
 
 
 def test_update_block_flags(doc):
-    blk = doc.blocks.new('UPDATE_BLOCK_FLAGS')
-    blk.add_attdef('TEST', (0, 0))
+    blk = doc.blocks.new("UPDATE_BLOCK_FLAGS")
+    blk.add_attdef("TEST", (0, 0))
     assert blk.block.get_flag_state(BLK_NON_CONSTANT_ATTRIBUTES) is False
     blk.update_block_flags()
     assert blk.block.get_flag_state(BLK_NON_CONSTANT_ATTRIBUTES) is True

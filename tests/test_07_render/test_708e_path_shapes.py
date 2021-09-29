@@ -56,9 +56,16 @@ def test_rotated_ellipse():
     assert extends.extmax.isclose((0.5, 1.0))
 
 
-@pytest.mark.parametrize("w,h", [
-    (0, 0), (1, 0), (0, 1), (-1, 1), (1, -1),
-])
+@pytest.mark.parametrize(
+    "w,h",
+    [
+        (0, 0),
+        (1, 0),
+        (0, 1),
+        (-1, 1),
+        (1, -1),
+    ],
+)
 def test_invalid_rect_dimensions(w, h):
     with pytest.raises(ValueError):
         shapes.rect(w, h)
@@ -112,5 +119,5 @@ def test_gear():
     assert gear.is_closed is True
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

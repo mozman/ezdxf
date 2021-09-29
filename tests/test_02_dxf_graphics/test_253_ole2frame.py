@@ -142,5 +142,5 @@ OLEBEGIN
 1000
 OLEEND
 """
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

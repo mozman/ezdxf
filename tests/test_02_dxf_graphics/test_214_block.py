@@ -7,7 +7,7 @@ from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
 TEST_CLASS = Block
-TEST_TYPE = 'BLOCK'
+TEST_TYPE = "BLOCK"
 
 ENTITY_R12 = """0
 BLOCK
@@ -67,6 +67,7 @@ def entity(request):
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
+
     assert TEST_TYPE in ENTITY_CLASSES
 
 
@@ -76,22 +77,28 @@ def test_default_init():
 
 
 def test_default_new():
-    entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
-        'base_point': (1, 2, 3),
-    })
-    assert entity.dxf.layer == '0'
+    entity = TEST_CLASS.new(
+        handle="ABBA",
+        owner="0",
+        dxfattribs={
+            "base_point": (1, 2, 3),
+        },
+    )
+    assert entity.dxf.layer == "0"
     assert entity.dxf.base_point == (1, 2, 3)
-    assert entity.dxf.base_point.x == 1, 'is not Vec3 compatible'
-    assert entity.dxf.base_point.y == 2, 'is not Vec3 compatible'
-    assert entity.dxf.base_point.z == 3, 'is not Vec3 compatible'
+    assert entity.dxf.base_point.x == 1, "is not Vec3 compatible"
+    assert entity.dxf.base_point.y == 2, "is not Vec3 compatible"
+    assert entity.dxf.base_point.z == 3, "is not Vec3 compatible"
 
 
 def test_load_from_text(entity):
-    assert entity.dxf.layer == '0'
+    assert entity.dxf.layer == "0"
     assert entity.dxf.base_point == (0, 0, 0)
 
 
-@pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
+@pytest.mark.parametrize(
+    "txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)]
+)
 def test_write_block_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
     block = TEST_CLASS.from_text(txt)
@@ -121,7 +128,9 @@ AcDbBlockEnd
 """
 
 
-@pytest.mark.parametrize("txt,ver", [(ENDBLK_R2000, DXF2000), (ENDBLK_R12, DXF12)])
+@pytest.mark.parametrize(
+    "txt,ver", [(ENDBLK_R2000, DXF2000), (ENDBLK_R12, DXF12)]
+)
 def test_write_endblk_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
     endblk = EndBlk.from_text(txt)

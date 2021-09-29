@@ -3,7 +3,7 @@
 
 import pytest
 
-pytest.importorskip('PyQt5')
+pytest.importorskip("PyQt5")
 
 from PyQt5.QtGui import QPainterPath
 from PyQt5.QtCore import QPointF
@@ -114,7 +114,11 @@ class TestFromQPainterPath:
     # no need to test quadTo()
     def test_cubic_to(self):
         qpath = QPainterPath(QPointF(0, 0))
-        qpath.cubicTo(QPointF(1, 1), QPointF(3, 1), QPointF(4, 0), )
+        qpath.cubicTo(
+            QPointF(1, 1),
+            QPointF(3, 1),
+            QPointF(4, 0),
+        )
 
         paths = list(path.from_qpainter_path(qpath))
         p0 = paths[0]
@@ -143,5 +147,5 @@ class TestFromQPainterPath:
         assert p1[0].end == (7, 9)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

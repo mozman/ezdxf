@@ -6,16 +6,16 @@ from ezdxf.tools.binarydata import bytes_to_hexstr
 
 
 def test_hexstr_to_bytes():
-    assert unhexlify('FFFF') == b"\xff\xff"
+    assert unhexlify("FFFF") == b"\xff\xff"
 
 
 def test_hexstr_data_to_bytes_1():
-    assert hex_strings_to_bytes(['FFFF']) == b"\xff\xff"
+    assert hex_strings_to_bytes(["FFFF"]) == b"\xff\xff"
 
 
 def test_hexstr_data_to_bytes_2():
-    assert hex_strings_to_bytes(['F0F0', '1A1C']) == b"\xF0\xF0\x1A\x1C"
+    assert hex_strings_to_bytes(["F0F0", "1A1C"]) == b"\xF0\xF0\x1A\x1C"
 
 
 def test_bytes_to_hexstr():
-    assert bytes_to_hexstr(b"\xff\xff") == 'FFFF'
+    assert bytes_to_hexstr(b"\xff\xff") == "FFFF"

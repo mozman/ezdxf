@@ -3,9 +3,21 @@
 import pytest
 
 from ezdxf.math import (
-    is_planar_face, Vec3, Vec2, subdivide_face, intersection_ray_ray_3d,
-    normal_vector_3p, NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, subdivide_ngons,
-    distance_point_line_3d, best_fit_normal, Matrix44, BarycentricCoordinates,
+    is_planar_face,
+    Vec3,
+    Vec2,
+    subdivide_face,
+    intersection_ray_ray_3d,
+    normal_vector_3p,
+    NULLVEC,
+    X_AXIS,
+    Y_AXIS,
+    Z_AXIS,
+    subdivide_ngons,
+    distance_point_line_3d,
+    best_fit_normal,
+    Matrix44,
+    BarycentricCoordinates,
     linear_vertex_spacing,
 )
 
@@ -14,7 +26,8 @@ from ezdxf.render.forms import square, circle
 REGULAR_FACE = Vec3.list([(0, 0, 0), (1, 0, 1), (1, 1, 1), (0, 1, 0)])
 IRREGULAR_FACE = Vec3.list([(0, 0, 0), (1, 0, 1), (1, 1, 0), (0, 1, 0)])
 REGULAR_FACE_WRONG_ORDER = Vec3.list(
-    [(0, 0, 0), (1, 1, 1), (1, 0, 1), (0, 1, 0)])
+    [(0, 0, 0), (1, 1, 1), (1, 0, 1), (0, 1, 0)]
+)
 
 
 def test_face_count():
@@ -126,13 +139,16 @@ def test_normal_vector_for_3_points(a, b, c, r):
     assert normal_vector_3p(a, b, c) == r
 
 
-@pytest.mark.parametrize('points, expected', [
-    ([(10, 3), (0, 0), (1, 0)], 3),  # left of line
-    ([(-10, 0), (0, 0), (1, 0)], 0),  # on line
-    ([(2, -4), (0, 0), (1, 0)], 4),  # right of line
-    ([(5, 0), (0, 5), (0, 2)], 5),
-    ([(1, 0, 1), (1, 1, 1), (0, 0, 0)], 0.8164965809277259),
-])
+@pytest.mark.parametrize(
+    "points, expected",
+    [
+        ([(10, 3), (0, 0), (1, 0)], 3),  # left of line
+        ([(-10, 0), (0, 0), (1, 0)], 0),  # on line
+        ([(2, -4), (0, 0), (1, 0)], 4),  # right of line
+        ([(5, 0), (0, 5), (0, 2)], 5),
+        ([(1, 0, 1), (1, 1, 1), (0, 0, 0)], 0.8164965809277259),
+    ],
+)
 def test_distance_point_line_3d(points, expected):
     p, a, b = Vec3.generate(points)
     assert distance_point_line_3d(p, a, b) == pytest.approx(expected)
@@ -143,11 +159,11 @@ class TestBestFitNormal:
     def test_if_returns_right_handed_normals(self, a, b, c, r):
         assert best_fit_normal((a, b, c)) == r
 
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def vertices(self):
         return Vec3.list([(0, 0), (3, 0), (3, 4), (4, 8), (1, 5), (0, 2)])
 
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def matrix(self):
         return Matrix44.chain(
             Matrix44.x_rotate(0.75),
@@ -178,11 +194,9 @@ class TestBarycentricCoords:
     def test_center_of_mass_property(self, bc):
         p = (bc.a + bc.b + bc.c) / 3
         b = bc.from_cartesian(p)
-        assert b.isclose((1 / 3., 1 / 3., 1 / 3.))
+        assert b.isclose((1 / 3.0, 1 / 3.0, 1 / 3.0))
 
-    @pytest.mark.parametrize('p', [
-        (0, 4, 0), (0, -1, 0), (7, 0, 0)
-    ])
+    @pytest.mark.parametrize("p", [(0, 4, 0), (0, -1, 0), (7, 0, 0)])
     def test_point_outside_triangle(self, bc, p):
         p = Vec3(p)
         b = bc.from_cartesian(p)
@@ -190,10 +204,15 @@ class TestBarycentricCoords:
         assert sum(b) == pytest.approx(1.0)
         assert p.isclose(bc.to_cartesian(b))
 
-    @pytest.mark.parametrize('p', [
-        # tests the normal projection of p onto (a, b, c)
-        (4, 1, 0), (4, 1, 1), (4, 1, -1)
-    ])
+    @pytest.mark.parametrize(
+        "p",
+        [
+            # tests the normal projection of p onto (a, b, c)
+            (4, 1, 0),
+            (4, 1, 1),
+            (4, 1, -1),
+        ],
+    )
     def test_point_inside_triangle(self, bc, p):
         b = bc.from_cartesian(p)
         assert all(0 <= b0 <= 1 for b0 in b) is True
@@ -225,5 +244,5 @@ class TestLinearVertexSpacing:
             assert vertices[x].isclose((-x, -x, -x))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

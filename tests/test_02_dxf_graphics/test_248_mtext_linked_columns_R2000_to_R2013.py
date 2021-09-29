@@ -5,7 +5,10 @@ import pytest
 
 import ezdxf
 from ezdxf.entities.mtext import (
-    load_columns_from_xdata, MText, ColumnType, MTextColumns,
+    load_columns_from_xdata,
+    MText,
+    ColumnType,
+    MTextColumns,
 )
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.lldxf.tagwriter import TagCollector
@@ -227,13 +230,14 @@ ACAD
 # The dynamic auto height and static types are very similar, the difference is
 # important for CAD applications, but not for the DXF format itself.
 
+
 def get_xdata(txt: str):
     tags = ExtendedTags.from_text(txt)
     return XData(tags.xdata)
 
 
 def test_load_dynamic_cols_manual_height():
-    """ Every column can have a different height.
+    """Every column can have a different height.
 
     The linked MTEXT entities do NOT have the "defined_height" stored in the
     XDATA section ACAD. The only source for the column height is the
@@ -261,7 +265,7 @@ def test_load_dynamic_cols_manual_height():
 
 
 def test_load_dynamic_cols_with_auto_height():
-    """ All columns have the same column height.
+    """All columns have the same column height.
 
     Each linked MTEXT has the "defined_height" stored in the XDATA section ACAD.
 
@@ -283,7 +287,7 @@ def test_load_dynamic_cols_with_auto_height():
 
 
 def test_load_static_cols():
-    """ All columns have the same column height.
+    """All columns have the same column height.
 
     Each linked MTEXT has the "defined_height" stored in the XDATA section ACAD.
 
@@ -316,16 +320,18 @@ def make_mtext(txt: str) -> MText:
     return mtext
 
 
-@pytest.mark.parametrize('txt', [
-    STATIC, DYNAMIC_AUTO_HEIGHT, DYNAMIC_MANUAL_HEIGHT
-], ids=['STATIC', 'DYNAMIC_AUTO', 'DYNAMIC_MANUAL'])
+@pytest.mark.parametrize(
+    "txt",
+    [STATIC, DYNAMIC_AUTO_HEIGHT, DYNAMIC_MANUAL_HEIGHT],
+    ids=["STATIC", "DYNAMIC_AUTO", "DYNAMIC_MANUAL"],
+)
 def test_set_columns_xdata(txt):
-    """ Create column data as XDATA for DXF versions before R2018. """
+    """Create column data as XDATA for DXF versions before R2018."""
     mtext = make_mtext(txt)
     mtext.set_column_xdata()
-    acad = mtext.xdata.get('ACAD')
+    acad = mtext.xdata.get("ACAD")
     expected_xdata = get_xdata(txt)
-    assert acad == expected_xdata.get('ACAD')
+    assert acad == expected_xdata.get("ACAD")
 
 
 def new_mtext_with_linked_columns(count=3) -> MText:
@@ -373,9 +379,9 @@ def test_destroy_mtext_with_linked_columns():
         assert col.is_alive is False
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def doc():
-    return ezdxf.new('R2013')
+    return ezdxf.new("R2013")
 
 
 def test_add_mtext_with_linked_columns_to_entitydb(doc):
@@ -406,7 +412,7 @@ def test_add_mtext_with_linked_columns_to_msp(doc):
 
 
 def test_delete_mtext_with_linked_columns_from_entitydb(doc):
-    """ Delete MTEXT by EntityDB.delete_entity(). """
+    """Delete MTEXT by EntityDB.delete_entity()."""
     db = doc.entitydb
     mtext = new_mtext_with_linked_columns(3)
     doc.entitydb.add(mtext)
@@ -417,7 +423,7 @@ def test_delete_mtext_with_linked_columns_from_entitydb(doc):
 
 
 def test_discard_mtext_with_linked_columns_from_entitydb(doc):
-    """ Discard MTEXT columns from entitydb, but do not destroy the entities. """
+    """Discard MTEXT columns from entitydb, but do not destroy the entities."""
     db = doc.entitydb
     mtext = new_mtext_with_linked_columns(3)
     doc.entitydb.add(mtext)
@@ -430,7 +436,7 @@ def test_discard_mtext_with_linked_columns_from_entitydb(doc):
 
 
 def test_destroy_mtext_with_linked_columns_from_entitydb(doc):
-    """ Delete MTEXT from EntityDB using MText.destroy(). """
+    """Delete MTEXT from EntityDB using MText.destroy()."""
     db = doc.entitydb
     mtext = new_mtext_with_linked_columns(3)
     doc.entitydb.add(mtext)
@@ -458,8 +464,9 @@ def test_transform_mtext_with_linked_columns():
     mtext2 = mtext.copy()
     mtext2.translate(*offset.xyz)
     assert mtext2.dxf.insert.isclose(mtext.dxf.insert + offset)
-    for col1, col2 in zip(mtext.columns.linked_columns,
-                          mtext2.columns.linked_columns):
+    for col1, col2 in zip(
+        mtext.columns.linked_columns, mtext2.columns.linked_columns
+    ):
         assert col2.dxf.insert.isclose(col1.dxf.insert + offset)
 
 
@@ -478,23 +485,23 @@ def test_scale_mtext_with_linked_columns():
 
 def test_sync_common_attribs_of_linked_columns():
     mtext = new_mtext_with_linked_columns(3)
-    mtext.dxf.style = 'NewStyle'
+    mtext.dxf.style = "NewStyle"
     # manual sync required - this is done automatically at DXF export:
     mtext.sync_common_attribs_of_linked_columns()
     for column in mtext.columns.linked_columns:
-        assert column.dxf.style == 'NewStyle'
+        assert column.dxf.style == "NewStyle"
 
 
 def test_remove_dependencies_from_mtext_and_linked_columns(doc):
     mtext = new_mtext_with_linked_columns(3)
-    mtext.dxf.style = 'StyleNotExist'
+    mtext.dxf.style = "StyleNotExist"
     mtext.sync_common_attribs_of_linked_columns()
     mtext.remove_dependencies(doc)
-    assert mtext.dxf.style == 'Standard'
+    assert mtext.dxf.style == "Standard"
     for column in mtext.columns.linked_columns:
         assert column.dxf.handle is None
         assert column.dxf.owner is None
-        assert column.dxf.style == 'Standard'
+        assert column.dxf.style == "Standard"
 
 
 class TestPreprocessDXFExport:
@@ -539,5 +546,5 @@ class TestGetColumnContent:
         assert content == "Line1 Line2 Line3 Line4 Line5 Line6".split()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

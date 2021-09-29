@@ -11,7 +11,7 @@ from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Vec3, Matrix44
 
 TEST_CLASS = Text
-TEST_TYPE = 'TEXT'
+TEST_TYPE = "TEXT"
 
 ENTITY_R12 = """0
 TEXT
@@ -98,7 +98,7 @@ AcDbText
 """
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def doc():
     return ezdxf.new()
 
@@ -110,6 +110,7 @@ def entity(request):
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
+
     assert TEST_TYPE in ENTITY_CLASSES
 
 
@@ -119,34 +120,41 @@ def test_default_init():
 
 
 def test_default_new():
-    entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
-        'color': '7',
-        'insert': (1, 2, 3),
-    })
-    assert entity.dxf.layer == '0'
+    entity = TEST_CLASS.new(
+        handle="ABBA",
+        owner="0",
+        dxfattribs={
+            "color": "7",
+            "insert": (1, 2, 3),
+        },
+    )
+    assert entity.dxf.layer == "0"
     assert entity.dxf.color == 7
-    assert entity.dxf.linetype == 'BYLAYER'
+    assert entity.dxf.linetype == "BYLAYER"
     assert entity.dxf.insert == (1, 2, 3)
-    assert entity.dxf.insert.x == 1, 'is not Vec3 compatible'
-    assert entity.dxf.insert.y == 2, 'is not Vec3 compatible'
-    assert entity.dxf.insert.z == 3, 'is not Vec3 compatible'
+    assert entity.dxf.insert.x == 1, "is not Vec3 compatible"
+    assert entity.dxf.insert.y == 2, "is not Vec3 compatible"
+    assert entity.dxf.insert.z == 3, "is not Vec3 compatible"
     # can set DXF R2007 value
     entity.dxf.shadow_mode = 1
     assert entity.dxf.shadow_mode == 1
     assert entity.dxf.extrusion == (0.0, 0.0, 1.0)
-    assert entity.dxf.hasattr('extrusion') is False, 'just the default value'
+    assert entity.dxf.hasattr("extrusion") is False, "just the default value"
 
 
 def test_load_from_text(entity):
-    assert entity.dxf.layer == '0'
-    assert entity.dxf.color == 256, 'default color is 256 (by layer)'
+    assert entity.dxf.layer == "0"
+    assert entity.dxf.color == 256, "default color is 256 (by layer)"
     assert entity.dxf.insert == (0, 0, 0)
 
 
-@pytest.mark.parametrize("txt,ver", [
-    (ENTITY_R2000, DXF2000),
-    (ENTITY_R12, DXF12),
-])
+@pytest.mark.parametrize(
+    "txt,ver",
+    [
+        (ENTITY_R2000, DXF2000),
+        (ENTITY_R12, DXF12),
+    ],
+)
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
     attdef = TEST_CLASS.from_text(txt)
@@ -159,22 +167,25 @@ def test_write_dxf(txt, ver):
     assert collector.has_all_tags(collector2)
 
 
-@pytest.mark.parametrize('invalid_text', [
-    'test\ntext\r',
-    'test\r\ntext',
-    'testtext^',
-    'test\ntext^',
-    'test\ntext^\r',
-])
+@pytest.mark.parametrize(
+    "invalid_text",
+    [
+        "test\ntext\r",
+        "test\r\ntext",
+        "testtext^",
+        "test\ntext^",
+        "test\ntext^\r",
+    ],
+)
 def test_removing_invalid_chars_at_setting_content(invalid_text):
     txt = Text()
     txt.dxf.text = invalid_text
-    assert txt.dxf.text == 'testtext'
+    assert txt.dxf.text == "testtext"
 
 
 @pytest.fixture
 def text():
-    return Text.new(handle='ABBA', owner='0')
+    return Text.new(handle="ABBA", owner="0")
 
 
 def test_text_set_alignment(text):
@@ -195,7 +206,7 @@ def test_text_set_fit_alignment(text):
 def test_text_get_alignment(text):
     text.dxf.halign = 1
     text.dxf.valign = 3
-    assert text.get_align() == 'TOP_CENTER'
+    assert text.get_align() == "TOP_CENTER"
 
 
 def test_text_get_pos_TOP_CENTER(text):
@@ -229,16 +240,18 @@ def test_text_transform_interface():
 
 @pytest.fixture
 def text2():
-    return Text.new(dxfattribs={
-        'text': 'TEXT',
-        'height': 1.0,
-        'width': 1.0,
-        'rotation': 0,
-        'layer': 'text',
-    }).set_pos((0, 0, 0), align='LEFT')
+    return Text.new(
+        dxfattribs={
+            "text": "TEXT",
+            "height": 1.0,
+            "width": 1.0,
+            "rotation": 0,
+            "layer": "text",
+        }
+    ).set_pos((0, 0, 0), align="LEFT")
 
 
-@pytest.mark.parametrize('rx, ry', [(1, 1), (-1, 1), (-1, -1), (1, -1)])
+@pytest.mark.parametrize("rx, ry", [(1, 1), (-1, 1), (-1, -1), (1, -1)])
 def test_text_scale_and_reflexion(rx, ry, text2):
     insert = Vec3(0, 0, 0)
     m = Matrix44.chain(

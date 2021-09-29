@@ -309,13 +309,10 @@ class TestDXFDictWithDefault:
 
 
 class TestCopyHardOwnerDictionary:
-
     @pytest.fixture(scope="class")
     def source(self, doc) -> Dictionary:
         doc = ezdxf.new()
-        dictionary = doc.rootdict.get_required_dict(
-            "COPYTEST", hard_owned=True
-        )
+        dictionary = doc.rootdict.get_required_dict("COPYTEST", hard_owned=True)
         dictionary.add_dict_var("DICTVAR", "VarContent")
         xrecord = dictionary.add_xrecord("XRECORD")
         xrecord.reset([(1, "String"), (40, 3.1415), (90, 4711)])
@@ -390,13 +387,10 @@ class TestCopyHardOwnerDictionary:
 
 
 class TestCopyNotHardOwnerDictionary:
-
     @pytest.fixture(scope="class")
     def source(self, doc) -> Dictionary:
         doc = ezdxf.new()
-        dictionary = doc.rootdict.get_required_dict(
-            "COPYTEST", hard_owned=True
-        )
+        dictionary = doc.rootdict.get_required_dict("COPYTEST", hard_owned=True)
         dict_var = dictionary.add_dict_var("DICTVAR", "VarContent")
         xrecord = dictionary.add_xrecord("XRECORD")
         xrecord.reset([(1, "String"), (40, 3.1415), (90, 4711)])

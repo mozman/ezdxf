@@ -318,16 +318,18 @@ class TestMatrix44:
 
 
 def test_has_matrix_2d_stretching():
-    """Note: Uniform scaling is not stretching in this context. """
+    """Note: Uniform scaling is not stretching in this context."""
     assert has_matrix_2d_stretching(Matrix44.scale(1, 1, 1)) is False
     assert has_matrix_2d_stretching(Matrix44.scale(2, 2, 2)) is False
-    assert has_matrix_2d_stretching(Matrix44.scale(1, 1, 2)) is False, "ignore z-axis"
+    assert (
+        has_matrix_2d_stretching(Matrix44.scale(1, 1, 2)) is False
+    ), "ignore z-axis"
     assert has_matrix_2d_stretching(Matrix44.scale(2, 1, 1)) is True
     assert has_matrix_2d_stretching(Matrix44.scale(1, 2, 1)) is True
 
 
 def test_has_matrix_3d_stretching():
-    """Note: Uniform scaling is not stretching in this context. """
+    """Note: Uniform scaling is not stretching in this context."""
     assert has_matrix_3d_stretching(Matrix44.scale(1, 1, 1)) is False
     assert has_matrix_3d_stretching(Matrix44.scale(2, 2, 2)) is False
     assert has_matrix_3d_stretching(Matrix44.scale(2, 1, 1)) is True

@@ -11,9 +11,9 @@ from ezdxf.tools.test import load_section
 from ezdxf.entities import factory
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def section():
-    sec = load_section(TESTCLASSES, 'CLASSES')
+    sec = load_section(TESTCLASSES, "CLASSES")
     cls_entities = [factory.load(ExtendedTags(e)) for e in sec]
     return ClassesSection(None, iter(cls_entities))
 
@@ -29,7 +29,7 @@ def test_write(section):
 
 
 def test_empty_section():
-    sec = load_section(EMPTYSEC, 'CLASSES')
+    sec = load_section(EMPTYSEC, "CLASSES")
     cls_entities = [factory.load(ExtendedTags(e)) for e in sec]
 
     section = ClassesSection(None, iter(cls_entities))
@@ -43,28 +43,29 @@ def test_empty_section():
 def test_count_class_instances():
     def instance_count(name):
         return doc.classes.get(name).dxf.instance_count
-    doc = ezdxf.new('R2004')
 
-    doc.classes.add_class('IMAGE')
-    doc.classes.add_class('IMAGEDEF')
-    doc.classes.add_class('IMAGEDEF_REACTOR')
-    doc.classes.add_class('RASTERVARIABLES')
+    doc = ezdxf.new("R2004")
+
+    doc.classes.add_class("IMAGE")
+    doc.classes.add_class("IMAGEDEF")
+    doc.classes.add_class("IMAGEDEF_REACTOR")
+    doc.classes.add_class("RASTERVARIABLES")
 
     doc.classes.update_instance_counters()
-    assert instance_count('IMAGE') == 0
-    assert instance_count('IMAGEDEF') == 0
-    assert instance_count('IMAGEDEF_REACTOR') == 0
-    assert instance_count('RASTERVARIABLES') == 0
+    assert instance_count("IMAGE") == 0
+    assert instance_count("IMAGEDEF") == 0
+    assert instance_count("IMAGEDEF_REACTOR") == 0
+    assert instance_count("RASTERVARIABLES") == 0
 
-    image_def = doc.add_image_def('test', size_in_pixel=(400, 400))
+    image_def = doc.add_image_def("test", size_in_pixel=(400, 400))
     msp = doc.modelspace()
     msp.add_image(image_def, insert=(0, 0), size_in_units=(10, 10))
 
     doc.classes.update_instance_counters()
-    assert instance_count('IMAGE') == 1
-    assert instance_count('IMAGEDEF') == 1
-    assert instance_count('IMAGEDEF_REACTOR') == 1
-    assert instance_count('RASTERVARIABLES') == 1
+    assert instance_count("IMAGE") == 1
+    assert instance_count("IMAGEDEF") == 1
+    assert instance_count("IMAGEDEF_REACTOR") == 1
+    assert instance_count("RASTERVARIABLES") == 1
 
 
 EMPTYSEC = """  0

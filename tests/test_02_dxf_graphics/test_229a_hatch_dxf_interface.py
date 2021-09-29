@@ -97,7 +97,8 @@ def test_write_dxf():
 def test_write_correct_polyline_path_tag_order(entity):
     entity = Hatch.from_text(HATCH)
     entity.paths.add_polyline_path(
-        [(0, 0), (1, 0), (1, 1)], is_closed=True,
+        [(0, 0), (1, 0), (1, 1)],
+        is_closed=True,
     )
     result = TagCollector.dxftags(entity)
     tags = list(result.pop_tags([92, 72, 73]))

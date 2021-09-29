@@ -34,19 +34,19 @@ def entity():
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert 'FIELDLIST' in ENTITY_CLASSES
+
+    assert "FIELDLIST" in ENTITY_CLASSES
 
 
 def test_default_init():
     entity = FieldList()
-    assert entity.dxftype() == 'FIELDLIST'
+    assert entity.dxftype() == "FIELDLIST"
     assert entity.dxf.handle is None
     assert entity.dxf.owner is None
 
 
 def test_default_new():
-    entity = FieldList.new(handle='ABBA', owner='0', dxfattribs={
-    })
+    entity = FieldList.new(handle="ABBA", owner="0", dxfattribs={})
     assert entity.dxf.flags == 0
     assert len(entity.handles) == 0
 
@@ -63,43 +63,43 @@ def test_write_dxf():
     assert result == expected
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def doc():
-    return ezdxf.new('R2007')
+    return ezdxf.new("R2007")
 
 
 def test_generic_field_list(doc):
-    field_list = doc.objects.new_entity('FIELDLIST', {})
-    assert field_list.dxftype() == 'FIELDLIST'
+    field_list = doc.objects.new_entity("FIELDLIST", {})
+    assert field_list.dxftype() == "FIELDLIST"
     assert len(field_list.handles) == 0
 
 
 def test_set_get_field_list(doc):
-    field_list = doc.objects.new_entity('FIELDLIST', {})
-    assert field_list.dxftype() == 'FIELDLIST'
-    field_list.handles = ['FF', 'EE', 'DD']
+    field_list = doc.objects.new_entity("FIELDLIST", {})
+    assert field_list.dxftype() == "FIELDLIST"
+    field_list.handles = ["FF", "EE", "DD"]
     handles = field_list.handles
     assert len(handles) == 3
-    assert handles == ['FF', 'EE', 'DD']
+    assert handles == ["FF", "EE", "DD"]
 
-    handles.append('FFFF')
-    assert handles[-1] == 'FFFF'
+    handles.append("FFFF")
+    assert handles[-1] == "FFFF"
 
 
 def test_dxf_tags(doc):
-    buffer = cast(FieldList, doc.objects.new_entity('FIELDLIST', {}))
-    buffer.handles = ['FF', 'EE', 'DD', 'CC']
+    buffer = cast(FieldList, doc.objects.new_entity("FIELDLIST", {}))
+    buffer.handles = ["FF", "EE", "DD", "CC"]
     tags = TagCollector.dxftags(buffer)[-4:]
 
     assert len(tags) == 4
-    assert tags[0] == (330, 'FF')
-    assert tags[-1] == (330, 'CC')
+    assert tags[0] == (330, "FF")
+    assert tags[-1] == (330, "CC")
 
 
 def test_clone(doc):
-    buffer = cast(FieldList, doc.objects.new_entity('FIELDLIST', {}))
-    buffer.handles = ['FF', 'EE', 'DD', 'CC']
+    buffer = cast(FieldList, doc.objects.new_entity("FIELDLIST", {}))
+    buffer.handles = ["FF", "EE", "DD", "CC"]
     buffer2 = cast(FieldList, buffer.copy())
-    buffer2.handles[-1] = 'ABCD'
+    buffer2.handles[-1] = "ABCD"
     assert buffer.handles[:-1] == buffer2.handles[:-1]
     assert buffer.handles[-1] != buffer2.handles[-1]

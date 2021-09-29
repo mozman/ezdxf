@@ -195,7 +195,7 @@ def test_match_full_string():
 
 
 def test_match_default_values():
-    """ An attribute query should match the default value if the attribute is
+    """An attribute query should match the default value if the attribute is
     not present.
     """
     text = Text()

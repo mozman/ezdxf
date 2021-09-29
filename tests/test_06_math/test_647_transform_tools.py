@@ -149,9 +149,7 @@ class TestTransformCCWAngles:
         assert ocs.transform_ccw_arc_angles_deg(s, e) == pytest.approx([s, e])
 
     @pytest.mark.parametrize("s,e", TEST_ANGLES)
-    @pytest.mark.parametrize(
-        "rotation", [45, 90, 180, 270, -45, -90, -180]
-    )
+    @pytest.mark.parametrize("rotation", [45, 90, 180, 270, -45, -90, -180])
     def test_rotation(self, s, e, rotation):
         ocs = OCSTransform(Z_AXIS, Matrix44.z_rotate(math.radians(rotation)))
         new_angles = normalize_angles(*ocs.transform_ccw_arc_angles_deg(s, e))

@@ -7,7 +7,7 @@ from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
 TEST_CLASS = Solid
-TEST_TYPE = 'SOLID'
+TEST_TYPE = "SOLID"
 
 ENTITY_R12 = """0
 SOLID
@@ -113,6 +113,7 @@ def entity(request):
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
+
     assert TEST_TYPE in ENTITY_CLASSES
 
 
@@ -122,32 +123,37 @@ def test_default_init():
 
 
 def test_default_new():
-    entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
-        'color': '7',
-        'vtx3': (1, 2, 3),
-    })
-    assert entity.dxf.layer == '0'
+    entity = TEST_CLASS.new(
+        handle="ABBA",
+        owner="0",
+        dxfattribs={
+            "color": "7",
+            "vtx3": (1, 2, 3),
+        },
+    )
+    assert entity.dxf.layer == "0"
     assert entity.dxf.color == 7
-    assert entity.dxf.linetype == 'BYLAYER'
+    assert entity.dxf.linetype == "BYLAYER"
     assert entity.dxf.vtx3 == (1, 2, 3)
-    assert entity.dxf.vtx3.x == 1, 'is not Vec3 compatible'
-    assert entity.dxf.vtx3.y == 2, 'is not Vec3 compatible'
-    assert entity.dxf.vtx3.z == 3, 'is not Vec3 compatible'
+    assert entity.dxf.vtx3.x == 1, "is not Vec3 compatible"
+    assert entity.dxf.vtx3.y == 2, "is not Vec3 compatible"
+    assert entity.dxf.vtx3.z == 3, "is not Vec3 compatible"
     # can set DXF R2007 value
     entity.dxf.shadow_mode = 1
     assert entity.dxf.shadow_mode == 1
     assert entity.dxf.extrusion == (0.0, 0.0, 1.0)
-    assert entity.dxf.hasattr('extrusion') is False, 'just the default value'
+    assert entity.dxf.hasattr("extrusion") is False, "just the default value"
 
 
 def test_load_from_text(entity):
-    assert entity.dxf.layer == '0'
-    assert entity.dxf.color == 256, 'default color is 256 (by layer)'
+    assert entity.dxf.layer == "0"
+    assert entity.dxf.color == 256, "default color is 256 (by layer)"
     assert entity.dxf.vtx3 == (0, 0, 0)
 
 
-@pytest.mark.parametrize("txt,ver",
-                         [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
+@pytest.mark.parametrize(
+    "txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)]
+)
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
     solid = TEST_CLASS.from_text(txt)
@@ -177,8 +183,8 @@ def test_trace():
 
     collector = TagCollector(dxfversion=DXF2000)
     trace.export_dxf(collector)
-    assert collector.tags[0] == (0, 'TRACE')
-    assert collector.tags[5] == (100, 'AcDbTrace')
+    assert collector.tags[0] == (0, "TRACE")
+    assert collector.tags[5] == (100, "AcDbTrace")
 
     # Elevation tag should not be written by default
     assert any(tag[0] == 38 for tag in collector.tags) is False
@@ -207,8 +213,8 @@ def test_3dface():
 
     collector = TagCollector(dxfversion=DXF2000)
     face.export_dxf(collector)
-    assert collector.tags[0] == (0, '3DFACE')
-    assert collector.tags[5] == (100, 'AcDbFace')
+    assert collector.tags[0] == (0, "3DFACE")
+    assert collector.tags[5] == (100, "AcDbFace")
 
 
 def test_solid_translate():
@@ -253,7 +259,12 @@ def test_solid_close_quad_ocs_vertices():
     for index, vertex in enumerate([(0, 0), (1, 0), (1, 1), (0, 1)]):
         solid[index] = vertex
     assert solid.vertices(close=True) == [
-        (0, 0), (1, 0), (0, 1), (1, 1), (0, 0)]
+        (0, 0),
+        (1, 0),
+        (0, 1),
+        (1, 1),
+        (0, 0),
+    ]
 
 
 def test_solid_wcs_vertices():
@@ -271,8 +282,13 @@ def test_3dface_quad_vertices():
     assert face.get_edges_visibility() == [True, True, True, True]
     # no weird vertex order:
     assert face.wcs_vertices() == [(0, 0), (1, 0), (1, 1), (0, 1)]
-    assert face.wcs_vertices(close=True) == [(0, 0), (1, 0), (1, 1), (0, 1),
-                                             (0, 0)]
+    assert face.wcs_vertices(close=True) == [
+        (0, 0),
+        (1, 0),
+        (1, 1),
+        (0, 1),
+        (0, 0),
+    ]
 
 
 def test_3dface_triangle_vertices():
@@ -281,14 +297,19 @@ def test_3dface_triangle_vertices():
         face[index] = vertex
     assert face.get_edges_visibility() == [True, True, True, True]
     assert face.wcs_vertices() == [(0, 0), (1, 0), (1, 1), (1, 1)]
-    assert face.wcs_vertices(close=True) == [(0, 0), (1, 0), (1, 1), (1, 1),
-                                             (0, 0)]
+    assert face.wcs_vertices(close=True) == [
+        (0, 0),
+        (1, 0),
+        (1, 1),
+        (1, 1),
+        (0, 0),
+    ]
 
 
 def test_elevation_group_code_support():
     solid = Solid.from_text(ELEVATION)
     # elevation data is copied to z-axis of vertices:
-    assert solid.dxf.hasattr('elevation') is False
+    assert solid.dxf.hasattr("elevation") is False
     vertices = solid.vertices()
     assert vertices[0] == (0, 0, 2)
 

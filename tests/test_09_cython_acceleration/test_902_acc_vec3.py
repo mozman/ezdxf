@@ -6,7 +6,7 @@
 
 import pytest
 
-cyvec = pytest.importorskip('ezdxf.acc.vector')
+cyvec = pytest.importorskip("ezdxf.acc.vector")
 Vec3 = cyvec.Vec3
 
 
@@ -68,9 +68,9 @@ def test_init_type_error():
     with pytest.raises(TypeError):
         Vec3(1, 2, 3, 4)
     with pytest.raises(TypeError):
-        Vec3('xyz')
+        Vec3("xyz")
     with pytest.raises(TypeError):
-        Vec3('xyz', 'abc')
+        Vec3("xyz", "abc")
 
 
 def test_is_null():
@@ -85,8 +85,11 @@ def test_compare():
     assert Vec3(1, 2, 3) == Vec3(1, 2, 3)
     assert Vec3(1, 2, 3) == (1, 2, 3)
     assert (1, 2) == Vec3(1, 2)
-    assert Vec3(1, 2, 3) != (1, 2.0000000000001, 3), \
-        "__eq__() should use the full floating point precision"
+    assert Vec3(1, 2, 3) != (
+        1,
+        2.0000000000001,
+        3,
+    ), "__eq__() should use the full floating point precision"
     assert Vec3(1, 2) != (2, 1)
 
 
@@ -100,5 +103,5 @@ def test_does_not_support_slicing():
         _ = Vec3(2, 1)[:]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

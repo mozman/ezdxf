@@ -30,19 +30,19 @@ def entity():
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert 'IDBUFFER' in ENTITY_CLASSES
+
+    assert "IDBUFFER" in ENTITY_CLASSES
 
 
 def test_default_init():
     entity = IDBuffer()
-    assert entity.dxftype() == 'IDBUFFER'
+    assert entity.dxftype() == "IDBUFFER"
     assert entity.dxf.handle is None
     assert entity.dxf.owner is None
 
 
 def test_default_new():
-    entity = IDBuffer.new(handle='ABBA', owner='0', dxfattribs={
-    })
+    entity = IDBuffer.new(handle="ABBA", owner="0", dxfattribs={})
     assert len(entity.handles) == 0
 
 
@@ -57,46 +57,46 @@ def test_write_dxf():
     assert result == expected
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def doc():
-    return ezdxf.new('R2007')
+    return ezdxf.new("R2007")
 
 
 def test_generic_id_buffer(doc):
-    id_buffer = doc.objects.new_entity('IDBUFFER', {})
-    assert id_buffer.dxftype() == 'IDBUFFER'
+    id_buffer = doc.objects.new_entity("IDBUFFER", {})
+    assert id_buffer.dxftype() == "IDBUFFER"
     assert len(id_buffer.handles) == 0
 
 
 def test_set_get_id_buffer(doc):
-    id_buffer = doc.objects.new_entity('IDBUFFER', {})
-    assert id_buffer.dxftype() == 'IDBUFFER'
-    id_buffer.handles = ['FF', 'EE', 'DD']
+    id_buffer = doc.objects.new_entity("IDBUFFER", {})
+    assert id_buffer.dxftype() == "IDBUFFER"
+    id_buffer.handles = ["FF", "EE", "DD"]
     handles = id_buffer.handles
     assert len(handles) == 3
-    assert handles == ['FF', 'EE', 'DD']
+    assert handles == ["FF", "EE", "DD"]
 
-    handles.append('FFFF')
-    assert handles[-1] == 'FFFF'
+    handles.append("FFFF")
+    assert handles[-1] == "FFFF"
 
     handles.clear()
     assert len(handles) == 0
 
 
 def test_dxf_tags(doc):
-    id_buffer = cast(IDBuffer, doc.objects.new_entity('IDBUFFER', {}))
-    id_buffer.handles = ['FF', 'EE', 'DD', 'CC']
+    id_buffer = cast(IDBuffer, doc.objects.new_entity("IDBUFFER", {}))
+    id_buffer.handles = ["FF", "EE", "DD", "CC"]
     tags = TagCollector.dxftags(id_buffer)[-4:]
 
     assert len(tags) == 4
-    assert tags[0] == (330, 'FF')
-    assert tags[-1] == (330, 'CC')
+    assert tags[0] == (330, "FF")
+    assert tags[-1] == (330, "CC")
 
 
 def test_clone(doc):
-    id_buffer = cast(IDBuffer, doc.objects.new_entity('IDBUFFER', {}))
-    id_buffer.handles = ['FF', 'EE', 'DD', 'CC']
+    id_buffer = cast(IDBuffer, doc.objects.new_entity("IDBUFFER", {}))
+    id_buffer.handles = ["FF", "EE", "DD", "CC"]
     buffer2 = cast(IDBuffer, id_buffer.copy())
-    buffer2.handles[-1] = 'ABCD'
+    buffer2.handles[-1] = "ABCD"
     assert id_buffer.handles[:-1] == buffer2.handles[:-1]
     assert id_buffer.handles[-1] != buffer2.handles[-1]

@@ -1,11 +1,17 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.math import BSpline, global_bspline_interpolation, rational_bspline_from_arc, Vec3
+from ezdxf.math import (
+    BSpline,
+    global_bspline_interpolation,
+    rational_bspline_from_arc,
+    Vec3,
+)
 
 
 def test_from_nurbs_python_curve_to_ezdxf_bspline():
     from geomdl.fitting import interpolate_curve
+
     curve = interpolate_curve([(0, 0), (0, 10), (10, 10), (10, 0)], degree=3)
     bspline = BSpline.from_nurbs_python_curve(curve)
     assert bspline.degree == 3
@@ -14,7 +20,9 @@ def test_from_nurbs_python_curve_to_ezdxf_bspline():
 
 
 def test_from_ezdxf_bspline_to_nurbs_python_curve_non_rational():
-    bspline = global_bspline_interpolation([(0, 0), (0, 10), (10, 10), (10, 0)], degree=3)
+    bspline = global_bspline_interpolation(
+        [(0, 0), (0, 10), (10, 10), (10, 0)], degree=3
+    )
 
     # to NURBS-Python
     curve = bspline.to_nurbs_python_curve()
@@ -31,7 +39,9 @@ def test_from_ezdxf_bspline_to_nurbs_python_curve_non_rational():
 
 
 def test_from_ezdxf_bspline_to_nurbs_python_curve_rational():
-    bspline = rational_bspline_from_arc(center=Vec3(0, 0), radius=2, start_angle=0, end_angle=90)
+    bspline = rational_bspline_from_arc(
+        center=Vec3(0, 0), radius=2, start_angle=0, end_angle=90
+    )
 
     # to NURBS-Python
     curve = bspline.to_nurbs_python_curve()
@@ -49,5 +59,5 @@ def test_from_ezdxf_bspline_to_nurbs_python_curve_rational():
     assert spline.weights() == (1.0, 0.7071067811865476, 1.0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

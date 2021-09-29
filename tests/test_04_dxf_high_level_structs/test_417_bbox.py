@@ -8,7 +8,7 @@ from ezdxf import bbox, disassemble
 from ezdxf.render.forms import square, translate
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def points1():
     lay = VirtualLayout()
     lay.add_point((-1, -2, -3))
@@ -31,17 +31,20 @@ def solid_entities():
 
 def solid_blockrefs():
     doc = ezdxf.new()
-    blk = doc.blocks.new('Solid')
+    blk = doc.blocks.new("Solid")
     blk.add_solid(square(1))
     msp = doc.modelspace()
-    msp.add_blockref('Solid', (-10, -10))
-    msp.add_blockref('Solid', (10, 10))
+    msp.add_blockref("Solid", (-10, -10))
+    msp.add_blockref("Solid", (10, 10))
     return msp
 
 
-@pytest.mark.parametrize('solids', [solid_entities(), solid_blockrefs()],
-                         ids=['entities', 'blockrefs'])
-@pytest.mark.parametrize('func', [bbox.multi_flat, bbox.multi_recursive])
+@pytest.mark.parametrize(
+    "solids",
+    [solid_entities(), solid_blockrefs()],
+    ids=["entities", "blockrefs"],
+)
+@pytest.mark.parametrize("func", [bbox.multi_flat, bbox.multi_recursive])
 def test_multi_boxes(solids, func):
     box = list(func(solids))
     assert box[0].extmin == (-10, -10)
@@ -66,12 +69,12 @@ def test_cache_usage_with_uuids(points1):
     assert cache.hits == 18
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def msp_solids():
     return solid_blockrefs()
 
 
-@pytest.mark.parametrize('func', [bbox.multi_flat, bbox.extents])
+@pytest.mark.parametrize("func", [bbox.multi_flat, bbox.extents])
 def test_cache_usage_for_flat_multi_boxes(msp_solids, func):
     cache = bbox.Cache()
     for _ in range(10):
@@ -98,9 +101,9 @@ def test_cache_usage_for_recreation_on_the_fly(msp_solids):
     assert cache.hits == 0
 
 
-@pytest.mark.parametrize('func', [
-    bbox.multi_flat, bbox.extents, bbox.multi_recursive
-])
+@pytest.mark.parametrize(
+    "func", [bbox.multi_flat, bbox.extents, bbox.multi_recursive]
+)
 def test_cache_usage_for_reused_virtual_entities(msp_solids, func):
     cache = bbox.Cache()
     # Create flat entity structure by yourself, so that virtual entities are
@@ -119,9 +122,9 @@ def test_cache_usage_for_reused_virtual_entities(msp_solids, func):
     assert cache.hits == 0  # parent INSERT bbox is not calculated and cached
 
 
-@pytest.mark.parametrize('func', [
-    bbox.multi_flat, bbox.extents, bbox.multi_recursive
-])
+@pytest.mark.parametrize(
+    "func", [bbox.multi_flat, bbox.extents, bbox.multi_recursive]
+)
 def test_cache_usage_with_uuids_for_reused_virtual_entities(msp_solids, func):
     cache = bbox.Cache(uuid=True)
     # Create flat entity structure by yourself, so that virtual entities are
@@ -159,9 +162,13 @@ def test_bbox_from_rough_flattening(circle):
 
 def test_bbox_from_precise_flattening(circle):
     box = bbox.extents(circle, flatten=0.0001)
-    assert box.extmin.isclose((-100, -100), abs_tol=0.0001), "expected a very close result"
-    assert box.extmax.isclose((+100, +100), abs_tol=0.0001), "expected a very_close result"
+    assert box.extmin.isclose(
+        (-100, -100), abs_tol=0.0001
+    ), "expected a very close result"
+    assert box.extmax.isclose(
+        (+100, +100), abs_tol=0.0001
+    ), "expected a very_close result"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

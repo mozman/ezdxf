@@ -3,9 +3,7 @@
 
 import pytest
 from ezdxf.lldxf.const import MTextParagraphAlignment
-from ezdxf.tools.text import (
-    MTextContext, ParagraphProperties
-)
+from ezdxf.tools.text import MTextContext, ParagraphProperties
 
 
 def test_underline():
@@ -67,17 +65,22 @@ class TestParagraphPropertiesToString:
         assert ParagraphProperties(right=4).tostring() == "\\pxr4;"
 
     def test_center_alignment_without_indentation(self):
-        assert ParagraphProperties(
-            align=MTextParagraphAlignment.CENTER).tostring() == "\\pxqc;"
+        assert (
+            ParagraphProperties(align=MTextParagraphAlignment.CENTER).tostring()
+            == "\\pxqc;"
+        )
 
     def test_center_alignment_with_indentation(self):
         # always a "," after indentations
-        assert ParagraphProperties(
-            indent=2.5,
-            align=MTextParagraphAlignment.CENTER).tostring() == "\\pxi2.5,qc;"
+        assert (
+            ParagraphProperties(
+                indent=2.5, align=MTextParagraphAlignment.CENTER
+            ).tostring()
+            == "\\pxi2.5,qc;"
+        )
 
     def test_one_tab_stop(self):
-        p = ParagraphProperties(tab_stops=(1, ))
+        p = ParagraphProperties(tab_stops=(1,))
         assert p.tostring() == "\\pxt1;"
 
     def test_multiple_tab_stops(self):
@@ -89,20 +92,20 @@ class TestParagraphPropertiesToString:
         # tab stops, e.g 2 or '2'
         # prefix 'c' defines a center adjusted tab stop e.g. 'c3.5'
         # prefix 'r' defines a right adjusted tab stop e.g. 'r2.7'
-        p = ParagraphProperties(tab_stops=(1, 'c2', 'r3.7'))
+        p = ParagraphProperties(tab_stops=(1, "c2", "r3.7"))
         assert p.tostring() == "\\pxt1,c2,r3.7;"
 
     def test_indention_and_multiple_tab_stops(self):
-        p = ParagraphProperties(indent=1,
-                                tab_stops=(1, 2, 3))
+        p = ParagraphProperties(indent=1, tab_stops=(1, 2, 3))
         # always a "," after indentations
         assert p.tostring() == "\\pxi1,t1,2,3;"
 
     def test_justified_alignment_and_multiple_tab_stops(self):
-        p = ParagraphProperties(align=MTextParagraphAlignment.JUSTIFIED,
-                                tab_stops=(1, 2, 3))
+        p = ParagraphProperties(
+            align=MTextParagraphAlignment.JUSTIFIED, tab_stops=(1, 2, 3)
+        )
         assert p.tostring() == "\\pxqj,t1,2,3;"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

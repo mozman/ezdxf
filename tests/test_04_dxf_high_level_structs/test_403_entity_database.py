@@ -6,31 +6,31 @@ from ezdxf.entitydb import EntityDB
 from ezdxf.entities.dxfentity import DXFEntity
 from ezdxf.audit import Auditor
 
-ENTITY = DXFEntity.new(handle='FFFF')
+ENTITY = DXFEntity.new(handle="FFFF")
 auditor = Auditor(ezdxf.new())
 
 
 @pytest.fixture
 def db():
     db = EntityDB()
-    db['FEFE'] = ENTITY
+    db["FEFE"] = ENTITY
     return db
 
 
 def test_get_value(db):
-    assert ENTITY is db['FEFE']
+    assert ENTITY is db["FEFE"]
 
 
 def test_set_value(db):
-    new_entity = DXFEntity.new(handle='FEFE')
-    db['FEFE'] = new_entity
-    assert new_entity is db['FEFE']
+    new_entity = DXFEntity.new(handle="FEFE")
+    db["FEFE"] = new_entity
+    assert new_entity is db["FEFE"]
 
 
 def test_del_value(db):
-    del db['FEFE']
+    del db["FEFE"]
     with pytest.raises(KeyError):
-        _ = db['FEFE']
+        _ = db["FEFE"]
     assert len(db) == 0
 
 
@@ -45,20 +45,20 @@ def test_delete_entity():
 
 def test_delete_dead_entity_entity():
     db = EntityDB()
-    entity = DXFEntity.new(handle='FEFE')
+    entity = DXFEntity.new(handle="FEFE")
     db.add(entity)
     assert len(db) == 1
     entity.destroy()
     # delete_entity() should not raise an error if entity is not alive!
     db.delete_entity(entity)
     # but entity.destroy() does not remove entity from EntityDB!
-    assert 'FEFE' in db
+    assert "FEFE" in db
     assert len(db) == 1
     # Auditor() removes such dead entities from database see test_restore_integrity_purge()
 
 
 def test_keys(db):
-    assert list(db.keys()) == ['FEFE']
+    assert list(db.keys()) == ["FEFE"]
 
 
 def test_values(db):
@@ -66,17 +66,17 @@ def test_values(db):
 
 
 def test_items(db):
-    assert list(db.items()) == [('FEFE', ENTITY)]
+    assert list(db.items()) == [("FEFE", ENTITY)]
 
 
 def test_get(db):
-    assert db.get('ABCD') is None
+    assert db.get("ABCD") is None
 
 
 def test_add_tags():
     db = EntityDB()
     db.add(ENTITY)
-    assert 'FFFF' in db
+    assert "FFFF" in db
 
 
 def test_len(db):
@@ -97,19 +97,19 @@ def test_restore_integrity_purge():
 
 def test_restore_integrity_recover():
     db = EntityDB()
-    e = DXFEntity.new(handle='ABBA')
+    e = DXFEntity.new(handle="ABBA")
     db.add(e)
     assert len(db) == 1
 
     # modify handle
-    e.dxf.handle = 'FEFE'
-    assert 'ABBA' in db
-    assert 'FEFE' not in db
+    e.dxf.handle = "FEFE"
+    assert "ABBA" in db
+    assert "FEFE" not in db
 
     db.audit(auditor)
     assert len(db) == 1
-    assert 'FEFE' in db
-    assert 'ABBA' not in db
+    assert "FEFE" in db
+    assert "ABBA" not in db
 
 
 def test_restore_integrity_remove_invalid_None():
@@ -126,12 +126,12 @@ def test_restore_integrity_remove_invalid_None():
 
 def test_restore_integrity_remove_invalid_handle():
     db = EntityDB()
-    e = DXFEntity.new(handle='ABBA')
+    e = DXFEntity.new(handle="ABBA")
     db.add(e)
     assert len(db) == 1
 
     # set invalid handle
-    e.dxf.handle = 'XFFF'
+    e.dxf.handle = "XFFF"
     db.audit(auditor)
     assert len(db) == 0
 
@@ -144,8 +144,8 @@ def test_add_entity_multiple_times():
     assert len(db) == 1
 
     db.add(e)
-    assert e.dxf.handle == handle, 'handle must not change'
-    assert len(db) == 1, 'do not store same entity multiple times'
+    assert e.dxf.handle == handle, "handle must not change"
+    assert len(db) == 1, "do not store same entity multiple times"
 
 
 def test_discard_contained_entity():
@@ -171,14 +171,15 @@ def test_discard_entity_with_none_handle():
 def test_discard_entity_with_handle_not_in_database():
     db = EntityDB()
     e = DXFEntity()
-    e.dxf.handle = 'ABBA'
+    e.dxf.handle = "ABBA"
     assert e.dxf.handle not in db
     # call should not raise any Exception
     db.discard(e)
     # 2rd call should not raise any Exception
     db.discard(e)
-    assert e.dxf.handle is 'ABBA', \
-        'set handle to None, only if entity was removed'
+    assert (
+        e.dxf.handle is "ABBA"
+    ), "set handle to None, only if entity was removed"
 
 
 def test_trashcan_context_manager():

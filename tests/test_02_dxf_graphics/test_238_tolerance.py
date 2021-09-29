@@ -43,42 +43,47 @@ def entity():
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert 'TOLERANCE' in ENTITY_CLASSES
+
+    assert "TOLERANCE" in ENTITY_CLASSES
 
 
 def test_default_init():
     entity = Tolerance()
-    assert entity.dxftype() == 'TOLERANCE'
+    assert entity.dxftype() == "TOLERANCE"
     assert entity.dxf.handle is None
     assert entity.dxf.owner is None
 
 
 def test_default_new():
-    entity = Tolerance.new(handle='ABBA', owner='0', dxfattribs={
-        'color': 7,
-        'dimstyle': 'EZDXF',
-        'insert': (1, 2, 3),
-        'extrusion': (4, 5, 6),
-        'x_axis_vector': (7, 8, 9),
-        'content': 'abcdef',
-    })
-    assert entity.dxf.layer == '0'
+    entity = Tolerance.new(
+        handle="ABBA",
+        owner="0",
+        dxfattribs={
+            "color": 7,
+            "dimstyle": "EZDXF",
+            "insert": (1, 2, 3),
+            "extrusion": (4, 5, 6),
+            "x_axis_vector": (7, 8, 9),
+            "content": "abcdef",
+        },
+    )
+    assert entity.dxf.layer == "0"
     assert entity.dxf.color == 7
-    assert entity.dxf.dimstyle == 'EZDXF'
+    assert entity.dxf.dimstyle == "EZDXF"
     assert entity.dxf.insert == (1, 2, 3)
     assert entity.dxf.extrusion == (4, 5, 6)
     assert entity.dxf.x_axis_vector == (7, 8, 9)
-    assert entity.dxf.content == 'abcdef'
+    assert entity.dxf.content == "abcdef"
 
 
 def test_load_from_text(entity):
-    assert entity.dxf.layer == '0'
-    assert entity.dxf.color == 256, 'default color is 256 (by layer)'
-    assert entity.dxf.dimstyle == 'Standard'
+    assert entity.dxf.layer == "0"
+    assert entity.dxf.color == 256, "default color is 256 (by layer)"
+    assert entity.dxf.dimstyle == "Standard"
     assert entity.dxf.insert == (0, 0, 0)
     assert entity.dxf.extrusion == (0, 0, 1)  # default value
     assert entity.dxf.x_axis_vector == (1, 0, 0)
-    assert entity.dxf.content == ''
+    assert entity.dxf.content == ""
 
 
 def test_write_dxf():
@@ -91,10 +96,10 @@ def test_write_dxf():
 def test_add_tolerance():
     doc = ezdxf.new()
     msp = doc.modelspace()
-    light = msp.new_entity('TOLERANCE', {})
-    assert light.dxftype() == 'TOLERANCE'
-    assert light.dxf.dimstyle == 'Standard'
+    light = msp.new_entity("TOLERANCE", {})
+    assert light.dxftype() == "TOLERANCE"
+    assert light.dxf.dimstyle == "Standard"
     assert light.dxf.insert == (0, 0, 0)
-    assert light.dxf.content == ''
+    assert light.dxf.content == ""
     assert light.dxf.extrusion == (0, 0, 1)
     assert light.dxf.x_axis_vector == (1, 0, 0)

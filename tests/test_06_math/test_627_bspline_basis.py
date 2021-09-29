@@ -64,5 +64,5 @@ def test_find_span(basis_cls):
     assert basis_func.find_span(basis_func.max_t) == 9
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

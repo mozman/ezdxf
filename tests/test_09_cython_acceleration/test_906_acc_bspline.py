@@ -3,7 +3,7 @@
 
 import pytest
 
-pytest.importorskip('ezdxf.acc.bspline')
+pytest.importorskip("ezdxf.acc.bspline")
 
 from ezdxf.math._bspline import Basis as PyBasis, Evaluator as PyEvaluator
 from ezdxf.acc.bspline import Basis as CyBasis, Evaluator as CyEvaluator
@@ -23,7 +23,7 @@ POINTS = [
     Vec3(1.282, 0.703, 0.17),
     Vec3(0.79, 0.77, 0.169),
     Vec3(1.622, 0.831, 0.172),
-    Vec3(1.099, 0.922, 0.163)
+    Vec3(1.099, 0.922, 0.163),
 ]
 
 
@@ -149,5 +149,5 @@ def test_weighted_derivative_evaluator(py_weval, cy_weval, t_vector):
         assert close_vectors(d1, d2)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

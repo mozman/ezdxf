@@ -5,17 +5,17 @@ import pytest
 import ezdxf
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def doc():
     return ezdxf.new()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def modelspace(doc):
     return doc.modelspace()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def paperspace(doc):
     return doc.layout()
 
@@ -33,11 +33,11 @@ def test_set_units(modelspace):
 
 
 def test_delete_entity():
-    doc = ezdxf.new('R12')
+    doc = ezdxf.new("R12")
     layout = doc.modelspace()
     for _ in range(5):
         layout.add_line((0, 0), (10, 0))
-    lines = layout.query('LINE')
+    lines = layout.query("LINE")
     assert 5 == len(lines)
     line3 = lines[2]
     layout.delete_entity(line3)
@@ -78,8 +78,8 @@ def test_iter_layout(doc):
 
 def test_query_entities(doc):
     paperspace = doc.layout()
-    paperspace.add_line((0, 0), (1, 1), dxfattribs={'layer': 'lay_lines'})
-    paperspace.add_line((0, 0), (1, 1), dxfattribs={'layer': 'lay_lines'})
+    paperspace.add_line((0, 0), (1, 1), dxfattribs={"layer": "lay_lines"})
+    paperspace.add_line((0, 0), (1, 1), dxfattribs={"layer": "lay_lines"})
     entities = paperspace.query('*[layer ? "lay_.*"]')
     assert len(entities) == 2
     assert entities[0].doc is doc
@@ -100,33 +100,39 @@ def test_paper_space_get_layout_for_entity(doc):
 
 def test_default_entity_settings(modelspace):
     line = modelspace.add_line((0, 0), (1, 1))
-    assert '0' == line.dxf.layer
+    assert "0" == line.dxf.layer
     assert 256 == line.dxf.color
-    assert 'BYLAYER' == line.dxf.linetype
+    assert "BYLAYER" == line.dxf.linetype
     assert (0.0, 0.0, 1.0) == line.dxf.extrusion
 
 
 def test_clone_dxfattribs(modelspace):
     line = modelspace.add_line((0, 0), (1, 1))
     attribs = line.dxfattribs()
-    assert 'extrusion' not in attribs, "Don't clone unset attribs with default values."
+    assert (
+        "extrusion" not in attribs
+    ), "Don't clone unset attribs with default values."
 
 
 def test_invalid_layer_name(modelspace):
     with pytest.raises(ezdxf.DXFValueError):
-        modelspace.add_line((0, 0), (1, 1), dxfattribs={'layer': 'InvalidName*'})
+        modelspace.add_line(
+            (0, 0), (1, 1), dxfattribs={"layer": "InvalidName*"}
+        )
 
 
 def test_create_layout(doc):
-    assert len(doc.layouts) == 2, "New drawing should have 1 model space and 1 paper space"
+    assert (
+        len(doc.layouts) == 2
+    ), "New drawing should have 1 model space and 1 paper space"
 
     # create a new layout
-    layout = doc.layouts.new('ezdxf')
-    assert 'ezdxf' in doc.layouts
+    layout = doc.layouts.new("ezdxf")
+    assert "ezdxf" in doc.layouts
     assert len(layout) == 0, "New layout should contain no entities"
 
     with pytest.raises(ezdxf.DXFValueError):
-        doc.layouts.new('invalid characters: <>/\":;?*|=`')
+        doc.layouts.new('invalid characters: <>/":;?*|=`')
 
     layout.page_setup()  # default paper setup
     assert len(layout) == 1, "missing 'main' viewport entity"

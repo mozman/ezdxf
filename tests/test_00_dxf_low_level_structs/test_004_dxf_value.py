@@ -7,19 +7,19 @@ from ezdxf.sections.header import HeaderVar
 
 class TestDXFValue:
     def test_single_value_code(self):
-        var = HeaderVar((0, 'SECTION'))
+        var = HeaderVar((0, "SECTION"))
         assert 0 == var.code
 
     def test_single_value_value(self):
-        var = HeaderVar((0, 'SECTION'))
-        assert 'SECTION' == var.value
+        var = HeaderVar((0, "SECTION"))
+        assert "SECTION" == var.value
 
     def test_single_value_str(self):
-        var = HeaderVar((0, 'SECTION'))
-        assert '  0\nSECTION\n' == str(var)
+        var = HeaderVar((0, "SECTION"))
+        assert "  0\nSECTION\n" == str(var)
 
     def test_not_ispoint(self):
-        var = HeaderVar((0, 'SECTION'))
+        var = HeaderVar((0, "SECTION"))
         assert var.ispoint is False
 
     def test_ispoint(self):

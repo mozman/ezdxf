@@ -4,7 +4,12 @@ import pytest
 from math import radians
 from ezdxf.math import Vec3, BoundingBox
 from ezdxf.render.forms import cube
-from ezdxf.render.mesh import MeshVertexMerger, MeshBuilder, MeshTransformer, MeshAverageVertexMerger
+from ezdxf.render.mesh import (
+    MeshVertexMerger,
+    MeshBuilder,
+    MeshTransformer,
+    MeshAverageVertexMerger,
+)
 from ezdxf.addons import SierpinskyPyramid
 from ezdxf.layouts import VirtualLayout
 
@@ -58,7 +63,7 @@ def test_average_vertex_merger_index_of():
 def test_mesh_builder(msp):
     pyramid = SierpinskyPyramid(level=4, sides=3)
     pyramid.render(msp, merge=False)
-    meshes = msp.query('MESH')
+    meshes = msp.query("MESH")
     assert len(meshes) == 256
 
 
@@ -115,7 +120,7 @@ def msp():
     return VirtualLayout()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def cube_polyface():
     layout = VirtualLayout()
     p = layout.add_polyface()
@@ -142,7 +147,7 @@ def test_render_polyface(cube_polyface, msp):
     assert len(t.faces) == 6
     t.render_polyface(msp)
     new_polyface = msp[-1]
-    assert new_polyface.dxftype() == 'POLYLINE'
+    assert new_polyface.dxftype() == "POLYLINE"
     assert new_polyface.is_poly_face_mesh is True
     assert len(new_polyface.vertices) == 8 + 6
     assert new_polyface.vertices[0] is not cube_polyface.vertices[0]
@@ -171,25 +176,49 @@ def test_from_polyface_type_error(msp):
 @pytest.fixture
 def polyface_181_1(msp):
     e = msp.new_entity(
-        'POLYLINE',
+        "POLYLINE",
         dxfattribs={
-            'flags': 48,
-            'm_count': 2,
-            'n_count': 6,
+            "flags": 48,
+            "m_count": 2,
+            "n_count": 6,
         },
     )
-    e.append_vertex((25041.94191089287, 29272.95055566061, 0.0), dxfattribs={'flags': 64})
-    e.append_vertex((25020.29127589287, 29285.45055566061, 0.0), dxfattribs={'flags': 64})
-    e.append_vertex((25020.29127589287, 29310.45055566061, 0.0), dxfattribs={'flags': 64})
-    e.append_vertex((25041.94191089287, 29322.95055566061, 0.0), dxfattribs={'flags': 64})
-    e.append_vertex((25063.59254589287, 29310.45055566061, 0.0), dxfattribs={'flags': 64})
-    e.append_vertex((25063.59254589287, 29285.45055566061, 0.0), dxfattribs={'flags': 64})
-    e.append_vertex((25041.94191089287, 29272.95055566061, 50.0), dxfattribs={'flags': 64})
-    e.append_vertex((25020.29127589287, 29285.45055566061, 50.0), dxfattribs={'flags': 64})
-    e.append_vertex((25020.29127589287, 29310.45055566061, 50.0), dxfattribs={'flags': 64})
-    e.append_vertex((25041.94191089287, 29322.95055566061, 50.0), dxfattribs={'flags': 64})
-    e.append_vertex((25063.59254589287, 29310.45055566061, 50.0), dxfattribs={'flags': 64})
-    e.append_vertex((25063.59254589287, 29285.45055566061, 50.0), dxfattribs={'flags': 64})
+    e.append_vertex(
+        (25041.94191089287, 29272.95055566061, 0.0), dxfattribs={"flags": 64}
+    )
+    e.append_vertex(
+        (25020.29127589287, 29285.45055566061, 0.0), dxfattribs={"flags": 64}
+    )
+    e.append_vertex(
+        (25020.29127589287, 29310.45055566061, 0.0), dxfattribs={"flags": 64}
+    )
+    e.append_vertex(
+        (25041.94191089287, 29322.95055566061, 0.0), dxfattribs={"flags": 64}
+    )
+    e.append_vertex(
+        (25063.59254589287, 29310.45055566061, 0.0), dxfattribs={"flags": 64}
+    )
+    e.append_vertex(
+        (25063.59254589287, 29285.45055566061, 0.0), dxfattribs={"flags": 64}
+    )
+    e.append_vertex(
+        (25041.94191089287, 29272.95055566061, 50.0), dxfattribs={"flags": 64}
+    )
+    e.append_vertex(
+        (25020.29127589287, 29285.45055566061, 50.0), dxfattribs={"flags": 64}
+    )
+    e.append_vertex(
+        (25020.29127589287, 29310.45055566061, 50.0), dxfattribs={"flags": 64}
+    )
+    e.append_vertex(
+        (25041.94191089287, 29322.95055566061, 50.0), dxfattribs={"flags": 64}
+    )
+    e.append_vertex(
+        (25063.59254589287, 29310.45055566061, 50.0), dxfattribs={"flags": 64}
+    )
+    e.append_vertex(
+        (25063.59254589287, 29285.45055566061, 50.0), dxfattribs={"flags": 64}
+    )
     return e
 
 
@@ -201,31 +230,85 @@ def test_from_polyface_182_1(polyface_181_1):
 @pytest.fixture
 def polyface_181_2(msp):
     e = msp.new_entity(
-        'POLYLINE',
+        "POLYLINE",
         dxfattribs={
-            'flags': 16,
-            'm_count': 6,
-            'n_count': 3,
+            "flags": 16,
+            "m_count": 6,
+            "n_count": 3,
         },
     )
-    e.append_vertex((16606.65151901649, 81.88147523282441, 2099.9999999999995), dxfattribs={'flags': 64})
-    e.append_vertex((16606.65151901649, 81.88147523282441, 1199.9999999999998), dxfattribs={'flags': 64})
-    e.append_vertex((16606.65151901649, 81.88147523282441, 1199.9999999999998), dxfattribs={'flags': 64})
-    e.append_vertex((16606.65151901649, 1281.8814752328244, 2099.9999999999995), dxfattribs={'flags': 64})
-    e.append_vertex((16606.65151901649, 1281.8814752328244, 1199.9999999999998), dxfattribs={'flags': 64})
-    e.append_vertex((16606.65151901649, 1281.8814752328244, 1199.9999999999998), dxfattribs={'flags': 64})
-    e.append_vertex((16626.65151901649, 1281.8814752328244, 2099.9999999999995), dxfattribs={'flags': 64})
-    e.append_vertex((16626.65151901649, 1281.8814752328244, 1199.9999999999998), dxfattribs={'flags': 64})
-    e.append_vertex((16606.65151901649, 1281.8814752328244, 1199.9999999999998), dxfattribs={'flags': 64})
-    e.append_vertex((16626.65151901649, 81.88147523282441, 2099.9999999999995), dxfattribs={'flags': 64})
-    e.append_vertex((16626.65151901649, 81.88147523282441, 1199.9999999999998), dxfattribs={'flags': 64})
-    e.append_vertex((16606.65151901649, 81.88147523282441, 1199.9999999999998), dxfattribs={'flags': 64})
-    e.append_vertex((16626.65151901649, 81.88147523282441, 2099.9999999999995), dxfattribs={'flags': 64})
-    e.append_vertex((16626.65151901649, 81.88147523282441, 2099.9999999999995), dxfattribs={'flags': 64})
-    e.append_vertex((16606.65151901649, 81.88147523282441, 2099.9999999999995), dxfattribs={'flags': 64})
-    e.append_vertex((16626.65151901649, 1281.8814752328244, 2099.9999999999995), dxfattribs={'flags': 64})
-    e.append_vertex((16626.65151901649, 1281.8814752328244, 2099.9999999999995), dxfattribs={'flags': 64})
-    e.append_vertex((16606.65151901649, 1281.8814752328244, 2099.9999999999995), dxfattribs={'flags': 64})
+    e.append_vertex(
+        (16606.65151901649, 81.88147523282441, 2099.9999999999995),
+        dxfattribs={"flags": 64},
+    )
+    e.append_vertex(
+        (16606.65151901649, 81.88147523282441, 1199.9999999999998),
+        dxfattribs={"flags": 64},
+    )
+    e.append_vertex(
+        (16606.65151901649, 81.88147523282441, 1199.9999999999998),
+        dxfattribs={"flags": 64},
+    )
+    e.append_vertex(
+        (16606.65151901649, 1281.8814752328244, 2099.9999999999995),
+        dxfattribs={"flags": 64},
+    )
+    e.append_vertex(
+        (16606.65151901649, 1281.8814752328244, 1199.9999999999998),
+        dxfattribs={"flags": 64},
+    )
+    e.append_vertex(
+        (16606.65151901649, 1281.8814752328244, 1199.9999999999998),
+        dxfattribs={"flags": 64},
+    )
+    e.append_vertex(
+        (16626.65151901649, 1281.8814752328244, 2099.9999999999995),
+        dxfattribs={"flags": 64},
+    )
+    e.append_vertex(
+        (16626.65151901649, 1281.8814752328244, 1199.9999999999998),
+        dxfattribs={"flags": 64},
+    )
+    e.append_vertex(
+        (16606.65151901649, 1281.8814752328244, 1199.9999999999998),
+        dxfattribs={"flags": 64},
+    )
+    e.append_vertex(
+        (16626.65151901649, 81.88147523282441, 2099.9999999999995),
+        dxfattribs={"flags": 64},
+    )
+    e.append_vertex(
+        (16626.65151901649, 81.88147523282441, 1199.9999999999998),
+        dxfattribs={"flags": 64},
+    )
+    e.append_vertex(
+        (16606.65151901649, 81.88147523282441, 1199.9999999999998),
+        dxfattribs={"flags": 64},
+    )
+    e.append_vertex(
+        (16626.65151901649, 81.88147523282441, 2099.9999999999995),
+        dxfattribs={"flags": 64},
+    )
+    e.append_vertex(
+        (16626.65151901649, 81.88147523282441, 2099.9999999999995),
+        dxfattribs={"flags": 64},
+    )
+    e.append_vertex(
+        (16606.65151901649, 81.88147523282441, 2099.9999999999995),
+        dxfattribs={"flags": 64},
+    )
+    e.append_vertex(
+        (16626.65151901649, 1281.8814752328244, 2099.9999999999995),
+        dxfattribs={"flags": 64},
+    )
+    e.append_vertex(
+        (16626.65151901649, 1281.8814752328244, 2099.9999999999995),
+        dxfattribs={"flags": 64},
+    )
+    e.append_vertex(
+        (16606.65151901649, 1281.8814752328244, 2099.9999999999995),
+        dxfattribs={"flags": 64},
+    )
     return e
 
 

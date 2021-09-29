@@ -1,8 +1,15 @@
 # Copyright (c) 2018-2021 Manfred Moitzi
 # License: MIT License
 from ezdxf.render.forms import (
-    circle, close_polygon, cube, extrude, cylinder,
-    cone, square, box, ngon,
+    circle,
+    close_polygon,
+    cube,
+    extrude,
+    cylinder,
+    cone,
+    square,
+    box,
+    ngon,
 )
 from ezdxf.render.forms import open_arrow, arrow2
 from ezdxf.render.forms import (
@@ -106,8 +113,9 @@ def test_cylinder():
     assert len(mesh.faces) == 14  # 1x bottom, 1x top, 12x side
     assert len(mesh.vertices) == 24  # 12x bottom, 12x top
 
-    mesh = cylinder(count=12, radius=3, top_radius=2, top_center=(1, 0, 3),
-                    caps=False)
+    mesh = cylinder(
+        count=12, radius=3, top_radius=2, top_center=(1, 0, 3), caps=False
+    )
     assert len(mesh.faces) == 12
     assert len(mesh.vertices) == 24
     assert in_vertices((3, 0, 3), mesh.vertices)
@@ -115,13 +123,13 @@ def test_cylinder():
 
 
 def test_spline_interpolation():
-    vertices = [(0., 0.), (1., 2.), (3., 1.), (5., 3.)]
-    result = spline_interpolation(vertices, method='uniform', subdivide=4)
+    vertices = [(0.0, 0.0), (1.0, 2.0), (3.0, 1.0), (5.0, 3.0)]
+    result = spline_interpolation(vertices, method="uniform", subdivide=4)
     assert len(result) == 13  # (len-1) * subdivide + 1
-    assert Vec3(0, 0, 0).isclose(result[0]), 'expected start point'
-    assert Vec3(5, 3, 0).isclose(result[-1]), 'expected end point'
-    assert Vec3(1, 2, 0).isclose(result[4]), 'expected 2. fit point'
-    assert Vec3(3, 1, 0).isclose(result[8]), 'expected 3. fit point'
+    assert Vec3(0, 0, 0).isclose(result[0]), "expected start point"
+    assert Vec3(5, 3, 0).isclose(result[-1]), "expected end point"
+    assert Vec3(1, 2, 0).isclose(result[4]), "expected 2. fit point"
+    assert Vec3(3, 1, 0).isclose(result[8]), "expected 3. fit point"
 
 
 def test_spline_interpolated_profiles():
@@ -151,8 +159,9 @@ def test_cone():
 
 def test_rotation_form():
     profile = [(0, 0.1), (1, 1), (3, 1.5), (5, 3)]  # in xy-plane
-    mesh = rotation_form(count=16, profile=profile,
-                         axis=(1, 0, 0))  # rotation axis is the x-axis
+    mesh = rotation_form(
+        count=16, profile=profile, axis=(1, 0, 0)
+    )  # rotation axis is the x-axis
     assert len(mesh.vertices) == 16 * 4
     assert len(mesh.faces) == 16 * 3
 

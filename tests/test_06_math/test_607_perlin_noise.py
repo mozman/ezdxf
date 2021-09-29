@@ -36,6 +36,4 @@ def test_simplex_3d_octaves_range():
         z = i * 0.34
         for o in range(10):
             n = snoise3(x, y, z)
-            assert -1.0 <= n <= 1.0, (x, y, z, o+1, n)
-
-
+            assert -1.0 <= n <= 1.0, (x, y, z, o + 1, n)

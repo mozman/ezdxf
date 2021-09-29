@@ -75,4 +75,3 @@ class TestBinaryDataToDXFTags:
         tags = binary_data_to_dxf_tags(data, value_size=10)
         content = b"".join(t.value for t in tags[1:])
         assert data == content
-

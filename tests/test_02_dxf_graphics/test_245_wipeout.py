@@ -17,22 +17,22 @@ def doc():
 
 
 def test_wipeout_default_new():
-    entity = Wipeout.new(handle='ABBA', owner='0', dxfattribs={
-        'image_size': (640, 200)
-    })
-    assert entity.dxf.layer == '0'
+    entity = Wipeout.new(
+        handle="ABBA", owner="0", dxfattribs={"image_size": (640, 200)}
+    )
+    assert entity.dxf.layer == "0"
     assert entity.dxf.insert is None  # set by add_image()
     assert entity.dxf.u_pixel is None  # set by add_image()
     assert entity.dxf.v_pixel is None  # set by add_image()
     assert entity.dxf.class_version == 0
     assert entity.dxf.image_size == (640, 200)
-    assert entity.dxf.image_def_handle == '0'
+    assert entity.dxf.image_def_handle == "0"
     assert entity.dxf.flags == 3
     assert entity.dxf.clipping == 0
     assert entity.dxf.brightness == 50
     assert entity.dxf.contrast == 50
     assert entity.dxf.fade == 0
-    assert entity.dxf.image_def_reactor_handle == '0'
+    assert entity.dxf.image_def_reactor_handle == "0"
     assert entity.dxf.clipping_boundary_type == 1
     assert entity.dxf.clip_mode == 0
     assert entity.boundary_path[0] == (-0.5, -0.5)
@@ -49,8 +49,9 @@ def test_wipeout_write_dxf():
 def test_wipeout_creator_interface():
     layout = VirtualLayout()
     wipeout = layout.add_wipeout(
-        [(150, 100), (250, 100), (250, 200), (150, 200)])
-    assert wipeout.dxftype() == 'WIPEOUT'
+        [(150, 100), (250, 100), (250, 200), (150, 200)]
+    )
+    assert wipeout.dxftype() == "WIPEOUT"
     assert wipeout.dxf.insert == (150, 100, 0)
     assert wipeout.dxf.u_pixel == (100, 0, 0)
     assert wipeout.dxf.v_pixel == (0, 100, 0)
@@ -84,41 +85,47 @@ def test_copy_wipeout():
 
 def test_wipeout_vars(doc):
     doc.set_wipeout_variables(frame=1)
-    wipeout_variables = doc.rootdict['ACAD_WIPEOUT_VARS']
+    wipeout_variables = doc.rootdict["ACAD_WIPEOUT_VARS"]
     assert wipeout_variables.dxf.frame == 1
 
 
 def test_boundary_path_wcs():
     from ezdxf.layouts import VirtualLayout
+
     layout = VirtualLayout()
-    e = cast(Wipeout, layout.new_entity(
-        'WIPEOUT',
-        dxfattribs={
-            'layer': "0",
-            'class_version': 0,
-            'insert': (150.0, 100.0, 0.0),
-            'u_pixel': (100.0, 0.0, 0.0),
-            'v_pixel': (0.0, 100.0, 0.0),
-            'image_size': (1.0, 1.0, 0.0),
-            'image_def_handle': "0",
-            'flags': 7,
-            'clipping': 1,
-            'brightness': 50,
-            'contrast': 50,
-            'fade': 0,
-            'image_def_reactor_handle': "0",
-            'clipping_boundary_type': 2,
-            'count_boundary_points': 5,
-            'clip_mode': 0,
-        },
-    ))
-    e.set_boundary_path([
-        (-0.5, 0.5),
-        (0.5, 0.5),
-        (0.5, -0.5),
-        (-0.5, -0.5),
-        (-0.5, 0.5),
-    ])
+    e = cast(
+        Wipeout,
+        layout.new_entity(
+            "WIPEOUT",
+            dxfattribs={
+                "layer": "0",
+                "class_version": 0,
+                "insert": (150.0, 100.0, 0.0),
+                "u_pixel": (100.0, 0.0, 0.0),
+                "v_pixel": (0.0, 100.0, 0.0),
+                "image_size": (1.0, 1.0, 0.0),
+                "image_def_handle": "0",
+                "flags": 7,
+                "clipping": 1,
+                "brightness": 50,
+                "contrast": 50,
+                "fade": 0,
+                "image_def_reactor_handle": "0",
+                "clipping_boundary_type": 2,
+                "count_boundary_points": 5,
+                "clip_mode": 0,
+            },
+        ),
+    )
+    e.set_boundary_path(
+        [
+            (-0.5, 0.5),
+            (0.5, 0.5),
+            (0.5, -0.5),
+            (-0.5, -0.5),
+            (-0.5, 0.5),
+        ]
+    )
     path = e.boundary_path_wcs()
     assert path[0] == (150, 100)
     assert path[1] == (250, 100)

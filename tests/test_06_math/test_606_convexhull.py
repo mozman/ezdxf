@@ -8,7 +8,7 @@ from io import StringIO
 
 
 def import_asc_coords(file_obj):
-    """ Import allplan asc-format point file.
+    """Import allplan asc-format point file.
 
     returns: a dictionary of Coordinates ('name': Coordinate)
     """
@@ -30,9 +30,9 @@ def test_convex_hull_raises():
     with pytest.raises(ValueError):
         _ = convex_hull_2d([])
     with pytest.raises(ValueError):
-        _ = convex_hull_2d([(0., 0.), (0., 0.)])
+        _ = convex_hull_2d([(0.0, 0.0), (0.0, 0.0)])
     with pytest.raises(ValueError):
-        _ = convex_hull_2d([(0., 0.), (0., 0.), (0., 0.), (0., 0.)])
+        _ = convex_hull_2d([(0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.0, 0.0)])
 
 
 def test_convex_hull_set1():

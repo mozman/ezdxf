@@ -23,10 +23,15 @@ def test_to_wcs():
 
 def test_points_to_wcs():
     ucs = PassTroughUCS()
-    assert list(ucs.points_to_wcs([(1, 2, 3), (3, 4, 5)])) == [Vec3(1, 2, 3), Vec3(3, 4, 5)]
+    assert list(ucs.points_to_wcs([(1, 2, 3), (3, 4, 5)])) == [
+        Vec3(1, 2, 3),
+        Vec3(3, 4, 5),
+    ]
 
     ucs2 = UCS()
-    assert list(ucs.points_to_wcs([(1, 2, 3), (3, 4, 5)])) == list(ucs2.points_to_wcs([(1, 2, 3), (3, 4, 5)]))
+    assert list(ucs.points_to_wcs([(1, 2, 3), (3, 4, 5)])) == list(
+        ucs2.points_to_wcs([(1, 2, 3), (3, 4, 5)])
+    )
 
 
 def test_to_ocs():
@@ -37,7 +42,10 @@ def test_to_ocs():
 
 def test_points_to_ocs():
     ucs = PassTroughUCS()
-    assert list(ucs.points_to_ocs([(1, 2, 3), (3, 4, 5)])) == [Vec3(1, 2, 3), Vec3(3, 4, 5)]
+    assert list(ucs.points_to_ocs([(1, 2, 3), (3, 4, 5)])) == [
+        Vec3(1, 2, 3),
+        Vec3(3, 4, 5),
+    ]
 
 
 def test_from_wcs():
@@ -56,4 +64,6 @@ def test_points_from_wcs():
     assert list(ucs.points_from_wcs(points)) == points
 
     ucs2 = UCS()
-    assert list(ucs.points_from_wcs(points)) == list(ucs2.points_from_wcs(points))
+    assert list(ucs.points_from_wcs(points)) == list(
+        ucs2.points_from_wcs(points)
+    )

@@ -26,10 +26,10 @@ def test_true_color(entity):
     entity.dxf.true_color = 0x0F0F0F
     assert 0x0F0F0F == entity.dxf.true_color
     assert (
-               0x0F,
-               0x0F,
-               0x0F,
-           ) == entity.rgb  # shortcut for modern graphic entities
+        0x0F,
+        0x0F,
+        0x0F,
+    ) == entity.rgb  # shortcut for modern graphic entities
     entity.rgb = (255, 255, 255)  # shortcut for modern graphic entities
     assert 0xFFFFFF == entity.dxf.true_color
 

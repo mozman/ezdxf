@@ -33,8 +33,12 @@ def test_add_station_3d():
 
 
 def test_add_spline_segment():
-    t = CurvedTrace.from_spline(BSpline.from_fit_points([(1, 0), (3, 1), (5, -1), (6, 0)]), start_width=2, end_width=1,
-                                segments=10)
+    t = CurvedTrace.from_spline(
+        BSpline.from_fit_points([(1, 0), (3, 1), (5, -1), (6, 0)]),
+        start_width=2,
+        end_width=1,
+        segments=10,
+    )
     assert len(t) == 11
 
 
@@ -58,8 +62,18 @@ def test_closed_linear_path():
     t.add_station((0, 0), 1, 1)
     faces = list(t.faces())
     assert len(faces) == 4
-    assert faces[0] == (Vec2(0.5, 0.5), Vec2(-0.5, -0.5), Vec2(1.5, -0.5), Vec2(0.5, 0.5))
-    assert faces[3] == (Vec2(0.5, 0.5), Vec2(-0.5, 1.5), Vec2(-0.5, -0.5), Vec2(0.5, 0.5))
+    assert faces[0] == (
+        Vec2(0.5, 0.5),
+        Vec2(-0.5, -0.5),
+        Vec2(1.5, -0.5),
+        Vec2(0.5, 0.5),
+    )
+    assert faces[3] == (
+        Vec2(0.5, 0.5),
+        Vec2(-0.5, 1.5),
+        Vec2(-0.5, -0.5),
+        Vec2(0.5, 0.5),
+    )
 
 
 def test_two_straight_faces():
@@ -110,22 +124,22 @@ def test_virtual_entities_added_to_entity_database():
     t.add_station((0, 0), 1, 1)
     t.add_station((1, 0), 0, 0)
 
-    dxfattribs = {'layer': 'TEST'}
-    solid = list(t.virtual_entities('SOLID', dxfattribs, doc))[0]
-    assert solid.DXFTYPE == 'SOLID'
-    assert solid.dxf.layer == 'TEST'
+    dxfattribs = {"layer": "TEST"}
+    solid = list(t.virtual_entities("SOLID", dxfattribs, doc))[0]
+    assert solid.DXFTYPE == "SOLID"
+    assert solid.dxf.layer == "TEST"
     assert solid.dxf.handle in doc.entitydb
     msp.add_entity(solid)
 
-    trace = list(t.virtual_entities('TRACE', dxfattribs, doc))[0]
-    assert trace.DXFTYPE == 'TRACE'
-    assert trace.dxf.layer == 'TEST'
+    trace = list(t.virtual_entities("TRACE", dxfattribs, doc))[0]
+    assert trace.DXFTYPE == "TRACE"
+    assert trace.dxf.layer == "TEST"
     assert trace.dxf.handle in doc.entitydb
     msp.add_entity(trace)
 
-    face = list(t.virtual_entities('3DFACE', dxfattribs, doc))[0]
-    assert face.DXFTYPE == '3DFACE'
-    assert face.dxf.layer == 'TEST'
+    face = list(t.virtual_entities("3DFACE", dxfattribs, doc))[0]
+    assert face.DXFTYPE == "3DFACE"
+    assert face.dxf.layer == "TEST"
     assert face.dxf.handle in doc.entitydb
     msp.add_entity(face)
 
@@ -134,20 +148,23 @@ def test_virtual_entities_added_to_entity_database():
 
 def test_issue_191():
     from ezdxf.entities import factory
+
     e = factory.new(
-        'LWPOLYLINE',
+        "LWPOLYLINE",
         dxfattribs={
-            'flags': 1,
+            "flags": 1,
         },
     )
-    e.set_points([
-        (421846.9857097387, -36908.41493252141, 0.0, 50.0, 0.52056705),
-        (421846.9857097387, -36908.41493252139, 0.0, 50.0, 0.52056705),
-    ])
+    e.set_points(
+        [
+            (421846.9857097387, -36908.41493252141, 0.0, 50.0, 0.52056705),
+            (421846.9857097387, -36908.41493252139, 0.0, 50.0, 0.52056705),
+        ]
+    )
     trace = TraceBuilder.from_polyline(e, segments=64)
     assert len(trace) == 1
     assert len(list(trace.faces())) == 32
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

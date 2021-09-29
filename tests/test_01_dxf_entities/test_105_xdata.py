@@ -755,9 +755,7 @@ class TestXDataTransformation:
         assert math.isclose(2, data[6].value)
 
     def test_scale(self, tags):
-        data = Tags(
-            transform_xdata_tags(tags, Matrix44.scale(2, 2, 2))
-        )
+        data = Tags(transform_xdata_tags(tags, Matrix44.scale(2, 2, 2)))
         # 1010 - fixed 3D point -> no transformation
         assert Vec3((10, 20, 30)).isclose(data[1].value)
         # 1011 - move, scale, rotate and mirror
@@ -772,9 +770,7 @@ class TestXDataTransformation:
         assert math.isclose(4, data[6].value)
 
     def test_mirror_x(self, tags):
-        data = Tags(
-            transform_xdata_tags(tags, Matrix44.scale(-1, 1, 1))
-        )
+        data = Tags(transform_xdata_tags(tags, Matrix44.scale(-1, 1, 1)))
         # 1010 - fixed 3D point -> no transformation
         assert Vec3((10, 20, 30)).isclose(data[1].value)
         # 1011 - move, scale, rotate and mirror
@@ -789,9 +785,7 @@ class TestXDataTransformation:
         assert math.isclose(2, data[6].value)
 
     def test_scale_and_mirror_y(self, tags):
-        data = Tags(
-            transform_xdata_tags(tags, Matrix44.scale(2, -2, 2))
-        )
+        data = Tags(transform_xdata_tags(tags, Matrix44.scale(2, -2, 2)))
         # 1011 - move, scale, rotate and mirror
         assert Vec3((22, -42, 62)).isclose(data[2].value)
         # 1012 - scale, rotate and mirror
@@ -804,9 +798,7 @@ class TestXDataTransformation:
         assert math.isclose(4, data[6].value)
 
     def test_rotate(self, tags):
-        data = Tags(
-            transform_xdata_tags(tags, Matrix44.z_rotate(math.pi/2))
-        )
+        data = Tags(transform_xdata_tags(tags, Matrix44.z_rotate(math.pi / 2)))
         # 1011 - move, scale, rotate and mirror
         assert Vec3((-21, 11, 31)).isclose(data[2].value)
         # 1012 - scale, rotate and mirror

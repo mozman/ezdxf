@@ -85,7 +85,7 @@ class HandlesMock:
     @property
     def next(self):
         self.calls += 1
-        return 'FF'
+        return "FF"
 
 
 class TestTags:
@@ -105,20 +105,20 @@ class TestTags:
         assert TEST_TAGREADER == result
 
     def test_update(self, tags):
-        tags.update(DXFTag(2, 'XHEADER'))
-        assert 'XHEADER' == tags[1].value
+        tags.update(DXFTag(2, "XHEADER"))
+        assert "XHEADER" == tags[1].value
 
     def test_update_error(self, tags):
         with pytest.raises(DXFValueError):
-            tags.update(DXFTag(999, 'DOESNOTEXIST'))
+            tags.update(DXFTag(999, "DOESNOTEXIST"))
 
     def test_set_first(self, tags):
-        tags.set_first(DXFTag(999, 'NEWTAG'))
-        assert 'NEWTAG' == tags[-1].value
+        tags.set_first(DXFTag(999, "NEWTAG"))
+        assert "NEWTAG" == tags[-1].value
 
     def test_find_first(self, tags):
         value = tags.get_first_value(9)
-        assert '$ACADVER' == value
+        assert "$ACADVER" == value
 
     def test_find_first_default(self, tags):
         value = tags.get_first_value(1234, default=999)
@@ -130,11 +130,11 @@ class TestTags:
 
     def test_get_handle_5(self):
         tags = Tags.from_text(TESTHANDLE5)
-        assert 'F5' == tags.get_handle()
+        assert "F5" == tags.get_handle()
 
     def test_get_handle_105(self):
         tags = Tags.from_text(TESTHANDLE105)
-        assert 'F105' == tags.get_handle()
+        assert "F105" == tags.get_handle()
 
     def test_get_handle_create_new(self, tags):
         with pytest.raises(DXFValueError):
@@ -170,7 +170,7 @@ class TestTags:
         tags = Tags.from_text(TAGS_WITH_VERTEX)
         assert len(tags) == 2
         v = tags[1]
-        assert v.value == (1., 2., 3.)
+        assert v.value == (1.0, 2.0, 3.0)
 
         tags2 = deepcopy(tags)
         assert id(tags) != id(tags2)
@@ -180,16 +180,16 @@ class TestTags:
 
     def test_replace_handle_5(self):
         tags = Tags.from_text(TESTHANDLE5)
-        tags.replace_handle('AA')
-        assert 'AA' == tags.get_handle()
+        tags.replace_handle("AA")
+        assert "AA" == tags.get_handle()
 
     def test_replace_handle_105(self):
         tags = Tags.from_text(TESTHANDLE105)
-        tags.replace_handle('AA')
-        assert 'AA' == tags.get_handle()
+        tags.replace_handle("AA")
+        assert "AA" == tags.get_handle()
 
     def test_replace_no_handle_without_error(self, tags):
-        tags.replace_handle('AA')
+        tags.replace_handle("AA")
         with pytest.raises(DXFValueError):
             tags.get_handle()  # handle still doesn't exist
 
@@ -210,25 +210,26 @@ class TestTags:
         assert tags.has_tag(7) is False
 
     def test_pop_tags(self):
-        tags = Tags([
-            DXFTag(1, 'name1'),
-            DXFTag(40, 1),
-            DXFTag(40, 2),
-
-            DXFTag(1, 'name2'),
-            DXFTag(40, 3),
-            DXFTag(1, 'name3'),
-            DXFTag(40, 4),
-            DXFTag(1, 'name4'),
-        ])
-        result = list(tags.pop_tags(codes=(40, )))
+        tags = Tags(
+            [
+                DXFTag(1, "name1"),
+                DXFTag(40, 1),
+                DXFTag(40, 2),
+                DXFTag(1, "name2"),
+                DXFTag(40, 3),
+                DXFTag(1, "name3"),
+                DXFTag(40, 4),
+                DXFTag(1, "name4"),
+            ]
+        )
+        result = list(tags.pop_tags(codes=(40,)))
         assert len(result) == 4
         assert result[0] == (40, 1)
         assert result[-1] == (40, 4)
 
         assert len(tags) == 4
-        assert tags[0] == (1, 'name1')
-        assert tags[-1] == (1, 'name4')
+        assert tags[0] == (1, "name1")
+        assert tags[-1] == (1, "name4")
 
 
 DUPLICATETAGS = """  0
@@ -278,7 +279,9 @@ class TestTagsCollect:
         assert "TWO" == collected_tags[2].value
 
     def test_with_start_and_end_param(self, tags):
-        collected_tags = tags.collect_consecutive_tags([1, 2, 3], start=6, end=9)
+        collected_tags = tags.collect_consecutive_tags(
+            [1, 2, 3], start=6, end=9
+        )
         assert 3 == len(collected_tags)
         assert "THREE" == collected_tags[2].value
 

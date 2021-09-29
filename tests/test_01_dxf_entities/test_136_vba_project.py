@@ -6,12 +6,14 @@ from ezdxf.lldxf.tagwriter import TagCollector
 
 
 def test_vba_project():
-    doc = ezdxf.new('R2007')
-    vba = doc.objects.new_entity('VBA_PROJECT', {})  # type: VBAProject
-    assert vba.dxftype() == 'VBA_PROJECT'
+    doc = ezdxf.new("R2007")
+    vba = doc.objects.new_entity("VBA_PROJECT", {})  # type: VBAProject
+    assert vba.dxftype() == "VBA_PROJECT"
     assert len(vba.data) == 0
 
-    data = b'abcdefghij' * 100  # 1000 bytes => 8 DXFBinaryTags() with <= 127 bytes
+    data = (
+        b"abcdefghij" * 100
+    )  # 1000 bytes => 8 DXFBinaryTags() with <= 127 bytes
     assert len(data) == 1000
 
     vba.data = data
@@ -44,4 +46,4 @@ A0B0C0D0E0F0
 def test_load_vba_project():
     vba = VBAProject.from_text(VBA_PROJECT)
     assert len(vba.data) == 6
-    assert vba.data == b'\xA0\xB0\xC0\xD0\xE0\xF0'
+    assert vba.data == b"\xA0\xB0\xC0\xD0\xE0\xF0"

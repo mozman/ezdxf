@@ -14,7 +14,7 @@ expected_points = [
     (2.7637635905799862, 1.5086926753401932),
     (2.6704397998515645, 1.9952561538526452),
     (2.3566156629790327, 2.3766072153088964),
-    (1.8936094203448928, 2.5322897289776636)
+    (1.8936094203448928, 2.5322897289776636),
 ]
 
 
@@ -27,8 +27,8 @@ def test_approximate():
 
 def test_radius():
     spiral = EulerSpiral(2.0)
-    assert isclose(spiral.radius(1), 4.)
-    assert isclose(spiral.radius(0), 0.)
+    assert isclose(spiral.radius(1), 4.0)
+    assert isclose(spiral.radius(0), 0.0)
 
 
 def test_tangent():

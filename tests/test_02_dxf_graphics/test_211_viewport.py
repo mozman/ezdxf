@@ -9,7 +9,7 @@ from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
 TEST_CLASS = Viewport
-TEST_TYPE = 'VIEWPORT'
+TEST_TYPE = "VIEWPORT"
 
 ENTITY_R12 = """0
 VIEWPORT
@@ -215,6 +215,7 @@ def entity(request):
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
+
     assert TEST_TYPE in ENTITY_CLASSES
 
 
@@ -224,15 +225,19 @@ def test_default_init():
 
 
 def test_default_new():
-    entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
-        'color': '7',
-        'view_direction_vector': (1, 2, 3),
-    })
-    assert entity.dxf.layer == '0'
+    entity = TEST_CLASS.new(
+        handle="ABBA",
+        owner="0",
+        dxfattribs={
+            "color": "7",
+            "view_direction_vector": (1, 2, 3),
+        },
+    )
+    assert entity.dxf.layer == "0"
     assert entity.dxf.view_direction_vector == (1, 2, 3)
-    assert entity.dxf.view_direction_vector.x == 1, 'is not Vec3 compatible'
-    assert entity.dxf.view_direction_vector.y == 2, 'is not Vec3 compatible'
-    assert entity.dxf.view_direction_vector.z == 3, 'is not Vec3 compatible'
+    assert entity.dxf.view_direction_vector.x == 1, "is not Vec3 compatible"
+    assert entity.dxf.view_direction_vector.y == 2, "is not Vec3 compatible"
+    assert entity.dxf.view_direction_vector.z == 3, "is not Vec3 compatible"
     assert entity.dxf.view_target_point == (0, 0, 0)
     assert entity.dxf.view_twist_angle == 0
     assert entity.dxf.view_height == 1
@@ -251,7 +256,7 @@ def test_default_new():
 
 
 def test_load_from_text(entity):
-    assert entity.dxf.layer == 'VIEWPORTS'
+    assert entity.dxf.layer == "VIEWPORTS"
     assert entity.dxf.center == (0, 0, 0)
 
 
@@ -273,28 +278,30 @@ def test_write_dxf_r12():
     collector = TagCollector(dxfversion=DXF12, optional=True)
     viewport.export_dxf(collector)
     xdata = ExtendedTags(DXFTag(c, v) for c, v in collector.tags).xdata[0]
-    assert xdata[0] == (1001, 'ACAD')
-    assert xdata[1] == (1000, 'MVIEW')
-    assert xdata[2] == (1002, '{')
-    assert xdata[-1] == (1002, '}')
+    assert xdata[0] == (1001, "ACAD")
+    assert xdata[1] == (1000, "MVIEW")
+    assert xdata[2] == (1002, "{")
+    assert xdata[-1] == (1002, "}")
 
 
 def test_viewport_set_frozen_layer_names():
-    viewport = Viewport.new('F000')
-    layer_names = ['bricks', 'steel', 'glass']
+    viewport = Viewport.new("F000")
+    layer_names = ["bricks", "steel", "glass"]
     viewport.frozen_layers = layer_names
     assert layer_names == viewport.frozen_layers
 
 
 def test_post_load_hook_resolves_frozen_layer_handles_into_names():
-    doc = ezdxf.new('R2000')
-    l1 = doc.layers.new('Layer1')
-    l2 = doc.layers.new('Layer2')
+    doc = ezdxf.new("R2000")
+    l1 = doc.layers.new("Layer1")
+    l2 = doc.layers.new("Layer2")
     handles = [l1.dxf.handle, l2.dxf.handle]
     viewport = Viewport.from_text(ENTITY_R2000)
     # implant some handles
     viewport.frozen_layers = handles
     result = viewport.post_load_hook(doc)
     assert result is None
-    assert viewport.frozen_layers == ['Layer1', 'Layer2'], \
-        'Layer handles must be resolved'
+    assert viewport.frozen_layers == [
+        "Layer1",
+        "Layer2",
+    ], "Layer handles must be resolved"

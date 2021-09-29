@@ -3,6 +3,7 @@
 import pytest
 import pickle
 from ezdxf.math import Vec3, Vec2, Matrix44, close_vectors
+
 # Import from 'ezdxf.math._bezier3p' to test Python implementation
 from ezdxf.math._bezier3p import Bezier3P
 from ezdxf.acc import USE_C_EXT
@@ -10,10 +11,11 @@ from ezdxf.acc import USE_C_EXT
 curve_classes = [Bezier3P]
 if USE_C_EXT:
     from ezdxf.acc.bezier3p import Bezier3P as CBezier3P
+
     curve_classes.append(CBezier3P)
 
-DEFPOINTS2D = [(0., 0.), (5., 5.), (10., 0.)]
-DEFPOINTS3D = [(0.0, 0.0, 0.0), (50., 50., 50.), (100., 0., 0.)]
+DEFPOINTS2D = [(0.0, 0.0), (5.0, 5.0), (10.0, 0.0)]
+DEFPOINTS3D = [(0.0, 0.0, 0.0), (50.0, 50.0, 50.0), (100.0, 0.0, 0.0)]
 
 
 @pytest.fixture(params=curve_classes)
@@ -24,7 +26,7 @@ def bezier(request):
 def test_accepts_2d_points(bezier):
     curve = bezier(DEFPOINTS2D)
     for index, chk in enumerate(Vec2.generate(POINTS2D)):
-        assert curve.point(index * .1).isclose(chk)
+        assert curve.point(index * 0.1).isclose(chk)
 
 
 def test_objects_are_immutable(bezier):
@@ -38,14 +40,17 @@ def test_approximate(bezier):
     with pytest.raises(ValueError):
         list(curve.approximate(0))
     assert list(curve.approximate(1)) == [DEFPOINTS2D[0], DEFPOINTS2D[-1]]
-    assert list(curve.approximate(2)) == [POINTS2D[0], POINTS2D[5],
-                                          POINTS2D[-1]]
+    assert list(curve.approximate(2)) == [
+        POINTS2D[0],
+        POINTS2D[5],
+        POINTS2D[-1],
+    ]
 
 
 def test_first_derivative(bezier):
     dbcurve = bezier(DEFPOINTS2D)
     for index, chk in enumerate(Vec2.generate(TANGENTS2D)):
-        assert dbcurve.tangent(index * .1).isclose(chk)
+        assert dbcurve.tangent(index * 0.1).isclose(chk)
 
 
 def test_reverse_points(bezier):
@@ -60,8 +65,9 @@ def test_transformation_interface(bezier):
     curve = bezier(DEFPOINTS3D)
     new = curve.transform(Matrix44.translate(1, 2, 3))
     assert new.control_points[0] == Vec3(DEFPOINTS3D[0]) + (1, 2, 3)
-    assert new.control_points[0] != curve.control_points[
-        0], 'expected a new object'
+    assert (
+        new.control_points[0] != curve.control_points[0]
+    ), "expected a new object"
 
 
 def test_transformation_returns_always_3d_curves(bezier):
@@ -99,7 +105,7 @@ POINTS2D = [
     (7.0, 2.1),
     (8.0, 1.6),
     (9.00, 0.9),
-    (10.0, 0.0)
+    (10.0, 0.0),
 ]
 TANGENTS2D = [
     (10.0, 10.0),
@@ -112,8 +118,8 @@ TANGENTS2D = [
     (10.0, -4.0),
     (10.0, -6.0),
     (10.0, -8.0),
-    (10.0, -10.0)
+    (10.0, -10.0),
 ]
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

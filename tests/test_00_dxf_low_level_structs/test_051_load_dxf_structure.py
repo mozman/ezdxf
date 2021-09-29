@@ -10,25 +10,25 @@ from ezdxf.lldxf.const import DXFStructureError
 def test_loader():
     sections = load_dxf_structure(internal_tag_compiler(TEST_HEADER))
     assert len(sections) == 3
-    header = sections['HEADER']
+    header = sections["HEADER"]
     assert len(header) == 1  # header load_section has always only one entity
     header_entity = header[0]
-    assert header_entity[0] == (0, 'SECTION')
-    assert header_entity[1] == (2, 'HEADER')
-    assert header_entity[2] == (9, '$ACADVER')
-    assert header_entity[-1] == (3, 'ANSI_1252')
+    assert header_entity[0] == (0, "SECTION")
+    assert header_entity[1] == (2, "HEADER")
+    assert header_entity[2] == (9, "$ACADVER")
+    assert header_entity[-1] == (3, "ANSI_1252")
 
-    tables = sections['TABLES']
+    tables = sections["TABLES"]
     assert len(tables) == 1
     tables_header = tables[0]
-    assert tables_header[0] == (0, 'SECTION')
-    assert tables_header[1] == (2, 'TABLES')
+    assert tables_header[0] == (0, "SECTION")
+    assert tables_header[1] == (2, "TABLES")
 
-    entities = sections['ENTITIES']
+    entities = sections["ENTITIES"]
     assert len(entities) == 1
     entities_header = entities[0]
-    assert entities_header[0] == (0, 'SECTION')
-    assert entities_header[1] == (2, 'ENTITIES')
+    assert entities_header[0] == (0, "SECTION")
+    assert entities_header[1] == (2, "ENTITIES")
 
 
 def test_error_section():
@@ -45,17 +45,21 @@ def validator(text):
 
 
 def test_valid_structure():
-    sections = validator("  0\nSECTION\n 2\nHEADER\n  0\nENDSEC\n  0\nSECTION\n  2\nCLASSES\n  0\nENDSEC\n  0\nEOF\n")
+    sections = validator(
+        "  0\nSECTION\n 2\nHEADER\n  0\nENDSEC\n  0\nSECTION\n  2\nCLASSES\n  0\nENDSEC\n  0\nEOF\n"
+    )
     assert len(sections) == 2
-    assert len(sections['HEADER']) == 1  # ENDSEC is not present
-    assert len(sections['CLASSES']) == 1  # ENDSEC is not present
+    assert len(sections["HEADER"]) == 1  # ENDSEC is not present
+    assert len(sections["CLASSES"]) == 1  # ENDSEC is not present
 
 
 def test_eof_without_lineending():
-    sections = validator("  0\nSECTION\n 2\nHEADER\n  0\nENDSEC\n  0\nSECTION\n  2\nCLASSES\n  0\nENDSEC\n  0\nEOF")
+    sections = validator(
+        "  0\nSECTION\n 2\nHEADER\n  0\nENDSEC\n  0\nSECTION\n  2\nCLASSES\n  0\nENDSEC\n  0\nEOF"
+    )
     assert len(sections) == 2
-    assert len(sections['HEADER']) == 1  # ENDSEC is not present
-    assert len(sections['CLASSES']) == 1  # ENDSEC is not present
+    assert len(sections["HEADER"]) == 1  # ENDSEC is not present
+    assert len(sections["CLASSES"]) == 1  # ENDSEC is not present
 
 
 def test_missing_eof():
@@ -65,20 +69,28 @@ def test_missing_eof():
 
 def test_missing_endsec():
     with pytest.raises(DXFStructureError):
-        validator("  0\nSECTION\n 2\nHEADER\n  0\nSECTION\n  2\nCLASSES\n  0\nENDSEC\n  0\nEOF\n")
+        validator(
+            "  0\nSECTION\n 2\nHEADER\n  0\nSECTION\n  2\nCLASSES\n  0\nENDSEC\n  0\nEOF\n"
+        )
 
     with pytest.raises(DXFStructureError):
-        validator("  0\nSECTION\n 2\nHEADER\n  0\nSECTION\n  2\nCLASSES\n  0\nEOF\n")
+        validator(
+            "  0\nSECTION\n 2\nHEADER\n  0\nSECTION\n  2\nCLASSES\n  0\nEOF\n"
+        )
 
 
 def test_missing_endsec_and_eof():
     with pytest.raises(DXFStructureError):
-        validator("  0\nSECTION\n 2\nHEADER\n  0\nENDSEC\n  0\nSECTION\n  2\nCLASSES\n")
+        validator(
+            "  0\nSECTION\n 2\nHEADER\n  0\nENDSEC\n  0\nSECTION\n  2\nCLASSES\n"
+        )
 
 
 def test_missing_section():
     with pytest.raises(DXFStructureError):
-        validator("  0\nENDSEC\n  0\nSECTION\n  2\nCLASSES\n  0\nENDSEC\n  0\nEOF\n")
+        validator(
+            "  0\nENDSEC\n  0\nSECTION\n  2\nCLASSES\n  0\nENDSEC\n  0\nEOF\n"
+        )
 
 
 TEST_HEADER = """  0

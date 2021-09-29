@@ -59,4 +59,3 @@ def test_rotate_center(square):
     square.rotate(90, center=(2, 2))
     assert square[0].isclose((2, 2))
     assert square[2].isclose((1, 3))
-

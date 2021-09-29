@@ -6,15 +6,15 @@ import ezdxf
 from ezdxf.entities.acis import tags2textlines, textlines2tags
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def layout():
-    doc = ezdxf.new('R2007')
+    doc = ezdxf.new("R2007")
     return doc.modelspace()
 
 
 def test_body_default_settings(layout):
     body = layout.add_body()
-    assert '0' == body.dxf.layer
+    assert "0" == body.dxf.layer
 
 
 def test_body_getting_acis_data(layout):
@@ -24,7 +24,7 @@ def test_body_getting_acis_data(layout):
 
 def test_region_default_settings(layout):
     region = layout.add_region()
-    assert region.dxf.layer == '0'
+    assert region.dxf.layer == "0"
 
 
 def test_region_getting_acis_data(layout):
@@ -34,8 +34,8 @@ def test_region_getting_acis_data(layout):
 
 def test_3dsolid_default_settings(layout):
     _3dsolid = layout.add_3dsolid()
-    assert _3dsolid.dxf.layer == '0'
-    assert _3dsolid.dxf.history_handle == '0'
+    assert _3dsolid.dxf.layer == "0"
+    assert _3dsolid.dxf.history_handle == "0"
 
 
 def test_3dsolid_getting_acis_data(layout):
@@ -55,17 +55,17 @@ vertex_template $-1 -1 3 0 1 8 #"""
 
 
 def test_tag2lines():
-    expected = 'AB' * 50 + 'CD' * 50 + 'EF' * 50
+    expected = "AB" * 50 + "CD" * 50 + "EF" * 50
     tags = [
-        (1, 'AB' * 50),
-        (3, 'CD' * 50),
-        (3, 'EF' * 50),
+        (1, "AB" * 50),
+        (3, "CD" * 50),
+        (3, "EF" * 50),
     ]
     assert list(tags2textlines(tags))[0] == expected
 
 
 def test_lines2tags():
-    line = 'AB' * 100 + 'CD' * 100 + 'EF' * 100
+    line = "AB" * 100 + "CD" * 100 + "EF" * 100
     result = list(textlines2tags([line]))
     code, value = result[0]
     assert code == 1

@@ -36,6 +36,7 @@ AcDbSubDMesh
 0
 """
 
+
 @pytest.fixture
 def entity():
     return Mesh.from_text(MESH)
@@ -43,24 +44,29 @@ def entity():
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert 'MESH' in ENTITY_CLASSES
+
+    assert "MESH" in ENTITY_CLASSES
 
 
 def test_default_init():
     entity = Mesh()
-    assert entity.dxftype() == 'MESH'
+    assert entity.dxftype() == "MESH"
     assert entity.dxf.handle is None
     assert entity.dxf.owner is None
 
 
 def test_default_new():
-    entity = Mesh.new(handle='ABBA', owner='0', dxfattribs={
-        'color': 7,
-        'version': 3,
-        'blend_crease': 1,
-        'subdivision_levels': 2,
-    })
-    assert entity.dxf.layer == '0'
+    entity = Mesh.new(
+        handle="ABBA",
+        owner="0",
+        dxfattribs={
+            "color": 7,
+            "version": 3,
+            "blend_crease": 1,
+            "subdivision_levels": 2,
+        },
+    )
+    assert entity.dxf.layer == "0"
     assert entity.dxf.color == 7
     assert entity.dxf.version == 3
     assert entity.dxf.blend_crease == 1
@@ -68,8 +74,8 @@ def test_default_new():
 
 
 def test_load_from_text(entity):
-    assert entity.dxf.layer == '0'
-    assert entity.dxf.color == 256, 'default color is 256 (by layer)'
+    assert entity.dxf.layer == "0"
+    assert entity.dxf.color == 256, "default color is 256 (by layer)"
     assert entity.dxf.version == 2
     assert entity.dxf.blend_crease == 0
     assert entity.dxf.subdivision_levels == 0
@@ -82,12 +88,12 @@ def test_write_dxf():
     assert result == expected
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def doc():
-    return ezdxf.new('R2000')
+    return ezdxf.new("R2000")
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def msp(doc):
     return doc.modelspace()
 
@@ -98,10 +104,10 @@ def mesh(doc):
 
 
 def test_mesh_properties(mesh):
-    assert 'MESH' == mesh.dxftype()
+    assert "MESH" == mesh.dxftype()
     assert 256 == mesh.dxf.color
-    assert '0' == mesh.dxf.layer
-    assert 'BYLAYER' == mesh.dxf.linetype
+    assert "0" == mesh.dxf.layer
+    assert "BYLAYER" == mesh.dxf.linetype
     assert mesh.dxf.paperspace == 0
 
 
@@ -170,7 +176,7 @@ def test_optimize(msp):
         [0, 1, 5, 4],
         [1, 2, 6, 5],
         [3, 2, 6, 7],
-        [0, 3, 7, 4]
+        [0, 3, 7, 4],
     ]
     mesh = msp.add_mesh()
     with mesh.edit_data() as mesh_data:

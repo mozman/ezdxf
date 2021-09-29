@@ -6,13 +6,14 @@
 
 import pytest
 
-bezier = pytest.importorskip('ezdxf.acc.bezier3p')
+bezier = pytest.importorskip("ezdxf.acc.bezier3p")
 Bezier3P = bezier.Bezier3P
 from ezdxf.acc.vector import Vec3
 from ezdxf.acc.matrix44 import Matrix44
+
 # check functions:
 
-POINTS = [(0., 0.), (5., 5.), (10., 0.)]
+POINTS = [(0.0, 0.0), (5.0, 5.0), (10.0, 0.0)]
 
 
 def test_default_constructor():
@@ -58,5 +59,5 @@ def test_transform(curve):
     assert r.control_points == Vec3.tuple([(1, 1), (6, 6), (11, 1)])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

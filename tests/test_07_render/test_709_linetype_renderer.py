@@ -41,5 +41,5 @@ def test_dash_dot_2x_render_issue():
     assert last_segment[0].isclose(last_segment[1])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

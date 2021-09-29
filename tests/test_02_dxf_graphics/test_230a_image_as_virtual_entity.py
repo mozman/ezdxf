@@ -71,21 +71,22 @@ def entity():
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert 'IMAGE' in ENTITY_CLASSES
+
+    assert "IMAGE" in ENTITY_CLASSES
 
 
 def test_default_init():
     entity = Image()
-    assert entity.dxftype() == 'IMAGE'
+    assert entity.dxftype() == "IMAGE"
     assert entity.dxf.handle is None
     assert entity.dxf.owner is None
 
 
 def test_default_new():
-    entity = Image.new(handle='ABBA', owner='0', dxfattribs={
-        'image_size': (640, 200)
-    })
-    assert entity.dxf.layer == '0'
+    entity = Image.new(
+        handle="ABBA", owner="0", dxfattribs={"image_size": (640, 200)}
+    )
+    assert entity.dxf.layer == "0"
     assert entity.dxf.insert is None  # set by add_image()
     assert entity.dxf.u_pixel is None  # set by add_image()
     assert entity.dxf.v_pixel is None  # set by add_image()
@@ -105,20 +106,20 @@ def test_default_new():
 
 
 def test_load_from_text(entity):
-    assert entity.dxf.layer == '0'
-    assert entity.dxf.color == 256, 'default color is 256 (by layer)'
+    assert entity.dxf.layer == "0"
+    assert entity.dxf.color == 256, "default color is 256 (by layer)"
     assert entity.dxf.insert == (0, 0, 0)
     assert entity.dxf.u_pixel == (1, 0, 0)
     assert entity.dxf.v_pixel == (0, 1, 0)
     assert entity.dxf.class_version == 0
     assert entity.dxf.image_size == (640, 320)
-    assert entity.dxf.image_def_handle == '0'
+    assert entity.dxf.image_def_handle == "0"
     assert entity.dxf.flags == 3
     assert entity.dxf.clipping == 0
     assert entity.dxf.brightness == 50
     assert entity.dxf.contrast == 50
     assert entity.dxf.fade == 0
-    assert entity.dxf.image_def_reactor_handle == '0'
+    assert entity.dxf.image_def_reactor_handle == "0"
     assert entity.dxf.clipping_boundary_type == 1
     assert entity.dxf.clip_mode == 0
     assert entity.boundary_path[0] == (-0.5, -0.5)

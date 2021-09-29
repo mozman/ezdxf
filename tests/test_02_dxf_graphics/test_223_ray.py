@@ -40,31 +40,36 @@ def entity():
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert 'RAY' in ENTITY_CLASSES
+
+    assert "RAY" in ENTITY_CLASSES
 
 
 def test_default_init():
     entity = Ray()
-    assert entity.dxftype() == 'RAY'
+    assert entity.dxftype() == "RAY"
     assert entity.dxf.handle is None
     assert entity.dxf.owner is None
 
 
 def test_default_new():
-    entity = Ray.new(handle='ABBA', owner='0', dxfattribs={
-        'color': 7,
-        'start': (1, 2, 3),
-        'unit_vector': (4, 5, 6),
-    })
-    assert entity.dxf.layer == '0'
+    entity = Ray.new(
+        handle="ABBA",
+        owner="0",
+        dxfattribs={
+            "color": 7,
+            "start": (1, 2, 3),
+            "unit_vector": (4, 5, 6),
+        },
+    )
+    assert entity.dxf.layer == "0"
     assert entity.dxf.color == 7
     assert entity.dxf.start == (1, 2, 3)
     assert entity.dxf.unit_vector == (4, 5, 6)
 
 
 def test_load_from_text(entity):
-    assert entity.dxf.layer == '0'
-    assert entity.dxf.color == 256, 'default color is 256 (by layer)'
+    assert entity.dxf.layer == "0"
+    assert entity.dxf.color == 256, "default color is 256 (by layer)"
     assert entity.dxf.start == (0, 0, 0)
     assert entity.dxf.unit_vector == (1, 0, 0)
 

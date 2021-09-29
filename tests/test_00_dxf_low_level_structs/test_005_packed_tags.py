@@ -28,7 +28,7 @@ def test_tag_array_clone(numbers):
 
 def test_inherited_array(numbers):
     class FloatArray(TagArray):
-        DTYPE = 'f'
+        DTYPE = "f"
 
     floats = FloatArray(data=numbers)
     for index, value in enumerate(floats.values):
@@ -37,14 +37,14 @@ def test_inherited_array(numbers):
 
 def test_vertex_array_basics():
     tags = ExtendedTags.from_text(SPLINE)
-    vertices = VertexArray.from_tags(tags.get_subclass('AcDbSpline'))
+    vertices = VertexArray.from_tags(tags.get_subclass("AcDbSpline"))
     assert len(vertices) == 7
     points = list(vertices)
     assert len(points) == 7
-    assert vertices[0] == (0., 0., 0.)
-    assert vertices[1] == (10., 10., 10.)
+    assert vertices[0] == (0.0, 0.0, 0.0)
+    assert vertices[1] == (10.0, 10.0, 10.0)
     # test negative index
-    assert vertices[-1] == (60., 60., 60.)
+    assert vertices[-1] == (60.0, 60.0, 60.0)
     with pytest.raises(IndexError):
         _ = vertices[-8]
     with pytest.raises(IndexError):
@@ -53,11 +53,11 @@ def test_vertex_array_basics():
 
 def test_vertex_array_advanced():
     tags = ExtendedTags.from_text(SPLINE)
-    vertices = VertexArray.from_tags(tags.get_subclass('AcDbSpline'))
+    vertices = VertexArray.from_tags(tags.get_subclass("AcDbSpline"))
     # append()
     vertices.append((70, 70, 70))
     assert len(vertices) == 8
-    assert vertices[-1] == (70., 70., 70.)
+    assert vertices[-1] == (70.0, 70.0, 70.0)
 
     # set vertex
     vertices[0] = (7, 6, 5)
@@ -78,7 +78,7 @@ def test_vertex_array_advanced():
 
 def test_vertex_array_delete():
     tags = ExtendedTags.from_text(SPLINE)
-    vertices = VertexArray.from_tags(tags.get_subclass('AcDbSpline'))
+    vertices = VertexArray.from_tags(tags.get_subclass("AcDbSpline"))
     assert len(vertices) == 7
     assert vertices[0] == (0, 0, 0)
     del vertices[0]
@@ -92,12 +92,12 @@ def test_vertex_array_delete():
 
 def test_vertex_array_delete_slices():
     tags = ExtendedTags.from_text(SPLINE)
-    vertices = VertexArray.from_tags(tags.get_subclass('AcDbSpline'))
+    vertices = VertexArray.from_tags(tags.get_subclass("AcDbSpline"))
     del vertices[:2]
     assert len(vertices) == 5
     assert vertices[0] == (20, 20, 20)
 
-    vertices = VertexArray.from_tags(tags.get_subclass('AcDbSpline'))
+    vertices = VertexArray.from_tags(tags.get_subclass("AcDbSpline"))
     del vertices[::2]
     assert len(vertices) == 3
     assert vertices[0] == (10, 10, 10)
@@ -107,7 +107,7 @@ def test_vertex_array_delete_slices():
 
 def test_vertex_array_insert():
     tags = ExtendedTags.from_text(SPLINE)
-    vertices = VertexArray.from_tags(tags.get_subclass('AcDbSpline'))
+    vertices = VertexArray.from_tags(tags.get_subclass("AcDbSpline"))
     assert vertices[0] == (0, 0, 0)
     assert vertices[1] == (10, 10, 10)
     vertices.insert(1, (-1, -2, -3))
@@ -119,12 +119,12 @@ def test_vertex_array_insert():
 
 def test_vertex_array_to_dxf_tags():
     tags = ExtendedTags.from_text(SPLINE)
-    vertices = VertexArray.from_tags(tags.get_subclass('AcDbSpline'))
+    vertices = VertexArray.from_tags(tags.get_subclass("AcDbSpline"))
     tags = TagCollector.dxftags(vertices)
     assert len(tags) == 7 * 3
-    assert tags[0] == (10, 0.)
-    assert tags[3] == (10, 10.)
-    assert tags[-1] == (30, 60.)
+    assert tags[0] == (10, 0.0)
+    assert tags[3] == (10, 10.0)
+    assert tags[-1] == (30, 60.0)
 
 
 def test_vertext_array_transform_by_ucs():

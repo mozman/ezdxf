@@ -44,7 +44,7 @@ def test_purge_destroyed_entities(layout):
     assert len(layout) == 1, "entity should not be removed immediately"
     layout.purge()
     assert (
-            len(layout) == 0
+        len(layout) == 0
     ), "destroyed entity should be removed from entity space"
 
 
@@ -66,10 +66,10 @@ def test_copy_all_entities_to_a_real_layout(layout, doc):
     assert copy.doc is doc, "copy should be assigned to DXF document"
     assert copy.dxf.handle is not None, "copy should have a handle"
     assert (
-            copy.dxf.owner == msp.layout_key
+        copy.dxf.owner == msp.layout_key
     ), "copy should have new layout as owner"
     assert (
-            copy.dxf.handle in doc.entitydb
+        copy.dxf.handle in doc.entitydb
     ), "copy should be stored in document entity database"
 
 
@@ -83,10 +83,10 @@ def test_move_all_entities_to_a_real_layout(layout, doc):
     assert entity.doc is doc, "entity should be assigned to DXF document"
     assert entity.dxf.handle is not None, "entity should have a handle"
     assert (
-            entity.dxf.owner == msp.layout_key
+        entity.dxf.owner == msp.layout_key
     ), "entity should have new layout as owner"
     assert (
-            entity.dxf.handle in doc.entitydb
+        entity.dxf.handle in doc.entitydb
     ), "entity should be stored in document entity database"
 
 
@@ -101,23 +101,23 @@ def test_copy_all_sub_entities_to_a_real_layout(layout, doc):
     assert polyline is not copy, "POLYLINE  entity should be copied"
     assert copy.doc is doc, "copy should be assigned to the DXF document"
     assert (
-            len(doc.entitydb) == len_db + 5
+        len(doc.entitydb) == len_db + 5
     ), "add 1x POLYLINE, 3x VERTEX and 1x SEQEND to entity database"
     assert copy.dxf.handle is not None, "copy should have a handle"
     assert copy.dxf.owner == msp.layout_key, "copy should have `msp` as owner"
     assert (
-            copy.dxf.handle in doc.entitydb
+        copy.dxf.handle in doc.entitydb
     ), "copy should be stored in document entity database"
     # check VERTEX entities
     vertex = copy.vertices[0]
     assert vertex.doc is doc, "vertices should have a document"
     assert (
-            vertex.dxf.handle in doc.entitydb
+        vertex.dxf.handle in doc.entitydb
     ), "vertices should be stored in the entity database"
     # check SEQEND
     assert copy.seqend.doc is doc, "seqend should have a document"
     assert (
-            copy.seqend.dxf.handle in doc.entitydb
+        copy.seqend.dxf.handle in doc.entitydb
     ), "seqend should be stored in the entity database"
 
     # Do any further problems exist?
@@ -136,25 +136,25 @@ def test_move_all_sub_entities_to_a_real_layout(layout, doc):
     assert polyline is entity
     assert entity.doc is doc, "entity should be assigned to the DXF document"
     assert (
-            len(doc.entitydb) == len_db + 5
+        len(doc.entitydb) == len_db + 5
     ), "add 1x POLYLINE, 3x VERTEX and 1x SEQEND to entity database"
     assert entity.dxf.handle is not None, "entity should have a handle"
     assert (
-            entity.dxf.owner == msp.layout_key
+        entity.dxf.owner == msp.layout_key
     ), "entity should have `msp` as owner"
     assert (
-            entity.dxf.handle in doc.entitydb
+        entity.dxf.handle in doc.entitydb
     ), "entity should be stored in document entity database"
     # check VERTEX entities
     vertex = entity.vertices[0]
     assert vertex.doc is doc, "vertices should have a document"
     assert (
-            vertex.dxf.handle in doc.entitydb
+        vertex.dxf.handle in doc.entitydb
     ), "vertices should be stored in the entity database"
     # check SEQEND
     assert entity.seqend.doc is doc, "seqend should have a document"
     assert (
-            entity.seqend.dxf.handle in doc.entitydb
+        entity.seqend.dxf.handle in doc.entitydb
     ), "seqend should be stored in the entity database"
 
     # Do any further problems exist?

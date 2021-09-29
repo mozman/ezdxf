@@ -4,8 +4,13 @@ import pytest
 import random
 
 from ezdxf.math import (
-    cubic_bezier_interpolation, Vec3, Bezier3P, quadratic_to_cubic_bezier,
-    Bezier4P, have_bezier_curves_g1_continuity, bezier_to_bspline,
+    cubic_bezier_interpolation,
+    Vec3,
+    Bezier3P,
+    quadratic_to_cubic_bezier,
+    Bezier4P,
+    have_bezier_curves_g1_continuity,
+    bezier_to_bspline,
 )
 
 
@@ -69,10 +74,12 @@ B5 = Bezier4P([(4, 0), (5, -1), (6, -1), (7, 0)])
 def test_g1_continuity_for_bezier_curves():
     assert have_bezier_curves_g1_continuity(B1, B2) is True
     assert have_bezier_curves_g1_continuity(B1, B3) is False
-    assert have_bezier_curves_g1_continuity(B1, B4, g1_tol=1e-4) is False, \
-        "should be outside of tolerance "
-    assert have_bezier_curves_g1_continuity(B1, B5) is False, \
-        "end- and start point should match"
+    assert (
+        have_bezier_curves_g1_continuity(B1, B4, g1_tol=1e-4) is False
+    ), "should be outside of tolerance "
+    assert (
+        have_bezier_curves_g1_continuity(B1, B5) is False
+    ), "end- and start point should match"
 
 
 D1 = Bezier4P([(0, 0), (1, 1), (3, 0), (3, 0)])
@@ -85,17 +92,21 @@ def test_g1_continuity_for_degenerated_bezier_curves():
     assert have_bezier_curves_g1_continuity(D1, D2) is False
 
 
-@pytest.mark.parametrize('curve', [D1, D2])
+@pytest.mark.parametrize("curve", [D1, D2])
 def test_flatten_degenerated_bezier_curves(curve):
     # Degenerated Bezier curves behave like regular curves!
     assert len(list(curve.flattening(0.1))) > 4
 
 
-@pytest.mark.parametrize("b1,b2", [
-    (B1, B2),  # G1 continuity, the common case
-    (B1, B3),  # without G1 continuity is also a regular B-spline
-    (B1, B5),  # regular B-spline, but first control point of B5 is lost
-], ids=["G1", "without G1", "gap"])
+@pytest.mark.parametrize(
+    "b1,b2",
+    [
+        (B1, B2),  # G1 continuity, the common case
+        (B1, B3),  # without G1 continuity is also a regular B-spline
+        (B1, B5),  # regular B-spline, but first control point of B5 is lost
+    ],
+    ids=["G1", "without G1", "gap"],
+)
 def test_bezier_curves_to_bspline(b1, b2):
     bspline = bezier_to_bspline([b1, b2])
     # Remove duplicate control point between two adjacent curves:

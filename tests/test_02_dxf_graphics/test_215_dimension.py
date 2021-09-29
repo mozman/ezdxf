@@ -11,7 +11,7 @@ from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.render.dim_base import format_text, DXFValueError
 
 TEST_CLASS = Dimension
-TEST_TYPE = 'DIMENSION'
+TEST_TYPE = "DIMENSION"
 
 ENTITY_R12 = """0
 DIMENSION
@@ -137,6 +137,7 @@ def entity(request):
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
+
     assert TEST_TYPE in ENTITY_CLASSES
 
 
@@ -146,29 +147,35 @@ def test_default_init():
 
 
 def test_default_new():
-    entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
-        'color': '7',
-        'defpoint': (1, 2, 3),
-    })
-    assert entity.dxf.layer == '0'
+    entity = TEST_CLASS.new(
+        handle="ABBA",
+        owner="0",
+        dxfattribs={
+            "color": "7",
+            "defpoint": (1, 2, 3),
+        },
+    )
+    assert entity.dxf.layer == "0"
     assert entity.dxf.color == 7
-    assert entity.dxf.linetype == 'BYLAYER'
+    assert entity.dxf.linetype == "BYLAYER"
     assert entity.dxf.defpoint == (1, 2, 3)
-    assert entity.dxf.defpoint.x == 1, 'is not Vec3 compatible'
-    assert entity.dxf.defpoint.y == 2, 'is not Vec3 compatible'
-    assert entity.dxf.defpoint.z == 3, 'is not Vec3 compatible'
+    assert entity.dxf.defpoint.x == 1, "is not Vec3 compatible"
+    assert entity.dxf.defpoint.y == 2, "is not Vec3 compatible"
+    assert entity.dxf.defpoint.z == 3, "is not Vec3 compatible"
     # can set DXF R2007 value
     entity.dxf.shadow_mode = 1
     assert entity.dxf.shadow_mode == 1
 
 
 def test_load_from_text(entity):
-    assert entity.dxf.layer == '0'
-    assert entity.dxf.color == 256, 'default color is 256 (by layer)'
+    assert entity.dxf.layer == "0"
+    assert entity.dxf.color == 256, "default color is 256 (by layer)"
     assert entity.dxf.defpoint == (0, 0, 0)
 
 
-@pytest.mark.parametrize("txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
+@pytest.mark.parametrize(
+    "txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)]
+)
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
     dimension = TEST_CLASS.from_text(txt)
@@ -188,36 +195,69 @@ def test_missing_block_geometry_name():
 
 
 def test_format_text():
-    assert format_text(0, dimrnd=0, dimdec=1, dimzin=0, dimpost='<>') == '0.0'
-    assert format_text(0, dimrnd=0, dimdec=1, dimzin=4, dimpost='<>') == '0'
-    assert format_text(0, dimrnd=0, dimdec=1, dimzin=8, dimpost='<>') == '0'
-    assert format_text(1.23, dimrnd=0.5, dimdec=1, dimzin=0, dimpost='<> mm') == '1.0 mm'
-    assert format_text(1.23, dimrnd=0.5, dimdec=1, dimzin=8, dimpost='<> mm') == '1 mm'
-    assert format_text(1.23, dimrnd=0.5, dimdec=1, dimzin=12, dimpost='<> mm') == '1 mm'
-    assert format_text(10.51, dimrnd=0.5, dimdec=2, dimzin=0, dimpost='<> mm') == '10.50 mm'
-    assert format_text(10.51, dimrnd=0.5, dimdec=2, dimzin=8, dimpost='<> mm') == '10.5 mm'
-    assert format_text(0.51, dimrnd=0.5, dimdec=2, dimzin=0, dimpost='mm <>') == 'mm 0.50'
-    assert format_text(0.51, dimrnd=0.5, dimdec=2, dimzin=4, dimpost='mm <>') == 'mm .50'
-    assert format_text(-0.51, dimrnd=0.5, dimdec=2, dimzin=4, dimpost='mm <>') == 'mm -.50'
-    assert format_text(-0.11, dimrnd=0.1, dimdec=2, dimzin=4, dimpost='mm <>') == 'mm -.10'
-    assert format_text(-0.51, dimdsep=',', dimpost='! <> m') == '! -0,51 m'
+    assert format_text(0, dimrnd=0, dimdec=1, dimzin=0, dimpost="<>") == "0.0"
+    assert format_text(0, dimrnd=0, dimdec=1, dimzin=4, dimpost="<>") == "0"
+    assert format_text(0, dimrnd=0, dimdec=1, dimzin=8, dimpost="<>") == "0"
+    assert (
+        format_text(1.23, dimrnd=0.5, dimdec=1, dimzin=0, dimpost="<> mm")
+        == "1.0 mm"
+    )
+    assert (
+        format_text(1.23, dimrnd=0.5, dimdec=1, dimzin=8, dimpost="<> mm")
+        == "1 mm"
+    )
+    assert (
+        format_text(1.23, dimrnd=0.5, dimdec=1, dimzin=12, dimpost="<> mm")
+        == "1 mm"
+    )
+    assert (
+        format_text(10.51, dimrnd=0.5, dimdec=2, dimzin=0, dimpost="<> mm")
+        == "10.50 mm"
+    )
+    assert (
+        format_text(10.51, dimrnd=0.5, dimdec=2, dimzin=8, dimpost="<> mm")
+        == "10.5 mm"
+    )
+    assert (
+        format_text(0.51, dimrnd=0.5, dimdec=2, dimzin=0, dimpost="mm <>")
+        == "mm 0.50"
+    )
+    assert (
+        format_text(0.51, dimrnd=0.5, dimdec=2, dimzin=4, dimpost="mm <>")
+        == "mm .50"
+    )
+    assert (
+        format_text(-0.51, dimrnd=0.5, dimdec=2, dimzin=4, dimpost="mm <>")
+        == "mm -.50"
+    )
+    assert (
+        format_text(-0.11, dimrnd=0.1, dimdec=2, dimzin=4, dimpost="mm <>")
+        == "mm -.10"
+    )
+    assert format_text(-0.51, dimdsep=",", dimpost="! <> m") == "! -0,51 m"
 
-    assert format_text(-0.51, dimdsep=',', dimpost='') == '-0,51'
-    assert format_text(-0.51, dimdsep=',', dimpost='<>') == '-0,51'
-    assert format_text(-0.51, dimdsep=',', dimpost='><>') == '>-0,51'
-    assert format_text(-0.51, dimdsep=',', dimpost='<><>') == '-0,51<>'  # ignore stupid
+    assert format_text(-0.51, dimdsep=",", dimpost="") == "-0,51"
+    assert format_text(-0.51, dimdsep=",", dimpost="<>") == "-0,51"
+    assert format_text(-0.51, dimdsep=",", dimpost="><>") == ">-0,51"
+    assert (
+        format_text(-0.51, dimdsep=",", dimpost="<><>") == "-0,51<>"
+    )  # ignore stupid
     with pytest.raises(DXFValueError):
-        _ = format_text(-0.51, dimpost='<')
+        _ = format_text(-0.51, dimpost="<")
 
 
 def test_linear_measurement_without_ocs():
     measurement = linear_measurement(Vec3(0, 0, 0), Vec3(1, 0, 0))
     assert measurement == 1
 
-    measurement = linear_measurement(Vec3(0, 0, 0), Vec3(1, 0, 0), angle=math.radians(45))
-    assert math.isclose(measurement, 1. / math.sqrt(2.))
+    measurement = linear_measurement(
+        Vec3(0, 0, 0), Vec3(1, 0, 0), angle=math.radians(45)
+    )
+    assert math.isclose(measurement, 1.0 / math.sqrt(2.0))
 
-    measurement = linear_measurement(Vec3(0, 0, 0), Vec3(1, 0, 0), angle=math.radians(90))
+    measurement = linear_measurement(
+        Vec3(0, 0, 0), Vec3(1, 0, 0), angle=math.radians(90)
+    )
     assert math.isclose(measurement, 0, abs_tol=1e-12)
 
 

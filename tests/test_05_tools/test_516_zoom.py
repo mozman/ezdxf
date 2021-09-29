@@ -7,7 +7,7 @@ from ezdxf import zoom, bbox
 
 
 class TestModelSpace:
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def msp(self):
         doc = ezdxf.new()
         msp_ = doc.modelspace()
@@ -19,52 +19,52 @@ class TestModelSpace:
 
     def test_zoom_center(self, msp):
         zoom.center(msp, (10, 10), (10, 10))
-        vp = msp.doc.viewports.get('*Active')[0]
+        vp = msp.doc.viewports.get("*Active")[0]
         assert vp.dxf.center == (10, 10)
         assert vp.dxf.height == 10
 
     def test_zoom_extents(self, msp):
         zoom.extents(msp)
-        vp = msp.doc.viewports.get('*Active')[0]
+        vp = msp.doc.viewports.get("*Active")[0]
         assert vp.dxf.center == (0, 0)
         # 2:1 = 200 / 2 = 100 == height
         assert vp.dxf.height == 100
 
     def test_zoom_extents_factor_2(self, msp):
         zoom.extents(msp, factor=2)
-        vp = msp.doc.viewports.get('*Active')[0]
+        vp = msp.doc.viewports.get("*Active")[0]
         assert vp.dxf.center == (0, 0)
         # 2:1 = 200 / 2 = 100 * 2 == height
         assert vp.dxf.height == 200
 
     def test_zoom_window(self, msp):
         zoom.window(msp, (-30, -10), (0, 20))
-        vp = msp.doc.viewports.get('*Active')[0]
+        vp = msp.doc.viewports.get("*Active")[0]
         assert vp.dxf.center == (-15, 5)
         assert vp.dxf.height == 30
 
     def test_zoom_objects(self, msp):
         points = msp[:2]
         zoom.objects(msp, points)
-        vp = msp.doc.viewports.get('*Active')[0]
+        vp = msp.doc.viewports.get("*Active")[0]
         assert vp.dxf.center == (0, 0)
         assert vp.dxf.height == 50
 
     def test_zoom_objects_of_empty_set(self, msp):
-        vp = msp.doc.viewports.get('*Active')[0]
+        vp = msp.doc.viewports.get("*Active")[0]
         old_center = vp.dxf.center
         old_height = vp.dxf.height
         zoom.objects(msp, [])
-        vp = msp.doc.viewports.get('*Active')[0]
+        vp = msp.doc.viewports.get("*Active")[0]
         assert vp.dxf.center == old_center
         assert vp.dxf.height == old_height
 
 
 class TestPaperSpace:
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def psp(self):
         doc = ezdxf.new()
-        psp_ = cast('Paperspace', doc.layout('Layout1'))
+        psp_ = cast("Paperspace", doc.layout("Layout1"))
         psp_.add_viewport(
             center=(40, 40),
             size=(40, 40),
@@ -131,5 +131,5 @@ class TestPaperSpace:
         assert vp.dxf.height == old_height
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

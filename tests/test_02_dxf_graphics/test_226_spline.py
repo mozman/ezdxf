@@ -35,30 +35,34 @@ AcDbSpline
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert 'SPLINE' in ENTITY_CLASSES
+
+    assert "SPLINE" in ENTITY_CLASSES
 
 
 def test_default_init():
     entity = Spline()
-    assert entity.dxftype() == 'SPLINE'
+    assert entity.dxftype() == "SPLINE"
     assert entity.dxf.handle is None
     assert entity.dxf.owner is None
 
 
 def test_default_new():
-    entity = Spline.new(handle='ABBA', owner='0', dxfattribs={
-        'color': 7,
-        'flags': 4,
-        'degree': 4,
-        'knot_tolerance': 42,
-        'control_point_tolerance': 43,
-        'fit_tolerance': 44,
-        'start_tangent': (1, 2, 3),
-        'end_tangent': (4, 5, 6),
-        'extrusion': (7, 8, 9),
-
-    })
-    assert entity.dxf.layer == '0'
+    entity = Spline.new(
+        handle="ABBA",
+        owner="0",
+        dxfattribs={
+            "color": 7,
+            "flags": 4,
+            "degree": 4,
+            "knot_tolerance": 42,
+            "control_point_tolerance": 43,
+            "fit_tolerance": 44,
+            "start_tangent": (1, 2, 3),
+            "end_tangent": (4, 5, 6),
+            "extrusion": (7, 8, 9),
+        },
+    )
+    assert entity.dxf.layer == "0"
     assert entity.dxf.color == 7
     assert entity.dxf.flags == 4
     assert entity.dxf.degree == 4
@@ -72,8 +76,8 @@ def test_default_new():
 
 def test_load_from_text():
     entity = Spline.from_text(SPLINE)
-    assert entity.dxf.layer == '0'
-    assert entity.dxf.color == 256, 'default color is 256 (by layer)'
+    assert entity.dxf.layer == "0"
+    assert entity.dxf.color == 256, "default color is 256 (by layer)"
     assert entity.dxf.extrusion == (0, 0, 1)
     assert entity.dxf.flags == 0
     assert entity.dxf.degree == 3
@@ -114,7 +118,7 @@ def spline():
 
 @pytest.fixture
 def points():
-    return [(1., 1., 0.), (2.5, 3., 0.), (4.5, 2., 0), (6.5, 4., 0)]
+    return [(1.0, 1.0, 0.0), (2.5, 3.0, 0.0), (4.5, 2.0, 0), (6.5, 4.0, 0)]
 
 
 @pytest.fixture
@@ -122,18 +126,18 @@ def weights():
     return [1, 2, 3, 4]
 
 
-@pytest.mark.parametrize('name', ['start', 'end'])
+@pytest.mark.parametrize("name", ["start", "end"])
 def test_set_tangent(spline, name):
     spline = spline
-    name += '_tangent'
+    name += "_tangent"
     spline.dxf.set(name, (1, 2, 3))
     assert (1, 2, 3) == spline.dxf.get(name)
 
 
-@pytest.mark.parametrize('name', ['start', 'end'])
+@pytest.mark.parametrize("name", ["start", "end"])
 def test_users_cant_set_invalid_tangents(spline, name):
     with pytest.raises(ValueError):
-        spline.dxf.set(name + '_tangent', (0, 0, 0))
+        spline.dxf.set(name + "_tangent", (0, 0, 0))
 
 
 SPLINE_INVALID_TANGENT = """0
@@ -175,8 +179,8 @@ AcDbSpline
 
 def test_ignore_invalid_tangent_values_at_loading_stage():
     spline = Spline.from_text(SPLINE_INVALID_TANGENT)
-    assert spline.dxf.hasattr('start_tangent') is False
-    assert spline.dxf.hasattr('end_tangent') is False
+    assert spline.dxf.hasattr("start_tangent") is False
+    assert spline.dxf.hasattr("end_tangent") is False
 
 
 def test_knot_values(spline):
@@ -211,8 +215,9 @@ def test_set_open_uniform(spline, points):
     assert spline.dxf.degree == 3
     assert list(spline.control_points) == points
     assert spline.dxf.n_control_points == len(points)
-    assert spline.dxf.n_knots == len(
-        points) + spline.dxf.degree + 1  # n + p + 2
+    assert (
+        spline.dxf.n_knots == len(points) + spline.dxf.degree + 1
+    )  # n + p + 2
     assert spline.closed is False
 
 
@@ -221,8 +226,9 @@ def test_set_uniform(spline, points):
     assert spline.dxf.degree == 3
     assert list(spline.control_points) == points
     assert spline.dxf.n_control_points == len(points)
-    assert spline.dxf.n_knots == len(
-        points) + spline.dxf.degree + 1  # n + p + 2
+    assert (
+        spline.dxf.n_knots == len(points) + spline.dxf.degree + 1
+    )  # n + p + 2
     assert spline.closed is False
 
 
@@ -232,8 +238,9 @@ def test_set_closed(spline, points):
     spline.set_closed(points, degree=degree)
     assert spline.dxf.degree == degree
     assert spline.dxf.n_control_points == len(points) + degree
-    assert spline.dxf.n_knots == len(
-        spline.control_points) + degree + 1  # n + p + 2
+    assert (
+        spline.dxf.n_knots == len(spline.control_points) + degree + 1
+    )  # n + p + 2
     assert spline.closed is True
 
 
@@ -244,8 +251,9 @@ def test_set_open_rational(spline, points, weights):
     assert list(spline.weights) == weights
     assert spline.dxf.n_control_points == len(points)
     assert len(spline.weights) == len(points)
-    assert spline.dxf.n_knots == len(
-        points) + spline.dxf.degree + 1  # n + p + 2
+    assert (
+        spline.dxf.n_knots == len(points) + spline.dxf.degree + 1
+    )  # n + p + 2
     assert spline.closed is False
 
 
@@ -256,8 +264,9 @@ def test_set_uniform_rational(spline, points, weights):
     assert list(spline.weights) == weights
     assert spline.dxf.n_control_points == len(points)
     assert len(spline.weights) == len(points)
-    assert spline.dxf.n_knots == len(
-        points) + spline.dxf.degree + 1  # n + p + 2
+    assert (
+        spline.dxf.n_knots == len(points) + spline.dxf.degree + 1
+    )  # n + p + 2
     assert spline.closed is False
 
 
@@ -268,14 +277,15 @@ def test_set_closed_rational(spline, points, weights):
     assert spline.dxf.degree == 3
     assert spline.dxf.n_control_points == len(points) + degree
     assert len(spline.weights) == len(points) + degree
-    assert spline.dxf.n_knots == len(
-        spline.control_points) + degree + 1  # n + p + 2
+    assert (
+        spline.dxf.n_knots == len(spline.control_points) + degree + 1
+    )  # n + p + 2
     assert spline.closed is True
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def msp():
-    doc = ezdxf.new('R2000')
+    doc = ezdxf.new("R2000")
     return doc.modelspace()
 
 
@@ -284,8 +294,9 @@ def test_open_spline(msp, points):
     assert spline.dxf.degree == 3
     assert list(spline.control_points) == points
     assert spline.dxf.n_control_points == len(points)
-    assert spline.dxf.n_knots == len(
-        points) + spline.dxf.degree + 1  # n + p + 2
+    assert (
+        spline.dxf.n_knots == len(points) + spline.dxf.degree + 1
+    )  # n + p + 2
     assert spline.closed is False
 
 
@@ -296,8 +307,9 @@ def test_open_rational_spline(msp, points, weights):
     assert list(spline.weights) == weights
     assert spline.dxf.n_control_points == len(points)
     assert len(spline.weights) == len(points)
-    assert spline.dxf.n_knots == len(
-        points) + spline.dxf.degree + 1  # n + p + 2
+    assert (
+        spline.dxf.n_knots == len(points) + spline.dxf.degree + 1
+    )  # n + p + 2
     assert spline.closed is False
 
 
@@ -317,61 +329,80 @@ def test_spline_transform_interface():
 
 def test_from_circle():
     from ezdxf.entities import Circle
-    spline = Spline.from_arc(Circle.new(dxfattribs={
-        'center': (1, 1),
-        'radius': 2,
-        'layer': 'circle',
-    }))
+
+    spline = Spline.from_arc(
+        Circle.new(
+            dxfattribs={
+                "center": (1, 1),
+                "radius": 2,
+                "layer": "circle",
+            }
+        )
+    )
     assert spline.dxf.handle is None
     assert spline.dxf.owner is None
-    assert spline.dxf.layer == 'circle'
+    assert spline.dxf.layer == "circle"
     assert spline.dxf.degree == 2
     assert len(spline.control_points) > 2
     assert len(spline.weights) > 2
     assert len(spline.fit_points) == 0
-    assert len(spline.knots) == required_knot_values(len(spline.control_points),
-                                                     spline.dxf.degree + 1)
+    assert len(spline.knots) == required_knot_values(
+        len(spline.control_points), spline.dxf.degree + 1
+    )
 
 
 def test_from_arc():
     from ezdxf.entities import Arc
-    spline = Spline.from_arc(Arc.new(dxfattribs={
-        'center': (1, 1),
-        'radius': 2,
-        'start_angle': 30,  # degrees
-        'end_angle': 150,
-        'layer': 'arc',
-    }))
-    assert spline.dxf.layer == 'arc'
+
+    spline = Spline.from_arc(
+        Arc.new(
+            dxfattribs={
+                "center": (1, 1),
+                "radius": 2,
+                "start_angle": 30,  # degrees
+                "end_angle": 150,
+                "layer": "arc",
+            }
+        )
+    )
+    assert spline.dxf.layer == "arc"
     assert spline.dxf.degree == 2
     assert len(spline.control_points) > 2
     assert len(spline.weights) > 2
     assert len(spline.fit_points) == 0
-    assert len(spline.knots) == required_knot_values(len(spline.control_points),
-                                                     spline.dxf.degree + 1)
+    assert len(spline.knots) == required_knot_values(
+        len(spline.control_points), spline.dxf.degree + 1
+    )
 
 
 def test_from_ellipse():
     from ezdxf.entities import Ellipse
-    spline = Spline.from_arc(Ellipse.new(dxfattribs={
-        'center': (1, 1),
-        'major_axis': (2, 0),
-        'ratio': 0.5,
-        'start_param': 0.5,  # radians
-        'end_param': 3,
-        'layer': 'ellipse',
-    }))
-    assert spline.dxf.layer == 'ellipse'
+
+    spline = Spline.from_arc(
+        Ellipse.new(
+            dxfattribs={
+                "center": (1, 1),
+                "major_axis": (2, 0),
+                "ratio": 0.5,
+                "start_param": 0.5,  # radians
+                "end_param": 3,
+                "layer": "ellipse",
+            }
+        )
+    )
+    assert spline.dxf.layer == "ellipse"
     assert spline.dxf.degree == 2
     assert len(spline.control_points) > 2
     assert len(spline.weights) > 2
     assert len(spline.fit_points) == 0
-    assert len(spline.knots) == required_knot_values(len(spline.control_points),
-                                                     spline.dxf.degree + 1)
+    assert len(spline.knots) == required_knot_values(
+        len(spline.control_points), spline.dxf.degree + 1
+    )
 
 
 def test_from_line_with_type_error():
     from ezdxf.entities import Line
+
     with pytest.raises(TypeError):
         Spline.from_arc(Line.new())
 

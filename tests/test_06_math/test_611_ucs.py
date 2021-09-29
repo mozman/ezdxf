@@ -115,7 +115,9 @@ def test_arbitrary_ucs():
 
 
 def test_ucs_direction_to_ocs_direction():
-    ucs = UCS.from_x_axis_and_point_in_xy(origin=(1, 2, 3), axis=(2, 3, 4), point=(3, 2, 5))
+    ucs = UCS.from_x_axis_and_point_in_xy(
+        origin=(1, 2, 3), axis=(2, 3, 4), point=(3, 2, 5)
+    )
     assert ucs.is_cartesian is True
     expected = (-3.350073025395333, 2.9626020192591795, 6)
     assert ucs.ucs_direction_to_ocs_direction(Vec3(2, 4, 6)).isclose(expected)
@@ -136,7 +138,9 @@ def test_points_to_ocs():
 
 
 def test_to_ocs_angle_deg():
-    ucs = UCS.from_x_axis_and_point_in_xy(origin=(1, 2, 3), axis=(2, 3, 4), point=(3, 2, 5))
+    ucs = UCS.from_x_axis_and_point_in_xy(
+        origin=(1, 2, 3), axis=(2, 3, 4), point=(3, 2, 5)
+    )
     expected = 120.077450607124
     assert isclose(ucs.to_ocs_angle_deg(45), expected)
 

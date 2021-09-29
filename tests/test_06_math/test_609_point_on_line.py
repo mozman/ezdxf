@@ -20,20 +20,33 @@ def test_distance_point_vertical_line():
 
 def test_is_point_on_horiz_line():
     assert is_point_on_line_2d(Vec2(-1, 0), Vec2(0, 0), Vec2(1, 0)) is True
-    assert is_point_on_line_2d(Vec2(-1, 0), Vec2(0, 0), Vec2(1, .0001)) is False
-    assert is_point_on_line_2d(Vec2(-1, 0), Vec2(0, 0), Vec2(1, 0), ray=False) is False
+    assert (
+        is_point_on_line_2d(Vec2(-1, 0), Vec2(0, 0), Vec2(1, 0.0001)) is False
+    )
+    assert (
+        is_point_on_line_2d(Vec2(-1, 0), Vec2(0, 0), Vec2(1, 0), ray=False)
+        is False
+    )
 
 
 def test_is_point_on_vertical_line():
     assert is_point_on_line_2d(Vec2(0, -1), Vec2(0, 0), Vec2(0, 1)) is True
-    assert is_point_on_line_2d(Vec2(0, -1), Vec2(0, 0), Vec2(0.00001, 1)) is False
-    assert is_point_on_line_2d(Vec2(0, -1), Vec2(0, 0), Vec2(0, 1), ray=False) is False
+    assert (
+        is_point_on_line_2d(Vec2(0, -1), Vec2(0, 0), Vec2(0.00001, 1)) is False
+    )
+    assert (
+        is_point_on_line_2d(Vec2(0, -1), Vec2(0, 0), Vec2(0, 1), ray=False)
+        is False
+    )
 
 
 def test_is_point_on_diag_line():
     assert is_point_on_line_2d(Vec2(-1, -1), Vec2(0, 0), Vec2(1, 1)) is True
-    assert is_point_on_line_2d(Vec2(-1, -1), Vec2(0, 0), Vec2(1, 1), ray=False) is False
+    assert (
+        is_point_on_line_2d(Vec2(-1, -1), Vec2(0, 0), Vec2(1, 1), ray=False)
+        is False
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

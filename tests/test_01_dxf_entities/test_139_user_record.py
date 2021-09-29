@@ -5,6 +5,7 @@ import pytest
 from ezdxf.lldxf import const
 from ezdxf.math import Vec3
 from ezdxf.lldxf.tags import Tags
+
 # noinspection PyProtectedMember
 from ezdxf.urecord import (
     parse_items,

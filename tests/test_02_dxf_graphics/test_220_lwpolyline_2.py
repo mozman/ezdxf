@@ -3,7 +3,12 @@
 import pytest
 import ezdxf
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.entities.lwpolyline import format_point, compile_array, LWPolylinePoints, LWPolyline
+from ezdxf.entities.lwpolyline import (
+    format_point,
+    compile_array,
+    LWPolylinePoints,
+    LWPolyline,
+)
 from ezdxf.math import Vec3
 
 
@@ -15,7 +20,7 @@ def lwpolyline(points, dxfattribs=None):
 
 def lwtags(text):
     tags = ExtendedTags.from_text(text)
-    return tags.get_subclass('AcDbPolyline')
+    return tags.get_subclass("AcDbPolyline")
 
 
 def test_new_line():
@@ -83,7 +88,7 @@ def test_insert_point():
     assert line[1] == (1, 1, 0, 0, 0)
     assert line[-1] == (5, 5, 0, 0, 0)
 
-    line.insert(1, (1, 9, 4), format='bxy')
+    line.insert(1, (1, 9, 4), format="bxy")
     assert len(line) == 7
     assert line[0] == (7, 8, 0, 0, 0)
     assert line[1] == (9, 4, 0, 0, 1)
@@ -129,7 +134,9 @@ def test_clear():
     assert line.closed is True, "Polyline should be closed"
     line.clear()
     assert 0 == len(line), "Polyline count should be 0."
-    assert len(list(line.get_points())) == 0, "Polyline should not have any points."
+    assert (
+        len(list(line.get_points())) == 0
+    ), "Polyline should not have any points."
     assert line.closed is True, "Polyline should be closed"
 
 
@@ -148,20 +155,20 @@ def test_vertices():
 
 
 def test_format_point():
-    assert format_point((1, 2, 3, 4, 5), 'xy') == (1, 2)
-    assert format_point((1, 2, 3, 4, 5), 'bse') == (5, 3, 4)
-    assert format_point((1, 2, 3, 4, 5), 'v,b') == ((1, 2), 5)
+    assert format_point((1, 2, 3, 4, 5), "xy") == (1, 2)
+    assert format_point((1, 2, 3, 4, 5), "bse") == (5, 3, 4)
+    assert format_point((1, 2, 3, 4, 5), "v,b") == ((1, 2), 5)
 
 
 def test_point_to_array():
-    assert tuple(compile_array((1, 2), 'xy')) == (1, 2, 0, 0, 0)
-    assert tuple(compile_array((1, 2, 5), 'xyb')) == (1, 2, 0, 0, 5)
-    assert tuple(compile_array((1, 2), 'xyseb')) == (1, 2, 0, 0, 0)
+    assert tuple(compile_array((1, 2), "xy")) == (1, 2, 0, 0, 0)
+    assert tuple(compile_array((1, 2, 5), "xyb")) == (1, 2, 0, 0, 5)
+    assert tuple(compile_array((1, 2), "xyseb")) == (1, 2, 0, 0, 0)
 
-    assert tuple(compile_array((1, 2, 5), 'xy')) == (1, 2, 0, 0, 0)
-    assert tuple(compile_array((5, (1, 2)), 'b,v')) == (1, 2, 0, 0, 5)
+    assert tuple(compile_array((1, 2, 5), "xy")) == (1, 2, 0, 0, 0)
+    assert tuple(compile_array((5, (1, 2)), "b,v")) == (1, 2, 0, 0, 5)
     # mix of x, y, v codes is allowed, but only last is set
-    assert tuple(compile_array(((1, 2), 4, 5), 'vxy')) == (4, 5, 0, 0, 0)
+    assert tuple(compile_array(((1, 2), 4, 5), "vxy")) == (4, 5, 0, 0, 0)
 
 
 def test_packed_points_basics():
@@ -169,10 +176,10 @@ def test_packed_points_basics():
     assert len(packed_points) == 2
     points = list(packed_points)
     assert len(points) == 2
-    assert packed_points[0] == (-.5, -.5, 0, 0, 0)
-    assert packed_points[1] == (.5, .5, 0, 0, 0)
+    assert packed_points[0] == (-0.5, -0.5, 0, 0, 0)
+    assert packed_points[1] == (0.5, 0.5, 0, 0, 0)
     # test negative index
-    assert packed_points[-1] == (.5, .5, 0, 0, 0)
+    assert packed_points[-1] == (0.5, 0.5, 0, 0, 0)
     with pytest.raises(IndexError):
         packed_points[-3]
     with pytest.raises(IndexError):
@@ -195,27 +202,27 @@ def test_packed_points_to_dxf_tags():
     packed_points, _ = LWPolylinePoints.from_tags(lwtags(LWPOLYLINE1))
     tags = list(packed_points.dxftags())
     assert len(tags) == 2  # just the points
-    assert tags[0] == (10, (-.5, -.5))
-    assert tags[1] == (10, (.5, .5))
+    assert tags[0] == (10, (-0.5, -0.5))
+    assert tags[1] == (10, (0.5, 0.5))
 
 
 def test_packed_points_to_dxf_tags_with_bulge():
     packed_points, _ = LWPolylinePoints.from_tags(lwtags(LWPOLYLINE1))
-    packed_points[0] = (-.5, -.5, 0, 0, 1)
-    packed_points[1] = (.5, .5, .1, .2, -1)
+    packed_points[0] = (-0.5, -0.5, 0, 0, 1)
+    packed_points[1] = (0.5, 0.5, 0.1, 0.2, -1)
     tags = list(packed_points.dxftags())
     assert len(tags) == 6
-    assert tags[0] == (10, (-.5, -.5))
+    assert tags[0] == (10, (-0.5, -0.5))
     assert tags[1] == (42, 1)
-    assert tags[2] == (10, (.5, .5))
-    assert tags[3] == (40, .1)
-    assert tags[4] == (41, .2)
+    assert tags[2] == (10, (0.5, 0.5))
+    assert tags[3] == (40, 0.1)
+    assert tags[4] == (41, 0.2)
     assert tags[5] == (42, -1)
 
 
 def test_lwpolyline_transform_interface():
     pline = LWPolyline()
-    pline.set_points([(0, 0), (2, 0), (1, 1)], format='xy')
+    pline.set_points([(0, 0), (2, 0), (1, 1)], format="xy")
     pline.translate(1, 1, 1)
     vertices = list(pline.vertices())
     assert vertices[0] == (1, 1)

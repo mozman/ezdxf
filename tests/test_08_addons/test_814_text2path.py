@@ -123,7 +123,7 @@ def test_group_three_contours_and_ignore_holes(s):
 @pytest.mark.skipif(
     arial_not_found,
     reason="Font 'Arial' required, a replacement fonts may return different "
-           "paths, issue #515",
+    "paths, issue #515",
 )
 def test_group_percent_sign():
     # Special case %: lower o is inside of the slash bounding box, but HATCH

@@ -15,21 +15,25 @@ def section():
 
 
 def test_loader(section):
-    assert 'ACDSDATA' == section.name.upper()
+    assert "ACDSDATA" == section.name.upper()
     assert len(section.entities) > 0
 
 
 def test_acds_record(section):
-    records = [entity for entity in section.entities if entity.dxftype() == 'ACDSRECORD']
+    records = [
+        entity
+        for entity in section.entities
+        if entity.dxftype() == "ACDSRECORD"
+    ]
     assert len(records) > 0
     record = records[0]
-    assert record.has_section('ASM_Data') is True
-    assert record.has_section('AcDbDs::ID') is True
-    assert record.has_section('mozman') is False
+    assert record.has_section("ASM_Data") is True
+    assert record.has_section("AcDbDs::ID") is True
+    assert record.has_section("mozman") is False
     with pytest.raises(DXFKeyError):
-        _ = record.get_section('mozman')
+        _ = record.get_section("mozman")
 
-    asm_data = record.get_section('ASM_Data')
+    asm_data = record.get_section("ASM_Data")
     binary_data = (tag for tag in asm_data if tag.code == 310)
     length = sum(len(tag.value) for tag in binary_data)
     assert asm_data[2].value == length

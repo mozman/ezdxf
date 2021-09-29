@@ -46,33 +46,34 @@ def entity():
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
-    assert 'IMAGEDEF' in ENTITY_CLASSES
+
+    assert "IMAGEDEF" in ENTITY_CLASSES
 
 
 def test_default_init():
     entity = ImageDef()
-    assert entity.dxftype() == 'IMAGEDEF'
+    assert entity.dxftype() == "IMAGEDEF"
     assert entity.dxf.handle is None
     assert entity.dxf.owner is None
 
 
 def test_default_new():
-    entity = ImageDef.new(handle='ABBA', owner='0', dxfattribs={
-        'filename': 'image.jpg'
-    })
+    entity = ImageDef.new(
+        handle="ABBA", owner="0", dxfattribs={"filename": "image.jpg"}
+    )
     assert entity.dxf.class_version == 0
-    assert entity.dxf.filename == 'image.jpg'
+    assert entity.dxf.filename == "image.jpg"
     assert entity.dxf.image_size is None
-    assert entity.dxf.pixel_size == (.01, .01)
+    assert entity.dxf.pixel_size == (0.01, 0.01)
     assert entity.dxf.loaded == 1
     assert entity.dxf.resolution_units == 0
 
 
 def test_load_from_text(entity):
     assert entity.dxf.class_version == 0
-    assert entity.dxf.filename == 'path/filename.jpg'
+    assert entity.dxf.filename == "path/filename.jpg"
     assert entity.dxf.image_size == (640, 480)
-    assert entity.dxf.pixel_size == (.01, .01)
+    assert entity.dxf.pixel_size == (0.01, 0.01)
     assert entity.dxf.loaded == 1
     assert entity.dxf.resolution_units == 0
 

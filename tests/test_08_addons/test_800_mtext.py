@@ -5,22 +5,22 @@ import ezdxf
 from ezdxf.addons import MText
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def doc():
-    return ezdxf.new('R12')
+    return ezdxf.new("R12")
 
 
 def test_horiz_top(doc):
-    layout = doc.blocks.new('test_horiz_top')
+    layout = doc.blocks.new("test_horiz_top")
     text = "lineA\nlineB"
-    mtext = MText(text, (0., 0., 0.), 1.0)
+    mtext = MText(text, (0.0, 0.0, 0.0), 1.0)
     mtext.render(layout)
     assert len(layout) == 2
     lines = list(layout)
-    assert lines[0].dxftype() == 'TEXT'
-    assert lines[1].dxftype() == 'TEXT'
-    assert lines[0].dxf.text == 'lineA'
-    assert lines[1].dxf.text == 'lineB'
+    assert lines[0].dxftype() == "TEXT"
+    assert lines[1].dxftype() == "TEXT"
+    assert lines[0].dxf.text == "lineA"
+    assert lines[1].dxf.text == "lineB"
     assert lines[0].dxf.align_point == (0, 0, 0)
     assert lines[1].dxf.align_point == (0, -1, 0)
     assert lines[0].dxf.valign == MText.TOP
@@ -28,16 +28,16 @@ def test_horiz_top(doc):
 
 
 def test_horiz_bottom(doc):
-    layout = doc.blocks.new('test_horiz_bottom')
+    layout = doc.blocks.new("test_horiz_bottom")
     text = "lineA\nlineB"
-    mtext = MText(text, (0., 0., 0.), 1.0, align='BOTTOM_LEFT')
+    mtext = MText(text, (0.0, 0.0, 0.0), 1.0, align="BOTTOM_LEFT")
     mtext.render(layout)
     assert len(layout) == 2
     lines = list(layout)
-    assert lines[0].dxftype() == 'TEXT'
-    assert lines[1].dxftype() == 'TEXT'
-    assert lines[0].dxf.text == 'lineA'
-    assert lines[1].dxf.text == 'lineB'
+    assert lines[0].dxftype() == "TEXT"
+    assert lines[1].dxftype() == "TEXT"
+    assert lines[0].dxf.text == "lineA"
+    assert lines[1].dxf.text == "lineB"
     assert lines[0].dxf.align_point == (0, 1, 0)
     assert lines[1].dxf.align_point == (0, 0, 0)
     assert lines[0].dxf.valign == MText.BOTTOM
@@ -45,35 +45,35 @@ def test_horiz_bottom(doc):
 
 
 def test_horiz_middle(doc):
-    layout = doc.blocks.new('test_horiz_middle')
+    layout = doc.blocks.new("test_horiz_middle")
     text = "lineA\nlineB"
-    mtext = MText(text, (0., 0., 0.), 1.0, align='MIDDLE_LEFT')
+    mtext = MText(text, (0.0, 0.0, 0.0), 1.0, align="MIDDLE_LEFT")
     mtext.render(layout)
     assert len(layout) == 2
     lines = list(layout)
-    assert lines[0].dxftype() == 'TEXT'
-    assert lines[1].dxftype() == 'TEXT'
-    assert lines[0].dxf.text == 'lineA'
-    assert lines[1].dxf.text == 'lineB'
-    assert lines[0].dxf.align_point == (0, .5, 0)
-    assert lines[1].dxf.align_point == (0, -.5, 0)
+    assert lines[0].dxftype() == "TEXT"
+    assert lines[1].dxftype() == "TEXT"
+    assert lines[0].dxf.text == "lineA"
+    assert lines[1].dxf.text == "lineB"
+    assert lines[0].dxf.align_point == (0, 0.5, 0)
+    assert lines[1].dxf.align_point == (0, -0.5, 0)
     assert lines[0].dxf.valign == MText.MIDDLE
     assert lines[0].dxf.halign == MText.LEFT
 
 
 def test_45deg_top(doc):
-    layout = doc.blocks.new('test_45deg_top')
+    layout = doc.blocks.new("test_45deg_top")
     text = "lineA\nlineB\nlineC"
-    mtext = MText(text, (0., 0., 0.), 1.0, align='TOP_LEFT', rotation=45)
+    mtext = MText(text, (0.0, 0.0, 0.0), 1.0, align="TOP_LEFT", rotation=45)
     mtext.render(layout)
     assert len(layout) == 3
     lines = list(layout)
-    assert lines[0].dxftype() == 'TEXT'
-    assert lines[1].dxftype() == 'TEXT'
-    assert lines[2].dxftype() == 'TEXT'
-    assert lines[0].dxf.text == 'lineA'
-    assert lines[1].dxf.text == 'lineB'
-    assert lines[2].dxf.text == 'lineC'
+    assert lines[0].dxftype() == "TEXT"
+    assert lines[1].dxftype() == "TEXT"
+    assert lines[2].dxftype() == "TEXT"
+    assert lines[0].dxf.text == "lineA"
+    assert lines[1].dxf.text == "lineB"
+    assert lines[2].dxf.text == "lineC"
     assert lines[0].dxf.align_point == (0, 0, 0)
     assert lines[1].dxf.align_point == (0.707107, -0.707107, 0)
     assert lines[2].dxf.align_point == (1.414214, -1.414214, 0)
@@ -83,18 +83,18 @@ def test_45deg_top(doc):
 
 
 def test_45deg_bottom(doc):
-    layout = doc.blocks.new('test_45deg_bottom')
+    layout = doc.blocks.new("test_45deg_bottom")
     text = "lineA\nlineB\nlineC"
-    mtext = MText(text, (0., 0., 0.), 1.0, align='BOTTOM_LEFT', rotation=45)
+    mtext = MText(text, (0.0, 0.0, 0.0), 1.0, align="BOTTOM_LEFT", rotation=45)
     mtext.render(layout)
     assert len(layout) == 3
     lines = list(layout)
-    assert lines[0].dxftype() == 'TEXT'
-    assert lines[1].dxftype() == 'TEXT'
-    assert lines[2].dxftype() == 'TEXT'
-    assert lines[0].dxf.text == 'lineA'
-    assert lines[1].dxf.text == 'lineB'
-    assert lines[2].dxf.text == 'lineC'
+    assert lines[0].dxftype() == "TEXT"
+    assert lines[1].dxftype() == "TEXT"
+    assert lines[2].dxftype() == "TEXT"
+    assert lines[0].dxf.text == "lineA"
+    assert lines[1].dxf.text == "lineB"
+    assert lines[2].dxf.text == "lineC"
     assert lines[0].dxf.align_point == (-1.414214, 1.414214, 0)
     assert lines[1].dxf.align_point == (-0.707107, 0.707107, 0)
     assert lines[2].dxf.align_point == (0, 0, 0)
@@ -104,13 +104,13 @@ def test_45deg_bottom(doc):
 
 
 def test_one_liner(doc):
-    layout = doc.blocks.new('test_one_liner')
+    layout = doc.blocks.new("test_one_liner")
     text = "OneLine"
-    mtext = MText(text, (0., 0., 0.))
+    mtext = MText(text, (0.0, 0.0, 0.0))
     mtext.render(layout)
     assert len(layout) == 1
     lines = list(layout)
-    assert lines[0].dxftype() == 'TEXT'
+    assert lines[0].dxftype() == "TEXT"
     assert lines[0].dxf.align_point == (0, 0, 0)
     assert lines[0].dxf.valign == MText.TOP
     assert lines[0].dxf.halign == MText.LEFT
@@ -118,12 +118,11 @@ def test_one_liner(doc):
 
 def test_get_attribute_by_subscript():
     mtext = MText("Test\nTest", (0, 0))
-    layer = mtext['layer']
+    layer = mtext["layer"]
     assert layer == mtext.layer
 
 
 def test_set_attribute_by_subscript():
     mtext = MText("Test\nTest", (0, 0))
-    mtext['layer'] = "modified"
+    mtext["layer"] = "modified"
     assert mtext.layer == "modified"
-

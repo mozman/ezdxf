@@ -11,14 +11,14 @@ class TestTextBox:
         assert box.width == 1
         assert box.height == 1
         assert box.angle == 0
-        assert box[0].isclose((-.5, -.5))
-        assert box[1].isclose((+.5, -.5))
-        assert box[2].isclose((+.5, +.5))
-        assert box[3].isclose((-.5, +.5))
+        assert box[0].isclose((-0.5, -0.5))
+        assert box[1].isclose((+0.5, -0.5))
+        assert box[2].isclose((+0.5, +0.5))
+        assert box[3].isclose((-0.5, +0.5))
 
     def test_init(self):
         box = ConstructionBox(center=(5, 0.5), width=10, height=1, angle=0)
-        assert box.center == (5, .5)
+        assert box.center == (5, 0.5)
         p1, p2, p3, p4 = box.corners
         assert p1.isclose((0, 0))
         assert p2.isclose((10, 0))
@@ -39,8 +39,8 @@ class TestTextBox:
         assert box.angle == 0
 
     def test_init_angle_90(self):
-        box = ConstructionBox(center=(.5, 5), width=10, height=1, angle=90)
-        assert box.center == (.5, 5)
+        box = ConstructionBox(center=(0.5, 5), width=10, height=1, angle=90)
+        assert box.center == (0.5, 5)
         p1, p2, p3, p4 = box.corners
         assert p1.isclose((1, 0))
         assert p2.isclose((1, 10))
@@ -49,8 +49,8 @@ class TestTextBox:
 
     def test_set_center(self):
         box = ConstructionBox()
-        box.center = (.5, .5)
-        assert box.center.isclose((.5, .5))
+        box.center = (0.5, 0.5)
+        assert box.center.isclose((0.5, 0.5))
         assert box[0].isclose((0, 0))
 
     def test_set_width(self):
@@ -58,8 +58,8 @@ class TestTextBox:
         box.width = -3
         assert box.width == 3
         assert box.center.isclose((0, 0))
-        assert box[0].isclose((-1.5, -.5))
-        assert box[2].isclose((+1.5, +.5))
+        assert box[0].isclose((-1.5, -0.5))
+        assert box[2].isclose((+1.5, +0.5))
 
     def test_set_height(self):
         box = ConstructionBox()
@@ -82,7 +82,7 @@ class TestTextBox:
         assert math.isclose(box.circumcircle_radius, r)
 
         box = ConstructionBox(width=17, height=1)
-        r = math.hypot(.5, 8.5)
+        r = math.hypot(0.5, 8.5)
         assert math.isclose(box.circumcircle_radius, r)
 
     def test_set_angle(self):
@@ -154,10 +154,10 @@ class TestTextBox:
         assert box.is_inside((+1, -1)) is False
 
         # outside but on extension lines
-        assert box.is_inside((1, .5)) is False
-        assert box.is_inside((-1, -.5)) is False
-        assert box.is_inside((-1, .5)) is False
-        assert box.is_inside((+1, -.5)) is False
+        assert box.is_inside((1, 0.5)) is False
+        assert box.is_inside((-1, -0.5)) is False
+        assert box.is_inside((-1, 0.5)) is False
+        assert box.is_inside((+1, -0.5)) is False
 
     def test_is_inside_rotated_box(self):
         box = ConstructionBox(angle=67)
@@ -188,16 +188,16 @@ class TestTextBox:
         assert box2.is_any_corner_inside(box1) is False
 
         # one point of box2 inside of box1
-        box2 = ConstructionBox(center=(.5404, .5404), angle=45)
+        box2 = ConstructionBox(center=(0.5404, 0.5404), angle=45)
         assert box1.is_any_corner_inside(box2) is False
         assert box2.is_any_corner_inside(box1) is True
 
         # one point of box2 inside of box1
-        box2 = ConstructionBox(center=(1.177, .5152), angle=45)
+        box2 = ConstructionBox(center=(1.177, 0.5152), angle=45)
         assert box2.is_any_corner_inside(box1) is True
 
         # no overlapping
-        box2 = ConstructionBox(center=(1.2091, .4669), angle=45)
+        box2 = ConstructionBox(center=(1.2091, 0.4669), angle=45)
         assert box2.is_any_corner_inside(box1) is False
 
     def test_overlapping_boxes(self):
@@ -215,36 +215,38 @@ class TestTextBox:
         assert box2.is_overlapping(box1) is True
 
         # no overlapping
-        box2 = ConstructionBox(center=(1.2091, .4669), angle=45)
+        box2 = ConstructionBox(center=(1.2091, 0.4669), angle=45)
         assert box1.is_overlapping(box2) is False
         assert box2.is_overlapping(box1) is False
 
         # one point of box2 inside of box1
-        box2 = ConstructionBox(center=(.5404, .5404), angle=45)
+        box2 = ConstructionBox(center=(0.5404, 0.5404), angle=45)
         assert box1.is_overlapping(box2) is True
         assert box2.is_overlapping(box1) is True
 
     def test_overlapping_crossing_boxes(self):
         box1 = ConstructionBox()
         # overlapping boxes with corners inside of each other
-        box2 = ConstructionBox(width=.1, height=3)
+        box2 = ConstructionBox(width=0.1, height=3)
         assert box1.is_any_corner_inside(box2) is False
         assert box2.is_any_corner_inside(box1) is False
         assert box1.is_overlapping(box2) is True
         assert box2.is_overlapping(box1) is True
 
         # center2 outside of box1
-        box2 = ConstructionBox(center=(.3, .708), width=.18, height=2.88)
+        box2 = ConstructionBox(center=(0.3, 0.708), width=0.18, height=2.88)
         assert box1.is_overlapping(box2) is True
         assert box2.is_overlapping(box1) is True
 
         # center2 outside of box1, no overlapping
-        box2 = ConstructionBox(center=(.6427, .6563), width=.18, height=2.88)
+        box2 = ConstructionBox(center=(0.6427, 0.6563), width=0.18, height=2.88)
         assert box1.is_overlapping(box2) is False
         assert box2.is_overlapping(box1) is False
 
         # cutting corner of box1
-        box2 = ConstructionBox(center=(.2639, .5721), width=.18, height=2.88, angle=45)
+        box2 = ConstructionBox(
+            center=(0.2639, 0.5721), width=0.18, height=2.88, angle=45
+        )
         assert box1.is_overlapping(box2) is True
         assert box2.is_overlapping(box1) is True
 

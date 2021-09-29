@@ -10,7 +10,7 @@ from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.path import make_path
 
 TEST_CLASS = Arc
-TEST_TYPE = 'ARC'
+TEST_TYPE = "ARC"
 
 ENTITY_R12 = """0
 ARC
@@ -68,6 +68,7 @@ def entity(request):
 
 def test_registered():
     from ezdxf.entities.factory import ENTITY_CLASSES
+
     assert TEST_TYPE in ENTITY_CLASSES
 
 
@@ -79,21 +80,25 @@ def test_default_init():
 
 
 def test_default_new():
-    entity = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
-        'color': '7',
-        'center': (1, 2, 3),
-        'radius': 2.5,
-        'start_angle': 30,
-        'end_angle': 290,
-    })
-    assert entity.dxf.layer == '0'
+    entity = TEST_CLASS.new(
+        handle="ABBA",
+        owner="0",
+        dxfattribs={
+            "color": "7",
+            "center": (1, 2, 3),
+            "radius": 2.5,
+            "start_angle": 30,
+            "end_angle": 290,
+        },
+    )
+    assert entity.dxf.layer == "0"
     assert entity.dxf.color == 7
-    assert entity.dxf.linetype == 'BYLAYER'
+    assert entity.dxf.linetype == "BYLAYER"
 
     assert entity.dxf.center == (1, 2, 3)
-    assert entity.dxf.center.x == 1, 'is not Vec3 compatible'
-    assert entity.dxf.center.y == 2, 'is not Vec3 compatible'
-    assert entity.dxf.center.z == 3, 'is not Vec3 compatible'
+    assert entity.dxf.center.x == 1, "is not Vec3 compatible"
+    assert entity.dxf.center.y == 2, "is not Vec3 compatible"
+    assert entity.dxf.center.z == 3, "is not Vec3 compatible"
     assert entity.dxf.radius == 2.5
     assert entity.dxf.start_angle == 30
     assert entity.dxf.end_angle == 290
@@ -101,17 +106,21 @@ def test_default_new():
     entity.dxf.shadow_mode = 1
     assert entity.dxf.shadow_mode == 1
     assert entity.dxf.extrusion == (0.0, 0.0, 1.0)
-    assert entity.dxf.hasattr('extrusion') is False, 'just the default value'
+    assert entity.dxf.hasattr("extrusion") is False, "just the default value"
 
 
 def test_get_start_and_end_vertices_with_ocs():
-    arc = TEST_CLASS.new(handle='ABBA', owner='0', dxfattribs={
-        'center': (1, 2, 3),
-        'radius': 2.5,
-        'start_angle': 90,
-        'end_angle': 180,
-        'extrusion': (0, 0, -1),
-    })
+    arc = TEST_CLASS.new(
+        handle="ABBA",
+        owner="0",
+        dxfattribs={
+            "center": (1, 2, 3),
+            "radius": 2.5,
+            "start_angle": 90,
+            "end_angle": 180,
+            "extrusion": (0, 0, -1),
+        },
+    )
     # convenient properties
     assert arc.start_point.isclose(Vec3(-1, 4.5, -3), abs_tol=1e-6)
     assert arc.end_point.isclose(Vec3(1.5, 2, -3), abs_tol=1e-6)
@@ -123,16 +132,17 @@ def test_get_start_and_end_vertices_with_ocs():
 
 
 def test_load_from_text(entity):
-    assert entity.dxf.layer == '0'
-    assert entity.dxf.color == 256, 'default color is 256 (by layer)'
+    assert entity.dxf.layer == "0"
+    assert entity.dxf.color == 256, "default color is 256 (by layer)"
     assert entity.dxf.center == (0, 0, 0)
     assert entity.dxf.radius == 1
     assert entity.dxf.start_angle == 0
     assert entity.dxf.end_angle == 360
 
 
-@pytest.mark.parametrize("txt,ver",
-                         [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)])
+@pytest.mark.parametrize(
+    "txt,ver", [(ENTITY_R2000, DXF2000), (ENTITY_R12, DXF12)]
+)
 def test_write_dxf(txt, ver):
     expected = basic_tags_from_text(txt)
     arc = TEST_CLASS.from_text(txt)
@@ -146,7 +156,7 @@ def test_write_dxf(txt, ver):
 
 
 def test_angles():
-    arc = Arc.new(dxfattribs={'radius': 1, 'start_angle': 30, 'end_angle': 60})
+    arc = Arc.new(dxfattribs={"radius": 1, "start_angle": 30, "end_angle": 60})
     assert tuple(arc.angles(2)) == (30, 60)
     assert tuple(arc.angles(3)) == (30, 45, 60)
 
@@ -163,8 +173,13 @@ def test_angles():
 
 def test_arc_default_ocs():
     arc = Arc.new(
-        dxfattribs={'center': (2, 3, 4), 'thickness': 2, 'start_angle': 30,
-                    'end_angle': 60})
+        dxfattribs={
+            "center": (2, 3, 4),
+            "thickness": 2,
+            "start_angle": 30,
+            "end_angle": 60,
+        }
+    )
     # 1. rotation - 2. scaling - 3. translation
     m = Matrix44.chain(Matrix44.scale(2, 2, 3), Matrix44.translate(1, 1, 1))
     # default extrusion is (0, 0, 1), therefore scale(2, 2, ..) is a uniform scaling in the xy-play of the OCS
@@ -182,32 +197,47 @@ def test_arc_default_ocs():
 
 
 # See also ConstructionArc(): test suite 645 - test_flattening()
-@pytest.mark.parametrize('r, s, e, sagitta, count', [
-    (1, 0, 180, 0.10, 5),
-    (0, 0, 360, 0.10, 0),  # radius 0 works but yields nothing
-    (-1, 0, 180, 0.35, 3),  # negative radius same as positive radius
-    (1, 270, 90, 0.10, 5),  # start angle > end angle
-])
+@pytest.mark.parametrize(
+    "r, s, e, sagitta, count",
+    [
+        (1, 0, 180, 0.10, 5),
+        (0, 0, 360, 0.10, 0),  # radius 0 works but yields nothing
+        (-1, 0, 180, 0.35, 3),  # negative radius same as positive radius
+        (1, 270, 90, 0.10, 5),  # start angle > end angle
+    ],
+)
 def test_arc_flattening(r, s, e, sagitta, count):
-    arc = Arc.new(dxfattribs={
-        'radius': r, 'start_angle': s, 'end_angle': e,
-    })
+    arc = Arc.new(
+        dxfattribs={
+            "radius": r,
+            "start_angle": s,
+            "end_angle": e,
+        }
+    )
     points = list(arc.flattening(sagitta))
     assert len(points) == count
 
 
 def test_arc_flattening_returns_Vec3():
-    arc = Arc.new(dxfattribs={
-        'radius': 1, 'start_angle': 0, 'end_angle': 180,
-    })
+    arc = Arc.new(
+        dxfattribs={
+            "radius": 1,
+            "start_angle": 0,
+            "end_angle": 180,
+        }
+    )
     points = list(arc.flattening(0.1))
     assert isinstance(points[0], Vec3), "must return Vec3() instances"
 
 
 def test_360_deg_arc_transformation():
-    arc = Arc.new(dxfattribs={
-        'radius': 1, 'start_angle': 0, 'end_angle': 360,
-    })
+    arc = Arc.new(
+        dxfattribs={
+            "radius": 1,
+            "start_angle": 0,
+            "end_angle": 360,
+        }
+    )
     count1 = len(list(make_path(arc).flattening(0.01)))
     arc.transform(Matrix44.translate(1, 0, 0))
     count2 = len(list(make_path(arc).flattening(0.01)))
@@ -219,14 +249,20 @@ def test_360_deg_arc_transformation():
     assert count1 == count3
 
 
-@pytest.mark.parametrize('angle', [30, 180, 360])
+@pytest.mark.parametrize("angle", [30, 180, 360])
 @pytest.mark.parametrize(
-    'reflexion', [(-1, 1, 1), (1, -1, 1), (1, 1, -1)], ids=['x', 'y', 'z'])
+    "reflexion", [(-1, 1, 1), (1, -1, 1), (1, 1, -1)], ids=["x", "y", "z"]
+)
 def test_30_deg_arc_reflexion(reflexion, angle):
-    arc = Arc.new(dxfattribs={
-        'radius': 1, 'start_angle': 0, 'end_angle': angle,
-    })
+    arc = Arc.new(
+        dxfattribs={
+            "radius": 1,
+            "start_angle": 0,
+            "end_angle": angle,
+        }
+    )
     x, y, z = reflexion
     arc.transform(Matrix44.scale(x, y, z))
-    assert arc_angle_span_deg(arc.dxf.start_angle,
-                              arc.dxf.end_angle) == pytest.approx(angle)
+    assert arc_angle_span_deg(
+        arc.dxf.start_angle, arc.dxf.end_angle
+    ) == pytest.approx(angle)

@@ -3,6 +3,7 @@
 import pytest
 import math
 import pickle
+
 # Import from 'ezdxf.math._vector' to test Python implementation
 from ezdxf.math._vector import Vec2, Vec3
 from ezdxf.acc import USE_C_EXT
@@ -66,9 +67,10 @@ def test_round(vec2):
 
 def test_from_angle(vcls):
     angle = math.radians(50)
-    length = 3.
+    length = 3.0
     assert vcls.from_angle(angle, length) == vcls(
-        (math.cos(angle) * length, math.sin(angle) * length))
+        (math.cos(angle) * length, math.sin(angle) * length)
+    )
 
 
 def test_vec2_as_tuple(vec2):
@@ -320,11 +322,14 @@ def test_angle_between(vcls):
     assert math.isclose(angle, math.pi / 4)
 
 
-@pytest.mark.parametrize('v1, v2', [
-    [(1, 0), (0, 0)],
-    [(0, 0), (1, 0)],
-    [(0, 0), (0, 0)],
-])
+@pytest.mark.parametrize(
+    "v1, v2",
+    [
+        [(1, 0), (0, 0)],
+        [(0, 0), (1, 0)],
+        [(0, 0), (0, 0)],
+    ],
+)
 def test_angle_between_null_vector(vcls, v1, v2):
     with pytest.raises(ZeroDivisionError):
         vcls(v1).angle_between(vcls(v2))
@@ -347,7 +352,7 @@ def test_rotate(vcls):
 def test_lerp(vcls):
     v1 = vcls(1, 1)
     v2 = vcls(4, 4)
-    assert v1.lerp(v2, .5) == (2.5, 2.5)
+    assert v1.lerp(v2, 0.5) == (2.5, 2.5)
     assert v1.lerp(v2, 0) == (1, 1)
     assert v1.lerp(v2, 1) == (4, 4)
 

@@ -4,7 +4,7 @@ import pytest
 import ezdxf
 
 
-@pytest.fixture(scope='module', params=['R12', 'R2000'])
+@pytest.fixture(scope="module", params=["R12", "R2000"])
 def dxf(request, tmpdir_factory):
     doc = ezdxf.new()
     msp = doc.modelspace()
@@ -22,8 +22,8 @@ def test_load_dxf(dxf):
 
     msp = doc.modelspace()
     assert len(msp) == 1
-    assert msp[0].dxftype() == 'LINE'
+    assert msp[0].dxftype() == "LINE"
 
     psp = doc.layout()
     assert len(psp) == 1
-    assert psp[0].dxftype() == 'CIRCLE'
+    assert psp[0].dxftype() == "CIRCLE"
