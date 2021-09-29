@@ -300,7 +300,7 @@ class TestMTextContextParsing:
     )
     def test_switch_stroke_on_off_multiple_times(self, s, e, attr):
         text = s + "word word" + e + " " + s + "word word" + e + " word"
-        # t[x]      0   12             3        4   56             78
+        # t[x]      0   12            3         4   56            78
         mp = MTextParser(text)
 
         assert [getattr(t.ctx, attr) for t in mp] == [
