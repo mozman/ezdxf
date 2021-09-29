@@ -11,7 +11,7 @@ def add_graphic_entity_to_root_dict(doc: Drawing):
     msp = doc.modelspace()
     line = msp.add_line((0, 0), (1, 0))
     # Question: is it possible to store graphical entities which reside in a
-    # layout in the root dictionary (Autodesk term: unnamed dictionary)
+    # layout in the root dictionary (Autodesk term: the named dictionary)
     # doc.rootdict["LINE"] = line  # this does not work for v0.17 as consequence!
     # HACK HACK HACK!!! - DO NOT USE HANDLES IN PRODUCTION CODE!
     doc.rootdict["LINE"] = line.dxf.handle
