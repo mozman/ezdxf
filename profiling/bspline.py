@@ -11,8 +11,8 @@ from ezdxf.version import __version__
 from ezdxf.math._bspline import Basis, Evaluator
 
 if USE_C_EXT is False:
-    print('C-extension disabled or not available. (pypy3?)')
-    print('Cython implementation == Python implementation.')
+    print("C-extension disabled or not available. (pypy3?)")
+    print("Cython implementation == Python implementation.")
     CBasis = Basis
     CEvaluator = Evaluator
 else:
@@ -25,13 +25,16 @@ from ezdxf.math import fit_points_to_cad_cv, linspace
 SPLINE_COUNT = 20
 POINT_COUNT = 20
 splines = [
-    fit_points_to_cad_cv(random_3d_path(POINT_COUNT)) for _ in range(SPLINE_COUNT)
+    fit_points_to_cad_cv(random_3d_path(POINT_COUNT))
+    for _ in range(SPLINE_COUNT)
 ]
 
 
 class PySpline:
     def __init__(self, bspline, weights=None):
-        self.basis = Basis(bspline.knots(), bspline.order, bspline.count, weights)
+        self.basis = Basis(
+            bspline.knots(), bspline.order, bspline.count, weights
+        )
         self.evaluator = Evaluator(self.basis, bspline.control_points)
 
     def point(self, u):
@@ -49,28 +52,32 @@ class PySpline:
 
 class CySpline(PySpline):
     def __init__(self, bspline, weights=None):
-        self.basis = CBasis(bspline.knots(), bspline.order, bspline.count, weights)
+        self.basis = CBasis(
+            bspline.knots(), bspline.order, bspline.count, weights
+        )
         self.evaluator = CEvaluator(self.basis, bspline.control_points)
 
 
 def open_log(name: str):
     parent = Path(__file__).parent
-    p = parent / 'logs' / Path(name + '.csv')
+    p = parent / "logs" / Path(name + ".csv")
     if not p.exists():
-        with open(p, mode='wt') as fp:
+        with open(p, mode="wt") as fp:
             fp.write(
                 '"timestamp"; "pytime"; "cytime"; '
-                '"python_version"; "ezdxf_version"\n')
-    log_file = open(p, mode='at')
+                '"python_version"; "ezdxf_version"\n'
+            )
+    log_file = open(p, mode="at")
     return log_file
 
 
 def log(name: str, pytime: float, cytime: float):
     log_file = open_log(name)
     timestamp = datetime.now().isoformat()
-    py_version =sys.version.replace('\n', ' ')
+    py_version = sys.version.replace("\n", " ")
     log_file.write(
-        f'{timestamp}; {pytime}; {cytime}; "{py_version}"; "{__version__}"\n')
+        f'{timestamp}; {pytime}; {cytime}; "{py_version}"; "{__version__}"\n'
+    )
     log_file.close()
 
 
@@ -119,45 +126,50 @@ def profile(text, func, pytype, cytype, *args):
     pytime = profile1(func, pytype, *args)
     cytime = profile1(func, cytype, *args)
     ratio = pytime / cytime
-    print(f'Python - {text} {pytime:.3f}s')
-    print(f'Cython - {text} {cytime:.3f}s')
-    print(f'Ratio {ratio:.1f}x')
+    print(f"Python - {text} {pytime:.3f}s")
+    print(f"Cython - {text} {cytime:.3f}s")
+    print(f"Ratio {ratio:.1f}x")
     log(func.__name__, pytime, cytime)
 
 
 POINT_COUNT_1 = 10_000
-print(f'Profiling BSpline Python and Cython implementation:')
+print(f"Profiling BSpline Python and Cython implementation:")
 profile(
-    f'calc {POINT_COUNT_1}x single point for {SPLINE_COUNT} BSplines: ',
+    f"calc {POINT_COUNT_1}x single point for {SPLINE_COUNT} BSplines: ",
     bspline_points,
     PySpline,
     CySpline,
-    POINT_COUNT_1)
+    POINT_COUNT_1,
+)
 
 profile(
-    f'calc {POINT_COUNT_1}x single point for {SPLINE_COUNT} rational BSplines: ',
+    f"calc {POINT_COUNT_1}x single point for {SPLINE_COUNT} rational BSplines: ",
     bspline_points_rational,
     PySpline,
     CySpline,
-    POINT_COUNT_1)
+    POINT_COUNT_1,
+)
 
 profile(
-    f'calc {POINT_COUNT_1}x multi point for {SPLINE_COUNT} BSplines: ',
+    f"calc {POINT_COUNT_1}x multi point for {SPLINE_COUNT} BSplines: ",
     bspline_multi_points,
     PySpline,
     CySpline,
-    POINT_COUNT_1)
+    POINT_COUNT_1,
+)
 
 profile(
-    f'calc {POINT_COUNT_1}x single point & derivative for {SPLINE_COUNT} BSplines: ',
+    f"calc {POINT_COUNT_1}x single point & derivative for {SPLINE_COUNT} BSplines: ",
     bspline_derivative,
     PySpline,
     CySpline,
-    POINT_COUNT_1)
+    POINT_COUNT_1,
+)
 
 profile(
-    f'calc {POINT_COUNT_1}x multi point & derivative for {SPLINE_COUNT} BSplines: ',
+    f"calc {POINT_COUNT_1}x multi point & derivative for {SPLINE_COUNT} BSplines: ",
     bspline_multi_derivative,
     PySpline,
     CySpline,
-    POINT_COUNT_1)
+    POINT_COUNT_1,
+)

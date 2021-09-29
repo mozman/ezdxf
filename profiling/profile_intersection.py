@@ -34,9 +34,11 @@ def profile(text, func):
     t0 = time.perf_counter()
     func()
     t1 = time.perf_counter()
-    print(f'{text} {t1 - t0:.3f}s')
+    print(f"{text} {t1 - t0:.3f}s")
 
 
-profile('intersect ConstructionRay: ', profile_construction_ray)
-profile('intersect ConstructionRay init once: ', profile_construction_ray_init_once)
-profile('intersect line line xy: ', profile_intersection_line_line_xy)
+profile("intersect ConstructionRay: ", profile_construction_ray)
+profile(
+    "intersect ConstructionRay init once: ", profile_construction_ray_init_once
+)
+profile("intersect line line xy: ", profile_intersection_line_line_xy)

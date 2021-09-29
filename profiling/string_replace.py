@@ -35,13 +35,13 @@ def profile(text, func, runs):
         func(REPLACE, content)
     t1 = time.perf_counter()
     t = t1 - t0
-    print(f'{text} {t:.3f}s')
+    print(f"{text} {t:.3f}s")
 
 
 RUNS = 1_000
 
-print(f'Profiling text replacement:')
-profile(f'str_replace() {RUNS}:', str_replace, RUNS)
-profile(f're_replace() {RUNS}:', re_replace, RUNS)
-profile(f'find_substr() {RUNS * 100}:', find_substr, RUNS * 100)
-profile(f'contains_substr() {RUNS * 100}:', contains_substr, RUNS * 100)
+print(f"Profiling text replacement:")
+profile(f"str_replace() {RUNS}:", str_replace, RUNS)
+profile(f"re_replace() {RUNS}:", re_replace, RUNS)
+profile(f"find_substr() {RUNS * 100}:", find_substr, RUNS * 100)
+profile(f"contains_substr() {RUNS * 100}:", contains_substr, RUNS * 100)

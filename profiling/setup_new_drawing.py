@@ -16,12 +16,12 @@ def setup_drawing():
 def main(count):
     t = Timer("setup_drawing()", SETUP)
     time2 = t.timeit(count)
-    print_result(time2, f'setup {count} new style DXF')
+    print_result(time2, f"setup {count} new style DXF")
 
 
 def print_result(time, text):
     print(f"Profiling: {text}; takes {time:.2f} seconds")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(300)

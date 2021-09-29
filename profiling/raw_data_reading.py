@@ -4,11 +4,11 @@ import os
 import time
 from ezdxf import EZDXF_TEST_FILES
 
-BIG_FILE = os.path.join(EZDXF_TEST_FILES, 'CADKitSamples', 'torso_uniform.dxf')
+BIG_FILE = os.path.join(EZDXF_TEST_FILES, "CADKitSamples", "torso_uniform.dxf")
 
 
 def load_ascii():
-    with open(BIG_FILE, 'rt', encoding='cp1252') as fp:
+    with open(BIG_FILE, "rt", encoding="cp1252") as fp:
         while True:
             line = fp.readline()
             if not line:
@@ -16,7 +16,7 @@ def load_ascii():
 
 
 def load_bytes():
-    with open(BIG_FILE, 'rb') as fp:
+    with open(BIG_FILE, "rb") as fp:
         while True:
             line = fp.readline()
             if not line:
@@ -24,7 +24,7 @@ def load_bytes():
 
 
 def print_result(time, text):
-    print(f'Operation: {text} takes {time:.6f} s\n')
+    print(f"Operation: {text} takes {time:.6f} s\n")
 
 
 def run(func):
@@ -34,6 +34,6 @@ def run(func):
     return end - start
 
 
-if __name__ == '__main__':
-    print_result(run(load_ascii), 'ascii stream reader')
-    print_result(run(load_bytes), 'byte stream reader')
+if __name__ == "__main__":
+    print_result(run(load_ascii), "ascii stream reader")
+    print_result(run(load_bytes), "byte stream reader")

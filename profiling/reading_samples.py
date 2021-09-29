@@ -51,11 +51,11 @@ def count_entities(msp):
 
 for _name in CADKIT_FILES:
     filename = os.path.join(EZDXF_TEST_FILES, CADKIT, _name)
-    print(f'reading file: {filename}')
+    print(f"reading file: {filename}")
     start_reading = time.perf_counter()
     doc = ezdxf.readfile(filename)
     msp = doc.modelspace()
     new_entities = count_entities(msp)
     new_count = len(msp)
     new_timing = time.perf_counter() - start_reading
-    print(f'loaded {new_count} entities in {new_timing:.3f} sec')
+    print(f"loaded {new_count} entities in {new_timing:.3f} sec")
