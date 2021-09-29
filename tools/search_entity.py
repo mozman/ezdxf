@@ -5,7 +5,7 @@ import ezdxf
 from ezdxf import recover
 from pathlib import Path
 
-DXF_ENTITY = 'SUNSTUDY'
+DXF_ENTITY = "SUNSTUDY"
 
 
 def has_dxf_entity(filename, entity_name):
@@ -15,10 +15,10 @@ def has_dxf_entity(filename, entity_name):
         return False
     except ezdxf.DXFError:
         try:
-            print('Using recover mode.')
+            print("Using recover mode.")
             doc, auditor = recover.readfile(filename)
         except ezdxf.DXFStructureError:
-            print(f'DXF structure error!')
+            print(f"DXF structure error!")
             return False
 
     entities = doc.modelspace().query(entity_name)
@@ -30,15 +30,14 @@ def has_dxf_entity(filename, entity_name):
 
 def process_dir(folder: Path):
     for filename in folder.iterdir():
-        if filename.is_dir() and filename.stem != 'BigFiles':
+        if filename.is_dir() and filename.stem != "BigFiles":
             process_dir(filename)
-        elif filename.match('*.dxf'):
+        elif filename.match("*.dxf"):
             print(f"processing: {filename}")
             if has_dxf_entity(filename, DXF_ENTITY):
-                print('\n' + '*'*40)
-                print(f'FOUND: {DXF_ENTITY}')
-                print('*' * 40 + '\n')
+                print("\n" + "*" * 40)
+                print(f"FOUND: {DXF_ENTITY}")
+                print("*" * 40 + "\n")
 
 
 process_dir(Path(ezdxf.EZDXF_TEST_FILES))
-

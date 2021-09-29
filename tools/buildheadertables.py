@@ -19,8 +19,16 @@ from ezdxf.lldxf.const import DXF12, DXF2000, DXF2004, DXF2007, DXF2010, DXF2013
 HEADER_VAR_MAP = {
 """
 TABLEEPILOGUE = "}\n"
-DXF_FILES = ['DXF12', 'DXF2000', 'DXF2004', 'DXF2007', 'DXF2010', 'DXF2013', 'DXF2018']
-TEMPLATES = Path(r'D:\Source\dxftest\templates')
+DXF_FILES = [
+    "DXF12",
+    "DXF2000",
+    "DXF2004",
+    "DXF2007",
+    "DXF2010",
+    "DXF2013",
+    "DXF2018",
+]
+TEMPLATES = Path(r"D:\Source\dxftest\templates")
 
 
 def write_table(filename, vars):
@@ -45,9 +53,12 @@ def write_table(filename, vars):
             "        mindxf={v.mindxf},\n"
             "        maxdxf={v.maxdxf},\n"
             "        priority={v.priority},\n"
-            "        default={default}),\n".format(v=var, f=factory, default=default))
+            "        default={default}),\n".format(
+                v=var, f=factory, default=default
+            )
+        )
 
-    with open(filename, 'wt') as fp:
+    with open(filename, "wt") as fp:
         fp.write(TABLEPRELUDE)
         for var in vars:
             write_var(var)
@@ -92,7 +103,7 @@ def add_vars(header, vars, dxf):
 
 
 def read(stream):
-    """ Open an existing drawing. """
+    """Open an existing drawing."""
     from ezdxf.lldxf.tagger import ascii_tags_loader, tag_compiler
 
     tagger = list(ascii_tags_loader(stream))
@@ -102,11 +113,14 @@ def read(stream):
 def get_tagger(filename):
     from ezdxf.lldxf.validator import is_dxf_file
     from ezdxf.filemanagement import dxf_file_info
+
     if not is_dxf_file(filename):
         raise IOError("File '{}' is not a DXF file.".format(filename))
 
     info = dxf_file_info(filename)
-    with open(filename, mode='rt', encoding=info.encoding, errors='ignore') as fp:
+    with open(
+        filename, mode="rt", encoding=info.encoding, errors="ignore"
+    ) as fp:
         tagger = read(fp)
     return tagger
 
@@ -114,16 +128,21 @@ def get_tagger(filename):
 def get_header_section(filename):
     tagger = list(get_tagger(filename))
     sections = load_dxf_structure(tagger)
-    return sections.get('HEADER', [None])[0]  # all tags in the first DXF structure entity
+    return sections.get("HEADER", [None])[
+        0
+    ]  # all tags in the first DXF structure entity
 
 
 def main():
     header_vars = OrderedDict()
     for dxf in reversed(DXF_FILES):
-        header = get_header_section(TEMPLATES / f'{dxf}.dxf')
+        header = get_header_section(TEMPLATES / f"{dxf}.dxf")
         add_vars(header[2:], header_vars, dxf)
-    write_table(TEMPLATES / 'headervars.py', sorted(header_vars.values(), key=lambda v: v.priority))
+    write_table(
+        TEMPLATES / "headervars.py",
+        sorted(header_vars.values(), key=lambda v: v.priority),
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

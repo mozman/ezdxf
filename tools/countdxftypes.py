@@ -27,9 +27,9 @@ def print_result(counter):
 
 
 def main(filename):
-    print('reading file ...')
+    print("reading file ...")
     doc = ezdxf.readfile(filename)
-    print('counting elements ...')
+    print("counting elements ...")
     result = count_elements(doc.entitydb)
     print_result(result)
 
