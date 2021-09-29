@@ -3,7 +3,10 @@
 
 import pytest
 from ezdxf.tools.text import (
-    MTextParser, TokenType, MTextParagraphAlignment, ParagraphProperties,
+    MTextParser,
+    TokenType,
+    MTextParagraphAlignment,
+    ParagraphProperties,
 )
 
 
@@ -19,27 +22,38 @@ class TestMTextContentParsing:
     def test_parse_plain_text(self):
         tokens = list(MTextParser("word1 word2 word3"))
         assert token_types(tokens) == (
-            TokenType.WORD, TokenType.SPACE, TokenType.WORD, TokenType.SPACE,
-            TokenType.WORD
+            TokenType.WORD,
+            TokenType.SPACE,
+            TokenType.WORD,
+            TokenType.SPACE,
+            TokenType.WORD,
         )
         assert token_data(tokens) == ("word1", None, "word2", None, "word3")
 
     def test_three_adjacent_spaces(self):
         tokens = list(MTextParser("   "))
         assert token_types(tokens) == (
-            TokenType.SPACE, TokenType.SPACE, TokenType.SPACE)
+            TokenType.SPACE,
+            TokenType.SPACE,
+            TokenType.SPACE,
+        )
 
     def test_non_breaking_space(self):
         tokens = list(MTextParser(r"word\~word"))
         assert token_types(tokens) == (
-            TokenType.WORD, TokenType.NBSP, TokenType.WORD)
+            TokenType.WORD,
+            TokenType.NBSP,
+            TokenType.WORD,
+        )
 
     def test_space_and_adjacent_non_breaking_space(self):
         tokens = list(MTextParser(r"word \~ word"))
         assert token_types(tokens) == (
             TokenType.WORD,
-            TokenType.SPACE, TokenType.NBSP, TokenType.SPACE,
-            TokenType.WORD
+            TokenType.SPACE,
+            TokenType.NBSP,
+            TokenType.SPACE,
+            TokenType.WORD,
         )
 
     def test_tabulator_caret_I(self):
@@ -47,7 +61,7 @@ class TestMTextContentParsing:
         assert token_types(tokens) == (
             TokenType.WORD,
             TokenType.TABULATOR,
-            TokenType.WORD
+            TokenType.WORD,
         )
         assert token_data(tokens) == ("word", None, "word")
 
@@ -56,7 +70,7 @@ class TestMTextContentParsing:
         assert token_types(tokens) == (
             TokenType.WORD,
             TokenType.NEW_PARAGRAPH,
-            TokenType.WORD
+            TokenType.WORD,
         )
         assert token_data(tokens) == ("word", None, "word")
 
@@ -65,14 +79,17 @@ class TestMTextContentParsing:
         assert token_types(tokens) == (
             TokenType.WORD,
             TokenType.SPACE,
-            TokenType.WORD
+            TokenType.WORD,
         )
         assert token_data(tokens) == ("word", None, "word")
 
     def test_escaped_letters_building_words(self):
         tokens = list(MTextParser(r"\\\{\} \\\{\}"))
         assert token_types(tokens) == (
-            TokenType.WORD, TokenType.SPACE, TokenType.WORD)
+            TokenType.WORD,
+            TokenType.SPACE,
+            TokenType.WORD,
+        )
         assert token_data(tokens) == (r"\{}", None, r"\{}")
 
     def test_invalid_escaped_letters_printed_verbatim(self):
@@ -80,7 +97,7 @@ class TestMTextContentParsing:
         # at a backslash. Therefore "\:\;" returns two tokens!
         w1 = r"\:"
         w2 = r"\;"
-        tokens = list(MTextParser(w1+w2))
+        tokens = list(MTextParser(w1 + w2))
         t0, t1 = tokens
         assert t0.type is TokenType.WORD
         assert t0.data == w1
@@ -94,7 +111,9 @@ class TestMTextContentParsing:
     def test_new_paragraph_token_in_usual_context(self):
         tokens = list(MTextParser(r"word\Pword"))
         assert token_types(tokens) == (
-            TokenType.WORD, TokenType.NEW_PARAGRAPH, TokenType.WORD
+            TokenType.WORD,
+            TokenType.NEW_PARAGRAPH,
+            TokenType.WORD,
         )
 
     def test_single_new_column_token(self):
@@ -209,11 +228,14 @@ class TestParsingFractions:
         assert token_types(tokens) == (TokenType.STACK, TokenType.WORD)
         assert tokens[1].data == ";"
 
-    @pytest.mark.parametrize('expr', [
-        r"word\p______;word",
-        r"word\f______;word",
-        r"word\F______;word",
-    ])
+    @pytest.mark.parametrize(
+        "expr",
+        [
+            r"word\p______;word",
+            r"word\f______;word",
+            r"word\F______;word",
+        ],
+    )
     def test_extraction_of_expression(self, expr):
         tokens = list(MTextParser(expr))
         assert token_types(tokens) == (TokenType.WORD, TokenType.WORD)
@@ -226,6 +248,15 @@ class TestMTextContextParsing:
         assert len(tokens) == 1, "property changes should not yield tokens"
         assert tokens[0].ctx.underline is True
 
+    def test_switch_underline_on_off_for_multiple_words(self):
+        tokens = list(MTextParser(r"\Lword\l \Lword\l \Lword\l"))
+        assert len(tokens) == 5
+        assert tokens[0].ctx.underline is True
+        assert tokens[1].ctx.underline is False
+        assert tokens[2].ctx.underline is True
+        assert tokens[3].ctx.underline is False
+        assert tokens[4].ctx.underline is True
+
     def test_consecutive_tokens_get_the_same_context_objects_if_unchanged(self):
         tokens = list(MTextParser(r"\Lword word"))
         t0, t1, t2 = tokens
@@ -237,7 +268,8 @@ class TestMTextContextParsing:
     def test_switch_underline_on_off_creates_different_context_objects(self):
         tokens = list(MTextParser(r"\Lword\lword"))
         t0, t1 = tokens
-        assert t0.ctx.underline is not t1.ctx.underline
+        assert t0.ctx.underline is True
+        assert t1.ctx.underline is False
         assert t0.ctx != t1.ctx
 
     def test_switch_overline_on_off(self):
@@ -257,6 +289,31 @@ class TestMTextContextParsing:
         final_ctx = mp.ctx
         assert t2.ctx.strike_through is not final_ctx.strike_through
         assert t2.ctx != final_ctx
+
+    @pytest.mark.parametrize(
+        "s,e,attr",
+        [
+            ["\\L", "\\l", "underline"],
+            ["\\K", "\\k", "strike_through"],
+            ["\\O", "\\o", "overline"],
+        ],
+    )
+    def test_switch_stroke_on_off_multiple_times(self, s, e, attr):
+        text = s + "word word" + e + " " + s + "word word" + e + " word"
+        # t[x]      0   12             3        4   56             78
+        mp = MTextParser(text)
+
+        assert [getattr(t.ctx, attr) for t in mp] == [
+            True,  # 0
+            True,  # 1
+            True,  # 2
+            False,  # 3
+            True,  # 4
+            True,  # 5
+            True,  # 6
+            False,  # 7
+            False,  # 8
+        ]
 
     def test_context_stack_for_grouping(self):
         t0, t1, t2 = MTextParser(r"word{\Lword}word")
@@ -324,52 +381,61 @@ class TestMTextContextParsing:
         assert t0.ctx.font_face.family == "Arial"
         assert t0.ctx.font_face is t1.ctx.font_face
 
-    @pytest.mark.parametrize("expr", [
-        r"\H3",
-        r"\H3;",
-        r"\H+3",
-        r"\H+3;",
-        r"\H-3",  # ignore sign
-        r"\H-3;",  # ignore sign
-        r"\H0.3e1",
-        r"\H0.3e1;",
-        r"\H30e-1",
-        r"\H30e-1;",
-    ])
+    @pytest.mark.parametrize(
+        "expr",
+        [
+            r"\H3",
+            r"\H3;",
+            r"\H+3",
+            r"\H+3;",
+            r"\H-3",  # ignore sign
+            r"\H-3;",  # ignore sign
+            r"\H0.3e1",
+            r"\H0.3e1;",
+            r"\H30e-1",
+            r"\H30e-1;",
+        ],
+    )
     def test_absolut_height_command(self, expr):
         t0 = list(MTextParser(f"{expr}word"))[0]
         assert t0.ctx.cap_height == 3
 
-    @pytest.mark.parametrize("expr", [
-        r"\H3x",
-        r"\H3x;",
-        r"\H+3x",
-        r"\H+3x;",
-        r"\H-3x",  # ignore sign
-        r"\H-3x;",  # ignore sign
-        r"\H0.3e1x",
-        r"\H0.3e1x;",
-        r"\H30e-1x",
-        r"\H30e-1x;",
-    ])
+    @pytest.mark.parametrize(
+        "expr",
+        [
+            r"\H3x",
+            r"\H3x;",
+            r"\H+3x",
+            r"\H+3x;",
+            r"\H-3x",  # ignore sign
+            r"\H-3x;",  # ignore sign
+            r"\H0.3e1x",
+            r"\H0.3e1x;",
+            r"\H30e-1x",
+            r"\H30e-1x;",
+        ],
+    )
     def test_relative_height_command(self, expr):
         t1 = list(MTextParser(rf"\H2;word{expr}word"))[1]
         assert t1.ctx.cap_height == 6.0
         assert t1.data == "word"
 
-    @pytest.mark.parametrize("expr", [
-        r"\H",
-        r"\H;",
-        r"\Hx",
-        r"\Hx;",
-        r"\H1-2;",
-        r"\H.3",  # this does work in AutoCAD
-        r"\H.3;",  # this does work in AutoCAD
-        r"\H.3x",  # this does work in AutoCAD
-        r"\H.3x;",  # this does work in AutoCAD
-        r"\H.",
-        r"\H.;",
-    ])
+    @pytest.mark.parametrize(
+        "expr",
+        [
+            r"\H",
+            r"\H;",
+            r"\Hx",
+            r"\Hx;",
+            r"\H1-2;",
+            r"\H.3",  # this does work in AutoCAD
+            r"\H.3;",  # this does work in AutoCAD
+            r"\H.3x",  # this does work in AutoCAD
+            r"\H.3x;",  # this does work in AutoCAD
+            r"\H.",
+            r"\H.;",
+        ],
+    )
     def test_invalid_height_command(self, expr):
         t0 = list(MTextParser(rf"{expr}word"))[0]
         assert t0.ctx.cap_height == 1.0
@@ -377,125 +443,152 @@ class TestMTextContextParsing:
         # INVALID height command is not relevant and may differ from AutoCAD and
         # BricsCAD rendering.
 
-    @pytest.mark.parametrize("expr", [
-        r"\W3",
-        r"\W3;",
-        r"\W+3",
-        r"\W+3;",
-        r"\W-3",  # ignore sign
-        r"\W-3;",  # ignore sign
-        r"\W0.3e1",
-        r"\W0.3e1;",
-        r"\W30e-1",
-        r"\W30e-1;",
-    ])
+    @pytest.mark.parametrize(
+        "expr",
+        [
+            r"\W3",
+            r"\W3;",
+            r"\W+3",
+            r"\W+3;",
+            r"\W-3",  # ignore sign
+            r"\W-3;",  # ignore sign
+            r"\W0.3e1",
+            r"\W0.3e1;",
+            r"\W30e-1",
+            r"\W30e-1;",
+        ],
+    )
     def test_absolut_width_command(self, expr):
         t0 = list(MTextParser(f"{expr}word"))[0]
         assert t0.ctx.width_factor == 3
 
-    @pytest.mark.parametrize("expr", [
-        r"\W3x",
-        r"\W3x;",
-        r"\W+3x",
-        r"\W+3x;",
-        r"\W-3x",  # ignore sign
-        r"\W-3x;",  # ignore sign
-        r"\W0.3e1x",
-        r"\W0.3e1x;",
-        r"\W30e-1x",
-        r"\W30e-1x;",
-    ])
+    @pytest.mark.parametrize(
+        "expr",
+        [
+            r"\W3x",
+            r"\W3x;",
+            r"\W+3x",
+            r"\W+3x;",
+            r"\W-3x",  # ignore sign
+            r"\W-3x;",  # ignore sign
+            r"\W0.3e1x",
+            r"\W0.3e1x;",
+            r"\W30e-1x",
+            r"\W30e-1x;",
+        ],
+    )
     def test_relative_height_command(self, expr):
         t1 = list(MTextParser(rf"\W2;word{expr}word"))[1]
         assert t1.ctx.width_factor == 6.0
         assert t1.data == "word"
 
-    @pytest.mark.parametrize("expr", [
-        r"\T3",
-        r"\T3;",
-        r"\T+3",
-        r"\T+3;",
-        r"\T-3",  # ignore sign
-        r"\T-3;",  # ignore sign
-        r"\T0.3e1",
-        r"\T0.3e1;",
-        r"\T30e-1",
-        r"\T30e-1;",
-    ])
+    @pytest.mark.parametrize(
+        "expr",
+        [
+            r"\T3",
+            r"\T3;",
+            r"\T+3",
+            r"\T+3;",
+            r"\T-3",  # ignore sign
+            r"\T-3;",  # ignore sign
+            r"\T0.3e1",
+            r"\T0.3e1;",
+            r"\T30e-1",
+            r"\T30e-1;",
+        ],
+    )
     def test_absolut_char_tracking_command(self, expr):
         t0 = list(MTextParser(f"{expr}word"))[0]
         assert t0.ctx.char_tracking_factor == 3
 
-    @pytest.mark.parametrize("expr", [
-        r"\T3x",
-        r"\T3x;",
-        r"\T+3x",
-        r"\T+3x;",
-        r"\T-3x",  # ignore sign
-        r"\T-3x;",  # ignore sign
-        r"\T0.3e1x",
-        r"\T0.3e1x;",
-        r"\T30e-1x",
-        r"\T30e-1x;",
-    ])
+    @pytest.mark.parametrize(
+        "expr",
+        [
+            r"\T3x",
+            r"\T3x;",
+            r"\T+3x",
+            r"\T+3x;",
+            r"\T-3x",  # ignore sign
+            r"\T-3x;",  # ignore sign
+            r"\T0.3e1x",
+            r"\T0.3e1x;",
+            r"\T30e-1x",
+            r"\T30e-1x;",
+        ],
+    )
     def test_relative_char_tracking_command(self, expr):
         t1 = list(MTextParser(rf"\T2;word{expr}word"))[1]
         assert t1.ctx.char_tracking_factor == 6.0
         assert t1.data == "word"
 
-    @pytest.mark.parametrize("expr", [
-        r"\Q3",
-        r"\Q3;",
-        r"\Q+3",
-        r"\Q+3;",
-        r"\Q0.3e1",
-        r"\Q0.3e1;",
-        r"\Q30e-1",
-        r"\Q30e-1;",
-    ])
+    @pytest.mark.parametrize(
+        "expr",
+        [
+            r"\Q3",
+            r"\Q3;",
+            r"\Q+3",
+            r"\Q+3;",
+            r"\Q0.3e1",
+            r"\Q0.3e1;",
+            r"\Q30e-1",
+            r"\Q30e-1;",
+        ],
+    )
     def test_positive_oblique_command(self, expr):
         t0 = list(MTextParser(f"{expr}word"))[0]
         assert t0.ctx.oblique == 3
 
-    @pytest.mark.parametrize("expr", [
-        r"\Q-3",
-        r"\Q-3;",
-        r"\Q-0.3e1",
-        r"\Q-0.3e1;",
-        r"\Q-30e-1",
-        r"\Q-30e-1;",
-    ])
+    @pytest.mark.parametrize(
+        "expr",
+        [
+            r"\Q-3",
+            r"\Q-3;",
+            r"\Q-0.3e1",
+            r"\Q-0.3e1;",
+            r"\Q-30e-1",
+            r"\Q-30e-1;",
+        ],
+    )
     def test_negative_oblique_command(self, expr):
         t0 = list(MTextParser(f"{expr}word"))[0]
         assert t0.ctx.oblique == -3
 
-    @pytest.mark.parametrize("expr", [
-        r"\C3",
-        r"\C3;",
-        r"\C03",
-        r"\C03;",
-    ])
+    @pytest.mark.parametrize(
+        "expr",
+        [
+            r"\C3",
+            r"\C3;",
+            r"\C03",
+            r"\C03;",
+        ],
+    )
     def test_aci_color(self, expr):
         t0 = list(MTextParser(rf"{expr}word"))[0]
         assert t0.ctx.aci == 3
         assert t0.ctx.rgb is None
 
-    @pytest.mark.parametrize("expr", [
-        r"\C1000",
-        r"\C1000;",
-    ])
+    @pytest.mark.parametrize(
+        "expr",
+        [
+            r"\C1000",
+            r"\C1000;",
+        ],
+    )
     def test_aci_color_is_limited_to_256(self, expr):
         t0 = list(MTextParser(rf"{expr}word"))[0]
         assert t0.ctx.aci == 7  # default value
         assert t0.ctx.rgb is None
         assert t0.data == "word"
 
-    @pytest.mark.parametrize("expr", [
-        r"\c255",
-        r"\c255;",
-        r"\c0255",
-        r"\c0255;",
-    ])
+    @pytest.mark.parametrize(
+        "expr",
+        [
+            r"\c255",
+            r"\c255;",
+            r"\c0255",
+            r"\c0255;",
+        ],
+    )
     def test_rgb_color(self, expr):
         t0 = list(MTextParser(rf"{expr}word"))[0]
         assert t0.ctx.aci == 7  # default value
@@ -507,47 +600,59 @@ class TestMTextContextParsing:
 
 
 class TestMTextParagraphProperties:
-    @pytest.mark.parametrize("expr, expected", [
-        ("i0;", 0),
-        ("i+1;", 1),
-        ("i1.1;", 1.1),
-        ("i-1;", -1),
-        ("i-1.1;", -1.1),
-    ])
+    @pytest.mark.parametrize(
+        "expr, expected",
+        [
+            ("i0;", 0),
+            ("i+1;", 1),
+            ("i1.1;", 1.1),
+            ("i-1;", -1),
+            ("i-1.1;", -1.1),
+        ],
+    )
     def test_indent_first_line(self, expr, expected):
         t0 = list(MTextParser(rf"\p{expr}word"))[0]
         assert t0.ctx.paragraph.indent == expected
 
-    @pytest.mark.parametrize("expr, expected", [
-        ("l0;", 0),
-        ("l+1;", 1),
-        ("l1.1;", 1.1),
-        ("l-1;", -1),
-        ("l-1.1;", -1.1),
-    ])
+    @pytest.mark.parametrize(
+        "expr, expected",
+        [
+            ("l0;", 0),
+            ("l+1;", 1),
+            ("l1.1;", 1.1),
+            ("l-1;", -1),
+            ("l-1.1;", -1.1),
+        ],
+    )
     def test_indent_left(self, expr, expected):
         t0 = list(MTextParser(rf"\p{expr}word"))[0]
         assert t0.ctx.paragraph.left == expected
 
-    @pytest.mark.parametrize("expr, expected", [
-        ("r0;", 0),
-        ("r+1;", 1),
-        ("r1.1;", 1.1),
-        ("r-1;", -1),
-        ("r-1.1;", -1.1),
-    ])
+    @pytest.mark.parametrize(
+        "expr, expected",
+        [
+            ("r0;", 0),
+            ("r+1;", 1),
+            ("r1.1;", 1.1),
+            ("r-1;", -1),
+            ("r-1.1;", -1.1),
+        ],
+    )
     def test_indent_right(self, expr, expected):
         t0 = list(MTextParser(rf"\p{expr}word"))[0]
         assert t0.ctx.paragraph.right == expected
 
-    @pytest.mark.parametrize("expr, expected", [
-        ("ql;", MTextParagraphAlignment.LEFT),
-        ("qr;", MTextParagraphAlignment.RIGHT),
-        ("qc;", MTextParagraphAlignment.CENTER),
-        ("qj;", MTextParagraphAlignment.JUSTIFIED),
-        ("qd;", MTextParagraphAlignment.DISTRIBUTED),
-        ("q?;", MTextParagraphAlignment.DEFAULT),
-    ])
+    @pytest.mark.parametrize(
+        "expr, expected",
+        [
+            ("ql;", MTextParagraphAlignment.LEFT),
+            ("qr;", MTextParagraphAlignment.RIGHT),
+            ("qc;", MTextParagraphAlignment.CENTER),
+            ("qj;", MTextParagraphAlignment.JUSTIFIED),
+            ("qd;", MTextParagraphAlignment.DISTRIBUTED),
+            ("q?;", MTextParagraphAlignment.DEFAULT),
+        ],
+    )
     def test_paragraph_alignment(self, expr, expected):
         t0 = list(MTextParser(rf"\p{expr}word"))[0]
         assert t0.ctx.paragraph.align == expected
@@ -556,22 +661,36 @@ class TestMTextParagraphProperties:
         t0 = list(MTextParser(r"\pxt4,c5,r6,7.5;word"))[0]
         assert t0.ctx.paragraph.tab_stops == (4, "c5", "r6", 7.5)
 
-    @pytest.mark.parametrize("expr", [
-        "i1,l2,r3,qc,t1,2,3;",  # regular order
-        "qc,l2,r3,i1,t1,2,3;",  # tab stops have to be the last argument
-        "xqc,xl2,xr3,xi1,xt1,2,3;",  # ignore "x"
-        "xqcl2xr3xi1xt1,2,3;",  # ezdxf: commas not required between arguments
-    ])
+    @pytest.mark.parametrize(
+        "expr",
+        [
+            "i1,l2,r3,qc,t1,2,3;",  # regular order
+            "qc,l2,r3,i1,t1,2,3;",  # tab stops have to be the last argument
+            "xqc,xl2,xr3,xi1,xt1,2,3;",  # ignore "x"
+            "xqcl2xr3xi1xt1,2,3;",  # ezdxf: commas not required between arguments
+        ],
+    )
     def test_combinations(self, expr):
         t0 = list(MTextParser(rf"\p{expr}word"))[0]
         assert t0.ctx.paragraph == (
-            1, 2, 3, MTextParagraphAlignment.CENTER, (1, 2, 3))
+            1,
+            2,
+            3,
+            MTextParagraphAlignment.CENTER,
+            (1, 2, 3),
+        )
 
     def test_reset_arguments(self):
-        t0, t1 = list(MTextParser(
-            r"\pi1,l2,r3,qc,t1,2,3;word\pi*,l*,r*,q*,t;word"))
+        t0, t1 = list(
+            MTextParser(r"\pi1,l2,r3,qc,t1,2,3;word\pi*,l*,r*,q*,t;word")
+        )
         assert t0.ctx.paragraph == (
-            1, 2, 3, MTextParagraphAlignment.CENTER, (1, 2, 3))
+            1,
+            2,
+            3,
+            MTextParagraphAlignment.CENTER,
+            (1, 2, 3),
+        )
         assert t1.ctx.paragraph == ParagraphProperties()  # reset to default
 
     def test_invalid_tab_stops(self):
@@ -580,5 +699,5 @@ class TestMTextParagraphProperties:
         assert t.ctx.paragraph.tab_stops == tuple()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])
