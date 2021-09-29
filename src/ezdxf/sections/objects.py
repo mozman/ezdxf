@@ -418,8 +418,6 @@ class ObjectsSection:
                 (best for AutoCAD)
 
         """
-        # removed auto-generated name
-        # use absolute image paths for filename and AutoCAD loads images automatically
         if name is None:
             name = filename
         image_dict = self.rootdict.get_required_dict("ACAD_IMAGE_DICT")
