@@ -234,6 +234,7 @@ e.g. for the `Notepad++` on Windows:
     [browse-command]
 
     text_editor = "C:\Program Files\Notepad++\notepad++.exe" "{filename}" -n{num}
+    icon_size = 32
 
 ``text_editor`` is a simple format string:
 :code:`text_editor.format(filename="test.dxf", num=100)`
@@ -247,6 +248,7 @@ For `gedit` on Linux use (untested):
     [browse-command]
 
     text_editor = gedit +{num} "{filename}"
+    icon_size = 32
 
 The *browse* command opens a DXF structure browser to investigate the
 internals of a DXF file without interpreting the content. The functionality of

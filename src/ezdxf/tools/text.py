@@ -763,7 +763,7 @@ class ParagraphProperties(NamedTuple):
 
 
 class MTextEditor:
-    """The :class:`MtextEditor` is a helper class to build MTEXT content
+    """The :class:`MTextEditor` is a helper class to build MTEXT content
     strings with support for inline codes to change color, font or
     paragraph properties. The result is always accessible by the :attr:`text`
     attribute or the magic :func:`__str__` function as
