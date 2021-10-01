@@ -72,6 +72,7 @@ def default_config() -> ConfigParser:
     config[BROWSE_COMMAND] = {
         "TEXT_EDITOR": r'"C:\Program Files\Notepad++\notepad++.exe" '
                        r'"{filename}" -n{num}',
+        "ICON_SIZE": 32,
     }
     config[ODAFC_ADDON] = {
         "WIN_EXEC_PATH": r'"C:\Program Files\ODA\ODAFileConverter\ODAFileConverter.exe"'

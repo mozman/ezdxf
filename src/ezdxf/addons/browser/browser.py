@@ -44,6 +44,9 @@ __all__ = ["DXFStructureBrowser"]
 
 APP_NAME = "DXF Structure Browser"
 TEXT_EDITOR = ezdxf.options.get(ezdxf.options.BROWSE_COMMAND, "TEXT_EDITOR")
+ICON_SIZE = max(
+    16, ezdxf.options.get_int(ezdxf.options.BROWSE_COMMAND, "ICON_SIZE")
+)
 
 SearchSections = Set[str]
 
@@ -286,7 +289,7 @@ class DXFStructureBrowser(QMainWindow):
 
     def setup_toolbar(self) -> None:
         toolbar = QToolBar("MainToolbar")
-        toolbar.setIconSize(QSize(64, 64))
+        toolbar.setIconSize(QSize(ICON_SIZE, ICON_SIZE))
         toolbar.addAction(self._entity_history_back_action)
         toolbar.addAction(self._entity_history_forward_action)
         toolbar.addAction(self._store_bookmark)
