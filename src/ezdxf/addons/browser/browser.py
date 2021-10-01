@@ -43,10 +43,9 @@ from .bookmarks import Bookmarks
 __all__ = ["DXFStructureBrowser"]
 
 APP_NAME = "DXF Structure Browser"
-TEXT_EDITOR = ezdxf.options.get(ezdxf.options.BROWSE_COMMAND, "TEXT_EDITOR")
-ICON_SIZE = max(
-    16, ezdxf.options.get_int(ezdxf.options.BROWSE_COMMAND, "ICON_SIZE")
-)
+BROWSE_COMMAND = ezdxf.options.BROWSE_COMMAND
+TEXT_EDITOR = ezdxf.options.get(BROWSE_COMMAND, "TEXT_EDITOR")
+ICON_SIZE = max(16, ezdxf.options.get_int(BROWSE_COMMAND, "ICON_SIZE"))
 
 SearchSections = Set[str]
 
@@ -150,41 +149,55 @@ class DXFStructureBrowser(QMainWindow):
             "&Quit", qApp.quit, shortcut="Ctrl+Q"
         )
         self._goto_handle_action = self.make_action(
-            "&Go to Handle...", self.ask_for_handle, shortcut="Ctrl+G"
+            "&Go to Handle...",
+            self.ask_for_handle,
+            shortcut="Ctrl+G",
+            icon_name="icon-goto-handle-64px.png",
+            tip="Go to Entity Handle",
         )
         self._goto_line_action = self.make_action(
-            "Go to &Line...", self.ask_for_line_number, shortcut="Ctrl+L"
+            "Go to &Line...",
+            self.ask_for_line_number,
+            shortcut="Ctrl+L",
+            icon_name="icon-goto-line-64px.png",
+            tip="Go to Line Number",
         )
 
         self._find_text_action = self.make_action(
-            "Find &Text...", self.find_text, shortcut="Ctrl+F"
+            "Find &Text...",
+            self.find_text,
+            shortcut="Ctrl+F",
+            icon_name="icon-find-64px.png",
+            tip="Find Text in Entities",
         )
         self._goto_predecessor_entity_action = self.make_action(
             "&Previous Entity",
             self.goto_previous_entity,
             shortcut="Ctrl+Left",
-            tip="go to previous entity in file order",
+            icon_name="icon-prev-entity-64px.png",
+            tip="Go to Previous Entity in File Order",
         )
 
         self._goto_next_entity_action = self.make_action(
             "&Next Entity",
             self.goto_next_entity,
             shortcut="Ctrl+Right",
-            tip="go to next entity in file order",
+            icon_name="icon-next-entity-64px.png",
+            tip="Go to Next Entity in File Order",
         )
         self._entity_history_back_action = self.make_action(
             "Entity History &Back",
             self.go_back_entity_history,
             shortcut="Alt+Left",
             icon_name="icon-left-arrow-64px.png",
-            tip="go to previous entity in browse history",
+            tip="Go to Previous Entity in Browser History",
         )
         self._entity_history_forward_action = self.make_action(
             "Entity History &Forward",
             self.go_forward_entity_history,
             shortcut="Alt+Right",
             icon_name="icon-right-arrow-64px.png",
-            tip="go to next entity in browse history",
+            tip="Go to Next Entity in Browser History",
         )
         self._open_entity_in_text_editor_action = self.make_action(
             "&Open in Text Editor",
@@ -192,9 +205,11 @@ class DXFStructureBrowser(QMainWindow):
             shortcut="Ctrl+T",
         )
         self._show_entity_in_tree_view_action = self.make_action(
-            "Show Entity in &TreeView",
+            "Show Entity in Structure &Tree",
             self.show_current_entity_in_tree_view,
             shortcut="Ctrl+Down",
+            icon_name="icon-show-in-tree-64px.png",
+            tip="Show Current Entity in Structure Tree",
         )
         self._goto_header_action = self.make_action(
             "Go to HEADER Section",
@@ -292,6 +307,12 @@ class DXFStructureBrowser(QMainWindow):
         toolbar.setIconSize(QSize(ICON_SIZE, ICON_SIZE))
         toolbar.addAction(self._entity_history_back_action)
         toolbar.addAction(self._entity_history_forward_action)
+        toolbar.addAction(self._goto_predecessor_entity_action)
+        toolbar.addAction(self._goto_next_entity_action)
+        toolbar.addAction(self._show_entity_in_tree_view_action)
+        toolbar.addAction(self._find_text_action)
+        toolbar.addAction(self._goto_line_action)
+        toolbar.addAction(self._goto_handle_action)
         toolbar.addAction(self._store_bookmark)
         toolbar.addAction(self._go_to_bookmark)
         toolbar.addAction(self._copy_entity_action)
