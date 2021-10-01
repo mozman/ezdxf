@@ -138,7 +138,10 @@ class DXFStructureBrowser(QMainWindow):
             "&Export DXF Entity...", self.export_entity, shortcut="Ctrl+E"
         )
         self._copy_entity_action = self.make_action(
-            "&Copy DXF Entity to Clipboard", self.copy_entity, shortcut="Ctrl+C"
+            "&Copy DXF Entity to Clipboard",
+            self.copy_entity,
+            shortcut="Ctrl+C",
+            icon_name="icon-copy-64px.png",
         )
         self._quit_action = self.make_action(
             "&Quit", qApp.quit, shortcut="Ctrl+Q"
@@ -214,11 +217,13 @@ class DXFStructureBrowser(QMainWindow):
             "Store Bookmark...",
             self.store_bookmark,
             shortcut="Shift+Ctrl+B",
+            icon_name="icon-store-bookmark-64px.png",
         )
         self._go_to_bookmark = self.make_action(
             "Go to Bookmark...",
             self.go_to_bookmark,
             shortcut="Ctrl+B",
+            icon_name="icon-goto-bookmark-64px.png",
         )
         self._reload_action = self.make_action(
             "Reload DXF File",
