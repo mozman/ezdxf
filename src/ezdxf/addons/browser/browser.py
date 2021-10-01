@@ -2,6 +2,7 @@
 #  License: MIT License
 from typing import Optional, Set, List
 from functools import partial
+from pathlib import Path
 import subprocess
 from PyQt5.QtWidgets import (
     QApplication,
@@ -13,8 +14,10 @@ from PyQt5.QtWidgets import (
     QInputDialog,
     qApp,
     QDialog,
+    QToolBar,
 )
-from PyQt5.QtCore import Qt, QModelIndex, QSettings, QFileSystemWatcher
+from PyQt5 import QtGui
+from PyQt5.QtCore import Qt, QModelIndex, QSettings, QFileSystemWatcher, QSize
 import ezdxf
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError
 from ezdxf.lldxf.types import DXFTag, is_pointer_code
@@ -62,10 +65,15 @@ TREE_WIDTH_FACTOR = 0.33
 
 class DXFStructureBrowser(QMainWindow):
     def __init__(
-        self, filename: str = "", line: int = None, handle: str = None
+        self,
+        filename: str = "",
+        line: int = None,
+        handle: str = None,
+        resource_path: Path = Path("."),
     ):
         super().__init__()
         self.doc = DXFDocument()
+        self.resource_path = resource_path
         self._structure_tree = StructureTree()
         self._dxf_tags_table = DXFTagsTable()
         self._current_entity: Optional[Tags] = None
@@ -78,6 +86,7 @@ class DXFStructureBrowser(QMainWindow):
         self.bookmarks = Bookmarks()
         self.setup_actions()
         self.setup_menu()
+        self.setup_toolbar()
 
         if filename:
             self.load_dxf(filename)
@@ -123,90 +132,117 @@ class DXFStructureBrowser(QMainWindow):
     # noinspection PyAttributeOutsideInit
     def setup_actions(self):
         self._open_action = self.make_action(
-            "&Open DXF File...", self.open_dxf, "Ctrl+O"
+            "&Open DXF File...", self.open_dxf, shortcut="Ctrl+O"
         )
         self._export_entity_action = self.make_action(
-            "&Export DXF Entity...", self.export_entity, "Ctrl+E"
+            "&Export DXF Entity...", self.export_entity, shortcut="Ctrl+E"
         )
         self._copy_entity_action = self.make_action(
-            "&Copy DXF Entity to Clipboard", self.copy_entity, "Ctrl+C"
+            "&Copy DXF Entity to Clipboard", self.copy_entity, shortcut="Ctrl+C"
         )
-        self._quit_action = self.make_action("&Quit", qApp.quit, "Ctrl+Q")
+        self._quit_action = self.make_action(
+            "&Quit", qApp.quit, shortcut="Ctrl+Q"
+        )
         self._goto_handle_action = self.make_action(
-            "&Go to Handle...", self.ask_for_handle, "Ctrl+G"
+            "&Go to Handle...", self.ask_for_handle, shortcut="Ctrl+G"
         )
         self._goto_line_action = self.make_action(
-            "Go to &Line...", self.ask_for_line_number, "Ctrl+L"
+            "Go to &Line...", self.ask_for_line_number, shortcut="Ctrl+L"
         )
 
         self._find_text_action = self.make_action(
-            "Find &Text...", self.find_text, "Ctrl+F"
+            "Find &Text...", self.find_text, shortcut="Ctrl+F"
         )
         self._goto_predecessor_entity_action = self.make_action(
-            "&Previous Entity", self.goto_previous_entity, "Ctrl+Left"
+            "&Previous Entity",
+            self.goto_previous_entity,
+            shortcut="Ctrl+Left",
+            tip="go to previous entity in file order",
         )
 
         self._goto_next_entity_action = self.make_action(
-            "&Next Entity", self.goto_next_entity, "Ctrl+Right"
+            "&Next Entity",
+            self.goto_next_entity,
+            shortcut="Ctrl+Right",
+            tip="go to next entity in file order",
         )
         self._entity_history_back_action = self.make_action(
-            "Entity History &Back", self.go_back_entity_history, "Alt+Left"
+            "Entity History &Back",
+            self.go_back_entity_history,
+            shortcut="Alt+Left",
+            icon_name="icon-left-arrow-64px.png",
+            tip="go to previous entity in browse history",
         )
         self._entity_history_forward_action = self.make_action(
             "Entity History &Forward",
             self.go_forward_entity_history,
-            "Alt+Right",
+            shortcut="Alt+Right",
+            icon_name="icon-right-arrow-64px.png",
+            tip="go to next entity in browse history",
         )
         self._open_entity_in_text_editor_action = self.make_action(
             "&Open in Text Editor",
             self.open_entity_in_text_editor,
-            "Ctrl+T",
+            shortcut="Ctrl+T",
         )
         self._show_entity_in_tree_view_action = self.make_action(
             "Show Entity in &TreeView",
             self.show_current_entity_in_tree_view,
-            "Ctrl+Down",
+            shortcut="Ctrl+Down",
         )
         self._goto_header_action = self.make_action(
             "Go to HEADER Section",
             partial(self.go_to_section, name="HEADER"),
-            "Shift+H",
+            shortcut="Shift+H",
         )
         self._goto_blocks_action = self.make_action(
             "Go to BLOCKS Section",
             partial(self.go_to_section, name="BLOCKS"),
-            "Shift+B",
+            shortcut="Shift+B",
         )
         self._goto_entities_action = self.make_action(
             "Go to ENTITIES Section",
             partial(self.go_to_section, name="ENTITIES"),
-            "Shift+E",
+            shortcut="Shift+E",
         )
         self._goto_objects_action = self.make_action(
             "Go to OBJECTS Section",
             partial(self.go_to_section, name="OBJECTS"),
-            "Shift+O",
+            shortcut="Shift+O",
         )
         self._store_bookmark = self.make_action(
             "Store Bookmark...",
             self.store_bookmark,
-            "Shift+Ctrl+B",
+            shortcut="Shift+Ctrl+B",
         )
         self._go_to_bookmark = self.make_action(
             "Go to Bookmark...",
             self.go_to_bookmark,
-            "Ctrl+B",
+            shortcut="Ctrl+B",
         )
         self._reload_action = self.make_action(
             "Reload DXF File",
             self.reload_dxf,
-            "Ctrl+R",
+            shortcut="Ctrl+R",
         )
 
-    def make_action(self, name, slot, shortcut=None) -> QAction:
+    def make_action(
+        self,
+        name,
+        slot,
+        *,
+        shortcut: str = "",
+        icon_name: str = "",
+        tip: str = "",
+    ) -> QAction:
         action = QAction(name, self)
         if shortcut:
             action.setShortcut(shortcut)
+        if icon_name:
+            icon = QtGui.QIcon(str(self.resource_path / icon_name))
+            action.setIcon(icon)
+        if tip:
+            action.setToolTip(tip)
         action.triggered.connect(slot)
         return action
 
@@ -242,6 +278,16 @@ class DXFStructureBrowser(QMainWindow):
         bookmarks_menu = menu.addMenu("&Bookmarks")
         bookmarks_menu.addAction(self._store_bookmark)
         bookmarks_menu.addAction(self._go_to_bookmark)
+
+    def setup_toolbar(self) -> None:
+        toolbar = QToolBar("MainToolbar")
+        toolbar.setIconSize(QSize(64, 64))
+        toolbar.addAction(self._entity_history_back_action)
+        toolbar.addAction(self._entity_history_forward_action)
+        toolbar.addAction(self._store_bookmark)
+        toolbar.addAction(self._go_to_bookmark)
+        toolbar.addAction(self._copy_entity_action)
+        self.addToolBar(toolbar)
 
     def create_find_dialog(self) -> "FindDialog":
         dialog = FindDialog(self)
@@ -566,8 +612,9 @@ class DXFStructureBrowser(QMainWindow):
                 model = self._dxf_tags_table.model()
                 row = indices[0].row()
                 line_number = model.line_number(row)
-            self._open_text_editor(str(self.doc.absolute_filepath()),
-                line_number)
+            self._open_text_editor(
+                str(self.doc.absolute_filepath()), line_number
+            )
 
     def _open_text_editor(self, filename: str, line_number: int) -> None:
         cmd = TEXT_EDITOR.format(
@@ -578,9 +625,7 @@ class DXFStructureBrowser(QMainWindow):
             subprocess.Popen(cmd)
         except FileNotFoundError:
             QMessageBox.critical(
-                self,
-                "Text Editor",
-                "Error calling text editor:\n" + cmd
+                self, "Text Editor", "Error calling text editor:\n" + cmd
             )
 
     def open_web_browser(self, url: str):

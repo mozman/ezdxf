@@ -494,7 +494,10 @@ class Browse(Command):
         app = QApplication(sys.argv)
         set_app_icon(app)
         main_window = browser.DXFStructureBrowser(
-            args.file, line=args.line, handle=args.handle
+            args.file,
+            line=args.line,
+            handle=args.handle,
+            resource_path=resources_path(),
         )
         main_window.show()
         sys.exit(app.exec_())
