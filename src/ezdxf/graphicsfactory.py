@@ -675,11 +675,26 @@ class CreatorInterface:
         count: int,
         dxfattribs: Dict = None,
     ) -> "MText":
-        """DO NOT USE THIS INTERFACE IN PRODUCTION CODE!
+        """Add a multiline text entity with as much columns as needed for the
+        given common fixed `height`. The content is spread across the columns
+        automatically by the CAD application. The `height` argument also defines
+        the total height of the MTEXT entity. To get the correct column `count`
+        requires an **exact** MTEXT rendering like AutoCAD, which is
+        not done by `ezdxf`, therefore passing the expected column `count`
+        is required to calculate the correct total width.
 
-        Without a usable MTEXT rendering engine is this interface useless,
-        the main goal is to get the column count from the content, which
-        requires an exact MTEXT rendering like AutoCAD/BricsCAD.
+        This current implementation works best for DXF R2018, because the
+        content is stored as a continuous text in a single MTEXT entity. For
+        DXF versions prior to R2018 the content should be distributed across
+        multiple MTEXT entities (one entity per column), which is not done by
+        `ezdxf`, but the result is correct for advanced DXF viewers and CAD
+        application, which do the MTEXT content distribution completely by
+        itself.
+
+        Because of the current limitations the use of this method is not
+        recommend. This situation may improve in future releases, but the exact
+        rendering of the content will also slow down the processing speed
+        dramatically.
 
         (requires DXF R2000)
 
@@ -727,6 +742,14 @@ class CreatorInterface:
         is ignored. The count of `heights` also determines the count of columns,
         and :code:`max(heights)` defines the total height of the MTEXT entity,
         which may be wrong if the last column requires more space.
+
+        This current implementation works best for DXF R2018, because the
+        content is stored as a continuous text in a single MTEXT entity. For
+        DXF versions prior to R2018 the content should be distributed across
+        multiple MTEXT entities (one entity per column), which is not done by
+        `ezdxf`, but the result is correct for advanced DXF viewers and CAD
+        application, which do the MTEXT content distribution completely by
+        itself.
 
         (requires DXF R2000)
 

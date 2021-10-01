@@ -43,9 +43,7 @@ def create_doc(filename: str, dxfversion: str):
         # Easy for R2018, very hard for <R2018
         # Passing count is required to calculate the correct total width.
         # The get the correct column count requires an exact MTEXT rendering
-        # like AutoCAD/BricsCAD, which does not exist yet, but is planned for
-        # the future.
-        # DO NOT USE THIS INTERFACE IN PRODUCTION CODE!
+        # like AutoCAD/BricsCAD, which does not exist yet.
         mtext = msp.add_mtext_dynamic_auto_height_columns(
             content,
             width=20,

@@ -120,6 +120,8 @@ BaseLayout
 
     .. automethod:: add_mtext_dynamic_manual_height_columns
 
+    .. automethod:: add_mtext_dynamic_auto_height_columns
+
     .. automethod:: add_ray
 
     .. automethod:: add_xline
