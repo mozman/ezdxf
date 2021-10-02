@@ -541,7 +541,9 @@ class Polyline(LinkedEntities):
         layout.
 
         """
-        return virtual_polyline_entities(self)
+        for e in virtual_polyline_entities(self):
+            e.set_source_of_copy(self)
+            yield e
 
     def audit(self, auditor: "Auditor") -> None:
         """Audit and repair POLYLINE entity."""

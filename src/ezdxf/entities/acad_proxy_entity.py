@@ -90,7 +90,9 @@ class ACADProxyEntity(DXFGraphic):
         """Implements the SupportsVirtualEntities protocol. """
         from ezdxf.proxygraphic import ProxyGraphic
         if self.proxy_graphic:
-            return ProxyGraphic(self.proxy_graphic, self.doc).virtual_entities()
+            for e in ProxyGraphic(self.proxy_graphic, self.doc).virtual_entities():
+                e.set_source_of_copy(self)
+                yield e
         return []
 
     def virtual_entities(self) -> Iterable[DXFGraphic]:

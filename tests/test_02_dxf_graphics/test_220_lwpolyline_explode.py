@@ -52,6 +52,12 @@ def test_virtual_entities(lwpolyline):
     assert e.dxf.end == (3, 0)
 
 
+def test_virtual_sub_entities_source_tracking(lwpolyline):
+    result = set(e.source_of_copy for e in lwpolyline.virtual_entities())
+    assert len(result) == 1, "only one source of copy expected"
+    assert lwpolyline in result, "lwpolyline should be the source of copy"
+
+
 def test_virtual_entities_elevation(lwpolyline):
     lwpolyline = lwpolyline.translate(1, 1, 1)
     assert lwpolyline.dxf.elevation == 1

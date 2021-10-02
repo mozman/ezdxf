@@ -119,6 +119,12 @@ class TestMLine:
         assert isinstance(mline, SupportsVirtualEntities)
         assert len(query_virtual_entities(mline)) > 0
 
+    def test_virtual_sub_entities_source_tracking(self, msp):
+        mline = msp.add_mline([(1, 2, 3), (3, 4, 3)])
+        result = set(e.source_of_copy for e in mline.virtual_entities())
+        assert len(result) == 1, "only one source of copy expected"
+        assert mline in result, "mline should be the source of copy"
+
 
 class TestMLineStyle:
     @pytest.fixture(scope="class")

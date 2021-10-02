@@ -1,6 +1,6 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Iterable
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -114,7 +114,7 @@ class Point(DXFGraphic):
 
     def virtual_entities(
         self, pdsize: float = 1, pdmode: int = 0
-    ) -> List["DXFGraphic"]:
+    ) -> Iterable["DXFGraphic"]:
         """Yields point graphic as DXF primitives LINE and CIRCLE entities.
         The dimensionless point is rendered as zero-length line!
 
@@ -128,10 +128,10 @@ class Point(DXFGraphic):
             pdsize: point size in drawing units
             pdmode: point styling mode
 
-        .. versionadded:: 0.15
-
         """
-        return point.virtual_entities(self, pdsize, pdmode)
+        for e in point.virtual_entities(self, pdsize, pdmode):
+            e.set_source_of_copy(self)
+            yield e
 
     def ocs(self) -> OCS:
         # WCS entity which supports the "extrusion" attribute in a

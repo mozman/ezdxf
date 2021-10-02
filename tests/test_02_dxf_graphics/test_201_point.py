@@ -144,3 +144,13 @@ def test_do_not_explode_point_entity():
     point = Point()
     with pytest.raises(TypeError):
         explode_entity(point)
+
+
+def test_virtual_sub_entities():
+    point = Point()
+    entities = list(point.virtual_entities())
+    assert len(entities) == 1
+    e = entities[0]
+    assert e.is_copy is True
+    assert e.source_of_copy is point
+

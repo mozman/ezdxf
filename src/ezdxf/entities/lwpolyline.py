@@ -402,7 +402,9 @@ class LWPolyline(DXFGraphic):
         layout.
 
         """
-        return virtual_lwpolyline_entities(self)
+        for e in virtual_lwpolyline_entities(self):
+            e.set_source_of_copy(self)
+            yield e
 
     def explode(self, target_layout: "BaseLayout" = None) -> "EntityQuery":
         """Explode parts of LWPOLYLINE as LINE or ARC entities into target layout,

@@ -9,6 +9,8 @@ Version 0.17.1 - dev
   - `source_of_copy` - get immediate source of an entity copy
   - `origin_of_copy` - get first non virtual source of an entity copy
   - `is_copy` - returns `True` if the entity is a copy
+- NEW: source entity tracking for virtual sub-entities from DXF entities:
+  `POINT`, `LWPOLYLINE`, `POLYLINE`, `LEADER`, `MLINE`, `ACAD_PROXY_ENTITY` 
 
 Version 0.17 - 2021-10-01
 -------------------------

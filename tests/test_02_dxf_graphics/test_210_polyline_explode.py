@@ -52,6 +52,12 @@ def test_polyline2d_virtual_entities(polyline2d):
     assert e.dxf.end == (3, 0)
 
 
+def test_virtual_sub_entities_source_tracking(polyline2d):
+    result = set(e.source_of_copy for e in polyline2d.virtual_entities())
+    assert len(result) == 1, "only one source of copy expected"
+    assert polyline2d in result, "polyline2d should be the source of copy"
+
+
 def test_polyline2d_elevation(polyline2d):
     polyline = polyline2d.translate(1, 1, 1)
     assert polyline.dxf.elevation == (0, 0, 1)

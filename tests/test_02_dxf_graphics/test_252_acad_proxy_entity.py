@@ -44,6 +44,12 @@ def test_virtual_entities_support(proxy):
     assert types == EXPECTED_VIRTUAL_ENTITY_TYPES
 
 
+def test_virtual_sub_entities_source_tracking(proxy):
+    result = set(e.source_of_copy for e in proxy.virtual_entities())
+    assert len(result) == 1, "only one source of copy expected"
+    assert proxy in result, "proxy should be the source of copy"
+
+
 def test_virtual_entities_if_no_proxy_graphic_exists(proxy):
     data = proxy.proxy_graphic
     proxy.proxy_graphic = None

@@ -627,8 +627,9 @@ class MLine(DXFGraphic):
         the method :meth:`virtual_entities`!
         """
         from ezdxf.render.mline import virtual_entities
-
-        return virtual_entities(self)
+        for e in virtual_entities(self):
+            e.set_source_of_copy(self)
+            yield e
 
     def virtual_entities(self) -> Iterable[DXFGraphic]:
         """Yields 'virtual' parts of MLINE as LINE, ARC and HATCH entities.

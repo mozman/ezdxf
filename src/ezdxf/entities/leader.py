@@ -268,7 +268,9 @@ class Leader(DXFGraphic, OverrideMixin):
     def __virtual_entities__(self) -> Iterable["DXFGraphic"]:
         """Implements the SupportsVirtualEntities protocol. """
         from ezdxf.render.leader import virtual_entities
-        return virtual_entities(self)
+        for e in virtual_entities(self):
+            e.set_source_of_copy(self)
+            yield e
 
     def virtual_entities(self) -> Iterable["DXFGraphic"]:
         """Yields 'virtual' parts of LEADER as DXF primitives.

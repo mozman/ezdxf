@@ -156,3 +156,12 @@ def test_supports_virtual_entities_protocol():
     leader.vertices = VERTICES
     assert isinstance(leader, SupportsVirtualEntities)
     assert len(query_virtual_entities(leader)) == 2
+
+
+def test_virtual_sub_entities_source_tracking():
+    leader = Leader.new()
+    leader.vertices = VERTICES
+
+    result = set(e.source_of_copy for e in leader.virtual_entities())
+    assert len(result) == 1, "only one source of copy expected"
+    assert leader in result, "lwpolyline should be the source of copy"
