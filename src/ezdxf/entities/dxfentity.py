@@ -48,6 +48,10 @@ if TYPE_CHECKING:
 
 __all__ = ["DXFEntity", "DXFTagStorage", "base_class", "SubclassProcessor"]
 
+# Dynamic attributes created only at request:
+DYN_SOURCE_OF_COPY_ATTRIBUTE = "_source_of_copy"
+DYN_UUID_ATTRIBUTE = "_uuid"
+
 base_class: DefSubclass = DefSubclass(
     None,
     {
@@ -94,20 +98,24 @@ class DXFEntity:
         self.extension_dict: Optional[ExtensionDict] = None
         self.xdata: Optional[XData] = None
         self.proxy_graphic: Optional[bytes] = None
-        # self._uuid  # uuid generated at first request
+
+        # For documentation:
+        # Dynamic attributes, created only at request:
+        # DYN_SOURCE_OF_COPY_ATTRIBUTE
+        # DYN_UUID_ATTRIBUTE
 
     @property
     def uuid(self) -> uuid.UUID:
         """Returns an UUID, which allows to distinguish even
         virtual entities without a handle.
 
-        This UUID will be created at the first request.
+        Dynamic attribute: this UUID will be created at the first request.
 
         """
-        uuid_ = getattr(self, "_uuid", None)
+        uuid_ = getattr(self, DYN_UUID_ATTRIBUTE, None)
         if uuid_ is None:
             uuid_ = uuid.uuid4()
-            self._uuid = uuid_
+            setattr(self, DYN_UUID_ATTRIBUTE, uuid_)
         return uuid_
 
     @classmethod
@@ -336,8 +344,8 @@ class DXFEntity:
         """
         if isinstance(source, DXFEntity) and not source.is_alive:
             source = None
-        # attribute only exist in copies:
-        self._source_of_copy = source
+        # dynamic attribute: exist only in copies:
+        setattr(self, DYN_SOURCE_OF_COPY_ATTRIBUTE, source)
 
     @property
     def is_copy(self) -> bool:
@@ -350,7 +358,7 @@ class DXFEntity:
         ``None``. Never returns a destroyed entity.
         """
         # attribute only exist in copies:
-        source = getattr(self, "_source_of_copy", None)
+        source = getattr(self, DYN_SOURCE_OF_COPY_ATTRIBUTE, None)
         if isinstance(source, DXFEntity) and not source.is_alive:
             return None
         return source
@@ -557,6 +565,8 @@ class DXFEntity:
             self.extension_dict = None
             self.appdata = None
             self.xdata = None
+            if hasattr(self, DYN_SOURCE_OF_COPY_ATTRIBUTE):
+                delattr(self, DYN_SOURCE_OF_COPY_ATTRIBUTE)
 
     def destroy(self) -> None:
         """Delete all data and references. Does not delete entity from
@@ -579,6 +589,9 @@ class DXFEntity:
         del self.xdata
         del self.doc
         del self.dxf  # check mark for is_alive
+        # Remove dynamic attributes, which reference other entities:
+        if hasattr(self, DYN_SOURCE_OF_COPY_ATTRIBUTE):
+            delattr(self, DYN_SOURCE_OF_COPY_ATTRIBUTE)
 
     def preprocess_export(self, tagwriter: "TagWriter") -> bool:
         """Pre requirement check and pre processing for export.
