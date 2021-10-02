@@ -280,6 +280,7 @@ class DXFEntity:
         entity.xdata = other.xdata
         entity.proxy_graphic = other.proxy_graphic
         entity.dxf.rewire(entity)
+        # Do not set copy state, this is not a real copy!
         return entity
 
     def copy(self: T) -> T:
@@ -321,9 +322,54 @@ class DXFEntity:
 
         # if xdata contains handles, they are treated as shared resources
         entity.xdata = copy.deepcopy(self.xdata)
-
+        entity.set_source_of_copy(self)
         self._copy_data(entity)
         return entity
+
+    def set_source_of_copy(self, source: Optional["DXFEntity"]):
+        """Set immediate source entity of a copy.
+
+        Also used from outside of DFXEntity to set the source of sub-entities
+        of disassembled entities (POLYLINE, LWPOLYLINE, ...).
+
+        (Internal API)
+        """
+        if isinstance(source, DXFEntity) and not source.is_alive:
+            source = None
+        # attribute only exist in copies:
+        self._source_of_copy = source
+
+    @property
+    def is_copy(self) -> bool:
+        """Returns ``True`` if the entity is a copy."""
+        return self.source_of_copy is not None
+
+    @property
+    def source_of_copy(self) -> Optional["DXFEntity"]:
+        """Returns the immediate source entity if this entity is a copy else
+        ``None``. Never returns a destroyed entity.
+        """
+        # attribute only exist in copies:
+        source = getattr(self, "_source_of_copy", None)
+        if isinstance(source, DXFEntity) and not source.is_alive:
+            return None
+        return source
+
+    @property
+    def origin_of_copy(self) -> Optional["DXFEntity"]:
+        """Returns the origin source entity if this entity is a copy else
+        ``None``. Returns the first non virtual source entity and never
+        returns a destroyed entity.
+        """
+        source = self.source_of_copy
+        # follow source entities references until the first non virtual entity:
+        while (
+            isinstance(source, DXFEntity)
+            and source.is_alive
+            and source.is_virtual
+        ):
+            source = source.source_of_copy
+        return source
 
     def _copy_data(self, entity: "DXFEntity") -> None:
         """Copy entity data like vertices or attribs and store the copies into

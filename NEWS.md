@@ -2,6 +2,14 @@
 News
 ====
 
+Version 0.17.1 - dev
+--------------------
+
+- NEW: tracking feature for DXF entity copies, new properties of `DXFEntity`
+  - `source_of_copy` - get immediate source of an entity copy
+  - `origin_of_copy` - get first non virtual source of an entity copy
+  - `is_copy` - returns `True` if the entity is a copy
+
 Version 0.17 - 2021-10-01
 -------------------------
 

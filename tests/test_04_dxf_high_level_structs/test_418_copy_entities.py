@@ -3,7 +3,7 @@
 
 import pytest
 import ezdxf
-from ezdxf.entities import Dictionary, Placeholder
+from ezdxf.entities import Dictionary, Placeholder, LWPolyline
 
 
 def test_copy_entity_with_extension_dict():
@@ -93,6 +93,72 @@ def test_virtual_copy_with_extension_dict():
     assert (
         new_placeholder in doc.objects
     ), "copied dictionary content should be added to OBJECTS section"
+
+
+def test_source_of_copy_for_bound_entity():
+    doc = ezdxf.new()
+    e = doc.modelspace().add_lwpolyline([(0, 0), (1, 0), (1, 1)])
+    assert e.is_virtual is False
+
+    c0 = e.copy()
+    assert c0.is_virtual is True, "copy should be a virtual entity"
+    assert c0.is_copy is True
+    assert (
+        c0.source_of_copy is e
+    ), "should return the immediate source of the copy"
+    assert (
+        c0.origin_of_copy is e
+    ), "should return the non virtual DXF entity as source of the copy"
+
+
+def test_is_copy_state():
+    doc = ezdxf.new()
+    e = doc.modelspace().add_lwpolyline([(0, 0), (1, 0), (1, 1)])
+    assert e.is_copy is False
+    c0 = e.copy()
+    assert c0.is_copy is True
+    c1 = c0.copy()
+    assert c1.is_copy is True
+
+
+def test_origin_of_copy_for_copy_chains():
+    doc = ezdxf.new()
+    e = doc.modelspace().add_lwpolyline([(0, 0), (1, 0), (1, 1)])
+
+    # first level copy
+    c0 = e.copy()
+    # second level copy
+    c1 = c0.copy()
+    assert (
+        c1.source_of_copy is c0
+    ), "should return the immediate source of the copy"
+    assert (
+        c1.origin_of_copy is e
+    ), "should return the non virtual DXF entity as source of the copy"
+
+    # third level copy
+    c2 = c1.copy()
+    assert (
+        c2.source_of_copy is c1
+    ), "should return the immediate source of the copy"
+    assert (
+        c2.origin_of_copy is e
+    ), "should return the non virtual DXF entity as source of the copy"
+
+
+def test_source_of_copy_for_virtual_entity():
+    e = LWPolyline()
+    e.vertices = [(0, 0), (1, 0), (1, 1)]
+    assert e.is_virtual is True
+    c = e.copy()
+    assert c.is_virtual is True, "copy should be a virtual entity"
+    assert c.is_copy is True, "should be a copy"
+    assert (
+        c.source_of_copy is e
+    ), "should return the immediate source of the copy"
+    assert (
+        c.origin_of_copy is None
+    ), "has no real DXF entity as source of the copy"
 
 
 if __name__ == "__main__":

@@ -47,7 +47,13 @@ Common base class for all DXF entities and objects.
 
     .. autoproperty:: is_bound
 
+    .. autoproperty:: is_copy
+
     .. autoproperty:: uuid
+
+    .. autoproperty:: source_of_copy
+
+    .. autoproperty:: origin_of_copy
 
     .. automethod:: dxftype
 
