@@ -55,6 +55,10 @@ Common base class for all DXF entities and objects.
 
     .. autoproperty:: origin_of_copy
 
+    .. autoproperty:: has_source_block_reference
+
+    .. autoproperty:: source_block_reference
+
     .. automethod:: dxftype
 
     .. automethod:: __str__

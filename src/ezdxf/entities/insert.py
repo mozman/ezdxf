@@ -643,9 +643,11 @@ class Insert(LinkedEntities):
                 entity is not supported and so was skipped
 
         """
-        return virtual_block_reference_entities(
+        for e in virtual_block_reference_entities(
             self, skipped_entity_callback=skipped_entity_callback
-        )
+        ):
+            e.set_source_block_reference(self)
+            yield e
 
     @property
     def mcount(self):
@@ -746,6 +748,6 @@ class Insert(LinkedEntities):
                 auditor.fixed_error(
                     code=AuditError.UNDEFINED_BLOCK,
                     message=f"Deleted entity {str(self)} without required BLOCK"
-                            f" definition.",
+                    f" definition.",
                 )
                 auditor.trash(self)

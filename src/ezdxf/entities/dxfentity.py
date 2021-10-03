@@ -44,13 +44,25 @@ from .xdict import ExtensionDict
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Auditor, TagWriter, Drawing, DXFAttr, DXFGraphic
+    from ezdxf.eztypes import (
+        Auditor,
+        TagWriter,
+        Drawing,
+        DXFAttr,
+        DXFGraphic,
+        Insert,
+    )
 
 __all__ = ["DXFEntity", "DXFTagStorage", "base_class", "SubclassProcessor"]
 
 # Dynamic attributes created only at request:
+# Source entity of a copy or None if not a copy:
 DYN_SOURCE_OF_COPY_ATTRIBUTE = "_source_of_copy"
+# UUID created on demand by uuid.uuid4()
 DYN_UUID_ATTRIBUTE = "_uuid"
+# Source block reference, which created the virtual entity, bound entities can
+# not have such an attribute:
+DYN_SOURCE_BLOCK_REFERENCE_ATTRIBUTE = "_source_block_reference"
 
 base_class: DefSubclass = DefSubclass(
     None,
@@ -103,6 +115,7 @@ class DXFEntity:
         # Dynamic attributes, created only at request:
         # DYN_SOURCE_OF_COPY_ATTRIBUTE
         # DYN_UUID_ATTRIBUTE
+        # DYN_SOURCE_BLOCK_REFERENCE_ATTRIBUTE
 
     @property
     def uuid(self) -> uuid.UUID:
@@ -331,6 +344,7 @@ class DXFEntity:
         # if xdata contains handles, they are treated as shared resources
         entity.xdata = copy.deepcopy(self.xdata)
         entity.set_source_of_copy(self)
+        # TODO: copy DYN_SOURCE_BLOCK_REFERENCE_ATTRIBUTE?
         self._copy_data(entity)
         return entity
 
@@ -347,15 +361,23 @@ class DXFEntity:
         # dynamic attribute: exist only in copies:
         setattr(self, DYN_SOURCE_OF_COPY_ATTRIBUTE, source)
 
+    def del_source_of_copy(self) -> None:
+        """Delete source of copy reference.
+
+        (Internal API)
+        """
+        if hasattr(self, DYN_SOURCE_OF_COPY_ATTRIBUTE):
+            delattr(self, DYN_SOURCE_OF_COPY_ATTRIBUTE)
+
     @property
     def is_copy(self) -> bool:
-        """Returns ``True`` if the entity is a copy."""
+        """Is ``True`` if the entity is a copy."""
         return self.source_of_copy is not None
 
     @property
     def source_of_copy(self) -> Optional["DXFEntity"]:
-        """Returns the immediate source entity if this entity is a copy else
-        ``None``. Never returns a destroyed entity.
+        """The immediate source entity if this entity is a copy else
+        ``None``. Never references a destroyed entity.
         """
         # attribute only exist in copies:
         source = getattr(self, DYN_SOURCE_OF_COPY_ATTRIBUTE, None)
@@ -365,9 +387,9 @@ class DXFEntity:
 
     @property
     def origin_of_copy(self) -> Optional["DXFEntity"]:
-        """Returns the origin source entity if this entity is a copy else
-        ``None``. Returns the first non virtual source entity and never
-        returns a destroyed entity.
+        """The origin source entity if this entity is a copy else
+        ``None``. References the first non virtual source entity and never
+        references a destroyed entity.
         """
         source = self.source_of_copy
         # follow source entities references until the first non virtual entity:
@@ -425,21 +447,64 @@ class DXFEntity:
             self.extension_dict.update_owner(handle)
 
     @property
-    def is_alive(self):
-        """Returns ``False`` if entity has been deleted."""
+    def is_alive(self) -> bool:
+        """Is ``False`` if entity has been deleted.
+        """
         return hasattr(self, "dxf")
 
     @property
-    def is_virtual(self):
-        """Returns ``True`` if entity is a virtual entity."""
+    def is_virtual(self) -> bool:
+        """Is ``True`` if entity is a virtual entity.
+        """
         return self.doc is None or self.dxf.handle is None
 
     @property
-    def is_bound(self):
-        """Returns ``True`` if entity is bound to DXF document."""
+    def is_bound(self) -> bool:
+        """Is ``True`` if entity is bound to DXF document.
+        """
         if self.is_alive and not self.is_virtual:
-            return factory.is_bound(self, self.doc)
+            return factory.is_bound(self, self.doc)  # type: ignore
         return False
+
+    @property
+    def has_source_block_reference(self) -> bool:
+        """Is ``True`` if this virtual entity was created by a block reference.
+        """
+        return hasattr(self, DYN_SOURCE_BLOCK_REFERENCE_ATTRIBUTE)
+
+    @property
+    def source_block_reference(self) -> Optional["Insert"]:
+        """The source block reference (INSERT) which created
+        this virtual entity. The property is ``None`` if this entity was not
+        created by a block reference.
+        """
+        blockref = getattr(self, DYN_SOURCE_BLOCK_REFERENCE_ATTRIBUTE, None)
+        if blockref is not None and blockref.is_alive:
+            return blockref  # type: ignore
+        return None
+
+    def set_source_block_reference(self, blockref: "Insert") -> None:
+        """Set the immediate source block reference which created this virtual
+        entity.
+
+        The source block reference can only be set once by the immediate INSERT
+        entity and does not change if the entity is passed through multiple
+        nested INSERT entities.
+
+        (Internal API)
+        """
+        assert self.is_virtual, "instance has to be a virtual entity"
+        if self.has_source_block_reference:
+            return
+        setattr(self, DYN_SOURCE_BLOCK_REFERENCE_ATTRIBUTE, blockref)
+
+    def del_source_block_reference(self) -> None:
+        """Delete source block reference.
+
+        (Internal API)
+        """
+        if hasattr(self, DYN_SOURCE_BLOCK_REFERENCE_ATTRIBUTE):
+            delattr(self, DYN_SOURCE_BLOCK_REFERENCE_ATTRIBUTE)
 
     def get_dxf_attrib(self, key: str, default: Any = None) -> Any:
         """Get DXF attribute `key`, returns `default` if key doesn't exist, or
@@ -565,8 +630,9 @@ class DXFEntity:
             self.extension_dict = None
             self.appdata = None
             self.xdata = None
-            if hasattr(self, DYN_SOURCE_OF_COPY_ATTRIBUTE):
-                delattr(self, DYN_SOURCE_OF_COPY_ATTRIBUTE)
+            # remove dynamic attributes if exist:
+            self.del_source_of_copy()
+            self.del_source_block_reference()
 
     def destroy(self) -> None:
         """Delete all data and references. Does not delete entity from
@@ -590,8 +656,8 @@ class DXFEntity:
         del self.doc
         del self.dxf  # check mark for is_alive
         # Remove dynamic attributes, which reference other entities:
-        if hasattr(self, DYN_SOURCE_OF_COPY_ATTRIBUTE):
-            delattr(self, DYN_SOURCE_OF_COPY_ATTRIBUTE)
+        self.del_source_of_copy()
+        self.del_source_block_reference()
 
     def preprocess_export(self, tagwriter: "TagWriter") -> bool:
         """Pre requirement check and pre processing for export.

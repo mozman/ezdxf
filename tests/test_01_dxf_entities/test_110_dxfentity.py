@@ -6,7 +6,7 @@ import ezdxf
 
 from ezdxf.lldxf.const import DXFAttributeError, DXF12, DXFValueError
 from ezdxf.lldxf.tagwriter import TagCollector
-from ezdxf.entities import DXFEntity, is_graphic_entity
+from ezdxf.entities import DXFEntity, is_graphic_entity, Insert
 from ezdxf.lldxf.extendedtags import DXFTag
 from ezdxf.entities.line import Line
 
@@ -117,6 +117,69 @@ def test_uuid():
     e2 = DXFEntity()
     assert e1.dxf.handle == e2.dxf.handle, "can't distinguish by handle"
     assert e1.uuid != e2.uuid, "can distinguish by uuid"
+
+
+def test_source_of_copy_is_none_for_a_new_entity():
+    e = DXFEntity()
+    assert e.source_of_copy is None
+
+
+def test_set_source_of_copy():
+    e = DXFEntity()
+    e.set_source_of_copy(e)
+    assert e.source_of_copy is e
+
+
+def test_delete_missing_source_of_copy_without_exception():
+    e = DXFEntity()
+    e.del_source_of_copy()
+    assert True is True
+
+
+def test_source_block_reference_is_none_for_a_new_entity():
+    e = DXFEntity()
+    assert e.has_source_block_reference is False
+    assert e.source_block_reference is None
+
+
+def test_set_source_block_reference():
+    e = DXFEntity()
+    insert = Insert()
+    e.set_source_block_reference(insert)
+    assert e.has_source_block_reference is True
+    assert e.source_block_reference is insert
+
+
+def test_setting_source_block_reference_twice_without_exception():
+    e = DXFEntity()
+    e.set_source_block_reference(Insert())
+    e.set_source_block_reference(Insert())
+    assert True is True
+
+
+def test_setting_source_block_reference_a_second_time_has_no_effect():
+    e = DXFEntity()
+    insert = Insert()
+    e.set_source_block_reference(insert)
+    e.set_source_block_reference(Insert())
+    assert (
+        e.source_block_reference is insert
+    ), "source block reference should not change"
+
+
+def test_do_not_copy_source_block_reference():
+    e = DXFEntity()
+    insert = Insert()
+    e.set_source_block_reference(insert)
+    copy = e.copy()
+    assert copy.has_source_block_reference is False
+    assert copy.source_block_reference is None
+
+
+def test_delete_missing_source_block_reference_without_exception():
+    e = DXFEntity()
+    e.del_source_block_reference()
+    assert True is True
 
 
 LINE_DATA = """  0

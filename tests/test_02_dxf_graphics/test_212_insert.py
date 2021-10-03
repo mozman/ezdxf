@@ -428,3 +428,5 @@ class TestSupportsVirtualEntitiesProtocol:
         entities = query_virtual_entities(insert)
         assert len(entities) == 1
         assert entities[0].dxftype() == "POINT"
+
+

@@ -6,7 +6,7 @@ import pytest
 import ezdxf
 import math
 
-from ezdxf.entities import Ellipse, Point, Arc
+from ezdxf.entities import Ellipse, Point, Arc, DXFEntity
 from ezdxf.math import Vec3
 
 
@@ -34,7 +34,32 @@ def entitydb(doc):
     return doc.entitydb
 
 
-def test_01_virtual_entities(msp):
+def test_01_virtual_entities_owner_and_handle(msp):
+    blockrefs = msp.query("INSERT")
+    blockref = blockrefs.first
+
+    virtual_entities = list(blockref.virtual_entities())
+    assert len(virtual_entities) == 2
+    for e in virtual_entities:
+        # Virtual entities should not be stored in the entity database.
+        assert e.dxf.handle is None, "handle should be None"
+        # Virtual entities should not reside in a layout.
+        assert e.dxf.owner is None, "owner should be None"
+        # Virtual entities should be assigned to the same document as the block reference.
+        assert e.doc is blockref.doc
+
+
+def test_01_virtual_entities_source_block_reference(msp):
+    blockrefs = msp.query("INSERT")
+    blockref = blockrefs.first
+
+    for e in blockref.virtual_entities():
+        entity = cast(DXFEntity, e)
+        assert entity.has_source_block_reference is True
+        assert entity.source_block_reference is blockref
+
+
+def test_01_virtual_entities_transformation(msp):
     blockrefs = msp.query("INSERT")
     blockref = blockrefs[0]
 
@@ -42,13 +67,6 @@ def test_01_virtual_entities(msp):
     assert len(virtual_entities) == 2
 
     e = virtual_entities[0]
-    # Virtual entities should not be stored in the entity database.
-    assert e.dxf.handle is None, "handle should be None"
-    # Virtual entities should not reside in a layout.
-    assert e.dxf.owner is None, "owner should be None"
-    # Virtual entities should be assigned to the same document as the block reference.
-    assert e.doc is blockref.doc
-
     assert e.dxftype() == "LINE"
     assert e.dxf.start == blockref.dxf.insert
     assert e.dxf.end == blockref.dxf.insert + (1, 0)
@@ -60,7 +78,6 @@ def test_01_virtual_entities(msp):
 
     blockref = blockrefs[1]
     virtual_entities = list(blockref.virtual_entities())
-    assert len(virtual_entities) == 2
 
     e = virtual_entities[0]
     assert e.dxftype() == "LINE"
