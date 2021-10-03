@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
 from typing import cast, Union
 
@@ -34,7 +34,7 @@ def entitydb(doc):
     return doc.entitydb
 
 
-def test_01_virtual_entities_owner_and_handle(msp):
+def test_virtual_entities_owner_and_handle(msp):
     blockrefs = msp.query("INSERT")
     blockref = blockrefs.first
 
@@ -49,7 +49,7 @@ def test_01_virtual_entities_owner_and_handle(msp):
         assert e.doc is blockref.doc
 
 
-def test_01_virtual_entities_source_block_reference(msp):
+def test_virtual_entities_source_block_reference(msp):
     blockrefs = msp.query("INSERT")
     blockref = blockrefs.first
 
@@ -59,7 +59,7 @@ def test_01_virtual_entities_source_block_reference(msp):
         assert entity.source_block_reference is blockref
 
 
-def test_01_virtual_entities_transformation(msp):
+def test_virtual_entities_transformation(msp):
     blockrefs = msp.query("INSERT")
     blockref = blockrefs[0]
 
@@ -90,7 +90,7 @@ def test_01_virtual_entities_transformation(msp):
     assert e.dxf.end == blockref.dxf.insert + (0, 1), "should apply yscale 1"
 
 
-def test_02_explode_blockrefs(doc, msp, entitydb):
+def test_explode_blockrefs(doc, msp, entitydb):
     blockrefs = msp.query("INSERT")
     blockref = blockrefs.first
     blockref_owner = blockref.dxf.owner
@@ -124,7 +124,7 @@ def test_02_explode_blockrefs(doc, msp, entitydb):
     assert e.dxf.end == blockref_insert + (0, 1)
 
 
-def test_03_explode_polyline_bulge(doc, msp):
+def test_explode_polyline_bulge(doc, msp):
     blk = doc.blocks.new("Test03")
     blk.add_lwpolyline([(0, 0), (3, 0, 0.5), (6, 0), (9, 0)], format="xyb")
     block_ref = msp.add_blockref(
@@ -159,7 +159,7 @@ def test_03_explode_polyline_bulge(doc, msp):
     assert e.dxf.end == (9, 0)
 
 
-def test_04_explode_blockref_with_attrib(doc, msp, entitydb):
+def test_explode_blockref_with_attrib(msp):
     blockref = msp.add_blockref("Test1", (20, 10))  # with attrib
     blockref.add_attrib(tag="TAG", text="Text", insert=(1.5, 2.6))
     assert len(blockref.attribs) == 1, "Error in add_attrib()"
@@ -177,7 +177,7 @@ def test_04_explode_blockref_with_attrib(doc, msp, entitydb):
     assert text.dxf.insert == (1.5, 2.6), "ATTRIB already located in WCS"
 
 
-def test_05_examine_uniform_scaled_ellipse(doc, msp):
+def test_examine_uniform_scaled_ellipse(doc, msp):
     blk = doc.blocks.new("EllipseBlk")
     blk.add_ellipse((0, 0), major_axis=(2, 0), ratio=0.5)
     blkref = msp.add_blockref("EllipseBlk", insert=(2, 2)).set_scale(2)
@@ -188,7 +188,7 @@ def test_05_examine_uniform_scaled_ellipse(doc, msp):
     assert ellipse.dxf.ratio == 0.5
 
 
-def test_06_skipped_entities_callback(doc, msp):
+def test_skipped_entities_callback(doc, msp):
     blk = doc.blocks.new("test_block")
     hatch = blk.add_hatch()
     edge_path = hatch.paths.add_edge_path()
@@ -277,7 +277,7 @@ def _check_curve(
     "zscale,is_arc",
     [(1, False), (0.5, False), (1, True), (0.5, True), (-1, False), (-1, True)],
 )
-def test_07_rotated_and_reflected_curves(zscale, is_arc):
+def test_rotated_and_reflected_curves(zscale, is_arc):
     scale = Vec3(1, 1, zscale)
 
     ellipse = _get_transformed_curve(scale, 0.0, is_arc)
@@ -336,7 +336,7 @@ def test_07_rotated_and_reflected_curves(zscale, is_arc):
 
 
 @pytest.mark.parametrize("stretch,is_arc", [(0.5, False), (0.5, True)])
-def test_08_rotated_and_reflected_and_stretched_curves(stretch, is_arc):
+def test_rotated_and_reflected_and_stretched_curves(stretch, is_arc):
     scale = Vec3(1, stretch, 1)
 
     ellipse = _get_transformed_curve(scale, 0.0, is_arc)
