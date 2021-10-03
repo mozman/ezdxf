@@ -1,12 +1,12 @@
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
-from typing import cast, Union
+from typing import cast, Union, List
 
 import pytest
 import ezdxf
 import math
 
-from ezdxf.entities import Ellipse, Point, Arc, DXFEntity
+from ezdxf.entities import Ellipse, Point, Arc, DXFEntity, Insert
 from ezdxf.math import Vec3
 
 
@@ -401,6 +401,64 @@ def test_explode_xref(doc, msp):
 
     result = xref.explode()
     assert len(result) == 0
+
+
+class TestSourceBlockReferenceFromNestedBlockReferences:
+    @pytest.fixture(scope="class")
+    def doc(self):
+        doc_ = ezdxf.new()
+        blk0 = doc_.blocks.new("BLK0")
+        blk1 = doc_.blocks.new("BLK1")
+        blk2 = doc_.blocks.new("BLK2")
+
+        blk2.add_point((2, 2))
+        blk1.add_point((1, 1))
+        # block reference 2
+        blk1.add_blockref("BLK2", (2, 2))
+        blk0.add_point((0, 0))
+        # block reference 1
+        blk0.add_blockref("BLK1", (1, 1))
+        # block reference 0
+        doc_.modelspace().add_blockref("BLK0", (0, 0))
+        return doc_
+
+    def test_virtual_entities_from_block_ref_0(self, doc):
+        blkref0 = cast(Insert, doc.modelspace()[0])
+        assert isinstance(blkref0, Insert) is True
+        entities: List[DXFEntity] = list(blkref0.virtual_entities())
+        point0 = cast(Point, entities[0])
+        assert point0.dxftype() == "POINT"
+        assert point0.source_block_reference is blkref0
+
+        # An INSERT entity is a just a simple DXF entity
+        blkref1 = cast(Insert, entities[1])
+        assert blkref1.dxftype() == "INSERT"
+        assert blkref1.source_block_reference is blkref0
+
+    def test_virtual_entities_from_block_ref_1(self, doc):
+        blkref0 = cast(Insert, doc.modelspace()[0])
+        entities: List[DXFEntity] = list(blkref0.virtual_entities())
+        blkref1 = cast(Insert, entities[1])
+        entities = list(blkref1.virtual_entities())
+
+        point1 = cast(Point, entities[0])
+        assert point1.dxftype() == "POINT"
+        assert point1.source_block_reference is blkref1
+
+        blkref2 = cast(Insert, entities[1])
+        assert blkref2.dxftype() == "INSERT"
+        assert blkref2.source_block_reference is blkref1
+
+    def test_virtual_entities_from_block_ref_2(self, doc):
+        blkref0 = cast(Insert, doc.modelspace()[0])
+        entities: List[DXFEntity] = list(blkref0.virtual_entities())
+        blkref1 = cast(Insert, entities[1])
+        entities = list(blkref1.virtual_entities())
+        blkref2 = cast(Insert, entities[1])
+
+        for point in blkref2.virtual_entities():
+            assert point.dxftype() == "POINT"
+            assert point.source_block_reference is blkref2
 
 
 if __name__ == "__main__":
