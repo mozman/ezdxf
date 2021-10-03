@@ -344,7 +344,9 @@ class DXFEntity:
         # if xdata contains handles, they are treated as shared resources
         entity.xdata = copy.deepcopy(self.xdata)
         entity.set_source_of_copy(self)
-        # TODO: copy DYN_SOURCE_BLOCK_REFERENCE_ATTRIBUTE?
+        # DO NOT COPY DYN_SOURCE_BLOCK_REFERENCE_ATTRIBUTE.
+        # Copying an entity from a block reference, takes it out of context of
+        # this block reference!
         self._copy_data(entity)
         return entity
 

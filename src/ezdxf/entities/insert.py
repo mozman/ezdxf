@@ -600,7 +600,7 @@ class Insert(LinkedEntities):
         This protocol is for consistent internal usage and does not replace
         the method :meth:`virtual_entities`!
         """
-        return virtual_block_reference_entities(self)
+        return self.virtual_entities()
 
     def virtual_entities(
         self,
@@ -654,8 +654,6 @@ class Insert(LinkedEntities):
         """Returns the multi-insert count, MINSERT (multi-insert) processing
         is required if :attr:`mcount` > 1.
 
-        .. versionadded:: 0.14
-
         """
         return (self.dxf.row_count if self.dxf.row_spacing else 1) * (
             self.dxf.column_count if self.dxf.column_spacing else 1
@@ -664,9 +662,6 @@ class Insert(LinkedEntities):
     def multi_insert(self) -> Iterable["Insert"]:
         """Yields a virtual INSERT entity for each grid element of a MINSERT
         entity (multi-insert).
-
-        .. versionadded:: 0.14
-
         """
 
         def transform_attached_attrib_entities(insert, offset):

@@ -59,6 +59,16 @@ def test_virtual_entities_source_block_reference(msp):
         assert entity.source_block_reference is blockref
 
 
+def test_copying_entities_from_block_reference_removes_source_context(msp):
+    """Copying an entity from a block reference, takes it out of context of
+    this block reference!
+    """
+    blockrefs = msp.query("INSERT")
+    for e in blockrefs.first.virtual_entities():
+        copy = e.copy()
+        assert copy.source_block_reference is None
+
+
 def test_virtual_entities_transformation(msp):
     blockrefs = msp.query("INSERT")
     blockref = blockrefs[0]
