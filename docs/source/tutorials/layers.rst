@@ -14,17 +14,18 @@ Create a Layer Definition
 
     doc = ezdxf.new(setup=True)  # setup required line types
     msp = doc.modelspace()
-    doc.layers.new(name='MyLines', dxfattribs={'linetype': 'DASHED', 'color': 7})
+    doc.layers.add(name="MyLines", color=7, linetype="DASHED", })
 
-The advantage of assigning a linetype and a color to a layer is that entities on this layer can inherit this properties
-by using ``'BYLAYER'`` as linetype string and ``256`` as color, both values are default values for new entities
+The advantage of assigning a linetype and a color to a layer is that entities
+on this layer can inherit this properties by using ``"BYLAYER"`` as linetype
+string and ``256`` as color, both values are default values for new entities
 so you can leave off these assignments:
 
 .. code-block:: python
 
-    msp.add_line((0, 0), (10, 0), dxfattribs={'layer': 'MyLines'})
+    msp.add_line((0, 0), (10, 0), dxfattribs={"layer": "MyLines"})
 
-The new created line will be drawn with color ``7`` and linetype ``'DASHED'``.
+The new created line will be drawn with color ``7`` and linetype ``"DASHED"``.
 
 Changing Layer State
 --------------------
@@ -54,14 +55,15 @@ Change the state of the layer:
     # lock layer, entities at this layer are not editable in CAD applications
     my_lines.lock()
 
-Get/set default color of a layer by property :attr:`Layer.color`, because the DXF attribute :attr:`Layer.dxf.color`
-is misused for switching the layer on and off, layer is off if the color value is negative.
+Get/set default color of a layer by property :attr:`Layer.color`, because the
+DXF attribute :attr:`Layer.dxf.color` is misused for switching the layer on and
+off, layer is off if the color value is negative.
 
 Changing the default layer values:
 
 .. code-block:: python
 
-    my_lines.dxf.linetype = 'DOTTED'
+    my_lines.dxf.linetype = "DOTTED"
     my_lines.color = 13  # preserves on/off state of layer
 
 .. seealso::
@@ -77,12 +79,12 @@ The layers object supports some standard Python protocols:
 
     # iteration
     for layer in doc.layers:
-        if layer.dxf.name != '0':
-            layer.off()  # switch all layers off except layer '0'
+        if layer.dxf.name != "0":
+            layer.off()  # switch all layers off except layer "0"
 
     # check for existing layer definition
-    if 'MyLines' in doc.layers:
-        layer = doc.layers.get('MyLines')
+    if "MyLines" in doc.layers:
+        layer = doc.layers.get("MyLines")
 
     layer_count = len(doc.layers) # total count of layer definitions
 
@@ -93,9 +95,10 @@ Delete a layer definition:
 
 .. code-block:: python
 
-    doc.layers.remove('MyLines')
+    doc.layers.remove("MyLines")
 
-This just deletes the layer definition, all DXF entities with the DXF attribute layer set to ``'MyLines'`` are still there,
-but if they inherit color and/or linetype from the layer definition they will be drawn now with linetype ``'Continuous'``
-and color ``1``.
+This just deletes the layer definition, all DXF entities with the DXF attribute
+layer set to ``"MyLines"`` are still there, but if they inherit color and/or
+linetype from the layer definition they will be drawn now with linetype
+``"Continuous"`` and color ``1``.
 
