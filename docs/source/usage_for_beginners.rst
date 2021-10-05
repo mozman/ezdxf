@@ -46,7 +46,7 @@ Saving DXF Files
 
 Save the DXF document with a new name::
 
-    doc.saveas('new_name.dxf')
+    doc.saveas("new_name.dxf")
 
 or with the same name as loaded::
 
@@ -67,7 +67,7 @@ Create new file for the latest supported DXF version::
 
 Create a new DXF file for a specific DXF version, e.g for DXF R12::
 
-    doc = ezdxf.new('R12')
+    doc = ezdxf.new("R12")
 
 
 To setup some basic DXF resources use the `setup` argument::
@@ -100,7 +100,7 @@ Getting the modelspace of a DXF document::
 Getting a paperspace layout by the name as shown in the tab of a
 CAD application::
 
-    psp = doc.layout('Layout1')
+    psp = doc.layout("Layout1")
 
 A block is just another kind of entity space, which can be inserted
 multiple times into other layouts and blocks by the INSERT entity also called
@@ -109,7 +109,7 @@ format.
 
 Getting a block layout by the block name::
 
-    blk = doc.blocks.get('NAME')
+    blk = doc.blocks.get("NAME")
 
 
 All these layouts have factory functions to create graphical DXF entities for
@@ -122,7 +122,7 @@ Create New Blocks
 The block definitions of a DXF document are managed by the
 :class:`~ezdxf.sections.blocks.BlocksSection` object::
 
-    my_block = doc.blocks.new('MyBlock')
+    my_block = doc.blocks.new("MyBlock")
 
 .. seealso::
 
@@ -136,14 +136,14 @@ stored in layouts, all these layouts can be iterated and support the index
 operator e.g. :code:`layout[-1]` returns the last entity.
 
 The main difference between iteration and index access is, that iteration filters
-destroyed entities, but the the index operator returns also destroyed entities
+destroyed entities, but the index operator returns also destroyed entities
 until these entities are purged by :code:`layout.purge()` more about this topic
 in section: `Delete Entities`_.
 
 There are two advanced query methods: :meth:`~ezdxf.layouts.BaseLayout.query`
 and :meth:`~ezdxf.layouts.BaseLayout.groupby`.
 
-Get all lines of layer ``'MyLayer'``::
+Get all lines of layer ``"MyLayer"``::
 
     lines = msp.query('LINE[layer=="MyLayer"]')
 
@@ -152,7 +152,7 @@ the same :meth:`query` and :meth:`groupby` methods.
 
 Get all lines categorized by a DXF attribute like color::
 
-    all_lines_by_color = msp.query('LINE').groupby('color')
+    all_lines_by_color = msp.query("LINE").groupby("color")
     lines_with_color_1 = all_lines_by_color.get(1, [])
 
 The :meth:`groupby` method returns a regular Python :class:`dict` with colors as
@@ -173,18 +173,18 @@ each entity can found in the documentation of the :mod:`ezdxf.entities` module.
 
 Get some basic DXF attributes::
 
-    layer = entity.dxf.layer  # default is '0'
+    layer = entity.dxf.layer  # default is "0"
     color = entity.dxf.color  # default is 256 = BYLAYER
 
 Most DXF attributes have a default value, which will be returned if the DXF
 attribute is not present, for DXF attributes without a default value you can
 check in the attribute really exist::
 
-    entity.dxf.hasattr('true_color')
+    entity.dxf.hasattr("true_color")
 
 or use the :meth:`get` method and a default value::
 
-    entity.dxf.get('true_color', 0)
+    entity.dxf.get("true_color", 0)
 
 .. seealso::
 
@@ -204,7 +204,7 @@ available for all entity containers:
 The usage is simple::
 
     msp = doc.modelspace()
-    msp.add_line((0, 0), (1, 0), dxfattribs={'layer': 'MyLayer'})
+    msp.add_line((0, 0), (1, 0), dxfattribs={"layer": "MyLayer"})
 
 A few important or required DXF attributes are explicit method arguments,
 most additional and optional DXF attributes are gives as a regular Python
@@ -226,7 +226,7 @@ A block reference is just another DXF entity called INSERT, but the term
 entity is created by the factory function:
 :meth:`~ezdxf.layouts.BaseLayout.add_blockref`::
 
-    msp.add_blockref('MyBlock')
+    msp.add_blockref("MyBlock", (0, 0))
 
 
 .. seealso::
@@ -246,7 +246,7 @@ attribute :code:`doc.layers`.
 
 You can create your own layers::
 
-    my_layer = doc.layer.add('MyLayer')
+    my_layer = doc.layer.add("MyLayer")
 
 The layer object also controls the visibility of entities which references this
 layer, the on/off state of the layer is unfortunately stored as positive or
@@ -282,7 +282,7 @@ destroyed entity and all Python attributes are deleted, so
 because ``line`` does not have a :attr:`~ezdxf.entities.DXFEntity.dxf`
 attribute anymore.
 
-The current version of `ezdxf` also supports also destruction of entities
+`Ezdxf` also supports also destruction of entities
 by calling method :meth:`~ezdxf.entities.DXFEntity.destroy` manually::
 
     line.destroy()
@@ -293,7 +293,7 @@ immediately from entities containers like :class:`Modelspace` or
 entities automatically, so a :code:`for e in msp: ...` loop
 will never yield destroyed entities. The index operator and the :func:`len`
 function do **not** filter deleted entities, to avoid getting deleted entities
-call the :func:`purge` method of the container manually  to remove deleted
+call the :func:`purge` method of the container manually to remove deleted
 entities.
 
 Further Information
