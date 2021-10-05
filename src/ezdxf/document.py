@@ -796,8 +796,8 @@ class Drawing:
         return list(self.layouts.names())
 
     def layout_names_in_taborder(self) -> Iterable[str]:
-        """Returns all layout names (modelspace included, always first name)
-        in tab order.
+        """Returns all layout names in tab order, layout "Model" (model space)
+        is always the first name.
         """
         return list(self.layouts.names_in_taborder())
 

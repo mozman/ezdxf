@@ -4,6 +4,7 @@ Tutorial for getting data from DXF files
 ========================================
 
 In this tutorial I show you how to get data from an existing DXF drawing.
+If you are a new `ezdxf` user, read also the tutorial :ref:`arch-usr`.
 
 Loading the DXF file:
 
@@ -15,19 +16,20 @@ Loading the DXF file:
     try:
         doc = ezdxf.readfile("your_dxf_file.dxf")
     except IOError:
-        print(f'Not a DXF file or a generic I/O error.')
+        print(f"Not a DXF file or a generic I/O error.")
         sys.exit(1)
     except ezdxf.DXFStructureError:
-        print(f'Invalid or corrupted DXF file.')
+        print(f"Invalid or corrupted DXF file.")
         sys.exit(2)
 
-This works well with DXF files from trusted sources like AutoCAD or BricsCAD,
+This works well for DXF files from trusted sources like AutoCAD or BricsCAD,
 for loading DXF files with minor or major flaws look at the
 :mod:`ezdxf.recover` module.
 
 .. seealso::
 
-    :ref:`dwgmanagement`
+    - :ref:`dwgmanagement`
+    - :ref:`arch-usr`
 
 Layouts
 -------
@@ -47,6 +49,17 @@ A DXF drawing consist of exact one modelspace and at least of one paperspace.
 DXF R12 has only one unnamed paperspace the later DXF versions support more than
 one paperspace and each paperspace has a name.
 
+Getting the modelspace layout
+-----------------------------
+
+The modelspace contains the "real" world representation of the drawing subjects
+in real world units. The modelspace has the fixed name "Model" and the DXF document
+has a special getter method :meth:`~ezdxf.document.Drawing.modelspace`.
+
+.. code:: Python
+
+    msp = doc.modelspace()
+
 Iterate over DXF entities of a layout
 -------------------------------------
 
@@ -65,11 +78,11 @@ better way.
     # iterate over all entities in modelspace
     msp = doc.modelspace()
     for e in msp:
-        if e.dxftype() == 'LINE':
+        if e.dxftype() == "LINE":
             print_entity(e)
 
     # entity query for all LINE entities in modelspace
-    for e in msp.query('LINE'):
+    for e in msp.query("LINE"):
         print_entity(e)
 
 
@@ -100,24 +113,24 @@ default value:
 
     # If DXF attribute 'paperspace' does not exist, the entity defaults
     # to modelspace:
-    p = e.get_dxf_attrib('paperspace', 0)
+    p = e.get_dxf_attrib("paperspace", 0)
 
 An unsupported DXF attribute raises an :class:`DXFAttributeError`.
-
 
 Getting a paperspace layout
 ---------------------------
 
 .. code:: Python
 
-    paperspace = doc.layout('layout0')
+    paperspace = doc.layout("layout0")
 
 Retrieves the paperspace named ``layout0``, the usage of the
 :class:`~ezdxf.layouts.Layout` object is the same as of the modelspace object.
 DXF R12 provides only one paperspace, therefore the paperspace name in the
-method call :code:`doc.layout('layout0')` is ignored or can be left off.
-For the later DXF versions you get a list of the names of the available
-layouts by :meth:`~ezdxf.document.Drawing.layout_names`.
+method call :code:`doc.layout("layout0")` is ignored or can be left off.
+For newer DXF versions you can get a list of the available layout names
+by the methods :meth:`~ezdxf.document.Drawing.layout_names` and
+:meth:`~ezdxf.document.Drawing.layout_names_in_taborder`.
 
 .. _entity queries:
 
@@ -130,7 +143,7 @@ an entity query or use the :meth:`ezdxf.query.new` function.
 
 The query string is the combination of two queries, first the required entity
 query and second the optional attribute query, enclosed in square brackets:
-``'EntityQuery[AttributeQuery]'``
+``"EntityQuery[AttributeQuery]"``
 
 The entity query is a whitespace separated list of DXF entity names or the
 special name ``*``. Where ``*`` means all DXF entities, all other DXF names
@@ -151,7 +164,7 @@ Get all LINE entities from the modelspace:
 .. code-block:: Python
 
     msp = doc.modelspace()
-    lines = msp.query('LINE')
+    lines = msp.query("LINE")
 
 The result container :class:`~ezdxf.query.EntityQuery` also provides the
 :meth:`query()` method, get all LINE entities at layer ``construction``:
@@ -197,7 +210,7 @@ as dict-value. Usage as dedicated function call:
 .. code-block:: Python
 
     from ezdxf.groupby import groupby
-    group = groupby(entities=msp, dxfattrib='layer')
+    group = groupby(entities=msp, dxfattrib="layer")
 
 The `entities` argument can be any container or generator which yields
 :class:`~ezdxf.entities.DXFEntity` or inherited objects. Shorter and simpler
@@ -207,13 +220,13 @@ paperspace layouts, blocks) and query results as
 
 .. code-block:: Python
 
-    group = msp.groupby(dxfattrib='layer')
+    group = msp.groupby(dxfattrib="layer")
 
     for layer, entities in group.items():
         print(f'Layer "{layer}" contains following entities:')
         for entity in entities:
-            print('    {}'.format(str(entity)))
-        print('-'*40)
+            print(f"    {entity}")
+        print("-"*40)
 
 The previous example shows how to group entities by a single DXF attribute,
 but it is also possible to group entities by a custom key, to do so create a
@@ -221,13 +234,13 @@ custom key function, which accepts a DXF entity as argument and returns a
 hashable value as dict-key or ``None`` to exclude the entity.
 The following example shows how to group entities by layer and color, so
 each result entry has a tuple ``(layer, color)`` as key and a list of entities
-with matching DXF attributes:
+with matching DXF attributes as values:
 
 .. code-block:: Python
 
     def layer_and_color_key(entity):
         # return None to exclude entities from result container
-        if entity.dxf.layer == '0':  # exclude entities from default layer '0'
+        if entity.dxf.layer == "0":  # exclude entities from default layer "0"
             return None
         else:
             return entity.dxf.layer, entity.dxf.color
@@ -236,8 +249,8 @@ with matching DXF attributes:
     for key, entities in group.items():
         print(f'Grouping criteria "{key}" matches following entities:')
         for entity in entities:
-            print('    {}'.format(str(entity)))
-        print('-'*40)
+            print(f"    {entity}")
+        print("-"*40)
 
 To exclude entities from the result container the `key` function should return
 ``None``. The :func:`~ezdxf.groupby.groupby` function catches
