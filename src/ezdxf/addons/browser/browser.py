@@ -4,7 +4,7 @@ from typing import Optional, Set, List
 from functools import partial
 from pathlib import Path
 import subprocess
-from PyQt5.QtWidgets import (
+from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
     QSplitter,
@@ -16,8 +16,8 @@ from PyQt5.QtWidgets import (
     QDialog,
     QToolBar,
 )
-from PyQt5 import QtGui
-from PyQt5.QtCore import Qt, QModelIndex, QSettings, QFileSystemWatcher, QSize
+from PySide6 import QtGui
+from PySide6.QtCore import Qt, QModelIndex, QSettings, QFileSystemWatcher, QSize
 import ezdxf
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError
 from ezdxf.lldxf.types import DXFTag, is_pointer_code

@@ -6,7 +6,7 @@ import os
 import time
 from typing import Iterable, Tuple, List, Dict
 
-from PyQt5 import QtWidgets as qw, QtCore as qc, QtGui as qg
+from PySide6 import QtWidgets as qw, QtCore as qc, QtGui as qg
 
 import ezdxf
 from ezdxf import recover
@@ -117,8 +117,9 @@ class CADGraphicsView(qw.QGraphicsView):
 
 
 class CADGraphicsViewWithOverlay(CADGraphicsView):
-    mouse_moved = qc.pyqtSignal(qc.QPointF)
-    element_selected = qc.pyqtSignal(object, int)
+
+    mouse_moved = qc.Signal(qc.QPointF)  # changed for PySide6 from pyqtSignal()
+    element_selected = qc.Signal(object, int)  # changed for PySide6 from pyqtSignal()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -183,12 +184,12 @@ class CadViewer(qw.QMainWindow):
         self.view.mouse_moved.connect(self._on_mouse_moved)
 
         menu = self.menuBar()
-        select_doc_action = qw.QAction("Select Document", self)
+        select_doc_action = qg.QAction("Select Document", self)  # PySide6
         select_doc_action.triggered.connect(self._select_doc)
         menu.addAction(select_doc_action)
         self.select_layout_menu = menu.addMenu("Select Layout")
 
-        toggle_sidebar_action = qw.QAction("Toggle Sidebar", self)
+        toggle_sidebar_action = qg.QAction("Toggle Sidebar", self)  # PySide6
         toggle_sidebar_action.triggered.connect(self._toggle_sidebar)
         menu.addAction(toggle_sidebar_action)
 
@@ -311,7 +312,7 @@ class CadViewer(qw.QMainWindow):
     def _populate_layouts(self):
         self.select_layout_menu.clear()
         for layout_name in self.doc.layout_names_in_taborder():
-            action = qw.QAction(layout_name, self)
+            action = qg.QAction(layout_name, self)  # PySide6
             action.triggered.connect(
                 lambda: self.draw_layout(layout_name, reset_view=True)
             )
@@ -372,7 +373,7 @@ class CadViewer(qw.QMainWindow):
             item = self.layers.itemWidget(self.layers.item(i))
             yield i, item  # type: ignore
 
-    @qc.pyqtSlot(int)
+    @qc.Slot(int)  # changed for PySide6 from pyqtSlot()
     def _layers_updated(self, item_state: qc.Qt.CheckState):
         shift_held = qw.QApplication.keyboardModifiers() & qc.Qt.ShiftModifier  # type: ignore
         if shift_held:
@@ -387,17 +388,17 @@ class CadViewer(qw.QMainWindow):
                 self._visible_layers.add(layer.text())
         self.draw_layout(self._current_layout, reset_view=False)  # type: ignore
 
-    @qc.pyqtSlot()
+    @qc.Slot()  # changed for PySide6 from pyqtSlot()
     def _toggle_sidebar(self):
         self.sidebar.setHidden(not self.sidebar.isHidden())
 
-    @qc.pyqtSlot(qc.QPointF)
+    @qc.Slot(qc.QPointF)  # changed for PySide6 from pyqtSlot()
     def _on_mouse_moved(self, mouse_pos: qc.QPointF):
         self.mouse_pos.setText(
             f"mouse position: {mouse_pos.x():.4f}, {mouse_pos.y():.4f}\n"
         )
 
-    @qc.pyqtSlot(object, int)
+    @qc.Slot(object, int)  # changed for PySide6 from pyqtSlot()
     def _on_element_selected(
         self, elements: List[qw.QGraphicsItem], index: int
     ):

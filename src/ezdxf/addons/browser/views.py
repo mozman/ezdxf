@@ -1,8 +1,8 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 import typing
-from PyQt5.QtWidgets import QTableView, QTreeView
-from PyQt5.QtCore import QModelIndex
+from PySide6.QtWidgets import QTableView, QTreeView
+from PySide6.QtCore import QModelIndex
 
 if typing.TYPE_CHECKING:
     from ezdxf.eztypes import Tags

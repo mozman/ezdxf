@@ -419,9 +419,9 @@ class View(Command):
     def run(args):
         # Import on demand for a quicker startup:
         try:
-            from PyQt5 import QtWidgets
+            from PySide6 import QtWidgets
         except ImportError:
-            print("PyQt5 package not found.")
+            print("PySide6 package not found.")
             sys.exit(1)
         from ezdxf.addons.drawing.qtviewer import CadViewer
         from ezdxf.addons.drawing.config import Configuration, LinePolicy
@@ -484,9 +484,9 @@ class Browse(Command):
     @staticmethod
     def run(args):
         try:
-            from PyQt5.QtWidgets import QApplication
+            from PySide6.QtWidgets import QApplication
         except ImportError:
-            print("PyQt5 package not found.")
+            print("PySide6 package not found.")
             sys.exit(1)
         from ezdxf.addons import browser
 
@@ -599,7 +599,7 @@ class Config(Command):
 
 
 def set_app_icon(app):
-    from PyQt5 import QtGui, QtCore
+    from PySide6 import QtGui, QtCore
 
     app_icon = QtGui.QIcon()
     p = resources_path()

@@ -1070,12 +1070,12 @@ def to_matplotlib_path(paths: Iterable[Path], extrusion: "Vertex" = Z_AXIS):
     return MatplotlibPath(vertices, codes)
 
 
-# Interface to PyQt5.QtGui.QPainterPath
+# Interface to PySide6.QtGui.QPainterPath
 
 
 def multi_path_from_qpainter_path(qpath) -> Path:
     """Returns a :class:`Path` objects from a `QPainterPath`_.
-    Returns a multi-path object if necessary. (requires PyQt5)
+    Returns a multi-path object if necessary. (requires PySide6)
 
     .. versionadded:: 0.17
 
@@ -1110,7 +1110,7 @@ def multi_path_from_qpainter_path(qpath) -> Path:
 
 def from_qpainter_path(qpath) -> Iterable[Path]:
     """Yields multiple :class:`Path` objects from a `QPainterPath`_.
-    (requires PyQt5)
+    (requires PySide6)
 
     .. versionadded:: 0.16
 
@@ -1126,12 +1126,12 @@ def from_qpainter_path(qpath) -> Iterable[Path]:
 
 
 def to_qpainter_path(paths: Iterable[Path], extrusion: "Vertex" = Z_AXIS):
-    """Convert the given `paths` into a :class:`PyQt5.QtGui.QPainterPath`
+    """Convert the given `paths` into a :class:`PySide6.QtGui.QPainterPath`
     object.
     The `extrusion` vector is applied to all paths, all vertices are projected
     onto the plane normal to this extrusion vector. The default extrusion vector
     is the WCS z-axis. The :class:`QPainterPath` is a 2D object with :ref:`OCS`
-    coordinates and the z-elevation is lost. (requires PyQt5)
+    coordinates and the z-elevation is lost. (requires PySide6)
 
     Args:
         paths: iterable of :class:`Path` objects
@@ -1143,8 +1143,8 @@ def to_qpainter_path(paths: Iterable[Path], extrusion: "Vertex" = Z_AXIS):
     .. versionadded:: 0.16
 
     """
-    from PyQt5.QtGui import QPainterPath
-    from PyQt5.QtCore import QPointF
+    from PySide6.QtGui import QPainterPath
+    from PySide6.QtCore import QPointF
 
     if not Z_AXIS.isclose(extrusion):
         paths = tools.transform_paths_to_ocs(paths, OCS(extrusion))

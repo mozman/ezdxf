@@ -8,8 +8,8 @@ from ezdxf.lldxf.types import (
     GROUP_MARKERS,
     POINTER_CODES,
 )
-from PyQt5.QtCore import QModelIndex, QAbstractTableModel, Qt
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor
+from PySide6.QtCore import QModelIndex, QAbstractTableModel, Qt
+from PySide6.QtGui import QStandardItemModel, QStandardItem, QColor
 from .tags import compile_tags, Tags
 
 __all__ = [

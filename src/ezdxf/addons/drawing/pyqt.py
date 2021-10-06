@@ -5,7 +5,7 @@ from abc import ABCMeta
 from typing import Optional, Iterable, Dict, Union, Tuple, no_type_check
 from collections import defaultdict
 from functools import lru_cache
-from PyQt5 import QtCore as qc, QtGui as qg, QtWidgets as qw
+from PySide6 import QtCore as qc, QtGui as qg, QtWidgets as qw
 
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.config import Configuration, LinePolicy, HatchPolicy
