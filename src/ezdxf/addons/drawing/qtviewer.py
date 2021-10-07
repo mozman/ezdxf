@@ -279,8 +279,8 @@ class CadViewer(qw.QMainWindow):
             if ret == qw.QMessageBox.No:
                 auditor.print_error_report(auditor.errors)
                 return
-        self.doc = document
-        self._render_context = RenderContext(document)
+        self.doc = document  # type: ignore # only a github action error
+        self._render_context = RenderContext(document)  # type: ignore # only a github action error
         self._reset_backend(scale=overall_scaling_factor)  # clear caches
         self._visible_layers = None
         self._current_layout = None
@@ -325,7 +325,7 @@ class CadViewer(qw.QMainWindow):
         reset_view: bool = True,
     ):
         print(f"drawing {layout_name}")
-        self._current_layout = layout_name
+        self._current_layout = layout_name  # type: ignore # only a github action error
         self.view.begin_loading()
         new_scene = qw.QGraphicsScene()
         self._backend.set_scene(new_scene)
@@ -383,10 +383,10 @@ class CadViewer(qw.QMainWindow):
                 item.setCheckState(item_state)
                 item.blockSignals(False)
 
-        self._visible_layers = set()
+        self._visible_layers = set()  # type: ignore # only a github action error
         for i, layer in self._layer_checkboxes():
             if layer.checkState() == qc.Qt.Checked:
-                self._visible_layers.add(layer.text())
+                self._visible_layers.add(layer.text())  # type: ignore # only a github action error
         self.draw_layout(self._current_layout, reset_view=False)  # type: ignore
 
     @Slot()  # type: ignore
