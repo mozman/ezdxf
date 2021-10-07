@@ -352,7 +352,7 @@ def _set_cosmetic_brush(
     brush = item.brush()
     # scale by -1 in y because the view is always mirrored in y and undoing the view transformation entirely would make
     # the hatch mirrored w.r.t the view
-    brush.setTransform(painter.transform().inverted()[0].scale(1, -1))
+    brush.setTransform(painter.transform().inverted()[0].scale(1, -1))  # type: ignore
     item.setBrush(brush)
 
 

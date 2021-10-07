@@ -1,5 +1,6 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
+# mypy: ignore_errors=True
 from ezdxf import options
 
 # Qt compatibility layer: all Qt imports from ezdxf.addons.xqt

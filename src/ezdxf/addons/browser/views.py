@@ -32,5 +32,5 @@ class DXFTagsTable(QTableView):
         first_row: int = 0
         selection = self.selectedIndexes()
         if selection:
-            first_row = selection[0].row()
+            first_row = selection[0].row()  # type: ignore
         return first_row

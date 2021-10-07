@@ -120,7 +120,9 @@ class CADGraphicsView(qw.QGraphicsView):
 class CADGraphicsViewWithOverlay(CADGraphicsView):
 
     mouse_moved = Signal(qc.QPointF)  # changed for PySide6 from pyqtSignal()
-    element_selected = Signal(object, int)  # changed for PySide6 from pyqtSignal()
+    element_selected = Signal(
+        object, int
+    )  # changed for PySide6 from pyqtSignal()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -146,7 +148,7 @@ class CADGraphicsViewWithOverlay(CADGraphicsView):
     def mouseMoveEvent(self, event: qg.QMouseEvent) -> None:
         super().mouseMoveEvent(event)
         pos = self.mapToScene(event.pos())
-        self.mouse_moved.emit(pos)
+        self.mouse_moved.emit(pos)  # type: ignore
         selected_items = self.scene().items(pos)
         if selected_items != self._selected_items:
             self._selected_items = selected_items
@@ -162,7 +164,7 @@ class CADGraphicsViewWithOverlay(CADGraphicsView):
             self._emit_selected()
 
     def _emit_selected(self):
-        self.element_selected.emit(self._selected_items, self._selected_index)
+        self.element_selected.emit(self._selected_items, self._selected_index)  # type: ignore
         self.scene().invalidate(
             self.sceneRect(), qw.QGraphicsScene.ForegroundLayer
         )
@@ -181,8 +183,8 @@ class CadViewer(qw.QMainWindow):
         self.view = CADGraphicsViewWithOverlay()
         self.view.setScene(qw.QGraphicsScene())
         self.view.scale(1, -1)  # so that +y is up
-        self.view.element_selected.connect(self._on_element_selected)
-        self.view.mouse_moved.connect(self._on_mouse_moved)
+        self.view.element_selected.connect(self._on_element_selected)  # type: ignore
+        self.view.mouse_moved.connect(self._on_mouse_moved)  # type: ignore
 
         menu = self.menuBar()
         select_doc_action = QAction("Select Document", self)  # PySide6
@@ -374,7 +376,7 @@ class CadViewer(qw.QMainWindow):
             item = self.layers.itemWidget(self.layers.item(i))
             yield i, item  # type: ignore
 
-    @Slot(int)  # changed for PySide6 from pyqtSlot()
+    @Slot(int)  # type: ignore
     def _layers_updated(self, item_state: qc.Qt.CheckState):
         shift_held = qw.QApplication.keyboardModifiers() & qc.Qt.ShiftModifier  # type: ignore
         if shift_held:
@@ -389,17 +391,17 @@ class CadViewer(qw.QMainWindow):
                 self._visible_layers.add(layer.text())
         self.draw_layout(self._current_layout, reset_view=False)  # type: ignore
 
-    @Slot()  # changed for PySide6 from pyqtSlot()
+    @Slot()  # type: ignore
     def _toggle_sidebar(self):
         self.sidebar.setHidden(not self.sidebar.isHidden())
 
-    @Slot(qc.QPointF)  # changed for PySide6 from pyqtSlot()
+    @Slot(qc.QPointF)  # type: ignore
     def _on_mouse_moved(self, mouse_pos: qc.QPointF):
         self.mouse_pos.setText(
             f"mouse position: {mouse_pos.x():.4f}, {mouse_pos.y():.4f}\n"
         )
 
-    @Slot(object, int)  # changed for PySide6 from pyqtSlot()
+    @Slot(object, int)  # type: ignore
     def _on_element_selected(
         self, elements: List[qw.QGraphicsItem], index: int
     ):
