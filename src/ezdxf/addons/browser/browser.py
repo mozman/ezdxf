@@ -146,10 +146,10 @@ class DXFStructureBrowser(QtWidgets.QMainWindow):
             shortcut="Ctrl+C",
             icon_name="icon-copy-64px.png",
         )
-        # TODO
-        # self._quit_action = self.make_action(
-        #     "&Quit", qApp.quit, shortcut="Ctrl+Q"
-        # )
+        self._quit_action = self.make_action(
+             "&Quit", self.close, shortcut="Ctrl+Q"
+        )
+        self.close()
         self._goto_handle_action = self.make_action(
             "&Go to Handle...",
             self.ask_for_handle,
@@ -280,8 +280,8 @@ class DXFStructureBrowser(QtWidgets.QMainWindow):
         file_menu.addSeparator()
         file_menu.addAction(self._export_entity_action)
         file_menu.addAction(self._copy_entity_action)
-        # TODO: file_menu.addSeparator()
-        # TODO: file_menu.addAction(self._quit_action)
+        file_menu.addSeparator()
+        file_menu.addAction(self._quit_action)
 
         navigate_menu = menu.addMenu("&Navigate")
         navigate_menu.addAction(self._goto_handle_action)
