@@ -31,6 +31,7 @@ EZDXF = "ezdxf"
 XDG_CONFIG_HOME = "XDG_CONFIG_HOME"
 CONFIG_DIRECTORY = ".config"
 ODAFC_ADDON = "odafc-addon"
+DRAWING_ADDON = "drawing-addon"
 
 
 def xdg_path(xdg_var: str, directory: str) -> Path:
@@ -76,6 +77,11 @@ def default_config() -> ConfigParser:
     }
     config[ODAFC_ADDON] = {
         "WIN_EXEC_PATH": r'"C:\Program Files\ODA\ODAFileConverter\ODAFileConverter.exe"'
+    }
+    config[DRAWING_ADDON] = {
+        # These options are just for testing scenarios!
+        "TRY_PYSIDE6": "true",
+        "TRY_PYQT5": "true",
     }
     return config
 

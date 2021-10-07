@@ -1,11 +1,12 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
+from ezdxf import options
 
 # Qt compatibility layer: all Qt imports from ezdxf.addons.xqt
 PYSIDE6 = False
-TRY_PYSIDE6 = True  # set to False only for testing
+TRY_PYSIDE6 = options.get_bool("drawing-addon", "try_pyside6", True)
 PYQT5 = False
-TRY_PYQT5 = True  # set to False only for testing
+TRY_PYQT5 = options.get_bool("drawing-addon", "try_pyqt5", True)
 
 if TRY_PYSIDE6:
     try:
@@ -15,7 +16,7 @@ if TRY_PYSIDE6:
         from PySide6.QtGui import QAction
 
         PYSIDE6 = True
-        print("using PySide6")
+        print("using Qt binding: PySide6")
     except ImportError:
         pass
 
@@ -28,7 +29,7 @@ if TRY_PYQT5 and not PYSIDE6:
         from PyQt5.QtWidgets import QAction
 
         PYQT5 = True
-        print("using PyQt5")
+        print("using Qt binding: PyQt5")
     except ImportError:
         pass
 
