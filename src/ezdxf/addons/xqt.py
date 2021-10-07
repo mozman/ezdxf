@@ -1,13 +1,13 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 # mypy: ignore_errors=True
-from ezdxf import options
+from ezdxf._options import DRAWING_ADDON, options
 
 # Qt compatibility layer: all Qt imports from ezdxf.addons.xqt
 PYSIDE6 = False
-TRY_PYSIDE6 = options.get_bool("drawing-addon", "try_pyside6", True)
+TRY_PYSIDE6 = options.get_bool(DRAWING_ADDON, "try_pyside6", True)
 PYQT5 = False
-TRY_PYQT5 = options.get_bool("drawing-addon", "try_pyqt5", True)
+TRY_PYQT5 = options.get_bool(DRAWING_ADDON, "try_pyqt5", True)
 
 if TRY_PYSIDE6:
     try:

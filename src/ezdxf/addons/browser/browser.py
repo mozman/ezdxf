@@ -475,8 +475,10 @@ class DXFStructureBrowser(QtWidgets.QMainWindow):
 
     def entity_activated(self, index: QModelIndex):
         tags = index.data(role=DXFTagsRole)
-        if isinstance(tags, Tags):
-            self.set_current_entity_with_history(tags)
+        # PySide6: Tags() are converted to type list by PySide6?
+        # print(type(tags))
+        if isinstance(tags, (Tags, list)):
+            self.set_current_entity_with_history(Tags(tags))
 
     def tag_activated(self, index: QModelIndex):
         tag = index.data(role=DXFTagsRole)
