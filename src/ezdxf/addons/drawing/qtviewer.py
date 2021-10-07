@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # Copyright (c) 2020-2021, Matthew Broadway
 # License: MIT License
+# mypy: ignore_errors=True
+
 import math
 import os
 import time
@@ -53,7 +55,7 @@ class CADGraphicsView(qw.QGraphicsView):
         self.setDragMode(qw.QGraphicsView.ScrollHandDrag)
         self.setFrameShape(qw.QFrame.NoFrame)
         self.setRenderHints(
-            qg.QPainter.Antialiasing  # type: ignore
+            qg.QPainter.Antialiasing
             | qg.QPainter.TextAntialiasing
             | qg.QPainter.SmoothPixmapTransform
         )
@@ -146,7 +148,7 @@ class CADGraphicsViewWithOverlay(CADGraphicsView):
     def mouseMoveEvent(self, event: qg.QMouseEvent) -> None:
         super().mouseMoveEvent(event)
         pos = self.mapToScene(event.pos())
-        self.mouse_moved.emit(pos)  # type: ignore
+        self.mouse_moved.emit(pos)
         selected_items = self.scene().items(pos)
         if selected_items != self._selected_items:
             self._selected_items = selected_items
@@ -162,7 +164,7 @@ class CADGraphicsViewWithOverlay(CADGraphicsView):
             self._emit_selected()
 
     def _emit_selected(self):
-        self.element_selected.emit(self._selected_items, self._selected_index)  # type: ignore
+        self.element_selected.emit(self._selected_items, self._selected_index)
         self.scene().invalidate(
             self.sceneRect(), qw.QGraphicsScene.ForegroundLayer
         )
@@ -181,8 +183,8 @@ class CadViewer(qw.QMainWindow):
         self.view = CADGraphicsViewWithOverlay()
         self.view.setScene(qw.QGraphicsScene())
         self.view.scale(1, -1)  # so that +y is up
-        self.view.element_selected.connect(self._on_element_selected)  # type: ignore
-        self.view.mouse_moved.connect(self._on_mouse_moved)  # type: ignore
+        self.view.element_selected.connect(self._on_element_selected)
+        self.view.mouse_moved.connect(self._on_mouse_moved)
 
         menu = self.menuBar()
         select_doc_action = QAction("Select Document", self)
@@ -228,7 +230,7 @@ class CadViewer(qw.QMainWindow):
     def _reset_backend(self, scale: float = 1.0):
         backend = PyQtBackend(use_text_cache=True)
         if scale != 1.0:
-            backend = BackendScaler(backend, factor=scale)  # type: ignore
+            backend = BackendScaler(backend, factor=scale)
         # clear caches
         self._backend = backend
 
@@ -279,9 +281,9 @@ class CadViewer(qw.QMainWindow):
             if ret == qw.QMessageBox.No:
                 auditor.print_error_report(auditor.errors)
                 return
-        self.doc = document  # type: ignore # only a github action error
-        self._render_context = RenderContext(document)  # type: ignore # only a github action error
-        self._reset_backend(scale=overall_scaling_factor)  # clear caches
+        self.doc = document
+        self._render_context = RenderContext(document)
+        self._reset_backend(scale=overall_scaling_factor)
         self._visible_layers = None
         self._current_layout = None
         self._populate_layouts()
@@ -325,11 +327,11 @@ class CadViewer(qw.QMainWindow):
         reset_view: bool = True,
     ):
         print(f"drawing {layout_name}")
-        self._current_layout = layout_name  # type: ignore # only a github action error
+        self._current_layout = layout_name
         self.view.begin_loading()
         new_scene = qw.QGraphicsScene()
         self._backend.set_scene(new_scene)
-        layout = self.doc.layout(layout_name)  # type: ignore
+        layout = self.doc.layout(layout_name)
         self._update_render_context(layout)
         try:
             start = time.perf_counter()
@@ -376,30 +378,30 @@ class CadViewer(qw.QMainWindow):
 
     @Slot(int)  # type: ignore
     def _layers_updated(self, item_state: qc.Qt.CheckState):
-        shift_held = qw.QApplication.keyboardModifiers() & qc.Qt.ShiftModifier  # type: ignore
+        shift_held = qw.QApplication.keyboardModifiers() & qc.Qt.ShiftModifier
         if shift_held:
             for i, item in self._layer_checkboxes():
                 item.blockSignals(True)
                 item.setCheckState(item_state)
                 item.blockSignals(False)
 
-        self._visible_layers = set()  # type: ignore # only a github action error
+        self._visible_layers = set()
         for i, layer in self._layer_checkboxes():
             if layer.checkState() == qc.Qt.Checked:
-                self._visible_layers.add(layer.text())  # type: ignore # only a github action error
-        self.draw_layout(self._current_layout, reset_view=False)  # type: ignore
+                self._visible_layers.add(layer.text())
+        self.draw_layout(self._current_layout, reset_view=False)
 
-    @Slot()  # type: ignore
+    @Slot()
     def _toggle_sidebar(self):
         self.sidebar.setHidden(not self.sidebar.isHidden())
 
-    @Slot(qc.QPointF)  # type: ignore
+    @Slot(qc.QPointF)
     def _on_mouse_moved(self, mouse_pos: qc.QPointF):
         self.mouse_pos.setText(
             f"mouse position: {mouse_pos.x():.4f}, {mouse_pos.y():.4f}\n"
         )
 
-    @Slot(object, int)  # type: ignore
+    @Slot(object, int)
     def _on_element_selected(
         self, elements: List[qw.QGraphicsItem], index: int
     ):
