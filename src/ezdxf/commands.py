@@ -419,7 +419,7 @@ class View(Command):
     def run(args):
         # Import on demand for a quicker startup:
         try:
-            from PySide6 import QtWidgets
+            from ezdxf.addons.xqt import QtWidgets
         except ImportError:
             print("PySide6 package not found.")
             sys.exit(1)
@@ -599,7 +599,7 @@ class Config(Command):
 
 
 def set_app_icon(app):
-    from PySide6 import QtGui, QtCore
+    from ezdxf.addons.xqt import QtGui, QtCore
 
     app_icon = QtGui.QIcon()
     p = resources_path()
