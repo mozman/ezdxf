@@ -4,20 +4,20 @@ from typing import Optional, Set, List
 from functools import partial
 from pathlib import Path
 import subprocess
-from PySide6.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QSplitter,
+from ezdxf.addons.xqt import (
+    QtWidgets,
+    QtGui,
     QAction,
-    QFileDialog,
     QMessageBox,
+    QFileDialog,
     QInputDialog,
-    qApp,
-    QDialog,
-    QToolBar,
+    Qt,
+    QModelIndex,
+    QSettings,
+    QFileSystemWatcher,
+    QSize,
 )
-from PySide6 import QtGui
-from PySide6.QtCore import Qt, QModelIndex, QSettings, QFileSystemWatcher, QSize
+
 import ezdxf
 from ezdxf.lldxf.const import DXFStructureError, DXFValueError
 from ezdxf.lldxf.types import DXFTag, is_pointer_code
@@ -65,7 +65,7 @@ BROWSER_HEIGHT = 768
 TREE_WIDTH_FACTOR = 0.33
 
 
-class DXFStructureBrowser(QMainWindow):
+class DXFStructureBrowser(QtWidgets.QMainWindow):
     def __init__(
         self,
         filename: str = "",
@@ -115,7 +115,7 @@ class DXFStructureBrowser(QMainWindow):
                     print(f"Handle {handle} not found.")
 
     def build_central_widget(self):
-        container = QSplitter(Qt.Horizontal)
+        container = QtWidgets.QSplitter(Qt.Horizontal)
         container.addWidget(self._structure_tree)
         container.addWidget(self._dxf_tags_table)
         tree_width = int(BROWSER_WIDTH * TREE_WIDTH_FACTOR)
@@ -133,6 +133,7 @@ class DXFStructureBrowser(QMainWindow):
 
     # noinspection PyAttributeOutsideInit
     def setup_actions(self):
+
         self._open_action = self.make_action(
             "&Open DXF File...", self.open_dxf, shortcut="Ctrl+O"
         )
@@ -145,9 +146,10 @@ class DXFStructureBrowser(QMainWindow):
             shortcut="Ctrl+C",
             icon_name="icon-copy-64px.png",
         )
-        self._quit_action = self.make_action(
-            "&Quit", qApp.quit, shortcut="Ctrl+Q"
-        )
+        # TODO
+        # self._quit_action = self.make_action(
+        #     "&Quit", qApp.quit, shortcut="Ctrl+Q"
+        # )
         self._goto_handle_action = self.make_action(
             "&Go to Handle...",
             self.ask_for_handle,
@@ -278,8 +280,8 @@ class DXFStructureBrowser(QMainWindow):
         file_menu.addSeparator()
         file_menu.addAction(self._export_entity_action)
         file_menu.addAction(self._copy_entity_action)
-        file_menu.addSeparator()
-        file_menu.addAction(self._quit_action)
+        # TODO: file_menu.addSeparator()
+        # TODO: file_menu.addAction(self._quit_action)
 
         navigate_menu = menu.addMenu("&Navigate")
         navigate_menu.addAction(self._goto_handle_action)
@@ -303,7 +305,7 @@ class DXFStructureBrowser(QMainWindow):
         bookmarks_menu.addAction(self._go_to_bookmark)
 
     def setup_toolbar(self) -> None:
-        toolbar = QToolBar("MainToolbar")
+        toolbar = QtWidgets.QToolBar("MainToolbar")
         toolbar.setIconSize(QSize(ICON_SIZE, ICON_SIZE))
         toolbar.addAction(self._entity_history_back_action)
         toolbar.addAction(self._entity_history_forward_action)
@@ -328,7 +330,7 @@ class DXFStructureBrowser(QMainWindow):
         return dialog
 
     def open_dxf(self):
-        path, _ = QFileDialog.getOpenFileName(
+        path, _ = QtWidgets.QFileDialog.getOpenFileName(
             self,
             caption="Select DXF file",
             filter="DXF Documents (*.dxf *.DXF)",
@@ -712,15 +714,17 @@ class DXFStructureBrowser(QMainWindow):
                 self._dxf_tags_table.scrollTo(index)
 
             else:
-                QMessageBox.critical(self, "Bookmark not found!", str(name))
+                QtWidgets.QMessageBox.critical(
+                    self, "Bookmark not found!", str(name)
+                )
 
 
 def copy_dxf_to_clipboard(tags: Tags):
-    clipboard = QApplication.clipboard()
+    clipboard = QtWidgets.QApplication.clipboard()
     clipboard.setText(dxfstr(tags), mode=clipboard.Clipboard)
 
 
-class FindDialog(QDialog, Ui_FindDialog):
+class FindDialog(QtWidgets.QDialog, Ui_FindDialog):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)

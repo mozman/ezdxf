@@ -8,8 +8,8 @@ from ezdxf.lldxf.types import (
     GROUP_MARKERS,
     POINTER_CODES,
 )
-from PySide6.QtCore import QModelIndex, QAbstractTableModel, Qt
-from PySide6.QtGui import QStandardItemModel, QStandardItem, QColor
+from ezdxf.addons.xqt import QModelIndex, QAbstractTableModel, Qt
+from ezdxf.addons.xqt import QStandardItemModel, QStandardItem, QColor
 from .tags import compile_tags, Tags
 
 __all__ = [
@@ -130,22 +130,22 @@ class EntityContainer(QStandardItem):
         self.setup_content(entities)
 
     def setup_content(self, entities):
-        self.appendRows(Entity(e) for e in entities)
+        self.appendRows([Entity(e) for e in entities])
 
 
 class Classes(EntityContainer):
     def setup_content(self, entities):
-        self.appendRows(Class(e) for e in entities)
+        self.appendRows([Class(e) for e in entities])
 
 
 class AcDsData(EntityContainer):
     def setup_content(self, entities):
-        self.appendRows(AcDsEntry(e) for e in entities)
+        self.appendRows([AcDsEntry(e) for e in entities])
 
 
 class NamedEntityContainer(EntityContainer):
     def setup_content(self, entities):
-        self.appendRows(NamedEntity(e) for e in entities)
+        self.appendRows([NamedEntity(e) for e in entities])
 
 
 class Tables(EntityContainer):

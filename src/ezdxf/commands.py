@@ -420,8 +420,8 @@ class View(Command):
         # Import on demand for a quicker startup:
         try:
             from ezdxf.addons.xqt import QtWidgets
-        except ImportError:
-            print("PySide6 package not found.")
+        except ImportError as e:
+            print(str(e))
             sys.exit(1)
         from ezdxf.addons.drawing.qtviewer import CadViewer
         from ezdxf.addons.drawing.config import Configuration, LinePolicy
@@ -484,14 +484,14 @@ class Browse(Command):
     @staticmethod
     def run(args):
         try:
-            from PySide6.QtWidgets import QApplication
-        except ImportError:
-            print("PySide6 package not found.")
+            from ezdxf.addons.xqt import QtWidgets
+        except ImportError as e:
+            print(str(e))
             sys.exit(1)
         from ezdxf.addons import browser
 
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
-        app = QApplication(sys.argv)
+        app = QtWidgets.QApplication(sys.argv)
         set_app_icon(app)
         main_window = browser.DXFStructureBrowser(
             args.file,

@@ -14,6 +14,22 @@ if TRY_PYSIDE6:
         from PySide6.QtCore import Signal
         from PySide6.QtCore import Slot
         from PySide6.QtGui import QAction
+        from PySide6.QtWidgets import (
+            QMessageBox,
+            QFileDialog,
+            QInputDialog,
+            QTableView,
+            QTreeView,
+        )
+        from PySide6.QtCore import (
+            Qt,
+            QModelIndex,
+            QSettings,
+            QFileSystemWatcher,
+            QSize,
+            QAbstractTableModel,
+        )
+        from PySide6.QtGui import QStandardItemModel, QStandardItem, QColor
 
         PYSIDE6 = True
         print("using Qt binding: PySide6")
@@ -26,7 +42,23 @@ if TRY_PYQT5 and not PYSIDE6:
         from PyQt5 import QtGui, QtCore, QtWidgets
         from PyQt5.QtCore import pyqtSignal as Signal
         from PyQt5.QtCore import pyqtSlot as Slot
-        from PyQt5.QtWidgets import QAction
+        from PyQt5.QtWidgets import (
+            QAction,
+            QMessageBox,
+            QFileDialog,
+            QInputDialog,
+            QTableView,
+            QTreeView,
+        )
+        from PyQt5.QtCore import (
+            Qt,
+            QModelIndex,
+            QSettings,
+            QFileSystemWatcher,
+            QSize,
+            QAbstractTableModel,
+        )
+        from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor
 
         PYQT5 = True
         print("using Qt binding: PyQt5")
