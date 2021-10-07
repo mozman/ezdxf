@@ -290,7 +290,12 @@ class Frontend:
             for line, transform, cap_height in simplified_text_chunks(
                 entity, self.out, font=properties.font
             ):
-                self.out.draw_text(line, transform, properties, cap_height)
+                self.out.draw_text(
+                    line,
+                    transform,
+                    properties,
+                    cap_height,
+                )
         else:
             raise TypeError(entity.dxftype())
 
@@ -596,7 +601,10 @@ class Frontend:
             return
 
         path = make_path(entity)
-        self.out.draw_path(path, properties)
+        self.out.draw_path(
+            path,
+            properties,
+        )
 
     def draw_composite_entity(
         self, entity: DXFGraphic, properties: Properties
@@ -612,7 +620,7 @@ class Frontend:
             self.draw_entities(
                 insert.virtual_entities(
                     skipped_entity_callback=self.skip_entity
-                )
+                ),
             )
 
         if isinstance(entity, Insert):
@@ -631,7 +639,9 @@ class Frontend:
 
     def draw_proxy_graphic(self, data: bytes, doc) -> None:
         if data:
-            self.draw_entities(virtual_entities(ProxyGraphic(data, doc)))
+            self.draw_entities(
+                virtual_entities(ProxyGraphic(data, doc)),
+            )
 
 
 def is_spatial_text(extrusion: Vec3) -> bool:

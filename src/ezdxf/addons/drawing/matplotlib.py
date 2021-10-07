@@ -116,7 +116,14 @@ class MatplotlibBackend(Backend):
     def draw_point(self, pos: Vec3, properties: Properties):
         """Draw a real dimensionless point."""
         color = properties.color
-        self.ax.scatter([pos.x], [pos.y], s=0.1, c=color, zorder=self._get_z())
+        self.ax.scatter(
+            [pos.x],
+            [pos.y],
+            s=0.1,
+            c=color,
+            zorder=self._get_z(),
+            gid=properties.output_id,
+        )
 
     def draw_line(self, start: Vec3, end: Vec3, properties: Properties):
         # matplotlib draws nothing for a zero-length line:
@@ -168,6 +175,7 @@ class MatplotlibBackend(Backend):
             fill=fill,
             hatch=hatch,
             zorder=self._get_z(),
+            gid=properties.output_id,
         )
         self.ax.add_patch(patch)
 
@@ -179,6 +187,7 @@ class MatplotlibBackend(Backend):
             color=properties.color,
             linewidth=0,
             zorder=self._get_z(),
+            gid=properties.output_id,
         )
 
     def draw_text(
@@ -206,6 +215,7 @@ class MatplotlibBackend(Backend):
                 facecolor=properties.color,
                 linewidth=0,
                 zorder=self._get_z(),
+                gid=properties.output_id,
             )
         )
 
@@ -490,7 +500,11 @@ class InternalLineRenderer(MatplotlibLineRenderer):
         self._solid_only = solid_only
 
     def draw_line(
-        self, start: Vec3, end: Vec3, properties: Properties, z: float
+        self,
+        start: Vec3,
+        end: Vec3,
+        properties: Properties,
+        z: float,
     ):
         self.ax.add_line(
             Line2D(
@@ -502,10 +516,16 @@ class InternalLineRenderer(MatplotlibLineRenderer):
                 else self.linetype(properties),
                 color=properties.color,
                 zorder=z,
+                gid=properties.output_id,
             )
         )
 
-    def draw_path(self, path, properties: Properties, z: float):
+    def draw_path(
+        self,
+        path,
+        properties: Properties,
+        z: float,
+    ):
         vertices, codes = _get_path_patch_data(path)
         patch = PathPatch(
             Path(vertices, codes),
@@ -516,6 +536,7 @@ class InternalLineRenderer(MatplotlibLineRenderer):
             fill=False,
             color=properties.color,
             zorder=z,
+            gid=properties.output_id,
         )
         self.ax.add_patch(patch)
 
@@ -551,7 +572,11 @@ class EzdxfLineRenderer(MatplotlibLineRenderer):
     """
 
     def draw_line(
-        self, start: Vec3, end: Vec3, properties: Properties, z: float
+        self,
+        start: Vec3,
+        end: Vec3,
+        properties: Properties,
+        z: float,
     ):
         pattern = self.pattern(properties)
         lineweight = self.lineweight(properties)
@@ -564,6 +589,7 @@ class EzdxfLineRenderer(MatplotlibLineRenderer):
                     linewidth=lineweight,
                     color=color,
                     zorder=z,
+                    gid=properties.output_id,
                 )
             )
         else:
@@ -576,6 +602,7 @@ class EzdxfLineRenderer(MatplotlibLineRenderer):
                 linewidths=lineweight,
                 color=color,
                 zorder=z,
+                gid=properties.output_id,
             )
             lines.set_capstyle("butt")
             self.ax.add_collection(lines)
@@ -592,6 +619,7 @@ class EzdxfLineRenderer(MatplotlibLineRenderer):
                 color=color,
                 fill=False,
                 zorder=z,
+                gid=properties.output_id,
             )
             self.ax.add_patch(patch)
         else:
@@ -606,6 +634,7 @@ class EzdxfLineRenderer(MatplotlibLineRenderer):
                 linewidths=lineweight,
                 color=color,
                 zorder=z,
+                gid=properties.output_id,
             )
             lines.set_capstyle("butt")
             self.ax.add_collection(lines)

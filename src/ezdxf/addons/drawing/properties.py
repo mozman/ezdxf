@@ -25,6 +25,7 @@ from ezdxf.lldxf import const
 from ezdxf.sections.table import table_key as layer_key
 from ezdxf.tools import fonts
 from ezdxf.tools.pattern import scale_pattern, HatchPatternType
+from ezdxf.entities import DXFGraphic
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -58,6 +59,26 @@ MODEL_SPACE_BG_COLOR = "#212830"
 PAPER_SPACE_BG_COLOR = "#ffffff"
 VIEWPORT_COLOR = "#aaaaaa"  # arbitrary choice
 OLE2FRAME_COLOR = "#89adba"  # arbitrary choice
+
+
+def recover_parent_handle(entity: DXFGraphic):
+    if not entity.is_virtual and not entity.is_copy:
+        return entity.dxf.handle
+
+    suffix = ""
+    if entity.has_source_block_reference:
+        if not entity.source_block_reference.is_virtual:
+            suffix += "_" + entity.uuid.hex
+            entity = entity.source_block_reference
+        else:
+            while entity.has_source_block_reference:
+                suffix += "_" + entity.uuid.hex
+                entity = entity.source_block_reference
+
+    if entity.is_copy:
+        entity = entity.origin_of_copy
+
+    return entity.dxf.handle + suffix
 
 
 def is_dark_color(color: Color, dark: float = 0.2) -> bool:
@@ -294,7 +315,9 @@ class RenderContext:
                 CAD application.
         """
         self._saved_states: List[Properties] = []
-        self.line_pattern: Dict[str, Sequence[float]] = _load_line_pattern(doc.linetypes) if doc else dict()
+        self.line_pattern: Dict[str, Sequence[float]] = (
+            _load_line_pattern(doc.linetypes) if doc else dict()
+        )
         self.current_layout_properties = LayoutProperties.modelspace()
         self.current_block_reference_properties: Optional[Properties] = None
         self.plot_styles = self._load_plot_style_table(ctb)
@@ -329,16 +352,16 @@ class RenderContext:
         self._hatch_pattern_cache: Dict[str, HatchPatternType] = dict()
 
     def update_configuration(self, config: Configuration) -> Configuration:
-        """ Where the user has not specified a value, populate configuration
+        """Where the user has not specified a value, populate configuration
         fields based on the dxf header values
         """
         changes = {}
         if config.pdsize is None:
-            changes['pdsize'] = self.pdsize
+            changes["pdsize"] = self.pdsize
         if config.pdmode is None:
-            changes['pdmode'] = self.pdmode
+            changes["pdmode"] = self.pdmode
         if config.measurement is None:
-            changes['measurement'] = self.measurement
+            changes["measurement"] = self.measurement
         return config.with_changes(**changes)
 
     def _setup_layers(self, doc: "Drawing"):
@@ -484,6 +507,7 @@ class RenderContext:
             p.font = self.resolve_font(entity)
         if isinstance(entity, DXFPolygon):
             p.filling = self.resolve_filling(entity)
+        p.output_id = recover_parent_handle(entity)
         return p
 
     def resolve_units(self) -> int:
