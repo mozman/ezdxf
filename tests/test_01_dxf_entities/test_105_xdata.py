@@ -69,7 +69,37 @@ def test_add_data(xdata):
     assert "XXX" in xdata
 
 
-@pytest.mark.parametrize("group_code", [1, 0, 1003])
+def test_safe_init():
+    tags = ExtendedTags.from_text(
+        """0
+DXFENTITY
+1001
+MOZMAN
+1000
+DataStr1
+1000
+DataStr2
+1007
+XXX
+1040
+3.14
+1001
+ACAD
+1000
+AutoDesk
+1000
+Revit"""
+    )
+
+    xdata = XData.safe_init(tags.xdata)
+    data = xdata.get("MOZMAN")
+    assert (
+        any(tag.code == 1007 for tag in data) is False
+    ), "group code 1007 should be removed"
+    assert "ACAD" in xdata
+
+
+@pytest.mark.parametrize("group_code", [1, 0, 1007])
 def test_prevent_adding_invalid_data(group_code):
     xdata = XData()
     with pytest.raises(DXFValueError):

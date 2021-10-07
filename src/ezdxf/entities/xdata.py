@@ -51,7 +51,7 @@ class XData:
     @classmethod
     def safe_init(cls, xdata: Iterable[Tags]):
         return cls(
-            [Tags(filter_invalid_xdata_group_codes(tags) for tags in xdata)]
+            [Tags(filter_invalid_xdata_group_codes(tags)) for tags in xdata]
         )
 
     def __len__(self):

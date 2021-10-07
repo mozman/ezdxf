@@ -4,7 +4,7 @@ News
 
 Version 0.17.1 - dev
 --------------------
-- CHANGE: usinf [PySide6](https://pypi.org/project/PySide6/) as Qt binding 
+- CHANGE: using [PySide6](https://pypi.org/project/PySide6/) as Qt binding 
   if installed, `PyQt5` is still supported as fallback
 - NEW: tracking feature for DXF entity copies, new properties of `DXFEntity`
   - `source_of_copy` - the immediate source of an entity copy
@@ -18,6 +18,8 @@ Version 0.17.1 - dev
     by a block reference
   - `source_block_reference` - the immediate source block reference (`INSERT`), 
     which created the virtual entity, otherwise ``None``
+- BUGFIX: invalid XDATA processing in `XData.safe_init()` 
+- BUGFIX: group code 1003 is a valid in XDATA section 
 
 Version 0.17 - 2021-10-01
 -------------------------
