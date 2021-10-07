@@ -19,7 +19,7 @@ Version 0.17.1 - dev
   - `source_block_reference` - the immediate source block reference (`INSERT`), 
     which created the virtual entity, otherwise ``None``
 - BUGFIX: invalid XDATA processing in `XData.safe_init()` 
-- BUGFIX: group code 1003 is a valid in XDATA section 
+- BUGFIX: group code 1003 is valid in XDATA section 
 
 Version 0.17 - 2021-10-01
 -------------------------

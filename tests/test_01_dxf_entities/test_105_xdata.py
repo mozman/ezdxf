@@ -95,7 +95,7 @@ Revit"""
     data = xdata.get("MOZMAN")
     assert (
         any(tag.code == 1007 for tag in data) is False
-    ), "group code 1007 should be removed"
+    ), "invalid group code 1007 should be removed"
     assert "ACAD" in xdata
 
 
