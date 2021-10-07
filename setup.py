@@ -104,7 +104,8 @@ def read(fname, until=""):
         return "File '%s' not found.\n" % fname
 
 
-DRAW = ["matplotlib", "PyQt5"]
+DRAW = ["matplotlib", "PySide6"]
+DRAW5 = ["matplotlib", "PyQt5"]
 TEST = ["pytest", "geomdl"]
 DEV = ["setuptools", "wheel", "Cython"]
 
@@ -144,9 +145,11 @@ setup(
     tests_require=["pytest", "geomdl"],
     extras_require={
         "draw": DRAW,
+        "draw5": DRAW5,
         "test": TEST,
         "dev": DEV + TEST,
         "all": DRAW + DEV + TEST,
+        "all5": DRAW5 + DEV + TEST,
     },
     keywords=["DXF", "CAD"],
     long_description=read("README.md")

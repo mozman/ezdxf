@@ -4,7 +4,8 @@ News
 
 Version 0.17.1 - dev
 --------------------
-
+- CHANGE: usinf [PySide6](https://pypi.org/project/PySide6/) as Qt binding 
+  if installed, `PyQt5` is still supported as fallback
 - NEW: tracking feature for DXF entity copies, new properties of `DXFEntity`
   - `source_of_copy` - the immediate source of an entity copy
   - `origin_of_copy` - the first non virtual source entity of an entity copy

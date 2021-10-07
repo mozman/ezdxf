@@ -185,7 +185,7 @@ Functions to create construction tools.
 
 .. autofunction:: to_matplotlib_path(paths: Iterable[Path], extrusion = (0, 0, 1)) -> matplotlib.path.Path
 
-.. autofunction:: to_qpainter_path(paths: Iterable[Path], extrusion = (0, 0, 1)) -> PyQt5.QtGui.QPainterPath
+.. autofunction:: to_qpainter_path(paths: Iterable[Path], extrusion = (0, 0, 1)) -> QPainterPath
 
 
 Utility Functions

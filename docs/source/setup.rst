@@ -38,10 +38,12 @@ To use all features of the drawing add-on, add the [draw] tag::
 ======== ===================================================
 Tag      Additional Installed Packages
 ======== ===================================================
-[draw]   Matplotlib, PyQt5
+[draw]   Matplotlib, PySide6
+[draw5]  Matplotlib, PyQt5 (use only if PySide6 is not available)
 [test]   geomdl, pytest
 [dev]    setuptools, wheel, Cython + [test]
 [all]    [draw] + [test] + [dev]
+[all5]   [draw5] + [test] + [dev]  (use only if PySide6 is not available)
 ======== ===================================================
 
 Disable C-Extensions
@@ -105,7 +107,7 @@ Install the test dependencies and run the tests::
 
 Install optional dependencies to use all features, like the drawing add-on::
 
-    pip3 install matplotlib PyQt5
+    pip3 install matplotlib PySide6
 
 Build Documentation
 -------------------
