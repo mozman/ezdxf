@@ -450,7 +450,7 @@ class View(Command):
                 layout=args.layout,
                 overall_scaling_factor=args.scale,
             )
-        sys.exit(app.exec_())
+        sys.exit(app.exec())
 
 
 @register
@@ -500,7 +500,7 @@ class Browse(Command):
             resource_path=resources_path(),
         )
         main_window.show()
-        sys.exit(app.exec_())
+        sys.exit(app.exec())
 
 
 @register

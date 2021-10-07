@@ -5,7 +5,7 @@ import argparse
 import signal
 import sys
 
-from PyQt5 import QtWidgets as qw
+from ezdxf.addons.xqt import QtWidgets as qw
 
 import ezdxf
 from ezdxf import recover
@@ -64,7 +64,7 @@ def _main():
                 f'could not find layout "{args.layout}". Valid layouts: {[l.name for l in v.doc.layouts]}'
             )
             sys.exit(3)
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
