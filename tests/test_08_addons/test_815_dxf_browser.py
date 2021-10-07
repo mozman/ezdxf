@@ -2,7 +2,7 @@
 #  License: MIT License
 import pytest
 
-pytest.importorskip("PyQt5")
+pytest.importorskip("PySide6")
 
 from io import StringIO
 import math
@@ -18,7 +18,7 @@ from ezdxf.addons.browser.data import (
     SearchIndex,
 )
 
-from PyQt5.QtCore import Qt, QModelIndex
+from ezdxf.addons.xqt import Qt, QModelIndex
 
 
 def txt2tags(s: str) -> Tags:

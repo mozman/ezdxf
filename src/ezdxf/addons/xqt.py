@@ -12,25 +12,31 @@ TRY_PYQT5 = options.get_bool(DRAWING_ADDON, "try_pyqt5", True)
 if TRY_PYSIDE6:
     try:
         from PySide6 import QtGui, QtCore, QtWidgets
-        from PySide6.QtCore import Signal
-        from PySide6.QtCore import Slot
-        from PySide6.QtGui import QAction
         from PySide6.QtWidgets import (
-            QMessageBox,
             QFileDialog,
             QInputDialog,
+            QMessageBox,
             QTableView,
             QTreeView,
         )
         from PySide6.QtCore import (
-            Qt,
-            QModelIndex,
-            QSettings,
-            QFileSystemWatcher,
-            QSize,
             QAbstractTableModel,
+            QFileSystemWatcher,
+            QModelIndex,
+            QPointF,
+            QSettings,
+            QSize,
+            Qt,
+            Signal,
+            Slot,
         )
-        from PySide6.QtGui import QStandardItemModel, QStandardItem, QColor
+        from PySide6.QtGui import (
+            QAction,
+            QColor,
+            QPainterPath,
+            QStandardItem,
+            QStandardItemModel,
+        )
 
         PYSIDE6 = True
         print("using Qt binding: PySide6")
@@ -45,21 +51,27 @@ if TRY_PYQT5 and not PYSIDE6:
         from PyQt5.QtCore import pyqtSlot as Slot
         from PyQt5.QtWidgets import (
             QAction,
-            QMessageBox,
             QFileDialog,
             QInputDialog,
+            QMessageBox,
             QTableView,
             QTreeView,
         )
         from PyQt5.QtCore import (
-            Qt,
-            QModelIndex,
-            QSettings,
-            QFileSystemWatcher,
-            QSize,
             QAbstractTableModel,
+            QFileSystemWatcher,
+            QModelIndex,
+            QPointF,
+            QSettings,
+            QSize,
+            Qt,
         )
-        from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor
+        from PyQt5.QtGui import (
+            QColor,
+            QPainterPath,
+            QStandardItem,
+            QStandardItemModel,
+        )
 
         PYQT5 = True
         print("using Qt binding: PyQt5")

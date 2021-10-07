@@ -3,10 +3,9 @@
 
 import pytest
 
-pytest.importorskip("PyQt5")
+pytest.importorskip("PySide6")
 
-from PyQt5.QtGui import QPainterPath
-from PyQt5.QtCore import QPointF
+from ezdxf.addons.xqt import QPainterPath, QPointF
 from ezdxf import path
 from ezdxf.math import quadratic_to_cubic_bezier, Bezier3P
 

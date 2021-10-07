@@ -1,10 +1,9 @@
-# Created: 06.2020
-# Copyright (c) 2020, Matthew Broadway
+# Copyright (c) 2020-2021, Matthew Broadway
 # License: MIT License
 import pytest
 
-qc = pytest.importorskip("PyQt5.QtCore")
-from PyQt5 import QtWidgets as qw
+pytest.importorskip("PySide6")
+from ezdxf.addons.xqt import QtWidgets as qw
 from ezdxf.addons.drawing.pyqt import PyQtBackend
 
 _app = None

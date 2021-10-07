@@ -119,10 +119,8 @@ class CADGraphicsView(qw.QGraphicsView):
 
 class CADGraphicsViewWithOverlay(CADGraphicsView):
 
-    mouse_moved = Signal(qc.QPointF)  # changed for PySide6 from pyqtSignal()
-    element_selected = Signal(
-        object, int
-    )  # changed for PySide6 from pyqtSignal()
+    mouse_moved = Signal(qc.QPointF)
+    element_selected = Signal(object, int)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -187,12 +185,12 @@ class CadViewer(qw.QMainWindow):
         self.view.mouse_moved.connect(self._on_mouse_moved)  # type: ignore
 
         menu = self.menuBar()
-        select_doc_action = QAction("Select Document", self)  # PySide6
+        select_doc_action = QAction("Select Document", self)
         select_doc_action.triggered.connect(self._select_doc)
         menu.addAction(select_doc_action)
         self.select_layout_menu = menu.addMenu("Select Layout")
 
-        toggle_sidebar_action = QAction("Toggle Sidebar", self)  # PySide6
+        toggle_sidebar_action = QAction("Toggle Sidebar", self)
         toggle_sidebar_action.triggered.connect(self._toggle_sidebar)
         menu.addAction(toggle_sidebar_action)
 
@@ -315,7 +313,7 @@ class CadViewer(qw.QMainWindow):
     def _populate_layouts(self):
         self.select_layout_menu.clear()
         for layout_name in self.doc.layout_names_in_taborder():
-            action = QAction(layout_name, self)  # PySide6
+            action = QAction(layout_name, self)
             action.triggered.connect(
                 lambda: self.draw_layout(layout_name, reset_view=True)
             )

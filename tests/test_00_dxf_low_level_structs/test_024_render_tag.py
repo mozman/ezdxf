@@ -2,8 +2,6 @@
 #  License: MIT License
 import pytest
 
-pytest.importorskip("PyQt5")
-
 from ezdxf.lldxf.types import dxftag, render_tag
 from ezdxf.math import Vec3
 
