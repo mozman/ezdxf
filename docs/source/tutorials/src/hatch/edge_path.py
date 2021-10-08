@@ -1,19 +1,20 @@
 from pathlib import Path
 import ezdxf
 
-DIR = Path('~/Desktop/Outbox').expanduser()
+DIR = Path("~/Desktop/Outbox").expanduser()
 doc = ezdxf.new()
 msp = doc.modelspace()
 
 hatch = msp.add_hatch(color=1)
 
 # 1. polyline path
-hatch.paths.add_polyline_path([
-    (240, 210, 0),
-    (0, 210, 0),
-    (0, 0, 0.),
-    (240, 0, 0),
-],
+hatch.paths.add_polyline_path(
+    [
+        (240, 210, 0),
+        (0, 210, 0),
+        (0, 0, 0.0),
+        (240, 0, 0),
+    ],
     is_closed=1,
     flags=ezdxf.const.BOUNDARY_PATH_EXTERNAL,
 )
@@ -27,12 +28,20 @@ edge_path.add_spline(
         (113.0168862297068, 117.8189380884978),
         (202.9816918983783, 63.17222935389572),
         (157.363511042264, 26.4621294342132),
-        (144.8204003260554, 28.4383294369643)
+        (144.8204003260554, 28.4383294369643),
     ],
     knot_values=[
-        0.0, 0.0, 0.0, 0.0, 55.20174685732758, 98.33239645153571,
-        175.1126541251052, 213.2061566683142, 213.2061566683142,
-        213.2061566683142, 213.2061566683142
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        55.20174685732758,
+        98.33239645153571,
+        175.1126541251052,
+        213.2061566683142,
+        213.2061566683142,
+        213.2061566683142,
+        213.2061566683142,
     ],
 )
 edge_path.add_arc(
@@ -43,7 +52,7 @@ edge_path.add_arc(
 )
 edge_path.add_line(
     (52.57506282464041, 123.3124200796114),
-    (126.658105895725, 177.0823706957212)
+    (126.658105895725, 177.0823706957212),
 )
 
-doc.saveas(DIR / 'edge_path_hatch.dxf')
+doc.saveas(DIR / "edge_path_hatch.dxf")
