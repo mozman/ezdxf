@@ -91,12 +91,12 @@ unusable - but in valid GeoJSON notation.
 First get epsg code and the CRS transformation matrix:
 
 .. literalinclude:: src/geo/gpx.py
-    :lines: 86-93
+    :lines: 82-89
 
 Query the DXF entities to export:
 
 .. literalinclude:: src/geo/gpx.py
-    :lines: 93-94
+    :lines: 90-91
 
 Create a :class:`GeoProxy` object from the DXF entity:
 
