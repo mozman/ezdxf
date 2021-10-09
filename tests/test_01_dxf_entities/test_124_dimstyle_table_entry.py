@@ -1,21 +1,18 @@
-# Created: 16.03.2011, 2018 rewritten for pytest
-# Copyright (C) 2011-2019, Manfred Moitzi
+# Copyright (C) 2011-2021, Manfred Moitzi
 # License: MIT License
 import pytest
-
+import ezdxf
 from ezdxf.entities.dimstyle import DimStyle
 from ezdxf.document import Drawing
 from ezdxf.lldxf.const import DXF12
+
+TEXT_STYLE = "TextStyle"
 
 
 @pytest.fixture
 def dimstyle():
     doc = Drawing.new()
-    doc.blocks.new("left_arrow")
-    doc.blocks.new("right_arrow")
-    doc.blocks.new("arrow")
-    doc.blocks.new("_DOT")
-    doc.blocks.new("_OPEN")
+    setup_doc(doc)
     return DimStyle.new(
         "FFFF",
         doc=doc,
@@ -23,6 +20,15 @@ def dimstyle():
             "name": "DIMSTYLE1",
         },
     )
+
+
+def setup_doc(doc):
+    doc.blocks.new("left_arrow")
+    doc.blocks.new("right_arrow")
+    doc.blocks.new("arrow")
+    doc.blocks.new("_DOT")
+    doc.blocks.new("_OPEN")
+    doc.styles.new(TEXT_STYLE)
 
 
 def test_name(dimstyle):
@@ -80,12 +86,15 @@ def dimstyle2():
     doc.blocks.new("right_arrow")
     doc.blocks.new("TestArrow")
     doc.blocks.new("arrow")
-    doc.styles.new("TestStyle")
+    doc.styles.new(TEXT_STYLE)
     return doc.dimstyles.new("testing")
 
 
 def test_handle_export(dimstyle2):
+    textstyle = dimstyle2.doc.styles.get(TEXT_STYLE)
     dimstyle2.set_arrows("", "left_arrow", "right_arrow", "arrow")
+    dimstyle2.dxf.dimtxsty = textstyle.dxf.name
+
     # test handles
     blocks = dimstyle2.doc.blocks
     left_arrow = blocks.get("left_arrow")
@@ -98,6 +107,52 @@ def test_handle_export(dimstyle2):
     assert dimstyle2.dxf.dimblk1_handle == left_arrow.block_record_handle
     assert dimstyle2.dxf.dimblk2_handle == right_arrow.block_record_handle
     assert dimstyle2.dxf.dimldrblk_handle == leader_arrow.block_record_handle
+    assert dimstyle2.dxf.dimtxsty_handle == textstyle.dxf.handle
+
+
+def test_resource_handles_export_R2000():
+    from ezdxf.lldxf.tagwriter import TagCollector
+
+    doc = ezdxf.new()
+    setup_doc(doc)
+    dimstyle = doc.dimstyles.add("MyStyle")
+    dimstyle.set_arrows("arrow", "left_arrow", "right_arrow", "arrow")
+    dimstyle.dxf.dimtxsty = TEXT_STYLE
+    t = TagCollector()
+    dimstyle.export_dxf(t)
+    codes = {
+        340,  # dimtxsty_handle
+        341,  # dimldrblk_handle
+        342,  # dimblk_handle
+        343,  # dimblk1_handle
+        344,  # dimblk2_handle
+    }
+    handles = [tag.value for tag in t.tags if tag.code in codes]
+    assert len(handles) == 5, "5 handles expected"
+    for handle in handles:
+        assert handle in doc.entitydb, f"not a valid handle: {handle}"
+
+
+def test_text_stream_for_resource_handles_R2000():
+    from ezdxf.lldxf.tagwriter import TagWriter
+    from io import StringIO
+
+    s = StringIO()
+    t = TagWriter(s)
+
+    doc = ezdxf.new()
+    setup_doc(doc)
+    dimstyle = doc.dimstyles.add("MyStyle")
+    dimstyle.set_arrows("arrow", "left_arrow", "right_arrow", "arrow")
+    dimstyle.dxf.dimtxsty = TEXT_STYLE
+
+    dimstyle.export_dxf(t)
+    result = s.getvalue()
+    assert "\n340\n" in result
+    assert "\n341\n" in result
+    assert "\n342\n" in result
+    assert "\n343\n" in result
+    assert "\n344\n" in result
 
 
 def test_dont_write_handles_for_R12(dimstyle):
@@ -135,14 +190,14 @@ def test_dimstyle_both_ticks(dimstyle2):
 
 
 def test_dimstyle_virtual_dimtxsty_attribute(dimstyle2):
-    dimstyle2.dxf.dimtxsty = "TestStyle"
-    assert dimstyle2.dxf.dimtxsty == "TestStyle"
+    dimstyle2.dxf.dimtxsty = TEXT_STYLE
+    assert dimstyle2.dxf.dimtxsty == TEXT_STYLE
 
     # prepare for export
     dimstyle2.set_handles()
     assert (
         dimstyle2.dxf.dimtxsty_handle
-        == dimstyle2.doc.styles.get("TestStyle").dxf.handle
+        == dimstyle2.doc.styles.get(TEXT_STYLE).dxf.handle
     )
 
 
