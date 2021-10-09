@@ -1,10 +1,13 @@
 # Copyright (C) 2011-2021, Manfred Moitzi
 # License: MIT License
 import pytest
+from io import StringIO
+
 import ezdxf
 from ezdxf.entities.dimstyle import DimStyle
 from ezdxf.document import Drawing
 from ezdxf.lldxf.const import DXF12
+from ezdxf.lldxf.tagwriter import TagCollector, TagWriter
 
 TEXT_STYLE = "TextStyle"
 
@@ -111,8 +114,6 @@ def test_handle_export(dimstyle2):
 
 
 def test_resource_handles_export_R2000():
-    from ezdxf.lldxf.tagwriter import TagCollector
-
     doc = ezdxf.new()
     setup_doc(doc)
     dimstyle = doc.dimstyles.add("MyStyle")
@@ -134,9 +135,6 @@ def test_resource_handles_export_R2000():
 
 
 def test_text_stream_for_resource_handles_R2000():
-    from ezdxf.lldxf.tagwriter import TagWriter
-    from io import StringIO
-
     s = StringIO()
     t = TagWriter(s)
 
@@ -156,9 +154,6 @@ def test_text_stream_for_resource_handles_R2000():
 
 
 def test_dont_write_handles_for_R12(dimstyle):
-    from ezdxf.lldxf.tagwriter import TagWriter
-    from io import StringIO
-
     s = StringIO()
     t = TagWriter(s)
     t.dxfversion = DXF12

@@ -398,7 +398,7 @@ class DimStyle(DXFEntity):
                 name = ""  # default arrow name
             self.dxf.set(attrib_name, name)
 
-        style_handle = self.dxf.get("dimtxsty", None)
+        style_handle = self.dxf.get("dimtxsty_handle", None)
         if style_handle and style_handle != "0":
             try:
                 self.dxf.dimtxsty = db[style_handle].dxf.name

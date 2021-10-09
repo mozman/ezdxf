@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.17.1b1 - dev
+Version 0.17.1b2 - dev
 ----------------------
 
 - CHANGE: using [PySide6](https://pypi.org/project/PySide6/) as Qt binding 
@@ -21,6 +21,7 @@ Version 0.17.1b1 - dev
     which created the virtual entity, otherwise ``None``
 - BUGFIX: invalid XDATA processing in `XData.safe_init()` 
 - BUGFIX: group code 1003 is valid in XDATA section 
+- BUGFIX: fix loading error of `DIMSTYLE` attribute `dimtxsty` 
 
 Version 0.17 - 2021-10-01
 -------------------------
