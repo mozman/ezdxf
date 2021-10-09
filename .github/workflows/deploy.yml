@@ -3,6 +3,7 @@ on:
   push:
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+  workflow_dispatch
 jobs:
   # Build and deploy manylinux wheel
   Linux-build:
@@ -15,7 +16,7 @@ jobs:
       - name: Build and upload manylinux wheels
         uses:  mozman/manylinux-wheel-builder@master
         with:
-          python-versions: "3.7, 3.8, 3.9"
+          python-versions: "'3.7', '3.8', '3.9', '3.10'"
         # if true then github actions won't stop even if build for this job fails
         continue-on-error: true
 
@@ -30,7 +31,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9
+          python-version: '3.9'
       - name: Create source distribution
         run: python setup.py sdist --formats=zip
       - name: Upload source distribution
@@ -48,7 +49,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, windows-latest]
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ['3.7', '3.8', '3.9', '3.10']
     steps:
       - uses: actions/checkout@v2
       - name: Setup Python
