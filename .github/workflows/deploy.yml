@@ -17,7 +17,7 @@ jobs:
       - name: Build and upload manylinux wheels
         uses:  mozman/manylinux-wheel-builder@master
         with:
-          python-versions: "'3.7', '3.8', '3.9', '3.10'"
+          python-versions: "3.7, 3.8, 3.9, 3.10"
         # if true then github actions won't stop even if build for this job fails
         continue-on-error: true
 
