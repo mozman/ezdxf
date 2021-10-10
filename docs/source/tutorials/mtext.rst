@@ -13,7 +13,7 @@ Prolog code:
 
     import ezdxf
 
-    doc = ezdxf.new('R2007', setup=True)
+    doc = ezdxf.new("R2007", setup=True)
     msp = doc.modelspace()
 
     lorem_ipsum = """
@@ -30,38 +30,39 @@ Prolog code:
 Adding a MText entity
 ---------------------
 
-The MText entity can be added to any layout (modelspace, paperspace or block) by the
-:meth:`~ezdxf.layouts.BaseLayout.add_mtext` function.
+The MText entity can be added to any layout (modelspace, paperspace or block)
+by the :meth:`~ezdxf.layouts.BaseLayout.add_mtext` function.
 
 .. code-block:: python
 
     # store MText entity for additional manipulations
-    mtext = msp.add_mtext(lorem_ipsum, dxfattribs={'style': 'OpenSans'})
+    mtext = msp.add_mtext(lorem_ipsum, dxfattribs={"style": "OpenSans"})
 
-This adds a MText entity with text style ``'OpenSans'``.
-The MText content can be accessed by the :attr:`text` attribute, this attribute can be edited
-like any Python string:
+This adds a MText entity with text style "OpenSans".
+The MText content can be accessed by the :attr:`text` attribute, this attribute
+can be edited like any Python string:
 
 .. code-block:: python
 
-    mtext.text += 'Append additional text to the MText entity.'
+    mtext.text += "Append additional text to the MText entity."
     # even shorter with __iadd__() support:
-    mtext += 'Append additional text to the MText entity.'
+    mtext += "Append additional text to the MText entity."
 
 
 .. image:: gfx/mtext_without_width.png
 
 .. important::
 
-    Line endings ``\n`` will be replaced by the MTEXT line endings ``\P`` at DXF export, but **not**
-    vice versa ``\P`` by ``\n`` at DXF file loading.
+    Line endings "\\n" will be replaced by the MTEXT line endings "\\P" at
+    DXF export, but **not** vice versa "\\P" by "\\n" at DXF file loading.
 
 Text placement
 --------------
 
-The location of the MText entity is defined by the :attr:`MText.dxf.insert` and the
-:attr:`MText.dxf.attachment_point` attributes. The :attr:`attachment_point` defines
-the text alignment relative to the :attr:`insert` location, default value is ``1``.
+The location of the MText entity is defined by the :attr:`MText.dxf.insert` and
+the :attr:`MText.dxf.attachment_point` attributes. The :attr:`attachment_point`
+defines the text alignment relative to the :attr:`insert` location, default
+value is 1.
 
 Attachment point constants defined in :mod:`ezdxf.lldxf.const`:
 
@@ -100,24 +101,27 @@ and :ref:`mtext_inline_codes`.
 Text rotation (direction)
 -------------------------
 
-The :attr:`MText.dxf.rotation` attribute defines the text rotation as angle between the x-axis and the
-horizontal direction of the text in degrees. The :attr:`MText.dxf.text_direction` attribute defines the
-horizontal direction of MText as vector in WCS or OCS, if an :ref:`OCS` is defined.
-Both attributes can be present at the same entity, in this case the :attr:`MText.dxf.text_direction`
-attribute has the higher priority.
+The :attr:`MText.dxf.rotation` attribute defines the text rotation as angle
+between the x-axis and the horizontal direction of the text in degrees.
+The :attr:`MText.dxf.text_direction` attribute defines the horizontal direction
+of MText as vector in WCS or OCS, if an :ref:`OCS` is defined.
+Both attributes can be present at the same entity, in this case the
+:attr:`MText.dxf.text_direction` attribute has the higher priority.
 
-The MText entity has two methods to get/set rotation: :meth:`~ezdxf.entities.MText.get_rotation` returns the
-rotation angle in degrees independent from definition as angle or direction, and
-:meth:`~ezdxf.entities.MText.set_rotation` set the :attr:`rotation` attribute and
-removes the :attr:`text_direction` attribute if present.
+The MText entity has two methods to get/set rotation:
+:meth:`~ezdxf.entities.MText.get_rotation` returns the rotation angle in degrees
+independent from definition as angle or direction, and
+:meth:`~ezdxf.entities.MText.set_rotation` set the :attr:`rotation` attribute
+and removes the :attr:`text_direction` attribute if present.
 
 Defining a wrapping border
 --------------------------
 
-The wrapping border limits the text width and forces a line break for text beyond this border.
-Without attribute :attr:`dxf.width` (or setting ``0``) the lines are wrapped only at the regular
-line endings ``\P`` or ``\n``, setting the reference column width forces additional line wrappings
-at the given width. The text height can not be limited, the text always occupies as much space as
+The wrapping border limits the text width and forces a line break for text
+beyond this border. Without attribute :attr:`dxf.width` (or setting 0) the
+lines are wrapped only at the regular line endings " \\P" or "\\n", setting the
+reference column width forces additional line wrappings at the given width.
+The text height can not be limited, the text always occupies as much space as
 needed.
 
 .. code-block:: python
@@ -162,19 +166,22 @@ Background color (filling)
 
 The MText entity can have a background filling:
 
-    - :ref:`ACI`
-    - true color value as ``(r, g, b)`` tuple
-    - color name as string, use special name ``'canvas'`` to use the canvas background color
+- :ref:`ACI`
+- true color value as ``(r, g, b)`` tuple
+- color name as string, use special name ``'canvas'`` to use the canvas
+  background color
 
 
-Because of the complex dependencies `ezdxf` provides a method to set all required DXF attributes at once:
+Because of the complex dependencies `ezdxf` provides a method to set all
+required DXF attributes at once:
 
 .. code-block:: python
 
     mtext.set_bg_color(2, scale=1.5)
 
-The parameter `scale` determines how much border there is around the text, the value is based on the text height,
-and should be in the range of ``1`` - ``5``, where ``1`` fits exact the MText entity.
+The parameter `scale` determines how much border there is around the text, the
+value is based on the text height, and should be in the range of 1 - 5,
+where 1 fits exact the MText entity.
 
 .. image:: gfx/mtext_bg_color.png
     :align: center
@@ -214,7 +221,7 @@ Init Editor
     import ezdxf
     from ezdxf.tools.text import MTextEditor
 
-    doc = ezdxf.new('R2007', setup=True)
+    doc = ezdxf.new("R2007", setup=True)
     msp = doc.modelspace()
 
     lorem_ipsum = """
@@ -225,7 +232,7 @@ Init Editor
     editor = MTextEditor(lorem_ipsum)
 
     # get the MTEXT content string from the editor by the str() function:
-    mtext = msp.add_mtext(str(editor), dxfattribs={'style': 'OpenSans'})
+    mtext = msp.add_mtext(str(editor), dxfattribs={"style": "OpenSans"})
 
 Tutorial Prolog:
 
@@ -246,9 +253,9 @@ Set Text Color
 
 There are three ways to change the color inline:
 
-    - by color name "red", "green", "blue", "yellow", "cyan", "magenta", "white"
-    - by :ref:`ACI`
-    - by RGB values
+- by color name "red", "green", "blue", "yellow", "cyan", "magenta", "white"
+- by :ref:`ACI`
+- by RGB values
 
 .. code-block:: python
 
@@ -325,7 +332,7 @@ The font family name is the name shown in font selection widgets in
 desktop applications: "Arial", "Times New Roman", "Comic Sans MS".
 The font has to be installed at the target system, else then CAD default
 font will be used, in AutoCAD/BricsCAD is this the font defined for the text
-style ``Standard``.
+style "Standard".
 
 .. important::
 
@@ -364,21 +371,21 @@ all paragraph properties in a named tuple.
 
 Each paragraph can have its own properties for:
 
-    - indentation arguments:
+- indentation arguments:
 
-        - ``indent`` is the left indentation of the first line
-        - ``left``  is the left side indentation of the paragraph
-        - ``right`` is the right side indentation of the paragraph
+    - ``indent`` is the left indentation of the first line
+    - ``left``  is the left side indentation of the paragraph
+    - ``right`` is the right side indentation of the paragraph
 
-    - text adjustment: ``align``, by enum :class:`MTextParagraphAlignment`
+- text adjustment: ``align``, by enum :class:`MTextParagraphAlignment`
 
-        - MTextParagraphAlignment.LEFT
-        - MTextParagraphAlignment.RIGHT
-        - MTextParagraphAlignment.CENTER
-        - MTextParagraphAlignment.JUSTIFIED
-        - MTextParagraphAlignment.DISTRIBUTED
+    - MTextParagraphAlignment.LEFT
+    - MTextParagraphAlignment.RIGHT
+    - MTextParagraphAlignment.CENTER
+    - MTextParagraphAlignment.JUSTIFIED
+    - MTextParagraphAlignment.DISTRIBUTED
 
-    - tabulator stops: ``tab_stops``, a tuple of tabulator stops
+- tabulator stops: ``tab_stops``, a tuple of tabulator stops
 
 
 Indentation and tabulator stops are multiples of the default :class:`MText`
@@ -386,7 +393,7 @@ text height stored in :class:`MText.dxf.char_height`. Calculate the drawing
 units for indentation and tabulator stops, by multiplying the the indentation
 value by the :attr:`char_height` value.
 
-:class:`Mtext` paragraphs are separated by new paragraph (``"\P"``) characters.
+:class:`Mtext` paragraphs are separated by new paragraph "\\P" characters.
 
 .. code-block:: Python
 
