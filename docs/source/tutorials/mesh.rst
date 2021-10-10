@@ -32,17 +32,22 @@ Create a cube mesh by direct access to base data structures:
         [0, 3, 7, 4]
     ]
 
-    doc = ezdxf.new('R2000')  # MESH requires DXF R2000 or later
+    # MESH requires DXF R2000 or later
+    doc = ezdxf.new("R2000")
     msp = doc.modelspace()
     mesh = msp.add_mesh()
-    mesh.dxf.subdivision_levels = 0  # do not subdivide cube, 0 is the default value
+    # do not subdivide cube, 0 is the default value
+    mesh.dxf.subdivision_levels = 0
     with mesh.edit_data() as mesh_data:
         mesh_data.vertices = cube_vertices
         mesh_data.faces = cube_faces
 
     doc.saveas("cube_mesh_1.dxf")
 
-Create a cube mesh by method calls:
+Create a cube mesh by assembling single faces and the
+:meth:`~ezdxf.entities.Mesh.edit_data()` context manager of the
+:class:`~ezdxf.entities.Mesh` class, using the helper class
+:class:`~ezdxf.entities.MeshData`:
 
 .. code-block:: python
 
@@ -61,7 +66,8 @@ Create a cube mesh by method calls:
         (0, 1, 1),
     ]
 
-    doc = ezdxf.new('R2000')  # MESH requires DXF R2000 or later
+    # MESH requires DXF R2000 or later
+    doc = ezdxf.new("R2000")
     msp = doc.modelspace()
     mesh = msp.add_mesh()
 
@@ -72,6 +78,7 @@ Create a cube mesh by method calls:
         mesh_data.add_face([p[1], p[2], p[6], p[5]])
         mesh_data.add_face([p[3], p[2], p[6], p[7]])
         mesh_data.add_face([p[0], p[3], p[7], p[4]])
-        mesh_data.optimize()  # optional, minimizes vertex count
+        # optional call optimize(): minimizes the vertex count
+        mesh_data.optimize()
 
     doc.saveas("cube_mesh_2.dxf")
