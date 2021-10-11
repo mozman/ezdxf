@@ -68,16 +68,17 @@ class Importer:
         source: source :class:`~ezdxf.drawing.Drawing`
         target: target :class:`~ezdxf.drawing.Drawing`
 
-    :ivar source: source drawing
-    :ivar target: target drawing
-    :ivar used_layer: Set of used layer names as string, AutoCAD accepts layer
-        names without a LAYER table entry.
-    :ivar used_linetypes: Set of used linetype names as string, these linetypes
-        require a TABLE entry or AutoCAD will crash.
-    :ivar used_styles: Set of used text style names, these text styles require
-        a TABLE entry or AutoCAD will crash.
-    :ivar used_dimstyles: Set of used dimension style names, these dimension
-        styles require a TABLE entry or AutoCAD will crash.
+    Attributes:
+        source: source DXF document
+        target: target DXF document
+        used_layers: Set of used layer names as string, AutoCAD accepts layer
+            names without a LAYER table entry.
+        used_linetypes: Set of used linetype names as string, these linetypes
+            require a TABLE entry or AutoCAD will crash.
+        used_styles: Set of used text style names, these text styles require
+            a TABLE entry or AutoCAD will crash.
+        used_dimstyles: Set of used dimension style names, these dimension
+            styles require a TABLE entry or AutoCAD will crash.
 
     """
 
@@ -141,7 +142,7 @@ class Importer:
 
         Args:
             table_names: iterable of tables names as strings, or a single table
-                name as string or ``*`` for all supported tables
+                name as string or "*" for all supported tables
             replace: True to replace already existing table entries else ignore
                 existing entries
 
@@ -164,9 +165,9 @@ class Importer:
         Import specific table entries from source drawing into target drawing.
 
         Args:
-            name: valid table names are ``layers``, ``linetypes`` and ``styles``
+            name: valid table names are "layers", "linetypes" and "styles"
             entries: Iterable of table names as strings, or a single table name
-                or ``*`` for all table entries
+                or "*" for all table entries
             replace: True to replace already existing table entry else ignore
                 existing entry
 
@@ -382,7 +383,7 @@ class Importer:
         target_layout: "BaseLayout" = None,
     ) -> None:
         """Import all `entities` into `target_layout` or the modelspace of the
-        target drawing, if `target_layout` is`None`.
+        target drawing, if `target_layout` is ``None``.
 
         Args:
             entities: Iterable of DXF entities
@@ -398,7 +399,7 @@ class Importer:
 
     def import_modelspace(self, target_layout: "BaseLayout" = None) -> None:
         """Import all entities from source modelspace into `target_layout` or
-        the modelspace of the target drawing, if `target_layout` is `None`.
+        the modelspace of the target drawing, if `target_layout` is ``None``.
 
         Args:
             target_layout: any layout (modelspace, paperspace or block) from
