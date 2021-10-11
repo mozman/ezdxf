@@ -124,19 +124,25 @@ class HandleIndex:
 
     def next_entity(self, entity: Tags) -> Tags:
         return_next = False
-        for e in self._index.values():
-            if return_next:
-                return e
-            if e is entity:
-                return_next = True
+        if len(entity):
+            # comparing Tags() is not safe!
+            first_tag = entity[0]
+            for e in self._index.values():
+                if return_next:
+                    return e
+                if len(e) and e[0] is first_tag:
+                    return_next = True
         return entity
 
     def previous_entity(self, entity: Tags) -> Tags:
         prev = entity
-        for e in self._index.values():
-            if e is entity:
-                return prev
-            prev = e
+        if len(entity):
+            # comparing Tags() is not safe!
+            first_tag = entity[0]
+            for e in self._index.values():
+                if len(e) and e[0] is first_tag:
+                    return prev
+                prev = e
         return entity
 
 
