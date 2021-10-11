@@ -22,6 +22,7 @@ Version 0.17.1b2 - dev
 - BUGFIX: invalid XDATA processing in `XData.safe_init()` 
 - BUGFIX: group code 1003 is valid in XDATA section 
 - BUGFIX: fix loading error of `DIMSTYLE` attribute `dimtxsty` 
+- BUGFIX: fix "Next Entity" and "Previous Entity" actions in the `browse` command 
 
 Version 0.17 - 2021-10-01
 -------------------------
