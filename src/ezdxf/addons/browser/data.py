@@ -9,11 +9,21 @@ from ezdxf.lldxf.tags import Tags
 
 __all__ = [
     "DXFDocument",
+    "DXFEntity",
     "get_row_from_line_number",
     "dxfstr",
     "EntityHistory",
     "SearchIndex",
 ]
+
+
+class DXFEntity:
+    def __init__(self, tags: Tags, handle: str = None, line: int = 0):
+        self.tags: Tags = tags
+        self.handle: Optional[str] = handle
+        self.start_line_number: int = line
+        self.prev: Optional["DXFEntity"] = None
+        self.next: Optional["DXFEntity"] = None
 
 
 class DXFDocument:
@@ -89,37 +99,56 @@ class DXFDocument:
 
 class HandleIndex:
     def __init__(self, sections: SectionDict):
-        self._index = HandleIndex.build(sections)
+        self._index: Dict[str, DXFEntity] = HandleIndex.build(sections)
 
     def __contains__(self, handle: str) -> bool:
         return handle.upper() in self._index
 
-    def get(self, handle: str):
-        return self._index.get(handle.upper())
+    def get(self, handle: str) -> Optional[Tags]:
+        entity = self._index.get(handle.upper())
+        if entity is not None:
+            return entity.tags
+        else:
+            return None
 
     def get_handle(self, entity: Tags) -> Optional[str]:
+        if len(entity) == 0:
+            return None
+
         try:
             return entity.get_handle()
         except ValueError:
             pass
+
         # get dummy handle
         for handle, e in self._index.items():
-            if e is entity:
-                return handle
+            # comparing Tags() is not safe!
+            tags = e.tags
+            if len(tags):
+                # compare first DXFv tag
+                if tags[0] is entity[0]:
+                    return handle
         return None
 
     @staticmethod
-    def build(sections: SectionDict) -> Dict:
+    def build(sections: SectionDict) -> Dict[str, DXFEntity]:
         dummy_handle = 1
         entity_index = dict()
+        prev_entity: Optional[DXFEntity] = None
         for section in sections.values():
-            for entity in section:
+            for tags in section:
                 try:
-                    handle = entity.get_handle()
+                    handle = tags.get_handle()
                 except ValueError:
                     handle = f"*{dummy_handle:X}"
                     dummy_handle += 1
-                entity_index[handle.upper()] = entity
+                handle = handle.upper()
+                new_entity = DXFEntity(tags, handle=handle)
+                if prev_entity is not None:
+                    new_entity.prev = prev_entity
+                    prev_entity.next = new_entity
+                entity_index[handle] = new_entity
+                prev_entity = new_entity
         return entity_index
 
     def next_entity(self, entity: Tags) -> Tags:
@@ -128,9 +157,10 @@ class HandleIndex:
             # comparing Tags() is not safe!
             first_tag = entity[0]
             for e in self._index.values():
+                tags = e.tags
                 if return_next:
-                    return e
-                if len(e) and e[0] is first_tag:
+                    return tags
+                if len(tags) and tags[0] is first_tag:
                     return_next = True
         return entity
 
@@ -140,9 +170,10 @@ class HandleIndex:
             # comparing Tags() is not safe!
             first_tag = entity[0]
             for e in self._index.values():
-                if len(e) and e[0] is first_tag:
+                tags = e.tags
+                if len(tags) and tags[0] is first_tag:
                     return prev
-                prev = e
+                prev = tags
         return entity
 
 
@@ -173,7 +204,8 @@ class LineIndex:
             # the section dict contain raw string tags
             for entity in section:
                 index[id(entity)] = line_number, entity  # type: ignore
-                line_number += len(entity) * 2  # type: ignore # group code, value
+                line_number += len(
+                    entity) * 2  # type: ignore # group code, value
             line_number += 2  # for missing ENDSEC tag
         return index
 
