@@ -9,7 +9,7 @@ from ezdxf.lldxf.tags import Tags
 
 __all__ = [
     "DXFDocument",
-    "DXFEntity",
+    "IndexEntry",
     "get_row_from_line_number",
     "dxfstr",
     "EntityHistory",
@@ -17,13 +17,12 @@ __all__ = [
 ]
 
 
-class DXFEntity:
-    def __init__(self, tags: Tags, handle: str = None, line: int = 0):
+class IndexEntry:
+    def __init__(self, tags: Tags, handle: str = None):
         self.tags: Tags = tags
         self.handle: Optional[str] = handle
-        self.start_line_number: int = line
-        self.prev: Optional["DXFEntity"] = None
-        self.next: Optional["DXFEntity"] = None
+        self.prev: Optional["IndexEntry"] = None
+        self.next: Optional["IndexEntry"] = None
 
 
 class DXFDocument:
@@ -99,7 +98,7 @@ class DXFDocument:
 
 class HandleIndex:
     def __init__(self, sections: SectionDict):
-        self._index: Dict[str, DXFEntity] = HandleIndex.build(sections)
+        self._index: Dict[str, IndexEntry] = HandleIndex.build(sections)
 
     def __contains__(self, handle: str) -> bool:
         return handle.upper() in self._index
@@ -130,10 +129,10 @@ class HandleIndex:
         return None
 
     @staticmethod
-    def build(sections: SectionDict) -> Dict[str, DXFEntity]:
+    def build(sections: SectionDict) -> Dict[str, IndexEntry]:
         dummy_handle = 1
         entity_index = dict()
-        prev_entity: Optional[DXFEntity] = None
+        prev_entity: Optional[IndexEntry] = None
         for section in sections.values():
             for tags in section:
                 try:
@@ -142,7 +141,7 @@ class HandleIndex:
                     handle = f"*{dummy_handle:X}"
                     dummy_handle += 1
                 handle = handle.upper()
-                new_entity = DXFEntity(tags, handle=handle)
+                new_entity = IndexEntry(tags, handle=handle)
                 if prev_entity is not None:
                     new_entity.prev = prev_entity
                     prev_entity.next = new_entity
