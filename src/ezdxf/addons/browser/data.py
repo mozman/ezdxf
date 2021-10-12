@@ -112,7 +112,7 @@ class HandleIndex:
             return None
 
     def get_handle(self, entity: Tags) -> Optional[str]:
-        if len(entity) == 0:
+        if not len(entity):
             return None
 
         try:
@@ -122,12 +122,11 @@ class HandleIndex:
 
         # get dummy handle
         for handle, e in self._index.items():
-            # comparing Tags() is not safe!
+            # comparing Tags() by the "is" operator is not safe!
             tags = e.tags
-            if len(tags):
-                # compare first DXFv tag
-                if tags[0] is entity[0]:
-                    return handle
+            # compare first DXF tag
+            if len(tags) and tags[0] is entity[0]:
+                return handle
         return None
 
     @staticmethod
@@ -152,28 +151,23 @@ class HandleIndex:
         return entity_index
 
     def next_entity(self, entity: Tags) -> Tags:
-        return_next = False
-        if len(entity):
-            # comparing Tags() is not safe!
-            first_tag = entity[0]
-            for e in self._index.values():
-                tags = e.tags
-                if return_next:
-                    return tags
-                if len(tags) and tags[0] is first_tag:
-                    return_next = True
+        handle = self.get_handle(entity)
+        if handle is not None:
+            dxf_entity = self._index.get(handle)
+            next_entity = dxf_entity.next
+            # next of last entity is None!
+            if next_entity is not None:
+                return next_entity.tags
         return entity
 
     def previous_entity(self, entity: Tags) -> Tags:
-        prev = entity
-        if len(entity):
-            # comparing Tags() is not safe!
-            first_tag = entity[0]
-            for e in self._index.values():
-                tags = e.tags
-                if len(tags) and tags[0] is first_tag:
-                    return prev
-                prev = tags
+        handle = self.get_handle(entity)
+        if handle is not None:
+            dxf_entity = self._index.get(handle)
+            prev_entity = dxf_entity.prev
+            # prev of first entity is None!
+            if prev_entity is not None:
+                return prev_entity.tags
         return entity
 
 
@@ -204,8 +198,9 @@ class LineIndex:
             # the section dict contain raw string tags
             for entity in section:
                 index[id(entity)] = line_number, entity  # type: ignore
-                line_number += len(
-                    entity) * 2  # type: ignore # group code, value
+                line_number += (
+                    len(entity) * 2
+                )  # type: ignore # group code, value
             line_number += 2  # for missing ENDSEC tag
         return index
 
