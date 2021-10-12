@@ -17,14 +17,6 @@ __all__ = [
 ]
 
 
-class IndexEntry:
-    def __init__(self, tags: Tags, handle: str = None):
-        self.tags: Tags = tags
-        self.handle: Optional[str] = handle
-        self.prev: Optional["IndexEntry"] = None
-        self.next: Optional["IndexEntry"] = None
-
-
 class DXFDocument:
     def __init__(self, sections: SectionDict = None):
         # Important: the section dict has to store the raw string tags
@@ -96,9 +88,20 @@ class DXFDocument:
         return self.handle_index.get_handle(entity)  # type: ignore
 
 
+class IndexEntry:
+    def __init__(self, tags: Tags, handle: str = None, line: int = 0):
+        self.tags: Tags = tags
+        self.handle: Optional[str] = handle
+        self.start_line_number: int = line
+        self.prev: Optional["IndexEntry"] = None
+        self.next: Optional["IndexEntry"] = None
+
+
 class HandleIndex:
     def __init__(self, sections: SectionDict):
-        self._index: Dict[str, IndexEntry] = HandleIndex.build(sections)
+        self._index: Dict[str, IndexEntry] = dict()
+        self._max_line_number: int = 0
+        self._build(sections)
 
     def __contains__(self, handle: str) -> bool:
         return handle.upper() in self._index
@@ -128,8 +131,8 @@ class HandleIndex:
                 return handle
         return None
 
-    @staticmethod
-    def build(sections: SectionDict) -> Dict[str, IndexEntry]:
+    def _build(self, sections: SectionDict) -> None:
+        start_line_number = 1
         dummy_handle = 1
         entity_index = dict()
         prev_entity: Optional[IndexEntry] = None
@@ -141,19 +144,28 @@ class HandleIndex:
                     handle = f"*{dummy_handle:X}"
                     dummy_handle += 1
                 handle = handle.upper()
-                new_entity = IndexEntry(tags, handle=handle)
+                new_entity = IndexEntry(
+                    tags, handle=handle, line=start_line_number  # type: ignore
+                )
                 if prev_entity is not None:
                     new_entity.prev = prev_entity
                     prev_entity.next = new_entity
                 entity_index[handle] = new_entity
                 prev_entity = new_entity
-        return entity_index
+
+                # calculate next start line number:
+                # add 2 lines for each tag: group code, value
+                start_line_number += len(tags) * 2  # type: ignore
+            start_line_number += 2  # for missing ENDSEC tag
+
+        self._max_line_number = start_line_number - 3  # last ENDSEC!
+        self._index = entity_index
 
     def next_entity(self, entity: Tags) -> Tags:
         handle = self.get_handle(entity)
         if handle is not None:
             dxf_entity = self._index.get(handle)
-            next_entity = dxf_entity.next
+            next_entity = dxf_entity.next  # type: ignore
             # next of last entity is None!
             if next_entity is not None:
                 return next_entity.tags
@@ -163,7 +175,7 @@ class HandleIndex:
         handle = self.get_handle(entity)
         if handle is not None:
             dxf_entity = self._index.get(handle)
-            prev_entity = dxf_entity.prev
+            prev_entity = dxf_entity.prev  # type: ignore
             # prev of first entity is None!
             if prev_entity is not None:
                 return prev_entity.tags
@@ -198,8 +210,8 @@ class LineIndex:
             for entity in section:
                 index[id(entity)] = line_number, entity  # type: ignore
                 line_number += (
-                    len(entity) * 2
-                )  # type: ignore # group code, value
+                    len(entity) * 2  # type: ignore # group code, value
+                )
             line_number += 2  # for missing ENDSEC tag
         return index
 
