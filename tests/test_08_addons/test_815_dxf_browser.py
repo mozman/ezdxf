@@ -239,7 +239,7 @@ class TestHandleIndex:
                 Tags([DXFTag(0, "ENTITY2"), DXFTag(5, "F002")]),
                 Tags([DXFTag(0, "ENTITY3"), DXFTag(5, "F003")]),
                 Tags([DXFTag(0, "ENTITY4"), DXFTag(5, "F004")]),
-                # last entity without handle
+                # last entity without handle, has dummy handle "*1"
                 Tags([DXFTag(0, "ENTITY5"), DXFTag(1, "DATA")]),
             ]
         }
@@ -285,6 +285,27 @@ class TestHandleIndex:
     def test_prev_entity_of_first_entity_is_first_entity(self, index):
         e1 = index.get("F001")
         assert index.previous_entity(e1) is e1
+
+    def test_max_line_number(self, index):
+        assert index.max_line_number == 20
+
+    def test_get_start_line_number(self, index):
+        e = index.get("F003")
+        assert index.get_start_line_for_entity(e) == 9
+
+    def test_get_start_line_number_for_dummy_handle(self, index):
+        e = index.get("*1")
+        assert index.get_start_line_for_entity(e) == 17
+
+    def test_entity_at_line(self, index):
+        e3 = index.get("F003")
+        assert index.get_entity_at_line(9) is e3
+        assert index.get_entity_at_line(10) is e3
+
+    def test_entity_at_line_for_dummy_handle(self, index):
+        e = index.get("*1")
+        assert index.get_entity_at_line(19) is e
+        assert index.get_entity_at_line(20) is e
 
 
 class TestEntityHistory:

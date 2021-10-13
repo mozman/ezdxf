@@ -99,37 +99,11 @@ class IndexEntry:
 
 class HandleIndex:
     def __init__(self, sections: SectionDict):
+        # dict() entries have to be ordered since Python 3.6!
+        # Therefore _index.values() returns the DXF entities in file order!
         self._index: Dict[str, IndexEntry] = dict()
         self._max_line_number: int = 0
         self._build(sections)
-
-    def __contains__(self, handle: str) -> bool:
-        return handle.upper() in self._index
-
-    def get(self, handle: str) -> Optional[Tags]:
-        entity = self._index.get(handle.upper())
-        if entity is not None:
-            return entity.tags
-        else:
-            return None
-
-    def get_handle(self, entity: Tags) -> Optional[str]:
-        if not len(entity):
-            return None
-
-        try:
-            return entity.get_handle()
-        except ValueError:
-            pass
-
-        # get dummy handle
-        for handle, e in self._index.items():
-            # comparing Tags() by the "is" operator is not safe!
-            tags = e.tags
-            # compare first DXF tag
-            if len(tags) and tags[0] is entity[0]:
-                return handle
-        return None
 
     def _build(self, sections: SectionDict) -> None:
         start_line_number = 1
@@ -161,6 +135,39 @@ class HandleIndex:
         self._max_line_number = start_line_number - 3  # last ENDSEC!
         self._index = entity_index
 
+    def __contains__(self, handle: str) -> bool:
+        return handle.upper() in self._index
+
+    @property
+    def max_line_number(self) -> int:
+        return self._max_line_number
+
+    def get(self, handle: str) -> Optional[Tags]:
+        entity = self._index.get(handle.upper())
+        if entity is not None:
+            return entity.tags
+        else:
+            return None
+
+    def get_handle(self, entity: Tags) -> Optional[str]:
+        if not len(entity):
+            return None
+
+        try:
+            return entity.get_handle()
+        except ValueError:
+            pass
+
+        first_tag = entity[0]
+        # get dummy handle
+        for handle, e in self._index.items():
+            # comparing Tags() by the "is" operator is not safe!
+            tags = e.tags
+            # compare first DXF tag
+            if len(tags) and tags[0] is first_tag:
+                return handle
+        return None
+
     def next_entity(self, entity: Tags) -> Tags:
         handle = self.get_handle(entity)
         if handle is not None:
@@ -180,6 +187,22 @@ class HandleIndex:
             if prev_entity is not None:
                 return prev_entity.tags
         return entity
+
+    def get_start_line_for_entity(self, entity: Tags) -> int:
+        handle = self.get_handle(entity)
+        if handle is not None:
+            entry = self._index.get(handle)
+            if entry:
+                return entry.start_line_number
+        return 0
+
+    def get_entity_at_line(self, number: int) -> Optional[Tags]:
+        tags = None
+        for entry in self._index.values():
+            if entry.start_line_number > number:
+                return tags  # tags of previous entry!
+            tags = entry.tags
+        return tags
 
 
 class LineIndex:
