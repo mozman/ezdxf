@@ -87,9 +87,8 @@ class DXFDocument:
 
 
 class IndexEntry:
-    def __init__(self, tags: Tags, handle: str = None, line: int = 0):
+    def __init__(self, tags: Tags, line: int = 0):
         self.tags: Tags = tags
-        self.handle: Optional[str] = handle
         self.start_line_number: int = line
         self.prev: Optional["IndexEntry"] = None
         self.next: Optional["IndexEntry"] = None
@@ -112,7 +111,7 @@ class EntityIndex:
         dummy_handle = 1
         entity_index: Dict[str, IndexEntry] = dict()
         dummy_handle_index: Dict[int, str] = dict()
-        prev_entity: Optional[IndexEntry] = None
+        prev_entry: Optional[IndexEntry] = None
         for section in sections.values():
             for tags in section:
                 assert isinstance(tags, Tags), "expected class Tags"
@@ -125,14 +124,12 @@ class EntityIndex:
                     dummy_handle_index[id(tags[0])] = handle
                     dummy_handle += 1
 
-                new_entity = IndexEntry(
-                    tags, handle=handle, line=start_line_number
-                )
-                if prev_entity is not None:
-                    new_entity.prev = prev_entity
-                    prev_entity.next = new_entity
-                entity_index[handle] = new_entity
-                prev_entity = new_entity
+                next_entry = IndexEntry(tags, start_line_number)
+                if prev_entry is not None:
+                    next_entry.prev = prev_entry
+                    prev_entry.next = next_entry
+                entity_index[handle] = next_entry
+                prev_entry = next_entry
 
                 # calculate next start line number:
                 # add 2 lines for each tag: group code, value
