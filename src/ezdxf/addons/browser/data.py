@@ -28,7 +28,7 @@ class DXFDocument:
         # debugging of DXF files (-b for backup):
         # ezdxf strip -b <your.dxf>
         self.sections: SectionDict = dict()
-        self.handle_index: Optional[HandleIndex] = None
+        self.handle_index: Optional[EntityIndex] = None
         self.line_index: Optional[LineIndex] = None
         self.valid_handles = None
         self.filename = ""
@@ -52,7 +52,7 @@ class DXFDocument:
 
     def update(self, sections: SectionDict):
         self.sections = sections
-        self.handle_index = HandleIndex(self.sections)
+        self.handle_index = EntityIndex(self.sections)
         self.line_index = LineIndex(self.sections)
 
     def absolute_filepath(self):
@@ -97,7 +97,7 @@ class IndexEntry:
         self.next: Optional["IndexEntry"] = None
 
 
-class HandleIndex:
+class EntityIndex:
     def __init__(self, sections: SectionDict):
         # dict() entries have to be ordered since Python 3.6!
         # Therefore _index.values() returns the DXF entities in file order!

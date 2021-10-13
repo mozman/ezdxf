@@ -13,7 +13,7 @@ from ezdxf.lldxf.tagger import ascii_tags_loader
 from ezdxf.addons.browser import DXFTagsModel, DXFStructureModel, DXFDocument
 from ezdxf.addons.browser.tags import compile_tags
 from ezdxf.addons.browser.data import (
-    HandleIndex,
+    EntityIndex,
     LineIndex,
     EntityHistory,
     SearchIndex,
@@ -230,7 +230,7 @@ EOF
 """
 
 
-class TestHandleIndex:
+class TestEntityIndex:
     @pytest.fixture(scope="class")
     def index(self):
         data = {
@@ -243,7 +243,7 @@ class TestHandleIndex:
                 Tags([DXFTag(0, "ENTITY5"), DXFTag(1, "DATA")]),
             ]
         }
-        return HandleIndex(data)
+        return EntityIndex(data)
 
     def test_contains_all_entities(self, index):
         assert "F001" in index
