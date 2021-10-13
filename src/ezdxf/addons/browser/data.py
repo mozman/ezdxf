@@ -100,24 +100,33 @@ class EntityIndex:
         # dict() entries have to be ordered since Python 3.6!
         # Therefore _index.values() returns the DXF entities in file order!
         self._index: Dict[str, IndexEntry] = dict()
+        # Index dummy handle of entities without handles by the id of the
+        # first tag for faster retrieval of the dummy handle from tags:
+        # dict items: (id, handle)
+        self._dummy_handle_index: Dict[int, str] = dict()
         self._max_line_number: int = 0
         self._build(sections)
 
     def _build(self, sections: SectionDict) -> None:
         start_line_number = 1
         dummy_handle = 1
-        entity_index = dict()
+        entity_index: Dict[str, IndexEntry] = dict()
+        dummy_handle_index: Dict[int, str] = dict()
         prev_entity: Optional[IndexEntry] = None
         for section in sections.values():
             for tags in section:
+                assert isinstance(tags, Tags), "expected class Tags"
+                assert len(tags) > 0, "empty tags should not be possible"
                 try:
-                    handle = tags.get_handle()
+                    handle = tags.get_handle().upper()
                 except ValueError:
                     handle = f"*{dummy_handle:X}"
+                    # index dummy handle by id of the first tag:
+                    dummy_handle_index[id(tags[0])] = handle
                     dummy_handle += 1
-                handle = handle.upper()
+
                 new_entity = IndexEntry(
-                    tags, handle=handle, line=start_line_number  # type: ignore
+                    tags, handle=handle, line=start_line_number
                 )
                 if prev_entity is not None:
                     new_entity.prev = prev_entity
@@ -132,6 +141,7 @@ class EntityIndex:
 
         self._max_line_number = start_line_number - 3  # last ENDSEC!
         self._index = entity_index
+        self._dummy_handle_index = dummy_handle_index
 
     def __contains__(self, handle: str) -> bool:
         return handle.upper() in self._index
@@ -154,17 +164,8 @@ class EntityIndex:
         try:
             return entity.get_handle()
         except ValueError:
-            pass
-
-        first_tag = entity[0]
-        # get dummy handle
-        for handle, e in self._index.items():
-            # comparing Tags() by the "is" operator is not safe!
-            tags = e.tags
-            # compare first DXF tag
-            if len(tags) and tags[0] is first_tag:
-                return handle
-        return None
+            # fast retrieval of dummy handle which isn't stored in tags:
+            return self._dummy_handle_index.get(id(entity[0]), None)
 
     def next_entity(self, entity: Tags) -> Tags:
         handle = self.get_handle(entity)
