@@ -147,7 +147,7 @@ class DXFStructureBrowser(QtWidgets.QMainWindow):
             icon_name="icon-copy-64px.png",
         )
         self._quit_action = self.make_action(
-             "&Quit", self.close, shortcut="Ctrl+Q"
+            "&Quit", self.close, shortcut="Ctrl+Q"
         )
         self.close()
         self._goto_handle_action = self.make_action(
@@ -453,7 +453,7 @@ class DXFStructureBrowser(QtWidgets.QMainWindow):
             self._current_entity = entity
             start_line_number = self.doc.get_line_number(entity)
             model = DXFTagsModel(
-                entity, start_line_number, self.doc.handle_index
+                entity, start_line_number, self.doc.entity_index
             )
             self._dxf_tags_table.setModel(model)
             if select_line_number is not None:
@@ -516,9 +516,9 @@ class DXFStructureBrowser(QtWidgets.QMainWindow):
             self,
             "Go to",
             f"Go to line number: (max. {max_line_number})",
-            value=1,
-            min=1,
-            max=max_line_number,
+            1,  # value
+            1,  # PyQt5: min, PySide6: minValue
+            max_line_number,  # PyQt5: max, PySide6: maxValue
         )
         if ok:
             self.goto_line(number)

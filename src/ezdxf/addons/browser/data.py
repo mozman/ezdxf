@@ -28,8 +28,7 @@ class DXFDocument:
         # debugging of DXF files (-b for backup):
         # ezdxf strip -b <your.dxf>
         self.sections: SectionDict = dict()
-        self.handle_index: Optional[EntityIndex] = None
-        self.line_index: Optional[LineIndex] = None
+        self.entity_index: Optional[EntityIndex] = None
         self.valid_handles = None
         self.filename = ""
         if sections:
@@ -41,8 +40,8 @@ class DXFDocument:
 
     @property
     def max_line_number(self) -> int:
-        if self.line_index:
-            return self.line_index.max_line_number
+        if self.entity_index:
+            return self.entity_index.max_line_number
         else:
             return 1
 
@@ -52,8 +51,7 @@ class DXFDocument:
 
     def update(self, sections: SectionDict):
         self.sections = sections
-        self.handle_index = EntityIndex(self.sections)
-        self.line_index = LineIndex(self.sections)
+        self.entity_index = EntityIndex(self.sections)
 
     def absolute_filepath(self):
         return self.filepath.absolute()
@@ -62,30 +60,30 @@ class DXFDocument:
         return self.sections.get(name)  # type: ignore
 
     def get_entity(self, handle: str) -> Optional[Tags]:
-        if self.handle_index:
-            return self.handle_index.get(handle)
+        if self.entity_index:
+            return self.entity_index.get(handle)
         return None
 
     def get_line_number(self, entity: Tags, offset: int = 0) -> int:
-        if self.line_index:
+        if self.entity_index:
             return (
-                self.line_index.get_start_line_for_entity(entity) + offset * 2
+                self.entity_index.get_start_line_for_entity(entity) + offset * 2
             )
         return 0
 
     def get_entity_at_line(self, number: int) -> Optional[Tags]:
-        if self.line_index:
-            return self.line_index.get_entity_at_line(number)
+        if self.entity_index:
+            return self.entity_index.get_entity_at_line(number)
         return None
 
     def next_entity(self, entity: Tags) -> Optional[Tags]:
-        return self.handle_index.next_entity(entity)  # type: ignore
+        return self.entity_index.next_entity(entity)  # type: ignore
 
     def previous_entity(self, entity: Tags) -> Optional[Tags]:
-        return self.handle_index.previous_entity(entity)  # type: ignore
+        return self.entity_index.previous_entity(entity)  # type: ignore
 
     def get_handle(self, entity) -> Optional[str]:
-        return self.handle_index.get_handle(entity)  # type: ignore
+        return self.entity_index.get_handle(entity)  # type: ignore
 
 
 class IndexEntry:
