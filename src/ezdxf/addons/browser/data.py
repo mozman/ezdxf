@@ -87,9 +87,8 @@ class DXFDocument:
 
 
 class IndexEntry:
-    def __init__(self, tags: Tags, handle: str = None, line: int = 0):
+    def __init__(self, tags: Tags, line: int = 0):
         self.tags: Tags = tags
-        self.handle: Optional[str] = handle
         self.start_line_number: int = line
         self.prev: Optional["IndexEntry"] = None
         self.next: Optional["IndexEntry"] = None
@@ -112,7 +111,7 @@ class EntityIndex:
         dummy_handle = 1
         entity_index: Dict[str, IndexEntry] = dict()
         dummy_handle_index: Dict[int, str] = dict()
-        prev_entity: Optional[IndexEntry] = None
+        prev_entry: Optional[IndexEntry] = None
         for section in sections.values():
             for tags in section:
                 assert isinstance(tags, Tags), "expected class Tags"
@@ -125,21 +124,20 @@ class EntityIndex:
                     dummy_handle_index[id(tags[0])] = handle
                     dummy_handle += 1
 
-                new_entity = IndexEntry(
-                    tags, handle=handle, line=start_line_number
-                )
-                if prev_entity is not None:
-                    new_entity.prev = prev_entity
-                    prev_entity.next = new_entity
-                entity_index[handle] = new_entity
-                prev_entity = new_entity
+                next_entry = IndexEntry(tags, start_line_number)
+                if prev_entry is not None:
+                    next_entry.prev = prev_entry
+                    prev_entry.next = next_entry
+                entity_index[handle] = next_entry
+                prev_entry = next_entry
 
                 # calculate next start line number:
                 # add 2 lines for each tag: group code, value
-                start_line_number += len(tags) * 2  # type: ignore
-            start_line_number += 2  # for missing ENDSEC tag
+                start_line_number += len(tags) * 2
+            start_line_number += 2  # for removed ENDSEC tag
 
-        self._max_line_number = start_line_number - 3  # last ENDSEC!
+        # subtract 1 and 2 for the last ENDSEC tag!
+        self._max_line_number = start_line_number - 3
         self._index = entity_index
         self._dummy_handle_index = dummy_handle_index
 
@@ -151,9 +149,9 @@ class EntityIndex:
         return self._max_line_number
 
     def get(self, handle: str) -> Optional[Tags]:
-        entity = self._index.get(handle.upper())
-        if entity is not None:
-            return entity.tags
+        index_entry = self._index.get(handle.upper())
+        if index_entry is not None:
+            return index_entry.tags
         else:
             return None
 
@@ -165,42 +163,42 @@ class EntityIndex:
             return entity.get_handle()
         except ValueError:
             # fast retrieval of dummy handle which isn't stored in tags:
-            return self._dummy_handle_index.get(id(entity[0]), None)
+            return self._dummy_handle_index.get(id(entity[0]))
 
     def next_entity(self, entity: Tags) -> Tags:
         handle = self.get_handle(entity)
-        if handle is not None:
-            dxf_entity = self._index.get(handle)
-            next_entity = dxf_entity.next  # type: ignore
+        if handle:
+            index_entry = self._index.get(handle)
+            next_entry = index_entry.next  # type: ignore
             # next of last entity is None!
-            if next_entity is not None:
-                return next_entity.tags
+            if next_entry:
+                return next_entry.tags
         return entity
 
     def previous_entity(self, entity: Tags) -> Tags:
         handle = self.get_handle(entity)
-        if handle is not None:
-            dxf_entity = self._index.get(handle)
-            prev_entity = dxf_entity.prev  # type: ignore
+        if handle:
+            index_entry = self._index.get(handle)
+            prev_entry = index_entry.prev  # type: ignore
             # prev of first entity is None!
-            if prev_entity is not None:
-                return prev_entity.tags
+            if prev_entry:
+                return prev_entry.tags
         return entity
 
     def get_start_line_for_entity(self, entity: Tags) -> int:
         handle = self.get_handle(entity)
-        if handle is not None:
-            entry = self._index.get(handle)
-            if entry:
-                return entry.start_line_number
+        if handle:
+            index_entry = self._index.get(handle)
+            if index_entry:
+                return index_entry.start_line_number
         return 0
 
     def get_entity_at_line(self, number: int) -> Optional[Tags]:
         tags = None
-        for entry in self._index.values():
-            if entry.start_line_number > number:
+        for index_entry in self._index.values():
+            if index_entry.start_line_number > number:
                 return tags  # tags of previous entry!
-            tags = entry.tags
+            tags = index_entry.tags
         return tags
 
 
