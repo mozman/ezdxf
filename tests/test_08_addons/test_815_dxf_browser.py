@@ -14,7 +14,6 @@ from ezdxf.addons.browser import DXFTagsModel, DXFStructureModel, DXFDocument
 from ezdxf.addons.browser.tags import compile_tags
 from ezdxf.addons.browser.data import (
     EntityIndex,
-    LineIndex,
     EntityHistory,
     SearchIndex,
 )
@@ -177,16 +176,6 @@ class TestTagCompiler:
         assert tags[1] == (10, 1.1), "expected coords as single tags"
 
 
-def test_line_index_adds_missing_endsec_tag():
-    # The function load_dxf_structure() throws the ENDSEC tag away.
-    # The line indexer must take this issue into account!
-    sections = load_dxf_structure(txt2tags(SECTIONS))
-    index = LineIndex(sections)
-    entity = index.get_entity_at_line(15)
-    assert entity.get_handle() == "100"
-    assert index.get_start_line_for_entity(entity) == 15
-
-
 ENTITIES = """0
 SECTION
 2
@@ -306,6 +295,16 @@ class TestEntityIndex:
         e = index.get("*1")
         assert index.get_entity_at_line(19) is e
         assert index.get_entity_at_line(20) is e
+
+
+def test_entity_index_adds_missing_endsec_tag():
+    # The function load_dxf_structure() throws the ENDSEC tag away.
+    # The entity indexer must take this issue into account!
+    sections = load_dxf_structure(txt2tags(SECTIONS))
+    index = EntityIndex(sections)
+    entity = index.get_entity_at_line(15)
+    assert entity.get_handle() == "100"
+    assert index.get_start_line_for_entity(entity) == 15
 
 
 class TestEntityHistory:
