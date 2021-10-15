@@ -82,8 +82,7 @@ class CreatorInterface:
         Create entity in drawing database and add entity to the entity space.
 
         Args:
-            type_ : DXF type string, like ``'LINE'``, ``'CIRCLE'`` or
-                ``'LWPOLYLINE'``
+            type_ : DXF type string, like "LINE", "CIRCLE" or "LWPOLYLINE"
             dxfattribs: DXF attributes for the new entity
 
         """
@@ -154,7 +153,7 @@ class CreatorInterface:
         """
         Add an :class:`~ezdxf.entities.Ellipse` entity, `ratio` is the ratio of
         minor axis to major axis, `start_param` and `end_param` defines start
-        and end point of the ellipse, a full ellipse goes from 0 to 2*pi.
+        and end point of the ellipse, a full ellipse goes from 0 to 2π.
         The ellipse goes from start to end param in `counter clockwise`
         direction.
 
@@ -189,14 +188,15 @@ class CreatorInterface:
         """
         Add an :class:`~ezdxf.entities.Arc` entity. The arc goes from
         `start_angle` to `end_angle` in counter clockwise direction by default,
-        set parameter `is_counter_clockwise` to False for clockwise orientation.
+        set parameter `is_counter_clockwise` to ``False`` for clockwise
+        orientation.
 
         Args:
             center: center of arc as 2D/3D point in :ref:`WCS`
             radius: arc radius
             start_angle: start angle in degrees
             end_angle: end angle in degrees
-            is_counter_clockwise: False for clockwise orientation
+            is_counter_clockwise: ``False`` for clockwise orientation
             dxfattribs: additional DXF attributes
 
         """
@@ -262,14 +262,15 @@ class CreatorInterface:
 
         Args:
             points: iterable of 3 or 4 2D/3D points in :ref:`WCS`
-            dxfattribs: additional DXF attributes for :class:`3DFace` entity
+            dxfattribs: additional DXF attributes for 3DFACE entity
 
         """
         return self._add_quadrilateral("3DFACE", points, dxfattribs)  # type: ignore
 
     def add_text(self, text: str, dxfattribs: Dict = None) -> "Text":
         """
-        Add a :class:`~ezdxf.entities.Text` entity, see also :class:`Style`.
+        Add a :class:`~ezdxf.entities.Text` entity, see also
+        :class:`~ezdxf.entities.Textstyle`.
 
         Args:
             text: content string
@@ -318,7 +319,7 @@ class CreatorInterface:
         Add an :class:`~ezdxf.entities.Insert` entity. This method adds for each
         :class:`~ezdxf.entities.Attdef` entity, defined in the block definition,
         automatically an :class:`Attrib` entity to the block reference and set
-        ``tag/value`` DXF attributes of the ATTRIB entities by the ``key/value``
+        (tag, value) DXF attributes of the ATTRIB entities by the (key, value)
         pairs (both as strings) of the `values` dict.
 
         The Attrib entities are placed relative to the insert point, which is
@@ -335,7 +336,7 @@ class CreatorInterface:
         Args:
             name: block name
             insert: insert location as 2D/3D point in :ref:`WCS`
-            values: :class:`~ezdxf.entities.Attrib` tag values as ``tag/value`` pairs
+            values: :class:`~ezdxf.entities.Attrib` tag values as (tag, value) pairs
             dxfattribs: additional DXF attributes for :class:`Insert` entity
 
         """
@@ -374,7 +375,7 @@ class CreatorInterface:
 
         Set position and alignment by the idiom::
 
-            layout.add_attdef('NAME').set_pos((2, 3), align='MIDDLE_CENTER')
+            layout.add_attdef("NAME").set_pos((2, 3), align="MIDDLE_CENTER")
 
         Args:
             tag: tag name as string
@@ -402,7 +403,7 @@ class CreatorInterface:
 
         Args:
             points: iterable of 2D points in :ref:`WCS`
-            close: `True` for a closed polyline
+            close: ``True`` for a closed polyline
             format: user defined point format like :meth:`add_lwpolyline`,
                 default is ``None``
             dxfattribs: additional DXF attributes
@@ -438,7 +439,7 @@ class CreatorInterface:
 
         Args:
             points: iterable of 3D points in :ref:`WCS`
-            close: `True` for a closed polyline
+            close: ``True`` for a closed polyline
             dxfattribs: additional DXF attributes
 
         """
@@ -561,7 +562,7 @@ class CreatorInterface:
         Add a 2D polyline as :class:`~ezdxf.entities.LWPolyline` entity.
         A points are defined as (x, y, [start_width, [end_width, [bulge]]])
         tuples, but order can be redefined by the `format` argument. Set
-        `start_width`, `end_width` to ``0`` to be ignored like
+        `start_width`, `end_width` to 0 to be ignored like
         (x, y, 0, 0, bulge).
 
         The :class:`~ezdxf.entities.LWPolyline` is defined as a single DXF
@@ -579,8 +580,8 @@ class CreatorInterface:
 
         Args:
             points: iterable of (x, y, [start_width, [end_width, [bulge]]]) tuples
-            format: user defined point format, default is ``"xyseb"``
-            close: `True` for a closed polyline
+            format: user defined point format, default is "xyseb"
+            close: ``True`` for a closed polyline
             dxfattribs: additional DXF attributes
 
         """
@@ -630,7 +631,7 @@ class CreatorInterface:
         across the columns, the count of content strings determine the count
         of columns.
 
-        This factory method adds automatically a column break ``\\N`` at the
+        This factory method adds automatically a column break "\\N" at the
         end of each column text to force a new column.
         The `height` attribute should be big enough to reserve enough space for
         the tallest column. Too small values produce valid DXF files, but the
@@ -824,7 +825,7 @@ class CreatorInterface:
 
         Args:
             start: location 3D point in :ref:`WCS`
-            unit_vector: 3D vector ``(x, y, z)``
+            unit_vector: 3D vector (x, y, z)
             dxfattribs: additional DXF attributes
 
         """
@@ -1190,7 +1191,7 @@ class CreatorInterface:
         """Add a :class:`~ezdxf.entities.Hatch` entity. (requires DXF R2000)
 
         Args:
-            color: fill color as :ref`ACI`, default is ``7`` (black/white).
+            color: fill color as :ref`ACI`, default is 7 (black/white).
             dxfattribs: additional DXF attributes
 
         """
@@ -1266,7 +1267,7 @@ class CreatorInterface:
         Args:
             image_def: required image definition as :class:`~ezdxf.entities.ImageDef`
             insert: insertion point as 3D point in :ref:`WCS`
-            size_in_units: size as ``(x, y)`` tuple in drawing units
+            size_in_units: size as (x, y) tuple in drawing units
             rotation: rotation angle around the extrusion axis, default is the
                 z-axis, in degrees
             dxfattribs: additional DXF attributes
@@ -1328,7 +1329,7 @@ class CreatorInterface:
         Args:
             underlay_def: required underlay definition as :class:`~ezdxf.entities.UnderlayDefinition`
             insert: insertion point as 3D point in :ref:`WCS`
-            scale:  underlay scaling factor as ``(x, y, z)`` tuple or as single
+            scale:  underlay scaling factor as (x, y, z) tuple or as single
                 value for uniform scaling for x, y and z
             rotation: rotation angle around the extrusion axis, default is the
                 z-axis, in degrees
@@ -1376,7 +1377,7 @@ class CreatorInterface:
         line. If an :class:`~ezdxf.math.UCS` is used for dimension line rendering,
         all point definitions in UCS coordinates, translation into :ref:`WCS`
         and :ref:`OCS` is done by the rendering function. Extrusion vector is
-        defined by UCS or ``(0, 0, 1)`` by default.
+        defined by UCS or (0, 0, 1) by default.
         See also: :ref:`tut_linear_dimension`
 
         This method returns a :class:`~ezdxf.entities.DimStyleOverride` object -
@@ -1388,7 +1389,7 @@ class CreatorInterface:
         .. note::
 
             `ezdxf` ignores some DIMSTYLE variables, so render results may differ
-            from BricsCAD or AutoCAD.
+            from CAD applications.
 
         Args:
             base: location of dimension line, any point on the dimension line or
@@ -1396,11 +1397,11 @@ class CreatorInterface:
             p1: measurement point 1 and start point of extension line 1 (in UCS)
             p2: measurement point 2 and start point of extension line 2 (in UCS)
             location: user defined location for text mid point (in UCS)
-            text: ``None`` or ``"<>"`` the measurement is drawn as text,
-                ``" "`` (one space) suppresses the dimension text, everything
+            text: ``None`` or "<>" the measurement is drawn as text,
+                " " (a single space) suppresses the dimension text, everything
                 else `text` is drawn as dimension text
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
-                table entry), default is ``'EZDXF'``
+                table entry), default is "EZDXF"
             angle: angle from ucs/wcs x-axis to dimension line in degrees
             text_rotation: rotation angle of the dimension text as absolute
                 angle (x-axis=0, y-axis=90) in degrees
@@ -1450,7 +1451,7 @@ class CreatorInterface:
         :class:`~ezdxf.math.UCS` is used for dimension line rendering, all point
         definitions in UCS coordinates, translation into :ref:`WCS` and
         :ref:`OCS` is done by the rendering function. Extrusion vector is
-        defined by UCS or ``(0, 0, 1)`` by default. See also:
+        defined by UCS or (0, 0, 1) by default. See also:
         :ref:`tut_linear_dimension`
 
         This method sets many design decisions by itself, the necessary geometry
@@ -1461,19 +1462,19 @@ class CreatorInterface:
         .. note::
 
             `ezdxf` ignores some DIMSTYLE variables, so render results may
-            differ from BricsCAD or AutoCAD.
+            differ from CAD applications.
 
         Args:
             base: location of dimension line, any point on the dimension line
                 or its extension will do (in UCS)
             points: iterable of measurement points (in UCS)
             angle: angle from ucs/wcs x-axis to dimension line in degrees
-                (``0`` = horizontal, ``90`` = vertical)
+                (0 = horizontal, 90 = vertical)
             ucs: user defined coordinate system
             avoid_double_rendering: suppresses the first extension line and the
                 first arrow if possible for continued dimension entities
             dimstyle: dimension style name (DimStyle table entry),
-                default is ``'EZDXF'``
+                default is "EZDXF"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension`
                 entity
@@ -1510,7 +1511,7 @@ class CreatorInterface:
         an :class:`~ezdxf.math.UCS` is used for dimension line rendering, all
         point definitions in UCS coordinates, translation into :ref:`WCS`
         and :ref:`OCS` is done by the rendering function. Extrusion vector
-        is defined by UCS or ``(0, 0, 1)`` by default.
+        is defined by UCS or (0, 0, 1) by default.
         See also: :ref:`tut_linear_dimension`
 
         This method returns a :class:`~ezdxf.entities.DimStyleOverride` object,
@@ -1522,17 +1523,17 @@ class CreatorInterface:
         .. note::
 
             `ezdxf` ignores some DIMSTYLE variables, so render results may
-            differ from BricsCAD or AutoCAD.
+            differ from CAD applications.
 
         Args:
             p1: measurement point 1 and start point of extension line 1 (in UCS)
             p2: measurement point 2 and start point of extension line 2 (in UCS)
             distance: distance of dimension line from measurement points
-            text: None or "<>" the measurement is drawn as text, " " (one space)
-                suppresses the dimension text, everything else `text` is drawn
-                as dimension text
+            text: ``None`` or "<>" the measurement is drawn as text,
+                " " (a single space) suppresses the dimension text,
+                everything else `text` is drawn as dimension text
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
-                table entry), default is ``'EZDXF'``
+                table entry), default is "EZDXF"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: DXF attributes for :class:`~ezdxf.entities.Dimension`
                 entity
@@ -1573,7 +1574,7 @@ class CreatorInterface:
         If an :class:`~ezdxf.math.UCS` is used for angular dimension rendering,
         all point definitions in UCS coordinates, translation into :ref:`WCS`
         and :ref:`OCS` is done by the rendering function. Extrusion vector is
-        defined by UCS or ``(0, 0, 1)`` by default.
+        defined by UCS or (0, 0, 1) by default.
 
         This method returns a :class:`~ezdxf.entities.DimStyleOverride` object -
         to create the necessary dimension geometry, you have to call
@@ -1584,7 +1585,7 @@ class CreatorInterface:
         .. note::
 
             `ezdxf` ignores some DIMSTYLE variables, so render results may
-            differ from BricsCAD or AutoCAD.
+            differ from CAD applications.
 
         Args:
             base: location of dimension line, any point on the dimension line or
@@ -1594,13 +1595,13 @@ class CreatorInterface:
             line2: specifies end leg of the angle (start point, end point) and
                 determines extension line 2 (in UCS)
             location: user defined location for text mid point (in UCS)
-            text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "``
-                (one space) suppresses the dimension text, everything else
-                `text` is drawn as dimension text
+            text: ``None`` or "<>" the measurement is drawn as text,
+                " " (a single space) suppresses the dimension text,
+                everything else `text` is drawn as dimension text
             text_rotation: rotation angle of the dimension text as absolute
                 angle (x-axis=0, y-axis=90) in degrees
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
-                table entry), default is ``'EZDXF'``
+                table entry), default is "EZDXF"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for
                 :class:`~ezdxf.entities.Dimension` entity
@@ -1652,7 +1653,7 @@ class CreatorInterface:
         If an :class:`~ezdxf.math.UCS` is used for angular dimension rendering,
         all point definitions in UCS coordinates, translation into :ref:`WCS`
         and :ref:`OCS` is done by the rendering function. Extrusion vector is
-        defined by UCS or ``(0, 0, 1)`` by default.
+        defined by UCS or (0, 0, 1) by default.
 
         This method returns a :class:`~ezdxf.entities.DimStyleOverride` object -
         to create the necessary dimension geometry, you have to call
@@ -1663,7 +1664,7 @@ class CreatorInterface:
         .. note::
 
             `ezdxf` ignores some DIMSTYLE variables, so render results may
-            differ from BricsCAD or AutoCAD.
+            differ from CAD applications.
 
         Args:
             base: location of dimension line, any point on the dimension line
@@ -1674,13 +1675,13 @@ class CreatorInterface:
             p2: specifies end leg of the  angle (center -> p2) and end point
                 of extension line 2 (in UCS)
             location: user defined location for text mid point (in UCS)
-            text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "``
-                (one space) suppresses the dimension text, everything else
-                `text` is drawn as dimension text
+            text: ``None`` or "<>" the measurement is drawn as text,
+                " " (a single space) suppresses the dimension text,
+                everything else `text` is drawn as dimension text
             text_rotation: rotation angle of the dimension text as absolute
                 angle (x-axis=0, y-axis=90) in degrees
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
-                table entry), default is ``'EZDXF'``
+                table entry), default is "EZDXF"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for
                 :class:`~ezdxf.entities.Dimension` entity
@@ -1734,7 +1735,7 @@ class CreatorInterface:
         If an :class:`~ezdxf.math.UCS` is used for dimension line rendering,
         all point definitions in UCS coordinates, translation into :ref:`WCS`
         and :ref:`OCS` is done by the rendering function. Extrusion vector is
-        defined by UCS or ``(0, 0, 1)`` by default.
+        defined by UCS or (0, 0, 1) by default.
 
         This method returns a :class:`~ezdxf.entities.DimStyleOverride` object -
         to create the necessary dimension geometry, you have to call
@@ -1745,7 +1746,7 @@ class CreatorInterface:
         .. note::
 
             `ezdxf` ignores some DIMSTYLE variables, so render results may
-            differ from BricsCAD or AutoCAD.
+            differ from CAD applications.
 
         Args:
             center: specifies the center of the circle (in UCS)
@@ -1754,11 +1755,11 @@ class CreatorInterface:
             angle: specify angle of dimension line in degrees, requires argument
                 `radius`, overrides `p1` argument
             location: user defined location for text mid point (in UCS)
-            text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "``
-                (one space) suppresses the dimension text, everything else
-                `text` is drawn as dimension text
+            text: ``None`` or ``"<>"`` the measurement is drawn as text,
+                " " (a single space) suppresses the dimension text,
+                everything else `text` is drawn as dimension text
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
-                table entry), default is ``'EZ_RADIUS'``
+                table entry), default is "EZ_RADIUS"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for
                 :class:`~ezdxf.entities.Dimension` entity
@@ -1820,18 +1821,18 @@ class CreatorInterface:
         :func:`add_diameter_dim`. Center point of the virtual circle is the
         mid point between `p1` and `p2`.
 
-        - dimstyle ``'EZ_RADIUS'``: places the dimension text outside
-        - dimstyle ``'EZ_RADIUS_INSIDE'``: places the dimension text inside
+        - dimstyle "EZ_RADIUS": places the dimension text outside
+        - dimstyle "EZ_RADIUS_INSIDE": places the dimension text inside
 
         Args:
             p1: first point of the circle (in UCS)
             p2: second point on the opposite side of the center point of the
                 circle (in UCS)
-            text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "``
-                (one space) suppresses the dimension text, everything else
-                `text` is drawn as dimension text
+            text: ``None`` or "<>" the measurement is drawn as text,
+                " " (a single space) suppresses the dimension text,
+                everything else `text` is drawn as dimension text
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
-                table entry), default is ``'EZ_RADIUS'``
+                table entry), default is "EZ_RADIUS"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for
                 :class:`~ezdxf.entities.Dimension` entity
@@ -1871,7 +1872,7 @@ class CreatorInterface:
         If an :class:`~ezdxf.math.UCS` is used for dimension line rendering,
         all point definitions in UCS coordinates, translation into :ref:`WCS`
         and :ref:`OCS` is done by the rendering function. Extrusion vector is
-        defined by UCS or ``(0, 0, 1)`` by default.
+        defined by UCS or (0, 0, 1) by default.
 
         This method returns a :class:`~ezdxf.entities.DimStyleOverride` object -
         to create the necessary dimension geometry, you have to call
@@ -1882,15 +1883,15 @@ class CreatorInterface:
         Following render types are supported:
 
         - Default text location outside: text aligned with dimension line;
-          dimension style: ``'EZ_RADIUS'``
-        - Default text location outside horizontal: ``'EZ_RADIUS'`` + dimtoh=1
+          dimension style: "EZ_RADIUS"
+        - Default text location outside horizontal: "EZ_RADIUS" + dimtoh=1
         - Default text location inside: text aligned with dimension line;
-          dimension style: ``'EZ_RADIUS_INSIDE'``
-        - Default text location inside horizontal:``'EZ_RADIUS_INSIDE'`` + dimtih=1
+          dimension style: "EZ_RADIUS_INSIDE"
+        - Default text location inside horizontal: "EZ_RADIUS_INSIDE" + dimtih=1
         - User defined text location: argument `location` != ``None``, text
-          aligned with dimension line; dimension style: ``'EZ_RADIUS'``
+          aligned with dimension line; dimension style: "EZ_RADIUS"
         - User defined text location horizontal: argument `location` != ``None``,
-          ``'EZ_RADIUS'`` + dimtoh=1 for text outside horizontal, ``'EZ_RADIUS'``
+          "EZ_RADIUS" + dimtoh=1 for text outside horizontal, "EZ_RADIUS"
           + dimtih=1 for text inside horizontal
 
         Placing the dimension text at a user defined `location`, overrides the
@@ -1905,7 +1906,7 @@ class CreatorInterface:
         .. note::
 
             `ezdxf` ignores some DIMSTYLE variables, so render results may
-            differ from BricsCAD or AutoCAD.
+            differ from CAD applications.
 
         Args:
             center: center point of the circle (in UCS)
@@ -1916,11 +1917,11 @@ class CreatorInterface:
                 argument `radius`
             location: user defined dimension text location, overrides `mpoint`
                 and `angle`, but requires `radius` (in UCS)
-            text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "``
-                (one space) suppresses the dimension text, everything else
-                `text` is drawn as dimension text
+            text: ``None`` or "<>" the measurement is drawn as text,
+                " " (a single space) suppresses the dimension text,
+                everything else `text` is drawn as dimension text
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
-                table entry), default is ``'EZ_RADIUS'``
+                table entry), default is "EZ_RADIUS"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for
                 :class:`~ezdxf.entities.Dimension` entity
@@ -1976,17 +1977,17 @@ class CreatorInterface:
         location defined by the associated `dimstyle`, for further information
         see general method :func:`add_radius_dim`.
 
-        - dimstyle ``'EZ_RADIUS'``: places the dimension text outside
-        - dimstyle ``'EZ_RADIUS_INSIDE'``: places the dimension text inside
+        - dimstyle "EZ_RADIUS": places the dimension text outside
+        - dimstyle "EZ_RADIUS_INSIDE": places the dimension text inside
 
         Args:
             center: center point of the circle (in UCS)
             mpoint: measurement point on the circle (in UCS)
-            text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "``
-                (one space) suppresses the dimension text, everything else
-                `text` is drawn as dimension text
+            text: ``None`` or "<>" the measurement is drawn as text,
+                " " (a single space) suppresses the dimension text,
+                everything else `text` is drawn as dimension text
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
-                table entry), default is ``'EZ_RADIUS'``
+                table entry), default is "EZ_RADIUS"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for
                 :class:`~ezdxf.entities.Dimension` entity
@@ -2019,18 +2020,18 @@ class CreatorInterface:
         location defined by the associated `dimstyle`, for further information
         see general method :func:`add_radius_dim`.
 
-        - dimstyle ``'EZ_RADIUS'``: places the dimension text outside
-        - dimstyle ``'EZ_RADIUS_INSIDE'``: places the dimension text inside
+        - dimstyle "EZ_RADIUS": places the dimension text outside
+        - dimstyle "EZ_RADIUS_INSIDE": places the dimension text inside
 
         Args:
             center: center point of the circle (in UCS)
             radius: radius in drawing units
             angle: angle of dimension line in degrees
-            text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "``
-                (one space) suppresses the dimension text, everything else
-                `text` is drawn as dimension text
+            text: ``None`` or "<>" the measurement is drawn as text,
+                " " (a single space) suppresses the dimension text,
+                everything else `text` is drawn as dimension text
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
-                table entry), default is ``'EZ_RADIUS'``
+                table entry), default is "EZ_RADIUS"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for
                 :class:`~ezdxf.entities.Dimension` entity
@@ -2064,7 +2065,7 @@ class CreatorInterface:
         If an :class:`~ezdxf.math.UCS` is used for dimension line rendering,
         all point definitions in UCS coordinates, translation into :ref:`WCS`
         and :ref:`OCS` is done by the rendering function. Extrusion vector is
-        defined by UCS or ``(0, 0, 1)`` by default.
+        defined by UCS or (0, 0, 1) by default.
 
         This method returns a :class:`~ezdxf.entities.DimStyleOverride` object -
         to create the necessary dimension geometry, you have to call
@@ -2075,7 +2076,7 @@ class CreatorInterface:
         .. note::
 
             `ezdxf` ignores some DIMSTYLE variables, so render results may
-            differ from BricsCAD or AutoCAD.
+            differ from CAD applications.
 
         Args:
             origin: specifies the origin of the ordinate coordinate system
@@ -2083,11 +2084,11 @@ class CreatorInterface:
             feature_location: feature location in UCS
             leader_endpoint: leader endpoint in UCS
             location: user defined location for text mid point (in UCS)
-            text: ``None`` or ``"<>"`` the measurement is drawn as text, ``" "``
-                (one space) suppresses the dimension text, everything else
-                `text` is drawn as dimension text
+            text: ``None`` or "<>" the measurement is drawn as text,
+                " " (a single space) suppresses the dimension text,
+                everything else `text` is drawn as dimension text
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
-                table entry), default is ``'EZDXF'``
+                table entry), default is "EZDXF"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for
                 :class:`~ezdxf.entities.Dimension` entity
@@ -2160,8 +2161,7 @@ class CreatorInterface:
         of one or more vertices (or spline fit points) and an arrowhead.
         The label or other content to which the :class:`~ezdxf.entities.Leader`
         is attached is stored as a separate entity, and is not part of the
-        :class:`~ezdxf.entities.Leader` itself.
-        (requires DXF R2000)
+        :class:`~ezdxf.entities.Leader` itself. (requires DXF R2000)
 
         :class:`~ezdxf.entities.Leader` shares its styling infrastructure with
         :class:`~ezdxf.entities.Dimension`.
@@ -2175,7 +2175,7 @@ class CreatorInterface:
         Args:
             vertices: leader vertices (in :ref:`WCS`)
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
-                table entry), default is ``'EZDXF'``
+                table entry), default is "EZDXF"
             override: override :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for
                 :class:`~ezdxf.entities.Leader` entity
@@ -2218,7 +2218,7 @@ class CreatorInterface:
 
         Args:
             vertices: MLINE vertices (in :ref:`WCS`)
-            close: `True` to add a closed MLINE
+            close: ``True`` to add a closed MLINE
             dxfattribs: additional DXF attributes for
                 :class:`~ezdxf.entities.MLine` entity
 
