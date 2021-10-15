@@ -28,8 +28,8 @@ This is a repetition of the radius tutorial, just with diameter dimensions.
 
 The example above creates a 45 degrees slanted diameter :class:`~ezdxf.entities.Dimension`
 entity, the default dimension style "EZ_RADIUS" (same as for radius dimensions)
-is defined as 1 drawing unit is 1m in reality, drawing scale 1:100
-and the length factor is 100, which creates a measurement text in cm, the default
+is defined as 1 drawing unit = 1m, drawing scale = 1:100 and the length
+factor = 100, which creates a measurement text in cm, the default
 location for the measurement text is outside of the circle.
 
 The `center` point defines the the center of the circle but there doesn't have
@@ -46,22 +46,26 @@ Placing Measurement Text
 
 There are different predefined DIMSTYLES to achieve various text placing locations.
 
-DIMSTYLE "EZ_RADIUS" settings are: 1 drawing unit is 1m, scale 1:100,
-`length_factor` is 100 which creates measurement text in cm, and a closed filled
-arrow with size 0.25 is used.
+The basic DIMSTYLE "EZ_RADIUS" settings are:
+
+- 1 drawing unit = 1m
+- scale 1:100
+- the length factor :attr:`dimlfac` = 100, which creates a measurement text in cm.
+- uses a closed filled arrow, arrow size :attr:`dimasz` = 0.25
 
 .. note::
 
-    Not all possibles features of DIMSTYLE are supported and especially for
-    diameter dimension there are less features supported as for linear dimension
-    because of the lack of good documentation.
+    Not all possibles features of DIMSTYLE are supported by the `ezdxf` rendering
+    procedure and especially for the diameter dimension there are less features
+    implemented than for the linear dimension because of the lack of good
+    documentation.
 
 .. seealso::
 
     - Graphical reference of many DIMVARS and some advanced information:
       :ref:`dimstyle_table_internals`
     - Source code file `standards.py`_ shows how to create your own DIMSTYLES.
-    - `dimension_diameter.py`_ for diameter dimension examples.
+    - The Script `dimension_diameter.py`_ shows examples for radius dimensions.
 
 Default Text Locations Outside
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -69,10 +73,10 @@ Default Text Locations Outside
 "EZ_RADIUS" default settings for to place text outside:
 
 =========== ====================================================================
-tmove       1 to keep dim line with text, this is the best setting for text
-            outside to preserve appearance of the DIMENSION entity, if editing
-            afterwards in BricsCAD or AutoCAD.
-dimtad      1 to place text vertical above the dimension line
+tmove       1 = add a leader when dimension text is moved, this is the best
+            setting for text outside to preserve the appearance of the DIMENSION
+            entity, if editing afterwards in a CAD application.
+dimtad      1 = place the text vertical above the dimension line
 =========== ====================================================================
 
 .. code-block:: python
@@ -83,7 +87,7 @@ dimtad      1 to place text vertical above the dimension line
         angle=45,
         dimstyle="EZ_RADIUS"
     )
-    dim.render()  # required, but not shown in the following examples
+    dim.render()  # always required, but not shown in the following examples
 
 .. image:: gfx/dim_diameter_outside.png
 
@@ -106,22 +110,28 @@ Default Text Locations Inside
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 DIMSTYLE "EZ_RADIUS_INSIDE" can be used to place the dimension text inside
-the circle at a default location. Default DIMSTYLE settings are: 1 drawing unit
-is 1m, scale 1:100, length_factor is 100 which creates measurement text in cm,
-and a closed filled arrow with size 0.25 is used.
+the circle at a default location.
 
-"EZ_RADIUS_INSIDE" default settings:
+The basic DIMSTYLE settings are:
+
+- 1 drawing unit = 1m
+- scale 1:100, length_factor is 100 which creates
+- the length factor :attr:`dimlfac` = 100, which creates a measurement text in cm.
+- uses a closed filled arrow, arrow size :attr:`dimasz` = 0.25
+
+Advanced "EZ_RADIUS_INSIDE" settings to place (force) the text inside of the
+circle:
 
 =========== ====================================================================
-tmove       0 to keep dim line with text, this is the best setting for text
-            inside to preserve appearance of the DIMENSION entity, if editing
-            afterwards in BricsCAD or AutoCAD.
-dimtix      1 to force text inside
-dimatfit    0 to force text inside, required by BricsCAD and AutoCAD
-dimtad      0 to center text vertical, BricsCAD and AutoCAD always create
-            vertical centered text, `ezdxf` let you choose the vertical placement
-            (above, below, center), but editing the DIMENSION in BricsCAD or
-            AutoCAD will reset text to center placement.
+tmove       0 = moves the dimension line with dimension text, this is the best
+            setting for text inside to preserve the appearance of the DIMENSION
+            entity, if editing afterwards in a CAD application.
+dimtix      1 = force text inside
+dimatfit    0 = force text inside, required by BricsCAD and AutoCAD
+dimtad      0 = center text vertical, BricsCAD and AutoCAD always create a
+            vertical centered text, `ezdxf` let you choose the vertical
+            placement (above, below, center), but editing the DIMENSION in
+            BricsCAD or AutoCAD will reset text to center placement.
 =========== ====================================================================
 
 .. code-block:: python

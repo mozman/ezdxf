@@ -80,7 +80,10 @@ dimtad      1 = place the text vertical above the dimension line
 .. code-block:: python
 
     dim = msp.add_radius_dim(
-        center=(0, 0), radius=2.5, angle=45, dimstyle="EZ_RADIUS"
+        center=(0, 0),
+        radius=2.5,
+        angle=45,
+        dimstyle="EZ_RADIUS"
     )
     dim.render()  # always required, but not shown in the following examples
 
@@ -165,7 +168,8 @@ Beside the default location it is always possible to override the text location
 by a user defined location. This location also determines the angle of the
 dimension line and overrides the argument `angle`. For user defined locations
 it is not necessary to force text inside (``dimtix=1``), because the location
-of the text is explicit given, therefore the DIMSTYLE "EZ_RADIUS" can be used for all this examples.
+of the text is explicit given, therefore the DIMSTYLE "EZ_RADIUS" can be used
+for all this examples.
 
 User defined location outside of the circle:
 
