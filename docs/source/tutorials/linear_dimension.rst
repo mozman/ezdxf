@@ -41,7 +41,8 @@ tolerances and therefore they are not supported (displayed) in DXF R12 files.
 
 .. seealso::
 
-    - Graphical reference of many DIMVARS and some advanced information: :ref:`dimstyle_table_internals`
+    - Graphical reference of many DIMVARS and some advanced information:
+      :ref:`dimstyle_table_internals`
     - Source code file `standards.py`_ shows how to create your own DIMSTYLES.
     - The Script `dimension_linear.py`_ shows examples for linear dimensions.
 
@@ -59,7 +60,7 @@ Horizontal Dimension
     msp = doc.modelspace()
     # Add a LINE entity, not required
     msp.add_line((0, 0), (3, 0))
-    # Add a horizontal dimension, default dimension style is 'EZDXF'
+    # Add a horizontal dimension, default dimension style is "EZDXF"
     dim = msp.add_linear_dim(base=(3, 2), p1=(0, 0), p2=(3, 0))
     # Necessary second step, to create the BLOCK entity with the dimension geometry.
     # Additional processing of the dimension line could happen between adding and
@@ -73,9 +74,10 @@ Horizontal Dimension
 The example above creates a horizontal :class:`~ezdxf.entities.Dimension` entity.
 The default dimension style "EZDXF" is defined as:
 
-- 1 drawing unit is 1m in reality
-- the drawing scale is 1:100
-- the length factor is 100, which creates a measurement text in cm.
+- 1 drawing unit = 1m in reality
+- the drawing scale = 1:100
+- the length factor :attr:`dimlfac` = 100, which creates a measurement text in cm.
+- arrow is "ARCHTICK", arrow size :attr:`dimasz` = 0.175
 
 The `base` point defines the location of the dimension line, `ezdxf` accepts any
 point on the dimension line, the point `p1` defines the start point of the
