@@ -312,23 +312,6 @@ class Importer:
         except AttributeError:
             pass
 
-    def _import_mtext(self, mtext: "MText"):
-        assert mtext.doc is not None  # mypy
-        if mtext.has_columns and mtext.doc.dxfversion < const.DXF2018:
-            # The count of linked MTEXT entities have to match the stored column
-            # count (minus one for the main MTEXT), otherwise ezdxf does not
-            # export the MTEXT entity.
-
-            # Fix column count, by hacking a protected attribute:
-            # This may break in the future!
-            columns = mtext._columns
-            assert columns is not None  # mypy
-            column_count = columns.count
-            linked_columns_count = len(columns.linked_columns)
-            if column_count != linked_columns_count + 1:
-                columns.count = linked_columns_count + 1
-                logger.warning("Importing MTEXT with invalid column count.")
-
     def _import_insert(self, insert: "Insert"):
         self.imported_inserts.append(insert)
         # remove all possible source drawing dependencies from sub entities
