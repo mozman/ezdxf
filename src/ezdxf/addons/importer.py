@@ -26,6 +26,7 @@ if TYPE_CHECKING:
         Dimension,
         Viewport,
         Linetype,
+        MText,
     )
 
 logger = logging.getLogger("ezdxf")
@@ -313,6 +314,12 @@ class Importer:
             getattr(self, "_import_" + dxftype.lower())(new_entity)
         except AttributeError:
             pass
+
+    def _import_mtext(self, mtext: "MText"):
+        if mtext.has_columns:
+            logger.warning(
+                f"Importing MTEXT with columns may not work as expected."
+            )
 
     def _import_insert(self, insert: "Insert"):
         self.imported_inserts.append(insert)
