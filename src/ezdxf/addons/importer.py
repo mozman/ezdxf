@@ -3,12 +3,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Set, cast, Union, List, Dict
 import logging
-from ezdxf.lldxf.const import (
-    DXFKeyError,
-    DXFStructureError,
-    DXFTableEntryError,
-    DXFTypeError,
-)
+from ezdxf.lldxf import const
 from ezdxf.render.arrows import ARROWS
 
 if TYPE_CHECKING:
@@ -189,7 +184,7 @@ class Importer:
         for entry_name in entries:
             try:
                 table_entry = source_table.get(entry_name)
-            except DXFTableEntryError:
+            except const.DXFTableEntryError:
                 logger.warning(
                     f'Required table entry "{entry_name}" in table f{name} '
                     f"not found."
@@ -289,7 +284,7 @@ class Importer:
         if target_layout is None:
             target_layout = self.target.modelspace()
         elif target_layout.doc != self.target:
-            raise DXFStructureError(
+            raise const.DXFStructureError(
                 "Target layout has to be a layout or block from the target "
                 "drawing."
             )
@@ -302,7 +297,7 @@ class Importer:
 
         try:
             new_entity = cast("DXFGraphic", new_clean_entity(entity))
-        except DXFTypeError:
+        except const.DXFTypeError:
             logger.debug(f"Copying for DXF type {dxftype} not supported.")
             return
 
@@ -316,10 +311,17 @@ class Importer:
             pass
 
     def _import_mtext(self, mtext: "MText"):
-        if mtext.has_columns:
-            logger.warning(
-                f"Importing MTEXT with columns may not work as expected."
-            )
+        if mtext.has_columns and mtext.doc.dxfversion < const.DXF2018:
+            # The count of linked MTEXT entities have to match the stored column
+            # count (minus one for the main MTEXT), otherwise ezdxf does not
+            # export the MTEXT entity.
+            column_count = mtext.columns.count
+            linked_columns_count = len(mtext.columns.linked_columns)
+            if column_count != linked_columns_count + 1:
+                # Fix column count, by hacking a protected attribute:
+                # This may break in the future!
+                mtext._columns.count = linked_columns_count + 1
+                logger.warning("Importing MTEXT with invalid column count.")
 
     def _import_insert(self, insert: "Insert"):
         self.imported_inserts.append(insert)
@@ -488,7 +490,7 @@ class Importer:
 
         """
         if name.lower() == "model":
-            raise DXFTypeError(
+            raise const.DXFTypeError(
                 "Can not import modelspace, use method import_modelspace()."
             )
         source_layout = self.source.layouts.get(name)
@@ -561,7 +563,7 @@ class Importer:
 
         try:
             source_block = self.source.blocks[block_name]
-        except DXFKeyError:
+        except const.DXFKeyError:
             raise ValueError(f'Source block "{block_name}" not found.')
 
         target_blocks = self.target.blocks
