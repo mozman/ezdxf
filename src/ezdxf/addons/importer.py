@@ -5,23 +5,25 @@ from typing import TYPE_CHECKING, Iterable, Set, cast, Union, List, Dict
 import logging
 from ezdxf.lldxf import const
 from ezdxf.render.arrows import ARROWS
+from ezdxf.entities import (
+    DXFEntity,
+    DXFGraphic,
+    Hatch,
+    Polyline,
+    DimStyle,
+    Dimension,
+    Viewport,
+    Linetype,
+    Insert,
+    MText,
+)
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         Drawing,
-        DXFEntity,
         BaseLayout,
         Layout,
-        DXFGraphic,
         BlockLayout,
-        Hatch,
-        Insert,
-        Polyline,
-        DimStyle,
-        Dimension,
-        Viewport,
-        Linetype,
-        MText,
     )
 
 logger = logging.getLogger("ezdxf")
@@ -364,6 +366,8 @@ class Importer:
 
         block_name = dimension.get_dxf_attrib("geometry")
         if block_name:
+            # This branch should not be reached anymore, because each DIMENSION
+            # copy carries its geometry entities as virtual entities.
             if block_name not in self.source.blocks:
                 msg = (
                     f'Required anonymous DIMENSION block "{block_name}" does '
@@ -384,7 +388,11 @@ class Importer:
             import_arrow_blocks()
             # restore previous collected INSERT entities
             self.imported_inserts = save_imported_inserts
-
+        elif dimension.virtual_block_content:
+            # import arrow blocks used in DIMENSION geometry:
+            for entity in dimension.virtual_block_content:
+                if isinstance(entity, Insert):
+                    self.import_block(entity.dxf.name, rename=False)
         else:
             logger.error(
                 "Required anonymous geometry block for DIMENSION not defined."
