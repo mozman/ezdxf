@@ -357,38 +357,7 @@ class Importer:
         viewport.dxf.discard("ref_vp_object_4")
 
     def _import_dimension(self, dimension: "Dimension"):
-        def import_arrow_blocks():
-            """Special import, because dimension blocks (arrows) must not
-            renamed if block already exist in target drawing.
-            """
-            for insert in self.imported_inserts:
-                self.import_block(insert.dxf.name, rename=False)
-
-        block_name = dimension.get_dxf_attrib("geometry")
-        if block_name:
-            # This branch should not be reached anymore, because each DIMENSION
-            # copy carries its geometry entities as virtual entities.
-            if block_name not in self.source.blocks:
-                msg = (
-                    f'Required anonymous DIMENSION block "{block_name}" does '
-                    f"not exist in source drawing."
-                )
-                logger.error(msg)
-                return
-
-            # INSERT entities in an anonymous dimension block (arrows) gets
-            # special treatment:
-            # Do NOT rename BLOCK (arrow) if already exist! -> import_arrow_blocks()
-            save_imported_inserts = self.imported_inserts
-            self.imported_inserts = []
-            name = self.import_block(block_name, rename=True)
-            dimension.dxf.geometry = name
-
-            # special treatment for arrow blocks!
-            import_arrow_blocks()
-            # restore previous collected INSERT entities
-            self.imported_inserts = save_imported_inserts
-        elif dimension.virtual_block_content:
+        if dimension.virtual_block_content:
             # import arrow blocks used in DIMENSION geometry:
             for entity in dimension.virtual_block_content:
                 if isinstance(entity, Insert):
