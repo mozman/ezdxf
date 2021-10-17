@@ -23,6 +23,8 @@ Version 0.17.1b2 - dev
 - BUGFIX: group code 1003 is valid in XDATA section 
 - BUGFIX: fix loading error of `DIMSTYLE` attribute `dimtxsty` 
 - BUGFIX: fix "Next Entity" and "Previous Entity" actions in the `browse` command 
+- BUGFIX: export `MTEXT` entities with column count different than the count of 
+  linked `MTEXT` entities 
 
 Version 0.17 - 2021-10-01
 -------------------------

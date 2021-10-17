@@ -236,6 +236,8 @@ class MTextColumns:
         self.column_type: ColumnType = ColumnType.STATIC
         # The embedded object in R2018 does not store the column count for
         # column type DYNAMIC and auto_height is True!
+        # For DXF < R2018 the column count, may not match the count of linked
+        # MTEXT entities!
         self.count: int = 1
         self.auto_height: bool = False
         self.reversed_column_flow: bool = False
@@ -519,6 +521,7 @@ def load_mtext_column_info(tags: Tags) -> Optional[MTextColumns]:
         elif group_code == 79:
             columns.auto_height = bool(value)
         elif group_code == 76:
+            # column count, may not match the count of linked MTEXT entities!
             columns.count = int(value)
         elif group_code == 78:
             columns.reversed_column_flow = bool(value)
@@ -737,7 +740,7 @@ class MText(DXFGraphic):
                 logger.debug(
                     f"{str(self)}: column count does not match linked columns"
                 )
-                return False
+                # just log for debugging, because AutoCAD accept this!
             if not all(column.is_alive for column in columns.linked_columns):
                 logger.debug(f"{str(self)}: contains destroyed linked columns")
                 return False

@@ -511,10 +511,15 @@ class TestPreprocessDXFExport:
         mtext = new_mtext_with_linked_columns(3)
         assert mtext.preprocess_export(self.collector) is True
 
-    def test_fail_for_invalid_column_count(self):
+    def test_accept_invalid_column_count(self):
+        # Changed 2021-10-17:
+        # AutoCAD accepts a different column count as linked MTEXT entities,
+        # see issue #558. This occurs in real world DXF files and the behavior
+        # until this fix, removed valid MTEXT entities from DXF files if they
+        # were exported (saveas).
         mtext = new_mtext_with_linked_columns(3)
         mtext._columns.count = 4
-        assert mtext.preprocess_export(self.collector) is False
+        assert mtext.preprocess_export(self.collector) is True
 
     def test_fail_for_destroyed_columns(self):
         mtext = new_mtext_with_linked_columns(3)

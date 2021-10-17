@@ -381,7 +381,10 @@ Column Count
 ++++++++++++
 
 For DXF versions < R2018 the column count is always given by the count of linked
-MTEXT columns. In DXF R2018+ this property is not available, because there are
+MTEXT columns. Caution: the column count stored in the XDATA section by group
+code 76 may not match the count of linked MTEXT entities and AutoCAD is OK with
+that!
+In DXF R2018+ this property is not available, because there are
 no linked MTEXT entities anymore.
 
 R2018+: For the column types "static" and "dynamic manual" the correct column
