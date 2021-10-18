@@ -1,4 +1,4 @@
-# Purpose: Import data from another DXF drawing
+# Purpose: Import data from another DXF document
 # Copyright (c) 2013-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Set, cast, Union, List, Dict
@@ -60,7 +60,7 @@ IMPORT_ENTITIES = {
 class Importer:
     """
     The :class:`Importer` class is central element for importing data from
-    other DXF drawings.
+    other DXF documents.
 
     Args:
         source: source :class:`~ezdxf.drawing.Drawing`
@@ -136,13 +136,13 @@ class Importer:
     def import_tables(
         self, table_names: Union[str, Iterable[str]] = "*", replace=False
     ) -> None:
-        """Import DXF tables from source drawing into target drawing.
+        """Import DXF tables from the source document into the target docuement.
 
         Args:
             table_names: iterable of tables names as strings, or a single table
                 name as string or "*" for all supported tables
-            replace: True to replace already existing table entries else ignore
-                existing entries
+            replace: ``True`` to replace already existing table entries else
+                ignore existing entries
 
         Raises:
             TypeError: unsupported table type
@@ -160,14 +160,15 @@ class Importer:
         self, name: str, entries: Union[str, Iterable[str]] = "*", replace=False
     ) -> None:
         """
-        Import specific table entries from source drawing into target drawing.
+        Import specific table entries from the source document into the
+        target document.
 
         Args:
             name: valid table names are "layers", "linetypes" and "styles"
             entries: Iterable of table names as strings, or a single table name
                 or "*" for all table entries
-            replace: True to replace already existing table entry else ignore
-                existing entry
+            replace: ``True`` to replace the already existing table entry else
+                ignore existing entries
 
         Raises:
             TypeError: unsupported table type
@@ -226,9 +227,9 @@ class Importer:
             ] = new_table_entry.dxf.handle
 
     def import_shape_files(self, fonts: Set[str]) -> None:
-        """Import shape file table entries from source drawing into target
-        drawing. Shape file entries are stored in the styles table but without
-        a name.
+        """Import shape file table entries from the source document into the
+        target document.
+        Shape file entries are stored in the styles table but without a name.
 
         """
         for font in fonts:
@@ -264,15 +265,15 @@ class Importer:
     ) -> None:
         """
         Imports a single DXF `entity` into `target_layout` or the modelspace
-        of the target drawing, if `target_layout` is `None`.
+        of the target document, if `target_layout` is ``None``.
 
         Args:
             entity: DXF entity to import
             target_layout: any layout (modelspace, paperspace or block) from
-                the target drawing
+                the target document
 
         Raises:
-            DXFStructureError: `target_layout` is not a layout of target drawing
+            DXFStructureError: `target_layout` is not a layout of target document
 
         """
 
@@ -288,7 +289,7 @@ class Importer:
         elif target_layout.doc != self.target:
             raise const.DXFStructureError(
                 "Target layout has to be a layout or block from the target "
-                "drawing."
+                "document."
             )
 
         dxftype = entity.dxftype()
@@ -314,12 +315,12 @@ class Importer:
 
     def _import_insert(self, insert: "Insert"):
         self.imported_inserts.append(insert)
-        # remove all possible source drawing dependencies from sub entities
+        # remove all possible source document dependencies from sub entities
         for attrib in insert.attribs:
             remove_dependencies(attrib)
 
     def _import_polyline(self, polyline: "Polyline"):
-        # remove all possible source drawing dependencies from sub entities
+        # remove all possible source document dependencies from sub entities
         for vertex in polyline.vertices:
             remove_dependencies(vertex)
 
@@ -356,15 +357,15 @@ class Importer:
         target_layout: "BaseLayout" = None,
     ) -> None:
         """Import all `entities` into `target_layout` or the modelspace of the
-        target drawing, if `target_layout` is ``None``.
+        target document, if `target_layout` is ``None``.
 
         Args:
             entities: Iterable of DXF entities
             target_layout: any layout (modelspace, paperspace or block) from
-                the target drawing
+                the target document
 
         Raises:
-            DXFStructureError: `target_layout` is not a layout of target drawing
+            DXFStructureError: `target_layout` is not a layout of target document
 
         """
         for entity in entities:
@@ -372,14 +373,14 @@ class Importer:
 
     def import_modelspace(self, target_layout: "BaseLayout" = None) -> None:
         """Import all entities from source modelspace into `target_layout` or
-        the modelspace of the target drawing, if `target_layout` is ``None``.
+        the modelspace of the target document, if `target_layout` is ``None``.
 
         Args:
             target_layout: any layout (modelspace, paperspace or block) from
-                the target drawing
+                the target document
 
         Raises:
-            DXFStructureError: `target_layout` is not a layout of target drawing
+            DXFStructureError: `target_layout` is not a layout of target document
 
         """
         self.import_entities(
@@ -387,9 +388,9 @@ class Importer:
         )
 
     def recreate_source_layout(self, name: str) -> "Layout":
-        """Recreate source paperspace layout `name` in the target drawing.
+        """Recreate source paperspace layout `name` in the target document.
         The layout will be renamed if `name` already exist in the target
-        drawing. Returns target modelspace for layout name "Model".
+        document. Returns target modelspace for layout name "Model".
 
         Args:
             name: layout name as string
@@ -561,9 +562,9 @@ class Importer:
         return new_block_name
 
     def _create_missing_arrows(self):
-        """Create or import required arrows, used by LEADER or DIMSTYLE, which
-        are not imported automatically because they are not actually used in an
-        anonymous  DIMENSION blocks.
+        """Create or import required arrow blocks, used by the LEADER or the
+        DIMSTYLE entity, which are not imported automatically because they are
+        not used in an anonymous DIMENSION geometry BLOCK.
 
         """
         self.used_arrows.discard(
@@ -576,11 +577,11 @@ class Importer:
                 self.import_block(arrow_name, rename=False)
 
     def _resolve_inserts(self) -> None:
-        """Resolve block names of imported block reference entities (INSERT).
+        """Resolve BLOCK names of imported BLOCK reference entities (INSERT).
 
-        This is required for the case the name of the imported block collides
-        with an already existing block in the target drawing and conflict
-        resolving method was ``rename``.
+        This is required for the case the name of the imported BLOCK collides
+        with an already existing BLOCK in the target document and the conflict
+        resolving method is "rename".
 
         """
         while len(self.imported_inserts):
@@ -592,8 +593,8 @@ class Importer:
                 insert.dxf.name = block_name
 
     def _import_required_table_entries(self) -> None:
-        """Import required tables entries collected while importing entities
-        into target drawing.
+        """Import required table entries collected while importing entities
+        into the target document.
 
         """
         # 1. dimstyles import adds additional required linetype and style
