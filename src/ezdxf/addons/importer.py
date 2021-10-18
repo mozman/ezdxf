@@ -341,13 +341,13 @@ class Importer:
 
     def _import_dimension(self, dimension: "Dimension"):
         if dimension.virtual_block_content:
-            # import arrow blocks used in DIMENSION geometry:
             for entity in dimension.virtual_block_content:
-                if isinstance(entity, Insert):
+                if isinstance(entity, Insert):  # import arrow blocks
                     self.import_block(entity.dxf.name, rename=False)
+                self._add_used_resources(entity)
         else:
             logger.error(
-                "Required anonymous geometry block for DIMENSION not defined."
+                "The required geometry block for DIMENSION is not defined."
             )
 
     def import_entities(
@@ -438,10 +438,12 @@ class Importer:
         return target_layout
 
     def import_paperspace_layout(self, name: str) -> "Layout":
-        """Import paperspace layout `name` into target drawing. Recreates the
-        source paperspace layout in the target drawing, renames the target
-        paperspace if already a paperspace with same `name` exist and imports
-        all entities from source paperspace into target paperspace.
+        """Import paperspace layout `name` into the target document.
+
+        Recreates the source paperspace layout in the target document, renames
+        the target paperspace if a paperspace with same `name` already exist
+        and imports all entities from the source paperspace into the target
+        paperspace.
 
         Args:
             name: source paper space name as string
@@ -463,9 +465,10 @@ class Importer:
         return target_layout
 
     def import_paperspace_layouts(self) -> None:
-        """Import all paperspace layouts and their content into target drawing.
-        Target layouts will be renamed if already a layout with same name exist.
-        Layouts will be imported in original tab order.
+        """Import all paperspace layouts and their content into the target
+        document.
+        Target layouts will be renamed if a layout with the same name already
+        exist. Layouts will be imported in original tab order.
 
         """
         for name in self.source.layouts.names_in_taborder():
@@ -473,42 +476,48 @@ class Importer:
                 self.import_paperspace_layout(name)
 
     def import_blocks(self, block_names: Iterable[str], rename=False) -> None:
-        """Import all block definitions. If block already exist the block will
-        be renamed if argument `rename` is True, else the existing target block
-        will be used instead of the source block. Required name resolving for
-        imported block references (INSERT), will be done in
-        :meth:`Importer.finalize`.
+        """Import all BLOCK definitions from source document.
+
+        If a BLOCK already exist the BLOCK will be renamed if argument
+        `rename` is ``True``, otherwise the existing BLOCK in the target
+        document will be used instead of the BLOCK from the source document.
+        Required name resolving for imported BLOCK references (INSERT), will be
+        done in the :meth:`Importer.finalize` method.
 
         Args:
-            block_names: names of blocks to import
-            rename: rename block if exists in target drawing
+            block_names: names of BLOCK definitions to import
+            rename: rename BLOCK if a BLOCK with the same name already exist in
+                target document
 
         Raises:
-            ValueError: source block not found
+            ValueError: BLOCK in source document not found (defined)
 
         """
         for block_name in block_names:
             self.import_block(block_name, rename=rename)
 
     def import_block(self, block_name: str, rename=True) -> str:
-        """Import one block definition. If block already exist the block will
-        be renamed if argument `rename` is True, else the existing target block
-        will be used instead of the source block. Required name resolving for
-        imported block references (INSERT), will be done in
-        :meth:`Importer.finalize`.
+        """Import one BLOCK definition from source document.
 
-        To replace an existing block in the target drawing, just delete it
-        before importing:
+        If the BLOCK already exist the BLOCK will be renamed if argument
+        `rename` is ``True``, otherwise the existing BLOCK in the target
+        document will be used instead of the BLOCK in the source document.
+        Required name resolving for imported block references (INSERT), will be
+        done in the :meth:`Importer.finalize` method.
+
+        To replace an existing BLOCK in the target document, just delete it
+        before importing data:
         :code:`target.blocks.delete_block(block_name, safe=False)`
 
         Args:
-            block_name: name of block to import
-            rename: rename block if exists in target drawing
+            block_name: name of BLOCK to import
+            rename: rename BLOCK if a BLOCK with the same name already exist in
+                target document
 
-        Returns: block name (renamed)
+        Returns: (renamed) BLOCK name
 
         Raises:
-            ValueError: source block not found
+            ValueError: BLOCK in source document not found (defined)
 
         """
 
@@ -620,10 +629,10 @@ class Importer:
                     linetype.pattern_tags.set_style_handle(new_handle)
 
     def finalize(self) -> None:
-        """Finalize import by importing required table entries and block
-        definition, without finalization the target drawing is maybe invalid
-        for AutoCAD. Call :meth:`~Importer.finalize()` as last step of the
-        import process.
+        """Finalize the import by importing required table entries and BLOCK
+        definitions, without finalization the target document is maybe invalid
+        for AutoCAD. Call the :meth:`~Importer.finalize()` method as last step
+        of the import process.
 
         """
         self._resolve_inserts()
@@ -631,32 +640,34 @@ class Importer:
         self._create_missing_arrows()
 
 
-def new_clean_entity(entity: "DXFEntity", xdata: bool = False) -> "DXFEntity":
+def new_clean_entity(
+    entity: "DXFEntity", keep_xdata: bool = False
+) -> "DXFEntity":
     """Copy entity and remove all external dependencies.
 
     Args:
         entity: DXF entity
-        xdata: remove xdata flag
+        keep_xdata: keep xdata flag
 
     """
     new_entity = entity.copy()
     new_entity.doc = None
-    return remove_dependencies(new_entity, xdata=xdata)
+    return remove_dependencies(new_entity, keep_xdata=keep_xdata)
 
 
 def remove_dependencies(
-    entity: "DXFEntity", xdata: bool = False
+    entity: "DXFEntity", keep_xdata: bool = False
 ) -> "DXFEntity":
     """Remove all external dependencies.
 
     Args:
         entity: DXF entity
-        xdata: remove xdata flag
+        keep_xdata: keep xdata flag
 
     """
     entity.appdata = None
     entity.reactors = None
     entity.extension_dict = None
-    if not xdata:
+    if not keep_xdata:
         entity.xdata = None
     return entity
