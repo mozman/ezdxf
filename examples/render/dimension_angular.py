@@ -53,7 +53,7 @@ def angular_default_above(dxfversion="R2000", delta=10):
         msp.add_line(line1[0], line1[1])
         msp.add_line(line2[0], line2[1])
 
-        # Default DimStyle EZ_ANGULAR:
+        # Default DimStyle EZ_CURVED:
         # - angle units = degree
         # - scale 1: 100
         # - closed filled arrow, size = 0.25
@@ -66,7 +66,7 @@ def angular_default_above(dxfversion="R2000", delta=10):
         # line2:
         #   second line defining the angle
         dim = msp.add_angular_dim(
-            base=base, line1=line1, line2=line2, dimstyle="EZ_ANGULAR"
+            base=base, line1=line1, line2=line2, dimstyle="EZ_CURVED"
         )
         # Necessary second step, to create the BLOCK entity with the DIMENSION
         # geometry. Ezdxf supports DXF R2000 attributes for DXF R12 rendering,
@@ -91,39 +91,12 @@ def angular_default_center(dxfversion="R2000", delta=10):
             base=base,
             line1=line1,
             line2=line2,
-            dimstyle="EZ_ANGULAR",
+            dimstyle="EZ_CURVED",
             override={"dimtad": 0},
         )
         dim.render(discard=BRICSCAD)
     doc.set_modelspace_vport(height=3 * delta)
     doc.saveas(OUTDIR / f"dim_angular_{dxfversion}_default_center.dxf")
-
-def angular_user_defined_keep_with_line(dxfversion="R2000", delta=15):
-    def add_dim(x, y, radius, dimtad):
-        center = Vec3(x, y)
-        msp.add_circle((x, y), radius=3)
-        dim_location = center + Vec3.from_deg_angle(angle, radius)
-        dim = msp.add_angular_dim(
-            center=(x, y),
-            radius=3,
-            location=dim_location,
-            dimstyle="EZ_RADIUS",
-            override={
-                "dimtad": dimtad,
-            },
-        )
-        dim.render(discard=BRICSCAD)
-
-    doc = ezdxf.new(dxfversion, setup=True)
-    msp = doc.modelspace()
-    for x, y in multiple_locations(delta=delta):
-        angle = Vec3(x, y).angle_deg
-        add_dim(x, y, 5, dimtad=1)  # above
-        add_dim(x + 3 * delta, y, 5, dimtad=0)  # center
-        add_dim(x + 6 * delta, y, 5, dimtad=4)  # below
-
-    doc.set_modelspace_vport(height=3 * delta, center=(4.5 * delta, 0))
-    doc.saveas(OUTDIR / f"dim_angular_{dxfversion}_user_defined_outside.dxf")
 
 
 def angular_3d(dxfversion="R2000", delta=10):
@@ -137,7 +110,7 @@ def angular_3d(dxfversion="R2000", delta=10):
         msp.add_line(line2[0], line2[1]).transform(ucs.matrix)
 
         dim = msp.add_angular_dim(
-            base=base, line1=line1, line2=line2, dimstyle="EZ_ANGULAR"
+            base=base, line1=line1, line2=line2, dimstyle="EZ_CURVED"
         )
         dim.render(discard=BRICSCAD, ucs=ucs)
 

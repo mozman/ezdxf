@@ -1565,7 +1565,7 @@ class CreatorInterface:
         location: "Vertex" = None,
         text: str = "<>",
         text_rotation: float = None,
-        dimstyle: str = "EZDXF",
+        dimstyle: str = "EZ_CURVED",
         override: Dict = None,
         dxfattribs: Dict = None,
     ) -> "DimStyleOverride":
@@ -1643,7 +1643,7 @@ class CreatorInterface:
         location: "Vertex" = None,
         text: str = "<>",
         text_rotation: float = None,
-        dimstyle: str = "EZDXF",
+        dimstyle: str = "EZ_CURVED",
         override: Dict = None,
         dxfattribs: Dict = None,
     ) -> "DimStyleOverride":

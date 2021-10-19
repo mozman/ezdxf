@@ -8,7 +8,7 @@ from ezdxf.entities.dimstyleoverride import DimStyleOverride
 from .dim_linear import LinearDimension
 from .dim_radius import RadiusDimension
 from .dim_diameter import DiameterDimension
-from .dim_angular import AngularDimension
+from .dim_curved import AngularDimension, Angular3PDimension, ArcLengthDimension
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Dimension, BaseDimensionRenderer
@@ -20,8 +20,12 @@ class DimensionRenderer:
     ) -> "BaseDimensionRenderer":
         dimension = override.dimension
         dim_type = dimension.dimtype
-
-        if dim_type in (0, 1):
+        dxf_type = dimension.dxftype()
+        if dxf_type == "ARC_DIMENSION":
+            return self.arc_length(dimension, ucs, override)
+        elif dxf_type == "LARGE_RADIAL_DIMENSION":
+            return self.large_radial(dimension, ucs, override)
+        elif dim_type in (0, 1):
             return self.linear(dimension, ucs, override)
         elif dim_type == 2:
             return self.angular(dimension, ucs, override)
@@ -51,6 +55,7 @@ class DimensionRenderer:
         ucs: "UCS" = None,
         override: "DimStyleOverride" = None,
     ):
+        """Call renderer for angular dimension defined by two lines."""
         return AngularDimension(dimension, ucs, override)
 
     def diameter(
@@ -71,13 +76,23 @@ class DimensionRenderer:
         """Call renderer for radius dimension"""
         return RadiusDimension(dimension, ucs, override)
 
+    def large_radial(
+        self,
+        dimension: "Dimension",
+        ucs: "UCS" = None,
+        override: "DimStyleOverride" = None,
+    ):
+        """Call renderer for large radial dimension"""
+        raise NotImplementedError()
+
     def angular3p(
         self,
         dimension: "Dimension",
         ucs: "UCS" = None,
         override: "DimStyleOverride" = None,
     ):
-        raise NotImplementedError()
+        """Call renderer for angular dimension defined by three points."""
+        return Angular3PDimension(dimension, ucs, override)
 
     def ordinate(
         self,
@@ -86,3 +101,12 @@ class DimensionRenderer:
         override: "DimStyleOverride" = None,
     ):
         raise NotImplementedError()
+
+    def arc_length(
+        self,
+        dimension: "Dimension",
+        ucs: "UCS" = None,
+        override: "DimStyleOverride" = None,
+    ):
+        """Call renderer for arc length dimension."""
+        return ArcLengthDimension(dimension, ucs, override)

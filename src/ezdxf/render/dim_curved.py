@@ -8,8 +8,14 @@ from .dim_base import BaseDimensionRenderer
 if TYPE_CHECKING:
     from ezdxf.eztypes import Dimension, Vertex, GenericLayoutType
 
+__all__ = ["AngularDimension", "Angular3PDimension", "ArcLengthDimension"]
 
-class AngularDimension(BaseDimensionRenderer):
+
+class _CurvedDimensionLine(BaseDimensionRenderer):
+    pass
+
+
+class AngularDimension(_CurvedDimensionLine):
     """
     Angular dimension line renderer.
 
@@ -26,5 +32,13 @@ class AngularDimension(BaseDimensionRenderer):
         override: dimension style override management object
 
     """
+
     pass
 
+
+class Angular3PDimension(_CurvedDimensionLine):
+    pass
+
+
+class ArcLengthDimension(_CurvedDimensionLine):
+    pass

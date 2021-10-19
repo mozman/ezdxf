@@ -17,7 +17,7 @@ Please read the :ref:`tut_linear_dimension` before, if you haven't.
     msp.add_circle((0, 0), radius=3)  # add a CIRCLE entity, not required
     # add default radius dimension, measurement text is located outside
     dim = msp.add_radius_dim(
-        center=(0, 0), radius=3, angle=45, dimstyle="EZ_RADIUS"
+        center=(0, 0), radius=3, angle=45, dimstyle="EZ_CURVED"
     )
     # necessary second step, to create the BLOCK entity with the dimension geometry.
     dim.render()
