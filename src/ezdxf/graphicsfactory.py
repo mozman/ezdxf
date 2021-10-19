@@ -1612,7 +1612,7 @@ class CreatorInterface:
 
         """
         type_ = {"dimtype": const.DIM_ANGULAR | const.DIM_BLOCK_EXCLUSIVE}
-        dimline: "Dimension" = self.new_entity("DIMENSION", dxfattribs=type_).cast()  # type: ignore
+        dimline: "Dimension" = self.new_entity("DIMENSION", dxfattribs=type_)  # type: ignore
 
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["dimstyle"] = self._safe_dimstyle(dimstyle)

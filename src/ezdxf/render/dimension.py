@@ -8,6 +8,7 @@ from ezdxf.entities.dimstyleoverride import DimStyleOverride
 from .dim_linear import LinearDimension
 from .dim_radius import RadiusDimension
 from .dim_diameter import DiameterDimension
+from .dim_angular import AngularDimension
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Dimension, BaseDimensionRenderer
@@ -50,7 +51,7 @@ class DimensionRenderer:
         ucs: "UCS" = None,
         override: "DimStyleOverride" = None,
     ):
-        raise NotImplementedError()
+        return AngularDimension(dimension, ucs, override)
 
     def diameter(
         self,

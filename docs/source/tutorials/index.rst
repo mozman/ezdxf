@@ -26,5 +26,6 @@ Tutorials
     linear_dimension
     radius_dimension
     diameter_dimension
+    angular_dimension
     geo
     custom_data
