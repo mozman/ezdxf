@@ -1388,8 +1388,8 @@ class CreatorInterface:
 
         .. note::
 
-            `ezdxf` ignores some DIMSTYLE variables, so render results may differ
-            from CAD applications.
+            `Ezdxf` does not consider all DIMSTYLE variables, so the
+            rendering results are different from CAD applications.
 
         Args:
             base: location of dimension line, any point on the dimension line or
@@ -1461,8 +1461,8 @@ class CreatorInterface:
 
         .. note::
 
-            `ezdxf` ignores some DIMSTYLE variables, so render results may
-            differ from CAD applications.
+            `Ezdxf` does not consider all DIMSTYLE variables, so the
+            rendering results are different from CAD applications.
 
         Args:
             base: location of dimension line, any point on the dimension line
@@ -1522,8 +1522,8 @@ class CreatorInterface:
 
         .. note::
 
-            `ezdxf` ignores some DIMSTYLE variables, so render results may
-            differ from CAD applications.
+            `Ezdxf` does not consider all DIMSTYLE variables, so the
+            rendering results are different from CAD applications.
 
         Args:
             p1: measurement point 1 and start point of extension line 1 (in UCS)
@@ -1584,8 +1584,8 @@ class CreatorInterface:
 
         .. note::
 
-            `ezdxf` ignores some DIMSTYLE variables, so render results may
-            differ from CAD applications.
+            `Ezdxf` does not consider all DIMSTYLE variables, so the
+            rendering results are different from CAD applications.
 
         Args:
             base: location of dimension line, any point on the dimension line or
@@ -1663,8 +1663,8 @@ class CreatorInterface:
 
         .. note::
 
-            `ezdxf` ignores some DIMSTYLE variables, so render results may
-            differ from CAD applications.
+            `Ezdxf` does not consider all DIMSTYLE variables, so the
+            rendering results are different from CAD applications.
 
         Args:
             base: location of dimension line, any point on the dimension line
@@ -1745,8 +1745,8 @@ class CreatorInterface:
 
         .. note::
 
-            `ezdxf` ignores some DIMSTYLE variables, so render results may
-            differ from CAD applications.
+            `Ezdxf` does not consider all DIMSTYLE variables, so the
+            rendering results are different from CAD applications.
 
         Args:
             center: specifies the center of the circle (in UCS)
@@ -1905,8 +1905,8 @@ class CreatorInterface:
 
         .. note::
 
-            `ezdxf` ignores some DIMSTYLE variables, so render results may
-            differ from CAD applications.
+            `Ezdxf` does not consider all DIMSTYLE variables, so the
+            rendering results are different from CAD applications.
 
         Args:
             center: center point of the circle (in UCS)
@@ -2075,8 +2075,8 @@ class CreatorInterface:
 
         .. note::
 
-            `ezdxf` ignores some DIMSTYLE variables, so render results may
-            differ from CAD applications.
+            `Ezdxf` does not consider all DIMSTYLE variables, so the
+            rendering results are different from CAD applications.
 
         Args:
             origin: specifies the origin of the ordinate coordinate system

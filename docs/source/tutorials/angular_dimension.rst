@@ -5,6 +5,11 @@ Tutorial for Angular Dimensions
 
 Please read the :ref:`tut_linear_dimension` before, if you haven't.
 
+.. note::
+
+    `Ezdxf` does not consider all DIMSTYLE variables, so the
+    rendering results are different from CAD applications.
+
 .. code-block:: Python
 
     import ezdxf

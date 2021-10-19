@@ -21,6 +21,11 @@ AutoCAD, `ezdxf` tries to be as close to the results rendered by BricsCAD, but
 it was not possible to implement all the various combinations of dimension style
 parameters.
 
+.. note::
+
+    `Ezdxf` does not consider all DIMSTYLE variables, so the
+    rendering results are different from CAD applications.
+
 Text rendering is another problem, because `ezdxf` has no real rendering engine.
 Some font properties, like the real text width, which is only available to
 `ezdxf` if the `Matplotlib` package is installed and may also vary slightly for

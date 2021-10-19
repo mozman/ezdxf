@@ -5,6 +5,11 @@ Tutorial for Diameter Dimensions
 
 Please read the :ref:`tut_radius_dimension` before, if you haven't.
 
+.. note::
+
+    `Ezdxf` does not consider all DIMSTYLE variables, so the
+    rendering results are different from CAD applications.
+
 This is a repetition of the radius tutorial, just with diameter dimensions.
 
 .. code-block:: Python
