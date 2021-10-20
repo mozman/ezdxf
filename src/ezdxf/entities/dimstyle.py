@@ -31,11 +31,13 @@ acdb_dimstyle = DefSubclass(
         "flags": DXFAttr(70, default=0),
         "dimpost": DXFAttr(3, default=""),
         "dimapost": DXFAttr(4, default=""),
+
         # Arrow names are the base data -> handle (DXF2000) is set at export
         "dimblk": DXFAttr(5, default=""),
         "dimblk1": DXFAttr(6, default=""),
         "dimblk2": DXFAttr(7, default=""),
         "dimscale": DXFAttr(40, default=1),
+
         # 0 has a special but unknown meaning, handle as 1.0
         "dimasz": DXFAttr(41, default=2.5),
         "dimexo": DXFAttr(42, default=0.625),
@@ -45,32 +47,55 @@ acdb_dimstyle = DefSubclass(
         "dimdle": DXFAttr(46, default=0),  # dimension line extension
         "dimtp": DXFAttr(47, default=0),
         "dimtm": DXFAttr(48, default=0),
+
         # undocumented: length of extension line if fixed (dimfxlon = 1)
         "dimfxl": DXFAttr(49, dxfversion=DXF2007, default=2.5),
+
         # jog angle, Angle of oblique dimension line segment in jogged radius dimension
         "dimjogang": DXFAttr(50, dxfversion=DXF2007, default=90, optional=True),
-        "dimtxt": DXFAttr(140, default=2.5),  # measurement text height
-        "dimcen": DXFAttr(141, default=2.5),
+
+        # measurement text height
+        "dimtxt": DXFAttr(140, default=2.5),
+
         # center marks and center lines; 0 = off, <0 = center line, >0 = center mark
+        "dimcen": DXFAttr(141, default=2.5),
         "dimtsz": DXFAttr(142, default=0),
         "dimaltf": DXFAttr(143, default=0.03937007874),
-        "dimlfac": DXFAttr(144, default=1),  # length factor
-        "dimtvp": DXFAttr(145, default=0),  # text vertical position if dimtad=0
+
+        # measurement length factor
+        "dimlfac": DXFAttr(144, default=1),
+
+        # text vertical position if dimtad=0
+        "dimtvp": DXFAttr(145, default=0),
         "dimtfac": DXFAttr(146, default=1),
-        "dimgap": DXFAttr(147, default=0.625),
+
         # default gap around the measurement text
+        "dimgap": DXFAttr(147, default=0.625),
         "dimaltrnd": DXFAttr(148, dxfversion=DXF2000, default=0),
-        "dimtfill": DXFAttr(69, dxfversion=DXF2007, default=0),
+
         # 0=None, 1=canvas color, 2=dimtfillclr
-        "dimtfillclr": DXFAttr(70, dxfversion=DXF2007, default=0),
+        "dimtfill": DXFAttr(69, dxfversion=DXF2007, default=0),
+
         # color index for dimtfill==2
+        "dimtfillclr": DXFAttr(70, dxfversion=DXF2007, default=0),
+
         "dimtol": DXFAttr(71, default=0),
         "dimlim": DXFAttr(72, default=0),
-        "dimtih": DXFAttr(73, default=0),  # text inside horizontal
-        "dimtoh": DXFAttr(74, default=0),  # text outside horizontal
-        "dimse1": DXFAttr(75, default=0),  # suppress extension line 1
-        "dimse2": DXFAttr(76, default=0),  # suppress extension line 2
-        "dimtad": DXFAttr(77, default=1),  # 0=center; 1+2+3=above; 4=below
+
+        # text inside horizontal
+        "dimtih": DXFAttr(73, default=0),
+
+        # text outside horizontal
+        "dimtoh": DXFAttr(74, default=0),
+
+        # suppress extension line 1
+        "dimse1": DXFAttr(75, default=0),
+
+        # suppress extension line 2
+        "dimse2": DXFAttr(76, default=0),
+
+        # text vertical location: 0=center; 1+2+3=above; 4=below
+        "dimtad": DXFAttr(77, default=1),
         "dimzin": DXFAttr(78, default=8),
         "dimazin": DXFAttr(79, default=0, dxfversion=DXF2000),
         "unknown1": DXFAttr(90, dxfversion=DXF2000, optional=True),
@@ -78,11 +103,19 @@ acdb_dimstyle = DefSubclass(
         "dimaltd": DXFAttr(171, default=3),
         "dimtofl": DXFAttr(172, default=1),
         "dimsah": DXFAttr(173, default=0),
-        "dimtix": DXFAttr(174, default=0),  # force dimension text inside
+
+        # force dimension text inside
+        "dimtix": DXFAttr(174, default=0),
         "dimsoxd": DXFAttr(175, default=0),
-        "dimclrd": DXFAttr(176, default=0),  # dimension line color
-        "dimclre": DXFAttr(177, default=0),  # extension line color
-        "dimclrt": DXFAttr(178, default=0),  # text color
+
+        # dimension line color
+        "dimclrd": DXFAttr(176, default=0),
+
+        # extension line color
+        "dimclre": DXFAttr(177, default=0),
+
+        # text color
+        "dimclrt": DXFAttr(178, default=0),
         "dimadec": DXFAttr(179, dxfversion=DXF2000, default=0),
         "dimunit": DXFAttr(270),  # obsolete
         "dimdec": DXFAttr(271, dxfversion=DXF2000, default=0),
@@ -94,62 +127,89 @@ acdb_dimstyle = DefSubclass(
         "dimfrac": DXFAttr(276, dxfversion=DXF2000, default=0),
         "dimlunit": DXFAttr(277, dxfversion=DXF2000, default=2),
         "dimdsep": DXFAttr(278, dxfversion=DXF2000, default=44),
+
         # 0 = Moves the dimension line with dimension text
         # 1 = Adds a leader when dimension text is moved
         # 2 = Allows text to be moved freely without a leader
         "dimtmove": DXFAttr(279, dxfversion=DXF2000, default=0),
-        "dimjust": DXFAttr(280, dxfversion=DXF2000, default=0),
+
         # 0=center; 1=left; 2=right; 3=above ext1; 4=above ext2
-        "dimsd1": DXFAttr(281, dxfversion=DXF2000, default=0),
+        "dimjust": DXFAttr(280, dxfversion=DXF2000, default=0),
+
         # suppress first part of the dimension line
-        "dimsd2": DXFAttr(282, dxfversion=DXF2000, default=0),
+        "dimsd1": DXFAttr(281, dxfversion=DXF2000, default=0),
+
         # suppress second part of the dimension line
+        "dimsd2": DXFAttr(282, dxfversion=DXF2000, default=0),
+
         "dimtolj": DXFAttr(283, dxfversion=DXF2000, default=0),
         "dimtzin": DXFAttr(284, dxfversion=DXF2000, default=8),
         "dimaltz": DXFAttr(285, dxfversion=DXF2000, default=0),
         "dimalttz": DXFAttr(286, dxfversion=DXF2000, default=0),
         "dimfit": DXFAttr(287),  # obsolete, now use DIMATFIT and DIMTMOVE
         "dimupt": DXFAttr(288, dxfversion=DXF2000, default=0),
+
+        # Determines how dimension text and arrows are arranged when space is
+        # not sufficient to place both within the extension lines.
         # 0 = Places both text and arrows outside extension lines
         # 1 = Moves arrows first, then text
         # 2 = Moves text first, then arrows
         # 3 = Moves either text or arrows, whichever fits best
         "dimatfit": DXFAttr(289, dxfversion=DXF2000, default=3),
-        "dimfxlon": DXFAttr(290, dxfversion=DXF2007, default=0),
+
         # undocumented: 1 = fixed extension line length
-        # virtual DXF attribute 'dimtxsty': set/get STYLE by name
+        "dimfxlon": DXFAttr(290, dxfversion=DXF2007, default=0),
+
+        # Virtual tags are transformed at DXF export - for DIMSTYLE the
+        # resource names are exported as <name>_handle tags:
+
+        # virtual: set/get STYLE by name
         "dimtxsty": DXFAttr(VIRTUAL_TAG, dxfversion=DXF2000),
-        # virtual DXF attribute 'dimldrblk': set/get leader arrow by block name
+
+        # virtual: set/get leader arrow by block name
         "dimldrblk": DXFAttr(VIRTUAL_TAG, dxfversion=DXF2000),
-        # virtual DXF attribute 'dimltype': set/get LINETYPE by name
+
+        # virtual: set/get LINETYPE by name
         "dimltype": DXFAttr(VIRTUAL_TAG, dxfversion=DXF2007),
-        # virtual DXF attribute 'dimltex1': set/get referenced LINETYPE by name
-        # as callback
+
+        # virtual: set/get referenced LINETYPE by name
         "dimltex2": DXFAttr(VIRTUAL_TAG, dxfversion=DXF2007),
-        # virtual DXF attribute 'dimltex1': set/get referenced LINETYPE by name
-        # as callback
+
+        # virtual: set/get referenced LINETYPE by name
         "dimltex1": DXFAttr(VIRTUAL_TAG, dxfversion=DXF2007),
-        # handles not used internally, handles are set at export
-        "dimtxsty_handle": DXFAttr(340, dxfversion=DXF2000),
+
+        # Entity handles are not used internally (see virtual tags above),
+        # these handles are set at DXF export:
+
         # handle of referenced STYLE entry
+        "dimtxsty_handle": DXFAttr(340, dxfversion=DXF2000),
+
+        # handle of referenced BLOCK_RECORD
         "dimblk_handle": DXFAttr(342, dxfversion=DXF2000),
+
         # handle of referenced BLOCK_RECORD
         "dimblk1_handle": DXFAttr(343, dxfversion=DXF2000),
+
         # handle of referenced BLOCK_RECORD
         "dimblk2_handle": DXFAttr(344, dxfversion=DXF2000),
+
         # handle of referenced BLOCK_RECORD
         "dimldrblk_handle": DXFAttr(341, dxfversion=DXF2000),
-        # handle of referenced BLOCK_RECORD
-        "dimltype_handle": DXFAttr(345, dxfversion=DXF2007),
+
         # handle of linetype for dimension line
-        "dimltex1_handle": DXFAttr(346, dxfversion=DXF2007),
+        "dimltype_handle": DXFAttr(345, dxfversion=DXF2007),
+
         # handle of linetype for extension line 1
-        "dimltex2_handle": DXFAttr(347, dxfversion=DXF2007),
+        "dimltex1_handle": DXFAttr(346, dxfversion=DXF2007),
+
         # handle of linetype for extension line 2
+        "dimltex2_handle": DXFAttr(347, dxfversion=DXF2007),
+
         # dimension line lineweight enum value, default BYBLOCK
         "dimlwd": DXFAttr(
             371, default=const.LINEWEIGHT_BYBLOCK, dxfversion=DXF2000
         ),
+
         # extension line lineweight enum value, default BYBLOCK
         "dimlwe": DXFAttr(
             372, default=const.LINEWEIGHT_BYBLOCK, dxfversion=DXF2000

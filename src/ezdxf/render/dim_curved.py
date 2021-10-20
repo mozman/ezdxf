@@ -32,6 +32,10 @@ class AngularDimension(_CurvedDimensionLine):
         override: dimension style override management object
 
     """
+    # unsupported or ignored features (at least by BricsCAD):
+    # dimtih: text inside horizontal
+    # dimtoh: text outside horizontal
+    # dimjust: text position horizontal
 
     pass
 
