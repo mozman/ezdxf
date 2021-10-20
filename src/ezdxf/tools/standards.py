@@ -166,15 +166,15 @@ def setup_dimstyles(doc: "Drawing", domain: str = "all") -> None:
             0  # required by BricsCAD (AutoCAD) to force text inside
         )
         ez_radius_inside.dxf.dimtad = 0  # center text vertical
-    if domain in ("curved", "all"):
+    if domain in ("angular", "all"):
         # curved dimension lines for angular and arc dimensions
-        ez_curved = cast(
-            "DimStyle", doc.dimstyles.duplicate_entry("EZDXF", "EZ_CURVED")
+        ez_angular = cast(
+            "DimStyle", doc.dimstyles.duplicate_entry("EZDXF", "EZ_ANGULAR")
         )
-        ez_curved.set_arrows(blk=ARROWS.closed_filled)
-        ez_curved.dxf.dimasz = 0.25  # set arrow size
-        ez_curved.dxf.dimtad = 1  # above
-        ez_curved.dxf.dimaunit = 0  # 0=decimal deg 1=DMS 2=Grad 3=Radians
+        ez_angular.set_arrows(blk=ARROWS.closed_filled)
+        ez_angular.dxf.dimasz = 0.25  # set arrow size
+        ez_angular.dxf.dimtad = 1  # above
+        ez_angular.dxf.dimaunit = 0  # 0=decimal deg 1=DMS 2=Grad 3=Radians
 
 
 class DimStyleFmt:

@@ -36,13 +36,13 @@ BRICSCAD = True
 
 
 def multiple_locations(delta=10):
-    base0 = Vec3(5.8833, -6.3408)
-    l1_p1 = Vec3(2.0101, -7.5156) - base0
-    l1_p2 = Vec3(2.7865, -10.4133) - base0
-    l2_p1 = Vec3(6.7054, -7.5156) - base0
-    l2_p2 = Vec3(5.9289, -10.4133) - base0
+    base = Vec3(5.8833, -6.3408)
+    p1 = Vec3(2.0101, -7.5156) - base
+    p2 = Vec3(2.7865, -10.4133) - base
+    p3 = Vec3(6.7054, -7.5156) - base
+    p4 = Vec3(5.9289, -10.4133) - base
     return [
-        (Vec3(), (l1_p1, l1_p2), (l2_p1, l2_p2)),
+        (Vec3(), (p1, p2), (p3, p4)),
     ]
 
 
@@ -66,7 +66,7 @@ def angular_default_above(dxfversion="R2000", delta=10):
         # line2:
         #   second line defining the angle
         dim = msp.add_angular_dim(
-            base=base, line1=line1, line2=line2, dimstyle="EZ_CURVED"
+            base=base, line1=line1, line2=line2, dimstyle="EZ_ANGULAR"
         )
         # Necessary second step, to create the BLOCK entity with the DIMENSION
         # geometry. Ezdxf supports DXF R2000 attributes for DXF R12 rendering,
@@ -91,7 +91,7 @@ def angular_default_center(dxfversion="R2000", delta=10):
             base=base,
             line1=line1,
             line2=line2,
-            dimstyle="EZ_CURVED",
+            dimstyle="EZ_ANGULAR",
             override={"dimtad": 0},
         )
         dim.render(discard=BRICSCAD)
@@ -110,7 +110,7 @@ def angular_3d(dxfversion="R2000", delta=10):
         msp.add_line(line2[0], line2[1]).transform(ucs.matrix)
 
         dim = msp.add_angular_dim(
-            base=base, line1=line1, line2=line2, dimstyle="EZ_CURVED"
+            base=base, line1=line1, line2=line2, dimstyle="EZ_ANGULAR"
         )
         dim.render(discard=BRICSCAD, ucs=ucs)
 

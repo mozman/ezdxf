@@ -18,8 +18,8 @@ many CAD application.
 
 Don't expect to get the same rendering results by `ezdxf` as you get from
 AutoCAD, `ezdxf` tries to be as close to the results rendered by BricsCAD, but
-it was not possible to implement all the various combinations of dimension style
-parameters.
+it is not possible to implement all the various combinations of dimension style
+parameters, which often affect one another.
 
 .. note::
 
@@ -58,18 +58,28 @@ Horizontal Dimension
 
     import ezdxf
 
-    # Argument setup=True setups the default dimension styles
+    # Create a DXF R2010 document:
+    # Use argument setup=True to setup the default dimension styles.
     doc = ezdxf.new("R2010", setup=True)
 
-    # Add new dimension entities to the modelspace
+    # Add new dimension entities to the modelspace:
     msp = doc.modelspace()
-    # Add a LINE entity, not required
+
+    # Add a LINE entity for visualization, not required to create the DIMENSION
+    # entity:
     msp.add_line((0, 0), (3, 0))
-    # Add a horizontal dimension, default dimension style is "EZDXF"
-    dim = msp.add_linear_dim(base=(3, 2), p1=(0, 0), p2=(3, 0))
-    # Necessary second step, to create the BLOCK entity with the dimension geometry.
-    # Additional processing of the dimension line could happen between adding and
-    # rendering call.
+
+    # Add a horizontal linear DIMENSION entity:
+    dim = msp.add_linear_dim(
+        base=(3, 2),  # location of the dimension line
+        p1=(0, 0),  # 1st measurement point
+        p2=(3, 0),  # 2nd measurement point
+        dimstyle="EZDXF",  # default dimension style
+    )
+
+    # Necessary second step to create the BLOCK entity with the dimension geometry.
+    # Additional processing of the DIMENSION entity could happen between adding
+    # the entity and the rendering call.
     dim.render()
     doc.saveas("dim_linear_horiz.dxf")
 
@@ -79,10 +89,14 @@ Horizontal Dimension
 The example above creates a horizontal :class:`~ezdxf.entities.Dimension` entity.
 The default dimension style "EZDXF" is defined as:
 
-- 1 drawing unit = 1m in reality
-- the drawing scale = 1:100
+- 1 drawing unit = 1m
+- measurement text height = 0.25 (drawing scale = 1:100)
 - the length factor :attr:`dimlfac` = 100, which creates a measurement text in cm.
 - arrow is "ARCHTICK", arrow size :attr:`dimasz` = 0.175
+
+Every dimension style which does not exist will be replaced by the dimension
+style "Standard" at DXF export by :meth:`save` or :meth:`saveas`
+(e.g. dimension style setup was not initiated).
 
 The `base` point defines the location of the dimension line, `ezdxf` accepts any
 point on the dimension line, the point `p1` defines the start point of the
