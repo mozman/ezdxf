@@ -236,7 +236,7 @@ class LinearDimension(BaseDimensionRenderer):
 
         """
         shift_vec = Vec2((self.text_shift_h, self.text_shift_v))
-        location += shift_vec.rotate(text_rotation)
+        location += shift_vec.rotate_deg(text_rotation)
         return location
 
     def render(self, block: "GenericLayoutType") -> None:

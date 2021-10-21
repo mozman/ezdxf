@@ -326,7 +326,7 @@ class OverrideMixin:
         (internal API)
 
         """
-        assert self.doc, "valid DXF document required"  # type: ignore
+        assert self.doc is not None, "valid DXF document required"  # type: ignore
         # ezdxf uses internally only resource names for arrows, line types and
         # text styles, but DXF 2000 and later requires handles for these
         # resources:
@@ -336,13 +336,13 @@ class OverrideMixin:
         dim_style_attributes = self.dim_style_attributes()
         for key, value in data.items():
             if key not in dim_style_attributes:
-                logging.warning(f'Ignore unknown DIMSTYLE attribute: "{key}"')
+                logger.debug(f'Ignore unknown DIMSTYLE attribute: "{key}"')
                 continue
             dxf_attr = dim_style_attributes.get(key)
             # Skip internal and virtual tags:
             if dxf_attr and dxf_attr.code > 0:
                 if dxf_attr.dxfversion > actual_dxfversion:
-                    logging.warning(
+                    logger.debug(
                         f'Unsupported DIMSTYLE attribute "{key}" for '  # type: ignore
                         f"DXF version {self.doc.acad_release}"  # type: ignore
                     )

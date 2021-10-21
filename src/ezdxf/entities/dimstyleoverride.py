@@ -530,7 +530,7 @@ class DimStyleOverride:
         renderer = self.get_renderer(ucs)
         if discard:
             self.doc.add_acad_incompatibility_message(
-                "DIMENSION without geometry as BLOCK (discard=True)"
+                f"DIMENSION entity without geometry BLOCK (discard=True)"
             )
         else:
             block = self.doc.blocks.new_anonymous_block(type_char="D")
