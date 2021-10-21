@@ -25,6 +25,7 @@ Version 0.17.1b2 - dev
 - BUGFIX: fix "Next Entity" and "Previous Entity" actions in the `browse` command 
 - BUGFIX: export `MTEXT` entities with column count different than the count of 
   linked `MTEXT` entities 
+- BUGFIX: fix invalid text rotation for relative text shifting for linear dimensions
 
 Version 0.17 - 2021-10-01
 -------------------------

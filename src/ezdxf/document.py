@@ -820,7 +820,7 @@ class Drawing:
         if msg not in self._acad_incompatibility_reason:
             self._acad_incompatibility_reason.add(msg)
             logger.warning(
-                f"Drawing is incompatible to AutoCAD, because {msg}."
+                f"DXF document is not AutoCAD compatible! {msg}."
             )
 
     def query(self, query: str = "*") -> EntityQuery:
