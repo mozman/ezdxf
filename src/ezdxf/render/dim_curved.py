@@ -1,13 +1,13 @@
 # Copyright (c) 2021, Manfred Moitzi
 # License: MIT License
 import math
-from typing import TYPE_CHECKING, Tuple, List, Iterable
+from typing import TYPE_CHECKING, Tuple, List
 from abc import abstractmethod
 
-from ezdxf.math import Vec2, Vec3, UCS
-from ezdxf.lldxf import const
+from ezdxf.math import Vec2, Vec3, UCS, ConstructionBox
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 from .dim_base import BaseDimensionRenderer
+from ezdxf.math import ConstructionCircle
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import GenericLayoutType, Dimension, DXFEntity
@@ -165,20 +165,21 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
                 dxfattribs=dxfattribs,
             )
 
-        def visible_arcs() -> Iterable[Tuple[float, float]]:
-            """Returns the visible parts of the dimension line as
-            (start angle, end angle) tuples.
-
-            """
-            yield start_angle, end_angle
-
         ocs_angle = self.ucs.to_ocs_angle_rad
         attribs = self.default_attributes()
         if dxfattribs:
             attribs.update(dxfattribs)
-
-        for start, end in visible_arcs():
-            add_arc(start, end)
+        if remove_hidden_lines:
+            for start, end in visible_arcs(
+                self.center_of_arc,
+                radius,
+                start_angle,
+                end_angle,
+                self.text_box,
+            ):
+                add_arc(start, end)
+        else:
+            add_arc(start_angle, end_angle)
 
 
 class AngularDimension(_CurvedDimensionLine):
@@ -262,3 +263,60 @@ class ArcLengthDimension(_CurvedDimensionLine):
     # defpoint2 = 1st arc point (group code 13)
     # defpoint3 = 2nd arc point (group code 14)
     # defpoint4 = center of arc (group code 15)
+
+
+def visible_arcs(
+    center: Vec2,
+    radius: float,
+    start_angle: float,
+    end_angle: float,
+    box: ConstructionBox,
+) -> List[Tuple[float, float]]:
+    """Returns the visible parts of an arc intersecting with a construction box
+    as (start angle, end angle) tuples.
+
+    Args:
+        center: center of the arc
+        radius: radius of the arc
+        start_angle: start angle of arc in radians
+        end_angle: end angle of arc in radians
+        box: construction box which may intersect the arc
+
+    """
+    tau = math.tau
+    # normalize angles into range 0 to 2pi
+    start_angle = start_angle % tau
+    end_angle = end_angle % tau
+    intersection_angles: List[float] = []  # angles are in the range 0 to 2pi
+    circle = ConstructionCircle(center, radius)
+    shift_angles = 0.0
+    if start_angle > end_angle:  # angles should not pass 0
+        shift_angles = tau
+        end_angle += tau
+
+    for line in box.border_lines():
+        for intersection_point in circle.intersect_ray(line.ray):
+            # is the intersection point in the range of the rectangle border
+            if line.bounding_box.inside(intersection_point):
+                angle = (
+                    (intersection_point - center).angle % tau
+                ) + shift_angles
+                # is angle in range of the arc
+                if start_angle < angle < end_angle:
+                    # new angle should be different than the last angle added:
+                    if intersection_angles and math.isclose(
+                        intersection_angles[-1], angle
+                    ):
+                        continue
+                    intersection_angles.append(angle)
+    if len(intersection_angles) == 2:
+        # Arc has to intersect the box in exact two locations!
+        intersection_angles.sort()
+        return [
+            (start_angle, intersection_angles[0]),
+            (intersection_angles[1], end_angle),
+        ]
+    else:
+        # Ignore cases where the start- or the end point is inside the box.
+        # Ignore cases where the box touches the arc in one point.
+        return [(start_angle, end_angle)]
