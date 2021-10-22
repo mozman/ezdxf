@@ -573,7 +573,7 @@ class DimStyle(DXFEntity):
 
     def print_dim_attribs(self) -> None:
         attdef = self.DXFATTRIBS.get
-        for name, value in self.dxfattribs():
+        for name, value in self.dxfattribs().items():
             if name.startswith("dim"):
                 print(f"{name} ({attdef(name).code}) = {value}")  # type: ignore
 

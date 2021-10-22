@@ -1,7 +1,7 @@
 .. _tut_angular_dimension:
 
-Tutorial for Angular Dimensions
-===============================
+Tutorial for Angular Dimensions (work in progress)
+==================================================
 
 Please read the :ref:`tut_linear_dimension` before, if you haven't.
 
