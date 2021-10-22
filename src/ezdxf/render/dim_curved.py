@@ -4,13 +4,19 @@ from typing import TYPE_CHECKING, Tuple, List
 from abc import abstractmethod
 
 from ezdxf.math import Vec2, Vec3, UCS
+from ezdxf.lldxf import const
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 from .dim_base import BaseDimensionRenderer
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import GenericLayoutType, Dimension
+    from ezdxf.eztypes import GenericLayoutType, Dimension, DXFEntity
 
 __all__ = ["AngularDimension", "Angular3PDimension", "ArcLengthDimension"]
+
+
+def has_required_attributes(entity: "DXFEntity", attrib_names: List[str]):
+    has = entity.dxf.hasattr
+    return all(has(attrib_name) for attrib_name in attrib_names)
 
 
 class _CurvedDimensionLine(BaseDimensionRenderer):
@@ -130,7 +136,65 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
 
 class AngularDimension(_CurvedDimensionLine):
     """
-    Angular dimension line renderer.
+    Angular dimension line renderer. The dimension line is defined by two lines.
+
+    Supported render types:
+
+    - default location above
+    - default location center
+    - user defined location, text aligned with dimension line
+    - user defined location horizontal text
+
+    Args:
+        dimension: DIMENSION entity
+        ucs: user defined coordinate system
+        override: dimension style override management object
+
+    """
+
+    # Required defpoints:
+    # defpoint = start point of 1st leg (group code 10)
+    # defpoint4 = end point of 1st leg (group code 15)
+    # defpoint3 = start point of 2nd leg (group code 14)
+    # defpoint2 = end point of 2nd leg (group code 13)
+    # defpoint5 = location of dimension line (group code 16)
+
+    # unsupported or ignored features (at least by BricsCAD):
+    # dimtih: text inside horizontal
+    # dimtoh: text outside horizontal
+    # dimjust: text position horizontal
+
+
+class Angular3PDimension(_CurvedDimensionLine):
+    """
+    Angular dimension line renderer. The dimension line is defined by three
+    points.
+
+    Supported render types:
+
+    - default location above
+    - default location center
+    - user defined location, text aligned with dimension line
+    - user defined location horizontal text
+
+    Args:
+        dimension: DIMENSION entity
+        ucs: user defined coordinate system
+        override: dimension style override management object
+
+    """
+
+    # Required defpoints:
+    # defpoint = location of dimension line (group code 10)
+    # defpoint2 = 1st leg (group code 13)
+    # defpoint3 = 2nd leg (group code 14)
+    # defpoint4 = center of angle (group code 15)
+
+
+class ArcLengthDimension(_CurvedDimensionLine):
+    """
+    Arc length dimension line renderer.
+    Requires DXF R2004.
 
     Supported render types:
 
@@ -146,17 +210,8 @@ class AngularDimension(_CurvedDimensionLine):
 
     """
 
-    # unsupported or ignored features (at least by BricsCAD):
-    # dimtih: text inside horizontal
-    # dimtoh: text outside horizontal
-    # dimjust: text position horizontal
-
-    pass
-
-
-class Angular3PDimension(_CurvedDimensionLine):
-    pass
-
-
-class ArcLengthDimension(_CurvedDimensionLine):
-    pass
+    # Required defpoints:
+    # defpoint = location of dimension line (group code 10)
+    # defpoint2 = 1st arc point (group code 13)
+    # defpoint3 = 2nd arc point (group code 14)
+    # defpoint4 = center of arc (group code 15)

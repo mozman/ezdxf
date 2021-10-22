@@ -511,6 +511,12 @@ class BaseDimensionRenderer:
             self.tol_text_width = None  # requires actual measurement
             self.text_height = max(self.text_height, self.tol_text_height)
 
+    def get_required_defpoint(self, name: str) -> Vec2:
+        dxf = self.dimension.dxf
+        if dxf.hasattr(name):  # has to exist, ignore default value!
+            return Vec2(dxf.get(name))
+        raise const.DXFMissingDefinitionPoint(name)
+
     def default_text_style(self):
         style = options.default_dimension_text_style
         if style not in self.doc.styles:

@@ -137,6 +137,20 @@ class DXFUndefinedBlockError(DXFKeyError):
     pass
 
 
+class DXFRenderError(DXFError):
+    """Errors related to DXF "rendering" tasks.
+
+    In this context "rendering" means creating the graphical representation of
+    complex DXF entities by DXF primitives (LINE, TEXT, ...)
+    e.g. for DIMENSION or LEADER entities.
+    """
+    pass
+
+
+class DXFMissingDefinitionPoint(DXFRenderError):
+    """Missing required definition points in the DIMENSION entity. """
+
+
 MANAGED_SECTIONS = {
     "HEADER",
     "CLASSES",
