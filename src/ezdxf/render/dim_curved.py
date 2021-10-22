@@ -1,6 +1,7 @@
 # Copyright (c) 2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple, List
+import math
+from typing import TYPE_CHECKING, Tuple, List, Iterable
 from abc import abstractmethod
 
 from ezdxf.math import Vec2, Vec3, UCS
@@ -29,7 +30,8 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         super().__init__(dimension, ucs, override)
         self.start_angle_rad: float = self.get_start_angle_rad()
         self.end_angle_rad: float = self.get_end_angle_rad()
-        self.center_of_angle: Vec2 = self.get_center_of_angle()
+        self.center_of_arc: Vec2 = self.get_center_of_arc()
+        self.ocs_center_of_arc = self.ucs.to_ocs(Vec3(self.center_of_arc))
         self.dim_line_center: Vec2 = self.get_dim_line_center()
         self.dim_line_radius: float = self.get_dim_line_radius()
 
@@ -65,9 +67,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
 
     def get_dim_line_center(self) -> Vec2:
         angle = (self.start_angle_rad + self.end_angle_rad) / 2.0
-        return self.center_of_angle + Vec2.from_angle(
-            angle, self.dim_line_radius
-        )
+        return self.center_of_arc + Vec2.from_angle(angle, self.dim_line_radius)
 
     @abstractmethod
     def get_start_angle_rad(self) -> float:
@@ -78,7 +78,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         pass
 
     @abstractmethod
-    def get_center_of_angle(self) -> Vec2:
+    def get_center_of_arc(self) -> Vec2:
         pass
 
     @abstractmethod
@@ -132,6 +132,53 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         self.add_text(
             dim_text, pos=Vec3(pos), rotation=rotation, dxfattribs=attribs
         )
+
+    def add_dxf_arc(
+        self,
+        radius: float,
+        start_angle: float,
+        end_angle: float,
+        dxfattribs: dict = None,
+        remove_hidden_lines=False,
+    ) -> None:
+        """Add a ARC entity to the dimension BLOCK. Removes parts of the arc
+        hidden by dimension text if `remove_hidden_lines` is True.
+        The center of the arc is always :attr: `self.ocs_center_of_arc`.
+
+        Args:
+            radius: radius of arc
+            start_angle: start angle in radians
+            end_angle: end angle in radians
+            dxfattribs: additional or overridden DXF attributes
+            remove_hidden_lines: removes parts of the arc hidden by dimension
+                text if ``True``
+
+        """
+
+        def add_arc(start: float, end: float) -> None:
+            """Add ARC entity to geometry block."""
+            self.block.add_arc(
+                center=self.ocs_center_of_arc,
+                radius=radius,
+                start_angle=math.degrees(ocs_angle(start)),
+                end_angle=math.degrees(ocs_angle(end)),
+                dxfattribs=dxfattribs,
+            )
+
+        def visible_arcs() -> Iterable[Tuple[float, float]]:
+            """Returns the visible parts of the dimension line as
+            (start angle, end angle) tuples.
+
+            """
+            yield start_angle, end_angle
+
+        ocs_angle = self.ucs.to_ocs_angle_rad
+        attribs = self.default_attributes()
+        if dxfattribs:
+            attribs.update(dxfattribs)
+
+        for start, end in visible_arcs():
+            add_arc(start, end)
 
 
 class AngularDimension(_CurvedDimensionLine):
