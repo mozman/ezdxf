@@ -1,6 +1,6 @@
 # Copyright (c) 2010-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List, Union
+from typing import TYPE_CHECKING, Iterable, List, Union, Tuple
 
 from functools import partial
 import math
@@ -34,7 +34,8 @@ __all__ = [
     "area",
     "circle_radius_3p",
     "TOLERANCE",
-    "has_matrix_2d_stretching"
+    "has_matrix_2d_stretching",
+    "decdeg2dms",
 ]
 
 
@@ -99,6 +100,13 @@ def reflect_angle_y_deg(a: float) -> float:
 
     """
     return (360.0 - (a % 360.0)) % 360.0
+
+
+def decdeg2dms(value: float) -> Tuple[float, float, float]:
+    """Return decimal degrees as tuple (Degrees, Minutes, Seconds)."""
+    mnt, sec = divmod(value * 3600., 60.)
+    deg, mnt = divmod(mnt, 60.)
+    return deg, mnt, sec
 
 
 def closest_point(base: "Vertex", points: Iterable["Vertex"]) -> "Vec3":
@@ -349,7 +357,7 @@ def area(vertices: Iterable["Vertex"]) -> float:
     return abs(
         sum(
             (p1.x * p2.y - p1.y * p2.x)
-                for p1, p2 in zip(_vertices, _vertices[1:])
+            for p1, p2 in zip(_vertices, _vertices[1:])
         )
         / 2
     )

@@ -246,6 +246,19 @@ def test_more_points():
     ) == (0, 0, -0.5)
 
 
+def test_decdeg2dms():
+    ss = 1. / 3600.
+    mm = 1. / 60.
+    for value in linspace(-2, 2, 71):
+        d, m, s = decdeg2dms(value)
+        result = d + m * mm + s * ss
+        assert value == pytest.approx(result)
+    assert decdeg2dms(-1) == (-1, 0, 0)
+    assert decdeg2dms(0) == (0, 0, 0)
+    assert decdeg2dms(1) == (1, 0, 0)
+
+
+
 def test_linspace():
     assert list(linspace(1, 4, num=4)) == [1, 2, 3, 4]
     assert list(linspace(1, 4, num=1)) == [1]
