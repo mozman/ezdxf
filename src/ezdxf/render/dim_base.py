@@ -8,11 +8,10 @@ from ezdxf._options import options
 from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError
 from ezdxf.tools import suppress_zeros
 from ezdxf.render.arrows import ARROWS
-from ezdxf.entities.dimstyleoverride import DimStyleOverride
+from ezdxf.entities import DimStyleOverride, Dimension
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        Dimension,
         Vertex,
         Drawing,
         GenericLayoutType,
@@ -97,13 +96,13 @@ class BaseDimensionRenderer:
 
     def __init__(
         self,
-        dimension: "Dimension",
+        dimension: Dimension,
         ucs: "UCS" = None,
         override: DimStyleOverride = None,
     ):
         assert dimension.doc is not None
         self.doc: "Drawing" = dimension.doc
-        self.dimension: "Dimension" = dimension
+        self.dimension: Dimension = dimension
         self.dxfversion: str = self.doc.dxfversion
         self.supports_dxf_r2000: bool = self.dxfversion >= "AC1015"
         self.supports_dxf_r2007: bool = self.dxfversion >= "AC1021"
@@ -512,10 +511,7 @@ class BaseDimensionRenderer:
             self.text_height = max(self.text_height, self.tol_text_height)
 
     def get_required_defpoint(self, name: str) -> Vec2:
-        dxf = self.dimension.dxf
-        if dxf.hasattr(name):  # has to exist, ignore default value!
-            return Vec2(dxf.get(name))
-        raise const.DXFMissingDefinitionPoint(name)
+        return get_required_defpoint(self.dimension, name)
 
     def default_text_style(self):
         style = options.default_dimension_text_style
@@ -835,6 +831,7 @@ class BaseDimensionRenderer:
             "layer": "DEFPOINTS",
         }
         for point in points:
+            # todo: are defpoints WCS points?
             location = self.ucs.to_ocs(Vec3(point)).replace(z=0)
             self.block.add_point(location, dxfattribs=attribs)  # type: ignore
 
@@ -889,3 +886,10 @@ def order_leader_points(p1: Vec2, p2: Vec2, p3: Vec2) -> Tuple[Vec2, Vec2]:
         return p3, p2
     else:
         return p2, p3
+
+
+def get_required_defpoint(dim: Dimension, name: str) -> Vec2:
+    dxf = dim.dxf
+    if dxf.hasattr(name):  # has to exist, ignore default value!
+        return Vec2(dxf.get(name))
+    raise const.DXFMissingDefinitionPoint(name)

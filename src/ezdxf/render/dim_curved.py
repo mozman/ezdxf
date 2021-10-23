@@ -5,17 +5,18 @@ from typing import TYPE_CHECKING, Tuple, List
 from abc import abstractmethod
 
 from ezdxf.math import Vec2, Vec3, UCS, ConstructionBox
-from ezdxf.entities.dimstyleoverride import DimStyleOverride
-from .dim_base import BaseDimensionRenderer
-from ezdxf.math import ConstructionCircle
+from ezdxf.entities import DimStyleOverride, Dimension, DXFEntity
+from ezdxf.graphicsfactory import CreatorInterface
+from .dim_base import BaseDimensionRenderer, get_required_defpoint
+from ezdxf.math import ConstructionCircle, intersection_line_line_2d
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import GenericLayoutType, Dimension, DXFEntity
+    from ezdxf.eztypes import GenericLayoutType
 
 __all__ = ["AngularDimension", "Angular3PDimension", "ArcLengthDimension"]
 
 
-def has_required_attributes(entity: "DXFEntity", attrib_names: List[str]):
+def has_required_attributes(entity: DXFEntity, attrib_names: List[str]):
     has = entity.dxf.hasattr
     return all(has(attrib_name) for attrib_name in attrib_names)
 
@@ -23,17 +24,17 @@ def has_required_attributes(entity: "DXFEntity", attrib_names: List[str]):
 class _CurvedDimensionLine(BaseDimensionRenderer):
     def __init__(
         self,
-        dimension: "Dimension",
+        dimension: Dimension,
         ucs: "UCS" = None,
-        override: "DimStyleOverride" = None,
+        override: DimStyleOverride = None,
     ):
         super().__init__(dimension, ucs, override)
-        self.start_angle_rad: float = self.get_start_angle_rad()
-        self.end_angle_rad: float = self.get_end_angle_rad()
         self.center_of_arc: Vec2 = self.get_center_of_arc()
         self.ocs_center_of_arc = self.ucs.to_ocs(Vec3(self.center_of_arc))
-        self.dim_line_center: Vec2 = self.get_dim_line_center()
         self.dim_line_radius: float = self.get_dim_line_radius()
+        self.start_angle_rad: float = self.get_start_angle_rad()
+        self.end_angle_rad: float = self.get_end_angle_rad()
+        self.dim_line_center: Vec2 = self.get_dim_line_center()
 
     def render(self, block: "GenericLayoutType") -> None:
         """Main method to create dimension geometry of basic DXF entities in the
@@ -61,7 +62,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
                 self.add_leader(self.dim_line_center, leader1, leader2)
         self.add_defpoints(self.get_defpoints())
 
-    @abstractmethod
+    # @abstractmethod
     def make_measurement_text(self) -> None:
         pass
 
@@ -85,11 +86,11 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
     def get_dim_line_radius(self) -> float:
         pass
 
-    @abstractmethod
+    # @abstractmethod
     def get_leader_points(self) -> Tuple[Vec2, Vec2]:
         pass
 
-    @abstractmethod
+    # @abstractmethod
     def get_defpoints(self) -> List[Vec2]:
         pass
 
@@ -99,19 +100,15 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         if not self.suppress_ext2_line:
             self.add_ext2_line()
 
-    @abstractmethod
     def add_ext1_line(self) -> None:
         pass
 
-    @abstractmethod
     def add_ext2_line(self) -> None:
         pass
 
-    @abstractmethod
     def add_arrows(self) -> None:
         pass
 
-    @abstractmethod
     def add_dimension_line(self) -> None:
         pass
 
@@ -157,7 +154,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
 
         def add_arc(start: float, end: float) -> None:
             """Add ARC entity to geometry block."""
-            self.block.add_arc(
+            self.block.add_arc(  # type: ignore
                 center=self.ocs_center_of_arc,
                 radius=radius,
                 start_angle=math.degrees(ocs_angle(start)),
@@ -165,11 +162,13 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
                 dxfattribs=dxfattribs,
             )
 
+        assert isinstance(self.block, CreatorInterface)
         ocs_angle = self.ucs.to_ocs_angle_rad
         attribs = self.default_attributes()
         if dxfattribs:
             attribs.update(dxfattribs)
         if remove_hidden_lines:
+            assert isinstance(self.text_box, ConstructionBox)
             for start, end in visible_arcs(
                 self.center_of_arc,
                 radius,
@@ -211,6 +210,37 @@ class AngularDimension(_CurvedDimensionLine):
     # dimtih: text inside horizontal
     # dimtoh: text outside horizontal
     # dimjust: text position horizontal
+    def __init__(
+        self,
+        dimension: Dimension,
+        ucs: "UCS" = None,
+        override: DimStyleOverride = None,
+    ):
+        self.leg1_start = get_required_defpoint(dimension, "defpoint")
+        self.leg1_end = get_required_defpoint(dimension, "defpoint4")
+        self.leg2_start = get_required_defpoint(dimension, "defpoint3")
+        self.leg2_end = get_required_defpoint(dimension, "defpoint2")
+        self.dim_line_location = get_required_defpoint(dimension, "defpoint5")
+        super().__init__(dimension, ucs, override)
+
+    def get_center_of_arc(self) -> Vec2:
+        center = intersection_line_line_2d(
+            (self.leg1_start, self.leg1_end),
+            (self.leg2_start, self.leg2_end),
+        )
+        if center is not None:
+            return center
+        # what about 180 deg angles?
+        ArithmeticError("parallel or colinear angle legs")
+
+    def get_dim_line_radius(self) -> float:
+        return (self.dim_line_location - self.center_of_arc).magnitude
+
+    def get_start_angle_rad(self) -> float:
+        return (self.leg1_start - self.center_of_arc).angle
+
+    def get_end_angle_rad(self) -> float:
+        return (self.leg2_start - self.center_of_arc).angle
 
 
 class Angular3PDimension(_CurvedDimensionLine):
@@ -238,6 +268,30 @@ class Angular3PDimension(_CurvedDimensionLine):
     # defpoint3 = 2nd leg (group code 14)
     # defpoint4 = center of angle (group code 15)
 
+    def __init__(
+        self,
+        dimension: Dimension,
+        ucs: "UCS" = None,
+        override: DimStyleOverride = None,
+    ):
+        self.dim_line_location = get_required_defpoint(dimension, "defpoint")
+        self.leg1_start = get_required_defpoint(dimension, "defpoint2")
+        self.leg2_start = get_required_defpoint(dimension, "defpoint3")
+        self.center_of_arc = get_required_defpoint(dimension, "defpoint4")
+        super().__init__(dimension, ucs, override)
+
+    def get_center_of_arc(self) -> Vec2:
+        return self.center_of_arc
+
+    def get_dim_line_radius(self) -> float:
+        return (self.dim_line_location - self.center_of_arc).magnitude
+
+    def get_start_angle_rad(self) -> float:
+        return (self.leg1_start - self.center_of_arc).angle
+
+    def get_end_angle_rad(self) -> float:
+        return (self.leg2_start - self.center_of_arc).angle
+
 
 class ArcLengthDimension(_CurvedDimensionLine):
     """
@@ -263,6 +317,30 @@ class ArcLengthDimension(_CurvedDimensionLine):
     # defpoint2 = 1st arc point (group code 13)
     # defpoint3 = 2nd arc point (group code 14)
     # defpoint4 = center of arc (group code 15)
+
+    def __init__(
+        self,
+        dimension: Dimension,
+        ucs: "UCS" = None,
+        override: DimStyleOverride = None,
+    ):
+        self.dim_line_location = get_required_defpoint(dimension, "defpoint")
+        self.leg1_start = get_required_defpoint(dimension, "defpoint2")
+        self.leg2_start = get_required_defpoint(dimension, "defpoint3")
+        self.center_of_arc = get_required_defpoint(dimension, "defpoint4")
+        super().__init__(dimension, ucs, override)
+
+    def get_center_of_arc(self) -> Vec2:
+        return self.center_of_arc
+
+    def get_dim_line_radius(self) -> float:
+        return (self.dim_line_location - self.center_of_arc).magnitude
+
+    def get_start_angle_rad(self) -> float:
+        return (self.leg1_start - self.center_of_arc).angle
+
+    def get_end_angle_rad(self) -> float:
+        return (self.leg2_start - self.center_of_arc).angle
 
 
 def visible_arcs(
