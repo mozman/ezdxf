@@ -106,7 +106,7 @@ def suppress_zeros(s: str, leading: bool = False, trailing: bool = True):
     # strip zeros
     if leading:
         s = s.lstrip("0")
-    if trailing:
+    if trailing and "." in s:
         s = s.rstrip("0")
 
     # remove comma if no decimals follow

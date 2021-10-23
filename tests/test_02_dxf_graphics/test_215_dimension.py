@@ -199,6 +199,18 @@ def test_format_text():
     assert format_text(0, dimrnd=0, dimdec=1, dimzin=4, dimpost="<>") == "0"
     assert format_text(0, dimrnd=0, dimdec=1, dimzin=8, dimpost="<>") == "0"
     assert (
+        format_text(100, dimrnd=0.0, dimdec=0, dimzin=8, dimpost="<>") == "100"
+    )
+    assert (
+        format_text(100, dimrnd=None, dimdec=0, dimzin=8, dimpost="<>") == "100"
+    )
+    assert (
+        format_text(100, dimrnd=0, dimdec=None, dimzin=8, dimpost="<>") == "100"
+    )
+    assert (
+        format_text(100, dimrnd=None, dimdec=None, dimzin=8, dimpost="<>") == "100"
+    )
+    assert (
         format_text(1.23, dimrnd=0.5, dimdec=1, dimzin=0, dimpost="<> mm")
         == "1.0 mm"
     )
