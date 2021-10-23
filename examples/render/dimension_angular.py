@@ -4,7 +4,7 @@
 import pathlib
 import math
 import ezdxf
-from ezdxf.math import Vec3, UCS
+from ezdxf.math import Vec3, UCS, NULLVEC
 import logging
 
 # ========================================
@@ -35,21 +35,25 @@ DIM_TEXT_STYLE = ezdxf.options.default_dimension_text_style
 BRICSCAD = True
 
 
-def multiple_locations(delta=10):
-    base = Vec3(5.8833, -6.3408)
-    p1 = Vec3(2.0101, -7.5156) - base
-    p2 = Vec3(2.7865, -10.4133) - base
-    p3 = Vec3(6.7054, -7.5156) - base
-    p4 = Vec3(5.9289, -10.4133) - base
+def locations():
+    def location(offset: Vec3, flip: float):
+        base = Vec3(0, 5) + offset
+        p1 = Vec3(-4, 3 * flip) + offset
+        p2 = Vec3(-1, 0) + offset
+        p4 = Vec3(4, 3 * flip) + offset
+        p3 = Vec3(1, 0) + offset
+        return base, (p1, p2), (p3, p4)
+
     return [
-        (Vec3(), (p1, p2), (p3, p4)),
+        location(NULLVEC, +1),
+        location(Vec3(10, 0), -1),
     ]
 
 
-def angular_default_above(dxfversion="R2000", delta=10):
+def angular_default_above(dxfversion="R2000"):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
-    for base, line1, line2 in multiple_locations(delta):
+    for base, line1, line2 in locations():
         msp.add_line(line1[0], line1[1])
         msp.add_line(line2[0], line2[1])
 
@@ -77,14 +81,14 @@ def angular_default_above(dxfversion="R2000", delta=10):
         # DimStyleOverride object is returned, the DIMENSION entity is stored
         # as dim.dimension, see also ezdxf.override.DimStyleOverride class.
         dim.render(discard=BRICSCAD)
-    doc.set_modelspace_vport(height=3 * delta)
+    doc.set_modelspace_vport(height=30)
     doc.saveas(OUTDIR / f"dim_angular_{dxfversion}_default_above.dxf")
 
 
-def angular_default_center(dxfversion="R2000", delta=10):
+def angular_default_center(dxfversion="R2000"):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
-    for base, line1, line2 in multiple_locations(delta):
+    for base, line1, line2 in locations():
         msp.add_line(line1[0], line1[1])
         msp.add_line(line2[0], line2[1])
         dim = msp.add_angular_dim(
@@ -95,15 +99,15 @@ def angular_default_center(dxfversion="R2000", delta=10):
             override={"dimtad": 0},
         )
         dim.render(discard=BRICSCAD)
-    doc.set_modelspace_vport(height=3 * delta)
+    doc.set_modelspace_vport(height=30)
     doc.saveas(OUTDIR / f"dim_angular_{dxfversion}_default_center.dxf")
 
 
-def angular_3d(dxfversion="R2000", delta=10):
+def angular_3d(dxfversion="R2000"):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
 
-    for base, line1, line2 in multiple_locations(delta=delta):
+    for base, line1, line2 in locations():
         ucs = UCS(origin=(base.x, base.y, 0)).rotate_local_x(math.radians(45))
 
         msp.add_line(line1[0], line1[1]).transform(ucs.matrix)
@@ -114,7 +118,7 @@ def angular_3d(dxfversion="R2000", delta=10):
         )
         dim.render(discard=BRICSCAD, ucs=ucs)
 
-    doc.set_modelspace_vport(height=3 * delta)
+    doc.set_modelspace_vport(height=30)
     doc.saveas(OUTDIR / f"dim_angular_{dxfversion}_3d.dxf")
 
 

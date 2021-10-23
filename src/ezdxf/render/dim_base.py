@@ -831,7 +831,9 @@ class BaseDimensionRenderer:
             "layer": "DEFPOINTS",
         }
         for point in points:
-            # todo: are defpoints WCS points?
+            # Despite the fact that the POINT entity has WCS coordinates,
+            # the coordinates of defpoints in DIMENSION entities have OCS
+            # coordinates.
             location = self.ucs.to_ocs(Vec3(point)).replace(z=0)
             self.block.add_point(location, dxfattribs=attribs)  # type: ignore
 
