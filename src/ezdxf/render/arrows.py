@@ -592,6 +592,8 @@ def connection_point(
     arrow_name: str, insert: "Vertex", scale: float = 1, rotation: float = 0
 ) -> Vec2:
     insert = Vec2(insert)
+    # remove leading "_" from true block name to match internal naming:
+    arrow_name = arrow_name.lstrip("_")
     if arrow_name in _Arrows.ORIGIN_ZERO:
         return insert
     else:
