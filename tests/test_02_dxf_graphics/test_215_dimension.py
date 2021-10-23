@@ -8,7 +8,7 @@ from ezdxf.math import Vec3, Matrix44
 from ezdxf.entities.dimension import Dimension, linear_measurement
 from ezdxf.lldxf.const import DXF12, DXF2000
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
-from ezdxf.render.dim_base import format_text, DXFValueError
+from ezdxf.render.dim_base import format_text, DXFValueError, apply_dimpost
 
 TEST_CLASS = Dimension
 TEST_TYPE = "DIMENSION"
@@ -208,7 +208,8 @@ def test_format_text():
         format_text(100, dimrnd=0, dimdec=None, dimzin=8, dimpost="<>") == "100"
     )
     assert (
-        format_text(100, dimrnd=None, dimdec=None, dimzin=8, dimpost="<>") == "100"
+        format_text(100, dimrnd=None, dimdec=None, dimzin=8, dimpost="<>")
+        == "100"
     )
     assert (
         format_text(1.23, dimrnd=0.5, dimdec=1, dimzin=0, dimpost="<> mm")
@@ -256,6 +257,13 @@ def test_format_text():
     )  # ignore stupid
     with pytest.raises(DXFValueError):
         _ = format_text(-0.51, dimpost="<")
+
+
+def test_apply_dim_post():
+    assert apply_dimpost("0°", "<>") == "0°"
+    assert apply_dimpost("30°", "x <>") == "x 30°"
+    assert apply_dimpost("30°", "<> x") == "30° x"
+    assert apply_dimpost("30°", "x <> x") == "x 30° x"
 
 
 def test_linear_measurement_without_ocs():

@@ -83,12 +83,16 @@ def format_text(
     if dimdsep != ".":
         text = text.replace(".", dimdsep)
     if dimpost:
-        if "<>" in dimpost:
-            fmt = dimpost.replace("<>", "{}", 1)
-            text = fmt.format(text)
-        else:
-            raise DXFValueError(f'Invalid dimpost string: "{dimpost}"')
+        text = apply_dimpost(text, dimpost)
     return text
+
+
+def apply_dimpost(text: str, dimpost: str) -> str:
+    if "<>" in dimpost:
+        fmt = dimpost.replace("<>", "{}", 1)
+        return fmt.format(text)
+    else:
+        raise DXFValueError(f'Invalid dimpost string: "{dimpost}"')
 
 
 class BaseDimensionRenderer:

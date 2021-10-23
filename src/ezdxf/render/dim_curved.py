@@ -4,10 +4,23 @@ import math
 from typing import TYPE_CHECKING, Tuple, List
 from abc import abstractmethod
 
-from ezdxf.math import Vec2, Vec3, UCS, ConstructionBox
+from ezdxf.math import (
+    Vec2,
+    Vec3,
+    UCS,
+    ConstructionBox,
+    decdeg2dms,
+    ellipse_param_span,
+)
+
 from ezdxf.entities import DimStyleOverride, Dimension, DXFEntity
 from ezdxf.graphicsfactory import CreatorInterface
-from .dim_base import BaseDimensionRenderer, get_required_defpoint
+from .dim_base import (
+    BaseDimensionRenderer,
+    get_required_defpoint,
+    format_text,
+    apply_dimpost,
+)
 from ezdxf.math import ConstructionCircle, intersection_line_line_2d
 
 if TYPE_CHECKING:
@@ -19,6 +32,10 @@ __all__ = ["AngularDimension", "Angular3PDimension", "ArcLengthDimension"]
 def has_required_attributes(entity: DXFEntity, attrib_names: List[str]):
     has = entity.dxf.hasattr
     return all(has(attrib_name) for attrib_name in attrib_names)
+
+
+GRAD = 200.0 / math.pi
+DEG = 180.0 / math.pi
 
 
 class _CurvedDimensionLine(BaseDimensionRenderer):
@@ -62,7 +79,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
                 self.add_leader(self.dim_line_center, leader1, leader2)
         self.add_defpoints(self.get_defpoints())
 
-    # @abstractmethod
+    @abstractmethod
     def make_measurement_text(self) -> None:
         pass
 
@@ -181,7 +198,46 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
             add_arc(start_angle, end_angle)
 
 
-class AngularDimension(_CurvedDimensionLine):
+class _AngularCommonBase(_CurvedDimensionLine):
+    def make_measurement_text(self) -> None:
+        angle = ellipse_param_span(self.start_angle_rad, self.end_angle_rad)
+        self.text = self.text_override(angle)  # -> self.format_text()
+
+    def format_text(self, value: float) -> str:
+        def decimal_format(value: float) -> str:
+            return format_text(
+                value,
+                dimrnd=self.text_round,
+                dimdec=self.text_decimal_places,
+                dimzin=self.text_suppress_zeros,
+                dimdsep=self.text_decimal_separator,
+            )
+
+        def dms_format(value: float) -> str:
+            d, m, s = decdeg2dms(value)
+            return f"{d:.0f}°{m:.0f}'{decimal_format(s)}\""
+
+        # 0 = Decimal degrees
+        # 1 = Degrees/minutes/seconds
+        # 2 = Grad
+        # 3 = Radians
+        fmt = self.dim_style.get("dimaunit", 0)
+        text = ""
+        if fmt == 0:
+            text = decimal_format(value * DEG) + "°"
+        elif fmt == 1:
+            text = dms_format(value * DEG)
+        elif fmt == 2:
+            text = decimal_format(value * GRAD) + "g"
+        elif fmt == 3:
+            text = decimal_format(value) + "r"
+        dimpost = self.text_format
+        if dimpost:
+            text = apply_dimpost(text, dimpost)
+        return text
+
+
+class AngularDimension(_AngularCommonBase):
     """
     Angular dimension line renderer. The dimension line is defined by two lines.
 
@@ -243,7 +299,7 @@ class AngularDimension(_CurvedDimensionLine):
         return (self.leg2_start - self.center_of_arc).angle
 
 
-class Angular3PDimension(_CurvedDimensionLine):
+class Angular3PDimension(_AngularCommonBase):
     """
     Angular dimension line renderer. The dimension line is defined by three
     points.
@@ -328,6 +384,7 @@ class ArcLengthDimension(_CurvedDimensionLine):
         self.leg1_start = get_required_defpoint(dimension, "defpoint2")
         self.leg2_start = get_required_defpoint(dimension, "defpoint3")
         self.center_of_arc = get_required_defpoint(dimension, "defpoint4")
+        self.arc_radius = (self.leg1_start - self.center_of_arc).magnitude
         super().__init__(dimension, ucs, override)
 
     def get_center_of_arc(self) -> Vec2:
@@ -341,6 +398,11 @@ class ArcLengthDimension(_CurvedDimensionLine):
 
     def get_end_angle_rad(self) -> float:
         return (self.leg2_start - self.center_of_arc).angle
+
+    def make_measurement_text(self) -> None:
+        angle = ellipse_param_span(self.start_angle_rad, self.end_angle_rad)
+        arc_length = angle * self.arc_radius * 2.
+        self.text = self.text_override(arc_length)  # -> self.format_text()
 
 
 def visible_arcs(

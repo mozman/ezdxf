@@ -123,6 +123,11 @@ acdb_dimstyle = DefSubclass(
         "dimtdec": DXFAttr(272, dxfversion=DXF2000, default=2),
         "dimaltu": DXFAttr(273, dxfversion=DXF2000, default=2),
         "dimalttd": DXFAttr(274, dxfversion=DXF2000, default=3),
+
+        # 0 = Decimal degrees
+        # 1 = Degrees/minutes/seconds
+        # 2 = Grad
+        # 3 = Radians
         "dimaunit": DXFAttr(275, dxfversion=DXF2000, default=0),
         "dimfrac": DXFAttr(276, dxfversion=DXF2000, default=0),
         "dimlunit": DXFAttr(277, dxfversion=DXF2000, default=2),
