@@ -6,7 +6,7 @@ import pytest
 import ezdxf
 from ezdxf.layouts import VirtualLayout
 from ezdxf.tools.text_size import text_size, mtext_size
-
+from ezdxf.tools.text_layout import leading
 
 # Exact text size checks are not possible if the used font is not available,
 # which cannot guaranteed for all platforms therefore the matplotlib support is
@@ -103,7 +103,7 @@ def test_mtext_size_of_an_empty_string(msp):
 
 
 def test_mtext_size_of_a_single_char(msp):
-
+    # Matplotlib support disabled and using MonospaceFont()
     mtext = msp.add_mtext("X", dxfattribs={"char_height": 2.0})
     size = mtext_size(mtext)
     assert size.total_height == 2.0
@@ -114,15 +114,28 @@ def test_mtext_size_of_a_single_char(msp):
 
 
 def test_mtext_size_of_a_string(msp):
-    ezdxf.options.use_matplotlib = False
+    # Matplotlib support disabled and using MonospaceFont()
     mtext = msp.add_mtext("XXX", dxfattribs={"char_height": 2.0})
     size = mtext_size(mtext)
     assert size.total_height == 2.0
     assert size.total_width == 6.0
-    assert size.column_width == 6.0
+    assert size.column_width == size.total_width
     assert size.gutter_width == 0.0
     assert size.column_count == 1
 
+
+@pytest.mark.parametrize("cap_height", [2., 3.])
+def test_mtext_size_of_2_lines(cap_height, msp):
+    # Matplotlib support disabled and using MonospaceFont()
+    mtext = msp.add_mtext("XXX\nYYYY", dxfattribs={
+        "char_height": cap_height,
+        "line_spacing_factor": 1.0,
+    })
+    size = mtext_size(mtext)
+    expected_total_height = leading(cap_height, line_spacing=1.0) + cap_height
+    assert size.total_height == pytest.approx(expected_total_height)
+    assert size.total_width == 4 * cap_height, "expected width of 2nd line"
+    assert size.column_width == size.total_width
 
 
 if __name__ == "__main__":
