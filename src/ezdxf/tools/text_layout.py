@@ -805,8 +805,9 @@ class EmptyParagraph(Cell):
     """
 
     def __init__(self, cap_height: float, line_spacing: float = 1):
-        self._height: float = leading(cap_height, line_spacing)
+        self._height: float = cap_height
         self._width: float = 0
+        self._last_line_spacing = cap_height - leading(cap_height, line_spacing)
 
     @property
     def total_width(self) -> float:
@@ -821,6 +822,10 @@ class EmptyParagraph(Cell):
 
     def distribute_content(self, height: float = None):
         pass
+
+    @property
+    def distance_to_next_paragraph(self) -> float:
+        return self._last_line_spacing
 
 
 def leading(cap_height: float, line_spacing: float = 1.0) -> float:
@@ -862,8 +867,15 @@ class Paragraph(Container):
         # contains the final distributed content:
         self._lines: List[AbstractLine] = []
 
+        # space to next paragraph
+        self._last_line_spacing = 0.0
+
     def __iter__(self):
         return iter(self._lines)
+
+    @property
+    def distance_to_next_paragraph(self):
+        return self._last_line_spacing
 
     def set_total_width(self, width: float):
         self._content_width = width - self.left_margin - self.right_margin
@@ -905,11 +917,14 @@ class Paragraph(Container):
         if len(lines):
             last_line = lines[-1]
             height = sum(
-                leading(line.total_height, line_spacing)
-                for line in lines[:-1]
+                leading(line.total_height, line_spacing) for line in lines[:-1]
             )
             # do not add line spacing after last line!
-            height += last_line.total_height
+            last_line_height = last_line.total_height
+            self._last_line_spacing = (
+                leading(last_line_height, line_spacing) - last_line_height
+            )
+            height += last_line_height
         return height
 
     def distribute_content(self, height: float = None) -> Optional["Paragraph"]:
@@ -1084,7 +1099,15 @@ class Column(Container):
             return max_height
 
     def used_content_height(self) -> float:
-        return sum(p.total_height for p in self._paragraphs)
+        paragraphs = self._paragraphs
+        height = 0.0
+        if paragraphs:
+            height = sum(
+                p.total_height + p.distance_to_next_paragraph
+                for p in paragraphs[:-1]
+            )
+            height += paragraphs[-1].total_height
+        return height
 
     @property
     def gutter(self):
@@ -1106,7 +1129,7 @@ class Column(Container):
         y -= self.top_margin
         for p in self._paragraphs:
             p.place(x, y)
-            y -= p.total_height
+            y -= p.total_height + p.distance_to_next_paragraph
 
     def append_paragraphs(
         self, paragraphs: Iterable[Paragraph]
