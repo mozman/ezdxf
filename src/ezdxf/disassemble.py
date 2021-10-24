@@ -3,7 +3,8 @@
 from typing import Iterable, Optional, cast, TYPE_CHECKING, List
 import abc
 import math
-from ezdxf.entities import DXFEntity, Insert
+from ezdxf.entities import DXFEntity, Insert, get_font_name
+
 from ezdxf.lldxf import const
 from ezdxf.math import Vec3, UCS, Z_AXIS, X_AXIS
 from ezdxf.path import Path, make_path, from_vertices
@@ -240,16 +241,6 @@ class HatchPrimitive(ConvertedPrimitive):
 
 DESCENDER_FACTOR = 0.333  # from TXT SHX font - just guessing
 X_HEIGHT_FACTOR = 0.666  # from TXT SHX font - just guessing
-
-
-def get_font_name(entity: "DXFEntity"):
-    font_name = "txt"
-    if entity.doc:
-        style_name = entity.dxf.style
-        style = entity.doc.styles.get(style_name)
-        if style:
-            font_name = style.dxf.font
-    return font_name
 
 
 class TextLinePrimitive(ConvertedPrimitive):

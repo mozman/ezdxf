@@ -47,6 +47,7 @@ __all__ = [
     "replace_entity",
     "elevation_to_z_axis",
     "is_graphic_entity",
+    "get_font_name",
 ]
 
 GRAPHIC_PROPERTIES = {
@@ -460,14 +461,13 @@ class DXFGraphic(DXFEntity):
         raise NotImplementedError()
 
     def post_transform(self, m: "Matrix44") -> None:
-        """Should be called if the main entity transformation was successful.
-        """
+        """Should be called if the main entity transformation was successful."""
         if self.xdata is not None:
             self.xdata.transform(m)
 
     @property
     def is_post_transform_required(self) -> bool:
-        """Check if post transform call is required. """
+        """Check if post transform call is required."""
         return self.xdata is not None
 
     def translate(self, dx: float, dy: float, dz: float) -> "DXFGraphic":
@@ -668,3 +668,18 @@ def is_graphic_entity(entity: DXFEntity) -> bool:
     if isinstance(entity, DXFTagStorage) and entity.is_graphic_entity:
         return True
     return False
+
+
+def get_font_name(entity: DXFEntity) -> str:
+    """Returns the name of the font use by an entity.
+    This function always returns a font name even if the entity does not have
+    any font usage. The default font name is "txt".
+
+    """
+    font_name = "txt"
+    if entity.doc:
+        style_name = entity.dxf.style
+        style = entity.doc.styles.get(style_name)
+        if style:
+            font_name = style.dxf.font
+    return font_name
