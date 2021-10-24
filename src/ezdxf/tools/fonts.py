@@ -43,7 +43,7 @@ ultra-expanded  200%
 =============== ======
 
 """
-from typing import Dict, Optional, NamedTuple
+from typing import Dict, Optional, NamedTuple, Tuple
 import abc
 import logging
 from pathlib import Path
@@ -482,7 +482,7 @@ class MatplotlibFont(AbstractFont):
         self._space_width = self.text_width(" X") - self.text_width("X")
 
     def text_width(self, text: str) -> float:
-        """Returns the text with in drawing units for the given `text` string.
+        """Returns the text width in drawing units for the given `text` string.
         Text rendering and width calculation is done by the Matplotlib
         :class:`TextPath` class.
 
