@@ -677,7 +677,7 @@ def get_font_name(entity: DXFEntity) -> str:
 
     """
     font_name = "txt"
-    if entity.doc:
+    if entity.doc and entity.dxf.hasattr("style"):
         style_name = entity.dxf.style
         style = entity.doc.styles.get(style_name)
         if style:
