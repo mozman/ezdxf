@@ -43,12 +43,15 @@ ultra-expanded  200%
 =============== ======
 
 """
-from typing import Dict, Optional, NamedTuple, Tuple
+from typing import Dict, Optional, NamedTuple, TYPE_CHECKING, cast
 import abc
 import logging
 from pathlib import Path
 import json
 from ezdxf import options
+
+if TYPE_CHECKING:
+    from ezdxf.entities import DXFEntity, Textstyle
 
 FONT_FACE_CACHE_FILE = "font_face_cache.json"
 FONT_MEASUREMENT_CACHE_FILE = "font_measurement_cache.json"
@@ -560,3 +563,42 @@ def make_font(
         return MatplotlibFont(ttf_path, cap_height, width_factor)
     else:
         return MonospaceFont(cap_height, width_factor)
+
+
+def get_entity_font_face(entity: "DXFEntity", doc=None) -> FontFace:
+    """Returns the :class:`FontFace` defined by the associated text style.
+    Returns the default font face if the `entity` does not have or support
+    the DXF attribute "style". Supports the extended font information stored in
+    :class:`~ezdxf.entities.Textstyle` table entries.
+
+    Pass a DXF document as argument `doc` to resolve text styles for virtual
+    entities which are not assigned to a DXF document. The argument `doc`
+    always overrides the DXF document to which the `entity` is assigned to.
+
+    """
+    if entity.doc and doc is None:
+        doc = entity.doc
+    if doc is None:
+        return FontFace()
+
+    style_name = ""
+    # This works also for entities which do not support "style",
+    # where style_name = entity.dxf.get("style") would fail.
+    if entity.dxf.is_supported("style"):
+        style_name = entity.dxf.style
+
+    font_face = FontFace()
+    if style_name:
+        style = cast("textstyle", doc.styles.get(style_name))
+        family, italic, bold = style.get_extended_font_data()
+        if family:
+            text_style = "italic" if italic else "normal"
+            text_weight = "bold" if bold else "normal"
+            font_face = FontFace(
+                family=family, style=text_style, weight=text_weight
+            )
+        else:
+            ttf = style.dxf.font
+            if ttf:
+                font_face = get_font_face(ttf)
+    return font_face

@@ -163,6 +163,8 @@ see :ref:`environment_variables`
 
 .. autofunction:: get_font_face
 
+.. autofunction:: get_entity_font_face
+
 .. autofunction:: get_font_measurements
 
 .. autofunction:: build_system_font_cache
