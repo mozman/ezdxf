@@ -122,6 +122,7 @@ class TextRenderer(FrameRenderer):
             text.transform(m)
 
 
+# todo: replace by fonts.get_entity_font_face()
 def get_font_face(entity: DXFGraphic, doc=None) -> fonts.FontFace:
     """Returns the :class:`~ezdxf.tools.fonts.FontFace` defined by the
     associated text style. Returns the default font face if the `entity` does

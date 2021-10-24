@@ -97,6 +97,7 @@ Tools
 
     tools/functions
     tools/text
+    tools/text_size
     tools/fonts
 
 

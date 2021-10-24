@@ -88,5 +88,36 @@ def test_matplotlib_support_for_text_size():
     assert size.total_height > size.cap_height
 
 
+def test_mtext_size_of_an_empty_string(msp):
+    mtext = msp.add_mtext("", dxfattribs={"char_height": 1.0})
+    size = mtext_size(mtext)
+    assert size.total_width == 0.0
+    assert size.total_height == 0.0
+    assert size.column_width == 0.0
+    assert size.gutter_width == 0.0
+    assert size.column_count == 1
+    assert size.column_heights == (0.0, )
+
+
+def test_mtext_size_of_a_single_char(msp):
+    mtext = msp.add_mtext("X", dxfattribs={"char_height": 2.0})
+    size = mtext_size(mtext)
+    assert size.total_height == 2.0
+    assert size.total_width == 2.0
+    assert size.column_width == 2.0
+    assert size.gutter_width == 0.0
+    assert size.column_count == 1
+
+
+def test_mtext_size_of_a_string(msp):
+    mtext = msp.add_mtext("XXX", dxfattribs={"char_height": 2.0})
+    size = mtext_size(mtext)
+    assert size.total_height == 2.0
+    assert size.total_width == 6.0
+    assert size.column_width == 6.0
+    assert size.gutter_width == 0.0
+    assert size.column_count == 1
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

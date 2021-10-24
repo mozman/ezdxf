@@ -589,7 +589,7 @@ def get_entity_font_face(entity: "DXFEntity", doc=None) -> FontFace:
 
     font_face = FontFace()
     if style_name:
-        style = cast("textstyle", doc.styles.get(style_name))
+        style = cast("Textstyle", doc.styles.get(style_name))
         family, italic, bold = style.get_extended_font_data()
         if family:
             text_style = "italic" if italic else "normal"
