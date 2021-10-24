@@ -10,7 +10,7 @@ from ezdxf.render.abstract_mtext_renderer import AbstractMTextRenderer
 
 __all__ = ["text_size", "mtext_size", "TextSize", "MTextSize"]
 
-DO_NOTHING_RENDER = tl.DoNothingRenderer()
+DO_NOTHING = tl.DoNothingRenderer()
 
 
 @dataclass(frozen=True)
@@ -77,6 +77,14 @@ def mtext_size(mtext: MText) -> MTextSize:
     Without access to the `Matplotlib` package the :class:`~ezdxf.tools.fonts.MonospaceFont`
     is used and the measurements are very inaccurate.
 
+    The first call to this function with `Matplotlib` support is very slow,
+    because `Matplotlib` lookup all available fonts on the system. To speedup
+    the calculation and accepting inaccurate results you can disable the
+    `Matplotlib` support manually::
+
+        ezdxf.option.use_matplotlib = False
+
+
     """
     column_heights: List[float] = [0.0]
     gutter_width = 0.0
@@ -103,10 +111,11 @@ def mtext_size(mtext: MText) -> MTextSize:
 class MTextSizeDetector(AbstractMTextRenderer):
     def word(self, text: str, ctx: MTextContext) -> tl.ContentCell:
         return tl.Text(
+            # The first call to get_font() is very slow!
             width=self.get_font(ctx).text_width(text),
             height=ctx.cap_height,
             valign=tl.CellAlignment(ctx.align),
-            renderer=DO_NOTHING_RENDER,
+            renderer=DO_NOTHING,
         )
 
     def fraction(self, data: Tuple, ctx: MTextContext) -> tl.ContentCell:
@@ -116,7 +125,7 @@ class MTextSizeDetector(AbstractMTextRenderer):
                 top=self.word(upr, ctx),
                 bottom=self.word(lwr, ctx),
                 stacking=self.get_stacking(type_),
-                renderer=DO_NOTHING_RENDER,
+                renderer=DO_NOTHING,
             )
         else:
             return self.word(upr, ctx)
@@ -125,7 +134,7 @@ class MTextSizeDetector(AbstractMTextRenderer):
         return fonts.get_entity_font_face(mtext)
 
     def make_bg_renderer(self, mtext: MText) -> tl.ContentRenderer:
-        return DO_NOTHING_RENDER
+        return DO_NOTHING
 
     @staticmethod
     def run(mtext: MText) -> tl.Layout:
