@@ -210,6 +210,23 @@ class ContentRenderer(abc.ABC):
         pass
 
 
+class DoNothingRenderer(ContentRenderer):
+    def render(
+        self,
+        left: float,
+        bottom: float,
+        right: float,
+        top: float,
+        m: Matrix44 = None,
+    ) -> None:
+        pass
+
+    def line(
+        self, x1: float, y1: float, x2: float, y2: float, m: Matrix44 = None
+    ) -> None:
+        pass
+
+
 Tuple4f = Tuple[float, float, float, float]
 Tuple2f = Tuple[float, float]
 
@@ -882,10 +899,18 @@ class Paragraph(Container):
         """Returns the actual content height determined by the distributed
         lines.
         """
-        return sum(
-            leading(line.total_height, self._line_spacing)
-                for line in self._lines
-        )
+        lines = self._lines
+        line_spacing = self._line_spacing
+        height = 0.0
+        if len(lines):
+            last_line = lines[-1]
+            height = sum(
+                leading(line.total_height, line_spacing)
+                for line in lines[:-1]
+            )
+            # do not add line spacing after last line!
+            height += last_line.total_height
+        return height
 
     def distribute_content(self, height: float = None) -> Optional["Paragraph"]:
         """Distribute the raw content into lines. Returns the cells which do
@@ -1539,7 +1564,7 @@ class JustifiedLine(LeftLine):
             return
 
         available_space = self._available_space(last_locked_cell)
-        cells = [c.cell for c in cells[last_locked_cell + 1:]]
+        cells = [c.cell for c in cells[last_locked_cell + 1 :]]
         modified = False
         while True:
             growable = growable_cells(cells)
