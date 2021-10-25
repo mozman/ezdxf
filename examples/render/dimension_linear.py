@@ -55,11 +55,17 @@ def linear_tutorial(dxfversion="R12"):
     msp.add_line((0, 7), (10, 0))
 
     # horizontal DIMENSION
-    # Default DimStyle EZDXF: 1 drawing unit == 1m; scale 1: 100; length_factor=100 -> measurement in cm
+    # Default DimStyle EZDXF:
+    #   1 drawing unit == 1m;
+    #   scale 1: 100;
+    #   length_factor=100 -> measurement in cm
     #
-    # base: defines the dimension line, ezdxf accepts any point on the dimension line
-    # p1: defines the start point of the first extension line, which also defines the first point to measure
-    # p2: defines the start point of the second extension line, which also defines the second point to measure
+    # base: defines the dimension line, ezdxf accepts any point on the
+    # dimension line
+    # p1: defines the start point of the first extension line, which also
+    # defines the first point to measure
+    # p2: defines the start point of the second extension line, which also
+    # defines the second point to measure
 
     dim = msp.add_linear_dim(
         base=(3, 2),
@@ -68,16 +74,21 @@ def linear_tutorial(dxfversion="R12"):
         dimstyle="EZDXF",
         override={"dimtxsty": "OpenSans"},
     )
-    # Necessary second step, to create the BLOCK entity with the DIMENSION geometry.
-    # ezdxf supports DXF R2000 attributes for DXF R12 rendering, but they have to be applied by the DIMSTYLE override
-    # feature, this additional attributes are not stored in the XDATA section of the DIMENSION entity, they are just
+    # Necessary second step, to create the BLOCK entity with the DIMENSION
+    # geometry.
+    # Ezdxf supports DXF R2000 attributes for DXF R12 rendering, but they have
+    # to be applied by the DIMSTYLE override feature, this additional attributes
+    # are not stored in the XDATA section of the DIMENSION entity, they are just
     # used to render the DIMENSION entity.
-    # The return value `dim` is not a DIMENSION entity, instead a DimStyleOverride object is returned, the DIMENSION
-    # entity is stored as dim.dimension, see also ezdxf.override.DimStyleOverride class.
+    # The return value `dim` is not a DIMENSION entity, instead a
+    # DimStyleOverride object is returned, the DIMENSION entity is stored as
+    # dim.dimension, see also ezdxf.override.DimStyleOverride class.
     dim.render()
 
-    # rotated DIMENSION without `override` uses ezdxf.options.default_dimension_text_style (OpenSansCondensed-Light)
-    # angle: defines the angle of the dimension line in relation to the x-axis of the WCS or UCS, measurement is the
+    # rotated DIMENSION without `override` uses ezdxf.options.default_dimension_text_style
+    # (OpenSansCondensed-Light)
+    # angle: defines the angle of the dimension line in relation to the x-axis
+    # of the WCS or UCS, measurement is the
     # distance between first and second measurement point in direction of `angle`
     dim2 = msp.add_linear_dim(
         base=(10, 2),
@@ -92,8 +103,8 @@ def linear_tutorial(dxfversion="R12"):
             "dimtfillclr": 4,  # cyan
         },
     )
-    # Some properties have setter methods for convenience, this is also the reason for not calling dim2.render()
-    # automatically.
+    # Some properties have setter methods for convenience, this is also the
+    # reason for not calling dim2.render() automatically.
     dim2.set_arrows(blk=ezdxf.ARROWS.closed_filled, size=0.25)
     dim2.set_text_align(halign="right")
     dim2.render()
@@ -103,8 +114,8 @@ def linear_tutorial(dxfversion="R12"):
 
 
 def example_background_fill(dxfversion="R12"):
-    """
-    This example shows the background fill feature, ezdxf uses MTEXT for this feature and has no effect in DXF R12.
+    """This example shows the background fill feature, ezdxf uses MTEXT for this
+    feature and has no effect in DXF R12.
 
     """
     doc = ezdxf.new(dxfversion, setup=True)
@@ -188,9 +199,8 @@ def example_for_all_text_placings_in_space_R2007():
 
 
 def example_for_all_text_placings(doc, filename, ucs=None):
-    """
-    This example shows many combinations of dimension text placing by `halign`, `valign` and user defined location
-    override.
+    """This example shows many combinations of dimension text placing by
+    `halign`, `valign` and user defined location override.
 
     Args:
         doc: DXF drawing
@@ -233,16 +243,17 @@ def example_for_all_text_placings(doc, filename, ucs=None):
     )
 
     def text(dimstyle, x, y, halign, valign, oblique=0):
-        """
-        Default dimension text placing
+        """Default dimension text placing
 
         Args:
             dimstyle: dimstyle to use
             x: start point x
             y: start point y
-            halign: horizontal text alignment - `left`, `right`, `center`, `above1`, `above2`, requires DXF R2000+
-            valign: vertical text alignment `above`, `center`, `below`
-            oblique: angle of oblique extension line, 0 = orthogonal to dimension line
+            halign: horizontal text alignment - "left", "right", "center",
+                "above1", "above2", requires DXF R2000+
+            valign: vertical text alignment "above", "center", "below"
+            oblique: angle of oblique extension line, 0 = orthogonal to
+                dimension line
 
         """
         dimattr = {}
@@ -303,8 +314,7 @@ def example_for_all_text_placings(doc, filename, ucs=None):
         dim.render(ucs=ucs, discard=BRICSCAD)
 
     def user_text_free(dimstyle, x=0, y=0, leader=False):
-        """
-        User defined dimension text placing.
+        """User defined dimension text placing.
 
         Args:
             dimstyle: dimstyle to use
@@ -469,9 +479,9 @@ def example_for_all_text_placings(doc, filename, ucs=None):
 
 
 def example_multi_point_linear_dimension():
-    """
-    Example for using the ezdxf "multi-point linear dimension" feature, which generates dimension entities for multiple
-    points at ones and tries to move dimension text to a readable location.
+    """Example for using the ezdxf "multi-point linear dimension" feature, which
+    generates dimension entities for multiple points at ones and tries to move
+    dimension text to a readable location.
 
     This feature works best with DXF R2007+.
 
@@ -501,9 +511,9 @@ def random_point(start, end):
 def example_random_multi_point_linear_dimension(
     count=10, length=20, discard=BRICSCAD
 ):
-    """
-    Example for using the ezdxf "multi-point linear dimension" feature, which generates dimension entities for multiple
-    points at ones and tries to move dimension text to a readable location.
+    """Example for using the ezdxf "multi-point linear dimension" feature, which
+    generates dimension entities for multiple points at ones and tries to move
+    dimension text to a readable location.
 
     This feature works best with DXF R2007+.
 
@@ -557,8 +567,7 @@ def example_random_multi_point_linear_dimension(
 def linear_all_arrow_style(
     version="R12", dimltype=None, dimltex1=None, dimltex2=None, filename=""
 ):
-    """
-    Show all AutoCAD standard arrows on a linear dimension.
+    """Show all AutoCAD standard arrows on a linear dimension.
 
     Args:
         version: DXF version
@@ -603,11 +612,11 @@ def linear_all_arrow_style(
 
 
 def linear_tutorial_using_tolerances(version="R2000"):
-    """
-    Shows usage of tolerances for the dimension text.
+    """Shows usage of tolerances for the dimension text.
 
-    ezdxf uses MTEXT features for tolerance rendering and therefore requires DXF R2000+, but if you are using a
-    friendly CAD application like BricsCAD, you can let the CAD application do the rendering job, be aware this files
+    ezdxf uses MTEXT features for tolerance rendering and therefore requires
+    DXF R2000+, but if you are using a friendly CAD application like BricsCAD,
+    you can let the CAD application do the rendering job, be aware this files
     are not AutoCAD compatible.
 
     Args:
@@ -624,7 +633,8 @@ def linear_tutorial_using_tolerances(version="R2000"):
         DimStyle, doc.dimstyles.duplicate_entry("EZDXF", "TOLERANCE")
     )
     # not all features are supported by DXF R12:
-    # zero suppression (DIMTZIN), align (DIMTOLJ) and dec (DIMTDEC) require DXF R2000+
+    # zero suppression (DIMTZIN), align (DIMTOLJ) and dec (DIMTDEC) require
+    # DXF R2000+
     tol_style.set_tolerance(0.1, hfactor=0.5, align="top", dec=2)
     msp.add_linear_dim(
         base=(0, 3), p1=(0, 0), p2=(10, 0), dimstyle="tolerance"
@@ -641,12 +651,12 @@ def linear_tutorial_using_tolerances(version="R2000"):
 
 
 def linear_tutorial_using_limits(version="R2000"):
-    """
-    Shows usage of limits for the dimension text, limits are the lower and upper limit for the measured distance, the
-    measurement itself is not shown.
+    """Shows usage of limits for the dimension text, limits are the lower and
+    upper limit for the measured distance, the measurement itself is not shown.
 
-    ezdxf uses MTEXT features for limits rendering and therefore requires DXF R2000+, but if you are using a
-    friendly CAD application like BricsCAD, you can let the CAD application do the rendering job, be aware this files
+    Ezdxf uses MTEXT features for limits rendering and therefore requires DXF
+    R2000+, but if you are using a friendly CAD application like BricsCAD, you
+    can let the CAD application do the rendering job, be aware this files
     are not AutoCAD compatible.
 
     Args:
@@ -674,9 +684,9 @@ def linear_tutorial_using_limits(version="R2000"):
 
 
 def linear_tutorial_using_tvp():
-    """
-    For the vertical text alignment `center`, exists an additional DXF feature, to move the dimension text vertical
-    up and down (DIMTVP). Vertical distance dimension line to text center =  text_height * vshift (DIMTVP)
+    """For the vertical text alignment "center", exists an additional DXF
+    feature, to move the dimension text vertical up and down (DIMTVP).
+    Vertical distance dimension line to text center = text_height * vshift (DIMTVP)
 
     """
     doc = ezdxf.new("R2000", setup=True)
@@ -782,7 +792,8 @@ ALL = True
 
 if __name__ == "__main__":
     example_for_all_text_placings_ucs_R12()
-    example_for_all_text_placings_in_space_R12()  # todo: this does not work
+    # todo: DIMENSION entities placed in 3D space for DXF R12 does not work!
+    example_for_all_text_placings_in_space_R12()
     example_for_all_text_placings_ucs_R2007()
     example_for_all_text_placings_in_space_R2007()
 
