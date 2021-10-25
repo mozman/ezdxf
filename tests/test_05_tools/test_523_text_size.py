@@ -23,7 +23,7 @@ def msp():
 
 
 H3W1 = {"height": 3.0, "width": 1.0}
-H3W2 = {"height": 2.0, "width": 2.0}
+H2W2 = {"height": 2.0, "width": 2.0}
 
 
 def test_text_size_of_an_empty_string(msp):
@@ -55,7 +55,7 @@ def test_text_width_of_a_string(msp, s):
 
 @pytest.mark.parametrize("s", ["ABC", ".,!", "   "])
 def test_text_width_of_a_string_for_width_factor_2(msp, s):
-    text = msp.add_text(s, dxfattribs=H3W2)
+    text = msp.add_text(s, dxfattribs=H2W2)
     size = text_size(text)
     assert size.width == len(s) * size.cap_height * 2.0
 

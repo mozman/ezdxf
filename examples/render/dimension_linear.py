@@ -1,26 +1,17 @@
 # Purpose: using DIMENSION horizontal, vertical and rotated
 # Copyright (c) 2018-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING
-import sys
+from typing import cast
 import math
 import pathlib
 import random
+import logging
+
 import ezdxf
 from ezdxf.tools.standards import setup_dimstyle
 from ezdxf.math import Vec3, UCS
-import logging
+from ezdxf.entities import DimStyle
 
-if TYPE_CHECKING:
-    from ezdxf.eztypes import DimStyle, DimStyleOverride
-
-# ========================================
-# IMPORTANT:
-# this script uses f-strings (Python 3.6)
-# ========================================
-if sys.version_info < (3, 6):
-    print("This script requires Python 3.6 (f-strings)")
-    sys.exit()
 
 # ========================================
 # Setup logging
@@ -53,7 +44,7 @@ BRICSCAD = False
 def set_text_style(doc, textstyle=DIM_TEXT_STYLE, name="EZDXF"):
     if doc.dxfversion == "AC1009":
         return
-    dimstyle = doc.dimstyles.get(name)  # type: DimStyle
+    dimstyle = cast(DimStyle, doc.dimstyles.get(name))
     dimstyle.dxf.dimtxsty = textstyle
 
 
@@ -100,7 +91,7 @@ def linear_tutorial(dxfversion="R12"):
             "dimtfill": 2,  # custom text fill
             "dimtfillclr": 4,  # cyan
         },
-    )  # type: DimStyleOverride
+    )
     # Some properties have setter methods for convenience, this is also the reason for not calling dim2.render()
     # automatically.
     dim2.set_arrows(blk=ezdxf.ARROWS.closed_filled, size=0.25)
@@ -128,7 +119,7 @@ def example_background_fill(dxfversion="R12"):
         override={
             "dimtfill": 1,  # background color
         },
-    )  # type: DimStyleOverride
+    )
     dim.set_text("bgcolor")
     dim.render()
 
@@ -141,7 +132,7 @@ def example_background_fill(dxfversion="R12"):
             "dimtfill": 2,  # custom text fill
             "dimtfillclr": 4,  # cyan
         },
-    )  # type: DimStyleOverride
+    )
     dim.set_text("cyan")
     dim.render()
     doc.saveas(OUTDIR / f"background_fill_example_{dxfversion}.dxf")
@@ -266,7 +257,7 @@ def example_for_all_text_placings(doc, filename, ucs=None):
             p2=(x + 5, y),
             dimstyle=dimstyle,
             dxfattribs=dimattr,
-        )  # type: DimStyleOverride
+        )
         dim.set_text_align(halign=halign, valign=valign)
         dim.render(ucs=ucs, discard=BRICSCAD)
 
@@ -282,7 +273,7 @@ def example_for_all_text_placings(doc, filename, ucs=None):
             p2=(x + 7.3, y),
             dimstyle=dimstyle,
             dxfattribs=dimattr,
-        )  # type: DimStyleOverride
+        )
         dim.set_text_align(halign=halign, valign=valign)
         dim.render(ucs=ucs, discard=BRICSCAD)
 
@@ -295,7 +286,7 @@ def example_for_all_text_placings(doc, filename, ucs=None):
             dimstyle=dimstyle,
             override={"dimdec": 2},
             dxfattribs=dimattr,
-        )  # type: DimStyleOverride
+        )
         dim.set_text_align(halign=halign, valign=valign)
         dim.render(ucs=ucs, discard=BRICSCAD)
 
@@ -307,7 +298,7 @@ def example_for_all_text_placings(doc, filename, ucs=None):
             dimstyle=dimstyle,
             override={"dimtix": 1},
             dxfattribs=dimattr,
-        )  # type: DimStyleOverride
+        )
         dim.set_text_align(halign=halign, valign=valign)
         dim.render(ucs=ucs, discard=BRICSCAD)
 
@@ -337,7 +328,7 @@ def example_for_all_text_placings(doc, filename, ucs=None):
             p2=(x + 3, y),
             dimstyle=dimstyle,
             override=override,
-        )  # type: DimStyleOverride
+        )
         location = Vec3(x + 3, y + 3, 0)
         dim.set_location(location, leader=leader)
         dim.render(ucs=ucs, discard=BRICSCAD)
@@ -352,7 +343,7 @@ def example_for_all_text_placings(doc, filename, ucs=None):
             p2=(x + 3, y),
             dimstyle=dimstyle,
             override=override,
-        )  # type: DimStyleOverride
+        )
         relative = Vec3(-1, +1)  # relative to dimline center
         dim.set_location(relative, leader=leader, relative=True)
         dim.render(ucs=ucs, discard=BRICSCAD)
@@ -367,7 +358,7 @@ def example_for_all_text_placings(doc, filename, ucs=None):
             p2=(x + 3, y),
             dimstyle=dimstyle,
             override=override,
-        )  # type: DimStyleOverride
+        )
         dh = -0.7
         dv = 1.5
         dim.shift_text(dh, dv)
@@ -387,7 +378,7 @@ def example_for_all_text_placings(doc, filename, ucs=None):
             p2=(x + 0.3, y),
             dimstyle=dimstyle,
             override=override,
-        )  # type: DimStyleOverride
+        )
         dh = 0
         dv = 1
         dim.shift_text(dh, dv)
@@ -491,9 +482,9 @@ def example_multi_point_linear_dimension():
     msp.add_lwpolyline(points)
 
     # create quick a new DIMSTYLE as alternative to overriding DIMSTYLE attributes
-    dimstyle = doc.dimstyles.duplicate_entry(
-        "EZDXF", "WITHTFILL"
-    )  # type: DimStyle
+    dimstyle = cast(
+        DimStyle, doc.dimstyles.duplicate_entry("EZDXF", "WITHTFILL")
+    )
     dimstyle.dxf.dimtfill = 1
 
     msp.add_multi_point_linear_dim(
@@ -525,16 +516,16 @@ def example_random_multi_point_linear_dimension(
     msp.add_lwpolyline(points, dxfattribs={"color": 1})
 
     # create quick a new DIMSTYLE as alternative to overriding DIMSTYLE attributes
-    dimstyle = doc.dimstyles.duplicate_entry(
-        "EZDXF", "WITHTFILL"
-    )  # type: DimStyle
+    dimstyle = cast(
+        DimStyle, doc.dimstyles.duplicate_entry("EZDXF", "WITHTFILL")
+    )
 
     dimstyle.dxf.dimtfill = 1
     dimstyle.dxf.dimdec = 2
 
-    dimstyle = doc.dimstyles.duplicate_entry(
-        "WITHTFILL", "WITHTXT"
-    )  # type: DimStyle
+    dimstyle = cast(
+        DimStyle, doc.dimstyles.duplicate_entry("WITHTFILL", "WITHTXT")
+    )
     dimstyle.dxf.dimblk = ezdxf.ARROWS.closed
     dimstyle.dxf.dimtxsty = "STANDARD"
     dimstyle.dxf.dimrnd = 0.5
@@ -579,7 +570,7 @@ def linear_all_arrow_style(
     """
     doc = ezdxf.new(version, setup=True)
     msp = doc.modelspace()
-    ezdxf_dimstyle = doc.dimstyles.get("EZDXF")  # type: DimStyle
+    ezdxf_dimstyle = cast(DimStyle, doc.dimstyles.get("EZDXF"))
     ezdxf_dimstyle.copy_to_header(doc)
 
     for index, name in enumerate(sorted(ezdxf.ARROWS.__all_arrows__)):
@@ -601,7 +592,7 @@ def linear_all_arrow_style(
             p2=(3, y),
             dimstyle="EZDXF",
             override=attributes,
-        )  # type: DimStyleOverride
+        )
         dim.set_arrows(blk=name, size=0.25)
         dim.render()
 
@@ -629,9 +620,9 @@ def linear_tutorial_using_tolerances(version="R2000"):
     # DO NOT RENDER BY EZDXF for DXF R12
     discard = version == "R12"
 
-    tol_style = doc.dimstyles.duplicate_entry(
-        "EZDXF", "TOLERANCE"
-    )  # type: DimStyle
+    tol_style = cast(
+        DimStyle, doc.dimstyles.duplicate_entry("EZDXF", "TOLERANCE")
+    )
     # not all features are supported by DXF R12:
     # zero suppression (DIMTZIN), align (DIMTOLJ) and dec (DIMTDEC) require DXF R2000+
     tol_style.set_tolerance(0.1, hfactor=0.5, align="top", dec=2)
@@ -667,9 +658,7 @@ def linear_tutorial_using_limits(version="R2000"):
     # DO NOT RENDER BY EZDXF for DXF R12
     discard = version == "R12"
 
-    tol_style = doc.dimstyles.duplicate_entry(
-        "EZDXF", "LIMITS"
-    )  # type: DimStyle
+    tol_style = cast(DimStyle, doc.dimstyles.duplicate_entry("EZDXF", "LIMITS"))
 
     # not all features are supported by DXF R12:
     # zero suppression (DIMTZIN), align (DIMTOLJ) and dec (DIMTDEC) require DXF R2000+
@@ -692,7 +681,7 @@ def linear_tutorial_using_tvp():
     """
     doc = ezdxf.new("R2000", setup=True)
     msp = doc.modelspace()
-    style = doc.dimstyles.duplicate_entry("EZDXF", "TVP")  # type: DimStyle
+    style = cast(DimStyle, doc.dimstyles.duplicate_entry("EZDXF", "TVP"))
     # shift text upwards
     style.set_text_align(valign="center", vshift=2.0)
     msp.add_linear_dim(
@@ -702,7 +691,7 @@ def linear_tutorial_using_tvp():
         base=(0, 3), p1=(15, 0), p2=(15.5, 0), dimstyle="TVP"
     ).render()
 
-    style = doc.dimstyles.duplicate_entry("EZDXF", "TVP2")  # type: DimStyle
+    style = cast(DimStyle, doc.dimstyles.duplicate_entry("EZDXF", "TVP2"))
     # shift text downwards
     style.set_text_align(valign="center", vshift=-2.0)
     msp.add_linear_dim(
@@ -793,7 +782,7 @@ ALL = True
 
 if __name__ == "__main__":
     example_for_all_text_placings_ucs_R12()
-    example_for_all_text_placings_in_space_R12()
+    example_for_all_text_placings_in_space_R12()  # todo: this does not work
     example_for_all_text_placings_ucs_R2007()
     example_for_all_text_placings_in_space_R2007()
 
