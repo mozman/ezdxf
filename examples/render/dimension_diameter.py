@@ -56,11 +56,15 @@ def diameter_default_outside(dxfversion="R2000", delta=10):
         angle = Vec3(x, y).angle_deg
         msp.add_circle((x, y), radius=3)
 
-        # Default DimStyle EZ_RADIUS: 1 drawing unit == 1m; scale 1: 100; length_factor=100 -> measurement in cm
-        # closed filled arrow, size 0.25
+        # Default DimStyle EZ_RADIUS:
+        #   1 drawing unit == 1m;
+        #   scale 1: 100;
+        #   length_factor=100 -> measurement in cm
+        #   closed filled arrow, size = 0.25
         # DIMSTYLE settings:
-        # dimtmove = 1: use leader, is the best setting for text outside to preserve appearance of DIMENSION entity,
-        # if editing afterwards in BricsCAD (AutoCAD)
+        # dimtmove = 1: use leader, is the best setting for text outside to
+        # preserve appearance of DIMENSION entity, if editing afterwards in
+        # BricsCAD (AutoCAD)
 
         # center: specifies the center of the circle
         # radius: specifies the radius of the circle
@@ -69,12 +73,15 @@ def diameter_default_outside(dxfversion="R2000", delta=10):
             center=(x, y), radius=3, angle=angle, dimstyle="EZ_RADIUS"
         )
 
-        # Necessary second step, to create the BLOCK entity with the DIMENSION geometry.
-        # ezdxf supports DXF R2000 attributes for DXF R12 rendering, but they have to be applied by the DIMSTYLE override
-        # feature, this additional attributes are not stored in the XDATA section of the DIMENSION entity, they are just
-        # used to render the DIMENSION entity.
-        # The return value `dim` is not a DIMENSION entity, instead a DimStyleOverride object is returned, the DIMENSION
-        # entity is stored as dim.dimension, see also ezdxf.override.DimStyleOverride class.
+        # Necessary second step, to create the BLOCK entity with the DIMENSION
+        # geometry.
+        # Ezdxf supports DXF R2000 attributes for DXF R12 rendering, but they
+        # have to be applied by the DIMSTYLE override feature, this additional
+        # attributes are not stored in the XDATA section of the DIMENSION entity,
+        # they are just used to render the DIMENSION entity.
+        # The return value `dim` is not a DIMENSION entity, instead a
+        # DimStyleOverride object is returned, the DIMENSION entity is stored
+        # as dim.dimension, see also ezdxf.override.DimStyleOverride class.
         dim.render(discard=BRICSCAD)
     doc.set_modelspace_vport(height=3 * delta)
     doc.saveas(OUTDIR / f"dim_diameter_{dxfversion}_default_outside.dxf")
@@ -98,15 +105,20 @@ def diameter_default_inside(dxfversion="R2000", delta=10, dimtmove=0):
     style = doc.dimstyles.get("EZ_RADIUS_INSIDE")
     style.dxf.dimtmove = dimtmove
 
-    # Default DimStyle EZ_RADIUS_INSIDE: 1 drawing unit == 1m; scale 1: 100; length_factor=100 -> measurement in cm
-    # closed filled arrow, size 0.25
+    # Default DimStyle EZ_RADIUS_INSIDE:
+    #   1 drawing unit == 1m;
+    #   scale 1: 100;
+    #   length_factor=100 -> measurement in cm
+    #   closed filled arrow, size = 0.25
     # DIMSTYLE settings:
-    # dimtmove = 0: keep dim line with text, is the best setting for text inside to preserve appearance of
-    # DIMENSION entity, if editing afterwards in BricsCAD (AutoCAD)
-    # dimtix = 1:   force text inside
+    # dimtmove = 0: keep dim line with text, is the best setting for text inside
+    # to preserve appearance of DIMENSION entity, if editing afterwards in
+    # BricsCAD (AutoCAD)
+    # dimtix = 1: force text inside
     # dimatfit = 0: force text inside, required by BricsCAD (AutoCAD)
-    # dimtad = 0: center text vertical, BricsCAD (AutoCAD) always creates vertical centered text,
-    # ezdxf let you choose the vertical placement (above, below, center),
+    # dimtad = 0: center text vertical, BricsCAD (AutoCAD) always creates
+    # vertical centered text,
+    # Ezdxf let you choose the vertical placement (above, below, center),
     # but editing the DIMENSION in BricsCAD will reset text to center placement.
 
     msp = doc.modelspace()
