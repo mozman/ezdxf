@@ -3,6 +3,7 @@
 import math
 from typing import TYPE_CHECKING, Tuple, List
 from abc import abstractmethod
+import logging
 
 from ezdxf.math import (
     Vec2,
@@ -28,6 +29,8 @@ if TYPE_CHECKING:
 
 __all__ = ["AngularDimension", "Angular3PDimension", "ArcLengthDimension"]
 
+logger = logging.getLogger("ezdxf")
+
 
 def has_required_attributes(entity: DXFEntity, attrib_names: List[str]):
     has = entity.dxf.hasattr
@@ -46,12 +49,17 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         override: DimStyleOverride = None,
     ):
         super().__init__(dimension, ucs, override)
+        # Common parameters for all sub-classes:
         self.center_of_arc: Vec2 = self.get_center_of_arc()
-        self.ocs_center_of_arc = self.ucs.to_ocs(Vec3(self.center_of_arc))
         self.dim_line_radius: float = self.get_dim_line_radius()
-        self.start_angle_rad: float = self.get_start_angle_rad()
-        self.end_angle_rad: float = self.get_end_angle_rad()
-        self.dim_line_center: Vec2 = self.get_dim_line_center()
+        self.ext1_dir: Vec2 = self.get_ext1_dir()
+        self.start_angle_rad: float = self.ext1_dir.angle
+        self.ext2_dir: Vec2 = self.get_ext2_dir()
+        self.end_angle_rad: float = self.ext2_dir.angle
+
+        # Additional required parameters but calculated later by sub-classes:
+        self.ext1_start = Vec2()  # start of 1st extension line
+        self.ext2_start = Vec2()  # start of 2nd extension line
 
     def render(self, block: "GenericLayoutType") -> None:
         """Main method to create dimension geometry of basic DXF entities in the
@@ -76,31 +84,44 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
             )
             if self.text_has_leader:
                 leader1, leader2 = self.get_leader_points()
-                self.add_leader(self.dim_line_center, leader1, leader2)
+                self.add_leader(self.dim_midpoint, leader1, leader2)
         self.add_defpoints(self.get_defpoints())
 
-    @abstractmethod
-    def make_measurement_text(self) -> None:
-        pass
+    @property
+    def ocs_center_of_arc(self) -> Vec3:
+        return self.ucs.to_ocs(Vec3(self.center_of_arc))
 
-    def get_dim_line_center(self) -> Vec2:
+    @property
+    def dim_midpoint(self) -> Vec2:
+        """Return the midpoint of the dimension line."""
         angle = (self.start_angle_rad + self.end_angle_rad) / 2.0
         return self.center_of_arc + Vec2.from_angle(angle, self.dim_line_radius)
 
     @abstractmethod
-    def get_start_angle_rad(self) -> float:
+    def make_measurement_text(self) -> None:
+        """Setup measurement text and the TextBox object."""
         pass
 
     @abstractmethod
-    def get_end_angle_rad(self) -> float:
+    def get_ext1_dir(self) -> Vec2:
+        """Return the direction of the 1st extension line == start angle."""
+        pass
+
+    @abstractmethod
+    def get_ext2_dir(self) -> Vec2:
+        """Return the direction of the 2nd extension line == end angle."""
         pass
 
     @abstractmethod
     def get_center_of_arc(self) -> Vec2:
+        """Return the center of the arc."""
         pass
 
     @abstractmethod
     def get_dim_line_radius(self) -> float:
+        """Return the distance from the center of the arc to the dimension line
+        location
+        """
         pass
 
     # @abstractmethod
@@ -278,25 +299,59 @@ class AngularDimension(_AngularCommonBase):
         self.leg2_end = get_required_defpoint(dimension, "defpoint2")
         self.dim_line_location = get_required_defpoint(dimension, "defpoint5")
         super().__init__(dimension, ucs, override)
+        # The extension line parameters depending on the location of the
+        # dimension line related to the definition point.
+        # Detect the extension start point.
+        # Which definition point is closer to the dimension line:
+        self.ext1_start = detect_closer_defpoint(
+            direction=self.ext1_dir,
+            base=self.dim_line_location,
+            p1=self.leg1_start,
+            p2=self.leg1_end,
+        )
+        self.ext2_start = detect_closer_defpoint(
+            direction=self.ext2_dir,
+            base=self.dim_line_location,
+            p1=self.leg2_start,
+            p2=self.leg2_end,
+        )
 
     def get_center_of_arc(self) -> Vec2:
         center = intersection_line_line_2d(
             (self.leg1_start, self.leg1_end),
             (self.leg2_start, self.leg2_end),
         )
-        if center is not None:
-            return center
-        # what about 180 deg angles?
-        ArithmeticError("parallel or colinear angle legs")
+        if center is None:
+            logger.warning(
+                f"Invalid colinear or parallel angle legs found in {self.dimension})"
+            )
+            # This case can not be created by the GUI in BricsCAD, but DXF
+            # files can contain any shit!
+            # The interpolation of the end-points is an arbitrary choice and
+            # maybe not the best choice!
+            center = self.leg1_end.lerp(self.leg2_end)
+        return center
 
     def get_dim_line_radius(self) -> float:
         return (self.dim_line_location - self.center_of_arc).magnitude
 
-    def get_start_angle_rad(self) -> float:
-        return (self.leg1_start - self.center_of_arc).angle
+    def get_ext1_dir(self) -> Vec2:
+        center = self.center_of_arc
+        start = (
+            self.leg1_end
+            if self.leg1_start.isclose(center)
+            else self.leg1_start
+        )
+        return (start - center).normalize()
 
-    def get_end_angle_rad(self) -> float:
-        return (self.leg2_start - self.center_of_arc).angle
+    def get_ext2_dir(self) -> Vec2:
+        center = self.center_of_arc
+        start = (
+            self.leg2_end
+            if self.leg2_start.isclose(center)
+            else self.leg2_start
+        )
+        return (start - center).normalize()
 
 
 class Angular3PDimension(_AngularCommonBase):
@@ -335,6 +390,8 @@ class Angular3PDimension(_AngularCommonBase):
         self.leg2_start = get_required_defpoint(dimension, "defpoint3")
         self.center_of_arc = get_required_defpoint(dimension, "defpoint4")
         super().__init__(dimension, ucs, override)
+        self.ext1_start = self.leg1_start
+        self.ext2_start = self.leg2_start
 
     def get_center_of_arc(self) -> Vec2:
         return self.center_of_arc
@@ -342,11 +399,11 @@ class Angular3PDimension(_AngularCommonBase):
     def get_dim_line_radius(self) -> float:
         return (self.dim_line_location - self.center_of_arc).magnitude
 
-    def get_start_angle_rad(self) -> float:
-        return (self.leg1_start - self.center_of_arc).angle
+    def get_ext1_dir(self) -> Vec2:
+        return (self.leg1_start - self.center_of_arc).normalize()
 
-    def get_end_angle_rad(self) -> float:
-        return (self.leg2_start - self.center_of_arc).angle
+    def get_ext2_dir(self) -> Vec2:
+        return (self.leg2_start - self.center_of_arc).normalize()
 
 
 class ArcLengthDimension(_CurvedDimensionLine):
@@ -386,6 +443,8 @@ class ArcLengthDimension(_CurvedDimensionLine):
         self.center_of_arc = get_required_defpoint(dimension, "defpoint4")
         self.arc_radius = (self.leg1_start - self.center_of_arc).magnitude
         super().__init__(dimension, ucs, override)
+        self.ext1_start = self.leg1_start
+        self.ext2_start = self.leg2_start
 
     def get_center_of_arc(self) -> Vec2:
         return self.center_of_arc
@@ -393,15 +452,15 @@ class ArcLengthDimension(_CurvedDimensionLine):
     def get_dim_line_radius(self) -> float:
         return (self.dim_line_location - self.center_of_arc).magnitude
 
-    def get_start_angle_rad(self) -> float:
-        return (self.leg1_start - self.center_of_arc).angle
+    def get_ext1_dir(self) -> Vec2:
+        return (self.ext1_start - self.center_of_arc).normalize()
 
-    def get_end_angle_rad(self) -> float:
-        return (self.leg2_start - self.center_of_arc).angle
+    def get_ext2_dir(self) -> Vec2:
+        return (self.ext2_start - self.center_of_arc).normalize()
 
     def make_measurement_text(self) -> None:
         angle = ellipse_param_span(self.start_angle_rad, self.end_angle_rad)
-        arc_length = angle * self.arc_radius * 2.
+        arc_length = angle * self.arc_radius * 2.0
         self.text = self.text_override(arc_length)  # -> self.format_text()
 
 
@@ -460,3 +519,16 @@ def visible_arcs(
         # Ignore cases where the start- or the end point is inside the box.
         # Ignore cases where the box touches the arc in one point.
         return [(start_angle, end_angle)]
+
+
+def detect_closer_defpoint(
+    direction: Vec2, base: Vec2, p1: Vec2, p2: Vec2
+) -> Vec2:
+    # Calculate the projected distance onto the (normalized) direction vector:
+    d0 = direction.dot(base)
+    d1 = direction.dot(p1)
+    d2 = direction.dot(p2)
+    # Which defpoint is closer to the base point (d0)?
+    if abs(d1 - d0) <= abs(d2 - d0):
+        return p1
+    return p2
