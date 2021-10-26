@@ -886,6 +886,20 @@ class BaseDimensionRenderer:
     def finalize(self) -> None:
         self.transform_ucs_to_wcs()
 
+    def add_extension_line(
+        self, start: "Vertex", end: "Vertex", linetype: str = None
+    ) -> None:
+        """Add extension lines from dimension line to measurement point."""
+        attribs: Dict[str, Any] = {"color": self.ext_line_color}
+        if linetype is not None:
+            attribs["linetype"] = linetype
+
+        # lineweight requires DXF R2000 or later
+        if self.supports_dxf_r2000:
+            attribs["lineweight"] = self.ext_lineweight
+
+        self.add_line(start, end, dxfattribs=attribs)
+
 
 def order_leader_points(p1: Vec2, p2: Vec2, p3: Vec2) -> Tuple[Vec2, Vec2]:
     if (p1 - p2).magnitude > (p1 - p3).magnitude:

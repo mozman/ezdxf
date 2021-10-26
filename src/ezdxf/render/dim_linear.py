@@ -560,20 +560,6 @@ class LinearDimension(BaseDimensionRenderer):
         end = end + direction * extension
         return start, end
 
-    def add_extension_line(
-        self, start: "Vertex", end: "Vertex", linetype: str = None
-    ) -> None:
-        """Add extension lines from dimension line to measurement point."""
-        attribs: Dict[str, Any] = {"color": self.ext_line_color}
-        if linetype is not None:
-            attribs["linetype"] = linetype
-
-        # lineweight requires DXF R2000 or later
-        if self.supports_dxf_r2000:
-            attribs["lineweight"] = self.ext_lineweight
-
-        self.add_line(start, end, dxfattribs=attribs)
-
     def transform_ucs_to_wcs(self) -> None:
         """Transforms dimension definition points into WCS or if required into
         OCS.
