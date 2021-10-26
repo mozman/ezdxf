@@ -856,7 +856,14 @@ class BaseDimensionRenderer:
         self.add_line(p2, p3, dxfattribs)
 
     def transform_ucs_to_wcs(self) -> None:
-        pass  # abstract method
+        """Transforms dimension definition points into WCS or if required into
+        OCS.
+
+        Can not be called in __init__(), because inherited classes may be need
+        unmodified values.
+
+        """
+        pass
 
     @property
     def vertical_placement(self) -> float:
@@ -885,6 +892,8 @@ class BaseDimensionRenderer:
 
     def finalize(self) -> None:
         self.transform_ucs_to_wcs()
+        if self.requires_extrusion:
+            self.dimension.dxf.extrusion = self.ucs.uz
 
     def add_extension_line(
         self, start: "Vertex", end: "Vertex", linetype: str = None

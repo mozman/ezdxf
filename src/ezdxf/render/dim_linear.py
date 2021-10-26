@@ -581,9 +581,6 @@ class LinearDimension(BaseDimensionRenderer):
             self.dimension.dxf.angle
         )
 
-        if self.requires_extrusion:
-            self.dimension.dxf.extrusion = self.ucs.uz
-
 
 CAN_SUPPRESS_ARROW1 = {
     ARROWS.dot,

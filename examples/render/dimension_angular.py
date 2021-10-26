@@ -32,7 +32,7 @@ DIM_TEXT_STYLE = ezdxf.options.default_dimension_text_style
 # Discarding dimension rendering is possible
 # for BricsCAD, but is incompatible to AutoCAD -> error
 # =======================================================
-BRICSCAD = True
+BRICSCAD = False
 
 
 def locations():
