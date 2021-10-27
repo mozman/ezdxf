@@ -1575,7 +1575,10 @@ class CreatorInterface:
         dxfattribs: Dict = None,
     ) -> "DimStyleOverride":
         """
-        Add angular :class:`~ezdxf.entities.Dimension` from 2 lines.
+        Add angular :class:`~ezdxf.entities.Dimension` from 2 lines. The
+        measurement is always done from `line1` to `line2` in counter clockwise
+        orientation. This does not always match the result in CAD applications!
+
         If an :class:`~ezdxf.math.UCS` is used for angular dimension rendering,
         all point definitions in UCS coordinates, translation into :ref:`WCS`
         and :ref:`OCS` is done by the rendering function. Extrusion vector is
@@ -1654,7 +1657,10 @@ class CreatorInterface:
     ) -> "DimStyleOverride":
         """
         Add angular :class:`~ezdxf.entities.Dimension` from 3 points
-        (center, p1, p2).
+        (center, p1, p2). The measurement is always done from `p1` to `p2` in
+        counter clockwise orientation. This does not always match the result in
+        CAD applications!
+
         If an :class:`~ezdxf.math.UCS` is used for angular dimension rendering,
         all point definitions in UCS coordinates, translation into :ref:`WCS`
         and :ref:`OCS` is done by the rendering function. Extrusion vector is
@@ -1736,7 +1742,8 @@ class CreatorInterface:
         (r)adius and start- and end (a)ngles, the measurement text is placed at
         the default location defined by the associated `dimstyle`.
         The measurement is always done from `start_angle` to `end_angle` in
-        counter clock-wise orientation.
+        counter clockwise orientation. This does not always match the result in
+        CAD applications!
         For further information see the more generic factory method
         :func:`add_angular_dim_3p`.
 
@@ -1769,7 +1776,7 @@ class CreatorInterface:
         center_ = Vec3(center)
 
         center_angle = sa + arc_angle_span_deg(sa, ea) / 2.0
-        # ca = (sa + se) / 2 is not correct: e.g. 30, -30 is 0 but should be 180
+        # ca = (sa + ea) / 2 is not correct: e.g. 30, -30 is 0 but should be 180
 
         base = center_ + Vec3.from_deg_angle(center_angle) * (
             ext_line_start + dim_line_offset
