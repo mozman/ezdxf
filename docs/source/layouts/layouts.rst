@@ -166,6 +166,12 @@ BaseLayout
 
     .. automethod:: add_diameter_dim_2p
 
+    .. automethod:: add_angular_dim_2l
+
+    .. automethod:: add_angular_dim_3p
+
+    .. automethod:: add_angular_dim_cra
+
     .. automethod:: add_leader
 
     .. automethod:: add_body

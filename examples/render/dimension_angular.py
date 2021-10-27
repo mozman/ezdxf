@@ -69,8 +69,8 @@ def angular_default_above(dxfversion="R2000"):
         #   first line defining the angle
         # line2:
         #   second line defining the angle
-        dim = msp.add_angular_dim(
-            base=base, line1=line1, line2=line2, dimstyle="EZ_ANGULAR"
+        dim = msp.add_angular_dim_2l(
+            base=base, line1=line1, line2=line2, dimstyle="EZ_CURVED"
         )
         # Necessary second step, to create the BLOCK entity with the DIMENSION
         # geometry. Ezdxf supports DXF R2000 attributes for DXF R12 rendering,
@@ -91,11 +91,11 @@ def angular_default_center(dxfversion="R2000"):
     for base, line1, line2 in locations():
         msp.add_line(line1[0], line1[1])
         msp.add_line(line2[0], line2[1])
-        dim = msp.add_angular_dim(
+        dim = msp.add_angular_dim_2l(
             base=base,
             line1=line1,
             line2=line2,
-            dimstyle="EZ_ANGULAR",
+            dimstyle="EZ_CURVED",
             override={"dimtad": 0},
         )
         dim.render(discard=BRICSCAD)
@@ -113,8 +113,8 @@ def angular_3d(dxfversion="R2000"):
         msp.add_line(line1[0], line1[1]).transform(ucs.matrix)
         msp.add_line(line2[0], line2[1]).transform(ucs.matrix)
 
-        dim = msp.add_angular_dim(
-            base=base, line1=line1, line2=line2, dimstyle="EZ_ANGULAR"
+        dim = msp.add_angular_dim_2l(
+            base=base, line1=line1, line2=line2, dimstyle="EZ_CURVED"
         )
         dim.render(discard=BRICSCAD, ucs=ucs)
 
@@ -125,7 +125,4 @@ def angular_3d(dxfversion="R2000"):
 if __name__ == "__main__":
     angular_default_above()
     angular_default_center()
-    # angular_user_defined_keep_with_line()
-    # angular_user_defined_no_leader()
-    # angular_user_defined_leader()
     angular_3d()

@@ -10,6 +10,8 @@ Please read the :ref:`tut_linear_dimension` before, if you haven't.
     `Ezdxf` does not consider all DIMSTYLE variables, so the
     rendering results are different from CAD applications.
 
+The first example shows an angular dimension for an angle defined by two lines:
+
 .. code-block:: Python
 
     import ezdxf
@@ -35,11 +37,11 @@ Please read the :ref:`tut_linear_dimension` before, if you haven't.
 
     # Add an angular DIMENSION from two lines, the measurement text is placed
     # at the default location above the dimension line:
-    dim = msp.add_angular_dim(
+    dim = msp.add_angular_dim_2l(
         base=base,  # defines the location of the dimension line
         line1=(p1, p2),  # start leg of the angle
         line2=(p3, p4),  # end leg of the angle
-        dimstyle="EZ_ANGULAR",  # default angular dimension style
+        dimstyle="EZ_CURVED",  # default angular dimension style
     )
 
     # Necessary second step to create the BLOCK entity with the dimension geometry.
@@ -73,6 +75,8 @@ the second leg and where the dimension line passes the `base` point.
 The return value `dim` is **not** a dimension entity, instead a
 :class:`~ezdxf.entities.DimStyleOverride` object is
 returned, the dimension entity is stored as :attr:`dim.dimension`.
+
+TODO ...
 
 Placing Measurement Text
 ------------------------

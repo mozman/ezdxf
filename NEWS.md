@@ -77,6 +77,8 @@ Version 0.17 - 2021-10-01
 - BUGFIX: graphic entities are not allowed as `DICTIONARY` entries 
 - BUGFIX: copied `DICTIONARY` was not added to the OBJECTS section by calling `factory.bind()`
 - BUGFIX: `XRecord.copy()` copies content tags
+- PREVIEW: angular dimension rendering support, new factory methods: 
+  `add_angular_dim_2l()`, `add_angular_dim_3p()`, `add_angular_dim_cra()` 
 
 Version 0.16.6 - 2021-08-28
 ---------------------------

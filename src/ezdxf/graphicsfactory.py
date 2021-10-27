@@ -6,7 +6,12 @@ import logging
 import warnings
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000
-from ezdxf.math import Vec3, global_bspline_interpolation, fit_points_to_cad_cv
+from ezdxf.math import (
+    Vec3,
+    global_bspline_interpolation,
+    fit_points_to_cad_cv,
+    arc_angle_span_deg,
+)
 from ezdxf.render.arrows import ARROWS
 from ezdxf.entities import factory
 from ezdxf.entities.mtext_columns import *
@@ -1557,7 +1562,7 @@ class CreatorInterface:
             dxfattribs=dxfattribs,
         )
 
-    def add_angular_dim(
+    def add_angular_dim_2l(
         self,
         base: "Vertex",
         line1: Tuple["Vertex", "Vertex"],
@@ -1589,7 +1594,7 @@ class CreatorInterface:
 
         Args:
             base: location of dimension line, any point on the dimension line or
-                its extension will do (in UCS)
+                its extension is valid (in UCS)
             line1: specifies start leg of the angle (start point, end point) and
                 determines extension line 1 (in UCS)
             line2: specifies end leg of the angle (start point, end point) and
@@ -1601,14 +1606,14 @@ class CreatorInterface:
             text_rotation: rotation angle of the dimension text as absolute
                 angle (x-axis=0, y-axis=90) in degrees
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
-                table entry), default is "EZDXF"
+                table entry), default is "EZ_CURVED"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for
                 :class:`~ezdxf.entities.Dimension` entity
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
-        (not implemented yet!)
+        .. versionadded:: v0.18
 
         """
         type_ = {"dimtype": const.DIM_ANGULAR | const.DIM_BLOCK_EXCLUSIVE}
@@ -1634,7 +1639,7 @@ class CreatorInterface:
             style.user_location_override(location)
         return style
 
-    def add_angular_3p_dim(
+    def add_angular_dim_3p(
         self,
         base: "Vertex",
         center: "Vertex",
@@ -1668,7 +1673,7 @@ class CreatorInterface:
 
         Args:
             base: location of dimension line, any point on the dimension line
-                or its extension will do (in UCS)
+                or its extension is valid (in UCS)
             center: specifies the vertex of the angle
             p1: specifies start leg of the angle (center -> p1) and end point
                 of extension line 1 (in UCS)
@@ -1681,14 +1686,14 @@ class CreatorInterface:
             text_rotation: rotation angle of the dimension text as absolute
                 angle (x-axis=0, y-axis=90) in degrees
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
-                table entry), default is "EZDXF"
+                table entry), default is "EZ_CURVED"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
             dxfattribs: additional DXF attributes for
                 :class:`~ezdxf.entities.Dimension` entity
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
-        (not implemented yet!)
+        .. versionadded:: v0.18
 
         """
         type_ = {"dimtype": const.DIM_ANGULAR_3P | const.DIM_BLOCK_EXCLUSIVE}
@@ -1713,6 +1718,74 @@ class CreatorInterface:
         if location is not None:
             style.user_location_override(location)
         return style
+
+    def add_angular_dim_cra(
+        self,
+        center: "Vertex",
+        radius: float,
+        start_angle: float,
+        end_angle: float,
+        distance: float,
+        text: str = "<>",
+        dimstyle: str = "EZ_CURVED",
+        override: Dict = None,
+        dxfattribs: Dict = None,
+    ) -> "DimStyleOverride":
+        """
+        Shortcut method to create an angular dimension by (c)enter point,
+        (r)adius and start- and end (a)ngles, the measurement text is placed at
+        the default location defined by the associated `dimstyle`.
+        The measurement is always done from `start_angle` to `end_angle` in
+        counter clock-wise orientation.
+        For further information see the more generic factory method
+        :func:`add_angular_dim_3p`.
+
+        Args:
+            center: center point of the angle (in UCS)
+            radius: the distance from `center` to the start of the extension
+                lines in drawing units
+            start_angle: start angle in degrees (in UCS)
+            end_angle: end angle in degrees (in UCS)
+            distance: distance from start of the extension lines to the
+                dimension line in drawing units
+            text: ``None`` or "<>" the measurement is drawn as text,
+                " " (a single space) suppresses the dimension text,
+                everything else `text` is drawn as dimension text
+            dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
+                table entry), default is "EZ_CURVED"
+            override: :class:`~ezdxf.entities.DimStyleOverride` attributes
+            dxfattribs: additional DXF attributes for
+                :class:`~ezdxf.entities.Dimension` entity
+
+        Returns: :class:`~ezdxf.entities.DimStyleOverride`
+
+        .. versionadded:: v0.18
+
+        """
+        sa = float(start_angle)
+        ea = float(end_angle)
+        ext_line_start = float(radius)
+        dim_line_offset = float(distance)
+        center_ = Vec3(center)
+
+        center_angle = sa + arc_angle_span_deg(sa, ea) / 2.0
+        # ca = (sa + se) / 2 is not correct: e.g. 30, -30 is 0 but should be 180
+
+        base = center_ + Vec3.from_deg_angle(center_angle) * (
+            ext_line_start + dim_line_offset
+        )
+        p1 = center_ + Vec3.from_deg_angle(sa) * ext_line_start
+        p2 = center_ + Vec3.from_deg_angle(ea) * ext_line_start
+        return self.add_angular_dim_3p(
+            base=base,
+            center=center_,
+            p1=p1,
+            p2=p2,
+            text=text,
+            dimstyle=dimstyle,
+            override=override,
+            dxfattribs=dxfattribs,
+        )
 
     def add_diameter_dim(
         self,
