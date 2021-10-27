@@ -149,7 +149,7 @@ Print help:
     C:\> ezdxf draw -h
     usage: ezdxf draw [-h] [--formats] [--layout LAYOUT] [--all-layers-visible]
                       [--all-entities-visible] [-o OUT] [--dpi DPI]
-                      [--ltype {internal,ezdxf}]
+                      [--ltype {approximate,accurate}]
                       [FILE]
 
     positional arguments:
@@ -161,14 +161,17 @@ Print help:
       --layout LAYOUT       select the layout to draw
       --all-layers-visible  draw all layers including the ones marked as invisible
       --all-entities-visible
-                            draw all entities including the ones marked as invisible (some
-                            entities are individually marked as invisible even if the layer
-                            is visible)
+                            draw all entities including the ones marked as
+                            invisible (some entities are individually marked as
+                            invisible even if the layer is visible)
       -o OUT, --out OUT     output filename for export
       --dpi DPI             target render resolution, default is 300
-      --ltype {internal,ezdxf}
-                            select the line type rendering engine, default is internal
-
+      --ltype {approximate,accurate}
+                            select the line type rendering method, default is
+                            approximate. Approximate uses the closest
+                            approximation available to the backend, the accurate
+                            method renders as accurately as possible but this
+                            approach is slower.
 View
 ----
 

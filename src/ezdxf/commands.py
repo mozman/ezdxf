@@ -290,9 +290,12 @@ class Draw(Command):
         )
         parser.add_argument(
             "--ltype",
-            default="internal",
-            choices=["internal", "ezdxf"],
-            help="select the line type rendering engine, default is internal",
+            default="approximate",
+            choices=["approximate", "accurate"],
+            help="select the line type rendering method, default is approximate. "
+                 "Approximate uses the closest approximation available to the "
+                 "backend, the accurate method renders as accurately as possible "
+                 "but this approach is slower.",
         )
 
     @staticmethod
@@ -347,7 +350,7 @@ class Draw(Command):
         config = Configuration.defaults()
         config = config.with_changes(
             line_policy=LinePolicy.ACCURATE
-            if args.ltype == "ezdxf"
+            if args.ltype == "accurate"
             else config.line_policy
         )
 
