@@ -21,7 +21,10 @@ Version 0.17.1b2 - dev
     which created the virtual entity, otherwise ``None``
 - NEW: `ezdxf.tools.text_size` module to measure `TEXT` and `MTEXT` entity dimensions
 - CHANGE: `--ltype` arguments of the `draw` command  to `approximate` and `accurate`
-    to be in sync with the `drawing` add-on configuration. 
+    to be in sync with the `drawing` add-on configuration.
+- CHANGE: `--ltype` arguments of the `view` command  to `approximate` and `accurate`
+    to be in sync with the `drawing` add-on configuration.
+- REMOVE `--scale` argument of the `view` command
 - BUGFIX: invalid XDATA processing in `XData.safe_init()` 
 - BUGFIX: group code 1003 is valid in XDATA section 
 - BUGFIX: fix loading error of `DIMSTYLE` attribute `dimtxsty` 

@@ -240,6 +240,13 @@ def load_document(filename: str):
     return doc, auditor
 
 
+HELP_LTYPE = "select the line type rendering method, default is approximate. " \
+             "Approximate uses the closest approximation available to the " \
+             "backend, the accurate method renders as accurately as possible " \
+             "but this approach is slower."
+HELP_LWSCALE = "set custom line weight scaling, default is 0 to disable line " \
+               "weights at all"
+
 @register
 class Draw(Command):
     """Launcher sub-command: draw"""
@@ -292,10 +299,7 @@ class Draw(Command):
             "--ltype",
             default="approximate",
             choices=["approximate", "accurate"],
-            help="select the line type rendering method, default is approximate. "
-                 "Approximate uses the closest approximation available to the "
-                 "backend, the accurate method renders as accurately as possible "
-                 "but this approach is slower.",
+            help=HELP_LTYPE,
         )
 
     @staticmethod
@@ -399,23 +403,16 @@ class View(Command):
         )
         parser.add_argument(
             "--ltype",
-            default="internal",
-            choices=["internal", "ezdxf"],
-            help="select the line type rendering engine, default is internal",
+            default="approximate",
+            choices=["approximate", "accurate"],
+            help=HELP_LTYPE,
         )
         # disable lineweight at all by default:
         parser.add_argument(
             "--lwscale",
             type=float,
             default=0,
-            help="set custom line weight scaling, default is 0 to disable "
-            "line weights at all",
-        )
-        parser.add_argument(
-            "--scale",
-            type=float,
-            default=1.0,
-            help="set set overall scaling factor > 1e-9 to scale the content",
+            help=HELP_LWSCALE,
         )
 
     @staticmethod
@@ -432,14 +429,11 @@ class View(Command):
         config = Configuration.defaults()
         config = config.with_changes(
             line_policy=LinePolicy.ACCURATE
-            if args.ltype == "ezdxf"
+            if args.ltype == "accurate"
             else config.line_policy,
             lineweight_scaling=args.lwscale,
         )
 
-        if args.scale < 1e-9:
-            print("Scaling factor too small or negative!")
-            sys.exit(2)
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
         app = QtWidgets.QApplication(sys.argv)
         set_app_icon(app)
@@ -451,7 +445,6 @@ class View(Command):
                 doc,
                 auditor,
                 layout=args.layout,
-                overall_scaling_factor=args.scale,
             )
         sys.exit(app.exec())
 

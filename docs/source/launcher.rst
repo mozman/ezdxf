@@ -189,17 +189,24 @@ Print help:
 .. code-block:: Text
 
     C:\> ezdxf view -h
-    usage: ezdxf view [-h] [--ltype {internal,ezdxf}] [--lwscale LWSCALE] [FILE]
+    usage: ezdxf view [-h] [--layout LAYOUT]
+                      [--ltype {approximate,accurate}] [--lwscale LWSCALE]
+                      [FILE]
 
     positional arguments:
       FILE                  DXF file to view
 
     optional arguments:
       -h, --help            show this help message and exit
-      --ltype {internal,ezdxf}
-                            select the line type rendering engine, default is internal
-      --lwscale LWSCALE     set custom line weight scaling, default is 0 to disable line
-                            weights at all
+      --layout LAYOUT       select the layout to draw
+      --ltype {approximate,accurate}
+                            select the line type rendering method, default
+                            is approximate. Approximate uses the closest
+                            approximation available to the backend, the
+                            accurate method renders as accurately as
+                            possible but this approach is slower.
+      --lwscale LWSCALE     set custom line weight scaling, default is 0 to
+                            disable line weights at all
 
 Browse
 ------
