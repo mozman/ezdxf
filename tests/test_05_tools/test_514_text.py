@@ -17,6 +17,8 @@ from ezdxf.tools.text import (
     fast_plain_mtext,
     plain_mtext,
     has_inline_formatting_codes,
+    is_upside_down_text_angle,
+    upright_text_angle,
 )
 from ezdxf.tools.fonts import MonospaceFont
 from ezdxf.math import Vec3
@@ -440,6 +442,32 @@ class TestMTextContentHasInlineFormattingCodes:
 
     def test_line_break_and_inline_formatting_code(self):
         assert has_inline_formatting_codes(r"\Kline\Pline\k") is True
+
+
+@pytest.mark.parametrize("a", [95, 180, 265, -95, -180, -265])
+def test_is_upside_down_text_angle(a):
+    assert is_upside_down_text_angle(a) is True
+
+
+@pytest.mark.parametrize("a", [0, 90, 270, -90, -270])
+def test_is_not_upside_down_text_angle(a):
+    assert is_upside_down_text_angle(a) is False
+
+
+def test_flipping_tolerance():
+    assert is_upside_down_text_angle(95.0, tol=3.0) is True
+    assert is_upside_down_text_angle(95.0, tol=5.0) is False
+    assert is_upside_down_text_angle(265.0, tol=3.0) is True
+    assert is_upside_down_text_angle(265.0, tol=5.0) is False
+
+
+def test_upright_text_angle():
+    assert upright_text_angle(0.0) == 0.0
+    assert upright_text_angle(90.0) == 90.0
+    assert upright_text_angle(95.0) == 275.0
+    assert upright_text_angle(180.0) == 0.0
+    assert upright_text_angle(265.0) == 85.0
+    assert upright_text_angle(270.0) == 270.0
 
 
 if __name__ == "__main__":

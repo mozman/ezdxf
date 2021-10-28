@@ -1666,3 +1666,32 @@ def has_inline_formatting_codes(text: str) -> bool:
     ).replace(  # non breaking spaces
         r"\~", ""
     )
+
+
+def is_upside_down_text_angle(angle: float, tol: float = 3.) -> bool:
+    """Returns ``True`` if the given text `angle` in degrees causes an upside
+    down text in the :ref:`WCS`. The strict flip range is 90° < `angle` < 270°,
+    the tolerance angle `tol` extends this range to: 90+tol < `angle` < 270-tol.
+    The angle is normalized to [0, 360).
+
+    Args:
+        angle: text angle in degrees
+        tol: tolerance range in which text flipping will be avoided
+
+    """
+    angle %= 360.
+    return 90. + tol < angle < 270. - tol
+
+
+def upright_text_angle(angle: float, tol: float = 3.) -> float:
+    """Returns a readable (upright) text angle in the range `angle` <= 90+tol or
+    `angle` >= 270-tol. The angle is normalized to [0, 360).
+
+    Args:
+        angle: text angle in degrees
+        tol: tolerance range in which text flipping will be avoided
+
+    """
+    if is_upside_down_text_angle(angle, tol):
+        angle += 180.
+    return angle % 360.

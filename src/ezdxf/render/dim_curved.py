@@ -23,6 +23,7 @@ from .dim_base import (
     apply_dimpost,
 )
 from ezdxf.render.arrows import ARROWS, connection_point
+from ezdxf.tools.text import upright_text_angle
 from ezdxf.math import ConstructionCircle, intersection_line_line_2d
 
 if TYPE_CHECKING:
@@ -120,8 +121,13 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         offset = self.text_height / 2.0 + self.text_gap
         radius = self.dim_line_radius + offset
         self.text_location = self.center_of_arc + center_dir * radius
-        self.text_rotation = center_dir.orthogonal(ccw=False).angle_deg
+
         self.dimension.dxf.text_midpoint = self.text_location
+        rotation = center_dir.orthogonal(ccw=False).angle_deg
+        # check WCS text orientation
+        wcs_angle = self.ucs.to_ocs_angle_deg(rotation)
+        rotation = upright_text_angle(wcs_angle)
+        self.text_rotation = rotation
 
     @abstractmethod
     def get_ext1_dir(self) -> Vec2:
@@ -436,6 +442,7 @@ class AngularDimension(_AngularCommonBase):
         """Transforms dimension definition points into WCS or if required into
         OCS.
         """
+
         def from_ucs(attr, func):
             point = self.dimension.get_dxf_attrib(attr)
             self.dimension.set_dxf_attrib(attr, func(point))
@@ -531,6 +538,7 @@ class Angular3PDimension(_AngularCommonBase):
         """Transforms dimension definition points into WCS or if required into
         OCS.
         """
+
         def from_ucs(attr, func):
             point = self.dimension.get_dxf_attrib(attr)
             self.dimension.set_dxf_attrib(attr, func(point))
@@ -601,6 +609,7 @@ class ArcLengthDimension(_CurvedDimensionLine):
         """Transforms dimension definition points into WCS or if required into
         OCS.
         """
+
         def from_ucs(attr, func):
             point = self.dimension.get_dxf_attrib(attr)
             self.dimension.set_dxf_attrib(attr, func(point))

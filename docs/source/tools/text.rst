@@ -126,3 +126,7 @@ Functions
 .. autofunction:: caret_decode
 
 .. autofunction:: is_text_vertical_stacked
+
+.. autofunction:: is_upside_down_text_angle
+
+.. autofunction:: upright_text_angle
