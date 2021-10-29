@@ -588,16 +588,26 @@ class _Arrows:
         return cls(insert, size, rotation)
 
 
+def block_name(arrow_name: str) -> str:
+    # remove leading "_" from true block name to match internal naming:
+    return arrow_name.lstrip("_")
+
+
 def connection_point(
-    arrow_name: str, insert: "Vertex", scale: float = 1, rotation: float = 0
+    arrow_name: str, insert: "Vertex", scale: float = 1., rotation: float = 0.
 ) -> Vec2:
     insert = Vec2(insert)
-    # remove leading "_" from true block name to match internal naming:
-    arrow_name = arrow_name.lstrip("_")
-    if arrow_name in _Arrows.ORIGIN_ZERO:
+    if block_name(arrow_name) in _Arrows.ORIGIN_ZERO:
         return insert
     else:
         return insert - Vec2.from_deg_angle(rotation, scale)
+
+
+def arrow_length(arrow_name: str, scale: float = 1.) -> float:
+    if block_name(arrow_name) in _Arrows.ORIGIN_ZERO:
+        return 0.
+    else:
+        return scale
 
 
 ARROWS: _Arrows = _Arrows()

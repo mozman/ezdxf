@@ -22,8 +22,8 @@ from .dim_base import (
     format_text,
     apply_dimpost,
 )
-from ezdxf.render.arrows import ARROWS, connection_point
-from ezdxf.tools.text import upright_text_angle
+from ezdxf.render.arrows import ARROWS, arrow_length
+from ezdxf.tools.text import is_upside_down_text_angle
 from ezdxf.math import ConstructionCircle, intersection_line_line_2d
 
 if TYPE_CHECKING:
@@ -80,8 +80,8 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         self.make_measurement_text()
         self.setup_text_properties()
         self.add_extension_lines()
-        self.add_arrows()
-        self.add_dimension_line()
+        adjust_start_angle, adjust_end_angle = self.add_arrows()
+        self.add_dimension_line(adjust_start_angle, adjust_end_angle)
         if self.text:
             if self.supports_dxf_r2000:
                 text = self.compile_mtext()
@@ -115,18 +115,47 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         """Setup geometric text properties (location, rotation) and the TextBox
         object.
         """
-        # todo: take more DIMSTYLE attributes into account!
-        # place text in the center of the angle above the dimension line
-        center_dir = Vec2.from_angle(self.center_angle_rad)
-        offset = self.text_height / 2.0 + self.text_gap
-        radius = self.dim_line_radius + offset
-        self.text_location = self.center_of_arc + center_dir * radius
+        # text radial direction = center -> text
+        text_radial_dir: Vec2  # text "vertical" direction
+        radius = self.dim_line_radius + self.text_vertical_distance()
 
+        # determine text location:
+        if self.user_location is None:
+            # place text in the center of the dimension line
+            text_radial_dir = Vec2.from_angle(self.center_angle_rad)
+            self.text_location = self.center_of_arc + text_radial_dir * radius
+        else:
+            # place text at user location:
+            self.text_location = self.user_location
+            text_radial_dir = (
+                self.text_location - self.center_of_arc
+            ).normalize()
+
+        # set text "horizontal":
+        text_tangential_dir = text_radial_dir.orthogonal(ccw=False)
+
+        # apply text relative shift (ezdxf only feature)
+        if self.text_shift_h:
+            self.text_location += text_tangential_dir * self.text_shift_h
+        if self.text_shift_v:
+            self.text_location += text_radial_dir * self.text_shift_v
+
+        # Update final text location in the DIMENSION entity:
         self.dimension.dxf.text_midpoint = self.text_location
-        rotation = center_dir.orthogonal(ccw=False).angle_deg
-        # check WCS text orientation
-        wcs_angle = self.ucs.to_ocs_angle_deg(rotation)
-        rotation = upright_text_angle(wcs_angle)
+
+        # apply user text rotation
+        if self.user_text_rotation is None:
+            rotation = text_tangential_dir.angle_deg
+        else:
+            rotation = self.user_text_rotation
+
+        if not self.requires_extrusion:
+            # todo: extrusion vector (0, 0, -1)?
+            # Practically all DIMENSION entities are 2D entities,
+            # where OCS == WCS, check WCS text orientation:
+            wcs_angle = self.ucs.to_ocs_angle_deg(rotation)
+            if is_upside_down_text_angle(wcs_angle):
+                rotation += 180.  # apply to UCS rotation!
         self.text_rotation = rotation
 
     @abstractmethod
@@ -188,7 +217,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         }
         radius = self.dim_line_radius
         if abs(radius) < 1e-12:
-            return 0.0, 0.0
+            return 0., 0.
 
         start = self.center_of_arc + self.ext1_dir * radius
         end = self.center_of_arc + self.ext2_dir * radius
@@ -197,15 +226,15 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         outside = self.arrows_outside
         arrow1 = not self.suppress_arrow1
         arrow2 = not self.suppress_arrow2
-        start_angle_offset = 0.0
-        end_angle_offset = 0.0
-        if self.tick_size > 0.0:  # oblique stroke, but double the size
+        start_angle_offset = 0.
+        end_angle_offset = 0.
+        if self.tick_size > 0.:  # oblique stroke, but double the size
             if arrow1:
                 self.add_blockref(
                     ARROWS.oblique,
                     insert=start,
                     rotation=angle1,
-                    scale=self.tick_size * 2,
+                    scale=self.tick_size * 2.,
                     dxfattribs=attribs,
                 )
             if arrow2:
@@ -213,19 +242,21 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
                     ARROWS.oblique,
                     insert=end,
                     rotation=angle2,
-                    scale=self.tick_size * 2,
+                    scale=self.tick_size * 2.,
                     dxfattribs=attribs,
                 )
         else:
+            assert self.arrow1_name is not None
+            assert self.arrow2_name is not None
             scale = self.arrow_size
-            start_angle = angle1 + 180.0
+            start_angle = angle1 + 180.
             end_angle = angle2
             if outside:
                 start_angle, end_angle = end_angle, start_angle
 
             if arrow1:
                 self.add_blockref(
-                    self.arrow1_name,  # type: ignore
+                    self.arrow1_name,
                     insert=start,
                     scale=scale,
                     rotation=start_angle,
@@ -233,37 +264,32 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
                 )  # reverse
             if arrow2:
                 self.add_blockref(
-                    self.arrow2_name,  # type: ignore
+                    self.arrow2_name,
                     insert=end,
                     scale=scale,
                     rotation=end_angle,
                     dxfattribs=attribs,
                 )
             if not outside:
-                # arrows inside extension lines: adjust connection points for
-                # the remaining dimension line
-                # acr angle in radians = arc length / radius
+                # arrows inside extension lines:
+                # adjust angles for the remaining dimension line
                 if arrow1:
                     start_angle_offset = (
-                        connection_point(
-                            self.arrow1_name, start, scale, start_angle  # type: ignore
-                        )
-                        / radius
+                        arrow_length(self.arrow1_name, scale) / radius
                     )
                 if arrow2:
                     end_angle_offset = (
-                        connection_point(
-                            self.arrow2_name, end, scale, end_angle  # type: ignore
-                        )
-                        / radius
+                        arrow_length(self.arrow2_name, scale) / radius
                     )
         return start_angle_offset, end_angle_offset
 
-    def add_dimension_line(self) -> None:
+    def add_dimension_line(
+        self, start_offset: float, end_offset: float
+    ) -> None:
         self.add_dxf_arc(
             self.dim_line_radius,
-            self.start_angle_rad,
-            self.end_angle_rad,
+            self.start_angle_rad + start_offset,
+            self.end_angle_rad - end_offset,
             remove_hidden_lines=False,
         )
 

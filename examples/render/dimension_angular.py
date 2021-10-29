@@ -142,22 +142,30 @@ def angular_cra_default_above(dxfversion="R2013"):
     doc.saveas(OUTDIR / f"dim_angular_cra_{dxfversion}_default_above.dxf")
 
 
-def angular_default_center(dxfversion="R2000"):
+def angular_cra_default_center(dxfversion="R2000"):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
-    for base, line1, line2 in locations():
-        msp.add_line(line1[0], line1[1])
-        msp.add_line(line2[0], line2[1])
-        dim = msp.add_angular_dim_2l(
-            base=base,
-            line1=line1,
-            line2=line2,
+    radius = 5
+    distance = 2
+    data = [
+        [Vec3(0, 0), 60, 120],
+        [Vec3(10, 0), 300, 240],
+        [Vec3(20, 0), 240, 300],
+    ]
+    for center, start_angle, end_angle in data:
+        add_lines(msp, center, radius, start_angle, end_angle)
+        dim = msp.add_angular_dim_cra(
+            center,
+            radius,
+            start_angle,
+            end_angle,
+            distance,
             dimstyle="EZ_CURVED",
             override={"dimtad": 0},
         )
         dim.render(discard=BRICSCAD)
     doc.set_modelspace_vport(height=30)
-    doc.saveas(OUTDIR / f"dim_angular_{dxfversion}_default_center.dxf")
+    doc.saveas(OUTDIR / f"dim_angular_cra_{dxfversion}_default_center.dxf")
 
 
 def angular_3d(dxfversion="R2000"):
@@ -181,5 +189,5 @@ def angular_3d(dxfversion="R2000"):
 
 if __name__ == "__main__":
     angular_cra_default_above()
-    angular_default_center()
+    angular_cra_default_center()
     angular_3d()
