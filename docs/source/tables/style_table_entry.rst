@@ -28,7 +28,7 @@ Example to create a new text style "Arial" and to apply this text style:
 
 .. code-block:: Python
 
-    doc.styles.new("Arial", dxfattribs={"font": "Arial.ttf"})
+    doc.styles.add("Arial", font="Arial.ttf")
     msp = doc.modelspace()
     msp.add_text("my text", dxfattribs={"style": "Arial"})
 
@@ -52,7 +52,7 @@ The most important setting is the :attr:`font` attribute, this attribute
 defines the rendering font as raw TTF file name, e.g. "Arial.ttf" or
 "OpenSansCondensed-Light.ttf", this file name is often **not** the name
 displayed in GUI application and you have to digg down into the fonts folder
-e.g. (``C:\\Windows\\Fonts``) to get the the real file name for the TTF font.
+e.g. ("C:\\Windows\\Fonts") to get the the real file name for the TTF font.
 Do not include the path!
 
 .. image:: ../gfx/font_properties.png

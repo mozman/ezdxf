@@ -12,8 +12,9 @@ DimStyle
     :align: center
     :width: 800px
 
-DIMSTYLE (`DXF Reference`_) defines the appearance of :class:`Dimension` entities. Each of this dimension variables
-starting with ``dim...`` can be overridden for any :class:`Dimension` entity individually.
+DIMSTYLE (`DXF Reference`_) defines the appearance of :class:`Dimension` entities.
+Each of this dimension variables starting with ``"dim..."`` can be overridden
+for any :class:`Dimension` entity individually.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFEntity`
@@ -35,12 +36,14 @@ Factory function         :meth:`Drawing.dimstyles.new`
 
         Standard flag values (bit-coded values):
 
-        ======= ==============================================================================================
+        ======= ================================================================
         16      If set, table entry is externally dependent on an xref
-        32      If both this bit and bit 16 are set, the externally dependent xref has been successfully resolved
-        64      If set, the table entry was referenced by at least one entity in the drawing the last time the drawing
-                was edited. (This flag is only for the benefit of AutoCAD)
-        ======= ==============================================================================================
+        32      If both this bit and bit 16 are set, the externally dependent
+                XREF has been successfully resolved
+        64      If set, the table entry was referenced by at least one entity in
+                the drawing the last time the drawing was edited. (This flag is
+                only for the benefit of AutoCAD)
+        ======= ================================================================
 
     .. attribute:: dxf.dimpost
 
@@ -72,23 +75,26 @@ Factory function         :meth:`Drawing.dimstyles.new`
 
     .. attribute:: dxf.dimexo
 
-        Distance from origin points to extension lines. (default imperial=0.0625, default metric=0.625)
+        Distance from origin points to extension lines. (default imperial=0.0625,
+        default metric=0.625)
 
     .. attribute:: dxf.dimdli
 
-        Incremental spacing between baseline dimensions. (default imperial=0.38, default metric=3.75)
+        Incremental spacing between baseline dimensions. (default imperial=0.38,
+        default metric=3.75)
 
     .. attribute:: dxf.dimexe
 
-        Extension line distance beyond dimension line. (default imperial=0.28, default metric=2.25)
+        Extension line distance beyond dimension line. (default imperial=0.28,
+        default metric=2.25)
 
     .. attribute:: dxf.dimrnd
 
         Rounding value for decimal dimensions. (default=0)
 
-        Rounds all dimensioning distances to the specified value, for instance, if DIMRND is set to 0.25,
-        all distances round to the nearest 0.25 unit. If you set DIMRND to 1.0, all distances round to
-        the nearest integer.
+        Rounds all dimensioning distances to the specified value, for instance,
+        if DIMRND is set to 0.25, all distances round to the nearest 0.25 unit.
+        If you set DIMRND to 1.0, all distances round to the nearest integer.
 
     .. attribute:: dxf.dimdle
 
@@ -108,11 +114,13 @@ Factory function         :meth:`Drawing.dimstyles.new`
 
     .. attribute:: dxf.dimcen
 
-        Controls placement of center marks or centerlines. (default imperial=0.09, default metric=2.5)
+        Controls placement of center marks or centerlines. (default imperial=0.09,
+        default metric=2.5)
 
     .. attribute:: dxf.dimtsz
 
-        Controls size of dimension line tick marks drawn instead of arrowheads. (default=0)
+        Controls size of dimension line tick marks drawn instead of arrowheads.
+        (default=0)
 
     .. attribute:: dxf.dimaltf
 
@@ -124,7 +132,8 @@ Factory function         :meth:`Drawing.dimstyles.new`
 
     .. attribute:: dxf.dimtvp
 
-        Vertical position of text above or below dimension line if :attr:`~DimStyle.dxf.dimtad` is 0. (default=0)
+        Vertical position of text above or below dimension line if
+        :attr:`~DimStyle.dxf.dimtad` is 0. (default=0)
 
     .. attribute:: dxf.dimtfac
 
@@ -132,7 +141,8 @@ Factory function         :meth:`Drawing.dimstyles.new`
 
     .. attribute:: dxf.dimgap
 
-        Gap size between dimension line and dimension text. (default imperial=0.09, default metric=0.625)
+        Gap size between dimension line and dimension text. (default
+        imperial=0.09, default metric=0.625)
 
     .. attribute:: dxf.dimaltrnd
 
@@ -140,7 +150,8 @@ Factory function         :meth:`Drawing.dimstyles.new`
 
     .. attribute:: dxf.dimtol
 
-        Toggles creation of appended tolerance dimensions. (default imperial=1, default metric=0)
+        Toggles creation of appended tolerance dimensions. (default imperial=1,
+        default metric=0)
 
     .. attribute:: dxf.dimlim
 
@@ -148,11 +159,13 @@ Factory function         :meth:`Drawing.dimstyles.new`
 
     .. attribute:: dxf.dimtih
 
-        Orientation of text inside extension lines. (default imperial=1, default metric=0)
+        Orientation of text inside extension lines. (default imperial=1, default
+        metric=0)
 
     .. attribute:: dxf.dimtoh
 
-        Orientation of text outside extension lines. (default imperial=1, default metric=0)
+        Orientation of text outside extension lines. (default imperial=1,
+        default metric=0)
 
     .. attribute:: dxf.dimse1
 
@@ -164,7 +177,8 @@ Factory function         :meth:`Drawing.dimstyles.new`
 
     .. attribute:: dxf.dimtad
 
-        Sets vertical text placement relative to dimension line. (default imperial=0, default metric=1)
+        Sets vertical text placement relative to dimension line. (default
+        imperial=0, default metric=1)
 
         === =====
         0   center
@@ -176,30 +190,36 @@ Factory function         :meth:`Drawing.dimstyles.new`
 
     .. attribute:: dxf.dimzin
 
-        Zero suppression for primary units dimensions. (default imperial=0, default metric=8)
+        Zero suppression for primary units dimensions. (default imperial=0,
+        default metric=8)
 
         Values 0-3 affect feet-and-inch dimensions only.
 
-        === =======================================================================================
+        === ====================================================================
         0   Suppresses zero feet and precisely zero inches
         1   Includes zero feet and precisely zero inches
         2   Includes zero feet and suppresses zero inches
         3   Includes zero inches and suppresses zero feet
-        4   Suppresses leading zeros in decimal dimensions (for example, 0.5000 becomes .5000)
-        8   Suppresses trailing zeros in decimal dimensions (for example, 12.5000 becomes 12.5)
-        12  Suppresses both leading and trailing zeros (for example, 0.5000 becomes .5)
-        === =======================================================================================
+        4   Suppresses leading zeros in decimal dimensions (for example, 0.5000
+            becomes .5000)
+        8   Suppresses trailing zeros in decimal dimensions (for example,
+            12.5000 becomes 12.5)
+        12  Suppresses both leading and trailing zeros (for example, 0.5000
+            becomes .5)
+        === ====================================================================
 
     .. attribute:: dxf.dimazin
 
         Controls zero suppression for angular dimensions. (default=0)
 
-        === =======================================================================================
+        === ====================================================================
         0   Displays all leading and trailing zeros
-        1   Suppresses leading zeros in decimal dimensions (for example, 0.5000 becomes .5000)
-        2   Suppresses trailing zeros in decimal dimensions (for example, 12.5000 becomes 12.5)
+        1   Suppresses leading zeros in decimal dimensions (for example, 0.5000
+            becomes .5000)
+        2   Suppresses trailing zeros in decimal dimensions (for example,
+            12.5000 becomes 12.5)
         3   Suppresses leading and trailing zeros (for example, 0.5000 becomes .5)
-        === =======================================================================================
+        === ====================================================================
 
     .. attribute:: dxf.dimalt
 
@@ -207,11 +227,13 @@ Factory function         :meth:`Drawing.dimstyles.new`
 
     .. attribute:: dxf.dimaltd
 
-        Controls decimal places for alternate units dimensions. (default imperial=2, default metric=3)
+        Controls decimal places for alternate units dimensions. (default
+        imperial=2, default metric=3)
 
     .. attribute:: dxf.dimtofl
 
-        Toggles forced dimension line creation. (default imperial=0, default metric=1)
+        Toggles forced dimension line creation. (default imperial=0, default
+        metric=1)
 
     .. attribute:: dxf.dimsah
 
@@ -251,7 +273,8 @@ Factory function         :meth:`Drawing.dimstyles.new`
 
     .. attribute:: dxf.dimtdec
 
-        Decimal places for primary units tolerance values. (default imperial=4, default metric=2)
+        Decimal places for primary units tolerance values. (default imperial=4,
+        default metric=2)
 
     .. attribute:: dxf.dimaltu
 
@@ -259,7 +282,8 @@ Factory function         :meth:`Drawing.dimstyles.new`
 
     .. attribute:: dxf.dimalttd
 
-        Decimal places for alternate units tolerance values. (default imperial=4, default metric=2)
+        Decimal places for alternate units tolerance values. (default imperial=4,
+        default metric=2)
 
     .. attribute:: dxf.dimaunit
 
@@ -267,7 +291,8 @@ Factory function         :meth:`Drawing.dimstyles.new`
 
     .. attribute:: dxf.dimfrac
 
-        Controls the fraction format used for architectural and fractional dimensions. (default=0)
+        Controls the fraction format used for architectural and fractional
+        dimensions. (default=0)
 
     .. attribute:: dxf.dimlunit
 
@@ -275,8 +300,9 @@ Factory function         :meth:`Drawing.dimstyles.new`
 
     .. attribute:: dxf.dimdsep
 
-        Specifies a single character to use as a decimal separator. (default imperial = ``'.'``, default metric = ``','``)
-        This is an integer value, use :code:`ord('.')` to write value.
+        Specifies a single character to use as a decimal separator. (default
+        imperial = ".", default metric = ",") This is an integer value,
+        use :code:`ord(".")` to write value.
 
     .. attribute:: dxf.dimtmove
 
@@ -340,7 +366,8 @@ Factory function         :meth:`Drawing.dimstyles.new`
 
     .. attribute:: dxf.dimatfit
 
-        Controls placement of text and arrowheads when there is insufficient space between the extension lines. (default=3)
+        Controls placement of text and arrowheads when there is insufficient
+        space between the extension lines. (default=3)
 
     .. attribute:: dxf.dimtxsty
 
@@ -385,30 +412,36 @@ Factory function         :meth:`Drawing.dimstyles.new`
 
     .. attribute:: dxf.dimltype
 
-        Specifies the linetype used for the dimension line as linetype name, requires DXF R2007+
+        Specifies the linetype used for the dimension line as linetype name,
+        requires DXF R2007+
 
     .. attribute:: dxf.dimltype_handle
 
-        Specifies the linetype used for the dimension line as handle to LTYPE entry, requires DXF R2007+
-        (use :attr:`DimStyle.dxf.dimltype` to get/set linetype by name)
+        Specifies the linetype used for the dimension line as handle to LTYPE
+        entry, requires DXF R2007+ (use :attr:`DimStyle.dxf.dimltype` to get/set
+        linetype by name)
 
     .. attribute:: dxf.dimltex1
 
-        Specifies the linetype used for the extension line 1 as linetype name, requires DXF R2007+
+        Specifies the linetype used for the extension line 1 as linetype name,
+        requires DXF R2007+
 
     .. attribute:: dxf.dimlex1_handle
 
-        Specifies the linetype used for the extension line 1 as handle to LTYPE entry, requires DXF R2007+
-        (use :attr:`DimStyle.dxf.dimltex1` to get/set linetype by name)
+        Specifies the linetype used for the extension line 1 as handle to LTYPE
+        entry, requires DXF R2007+ (use :attr:`DimStyle.dxf.dimltex1` to get/set
+        linetype by name)
 
     .. attribute:: dxf.dimltex2
 
-        Specifies the linetype used for the extension line 2 as linetype name, requires DXF R2007+
+        Specifies the linetype used for the extension line 2 as linetype name,
+        requires DXF R2007+
 
     .. attribute:: dxf.dimlex2_handle
 
-        Specifies the linetype used for the extension line 2 as handle to LTYPE entry, requires DXF R2007+
-        (use :attr:`DimStyle.dxf.dimltex2` to get/set linetype by name)
+        Specifies the linetype used for the extension line 2 as handle to LTYPE
+        entry, requires DXF R2007+ (use :attr:`DimStyle.dxf.dimltex2` to get/set
+        linetype by name)
 
     .. attribute:: dxf.dimfxlon
 
@@ -416,12 +449,14 @@ Factory function         :meth:`Drawing.dimstyles.new`
 
     .. attribute:: dxf.dimfxl
 
-        Length of extension line below dimension line if fixed (:attr:`DimStyle.dxf.dimtfxlon` == 1),
-        :attr:`DimStyle.dxf.dimexen` defines the the length above the dimension line, requires DXF R2007+
+        Length of extension line below dimension line if fixed
+        (:attr:`DimStyle.dxf.dimtfxlon` == 1), :attr:`DimStyle.dxf.dimexen`
+        defines the the length above the dimension line, requires DXF R2007+
 
     .. attribute:: dxf.dimtfill
 
-        Text fill 0=off; 1=background color; 2=custom color (see :attr:`DimStyle.dxf.dimtfillclr`), requires DXF R2007+
+        Text fill 0=off; 1=background color; 2=custom color (see
+        :attr:`DimStyle.dxf.dimtfillclr`), requires DXF R2007+
 
     .. attribute:: dxf.dimtfillclr
 

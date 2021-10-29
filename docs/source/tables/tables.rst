@@ -8,7 +8,8 @@ Generic Table Class
 
 .. class:: Table
 
-    Generic collection of table entries. Table entry names are case insensitive: ``'Test' == 'TEST'``.
+    Generic collection of table entries. Table entry names are case insensitive:
+    "Test" == "TEST".
 
     .. automethod:: key(entity: Union[str, DXFEntity]) -> str
 
@@ -119,14 +120,16 @@ Viewport Table
 
 .. class:: ViewportTable
 
-    The viewport table stores the modelspace viewport configurations. A viewport configuration is a tiled view of
-    multiple viewports or just one viewport. In contrast to other tables the viewport table can have multiple entries
-    with the same name, because all viewport entries of a multi-viewport configuration are having the same name - the
-    viewport configuration name.
+    The viewport table stores the modelspace viewport configurations. A viewport
+    configuration is a tiled view of multiple viewports or just one viewport.
+    In contrast to other tables the viewport table can have multiple entries
+    with the same name, because all viewport entries of a multi-viewport
+    configuration are having the same name - the viewport configuration name.
 
-    The name of the actual displayed viewport configuration is ``'*ACTIVE'``.
+    The name of the actual displayed viewport configuration is "\*ACTIVE".
 
-    Duplication of table entries is not supported: :meth:`duplicate_entry` raises :class:`NotImplementedError`
+    Duplication of table entries is not supported: :meth:`duplicate_entry`
+    raises :class:`NotImplementedError`
 
     .. automethod:: add
 

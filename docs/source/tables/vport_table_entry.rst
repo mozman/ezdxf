@@ -4,8 +4,9 @@ VPort
 .. module:: ezdxf.entities
     :noindex:
 
-The viewport table (`DXF Reference`_) stores the modelspace viewport configurations. So this entries just modelspace
-viewports, not paperspace viewports, for paperspace viewports see the :class:`Viewport` entity.
+The viewport table (`DXF Reference`_) stores the modelspace viewport
+configurations. So this entries just modelspace viewports, not paperspace
+viewports, for paperspace viewports see the :class:`Viewport` entity.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFEntity`
@@ -37,9 +38,11 @@ Factory function         :meth:`Drawing.viewports.new`
 
         === ==============================================================
         16  If set, table entry is externally dependent on an xref
-        32  If both this bit and bit 16 are set, the externally dependent xref has been successfully resolved
-        64  If set, the table entry was referenced by at least one entity in the drawing the last time the drawing
-            was edited. (This flag is only for the benefit of AutoCAD)
+        32  If both this bit and bit 16 are set, the externally dependent xref
+            has been successfully resolved
+        64  If set, the table entry was referenced by at least one entity in the
+            drawing the last time the drawing was edited. (This flag is only for
+            the benefit of AutoCAD)
         === ==============================================================
 
     .. attribute:: dxf.lower_left

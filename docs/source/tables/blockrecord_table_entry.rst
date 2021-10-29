@@ -29,15 +29,16 @@ Factory function         :meth:`Drawing.block_records.new`
 
     .. attribute:: dxf.layout
 
-        Handle to associated :class:`~ezdxf.entities.layout.DXFLayout`, if paperspace layout or modelspace else ``0``
+        Handle to associated :class:`~ezdxf.entities.layout.DXFLayout`, if
+        paperspace layout or modelspace else "0"
 
     .. attribute:: dxf.explode
 
-        ``1`` for BLOCK references can be exploded else ``0``
+        1 for BLOCK references can be exploded else 0
 
     .. attribute:: dxf.scale
 
-        ``1`` for BLOCK references can be scaled else ``0``
+        1 for BLOCK references can be scaled else 0
 
     .. attribute:: dxf.units
 
