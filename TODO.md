@@ -26,7 +26,7 @@ Add-ons
   - Reportlab: more report or magazine page layout oriented
   - PyQt: QPrinter & QPainter - https://wiki.qt.io/Handling_PDF
   
-  In consideration, if then SVG exporter works well.
+  In consideration, if the SVG exporter works well.
     
 - (>v1.0) DWG loader, planned for the future. Cython will be required for the 
   low level stuff, no pure Python implementation.
@@ -87,3 +87,9 @@ DXF Audit & Repair
   - text style exist; repair: set to 'Standard'
   - check consistent defpoint and POINT entity locations in the associated 
     geometry block 
+
+Documentation
+-------------
+
+- Basic concept & tutorial: Text styling (TEXT, ATTRIB, ATTDEF, MTEXT)
+- Tutorial for POLYFACE
