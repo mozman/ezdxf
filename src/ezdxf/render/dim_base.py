@@ -179,7 +179,7 @@ class Tolerance:  # and Limits
         if self.minimum == self.maximum:
             self.text = PLUS_MINUS + self.format_text(abs(self.maximum))
             self.text_height = self.char_height
-            self.text_width = self.tolerance_text_width(self.text, self.text)
+            self.text_width = self.get_text_width(self.text, self.text)
         else:  # 2 stacked values: +upper tolerance <above> -lower tolerance
             self.text_upper = sign_char(self.maximum) + self.format_text(
                 abs(self.maximum)
@@ -191,7 +191,7 @@ class Tolerance:  # and Limits
             self.text_height = self.char_height + (
                 self.text_height * self.line_spacing
             )
-            self.text_width = self.tolerance_text_width(
+            self.text_width = self.get_text_width(
                 self.text_upper, self.text_lower
             )
 
@@ -216,11 +216,45 @@ class Tolerance:  # and Limits
             dimdsep=self.text_decimal_separator,
         )
 
-    def tolerance_text_width(self, upr: str, lwr: str) -> float:
+    def get_text_width(self, upr: str, lwr: str) -> float:
         """Returns the text width of the tolerance (upr/lwr) in drawing units."""
         # todo: use matplotlib support
         count = max(len(upr), len(lwr))
         return self.text_height * self.text_width_factor * count
+
+    def compile_mtext(self, text: str) -> str:
+        if self.has_tolerance:
+            align = max(int(self.valign), 0)
+            align = min(align, 2)
+            if not self.text:
+                text = TOLERANCE_TEMPLATE2.format(
+                    align=align,
+                    txt=text,
+                    fac=self.text_scale_factor,
+                    upr=self.text_upper,
+                    lwr=self.text_lower,
+                )
+            else:
+                text = TOLERANCE_TEMPLATE1.format(
+                    align=align,
+                    txt=text,
+                    fac=self.text_scale_factor,
+                    tol=self.text,
+                )
+        elif self.has_limits:
+            text = LIMITS_TEMPLATE.format(
+                upr=self.text_upper,
+                lwr=self.text_lower,
+                fac=self.text_scale_factor,
+            )
+        return text
+
+    def update_limits(self, measurement: float) -> None:
+        upper_limit = measurement + self.maximum
+        lower_limit = measurement - self.minimum
+        self.text_upper = self.format_text(upper_limit)
+        self.text_lower = self.format_text(lower_limit)
+        self.text_width = self.get_text_width(self.text_upper, self.text_lower)
 
 
 class BaseDimensionRenderer:
@@ -541,113 +575,12 @@ class BaseDimensionRenderer:
         # ---------------------------------------------
         # TOLERANCES & LIMITS
         # ---------------------------------------------
-        self.tol = self.setup_tolerance()
-        # Appends tolerances to dimension text. Setting DIMTOL to on turns
-        # DIMLIM off.
-        self.dim_tolerance: int = get("dimtol", 0)
-        # Generates dimension limits as the default text. Setting DIMLIM to On
-        # turns DIMTOL off.
-        self.dim_limits: int = get("dimlim", 0)
-
-        if self.dim_tolerance:
-            self.dim_limits = 0
-
-        if self.dim_limits:
-            self.dim_tolerance = 0
-
-        # Scale factor for the text height of fractions and tolerance values
-        # relative to the dimension text height
-        self.tol_text_scale_factor = get("dimtfac", 0.5)
-
-        # Default MTEXT line spacing for tolerances (BricsCAD)
-        self.tol_line_spacing = 1.35
-
-        # Sets the minimum (or lower) tolerance limit for dimension text when
-        # DIMTOL or DIMLIM is on.
-        # DIMTM accepts signed values.
-        # If DIMTOL is on and DIMTP and DIMTM are set to the same value, a
-        # tolerance value is drawn.
-        # If DIMTM and DIMTP values differ, the upper tolerance is drawn above
-        # the lower, and a plus sign is added to the DIMTP value if it is
-        # positive.
-        # For DIMTM, the program uses the negative of the value you enter
-        # (adding a minus sign if you specify a positive number and a plus sign
-        # if you specify a negative number).
-        self.tol_minimum: float = get("dimtm", 0)
-
-        # Sets the maximum (or upper) tolerance limit for dimension text when
-        # DIMTOL or DIMLIM is on.
-        # DIMTP accepts signed values.
-        # If DIMTOL is on and DIMTP and DIMTM are set to the same value, a
-        # tolerance value is drawn.
-        # If DIMTM and DIMTP values differ, the upper tolerance is drawn above
-        # the lower and a plus sign is added to the DIMTP value if it is
-        # positive.
-        self.tol_maximum: float = get("dimtp", 0)
-
-        # Number of decimal places to display in tolerance values
-        self.tol_decimal_places: int = get("dimtdec", 4)
-
-        # Vertical justification for tolerance values relative to the nominal dimension text
-        # 0 = Bottom
-        # 1 = Middle
-        # 2 = Top
-        self.tol_valign: int = get("dimtolj", 0)
-
-        # Same as DIMZIN for tolerances (self.text_suppress_zeros)
-        self.tol_suppress_zeros: int = get("dimtzin", 0)
-        self.tol_text: str = ""
-        self.tol_text_height: float = 0.0
-        self.tol_text_upper: str = ""
-        self.tol_text_lower: str = ""
-        self.tol_char_height: float = (
-            self.char_height * self.tol_text_scale_factor * self.dim_scale
-        )
-        self.tol_text_width: float = 0.0
-        if self.dim_tolerance:
-            self.init_tolerance()
-        elif self.dim_limits:
-            self.init_limits()
+        self.tol = self.init_tolerance()
 
         # Update text height
-        self.text_height = max(self.text_height, self.tol_text_height)
+        self.text_height = max(self.text_height, self.tol.text_height)
 
-    def init_tolerance(self):
-        # The tolerance values are stored in the dimension style, they are
-        # independent from the actual measurement:
-        # Single tolerance value +/- value
-        if self.tol_minimum == self.tol_maximum:
-            self.tol_text = PLUS_MINUS + self.format_tolerance_text(
-                abs(self.tol_maximum)
-            )
-            self.tol_text_height = self.tol_char_height
-            self.tol_text_width = self.tolerance_text_width(
-                self.tol_text, self.tol_text
-            )
-        else:  # 2 stacked values: +upper tolerance <above> -lower tolerance
-            self.tol_text_upper = sign_char(
-                self.tol_maximum
-            ) + self.format_tolerance_text(abs(self.tol_maximum))
-            self.tol_text_lower = sign_char(
-                self.tol_minimum * -1
-            ) + self.format_tolerance_text(abs(self.tol_minimum))
-            # requires 2 text lines
-            self.tol_text_height = self.tol_char_height + (
-                self.tol_text_height * self.tol_line_spacing
-            )
-            self.tol_text_width = self.tolerance_text_width(
-                self.tol_text_upper, self.tol_text_lower
-            )
-
-    def init_limits(self):
-        # self.tol_text is always an empty string (default value)
-        # Limit text are always 2 stacked numbers and requires the actual
-        # measurement!
-        self.tol_text_height = self.tol_char_height + (
-            self.tol_text_height * self.tol_line_spacing
-        )
-
-    def setup_tolerance(self) -> Tolerance:
+    def init_tolerance(self) -> Tolerance:
         return Tolerance(
             self.dim_style,
             cap_height=self.text_height,
@@ -700,12 +633,6 @@ class BaseDimensionRenderer:
         char_width = self.text_height * self.text_width_factor
         return len(text) * char_width
 
-    def tolerance_text_width(self, upr: str, lwr: str) -> float:
-        """Returns the text width of the tolerance (upr/lwr) in drawing units."""
-        # todo: use matplotlib support
-        count = max(len(upr), len(lwr))
-        return self.tol_text_height * self.text_width_factor * count
-
     def default_attributes(self) -> dict:
         """Returns default DXF attributes as dict."""
         return {
@@ -752,44 +679,9 @@ class BaseDimensionRenderer:
 
     def compile_mtext(self) -> str:
         text = self.text
-        if self.dim_tolerance:
-            align = max(int(self.tol_valign), 0)
-            align = min(align, 2)
-            if not self.tol_text:
-                text = TOLERANCE_TEMPLATE2.format(
-                    align=align,
-                    txt=text,
-                    fac=self.tol_text_scale_factor,
-                    upr=self.tol_text_upper,
-                    lwr=self.tol_text_lower,
-                )
-            else:
-                text = TOLERANCE_TEMPLATE1.format(
-                    align=align,
-                    txt=text,
-                    fac=self.tol_text_scale_factor,
-                    tol=self.tol_text,
-                )
-        elif self.dim_limits:
-            text = LIMITS_TEMPLATE.format(
-                upr=self.tol_text_upper,
-                lwr=self.tol_text_lower,
-                fac=self.tol_text_scale_factor,
-            )
+        if self.tol.enabled:
+            text = self.tol.compile_mtext(text)
         return text
-
-    def format_tolerance_text(self, value: float) -> str:
-        """Rounding and text formatting of tolerance `value`, removes leading
-        and trailing zeros if necessary.
-
-        """
-        return format_text(
-            value=value,
-            dimrnd=None,
-            dimdec=self.tol_decimal_places,
-            dimzin=self.tol_suppress_zeros,
-            dimdsep=self.text_decimal_separator,
-        )
 
     @property
     def has_relative_text_movement(self):

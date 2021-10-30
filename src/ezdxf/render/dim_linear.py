@@ -124,27 +124,15 @@ class LinearDimension(BaseDimensionRenderer):
         if self.text:
             # text width and required space
             self.dim_text_width = self.text_width(self.text)
-            if self.dim_tolerance:
-                self.dim_text_width += self.tol_text_width  # type: ignore
-
-            elif self.dim_limits:
+            if self.tol.has_tolerance:
+                self.dim_text_width += self.tol.text_width
+            elif self.tol.has_limits:
                 # limits show the upper and lower limit of the measurement as
                 # stacked values and with the size of tolerances
                 measurement = self.measurement * self.dim_measurement_factor
-                self.measurement_upper_limit = measurement + self.tol_maximum
-                self.measurement_lower_limit = measurement - self.tol_minimum
-                self.tol_text_upper = self.format_tolerance_text(
-                    self.measurement_upper_limit
-                )
-                self.tol_text_lower = self.format_tolerance_text(
-                    self.measurement_lower_limit
-                )
-                self.tol_text_width = self.tolerance_text_width(
-                    self.tol_text_upper, self.tol_text_lower
-                )
-
+                self.tol.update_limits(measurement)
                 # only limits are displayed so:
-                self.dim_text_width = self.tol_text_width
+                self.dim_text_width = self.tol.text_width
 
             if self.multi_point_mode:
                 # ezdxf has total control about vertical text position in multi

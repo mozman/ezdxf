@@ -90,29 +90,16 @@ class RadiusDimension(BaseDimensionRenderer):
         if self.text:
             # text width and required space
             self.dim_text_width: float = self.text_width(self.text)
-            if self.dim_tolerance:
+            if self.tol.has_tolerance:
                 self.dim_text_width += self.tol_text_width  # type: ignore
 
             elif self.dim_limits:
-                # limits show the upper and lower limit of the measurement as stacked values
-                # and with the size of tolerances
+                # limits show the upper and lower limit of the measurement as
+                # stacked values and with the size of tolerances
                 measurement = self.measurement * self.dim_measurement_factor
-                self.measurement_upper_limit = measurement + self.tol_maximum
-                self.measurement_lower_limit = measurement - self.tol_minimum
-                self.tol_text_upper = self.format_tolerance_text(
-                    self.measurement_upper_limit
-                )
-                # Only the lower limit has a text prefix
-                self.tol_text_lower = (
-                    self.text_prefix
-                    + self.format_tolerance_text(self.measurement_lower_limit)
-                )
-                self.tol_text_width = self.tolerance_text_width(
-                    self.tol_text_upper, self.tol_text_lower
-                )
-
+                self.tol.update_limits(measurement)
                 # only limits are displayed so:
-                self.dim_text_width = self.tol_text_width
+                self.dim_text_width = self.tol.text_width
 
         # default rotation is angle of dimension line, from center to point on circle.
         rotation = self.dim_line_angle

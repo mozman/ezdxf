@@ -119,27 +119,21 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         pass
 
     def setup_limits(self) -> None:
-        if self.dim_limits:
+        if self.tol.has_limits:
             # limits show the upper and lower limit of the measurement as
             # stacked values and with the size of tolerances
             measurement = self.measurement * self.dim_measurement_factor
-            upper_limit = measurement + self.tol_maximum
-            lower_limit = measurement - self.tol_minimum
-            self.tol_text_upper = self.format_tolerance_text(upper_limit)
-            self.tol_text_lower = self.format_tolerance_text(lower_limit)
-            self.tol_text_width = self.tolerance_text_width(
-                self.tol_text_upper, self.tol_text_lower
-            )
+            self.tol.update_limits(measurement)
 
     def total_dim_text_width(self) -> float:
         width = 0.0
         if self.text:
             if self.dim_limits:  # only limits are displayed
-                width = self.tol_text_width
+                width = self.tol.text_width
             else:
                 width = self.text_width(self.text)
                 if self.dim_tolerance:
-                    width += self.tol_text_width  # type: ignore
+                    width += self.tol.text_width  # type: ignore
         return width
 
     def setup_text_properties(self) -> None:
@@ -477,8 +471,8 @@ class _AngularCommonBase(_CurvedDimensionLine):
         return self.format_angular_text(
             value=value,
             dimrnd=None,
-            dimdec=self.tol_decimal_places,
-            dimzin=self.tol_suppress_zeros,
+            dimdec=self.tol.decimal_places,
+            dimzin=self.tol.suppress_zeros,
             dimdsep=self.text_decimal_separator,
         )
         # Do not apply dimpost!?

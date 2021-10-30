@@ -41,8 +41,8 @@ class DiameterDimension(RadiusDimension):
 
         # escape diameter sign
         self.text = self.text.replace(self.text_prefix, '%%c')
-        if self.dim_limits:
-            self.tol_text_lower = self.tol_text_lower.replace(self.text_prefix, '%%c')
+        if self.tol.has_limits:
+            self.tol.text_lower = self.tol.text_lower.replace(self.text_prefix, '%%c')
 
     def get_default_text_location(self) -> Vec2:
         """ Returns default text midpoint based on `self.text_valign` and `self.text_outside` """
