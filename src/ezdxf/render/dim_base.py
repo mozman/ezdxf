@@ -172,6 +172,10 @@ class Tolerance:  # and Limits
     def enabled(self) -> bool:
         return self.has_tolerance or self.has_limits
 
+    def disable(self):
+        self.has_tolerance = False
+        self.has_limits = False
+
     def init_tolerance(self):
         # The tolerance values are stored in the dimension style, they are
         # independent from the actual measurement:
@@ -609,8 +613,7 @@ class BaseDimensionRenderer:
         # Tolerance requires MTEXT support, switch off rendering of tolerances
         # and limits
         if not self.supports_dxf_r2000:
-            self.dim_tolerance = 0
-            self.dim_limits = 0
+            self.tol.disable()
 
     @property
     def char_height(self) -> float:
