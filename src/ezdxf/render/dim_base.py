@@ -63,7 +63,6 @@ def format_text(
     dimdec: int = None,
     dimzin: int = 0,
     dimdsep: str = ".",
-    dimpost: str = "<>",
 ) -> str:
     if dimrnd is not None:
         value = xround(value, dimrnd)
@@ -82,8 +81,6 @@ def format_text(
     text = suppress_zeros(text, leading, pending)
     if dimdsep != ".":
         text = text.replace(".", dimdsep)
-    if dimpost:
-        text = apply_dimpost(text, dimpost)
     return text
 
 
@@ -158,8 +155,8 @@ class Tolerance:  # and Limits
         # Same as DIMZIN for tolerances (self.text_suppress_zeros)
         self.suppress_zeros: int = get("dimtzin", 0)
         self.text: str = ""
-        self.text_height: float = 0.0
-        self.text_width: float = 0.0
+        self.text_height: float = 0.
+        self.text_width: float = 0.
         self.text_upper: str = ""
         self.text_lower: str = ""
         self.char_height: float = cap_height * self.text_scale_factor * self.dim_scale
@@ -212,6 +209,7 @@ class Tolerance:  # and Limits
         and trailing zeros if necessary.
 
         """
+        # dimpost is not applied to limits or tolerances!
         return format_text(
             value=value,
             dimrnd=None,
@@ -391,9 +389,11 @@ class BaseDimensionRenderer:
         # 12 (Bit 3+4) = Suppresses both leading and trailing zeros,
         #   e.g. 0.5000 becomes .5)
         self.text_suppress_zeros: int = get("dimzin", 0)
+
+        # decimal separator char, default is ",":
         self.text_decimal_separator = self.dim_style.get_decimal_separator()
 
-        self.text_format: str = self.dim_style.get("dimpost", "<>")
+        self.text_post_process_format: str = self.dim_style.get("dimpost", "")
         # text_fill:
         # 0 = None
         # 1 = Background
@@ -671,14 +671,16 @@ class BaseDimensionRenderer:
         trailing zeros if necessary.
 
         """
-        return format_text(
+        text = format_text(
             value,
             self.text_round,
             self.text_decimal_places,
             self.text_suppress_zeros,
             self.text_decimal_separator,
-            self.text_format,
         )
+        if self.text_post_process_format:
+            text = apply_dimpost(text, self.text_post_process_format)
+        return text
 
     def compile_mtext(self) -> str:
         text = self.text

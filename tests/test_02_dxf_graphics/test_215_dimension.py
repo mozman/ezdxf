@@ -195,75 +195,40 @@ def test_missing_block_geometry_name():
 
 
 def test_format_text():
-    assert format_text(0, dimrnd=0, dimdec=1, dimzin=0, dimpost="<>") == "0.0"
-    assert format_text(0, dimrnd=0, dimdec=1, dimzin=4, dimpost="<>") == "0"
-    assert format_text(0, dimrnd=0, dimdec=1, dimzin=8, dimpost="<>") == "0"
-    assert (
-        format_text(100, dimrnd=0.0, dimdec=0, dimzin=8, dimpost="<>") == "100"
-    )
-    assert (
-        format_text(100, dimrnd=None, dimdec=0, dimzin=8, dimpost="<>") == "100"
-    )
-    assert (
-        format_text(100, dimrnd=0, dimdec=None, dimzin=8, dimpost="<>") == "100"
-    )
-    assert (
-        format_text(100, dimrnd=None, dimdec=None, dimzin=8, dimpost="<>")
-        == "100"
-    )
-    assert (
-        format_text(1.23, dimrnd=0.5, dimdec=1, dimzin=0, dimpost="<> mm")
-        == "1.0 mm"
-    )
-    assert (
-        format_text(1.23, dimrnd=0.5, dimdec=1, dimzin=8, dimpost="<> mm")
-        == "1 mm"
-    )
-    assert (
-        format_text(1.23, dimrnd=0.5, dimdec=1, dimzin=12, dimpost="<> mm")
-        == "1 mm"
-    )
-    assert (
-        format_text(10.51, dimrnd=0.5, dimdec=2, dimzin=0, dimpost="<> mm")
-        == "10.50 mm"
-    )
-    assert (
-        format_text(10.51, dimrnd=0.5, dimdec=2, dimzin=8, dimpost="<> mm")
-        == "10.5 mm"
-    )
-    assert (
-        format_text(0.51, dimrnd=0.5, dimdec=2, dimzin=0, dimpost="mm <>")
-        == "mm 0.50"
-    )
-    assert (
-        format_text(0.51, dimrnd=0.5, dimdec=2, dimzin=4, dimpost="mm <>")
-        == "mm .50"
-    )
-    assert (
-        format_text(-0.51, dimrnd=0.5, dimdec=2, dimzin=4, dimpost="mm <>")
-        == "mm -.50"
-    )
-    assert (
-        format_text(-0.11, dimrnd=0.1, dimdec=2, dimzin=4, dimpost="mm <>")
-        == "mm -.10"
-    )
-    assert format_text(-0.51, dimdsep=",", dimpost="! <> m") == "! -0,51 m"
-
-    assert format_text(-0.51, dimdsep=",", dimpost="") == "-0,51"
-    assert format_text(-0.51, dimdsep=",", dimpost="<>") == "-0,51"
-    assert format_text(-0.51, dimdsep=",", dimpost="><>") == ">-0,51"
-    assert (
-        format_text(-0.51, dimdsep=",", dimpost="<><>") == "-0,51<>"
-    )  # ignore stupid
-    with pytest.raises(DXFValueError):
-        _ = format_text(-0.51, dimpost="<")
+    assert format_text(0, dimrnd=0, dimdec=1, dimzin=0) == "0.0"
+    assert format_text(0, dimrnd=0, dimdec=1, dimzin=4) == "0"
+    assert format_text(0, dimrnd=0, dimdec=1, dimzin=8) == "0"
+    assert format_text(100, dimrnd=0.0, dimdec=0, dimzin=8) == "100"
+    assert format_text(100, dimrnd=None, dimdec=0, dimzin=8) == "100"
+    assert format_text(100, dimrnd=0, dimdec=None, dimzin=8) == "100"
+    assert format_text(100, dimrnd=None, dimdec=None, dimzin=8) == "100"
+    assert format_text(1.23, dimrnd=0.5, dimdec=1, dimzin=0) == "1.0"
+    assert format_text(1.23, dimrnd=0.5, dimdec=1, dimzin=8) == "1"
+    assert format_text(1.23, dimrnd=0.5, dimdec=1, dimzin=12) == "1"
+    assert format_text(10.51, dimrnd=0.5, dimdec=2, dimzin=0) == "10.50"
+    assert format_text(10.51, dimrnd=0.5, dimdec=2, dimzin=8) == "10.5"
+    assert format_text(0.51, dimrnd=0.5, dimdec=2, dimzin=0 == "0.50")
+    assert format_text(0.51, dimrnd=0.5, dimdec=2, dimzin=4) == ".50"
+    assert format_text(-0.51, dimrnd=0.5, dimdec=2, dimzin=4) == "-.50"
+    assert format_text(-0.11, dimrnd=0.1, dimdec=2, dimzin=4) == "-.10"
+    assert format_text(-0.51, dimdsep=",") == "-0,51"
 
 
-def test_apply_dim_post():
+def test_apply_dimpost():
     assert apply_dimpost("0°", "<>") == "0°"
     assert apply_dimpost("30°", "x <>") == "x 30°"
     assert apply_dimpost("30°", "<> x") == "30° x"
     assert apply_dimpost("30°", "x <> x") == "x 30° x"
+    assert apply_dimpost("-0,51", "! <> m") == "! -0,51 m"
+    assert apply_dimpost("-0,51", "><>") == ">-0,51"
+    assert apply_dimpost("-0,51", "<><>") == "-0,51<>"  # ignore stupid
+
+
+def test_apply_dimpost_raises_exception_for_invalid_text_format():
+    with pytest.raises(DXFValueError):
+        apply_dimpost("x", dimpost="")
+    with pytest.raises(DXFValueError):
+        apply_dimpost("x", dimpost="<")
 
 
 def test_linear_measurement_without_ocs():

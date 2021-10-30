@@ -22,6 +22,7 @@ from .dim_base import (
     format_text,
     apply_dimpost,
     TextBox,
+    Tolerance,
 )
 from ezdxf.render.arrows import ARROWS, arrow_length
 from ezdxf.tools.text import is_upside_down_text_angle
@@ -42,6 +43,72 @@ def has_required_attributes(entity: DXFEntity, attrib_names: List[str]):
 
 GRAD = 200.0 / math.pi
 DEG = 180.0 / math.pi
+
+
+def format_angular_text(
+    value: float,
+    angular_unit: int,
+    dimrnd: Optional[float],
+    dimdec: Optional[int],
+    dimzin: int,
+    dimdsep: str,
+) -> str:
+    def decimal_format(_value: float) -> str:
+        return format_text(
+            _value,
+            dimrnd=dimrnd,
+            dimdec=dimdec,
+            dimzin=dimzin,
+            dimdsep=dimdsep,
+        )
+
+    def dms_format(_value: float) -> str:
+        d, m, s = decdeg2dms(_value)
+        return f"{d:.0f}°{m:.0f}'{decimal_format(s)}\""
+
+    # angular_unit:
+    # 0 = Decimal degrees
+    # 1 = Degrees/minutes/seconds
+    # 2 = Grad
+    # 3 = Radians
+
+    text = ""
+    if angular_unit == 0:
+        text = decimal_format(value * DEG) + "°"
+    elif angular_unit == 1:
+        text = dms_format(value * DEG)
+    elif angular_unit == 2:
+        text = decimal_format(value * GRAD) + "g"
+    elif angular_unit == 3:
+        text = decimal_format(value) + "r"
+    return text
+
+
+class AngularTolerance(Tolerance):
+    def __init__(
+        self,
+        dim_style: DimStyleOverride,
+        cap_height: float = 1.,
+        width_factor: float = 1.,
+        dim_scale: float = 1.,
+        angular_units: int = 0,
+    ):
+        super().__init__(dim_style, cap_height, width_factor, dim_scale)
+        self.angular_units = angular_units
+
+    def format_text(self, value: float) -> str:
+        """Rounding and text formatting of tolerance `value`, removes leading
+        and trailing zeros if necessary.
+
+        """
+        return format_angular_text(
+            value=value,
+            angular_unit=self.angular_units,
+            dimrnd=None,
+            dimdec=self.decimal_places,
+            dimzin=self.suppress_zeros,
+            dimdsep=self.text_decimal_separator,
+        )
 
 
 class _CurvedDimensionLine(BaseDimensionRenderer):
@@ -71,6 +138,14 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         self.measurement = 0.0
         self.dim_text_width: float = 0.0
 
+        # Class specific setup:
+        self.setup_measurement_text()
+        if self.tol.has_limits:
+            self.tol.update_limits(self.measurement)
+        self.dim_text_width = self.get_total_dim_text_width()
+        self.setup_text_properties()
+        self.setup_text_box()
+
     def render(self, block: "GenericLayoutType") -> None:
         """Main method to create dimension geometry of basic DXF entities in the
         associated BLOCK layout.
@@ -80,12 +155,6 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
 
         """
         super().render(block)
-        self.setup_measurement_text()
-        if self.dim_limits:
-            self.setup_limits()
-        self.dim_text_width = self.total_dim_text_width()
-        self.setup_text_properties()
-        self.setup_text_box()
         self.add_extension_lines()
         adjust_start_angle, adjust_end_angle = self.add_arrows()
         self.add_dimension_line(adjust_start_angle, adjust_end_angle)
@@ -118,21 +187,14 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         """Setup measurement text."""
         pass
 
-    def setup_limits(self) -> None:
-        if self.tol.has_limits:
-            # limits show the upper and lower limit of the measurement as
-            # stacked values and with the size of tolerances
-            measurement = self.measurement * self.dim_measurement_factor
-            self.tol.update_limits(measurement)
-
-    def total_dim_text_width(self) -> float:
+    def get_total_dim_text_width(self) -> float:
         width = 0.0
         if self.text:
-            if self.dim_limits:  # only limits are displayed
+            if self.tol.has_limits:  # only limits are displayed
                 width = self.tol.text_width
             else:
                 width = self.text_width(self.text)
-                if self.dim_tolerance:
+                if self.tol.has_tolerance:
                     width += self.tol.text_width  # type: ignore
         return width
 
@@ -189,6 +251,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
             width=self.dim_text_width,
             height=self.text_height,
             angle=self.text_rotation,
+            # Arbitrary choice to reduce the too large gap!
             gap=self.text_gap * 0.75,
         )
 
@@ -400,82 +463,36 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
 
 
 class _AngularCommonBase(_CurvedDimensionLine):
+    def init_tolerance(self) -> Tolerance:
+        return AngularTolerance(
+            self.dim_style,
+            cap_height=self.text_height,
+            width_factor=self.text_width_factor,
+            dim_scale=self.dim_scale,
+            angular_units=self.text_angle_unit,
+        )
+
     def setup_measurement_text(self) -> None:
         self.measurement = ellipse_param_span(
             self.start_angle_rad, self.end_angle_rad
         )
         self.text = self.text_override(
             self.measurement
-        )  # -> self.format_text()
-        if self.dim_limits:
-            self.setup_limits()
+        )  # calls self.format_text()
 
     def format_text(self, value: float) -> str:
-        text = self.format_angular_text(
+        text = format_angular_text(
             value,
+            angular_unit=self.text_angle_unit,
             dimrnd=self.text_round,
             dimdec=self.text_decimal_places,
             dimzin=self.text_suppress_zeros,
             dimdsep=self.text_decimal_separator,
         )
-        dimpost = self.text_format
+        dimpost = self.text_post_process_format
         if dimpost:
             text = apply_dimpost(text, dimpost)
         return text
-
-    def format_angular_text(
-        self,
-        value: float,
-        dimrnd: Optional[float],
-        dimdec: int,
-        dimzin: int,
-        dimdsep: str,
-    ) -> str:
-        def decimal_format(value: float) -> str:
-            return format_text(
-                value,
-                dimrnd=dimrnd,
-                dimdec=dimdec,
-                dimzin=dimzin,
-                dimdsep=dimdsep,
-            )
-
-        def dms_format(value: float) -> str:
-            d, m, s = decdeg2dms(value)
-            return f"{d:.0f}°{m:.0f}'{decimal_format(s)}\""
-
-        # 0 = Decimal degrees
-        # 1 = Degrees/minutes/seconds
-        # 2 = Grad
-        # 3 = Radians
-        fmt = self.text_angle_unit
-        text = ""
-        if fmt == 0:
-            text = decimal_format(value * DEG) + "°"
-        elif fmt == 1:
-            text = dms_format(value * DEG)
-        elif fmt == 2:
-            text = decimal_format(value * GRAD) + "g"
-        elif fmt == 3:
-            text = decimal_format(value) + "r"
-        dimpost = self.text_format
-        if dimpost:
-            text = apply_dimpost(text, dimpost)
-        return text
-
-    def format_tolerance_text(self, value: float) -> str:
-        """Rounding and text formatting of tolerance `value`, removes leading
-        and trailing zeros if necessary.
-
-        """
-        return self.format_angular_text(
-            value=value,
-            dimrnd=None,
-            dimdec=self.tol.decimal_places,
-            dimzin=self.tol.suppress_zeros,
-            dimdsep=self.text_decimal_separator,
-        )
-        # Do not apply dimpost!?
 
 
 class AngularDimension(_AngularCommonBase):

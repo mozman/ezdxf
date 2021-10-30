@@ -31,21 +31,30 @@ class DiameterDimension(RadiusDimension):
     """
 
     def _center(self):
-        return Vec2(self.dimension.dxf.defpoint).lerp(self.dimension.dxf.defpoint4)
+        return Vec2(self.dimension.dxf.defpoint).lerp(
+            self.dimension.dxf.defpoint4
+        )
 
-    def __init__(self, dimension: 'Dimension', ucs: 'UCS' = None, override: 'DimStyleOverride' = None):
+    def __init__(
+        self,
+        dimension: "Dimension",
+        ucs: "UCS" = None,
+        override: "DimStyleOverride" = None,
+    ):
         # Diameter dimension has the same styles for inside text as radius dimension, except for the
         # measurement text
         super().__init__(dimension, ucs, override)
         self.point_on_circle2 = Vec2(self.dimension.dxf.defpoint)
 
         # escape diameter sign
-        self.text = self.text.replace(self.text_prefix, '%%c')
+        self.text = self.text.replace(self.text_prefix, "%%c")
         if self.tol.has_limits:
-            self.tol.text_lower = self.tol.text_lower.replace(self.text_prefix, '%%c')
+            self.tol.text_lower = self.tol.text_lower.replace(
+                self.text_prefix, "%%c"
+            )
 
     def get_default_text_location(self) -> Vec2:
-        """ Returns default text midpoint based on `self.text_valign` and `self.text_outside` """
+        """Returns default text midpoint based on `self.text_valign` and `self.text_outside`"""
         if self.text_outside and self.text_outside_horizontal:
             return super().get_default_text_location()
 
@@ -55,7 +64,7 @@ class DiameterDimension(RadiusDimension):
         if self.text_inside:
             text_midpoint = self.center
         else:
-            hdist = self.dim_text_width / 2. + self.arrow_size + self.text_gap
+            hdist = self.dim_text_width / 2.0 + self.arrow_size + self.text_gap
             text_midpoint = self.point_on_circle + (self.dim_line_vec * hdist)
         return text_midpoint + (vertical_direction * vertical_distance)
 
@@ -72,12 +81,14 @@ class DiameterDimension(RadiusDimension):
             return self.point_on_circle2
 
     def render_default_location(self) -> None:
-        """ Create dimension geometry at the default dimension line locations. """
+        """Create dimension geometry at the default dimension line locations."""
 
         if self.text_outside:
             connection_point1 = self._add_arrow_1(rotate=True)
             if self.outside_text_force_dimline:
-                self.add_diameter_dim_line(connection_point1, self._add_arrow_2())
+                self.add_diameter_dim_line(
+                    connection_point1, self._add_arrow_2()
+                )
             else:
                 add_center_mark(self)
             if self.text_outside_horizontal:
@@ -88,14 +99,18 @@ class DiameterDimension(RadiusDimension):
             connection_point1 = self._add_arrow_1(rotate=False)
             if self.text_movement_rule == 1:
                 # move text, add leader -> dimline from text to point on circle
-                self.add_radial_dim_line_from_text(self.center, connection_point1)
+                self.add_radial_dim_line_from_text(
+                    self.center, connection_point1
+                )
                 add_center_mark(self)
             else:
                 # dimline from center to point on circle
-                self.add_diameter_dim_line(connection_point1, self._add_arrow_2())
+                self.add_diameter_dim_line(
+                    connection_point1, self._add_arrow_2()
+                )
 
     def render_user_location(self) -> None:
-        """ Create dimension geometry at user defined dimension locations. """
+        """Create dimension geometry at user defined dimension locations."""
         preserve_outside = self.text_outside
         leader = self.text_movement_rule != 2
         if not leader:
@@ -119,15 +134,21 @@ class DiameterDimension(RadiusDimension):
                 if self.text_movement_rule == 2:  # move text, no leader!
                     # dimline across the circle
                     connection_point2 = self._add_arrow_2(rotate=True)
-                    self.add_line(connection_point1, connection_point2, remove_hidden_lines=True)
+                    self.add_line(
+                        connection_point1,
+                        connection_point2,
+                        remove_hidden_lines=True,
+                    )
                 else:
                     # move text, add leader -> dimline from text to point on circle
-                    self.add_radial_dim_line_from_text(self.user_location, connection_point1)
+                    self.add_radial_dim_line_from_text(
+                        self.user_location, connection_point1
+                    )
                     add_center_mark(self)
 
         self.text_outside = preserve_outside
 
     def add_diameter_dim_line(self, start: Vec2, end: Vec2) -> None:
-        """  Add diameter dimension line. """
+        """Add diameter dimension line."""
         attribs = self.dim_line_attributes()
         self.add_line(start, end, dxfattribs=attribs, remove_hidden_lines=True)

@@ -93,7 +93,7 @@ class RadiusDimension(BaseDimensionRenderer):
             if self.tol.has_tolerance:
                 self.dim_text_width += self.tol_text_width  # type: ignore
 
-            elif self.dim_limits:
+            elif self.tol.has_limits:
                 # limits show the upper and lower limit of the measurement as
                 # stacked values and with the size of tolerances
                 measurement = self.measurement * self.dim_measurement_factor
