@@ -346,7 +346,7 @@ class LinearDimension(BaseDimensionRenderer):
 
         """
         attribs = {
-            "color": self.dim_line_color,
+            "color": self.dimension_line.color,
         }
         start = self.dim_line_start
         end = self.dim_line_end
@@ -425,7 +425,7 @@ class LinearDimension(BaseDimensionRenderer):
             )
 
         attribs = {
-            "color": self.dim_line_color,
+            "color": self.dimension_line.color,
         }
         start = self.dim_line_start
         end = self.dim_line_end
@@ -473,7 +473,8 @@ class LinearDimension(BaseDimensionRenderer):
             end: dimension line end
 
         """
-        extension = self.dim_line_vec * self.dim_line_extension
+        dim_line = self.dimension_line
+        extension = self.dim_line_vec * dim_line.extension
         if self.arrow1_name is None or ARROWS.has_extension_line(
             self.arrow1_name
         ):
@@ -485,15 +486,15 @@ class LinearDimension(BaseDimensionRenderer):
 
         attribs = self.dim_line_attributes()
 
-        if self.suppress_dim1_line or self.suppress_dim2_line:
+        if dim_line.suppress1 or dim_line.suppress2:
             # TODO: results not as expected, but good enough
             # center should take into account text location
             center = start.lerp(end)
-            if not self.suppress_dim1_line:
+            if not dim_line.suppress1:
                 self.add_line(
                     start, center, dxfattribs=attribs, remove_hidden_lines=True
                 )
-            if not self.suppress_dim2_line:
+            if not dim_line.suppress2:
                 self.add_line(
                     center, end, dxfattribs=attribs, remove_hidden_lines=True
                 )

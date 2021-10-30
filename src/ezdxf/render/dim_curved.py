@@ -311,7 +311,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
 
         """
         attribs = {
-            "color": self.dim_line_color,
+            "color": self.dimension_line.color,
         }
         radius = self.dim_line_radius
         if abs(radius) < 1e-12:

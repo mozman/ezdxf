@@ -204,7 +204,7 @@ class RadiusDimension(BaseDimensionRenderer):
         """Create dimension geometry of basic DXF entities in the associated BLOCK layout."""
         # call required to setup some requirements
         super().render(block)
-        if not self.suppress_dim1_line:
+        if not self.dimension_line.suppress1:
             if self.user_location is not None:
                 self.render_user_location()
             else:
@@ -294,7 +294,7 @@ class RadiusDimension(BaseDimensionRenderer):
     def add_arrow(self, location, rotate: bool) -> Vec2:
         """Add arrow or tick to dimension line, returns dimension line connection point."""
         attribs = {
-            "color": self.dim_line_color,
+            "color": self.dimension_line.color,
         }
         arrow_name = self.arrow1_name
         if self.tick_size > 0.0:  # oblique stroke, but double the size

@@ -292,6 +292,34 @@ class ExtensionLines:
         )
 
 
+class DimensionLine:
+    def __init__(self, dim_style: DimStyleOverride, default_color: int, dim_scale: float):
+        get = dim_style.get
+        self.color: int = get("dimclrd", default_color)  # ACI
+
+        # Dimension line extension, along the dimension line direction ('left'
+        # and 'right')
+        self.extension: float = get("dimdle", 0.) * dim_scale
+        self.linetype: str = get("dimltype", "")
+        self.lineweight: int = get("dimlwd", const.LINEWEIGHT_BYBLOCK)
+
+        # Suppress first part of the dimension line
+        self.suppress1: bool = bool(get("dimsd1", 0))
+
+        # Suppress second part of the dimension line
+        self.suppress2: bool = bool(get("dimsd2", 0))
+
+        # Controls whether a dimension line is drawn between the extension lines
+        # even when the text is placed outside.
+        # For radius and diameter dimensions (when DIMTIX is off), draws a
+        # dimension line inside the circle or arc and places the text,
+        # arrowheads, and leader outside.
+        # 0 = no dimension line
+        # 1 = draw dimension line
+        # not supported yet - ezdxf behaves like option 1
+        self.has_dim_line_if_text_outside: bool = bool(get("dimtofl", 1))
+
+
 class BaseDimensionRenderer:
     """Base rendering class for DIMENSION entities."""
 
@@ -556,34 +584,8 @@ class BaseDimensionRenderer:
         # Only if force_text_inside is True
         self.suppress_arrow_heads: int = get("dimsoxd", 0)  # not supported yet
 
-        # ---------------------------------------------
-        # DIMENSION LINE
-        # ---------------------------------------------
-        self.dim_line_color: int = get("dimclrd", self.default_color)
-
-        # Dimension line extension, along the dimension line direction ('left'
-        # and 'right')
-        self.dim_line_extension: float = get("dimdle", 0.0) * self.dim_scale
-        self.dim_linetype: Optional[str] = get("dimltype", None)
-        self.dim_lineweight: int = get("dimlwd", const.LINEWEIGHT_BYBLOCK)
-
-        # Suppress first part of the dimension line
-        self.suppress_dim1_line: int = get("dimsd1", 0)
-
-        # Suppress second part of the dimension line
-        self.suppress_dim2_line: int = get("dimsd2", 0)
-
-        # Controls whether a dimension line is drawn between the extension lines
-        # even when the text is placed outside.
-        # For radius and diameter dimensions (when DIMTIX is off), draws a
-        # dimension line inside the circle or arc and places the text,
-        # arrowheads, and leader outside.
-        # 0 = no dimension line
-        # 1 = draw dimension line
-        # not supported yet - ezdxf behaves like option 1
-        self.dim_line_if_text_outside: int = get("dimtofl", 1)
-
-        self.extension_lines = self.init_extension_lines()
+        self.dimension_line: DimensionLine = self.init_dimension_line()
+        self.extension_lines: ExtensionLines = self.init_extension_lines()
         self.tol: Tolerance = self.init_tolerance()
 
         # Update text height
@@ -599,6 +601,13 @@ class BaseDimensionRenderer:
 
     def init_extension_lines(self) -> ExtensionLines:
         return ExtensionLines(
+            self.dim_style,
+            self.default_color,
+            self.dim_scale,
+        )
+
+    def init_dimension_line(self) -> DimensionLine:
+        return DimensionLine(
             self.dim_style,
             self.default_color,
             self.dim_scale,
@@ -657,12 +666,13 @@ class BaseDimensionRenderer:
 
     def dim_line_attributes(self) -> dict:
         """Returns default dimension line DXF attributes as dict."""
-        attribs: Dict[str, Any] = {"color": self.dim_line_color}
-        if self.dim_linetype is not None:
-            attribs["linetype"] = self.dim_linetype
+        dim_line = self.dimension_line
+        attribs: Dict[str, Any] = {"color": dim_line.color}
+        if dim_line.linetype:
+            attribs["linetype"] = dim_line.linetype
 
         if self.supports_dxf_r2000:
-            attribs["lineweight"] = self.dim_lineweight
+            attribs["lineweight"] = dim_line.lineweight
         return attribs
 
     def text_override(self, measurement: float) -> str:
@@ -969,11 +979,11 @@ class BaseDimensionRenderer:
             self.dimension.dxf.extrusion = self.ucs.uz
 
     def add_extension_line(
-        self, start: "Vertex", end: "Vertex", linetype: str = None
+        self, start: "Vertex", end: "Vertex", linetype: str = ""
     ) -> None:
         """Add extension lines from dimension line to measurement point."""
         attribs: Dict[str, Any] = {"color": self.extension_lines.color}
-        if linetype is not None:
+        if linetype:
             attribs["linetype"] = linetype
 
         # lineweight requires DXF R2000 or later
