@@ -150,5 +150,5 @@ class DiameterDimension(RadiusDimension):
 
     def add_diameter_dim_line(self, start: Vec2, end: Vec2) -> None:
         """Add diameter dimension line."""
-        attribs = self.dim_line_attributes()
+        attribs = self.dimension_line.dxf_attributes()
         self.add_line(start, end, dxfattribs=attribs, remove_hidden_lines=True)

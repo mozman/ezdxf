@@ -319,6 +319,15 @@ class DimensionLine:
         # not supported yet - ezdxf behaves like option 1
         self.has_dim_line_if_text_outside: bool = bool(get("dimtofl", 1))
 
+    def dxf_attributes(self) -> dict:
+        """Returns default dimension line DXF attributes as dict."""
+        attribs: Dict[str, Any] = {"color": self.color}
+        if self.linetype:
+            attribs["linetype"] = self.linetype
+        if self.lineweight != const.LINEWEIGHT_BYBLOCK:
+            attribs["lineweight"] = self.lineweight
+        return attribs
+
 
 class BaseDimensionRenderer:
     """Base rendering class for DIMENSION entities."""
@@ -663,17 +672,6 @@ class BaseDimensionRenderer:
             "layer": self.default_layer,
             "color": self.default_color,
         }
-
-    def dim_line_attributes(self) -> dict:
-        """Returns default dimension line DXF attributes as dict."""
-        dim_line = self.dimension_line
-        attribs: Dict[str, Any] = {"color": dim_line.color}
-        if dim_line.linetype:
-            attribs["linetype"] = dim_line.linetype
-
-        if self.supports_dxf_r2000:
-            attribs["lineweight"] = dim_line.lineweight
-        return attribs
 
     def text_override(self, measurement: float) -> str:
         """Create dimension text for `measurement` in drawing units and applies
