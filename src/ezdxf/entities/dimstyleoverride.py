@@ -180,6 +180,10 @@ class DimStyleOverride:
                 blk2 = blk
         return blk1, blk2
 
+    def get_decimal_separator(self) -> str:
+        dimdsep: int = self.get("dimdsep", 0)
+        return "," if dimdsep == 0 else chr(dimdsep)
+
     def set_tick(self, size: float = 1) -> None:
         """Use oblique stroke as tick, disables arrows.
 

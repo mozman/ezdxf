@@ -108,7 +108,7 @@ class RadiusDimension(BaseDimensionRenderer):
                     + self.format_tolerance_text(self.measurement_lower_limit)
                 )
                 self.tol_text_width = self.tolerance_text_width(
-                    max(len(self.tol_text_upper), len(self.tol_text_lower))
+                    self.tol_text_upper, self.tol_text_lower
                 )
 
                 # only limits are displayed so:

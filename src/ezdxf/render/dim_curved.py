@@ -1,7 +1,7 @@
 # Copyright (c) 2021, Manfred Moitzi
 # License: MIT License
 import math
-from typing import TYPE_CHECKING, Tuple, List
+from typing import TYPE_CHECKING, Tuple, List, Optional
 from abc import abstractmethod
 import logging
 
@@ -21,6 +21,7 @@ from .dim_base import (
     get_required_defpoint,
     format_text,
     apply_dimpost,
+    TextBox,
 )
 from ezdxf.render.arrows import ARROWS, arrow_length
 from ezdxf.tools.text import is_upside_down_text_angle
@@ -67,6 +68,8 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         self.ext1_start = Vec2()  # start of 1st extension line
         self.ext2_start = Vec2()  # start of 2nd extension line
         self.arrows_outside = False
+        self.measurement = 0.0
+        self.dim_text_width: float = 0.0
 
     def render(self, block: "GenericLayoutType") -> None:
         """Main method to create dimension geometry of basic DXF entities in the
@@ -77,8 +80,12 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
 
         """
         super().render(block)
-        self.make_measurement_text()
+        self.setup_measurement_text()
+        if self.dim_limits:
+            self.setup_limits()
+        self.dim_text_width = self.total_dim_text_width()
         self.setup_text_properties()
+        self.setup_text_box()
         self.add_extension_lines()
         adjust_start_angle, adjust_end_angle = self.add_arrows()
         self.add_dimension_line(adjust_start_angle, adjust_end_angle)
@@ -107,9 +114,33 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         )
 
     @abstractmethod
-    def make_measurement_text(self) -> None:
+    def setup_measurement_text(self) -> None:
         """Setup measurement text."""
         pass
+
+    def setup_limits(self) -> None:
+        if self.dim_limits:
+            # limits show the upper and lower limit of the measurement as
+            # stacked values and with the size of tolerances
+            measurement = self.measurement * self.dim_measurement_factor
+            upper_limit = measurement + self.tol_maximum
+            lower_limit = measurement - self.tol_minimum
+            self.tol_text_upper = self.format_tolerance_text(upper_limit)
+            self.tol_text_lower = self.format_tolerance_text(lower_limit)
+            self.tol_text_width = self.tolerance_text_width(
+                self.tol_text_upper, self.tol_text_lower
+            )
+
+    def total_dim_text_width(self) -> float:
+        width = 0.0
+        if self.text:
+            if self.dim_limits:  # only limits are displayed
+                width = self.tol_text_width
+            else:
+                width = self.text_width(self.text)
+                if self.dim_tolerance:
+                    width += self.tol_text_width  # type: ignore
+        return width
 
     def setup_text_properties(self) -> None:
         """Setup geometric text properties (location, rotation) and the TextBox
@@ -155,8 +186,17 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
             # where OCS == WCS, check WCS text orientation:
             wcs_angle = self.ucs.to_ocs_angle_deg(rotation)
             if is_upside_down_text_angle(wcs_angle):
-                rotation += 180.  # apply to UCS rotation!
+                rotation += 180.0  # apply to UCS rotation!
         self.text_rotation = rotation
+
+    def setup_text_box(self):
+        self.text_box = TextBox(
+            center=self.text_location,
+            width=self.dim_text_width,
+            height=self.text_height,
+            angle=self.text_rotation,
+            gap=self.text_gap * 0.75,
+        )
 
     @abstractmethod
     def get_ext1_dir(self) -> Vec2:
@@ -217,7 +257,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         }
         radius = self.dim_line_radius
         if abs(radius) < 1e-12:
-            return 0., 0.
+            return 0.0, 0.0
 
         start = self.center_of_arc + self.ext1_dir * radius
         end = self.center_of_arc + self.ext2_dir * radius
@@ -226,15 +266,15 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         outside = self.arrows_outside
         arrow1 = not self.suppress_arrow1
         arrow2 = not self.suppress_arrow2
-        start_angle_offset = 0.
-        end_angle_offset = 0.
-        if self.tick_size > 0.:  # oblique stroke, but double the size
+        start_angle_offset = 0.0
+        end_angle_offset = 0.0
+        if self.tick_size > 0.0:  # oblique stroke, but double the size
             if arrow1:
                 self.add_blockref(
                     ARROWS.oblique,
                     insert=start,
                     rotation=angle1,
-                    scale=self.tick_size * 2.,
+                    scale=self.tick_size * 2.0,
                     dxfattribs=attribs,
                 )
             if arrow2:
@@ -242,14 +282,14 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
                     ARROWS.oblique,
                     insert=end,
                     rotation=angle2,
-                    scale=self.tick_size * 2.,
+                    scale=self.tick_size * 2.0,
                     dxfattribs=attribs,
                 )
         else:
             assert self.arrow1_name is not None
             assert self.arrow2_name is not None
             scale = self.arrow_size
-            start_angle = angle1 + 180.
+            start_angle = angle1 + 180.0
             end_angle = angle2
             if outside:
                 start_angle, end_angle = end_angle, start_angle
@@ -366,18 +406,44 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
 
 
 class _AngularCommonBase(_CurvedDimensionLine):
-    def make_measurement_text(self) -> None:
-        angle = ellipse_param_span(self.start_angle_rad, self.end_angle_rad)
-        self.text = self.text_override(angle)  # -> self.format_text()
+    def setup_measurement_text(self) -> None:
+        self.measurement = ellipse_param_span(
+            self.start_angle_rad, self.end_angle_rad
+        )
+        self.text = self.text_override(
+            self.measurement
+        )  # -> self.format_text()
+        if self.dim_limits:
+            self.setup_limits()
 
     def format_text(self, value: float) -> str:
+        text = self.format_angular_text(
+            value,
+            dimrnd=self.text_round,
+            dimdec=self.text_decimal_places,
+            dimzin=self.text_suppress_zeros,
+            dimdsep=self.text_decimal_separator,
+        )
+        dimpost = self.text_format
+        if dimpost:
+            text = apply_dimpost(text, dimpost)
+        return text
+
+    def format_angular_text(
+        self,
+        value: float,
+        dimrnd: Optional[float],
+        dimdec: int,
+        dimzin: int,
+        dimdsep: str,
+    ) -> str:
         def decimal_format(value: float) -> str:
             return format_text(
                 value,
-                dimrnd=self.text_round,
-                dimdec=self.text_decimal_places,
-                dimzin=self.text_suppress_zeros,
-                dimdsep=self.text_decimal_separator,
+                dimrnd=dimrnd,
+                dimdec=dimdec,
+                dimzin=dimzin,
+                dimdsep=dimdsep,
             )
 
         def dms_format(value: float) -> str:
@@ -388,7 +454,7 @@ class _AngularCommonBase(_CurvedDimensionLine):
         # 1 = Degrees/minutes/seconds
         # 2 = Grad
         # 3 = Radians
-        fmt = self.dim_style.get("dimaunit", 0)
+        fmt = self.text_angle_unit
         text = ""
         if fmt == 0:
             text = decimal_format(value * DEG) + "°"
@@ -402,6 +468,20 @@ class _AngularCommonBase(_CurvedDimensionLine):
         if dimpost:
             text = apply_dimpost(text, dimpost)
         return text
+
+    def format_tolerance_text(self, value: float) -> str:
+        """Rounding and text formatting of tolerance `value`, removes leading
+        and trailing zeros if necessary.
+
+        """
+        return self.format_angular_text(
+            value=value,
+            dimrnd=None,
+            dimdec=self.tol_decimal_places,
+            dimzin=self.tol_suppress_zeros,
+            dimdsep=self.text_decimal_separator,
+        )
+        # Do not apply dimpost!?
 
 
 class AngularDimension(_AngularCommonBase):
@@ -661,7 +741,7 @@ class ArcLengthDimension(_CurvedDimensionLine):
     def get_ext2_dir(self) -> Vec2:
         return (self.ext2_start - self.center_of_arc).normalize()
 
-    def make_measurement_text(self) -> None:
+    def setup_measurement_text(self) -> None:
         angle = ellipse_param_span(self.start_angle_rad, self.end_angle_rad)
         arc_length = angle * self.arc_radius * 2.0
         self.text = self.text_override(arc_length)  # -> self.format_text()

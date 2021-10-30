@@ -140,7 +140,7 @@ class LinearDimension(BaseDimensionRenderer):
                     self.measurement_lower_limit
                 )
                 self.tol_text_width = self.tolerance_text_width(
-                    max(len(self.tol_text_upper), len(self.tol_text_lower))
+                    self.tol_text_upper, self.tol_text_lower
                 )
 
                 # only limits are displayed so:
@@ -218,26 +218,6 @@ class LinearDimension(BaseDimensionRenderer):
             else:
                 # write final text location into DIMENSION entity
                 self.dimension.dxf.text_midpoint = self.text_location
-
-    @property
-    def has_relative_text_movement(self):
-        return bool(self.text_shift_h or self.text_shift_v)
-
-    def apply_text_shift(self, location: Vec2, text_rotation: float) -> Vec2:
-        """Add `self.text_shift_h` and `sel.text_shift_v` to point `location`,
-        shifting along and perpendicular to text orientation defined by
-        `text_rotation`.
-
-        Args:
-            location: location point
-            text_rotation: text rotation in degrees
-
-        Returns: new location
-
-        """
-        shift_vec = Vec2((self.text_shift_h, self.text_shift_v))
-        location += shift_vec.rotate_deg(text_rotation)
-        return location
 
     def render(self, block: "GenericLayoutType") -> None:
         """Main method to create dimension geometry of basic DXF entities in the
