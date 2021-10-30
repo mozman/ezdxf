@@ -286,19 +286,20 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         return []
 
     def add_extension_lines(self) -> None:
-        if not self.suppress_ext1_line:
+        ext_lines = self.extension_lines
+        if not ext_lines.suppress1:
             self._add_ext_line(
-                self.ext1_start, self.ext1_dir, self.ext1_linetype_name
+                self.ext1_start, self.ext1_dir, ext_lines.linetype1
             )
-        if not self.suppress_ext2_line:
+        if not ext_lines.suppress2:
             self._add_ext_line(
-                self.ext2_start, self.ext2_dir, self.ext2_linetype_name
+                self.ext2_start, self.ext2_dir, ext_lines.linetype2
             )
 
     def _add_ext_line(self, start: Vec2, direction: Vec2, ltype) -> None:
-        start = start + direction * self.ext_line_offset
+        start = start + direction * self.extension_lines.offset
         end = self.center_of_arc + direction * (
-            self.dim_line_radius + self.ext_line_extension
+            self.dim_line_radius + self.extension_lines.extension_above
         )
         self.add_extension_line(start, end, ltype)
 

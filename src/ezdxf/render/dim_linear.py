@@ -219,23 +219,24 @@ class LinearDimension(BaseDimensionRenderer):
         super().render(block)
 
         # add extension line 1
-        if not self.suppress_ext1_line:
+        ext_lines = self.extension_lines
+        if not ext_lines.suppress1:
             above_ext_line1 = self.text_halign == 3
             start, end = self.extension_line_points(
                 self.ext1_line_start, self.dim_line_start, above_ext_line1
             )
             self.add_extension_line(
-                start, end, linetype=self.ext1_linetype_name
+                start, end, linetype=ext_lines.linetype1
             )
 
         # add extension line 2
-        if not self.suppress_ext2_line:
+        if not ext_lines.suppress2:
             above_ext_line2 = self.text_halign == 4
             start, end = self.extension_line_points(
                 self.ext2_line_start, self.dim_line_end, above_ext_line2
             )
             self.add_extension_line(
-                start, end, linetype=self.ext2_linetype_name
+                start, end, linetype=ext_lines.linetype2
             )
 
         # add arrow symbols (block references), also adjust dimension line start
@@ -295,13 +296,14 @@ class LinearDimension(BaseDimensionRenderer):
         end = self.dim_line_end
         halign = self.text_halign
         # positions the text above and aligned with the first/second extension line
+        ext_lines = self.extension_lines
         if halign in (3, 4):
             # horizontal location
             hdist = self.text_gap + self.text_height / 2.0
             hvec = self.dim_line_vec * hdist
             location = (start if halign == 3 else end) - hvec
             # vertical location
-            vdist = self.ext_line_extension + self.dim_text_width / 2.0
+            vdist = ext_lines.extension_above + self.dim_text_width / 2.0
             location += Vec2.from_deg_angle(self.ext_line_angle).normalize(
                 vdist
             )
@@ -325,7 +327,7 @@ class LinearDimension(BaseDimensionRenderer):
 
             if self.text_outside:  # move text up
                 vdist = (
-                    self.ext_line_extension
+                    ext_lines.extension_above
                     + self.text_gap
                     + self.text_height / 2.0
                 )
@@ -518,11 +520,11 @@ class LinearDimension(BaseDimensionRenderer):
             direction = Vec2.from_deg_angle(self.ext_line_angle)
         else:
             direction = (end - start).normalize()
-        if self.ext_line_fixed:
-            start = end - (direction * self.ext_line_length)
+        if self.extension_lines.has_fixed_length:
+            start = end - (direction * self.extension_lines.length_below)
         else:
-            start = start + direction * self.ext_line_offset
-        extension = self.ext_line_extension
+            start = start + direction * self.extension_lines.offset
+        extension = self.extension_lines.extension_above
         if text_above_extline:
             extension += self.dim_text_width
         end = end + direction * extension

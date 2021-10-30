@@ -96,9 +96,9 @@ class Tolerance:  # and Limits
     def __init__(
         self,
         dim_style: DimStyleOverride,
-        cap_height: float = 1.,
-        width_factor: float = 1.,
-        dim_scale: float = 1.,
+        cap_height: float = 1.0,
+        width_factor: float = 1.0,
+        dim_scale: float = 1.0,
     ):
         self.text_width_factor = width_factor
         self.dim_scale = dim_scale
@@ -155,11 +155,13 @@ class Tolerance:  # and Limits
         # Same as DIMZIN for tolerances (self.text_suppress_zeros)
         self.suppress_zeros: int = get("dimtzin", 0)
         self.text: str = ""
-        self.text_height: float = 0.
-        self.text_width: float = 0.
+        self.text_height: float = 0.0
+        self.text_width: float = 0.0
         self.text_upper: str = ""
         self.text_lower: str = ""
-        self.char_height: float = cap_height * self.text_scale_factor * self.dim_scale
+        self.char_height: float = (
+            cap_height * self.text_scale_factor * self.dim_scale
+        )
         if self.has_tolerance:
             self.init_tolerance()
         elif self.has_limits:
@@ -257,6 +259,37 @@ class Tolerance:  # and Limits
         self.text_upper = self.format_text(upper_limit)
         self.text_lower = self.format_text(lower_limit)
         self.text_width = self.get_text_width(self.text_upper, self.text_lower)
+
+
+class ExtensionLines:
+    def __init__(
+        self, dim_style: DimStyleOverride, default_color: int, dim_scale: float
+    ):
+        get = dim_style.get
+        self.color: int = get("dimclre", default_color)  # ACI
+        self.linetype1: str = get("dimltex1", "")
+        self.linetype2: str = get("dimltex2", "")
+        self.lineweight: int = get("dimlwe", const.LINEWEIGHT_BYBLOCK)
+        self.suppress1: bool = bool(get("dimse1", 0))
+        self.suppress2: bool = bool(get("dimse2", 0))
+
+        # Extension of extension line above the dimension line, in extension
+        # line direction in most cases perpendicular to dimension line
+        # (oblique!)
+        self.extension_above: float = get("dimexe", 0.0) * dim_scale
+
+        # Distance of extension line from the measurement point in extension
+        # line direction
+        self.offset: float = get("dimexo", 0.0) * dim_scale
+
+        # Fixed length extension line, lenght above dimension line is still
+        # self.ext_line_extension
+        self.has_fixed_length: bool = bool(get("dimfxlon", 0))
+
+        # Length below the dimension line:
+        self.length_below: float = (
+            get("dimfxl", self.extension_above) * dim_scale
+        )
 
 
 class BaseDimensionRenderer:
@@ -391,7 +424,9 @@ class BaseDimensionRenderer:
         self.text_suppress_zeros: int = get("dimzin", 0)
 
         # decimal separator char, default is ",":
-        self.text_decimal_separator = self.dim_style.get_decimal_separator()
+        self.text_decimal_separator: str = (
+            self.dim_style.get_decimal_separator()
+        )
 
         self.text_post_process_format: str = self.dim_style.get("dimpost", "")
         # text_fill:
@@ -548,38 +583,8 @@ class BaseDimensionRenderer:
         # not supported yet - ezdxf behaves like option 1
         self.dim_line_if_text_outside: int = get("dimtofl", 1)
 
-        # ---------------------------------------------
-        # EXTENSION LINES
-        # ---------------------------------------------
-        self.ext_line_color: int = get("dimclre", self.default_color)
-        self.ext1_linetype_name: Optional[str] = get("dimltex1", None)
-        self.ext2_linetype_name: Optional[str] = get("dimltex2", None)
-        self.ext_lineweight: int = get("dimlwe", const.LINEWEIGHT_BYBLOCK)
-        self.suppress_ext1_line: int = get("dimse1", 0)
-        self.suppress_ext2_line: int = get("dimse2", 0)
-
-        # Extension of extension line above the dimension line, in extension
-        # line direction in most cases perpendicular to dimension line
-        # (oblique!)
-        self.ext_line_extension: float = get("dimexe", 0.0) * self.dim_scale
-
-        # Distance of extension line from the measurement point in extension
-        # line direction
-        self.ext_line_offset: float = get("dimexo", 0.0) * self.dim_scale
-
-        # Fixed length extension line, leenght above dimension line is still
-        # self.ext_line_extension
-        self.ext_line_fixed: int = get("dimfxlon", 0)
-
-        # Length below the dimension line:
-        self.ext_line_length: float = (
-            get("dimfxl", self.ext_line_extension) * self.dim_scale
-        )
-
-        # ---------------------------------------------
-        # TOLERANCES & LIMITS
-        # ---------------------------------------------
-        self.tol = self.init_tolerance()
+        self.extension_lines = self.init_extension_lines()
+        self.tol: Tolerance = self.init_tolerance()
 
         # Update text height
         self.text_height = max(self.text_height, self.tol.text_height)
@@ -590,6 +595,13 @@ class BaseDimensionRenderer:
             cap_height=self.text_height,
             width_factor=self.text_width_factor,
             dim_scale=self.dim_scale,
+        )
+
+    def init_extension_lines(self) -> ExtensionLines:
+        return ExtensionLines(
+            self.dim_style,
+            self.default_color,
+            self.dim_scale,
         )
 
     def get_required_defpoint(self, name: str) -> Vec2:
@@ -960,13 +972,13 @@ class BaseDimensionRenderer:
         self, start: "Vertex", end: "Vertex", linetype: str = None
     ) -> None:
         """Add extension lines from dimension line to measurement point."""
-        attribs: Dict[str, Any] = {"color": self.ext_line_color}
+        attribs: Dict[str, Any] = {"color": self.extension_lines.color}
         if linetype is not None:
             attribs["linetype"] = linetype
 
         # lineweight requires DXF R2000 or later
         if self.supports_dxf_r2000:
-            attribs["lineweight"] = self.ext_lineweight
+            attribs["lineweight"] = self.extension_lines.lineweight
 
         self.add_line(start, end, dxfattribs=attribs)
 
