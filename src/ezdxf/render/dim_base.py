@@ -580,7 +580,7 @@ class Measurement:
         self.text_is_outside: bool = False
 
         # Final calculated or overridden dimension text location
-        self.final_text_location: Vec2 = Vec2()
+        self.text_location: Vec2 = Vec2()
 
         # True if dimension text doesn't fit between extension lines
         self.is_wide_text: bool = False
@@ -954,7 +954,7 @@ class BaseDimensionRenderer:
     ):
         self.dimension: Dimension = dimension
         self.geometry = self.init_geometry(dimension, ucs)
-        doc = dimension.doc
+
         # DimStyleOverride object, manages dimension style overriding
         self.dim_style: DimStyleOverride
         if override:

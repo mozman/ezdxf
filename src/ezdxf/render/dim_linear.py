@@ -118,7 +118,7 @@ class LinearDimension(BaseDimensionRenderer):
             2 * self.arrows.arrow_size + measurement.text_gap
         )
         self.arrows_outside: bool = (
-            self.required_arrows_space > self.measurement.raw_value
+            self.required_arrows_space > raw_measurement
         )
 
         # text location and rotation
@@ -145,11 +145,11 @@ class LinearDimension(BaseDimensionRenderer):
                 )
             else:
                 required_space = self._total_text_width
-            measurement.is_wide_text = required_space > measurement.raw_value
+            measurement.is_wide_text = required_space > raw_measurement
 
             if not measurement.force_text_inside:
                 # place text outside if wide text and not forced inside
-                measurement.text_outside = measurement.is_wide_text
+                measurement.text_is_outside = measurement.is_wide_text
             elif measurement.is_wide_text and measurement.text_halign < 3:
                 # center wide text horizontal
                 measurement.text_halign = 0
