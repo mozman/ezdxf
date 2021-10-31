@@ -240,7 +240,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
             wcs_angle = self.geometry.ucs.to_ocs_angle_deg(rotation)
             if is_upside_down_text_angle(wcs_angle):
                 rotation += 180.0  # apply to UCS rotation!
-        self.text_rotation = rotation
+        self.text_rotation: float = rotation
 
     def setup_text_box(self):
         self.geometry.set_text_box(

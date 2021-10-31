@@ -1,12 +1,12 @@
 # Copyright (c) 2018-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING
-from ezdxf.math import Vec3, Vec2, UCS
+from ezdxf.math import Vec2, UCS
 from ezdxf.tools import normalize_text_angle
 from ezdxf.render.arrows import ARROWS, connection_point
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 from ezdxf.lldxf.const import DXFInternalEzdxfError
-from .dim_base import BaseDimensionRenderer, TextBox
+from ezdxf.render.dim_base import BaseDimensionRenderer, TextBox
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Dimension, Vertex, GenericLayoutType
@@ -441,8 +441,10 @@ def add_center_mark(dim: RadiusDimension) -> None:
     # draw center mark
     mark_x_vec = Vec2((mark_size, 0))
     mark_y_vec = Vec2((0, mark_size))
-    dim.add_line(center - mark_x_vec, center + mark_x_vec)
-    dim.add_line(center - mark_y_vec, center + mark_y_vec)
+    # use only  color and ignore linetype!
+    dxfattribs = {"color": dim.dimension_line.color}
+    dim.add_line(center - mark_x_vec, center + mark_x_vec, dxfattribs)
+    dim.add_line(center - mark_y_vec, center + mark_y_vec, dxfattribs)
 
     if center_lines:
         size = mark_size + radius
@@ -452,7 +454,7 @@ def add_center_mark(dim: RadiusDimension) -> None:
         start_y_vec = mark_y_vec * 2
         end_x_vec = Vec2((size, 0))
         end_y_vec = Vec2((0, size))
-        dim.add_line(center + start_x_vec, center + end_x_vec)
-        dim.add_line(center - start_x_vec, center - end_x_vec)
-        dim.add_line(center + start_y_vec, center + end_y_vec)
-        dim.add_line(center - start_y_vec, center - end_y_vec)
+        dim.add_line(center + start_x_vec, center + end_x_vec, dxfattribs)
+        dim.add_line(center - start_x_vec, center - end_x_vec, dxfattribs)
+        dim.add_line(center + start_y_vec, center + end_y_vec, dxfattribs)
+        dim.add_line(center - start_y_vec, center - end_y_vec, dxfattribs)

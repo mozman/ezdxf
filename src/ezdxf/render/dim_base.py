@@ -1124,9 +1124,7 @@ class BaseDimensionRenderer:
                 attribs.update(dxfattribs)
             geometry.add_text(text, pos, rotation, dxfattribs=attribs)
 
-    def add_leader(
-        self, p1: Vec2, p2: Vec2, p3: Vec2, dxfattribs: Dict[str, Any] = None
-    ):
+    def add_leader(self, p1: Vec2, p2: Vec2, p3: Vec2):
         """
         Add simple leader line from p1 to p2 to p3.
 
@@ -1134,9 +1132,10 @@ class BaseDimensionRenderer:
             p1: target point
             p2: first text point
             p3: second text point
-            dxfattribs: DXF attribute
 
         """
+        # use only  color and ignore linetype!
+        dxfattribs = {"color": self.dimension_line.color}
         self.add_line(p1, p2, dxfattribs)
         self.add_line(p2, p3, dxfattribs)
 
