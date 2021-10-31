@@ -7,8 +7,6 @@ from typing import (
     List,
     cast,
     Optional,
-    Dict,
-    Any,
 )
 import math
 from ezdxf.math import Vec3, Vec2, ConstructionRay, UCS
@@ -20,6 +18,7 @@ from .dim_base import (
     TextBox,
     LengthMeasurement,
     Measurement,
+    compile_mtext,
 )
 
 if TYPE_CHECKING:
@@ -51,10 +50,11 @@ class LinearDimension(BaseDimensionRenderer):
         override: "DimStyleOverride" = None,
     ):
         super().__init__(dimension, ucs, override)
-        if self.text_movement_rule == 0:  # type: ignore
+        measurement = self.measurement
+        if measurement.text_movement_rule == 0:
             # moves the dimension line with dimension text, this makes no sense
             # for ezdxf (just set `base` argument)
-            self.text_movement_rule = 2
+            measurement.text_movement_rule = 2
 
         self.oblique_angle: float = self.dimension.get_dxf_attrib(
             "oblique_angle", 90
@@ -65,12 +65,10 @@ class LinearDimension(BaseDimensionRenderer):
         self.ext_line_angle_rad: float = math.radians(self.ext_line_angle)
 
         # text is aligned to dimension line
-        self.text_rotation: float = self.dim_line_angle
-        if self.text_halign in (  # type: ignore
-            3,
-            4,
-        ):  # text above extension line, is always aligned with extension lines
-            self.text_rotation = self.ext_line_angle
+        measurement.text_rotation = self.dim_line_angle
+        # text above extension line, is always aligned with extension lines
+        if measurement.text_halign in (3, 4):
+            measurement.text_rotation = self.ext_line_angle
 
         self.ext1_line_start = Vec2(self.dimension.dxf.defpoint2)
         self.ext2_line_start = Vec2(self.dimension.dxf.defpoint3)
@@ -99,13 +97,8 @@ class LinearDimension(BaseDimensionRenderer):
         # set dimension defpoint to expected location - 3D vertex required!
         self.dimension.dxf.defpoint = Vec3(self.dim_line_start)
 
-        raw_measurement: float = (
-            self.dim_line_end - self.dim_line_start
-        ).magnitude
-        self.text: str = self.text_override(
-            raw_measurement * self.dim_measurement_factor
-        )
-        self.measurement.update(raw_measurement)
+        raw_measurement = (self.dim_line_end - self.dim_line_start).magnitude
+        measurement.update(raw_measurement)
 
         # only for linear dimension in multi point mode
         self.multi_point_mode = self.dim_style.pop("multi_point_mode", False)
@@ -118,93 +111,100 @@ class LinearDimension(BaseDimensionRenderer):
         )
 
         # actual text width in drawing units
-        self.dim_text_width: float = 0
+        self._total_text_width: float = 0
 
         # arrows
         self.required_arrows_space: float = (
-            2 * self.arrows.arrow_size + self.text_gap
+            2 * self.arrows.arrow_size + measurement.text_gap
         )
-        self.arrows_outside: bool = self.required_arrows_space > self.measurement.raw_value
+        self.arrows_outside: bool = (
+            self.required_arrows_space > self.measurement.raw_value
+        )
 
         # text location and rotation
-        if self.text:
+        if measurement.text:
             # text width and required space
-            self.dim_text_width = self.text_width(self.text)
-            if self.tol.has_tolerance:
-                self.dim_text_width += self.tol.text_width
-            elif self.tol.has_limits:
+            self._total_text_width = self.total_text_width()
+            if self.tol.has_limits:
                 # limits show the upper and lower limit of the measurement as
                 # stacked values and with the size of tolerances
                 self.tol.update_limits(self.measurement.value)
-                # only limits are displayed so:
-                self.dim_text_width = self.tol.text_width
 
             if self.multi_point_mode:
                 # ezdxf has total control about vertical text position in multi
                 # point mode
-                self.text_vertical_position = 0.0
+                measurement.text_vertical_position = 0.0
 
-            if self.text_valign == 0 and abs(self.text_vertical_position) < 0.7:
+            if (
+                measurement.text_valign == 0
+                and abs(measurement.text_vertical_position) < 0.7
+            ):
                 # vertical centered text needs also space for arrows
                 required_space = (
-                    self.dim_text_width + 2 * self.arrows.arrow_size
+                    self._total_text_width + 2 * self.arrows.arrow_size
                 )
             else:
-                required_space = self.dim_text_width
-            self.is_wide_text = required_space > raw_measurement
+                required_space = self._total_text_width
+            measurement.is_wide_text = required_space > measurement.raw_value
 
-            if not self.force_text_inside:
+            if not measurement.force_text_inside:
                 # place text outside if wide text and not forced inside
-                self.text_outside = self.is_wide_text
-            elif self.is_wide_text and self.text_halign < 3:  # type: ignore
+                measurement.text_outside = measurement.is_wide_text
+            elif measurement.is_wide_text and measurement.text_halign < 3:
                 # center wide text horizontal
-                self.text_halign = 0
+                measurement.text_halign = 0
 
             # use relative text shift to move wide text up or down in multi
             # point mode
             if (
                 self.multi_point_mode
-                and self.is_wide_text
+                and measurement.is_wide_text
                 and self.move_wide_text
             ):
-                shift_value = self.text_height + self.text_gap
+                shift_value = measurement.text_height + measurement.text_gap
                 if self.move_wide_text == 1:  # move text up
-                    self.text_shift_v = shift_value
+                    measurement.text_shift_v = shift_value
                     if (
-                        self.vertical_placement == -1
+                        measurement.vertical_placement == -1
                     ):  # text below dimension line
                         # shift again
-                        self.text_shift_v += shift_value
+                        measurement.text_shift_v += shift_value
                 elif self.move_wide_text == 2:  # move text down
-                    self.text_shift_v = -shift_value
+                    measurement.text_shift_v = -shift_value
                     if (
-                        self.vertical_placement == 1
+                        measurement.vertical_placement == 1
                     ):  # text above dimension line
                         # shift again
-                        self.text_shift_v -= shift_value
+                        measurement.text_shift_v -= shift_value
 
             # get final text location - no altering after this line
-            self.text_location: Vec2 = self.get_text_location()
+            measurement.text_location = self.get_text_location()
 
             # text rotation override
-            rotation: float = self.text_rotation
-            if self.user_text_rotation is not None:
-                rotation = self.user_text_rotation
-            elif self.text_outside and self.text_outside_horizontal:
-                rotation = 0
-            elif self.text_inside and self.text_inside_horizontal:
-                rotation = 0
-            self.text_rotation = rotation
+            rotation: float = measurement.text_rotation
+            if measurement.user_text_rotation is not None:
+                rotation = measurement.user_text_rotation
+            elif (
+                measurement.text_is_outside
+                and measurement.text_outside_horizontal
+            ):
+                rotation = 0.0
+            elif (
+                measurement.text_is_inside
+                and measurement.text_inside_horizontal
+            ):
+                rotation = 0.0
+            measurement.text_rotation = rotation
 
             text_box = TextBox(
-                center=self.text_location,
-                width=self.dim_text_width,
-                height=self.text_height,
-                angle=self.text_rotation,
-                gap=self.text_gap * 0.75,
+                center=measurement.text_location,
+                width=self._total_text_width,
+                height=measurement.text_height,
+                angle=measurement.text_rotation,
+                gap=measurement.text_gap * 0.75,
             )
             self.geometry.set_text_box(text_box)
-            if self.text_has_leader:
+            if measurement.has_leader:
                 p1, p2, *_ = text_box.corners
                 self.leader1, self.leader2 = order_leader_points(
                     self.dim_line_center, p1, p2
@@ -213,7 +213,7 @@ class LinearDimension(BaseDimensionRenderer):
                 self.dimension.dxf.text_midpoint = self.leader1
             else:
                 # write final text location into DIMENSION entity
-                self.dimension.dxf.text_midpoint = self.text_location
+                self.dimension.dxf.text_midpoint = measurement.text_location
 
     def init_measurement(self, color: int, scale: float) -> Measurement:
         return LengthMeasurement(
@@ -233,8 +233,9 @@ class LinearDimension(BaseDimensionRenderer):
 
         # add extension line 1
         ext_lines = self.extension_lines
+        measurement = self.measurement
         if not ext_lines.suppress1:
-            above_ext_line1 = self.text_halign == 3
+            above_ext_line1 = measurement.text_halign == 3
             start, end = self.extension_line_points(
                 self.ext1_line_start, self.dim_line_start, above_ext_line1
             )
@@ -242,7 +243,7 @@ class LinearDimension(BaseDimensionRenderer):
 
         # add extension line 2
         if not ext_lines.suppress2:
-            above_ext_line2 = self.text_halign == 4
+            above_ext_line2 = measurement.text_halign == 4
             start, end = self.extension_line_points(
                 self.ext2_line_start, self.dim_line_end, above_ext_line2
             )
@@ -256,15 +257,15 @@ class LinearDimension(BaseDimensionRenderer):
         self.add_dimension_line(dim_line_start, dim_line_end)
 
         # add measurement text as last entity to see text fill properly
-        if self.text:
+        if measurement.text:
             if self.geometry.supports_dxf_r2000:
-                text = self.compile_mtext()
+                text = compile_mtext(measurement, self.tol)
             else:
-                text = self.text
+                text = measurement.text
             self.add_measurement_text(
-                text, self.text_location, self.text_rotation
+                text, measurement.text_location, measurement.text_rotation
             )
-            if self.text_has_leader:
+            if measurement.has_leader:
                 self.add_leader(
                     self.dim_line_center, self.leader1, self.leader2
                 )
@@ -280,17 +281,20 @@ class LinearDimension(BaseDimensionRenderer):
 
         """
         # apply relative text shift as user location override without leader
-        if self.has_relative_text_movement:
+        measurement = self.measurement
+        if measurement.has_relative_text_movement:
             location = self.default_text_location()
-            location = self.apply_text_shift(location, self.text_rotation)
+            location = measurement.apply_text_shift(
+                location, measurement.text_rotation
+            )
             self.location_override(location)
 
-        if self.user_location is not None:
-            location = self.user_location
-            if self.relative_user_location:
+        if measurement.user_location is not None:
+            location = measurement.user_location
+            if measurement.relative_user_location:
                 location = self.dim_line_center + location
             # define overridden text location as outside
-            self.text_outside = True
+            measurement.text_is_outside = True
         else:
             location = self.default_text_location()
 
@@ -303,31 +307,32 @@ class LinearDimension(BaseDimensionRenderer):
         """
         start = self.dim_line_start
         end = self.dim_line_end
-        halign = self.text_halign
+        measurement = self.measurement
+        halign = measurement.text_halign
         # positions the text above and aligned with the first/second extension line
         ext_lines = self.extension_lines
         if halign in (3, 4):
             # horizontal location
-            hdist = self.text_gap + self.text_height / 2.0
+            hdist = measurement.text_gap + measurement.text_height / 2.0
             hvec = self.dim_line_vec * hdist
             location = (start if halign == 3 else end) - hvec
             # vertical location
-            vdist = ext_lines.extension_above + self.dim_text_width / 2.0
+            vdist = ext_lines.extension_above + self._total_text_width / 2.0
             location += Vec2.from_deg_angle(self.ext_line_angle).normalize(
                 vdist
             )
         else:
             # relocate outside text to center location
-            if self.text_outside:
+            if measurement.text_is_outside:
                 halign = 0
 
             if halign == 0:
                 location = self.dim_line_center  # center of dimension line
             else:
                 hdist = (
-                    self.dim_text_width / 2.0
+                    self._total_text_width / 2.0
                     + self.arrows.arrow_size
-                    + self.text_gap
+                    + measurement.text_gap
                 )
                 if (
                     halign == 1
@@ -336,15 +341,15 @@ class LinearDimension(BaseDimensionRenderer):
                 else:  # positions the text next to the second extension line
                     location = end - (self.dim_line_vec * hdist)
 
-            if self.text_outside:  # move text up
+            if measurement.text_is_outside:  # move text up
                 vdist = (
                     ext_lines.extension_above
-                    + self.text_gap
-                    + self.text_height / 2.0
+                    + measurement.text_gap
+                    + measurement.text_height / 2.0
                 )
             else:
                 # distance from extension line to text midpoint
-                vdist = self.text_vertical_distance()
+                vdist = measurement.text_vertical_distance()
             location += self.dim_line_vec.orthogonal().normalize(vdist)
 
         return location
@@ -530,7 +535,7 @@ class LinearDimension(BaseDimensionRenderer):
             start = start + direction * self.extension_lines.offset
         extension = self.extension_lines.extension_above
         if text_above_extline:
-            extension += self.dim_text_width
+            extension += self._total_text_width
         end = end + direction * extension
         return start, end
 
@@ -653,7 +658,7 @@ def multi_point_linear_dimension(
             _suppress_arrow1 = suppress_arrow1(style)
 
         renderer = cast(LinearDimension, style.render(ucs, discard=discard))
-        if renderer.is_wide_text:
+        if renderer.measurement.is_wide_text:
             # after wide text switch moving direction
             if move_wide_text == 1:
                 move_wide_text = 2

@@ -419,8 +419,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
 
 
 class _AngularCommonBase(_CurvedDimensionLine):
-    def init_tolerance(self, scale: float) -> Tolerance:
-        measurement = self.measurement
+    def init_tolerance(self, scale: float, measurement: Measurement) -> Tolerance:
         return AngularTolerance(
             self.dim_style,
             cap_height=measurement.text_height,
