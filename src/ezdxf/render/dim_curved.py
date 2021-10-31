@@ -20,6 +20,9 @@ from .dim_base import (
     apply_dimpost,
     TextBox,
     Tolerance,
+    Measurement,
+    LengthMeasurement,
+    compile_mtext,
 )
 from ezdxf.render.arrows import ARROWS, arrow_length
 from ezdxf.tools.text import is_upside_down_text_angle
@@ -44,7 +47,7 @@ DEG = 180.0 / math.pi
 
 def format_angular_text(
     value: float,
-    angular_unit: int,
+    angle_units: int,
     dimrnd: Optional[float],
     dimdec: Optional[int],
     dimzin: int,
@@ -70,13 +73,13 @@ def format_angular_text(
     # 3 = Radians
 
     text = ""
-    if angular_unit == 0:
+    if angle_units == 0:
         text = decimal_format(value * DEG) + "°"
-    elif angular_unit == 1:
+    elif angle_units == 1:
         text = dms_format(value * DEG)
-    elif angular_unit == 2:
+    elif angle_units == 2:
         text = decimal_format(value * GRAD) + "g"
-    elif angular_unit == 3:
+    elif angle_units == 3:
         text = decimal_format(value) + "r"
     return text
 
@@ -88,10 +91,10 @@ class AngularTolerance(Tolerance):
         cap_height: float = 1.0,
         width_factor: float = 1.0,
         dim_scale: float = 1.0,
-        angular_units: int = 0,
+        angle_units: int = 0,
     ):
         super().__init__(dim_style, cap_height, width_factor, dim_scale)
-        self.angular_units = angular_units
+        self.angular_units = angle_units
 
     def format_text(self, value: float) -> str:
         """Rounding and text formatting of tolerance `value`, removes leading
@@ -100,12 +103,32 @@ class AngularTolerance(Tolerance):
         """
         return format_angular_text(
             value=value,
-            angular_unit=self.angular_units,
+            angle_units=self.angular_units,
             dimrnd=None,
             dimdec=self.decimal_places,
             dimzin=self.suppress_zeros,
             dimdsep=self.text_decimal_separator,
         )
+
+
+class AngleMeasurement(Measurement):
+    def update(self, raw_measurement_value: float) -> None:
+        self.raw_value = raw_measurement_value
+        self.value = raw_measurement_value
+        self.text = self.text_override(raw_measurement_value)
+
+    def format_text(self, value: float) -> str:
+        text = format_angular_text(
+            value=value,
+            angle_units=self.angle_units,
+            dimrnd=None,
+            dimdec=self.decimal_places,
+            dimzin=self.suppress_zeros,
+            dimdsep=self.decimal_separator,
+        )
+        if self.text_post_process_format:
+            text = apply_dimpost(text, self.text_post_process_format)
+        return text
 
 
 class _CurvedDimensionLine(BaseDimensionRenderer):
@@ -132,14 +155,11 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         self.ext1_start = Vec2()  # start of 1st extension line
         self.ext2_start = Vec2()  # start of 2nd extension line
         self.arrows_outside = False
-        self.measurement = 0.0
-        self.dim_text_width: float = 0.0
 
         # Class specific setup:
-        self.setup_measurement_text()
+        self.update_measurement()
         if self.tol.has_limits:
-            self.tol.update_limits(self.measurement)
-        self.dim_text_width = self.get_total_dim_text_width()
+            self.tol.update_limits(self.measurement.value)
         self.setup_text_properties()
         self.setup_text_box()
 
@@ -155,15 +175,16 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         self.add_extension_lines()
         adjust_start_angle, adjust_end_angle = self.add_arrows()
         self.add_dimension_line(adjust_start_angle, adjust_end_angle)
-        if self.text:
+        measurement = self.measurement
+        if measurement.text:
             if self.geometry.supports_dxf_r2000:
-                text = self.compile_mtext()
+                text = compile_mtext(measurement, self.tol)
             else:
-                text = self.text
+                text = measurement.text
             self.add_measurement_text(
-                text, self.text_location, self.text_rotation
+                text, measurement.text_location, measurement.text_rotation
             )
-            if self.text_has_leader:
+            if measurement.has_leader:
                 leader1, leader2 = self.get_leader_points()
                 self.add_leader(self.dim_midpoint, leader1, leader2)
         self.geometry.add_defpoints(self.get_defpoints())
@@ -180,20 +201,9 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         )
 
     @abstractmethod
-    def setup_measurement_text(self) -> None:
+    def update_measurement(self) -> None:
         """Setup measurement text."""
         pass
-
-    def get_total_dim_text_width(self) -> float:
-        width = 0.0
-        if self.text:
-            if self.tol.has_limits:  # only limits are displayed
-                width = self.tol.text_width
-            else:
-                width = self.text_width(self.text)
-                if self.tol.has_tolerance:
-                    width += self.tol.text_width  # type: ignore
-        return width
 
     def setup_text_properties(self) -> None:
         """Setup geometric text properties (location, rotation) and the TextBox
@@ -201,37 +211,38 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         """
         # text radial direction = center -> text
         text_radial_dir: Vec2  # text "vertical" direction
-        radius = self.dim_line_radius + self.text_vertical_distance()
+        measurement = self.measurement
+        radius = self.dim_line_radius + measurement.text_vertical_distance()
 
         # determine text location:
-        if self.user_location is None:
+        if measurement.user_location is None:
             # place text in the center of the dimension line
             text_radial_dir = Vec2.from_angle(self.center_angle_rad)
-            self.text_location = self.center_of_arc + text_radial_dir * radius
+            measurement.text_location = self.center_of_arc + text_radial_dir * radius
         else:
             # place text at user location:
-            self.text_location = self.user_location
+            measurement.text_location = measurement.user_location
             text_radial_dir = (
-                self.text_location - self.center_of_arc
+                measurement.text_location - self.center_of_arc
             ).normalize()
 
         # set text "horizontal":
         text_tangential_dir = text_radial_dir.orthogonal(ccw=False)
 
         # apply text relative shift (ezdxf only feature)
-        if self.text_shift_h:
-            self.text_location += text_tangential_dir * self.text_shift_h
-        if self.text_shift_v:
-            self.text_location += text_radial_dir * self.text_shift_v
+        if measurement.text_shift_h:
+            measurement.text_location += text_tangential_dir * measurement.text_shift_h
+        if measurement.text_shift_v:
+            measurement.text_location += text_radial_dir * measurement.text_shift_v
 
         # Update final text location in the DIMENSION entity:
-        self.dimension.dxf.text_midpoint = self.text_location
+        self.dimension.dxf.text_midpoint = measurement.text_location
 
         # apply user text rotation
-        if self.user_text_rotation is None:
+        if measurement.user_text_rotation is None:
             rotation = text_tangential_dir.angle_deg
         else:
-            rotation = self.user_text_rotation
+            rotation = measurement.user_text_rotation
 
         if not self.geometry.requires_extrusion:
             # todo: extrusion vector (0, 0, -1)?
@@ -240,17 +251,18 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
             wcs_angle = self.geometry.ucs.to_ocs_angle_deg(rotation)
             if is_upside_down_text_angle(wcs_angle):
                 rotation += 180.0  # apply to UCS rotation!
-        self.text_rotation: float = rotation
+        measurement.text_rotation = rotation
 
     def setup_text_box(self):
+        measurement = self.measurement
         self.geometry.set_text_box(
             TextBox(
-                center=self.text_location,
-                width=self.dim_text_width,
-                height=self.text_height,
-                angle=self.text_rotation,
+                center=measurement.text_location,
+                width=self.total_text_width(),
+                height=measurement.text_height,
+                angle=measurement.text_rotation,
                 # Arbitrary choice to reduce the too large gap!
-                gap=self.text_gap * 0.75,
+                gap=measurement.text_gap * 0.75,
             )
         )
 
@@ -402,43 +414,31 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
             rotation: text rotation in degrees
 
         """
-        attribs = {
-            "color": self.text_color,
-        }
+        attribs = self.measurement.dxfattribs()
         self.add_text(dim_text, pos=pos, rotation=rotation, dxfattribs=attribs)
 
 
 class _AngularCommonBase(_CurvedDimensionLine):
     def init_tolerance(self, scale: float) -> Tolerance:
+        measurement = self.measurement
         return AngularTolerance(
             self.dim_style,
-            cap_height=self.text_height,
-            width_factor=self.text_width_factor,
+            cap_height=measurement.text_height,
+            width_factor=measurement.text_width_factor,
             dim_scale=scale,
-            angular_units=self.text_angle_unit,
+            angle_units=measurement.angle_units,
         )
 
-    def setup_measurement_text(self) -> None:
-        self.measurement = ellipse_param_span(
+    def init_measurement(self, color: int, scale: float) -> Measurement:
+        return AngleMeasurement(
+            self.dim_style, self.default_color, self.dim_scale
+        )
+
+    def update_measurement(self) -> None:
+        measurement = ellipse_param_span(
             self.start_angle_rad, self.end_angle_rad
         )
-        self.text = self.text_override(
-            self.measurement
-        )  # calls self.format_text()
-
-    def format_text(self, value: float) -> str:
-        text = format_angular_text(
-            value,
-            angular_unit=self.text_angle_unit,
-            dimrnd=self.text_round,
-            dimdec=self.text_decimal_places,
-            dimzin=self.text_suppress_zeros,
-            dimdsep=self.text_decimal_separator,
-        )
-        dimpost = self.text_post_process_format
-        if dimpost:
-            text = apply_dimpost(text, dimpost)
-        return text
+        self.measurement.update(measurement)
 
 
 class AngularDimension(_AngularCommonBase):
@@ -670,6 +670,11 @@ class ArcLengthDimension(_CurvedDimensionLine):
         self.ext1_start = self.leg1_start
         self.ext2_start = self.leg2_start
 
+    def init_measurement(self, color: int, scale: float) -> Measurement:
+        return LengthMeasurement(
+            self.dim_style, self.default_color, self.dim_scale
+        )
+
     def transform_ucs_to_wcs(self) -> None:
         """Transforms dimension definition points into WCS or if required into
         OCS.
@@ -701,10 +706,10 @@ class ArcLengthDimension(_CurvedDimensionLine):
     def get_ext2_dir(self) -> Vec2:
         return (self.ext2_start - self.center_of_arc).normalize()
 
-    def setup_measurement_text(self) -> None:
+    def update_measurement(self) -> None:
         angle = ellipse_param_span(self.start_angle_rad, self.end_angle_rad)
         arc_length = angle * self.arc_radius * 2.0
-        self.text = self.text_override(arc_length)  # -> self.format_text()
+        self.measurement.update(arc_length)
 
 
 def detect_closer_defpoint(

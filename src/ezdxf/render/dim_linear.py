@@ -15,7 +15,12 @@ from ezdxf.math import Vec3, Vec2, ConstructionRay, UCS
 from ezdxf.render.arrows import ARROWS, connection_point
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 
-from .dim_base import BaseDimensionRenderer, TextBox
+from .dim_base import (
+    BaseDimensionRenderer,
+    TextBox,
+    LengthMeasurement,
+    Measurement,
+)
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Dimension, Vertex, GenericLayoutType
@@ -94,12 +99,13 @@ class LinearDimension(BaseDimensionRenderer):
         # set dimension defpoint to expected location - 3D vertex required!
         self.dimension.dxf.defpoint = Vec3(self.dim_line_start)
 
-        self.measurement: float = (
+        raw_measurement: float = (
             self.dim_line_end - self.dim_line_start
         ).magnitude
         self.text: str = self.text_override(
-            self.measurement * self.dim_measurement_factor
+            raw_measurement * self.dim_measurement_factor
         )
+        self.measurement.update(raw_measurement)
 
         # only for linear dimension in multi point mode
         self.multi_point_mode = self.dim_style.pop("multi_point_mode", False)
@@ -115,10 +121,10 @@ class LinearDimension(BaseDimensionRenderer):
         self.dim_text_width: float = 0
 
         # arrows
-        self.required_arrows_space: float = 2 * self.arrows.arrow_size + self.text_gap
-        self.arrows_outside: bool = (
-            self.required_arrows_space > self.measurement
+        self.required_arrows_space: float = (
+            2 * self.arrows.arrow_size + self.text_gap
         )
+        self.arrows_outside: bool = self.required_arrows_space > self.measurement.raw_value
 
         # text location and rotation
         if self.text:
@@ -129,8 +135,7 @@ class LinearDimension(BaseDimensionRenderer):
             elif self.tol.has_limits:
                 # limits show the upper and lower limit of the measurement as
                 # stacked values and with the size of tolerances
-                measurement = self.measurement * self.dim_measurement_factor
-                self.tol.update_limits(measurement)
+                self.tol.update_limits(self.measurement.value)
                 # only limits are displayed so:
                 self.dim_text_width = self.tol.text_width
 
@@ -141,10 +146,12 @@ class LinearDimension(BaseDimensionRenderer):
 
             if self.text_valign == 0 and abs(self.text_vertical_position) < 0.7:
                 # vertical centered text needs also space for arrows
-                required_space = self.dim_text_width + 2 * self.arrows.arrow_size
+                required_space = (
+                    self.dim_text_width + 2 * self.arrows.arrow_size
+                )
             else:
                 required_space = self.dim_text_width
-            self.is_wide_text = required_space > self.measurement
+            self.is_wide_text = required_space > raw_measurement
 
             if not self.force_text_inside:
                 # place text outside if wide text and not forced inside
@@ -208,6 +215,11 @@ class LinearDimension(BaseDimensionRenderer):
                 # write final text location into DIMENSION entity
                 self.dimension.dxf.text_midpoint = self.text_location
 
+    def init_measurement(self, color: int, scale: float) -> Measurement:
+        return LengthMeasurement(
+            self.dim_style, self.default_color, self.dim_scale
+        )
+
     def render(self, block: "GenericLayoutType") -> None:
         """Main method to create dimension geometry of basic DXF entities in the
         associated BLOCK layout.
@@ -226,9 +238,7 @@ class LinearDimension(BaseDimensionRenderer):
             start, end = self.extension_line_points(
                 self.ext1_line_start, self.dim_line_start, above_ext_line1
             )
-            self.add_line(
-                start, end, dxfattribs=ext_lines.dxfattribs(1)
-            )
+            self.add_line(start, end, dxfattribs=ext_lines.dxfattribs(1))
 
         # add extension line 2
         if not ext_lines.suppress2:
@@ -236,9 +246,7 @@ class LinearDimension(BaseDimensionRenderer):
             start, end = self.extension_line_points(
                 self.ext2_line_start, self.dim_line_end, above_ext_line2
             )
-            self.add_line(
-                start, end, dxfattribs=ext_lines.dxfattribs(2)
-            )
+            self.add_line(start, end, dxfattribs=ext_lines.dxfattribs(2))
 
         # add arrow symbols (block references), also adjust dimension line start
         # and end point
@@ -317,7 +325,9 @@ class LinearDimension(BaseDimensionRenderer):
                 location = self.dim_line_center  # center of dimension line
             else:
                 hdist = (
-                    self.dim_text_width / 2.0 + self.arrows.arrow_size + self.text_gap
+                    self.dim_text_width / 2.0
+                    + self.arrows.arrow_size
+                    + self.text_gap
                 )
                 if (
                     halign == 1
@@ -354,13 +364,13 @@ class LinearDimension(BaseDimensionRenderer):
         arrow1 = not arrows.suppress1
         arrow2 = not arrows.suppress2
 
-        if arrows.tick_size > 0.:  # oblique stroke, but double the size
+        if arrows.tick_size > 0.0:  # oblique stroke, but double the size
             if arrow1:
                 self.add_blockref(
                     ARROWS.oblique,
                     insert=start,
                     rotation=self.dim_line_angle,
-                    scale=arrows.tick_size * 2.,
+                    scale=arrows.tick_size * 2.0,
                     dxfattribs=attribs,
                 )
             if arrow2:
@@ -368,12 +378,12 @@ class LinearDimension(BaseDimensionRenderer):
                     ARROWS.oblique,
                     insert=end,
                     rotation=self.dim_line_angle,
-                    scale=arrows.tick_size * 2.,
+                    scale=arrows.tick_size * 2.0,
                     dxfattribs=attribs,
                 )
         else:
             scale = arrows.arrow_size
-            start_angle = self.dim_line_angle + 180.
+            start_angle = self.dim_line_angle + 180.0
             end_angle = self.dim_line_angle
             if outside:
                 start_angle, end_angle = end_angle, start_angle
