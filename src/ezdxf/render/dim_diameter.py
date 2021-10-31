@@ -64,7 +64,11 @@ class DiameterDimension(RadiusDimension):
         if self.text_inside:
             text_midpoint = self.center
         else:
-            hdist = self.dim_text_width / 2.0 + self.arrow_size + self.text_gap
+            hdist = (
+                self.dim_text_width / 2.0
+                + self.arrows.arrow_size
+                + self.text_gap
+            )
             text_midpoint = self.point_on_circle + (self.dim_line_vec * hdist)
         return text_midpoint + (vertical_direction * vertical_distance)
 

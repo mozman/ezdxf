@@ -115,7 +115,7 @@ class LinearDimension(BaseDimensionRenderer):
         self.dim_text_width: float = 0
 
         # arrows
-        self.required_arrows_space: float = 2 * self.arrow_size + self.text_gap
+        self.required_arrows_space: float = 2 * self.arrows.arrow_size + self.text_gap
         self.arrows_outside: bool = (
             self.required_arrows_space > self.measurement
         )
@@ -141,7 +141,7 @@ class LinearDimension(BaseDimensionRenderer):
 
             if self.text_valign == 0 and abs(self.text_vertical_position) < 0.7:
                 # vertical centered text needs also space for arrows
-                required_space = self.dim_text_width + 2 * self.arrow_size
+                required_space = self.dim_text_width + 2 * self.arrows.arrow_size
             else:
                 required_space = self.dim_text_width
             self.is_wide_text = required_space > self.measurement
@@ -317,7 +317,7 @@ class LinearDimension(BaseDimensionRenderer):
                 location = self.dim_line_center  # center of dimension line
             else:
                 hdist = (
-                    self.dim_text_width / 2.0 + self.arrow_size + self.text_gap
+                    self.dim_text_width / 2.0 + self.arrows.arrow_size + self.text_gap
                 )
                 if (
                     halign == 1
@@ -346,21 +346,21 @@ class LinearDimension(BaseDimensionRenderer):
         Returns: dimension line connection points
 
         """
-        attribs = {
-            "color": self.dimension_line.color,
-        }
+        arrows = self.arrows
+        attribs = arrows.dxfattribs()
         start = self.dim_line_start
         end = self.dim_line_end
         outside = self.arrows_outside
-        arrow1 = not self.suppress_arrow1
-        arrow2 = not self.suppress_arrow2
-        if self.tick_size > 0.0:  # oblique stroke, but double the size
+        arrow1 = not arrows.suppress1
+        arrow2 = not arrows.suppress2
+
+        if arrows.tick_size > 0.:  # oblique stroke, but double the size
             if arrow1:
                 self.add_blockref(
                     ARROWS.oblique,
                     insert=start,
                     rotation=self.dim_line_angle,
-                    scale=self.tick_size * 2,
+                    scale=arrows.tick_size * 2.,
                     dxfattribs=attribs,
                 )
             if arrow2:
@@ -368,19 +368,19 @@ class LinearDimension(BaseDimensionRenderer):
                     ARROWS.oblique,
                     insert=end,
                     rotation=self.dim_line_angle,
-                    scale=self.tick_size * 2,
+                    scale=arrows.tick_size * 2.,
                     dxfattribs=attribs,
                 )
         else:
-            scale = self.arrow_size
-            start_angle = self.dim_line_angle + 180.0
+            scale = arrows.arrow_size
+            start_angle = self.dim_line_angle + 180.
             end_angle = self.dim_line_angle
             if outside:
                 start_angle, end_angle = end_angle, start_angle
 
             if arrow1:
                 self.add_blockref(
-                    self.arrow1_name,  # type: ignore
+                    arrows.arrow1_name,
                     insert=start,
                     scale=scale,
                     rotation=start_angle,
@@ -388,7 +388,7 @@ class LinearDimension(BaseDimensionRenderer):
                 )  # reverse
             if arrow2:
                 self.add_blockref(
-                    self.arrow2_name,  # type: ignore
+                    arrows.arrow2_name,
                     insert=end,
                     scale=scale,
                     rotation=end_angle,
@@ -400,11 +400,11 @@ class LinearDimension(BaseDimensionRenderer):
                 # the remaining dimension line
                 if arrow1:
                     start = connection_point(
-                        self.arrow1_name, start, scale, start_angle  # type: ignore
+                        arrows.arrow1_name, start, scale, start_angle
                     )
                 if arrow2:
                     end = connection_point(
-                        self.arrow2_name, end, scale, end_angle  # type: ignore
+                        arrows.arrow2_name, end, scale, end_angle
                     )
             else:
                 # add additional extension lines to arrows placed outside of
@@ -425,21 +425,20 @@ class LinearDimension(BaseDimensionRenderer):
                 and (name not in ARROWS.ORIGIN_ZERO)
             )
 
-        attribs = {
-            "color": self.dimension_line.color,
-        }
+        attribs = self.dimension_line.dxfattribs()
+        arrows = self.arrows
         start = self.dim_line_start
         end = self.dim_line_end
-        arrow_size = self.arrow_size
+        arrow_size = arrows.arrow_size
 
-        if not self.suppress_arrow1 and has_arrow_extension(self.arrow1_name):
+        if not self.suppress_arrow1 and has_arrow_extension(arrows.arrow1_name):
             self.add_line(
                 start - self.dim_line_vec * arrow_size,
                 start - self.dim_line_vec * (2 * arrow_size),
                 dxfattribs=attribs,
             )
 
-        if not self.suppress_arrow2 and has_arrow_extension(self.arrow2_name):
+        if not self.suppress_arrow2 and has_arrow_extension(arrows.arrow2_name):
             self.add_line(
                 end + self.dim_line_vec * arrow_size,
                 end + self.dim_line_vec * (2 * arrow_size),
@@ -470,14 +469,12 @@ class LinearDimension(BaseDimensionRenderer):
 
         """
         dim_line = self.dimension_line
+        arrows = self.arrows
         extension = self.dim_line_vec * dim_line.extension
-        if self.arrow1_name is None or ARROWS.has_extension_line(
-            self.arrow1_name
-        ):
+        ticks = arrows.has_ticks
+        if ticks or ARROWS.has_extension_line(arrows.arrow1_name):
             start = start - extension
-        if self.arrow2_name is None or ARROWS.has_extension_line(
-            self.arrow2_name
-        ):
+        if ticks or ARROWS.has_extension_line(arrows.arrow2_name):
             end = end + extension
 
         attribs = dim_line.dxfattribs()

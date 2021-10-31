@@ -311,9 +311,8 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
             dimension line
 
         """
-        attribs = {
-            "color": self.dimension_line.color,
-        }
+        arrows = self.arrows
+        attribs = arrows.dxfattribs()
         radius = self.dim_line_radius
         if abs(radius) < 1e-12:
             return 0.0, 0.0
@@ -323,17 +322,17 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         angle1 = self.ext1_dir.orthogonal().angle_deg
         angle2 = self.ext2_dir.orthogonal().angle_deg
         outside = self.arrows_outside
-        arrow1 = not self.suppress_arrow1
-        arrow2 = not self.suppress_arrow2
-        start_angle_offset = 0.0
-        end_angle_offset = 0.0
-        if self.tick_size > 0.0:  # oblique stroke, but double the size
+        arrow1 = not arrows.suppress1
+        arrow2 = not arrows.suppress2
+        start_angle_offset = 0.
+        end_angle_offset = 0.
+        if arrows.tick_size > 0.:  # oblique stroke, but double the size
             if arrow1:
                 self.add_blockref(
                     ARROWS.oblique,
                     insert=start,
                     rotation=angle1,
-                    scale=self.tick_size * 2.0,
+                    scale=arrows.tick_size * 2.,
                     dxfattribs=attribs,
                 )
             if arrow2:
@@ -341,21 +340,19 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
                     ARROWS.oblique,
                     insert=end,
                     rotation=angle2,
-                    scale=self.tick_size * 2.0,
+                    scale=arrows.tick_size * 2.,
                     dxfattribs=attribs,
                 )
         else:
-            assert self.arrow1_name is not None
-            assert self.arrow2_name is not None
-            scale = self.arrow_size
-            start_angle = angle1 + 180.0
+            scale = arrows.arrow_size
+            start_angle = angle1 + 180.
             end_angle = angle2
             if outside:
                 start_angle, end_angle = end_angle, start_angle
 
             if arrow1:
                 self.add_blockref(
-                    self.arrow1_name,
+                    arrows.arrow1_name,
                     insert=start,
                     scale=scale,
                     rotation=start_angle,
@@ -363,7 +360,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
                 )  # reverse
             if arrow2:
                 self.add_blockref(
-                    self.arrow2_name,
+                    arrows.arrow2_name,
                     insert=end,
                     scale=scale,
                     rotation=end_angle,
@@ -374,11 +371,11 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
                 # adjust angles for the remaining dimension line
                 if arrow1:
                     start_angle_offset = (
-                        arrow_length(self.arrow1_name, scale) / radius
+                        arrow_length(arrows.arrow1_name, scale) / radius
                     )
                 if arrow2:
                     end_angle_offset = (
-                        arrow_length(self.arrow2_name, scale) / radius
+                        arrow_length(arrows.arrow2_name, scale) / radius
                     )
         return start_angle_offset, end_angle_offset
 
@@ -412,12 +409,12 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
 
 
 class _AngularCommonBase(_CurvedDimensionLine):
-    def init_tolerance(self) -> Tolerance:
+    def init_tolerance(self, scale: float) -> Tolerance:
         return AngularTolerance(
             self.dim_style,
             cap_height=self.text_height,
             width_factor=self.text_width_factor,
-            dim_scale=self.dim_scale,
+            dim_scale=scale,
             angular_units=self.text_angle_unit,
         )
 

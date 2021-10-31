@@ -71,7 +71,7 @@ class RadiusDimension(BaseDimensionRenderer):
         self.radius = direction.magnitude
         # get_measurement() works for radius and diameter dimension
         self.measurement = self.dimension.get_measurement()
-        self.outside_default_distance = self.radius + 2 * self.arrow_size
+        self.outside_default_distance = self.radius + 2 * self.arrows.arrow_size
         self.outside_default_defpoint = self.center + (
             self.dim_line_vec * self.outside_default_distance
         )
@@ -155,9 +155,9 @@ class RadiusDimension(BaseDimensionRenderer):
             if (
                 self.vertical_placement == 0
             ):  # shift text horizontal if vertical centered
-                hdist += self.arrow_size
+                hdist += self.arrows.arrow_size
             angle = self.dim_line_angle % 360.0  # normalize 0 .. 360
-            if 90 < angle <= 270:
+            if 90.0 < angle <= 270.0:
                 hdist = -hdist
             return self.outside_default_defpoint + Vec2(
                 (hdist, self.text_vertical_distance())
@@ -167,10 +167,14 @@ class RadiusDimension(BaseDimensionRenderer):
         vertical_direction = text_direction.orthogonal(ccw=True)
         vertical_distance = self.text_vertical_distance()
         if self.text_inside:
-            hdist = (self.radius - self.arrow_size) / 2
+            hdist = (self.radius - self.arrows.arrow_size) / 2.0
             text_midpoint = self.center + (self.dim_line_vec * hdist)
         else:
-            hdist = self.dim_text_width / 2.0 + self.arrow_size + self.text_gap
+            hdist = (
+                self.dim_text_width / 2.0
+                + self.arrows.arrow_size
+                + self.text_gap
+            )
             text_midpoint = self.point_on_circle + (self.dim_line_vec * hdist)
         return text_midpoint + (vertical_direction * vertical_distance)
 
@@ -179,11 +183,11 @@ class RadiusDimension(BaseDimensionRenderer):
         text_outside_horiz = self.text_outside and self.text_outside_horizontal
         text_inside_horiz = self.text_inside and self.text_inside_horizontal
         if text_outside_horiz or text_inside_horiz:
-            hdist = self.dim_text_width / 2
+            hdist = self.dim_text_width / 2.0
             if (
                 self.vertical_placement == 0
             ):  # shift text horizontal if vertical centered
-                hdist += self.arrow_size
+                hdist += self.arrows.arrow_size
             if self.user_location.x <= self.point_on_circle.x:
                 hdist = -hdist
             vdist = self.text_vertical_distance()
@@ -294,32 +298,32 @@ class RadiusDimension(BaseDimensionRenderer):
 
     def add_arrow(self, location, rotate: bool) -> Vec2:
         """Add arrow or tick to dimension line, returns dimension line connection point."""
-        attribs = {
-            "color": self.dimension_line.color,
-        }
-        arrow_name = self.arrow1_name
-        if self.tick_size > 0.0:  # oblique stroke, but double the size
+        arrows = self.arrows
+        attribs = arrows.dxfattribs()
+
+        arrow_name = arrows.arrow1_name
+        if arrows.tick_size > 0.0:  # oblique stroke, but double the size
             self.add_blockref(
                 ARROWS.oblique,
                 insert=location,
                 rotation=self.dim_line_angle,
-                scale=self.tick_size * 2,
+                scale=arrows.tick_size * 2.0,
                 dxfattribs=attribs,
             )
         else:
-            scale = self.arrow_size
+            scale = arrows.arrow_size
             angle = self.dim_line_angle
             if rotate:
-                angle += 180
+                angle += 180.0
 
             self.add_blockref(
-                arrow_name,  # type: ignore
+                arrow_name,
                 insert=location,
                 scale=scale,
                 rotation=angle,
                 dxfattribs=attribs,
             )
-            location = connection_point(arrow_name, location, scale, angle)  # type: ignore
+            location = connection_point(arrow_name, location, scale, angle)
         return location
 
     def add_radial_dim_line(self, end: "Vertex") -> None:
@@ -349,7 +353,7 @@ class RadiusDimension(BaseDimensionRenderer):
         attribs = self.dimension_line.dxfattribs()
         self.add_line(start, self.outside_default_defpoint, dxfattribs=attribs)
         if self.vertical_placement == 0:
-            hdist = self.arrow_size
+            hdist = self.arrows.arrow_size
         else:
             hdist = self.dim_text_width
         angle = self.dim_line_angle % 360.0  # normalize 0 .. 360
@@ -363,7 +367,7 @@ class RadiusDimension(BaseDimensionRenderer):
         attribs = self.dimension_line.dxfattribs()
         self.add_line(start, self.user_location, dxfattribs=attribs)
         if self.vertical_placement == 0:
-            hdist = self.arrow_size
+            hdist = self.arrows.arrow_size
         else:
             hdist = self.dim_text_width
         if self.user_location.x <= self.point_on_circle.x:

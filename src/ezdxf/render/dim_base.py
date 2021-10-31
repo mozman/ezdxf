@@ -358,6 +358,39 @@ class DimensionLine:
         return attribs
 
 
+class Arrows:
+    def __init__(
+        self, dim_style: DimStyleOverride, color: int, dim_scale: float
+    ):
+        get = dim_style.get
+        self.color: int = color
+        self.tick_size: float = get("dimtsz", 0.0) * dim_scale
+        self.arrow1_name: str = ""  # empty string is a closed filled arrow
+        self.arrow2_name: str = ""  # empty string is a closed filled arrow
+        self.arrow_size: float = get("dimasz", 0.25) * dim_scale
+        self.suppress1 = False  # ezdxf only
+        self.suppress2 = False  # ezdxf only
+
+        if self.tick_size > 0.0:
+            # Use oblique strokes as 'arrows', disables usual 'arrows' and user
+            # defined blocks tick size is per definition double the size of
+            # arrow size adjust arrow size to reuse the 'oblique' arrow block
+            self.arrow_size = self.tick_size * 2.0
+        else:
+            # Arrow name or block name if user defined arrow
+            (
+                self.arrow1_name,
+                self.arrow2_name,
+            ) = dim_style.get_arrow_names()
+
+    @property
+    def has_ticks(self) -> bool:
+        return self.tick_size > 0.0
+
+    def dxfattribs(self) -> Dict[str, Any]:
+        return {"color": self.color}
+
+
 class Geometry:
     """
     Geometry layout entities are located in the OCS defined by the extrusion
@@ -569,6 +602,7 @@ class Geometry:
                 end_angle=math.degrees(ocs_angle(e)),
                 dxfattribs=dxfattribs,
             )
+
         # OCS of the ARC is defined by the DIMENSION entity!
         # Therefore remove OCS elevation, the elevation is defined by the
         # DIMENSION 'text_midpoint' (group code 11) and do not set 'extrusion'
@@ -815,35 +849,18 @@ class BaseDimensionRenderer:
         # True if dimension text doesn't fit between extension lines
         self.is_wide_text: bool = False
 
-        # ---------------------------------------------
-        # ARROWS & TICKS
-        # ---------------------------------------------
-        self.tick_size: float = get("dimtsz", 0) * self.dim_scale
-        self.arrow1_name: Optional[str] = None
-        self.arrow2_name: Optional[str] = None
-        self.arrow_size: float = 0.25
-
-        if self.tick_size > 0:
-            # Use oblique strokes as 'arrows', disables usual 'arrows' and user
-            # defined blocks tick size is per definition double the size of
-            # arrow size adjust arrow size to reuse the 'oblique' arrow block
-            self.arrow_size = self.tick_size * 2
-        else:
-            # Arrow name or block name if user defined arrow
-            (
-                self.arrow1_name,
-                self.arrow2_name,
-            ) = self.dim_style.get_arrow_names()
-            self.arrow_size = get("dimasz", 0.25) * self.dim_scale
-
-        # Suppresses arrowheads if not enough space is available inside the
-        # extension lines.
-        # Only if force_text_inside is True
-        self.suppress_arrow_heads: int = get("dimsoxd", 0)  # not supported yet
-
-        self.dimension_line: DimensionLine = self.init_dimension_line()
-        self.extension_lines: ExtensionLines = self.init_extension_lines()
-        self.tol: Tolerance = self.init_tolerance()
+        self.dimension_line: DimensionLine = self.init_dimension_line(
+            self.default_color, self.dim_scale
+        )
+        self.arrows: Arrows = self.init_arrows(
+            self.default_color, self.dim_scale
+        )
+        self.arrows.suppress1 = self.suppress_arrow1
+        self.arrows.suppress2 = self.suppress_arrow2
+        self.extension_lines: ExtensionLines = self.init_extension_lines(
+            self.default_color, self.dim_scale
+        )
+        self.tol: Tolerance = self.init_tolerance(self.dim_scale)
 
         # Update text height
         self.text_height = max(self.text_height, self.tol.text_height)
@@ -853,27 +870,22 @@ class BaseDimensionRenderer:
 
         return Geometry(dimension, ucs or PassTroughUCS(), VirtualLayout())
 
-    def init_tolerance(self) -> Tolerance:
+    def init_tolerance(self, scale: float) -> Tolerance:
         return Tolerance(
             self.dim_style,
             cap_height=self.text_height,
             width_factor=self.text_width_factor,
-            dim_scale=self.dim_scale,
+            dim_scale=scale,
         )
 
-    def init_extension_lines(self) -> ExtensionLines:
-        return ExtensionLines(
-            self.dim_style,
-            self.default_color,
-            self.dim_scale,
-        )
+    def init_extension_lines(self, color: int, scale: float) -> ExtensionLines:
+        return ExtensionLines(self.dim_style, color, scale)
 
-    def init_dimension_line(self) -> DimensionLine:
-        return DimensionLine(
-            self.dim_style,
-            self.default_color,
-            self.dim_scale,
-        )
+    def init_dimension_line(self, color: int, scale: float) -> DimensionLine:
+        return DimensionLine(self.dim_style, color, scale)
+
+    def init_arrows(self, color: int, scale: float) -> Arrows:
+        return Arrows(self.dim_style, color, scale)
 
     def get_required_defpoint(self, name: str) -> Vec2:
         return get_required_defpoint(self.dimension, name)
