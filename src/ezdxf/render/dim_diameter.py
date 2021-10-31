@@ -137,6 +137,7 @@ class DiameterDimension(RadiusDimension):
                     self.add_line(
                         connection_point1,
                         connection_point2,
+                        dxfattribs=self.dimension_line.dxfattribs(),
                         remove_hidden_lines=True,
                     )
                 else:

@@ -1,7 +1,7 @@
 # Copyright (c) 2021, Manfred Moitzi
 # License: MIT License
 import math
-from typing import TYPE_CHECKING, Tuple, List, Optional
+from typing import TYPE_CHECKING, Tuple, List, Optional, Dict, Any
 from abc import abstractmethod
 import logging
 
@@ -9,13 +9,10 @@ from ezdxf.math import (
     Vec2,
     Vec3,
     UCS,
-    ConstructionBox,
     decdeg2dms,
     ellipse_param_span,
 )
-
 from ezdxf.entities import DimStyleOverride, Dimension, DXFEntity
-from ezdxf.graphicsfactory import CreatorInterface
 from .dim_base import (
     BaseDimensionRenderer,
     get_required_defpoint,
@@ -26,7 +23,7 @@ from .dim_base import (
 )
 from ezdxf.render.arrows import ARROWS, arrow_length
 from ezdxf.tools.text import is_upside_down_text_angle
-from ezdxf.math import ConstructionCircle, intersection_line_line_2d
+from ezdxf.math import intersection_line_line_2d
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import GenericLayoutType
@@ -88,9 +85,9 @@ class AngularTolerance(Tolerance):
     def __init__(
         self,
         dim_style: DimStyleOverride,
-        cap_height: float = 1.,
-        width_factor: float = 1.,
-        dim_scale: float = 1.,
+        cap_height: float = 1.0,
+        width_factor: float = 1.0,
+        dim_scale: float = 1.0,
         angular_units: int = 0,
     ):
         super().__init__(dim_style, cap_height, width_factor, dim_scale)
@@ -159,7 +156,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         adjust_start_angle, adjust_end_angle = self.add_arrows()
         self.add_dimension_line(adjust_start_angle, adjust_end_angle)
         if self.text:
-            if self.supports_dxf_r2000:
+            if self.geometry.supports_dxf_r2000:
                 text = self.compile_mtext()
             else:
                 text = self.text
@@ -169,11 +166,11 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
             if self.text_has_leader:
                 leader1, leader2 = self.get_leader_points()
                 self.add_leader(self.dim_midpoint, leader1, leader2)
-        self.add_defpoints(self.get_defpoints())
+        self.geometry.add_defpoints(self.get_defpoints())
 
     @property
     def ocs_center_of_arc(self) -> Vec3:
-        return self.ucs.to_ocs(Vec3(self.center_of_arc))
+        return self.geometry.ucs.to_ocs(Vec3(self.center_of_arc))
 
     @property
     def dim_midpoint(self) -> Vec2:
@@ -236,23 +233,25 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         else:
             rotation = self.user_text_rotation
 
-        if not self.requires_extrusion:
+        if not self.geometry.requires_extrusion:
             # todo: extrusion vector (0, 0, -1)?
             # Practically all DIMENSION entities are 2D entities,
             # where OCS == WCS, check WCS text orientation:
-            wcs_angle = self.ucs.to_ocs_angle_deg(rotation)
+            wcs_angle = self.geometry.ucs.to_ocs_angle_deg(rotation)
             if is_upside_down_text_angle(wcs_angle):
                 rotation += 180.0  # apply to UCS rotation!
         self.text_rotation = rotation
 
     def setup_text_box(self):
-        self.text_box = TextBox(
-            center=self.text_location,
-            width=self.dim_text_width,
-            height=self.text_height,
-            angle=self.text_rotation,
-            # Arbitrary choice to reduce the too large gap!
-            gap=self.text_gap * 0.75,
+        self.geometry.set_text_box(
+            TextBox(
+                center=self.text_location,
+                width=self.dim_text_width,
+                height=self.text_height,
+                angle=self.text_rotation,
+                # Arbitrary choice to reduce the too large gap!
+                gap=self.text_gap * 0.75,
+            )
         )
 
     @abstractmethod
@@ -289,19 +288,21 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         ext_lines = self.extension_lines
         if not ext_lines.suppress1:
             self._add_ext_line(
-                self.ext1_start, self.ext1_dir, ext_lines.linetype1
+                self.ext1_start, self.ext1_dir, ext_lines.dxfattribs(1)
             )
         if not ext_lines.suppress2:
             self._add_ext_line(
-                self.ext2_start, self.ext2_dir, ext_lines.linetype2
+                self.ext2_start, self.ext2_dir, ext_lines.dxfattribs(2)
             )
 
-    def _add_ext_line(self, start: Vec2, direction: Vec2, ltype) -> None:
+    def _add_ext_line(
+        self, start: Vec2, direction: Vec2, dxfattribs: Dict[str, Any]
+    ) -> None:
         start = start + direction * self.extension_lines.offset
         end = self.center_of_arc + direction * (
             self.dim_line_radius + self.extension_lines.extension_above
         )
-        self.add_extension_line(start, end, ltype)
+        self.add_line(start, end, dxfattribs=dxfattribs)
 
     def add_arrows(self) -> Tuple[float, float]:
         """Add arrows or ticks to dimension.
@@ -384,10 +385,12 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
     def add_dimension_line(
         self, start_offset: float, end_offset: float
     ) -> None:
-        self.add_dxf_arc(
+        self.add_arc(
+            self.center_of_arc,
             self.dim_line_radius,
             self.start_angle_rad + start_offset,
             self.end_angle_rad - end_offset,
+            dxfattribs=self.dimension_line.dxfattribs(),
             remove_hidden_lines=False,
         )
 
@@ -405,62 +408,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         attribs = {
             "color": self.text_color,
         }
-        self.add_text(
-            dim_text, pos=Vec3(pos), rotation=rotation, dxfattribs=attribs
-        )
-
-    def add_dxf_arc(
-        self,
-        radius: float,
-        start_angle: float,
-        end_angle: float,
-        dxfattribs: dict = None,
-        remove_hidden_lines=False,
-    ) -> None:
-        """Add a ARC entity to the dimension BLOCK. Removes parts of the arc
-        hidden by dimension text if `remove_hidden_lines` is True.
-        The center of the arc is always :attr: `self.ocs_center_of_arc`.
-
-        Args:
-            radius: radius of arc
-            start_angle: start angle in radians
-            end_angle: end angle in radians
-            dxfattribs: additional or overridden DXF attributes
-            remove_hidden_lines: removes parts of the arc hidden by dimension
-                text if ``True``
-
-        """
-
-        def add_arc(start: float, end: float) -> None:
-            """Add ARC entity to geometry block."""
-            self.block.add_arc(  # type: ignore
-                center=ocs_center,
-                radius=radius,
-                start_angle=math.degrees(ocs_angle(start)),
-                end_angle=math.degrees(ocs_angle(end)),
-                dxfattribs=dxfattribs,
-            )
-
-        assert isinstance(self.block, CreatorInterface)
-        ocs_center = self.ucs.to_ocs(Vec3(self.center_of_arc)).replace(z=0)
-        ocs_angle = self.ucs.to_ocs_angle_rad
-        attribs = self.default_attributes()
-        if dxfattribs:
-            attribs.update(dxfattribs)
-        if self.requires_extrusion:
-            attribs["extrusion"] = self.ucs.uz
-        if remove_hidden_lines:
-            assert isinstance(self.text_box, ConstructionBox)
-            for start, end in visible_arcs(
-                self.center_of_arc,
-                radius,
-                start_angle,
-                end_angle,
-                self.text_box,
-            ):
-                add_arc(start, end)
-        else:
-            add_arc(start_angle, end_angle)
+        self.add_text(dim_text, pos=pos, rotation=rotation, dxfattribs=attribs)
 
 
 class _AngularCommonBase(_CurvedDimensionLine):
@@ -565,13 +513,14 @@ class AngularDimension(_AngularCommonBase):
             point = self.dimension.get_dxf_attrib(attr)
             self.dimension.set_dxf_attrib(attr, func(point))
 
-        from_ucs("defpoint", self.ucs.to_wcs)
-        from_ucs("defpoint2", self.ucs.to_wcs)
-        from_ucs("defpoint3", self.ucs.to_wcs)
-        from_ucs("defpoint4", self.ucs.to_wcs)
-        from_ucs("defpoint5", self.ucs.to_wcs)
-        from_ucs("text_midpoint", self.ucs.to_ocs)
-        self.dimension.dxf.angle = self.ucs.to_ocs_angle_deg(
+        ucs = self.geometry.ucs
+        from_ucs("defpoint", ucs.to_wcs)
+        from_ucs("defpoint2", ucs.to_wcs)
+        from_ucs("defpoint3", ucs.to_wcs)
+        from_ucs("defpoint4", ucs.to_wcs)
+        from_ucs("defpoint5", ucs.to_wcs)
+        from_ucs("text_midpoint", ucs.to_ocs)
+        self.dimension.dxf.angle = ucs.to_ocs_angle_deg(
             self.dimension.dxf.angle
         )
 
@@ -661,12 +610,13 @@ class Angular3PDimension(_AngularCommonBase):
             point = self.dimension.get_dxf_attrib(attr)
             self.dimension.set_dxf_attrib(attr, func(point))
 
-        from_ucs("defpoint", self.ucs.to_wcs)
-        from_ucs("defpoint2", self.ucs.to_wcs)
-        from_ucs("defpoint3", self.ucs.to_wcs)
-        from_ucs("defpoint4", self.ucs.to_wcs)
-        from_ucs("text_midpoint", self.ucs.to_ocs)
-        self.dimension.dxf.angle = self.ucs.to_ocs_angle_deg(
+        ucs = self.geometry.ucs
+        from_ucs("defpoint", ucs.to_wcs)
+        from_ucs("defpoint2", ucs.to_wcs)
+        from_ucs("defpoint3", ucs.to_wcs)
+        from_ucs("defpoint4", ucs.to_wcs)
+        from_ucs("text_midpoint", ucs.to_ocs)
+        self.dimension.dxf.angle = ucs.to_ocs_angle_deg(
             self.dimension.dxf.angle
         )
 
@@ -732,12 +682,13 @@ class ArcLengthDimension(_CurvedDimensionLine):
             point = self.dimension.get_dxf_attrib(attr)
             self.dimension.set_dxf_attrib(attr, func(point))
 
-        from_ucs("defpoint", self.ucs.to_wcs)
-        from_ucs("defpoint2", self.ucs.to_wcs)
-        from_ucs("defpoint3", self.ucs.to_wcs)
-        from_ucs("defpoint4", self.ucs.to_wcs)
-        from_ucs("text_midpoint", self.ucs.to_ocs)
-        self.dimension.dxf.angle = self.ucs.to_ocs_angle_deg(
+        ucs = self.geometry.ucs
+        from_ucs("defpoint", ucs.to_wcs)
+        from_ucs("defpoint2", ucs.to_wcs)
+        from_ucs("defpoint3", ucs.to_wcs)
+        from_ucs("defpoint4", ucs.to_wcs)
+        from_ucs("text_midpoint", ucs.to_ocs)
+        self.dimension.dxf.angle = ucs.to_ocs_angle_deg(
             self.dimension.dxf.angle
         )
 
@@ -757,63 +708,6 @@ class ArcLengthDimension(_CurvedDimensionLine):
         angle = ellipse_param_span(self.start_angle_rad, self.end_angle_rad)
         arc_length = angle * self.arc_radius * 2.0
         self.text = self.text_override(arc_length)  # -> self.format_text()
-
-
-def visible_arcs(
-    center: Vec2,
-    radius: float,
-    start_angle: float,
-    end_angle: float,
-    box: ConstructionBox,
-) -> List[Tuple[float, float]]:
-    """Returns the visible parts of an arc intersecting with a construction box
-    as (start angle, end angle) tuples.
-
-    Args:
-        center: center of the arc
-        radius: radius of the arc
-        start_angle: start angle of arc in radians
-        end_angle: end angle of arc in radians
-        box: construction box which may intersect the arc
-
-    """
-    tau = math.tau
-    # normalize angles into range 0 to 2pi
-    start_angle = start_angle % tau
-    end_angle = end_angle % tau
-    intersection_angles: List[float] = []  # angles are in the range 0 to 2pi
-    circle = ConstructionCircle(center, radius)
-    shift_angles = 0.0
-    if start_angle > end_angle:  # angles should not pass 0
-        shift_angles = tau
-        end_angle += tau
-
-    for line in box.border_lines():
-        for intersection_point in circle.intersect_ray(line.ray):
-            # is the intersection point in the range of the rectangle border
-            if line.bounding_box.inside(intersection_point):
-                angle = (
-                    (intersection_point - center).angle % tau
-                ) + shift_angles
-                # is angle in range of the arc
-                if start_angle < angle < end_angle:
-                    # new angle should be different than the last angle added:
-                    if intersection_angles and math.isclose(
-                        intersection_angles[-1], angle
-                    ):
-                        continue
-                    intersection_angles.append(angle)
-    if len(intersection_angles) == 2:
-        # Arc has to intersect the box in exact two locations!
-        intersection_angles.sort()
-        return [
-            (start_angle, intersection_angles[0]),
-            (intersection_angles[1], end_angle),
-        ]
-    else:
-        # Ignore cases where the start- or the end point is inside the box.
-        # Ignore cases where the box touches the arc in one point.
-        return [(start_angle, end_angle)]
 
 
 def detect_closer_defpoint(

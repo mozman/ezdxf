@@ -52,7 +52,7 @@ class RadiusDimension(BaseDimensionRenderer):
         else:
             raise DXFInternalEzdxfError(f"Invalid dimension type {dimtype}")
 
-        self.center = self._center()  # override in diameter dimension
+        self.center: Vec2 = self._center()  # override in diameter dimension
         self.point_on_circle: Vec2 = Vec2(self.dimension.dxf.defpoint4)
         # modify parameters for special scenarios
         if self.user_location is None:  # type: ignore # default location
@@ -115,13 +115,14 @@ class RadiusDimension(BaseDimensionRenderer):
 
         # final text location
         self.text_location: Vec2 = self.get_text_location()
-
-        self.text_box = TextBox(
-            center=self.text_location,
-            width=self.dim_text_width,
-            height=self.text_height,
-            angle=self.text_rotation,
-            gap=self.text_gap * 0.75,
+        self.geometry.set_text_box(
+            TextBox(
+                center=self.text_location,
+                width=self.dim_text_width,
+                height=self.text_height,
+                angle=self.text_rotation,
+                gap=self.text_gap * 0.75,
+            )
         )
         # write final text location into DIMENSION entity
         if self.user_location:
@@ -212,7 +213,7 @@ class RadiusDimension(BaseDimensionRenderer):
 
         # add measurement text as last entity to see text fill properly
         if self.text:
-            if self.supports_dxf_r2000:
+            if self.geometry.supports_dxf_r2000:
                 text = self.compile_mtext()
             else:
                 text = self.text
@@ -221,7 +222,7 @@ class RadiusDimension(BaseDimensionRenderer):
             )
 
         # add POINT entities at definition points
-        self.add_defpoints([self.center, self.point_on_circle])
+        self.geometry.add_defpoints([self.center, self.point_on_circle])
 
     def render_default_location(self) -> None:
         """Create dimension geometry at the default dimension line locations."""
@@ -358,8 +359,7 @@ class RadiusDimension(BaseDimensionRenderer):
         self.add_line(self.outside_default_defpoint, end, dxfattribs=attribs)
 
     def add_horiz_ext_line_user(self, start: "Vertex") -> None:
-        """Add horizontal extension line from start for user defined locations.
-        """
+        """Add horizontal extension line from start for user defined locations."""
         attribs = self.dimension_line.dxfattribs()
         self.add_line(start, self.user_location, dxfattribs=attribs)
         if self.vertical_placement == 0:
@@ -394,9 +394,7 @@ class RadiusDimension(BaseDimensionRenderer):
         attribs = {
             "color": self.text_color,
         }
-        self.add_text(
-            dim_text, pos=Vec3(pos), rotation=rotation, dxfattribs=attribs
-        )
+        self.add_text(dim_text, pos=pos, rotation=rotation, dxfattribs=attribs)
 
     def transform_ucs_to_wcs(self) -> None:
         """
@@ -410,9 +408,10 @@ class RadiusDimension(BaseDimensionRenderer):
             point = self.dimension.get_dxf_attrib(attr)
             self.dimension.set_dxf_attrib(attr, func(point))
 
-        from_ucs("defpoint", self.ucs.to_wcs)
-        from_ucs("defpoint4", self.ucs.to_wcs)
-        from_ucs("text_midpoint", self.ucs.to_ocs)
+        ucs = self.geometry.ucs
+        from_ucs("defpoint", ucs.to_wcs)
+        from_ucs("defpoint4", ucs.to_wcs)
+        from_ucs("text_midpoint", ucs.to_ocs)
 
 
 def add_center_mark(dim: RadiusDimension) -> None:

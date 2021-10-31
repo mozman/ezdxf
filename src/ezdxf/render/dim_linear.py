@@ -189,15 +189,16 @@ class LinearDimension(BaseDimensionRenderer):
                 rotation = 0
             self.text_rotation = rotation
 
-            self.text_box = TextBox(
+            text_box = TextBox(
                 center=self.text_location,
                 width=self.dim_text_width,
                 height=self.text_height,
                 angle=self.text_rotation,
                 gap=self.text_gap * 0.75,
             )
+            self.geometry.set_text_box(text_box)
             if self.text_has_leader:
-                p1, p2, *_ = self.text_box.corners
+                p1, p2, *_ = text_box.corners
                 self.leader1, self.leader2 = order_leader_points(
                     self.dim_line_center, p1, p2
                 )
@@ -225,8 +226,8 @@ class LinearDimension(BaseDimensionRenderer):
             start, end = self.extension_line_points(
                 self.ext1_line_start, self.dim_line_start, above_ext_line1
             )
-            self.add_extension_line(
-                start, end, linetype=ext_lines.linetype1
+            self.add_line(
+                start, end, dxfattribs=ext_lines.dxfattribs(1)
             )
 
         # add extension line 2
@@ -235,8 +236,8 @@ class LinearDimension(BaseDimensionRenderer):
             start, end = self.extension_line_points(
                 self.ext2_line_start, self.dim_line_end, above_ext_line2
             )
-            self.add_extension_line(
-                start, end, linetype=ext_lines.linetype2
+            self.add_line(
+                start, end, dxfattribs=ext_lines.dxfattribs(2)
             )
 
         # add arrow symbols (block references), also adjust dimension line start
@@ -248,7 +249,7 @@ class LinearDimension(BaseDimensionRenderer):
 
         # add measurement text as last entity to see text fill properly
         if self.text:
-            if self.supports_dxf_r2000:
+            if self.geometry.supports_dxf_r2000:
                 text = self.compile_mtext()
             else:
                 text = self.text
@@ -261,7 +262,7 @@ class LinearDimension(BaseDimensionRenderer):
                 )
 
         # add POINT entities at definition points
-        self.add_defpoints(
+        self.geometry.add_defpoints(
             [self.dim_line_start, self.ext1_line_start, self.ext2_line_start]
         )
 
@@ -456,12 +457,7 @@ class LinearDimension(BaseDimensionRenderer):
             rotation: text rotation in degrees
 
         """
-        attribs = {
-            "color": self.text_color,
-        }
-        self.add_text(
-            dim_text, pos=Vec3(pos), rotation=rotation, dxfattribs=attribs
-        )
+        self.add_text(dim_text, pos, rotation, dict())
 
     def add_dimension_line(self, start: Vec2, end: Vec2) -> None:
         """Add dimension line to dimension BLOCK, adds extension DIMDLE if
@@ -544,11 +540,12 @@ class LinearDimension(BaseDimensionRenderer):
             point = self.dimension.get_dxf_attrib(attr)
             self.dimension.set_dxf_attrib(attr, func(point))
 
-        from_ucs("defpoint", self.ucs.to_wcs)
-        from_ucs("defpoint2", self.ucs.to_wcs)
-        from_ucs("defpoint3", self.ucs.to_wcs)
-        from_ucs("text_midpoint", self.ucs.to_ocs)
-        self.dimension.dxf.angle = self.ucs.to_ocs_angle_deg(
+        ucs = self.geometry.ucs
+        from_ucs("defpoint", ucs.to_wcs)
+        from_ucs("defpoint2", ucs.to_wcs)
+        from_ucs("defpoint3", ucs.to_wcs)
+        from_ucs("text_midpoint", ucs.to_ocs)
+        self.dimension.dxf.angle = ucs.to_ocs_angle_deg(
             self.dimension.dxf.angle
         )
 
