@@ -272,7 +272,7 @@ class ExtensionLines:
     default_lineweight: int = const.LINEWEIGHT_BYBLOCK
 
     def __init__(
-        self, dim_style: DimStyleOverride, default_color: int, dim_scale: float
+        self, dim_style: DimStyleOverride, default_color: int, scale: float
     ):
         get = dim_style.get
         self.color: int = get("dimclre", default_color)  # ACI
@@ -285,11 +285,11 @@ class ExtensionLines:
         # Extension of extension line above the dimension line, in extension
         # line direction in most cases perpendicular to dimension line
         # (oblique!)
-        self.extension_above: float = get("dimexe", 0.0) * dim_scale
+        self.extension_above: float = get("dimexe", 0.0) * scale
 
         # Distance of extension line from the measurement point in extension
         # line direction
-        self.offset: float = get("dimexo", 0.0) * dim_scale
+        self.offset: float = get("dimexo", 0.0) * scale
 
         # Fixed length extension line, lenght above dimension line is still
         # self.ext_line_extension
@@ -297,7 +297,7 @@ class ExtensionLines:
 
         # Length below the dimension line:
         self.length_below: float = (
-            get("dimfxl", self.extension_above) * dim_scale
+            get("dimfxl", self.extension_above) * scale
         )
 
     def dxfattribs(self, num: int = 1) -> Dict[str, Any]:
@@ -321,14 +321,14 @@ class DimensionLine:
     default_lineweight: int = const.LINEWEIGHT_BYBLOCK
 
     def __init__(
-        self, dim_style: DimStyleOverride, default_color: int, dim_scale: float
+        self, dim_style: DimStyleOverride, default_color: int, scale: float
     ):
         get = dim_style.get
         self.color: int = get("dimclrd", default_color)  # ACI
 
         # Dimension line extension, along the dimension line direction ('left'
         # and 'right')
-        self.extension: float = get("dimdle", 0.0) * dim_scale
+        self.extension: float = get("dimdle", 0.0) * scale
         self.linetype: str = get("dimltype", "")
         self.lineweight: int = get("dimlwd", self.default_lineweight)
 
@@ -360,14 +360,14 @@ class DimensionLine:
 
 class Arrows:
     def __init__(
-        self, dim_style: DimStyleOverride, color: int, dim_scale: float
+        self, dim_style: DimStyleOverride, color: int, scale: float
     ):
         get = dim_style.get
         self.color: int = color
-        self.tick_size: float = get("dimtsz", 0.0) * dim_scale
+        self.tick_size: float = get("dimtsz", 0.0) * scale
         self.arrow1_name: str = ""  # empty string is a closed filled arrow
         self.arrow2_name: str = ""  # empty string is a closed filled arrow
-        self.arrow_size: float = get("dimasz", 0.25) * dim_scale
+        self.arrow_size: float = get("dimasz", 0.25) * scale
         self.suppress1 = False  # ezdxf only
         self.suppress2 = False  # ezdxf only
 
@@ -390,6 +390,12 @@ class Arrows:
     def dxfattribs(self) -> Dict[str, Any]:
         return {"color": self.color}
 
+class Measurement:
+    def __init__(
+        self, dim_style: DimStyleOverride, color: int, scale: float
+    ):
+        get = dim_style.get
+        self.color: int = color
 
 class Geometry:
     """
@@ -669,10 +675,10 @@ class BaseDimensionRenderer:
         # All placing related calculations are done without this settings.
         # Used for multi point linear dimensions to avoid double rendering of
         # non arrow ticks.
-        self.suppress_arrow1: bool = self.dim_style.pop(
+        suppress_arrow1: bool = self.dim_style.pop(
             "suppress_arrow1", False
         )
-        self.suppress_arrow2: bool = self.dim_style.pop(
+        suppress_arrow2: bool = self.dim_style.pop(
             "suppress_arrow2", False
         )
         # End of ezdxf specific attributes
@@ -855,8 +861,8 @@ class BaseDimensionRenderer:
         self.arrows: Arrows = self.init_arrows(
             self.default_color, self.dim_scale
         )
-        self.arrows.suppress1 = self.suppress_arrow1
-        self.arrows.suppress2 = self.suppress_arrow2
+        self.arrows.suppress1 = suppress_arrow1
+        self.arrows.suppress2 = suppress_arrow2
         self.extension_lines: ExtensionLines = self.init_extension_lines(
             self.default_color, self.dim_scale
         )

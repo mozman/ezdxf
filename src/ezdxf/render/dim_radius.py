@@ -230,7 +230,7 @@ class RadiusDimension(BaseDimensionRenderer):
 
     def render_default_location(self) -> None:
         """Create dimension geometry at the default dimension line locations."""
-        if not self.suppress_arrow1:
+        if not self.arrows.suppress1:
             arrow_connection_point = self.add_arrow(
                 self.point_on_circle, rotate=self.text_outside
             )
@@ -265,7 +265,7 @@ class RadiusDimension(BaseDimensionRenderer):
         if not leader:
             self.text_outside = False  # render dimension line like text inside
         # add arrow symbol (block references)
-        if not self.suppress_arrow1:
+        if not self.arrows.suppress1:
             arrow_connection_point = self.add_arrow(
                 self.point_on_circle, rotate=self.text_outside
             )

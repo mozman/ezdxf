@@ -73,13 +73,13 @@ class DiameterDimension(RadiusDimension):
         return text_midpoint + (vertical_direction * vertical_distance)
 
     def _add_arrow_1(self, rotate=False):
-        if not self.suppress_arrow1:
+        if not self.arrows.suppress1:
             return self.add_arrow(self.point_on_circle, rotate=rotate)
         else:
             return self.point_on_circle
 
     def _add_arrow_2(self, rotate=True):
-        if not self.suppress_arrow2:
+        if not self.arrows.suppress2:
             return self.add_arrow(self.point_on_circle2, rotate=rotate)
         else:
             return self.point_on_circle2

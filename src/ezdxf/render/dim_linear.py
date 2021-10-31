@@ -431,14 +431,14 @@ class LinearDimension(BaseDimensionRenderer):
         end = self.dim_line_end
         arrow_size = arrows.arrow_size
 
-        if not self.suppress_arrow1 and has_arrow_extension(arrows.arrow1_name):
+        if not arrows.suppress1 and has_arrow_extension(arrows.arrow1_name):
             self.add_line(
                 start - self.dim_line_vec * arrow_size,
                 start - self.dim_line_vec * (2 * arrow_size),
                 dxfattribs=attribs,
             )
 
-        if not self.suppress_arrow2 and has_arrow_extension(arrows.arrow2_name):
+        if not arrows.suppress2 and has_arrow_extension(arrows.arrow2_name):
             self.add_line(
                 end + self.dim_line_vec * arrow_size,
                 end + self.dim_line_vec * (2 * arrow_size),
