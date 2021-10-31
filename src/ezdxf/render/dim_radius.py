@@ -27,9 +27,8 @@ class RadiusMeasurement(LengthMeasurement):
 
     def text_override(self, measurement: float) -> str:
         text = super().text_override(measurement)
-        if text:
-            if text[0] != self.text_prefix:
-                text = self.text_prefix + text
+        if text and text[0] != self.text_prefix:
+            text = self.text_prefix + text
         return text
 
 
