@@ -323,14 +323,14 @@ class RadiusDimension(BaseDimensionRenderer):
 
     def add_radial_dim_line(self, end: "Vertex") -> None:
         """Add radial dimension line."""
-        attribs = self.dimension_line.dxf_attributes()
+        attribs = self.dimension_line.dxfattribs()
         self.add_line(
             self.center, end, dxfattribs=attribs, remove_hidden_lines=True
         )
 
     def add_radial_dim_line_from_text(self, start, end: "Vertex") -> None:
         """Add radial dimension line, starting point at the measurement text."""
-        attribs = self.dimension_line.dxf_attributes()
+        attribs = self.dimension_line.dxfattribs()
         hshift = self.dim_text_width / 2
         if self.vertical_placement != 0:  # not center
             hshift = -hshift
@@ -345,7 +345,7 @@ class RadiusDimension(BaseDimensionRenderer):
         """Add horizontal outside extension line from start for default
         locations.
         """
-        attribs = self.dimension_line.dxf_attributes()
+        attribs = self.dimension_line.dxfattribs()
         self.add_line(start, self.outside_default_defpoint, dxfattribs=attribs)
         if self.vertical_placement == 0:
             hdist = self.arrow_size
@@ -360,7 +360,7 @@ class RadiusDimension(BaseDimensionRenderer):
     def add_horiz_ext_line_user(self, start: "Vertex") -> None:
         """Add horizontal extension line from start for user defined locations.
         """
-        attribs = self.dimension_line.dxf_attributes()
+        attribs = self.dimension_line.dxfattribs()
         self.add_line(start, self.user_location, dxfattribs=attribs)
         if self.vertical_placement == 0:
             hdist = self.arrow_size
@@ -373,14 +373,14 @@ class RadiusDimension(BaseDimensionRenderer):
 
     def add_radial_ext_line_default(self, start: "Vertex") -> None:
         """Add radial outside extension line from start for default locations."""
-        attribs = self.dimension_line.dxf_attributes()
+        attribs = self.dimension_line.dxfattribs()
         length = self.text_gap + self.dim_text_width
         end = start + self.dim_line_vec * length
         self.add_line(start, end, dxfattribs=attribs, remove_hidden_lines=True)
 
     def add_radial_ext_line_user(self, start: "Vertex") -> None:
         """Add radial outside extension line from start for user defined location."""
-        attribs = self.dimension_line.dxf_attributes()
+        attribs = self.dimension_line.dxfattribs()
         length = self.dim_text_width / 2
         if self.vertical_placement == 0:
             length = -length

@@ -24,11 +24,11 @@ class TextBox(ConstructionBox):
 
     def __init__(
         self,
-        center: "Vertex",
-        width: float,
-        height: float,
-        angle: float,
-        gap: float = 0,
+        center: Vec2 = Vec2(),
+        width: float = 0.0,
+        height: float = 0.0,
+        angle: float = 0.0,
+        gap: float = 0.0,
     ):
         height += 2 * gap
         super().__init__(center, width, height, angle)
@@ -262,6 +262,8 @@ class Tolerance:  # and Limits
 
 
 class ExtensionLines:
+    default_lineweight: int = const.LINEWEIGHT_BYBLOCK
+
     def __init__(
         self, dim_style: DimStyleOverride, default_color: int, dim_scale: float
     ):
@@ -269,7 +271,7 @@ class ExtensionLines:
         self.color: int = get("dimclre", default_color)  # ACI
         self.linetype1: str = get("dimltex1", "")
         self.linetype2: str = get("dimltex2", "")
-        self.lineweight: int = get("dimlwe", const.LINEWEIGHT_BYBLOCK)
+        self.lineweight: int = get("dimlwe", self.default_lineweight)
         self.suppress1: bool = bool(get("dimse1", 0))
         self.suppress2: bool = bool(get("dimse2", 0))
 
@@ -291,17 +293,37 @@ class ExtensionLines:
             get("dimfxl", self.extension_above) * dim_scale
         )
 
+    def dxfattribs(self, num: int = 1) -> Dict[str, Any]:
+        """Returns default dimension line DXF attributes as dict."""
+        attribs: Dict[str, Any] = {"color": self.color}
+        if num == 1:
+            linetype = self.linetype1
+        elif num == 2:
+            linetype = self.linetype2
+        else:
+            raise ValueError(f"invalid argument num:{num}")
+
+        if linetype:
+            attribs["linetype"] = linetype
+        if self.lineweight != self.default_lineweight:
+            attribs["lineweight"] = self.lineweight
+        return attribs
+
 
 class DimensionLine:
-    def __init__(self, dim_style: DimStyleOverride, default_color: int, dim_scale: float):
+    default_lineweight: int = const.LINEWEIGHT_BYBLOCK
+
+    def __init__(
+        self, dim_style: DimStyleOverride, default_color: int, dim_scale: float
+    ):
         get = dim_style.get
         self.color: int = get("dimclrd", default_color)  # ACI
 
         # Dimension line extension, along the dimension line direction ('left'
         # and 'right')
-        self.extension: float = get("dimdle", 0.) * dim_scale
+        self.extension: float = get("dimdle", 0.0) * dim_scale
         self.linetype: str = get("dimltype", "")
-        self.lineweight: int = get("dimlwd", const.LINEWEIGHT_BYBLOCK)
+        self.lineweight: int = get("dimlwd", self.default_lineweight)
 
         # Suppress first part of the dimension line
         self.suppress1: bool = bool(get("dimsd1", 0))
@@ -319,14 +341,28 @@ class DimensionLine:
         # not supported yet - ezdxf behaves like option 1
         self.has_dim_line_if_text_outside: bool = bool(get("dimtofl", 1))
 
-    def dxf_attributes(self) -> dict:
+    def dxfattribs(self) -> Dict[str, Any]:
         """Returns default dimension line DXF attributes as dict."""
         attribs: Dict[str, Any] = {"color": self.color}
         if self.linetype:
             attribs["linetype"] = self.linetype
-        if self.lineweight != const.LINEWEIGHT_BYBLOCK:
+        if self.lineweight != self.default_lineweight:
             attribs["lineweight"] = self.lineweight
         return attribs
+
+
+class Geometry:
+    def __init__(self, ucs: UCS, layout: "GenericLayoutType"):
+        self.ucs: UCS = ucs
+        self.requires_extrusion: bool = not self.ucs.uz.isclose(Z_AXIS)
+        self.layout: "GenericLayoutType" = layout
+        self._text_box: TextBox = TextBox()
+
+    def set_layout(self, layout: "GenericLayoutType") -> None:
+        self.layout = layout
+
+    def set_text_box(self, text_box: TextBox) -> None:
+        self._text_box = text_box
 
 
 class BaseDimensionRenderer:
@@ -341,6 +377,7 @@ class BaseDimensionRenderer:
         assert dimension.doc is not None
         self.doc: "Drawing" = dimension.doc
         self.dimension: Dimension = dimension
+        self.geometry = self.init_geometry(ucs)
         self.dxfversion: str = self.doc.dxfversion
         self.supports_dxf_r2000: bool = self.dxfversion >= "AC1015"
         self.supports_dxf_r2007: bool = self.dxfversion >= "AC1021"
@@ -600,6 +637,11 @@ class BaseDimensionRenderer:
         # Update text height
         self.text_height = max(self.text_height, self.tol.text_height)
 
+    def init_geometry(self, ucs: UCS = None):
+        from ezdxf.layouts import VirtualLayout
+
+        return Geometry(ucs or PassTroughUCS(), VirtualLayout())
+
     def init_tolerance(self) -> Tolerance:
         return Tolerance(
             self.dim_style,
@@ -639,6 +681,7 @@ class BaseDimensionRenderer:
         # Block entities are located in the OCS defined by the extrusion vector
         # of the DIMENSION entity and the z-axis of the OCS point
         # 'text_midpoint' (group code 11).
+        self.geometry.set_layout(block)
         self.block = block
         # Tolerance requires MTEXT support, switch off rendering of tolerances
         # and limits

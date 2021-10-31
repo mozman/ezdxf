@@ -484,7 +484,7 @@ class LinearDimension(BaseDimensionRenderer):
         ):
             end = end + extension
 
-        attribs = dim_line.dxf_attributes()
+        attribs = dim_line.dxfattribs()
 
         if dim_line.suppress1 or dim_line.suppress2:
             # TODO: results not as expected, but good enough
