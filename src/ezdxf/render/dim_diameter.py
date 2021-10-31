@@ -1,11 +1,10 @@
-# Created: 30.01.2020
-# Copyright (c) 2018-2020, Manfred Moitzi
+# Copyright (c) 2018-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING
 from ezdxf.math import Vec2, UCS
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 
-from .dim_radius import RadiusDimension, add_center_mark
+from .dim_radius import RadiusDimension, add_center_mark, Measurement, RadiusMeasurement
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Dimension
@@ -29,6 +28,8 @@ class DiameterDimension(RadiusDimension):
         override: dimension style override management object
 
     """
+    def init_measurement(self, color: int, scale: float) -> Measurement:
+        return RadiusMeasurement(self.dim_style, color, scale, "Ø")
 
     def _center(self):
         return Vec2(self.dimension.dxf.defpoint).lerp(
