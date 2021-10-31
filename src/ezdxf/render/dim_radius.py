@@ -82,7 +82,9 @@ class RadiusDimension(BaseDimensionRenderer):
                 and measurement.text_movement_rule == 1
             ):  # move text, add leader
                 # use algorithm for user define dimension line location
-                measurement.user_location = self.center.lerp(self.point_on_circle)
+                measurement.user_location = self.center.lerp(
+                    self.point_on_circle
+                )
                 measurement.text_valign = 0  # text vertical centered
 
         direction = self.point_on_circle - self.center
@@ -198,8 +200,12 @@ class RadiusDimension(BaseDimensionRenderer):
         """Returns text midpoint for user defined dimension location."""
         measurement = self.measurement
         assert isinstance(measurement.user_location, Vec2)
-        text_outside_horiz = measurement.text_is_outside and measurement.text_outside_horizontal
-        text_inside_horiz = measurement.text_is_inside and measurement.text_inside_horizontal
+        text_outside_horiz = (
+            measurement.text_is_outside and measurement.text_outside_horizontal
+        )
+        text_inside_horiz = (
+            measurement.text_is_inside and measurement.text_inside_horizontal
+        )
         if text_outside_horiz or text_inside_horiz:
             hdist = self._total_text_width / 2.0
             if (
@@ -250,8 +256,7 @@ class RadiusDimension(BaseDimensionRenderer):
         self.geometry.add_defpoints([self.center, self.point_on_circle])
 
     def render_default_location(self) -> None:
-        """Create dimension geometry at the default dimension line locations.
-        """
+        """Create dimension geometry at the default dimension line locations."""
         measurement = self.measurement
         if not self.arrows.suppress1:
             arrow_connection_point = self.add_arrow(
@@ -389,8 +394,7 @@ class RadiusDimension(BaseDimensionRenderer):
         self.add_line(self.outside_default_defpoint, end, dxfattribs=attribs)
 
     def add_horiz_ext_line_user(self, start: "Vertex") -> None:
-        """Add horizontal extension line from start for user defined locations.
-        """
+        """Add horizontal extension line from start for user defined locations."""
         measurement = self.measurement
         assert isinstance(measurement.user_location, Vec2)
         attribs = self.dimension_line.dxfattribs()
@@ -414,7 +418,7 @@ class RadiusDimension(BaseDimensionRenderer):
     def add_radial_ext_line_user(self, start: "Vertex") -> None:
         """Add radial outside extension line from start for user defined location."""
         attribs = self.dimension_line.dxfattribs()
-        length = self._total_text_width / 2.
+        length = self._total_text_width / 2.0
         if self.measurement.vertical_placement == 0:
             length = -length
         end = self.measurement.user_location + self.dim_line_vec * length

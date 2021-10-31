@@ -1037,7 +1037,7 @@ class BaseDimensionRenderer:
         return Arrows(self.dim_style, color, scale)
 
     def init_measurement(self, color: int, scale: float) -> Measurement:
-        return Measurement(self.dim_style, color, scale)
+        return LengthMeasurement(self.dim_style, color, scale)
 
     def get_required_defpoint(self, name: str) -> Vec2:
         return get_required_defpoint(self.dimension, name)

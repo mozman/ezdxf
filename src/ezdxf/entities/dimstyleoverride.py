@@ -161,7 +161,7 @@ class DimStyleOverride:
         if ldrblk is not None:
             set_arrow("dimldrblk", ldrblk)
 
-    def get_arrow_names(self) -> Tuple[Optional[str], Optional[str]]:
+    def get_arrow_names(self) -> Tuple[str, str]:
         """Get arrow names as strings like 'ARCHTICK'.
 
         Returns:
@@ -169,7 +169,7 @@ class DimStyleOverride:
 
         """
         dimtsz = self.get("dimtsz", 0)
-        blk1, blk2 = None, None
+        blk1, blk2 = "", ""
         if dimtsz == 0.0:
             if bool(self.get("dimsah")):
                 blk1 = self.get("dimblk1", "")
