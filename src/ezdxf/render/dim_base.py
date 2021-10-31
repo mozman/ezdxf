@@ -41,7 +41,7 @@ class TextBox(ConstructionBox):
 
     def __init__(
         self,
-        center: Vec2 = Vec2(),
+        center: Vec2 = Vec2(0, 0),
         width: float = 0.0,
         height: float = 0.0,
         angle: float = 0.0,
@@ -580,7 +580,7 @@ class Measurement:
         self.text_is_outside: bool = False
 
         # Final calculated or overridden dimension text location
-        self.text_location: Vec2 = Vec2()
+        self.text_location: Vec2 = Vec2(0, 0)
 
         # True if dimension text doesn't fit between extension lines
         self.is_wide_text: bool = False
