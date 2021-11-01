@@ -172,6 +172,7 @@ Print help:
                             approximation available to the backend, the accurate
                             method renders as accurately as possible but this
                             approach is slower.
+
 View
 ----
 
