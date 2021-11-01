@@ -66,7 +66,7 @@ class ConstructionPolyline(Sequence):
         if isinstance(item, int):
             return self._vertices[item]
         else:  # slice
-            return self.__class__(self._vertices[item])
+            return self.__class__(self._vertices[item], rel_tol=self._rel_tol)
 
     @property
     def length(self) -> float:
