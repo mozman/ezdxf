@@ -819,6 +819,24 @@ ConstructionBox
 
     .. automethod:: intersect(line: ConstructionLine) -> List[Vec2]
 
+ConstructionPolyline
+--------------------
+
+.. autoclass:: ConstructionPolyline
+
+    .. autoproperty:: length
+
+    .. autoproperty:: is_closed
+
+    .. automethod:: data(index: int) -> Tuple[float, float, Vec3]
+
+    .. automethod:: vertex_at(distance: float) -> Vec3
+
+    .. automethod:: divide(count: int) -> Iterator[Vec3]
+
+    .. automethod:: divide_by_length(length: float, force_last: bool = False) -> Iterator[Vec3]
+
+
 Shape2d
 -------
 

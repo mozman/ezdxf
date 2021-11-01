@@ -1,8 +1,7 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Iterable, List, TYPE_CHECKING, Tuple, Iterator
+from typing import Iterable, List, TYPE_CHECKING, Tuple, Iterator, Sequence
 from ezdxf.math import Vec3, linspace, NULLVEC
-from collections import Sequence
 import bisect
 
 if TYPE_CHECKING:
@@ -14,6 +13,31 @@ REL_TOL = 1e-9
 
 
 class ConstructionPolyline(Sequence):
+    """A polyline construction tool to measure, interpolate and divide anything
+    that can be approximated or flattened into vertices.
+    This is an immutable data structure which supports the :class:`Sequence`
+    interface.
+
+    Args:
+        vertices: iterable of polyline vertices
+        close: ``True`` to close the polyline (first vertex == last vertex)
+        rel_tol: relative tolerance for floating point comparisons
+
+    Example to measure or divide a SPLINE entity::
+
+        import ezdxf
+        from ezdxf.math import ConstructionPolyline
+
+        doc = ezdxf.readfile("your.dxf")
+        msp = doc.modelspace()
+        spline = msp.query("SPLINE").first
+        if spline is not None
+            polyline = ConstructionPolyline(spline.flattening(0.01))
+            print(f"Entity {spline} has an approximated length of {polyline.length}")
+            # get dividing points with a distance of 1.0 drawing unit to each other
+            points = list(polyline.divide_by_length(1.0))
+
+    """
     def __init__(
         self,
         vertices: Iterable["Vertex"],
@@ -78,7 +102,7 @@ class ConstructionPolyline(Sequence):
         vertex = vertices[index]
         return current_distance, current_distance - prev_distance, vertex
 
-    def vertex_at(self, distance: float):
+    def vertex_at(self, distance: float) -> Vec3:
         """Returns the interpolated vertex at the given `distance` from the
         start of the polyline.
         """
@@ -88,7 +112,7 @@ class ConstructionPolyline(Sequence):
             raise ValueError("not enough vertices for interpolation")
         return self._vertex_at(distance)
 
-    def _vertex_at(self, distance: float):
+    def _vertex_at(self, distance: float) -> Vec3:
         # fast method without any checks
         vertices = self._vertices
         distances = self._distances

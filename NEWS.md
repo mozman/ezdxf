@@ -32,6 +32,11 @@ Version 0.17.1b2 - dev
 - BUGFIX: export `MTEXT` entities with column count different than the count of 
   linked `MTEXT` entities 
 - BUGFIX: fix invalid text rotation for relative text shifting for linear dimensions
+- PREVIEW: angular dimension rendering support, new factory methods: 
+  `add_angular_dim_2l()`, `add_angular_dim_3p()`, `add_angular_dim_cra()` 
+- PREVIEW: helper class `ezdxf.math.ConstructionPolyline` to measure, interpolate and 
+  divide polylines and anything that can be approximated or flattened into 
+  vertices
 
 Version 0.17 - 2021-10-01
 -------------------------
@@ -77,8 +82,6 @@ Version 0.17 - 2021-10-01
 - BUGFIX: graphic entities are not allowed as `DICTIONARY` entries 
 - BUGFIX: copied `DICTIONARY` was not added to the OBJECTS section by calling `factory.bind()`
 - BUGFIX: `XRecord.copy()` copies content tags
-- PREVIEW: angular dimension rendering support, new factory methods: 
-  `add_angular_dim_2l()`, `add_angular_dim_3p()`, `add_angular_dim_cra()` 
 
 Version 0.16.6 - 2021-08-28
 ---------------------------
