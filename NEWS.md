@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.17.1b2 - dev
+Version 0.17.1b3 - dev
 ----------------------
 
 - CHANGE: using [PySide6](https://pypi.org/project/PySide6/) as Qt binding 
