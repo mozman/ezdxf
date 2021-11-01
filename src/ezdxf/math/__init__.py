@@ -29,6 +29,7 @@ from .offset2d import *
 from .transformtools import *
 from .curvetools import *
 from .clipping import *
+from .polyline import *
 
 AnyVec = Union[Vec2, Vec3]
 Vertex = Union[Sequence[float], AnyVec]
