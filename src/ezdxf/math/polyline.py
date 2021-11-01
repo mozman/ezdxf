@@ -31,7 +31,7 @@ class ConstructionPolyline(Sequence):
         doc = ezdxf.readfile("your.dxf")
         msp = doc.modelspace()
         spline = msp.query("SPLINE").first
-        if spline is not None
+        if spline is not None:
             polyline = ConstructionPolyline(spline.flattening(0.01))
             print(f"Entity {spline} has an approximated length of {polyline.length}")
             # get dividing points with a distance of 1.0 drawing unit to each other
