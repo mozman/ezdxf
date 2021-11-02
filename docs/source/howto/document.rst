@@ -209,4 +209,18 @@ The :mod:`~ezdxf.zoom` module also works for paperspace layouts.
     the :mod:`~ezdxf.bbox` module to understand its limitations and the
     bounding box calculation for large documents can take a while!
 
+Add `ezdxf` Resources to Existing DXF Document
+----------------------------------------------
+
+Add all `ezdxf` specific resources (line types, text- and dimension styles)
+to an existing DXF document:
+
+.. code-block:: Python
+
+    import ezdxf
+    from ezdxf.tools.standards import setup_drawing
+
+    doc = ezdxf.readfile("your.dxf")
+    setup_drawing(doc, topics="all")
+
 .. _header variables: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-A85E8E67-27CD-4C59-BE61-4DC9FADBE74A

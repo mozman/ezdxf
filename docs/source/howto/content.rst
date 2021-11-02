@@ -147,6 +147,10 @@ in the range 1000 - 1071.
 Method :meth:`~ezdxf.entities.DXFEntity.get_xdata` returns the extended data for an entity as
 :class:`~ezdxf.lldxf.tags.Tags` object.
 
+.. seealso::
+
+    Tutorial: :ref:`tut_custom_data`
+
 Get Overridden DIMSTYLE Values from DIMENSION
 ---------------------------------------------
 
