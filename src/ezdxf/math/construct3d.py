@@ -329,8 +329,9 @@ def linear_vertex_spacing(start: Vec3, end: Vec3, count: int) -> List[Vec3]:
 
     vertices = [start]
     step = distance.normalize(distance.magnitude / (count - 1))
-    for index in range(1, count - 1):
-        vertices.append(start + (step * index))
+    for _ in range(1, count - 1):
+        start += step
+        vertices.append(start)
     vertices.append(end)
     return vertices
 
