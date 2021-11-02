@@ -94,7 +94,7 @@ def add_lines(
     msp.add_line(center, end_point)
 
 
-def angular_cra_default_above(dxfversion="R2013"):
+def angular_cra_default(dxfversion="R2013"):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     radius = 5
@@ -104,68 +104,53 @@ def angular_cra_default_above(dxfversion="R2013"):
         [Vec3(10, 0), 300, 240],
         [Vec3(20, 0), 240, 300],
     ]
-    for center, start_angle, end_angle in data:
-        add_lines(msp, center, radius, start_angle, end_angle)
-        # Default DimStyle EZ_CURVED:
-        # - angle units = degree
-        # - scale 1: 100
-        # - closed filled arrow, size = 0.25
-        # - text location above dimension line
-        #
-        # center:
-        #   center of angle
-        # radius:
-        #   distance from center to the start of the extension lines
-        # distance:
-        #   distance from start of the extension lines to the dimension line
-        # start_angle:
-        #   start angle in degrees
-        # end_angle:
-        #   end angle in degrees
-        # The measurement is always done from start_angle to end_angle in
-        # counter clockwise orientation. This does not always match the result
-        # in CAD applications!
-        dim = msp.add_angular_dim_cra(
-            center, radius, start_angle, end_angle, distance
-        )
-        # Necessary second step, to create the BLOCK entity with the DIMENSION
-        # geometry. Ezdxf supports DXF R2000 attributes for DXF R12 rendering,
-        # but they have to be applied by the DIMSTYLE override feature, this
-        # additional attributes are not stored in the XDATA section of the
-        # DIMENSION entity, they are just used to render the DIMENSION entity.
-        # The return value `dim` is not a DIMENSION entity, instead a
-        # DimStyleOverride object is returned, the DIMENSION entity is stored
-        # as dim.dimension, see also ezdxf.override.DimStyleOverride class.
-        dim.render(discard=BRICSCAD)
+    for name, dimtad, offset in [
+        ["above", 1, Vec3(0, 20)],
+        ["center", 0, Vec3(0, 0)],
+        ["below", 4, Vec3(0, -20)],
+    ]:
+        for center, start_angle, end_angle in data:
+            center += offset
+            add_lines(msp, center, radius, start_angle, end_angle)
+            # Default DimStyle EZ_CURVED:
+            # - angle units = degree
+            # - scale 1: 100
+            # - closed filled arrow, size = 0.25
+            # - text location above dimension line
+            #
+            # center:
+            #   center of angle
+            # radius:
+            #   distance from center to the start of the extension lines
+            # distance:
+            #   distance from start of the extension lines to the dimension line
+            # start_angle:
+            #   start angle in degrees
+            # end_angle:
+            #   end angle in degrees
+            # The measurement is always done from start_angle to end_angle in
+            # counter clockwise orientation. This does not always match the result
+            # in CAD applications!
+            dim = msp.add_angular_dim_cra(
+                center,
+                radius,
+                start_angle,
+                end_angle,
+                distance,
+                override={"dimtad": dimtad},
+            )
+            # Necessary second step, to create the BLOCK entity with the DIMENSION
+            # geometry. Ezdxf supports DXF R2000 attributes for DXF R12 rendering,
+            # but they have to be applied by the DIMSTYLE override feature, this
+            # additional attributes are not stored in the XDATA section of the
+            # DIMENSION entity, they are just used to render the DIMENSION entity.
+            # The return value `dim` is not a DIMENSION entity, instead a
+            # DimStyleOverride object is returned, the DIMENSION entity is stored
+            # as dim.dimension, see also ezdxf.override.DimStyleOverride class.
+            dim.render(discard=BRICSCAD)
 
-    doc.set_modelspace_vport(height=30)
-    doc.saveas(OUTDIR / f"dim_angular_cra_{dxfversion}_default_above.dxf")
-
-
-def angular_cra_default_center(dxfversion="R2000"):
-    doc = ezdxf.new(dxfversion, setup=True)
-    msp = doc.modelspace()
-    radius = 5
-    distance = 2
-    data = [
-        [Vec3(0, 0), 60, 120],
-        [Vec3(10, 0), 300, 240],
-        [Vec3(20, 0), 240, 300],
-    ]
-    for center, start_angle, end_angle in data:
-        add_lines(msp, center, radius, start_angle, end_angle)
-        dim = msp.add_angular_dim_cra(
-            center,
-            radius,
-            start_angle,
-            end_angle,
-            distance,
-            dimstyle="EZ_CURVED",
-            override={"dimtad": 0},
-        )
-        dim.render(discard=BRICSCAD)
-    doc.set_modelspace_vport(height=30)
-    doc.saveas(OUTDIR / f"dim_angular_cra_{dxfversion}_default_center.dxf")
+    doc.set_modelspace_vport(height=70)
+    doc.saveas(OUTDIR / f"dim_angular_cra_{dxfversion}_default.dxf")
 
 
 def angular_3d(dxfversion="R2000"):
@@ -188,6 +173,5 @@ def angular_3d(dxfversion="R2000"):
 
 
 if __name__ == "__main__":
-    angular_cra_default_above()
-    angular_cra_default_center()
+    angular_cra_default()
     angular_3d()
