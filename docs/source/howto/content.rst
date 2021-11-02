@@ -37,11 +37,12 @@ Default value is 256 which means BYLAYER:
     layer = doc.layers.get(entity.dxf.layer)
     aci = layer.get_color()
 
-The special :meth:`~ezdxf.entities.Layer.get_color` method is required, because the color attribute
-:attr:`Layer.dxf.color` is misused as layer on/off flag, a negative color value means the
-layer is off.
+The special :meth:`~ezdxf.entities.Layer.get_color` method is required, because
+the color attribute :attr:`Layer.dxf.color` is misused as layer on/off flag, a
+negative color value means the layer is off.
 
-ACI value 0 means BYBLOCK, which means the color from the block reference (INSERT entity).
+ACI value 0 means BYBLOCK, which means the color from the block reference
+(INSERT entity).
 
 Set color as ACI value as int in range [0, 256]:
 
@@ -50,44 +51,61 @@ Set color as ACI value as int in range [0, 256]:
     entity.dxf.color = 1
 
 
-The RGB values of the AutoCAD default colors are not officially documented, but an accurate
-translation table is included in `ezdxf`:
-
-.. code-block:: python
-
-    from ezdxf.colors import DXF_DEFAULT_COLORS, int2rgb
-
-    # 24 bit value RRRRRRRRGGGGGGGGBBBBBBBB
-    rgb24 = DXF_DEFAULT_COLORS[aci]
-    print(f'RGB Hex Value: #{rgb24:06X}')
-    r, g, b = int2rgb(rgb24)
-    print(f'RGB Channel Values: R={r:02X} G={g:02X} b={b:02X}')
-
-The ACI value 7 has a special meaning, it is white on dark backgrounds and white on light backgrounds.
+The ACI value 7 has a special meaning, it is white on dark backgrounds and white
+on light backgrounds.
 
 .. _howto_get_entity_rgb_color:
 
 Get/Set Entity RGB Color
 ------------------------
 
-RGB true color values are supported since DXF R13 (AC1012), the 24-bit RGB value is stored as integer in
-the DXF attribute :attr:`~ezdxf.entities.DXFGraphic.dxf.true_color`:
+RGB true color values are supported since DXF R13 (AC1012), the 24-bit RGB value
+is stored as integer in the DXF attribute :attr:`~ezdxf.entities.DXFGraphic.dxf.true_color`:
 
 .. code-block:: python
 
+    # 24 bit binary value: 0bRRRRRRRRGGGGGGGGBBBBBBBB or hex value: 0xRRGGBB
     # set true color value to red
     entity.dxf.true_color = 0xFF0000
 
-The :attr:`~ezdxf.entities.DXFGraphic.rgb` property of the :class:`~ezdxf.entities.DXFGraphic` entity
-add support to get/set RGB value as (r, g, b)-tuple:
+Use the helper functions from the :mod:`ezdxf.colors` module for
+RGB integer value handling:
+
+.. code-block:: python
+
+    from ezdxf import colors
+
+    entity.dxf.true_color = colors.rgb2int((0xFF, 0, 0))
+    r, g, b = colors.int2rgb(entity.dxf.true_color)
+
+The RGB values of the AutoCAD default colors are not officially documented,
+but an accurate translation table is included in `ezdxf`:
+
+.. code-block:: python
+
+    # Warning: ACI value 256 (BYLAYER) raises an IndexError!
+    rgb24 = colors.DXF_DEFAULT_COLORS[aci]
+    print(f"RGB Hex Value: #{rgb24:06X}")
+    r, g, b = colors.int2rgb(rgb24)
+    print(f"RGB Channel Values: R={r:02X} G={g:02X} b={b:02X}")
+
+If :attr:`color` and :attr:`true_color` values are set, BricsCAD and AutoCAD use
+the :attr:`true_color` value as display color for the entity.
+
+Get/Set True Color as RGB-Tuple
+-------------------------------
+
+Get/Set the true color value as (r, g, b)-tuple by the
+:attr:`~ezdxf.entities.DXFGraphic.rgb` property of the
+:class:`~ezdxf.entities.DXFGraphic` entity:
 
 .. code-block:: python
 
     # set true color value to red
-    entity.rgb = (255, 0, 0)
+    entity.rgb = (0xFF, 0, 0)
 
-If ``color`` and ``true_color`` values are set, BricsCAD and AutoCAD use the ``true_color`` value
-as display color for the entity.
+    # get true color values
+    r, g, b = entity.rgb
 
 .. _howto_get_attribs:
 

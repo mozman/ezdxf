@@ -128,7 +128,7 @@ def luminance(color: RGB) -> float:
 
 # modelspace color palette for AutoCAD 2020
 DXF_DEFAULT_COLORS = [
-    0x000000,
+    0x000000,  # dummy value for index [0]
     0xFF0000,
     0xFFFF00,
     0x00FF00,
@@ -389,7 +389,7 @@ DXF_DEFAULT_COLORS = [
 
 # paperspace color palette for AutoCAD 2020
 DXF_DEFAULT_PAPERSPACE_COLORS = [
-    0x000000,
+    0x000000,  # dummy value for index [0]
     0xFF0000,
     0xFFFF00,
     0x00FF00,
