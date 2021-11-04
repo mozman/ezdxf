@@ -1,12 +1,12 @@
 # Copyright (c) 2018-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Tuple, Iterable
+from typing import TYPE_CHECKING, Tuple, Iterable, Sequence
 import math
 
 from ezdxf.math import Vec2
 from .bbox import BoundingBox2d
 from .construct2d import enclosing_angles, linspace
-from .circle import ConstructionCircle
+from .circle import ConstructionCircle, ConstructionRay, ConstructionLine
 from .ucs import UCS
 
 if TYPE_CHECKING:
@@ -39,9 +39,9 @@ class ConstructionArc:
     def __init__(
         self,
         center: "Vertex" = (0, 0),
-        radius: float = 1,
-        start_angle: float = 0,
-        end_angle: float = 360,
+        radius: float = 1.0,
+        start_angle: float = 0.0,
+        end_angle: float = 360.0,
         is_counter_clockwise: bool = True,
     ):
 
@@ -63,6 +63,15 @@ class ConstructionArc:
     def end_point(self) -> "Vec2":
         """end point of arc as :class:`Vec2`."""
         return self.center + Vec2.from_deg_angle(self.end_angle, self.radius)
+
+    @property
+    def is_passing_zero(self) -> bool:
+        """Returns ``True`` if the arc passes the x-axis (== 0 degree)."""
+        return self.start_angle > self.end_angle
+
+    @property
+    def circle(self) -> ConstructionCircle:
+        return ConstructionCircle(self.center, self.radius)
 
     @property
     def bounding_box(self) -> "BoundingBox2d":
@@ -370,6 +379,139 @@ class ConstructionArc:
             dxfattribs=dxfattribs,
         )
         return arc if ucs is None else arc.transform(ucs.matrix)
+
+    def intersect_ray(
+        self, ray: ConstructionRay, abs_tol: float = 1e-10
+    ) -> Sequence[Vec2]:
+        """Returns intersection points of arc and `ray` as sequence of
+        :class:`Vec2` objects.
+
+        Args:
+            ray: intersection ray
+            abs_tol: absolute tolerance for tests (e.g. test for tangents)
+
+        Returns:
+            tuple of :class:`Vec2` objects
+
+            =========== ==================================
+            tuple size  Description
+            =========== ==================================
+            0           no intersection
+            1           line intersects or touches the arc at one point
+            2           line intersects the arc at two points
+            =========== ==================================
+
+        .. versionadded:: 0.17.1
+
+        """
+        return [
+            point
+            for point in self.circle.intersect_ray(ray, abs_tol)
+            if self._is_point_in_arc_range(point)
+        ]
+
+    def intersect_line(
+        self, line: ConstructionLine, abs_tol: float = 1e-10
+    ) -> Sequence[Vec2]:
+        """Returns intersection points of arc and `line` as sequence of
+        :class:`Vec2` objects.
+
+        Args:
+            line: intersection line
+            abs_tol: absolute tolerance for tests (e.g. test for tangents)
+
+        Returns:
+            tuple of :class:`Vec2` objects
+
+            =========== ==================================
+            tuple size  Description
+            =========== ==================================
+            0           no intersection
+            1           line intersects or touches the arc at one point
+            2           line intersects the arc at two points
+            =========== ==================================
+
+        .. versionadded:: 0.17.1
+
+        """
+        return [
+            point
+            for point in self.circle.intersect_line(line, abs_tol)
+            if self._is_point_in_arc_range(point)
+        ]
+
+    def intersect_circle(
+        self, circle: ConstructionCircle, abs_tol: float = 1e-10
+    ) -> Sequence[Vec2]:
+        """Returns intersection points of arc and `circle` as sequence of
+        :class:`Vec2` objects.
+
+        Args:
+            circle: intersection circle
+            abs_tol: absolute tolerance for tests
+
+        Returns:
+            tuple of :class:`Vec2` objects
+
+            =========== ==================================
+            tuple size  Description
+            =========== ==================================
+            0           no intersection
+            1           circle intersects or touches the arc at one point
+            2           circle intersects the arc at two points
+            =========== ==================================
+
+        .. versionadded:: 0.17.1
+
+        """
+        return [
+            point
+            for point in self.circle.intersect_circle(circle, abs_tol)
+            if self._is_point_in_arc_range(point)
+        ]
+
+    def intersect_arc(
+        self, other: "ConstructionArc", abs_tol: float = 1e-10
+    ) -> Sequence[Vec2]:
+        """Returns intersection points of two arcs as sequence of
+        :class:`Vec2` objects.
+
+        Args:
+            other: other intersection arc
+            abs_tol: absolute tolerance for tests
+
+        Returns:
+            tuple of :class:`Vec2` objects
+
+            =========== ==================================
+            tuple size  Description
+            =========== ==================================
+            0           no intersection
+            1           other arc intersects or touches the arc at one point
+            2           other arc intersects the arc at two points
+            =========== ==================================
+
+        .. versionadded:: 0.17.1
+
+        """
+        return [
+            point
+            for point in self.circle.intersect_circle(other.circle, abs_tol)
+            if self._is_point_in_arc_range(point)
+            and other._is_point_in_arc_range(point)
+        ]
+
+    def _is_point_in_arc_range(self, point: Vec2) -> bool:
+        # The point has to be on the circle defined by the arc, this is not
+        # tested here! Helper tools to check intersections.
+        angle_shift: float = 0.0
+        start: float = self.start_angle
+        end: float = self.end_angle
+        if start > end:
+            angle_shift = 360.0
+            start += angle_shift
+        angle: float = ((point - self.center).angle_deg % 360.0) + angle_shift
+        return start <= angle <= end
 
 
 def arc_chord_length(radius: float, sagitta: float) -> float:

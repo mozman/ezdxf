@@ -715,6 +715,14 @@ ConstructionArc
 
     .. automethod:: add_to_layout(layout: BaseLayout, ucs: UCS = None, dxfattribs: dict = None) -> Arc
 
+    .. automethod:: intersect_ray(ray: ConstructionRay, abs_tol: float = 1e-10) -> Sequence[Vec2]
+
+    .. automethod:: intersect_line(ray: ConstructionLine, abs_tol: float = 1e-10) -> Sequence[Vec2]
+
+    .. automethod:: intersect_circle(circle: ConstructionCircle, abs_tol: float = 1e-10) -> Sequence[Vec2]
+
+    .. automethod:: intersect_arc(other: ConstructionArc, abs_tol: float = 1e-10) -> Sequence[Vec2]
+
 ConstructionEllipse
 -------------------
 
