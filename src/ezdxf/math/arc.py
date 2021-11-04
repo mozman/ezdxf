@@ -508,13 +508,12 @@ class ConstructionArc:
     def _is_point_in_arc_range(self, point: Vec2) -> bool:
         # The point has to be on the circle defined by the arc, this is not
         # tested here! Helper tools to check intersections.
-        angle_shift: float = 0.0
         start: float = self.start_angle
         end: float = self.end_angle
-        if start > end:
-            angle_shift = 360.0
-            end += angle_shift
-        angle: float = ((point - self.center).angle_deg % 360.0) + angle_shift
+        angle: float = (point - self.center).angle_deg % 360.0
+        if start > end:  # arc passes 0 degree
+            end += 360.0
+            angle += 360.0
         return start <= angle <= end
 
 
