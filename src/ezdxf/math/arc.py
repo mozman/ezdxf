@@ -404,6 +404,7 @@ class ConstructionArc:
         .. versionadded:: 0.17.1
 
         """
+        assert isinstance(ray, ConstructionRay)
         return [
             point
             for point in self.circle.intersect_ray(ray, abs_tol)
@@ -434,6 +435,7 @@ class ConstructionArc:
         .. versionadded:: 0.17.1
 
         """
+        assert isinstance(line, ConstructionLine)
         return [
             point
             for point in self.circle.intersect_line(line, abs_tol)
@@ -464,6 +466,7 @@ class ConstructionArc:
         .. versionadded:: 0.17.1
 
         """
+        assert isinstance(circle, ConstructionCircle)
         return [
             point
             for point in self.circle.intersect_circle(circle, abs_tol)
@@ -494,6 +497,7 @@ class ConstructionArc:
         .. versionadded:: 0.17.1
 
         """
+        assert isinstance(other, ConstructionArc)
         return [
             point
             for point in self.circle.intersect_circle(other.circle, abs_tol)

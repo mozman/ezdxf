@@ -145,6 +145,7 @@ class ConstructionCircle:
             =========== ==================================
 
         """
+        assert isinstance(ray, ConstructionRay)
         ortho_ray = ray.orthogonal(self.center)
         intersection_point = ray.intersect(ortho_ray)
         dist = self.center.distance(intersection_point)
@@ -194,7 +195,7 @@ class ConstructionCircle:
         .. versionadded:: 0.17.1
 
         """
-
+        assert isinstance(line, ConstructionLine)
         return [
             point
             for point in self.intersect_ray(line.ray, abs_tol=abs_tol)
@@ -223,6 +224,7 @@ class ConstructionCircle:
             =========== ==================================
 
         """
+        assert isinstance(other, ConstructionCircle)
         r1 = self.radius
         r2 = other.radius
         d = self.center.distance(other.center)
