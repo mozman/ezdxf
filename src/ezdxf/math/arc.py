@@ -513,7 +513,7 @@ class ConstructionArc:
         end: float = self.end_angle
         if start > end:
             angle_shift = 360.0
-            start += angle_shift
+            end += angle_shift
         angle: float = ((point - self.center).angle_deg % 360.0) + angle_shift
         return start <= angle <= end
 
