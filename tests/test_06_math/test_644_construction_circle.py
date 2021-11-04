@@ -7,6 +7,7 @@ import pytest
 
 from ezdxf.math import (
     ConstructionRay,
+    ConstructionLine,
     ConstructionCircle,
     Vec2,
 )
@@ -281,3 +282,51 @@ def test_create_3P():
     assert isclose(circle.center[0], 7.6875, abs_tol=1e-4)
     assert isclose(circle.center[1], 3.15625, abs_tol=1e-4)
     assert isclose(circle.radius, 4.6901, abs_tol=1e-4)
+
+
+@pytest.mark.parametrize(
+    "start,end",
+    [
+        [(0.5, 2.0), (1.5, 2.0)],
+        [(0.5, -2.0), (1.5, -2.0)],
+        [(2.0, -2.0), (2.0, 2.0)],
+        [(-2.0, -2.0), (-2.0, 2.0)],
+    ],
+)
+def test_intersect_line_in_no_point(start, end):
+    """The intersection calculation itself is based on intersect_ray() and is
+    already tested.
+    """
+    circle = ConstructionCircle((0, 0), 1.0)
+    assert len(circle.intersect_line(ConstructionLine(start, end))) == 0
+
+
+@pytest.mark.parametrize(
+    "start,end",
+    [
+        [(0.5, 0.5), (1.5, 1.5)],
+        [(-0.5, -0.5), (-1.5, -1.5)],
+        [(0.0, 1.0), (0.5, 1.0)],  # touches the circle at one point
+    ],
+)
+def test_intersect_line_in_one_point(start, end):
+    """The intersection calculation itself is based on intersect_ray() and is
+    already tested.
+    """
+    circle = ConstructionCircle((0, 0), 1.0)
+    assert len(circle.intersect_line(ConstructionLine(start, end))) == 1
+
+
+@pytest.mark.parametrize(
+    "start,end",
+    [
+        [(0.0, -2.0), (0.0, 2.0)],
+        [(0.5, -2.0), (0.5, 2.0)],
+        [(-2.0, 0.0), (2.0, 0.0)],
+        [(-2.0, 0.5), (2.0, 0.5)],
+        [(-2.0, -2.0), (2.0, 2.0)],
+    ],
+)
+def test_intersect_line_in_two_points(start, end):
+    circle = ConstructionCircle((0, 0), 1.0)
+    assert len(circle.intersect_line(ConstructionLine(start, end))) == 2

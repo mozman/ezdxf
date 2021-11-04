@@ -1288,19 +1288,19 @@ def visible_arcs(
         end_angle += tau
 
     for line in box.border_lines():
-        for intersection_point in circle.intersect_ray(line.ray):
-            if is_point_in_line_range(line.start, line.end, intersection_point):
-                angle = (
-                    (intersection_point - center).angle % tau
-                ) + shift_angles
-                # is angle in range of the arc
-                if start_angle < angle < end_angle:
-                    # new angle should be different than the last angle added:
-                    if intersection_angles and math.isclose(
-                        intersection_angles[-1], angle
-                    ):
-                        continue
-                    intersection_angles.append(angle)
+        for intersection_point in circle.intersect_line(line):
+            angle = (
+                (intersection_point - center).angle % tau
+            ) + shift_angles
+            # is angle in range of the arc
+            if start_angle < angle < end_angle:
+                # new angle should be different than the last angle added:
+                if intersection_angles and math.isclose(
+                    intersection_angles[-1], angle
+                ):
+                    continue
+                intersection_angles.append(angle)
+
     if len(intersection_angles) == 2:
         # Arc has to intersect the box in exact two locations!
         intersection_angles.sort()
@@ -1312,13 +1312,6 @@ def visible_arcs(
         # Ignore cases where the start- or the end point is inside the box.
         # Ignore cases where the box touches the arc in one point.
         return [(start_angle, end_angle)]
-
-
-def is_point_in_line_range(start: Vec2, end: Vec2, point: Vec2) -> bool:
-    length = (end - start).magnitude
-    if (point - start).magnitude > length:
-        return False
-    return (point - end).magnitude <= length
 
 
 def get_text_style(doc: "Drawing", name: str) -> "Textstyle":

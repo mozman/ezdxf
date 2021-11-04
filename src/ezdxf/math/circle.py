@@ -3,7 +3,7 @@
 from typing import TYPE_CHECKING, Sequence, Iterator, Iterable
 import math
 from ezdxf.math import Vec2, linspace
-from .line import ConstructionRay
+from .line import ConstructionRay, ConstructionLine
 from .bbox import BoundingBox2d
 
 if TYPE_CHECKING:
@@ -103,6 +103,7 @@ class ConstructionCircle:
 
         """
         from .arc import arc_segment_count
+
         count = arc_segment_count(self.radius, math.tau, sagitta)
         yield from self.vertices(linspace(0.0, math.tau, count + 1))
 
@@ -169,6 +170,37 @@ class ConstructionCircle:
         # else: No intersection
         return tuple(result)
 
+    def intersect_line(
+        self, line: ConstructionLine, abs_tol: float = 1e-10
+    ) -> Sequence[Vec2]:
+        """Returns intersection points of circle and `line` as sequence of
+        :class:`Vec2` objects.
+
+        Args:
+            line: intersection line
+            abs_tol: absolute tolerance for tests (e.g. test for tangents)
+
+        Returns:
+            tuple of :class:`Vec2` objects
+
+            =========== ==================================
+            tuple size  Description
+            =========== ==================================
+            0           no intersection
+            1           line intersects or touches the circle at one point
+            2           line intersects the circle at two points
+            =========== ==================================
+
+        .. versionadded:: 0.17.1
+
+        """
+
+        return [
+            point
+            for point in self.intersect_ray(line.ray, abs_tol=abs_tol)
+            if is_point_in_line_range(line.start, line.end, point)
+        ]
+
     def intersect_circle(
         self, other: "ConstructionCircle", abs_tol: float = 1e-10
     ) -> Sequence[Vec2]:
@@ -212,3 +244,10 @@ class ConstructionCircle:
                 result.append(self.point_at(angle + alpha))
                 result.append(self.point_at(angle - alpha))
         return tuple(result)
+
+
+def is_point_in_line_range(start: Vec2, end: Vec2, point: Vec2) -> bool:
+    length = (end - start).magnitude
+    if (point - start).magnitude > length:
+        return False
+    return (point - end).magnitude <= length

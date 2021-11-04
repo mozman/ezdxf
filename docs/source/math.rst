@@ -658,6 +658,8 @@ ConstructionCircle
 
     .. automethod:: intersect_ray(ray: ConstructionRay, abs_tol: float = 1e-10) -> Sequence[Vec2]
 
+    .. automethod:: intersect_line(ray: ConstructionLine, abs_tol: float = 1e-10) -> Sequence[Vec2]
+
     .. automethod:: intersect_circle(other: ConstructionCircle, abs_tol: float = 1e-10) -> Sequence[Vec2]
 
 ConstructionArc
