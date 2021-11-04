@@ -106,7 +106,7 @@ class Circle(DXFGraphic):
             yield ocs.to_wcs(Vec3.from_deg_angle(angle, radius) + center)
 
     def flattening(self, sagitta: float) -> Iterable[Vec3]:
-        """Approximate the circle by vertices in WCS, argument `segment` is the
+        """Approximate the circle by vertices in WCS, argument `sagitta` is the
         max. distance from the center of an arc segment to the center of its
         chord. Returns a closed polygon: start vertex == end vertex!
 

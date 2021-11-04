@@ -648,6 +648,10 @@ ConstructionCircle
 
     .. automethod:: point_at(angle: float) -> Vec2
 
+    .. automethod:: vertices(angles: Iterable[float]) -> Iterator[Vec2]
+
+    .. automethod:: flattening(sagitta: float) -> Iterator[Vec2]
+
     .. automethod:: inside
 
     .. automethod:: tangent(angle: float) -> ConstructionRay

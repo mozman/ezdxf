@@ -111,7 +111,7 @@ class ConstructionArc:
             yield center + Vec2.from_deg_angle(angle, radius)
 
     def flattening(self, sagitta: float) -> Iterable[Vec2]:
-        """Approximate the arc by vertices in WCS, argument `segment` is the
+        """Approximate the arc by vertices in WCS, argument `sagitta` is the
         max. distance from the center of an arc segment to the center of its
         chord.
 

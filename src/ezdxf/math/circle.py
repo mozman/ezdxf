@@ -1,8 +1,8 @@
 # Copyright (c) 2010-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING, Sequence, Iterator, Iterable
 import math
-from ezdxf.math import Vec2
+from ezdxf.math import Vec2, linspace
 from .line import ConstructionRay
 from .bbox import BoundingBox2d
 
@@ -72,10 +72,39 @@ class ConstructionCircle:
         """Returns point on circle at `angle` as :class:`Vec2` object.
 
         Args:
-            angle: angle in radians
+            angle: angle in radians, angle goes counter
+                clockwise around the z-axis, x-axis = 0 deg.
 
         """
         return self.center + Vec2.from_angle(angle, self.radius)
+
+    def vertices(self, angles: Iterable[float]) -> Iterable[Vec2]:
+        """Yields vertices of the circle for iterable `angles`.
+
+        Args:
+            angles: iterable of angles as radians, angle goes counter
+                clockwise around the z-axis, x-axis = 0 deg.
+
+        .. versionadded:: 0.17.1
+
+        """
+        center = self.center
+        radius = self.radius
+        for angle in angles:
+            yield center + Vec2.from_angle(angle, radius)
+
+    def flattening(self, sagitta: float) -> Iterator[Vec2]:
+        """Approximate the circle by vertices, argument `sagitta` is the
+        max. distance from the center of an arc segment to the center of its
+        chord. Returns a closed polygon where the start vertex is coincident
+        with the end vertex!
+
+        .. versionadded:: 0.17.1
+
+        """
+        from .arc import arc_segment_count
+        count = arc_segment_count(self.radius, math.tau, sagitta)
+        yield from self.vertices(linspace(0.0, math.tau, count + 1))
 
     def inside(self, point: "Vertex") -> bool:
         """Returns ``True`` if `point` is inside circle."""

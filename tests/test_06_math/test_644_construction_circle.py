@@ -257,6 +257,22 @@ def test_intersect_circle_intersect():
     )
 
 
+def test_vertices():
+    circle = ConstructionCircle((0, 0), 1.0)
+    vertices = list(circle.vertices([0, math.pi * 0.5, math.pi, math.pi * 1.5]))
+    assert vertices[0].isclose((1, 0))
+    assert vertices[1].isclose((0, 1))
+    assert vertices[2].isclose((-1, 0))
+    assert vertices[3].isclose((0, -1))
+
+
+def test_flattening():
+    circle = ConstructionCircle((0, 0), 1.0)
+    vertices = list(circle.flattening(0.01))
+    assert len(vertices) == 24
+    assert vertices[0].isclose(vertices[-1]), "expected closed polygon"
+
+
 def test_create_3P():
     p1 = (3.0, 3.0)
     p2 = (5.0, 7.0)
