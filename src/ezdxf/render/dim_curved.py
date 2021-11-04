@@ -174,7 +174,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         super().render(block)
         self.add_extension_lines()
         adjust_start_angle, adjust_end_angle = self.add_arrows()
-        self.add_dimension_line(adjust_start_angle, adjust_end_angle)
+
         measurement = self.measurement
         if measurement.text:
             if self.geometry.supports_dxf_r2000:
@@ -187,6 +187,8 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
             if measurement.has_leader:
                 leader1, leader2 = self.get_leader_points()
                 self.add_leader(self.dim_midpoint, leader1, leader2)
+        # requires the TextBox to remove hidden parts of the dimension line
+        self.add_dimension_line(adjust_start_angle, adjust_end_angle)
         self.geometry.add_defpoints(self.get_defpoints())
 
     @property
@@ -400,7 +402,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
             self.start_angle_rad + start_offset,
             self.end_angle_rad - end_offset,
             dxfattribs=self.dimension_line.dxfattribs(),
-            remove_hidden_lines=False,
+            remove_hidden_lines=True,
         )
 
     def add_measurement_text(
