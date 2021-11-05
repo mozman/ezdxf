@@ -49,6 +49,7 @@ def locations():
         location(Vec3(10, 0), -1),
     ]
 
+
 def angular_cra_default(dxfversion="R2013"):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
@@ -58,6 +59,7 @@ def angular_cra_default(dxfversion="R2013"):
         [Vec3(0, 0), 60, 120],
         [Vec3(10, 0), 300, 240],
         [Vec3(20, 0), 240, 300],
+        [Vec3(30, 0), 300, 30],
     ]
     for name, dimtad, offset in [
         ["above", 1, Vec3(0, 20)],

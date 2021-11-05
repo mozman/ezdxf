@@ -1277,24 +1277,26 @@ def visible_arcs(
     """
 
     intersection_angles: List[float] = []  # angles are in the range 0 to 2pi
+    start_angle %= math.tau
+    end_angle %= math.tau
     arc = ConstructionArc(
         center, radius, math.degrees(start_angle), math.degrees(end_angle)
     )
     for line in box.border_lines():
         for intersection_point in arc.intersect_line(line):
-            angle = (
-                (intersection_point - center).angle % math.tau
-            )
+            angle = (intersection_point - center).angle % math.tau
             if not intersection_angles:
                 intersection_angles.append(angle)
             # new angle should be different than the last added angle:
-            elif not math.isclose(
-                intersection_angles[-1], angle
-            ):
+            elif not math.isclose(intersection_angles[-1], angle):
                 intersection_angles.append(angle)
-
+    # Arc has to intersect the box in exact two locations!
     if len(intersection_angles) == 2:
-        # Arc has to intersect the box in exact two locations!
+        if start_angle > end_angle:  # arc passes 0 degrees
+            intersection_angles = [
+                (a if a >= start_angle else a + math.tau)
+                for a in intersection_angles
+            ]
         intersection_angles.sort()
         return [
             (start_angle, intersection_angles[0]),
