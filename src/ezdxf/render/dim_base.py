@@ -17,7 +17,7 @@ from ezdxf.math import (
     Vec2,
     ConstructionLine,
     ConstructionBox,
-    ConstructionCircle,
+    ConstructionArc,
 )
 from ezdxf.math import UCS, PassTroughUCS, xround, Z_AXIS
 from ezdxf.lldxf import const
@@ -1276,29 +1276,21 @@ def visible_arcs(
 
     """
 
-    tau = math.tau
-    # normalize angles into range 0 to 2pi
-    start_angle = start_angle % tau
-    end_angle = end_angle % tau
     intersection_angles: List[float] = []  # angles are in the range 0 to 2pi
-    circle = ConstructionCircle(center, radius)
-    shift_angles = 0.0
-    if start_angle > end_angle:  # angles should not pass 0
-        shift_angles = tau
-        end_angle += tau
-
+    arc = ConstructionArc(
+        center, radius, math.degrees(start_angle), math.degrees(end_angle)
+    )
     for line in box.border_lines():
-        for intersection_point in circle.intersect_line(line):
+        for intersection_point in arc.intersect_line(line):
             angle = (
-                (intersection_point - center).angle % tau
-            ) + shift_angles
-            # is angle in range of the arc
-            if start_angle < angle < end_angle:
-                # new angle should be different than the last angle added:
-                if intersection_angles and math.isclose(
-                    intersection_angles[-1], angle
-                ):
-                    continue
+                (intersection_point - center).angle % math.tau
+            )
+            if not intersection_angles:
+                intersection_angles.append(angle)
+            # new angle should be different than the last added angle:
+            elif not math.isclose(
+                intersection_angles[-1], angle
+            ):
                 intersection_angles.append(angle)
 
     if len(intersection_angles) == 2:
