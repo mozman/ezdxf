@@ -169,32 +169,25 @@ def test_cicles_do_not_intersect():
     assert len(cross_points) == 0
 
 
-def test_intersect_circle_touch():
-    def check_touch(m, t, abs_tol=1e-9):
-        circle2 = ConstructionCircle(m, 1.5)
-        points = circle1.intersect_circle(circle2, 4)
-        assert len(points) == 1
-        return points[0].isclose(t, abs_tol=abs_tol)
-
+@pytest.mark.parametrize(
+    "center, point",
+    [
+        ((26.5, 20.0), (25.0, 20.0)),
+        ((20.0, 26.5), (20.0, 25.0)),
+        ((13.5, 20.0), (15.0, 20.0)),
+        ((20.0, 13.5), (20.0, 15.0)),
+        ((23.5, 20.0), (25.0, 20.0)),
+        ((20.0, 23.5), (20.0, 25.0)),
+        ((16.5, 20.0), (15.0, 20.0)),
+        ((20.0, 16.5), (20.0, 15.0)),
+    ],
+)
+def test_two_circles_touching_at_one_point(center, point):
     circle1 = ConstructionCircle((20, 20), 5)
-
-    assert check_touch((26.5, 20.0), (25.0, 20.0)) is True
-    assert check_touch((20.0, 26.5), (20.0, 25.0)) is True
-    assert check_touch((13.5, 20.0), (15.0, 20.0)) is True
-    assert check_touch((20.0, 13.5), (20.0, 15.0)) is True
-    assert (
-        check_touch((14.9339, 15.9276), (16.1030, 16.8674), abs_tol=1e-4)
-        is True
-    )
-
-    assert check_touch((23.5, 20.0), (25.0, 20.0)) is True
-    assert check_touch((20.0, 23.5), (20.0, 25.0)) is True
-    assert check_touch((16.5, 20.0), (15.0, 20.0)) is True
-    assert check_touch((20.0, 16.5), (20.0, 15.0)) is True
-    assert (
-        check_touch((17.2721, 17.8071), (16.1030, 16.8673), abs_tol=1e-4)
-        is True
-    )
+    circle2 = ConstructionCircle(center, 1.5)
+    points = circle1.intersect_circle(circle2)
+    assert len(points) == 1
+    return points[0].isclose(point, abs_tol=1e-9)
 
 
 def test_intersect_circle_intersect():

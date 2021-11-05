@@ -4,8 +4,15 @@
 import pytest
 import ezdxf
 import math
-from ezdxf.math import ConstructionArc, Vec3, UCS, Vec2
-from ezdxf.math import arc_segment_count, arc_angle_span_deg
+from ezdxf.math import (
+    ConstructionArc,
+    ConstructionCircle,
+    ConstructionLine,
+    UCS,
+    Vec3,
+    Vec2,
+    arc_segment_count,
+)
 from math import isclose
 
 
@@ -230,3 +237,139 @@ def test_arc_segment_count():
 def test_flattening(r, s, e, sagitta, count):
     arc = ConstructionArc((0, 0), r, s, e)
     assert len(list(arc.flattening(sagitta))) == count
+
+
+@pytest.mark.parametrize("p", [(2, 0), (2, 2), (0, 2), (2, -2), (0, -2)])
+def test_point_is_in_arc_range(p):
+    """
+    Test if the angle defined by arc.center and point "p" is in the range
+    arc.start_angle to arc.end_angle:
+    """
+    arc = ConstructionArc((0, 0), 1, -90, 90)
+    assert arc._is_point_in_arc_range(Vec2(p)) is True
+
+
+@pytest.mark.parametrize("p", [(-2, 0), (-2, 2), (-2, -2)])
+def test_point_is_not_in_arc_range(p):
+    """
+    Test if the angle defined by arc.center and point "p" is NOT in the range
+    arc.start_angle to arc.end_angle:
+    """
+    arc = ConstructionArc((0, 0), 1, -90, 90)
+    assert arc._is_point_in_arc_range(Vec2(p)) is False
+
+
+@pytest.mark.parametrize(
+    "s, e",
+    [
+        [(0, 0), (2, 0)],  # touches the arc
+        [(0, 0), (3, 0)],  # intersect
+        [(0, 0), (0, 2)],  # touches the arc
+        [(0, 0), (0, 3)],  # intersect
+        [(0, 0), (2, 2)],  # intersect
+        [(0, -1), (2, -1)],  # intersect
+    ],
+)
+def test_arc_intersect_line_in_one_point(s, e):
+    arc = ConstructionArc((0, 0), 2, -90, 90)
+    assert len(arc.intersect_line(ConstructionLine(s, e))) == 1
+
+
+@pytest.mark.parametrize(
+    "s, e",
+    [
+        [(-2, 0), (2, 0)],  # touches
+        [(-2, 1), (2, 1)],  # intersect
+    ],
+)
+def test_arc_intersect_line_in_two_points(s, e):
+    arc = ConstructionArc((0, 0), 2, 0, 180)
+    assert len(arc.intersect_line(ConstructionLine(s, e))) == 2
+
+
+@pytest.mark.parametrize(
+    "s, e",
+    [
+        [(0, 2), (1, 2)],
+        [(2, 0), (2, 1)],
+        [(1, 1), (2, 2)],
+    ],
+)
+def test_arc_does_not_intersect_line(s, e):
+    arc = ConstructionArc((0, 0), 1, 0, 90)
+    assert len(arc.intersect_line(ConstructionLine(s, e))) == 0
+
+
+@pytest.mark.parametrize(
+    "c, r",
+    [
+        [(0.0, 1.0), 1.0],
+        [(0.0, 0.5), 0.5],
+        [(2.0, 0.0), 1.0],
+    ],
+)
+def test_arc_intersect_circle_in_one_point(c, r):
+    arc = ConstructionArc((0, 0), 1, -90, 90)
+    assert len(arc.intersect_circle(ConstructionCircle(c, r))) == 1
+
+
+@pytest.mark.parametrize(
+    "c, r",
+    [
+        [(1.0, 0.0), 1.0],
+        [(0.5, 0.0), 1.0],
+    ],
+)
+def test_arc_intersect_circle_in_two_points(c, r):
+    arc = ConstructionArc((0, 0), 1, -90, 90)
+    assert len(arc.intersect_circle(ConstructionCircle(c, r))) == 2
+
+
+@pytest.mark.parametrize(
+    "c, r",
+    [
+        [(0.0, 0.0), 0.5],  # concentric circle
+        [(0.0, 0.0), 1.0],  # concentric circle
+        [(0.0, 0.0), 2.0],  # concentric circle
+        [(2.0, 0.0), 0.5],  # ) O
+    ],
+)
+def test_arc_does_not_intersect_circle(c, r):
+    arc = ConstructionArc((0, 0), 1, -90, 90)
+    assert len(arc.intersect_circle(ConstructionCircle(c, r))) == 0
+
+
+@pytest.mark.parametrize(
+    "c, r, s, e",
+    [
+        [(2.0, 0.0), 1.0, 90, 270],  # touches in one point: )(
+        [(1.5, 0.0), 1.0, 90, 180],  # intersect
+    ],
+)
+def test_arc_intersect_arc_in_one_point(c, r, s, e):
+    arc = ConstructionArc((0, 0), 1, -90, 90)
+    assert len(arc.intersect_arc(ConstructionArc(c, r, s, e))) == 1
+
+
+@pytest.mark.parametrize(
+    "c, r, s, e",
+    [
+        [(0.5, 0.0), 1.0, 90, 270],  # intersect
+        [(1.5, 0.0), 1.0, 90, 270],  # intersect
+    ],
+)
+def test_arc_intersect_arc_in_two_points(c, r, s, e):
+    arc = ConstructionArc((0, 0), 1, -90, 90)
+    assert len(arc.intersect_arc(ConstructionArc(c, r, s, e))) == 2
+
+
+@pytest.mark.parametrize(
+    "c, r, s, e",
+    [
+        [(0.0, 0.0), 1.0, 90, 270],  # concentric arcs
+        [(-0.5, 0.0), 1.0, 90, 270],  # insect circle but not arc: ( )
+    ],
+)
+def test_arc_does_not_intersect_arc(c, r, s, e):
+    arc = ConstructionArc((0, 0), 1, -90, 90)
+    assert len(arc.intersect_arc(ConstructionArc(c, r, s, e))) == 0

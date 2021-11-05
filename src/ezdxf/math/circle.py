@@ -228,6 +228,10 @@ class ConstructionCircle:
         r1 = self.radius
         r2 = other.radius
         d = self.center.distance(other.center)
+        if d < abs_tol:
+            # concentric circles do not intersect by definition
+            return []
+
         d_max = r1 + r2
         d_min = math.fabs(r1 - r2)
         result = []

@@ -6,7 +6,8 @@ import math
 from ezdxf.math import Vec2
 from .bbox import BoundingBox2d
 from .construct2d import enclosing_angles, linspace
-from .circle import ConstructionCircle, ConstructionRay, ConstructionLine
+from .circle import ConstructionCircle
+from .line import ConstructionRay, ConstructionLine
 from .ucs import UCS
 
 if TYPE_CHECKING:
@@ -508,12 +509,11 @@ class ConstructionArc:
     def _is_point_in_arc_range(self, point: Vec2) -> bool:
         # The point has to be on the circle defined by the arc, this is not
         # tested here! Helper tools to check intersections.
-        start: float = self.start_angle
-        end: float = self.end_angle
+        start: float = self.start_angle % 360.0
+        end: float = self.end_angle % 360.0
         angle: float = (point - self.center).angle_deg % 360.0
         if start > end:  # arc passes 0 degree
-            end += 360.0
-            angle += 360.0
+            return angle >= start or angle <= end
         return start <= angle <= end
 
 
