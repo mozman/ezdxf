@@ -4,7 +4,7 @@
 import pytest
 import ezdxf
 from ezdxf.document import Drawing
-from ezdxf.math import Vec2
+from ezdxf.math import Vec2, arc_angle_span_deg
 from ezdxf.render.dim_curved import detect_closer_defpoint
 
 
@@ -82,20 +82,21 @@ class TestDetectCloserDefpoints:
 
 
 @pytest.mark.parametrize(
-    "c,s,e",
+    "s,e",
     [
-        [Vec2(0, 0), 60, 120],
-        [Vec2(10, 0), 300, 240],
-        [Vec2(20, 0), 240, 300],
-    ],
+        [60, 120],
+        [300, 240],  # passes 0
+        [240, 300],
+        [300, 30],  # passes 0
+    ]
 )
-def test_dimension_line_divided_by_measurement_text(doc: Drawing, c, s, e):
+def test_dimension_line_divided_by_measurement_text(doc: Drawing, s, e):
     """Vertical centered measurement text should hide the part of the
     dimension line beneath the text. This creates two arcs instead of one.
     """
     msp = doc.modelspace()
     dim = msp.add_angular_dim_cra(
-        center=c,
+        center=Vec2(),
         radius=5,
         start_angle=s,
         end_angle=e,
@@ -103,8 +104,14 @@ def test_dimension_line_divided_by_measurement_text(doc: Drawing, c, s, e):
         override={"dimtad": 0},  # vertical centered text
     )
     dim.render()
-    block = dim.dimension.get_geometry_block()
-    assert sum(1 for e in block if e.dxftype() == "ARC") == 2
+    arcs = dim.dimension.get_geometry_block().query("ARC")
+    assert len(arcs) == 2
+    assert sum(
+        arc_angle_span_deg(arc.dxf.start_angle, arc.dxf.end_angle)
+        for arc in arcs
+    ) < arc_angle_span_deg(
+        s, e
+    ), "sum of visual arcs should be smaller than the full arc"
 
 
 if __name__ == "__main__":
