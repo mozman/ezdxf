@@ -230,26 +230,22 @@ class ConstructionCircle:
         d = self.center.distance(other.center)
         if d < abs_tol:
             # concentric circles do not intersect by definition
-            return []
+            return tuple()
 
         d_max = r1 + r2
         d_min = math.fabs(r1 - r2)
-        result = []
         if d_min <= d <= d_max:
             angle = (other.center - self.center).angle
             # Circles touches at one point:
             if math.isclose(d, d_max, abs_tol=abs_tol) or math.isclose(
                 d, d_min, abs_tol=abs_tol
             ):
-                result.append(self.point_at(angle))
+                return (self.point_at(angle),)
             else:  # Circles intersect in two points:
                 # Law of Cosines:
-                alpha = math.acos(
-                    (r2 ** 2 - r1 ** 2 - d ** 2) / (-2.0 * r1 * d)
-                )
-                result.append(self.point_at(angle + alpha))
-                result.append(self.point_at(angle - alpha))
-        return tuple(result)
+                alpha = math.acos((r2 * r2 - r1 * r1 - d * d) / (-2.0 * r1 * d))
+                return tuple(self.vertices((angle + alpha, angle - alpha)))
+        return tuple()
 
 
 def is_point_in_line_range(start: Vec2, end: Vec2, point: Vec2) -> bool:
