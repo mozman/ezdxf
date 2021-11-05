@@ -577,15 +577,12 @@ class Vec2:
 
     __slots__ = ["x", "y"]
 
-    def __init__(self, v: Any = None, y: float = None):
+    def __init__(self, v=(0.0, 0.0), y=None):
         try:  # fast path for Vec2() and Vec3() or any object providing x and y attributes
             self.x = v.x
             self.y = v.y
         except AttributeError:
-            if v is None:  # accept Vec2() like the C-extension
-                self.x = 0.0
-                self.y = 0.0
-            elif y is None:  # given one tuple
+            if y is None:  # given one tuple
                 self.x = float(v[0])
                 self.y = float(v[1])
             else:  # two floats given
@@ -606,7 +603,7 @@ class Vec2:
 
         Uses standard Python :func:`round` function for rounding.
         """
-        return self.__class__((round(self.x, ndigits), round(self.y, ndigits)))
+        return self.__class__(round(self.x, ndigits), round(self.y, ndigits))
 
     @classmethod
     def list(cls, items: Iterable["Vertex"]) -> List["Vec2"]:
