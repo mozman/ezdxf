@@ -36,6 +36,12 @@ def test_init_tuple(vcls):
     assert v.y == 3
 
 
+def test_empty_init(vcls):
+    v = vcls()
+    assert v.x == 0.
+    assert v.y == 0.
+
+
 def test_init_vec2(vcls):
     v = Vec2(vcls(2, 3))
     assert v.x == 2

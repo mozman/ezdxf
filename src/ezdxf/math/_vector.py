@@ -577,12 +577,15 @@ class Vec2:
 
     __slots__ = ["x", "y"]
 
-    def __init__(self, v: Any, y: float = None):
+    def __init__(self, v: Any = None, y: float = None):
         try:  # fast path for Vec2() and Vec3() or any object providing x and y attributes
             self.x = v.x
             self.y = v.y
         except AttributeError:
-            if y is None:  # given one tuple
+            if v is None:  # accept Vec2() like the C-extension
+                self.x = 0.0
+                self.y = 0.0
+            elif y is None:  # given one tuple
                 self.x = float(v[0])
                 self.y = float(v[1])
             else:  # two floats given
