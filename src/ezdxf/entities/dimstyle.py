@@ -97,7 +97,13 @@ acdb_dimstyle = DefSubclass(
         # text vertical location: 0=center; 1+2+3=above; 4=below
         "dimtad": DXFAttr(77, default=1),
         "dimzin": DXFAttr(78, default=8),
-        "dimazin": DXFAttr(79, default=0, dxfversion=DXF2000),
+
+        # dimazin:
+        # 0 = Displays all leading and trailing zeros
+        # 1 = Suppresses leading zeros in decimal dimensions (for example, 0.5000 becomes .5000)
+        # 2 = Suppresses trailing zeros in decimal dimensions (for example, 12.5000 becomes 12.5)
+        # 3 = Suppresses leading and trailing zeros (for example, 0.5000 becomes .5)
+        "dimazin": DXFAttr(79, default=3, dxfversion=DXF2000),
         "unknown1": DXFAttr(90, dxfversion=DXF2000, optional=True),
         "dimalt": DXFAttr(170, default=0),
         "dimaltd": DXFAttr(171, default=3),
@@ -116,9 +122,9 @@ acdb_dimstyle = DefSubclass(
 
         # text color
         "dimclrt": DXFAttr(178, default=0),
-        "dimadec": DXFAttr(179, dxfversion=DXF2000, default=0),
+        "dimadec": DXFAttr(179, dxfversion=DXF2000, default=2),
         "dimunit": DXFAttr(270),  # obsolete
-        "dimdec": DXFAttr(271, dxfversion=DXF2000, default=0),
+        "dimdec": DXFAttr(271, dxfversion=DXF2000, default=2),
         # can appear multiple times ???
         "dimtdec": DXFAttr(272, dxfversion=DXF2000, default=2),
         "dimaltu": DXFAttr(273, dxfversion=DXF2000, default=2),

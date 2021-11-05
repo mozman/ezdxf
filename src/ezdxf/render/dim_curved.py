@@ -11,6 +11,7 @@ from ezdxf.math import (
     UCS,
     decdeg2dms,
     ellipse_param_span,
+    xround,
 )
 from ezdxf.entities import DimStyleOverride, Dimension, DXFEntity
 from .dim_base import (
@@ -49,7 +50,7 @@ def format_angular_text(
     value: float,
     angle_units: int,
     dimrnd: Optional[float],
-    dimdec: Optional[int],
+    dimdec: int,
     dimzin: int,
     dimdsep: str,
 ) -> str:
@@ -63,15 +64,24 @@ def format_angular_text(
         )
 
     def dms_format(_value: float) -> str:
+        if dimrnd is not None:
+            _value = xround(_value, dimrnd)
         d, m, s = decdeg2dms(_value)
-        return f"{d:.0f}°{m:.0f}'{decimal_format(s)}\""
+        if dimdec > 4:
+            places = dimdec - 5
+            s = round(s, places)
+            return f"{d:.0f}°{m:.0f}'{decimal_format(s)}\""
+        if dimdec > 2:
+            return f"{d:.0f}°{m:.0f}'{s:.0f}\""
+        if dimdec > 0:
+            return f"{d:.0f}°{m:.0f}'"
+        return f"{d:.0f}°"
 
     # angular_unit:
     # 0 = Decimal degrees
     # 1 = Degrees/minutes/seconds
     # 2 = Grad
     # 3 = Radians
-
     text = ""
     if angle_units == 0:
         text = decimal_format(value * DEG) + "°"
@@ -84,6 +94,18 @@ def format_angular_text(
     return text
 
 
+_ANGLE_UNITS = [
+    DEG,
+    DEG,
+    GRAD,
+    1.0,
+]
+
+
+def to_radians(value: float, dimaunit: int) -> float:
+    return value / _ANGLE_UNITS[dimaunit]
+
+
 class AngularTolerance(Tolerance):
     def __init__(
         self,
@@ -93,8 +115,16 @@ class AngularTolerance(Tolerance):
         dim_scale: float = 1.0,
         angle_units: int = 0,
     ):
-        super().__init__(dim_style, cap_height, width_factor, dim_scale)
         self.angular_units = angle_units
+        super().__init__(dim_style, cap_height, width_factor, dim_scale)
+        # Tolerance values are interpreted in dimaunit:
+        # dimtp 1 means 1 degree for dimaunit = 0 or 1, but 1 radians for
+        # dimaunit = 3
+        # format_text() requires radians as input:
+        self.update_tolerance_text(
+            to_radians(self.maximum, angle_units),
+            to_radians(self.minimum, angle_units),
+        )
 
     def format_text(self, value: float) -> str:
         """Rounding and text formatting of tolerance `value`, removes leading
@@ -110,6 +140,17 @@ class AngularTolerance(Tolerance):
             dimdsep=self.text_decimal_separator,
         )
 
+    def update_limits(self, measurement: float) -> None:
+        # measurement is in radians, tolerance values are interpreted in
+        # dimaunit: dimtp 1 means 1 degree for dimaunit = 0 or 1,
+        # but 1 radians for dimaunit = 3
+        # format_text() requires radians as input:
+        upper_limit = measurement + to_radians(self.maximum, self.angular_units)
+        lower_limit = measurement - to_radians(self.minimum, self.angular_units)
+        self.text_upper = self.format_text(upper_limit)
+        self.text_lower = self.format_text(lower_limit)
+        self.text_width = self.get_text_width(self.text_upper, self.text_lower)
+
 
 class AngleMeasurement(Measurement):
     def update(self, raw_measurement_value: float) -> None:
@@ -122,8 +163,8 @@ class AngleMeasurement(Measurement):
             value=value,
             angle_units=self.angle_units,
             dimrnd=None,
-            dimdec=self.decimal_places,
-            dimzin=self.suppress_zeros,
+            dimdec=self.angular_decimal_places,
+            dimzin=self.angular_suppress_zeros << 2,  # convert to dimzin value
             dimdsep=self.decimal_separator,
         )
         if self.text_post_process_format:
@@ -220,7 +261,9 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         if measurement.user_location is None:
             # place text in the center of the dimension line
             text_radial_dir = Vec2.from_angle(self.center_angle_rad)
-            measurement.text_location = self.center_of_arc + text_radial_dir * radius
+            measurement.text_location = (
+                self.center_of_arc + text_radial_dir * radius
+            )
         else:
             # place text at user location:
             measurement.text_location = measurement.user_location
@@ -233,9 +276,13 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
 
         # apply text relative shift (ezdxf only feature)
         if measurement.text_shift_h:
-            measurement.text_location += text_tangential_dir * measurement.text_shift_h
+            measurement.text_location += (
+                text_tangential_dir * measurement.text_shift_h
+            )
         if measurement.text_shift_v:
-            measurement.text_location += text_radial_dir * measurement.text_shift_v
+            measurement.text_location += (
+                text_radial_dir * measurement.text_shift_v
+            )
 
         # Update final text location in the DIMENSION entity:
         self.dimension.dxf.text_midpoint = measurement.text_location
@@ -338,15 +385,15 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         outside = self.arrows_outside
         arrow1 = not arrows.suppress1
         arrow2 = not arrows.suppress2
-        start_angle_offset = 0.
-        end_angle_offset = 0.
-        if arrows.tick_size > 0.:  # oblique stroke, but double the size
+        start_angle_offset = 0.0
+        end_angle_offset = 0.0
+        if arrows.tick_size > 0.0:  # oblique stroke, but double the size
             if arrow1:
                 self.add_blockref(
                     ARROWS.oblique,
                     insert=start,
                     rotation=angle1,
-                    scale=arrows.tick_size * 2.,
+                    scale=arrows.tick_size * 2.0,
                     dxfattribs=attribs,
                 )
             if arrow2:
@@ -354,12 +401,12 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
                     ARROWS.oblique,
                     insert=end,
                     rotation=angle2,
-                    scale=arrows.tick_size * 2.,
+                    scale=arrows.tick_size * 2.0,
                     dxfattribs=attribs,
                 )
         else:
             scale = arrows.arrow_size
-            start_angle = angle1 + 180.
+            start_angle = angle1 + 180.0
             end_angle = angle2
             if outside:
                 start_angle, end_angle = end_angle, start_angle
@@ -421,7 +468,9 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
 
 
 class _AngularCommonBase(_CurvedDimensionLine):
-    def init_tolerance(self, scale: float, measurement: Measurement) -> Tolerance:
+    def init_tolerance(
+        self, scale: float, measurement: Measurement
+    ) -> Tolerance:
         return AngularTolerance(
             self.dim_style,
             cap_height=measurement.text_height,

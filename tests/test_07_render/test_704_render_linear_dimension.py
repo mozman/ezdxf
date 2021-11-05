@@ -29,10 +29,10 @@ def test_linear_dimension_with_one_tolerance(dwg):
     renderer = LinearDimension(dimline.dimension, override=style)
     assert renderer.measurement.text == "100"
     assert renderer.measurement.decimal_separator == "."
-    assert renderer.tol.decimal_places == 4  # default value
-    assert renderer.tol.text == "±0.0100"
+    assert renderer.tol.decimal_places == 2  # default value
+    assert renderer.tol.text == "±0.01"
     assert renderer.tol.valign == 0
-    assert compile_mtext(renderer.measurement, renderer.tol) == r"\A0;100{\H0.50x;±0.0100}"
+    assert compile_mtext(renderer.measurement, renderer.tol) == r"\A0;100{\H0.50x;±0.01}"
 
 
 def test_linear_dimension_with_two_tolerances(dwg):
@@ -50,11 +50,11 @@ def test_linear_dimension_with_two_tolerances(dwg):
     renderer = LinearDimension(dimline.dimension, override=style)
     assert renderer.measurement.text == "101"
     assert renderer.measurement.decimal_separator == "."
-    assert renderer.tol.decimal_places == 4  # default value
-    assert renderer.tol.text_upper == "+0.0200"
-    assert renderer.tol.text_lower == "-0.0300"
+    assert renderer.tol.decimal_places == 2  # default value
+    assert renderer.tol.text_upper == "+0.02"
+    assert renderer.tol.text_lower == "-0.03"
     assert renderer.tol.valign == 1
-    assert compile_mtext(renderer.measurement, renderer.tol) == r"\A1;101{\H0.50x;\S+0.0200^ -0.0300;}"
+    assert compile_mtext(renderer.measurement, renderer.tol) == r"\A1;101{\H0.50x;\S+0.02^ -0.03;}"
 
 
 def test_linear_dimension_with_limits(dwg):
@@ -71,10 +71,10 @@ def test_linear_dimension_with_limits(dwg):
     renderer = LinearDimension(dimline.dimension, override=style)
     assert renderer.measurement.text == "101"
     assert renderer.measurement.decimal_separator == "."
-    assert renderer.tol.decimal_places == 4  # default value
-    assert renderer.tol.text_upper == "101.0200"
-    assert renderer.tol.text_lower == "100.9700"
-    assert compile_mtext(renderer.measurement, renderer.tol) == r"{\H0.50x;\S101.0200^ 100.9700;}"
+    assert renderer.tol.decimal_places == 2  # default value
+    assert renderer.tol.text_upper == "101.02"
+    assert renderer.tol.text_lower == "100.97"
+    assert compile_mtext(renderer.measurement, renderer.tol) == r"{\H0.50x;\S101.02^ 100.97;}"
 
 
 def test_dimension_insert_attribute_translates_the_block_content():

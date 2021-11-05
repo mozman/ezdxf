@@ -77,7 +77,7 @@ def sign_char(value: float) -> str:
 def format_text(
     value: float,
     dimrnd: float = None,
-    dimdec: int = None,
+    dimdec: int = 2,
     dimzin: int = 0,
     dimdsep: str = ".",
 ) -> str:
@@ -161,7 +161,8 @@ class Tolerance:  # and Limits
         self.maximum: float = get("dimtp", 0.0)
 
         # Number of decimal places to display in tolerance values
-        self.decimal_places: int = get("dimtdec", 4)
+        # Same value for linear and angular measurements!
+        self.decimal_places: int = get("dimtdec", 2)
 
         # Vertical justification for tolerance values relative to the nominal dimension text
         # 0 = Bottom
@@ -170,6 +171,7 @@ class Tolerance:  # and Limits
         self.valign: int = get("dimtolj", 0)
 
         # Same as DIMZIN for tolerances (self.text_suppress_zeros)
+        # Same value for linear and angular measurements!
         self.suppress_zeros: int = get("dimtzin", 0)
         self.text: str = ""
         self.text_height: float = 0.0
@@ -197,22 +199,27 @@ class Tolerance:  # and Limits
         # independent from the actual measurement:
         # Single tolerance value +/- value
         if self.minimum == self.maximum:
-            self.text = PLUS_MINUS + self.format_text(abs(self.maximum))
             self.text_height = self.char_height
             self.text_width = self.get_text_width(self.text, self.text)
         else:  # 2 stacked values: +upper tolerance <above> -lower tolerance
-            self.text_upper = sign_char(self.maximum) + self.format_text(
-                abs(self.maximum)
-            )
-            self.text_lower = sign_char(self.minimum * -1) + self.format_text(
-                abs(self.minimum)
-            )
             # requires 2 text lines
             self.text_height = self.char_height + (
                 self.text_height * self.line_spacing
             )
             self.text_width = self.get_text_width(
                 self.text_upper, self.text_lower
+            )
+        self.update_tolerance_text(self.maximum, self.minimum)
+
+    def update_tolerance_text(self, tol_upper: float, tol_lower: float):
+        if tol_upper == tol_lower:
+            self.text = PLUS_MINUS + self.format_text(abs(tol_upper))
+        else:
+            self.text_upper = sign_char(tol_upper) + self.format_text(
+                abs(tol_upper)
+            )
+            self.text_lower = sign_char(tol_lower * -1) + self.format_text(
+                abs(tol_lower)
             )
 
     def init_limits(self):
@@ -474,7 +481,8 @@ class Measurement:
         self.text_rotation: float = self.user_text_rotation
         self.text_color: int = get("dimclrt", color)  # ACI
         self.text_round: Optional[float] = get("dimrnd", None)
-        self.decimal_places: Optional[int] = get("dimdec", None)
+        self.decimal_places: int = get("dimdec", 2)
+        self.angular_decimal_places: int = get("dimadec", 2)
 
         # Controls the suppression of zeros in the primary unit value.
         # Values 0-3 affect feet-and-inch dimensions only and are not supported
@@ -484,7 +492,14 @@ class Measurement:
         #   e.g. 12.5000 becomes 12.5
         # 12 (Bit 3+4) = Suppresses both leading and trailing zeros,
         #   e.g. 0.5000 becomes .5)
-        self.suppress_zeros: int = get("dimzin", 0)
+        self.suppress_zeros: int = get("dimzin", 8)
+
+        # special setting for angular dimensions  (dimzin << 2) & 3
+        # 0 = Displays all leading and trailing zeros
+        # 1 = Suppresses leading zeros in decimal dimensions (for example, 0.5000 becomes .5000)
+        # 2 = Suppresses trailing zeros in decimal dimensions (for example, 12.5000 becomes 12.5)
+        # 3 = Suppresses leading and trailing zeros (for example, 0.5000 becomes .5)
+        self.angular_suppress_zeros: int = get("dimazin", 3)
 
         # decimal separator char, default is ",":
         self.decimal_separator: str = dim_style.get_decimal_separator()

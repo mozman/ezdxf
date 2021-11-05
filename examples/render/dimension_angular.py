@@ -189,8 +189,49 @@ def angular_3d(dxfversion="R2000"):
     doc.saveas(OUTDIR / f"dim_angular_{dxfversion}_3d.dxf")
 
 
+def angular_units_tol_limits(dxfversion="R2013"):
+    doc = ezdxf.new(dxfversion, setup=True)
+    msp = doc.modelspace()
+    radius = 5
+    distance = 2
+    data = [
+        [Vec3(0, 0), 60, 120, 0, 0],
+        [Vec3(10, 0), 300, 240, 0, 0],
+        [Vec3(20, 0), 240, 300, 1, 0],  # tolerance
+        [Vec3(30, 0), 300, 30, 0, 1],  # limits
+    ]
+    for dimaunit, offset in [
+        [0, Vec3(0, 0)],
+        [1, Vec3(0, 20)],
+        [2, Vec3(0, 40)],
+        [3, Vec3(0, 60)],
+    ]:
+        for center, start_angle, end_angle, dimtol, dimlim in data:
+            center += offset
+            add_lines(msp, center, radius, start_angle, end_angle)
+            dim = msp.add_angular_dim_cra(
+                center,
+                radius,
+                start_angle,
+                end_angle,
+                distance,
+                override={
+                    "dimaunit": dimaunit,
+                    "dimtol": dimtol,
+                    "dimtp": 1.0,
+                    "dimtm": 2.0,
+                    "dimlim": dimlim,
+                },
+            )
+            dim.render(discard=BRICSCAD)
+
+    doc.set_modelspace_vport(height=70)
+    doc.saveas(OUTDIR / f"dim_angular_units_tol_limits_{dxfversion}.dxf")
+
+
 if __name__ == "__main__":
     angular_cra_default()
     angular_3p_default()
     angular_2l_default()
     angular_3d()
+    angular_units_tol_limits()

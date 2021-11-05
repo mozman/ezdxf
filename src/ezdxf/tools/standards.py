@@ -279,26 +279,29 @@ def setup_dimstyle(
     dimstyle.dxf.dimexo = dim_style_fmt.dimexo
     dimstyle.dxf.dimdle = 0  # dimension extension beyond extension lines
     dimstyle.dxf.dimtix = 0  # Draws dimension text between the extension lines even if it would ordinarily be placed outside those lines
-    dimstyle.dxf.dimtih = 0  # Aligns text inside extension lines with dimension line; 1 = Draws text horizontally
-    dimstyle.dxf.dimtoh = 0  # Aligns text outside of extension lines with dimension line; 1 = Draws text horizontally
-    dimstyle.dxf.dimzin = 8  # Suppresses trailing zeros in decimal dimensions
+    dimstyle.dxf.dimtih = 0  # Align text inside extension lines with dimension line; 1 = Draws text horizontally
+    dimstyle.dxf.dimtoh = 0  # Align text outside of extension lines with dimension line; 1 = Draws text horizontally
+    dimstyle.dxf.dimzin = 12  # Suppresses leading trailing zeros in linear dimensions
+    dimstyle.dxf.dimazin = 3  # Suppresses leading + trailing zeros in angular dimensions
+    dimstyle.dxf.dimdec = 2  # decimals places for linear measurements
+    dimstyle.dxf.dimadec = 2  # decimals places for angle measurements
     dimstyle.dxf.dimsah = 0
+    dimstyle.dxf.dimtmove = 2  # move freely without leader
+    dimstyle.dxf.dimtxsty = style  # text style
+    dimstyle.dxf.dimtfac = 0.5  # tolerance text factor
+    dimstyle.dxf.dimtdec = 2  # tolerance decimal places
+
+    # user location override, controls both the text position and the
+    # dimension line location, same as DXF12
+    dimstyle.dxf.dimupt = 1
+    dimstyle.dxf.dimdsep = ord(".")
+
     if blk is None:  # oblique stroke
         dimstyle.dxf.dimtsz = dim_style_fmt.dimtsz  # tick size
         dimstyle.dxf.dimasz = dim_style_fmt.dimasz  # arrow size
     else:  # arrow or block
         dimstyle.set_arrows(blk=blk)
         dimstyle.dxf.dimasz = dim_style_fmt.dimasz
-    if doc.dxfversion > DXF12:
-        # set text style
-        dimstyle.dxf.dimtmove = 2  # move freely without leader
-        dimstyle.dxf.dimtxsty = style
-
-        # user location override, controls both the text position and the
-        # dimension line location, same as DXF12
-        dimstyle.dxf.dimupt = 1
-        dimstyle.dxf.dimdsep = ord(".")
-        dimstyle.dxf.dimdec = 2  # show just 2 decimals
     return dimstyle
 
 
