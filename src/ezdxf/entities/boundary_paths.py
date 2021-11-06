@@ -20,6 +20,7 @@ from ezdxf.math import (
     OCS,
     bulge_to_arc,
     ConstructionEllipse,
+    ConstructionArc,
     BSpline,
     NonUniformScalingError,
     open_uniform_knot_vector,
@@ -1004,6 +1005,15 @@ class ArcEdge:
             # ArcEdge is represented in counter-clockwise orientation:
             self.end_angle = self.start_angle + 360.0
 
+    def construction_tool(self) -> ConstructionArc:
+        """Returns ConstructionArc() for the OCS representation."""
+        return ConstructionArc(
+            center=self.center,
+            radius=self.radius,
+            start_angle=self.start_angle,
+            end_angle=self.end_angle,
+        )
+
 
 class EllipseEdge:
     EDGE_TYPE = "EllipseEdge"  # 2021-05-31: deprecated use type
@@ -1094,7 +1104,7 @@ class EllipseEdge:
         tagwriter.write_tag2(51, end)
         tagwriter.write_tag2(73, int(self.ccw))
 
-    def construction_tool(self):
+    def construction_tool(self) -> ConstructionEllipse:
         """Returns ConstructionEllipse() for the OCS representation."""
         return ConstructionEllipse(
             center=Vec3(self.center),
