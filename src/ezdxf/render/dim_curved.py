@@ -12,6 +12,7 @@ from ezdxf.math import (
     decdeg2dms,
     ellipse_param_span,
     xround,
+    arc_angle_span_deg
 )
 from ezdxf.entities import DimStyleOverride, Dimension, DXFEntity
 from .dim_base import (
