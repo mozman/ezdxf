@@ -27,7 +27,8 @@ __all__ = [
 
 _FLIPPED_Z_AXIS = Vec3(0, 0, -1)
 _PLACEHOLDER_OCS = OCS()
-DEG = 180.0 / math.pi
+DEG = 180.0 / math.pi  # radians to degrees
+RADIANS = math.pi / 180.0  # degrees to radians
 
 
 class TransformError(Exception):
@@ -192,7 +193,7 @@ class OCSTransform:
 
     def transform_deg_angle(self, angle: float) -> float:
         """Returns angle (in degrees) from old OCS transformed into new OCS."""
-        return math.degrees(self.transform_angle(math.radians(angle)))
+        return self.transform_angle(angle * RADIANS) * DEG
 
     def transform_ccw_arc_angles(
         self, start: float, end: float
@@ -225,6 +226,6 @@ class OCSTransform:
         into new OCS in counter-clockwise orientation.
         """
         start, end = self.transform_ccw_arc_angles(
-            math.radians(start), math.radians(end)
+            start * RADIANS, end * RADIANS
         )
-        return math.degrees(start), math.degrees(end)
+        return start * DEG, end * DEG
