@@ -1280,6 +1280,15 @@ class SplineEdge:
             t = Vec3(self.end_tangent).replace(z=elevation)
             self.end_tangent = ocs.transform_direction(t).vec2
 
+    def construction_tool(self) -> BSpline:
+        """Returns BSpline() for the OCS representation."""
+        return BSpline(
+            control_points=self.control_points,
+            knots=self.knot_values,
+            order=self.degree + 1,
+            weights=self.weights,
+        )
+
 
 EDGE_CLASSES = [None, LineEdge, ArcEdge, EllipseEdge, SplineEdge]
 EdgeTypes = Union[LineEdge, ArcEdge, EllipseEdge, SplineEdge]  # type hint
