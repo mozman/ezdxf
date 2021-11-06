@@ -4,7 +4,7 @@
 import pytest
 import math
 
-from ezdxf.math import ellipse_param_span, arc_angle_span_deg
+from ezdxf.math import ellipse_param_span, arc_angle_span_deg, arc_angle_span_rad
 
 
 class TestArcParamSpan:
@@ -84,6 +84,13 @@ class TestEllipseParamSpan(TestArcParamSpan):
     def span(self, s, e):
         return math.degrees(
             ellipse_param_span(math.radians(s), math.radians(e))
+        )
+
+
+class TestArcParamSpanRadians(TestArcParamSpan):
+    def span(self, s, e):
+        return math.degrees(
+            arc_angle_span_rad(math.radians(s), math.radians(e))
         )
 
 

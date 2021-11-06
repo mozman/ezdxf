@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Iterable, List, Union, Tuple
 from functools import partial
 import math
 import warnings
-from ezdxf.math import Vec3, Vec2, Matrix44, X_AXIS, Y_AXIS
+from ezdxf.math import Vec3, Vec2, Matrix44, X_AXIS, Y_AXIS, arc_angle_span_rad
 from decimal import Decimal
 
 if TYPE_CHECKING:
@@ -36,6 +36,7 @@ __all__ = [
     "TOLERANCE",
     "has_matrix_2d_stretching",
     "decdeg2dms",
+    "ellipse_param_span",
 ]
 
 
@@ -107,6 +108,23 @@ def decdeg2dms(value: float) -> Tuple[float, float, float]:
     mnt, sec = divmod(value * 3600., 60.)
     deg, mnt = divmod(mnt, 60.)
     return deg, mnt, sec
+
+
+def ellipse_param_span(start_param: float, end_param: float) -> float:
+    """Returns the counter clockwise params span of an elliptic arc from start-
+    to end param.
+
+    Returns the param span in the range [0, 2π], 2π is a full ellipse.
+    Full ellipse handling is a special case, because normalization of params
+    which describe a full ellipse would return 0 if treated as regular params.
+    e.g. (0, 2π) → 2π, (0, -2π) → 2π, (π, -π) → 2π.
+    Input params with the same value always return 0 by definition:
+    (0, 0) → 0, (-π, -π) → 0, (2π, 2π) → 0.
+
+    Alias to function: :func:`ezdxf.math.arc_angle_span_rad`
+
+    """
+    return arc_angle_span_rad(float(start_param), float(end_param))
 
 
 def closest_point(base: "Vertex", points: Iterable["Vertex"]) -> "Vec3":

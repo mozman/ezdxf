@@ -208,3 +208,34 @@ def arc_angle_span_deg(start: float, end: float) -> float:
     if end < start:
         end += 360.0
     return end - start
+
+
+def arc_angle_span_rad(start: float, end: float) -> float:
+    """Returns the counter clockwise angle span from `start` to `end` in radians.
+
+    Returns the angle span in the range of [0, 2π], 2π is a full circle.
+    Full circle handling is a special case, because normalization of angles
+    which describe a full circle would return 0 if treated as regular angles.
+    e.g. (0, 2π) → 2π, (0, -2π) → 2π, (π, -π) → 2π.
+    Input angles with the same value always return 0 by definition: (0, 0) → 0,
+    (-π, -π) → 0, (2π, 2π) → 0.
+
+    """
+    tau = math.tau
+    # Input values are equal, returns 0 by definition:
+    if math.isclose(start, end):
+        return 0.0
+
+    # Normalized start- and end angles are equal, but input values are
+    # different, returns 360 by definition:
+    start %= tau
+    if math.isclose(start, end % tau):
+        return tau
+
+    # Special treatment for end angle == 2π:
+    if not math.isclose(end, tau):
+        end %= tau
+
+    if end < start:
+        end += tau
+    return end - start

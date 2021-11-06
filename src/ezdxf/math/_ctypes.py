@@ -23,6 +23,7 @@ __all__ = [
     "intersection_line_line_2d",
     "intersection_ray_ray_3d",
     "arc_angle_span_deg",
+    "arc_angle_span_rad",
 ]
 # Import of Python or Cython implementations:
 if USE_C_EXT:
@@ -50,6 +51,7 @@ if USE_C_EXT:
         intersection_line_line_2d,
         intersection_ray_ray_3d,
         arc_angle_span_deg,
+        arc_angle_span_rad,
     )
 else:
     from ._vector import (
@@ -76,4 +78,5 @@ else:
         intersection_line_line_2d,
         intersection_ray_ray_3d,
         arc_angle_span_deg,
+        arc_angle_span_rad,
     )

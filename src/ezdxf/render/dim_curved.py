@@ -10,9 +10,8 @@ from ezdxf.math import (
     Vec3,
     UCS,
     decdeg2dms,
-    ellipse_param_span,
+    arc_angle_span_rad,
     xround,
-    arc_angle_span_deg
 )
 from ezdxf.entities import DimStyleOverride, Dimension, DXFEntity
 from .dim_base import (
@@ -190,7 +189,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         self.end_angle_rad: float = self.ext2_dir.angle
         self.center_angle_rad = (
             self.start_angle_rad
-            + ellipse_param_span(self.start_angle_rad, self.end_angle_rad) / 2.0
+            + arc_angle_span_rad(self.start_angle_rad, self.end_angle_rad) / 2.0
         )
 
         # Additional required parameters but calculated later by sub-classes:
@@ -486,7 +485,7 @@ class _AngularCommonBase(_CurvedDimensionLine):
         )
 
     def update_measurement(self) -> None:
-        measurement = ellipse_param_span(
+        measurement = arc_angle_span_rad(
             self.start_angle_rad, self.end_angle_rad
         )
         self.measurement.update(measurement)
@@ -758,7 +757,7 @@ class ArcLengthDimension(_CurvedDimensionLine):
         return (self.ext2_start - self.center_of_arc).normalize()
 
     def update_measurement(self) -> None:
-        angle = ellipse_param_span(self.start_angle_rad, self.end_angle_rad)
+        angle = arc_angle_span_rad(self.start_angle_rad, self.end_angle_rad)
         arc_length = angle * self.arc_radius * 2.0
         self.measurement.update(arc_length)
 

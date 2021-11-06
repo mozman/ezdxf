@@ -1,6 +1,6 @@
 # cython: language_level=3
 # distutils: language = c++
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
 from typing import Iterable, TYPE_CHECKING, Sequence, Optional, Tuple
 from libc.math cimport fabs
@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 DEF ABS_TOL = 1e-12
 DEF REL_TOL = 1e-9
 DEF TOLERANCE = 1e-10
+DEF TAU = 6.283185307179586
 
 def has_clockwise_orientation(vertices: Iterable['Vertex']) -> bool:
     """ Returns True if 2D `vertices` have clockwise orientation. Ignores
@@ -209,4 +210,19 @@ def arc_angle_span_deg(double start, double end) -> float:
 
     if end < start:
         end += 360.0
+    return end - start
+
+def arc_angle_span_rad(double start, double end) -> float:
+    if isclose(start, end, REL_TOL, ABS_TOL):
+        return 0.0
+
+    start %= TAU
+    if isclose(start, end % TAU, REL_TOL, ABS_TOL):
+        return TAU
+
+    if not isclose(end, TAU, REL_TOL, ABS_TOL):
+        end %= TAU
+
+    if end < start:
+        end += TAU
     return end - start

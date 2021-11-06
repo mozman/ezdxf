@@ -2,12 +2,18 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Dict, Tuple
 import math
-from ezdxf.math import Vec3, NULLVEC, X_AXIS, Z_AXIS, Matrix44
-from .construct3d import distance_point_line_3d
-from .ucs import OCS
-from .construct2d import enclosing_angles, linspace
-
-pi2 = math.pi / 2
+from ezdxf.math import (
+    Vec3,
+    NULLVEC,
+    X_AXIS,
+    Z_AXIS,
+    OCS,
+    Matrix44,
+    arc_angle_span_rad,
+    linspace,
+    distance_point_line_3d,
+    enclosing_angles,
+)
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, BaseLayout, Ellipse
@@ -17,7 +23,6 @@ __all__ = [
     "angle_to_param",
     "param_to_angle",
     "rytz_axis_construction",
-    "ellipse_param_span",
 ]
 QUARTER_PARAMS = [0, math.pi * 0.5, math.pi, math.pi * 1.5]
 HALF_PI = math.pi / 2.0
@@ -285,8 +290,8 @@ class ConstructionEllipse:
                 math.isclose(start_param, 0)
                 and math.isclose(end_param, math.tau)
             ):
-                start_param -= pi2
-                end_param -= pi2
+                start_param -= HALF_PI
+                end_param -= HALF_PI
 
         # TODO: remove normalize start- and end params?
         #  2021-01-28 this is possibly the source of errors!
@@ -310,7 +315,7 @@ class ConstructionEllipse:
         see also :func:`ezdxf.math.ellipse_param_span` for more information.
 
         """
-        return ellipse_param_span(self.start_param, self.end_param)
+        return arc_angle_span_rad(self.start_param, self.end_param)
 
     def params(self, num: int) -> Iterable[float]:
         """Returns `num` params from start- to end param in counter clockwise
@@ -612,33 +617,3 @@ def rytz_axis_construction(d1: Vec3, d2: Vec3) -> Tuple[Vec3, Vec3, float]:
     major_axis = B.normalize(major_axis_length)
     minor_axis = A.normalize(minor_axis_length)
     return major_axis, minor_axis, ratio
-
-
-def ellipse_param_span(start_param: float, end_param: float) -> float:
-    """Returns the counter clockwise params span of an elliptic arc from start-
-    to end param.
-
-    Returns the param span in the range [0, 2π], 2π is a full ellipse.
-    Full ellipse handling is a special case, because normalization of params
-    which describe a full ellipse would return 0 if treated as regular params.
-    e.g. (0, 2π) → 2π, (0, -2π) → 2π, (π, -π) → 2π.
-    Input params with the same value always return 0 by definition:
-    (0, 0) → 0, (-π, -π) → 0, (2π, 2π) → 0.
-
-    """
-    s = float(start_param)
-    e = float(end_param)
-    if math.isclose(s, e):
-        return 0.0  # by definition
-    # start param != end param but normalized params are equal:
-    s %= math.tau
-    if math.isclose(s, e % math.tau):
-        return math.tau  # full ellipse by definition
-
-    # Special treatment for end param == 2pi:
-    if not math.isclose(e, math.tau):
-        e %= math.tau
-
-    while e < s:
-        e += math.tau
-    return e - s

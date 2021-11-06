@@ -23,6 +23,12 @@ Functions
 
 .. autofunction:: arc_angle_span_deg
 
+.. autofunction:: arc_angle_span_rad
+
+.. autofunction:: arc_segment_count
+
+.. autofunction:: arc_chord_length
+
 .. autofunction:: ellipse_param_span
 
 .. autofunction:: has_matrix_2d_stretching(m: Matrix44) -> bool
@@ -50,10 +56,6 @@ Bulge Related Functions
 
 2D Functions
 ============
-
-.. autofunction:: arc_segment_count
-
-.. autofunction:: arc_chord_length
 
 .. autofunction:: distance_point_line_2d(point: Vec2, start: Vec2, end: Vec2) -> float
 
