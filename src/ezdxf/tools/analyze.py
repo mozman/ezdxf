@@ -1,13 +1,12 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 #  Debugging tools to analyze DXF entities.
-
+from typing import List
 import ezdxf
 from ezdxf.math import Vec2
 from ezdxf.lldxf import const
 
 from ezdxf.entities import (
-    Hatch,
     EdgePath,
     PolylinePath,
     LineEdge,
@@ -15,6 +14,7 @@ from ezdxf.entities import (
     EllipseEdge,
     SplineEdge,
 )
+from ezdxf.entities.polygon import DXFPolygon
 
 EDGE_START_MARKER = "EDGE_START_MARKER"
 EDGE_END_MARKER = "EDGE_END_MARKER"
@@ -43,12 +43,12 @@ class HatchAnalyzer:
         self.init_layers()
         self.init_markers()
 
-    def add_hatch(self, hatch: Hatch) -> None:
+    def add_hatch(self, hatch: DXFPolygon) -> None:
         hatch.dxf.discard("extrusion")
         hatch.dxf.layer = HATCH_LAYER
         self.msp.add_foreign_entity(hatch)
 
-    def add_boundary_markers(self, hatch: Hatch) -> None:
+    def add_boundary_markers(self, hatch: DXFPolygon) -> None:
         hatch.dxf.discard("extrusion")
         path_num: int = 0
 
@@ -129,7 +129,9 @@ class HatchAnalyzer:
     def add_end_marker(self, location: Vec2, name: str, layer: str) -> None:
         self.add_marker(EDGE_END_MARKER, location, name, layer)
 
-    def add_marker(self, blk_name: str, location: Vec2, name: str, layer: str) -> None:
+    def add_marker(
+        self, blk_name: str, location: Vec2, name: str, layer: str
+    ) -> None:
         blkref = self.msp.add_blockref(
             name=blk_name,
             insert=location,
@@ -141,8 +143,12 @@ class HatchAnalyzer:
         blkref.add_auto_attribs({"NAME": name})
 
     def add_polyline_markers(self, p: PolylinePath, num: int) -> None:
-        self.add_start_marker(Vec2(p.vertices[0]), f"Poly-S({num})", POLYLINE_LAYER)
-        self.add_end_marker(Vec2(p.vertices[0]), f"Poly-E({num})", POLYLINE_LAYER)
+        self.add_start_marker(
+            Vec2(p.vertices[0]), f"Poly-S({num})", POLYLINE_LAYER
+        )
+        self.add_end_marker(
+            Vec2(p.vertices[0]), f"Poly-E({num})", POLYLINE_LAYER
+        )
 
     def add_edge_markers(self, p: EdgePath, num: int) -> None:
         edge_num: int = 0
@@ -168,18 +174,72 @@ class HatchAnalyzer:
         self.add_end_marker(line.end, "Line-E" + name, LINE_LAYER)
 
     def add_arc_edge_markers(self, arc: ArcEdge, name: str) -> None:
-        ctool = arc.construction_tool()
-        self.add_start_marker(ctool.start_point, "Arc-S" + name, ARC_LAYER)
-        self.add_end_marker(ctool.end_point, "Arc-E" + name, ARC_LAYER)
+        self.add_start_marker(arc.start_point, "Arc-S" + name, ARC_LAYER)
+        self.add_end_marker(arc.end_point, "Arc-E" + name, ARC_LAYER)
 
     def add_ellipse_edge_markers(self, ellipse: EllipseEdge, name: str) -> None:
-        ctool = ellipse.construction_tool()
-        self.add_start_marker(ctool.start_point.vec2, "Ellipse-S" + name, ELLIPSE_LAYER)
-        self.add_end_marker(ctool.end_point.vec2, "Ellipse-E" + name, ELLIPSE_LAYER)
+        self.add_start_marker(
+            ellipse.start_point, "Ellipse-S" + name, ELLIPSE_LAYER
+        )
+        self.add_end_marker(
+            ellipse.end_point, "Ellipse-E" + name, ELLIPSE_LAYER
+        )
 
     def add_spline_edge_markers(self, spline: SplineEdge, name: str) -> None:
         if len(spline.control_points):
             # Assuming a clamped B-spline, because this is the only practical
             # usable B-spline for edges.
-            self.add_start_marker(spline.control_points[0], "SplineS" + name, SPLINE_LAYER)
-            self.add_end_marker(spline.control_points[-1], "SplineE" + name, SPLINE_LAYER)
+            self.add_start_marker(
+                spline.start_point, "SplineS" + name, SPLINE_LAYER
+            )
+            self.add_end_marker(
+                spline.end_point, "SplineE" + name, SPLINE_LAYER
+            )
+
+    @staticmethod
+    def report(hatch: DXFPolygon):
+        return hatch_report(hatch)
+
+    @staticmethod
+    def print_report(hatch: DXFPolygon) -> None:
+        print("\n".join(hatch_report(hatch)))
+
+
+def hatch_report(hatch: DXFPolygon) -> List[str]:
+    text = [
+        f"{str(hatch)}",
+        f"associative: {hatch.dxf.associative}",
+        f"boundary path count: {len(hatch.paths)}",
+    ]
+    num = 0
+    for path in hatch.paths:
+        num += 1
+        if isinstance(path, PolylinePath):
+            text.extend(polyline_path_report(path, num))
+        elif isinstance(path, EdgePath):
+            text.extend(edge_path_report(path, num))
+    return text
+
+
+def polyline_path_report(p: PolylinePath, num: int) -> List[str]:
+    return [
+        f"{num}. Polyline Path, vertex count: {len(p.vertices)}",
+    ]
+
+
+def edge_path_report(p: EdgePath, num: int) -> List[str]:
+    closed = False
+    connected = False
+    edges = p.edges
+    if len(edges):
+        closed = edges[0].start_point.isclose(edges[-1].end_point)
+        connected = all(
+            e1.end_point.isclose(e2.start_point)
+            for e1, e2 in zip(edges, edges[1:])
+        )
+
+    return [
+        f"{num}. Edge Path, edge count: {len(p.edges)}",
+        f"   continuously connected edges:   {connected}",
+        f"   closed edge loop:               {closed}",
+    ]

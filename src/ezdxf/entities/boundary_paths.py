@@ -11,6 +11,7 @@ from typing import (
     TYPE_CHECKING,
 )
 import math
+import abc
 
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tags import Tags, group_tags
@@ -298,7 +299,7 @@ class BoundaryPaths:
             if isinstance(path, EdgePath):
                 edges = path.edges
                 for edge_index, edge in enumerate(edges):
-                    if edge.type == EdgeType.ARC:
+                    if isinstance(edge, ArcEdge):
                         edges[edge_index] = to_ellipse(edge)
 
     def ellipse_edges_to_spline_edges(self, num: int = 32) -> None:
@@ -337,7 +338,7 @@ class BoundaryPaths:
             if isinstance(path, EdgePath):
                 edges = path.edges
                 for edge_index, edge in enumerate(edges):
-                    if edge.type == EdgeType.ELLIPSE:
+                    if isinstance(edge, EllipseEdge):
                         edges[edge_index] = to_spline_edge(edge)
 
     def spline_edges_to_line_edges(self, factor: int = 8) -> None:
@@ -648,13 +649,35 @@ class PolylinePath:
             self.vertices = list(_transform())
 
 
+class AbstractEdge(abc.ABC):
+    type: EdgeType
+
+    @property
+    @abc.abstractmethod
+    def start_point(self) -> Vec2:
+        ...
+
+    @property
+    @abc.abstractmethod
+    def end_point(self) -> Vec2:
+        ...
+
+    @abc.abstractmethod
+    def export_dxf(self, tagwriter: "TagWriter") -> None:
+        ...
+
+    @abc.abstractmethod
+    def transform(self, ocs: OCSTransform, elevation: float) -> None:
+        ...
+
+
 class EdgePath:
     PATH_TYPE = "EdgePath"  # 2021-05-31: deprecated use type
     type = BoundaryPathType.EDGE
 
     def __init__(self):
         self.path_type_flags = const.BOUNDARY_PATH_DEFAULT
-        self.edges = []
+        self.edges: List[AbstractEdge] = []
         self.source_boundary_objects = []
 
     def __iter__(self):
@@ -672,7 +695,7 @@ class EdgePath:
         return edge_path
 
     @staticmethod
-    def load_edge(tags: Tags) -> "EdgeTypes":
+    def load_edge(tags: Tags) -> AbstractEdge:
         edge_type = tags[0].value
         if 0 < edge_type < 5:
             return EDGE_CLASSES[edge_type].load_tags(tags[1:])
@@ -885,13 +908,21 @@ class EdgePath:
         export_source_boundary_objects(tagwriter, self.source_boundary_objects)
 
 
-class LineEdge:
+class LineEdge(AbstractEdge):
     EDGE_TYPE = "LineEdge"  # 2021-05-31: deprecated use type
     type = EdgeType.LINE
 
     def __init__(self):
         self.start = Vec2(0, 0)  # OCS!
         self.end = Vec2(0, 0)  # OCS!
+
+    @property
+    def start_point(self) -> Vec2:
+        return self.start
+
+    @property
+    def end_point(self) -> Vec2:
+        return self.end
 
     @classmethod
     def load_tags(cls, tags: Tags) -> "LineEdge":
@@ -920,7 +951,7 @@ class LineEdge:
         self.end = ocs.transform_2d_vertex(self.end, elevation)
 
 
-class ArcEdge:
+class ArcEdge(AbstractEdge):
     type = EdgeType.ARC  # 2021-05-31: deprecated use type
     EDGE_TYPE = "ArcEdge"
 
@@ -932,6 +963,14 @@ class ArcEdge:
         self.end_angle: float = 360.0
         # Flag to preserve the required orientation for DXF export:
         self.ccw: bool = True
+
+    @property
+    def start_point(self) -> Vec2:
+        return self.construction_tool().start_point
+
+    @property
+    def end_point(self) -> Vec2:
+        return self.construction_tool().end_point
 
     @classmethod
     def load_tags(cls, tags: Tags) -> "ArcEdge":
@@ -1015,7 +1054,7 @@ class ArcEdge:
         )
 
 
-class EllipseEdge:
+class EllipseEdge(AbstractEdge):
     EDGE_TYPE = "EllipseEdge"  # 2021-05-31: deprecated use type
     type = EdgeType.ELLIPSE
 
@@ -1029,6 +1068,14 @@ class EllipseEdge:
         self.end_angle: float = 360.0  # end param, not a real angle
         # Flag to preserve the required orientation for DXF export:
         self.ccw: bool = True
+
+    @property
+    def start_point(self) -> Vec2:
+        return self.construction_tool().start_point.vec2
+
+    @property
+    def end_point(self) -> Vec2:
+        return self.construction_tool().end_point.vec2
 
     @property
     def start_param(self) -> float:
@@ -1155,7 +1202,7 @@ class EllipseEdge:
             self.end_angle = 360.0
 
 
-class SplineEdge:
+class SplineEdge(AbstractEdge):
     EDGE_TYPE = "SplineEdge"  # 2021-05-31: deprecated use type
     type = EdgeType.SPLINE
 
@@ -1170,6 +1217,14 @@ class SplineEdge:
         # do not set tangents by default to (0, 0)
         self.start_tangent: Optional[Vec2] = None
         self.end_tangent: Optional[Vec2] = None
+
+    @property
+    def start_point(self) -> Vec2:
+        return self.control_points[0]
+
+    @property
+    def end_point(self) -> Vec2:
+        return self.control_points[-1]
 
     @classmethod
     def load_tags(cls, tags: Tags) -> "SplineEdge":
