@@ -1,5 +1,6 @@
 # Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
+from typing import List
 from enum import IntEnum, IntFlag
 
 DXF9 = "AC1004"
@@ -505,7 +506,9 @@ LINEAR_SPLINE = 16
 HATCH_TYPE_USER_DEFINED = 0
 HATCH_TYPE_PREDEFINED = 1
 HATCH_TYPE_CUSTOM = 2
+HATCH_PATTERN_TYPE = ["user-defined", "predefined", "custom"]
 
+ISLAND_DETECTION = ["nested", "outermost", "ignore"]
 HATCH_STYLE_NORMAL = 0
 HATCH_STYLE_NESTED = 0
 HATCH_STYLE_OUTERMOST = 1
@@ -517,6 +520,24 @@ BOUNDARY_PATH_POLYLINE = 2
 BOUNDARY_PATH_DERIVED = 4
 BOUNDARY_PATH_TEXTBOX = 8
 BOUNDARY_PATH_OUTERMOST = 16
+
+
+def boundary_path_flag_names(flags: int) -> List[str]:
+    if flags == 0:
+        return ["default"]
+    types: List[str] = []
+    if flags & BOUNDARY_PATH_EXTERNAL:
+        types.append("external")
+    if flags & BOUNDARY_PATH_POLYLINE:
+        types.append("polyline")
+    if flags & BOUNDARY_PATH_DERIVED:
+        types.append("derived")
+    if flags & BOUNDARY_PATH_TEXTBOX:
+        types.append("textbox")
+    if flags & BOUNDARY_PATH_OUTERMOST:
+        types.append("outermost")
+    return types
+
 
 GRADIENT_TYPES = frozenset(
     [

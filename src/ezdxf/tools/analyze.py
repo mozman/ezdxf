@@ -206,10 +206,20 @@ class HatchAnalyzer:
 
 
 def hatch_report(hatch: DXFPolygon) -> List[str]:
+    dxf = hatch.dxf
+    style = const.ISLAND_DETECTION[dxf.hatch_style]
+    pattern_type = const.HATCH_PATTERN_TYPE[dxf.pattern_type]
     text = [
         f"{str(hatch)}",
-        f"associative: {hatch.dxf.associative}",
-        f"boundary path count: {len(hatch.paths)}",
+        f"   solid fill: {bool(dxf.solid_fill)}",
+        f"   pattern type: {pattern_type}",
+        f"   pattern name: {dxf.pattern_name}",
+        f"   associative: {bool(dxf.associative)}",
+        f"   island detection: {style}",
+        f"   has pattern data: {hatch.pattern is not None}",
+        f"   has gradient data: {hatch.gradient is not None}",
+        f"   seed value count: {len(hatch.seeds)}",
+        f"   boundary path count: {len(hatch.paths)}",
     ]
     num = 0
     for path in hatch.paths:
@@ -222,14 +232,17 @@ def hatch_report(hatch: DXFPolygon) -> List[str]:
 
 
 def polyline_path_report(p: PolylinePath, num: int) -> List[str]:
+    path_type = ", ".join(const.boundary_path_flag_names(p.path_type_flags))
     return [
         f"{num}. Polyline Path, vertex count: {len(p.vertices)}",
+        f"   path type:                      {path_type}",
     ]
 
 
 def edge_path_report(p: EdgePath, num: int) -> List[str]:
     closed = False
     connected = False
+    path_type = ", ".join(const.boundary_path_flag_names(p.path_type_flags))
     edges = p.edges
     if len(edges):
         closed = edges[0].start_point.isclose(edges[-1].end_point)
@@ -240,6 +253,7 @@ def edge_path_report(p: EdgePath, num: int) -> List[str]:
 
     return [
         f"{num}. Edge Path, edge count: {len(p.edges)}",
+        f"   path type:                      {path_type}",
         f"   continuously connected edges:   {connected}",
         f"   closed edge loop:               {closed}",
     ]
