@@ -542,15 +542,15 @@ def boundary_path_flag_names(flags: int) -> List[str]:
 
 
 @dataclass(frozen=True)
-class HatchBoundaryState:
+class BoundaryPathState:
     external: bool = False
     derived: bool = False
     textbox: bool = False
     outermost: bool = False
 
-    @classmethod
-    def from_flag_state(cls, flag: int) -> "HatchBoundaryState":
-        return HatchBoundaryState(
+    @staticmethod
+    def from_flags(flag: int) -> "BoundaryPathState":
+        return BoundaryPathState(
             external=bool(flag & BOUNDARY_PATH_EXTERNAL),
             derived=bool(flag & BOUNDARY_PATH_DERIVED),
             textbox=bool(flag & BOUNDARY_PATH_TEXTBOX),

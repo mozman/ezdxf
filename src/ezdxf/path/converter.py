@@ -254,13 +254,20 @@ def _from_hatch(hatch: Hatch, **kwargs) -> Path:
         from_hatch_boundary_path(boundary, ocs, elevation, offset=offset)
         for boundary in hatch.paths
     ]
+    # looses the boundary path state:
     return tools.to_multi_path(paths)
 
 
 def from_hatch(hatch: Hatch) -> Iterable[Path]:
     """Yield all HATCH boundary paths as separated :class:`Path` objects.
 
+
     .. versionadded:: 0.16
+
+    .. versionchanged:: 17.1
+
+        Attaches the boundary state to each path as
+        :class:`ezdxf.lldxf.const.BoundaryPathState`.
 
     """
     ocs = hatch.ocs()
@@ -281,6 +288,12 @@ def from_hatch_boundary_path(
 ) -> "Path":
     """Returns a :class:`Path` object from a :class:`~ezdxf.entities.Hatch`
     polyline- or edge path.
+
+    .. versionchanged:: 17.1
+
+        Attaches the boundary state to each path as
+        :class:`ezdxf.lldxf.const.BoundaryPathState`.
+
     """
     if isinstance(boundary, EdgePath):
         p = from_hatch_edge_path(boundary, ocs, elevation)
@@ -288,10 +301,16 @@ def from_hatch_boundary_path(
         p = from_hatch_polyline_path(boundary, ocs, elevation)
     else:
         raise TypeError(type(boundary))
+
     if offset and ocs is not None:  # only for MPOLYGON
         # assume offset is in OCS
         offset = ocs.to_wcs(offset.replace(z=elevation))
         p = p.transform(Matrix44.translate(offset.x, offset.y, offset.z))
+
+    # attach path type information
+    p.user_data = const.BoundaryPathState.from_flags(
+        boundary.path_type_flags
+    )
     return p
 
 

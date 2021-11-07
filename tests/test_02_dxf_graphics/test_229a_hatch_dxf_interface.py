@@ -111,7 +111,7 @@ def test_write_correct_polyline_path_tag_order(entity):
 
 
 def test_hatch_boundary_state():
-    state = const.HatchBoundaryState.from_flag_state(
+    state = const.BoundaryPathState.from_flags(
         const.BOUNDARY_PATH_EXTERNAL
         + const.BOUNDARY_PATH_DERIVED
         + const.BOUNDARY_PATH_TEXTBOX
@@ -125,7 +125,7 @@ def test_hatch_boundary_state():
 
 
 def test_hatch_boundary_default_state():
-    state = const.HatchBoundaryState()
+    state = const.BoundaryPathState()
     assert state.external is False
     assert state.derived is False
     assert state.textbox is False
