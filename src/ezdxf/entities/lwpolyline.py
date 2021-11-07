@@ -247,14 +247,14 @@ class LWPolyline(DXFGraphic):
         for point in self:
             yield point[0], point[1]
 
-    def vertices_in_wcs(self) -> Iterable["Vertex"]:
+    def vertices_in_wcs(self) -> Iterable[Vec3]:
         """Returns iterable of all polyline points as Vec3(x, y, z) in :ref:`WCS`."""
         ocs = self.ocs()
         elevation = self.get_dxf_attrib("elevation", default=0.0)
         for x, y in self.vertices():
-            yield ocs.to_wcs((x, y, elevation))
+            yield ocs.to_wcs(Vec3(x, y, elevation))
 
-    def vertices_in_ocs(self) -> Iterable["Vertex"]:
+    def vertices_in_ocs(self) -> Iterable[Vec3]:
         """Returns iterable of all polyline points as Vec3(x, y, z) in :ref:`OCS`."""
         elevation = self.get_dxf_attrib("elevation", default=0.0)
         for x, y in self.vertices():
