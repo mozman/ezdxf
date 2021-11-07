@@ -5,10 +5,10 @@ from ezdxf.entities import Hatch
 from ezdxf.tools.analyze import HatchAnalyzer
 
 DIR = Path("~/Desktop/Outbox").expanduser()
-FILE = r"C:\Users\manfred\Desktop\Now\ezdxf\573\power_unit_1.dxf"
+FILE = r"C:\Users\manfred\Desktop\Now\ezdxf\573\textbox.dxf"
 
 doc = ezdxf.readfile(FILE)
-hatch = doc.entitydb.get("17ECC6")
+hatch = doc.entitydb.get("A2")
 assert isinstance(hatch, Hatch)
 
 handle = hatch.dxf.handle

@@ -251,6 +251,8 @@ The Path Class
 
     .. autoproperty:: has_sub_paths
 
+    .. autoproperty:: user_data
+
     .. automethod:: sub_paths() -> Iterable[Path]
 
     .. automethod:: control_vertices

@@ -93,6 +93,23 @@ def test_curve4_to():
     assert path.end == (1, 2, 3)
 
 
+def test_user_data_is_none_by_default():
+    assert Path().user_data is None
+
+
+def test_set_and_get_user_data():
+    path = Path()
+    path.user_data = [1, 2, 3]
+    assert path.user_data == [1, 2, 3]
+
+
+def test_path_clones_share_user_data():
+    path = Path()
+    data = [1, 2, 3]
+    path.user_data = data
+    assert path.clone().user_data is data
+
+
 class TestAllLinesToCurveConverter:
     def test_create_a_curve3_command(self):
         path = Path()
