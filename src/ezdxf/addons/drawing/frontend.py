@@ -424,7 +424,7 @@ class Frontend:
 
         if external_paths:
             self.out.draw_filled_paths(
-                ignore_external_text_boxes(external_paths), holes, properties
+                ignore_text_boxes(external_paths), holes, properties
             )
         elif holes:
             # First path is the exterior path, everything else is a hole
@@ -660,9 +660,14 @@ def closed_loops(
     return loops
 
 
-def ignore_external_text_boxes(paths: Iterable[Path]) -> Iterable[Path]:
-    """Filters text boxes from external paths."""
+def ignore_text_boxes(paths: Iterable[Path]) -> Iterable[Path]:
+    """Filters text boxes from paths if BoundaryPathState() information is
+    attached.
+    """
     for path in paths:
-        assert isinstance(path.user_data, const.BoundaryPathState)
-        if not path.user_data.textbox:
-            yield path
+        if (
+            isinstance(path.user_data, const.BoundaryPathState)
+            and path.user_data.textbox
+        ):
+            continue  # skip text box paths
+        yield path
