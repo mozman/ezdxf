@@ -64,6 +64,7 @@ from ezdxf import reorder
 from ezdxf.proxygraphic import ProxyGraphic
 from ezdxf.protocols import SupportsVirtualEntities, virtual_entities
 from ezdxf.tools.text import has_inline_formatting_codes
+from ezdxf.lldxf import const
 
 __all__ = ["Frontend"]
 
@@ -422,7 +423,9 @@ class Frontend:
             external_paths, holes = winding_deconstruction(polygons)
 
         if external_paths:
-            self.out.draw_filled_paths(external_paths, holes, properties)
+            self.out.draw_filled_paths(
+                ignore_external_text_boxes(external_paths), holes, properties
+            )
         elif holes:
             # First path is the exterior path, everything else is a hole
             self.out.draw_filled_paths([holes[0]], holes[1:], properties)
@@ -648,7 +651,18 @@ def closed_loops(
     loops = []
     for boundary in paths:
         path = from_hatch_boundary_path(boundary, ocs, elevation, offset)
+        assert isinstance(
+            path.user_data, const.BoundaryPathState
+        ), "missing attached boundary path state"
         for sub_path in path.sub_paths():
             sub_path.close()
             loops.append(sub_path)
     return loops
+
+
+def ignore_external_text_boxes(paths: Iterable[Path]) -> Iterable[Path]:
+    """Filters text boxes from external paths."""
+    for path in paths:
+        assert isinstance(path.user_data, const.BoundaryPathState)
+        if not path.user_data.textbox:
+            yield path
