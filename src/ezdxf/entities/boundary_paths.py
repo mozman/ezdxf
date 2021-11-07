@@ -43,12 +43,11 @@ __all__ = [
     "ArcEdge",
     "EllipseEdge",
     "SplineEdge",
-    "TBoundaryPath",
     "EdgeType",
     "BoundaryPathType",
+    "AbstractEdge",
+    "AbstractBoundaryPath",
 ]
-
-TBoundaryPath = Union["PolylinePath", "EdgePath"]
 
 
 @enum.unique
@@ -65,9 +64,53 @@ class EdgeType(enum.IntEnum):
     SPLINE = 4
 
 
+class AbstractBoundaryPath(abc.ABC):
+    type: BoundaryPathType
+    path_type_flags: int
+    source_boundary_objects: List[str]
+
+    @abc.abstractmethod
+    def clear(self) -> None:
+        ...
+
+    @classmethod
+    def load_tags(cls, tags: Tags) -> "AbstractBoundaryPath":
+        ...
+
+    @abc.abstractmethod
+    def export_dxf(self, tagwriter: "TagWriter", dxftype: str) -> None:
+        ...
+
+    @abc.abstractmethod
+    def transform(self, ocs: OCSTransform, elevation: float) -> None:
+        ...
+
+
+class AbstractEdge(abc.ABC):
+    type: EdgeType
+
+    @property
+    @abc.abstractmethod
+    def start_point(self) -> Vec2:
+        ...
+
+    @property
+    @abc.abstractmethod
+    def end_point(self) -> Vec2:
+        ...
+
+    @abc.abstractmethod
+    def export_dxf(self, tagwriter: "TagWriter") -> None:
+        ...
+
+    @abc.abstractmethod
+    def transform(self, ocs: OCSTransform, elevation: float) -> None:
+        ...
+
+
 class BoundaryPaths:
-    def __init__(self, paths: List[TBoundaryPath] = None):
-        self.paths: List[TBoundaryPath] = paths or []
+    def __init__(self, paths: List[AbstractBoundaryPath] = None):
+        self.paths: List[AbstractBoundaryPath] = paths or []
 
     def __len__(self):
         return len(self.paths)
@@ -83,7 +126,7 @@ class BoundaryPaths:
         for path_tags in grouped_path_tags:
             path_type_flags = path_tags[0].value
             is_polyline_path = bool(path_type_flags & 2)
-            path: Union[PolylinePath, EdgePath] = (
+            path: AbstractBoundaryPath = (
                 PolylinePath.load_tags(path_tags)
                 if is_polyline_path
                 else EdgePath.load_tags(path_tags)
@@ -100,19 +143,19 @@ class BoundaryPaths:
         """Remove all boundary paths."""
         self.paths = []
 
-    def external_paths(self) -> Iterable[TBoundaryPath]:
+    def external_paths(self) -> Iterable[AbstractBoundaryPath]:
         """Iterable of external paths, could be empty."""
         for b in self.paths:
             if b.path_type_flags & const.BOUNDARY_PATH_EXTERNAL:
                 yield b
 
-    def outermost_paths(self) -> Iterable[TBoundaryPath]:
+    def outermost_paths(self) -> Iterable[AbstractBoundaryPath]:
         """Iterable of outermost paths, could be empty."""
         for b in self.paths:
             if b.path_type_flags & const.BOUNDARY_PATH_OUTERMOST:
                 yield b
 
-    def default_paths(self) -> Iterable[TBoundaryPath]:
+    def default_paths(self) -> Iterable[AbstractBoundaryPath]:
         """Iterable of default paths, could be empty."""
         not_default = (
             const.BOUNDARY_PATH_OUTERMOST + const.BOUNDARY_PATH_EXTERNAL
@@ -123,7 +166,7 @@ class BoundaryPaths:
 
     def rendering_paths(
         self, hatch_style: int = const.HATCH_STYLE_NESTED
-    ) -> Iterable[TBoundaryPath]:
+    ) -> Iterable[AbstractBoundaryPath]:
         """Iterable of paths to process for rendering, filters unused
         boundary paths according to the given hatch style:
 
@@ -350,7 +393,7 @@ class BoundaryPaths:
 
         """
 
-        def to_line_edges(spline_edge):
+        def to_line_edges(spline_edge: SplineEdge):
             weights = spline_edge.weights
             if len(spline_edge.control_points):
                 bspline = BSpline(
@@ -379,7 +422,7 @@ class BoundaryPaths:
             if isinstance(path, EdgePath):
                 new_edges = []
                 for edge in path.edges:
-                    if edge.type == EdgeType.SPLINE:
+                    if isinstance(edge, SplineEdge):
                         new_edges.extend(to_line_edges(edge))
                     else:
                         new_edges.append(edge)
@@ -467,15 +510,17 @@ class BoundaryPaths:
         for path in self.paths:
             if isinstance(path, PolylinePath):
                 return path.has_bulge()
-            else:
+            elif isinstance(path, EdgePath):
                 for edge in path.edges:
                     if edge.type in {EdgeType.ARC, EdgeType.ELLIPSE}:
                         return True
+            else:
+                raise TypeError(type(path))
         return False
 
 
 def flatten_to_polyline_path(
-    path: TBoundaryPath, distance: float, segments: int = 16
+    path: AbstractBoundaryPath, distance: float, segments: int = 16
 ) -> "PolylinePath":
     import ezdxf.path  # avoid cyclic imports
 
@@ -513,8 +558,7 @@ def export_source_boundary_objects(
         tagwriter.write_tag2(330, handle)
 
 
-class PolylinePath:
-    PATH_TYPE = "PolylinePath"  # 2021-05-31: deprecated use type
+class PolylinePath(AbstractBoundaryPath):
     type = BoundaryPathType.POLYLINE
 
     def __init__(self):
@@ -649,30 +693,7 @@ class PolylinePath:
             self.vertices = list(_transform())
 
 
-class AbstractEdge(abc.ABC):
-    type: EdgeType
-
-    @property
-    @abc.abstractmethod
-    def start_point(self) -> Vec2:
-        ...
-
-    @property
-    @abc.abstractmethod
-    def end_point(self) -> Vec2:
-        ...
-
-    @abc.abstractmethod
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
-        ...
-
-    @abc.abstractmethod
-    def transform(self, ocs: OCSTransform, elevation: float) -> None:
-        ...
-
-
-class EdgePath:
-    PATH_TYPE = "EdgePath"  # 2021-05-31: deprecated use type
+class EdgePath(AbstractBoundaryPath):
     type = BoundaryPathType.EDGE
 
     def __init__(self):
@@ -1346,4 +1367,3 @@ class SplineEdge(AbstractEdge):
 
 
 EDGE_CLASSES = [None, LineEdge, ArcEdge, EllipseEdge, SplineEdge]
-EdgeTypes = Union[LineEdge, ArcEdge, EllipseEdge, SplineEdge]  # type hint

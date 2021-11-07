@@ -25,6 +25,8 @@ Version 0.17.1b3 - dev
 - CHANGE: `--ltype` arguments of the `view` command  to `approximate` and `accurate`
     to be in sync with the `drawing` add-on configuration.
 - REMOVE `--scale` argument of the `view` command
+- REMOVE: `PolylinePath.PATH_TYPE`, use `PolylinePath.type` instead
+- REMOVE: `EdgePath.PATH_TYPE`, use `EdgePath.type` instead
 - BUGFIX: invalid XDATA processing in `XData.safe_init()` 
 - BUGFIX: group code 1003 is valid in XDATA section 
 - BUGFIX: fix loading error of `DIMSTYLE` attribute `dimtxsty` 

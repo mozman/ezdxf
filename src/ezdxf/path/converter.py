@@ -1,7 +1,6 @@
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
 from typing import (
-    TYPE_CHECKING,
     List,
     Iterable,
     Union,
@@ -49,16 +48,18 @@ from ezdxf.entities import (
     Wipeout,
     MPolygon,
     BoundaryPaths,
-    BoundaryPathType,
-    EdgeType,
+    AbstractBoundaryPath,
+    PolylinePath,
+    EdgePath,
+    LineEdge,
+    ArcEdge,
+    EllipseEdge,
+    SplineEdge,
 )
 from .path import Path
 from .commands import Command
 from . import tools
 from .nesting import group_paths
-
-if TYPE_CHECKING:
-    from ezdxf.entities import TBoundaryPath, PolylinePath, EdgePath
 
 __all__ = [
     "make_path",
@@ -273,7 +274,7 @@ def from_hatch(hatch: Hatch) -> Iterable[Path]:
 
 
 def from_hatch_boundary_path(
-    boundary: "TBoundaryPath",
+    boundary: AbstractBoundaryPath,
     ocs: OCS = None,
     elevation: float = 0,
     offset: Vec3 = NULLVEC,  # ocs offset!
@@ -281,10 +282,12 @@ def from_hatch_boundary_path(
     """Returns a :class:`Path` object from a :class:`~ezdxf.entities.Hatch`
     polyline- or edge path.
     """
-    if boundary.type == BoundaryPathType.EDGE:
-        p = from_hatch_edge_path(boundary, ocs, elevation)  # type: ignore
+    if isinstance(boundary, EdgePath):
+        p = from_hatch_edge_path(boundary, ocs, elevation)
+    elif isinstance(boundary, PolylinePath):
+        p = from_hatch_polyline_path(boundary, ocs, elevation)
     else:
-        p = from_hatch_polyline_path(boundary, ocs, elevation)  # type: ignore
+        raise TypeError(type(boundary))
     if offset and ocs is not None:  # only for MPOLYGON
         # assume offset is in OCS
         offset = ocs.to_wcs(offset.replace(z=elevation))
@@ -293,8 +296,8 @@ def from_hatch_boundary_path(
 
 
 def from_hatch_polyline_path(
-    polyline: "PolylinePath", ocs: OCS = None, elevation: float = 0
-) -> "Path":
+    polyline: PolylinePath, ocs: OCS = None, elevation: float = 0
+) -> Path:
     """Returns a :class:`Path` object from a :class:`~ezdxf.entities.Hatch`
     polyline path.
     """
@@ -310,11 +313,11 @@ def from_hatch_polyline_path(
 
 
 def from_hatch_edge_path(
-    edges: "EdgePath",
+    edges: EdgePath,
     ocs: OCS = None,
     elevation: float = 0,
     open_loops: bool = False,
-) -> "Path":
+) -> Path:
     """Returns a :class:`Path` object from a :class:`~ezdxf.entities.Hatch`
     edge path.
 
@@ -322,14 +325,14 @@ def from_hatch_edge_path(
     necessary to override this behavior, by setting `open_loops` to ``True``.
     """
 
-    def line(edge):
+    def line(edge: LineEdge):
         start = wcs(edge.start)
         end = wcs(edge.end)
         segment = Path(start)
         segment.line_to(end)
         return segment
 
-    def arc(edge):
+    def arc(edge: ArcEdge):
         x, y, *_ = edge.center
         # from_arc() requires OCS data:
         # Note: clockwise oriented arcs are converted to counter
@@ -346,7 +349,7 @@ def from_hatch_edge_path(
         tools.add_ellipse(segment, ellipse, reset=True)
         return segment
 
-    def ellipse(edge):
+    def ellipse(edge: EllipseEdge):
         ocs_ellipse = edge.construction_tool()
         # ConstructionEllipse has WCS representation:
         # Note: clockwise oriented ellipses are converted to counter
@@ -364,7 +367,7 @@ def from_hatch_edge_path(
         tools.add_ellipse(segment, ellipse, reset=True)
         return segment
 
-    def spline(edge):
+    def spline(edge: SplineEdge):
         control_points = [wcs(p) for p in edge.control_points]
         if len(control_points) == 0:
             fit_points = [wcs(p) for p in edge.fit_points]
@@ -380,7 +383,7 @@ def from_hatch_edge_path(
         tools.add_spline(segment, bspline, reset=True)
         return segment
 
-    def from_fit_points(edge, fit_points):
+    def from_fit_points(edge: SplineEdge, fit_points):
         tangents = None
         if edge.start_tangent and edge.end_tangent:
             tangents = (
@@ -392,7 +395,7 @@ def from_hatch_edge_path(
             tangents=tangents,
         )
 
-    def from_control_points(edge, control_points):
+    def from_control_points(edge: SplineEdge, control_points):
         return BSpline(
             control_points=control_points,
             order=edge.degree + 1,
@@ -417,16 +420,18 @@ def from_hatch_edge_path(
     loop: Optional[Path] = None
     for edge in edges:
         next_segment: Optional[Path] = None
-        if edge.type == EdgeType.LINE:
+        if isinstance(edge, LineEdge):
             next_segment = line(edge)
-        elif edge.type == EdgeType.ARC:
+        elif isinstance(edge, ArcEdge):
             if abs(edge.radius) > ABS_TOL:
                 next_segment = arc(edge)
-        elif edge.type == EdgeType.ELLIPSE:
+        elif isinstance(edge, EllipseEdge):
             if not Vec2(edge.major_axis).is_null:
                 next_segment = ellipse(edge)
-        elif edge.type == EdgeType.SPLINE:
+        elif isinstance(edge, SplineEdge):
             next_segment = spline(edge)
+        else:
+            raise TypeError(type(edge))
 
         if next_segment is None:
             continue

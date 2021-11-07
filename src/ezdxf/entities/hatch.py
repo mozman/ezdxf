@@ -14,7 +14,7 @@ from ezdxf.lldxf.attributes import (
 )
 from ezdxf.lldxf.tags import Tags
 from ezdxf.math import NULLVEC, Z_AXIS
-from .boundary_paths import TBoundaryPath
+from .boundary_paths import AbstractBoundaryPath
 from .dxfentity import base_class
 from .dxfgfx import acdb_entity
 from .factory import register_entity
@@ -25,28 +25,6 @@ if TYPE_CHECKING:
 
 __all__ = ["Hatch"]
 
-PATH_CODES = {
-    10,
-    11,
-    12,
-    13,
-    40,
-    42,
-    50,
-    51,
-    42,
-    72,
-    73,
-    74,
-    92,
-    93,
-    94,
-    95,
-    96,
-    97,
-    330,
-}
-PATTERN_DEFINITION_LINE_CODES = {53, 43, 44, 45, 46, 79, 49}
 
 acdb_hatch = DefSubclass(
     "AcDbHatch",
@@ -278,7 +256,9 @@ class Hatch(DXFPolygon):
         if rgb is not None:
             self.rgb = rgb
 
-    def associate(self, path: TBoundaryPath, entities: Iterable["DXFEntity"]):
+    def associate(
+        self, path: AbstractBoundaryPath, entities: Iterable["DXFEntity"]
+    ):
         """Set association from hatch boundary `path` to DXF geometry `entities`.
 
         A HATCH entity can be associative to a base geometry, this association

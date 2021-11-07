@@ -48,7 +48,7 @@ from ezdxf.entities import (
 )
 from ezdxf.entities.attrib import BaseAttrib
 from ezdxf.entities.polygon import DXFPolygon
-from ezdxf.entities.boundary_paths import TBoundaryPath
+from ezdxf.entities.boundary_paths import AbstractBoundaryPath
 from ezdxf.layouts import Layout
 from ezdxf.math import Vec3, OCS, NULLVEC
 from ezdxf.path import (
@@ -640,7 +640,7 @@ def is_spatial_text(extrusion: Vec3) -> bool:
 
 
 def closed_loops(
-    paths: List[TBoundaryPath],
+    paths: List[AbstractBoundaryPath],
     ocs: OCS,
     elevation: float,
     offset: Vec3 = NULLVEC,
