@@ -3,7 +3,7 @@
 import pytest
 import ezdxf
 from ezdxf.render.trace import TraceBuilder, LinearTrace, CurvedTrace
-from ezdxf.math import BSpline, Vec2
+from ezdxf.math import BSpline, Vec2, BoundingBox
 
 
 def test_trace_builder_init():
@@ -164,6 +164,30 @@ def test_issue_191():
     trace = TraceBuilder.from_polyline(e, segments=64)
     assert len(trace) == 1
     assert len(list(trace.faces())) == 32
+
+
+def test_nearly_horizontal_parallel_lines_in_linear_trace_builder():
+    width = 30
+    trace = LinearTrace()
+    trace.add_station((100, 0), width, width)
+    trace.add_station((100_000, 0), width, width)
+    trace.add_station((0, 0.001), width, width)
+    bbox = BoundingBox()
+    for face in trace.faces():
+        bbox.extend(face)
+    assert bbox.extmin.x > -100
+
+
+def test_nearly_vertical_parallel_lines_in_linear_trace_builder():
+    width = 30
+    trace = LinearTrace()
+    trace.add_station((0, 100), width, width)
+    trace.add_station((0, 100_000), width, width)
+    trace.add_station((0.001, 0), width, width)
+    bbox = BoundingBox()
+    for face in trace.faces():
+        bbox.extend(face)
+    assert bbox.extmin.y > -100
 
 
 if __name__ == "__main__":

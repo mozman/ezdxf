@@ -208,10 +208,9 @@ class LinearTrace(AbstractTrace):
             ray1: ConstructionRay, ray2: ConstructionRay, default: Vec2
         ) -> Vec2:
             """Intersect two rays but take parallel rays into account."""
-            # check for nearly parallel rays
-            if ray1.slope is not None and ray2.slope is not None:
-                if abs(ray1.slope - ray2.slope) < 1e-4:
-                    return default
+            # check for nearly parallel rays pi/100 ~1.8 degrees
+            if ray1.direction.angle_between(ray2.direction) < 0.031415:
+                return default
             try:
                 return ray1.intersect(ray2)
             except ParallelRaysError:
