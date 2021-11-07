@@ -93,6 +93,7 @@ def single_paths(paths: Iterable[Path]) -> Iterable[Path]:
 def transform_paths(paths: Iterable[Path], m: Matrix44) -> List[Path]:
     """Transform multiple :class:`Path` objects at once by transformation
     matrix `m`. Returns a list of the transformed :class:`Path` objects.
+    Warning: transformed paths looses the attached user data!
 
     Args:
         paths: iterable of :class:`Path` objects
@@ -150,6 +151,7 @@ def transform_paths(paths: Iterable[Path], m: Matrix44) -> List[Path]:
 def transform_paths_to_ocs(paths: Iterable[Path], ocs: OCS) -> List[Path]:
     """Transform multiple :class:`Path` objects at once from WCS to OCS.
     Returns a list of the transformed :class:`Path` objects.
+    Warning: transformed paths looses the attached user data!
 
     Args:
         paths: iterable of :class:`Path` objects

@@ -230,7 +230,7 @@ class Path(abc.Sequence):
         if not commands:
             return Path(self.start)
         path = Path(start=self.end)
-
+        path._user_data = self._user_data
         # localize variables:
         _, line_to, curve3_to, curve4_to, move_to = Command
         commands = self._commands
@@ -367,7 +367,7 @@ class Path(abc.Sequence):
 
         """
         new_path = self.__class__(m.transform(self.start))
-
+        new_path._user_data = self._user_data
         # localize variables:
         _, line_to, curve3_to, curve4_to, move_to = Command
 
@@ -387,7 +387,6 @@ class Path(abc.Sequence):
                 new_path.move_to(m.transform(cmd.end))
             else:
                 raise ValueError(f"Invalid command: {cmd.type}")
-
         return new_path
 
     def to_wcs(self, ocs: OCS, elevation: float):
@@ -406,11 +405,14 @@ class Path(abc.Sequence):
 
         """
         path = self.__class__(start=self.start)
+        path._user_data = self._user_data
         move_to = Command.MOVE_TO
         for cmd in self._commands:
+
             if cmd.type == move_to:
                 yield path
                 path = self.__class__(start=cmd.end)
+                path._user_data = self._user_data
             else:
                 path._commands.append(cmd)  # immutable data!
         yield path

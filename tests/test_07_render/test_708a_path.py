@@ -110,6 +110,31 @@ def test_path_clones_share_user_data():
     assert path.clone().user_data is data
 
 
+def test_reversed_path_preserves_user_data():
+    path = Path()
+    path.user_data = "data"
+    path.line_to((1, 2, 3))
+    assert path.reversed().user_data == "data"
+
+
+def test_transformed_path_preserves_user_data():
+    path = Path()
+    path.user_data = "data"
+    path.line_to((1, 2, 3))
+    assert path.transform(Matrix44()).user_data == "data"
+
+
+def test_sub_paths_inherit_parent_user_data():
+    path = Path()
+    path.user_data = "data"
+    path.line_to((1, 2, 3))
+    path.move_to((7, 8, 9))
+    path.line_to((7, 8, 9))
+    assert path.has_sub_paths is True
+    for p in path.sub_paths():
+        assert p.user_data == "data"
+
+
 class TestAllLinesToCurveConverter:
     def test_create_a_curve3_command(self):
         path = Path()
