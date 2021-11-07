@@ -6,7 +6,6 @@ from ezdxf.math import BoundingBox
 from ezdxf.render.trace import LinearTrace
 
 
-@pytest.mark.xfail(reason="Error in LinearTrace.faces()")
 def test_linear_trace_builder():
     width = 30
     trace = LinearTrace()

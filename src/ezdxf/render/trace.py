@@ -208,11 +208,14 @@ class LinearTrace(AbstractTrace):
             ray1: ConstructionRay, ray2: ConstructionRay, default: Vec2
         ) -> Vec2:
             """Intersect two rays but take parallel rays into account."""
+            # check for nearly parallel rays
+            if ray1.slope is not None and ray2.slope is not None:
+                if abs(ray1.slope - ray2.slope) < 1e-4:
+                    return default
             try:
-                v = ray1.intersect(ray2)
+                return ray1.intersect(ray2)
             except ParallelRaysError:
-                v = default
-            return v
+                return default
 
         # Path has to be explicit closed by vertices:
         is_closed = stations[0].vertex.isclose(stations[-1].vertex)
