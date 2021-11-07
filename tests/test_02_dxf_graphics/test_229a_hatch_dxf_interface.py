@@ -4,6 +4,7 @@ import pytest
 
 from ezdxf.entities.hatch import Hatch
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
+from ezdxf.lldxf import const
 
 HATCH = """0
 HATCH
@@ -107,3 +108,27 @@ def test_write_correct_polyline_path_tag_order(entity):
     # 73 = is_closed
     # The group codes 72 and 73 are swapped in comparison to MPOLYGON
     assert tags == [(92, 3), (72, 0), (73, 1)]
+
+
+def test_hatch_boundary_state():
+    state = const.HatchBoundaryState.from_flag_state(
+        const.BOUNDARY_PATH_EXTERNAL
+        + const.BOUNDARY_PATH_DERIVED
+        + const.BOUNDARY_PATH_TEXTBOX
+        + const.BOUNDARY_PATH_OUTERMOST
+    )
+    assert state.external is True
+    assert state.derived is True
+    assert state.textbox is True
+    assert state.outermost is True
+    assert state.default is False
+
+
+def test_hatch_boundary_default_state():
+    state = const.HatchBoundaryState()
+    assert state.external is False
+    assert state.derived is False
+    assert state.textbox is False
+    assert state.outermost is False
+    assert state.default is True
+

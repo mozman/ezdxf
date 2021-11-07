@@ -2,6 +2,7 @@
 # License: MIT License
 from typing import List
 from enum import IntEnum, IntFlag
+from dataclasses import dataclass
 
 DXF9 = "AC1004"
 DXF10 = "AC1006"
@@ -145,11 +146,12 @@ class DXFRenderError(DXFError):
     complex DXF entities by DXF primitives (LINE, TEXT, ...)
     e.g. for DIMENSION or LEADER entities.
     """
+
     pass
 
 
 class DXFMissingDefinitionPoint(DXFRenderError):
-    """Missing required definition points in the DIMENSION entity. """
+    """Missing required definition points in the DIMENSION entity."""
 
 
 MANAGED_SECTIONS = {
@@ -537,6 +539,29 @@ def boundary_path_flag_names(flags: int) -> List[str]:
     if flags & BOUNDARY_PATH_OUTERMOST:
         types.append("outermost")
     return types
+
+
+@dataclass(frozen=True)
+class HatchBoundaryState:
+    external: bool = False
+    derived: bool = False
+    textbox: bool = False
+    outermost: bool = False
+
+    @classmethod
+    def from_flag_state(cls, flag: int) -> "HatchBoundaryState":
+        return HatchBoundaryState(
+            external=bool(flag & BOUNDARY_PATH_EXTERNAL),
+            derived=bool(flag & BOUNDARY_PATH_DERIVED),
+            textbox=bool(flag & BOUNDARY_PATH_TEXTBOX),
+            outermost=bool(flag & BOUNDARY_PATH_OUTERMOST),
+        )
+
+    @property
+    def default(self) -> bool:
+        return not (
+            self.external or self.derived or self.outermost or self.textbox
+        )
 
 
 GRADIENT_TYPES = frozenset(
