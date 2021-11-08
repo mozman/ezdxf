@@ -268,7 +268,8 @@ class Text(DXFGraphic):
 
         """
         p1 = Vec3(self.dxf.insert)
-        p2 = Vec3(self.get_dxf_attrib("align_point", NULLVEC))
+        # If the second (and often required) align point is not present use p1!
+        p2 = Vec3(self.dxf.get("align_point", p1))
         align = self.get_align()
         if align == "LEFT":
             return align, p1, None

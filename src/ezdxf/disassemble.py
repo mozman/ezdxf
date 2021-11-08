@@ -261,12 +261,10 @@ class TextLinePrimitive(ConvertedPrimitive):
                 return math.radians(text.dxf.rotation)
 
         def location():
-            if alignment == "LEFT":
-                return p1
-            elif fit_or_aligned:
+            if fit_or_aligned:
                 return p1.lerp(p2, factor=0.5)
             else:
-                return p2
+                return p1
 
         text = cast("Text", self.entity)
         if text.dxftype() == "ATTDEF":
@@ -281,13 +279,11 @@ class TextLinePrimitive(ConvertedPrimitive):
             self._path = Path()
             return
 
-        p1: Vec3 = text.dxf.insert
-        p2: Vec3 = text.dxf.align_point
         font = fonts.make_font(
             get_font_name(text), text.dxf.height, text.dxf.width
         )
         text_line = TextLine(content, font)
-        alignment: str = text.get_align()
+        alignment, p1, p2 = text.get_pos()
         fit_or_aligned = alignment == "FIT" or alignment == "ALIGNED"
         if text.dxf.halign > 2:  # ALIGNED=3, MIDDLE=4, FIT=5
             text_line.stretch(alignment, p1, p2)
