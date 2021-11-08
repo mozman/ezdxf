@@ -263,8 +263,7 @@ class TextLinePrimitive(ConvertedPrimitive):
         def location():
             if fit_or_aligned:
                 return p1.lerp(p2, factor=0.5)
-            else:
-                return p1
+            return p1
 
         text = cast("Text", self.entity)
         if text.dxftype() == "ATTDEF":
@@ -284,6 +283,8 @@ class TextLinePrimitive(ConvertedPrimitive):
         )
         text_line = TextLine(content, font)
         alignment, p1, p2 = text.get_pos()
+        if p2 is None:
+            p2 = p1
         fit_or_aligned = alignment == "FIT" or alignment == "ALIGNED"
         if text.dxf.halign > 2:  # ALIGNED=3, MIDDLE=4, FIT=5
             text_line.stretch(alignment, p1, p2)
