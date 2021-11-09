@@ -477,9 +477,10 @@ class Drawing:
         """For upgrading DXF R12/13/14 files to R2000, it is necessary to
         create all used arrow blocks before saving the DXF file, else $HANDSEED
         is not the next available handle, which is a problem for AutoCAD.
-        To be save create all known AutoCAD arrows, because references to arrow
-        blocks can be in DIMSTYLE, DIMENSION override, LEADER override and maybe
-        other places.
+
+        Create all known AutoCAD arrows to be on the safe side, because
+        references to arrow blocks can be in DIMSTYLE, DIMENSION override,
+        LEADER override and maybe other locations.
 
         """
         from ezdxf.render.arrows import ARROWS
