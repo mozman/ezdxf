@@ -187,14 +187,14 @@ def text():
     return Text.new(handle="ABBA", owner="0")
 
 
-def test_text_set_alignment(text):
+def test_set_alignment(text):
     text.set_pos((2, 2), align="TOP_CENTER")
     assert text.dxf.halign == 1
     assert text.dxf.valign == 3
     assert text.dxf.align_point == (2, 2)
 
 
-def test_text_set_fit_alignment(text):
+def test_set_fit_alignment(text):
     text.set_pos((2, 2), (4, 2), align="FIT")
     assert text.dxf.halign == 5
     assert text.dxf.valign == 0
@@ -202,13 +202,36 @@ def test_text_set_fit_alignment(text):
     assert text.dxf.align_point == (4, 2)
 
 
-def test_text_get_alignment(text):
+def test_reset_fit_alignment(text):
+    text.set_pos((2, 2), (4, 2), align="FIT")
+    text.set_pos((3, 3), (5, 3))
+    assert text.dxf.halign == 5
+    assert text.dxf.valign == 0
+    assert text.dxf.insert == (3, 3)
+    assert text.dxf.align_point == (5, 3)
+
+
+def test_resetting_location_raises_value_error_for_missing_point(text):
+    text.set_pos((2, 2), (4, 2), align="FIT")
+    with pytest.raises(ValueError):
+        text.set_pos((3, 3))
+
+
+def test_raises_value_error_for_invalid_alignment(text):
+    with pytest.raises(ValueError):
+        text.set_align("XYZ")
+
+    with pytest.raises(ValueError):
+        text.set_pos((2, 2), (4, 2), align="XYZ")
+
+
+def test_get_alignment(text):
     text.dxf.halign = 1
     text.dxf.valign = 3
     assert text.get_align() == "TOP_CENTER"
 
 
-def test_text_get_pos_TOP_CENTER(text):
+def test_get_pos_TOP_CENTER(text):
     text.set_pos((2, 2), align="TOP_CENTER")
     align, p1, p2 = text.get_pos()
     assert align == "TOP_CENTER"
@@ -216,7 +239,7 @@ def test_text_get_pos_TOP_CENTER(text):
     assert p2 is None
 
 
-def test_text_get_pos_LEFT(text):
+def test_get_pos_LEFT(text):
     text.set_pos((2, 2))
     align, p1, p2 = text.get_pos()
     assert align == "LEFT"
@@ -224,7 +247,7 @@ def test_text_get_pos_LEFT(text):
     assert p2 is None
 
 
-def test_text_transform_interface():
+def test_transform_interface():
     text = Text()
     text.dxf.insert = (1, 0, 0)
     text.transform(Matrix44.translate(1, 2, 3))
@@ -235,6 +258,19 @@ def test_text_transform_interface():
     text.translate(1, 2, 3)
     assert text.dxf.insert == (3, 4, 6)
     assert text.dxf.align_point == (4, 4, 4)
+
+
+def test_fit_length(text):
+    text.set_pos((2, 2), (4, 2), align="FIT")
+    assert text.fit_length() == 2
+
+    # remove align point
+    del text.dxf.align_point
+    assert text.fit_length() == 0
+
+
+def test_default_font_name(text):
+    assert text.font_name() == "arial.ttf"
 
 
 @pytest.fixture
@@ -251,7 +287,7 @@ def text2():
 
 
 @pytest.mark.parametrize("rx, ry", [(1, 1), (-1, 1), (-1, -1), (1, -1)])
-def test_text_scale_and_reflexion(rx, ry, text2):
+def test_scale_and_reflexion(rx, ry, text2):
     insert = Vec3(0, 0, 0)
     m = Matrix44.chain(
         Matrix44.scale(2 * rx, 3 * ry, 1),
@@ -267,7 +303,7 @@ def test_text_scale_and_reflexion(rx, ry, text2):
     assert math.isclose(text2.dxf.width, 2.0 / 3.0)
 
 
-def test_text_non_uniform_scaling(text2):
+def test_non_uniform_scaling(text2):
     text2.rotate_z(math.radians(30))
     text2.scale(1, 2, 1)
     assert math.isclose(text2.dxf.oblique, 33.004491598883064)

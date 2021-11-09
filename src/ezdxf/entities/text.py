@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 import math
-from typing import TYPE_CHECKING, Tuple, Union
+from typing import TYPE_CHECKING, Tuple, Optional
 
 from ezdxf.lldxf import validator
 from ezdxf.lldxf import const
@@ -248,9 +248,10 @@ class Text(DXFGraphic):
         """
         if align is None:
             align = self.get_align()
-        align = align.upper()
-        self.set_align(align)
-        self.set_dxf_attrib("insert", p1)
+        else:
+            align = align.upper()
+            self.set_align(align)
+        self.dxf.insert = p1
         if align in ("ALIGNED", "FIT"):
             if p2 is None:
                 raise DXFValueError(
@@ -258,10 +259,10 @@ class Text(DXFGraphic):
                 )
         else:
             p2 = p1
-        self.set_dxf_attrib("align_point", p2)
+        self.dxf.align_point = p2
         return self
 
-    def get_pos(self) -> Tuple[str, Vec3, Union[Vec3, None]]:
+    def get_pos(self) -> Tuple[str, Vec3, Optional[Vec3]]:
         """Returns a tuple (`align`, `p1`, `p2`), `align` is the alignment
         method, `p1` is the alignment point, `p2` is only relevant if `align`
         is "ALIGNED" or "FIT", otherwise it is ``None``.
@@ -288,15 +289,18 @@ class Text(DXFGraphic):
 
         """
         align = align.upper()
-        halign, valign = const.TEXT_ALIGN_FLAGS[align.upper()]
-        self.set_dxf_attrib("halign", halign)
-        self.set_dxf_attrib("valign", valign)
+        try:
+            halign, valign = const.TEXT_ALIGN_FLAGS[align.upper()]
+        except KeyError:
+            raise ValueError(f"invalid argument align: {align}")
+        self.dxf.halign = halign
+        self.dxf.valign = valign
         return self
 
     def get_align(self) -> str:
         """Returns the actual text alignment as string, see also :meth:`set_pos`."""
-        halign = self.get_dxf_attrib("halign", 0)
-        valign = self.get_dxf_attrib("valign", 0)
+        halign = self.dxf.get("halign", 0)
+        valign = self.dxf.get("valign", 0)
         if halign > 2:
             valign = 0
         return const.TEXT_ALIGNMENT_BY_FLAGS.get((halign, valign), "LEFT")
@@ -417,7 +421,7 @@ class Text(DXFGraphic):
         other alignments.
 
         """
-        length = 0
+        length = 0.0
         align, p1, p2 = self.get_pos()
         if align in ("FIT", "ALIGNED"):
             # text is stretch between p1 and p2
