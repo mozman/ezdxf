@@ -1,6 +1,5 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-# created 2019-02-15
 import pytest
 import math
 
@@ -290,3 +289,30 @@ def test_is_upside_down(text):
 def test_set_is_upside_down(text):
     text.is_upside_down = True
     assert text.is_upside_down is True
+
+
+def test_get_pos_handles_missing_align_point():
+    """Any text alignment except LEFT requires and uses the align_point
+    attribute as text location point. But there are real world example from
+    AutoCAD which do not provide the align_point even it is required.
+
+    In this case the get_pos() method returns the insert attribute.
+
+    """
+    text = Text()
+    text.dxf.halign = 1  # center
+    text.dxf.valign = 1  # bottom
+    text.dxf.insert = (1, 2)
+    text.dxf.align_point = (3, 4)  # the real alignment point
+
+    # the expected and correct align point:
+    alignment, p1, p2 = text.get_pos()
+    assert p1 == (3, 4)
+    assert p2 is None  # only used for "FIT" and "ALIGNED"
+
+    # remove the align point
+    del text.dxf.align_point
+
+    alignment, p1, p2 = text.get_pos()
+    assert p1 == (1, 2)  # use the insert point instead
+    assert p2 is None  # only used for "FIT" and "ALIGNED"
