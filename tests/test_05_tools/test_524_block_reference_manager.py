@@ -32,6 +32,24 @@ def test_count_simple_references():
     assert ref_counter[block.block_record.dxf.handle] == 10
 
 
+def test_count_nested_block_references():
+    count = 10
+    doc = ezdxf.new()
+    block1 = doc.blocks.new("First")
+    block2 = doc.blocks.new("Second")
+    block1.add_blockref(block2.dxf.name, (0, 0))
+
+    msp = doc.modelspace()
+    for _ in range(count):
+        msp.add_blockref("First", (0, 0))
+    ref_counter = BlockReferenceCounter(doc)
+    assert len(ref_counter) == 2
+    assert ref_counter[block1.block_record.dxf.handle] == 10
+    assert (
+        ref_counter[block2.block_record.dxf.handle] == 1
+    ), "referenced only once in block First"
+
+
 def test_count_references_used_in_xdata():
     doc = ezdxf.new()
     msp = doc.modelspace()
@@ -56,6 +74,17 @@ def test_count_references_used_in_app_data():
     line.set_app_data("ezdxf", [(320, handle), (480, handle)])
     ref_counter = BlockReferenceCounter(doc)
     assert ref_counter[handle] == 2
+
+
+def test_count_references_used_in_xrecord():
+    doc = ezdxf.new()
+    block = doc.blocks.new("First")
+    handle = block.block_record.dxf.handle
+    xrecord = doc.rootdict.add_xrecord("Test")
+    xrecord.reset([(320, handle), (330, handle), (480, handle)])
+
+    ref_counter = BlockReferenceCounter(doc)
+    assert ref_counter[handle] == 3
 
 
 if __name__ == "__main__":

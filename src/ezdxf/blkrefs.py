@@ -33,11 +33,11 @@ from typing import TYPE_CHECKING, Dict, Iterable, List
 from collections import Counter
 
 from ezdxf.lldxf.types import POINTER_CODES
-from ezdxf.entities import DXFEntity, BlockRecord
+from ezdxf.entities import DXFEntity, BlockRecord, XRecord, DXFTagStorage
 from ezdxf.protocols import referenced_blocks
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing
+    from ezdxf.eztypes import Drawing, Tags
     from ezdxf.sections.tables import BlockRecordTable
 
 """ 
@@ -119,6 +119,13 @@ def count_references(
     for entity in entities:
         update(generic_handles(entity))
         update(referenced_blocks(entity))
+        if isinstance(entity, XRecord):
+            update(all_pointer_handles(entity.tags))
+        elif isinstance(entity, DXFTagStorage):
+            # XDATA and APP data is already done!
+            for tags in entity.xtags.subclasses[1:]:
+                update(all_pointer_handles(tags))
+            # ignore embedded objects: special objects for MTEXT and ATTRIB
     return counter
 
 
@@ -129,15 +136,16 @@ def generic_handles(entity: DXFEntity) -> Handles:
                 if code == 1005:
                     yield value
 
-    def appdata_handles() -> Iterable[str]:
-        for tags in entity.appdata.data.values():  # type: ignore
-            for code, value in tags:
-                if code in POINTER_CODES:
-                    yield value
-
     handles: List[str] = []
     if entity.xdata is not None:
         handles.extend(xdata_handles())
     if entity.appdata is not None:
-        handles.extend(appdata_handles())
+        for tags in entity.appdata.data.values():
+            handles.extend(all_pointer_handles(tags))
     return handles
+
+
+def all_pointer_handles(tags: "Tags") -> Iterable[str]:
+    for code, value in tags:
+        if code in POINTER_CODES:
+            yield value
