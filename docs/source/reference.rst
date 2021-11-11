@@ -43,6 +43,7 @@ DXF Structures
     appdata
     xdict
     reactors
+    blkrefs
 
 DXF Entity Creation
 -------------------

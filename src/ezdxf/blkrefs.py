@@ -2,8 +2,8 @@
 #  License: MIT License
 #  Work in progress, should be released in v0.18
 """
-Block Reference Management Tools
-================================
+Block Reference Management
+==========================
 
 The package `ezdxf` is not designed as a CAD library and does not automatically
 monitor all internal changes. This enables faster entity processing at the cost
@@ -12,11 +12,6 @@ of an unknown state of the DXF document.
 In order to carry out precise BLOCK reference management, i.e. to handle
 dependencies or to delete unused BLOCK definition, the block reference status
 (counter) must be acquired explicitly by the package user.
-
-This follows more the C++ zero-overhead principle:
-
-    What you don't use, you don't pay for.
-
 All block reference management structures must be explicitly recreated each time
 the document content is changed. This is not very efficient, but it is safe.
 
@@ -27,6 +22,8 @@ the document content is changed. This is not very efficient, but it is safe.
 
 Always remember that `ezdxf` is not intended or suitable as a basis for a CAD
 application!
+
+.. versionadded:: 0.18
 
 """
 from typing import TYPE_CHECKING, Dict, Iterable, List
@@ -39,6 +36,8 @@ from ezdxf.protocols import referenced_blocks
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing, Tags
     from ezdxf.sections.tables import BlockRecordTable
+
+__all__ = ["BlockReferenceCounter"]
 
 """ 
 Where are block references located:
@@ -83,6 +82,22 @@ Handles = Iterable[str]
 
 
 class BlockReferenceCounter:
+    """
+    Counts all block references in a DXF document.
+
+    Check if a block is referenced by any entity or any resource (DIMSYTLE,
+    MLEADERSTYLE) in a DXF document::
+
+        import ezdxf
+        from ezdxf.blkrefs import BlockReferenceCounter
+
+        doc = ezdxf.readfile("your.dxf")
+        counter = BlockReferenceCounter(doc)
+        count = counter.by_name("XYZ")
+        print(f"Block 'XYZ' if referenced {count} times.")
+
+    """
+
     def __init__(self, doc: "Drawing"):
         self._doc = doc
         # mapping: handle -> BlockRecord entity
@@ -95,12 +110,15 @@ class BlockReferenceCounter:
         self._counter.update(header_section_handles(doc))
 
     def __len__(self) -> int:
+        """Returns the count of block definitions used by the DXF document."""
         return len(self._counter)
 
-    def __getitem__(self, item: str) -> int:
-        return self._counter[item]
+    def __getitem__(self, handle: str) -> int:
+        """Returns the block reference count for a given BLOCK_RECORD handle."""
+        return self._counter[handle]
 
     def by_name(self, block_name: str) -> int:
+        """Returns the block reference count for a given block name."""
         handle = ""
         block = self._doc.blocks.get(block_name, None)
         if block is not None:
