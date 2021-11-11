@@ -454,6 +454,24 @@ class MultiLeader(DXFGraphic):
         else:
             return []
 
+    def __referenced_blocks__(self) -> Iterable[str]:
+        """Support for "ReferencedBlocks" protocol. """
+        # 1. overridden MLEADERSTYLE attributes
+        for name in ("block_record_handle", "arrow_head_handle"):
+            handle = self.dxf.get(name, None)
+            if handle is not None:
+                yield handle
+
+        # 2. arrows heads
+        for arrow_head in self.arrow_heads:
+            yield arrow_head.handle
+
+        # 3. MLeader context
+        if self.context.block is not None:
+            handle = self.context.block.block_record_handle
+            if handle is not None:
+                yield handle
+
 
 class MultiLeaderContext:
     ATTRIBS = {
