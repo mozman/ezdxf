@@ -132,5 +132,20 @@ def test_count_references_in_leader():
     assert ref_counter.by_name("Arrow") == 1
 
 
+def test_count_references_in_mleader_style():
+    doc = ezdxf.new()
+    arrow = doc.blocks.new("Arrow")
+    arrow_handle = arrow.block_record.dxf.handle
+    block = doc.blocks.new("Block")
+    block_handle = block.block_record.dxf.handle
+    mleader_style = doc.mleader_styles.new("Test")
+    mleader_style.dxf.arrow_head_handle = arrow_handle
+    mleader_style.dxf.block_record_handle = block_handle
+
+    ref_counter = BlockReferenceCounter(doc)
+    assert ref_counter[arrow_handle] == 1
+    assert ref_counter[block_handle] == 1
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

@@ -947,6 +947,13 @@ class MLeaderStyle(DXFObject):
             tagwriter, acdb_mleader_style.attribs.keys()
         )
 
+    def __referenced_blocks__(self) -> Iterable[str]:
+        """Support for "ReferencedBlocks" protocol. """
+        for name in ("block_record_handle", "arrow_head_handle"):
+            handle = self.dxf.get(name, None)
+            if handle is not None:
+                yield handle
+
 
 class MLeaderStyleCollection(ObjectCollection):
     def __init__(self, doc: "Drawing"):
