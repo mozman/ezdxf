@@ -114,5 +114,23 @@ def test_count_references_in_dimstyle():
     assert ref_counter.by_name("Arrow") == 4
 
 
+def test_count_references_in_leader():
+    doc = ezdxf.new()
+    doc.blocks.new("Arrow")
+    msp = doc.modelspace()
+    msp.add_leader(
+        vertices=[(0, 0), (1, 0)],
+        override={
+            "dimblk": "Arrow",  # ignored by LEADER
+            "dimblk1": "Arrow",  # ignored by LEADER
+            "dimblk2": "Arrow",  # ignored by LEADER
+            "dimldrblk": "Arrow",  # stored in XDATA
+        }
+    )
+
+    ref_counter = BlockReferenceCounter(doc)
+    assert ref_counter.by_name("Arrow") == 1
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
