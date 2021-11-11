@@ -17,12 +17,15 @@ def test_non_exiting_handles_return_0():
     doc = ezdxf.new()
     ref_counter = BlockReferenceCounter(doc)
     assert ref_counter["xyz"] == 0, "not existing handles should return 0"
+    assert (
+        ref_counter.by_name("xyz") == 0
+    ), "not existing block name should return 0"
 
 
 def test_count_simple_references():
     count = 10
     doc = ezdxf.new()
-    block = doc.blocks.new("First")
+    doc.blocks.new("First")
     msp = doc.modelspace()
     psp = doc.layout()
     for _ in range(count):
@@ -30,7 +33,7 @@ def test_count_simple_references():
         psp.add_blockref("First", (0, 0))
     ref_counter = BlockReferenceCounter(doc)
     assert len(ref_counter) == 1
-    assert ref_counter[block.block_record.dxf.handle] == 20
+    assert ref_counter.by_name("First") == 20
 
 
 def test_count_nested_block_references():
@@ -45,9 +48,9 @@ def test_count_nested_block_references():
         msp.add_blockref("First", (0, 0))
     ref_counter = BlockReferenceCounter(doc)
     assert len(ref_counter) == 2
-    assert ref_counter[block1.block_record.dxf.handle] == 10
+    assert ref_counter.by_name("First") == 10
     assert (
-        ref_counter[block2.block_record.dxf.handle] == 1
+        ref_counter.by_name("Second") == 1
     ), "referenced only once in block First"
 
 
@@ -90,14 +93,12 @@ def test_count_references_used_in_xrecord():
 
 def test_count_references_in_header_section():
     doc = ezdxf.new()
-    block = doc.blocks.new("Arrow")
-    handle = block.block_record.dxf.handle
-
+    doc.blocks.new("Arrow")
     for var_name in ("$DIMBLK", "$DIMBLK1", "$DIMBLK2", "$DIMLDRBLK"):
         doc.header[var_name] = "Arrow"
 
     ref_counter = BlockReferenceCounter(doc)
-    assert ref_counter[handle] == 4
+    assert ref_counter.by_name("Arrow") == 4
 
 
 if __name__ == "__main__":

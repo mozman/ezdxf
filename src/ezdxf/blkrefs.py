@@ -84,6 +84,7 @@ Handles = Iterable[str]
 
 class BlockReferenceCounter:
     def __init__(self, doc: "Drawing"):
+        self._doc = doc
         # mapping: handle -> BlockRecord entity
         self._block_index = make_block_index(doc.block_records)
 
@@ -98,6 +99,13 @@ class BlockReferenceCounter:
 
     def __getitem__(self, item: str) -> int:
         return self._counter[item]
+
+    def by_name(self, block_name: str) -> int:
+        handle = ""
+        block = self._doc.blocks.get(block_name, None)
+        if block is not None:
+            handle = block.block_record.dxf.handle
+        return self._counter[handle]
 
 
 def make_block_index(block_records: "BlockRecordTable") -> BlockIndex:
