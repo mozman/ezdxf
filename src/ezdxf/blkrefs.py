@@ -117,8 +117,11 @@ def count_references(
 
     counter: Counter = Counter()
     for entity in entities:
+        # add handles stored in XDATA and APP data
         update(generic_handles(entity))
+        # add entity specific block references
         update(referenced_blocks(entity))
+        # special entity types storing arbitrary raw DXF tags:
         if isinstance(entity, XRecord):
             update(all_pointer_handles(entity.tags))
         elif isinstance(entity, DXFTagStorage):
@@ -130,15 +133,10 @@ def count_references(
 
 
 def generic_handles(entity: DXFEntity) -> Handles:
-    def xdata_handles() -> Iterable[str]:
-        for tags in entity.xdata.data.values():  # type: ignore
-            for code, value in tags:
-                if code == 1005:
-                    yield value
-
     handles: List[str] = []
     if entity.xdata is not None:
-        handles.extend(xdata_handles())
+        for tags in entity.xdata.data.values():
+            handles.extend(value for code, value in tags if code == 1005)
     if entity.appdata is not None:
         for tags in entity.appdata.data.values():
             handles.extend(all_pointer_handles(tags))
@@ -146,6 +144,4 @@ def generic_handles(entity: DXFEntity) -> Handles:
 
 
 def all_pointer_handles(tags: "Tags") -> Iterable[str]:
-    for code, value in tags:
-        if code in POINTER_CODES:
-            yield value
+    return (value for code, value in tags if code in POINTER_CODES)
