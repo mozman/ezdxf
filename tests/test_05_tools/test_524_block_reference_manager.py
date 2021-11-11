@@ -32,5 +32,31 @@ def test_count_simple_references():
     assert ref_counter[block.block_record.dxf.handle] == 10
 
 
+def test_count_references_used_in_xdata():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    block = doc.blocks.new("First")
+    handle = block.block_record.dxf.handle
+    line = msp.add_line((0, 0), (1, 0))
+
+    # attach XDATA handle to block reference
+    line.set_xdata("ezdxf", [(1005, handle)])
+    ref_counter = BlockReferenceCounter(doc)
+    assert ref_counter[handle] == 1
+
+
+def test_count_references_used_in_app_data():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    block = doc.blocks.new("First")
+    handle = block.block_record.dxf.handle
+    line = msp.add_line((0, 0), (1, 0))
+
+    # attach XDATA handle to block reference
+    line.set_app_data("ezdxf", [(320, handle), (480, handle)])
+    ref_counter = BlockReferenceCounter(doc)
+    assert ref_counter[handle] == 2
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

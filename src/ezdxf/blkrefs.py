@@ -29,8 +29,10 @@ Always remember that `ezdxf` is not intended or suitable as a basis for a CAD
 application!
 
 """
-from typing import TYPE_CHECKING, Dict, Iterable
+from typing import TYPE_CHECKING, Dict, Iterable, List
 from collections import Counter
+
+from ezdxf.lldxf.types import POINTER_CODES
 from ezdxf.entities import DXFEntity, BlockRecord
 from ezdxf.protocols import referenced_blocks
 
@@ -115,10 +117,27 @@ def count_references(
 
     counter: Counter = Counter()
     for entity in entities:
-        update(generic_blockrefs(entity))
+        update(generic_handles(entity))
         update(referenced_blocks(entity))
     return counter
 
 
-def generic_blockrefs(entity: DXFEntity) -> Handles:
-    return []
+def generic_handles(entity: DXFEntity) -> Handles:
+    def xdata_handles() -> Iterable[str]:
+        for tags in entity.xdata.data.values():  # type: ignore
+            for code, value in tags:
+                if code == 1005:
+                    yield value
+
+    def appdata_handles() -> Iterable[str]:
+        for tags in entity.appdata.data.values():  # type: ignore
+            for code, value in tags:
+                if code in POINTER_CODES:
+                    yield value
+
+    handles: List[str] = []
+    if entity.xdata is not None:
+        handles.extend(xdata_handles())
+    if entity.appdata is not None:
+        handles.extend(appdata_handles())
+    return handles

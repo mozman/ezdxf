@@ -8,6 +8,7 @@ from typing import (
     Sequence,
     Optional,
     Iterator,
+    Dict,
 )
 from collections import OrderedDict
 from ezdxf.lldxf.types import dxftag, uniform_appid
@@ -30,7 +31,7 @@ ERR_DXF_ATTRIB_NOT_EXITS = "DXF attribute {} does not exist"
 
 class AppData:
     def __init__(self):
-        self.data = OrderedDict()
+        self.data: Dict[str, Tags] = OrderedDict()
 
     def __contains__(self, appid: str) -> bool:
         """Returns ``True`` if application-defined data exist for `appid`."""
