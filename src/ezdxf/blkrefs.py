@@ -68,6 +68,12 @@ Contains no block references as far as known:
 
 Block references are stored as handles to the BLOCK_RECORD entity!
 
+Testing DXF documents with missing BLOCK definitions:
+
+- INSERT without an existing BLOCK definition does NOT crash AutoCAD/BricsCAD
+- HEADER variables $DIMBLK, $DIMBLK2, $DIMBLK2 and $DIMLDRBLK can reference 
+  non existing blocks without crashing AutoCAD/BricsCAD  
+
 """
 
 BlockIndex = Dict[str, BlockRecord]
