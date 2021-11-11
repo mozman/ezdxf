@@ -88,5 +88,17 @@ def test_count_references_used_in_xrecord():
     assert ref_counter[handle] == 3
 
 
+def test_count_references_in_header_section():
+    doc = ezdxf.new()
+    block = doc.blocks.new("Arrow")
+    handle = block.block_record.dxf.handle
+
+    for var_name in ("$DIMBLK", "$DIMBLK1", "$DIMBLK2", "$DIMLDRBLK"):
+        doc.header[var_name] = "Arrow"
+
+    ref_counter = BlockReferenceCounter(doc)
+    assert ref_counter[handle] == 4
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

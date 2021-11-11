@@ -91,6 +91,7 @@ class BlockReferenceCounter:
         self._counter = count_references(
             doc.entitydb.values(), self._block_index
         )
+        self._counter.update(header_section_handles(doc))
 
     def __len__(self) -> int:
         return len(self._counter)
@@ -145,3 +146,13 @@ def generic_handles(entity: DXFEntity) -> Handles:
 
 def all_pointer_handles(tags: "Tags") -> Iterable[str]:
     return (value for code, value in tags if code in POINTER_CODES)
+
+
+def header_section_handles(doc: "Drawing") -> Handles:
+    header = doc.header
+    for var_name in ("$DIMBLK", "$DIMBLK1", "$DIMBLK2", "$DIMLDRBLK"):
+        blk_name = header.get(var_name, None)
+        if blk_name is not None:
+            block = doc.blocks.get(blk_name, None)
+            if block is not None:
+                yield block.block_record.dxf.handle
