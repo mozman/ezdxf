@@ -101,5 +101,18 @@ def test_count_references_in_header_section():
     assert ref_counter.by_name("Arrow") == 4
 
 
+def test_count_references_in_dimstyle():
+    doc = ezdxf.new()
+    doc.blocks.new("Arrow")
+    dimstyle = doc.dimstyles.new("Test")
+    dimstyle.dxf.dimblk = "Arrow"
+    dimstyle.dxf.dimblk1 = "Arrow"
+    dimstyle.dxf.dimblk2 = "Arrow"
+    dimstyle.dxf.dimldrblk = "Arrow"
+
+    ref_counter = BlockReferenceCounter(doc)
+    assert ref_counter.by_name("Arrow") == 4
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

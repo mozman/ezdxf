@@ -1,6 +1,6 @@
 # Copyright (c) 2019-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable
 import logging
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -872,6 +872,17 @@ class DimStyle(DXFEntity):
         self.dxf.dimtolj = 0  # set bottom as default
         if dec is not None:
             self.dxf.dimtdec = int(dec)
+
+    def __referenced_blocks__(self) -> Iterable[str]:
+        """Support for "ReferencedBlocks" protocol. """
+        if self.doc:
+            blocks = self.doc.blocks
+            for attrib_name in ("dimblk", "dimblk1", "dimblk2", "dimldrblk"):
+                name = self.dxf.get(attrib_name, None)
+                if name:
+                    block = blocks.get(name, None)
+                    if block is not None:
+                        yield block.block_record.dxf.handle
 
 
 def get_block_name_by_handle(handle, doc: "Drawing", default="") -> str:
