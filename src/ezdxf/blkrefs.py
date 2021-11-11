@@ -43,15 +43,15 @@ __all__ = ["BlockReferenceCounter"]
 Where are block references located:
 
 - HEADER SECTION: $DIMBLK, $DIMBLK1, $DIMBLK2, $DIMLDRBLK 
-- DIMENSION - arrows referenced in the associated anonymous BLOCK, covered by 
+- DIMENSION: arrows referenced in the associated anonymous BLOCK, covered by 
   the INSERT entities in that BLOCK
-- ACAD_TABLE - has an anonymous BLOCK representation, covered by the 
+- ACAD_TABLE: has an anonymous BLOCK representation, covered by the 
   INSERT entities in that BLOCK
+- LEADER: DIMSTYLE override "dimldrblk" is stored as handle in XDATA
 
 Entity specific block references, returned by the "ReferencedBlocks" protocol:
 - INSERT: "name"
 - DIMSTYLE: "dimblk", "dimblk1", "dimblk2", "dimldrblk"
-- LEADER: DIMSTYLE override "dimldrblk" - has no anonymous BLOCK representation 
 - MLEADER: arrows, blocks - has no anonymous BLOCK representation
 - MLEADERSTYLE: arrows
 
