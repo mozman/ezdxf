@@ -29,7 +29,6 @@ from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Iterator
 from collections import Counter
 
 from ezdxf.lldxf.types import POINTER_CODES
-from ezdxf.entities import XRecord, DXFTagStorage
 from ezdxf.protocols import referenced_blocks
 
 if TYPE_CHECKING:
@@ -82,7 +81,9 @@ Testing DXF documents with missing BLOCK definitions:
 class BlockDefinitionIndex:
     """Index of all :class:`~ezdxf.entities.BlockRecord` entities representing
     real BLOCK definitions, excluding all :class:`~ezdxf.entities.BlockRecord`
-    entities defining model space or paper space layouts.
+    entities defining model space or paper space layouts. External references
+    (XREF) and XREF overlays are included.
+
     """
     def __init__(self, doc: "Drawing"):
         self._doc = doc
@@ -182,6 +183,8 @@ class BlockReferenceCounter:
 def count_references(
     entities: Iterable["DXFEntity"], index: BlockDefinitionIndex
 ) -> Counter:
+    from ezdxf.entities import XRecord, DXFTagStorage
+
     def update(handles: Iterable[str]):
         # only count references to existing blocks:
         counter.update(h for h in handles if index.has_handle(h))
