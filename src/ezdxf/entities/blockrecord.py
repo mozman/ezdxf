@@ -213,6 +213,14 @@ class BlockRecord(DXFEntity):
         """
         return not self.is_any_layout
 
+    @property
+    def is_xref(self) -> bool:
+        """``True`` if represents an XREF (external reference) or XREF_OVERLAY.
+        """
+        if self.block is not None:
+            return bool(self.block.dxf.flags & 12)
+        return False
+
     def add_entity(self, entity: "DXFGraphic") -> None:
         """Add an existing DXF entity to BLOCK_RECORD.
 

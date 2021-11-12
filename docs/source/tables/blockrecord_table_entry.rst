@@ -73,15 +73,17 @@ Factory function         :meth:`Drawing.block_records.new`
         === ===================
 
 
-    .. autoattribute:: is_active_paperspace
+    .. autoproperty:: is_active_paperspace
 
-    .. autoattribute:: is_any_paperspace
+    .. autoproperty:: is_any_paperspace
 
-    .. autoattribute:: is_any_layout
+    .. autoproperty:: is_any_layout
 
-    .. autoattribute:: is_block_layout
+    .. autoproperty:: is_block_layout
 
-    .. autoattribute:: is_modelspace
+    .. autoproperty:: is_modelspace
+
+    .. autoproperty:: is_xref
 
 
 Internal Structure
