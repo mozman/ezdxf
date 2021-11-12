@@ -60,6 +60,7 @@ if TYPE_CHECKING:
         BlockLayout,
         BaseLayout,
         Auditor,
+        BlockRecord,
     )
 
 __all__ = ["Insert"]
@@ -258,9 +259,9 @@ class Insert(LinkedEntities):
 
     def block(self) -> Optional["BlockLayout"]:
         """Returns associated :class:`~ezdxf.layouts.BlockLayout`."""
-        if self.doc is None:
-            return None
-        return self.doc.blocks.get(self.dxf.name)
+        if self.doc:
+            return self.doc.blocks.get(self.dxf.name)
+        return None
 
     def place(
         self,
@@ -749,9 +750,7 @@ class Insert(LinkedEntities):
 
     def __referenced_blocks__(self) -> Iterable[str]:
         """Support for the "ReferencedBlocks" protocol."""
-        if self.doc:
-            block_name = self.dxf.name
-            block = self.doc.blocks.get(block_name, None)
-            if block is not None:
-                return block.block_record_handle,
+        block = self.block()
+        if block is not None:
+            return block.block_record_handle,
         return tuple()
