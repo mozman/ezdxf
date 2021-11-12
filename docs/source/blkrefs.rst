@@ -1,7 +1,7 @@
 
 .. automodule:: ezdxf.blkrefs
 
-.. autoclass:: BlockRecordIndex
+.. autoclass:: BlockDefinitionIndex
 
     .. autoproperty:: block_records
 
@@ -17,8 +17,6 @@
 
 .. autoclass:: BlockReferenceCounter
 
-    .. automethod:: __len__
-
-    .. automethod:: __getitem__
+    .. automethod:: by_handle
 
     .. automethod:: by_name

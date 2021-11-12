@@ -7,16 +7,12 @@ import ezdxf
 from ezdxf.blkrefs import BlockReferenceCounter
 
 
-def test_count_empty_document():
-    doc = ezdxf.new()
-    ref_counter = BlockReferenceCounter(doc)
-    assert len(ref_counter) == 0
-
-
 def test_non_exiting_handles_return_0():
     doc = ezdxf.new()
     ref_counter = BlockReferenceCounter(doc)
-    assert ref_counter["xyz"] == 0, "not existing handles should return 0"
+    assert (
+        ref_counter.by_handle("xyz") == 0
+    ), "not existing handles should return 0"
     assert (
         ref_counter.by_name("xyz") == 0
     ), "not existing block name should return 0"
@@ -28,7 +24,6 @@ def test_access_interface():
     block = doc.blocks.new("First")
     msp.add_blockref("First", (0, 0))
     ref_counter = BlockReferenceCounter(doc)
-    assert ref_counter[block.block_record_handle] == 1
     assert ref_counter.by_handle(block.block_record_handle) == 1
     assert ref_counter.by_name("First") == 1
 
@@ -43,7 +38,6 @@ def test_count_simple_references():
         msp.add_blockref("First", (0, 0))
         psp.add_blockref("First", (0, 0))
     ref_counter = BlockReferenceCounter(doc)
-    assert len(ref_counter) == 1
     assert ref_counter.by_name("First") == 20
 
 
@@ -58,7 +52,6 @@ def test_count_nested_block_references():
     for _ in range(count):
         msp.add_blockref("First", (0, 0))
     ref_counter = BlockReferenceCounter(doc)
-    assert len(ref_counter) == 2
     assert ref_counter.by_name("First") == 10
     assert (
         ref_counter.by_name("Second") == 1
@@ -75,7 +68,7 @@ def test_count_references_used_in_xdata():
     # attach XDATA handle to block reference
     line.set_xdata("ezdxf", [(1005, handle)])
     ref_counter = BlockReferenceCounter(doc)
-    assert ref_counter[handle] == 1
+    assert ref_counter.by_handle(handle) == 1
 
 
 def test_count_references_used_in_app_data():
@@ -88,7 +81,7 @@ def test_count_references_used_in_app_data():
     # attach XDATA handle to block reference
     line.set_app_data("ezdxf", [(320, handle), (480, handle)])
     ref_counter = BlockReferenceCounter(doc)
-    assert ref_counter[handle] == 2
+    assert ref_counter.by_handle(handle) == 2
 
 
 def test_count_references_used_in_xrecord():
@@ -99,7 +92,7 @@ def test_count_references_used_in_xrecord():
     xrecord.reset([(320, handle), (330, handle), (480, handle)])
 
     ref_counter = BlockReferenceCounter(doc)
-    assert ref_counter[handle] == 3
+    assert ref_counter.by_handle(handle) == 3
 
 
 def test_count_references_in_header_section():
@@ -167,8 +160,8 @@ def test_count_references_in_mleader_style():
     mleader_style.dxf.block_record_handle = block_handle
 
     ref_counter = BlockReferenceCounter(doc)
-    assert ref_counter[arrow_handle] == 1
-    assert ref_counter[block_handle] == 1
+    assert ref_counter.by_handle(arrow_handle) == 1
+    assert ref_counter.by_handle(block_handle) == 1
 
 
 if __name__ == "__main__":

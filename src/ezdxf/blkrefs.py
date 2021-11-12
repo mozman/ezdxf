@@ -80,9 +80,9 @@ Testing DXF documents with missing BLOCK definitions:
 
 
 class BlockDefinitionIndex:
-    """Index of all BLOCK_RECORD entities representing real BLOCK definitions,
-    excluding all BLOCK_RECORD entities defining model space or paper space
-    layouts.
+    """Index of all :class:`~ezdxf.entities.BlockRecord` entities representing
+    real BLOCK definitions, excluding all :class:`~ezdxf.entities.BlockRecord`
+    entities defining model space or paper space layouts.
     """
     def __init__(self, doc: "Drawing"):
         self._doc = doc
@@ -153,7 +153,6 @@ class BlockReferenceCounter:
     """
 
     def __init__(self, doc: "Drawing", index: BlockDefinitionIndex = None):
-        self._doc = doc
         # mapping: handle -> BlockRecord entity
         self._block_record_index = (
             index if index is not None else BlockDefinitionIndex(doc)
@@ -165,16 +164,10 @@ class BlockReferenceCounter:
         )
         self._counter.update(header_section_handles(doc))
 
-    def __len__(self) -> int:
-        """Returns the count of block definitions used by the DXF document."""
-        return len(self._counter)
-
-    def __getitem__(self, handle: str) -> int:
-        """Returns the block reference count for a given BLOCK_RECORD handle."""
-        return self._counter[handle]
-
     def by_handle(self, handle: str) -> int:
-        """Returns the block reference count for a given BLOCK_RECORD handle."""
+        """Returns the block reference count for a given
+        :class:`~ezdxf.entities.BlockRecord` handle.
+        """
         return self._counter[handle]
 
     def by_name(self, block_name: str) -> int:
