@@ -753,5 +753,5 @@ class Insert(LinkedEntities):
             block_name = self.dxf.name
             block = self.doc.blocks.get(block_name, None)
             if block is not None:
-                return block.block_record.dxf.handle,
+                return block.block_record_handle,
         return tuple()

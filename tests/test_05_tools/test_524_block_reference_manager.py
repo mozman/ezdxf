@@ -136,11 +136,24 @@ def test_count_references_in_leader():
             "dimblk1": "Arrow",  # ignored by LEADER
             "dimblk2": "Arrow",  # ignored by LEADER
             "dimldrblk": "Arrow",  # stored in XDATA
-        }
+        },
     )
 
     ref_counter = BlockReferenceCounter(doc)
     assert ref_counter.by_name("Arrow") == 1
+
+
+def test_count_references_for_anonymous_dimension_block():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    dim = msp.add_linear_dim(
+        base=(25, 10),
+        p1=(0, 0),
+        p2=(50, 0),
+    )
+    dim.render()
+    ref_counter = BlockReferenceCounter(doc)
+    assert ref_counter.by_name(dim.dimension.dxf.geometry) == 1
 
 
 def test_count_references_in_mleader_style():

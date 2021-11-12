@@ -1,6 +1,5 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-#  Work in progress, should be released in v0.18
 """
 Block Reference Management
 ==========================

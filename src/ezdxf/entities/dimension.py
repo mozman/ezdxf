@@ -795,6 +795,16 @@ class Dimension(DXFGraphic, OverrideMixin):
         del self.virtual_block_content
         super().destroy()
 
+    def __referenced_blocks__(self) -> Iterable[str]:
+        """Support for "ReferencedBlocks" protocol. """
+        if self.doc:
+            block_name = self.dxf.get("geometry", None)
+            if block_name:
+                block = self.doc.blocks.get(block_name)
+                if block is not None:
+                    return block.block_record_handle,
+        return tuple()
+
 
 acdb_arc_dimension = DefSubclass(
     "AcDbArcDimension",
