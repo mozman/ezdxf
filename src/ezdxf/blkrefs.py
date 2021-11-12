@@ -26,18 +26,17 @@ application!
 .. versionadded:: 0.18
 
 """
-from typing import TYPE_CHECKING, Dict, Iterable, List
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Iterator
 from collections import Counter
 
 from ezdxf.lldxf.types import POINTER_CODES
-from ezdxf.entities import DXFEntity, BlockRecord, XRecord, DXFTagStorage
+from ezdxf.entities import XRecord, DXFTagStorage
 from ezdxf.protocols import referenced_blocks
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing, Tags
-    from ezdxf.sections.tables import BlockRecordTable
+    from ezdxf.eztypes import Drawing, Tags, DXFEntity, BlockRecord
 
-__all__ = ["BlockReferenceCounter"]
+__all__ = ["BlockDefinitionIndex", "BlockReferenceCounter"]
 
 """ 
 Where are block references located:
@@ -54,6 +53,9 @@ Entity specific block references, returned by the "ReferencedBlocks" protocol:
 - DIMSTYLE: "dimblk", "dimblk1", "dimblk2", "dimldrblk"
 - MLEADER: arrows, blocks - has no anonymous BLOCK representation
 - MLEADERSTYLE: arrows
+- DIMENSION: "geometry", the associated anonymous BLOCK
+- ACAD_TABLE: currently managed as generic DXFTagStorage, that should return 
+  the group code 343 "block_record" 
 
 Possible unknown or undocumented block references:
 - DXFTagStorage - all handle group codes
@@ -77,8 +79,61 @@ Testing DXF documents with missing BLOCK definitions:
 
 """
 
-BlockIndex = Dict[str, BlockRecord]
-Handles = Iterable[str]
+
+class BlockDefinitionIndex:
+    """Index of all BLOCK_RECORD entities representing real BLOCK definitions,
+    excluding all BLOCK_RECORD entities defining model space or paper space
+    layouts.
+    """
+    def __init__(self, doc: "Drawing"):
+        self._doc = doc
+        # mapping: handle -> BlockRecord entity
+        self._handle_index: Dict[str, "BlockRecord"] = dict()
+        # mapping: block name -> BlockRecord entity
+        self._name_index: Dict[str, "BlockRecord"] = dict()
+        self.rebuild()
+
+    @property
+    def block_records(self) -> Iterator["BlockRecord"]:
+        """Returns an iterator of all :class:`~ezdxf.entities.BlockRecord`
+        entities representing BLOCK definitions.
+        """
+        return iter(self._doc.tables.block_records)  # type: ignore
+
+    def rebuild(self):
+        """Rebuild index from scratch."""
+        handle_index = self._handle_index
+        name_index = self._name_index
+        handle_index.clear()
+        name_index.clear()
+        for block_record in self.block_records:
+            if block_record.is_block_layout:
+                handle_index[block_record.dxf.handle] = block_record
+                name_index[block_record.dxf.name] = block_record
+
+    def has_handle(self, handle: str) -> bool:
+        """Returns ``True`` if a :class:`~ezdxf.entities.BlockRecord` for the
+        given block record handle exist.
+        """
+        return handle in self._handle_index
+
+    def has_name(self, name: str) -> bool:
+        """Returns ``True`` if a :class:`~ezdxf.entities.BlockRecord` for the
+        given block name exist.
+        """
+        return name in self._name_index
+
+    def by_handle(self, handle: str) -> Optional["BlockRecord"]:
+        """Returns the :class:`~ezdxf.entities.BlockRecord` for the given block
+        record handle or ``None``.
+        """
+        return self._handle_index.get(handle)
+
+    def by_name(self, name: str) -> Optional["BlockRecord"]:
+        """Returns :class:`~ezdxf.entities.BlockRecord` for the given block name
+        or ``None``.
+        """
+        return self._name_index.get(name)
 
 
 class BlockReferenceCounter:
@@ -98,14 +153,16 @@ class BlockReferenceCounter:
 
     """
 
-    def __init__(self, doc: "Drawing"):
+    def __init__(self, doc: "Drawing", index: BlockDefinitionIndex = None):
         self._doc = doc
         # mapping: handle -> BlockRecord entity
-        self._block_index = make_block_index(doc.block_records)
+        self._block_record_index = (
+            index if index is not None else BlockDefinitionIndex(doc)
+        )
 
         # mapping: handle -> reference count
         self._counter = count_references(
-            doc.entitydb.values(), self._block_index
+            doc.entitydb.values(), self._block_record_index
         )
         self._counter.update(header_section_handles(doc))
 
@@ -117,30 +174,25 @@ class BlockReferenceCounter:
         """Returns the block reference count for a given BLOCK_RECORD handle."""
         return self._counter[handle]
 
+    def by_handle(self, handle: str) -> int:
+        """Returns the block reference count for a given BLOCK_RECORD handle."""
+        return self._counter[handle]
+
     def by_name(self, block_name: str) -> int:
         """Returns the block reference count for a given block name."""
         handle = ""
-        block = self._doc.blocks.get(block_name, None)
-        if block is not None:
-            handle = block.block_record.dxf.handle
+        block_record = self._block_record_index.by_name(block_name)
+        if block_record is not None:
+            handle = block_record.dxf.handle
         return self._counter[handle]
 
 
-def make_block_index(block_records: "BlockRecordTable") -> BlockIndex:
-    block_index: BlockIndex = dict()
-    for block_record in block_records:
-        assert isinstance(block_record, BlockRecord)
-        if block_record.is_block_layout:
-            block_index[block_record.dxf.handle] = block_record
-    return block_index
-
-
 def count_references(
-    entities: Iterable[DXFEntity], block_index: BlockIndex
+    entities: Iterable["DXFEntity"], index: BlockDefinitionIndex
 ) -> Counter:
     def update(handles: Iterable[str]):
         # only count references to existing blocks:
-        counter.update(h for h in handles if h in block_index)
+        counter.update(h for h in handles if index.has_handle(h))
 
     counter: Counter = Counter()
     for entity in entities:
@@ -159,7 +211,7 @@ def count_references(
     return counter
 
 
-def generic_handles(entity: DXFEntity) -> Handles:
+def generic_handles(entity: "DXFEntity") -> Iterable[str]:
     handles: List[str] = []
     if entity.xdata is not None:
         for tags in entity.xdata.data.values():
@@ -174,7 +226,7 @@ def all_pointer_handles(tags: "Tags") -> Iterable[str]:
     return (value for code, value in tags if code in POINTER_CODES)
 
 
-def header_section_handles(doc: "Drawing") -> Handles:
+def header_section_handles(doc: "Drawing") -> Iterable[str]:
     header = doc.header
     for var_name in ("$DIMBLK", "$DIMBLK1", "$DIMBLK2", "$DIMLDRBLK"):
         blk_name = header.get(var_name, None)

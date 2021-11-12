@@ -22,6 +22,17 @@ def test_non_exiting_handles_return_0():
     ), "not existing block name should return 0"
 
 
+def test_access_interface():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    block = doc.blocks.new("First")
+    msp.add_blockref("First", (0, 0))
+    ref_counter = BlockReferenceCounter(doc)
+    assert ref_counter[block.block_record_handle] == 1
+    assert ref_counter.by_handle(block.block_record_handle) == 1
+    assert ref_counter.by_name("First") == 1
+
+
 def test_count_simple_references():
     count = 10
     doc = ezdxf.new()
