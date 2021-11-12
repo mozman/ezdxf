@@ -247,21 +247,18 @@ class Insert(LinkedEntities):
         self.dxf.zscale = factor
         return self
 
-    def is_xref(self) -> bool:
-        """Return ``True`` if XREF or XREF_OVERLAY."""
-        assert self.doc is not None, "Requires a document object"
-        block_layout = self.doc.blocks.get(self.dxf.name)
-        if (
-            block_layout is not None and block_layout.block.dxf.flags & 12  # type: ignore
-        ):  # XREF(4) & XREF_OVERLAY(8)
-            return True
-        return False
-
     def block(self) -> Optional["BlockLayout"]:
         """Returns associated :class:`~ezdxf.layouts.BlockLayout`."""
         if self.doc:
             return self.doc.blocks.get(self.dxf.name)
         return None
+
+    def is_xref(self) -> bool:
+        """Return ``True`` if XREF or XREF_OVERLAY."""
+        block = self.block()
+        if block is not None:
+            return block.block_record.is_xref
+        return False
 
     def place(
         self,
