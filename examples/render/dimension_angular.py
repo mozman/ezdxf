@@ -164,10 +164,11 @@ def angular_2l_default(dxfversion="R2013"):
 def add_lines(
     msp, center: Vec3, radius: float, start_angle: float, end_angle: float
 ):
+    attribs = {"color": 1}
     start_point = center + Vec3.from_deg_angle(start_angle) * radius
     end_point = center + Vec3.from_deg_angle(end_angle) * radius
-    msp.add_line(center, start_point)
-    msp.add_line(center, end_point)
+    msp.add_line(center, start_point, dxfattribs=attribs)
+    msp.add_line(center, end_point, dxfattribs=attribs)
 
 
 def angular_3d(dxfversion="R2000"):
@@ -229,9 +230,38 @@ def angular_units_tol_limits(dxfversion="R2013"):
     doc.saveas(OUTDIR / f"dim_angular_units_tol_limits_{dxfversion}.dxf")
 
 
+def measure_fixed_angle(angle: float, dxfversion="R2013"):
+    doc = ezdxf.new(dxfversion, setup=True)
+    msp = doc.modelspace()
+    x_dist = 15
+    radius = 3
+    distance = 1
+    delta = angle / 2.0
+    for dimtad, y_dist in [[0, 0], [1, 20], [4, 40]]:
+        for count in range(8):
+            center = Vec3(x_dist * count, y_dist)
+            main_angle = 45.0 * count
+            start_angle = main_angle - delta
+            end_angle = main_angle + delta
+            add_lines(msp, center, radius, start_angle, end_angle)
+            dim = msp.add_angular_dim_cra(
+                center,
+                radius,
+                start_angle,
+                end_angle,
+                distance,
+                override={"dimtad": dimtad},
+            )
+            dim.render(discard=BRICSCAD)
+
+    doc.set_modelspace_vport(height=100, center=(x_dist * 4, 20))
+    doc.saveas(OUTDIR / f"dim_angular_{angle:.0f}_deg_{dxfversion}.dxf")
+
+
 if __name__ == "__main__":
     angular_cra_default()
     angular_3p_default()
     angular_2l_default()
     angular_3d()
     angular_units_tol_limits()
+    measure_fixed_angle(3.0)
