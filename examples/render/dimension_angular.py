@@ -265,3 +265,4 @@ if __name__ == "__main__":
     angular_3d()
     angular_units_tol_limits()
     measure_fixed_angle(3.0)
+    measure_fixed_angle(6.0)

@@ -187,22 +187,62 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         self.start_angle_rad: float = self.ext1_dir.angle
         self.ext2_dir: Vec2 = self.get_ext2_dir()
         self.end_angle_rad: float = self.ext2_dir.angle
+
+        # Angle between extension lines for all curved dimensions:
+        # equal to the angle measurement of angular dimensions
+        self.arc_angle_span_rad: float = arc_angle_span_rad(
+            self.start_angle_rad, self.end_angle_rad
+        )
         self.center_angle_rad = (
-            self.start_angle_rad
-            + arc_angle_span_rad(self.start_angle_rad, self.end_angle_rad) / 2.0
+            self.start_angle_rad + self.arc_angle_span_rad / 2.0
         )
 
         # Additional required parameters but calculated later by sub-classes:
         self.ext1_start = Vec2()  # start of 1st extension line
         self.ext2_start = Vec2()  # start of 2nd extension line
-        self.arrows_outside = False
 
         # Class specific setup:
         self.update_measurement()
         if self.tol.has_limits:
             self.tol.update_limits(self.measurement.value)
+
         self.setup_text_properties()
-        self.setup_text_box()
+        self.text_box = self.setup_text_box()
+        self.geometry.set_text_box(self.text_box)
+
+        # Required space between extension lines as length:
+        self.required_text_and_arrows_space: float = (
+            self.text_box.width + 2.0 * self.arrows.arrow_size
+        )
+
+        # Required angle span to fit text and arrows between extension lines:
+        self.required_angle_span = self.required_text_and_arrows_space / (
+            2.0 * self.dim_line_radius
+        )
+
+        # Place arrows outside:
+        self.arrows_outside: bool = (
+            self.required_angle_span > self.arc_angle_span_rad
+        )
+        # Place text outside:
+        self.force_text_outside: bool = self.arc_angle_span_rad < (
+            self.required_angle_span * 1.1
+        )
+
+        # Use hidden line detection for dimension line:
+        self.remove_hidden_lines_of_dimline = True
+        if self.force_text_outside:
+            self.move_text_outside()
+            # intersection with dimension line is not very likely:
+            self.remove_hidden_lines_of_dimline = False
+
+    def move_text_outside(self):
+        if self.measurement.user_location:
+            return
+        self.measurement.text_valign = 1
+        self.measurement.text_location = self.default_location(
+            shift=self.extension_lines.extension_above
+        )
 
     def render(self, block: "GenericLayoutType") -> None:
         """Main method to create dimension geometry of basic DXF entities in the
@@ -248,6 +288,15 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         """Setup measurement text."""
         pass
 
+    def default_location(self, shift: float = 0.0) -> Vec2:
+        radius = (
+            self.dim_line_radius
+            + self.measurement.text_vertical_distance()
+            + shift
+        )
+        text_radial_dir = Vec2.from_angle(self.center_angle_rad)
+        return self.center_of_arc + text_radial_dir * radius
+
     def setup_text_properties(self) -> None:
         """Setup geometric text properties (location, rotation) and the TextBox
         object.
@@ -255,15 +304,11 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         # text radial direction = center -> text
         text_radial_dir: Vec2  # text "vertical" direction
         measurement = self.measurement
-        radius = self.dim_line_radius + measurement.text_vertical_distance()
-
         # determine text location:
         if measurement.user_location is None:
             # place text in the center of the dimension line
             text_radial_dir = Vec2.from_angle(self.center_angle_rad)
-            measurement.text_location = (
-                self.center_of_arc + text_radial_dir * radius
-            )
+            measurement.text_location = self.default_location()
         else:
             # place text at user location:
             measurement.text_location = measurement.user_location
@@ -302,17 +347,15 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
                 rotation += 180.0  # apply to UCS rotation!
         measurement.text_rotation = rotation
 
-    def setup_text_box(self):
+    def setup_text_box(self) -> TextBox:
         measurement = self.measurement
-        self.geometry.set_text_box(
-            TextBox(
-                center=measurement.text_location,
-                width=self.total_text_width(),
-                height=measurement.text_height,
-                angle=measurement.text_rotation,
-                # Arbitrary choice to reduce the too large gap!
-                gap=measurement.text_gap * 0.75,
-            )
+        return TextBox(
+            center=measurement.text_location,
+            width=self.total_text_width(),
+            height=measurement.text_height,
+            angle=measurement.text_rotation,
+            # Arbitrary choice to reduce the too large gap!
+            gap=measurement.text_gap * 0.75,
         )
 
     @abstractmethod
@@ -409,7 +452,8 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
             start_angle = angle1 + 180.0
             end_angle = angle2
             if outside:
-                start_angle, end_angle = end_angle, start_angle
+                start_angle += 180.0
+                end_angle += 180.0
 
             if arrow1:
                 self.add_blockref(
@@ -441,15 +485,27 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         return start_angle_offset, end_angle_offset
 
     def add_dimension_line(
-        self, start_offset: float, end_offset: float
+        self,
+        start_offset: float,
+        end_offset: float,
     ) -> None:
+        # Start- and end angle adjustments have to be limited between the
+        # extension lines.
+        # Negative offset extends the dimension line outside!
+        max_adjustment: float = abs(self.measurement.raw_value) / 2.0
+        if start_offset > max_adjustment:
+            start_offset = 0.0
+        if end_offset > max_adjustment:
+            end_offset = 0.0
+
         self.add_arc(
             self.center_of_arc,
             self.dim_line_radius,
             self.start_angle_rad + start_offset,
             self.end_angle_rad - end_offset,
             dxfattribs=self.dimension_line.dxfattribs(),
-            remove_hidden_lines=True,
+            # hidden line detection if text is not placed outside:
+            remove_hidden_lines=self.remove_hidden_lines_of_dimline,
         )
 
     def add_measurement_text(
@@ -485,10 +541,7 @@ class _AngularCommonBase(_CurvedDimensionLine):
         )
 
     def update_measurement(self) -> None:
-        measurement = arc_angle_span_rad(
-            self.start_angle_rad, self.end_angle_rad
-        )
-        self.measurement.update(measurement)
+        self.measurement.update(self.arc_angle_span_rad)
 
 
 class AngularDimension(_AngularCommonBase):
