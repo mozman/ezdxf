@@ -2,8 +2,8 @@
 News
 ====
 
-Version 0.17.1b3 - dev
-----------------------
+Version 0.17.1 - 2021-11-14
+---------------------------
 
 - CHANGE: using [PySide6](https://pypi.org/project/PySide6/) as Qt binding 
   if installed, `PyQt5` is still supported as fallback
@@ -21,9 +21,9 @@ Version 0.17.1b3 - dev
     which created the virtual entity, otherwise ``None``
 - NEW: `ezdxf.tools.text_size` module to measure `TEXT` and `MTEXT` entity dimensions
 - CHANGE: `--ltype` arguments of the `draw` command  to `approximate` and `accurate`
-    to be in sync with the `drawing` add-on configuration.
+  to be in sync with the `drawing` add-on configuration.
 - CHANGE: `--ltype` arguments of the `view` command  to `approximate` and `accurate`
-    to be in sync with the `drawing` add-on configuration.
+  to be in sync with the `drawing` add-on configuration.
 - REMOVE `--scale` argument of the `view` command
 - REMOVE: `PolylinePath.PATH_TYPE`, use `PolylinePath.type` instead
 - REMOVE: `EdgePath.PATH_TYPE`, use `EdgePath.type` instead
