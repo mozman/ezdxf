@@ -181,6 +181,8 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
     ):
         super().__init__(dimension, ucs, override)
         # Common parameters for all sub-classes:
+        # Use hidden line detection for dimension line:
+        self.remove_hidden_lines_of_dimline = True
         self.center_of_arc: Vec2 = self.get_center_of_arc()
         self.dim_line_radius: float = self.get_dim_line_radius()
         self.ext1_dir: Vec2 = self.get_ext1_dir()
@@ -206,43 +208,42 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         if self.tol.has_limits:
             self.tol.update_limits(self.measurement.value)
 
-        self.setup_text_properties()
+        # Text width and -height is required first, text location and -rotation
+        # is not valid yet:
         self.text_box = self.setup_text_box()
-        self.geometry.set_text_box(self.text_box)
 
-        # Required space between extension lines as length:
-        self.required_text_and_arrows_space: float = (
-            self.text_box.width + 2.0 * self.arrows.arrow_size
+        # Calculate the required space between extension lines as length:
+        # Do not apply self.dim_scale: text and arrow size are already scaled!
+        required_text_and_arrows_space: float = (
+            # The suppression of the arrows is not taken into account:
+            self.text_box.width
+            + 2.0 * self.arrows.arrow_size
         )
-
         # Required angle span to fit text and arrows between extension lines:
-        self.required_angle_span = self.required_text_and_arrows_space / (
+        required_angle_span = required_text_and_arrows_space / (
             2.0 * self.dim_line_radius
         )
 
-        # Place arrows outside:
+        # dimatfit: measurement text fitting rule is ignored!
+        # Place arrows outside?
         self.arrows_outside: bool = (
-            self.required_angle_span > self.arc_angle_span_rad
+            required_angle_span > self.arc_angle_span_rad
         )
-        # Place text outside:
-        self.force_text_outside: bool = self.arc_angle_span_rad < (
-            self.required_angle_span * 1.1
+        # Place text outside?
+        self.measurement.text_is_outside = self.arc_angle_span_rad < (
+            required_angle_span * 1.1
         )
-
-        # Use hidden line detection for dimension line:
-        self.remove_hidden_lines_of_dimline = True
-        if self.force_text_outside:
-            self.move_text_outside()
+        if self.measurement.text_is_outside:
+            self.measurement.is_wide_text = True
             # intersection with dimension line is not very likely:
             self.remove_hidden_lines_of_dimline = False
 
-    def move_text_outside(self):
-        if self.measurement.user_location:
-            return
-        self.measurement.text_valign = 1
-        self.measurement.text_location = self.default_location(
-            shift=self.extension_lines.extension_above
-        )
+        self.setup_text_location()
+
+        # update text box location and -rotation:
+        self.text_box.center = self.measurement.text_location
+        self.text_box.angle = self.measurement.text_rotation
+        self.geometry.set_text_box(self.text_box)
 
     def render(self, block: "GenericLayoutType") -> None:
         """Main method to create dimension geometry of basic DXF entities in the
@@ -297,19 +298,49 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         text_radial_dir = Vec2.from_angle(self.center_angle_rad)
         return self.center_of_arc + text_radial_dir * radius
 
-    def setup_text_properties(self) -> None:
+    def setup_text_box(self) -> TextBox:
+        measurement = self.measurement
+
+        return TextBox(
+            center=measurement.text_location,
+            width=self.total_text_width(),
+            height=measurement.text_height,
+            angle=measurement.text_rotation or 0.0,
+            # Arbitrary choice to reduce the too large gap!
+            gap=measurement.text_gap * 0.75,
+        )
+
+    def setup_text_location(self) -> None:
         """Setup geometric text properties (location, rotation) and the TextBox
         object.
         """
+        # dimtix: measurement.force_text_inside is ignored
+        # dimtih: measurement.text_inside_horizontal is ignored
+        # dimtoh: measurement.text_outside_horizontal is ignored
+
         # text radial direction = center -> text
         text_radial_dir: Vec2  # text "vertical" direction
         measurement = self.measurement
+
         # determine text location:
-        if measurement.user_location is None:
-            # place text in the center of the dimension line
+        at_default_location = measurement.user_location is None
+        if at_default_location:
+            # place text in the center of the dimension line at the default
+            # location defined by measurement.text_valign (dimtad):
             text_radial_dir = Vec2.from_angle(self.center_angle_rad)
-            measurement.text_location = self.default_location()
+            shift: float = 0.0
+            if measurement.text_is_outside:
+                # reset dimtad to "above"
+                measurement.text_valign = 1
+                # move measurement text "above" the extension lines endings:
+                shift = self.extension_lines.extension_above
+            measurement.text_location = self.default_location(shift=shift)
         else:
+            # apply dimtmove: measurement.text_movement_rule
+            # 0 = Moves the dimension line with dimension text
+            # 1 = Adds a leader when dimension text is moved
+            # 2 = Allows text to be moved freely without a leader
+
             # place text at user location:
             measurement.text_location = measurement.user_location
             text_radial_dir = (
@@ -319,15 +350,18 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         # set text "horizontal":
         text_tangential_dir = text_radial_dir.orthogonal(ccw=False)
 
-        # apply text relative shift (ezdxf only feature)
-        if measurement.text_shift_h:
-            measurement.text_location += (
-                text_tangential_dir * measurement.text_shift_h
-            )
-        if measurement.text_shift_v:
-            measurement.text_location += (
-                text_radial_dir * measurement.text_shift_v
-            )
+        if at_default_location:
+            # Apply text relative shift (ezdxf only feature)
+            # This is lost if the text will be forced outside if not enough
+            # space between extension lines.
+            if measurement.text_shift_h:
+                measurement.text_location += (
+                    text_tangential_dir * measurement.text_shift_h
+                )
+            if measurement.text_shift_v:
+                measurement.text_location += (
+                    text_radial_dir * measurement.text_shift_v
+                )
 
         # Update final text location in the DIMENSION entity:
         self.dimension.dxf.text_midpoint = measurement.text_location
@@ -346,17 +380,6 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
             if is_upside_down_text_angle(wcs_angle):
                 rotation += 180.0  # apply to UCS rotation!
         measurement.text_rotation = rotation
-
-    def setup_text_box(self) -> TextBox:
-        measurement = self.measurement
-        return TextBox(
-            center=measurement.text_location,
-            width=self.total_text_width(),
-            height=measurement.text_height,
-            angle=measurement.text_rotation,
-            # Arbitrary choice to reduce the too large gap!
-            gap=measurement.text_gap * 0.75,
-        )
 
     @abstractmethod
     def get_ext1_dir(self) -> Vec2:

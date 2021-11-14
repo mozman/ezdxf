@@ -230,7 +230,9 @@ def angular_units_tol_limits(dxfversion="R2013"):
     doc.saveas(OUTDIR / f"dim_angular_units_tol_limits_{dxfversion}.dxf")
 
 
-def measure_fixed_angle(angle: float, dxfversion="R2013"):
+def measure_fixed_angle(
+    angle: float, shift_h: float = 0.0, shift_v: float = 0.0, dxfversion="R2013"
+):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     x_dist = 15
@@ -250,7 +252,11 @@ def measure_fixed_angle(angle: float, dxfversion="R2013"):
                 start_angle,
                 end_angle,
                 distance,
-                override={"dimtad": dimtad},
+                override={
+                    "dimtad": dimtad,
+                    "text_shift_h": shift_h,
+                    "text_shift_v": shift_v,
+                },
             )
             dim.render(discard=BRICSCAD)
 

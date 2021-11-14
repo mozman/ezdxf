@@ -538,6 +538,9 @@ class Measurement:
         self.text_vertical_position: float = get("dimtvp", 0.0)
 
         # Move text freely:
+        # 0 = Moves the dimension line with dimension text
+        # 1 = Adds a leader when dimension text is moved
+        # 2 = Allows text to be moved freely without a leader
         self.text_movement_rule: int = get("dimtmove", 2)
 
         self.has_leader: bool = (
