@@ -172,6 +172,11 @@ class AngleMeasurement(Measurement):
         return text
 
 
+def fits_into_arc_span(length: float, radius: float, arc_span: float) -> bool:
+    required_arc_span: float = length / radius
+    return arc_span > required_arc_span
+
+
 class _CurvedDimensionLine(BaseDimensionRenderer):
     def __init__(
         self,
@@ -184,6 +189,8 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         # Use hidden line detection for dimension line:
         self.remove_hidden_lines_of_dimline = True
         self.center_of_arc: Vec2 = self.get_center_of_arc()
+        # todo: measurement.text_movement_rule and user located measurement text
+        #  changes the dim_line_radius
         self.dim_line_radius: float = self.get_dim_line_radius()
         self.ext1_dir: Vec2 = self.get_ext1_dir()
         self.start_angle_rad: float = self.ext1_dir.angle
@@ -209,32 +216,37 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
             self.tol.update_limits(self.measurement.value)
 
         # Text width and -height is required first, text location and -rotation
-        # is not valid yet:
+        # are not valid yet:
         self.text_box = self.setup_text_box()
+        # self.text_box.width includes the gaps between text and dimension line
 
-        # Calculate the required space between extension lines as length:
-        # Do not apply self.dim_scale: text and arrow size are already scaled!
+        # Does the measurement text without the arrows fit between the
+        # extension lines:
+        self.measurement.is_wide_text = not fits_into_arc_span(
+            self.text_box.width, self.dim_line_radius, self.arc_angle_span_rad
+        )
+
         required_text_and_arrows_space: float = (
             # The suppression of the arrows is not taken into account:
             self.text_box.width
             + 2.0 * self.arrows.arrow_size
         )
-        # Required angle span to fit text and arrows between extension lines:
-        required_angle_span = required_text_and_arrows_space / (
-            2.0 * self.dim_line_radius
-        )
 
         # dimatfit: measurement text fitting rule is ignored!
         # Place arrows outside?
-        self.arrows_outside: bool = (
-            required_angle_span > self.arc_angle_span_rad
+        self.arrows_outside: bool = not fits_into_arc_span(
+            required_text_and_arrows_space,
+            self.dim_line_radius,
+            self.arc_angle_span_rad,
         )
         # Place text outside?
-        self.measurement.text_is_outside = self.arc_angle_span_rad < (
-            required_angle_span * 1.1
+        self.measurement.text_is_outside = not fits_into_arc_span(
+            required_text_and_arrows_space * 1.1,  # add some extra space
+            self.dim_line_radius,
+            self.arc_angle_span_rad,
         )
+
         if self.measurement.text_is_outside:
-            self.measurement.is_wide_text = True
             # intersection with dimension line is not very likely:
             self.remove_hidden_lines_of_dimline = False
 
@@ -332,8 +344,9 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
             if measurement.text_is_outside:
                 # reset dimtad to "above"
                 measurement.text_valign = 1
-                # move measurement text "above" the extension lines endings:
-                shift = self.extension_lines.extension_above
+                if measurement.is_wide_text:
+                    # move measurement text "above" the extension lines endings:
+                    shift = self.extension_lines.extension_above
             measurement.text_location = self.default_location(shift=shift)
         else:
             # apply dimtmove: measurement.text_movement_rule
