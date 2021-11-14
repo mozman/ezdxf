@@ -220,8 +220,8 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         self.text_box = self.setup_text_box()
         # self.text_box.width includes the gaps between text and dimension line
 
-        # Does the measurement text without the arrows fit between the
-        # extension lines:
+        # Is the measurement text without the arrows too wide to fit between the
+        # extension lines?
         self.measurement.is_wide_text = not fits_into_arc_span(
             self.text_box.width, self.dim_line_radius, self.arc_angle_span_rad
         )
@@ -239,15 +239,19 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
             self.dim_line_radius,
             self.arc_angle_span_rad,
         )
-        # Place text outside?
+        # Place measurement text outside?
         self.measurement.text_is_outside = not fits_into_arc_span(
             required_text_and_arrows_space * 1.1,  # add some extra space
             self.dim_line_radius,
             self.arc_angle_span_rad,
         )
 
-        if self.measurement.text_is_outside:
-            # intersection with dimension line is not very likely:
+        if (
+            self.measurement.text_is_outside
+            and self.measurement.user_text_rotation is None
+        ):
+            # Intersection of the measurement text with the dimension line is
+            # not possible:
             self.remove_hidden_lines_of_dimline = False
 
         self.setup_text_location()
