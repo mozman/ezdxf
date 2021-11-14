@@ -603,6 +603,9 @@ class Measurement:
         # True if dimension text doesn't fit between extension lines
         self.is_wide_text: bool = False
 
+        # Text rotation was corrected to make upside down text better readable
+        self.has_upside_down_correction: bool = False
+
     @property
     def text_is_inside(self):
         return not self.text_is_outside

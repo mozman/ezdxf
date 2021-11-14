@@ -38,6 +38,7 @@ class ConstructionBox:
         self._width: float = abs(width)
         self._height: float = abs(height)
         self._angle: float = angle  # in degrees
+        # corners: lower left, lower right, upper right, upper left:
         self._corners: Sequence[Vec2] = tuple()
         self._tainted: bool = True
 

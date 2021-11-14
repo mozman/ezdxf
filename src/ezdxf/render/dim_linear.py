@@ -19,17 +19,11 @@ from .dim_base import (
     LengthMeasurement,
     Measurement,
     compile_mtext,
+    order_leader_points,
 )
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Dimension, Vertex, GenericLayoutType
-
-
-def order_leader_points(p1: Vec2, p2: Vec2, p3: Vec2) -> Tuple[Vec2, Vec2]:
-    if (p1 - p2).magnitude > (p1 - p3).magnitude:
-        return p3, p2
-    else:
-        return p2, p3
 
 
 class LinearDimension(BaseDimensionRenderer):

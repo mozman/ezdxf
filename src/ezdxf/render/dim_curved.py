@@ -24,6 +24,7 @@ from .dim_base import (
     Measurement,
     LengthMeasurement,
     compile_mtext,
+    order_leader_points,
 )
 from ezdxf.render.arrows import ARROWS, arrow_length
 from ezdxf.tools.text import is_upside_down_text_angle
@@ -187,10 +188,9 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         super().__init__(dimension, ucs, override)
         # Common parameters for all sub-classes:
         # Use hidden line detection for dimension line:
+        # Disable expensive hidden line calculation if possible!
         self.remove_hidden_lines_of_dimline = True
         self.center_of_arc: Vec2 = self.get_center_of_arc()
-        # todo: measurement.text_movement_rule and user located measurement text
-        #  changes the dim_line_radius
         self.dim_line_radius: float = self.get_dim_line_radius()
         self.ext1_dir: Vec2 = self.get_ext1_dir()
         self.start_angle_rad: float = self.ext1_dir.angle
@@ -218,8 +218,85 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         # Text width and -height is required first, text location and -rotation
         # are not valid yet:
         self.text_box = self.setup_text_box()
-        # self.text_box.width includes the gaps between text and dimension line
 
+        # Place arrows outside?
+        self.arrows_outside = False
+
+        self.setup_text_and_arrow_fitting()
+        self.setup_text_location()
+
+        # update text box location and -rotation:
+        self.text_box.center = self.measurement.text_location
+        self.text_box.angle = self.measurement.text_rotation
+        self.geometry.set_text_box(self.text_box)
+
+        # Update final text location in the DIMENSION entity:
+        self.dimension.dxf.text_midpoint = self.measurement.text_location
+
+    @property
+    def ocs_center_of_arc(self) -> Vec3:
+        return self.geometry.ucs.to_ocs(Vec3(self.center_of_arc))
+
+    @property
+    def dim_midpoint(self) -> Vec2:
+        """Return the midpoint of the dimension line."""
+        return self.center_of_arc + Vec2.from_angle(
+            self.center_angle_rad, self.dim_line_radius
+        )
+
+    @abstractmethod
+    def update_measurement(self) -> None:
+        """Setup measurement text."""
+        ...
+
+    @abstractmethod
+    def get_ext1_dir(self) -> Vec2:
+        """Return the direction of the 1st extension line == start angle."""
+        ...
+
+    @abstractmethod
+    def get_ext2_dir(self) -> Vec2:
+        """Return the direction of the 2nd extension line == end angle."""
+        ...
+
+    @abstractmethod
+    def get_center_of_arc(self) -> Vec2:
+        """Return the center of the arc."""
+        ...
+
+    @abstractmethod
+    def get_dim_line_radius(self) -> float:
+        """Return the distance from the center of the arc to the dimension line
+        location
+        """
+        ...
+
+    @abstractmethod
+    def get_defpoints(self) -> List[Vec2]:
+        ...
+
+    def default_location(self, shift: float = 0.0) -> Vec2:
+        radius = (
+            self.dim_line_radius
+            + self.measurement.text_vertical_distance()
+            + shift
+        )
+        text_radial_dir = Vec2.from_angle(self.center_angle_rad)
+        return self.center_of_arc + text_radial_dir * radius
+
+    def setup_text_box(self) -> TextBox:
+        measurement = self.measurement
+        return TextBox(
+            center=measurement.text_location,
+            width=self.total_text_width(),
+            height=measurement.text_height,
+            angle=measurement.text_rotation or 0.0,
+            # Arbitrary choice to reduce the too large gap!
+            gap=measurement.text_gap * 0.75,
+        )
+
+    def setup_text_and_arrow_fitting(self):
+        # self.text_box.width includes the gaps between text and dimension line
         # Is the measurement text without the arrows too wide to fit between the
         # extension lines?
         self.measurement.is_wide_text = not fits_into_arc_span(
@@ -254,12 +331,134 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
             # not possible:
             self.remove_hidden_lines_of_dimline = False
 
-        self.setup_text_location()
+    def setup_text_location(self) -> None:
+        """Setup geometric text properties (location, rotation) and the TextBox
+        object.
+        """
+        # dimtix: measurement.force_text_inside is ignored
+        # dimtih: measurement.text_inside_horizontal is ignored
+        # dimtoh: measurement.text_outside_horizontal is ignored
 
-        # update text box location and -rotation:
-        self.text_box.center = self.measurement.text_location
-        self.text_box.angle = self.measurement.text_rotation
-        self.geometry.set_text_box(self.text_box)
+        # text radial direction = center -> text
+        text_radial_dir: Vec2  # text "vertical" direction
+        measurement = self.measurement
+
+        # determine text location:
+        at_default_location: bool = measurement.user_location is None
+        has_text_shifting: bool = bool(
+            measurement.text_shift_h or measurement.text_shift_v
+        )
+        if at_default_location:
+            # place text in the "horizontal" center of the dimension line at the
+            # default location defined by measurement.text_valign (dimtad):
+            text_radial_dir = Vec2.from_angle(self.center_angle_rad)
+            shift_text_upwards: float = 0.0
+            if measurement.text_is_outside:
+                # reset vertical alignment to "above"
+                measurement.text_valign = 1
+                if measurement.is_wide_text:
+                    # move measurement text "above" the extension line endings:
+                    shift_text_upwards = self.extension_lines.extension_above
+            measurement.text_location = self.default_location(
+                shift=shift_text_upwards
+            )
+            if (
+                measurement.text_valign > 0 and not has_text_shifting
+            ):  # not in the center and no text shifting is applied
+                # disable expensive hidden line calculation
+                self.remove_hidden_lines_of_dimline = False
+        else:
+            # apply dimtmove: measurement.text_movement_rule
+            user_location = measurement.user_location
+            assert isinstance(user_location, Vec2)
+            measurement.text_location = user_location
+            if measurement.text_movement_rule == 0:
+                # Moves the dimension line with dimension text and
+                # aligns the text direction perpendicular to the connection
+                # line from the arc center to the text center:
+                self.dim_line_radius = (
+                    self.center_of_arc - user_location
+                ).magnitude
+                # Attributes about the text and arrow fitting have to be
+                # updated now:
+                self.setup_text_and_arrow_fitting()
+            elif measurement.text_movement_rule == 1:
+                # Adds a leader when dimension text, text direction is
+                # "horizontal" or user text rotation if given.
+                # Leader location is defined by dimtad (text_valign):
+                # "center" - connects to the left or right center of the text
+                # "below" - add a line below the text
+                if measurement.user_text_rotation is None:
+                    # override text rotation
+                    measurement.user_text_rotation = 0.0
+                measurement.text_is_outside = True  # by definition
+            elif measurement.text_movement_rule == 2:
+                # Allows text to be moved freely without a leader and
+                # aligns the text direction perpendicular to the connection
+                # line from the arc center to the text center:
+                measurement.text_is_outside = True  # by definition
+            text_radial_dir = (
+                measurement.text_location - self.center_of_arc
+            ).normalize()
+
+        # set text "horizontal":
+        text_tangential_dir = text_radial_dir.orthogonal(ccw=False)
+
+        if at_default_location and has_text_shifting:
+            # Apply text relative shift (ezdxf only feature)
+            if measurement.text_shift_h:
+                measurement.text_location += (
+                    text_tangential_dir * measurement.text_shift_h
+                )
+            if measurement.text_shift_v:
+                measurement.text_location += (
+                    text_radial_dir * measurement.text_shift_v
+                )
+
+        # apply user text rotation; rotation in degrees:
+        if measurement.user_text_rotation is None:
+            rotation = text_tangential_dir.angle_deg
+        else:
+            rotation = measurement.user_text_rotation
+
+        if not self.geometry.requires_extrusion:
+            # todo: extrusion vector (0, 0, -1)?
+            # Practically all DIMENSION entities are 2D entities,
+            # where OCS == WCS, check WCS text orientation:
+            wcs_angle = self.geometry.ucs.to_ocs_angle_deg(rotation)
+            if is_upside_down_text_angle(wcs_angle):
+                measurement.has_upside_down_correction = True
+                rotation += 180.0  # apply to UCS rotation!
+        measurement.text_rotation = rotation
+
+    def get_leader_points(self) -> Tuple[Vec2, Vec2]:
+        # Leader location is defined by dimtad (text_valign):
+        # "center":
+        # - connects to the left or right vertical center of the text
+        # - distance between text and leader line is measurement.text_gap (dimgap)
+        # - length of "leg": arrows.arrow_size
+        # "below" - add a line below the text
+        target_point = self.dim_midpoint
+        corners = list(self.text_box.corners)
+        if self.measurement.text_valign == 0:  # center
+            center_left = corners[0].lerp(corners[3])
+            center_right = corners[1].lerp(corners[2])
+            connection_point = center_left
+            direction = (corners[1] - corners[0]).normalize()
+            if target_point.distance(center_left) < target_point.distance(
+                center_right
+            ):
+                connection_point = center_right
+                direction = -direction
+            p1 = connection_point + direction * self.measurement.text_gap
+            p2 = p1 + direction * self.arrows.arrow_size
+            return (p1, p2)
+
+        else:  # "below"
+            if self.measurement.has_upside_down_correction:
+                return (corners[2], corners[3])
+            else:
+                return (corners[0], corners[1])
 
     def render(self, block: "GenericLayoutType") -> None:
         """Main method to create dimension geometry of basic DXF entities in the
@@ -283,150 +482,12 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
                 text, measurement.text_location, measurement.text_rotation
             )
             if measurement.has_leader:
-                leader1, leader2 = self.get_leader_points()
-                self.add_leader(self.dim_midpoint, leader1, leader2)
-        # requires the TextBox to remove hidden parts of the dimension line
+                p1, p2 = self.get_leader_points()
+                target_point = self.dim_midpoint
+                p1, p2 = order_leader_points(target_point, p1, p2)
+                self.add_leader(target_point, p1, p2)
         self.add_dimension_line(adjust_start_angle, adjust_end_angle)
         self.geometry.add_defpoints(self.get_defpoints())
-
-    @property
-    def ocs_center_of_arc(self) -> Vec3:
-        return self.geometry.ucs.to_ocs(Vec3(self.center_of_arc))
-
-    @property
-    def dim_midpoint(self) -> Vec2:
-        """Return the midpoint of the dimension line."""
-        return self.center_of_arc + Vec2.from_angle(
-            self.center_angle_rad, self.dim_line_radius
-        )
-
-    @abstractmethod
-    def update_measurement(self) -> None:
-        """Setup measurement text."""
-        pass
-
-    def default_location(self, shift: float = 0.0) -> Vec2:
-        radius = (
-            self.dim_line_radius
-            + self.measurement.text_vertical_distance()
-            + shift
-        )
-        text_radial_dir = Vec2.from_angle(self.center_angle_rad)
-        return self.center_of_arc + text_radial_dir * radius
-
-    def setup_text_box(self) -> TextBox:
-        measurement = self.measurement
-
-        return TextBox(
-            center=measurement.text_location,
-            width=self.total_text_width(),
-            height=measurement.text_height,
-            angle=measurement.text_rotation or 0.0,
-            # Arbitrary choice to reduce the too large gap!
-            gap=measurement.text_gap * 0.75,
-        )
-
-    def setup_text_location(self) -> None:
-        """Setup geometric text properties (location, rotation) and the TextBox
-        object.
-        """
-        # dimtix: measurement.force_text_inside is ignored
-        # dimtih: measurement.text_inside_horizontal is ignored
-        # dimtoh: measurement.text_outside_horizontal is ignored
-
-        # text radial direction = center -> text
-        text_radial_dir: Vec2  # text "vertical" direction
-        measurement = self.measurement
-
-        # determine text location:
-        at_default_location = measurement.user_location is None
-        if at_default_location:
-            # place text in the center of the dimension line at the default
-            # location defined by measurement.text_valign (dimtad):
-            text_radial_dir = Vec2.from_angle(self.center_angle_rad)
-            shift: float = 0.0
-            if measurement.text_is_outside:
-                # reset dimtad to "above"
-                measurement.text_valign = 1
-                if measurement.is_wide_text:
-                    # move measurement text "above" the extension lines endings:
-                    shift = self.extension_lines.extension_above
-            measurement.text_location = self.default_location(shift=shift)
-        else:
-            # apply dimtmove: measurement.text_movement_rule
-            # 0 = Moves the dimension line with dimension text
-            # 1 = Adds a leader when dimension text is moved
-            # 2 = Allows text to be moved freely without a leader
-
-            # place text at user location:
-            measurement.text_location = measurement.user_location
-            text_radial_dir = (
-                measurement.text_location - self.center_of_arc
-            ).normalize()
-
-        # set text "horizontal":
-        text_tangential_dir = text_radial_dir.orthogonal(ccw=False)
-
-        if at_default_location:
-            # Apply text relative shift (ezdxf only feature)
-            # This is lost if the text will be forced outside if not enough
-            # space between extension lines.
-            if measurement.text_shift_h:
-                measurement.text_location += (
-                    text_tangential_dir * measurement.text_shift_h
-                )
-            if measurement.text_shift_v:
-                measurement.text_location += (
-                    text_radial_dir * measurement.text_shift_v
-                )
-
-        # Update final text location in the DIMENSION entity:
-        self.dimension.dxf.text_midpoint = measurement.text_location
-
-        # apply user text rotation
-        if measurement.user_text_rotation is None:
-            rotation = text_tangential_dir.angle_deg
-        else:
-            rotation = measurement.user_text_rotation
-
-        if not self.geometry.requires_extrusion:
-            # todo: extrusion vector (0, 0, -1)?
-            # Practically all DIMENSION entities are 2D entities,
-            # where OCS == WCS, check WCS text orientation:
-            wcs_angle = self.geometry.ucs.to_ocs_angle_deg(rotation)
-            if is_upside_down_text_angle(wcs_angle):
-                rotation += 180.0  # apply to UCS rotation!
-        measurement.text_rotation = rotation
-
-    @abstractmethod
-    def get_ext1_dir(self) -> Vec2:
-        """Return the direction of the 1st extension line == start angle."""
-        pass
-
-    @abstractmethod
-    def get_ext2_dir(self) -> Vec2:
-        """Return the direction of the 2nd extension line == end angle."""
-        pass
-
-    @abstractmethod
-    def get_center_of_arc(self) -> Vec2:
-        """Return the center of the arc."""
-        pass
-
-    @abstractmethod
-    def get_dim_line_radius(self) -> float:
-        """Return the distance from the center of the arc to the dimension line
-        location
-        """
-        pass
-
-    # @abstractmethod
-    def get_leader_points(self) -> Tuple[Vec2, Vec2]:
-        pass
-
-    # @abstractmethod
-    def get_defpoints(self) -> List[Vec2]:
-        return []
 
     def add_extension_lines(self) -> None:
         ext_lines = self.extension_lines
@@ -644,6 +705,15 @@ class AngularDimension(_AngularCommonBase):
             p2=self.leg2_end,
         )
 
+    def get_defpoints(self) -> List[Vec2]:
+        return [
+            self.leg1_start,
+            self.leg1_end,
+            self.leg2_start,
+            self.leg2_end,
+            self.dim_line_location,
+        ]
+
     def transform_ucs_to_wcs(self) -> None:
         """Transforms dimension definition points into WCS or if required into
         OCS.
@@ -741,6 +811,14 @@ class Angular3PDimension(_AngularCommonBase):
         self.ext1_start = self.leg1_start
         self.ext2_start = self.leg2_start
 
+    def get_defpoints(self) -> List[Vec2]:
+        return [
+            self.dim_line_location,
+            self.leg1_start,
+            self.leg2_start,
+            self.center_of_arc,
+        ]
+
     def transform_ucs_to_wcs(self) -> None:
         """Transforms dimension definition points into WCS or if required into
         OCS.
@@ -812,6 +890,14 @@ class ArcLengthDimension(_CurvedDimensionLine):
         super().__init__(dimension, ucs, override)
         self.ext1_start = self.leg1_start
         self.ext2_start = self.leg2_start
+
+    def get_defpoints(self) -> List[Vec2]:
+        return [
+            self.dim_line_location,
+            self.leg1_start,
+            self.leg2_start,
+            self.center_of_arc,
+        ]
 
     def init_measurement(self, color: int, scale: float) -> Measurement:
         return LengthMeasurement(
