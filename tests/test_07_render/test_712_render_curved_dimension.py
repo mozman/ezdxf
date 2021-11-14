@@ -5,7 +5,7 @@ import pytest
 import ezdxf
 from ezdxf.document import Drawing
 from ezdxf.math import Vec2, arc_angle_span_deg
-from ezdxf.render.dim_curved import detect_closer_defpoint
+from ezdxf.render.dim_curved import detect_closer_defpoint, _CurvedDimensionLine
 
 
 @pytest.fixture(scope="module")
@@ -112,6 +112,63 @@ def test_dimension_line_divided_by_measurement_text(doc: Drawing, s, e):
     ) < arc_angle_span_deg(
         s, e
     ), "sum of visual arcs should be smaller than the full arc"
+
+
+def measure_fixed_angle(msp, angle: float):
+    x_dist = 15
+    radius = 3
+    distance = 1
+    delta = angle / 2.0
+    for dimtad, y_dist in [[0, 0], [1, 20], [4, 40]]:
+        for count in range(8):
+            center = Vec2(x_dist * count, y_dist)
+            main_angle = 45.0 * count
+            start_angle = main_angle - delta
+            end_angle = main_angle + delta
+            yield msp.add_angular_dim_cra(
+                center,
+                radius,
+                start_angle,
+                end_angle,
+                distance,
+                override={"dimtad": dimtad},
+            )
+
+
+def test_text_and_arrows_fit_between_extension_lines(doc: Drawing):
+    """There is enough space between extension lines is to place text and
+    arrows.
+    """
+    for dim in measure_fixed_angle(doc.modelspace(), angle=20):
+        render_obj = dim.render()
+        assert isinstance(render_obj, _CurvedDimensionLine)
+        assert render_obj.arrows_outside is False
+        assert render_obj.measurement.is_wide_text is False
+        assert render_obj.measurement.text_is_outside is False
+
+
+@pytest.mark.parametrize("angle", [3, 6])
+def test_has_outside_text_and_arrows(doc: Drawing, angle):
+    """The space between extension lines is too narrow to place text and arrows.
+    """
+    for dim in measure_fixed_angle(doc.modelspace(), angle=angle):
+        render_obj = dim.render()
+        assert isinstance(render_obj, _CurvedDimensionLine)
+        assert render_obj.arrows_outside is True
+        assert render_obj.measurement.text_is_outside is True
+        assert render_obj.measurement.is_wide_text is True
+
+
+def test_has_outside_text_and_arrows_but_not_a_wide_text(doc: Drawing):
+    """The space between extension lines is too narrow to place text and arrows,
+    but the text alone has enough space.
+    """
+    for dim in measure_fixed_angle(doc.modelspace(), angle=9):
+        render_obj = dim.render()
+        assert isinstance(render_obj, _CurvedDimensionLine)
+        assert render_obj.arrows_outside is True
+        assert render_obj.measurement.text_is_outside is True
+        assert render_obj.measurement.is_wide_text is False
 
 
 if __name__ == "__main__":
