@@ -439,26 +439,32 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         # - length of "leg": arrows.arrow_size
         # "below" - add a line below the text
         target_point = self.dim_midpoint
-        corners = list(self.text_box.corners)
-        if self.measurement.text_valign == 0:  # center
-            center_left = corners[0].lerp(corners[3])
-            center_right = corners[1].lerp(corners[2])
-            connection_point = center_left
-            direction = (corners[1] - corners[0]).normalize()
-            if target_point.distance(center_left) < target_point.distance(
-                center_right
+        c0, c1, c2, c3 = self.text_box.corners
+        #                c3-----c2
+        # left center ---x       x--- right center
+        #                c0-----c1
+        if self.measurement.text_valign == 0:  # "center"
+            left_center = c0.lerp(c3)
+            right_center = c1.lerp(c2)
+            connection_point = left_center
+            leg_direction = (c0 - c1).normalize()
+            if target_point.distance(left_center) > target_point.distance(
+                right_center
             ):
-                connection_point = center_right
-                direction = -direction
-            p1 = connection_point + direction * self.measurement.text_gap
-            p2 = p1 + direction * self.arrows.arrow_size
+                connection_point = right_center
+                leg_direction = -leg_direction
+            # leader line: target_point -> p1 -> p2
+            p2 = connection_point + leg_direction * self.measurement.text_gap
+            p1 = p2 + leg_direction * self.arrows.arrow_size
+            # Do not order leader points!
             return (p1, p2)
 
         else:  # "below"
             if self.measurement.has_upside_down_correction:
-                return (corners[2], corners[3])
+                p1, p2 = c2, c3
             else:
-                return (corners[0], corners[1])
+                p1, p2 = c0, c1
+            return order_leader_points(target_point, p1, p2)
 
     def render(self, block: "GenericLayoutType") -> None:
         """Main method to create dimension geometry of basic DXF entities in the
@@ -483,9 +489,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
             )
             if measurement.has_leader:
                 p1, p2 = self.get_leader_points()
-                target_point = self.dim_midpoint
-                p1, p2 = order_leader_points(target_point, p1, p2)
-                self.add_leader(target_point, p1, p2)
+                self.add_leader(self.dim_midpoint, p1, p2)
         self.add_dimension_line(adjust_start_angle, adjust_end_angle)
         self.geometry.add_defpoints(self.get_defpoints())
 

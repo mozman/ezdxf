@@ -230,38 +230,81 @@ def angular_units_tol_limits(dxfversion="R2013"):
     doc.saveas(OUTDIR / f"dim_angular_units_tol_limits_{dxfversion}.dxf")
 
 
-def measure_fixed_angle(
-    angle: float, shift_h: float = 0.0, shift_v: float = 0.0, dxfversion="R2013"
+def add_angle_dim(
+    msp,
+    center: Vec3,
+    angle: float,
+    delta: float,
+    radius: float,
+    distance: float,
+    override: dict,
 ):
+    start_angle = angle - delta
+    end_angle = angle + delta
+    add_lines(msp, center, radius, start_angle, end_angle)
+    dim = msp.add_angular_dim_cra(
+        center,
+        radius,
+        start_angle,
+        end_angle,
+        distance,
+        override=override,
+    )
+    return dim
+
+
+def measure_fixed_angle(angle: float, dxfversion="R2013"):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     x_dist = 15
-    radius = 3
-    distance = 1
-    delta = angle / 2.0
     for dimtad, y_dist in [[0, 0], [1, 20], [4, 40]]:
+        for count in range(8):
+            dim = add_angle_dim(
+                msp,
+                center=Vec3(x_dist * count, y_dist),
+                angle=45.0 * count,
+                delta=angle / 2.0,
+                radius=3.0,
+                distance=1.0,
+                override={"dimtad": dimtad},
+            )
+            dim.render(discard=BRICSCAD)
+    doc.set_modelspace_vport(height=100, center=(x_dist * 4, 20))
+    doc.saveas(OUTDIR / f"dim_angular_{angle:.0f}_deg_{dxfversion}.dxf")
+
+
+def usr_location_abs(angle: float, dxfversion="R2013"):
+    doc = ezdxf.new(dxfversion, setup=True)
+    msp = doc.modelspace()
+    x_dist = 15
+    radius = 3.0
+    distance = 1.0
+    for dimtad, y_dist, leader in [
+        [0, 0, False],
+        [0, 20, True],
+        [4, 40, False],
+        [4, 60, True],
+    ]:
         for count in range(8):
             center = Vec3(x_dist * count, y_dist)
             main_angle = 45.0 * count
-            start_angle = main_angle - delta
-            end_angle = main_angle + delta
-            add_lines(msp, center, radius, start_angle, end_angle)
-            dim = msp.add_angular_dim_cra(
-                center,
-                radius,
-                start_angle,
-                end_angle,
-                distance,
-                override={
-                    "dimtad": dimtad,
-                    "text_shift_h": shift_h,
-                    "text_shift_v": shift_v,
-                },
+            usr_location = center + Vec3.from_deg_angle(
+                main_angle, radius + distance * 2.0
             )
+            dim = add_angle_dim(
+                msp,
+                center=center,
+                angle=main_angle,
+                delta=angle / 2.0,
+                radius=radius,
+                distance=distance,
+                override={"dimtad": dimtad},
+            )
+            dim.set_location(usr_location, leader=leader)
             dim.render(discard=BRICSCAD)
 
-    doc.set_modelspace_vport(height=100, center=(x_dist * 4, 20))
-    doc.saveas(OUTDIR / f"dim_angular_{angle:.0f}_deg_{dxfversion}.dxf")
+    doc.set_modelspace_vport(height=100, center=(x_dist * 4, 40))
+    doc.saveas(OUTDIR / f"dim_angular_usr_loc_abs_{dxfversion}.dxf")
 
 
 if __name__ == "__main__":
@@ -273,3 +316,4 @@ if __name__ == "__main__":
     measure_fixed_angle(3.0)
     measure_fixed_angle(6.0)
     measure_fixed_angle(9.0)
+    usr_location_abs(15)

@@ -486,8 +486,9 @@ class DimStyleOverride:
 
         """
         self.user_location_override(location)
-        linear = self.dimension.dimtype in (0, 1)
-        if linear:
+        linear = self.dimension.dimtype < 2
+        curved = self.dimension.dimtype in (2, 5, 8)
+        if linear or curved:
             self.dimstyle_attribs["dimtmove"] = 1 if leader else 2
             self.dimstyle_attribs["relative_user_location"] = relative
 
