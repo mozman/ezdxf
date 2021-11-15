@@ -1733,6 +1733,7 @@ class CreatorInterface:
         end_angle: float,
         distance: float,
         text: str = "<>",
+        text_rotation: float = None,
         dimstyle: str = "EZ_CURVED",
         override: Dict = None,
         dxfattribs: Dict = None,
@@ -1758,6 +1759,8 @@ class CreatorInterface:
             text: ``None`` or "<>" the measurement is drawn as text,
                 " " (a single space) suppresses the dimension text,
                 everything else `text` is drawn as dimension text
+            text_rotation: rotation angle of the dimension text as absolute
+                angle (x-axis=0, y-axis=90) in degrees
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
                 table entry), default is "EZ_CURVED"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
@@ -1789,6 +1792,7 @@ class CreatorInterface:
             p1=p1,
             p2=p2,
             text=text,
+            text_rotation=text_rotation,
             dimstyle=dimstyle,
             override=override,
             dxfattribs=dxfattribs,
