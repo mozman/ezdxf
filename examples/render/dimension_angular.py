@@ -273,7 +273,7 @@ def measure_fixed_angle(angle: float, dxfversion="R2013"):
     doc.saveas(OUTDIR / f"dim_angular_{angle:.0f}_deg_{dxfversion}.dxf")
 
 
-def usr_location_abs(angle: float, dxfversion="R2013"):
+def usr_location_absolute(angle: float, dxfversion="R2013"):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     x_dist = 15
@@ -282,15 +282,11 @@ def usr_location_abs(angle: float, dxfversion="R2013"):
     for dimtad, y_dist, leader in [
         [0, 0, False],
         [0, 20, True],
-        [4, 40, False],
-        [4, 60, True],
+        [4, 40, True],
     ]:
         for count in range(8):
             center = Vec3(x_dist * count, y_dist)
             main_angle = 45.0 * count
-            usr_location = center + Vec3.from_deg_angle(
-                main_angle, radius + distance * 2.0
-            )
             dim = add_angle_dim(
                 msp,
                 center=center,
@@ -300,11 +296,47 @@ def usr_location_abs(angle: float, dxfversion="R2013"):
                 distance=distance,
                 override={"dimtad": dimtad},
             )
+            # user location in WCS coordinates, absolut location:
+            usr_location = center + Vec3.from_deg_angle(
+                main_angle, radius + distance * 2.0
+            )
             dim.set_location(usr_location, leader=leader)
             dim.render(discard=BRICSCAD)
 
     doc.set_modelspace_vport(height=100, center=(x_dist * 4, 40))
-    doc.saveas(OUTDIR / f"dim_angular_usr_loc_abs_{dxfversion}.dxf")
+    doc.saveas(OUTDIR / f"dim_angular_usr_loc_absolute_{dxfversion}.dxf")
+
+
+def usr_location_relative(angle: float, dxfversion="R2013"):
+    doc = ezdxf.new(dxfversion, setup=True)
+    msp = doc.modelspace()
+    x_dist = 15
+    radius = 3.0
+    distance = 1.0
+    for dimtad, y_dist, leader in [
+        [0, 0, False],
+        [0, 20, True],
+        [4, 40, True],
+    ]:
+        for count in range(8):
+            center = Vec3(x_dist * count, y_dist)
+            main_angle = 45.0 * count
+            dim = add_angle_dim(
+                msp,
+                center=center,
+                angle=main_angle,
+                delta=angle / 2.0,
+                radius=radius,
+                distance=distance,
+                override={"dimtad": dimtad},
+            )
+            # user location relative to center of dimension line:
+            usr_location = Vec3.from_deg_angle(main_angle, 2.0)
+            dim.set_location(usr_location, leader=leader, relative=True)
+            dim.render(discard=BRICSCAD)
+
+    doc.set_modelspace_vport(height=100, center=(x_dist * 4, 40))
+    doc.saveas(OUTDIR / f"dim_angular_usr_loc_relative_{dxfversion}.dxf")
 
 
 if __name__ == "__main__":
@@ -316,4 +348,5 @@ if __name__ == "__main__":
     measure_fixed_angle(3.0)
     measure_fixed_angle(6.0)
     measure_fixed_angle(9.0)
-    usr_location_abs(15)
+    usr_location_absolute(6)
+    usr_location_relative(30)

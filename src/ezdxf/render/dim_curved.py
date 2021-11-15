@@ -371,6 +371,8 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
             # apply dimtmove: measurement.text_movement_rule
             user_location = measurement.user_location
             assert isinstance(user_location, Vec2)
+            if measurement.relative_user_location:
+                user_location += self.dim_midpoint
             measurement.text_location = user_location
             if measurement.text_movement_rule == 0:
                 # Moves the dimension line with dimension text and

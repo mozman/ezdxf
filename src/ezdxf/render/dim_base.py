@@ -833,7 +833,7 @@ class Geometry:
 
     def add_defpoints(self, points: Iterable[Vec2]) -> None:
         attribs = {
-            "layer": "DEFPOINTS",
+            "layer": "Defpoints",
         }
         for point in points:
             # Despite the fact that the POINT entity has WCS coordinates,
