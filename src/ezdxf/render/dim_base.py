@@ -1271,6 +1271,28 @@ def order_leader_points(p1: Vec2, p2: Vec2, p3: Vec2) -> Tuple[Vec2, Vec2]:
         return p2, p3
 
 
+def get_center_leader_points(
+    target_point: Vec2, text_box: TextBox, leg_length: float
+) -> Tuple[Vec2, Vec2]:
+    """Returns the leader points of the "leg" for a vertical centered leader."""
+    c0, c1, c2, c3 = text_box.corners
+    #              c3-------c2
+    # left leg /---x  text  x---\ right leg
+    #         /    c0-------c1   \
+    left_center = c0.lerp(c3)
+    right_center = c1.lerp(c2)
+    connection_point = left_center
+    leg_vector = (c0 - c1).normalize(leg_length)
+    if target_point.distance(left_center) > target_point.distance(right_center):
+        connection_point = right_center
+        leg_vector = -leg_vector
+    # leader line: target_point -> leg_point -> connection_point
+    # The text gap between the text and the connection point is already included
+    # in the text_box corners!
+    # Do not order leader points!
+    return connection_point + leg_vector, connection_point
+
+
 def get_required_defpoint(dim: Dimension, name: str) -> Vec2:
     dxf = dim.dxf
     if dxf.hasattr(name):  # has to exist, ignore default value!

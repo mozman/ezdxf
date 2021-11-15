@@ -25,6 +25,7 @@ from .dim_base import (
     LengthMeasurement,
     compile_mtext,
     order_leader_points,
+    get_center_leader_points,
 )
 from ezdxf.render.arrows import ARROWS, arrow_length
 from ezdxf.tools.text import is_upside_down_text_angle
@@ -438,35 +439,20 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         # "center":
         # - connects to the left or right vertical center of the text
         # - distance between text and leader line is measurement.text_gap (dimgap)
+        #   and is already included in the text_box corner points
         # - length of "leg": arrows.arrow_size
         # "below" - add a line below the text
-        target_point = self.dim_midpoint
-        c0, c1, c2, c3 = self.text_box.corners
-        #                c3-----c2
-        # left center ---x       x--- right center
-        #                c0-----c1
         if self.measurement.text_valign == 0:  # "center"
-            left_center = c0.lerp(c3)
-            right_center = c1.lerp(c2)
-            connection_point = left_center
-            leg_direction = (c0 - c1).normalize()
-            if target_point.distance(left_center) > target_point.distance(
-                right_center
-            ):
-                connection_point = right_center
-                leg_direction = -leg_direction
-            # leader line: target_point -> p1 -> p2
-            p2 = connection_point + leg_direction * self.measurement.text_gap
-            p1 = p2 + leg_direction * self.arrows.arrow_size
-            # Do not order leader points!
-            return (p1, p2)
-
+            return get_center_leader_points(
+                self.dim_midpoint, self.text_box, self.arrows.arrow_size
+            )
         else:  # "below"
+            c0, c1, c2, c3 = self.text_box.corners
             if self.measurement.has_upside_down_correction:
                 p1, p2 = c2, c3
             else:
                 p1, p2 = c0, c1
-            return order_leader_points(target_point, p1, p2)
+            return order_leader_points(self.dim_midpoint, p1, p2)
 
     def render(self, block: "GenericLayoutType") -> None:
         """Main method to create dimension geometry of basic DXF entities in the
