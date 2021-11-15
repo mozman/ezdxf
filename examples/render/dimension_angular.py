@@ -1,6 +1,7 @@
 # Purpose: using angular DIMENSION
 # Copyright (c) 2021, Manfred Moitzi
 # License: MIT License
+from typing import Optional
 import pathlib
 import math
 import ezdxf
@@ -237,6 +238,7 @@ def add_angle_dim(
     delta: float,
     radius: float,
     distance: float,
+    text_rotation: Optional[float],
     override: dict,
 ):
     start_angle = angle - delta
@@ -248,6 +250,7 @@ def add_angle_dim(
         start_angle,
         end_angle,
         distance,
+        text_rotation=text_rotation,
         override=override,
     )
     return dim
@@ -266,6 +269,7 @@ def measure_fixed_angle(angle: float, dxfversion="R2013"):
                 delta=angle / 2.0,
                 radius=3.0,
                 distance=1.0,
+                text_rotation=None,
                 override={"dimtad": dimtad},
             )
             dim.render(discard=BRICSCAD)
@@ -273,7 +277,9 @@ def measure_fixed_angle(angle: float, dxfversion="R2013"):
     doc.saveas(OUTDIR / f"dim_angular_{angle:.0f}_deg_{dxfversion}.dxf")
 
 
-def usr_location_absolute(angle: float, dxfversion="R2013"):
+def usr_location_absolute(
+    angle: float, rotation: float = None, dxfversion="R2013"
+):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     x_dist = 15
@@ -294,6 +300,7 @@ def usr_location_absolute(angle: float, dxfversion="R2013"):
                 delta=angle / 2.0,
                 radius=radius,
                 distance=distance,
+                text_rotation=rotation,
                 override={"dimtad": dimtad},
             )
             # user location in WCS coordinates, absolut location:
@@ -304,10 +311,15 @@ def usr_location_absolute(angle: float, dxfversion="R2013"):
             dim.render(discard=BRICSCAD)
 
     doc.set_modelspace_vport(height=100, center=(x_dist * 4, 40))
-    doc.saveas(OUTDIR / f"dim_angular_usr_loc_absolute_{dxfversion}.dxf")
+    rstr = ""
+    if rotation is not None:
+        rstr = f"rot_{rotation}_"
+    doc.saveas(OUTDIR / f"dim_angular_usr_loc_absolute_{rstr}{dxfversion}.dxf")
 
 
-def usr_location_relative(angle: float, dxfversion="R2013"):
+def usr_location_relative(
+    angle: float, rotation: float = None, dxfversion="R2013"
+):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     x_dist = 15
@@ -328,6 +340,7 @@ def usr_location_relative(angle: float, dxfversion="R2013"):
                 delta=angle / 2.0,
                 radius=radius,
                 distance=distance,
+                text_rotation=rotation,
                 override={"dimtad": dimtad},
             )
             # user location relative to center of dimension line:
@@ -336,7 +349,10 @@ def usr_location_relative(angle: float, dxfversion="R2013"):
             dim.render(discard=BRICSCAD)
 
     doc.set_modelspace_vport(height=100, center=(x_dist * 4, 40))
-    doc.saveas(OUTDIR / f"dim_angular_usr_loc_relative_{dxfversion}.dxf")
+    rstr = ""
+    if rotation is not None:
+        rstr = f"rot_{rotation}_"
+    doc.saveas(OUTDIR / f"dim_angular_usr_loc_relative_{rstr}{dxfversion}.dxf")
 
 
 if __name__ == "__main__":
@@ -349,4 +365,6 @@ if __name__ == "__main__":
     measure_fixed_angle(6.0)
     measure_fixed_angle(9.0)
     usr_location_absolute(6)
+    usr_location_absolute(6, rotation=15)
     usr_location_relative(30)
+    usr_location_relative(30, rotation=345)
