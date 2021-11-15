@@ -600,6 +600,30 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
             # hidden line detection if text is not placed outside:
             remove_hidden_lines=self.remove_hidden_lines_of_dimline,
         )
+        arrows = self.arrows
+        if self.arrows_outside and not arrows.has_ticks:  # add extension lines
+            length = arrows.arrow_size
+            # special treatment of arrow extension lines for curved dimensions:
+            # ticks and arrows having EXTENSIONS_ALLOWED do NOT get the
+            # arrow extension line, real arrows like "CLOSED_BLANK"
+            # get an extension line:
+            if not ARROWS.has_extension_line(arrows.arrow1_name):
+                self.add_arrow_extension_line(self.ext1_dir, -length)
+            if not ARROWS.has_extension_line(arrows.arrow2_name):
+                self.add_arrow_extension_line(self.ext2_dir, length)
+
+    def add_arrow_extension_line(self, ext_line_dir: Vec2, length: float):
+        arrow_ext_vec = ext_line_dir.orthogonal() * length
+        start_point = (
+            self.center_of_arc
+            + ext_line_dir * self.dim_line_radius
+            + arrow_ext_vec
+        )
+        self.add_line(
+            start_point,
+            start_point + arrow_ext_vec,
+            dxfattribs=self.dimension_line.dxfattribs(),
+        )
 
     def add_measurement_text(
         self, dim_text: str, pos: Vec2, rotation: float
