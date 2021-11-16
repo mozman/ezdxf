@@ -27,7 +27,7 @@ from .dim_base import (
     order_leader_points,
     get_center_leader_points,
 )
-from ezdxf.render.arrows import ARROWS, arrow_length
+from ezdxf.render.arrows import ARROWS, arrow_length, block_name
 from ezdxf.tools.text import is_upside_down_text_angle
 from ezdxf.math import intersection_line_line_2d
 
@@ -567,13 +567,14 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
             if not outside:
                 # arrows inside extension lines:
                 # adjust angles for the remaining dimension line
+                size = arrows.arrow_size
                 if arrow1:
                     start_angle_offset = (
-                        arrow_length(arrows.arrow1_name, scale) / radius
+                        curved_arrow_length(arrows.arrow1_name, size) / radius
                     )
                 if arrow2:
                     end_angle_offset = (
-                        arrow_length(arrows.arrow2_name, scale) / radius
+                        curved_arrow_length(arrows.arrow2_name, size) / radius
                     )
         return start_angle_offset, end_angle_offset
 
@@ -585,7 +586,13 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         # Start- and end angle adjustments have to be limited between the
         # extension lines.
         # Negative offset extends the dimension line outside!
-        max_adjustment: float = abs(self.measurement.raw_value) / 2.0
+        start_angle: float = self.start_angle_rad
+        end_angle: float = self.end_angle_rad
+        arrows = self.arrows
+        size = arrows.arrow_size
+        radius = self.dim_line_radius
+        max_adjustment: float = abs(self.arc_angle_span_rad) / 2.0
+
         if start_offset > max_adjustment:
             start_offset = 0.0
         if end_offset > max_adjustment:
@@ -593,35 +600,36 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
 
         self.add_arc(
             self.center_of_arc,
-            self.dim_line_radius,
-            self.start_angle_rad + start_offset,
-            self.end_angle_rad - end_offset,
+            radius,
+            start_angle + start_offset,
+            end_angle - end_offset,
             dxfattribs=self.dimension_line.dxfattribs(),
             # hidden line detection if text is not placed outside:
             remove_hidden_lines=self.remove_hidden_lines_of_dimline,
         )
-        arrows = self.arrows
-        if self.arrows_outside and not arrows.has_ticks:  # add extension lines
-            length = arrows.arrow_size
-            # special treatment of arrow extension lines for curved dimensions:
-            # ticks and arrows having EXTENSIONS_ALLOWED do NOT get the
-            # arrow extension line, real arrows like "CLOSED_BLANK"
-            # get an extension line:
-            if not ARROWS.has_extension_line(arrows.arrow1_name):
-                self.add_arrow_extension_line(self.ext1_dir, -length)
-            if not ARROWS.has_extension_line(arrows.arrow2_name):
-                self.add_arrow_extension_line(self.ext2_dir, length)
+        if self.arrows_outside and not arrows.has_ticks:
+            # add arrow extension lines
+            start_offset, end_offset = arrow_offset_angles(
+                arrows.arrow1_name, size, radius
+            )
+            self.add_arrow_extension_line(
+                start_angle - end_offset,
+                start_angle - start_offset,
+            )
+            start_offset, end_offset = arrow_offset_angles(
+                arrows.arrow2_name, size, radius
+            )
+            self.add_arrow_extension_line(
+                end_angle + start_offset,
+                end_angle + end_offset,
+            )
 
-    def add_arrow_extension_line(self, ext_line_dir: Vec2, length: float):
-        arrow_ext_vec = ext_line_dir.orthogonal() * length
-        start_point = (
-            self.center_of_arc
-            + ext_line_dir * self.dim_line_radius
-            + arrow_ext_vec
-        )
-        self.add_line(
-            start_point,
-            start_point + arrow_ext_vec,
+    def add_arrow_extension_line(self, start_angle: float, end_angle: float):
+        self.add_arc(
+            self.center_of_arc,
+            self.dim_line_radius,
+            start_angle=start_angle,
+            end_angle=end_angle,
             dxfattribs=self.dimension_line.dxfattribs(),
         )
 
@@ -968,3 +976,45 @@ def detect_closer_defpoint(
     if abs(d1 - d0) <= abs(d2 - d0):
         return p1
     return p2
+
+
+def arrow_extension_length(arrows, arrow_name: str) -> float:
+    length: float = 0.0
+    if not ARROWS.has_extension_line(arrow_name):
+        length = arrows.arrow_size
+    return length
+
+
+_FULL_SIZE = {
+    ARROWS.closed_filled,
+    ARROWS.closed_blank,
+    ARROWS.datum_triangle,
+    ARROWS.datum_triangle_filled,
+}
+
+_HALF_SIZE = {
+    ARROWS.origin_indicator_2,
+    ARROWS.dot_blank,
+    ARROWS.box,
+}
+
+
+def curved_arrow_length(arrow_name: str, size: float) -> float:
+    real_name = block_name(arrow_name)
+    if real_name in _FULL_SIZE:
+        return size
+    if real_name in _HALF_SIZE:
+        return size * 0.5
+    return 0.0
+
+
+def arrow_offset_angles(
+    arrow_name: str, size: float, radius: float
+) -> Tuple[float, float]:
+    start_offset: float = 0.0
+    end_offset: float = size / radius
+    length = curved_arrow_length(arrow_name, size)
+    if length > 0.0:
+        start_offset = length / radius
+        end_offset *= 2.0
+    return start_offset, end_offset
