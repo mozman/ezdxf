@@ -614,24 +614,20 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         )
         if self.arrows_outside and not arrows.has_ticks:
             # add arrow extension lines
-            name = arrows.arrow1_name
-            if has_arrow_extension(name):
-                start_offset, end_offset = arrow_offset_angles(
-                    name, size, radius
-                )
-                self.add_arrow_extension_line(
-                    start_angle - end_offset,
-                    start_angle - start_offset,
-                )
-            name = arrows.arrow2_name
-            if has_arrow_extension(name):
-                start_offset, end_offset = arrow_offset_angles(
-                    name, size, radius
-                )
-                self.add_arrow_extension_line(
-                    end_angle + start_offset,
-                    end_angle + end_offset,
-                )
+            start_offset, end_offset = arrow_offset_angles(
+                arrows.arrow1_name, size, radius
+            )
+            self.add_arrow_extension_line(
+                start_angle - end_offset,
+                start_angle - start_offset,
+            )
+            start_offset, end_offset = arrow_offset_angles(
+                arrows.arrow1_name, size, radius
+            )
+            self.add_arrow_extension_line(
+                end_angle + start_offset,
+                end_angle + end_offset,
+            )
 
     def add_arrow_extension_line(self, start_angle: float, end_angle: float):
         self.add_arc(
@@ -987,61 +983,13 @@ def detect_closer_defpoint(
     return p2
 
 
-def arrow_extension_length(arrows, arrow_name: str) -> float:
-    length: float = 0.0
-    if not ARROWS.has_extension_line(arrow_name):
-        length = arrows.arrow_size
-    return length
-
-
-_FULL_SIZE = {
-    ARROWS.closed_filled,
-    ARROWS.closed_blank,
-    ARROWS.datum_triangle,
-    ARROWS.datum_triangle_filled,
-}
-
-_HALF_SIZE = {
-    ARROWS.origin_indicator_2,
-    ARROWS.dot_blank,
-    ARROWS.box,
-}
-
-
-def curved_arrow_length(arrow_name: str, size: float) -> float:
-    real_name = block_name(arrow_name)
-    if real_name in _FULL_SIZE:
-        return size
-    if real_name in _HALF_SIZE:
-        return size * 0.5
-    return 0.0
-
-
 def arrow_offset_angles(
     arrow_name: str, size: float, radius: float
 ) -> Tuple[float, float]:
     start_offset: float = 0.0
     end_offset: float = size / radius
-    length = curved_arrow_length(arrow_name, size)
+    length = arrow_length(arrow_name, size)
     if length > 0.0:
         start_offset = length / radius
         end_offset *= 2.0
     return start_offset, end_offset
-
-
-_HAS_EXTENSION = {
-    ARROWS.closed_filled,
-    ARROWS.closed_blank,
-    ARROWS.none,
-    ARROWS.architectural_tick,
-    ARROWS.dot_small,
-    ARROWS.dot_smallblank,
-    ARROWS.oblique,
-    ARROWS.integral,
-    ARROWS.datum_triangle_filled,
-    ARROWS.datum_triangle,
-}
-
-
-def has_arrow_extension(arrow_name: str) -> bool:
-    return block_name(arrow_name) in _HAS_EXTENSION
