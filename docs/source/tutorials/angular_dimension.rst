@@ -64,8 +64,8 @@ start- and end angles:
     dim = msp.add_angular_dim_cra(
         center=(5, 5),  # center point of the angle
         radius= 7,  # distance from center point to the start of the extension lines
-        start_angle=30,  # start angle in degrees
-        end_angle=150,  # end angle in degrees
+        start_angle=60,  # start angle in degrees
+        end_angle=120,  # end angle in degrees
         distance=3,  # distance from start of the extension lines to the dimension line
         dimstyle="EZ_CURVED",  # default angular dimension style
     )
@@ -76,6 +76,12 @@ start- and end angles:
     dim.render()
     doc.saveas("angular_dimension_cra.dxf")
 
+The return value `dim` is **not** a dimension entity, instead a
+:class:`~ezdxf.entities.DimStyleOverride` object is
+returned, the dimension entity is stored as :attr:`dim.dimension`.
+
+.. image:: gfx/dim_angular_cra.png
+
 Angle by 2 Lines
 ~~~~~~~~~~~~~~~~
 
@@ -85,7 +91,7 @@ The next example shows an angular dimension for an angle defined by two lines:
 
     import ezdxf
 
-    doc = ezdxf.new("R2010", setup=True)
+    doc = ezdxf.new(setup=True)
     msp = doc.modelspace()
 
     # Setup the geometric parameters for the DIMENSION entity:
@@ -125,14 +131,29 @@ defines the start point of the second extension line.
 The measurement of the DIMENSION entity is the angle enclosed by the first and
 the second leg and where the dimension line passes the `base` point.
 
-The return value `dim` is **not** a dimension entity, instead a
-:class:`~ezdxf.entities.DimStyleOverride` object is
-returned, the dimension entity is stored as :attr:`dim.dimension`.
+.. image:: gfx/dim_angular_2l.png
 
 Angler by 3 Points
 ~~~~~~~~~~~~~~~~~~
 
-TODO ...
+The next example shows an angular dimension defined by three points,
+a center point and the two end points of the angle legs:
+
+.. code-block:: Python
+
+    import ezdxf
+
+    doc = ezdxf.new(setup=True)
+    msp = doc.modelspace()
+
+    msp.add_angular_dim_3p(
+        base=(0, 7),  # location of the dimension line
+        center=(0, 0),  # center point
+        p1=(-3, 5),  # end point of 1st leg = start angle
+        p2=(3, 5),  # end point of 2nd leg = end angle
+    ).render()
+
+.. image:: gfx/dim_angular_3p.png
 
 Placing Measurement Text
 ------------------------
