@@ -609,20 +609,24 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         )
         if self.arrows_outside and not arrows.has_ticks:
             # add arrow extension lines
-            start_offset, end_offset = arrow_offset_angles(
-                arrows.arrow1_name, size, radius
-            )
-            self.add_arrow_extension_line(
-                start_angle - end_offset,
-                start_angle - start_offset,
-            )
-            start_offset, end_offset = arrow_offset_angles(
-                arrows.arrow2_name, size, radius
-            )
-            self.add_arrow_extension_line(
-                end_angle + start_offset,
-                end_angle + end_offset,
-            )
+            name = arrows.arrow1_name
+            if has_arrow_extension(name):
+                start_offset, end_offset = arrow_offset_angles(
+                    name, size, radius
+                )
+                self.add_arrow_extension_line(
+                    start_angle - end_offset,
+                    start_angle - start_offset,
+                )
+            name = arrows.arrow2_name
+            if has_arrow_extension(name):
+                start_offset, end_offset = arrow_offset_angles(
+                    name, size, radius
+                )
+                self.add_arrow_extension_line(
+                    end_angle + start_offset,
+                    end_angle + end_offset,
+                )
 
     def add_arrow_extension_line(self, start_angle: float, end_angle: float):
         self.add_arc(
@@ -1018,3 +1022,21 @@ def arrow_offset_angles(
         start_offset = length / radius
         end_offset *= 2.0
     return start_offset, end_offset
+
+
+_HAS_EXTENSION = {
+    ARROWS.closed_filled,
+    ARROWS.closed_blank,
+    ARROWS.none,
+    ARROWS.architectural_tick,
+    ARROWS.dot_small,
+    ARROWS.dot_smallblank,
+    ARROWS.oblique,
+    ARROWS.integral,
+    ARROWS.datum_triangle_filled,
+    ARROWS.datum_triangle,
+}
+
+
+def has_arrow_extension(arrow_name: str) -> bool:
+    return block_name(arrow_name) in _HAS_EXTENSION

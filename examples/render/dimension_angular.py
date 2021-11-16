@@ -355,6 +355,44 @@ def usr_location_relative(
     doc.saveas(OUTDIR / f"dim_angular_usr_loc_relative_{rstr}{dxfversion}.dxf")
 
 
+def show_all_arrow_heads(dxfversion="R2013"):
+    # The ezdxf arrow head blocks were designed for linear dimensions and do not
+    # work well with curved dimension lines.
+    # This are the arrow heads which look correct for arrows placed inside and
+    # outside for curved dimension lines:
+    # - closed_filled
+    # - closed_filled
+    # - closed_black
+    # - architectural_tick
+    # - dot_small
+    # - dot_small_blank
+    # - integral
+    # - none
+    # - oblique
+
+    doc = ezdxf.new(dxfversion, setup=True)
+    msp = doc.modelspace()
+    x_dist = 15.0
+    y_dist = 6.0
+    for x, arrow_name in enumerate(sorted(ezdxf.ARROWS.__all_arrows__)):
+        for y, angle in enumerate((3.0, 30.0)):
+            center = Vec3(x * x_dist, y * y_dist)
+            dim = add_angle_dim(
+                msp,
+                center=center,
+                angle=90.0,
+                delta=angle / 2.0,
+                radius=3.0,
+                distance=1.0,
+                text_rotation=None,
+                override={"dimblk": arrow_name},
+            )
+            dim.render(discard=BRICSCAD)
+
+    doc.set_modelspace_vport(height=100, center=(50, 5))
+    doc.saveas(OUTDIR / f"dim_angular_all_arrows_{dxfversion}.dxf")
+
+
 if __name__ == "__main__":
     angular_cra_default()
     angular_3p_default()
@@ -368,3 +406,4 @@ if __name__ == "__main__":
     usr_location_absolute(6, rotation=15)
     usr_location_relative(30)
     usr_location_relative(30, rotation=345)
+    show_all_arrow_heads()
