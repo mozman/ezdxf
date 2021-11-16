@@ -358,8 +358,8 @@ def usr_location_relative(
 def show_all_arrow_heads(dxfversion="R2013"):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
-    x_dist = 15.0
-    y_dist = 6.0
+    x_dist = 4.0
+    y_dist = 5.0
     for x, arrow_name in enumerate(sorted(ezdxf.ARROWS.__all_arrows__)):
         for y, angle in enumerate((3.0, 30.0)):
             center = Vec3(x * x_dist, y * y_dist)
@@ -375,7 +375,7 @@ def show_all_arrow_heads(dxfversion="R2013"):
             )
             dim.render(discard=BRICSCAD)
 
-    doc.set_modelspace_vport(height=100, center=(50, 5))
+    doc.set_modelspace_vport(height=40, center=(50, 5))
     doc.saveas(OUTDIR / f"dim_angular_all_arrows_{dxfversion}.dxf")
 
 
