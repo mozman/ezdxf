@@ -356,20 +356,6 @@ def usr_location_relative(
 
 
 def show_all_arrow_heads(dxfversion="R2013"):
-    # The ezdxf arrow head blocks were designed for linear dimensions and do not
-    # work well with curved dimension lines.
-    # This are the arrow heads which look correct for arrows placed inside and
-    # outside for curved dimension lines:
-    # - closed_filled
-    # - closed_filled
-    # - closed_black
-    # - architectural_tick
-    # - dot_small
-    # - dot_small_blank
-    # - integral
-    # - none
-    # - oblique
-
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     x_dist = 15.0

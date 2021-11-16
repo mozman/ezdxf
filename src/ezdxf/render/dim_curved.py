@@ -541,19 +541,25 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
                     dxfattribs=attribs,
                 )
         else:
-            scale = arrows.arrow_size
+            arrow_size = arrows.arrow_size
+            # Note: The arrow blocks are correct as they are!
+            # The arrow head is tilted to match the connection point of the
+            # dimension line (even for datum arrows).
+            # tilting angle = 1/2 of the arc angle defined by the arrow length
+            arrow_tilt: float = arrow_size / radius * 0.5 * DEG
             start_angle = angle1 + 180.0
             end_angle = angle2
             if outside:
                 start_angle += 180.0
                 end_angle += 180.0
-
+                arrow_tilt = -arrow_tilt
+            scale = arrow_size
             if arrow1:
                 self.add_blockref(
                     arrows.arrow1_name,
                     insert=start,
                     scale=scale,
-                    rotation=start_angle,
+                    rotation=start_angle + arrow_tilt,
                     dxfattribs=attribs,
                 )  # reverse
             if arrow2:
@@ -561,20 +567,19 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
                     arrows.arrow2_name,
                     insert=end,
                     scale=scale,
-                    rotation=end_angle,
+                    rotation=end_angle - arrow_tilt,
                     dxfattribs=attribs,
                 )
             if not outside:
                 # arrows inside extension lines:
                 # adjust angles for the remaining dimension line
-                size = arrows.arrow_size
                 if arrow1:
                     start_angle_offset = (
-                        curved_arrow_length(arrows.arrow1_name, size) / radius
+                        arrow_length(arrows.arrow1_name, arrow_size) / radius
                     )
                 if arrow2:
                     end_angle_offset = (
-                        curved_arrow_length(arrows.arrow2_name, size) / radius
+                        arrow_length(arrows.arrow2_name, arrow_size) / radius
                     )
         return start_angle_offset, end_angle_offset
 
