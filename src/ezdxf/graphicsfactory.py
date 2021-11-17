@@ -1732,6 +1732,7 @@ class CreatorInterface:
         start_angle: float,
         end_angle: float,
         distance: float,
+        location: "Vertex" = None,
         text: str = "<>",
         text_rotation: float = None,
         dimstyle: str = "EZ_CURVED",
@@ -1756,6 +1757,7 @@ class CreatorInterface:
             end_angle: end angle in degrees (in UCS)
             distance: distance from start of the extension lines to the
                 dimension line in drawing units
+            location: user defined location for text mid point (in UCS)
             text: ``None`` or "<>" the measurement is drawn as text,
                 " " (a single space) suppresses the dimension text,
                 everything else `text` is drawn as dimension text
@@ -1791,6 +1793,7 @@ class CreatorInterface:
             center=center_,
             p1=p1,
             p2=p2,
+            location=location,
             text=text,
             text_rotation=text_rotation,
             dimstyle=dimstyle,
