@@ -11,6 +11,7 @@ from ezdxf.math import (
     global_bspline_interpolation,
     fit_points_to_cad_cv,
     arc_angle_span_deg,
+    ConstructionArc,
 )
 from ezdxf.render.arrows import ARROWS
 from ezdxf.entities import factory
@@ -1793,6 +1794,65 @@ class CreatorInterface:
             center=center_,
             p1=p1,
             p2=p2,
+            location=location,
+            text=text,
+            text_rotation=text_rotation,
+            dimstyle=dimstyle,
+            override=override,
+            dxfattribs=dxfattribs,
+        )
+
+    def add_angular_dim_arc(
+        self,
+        arc: ConstructionArc,
+        distance: float,
+        location: "Vertex" = None,
+        text: str = "<>",
+        text_rotation: float = None,
+        dimstyle: str = "EZ_CURVED",
+        override: Dict = None,
+        dxfattribs: Dict = None,
+    ) -> "DimStyleOverride":
+        """
+        Shortcut method to create an angular dimension from a
+        :class:`~ezdxf.math.ConstructionArc`. This construction tool can
+        be created from ARC entities and the tool itself provides various
+        construction class methods.
+        The measurement text is placed at the default location defined by the
+        associated `dimstyle`.
+        The measurement is always done from `start_angle` to `end_angle` of the
+        arc in counter clockwise orientation.
+        This does not always match the result in CAD applications!
+        For further information see the more generic factory method
+        :func:`add_angular_dim_3p`.
+
+        Args:
+            arc: :class:`~ezdxf.math.ConstructionArc`
+            distance: distance from start of the extension lines to the
+                dimension line in drawing units
+            location: user defined location for text mid point (in UCS)
+            text: ``None`` or "<>" the measurement is drawn as text,
+                " " (a single space) suppresses the dimension text,
+                everything else `text` is drawn as dimension text
+            text_rotation: rotation angle of the dimension text as absolute
+                angle (x-axis=0, y-axis=90) in degrees
+            dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
+                table entry), default is "EZ_CURVED"
+            override: :class:`~ezdxf.entities.DimStyleOverride` attributes
+            dxfattribs: additional DXF attributes for
+                :class:`~ezdxf.entities.Dimension` entity
+
+        Returns: :class:`~ezdxf.entities.DimStyleOverride`
+
+        .. versionadded:: v0.18
+
+        """
+        return self.add_angular_dim_cra(
+            center=arc.center,
+            radius=arc.radius,
+            start_angle=arc.start_angle,
+            end_angle=arc.end_angle,
+            distance=distance,
             location=location,
             text=text,
             text_rotation=text_rotation,

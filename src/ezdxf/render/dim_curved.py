@@ -495,10 +495,17 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
     def _add_ext_line(
         self, start: Vec2, direction: Vec2, dxfattribs: Dict[str, Any]
     ) -> None:
-        start = start + direction * self.extension_lines.offset
-        end = self.center_of_arc + direction * (
-            self.dim_line_radius + self.extension_lines.extension_above
-        )
+        center = self.center_of_arc
+        radius = self.dim_line_radius
+        # dimension line is "outside"
+        extension_above = self.extension_lines.extension_above
+        offset = self.extension_lines.offset
+        if (start - center).magnitude > radius:
+            # dimension line is "inside"
+            extension_above = -extension_above
+            offset = -offset
+        start += direction * offset
+        end = center + direction * (radius + extension_above)
         self.add_line(start, end, dxfattribs=dxfattribs)
 
     def add_arrows(self) -> Tuple[float, float]:

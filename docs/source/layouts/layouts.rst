@@ -172,6 +172,8 @@ BaseLayout
 
     .. automethod:: add_angular_dim_cra
 
+    .. automethod:: add_angular_dim_arc
+
     .. automethod:: add_leader
 
     .. automethod:: add_body

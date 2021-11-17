@@ -133,8 +133,8 @@ the second leg and where the dimension line passes the `base` point.
 
 .. image:: gfx/dim_angular_2l.png
 
-Angler by 3 Points
-~~~~~~~~~~~~~~~~~~
+Angle by 3 Points
+~~~~~~~~~~~~~~~~~
 
 The next example shows an angular dimension defined by three points,
 a center point and the two end points of the angle legs:
@@ -154,6 +154,34 @@ a center point and the two end points of the angle legs:
     ).render()
 
 .. image:: gfx/dim_angular_3p.png
+
+Angle from ConstructionArc
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :class:`ezdxf.math.ConstructionArc` provides various class methods for
+creating arcs and the construction tool can be created from an ARC entity.
+
+Add an angular dimension to an ARC entity:
+
+.. code-block:: Python
+
+    import ezdxf
+
+    doc = ezdxf.new(setup=True)
+    msp = doc.modelspace()
+
+    arc = msp.add_arc(
+        center=(0, 0),
+        radius=5,
+        start_angle = 60,
+        end_angle = 120,
+    )
+    msp.add_angular_dim_arc(
+        arc.construction_tool(),
+        distance=2,
+    ).render()
+
+.. image:: gfx/dim_angular_from_arc.png
 
 Placing Measurement Text
 ------------------------
