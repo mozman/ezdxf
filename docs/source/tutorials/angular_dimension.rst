@@ -1,7 +1,7 @@
 .. _tut_angular_dimension:
 
-Tutorial for Angular Dimensions (work in progress)
-==================================================
+Tutorial for Angular Dimensions
+===============================
 
 Please read the :ref:`tut_linear_dimension` before, if you haven't.
 
@@ -158,15 +158,9 @@ a center point and the two end points of the angle legs:
 Placing Measurement Text
 ------------------------
 
-Default Text Location
-~~~~~~~~~~~~~~~~~~~~~
-
-The DIMSTYLE "EZ_CURVED" places the measurement text in the center of the angle
-above the dimension line. The first examples above show the measurement text at
-the default text location.
-
-The text direction angle is always perpendicular to the line from the text center
-to the center point of the angle unless this angle is manually overridden.
+The default location of the measurement text depends on various
+:class:`~ezdxf.entities.DimStyle` parameters and is applied if no user defined
+text location is defined.
 
 .. note::
 
@@ -182,24 +176,141 @@ to the center point of the angle unless this angle is manually overridden.
     - Source code file `standards.py`_ shows how to create your own DIMSTYLES.
     - The Script `dimension_angular.py`_ shows examples for angular dimensions.
 
+Default Text Locations
+~~~~~~~~~~~~~~~~~~~~~~
+
+The DIMSTYLE "EZ_CURVED" places the measurement text in the center of the angle
+above the dimension line. The first examples above show the measurement text at
+the default text location.
+
+The text direction angle is always perpendicular to the line from the text center
+to the center point of the angle unless this angle is manually overridden.
+
+The **"vertical"** location of the measurement text relative to the dimension
+line is defined by :attr:`~ezdxf.entities.DimStyle.dxf.dimtad`:
+
+=== =====
+0   Center, it is possible to adjust the vertical location by
+    :attr:`~ezdxf.entities.DimStyle.dxf.dimtvp`
+1   Above
+2   Outside, handled like `Above` by `ezdxf`
+3   JIS, handled like `Above` by `ezdxf`
+4   Below
+=== =====
+
+.. code-block:: Python
+
+    msp.add_angular_dim_cra(
+        center=(3, 3),
+        radius=3,
+        distance=1,
+        start_angle=60,
+        end_angle=120,
+        override={
+            "dimtad": 1,  # 0=center; 1=above; 4=below;
+        },
+    ).render()
+
+.. image:: gfx/dim_angular_dimtad.png
+
+Shift Text From Default Location
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The method :meth:`shift_text` shifts the measurement text away from the default
+location. The shifting direction is aligned to the text rotation of the default
+measurement text.
+
+.. code-block:: Python
+
+    dim = msp.add_angular_dim_cra(
+        center=(3, 3),
+        radius=3,
+        distance=1,
+        start_angle=60,
+        end_angle=120,
+    )
+    # shift text from default text location:
+    dim.shift_text(0.5, 1.0)
+    dim.render()
+
+.. image:: gfx/dim_angular_shift_text.png
+
+This is just a rendering effect, editing the dimension line in a CAD application
+resets the text to the default location.
+
 User Defined Text Locations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Beside the default location it is always possible to override the text location
-by a user defined location. This location also determines the angle of the
-measurement text.
+by a user defined location.
+
+The coordinates of user locations are located in the rendering UCS and the
+default rendering UCS is the :ref:`WCS`.
+
+Absolute User Location
+++++++++++++++++++++++
+
+Absolute placing of the measurement text means relative to the origin of the
+render UCS.
+The user location is stored in the DIMENSION entity, which means editing the
+dimension line in a CAD application does not alter the text location.
+This location also determines the rotation of the measurement text.
 
 .. code-block:: python
 
-    dim = msp.add_angular_dim_3p(
-        base=(0, 4),  # location of the dimension line
-        center=(0, 0),  # center point of angle
-        p1=(-3, 3),  # defines the start angle and the start point of the first extension line
-        p2=(3, 3),  # defines the end angle and the start point of the second extension line
-        location=(1, 5),  # user defined measurement text location
+    dim = msp.add_angular_dim_cra(
+        center=(3, 3),
+        radius=3,
+        distance=1,
+        start_angle=60,
+        end_angle=120,
+        location=(5, 8),  # user defined measurement text location
     )
+    dim.render()
 
-.. image:: gfx/dim_angular_user.png
+.. image:: gfx/dim_angular_user_location_1.png
+
+Relative User Location
+++++++++++++++++++++++
+
+Relative placing of the measurement text means relative to the middle of the
+dimension line. This is only possible by calling the :meth:`set_location`
+method, and the argument `relative` has to be ``True``.
+The user location is stored in the DIMENSION entity, which means editing the
+dimension line in a CAD application does not alter the text location.
+This location also determines the rotation of the measurement text.
+
+.. code-block:: python
+
+    dim = msp.add_angular_dim_cra(
+        center=(3, 3),
+        radius=3,
+        distance=1,
+        start_angle=60,
+        end_angle=120,
+    )
+    dim.set_location((1, 2), relative=True)
+    dim.render()
+
+.. image:: gfx/dim_angular_user_location_2.png
+
+Adding a Leader
++++++++++++++++
+
+.. code-block:: python
+
+    dim = msp.add_angular_dim_cra(
+        center=(3, 3),
+        radius=3,
+        distance=1,
+        start_angle=60,
+        end_angle=120,
+    )
+    dim.set_location((1, 2), relative=True, leader=True)
+    dim.render()
+
+Overriding Text Rotation
+------------------------
 
 Overriding Measurement Text
 ---------------------------

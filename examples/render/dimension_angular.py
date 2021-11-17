@@ -142,7 +142,12 @@ def angular_3p_default(dxfversion="R2013"):
                 center,
                 p1,
                 p2,
-                override={"dimtad": dimtad},
+                override={
+                    "dimtad": dimtad,
+                    "dimtxt": 1,
+                    "dimasz": 1,
+                    "dimgap": 0.25,
+                },
             ).render(discard=BRICSCAD)
 
     doc.set_modelspace_vport(height=70)
@@ -165,7 +170,7 @@ def angular_2l_default(dxfversion="R2013"):
 def add_lines(
     msp, center: Vec3, radius: float, start_angle: float, end_angle: float
 ):
-    attribs = {"color": 1}
+    attribs = {"color": 7}
     start_point = center + Vec3.from_deg_angle(start_angle) * radius
     end_point = center + Vec3.from_deg_angle(end_angle) * radius
     msp.add_line(center, start_point, dxfattribs=attribs)
