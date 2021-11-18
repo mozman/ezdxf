@@ -327,13 +327,13 @@ def usr_location_relative(
 ):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
-    x_dist = 15
+    x_dist = 10
     radius = 3.0
     distance = 1.0
     for dimtad, y_dist, leader in [
         [0, 0, False],
-        [0, 20, True],
-        [4, 40, True],
+        [0, 10, True],
+        [4, 20, True],
     ]:
         for count in range(8):
             center = Vec3(x_dist * count, y_dist)

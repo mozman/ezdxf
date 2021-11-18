@@ -294,6 +294,13 @@ direction. This method does not support leaders.
 
 .. image:: gfx/dim_linear_user_location_shift.png
 
+Overriding Text Rotation
+++++++++++++++++++++++++
+
+All factory methods supporting the argument `text_rotation` can override the
+measurement text rotation.
+The user defined rotation is relative to the render UCS x-axis (default is WCS).
+
 .. _tut_measurement_text_formatting_and_styling:
 
 Measurement Text Formatting and Styling

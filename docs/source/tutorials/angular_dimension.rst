@@ -325,20 +325,91 @@ This location also determines the rotation of the measurement text.
 Adding a Leader
 +++++++++++++++
 
+The method :meth:`set_location` has the option to add a leader line to the
+measurement text. This also aligns the text rotation to the render
+UCS x-axis, this means in the default case the measurement text is horizontal.
+The leader line can be "below" the text or start at the "left" or "right"
+center of the text, this location is defined by the
+:attr:`~ezdxf.entities.DimStyle.dxf.dimtad` attribute, 0 means "center" and
+any value != 0 means "below".
+
 .. code-block:: python
 
-    dim = msp.add_angular_dim_cra(
-        center=(3, 3),
-        radius=3,
-        distance=1,
-        start_angle=60,
-        end_angle=120,
-    )
-    dim.set_location((1, 2), relative=True, leader=True)
-    dim.render()
+    for dimtad, x in [(0, 0), (4, 6)]:
+        dim = msp.add_angular_dim_cra(
+            center=(3 + x, 3),
+            radius=3,
+            distance=1,
+            start_angle=60,
+            end_angle=120,
+            override={"dimtad": dimtad}  # "center" == 0; "below" != 0;
+        )
+        dim.set_location((1, 2), relative=True, leader=True)
+        dim.render()
+
+.. image:: gfx/dim_angular_user_location_3.png
+
+Advanced version which calculates the relative text location:
+The user location vector has a length 2 and the orientation is defined by
+`center_angle` pointing away from the center of the angle.
+
+.. code-block:: python
+
+    import ezdxf
+    from ezdxf.math import Vec3
+
+    doc = ezdxf.new(setup=True)
+    msp = doc.modelspace()
+    for dimtad, y, leader in [
+        [0, 0, False],
+        [0, 7, True],
+        [4, 14, True],
+    ]:
+        for x, center_angle in [
+            (0, 0), (7, 45), (14, 90), (21, 135), (26, 225), (29, 270)
+        ]:
+            dim = msp.add_angular_dim_cra(
+                center=(x, y),
+                radius=3.0,
+                distance=1.0,
+                start_angle=center_angle - 15.0,
+                end_angle=center_angle + 15.0,
+                override={"dimtad": dimtad},
+            )
+            # The user location is relative to the center of the dimension line:
+            usr_location = Vec3.from_deg_angle(angle=center_angle, length=2.0)
+            dim.set_location(usr_location, leader=leader, relative=True)
+            dim.render()
+
+
+.. image:: gfx/dim_angular_user_location_4.png
 
 Overriding Text Rotation
 ------------------------
+
+All factory methods supporting the argument `text_rotation` can override the
+measurement text rotation.
+The user defined rotation is relative to the render UCS x-axis (default is WCS).
+
+This example uses a relative text location without a leader and forces the text
+rotation to 90 degrees.
+
+.. code-block:: python
+
+    for x, center_angle in [(7, 45), (14, 90), (21, 135)]:
+        dim = msp.add_angular_dim_cra(
+            center=(x, 0),
+            radius=3.0,
+            distance=1.0,
+            start_angle=center_angle - 15.0,
+            end_angle=center_angle + 15.0,
+            text_rotation=90,  # vertical text
+        )
+        usr_location = Vec3.from_deg_angle(angle=center_angle, length=1.0)
+        dim.set_location(usr_location, leader=False, relative=True)
+        dim.render()
+
+.. image:: gfx/dim_angular_user_location_5.png
 
 Overriding Measurement Text
 ---------------------------
@@ -349,6 +420,11 @@ Measurement Text Formatting and Styling
 ---------------------------------------
 
 See Linear Dimension Tutorial: :ref:`tut_measurement_text_formatting_and_styling`
+
+Tolerances and Limits
+---------------------
+
+See Linear Dimension Tutorial: :ref:`tut_tolerances_and_limits`
 
 
 .. _dimension_angular.py:  https://github.com/mozman/ezdxf/blob/master/examples/render/dimension_angular.py
