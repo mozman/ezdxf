@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2020, Manfred Moitzi
+# Copyright (c) 2010-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Sequence, Optional, Tuple
 import math
@@ -9,6 +9,8 @@ from ._vector import Vec2, Vec3
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 TOLERANCE = 1e-10
+RAD_ABS_TOL = 1e-15
+DEG_ABS_TOL = 1e-13
 
 
 def has_clockwise_orientation(vertices: Iterable["Vertex"]) -> bool:
@@ -192,17 +194,17 @@ def arc_angle_span_deg(start: float, end: float) -> float:
 
     """
     # Input values are equal, returns 0 by definition:
-    if math.isclose(start, end):
+    if math.isclose(start, end, abs_tol=DEG_ABS_TOL):
         return 0.0
 
     # Normalized start- and end angles are equal, but input values are
     # different, returns 360 by definition:
     start %= 360.0
-    if math.isclose(start, end % 360.0):
+    if math.isclose(start, end % 360.0, abs_tol=DEG_ABS_TOL):
         return 360.0
 
     # Special treatment for end angle == 360 deg:
-    if not math.isclose(end, 360.0):
+    if not math.isclose(end, 360.0, abs_tol=DEG_ABS_TOL):
         end %= 360.0
 
     if end < start:
@@ -223,17 +225,17 @@ def arc_angle_span_rad(start: float, end: float) -> float:
     """
     tau = math.tau
     # Input values are equal, returns 0 by definition:
-    if math.isclose(start, end):
+    if math.isclose(start, end, abs_tol=RAD_ABS_TOL):
         return 0.0
 
     # Normalized start- and end angles are equal, but input values are
     # different, returns 360 by definition:
     start %= tau
-    if math.isclose(start, end % tau):
+    if math.isclose(start, end % tau, abs_tol=RAD_ABS_TOL):
         return tau
 
     # Special treatment for end angle == 2π:
-    if not math.isclose(end, tau):
+    if not math.isclose(end, tau, abs_tol=RAD_ABS_TOL):
         end %= tau
 
     if end < start:

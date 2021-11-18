@@ -371,7 +371,8 @@ class ConstructionEllipse:
         def subdiv(s: Vec3, e: Vec3, s_param: float, e_param: float):
             m_param = (s_param + e_param) * 0.5
             m = vertex_(m_param)
-            if distance_point_line_3d(m, s, e) < distance:
+            d = distance_point_line_3d(m, s, e)
+            if d < distance:
                 yield e
             else:
                 yield from subdiv(s, m, s_param, m_param)
@@ -383,6 +384,9 @@ class ConstructionEllipse:
         radius_y = radius_x * self.ratio
 
         delta = self.param_span / segments
+        if delta == 0.0:
+            return
+
         param = self.start_param % math.tau
         if math.isclose(self.end_param, math.tau):
             end_param = math.tau

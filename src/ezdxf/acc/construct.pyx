@@ -13,6 +13,8 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex
 
 DEF ABS_TOL = 1e-12
+DEF RAD_ABS_TOL = 1e-15
+DEF DEG_ABS_TOL = 1e-13
 DEF REL_TOL = 1e-9
 DEF TOLERANCE = 1e-10
 DEF TAU = 6.283185307179586
@@ -198,14 +200,14 @@ def intersection_ray_ray_3d(ray1: Tuple[Vec3, Vec3],
             return v3_from_cpp_vec3(p1), v3_from_cpp_vec3(p2)
 
 def arc_angle_span_deg(double start, double end) -> float:
-    if isclose(start, end, REL_TOL, ABS_TOL):
+    if isclose(start, end, REL_TOL, DEG_ABS_TOL):
         return 0.0
 
     start %= 360.0
-    if isclose(start, end % 360.0, REL_TOL, ABS_TOL):
+    if isclose(start, end % 360.0, REL_TOL, DEG_ABS_TOL):
         return 360.0
 
-    if not isclose(end, 360.0, REL_TOL, ABS_TOL):
+    if not isclose(end, 360.0, REL_TOL, DEG_ABS_TOL):
         end %= 360.0
 
     if end < start:
@@ -213,14 +215,14 @@ def arc_angle_span_deg(double start, double end) -> float:
     return end - start
 
 def arc_angle_span_rad(double start, double end) -> float:
-    if isclose(start, end, REL_TOL, ABS_TOL):
+    if isclose(start, end, REL_TOL, RAD_ABS_TOL):
         return 0.0
 
     start %= TAU
-    if isclose(start, end % TAU, REL_TOL, ABS_TOL):
+    if isclose(start, end % TAU, REL_TOL, RAD_ABS_TOL):
         return TAU
 
-    if not isclose(end, TAU, REL_TOL, ABS_TOL):
+    if not isclose(end, TAU, REL_TOL, RAD_ABS_TOL):
         end %= TAU
 
     if end < start:
