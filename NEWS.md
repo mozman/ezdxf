@@ -5,6 +5,8 @@ News
 Version 0.17.2b0 - dev
 ----------------------
 
+- BUGFIX: flattening issues #574 in Path() and ConstructionEllipse() 
+
 Version 0.17.1 - 2021-11-14
 ---------------------------
 
