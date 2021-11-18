@@ -116,7 +116,6 @@ class Bezier3P:
             segments: minimum segment count
 
         """
-
         def subdiv(
             start_point: "AnyVec",
             end_point: "AnyVec",
@@ -128,7 +127,10 @@ class Bezier3P:
             chk_point: "AnyVec" = start_point.lerp(end_point)
             # center point point is faster than projecting mid point onto
             # vector start -> end:
-            if chk_point.distance(mid_point) < distance:
+            d = chk_point.distance(mid_point)
+            if d < distance or d > 1e12:  # educated guess
+                # keep in sync with Cython implementation: ezdxf/acc/bezier3p.pyx
+                # emergency exit if distance d is suddenly very large!
                 yield end_point
             else:
                 yield from subdiv(start_point, mid_point, start_t, mid_t)

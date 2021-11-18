@@ -141,8 +141,6 @@ class Bezier4P:
         .. versionadded:: 0.15
 
         """
-        max_distance: float = 1e12  # educated guess,
-        # keep in sync with Cython implementation: ezdxf/acc/bezier4p.pyx
 
         def subdiv(
             start_point: "AnyVec",
@@ -157,9 +155,11 @@ class Bezier4P:
             # vector start -> end:
             # very big numbers (>1e99) can cause calculation errors #574
             # distance from 2.999999999999987e+99 to 2.9999999999999e+99 is
-            # very big even it is only a floating point imprecision error!
+            # very big even it is only a floating point imprecision error in the
+            # mantissa!
             d = chk_point.distance(mid_point)
-            if d < distance or d > max_distance:
+            if d < distance or d > 1e12:  # educated guess
+                # keep in sync with Cython implementation: ezdxf/acc/bezier4p.pyx
                 # emergency exit if distance d is suddenly very large!
                 yield end_point
             else:

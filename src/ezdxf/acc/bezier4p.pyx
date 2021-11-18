@@ -29,8 +29,6 @@ DEF M_PI = 3.141592653589793
 DEF M_TAU = M_PI * 2.0
 DEF DEG2RAD = M_PI / 180.0
 
-DEF MAX_DISTANCE = 1e12  # educated guess
-# keep in sync with CPython implementation: ezdxf/math/_bezier4p.py
 
 # noinspection PyUnresolvedReferences
 cdef class Bezier4P:
@@ -158,8 +156,10 @@ cdef class _Flattening:
         cdef double d = mid_point.distance(start_point.lerp(end_point, 0.5))
         # very big numbers (>1e99) can cause calculation errors #574
         # distance from 2.999999999999987e+99 to 2.9999999999999e+99 is
-        # very big even it is only a floating point imprecision error!
-        if d < self.distance or d > MAX_DISTANCE:
+        # very big even it is only a floating point imprecision error in the
+        # mantissa!
+        if d < self.distance or d > 1e12:  # educated guess
+            # keep in sync with CPython implementation: ezdxf/math/_bezier4p.py
             # Convert CppVec3 to Python type Vec3:
             self.points.append(v3_from_cpp_vec3(end_point))
         else:
