@@ -1429,7 +1429,7 @@ class AbstractLine(ContentCell):  # ABC
 
     @property
     def total_width(self) -> float:
-        width: float = 0
+        width: float = 0.0
         if len(self._cells):
             last_cell = self._cells[-1]
             width = last_cell.offset + last_cell.cell.total_width
@@ -1437,7 +1437,9 @@ class AbstractLine(ContentCell):  # ABC
 
     @property
     def total_height(self) -> float:
-        return max(c.cell.total_height for c in self._cells)
+        if len(self._cells):
+            return max(c.cell.total_height for c in self._cells)
+        return 0.0
 
     def cells(self) -> Iterable[Cell]:
         """Yield line content including RigidConnections."""
