@@ -154,6 +154,15 @@ def test_distance_point_line_3d(points, expected):
     assert distance_point_line_3d(p, a, b) == pytest.approx(expected)
 
 
+@pytest.mark.parametrize("x", [1e-99, 1e-9, 0, 1e9, 1e99])
+def test_distance_point_line_3d_no_line(x):
+    """Start point is equal or close to end point."""
+    s = Vec3(1, 0, x)
+    e = Vec3(1, 0, x)
+    with pytest.raises(ZeroDivisionError):
+        distance_point_line_3d(Vec3(1, 0, 0), s, e)
+
+
 class TestBestFitNormal:
     @pytest.mark.parametrize("a,b,c,r", RH_ORTHO)
     def test_if_returns_right_handed_normals(self, a, b, c, r):
