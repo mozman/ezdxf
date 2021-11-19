@@ -82,6 +82,41 @@ def test_flattening(bezier):
     assert len(list(curve.flattening(0.1, segments=4))) == 9
 
 
+@pytest.mark.parametrize(
+    "z",
+    [
+        1e99,
+        1e79,
+        1e59,
+        1e39,
+        1e19,
+        1e9,
+        1e6,
+        1000,
+        0,
+        -1e99,
+        -1e79,
+        -1e59,
+        -1e39,
+        -1e19,
+        -1e9,
+        -1e6,
+        -1000,
+    ],
+)
+def test_flattening_big_z_coordinates(bezier, z):
+    """Test based on issue #574"""
+    cp = [
+        (888, 770, z),
+        (887, 623, z),
+        (901, 478, z),
+    ]
+    curve = bezier(cp)
+    points = list(curve.flattening(0.01))
+    # Don't care about the result, it should just not break!
+    assert len(points) > 0
+
+
 def test_approximated_length(bezier):
     length = bezier(DEFPOINTS3D).approximated_length(64)
     assert length == pytest.approx(127.12269127455725)

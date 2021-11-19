@@ -159,6 +159,8 @@ class Bezier4P:
             # mantissa!
             d = chk_point.distance(mid_point)
             if d < distance or d > 1e12:  # educated guess
+                # Optimizing the max sagitta value, e.g. using the sum of chords
+                # cp0 ... cp3 as max sagitta, does not improve the result!
                 # keep in sync with Cython implementation: ezdxf/acc/bezier4p.pyx
                 # emergency exit if distance d is suddenly very large!
                 yield end_point
