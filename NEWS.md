@@ -6,6 +6,8 @@ Version 0.17.2b0 - dev
 ----------------------
 
 - BUGFIX: flattening issues #574 in Path() and ConstructionEllipse() 
+- PREVIEW: arc length dimension rendering support, new factory methods: 
+  `add_arc_dim_3p()`, `add_arc_dim_cra()`, `add_arc_dim_arc()`
 
 Version 0.17.1 - 2021-11-14
 ---------------------------
