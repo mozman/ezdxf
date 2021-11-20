@@ -242,11 +242,11 @@ line is defined by :attr:`~ezdxf.entities.DimStyle.dxf.dimtad`:
 
 .. image:: gfx/dim_angular_dimtad.png
 
-
-Arrows and measurement text is placed "outside" if the available space between
-the extension lines isn't sufficient. `Ezdxf` follows its own rules, ignores
-the :attr:`dimtfit` attribute and works similar to :attr:`dimtfit` = 1, move
-arrows first, then text:
+Arrows and measurement text are placed "outside" automatically if the available
+space between the extension lines isn't sufficient.
+This overrides the :attr:`dimtad` value by 1 ("above").
+`Ezdxf` follows its own rules, ignores the :attr:`~ezdxf.entities.DimStyle.dxf.dimatfit`
+attribute and works similar to :attr:`dimatfit` = 1, move arrows first, then text:
 
 .. image:: gfx/dim_angular_outside.png
 
@@ -401,7 +401,7 @@ measurement text rotation.
 The user defined rotation is relative to the render UCS x-axis (default is WCS).
 
 This example uses a relative text location without a leader and forces the text
-rotation to 90 degrees.
+rotation to 90 degrees:
 
 .. code-block:: python
 
