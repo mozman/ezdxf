@@ -5,9 +5,9 @@ Add-ons
 -------
 
 - drawing
-    - (v0.18) MLEADER full rendering support, requires `MLeader.virtual_entities()`
-    - (>v1.0) ACAD_TABLE
-    - (>v1.0) support for switching plot styles (DXF_DEFAULT_PAPERSPACE_COLORS)
+  - (v0.18) MLEADER full rendering support, requires `MLeader.virtual_entities()`
+  - (<v1.0) show ACAD_TABLE virtual entities from anonymous block `*T...`
+  - (>v1.0) support for switching plot styles (DXF_DEFAULT_PAPERSPACE_COLORS)
   
 - (>v1.0) Native SVG exporter, planned after the matplotlib backend supports 
   all v1.0 features. 
@@ -34,13 +34,16 @@ Add-ons
 Render Tools
 ------------
 
-- (v0.18) `MLeader.virtual_entities()`
 - (v0.18) DIMENSION rendering
-    - angular dim
-    - angular 3 point dim
-    - ordinate dim
-    - arc dim
-- (>v1.0) `ACADTable.virtual_entities()`, requires basic ACAD_TABLE support
+  - arc dim
+  - ordinate dim
+
+- (v0.18) `MLeader.virtual_entities()`
+- (<v1.0) ACAD_TABLE get virtual entities from anonymous block `*T...`
+
+- (>v1.0) ACAD_TABLE tool to render content as DXF primitives to create the 
+  content of the anonymous block `*T...`
+- (>v1.0) factory methods to create ACAD_TABLE entities
 - (>v1.0) tool to create proxy graphic 
 
 Construction Tools
@@ -55,6 +58,9 @@ DXF Entities
 - (<v1.0) do more entities support the DXF "thickness" attribute (group code 39)?
   possible candidates: HATCH, MPOLYGON, planar SPLINE, ELLIPSE, MLINE 
   -> `make_primitive()` 
+- (<v1.0) ACAD_TABLE entity load and export support beyond `DXFTagStorage`
+
+- (>v1.0) ACAD_TABLE tool to manage content at table and cell basis
 - (>v1.0) GEODATA version 1 support, see mpolygon examples and DXF reference R2009
 - (>v1.0) FIELD, used by ACAD_TABLE and MTEXT
 - (>v1.0) ACAD_TABLE
