@@ -496,10 +496,10 @@ class Measurement:
 
         # special setting for angular dimensions  (dimzin << 2) & 3
         # 0 = Displays all leading and trailing zeros
-        # 1 = Suppresses leading zeros in decimal dimensions (for example, 0.5000 becomes .5000)
-        # 2 = Suppresses trailing zeros in decimal dimensions (for example, 12.5000 becomes 12.5)
+        # 1 = Suppresses leading zeros (for example, 0.5000 becomes .5000)
+        # 2 = Suppresses trailing zeros (for example, 12.5000 becomes 12.5)
         # 3 = Suppresses leading and trailing zeros (for example, 0.5000 becomes .5)
-        self.angular_suppress_zeros: int = get("dimazin", 3)
+        self.angular_suppress_zeros: int = get("dimazin", 2)
 
         # decimal separator char, default is ",":
         self.decimal_separator: str = dim_style.get_decimal_separator()
@@ -586,7 +586,7 @@ class Measurement:
 
         # Units format for angular dimensions
         # 0 = Decimal degrees
-        # 1 = Degrees/minutes/seconds (not supported) same as 0
+        # 1 = Degrees/minutes/seconds
         # 2 = Grad
         # 3 = Radians
         self.angle_units: int = get("dimaunit", 0)

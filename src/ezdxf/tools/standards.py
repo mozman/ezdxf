@@ -175,6 +175,7 @@ def setup_dimstyles(doc: "Drawing", domain: str = "all") -> None:
         ez_angular.dxf.dimasz = 0.25  # set arrow size
         ez_angular.dxf.dimtad = 1  # above
         ez_angular.dxf.dimaunit = 0  # 0=decimal deg 1=DMS 2=Grad 3=Radians
+        ez_angular.dxf.dimazin = 2  # suppresses trailing zeros in decimal dimensions (for example, 12.5000 becomes 12.5)
 
 
 class DimStyleFmt:

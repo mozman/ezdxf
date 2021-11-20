@@ -105,7 +105,10 @@ _ANGLE_UNITS = [
 
 
 def to_radians(value: float, dimaunit: int) -> float:
-    return value / _ANGLE_UNITS[dimaunit]
+    try:
+        return value / _ANGLE_UNITS[dimaunit]
+    except IndexError:
+        return value / DEG
 
 
 class AngularTolerance(Tolerance):

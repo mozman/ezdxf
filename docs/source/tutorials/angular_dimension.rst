@@ -16,10 +16,11 @@ Dimension Style "EZ_CURVED"
 All factory methods to create angular dimensions uses the dimension style
 "EZ_CURVED" for curved dimension lines which is defined as:
 
-- angle unit is decimal degrees
+- angle unit is decimal degrees, :attr:`dimaunit` = 0
 - measurement text height = 0.25 (drawing scale = 1:100)
 - measurement text location is above the dimension line
 - closed filled arrow and arrow size :attr:`dimasz` = 0.25
+- :attr:`dimazin` = 2, suppresses trailing zeros (e.g. 12.5000 becomes 12.5)
 
 This DIMENSION style only exist if the argument `setup` is ``True`` for creating
 a new DXF document by :meth:`ezdxf.new`.
@@ -241,6 +242,14 @@ line is defined by :attr:`~ezdxf.entities.DimStyle.dxf.dimtad`:
 
 .. image:: gfx/dim_angular_dimtad.png
 
+
+Arrows and measurement text is placed "outside" if the available space between
+the extension lines isn't sufficient. `Ezdxf` follows its own rules, ignores
+the :attr:`dimtfit` attribute and works similar to :attr:`dimtfit` = 1, move
+arrows first, then text:
+
+.. image:: gfx/dim_angular_outside.png
+
 Shift Text From Default Location
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -410,6 +419,53 @@ rotation to 90 degrees.
         dim.render()
 
 .. image:: gfx/dim_angular_user_location_5.png
+
+Angular Units
+-------------
+
+Angular units are set by :attr:`~ezdxf.entities.DimStyle.dxf.dimaunit`:
+
+=== =====
+0   Decimal degrees
+1   Degrees/Minutes/Seconds, ``dimadec`` controls the shown precision
+
+    - dimadec=0: 30°
+    - dimadec=2: 30°35'
+    - dimadec=4: 30°35'25"
+    - dimadec=7: 30°35'25.15"
+
+2   Grad
+3   Radians
+=== =====
+
+.. code-block:: Python
+
+    d1 = 15
+    d2 = 15.59031944
+    for x, (dimaunit, dimadec) in enumerate(
+        [
+            (0, 4),
+            (1, 7),
+            (2, 4),
+            (3, 4),
+        ]
+    ):
+        dim = msp.add_angular_dim_cra(
+            center=(x * 4.0, 0.0),
+            radius=3.0,
+            distance=1.0,
+            start_angle=90.0 - d1,
+            end_angle=90.0 + d2,
+            override={
+                "dimaunit": dimaunit,
+                "dimadec": dimadec,
+            },
+        )
+        dim.render()
+
+.. image:: gfx/dim_angular_dimaunit.png
+
+.. image:: gfx/dim_angular_dms.png
 
 Overriding Measurement Text
 ---------------------------
