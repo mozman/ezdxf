@@ -486,38 +486,36 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
 
     def add_extension_lines(self) -> None:
         ext_lines = self.extension_lines
-        ext1_start = self.ext1_start
-        ext2_start = self.ext2_start
-        ext1_dir = self.ext1_dir
-        ext2_dir = self.ext2_dir
-        center = self.center_of_arc
-
-        if ext_lines.has_fixed_length:
-            fixed_length_radius = (
-                self.dim_line_radius - ext_lines.length_below - ext_lines.offset
-            )
-            ext1_start = center + ext1_dir * fixed_length_radius
-            ext2_start = center + ext2_dir * fixed_length_radius
-
         if not ext_lines.suppress1:
-            self._add_ext_line(ext1_start, ext1_dir, ext_lines.dxfattribs(1))
+            self._add_ext_line(
+                self.ext1_start, self.ext1_dir, ext_lines.dxfattribs(1)
+            )
         if not ext_lines.suppress2:
-            self._add_ext_line(ext2_start, ext2_dir, ext_lines.dxfattribs(2))
+            self._add_ext_line(
+                self.ext2_start, self.ext2_dir, ext_lines.dxfattribs(2)
+            )
 
     def _add_ext_line(
         self, start: Vec2, direction: Vec2, dxfattribs: Dict[str, Any]
     ) -> None:
+        ext_lines = self.extension_lines
         center = self.center_of_arc
         radius = self.dim_line_radius
-        # dimension line is "outside"
-        extension_above = self.extension_lines.extension_above
-        offset = self.extension_lines.offset
-        if (start - center).magnitude > radius:
-            # dimension line is "inside"
-            extension_above = -extension_above
-            offset = -offset
-        start += direction * offset
-        end = center + direction * (radius + extension_above)
+        ext_above = ext_lines.extension_above
+        is_inside = (start - center).magnitude > radius
+
+        if ext_lines.has_fixed_length:
+            ext_below = ext_lines.length_below
+            if is_inside:
+                ext_below, ext_above = ext_above, ext_below
+            start = center + direction * (radius - ext_below)
+        else:
+            offset = ext_lines.offset
+            if is_inside:
+                ext_above = -ext_above
+                offset = -offset
+            start += direction * offset
+        end = center + direction * (radius + ext_above)
         self.add_line(start, end, dxfattribs=dxfattribs)
 
     def add_arrows(self) -> Tuple[float, float]:

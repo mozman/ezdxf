@@ -35,6 +35,8 @@ DIM_TEXT_STYLE = ezdxf.options.default_dimension_text_style
 # =======================================================
 BRICSCAD = False
 
+DXFVERSION = "R2013"
+
 
 def locations():
     def location(offset: Vec3, flip: float):
@@ -51,25 +53,30 @@ def locations():
     ]
 
 
-def angular_cra_default(dxfversion="R2013"):
-    doc = ezdxf.new(dxfversion, setup=True)
+def angular_cra_default(
+    distance: float,
+    filename: str,
+    show_angle=True,
+    override: dict = None,
+):
+    doc = ezdxf.new(DXFVERSION, setup=True)
     msp = doc.modelspace()
     radius = 5
-    distance = 2
     data = [
         [Vec3(0, 0), 60, 120],
         [Vec3(10, 0), 300, 240],
         [Vec3(20, 0), 240, 300],
         [Vec3(30, 0), 300, 30],
     ]
-    for name, dimtad, offset in [
-        ["above", 1, Vec3(0, 20)],
-        ["center", 0, Vec3(0, 0)],
-        ["below", 4, Vec3(0, -20)],
-    ]:
+    if override is None:
+        override = dict()
+    for dimtad, offset in [(1, (0, 20)), (0, (0, 0)), (4, (0, -20))]:
         for center, start_angle, end_angle in data:
-            center += offset
-            add_lines(msp, center, radius, start_angle, end_angle)
+            center += Vec3(offset)
+            override["dimtad"] = dimtad
+
+            if show_angle:
+                add_lines(msp, center, radius, start_angle, end_angle)
             # Default DimStyle EZ_CURVED:
             # - angle units = degree
             # - scale 1: 100
@@ -90,12 +97,12 @@ def angular_cra_default(dxfversion="R2013"):
             # counter clockwise orientation. This does not always match the result
             # in CAD applications!
             dim = msp.add_angular_dim_cra(
-                center,
-                radius,
-                start_angle,
-                end_angle,
-                distance,
-                override={"dimtad": dimtad},
+                center=center,
+                radius=radius,
+                start_angle=start_angle,
+                end_angle=end_angle,
+                distance=distance,
+                override=override,
             )
             # Necessary second step, to create the BLOCK entity with the DIMENSION
             # geometry. Ezdxf supports DXF R2000 attributes for DXF R12 rendering,
@@ -108,26 +115,75 @@ def angular_cra_default(dxfversion="R2013"):
             dim.render(discard=BRICSCAD)
 
     doc.set_modelspace_vport(height=70)
-    doc.saveas(OUTDIR / f"dim_angular_cra_{dxfversion}_default.dxf")
+    doc.saveas(OUTDIR / f"{filename}_{DXFVERSION}.dxf")
 
 
-def angular_3p_default(dxfversion="R2013"):
-    doc = ezdxf.new(dxfversion, setup=True)
+def angular_cra_default_outside():
+    """Outside means: the dimension line is farther away from the center than
+    the extension line start points.
+    """
+    angular_cra_default(
+        distance=2.0,
+        filename="dim_angular_cra_outside",
+        show_angle=True,
+    )
+
+
+def angular_cra_default_outside_fixed_extension_length():
+    """Outside means: the dimension line is farther away from the center than
+    the extension line start points.
+    """
+    angular_cra_default(
+        distance=2.0,
+        filename="dim_angular_cra_outside_fxl",
+        show_angle=True,
+        override={
+            "dimfxlon": 1,  # use fixed length extension lines
+            "dimexe": 0.5,  # length "above" the dimension line
+            "dimfxl": 1.0,  # length "below" the dimension line
+        },
+    )
+
+
+def angular_cra_default_inside():
+    """Inside means: the dimension line is closer to the center than
+    the extension line start points.
+    """
+    angular_cra_default(
+        distance=-2.0,
+        filename="dim_angular_cra_inside",
+        show_angle=False,
+    )
+
+
+def angular_cra_default_inside_fixed_extension_length():
+    """Inside means: the dimension line is closer to the center than
+    the extension line start points.
+    """
+    angular_cra_default(
+        distance=-2.0,
+        filename="dim_angular_cra_inside_fxl",
+        show_angle=False,
+        override={
+            "dimfxlon": 1,  # use fixed length extension lines
+            "dimexe": 0.5,  # length "above" the dimension line
+            "dimfxl": 1.0,  # length "below" the dimension line
+        },
+    )
+
+
+def angular_3p_default(distance: float = 2.0):
+    doc = ezdxf.new(DXFVERSION, setup=True)
     msp = doc.modelspace()
     radius = 5
-    distance = 2
     data = [
         [Vec3(0, 0), 60, 120],
         [Vec3(10, 0), 300, 240],
         [Vec3(20, 0), 240, 300],
     ]
-    for name, dimtad, offset in [
-        ["above", 1, Vec3(0, 20)],
-        ["center", 0, Vec3(0, 0)],
-        ["below", 4, Vec3(0, -20)],
-    ]:
+    for dimtad, offset in [(1, (0, 20)), (0, (0, 0)), (4, (0, -20))]:
         for center, start_angle, end_angle in data:
-            center += offset
+            center += Vec3(offset)
             dir1 = Vec3.from_deg_angle(start_angle)
             dir2 = Vec3.from_deg_angle(end_angle)
 
@@ -151,11 +207,11 @@ def angular_3p_default(dxfversion="R2013"):
             ).render(discard=BRICSCAD)
 
     doc.set_modelspace_vport(height=70)
-    doc.saveas(OUTDIR / f"dim_angular_3p_{dxfversion}_default.dxf")
+    doc.saveas(OUTDIR / f"dim_angular_3p_{DXFVERSION}.dxf")
 
 
-def angular_2l_default(dxfversion="R2013"):
-    doc = ezdxf.new(dxfversion, setup=True)
+def angular_2l_default():
+    doc = ezdxf.new(DXFVERSION, setup=True)
     msp = doc.modelspace()
     for base, line1, line2 in locations():
         msp.add_line(line1[0], line1[1])
@@ -164,7 +220,7 @@ def angular_2l_default(dxfversion="R2013"):
             base=base, line1=line1, line2=line2, dimstyle="EZ_CURVED"
         ).render(discard=BRICSCAD)
     doc.set_modelspace_vport(height=30)
-    doc.saveas(OUTDIR / f"dim_angular_2l_{dxfversion}_default.dxf")
+    doc.saveas(OUTDIR / f"dim_angular_2l_{DXFVERSION}.dxf")
 
 
 def add_lines(
@@ -177,8 +233,8 @@ def add_lines(
     msp.add_line(center, end_point, dxfattribs=attribs)
 
 
-def angular_3d(dxfversion="R2000"):
-    doc = ezdxf.new(dxfversion, setup=True)
+def angular_3d():
+    doc = ezdxf.new(DXFVERSION, setup=True)
     msp = doc.modelspace()
 
     for base, line1, line2 in locations():
@@ -193,11 +249,11 @@ def angular_3d(dxfversion="R2000"):
         dim.render(discard=BRICSCAD, ucs=ucs)
 
     doc.set_modelspace_vport(height=30)
-    doc.saveas(OUTDIR / f"dim_angular_{dxfversion}_3d.dxf")
+    doc.saveas(OUTDIR / f"dim_angular_3d_{DXFVERSION}.dxf")
 
 
-def angular_units_tol_limits(dxfversion="R2013"):
-    doc = ezdxf.new(dxfversion, setup=True)
+def angular_units_tol_limits():
+    doc = ezdxf.new(DXFVERSION, setup=True)
     msp = doc.modelspace()
     radius = 5
     distance = 2
@@ -233,7 +289,7 @@ def angular_units_tol_limits(dxfversion="R2013"):
             dim.render(discard=BRICSCAD)
 
     doc.set_modelspace_vport(height=70)
-    doc.saveas(OUTDIR / f"dim_angular_units_tol_limits_{dxfversion}.dxf")
+    doc.saveas(OUTDIR / f"dim_angular_units_tol_limits_{DXFVERSION}.dxf")
 
 
 def add_angle_dim(
@@ -261,8 +317,8 @@ def add_angle_dim(
     return dim
 
 
-def measure_fixed_angle(angle: float, dxfversion="R2013"):
-    doc = ezdxf.new(dxfversion, setup=True)
+def measure_fixed_angle(angle: float):
+    doc = ezdxf.new(DXFVERSION, setup=True)
     msp = doc.modelspace()
     x_dist = 15
     for dimtad, y_dist in [[0, 0], [1, 20], [4, 40]]:
@@ -279,13 +335,11 @@ def measure_fixed_angle(angle: float, dxfversion="R2013"):
             )
             dim.render(discard=BRICSCAD)
     doc.set_modelspace_vport(height=100, center=(x_dist * 4, 20))
-    doc.saveas(OUTDIR / f"dim_angular_{angle:.0f}_deg_{dxfversion}.dxf")
+    doc.saveas(OUTDIR / f"dim_angular_deg_{angle:.0f}_{DXFVERSION}.dxf")
 
 
-def usr_location_absolute(
-    angle: float, rotation: float = None, dxfversion="R2013"
-):
-    doc = ezdxf.new(dxfversion, setup=True)
+def usr_location_absolute(angle: float, rotation: float = None):
+    doc = ezdxf.new(DXFVERSION, setup=True)
     msp = doc.modelspace()
     x_dist = 15
     radius = 3.0
@@ -319,13 +373,11 @@ def usr_location_absolute(
     rstr = ""
     if rotation is not None:
         rstr = f"rot_{rotation}_"
-    doc.saveas(OUTDIR / f"dim_angular_usr_loc_absolute_{rstr}{dxfversion}.dxf")
+    doc.saveas(OUTDIR / f"dim_angular_usr_loc_absolute_{rstr}_{DXFVERSION}.dxf")
 
 
-def usr_location_relative(
-    angle: float, rotation: float = None, dxfversion="R2013"
-):
-    doc = ezdxf.new(dxfversion, setup=True)
+def usr_location_relative(angle: float, rotation: float = None):
+    doc = ezdxf.new(DXFVERSION, setup=True)
     msp = doc.modelspace()
     x_dist = 10
     radius = 3.0
@@ -357,11 +409,11 @@ def usr_location_relative(
     rstr = ""
     if rotation is not None:
         rstr = f"rot_{rotation}_"
-    doc.saveas(OUTDIR / f"dim_angular_usr_loc_relative_{rstr}{dxfversion}.dxf")
+    doc.saveas(OUTDIR / f"dim_angular_usr_loc_relative_{rstr}_{DXFVERSION}.dxf")
 
 
-def show_all_arrow_heads(dxfversion="R2013"):
-    doc = ezdxf.new(dxfversion, setup=True)
+def show_all_arrow_heads():
+    doc = ezdxf.new(DXFVERSION, setup=True)
     msp = doc.modelspace()
     x_dist = 4.0
     y_dist = 5.0
@@ -381,11 +433,14 @@ def show_all_arrow_heads(dxfversion="R2013"):
             dim.render(discard=BRICSCAD)
 
     doc.set_modelspace_vport(height=40, center=(50, 5))
-    doc.saveas(OUTDIR / f"dim_angular_all_arrows_{dxfversion}.dxf")
+    doc.saveas(OUTDIR / f"dim_angular_all_arrows_{DXFVERSION}.dxf")
 
 
 if __name__ == "__main__":
-    angular_cra_default()
+    angular_cra_default_outside()
+    angular_cra_default_outside_fixed_extension_length()
+    angular_cra_default_inside()
+    angular_cra_default_inside_fixed_extension_length()
     angular_3p_default()
     angular_2l_default()
     angular_3d()
