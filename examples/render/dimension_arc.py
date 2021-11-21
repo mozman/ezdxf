@@ -1,11 +1,11 @@
-# Purpose: using angular DIMENSION
+# Purpose: using arc DIMENSION
 # Copyright (c) 2021, Manfred Moitzi
 # License: MIT License
 from typing import Optional
 import pathlib
 import math
 import ezdxf
-from ezdxf.math import Vec3, UCS, NULLVEC
+from ezdxf.math import Vec3, UCS, ConstructionArc
 import logging
 
 # ========================================
@@ -38,35 +38,7 @@ BRICSCAD = False
 DXFVERSION = "R2013"
 
 
-def locations():
-    def location(offset: Vec3, flip: float):
-        base = Vec3(0, 5) + offset
-        p1 = Vec3(-4, 3 * flip) + offset
-        p2 = Vec3(-1, 0) + offset
-        p4 = Vec3(4, 3 * flip) + offset
-        p3 = Vec3(1, 0) + offset
-        return base, (p1, p2), (p3, p4)
-
-    return [
-        location(NULLVEC, +1),
-        location(Vec3(10, 0), -1),
-    ]
-
-
-def angular_2l_default():
-    doc = ezdxf.new(DXFVERSION, setup=True)
-    msp = doc.modelspace()
-    for base, line1, line2 in locations():
-        msp.add_line(line1[0], line1[1])
-        msp.add_line(line2[0], line2[1])
-        msp.add_angular_dim_2l(
-            base=base, line1=line1, line2=line2, dimstyle="EZ_CURVED"
-        ).render(discard=BRICSCAD)
-    doc.set_modelspace_vport(height=30)
-    doc.saveas(OUTDIR / f"dim_angular_2l_{DXFVERSION}.dxf")
-
-
-def angular_cra_default(
+def arc_cra_default(
     distance: float,
     filename: str,
     show_angle=True,
@@ -106,9 +78,6 @@ def angular_cra_default(
             #   start angle in degrees
             # end_angle:
             #   end angle in degrees
-            # The measurement is always done from start_angle to end_angle in
-            # counter clockwise orientation. This does not always match the result
-            # in CAD applications!
             dim = msp.add_angular_dim_cra(
                 center=center,
                 radius=radius,
@@ -131,24 +100,24 @@ def angular_cra_default(
     doc.saveas(OUTDIR / f"{filename}_{DXFVERSION}.dxf")
 
 
-def angular_cra_default_outside():
+def arc_cra_default_outside():
     """Outside means: the dimension line is farther away from the center than
     the extension line start points.
     """
-    angular_cra_default(
+    arc_cra_default(
         distance=2.0,
-        filename="dim_angular_cra_outside",
+        filename="dim_arc_cra_outside",
         show_angle=True,
     )
 
 
-def angular_cra_default_outside_fixed_extension_length():
+def arc_cra_default_outside_fixed_extension_length():
     """Outside means: the dimension line is farther away from the center than
     the extension line start points.
     """
-    angular_cra_default(
+    arc_cra_default(
         distance=2.0,
-        filename="dim_angular_cra_outside_fxl",
+        filename="dim_arc_cra_outside_fxl",
         show_angle=True,
         override={
             "dimfxlon": 1,  # use fixed length extension lines
@@ -158,24 +127,24 @@ def angular_cra_default_outside_fixed_extension_length():
     )
 
 
-def angular_cra_default_inside():
+def arc_cra_default_inside():
     """Inside means: the dimension line is closer to the center than
     the extension line start points.
     """
-    angular_cra_default(
+    arc_cra_default(
         distance=-2.0,
-        filename="dim_angular_cra_inside",
+        filename="dim_arc_cra_inside",
         show_angle=False,
     )
 
 
-def angular_cra_default_inside_fixed_extension_length():
+def arc_cra_default_inside_fixed_extension_length():
     """Inside means: the dimension line is closer to the center than
     the extension line start points.
     """
-    angular_cra_default(
+    arc_cra_default(
         distance=-2.0,
-        filename="dim_angular_cra_inside_fxl",
+        filename="dim_arc_cra_inside_fxl",
         show_angle=False,
         override={
             "dimfxlon": 1,  # use fixed length extension lines
@@ -233,23 +202,26 @@ def add_lines(
     msp.add_line(center, end_point, dxfattribs=attribs)
 
 
-def angular_3d():
+def dim_arc_3d():
     doc = ezdxf.new(DXFVERSION, setup=True)
     msp = doc.modelspace()
 
-    for base, line1, line2 in locations():
-        ucs = UCS(origin=(base.x, base.y, 0)).rotate_local_x(math.radians(45))
+    for center, radius, sa, ea, distance in [
+        [Vec3(0, 0), 5, 60, 90, 2]
+    ]:
+        arc = ConstructionArc(center, radius, sa, ea)
+        ucs = UCS(origin=center + (5, 5)).rotate_local_x(math.radians(45))
+        msp.add_line(arc.center, arc.start_point).transform(ucs.matrix)
+        msp.add_line(arc.center, arc.end_point).transform(ucs.matrix)
 
-        msp.add_line(line1[0], line1[1]).transform(ucs.matrix)
-        msp.add_line(line2[0], line2[1]).transform(ucs.matrix)
-
-        dim = msp.add_angular_dim_2l(
-            base=base, line1=line1, line2=line2, dimstyle="EZ_CURVED"
+        dim = msp.add_arc_dim_arc(
+            arc=arc,
+            distance=distance, dimstyle="EZ_CURVED"
         )
         dim.render(discard=BRICSCAD, ucs=ucs)
 
     doc.set_modelspace_vport(height=30)
-    doc.saveas(OUTDIR / f"dim_angular_3d_{DXFVERSION}.dxf")
+    doc.saveas(OUTDIR / f"dim_arc_3d_{DXFVERSION}.dxf")
 
 
 def angular_units_tol_limits():
@@ -437,19 +409,19 @@ def show_all_arrow_heads():
 
 
 if __name__ == "__main__":
-    angular_cra_default_outside()
-    angular_cra_default_outside_fixed_extension_length()
-    angular_cra_default_inside()
-    angular_cra_default_inside_fixed_extension_length()
-    angular_3p_default()
-    angular_2l_default()
-    angular_3d()
-    angular_units_tol_limits()
-    measure_fixed_angle(3.0)
-    measure_fixed_angle(6.0)
-    measure_fixed_angle(9.0)
-    usr_location_absolute(6)
-    usr_location_absolute(6, rotation=15)
-    usr_location_relative(30)
-    usr_location_relative(30, rotation=345)
-    show_all_arrow_heads()
+    arc_cra_default_outside()
+    arc_cra_default_outside_fixed_extension_length()
+    arc_cra_default_inside()
+    arc_cra_default_inside_fixed_extension_length()
+    # angular_3p_default()
+    # angular_2l_default()
+    # dim_arc_3d()
+    # angular_units_tol_limits()
+    # measure_fixed_angle(3.0)
+    # measure_fixed_angle(6.0)
+    # measure_fixed_angle(9.0)
+    # usr_location_absolute(6)
+    # usr_location_absolute(6, rotation=15)
+    # usr_location_relative(30)
+    # usr_location_relative(30, rotation=345)
+    # show_all_arrow_heads()

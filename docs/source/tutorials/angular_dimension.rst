@@ -1,3 +1,4 @@
+
 .. _tut_angular_dimension:
 
 Tutorial for Angular Dimensions
@@ -9,6 +10,8 @@ Please read the :ref:`tut_linear_dimension` before, if you haven't.
 
     `Ezdxf` does not consider all DIMSTYLE variables, so the
     rendering results are different from CAD applications.
+
+.. _tut_angular_dim_style:
 
 Dimension Style "EZ_CURVED"
 ---------------------------
@@ -205,6 +208,8 @@ text location is defined.
     - Source code file `standards.py`_ shows how to create your own DIMSTYLES.
     - The Script `dimension_angular.py`_ shows examples for angular dimensions.
 
+.. _tut_angular_dim_default_text_location:
+
 Default Text Locations
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -250,6 +255,8 @@ attribute and works similar to :attr:`dimatfit` = 1, move arrows first, then tex
 
 .. image:: gfx/dim_angular_outside.png
 
+.. _tut_angular_dim_shift_default_text_location:
+
 Shift Text From Default Location
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -274,6 +281,8 @@ measurement text.
 
 This is just a rendering effect, editing the dimension line in a CAD application
 resets the text to the default location.
+
+.. _tut_angular_dim_user_text_location:
 
 User Defined Text Locations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -392,6 +401,8 @@ The user location vector has a length 2 and the orientation is defined by
 
 
 .. image:: gfx/dim_angular_user_location_4.png
+
+.. _tut_angular_dim_overriding_text_rotation:
 
 Overriding Text Rotation
 ------------------------

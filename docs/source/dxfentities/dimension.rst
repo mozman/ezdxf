@@ -33,8 +33,10 @@ Factory Functions
 =========================================== ==========================================
 `Linear and Rotated Dimension (DXF)`_       :meth:`~ezdxf.layouts.BaseLayout.add_linear_dim`
 `Aligned Dimension (DXF)`_                  :meth:`~ezdxf.layouts.BaseLayout.add_aligned_dim`
-`Angular Dimension (DXF)`_                  :meth:`~ezdxf.layouts.BaseLayout.add_angular_dim` (not implemented)
-`Angular 3P Dimension (DXF)`_               :meth:`~ezdxf.layouts.BaseLayout.add_angular_3p_dim` (not implemented)
+`Angular Dimension (DXF)`_                  :meth:`~ezdxf.layouts.BaseLayout.add_angular_dim_2l`
+`Angular 3P Dimension (DXF)`_               :meth:`~ezdxf.layouts.BaseLayout.add_angular_dim_3p`
+Angular Dimension by center, radius, angles :meth:`~ezdxf.layouts.BaseLayout.add_angular_dim_cra`
+Angular Dimension by ConstructionArc        :meth:`~ezdxf.layouts.BaseLayout.add_angular_dim_arc`
 `Diameter Dimension (DXF)`_                 :meth:`~ezdxf.layouts.BaseLayout.add_diameter_dim`
 `Radius Dimension (DXF)`_                   :meth:`~ezdxf.layouts.BaseLayout.add_radius_dim`
 `Ordinate Dimension (DXF)`_                 :meth:`~ezdxf.layouts.BaseLayout.add_ordinate_dim` (not implemented)

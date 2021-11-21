@@ -1861,6 +1861,214 @@ class CreatorInterface:
             dxfattribs=dxfattribs,
         )
 
+    def add_arc_dim_3p(
+        self,
+        base: "Vertex",
+        center: "Vertex",
+        p1: "Vertex",
+        p2: "Vertex",
+        location: "Vertex" = None,
+        text: str = "<>",
+        text_rotation: float = None,
+        dimstyle: str = "EZ_CURVED",
+        override: Dict = None,
+        dxfattribs: Dict = None,
+    ) -> "DimStyleOverride":
+        """
+        Add :class:`~ezdxf.entities.ArcDimension` from 3 points
+        (center, p1, p2). Point `p1` defines the radius and the start angle of
+        the arc, point `p2` only defines the end angle of the arc.
+
+        If an :class:`~ezdxf.math.UCS` is used for arc dimension rendering,
+        all point definitions in UCS coordinates, translation into :ref:`WCS`
+        and :ref:`OCS` is done by the rendering function. Extrusion vector is
+        defined by UCS or (0, 0, 1) by default.
+
+        This method returns a :class:`~ezdxf.entities.DimStyleOverride` object -
+        to create the necessary dimension geometry, you have to call
+        :meth:`~ezdxf.entities.DimStyleOverride.render` manually, this two step
+        process allows additional processing steps on the
+        :class:`~ezdxf.entities.ArcDimension` entity between creation and
+        rendering.
+
+        .. note::
+
+            `Ezdxf` does not consider all DIMSTYLE variables, so the
+            rendering results are different from CAD applications.
+
+        Args:
+            base: location of dimension line, any point on the dimension line
+                or its extension is valid (in UCS)
+            center: specifies the vertex of the angle
+            p1: specifies the radius (center -> p1) and the star angle of the
+                arc, this is also the start point for the 1st extension line (in UCS)
+            p2: specifies the end angle of the arc. The start 2nd extension line
+                is defined by this angle and the radius defined by p1 (in UCS)
+            location: user defined location for text mid point (in UCS)
+            text: ``None`` or "<>" the measurement is drawn as text,
+                " " (a single space) suppresses the dimension text,
+                everything else `text` is drawn as dimension text
+            text_rotation: rotation angle of the dimension text as absolute
+                angle (x-axis=0, y-axis=90) in degrees
+            dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
+                table entry), default is "EZ_CURVED"
+            override: :class:`~ezdxf.entities.DimStyleOverride` attributes
+            dxfattribs: additional DXF attributes for
+                :class:`~ezdxf.entities.Dimension` entity
+
+        Returns: :class:`~ezdxf.entities.DimStyleOverride`
+
+        .. versionadded:: v0.18
+
+        """
+        type_ = {"dimtype": const.DIM_ANGULAR_3P | const.DIM_BLOCK_EXCLUSIVE}
+        dimline = cast(
+            "Dimension", self.new_entity("DIMENSION", dxfattribs=type_)
+        )
+        dxfattribs = dict(dxfattribs or {})
+        dxfattribs["dimstyle"] = self._safe_dimstyle(dimstyle)
+        dxfattribs["text"] = str(text)
+        dxfattribs["defpoint"] = Vec3(base)
+        dxfattribs["defpoint2"] = Vec3(p1)
+        dxfattribs["defpoint3"] = Vec3(p2)
+        dxfattribs["defpoint4"] = Vec3(center)
+
+        # text_rotation ALWAYS overrides implicit angles as absolute angle
+        # (x-axis=0, y-axis=90)!
+        if text_rotation is not None:
+            dxfattribs["text_rotation"] = float(text_rotation)
+
+        dimline.update_dxf_attribs(dxfattribs)
+        style = DimStyleOverride(dimline, override=override)
+        if location is not None:
+            style.user_location_override(location)
+        return style
+
+    def add_arc_dim_cra(
+        self,
+        center: "Vertex",
+        radius: float,
+        start_angle: float,
+        end_angle: float,
+        distance: float,
+        location: "Vertex" = None,
+        text: str = "<>",
+        text_rotation: float = None,
+        dimstyle: str = "EZ_CURVED",
+        override: Dict = None,
+        dxfattribs: Dict = None,
+    ) -> "DimStyleOverride":
+        """
+        Shortcut method to create an arc dimension by (c)enter point,
+        (r)adius and start- and end (a)ngles, the measurement text is placed at
+        the default location defined by the associated `dimstyle`.
+
+        Args:
+            center: center point of the angle (in UCS)
+            radius: the distance from `center` to the start of the extension
+                lines in drawing units
+            start_angle: start angle in degrees (in UCS)
+            end_angle: end angle in degrees (in UCS)
+            distance: distance from start of the extension lines to the
+                dimension line in drawing units
+            location: user defined location for text mid point (in UCS)
+            text: ``None`` or "<>" the measurement is drawn as text,
+                " " (a single space) suppresses the dimension text,
+                everything else `text` is drawn as dimension text
+            text_rotation: rotation angle of the dimension text as absolute
+                angle (x-axis=0, y-axis=90) in degrees
+            dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
+                table entry), default is "EZ_CURVED"
+            override: :class:`~ezdxf.entities.DimStyleOverride` attributes
+            dxfattribs: additional DXF attributes for
+                :class:`~ezdxf.entities.Dimension` entity
+
+        Returns: :class:`~ezdxf.entities.DimStyleOverride`
+
+        .. versionadded:: v0.18
+
+        """
+        sa = float(start_angle)
+        ea = float(end_angle)
+        ext_line_start = float(radius)
+        dim_line_offset = float(distance)
+        center_ = Vec3(center)
+
+        center_angle = sa + arc_angle_span_deg(sa, ea) / 2.0
+        # ca = (sa + ea) / 2 is not correct: e.g. 30, -30 is 0 but should be 180
+
+        base = center_ + Vec3.from_deg_angle(center_angle) * (
+            ext_line_start + dim_line_offset
+        )
+        p1 = center_ + Vec3.from_deg_angle(sa) * ext_line_start
+        p2 = center_ + Vec3.from_deg_angle(ea) * ext_line_start
+        return self.add_arc_dim_3p(
+            base=base,
+            center=center_,
+            p1=p1,
+            p2=p2,
+            location=location,
+            text=text,
+            text_rotation=text_rotation,
+            dimstyle=dimstyle,
+            override=override,
+            dxfattribs=dxfattribs,
+        )
+
+    def add_arc_dim_arc(
+        self,
+        arc: ConstructionArc,
+        distance: float,
+        location: "Vertex" = None,
+        text: str = "<>",
+        text_rotation: float = None,
+        dimstyle: str = "EZ_CURVED",
+        override: Dict = None,
+        dxfattribs: Dict = None,
+    ) -> "DimStyleOverride":
+        """
+        Shortcut method to create an arc dimension from a
+        :class:`~ezdxf.math.ConstructionArc`. This construction tool can
+        be created from ARC entities and the tool itself provides various
+        construction class methods.
+        The measurement text is placed at the default location defined by the
+        associated `dimstyle`.
+
+        Args:
+            arc: :class:`~ezdxf.math.ConstructionArc`
+            distance: distance from start of the extension lines to the
+                dimension line in drawing units
+            location: user defined location for text mid point (in UCS)
+            text: ``None`` or "<>" the measurement is drawn as text,
+                " " (a single space) suppresses the dimension text,
+                everything else `text` is drawn as dimension text
+            text_rotation: rotation angle of the dimension text as absolute
+                angle (x-axis=0, y-axis=90) in degrees
+            dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
+                table entry), default is "EZ_CURVED"
+            override: :class:`~ezdxf.entities.DimStyleOverride` attributes
+            dxfattribs: additional DXF attributes for
+                :class:`~ezdxf.entities.Dimension` entity
+
+        Returns: :class:`~ezdxf.entities.DimStyleOverride`
+
+        .. versionadded:: v0.18
+
+        """
+        return self.add_arc_dim_cra(
+            center=arc.center,
+            radius=arc.radius,
+            start_angle=arc.start_angle,
+            end_angle=arc.end_angle,
+            distance=distance,
+            location=location,
+            text=text,
+            text_rotation=text_rotation,
+            dimstyle=dimstyle,
+            override=override,
+            dxfattribs=dxfattribs,
+        )
+
     def add_diameter_dim(
         self,
         center: "Vertex",
