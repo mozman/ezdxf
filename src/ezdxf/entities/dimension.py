@@ -809,9 +809,12 @@ class Dimension(DXFGraphic, OverrideMixin):
 acdb_arc_dimension = DefSubclass(
     "AcDbArcDimension",
     {
-        "ext_line1_point": DXFAttr(13, xtype=XType.point3d, default=NULLVEC),
-        "ext_line2_point": DXFAttr(14, xtype=XType.point3d, default=NULLVEC),
-        "arc_center": DXFAttr(15, xtype=XType.point3d, default=NULLVEC),
+        # start point of the 1st extension line:
+        "defpoint2": DXFAttr(13, xtype=XType.point3d, default=NULLVEC),
+        # start point of the 2ndt extension line:
+        "defpoint3": DXFAttr(14, xtype=XType.point3d, default=NULLVEC),
+        # center of arc:
+        "defpoint4": DXFAttr(15, xtype=XType.point3d, default=NULLVEC),
         "start_angle": DXFAttr(40),  # radians?
         "end_angle": DXFAttr(41),  # radians?
         "is_partial": DXFAttr(70, validator=validator.is_integer_bool),
@@ -865,9 +868,9 @@ class ArcDimension(Dimension):
         self.dxf.export_dxf_attribs(
             tagwriter,
             [
-                "ext_line1_point",
-                "ext_line2_point",
-                "arc_center",
+                "defpoint2",
+                "defpoint3",
+                "defpoint4",
                 "start_angle",
                 "end_angle",
                 "is_partial",
@@ -893,6 +896,7 @@ class ArcDimension(Dimension):
         ocs = OCSTransform(dxf.extrusion, m)
         super().transform(m)
 
+        # angles in radians?
         for angle_name in ("start_angle", "end_angle"):
             transform_if_exist(angle_name, ocs.transform_deg_angle)
 
