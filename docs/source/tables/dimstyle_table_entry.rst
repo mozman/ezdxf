@@ -462,6 +462,17 @@ Factory function         :meth:`Drawing.dimstyles.new`
 
         Text fill custom color as color index (1-255), requires DXF R2007+
 
+    .. attribute:: dxf.dimarcsym
+
+        Display arc symbol, supported only by :class:`ArcDimension`:
+
+        === ====================================================
+        0   arc symbol preceding the measurement text
+        1   arc symbol above the measurement text
+        2   disable arc symbol
+        === ====================================================
+
+
     .. automethod:: copy_to_header(dwg: Drawing) -> None
 
     .. automethod:: set_arrows

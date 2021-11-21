@@ -14,7 +14,7 @@ factory function         - :meth:`~ezdxf.layouts.BaseLayout.add_arc_dim_3p`
                          - :meth:`~ezdxf.layouts.BaseLayout.add_arc_dim_cra`
                          - :meth:`~ezdxf.layouts.BaseLayout.add_arc_dim_arc`
 Inherited DXF attributes :ref:`Common graphical DXF attributes`
-Required DXF version     DXF R2004 (``'AC1018'``)
+Required DXF version     R2004 / AC1018
 ======================== ==========================================
 
 .. warning::
@@ -24,11 +24,17 @@ Required DXF version     DXF R2004 (``'AC1018'``)
 
 .. class:: ArcDimension
 
-    .. attribute:: dxf.ext_line1_point
+    .. attribute:: dxf.defpoint2
 
-    .. attribute:: dxf.ext_line2_point
+        start point of first extension line in :ref:`OCS`
 
-    .. attribute:: dxf.arc_center
+    .. attribute:: dxf.defpoint3
+
+        start point of second extension line in :ref:`OCS`
+
+    .. attribute:: dxf.defpoint4
+
+        center point of arc in :ref:`OCS`
 
     .. attribute:: dxf.start_angle
 

@@ -591,6 +591,10 @@ class Measurement:
         # 3 = Radians
         self.angle_units: int = get("dimaunit", 0)
 
+        self.has_arc_length_prefix = False
+        if get("dimarcsym", 2) == 0:
+            self.has_arc_length_prefix = True
+
         # Text_outside is only True if really placed outside of default text
         # location
         # remark: user defined text location is always outside per definition

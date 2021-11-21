@@ -89,7 +89,12 @@ acdb_dimstyle = DefSubclass(
         # 2 = Suppresses trailing zeros in decimal dimensions (for example, 12.5000 becomes 12.5)
         # 3 = Suppresses leading and trailing zeros (for example, 0.5000 becomes .5)
         "dimazin": DXFAttr(79, default=3, dxfversion=DXF2000),
-        "unknown1": DXFAttr(90, dxfversion=DXF2000, optional=True),
+
+        # dimarcsym: show arc symbol
+        # 0 = preceding text
+        # 1 = above text
+        # 2 = disable
+        "dimarcsym": DXFAttr(90, dxfversion=DXF2000, optional=True),
         "dimalt": DXFAttr(170, default=0),
         "dimaltd": DXFAttr(171, default=3),
         "dimtofl": DXFAttr(172, default=1),
@@ -225,7 +230,7 @@ EXPORT_MAP_R2007 = [
     "dimtad",
     "dimzin",
     "dimazin",
-    "unknown1",
+    "dimarcsym",
     "dimalt",
     "dimaltd",
     "dimtofl",
@@ -299,7 +304,7 @@ EXPORT_MAP_R2000 = [
     "dimtad",
     "dimzin",
     "dimazin",
-    "unknown1",
+    "dimarcsym",
     "dimalt",
     "dimaltd",
     "dimtofl",

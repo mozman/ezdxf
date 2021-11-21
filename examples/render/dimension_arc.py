@@ -85,6 +85,7 @@ def arc_cra_default(
             # - scale 1: 100
             # - closed filled arrow, size = 0.25
             # - text location above dimension line
+            # - arc symbol is disabled
             #
             # center:
             #   center of angle
@@ -286,7 +287,7 @@ def add_arc_dim(
     start_angle = angle - delta
     end_angle = angle + delta
     add_lines(msp, center, radius, start_angle, end_angle)
-    dim = msp.add_angular_dim_cra(
+    dim = msp.add_arc_dim_cra(
         center,
         radius,
         start_angle,

@@ -27,7 +27,7 @@ from .dim_base import (
     order_leader_points,
     get_center_leader_points,
 )
-from ezdxf.render.arrows import ARROWS, arrow_length, block_name
+from ezdxf.render.arrows import ARROWS, arrow_length
 from ezdxf.tools.text import is_upside_down_text_angle
 from ezdxf.math import intersection_line_line_2d
 
@@ -37,6 +37,8 @@ if TYPE_CHECKING:
 __all__ = ["AngularDimension", "Angular3PDimension", "ArcLengthDimension"]
 
 logger = logging.getLogger("ezdxf")
+
+ARC_PREFIX = "( "
 
 
 def has_required_attributes(entity: DXFEntity, attrib_names: List[str]):
@@ -897,6 +899,22 @@ class Angular3PDimension(_AngularCommonBase):
         return (self.leg2_start - self.center_of_arc).normalize()
 
 
+class ArcLengthMeasurement(LengthMeasurement):
+    def format_text(self, value: float) -> str:
+        text = format_text(
+            value=value,
+            dimrnd=self.text_round,
+            dimdec=self.decimal_places,
+            dimzin=self.suppress_zeros,
+            dimdsep=self.decimal_separator,
+        )
+        if self.has_arc_length_prefix:
+            text = ARC_PREFIX + text
+        if self.text_post_process_format:
+            text = apply_dimpost(text, self.text_post_process_format)
+        return text
+
+
 class ArcLengthDimension(_CurvedDimensionLine):
     """
     Arc length dimension line renderer.
@@ -946,7 +964,7 @@ class ArcLengthDimension(_CurvedDimensionLine):
         ]
 
     def init_measurement(self, color: int, scale: float) -> Measurement:
-        return LengthMeasurement(
+        return ArcLengthMeasurement(
             self.dim_style, self.default_color, self.dim_scale
         )
 

@@ -26,6 +26,8 @@ All factory methods to create arc dimensions uses the dimension style
 - measurement text location is above the dimension line
 - closed filled arrow and arrow size :attr:`dimasz` = 0.25
 - :attr:`dimzin` = 2, suppresses trailing zeros (e.g. 12.5000 becomes 12.5)
+- :attr:`dimarcsym` = 2, disables the arc symbol, renders only an open brace "("
+  in front of text if enabled
 
 For more information go to: :ref:`tut_angular_dim_style`
 
