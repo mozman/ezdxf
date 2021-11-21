@@ -26,8 +26,9 @@ All factory methods to create arc dimensions uses the dimension style
 - measurement text location is above the dimension line
 - closed filled arrow and arrow size :attr:`dimasz` = 0.25
 - :attr:`dimzin` = 2, suppresses trailing zeros (e.g. 12.5000 becomes 12.5)
-- :attr:`dimarcsym` = 2, disables the arc symbol, renders only an open brace "("
-  in front of text if enabled
+- :attr:`dimarcsym` = 2, disables the arc symbol, 0 renders only an open round
+  bracket "(" in front of the text and 1 for arc symbol above the text is not
+  supported, renders like disabled
 
 For more information go to: :ref:`tut_angular_dim_style`
 
@@ -55,10 +56,10 @@ start- and end angles:
     # line:
     dim = msp.add_arc_dim_cra(
         center=(5, 5),  # center point of the angle
-        radius= 7,  # distance from center point to the start of the extension lines
+        radius=5,  # distance from center point to the start of the extension lines
         start_angle=60,  # start angle in degrees
         end_angle=120,  # end angle in degrees
-        distance=3,  # distance from start of the extension lines to the dimension line
+        distance=2,  # distance from start of the extension lines to the dimension line
         dimstyle="EZ_CURVED",  # default angular dimension style
     )
 
@@ -92,8 +93,8 @@ from the center point is not relevant:
     msp.add_arc_dim_3p(
         base=(0, 7),  # location of the dimension line
         center=(0, 0),  # center point
-        p1=(-3, 5),  # 1st point of arc defines start angle and radius
-        p2=(3, 5),  # 2nd point defines the end angle
+        p1=(2.5, 4.330127018922193),  # 1st point of arc defines start angle and radius
+        p2=(-2.5, 4.330127018922194),  # 2nd point defines the end angle
     ).render()
 
 .. image:: gfx/dim_arc_3p.png
@@ -124,7 +125,6 @@ Add an angular dimension to an ARC entity:
         distance=2,
     ).render()
 
-.. image:: gfx/dim_arc_from_arc.png
 
 Placing Measurement Text
 ------------------------
@@ -138,7 +138,8 @@ text location is defined.
     Not all possibles features of DIMSTYLE are supported by the `ezdxf` rendering
     procedure and especially for the arc dimension there are less features
     implemented than for the linear dimension because of the lack of good
-    documentation.
+    documentation. If the arc symbol is enabled (:attr:`dimarcsym` = 0) only an
+    open round bracket "(" is rendered in front  of the measurement text!
 
 .. seealso::
 
