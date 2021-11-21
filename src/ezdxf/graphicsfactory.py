@@ -12,6 +12,7 @@ from ezdxf.math import (
     fit_points_to_cad_cv,
     arc_angle_span_deg,
     ConstructionArc,
+    NULLVEC,
 )
 from ezdxf.render.arrows import ARROWS
 from ezdxf.entities import factory
@@ -29,6 +30,7 @@ if TYPE_CHECKING:
         Body,
         Circle,
         Dimension,
+        ArcDimension,
         DXFGraphic,
         Drawing,
         Ellipse,
@@ -1893,8 +1895,9 @@ class CreatorInterface:
 
         .. note::
 
-            `Ezdxf` does not consider all DIMSTYLE variables, so the
-            rendering results are different from CAD applications.
+            `Ezdxf` does not render the arc dimension like CAD applications and
+            does not consider all DIMSTYLE variables, so the rendering results
+            are **very** different from CAD applications.
 
         Args:
             base: location of dimension line, any point on the dimension line
@@ -1921,9 +1924,11 @@ class CreatorInterface:
         .. versionadded:: v0.18
 
         """
-        type_ = {"dimtype": const.DIM_ANGULAR_3P | const.DIM_BLOCK_EXCLUSIVE}
+        # always set dimtype to 8 for DXF R2013+, the DXF export handles the
+        # version dependent dimtype
+        type_ = {"dimtype": const.DIM_ARC | const.DIM_BLOCK_EXCLUSIVE}
         dimline = cast(
-            "Dimension", self.new_entity("DIMENSION", dxfattribs=type_)
+            "ArcDimension", self.new_entity("ARC_DIMENSION", dxfattribs=type_)
         )
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["dimstyle"] = self._safe_dimstyle(dimstyle)
@@ -1932,6 +1937,12 @@ class CreatorInterface:
         dxfattribs["defpoint2"] = Vec3(p1)
         dxfattribs["defpoint3"] = Vec3(p2)
         dxfattribs["defpoint4"] = Vec3(center)
+        dxfattribs["start_angle"] = 0.0  # unknown meaning
+        dxfattribs["end_angle"] = 0.0  # unknown meaning
+        dxfattribs["is_partial"] = 0  # unknown meaning
+        dxfattribs["has_leader"] = 0  # ignored by ezdxf
+        dxfattribs["leader_point1"] = NULLVEC  # ignored by ezdxf
+        dxfattribs["leader_point2"] = NULLVEC  # ignored by ezdxf
 
         # text_rotation ALWAYS overrides implicit angles as absolute angle
         # (x-axis=0, y-axis=90)!
@@ -1962,6 +1973,12 @@ class CreatorInterface:
         Shortcut method to create an arc dimension by (c)enter point,
         (r)adius and start- and end (a)ngles, the measurement text is placed at
         the default location defined by the associated `dimstyle`.
+
+        .. note::
+
+            `Ezdxf` does not render the arc dimension like CAD applications and
+            does not consider all DIMSTYLE variables, so the rendering results
+            are **very** different from CAD applications.
 
         Args:
             center: center point of the angle (in UCS)
@@ -2033,6 +2050,12 @@ class CreatorInterface:
         construction class methods.
         The measurement text is placed at the default location defined by the
         associated `dimstyle`.
+
+        .. note::
+
+            `Ezdxf` does not render the arc dimension like CAD applications and
+            does not consider all DIMSTYLE variables, so the rendering results
+            are **very** different from CAD applications.
 
         Args:
             arc: :class:`~ezdxf.math.ConstructionArc`

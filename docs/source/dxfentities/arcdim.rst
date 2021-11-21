@@ -4,7 +4,8 @@ ArcDimension
 .. module:: ezdxf.entities
     :noindex:
 
-The ARC_DIMENSION entity was introduced in DXF R2004 and is **not** documented in the DXF reference.
+The ARC_DIMENSION entity was introduced in DXF R2004 and is **not** documented
+in the DXF reference.
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.Dimension`
@@ -18,7 +19,8 @@ Required DXF version     DXF R2004 (``'AC1018'``)
 
 .. warning::
 
-    Do not instantiate entity classes by yourself - always use the provided factory functions!
+    Do not instantiate entity classes by yourself - always use the provided
+    factory functions!
 
 .. class:: ArcDimension
 

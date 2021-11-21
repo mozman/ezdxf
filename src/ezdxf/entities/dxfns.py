@@ -172,7 +172,11 @@ class DXFNamespace:
             if attrib_def.xtype == XType.callback:
                 attrib_def.set_callback_value(self._entity, value)
             else:
-                self.__dict__[key] = check(value)
+                try:
+                    self.__dict__[key] = check(value)
+                except (TypeError, ValueError):
+                    print(key)
+                    raise
         else:
             raise const.DXFAttributeError(
                 ERR_INVALID_DXF_ATTRIB.format(key, self.dxftype)

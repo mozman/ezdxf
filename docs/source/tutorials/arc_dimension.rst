@@ -5,14 +5,15 @@ Tutorial for Arc Dimensions
 ===========================
 
 Please read the :ref:`tut_linear_dimension` before, if you haven't. This is a
-repetition of the :ref:`tut_angular_dimension`, because these are basically the
-same dimension entities, one measures the angle the other measure the length of
-an arc.
+repetition of the :ref:`tut_angular_dimension`, because `ezdxf` reuses the
+angular dimension to render arc dimensions. This approach is very different
+to CAD applications, but also much less work.
 
 .. note::
 
-    `Ezdxf` does not consider all DIMSTYLE variables, so the
-    rendering results are different from CAD applications.
+    `Ezdxf` does not render the arc dimension like CAD applications and does
+    not consider all DIMSTYLE variables, so the rendering results are **very**
+    different from CAD applications.
 
 Dimension Style "EZ_CURVED"
 ---------------------------

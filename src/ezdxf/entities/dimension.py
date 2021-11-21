@@ -744,7 +744,7 @@ class Dimension(DXFGraphic, OverrideMixin):
                 pass  # ignore transformation errors
 
     def __virtual_entities__(self) -> Iterable["DXFGraphic"]:
-        """Implements the SupportsVirtualEntities protocol. """
+        """Implements the SupportsVirtualEntities protocol."""
         transform = False
         insert = self.dxf.get("insert", None)
         if insert:
@@ -796,13 +796,13 @@ class Dimension(DXFGraphic, OverrideMixin):
         super().destroy()
 
     def __referenced_blocks__(self) -> Iterable[str]:
-        """Support for "ReferencedBlocks" protocol. """
+        """Support for "ReferencedBlocks" protocol."""
         if self.doc:
             block_name = self.dxf.get("geometry", None)
             if block_name:
                 block = self.doc.blocks.get(block_name)
                 if block is not None:
-                    return block.block_record_handle,
+                    return (block.block_record_handle,)
         return tuple()
 
 
@@ -815,8 +815,8 @@ acdb_arc_dimension = DefSubclass(
         "defpoint3": DXFAttr(14, xtype=XType.point3d, default=NULLVEC),
         # center of arc:
         "defpoint4": DXFAttr(15, xtype=XType.point3d, default=NULLVEC),
-        "start_angle": DXFAttr(40),  # radians?
-        "end_angle": DXFAttr(41),  # radians?
+        "start_angle": DXFAttr(40),  # radians, unknown meaning
+        "end_angle": DXFAttr(41),  # radians, unknown meaning
         "is_partial": DXFAttr(70, validator=validator.is_integer_bool),
         "has_leader": DXFAttr(71, validator=validator.is_integer_bool),
         "leader_point1": DXFAttr(16, xtype=XType.point3d, default=NULLVEC),
@@ -861,7 +861,7 @@ class ArcDimension(Dimension):
 
     def export_entity(self, tagwriter: "TagWriter") -> None:
         """Export entity specific data as DXF tags."""
-        dimtype = self.dxf.dimtype
+        dimtype = self.dxf.dimtype  # preserve original dimtype
         self.dxf.dimtype = self.versioned_dimtype(tagwriter.dxfversion)
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, "AcDbArcDimension")
@@ -879,7 +879,7 @@ class ArcDimension(Dimension):
                 "leader_point2",
             ],
         )
-        self.dxf.dimtype = dimtype
+        self.dxf.dimtype = dimtype  # restore original dimtype
 
     def transform(self, m: "Matrix44") -> "Dimension":
         """Transform the ARC_DIMENSION entity by transformation matrix `m` inplace.
@@ -893,13 +893,7 @@ class ArcDimension(Dimension):
                 dxf.set(name, func(dxf.get(name)))
 
         dxf = self.dxf
-        ocs = OCSTransform(dxf.extrusion, m)
         super().transform(m)
-
-        # angles in radians?
-        for angle_name in ("start_angle", "end_angle"):
-            transform_if_exist(angle_name, ocs.transform_deg_angle)
-
         for vertex_name in ("leader_point1", "leader_point2"):
             transform_if_exist(vertex_name, m.transform)
 

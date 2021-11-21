@@ -35,7 +35,6 @@ Render Tools
 ------------
 
 - (v0.18) DIMENSION rendering
-  - arc dim
   - ordinate dim
 
 - (v0.18) `MLeader.virtual_entities()`

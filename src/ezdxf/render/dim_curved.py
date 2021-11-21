@@ -965,9 +965,9 @@ class ArcLengthDimension(_CurvedDimensionLine):
         from_ucs("defpoint3", ucs.to_wcs)
         from_ucs("defpoint4", ucs.to_wcs)
         from_ucs("text_midpoint", ucs.to_ocs)
-        self.dimension.dxf.angle = ucs.to_ocs_angle_deg(
-            self.dimension.dxf.angle
-        )
+        dxf = self.dimension.dxf
+        if dxf.hasattr("angle"):
+            dxf.angle = ucs.to_ocs_angle_deg(dxf.angle)
 
     def get_center_of_arc(self) -> Vec2:
         return self.center_of_arc
@@ -976,14 +976,14 @@ class ArcLengthDimension(_CurvedDimensionLine):
         return (self.dim_line_location - self.center_of_arc).magnitude
 
     def get_ext1_dir(self) -> Vec2:
-        return (self.ext1_start - self.center_of_arc).normalize()
+        return (self.leg1_start - self.center_of_arc).normalize()
 
     def get_ext2_dir(self) -> Vec2:
-        return (self.ext2_start - self.center_of_arc).normalize()
+        return (self.leg2_start - self.center_of_arc).normalize()
 
     def update_measurement(self) -> None:
         angle = arc_angle_span_rad(self.start_angle_rad, self.end_angle_rad)
-        arc_length = angle * self.arc_radius * 2.0
+        arc_length = angle * self.arc_radius
         self.measurement.update(arc_length)
 
 

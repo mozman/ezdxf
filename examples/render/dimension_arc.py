@@ -38,6 +38,23 @@ BRICSCAD = False
 DXFVERSION = "R2013"
 
 
+def add_lines(
+    msp, center: Vec3, radius: float, start_angle: float, end_angle: float
+):
+    attribs = {"color": 7}
+    start_point = center + Vec3.from_deg_angle(start_angle) * radius
+    end_point = center + Vec3.from_deg_angle(end_angle) * radius
+    msp.add_line(center, start_point, dxfattribs=attribs)
+    msp.add_line(center, end_point, dxfattribs=attribs)
+
+
+def add_arc(
+    msp, center: Vec3, radius: float, start_angle: float, end_angle: float
+):
+    attribs = {"color": 7}
+    msp.add_arc(center, radius, start_angle, end_angle, dxfattribs=attribs)
+
+
 def arc_cra_default(
     distance: float,
     filename: str,
@@ -62,6 +79,7 @@ def arc_cra_default(
 
             if show_angle:
                 add_lines(msp, center, radius, start_angle, end_angle)
+                add_arc(msp, center, radius, start_angle, end_angle)
             # Default DimStyle EZ_CURVED:
             # - angle units = degree
             # - scale 1: 100
@@ -78,7 +96,7 @@ def arc_cra_default(
             #   start angle in degrees
             # end_angle:
             #   end angle in degrees
-            dim = msp.add_angular_dim_cra(
+            dim = msp.add_arc_dim_cra(
                 center=center,
                 radius=radius,
                 start_angle=start_angle,
@@ -154,7 +172,7 @@ def arc_cra_default_inside_fixed_extension_length():
     )
 
 
-def angular_3p_default(distance: float = 2.0):
+def arc_3p_default(distance: float = 2.0):
     doc = ezdxf.new(DXFVERSION, setup=True)
     msp = doc.modelspace()
     radius = 5
@@ -175,7 +193,8 @@ def angular_3p_default(distance: float = 2.0):
             base = center + dir1.lerp(dir2) * (radius + distance)
 
             add_lines(msp, center, radius, start_angle, end_angle)
-            msp.add_angular_dim_3p(
+            add_arc(msp, center, radius, start_angle, end_angle)
+            msp.add_arc_dim_3p(
                 base,
                 center,
                 p1,
@@ -189,17 +208,7 @@ def angular_3p_default(distance: float = 2.0):
             ).render(discard=BRICSCAD)
 
     doc.set_modelspace_vport(height=70)
-    doc.saveas(OUTDIR / f"dim_angular_3p_{DXFVERSION}.dxf")
-
-
-def add_lines(
-    msp, center: Vec3, radius: float, start_angle: float, end_angle: float
-):
-    attribs = {"color": 7}
-    start_point = center + Vec3.from_deg_angle(start_angle) * radius
-    end_point = center + Vec3.from_deg_angle(end_angle) * radius
-    msp.add_line(center, start_point, dxfattribs=attribs)
-    msp.add_line(center, end_point, dxfattribs=attribs)
+    doc.saveas(OUTDIR / f"dim_arc_3p_{DXFVERSION}.dxf")
 
 
 def dim_arc_3d():
@@ -224,7 +233,7 @@ def dim_arc_3d():
     doc.saveas(OUTDIR / f"dim_arc_3d_{DXFVERSION}.dxf")
 
 
-def angular_units_tol_limits():
+def arc_units_tol_limits():
     doc = ezdxf.new(DXFVERSION, setup=True)
     msp = doc.modelspace()
     radius = 5
@@ -244,7 +253,7 @@ def angular_units_tol_limits():
         for center, start_angle, end_angle, dimtol, dimlim in data:
             center += offset
             add_lines(msp, center, radius, start_angle, end_angle)
-            dim = msp.add_angular_dim_cra(
+            dim = msp.add_arc_dim_cra(
                 center,
                 radius,
                 start_angle,
@@ -261,10 +270,10 @@ def angular_units_tol_limits():
             dim.render(discard=BRICSCAD)
 
     doc.set_modelspace_vport(height=70)
-    doc.saveas(OUTDIR / f"dim_angular_units_tol_limits_{DXFVERSION}.dxf")
+    doc.saveas(OUTDIR / f"dim_arc_units_tol_limits_{DXFVERSION}.dxf")
 
 
-def add_angle_dim(
+def add_arc_dim(
     msp,
     center: Vec3,
     angle: float,
@@ -295,7 +304,7 @@ def measure_fixed_angle(angle: float):
     x_dist = 15
     for dimtad, y_dist in [[0, 0], [1, 20], [4, 40]]:
         for count in range(8):
-            dim = add_angle_dim(
+            dim = add_arc_dim(
                 msp,
                 center=Vec3(x_dist * count, y_dist),
                 angle=45.0 * count,
@@ -307,7 +316,7 @@ def measure_fixed_angle(angle: float):
             )
             dim.render(discard=BRICSCAD)
     doc.set_modelspace_vport(height=100, center=(x_dist * 4, 20))
-    doc.saveas(OUTDIR / f"dim_angular_deg_{angle:.0f}_{DXFVERSION}.dxf")
+    doc.saveas(OUTDIR / f"dim_arc_deg_{angle:.0f}_{DXFVERSION}.dxf")
 
 
 def usr_location_absolute(angle: float, rotation: float = None):
@@ -324,7 +333,7 @@ def usr_location_absolute(angle: float, rotation: float = None):
         for count in range(8):
             center = Vec3(x_dist * count, y_dist)
             main_angle = 45.0 * count
-            dim = add_angle_dim(
+            dim = add_arc_dim(
                 msp,
                 center=center,
                 angle=main_angle,
@@ -345,7 +354,7 @@ def usr_location_absolute(angle: float, rotation: float = None):
     rstr = ""
     if rotation is not None:
         rstr = f"rot_{rotation}_"
-    doc.saveas(OUTDIR / f"dim_angular_usr_loc_absolute_{rstr}_{DXFVERSION}.dxf")
+    doc.saveas(OUTDIR / f"dim_arc_usr_loc_absolute_{rstr}_{DXFVERSION}.dxf")
 
 
 def usr_location_relative(angle: float, rotation: float = None):
@@ -362,7 +371,7 @@ def usr_location_relative(angle: float, rotation: float = None):
         for count in range(8):
             center = Vec3(x_dist * count, y_dist)
             main_angle = 45.0 * count
-            dim = add_angle_dim(
+            dim = add_arc_dim(
                 msp,
                 center=center,
                 angle=main_angle,
@@ -381,7 +390,7 @@ def usr_location_relative(angle: float, rotation: float = None):
     rstr = ""
     if rotation is not None:
         rstr = f"rot_{rotation}_"
-    doc.saveas(OUTDIR / f"dim_angular_usr_loc_relative_{rstr}_{DXFVERSION}.dxf")
+    doc.saveas(OUTDIR / f"dim_arc_usr_loc_relative_{rstr}_{DXFVERSION}.dxf")
 
 
 def show_all_arrow_heads():
@@ -392,7 +401,7 @@ def show_all_arrow_heads():
     for x, arrow_name in enumerate(sorted(ezdxf.ARROWS.__all_arrows__)):
         for y, angle in enumerate((3.0, 30.0)):
             center = Vec3(x * x_dist, y * y_dist)
-            dim = add_angle_dim(
+            dim = add_arc_dim(
                 msp,
                 center=center,
                 angle=90.0,
@@ -405,7 +414,7 @@ def show_all_arrow_heads():
             dim.render(discard=BRICSCAD)
 
     doc.set_modelspace_vport(height=40, center=(50, 5))
-    doc.saveas(OUTDIR / f"dim_angular_all_arrows_{DXFVERSION}.dxf")
+    doc.saveas(OUTDIR / f"dim_arc_all_arrows_{DXFVERSION}.dxf")
 
 
 if __name__ == "__main__":
@@ -413,15 +422,14 @@ if __name__ == "__main__":
     arc_cra_default_outside_fixed_extension_length()
     arc_cra_default_inside()
     arc_cra_default_inside_fixed_extension_length()
-    # angular_3p_default()
-    # angular_2l_default()
-    # dim_arc_3d()
-    # angular_units_tol_limits()
-    # measure_fixed_angle(3.0)
-    # measure_fixed_angle(6.0)
-    # measure_fixed_angle(9.0)
-    # usr_location_absolute(6)
-    # usr_location_absolute(6, rotation=15)
-    # usr_location_relative(30)
-    # usr_location_relative(30, rotation=345)
-    # show_all_arrow_heads()
+    arc_3p_default()
+    dim_arc_3d()
+    arc_units_tol_limits()
+    measure_fixed_angle(3.0)
+    measure_fixed_angle(6.0)
+    measure_fixed_angle(9.0)
+    usr_location_absolute(6)
+    usr_location_absolute(6, rotation=15)
+    usr_location_relative(30)
+    usr_location_relative(30, rotation=345)
+    show_all_arrow_heads()
