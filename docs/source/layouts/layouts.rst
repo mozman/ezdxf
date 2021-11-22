@@ -180,6 +180,12 @@ BaseLayout
 
     .. automethod:: add_arc_dim_arc
 
+    .. automethod:: add_ordinate_dim
+
+    .. automethod:: add_ordinate_x_dim
+
+    .. automethod:: add_ordinate_y_dim
+
     .. automethod:: add_leader
 
     .. automethod:: add_body

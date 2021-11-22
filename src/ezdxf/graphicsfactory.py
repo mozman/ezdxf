@@ -1570,6 +1570,7 @@ class CreatorInterface:
         base: "Vertex",
         line1: Tuple["Vertex", "Vertex"],
         line2: Tuple["Vertex", "Vertex"],
+        *,
         location: "Vertex" = None,
         text: str = "<>",
         text_rotation: float = None,
@@ -1651,6 +1652,7 @@ class CreatorInterface:
         center: "Vertex",
         p1: "Vertex",
         p2: "Vertex",
+        *,
         location: "Vertex" = None,
         text: str = "<>",
         text_rotation: float = None,
@@ -1735,6 +1737,7 @@ class CreatorInterface:
         start_angle: float,
         end_angle: float,
         distance: float,
+        *,
         location: "Vertex" = None,
         text: str = "<>",
         text_rotation: float = None,
@@ -1808,6 +1811,7 @@ class CreatorInterface:
         self,
         arc: ConstructionArc,
         distance: float,
+        *,
         location: "Vertex" = None,
         text: str = "<>",
         text_rotation: float = None,
@@ -1869,6 +1873,7 @@ class CreatorInterface:
         center: "Vertex",
         p1: "Vertex",
         p2: "Vertex",
+        *,
         location: "Vertex" = None,
         text: str = "<>",
         text_rotation: float = None,
@@ -1962,6 +1967,7 @@ class CreatorInterface:
         start_angle: float,
         end_angle: float,
         distance: float,
+        *,
         location: "Vertex" = None,
         text: str = "<>",
         text_rotation: float = None,
@@ -2036,6 +2042,7 @@ class CreatorInterface:
         self,
         arc: ConstructionArc,
         distance: float,
+        *,
         location: "Vertex" = None,
         text: str = "<>",
         text_rotation: float = None,
@@ -2098,6 +2105,7 @@ class CreatorInterface:
         mpoint: "Vertex" = None,
         radius: float = None,
         angle: float = None,
+        *,
         location: "Vertex" = None,
         text: str = "<>",
         dimstyle: str = "EZ_RADIUS",
@@ -2235,6 +2243,7 @@ class CreatorInterface:
         mpoint: "Vertex" = None,
         radius: float = None,
         angle: float = None,
+        *,
         location: "Vertex" = None,
         text: str = "<>",
         dimstyle: str = "EZ_RADIUS",
@@ -2344,6 +2353,7 @@ class CreatorInterface:
         self,
         center: "Vertex",
         mpoint: "Vertex",
+        *,
         text: str = "<>",
         dimstyle: str = "EZ_RADIUS",
         override: Dict = None,
@@ -2387,6 +2397,7 @@ class CreatorInterface:
         center: "Vertex",
         radius: float,
         angle: float,
+        *,
         text: str = "<>",
         dimstyle: str = "EZ_RADIUS",
         override: Dict = None,
@@ -2429,17 +2440,18 @@ class CreatorInterface:
 
     def add_ordinate_dim(
         self,
-        origin: "Vertex",
         feature_location: "Vertex",
-        leader_endpoint: "Vertex",
-        location: "Vertex" = None,
+        offset: "Vertex",
+        dtype: int,
+        *,
+        origin: "Vertex" = NULLVEC,
         text: str = "<>",
         dimstyle: str = "EZDXF",
         override: Dict = None,
         dxfattribs: Dict = None,
     ) -> DimStyleOverride:
         """
-        Add ordinate :class:`~ezdxf.entities.Dimension` line.
+        Add an ordinate type :class:`~ezdxf.entities.Dimension` line.
         If an :class:`~ezdxf.math.UCS` is used for dimension line rendering,
         all point definitions in UCS coordinates, translation into :ref:`WCS`
         and :ref:`OCS` is done by the rendering function. Extrusion vector is
@@ -2457,11 +2469,12 @@ class CreatorInterface:
             rendering results are different from CAD applications.
 
         Args:
-            origin: specifies the origin of the ordinate coordinate system
-                (in UCS)
             feature_location: feature location in UCS
-            leader_endpoint: leader endpoint in UCS
-            location: user defined location for text mid point (in UCS)
+            offset: offset vector of leader end point from the feature location
+                in UCS
+            dtype: 0 = x-type, 1 = y-type
+            origin: specifies the origin (0, 0) of the ordinate coordinate
+                system in UCS
             text: ``None`` or "<>" the measurement is drawn as text,
                 " " (a single space) suppresses the dimension text,
                 everything else `text` is drawn as dimension text
@@ -2473,25 +2486,91 @@ class CreatorInterface:
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
-        (not implemented yet!)
+        .. versionadded:: v0.18
 
         """
-        type_ = {"dimtype": const.DIM_ORDINATE | const.DIM_BLOCK_EXCLUSIVE}
+        dtype = int(dtype)
+        if dtype not in (0, 1):
+            raise DXFValueError("invalid dtype (0, 1)")
+
+        type_ = {
+            "dimtype": const.DIM_ORDINATE
+            | const.DIM_BLOCK_EXCLUSIVE
+            | (const.DIM_ORDINATE_TYPE * dtype)
+        }
+
         dimline = cast(
             "Dimension", self.new_entity("DIMENSION", dxfattribs=type_)
         )
+        origin_ = Vec3(origin)
+        feature_location_ = Vec3(feature_location)
+        end_point_ = feature_location_ + Vec3(offset)
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["dimstyle"] = self._safe_dimstyle(dimstyle)
-        dxfattribs["defpoint"] = Vec3(origin)  # group code 10
-        dxfattribs["defpoint2"] = Vec3(feature_location)  # group code 13
-        dxfattribs["defpoint3"] = Vec3(leader_endpoint)  # group code 14
+        dxfattribs["defpoint"] = origin_  # group code 10
+        dxfattribs["defpoint2"] = feature_location_  # group code 13
+        dxfattribs["defpoint3"] = end_point_  # group code 14
         dxfattribs["text"] = str(text)
         dimline.update_dxf_attribs(dxfattribs)
 
         style = DimStyleOverride(dimline, override=override)
-        if location is not None:
-            style.user_location_override(location)
         return style
+
+    def add_ordinate_x_dim(
+        self,
+        feature_location: "Vertex",
+        offset: "Vertex",
+        *,
+        origin: "Vertex" = NULLVEC,
+        text: str = "<>",
+        dimstyle: str = "EZDXF",
+        override: Dict = None,
+        dxfattribs: Dict = None,
+    ) -> DimStyleOverride:
+        """Shortcut to add a x-type ordinate DIMENSION, for more information see
+        :meth:`add_ordinate_dim`.
+
+        .. versionadded:: v0.18
+
+        """
+        return self.add_ordinate_dim(
+            feature_location=feature_location,
+            offset=offset,
+            dtype=0,
+            origin=origin,
+            text=text,
+            dimstyle=dimstyle,
+            override=override,
+            dxfattribs=dxfattribs,
+        )
+
+    def add_ordinate_y_dim(
+        self,
+        feature_location: "Vertex",
+        offset: "Vertex",
+        *,
+        origin: "Vertex" = NULLVEC,
+        text: str = "<>",
+        dimstyle: str = "EZDXF",
+        override: Dict = None,
+        dxfattribs: Dict = None,
+    ) -> DimStyleOverride:
+        """Shortcut to add a y-type ordinate DIMENSION, for more information see
+        :meth:`add_ordinate_dim`.
+
+        .. versionadded:: v0.18
+
+        """
+        return self.add_ordinate_dim(
+            feature_location=feature_location,
+            offset=offset,
+            dtype=1,
+            origin=origin,
+            text=text,
+            dimstyle=dimstyle,
+            override=override,
+            dxfattribs=dxfattribs,
+        )
 
     def add_arrow(
         self,
