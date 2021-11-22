@@ -983,9 +983,7 @@ class ArcLengthDimension(_CurvedDimensionLine):
         from_ucs("defpoint3", ucs.to_wcs)
         from_ucs("defpoint4", ucs.to_wcs)
         from_ucs("text_midpoint", ucs.to_ocs)
-        dxf = self.dimension.dxf
-        if dxf.hasattr("angle"):
-            dxf.angle = ucs.to_ocs_angle_deg(dxf.angle)
+        # attribute "angle" does not exist for "curved" DIMENSIONS
 
     def get_center_of_arc(self) -> Vec2:
         return self.center_of_arc
