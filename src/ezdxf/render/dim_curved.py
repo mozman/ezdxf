@@ -8,6 +8,7 @@ import logging
 from ezdxf.math import (
     Vec2,
     Vec3,
+    NULLVEC,
     UCS,
     decdeg2dms,
     arc_angle_span_rad,
@@ -280,6 +281,25 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
     @abstractmethod
     def get_defpoints(self) -> List[Vec2]:
         ...
+
+    def transform_ucs_to_wcs(self) -> None:
+        """Transforms dimension definition points into WCS or if required into
+        OCS.
+        """
+
+        def from_ucs(attr, func):
+            if dxf.is_supported(attr):
+                point = dxf.get(attr, NULLVEC)
+                dxf.set(attr, func(point))
+
+        dxf = self.dimension.dxf
+        ucs = self.geometry.ucs
+        from_ucs("defpoint", ucs.to_wcs)
+        from_ucs("defpoint2", ucs.to_wcs)
+        from_ucs("defpoint3", ucs.to_wcs)
+        from_ucs("defpoint4", ucs.to_wcs)
+        from_ucs("defpoint5", ucs.to_wcs)
+        from_ucs("text_midpoint", ucs.to_ocs)
 
     def default_location(self, shift: float = 0.0) -> Vec2:
         radius = (
@@ -762,26 +782,6 @@ class AngularDimension(_AngularCommonBase):
             self.dim_line_location,
         ]
 
-    def transform_ucs_to_wcs(self) -> None:
-        """Transforms dimension definition points into WCS or if required into
-        OCS.
-        """
-
-        def from_ucs(attr, func):
-            point = self.dimension.get_dxf_attrib(attr)
-            self.dimension.set_dxf_attrib(attr, func(point))
-
-        ucs = self.geometry.ucs
-        from_ucs("defpoint", ucs.to_wcs)
-        from_ucs("defpoint2", ucs.to_wcs)
-        from_ucs("defpoint3", ucs.to_wcs)
-        from_ucs("defpoint4", ucs.to_wcs)
-        from_ucs("defpoint5", ucs.to_wcs)
-        from_ucs("text_midpoint", ucs.to_ocs)
-        self.dimension.dxf.angle = ucs.to_ocs_angle_deg(
-            self.dimension.dxf.angle
-        )
-
     def get_center_of_arc(self) -> Vec2:
         center = intersection_line_line_2d(
             (self.leg1_start, self.leg1_end),
@@ -867,25 +867,6 @@ class Angular3PDimension(_AngularCommonBase):
             self.center_of_arc,
         ]
 
-    def transform_ucs_to_wcs(self) -> None:
-        """Transforms dimension definition points into WCS or if required into
-        OCS.
-        """
-
-        def from_ucs(attr, func):
-            point = self.dimension.get_dxf_attrib(attr)
-            self.dimension.set_dxf_attrib(attr, func(point))
-
-        ucs = self.geometry.ucs
-        from_ucs("defpoint", ucs.to_wcs)
-        from_ucs("defpoint2", ucs.to_wcs)
-        from_ucs("defpoint3", ucs.to_wcs)
-        from_ucs("defpoint4", ucs.to_wcs)
-        from_ucs("text_midpoint", ucs.to_ocs)
-        self.dimension.dxf.angle = ucs.to_ocs_angle_deg(
-            self.dimension.dxf.angle
-        )
-
     def get_center_of_arc(self) -> Vec2:
         return self.center_of_arc
 
@@ -967,23 +948,6 @@ class ArcLengthDimension(_CurvedDimensionLine):
         return ArcLengthMeasurement(
             self.dim_style, self.default_color, self.dim_scale
         )
-
-    def transform_ucs_to_wcs(self) -> None:
-        """Transforms dimension definition points into WCS or if required into
-        OCS.
-        """
-
-        def from_ucs(attr, func):
-            point = self.dimension.get_dxf_attrib(attr)
-            self.dimension.set_dxf_attrib(attr, func(point))
-
-        ucs = self.geometry.ucs
-        from_ucs("defpoint", ucs.to_wcs)
-        from_ucs("defpoint2", ucs.to_wcs)
-        from_ucs("defpoint3", ucs.to_wcs)
-        from_ucs("defpoint4", ucs.to_wcs)
-        from_ucs("text_midpoint", ucs.to_ocs)
-        # attribute "angle" does not exist for "curved" DIMENSIONS
 
     def get_center_of_arc(self) -> Vec2:
         return self.center_of_arc
