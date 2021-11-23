@@ -35,10 +35,6 @@ if TYPE_CHECKING:
         Textstyle,
     )
 
-# Arbitrary choice to reduce the too large gap around the text box!
-# applied as: text_gap * TEXT_BOX_GAP_FACTOR
-TEXT_BOX_GAP_FACTOR = 0.75
-
 
 class TextBox(ConstructionBox):
     """Text boundaries representation."""
@@ -49,10 +45,12 @@ class TextBox(ConstructionBox):
         width: float = 0.0,
         height: float = 0.0,
         angle: float = 0.0,
-        gap: float = 0.0,
+        hgap: float = 0.0,  # horizontal gap - width
+        vgap: float = 0.0,  # vertical gap - height
     ):
-        height += 2 * gap
-        super().__init__(center, width, height, angle)
+        super().__init__(
+            center, width + 2.0 * hgap, height + 2.0 * vgap, angle
+        )
 
 
 PLUS_MINUS = "±"
@@ -1075,7 +1073,12 @@ class BaseDimensionRenderer:
             width=self.total_text_width(),
             height=measurement.text_height,
             angle=measurement.text_rotation or 0.0,
-            gap=measurement.text_gap * TEXT_BOX_GAP_FACTOR,
+            # The currently used mono-spaced abstract font, returns a too large
+            # text width.
+            # Therefore the horizontal text gap is ignored at all - yet!
+            hgap=0.0,
+            # Arbitrary choice to reduce the too large vertical gap!
+            vgap=measurement.text_gap * 0.75,
         )
 
     def get_required_defpoint(self, name: str) -> Vec2:
