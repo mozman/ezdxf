@@ -35,6 +35,10 @@ if TYPE_CHECKING:
         Textstyle,
     )
 
+# Arbitrary choice to reduce the too large gap around the text box!
+# applied as: text_gap * TEXT_BOX_GAP_FACTOR
+TEXT_BOX_GAP_FACTOR = 0.75
+
 
 class TextBox(ConstructionBox):
     """Text boundaries representation."""
@@ -1063,6 +1067,16 @@ class BaseDimensionRenderer:
 
     def init_measurement(self, color: int, scale: float) -> Measurement:
         return LengthMeasurement(self.dim_style, color, scale)
+
+    def init_text_box(self) -> TextBox:
+        measurement = self.measurement
+        return TextBox(
+            center=measurement.text_location,
+            width=self.total_text_width(),
+            height=measurement.text_height,
+            angle=measurement.text_rotation or 0.0,
+            gap=measurement.text_gap * TEXT_BOX_GAP_FACTOR,
+        )
 
     def get_required_defpoint(self, name: str) -> Vec2:
         return get_required_defpoint(self.dimension, name)

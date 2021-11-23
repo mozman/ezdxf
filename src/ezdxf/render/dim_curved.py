@@ -224,7 +224,7 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
 
         # Text width and -height is required first, text location and -rotation
         # are not valid yet:
-        self.text_box = self.setup_text_box()
+        self.text_box = self.init_text_box()
 
         # Place arrows outside?
         self.arrows_outside = False
@@ -309,17 +309,6 @@ class _CurvedDimensionLine(BaseDimensionRenderer):
         )
         text_radial_dir = Vec2.from_angle(self.center_angle_rad)
         return self.center_of_arc + text_radial_dir * radius
-
-    def setup_text_box(self) -> TextBox:
-        measurement = self.measurement
-        return TextBox(
-            center=measurement.text_location,
-            width=self.total_text_width(),
-            height=measurement.text_height,
-            angle=measurement.text_rotation or 0.0,
-            # Arbitrary choice to reduce the too large gap!
-            gap=measurement.text_gap * 0.75,
-        )
 
     def setup_text_and_arrow_fitting(self):
         # self.text_box.width includes the gaps between text and dimension line

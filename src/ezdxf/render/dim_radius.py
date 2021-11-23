@@ -130,15 +130,7 @@ class RadiusDimension(BaseDimensionRenderer):
 
         # final text location
         measurement.text_location = self.get_text_location()
-        self.geometry.set_text_box(
-            TextBox(
-                center=measurement.text_location,
-                width=self._total_text_width,
-                height=measurement.text_height,
-                angle=measurement.text_rotation,
-                gap=measurement.text_gap * 0.75,
-            )
-        )
+        self.geometry.set_text_box(self.init_text_box())
         # write final text location into DIMENSION entity
         if measurement.user_location:
             self.dimension.dxf.text_midpoint = measurement.user_location

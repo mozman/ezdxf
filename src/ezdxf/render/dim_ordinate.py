@@ -11,6 +11,7 @@ from .dim_base import (
     BaseDimensionRenderer,
     get_required_defpoint,
     compile_mtext,
+    TextBox,
 )
 
 if TYPE_CHECKING:
@@ -42,6 +43,29 @@ class OrdinateDimension(BaseDimensionRenderer):
             dimension.dxf.get("dimtype", 0) & const.DIM_ORDINATE_TYPE
         )
         super().__init__(dimension, ucs, override)
+        # Class specific setup:
+        self.update_measurement()
+        if self.tol.has_limits:
+            self.tol.update_limits(self.measurement.value)
+
+        # Text width and -height is required first, text location and -rotation
+        # are not valid yet:
+        self.text_box = self.init_text_box()
+        self.setup_text_location()
+
+        # update text box location and -rotation:
+        self.text_box.center = self.measurement.text_location
+        self.text_box.angle = self.measurement.text_rotation
+        self.geometry.set_text_box(self.text_box)
+
+        # Update final text location in the DIMENSION entity:
+        self.dimension.dxf.text_midpoint = self.measurement.text_location
+
+    def setup_text_location(self) -> None:
+        """Setup geometric text properties (location, rotation) and the TextBox
+        object.
+        """
+        pass
 
     def update_measurement(self) -> None:
         distance: Vec2 = self.feature_location - self.origin

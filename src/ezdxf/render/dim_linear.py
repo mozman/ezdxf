@@ -190,13 +190,7 @@ class LinearDimension(BaseDimensionRenderer):
                 rotation = 0.0
             measurement.text_rotation = rotation
 
-            text_box = TextBox(
-                center=measurement.text_location,
-                width=self._total_text_width,
-                height=measurement.text_height,
-                angle=measurement.text_rotation,
-                gap=measurement.text_gap * 0.75,
-            )
+            text_box = self.init_text_box()
             self.geometry.set_text_box(text_box)
             if measurement.has_leader:
                 p1, p2, *_ = text_box.corners
