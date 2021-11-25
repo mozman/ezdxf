@@ -89,6 +89,9 @@ def ordinate_wcs(
     for dimtad, feature_location in [(1, (5, 20)), (0, (0, 0)), (4, (-5, -20))]:
         override["dimtad"] = dimtad
         add_x_and_y_type(msp, Vec3(feature_location), Vec3(1, 3), override)
+        add_x_and_y_type(msp, Vec3(feature_location), Vec3(-1, 3), override)
+        add_x_and_y_type(msp, Vec3(feature_location), Vec3(1, -3), override)
+        add_x_and_y_type(msp, Vec3(feature_location), Vec3(-1, -3), override)
     doc.set_modelspace_vport(height=70)
     doc.saveas(OUTDIR / f"{filename}_{DXFVERSION}.dxf")
 

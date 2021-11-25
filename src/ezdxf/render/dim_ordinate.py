@@ -74,10 +74,13 @@ class OrdinateDimension(BaseDimensionRenderer):
 
     def setup_text_location(self) -> None:
         """Setup geometric text properties location and rotation."""
+        offset = self.measurement.text_vertical_distance()
+        offset_vec = (Vec2(-1, 0) if self.x_type else Vec2(0, 1)) * offset
+
         self.measurement.text_location = (
             self.end_of_leader
-            + self.direction * self.text_box.width / 2.0
-            + self.dir_ortho * self.measurement.text_vertical_distance()
+            + self.dir_ortho * (self.text_box.width * 0.5)
+            + offset_vec
         )
         if self.measurement.text_rotation is None:
             # if no user text rotation is set:
@@ -138,7 +141,24 @@ class OrdinateDimension(BaseDimensionRenderer):
         self.geometry.add_defpoints(self.get_defpoints())
 
     def add_extension_line(self) -> None:
-        pass
+        attribs = self.extension_lines.dxfattribs(1)
+        direction = self.dir_ortho  # leader direction or text direction
+        leg_size = self.arrows.arrow_size * 2.0
+        #            /---1---TEXT
+        # x----0----/
+        # d0 = distance from feature location (x) to 1st upward junction
+        d0 = direction.project(self.leader_offset).magnitude - 2.0 * leg_size
+
+        start0 = self.feature_location + direction * self.extension_lines.offset
+        end0 = self.feature_location + direction * max(leg_size, d0)
+        start1 = self.end_of_leader - direction * leg_size
+        end1 = self.end_of_leader
+        if self.measurement.vertical_placement != 0:
+            end1 += direction * self.text_box.width
+
+        self.add_line(start0, end0, dxfattribs=attribs)
+        self.add_line(end0, start1, dxfattribs=attribs)
+        self.add_line(start1, end1, dxfattribs=attribs)
 
     def add_measurement_text(
         self, dim_text: str, pos: Vec2, rotation: float
