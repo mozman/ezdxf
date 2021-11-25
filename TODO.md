@@ -34,9 +34,6 @@ Add-ons
 Render Tools
 ------------
 
-- (v0.18) DIMENSION rendering
-  - ordinate dim
-
 - (v0.18) `MLeader.virtual_entities()`
 - (<v1.0) ACAD_TABLE get virtual entities from anonymous block `*T...`
 
