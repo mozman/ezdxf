@@ -39,7 +39,7 @@ class OrdinateDimension(BaseDimensionRenderer):
         self.end_of_leader: Vec2 = get_required_defpoint(dimension, "defpoint3")
         self.leader_offset = self.end_of_leader - self.feature_location
         # x_type = not(y_type)
-        self.y_type = bool(
+        self.x_type = bool(  # x-type is set!
             dimension.dxf.get("dimtype", 0) & const.DIM_ORDINATE_TYPE
         )
         super().__init__(dimension, ucs, override)
@@ -51,7 +51,7 @@ class OrdinateDimension(BaseDimensionRenderer):
         self.dir_ortho: Vec2 = Vec2(
             0, -1.0 if self.leader_offset.y < 0.0 else 1.0
         )
-        if self.y_type:
+        if not self.x_type:
             self.direction, self.dir_ortho = self.dir_ortho, self.direction
 
         # Class specific setup:
@@ -81,14 +81,17 @@ class OrdinateDimension(BaseDimensionRenderer):
         )
         if self.measurement.text_rotation is None:
             # if no user text rotation is set:
-            if self.y_type:
+            if self.x_type:
                 self.measurement.text_rotation = 90.0
             else:
                 self.measurement.text_rotation = 0.0
 
     def update_measurement(self) -> None:
         distance: Vec2 = self.feature_location - self.origin
-        self.measurement.update(distance.y if self.y_type else distance.x)
+        # ordinate measurement is always absolute:
+        self.measurement.update(
+            abs(distance.x) if self.x_type else abs(distance.y)
+        )
 
     def get_defpoints(self) -> List[Vec2]:
         return [

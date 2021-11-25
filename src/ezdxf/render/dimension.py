@@ -9,6 +9,8 @@ from .dim_linear import LinearDimension
 from .dim_radius import RadiusDimension
 from .dim_diameter import DiameterDimension
 from .dim_curved import AngularDimension, Angular3PDimension, ArcLengthDimension
+from .dim_ordinate import OrdinateDimension
+
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Dimension, BaseDimensionRenderer
@@ -100,7 +102,8 @@ class DimensionRenderer:
         ucs: "UCS" = None,
         override: "DimStyleOverride" = None,
     ):
-        raise NotImplementedError()
+        """Call renderer for ordinate dimension."""
+        return OrdinateDimension(dimension, ucs, override)
 
     def arc_length(
         self,
