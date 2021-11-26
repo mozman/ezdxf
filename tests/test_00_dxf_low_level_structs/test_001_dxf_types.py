@@ -1,5 +1,7 @@
 # Copyright (c) 2018-2019 Manfred Moitzi
 # License: MIT License
+import pytest
+
 from ezdxf.lldxf.types import DXFTag, get_xcode_for, is_valid_handle
 
 
@@ -9,6 +11,14 @@ def test_init():
 
     tag2 = DXFTag(code=2, value="text2")
     assert tag2 == (2, "text2")
+
+
+def test_immutability():
+    tag = DXFTag(1, "text")
+    with pytest.raises(AttributeError):
+        tag.code = 2
+    with pytest.raises(AttributeError):
+        tag.value = "string"
 
 
 def test_equality():
