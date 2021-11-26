@@ -3,8 +3,8 @@
 
 from typing import TYPE_CHECKING, List
 import logging
-
-from ezdxf.math import Vec2, UCS, NULLVEC, sign
+import math
+from ezdxf.math import Vec2, UCS, NULLVEC
 from ezdxf.lldxf import const
 from ezdxf.entities import DimStyleOverride, Dimension
 from .dim_base import (
@@ -26,33 +26,49 @@ class OrdinateDimension(BaseDimensionRenderer):
     # defpoint = origin (group code 10)
     # defpoint2 = feature location (group code 13)
     # defpoint3 = end of leader (group code 14)
+
     def __init__(
         self,
         dimension: Dimension,
         ucs: "UCS" = None,
         override: DimStyleOverride = None,
     ):
-        self.origin: Vec2 = get_required_defpoint(dimension, "defpoint")
-        self.feature_location: Vec2 = get_required_defpoint(
+        # The local coordinate system is defined by origin and the
+        # horizontal_direction in OCS:
+        self.origin_ocs: Vec2 = get_required_defpoint(dimension, "defpoint")
+
+        # Horizontal direction in clockwise orientation, see DXF reference
+        # for group code 51:
+        self.horizontal_dir = -dimension.dxf.get("horizontal_direction", 0.0)
+        self.rotation = math.radians(self.horizontal_dir)
+        self.local_x_axis = Vec2.from_angle(self.rotation)
+        self.local_y_axis = self.local_x_axis.orthogonal()
+
+        self.feature_location_ocs: Vec2 = get_required_defpoint(
             dimension, "defpoint2"
         )
-        self.end_of_leader: Vec2 = get_required_defpoint(dimension, "defpoint3")
-        self.leader_offset = self.end_of_leader - self.feature_location
-        # x_type = not(y_type)
+        self.end_of_leader_ocs: Vec2 = get_required_defpoint(
+            dimension, "defpoint3"
+        )  # OCS
+        self.leader_offset_ocs = (
+            self.end_of_leader_ocs - self.feature_location_ocs
+        )
+        self.leader_local_x = self.local_x_axis.project(self.leader_offset_ocs)
+        self.leader_local_y = self.local_y_axis.project(self.leader_offset_ocs)
         self.x_type = bool(  # x-type is set!
             dimension.dxf.get("dimtype", 0) & const.DIM_ORDINATE_TYPE
         )
         super().__init__(dimension, ucs, override)
 
-        # Main direction vectors for x-type:
-        self.direction: Vec2 = Vec2(
-            -1.0 if self.leader_offset.x < 0.0 else 1.0, 0
-        )
-        self.dir_ortho: Vec2 = Vec2(
-            0, -1.0 if self.leader_offset.y < 0.0 else 1.0
-        )
+        # Leader direction vectors for x-type:
+        # Leader directions can be opposite to local x- or y-axis
+        self.leader_direction: Vec2 = self.leader_local_x.normalize()
+        self.leader_orthogonal: Vec2 = self.leader_local_y.normalize()
         if not self.x_type:
-            self.direction, self.dir_ortho = self.dir_ortho, self.direction
+            self.leader_direction, self.leader_orthogonal = (
+                self.leader_orthogonal,
+                self.leader_direction,
+            )
 
         # Class specific setup:
         self.update_measurement()
@@ -75,32 +91,35 @@ class OrdinateDimension(BaseDimensionRenderer):
     def setup_text_location(self) -> None:
         """Setup geometric text properties location and rotation."""
         offset = self.measurement.text_vertical_distance()
-        offset_vec = (Vec2(-1, 0) if self.x_type else Vec2(0, 1)) * offset
+        if self.x_type:
+            offset_dir = -self.local_x_axis
+        else:
+            offset_dir = self.local_y_axis
 
+        # user text location is not supported and ignored:
         self.measurement.text_location = (
-            self.end_of_leader
-            + self.dir_ortho * (self.text_box.width * 0.5)
-            + offset_vec
+            self.end_of_leader_ocs
+            + self.leader_orthogonal * (self.text_box.width * 0.5)
+            + offset_dir * offset
         )
-        if self.measurement.text_rotation is None:
-            # if no user text rotation is set:
-            if self.x_type:
-                self.measurement.text_rotation = 90.0
-            else:
-                self.measurement.text_rotation = 0.0
+        # user text rotation is not supported and ignored:
+        if self.x_type:
+            self.measurement.text_rotation = 90.0 + self.horizontal_dir
+        else:
+            self.measurement.text_rotation = self.horizontal_dir
 
     def update_measurement(self) -> None:
-        distance: Vec2 = self.feature_location - self.origin
+        distance: Vec2 = self.feature_location_ocs - self.origin_ocs
+        x = self.local_x_axis.project(distance).magnitude
+        y = self.local_y_axis.project(distance).magnitude
         # ordinate measurement is always absolute:
-        self.measurement.update(
-            abs(distance.x) if self.x_type else abs(distance.y)
-        )
+        self.measurement.update(x if self.x_type else y)
 
     def get_defpoints(self) -> List[Vec2]:
         return [
-            self.origin,
-            self.feature_location,
-            self.end_of_leader,
+            self.origin_ocs,
+            self.feature_location_ocs,
+            self.end_of_leader_ocs,
         ]
 
     def transform_ucs_to_wcs(self) -> None:
@@ -118,6 +137,10 @@ class OrdinateDimension(BaseDimensionRenderer):
         from_ucs("defpoint2", ucs.to_wcs)
         from_ucs("defpoint3", ucs.to_wcs)
         from_ucs("text_midpoint", ucs.to_ocs)
+
+        # Horizontal direction in clockwise orientation, see DXF reference
+        # for group code 51:
+        dxf.horizontal_direction = -ucs.to_ocs_angle_deg(self.horizontal_dir)
 
     def render(self, block: "GenericLayoutType") -> None:
         """Main method to create dimension geometry of basic DXF entities in the
@@ -142,17 +165,21 @@ class OrdinateDimension(BaseDimensionRenderer):
 
     def add_extension_line(self) -> None:
         attribs = self.extension_lines.dxfattribs(1)
-        direction = self.dir_ortho  # leader direction or text direction
+        direction = self.leader_orthogonal  # leader direction or text direction
         leg_size = self.arrows.arrow_size * 2.0
         #            /---1---TEXT
         # x----0----/
         # d0 = distance from feature location (x) to 1st upward junction
-        d0 = direction.project(self.leader_offset).magnitude - 2.0 * leg_size
+        d0 = (
+            direction.project(self.leader_offset_ocs).magnitude - 2.0 * leg_size
+        )
 
-        start0 = self.feature_location + direction * self.extension_lines.offset
-        end0 = self.feature_location + direction * max(leg_size, d0)
-        start1 = self.end_of_leader - direction * leg_size
-        end1 = self.end_of_leader
+        start0 = (
+            self.feature_location_ocs + direction * self.extension_lines.offset
+        )
+        end0 = self.feature_location_ocs + direction * max(leg_size, d0)
+        start1 = self.end_of_leader_ocs - direction * leg_size
+        end1 = self.end_of_leader_ocs
         if self.measurement.vertical_placement != 0:
             end1 += direction * self.text_box.width
 

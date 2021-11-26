@@ -2445,6 +2445,7 @@ class CreatorInterface:
         dtype: int,
         *,
         origin: "Vertex" = NULLVEC,
+        rotation: float = 0.0,
         text: str = "<>",
         dimstyle: str = "EZDXF",
         override: Dict = None,
@@ -2469,12 +2470,13 @@ class CreatorInterface:
             rendering results are different from CAD applications.
 
         Args:
-            feature_location: feature location in UCS
+            feature_location: feature location in local coordinate system
             offset: offset vector of leader end point from the feature location
-                in UCS
+                in in local coordinate system
             dtype: 0 = x-type, 1 = y-type
-            origin: specifies the origin (0, 0) of the ordinate coordinate
+            origin: specifies the origin (0, 0) of the local coordinate
                 system in UCS
+            rotation: rotation angle of the local coordinate system in degrees
             text: ``None`` or "<>" the measurement is drawn as text,
                 " " (a single space) suppresses the dimension text,
                 everything else `text` is drawn as dimension text
@@ -2508,8 +2510,17 @@ class CreatorInterface:
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["dimstyle"] = self._safe_dimstyle(dimstyle)
         dxfattribs["defpoint"] = origin_  # group code 10
-        dxfattribs["defpoint2"] = feature_location_  # group code 13
-        dxfattribs["defpoint3"] = end_point_  # group code 14
+        if rotation:
+            rotation = float(rotation)
+            # Horizontal direction in clockwise orientation, see DXF reference
+            # for group code 51:
+            dxfattribs["horizontal_direction"] = -rotation
+            relative_feature_location = feature_location_ - origin_
+            dxfattribs["defpoint2"] = origin_ + relative_feature_location.rotate_deg(rotation)  # group code 13
+            dxfattribs["defpoint3"] = end_point_.rotate_deg(rotation)  # group code 14
+        else:
+            dxfattribs["defpoint2"] = feature_location_  # group code 13
+            dxfattribs["defpoint3"] = end_point_  # group code 14
         dxfattribs["text"] = str(text)
         dimline.update_dxf_attribs(dxfattribs)
 
@@ -2522,6 +2533,7 @@ class CreatorInterface:
         offset: "Vertex",
         *,
         origin: "Vertex" = NULLVEC,
+        rotation: float = 0.0,
         text: str = "<>",
         dimstyle: str = "EZDXF",
         override: Dict = None,
@@ -2538,6 +2550,7 @@ class CreatorInterface:
             offset=offset,
             dtype=0,
             origin=origin,
+            rotation=rotation,
             text=text,
             dimstyle=dimstyle,
             override=override,
@@ -2550,6 +2563,7 @@ class CreatorInterface:
         offset: "Vertex",
         *,
         origin: "Vertex" = NULLVEC,
+        rotation: float = 0.0,
         text: str = "<>",
         dimstyle: str = "EZDXF",
         override: Dict = None,
@@ -2566,6 +2580,7 @@ class CreatorInterface:
             offset=offset,
             dtype=1,
             origin=origin,
+            rotation=rotation,
             text=text,
             dimstyle=dimstyle,
             override=override,

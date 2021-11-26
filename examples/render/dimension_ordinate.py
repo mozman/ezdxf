@@ -38,7 +38,9 @@ BRICSCAD = False
 DXFVERSION = "R2013"
 
 
-def add_x_and_y_type(msp, feature_location: Vec3, offset: Vec3, override):
+def add_x_and_y_type(
+    msp, feature_location: Vec3, offset: Vec3, rotate: float, override
+):
     # Default DimStyle EZDXF:
     # - linear units = 1 drawing unit = 1 m
     # - scale 1:100
@@ -56,6 +58,7 @@ def add_x_and_y_type(msp, feature_location: Vec3, offset: Vec3, override):
     dim = msp.add_ordinate_x_dim(
         feature_location=feature_location,
         offset=offset,
+        rotation=rotate,
         override=override,
     )
     # Necessary second step, to create the BLOCK entity with the DIMENSION
@@ -73,12 +76,14 @@ def add_x_and_y_type(msp, feature_location: Vec3, offset: Vec3, override):
     msp.add_ordinate_y_dim(
         feature_location=feature_location,
         offset=offset,
+        rotation=rotate,
         override=override,
     ).render()
 
 
 def ordinate_wcs(
     filename: str,
+    rotate: float = 0.0,
     override: dict = None,
 ):
     doc = ezdxf.new(DXFVERSION, setup=True)
@@ -88,13 +93,22 @@ def ordinate_wcs(
 
     for dimtad, feature_location in [(1, (5, 20)), (0, (0, 0)), (4, (-5, -20))]:
         override["dimtad"] = dimtad
-        add_x_and_y_type(msp, Vec3(feature_location), Vec3(1, 3), override)
-        add_x_and_y_type(msp, Vec3(feature_location), Vec3(-1, 3), override)
-        add_x_and_y_type(msp, Vec3(feature_location), Vec3(1, -3), override)
-        add_x_and_y_type(msp, Vec3(feature_location), Vec3(-1, -3), override)
+        add_x_and_y_type(
+            msp, Vec3(feature_location), Vec3(1, 3), rotate, override
+        )
+        add_x_and_y_type(
+            msp, Vec3(feature_location), Vec3(-1, 3), rotate, override
+        )
+        add_x_and_y_type(
+            msp, Vec3(feature_location), Vec3(1, -3), rotate, override
+        )
+        add_x_and_y_type(
+            msp, Vec3(feature_location), Vec3(-1, -3), rotate, override
+        )
     doc.set_modelspace_vport(height=70)
     doc.saveas(OUTDIR / f"{filename}_{DXFVERSION}.dxf")
 
 
 if __name__ == "__main__":
     ordinate_wcs(filename="ordinate_wcs")
+    ordinate_wcs(filename="ordinate_rot_30_deg_wcs", rotate=30)
