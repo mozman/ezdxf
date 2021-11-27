@@ -15,9 +15,133 @@ All factory methods have the prefix: ``add_...``
     msp = doc.modelspace()
     msp.add_line((0, 0, 0), (3, 0, 0), dxfattribs={"color": 2})
 
+.. _thematic_factory_method_index:
+
+Thematic Index of Layout Factory Methods
+----------------------------------------
+
+DXF Primitives
+++++++++++++++
+
+- :meth:`~ezdxf.layouts.BaseLayout.add_3dface`
+- :meth:`~ezdxf.layouts.BaseLayout.add_arc`
+- :meth:`~ezdxf.layouts.BaseLayout.add_circle`
+- :meth:`~ezdxf.layouts.BaseLayout.add_ellipse`
+- :meth:`~ezdxf.layouts.BaseLayout.add_hatch`
+- :meth:`~ezdxf.layouts.BaseLayout.add_image`
+- :meth:`~ezdxf.layouts.BaseLayout.add_leader`
+- :meth:`~ezdxf.layouts.BaseLayout.add_line`
+- :meth:`~ezdxf.layouts.BaseLayout.add_lwpolyline`
+- :meth:`~ezdxf.layouts.BaseLayout.add_mesh`
+- :meth:`~ezdxf.layouts.BaseLayout.add_mline`
+- :meth:`~ezdxf.layouts.BaseLayout.add_mpolygon`
+- :meth:`~ezdxf.layouts.BaseLayout.add_point`
+- :meth:`~ezdxf.layouts.BaseLayout.add_polyface`
+- :meth:`~ezdxf.layouts.BaseLayout.add_polyline2d`
+- :meth:`~ezdxf.layouts.BaseLayout.add_polyline3d`
+- :meth:`~ezdxf.layouts.BaseLayout.add_polymesh`
+- :meth:`~ezdxf.layouts.BaseLayout.add_ray`
+- :meth:`~ezdxf.layouts.BaseLayout.add_shape`
+- :meth:`~ezdxf.layouts.BaseLayout.add_solid`
+- :meth:`~ezdxf.layouts.BaseLayout.add_trace`
+- :meth:`~ezdxf.layouts.BaseLayout.add_wipeout`
+- :meth:`~ezdxf.layouts.BaseLayout.add_xline`
+
+Text Entities
++++++++++++++
+
+- :meth:`~ezdxf.layouts.BaseLayout.add_attdef`
+- :meth:`~ezdxf.layouts.BaseLayout.add_mtext_dynamic_auto_height_columns`
+- :meth:`~ezdxf.layouts.BaseLayout.add_mtext_dynamic_manual_height_columns`
+- :meth:`~ezdxf.layouts.BaseLayout.add_mtext_static_columns`
+- :meth:`~ezdxf.layouts.BaseLayout.add_mtext`
+- :meth:`~ezdxf.layouts.BaseLayout.add_text`
+
+Spline Entity
++++++++++++++
+
+- :meth:`~ezdxf.layouts.BaseLayout.add_cad_spline_control_frame`
+- :meth:`~ezdxf.layouts.BaseLayout.add_open_spline`
+- :meth:`~ezdxf.layouts.BaseLayout.add_rational_spline`
+- :meth:`~ezdxf.layouts.BaseLayout.add_spline_control_frame`
+- :meth:`~ezdxf.layouts.BaseLayout.add_spline`
+
+Block References and Underlays
+++++++++++++++++++++++++++++++
+
+- :meth:`~ezdxf.layouts.BaseLayout.add_arrow_blockref`
+- :meth:`~ezdxf.layouts.BaseLayout.add_auto_blockref`
+- :meth:`~ezdxf.layouts.BaseLayout.add_blockref`
+- :meth:`~ezdxf.layouts.BaseLayout.add_underlay`
+
+Viewport Entity
++++++++++++++++
+
+Only available in paper space layouts.
+
+- :meth:`~ezdxf.layouts.BaseLayout.add_viewport`
+
+Dimension Entities
+++++++++++++++++++
+
+Linear Dimension
+
+- :meth:`~ezdxf.layouts.BaseLayout.add_aligned_dim`
+- :meth:`~ezdxf.layouts.BaseLayout.add_linear_dim`
+- :meth:`~ezdxf.layouts.BaseLayout.add_multi_point_linear_dim`
+
+Radius and Diameter Dimension
+
+- :meth:`~ezdxf.layouts.BaseLayout.add_diameter_dim_2p`
+- :meth:`~ezdxf.layouts.BaseLayout.add_diameter_dim`
+- :meth:`~ezdxf.layouts.BaseLayout.add_radius_dim_2p`
+- :meth:`~ezdxf.layouts.BaseLayout.add_radius_dim_cra`
+- :meth:`~ezdxf.layouts.BaseLayout.add_radius_dim`
+
+Angular Dimension
+
+- :meth:`~ezdxf.layouts.BaseLayout.add_angular_dim_2l`
+- :meth:`~ezdxf.layouts.BaseLayout.add_angular_dim_3p`
+- :meth:`~ezdxf.layouts.BaseLayout.add_angular_dim_arc`
+- :meth:`~ezdxf.layouts.BaseLayout.add_angular_dim_cra`
+
+Arc Dimension
+
+- :meth:`~ezdxf.layouts.BaseLayout.add_arc_dim_3p`
+- :meth:`~ezdxf.layouts.BaseLayout.add_arc_dim_arc`
+- :meth:`~ezdxf.layouts.BaseLayout.add_arc_dim_cra`
+
+Ordinate Dimension
+
+- :meth:`~ezdxf.layouts.BaseLayout.add_ordinate_dim`
+- :meth:`~ezdxf.layouts.BaseLayout.add_ordinate_x_dim`
+- :meth:`~ezdxf.layouts.BaseLayout.add_ordinate_y_dim`
+
+
+Miscellaneous
++++++++++++++
+
+- :meth:`~ezdxf.layouts.BaseLayout.add_entity`
+- :meth:`~ezdxf.layouts.BaseLayout.add_foreign_entity`
+- :meth:`~ezdxf.layouts.BaseLayout.add_arrow`
+
+ACIS Entities
++++++++++++++
+
+The creation of the required ACIS data has do be done by an external library!
+
+- :meth:`~ezdxf.layouts.BaseLayout.add_3dsolid`
+- :meth:`~ezdxf.layouts.BaseLayout.add_body`
+- :meth:`~ezdxf.layouts.BaseLayout.add_extruded_surface`
+- :meth:`~ezdxf.layouts.BaseLayout.add_lofted_surface`
+- :meth:`~ezdxf.layouts.BaseLayout.add_region`
+- :meth:`~ezdxf.layouts.BaseLayout.add_revolved_surface`
+- :meth:`~ezdxf.layouts.BaseLayout.add_surface`
+- :meth:`~ezdxf.layouts.BaseLayout.add_swept_surface`
+
 .. seealso::
 
-    Methods of the :class:`~ezdxf.layouts.BaseLayout` class.
+    Layout base class: :class:`~ezdxf.layouts.BaseLayout`
 
 Factory Functions
 -----------------

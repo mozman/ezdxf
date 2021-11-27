@@ -193,8 +193,8 @@ or use the :meth:`get` method and a default value::
 Create New DXF Entities
 -----------------------
 
-The factory functions for creating new graphical DXF entities are located in the
-:class:`~ezdxf.layouts.BaseLayout` class. This means this factory function are
+The factory methods for creating new graphical DXF entities are located in the
+:class:`~ezdxf.layouts.BaseLayout` class. This means this factory methods are
 available for all entity containers:
 
     - :class:`~ezdxf.layouts.Modelspace`
@@ -205,6 +205,10 @@ The usage is simple::
 
     msp = doc.modelspace()
     msp.add_line((0, 0), (1, 0), dxfattribs={"layer": "MyLayer"})
+
+.. seealso::
+
+    :ref:`thematic_factory_method_index`
 
 A few important or required DXF attributes are explicit method arguments,
 most additional and optional DXF attributes are gives as a regular Python
@@ -217,6 +221,7 @@ The supported DXF attributes can be found in the documentation of the
     Do not instantiate DXF entities by yourself and add them to layouts, always
     use the provided factory function to create new graphical entities, this is
     the intended way to use `ezdxf`.
+
 
 Create Block References
 -----------------------

@@ -2,7 +2,6 @@
 # Copyright (c) 2021, Manfred Moitzi
 # License: MIT License
 import pathlib
-import math
 import ezdxf
 from ezdxf.math import Vec3, UCS
 import logging
