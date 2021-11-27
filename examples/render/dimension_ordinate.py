@@ -1,11 +1,10 @@
 # Purpose: using ordinate DIMENSION
 # Copyright (c) 2021, Manfred Moitzi
 # License: MIT License
-from typing import Optional
 import pathlib
 import math
 import ezdxf
-from ezdxf.math import Vec3, UCS, NULLVEC
+from ezdxf.math import Vec3, UCS
 import logging
 
 # ========================================
@@ -19,15 +18,6 @@ logging.basicConfig(level="WARNING")
 OUTDIR = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not OUTDIR.exists():
     OUTDIR = pathlib.Path()
-
-# ========================================
-# Default text attributes
-# ========================================
-TEXT_ATTRIBS = {
-    "height": 0.25,
-    "style": ezdxf.options.default_dimension_text_style,
-}
-DIM_TEXT_STYLE = ezdxf.options.default_dimension_text_style
 
 # =======================================================
 # Discarding dimension rendering is possible
@@ -109,6 +99,33 @@ def ordinate_wcs(
     doc.saveas(OUTDIR / f"{filename}_{DXFVERSION}.dxf")
 
 
+def ordinate_ucs(
+    filename: str,
+    rotate: float = 30.0,
+):
+    doc = ezdxf.new(DXFVERSION, setup=True)
+    dimstyle = doc.dimstyles.duplicate_entry("EZDXF", "ORD_CENTER")
+    dimstyle.dxf.dimtad = 0
+    msp = doc.modelspace()
+
+    for origin in [Vec3(5, 20), Vec3(0, 0), Vec3(-5, -20)]:
+        ucs = UCS(origin, ux=Vec3.from_deg_angle(rotate), uz=(0, 0, 1))
+        msp.add_ordinate_x_dim(
+            feature_location=(3, 2),
+            offset=(1, 2),
+            dimstyle="ORD_CENTER"
+        ).render(ucs=ucs)
+        msp.add_ordinate_y_dim(
+            feature_location=(3, 2),
+            offset=(1, -2),
+            dimstyle="ORD_CENTER"
+        ).render(ucs=ucs)
+
+    doc.set_modelspace_vport(height=70)
+    doc.saveas(OUTDIR / f"{filename}_{DXFVERSION}.dxf")
+
+
 if __name__ == "__main__":
     ordinate_wcs(filename="ordinate_wcs")
     ordinate_wcs(filename="ordinate_rot_30_deg_wcs", rotate=30)
+    ordinate_ucs(filename="ordinate_ucs", rotate=30)
