@@ -59,8 +59,15 @@ class OrdinateDimension(BaseDimensionRenderer):
         self.leader_vec_ocs = self.end_of_leader_ocs - self.feature_location_ocs
         leader_x_vec = self.local_x_axis.project(self.leader_vec_ocs)
         leader_y_vec = self.local_y_axis.project(self.leader_vec_ocs)
-        self.measurement_direction: Vec2 = leader_x_vec.normalize()
-        self.measurement_orthogonal: Vec2 = leader_y_vec.normalize()
+        try:
+            self.measurement_direction: Vec2 = leader_x_vec.normalize()
+        except ZeroDivisionError:
+            self.measurement_direction = Vec2(1, 0)
+        try:
+            self.measurement_orthogonal: Vec2 = leader_y_vec.normalize()
+        except ZeroDivisionError:
+            self.measurement_orthogonal = Vec2(0, 1)
+
         if not self.x_type:
             self.measurement_direction, self.measurement_orthogonal = (
                 self.measurement_orthogonal,
