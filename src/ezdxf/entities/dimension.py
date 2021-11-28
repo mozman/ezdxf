@@ -3,6 +3,7 @@
 import math
 from typing import TYPE_CHECKING, Optional, Union, Iterable
 import logging
+from ezdxf.audit import AuditError
 from ezdxf.lldxf import validator, const
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -45,6 +46,7 @@ if TYPE_CHECKING:
         BaseLayout,
         EntityQuery,
         DXFEntity,
+        Auditor,
     )
 
 logger = logging.getLogger("ezdxf")
@@ -804,6 +806,29 @@ class Dimension(DXFGraphic, OverrideMixin):
                 if block is not None:
                     return (block.block_record_handle,)
         return tuple()
+
+    def audit(self, auditor: "Auditor") -> None:
+        super().audit(auditor)
+        doc = auditor.doc
+        dxf = self.dxf
+
+        if dxf.get("geometry", "*") not in doc.blocks:
+            auditor.fixed_error(
+                code=AuditError.UNDEFINED_BLOCK,
+                message=f"Removed {str(self)} without valid geometry block.",
+            )
+            auditor.trash(self)
+            return
+
+        dimstyle = dxf.get("dimstyle", "Standard")
+        if not doc.dimstyles.has_entry(dimstyle):
+            auditor.fixed_error(
+                code=AuditError.INVALID_DIMSTYLE,
+                message=f"Replaced invalid DIMSTYLE '{dimstyle}' by 'Standard'.",
+            )
+            dxf.discard("dimstyle")
+        # AutoCAD ignores invalid data in the XDATA section, no need to
+        # check or repair. Ezdxf also ignores invalid XDATA overrides.
 
 
 acdb_arc_dimension = DefSubclass(

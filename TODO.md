@@ -42,18 +42,10 @@ Render Tools
 - (>v1.0) factory methods to create ACAD_TABLE entities
 - (>v1.0) tool to create proxy graphic 
 
-Construction Tools
-------------------
-
-- (<v1.0) `make_primitive()`: apply thickness if not 0, which creates meshes 
-
 DXF Entities
 ------------
 
 - (v0.18) MLEADER: factory methods to create new MLEADER entities
-- (<v1.0) do more entities support the DXF "thickness" attribute (group code 39)?
-  possible candidates: HATCH, MPOLYGON, planar SPLINE, ELLIPSE, MLINE 
-  -> `make_primitive()` 
 
 - (>v1.0) ACAD_TABLE entity load and export support beyond `AcadTableBlockContent`
 - (>v1.0) ACAD_TABLE tool to manage content at table and cell basis
@@ -69,15 +61,6 @@ DXF Document
   POLYLINE ..., and removes all entities not supported by DXF R12 
   like TABLE, ACIS entities, ...
    
-DXF Audit & Repair
-------------------
-
-- (<v1.0) check DIMENSION
-  - overridden properties in XDATA have to be checked!
-  - dimstyle exist; repair: set to 'Standard'
-  - arrows exist; repair: set to '' = default open filled arrow
-  - text style exist; repair: set to 'Standard'
-
 Documentation
 -------------
 

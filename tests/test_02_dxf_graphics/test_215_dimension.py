@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 import pytest
 import math
@@ -259,3 +259,30 @@ def test_dimension_transform_interface():
 
     dim.transform(Matrix44.z_rotate(math.radians(45)))
     assert math.isclose(dim.dxf.angle, 90)
+
+
+@pytest.fixture(scope="module")
+def doc():
+    return ezdxf.new()
+
+
+def test_audit_invalid_dimstyle(doc):
+    msp = doc.modelspace()
+    dim = msp.add_linear_dim((5, 2), (0, 0), (10, 0))
+    dim.render()
+
+    dim.dimension.dxf.dimstyle = "XYZ"
+    auditor = doc.audit()
+    assert len(auditor.fixes) == 1
+    assert dim.dimension.dxf.dimstyle == "Standard"
+
+
+def test_audit_invalid_geometry_block(doc):
+    msp = doc.modelspace()
+    dim = msp.add_linear_dim((5, 2), (0, 0), (10, 0))
+    # no geometry block was created without calling dim.render()
+
+    auditor = doc.audit()
+    assert len(auditor.fixes) == 1
+    assert dim.dimension.is_alive is False, "DIMENSION should be destroyed"
+

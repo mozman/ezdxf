@@ -68,6 +68,7 @@ class AuditError(IntEnum):
     INVALID_COLOR_INDEX = 204
     INVALID_LINEWEIGHT = 205
     INVALID_MLINESTYLE_HANDLE = 206
+    INVALID_DIMSTYLE = 207
 
     # DXF entity geometry or content errors:
     INVALID_EXTRUSION_VECTOR = 210
