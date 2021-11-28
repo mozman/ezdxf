@@ -1,8 +1,9 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING, Iterable, Optional
 import copy
-from ezdxf.math import Vec3
+from ezdxf.math import Vec3, Matrix44
+from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.attributes import (
     DXFAttr,
     DXFAttributes,
@@ -10,23 +11,71 @@ from ezdxf.lldxf.attributes import (
     XType,
     group_code_mapping,
 )
-from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2007
-from .dxfentity import base_class, SubclassProcessor, DXFEntity
+from ezdxf.lldxf import const
+from ezdxf.entities import factory
+from .dxfentity import base_class, SubclassProcessor, DXFEntity, DXFTagStorage
 from .dxfgfx import DXFGraphic, acdb_entity
 from .dxfobj import DXFObject
 from .objectcollection import ObjectCollection
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Tags, Drawing
+    from ezdxf.eztypes import (
+        TagWriter,
+        DXFNamespace,
+        Drawing,
+    )
 
-__all__ = ["ACADTable"]
+__all__ = ["AcadTable", "AcadTableBlockContent"]
+
+
+@factory.register_entity
+class AcadTableBlockContent(DXFTagStorage):
+    DXFTYPE = "ACAD_TABLE"
+
+    def proxy_graphic_content(self) -> Iterable[DXFGraphic]:
+        return super().__virtual_entities__()
+
+    def _block_content(self) -> Iterable[DXFGraphic]:
+        tags = self._block_reference_tags()
+        block_name: str = tags.get_first_value(2, "*")
+        return self.doc.blocks.get(block_name, [])  # type: ignore
+
+    def _block_reference_tags(self) -> Tags:
+        try:
+            return self.xtags.get_subclass("AcDbBlockReference")
+        except const.DXFKeyError:
+            return Tags()
+
+    def _insert_location(self) -> Vec3:
+        return self._block_reference_tags().get_first_value(10, Vec3())
+
+    def __virtual_entities__(self) -> Iterable[DXFGraphic]:
+        """Implements the SupportsVirtualEntities protocol."""
+        insert: Vec3 = Vec3(self._insert_location())
+        m: Optional[Matrix44] = None
+        if insert:
+            # TODO: OCS transformation (extrusion) is ignored yet
+            m = Matrix44.translate(insert.x, insert.y, insert.z)
+
+        for entity in self._block_content():
+            try:
+                clone = entity.copy()
+            except const.DXFTypeError:
+                continue
+            if m is not None:
+                # noinspection PyUnboundLocalVariable
+                try:
+                    clone.transform(m)
+                except:  # skip entity at any transformation issue
+                    continue
+            yield clone
+
 
 acdb_block_reference = DefSubclass(
     "AcDbBlockReference",
     {
         # Block name: an anonymous block begins with a *T value
         "geometry": DXFAttr(2),
-
         # Insertion point:
         "insert": DXFAttr(10, xtype=XType.point3d, default=Vec3(0, 0, 0)),
     },
@@ -38,38 +87,27 @@ acdb_table = DefSubclass(
     {
         # Table data version number: 0 = 2010
         "version": DXFAttr(280),
-
         # Hard of the TABLESTYLE object:
         "table_style_id": DXFAttr(342),
-
         # Handle of the associated anonymous BLOCK containing the graphical
         # representation:
         "block_record_handle": DXFAttr(343),
-
         # Horizontal direction vector:
         "horizontal_direction": DXFAttr(11),
-
         # Flag for table value (unsigned integer):
         "table_value": DXFAttr(90),
-
         # Number of rows:
         "n_rows": DXFAttr(91),
-
         # Number of columns:
         "n_cols": DXFAttr(92),
-
         # Flag for an override:
         "override_flag": DXFAttr(93),
-
         # Flag for an override of border color:
         "border_color_override_flag": DXFAttr(94),
-
         # Flag for an override of border lineweight:
         "border_lineweight_override_flag": DXFAttr(95),
-
         # Flag for an override of border visibility:
         "border_visibility_override_flag": DXFAttr(96),
-
         # 141: Row height; this value is repeated, 1 value per row
         # 142: Column height; this value is repeated, 1 value per column
         # for every cell:
@@ -231,14 +269,14 @@ acdb_table_group_codes = group_code_mapping(acdb_table)
 
 
 # todo: implement ACAD_TABLE
-class ACADTable(DXFGraphic):
+class AcadTable(DXFGraphic):
     """DXF ACAD_TABLE entity"""
 
     DXFTYPE = "ACAD_TABLE"
     DXFATTRIBS = DXFAttributes(
         base_class, acdb_entity, acdb_block_reference, acdb_table
     )
-    MIN_DXF_VERSION_FOR_EXPORT = DXF2007
+    MIN_DXF_VERSION_FOR_EXPORT = const.DXF2007
 
     def __init__(self):
         super().__init__()
@@ -246,7 +284,7 @@ class ACADTable(DXFGraphic):
 
     def _copy_data(self, entity: "DXFEntity") -> None:
         """Copy data."""
-        assert isinstance(entity, ACADTable)
+        assert isinstance(entity, AcadTable)
         entity.data = copy.deepcopy(self.data)
 
     def load_dxf_attribs(
@@ -269,9 +307,9 @@ class ACADTable(DXFGraphic):
     def export_entity(self, tagwriter: "TagWriter") -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
-        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_block_reference.name)
+        tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_block_reference.name)
         self.dxf.export_dxf_attribs(tagwriter, ["geometry", "insert"])
-        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_table.name)
+        tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_table.name)
         self.export_table(tagwriter)
 
     def export_table(self, tagwriter: "TagWriter"):
@@ -291,32 +329,24 @@ acdb_table_style = DefSubclass(
     {
         # Table style version: 0 = 2010
         "version": DXFAttr(280),
-
         # Table style description (string; 255 characters maximum):
         "name": DXFAttr(3),
-
         # FlowDirection (integer):
         # 0 = Down
         # 1 = Up
         "flow_direction": DXFAttr(7),
-
         # Flags (bit-coded)
         "flags": DXFAttr(7),
-
         # Horizontal cell margin (real; default = 0.06)
         "horizontal_cell_margin": DXFAttr(40),
-
         # Vertical cell margin (real; default = 0.06)
         "vertical_cell_margin": DXFAttr(41),
-
         # Flag for whether the title is suppressed:
         # 0/1 = not suppressed/suppressed
         "suppress_title": DXFAttr(280),
-
         # Flag for whether the column heading is suppressed:
         # 0/1 = not suppressed/suppressed
         "suppress_column_header": DXFAttr(281),
-
         # The following group codes are repeated for every cell in the table
         #   7: Text style name (string; default = STANDARD)
         # 140: Text height (real)
@@ -348,7 +378,7 @@ class TableStyle(DXFObject):
 
     DXFTYPE = "TABLESTYLE"
     DXFATTRIBS = DXFAttributes(base_class, acdb_table_style)
-    MIN_DXF_VERSION_FOR_EXPORT = DXF2007
+    MIN_DXF_VERSION_FOR_EXPORT = const.DXF2007
 
 
 class TableStyleManager(ObjectCollection):

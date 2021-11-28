@@ -6,8 +6,9 @@ Add-ons
 
 - drawing
   - (v0.18) MLEADER full rendering support, requires `MLeader.virtual_entities()`
-  - (<v1.0) show ACAD_TABLE virtual entities from anonymous block `*T...`
+
   - (>v1.0) support for switching plot styles (DXF_DEFAULT_PAPERSPACE_COLORS)
+  - (>v1.0) VIEWPORT rendering support?
   
 - (>v1.0) Native SVG exporter, planned after the matplotlib backend supports 
   all v1.0 features. 
@@ -35,7 +36,6 @@ Render Tools
 ------------
 
 - (v0.18) `MLeader.virtual_entities()`
-- (<v1.0) ACAD_TABLE get virtual entities from anonymous block `*T...`
 
 - (>v1.0) ACAD_TABLE tool to render content as DXF primitives to create the 
   content of the anonymous block `*T...`
@@ -54,12 +54,11 @@ DXF Entities
 - (<v1.0) do more entities support the DXF "thickness" attribute (group code 39)?
   possible candidates: HATCH, MPOLYGON, planar SPLINE, ELLIPSE, MLINE 
   -> `make_primitive()` 
-- (<v1.0) ACAD_TABLE entity load and export support beyond `DXFTagStorage`
 
+- (>v1.0) ACAD_TABLE entity load and export support beyond `AcadTableBlockContent`
 - (>v1.0) ACAD_TABLE tool to manage content at table and cell basis
 - (>v1.0) GEODATA version 1 support, see mpolygon examples and DXF reference R2009
 - (>v1.0) FIELD, used by ACAD_TABLE and MTEXT
-- (>v1.0) ACAD_TABLE
 
 DXF Document
 ------------
@@ -69,16 +68,7 @@ DXF Document
   MESH to PolyFaceMesh, LWPOLYLINE into POLYLINE, flatten SPLINE into 
   POLYLINE ..., and removes all entities not supported by DXF R12 
   like TABLE, ACIS entities, ...
-  
-- (>v1.0) Optimize DXF export: write tags direct in export_entity() 
-  without any indirections, this requires some additional tag writing 
-  function in the Tagwriter() class, these additional functions should only use 
-  methods from AbstractTagwriter():
-  - write_tag2_skip_default(code, value, default)
-  - write_vertex_2d(code, value, default) write explicit 2D vertices and 
-    skip default value if given
-  - a check function for tags containing user strings (line breaks!)
-  
+   
 DXF Audit & Repair
 ------------------
 
@@ -87,8 +77,6 @@ DXF Audit & Repair
   - dimstyle exist; repair: set to 'Standard'
   - arrows exist; repair: set to '' = default open filled arrow
   - text style exist; repair: set to 'Standard'
-  - check consistent defpoint and POINT entity locations in the associated 
-    geometry block 
 
 Documentation
 -------------
