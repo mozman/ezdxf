@@ -4,6 +4,7 @@
 from typing import Iterable, TYPE_CHECKING
 from ezdxf.entities import DXFGraphic, DXFEntity
 from ezdxf.lldxf import const
+from ezdxf.protocols import SupportsVirtualEntities
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
@@ -31,6 +32,8 @@ class DXFGraphicProxy(DXFGraphic):
 
     def __virtual_entities__(self) -> Iterable[DXFGraphic]:
         """Implements the SupportsVirtualEntities protocol."""
+        if isinstance(self.entity, SupportsVirtualEntities):
+            return self.entity.__virtual_entities__()  # type: ignore
         if hasattr(self.entity, "virtual_entities"):
             return self.entity.virtual_entities()  # type: ignore
         return []

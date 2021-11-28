@@ -8,13 +8,28 @@ from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.protocols import SupportsVirtualEntities, query_virtual_entities
 
 
+class FakeObject(DXFObject):
+    # does not support any graphical DXF attributes like layer, linetype ...
+    DXFTYPE = "FAKE_OBJECT"
+
+
+ENTITIES = [0, 2, 3]
+
+
+class VirtualEntitiesMethod(DXFObject):
+    def virtual_entities(self):
+        return ENTITIES
+
+
+class VirtualEntitiesProtocol(DXFObject):
+    def __virtual_entities__(self):
+        return ENTITIES
+
+
 class TestDXFGraphicProxy:
     @pytest.fixture
     def proxy(self):
-        obj = DXFObject()
-        # does not support any graphical DXF attributes like layer, linetype ...
-        obj.DXFTYPE = "FAKE_OBJECT"
-        return DXFGraphicProxy(obj)
+        return DXFGraphicProxy(FakeObject())
 
     def test_dxf_type(self, proxy):
         assert proxy.dxftype() == "FAKE_OBJECT"
@@ -36,6 +51,14 @@ class TestDXFGraphicProxy:
     def test_supports_virtual_entities_protocol(self, proxy):
         assert isinstance(proxy, SupportsVirtualEntities)
         assert len(query_virtual_entities(proxy)) == 0
+
+    def test_supports_virtual_entities_method_of_wrapped_entity(self):
+        proxy = DXFGraphicProxy(VirtualEntitiesMethod())
+        assert list(query_virtual_entities(proxy)) == ENTITIES
+
+    def test_supports_virtual_entities_protocol_of_wrapped_entity(self):
+        proxy = DXFGraphicProxy(VirtualEntitiesProtocol())
+        assert list(query_virtual_entities(proxy)) == ENTITIES
 
 
 def test_support_for_proxy_graphic_stored_in_acdb_entity():
