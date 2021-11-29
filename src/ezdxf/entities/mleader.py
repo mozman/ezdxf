@@ -54,14 +54,14 @@ acdb_mleader = DefSubclass(
         # Theory: Take properties from MLEADERSTYLE,
         # except explicit overridden here:
         "property_override_flags": DXFAttr(90),
-        # Bit coded flags:
+        # Bit coded flags from ODA DWG specs pg.158:
         # 1 << 0 = leader_type
         # 1 << 1 = leader_line_color
         # 1 << 2 = leader_linetype_handle
         # 1 << 3 = leader_lineweight
-        # 1 << 4 = landing_flag
+        # 1 << 4 = has_landing
         # 1 << 5 = landing_gap ???
-        # 1 << 6 = dogleg_flag
+        # 1 << 6 = has_dogleg
         # 1 << 7 = dogleg_length
         # 1 << 8 = arrow_head_handle
         # 1 << 9 = arrow_head_size
@@ -72,7 +72,7 @@ acdb_mleader = DefSubclass(
         # 1 << 14 = text_alignment_type (of MTEXT)
         # 1 << 15 = text_color (of MTEXT)
         # 1 << 16 = ??? Text height (of MTEXT) ???
-        # 1 << 17 = text_frame_flag
+        # 1 << 17 = has_text_frame
         # 1 << 18 = ??? Enable use of default MTEXT (from MLEADERSTYLE)
         # 1 << 19 = block_record_handle
         # 1 << 20 = block_color
@@ -933,7 +933,7 @@ acdb_mleader_style = DefSubclass(
         # 0 = Horizontal; 1 = Vertical:
         "text_attachment_direction": DXFAttr(271, default=0),
         # 9 = Center; 10 = Underline and Center:
-        "text_bottom__attachment_direction": DXFAttr(272, default=9),
+        "text_bottom_attachment_direction": DXFAttr(272, default=9),
         # 9 = Center; 10 = Overline and Center:
         "text_top_attachment_direction": DXFAttr(273, default=9),
         "unknown2": DXFAttr(298, optional=True),  # boolean flag ?
