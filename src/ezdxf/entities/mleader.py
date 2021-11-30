@@ -624,10 +624,10 @@ class MTextData:
         self.insert: Vec3 = NULLVEC
         self.text_direction: Vec3 = X_AXIS  # text direction
         self.rotation: float = 0.0  # in radians!
-        self.rect_width: float = 0.0
+        self.rect_width: float = 0.0  # MTEXT width?
         # If "rect_height" is not set, like by BricsCAD, a full layout
         # calculation is required!
-        self.rect_height: float = 0.0
+        self.rect_height: float = 0.0  # defined column height?
         self.line_spacing_factor: float = 1.0
         self.line_spacing_style: int = 1  # 1=at least, 2=exactly
         self.color: int = colors.BY_BLOCK_RAW_VALUE

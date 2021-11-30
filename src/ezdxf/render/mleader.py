@@ -1,9 +1,11 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import TYPE_CHECKING, Any, Iterable, cast, List, Optional
+from typing import TYPE_CHECKING, Any, cast, List
 import logging
 
-from ezdxf.math import Vec3
+from ezdxf import colors
+from ezdxf.lldxf import const
+from ezdxf.math import Vec3, Z_AXIS
 from ezdxf.entities import factory
 from ezdxf.proxygraphic import ProxyGraphic
 
@@ -17,6 +19,7 @@ if TYPE_CHECKING:
         Attrib,
         Line,
         Spline,
+        Textstyle,
     )
     from ezdxf.document import Drawing
 
@@ -83,7 +86,7 @@ class MLeaderStyleOverride:
         )
         self.use_mtext_default_content = bool(
             self._property_override_flags & (1 << 18)
-        )
+        )  # if False, what MTEXT content is used?
 
     def get(self, attrib_name: str) -> Any:
         # Set MLEADERSTYLE value as default:
@@ -134,6 +137,37 @@ def get_style(mleader: "MLeader", doc: "Drawing") -> MLeaderStyleOverride:
     return MLeaderStyleOverride(cast("MLeaderStyle", style), mleader)
 
 
+def get_text_style(handle: str, doc: "Drawing") -> "Textstyle":
+    text_style = doc.entitydb.get(handle)
+    if text_style is None:
+        logger.warning(
+            f"referenced STYLE(#{handle}) does not exist, "
+            f"replaced by 'Standard'"
+        )
+        text_style = doc.styles.get("Standard")
+    assert text_style is not None, "mandatory STYLE 'Standard' does not exist"
+    return text_style  # type: ignore
+
+
+ACI_COLOR_TYPES = {
+    colors.COLOR_TYPE_BY_BLOCK,
+    colors.COLOR_TYPE_BY_LAYER,
+    colors.COLOR_TYPE_ACI,
+}
+
+
+def set_mtext_color(mtext: "MText", raw_color: int) -> None:
+    color_type, color = colors.decode_raw_color(raw_color)
+    if color_type in ACI_COLOR_TYPES:
+        mtext.dxf.color = color
+    elif color_type == colors.COLOR_TYPE_RGB:
+        # shortcut for mtext.rgb = color
+        mtext.dxf.true_color = raw_color & 0xffffff
+    else:
+        mtext.dxf.color = const.BYBLOCK  # set default color
+    # colors.COLOR_TYPE_WINDOW_BG: not supported for text color
+
+
 class RenderEngine:
     def __init__(self, mleader: "MLeader", doc: "Drawing"):
         self.mleader = mleader
@@ -142,8 +176,8 @@ class RenderEngine:
         self.context = mleader.context
         # Gather final parameters from various places:
         # Ignore MLeaderStyleOverride at all?
-        # overall scale:
         self.scale: float = self.context.scale  # ignore scale in style?
+        self.layer = mleader.dxf.layer
 
     @property
     def has_text_frame(self) -> bool:
@@ -160,6 +194,31 @@ class RenderEngine:
 
     def build_mtext_content(self) -> List["DXFGraphic"]:
         mtext = cast("MText", factory.new("MTEXT", doc=self.doc))
+        dxf = mtext.dxf
+        dxf.layer = self.layer
+        mctx = self.context.mtext
+        if mctx is not None:
+            # What else could be used as MTEXT content?
+            mtext.text = mctx.default_content
+
+            dxf.style = get_text_style(mctx.style_handle, self.doc)
+            dxf.insert = mctx.insert
+            if not mctx.extrusion.isclose(Z_AXIS):
+                dxf.extrusion = mctx.extrusion
+            dxf.text_direction = mctx.text_direction
+            # ignore rotation!
+            dxf.char_height = self.context.text_height  # default char height
+            dxf.width = mctx.rect_width  # ???
+            dxf.line_spacing_factor = mctx.line_spacing_factor
+            dxf.line_spacing_style = mctx.line_spacing_style
+            dxf.flow_direction = mctx.flow_direction
+            set_mtext_color(mtext, mctx.color)  # set raw color value
+
+            # alignment=attachment_point: 1=top left, 2=top center, 3=top right
+            dxf.attachment_point = mctx.alignment
+
+            # todo: background color, columns
+
         content = [mtext]
         if self.has_text_frame:
             content.extend(self.build_text_frame())
@@ -174,4 +233,3 @@ class RenderEngine:
 
     def build_leaders(self) -> List["DXFGraphic"]:
         return []
-
