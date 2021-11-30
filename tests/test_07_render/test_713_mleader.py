@@ -12,12 +12,16 @@ def doc():
     return ezdxf.new()
 
 
-def test_anything(doc):
-    engine = mleader.RenderEngine(MLeader(), doc)
-    mtext = engine.build_mtext_content()
-    assert isinstance(mtext, MText)
-    blkref = engine.build_block_content()
-    assert isinstance(blkref, Insert)
+class TestRenderEngine:
+    def test_mtext_builder(self, doc):
+        engine = mleader.RenderEngine(MLeader(), doc)
+        content = engine.build_mtext_content()
+        assert isinstance(content[0], MText)
+
+    def test_block_builder(self, doc):
+        engine = mleader.RenderEngine(MLeader(), doc)
+        content = engine.build_block_content()
+        assert isinstance(content[0], Insert)
 
 
 if __name__ == '__main__':

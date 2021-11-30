@@ -70,6 +70,7 @@ class MLeaderStyleOverride:
     def __init__(self, style: "MLeaderStyle", mleader: "MLeader"):
         self._style_dxf = style.dxf
         self._mleader_dxf = mleader.dxf
+        self._context = mleader.context
         self._property_override_flags = mleader.dxf.get(
             "property_override_flags", 0
         )
@@ -85,12 +86,17 @@ class MLeaderStyleOverride:
         )
 
     def get(self, attrib_name: str) -> Any:
+        # Set MLEADERSTYLE value as default:
         if attrib_name == "block_scale_vector":
             value = self._block_scale_vector
         else:
             value = self._style_dxf.get(attrib_name)
         if self.is_overridden(attrib_name):
-            value = self._mleader_dxf.get(attrib_name, value)
+            # Get overridden value from MLEADER
+            if attrib_name == "text_height":
+                value = self._context.text_height
+            else:
+                value = self._mleader_dxf.get(attrib_name, value)
         return value
 
     def is_overridden(self, attrib_name: str) -> bool:
@@ -110,9 +116,7 @@ def virtual_entities(
         )
     else:
         engine = RenderEngine(mleader, doc)
-        content = engine.build_content()
-        if content is not None:
-            entities.append(content)
+        entities.extend(engine.build_content())
         entities.extend(engine.build_leaders())
     return entities
 
@@ -141,22 +145,33 @@ class RenderEngine:
         # overall scale:
         self.scale: float = self.context.scale  # ignore scale in style?
 
-    def build_content(self) -> Optional["DXFGraphic"]:
+    @property
+    def has_text_frame(self) -> bool:
+        return False
+
+    def build_content(self) -> List["DXFGraphic"]:
         context = self.mleader.context
         # also check self.style.get("content_type") ?
         if context.mtext is not None:
             return self.build_mtext_content()
         elif context.block is not None:
             return self.build_block_content()
-        return None
-
-    def build_mtext_content(self) -> "MText":
-        mtext = cast("MText", factory.new("MTEXT", doc=self.doc))
-        return mtext
-
-    def build_block_content(self) -> "Insert":
-        blkref = cast("Insert", factory.new("INSERT", doc=self.doc))
-        return blkref
-
-    def build_leaders(self) -> Iterable["DXFGraphic"]:
         return []
+
+    def build_mtext_content(self) -> List["DXFGraphic"]:
+        mtext = cast("MText", factory.new("MTEXT", doc=self.doc))
+        content = [mtext]
+        if self.has_text_frame:
+            content.extend(self.build_text_frame())
+        return content
+
+    def build_text_frame(self) -> List["DXFGraphic"]:
+        return []
+
+    def build_block_content(self) -> List["DXFGraphic"]:
+        blkref = cast("Insert", factory.new("INSERT", doc=self.doc))
+        return [blkref]
+
+    def build_leaders(self) -> List["DXFGraphic"]:
+        return []
+
