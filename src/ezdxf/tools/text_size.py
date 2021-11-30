@@ -68,14 +68,16 @@ def text_size(text: Text) -> TextSize:
 
 
 def mtext_size(mtext: MText) -> MTextSize:
-    """Returns the total-width, total-height and columns information for a
+    """Returns the total-width, -height and columns information for a
     :class:`~ezdxf.entities.MText` entity.
+
     This function uses the optional `Matplotlib` package if available to do
     font measurements and the internal text layout engine to determine the final
     rendering size for the :class:`MText` entity as close as possible.
-    Because of the requirement of building the full layout this function is slow!
     Without access to the `Matplotlib` package the :class:`~ezdxf.tools.fonts.MonospaceFont`
     is used and the measurements are very inaccurate.
+
+    Attention: The required full layout calculation is slow!
 
     The first call to this function with `Matplotlib` support is very slow,
     because `Matplotlib` lookup all available fonts on the system. To speedup
@@ -83,7 +85,6 @@ def mtext_size(mtext: MText) -> MTextSize:
     `Matplotlib` support manually::
 
         ezdxf.option.use_matplotlib = False
-
 
     """
     column_heights: List[float] = [0.0]
