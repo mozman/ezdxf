@@ -455,7 +455,7 @@ class MultiLeader(DXFGraphic):
             return []
 
     def __referenced_blocks__(self) -> Iterable[str]:
-        """Support for "ReferencedBlocks" protocol. """
+        """Support for "ReferencedBlocks" protocol."""
         # 1. overridden MLEADERSTYLE attributes
         for name in ("block_record_handle", "arrow_head_handle"):
             handle = self.dxf.get(name, None)
@@ -591,15 +591,15 @@ class MultiLeaderContext:
 class MTextData:
     ATTRIBS = {
         304: "default_content",
-        11: "normal_direction",
+        11: "extrusion",
         340: "style_handle",
-        12: "location",
-        13: "direction",
+        12: "insert",
+        13: "text_direction",
         42: "rotation",
-        43: "boundary_width",
-        44: "boundary_height",
-        45: "line_space_factor",
-        170: "line_space_style",
+        43: "rect_width",
+        44: "rect_height",
+        45: "line_spacing_factor",
+        170: "line_spacing_style",
         90: "color",
         171: "alignment",
         172: "flow_direction",
@@ -619,15 +619,17 @@ class MTextData:
 
     def __init__(self):
         self.default_content: str = ""
-        self.normal_direction: Vec3 = Z_AXIS
+        self.extrusion: Vec3 = Z_AXIS
         self.style_handle = None  # handle of TextStyle() table entry
-        self.location: Vec3 = NULLVEC
-        self.direction: Vec3 = X_AXIS  # text direction
+        self.insert: Vec3 = NULLVEC
+        self.text_direction: Vec3 = X_AXIS  # text direction
         self.rotation: float = 0.0  # in radians!
-        self.boundary_width: float = 0.0
-        self.boundary_height: float = 0.0
-        self.line_space_factor: float = 1.0
-        self.line_space_style: int = 1  # 1=at least, 2=exactly
+        self.rect_width: float = 0.0
+        # If "rect_height" is not set, like by BricsCAD, a full layout
+        # calculation is required!
+        self.rect_height: float = 0.0
+        self.line_spacing_factor: float = 1.0
+        self.line_spacing_style: int = 1  # 1=at least, 2=exactly
         self.color: int = colors.BY_BLOCK_RAW_VALUE
         self.alignment: int = 1  # 1=left, 2=center, 3=right
         self.flow_direction: int = 1  # 1=horiz, 3=vert, 6=by style
@@ -658,20 +660,20 @@ class MTextData:
         write_tag2 = tagwriter.write_tag2
         write_vertex = tagwriter.write_vertex
         write_tag2(304, self.default_content)
-        write_vertex(11, self.normal_direction)
+        write_vertex(11, self.extrusion)
         if self.style_handle:
             write_tag2(340, self.style_handle)
         else:
             # Do not write None, but "0" is also not valid!
             # DXF structure error should be detected before export.
             write_tag2(340, "0")
-        write_vertex(12, self.location)
-        write_vertex(13, self.direction)
+        write_vertex(12, self.insert)
+        write_vertex(13, self.text_direction)
         write_tag2(42, self.rotation)
-        write_tag2(43, self.boundary_width)
-        write_tag2(44, self.boundary_height)
-        write_tag2(45, self.line_space_factor)
-        write_tag2(170, self.line_space_style)
+        write_tag2(43, self.rect_width)
+        write_tag2(44, self.rect_height)
+        write_tag2(45, self.line_spacing_factor)
+        write_tag2(170, self.line_spacing_style)
         write_tag2(90, self.color)
         write_tag2(171, self.alignment)
         write_tag2(172, self.flow_direction)
@@ -966,7 +968,7 @@ class MLeaderStyle(DXFObject):
         )
 
     def __referenced_blocks__(self) -> Iterable[str]:
-        """Support for "ReferencedBlocks" protocol. """
+        """Support for "ReferencedBlocks" protocol."""
         for name in ("block_record_handle", "arrow_head_handle"):
             handle = self.dxf.get(name, None)
             if handle is not None:
