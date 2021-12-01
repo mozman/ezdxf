@@ -477,7 +477,7 @@ class MultiLeaderContext:
     ATTRIBS = {
         40: "scale",
         10: "base_point",
-        41: "text_height",
+        41: "char_height",
         140: "arrowhead_size",
         145: "landing_gap_size",
         174: "left_attachment",
@@ -496,7 +496,7 @@ class MultiLeaderContext:
         self.leaders: List["Leader"] = []
         self.scale: float = 1.0  # overall scale
         self.base_point: Vec3 = NULLVEC
-        self.text_height = 4.0
+        self.char_height = 4.0
         self.arrowhead_size = 4.0
         self.landing_gap_size = 2.0
         self.left_attachment = 1
@@ -552,7 +552,7 @@ class MultiLeaderContext:
         # All MultiLeaderContext tags:
         write_tag2(40, self.scale)
         write_vertex(10, self.base_point)
-        write_tag2(41, self.text_height)
+        write_tag2(41, self.char_height)
         write_tag2(140, self.arrowhead_size)
         write_tag2(145, self.landing_gap_size)
         write_tag2(174, self.left_attachment)
@@ -633,7 +633,7 @@ class MTextData:
         self.color: int = colors.BY_BLOCK_RAW_VALUE
         self.alignment: int = 1  # 1=left, 2=center, 3=right
         self.flow_direction: int = 1  # 1=horiz, 3=vert, 6=by style
-        self.bg_color: int = -939524096  # use window background color? (CMC)
+        self.bg_color: int = colors.CANVAS_COLOR_RAW_VALUE  # window background color
         self.bg_scale_factor: float = 1.5
         self.bg_transparency: int = 0
         self.has_bg_color: int = 0
@@ -895,9 +895,7 @@ acdb_mleader_style = DefSubclass(
         "first_segment_angle_constraint": DXFAttr(40, default=0.0),
         "second_segment_angle_constraint": DXFAttr(41, default=0.0),
         "leader_type": DXFAttr(173, default=1),
-        "leader_line_color": DXFAttr(91, default=-1056964608),
-        # raw color: BY_BLOCK
-        # raw color: BY_BLOCK
+        "leader_line_color": DXFAttr(91, default=colors.BY_BLOCK_RAW_VALUE),
         "leader_linetype_handle": DXFAttr(340),
         "leader_lineweight": DXFAttr(92, default=-2),
         "has_landing": DXFAttr(290, default=1),
@@ -914,14 +912,14 @@ acdb_mleader_style = DefSubclass(
         "text_angle_type": DXFAttr(175, default=1),
         "text_alignment_type": DXFAttr(176, default=0),
         "text_right_attachment_type": DXFAttr(178, default=1),
-        "text_color": DXFAttr(93, default=-1056964608),  # raw color: BY_BLOCK
-        "text_height": DXFAttr(45, default=4),
+        "text_color": DXFAttr(93, default=colors.BY_BLOCK_RAW_VALUE),
+        "char_height": DXFAttr(45, default=4),
         "has_frame_text": DXFAttr(292, default=0),
         "text_align_always_left": DXFAttr(297, default=0),
         "align_space": DXFAttr(46, default=4),
         "has_block_scaling": DXFAttr(293),
         "block_record_handle": DXFAttr(343),
-        "block_color": DXFAttr(94, default=-1056964608),  # raw color: BY_BLOCK
+        "block_color": DXFAttr(94, default=colors.BY_BLOCK_RAW_VALUE),
         "block_scale_x": DXFAttr(47, default=1),
         "block_scale_y": DXFAttr(49, default=1),
         "block_scale_z": DXFAttr(140, default=1),

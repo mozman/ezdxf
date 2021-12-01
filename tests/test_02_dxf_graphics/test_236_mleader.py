@@ -219,7 +219,7 @@ class TestMTextContext(MLeaderTesting):
         assert len(ctx.leaders) == 2
         assert ctx.scale == 1
         assert ctx.base_point == (187.4, 185, 0)
-        assert ctx.text_height == 5
+        assert ctx.char_height == 5
         assert ctx.arrowhead_size == 3
         assert ctx.landing_gap_size == 2.5
         assert ctx.left_attachment == 1
@@ -552,7 +552,7 @@ class TestBlockContext(MLeaderTesting):
         assert len(ctx.leaders) == 1
         assert ctx.scale == 1
         assert ctx.base_point == (8.42, 0.70, 0)
-        assert ctx.text_height == 5
+        assert ctx.char_height == 5
         assert ctx.arrowhead_size == 3
         assert ctx.landing_gap_size == 2.5
         assert ctx.left_attachment == 1

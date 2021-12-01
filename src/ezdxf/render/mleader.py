@@ -52,7 +52,7 @@ OVERRIDE_FLAG = {
     "text_angle_type": 1 << 13,
     "text_alignment_type": 1 << 14,
     "text_color": 1 << 15,
-    "text_height": 1 << 16,  # stored in MLeader.context.text_height
+    "char_height": 1 << 16,  # stored in MLeader.context.char_height
     "has_text_frame": 1 << 17,
     # 1 << 18 # use default content stored in MLeader.mtext.default_content
     "block_record_handle": 1 << 19,
@@ -96,8 +96,8 @@ class MLeaderStyleOverride:
             value = self._style_dxf.get(attrib_name)
         if self.is_overridden(attrib_name):
             # Get overridden value from MLEADER
-            if attrib_name == "text_height":
-                value = self._context.text_height
+            if attrib_name == "char_height":
+                value = self._context.char_height
             else:
                 value = self._mleader_dxf.get(attrib_name, value)
         return value
@@ -193,6 +193,8 @@ class RenderEngine:
         return []
 
     def build_mtext_content(self) -> List["DXFGraphic"]:
+        # BricsCAD does not support columns in MTEXT content, so exploring
+        # MLEADER with columns was not possible!
         mtext = cast("MText", factory.new("MTEXT", doc=self.doc))
         dxf = mtext.dxf
         dxf.layer = self.layer
@@ -207,8 +209,8 @@ class RenderEngine:
                 dxf.extrusion = mctx.extrusion
             dxf.text_direction = mctx.text_direction
             # ignore rotation!
-            dxf.char_height = self.context.text_height  # default char height
-            dxf.width = mctx.rect_width  # ???
+            dxf.char_height = self.context.char_height
+            dxf.width = mctx.rect_width
             dxf.line_spacing_factor = mctx.line_spacing_factor
             dxf.line_spacing_style = mctx.line_spacing_style
             dxf.flow_direction = mctx.flow_direction
