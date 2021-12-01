@@ -5,7 +5,7 @@ import logging
 
 from ezdxf import colors
 from ezdxf.lldxf import const
-from ezdxf.math import Vec3, Z_AXIS
+from ezdxf.math import Vec3, Z_AXIS, Matrix44
 from ezdxf.entities import factory
 from ezdxf.proxygraphic import ProxyGraphic
 
@@ -21,6 +21,7 @@ if TYPE_CHECKING:
         Spline,
         Textstyle,
     )
+    from ezdxf.entities.mleader import MTextData
     from ezdxf.document import Drawing
 
 __all__ = ["virtual_entities"]
@@ -156,16 +157,69 @@ ACI_COLOR_TYPES = {
 }
 
 
-def set_mtext_color(mtext: "MText", raw_color: int) -> None:
+def copy_mtext_data(mtext: "MText", mtext_data: "MTextData") -> None:
+    # MLEADERSTYLE has a flag "use_mtext_default_content", what else should be
+    # used as content if this flag is false?
+    mtext.text = mtext_data.default_content
+    dxf = mtext.dxf
+    dxf.insert = mtext_data.insert
+    assert mtext.doc is not None
+    mtext.dxf.style = get_text_style(mtext_data.style_handle, mtext.doc)
+    if not mtext_data.extrusion.isclose(Z_AXIS):
+        dxf.extrusion = mtext_data.extrusion
+    dxf.text_direction = mtext_data.text_direction
+    # ignore rotation!
+    dxf.width = mtext_data.rect_width
+    dxf.line_spacing_factor = mtext_data.line_spacing_factor
+    dxf.line_spacing_style = mtext_data.line_spacing_style
+    dxf.flow_direction = mtext_data.flow_direction
+    # alignment=attachment_point: 1=top left, 2=top center, 3=top right
+    dxf.attachment_point = mtext_data.alignment
+
+
+def set_mtext_text_color(mtext: "MText", raw_color: int) -> None:
     color_type, color = colors.decode_raw_color(raw_color)
     if color_type in ACI_COLOR_TYPES:
         mtext.dxf.color = color
     elif color_type == colors.COLOR_TYPE_RGB:
         # shortcut for mtext.rgb = color
-        mtext.dxf.true_color = raw_color & 0xffffff
+        mtext.dxf.true_color = raw_color & 0xFFFFFF
     else:
         mtext.dxf.color = const.BYBLOCK  # set default color
     # colors.COLOR_TYPE_WINDOW_BG: not supported for text color
+
+
+def set_mtext_bg_fill(mtext: "MText", mtext_data: "MTextData") -> None:
+    # Note: the "text frame" flag (16) in "bg_fill" is never set by BricsCAD!
+    # Set required DXF attributes:
+    mtext.dxf.bg_fill_scale = mtext_data.bg_scale_factor
+    mtext.dxf.bg_fill = 1
+    mtext.dxf.bg_fill_color = colors.BYBLOCK
+    mtext.dxf.bg_fill_transparency = mtext_data.bg_transparency
+    color_type, color = colors.decode_raw_color(mtext_data.bg_color)
+    if color_type in ACI_COLOR_TYPES:
+        mtext.dxf.bg_fill_color = color
+    elif color_type == colors.COLOR_TYPE_RGB:
+        # shortcut for mtext.rgb = color
+        mtext.dxf.bg_fill_true_color = mtext_data.bg_color & 0xFFFFFF
+
+    if (
+        mtext_data.use_window_bg_color
+        or color_type == colors.COLOR_TYPE_WINDOW_BG
+    ):
+        # override fill mode, but keep stored colors
+        mtext.dxf.bg_fill = 3
+
+
+def set_mtext_columns(mtext: "MText", mtext_data: "MTextData") -> None:
+    # BricsCAD does not support columns for MTEXT content, so exploring
+    # MLEADER with columns was not possible!
+    pass
+
+
+def scale_mtext(mtext: "MText", scale: float) -> None:
+    if scale:
+        mtext.transform(Matrix44.scale(scale, scale, scale))
 
 
 class RenderEngine:
@@ -193,35 +247,20 @@ class RenderEngine:
         return []
 
     def build_mtext_content(self) -> List["DXFGraphic"]:
-        # BricsCAD does not support columns in MTEXT content, so exploring
-        # MLEADER with columns was not possible!
         mtext = cast("MText", factory.new("MTEXT", doc=self.doc))
-        dxf = mtext.dxf
-        dxf.layer = self.layer
-        mctx = self.context.mtext
-        if mctx is not None:
-            # What else could be used as MTEXT content?
-            mtext.text = mctx.default_content
+        mtext.dxf.layer = self.layer
+        mtext.dxf.char_height = self.context.char_height
+        mtext_data: "MTextData" = self.context.mtext
+        if mtext_data is not None:
+            copy_mtext_data(mtext, mtext_data)
+            set_mtext_text_color(mtext, mtext_data.color)
+            if mtext_data.has_bg_fill:
+                set_mtext_bg_fill(mtext, mtext_data)
+            set_mtext_columns(mtext, mtext_data)
+        if self.scale != 1.0:
+            scale_mtext(mtext, self.scale)
 
-            dxf.style = get_text_style(mctx.style_handle, self.doc)
-            dxf.insert = mctx.insert
-            if not mctx.extrusion.isclose(Z_AXIS):
-                dxf.extrusion = mctx.extrusion
-            dxf.text_direction = mctx.text_direction
-            # ignore rotation!
-            dxf.char_height = self.context.char_height
-            dxf.width = mctx.rect_width
-            dxf.line_spacing_factor = mctx.line_spacing_factor
-            dxf.line_spacing_style = mctx.line_spacing_style
-            dxf.flow_direction = mctx.flow_direction
-            set_mtext_color(mtext, mctx.color)  # set raw color value
-
-            # alignment=attachment_point: 1=top left, 2=top center, 3=top right
-            dxf.attachment_point = mctx.alignment
-
-            # todo: background color, columns
-
-        content = [mtext]
+        content: List["DXFGraphic"] = [mtext]
         if self.has_text_frame:
             content.extend(self.build_text_frame())
         return content

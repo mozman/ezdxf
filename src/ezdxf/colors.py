@@ -51,7 +51,7 @@ def decode_raw_color(value: int) -> Tuple[int, Union[int, RGB]]:
 
 BY_LAYER_RAW_VALUE = -1073741824  # -(-(0xc0 << 24) & 0xffffffff)
 BY_BLOCK_RAW_VALUE = -1056964608  # -(-(0xc1 << 24) & 0xffffffff)
-CANVAS_COLOR_RAW_VALUE = -939524096
+WINDOW_BG_RAW_VALUE = -939524096
 
 
 def encode_raw_color(value: Union[int, RGB]) -> int:

@@ -606,7 +606,7 @@ class MTextData:
         91: "bg_color",
         141: "bg_scale_factor",
         92: "bg_transparency",
-        291: "has_bg_color",
+        291: "use_window_bg_color",
         292: "has_bg_fill",
         173: "column_type",
         293: "use_auto_height",
@@ -633,10 +633,10 @@ class MTextData:
         self.color: int = colors.BY_BLOCK_RAW_VALUE
         self.alignment: int = 1  # 1=left, 2=center, 3=right
         self.flow_direction: int = 1  # 1=horiz, 3=vert, 6=by style
-        self.bg_color: int = colors.CANVAS_COLOR_RAW_VALUE  # window background color
+        self.bg_color: int = colors.WINDOW_BG_RAW_VALUE
         self.bg_scale_factor: float = 1.5
         self.bg_transparency: int = 0
-        self.has_bg_color: int = 0
+        self.use_window_bg_color: int = 0
         self.has_bg_fill: int = 0
         self.column_type: int = 0  # unknown values
         self.use_auto_height: int = 0
@@ -680,7 +680,7 @@ class MTextData:
         write_tag2(91, self.bg_color)
         write_tag2(141, self.bg_scale_factor)
         write_tag2(92, self.bg_transparency)
-        write_tag2(291, self.has_bg_color)
+        write_tag2(291, self.use_window_bg_color)
         write_tag2(292, self.has_bg_fill)
         write_tag2(173, self.column_type)
         write_tag2(293, self.use_auto_height)

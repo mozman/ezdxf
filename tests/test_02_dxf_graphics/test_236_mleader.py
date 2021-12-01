@@ -251,7 +251,7 @@ class TestMTextContext(MLeaderTesting):
         assert mtext.bg_color == -939524096  # use window background color?
         assert mtext.bg_scale_factor == 2
         assert mtext.bg_transparency == 0
-        assert mtext.has_bg_color == 0
+        assert mtext.use_window_bg_color == 0
         assert mtext.has_bg_fill == 0
         assert mtext.column_type == 0
         assert mtext.use_auto_height == 0
