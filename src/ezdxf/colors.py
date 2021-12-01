@@ -2,10 +2,20 @@
 #  License: MIT License
 from typing import Tuple, Union
 import math
-from ezdxf.lldxf import const
 
 RGB = Tuple[int, int, int]
 
+BYBLOCK = 0
+BYLAYER = 256
+BYOBJECT = 257
+RED = 1
+YELLOW = 2
+GREEN = 3
+CYAN = 4
+BLUE = 5
+MAGENTA = 6
+BLACK = 7
+WHITE = 7
 
 # Flags for raw color int values:
 # Take color from layer, ignore other bytes.
@@ -26,9 +36,9 @@ def decode_raw_color(value: int) -> Tuple[int, Union[int, RGB]]:
     """Returns tuple(type, Union[aci, (r, g, b)]."""
     flags = (value >> 24) & 0xFF
     if flags == COLOR_TYPE_BY_BLOCK:
-        return COLOR_TYPE_BY_BLOCK, const.BYBLOCK
+        return COLOR_TYPE_BY_BLOCK, BYBLOCK
     elif flags == COLOR_TYPE_BY_LAYER:
-        return COLOR_TYPE_BY_LAYER, const.BYLAYER
+        return COLOR_TYPE_BY_LAYER, BYLAYER
     elif flags == COLOR_TYPE_ACI:
         return COLOR_TYPE_ACI, value & 0xFF
     elif flags == COLOR_TYPE_RGB:
@@ -41,13 +51,14 @@ def decode_raw_color(value: int) -> Tuple[int, Union[int, RGB]]:
 
 BY_LAYER_RAW_VALUE = -1073741824  # -(-(0xc0 << 24) & 0xffffffff)
 BY_BLOCK_RAW_VALUE = -1056964608  # -(-(0xc1 << 24) & 0xffffffff)
+CANVAS_COLOR_RAW_VALUE = -939524096
 
 
 def encode_raw_color(value: Union[int, RGB]) -> int:
     if isinstance(value, int):
-        if value == const.BYBLOCK:
+        if value == BYBLOCK:
             return BY_BLOCK_RAW_VALUE
-        elif value == const.BYLAYER:
+        elif value == BYLAYER:
             return BY_LAYER_RAW_VALUE
         elif 0 < value < 256:
             return -(-(COLOR_TYPE_ACI << 24) & 0xFFFFFFFF) | value
