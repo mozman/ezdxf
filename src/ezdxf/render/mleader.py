@@ -1,11 +1,11 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import TYPE_CHECKING, Any, cast, List
+from typing import TYPE_CHECKING, Any, cast, List, Dict, Tuple, Optional
 import logging
 
 from ezdxf import colors
 from ezdxf.lldxf import const
-from ezdxf.math import Vec3, Z_AXIS, Matrix44
+from ezdxf.math import Vec3, Z_AXIS, Matrix44, fit_points_to_cad_cv
 from ezdxf.entities import factory
 from ezdxf.proxygraphic import ProxyGraphic
 
@@ -19,9 +19,10 @@ if TYPE_CHECKING:
         Attrib,
         Line,
         Spline,
+        LWPolyline,
         Textstyle,
     )
-    from ezdxf.entities.mleader import MTextData
+    from ezdxf.entities.mleader import MTextData, Leader, LeaderLine
     from ezdxf.document import Drawing
 
 __all__ = ["virtual_entities"]
@@ -94,7 +95,7 @@ class MLeaderStyleOverride:
         if attrib_name == "block_scale_vector":
             value = self._block_scale_vector
         else:
-            value = self._style_dxf.get(attrib_name)
+            value = self._style_dxf.get_default(attrib_name)
         if self.is_overridden(attrib_name):
             # Get overridden value from MLEADER
             if attrib_name == "char_height":
@@ -157,6 +158,18 @@ ACI_COLOR_TYPES = {
 }
 
 
+def decode_raw_color(raw_color: int) -> Tuple[int, Optional[int]]:
+    aci_color = colors.BYBLOCK
+    true_color: Optional[int] = None
+    color_type, color = colors.decode_raw_color_int(raw_color)
+    if color_type in ACI_COLOR_TYPES:
+        aci_color = color
+    elif color_type == colors.COLOR_TYPE_RGB:
+        true_color = color
+    # COLOR_TYPE_WINDOW_BG: not supported as entity color
+    return aci_color, true_color
+
+
 def copy_mtext_data(mtext: "MText", mtext_data: "MTextData") -> None:
     # MLEADERSTYLE has a flag "use_mtext_default_content", what else should be
     # used as content if this flag is false?
@@ -178,15 +191,11 @@ def copy_mtext_data(mtext: "MText", mtext_data: "MTextData") -> None:
 
 
 def set_mtext_text_color(mtext: "MText", raw_color: int) -> None:
-    color_type, color = colors.decode_raw_color(raw_color)
-    if color_type in ACI_COLOR_TYPES:
-        mtext.dxf.color = color
-    elif color_type == colors.COLOR_TYPE_RGB:
-        # shortcut for mtext.rgb = color
-        mtext.dxf.true_color = raw_color & 0xFFFFFF
+    aci, true_color = decode_raw_color(raw_color)
+    if true_color is None:
+        mtext.dxf.color = aci
     else:
-        mtext.dxf.color = const.BYBLOCK  # set default color
-    # colors.COLOR_TYPE_WINDOW_BG: not supported for text color
+        mtext.dxf.true_color = true_color
 
 
 def set_mtext_bg_fill(mtext: "MText", mtext_data: "MTextData") -> None:
@@ -196,12 +205,11 @@ def set_mtext_bg_fill(mtext: "MText", mtext_data: "MTextData") -> None:
     mtext.dxf.bg_fill = 1
     mtext.dxf.bg_fill_color = colors.BYBLOCK
     mtext.dxf.bg_fill_transparency = mtext_data.bg_transparency
-    color_type, color = colors.decode_raw_color(mtext_data.bg_color)
+    color_type, color = colors.decode_raw_color_int(mtext_data.bg_color)
     if color_type in ACI_COLOR_TYPES:
         mtext.dxf.bg_fill_color = color
     elif color_type == colors.COLOR_TYPE_RGB:
-        # shortcut for mtext.rgb = color
-        mtext.dxf.bg_fill_true_color = mtext_data.bg_color & 0xFFFFFF
+        mtext.dxf.bg_fill_true_color = color
 
     if (
         mtext_data.use_window_bg_color
@@ -229,13 +237,46 @@ class RenderEngine:
         self.style: MLeaderStyleOverride = get_style(mleader, doc)
         self.context = mleader.context
         # Gather final parameters from various places:
-        # Ignore MLeaderStyleOverride at all?
         self.scale: float = self.context.scale  # ignore scale in style?
         self.layer = mleader.dxf.layer
+        self.linetype = self._get_linetype_name()
+        self.lineweight = self.style.get("leader_lineweight")
+        aci_color, true_color = self._get_leader_color()
+        self.leader_aci_color: int = aci_color
+        self.leader_true_color: Optional[int] = true_color
+        # leader_type:
+        # 0 = invisible
+        # 1 = straight line leader
+        # 2 = spline leader
+        self.leader_type: int = self.style.get("leader_type")
+        self.has_text_frame = False
 
-    @property
-    def has_text_frame(self) -> bool:
-        return False
+    def _get_linetype_name(self) -> str:
+        handle = self.style.get("leader_linetype_handle")
+        ltype = self.doc.entitydb.get(handle)
+        if ltype is not None:
+            return ltype.dxf.name
+        return "Continuous"
+
+    def _get_leader_color(self) -> Tuple[int, Optional[int]]:
+        raw_color: int = self.style.get("leader_line_color")
+        return decode_raw_color(raw_color)
+
+    def leader_line_attribs(self, raw_color: int = None) -> Dict:
+        aci_color = self.leader_aci_color
+        true_color = self.leader_true_color
+        if raw_color is not None:
+            aci_color, true_color = decode_raw_color(raw_color)
+
+        attribs = {
+            "layer": self.layer,
+            "color": aci_color,
+            "linetype": self.linetype,
+            "lineweight": self.lineweight,
+        }
+        if true_color is not None:
+            attribs["true_color"] = true_color
+        return attribs
 
     def build_content(self) -> List["DXFGraphic"]:
         context = self.mleader.context
@@ -273,4 +314,50 @@ class RenderEngine:
         return [blkref]
 
     def build_leaders(self) -> List["DXFGraphic"]:
+        entities: List["DXFGraphic"] = []
+        if self.leader_type > 0:
+            for leader in self.context.leaders:
+                for line in leader.lines:
+                    entities.extend(self.build_leader_line(leader, line))
+        return entities
+
+    def build_leader_line(
+        self, leader: "Leader", line: "LeaderLine"
+    ) -> List["DXFGraphic"]:
+        # 0 = invisible leader lines
+        if self.leader_type == 1:
+            return self.build_straight_line(leader, line)
+        elif self.leader_type == 2:
+            return self.build_spline(leader, line)
         return []
+
+    def build_straight_line(
+        self, leader: "Leader", line: "LeaderLine"
+    ) -> List["DXFGraphic"]:
+        attribs = self.leader_line_attribs(line.color)
+        pline = cast(
+            "LWPolyline",
+            factory.new("LWPOLYLINE", dxfattribs=attribs, doc=self.doc),
+        )
+        pline.set_points(line.vertices, format="xy")  # type: ignore
+        return [pline]
+
+    def build_spline(
+        self, leader: "Leader", line: "LeaderLine"
+    ) -> List["DXFGraphic"]:
+        entities: List["DXFGraphic"] = []
+        attribs = self.leader_line_attribs(line.color)
+        spline = cast(
+            "Spline",
+            factory.new("SPLINE", dxfattribs=attribs, doc=self.doc),
+        )
+        fit_points = line.vertices
+        tangents = None
+        # 4 fit point or 2 fit points, start- and end tangent required
+        if len(fit_points) > 3:
+            entities.append(
+                spline.apply_construction_tool(
+                    fit_points_to_cad_cv(fit_points, tangents)
+                )
+            )
+        return entities

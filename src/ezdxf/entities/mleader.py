@@ -85,6 +85,11 @@ acdb_mleader = DefSubclass(
         # 1 << 27 = text_attachment_direction (of MTEXT)
         # 1 << 28 = text_top_attachment_type (of MTEXT)
         # 1 << 29 = Text_bottom_attachment_type (of MTEXT)
+
+        # leader_type:
+        # 0 = invisible
+        # 1 = straight line leader
+        # 2 = spline leader
         "leader_type": DXFAttr(170, default=1),
         "leader_line_color": DXFAttr(91, default=colors.BY_BLOCK_RAW_VALUE),
         "leader_linetype_handle": DXFAttr(341),
@@ -894,6 +899,10 @@ acdb_mleader_style = DefSubclass(
         "max_leader_segments_points": DXFAttr(90, default=2),
         "first_segment_angle_constraint": DXFAttr(40, default=0.0),
         "second_segment_angle_constraint": DXFAttr(41, default=0.0),
+        # leader_type:
+        # 0 = invisible
+        # 1 = straight line leader
+        # 2 = spline leader
         "leader_type": DXFAttr(173, default=1),
         "leader_line_color": DXFAttr(91, default=colors.BY_BLOCK_RAW_VALUE),
         "leader_linetype_handle": DXFAttr(340),
