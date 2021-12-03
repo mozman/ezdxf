@@ -698,8 +698,8 @@ class MTextData:
 class BlockData:
     ATTRIBS = {
         341: "block_record_handle",
-        14: "normal_direction",
-        15: "location",
+        14: "extrusion",
+        15: "insert",
         16: "scale",
         46: "rotation",
         93: "color",
@@ -707,8 +707,8 @@ class BlockData:
 
     def __init__(self):
         self.block_record_handle = None
-        self.normal_direction: Vec3 = Z_AXIS
-        self.location: Vec3 = NULLVEC
+        self.extrusion: Vec3 = Z_AXIS
+        self.insert: Vec3 = NULLVEC
         self.scale: Vec3 = Vec3(1, 1, 1)
         self.rotation: float = 0  # in radians!
         self.color: int = colors.BY_BLOCK_RAW_VALUE
@@ -748,8 +748,8 @@ class BlockData:
             # Do not write None, but "0" is also not valid!
             # DXF structure error should be detected before export.
             write_tag2(341, "0")
-        write_vertex(14, self.normal_direction)
-        write_vertex(15, self.location)
+        write_vertex(14, self.extrusion)
+        write_vertex(15, self.insert)
         write_vertex(16, self.scale)
         write_tag2(46, self.rotation)
         write_tag2(93, self.color)
@@ -829,7 +829,7 @@ class Leader:
 
 class LeaderLine:
     def __init__(self):
-        self.vertices: List[Vec3] = []
+        self.vertices: List[Vec3] = []  # OCS coordinates?
         self.breaks: Optional[List[Union[int, Vec3]]] = None
         # Breaks: 90, 11, 12, [11, 12, ...] [, 90, 11, 12 [11, 12, ...]]
         # group code 90 = break index

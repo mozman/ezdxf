@@ -570,8 +570,8 @@ class TestBlockContext(MLeaderTesting):
     def test_block_data(self, ctx):
         block = ctx.block
         assert block.block_record_handle == "FEFE"
-        assert block.normal_direction == (0, 0, 1)
-        assert block.location == (18.42, 0.70, 0)
+        assert block.extrusion == (0, 0, 1)
+        assert block.insert == (18.42, 0.70, 0)
         assert block.scale == (1.0, 2.0, 3.0)
         assert block.rotation == 0.2
         assert block.color == colors.BY_BLOCK_RAW_VALUE
