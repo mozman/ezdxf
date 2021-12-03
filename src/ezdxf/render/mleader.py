@@ -4,8 +4,7 @@ from typing import TYPE_CHECKING, Any, cast, List, Dict, Tuple, Optional
 import logging
 
 from ezdxf import colors
-from ezdxf.lldxf import const
-from ezdxf.math import Vec3, Z_AXIS, Matrix44, fit_points_to_cad_cv
+from ezdxf.math import Vec3, NULLVEC, Z_AXIS, fit_points_to_cad_cv, OCS
 from ezdxf.entities import factory
 from ezdxf.proxygraphic import ProxyGraphic
 
@@ -114,16 +113,10 @@ def virtual_entities(
 ) -> List["DXFGraphic"]:
     doc = mleader.doc
     assert doc is not None, "valid DXF document required"
-    entities: List["DXFGraphic"] = list()
     if proxy_graphic and mleader.proxy_graphic is not None:
-        entities.extend(
-            ProxyGraphic(mleader.proxy_graphic, doc).virtual_entities()
-        )
+        return list(ProxyGraphic(mleader.proxy_graphic, doc).virtual_entities())
     else:
-        engine = RenderEngine(mleader, doc)
-        entities.extend(engine.build_content())
-        entities.extend(engine.build_leaders())
-    return entities
+        return RenderEngine(mleader, doc).run()
 
 
 def get_style(mleader: "MLeader", doc: "Drawing") -> MLeaderStyleOverride:
@@ -170,7 +163,9 @@ def decode_raw_color(raw_color: int) -> Tuple[int, Optional[int]]:
     return aci_color, true_color
 
 
-def copy_mtext_data(mtext: "MText", mtext_data: "MTextData") -> None:
+def copy_mtext_data(
+    mtext: "MText", mtext_data: "MTextData", scale: float
+) -> None:
     # MLEADERSTYLE has a flag "use_mtext_default_content", what else should be
     # used as content if this flag is false?
     mtext.text = mtext_data.default_content
@@ -182,7 +177,7 @@ def copy_mtext_data(mtext: "MText", mtext_data: "MTextData") -> None:
         dxf.extrusion = mtext_data.extrusion
     dxf.text_direction = mtext_data.text_direction
     # ignore rotation!
-    dxf.width = mtext_data.rect_width
+    dxf.width = mtext_data.width * scale
     dxf.line_spacing_factor = mtext_data.line_spacing_factor
     dxf.line_spacing_style = mtext_data.line_spacing_style
     dxf.flow_direction = mtext_data.flow_direction
@@ -201,7 +196,7 @@ def set_mtext_text_color(mtext: "MText", raw_color: int) -> None:
 def set_mtext_bg_fill(mtext: "MText", mtext_data: "MTextData") -> None:
     # Note: the "text frame" flag (16) in "bg_fill" is never set by BricsCAD!
     # Set required DXF attributes:
-    mtext.dxf.bg_fill_scale = mtext_data.bg_scale_factor
+    mtext.dxf.box_fill_scale = mtext_data.bg_scale_factor
     mtext.dxf.bg_fill = 1
     mtext.dxf.bg_fill_color = colors.BYBLOCK
     mtext.dxf.bg_fill_transparency = mtext_data.bg_transparency
@@ -219,15 +214,38 @@ def set_mtext_bg_fill(mtext: "MText", mtext_data: "MTextData") -> None:
         mtext.dxf.bg_fill = 3
 
 
-def set_mtext_columns(mtext: "MText", mtext_data: "MTextData") -> None:
+def set_mtext_columns(
+    mtext: "MText", mtext_data: "MTextData", scale: float
+) -> None:
     # BricsCAD does not support columns for MTEXT content, so exploring
     # MLEADER with columns was not possible!
     pass
 
 
-def scale_mtext(mtext: "MText", scale: float) -> None:
-    if scale:
-        mtext.transform(Matrix44.scale(scale, scale, scale))
+def _get_insert(entity: "MLeader") -> Vec3:
+    context = entity.context
+    if context.mtext is not None:
+        return context.mtext.insert
+    elif context.block is not None:
+        return context.block.insert
+    return NULLVEC
+
+
+def _get_extrusion(entity: "MLeader") -> Vec3:
+    context = entity.context
+    if context.mtext is not None:
+        return context.mtext.extrusion
+    elif context.block is not None:
+        return context.block.extrusion
+    return Z_AXIS
+
+
+def _get_leader_vertices(
+    leader: "Leader", line_vertices: List[Vec3]
+) -> List[Vec3]:
+    vertices = list(line_vertices)
+    vertices.append(leader.last_leader_point)
+    return vertices
 
 
 class RenderEngine:
@@ -236,20 +254,33 @@ class RenderEngine:
         self.doc = doc
         self.style: MLeaderStyleOverride = get_style(mleader, doc)
         self.context = mleader.context
+        self.insert = _get_insert(mleader)
+        self.extrusion: Vec3 = _get_extrusion(mleader)
+        self.has_extrusion = not self.extrusion.isclose(Z_AXIS)
+        self.elevation: float = self.insert.z
+
         # Gather final parameters from various places:
-        self.scale: float = self.context.scale  # ignore scale in style?
+        # This is the actual entity scaling, ignore scale in MLEADERSTYLE!
+        self.scale: float = self.context.scale
         self.layer = mleader.dxf.layer
         self.linetype = self._get_linetype_name()
         self.lineweight = self.style.get("leader_lineweight")
-        aci_color, true_color = self._get_leader_color()
+        aci_color, true_color = decode_raw_color(
+            self.style.get("leader_line_color")
+        )
         self.leader_aci_color: int = aci_color
         self.leader_true_color: Optional[int] = true_color
-        # leader_type:
-        # 0 = invisible
-        # 1 = straight line leader
-        # 2 = spline leader
         self.leader_type: int = self.style.get("leader_type")
         self.has_text_frame = False
+
+    def run(self) -> List["DXFGraphic"]:
+        """Entry point to render MLEADER entities."""
+        entities: List["DXFGraphic"] = []
+        if abs(self.scale) > 1e-9:
+            entities.extend(self.build_content())
+            entities.extend(self.build_leaders())
+        # otherwise it vanishes by scaling down to almost "nothing"
+        return entities
 
     def _get_linetype_name(self) -> str:
         handle = self.style.get("leader_linetype_handle")
@@ -257,10 +288,6 @@ class RenderEngine:
         if ltype is not None:
             return ltype.dxf.name
         return "Continuous"
-
-    def _get_leader_color(self) -> Tuple[int, Optional[int]]:
-        raw_color: int = self.style.get("leader_line_color")
-        return decode_raw_color(raw_color)
 
     def leader_line_attribs(self, raw_color: int = None) -> Dict:
         aci_color = self.leader_aci_color
@@ -290,16 +317,15 @@ class RenderEngine:
     def build_mtext_content(self) -> List["DXFGraphic"]:
         mtext = cast("MText", factory.new("MTEXT", doc=self.doc))
         mtext.dxf.layer = self.layer
+        # !char_height is the final already scaled value!
         mtext.dxf.char_height = self.context.char_height
         mtext_data: "MTextData" = self.context.mtext
         if mtext_data is not None:
-            copy_mtext_data(mtext, mtext_data)
+            copy_mtext_data(mtext, mtext_data, self.scale)
             set_mtext_text_color(mtext, mtext_data.color)
             if mtext_data.has_bg_fill:
                 set_mtext_bg_fill(mtext, mtext_data)
-            set_mtext_columns(mtext, mtext_data)
-        if self.scale != 1.0:
-            scale_mtext(mtext, self.scale)
+            set_mtext_columns(mtext, mtext_data, self.scale)
 
         content: List["DXFGraphic"] = [mtext]
         if self.has_text_frame:
@@ -335,11 +361,17 @@ class RenderEngine:
         self, leader: "Leader", line: "LeaderLine"
     ) -> List["DXFGraphic"]:
         attribs = self.leader_line_attribs(line.color)
+        # BricsCAD builds multiple LINE entities, but LWPOLYLINE is more
+        # efficient.
+        attribs["elevation"] = self.elevation
+        attribs["extrusion"] = self.extrusion
         pline = cast(
             "LWPolyline",
             factory.new("LWPOLYLINE", dxfattribs=attribs, doc=self.doc),
         )
-        pline.set_points(line.vertices, format="xy")  # type: ignore
+        # TODO: expecting OCS vertices
+        vertices = _get_leader_vertices(leader, line.vertices)
+        pline.set_points(vertices, format="xy")  # type: ignore
         return [pline]
 
     def build_spline(
@@ -351,13 +383,19 @@ class RenderEngine:
             "Spline",
             factory.new("SPLINE", dxfattribs=attribs, doc=self.doc),
         )
-        fit_points = line.vertices
-        tangents = None
+        # TODO: expecting OCS vertices
+        fit_points = _get_leader_vertices(leader, line.vertices)
+        if self.has_extrusion:
+            # convert OCS coordinates to WCS coordinates
+            ocs = OCS(self.extrusion)
+            to_wcs = ocs.matrix.ocs_to_wcs
+            fit_points = [to_wcs(v) for v in line.vertices]
+
         # 4 fit point or 2 fit points, start- and end tangent required
         if len(fit_points) > 3:
             entities.append(
                 spline.apply_construction_tool(
-                    fit_points_to_cad_cv(fit_points, tangents)
+                    fit_points_to_cad_cv(fit_points, tangents=None)
                 )
             )
         return entities
