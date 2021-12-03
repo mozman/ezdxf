@@ -242,7 +242,7 @@ class TestMTextContext(MLeaderTesting):
         assert mtext.insert == (236.6, 187.0, 0)
         assert mtext.text_direction == (0, 1, 0)
         assert mtext.rotation == 0.2  # in radians!
-        assert mtext.rect_width == 104.6
+        assert mtext.width == 104.6
         assert mtext.line_spacing_factor == 1.5
         assert mtext.line_spacing_style == 1
         assert mtext.color == colors.BY_BLOCK_RAW_VALUE

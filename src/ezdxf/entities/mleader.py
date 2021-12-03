@@ -501,7 +501,7 @@ class MultiLeaderContext:
         self.leaders: List["Leader"] = []
         self.scale: float = 1.0  # overall scale
         self.base_point: Vec3 = NULLVEC
-        self.char_height = 4.0
+        self.char_height = 4.0  # scaled char height!
         self.arrowhead_size = 4.0
         self.landing_gap_size = 2.0
         self.left_attachment = 1
@@ -601,8 +601,8 @@ class MTextData:
         12: "insert",
         13: "text_direction",
         42: "rotation",
-        43: "rect_width",
-        44: "rect_height",
+        43: "width",
+        44: "defined_height",
         45: "line_spacing_factor",
         170: "line_spacing_style",
         90: "color",
@@ -629,10 +629,8 @@ class MTextData:
         self.insert: Vec3 = NULLVEC
         self.text_direction: Vec3 = X_AXIS  # text direction
         self.rotation: float = 0.0  # in radians!
-        self.rect_width: float = 0.0  # MTEXT width?
-        # If "rect_height" is not set, like by BricsCAD, a full layout
-        # calculation is required!
-        self.rect_height: float = 0.0  # defined column height?
+        self.width: float = 0.0  # MTEXT width, not scaled
+        self.defined_height: float = 0.0  # defined column height, not scaled
         self.line_spacing_factor: float = 1.0
         self.line_spacing_style: int = 1  # 1=at least, 2=exactly
         self.color: int = colors.BY_BLOCK_RAW_VALUE
@@ -645,10 +643,10 @@ class MTextData:
         self.has_bg_fill: int = 0
         self.column_type: int = 0  # unknown values
         self.use_auto_height: int = 0
-        self.column_width: float = 0.0
-        self.column_gutter_width: float = 0.0
+        self.column_width: float = 0.0  # not scaled
+        self.column_gutter_width: float = 0.0  # not scaled
         self.column_flow_reversed: int = 0
-        self.column_sizes: List[float] = []  # heights?
+        self.column_sizes: List[float] = []  # heights?, not scaled
         self.use_word_break: int = 1
 
     def parse(self, code: int, value) -> bool:
@@ -675,8 +673,8 @@ class MTextData:
         write_vertex(12, self.insert)
         write_vertex(13, self.text_direction)
         write_tag2(42, self.rotation)
-        write_tag2(43, self.rect_width)
-        write_tag2(44, self.rect_height)
+        write_tag2(43, self.width)
+        write_tag2(44, self.defined_height)
         write_tag2(45, self.line_spacing_factor)
         write_tag2(170, self.line_spacing_style)
         write_tag2(90, self.color)
