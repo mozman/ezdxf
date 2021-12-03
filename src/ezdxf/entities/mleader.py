@@ -6,6 +6,7 @@ import logging
 from collections import namedtuple
 
 from ezdxf.lldxf import const
+from ezdxf.lldxf.types import cast_value
 from ezdxf.lldxf.attributes import (
     DXFAttr,
     DXFAttributes,
@@ -652,11 +653,11 @@ class MTextData:
     def parse(self, code: int, value) -> bool:
         # return True if data belongs to mtext else False (end of mtext section)
         if code == 144:
-            self.column_sizes.append(value)
+            self.column_sizes.append(float(value))
             return True
         attrib = MTextData.ATTRIBS.get(code)
         if attrib:
-            self.__setattr__(attrib, value)
+            self.__setattr__(attrib, cast_value(code, value))
         return bool(attrib)
 
     def export_dxf(self, tagwriter: "TagWriter") -> None:
@@ -731,9 +732,9 @@ class BlockData:
     def parse(self, code: int, value) -> bool:
         attrib = BlockData.ATTRIBS.get(code)
         if attrib:
-            self.__setattr__(attrib, value)
+            self.__setattr__(attrib, cast_value(code, value))
         elif code == 47:
-            self._matrix.append(value)
+            self._matrix.append(float(value))
         else:
             return False
         # return True if data belongs to block else False (end of block section)
@@ -848,9 +849,9 @@ class LeaderLine:
         breaks = []
         for code, value in tags:
             if code == 10:
-                vertices.append(value)
+                vertices.append(Vec3(value))
             elif code in (90, 11, 12):
-                breaks.append(value)
+                breaks.append(cast_value(code, value))
             elif code == 91:
                 line.index = value
             elif code == 92:
