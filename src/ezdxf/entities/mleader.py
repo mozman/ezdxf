@@ -35,7 +35,19 @@ if TYPE_CHECKING:
         DXFEntity,
     )
 
-__all__ = ["MultiLeader", "MLeader", "MLeaderStyle", "MLeaderStyleCollection"]
+__all__ = [
+    "MultiLeader",
+    "MLeader",
+    "MLeaderStyle",
+    "MLeaderStyleCollection",
+    "MLeaderContext",
+    "MTextData",
+    "BlockData",
+    "LeaderData",
+    "LeaderLine",
+    "ArrowHeadData",
+    "AttribData",
+]
 
 logger = logging.getLogger("ezdxf")
 
@@ -86,7 +98,6 @@ acdb_mleader = DefSubclass(
         # 1 << 27 = text_attachment_direction (of MTEXT)
         # 1 << 28 = text_top_attachment_type (of MTEXT)
         # 1 << 29 = Text_bottom_attachment_type (of MTEXT)
-
         # leader_type:
         # 0 = invisible
         # 1 = straight line leader
@@ -241,7 +252,7 @@ class MultiLeader(DXFGraphic):
 
     def __init__(self):
         super().__init__()
-        self.context = MultiLeaderContext()
+        self.context = MLeaderContext()
         self.arrow_heads: List[ArrowHeadData] = []
         self.block_attribs: List[AttribData] = []
 
@@ -298,13 +309,13 @@ class MultiLeader(DXFGraphic):
         return context_data
 
     @staticmethod
-    def load_context(data: List["DXFTag"]) -> "MultiLeaderContext":
+    def load_context(data: List["DXFTag"]) -> "MLeaderContext":
         try:
             context = compile_context_tags(data, END_CONTEXT_DATA)
         except StopIteration:
             raise const.DXFStructureError
         else:
-            return MultiLeaderContext.load(context)
+            return MLeaderContext.load(context)
 
     @staticmethod
     def extract_arrow_heads(data: Tags) -> List[ArrowHeadData]:
@@ -479,7 +490,7 @@ class MultiLeader(DXFGraphic):
                 yield handle
 
 
-class MultiLeaderContext:
+class MLeaderContext:
     ATTRIBS = {
         40: "scale",
         10: "base_point",
@@ -499,7 +510,7 @@ class MultiLeaderContext:
     }
 
     def __init__(self):
-        self.leaders: List["Leader"] = []
+        self.leaders: List["LeaderData"] = []
         self.scale: float = 1.0  # overall scale
         self.base_point: Vec3 = NULLVEC
         self.char_height = 4.0  # scaled char height!
@@ -519,13 +530,13 @@ class MultiLeaderContext:
         self.bottom_attachment = 9
 
     @classmethod
-    def load(cls, context: List[Union["DXFTag", List]]) -> "MultiLeaderContext":
+    def load(cls, context: List[Union["DXFTag", List]]) -> "MLeaderContext":
         assert context[0] == (START_CONTEXT_DATA, CONTEXT_STR)
         ctx = cls()
         content = None
         for tag in context:
             if isinstance(tag, list):  # Leader()
-                ctx.leaders.append(Leader.load(tag))
+                ctx.leaders.append(LeaderData.load(tag))
                 continue
             # parse context tags
             code, value = tag
@@ -542,7 +553,7 @@ class MultiLeaderContext:
                 content = BlockData()  # type: ignore
                 ctx.block = content
             else:
-                name = MultiLeaderContext.ATTRIBS.get(code)
+                name = MLeaderContext.ATTRIBS.get(code)
                 if name:
                     ctx.__setattr__(name, value)
         return ctx
@@ -555,7 +566,7 @@ class MultiLeaderContext:
         write_tag2 = tagwriter.write_tag2
         write_vertex = tagwriter.write_vertex
         write_tag2(START_CONTEXT_DATA, CONTEXT_STR)
-        # All MultiLeaderContext tags:
+        # All MLeaderContext tags:
         write_tag2(40, self.scale)
         write_vertex(10, self.base_point)
         write_tag2(41, self.char_height)
@@ -587,7 +598,7 @@ class MultiLeaderContext:
         for leader in self.leaders:
             leader.export_dxf(tagwriter)
 
-        # Additional MultiLeaderContext tags:
+        # Additional MLeaderContext tags:
         if tagwriter.dxfversion >= const.DXF2010:
             write_tag2(272, self.top_attachment)
             write_tag2(273, self.bottom_attachment)
@@ -758,10 +769,12 @@ class BlockData:
             write_tag2(47, value)
 
 
-class Leader:
+class LeaderData:
     def __init__(self):
         self.lines: List["LeaderLine"] = []
-        self.has_last_leader_line: int = 0  # group code 290
+        # What does "has_last_leader_line" mean, it is not the same as
+        # "has_dogleg"!
+        self.has_last_leader_line: int = 0  # group code 290,
         self.has_dogleg_vector: int = 0  # group code 291
         self.last_leader_point: Vec3 = NULLVEC  # group code (10, 20, 30)
         self.dogleg_vector: Vec3 = X_AXIS  # group code (11, 21, 31)
@@ -787,7 +800,7 @@ class Leader:
             elif code == 10:
                 leader.last_leader_point = value
             elif code == 11:
-                leader.dogleg_vector = value
+                leader.dogleg_vector = Vec3(value)
             elif code == 40:
                 leader.dogleg_length = value
             elif code == 90:
@@ -795,7 +808,7 @@ class Leader:
             elif code == 271:
                 leader.attachment_direction = value
             elif code in (12, 13):
-                leader.breaks.append(value)
+                leader.breaks.append(Vec3(value))
 
         return leader
 

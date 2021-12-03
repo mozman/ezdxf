@@ -9,20 +9,23 @@ from ezdxf.entities import factory
 from ezdxf.proxygraphic import ProxyGraphic
 
 if TYPE_CHECKING:
+    from ezdxf.document import Drawing
     from ezdxf.entities import (
-        MLeader,
-        MLeaderStyle,
         DXFGraphic,
         MText,
         Insert,
         Attrib,
         Line,
         Spline,
-        LWPolyline,
         Textstyle,
     )
-    from ezdxf.entities.mleader import MTextData, Leader, LeaderLine
-    from ezdxf.document import Drawing
+    from ezdxf.entities.mleader import (
+        MLeader,
+        MLeaderStyle,
+        MTextData,
+        LeaderData,
+        LeaderLine,
+    )
 
 __all__ = ["virtual_entities"]
 
@@ -170,6 +173,10 @@ def copy_mtext_data(
     # used as content if this flag is false?
     mtext.text = mtext_data.default_content
     dxf = mtext.dxf
+    aci_color, true_color = decode_raw_color(mtext_data.color)
+    dxf.color = aci_color
+    if true_color is not None:
+        dxf.true_color = true_color
     dxf.insert = mtext_data.insert
     assert mtext.doc is not None
     mtext.dxf.style = get_text_style(mtext_data.style_handle, mtext.doc)
@@ -183,14 +190,6 @@ def copy_mtext_data(
     dxf.flow_direction = mtext_data.flow_direction
     # alignment=attachment_point: 1=top left, 2=top center, 3=top right
     dxf.attachment_point = mtext_data.alignment
-
-
-def set_mtext_text_color(mtext: "MText", raw_color: int) -> None:
-    aci, true_color = decode_raw_color(raw_color)
-    if true_color is None:
-        mtext.dxf.color = aci
-    else:
-        mtext.dxf.true_color = true_color
 
 
 def set_mtext_bg_fill(mtext: "MText", mtext_data: "MTextData") -> None:
@@ -241,22 +240,31 @@ def _get_extrusion(entity: "MLeader") -> Vec3:
 
 
 def _get_leader_vertices(
-    leader: "Leader", line_vertices: List[Vec3]
+    leader: "LeaderData", line_vertices: List[Vec3], has_dogleg=False
 ) -> List[Vec3]:
     vertices = list(line_vertices)
-    vertices.append(leader.last_leader_point)
+    end_point = leader.last_leader_point
+    if has_dogleg:
+        vertices.append(end_point)
+    if leader.has_dogleg_vector:  # what else?
+        vertices.append(
+            end_point + leader.dogleg_vector.normalize(leader.dogleg_length)
+        )
     return vertices
 
 
 class RenderEngine:
     def __init__(self, mleader: "MLeader", doc: "Drawing"):
+        self.entities: List["DXFGraphic"] = []  # result container
         self.mleader = mleader
         self.doc = doc
         self.style: MLeaderStyleOverride = get_style(mleader, doc)
         self.context = mleader.context
         self.insert = _get_insert(mleader)
         self.extrusion: Vec3 = _get_extrusion(mleader)
-        self.has_extrusion = not self.extrusion.isclose(Z_AXIS)
+        self.ocs: Optional[OCS] = None
+        if not self.extrusion.isclose(Z_AXIS):
+            self.ocs = OCS(self.extrusion)
         self.elevation: float = self.insert.z
 
         # Gather final parameters from various places:
@@ -272,15 +280,20 @@ class RenderEngine:
         self.leader_true_color: Optional[int] = true_color
         self.leader_type: int = self.style.get("leader_type")
         self.has_text_frame = False
+        self.has_dogleg = self.style.get("has_dogleg")
+
+    @property
+    def has_extrusion(self) -> bool:
+        return self.ocs is not None
 
     def run(self) -> List["DXFGraphic"]:
         """Entry point to render MLEADER entities."""
-        entities: List["DXFGraphic"] = []
+        self.entities.clear()
         if abs(self.scale) > 1e-9:
-            entities.extend(self.build_content())
-            entities.extend(self.build_leaders())
+            self.add_content()
+            self.add_leaders()
         # otherwise it vanishes by scaling down to almost "nothing"
-        return entities
+        return self.entities
 
     def _get_linetype_name(self) -> str:
         handle = self.style.get("leader_linetype_handle")
@@ -305,16 +318,14 @@ class RenderEngine:
             attribs["true_color"] = true_color
         return attribs
 
-    def build_content(self) -> List["DXFGraphic"]:
-        context = self.mleader.context
+    def add_content(self) -> None:
         # also check self.style.get("content_type") ?
-        if context.mtext is not None:
-            return self.build_mtext_content()
-        elif context.block is not None:
-            return self.build_block_content()
-        return []
+        if self.context.mtext is not None:
+            self.add_mtext_content()
+        elif self.context.block is not None:
+            self.add_block_content()
 
-    def build_mtext_content(self) -> List["DXFGraphic"]:
+    def add_mtext_content(self) -> None:
         mtext = cast("MText", factory.new("MTEXT", doc=self.doc))
         mtext.dxf.layer = self.layer
         # !char_height is the final already scaled value!
@@ -322,80 +333,84 @@ class RenderEngine:
         mtext_data: "MTextData" = self.context.mtext
         if mtext_data is not None:
             copy_mtext_data(mtext, mtext_data, self.scale)
-            set_mtext_text_color(mtext, mtext_data.color)
             if mtext_data.has_bg_fill:
                 set_mtext_bg_fill(mtext, mtext_data)
             set_mtext_columns(mtext, mtext_data, self.scale)
-
-        content: List["DXFGraphic"] = [mtext]
+        self.entities.append(mtext)
         if self.has_text_frame:
-            content.extend(self.build_text_frame())
-        return content
+            self.add_text_frame()
 
-    def build_text_frame(self) -> List["DXFGraphic"]:
-        return []
+    def add_text_frame(self) -> None:
+        pass
 
-    def build_block_content(self) -> List["DXFGraphic"]:
+    def add_block_content(self) -> None:
         blkref = cast("Insert", factory.new("INSERT", doc=self.doc))
-        return [blkref]
+        self.entities.append(blkref)
 
-    def build_leaders(self) -> List["DXFGraphic"]:
-        entities: List["DXFGraphic"] = []
-        if self.leader_type > 0:
-            for leader in self.context.leaders:
-                for line in leader.lines:
-                    entities.extend(self.build_leader_line(leader, line))
-        return entities
+    def add_leaders(self) -> None:
+        if self.leader_type == 0:
+            return
 
-    def build_leader_line(
-        self, leader: "Leader", line: "LeaderLine"
-    ) -> List["DXFGraphic"]:
+        for leader in self.context.leaders:
+            if self.leader_type == 1 and self.has_dogleg:
+                self.add_dogleg(leader)
+            for line in leader.lines:
+                self.add_leader_line(leader, line)
+
+    def add_dogleg(self, leader: "LeaderData"):
+        start_point = leader.last_leader_point
+        end_point = start_point + leader.dogleg_vector.normalize(
+            leader.dogleg_length
+        )
+        self.add_dxf_line(start_point, end_point)
+
+    def add_leader_line(self, leader: "LeaderData", line: "LeaderLine"):
         # 0 = invisible leader lines
         if self.leader_type == 1:
-            return self.build_straight_line(leader, line)
+            self.add_straight_leader(leader, line)
         elif self.leader_type == 2:
-            return self.build_spline(leader, line)
-        return []
+            self.add_spline_leader(leader, line)
 
-    def build_straight_line(
-        self, leader: "Leader", line: "LeaderLine"
-    ) -> List["DXFGraphic"]:
-        attribs = self.leader_line_attribs(line.color)
-        # BricsCAD builds multiple LINE entities, but LWPOLYLINE is more
-        # efficient.
-        attribs["elevation"] = self.elevation
-        attribs["extrusion"] = self.extrusion
-        pline = cast(
-            "LWPolyline",
-            factory.new("LWPOLYLINE", dxfattribs=attribs, doc=self.doc),
+    def add_straight_leader(self, leader: "LeaderData", line: "LeaderLine"):
+        vertices = _get_leader_vertices(leader, line.vertices, self.has_dogleg)
+        for s, e in zip(vertices, vertices[1:]):
+            self.add_dxf_line(s, e, line.color)
+
+    def add_spline_leader(self, leader: "LeaderData", line: "LeaderLine"):
+        # Splines do not have a dogleg!
+        fit_points = _get_leader_vertices(
+            leader, line.vertices, has_dogleg=False
         )
-        # TODO: expecting OCS vertices
-        vertices = _get_leader_vertices(leader, line.vertices)
-        pline.set_points(vertices, format="xy")  # type: ignore
-        return [pline]
+        # 4 fit points or 2 fit points & start- and end tangent required
+        if len(fit_points) > 3:
+            self.add_dxf_spline(fit_points, tangents=None, color=line.color)
 
-    def build_spline(
-        self, leader: "Leader", line: "LeaderLine"
-    ) -> List["DXFGraphic"]:
-        entities: List["DXFGraphic"] = []
-        attribs = self.leader_line_attribs(line.color)
+    def add_dxf_spline(
+        self, fit_points: List[Vec3], tangents=None, color: int = None
+    ):
+        attribs = self.leader_line_attribs(color)
         spline = cast(
             "Spline",
             factory.new("SPLINE", dxfattribs=attribs, doc=self.doc),
         )
-        # TODO: expecting OCS vertices
-        fit_points = _get_leader_vertices(leader, line.vertices)
-        if self.has_extrusion:
+        if self.ocs is not None:
             # convert OCS coordinates to WCS coordinates
-            ocs = OCS(self.extrusion)
-            to_wcs = ocs.matrix.ocs_to_wcs
-            fit_points = [to_wcs(v) for v in line.vertices]
+            to_wcs = self.ocs.matrix.ocs_to_wcs
+            fit_points = [to_wcs(v) for v in fit_points]
 
-        # 4 fit point or 2 fit points, start- and end tangent required
-        if len(fit_points) > 3:
-            entities.append(
-                spline.apply_construction_tool(
-                    fit_points_to_cad_cv(fit_points, tangents=None)
-                )
-            )
-        return entities
+        spline.apply_construction_tool(
+            fit_points_to_cad_cv(fit_points, tangents=tangents)
+        )
+        self.entities.append(spline)
+
+    def add_dxf_line(self, start: Vec3, end: Vec3, color: int = None):
+        attribs = self.leader_line_attribs(color)
+        if self.ocs is not None:
+            to_wcs = self.ocs.matrix.ocs_to_wcs
+            start = to_wcs(start)
+            end = to_wcs(end)
+        attribs["start"] = start
+        attribs["end"] = end
+        self.entities.append(
+            factory.new("LINE", dxfattribs=attribs, doc=self.doc)  # type: ignore
+        )

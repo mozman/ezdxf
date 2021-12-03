@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2020 Manfred Moitzi
+# Copyright (c) 2018-2021 Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
@@ -9,12 +9,11 @@ from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
 from ezdxf.math import Matrix44
 
-# noinspection PyProtectedMember
 from ezdxf.entities.mleader import (
     LeaderLine,
-    Leader,
+    LeaderData,
     compile_context_tags,
-    MultiLeaderContext,
+    MLeaderContext,
     MultiLeader,
     BlockData,
 )
@@ -105,7 +104,7 @@ class TestLeader:
 
     def test_parse(self, tags):
         ctx = compile_context_tags(tags, 303)
-        leader = Leader.load(ctx)
+        leader = LeaderData.load(ctx)
         assert len(leader.lines) == 1
         assert leader.has_last_leader_line == 1
         assert leader.has_dogleg_vector == 1
@@ -118,7 +117,7 @@ class TestLeader:
     def test_export_dxf(self, tags):
         expected = basic_tags_from_text(LEADER_1)
         ctx = compile_context_tags(tags, 303)
-        leader = Leader.load(ctx)
+        leader = LeaderData.load(ctx)
         collector = TagCollector()
         leader.export_dxf(collector)
         assert collector.tags == expected
@@ -187,7 +186,7 @@ class MLeaderTesting:
 
     @pytest.fixture(scope="class")
     def ctx(self, tags):
-        return MultiLeaderContext.load(compile_context_tags(tags, 301))
+        return MLeaderContext.load(compile_context_tags(tags, 301))
 
     @pytest.fixture(scope="class")
     def mleader(self, text):
