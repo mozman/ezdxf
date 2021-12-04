@@ -4,9 +4,10 @@ from typing import TYPE_CHECKING, Any, cast, List, Dict, Tuple, Optional
 import logging
 
 from ezdxf import colors
-from ezdxf.math import Vec3, NULLVEC, Z_AXIS, fit_points_to_cad_cv, OCS
+from ezdxf.math import Vec3, NULLVEC, X_AXIS, Z_AXIS, fit_points_to_cad_cv, OCS
 from ezdxf.entities import factory
 from ezdxf.proxygraphic import ProxyGraphic
+from ezdxf.render.arrows import ARROWS, arrow_length
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
         MTextData,
         LeaderData,
         LeaderLine,
+        ArrowHeadData,
     )
 
 __all__ = ["virtual_entities"]
@@ -147,6 +149,13 @@ def get_text_style(handle: str, doc: "Drawing") -> "Textstyle":
     return text_style  # type: ignore
 
 
+def get_arrow_direction(vertices: List[Vec3]) -> Vec3:
+    if len(vertices) < 2:
+        return X_AXIS
+    direction = vertices[1] - vertices[0]
+    return direction.normalize()
+
+
 ACI_COLOR_TYPES = {
     colors.COLOR_TYPE_BY_BLOCK,
     colors.COLOR_TYPE_BY_LAYER,
@@ -227,7 +236,7 @@ def _get_insert(entity: "MLeader") -> Vec3:
         return context.mtext.insert
     elif context.block is not None:
         return context.block.insert
-    return NULLVEC
+    return context.plane_origin
 
 
 def _get_extrusion(entity: "MLeader") -> Vec3:
@@ -236,7 +245,7 @@ def _get_extrusion(entity: "MLeader") -> Vec3:
         return context.mtext.extrusion
     elif context.block is not None:
         return context.block.extrusion
-    return Z_AXIS
+    return context.plane_z_axis
 
 
 def _get_leader_vertices(
@@ -246,11 +255,14 @@ def _get_leader_vertices(
     end_point = leader.last_leader_point
     if has_dogleg:
         vertices.append(end_point)
-    if leader.has_dogleg_vector:  # what else?
-        vertices.append(
-            end_point + leader.dogleg_vector.normalize(leader.dogleg_length)
-        )
+    vertices.append(end_point + _get_dogleg_vector(leader))
     return vertices
+
+
+def _get_dogleg_vector(leader: "LeaderData", default: Vec3 = X_AXIS) -> Vec3:
+    if leader.has_dogleg_vector:  # what else?
+        return leader.dogleg_vector.normalize(leader.dogleg_length)
+    return default.normalize(leader.dogleg_length)
 
 
 class RenderEngine:
@@ -271,7 +283,7 @@ class RenderEngine:
         # This is the actual entity scaling, ignore scale in MLEADERSTYLE!
         self.scale: float = self.context.scale
         self.layer = mleader.dxf.layer
-        self.linetype = self._get_linetype_name()
+        self.linetype = self.linetype_name()
         self.lineweight = self.style.get("leader_lineweight")
         aci_color, true_color = decode_raw_color(
             self.style.get("leader_line_color")
@@ -281,6 +293,9 @@ class RenderEngine:
         self.leader_type: int = self.style.get("leader_type")
         self.has_text_frame = False
         self.has_dogleg = self.style.get("has_dogleg")
+        self.arrow_heads: Dict[int, str] = {
+            head.index: head.handle for head in mleader.arrow_heads
+        }
 
     @property
     def has_extrusion(self) -> bool:
@@ -295,12 +310,27 @@ class RenderEngine:
         # otherwise it vanishes by scaling down to almost "nothing"
         return self.entities
 
-    def _get_linetype_name(self) -> str:
+    def linetype_name(self) -> str:
         handle = self.style.get("leader_linetype_handle")
         ltype = self.doc.entitydb.get(handle)
         if ltype is not None:
             return ltype.dxf.name
+        logger.warning(f"invalid linetype handle #{handle} in {self.mleader}")
         return "Continuous"
+
+    def arrow_block_name(self, index: int) -> str:
+        closed_filled = "_CLOSED_FILLED"
+        handle = self.arrow_heads.get(index, None)
+        if handle is None or handle == "0":
+            return closed_filled
+        block_record = self.doc.entitydb.get(handle)
+        if block_record is None:
+            logger.warning(
+                f"arrow block #{handle} in {self.mleader} does not exist, "
+                f"replaced by closed filled arrow"
+            )
+            return closed_filled
+        return block_record.dxf.name
 
     def leader_line_attribs(self, raw_color: int = None) -> Dict:
         aci_color = self.leader_aci_color
@@ -365,25 +395,51 @@ class RenderEngine:
         self.add_dxf_line(start_point, end_point)
 
     def add_leader_line(self, leader: "LeaderData", line: "LeaderLine"):
-        # 0 = invisible leader lines
-        if self.leader_type == 1:
-            self.add_straight_leader(leader, line)
-        elif self.leader_type == 2:
-            self.add_spline_leader(leader, line)
+        leader_type = self.leader_type
+        if leader_type == 0:  # invisible leader lines
+            return
+        has_dogleg = self.has_dogleg
+        if leader_type == 2:  # Splines do not have a dogleg!
+            has_dogleg = False
+        vertices = _get_leader_vertices(leader, line.vertices, has_dogleg)
+        if len(vertices) < 2:  # at least 2 vertices required
+            return
 
-    def add_straight_leader(self, leader: "LeaderData", line: "LeaderLine"):
-        vertices = _get_leader_vertices(leader, line.vertices, self.has_dogleg)
-        for s, e in zip(vertices, vertices[1:]):
-            self.add_dxf_line(s, e, line.color)
-
-    def add_spline_leader(self, leader: "LeaderData", line: "LeaderLine"):
-        # Splines do not have a dogleg!
-        fit_points = _get_leader_vertices(
-            leader, line.vertices, has_dogleg=False
+        arrow_direction = get_arrow_direction(vertices)
+        raw_color = line.color
+        index = line.index
+        block_name = self.create_arrow_block(self.arrow_block_name(index))
+        arrow_size = self.context.arrowhead_size
+        self.add_arrow(
+            name=block_name,
+            location=vertices[0],
+            rotation=arrow_direction.angle_deg + 180.0,
+            scale=arrow_size,
+            color=raw_color,
         )
-        # 4 fit points or 2 fit points & start- and end tangent required
-        if len(fit_points) > 3:
-            self.add_dxf_spline(fit_points, tangents=None, color=line.color)
+        arrow_offset = arrow_direction * arrow_length(
+            block_name, arrow_size
+        )
+        vertices[0] += arrow_offset
+        if leader_type == 1:  # add straight lines
+            for s, e in zip(vertices, vertices[1:]):
+                self.add_dxf_line(s, e, raw_color)
+        elif leader_type == 2:  # add spline
+            self.add_dxf_spline(
+                vertices,
+                # tangent normalization is not required
+                tangents=[arrow_direction, _get_dogleg_vector(leader)],
+                color=raw_color,
+            )
+
+    def create_arrow_block(self, name: str) -> str:
+        if name not in self.doc.blocks:
+            # create predefined arrows
+            arrow_name = ARROWS.arrow_name(name)
+            if arrow_name not in ARROWS:
+                arrow_name = ARROWS.closed_filled
+            name = ARROWS.create_block(self.doc.blocks, arrow_name)
+        return name
 
     def add_dxf_spline(
         self, fit_points: List[Vec3], tangents=None, color: int = None
@@ -413,4 +469,26 @@ class RenderEngine:
         attribs["end"] = end
         self.entities.append(
             factory.new("LINE", dxfattribs=attribs, doc=self.doc)  # type: ignore
+        )
+
+    def add_arrow(
+        self,
+        name: str,
+        location: Vec3,
+        rotation: float,
+        scale: float,
+        color: int,
+    ):
+        attribs = self.leader_line_attribs(color)
+        attribs["name"] = name
+        attribs["insert"] = location
+        attribs["rotation"] = rotation
+        if scale != 1.0:
+            attribs["xscale"] = scale
+            attribs["yscale"] = scale
+            attribs["zscale"] = scale
+        if self.has_extrusion:
+            attribs["extrusion"] = self.extrusion
+        self.entities.append(
+            factory.new("INSERT", dxfattribs=attribs, doc=self.doc)  # type: ignore
         )

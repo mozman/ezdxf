@@ -555,12 +555,19 @@ class MLeaderContext:
             else:
                 name = MLeaderContext.ATTRIBS.get(code)
                 if name:
-                    ctx.__setattr__(name, value)
+                    ctx.__setattr__(name, cast_value(code, value))
         return ctx
 
     @property
     def is_valid(self) -> bool:
         return True
+
+    @property
+    def plane_z_axis(self) -> Vec3:
+        z_axis = self.plane_x_axis.cross(self.plane_y_axis)
+        if self.plane_normal_reversed:
+            z_axis = -z_axis
+        return z_axis
 
     def export_dxf(self, tagwriter: "TagWriter") -> None:
         write_tag2 = tagwriter.write_tag2

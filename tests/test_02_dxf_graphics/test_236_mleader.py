@@ -7,7 +7,7 @@ from ezdxf import colors
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.math import Matrix44
+from ezdxf.math import Matrix44, Z_AXIS
 
 from ezdxf.entities.mleader import (
     LeaderLine,
@@ -232,6 +232,7 @@ class TestMTextContext(MLeaderTesting):
         assert ctx.plane_normal_reversed == 1
         assert ctx.top_attachment == 8
         assert ctx.bottom_attachment == 8
+        assert ctx.plane_z_axis.isclose(Z_AXIS)
 
     def test_mtext_data(self, ctx):
         mtext = ctx.mtext
