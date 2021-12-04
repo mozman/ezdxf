@@ -4,7 +4,15 @@ from typing import TYPE_CHECKING, Any, cast, List, Dict, Tuple, Optional
 import logging
 
 from ezdxf import colors
-from ezdxf.math import Vec3, NULLVEC, X_AXIS, Z_AXIS, fit_points_to_cad_cv, OCS
+from ezdxf.math import (
+    Vec3,
+    NULLVEC,
+    X_AXIS,
+    Z_AXIS,
+    fit_points_to_cad_cv,
+    OCS,
+    OCSTransform,
+)
 from ezdxf.entities import factory
 from ezdxf.proxygraphic import ProxyGraphic
 from ezdxf.render.arrows import ARROWS, arrow_length
@@ -251,6 +259,7 @@ def _get_extrusion(entity: "MLeader") -> Vec3:
 def _get_leader_vertices(
     leader: "LeaderData", line_vertices: List[Vec3], has_dogleg=False
 ) -> List[Vec3]:
+    # All leader vertices and directions in WCS!
     vertices = list(line_vertices)
     end_point = leader.last_leader_point
     if has_dogleg:
@@ -260,6 +269,7 @@ def _get_leader_vertices(
 
 
 def _get_dogleg_vector(leader: "LeaderData", default: Vec3 = X_AXIS) -> Vec3:
+    # All leader vertices and directions in WCS!
     if leader.has_dogleg_vector:  # what else?
         return leader.dogleg_vector.normalize(leader.dogleg_length)
     return default.normalize(leader.dogleg_length)
@@ -292,7 +302,7 @@ class RenderEngine:
         self.leader_true_color: Optional[int] = true_color
         self.leader_type: int = self.style.get("leader_type")
         self.has_text_frame = False
-        self.has_dogleg = self.style.get("has_dogleg")
+        self.has_dogleg: bool = bool(self.style.get("has_dogleg"))
         self.arrow_heads: Dict[int, str] = {
             head.index: head.handle for head in mleader.arrow_heads
         }
@@ -388,6 +398,7 @@ class RenderEngine:
                 self.add_leader_line(leader, line)
 
     def add_dogleg(self, leader: "LeaderData"):
+        # All leader vertices and directions in WCS!
         start_point = leader.last_leader_point
         end_point = start_point + leader.dogleg_vector.normalize(
             leader.dogleg_length
@@ -395,29 +406,32 @@ class RenderEngine:
         self.add_dxf_line(start_point, end_point)
 
     def add_leader_line(self, leader: "LeaderData", line: "LeaderLine"):
-        leader_type = self.leader_type
+        # All leader vertices and directions in WCS!
+        leader_type: int = self.leader_type
         if leader_type == 0:  # invisible leader lines
             return
-        has_dogleg = self.has_dogleg
-        if leader_type == 2:  # Splines do not have a dogleg!
+        has_dogleg: bool = self.has_dogleg
+        if leader_type == 2:  # splines do not have a dogleg!
             has_dogleg = False
-        vertices = _get_leader_vertices(leader, line.vertices, has_dogleg)
+        vertices: List[Vec3] = _get_leader_vertices(
+            leader, line.vertices, has_dogleg
+        )
         if len(vertices) < 2:  # at least 2 vertices required
             return
 
-        arrow_direction = get_arrow_direction(vertices)
-        raw_color = line.color
-        index = line.index
-        block_name = self.create_arrow_block(self.arrow_block_name(index))
-        arrow_size = self.context.arrowhead_size
+        arrow_direction: Vec3 = get_arrow_direction(vertices)
+        raw_color: int = line.color
+        index: int = line.index
+        block_name: str = self.create_arrow_block(self.arrow_block_name(index))
+        arrow_size: float = self.context.arrowhead_size
         self.add_arrow(
             name=block_name,
             location=vertices[0],
-            rotation=arrow_direction.angle_deg + 180.0,
+            direction=arrow_direction,
             scale=arrow_size,
             color=raw_color,
         )
-        arrow_offset = arrow_direction * arrow_length(
+        arrow_offset: Vec3 = arrow_direction * arrow_length(
             block_name, arrow_size
         )
         vertices[0] += arrow_offset
@@ -449,11 +463,6 @@ class RenderEngine:
             "Spline",
             factory.new("SPLINE", dxfattribs=attribs, doc=self.doc),
         )
-        if self.ocs is not None:
-            # convert OCS coordinates to WCS coordinates
-            to_wcs = self.ocs.matrix.ocs_to_wcs
-            fit_points = [to_wcs(v) for v in fit_points]
-
         spline.apply_construction_tool(
             fit_points_to_cad_cv(fit_points, tangents=tangents)
         )
@@ -461,10 +470,6 @@ class RenderEngine:
 
     def add_dxf_line(self, start: Vec3, end: Vec3, color: int = None):
         attribs = self.leader_line_attribs(color)
-        if self.ocs is not None:
-            to_wcs = self.ocs.matrix.ocs_to_wcs
-            start = to_wcs(start)
-            end = to_wcs(end)
         attribs["start"] = start
         attribs["end"] = end
         self.entities.append(
@@ -475,20 +480,22 @@ class RenderEngine:
         self,
         name: str,
         location: Vec3,
-        rotation: float,
+        direction: Vec3,
         scale: float,
         color: int,
     ):
         attribs = self.leader_line_attribs(color)
         attribs["name"] = name
-        attribs["insert"] = location
-        attribs["rotation"] = rotation
-        if scale != 1.0:
-            attribs["xscale"] = scale
-            attribs["yscale"] = scale
-            attribs["zscale"] = scale
-        if self.has_extrusion:
+        if self.ocs is not None:
+            location = self.ocs.from_wcs(location)
+            direction = self.ocs.from_wcs(direction)
             attribs["extrusion"] = self.extrusion
+
+        attribs["insert"] = location
+        attribs["rotation"] = direction.angle_deg + 180.0
+        attribs["xscale"] = scale
+        attribs["yscale"] = scale
+        attribs["zscale"] = scale
         self.entities.append(
             factory.new("INSERT", dxfattribs=attribs, doc=self.doc)  # type: ignore
         )

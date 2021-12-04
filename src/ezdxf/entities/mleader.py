@@ -783,8 +783,8 @@ class LeaderData:
         # "has_dogleg"!
         self.has_last_leader_line: int = 0  # group code 290,
         self.has_dogleg_vector: int = 0  # group code 291
-        self.last_leader_point: Vec3 = NULLVEC  # group code (10, 20, 30)
-        self.dogleg_vector: Vec3 = X_AXIS  # group code (11, 21, 31)
+        self.last_leader_point: Vec3 = NULLVEC  # group code (10, 20, 30) in WCS
+        self.dogleg_vector: Vec3 = X_AXIS  # group code (11, 21, 31) in WCS
         self.dogleg_length: float = 1.0  # group code 40
         self.index: int = 0  # group code 90
         self.attachment_direction: int = 0  # group code 271, R21010+
@@ -850,7 +850,7 @@ class LeaderData:
 
 class LeaderLine:
     def __init__(self):
-        self.vertices: List[Vec3] = []  # OCS coordinates?
+        self.vertices: List[Vec3] = []  # WCS coordinates
         self.breaks: Optional[List[Union[int, Vec3]]] = None
         # Breaks: 90, 11, 12, [11, 12, ...] [, 90, 11, 12 [11, 12, ...]]
         # group code 90 = break index
