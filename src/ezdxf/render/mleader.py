@@ -77,7 +77,7 @@ OVERRIDE_FLAG = {
     "scale": 1 << 24,
     "text_right_attachment_type": 1 << 25,
     "text_switch_alignment": 1 << 26,  # ??? not in MLeader/MLeaderStyle
-    "text_attachment_direction": 1 << 27,
+    "text_attachment_direction": 1 << 27,  # this flag is not set by BricsCAD
     "text_top_attachment_direction": 1 << 28,
     "text_bottom_attachment_direction": 1 << 29,
 }
@@ -256,18 +256,6 @@ def _get_extrusion(entity: "MLeader") -> Vec3:
     return context.plane_z_axis
 
 
-def _get_leader_vertices(
-    leader: "LeaderData", line_vertices: List[Vec3], has_dogleg=False
-) -> List[Vec3]:
-    # All leader vertices and directions in WCS!
-    vertices = list(line_vertices)
-    end_point = leader.last_leader_point
-    if has_dogleg:
-        vertices.append(end_point)
-    vertices.append(end_point + _get_dogleg_vector(leader))
-    return vertices
-
-
 def _get_dogleg_vector(leader: "LeaderData", default: Vec3 = X_AXIS) -> Vec3:
     # All leader vertices and directions in WCS!
     if leader.has_dogleg_vector:  # what else?
@@ -306,6 +294,11 @@ class RenderEngine:
         self.arrow_heads: Dict[int, str] = {
             head.index: head.handle for head in mleader.arrow_heads
         }
+        self.arrow_head_handle = self.style.get("arrow_head_handle")
+        # 0= horizontal; 1=vertical - override flag (27) is not set by BricsCAD!
+        self.has_horizontal_attachment = not bool(
+            mleader.dxf.text_attachment_direction
+        )
 
     @property
     def has_extrusion(self) -> bool:
@@ -330,7 +323,7 @@ class RenderEngine:
 
     def arrow_block_name(self, index: int) -> str:
         closed_filled = "_CLOSED_FILLED"
-        handle = self.arrow_heads.get(index, None)
+        handle = self.arrow_heads.get(index, self.arrow_head_handle)
         if handle is None or handle == "0":
             return closed_filled
         block_record = self.doc.entitydb.get(handle)
@@ -392,7 +385,11 @@ class RenderEngine:
             return
 
         for leader in self.context.leaders:
-            if self.leader_type == 1 and self.has_dogleg:
+            if (
+                self.leader_type == 1  # straight lines
+                and self.has_dogleg
+                and self.has_horizontal_attachment
+            ):
                 self.add_dogleg(leader)
             for line in leader.lines:
                 self.add_leader_line(leader, line)
@@ -405,6 +402,20 @@ class RenderEngine:
         )
         self.add_dxf_line(start_point, end_point)
 
+    def leader_vertices(
+        self, leader: "LeaderData", line_vertices: List[Vec3], has_dogleg=False
+    ) -> List[Vec3]:
+        # All leader vertices and directions in WCS!
+        vertices = list(line_vertices)
+        end_point = leader.last_leader_point
+        if self.has_horizontal_attachment:
+            if has_dogleg:
+                vertices.append(end_point)
+            vertices.append(end_point + _get_dogleg_vector(leader))
+        else:
+            vertices.append(end_point)
+        return vertices
+
     def add_leader_line(self, leader: "LeaderData", line: "LeaderLine"):
         # All leader vertices and directions in WCS!
         leader_type: int = self.leader_type
@@ -413,7 +424,7 @@ class RenderEngine:
         has_dogleg: bool = self.has_dogleg
         if leader_type == 2:  # splines do not have a dogleg!
             has_dogleg = False
-        vertices: List[Vec3] = _get_leader_vertices(
+        vertices: List[Vec3] = self.leader_vertices(
             leader, line.vertices, has_dogleg
         )
         if len(vertices) < 2:  # at least 2 vertices required
@@ -439,10 +450,14 @@ class RenderEngine:
             for s, e in zip(vertices, vertices[1:]):
                 self.add_dxf_line(s, e, raw_color)
         elif leader_type == 2:  # add spline
+            if self.has_horizontal_attachment:
+                end_tangent = _get_dogleg_vector(leader)
+            else:
+                end_tangent = vertices[-1] - vertices[-2]
             self.add_dxf_spline(
                 vertices,
                 # tangent normalization is not required
-                tangents=[arrow_direction, _get_dogleg_vector(leader)],
+                tangents=[arrow_direction, end_tangent],
                 color=raw_color,
             )
 
