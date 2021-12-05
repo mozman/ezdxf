@@ -20,6 +20,14 @@ For more information about dimensions see the online help from AutoDesk:
     objects. Dimensional constraints are not documented in the DXF reference and
     not supported by `ezdxf`.
 
+.. seealso::
+
+    - :ref:`tut_linear_dimension`
+    - :ref:`tut_radius_dimension`
+    - :ref:`tut_diameter_dimension`
+    - :ref:`tut_angular_dimension`
+    - :ref:`tut_ordinate_dimension`
+
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'DIMENSION'``

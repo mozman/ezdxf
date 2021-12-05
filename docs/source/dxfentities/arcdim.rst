@@ -7,6 +7,10 @@ ArcDimension
 The ARC_DIMENSION entity was introduced in DXF R2004 and is **not** documented
 in the DXF reference.
 
+.. seealso::
+
+    :ref:`tut_arc_dimension`
+
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.Dimension`
 DXF type                 ``'ARC_DIMENSION'``

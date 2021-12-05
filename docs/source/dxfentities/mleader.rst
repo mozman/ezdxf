@@ -14,6 +14,10 @@ the MLEADER.
 Because of the complexity of the MLEADER entity it is recommend to use the
 :class:`~ezdxf.render.MLeaderBuilder` to create or modify the entity.
 
+.. seealso::
+
+    :ref:`tut_mleader`
+
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'MULTILEADER'``, maybe ``'MLEADER'``
