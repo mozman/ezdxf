@@ -188,6 +188,8 @@ BaseLayout
 
     .. automethod:: add_leader
 
+    .. automethod:: add_multileader
+
     .. automethod:: add_body
 
     .. automethod:: add_region

@@ -70,6 +70,8 @@ if TYPE_CHECKING:
         Wipeout,
         XLine,
         GenericLayoutType,
+        MultiLeaderBuilder,
+        MultiLeader,
     )
 
 
@@ -2681,6 +2683,28 @@ class CreatorInterface:
                 cast("Dimension", leader), override=override
             ).commit()
         return leader
+
+    def add_multileader(
+        self,
+        style: str = "Standard",
+        dxfattribs: Dict = None,
+    ) -> "MultiLeaderBuilder":
+        """Add a :class:`~ezdxf.entities.MultiLeader` entity but returns
+        a :class:`~ezdxf.render.MultiLeaderBuilder`.
+
+        .. versionadded:: 0.18
+
+        """
+        from ezdxf.render import MultiLeaderBuilder
+        if self.dxfversion < DXF2000:
+            raise DXFVersionError("MULTILEADER requires DXF R2000")
+        dxfattribs = dxfattribs or dict()
+        mleader_style = self.doc.mleader_styles.get(style)
+        if mleader_style is None:
+            raise DXFValueError(f"MLEADERSTYLE '{style}' does not exist")
+        dxfattribs["style_handle"] = mleader_style.dxf.handle
+        multileader = self.new_entity("MULTILEADER", dxfattribs=dxfattribs)
+        return MultiLeaderBuilder(cast("MultiLeader", multileader))
 
     def add_mline(
         self,

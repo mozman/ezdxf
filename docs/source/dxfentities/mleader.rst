@@ -6,13 +6,16 @@ MultiLeader
 
 .. versionadded:: 0.18
 
-The MULTILEADER or MLEADER entity (`DXF Reference`_) represents one ore more
-leaders, made up of one or more vertices (or spline fit points) and an arrowhead.
+The MULTILEADER entity (`DXF Reference`_) represents one ore more leaders,
+made up of one or more vertices (or spline fit points) and an arrowhead.
 In contrast to the :class:`Leader` entity the text- or block content is part of
-the MLEADER.
+the MULTILEADER entity.
 
 Because of the complexity of the MLEADER entity it is recommend to use the
-:class:`~ezdxf.render.MLeaderBuilder` to create or modify the entity.
+:class:`~ezdxf.render.MultiLeaderBuilder` to create or modify the entity.
+
+AutoCAD, BricsCAD and maybe other CAD applications do accept ``'MLEADER'`` as
+type string but always create entities with ``'MULTILEADER'`` as type string.
 
 .. seealso::
 
@@ -20,8 +23,8 @@ Because of the complexity of the MLEADER entity it is recommend to use the
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
-DXF type                 ``'MULTILEADER'``, maybe ``'MLEADER'``
-Factory function         :meth:`ezdxf.layouts.BaseLayout.add_mleader`
+DXF type                 ``'MULTILEADER'``
+Factory function         :meth:`ezdxf.layouts.BaseLayout.add_multileader`
 Inherited DXF attributes :ref:`Common graphical DXF attributes`
 Required DXF version     DXF R2000 (``'AC1015'``)
 ======================== ==========================================

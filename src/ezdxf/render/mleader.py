@@ -32,7 +32,7 @@ if TYPE_CHECKING:
         LeaderLine,
     )
 
-__all__ = ["virtual_entities", "MLeaderBuilder"]
+__all__ = ["virtual_entities", "MultiLeaderBuilder"]
 
 logger = logging.getLogger("ezdxf")
 
@@ -555,5 +555,8 @@ class RenderEngine:
         )
 
 
-class MLeaderBuilder:
-    pass
+class MultiLeaderBuilder:
+    def __init__(self, multileader: "MultiLeader"):
+        self.multileader = multileader
+        self.doc = multileader.doc
+        assert self.doc is not None, "valid DXF document required"

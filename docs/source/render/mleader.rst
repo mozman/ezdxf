@@ -1,9 +1,9 @@
 .. module:: ezdxf.render
     :noindex:
 
-MLeaderBuilder
-==============
+MultiLeaderBuilder
+==================
 
 .. versionadded:: 0.18
 
-.. class:: MLeaderBuilder
+.. class:: MultiLeaderBuilder

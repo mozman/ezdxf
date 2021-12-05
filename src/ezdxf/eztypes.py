@@ -123,8 +123,10 @@ if TYPE_CHECKING:
     from ezdxf.entities.geodata import GeoData
     from ezdxf.entities.light import Light
     from ezdxf.entities.leader import Leader
+    from ezdxf.entities.mleader import MultiLeader
     from ezdxf.render.dim_base import BaseDimensionRenderer
     from ezdxf.entities.mline import MLineVertex, MLine, MLineStyle
+    from ezdxf.render.mleader import MultiLeaderBuilder
     # other
     from ezdxf.audit import Auditor
     from ezdxf.lldxf.validator import DXFInfo
