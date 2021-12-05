@@ -5,8 +5,6 @@ Add-ons
 -------
 
 - drawing
-  - (v0.18) MLEADER full rendering support, requires `MLeader.virtual_entities()`
-
   - (>v1.0) support for switching plot styles (DXF_DEFAULT_PAPERSPACE_COLORS)
   - (>v1.0) VIEWPORT rendering support?
   
@@ -34,8 +32,6 @@ Add-ons
 
 Render Tools
 ------------
-
-- (v0.18) `MLeader.virtual_entities()`
 
 - (>v1.0) ACAD_TABLE tool to render content as DXF primitives to create the 
   content of the anonymous block `*T...`

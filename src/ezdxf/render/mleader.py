@@ -32,13 +32,9 @@ if TYPE_CHECKING:
         LeaderLine,
     )
 
-__all__ = ["virtual_entities"]
+__all__ = ["virtual_entities", "MLeaderBuilder"]
 
 logger = logging.getLogger("ezdxf")
-
-# DXF Examples:
-# "D:\source\dxftest\CADKitSamples\house design for two family with common staircasedwg.dxf"
-# "D:\source\dxftest\CADKitSamples\house design.dxf"
 
 # How to render MLEADER: https://atlight.github.io/formats/dxf-leader.html
 # DXF reference:
@@ -557,3 +553,7 @@ class RenderEngine:
         self.entities.append(
             factory.new("INSERT", dxfattribs=attribs, doc=self.doc)  # type: ignore
         )
+
+
+class MLeaderBuilder:
+    pass

@@ -33,6 +33,8 @@ if TYPE_CHECKING:
         DXFNamespace,
         DXFTag,
         DXFEntity,
+        BaseLayout,
+        EntityQuery,
     )
 
 __all__ = [
@@ -463,7 +465,35 @@ class MultiLeader(DXFGraphic):
             tagwriter.write_tag2(44, attrib.width)
             tagwriter.write_tag2(302, attrib.text)
 
+    def virtual_entities(self) -> Iterable["DXFGraphic"]:
+        """Yields the graphical representation of MULTILEADER as virtual DXF
+        primitives.
+
+        This entities are located at the original location, but are not stored
+        in the entity database, have no handle and are not assigned to any
+        layout.
+
+        """
+        return self.__virtual_entities__()
+
+    def explode(self, target_layout: "BaseLayout" = None) -> "EntityQuery":
+        """Explode MULTILEADER as DXF primitives into target layout,
+        if target layout is ``None``, the target layout is the layout of the
+        source entity.
+
+        Returns an :class:`~ezdxf.query.EntityQuery` container with all DXF
+        primitives.
+
+        Args:
+            target_layout: target layout for the DXF primitives, ``None`` for
+                same layout as the source entity.
+
+        """
+        from ezdxf.explode import explode_entity
+        return explode_entity(self, target_layout)
+
     def __virtual_entities__(self) -> Iterable["DXFGraphic"]:
+        """Support for "VirtualEntities" protocol."""
         from ezdxf.render import mleader
         try:
             return mleader.virtual_entities(self, proxy_graphic=True)

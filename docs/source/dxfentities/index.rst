@@ -35,6 +35,7 @@ and inherited classes like :class:`~ezdxf.layouts.Modelspace`,
     mesh
     mpolygon
     mtext
+    mleader
     point
     polyline
     ray
