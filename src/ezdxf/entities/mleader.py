@@ -17,7 +17,7 @@ from ezdxf.lldxf.attributes import (
 from ezdxf.lldxf.tags import Tags
 from ezdxf.math import Vec3, NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
 from ezdxf import colors
-from ezdxf.proxygraphic import ProxyGraphic
+from ezdxf.proxygraphic import ProxyGraphicError
 
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
@@ -464,11 +464,11 @@ class MultiLeader(DXFGraphic):
             tagwriter.write_tag2(302, attrib.text)
 
     def __virtual_entities__(self) -> Iterable["DXFGraphic"]:
-        # As long as MLeader.virtual_entities() is not implemented,
-        # use existing proxy graphic:
         from ezdxf.render import mleader
-
-        return mleader.virtual_entities(self)
+        try:
+            return mleader.virtual_entities(self, proxy_graphic=True)
+        except ProxyGraphicError:
+            return mleader.virtual_entities(self, proxy_graphic=False)
 
     def __referenced_blocks__(self) -> Iterable[str]:
         """Support for "ReferencedBlocks" protocol."""
