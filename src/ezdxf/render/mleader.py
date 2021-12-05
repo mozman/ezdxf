@@ -25,7 +25,7 @@ if TYPE_CHECKING:
         Textstyle,
     )
     from ezdxf.entities.mleader import (
-        MLeader,
+        MultiLeader,
         MLeaderStyle,
         MTextData,
         LeaderData,
@@ -50,7 +50,7 @@ OVERRIDE_FLAG = {
     "leader_linetype_handle": 1 << 2,
     "leader_lineweight": 1 << 3,
     "has_landing": 1 << 4,
-    "landing_gap": 1 << 5,  # ??? not in MLeader
+    "landing_gap": 1 << 5,  # ??? not in MultiLeader
     "has_dogleg": 1 << 6,
     "dogleg_length": 1 << 7,
     "arrow_head_handle": 1 << 8,
@@ -61,9 +61,9 @@ OVERRIDE_FLAG = {
     "text_angle_type": 1 << 13,
     "text_alignment_type": 1 << 14,
     "text_color": 1 << 15,
-    "char_height": 1 << 16,  # stored in MLeader.context.char_height
+    "char_height": 1 << 16,  # stored in MultiLeader.context.char_height
     "has_text_frame": 1 << 17,
-    # 1 << 18 # use default content stored in MLeader.mtext.default_content
+    # 1 << 18 # use default content stored in MultiLeader.mtext.default_content
     "block_record_handle": 1 << 19,
     "block_color": 1 << 20,
     "block_scale_vector": 1 << 21,  # 3 values in MLeaderStyle
@@ -71,7 +71,7 @@ OVERRIDE_FLAG = {
     "block_connection_type": 1 << 23,
     "scale": 1 << 24,
     "text_right_attachment_type": 1 << 25,
-    "text_switch_alignment": 1 << 26,  # ??? not in MLeader/MLeaderStyle
+    "text_switch_alignment": 1 << 26,  # ??? not in MultiLeader/MLeaderStyle
     "text_attachment_direction": 1 << 27,  # this flag is not set by BricsCAD
     "text_top_attachment_direction": 1 << 28,
     "text_bottom_attachment_direction": 1 << 29,
@@ -79,7 +79,7 @@ OVERRIDE_FLAG = {
 
 
 class MLeaderStyleOverride:
-    def __init__(self, style: "MLeaderStyle", mleader: "MLeader"):
+    def __init__(self, style: "MLeaderStyle", mleader: "MultiLeader"):
         self._style_dxf = style.dxf
         self._mleader_dxf = mleader.dxf
         self._context = mleader.context
@@ -117,7 +117,7 @@ class MLeaderStyleOverride:
 
 
 def virtual_entities(
-    mleader: "MLeader", proxy_graphic=False
+    mleader: "MultiLeader", proxy_graphic=False
 ) -> List["DXFGraphic"]:
     doc = mleader.doc
     assert doc is not None, "valid DXF document required"
@@ -127,7 +127,7 @@ def virtual_entities(
         return RenderEngine(mleader, doc).run()
 
 
-def get_style(mleader: "MLeader", doc: "Drawing") -> MLeaderStyleOverride:
+def get_style(mleader: "MultiLeader", doc: "Drawing") -> MLeaderStyleOverride:
     handle = mleader.dxf.style_handle
     style = doc.entitydb.get(handle)
     if style is None:
@@ -233,7 +233,7 @@ def set_mtext_columns(
     pass
 
 
-def _get_insert(entity: "MLeader") -> Vec3:
+def _get_insert(entity: "MultiLeader") -> Vec3:
     context = entity.context
     if context.mtext is not None:
         return context.mtext.insert
@@ -242,7 +242,7 @@ def _get_insert(entity: "MLeader") -> Vec3:
     return context.plane_origin
 
 
-def _get_extrusion(entity: "MLeader") -> Vec3:
+def _get_extrusion(entity: "MultiLeader") -> Vec3:
     context = entity.context
     if context.mtext is not None:
         return context.mtext.extrusion
@@ -267,7 +267,7 @@ def _get_block_name(handle: str, doc: "Drawing") -> Optional[str]:
 
 
 class RenderEngine:
-    def __init__(self, mleader: "MLeader", doc: "Drawing"):
+    def __init__(self, mleader: "MultiLeader", doc: "Drawing"):
         self.entities: List["DXFGraphic"] = []  # result container
         self.mleader = mleader
         self.doc = doc

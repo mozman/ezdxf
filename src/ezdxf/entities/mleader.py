@@ -466,10 +466,9 @@ class MultiLeader(DXFGraphic):
     def __virtual_entities__(self) -> Iterable["DXFGraphic"]:
         # As long as MLeader.virtual_entities() is not implemented,
         # use existing proxy graphic:
-        if self.proxy_graphic:
-            return ProxyGraphic(self.proxy_graphic, self.doc).virtual_entities()
-        else:
-            return []
+        from ezdxf.render import mleader
+
+        return mleader.virtual_entities(self)
 
     def __referenced_blocks__(self) -> Iterable[str]:
         """Support for "ReferencedBlocks" protocol."""
@@ -488,6 +487,11 @@ class MultiLeader(DXFGraphic):
             handle = self.context.block.block_record_handle
             if handle is not None:
                 yield handle
+
+
+@register_entity
+class MLeader(MultiLeader):  # same entity different name
+    DXFTYPE = "MLEADER"
 
 
 class MLeaderContext:
@@ -901,11 +905,6 @@ class LeaderLine:
         write_tag2(91, self.index)
         write_tag2(92, self.color)
         write_tag2(END_LEADER_LINE, "}")
-
-
-@register_entity
-class MLeader(MultiLeader):
-    DXFTYPE = "MLEADER"
 
 
 acdb_mleader_style = DefSubclass(
