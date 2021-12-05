@@ -497,6 +497,8 @@ class ProxyGraphic:
         logger.warning(
             "Untested proxy graphic entity: LWPOLYLINE - Need examples!"
         )
+        # TODO: MLEADER exploration example "explore_mleader_block.dxf" has
+        #  LWPOLYLINE proxy graphic and raises an exception!
         bs = BitStream(data)
         flag: int = bs.read_bit_short()
         attribs = self._build_dxf_attribs()
