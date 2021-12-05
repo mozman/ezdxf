@@ -71,6 +71,7 @@ __all__ = ["Frontend"]
 
 # typedef
 TDispatchTable = Dict[str, Callable[[DXFGraphic, Properties], None]]
+POST_ISSUE_MSG = "Please post sample DXF file at https://github.com/mozman/ezdxf/issues."
 
 
 class Frontend:
@@ -632,6 +633,7 @@ class Frontend:
                 self.draw_entities(set_opaque(virtual_entities(entity)))
             except ProxyGraphicError as e:
                 print(str(e))
+                print(POST_ISSUE_MSG)
         else:
             raise TypeError(entity.dxftype())
 
@@ -641,6 +643,7 @@ class Frontend:
                 self.draw_entities(virtual_entities(ProxyGraphic(data, doc)))
             except ProxyGraphicError as e:
                 print(str(e))
+                print(POST_ISSUE_MSG)
 
 
 def is_spatial_text(extrusion: Vec3) -> bool:

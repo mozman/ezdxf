@@ -40,7 +40,9 @@ Render Tools
 - (>v1.0) ACAD_TABLE tool to render content as DXF primitives to create the 
   content of the anonymous block `*T...`
 - (>v1.0) factory methods to create ACAD_TABLE entities
+- (>v1.0) fix LWPOLYLINE parsing error in ProxyGraphic, see test script 239
 - (>v1.0) tool to create proxy graphic 
+
 
 DXF Entities
 ------------

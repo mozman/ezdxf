@@ -503,9 +503,6 @@ class ProxyGraphic:
 
     def lwpolyline(self, data: bytes):
         # OpenDesign Specs LWPLINE: 20.4.85 Page 211
-        logger.warning(
-            "Untested proxy graphic entity: LWPOLYLINE - Need examples!"
-        )
         # TODO: MLEADER exploration example "explore_mleader_block.dxf" has
         #  LWPOLYLINE proxy graphic and raises an exception!
         bs = BitStream(data)
