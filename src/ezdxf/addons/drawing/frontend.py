@@ -61,7 +61,7 @@ from ezdxf.path import (
 )
 from ezdxf.render import MeshBuilder, TraceBuilder
 from ezdxf import reorder
-from ezdxf.proxygraphic import ProxyGraphic
+from ezdxf.proxygraphic import ProxyGraphic, ProxyGraphicError
 from ezdxf.protocols import SupportsVirtualEntities, virtual_entities
 from ezdxf.tools.text import has_inline_formatting_codes
 from ezdxf.lldxf import const
@@ -628,13 +628,19 @@ class Frontend:
             self.ctx.pop_state()
         elif isinstance(entity, SupportsVirtualEntities):
             # draw_entities() includes the visibility check:
-            self.draw_entities(set_opaque(virtual_entities(entity)))
+            try:
+                self.draw_entities(set_opaque(virtual_entities(entity)))
+            except ProxyGraphicError as e:
+                print(str(e))
         else:
             raise TypeError(entity.dxftype())
 
     def draw_proxy_graphic(self, data: bytes, doc) -> None:
         if data:
-            self.draw_entities(virtual_entities(ProxyGraphic(data, doc)))
+            try:
+                self.draw_entities(virtual_entities(ProxyGraphic(data, doc)))
+            except ProxyGraphicError as e:
+                print(str(e))
 
 
 def is_spatial_text(extrusion: Vec3) -> bool:

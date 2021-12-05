@@ -51,6 +51,10 @@ logger = logging.getLogger("ezdxf")
 CHUNK_SIZE = 127
 
 
+class ProxyGraphicError(Exception):
+    pass
+
+
 def load_proxy_graphic(
     tags: "Tags", length_code: int = 160, data_code: int = 310
 ) -> Optional[bytes]:
@@ -289,9 +293,17 @@ class ProxyGraphic:
             yield index, size, name
             index += size
 
+    def virtual_entities(self) -> Iterable["DXFGraphic"]:
+        return self.__virtual_entities__()
+
     def __virtual_entities__(self) -> Iterable["DXFGraphic"]:
         """Implements the SupportsVirtualEntities protocol."""
+        try:
+            yield from self.unsafe_virtual_entities()
+        except Exception as e:
+            raise ProxyGraphicError(f"Proxy graphic error: {str(e)}")
 
+    def unsafe_virtual_entities(self) -> Iterable["DXFGraphic"]:
         def transform(entity):
             if self.matrices:
                 return entity.transform(self.matrices[-1])
@@ -321,9 +333,6 @@ class ProxyGraphic:
             else:
                 logger.debug(f"Unsupported feature ProxyGraphic.{name}()")
             index += size
-
-    def virtual_entities(self) -> Iterable["DXFGraphic"]:
-        return self.__virtual_entities__()
 
     def push_matrix(self, data: bytes):
         values = struct.unpack("<16d", data)
