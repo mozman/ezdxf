@@ -721,15 +721,16 @@ class Insert(LinkedEntities):
             return tag, text, location
 
         def autofill() -> None:
-            for attdef in blockdef.attdefs():  # type: ignore
+            for attdef in block_layout.attdefs():  # type: ignore
                 dxfattribs = attdef.dxfattribs(drop={"prompt", "handle"})
                 tag, text, location = unpack(dxfattribs)
                 attrib = self.add_attrib(tag, text, location, dxfattribs)
                 attrib.transform(m)
 
-        m = self.matrix44()
-        blockdef = self.block()
-        autofill()
+        block_layout = self.block()
+        if block_layout is not None:
+            m = self.matrix44()
+            autofill()
         return self
 
     def audit(self, auditor: "Auditor") -> None:

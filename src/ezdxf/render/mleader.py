@@ -21,8 +21,6 @@ if TYPE_CHECKING:
         DXFGraphic,
         MText,
         Insert,
-        Attrib,
-        Line,
         Spline,
         Textstyle,
     )
@@ -33,7 +31,6 @@ if TYPE_CHECKING:
         LeaderData,
         LeaderLine,
     )
-    from ezdxf.layouts import BlockLayout
 
 __all__ = ["virtual_entities"]
 
@@ -261,16 +258,12 @@ def _get_dogleg_vector(leader: "LeaderData", default: Vec3 = X_AXIS) -> Vec3:
     return default.normalize(leader.dogleg_length)
 
 
-def _get_block_layout(handle: str, doc: "Drawing") -> Optional["BlockLayout"]:
+def _get_block_name(handle: str, doc: "Drawing") -> Optional[str]:
     block_record = doc.entitydb.get(handle)
     if block_record is None:
         logger.error(f"required BLOCK_RECORD entity #{handle} does not exist")
         return None
-    block_name = block_record.dxf.name
-    block_layout = doc.blocks.get(block_name)
-    if block_layout is None:
-        logger.error(f"required BLOCK definition '{block_name}' does not exist")
-    return block_layout
+    return block_record.dxf.get("name")  # has no default value
 
 
 class RenderEngine:
@@ -388,34 +381,47 @@ class RenderEngine:
 
     def add_block_content(self) -> None:
         block = self.context.block
-        block_layout = _get_block_layout(block.block_record_handle, self.doc)
-        if block_layout is None:
+        assert block is not None
+        block_name = _get_block_name(block.block_record_handle, self.doc)
+        if block_name is None:
             return
-        aci_color, true_color = decode_raw_color(block.color)
         location = block.insert  # in WCS, really funny for an OCS entity!
         if self.ocs is not None:
             location = self.ocs.from_wcs(location)
+        aci_color, true_color = decode_raw_color(block.color)
+        scale = block.scale
         attribs = {
-            "name": block_layout.name,
+            "name": block_name,
             "insert": location,
             "color": aci_color,
-            "extrusion": block.extrusion
+            "extrusion": block.extrusion,
+            "xscale": scale.x,
+            "yscale": scale.y,
+            "zscale": scale.z,
         }
         if true_color is not None:
             attribs["true_color"] = true_color
-        scale = block.scale
-        attribs["xscale"] = scale.x
-        attribs["yscale"] = scale.y
-        attribs["zscale"] = scale.z
-
-        self.entities.append(
-            factory.new("INSERT", dxfattribs=attribs, doc=self.doc)  # type: ignore
+        insert = cast(
+            "Insert", factory.new("INSERT", dxfattribs=attribs, doc=self.doc)
         )
+        self.entities.append(insert)
         if self.mleader.block_attribs:
-            self.add_block_attributes(block_layout)
+            self.add_block_attributes(insert)
 
-    def add_block_attributes(self, block_layout: "BlockLayout"):
-        pass
+    def add_block_attributes(self, insert: "Insert"):
+        entitydb = self.doc.entitydb
+        values: Dict[str, str] = dict()
+        for attrib in self.mleader.block_attribs:
+            attdef = entitydb.get(attrib.handle)
+            if attdef is None:
+                logger.error(
+                    f"required ATTDEF entity #{attrib.handle} does not exist"
+                )
+                continue
+            tag = attdef.dxf.tag
+            values[tag] = attrib.text
+        if values:
+            insert.add_auto_attribs(values)
 
     def add_leaders(self) -> None:
         if self.leader_type == 0:

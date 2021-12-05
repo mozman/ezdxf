@@ -18,11 +18,6 @@ class TestRenderEngine:
         engine.add_mtext_content()
         assert isinstance(engine.entities[0], MText)
 
-    def test_block_builder(self, doc):
-        engine = mleader.RenderEngine(MLeader(), doc)
-        engine.add_block_content()
-        assert isinstance(engine.entities[0], Insert)
-
 
 if __name__ == '__main__':
     pytest.main([__file__])
