@@ -6,12 +6,10 @@ import logging
 from ezdxf import colors
 from ezdxf.math import (
     Vec3,
-    NULLVEC,
     X_AXIS,
     Z_AXIS,
     fit_points_to_cad_cv,
     OCS,
-    OCSTransform,
 )
 from ezdxf.entities import factory
 from ezdxf.proxygraphic import ProxyGraphic
@@ -34,8 +32,8 @@ if TYPE_CHECKING:
         MTextData,
         LeaderData,
         LeaderLine,
-        ArrowHeadData,
     )
+    from ezdxf.layouts import BlockLayout
 
 __all__ = ["virtual_entities"]
 
@@ -263,6 +261,18 @@ def _get_dogleg_vector(leader: "LeaderData", default: Vec3 = X_AXIS) -> Vec3:
     return default.normalize(leader.dogleg_length)
 
 
+def _get_block_layout(handle: str, doc: "Drawing") -> Optional["BlockLayout"]:
+    block_record = doc.entitydb.get(handle)
+    if block_record is None:
+        logger.error(f"required BLOCK_RECORD entity #{handle} does not exist")
+        return None
+    block_name = block_record.dxf.name
+    block_layout = doc.blocks.get(block_name)
+    if block_layout is None:
+        logger.error(f"required BLOCK definition '{block_name}' does not exist")
+    return block_layout
+
+
 class RenderEngine:
     def __init__(self, mleader: "MLeader", doc: "Drawing"):
         self.entities: List["DXFGraphic"] = []  # result container
@@ -377,8 +387,35 @@ class RenderEngine:
         pass
 
     def add_block_content(self) -> None:
-        blkref = cast("Insert", factory.new("INSERT", doc=self.doc))
-        self.entities.append(blkref)
+        block = self.context.block
+        block_layout = _get_block_layout(block.block_record_handle, self.doc)
+        if block_layout is None:
+            return
+        aci_color, true_color = decode_raw_color(block.color)
+        location = block.insert  # in WCS, really funny for an OCS entity!
+        if self.ocs is not None:
+            location = self.ocs.from_wcs(location)
+        attribs = {
+            "name": block_layout.name,
+            "insert": location,
+            "color": aci_color,
+            "extrusion": block.extrusion
+        }
+        if true_color is not None:
+            attribs["true_color"] = true_color
+        scale = block.scale
+        attribs["xscale"] = scale.x
+        attribs["yscale"] = scale.y
+        attribs["zscale"] = scale.z
+
+        self.entities.append(
+            factory.new("INSERT", dxfattribs=attribs, doc=self.doc)  # type: ignore
+        )
+        if self.mleader.block_attribs:
+            self.add_block_attributes(block_layout)
+
+    def add_block_attributes(self, block_layout: "BlockLayout"):
+        pass
 
     def add_leaders(self) -> None:
         if self.leader_type == 0:
