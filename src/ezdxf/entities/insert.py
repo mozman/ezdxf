@@ -737,7 +737,14 @@ class Insert(LinkedEntities):
         super().audit(auditor)
         doc = auditor.doc
         if doc and doc.blocks:
-            if self.dxf.name not in doc.blocks:
+            name = self.dxf.name
+            if name is None:
+                auditor.fixed_error(
+                    code=AuditError.UNDEFINED_BLOCK_NAME,
+                    message=f"Deleted entity {str(self)} without a BLOCK name",
+                )
+                auditor.trash(self)
+            elif name not in doc.blocks:
                 auditor.fixed_error(
                     code=AuditError.UNDEFINED_BLOCK,
                     message=f"Deleted entity {str(self)} without required BLOCK"

@@ -60,6 +60,7 @@ class AuditError(IntEnum):
     CREATED_MISSING_OBJECT = 112
     RESET_MLINE_STYLE = 113
     INVALID_GROUP_ENTITIES = 114
+    UNDEFINED_BLOCK_NAME = 115
 
     # DXF entity property errors:
     INVALID_ENTITY_HANDLE = 201
