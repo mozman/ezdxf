@@ -211,6 +211,16 @@ def test_scaling():
     assert line.dxf.thickness == 4
 
 
+def test_copy_entity_transparency():
+    line = Line()
+    line2 = line.copy()
+    assert line2.dxf.hasattr("transparency") is False
+
+    line.transparency = 0.5
+    line2 = line.copy()
+    assert line2.dxf.transparency == 0x0200007F
+
+
 ERR_LINE = """0
 LINE
 5
