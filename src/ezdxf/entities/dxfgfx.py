@@ -249,9 +249,10 @@ class DXFGraphic(DXFEntity):
         is 100% transparent (invisible).
         """
         if self.dxf.hasattr("transparency"):
-            return clr.transparency2float(self.dxf.get("transparency"))
-        else:
-            return 0.0
+            value = self.dxf.get("transparency")
+            if validator.is_transparency(value):
+                return clr.transparency2float(value)
+        return 0.0
 
     @transparency.setter
     def transparency(self, transparency: float) -> None:

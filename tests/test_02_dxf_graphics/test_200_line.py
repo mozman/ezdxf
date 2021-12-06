@@ -227,6 +227,14 @@ def test_setting_invalid_transparency_value_raises_exception():
         line.dxf.transparency = 0
 
 
+def test_load_entity_with_invalid_transparency():
+    line = Line.from_text(ENTITY_INVALID_TRANSPARENCY)
+    assert line.dxf.transparency == 268435456
+    assert (
+        line.transparency == 0.0
+    ), "should replace invalid transparency by opaque"
+
+
 ERR_LINE = """0
 LINE
 5
@@ -256,6 +264,35 @@ Linetype
 31
 1.0
 """
+
+ENTITY_INVALID_TRANSPARENCY = """0
+LINE
+5
+0
+330
+0
+100
+AcDbEntity
+8
+0
+440
+268435456
+100
+AcDbLine
+10
+0.0
+20
+0.0
+30
+0.0
+11
+1.0
+21
+1.0
+31
+1.0
+"""
+
 
 def test_recover_acdb_entity_tags():
     line = Line.from_text(ERR_LINE)
