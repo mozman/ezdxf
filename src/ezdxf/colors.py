@@ -102,8 +102,9 @@ def transparency2float(value: int) -> float:
             for opaque
 
     """
-    # 255 -> 0.
-    # 0 -> 1.
+    # Transparency value 0x020000TT 0 = fully transparent / 255 = opaque
+    # 255 -> 0.0
+    # 0 -> 1.0
     return 1.0 - float(int(value) & 0xFF) / 255.0
 
 

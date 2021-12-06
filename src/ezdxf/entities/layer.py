@@ -283,7 +283,7 @@ class Layer(DXFEntity):
         try:
             xdata = self.get_xdata(AcCmTransparency)
         except DXFValueError:
-            return 0
+            return 0.0
         else:
             return clr.transparency2float(xdata[0].value)
 
