@@ -5,67 +5,12 @@ import pytest
 import ezdxf
 from ezdxf.addons.drawing import Frontend, RenderContext, Properties
 from ezdxf.addons.drawing.backend import Backend, BackendScaler
-from ezdxf.addons.drawing.config import Configuration
-from ezdxf.tools.fonts import FontMeasurements
+from ezdxf.addons.drawing.debug_backend import BasicBackend, PathBackend
 from ezdxf.document import Drawing
 from ezdxf.entities import DXFGraphic
 from ezdxf.render.forms import cube
 from ezdxf.path import Path, from_vertices
 from ezdxf.math import Vec3, Matrix44
-
-
-class BasicBackend(Backend):
-    """The basic backend has no draw_path() support and approximates all curves
-    by lines.
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.collector = []
-        self.configure(Configuration.defaults())
-
-    def draw_point(self, pos: Vec3, properties: Properties) -> None:
-        self.collector.append(("point", pos, properties))
-
-    def draw_line(self, start: Vec3, end: Vec3, properties: Properties) -> None:
-        self.collector.append(("line", start, end, properties))
-
-    def draw_filled_polygon(
-        self, points: List[Vec3], properties: Properties
-    ) -> None:
-        self.collector.append(("filled_polygon", points, properties))
-
-    def draw_text(
-        self,
-        text: str,
-        transform: Matrix44,
-        properties: Properties,
-        cap_height: float,
-    ) -> None:
-        self.collector.append(("text", text, transform, properties))
-
-    def get_font_measurements(
-        self, cap_height: float, font=None
-    ) -> FontMeasurements:
-        return FontMeasurements(
-            baseline=0.0, cap_height=1.0, x_height=0.5, descender_height=0.2
-        )
-
-    def set_background(self, color: str) -> None:
-        self.collector.append(("bgcolor", color))
-
-    def get_text_line_width(
-        self, text: str, cap_height: float, font: str = None
-    ) -> float:
-        return len(text)
-
-    def clear(self) -> None:
-        self.collector = []
-
-
-class PathBackend(BasicBackend):
-    def draw_path(self, path: Path, properties: Properties) -> None:
-        self.collector.append(("path", path, properties))
 
 
 @pytest.fixture
