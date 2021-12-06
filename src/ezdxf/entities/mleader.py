@@ -182,25 +182,28 @@ acdb_mleader = DefSubclass(
         # 2 = center
         # 3 = right
         "scale": DXFAttr(45, default=1, dxfversion=const.DXF2007),
-        "text_attachment_direction": DXFAttr(
-            271, default=0, dxfversion=const.DXF2010
-        ),
+
         # This defines whether the leaders attach to the left/right of the content
         # block/text, or attach to the top/bottom:
         # 0 = horizontal
         # 1 = vertical
-        "text_bottom_attachment_direction": DXFAttr(
-            272, default=9, dxfversion=const.DXF2010
+        "text_attachment_direction": DXFAttr(
+            271, default=0, dxfversion=const.DXF2010
         ),
+
         # like 173, but
         # 9 = center
         # 10= underline and center
-        "text_top_attachment_direction": DXFAttr(
-            273, default=9, dxfversion=const.DXF2010
+        "text_bottom_attachment_type": DXFAttr(
+            272, default=9, dxfversion=const.DXF2010
         ),
+
         # like 173, but
         # 9 = center
         # 10= overline and center
+        "text_top_attachment_type": DXFAttr(
+            273, default=9, dxfversion=const.DXF2010
+        ),
         "leader_extend_to_text": DXFAttr(
             295, default=0, dxfversion=const.DXF2013
         ),
@@ -447,8 +450,8 @@ class MultiLeader(DXFGraphic):
 
         if version >= const.DXF2010:
             write_tag2(271, dxf.text_attachment_direction)
-            write_tag2(272, dxf.text_bottom_attachment_direction)
-            write_tag2(273, dxf.text_top_attachment_direction)
+            write_tag2(272, dxf.text_bottom_attachment_type)
+            write_tag2(273, dxf.text_top_attachment_type)
 
         if version >= const.DXF2013:
             write_tag2(295, dxf.leader_extend_to_text)
@@ -996,9 +999,9 @@ acdb_mleader_style = DefSubclass(
         # 0 = Horizontal; 1 = Vertical:
         "text_attachment_direction": DXFAttr(271, default=0),
         # 9 = Center; 10 = Underline and Center:
-        "text_bottom_attachment_direction": DXFAttr(272, default=9),
+        "text_bottom_attachment_type": DXFAttr(272, default=9),
         # 9 = Center; 10 = Overline and Center:
-        "text_top_attachment_direction": DXFAttr(273, default=9),
+        "text_top_attachment_type": DXFAttr(273, default=9),
         "unknown2": DXFAttr(298, optional=True),  # boolean flag ?
     },
 )

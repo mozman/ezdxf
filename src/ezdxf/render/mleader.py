@@ -10,6 +10,7 @@ from ezdxf.math import (
     Z_AXIS,
     fit_points_to_cad_cv,
     OCS,
+    is_point_left_of_line,
 )
 from ezdxf.entities import factory
 from ezdxf.proxygraphic import ProxyGraphic
@@ -69,8 +70,8 @@ OVERRIDE_FLAG = {
     "text_right_attachment_type": 1 << 25,
     "text_switch_alignment": 1 << 26,  # ??? not in MultiLeader/MLeaderStyle
     "text_attachment_direction": 1 << 27,  # this flag is not set by BricsCAD
-    "text_top_attachment_direction": 1 << 28,
-    "text_bottom_attachment_direction": 1 << 29,
+    "text_top_attachment_type": 1 << 28,
+    "text_bottom_attachment_type": 1 << 29,
 }
 
 
@@ -299,6 +300,14 @@ class RenderEngine:
     def has_extrusion(self) -> bool:
         return self.ocs is not None
 
+    @property
+    def has_text_content(self) -> bool:
+        return self.context.mtext is not None
+
+    @property
+    def has_block_content(self) -> bool:
+        return self.context.block is not None
+
     def run(self) -> List["DXFGraphic"]:
         """Entry point to render MLEADER entities."""
         self.entities.clear()
@@ -348,9 +357,9 @@ class RenderEngine:
 
     def add_content(self) -> None:
         # also check self.style.get("content_type") ?
-        if self.context.mtext is not None:
+        if self.has_text_content:
             self.add_mtext_content()
-        elif self.context.block is not None:
+        elif self.has_block_content:
             self.add_block_content()
 
     def add_mtext_content(self) -> None:
@@ -429,6 +438,11 @@ class RenderEngine:
             for line in leader.lines:
                 self.add_leader_line(leader, line)
 
+            # text content with vertical attachment can have an extra
+            # "horizontal" line across the text width:
+            if self.has_text_content and not leader.has_horizontal_attachment:
+                self.add_overline(leader)
+
     def add_dogleg(self, leader: "LeaderData"):
         # All leader vertices and directions in WCS!
         start_point = leader.last_leader_point
@@ -436,6 +450,35 @@ class RenderEngine:
             leader.dogleg_length
         )
         self.add_dxf_line(start_point, end_point)
+
+    def add_overline(self, leader: "LeaderData"):
+        mtext = self.context.mtext
+        if mtext is None:
+            return
+        length = abs(mtext.width)  # this is not very accurate!
+        if length < 1e-9:
+            return
+        # The end of the leader is the center of the "overline".
+        # The leader is on the bottom of the text if the insertion
+        # point of the text is left of "overline" (start -> end).
+        center = leader.last_leader_point
+        insert = mtext.insert
+        line2 = mtext.text_direction.normalize(length / 2)
+        start = center - line2
+        end = center + line2
+
+        if self.ocs is None:  # z-axis is ignored
+            bottom = is_point_left_of_line(insert, start, end)
+        else:  # project points into the text plane, z-axis is ignored
+            from_wcs = self.ocs.from_wcs
+            bottom = is_point_left_of_line(
+                from_wcs(insert), from_wcs(start), from_wcs(end)
+            )
+
+        if bottom and self.style.get("text_bottom_attachment_type") == 10:
+            self.add_dxf_line(start, end)
+        elif not bottom and self.style.get("text_top_attachment_type") == 10:
+            self.add_dxf_line(start, end)
 
     def leader_vertices(
         self, leader: "LeaderData", line_vertices: List[Vec3], has_dogleg=False
