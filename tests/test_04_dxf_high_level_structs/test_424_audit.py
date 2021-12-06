@@ -214,9 +214,9 @@ def test_fix_invalid_transparency():
     doc = ezdxf.new()
     msp = doc.modelspace()
     line = msp.add_line((0, 0), (1, 0))
-    # HACK! cant set invalid transparency otherwise.
-    line.dxf.__dict__["transparency"] = 268435456
-    assert line.dxf.transparency == 268435456  # works?
+    # transparency value requires 0x02000000 bit set
+    line.dxf.unprotected_set("transparency", 0x10000000)
     auditor = Auditor(doc)
     line.audit(auditor)
     assert line.dxf.hasattr("transparency") is False
+    assert len(auditor.fixes) == 1
