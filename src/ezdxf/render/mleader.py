@@ -455,9 +455,15 @@ class RenderEngine:
         mtext = self.context.mtext
         if mtext is None:
             return
+        has_bottom_line = self.style.get("text_bottom_attachment_type") == 10
+        has_top_line = self.style.get("text_top_attachment_type") == 10
+        if not (has_bottom_line or has_top_line):
+            return
+
         length = abs(mtext.width)  # this is not very accurate!
         if length < 1e-9:
             return
+
         # The end of the leader is the center of the "overline".
         # The leader is on the bottom of the text if the insertion
         # point of the text is left of "overline" (start -> end).
@@ -474,10 +480,8 @@ class RenderEngine:
             bottom = is_point_left_of_line(
                 from_wcs(insert), from_wcs(start), from_wcs(end)
             )
-
-        if bottom and self.style.get("text_bottom_attachment_type") == 10:
-            self.add_dxf_line(start, end)
-        elif not bottom and self.style.get("text_top_attachment_type") == 10:
+        top = not bottom
+        if (bottom and has_bottom_line) or (top and has_top_line):
             self.add_dxf_line(start, end)
 
     def leader_vertices(
