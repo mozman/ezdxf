@@ -452,3 +452,7 @@ def is_handle(handle) -> bool:
     except (ValueError, TypeError):
         return False
     return True
+
+
+def is_transparency(value) -> bool:
+    return bool(value & 0x02000000)

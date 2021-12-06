@@ -119,7 +119,12 @@ acdb_entity: DefSubclass = DefSubclass(
         # Color name as string. Color books are stored in .stb config files?
         "color_name": DXFAttr(430, dxfversion=DXF2004, optional=True),
         # Transparency value 0x020000TT 0 = fully transparent / 255 = opaque
-        "transparency": DXFAttr(440, dxfversion=DXF2004, optional=True),
+        "transparency": DXFAttr(
+            440,
+            dxfversion=DXF2004,
+            optional=True,
+            validator=validator.is_transparency,
+        ),
         # Shadow mode:
         # 0 = Casts and receives shadows
         # 1 = Casts shadows

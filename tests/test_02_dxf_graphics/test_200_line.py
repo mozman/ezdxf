@@ -4,7 +4,7 @@ import pytest
 import math
 
 from ezdxf.entities.line import Line
-from ezdxf.lldxf.const import DXF12, DXF2000
+from ezdxf.lldxf.const import DXF12, DXF2000, DXFValueError
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Matrix44
 
@@ -221,6 +221,12 @@ def test_copy_entity_transparency():
     assert line2.dxf.transparency == 0x0200007F
 
 
+def test_setting_invalid_transparency_value_raises_exception():
+    line = Line()
+    with pytest.raises(DXFValueError):
+        line.dxf.transparency = 0
+
+
 ERR_LINE = """0
 LINE
 5
@@ -250,7 +256,6 @@ Linetype
 31
 1.0
 """
-
 
 def test_recover_acdb_entity_tags():
     line = Line.from_text(ERR_LINE)
