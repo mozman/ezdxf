@@ -294,10 +294,6 @@ class RenderEngine:
             head.index: head.handle for head in mleader.arrow_heads
         }
         self.arrow_head_handle = self.style.get("arrow_head_handle")
-        # 0= horizontal; 1=vertical - override flag (27) is not set by BricsCAD!
-        self.has_horizontal_attachment = not bool(
-            mleader.dxf.text_attachment_direction
-        )
 
     @property
     def has_extrusion(self) -> bool:
@@ -427,7 +423,7 @@ class RenderEngine:
             if (
                 self.leader_type == 1  # straight lines
                 and self.has_dogleg
-                and self.has_horizontal_attachment
+                and leader.has_horizontal_attachment
             ):
                 self.add_dogleg(leader)
             for line in leader.lines:
@@ -447,7 +443,7 @@ class RenderEngine:
         # All leader vertices and directions in WCS!
         vertices = list(line_vertices)
         end_point = leader.last_leader_point
-        if self.has_horizontal_attachment:
+        if leader.has_horizontal_attachment:
             if has_dogleg:
                 vertices.append(end_point)
             vertices.append(end_point + _get_dogleg_vector(leader))
@@ -489,7 +485,7 @@ class RenderEngine:
             for s, e in zip(vertices, vertices[1:]):
                 self.add_dxf_line(s, e, raw_color)
         elif leader_type == 2:  # add spline
-            if self.has_horizontal_attachment:
+            if leader.has_horizontal_attachment:
                 end_tangent = _get_dogleg_vector(leader)
             else:
                 end_tangent = vertices[-1] - vertices[-2]

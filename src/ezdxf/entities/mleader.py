@@ -821,8 +821,14 @@ class LeaderData:
         self.dogleg_vector: Vec3 = X_AXIS  # group code (11, 21, 31) in WCS
         self.dogleg_length: float = 1.0  # group code 40
         self.index: int = 0  # group code 90
-        self.attachment_direction: int = 0  # group code 271, R21010+
+
+        # 0=horizontal; 1=vertical
+        self.attachment_direction: int = 0  # group code 271, R2010+
         self.breaks = []  # group code 12, 13 - multiple breaks possible!
+
+    @property
+    def has_horizontal_attachment(self) -> bool:
+        return not bool(self.attachment_direction)
 
     @classmethod
     def load(cls, context: List[Union["DXFTag", List]]):
