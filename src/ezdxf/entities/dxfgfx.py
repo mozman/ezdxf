@@ -455,6 +455,8 @@ class DXFGraphic(DXFEntity):
             auditor.check_entity_lineweight(self)
         if dxf.hasattr("extrusion"):
             auditor.check_extrusion_vector(self)
+        if dxf.hasattr("transparency"):
+            auditor.check_transparency(self)
 
     def transform(self, m: "Matrix44") -> "DXFGraphic":
         """Inplace transformation interface, returns `self`

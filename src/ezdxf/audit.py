@@ -85,6 +85,7 @@ class AuditError(IntEnum):
     INVALID_SPLINE_KNOT_VALUE_COUNT = 220
     INVALID_SPLINE_WEIGHT_COUNT = 221
     INVALID_DIMENSION_GEOMETRY_LOCATION = 222
+    INVALID_TRANSPARENCY = 223
 
 
 REQUIRED_ROOT_DICT_ENTRIES = ("ACAD_GROUP", "ACAD_PLOTSTYLENAME")
@@ -445,6 +446,18 @@ class Auditor:
             self.fixed_error(
                 code=AuditError.INVALID_EXTRUSION_VECTOR,
                 message=f"Fixed extrusion vector for entity: {str(self)}.",
+                dxf_entity=entity,
+            )
+
+    def check_transparency(self, entity: DXFEntity) -> None:
+        value = entity.dxf.transparency
+        if value is None:
+            return
+        if not validator.is_transparency(value):
+            entity.dxf.discard("transparency")
+            self.fixed_error(
+                code=AuditError.INVALID_TRANSPARENCY,
+                message=f"Fixed invalid transparency for entity: {str(self)}.",
                 dxf_entity=entity,
             )
 

@@ -100,7 +100,7 @@ class TestCorruptCivil3D:
         assert doc.dxfversion == "AC1032"
         assert auditor.has_errors is True
         assert len(auditor.errors) == 238, "expected decoding errors"
-        assert len(auditor.fixes) == 536
+        assert len(auditor.fixes) == 538
 
 
 FILE_MAP_3D = os.path.join(

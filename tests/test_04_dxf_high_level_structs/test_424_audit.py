@@ -208,3 +208,15 @@ def test_remove_standalone_attrib_entities_from_blocks():
     auditor = doc.audit()
     assert len(list(msp)) == 0
     assert len(auditor.fixes) == 1
+
+
+def test_fix_invalid_transparency():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    line = msp.add_line((0, 0), (1, 0))
+    # HACK! cant set invalid transparency otherwise.
+    line.dxf.__dict__["transparency"] = 268435456
+    assert line.dxf.transparency == 268435456  # works?
+    auditor = Auditor(doc)
+    line.audit(auditor)
+    assert line.dxf.hasattr("transparency") is False

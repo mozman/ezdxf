@@ -2,7 +2,7 @@
 #  License: MIT License
 from typing import Iterable
 from ezdxf.math import Vec3, Matrix44
-from ezdxf.tools.fonts import FontMeasurements
+from ezdxf.tools.fonts import FontMeasurements, FontFace
 from ezdxf.path import Path
 from .properties import Properties
 from .backend import Backend
@@ -50,7 +50,7 @@ class BasicBackend(Backend):
         self.collector.append(("bgcolor", color))
 
     def get_text_line_width(
-        self, text: str, cap_height: float, font: str = None
+        self, text: str, cap_height: float, font: FontFace = None
     ) -> float:
         return len(text)
 

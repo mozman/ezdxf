@@ -7,6 +7,7 @@ from ezdxf.entities.line import Line
 from ezdxf.lldxf.const import DXF12, DXF2000, DXFValueError
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Matrix44
+from ezdxf.audit import Auditor
 
 TEST_CLASS = Line
 TEST_TYPE = "LINE"
@@ -229,6 +230,8 @@ def test_setting_invalid_transparency_value_raises_exception():
 
 def test_load_entity_with_invalid_transparency():
     line = Line.from_text(ENTITY_INVALID_TRANSPARENCY)
+    # No auto fix in normal loading mode - Auditor fixes this issue at DXF
+    # attribute level!
     assert line.dxf.transparency == 268435456
     assert (
         line.transparency == 0.0
