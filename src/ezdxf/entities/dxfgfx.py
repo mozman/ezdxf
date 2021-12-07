@@ -249,14 +249,12 @@ class DXFGraphic(DXFEntity):
     @property
     def transparency(self) -> float:
         """Get transparency as float value between 0 and 1, 0 is opaque and 1
-        is 100% transparent (invisible).
+        is 100% transparent (invisible). Transparency by block returns always 0.
         """
         if self.dxf.hasattr("transparency"):
             value = self.dxf.get("transparency")
             if validator.is_transparency(value):
-                if value & TRANSPARENCY_BYBLOCK:
-                    # Convert transparency ByBlock to opaque, until I know a
-                    # better solution
+                if value & TRANSPARENCY_BYBLOCK:  # just check flag state
                     return 0.0
                 return clr.transparency2float(value)
         return 0.0

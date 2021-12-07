@@ -551,6 +551,16 @@ class RenderContext:
         else:  # BYOBJECT
             color = self._true_entity_color(entity.rgb, aci)
 
+        # TODO: handle transparency by block
+        if entity.is_transparency_by_block:
+            if not self.inside_block_reference:
+                # get transparency from "current_layout_properties"
+                pass
+            else:
+                # get transparency from "current_block_reference_properties"
+                pass
+
+        # entity.transparency returns 0.0 (opaque) for transparency by block!
         alpha = int(round((1.0 - entity.transparency) * 255))
         if alpha == 255:
             return color

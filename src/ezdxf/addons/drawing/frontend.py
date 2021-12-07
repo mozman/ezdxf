@@ -605,6 +605,8 @@ class Frontend:
     def draw_composite_entity(
         self, entity: DXFGraphic, properties: Properties
     ) -> None:
+        # TODO: set_opaque() shouldn't be necessary after adding proper support
+        #  for transparency by block
         def set_opaque(entities: Iterable[DXFGraphic]):
             for child in entities:
                 child.transparency = 0.0
