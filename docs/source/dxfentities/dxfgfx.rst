@@ -42,6 +42,10 @@ Subclass of  :class:`ezdxf.entities.DXFEntity`
         This attribute requires DXF R2004 or later, returns ``0`` for prior DXF versions
         and raises :class:`DXFAttributeError` for setting `transparency` in older DXF versions.
 
+    .. autoproperty:: is_transparency_by_layer
+
+    .. autoproperty:: is_transparency_by_block
+
     .. automethod:: ocs() -> OCS
 
     .. automethod:: get_layout() -> BaseLayout
@@ -127,8 +131,9 @@ Common graphical DXF attributes
 
     .. attribute:: DXFGraphic.dxf.paperspace
 
-        ``0`` for entity resides in modelspace or a block, ``1`` for paperspace, this attribute is set automatically by
-        adding an entity to a layout (feature for experts); default = ``0``
+        ``0`` for entity resides in modelspace or a block, ``1`` for paperspace,
+        this attribute is set automatically by adding an entity to a layout
+        (feature for experts); default = ``0``
 
     .. attribute:: DXFGraphic.dxf.extrusion
 
@@ -140,8 +145,8 @@ Common graphical DXF attributes
 
     .. attribute:: DXFGraphic.dxf.true_color
 
-        True color value as int ``0x00RRGGBB``, use :attr:`DXFGraphic.rgb` to get/set true color values as ``(r, g, b)``
-        tuples. (requires DXF R2004)
+        True color value as int ``0x00RRGGBB``, use :attr:`DXFGraphic.rgb` to
+        get/set true color values as ``(r, g, b)`` tuples. (requires DXF R2004)
 
     .. attribute:: DXFGraphic.dxf.color_name
 
@@ -149,8 +154,12 @@ Common graphical DXF attributes
 
     .. attribute:: DXFGraphic.dxf.transparency
 
-        Transparency value as int, ``0x020000TT`` ``0x00`` = 100% transparent / ``0xFF`` = opaque, use
-        :attr:`DXFGraphic.transparency` to get/set transparency as float value.
+        Transparency value as int, ``0x020000TT`` ``0x00`` = 100% transparent /
+        ``0xFF`` = opaque, special value ``0x01000000`` means transparency by
+        block. An unset transparency value means transparency by layer.
+        Use :attr:`DXFGraphic.transparency` to get/set transparency as float
+        value, and the properties :attr:`DXFGraphic.is_transparency_by_block`
+        and :attr:`DXFGraphic.is_transparency_by_layer` to check special cases.
 
         (requires DXF R2004)
 

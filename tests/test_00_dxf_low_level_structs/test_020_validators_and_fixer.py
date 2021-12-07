@@ -24,6 +24,7 @@ from ezdxf.lldxf.validator import (
     fix_bitmask,
     is_greater_or_equal_zero,
     is_handle,
+    is_transparency,
 )
 from ezdxf.entities.layer import is_valid_layer_color_index, fix_layer_color
 
@@ -242,6 +243,21 @@ def test_is_a_handle(handle):
 @pytest.mark.parametrize("handle", [None, 0, 0x200000, "xyz"])
 def test_is_not_a_handle(handle):
     assert is_handle(handle) is False
+
+
+@pytest.mark.parametrize("t", [
+    0x02000000,  # 100% transparent
+    0x0200007F,  # 50% transparent
+    0x020000FF,  # opaque
+    0x01000000,  # ByBlock
+])
+def test_is_transparency(t):
+    assert is_transparency(t) is True
+
+
+@pytest.mark.parametrize("t", [None, 0, 127, 255, 0x01000001])
+def test_is_not_transparency(t):
+    assert is_transparency(t) is False
 
 
 if __name__ == "__main__":

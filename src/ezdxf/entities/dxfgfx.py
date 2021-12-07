@@ -24,6 +24,7 @@ from ezdxf.lldxf.const import (
     SUBCLASS_MARKER,
     DXFInvalidLineType,
     DXFStructureError,
+    TRANSPARENCY_BYBLOCK,
 )
 from ezdxf.math import OCS, Matrix44
 from ezdxf.proxygraphic import load_proxy_graphic, export_proxy_graphic
@@ -119,6 +120,8 @@ acdb_entity: DefSubclass = DefSubclass(
         # Color name as string. Color books are stored in .stb config files?
         "color_name": DXFAttr(430, dxfversion=DXF2004, optional=True),
         # Transparency value 0x020000TT 0 = fully transparent / 255 = opaque
+        # Special value 0x01000000 == ByBlock
+        # unset value means ByLayer
         "transparency": DXFAttr(
             440,
             dxfversion=DXF2004,
@@ -251,6 +254,10 @@ class DXFGraphic(DXFEntity):
         if self.dxf.hasattr("transparency"):
             value = self.dxf.get("transparency")
             if validator.is_transparency(value):
+                if value & TRANSPARENCY_BYBLOCK:
+                    # Convert transparency ByBlock to opaque, until I know a
+                    # better solution
+                    return 0.0
                 return clr.transparency2float(value)
         return 0.0
 
@@ -260,6 +267,16 @@ class DXFGraphic(DXFEntity):
         is 100% transparent (invisible).
         """
         self.dxf.set("transparency", clr.float2transparency(transparency))
+
+    @property
+    def is_transparency_by_layer(self) -> bool:
+        """Returns ``True`` if entity inherits transparency from layer."""
+        return not self.dxf.hasattr("transparency")
+
+    @property
+    def is_transparency_by_block(self) -> bool:
+        """Returns ``True`` if entity inherits transparency from block."""
+        return self.dxf.get("transparency", 0) == TRANSPARENCY_BYBLOCK
 
     def graphic_properties(self) -> Dict:
         """Returns the important common properties layer, color, linetype,

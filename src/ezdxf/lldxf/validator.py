@@ -20,6 +20,7 @@ from .const import (
     VALID_DXF_LINEWEIGHT_VALUES,
     VALID_DXF_LINEWEIGHTS,
     LINEWEIGHT_BYLAYER,
+    TRANSPARENCY_BYBLOCK,
 )
 
 from .tagger import ascii_tags_loader
@@ -455,4 +456,6 @@ def is_handle(handle) -> bool:
 
 
 def is_transparency(value) -> bool:
-    return bool(value & 0x02000000)
+    if isinstance(value, int):
+        return value == TRANSPARENCY_BYBLOCK or bool(value & 0x02000000)
+    return False
