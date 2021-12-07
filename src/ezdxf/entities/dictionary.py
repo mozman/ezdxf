@@ -288,9 +288,18 @@ class Dictionary(DXFObject):
                     f"Invalid entity handle #{entity} for key {key}"
                 )
         elif isinstance(entity, DXFGraphic):
-            raise DXFTypeError(
-                f"Graphic entities not allowed: {entity.dxftype()}"
-            )
+            if self.doc is not None and self.doc.is_loading:
+                # AutoCAD add-ons can store graphical entities in DICTIONARIES
+                # in the OBJECTS section and AutoCAD does not complain - so just
+                # preserve them!
+                # Example "ZJMC-288.dxf" in issue #585, add-on: "acdgnlsdraw.crx"?
+                logger.warning(f"Invalid entity {str(entity)} in {str(self)}")
+            else:
+                # Do not allow ezdxf users to add graphical entities to a
+                # DICTIONARY object!
+                raise DXFTypeError(
+                    f"Graphic entities not allowed: {entity.dxftype()}"
+                )
         self._data[key] = entity
 
     def remove(self, key: str) -> None:
