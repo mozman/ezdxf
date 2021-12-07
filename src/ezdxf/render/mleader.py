@@ -15,6 +15,7 @@ from ezdxf.math import (
 from ezdxf.entities import factory
 from ezdxf.proxygraphic import ProxyGraphic
 from ezdxf.render.arrows import ARROWS, arrow_length
+from ezdxf.tools.text_size import mtext_size, MTextSize
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
@@ -188,7 +189,7 @@ def copy_mtext_data(
         dxf.true_color = true_color
     dxf.insert = mtext_data.insert
     assert mtext.doc is not None
-    mtext.dxf.style = get_text_style(mtext_data.style_handle, mtext.doc)
+    mtext.dxf.style = get_text_style(mtext_data.style_handle, mtext.doc).dxf.name
     if not mtext_data.extrusion.isclose(Z_AXIS):
         dxf.extrusion = mtext_data.extrusion
     dxf.text_direction = mtext_data.text_direction
@@ -295,6 +296,8 @@ class RenderEngine:
             head.index: head.handle for head in mleader.arrow_heads
         }
         self.arrow_head_handle = self.style.get("arrow_head_handle")
+        self.dxf_mtext_entity: Optional["MText"] = None
+        self._dxf_mtext_size: Optional[MTextSize] = None
 
     @property
     def has_extrusion(self) -> bool:
@@ -307,6 +310,18 @@ class RenderEngine:
     @property
     def has_block_content(self) -> bool:
         return self.context.block is not None
+
+    @property
+    def mtext_size(self) -> MTextSize:
+        """Calculate MTEXT size on demand. """
+        if isinstance(self._dxf_mtext_size, MTextSize):
+            return self._dxf_mtext_size
+        if self.dxf_mtext_entity is not None:
+            size = mtext_size(self.dxf_mtext_entity)
+        else:
+            size = MTextSize(0, 0, 0, 0, [])
+        self._dxf_mtext_size = size
+        return size
 
     def run(self) -> List["DXFGraphic"]:
         """Entry point to render MLEADER entities."""
@@ -374,6 +389,8 @@ class RenderEngine:
                 set_mtext_bg_fill(mtext, mtext_data)
             set_mtext_columns(mtext, mtext_data, self.scale)
         self.entities.append(mtext)
+        self.dxf_mtext_entity = mtext
+
         if self.has_text_frame:
             self.add_text_frame()
 
@@ -460,7 +477,7 @@ class RenderEngine:
         if not (has_bottom_line or has_top_line):
             return
 
-        length = abs(mtext.width)  # this is not very accurate!
+        length = self.mtext_size.total_width
         if length < 1e-9:
             return
 
