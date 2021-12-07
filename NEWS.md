@@ -6,6 +6,8 @@ Version 0.17.2b1 - dev
 ----------------------
 
 - NEW: Auditor fixes invalid transparency values
+- NEW: add `transparency` argument to `LayerTable.add()`
+- NEW: better transparency support for the `drawing` add-on
 - BUGFIX: flattening issues #574 in Path() and ConstructionEllipse() 
 - BUGFIX: `drawing` add-on shows block references in `ACAD_TABLE` at the 
   correct location

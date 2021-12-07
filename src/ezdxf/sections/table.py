@@ -301,6 +301,7 @@ class LayerTable(Table):
         linetype: str = "Continuous",
         lineweight: int = const.LINEWEIGHT_BYLAYER,
         plot: bool = True,
+        transparency: Optional[float] = None,
         dxfattribs: Dict = None,
     ) -> "Layer":
         """Add a new :class:`~ezdxf.entities.Layer`.
@@ -313,6 +314,8 @@ class LayerTable(Table):
             linetype (str): line type name, default is "Continuous"
             lineweight (int): line weight, default is BYLAYER
             plot (bool): plot layer as bool, default is ``True``
+            transparency: transparency value in the range [0, 1], where 1 is
+                100% transparent and 0 is opaque
             dxfattribs (dict): additional DXF attributes
 
         .. versionadded:: 0.17
@@ -331,7 +334,10 @@ class LayerTable(Table):
         if true_color is not None:
             dxfattribs["true_color"] = int(true_color)
         dxfattribs["plot"] = int(plot)
-        return self.new(name, dxfattribs)  # type: ignore
+        layer = cast("Layer", self.new(name, dxfattribs))
+        if transparency is not None:
+            layer.transparency = transparency
+        return layer
 
 
 class LineTypeTable(Table):
