@@ -43,8 +43,7 @@ def decode_raw_color(value: int) -> Tuple[int, Union[int, RGB]]:
 
 
 def decode_raw_color_int(value: int) -> Tuple[int, int]:
-    """Returns tuple(type, int), the true color value is a 24-bit int value.
-    """
+    """Returns tuple(type, int), the true color value is a 24-bit int value."""
     flags = (value >> 24) & 0xFF
     if flags == COLOR_TYPE_BY_BLOCK:
         return COLOR_TYPE_BY_BLOCK, BYBLOCK
@@ -77,6 +76,11 @@ def encode_raw_color(value: Union[int, RGB]) -> int:
             raise ValueError(f"Invalid color index: {value}")
     else:
         return -(-((COLOR_TYPE_RGB << 24) + rgb2int(value)) & 0xFFFFFFFF)
+
+
+# Special transparency value
+TRANSPARENCY_BYBLOCK = 0x01000000
+OPAQUE = 0x020000FF
 
 
 def float2transparency(value: float) -> int:
