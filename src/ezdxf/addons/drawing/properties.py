@@ -61,7 +61,7 @@ OLE2FRAME_COLOR = "#89adba"  # arbitrary choice
 
 
 def is_dark_color(color: Color, dark: float = 0.2) -> bool:
-    luma = luminance(hex_to_rgb(color))
+    luma = luminance(hex_to_rgb(color[:7]))
     return luma <= dark
 
 
@@ -294,7 +294,9 @@ class RenderContext:
                 CAD application.
         """
         self._saved_states: List[Properties] = []
-        self.line_pattern: Dict[str, Sequence[float]] = _load_line_pattern(doc.linetypes) if doc else dict()
+        self.line_pattern: Dict[str, Sequence[float]] = (
+            _load_line_pattern(doc.linetypes) if doc else dict()
+        )
         self.current_layout_properties = LayoutProperties.modelspace()
         self.current_block_reference_properties: Optional[Properties] = None
         self.plot_styles = self._load_plot_style_table(ctb)
@@ -329,16 +331,16 @@ class RenderContext:
         self._hatch_pattern_cache: Dict[str, HatchPatternType] = dict()
 
     def update_configuration(self, config: Configuration) -> Configuration:
-        """ Where the user has not specified a value, populate configuration
+        """Where the user has not specified a value, populate configuration
         fields based on the dxf header values
         """
         changes = {}
         if config.pdsize is None:
-            changes['pdsize'] = self.pdsize
+            changes["pdsize"] = self.pdsize
         if config.pdmode is None:
-            changes['pdmode'] = self.pdmode
+            changes["pdmode"] = self.pdmode
         if config.measurement is None:
-            changes['measurement'] = self.measurement
+            changes["measurement"] = self.measurement
         return config.with_changes(**changes)
 
     def _setup_layers(self, doc: "Drawing"):
@@ -356,6 +358,11 @@ class RenderContext:
         # Store real layer name (mixed case):
         properties.layer = layer.dxf.name
         properties.color = self._true_layer_color(layer)
+
+        # set layer transparency
+        alpha = transparency_to_alpha(layer.transparency)
+        if alpha < 255:
+            properties.color = set_color_alpha(properties.color, alpha)
 
         # Depend layer ACI color from layout background color?
         # True color overrides ACI color and layers with only true color set
@@ -535,12 +542,13 @@ class RenderContext:
         else:
             aci = entity.dxf.color  # defaults to BYLAYER
 
+        entity_layer = resolved_layer or layer_key(self.resolve_layer(entity))
+        layer_properties = self.layers.get(
+            entity_layer, DEFAULT_LAYER_PROPERTIES
+        )
+
         if aci == const.BYLAYER:
-            entity_layer = resolved_layer or layer_key(
-                self.resolve_layer(entity)
-            )
-            layer = self.layers.get(entity_layer, DEFAULT_LAYER_PROPERTIES)
-            color = layer.get_entity_color_from_layer(
+            color = layer_properties.get_entity_color_from_layer(
                 self.current_layout_properties.default_color
             )
         elif aci == const.BYBLOCK:
@@ -550,22 +558,29 @@ class RenderContext:
                 color = self.current_block_reference_properties.color  # type: ignore
         else:  # BYOBJECT
             color = self._true_entity_color(entity.rgb, aci)
+        return color + self._entity_alpha_str(
+            entity.dxf.get("transparency"), layer_properties.color
+        )
 
-        # TODO: handle transparency by block
-        if entity.is_transparency_by_block:
-            if not self.inside_block_reference:
-                # get transparency from "current_layout_properties"
-                pass
-            else:
-                # get transparency from "current_block_reference_properties"
-                pass
+    def _entity_alpha_str(
+        self, raw_transparency: Optional[int], layer_color: Color
+    ) -> str:
+        """Returns the alpha value as hex string "xx" or empty string if opaque."""
+        if raw_transparency == const.TRANSPARENCY_BYBLOCK:
+            if self.inside_block_reference:
+                return self.current_block_reference_properties.color[7:]  # type: ignore
+            # else: entity is not in a block
+            # There is no default transparency value for layouts, AutoCAD and
+            # BricsCAD shows opaque entities!
+            return ""
+        # No transparency attribute means "by layer"
+        elif raw_transparency is None:
+            return layer_color[7:]
 
-        # entity.transparency returns 0.0 (opaque) for transparency by block!
-        alpha = int(round((1.0 - entity.transparency) * 255))
-        if alpha == 255:
-            return color
-        else:
-            return set_color_alpha(color, alpha)
+        alpha = 255 - (raw_transparency & 0xff)
+        if alpha < 255:
+            return f"{alpha:02x}"
+        return ""
 
     def resolve_aci_color(self, aci: int, resolved_layer: str) -> Color:
         """Resolve the `aci` color as hex color string: "#RRGGBB" """
@@ -823,6 +838,12 @@ def set_color_alpha(color: Color, alpha: int) -> Color:
     ), f'invalid RGB color: "{color}"'
     assert 0 <= alpha < 256, f"alpha out of range: {alpha}"
     return f"{color[:7]}{alpha:02x}"
+
+
+def transparency_to_alpha(value: float) -> int:
+    # clamp into range [0, 1]
+    value = min(max(0.0, value), 1.0)
+    return int(round((1.0 - value) * 255))
 
 
 def _load_line_pattern(linetypes: "Table") -> Dict[str, Sequence[float]]:

@@ -605,12 +605,6 @@ class Frontend:
     def draw_composite_entity(
         self, entity: DXFGraphic, properties: Properties
     ) -> None:
-        # TODO: set_opaque() shouldn't be necessary after adding proper support
-        #  for transparency by block
-        def set_opaque(entities: Iterable[DXFGraphic]):
-            for child in entities:
-                child.transparency = 0.0
-                yield child
 
         def draw_insert(insert: Insert):
             self.draw_entities(insert.attribs)
@@ -632,7 +626,7 @@ class Frontend:
         elif isinstance(entity, SupportsVirtualEntities):
             # draw_entities() includes the visibility check:
             try:
-                self.draw_entities(set_opaque(virtual_entities(entity)))
+                self.draw_entities(virtual_entities(entity))
             except ProxyGraphicError as e:
                 print(str(e))
                 print(POST_ISSUE_MSG)

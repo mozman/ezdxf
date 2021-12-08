@@ -11,14 +11,7 @@ from ezdxf.lldxf import const
 @pytest.fixture(scope="module")
 def doc():
     d = ezdxf.new(setup=True)
-    d.layers.new(
-        "Test",
-        dxfattribs={
-            "color": 5,  # blue: 0000ff
-            "linetype": "DOT",
-            "lineweight": 70,  # 0.70
-        },
-    )
+    d.layers.add("Test", color=5, linetype="DOT", lineweight=70)
     msp = d.modelspace()
     msp.add_line(
         (0, 0),
@@ -345,6 +338,24 @@ def test_is_valid_transparent_color(color, result):
 )
 def test_is_valid_color_value_length(color, result):
     assert is_valid_color(color) is result
+
+
+def test_resolve_transparency_from_layer():
+    doc = ezdxf.new()
+    doc.layers.add("Layer_T50", color=1, transparency=0.50)
+    msp = doc.modelspace()
+    line = msp.add_line(
+        (0, 0),
+        (1, 0),
+        dxfattribs={
+            "color": 5,
+            "layer": "Layer_T50",
+        },
+    )
+    context = RenderContext(doc)
+    context.set_current_layout(msp)
+    prop = context.resolve_all(line)
+    assert prop.color == "#0000ff7f"
 
 
 if __name__ == "__main__":
