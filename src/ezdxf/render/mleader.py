@@ -6,6 +6,7 @@ import logging
 from ezdxf import colors
 from ezdxf.math import (
     Vec3,
+    Vec2,
     X_AXIS,
     Z_AXIS,
     fit_points_to_cad_cv,
@@ -469,37 +470,21 @@ class RenderEngine:
             return
 
         for leader in self.context.leaders:
-            connection_point = leader.last_leader_point
-            if (
-                self.leader_type == 1  # straight lines
-                and self.has_dogleg
-                and leader.has_horizontal_attachment
-            ):
-                connection_point = self.add_dogleg(leader)
             for line in leader.lines:
                 self.add_leader_line(leader, line)
 
             if self.has_text_content:
                 if leader.has_horizontal_attachment:
                     # add text underlines for these horizontal attachment styles:
-                    # - 5 = 5 = bottom of bottom text line & underline bottom text line
-                    # - 6 = bottom of top text line & underline top text line
-                    self.add_text_underline(connection_point)
+                    # 5 = bottom of bottom text line & underline bottom text line
+                    # 6 = bottom of top text line & underline top text line
+                    self.add_text_underline(leader)
                 else:
                     # text with vertical attachment may have an extra "overline"
                     # across the text
                     self.add_overline(leader)
 
-    def add_dogleg(self, leader: "LeaderData") -> Vec3:
-        # All leader vertices and directions in WCS!
-        start_point = leader.last_leader_point
-        end_point = start_point + leader.dogleg_vector.normalize(
-            leader.dogleg_length
-        )
-        self.add_dxf_line(start_point, end_point)
-        return end_point
-
-    def add_text_underline(self, connection_point: Vec3):
+    def add_text_underline(self, leader: "LeaderData"):
         mtext = self.context.mtext
         if mtext is None:
             return
@@ -507,6 +492,7 @@ class RenderEngine:
         has_right_underline = self.right_attachment_type in (5, 6)
         if not (has_left_underline or has_right_underline):
             return
+        connection_point = leader.last_leader_point + _get_dogleg_vector(leader)
         length = self.mtext_size.total_width + self.context.landing_gap_size
         if length < 1e-9:
             return
@@ -520,9 +506,9 @@ class RenderEngine:
             cp2d = connection_point.vec2
         else:  # project points into the text plane
             from_wcs = self.ocs.from_wcs
-            start2d = from_wcs(start).vec2
-            up2d = from_wcs(mtext.text_direction).vec2.orthogonal()
-            cp2d = from_wcs(connection_point).vec2
+            start2d = Vec2(from_wcs(start))
+            up2d = Vec2(from_wcs(mtext.text_direction)).orthogonal()
+            cp2d = Vec2(from_wcs(connection_point))
         is_left = is_point_left_of_line(cp2d, start2d, start2d + up2d)
         is_right = not is_left
         line = mtext.text_direction.normalize(length if is_left else -length)

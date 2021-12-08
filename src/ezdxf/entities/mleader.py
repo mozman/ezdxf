@@ -844,7 +844,7 @@ class LeaderData:
             elif code == 291:
                 leader.has_dogleg_vector = value
             elif code == 10:
-                leader.last_leader_point = value
+                leader.last_leader_point = Vec3(value)
             elif code == 11:
                 leader.dogleg_vector = Vec3(value)
             elif code == 40:
