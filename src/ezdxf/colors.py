@@ -1,6 +1,7 @@
 #  Copyright (c) 2020-2021, Manfred Moitzi
 #  License: MIT License
 from typing import Tuple, Union
+from enum import IntEnum
 import math
 
 RGB = Tuple[int, int, int]
@@ -16,6 +17,21 @@ BLUE = 5
 MAGENTA = 6
 BLACK = 7
 WHITE = 7
+
+
+class ACI(IntEnum):
+    BYBLOCK = 0
+    BYLAYER = 256
+    BYOBJECT = 257
+    RED = 1
+    YELLOW = 2
+    GREEN = 3
+    CYAN = 4
+    BLUE = 5
+    MAGENTA = 6
+    BLACK = 7
+    WHITE = 7
+
 
 # Flags for raw color int values:
 # Take color from layer, ignore other bytes.
@@ -78,9 +94,17 @@ def encode_raw_color(value: Union[int, RGB]) -> int:
         return -(-((COLOR_TYPE_RGB << 24) + rgb2int(value)) & 0xFFFFFFFF)
 
 
-# Special transparency value
-TRANSPARENCY_BYBLOCK = 0x01000000
-OPAQUE = 0x020000FF
+TRANSPARENCY_BYBLOCK = 0x1000000
+OPAQUE = 0x20000FF
+TRANSPARENCY_10 = 0x20000E5
+TRANSPARENCY_20 = 0x20000CC
+TRANSPARENCY_30 = 0x20000B2
+TRANSPARENCY_40 = 0x2000099
+TRANSPARENCY_50 = 0x200007F
+TRANSPARENCY_60 = 0x2000066
+TRANSPARENCY_70 = 0x200004C
+TRANSPARENCY_80 = 0x2000032
+TRANSPARENCY_90 = 0x2000019
 
 
 def float2transparency(value: float) -> int:

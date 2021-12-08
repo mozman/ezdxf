@@ -195,6 +195,7 @@ OWNER_CODE = 330
 # normal tags before saved to file.
 COMPRESSED_TAGS = -10
 
+# All color related constants are located in colors.py
 BYBLOCK = 0
 BYLAYER = 256
 BYOBJECT = 257
@@ -207,23 +208,9 @@ MAGENTA = 6
 BLACK = 7
 WHITE = 7
 
-
-class ACI(IntEnum):
-    BYBLOCK = 0
-    BYLAYER = 256
-    BYOBJECT = 257
-    RED = 1
-    YELLOW = 2
-    GREEN = 3
-    CYAN = 4
-    BLUE = 5
-    MAGENTA = 6
-    BLACK = 7
-    WHITE = 7
-
-
+# All transparency related constants are located in colors.py
 TRANSPARENCY_BYBLOCK = 0x01000000
-OPAQUE = 0x020000FF
+
 
 LINEWEIGHT_BYLAYER = -1
 LINEWEIGHT_BYBLOCK = -2
