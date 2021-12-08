@@ -42,6 +42,10 @@ logger = logging.getLogger("ezdxf")
 # DXF reference:
 # http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-72D20B8C-0F5E-4993-BEB7-0FCF94F32BE0
 
+# AutoCAD and BricsCAD always (?) use values stored in the MULTILEADER
+# entity, even if the override flag isn't set!
+IGNORE_OVERRIDE_FLAGS = True
+
 OVERRIDE_FLAG = {
     "leader_type": 1 << 0,
     "leader_line_color": 1 << 1,
@@ -96,13 +100,13 @@ class MLeaderStyleOverride:
         )  # if False, what MTEXT content is used?
 
     def get(self, attrib_name: str) -> Any:
-        # Set MLEADERSTYLE value as default:
+        # Set MLEADERSTYLE value as default value:
         if attrib_name == "block_scale_vector":
             value = self._block_scale_vector
         else:
             value = self._style_dxf.get_default(attrib_name)
-        if self.is_overridden(attrib_name):
-            # Get overridden value from MLEADER
+        if IGNORE_OVERRIDE_FLAGS or self.is_overridden(attrib_name):
+            # Get overridden value from MULTILEADER:
             if attrib_name == "char_height":
                 value = self._context.char_height
             else:
@@ -357,7 +361,9 @@ class RenderEngine:
     def leader_line_attribs(self, raw_color: int = None) -> Dict:
         aci_color = self.leader_aci_color
         true_color = self.leader_true_color
-        if raw_color is not None:
+
+        # Ignore color override value BYBLOCK!
+        if raw_color and raw_color is not colors.BY_BLOCK_RAW_VALUE:
             aci_color, true_color = decode_raw_color(raw_color)
 
         attribs = {
