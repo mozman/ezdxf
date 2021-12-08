@@ -123,21 +123,17 @@ acdb_mleader = DefSubclass(
         "text_style_handle": DXFAttr(343),
         "text_left_attachment_type": DXFAttr(173, default=1),
         # Values 0-8 are used for the left/right attachment
-        # point (attachment direction is horizontal), values 9-10 are used for the
-        # top/bottom attachment points (attachment direction is vertical).
+        # point (attachment direction is horizontal)
         # Attachment point is:
-        # 0 = top of top text line,
-        # 1 = middle of top text line,
-        # 2 = middle of text,
-        # 3 = middle of bottom text line,
-        # 4 = bottom of bottom text line,
-        # 5 = bottom text line,
-        # 6 = bottom of top text line. Underline bottom line
-        # 7 = bottom of top text line. Underline top line,
-        # 8 = bottom of top text line. Underline all content,
-        # 9 = center of text (y-coordinate only),
-        # 10 = center of text (y-coordinate only), and overline top/underline
-        # bottom content.
+        # 0 = top of top text line
+        # 1 = middle of top text line
+        # 2 = middle of whole text
+        # 3 = middle of bottom text line
+        # 4 = bottom of bottom text line
+        # 5 = bottom of bottom text line & underline bottom text line
+        # 6 = bottom of top text line & underline top text line
+        # 7 = bottom of top text line
+        # 8 = bottom of top text line & underline all text lines
         "text_right_attachment_type": DXFAttr(95),  # like 173
         "text_angle_type": DXFAttr(174, default=1),
         # 0 = text angle is equal to last leader line segment angle

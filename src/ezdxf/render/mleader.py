@@ -193,7 +193,9 @@ def copy_mtext_data(
         dxf.true_color = true_color
     dxf.insert = mtext_data.insert
     assert mtext.doc is not None
-    mtext.dxf.style = get_text_style(mtext_data.style_handle, mtext.doc).dxf.name
+    mtext.dxf.style = get_text_style(
+        mtext_data.style_handle, mtext.doc
+    ).dxf.name
     if not mtext_data.extrusion.isclose(Z_AXIS):
         dxf.extrusion = mtext_data.extrusion
     dxf.text_direction = mtext_data.text_direction
@@ -302,6 +304,17 @@ class RenderEngine:
         self.arrow_head_handle = self.style.get("arrow_head_handle")
         self.dxf_mtext_entity: Optional["MText"] = None
         self._dxf_mtext_size: Optional[MTextSize] = None
+        self.has_horizontal_attachment = bool(
+            self.style.get("text_attachment_direction")
+        )
+        self.left_attachment_type = self.style.get("text_left_attachment_type")
+        self.right_attachment_type = self.style.get(
+            "text_right_attachment_type"
+        )
+        self.top_attachment_type = self.style.get("text_top_attachment_type")
+        self.bottom_attachment_type = self.style.get(
+            "text_bottom_attachment_type"
+        )
 
     @property
     def has_extrusion(self) -> bool:
@@ -317,11 +330,15 @@ class RenderEngine:
 
     @property
     def mtext_size(self) -> MTextSize:
-        """Calculate MTEXT size on demand. """
+        """Calculate MTEXT size on demand."""
         if isinstance(self._dxf_mtext_size, MTextSize):
             return self._dxf_mtext_size
         if self.dxf_mtext_entity is not None:
+            # detect real text width
+            backup = self.dxf_mtext_entity.dxf.width
+            self.dxf_mtext_entity.dxf.width = 0
             size = mtext_size(self.dxf_mtext_entity)
+            self.dxf_mtext_entity.dxf.width = backup
         else:
             size = MTextSize(0, 0, 0, 0, [])
         self._dxf_mtext_size = size
@@ -452,34 +469,74 @@ class RenderEngine:
             return
 
         for leader in self.context.leaders:
+            connection_point = leader.last_leader_point
             if (
                 self.leader_type == 1  # straight lines
                 and self.has_dogleg
                 and leader.has_horizontal_attachment
             ):
-                self.add_dogleg(leader)
+                connection_point = self.add_dogleg(leader)
             for line in leader.lines:
                 self.add_leader_line(leader, line)
 
-            # text content with vertical attachment can have an extra
-            # "horizontal" line across the text width:
-            if self.has_text_content and not leader.has_horizontal_attachment:
-                self.add_overline(leader)
+            if self.has_text_content:
+                if leader.has_horizontal_attachment:
+                    # add text underlines for these horizontal attachment styles:
+                    # - 5 = 5 = bottom of bottom text line & underline bottom text line
+                    # - 6 = bottom of top text line & underline top text line
+                    self.add_text_underline(connection_point)
+                else:
+                    # text with vertical attachment may have an extra "overline"
+                    # across the text
+                    self.add_overline(leader)
 
-    def add_dogleg(self, leader: "LeaderData"):
+    def add_dogleg(self, leader: "LeaderData") -> Vec3:
         # All leader vertices and directions in WCS!
         start_point = leader.last_leader_point
         end_point = start_point + leader.dogleg_vector.normalize(
             leader.dogleg_length
         )
         self.add_dxf_line(start_point, end_point)
+        return end_point
+
+    def add_text_underline(self, connection_point: Vec3):
+        mtext = self.context.mtext
+        if mtext is None:
+            return
+        has_left_underline = self.left_attachment_type in (5, 6)
+        has_right_underline = self.right_attachment_type in (5, 6)
+        if not (has_left_underline or has_right_underline):
+            return
+        length = self.mtext_size.total_width + self.context.landing_gap_size
+        if length < 1e-9:
+            return
+        # The connection point is on the "left" or "right" side of the
+        # detection line, which is a "vertical" line through the text
+        # insertion point.
+        start = mtext.insert
+        if self.ocs is None:  # text plane is parallel to the xy-plane
+            start2d = start.vec2
+            up2d = mtext.text_direction.vec2.orthogonal()
+            cp2d = connection_point.vec2
+        else:  # project points into the text plane
+            from_wcs = self.ocs.from_wcs
+            start2d = from_wcs(start).vec2
+            up2d = from_wcs(mtext.text_direction).vec2.orthogonal()
+            cp2d = from_wcs(connection_point).vec2
+        is_left = is_point_left_of_line(cp2d, start2d, start2d + up2d)
+        is_right = not is_left
+        line = mtext.text_direction.normalize(length if is_left else -length)
+        if (is_left and has_left_underline) or (
+            is_right and has_right_underline
+        ):
+            self.add_dxf_line(connection_point, connection_point + line)
 
     def add_overline(self, leader: "LeaderData"):
         mtext = self.context.mtext
         if mtext is None:
             return
-        has_bottom_line = self.style.get("text_bottom_attachment_type") == 10
-        has_top_line = self.style.get("text_top_attachment_type") == 10
+        has_bottom_line = self.bottom_attachment_type == 10
+        has_top_line = self.top_attachment_type == 10
         if not (has_bottom_line or has_top_line):
             return
 
