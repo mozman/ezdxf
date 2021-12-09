@@ -16,7 +16,7 @@ from ezdxf.math import (
 from ezdxf.entities import factory
 from ezdxf.proxygraphic import ProxyGraphic
 from ezdxf.render.arrows import ARROWS, arrow_length
-from ezdxf.tools.text_size import mtext_size, MTextSize
+from ezdxf.tools.text_size import estimate_mtext_width
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
@@ -304,7 +304,7 @@ class RenderEngine:
         }
         self.arrow_head_handle = self.style.get("arrow_head_handle")
         self.dxf_mtext_entity: Optional["MText"] = None
-        self._dxf_mtext_size: Optional[MTextSize] = None
+        self._dxf_mtext_width: Optional[float] = None
         self.has_horizontal_attachment = bool(
             self.style.get("text_attachment_direction")
         )
@@ -330,19 +330,18 @@ class RenderEngine:
         return self.context.block is not None
 
     @property
-    def mtext_size(self) -> MTextSize:
-        """Calculate MTEXT size on demand."""
-        if isinstance(self._dxf_mtext_size, MTextSize):
-            return self._dxf_mtext_size
+    def mtext_width(self) -> float:
+        """Calculate MTEXT width on demand."""
+        if self._dxf_mtext_width is not None:
+            return self._dxf_mtext_width
         if self.dxf_mtext_entity is not None:
-            # detect real text width
-            backup = self.dxf_mtext_entity.dxf.width
-            self.dxf_mtext_entity.dxf.width = 0
-            size = mtext_size(self.dxf_mtext_entity)
-            self.dxf_mtext_entity.dxf.width = backup
+            # TODO: this is very inaccurate if using inline codes, better
+            #  solution is required like a text layout engine with column width
+            #  calculation from the MTEXT content.
+            size = estimate_mtext_width(self.dxf_mtext_entity)
         else:
-            size = MTextSize(0, 0, 0, 0, [])
-        self._dxf_mtext_size = size
+            size = 0.0
+        self._dxf_mtext_width = size
         return size
 
     def run(self) -> List["DXFGraphic"]:
@@ -493,7 +492,7 @@ class RenderEngine:
         if not (has_left_underline or has_right_underline):
             return
         connection_point = leader.last_leader_point + _get_dogleg_vector(leader)
-        length = self.mtext_size.total_width + self.context.landing_gap_size
+        length = self.mtext_width + self.context.landing_gap_size
         if length < 1e-9:
             return
         # The connection point is on the "left" or "right" side of the
@@ -526,7 +525,7 @@ class RenderEngine:
         if not (has_bottom_line or has_top_line):
             return
 
-        length = self.mtext_size.total_width
+        length = self.mtext_width
         if length < 1e-9:
             return
 

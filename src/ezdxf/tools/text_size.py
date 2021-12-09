@@ -1,13 +1,16 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Sequence, Tuple, List, Type
+from typing import Sequence, Tuple, List
 from dataclasses import dataclass
 import ezdxf
 from ezdxf.math import Matrix44, Vec2
 from ezdxf.entities import Text, MText, get_font_name
 from ezdxf.tools import text_layout as tl, fonts
 from ezdxf.tools.text import MTextContext
-from ezdxf.render.abstract_mtext_renderer import AbstractMTextRenderer
+from ezdxf.render.abstract_mtext_renderer import (
+    AbstractMTextRenderer,
+    detect_width as estimate_mtext_width,
+)
 
 __all__ = [
     "text_size",
@@ -15,6 +18,7 @@ __all__ = [
     "TextSize",
     "MTextSize",
     "WordSizeDetector",
+    "estimate_mtext_width",
 ]
 
 
