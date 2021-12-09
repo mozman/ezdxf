@@ -9,7 +9,7 @@ from ezdxf.tools import text_layout as tl, fonts
 from ezdxf.tools.text import MTextContext
 from ezdxf.render.abstract_mtext_renderer import (
     AbstractMTextRenderer,
-    detect_width as estimate_mtext_width,
+    estimate_mtext_extents,
 )
 
 __all__ = [
@@ -18,7 +18,7 @@ __all__ = [
     "TextSize",
     "MTextSize",
     "WordSizeDetector",
-    "estimate_mtext_width",
+    "estimate_mtext_extents",
 ]
 
 

@@ -5,7 +5,7 @@
 # ezdxf.tools.text_layout and a concrete MTEXT renderer implementation like
 # MTextExplode or ComplexMTextRenderer.
 
-from typing import List, Sequence, Dict, Tuple, Optional
+from typing import List, Sequence, Dict, Tuple, Optional, TYPE_CHECKING, cast
 import abc
 from ezdxf.lldxf import const
 from ezdxf.entities.mtext import MText, MTextColumns
@@ -19,7 +19,11 @@ from ezdxf.tools.text import (
     AbstractFont,
 )
 
-__all__ = ["AbstractMTextRenderer"]
+if TYPE_CHECKING:
+    from ezdxf.entities import Textstyle
+
+
+__all__ = ["AbstractMTextRenderer", "estimate_mtext_extents"]
 
 ALIGN = {
     MTextParagraphAlignment.LEFT: tl.ParagraphAlignment.LEFT,
@@ -147,30 +151,37 @@ def super_glue():
 def defined_width(mtext: MText) -> float:
     width = mtext.dxf.get("width", 0.0)
     if width < 1e-6:
-        width = detect_width(mtext)
+        width, height = estimate_mtext_extents(mtext)
     return width
 
 
-def detect_width(mtext: MText) -> float:
-    """Detect the width for single column MTEXT. The result is very inaccurate
-    if inline codes are used!
+def estimate_mtext_extents(mtext: MText) -> Tuple[float, float]:
+    """Estimate the width and height for a single column MTEXT entity.
+    The result is very inaccurate if inline codes are used!
     """
 
     def make_font() -> AbstractFont:
-        cap_height = mtext.dxf.get_default("char_height")
-        ttf = ""
         doc = mtext.doc
         if doc:
-            style = doc.styles.get(mtext.dxf.get("style", "Standard"))
-            ttf = style.dxf.font
-        if ttf == "":
-            ttf = "arial.ttf"
-        return fonts.make_font(ttf, cap_height=cap_height)
+            style = cast(
+                "Textstyle", doc.styles.get(mtext.dxf.get_default("style"))
+            )
+            if style is not None:
+                return style.make_font(cap_height)
+        return fonts.make_font(const.DEFAULT_TTF, cap_height=cap_height)
 
+    width = 0.0
+    height = 0.0
+    cap_height = mtext.dxf.get_default("char_height")
+    line_spacing_factor = mtext.dxf.get_default("line_spacing_factor")
     content = mtext.plain_text(split=True, fast=True)
-    font = make_font()
-    width = max(font.text_width(t) for t in content)
-    return width
+    line_count = len(content)
+    if (line_count > 0) and (line_count > 1 or content[0] != ""):
+        spacing = tl.leading(cap_height, line_spacing_factor) - cap_height
+        height = cap_height * line_count + spacing * (line_count - 1)
+        font = make_font()
+        width = max(font.text_width(t) for t in content)
+    return width, height
 
 
 def column_heights(columns: MTextColumns) -> List[Optional[float]]:
