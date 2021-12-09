@@ -142,7 +142,7 @@ acdb_mleader = DefSubclass(
         #     rotated by 180 degrees so the right side is up for readability.
         "text_alignment_type": DXFAttr(175, default=2),
         "text_color": DXFAttr(92, default=colors.BY_BLOCK_RAW_VALUE),
-        "has_frame_text": DXFAttr(292, default=0),
+        "has_text_frame": DXFAttr(292, default=0),
         # Block Content:
         "block_record_handle": DXFAttr(344),
         "block_color": DXFAttr(
@@ -205,6 +205,19 @@ acdb_mleader = DefSubclass(
         ),
     },
 )
+# The text frame shape is stored in XDATA except for the default rectangle:
+# 1001 ACAD
+# 1070 <type>
+# 2 = rounded rectangle
+# 3 = parallelogram
+# 4 = triangle
+# 5 = square
+# 6 = pentagon
+# 7 = hexagon
+# 8 = octagon
+# 9 = circle
+# 10= ellipse
+
 acdb_mleader_group_codes = group_code_mapping(acdb_mleader)
 CONTEXT_STR = "CONTEXT_DATA{"
 LEADER_STR = "LEADER{"
@@ -428,7 +441,7 @@ class MultiLeader(DXFGraphic):
         write_tag2(174, dxf.text_angle_type)
         write_tag2(175, dxf.text_alignment_type)
         write_tag2(92, dxf.text_color)
-        write_tag2(292, dxf.has_frame_text)
+        write_tag2(292, dxf.has_text_frame)
 
         write_handle_if_exist(344, "block_record_handle")
         write_tag2(93, dxf.block_color)
@@ -976,7 +989,7 @@ acdb_mleader_style = DefSubclass(
         "text_right_attachment_type": DXFAttr(178, default=1),
         "text_color": DXFAttr(93, default=colors.BY_BLOCK_RAW_VALUE),
         "char_height": DXFAttr(45, default=4),
-        "has_frame_text": DXFAttr(292, default=0),
+        "has_text_frame": DXFAttr(292, default=0),
         "text_align_always_left": DXFAttr(297, default=0),
         "align_space": DXFAttr(46, default=4),
         "has_block_scaling": DXFAttr(293),

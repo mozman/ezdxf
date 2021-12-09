@@ -418,6 +418,11 @@ class RenderEngine:
             self.add_text_frame()
 
     def add_text_frame(self) -> None:
+        # not supported - yet?
+        # 1. This requires a full MTEXT height calculation.
+        # 2. Only the default rectangle and the rounded rectangle are
+        #    acceptable every other text frame is just ugly, especially
+        #    when the MTEXT gets more complex.
         pass
 
     def add_block_content(self) -> None:
