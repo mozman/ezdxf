@@ -19,8 +19,11 @@ logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.tools.fonts import AbstractFont
 
 __all__ = ["Textstyle"]
+
+DEFAULT_TTF = "arial.ttf"
 
 acdb_style = DefSubclass(
     "AcDbTextStyleTableRecord",
@@ -202,3 +205,14 @@ class Textstyle(DXFEntity):
     @is_vertical_stacked.setter
     def is_vertical_stacked(self, state) -> None:
         self.set_flag_state(const.VERTICAL_STACKED, state, "flags")
+
+    def make_font(
+        self, cap_height: float, width_factor: float = 1.0
+    ) -> "AbstractFont":
+        """Returns the ezdxf font abstraction for the stored TTF font."""
+        from ezdxf.tools import fonts
+
+        ttf = self.dxf.get("font", DEFAULT_TTF)
+        if ttf == "":
+            ttf = DEFAULT_TTF
+        return fonts.make_font(ttf, cap_height, width_factor)
