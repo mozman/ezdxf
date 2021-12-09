@@ -49,6 +49,7 @@ import logging
 from pathlib import Path
 import json
 from ezdxf import options
+from ezdxf.lldxf import const
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFEntity, Textstyle
@@ -302,7 +303,7 @@ def find_font_face_by_family(
     return None
 
 
-def find_ttf_path(font_face: FontFace, default="DejaVuSans.ttf") -> str:
+def find_ttf_path(font_face: FontFace, default=const.DEFAULT_TTF) -> str:
     """Returns the true type font path."""
     if options.use_matplotlib:
         from ._matplotlib_font_support import find_filename
@@ -449,6 +450,7 @@ class FontMeasurements(NamedTuple):
 
 
 class AbstractFont:
+    """The `ezdxf` font abstraction."""
     def __init__(self, measurements: FontMeasurements):
         self.measurements = measurements
 

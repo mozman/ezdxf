@@ -8,6 +8,7 @@ Version 0.17.2b1 - dev
 - NEW: Auditor fixes invalid transparency values
 - NEW: add `transparency` argument to `LayerTable.add()`
 - NEW: support for transparency BYLAYER and BYBLOCK for the `drawing` add-on
+- NEW: `Textstyle.make_font()` returns the ezdxf font abstraction
 - BUGFIX: flattening issues #574 in Path() and ConstructionEllipse() 
 - BUGFIX: `drawing` add-on shows block references in `ACAD_TABLE` at the 
   correct location

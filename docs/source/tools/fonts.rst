@@ -24,6 +24,15 @@ Font Classes
 
 .. autoclass:: AbstractFont
 
+    .. attribute:: measurement
+
+        The :class:`FontMeasurements` data.
+
+    .. automethod:: text_width
+
+    .. automethod:: space_width
+
+
 .. autoclass:: MonospaceFont
 
     .. automethod:: text_width
