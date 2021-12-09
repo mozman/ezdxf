@@ -55,3 +55,5 @@ Text Size Tools
         The count of columns (int).
 
 .. autofunction:: mtext_size
+
+.. autofunction:: estimate_mtext_extents

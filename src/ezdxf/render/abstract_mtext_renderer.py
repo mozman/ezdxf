@@ -156,8 +156,15 @@ def defined_width(mtext: MText) -> float:
 
 
 def estimate_mtext_extents(mtext: MText) -> Tuple[float, float]:
-    """Estimate the width and height for a single column MTEXT entity.
-    The result is very inaccurate if inline codes are used!
+    """Estimate the width and height for a single column
+    :class:`~ezdxf.entities.MText` entity.
+    This function is faster than the :func:`mtext_size` function, but the
+    result is very inaccurate if inline codes are present!
+    This function also uses the optional Matplotlib package if available.
+
+    Returns:
+        Tuple[width, height]
+
     """
 
     def make_font() -> AbstractFont:
