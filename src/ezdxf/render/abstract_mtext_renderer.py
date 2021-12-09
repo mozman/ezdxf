@@ -145,11 +145,31 @@ def super_glue():
 
 
 def defined_width(mtext: MText) -> float:
-    width = mtext.dxf.get("width", 0.0)  # optional without default value
-    if width < 1e-6:  # no defined width
-        content = mtext.plain_text(split=True, fast=True)
-        max_line_length = max(len(t) for t in content)
-        width = max_line_length * mtext.dxf.char_height
+    width = mtext.dxf.get("width", 0.0)
+    if width < 1e-6:
+        width = detect_width(mtext)
+    return width
+
+
+def detect_width(mtext: MText) -> float:
+    """Detect the width for single column MTEXT. The result is very inaccurate
+    if inline codes are used!
+    """
+
+    def make_font() -> AbstractFont:
+        cap_height = mtext.dxf.get_default("char_height")
+        ttf = ""
+        doc = mtext.doc
+        if doc:
+            style = doc.styles.get(mtext.dxf.get("style", "Standard"))
+            ttf = style.dxf.font
+        if ttf == "":
+            ttf = "arial.ttf"
+        return fonts.make_font(ttf, cap_height=cap_height)
+
+    content = mtext.plain_text(split=True, fast=True)
+    font = make_font()
+    width = max(font.text_width(t) for t in content)
     return width
 
 
