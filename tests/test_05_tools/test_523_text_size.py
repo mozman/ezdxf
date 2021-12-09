@@ -5,12 +5,13 @@ import pytest
 
 import ezdxf
 from ezdxf.layouts import VirtualLayout
-from ezdxf.tools.text_size import text_size, mtext_size
+from ezdxf.math import BoundingBox2d
+from ezdxf.tools.text_size import text_size, mtext_size, WordSizeDetector
 from ezdxf.tools.text_layout import leading
 
 # Exact text size checks are not possible if the used font is not available,
 # which cannot guaranteed for all platforms therefore the matplotlib support is
-# disabled deliberately by using a virtal layout, which has not text style
+# disabled deliberately by using a virtual layout, which has no text style
 # tables attached and the "MonospaceFont" based text measurements are used.
 
 
@@ -136,6 +137,21 @@ def test_mtext_size_of_2_lines(cap_height, msp):
     assert size.total_height == pytest.approx(expected_total_height)
     assert size.total_width == 4 * cap_height, "expected width of 2nd line"
     assert size.column_width == size.total_width
+
+
+@pytest.mark.parametrize("cap_height", [2., 3.])
+def test_measure_mtext_word_size(cap_height, msp):
+    # Matplotlib support disabled and using MonospaceFont()
+    mtext = msp.add_mtext("XXX\nYYYY", dxfattribs={
+        "char_height": cap_height,
+        "line_spacing_factor": 1.0,
+    })
+    word_size_detector = WordSizeDetector()
+    mtext_size(mtext, tool=word_size_detector)
+    boxes = word_size_detector.word_boxes()
+    assert len(boxes) == 2
+    assert BoundingBox2d(boxes[0]).size.isclose((cap_height * 3, cap_height))
+    assert BoundingBox2d(boxes[1]).size.isclose((cap_height * 4, cap_height))
 
 
 if __name__ == "__main__":

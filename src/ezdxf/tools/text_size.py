@@ -1,16 +1,21 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Sequence, Tuple, List
+from typing import Sequence, Tuple, List, Type
 from dataclasses import dataclass
 import ezdxf
+from ezdxf.math import Matrix44, Vec2
 from ezdxf.entities import Text, MText, get_font_name
 from ezdxf.tools import text_layout as tl, fonts
 from ezdxf.tools.text import MTextContext
 from ezdxf.render.abstract_mtext_renderer import AbstractMTextRenderer
 
-__all__ = ["text_size", "mtext_size", "TextSize", "MTextSize"]
-
-DO_NOTHING = tl.DoNothingRenderer()
+__all__ = [
+    "text_size",
+    "mtext_size",
+    "TextSize",
+    "MTextSize",
+    "WordSizeDetector",
+]
 
 
 @dataclass(frozen=True)
@@ -67,7 +72,7 @@ def text_size(text: Text) -> TextSize:
     return TextSize(text_width, cap_height, total_height)
 
 
-def mtext_size(mtext: MText) -> MTextSize:
+def mtext_size(mtext: MText, tool: "MTextSizeDetector" = None) -> MTextSize:
     """Returns the total-width, -height and columns information for a
     :class:`~ezdxf.entities.MText` entity.
 
@@ -87,11 +92,12 @@ def mtext_size(mtext: MText) -> MTextSize:
         ezdxf.option.use_matplotlib = False
 
     """
+    tool = tool or MTextSizeDetector()
     column_heights: List[float] = [0.0]
     gutter_width = 0.0
     column_width = 0.0
     if mtext.text:
-        columns: List[tl.Column] = list(MTextSizeDetector.run(mtext))
+        columns: List[tl.Column] = list(tool.measure(mtext))
         if len(columns):
             first_column = columns[0]
             # same values for all columns
@@ -110,13 +116,21 @@ def mtext_size(mtext: MText) -> MTextSize:
 
 
 class MTextSizeDetector(AbstractMTextRenderer):
+    def __init__(self):
+        super().__init__()
+        self.do_nothing = tl.DoNothingRenderer()
+        self.renderer = self.do_nothing
+
+    def reset(self):
+        pass
+
     def word(self, text: str, ctx: MTextContext) -> tl.ContentCell:
         return tl.Text(
             # The first call to get_font() is very slow!
             width=self.get_font(ctx).text_width(text),
             height=ctx.cap_height,
             valign=tl.CellAlignment(ctx.align),
-            renderer=DO_NOTHING,
+            renderer=self.renderer,
         )
 
     def fraction(self, data: Tuple, ctx: MTextContext) -> tl.ContentCell:
@@ -126,7 +140,7 @@ class MTextSizeDetector(AbstractMTextRenderer):
                 top=self.word(upr, ctx),
                 bottom=self.word(lwr, ctx),
                 stacking=self.get_stacking(type_),
-                renderer=DO_NOTHING,
+                renderer=self.renderer,
             )
         else:
             return self.word(upr, ctx)
@@ -135,11 +149,42 @@ class MTextSizeDetector(AbstractMTextRenderer):
         return fonts.get_entity_font_face(mtext)
 
     def make_bg_renderer(self, mtext: MText) -> tl.ContentRenderer:
-        return DO_NOTHING
+        return self.do_nothing
 
-    @staticmethod
-    def run(mtext: MText) -> tl.Layout:
-        detector = MTextSizeDetector()
-        layout = detector.layout_engine(mtext)
+    def measure(self, mtext: MText) -> tl.Layout:
+        self.reset()
+        layout = self.layout_engine(mtext)
         layout.place()
         return layout
+
+
+class WordSizeCollector(tl.DoNothingRenderer):
+    """Collects word sizes as tuples of the lower left corner and the upper
+    right corner as Vec2 objects, ignores lines.
+    """
+
+    def __init__(self):
+        self.word_boxes: List[Tuple[Vec2, Vec2]] = []
+
+    def render(
+        self,
+        left: float,
+        bottom: float,
+        right: float,
+        top: float,
+        m: Matrix44 = None,
+    ) -> None:
+        self.word_boxes.append((Vec2(left, bottom), Vec2(right, top)))
+
+
+class WordSizeDetector(MTextSizeDetector):
+    def reset(self):
+        self.renderer = WordSizeCollector()
+
+    def measure(self, mtext: MText) -> tl.Layout:
+        layout = super().measure(mtext)
+        layout.render()
+        return layout
+
+    def word_boxes(self) -> List[Tuple[Vec2, Vec2]]:
+        return self.renderer.word_boxes
