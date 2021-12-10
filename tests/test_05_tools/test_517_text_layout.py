@@ -965,5 +965,13 @@ def test_shift_tab_stops_beyond_right_border():
     ), "tab stop at the right border should be preserved"
 
 
+def test_empty_paragraph():
+    cap_height = 2
+    p = tl.EmptyParagraph(cap_height, 1)
+    assert p.total_width == 0
+    assert p.total_height == cap_height
+    assert p.distance_to_next_paragraph > cap_height / 2
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

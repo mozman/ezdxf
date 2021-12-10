@@ -808,7 +808,7 @@ class EmptyParagraph(Cell):
     def __init__(self, cap_height: float, line_spacing: float = 1):
         self._height: float = cap_height
         self._width: float = 0
-        self._last_line_spacing = cap_height - leading(cap_height, line_spacing)
+        self._last_line_spacing = leading(cap_height, line_spacing) - cap_height
 
     @property
     def total_width(self) -> float:
