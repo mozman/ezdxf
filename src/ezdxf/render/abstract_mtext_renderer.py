@@ -17,11 +17,10 @@ from ezdxf.tools.text import (
     MTextParagraphAlignment,
     ParagraphProperties,
     AbstractFont,
+    estimate_mtext_extents,
 )
-from ezdxf.tools.text2 import estimate_mtext_extents
 
-
-__all__ = ["AbstractMTextRenderer", "estimate_mtext_extents"]
+__all__ = ["AbstractMTextRenderer"]
 
 ALIGN = {
     MTextParagraphAlignment.LEFT: tl.ParagraphAlignment.LEFT,

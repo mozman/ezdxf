@@ -30,7 +30,7 @@ from ezdxf.lldxf.const import (
 )
 from ezdxf.math import Vec3, Vec2, Vertex
 from ezdxf.colors import rgb2int, RGB, int2rgb
-from .fonts import FontMeasurements, AbstractFont, FontFace
+from .fonts import FontMeasurements, AbstractFont, FontFace, make_font
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Text, MText, DXFEntity, Tags
@@ -1708,3 +1708,62 @@ def leading(cap_height: float, line_spacing: float = 1.0) -> float:
     # method "exact": 3-on-5 line spacing = 5/3 = 1.667
     # method "at least" is not supported
     return cap_height * 1.667 * line_spacing
+
+
+def estimate_mtext_extents(mtext: "MText") -> Tuple[float, float]:
+    """Estimate the width and height for a single column
+    :class:`~ezdxf.entities.MText` entity.
+
+    This function is faster than the :func:`~ezdxf.tools.text_size.mtext_size`
+    function, but the result is very inaccurate if inline codes are used or
+    auto line wrapping is involved!
+
+    This function uses the optional `Matplotlib` package if available.
+
+    Returns:
+        Tuple[width, height]
+
+    """
+
+    def _make_font():
+        doc = mtext.doc
+        if doc:
+            style = doc.styles.get(mtext.dxf.get_default("style"))
+            if style is not None:
+                return style.make_font(cap_height)  # type: ignore
+        return make_font(const.DEFAULT_TTF, cap_height=cap_height)
+
+    def estimate_line_wraps(_width: float) -> int:
+        """Does not care about spaces for line breaks!"""
+        if has_column_width:
+            return math.ceil(_width / column_width)
+        return 1
+
+    max_width: float = 0.0
+    height: float = 0.0
+
+    column_width: float = mtext.dxf.get("width", 0.0)
+    cap_height: float = mtext.dxf.get_default("char_height")
+    line_spacing_factor: float = mtext.dxf.get_default("line_spacing_factor")
+
+    has_column_width: bool = column_width > 0.0
+    content: List[str] = mtext.plain_text(split=True, fast=True)  # type: ignore
+    line_count: int = len(content)
+
+    if (line_count > 0) and (line_count > 1 or content[0] != ""):
+        line_count = 0
+        font = _make_font()
+        for line in content:
+            line_width = font.text_width(line)
+            line_count += estimate_line_wraps(line_width)
+
+            # Note: max_width can be smaller than the column_width, if all lines
+            # are shorter than column_width!
+            if has_column_width and line_width > column_width:
+                line_width = column_width
+            max_width = max(max_width, line_width)
+
+        spacing = leading(cap_height, line_spacing_factor) - cap_height
+        height = cap_height * line_count + spacing * (line_count - 1)
+
+    return max_width, height

@@ -8,7 +8,7 @@ from ezdxf.entities import Text, MText, get_font_name
 from ezdxf.tools import text_layout as tl, fonts
 from ezdxf.tools.text import MTextContext
 from ezdxf.render.abstract_mtext_renderer import AbstractMTextRenderer
-from ezdxf.tools.text2 import estimate_mtext_extents
+from ezdxf.tools.text import estimate_mtext_extents
 
 __all__ = [
     "text_size",
@@ -16,6 +16,9 @@ __all__ = [
     "TextSize",
     "MTextSize",
     "WordSizeDetector",
+
+    # estimate_mtext_extents() belongs also to the topic of this module, users
+    # may look here first
     "estimate_mtext_extents",
 ]
 
