@@ -587,7 +587,7 @@ class RenderEngine:
         raw_color: int = line.color
         index: int = line.index
         block_name: str = self.create_arrow_block(self.arrow_block_name(index))
-        arrow_size: float = self.context.arrowhead_size
+        arrow_size: float = self.context.arrow_head_size
         self.add_arrow(
             name=block_name,
             location=vertices[0],

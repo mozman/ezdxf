@@ -15,7 +15,17 @@ from ezdxf.lldxf.attributes import (
     group_code_mapping,
 )
 from ezdxf.lldxf.tags import Tags
-from ezdxf.math import Vec3, NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
+from ezdxf.math import (
+    Vec3,
+    NULLVEC,
+    X_AXIS,
+    Y_AXIS,
+    Z_AXIS,
+    Matrix44,
+    WCSTransform,
+    OCSTransform,
+    NonUniformScalingError,
+)
 from ezdxf import colors
 from ezdxf.proxygraphic import ProxyGraphicError
 
@@ -178,7 +188,6 @@ acdb_mleader = DefSubclass(
         # 2 = center
         # 3 = right
         "scale": DXFAttr(45, default=1, dxfversion=const.DXF2007),
-
         # This defines whether the leaders attach to the left/right of the content
         # block/text, or attach to the top/bottom:
         # 0 = horizontal
@@ -186,14 +195,12 @@ acdb_mleader = DefSubclass(
         "text_attachment_direction": DXFAttr(
             271, default=0, dxfversion=const.DXF2010
         ),
-
         # like 173, but
         # 9 = center
         # 10= underline and center
         "text_bottom_attachment_type": DXFAttr(
             272, default=9, dxfversion=const.DXF2010
         ),
-
         # like 173, but
         # 9 = center
         # 10= overline and center
@@ -502,11 +509,13 @@ class MultiLeader(DXFGraphic):
 
         """
         from ezdxf.explode import explode_entity
+
         return explode_entity(self, target_layout)
 
     def __virtual_entities__(self) -> Iterable["DXFGraphic"]:
         """Support for "VirtualEntities" protocol."""
         from ezdxf.render import mleader
+
         try:
             return mleader.virtual_entities(self, proxy_graphic=True)
         except ProxyGraphicError:
@@ -530,6 +539,31 @@ class MultiLeader(DXFGraphic):
             if handle is not None:
                 yield handle
 
+    def transform(self, m: "Matrix44") -> "DXFGraphic":
+        dxf = self.dxf
+        context = self.context
+
+        wcs = WCSTransform(m)
+        if not wcs.scale_xy_uniform:
+            # caller has to catch this exception and explode the MULTILEADER
+            raise NonUniformScalingError(
+                "MULTILEADER does not support non uniform scaling"
+            )
+
+        context.transform(wcs)
+        # copy redundant attributes from sub-structures:
+        dxf.arrow_head_size = context.arrow_head_size
+        dxf.scale = context.scale
+        dxf.dogleg_length = wcs.transform_length(dxf.dogleg_length)
+        if context.block:
+            dxf.block_rotation = context.block.rotation
+            dxf.block_scale_vector = context.block.scale
+
+        # ArrowHeadData: no transformation not needed
+        # AttribData: no transformation not needed
+        self.post_transform(m)
+        return self
+
 
 @register_entity
 class MLeader(MultiLeader):  # same entity different name
@@ -541,7 +575,7 @@ class MLeaderContext:
         40: "scale",
         10: "base_point",
         41: "char_height",
-        140: "arrowhead_size",
+        140: "arrow_head_size",
         145: "landing_gap_size",
         174: "left_attachment",
         175: "right_attachment",
@@ -560,7 +594,7 @@ class MLeaderContext:
         self.scale: float = 1.0  # overall scale
         self.base_point: Vec3 = NULLVEC
         self.char_height = 4.0  # scaled char height!
-        self.arrowhead_size = 4.0
+        self.arrow_head_size = 4.0
         self.landing_gap_size = 2.0
         self.left_attachment = 1
         self.right_attachment = 1
@@ -623,7 +657,7 @@ class MLeaderContext:
         write_tag2(40, self.scale)
         write_vertex(10, self.base_point)
         write_tag2(41, self.char_height)
-        write_tag2(140, self.arrowhead_size)
+        write_tag2(140, self.arrow_head_size)
         write_tag2(145, self.landing_gap_size)
         write_tag2(174, self.left_attachment)
         write_tag2(175, self.right_attachment)
@@ -656,6 +690,27 @@ class MLeaderContext:
             write_tag2(272, self.top_attachment)
             write_tag2(273, self.bottom_attachment)
         write_tag2(END_CONTEXT_DATA, "}")
+
+    def transform(self, wcs: WCSTransform) -> None:
+        m = wcs.m
+        self.scale = wcs.transform_length(self.scale)
+        self.base_point = m.transform(self.base_point)
+        self.char_height = wcs.transform_length(self.char_height)
+        self.arrow_head_size = wcs.transform_length(self.arrow_head_size)
+        self.landing_gap_size = wcs.transform_length(self.landing_gap_size)
+        self.plane_origin = m.transform(self.plane_origin)
+        self.plane_x_axis = m.transform_direction(
+            self.plane_x_axis, normalize=True
+        )
+        self.plane_y_axis = m.transform_direction(
+            self.plane_y_axis, normalize=True
+        )
+        for leader in self.leaders:
+            leader.transform(wcs)
+        if self.mtext is not None:
+            self.mtext.transform(wcs)
+        if self.block is not None:
+            self.block.transform(wcs)
 
 
 class MTextData:
@@ -759,6 +814,29 @@ class MTextData:
             write_tag2(144, size)
         write_tag2(295, self.use_word_break)
 
+    def transform(self, wcs: WCSTransform) -> None:
+        # MTEXT is not really an OCS entity!
+        m = wcs.m
+        ocs = OCSTransform(self.extrusion, m)  # source extrusion!
+        self.extrusion = m.transform_direction(self.extrusion, normalize=True)
+        self.insert = m.transform(self.insert)
+        self.text_direction = wcs.m.transform_direction(
+            self.text_direction, normalize=True
+        )
+        # don't use rotation ;)
+        self.rotation = ocs.transform_angle(self.rotation)
+        self.width = wcs.transform_length(self.width)
+        self.defined_height = wcs.transform_length(
+            self.defined_height, axis="y"
+        )
+        self.column_width = wcs.transform_length(self.column_width)
+        self.column_gutter_width = wcs.transform_length(
+            self.column_gutter_width
+        )
+        self.column_sizes = [
+            wcs.transform_length(size, axis="y") for size in self.column_sizes
+        ]
+
 
 class BlockData:
     ATTRIBS = {
@@ -820,6 +898,16 @@ class BlockData:
         write_tag2(93, self.color)
         for value in self._matrix:
             write_tag2(47, value)
+
+    def transform(self, wcs: WCSTransform) -> None:
+        # INSERT is an OCS entity, but the insert point is WCS!!!
+        m = wcs.m
+        ocs = OCSTransform(self.extrusion, m)  # source extrusion!
+        self.extrusion = ocs.new_extrusion
+        self.insert = m.transform(self.insert)  # WCS coordinates!!!
+        self.scale = wcs.transform_scale_vector(self.scale)
+        self.rotation = ocs.transform_angle(self.rotation)
+        self.matrix44 = self.matrix44 * m
 
 
 class LeaderData:
@@ -899,6 +987,16 @@ class LeaderData:
             write_tag2(271, self.attachment_direction)
         write_tag2(END_LEADER, "}")
 
+    def transform(self, wcs: WCSTransform) -> None:
+        m = wcs.m
+        self.last_leader_point = m.transform(self.last_leader_point)
+        dog_leg = m.transform_direction(
+            self.dogleg_vector.normalize(self.dogleg_length)
+        )
+        self.dogleg_vector = dog_leg.normalize()
+        self.dogleg_length = dog_leg.magnitude
+        self.breaks = list(m.transform_vertices(self.breaks))
+
 
 class LeaderLine:
     def __init__(self):
@@ -953,6 +1051,12 @@ class LeaderLine:
         write_tag2(91, self.index)
         write_tag2(92, self.color)
         write_tag2(END_LEADER_LINE, "}")
+
+    def transform(self, wcs: WCSTransform) -> None:
+        m = wcs.m
+        self.vertices = list(m.transform_vertices(self.vertices))
+        if self.breaks:
+            self.breaks = list(m.transform_vertices(self.breaks))
 
 
 acdb_mleader_style = DefSubclass(
