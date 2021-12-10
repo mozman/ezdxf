@@ -133,4 +133,6 @@ Functions
 
 .. autofunction:: estimate_mtext_extents
 
+.. autofunction:: estimate_mtext_content_extents
+
 .. autofunction:: leading

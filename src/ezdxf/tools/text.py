@@ -1670,7 +1670,7 @@ def has_inline_formatting_codes(text: str) -> bool:
     )
 
 
-def is_upside_down_text_angle(angle: float, tol: float = 3.) -> bool:
+def is_upside_down_text_angle(angle: float, tol: float = 3.0) -> bool:
     """Returns ``True`` if the given text `angle` in degrees causes an upside
     down text in the :ref:`WCS`. The strict flip range is 90° < `angle` < 270°,
     the tolerance angle `tol` extends this range to: 90+tol < `angle` < 270-tol.
@@ -1681,11 +1681,11 @@ def is_upside_down_text_angle(angle: float, tol: float = 3.) -> bool:
         tol: tolerance range in which text flipping will be avoided
 
     """
-    angle %= 360.
-    return 90. + tol < angle < 270. - tol
+    angle %= 360.0
+    return 90.0 + tol < angle < 270.0 - tol
 
 
-def upright_text_angle(angle: float, tol: float = 3.) -> float:
+def upright_text_angle(angle: float, tol: float = 3.0) -> float:
     """Returns a readable (upright) text angle in the range `angle` <= 90+tol or
     `angle` >= 270-tol. The angle is normalized to [0, 360).
 
@@ -1695,8 +1695,8 @@ def upright_text_angle(angle: float, tol: float = 3.) -> float:
 
     """
     if is_upside_down_text_angle(angle, tol):
-        angle += 180.
-    return angle % 360.
+        angle += 180.0
+    return angle % 360.0
 
 
 def leading(cap_height: float, line_spacing: float = 1.0) -> float:
@@ -1713,12 +1713,12 @@ def leading(cap_height: float, line_spacing: float = 1.0) -> float:
 
 
 def estimate_mtext_extents(mtext: "MText") -> Tuple[float, float]:
-    """Estimate the width and height for a single column
+    """Estimate the width and height of a single column
     :class:`~ezdxf.entities.MText` entity.
 
     This function is faster than the :func:`~ezdxf.tools.text_size.mtext_size`
     function, but the result is very inaccurate if inline codes are used or
-    auto line wrapping is involved!
+    line wrapping at the column border is involved!
 
     This function uses the optional `Matplotlib` package if available.
 
@@ -1728,6 +1728,7 @@ def estimate_mtext_extents(mtext: "MText") -> Tuple[float, float]:
     """
 
     def _make_font():
+        cap_height: float = mtext.dxf.get_default("char_height")
         doc = mtext.doc
         if doc:
             style = doc.styles.get(mtext.dxf.get_default("style"))
@@ -1735,34 +1736,56 @@ def estimate_mtext_extents(mtext: "MText") -> Tuple[float, float]:
                 return style.make_font(cap_height)  # type: ignore
         return make_font(const.DEFAULT_TTF, cap_height=cap_height)
 
-    def estimate_line_wraps(_width: float) -> int:
-        """Does not care about spaces for line breaks!"""
-        if has_column_width:
-            return math.ceil(_width / column_width)
-        return 1
+    return estimate_mtext_content_extents(
+        content=mtext.text,
+        font=_make_font(),
+        column_width=mtext.dxf.get("width", 0.0),
+        line_spacing_factor=mtext.dxf.get_default("line_spacing_factor"),
+    )
 
+
+def estimate_mtext_content_extents(
+    content: str,
+    font: AbstractFont,
+    column_width: float = 0.0,
+    line_spacing_factor: float = 1.0,
+) -> Tuple[float, float]:
+    """Estimate the width and height of the :class:`~ezdxf.entities.MText`
+    content string. The result is very inaccurate if inline codes are used or
+    line wrapping at the column border is involved!
+    Column breaks ``\\N`` will be ignored.
+
+    This function uses the optional `Matplotlib` package if available.
+
+    Args:
+        content: the :class:`~ezdxf.entities.MText` content string
+        font: font abstraction based on :class:`ezdxf.tools.fonts.AbstractFont`
+        column_width: :attr:`MText.dxf.width` or 0.0 for an unrestricted column
+            width
+        line_spacing_factor: :attr:`MText.dxf.line_spacing_factor`
+
+    Returns:
+        Tuple[width, height]
+
+    """
     max_width: float = 0.0
     height: float = 0.0
-
-    column_width: float = mtext.dxf.get("width", 0.0)
-    cap_height: float = mtext.dxf.get_default("char_height")
-    line_spacing_factor: float = mtext.dxf.get_default("line_spacing_factor")
-
+    cap_height: float = font.measurements.cap_height
     has_column_width: bool = column_width > 0.0
-    content: List[str] = fast_plain_mtext(mtext.text, split=True)  # type: ignore
-    line_count: int = len(content)
+    lines: List[str] = fast_plain_mtext(content, split=True)  # type: ignore
 
-    if (line_count > 0) and (line_count > 1 or content[0] != ""):
-        line_count = 0
-        font = _make_font()
-        for line in content:
+    if any(lines):  # has any non empty lines
+        line_count: int = 0
+        for line in lines:
             line_width = font.text_width(line)
-            line_count += estimate_line_wraps(line_width)
-
+            if has_column_width:
+                # naive line wrapping, does not care about line content
+                line_count += math.ceil(line_width / column_width)
+                line_width = min(line_width, column_width)
+            else:
+                line_count += 1
             # Note: max_width can be smaller than the column_width, if all lines
             # are shorter than column_width!
-            if has_column_width and line_width > column_width:
-                line_width = column_width
             max_width = max(max_width, line_width)
 
         spacing = leading(cap_height, line_spacing_factor) - cap_height

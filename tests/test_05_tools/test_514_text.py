@@ -19,6 +19,7 @@ from ezdxf.tools.text import (
     has_inline_formatting_codes,
     is_upside_down_text_angle,
     upright_text_angle,
+    estimate_mtext_content_extents,
 )
 from ezdxf.tools.fonts import MonospaceFont
 from ezdxf.math import Vec3
@@ -468,6 +469,39 @@ def test_upright_text_angle():
     assert upright_text_angle(180.0) == 0.0
     assert upright_text_angle(265.0) == 85.0
     assert upright_text_angle(270.0) == 270.0
+
+
+class TestEstimateMTextContentExtents:
+    @pytest.fixture
+    def font(self):
+        return MonospaceFont(cap_height=2.0, width_factor=1.0)
+
+    def test_empty_text(self, font):
+        width, height = estimate_mtext_content_extents("", font)
+        assert height == 0.0
+        assert width == 0.0
+
+    def test_more_empty_text(self, font):
+        width, height = estimate_mtext_content_extents("\n\n\n", font)
+        assert height == 0.0
+        assert width == 0.0
+
+    def test_single_line(self, font):
+        width, height = estimate_mtext_content_extents("XXX", font)
+        assert height == 2.0
+        assert width == 6.0
+
+    def test_many_lines_no_line_wrapping(self, font):
+        width, height = estimate_mtext_content_extents("XXX\nYYYY\nZ", font)
+        assert height == pytest.approx(8.668)  # 3x line height + 2x spacing
+        assert width == 8.0
+
+    def test_many_lines_with_line_wrapping(self, font):
+        width, height = estimate_mtext_content_extents(
+            "XXXXXXXXXXXX\nYYYY\nZ", font, column_width=8.0
+        )
+        assert height == pytest.approx(15.336)  # 5x line height + 4x spacing
+        assert width == 8.0
 
 
 if __name__ == "__main__":
