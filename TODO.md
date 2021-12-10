@@ -54,10 +54,21 @@ DXF Document
 ------------
 
 - (>v1.0) `doc.to_dxf_r12()`: convert the whole DXF document into DXF R12. 
-  This is a destructive process, which converts MTEXT to TEXT, 
-  MESH to PolyFaceMesh, LWPOLYLINE into POLYLINE, flatten SPLINE into 
-  POLYLINE ..., and removes all entities not supported by DXF R12 
-  like TABLE, ACIS entities, ...
+  This is a destructive process, which converts or explodes DXF entities:
+  
+  - explode MTEXT, MULTILEADER, MLINE, ACAD_TABLE, ARC_DIMENSION
+  - convert MESH to PolyFaceMesh
+  - convert LWPOLYLINE into 2D polyline
+  - flatten SPLINE into a 3D polyline
+  - flatten ELLIPSE into a 3D polyline
+
+  Removes all data not supported by DXF R12:
+  - all ACIS based entities 
+  - HATCH and MPOLYGON entities
+  - IMAGE and UNDERLAY entities
+  - XLINE and RAY entities
+  - OBJECTS and the CLASSES sections
+  - all but the first paper space layout
    
 Documentation
 -------------
