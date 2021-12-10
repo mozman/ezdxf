@@ -1749,7 +1749,7 @@ def estimate_mtext_extents(mtext: "MText") -> Tuple[float, float]:
     line_spacing_factor: float = mtext.dxf.get_default("line_spacing_factor")
 
     has_column_width: bool = column_width > 0.0
-    content: List[str] = mtext.plain_text(split=True, fast=True)  # type: ignore
+    content: List[str] = fast_plain_mtext(mtext.text, split=True)  # type: ignore
     line_count: int = len(content)
 
     if (line_count > 0) and (line_count > 1 or content[0] != ""):
