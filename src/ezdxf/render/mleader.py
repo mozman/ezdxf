@@ -258,8 +258,11 @@ def _get_extrusion(entity: "MultiLeader") -> Vec3:
 
 def _get_dogleg_vector(leader: "LeaderData", default: Vec3 = X_AXIS) -> Vec3:
     # All leader vertices and directions in WCS!
-    if leader.has_dogleg_vector:  # what else?
-        return leader.dogleg_vector.normalize(leader.dogleg_length)
+    try:
+        if leader.has_dogleg_vector:  # what else?
+            return leader.dogleg_vector.normalize(leader.dogleg_length)
+    except ZeroDivisionError:  # dogleg_vector is NULL
+        pass
     return default.normalize(leader.dogleg_length)
 
 
