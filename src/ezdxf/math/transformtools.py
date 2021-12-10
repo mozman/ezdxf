@@ -240,12 +240,14 @@ class WCSTransform:
         new_y = m.transform_direction(Y_AXIS)
         new_z = m.transform_direction(Z_AXIS)
         new_x_mag_squ = new_x.magnitude_square
-        self.scale_xy_uniform = math.isclose(
+        self.has_uniform_xy_scaling = math.isclose(
             new_x_mag_squ, new_y.magnitude_square
         )
-        self.scale_xyz_uniform = self.scale_xy_uniform and math.isclose(
-            new_x_mag_squ, new_z.magnitude_square
+        self.has_uniform_xyz_scaling = (
+            self.has_uniform_xy_scaling
+            and math.isclose(new_x_mag_squ, new_z.magnitude_square)
         )
+        self.uniform_scale = self.transform_length(1.0)
 
     def transform_length(self, value: float, axis: str = "x") -> float:
         if axis == "x":
@@ -265,4 +267,3 @@ class WCSTransform:
             unit_vec.y * vec.y,
             unit_vec.z * vec.z,
         )
-

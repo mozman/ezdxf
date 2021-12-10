@@ -544,17 +544,26 @@ class MultiLeader(DXFGraphic):
         context = self.context
 
         wcs = WCSTransform(m)
-        if not wcs.scale_xy_uniform:
+        if not wcs.has_uniform_xy_scaling:
             # caller has to catch this exception and explode the MULTILEADER
             raise NonUniformScalingError(
                 "MULTILEADER does not support non uniform scaling"
             )
-
+        if (
+            abs(context.plane_x_axis.z) > 1e-12
+            or abs(context.plane_y_axis.z) > 1e-12
+        ):
+            # check only if not parallel to xy-plane
+            if not wcs.has_uniform_xyz_scaling:
+                # caller has to catch this exception and explode the MULTILEADER
+                raise NonUniformScalingError(
+                    "MULTILEADER does not support non uniform scaling"
+                )
         context.transform(wcs)
         # copy redundant attributes from sub-structures:
         dxf.arrow_head_size = context.arrow_head_size
         dxf.scale = context.scale
-        dxf.dogleg_length = wcs.transform_length(dxf.dogleg_length)
+        dxf.dogleg_length *= wcs.uniform_scale
         if context.block:
             dxf.block_rotation = context.block.rotation
             dxf.block_scale_vector = context.block.scale
@@ -693,11 +702,12 @@ class MLeaderContext:
 
     def transform(self, wcs: WCSTransform) -> None:
         m = wcs.m
-        self.scale = wcs.transform_length(self.scale)
+        scale = wcs.uniform_scale
+        self.scale *= scale
         self.base_point = m.transform(self.base_point)
-        self.char_height = wcs.transform_length(self.char_height)
-        self.arrow_head_size = wcs.transform_length(self.arrow_head_size)
-        self.landing_gap_size = wcs.transform_length(self.landing_gap_size)
+        self.char_height *= scale
+        self.arrow_head_size *= scale
+        self.landing_gap_size *= scale
         self.plane_origin = m.transform(self.plane_origin)
         self.plane_x_axis = m.transform_direction(
             self.plane_x_axis, normalize=True
@@ -825,17 +835,12 @@ class MTextData:
         )
         # don't use rotation ;)
         self.rotation = ocs.transform_angle(self.rotation)
-        self.width = wcs.transform_length(self.width)
-        self.defined_height = wcs.transform_length(
-            self.defined_height, axis="y"
-        )
-        self.column_width = wcs.transform_length(self.column_width)
-        self.column_gutter_width = wcs.transform_length(
-            self.column_gutter_width
-        )
-        self.column_sizes = [
-            wcs.transform_length(size, axis="y") for size in self.column_sizes
-        ]
+        scale = wcs.uniform_scale
+        self.width *= scale
+        self.defined_height *= scale
+        self.column_width *= scale
+        self.column_gutter_width *= scale
+        self.column_sizes = [size * scale for size in self.column_sizes]
 
 
 class BlockData:
@@ -999,6 +1004,8 @@ class LeaderData:
         self.dogleg_vector = dog_leg.normalize()
         self.dogleg_length = dog_leg.magnitude
         self.breaks = list(m.transform_vertices(self.breaks))
+        for leader_line in self.lines:
+            leader_line.transform(wcs)
 
 
 class LeaderLine:
