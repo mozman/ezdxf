@@ -1059,7 +1059,13 @@ class LeaderLine:
         m = wcs.m
         self.vertices = list(m.transform_vertices(self.vertices))
         if self.breaks:
-            self.breaks = list(m.transform_vertices(self.breaks))
+            breaks: List[Union[int, Vec3]] = []
+            for value in self.breaks:
+                if isinstance(value, Vec3):
+                    breaks.append(m.transform(value))
+                else:  # break index
+                    breaks.append(value)
+            self.breaks = breaks
 
 
 acdb_mleader_style = DefSubclass(
