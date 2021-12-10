@@ -1,6 +1,8 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-#  All tools in this module have to be independent from DXF entities!
+"""
+Tools in this module should be as independent from DXF entities as possible!
+"""
 import enum
 from typing import (
     List,
