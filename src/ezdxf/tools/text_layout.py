@@ -6,6 +6,7 @@ import itertools
 import enum
 
 from ezdxf.math import Matrix44, BoundingBox2d
+from ezdxf.tools.text import leading
 
 """
 
@@ -826,19 +827,6 @@ class EmptyParagraph(Cell):
     @property
     def distance_to_next_paragraph(self) -> float:
         return self._last_line_spacing
-
-
-def leading(cap_height: float, line_spacing: float = 1.0) -> float:
-    """Returns the distance from baseline to baseline.
-
-    Args:
-        cap_height: cap height of the line
-        line_spacing: line spacing factor as percentage of 3-on-5 spacing
-
-    """
-    # method "exact": 3-on-5 line spacing = 5/3 = 1.667
-    # method "at least" is not supported
-    return cap_height * 1.667 * line_spacing
 
 
 class Paragraph(Container):

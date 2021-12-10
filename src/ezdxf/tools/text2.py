@@ -12,7 +12,8 @@ circular import errors.
 from typing import TYPE_CHECKING, Tuple, List
 import math
 from ezdxf import const
-from ezdxf.tools import fonts, text_layout as tl
+from ezdxf.tools import fonts
+from ezdxf.tools.text import leading
 
 if TYPE_CHECKING:
     from ezdxf.entities import MText
@@ -71,7 +72,7 @@ def estimate_mtext_extents(mtext: "MText") -> Tuple[float, float]:
                 line_width = column_width
             max_width = max(max_width, line_width)
 
-        spacing = tl.leading(cap_height, line_spacing_factor) - cap_height
+        spacing = leading(cap_height, line_spacing_factor) - cap_height
         height = cap_height * line_count + spacing * (line_count - 1)
 
     return max_width, height
