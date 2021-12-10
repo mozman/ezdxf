@@ -5,7 +5,7 @@
 # ezdxf.tools.text_layout and a concrete MTEXT renderer implementation like
 # MTextExplode or ComplexMTextRenderer.
 
-from typing import List, Sequence, Dict, Tuple, Optional, TYPE_CHECKING, cast
+from typing import List, Sequence, Dict, Tuple, Optional, cast
 import abc
 from ezdxf.lldxf import const
 from ezdxf.entities.mtext import MText, MTextColumns
@@ -18,9 +18,7 @@ from ezdxf.tools.text import (
     ParagraphProperties,
     AbstractFont,
 )
-
-if TYPE_CHECKING:
-    from ezdxf.entities import Textstyle
+from ezdxf.tools.text2 import estimate_mtext_extents
 
 
 __all__ = ["AbstractMTextRenderer", "estimate_mtext_extents"]
@@ -153,42 +151,6 @@ def defined_width(mtext: MText) -> float:
     if width < 1e-6:
         width, height = estimate_mtext_extents(mtext)
     return width
-
-
-def estimate_mtext_extents(mtext: MText) -> Tuple[float, float]:
-    """Estimate the width and height for a single column
-    :class:`~ezdxf.entities.MText` entity.
-    This function is faster than the :func:`mtext_size` function, but the
-    result is very inaccurate if inline codes are present!
-    This function also uses the optional Matplotlib package if available.
-
-    Returns:
-        Tuple[width, height]
-
-    """
-
-    def make_font() -> AbstractFont:
-        doc = mtext.doc
-        if doc:
-            style = cast(
-                "Textstyle", doc.styles.get(mtext.dxf.get_default("style"))
-            )
-            if style is not None:
-                return style.make_font(cap_height)
-        return fonts.make_font(const.DEFAULT_TTF, cap_height=cap_height)
-
-    width = 0.0
-    height = 0.0
-    cap_height = mtext.dxf.get_default("char_height")
-    line_spacing_factor = mtext.dxf.get_default("line_spacing_factor")
-    content = mtext.plain_text(split=True, fast=True)
-    line_count = len(content)
-    if (line_count > 0) and (line_count > 1 or content[0] != ""):
-        spacing = tl.leading(cap_height, line_spacing_factor) - cap_height
-        height = cap_height * line_count + spacing * (line_count - 1)
-        font = make_font()
-        width = max(font.text_width(t) for t in content)
-    return width, height
 
 
 def column_heights(columns: MTextColumns) -> List[Optional[float]]:

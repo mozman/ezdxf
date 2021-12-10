@@ -135,28 +135,45 @@ def test_mtext_size_of_a_string(msp):
     assert size.column_count == 1
 
 
-def test_estimate_mtext_extents_empty_text(msp):
-    # Matplotlib support disabled and using MonospaceFont()
-    mtext = msp.add_mtext("", dxfattribs={"char_height": 2.0})
-    width, height = estimate_mtext_extents(mtext)
-    assert height == 0.0
-    assert width == 0.0
+class TestEstimateMTextExtents:
+    """Matplotlib support disabled and using MonospaceFont()"""
 
+    def test_empty_text(self, msp):
+        mtext = msp.add_mtext("", dxfattribs={"char_height": 2.0})
+        width, height = estimate_mtext_extents(mtext)
+        assert height == 0.0
+        assert width == 0.0
 
-def test_estimate_mtext_extents_single_line(msp):
-    # Matplotlib support disabled and using MonospaceFont()
-    mtext = msp.add_mtext("XXX", dxfattribs={"char_height": 2.0})
-    width, height = estimate_mtext_extents(mtext)
-    assert height == 2.0
-    assert width == 6.0
+    def test_single_line(self, msp):
+        mtext = msp.add_mtext("XXX", dxfattribs={"char_height": 2.0})
+        width, height = estimate_mtext_extents(mtext)
+        assert height == 2.0
+        assert width == 6.0
 
+    def test_many_lines_no_auto_wrap(self, msp):
+        mtext = msp.add_mtext(
+            r"XXX\PYYYY\PZ",
+            dxfattribs={
+                "char_height": 2.0,
+                "width": 0,
+            },
+        )
+        width, height = estimate_mtext_extents(mtext)
+        assert height == pytest.approx(8.668)  # 3x line height + 2x spacing
+        assert width == 8.0
 
-def test_estimate_mtext_extents_more_lines(msp):
-    # Matplotlib support disabled and using MonospaceFont()
-    mtext = msp.add_mtext(r"XXX\PYYYY\PZ", dxfattribs={"char_height": 2.0})
-    width, height = estimate_mtext_extents(mtext)
-    assert height == pytest.approx(8.668)  # 3x line height + 2x spacing
-    assert width == 8.0
+    def test_many_lines_with_auto_wrap(self, msp):
+        """The auto wrap feature does not wrap only at spaces!"""
+        mtext = msp.add_mtext(
+            r"XXXXXXXXXXXX\PYYYY\PZ",  # 5 lines!
+            dxfattribs={
+                "char_height": 2.0,
+                "width": 8.0,
+            },
+        )
+        width, height = estimate_mtext_extents(mtext)
+        assert height == pytest.approx(15.336)  # 5 lines!
+        assert width == 8.0
 
 
 @pytest.mark.parametrize("cap_height", [2.0, 3.0])
