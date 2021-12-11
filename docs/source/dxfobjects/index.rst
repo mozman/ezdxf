@@ -6,11 +6,12 @@ All DXF objects can only reside in the OBJECTS section of a DXF document.
 .. toctree::
     :maxdepth: 1
 
-    dxfobject
     dictionary
+    dxflayout
+    dxfobject
     geodata
     imagedef
-    dxflayout
+    mleaderstyle
     placeholder
     plotsettings
     sun

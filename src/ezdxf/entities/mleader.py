@@ -539,7 +539,18 @@ class MultiLeader(DXFGraphic):
             if handle is not None:
                 yield handle
 
-    def transform(self, m: "Matrix44") -> "DXFGraphic":
+    def transform(self, m: "Matrix44") -> "MultiLeader":
+        """Transform the MULTILEADER entity by transformation matrix `m` inplace.
+
+        Non uniform scaling is not supported.
+
+        Args:
+            m: transformation :class:`~ezdxf.math.Matrix44`
+
+        Raises:
+            NonUniformScalingError: for non uniform scaling
+
+        """
         dxf = self.dxf
         context = self.context
 

@@ -11,15 +11,27 @@ made up of one or more vertices (or spline fit points) and an arrowhead.
 In contrast to the :class:`Leader` entity the text- or block content is part of
 the MULTILEADER entity.
 
-Because of the complexity of the MLEADER entity it is recommend to use the
-:class:`~ezdxf.render.MultiLeaderBuilder` to create or modify the entity.
-
 AutoCAD, BricsCAD and maybe other CAD applications do accept ``'MLEADER'`` as
-type string but always create entities with ``'MULTILEADER'`` as type string.
+type string but they always create entities with ``'MULTILEADER'`` as type
+string.
+
+Because of the complexity of the MLEADER entity it is recommend to use the
+:class:`~ezdxf.render.MultiLeaderBuilder` to construct the entity.
+
+The visual design is based on an associated :class:`~ezdxf.entities.MLeaderStyle`,
+but almost all attributes are also stored in the MULTILEADER entity itself.
+
+The attribute :attr:`MultiLeader.dxf.property_override_flags` should indicate
+which MLEADERSTYLE attributes are overridden by MULTILEADER attributes,
+but these flags do not always reflect the state of overridden attributes.
+The `ezdxf` MULTILEADER renderer uses always the attributes from
+the MULTILEADER entity and ignores the override flags.
 
 .. seealso::
 
-    :ref:`tut_mleader`
+    - :class:`ezdxf.entities.MLeaderStyle`
+    - :class:`ezdxf.render.MultiLeaderBuilder`
+    - :ref:`tut_mleader`
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
@@ -38,4 +50,5 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: explode(target_layout: BaseLayout = None) -> EntityQuery
 
-TODO ...
+    .. automethod:: transform(m: Matrix44) -> MultiLeader
+
