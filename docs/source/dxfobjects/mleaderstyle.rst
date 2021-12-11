@@ -39,9 +39,15 @@ Factory function         :meth:`ezdxf.document.Drawing.mleader_styles.new`
 
     .. attribute:: dxf.arrow_head_handle
 
+        handle of default arrow head, see also :mod:`ezdxf.render.arrows` module
+
     .. attribute:: dxf.arrow_head_size
 
+        default arrow head size in drawing units
+
     .. attribute:: dxf.block_color
+
+        default block color as raw color value
 
     .. attribute:: dxf.block_connection_type
 

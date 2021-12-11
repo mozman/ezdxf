@@ -20,8 +20,6 @@ encoding is not necessary.
 The :func:`ezdxf.has_dxf_unicode` and :func:`ezdxf.decode_dxf_unicode` are
 new support functions to decode unicode characters "\\U+xxxx" manually.
 
-.. versionadded:: 0.14
-
 .. autofunction:: ezdxf.has_dxf_unicode
 
 .. autofunction:: ezdxf.decode_dxf_unicode
@@ -30,18 +28,6 @@ Tools
 -----
 
 Some handy tool functions used internally by ``ezdxf``.
-
-.. autofunction:: ezdxf.int2rgb
-
-.. autofunction:: ezdxf.rgb2int
-
-.. autofunction:: ezdxf.float2transparency
-
-.. autofunction:: ezdxf.transparency2float
-
-.. autofunction:: ezdxf.colors.aci2rgb
-
-.. autofunction:: ezdxf.colors.luminance
 
 .. autofunction:: ezdxf.tools.juliandate
 

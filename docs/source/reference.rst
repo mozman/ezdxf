@@ -97,6 +97,7 @@ Tools
     :maxdepth: 2
 
     tools/functions
+    tools/colors
     tools/text
     tools/text_size
     tools/fonts
