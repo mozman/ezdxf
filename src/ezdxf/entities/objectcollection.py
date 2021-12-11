@@ -89,14 +89,16 @@ class ObjectCollection:
 
         """
         entry = self.get(name)
+        if entry is None:
+            raise DXFValueError(f"entry '{name}' does not exist")
         entitydb = self.entitydb
         if entitydb:
             new_entry = entitydb.duplicate_entity(entry)
         else:  # only for testing!
             new_entry = entry.copy()
         new_entry.dxf.name = new_name
-        self.object_dict.add(name, new_entry)
-        return new_entry
+        self.object_dict.add(name, new_entry)  # type: ignore
+        return new_entry  # type: ignore
 
     def _new(self, name: str, dxfattribs: dict) -> "DXFObject":
         owner = self.object_dict.dxf.handle

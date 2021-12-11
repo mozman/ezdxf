@@ -1,4 +1,5 @@
 # Copyright (c) 2013-2021, Manfred Moitzi
+# Copyright (c) 2013-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Sequence, Dict, Tuple, cast
 import math
@@ -641,7 +642,7 @@ class CreatorInterface:
         across the columns, the count of content strings determine the count
         of columns.
 
-        This factory method adds automatically a column break "\\N" at the
+        This factory method adds automatically a column break ``"\\N"`` at the
         end of each column text to force a new column.
         The `height` attribute should be big enough to reserve enough space for
         the tallest column. Too small values produce valid DXF files, but the
