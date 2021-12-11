@@ -157,7 +157,7 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: transform(m: Matrix44) -> Polyline
 
-    .. automethod:: virtual_entities() -> Iterable[Union[Line, Arc]]
+    .. automethod:: virtual_entities() -> Iterable[Union[Line, Arc, Face3d]]
 
     .. automethod:: explode(target_layout: BaseLayout = None) -> EntityQuery
 

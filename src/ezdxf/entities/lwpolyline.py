@@ -361,14 +361,26 @@ class LWPolyline(DXFGraphic):
         self.lwpoints.clear()
 
     def transform(self, m: "Matrix44") -> "LWPolyline":
-        """Transform the LWPOLYLINE entity by transformation matrix `m` inplace."""
+        """Transform the LWPOLYLINE entity by transformation matrix `m` inplace.
+
+        A non uniform scaling is not supported if the entity contains circular
+        arc segments (bulges).
+
+        Args:
+            m: transformation matrix :class:`ezdxf.math.Matrix44`
+
+        Raises:
+            NonUniformScalingError: for non uniform scaling of entity containing
+                circular arc segments (bulges)
+
+        """
         dxf = self.dxf
         ocs = OCSTransform(self.dxf.extrusion, m)
         if not ocs.scale_uniform and self.has_arc:
             raise NonUniformScalingError(
-                "2D POLYLINE with arcs does not support non uniform scaling"
+                "LWPOLYLINE containing arcs (bulges) does not support non uniform scaling"
             )
-            # Parent function has to catch this Exception and explode this
+            # The caller function has to catch this exception and explode the
             # LWPOLYLINE into LINE and ELLIPSE entities.
         vertices = list(ocs.transform_vertex(v) for v in self.vertices_in_ocs())
         lwpoints = []
@@ -408,11 +420,11 @@ class LWPolyline(DXFGraphic):
             yield e
 
     def explode(self, target_layout: "BaseLayout" = None) -> "EntityQuery":
-        """Explode LWPOLYLINE as DXF primitives (LINE or ARC) into target
-        layout, if the target layout is ``None``, the target layout is the
-        layout of the source entity.
+        """Explode the LWPOLYLINE entity as DXF primitives (LINE or ARC) into
+        the target layout, if the target layout is ``None``, the target layout
+        is the layout of the source entity.
 
-        Returns an :class:`~ezdxf.query.EntityQuery` container with all DXF
+        Returns an :class:`~ezdxf.query.EntityQuery` container of all DXF
         primitives.
 
         Args:
