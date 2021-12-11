@@ -80,6 +80,24 @@ class ObjectCollection:
             )
         return self._new(name, dxfattribs={"name": name})
 
+    def duplicate_entry(self, name: str, new_name: str) -> "DXFObject":
+        """Returns a new table entry `new_name` as copy of `name`,
+        replaces entry `new_name` if already exist.
+
+        Raises:
+             DXFValueError: `name` does not exist
+
+        """
+        entry = self.get(name)
+        entitydb = self.entitydb
+        if entitydb:
+            new_entry = entitydb.duplicate_entity(entry)
+        else:  # only for testing!
+            new_entry = entry.copy()
+        new_entry.dxf.name = new_name
+        self.object_dict.add(name, new_entry)
+        return new_entry
+
     def _new(self, name: str, dxfattribs: dict) -> "DXFObject":
         owner = self.object_dict.dxf.handle
         dxfattribs["owner"] = owner
