@@ -463,7 +463,7 @@ class Polyline(LinkedEntities):
         circular arc segments (bulges).
 
         Args:
-            m: transformation matrix :class:`ezdxf.math.Matrix44`
+            m: transformation :class:`~ezdxf.math.Matrix44`
 
         Raises:
             NonUniformScalingError: for non uniform scaling of 2D POLYLINE

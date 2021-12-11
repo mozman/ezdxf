@@ -367,7 +367,7 @@ class LWPolyline(DXFGraphic):
         arc segments (bulges).
 
         Args:
-            m: transformation matrix :class:`ezdxf.math.Matrix44`
+            m: transformation :class:`~ezdxf.math.Matrix44`
 
         Raises:
             NonUniformScalingError: for non uniform scaling of entity containing
@@ -410,9 +410,9 @@ class LWPolyline(DXFGraphic):
         """Yields the graphical representation of LWPOLYLINE as virtual DXF
         primitives (LINE or ARC).
 
-        This entities are located at the original location, but are not stored
-        in the entity database, have no handle and are not assigned to any
-        layout.
+        These virtual entities are located at the original location, but are not
+        stored in the entity database, have no handle and are not assigned to
+        any layout.
 
         """
         for e in virtual_lwpolyline_entities(self):
