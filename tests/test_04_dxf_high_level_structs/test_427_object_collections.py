@@ -71,6 +71,10 @@ class TestCreateNewEntry:
         with pytest.raises(ValueError):
             collection_rw.new("NEW3"), "case insensitive names"
 
+    def test_invalid_char_in_name_raises_exception(self, collection_rw):
+        with pytest.raises(ValueError):
+            collection_rw.new("New:")
+
 
 class TestDeleteEntry:
     def test_delete_entry_remove_entry(self, collection_rw):
@@ -125,6 +129,10 @@ class TestDuplicateEntry:
     def test_duplicated_entry_is_stored_in_objects_section(self, collection_rw):
         obj = collection_rw.duplicate_entry("STANDARD", "Dup4")
         assert obj.dxf.handle in obj.doc.objects
+
+    def test_invalid_char_in_new_name_raises_exception(self, collection_rw):
+        with pytest.raises(ValueError):
+            collection_rw.duplicate_entry("Standard", "New:")
 
 
 def test_clear():

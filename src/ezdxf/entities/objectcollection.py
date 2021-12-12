@@ -1,8 +1,8 @@
 # Copyright (c) 2018-2021 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterator, cast, Optional, Tuple
-from ezdxf.lldxf.const import DXFValueError, DXFKeyError
-from ezdxf.lldxf.validator import make_table_key
+from ezdxf.lldxf.const import DXFValueError, DXFKeyError, INVALID_NAME_CHARACTERS
+from ezdxf.lldxf.validator import make_table_key, is_valid_table_name
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -10,6 +10,15 @@ if TYPE_CHECKING:
         Dictionary,
         Drawing,
     )
+
+
+def validate_name(name: str) -> str:
+    name = name[:255]
+    if not is_valid_table_name(name):
+        raise DXFValueError(
+            f"table name '{name}' contains invalid characters: {INVALID_NAME_CHARACTERS}"
+        )
+    return name
 
 
 class ObjectCollection:
@@ -65,8 +74,8 @@ class ObjectCollection:
 
     def new(self, name: str) -> "DXFObject":
         """Create a new object of type `self.object_type` and store its handle
-        in the object manager dictionary.  Object collection entries are case
-        insensitive.
+        in the object manager dictionary.  Object collection entry names are
+        case insensitive and limited to 255 characters.
 
         Args:
             name: name of new object as string
@@ -75,11 +84,12 @@ class ObjectCollection:
             new object of type `self.object_type`
 
         Raises:
-            DXFValueError: if object name already exist
+            DXFValueError: if object name already exist or is invalid
 
         (internal API)
 
         """
+        name = validate_name(name)
         if not self.is_unique_name(name):
             raise DXFValueError(
                 f"{self.object_type} entry {name} already exists."
@@ -97,6 +107,7 @@ class ObjectCollection:
         entry = self.get(name)
         if entry is None:
             raise DXFValueError(f"entry '{name}' does not exist")
+        new_name = validate_name(new_name)
         # remove existing entry
         existing_entry = self.get(new_name)
         if existing_entry is not None:
