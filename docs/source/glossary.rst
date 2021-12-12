@@ -44,13 +44,18 @@ Glossary
         Raw color value as stored in DWG files, this integer value can
         represent :term:`ACI` values as well as and :term:`true color` values
 
+    reliable CAD application
+        CAD applications which create valid DXF documents in the meaning and
+        interpretation of `Autodesk`_. See also :ref:`what is dxf`
+
+
 .. (R) = Atl+0174
 
-.. _Autodesk: http://www.autodesk.com/
+.. _Autodesk: https://www.autodesk.com/
 
 .. _AutoCAD: https://www.autodesk.com/products/autocad/overview
 
-.. _DXF: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3
+.. _DXF: https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3
 
 .. _Spatial Corp.: http://www.spatial.com/products/3d-acis-modeling
 
