@@ -454,5 +454,5 @@ class MaterialCollection(ObjectCollection):
 
     def create_required_entries(self) -> None:
         for name in ("ByBlock", "ByLayer", "Global"):
-            if name not in self.object_dict:
+            if name not in self:
                 self.new(name)

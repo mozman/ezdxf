@@ -919,7 +919,7 @@ class MLineStyleCollection(ObjectCollection):
         self.create_required_entries()
 
     def create_required_entries(self) -> None:
-        if "Standard" not in self.object_dict:
+        if "Standard" not in self:
             entity: MLineStyle = self.new("Standard")  # type: ignore
             entity.elements.append(0.5, 256)
             entity.elements.append(-0.5, 256)

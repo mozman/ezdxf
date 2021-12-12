@@ -345,6 +345,7 @@ class GroupCollection(ObjectCollection):
     ) -> DXFGroup:
         r"""Creates a new group. If `name` is ``None`` an unnamed group is
         created, which has an automatically generated name like "\*Annnn".
+        Group names are case insensitive.
 
         Args:
             name: group name as string
@@ -352,7 +353,7 @@ class GroupCollection(ObjectCollection):
             selectable: group is selectable if ``True``
 
         """
-        if name in self:  # type: ignore
+        if name is not None and name in self:  # type: ignore
             raise const.DXFValueError(f"GROUP '{name}' already exists.")
 
         if name is None:

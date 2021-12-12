@@ -1187,9 +1187,8 @@ class MLeaderStyleCollection(ObjectCollection):
         self.create_required_entries()
 
     def create_required_entries(self) -> None:
-        for name in ("Standard",):
-            if name not in self.object_dict:
-                mleader_style = self.new(name)
-                # set standard text style
-                text_style = self.doc.styles.get("Standard")
-                mleader_style.dxf.text_style_handle = text_style.dxf.handle
+        if "Standard" not in self:
+            mleader_style = self.new("Standard")
+            # set standard text style
+            text_style = self.doc.styles.get("Standard")
+            mleader_style.dxf.text_style_handle = text_style.dxf.handle
