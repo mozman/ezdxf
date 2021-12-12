@@ -1,22 +1,35 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import TYPE_CHECKING, Any, cast, List, Dict, Tuple, Optional
+from typing import TYPE_CHECKING, Any, cast, List, Dict, Tuple, Optional, Union
 import logging
-
+import enum
+from collections import defaultdict
 from ezdxf import colors
 from ezdxf.math import (
     Vec3,
     Vec2,
+    Vertex,
     X_AXIS,
     Z_AXIS,
     fit_points_to_cad_cv,
     OCS,
+    UCS,
     is_point_left_of_line,
 )
 from ezdxf.entities import factory
+from ezdxf.lldxf import const
 from ezdxf.proxygraphic import ProxyGraphic
 from ezdxf.render.arrows import ARROWS, arrow_length
 from ezdxf.tools.text_size import estimate_mtext_extents
+from ezdxf.entities.mleader import (
+    MultiLeader,
+    MLeaderStyle,
+    MTextData,
+    BlockData,
+    LeaderData,
+    LeaderLine,
+    acdb_mleader_style,
+)
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
@@ -27,15 +40,8 @@ if TYPE_CHECKING:
         Spline,
         Textstyle,
     )
-    from ezdxf.entities.mleader import (
-        MultiLeader,
-        MLeaderStyle,
-        MTextData,
-        LeaderData,
-        LeaderLine,
-    )
 
-__all__ = ["virtual_entities", "MultiLeaderBuilder"]
+__all__ = ["virtual_entities", "MultiLeaderBuilder", "ConnectionSide"]
 
 logger = logging.getLogger("ezdxf")
 
@@ -82,7 +88,7 @@ OVERRIDE_FLAG = {
 
 
 class MLeaderStyleOverride:
-    def __init__(self, style: "MLeaderStyle", mleader: "MultiLeader"):
+    def __init__(self, style: MLeaderStyle, mleader: MultiLeader):
         self._style_dxf = style.dxf
         self._mleader_dxf = mleader.dxf
         self._context = mleader.context
@@ -120,7 +126,7 @@ class MLeaderStyleOverride:
 
 
 def virtual_entities(
-    mleader: "MultiLeader", proxy_graphic=False
+    mleader: MultiLeader, proxy_graphic=False
 ) -> List["DXFGraphic"]:
     doc = mleader.doc
     assert doc is not None, "valid DXF document required"
@@ -130,7 +136,7 @@ def virtual_entities(
         return RenderEngine(mleader, doc).run()
 
 
-def get_style(mleader: "MultiLeader", doc: "Drawing") -> MLeaderStyleOverride:
+def get_style(mleader: MultiLeader, doc: "Drawing") -> MLeaderStyleOverride:
     handle = mleader.dxf.style_handle
     style = doc.entitydb.get(handle)
     if style is None:
@@ -140,7 +146,7 @@ def get_style(mleader: "MultiLeader", doc: "Drawing") -> MLeaderStyleOverride:
         )
         style = doc.mleader_styles.get("Standard")
     assert style is not None, "mandatory MLEADERSTYLE 'Standard' does not exist"
-    return MLeaderStyleOverride(cast("MLeaderStyle", style), mleader)
+    return MLeaderStyleOverride(cast(MLeaderStyle, style), mleader)
 
 
 def get_text_style(handle: str, doc: "Drawing") -> "Textstyle":
@@ -182,7 +188,7 @@ def decode_raw_color(raw_color: int) -> Tuple[int, Optional[int]]:
 
 
 def copy_mtext_data(
-    mtext: "MText", mtext_data: "MTextData", scale: float
+    mtext: "MText", mtext_data: MTextData, scale: float
 ) -> None:
     # MLEADERSTYLE has a flag "use_mtext_default_content", what else should be
     # used as content if this flag is false?
@@ -209,7 +215,7 @@ def copy_mtext_data(
     dxf.attachment_point = mtext_data.alignment
 
 
-def set_mtext_bg_fill(mtext: "MText", mtext_data: "MTextData") -> None:
+def set_mtext_bg_fill(mtext: "MText", mtext_data: MTextData) -> None:
     # Note: the "text frame" flag (16) in "bg_fill" is never set by BricsCAD!
     # Set required DXF attributes:
     mtext.dxf.box_fill_scale = mtext_data.bg_scale_factor
@@ -231,14 +237,14 @@ def set_mtext_bg_fill(mtext: "MText", mtext_data: "MTextData") -> None:
 
 
 def set_mtext_columns(
-    mtext: "MText", mtext_data: "MTextData", scale: float
+    mtext: "MText", mtext_data: MTextData, scale: float
 ) -> None:
     # BricsCAD does not support columns for MTEXT content, so exploring
     # MLEADER with columns was not possible!
     pass
 
 
-def _get_insert(entity: "MultiLeader") -> Vec3:
+def _get_insert(entity: MultiLeader) -> Vec3:
     context = entity.context
     if context.mtext is not None:
         return context.mtext.insert
@@ -247,7 +253,7 @@ def _get_insert(entity: "MultiLeader") -> Vec3:
     return context.plane_origin
 
 
-def _get_extrusion(entity: "MultiLeader") -> Vec3:
+def _get_extrusion(entity: MultiLeader) -> Vec3:
     context = entity.context
     if context.mtext is not None:
         return context.mtext.extrusion
@@ -256,7 +262,7 @@ def _get_extrusion(entity: "MultiLeader") -> Vec3:
     return context.plane_z_axis
 
 
-def _get_dogleg_vector(leader: "LeaderData", default: Vec3 = X_AXIS) -> Vec3:
+def _get_dogleg_vector(leader: LeaderData, default: Vec3 = X_AXIS) -> Vec3:
     # All leader vertices and directions in WCS!
     try:
         if leader.has_dogleg_vector:  # what else?
@@ -275,7 +281,7 @@ def _get_block_name(handle: str, doc: "Drawing") -> Optional[str]:
 
 
 class RenderEngine:
-    def __init__(self, mleader: "MultiLeader", doc: "Drawing"):
+    def __init__(self, mleader: MultiLeader, doc: "Drawing"):
         self.entities: List["DXFGraphic"] = []  # result container
         self.mleader = mleader
         self.doc = doc
@@ -409,7 +415,7 @@ class RenderEngine:
         mtext.dxf.layer = self.layer
         # !char_height is the final already scaled value!
         mtext.dxf.char_height = self.context.char_height
-        mtext_data: "MTextData" = self.context.mtext
+        mtext_data: MTextData = self.context.mtext
         if mtext_data is not None:
             copy_mtext_data(mtext, mtext_data, self.scale)
             if mtext_data.has_bg_fill:
@@ -492,7 +498,7 @@ class RenderEngine:
                     # across the text
                     self.add_overline(leader)
 
-    def add_text_underline(self, leader: "LeaderData"):
+    def add_text_underline(self, leader: LeaderData):
         mtext = self.context.mtext
         if mtext is None:
             return
@@ -526,7 +532,7 @@ class RenderEngine:
         ):
             self.add_dxf_line(connection_point, connection_point + line)
 
-    def add_overline(self, leader: "LeaderData"):
+    def add_overline(self, leader: LeaderData):
         mtext = self.context.mtext
         if mtext is None:
             return
@@ -559,7 +565,7 @@ class RenderEngine:
             self.add_dxf_line(start, end)
 
     def leader_vertices(
-        self, leader: "LeaderData", line_vertices: List[Vec3], has_dogleg=False
+        self, leader: LeaderData, line_vertices: List[Vec3], has_dogleg=False
     ) -> List[Vec3]:
         # All leader vertices and directions in WCS!
         vertices = list(line_vertices)
@@ -572,7 +578,7 @@ class RenderEngine:
             vertices.append(end_point)
         return vertices
 
-    def add_leader_line(self, leader: "LeaderData", line: "LeaderLine"):
+    def add_leader_line(self, leader: LeaderData, line: LeaderLine):
         # All leader vertices and directions in WCS!
         leader_type: int = self.leader_type
         if leader_type == 0:  # invisible leader lines
@@ -672,8 +678,284 @@ class RenderEngine:
         )
 
 
+class LeaderType(enum.IntEnum):
+    none = 0
+    straight_lines = 1
+    splines = 2
+
+
+class ConnectionSide(enum.Enum):
+    left = enum.auto()
+    right = enum.auto()
+    top = enum.auto()
+    bottom = enum.auto()
+
+
+class HorizontalConnection(enum.IntEnum):
+    by_style = 0
+    top_of_top_line = 1
+    middle_of_top_line = 2
+    middle_of_text = 2
+    middle_of_bottom_line = 3
+    bottom_of_bottom_line = 4
+    bottom_of_bottom_line_underline = 5
+    bottom_of_top_line_underline = 6
+    bottom_of_top_line = 7
+    bottom_of_top_line_underline_all = 8
+
+
+class VerticalConnection(enum.IntEnum):
+    by_style = 0
+    center = 9
+    center_overline = 10
+
+
+class TextAlignment(enum.IntEnum):
+    left = 1
+    center = 2
+    right = 3
+
+
+class BlockAlignment(enum.IntEnum):
+    center_extents = 0
+    insertion_point = 1
+
+
 class MultiLeaderBuilder:
-    def __init__(self, multileader: "MultiLeader"):
+    def __init__(self, multileader: MultiLeader):
+        doc = multileader.doc
+        assert doc is not None, "valid DXF document required"
+        self.doc: "Drawing" = doc
         self.multileader = multileader
-        self.doc = multileader.doc
-        assert self.doc is not None, "valid DXF document required"
+        self.context = multileader.context
+        self.ucs = UCS()
+        style: MLeaderStyle = self.doc.entitydb.get(
+            self.multileader.dxf.style_handle
+        )  # type: ignore
+
+        self._mleader_style: MLeaderStyle = style
+        self._leaders: Dict[ConnectionSide, List[List[Vec3]]] = defaultdict(
+            list
+        )
+        self.set_mleader_style(style)
+        # landing gap size is not stored in MULTILEADER
+        self.landing_gap = self._mleader_style.dxf.landing_gap
+
+    def set_mleader_style(self, style: MLeaderStyle):
+        """Reset base properties by :class:`~ezdxf.entities.MLeaderStyle`
+        properties. This also resets the content!
+        """
+        self._mleader_style = style
+        multileader_dxf = self.multileader.dxf
+        style_dxf = style.dxf
+        keys = list(acdb_mleader_style.attribs.keys())
+        for key in keys:
+            if multileader_dxf.is_supported(key):
+                multileader_dxf.set(key, style_dxf.get_default(key))
+        multileader_dxf.block_scale_vector = Vec3(
+            style_dxf.block_scale_x,
+            style_dxf.block_scale_y,
+            style_dxf.block_scale_z,
+        )
+        self._init_content()
+
+    def _init_content(self):
+        content_type = self.multileader.dxf.content_type
+        if content_type == 1:
+            self._build_block_content()
+        elif content_type == 2:
+            self._build_mtext_content()
+
+    def _build_mtext_content(self):
+        context = self.context
+        style = self._mleader_style
+        mleader = self.multileader
+
+        # reset content type
+        mleader.dxf.content_type = 2
+        context.block = None
+
+        # create default mtext content
+        mtext = MTextData()
+        context.mtext = mtext
+
+        mtext.default_content = style.dxf.default_text_content
+        mtext.extrusion = context.plane_z_axis
+        mtext.style_handle = mleader.dxf.text_style_handle
+        mtext.insert = context.base_point
+        mtext.text_direction = context.plane_x_axis
+        mtext.color = mleader.dxf.text_color
+        mtext.alignment = mleader.dxf.text_attachment_point
+        mtext.bg_color = colors.WINDOW_BG_RAW_VALUE
+        mtext.bg_scale_factor = 1.5
+        mtext.bg_transparency = 0
+        mtext.use_window_bg_color = 0
+        mtext.has_bg_fill = 0
+        mtext.column_type = 0  # unknown values
+        mtext.use_auto_height = 0
+        mtext.column_width = 0.0  # not scaled
+        mtext.column_gutter_width = 0.0  # not scaled
+        mtext.column_flow_reversed = 0
+        mtext.use_word_break = 1
+        # todo: rotation
+
+    def _build_block_content(self):
+        context = self.context
+        mleader = self.multileader
+
+        # set content type
+        mleader.dxf.content_type = 1
+        context.mtext = None
+
+        # create default block content
+        block = BlockData()
+        block.block_record_handle = mleader.dxf.block_record_handle
+        block.extrusion = context.plane_z_axis
+        block.insert = context.base_point
+        block.scale = mleader.dxf.block_scale_vector
+        block.rotation = mleader.dxf.block_rotation
+        block.color = mleader.dxf.block_color
+
+    def set_content_properties(  # todo: better method name
+        self,
+        landing_gap: float = 0.0,
+        dogleg_length: float = 0.0,
+        ucs: UCS = None,
+    ):
+        mleader = self.multileader
+        context = mleader.context
+        if ucs:
+            self.ucs = ucs
+            context.plane_origin = ucs.origin
+            context.plane_x_axis = ucs.ux
+            context.plane_y_axis = ucs.uy
+            context.plane_normal_reversed = 0
+        if dogleg_length:
+            mleader.dxf.has_dogleg = 1
+            mleader.dxf.dogleg_length = dogleg_length
+        else:
+            mleader.dxf.has_dogleg = 0
+        self.landing_gap = landing_gap
+
+    def set_connection_types(
+        self,
+        left=HorizontalConnection.by_style,
+        right=HorizontalConnection.by_style,
+        top=VerticalConnection.by_style,
+        bottom=VerticalConnection.by_style,
+    ):
+        dxf = self.multileader.dxf
+        style = self._mleader_style
+        if left == HorizontalConnection.by_style:
+            dxf.text_left_attachment_type = style.dxf.text_left_attachment_type
+        else:
+            dxf.text_left_attachment_type = int(left)
+
+        if right == HorizontalConnection.by_style:
+            dxf.text_right_attachment_type = (
+                style.dxf.text_right_attachment_type
+            )
+        else:
+            dxf.text_right_attachment_type = int(right)
+
+        if top == VerticalConnection.by_style:
+            dxf.text_top_attachment_type = style.dxf.text_top_attachment_type
+        else:
+            dxf.text_top_attachment_type = int(top)
+
+        if bottom == VerticalConnection.by_style:
+            dxf.text_bottom_attachment_type = (
+                style.dxf.text_bottom_attachment_type
+            )
+        else:
+            dxf.text_bottom_attachment_type = int(bottom)
+
+    def set_mtext_content(
+        self,
+        location: Vertex,
+        content: str,
+        color: Union[int, colors.RGB] = colors.BYBLOCK,
+        char_height: float = 0.0,  # 0.0 is by style
+        alignment: TextAlignment = TextAlignment.left,
+    ):
+        mleader = self.multileader
+        # update MULTILEADER DXF namespace
+        mleader.dxf.text_color = colors.encode_raw_color(color)
+        mleader.dxf.text_attachment_point = int(alignment)
+        self._set_base_point(location)
+        # build MTextData object
+        self._build_mtext_content()
+        # following attributes are not stored in the MULTILEADER DXF namespace
+        self.context.mtext.default_content = content
+        if char_height:
+            self.context.char_height = char_height
+
+    def _set_base_point(self, location: Vertex):
+        # todo: is WCS conversion correct in context.plan_origin != (0, 0, 0)?
+        self.context.base_point = self.ucs.to_wcs(location)
+
+    def set_block_content(
+        self,
+        location: Vertex,
+        name: str,  # block name
+        color: Union[int, colors.RGB] = colors.BYBLOCK,
+        scale: float = 1.0,
+        rotation: float = 0.0,
+        alignment=BlockAlignment.center_extents,
+    ):
+        mleader = self.multileader
+        self._set_base_point(location)
+        # update MULTILEADER DXF namespace
+        block = self.doc.blocks.get(name)
+        if block is None:
+            raise ValueError(f"undefined BLOCK '{name}'")
+        mleader.dxf.block_record_handle = block.block_record_handle
+        mleader.dxf.block_color = colors.encode_raw_color(color)
+        mleader.dxf.block_scale_vector = Vec3(scale, scale, scale)
+        mleader.dxf.block_rotation = rotation
+        mleader.dxf.block_connection_type = int(alignment)
+        self._build_mtext_content()
+
+    def set_leader_properties(
+        self,
+        color: Union[int, colors.RGB] = colors.BYBLOCK,
+        linetype: str = "BYBLOCK",
+        lineweight: int = const.LINEWEIGHT_BYBLOCK,
+        leader_type=LeaderType.straight_lines,
+    ):
+        mleader = self.multileader
+        mleader.dxf.leader_line_color = colors.encode_raw_color(color)  # type: ignore
+        linetype_ = self.doc.linetypes.get(linetype)
+        if linetype_ is None:
+            raise ValueError(f"undefined linetype '{linetype}'")
+        mleader.dxf.leader_linetype_handle = linetype_.dxf.handle
+        mleader.dxf.leader_lineweight = lineweight
+        mleader.dxf.leader_type = int(leader_type)
+
+    def set_arrow_properties(
+        self,
+        name: str = "",
+        size: float = 0.0,  # 0=by style
+    ):
+        if size:
+            self.multileader.dxf.arrow_head_size = size
+        else:
+            self.multileader.dxf.arrow_head_size = (
+                self._mleader_style.dxf.arrow_head_size
+            )
+        if name:
+            self.multileader.dxf.arrow_head_handle = ARROWS.arrow_handle(
+                self.doc.blocks, name
+            )
+        else:
+            # empty string is the default "closed filled" arrow,
+            # no handle needed
+            del self.multileader.dxf.arrow_head_handle
+
+    def add_leader_line(self, side: ConnectionSide, vertices: List[Vertex]):
+        _vertices = Vec3.list(vertices)
+        self._leaders[side].append(_vertices)
+
+    def build(self):
+        """Build geometry data"""
+        pass
