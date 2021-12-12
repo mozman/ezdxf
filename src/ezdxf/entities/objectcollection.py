@@ -110,6 +110,9 @@ class ObjectCollection:
         if new_entry.dxf.is_supported("name"):
             new_entry.dxf.name = new_name
         self.object_dict.add(new_name, new_entry)  # type: ignore
+        owner_handle = self.object_dict.dxf.handle
+        new_entry.dxf.owner = owner_handle
+        new_entry.set_reactors([owner_handle])
         return new_entry  # type: ignore
 
     def _new(self, name: str, dxfattribs: dict) -> "DXFObject":

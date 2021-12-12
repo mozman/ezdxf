@@ -107,6 +107,25 @@ class TestDuplicateEntry:
         assert collection_rw.get("Dup2") is obj2, "obj2 should replace obj1"
         assert len(collection_rw) == count + 1
 
+    def test_duplicated_entries_have_same_content(self, collection_rw):
+        def attribs(obj):
+            a = obj.dxf.all_existing_dxf_attribs()
+            del a['handle']
+            del a['name']
+            return a
+
+        obj0 = collection_rw.get("Standard")
+        obj1 = collection_rw.duplicate_entry("STANDARD", "Dup3")
+        attribs0 = attribs(obj0)
+        attribs1 = attribs(obj1)
+        assert len(attribs0) > 1
+        assert attribs0 == attribs1
+        assert obj1.get_reactors() == obj0.get_reactors()
+
+    def test_duplicated_entry_is_stored_in_objects_section(self, collection_rw):
+        obj = collection_rw.duplicate_entry("STANDARD", "Dup4")
+        assert obj.dxf.handle in obj.doc.objects
+
 
 def test_clear():
     doc = ezdxf.new()
