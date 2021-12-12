@@ -1,15 +1,13 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Dict
-from ezdxf.math import Vec2, Shape2d, NULLVEC
+from ezdxf.math import Vec2, Shape2d, NULLVEC, Vertex
 from .forms import open_arrow, arrow2
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        Vertex,
         GenericLayoutType,
         DXFGraphic,
-        Drawing,
         BlocksSection,
     )
 
@@ -20,24 +18,24 @@ DEFAULT_BETA = 45.0
 # The base arrow is oriented for the right hand side ->| of the dimension line,
 # reverse is the left hand side |<-.
 class BaseArrow:
-    def __init__(self, vertices: Iterable["Vertex"]):
+    def __init__(self, vertices: Iterable[Vertex]):
         self.shape = Shape2d(vertices)
 
     def render(self, layout: "GenericLayoutType", dxfattribs: dict = None):
         pass
 
-    def place(self, insert: "Vertex", angle: float):
+    def place(self, insert: Vertex, angle: float):
         self.shape.rotate(angle)
         self.shape.translate(insert)
 
 
 class NoneStroke(BaseArrow):
-    def __init__(self, insert: "Vertex", size: float = 1.0, angle: float = 0):
+    def __init__(self, insert: Vertex, size: float = 1.0, angle: float = 0):
         super().__init__([Vec2(insert)])
 
 
 class ObliqueStroke(BaseArrow):
-    def __init__(self, insert: "Vertex", size: float = 1.0, angle: float = 0):
+    def __init__(self, insert: Vertex, size: float = 1.0, angle: float = 0):
         self.size = size
         s2 = size / 2
         # shape = [center, lower left, upper right]
@@ -66,7 +64,7 @@ class ArchTick(ObliqueStroke):
 
 
 class ClosedArrowBlank(BaseArrow):
-    def __init__(self, insert: "Vertex", size: float = 1.0, angle: float = 0):
+    def __init__(self, insert: Vertex, size: float = 1.0, angle: float = 0):
         super().__init__(open_arrow(size, angle=DEFAULT_ARROW_ANGLE))
         self.place(insert, angle)
 
@@ -104,7 +102,7 @@ class _OpenArrow(BaseArrow):
     def __init__(
         self,
         arrow_angle: float,
-        insert: "Vertex",
+        insert: Vertex,
         size: float = 1.0,
         angle: float = 0,
     ):
@@ -124,22 +122,22 @@ class _OpenArrow(BaseArrow):
 
 
 class OpenArrow(_OpenArrow):
-    def __init__(self, insert: "Vertex", size: float = 1.0, angle: float = 0):
+    def __init__(self, insert: Vertex, size: float = 1.0, angle: float = 0):
         super().__init__(DEFAULT_ARROW_ANGLE, insert, size, angle)
 
 
 class OpenArrow30(_OpenArrow):
-    def __init__(self, insert: "Vertex", size: float = 1.0, angle: float = 0):
+    def __init__(self, insert: Vertex, size: float = 1.0, angle: float = 0):
         super().__init__(30, insert, size, angle)
 
 
 class OpenArrow90(_OpenArrow):
-    def __init__(self, insert: "Vertex", size: float = 1.0, angle: float = 0):
+    def __init__(self, insert: Vertex, size: float = 1.0, angle: float = 0):
         super().__init__(90, insert, size, angle)
 
 
 class Circle(BaseArrow):
-    def __init__(self, insert: "Vertex", size: float = 1.0, angle: float = 0):
+    def __init__(self, insert: Vertex, size: float = 1.0, angle: float = 0):
         self.radius = size / 2
         # shape = [center point, connection point]
         super().__init__(
@@ -220,7 +218,7 @@ class Dot(DotSmall):
 
 
 class Box(BaseArrow):
-    def __init__(self, insert: "Vertex", size: float = 1.0, angle: float = 0):
+    def __init__(self, insert: Vertex, size: float = 1.0, angle: float = 0):
         # shape = [lower_left, lower_right, upper_right, upper_left, connection point]
         s2 = size / 2
         super().__init__(
@@ -263,7 +261,7 @@ class BoxFilled(Box):
 
 
 class Integral(BaseArrow):
-    def __init__(self, insert: "Vertex", size: float = 1.0, angle: float = 0):
+    def __init__(self, insert: Vertex, size: float = 1.0, angle: float = 0):
         self.radius = size * 0.3535534
         self.angle = angle
         # shape = [center, left_center, right_center]
@@ -297,7 +295,7 @@ class Integral(BaseArrow):
 class DatumTriangle(BaseArrow):
     REVERSE_ANGLE = 180
 
-    def __init__(self, insert: "Vertex", size: float = 1.0, angle: float = 0):
+    def __init__(self, insert: Vertex, size: float = 1.0, angle: float = 0):
         d = 0.577350269 * size  # tan(30)
         # shape = [upper_corner, lower_corner, connection_point]
         super().__init__(
@@ -327,7 +325,7 @@ class DatumTriangleFilled(DatumTriangle):
 
 
 class _EzArrow(BaseArrow):
-    def __init__(self, insert: "Vertex", size: float = 1.0, angle: float = 0):
+    def __init__(self, insert: Vertex, size: float = 1.0, angle: float = 0):
         points = list(arrow2(size, angle=DEFAULT_ARROW_ANGLE))
         points.append((-1, 0))
         super().__init__(points)
@@ -525,7 +523,7 @@ class _Arrows:
         self,
         layout: "GenericLayoutType",
         name: str,
-        insert: "Vertex" = NULLVEC,
+        insert: Vertex = NULLVEC,
         size: float = 1.0,
         rotation: float = 0,
         *,
@@ -547,7 +545,7 @@ class _Arrows:
         self,
         layout: "GenericLayoutType",
         name: str,
-        insert: "Vertex" = NULLVEC,
+        insert: Vertex = NULLVEC,
         size: float = 1.0,
         rotation: float = 0,
         *,
@@ -564,7 +562,7 @@ class _Arrows:
     def virtual_entities(
         self,
         name: str,
-        insert: "Vertex" = NULLVEC,
+        insert: Vertex = NULLVEC,
         size: float = 0.625,
         rotation: float = 0,
         *,
@@ -587,7 +585,7 @@ class _Arrows:
             yield from iter(layout)
 
     def arrow_shape(
-        self, name: str, insert: "Vertex", size: float, rotation: float
+        self, name: str, insert: Vertex, size: float, rotation: float
     ) -> BaseArrow:
         # size depending shapes
         name = name.upper()
@@ -600,7 +598,7 @@ class _Arrows:
 
 
 def connection_point(
-    arrow_name: str, insert: "Vertex", scale: float = 1.0, rotation: float = 0.0
+    arrow_name: str, insert: Vertex, scale: float = 1.0, rotation: float = 0.0
 ) -> Vec2:
     insert = Vec2(insert)
     if ARROWS.arrow_name(arrow_name) in _Arrows.ORIGIN_ZERO:
