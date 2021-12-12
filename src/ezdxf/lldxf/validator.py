@@ -10,6 +10,7 @@ from .const import (
     DXFStructureError,
     DXFError,
     DXFValueError,
+    DXFTypeError,
     DXFAppDataError,
     DXFXDataError,
     APP_DATA_MARKER,
@@ -292,6 +293,13 @@ def is_dxf_stream(stream: TextIO) -> bool:
 
 def is_valid_table_name(name: str) -> bool:
     return not bool(INVALID_LAYER_NAME_CHARACTERS.intersection(set(name)))
+
+
+def make_table_key(name: str) -> str:
+    """Make unified table entry key."""
+    if not isinstance(name, str):
+        raise DXFTypeError("name has to be a string.")
+    return name.lower()
 
 
 def is_valid_layer_name(name: str) -> bool:

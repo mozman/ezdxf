@@ -15,7 +15,7 @@ from ezdxf.lldxf.const import (
     DXFTableEntryError,
     DXFKeyError,
 )
-from ezdxf.lldxf import const
+from ezdxf.lldxf import const, validator
 from ezdxf.entities import (
     factory,
     entity_linker,
@@ -28,7 +28,6 @@ from ezdxf.entities import (
 from ezdxf.layouts.blocklayout import BlockLayout
 from ezdxf.render.arrows import ARROWS
 from ezdxf.audit import Auditor, AuditError
-from .table import table_key
 import warnings
 import logging
 
@@ -386,7 +385,8 @@ class BlocksSection:
         """
         assert self.doc is not None
         active_references = set(
-            table_key(entity.dxf.name) for entity in self.doc.query("INSERT")
+            validator.make_table_key(entity.dxf.name)
+            for entity in self.doc.query("INSERT")
         )
 
         def is_safe(name: str) -> bool:
@@ -396,7 +396,7 @@ class BlocksSection:
 
         trash = set()
         for block in self:
-            name = table_key(block.name)
+            name = validator.make_table_key(block.name)
             if not block.is_any_layout and is_safe(name):
                 trash.add(name)
 
@@ -434,7 +434,7 @@ class BlocksSection:
                     auditor.fixed_error(
                         code=AuditError.REMOVED_INVALID_GRAPHIC_ENTITY,
                         message=f"Removed invalid DXF entity {str(entity)} from"
-                                f" BLOCK '{block_record.dxf.name}'.",
+                        f" BLOCK '{block_record.dxf.name}'.",
                     )
                     auditor.trash(entity)
                 elif isinstance(entity, Attrib):
@@ -443,7 +443,6 @@ class BlocksSection:
                     auditor.fixed_error(
                         code=AuditError.REMOVED_STANDALONE_ATTRIB_ENTITY,
                         message=f"Removed standalone {str(entity)} entity from"
-                                f" BLOCK '{block_record.dxf.name}'.",
+                        f" BLOCK '{block_record.dxf.name}'.",
                     )
                     auditor.trash(entity)
-

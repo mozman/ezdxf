@@ -22,7 +22,7 @@ from ezdxf.entities import Attrib, Insert, Face3d, Linetype
 from ezdxf.entities.ltype import CONTINUOUS_PATTERN
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.lldxf import const
-from ezdxf.sections.table import table_key as layer_key
+from ezdxf.lldxf.validator import make_table_key as layer_key
 from ezdxf.tools import fonts
 from ezdxf.tools.pattern import scale_pattern, HatchPatternType
 

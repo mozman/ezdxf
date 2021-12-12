@@ -16,7 +16,6 @@ from enum import IntEnum
 from ezdxf.lldxf import const, validator
 from ezdxf.entities import factory, DXFEntity
 from ezdxf.math import NULLVEC
-from ezdxf.sections.table import table_key
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
@@ -323,7 +322,7 @@ class Auditor:
         assert self.doc is entity.doc, "Entity from different DXF document."
         if not entity.dxf.hasattr("linetype"):
             return
-        linetype = table_key(entity.dxf.linetype)
+        linetype = validator.make_table_key(entity.dxf.linetype)
         # No table entry in linetypes required:
         if linetype in ("bylayer", "byblock"):
             return
