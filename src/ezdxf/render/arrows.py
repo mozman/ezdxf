@@ -5,13 +5,20 @@ from ezdxf.math import Vec2, Shape2d, NULLVEC
 from .forms import open_arrow, arrow2
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, GenericLayoutType, DXFGraphic, Drawing
+    from ezdxf.eztypes import (
+        Vertex,
+        GenericLayoutType,
+        DXFGraphic,
+        Drawing,
+        BlocksSection,
+    )
 
 DEFAULT_ARROW_ANGLE = 18.924644
 DEFAULT_BETA = 45.0
 
 
-# The base arrow is oriented for the right hand side ->| of the dimension line, reverse is the left hand side |<-.
+# The base arrow is oriented for the right hand side ->| of the dimension line,
+# reverse is the left hand side |<-.
 class BaseArrow:
     def __init__(self, vertices: Iterable["Vertex"]):
         self.shape = Shape2d(vertices)
@@ -478,7 +485,7 @@ class _Arrows:
             return False
         return item.upper() in self.__all_arrows__
 
-    def create_block(self, blocks, name: str):
+    def create_block(self, blocks: "BlocksSection", name: str):
         block_name = self.block_name(name)
         if block_name not in blocks:
             block = blocks.new(block_name)
@@ -486,20 +493,24 @@ class _Arrows:
             arrow.render(block, dxfattribs={"color": 0, "linetype": "BYBLOCK"})
         return block_name
 
+    def arrow_handle(self, blocks: "BlocksSection", name: str) -> str:
+        arrow_name = self.arrow_name(name)
+        block_name = self.create_block(blocks, arrow_name)
+        block = blocks.get(block_name)
+        return block.block_record_handle
+
     def block_name(self, name):
         if not self.is_acad_arrow(name):  # common BLOCK definition
-            return (
-                name.upper()
-            )  # e.g. Dimension.dxf.bkl = 'EZ_ARROW' == Insert.dxf.name
-        elif (
-            name == ""
-        ):  # special AutoCAD arrow symbol 'CLOSED_FILLED' has no name
+            # e.g. Dimension.dxf.bkl = 'EZ_ARROW' == Insert.dxf.name
+            return name.upper()
+        elif name == "":
+            # special AutoCAD arrow symbol 'CLOSED_FILLED' has no name
             # ezdxf uses blocks for ALL arrows, but '_' (closed filled) as block name?
             return "_CLOSEDFILLED"  # Dimension.dxf.bkl = '' != Insert.dxf.name = '_CLOSED_FILLED'
-        else:  # add preceding '_' to AutoCAD arrow symbol names
-            return (
-                "_" + name.upper()
-            )  # Dimension.dxf.bkl = 'DOT' != Insert.dxf.name = '_DOT'
+        else:
+            # add preceding '_' to AutoCAD arrow symbol names
+            # Dimension.dxf.bkl = 'DOT' != Insert.dxf.name = '_DOT'
+            return "_" + name.upper()
 
     def arrow_name(self, block_name: str) -> str:
         if block_name.startswith("_"):
@@ -588,24 +599,19 @@ class _Arrows:
         return cls(insert, size, rotation)
 
 
-def block_name(arrow_name: str) -> str:
-    # remove leading "_" from true block name to match internal naming:
-    return arrow_name.lstrip("_")
-
-
 def connection_point(
-    arrow_name: str, insert: "Vertex", scale: float = 1., rotation: float = 0.
+    arrow_name: str, insert: "Vertex", scale: float = 1.0, rotation: float = 0.0
 ) -> Vec2:
     insert = Vec2(insert)
-    if block_name(arrow_name) in _Arrows.ORIGIN_ZERO:
+    if ARROWS.arrow_name(arrow_name) in _Arrows.ORIGIN_ZERO:
         return insert
     else:
         return insert - Vec2.from_deg_angle(rotation, scale)
 
 
-def arrow_length(arrow_name: str, scale: float = 1.) -> float:
-    if block_name(arrow_name) in _Arrows.ORIGIN_ZERO:
-        return 0.
+def arrow_length(arrow_name: str, scale: float = 1.0) -> float:
+    if ARROWS.arrow_name(arrow_name) in _Arrows.ORIGIN_ZERO:
+        return 0.0
     else:
         return scale
 
