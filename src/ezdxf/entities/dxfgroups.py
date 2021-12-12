@@ -373,11 +373,13 @@ class GroupCollection(ObjectCollection):
         or a group name as string.
 
         """
+        entitydb = self.doc.entitydb
+        assert entitydb is not None
         # Delete group by name:
         if isinstance(group, str):
             name = group
         elif group.dxftype() == "GROUP":
-            name = get_group_name(group, self.entitydb)
+            name = get_group_name(group, entitydb)
         else:
             raise TypeError(group.dxftype())
 

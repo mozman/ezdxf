@@ -26,14 +26,6 @@ class ObjectCollection:
             dict_name
         )
 
-    @property
-    def objects(self) -> "ObjectsSection":
-        return self.doc.objects
-
-    @property
-    def entitydb(self) -> "EntityDB":
-        return self.doc.entitydb
-
     def __iter__(self) -> Iterator[Tuple[str, "DXFObject"]]:
         return self.object_dict.items()
 
@@ -91,7 +83,7 @@ class ObjectCollection:
         entry = self.get(name)
         if entry is None:
             raise DXFValueError(f"entry '{name}' does not exist")
-        entitydb = self.entitydb
+        entitydb = self.doc.entitydb
         if entitydb:
             new_entry = entitydb.duplicate_entity(entry)
         else:  # only for testing!
@@ -101,20 +93,26 @@ class ObjectCollection:
         return new_entry  # type: ignore
 
     def _new(self, name: str, dxfattribs: dict) -> "DXFObject":
+        objects = self.doc.objects
+        assert objects is not None
+
         owner = self.object_dict.dxf.handle
         dxfattribs["owner"] = owner
-        obj = self.objects.add_dxf_object_with_reactor(
+        obj = objects.add_dxf_object_with_reactor(
             self.object_type, dxfattribs=dxfattribs
         )
         self.object_dict.add(name, obj)
         return cast("DXFObject", obj)
 
     def delete(self, name: str) -> None:
+        objects = self.doc.objects
+        assert objects is not None
+
         obj = self.object_dict.get(name)
         if obj is not None:
             obj = cast("DXFObject", obj)
             self.object_dict.discard(name)
-            self.objects.delete_entity(obj)
+            objects.delete_entity(obj)
 
     def clear(self) -> None:
         """Delete all entries."""
