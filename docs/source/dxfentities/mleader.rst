@@ -35,6 +35,7 @@ coordinates in the usual case.
     - :class:`ezdxf.entities.MLeaderStyle`
     - :class:`ezdxf.render.MultiLeaderBuilder`
     - :ref:`tut_mleader`
+    - :ref:`MLEADER Internals`
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
