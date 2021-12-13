@@ -831,6 +831,7 @@ class MultiLeaderBuilder:
         if self._connection_box is not None:
             return self._connection_box
         self._connection_box = self._build_connection_box()
+        return self._connection_box
 
     def _reset_caches(self):
         self._block_layout = None
@@ -1112,6 +1113,7 @@ class MultiLeaderBuilder:
 
     def _build_mtext_connection_box(self) -> ConnectionBox:
         def transformation_matrix() -> Matrix44:
+            assert mtext is not None  # shut-up mypy!!!!
             dx = 0.0
             if mtext.alignment == 2:
                 dx = width * 0.5
@@ -1150,7 +1152,6 @@ class MultiLeaderBuilder:
         mtext = context.mtext
         if mtext is None:
             raise TypeError("MULTILEADER has not MTEXT content")
-
         left_attachment = HorizontalConnection(context.left_attachment)
         right_attachment = HorizontalConnection(context.right_attachment)
         char_height = context.char_height

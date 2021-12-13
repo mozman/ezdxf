@@ -75,7 +75,7 @@ class BlockLayout(BaseLayout):
     @property
     def base_point(self) -> Vec3:
         """Returns the base point of the block."""
-        return Vec3(self.block.dxf.base_point)
+        return Vec3(self.block.dxf.base_point)  # type: ignore
 
     def attdefs(self) -> Iterable[AttDef]:
         """Returns iterable of all :class:`~ezdxf.entities.attrib.Attdef`
