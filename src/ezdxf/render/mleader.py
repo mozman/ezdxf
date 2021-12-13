@@ -11,6 +11,7 @@ from ezdxf.math import (
     Vec3,
     Vec2,
     Vertex,
+    Matrix44,
     X_AXIS,
     Z_AXIS,
     NULLVEC,
@@ -18,13 +19,12 @@ from ezdxf.math import (
     OCS,
     UCS,
     is_point_left_of_line,
-
 )
 from ezdxf.entities import factory
 from ezdxf.lldxf import const
 from ezdxf.proxygraphic import ProxyGraphic
 from ezdxf.render.arrows import ARROWS, arrow_length
-from ezdxf.tools.text_size import estimate_mtext_extents
+from ezdxf.tools import text_size, text as text_tools
 from ezdxf.entities.mleader import (
     MLeaderContext,
     MultiLeader,
@@ -33,11 +33,13 @@ from ezdxf.entities.mleader import (
     BlockData,
     LeaderData,
     LeaderLine,
+    AttribData,
     acdb_mleader_style,
 )
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
+    from ezdxf.layouts import BlockLayout
     from ezdxf.entities import (
         DXFGraphic,
         MText,
@@ -234,6 +236,24 @@ def copy_mtext_data(
     dxf.attachment_point = mtext_data.alignment
 
 
+def make_mtext(mleader: MultiLeader) -> "MText":
+    mtext = cast("MText", factory.new("MTEXT", doc=mleader.doc))
+    mtext.dxf.layer = mleader.dxf.layer
+    context = mleader.context
+    mtext_data = context.mtext
+    if mtext_data is None:
+        raise TypeError(f"MULTILEADER has no MTEXT content")
+    scale = context.scale
+    # !char_height is the final already scaled value!
+    mtext.dxf.char_height = context.char_height
+    if mtext_data is not None:
+        copy_mtext_data(mtext, mtext_data, scale)
+        if mtext_data.has_bg_fill:
+            set_mtext_bg_fill(mtext, mtext_data)
+        set_mtext_columns(mtext, mtext_data, scale)
+    return mtext
+
+
 def set_mtext_bg_fill(mtext: "MText", mtext_data: MTextData) -> None:
     # Note: the "text frame" flag (16) in "bg_fill" is never set by BricsCAD!
     # Set required DXF attributes:
@@ -367,7 +387,9 @@ class RenderEngine:
             # TODO: this is very inaccurate if using inline codes, better
             #  solution is required like a text layout engine with column width
             #  calculation from the MTEXT content.
-            width, height = estimate_mtext_extents(self.dxf_mtext_entity)
+            width, height = text_size.estimate_mtext_extents(
+                self.dxf_mtext_entity
+            )
         else:
             width, height = 0.0, 0.0
         self._dxf_mtext_extents = (width, height)
@@ -430,19 +452,9 @@ class RenderEngine:
             self.add_block_content()
 
     def add_mtext_content(self) -> None:
-        mtext = cast("MText", factory.new("MTEXT", doc=self.doc))
-        mtext.dxf.layer = self.layer
-        # !char_height is the final already scaled value!
-        mtext.dxf.char_height = self.context.char_height
-        mtext_data: MTextData = self.context.mtext
-        if mtext_data is not None:
-            copy_mtext_data(mtext, mtext_data, self.scale)
-            if mtext_data.has_bg_fill:
-                set_mtext_bg_fill(mtext, mtext_data)
-            set_mtext_columns(mtext, mtext_data, self.scale)
+        mtext = make_mtext(self.mleader)
         self.entities.append(mtext)
         self.dxf_mtext_entity = mtext
-
         if self.has_text_frame:
             self.add_text_frame()
 
@@ -742,10 +754,30 @@ class BlockAlignment(enum.IntEnum):
 
 @dataclass
 class ConnectionBox:
+    """Contains the connection points for all 4 sides of the content, the
+    landing gap is included.
+    """
     left: Vec3 = NULLVEC
     right: Vec3 = NULLVEC
     top: Vec3 = NULLVEC
     bottom: Vec3 = NULLVEC
+
+    def transform(self, m: Matrix44) -> "ConnectionBox":
+        return ConnectionBox(
+            left=m.transform(self.left),
+            right=m.transform(self.right),
+            top=m.transform(self.top),
+            bottom=m.transform(self.bottom),
+        )
+
+    def get(self, side: ConnectionSide) -> Vec3:
+        if side == ConnectionSide.left:
+            return self.left
+        elif side == ConnectionSide.right:
+            return self.right
+        elif side == ConnectionSide.top:
+            return self.top
+        return self.bottom
 
 
 class MultiLeaderBuilder:
@@ -760,17 +792,49 @@ class MultiLeaderBuilder:
         self._mleader_style: MLeaderStyle = style
         self._multileader = multileader
         self._ucs = UCS()
-        self._connection_box = ConnectionBox()
         self._leaders: Dict[ConnectionSide, List[List[Vec3]]] = defaultdict(
             list
         )
         self.set_mleader_style(style)
         # landing gap size is not stored in MULTILEADER
         self._landing_gap = self._mleader_style.dxf.landing_gap
+        self._block_layout: Optional["BlockLayout"] = None  # cache
+        self._connection_box: Optional[ConnectionBox] = None  # cache
 
     @property
     def context(self) -> MLeaderContext:
         return self._multileader.context
+
+    @property
+    def block_layout(self) -> "BlockLayout":
+        if self._block_layout is not None:
+            return self._block_layout
+
+        context = self.context
+        if context.block is None:
+            raise TypeError("MULTILEADER has no BLOCK content")
+        handle = context.block.block_record_handle
+        block_record = self._doc.entitydb.get(handle)
+        if block_record is None:
+            raise ValueError(f"invalid BLOCK_RECORD handle #{handle}")
+        name = block_record.dxf.name
+        block_layout = self._doc.blocks.get(name)
+        if block_layout is None:
+            raise ValueError(
+                f"BLOCK '{name}' defined by {str(block_record)} not found"
+            )
+        self._block_layout = block_layout
+        return block_layout
+
+    @property
+    def connection_box(self) -> ConnectionBox:
+        if self._connection_box is not None:
+            return self._connection_box
+        self._connection_box = self._build_connection_box()
+
+    def _reset_caches(self):
+        self._block_layout = None
+        self._connection_box = ConnectionBox()
 
     def set_mleader_style(self, style: MLeaderStyle):
         """Reset base properties by :class:`~ezdxf.entities.MLeaderStyle`
@@ -792,6 +856,7 @@ class MultiLeaderBuilder:
 
     def _init_content(self):
         content_type = self._multileader.dxf.content_type
+        self._block_layout = None
         if content_type == 1:
             self._build_block_content()
         elif content_type == 2:
@@ -898,6 +963,7 @@ class MultiLeaderBuilder:
         char_height: float = 0.0,  # 0.0 is by style
         alignment: TextAlignment = TextAlignment.left,
     ):
+        self._reset_caches()
         mleader = self._multileader
         context = self.context
         # update MULTILEADER DXF namespace
@@ -907,13 +973,22 @@ class MultiLeaderBuilder:
         self._build_mtext_content()
         # following attributes are not stored in the MULTILEADER DXF namespace
         assert context.mtext is not None
-        context.mtext.default_content = content
+        context.mtext.default_content = text_tools.escape_dxf_line_endings(
+            content
+        )
         if char_height:
             context.char_height = char_height
 
     def _set_base_point(self, location: Vertex):
         # todo: is WCS conversion correct in context.plan_origin != (0, 0, 0)?
         self.context.base_point = self._ucs.to_wcs(location)
+
+    def set_overall_scaling(self, scale: float):
+        self.context.scale = float(scale)
+        self._update_overall_scaling()
+
+    def _update_overall_scaling(self) -> None:
+        pass  # TODO
 
     def set_block_content(
         self,
@@ -923,8 +998,8 @@ class MultiLeaderBuilder:
         scale: float = 1.0,
         rotation: float = 0.0,
         alignment=BlockAlignment.center_extents,
-        attributes: List[Tuple[str, str]] = None,
     ):
+        self._reset_caches()
         mleader = self._multileader
         self._set_base_point(location)
         # update MULTILEADER DXF namespace
@@ -937,12 +1012,21 @@ class MultiLeaderBuilder:
         mleader.dxf.block_rotation = rotation
         mleader.dxf.block_connection_type = int(alignment)
         self._build_block_content()
-        if attributes:
-            self.set_attributes(attributes)
 
-    def set_attributes(self, attributes: List[Tuple[str, str]] = None):
-        if self.context.block is None:
-            raise TypeError("MULTILEADER has no BLOCK content")
+    def set_attribute(self, tag: str, text: str, width: float = 1.0):
+        block_layout = self.block_layout
+        block_attribs = self._multileader.block_attribs
+        for index, attdef in enumerate(block_layout.attdefs()):
+            if tag == attdef.dxf.tag:
+                block_attribs.append(
+                    AttribData(
+                        handle=attdef.dxf.handle,
+                        index=index,
+                        width=float(width),
+                        text=str(text),
+                    )
+                )
+            return
 
     def set_leader_properties(
         self,
@@ -985,7 +1069,9 @@ class MultiLeaderBuilder:
 
     def build(self):
         """Build geometry data"""
-        self._get_content_geometry()
+        if self._set_content_type() == 0:
+            return
+
         leaders = self._leaders
         if leaders:
             horizontal = (ConnectionSide.left in leaders) or (
@@ -1006,8 +1092,107 @@ class MultiLeaderBuilder:
         for side, leader_lines in leaders.items():
             self._build_leader(side, leader_lines)
 
-    def _get_content_geometry(self):
-        pass
+    def _set_content_type(self) -> int:
+        context = self.context
+        if context.block is not None:
+            self._multileader.dxf.content_type = 1
+        elif context.mtext is not None:
+            self._multileader.dxf.content_type = 2
+        else:
+            self._multileader.dxf.content_type = 0
+        return self._multileader.dxf.content_type
+
+    def _build_connection_box(self) -> ConnectionBox:
+        context = self.context
+        if context.mtext is not None:
+            return self._build_mtext_connection_box()
+        elif context.block is not None:
+            return self._build_block_connection_box()
+        return ConnectionBox()
+
+    def _build_mtext_connection_box(self) -> ConnectionBox:
+        def transformation_matrix() -> Matrix44:
+            dx = 0.0
+            if mtext.alignment == 2:
+                dx = width * 0.5
+            elif mtext.alignment == 3:
+                dx = width
+
+            # TODO: works only if extrusion == (0, 0, 1)!
+            m = Matrix44.translate(dx, 0, 0)
+            if mtext.rotation:
+                m *= Matrix44.z_rotate(mtext.rotation)
+            return m
+
+        def vertical_connection_height(
+            connection: HorizontalConnection,
+        ) -> float:
+            if connection == HorizontalConnection.middle_of_top_line:
+                return -char_height * 0.5
+            elif connection == HorizontalConnection.middle_of_text:
+                return -height * 0.5
+            elif connection == HorizontalConnection.middle_of_bottom_line:
+                return -height + char_height * 0.5
+            elif connection in (
+                HorizontalConnection.bottom_of_bottom_line,
+                HorizontalConnection.bottom_of_bottom_line_underline,
+            ):
+                return -height
+            elif connection in (
+                HorizontalConnection.bottom_of_top_line,
+                HorizontalConnection.bottom_of_top_line_underline,
+                HorizontalConnection.bottom_of_top_line_underline_all,
+            ):
+                return -char_height
+            return 0.0
+
+        context = self.context
+        mtext = context.mtext
+        if mtext is None:
+            raise TypeError("MULTILEADER has not MTEXT content")
+
+        left_attachment = HorizontalConnection(context.left_attachment)
+        right_attachment = HorizontalConnection(context.right_attachment)
+        char_height = context.char_height
+        gap = self._landing_gap
+
+        width: float
+        height: float
+        # required data: context.scale, context.char_height
+        entity = make_mtext(self._multileader)
+        if text_tools.has_inline_formatting_codes(mtext.default_content):
+            size = text_size.mtext_size(entity)
+            width = size.total_width
+            height = size.total_height
+        else:
+            width, height = text_size.estimate_mtext_extents(entity)
+
+        # define connection points for rotation=0, alignment=left
+        left = Vec3(
+            -gap,
+            vertical_connection_height(left_attachment),
+        )
+        right = Vec3(
+            width + gap,
+            vertical_connection_height(right_attachment),
+        )
+        box = ConnectionBox(
+            left=left,
+            right=right,
+            top=Vec3(width * 0.5, gap),
+            bottom=Vec3(width * 0.5, -height - gap),
+        )
+        return box.transform(transformation_matrix())
+
+    def _build_block_connection_box(self) -> ConnectionBox:
+        # ignore the landing gap for BLOCK content
+        from ezdxf import bbox
+        block_layout = self.block_layout
+        base_point = block_layout.base_point
+        extents = bbox.extents(block_layout)
+        width = extents.size.x
+        height = extents.size.y
+        return ConnectionBox()
 
     def _build_leader(
         self, side: ConnectionSide, leader_lines: List[List[Vec3]]
@@ -1015,17 +1200,15 @@ class MultiLeaderBuilder:
         mleader = self._multileader
         context = self.context
         horizontal = side == ConnectionSide.left or side == ConnectionSide.right
-
+        # dogleg vector points to the content
         if side == ConnectionSide.left:
             dogleg_direction = context.plane_x_axis
         elif side == ConnectionSide.right:
             dogleg_direction = -context.plane_x_axis
         elif side == ConnectionSide.top:
-            dogleg_direction = context.plane_y_axis
-        elif side == ConnectionSide.bottom:
             dogleg_direction = -context.plane_y_axis
-        else:
-            raise ValueError("invalid ConnectionSide enum value")
+        else:  # bottom
+            dogleg_direction = context.plane_y_axis
 
         leader = LeaderData()
         leader.index = len(self.context.leaders)
@@ -1033,7 +1216,14 @@ class MultiLeaderBuilder:
         leader.has_dogleg_vector = 1
         leader.dogleg_vector = dogleg_direction
         leader.attachment_direction = 0 if horizontal else 1
-        # todo: leader.last_leader_point
+
+        # setting last leader point:
+        # landing gap is already included in connection box
+        start_point = self.connection_box.get(side)
+        leader.last_leader_point = start_point + dogleg_direction.normalize(
+            -leader.dogleg_length  # away from content
+        )
+
         for index, vertices in enumerate(leader_lines):
             line = LeaderLine()
             line.index = index
