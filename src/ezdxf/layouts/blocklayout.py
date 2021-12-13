@@ -1,6 +1,7 @@
 # Copyright (c) 2019-2021, Manfred Moitzi
 # License: MIT License
 from typing import Iterable, Optional
+from ezdxf.math import Vec3
 from ezdxf.lldxf import const
 from .base import BaseLayout
 from ezdxf.entities import DXFGraphic, AttDef, Block, EndBlk
@@ -35,12 +36,11 @@ class BlockLayout(BaseLayout):
 
     @property
     def name(self) -> str:
-        """Get block and block_record name"""
+        """Get/set the BLOCK name"""
         return self.block_record.dxf.name
 
     @name.setter
     def name(self, new_name) -> None:
-        """Set block and block_record name"""
         self.block_record.rename(new_name)
 
     @property
@@ -71,6 +71,11 @@ class BlockLayout(BaseLayout):
     @scale_uniformly.setter
     def scale_uniformly(self, value: bool):
         self.block_record.dxf.scale = int(value)
+
+    @property
+    def base_point(self) -> Vec3:
+        """Returns the base point of the block."""
+        return Vec3(self.block.dxf.base_point)
 
     def attdefs(self) -> Iterable[AttDef]:
         """Returns iterable of all :class:`~ezdxf.entities.attrib.Attdef`

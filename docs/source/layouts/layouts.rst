@@ -319,19 +319,19 @@ BlockLayout
     :class:`~ezdxf.entities.Insert` entities. Each reference can be placed, scaled and rotated individually and can
     have it's own set of DXF :class:`~ezdxf.entities.Attrib` entities attached.
 
-    .. attribute:: name
+    .. autoproperty:: name
 
-       name of the associated BLOCK and BLOCK_RECORD entities.
+    .. autoproperty:: block
 
-    .. autoattribute:: block
+    .. autoproperty:: endblk
 
-    .. autoattribute:: endblk
+    .. autoproperty:: dxf
 
-    .. autoattribute:: dxf
+    .. autoproperty:: can_explode
 
-    .. autoattribute:: can_explode
+    .. autoproperty:: scale_uniformly
 
-    .. autoattribute:: scale_uniformly
+    .. autoproperty:: base_point
 
     .. automethod:: __contains__
 
