@@ -31,8 +31,7 @@ jobs:
         if: ${{ matrix.platform == 'aarch64' }}
         uses: RalfG/python-wheels-manylinux-build@v0.3.4-manylinux2014_aarch64
         with:
-          # python-versions: 'cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310'
-          python-versions: 'cp37-cp37m'
+          python-versions: 'cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310'
           build-requirements: 'cython'
         # if true then github actions won't stop even if build for this job fails
         continue-on-error: true
