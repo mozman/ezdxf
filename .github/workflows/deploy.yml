@@ -38,6 +38,7 @@ jobs:
       - name: Publish manylinux aarch64 wheels to PyPI
         run: |
           twine upload dist/*_aarch64.whl
+        continue-on-error: true
 
   # Deploy source distribution
   Source-dist:
