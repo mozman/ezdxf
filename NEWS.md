@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.17.2b2 - dev
+Version 0.17.2b3 - dev
 ----------------------
 
 - NEW: Auditor fixes invalid transparency values
