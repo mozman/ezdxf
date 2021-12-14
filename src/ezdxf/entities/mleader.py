@@ -1109,7 +1109,7 @@ acdb_mleader_style = DefSubclass(
         "landing_gap": DXFAttr(42, default=2.0),
         "has_dogleg": DXFAttr(291, default=1),
         "dogleg_length": DXFAttr(43, default=8),
-        "name": DXFAttr(3, default="Standard"),
+        "name": DXFAttr(3, default="Standard"),  # description text
         # no handle is default arrow 'closed filled':
         "arrow_head_handle": DXFAttr(341),
         "arrow_head_size": DXFAttr(44, default=4),
