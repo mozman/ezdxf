@@ -551,6 +551,7 @@ class MultiLeader(DXFGraphic):
             NonUniformScalingError: for non uniform scaling
 
         """
+        raise NotImplementedError()  # todo: disabled until tested
         dxf = self.dxf
         context = self.context
 
