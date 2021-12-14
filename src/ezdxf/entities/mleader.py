@@ -123,6 +123,8 @@ acdb_mleader = DefSubclass(
         "dogleg_length": DXFAttr(41, default=8),  # depend on $MEASUREMENT?
         # no handle is default arrow 'closed filled':
         "arrow_head_handle": DXFAttr(342),
+
+        # unscaled arroe head size:
         "arrow_head_size": DXFAttr(42, default=4),  # depend on $MEASUREMENT?
         "content_type": DXFAttr(172, default=2),
         # 0 = None
@@ -734,6 +736,16 @@ class MLeaderContext:
         if self.block is not None:
             self.block.transform(wcs)
 
+    def set_scale(self, value: float):
+        try:
+            conversion_factor = value / self.scale
+        except ZeroDivisionError:
+            return
+        self.scale = value
+        self.char_height *= conversion_factor
+        self.arrow_head_size *= conversion_factor
+        self.landing_gap_size *= conversion_factor
+
 
 class MTextData:
     ATTRIBS = {
@@ -854,6 +866,16 @@ class MTextData:
         self.column_gutter_width *= scale
         self.column_sizes = [size * scale for size in self.column_sizes]
 
+    def apply_conversion_factor(self, conversion_factor: float):
+        # conversion_factor: convert from an old scaling to a new scaling
+        self.width *= conversion_factor
+        self.defined_height *= conversion_factor
+        self.column_width *= conversion_factor
+        self.column_gutter_width *= conversion_factor
+        self.column_sizes = [
+            h * conversion_factor for h in self.column_sizes
+        ]
+
 
 class BlockData:
     ATTRIBS = {
@@ -925,6 +947,10 @@ class BlockData:
         self.scale = wcs.transform_scale_vector(self.scale)
         self.rotation = ocs.transform_angle(self.rotation)
         self.matrix44 = self.matrix44 * m
+
+    def apply_conversion_factor(self, conversion_factor: float):
+        # conversion_factor: convert from an old scaling to a new scaling
+        self.scale *= conversion_factor
 
 
 class LeaderData:

@@ -816,14 +816,22 @@ class MultiLeaderBuilder:
             list
         )
         self.set_mleader_style(style)
-        # landing gap size is not stored in MULTILEADER
-        self._landing_gap = self._mleader_style.dxf.landing_gap
+        self._multileader.context.landing_gap_size = (
+            self._mleader_style.dxf.landing_gap
+        )
         self._block_layout: Optional["BlockLayout"] = None  # cache
-        self._connection_box: Optional[ConnectionBox] = None  # cache
+
+    @property
+    def multileader(self) -> MultiLeader:
+        return self._multileader
 
     @property
     def context(self) -> MLeaderContext:
         return self._multileader.context
+
+    @property
+    def _landing_gap_size(self) -> float:
+        return self._multileader.context.landing_gap_size
 
     @property
     def has_mtext_content(self):
@@ -856,12 +864,12 @@ class MultiLeaderBuilder:
 
     def _reset_caches(self):
         self._block_layout = None
-        self._connection_box = ConnectionBox()
 
     def set_mleader_style(self, style: MLeaderStyle):
         """Reset base properties by :class:`~ezdxf.entities.MLeaderStyle`
         properties. This also resets the content!
         """
+
         self._mleader_style = style
         multileader_dxf = self._multileader.dxf
         style_dxf = style.dxf
@@ -874,6 +882,8 @@ class MultiLeaderBuilder:
             style_dxf.block_scale_y,
             style_dxf.block_scale_z,
         )
+        # MLEADERSTYLE contains unscaled values
+        self.context.set_scale(multileader_dxf.scale)
         self._init_content()
 
     def _init_content(self):
@@ -905,6 +915,9 @@ class MultiLeaderBuilder:
         mtext.color = mleader.dxf.text_color
         mtext.alignment = mleader.dxf.text_attachment_point
         # todo: rotation
+        # The char height is stored in MLeader Context()!
+        # The content dimensions are not calculated yet, therefor scaling is
+        # not necessary!
 
     def _build_block_content(self):
         context = self.context
@@ -919,22 +932,24 @@ class MultiLeaderBuilder:
         block.block_record_handle = mleader.dxf.block_record_handle
         block.extrusion = context.plane_z_axis
         block.insert = context.base_point
-        block.scale = mleader.dxf.block_scale_vector
+        # final scaling factors for the INSERT entity:
+        block.scale = mleader.dxf.block_scale_vector * context.scale
         block.rotation = mleader.dxf.block_rotation
         block.color = mleader.dxf.block_color
 
     def set_content_properties(  # todo: better method name
         self,
-        landing_gap: float = 0.0,
-        dogleg_length: float = 0.0,
+        landing_gap: float = 0.0,  # unscaled value!
+        dogleg_length: float = 0.0,  # unscaled value!
     ):
-        mleader = self._multileader
+        multileader = self.multileader
+        scale = multileader.dxf.scale
         if dogleg_length:
-            mleader.dxf.has_dogleg = 1
-            mleader.dxf.dogleg_length = dogleg_length
+            multileader.dxf.has_dogleg = 1
+            multileader.dxf.dogleg_length = dogleg_length * scale
         else:
-            mleader.dxf.has_dogleg = 0
-        self._landing_gap = landing_gap
+            multileader.dxf.has_dogleg = 0
+        multileader.context.landing_gap_size * landing_gap * scale
 
     def set_connection_types(
         self,
@@ -973,7 +988,7 @@ class MultiLeaderBuilder:
         self,
         content: str,
         color: Union[int, colors.RGB] = colors.BYBLOCK,
-        char_height: float = 0.0,  # 0.0 is by style
+        char_height: float = 0.0,  # unscaled char height, 0.0 is by style
         alignment: TextAlignment = TextAlignment.left,
     ):
         self._reset_caches()
@@ -989,14 +1004,28 @@ class MultiLeaderBuilder:
             content
         )
         if char_height:
-            context.char_height = char_height
+            context.char_height = char_height * self.multileader.dxf.scale
 
     def set_overall_scaling(self, scale: float):
-        self.context.scale = float(scale)
-        self._update_overall_scaling()
+        new_scale = float(scale)
+        context = self.context
+        multileader = self.multileader
+        old_scale = multileader.dxf.scale
+        try:
+            # convert from existing scaling to new scale factor
+            conversion_factor = new_scale / old_scale
+        except ZeroDivisionError:
+            conversion_factor = new_scale
 
-    def _update_overall_scaling(self) -> None:
-        pass  # TODO
+        multileader.dxf.scale = new_scale
+        multileader.dxf.dogleg_length *= conversion_factor
+        context.set_scale(new_scale)
+        mtext = context.mtext
+        if isinstance(mtext, MTextData):
+            mtext.apply_conversion_factor(conversion_factor)
+        block = context.block
+        if isinstance(block, BlockData):
+            block.apply_conversion_factor(conversion_factor)
 
     def set_block_content(
         self,
@@ -1028,7 +1057,7 @@ class MultiLeaderBuilder:
                     AttribData(
                         handle=attdef.dxf.handle,
                         index=index,
-                        width=float(width),
+                        width=float(width),  # width factor, do no scale!
                         text=str(text),
                     )
                 )
@@ -1074,8 +1103,8 @@ class MultiLeaderBuilder:
         # Leader line vertices in UCS coordinates!
         self._leaders[side].append(Vec3.list(vertices))
 
-    def render(self, insert: Vertex, ucs: UCS = None):
-        """Render the required geometry data. The construction plane is
+    def build(self, insert: Vertex, ucs: UCS = None):
+        """Compute the required geometry data. The construction plane is
         defined by the given `ucs`.
 
         Args:
@@ -1126,10 +1155,13 @@ class MultiLeaderBuilder:
     def _set_plane(self, base_point_wcs: Vec3, ucs: UCS):
         context = self.context
         context.base_point = base_point_wcs
-        context.plane_origin = ucs.origin
-        context.plane_x_axis = ucs.ux
-        context.plane_y_axis = ucs.uy
+        # set default WCS
+        context.plane_origin = NULLVEC
+        context.plane_x_axis = X_AXIS
+        context.plane_y_axis = Y_AXIS
         context.plane_normal_reversed = 0
+        if not ucs.uz.isclose(Z_AXIS):
+            pass  # TODO: further research required
 
     def _set_mtext_ucs(self, base_point_wcs: Vec3, ucs: UCS):
         mtext = self.context.mtext
@@ -1211,8 +1243,8 @@ class MultiLeaderBuilder:
             raise TypeError("MULTILEADER has not MTEXT content")
         left_attachment = HorizontalConnection(context.left_attachment)
         right_attachment = HorizontalConnection(context.right_attachment)
-        char_height = context.char_height
-        gap = self._landing_gap
+        char_height = context.char_height  # scaled value!
+        gap = context.landing_gap_size  # scaled value!
 
         width: float
         height: float
@@ -1252,9 +1284,11 @@ class MultiLeaderBuilder:
         """
         # ignore the landing gap for BLOCK content
         from ezdxf import bbox
+
         block_connection_type = self._multileader.dxf.block_connection_type
         block_layout = self.block_layout
         extents = bbox.extents(block_layout)
+        # todo: apply block scale and overall scale
         width2 = extents.size.x * 0.5
         height2 = extents.size.y * 0.5
         insert = base_point_ucs - (extents.center - block_layout.base_point)
@@ -1279,6 +1313,8 @@ class MultiLeaderBuilder:
         dogleg_direction = DOGLEG_DIRECTIONS[side]
         leader = LeaderData()
         leader.index = len(self.context.leaders)
+
+        # dogleg_length is the already scaled length!
         leader.dogleg_length = float(self._multileader.dxf.dogleg_length)
         leader.has_dogleg_vector = 1
         leader.dogleg_vector = ucs.to_wcs(dogleg_direction)

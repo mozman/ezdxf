@@ -27,7 +27,7 @@ class TestMultiLeaderBuilder:
         ml = make_multi_leader(doc)
         builder = mleader.MultiLeaderBuilder(ml)
         builder.set_mtext_content("line1")
-        builder.render(insert=(0, 0))
+        builder.build(insert=(0, 0))
         assert ml.context.mtext is not None
         assert ml.context.mtext.default_content == "line1"
 
@@ -40,7 +40,7 @@ class TestRenderEngine:
         ml = make_multi_leader(doc)
         builder = mleader.MultiLeaderBuilder(ml)
         builder.set_mtext_content('line')
-        builder.render(insert=(0, 0))
+        builder.build(insert=(0, 0))
         return ml
 
     def test_add_mtext_content(self, ml_mtext):
