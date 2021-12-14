@@ -40,7 +40,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install twine
-          twine upload dist/*_aarch64.whl
+          twine upload dist/*.manylinux2014_aarch64.whl
         continue-on-error: true
 
   # Deploy source distribution
