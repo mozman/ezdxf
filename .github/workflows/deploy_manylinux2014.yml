@@ -9,9 +9,6 @@ jobs:
   # Build and deploy manylinux2014_aarch64 wheels
   Linux-build:
     runs-on: ubuntu-latest
-    env:
-      TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
-      TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
     steps:
       - uses: actions/checkout@v2
       - name: Set up QEMU
@@ -23,6 +20,9 @@ jobs:
           build-requirements: 'cython'
         continue-on-error: true
       - name: Upload manylinux2014_aarch64 wheels to PyPI
+        env:
+          TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
         run: |
           pip install twine
           twine upload --skip-existing dist/*.manylinux2014_aarch64.whl
