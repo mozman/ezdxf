@@ -1,0 +1,26 @@
+name: PyPI manylinux2010_x86_64 deployer
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  # Build and deploy manylinux2010_x86_64 wheels
+  Linux-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build manylinux2010_x86_64 wheels
+        uses: RalfG/python-wheels-manylinux-build@v0.4.2-manylinux2010_x86_64
+        with:
+          python-versions: 'cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310'
+          build-requirements: 'cython'
+        continue-on-error: true
+      - name: Upload manylinux2010_x86_64 wheels to PyPI
+        env:
+          TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+        run: |
+          pip install twine
+          twine upload --skip-existing dist/*.manylinux2010_x86_64.whl
