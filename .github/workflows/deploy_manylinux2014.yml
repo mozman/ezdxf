@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Build and deploy manylinux2014_aarch64 wheel
+  # Build and deploy manylinux2014_aarch64 wheels
   Linux-build:
     runs-on: ubuntu-latest
     env:
@@ -25,4 +25,4 @@ jobs:
       - name: Upload manylinux2014_aarch64 wheels to PyPI
         run: |
           pip install twine
-          twine upload dist/*.manylinux2014_aarch64.whl
+          twine upload --skip-existing dist/*.manylinux2014_aarch64.whl

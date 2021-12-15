@@ -5,7 +5,7 @@ on:
       - 'v*'
 
 jobs:
-  # Build and deploy wheels for macOS and Windows
+  # Build and deploy windows and macos wheels
   Matrix-build:
     runs-on: ${{ matrix.os }}
     env:
@@ -21,12 +21,12 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Build binary wheels
+      - name: Build wheels
         run: |
           pip install wheel cython
           python setup.py bdist_wheel
-      - name: Upload binary wheels to PyPI
+      - name: Upload wheels to PyPI
         run: |
           pip install twine
-          twine upload dist/*
+          twine --skip-existing upload dist/*
         continue-on-error: true
