@@ -7,6 +7,7 @@ on:
 
 jobs:
   # Build and deploy manylinux2014_x86_64 wheels
+  # follow numpy schema: https://pypi.org/project/numpy/#files
   Linux-build:
     runs-on: ubuntu-latest
     steps:
@@ -14,7 +15,7 @@ jobs:
       - name: Build manylinux2014_x86_64 wheels
         uses: RalfG/python-wheels-manylinux-build@v0.4.2-manylinux2014_x86_64
         with:
-          python-versions: 'cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310'
+          python-versions: 'cp310-cp310'
           build-requirements: 'cython'
         continue-on-error: true
       - name: Upload manylinux2014_x86_64 wheels to PyPI
