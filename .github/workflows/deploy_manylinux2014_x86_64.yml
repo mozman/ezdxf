@@ -1,8 +1,8 @@
 name: PyPI manylinux2014_x86_64 deployer
 on:
-  #push:
-  #  tags:
-  #    - 'v*'
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
