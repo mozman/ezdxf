@@ -1,0 +1,27 @@
+name: PyPI manylinux2014_x86_64 deployer
+on:
+  #push:
+  #  tags:
+  #    - 'v*'
+  workflow_dispatch:
+
+jobs:
+  # Build and deploy manylinux2014_x86_64 wheels
+  Linux-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build manylinux2014_x86_64 wheels
+        uses: RalfG/python-wheels-manylinux-buildv0.4.2-manylinux2014_x86_64
+        with:
+          # python-versions: 'cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310'
+          python-versions: 'cp37-cp37m'
+          build-requirements: 'cython'
+        continue-on-error: true
+      - name: Upload manylinux2014_x86_64 wheels to TestPyPI
+        env:
+          TWINE_USERNAME: ${{ secrets.TWINE_TESTPYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.TWINE_TESTPYPI_PASSWORD }}
+        run: |
+          pip install twine
+          twine upload --skip-existing -r testpypi dist/*.manylinux2014_x86_64.whl
