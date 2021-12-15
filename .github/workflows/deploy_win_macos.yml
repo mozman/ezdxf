@@ -1,0 +1,30 @@
+name: PyPI win and macos deployer
+on:
+  push:
+    tags:
+      - 'v*'
+  # Build and deploy wheels for macOS and Windows
+  Matrix-build:
+    runs-on: ${{ matrix.os }}
+    env:
+      TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+      TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+        python-version: ['3.7', '3.8', '3.9', '3.10']
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Build binary wheels
+        run: |
+          pip install wheel cython
+          python setup.py bdist_wheel
+      - name: Upload binary wheels to PyPI
+        run: |
+          pip install twine
+          twine upload dist/*
+        continue-on-error: true

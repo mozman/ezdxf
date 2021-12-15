@@ -1,0 +1,24 @@
+name: PyPI source deployer
+on:
+  push:
+    tags:
+      - 'v*'
+
+  # Deploy source distribution
+  Source-dist:
+    runs-on: windows-latest
+    env:
+      TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+      TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      - name: Create source distribution
+        run: python setup.py sdist --formats=zip
+      - name: Upload source package to PyPI
+        run: |
+          pip install twine
+          twine upload dist/*
