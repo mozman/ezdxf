@@ -3,6 +3,8 @@ on:
   push:
     tags:
       - 'v*'
+
+jobs:
   # Build and deploy wheels for macOS and Windows
   Matrix-build:
     runs-on: ${{ matrix.os }}

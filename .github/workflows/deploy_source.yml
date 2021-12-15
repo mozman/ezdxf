@@ -3,7 +3,7 @@ on:
   push:
     tags:
       - 'v*'
-
+jobs:
   # Deploy source distribution
   Source-dist:
     runs-on: windows-latest
