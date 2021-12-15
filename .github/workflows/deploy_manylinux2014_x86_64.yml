@@ -14,14 +14,13 @@ jobs:
       - name: Build manylinux2014_x86_64 wheels
         uses: RalfG/python-wheels-manylinux-build@v0.4.2-manylinux2014_x86_64
         with:
-          # python-versions: 'cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310'
-          python-versions: 'cp37-cp37m'
+          python-versions: 'cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310'
           build-requirements: 'cython'
         continue-on-error: true
-      - name: Upload manylinux2014_x86_64 wheels to TestPyPI
+      - name: Upload manylinux2014_x86_64 wheels to PyPI
         env:
-          TWINE_USERNAME: ${{ secrets.TWINE_TESTPYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.TWINE_TESTPYPI_PASSWORD }}
+          TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
         run: |
           pip install twine
-          twine upload --skip-existing -r testpypi dist/*.manylinux2014_x86_64.whl
+          twine upload --skip-existing dist/*.manylinux2014_x86_64.whl
