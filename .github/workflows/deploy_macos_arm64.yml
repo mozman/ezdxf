@@ -25,7 +25,7 @@ jobs:
       env:
         CIBW_BEFORE_BUILD: "pip install wheel cython"
         CIBW_ARCHS_MACOS: "universal2 arm64"
-        CIBW_BUILD: cp38-*
+        CIBW_BUILD: cp38-* cp39-* cp310-*
     - name: Upload wheels
       env:
         TWINE_USERNAME: ${{ secrets.TWINE_TESTPYPI_USERNAME }}
