@@ -21,16 +21,13 @@ jobs:
       uses: pypa/cibuildwheel@v2.3.1
       env:
         CIBW_BEFORE_BUILD: "pip install wheel cython"
-        # CIBW_ARCHS_MACOS: "universal2 arm64"
-        CIBW_ARCHS_MACOS: "arm64"
-        CIBW_BUILD: cp38-*
-        CIBW_TEST_REQUIRES: pytest pyparsing geomdl typing_extensions
-        CIBW_TEST_COMMAND: pytest {package}/tests
+        CIBW_ARCHS_MACOS: "universal2 arm64"
+        CIBW_BUILD: cp38-* cp39-* cp310-*
     - name: Upload wheels
       env:
         TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
       run: |
         ls -l ./wheelhouse
-      # pip install twine
-      # twine upload --skip-existing ./wheelhouse/*.whl
+        pip install twine
+        twine upload --skip-existing ./wheelhouse/*.whl
