@@ -12,7 +12,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest]
+        # os: [windows-latest, macos-latest]
+        os: [macos-latest]
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
@@ -25,9 +26,9 @@ jobs:
       env:
         CIBW_BEFORE_BUILD: "pip install wheel cython"
         CIBW_ARCHS_WINDOWS: "AMD64"
-        CIBW_ARCHS_MACOS: "x86_64 arm64"
+        CIBW_ARCHS_MACOS: "x86_64 arm64 universal2"
         # CIBW_BUILD: cp37-* cp38-* cp39-* cp310-*
-        CIBW_BUILD: cp37-*
+        CIBW_BUILD: cp37-* cp38-*
     - name: Upload wheels
       env:
         TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
