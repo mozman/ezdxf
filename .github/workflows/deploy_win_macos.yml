@@ -22,10 +22,11 @@ jobs:
         CIBW_ARCHS_MACOS: "x86_64 arm64"
         # CIBW_BUILD: cp37-* cp38-* cp39-* cp310-*
         CIBW_BUILD: cp37-*
-    - name: Upload wheels
+    - name: Install Python
       uses: actions/setup-python@v2
       with:
         python-version: 3.x
+    - name: Upload wheels
       env:
         TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
