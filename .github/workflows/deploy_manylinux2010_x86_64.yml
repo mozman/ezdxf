@@ -13,15 +13,18 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build manylinux2010_x86_64 wheels
-        uses: RalfG/python-wheels-manylinux-build@v0.4.2-manylinux2010_x86_64
-        with:
-          python-versions: 'cp37-cp37m cp38-cp38 cp39-cp39'
-          build-requirements: 'cython'
-        continue-on-error: true
+        uses: pypa/cibuildwheel@v2.3.1
+        env:
+          CIBW_BEFORE_BUILD: "pip install wheel cython"
+          CIBW_ARCHS_LINUX: "x86_64"
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
+          # CIBW_BUILD: cp37-* cp38-* cp39-*
+          CIBW_BUILD: cp37-*
       - name: Upload manylinux2010_x86_64 wheels to PyPI
         env:
           TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
         run: |
-          pip install twine
-          twine upload --skip-existing dist/*.manylinux2010_x86_64.whl
+          ls -l ./wheelhouse
+        #  pip install twine
+        #  twine upload --skip-existing ./wheelhouse/*.whl
