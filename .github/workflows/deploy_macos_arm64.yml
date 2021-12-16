@@ -33,4 +33,4 @@ jobs:
       run: |
         ls -l ./wheelhouse
         pip install twine
-        twine --skip-existing upload -r testpypi ./wheelhouse/*.whl
+        twine upload --skip-existing -r testpypi ./wheelhouse/*.whl
