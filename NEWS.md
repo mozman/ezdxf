@@ -2,9 +2,18 @@
 News
 ====
 
-Version 0.17.2b3 - dev
+Version 0.17.2b4 - dev
 ----------------------
-
+- `beta3` and `beta4` are just a deployment tests!!!
+- NEW: extended binary wheels support
+  - `manylinux2010_x86_64` for Python < 3.10 and `manylinux2014_x86_64` 
+    for Python >= 3.10 
+  - `musllinux_2010_x86_64` for Python < 3.10 and `musllinux_2014_x86_64` 
+    for Python >= 3.10
+  - `manylinux_2014_aarch64` for ARM64 based Linux
+  - `musllinux_2014_aarch64` for ARM64 based Linux
+  - `macosx_11_0_arm64` for Apple silicon
+  - `macosx_10_9_universal2` for Apple silicon & x86
 - NEW: Auditor fixes invalid transparency values
 - NEW: add `transparency` argument to `LayerTable.add()`
 - NEW: support for transparency `BYLAYER` and `BYBLOCK` for the `drawing` add-on
