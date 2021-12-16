@@ -39,4 +39,4 @@ jobs:
     needs: wheels
     runs-on: ubuntu-latest
     steps:
-      - run: ls -l ./wheelouse/*
+      - run: ls -l ./wheelhouse/*
