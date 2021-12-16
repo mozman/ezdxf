@@ -18,13 +18,12 @@ jobs:
           CIBW_BEFORE_BUILD: "pip install wheel cython"
           CIBW_ARCHS_LINUX: "x86_64"
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
-          # CIBW_BUILD: cp37-* cp38-* cp39-*
-          CIBW_BUILD: cp37-*
+          CIBW_BUILD: cp37-* cp38-* cp39-*
       - name: Upload manylinux2010_x86_64 wheels to PyPI
         env:
           TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
         run: |
           ls -l ./wheelhouse
-        #  pip install twine
-        #  twine upload --skip-existing ./wheelhouse/*.whl
+          pip install twine
+          twine upload --skip-existing ./wheelhouse/*.whl
