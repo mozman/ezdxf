@@ -8,11 +8,8 @@ on:
 
 jobs:
   wheels:
-    name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [macOS-10.15]
+    name: Build wheels on macos-10.15
+    runs-on: macos-10.15
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
@@ -28,9 +25,9 @@ jobs:
         CIBW_BUILD: cp38-* cp39-* cp310-*
     - name: Upload wheels
       env:
-        TWINE_USERNAME: ${{ secrets.TWINE_TESTPYPI_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.TWINE_TESTPYPI_PASSWORD }}
+        TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
       run: |
         ls -l ./wheelhouse
         pip install twine
-        twine upload --skip-existing -r testpypi ./wheelhouse/*.whl
+        twine upload --skip-existing ./wheelhouse/*.whl
