@@ -14,6 +14,12 @@ jobs:
       matrix:
         os: [windows-latest, macos-latest]
     steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+    - name: Install Python 3.x
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.x
     - name: Build wheels
       uses: pypa/cibuildwheel@v2.3.1
       env:
@@ -22,10 +28,6 @@ jobs:
         CIBW_ARCHS_MACOS: "x86_64 arm64"
         # CIBW_BUILD: cp37-* cp38-* cp39-* cp310-*
         CIBW_BUILD: cp37-*
-    - name: Install Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.x
     - name: Upload wheels
       env:
         TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
