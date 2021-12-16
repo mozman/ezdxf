@@ -14,15 +14,18 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Build manylinux2014_aarch64 wheels
-        uses: RalfG/python-wheels-manylinux-build@v0.4.2-manylinux2014_aarch64
-        with:
-          python-versions: 'cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310'
-          build-requirements: 'cython'
-        continue-on-error: true
+        uses: pypa/cibuildwheel@v2.3.1
+        env:
+          CIBW_BEFORE_BUILD: "pip install wheel cython"
+          CIBW_ARCHS_LINUX: "aarch64"
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+          # CIBW_BUILD: cp37-* cp38-* cp39-* cp310-*
+          CIBW_BUILD: cp37-*
       - name: Upload manylinux2014_aarch64 wheels to PyPI
         env:
           TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
         run: |
-          pip install twine
-          twine upload --skip-existing dist/*.manylinux2014_aarch64.whl
+          ls -l ./wheelhouse
+        #  pip install twine
+        #  twine upload --skip-existing dist/*.whl
