@@ -13,7 +13,6 @@ jobs:
     strategy:
       matrix:
         os: [macOS-10.15]
-
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
@@ -29,14 +28,11 @@ jobs:
         CIBW_BEFORE_BUILD: "pip install wheel cython"
         CIBW_ARCHS_MACOS: "universal2 arm64"
         CIBW_BUILD: cp38-*
-    - name: Save wheels
-      uses: actions/upload-artifact@v2
-      with:
-        path: ./wheelhouse/*.whl
-
-  upload_pypi:
-    name: Upload to PyPI
-    needs: wheels
-    runs-on: ubuntu-latest
-    steps:
-      - run: ls -l ./wheelhouse/*
+    - name: Upload wheels
+      env:
+        TWINE_USERNAME: ${{ secrets.TWINE_TESTPYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.TWINE_TESTPYPI_PASSWORD }}
+      run: ls -l ./wheelhouse
+    #  run: |
+    #    pip install twine
+    #    twine --skip-existing -r testpypi upload ./wheelhouse/*.whl
