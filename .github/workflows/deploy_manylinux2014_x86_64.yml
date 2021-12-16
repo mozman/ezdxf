@@ -25,5 +25,5 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
         run: |
           ls -l ./wheelhouse
-        # pip install twine
-        # twine upload --skip-existing ./wheelhouse/*.manylinux2014_x86_64.whl
+          pip install twine
+          twine upload --skip-existing ./wheelhouse/*.whl
