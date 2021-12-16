@@ -14,7 +14,7 @@ jobs:
       matrix:
         os: [windows-latest, macos-latest]
     steps:
-      - name: Build wheels
+    - name: Build wheels
       uses: pypa/cibuildwheel@v2.3.1
       env:
         CIBW_BEFORE_BUILD: "pip install wheel cython"
