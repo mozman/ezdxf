@@ -3,30 +3,33 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 jobs:
   # Build and deploy windows and macos wheels
   Matrix-build:
     runs-on: ${{ matrix.os }}
-    env:
-      TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
-      TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest]
-        python-version: ['3.7', '3.8', '3.9', '3.10']
+        os: [windows-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v2
-      - name: Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
       - name: Build wheels
-        run: |
-          pip install wheel cython
-          python setup.py bdist_wheel
-      - name: Upload wheels to PyPI
-        run: |
-          pip install twine
-          twine upload --skip-existing dist/*
-        continue-on-error: true
+      uses: pypa/cibuildwheel@v2.3.1
+      env:
+        CIBW_BEFORE_BUILD: "pip install wheel cython"
+        CIBW_ARCHS_WINDOWS: "AMD64"
+        CIBW_ARCHS_MACOS: "x86_64 arm64"
+        # CIBW_BUILD: cp37-* cp38-* cp39-* cp310-*
+        CIBW_BUILD: cp37-*
+    - name: Upload wheels
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.x
+      env:
+        TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+      run: |
+        ls -l ./wheelhouse
+      #  pip install twine
+      #  twine upload --skip-existing ./wheelhouse/*.whl
