@@ -331,7 +331,12 @@ EXPECTED_FLATTENING = [
 def test_flattening():
     fitpoints = [(0, 0), (1, 3), (2, 0), (3, 3)]
     bspline = BSpline.from_fit_points(fitpoints)
-    assert list(bspline.flattening(0.01, segments=4)) == EXPECTED_FLATTENING
+    assert all(
+        a.isclose(b)
+        for a, b in zip(
+            bspline.flattening(0.01, segments=4), EXPECTED_FLATTENING
+        )
+    )
 
 
 POINTS_ORDER_4 = [

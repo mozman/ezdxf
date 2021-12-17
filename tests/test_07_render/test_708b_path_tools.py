@@ -388,8 +388,20 @@ class TestToEntityConverter:
         p0 = polylines[0]
         assert p0.dxf.elevation == pytest.approx(1)
         assert p0.dxf.extrusion.isclose(extrusion)
-        assert p0[0] == (0, 0, 0, 0, 0)
-        assert p0[-1] == (4, 0, 0, 0, 0)
+        assert (
+            all(
+                math.isclose(a, b, abs_tol=1e-12)
+                for a, b in zip(p0[0], (0, 0, 0, 0, 0))
+            )
+            is True
+        )
+        assert (
+            all(
+                math.isclose(a, b, abs_tol=1e-12)
+                for a, b in zip(p0[-1], (4, 0, 0, 0, 0))
+            )
+            is True
+        )
 
     def test_multi_path_to_lwpolylines(self):
         path = Path()
@@ -453,11 +465,13 @@ class TestToEntityConverter:
         assert h0.dxf.elevation.isclose((0, 0, 1))
         assert h0.dxf.extrusion.isclose(extrusion)
         polypath0 = h0.paths[0]
-        assert polypath0.vertices[0] == (0, 0, 0)  # x, y, bulge
-        assert polypath0.vertices[-1] == (
-            0,
-            0,
-            0,
+        assert (
+            all(abs(a) < 1e-12 for a in polypath0.vertices[0])
+            is True  # ~(0, 0, 0)
+        )  # x, y, bulge
+        assert (
+            all(abs(a) < 1e-12 for a in polypath0.vertices[-1])
+            is True  # ~(0, 0, 0)
         ), "should be closed automatically"
 
     def test_to_edge_path_hatches(self, path):

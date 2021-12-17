@@ -2,6 +2,7 @@
 #  License: MIT License
 
 import pytest
+import math
 
 pytest.importorskip("ezdxf.acc.bspline")
 
@@ -69,39 +70,53 @@ def test_basis_funcs(py_basis, cy_basis, t_vector):
         p = py_basis.basis_funcs(span1, u)
         span2 = cy_basis.find_span(u)
         c = cy_basis.basis_funcs(span2, u)
-        assert p == c
+        assert (
+            all(math.isclose(a, b, abs_tol=1e-12) for a, b in zip(p, c)) is True
+        )
 
 
 def test_basis_vector(py_basis, cy_basis, t_vector):
     for u in t_vector:
         p = py_basis.basis_vector(u)
         c = list(cy_basis.basis_vector(u))
-        assert p == c
+        assert (
+            all(math.isclose(a, b, abs_tol=1e-12) for a, b in zip(p, c)) is True
+        )
 
 
 def test_weighted_basis_vector(py_wbasis, cy_wbasis, t_vector):
     for u in t_vector:
         p = py_wbasis.basis_vector(u)
         c = list(cy_wbasis.basis_vector(u))
-        assert p == c
+        assert (
+            all(math.isclose(a, b, abs_tol=1e-12) for a, b in zip(p, c)) is True
+        )
 
 
 def test_basis_funcs_derivatives(py_basis, cy_basis, t_vector):
     for u in t_vector:
         span = py_basis.find_span(u)
-        p = py_basis.basis_funcs_derivatives(span, u, 2)
+        pl = py_basis.basis_funcs_derivatives(span, u, 2)
         span = cy_basis.find_span(u)
-        c = cy_basis.basis_funcs_derivatives(span, u, 2)
-        assert p == c
+        cl = cy_basis.basis_funcs_derivatives(span, u, 2)
+        for p, c in zip(pl, cl):
+            assert (
+                all(math.isclose(a, b, abs_tol=1e-12) for a, b in
+                    zip(p, c)) is True
+            )
 
 
 def test_weighted_basis_funcs_derivatives(py_wbasis, cy_wbasis, t_vector):
     for u in t_vector:
         span = py_wbasis.find_span(u)
-        p = py_wbasis.basis_funcs_derivatives(span, u, 2)
+        pl = py_wbasis.basis_funcs_derivatives(span, u, 2)
         span = cy_wbasis.find_span(u)
-        c = cy_wbasis.basis_funcs_derivatives(span, u, 2)
-        assert p == c
+        cl = cy_wbasis.basis_funcs_derivatives(span, u, 2)
+        for p, c in zip(pl, cl):
+            assert (
+                all(math.isclose(a, b, abs_tol=1e-12) for a, b in
+                    zip(p, c)) is True
+            )
 
 
 @pytest.fixture
@@ -117,14 +132,14 @@ def cy_eval(cy_basis):
 def test_point_evaluator(py_eval, cy_eval, t_vector):
     py_points = list(py_eval.points(t_vector))
     cy_points = list(cy_eval.points(t_vector))
-    assert py_points == cy_points
+    assert close_vectors(py_points, cy_points) is True
 
 
 def test_derivative_evaluator(py_eval, cy_eval, t_vector):
     py_ders = list(py_eval.derivatives(t_vector, 2))
     cy_ders = list(cy_eval.derivatives(t_vector, 2))
-    assert py_ders == cy_ders
-
+    for d1, d2 in zip(py_ders, cy_ders):
+        assert close_vectors(d1, d2) is True
 
 @pytest.fixture
 def py_weval(py_wbasis):
@@ -139,14 +154,14 @@ def cy_weval(cy_wbasis):
 def test_weighted_point_evaluator(py_weval, cy_weval, t_vector):
     py_points = list(py_weval.points(t_vector))
     cy_points = list(cy_weval.points(t_vector))
-    assert py_points == cy_points
+    assert close_vectors(py_points, cy_points) is True
 
 
 def test_weighted_derivative_evaluator(py_weval, cy_weval, t_vector):
     py_ders = list(py_weval.derivatives(t_vector, 2))
     cy_ders = list(cy_weval.derivatives(t_vector, 2))
     for d1, d2 in zip(py_ders, cy_ders):
-        assert close_vectors(d1, d2)
+        assert close_vectors(d1, d2) is True
 
 
 if __name__ == "__main__":
