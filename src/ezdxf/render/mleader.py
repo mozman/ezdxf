@@ -742,9 +742,9 @@ DOGLEG_DIRECTIONS = {
 
 
 class HorizontalConnection(enum.IntEnum):
-    by_style = 0
-    top_of_top_line = 1
-    middle_of_top_line = 2
+    by_style = -1
+    top_of_top_line = 0
+    middle_of_top_line = 1
     middle_of_text = 2
     middle_of_bottom_line = 3
     bottom_of_bottom_line = 4
@@ -1330,6 +1330,7 @@ class MultiLeaderBuilder:
         # dogleg_length is the already scaled length!
         leader.dogleg_length = float(self._multileader.dxf.dogleg_length)
         leader.has_dogleg_vector = 1
+        leader.has_last_leader_line = 1  # whatever this means
         leader.dogleg_vector = ucs.to_wcs(dogleg_direction)
         if side == ConnectionSide.left or side == ConnectionSide.right:
             leader.attachment_direction = 0
@@ -1339,7 +1340,7 @@ class MultiLeaderBuilder:
         # setting last leader point:
         # landing gap is already included in connection box
         leader.last_leader_point = ucs.to_wcs(
-            connection_point_ucs + dogleg_direction * -leader.dogleg_length
+            connection_point_ucs + (dogleg_direction * -leader.dogleg_length)
         )
 
         for index, vertices in enumerate(leader_lines):

@@ -146,7 +146,7 @@ acdb_mleader = DefSubclass(
         # 6 = bottom of top text line & underline top text line
         # 7 = bottom of top text line
         # 8 = bottom of top text line & underline all text lines
-        "text_right_attachment_type": DXFAttr(95),  # like 173
+        "text_right_attachment_type": DXFAttr(95, default=1),  # like 173
         "text_angle_type": DXFAttr(174, default=1),
         # 0 = text angle is equal to last leader line segment angle
         # 1 = text is horizontal
@@ -1009,10 +1009,8 @@ class LeaderData:
         write_tag2(START_LEADER, LEADER_STR)
         write_tag2(290, self.has_last_leader_line)
         write_tag2(291, self.has_dogleg_vector)
-        if self.has_last_leader_line:
-            write_vertex(10, self.last_leader_point)
-        if self.has_dogleg_vector:
-            write_vertex(11, self.dogleg_vector)
+        write_vertex(10, self.last_leader_point)
+        write_vertex(11, self.dogleg_vector)
 
         code = 0
         for vertex in self.breaks:
