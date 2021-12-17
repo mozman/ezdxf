@@ -296,11 +296,11 @@ def test_3dface_triangle_vertices():
     for index, vertex in enumerate([(0, 0), (1, 0), (1, 1), (1, 1)]):
         face[index] = vertex
     assert face.get_edges_visibility() == [True, True, True, True]
-    assert face.wcs_vertices() == [(0, 0), (1, 0), (1, 1), (1, 1)]
+    # changed in v0.17.2: do not return duplicated vertices at the end
+    assert face.wcs_vertices() == [(0, 0), (1, 0), (1, 1)]
     assert face.wcs_vertices(close=True) == [
         (0, 0),
         (1, 0),
-        (1, 1),
         (1, 1),
         (0, 0),
     ]

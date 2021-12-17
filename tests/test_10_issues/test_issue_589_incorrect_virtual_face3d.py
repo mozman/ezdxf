@@ -9,27 +9,29 @@ from ezdxf import bbox
 
 
 @pytest.fixture(scope="module")
-def poly_face_mesh():
+def triangle_mesh():
     doc = ezdxf.read(io.StringIO(POLYMESH))
     msp = doc.modelspace()
     return msp[0]
 
 
-def test_is_poly_face_mesh(poly_face_mesh):
-    assert poly_face_mesh.is_poly_face_mesh
+@pytest.fixture
+def virtual_3dface(triangle_mesh):
+    virtual_entities = list(triangle_mesh.virtual_entities())
+    return virtual_entities[0]
 
 
-def test_virtual_3dface_has_only_3_vertices(poly_face_mesh):
-    virtual_entities = list(poly_face_mesh.virtual_entities())
-    face3d = virtual_entities[0]
-    vertices = face3d.wcs_vertices()
+def test_is_poly_face_mesh(triangle_mesh):
+    assert triangle_mesh.is_poly_face_mesh
+
+
+def test_virtual_3dface_has_only_3_vertices(virtual_3dface):
+    vertices = virtual_3dface.wcs_vertices()
     assert len(vertices) == 3
 
 
-def test_virtual_3dface_does_not_include_NULLVEC(poly_face_mesh):
-    virtual_entities = list(poly_face_mesh.virtual_entities())
-    face3d = virtual_entities[0]
-    box = bbox.extents([face3d])
+def test_virtual_3dface_does_not_include_NULLVEC(virtual_3dface):
+    box = bbox.extents([virtual_3dface])
     assert box.extmin > Vec3(1, 1, 0)
 
 
