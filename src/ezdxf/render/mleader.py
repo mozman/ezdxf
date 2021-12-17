@@ -990,6 +990,7 @@ class MultiLeaderBuilder:
         color: Union[int, colors.RGB] = colors.BYBLOCK,
         char_height: float = 0.0,  # unscaled char height, 0.0 is by style
         alignment: TextAlignment = TextAlignment.left,
+        style: str = None,
     ):
         self._reset_caches()
         mleader = self._multileader
@@ -1005,6 +1006,17 @@ class MultiLeaderBuilder:
         )
         if char_height:
             context.char_height = char_height * self.multileader.dxf.scale
+        if style is not None:
+            self._set_mtext_style(style)
+
+    def _set_mtext_style(self, name: str):
+        style = self._doc.styles.get(name)
+        if style is not None:
+            self._multileader.dxf.text_style_handle = style.dxf.handle
+            assert self.context.mtext is not None
+            self.context.mtext.style_handle = style.dxf.handle
+        else:
+            raise ValueError(f"text style '{name}' does not exist")
 
     def set_overall_scaling(self, scale: float):
         new_scale = float(scale)
@@ -1152,11 +1164,9 @@ class MultiLeaderBuilder:
         if handle is None or handle not in doc.entitydb:
             linetype = doc.linetypes.get("BYLAYER")
             if linetype is None:
-                raise ValueError(
-                    f"required linetype 'BYLAYER' does not exist"
-                )
+                raise ValueError(f"required linetype 'BYLAYER' does not exist")
             dxf.leader_linetype_handle = linetype.dxf.handle
-        dxf.property_override_flags = 0xffffffff
+        dxf.property_override_flags = 0xFFFFFFFF
 
     def _set_ucs(self, base_point_wcs: Vec3, ucs: UCS):
         self._set_plane(base_point_wcs, ucs)
@@ -1329,8 +1339,9 @@ class MultiLeaderBuilder:
 
         # dogleg_length is the already scaled length!
         leader.dogleg_length = float(self._multileader.dxf.dogleg_length)
-        leader.has_dogleg_vector = 1
-        leader.has_last_leader_line = 1  # whatever this means
+        leader.has_dogleg_vector = 1  # ignored by AutoCAD/BricsCAD
+        leader.has_last_leader_line = 1  # leader is invisible in AutoCAD if 0 ...
+        # flag is ignored by BricsCAD
         leader.dogleg_vector = ucs.to_wcs(dogleg_direction)
         if side == ConnectionSide.left or side == ConnectionSide.right:
             leader.attachment_direction = 0

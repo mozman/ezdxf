@@ -26,7 +26,7 @@ def simple_mtext_content(name: str):
     doc = ezdxf.new(DXFVERSION, setup=True)
     msp = doc.modelspace()
     ml_builder = msp.add_multileader("Standard")
-    ml_builder.set_mtext_content("Line1\nLine2")
+    ml_builder.set_mtext_content("Line1\nLine2", style="OpenSans")
 
     # Construction plane of the entity is defined by an render UCS.
     # The default render UCS is the WCS.
@@ -34,12 +34,14 @@ def simple_mtext_content(name: str):
     # means relative to the UCS origin!
     # This example shows the simplest way UCS==WCS!
     ml_builder.add_leader_line(ConnectionSide.right, [(40, 15)])
+    ml_builder.add_leader_line(ConnectionSide.right, [(40, -15)])
+    ml_builder.add_leader_line(ConnectionSide.left, [(-20, -15)])
 
     # The insert point (in UCS coordinates= is the alignment point for MTEXT
     # content and the insert location for BLOCK content:
     ml_builder.build(insert=(5, 0))
 
-    doc.set_modelspace_vport(50, center=(20, 5))
+    doc.set_modelspace_vport(60, center=(10, 5))
     doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
 
     # Rotation of the MULTILEADER entity can only be achieved by rotating the

@@ -956,8 +956,9 @@ class BlockData:
 class LeaderData:
     def __init__(self):
         self.lines: List["LeaderLine"] = []
-        # What does "has_last_leader_line" mean, it is not the same as
-        # "has_dogleg"!
+        # has_last_leader_line:
+        # in AutoCAD the leader is invisible if set to 0
+        # BricsCAD ignores this flag
         self.has_last_leader_line: int = 0  # group code 290,
         self.has_dogleg_vector: int = 0  # group code 291
         self.last_leader_point: Vec3 = NULLVEC  # group code (10, 20, 30) in WCS
