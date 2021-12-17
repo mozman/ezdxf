@@ -212,6 +212,15 @@ def virtual_polyface_entities(polyline: "Polyline") -> Iterable["Face3d"]:
         invisible = 0
         pos = 1
 
+        # check if vtx0, vtx1 and vtx3 exist
+        for name in VERTEXNAMES[:-1]:
+            if not face.dxf.hasattr(name):
+                logger.warning(
+                    f"skipped face record {str(face)} without required vertex "
+                    f"{name} in PolyFaceMesh(#{str(polyline.dxf.handle)})"
+                )
+                continue
+
         indices = (
             (face.dxf.get(name), name)
             for name in VERTEXNAMES
@@ -226,6 +235,10 @@ def virtual_polyface_entities(polyline: "Polyline") -> Iterable["Face3d"]:
             face3d_attribs[name] = vertices[index - 1].dxf.location
             # vertex index bit encoded: 1=0b0001, 2=0b0010, 3=0b0100, 4=0b1000
             pos <<= 1
+
+        if "vtx3" not in face3d_attribs:
+            # triangle face ends with two identical vertices vtx2 and vtx3
+            face3d_attribs["vtx3"] = face3d_attribs["vtx2"]
 
         face3d_attribs["invisible"] = invisible
         yield factory.new(dxftype="3DFACE", dxfattribs=face3d_attribs, doc=doc)  # type: ignore

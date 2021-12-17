@@ -258,7 +258,7 @@ class Face3d(_Base):
         already WCS vertices.
         """
         dxf = self.dxf
-        vertices = [dxf.vtx0, dxf.vtx1, dxf.vtx2, dxf.vtx3]
+        vertices: List[Vec3] = [dxf.vtx0, dxf.vtx1, dxf.vtx2, dxf.vtx3]
         if close:
             vertices.append(vertices[0])
         return vertices
