@@ -207,11 +207,6 @@ def virtual_polyface_entities(polyline: "Polyline") -> Iterable["Face3d"]:
 
     face_records = (v for v in vertices if v.is_face_record)
     for face in face_records:
-        face3d_attribs = dict(base_attribs)
-        face3d_attribs.update(face.graphic_properties())
-        invisible = 0
-        pos = 1
-
         # check if vtx0, vtx1 and vtx2 exist
         for name in VERTEXNAMES[:-1]:
             if not face.dxf.hasattr(name):
@@ -221,6 +216,10 @@ def virtual_polyface_entities(polyline: "Polyline") -> Iterable["Face3d"]:
                 )
                 continue
 
+        face3d_attribs = dict(base_attribs)
+        face3d_attribs.update(face.graphic_properties())
+        invisible = 0
+        pos = 1
         indices = (
             (face.dxf.get(name), name)
             for name in VERTEXNAMES
