@@ -210,11 +210,14 @@ def virtual_polyface_entities(polyline: "Polyline") -> Iterable["Face3d"]:
         # check if vtx0, vtx1 and vtx2 exist
         for name in VERTEXNAMES[:-1]:
             if not face.dxf.hasattr(name):
-                logger.warning(
-                    f"skipped face record {str(face)} without required vertex "
-                    f"'{name}' in PolyFaceMesh(#{str(polyline.dxf.handle)})"
+                logger.info(
+                    f"skipped face {str(face)} with less than 3 vertices"
+                    f"in PolyFaceMesh(#{str(polyline.dxf.handle)})"
                 )
                 continue
+                # Alternate solutions: return a face with less than 3 vertices
+                # as LINE (breaks the method signature) or as degenerated 3DFACE
+                # (vtx0, vtx1, vtx1, vtx1)
 
         face3d_attribs = dict(base_attribs)
         face3d_attribs.update(face.graphic_properties())
