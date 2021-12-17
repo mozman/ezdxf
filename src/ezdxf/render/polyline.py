@@ -212,12 +212,12 @@ def virtual_polyface_entities(polyline: "Polyline") -> Iterable["Face3d"]:
         invisible = 0
         pos = 1
 
-        # check if vtx0, vtx1 and vtx3 exist
+        # check if vtx0, vtx1 and vtx2 exist
         for name in VERTEXNAMES[:-1]:
             if not face.dxf.hasattr(name):
                 logger.warning(
                     f"skipped face record {str(face)} without required vertex "
-                    f"{name} in PolyFaceMesh(#{str(polyline.dxf.handle)})"
+                    f"'{name}' in PolyFaceMesh(#{str(polyline.dxf.handle)})"
                 )
                 continue
 
@@ -237,7 +237,8 @@ def virtual_polyface_entities(polyline: "Polyline") -> Iterable["Face3d"]:
             pos <<= 1
 
         if "vtx3" not in face3d_attribs:
-            # triangle face ends with two identical vertices vtx2 and vtx3
+            # A triangle face ends with two identical vertices vtx2 and vtx3.
+            # This is a requirement defined by AutoCAD.
             face3d_attribs["vtx3"] = face3d_attribs["vtx2"]
 
         face3d_attribs["invisible"] = invisible
