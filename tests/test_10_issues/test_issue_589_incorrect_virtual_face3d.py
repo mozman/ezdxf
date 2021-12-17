@@ -6,6 +6,7 @@ import io
 import ezdxf
 from ezdxf.math import Vec3
 from ezdxf import bbox
+from ezdxf.render import MeshBuilder
 
 
 @pytest.fixture(scope="module")
@@ -33,6 +34,14 @@ def test_virtual_3dface_has_only_3_vertices(virtual_3dface):
 def test_virtual_3dface_does_not_include_NULLVEC(virtual_3dface):
     box = bbox.extents([virtual_3dface])
     assert box.extmin > Vec3(1, 1, 0)
+
+
+def test_mesh_builder(triangle_mesh):
+    builder = MeshBuilder.from_polyface(triangle_mesh)
+    assert len(builder.vertices) == 3
+    faces = list(builder.faces_as_vertices())
+    assert len(faces) == 1, "expected only one face"
+    assert len(faces[0]) == 3, "expected a triangle face"
 
 
 if __name__ == "__main__":
