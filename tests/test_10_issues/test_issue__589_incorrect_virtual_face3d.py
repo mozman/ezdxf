@@ -8,22 +8,32 @@ from ezdxf.math import Vec3
 from ezdxf import bbox
 
 
-def test_load_poly_face_mesh():
+@pytest.fixture(scope="module")
+def poly_face_mesh():
     doc = ezdxf.read(io.StringIO(POLYMESH))
     msp = doc.modelspace()
-    poly_face_mesh = msp[0]
+    return msp[0]
+
+
+def test_is_poly_face_mesh(poly_face_mesh):
     assert poly_face_mesh.is_poly_face_mesh
 
+
+def test_virtual_3dface_has_only_3_vertices(poly_face_mesh):
     virtual_entities = list(poly_face_mesh.virtual_entities())
     face3d = virtual_entities[0]
     vertices = face3d.wcs_vertices()
-    assert len(vertices) == 4
-    assert vertices[2] == vertices[3]
+    assert len(vertices) == 3
+
+
+def test_virtual_3dface_does_not_include_NULLVEC(poly_face_mesh):
+    virtual_entities = list(poly_face_mesh.virtual_entities())
+    face3d = virtual_entities[0]
     box = bbox.extents([face3d])
     assert box.extmin > Vec3(1, 1, 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])
 
 # DXF R12, only ENTITIES section

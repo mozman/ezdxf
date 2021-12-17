@@ -141,8 +141,8 @@ class Solid(_Base):
 
         """
         dxf = self.dxf
-        vertices = [dxf.vtx0, dxf.vtx1, dxf.vtx2]
-        if dxf.vtx3 != dxf.vtx2:  # when the face is a triangle, vtx2 == vtx3
+        vertices: List[Vec3] = [dxf.vtx0, dxf.vtx1, dxf.vtx2]
+        if dxf.vtx3 != dxf.vtx2:  # face is not a triangle
             vertices.append(dxf.vtx3)
 
         # adjust weird vertex order of SOLID and TRACE:
@@ -258,7 +258,10 @@ class Face3d(_Base):
         already WCS vertices.
         """
         dxf = self.dxf
-        vertices: List[Vec3] = [dxf.vtx0, dxf.vtx1, dxf.vtx2, dxf.vtx3]
+        vertices: List[Vec3] = [dxf.vtx0, dxf.vtx1, dxf.vtx2]
+        vtx3 = dxf.get("vtx3")
+        if isinstance(vtx3, Vec3) and vtx3 != dxf.vtx2:  # face is not a triangle
+            vertices.append(vtx3)
         if close:
             vertices.append(vertices[0])
         return vertices
