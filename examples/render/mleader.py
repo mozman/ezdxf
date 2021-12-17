@@ -33,11 +33,12 @@ def simple_mtext_content(name: str):
     # The leader lines vertices are expected in render UCS coordinates, which
     # means relative to the UCS origin!
     # This example shows the simplest way UCS==WCS!
-    ml_builder.add_leader_line(ConnectionSide.right, [(10, 10)])
+    ml_builder.add_leader_line(ConnectionSide.right, [(40, 15)])
 
     # The insert point (in UCS coordinates= is the alignment point for MTEXT
     # content and the insert location for BLOCK content:
-    ml_builder.render(insert=(5, 0))
+    ml_builder.build(insert=(5, 0))
+    doc.set_modelspace_vport(50, center=(20, 5))
     doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
 
     # Rotation of the MULTILEADER entity can only be achieved by rotating the

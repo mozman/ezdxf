@@ -1120,13 +1120,13 @@ class MultiLeaderBuilder:
             base_point_wcs = Vec3(insert)
         else:
             base_point_wcs = ucs.to_wcs(insert)
-
+        self._set_required_multileader_attributes()
         self._set_ucs(base_point_wcs, ucs)
         connection_box = self._build_connection_box(base_point_ucs=Vec3(insert))
         leaders = self._leaders
         if leaders:
             horizontal = (ConnectionSide.left in leaders) or (
-                ConnectionSide.left in leaders
+                ConnectionSide.right in leaders
             )
             vertical = (ConnectionSide.top in leaders) or (
                 ConnectionSide.bottom in leaders
@@ -1144,6 +1144,19 @@ class MultiLeaderBuilder:
             self._build_leader(
                 leader_lines, side, connection_box.get(side), ucs
             )
+
+    def _set_required_multileader_attributes(self):
+        dxf = self.multileader.dxf
+        doc = self._doc
+        handle = dxf.get("leader_linetype_handle")
+        if handle is None or handle not in doc.entitydb:
+            linetype = doc.linetypes.get("BYLAYER")
+            if linetype is None:
+                raise ValueError(
+                    f"required linetype 'BYLAYER' does not exist"
+                )
+            dxf.leader_linetype_handle = linetype.dxf.handle
+        dxf.property_override_flags = 0xffffffff
 
     def _set_ucs(self, base_point_wcs: Vec3, ucs: UCS):
         self._set_plane(base_point_wcs, ucs)
