@@ -737,8 +737,8 @@ class ConnectionSide(enum.Enum):
 DOGLEG_DIRECTIONS = {
     ConnectionSide.left: X_AXIS,
     ConnectionSide.right: -X_AXIS,
-    ConnectionSide.top: -Y_AXIS,
-    ConnectionSide.bottom: Y_AXIS,
+    ConnectionSide.top: -X_AXIS,  # ???
+    ConnectionSide.bottom: X_AXIS,  # ???
 }
 
 
@@ -1068,6 +1068,7 @@ class MultiLeaderBuilder:
         move_text_x: float  # relative x-movement of MTEXT from insert location
         move_text_y: float  # relative y-movement of MTEXT from insert location
         side: ConnectionSide  # left, right, top, bottom
+        has_dogleg = bool(self.multileader.dxf.has_dogleg)
         connection_box = self._build_connection_box(base_point_ucs=Vec2(0, 0))
         if isinstance(connection_type, HorizontalConnection):
             move_text_x = 0.0  # MTEXT is aligned to the insert location
@@ -1082,6 +1083,8 @@ class MultiLeaderBuilder:
                 right=connection_type,
             )
         elif isinstance(connection_type, VerticalConnection):
+            # vertical connection never have doglegs!
+            has_dogleg = False
             move_text_x = 0.0  # MTEXT is centered to the insert location
             if offset.y >= 0.0:
                 side = ConnectionSide.bottom
@@ -1107,9 +1110,10 @@ class MultiLeaderBuilder:
         gap = self._landing_gap_size
         last_leader_point = target + offset
         dogleg_direction = DOGLEG_DIRECTIONS[side]
-        last_segment = dogleg_direction * (dogleg_length + gap)
-
-        # Compute the MTEXT insert location.
+        if has_dogleg:
+            last_segment = dogleg_direction * (dogleg_length + gap)
+        else:
+            last_segment = Vec2()
         insert = (
             last_leader_point + last_segment + Vec2(move_text_x, move_text_y)
         )
@@ -1208,31 +1212,32 @@ class MultiLeaderBuilder:
             # no handle needed
             del self._multileader.dxf.arrow_head_handle
 
-    def add_leader_line(self, side: ConnectionSide, vertices: Iterable[Vertex]):
+    def add_leader_line(self, side: ConnectionSide, vertices: Iterable[Vec2]):
         # Leader line vertices in UCS coordinates!
-        self._leaders[side].append(Vec2.list(vertices))
+        self._leaders[side].append(list(vertices))
 
-    def build(self, insert: Vertex, ucs: UCS = None):
+    def build(self, insert: Vec2, ucs: UCS = None):
         """Compute the required geometry data. The construction plane is
-        defined by the given `ucs`.
+        defined by the given :class:`~ezdxf.math.UCS`.
 
         Args:
-            insert: insert location for the MTEXT or BLOCK content in UCS
-                coordinates
-            ucs: the render UCS, default is WCS
+            insert: insert location for the MTEXT or BLOCK content in the UCS
+                xy-plane as :class:`~ezdxf.math.Vec2` object
+            ucs: the render :class:`~ezdxf.math.UCS`, default is WCS
 
         """
+        assert isinstance(insert, Vec2), "insert has to be a Vec2() object"
         if self._set_content_type() == 0:
             return
-        insert_2d = Vec2(insert)
         if ucs is None:
             ucs = UCS()
-            base_point_wcs = Vec3(insert_2d)
+            base_point_wcs = Vec3(insert)
         else:
-            base_point_wcs = ucs.to_wcs(insert_2d.vec3)
+            base_point_wcs = ucs.to_wcs(insert.vec3)
+        multileader = self.multileader
         self._set_required_multileader_attributes()
         self._set_ucs(base_point_wcs, ucs)
-        connection_box = self._build_connection_box(base_point_ucs=insert_2d)
+        connection_box = self._build_connection_box(base_point_ucs=insert)
         leaders = self._leaders
         if leaders:
             horizontal = (ConnectionSide.left in leaders) or (
@@ -1248,6 +1253,8 @@ class MultiLeaderBuilder:
             self._multileader.dxf.text_attachment_direction = (
                 0 if horizontal else 1
             )
+            if vertical:
+                multileader.dxf.has_dogleg = False
         # else MULTILEADER without any leader lines!
         self.context.leaders.clear()
         for side, leader_lines in leaders.items():
@@ -1275,6 +1282,8 @@ class MultiLeaderBuilder:
 
     def _set_plane(self, base_point_wcs: Vec3, ucs: UCS):
         context = self.context
+        # "base_point" need more investigation if vertical attachment and maybe
+        # other situations!
         context.base_point = base_point_wcs
         # set default WCS
         context.plane_origin = NULLVEC
@@ -1320,21 +1329,23 @@ class MultiLeaderBuilder:
             return self._build_block_connection_box(base_point_ucs)
         raise ValueError("content not defined")
 
-    def _build_mtext_connection_box(
-        self, base_point_ucs: Vec2
-    ) -> ConnectionBox:
+    def _build_mtext_connection_box(self, insert_ucs: Vec2) -> ConnectionBox:
         """Returns the connection box for MTEXT content with the connection
         points on all 4 sides in UCS coordinates.
+
+        Args:
+            insert_ucs: insertion point of the MTEXT in ucs-coordinates
+
         """
 
         def get_insert(width: float) -> Vec2:
             assert mtext is not None  # shut-up mypy!!!!
             dx = 0.0
             if mtext.alignment == 2:
-                dx = width * 0.5
+                dx = -width * 0.5
             elif mtext.alignment == 3:
-                dx = width
-            return Vec2(dx, 0) + base_point_ucs
+                dx = -width
+            return Vec2(dx, 0) + insert_ucs
 
         def vertical_connection_height(
             connection: HorizontalConnection,
@@ -1361,7 +1372,7 @@ class MultiLeaderBuilder:
         context = self.context
         mtext = context.mtext
         if mtext is None:
-            raise TypeError("MULTILEADER has not MTEXT content")
+            raise TypeError("MULTILEADER has no MTEXT content")
         left_attachment = HorizontalConnection(context.left_attachment)
         right_attachment = HorizontalConnection(context.right_attachment)
         char_height = context.char_height  # scaled value!
@@ -1452,9 +1463,13 @@ class MultiLeaderBuilder:
 
         # setting last leader point:
         # landing gap is already included in connection box
-        leader.last_leader_point = ucs.to_wcs(
-            connection_point_ucs + (dogleg_direction * -leader.dogleg_length)
-        )
+        if self.multileader.dxf.has_dogleg:
+            leader.last_leader_point = ucs.to_wcs(
+                connection_point_ucs.vec3
+                + (dogleg_direction * -leader.dogleg_length)
+            )
+        else:
+            leader.last_leader_point = ucs.to_wcs(connection_point_ucs.vec3)
 
         for index, vertices in enumerate(leader_lines):
             line = LeaderLine()
