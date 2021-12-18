@@ -3,7 +3,7 @@
 
 import pathlib
 import ezdxf
-from ezdxf.math import Vec3, UCS, NULLVEC
+from ezdxf.math import Vec2, UCS, NULLVEC
 import logging
 from ezdxf.render.mleader import ConnectionSide
 
@@ -49,5 +49,22 @@ def simple_mtext_content(name: str):
     # another example.
 
 
+def quick_mtext(name: str):
+    doc = ezdxf.new(DXFVERSION, setup=True)
+    mleaderstyle = doc.mleader_styles.duplicate_entry("Standard", "EZDXF")
+    mleaderstyle.set_mtext_style("OpenSans")  # type: ignore
+    msp = doc.modelspace()
+    ml_builder = msp.add_multileader("EZDXF")
+    ml_builder.quick_mtext(
+        "Line1\nLine2",
+        target=Vec2(40, 15),
+        segment1=Vec2(-10, -10)
+    )
+    doc.set_modelspace_vport(60, center=(10, 5))
+    doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
+
+
 if __name__ == "__main__":
+    quick_mtext("mleader_quick_mtext")
     simple_mtext_content("mleader_simple_mtext")
+

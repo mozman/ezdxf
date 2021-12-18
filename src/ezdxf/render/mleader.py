@@ -1029,7 +1029,8 @@ class MultiLeaderBuilder:
         connection_type: Union[
             HorizontalConnection, VerticalConnection
         ] = HorizontalConnection.middle_of_top_line,
-    ) -> Vec2:
+        ucs: UCS = None,
+    ):
         """Creates a quick MTEXT leader. The `target` point defines where the
         leader points to.
         The `segment1` is the first segment of the leader line relative to the
@@ -1040,9 +1041,6 @@ class MultiLeaderBuilder:
         Horizontal connections are always left or right aligned, vertical
         connections are always center aligned.
 
-        The method returns the required `insert` location for the :meth:`build`
-        method.
-
         Args:
             content: MTEXT content string
             target: leader target point as :class:`Vec2`
@@ -1051,8 +1049,7 @@ class MultiLeaderBuilder:
                 first line segment
             connection_type: one of :class:`HorizontalConnection` or
                 :class:`VerticalConnection`
-
-        Returns: `insert` location for the :meth:`build` method
+            ucs: the rendering user coordinate system, default is the :ref:`WCS`
 
         """
         offset = segment1
@@ -1112,11 +1109,11 @@ class MultiLeaderBuilder:
         dogleg_direction = DOGLEG_DIRECTIONS[side]
         last_segment = dogleg_direction * (dogleg_length + gap)
 
-        # Build the insert location for the build() method.
+        # Compute the MTEXT insert location.
         insert = (
             last_leader_point + last_segment + Vec2(move_text_x, move_text_y)
         )
-        return insert
+        self.build(insert, ucs)
 
     def set_overall_scaling(self, scale: float):
         new_scale = float(scale)

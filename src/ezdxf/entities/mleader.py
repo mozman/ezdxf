@@ -1190,6 +1190,42 @@ class MLeaderStyle(DXFObject):
             )
         return dxf
 
+    def set_mtext_style(self, name: str) -> None:
+        assert self.doc is not None, "valid DXF document required"
+        style = self.doc.styles.get(name)
+        if style is not None:
+            self.dxf.text_style_handle = style.dxf.handle
+        else:
+            raise ValueError(f"text style '{name}' does not exist")
+
+    def set_leader_properties(
+        self,
+        color: Union[int, colors.RGB] = colors.BYBLOCK,
+        linetype: str = "BYBLOCK",
+        lineweight: int = const.LINEWEIGHT_BYBLOCK,
+        leader_type: int = 1,
+    ):
+        assert self.doc is not None, "valid DXF document required"
+        self.dxf.leader_line_color = colors.encode_raw_color(color)  # type: ignore
+        linetype_ = self.doc.linetypes.get(linetype)
+        if linetype_ is None:
+            raise ValueError(f"invalid linetype name '{linetype}'")
+        self.dxf.leader_linetype_handle = linetype_.dxf.handle
+        self.dxf.leader_lineweight = int(lineweight)
+        self.dxf.leader_type = int(leader_type)
+
+    def set_arrow_head(self, name: str = ""):
+        from ezdxf.render.arrows import ARROWS
+        assert self.doc is not None, "valid DXF document required"
+        if name:
+            self.dxf.arrow_head_handle = ARROWS.arrow_handle(
+                self.doc.blocks, name
+            )
+        else:
+            # empty string is the default "closed filled" arrow,
+            # no handle needed
+            del self.dxf.arrow_head_handle
+
     def export_entity(self, tagwriter: "TagWriter") -> None:
         super().export_entity(tagwriter)
         tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_mleader_style.name)
