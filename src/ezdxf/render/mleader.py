@@ -911,7 +911,7 @@ class MultiLeaderBuilder:
         mtext.default_content = style.dxf.default_text_content
         mtext.extrusion = context.plane_z_axis
         mtext.style_handle = mleader.dxf.text_style_handle
-        mtext.insert = context.base_point
+        mtext.insert = NULLVEC
         mtext.text_direction = context.plane_x_axis
         mtext.color = mleader.dxf.text_color
         mtext.alignment = mleader.dxf.text_attachment_point
@@ -932,7 +932,7 @@ class MultiLeaderBuilder:
         block = BlockData()
         block.block_record_handle = mleader.dxf.block_record_handle
         block.extrusion = context.plane_z_axis
-        block.insert = context.base_point
+        block.insert = NULLVEC
         # final scaling factors for the INSERT entity:
         block.scale = mleader.dxf.block_scale_vector * context.scale
         block.rotation = mleader.dxf.block_rotation
@@ -1069,7 +1069,7 @@ class MultiLeaderBuilder:
         move_text_y: float  # relative y-movement of MTEXT from insert location
         side: ConnectionSide  # left, right, top, bottom
         has_dogleg = bool(self.multileader.dxf.has_dogleg)
-        connection_box = self._build_connection_box(base_point_ucs=Vec2(0, 0))
+        connection_box = self._build_connection_box(insert_ucs=Vec2(0, 0))
         if isinstance(connection_type, HorizontalConnection):
             move_text_x = 0.0  # MTEXT is aligned to the insert location
             if offset.x <= 0.0:
@@ -1231,13 +1231,13 @@ class MultiLeaderBuilder:
             return
         if ucs is None:
             ucs = UCS()
-            base_point_wcs = Vec3(insert)
+            insert_wcs = Vec3(insert)
         else:
-            base_point_wcs = ucs.to_wcs(insert.vec3)
+            insert_wcs = ucs.to_wcs(insert.vec3)
         multileader = self.multileader
         self._set_required_multileader_attributes()
-        self._set_ucs(base_point_wcs, ucs)
-        connection_box = self._build_connection_box(base_point_ucs=insert)
+        self._set_ucs(insert_wcs, ucs)
+        connection_box = self._build_connection_box(insert_ucs=insert)
         leaders = self._leaders
         if leaders:
             horizontal = (ConnectionSide.left in leaders) or (
@@ -1256,6 +1256,10 @@ class MultiLeaderBuilder:
             if vertical:
                 multileader.dxf.has_dogleg = False
         # else MULTILEADER without any leader lines!
+        self._set_base_point(  # requires "text_attachment_direction"
+            left=ucs.to_wcs(connection_box.left.vec3),
+            bottom=ucs.to_wcs(connection_box.bottom.vec3)
+        )
         self.context.leaders.clear()
         for side, leader_lines in leaders.items():
             self._build_leader(
@@ -1273,18 +1277,15 @@ class MultiLeaderBuilder:
             dxf.leader_linetype_handle = linetype.dxf.handle
         dxf.property_override_flags = 0xFFFFFFFF
 
-    def _set_ucs(self, base_point_wcs: Vec3, ucs: UCS):
-        self._set_plane(base_point_wcs, ucs)
+    def _set_ucs(self, insert_wcs: Vec3, ucs: UCS):
+        self._set_plane(ucs)
         if self.has_mtext_content:
-            self._set_mtext_ucs(base_point_wcs, ucs)
+            self._set_mtext_ucs(insert_wcs, ucs)
         elif self.has_block_content:
-            self._set_block_ucs(base_point_wcs, ucs)
+            self._set_block_ucs(insert_wcs, ucs)
 
-    def _set_plane(self, base_point_wcs: Vec3, ucs: UCS):
+    def _set_plane(self, ucs: UCS):
         context = self.context
-        # "base_point" need more investigation if vertical attachment and maybe
-        # other situations!
-        context.base_point = base_point_wcs
         # set default WCS
         context.plane_origin = NULLVEC
         context.plane_x_axis = X_AXIS
@@ -1293,19 +1294,30 @@ class MultiLeaderBuilder:
         if not ucs.uz.isclose(Z_AXIS):
             pass  # TODO: further research required
 
-    def _set_mtext_ucs(self, base_point_wcs: Vec3, ucs: UCS):
+    def _set_base_point(self, left: Vec3, bottom: Vec3):
+        context = self.context
+        if context.mtext is not None:
+            if self.multileader.dxf.text_attachment_direction == 0:  # horizontal
+                context.base_point = left
+            else:  # vertical
+                context.base_point = bottom
+        elif context.block is not None:
+            # BricsCAD does not support vertical attached leaders
+            context.base_point = left
+
+    def _set_mtext_ucs(self, insert_wcs: Vec3, ucs: UCS):
         mtext = self.context.mtext
         assert mtext is not None
         mtext.extrusion = ucs.uz  # not an OCS entity!!!
-        mtext.insert = base_point_wcs
+        mtext.insert = insert_wcs
         mtext.text_direction = ucs.ux
         mtext.rotation = ocs_rotation(ucs)
 
-    def _set_block_ucs(self, base_point_wcs: Vec3, ucs: UCS):
+    def _set_block_ucs(self, insert_wcs: Vec3, ucs: UCS):
         block = self.context.block
         assert block is not None
         block.extrusion = ucs.uz
-        block.insert = base_point_wcs  # OCS entity but WCS coordinates!!!
+        block.insert = insert_wcs  # OCS entity but WCS coordinates!!!
         block.rotation = ocs_rotation(ucs)
 
     def _set_content_type(self) -> int:
@@ -1318,15 +1330,15 @@ class MultiLeaderBuilder:
             self._multileader.dxf.content_type = 0
         return self._multileader.dxf.content_type
 
-    def _build_connection_box(self, base_point_ucs: Vec2) -> ConnectionBox:
+    def _build_connection_box(self, insert_ucs: Vec2) -> ConnectionBox:
         """Returns the connection box with the connection points on all 4 sides
         in UCS coordinates.
         """
         context = self.context
         if context.mtext is not None:
-            return self._build_mtext_connection_box(base_point_ucs)
+            return self._build_mtext_connection_box(insert_ucs)
         elif context.block is not None:
-            return self._build_block_connection_box(base_point_ucs)
+            return self._build_block_connection_box(insert_ucs)
         raise ValueError("content not defined")
 
     def _build_mtext_connection_box(self, insert_ucs: Vec2) -> ConnectionBox:
@@ -1338,7 +1350,7 @@ class MultiLeaderBuilder:
 
         """
 
-        def get_insert(width: float) -> Vec2:
+        def get_aligned_insert(width: float) -> Vec2:
             assert mtext is not None  # shut-up mypy!!!!
             dx = 0.0
             if mtext.alignment == 2:
@@ -1388,6 +1400,7 @@ class MultiLeaderBuilder:
             height = size.total_height
         else:
             width, height = text_size.estimate_mtext_extents(entity)
+        width2 = width * 0.5
 
         # define connection points for rotation=0, alignment=left
         left = Vec2(
@@ -1398,18 +1411,21 @@ class MultiLeaderBuilder:
             width + gap,
             vertical_connection_height(right_attachment),
         )
-        insert = get_insert(width)
-        # Connection box in UCS coordinates, content is aligned to the x- and
-        # y axis!
+
+        # alignment (left, center, right) will ne applied:
+        insert = get_aligned_insert(width)
+
+        # Connection box in UCS coordinates, content is aligned to the UCS x-
+        # and y-axis!
         return ConnectionBox(
             left=insert + left,
             right=insert + right,
-            top=insert + Vec3(width * 0.5, gap),
-            bottom=insert + Vec3(width * 0.5, -height - gap),
+            top=insert + Vec2(width2, gap),
+            bottom=insert + Vec2(width2, -height - gap),
         )
 
     def _build_block_connection_box(
-        self, base_point_ucs: Vec2
+        self, insert_ucs: Vec2
     ) -> ConnectionBox:
         """Returns the connection box for BLOCK content with the connection
         points on all 4 sides in UCS coordinates.
@@ -1423,7 +1439,7 @@ class MultiLeaderBuilder:
         # todo: apply block scale and overall scale
         width2 = extents.size.x * 0.5
         height2 = extents.size.y * 0.5
-        insert = base_point_ucs - (
+        insert = insert_ucs - (
             extents.center.vec2 - block_layout.base_point.vec2
         )
         return ConnectionBox(

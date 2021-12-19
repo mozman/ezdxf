@@ -66,7 +66,11 @@ def simple_mtext_content_vertical(name: str):
     # The insert point (in UCS coordinates= is the alignment point for MTEXT
     # content and the insert location for BLOCK content:
     ml_builder.build(insert=Vec2(5, 0))
-
+    msp.add_circle(
+        ml_builder.multileader.context.base_point,
+        radius=0.5,
+        dxfattribs={"color": ezdxf.colors.RED}
+    )
     doc.set_modelspace_vport(60, center=(10, 5))
     doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
 

@@ -615,6 +615,21 @@ class MLeaderContext:
     def __init__(self):
         self.leaders: List["LeaderData"] = []
         self.scale: float = 1.0  # overall scale
+
+        # MTEXT base point: is not the MTEXT insertion point!
+        # HORIZONTAL leader attachment:
+        # the "base_point" is always the start point of the leader on the LEFT side
+        # of the MTEXT, regardless of alignment and which side leaders are attached.
+        # VERTICAL leader attachment:
+        # the "base_point" is always the start point of the leader on the BOTTOM
+        # side of the MTEXT, regardless of alignment and which side leaders are
+        # attached.
+
+        # BLOCK base point: is not the BLOCK insertion point!
+        # HORIZONTAL leader attachment:
+        # Strange results, setting the "base_point" to the left center of the BLOCK,
+        # regardless which side leaders are attached, seems to be reasonable.
+        # VERTICAL leader attachment: not supported by BricsCAD
         self.base_point: Vec3 = NULLVEC
         self.char_height = 4.0  # scaled char height!
         self.arrow_head_size = 4.0
@@ -722,7 +737,7 @@ class MLeaderContext:
         self.char_height *= scale
         self.arrow_head_size *= scale
         self.landing_gap_size *= scale
-        self.plane_origin = m.transform(self.plane_origin)
+        self.plane_origin = m.transform(self.plane_origin)  # confirmed by BricsCAD
         self.plane_x_axis = m.transform_direction(
             self.plane_x_axis, normalize=True
         )
