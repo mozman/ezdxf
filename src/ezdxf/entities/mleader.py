@@ -541,7 +541,8 @@ class MultiLeader(DXFGraphic):
             if handle is not None:
                 yield handle
 
-    def transform(self, m: "Matrix44") -> "MultiLeader":
+    # TODO: rename to transform() when tested
+    def _transform(self, m: "Matrix44") -> "MultiLeader":
         """Transform the MULTILEADER entity by transformation matrix `m` inplace.
 
         Non uniform scaling is not supported.
@@ -553,7 +554,6 @@ class MultiLeader(DXFGraphic):
             NonUniformScalingError: for non uniform scaling
 
         """
-        raise NotImplementedError()  # todo: disabled until tested
         dxf = self.dxf
         context = self.context
 

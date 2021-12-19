@@ -2689,7 +2689,6 @@ class CreatorInterface:
     def add_multileader_mtext(
         self,
         style: str = "Standard",
-        ucs: "UCS" = None,
         dxfattribs: Dict = None,
     ) -> "MultiLeaderMTextBuilder":
         """Add a :class:`~ezdxf.entities.MultiLeader` entity but returns
@@ -2700,12 +2699,11 @@ class CreatorInterface:
         """
         from ezdxf.render.mleader import MultiLeaderMTextBuilder
         multileader = self._make_multileader(style, dxfattribs)
-        return MultiLeaderMTextBuilder(multileader, ucs)
+        return MultiLeaderMTextBuilder(multileader)
 
     def add_multileader_block(
         self,
         style: str = "Standard",
-        ucs: "UCS" = None,
         dxfattribs: Dict = None,
     ) -> "MultiLeaderBlockBuilder":
         """Add a :class:`~ezdxf.entities.MultiLeader` entity but returns
@@ -2716,7 +2714,7 @@ class CreatorInterface:
         """
         from ezdxf.render.mleader import MultiLeaderBlockBuilder
         multileader = self._make_multileader(style, dxfattribs)
-        return MultiLeaderBlockBuilder(multileader, ucs)
+        return MultiLeaderBlockBuilder(multileader)
 
     def _make_multileader(
         self,

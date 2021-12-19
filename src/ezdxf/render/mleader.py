@@ -805,7 +805,7 @@ def ocs_rotation(ucs: UCS) -> float:
 
 
 class MultiLeaderBuilder(abc.ABC):
-    def __init__(self, multileader: MultiLeader, ucs: UCS = None):
+    def __init__(self, multileader: MultiLeader):
         doc = multileader.doc
         assert doc is not None, "valid DXF document required"
         handle = multileader.dxf.style_handle
@@ -815,7 +815,6 @@ class MultiLeaderBuilder(abc.ABC):
         self._doc: "Drawing" = doc
         self._mleader_style: MLeaderStyle = style
         self._multileader = multileader
-        self._render_ucs: Optional[UCS] = ucs
         self._build_ucs: UCS = UCS()
         self._leaders: Dict[ConnectionSide, List[List[Vec2]]] = defaultdict(
             list
@@ -983,15 +982,16 @@ class MultiLeaderBuilder(abc.ABC):
         # Leader line vertices in UCS coordinates!
         self._leaders[side].append(list(vertices))
 
-    def build(self, insert: Vec2, rotation: float=0.0) -> None:
+    def build(
+        self, insert: Vec2, rotation: float = 0.0, ucs: UCS = None
+    ) -> None:
         """Compute the required geometry data. The construction plane is
-        the render :class:`~ezdxf.math.UCS` set in the constructor. The default
-        render UCS is the :ref:`WCS`.
+        the xy-plane of the given render :class:`~ezdxf.math.UCS`.
 
         Args:
-            insert: insert location for the MTEXT or BLOCK content in the UCS
-                xy-plane as :class:`~ezdxf.math.Vec2` object
-            rotation: content rotation angle around the UCS z-axis in degrees.
+            insert: insert location for the content in render UCS coordinates
+            rotation: content rotation angle around the render UCS z-axis in degrees
+            ucs: the render :class:`~ezdxf.math.UCS`, default is the :ref:`WCS`
 
         """
         assert isinstance(insert, Vec2), "insert has to be a Vec2() object"
@@ -1032,6 +1032,10 @@ class MultiLeaderBuilder(abc.ABC):
             self._build_leader(
                 leader_lines, side, connection_box.get(side), self._build_ucs
             )
+
+        # transformation from render UCS into WCS
+        if ucs is not None:
+            multileader._transform(ucs.matrix)
 
     def _set_required_multileader_attributes(self):
         dxf = self.multileader.dxf
@@ -1368,8 +1372,8 @@ class MultiLeaderMTextBuilder(MultiLeaderBuilder):
 
 
 class MultiLeaderBlockBuilder(MultiLeaderBuilder):
-    def __init__(self, multileader: MultiLeader, ucs: UCS = None):
-        super().__init__(multileader, ucs)
+    def __init__(self, multileader: MultiLeader):
+        super().__init__(multileader)
         self._block_layout: Optional["BlockLayout"] = None  # cache
 
     def _init_content(self):
