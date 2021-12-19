@@ -126,7 +126,9 @@ if TYPE_CHECKING:
     from ezdxf.entities.mleader import MultiLeader
     from ezdxf.render.dim_base import BaseDimensionRenderer
     from ezdxf.entities.mline import MLineVertex, MLine, MLineStyle
-    from ezdxf.render.mleader import MultiLeaderBuilder
+    from ezdxf.render.mleader import (
+        MultiLeaderBuilder, MultiLeaderBlockBuilder, MultiLeaderMTextBuilder
+    )
     # other
     from ezdxf.audit import Auditor
     from ezdxf.lldxf.validator import DXFInfo

@@ -1,7 +1,7 @@
 # Copyright (c) 2013-2021, Manfred Moitzi
 # Copyright (c) 2013-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Sequence, Dict, Tuple, cast
+from typing import TYPE_CHECKING, Iterable, Sequence, Dict, Tuple, cast, Type
 import math
 import logging
 import warnings
@@ -71,8 +71,9 @@ if TYPE_CHECKING:
         Wipeout,
         XLine,
         GenericLayoutType,
-        MultiLeaderBuilder,
         MultiLeader,
+        MultiLeaderMTextBuilder,
+        MultiLeaderBlockBuilder,
     )
 
 
@@ -2685,18 +2686,43 @@ class CreatorInterface:
             ).commit()
         return leader
 
-    def add_multileader(
+    def add_multileader_mtext(
         self,
         style: str = "Standard",
+        ucs: "UCS" = None,
         dxfattribs: Dict = None,
-    ) -> "MultiLeaderBuilder":
+    ) -> "MultiLeaderMTextBuilder":
         """Add a :class:`~ezdxf.entities.MultiLeader` entity but returns
-        a :class:`~ezdxf.render.MultiLeaderBuilder`.
+        a :class:`~ezdxf.render.MultiLeaderMTextBuilder`.
 
         .. versionadded:: 0.18
 
         """
-        from ezdxf.render import MultiLeaderBuilder
+        from ezdxf.render.mleader import MultiLeaderMTextBuilder
+        multileader = self._make_multileader(style, dxfattribs)
+        return MultiLeaderMTextBuilder(multileader, ucs)
+
+    def add_multileader_block(
+        self,
+        style: str = "Standard",
+        ucs: "UCS" = None,
+        dxfattribs: Dict = None,
+    ) -> "MultiLeaderBlockBuilder":
+        """Add a :class:`~ezdxf.entities.MultiLeader` entity but returns
+        a :class:`~ezdxf.render.MultiLeaderBlockBuilder`.
+
+        .. versionadded:: 0.18
+
+        """
+        from ezdxf.render.mleader import MultiLeaderBlockBuilder
+        multileader = self._make_multileader(style, dxfattribs)
+        return MultiLeaderBlockBuilder(multileader, ucs)
+
+    def _make_multileader(
+        self,
+        style: str,
+        dxfattribs: Dict = None,
+    ) -> "MultiLeader":
         if self.dxfversion < DXF2000:
             raise DXFVersionError("MULTILEADER requires DXF R2000")
         dxfattribs = dxfattribs or dict()
@@ -2704,8 +2730,7 @@ class CreatorInterface:
         if mleader_style is None:
             raise DXFValueError(f"MLEADERSTYLE '{style}' does not exist")
         dxfattribs["style_handle"] = mleader_style.dxf.handle
-        multileader = self.new_entity("MULTILEADER", dxfattribs=dxfattribs)
-        return MultiLeaderBuilder(cast("MultiLeader", multileader))
+        return self.new_entity("MULTILEADER", dxfattribs=dxfattribs)  # type: ignore
 
     def add_mline(
         self,

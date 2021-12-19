@@ -35,7 +35,8 @@ DXF Primitives
 - :meth:`~ezdxf.layouts.BaseLayout.add_mesh`
 - :meth:`~ezdxf.layouts.BaseLayout.add_mline`
 - :meth:`~ezdxf.layouts.BaseLayout.add_mpolygon`
-- :meth:`~ezdxf.layouts.BaseLayout.add_multileader`
+- :meth:`~ezdxf.layouts.BaseLayout.add_multileader_mtext`
+- :meth:`~ezdxf.layouts.BaseLayout.add_multileader_block`
 - :meth:`~ezdxf.layouts.BaseLayout.add_point`
 - :meth:`~ezdxf.layouts.BaseLayout.add_polyface`
 - :meth:`~ezdxf.layouts.BaseLayout.add_polyline2d`

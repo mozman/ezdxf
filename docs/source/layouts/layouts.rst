@@ -188,7 +188,9 @@ BaseLayout
 
     .. automethod:: add_leader
 
-    .. automethod:: add_multileader
+    .. automethod:: add_multileader_mtext
+
+    .. automethod:: add_multileader_block
 
     .. automethod:: add_body
 

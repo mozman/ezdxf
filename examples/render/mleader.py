@@ -25,8 +25,8 @@ DXFVERSION = "R2013"
 def simple_mtext_content_horizontal(name: str):
     doc = ezdxf.new(DXFVERSION, setup=True)
     msp = doc.modelspace()
-    ml_builder = msp.add_multileader("Standard")
-    ml_builder.set_mtext_content("Line1\nLine2", style="OpenSans")
+    ml_builder = msp.add_multileader_mtext("Standard")
+    ml_builder.set_content("Line1\nLine2", style="OpenSans")
 
     # Construction plane of the entity is defined by an render UCS.
     # The default render UCS is the WCS.
@@ -48,8 +48,8 @@ def simple_mtext_content_horizontal(name: str):
 def simple_mtext_content_vertical(name: str):
     doc = ezdxf.new(DXFVERSION, setup=True)
     msp = doc.modelspace()
-    ml_builder = msp.add_multileader("Standard")
-    ml_builder.set_mtext_content("Line1\nLine2", style="OpenSans")
+    ml_builder = msp.add_multileader_mtext("Standard")
+    ml_builder.set_content("Line1\nLine2", style="OpenSans")
 
     # Construction plane of the entity is defined by an render UCS.
     # The default render UCS is the WCS.
@@ -86,8 +86,8 @@ def quick_mtext_horizontal(name: str):
     )
 
     for angle in [45, 135, 225, -45]:
-        ml_builder = msp.add_multileader("EZDXF")
-        ml_builder.quick_mtext(
+        ml_builder = msp.add_multileader_mtext("EZDXF")
+        ml_builder.quick_leader(
             "Line1\nLine2",
             target=target_point,
             segment1=Vec2.from_deg_angle(angle, 14),
@@ -108,8 +108,8 @@ def quick_mtext_vertical(name: str):
     )
 
     for angle in [45, 135, 225, -45]:
-        ml_builder = msp.add_multileader("EZDXF")
-        ml_builder.quick_mtext(
+        ml_builder = msp.add_multileader_mtext("EZDXF")
+        ml_builder.quick_leader(
             "Line1\nLine2",
             target=target_point,
             segment1=Vec2.from_deg_angle(angle, 14),
