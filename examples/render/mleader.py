@@ -5,7 +5,12 @@ import pathlib
 import ezdxf
 from ezdxf.math import Vec2, UCS, NULLVEC
 import logging
-from ezdxf.render.mleader import ConnectionSide, VerticalConnection
+from ezdxf.render.mleader import (
+    ConnectionSide,
+    VerticalConnection,
+    HorizontalConnection,
+    TextAlignment,
+)
 
 # ========================================
 # Setup logging
@@ -45,6 +50,48 @@ def simple_mtext_content_horizontal(name: str):
     doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
 
 
+def all_mtext_content_horizontal(name: str):
+    doc = ezdxf.new(DXFVERSION, setup=True)
+    msp = doc.modelspace()
+
+    for direction in range(9):
+        for ax, alignment in enumerate(
+            [
+                TextAlignment.left,
+                TextAlignment.center,
+                TextAlignment.right,
+            ]
+        ):
+            ml_builder = msp.add_multileader_mtext("Standard")
+            dir_enum = HorizontalConnection(direction)
+            ml_builder.set_connection_types(
+                left=dir_enum,
+                right=dir_enum,
+            )
+
+            ml_builder.set_content(
+                f"{dir_enum.name}\n{dir_enum.name}\n{dir_enum.name}",
+                alignment=alignment,
+                style="OpenSans",
+            )
+            width = len(dir_enum.name) * 2.5
+            x = 40 + width
+            ml_builder.add_leader_line(ConnectionSide.right, [Vec2(x, 15)])
+            ml_builder.add_leader_line(ConnectionSide.right, [Vec2(x, -15)])
+            ml_builder.add_leader_line(ConnectionSide.left, [Vec2(-20, -15)])
+            x = 5
+            if alignment == TextAlignment.center:
+                x += width / 2
+            elif alignment == TextAlignment.right:
+                x += width
+            ml_builder.build(
+                insert=Vec2(x, 0), ucs=UCS(origin=(ax * 250, direction * 50))
+            )
+    height = 600
+    doc.set_modelspace_vport(height, center=(200, height / 2))
+    doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
+
+
 def simple_mtext_content_vertical(name: str):
     doc = ezdxf.new(DXFVERSION, setup=True)
     msp = doc.modelspace()
@@ -69,7 +116,7 @@ def simple_mtext_content_vertical(name: str):
     msp.add_circle(
         ml_builder.multileader.context.base_point,
         radius=0.5,
-        dxfattribs={"color": ezdxf.colors.RED}
+        dxfattribs={"color": ezdxf.colors.RED},
     )
     doc.set_modelspace_vport(60, center=(10, 5))
     doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
@@ -125,3 +172,4 @@ if __name__ == "__main__":
     quick_mtext_vertical("mleader_quick_mtext_vertical")
     simple_mtext_content_horizontal("mleader_simple_mtext_horizontal")
     simple_mtext_content_vertical("mleader_simple_mtext_vertical")
+    all_mtext_content_horizontal("mleader_all_mtext_horizontal")

@@ -906,31 +906,37 @@ class MultiLeaderBuilder(abc.ABC):
         top=VerticalConnection.by_style,
         bottom=VerticalConnection.by_style,
     ):
-        dxf = self._multileader.dxf
+        context = self.context
         style = self._mleader_style
         if left == HorizontalConnection.by_style:
-            dxf.text_left_attachment_type = style.dxf.text_left_attachment_type
+            context.left_attachment = style.dxf.text_left_attachment_type
         else:
-            dxf.text_left_attachment_type = int(left)
+            context.left_attachment = int(left)
 
         if right == HorizontalConnection.by_style:
-            dxf.text_right_attachment_type = (
+            context.right_attachment = (
                 style.dxf.text_right_attachment_type
             )
         else:
-            dxf.text_right_attachment_type = int(right)
+            context.right_attachment = int(right)
 
         if top == VerticalConnection.by_style:
-            dxf.text_top_attachment_type = style.dxf.text_top_attachment_type
+            context.top_attachment = style.dxf.text_top_attachment_type
         else:
-            dxf.text_top_attachment_type = int(top)
+            context.top_attachment = int(top)
 
         if bottom == VerticalConnection.by_style:
-            dxf.text_bottom_attachment_type = (
+            context.bottom_attachment = (
                 style.dxf.text_bottom_attachment_type
             )
         else:
-            dxf.text_bottom_attachment_type = int(bottom)
+            context.bottom_attachment = int(bottom)
+
+        dxf = self._multileader.dxf
+        dxf.text_left_attachment_type = context.left_attachment
+        dxf.text_right_attachment_type = context.right_attachment
+        dxf.text_top_attachment_type = context.top_attachment
+        dxf.text_bottom_attachment_type = context.bottom_attachment
 
     def set_overall_scaling(self, scale: float):
         new_scale = float(scale)
@@ -1003,9 +1009,8 @@ class MultiLeaderBuilder(abc.ABC):
         assert isinstance(insert, Vec2), "insert has to be a Vec2() object"
         rotation = math.radians(rotation)
         # transformation matrix from build ucs to render ucs
-        m = Matrix44.z_rotate(rotation) * Matrix44.translate(
-            insert.x, insert.y, 0.0
-        )
+        m = Matrix44.z_rotate(rotation)
+        m.set_row(3, (insert.x, insert.y))  # fast translation
 
         self._set_required_multileader_attributes()
         self._transform_content_to_render_ucs(insert, rotation)
