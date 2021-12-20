@@ -827,7 +827,7 @@ class MultiLeaderBuilder(abc.ABC):
     def _init_content(self):
         ...
 
-    def _reset_caches(self):
+    def _reset_cache(self):
         pass
 
     @abc.abstractmethod
@@ -1114,6 +1114,7 @@ class MultiLeaderBuilder(abc.ABC):
 
 class MultiLeaderMTextBuilder(MultiLeaderBuilder):
     def _init_content(self):
+        self._reset_cache()
         context = self.context
         style = self._mleader_style
         mleader = self._multileader
@@ -1131,10 +1132,6 @@ class MultiLeaderMTextBuilder(MultiLeaderBuilder):
         mtext.color = mleader.dxf.text_color
         mtext.alignment = mleader.dxf.text_attachment_point
 
-        # build UCS:
-        # origin = attachment point
-        # x-axis = WCS x-axis
-        # extrusion = WCS z-axis
         # The char height is stored in MLeader Context()!
         # The content dimensions (width, height) are not calculated yet,
         # therefore scaling is not necessary!
@@ -1147,7 +1144,6 @@ class MultiLeaderMTextBuilder(MultiLeaderBuilder):
         alignment: TextAlignment = TextAlignment.left,
         style: str = None,
     ):
-        self._reset_caches()
         mleader = self._multileader
         context = self.context
         # update MULTILEADER DXF namespace
@@ -1371,24 +1367,26 @@ class MultiLeaderBlockBuilder(MultiLeaderBuilder):
         self._block_layout: Optional["BlockLayout"] = None  # cache
 
     def _init_content(self):
-        self._block_layout = None
+        self._reset_cache()
 
         context = self.context
-        mleader = self._multileader
+        multileader = self._multileader
 
         # set content type
-        mleader.dxf.content_type = 1
+        multileader.dxf.content_type = 1
         context.mtext = None
 
         # create default block content
         block = BlockData()
-        block.block_record_handle = mleader.dxf.block_record_handle
-        # final scaling factors for the INSERT entity:
-        block.scale = mleader.dxf.block_scale_vector * context.scale
-        block.rotation = mleader.dxf.block_rotation
-        block.color = mleader.dxf.block_color
+        context.block = block
 
-    def _reset_caches(self):
+        block.block_record_handle = multileader.dxf.block_record_handle
+        # final scaling factors for the INSERT entity:
+        block.scale = multileader.dxf.block_scale_vector * context.scale
+        block.rotation = multileader.dxf.block_rotation
+        block.color = multileader.dxf.block_color
+
+    def _reset_cache(self):
         self._block_layout = None
 
     @property
@@ -1396,9 +1394,10 @@ class MultiLeaderBlockBuilder(MultiLeaderBuilder):
         if self._block_layout is not None:
             return self._block_layout
 
-        context = self.context
-        assert context.block is not None, "BLOCK content required"
-        handle = context.block.block_record_handle
+        block = self.context.block
+        assert isinstance(block, BlockData), "undefined BLOCK content"
+
+        handle = block.block_record_handle
         block_record = self._doc.entitydb.get(handle)
         if block_record is None:
             raise ValueError(f"invalid BLOCK_RECORD handle #{handle}")
@@ -1445,14 +1444,14 @@ class MultiLeaderBlockBuilder(MultiLeaderBuilder):
 
     def _transform_content_to_render_ucs(self, insert: Vec2, rotation: float):
         block = self.context.block
-        assert block is not None
+        assert isinstance(block, BlockData), "undefined BLOCK content"
         block.extrusion = Z_AXIS
         block.insert = Vec3(insert)
         block.rotation += rotation
 
     def _apply_conversion_factor(self, conversion_factor: float) -> None:
         block = self.context.block
-        assert block is not None
+        assert isinstance(block, BlockData), "undefined BLOCK content"
         block.apply_conversion_factor(conversion_factor)
 
     def set_content(
@@ -1463,7 +1462,6 @@ class MultiLeaderBlockBuilder(MultiLeaderBuilder):
         rotation: float = 0.0,
         alignment=BlockAlignment.center_extents,
     ):
-        self._reset_caches()
         mleader = self._multileader
         # update MULTILEADER DXF namespace
         block = self._doc.blocks.get(name)
