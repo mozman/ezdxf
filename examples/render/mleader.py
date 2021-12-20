@@ -53,7 +53,7 @@ def simple_mtext_content_horizontal(name: str):
 def all_mtext_content_horizontal(name: str):
     doc = ezdxf.new(DXFVERSION, setup=True)
     msp = doc.modelspace()
-
+    attribs = {"color": ezdxf.colors.RED}
     for direction in range(9):
         for ax, alignment in enumerate(
             [
@@ -75,18 +75,32 @@ def all_mtext_content_horizontal(name: str):
                 style="OpenSans",
             )
             width = len(dir_enum.name) * 2.5
-            x = 40 + width
-            ml_builder.add_leader_line(ConnectionSide.right, [Vec2(x, 15)])
-            ml_builder.add_leader_line(ConnectionSide.right, [Vec2(x, -15)])
-            ml_builder.add_leader_line(ConnectionSide.left, [Vec2(-20, -15)])
+            x0 = -30
+            x1 = 40 + width
+            y0 = -15
+            y1 = 20
+
+            ml_builder.add_leader_line(ConnectionSide.right, [Vec2(x1, y1)])
+            ml_builder.add_leader_line(ConnectionSide.right, [Vec2(x1, y0)])
+            ml_builder.add_leader_line(ConnectionSide.left, [Vec2(x0, y0)])
+            ml_builder.add_leader_line(ConnectionSide.left, [Vec2(x0, y1)])
             x = 5
             if alignment == TextAlignment.center:
                 x += width / 2
             elif alignment == TextAlignment.right:
                 x += width
-            ml_builder.build(
-                insert=Vec2(x, 0), ucs=UCS(origin=(ax * 250, direction * 50))
+            ucs = UCS(origin=(ax * 250, direction * 50))
+            insert = Vec2(x, y1/2)
+            ml_builder.build(insert=insert, ucs=ucs)
+            e = msp.add_lwpolyline(
+                [(x0, y0), (x1, y0), (x1, y1), (x0, y1)],
+                close=True,
+                dxfattribs=attribs,
             )
+            e.transform(ucs.matrix)
+            e = msp.add_circle(insert, radius=0.5, dxfattribs=attribs)
+            e.transform(ucs.matrix)
+
     height = 600
     doc.set_modelspace_vport(height, center=(200, height / 2))
     doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")

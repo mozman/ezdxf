@@ -547,8 +547,8 @@ class RenderEngine:
         mtext = self.context.mtext
         if mtext is None:
             return
-        has_left_underline = self.left_attachment_type in (5, 6)
-        has_right_underline = self.right_attachment_type in (5, 6)
+        has_left_underline = self.left_attachment_type in (5, 6, 8)
+        has_right_underline = self.right_attachment_type in (5, 6, 8)
         if not (has_left_underline or has_right_underline):
             return
         connection_point = leader.last_leader_point + _get_dogleg_vector(leader)
