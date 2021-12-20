@@ -815,7 +815,6 @@ class MultiLeaderBuilder(abc.ABC):
         self._doc: "Drawing" = doc
         self._mleader_style: MLeaderStyle = style
         self._multileader = multileader
-        self._build_ucs: UCS = UCS()
         self._leaders: Dict[ConnectionSide, List[List[Vec2]]] = defaultdict(
             list
         )
@@ -832,18 +831,25 @@ class MultiLeaderBuilder(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def _build_connection_box(self, insert_ucs: Vec2) -> ConnectionBox:
+    def _build_connection_box(self) -> ConnectionBox:
         """Returns the connection box with the connection points on all 4 sides
-        in build UCS coordinates.
+        in build UCS coordinates. The origin of the build ucs is the insertion
+        or attachment point of the content.
         """
         ...
 
     @abc.abstractmethod
-    def _apply_build_ucs(self, insert: Vec2, rotation: float) -> UCS:
+    def _transform_content_to_render_ucs(
+        self, insert: Vec2, rotation: float
+    ) -> None:
         ...
 
     @abc.abstractmethod
     def _apply_conversion_factor(self, conversion_factor: float) -> None:
+        ...
+
+    @abc.abstractmethod
+    def _set_base_point(self, left: Vec3, bottom: Vec3):
         ...
 
     @property
@@ -995,12 +1001,28 @@ class MultiLeaderBuilder(abc.ABC):
 
         """
         assert isinstance(insert, Vec2), "insert has to be a Vec2() object"
-        multileader = self.multileader
-        insert = Vec2(insert)
         rotation = math.radians(rotation)
+        # transformation matrix from build ucs to render ucs
+        m = Matrix44.z_rotate(rotation) * Matrix44.translate(
+            insert.x, insert.y, 0.0
+        )
+
         self._set_required_multileader_attributes()
-        build_ucs = self._apply_build_ucs(insert, rotation)
-        connection_box = self._build_connection_box(insert_ucs=insert)
+        self._transform_content_to_render_ucs(insert, rotation)
+        connection_box = self._build_connection_box()
+        self._set_attachment_direction()
+        self._set_base_point(  # MTEXT requires "text_attachment_direction"
+            left=m.transform(connection_box.left.vec3),
+            bottom=m.transform(connection_box.bottom.vec3),
+        )
+        self.context.leaders.clear()
+
+        for side, leader_lines in self._leaders.items():
+            self._build_leader(leader_lines, side, connection_box.get(side), m)
+        if ucs is not None:
+            self._transform_to_wcs(ucs)
+
+    def _set_attachment_direction(self):
         leaders = self._leaders
         if leaders:
             horizontal = (ConnectionSide.left in leaders) or (
@@ -1017,25 +1039,12 @@ class MultiLeaderBuilder(abc.ABC):
                 0 if horizontal else 1
             )
             if vertical:
-                multileader.dxf.has_dogleg = False
+                self._multileader.dxf.has_dogleg = False
         # else MULTILEADER without any leader lines!
-        self._set_base_point(  # requires "text_attachment_direction"
-            left=self._build_ucs.to_wcs(connection_box.left.vec3),
-            bottom=self._build_ucs.to_wcs(connection_box.bottom.vec3),
-        )
-        # the content is build in UCS coordinates with rotation = 0
-        rotation = 0
-        self._apply_transformation(math.radians(rotation))
 
-        self.context.leaders.clear()
-        for side, leader_lines in leaders.items():
-            self._build_leader(
-                leader_lines, side, connection_box.get(side), self._build_ucs
-            )
-
+    def _transform_to_wcs(self, ucs: UCS) -> None:
         # transformation from render UCS into WCS
-        if ucs is not None:
-            multileader._transform(ucs.matrix)
+        self.multileader._transform(ucs.matrix)
 
     def _set_required_multileader_attributes(self):
         dxf = self.multileader.dxf
@@ -1048,28 +1057,14 @@ class MultiLeaderBuilder(abc.ABC):
             dxf.leader_linetype_handle = linetype.dxf.handle
         dxf.property_override_flags = 0xFFFFFFFF
 
-    def _set_base_point(self, left: Vec3, bottom: Vec3):
-        context = self.context
-        if context.mtext is not None:
-            if (
-                self.multileader.dxf.text_attachment_direction == 0
-            ):  # horizontal
-                context.base_point = left
-            else:  # vertical
-                context.base_point = bottom
-        elif context.block is not None:
-            # BricsCAD does not support vertical attached leaders
-            context.base_point = left
-
     def _build_leader(
         self,
         leader_lines: List[List[Vec2]],
         side: ConnectionSide,
-        connection_point_ucs: Vec2,
-        ucs: UCS,
+        connection_point: Vec2,
+        m: Matrix44,
     ):
-        # The content is always aligned to the x- and y-axis of the UCS!
-        # Rotation of the content has to be applied to the UCS!
+        # The content is always aligned to the x- and y-axis of the build UCS!
 
         # The dogleg vector points to the content:
         dogleg_direction = DOGLEG_DIRECTIONS[side]
@@ -1083,7 +1078,7 @@ class MultiLeaderBuilder(abc.ABC):
             1  # leader is invisible in AutoCAD if 0 ...
         )
         # flag is ignored by BricsCAD
-        leader.dogleg_vector = ucs.to_wcs(dogleg_direction)
+        leader.dogleg_vector = dogleg_direction
         if side == ConnectionSide.left or side == ConnectionSide.right:
             leader.attachment_direction = 0
         else:
@@ -1092,23 +1087,29 @@ class MultiLeaderBuilder(abc.ABC):
         # setting last leader point:
         # landing gap is already included in connection box
         if self.multileader.dxf.has_dogleg:
-            leader.last_leader_point = ucs.to_wcs(
-                connection_point_ucs.vec3
-                + (dogleg_direction * -leader.dogleg_length)
+            leader.last_leader_point = connection_point.vec3 + (
+                dogleg_direction * -leader.dogleg_length
             )
         else:
-            leader.last_leader_point = ucs.to_wcs(connection_point_ucs.vec3)
+            leader.last_leader_point = connection_point.vec3
 
+        # transform leader from build ucs to user UCS
+        leader.last_leader_point = m.transform(leader.last_leader_point)
+        leader.dogleg_vector = m.transform_direction(leader.dogleg_vector)
+
+        # leader line vertices in user UCS coordinates!
+        self._append_leader_lines(leader, leader_lines)
+        self.context.leaders.append(leader)
+
+    @staticmethod
+    def _append_leader_lines(
+        leader: LeaderData, leader_lines: List[List[Vec2]]
+    ) -> None:
         for index, vertices in enumerate(leader_lines):
             line = LeaderLine()
             line.index = index
-            # Leader line vertices in UCS coordinates!
-            line.vertices = list(ucs.points_to_wcs(Vec3.generate(vertices)))
+            line.vertices = Vec3.list(vertices)
             leader.lines.append(line)
-        self.context.leaders.append(leader)
-
-    def _apply_transformation(self, rotation: float) -> None:
-        pass
 
 
 class MultiLeaderMTextBuilder(MultiLeaderBuilder):
@@ -1126,13 +1127,14 @@ class MultiLeaderMTextBuilder(MultiLeaderBuilder):
         context.mtext = mtext
 
         mtext.default_content = style.dxf.default_text_content
-        mtext.extrusion = context.plane_z_axis
         mtext.style_handle = mleader.dxf.text_style_handle
-        mtext.insert = NULLVEC
-        mtext.text_direction = context.plane_x_axis
         mtext.color = mleader.dxf.text_color
         mtext.alignment = mleader.dxf.text_attachment_point
-        # todo: rotation
+
+        # build UCS:
+        # origin = attachment point
+        # x-axis = WCS x-axis
+        # extrusion = WCS z-axis
         # The char height is stored in MLeader Context()!
         # The content dimensions (width, height) are not calculated yet,
         # therefore scaling is not necessary!
@@ -1172,23 +1174,21 @@ class MultiLeaderMTextBuilder(MultiLeaderBuilder):
         else:
             raise ValueError(f"text style '{name}' does not exist")
 
-    def _build_connection_box(self, insert_ucs: Vec2) -> ConnectionBox:
-        """Returns the connection box for MTEXT content with the connection
-        points on all 4 sides in build UCS coordinates.
-
-        Args:
-            insert_ucs: insertion point of the MTEXT in build_ucs-coordinates
-
+    def _build_connection_box(self) -> ConnectionBox:
+        """Returns the connection box with the connection points on all 4 sides
+        in build UCS coordinates. The origin of the build ucs is the attachment
+        point of the MTEXT content.
         """
 
-        def get_aligned_insert(width: float) -> Vec2:
+        def get_left_x() -> float:
             assert mtext is not None  # shut-up mypy!!!!
-            dx = 0.0
-            if mtext.alignment == 2:
-                dx = -width * 0.5
-            elif mtext.alignment == 3:
-                dx = -width
-            return Vec2(dx, 0) + insert_ucs
+            # relative to the attachment point
+            x = -gap  # left
+            if mtext.alignment == 2:  # center
+                x = -width * 0.5 - gap
+            elif mtext.alignment == 3:  # right
+                x = -width - gap
+            return x
 
         def vertical_connection_height(
             connection: HorizontalConnection,
@@ -1214,8 +1214,7 @@ class MultiLeaderMTextBuilder(MultiLeaderBuilder):
 
         context = self.context
         mtext = context.mtext
-        if mtext is None:
-            raise TypeError("MULTILEADER has no MTEXT content")
+        assert isinstance(mtext, MTextData), "undefined MTEXT content"
         left_attachment = HorizontalConnection(context.left_attachment)
         right_attachment = HorizontalConnection(context.right_attachment)
         char_height = context.char_height  # scaled value!
@@ -1225,45 +1224,35 @@ class MultiLeaderMTextBuilder(MultiLeaderBuilder):
         height: float
         # required data: context.scale, context.char_height
         entity = make_mtext(self._multileader)
-        if text_tools.has_inline_formatting_codes(mtext.default_content):
+        if text_tools.has_inline_formatting_codes(entity.text):
             size = text_size.mtext_size(entity)
             width = size.total_width
             height = size.total_height
         else:
             width, height = text_size.estimate_mtext_extents(entity)
-        width2 = width * 0.5
 
-        # define connection points for rotation=0, alignment=left
-        left = Vec2(
-            -gap,
-            vertical_connection_height(left_attachment),
-        )
-        right = Vec2(
-            width + gap,
-            vertical_connection_height(right_attachment),
-        )
+        left_x = get_left_x()
+        right_x = left_x + width + 2.0 * gap
+        center_x = (left_x + right_x) * 0.5
 
-        # alignment (left, center, right) will ne applied:
-        insert = get_aligned_insert(width)
-
-        # Connection box in UCS coordinates, content is aligned to the UCS x-
-        # and y-axis!
+        # Connection box in build UCS coordinates:
         return ConnectionBox(
-            left=insert + left,
-            right=insert + right,
-            top=insert + Vec2(width2, gap),
-            bottom=insert + Vec2(width2, -height - gap),
+            left=Vec2(left_x, vertical_connection_height(left_attachment)),
+            right=Vec2(right_x, vertical_connection_height(right_attachment)),
+            top=Vec2(center_x, gap),
+            bottom=Vec2(center_x, -height - gap),
         )
 
-    def _apply_build_ucs(self, insert: Vec2, rotation: float) -> UCS:
+    def _transform_content_to_render_ucs(
+        self, insert: Vec2, rotation: float
+    ) -> None:
         mtext = self.context.mtext
         assert mtext is not None
-        build_ucs = self._build_ucs
-        mtext.extrusion = build_ucs.uz
-        mtext.insert = build_ucs.to_wcs(insert.vec3)
-        mtext.text_direction = build_ucs.ux
-        mtext.rotation = ocs_rotation(build_ucs)
-        return build_ucs
+        mtext.extrusion = Z_AXIS
+        mtext.insert = Vec3(insert)
+        mtext.text_direction = X_AXIS.rotate(rotation)
+        # todo: text_angle_type?
+        mtext.rotation = rotation
 
     def _apply_conversion_factor(self, conversion_factor: float) -> None:
         mtext = self.context.mtext
@@ -1299,7 +1288,7 @@ class MultiLeaderMTextBuilder(MultiLeaderBuilder):
                 first line segment
             connection_type: one of :class:`HorizontalConnection` or
                 :class:`VerticalConnection`
-            ucs: the rendering user coordinate system, default is the :ref:`WCS`
+            ucs: the rendering :class:`~ezdxf.math.UCS`, default is the :ref:`WCS`
 
         """
         offset = segment1
@@ -1311,7 +1300,6 @@ class MultiLeaderMTextBuilder(MultiLeaderBuilder):
             alignment = (
                 TextAlignment.right if offset.x <= 0.0 else TextAlignment.left
             )
-        self._render_ucs = ucs
         # Use text color and char height defined by the associated MLEADERSTYLE.
         self.set_content(content, alignment=alignment)
 
@@ -1320,7 +1308,7 @@ class MultiLeaderMTextBuilder(MultiLeaderBuilder):
         move_text_y: float  # relative y-movement of MTEXT from insert location
         side: ConnectionSide  # left, right, top, bottom
         has_dogleg = bool(self.multileader.dxf.has_dogleg)
-        connection_box = self._build_connection_box(insert_ucs=Vec2(0, 0))
+        connection_box = self._build_connection_box()
         if isinstance(connection_type, HorizontalConnection):
             move_text_x = 0.0  # MTEXT is aligned to the insert location
             if offset.x <= 0.0:
@@ -1368,7 +1356,13 @@ class MultiLeaderMTextBuilder(MultiLeaderBuilder):
         insert = (
             last_leader_point + last_segment + Vec2(move_text_x, move_text_y)
         )
-        self.build(insert)
+        self.build(insert, ucs=ucs)
+
+    def _set_base_point(self, left: Vec3, bottom: Vec3):
+        if self._multileader.dxf.text_attachment_direction == 0:  # horizontal
+            self.context.base_point = left
+        else:  # vertical
+            self.context.base_point = bottom
 
 
 class MultiLeaderBlockBuilder(MultiLeaderBuilder):
@@ -1389,8 +1383,6 @@ class MultiLeaderBlockBuilder(MultiLeaderBuilder):
         # create default block content
         block = BlockData()
         block.block_record_handle = mleader.dxf.block_record_handle
-        block.extrusion = context.plane_z_axis
-        block.insert = NULLVEC
         # final scaling factors for the INSERT entity:
         block.scale = mleader.dxf.block_scale_vector * context.scale
         block.rotation = mleader.dxf.block_rotation
@@ -1419,37 +1411,44 @@ class MultiLeaderBlockBuilder(MultiLeaderBuilder):
         self._block_layout = block_layout
         return block_layout
 
-    def _build_connection_box(self, insert_ucs: Vec2) -> ConnectionBox:
-        """Returns the connection box for BLOCK content with the connection
-        points on all 4 sides in UCS coordinates.
+    def _build_connection_box(self) -> ConnectionBox:
+        """Returns the connection box with the connection points on all 4 sides
+        in build UCS coordinates. The origin of the build ucs is the insertion
+        point of the BLOCK content.
         """
         # ignore the landing gap for BLOCK content
         from ezdxf import bbox
 
+        block = self.context.block
+        assert isinstance(block, BlockData), "undefined BLOCK content"
+
+        # todo: block_connection_type
         block_connection_type = self._multileader.dxf.block_connection_type
         block_layout = self.block_layout
         extents = bbox.extents(block_layout)
-        # todo: apply block scale and overall scale
-        width2 = extents.size.x * 0.5
-        height2 = extents.size.y * 0.5
-        insert = insert_ucs - (
-            extents.center.vec2 - block_layout.base_point.vec2
-        )
+        sx = block.scale.x
+        sy = block.scale.y
+        width2 = extents.size.x * 0.5 * sx
+        height2 = extents.size.y * 0.5 * sx
+        base_x = block_layout.base_point.x * sx
+        base_y = block_layout.base_point.y * sy
+        center_x = extents.center.x * sx
+        center_y = extents.center.y * sy
+        insert_x = center_x - base_x
+        insert_y = center_y - base_y
         return ConnectionBox(
-            left=insert + Vec2(-width2, 0.0),
-            right=insert + Vec2(width2, 0.0),
-            top=insert + Vec2(0.0, height2),
-            bottom=insert + Vec2(0.0, -height2),
+            left=Vec2(insert_x - width2, 0.0),
+            right=Vec2(insert_x + width2, 0.0),
+            top=Vec2(0.0, insert_y + height2),
+            bottom=Vec2(0.0, insert_y - height2),
         )
 
-    def _apply_build_ucs(self, insert: Vec2, rotation: float) -> UCS:
+    def _transform_content_to_render_ucs(self, insert: Vec2, rotation: float):
         block = self.context.block
         assert block is not None
-        build_ucs = self._build_ucs
-        block.extrusion = build_ucs.uz
-        block.insert = build_ucs.to_wcs(insert.vec3)
-        block.rotation = ocs_rotation(build_ucs)
-        return build_ucs
+        block.extrusion = Z_AXIS
+        block.insert = Vec3(insert)
+        block.rotation += rotation
 
     def _apply_conversion_factor(self, conversion_factor: float) -> None:
         block = self.context.block
@@ -1491,3 +1490,7 @@ class MultiLeaderBlockBuilder(MultiLeaderBuilder):
                     )
                 )
                 break
+
+    def _set_base_point(self, left: Vec3, bottom: Vec3):
+        # BricsCAD does not support vertical attached leaders
+        self.context.base_point = left
