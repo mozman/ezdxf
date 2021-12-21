@@ -69,7 +69,27 @@ DXF Document
   - XLINE and RAY entities
   - OBJECTS and the CLASSES sections
   - all but the first paper space layout
-   
+
+- (>v1.0) core module `ezdxf.xref` as replacement for the `Importer` add-on
+  - AutoCAD does not support DXF as XREF objects!
+  - ezdxf will only support DXF as XREF objects, use the `odafc` add-on to convert 
+    DWG to DXF
+  - has to be much more versatile than the current `Importer` add-on otherwise 
+    just improve and extend the `Importer` add-on 
+  - resource management like CAD applications, e.g. layer names of xrefs: 
+    <dwg-name>$0$layername
+  - `xref.bind(xref_block)`: convert a XREF into a common BLOCK, this replaces 
+    the model space import of the `Importer` add-on
+  - `xref.attach(doc, "xref_filename.dxf")`, replaces `Drawing.add_xref_def()`
+  - `xmgr = xref.XRefManager(source_doc, target_doc)`
+  - `xmgr.import_modelspace()` import all modelspace entities
+  - `xmgr.import_entities(entities)` import selected entities
+  - modify entities on import (transform, change DXF properties)
+  - `xmgr.import_block("block_name")`
+  - `xmgr.import_resources(resource_desc)`
+  - `xmgr.import_paperspace("layout_name")` ???
+  - `xmgr.finalize()`
+  
 Documentation
 -------------
 
