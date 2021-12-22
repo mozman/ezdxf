@@ -2,7 +2,6 @@
 # License: MIT License
 from typing import (
     TYPE_CHECKING,
-    Iterable,
     Iterator,
     Optional,
     List,
@@ -116,7 +115,7 @@ class Table:
         """
         if self.has_entry(name):
             raise const.DXFTableEntryError(
-                f"{self._head.dxf.name} {name} already exists!"
+                f"{self.TABLE_TYPE} '{name}' already exists!"
             )
         dxfattribs = dxfattribs or {}
         dxfattribs["name"] = name
@@ -181,7 +180,7 @@ class Table:
         Duplicate entries are possible for Viewports.
         """
         entry = factory.create_db_entry(
-            self._head.dxf.name, dxfattribs, self.doc  # type: ignore
+            self.TABLE_TYPE, dxfattribs, self.doc  # type: ignore
         )
         self._append(entry)
         return entry
