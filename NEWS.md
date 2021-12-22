@@ -28,6 +28,7 @@ Version 0.17.2b4 - dev
   `add_arc_dim_3p()`, `add_arc_dim_cra()`, `add_arc_dim_arc()`
 - PREVIEW: ordinate dimension rendering support, new factory methods: 
   `add_ordinate_dim()`, `add_ordinate_x_dim()`, `add_ordinate_y_dim()`
+- PREVIEW: `ezdxf.gfxattribs.gfxattribs()` function, [docs](https://ezdxf.mozman.at/docs/tools/gfxattribs.html)
 
 Version 0.17.1 - 2021-11-14
 ---------------------------

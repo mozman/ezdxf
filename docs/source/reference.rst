@@ -98,6 +98,7 @@ Tools
 
     tools/functions
     tools/colors
+    tools/gfxattribs
     tools/text
     tools/text_size
     tools/fonts
