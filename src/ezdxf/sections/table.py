@@ -184,8 +184,9 @@ class Table(Generic[T]):
         Does not check if an entry dxfattribs['name'] already exists!
         Duplicate entries are possible for Viewports.
         """
+        assert self.doc is not None, "valid DXF document expected"
         entry = cast(T, factory.create_db_entry(
-            self.TABLE_TYPE, dxfattribs, self.doc  # type: ignore
+            self.TABLE_TYPE, dxfattribs, self.doc
         ))
 
         self._append(entry)
@@ -400,7 +401,7 @@ class StyleTable(Table["Textstyle"]):
                 "last_height": 2.5,  # maybe required by AutoCAD
             }
         )
-        return self.new_entry(dxfattribs)  # type: ignore
+        return self.new_entry(dxfattribs)
 
     def add_shx(self, shx_file: str, *, dxfattribs: Dict = None) -> "Textstyle":
         """Add a new shape font (SHX file) entry. These are special text style
@@ -432,7 +433,7 @@ class StyleTable(Table["Textstyle"]):
                 "last_height": 2.5,  # maybe required by AutoCAD
             }
         )
-        return self.new_entry(dxfattribs)  # type: ignore
+        return self.new_entry(dxfattribs)
 
     def get_shx(self, shx_file: str) -> "Textstyle":
         """Get existing entry for a shape file (SHX file), or create a new
@@ -464,7 +465,7 @@ class StyleTable(Table["Textstyle"]):
         lower_name = shx_file.lower()
         for entry in iter(self):
             if entry.dxf.font.lower() == lower_name:
-                return entry  # type: ignore
+                return entry
         return None
 
 
@@ -493,7 +494,7 @@ class ViewportTable(Table["VPort"]):
         """
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["name"] = name
-        return self.new_entry(dxfattribs)  # type: ignore
+        return self.new_entry(dxfattribs)
 
     def remove(self, name: str) -> None:
         """Remove table-entry from table and entitydb by name."""
@@ -521,8 +522,9 @@ class ViewportTable(Table["VPort"]):
         Does not check if an entry dxfattribs['name'] already exists!
         Duplicate entries are possible for Viewports.
         """
+        assert self.doc is not None, "valid DXF document expected"
         entry = cast(T, factory.create_db_entry(
-            self._head.dxf.name, dxfattribs, self.doc  # type: ignore
+            self.TABLE_TYPE, dxfattribs, self.doc
         ))
         self._append(entry)
         return entry
@@ -574,7 +576,7 @@ class AppIDTable(Table["AppID"]):
         """
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["name"] = name
-        return self.new_entry(dxfattribs)  # type: ignore
+        return self.new_entry(dxfattribs)
 
 
 class ViewTable(Table["View"]):
@@ -592,7 +594,7 @@ class ViewTable(Table["View"]):
         """
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["name"] = name
-        return self.new_entry(dxfattribs)  # type: ignore
+        return self.new_entry(dxfattribs)
 
 
 class BlockRecordTable(Table["BlockRecord"]):
@@ -610,7 +612,7 @@ class BlockRecordTable(Table["BlockRecord"]):
         """
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["name"] = name
-        return self.new_entry(dxfattribs)  # type: ignore
+        return self.new_entry(dxfattribs)
 
 
 class DimStyleTable(Table["DimStyle"]):
@@ -628,7 +630,7 @@ class DimStyleTable(Table["DimStyle"]):
         """
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["name"] = name
-        return self.new_entry(dxfattribs)  # type: ignore
+        return self.new_entry(dxfattribs)
 
 
 class UCSTable(Table["UCSTableEntry"]):
@@ -646,4 +648,4 @@ class UCSTable(Table["UCSTableEntry"]):
         """
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["name"] = name
-        return self.new_entry(dxfattribs)  # type: ignore
+        return self.new_entry(dxfattribs)
