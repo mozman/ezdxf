@@ -113,7 +113,7 @@ Factory function         :meth:`Drawing.styles.new`
 
     .. attribute:: dxf.owner
 
-        Handle to owner (:class:`~ezdxf.sections.table.StyleTable`).
+        Handle to owner (:class:`~ezdxf.sections.table.TextstyleTable`).
 
     .. attribute:: dxf.name
 

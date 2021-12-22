@@ -21,7 +21,7 @@ The TABLES section is the home of all TABLE objects of a DXF document.
 
     .. attribute:: styles
 
-        :class:`~ezdxf.sections.table.StyleTable` object for :class:`~ezdxf.entities.Textstyle` objects
+        :class:`~ezdxf.sections.table.TextstyleTable` object for :class:`~ezdxf.entities.Textstyle` objects
 
     .. attribute:: dimstyles
 

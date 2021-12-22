@@ -6,9 +6,9 @@ from ezdxf.lldxf.const import DXFStructureError, DXF12
 from .table import (
     Table,
     ViewportTable,
-    StyleTable,
+    TextstyleTable,
     LayerTable,
-    LineTypeTable,
+    LinetypeTable,
     AppIDTable,
     ViewTable,
     BlockRecordTable,
@@ -45,10 +45,10 @@ class TablesSection:
         self.doc = doc
         # not loaded tables: table.doc is None
         self.layers = LayerTable()
-        self.linetypes = LineTypeTable()
+        self.linetypes = LinetypeTable()
         self.appids = AppIDTable()
         self.dimstyles = DimStyleTable()
-        self.styles = StyleTable()
+        self.styles = TextstyleTable()
         self.ucs = UCSTable()
         self.views = ViewTable()
         self.viewports = ViewportTable()

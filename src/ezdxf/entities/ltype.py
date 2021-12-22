@@ -197,7 +197,7 @@ class Linetype(DXFEntity):
         self, pattern: Union[Sequence[float], str], length: float = 0
     ) -> None:
         # The new() function gets no doc reference, therefore complex linetype
-        # setup has to be done later. See also: LineTypeTable.new_entry()
+        # setup has to be done later. See also: LinetypeTable.new_entry()
         complex_line_type = True if isinstance(pattern, str) else False
         if complex_line_type:  # a .lin like line type definition string
             tags = self._setup_complex_pattern(pattern, length)  # type: ignore

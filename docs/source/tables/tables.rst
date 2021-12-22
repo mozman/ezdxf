@@ -43,7 +43,7 @@ Layer Table
 Linetype Table
 --------------
 
-.. class:: LineTypeTable
+.. class:: LinetypeTable
 
     Subclass of :class:`Table`.
 
@@ -54,7 +54,7 @@ Linetype Table
 Style Table
 -----------
 
-.. class:: StyleTable
+.. class:: TextstyleTable
 
     Subclass of :class:`Table`.
 

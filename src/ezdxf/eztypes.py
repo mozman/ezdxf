@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 
     # Sections and Tables
     from ezdxf.sections.table import (
-        Table, ViewportTable, LayerTable, StyleTable
+        Table, ViewportTable, LayerTable, TextstyleTable
     )
     from ezdxf.sections.blocks import BlocksSection
     from ezdxf.sections.header import HeaderSection

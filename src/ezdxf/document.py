@@ -77,8 +77,8 @@ if TYPE_CHECKING:
     )
     from ezdxf.sections.tables import (
         LayerTable,
-        LineTypeTable,
-        StyleTable,
+        LinetypeTable,
+        TextstyleTable,
         DimStyleTable,
         AppIDTable,
         UCSTable,
@@ -723,11 +723,11 @@ class Drawing:
         return self.tables.layers
 
     @property
-    def linetypes(self) -> "LineTypeTable":
+    def linetypes(self) -> "LinetypeTable":
         return self.tables.linetypes
 
     @property
-    def styles(self) -> "StyleTable":
+    def styles(self) -> "TextstyleTable":
         return self.tables.styles
 
     @property

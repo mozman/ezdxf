@@ -314,7 +314,7 @@ class LayerTable(Table["Layer"]):
         return layer
 
 
-class LineTypeTable(Table["Linetype"]):
+class LinetypeTable(Table["Linetype"]):
     TABLE_TYPE = "LTYPE"
 
     def new_entry(self, dxfattribs: dict) -> T:
@@ -370,7 +370,7 @@ class LineTypeTable(Table["Linetype"]):
         return self.new_entry(dxfattribs)  # type: ignore
 
 
-class StyleTable(Table["Textstyle"]):
+class TextstyleTable(Table["Textstyle"]):
     TABLE_TYPE = "STYLE"
 
     def add(
