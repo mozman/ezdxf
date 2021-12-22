@@ -8,6 +8,8 @@ from typing import (
     Dict,
     cast,
     Union,
+    Generic,
+    TypeVar,
 )
 from collections import OrderedDict
 import logging
@@ -35,13 +37,15 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("ezdxf")
 
+T = TypeVar("T", bound="DXFEntity")
 
-class Table:
+
+class Table(Generic[T]):
     TABLE_TYPE = "UNKNOWN"
 
     def __init__(self):
         self.doc: Optional["Drawing"] = None
-        self.entries: Dict[str, DXFEntity] = OrderedDict()
+        self.entries: Dict[str, T] = OrderedDict()
         self._head = TableHead()
 
     def load(self, doc: "Drawing", entities: Iterator["DXFEntity"]) -> None:
@@ -57,7 +61,7 @@ class Table:
         expected_entry_dxftype = self.TABLE_TYPE
         for table_entry in entities:
             if table_entry.dxftype() == expected_entry_dxftype:
-                self._append(table_entry)
+                self._append(cast(T, table_entry))
             else:
                 logger.warning(
                     f"Ignored invalid DXF entity type '{table_entry.dxftype()}'"
@@ -99,13 +103,13 @@ class Table:
         """Count of table entries."""
         return len(self.entries)
 
-    def __iter__(self) -> Iterator["DXFEntity"]:
+    def __iter__(self) -> Iterator[T]:
         """Iterable of all table entries."""
         for e in self.entries.values():
             if e.is_alive:
                 yield e
 
-    def new(self, name: str, dxfattribs: dict = None) -> "DXFEntity":
+    def new(self, name: str, dxfattribs: dict = None) -> T:
         """Create a new table entry `name`.
 
         Args:
@@ -122,7 +126,7 @@ class Table:
         dxfattribs["owner"] = self._head.dxf.handle
         return self.new_entry(dxfattribs)
 
-    def get(self, name: str) -> "DXFEntity":
+    def get(self, name: str) -> T:
         """Get table entry `name` (case insensitive).
         Raises :class:`DXFValueError` if table entry does not exist.
         """
@@ -142,7 +146,7 @@ class Table:
         self.entitydb.delete_entity(entry)
         self.discard(key)
 
-    def duplicate_entry(self, name: str, new_name: str) -> "DXFEntity":
+    def duplicate_entry(self, name: str, new_name: str) -> T:
         """Returns a new table entry `new_name` as copy of `name`,
         replaces entry `new_name` if already exist.
 
@@ -157,14 +161,15 @@ class Table:
         else:  # only for testing!
             new_entry = entry.copy()
         new_entry.dxf.name = new_name
-        self._append(new_entry)
-        return new_entry
+        entry = cast(T, new_entry)
+        self._append(entry)
+        return entry
 
     def discard(self, name: str) -> None:
         """Remove table entry without destroying object. (internal API)"""
         del self.entries[self.key(name)]
 
-    def replace(self, name: str, entry: "DXFEntity") -> None:
+    def replace(self, name: str, entry: T) -> None:
         """Replace table entry `name` by new `entry`. (internal API)"""
         self.discard(name)
         self._append(entry)
@@ -173,26 +178,27 @@ class Table:
     def entitydb(self) -> "EntityDB":
         return self.doc.entitydb  # type: ignore
 
-    def new_entry(self, dxfattribs: dict) -> "DXFEntity":
+    def new_entry(self, dxfattribs: dict) -> T:
         """Create and add new table-entry of type 'self.entry_dxftype'.
 
         Does not check if an entry dxfattribs['name'] already exists!
         Duplicate entries are possible for Viewports.
         """
-        entry = factory.create_db_entry(
+        entry = cast(T, factory.create_db_entry(
             self.TABLE_TYPE, dxfattribs, self.doc  # type: ignore
-        )
+        ))
+
         self._append(entry)
         return entry
 
-    def _append(self, entry: "DXFEntity") -> None:
+    def _append(self, entry: T) -> None:
         """Add a table entry, replaces existing entries with same name.
         (internal API).
         """
         assert entry.dxftype() == self.TABLE_TYPE
         self.entries[self.key(entry.dxf.name)] = entry
 
-    def add_entry(self, entry: "DXFEntity") -> None:
+    def add_entry(self, entry: T) -> None:
         """Add a table `entry`, created by other object than this table.
         (internal API)
         """
@@ -250,10 +256,10 @@ class Table:
             self.update_owner_handles()
 
 
-class LayerTable(Table):
+class LayerTable(Table["Layer"]):
     TABLE_TYPE = "LAYER"
 
-    def new_entry(self, dxfattribs: dict) -> "DXFEntity":
+    def new_entry(self, dxfattribs: dict) -> "Layer":
         layer = cast("Layer", super().new_entry(dxfattribs))
         if self.doc:
             layer.set_required_attributes()
@@ -307,15 +313,15 @@ class LayerTable(Table):
         return layer
 
 
-class LineTypeTable(Table):
+class LineTypeTable(Table["Linetype"]):
     TABLE_TYPE = "LTYPE"
 
-    def new_entry(self, dxfattribs: dict) -> "DXFEntity":
+    def new_entry(self, dxfattribs: dict) -> T:
         pattern = dxfattribs.pop("pattern", [0.0])
         length = dxfattribs.pop("length", 0)  # required for complex types
         ltype = cast("Linetype", super().new_entry(dxfattribs))
         ltype.setup_pattern(pattern, length)
-        return ltype
+        return cast(T, ltype)
 
     def add(
         self,
@@ -363,7 +369,7 @@ class LineTypeTable(Table):
         return self.new_entry(dxfattribs)  # type: ignore
 
 
-class StyleTable(Table):
+class StyleTable(Table["Textstyle"]):
     TABLE_TYPE = "STYLE"
 
     def add(
@@ -462,12 +468,12 @@ class StyleTable(Table):
         return None
 
 
-class ViewportTable(Table):
+class ViewportTable(Table["VPort"]):
     TABLE_TYPE = "VPORT"
     # Viewport-Table can have multiple entries with same name
     # each table entry is a list of VPORT entries
 
-    def new(self, name: str, dxfattribs: dict = None) -> "DXFEntity":
+    def new(self, name: str, dxfattribs: dict = None) -> T:
         """Create a new table entry."""
         dxfattribs = dxfattribs or {}
         dxfattribs["name"] = name
@@ -497,11 +503,11 @@ class ViewportTable(Table):
             self.entitydb.delete_entity(entry)
         del self.entries[key]
 
-    def __iter__(self) -> Iterator["DXFEntity"]:
+    def __iter__(self) -> Iterator[T]:
         for entries in self.entries.values():
             yield from iter(entries)  # type: ignore
 
-    def _flatten(self) -> Iterator["DXFEntity"]:
+    def _flatten(self) -> Iterator[T]:
         for entries in self.entries.values():
             yield from iter(entries)  # type: ignore
 
@@ -509,22 +515,22 @@ class ViewportTable(Table):
         # calling __iter__() invokes recursion!
         return len(list(self._flatten()))
 
-    def new_entry(self, dxfattribs: dict) -> "DXFEntity":
+    def new_entry(self, dxfattribs: dict) -> T:
         """Create and add new table-entry of type 'self.entry_dxftype'.
 
         Does not check if an entry dxfattribs['name'] already exists!
         Duplicate entries are possible for Viewports.
         """
-        entry = factory.create_db_entry(
+        entry = cast(T, factory.create_db_entry(
             self._head.dxf.name, dxfattribs, self.doc  # type: ignore
-        )
+        ))
         self._append(entry)
         return entry
 
-    def duplicate_entry(self, name: str, new_name: str) -> "DXFEntity":
+    def duplicate_entry(self, name: str, new_name: str) -> T:
         raise NotImplementedError()
 
-    def _append(self, entry: "DXFEntity") -> None:
+    def _append(self, entry: T) -> None:
         key = self.key(entry.dxf.name)
         if key in self.entries:
             self.entries[key].append(entry)  # type: ignore
@@ -537,7 +543,7 @@ class ViewportTable(Table):
             for entry in entries:  # type: ignore
                 entry.dxf.owner = owner_handle
 
-    def get_config(self, name: str) -> List["DXFEntity"]:
+    def get_config(self, name: str) -> List[T]:
         """Returns a list of :class:`~ezdxf.entities.VPort` objects, for
         the multi-viewport configuration `name`.
         """
@@ -553,7 +559,7 @@ class ViewportTable(Table):
         self.remove(name)
 
 
-class AppIDTable(Table):
+class AppIDTable(Table["AppID"]):
     TABLE_TYPE = "APPID"
 
     def add(self, name: str, *, dxfattribs: Dict = None) -> "AppID":
@@ -571,7 +577,7 @@ class AppIDTable(Table):
         return self.new_entry(dxfattribs)  # type: ignore
 
 
-class ViewTable(Table):
+class ViewTable(Table["View"]):
     TABLE_TYPE = "VIEW"
 
     def add(self, name: str, *, dxfattribs: Dict = None) -> "View":
@@ -589,7 +595,7 @@ class ViewTable(Table):
         return self.new_entry(dxfattribs)  # type: ignore
 
 
-class BlockRecordTable(Table):
+class BlockRecordTable(Table["BlockRecord"]):
     TABLE_TYPE = "BLOCK_RECORD"
 
     def add(self, name: str, *, dxfattribs: Dict = None) -> "BlockRecord":
@@ -607,7 +613,7 @@ class BlockRecordTable(Table):
         return self.new_entry(dxfattribs)  # type: ignore
 
 
-class DimStyleTable(Table):
+class DimStyleTable(Table["DimStyle"]):
     TABLE_TYPE = "DIMSTYLE"
 
     def add(self, name: str, *, dxfattribs: Dict = None) -> "DimStyle":
@@ -625,7 +631,7 @@ class DimStyleTable(Table):
         return self.new_entry(dxfattribs)  # type: ignore
 
 
-class UCSTable(Table):
+class UCSTable(Table["UCSTableEntry"]):
     TABLE_TYPE = "UCS"
 
     def add(self, name: str, *, dxfattribs: Dict = None) -> "UCSTableEntry":
