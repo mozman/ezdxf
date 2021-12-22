@@ -57,6 +57,8 @@ def tablename(dxfname: str) -> str:
 
 
 class Table:
+    TABLE_TYPE = "UNKNOWN"
+
     def __init__(
         self, doc: "Drawing" = None, entities: Iterable["DXFEntity"] = None
     ):
@@ -75,22 +77,21 @@ class Table:
             raise const.DXFStructureError(
                 "Critical structure error in TABLES section."
             )
-        expected_entry_dxftype = self.entry_dxftype
+        expected_entry_dxftype = self.TABLE_TYPE
         for table_entry in entities:
             if table_entry.dxftype() == expected_entry_dxftype:
                 self._append(table_entry)
             else:
                 logger.warning(
                     f"Ignored invalid DXF entity type '{table_entry.dxftype()}'"
-                    f" in table '{self.name}'."
+                    f" in {self.TABLE_TYPE} table."
                 )
 
-    @classmethod
-    def new_table(cls, name: str, handle: str, doc: "Drawing") -> "Table":
-        """Create new table. (internal API)"""
-        table = cls(doc)
-        table._set_head(name, handle)
-        return table
+    def reset(self, handle: str, doc: "Drawing") -> None:
+        """Reset table. (internal API)"""
+        self.doc = doc
+        self._set_head(self.TABLE_TYPE, handle)
+        self.entries.clear()
 
     def _set_head(self, name: str, handle: str = None) -> None:
         self._head = TableHead.new(
@@ -102,19 +103,10 @@ class Table:
         """Returns table head entry."""
         return self._head
 
-    @property
-    def entry_dxftype(self) -> str:
-        return self._head.dxf.name
-
     @staticmethod
     def key(name: str) -> str:
         """Unified table entry key."""
         return validator.make_table_key(name)
-
-    @property
-    def name(self) -> str:
-        """Table name like ``layers``."""
-        return tablename(self.entry_dxftype)
 
     def has_entry(self, name: str) -> bool:
         """Returns ``True`` if an table entry `name` exist."""
@@ -216,14 +208,14 @@ class Table:
         """Add a table entry, replaces existing entries with same name.
         (internal API).
         """
-        assert entry.dxftype() == self.entry_dxftype
+        assert entry.dxftype() == self.TABLE_TYPE
         self.entries[self.key(entry.dxf.name)] = entry
 
     def add_entry(self, entry: "DXFEntity") -> None:
         """Add a table `entry`, created by other object than this table.
         (internal API)
         """
-        if entry.dxftype() != self.entry_dxftype:
+        if entry.dxftype() != self.TABLE_TYPE:
             raise const.DXFTypeError(
                 f"Invalid table entry type {entry.dxftype()} "
                 f"for table {self.name}"
@@ -278,6 +270,8 @@ class Table:
 
 
 class LayerTable(Table):
+    TABLE_TYPE = "LAYER"
+
     def new_entry(self, dxfattribs: dict) -> "DXFEntity":
         layer = cast("Layer", super().new_entry(dxfattribs))
         if self.doc:
@@ -333,6 +327,8 @@ class LayerTable(Table):
 
 
 class LineTypeTable(Table):
+    TABLE_TYPE = "LTYPE"
+
     def new_entry(self, dxfattribs: dict) -> "DXFEntity":
         pattern = dxfattribs.pop("pattern", [0.0])
         length = dxfattribs.pop("length", 0)  # required for complex types
@@ -387,6 +383,8 @@ class LineTypeTable(Table):
 
 
 class StyleTable(Table):
+    TABLE_TYPE = "STYLE"
+
     def add(
         self, name: str, *, font: str, dxfattribs: Dict = None
     ) -> "Textstyle":
@@ -484,6 +482,7 @@ class StyleTable(Table):
 
 
 class ViewportTable(Table):
+    TABLE_TYPE = "VPORT"
     # Viewport-Table can have multiple entries with same name
     # each table entry is a list of VPORT entries
 
@@ -574,6 +573,7 @@ class ViewportTable(Table):
 
 
 class AppIDTable(Table):
+    TABLE_TYPE = "APPID"
     def add(self, name: str, *, dxfattribs: Dict = None) -> "AppID":
         """Add a new appid table entry.
 
@@ -590,6 +590,7 @@ class AppIDTable(Table):
 
 
 class ViewTable(Table):
+    TABLE_TYPE = "VIEW"
     def add(self, name: str, *, dxfattribs: Dict = None) -> "View":
         """Add a new view table entry.
 
@@ -606,6 +607,8 @@ class ViewTable(Table):
 
 
 class BlockRecordTable(Table):
+    TABLE_TYPE = "BLOCK_RECORD"
+
     def add(self, name: str, *, dxfattribs: Dict = None) -> "BlockRecord":
         """Add a new block record table entry.
 
@@ -622,6 +625,8 @@ class BlockRecordTable(Table):
 
 
 class DimStyleTable(Table):
+    TABLE_TYPE = "DIMSTYLE"
+
     def add(self, name: str, *, dxfattribs: Dict = None) -> "DimStyle":
         """Add a new dimension style table entry.
 
@@ -638,6 +643,8 @@ class DimStyleTable(Table):
 
 
 class UCSTable(Table):
+    TABLE_TYPE = "UCS"
+
     def add(self, name: str, *, dxfattribs: Dict = None) -> "UCSTableEntry":
         """Add a new UCS table entry.
 
