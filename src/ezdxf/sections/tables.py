@@ -121,14 +121,13 @@ class TablesSection:
         """
         table = getattr(self, TABLENAMES[name])
         if isinstance(table, Table):
-            table.doc = self.doc
-            table.load(iter(table_entities))
+            table.load(self.doc, iter(table_entities))
 
     def _reset_not_loaded_tables(self) -> None:
         for table in self.tables():
             if table.doc is None:
                 handle = self.doc.entitydb.next_handle()
-                table.reset(handle, self.doc)
+                table.reset(self.doc, handle)
 
     def export_dxf(self, tagwriter: "TagWriter") -> None:
         tagwriter.write_str("  0\nSECTION\n  2\nTABLES\n")

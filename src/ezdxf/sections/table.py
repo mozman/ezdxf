@@ -40,17 +40,14 @@ logger = logging.getLogger("ezdxf")
 class Table:
     TABLE_TYPE = "UNKNOWN"
 
-    def __init__(
-        self, doc: "Drawing" = None, entities: Iterable["DXFEntity"] = None
-    ):
-        self.doc = doc
+    def __init__(self):
+        self.doc: Optional["Drawing"] = None
         self.entries: Dict[str, DXFEntity] = OrderedDict()
         self._head = TableHead()
-        if entities is not None:
-            self.load(iter(entities))
 
-    def load(self, entities: Iterator["DXFEntity"]) -> None:
+    def load(self, doc: "Drawing", entities: Iterator["DXFEntity"]) -> None:
         """Loading interface. (internal API)"""
+        self.doc = doc
         table_head = next(entities)
         if isinstance(table_head, TableHead):
             self._head = table_head
@@ -68,7 +65,7 @@ class Table:
                     f" in {self.TABLE_TYPE} table."
                 )
 
-    def reset(self, handle: str, doc: "Drawing") -> None:
+    def reset(self, doc: "Drawing", handle: str) -> None:
         """Reset table. (internal API)"""
         self.doc = doc
         self._set_head(self.TABLE_TYPE, handle)

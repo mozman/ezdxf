@@ -21,7 +21,8 @@ def test_table_entry_dxf_type(table):
 def test_ac1009_load_table():
     doc = ezdxf.new("R12")
     entities = list(load_entities(AC1009TABLE, "TABLES"))
-    table = AppIDTable(doc, entities[1:-1])  # without SECTION tags and ENDTAB
+    table = AppIDTable()
+    table.load(doc, iter(entities[1:-1]))  # without SECTION tags and ENDTAB
     assert len(table) == 10
 
 
@@ -31,7 +32,8 @@ def test_load_table_with_invalid_table_entry():
     """
     doc = ezdxf.new("R12")
     entities = list(load_entities(INVALID_TABLE_ENTRY, "TABLES"))
-    table = Table(doc, entities[1:-1])  # without SECTION tags and ENDTAB
+    table = Table()
+    table.load(doc, iter(entities[1:-1]))  # without SECTION tags and ENDTAB
     assert len(table) == 0
 
 
@@ -48,7 +50,8 @@ def test_ac1009_write(table):
 def test_ac1024_load_table():
     doc = ezdxf.new("R2010")
     entities = list(load_entities(AC1024TABLE, "TABLES"))
-    table = AppIDTable(doc, entities[1:-1])  # without SECTION tags and ENDTAB
+    table = AppIDTable()
+    table.load(doc, iter(entities[1:-1]))  # without SECTION tags and ENDTAB
     assert 10 == len(table)
 
 
