@@ -276,7 +276,7 @@ class Auditor:
                 self.entitydb.add(head)
                 self.fixed_error(
                     code=AuditError.INVALID_TABLE_HANDLE,
-                    message=f"Fixed invalid table handle in {table.name}",
+                    message=f"Fixed invalid handle in table {table.name}",
                 )
             # Just to be sure owner handle is valid in every circumstance:
             table.update_owner_handles()

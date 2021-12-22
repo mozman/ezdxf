@@ -88,9 +88,7 @@ class TablesSection:
                 if len(table_records):
                     # TABLE entity without preceding ENDTAB entity, should we care?
                     logger.debug(
-                        'Ignore missing ENDTAB entity in table "{}".'.format(
-                            table_name
-                        )
+                        f'Ignore missing ENDTAB entity in table "{table_name}".'
                     )
                     self._load_table(table_name, table_records)  # type: ignore
                 table_name = entity.dxf.name

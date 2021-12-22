@@ -36,25 +36,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("ezdxf")
 
-TABLENAMES = {
-    "LAYER": "LAYERS",
-    "LTYPE": "LINETYPES",
-    "APPID": "APPIDS",
-    "DIMSTYLE": "DIMSTYLES",
-    "STYLE": "STYLES",
-    "UCS": "UCS",
-    "VIEW": "VIEWS",
-    "VPORT": "VIEWPORTS",
-    "BLOCK_RECORD": "BLOCK_RECORDS",
-}
-
-
-def tablename(dxfname: str) -> str:
-    """Translate DXF-table-name to attribute-name. ('LAYER' -> 'LAYERS')"""
-    name = dxfname.upper()
-    name = TABLENAMES.get(name, name + "S")
-    return name
-
 
 class Table:
     TABLE_TYPE = "UNKNOWN"
@@ -102,6 +83,10 @@ class Table:
     def head(self):
         """Returns table head entry."""
         return self._head
+
+    @property
+    def name(self) -> str:
+        return self.TABLE_TYPE
 
     @staticmethod
     def key(name: str) -> str:
@@ -218,7 +203,7 @@ class Table:
         if entry.dxftype() != self.TABLE_TYPE:
             raise const.DXFTypeError(
                 f"Invalid table entry type {entry.dxftype()} "
-                f"for table {self.name}"
+                f"for table {self.TABLE_TYPE}"
             )
         name = entry.dxf.name
         if self.has_entry(name):
@@ -574,6 +559,7 @@ class ViewportTable(Table):
 
 class AppIDTable(Table):
     TABLE_TYPE = "APPID"
+
     def add(self, name: str, *, dxfattribs: Dict = None) -> "AppID":
         """Add a new appid table entry.
 
@@ -591,6 +577,7 @@ class AppIDTable(Table):
 
 class ViewTable(Table):
     TABLE_TYPE = "VIEW"
+
     def add(self, name: str, *, dxfattribs: Dict = None) -> "View":
         """Add a new view table entry.
 
