@@ -4,7 +4,7 @@ import logging
 import io
 import bisect
 import math
-from typing import TextIO, Iterable, List, Optional, Set, cast
+from typing import TextIO, Iterable, List, Optional, Set, cast, Sequence
 
 from .const import (
     DXFStructureError,
@@ -353,6 +353,17 @@ def fix_lineweight(lineweight: int) -> int:
 
 def is_valid_aci_color(aci: int) -> bool:
     return 0 <= aci <= 257
+
+
+def is_valid_rgb(rgb) -> bool:
+    if not isinstance(rgb, Sequence):
+        return False
+    if len(rgb) != 3:
+        return False
+    for value in rgb:
+        if not isinstance(value, int) or value < 0 or value > 255:
+            return False
+    return True
 
 
 def is_in_integer_range(start: int, end: int):

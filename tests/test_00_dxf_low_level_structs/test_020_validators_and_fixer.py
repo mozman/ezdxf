@@ -25,6 +25,7 @@ from ezdxf.lldxf.validator import (
     is_greater_or_equal_zero,
     is_handle,
     is_transparency,
+    is_valid_rgb,
 )
 from ezdxf.entities.layer import is_valid_layer_color_index, fix_layer_color
 
@@ -245,12 +246,15 @@ def test_is_not_a_handle(handle):
     assert is_handle(handle) is False
 
 
-@pytest.mark.parametrize("t", [
-    0x02000000,  # 100% transparent
-    0x0200007F,  # 50% transparent
-    0x020000FF,  # opaque
-    0x01000000,  # ByBlock
-])
+@pytest.mark.parametrize(
+    "t",
+    [
+        0x02000000,  # 100% transparent
+        0x0200007F,  # 50% transparent
+        0x020000FF,  # opaque
+        0x01000000,  # ByBlock
+    ],
+)
 def test_is_transparency(t):
     assert is_transparency(t) is True
 
@@ -258,6 +262,33 @@ def test_is_transparency(t):
 @pytest.mark.parametrize("t", [None, 0, 127, 255, 0x01000001])
 def test_is_not_transparency(t):
     assert is_transparency(t) is False
+
+
+@pytest.mark.parametrize("rgb", [
+    (0, 0, 0),
+    [0, 0, 0],
+    (255, 255, 255),
+    [255, 255, 255],
+])
+def test_is_valid_rgb(rgb):
+    assert is_valid_rgb(rgb) is True
+
+
+@pytest.mark.parametrize("rgb", [
+    None,
+    1,
+    1.0,
+    "1",
+    (0,),
+    (0, 0),
+    (0, 0, 0, 0),
+    (-1, 0, 0),
+    (256, 0, 0),
+    ("0", 0, 0),
+    (0.0, 0, 0),  # no floats!
+])
+def test_is_not_valid_rgb(rgb):
+    assert is_valid_rgb(rgb) is False
 
 
 if __name__ == "__main__":
