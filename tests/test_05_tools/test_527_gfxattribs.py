@@ -189,6 +189,11 @@ class TestGfxAttribTransparency:
         attribs.transparency = value
         assert attribs.transparency == value
 
+    def test_set_by_block_value(self):
+        attribs = GfxAttribs()
+        attribs.transparency = gfxattribs.TRANSPARENCY_BYBLOCK
+        assert attribs.transparency == gfxattribs.TRANSPARENCY_BYBLOCK
+
     def test_reset_value(self):
         attribs = GfxAttribs(transparency=0.5)
         attribs.transparency = None
@@ -201,6 +206,9 @@ class TestGfxAttribTransparency:
 
     def test_str(self):
         assert str(GfxAttribs(transparency=0.5001)) == "transparency=0.5"
+
+    def test_by_block_str(self):
+        assert str(GfxAttribs(transparency=-1)) == "transparency=-1.0"
 
     def test_repr(self):
         assert (
@@ -236,17 +244,6 @@ class TestGfxAttribLinetypeScale:
         assert repr(GfxAttribs(ltscale=0.5001)) == "GfxAttribs(ltscale=0.5)"
 
 
-EXPECTED = {
-    "layer": "Test",
-    "color": 1,
-    "true_color": 0x0A0B0C,
-    "linetype": "SOLID",
-    "lineweight": 50,
-    "transparency": 0x200007F,
-    "ltscale": 2.0,
-}
-
-
 def test_gfx_attribs_as_dict():
     attribs = GfxAttribs(
         layer="Test",
@@ -257,9 +254,29 @@ def test_gfx_attribs_as_dict():
         transparency=0.5,
         ltscale=2,
     )
-    assert sorted(attribs.items()) == sorted(EXPECTED.items())
-    assert attribs.asdict() == EXPECTED
-    assert dict(attribs) == EXPECTED
+    expected = {
+        "layer": "Test",
+        "color": 1,
+        "true_color": 0x0A0B0C,
+        "linetype": "SOLID",
+        "lineweight": 50,
+        "transparency": 0x200007F,
+        "ltscale": 2.0,
+    }
+
+    assert sorted(attribs.items()) == sorted(expected.items())
+    assert attribs.asdict() == expected
+    assert dict(attribs) == expected
+
+
+def test_transparency_by_block_as_dict():
+    attribs = GfxAttribs(
+        transparency=gfxattribs.TRANSPARENCY_BYBLOCK,
+    )
+    expected = [("transparency", ezdxf.colors.TRANSPARENCY_BYBLOCK)]
+    assert attribs.items() == expected
+    assert attribs.asdict() == dict(expected)
+    assert dict(attribs) == dict(expected)
 
 
 def test_gfx_attribs_string():
@@ -356,6 +373,15 @@ def test_update_dxf_attributes_from_gfx_attribs():
     )
     assert attribs.linetype == line.dxf.linetype
     assert attribs.ltscale == line.dxf.ltscale
+
+
+def test_update_transparency_by_block_from_gfx_attribs():
+    attribs = GfxAttribs(
+        transparency=gfxattribs.TRANSPARENCY_BYBLOCK,
+    )
+    line = factory.new("LINE")
+    line.dxf.update(dict(attribs))
+    assert line.dxf.transparency == ezdxf.colors.TRANSPARENCY_BYBLOCK
 
 
 if __name__ == "__main__":

@@ -25,9 +25,11 @@ values.
 
     # Update DXF attributes of existing entities:
     attribs = GfxAttribs(layer="MyLayer2", color=ezdxf.colors.BLUE)
+
     # Convert GfxAttribs() to dict(), but this method cannot reset
     # attributes to the default values like setting layer to "0".
     line.update_dxf_attribs(dict(attribs))
+
     # Using GfxAttribs.asdict(default_values=True), can reset attributes to the
     # default values like setting layer to "0", except for true_color and
     # transparency, which do not have default values, their absence is the
@@ -41,15 +43,15 @@ values.
 
 Validation features:
 
-- **layer** - string which can not contain certain characters: ``<>/\\":;?*=\```
+- **layer** - string which can not contain certain characters: ``<>/\":;?*=```
 - **color** - :ref:`ACI` value as integer in the range from 0 to 257
-- **rgb** - true color value as (red, green blue) tuple, all channel values as
+- **rgb** - true color value as (red, green, blue) tuple, all channel values as
   integer values in the range from 0 to 255
-- **linetype** - string which can not contain certain characters: ``<>/\\":;?*=\```,
+- **linetype** - string which can not contain certain characters: ``<>/\":;?*=```,
   does not check if the linetype exists
 - **lineweight** - integer value in the range from 0 to 211, see :ref:`lineweights`
   for valid values
-- **transparency** - float value in the range from 0.0 to 1.0
+- **transparency** - float value in the range from 0.0 to 1.0 and -1.0 for transparency by block
 - **ltscale** - float value > 0.0
 
 
