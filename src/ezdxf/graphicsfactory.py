@@ -105,7 +105,7 @@ class CreatorInterface:
     def add_entity(self, entity: "DXFGraphic") -> None:
         pass
 
-    def add_point(self, location: "Vertex", dxfattribs: Dict = None) -> "Point":
+    def add_point(self, location: "Vertex", dxfattribs=None) -> "Point":
         """
         Add a :class:`~ezdxf.entities.Point` entity at `location`.
 
@@ -119,7 +119,7 @@ class CreatorInterface:
         return self.new_entity("POINT", dxfattribs)  # type: ignore
 
     def add_line(
-        self, start: "Vertex", end: "Vertex", dxfattribs: Dict = None
+        self, start: "Vertex", end: "Vertex", dxfattribs=None
     ) -> "Line":
         """
         Add a :class:`~ezdxf.entities.Line` entity from `start` to `end`.
@@ -136,7 +136,7 @@ class CreatorInterface:
         return self.new_entity("LINE", dxfattribs)  # type: ignore
 
     def add_circle(
-        self, center: "Vertex", radius: float, dxfattribs: Dict = None
+        self, center: "Vertex", radius: float, dxfattribs=None
     ) -> "Circle":
         """
         Add a :class:`~ezdxf.entities.Circle` entity. This is an 2D element,
@@ -160,7 +160,7 @@ class CreatorInterface:
         ratio: float = 1,
         start_param: float = 0,
         end_param: float = math.tau,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "Ellipse":
         """
         Add an :class:`~ezdxf.entities.Ellipse` entity, `ratio` is the ratio of
@@ -195,7 +195,7 @@ class CreatorInterface:
         start_angle: float,
         end_angle: float,
         is_counter_clockwise: bool = True,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "Arc":
         """
         Add an :class:`~ezdxf.entities.Arc` entity. The arc goes from
@@ -236,14 +236,12 @@ class CreatorInterface:
 
         Args:
             points: iterable of 3 or 4 2D/3D points in :ref:`WCS`
-            dxfattribs: additional DXF attributes for :class:`Solid` entity
+            dxfattribs: additional DXF attributes
 
         """
         return self._add_quadrilateral("SOLID", points, dxfattribs)  # type: ignore
 
-    def add_trace(
-        self, points: Iterable["Vertex"], dxfattribs: Dict = None
-    ) -> "Trace":
+    def add_trace(self, points: Iterable["Vertex"], dxfattribs=None) -> "Trace":
         """Add a :class:`~ezdxf.entities.Trace` entity, `points` is an iterable
         of 3 or 4 points.
 
@@ -254,14 +252,13 @@ class CreatorInterface:
 
         Args:
             points: iterable of 3 or 4 2D/3D points in :ref:`WCS`
-            dxfattribs: additional DXF attributes for :class:`Trace`
-                entity
+            dxfattribs: additional DXF attributes
 
         """
         return self._add_quadrilateral("TRACE", points, dxfattribs)  # type: ignore
 
     def add_3dface(
-        self, points: Iterable["Vertex"], dxfattribs: Dict = None
+        self, points: Iterable["Vertex"], dxfattribs=None
     ) -> "Face3d":
         """
         Add a :class:`~ezdxf.entities.3DFace` entity, `points` is an iterable
@@ -274,19 +271,19 @@ class CreatorInterface:
 
         Args:
             points: iterable of 3 or 4 2D/3D points in :ref:`WCS`
-            dxfattribs: additional DXF attributes for 3DFACE entity
+            dxfattribs: additional DXF attributes
 
         """
         return self._add_quadrilateral("3DFACE", points, dxfattribs)  # type: ignore
 
-    def add_text(self, text: str, dxfattribs: Dict = None) -> "Text":
+    def add_text(self, text: str, dxfattribs=None) -> "Text":
         """
         Add a :class:`~ezdxf.entities.Text` entity, see also
         :class:`~ezdxf.entities.Textstyle`.
 
         Args:
             text: content string
-            dxfattribs: additional DXF attributes for :class:`Text` entity
+            dxfattribs: additional DXF attributes
 
         """
         dxfattribs = dict(dxfattribs or {})
@@ -295,7 +292,7 @@ class CreatorInterface:
         return self.new_entity("TEXT", dxfattribs)  # type: ignore
 
     def add_blockref(
-        self, name: str, insert: "Vertex", dxfattribs: Dict = None
+        self, name: str, insert: "Vertex", dxfattribs=None
     ) -> "Insert":
         """
         Add an :class:`~ezdxf.entities.Insert` entity.
@@ -309,7 +306,7 @@ class CreatorInterface:
         Args:
             name: block name as str
             insert: insert location as 2D/3D point in :ref:`WCS`
-            dxfattribs: additional DXF attributes for :class:`Insert` entity
+            dxfattribs: additional DXF attributes
 
         """
         if not isinstance(name, str):
@@ -325,7 +322,7 @@ class CreatorInterface:
         name: str,
         insert: "Vertex",
         values: Dict[str, str],
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "Insert":
         """
         Add an :class:`~ezdxf.entities.Insert` entity. This method adds for each
@@ -349,7 +346,7 @@ class CreatorInterface:
             name: block name
             insert: insert location as 2D/3D point in :ref:`WCS`
             values: :class:`~ezdxf.entities.Attrib` tag values as (tag, value) pairs
-            dxfattribs: additional DXF attributes for :class:`Insert` entity
+            dxfattribs: additional DXF attributes
 
         """
         if not isinstance(name, str):
@@ -380,7 +377,7 @@ class CreatorInterface:
         tag: str,
         insert: "Vertex" = (0, 0),
         text: str = "",
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "AttDef":
         """
         Add an :class:`~ezdxf.entities.AttDef` as stand alone DXF entity.
@@ -408,7 +405,7 @@ class CreatorInterface:
         format: str = None,
         *,
         close: bool = False,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "Polyline":
         """
         Add a 2D :class:`~ezdxf.entities.Polyline` entity.
@@ -445,7 +442,7 @@ class CreatorInterface:
         points: Iterable["Vertex"],
         *,
         close: bool = False,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "Polyline":
         """Add a 3D :class:`~ezdxf.entities.Polyline` entity.
 
@@ -462,7 +459,7 @@ class CreatorInterface:
         return self.add_polyline2d(points, close=close, dxfattribs=dxfattribs)
 
     def add_polymesh(
-        self, size: Tuple[int, int] = (3, 3), dxfattribs: Dict = None
+        self, size: Tuple[int, int] = (3, 3), dxfattribs=None
     ) -> "Polymesh":
         """
         Add a :class:`~ezdxf.entities.Polymesh` entity, which is a wrapper class
@@ -471,8 +468,7 @@ class CreatorInterface:
 
         Args:
             size: 2-tuple (`mcount`, `ncount`)
-            dxfattribs: additional DXF attributes for
-                :class:`~ezdxf.entities.Polyline` entity
+            dxfattribs: additional DXF attributes
 
         """
         dxfattribs = dict(dxfattribs or {})
@@ -496,7 +492,7 @@ class CreatorInterface:
 
         return polymesh
 
-    def add_polyface(self, dxfattribs: Dict = None) -> "Polyface":
+    def add_polyface(self, dxfattribs=None) -> "Polyface":
         """Add a :class:`~ezdxf.entities.Polyface` entity, which is a wrapper
         class for the POLYLINE entity.
 
@@ -542,7 +538,7 @@ class CreatorInterface:
         name: str,
         insert: "Vertex" = (0, 0),
         size: float = 1.0,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "Shape":
         """
         Add a :class:`~ezdxf.entities.Shape` reference to a external stored shape.
@@ -568,7 +564,7 @@ class CreatorInterface:
         format: str = "xyseb",
         *,
         close: bool = False,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "LWPolyline":
         """
         Add a 2D polyline as :class:`~ezdxf.entities.LWPolyline` entity.
@@ -612,7 +608,7 @@ class CreatorInterface:
         lwpolyline.closed = close
         return lwpolyline
 
-    def add_mtext(self, text: str, dxfattribs: Dict = None) -> "MText":
+    def add_mtext(self, text: str, dxfattribs=None) -> "MText":
         """
         Add a multiline text entity with automatic text wrapping at boundaries
         as :class:`~ezdxf.entities.MText` entity.
@@ -636,7 +632,7 @@ class CreatorInterface:
         width: float,
         gutter_width: float,
         height: float,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "MText":
         """Add a multiline text entity with static columns as
         :class:`~ezdxf.entities.MText` entity. The content is spread
@@ -665,6 +661,7 @@ class CreatorInterface:
         dxfversion = self.dxfversion
         if dxfversion < DXF2000:
             raise DXFVersionError("MTEXT requires DXF R2000")
+        dxfattribs = dict(dxfattribs or {})
         content = list(content)
         if dxfversion < const.DXF2018:
             mtext = make_static_columns_r2000(
@@ -686,7 +683,7 @@ class CreatorInterface:
         gutter_width: float,
         height: float,
         count: int,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "MText":
         """Add a multiline text entity with as much columns as needed for the
         given common fixed `height`. The content is spread across the columns
@@ -725,6 +722,7 @@ class CreatorInterface:
         dxfversion = self.dxfversion
         if dxfversion < DXF2000:
             raise DXFVersionError("MTEXT requires DXF R2000")
+        dxfattribs = dict(dxfattribs or {})
         if dxfversion < const.DXF2018:
             mtext = make_dynamic_auto_height_columns_r2000(
                 content, width, gutter_width, height, count, dxfattribs
@@ -744,7 +742,7 @@ class CreatorInterface:
         width: float,
         gutter_width: float,
         heights: Sequence[float],
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "MText":
         """Add a multiline text entity with dynamic columns as
         :class:`~ezdxf.entities.MText` entity. The content is spread
@@ -796,6 +794,7 @@ class CreatorInterface:
         dxfversion = self.dxfversion
         if dxfversion < DXF2000:
             raise DXFVersionError("MTEXT requires DXF R2000")
+        dxfattribs = dict(dxfattribs or {})
         if dxfversion < const.DXF2018:
             mtext = make_dynamic_manual_height_columns_r2000(
                 content, width, gutter_width, heights, dxfattribs
@@ -810,7 +809,7 @@ class CreatorInterface:
         return mtext
 
     def add_ray(
-        self, start: "Vertex", unit_vector: "Vertex", dxfattribs: Dict = None
+        self, start: "Vertex", unit_vector: "Vertex", dxfattribs=None
     ) -> "Ray":
         """
         Add a :class:`~ezdxf.entities.Ray` that begins at `start` point and
@@ -830,7 +829,7 @@ class CreatorInterface:
         return self.new_entity("RAY", dxfattribs)  # type: ignore
 
     def add_xline(
-        self, start: "Vertex", unit_vector: "Vertex", dxfattribs: Dict = None
+        self, start: "Vertex", unit_vector: "Vertex", dxfattribs=None
     ) -> "XLine":
         """Add an infinity :class:`~ezdxf.entities.XLine` (construction line).
         (requires DXF R2000)
@@ -852,7 +851,7 @@ class CreatorInterface:
         self,
         fit_points: Iterable["Vertex"] = None,
         degree: int = 3,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "Spline":
         """Add a B-spline (:class:`~ezdxf.entities.Spline` entity) defined by
         the given `fit_points` - the control points and knot values are created
@@ -895,7 +894,7 @@ class CreatorInterface:
         fit_points: Iterable["Vertex"],
         degree: int = 3,
         method: str = "chord",
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "Spline":
         """Add a :class:`~ezdxf.entities.Spline` entity passing through the
         given `fit_points`, the control points are calculated by a global curve
@@ -940,7 +939,7 @@ class CreatorInterface:
         fit_points: Iterable["Vertex"],
         tangents: Iterable["Vertex"] = None,
         estimate: str = "5-p",
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "Spline":
         """Add a :class:`~ezdxf.entities.Spline` entity passing through the
         given fit points.
@@ -967,7 +966,7 @@ class CreatorInterface:
         control_points: Iterable["Vertex"],
         degree: int = 3,
         knots: Iterable[float] = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "Spline":
         """
         Add an open uniform :class:`~ezdxf.entities.Spline` defined by
@@ -994,7 +993,7 @@ class CreatorInterface:
         weights: Sequence[float],
         degree: int = 3,
         knots: Iterable[float] = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "Spline":
         """
         Add an open rational uniform :class:`~ezdxf.entities.Spline` defined by
@@ -1022,7 +1021,7 @@ class CreatorInterface:
         return spline
 
     def add_body(
-        self, acis_data: Iterable[str] = None, dxfattribs: Dict = None
+        self, acis_data: Iterable[str] = None, dxfattribs=None
     ) -> "Body":
         """
         Add a :class:`~ezdxf.entities.Body` entity. (requires DXF R2000-R2010)
@@ -1041,7 +1040,7 @@ class CreatorInterface:
         return self._add_acis_entiy("BODY", acis_data, dxfattribs)  # type: ignore
 
     def add_region(
-        self, acis_data: Iterable[str] = None, dxfattribs: Dict = None
+        self, acis_data: Iterable[str] = None, dxfattribs=None
     ) -> "Region":
         """
         Add a :class:`~ezdxf.entities.Region` entity. (requires DXF R2000-R2010)
@@ -1060,7 +1059,7 @@ class CreatorInterface:
         return self._add_acis_entiy("REGION", acis_data, dxfattribs)  # type: ignore
 
     def add_3dsolid(
-        self, acis_data: Iterable[str] = None, dxfattribs: Dict = None
+        self, acis_data: Iterable[str] = None, dxfattribs=None
     ) -> "Solid3d":
         """
         Add a 3DSOLID entity (:class:`~ezdxf.entities.Solid3d`).
@@ -1080,7 +1079,7 @@ class CreatorInterface:
         return self._add_acis_entiy("3DSOLID", acis_data, dxfattribs)  # type: ignore
 
     def add_surface(
-        self, acis_data: Iterable[str] = None, dxfattribs: Dict = None
+        self, acis_data: Iterable[str] = None, dxfattribs=None
     ) -> "Surface":
         """
         Add a :class:`~ezdxf.entities.Surface` entity. (requires DXF R2000-R2010)
@@ -1101,7 +1100,7 @@ class CreatorInterface:
         return self._add_acis_entiy("SURFACE", acis_data, dxfattribs)  # type: ignore
 
     def add_extruded_surface(
-        self, acis_data: Iterable[str] = None, dxfattribs: Dict = None
+        self, acis_data: Iterable[str] = None, dxfattribs=None
     ) -> "ExtrudedSurface":
         """
         Add a :class:`~ezdxf.entities.ExtrudedSurface` entity.
@@ -1123,7 +1122,7 @@ class CreatorInterface:
         return self._add_acis_entiy("EXTRUDEDSURFACE", acis_data, dxfattribs)  # type: ignore
 
     def add_lofted_surface(
-        self, acis_data: Iterable[str] = None, dxfattribs: Dict = None
+        self, acis_data: Iterable[str] = None, dxfattribs=None
     ) -> "LoftedSurface":
         """
         Add a :class:`~ezdxf.entities.LoftedSurface` entity.
@@ -1145,7 +1144,7 @@ class CreatorInterface:
         return self._add_acis_entiy("LOFTEDSURFACE", acis_data, dxfattribs)  # type: ignore
 
     def add_revolved_surface(
-        self, acis_data: Iterable[str] = None, dxfattribs: Dict = None
+        self, acis_data: Iterable[str] = None, dxfattribs=None
     ) -> "RevolvedSurface":
         """
         Add a :class:`~ezdxf.entities.RevolvedSurface` entity.
@@ -1167,7 +1166,7 @@ class CreatorInterface:
         return self._add_acis_entiy("REVOLVEDSURFACE", acis_data, dxfattribs)  # type: ignore
 
     def add_swept_surface(
-        self, acis_data: Iterable[str] = None, dxfattribs: Dict = None
+        self, acis_data: Iterable[str] = None, dxfattribs=None
     ) -> "SweptSurface":
         """
         Add a :class:`~ezdxf.entities.SweptSurface` entity.
@@ -1189,7 +1188,7 @@ class CreatorInterface:
         return self._add_acis_entiy("SWEPTSURFACE", acis_data, dxfattribs)  # type: ignore
 
     def _add_acis_entiy(
-        self, name, acis_data: Iterable[str], dxfattribs: Dict
+        self, name, acis_data: Iterable[str], dxfattribs
     ) -> "Body":
         if not (const.DXF2000 <= self.dxfversion <= const.DXF2010):
             raise DXFVersionError(f"{name} requires DXF R2000-R2010")
@@ -1199,7 +1198,7 @@ class CreatorInterface:
             entity.acis_data = acis_data  # type: ignore
         return entity
 
-    def add_hatch(self, color: int = 7, dxfattribs: Dict = None) -> "Hatch":
+    def add_hatch(self, color: int = 7, dxfattribs=None) -> "Hatch":
         """Add a :class:`~ezdxf.entities.Hatch` entity. (requires DXF R2000)
 
         Args:
@@ -1219,7 +1218,7 @@ class CreatorInterface:
         self,
         color: int = const.BYLAYER,
         fill_color: int = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "MPolygon":
         """Add a :class:`~ezdxf.entities.MPolygon` entity. (requires DXF R2000)
 
@@ -1250,7 +1249,7 @@ class CreatorInterface:
         dxfattribs["color"] = int(color)
         return self.new_entity("MPOLYGON", dxfattribs)  # type: ignore
 
-    def add_mesh(self, dxfattribs: Dict = None) -> "Mesh":
+    def add_mesh(self, dxfattribs=None) -> "Mesh":
         """
         Add a :class:`~ezdxf.entities.Mesh` entity. (requires DXF R2007)
 
@@ -1269,7 +1268,7 @@ class CreatorInterface:
         insert: "Vertex",
         size_in_units: Tuple[float, float],
         rotation: float = 0.0,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "Image":
         """
         Add an :class:`~ezdxf.entities.Image` entity, requires a
@@ -1309,7 +1308,7 @@ class CreatorInterface:
         return self.new_entity("IMAGE", dxfattribs)  # type: ignore
 
     def add_wipeout(
-        self, vertices: Iterable["Vertex"], dxfattribs: Dict = None
+        self, vertices: Iterable["Vertex"], dxfattribs=None
     ) -> "Wipeout":
         """Add a :class:`ezdxf.entities.Wipeout` entity, the masking area is
         defined by WCS `vertices`.
@@ -1318,6 +1317,7 @@ class CreatorInterface:
         the z-axis of the input vertices are ignored.
 
         """
+        dxfattribs = dict(dxfattribs or {})
         wipeout: "Wipeout" = self.new_entity("WIPEOUT", dxfattribs=dxfattribs)  # type: ignore
         wipeout.set_masking_area(vertices)
         doc = self.doc
@@ -1331,7 +1331,7 @@ class CreatorInterface:
         insert: "Vertex" = (0, 0, 0),
         scale=(1, 1, 1),
         rotation: float = 0.0,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "Underlay":
         """
         Add an :class:`~ezdxf.entities.Underlay` entity, requires a
@@ -1382,7 +1382,7 @@ class CreatorInterface:
         text_rotation: float = None,
         dimstyle: str = "EZDXF",
         override: Dict = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "DimStyleOverride":
         """
         Add horizontal, vertical and rotated :class:`~ezdxf.entities.Dimension`
@@ -1418,8 +1418,7 @@ class CreatorInterface:
             text_rotation: rotation angle of the dimension text as absolute
                 angle (x-axis=0, y-axis=90) in degrees
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
-            dxfattribs: additional DXF attributes for
-                :class:`~ezdxf.entities.Dimension` entity
+            dxfattribs: additional DXF attributes for the DIMENSION entity
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
@@ -1455,7 +1454,7 @@ class CreatorInterface:
         avoid_double_rendering: bool = True,
         dimstyle: str = "EZDXF",
         override: Dict = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
         discard=False,
     ) -> None:
         """
@@ -1488,13 +1487,13 @@ class CreatorInterface:
             dimstyle: dimension style name (DimStyle table entry),
                 default is "EZDXF"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
-            dxfattribs: additional DXF attributes for :class:`~ezdxf.entities.Dimension`
-                entity
+            dxfattribs: additional DXF attributes for the DIMENSION entity
             discard: discard rendering result for friendly CAD applications like
                 BricsCAD to get a native and likely better rendering result.
                 (does not work with AutoCAD)
 
         """
+        dxfattribs = dict(dxfattribs or {})
         multi_point_linear_dimension(
             cast("GenericLayoutType", self),
             base=base,
@@ -1547,8 +1546,7 @@ class CreatorInterface:
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
                 table entry), default is "EZDXF"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
-            dxfattribs: DXF attributes for :class:`~ezdxf.entities.Dimension`
-                entity
+            dxfattribs:  additional DXF attributes for the DIMENSION entity
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
@@ -1580,7 +1578,7 @@ class CreatorInterface:
         text_rotation: float = None,
         dimstyle: str = "EZ_CURVED",
         override: Dict = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "DimStyleOverride":
         """
         Add angular :class:`~ezdxf.entities.Dimension` from 2 lines. The
@@ -1619,8 +1617,7 @@ class CreatorInterface:
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
                 table entry), default is "EZ_CURVED"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
-            dxfattribs: additional DXF attributes for
-                :class:`~ezdxf.entities.Dimension` entity
+            dxfattribs:  additional DXF attributes for the DIMENSION entity
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
@@ -1662,7 +1659,7 @@ class CreatorInterface:
         text_rotation: float = None,
         dimstyle: str = "EZ_CURVED",
         override: Dict = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "DimStyleOverride":
         """
         Add angular :class:`~ezdxf.entities.Dimension` from 3 points
@@ -1703,8 +1700,7 @@ class CreatorInterface:
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
                 table entry), default is "EZ_CURVED"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
-            dxfattribs: additional DXF attributes for
-                :class:`~ezdxf.entities.Dimension` entity
+            dxfattribs: additional DXF attributes for the DIMENSION entity
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
@@ -1747,7 +1743,7 @@ class CreatorInterface:
         text_rotation: float = None,
         dimstyle: str = "EZ_CURVED",
         override: Dict = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "DimStyleOverride":
         """
         Shortcut method to create an angular dimension by (c)enter point,
@@ -1776,8 +1772,7 @@ class CreatorInterface:
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
                 table entry), default is "EZ_CURVED"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
-            dxfattribs: additional DXF attributes for
-                :class:`~ezdxf.entities.Dimension` entity
+            dxfattribs: additional DXF attributes for the DIMENSION entity
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
@@ -1821,7 +1816,7 @@ class CreatorInterface:
         text_rotation: float = None,
         dimstyle: str = "EZ_CURVED",
         override: Dict = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "DimStyleOverride":
         """
         Shortcut method to create an angular dimension from a
@@ -1849,8 +1844,7 @@ class CreatorInterface:
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
                 table entry), default is "EZ_CURVED"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
-            dxfattribs: additional DXF attributes for
-                :class:`~ezdxf.entities.Dimension` entity
+            dxfattribs:  additional DXF attributes for the DIMENSION entity
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
@@ -1883,7 +1877,7 @@ class CreatorInterface:
         text_rotation: float = None,
         dimstyle: str = "EZ_CURVED",
         override: Dict = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "DimStyleOverride":
         """
         Add :class:`~ezdxf.entities.ArcDimension` from 3 points
@@ -1925,8 +1919,7 @@ class CreatorInterface:
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
                 table entry), default is "EZ_CURVED"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
-            dxfattribs: additional DXF attributes for
-                :class:`~ezdxf.entities.Dimension` entity
+            dxfattribs: additional DXF attributes for the DIMENSION entity
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
@@ -1977,7 +1970,7 @@ class CreatorInterface:
         text_rotation: float = None,
         dimstyle: str = "EZ_CURVED",
         override: Dict = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "DimStyleOverride":
         """
         Shortcut method to create an arc dimension by (c)enter point,
@@ -2007,8 +2000,7 @@ class CreatorInterface:
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
                 table entry), default is "EZ_CURVED"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
-            dxfattribs: additional DXF attributes for
-                :class:`~ezdxf.entities.Dimension` entity
+            dxfattribs: additional DXF attributes for the DIMENSION entity
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
@@ -2052,7 +2044,7 @@ class CreatorInterface:
         text_rotation: float = None,
         dimstyle: str = "EZ_CURVED",
         override: Dict = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "DimStyleOverride":
         """
         Shortcut method to create an arc dimension from a
@@ -2081,8 +2073,7 @@ class CreatorInterface:
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
                 table entry), default is "EZ_CURVED"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
-            dxfattribs: additional DXF attributes for
-                :class:`~ezdxf.entities.Dimension` entity
+            dxfattribs: additional DXF attributes for the DIMENSION entity
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
@@ -2114,7 +2105,7 @@ class CreatorInterface:
         text: str = "<>",
         dimstyle: str = "EZ_RADIUS",
         override: Dict = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "DimStyleOverride":
         """
         Add a diameter :class:`~ezdxf.entities.Dimension` line. The diameter
@@ -2151,8 +2142,7 @@ class CreatorInterface:
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
                 table entry), default is "EZ_RADIUS"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
-            dxfattribs: additional DXF attributes for
-                :class:`~ezdxf.entities.Dimension` entity
+            dxfattribs: additional DXF attributes for the DIMENSION entity
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
@@ -2202,7 +2192,7 @@ class CreatorInterface:
         text: str = "<>",
         dimstyle: str = "EZ_RADIUS",
         override: Dict = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "DimStyleOverride":
         """
         Shortcut method to create a diameter dimension by two points on the
@@ -2224,8 +2214,7 @@ class CreatorInterface:
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
                 table entry), default is "EZ_RADIUS"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
-            dxfattribs: additional DXF attributes for
-                :class:`~ezdxf.entities.Dimension` entity
+            dxfattribs: additional DXF attributes for the DIMENSION entity
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
@@ -2252,7 +2241,7 @@ class CreatorInterface:
         text: str = "<>",
         dimstyle: str = "EZ_RADIUS",
         override: Dict = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "DimStyleOverride":
         """
         Add a radius :class:`~ezdxf.entities.Dimension` line. The radius
@@ -2314,8 +2303,7 @@ class CreatorInterface:
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
                 table entry), default is "EZ_RADIUS"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
-            dxfattribs: additional DXF attributes for
-                :class:`~ezdxf.entities.Dimension` entity
+            dxfattribs: additional DXF attributes for the DIMENSION entity
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
@@ -2361,7 +2349,7 @@ class CreatorInterface:
         text: str = "<>",
         dimstyle: str = "EZ_RADIUS",
         override: Dict = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "DimStyleOverride":
         """
         Shortcut method to create a radius dimension by center point,
@@ -2381,8 +2369,7 @@ class CreatorInterface:
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
                 table entry), default is "EZ_RADIUS"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
-            dxfattribs: additional DXF attributes for
-                :class:`~ezdxf.entities.Dimension` entity
+            dxfattribs: additional DXF attributes for the DIMENSION entity
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
@@ -2405,7 +2392,7 @@ class CreatorInterface:
         text: str = "<>",
         dimstyle: str = "EZ_RADIUS",
         override: Dict = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "DimStyleOverride":
         """
         Shortcut method to create a radius dimension by (c)enter point,
@@ -2426,8 +2413,7 @@ class CreatorInterface:
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
                 table entry), default is "EZ_RADIUS"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
-            dxfattribs: additional DXF attributes for
-                :class:`~ezdxf.entities.Dimension` entity
+            dxfattribs: additional DXF attributes for the DIMENSION entity
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
@@ -2453,7 +2439,7 @@ class CreatorInterface:
         text: str = "<>",
         dimstyle: str = "EZDXF",
         override: Dict = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> DimStyleOverride:
         """
         Add an ordinate type :class:`~ezdxf.entities.Dimension` line. The
@@ -2490,8 +2476,7 @@ class CreatorInterface:
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
                 table entry), default is "EZDXF"
             override: :class:`~ezdxf.entities.DimStyleOverride` attributes
-            dxfattribs: additional DXF attributes for
-                :class:`~ezdxf.entities.Dimension` entity
+            dxfattribs: additional DXF attributes for the DIMENSION entity
 
         Returns: :class:`~ezdxf.entities.DimStyleOverride`
 
@@ -2544,7 +2529,7 @@ class CreatorInterface:
         text: str = "<>",
         dimstyle: str = "EZDXF",
         override: Dict = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> DimStyleOverride:
         """Shortcut to add a x-type feature ordinate DIMENSION, for more
         information see :meth:`add_ordinate_dim`.
@@ -2574,7 +2559,7 @@ class CreatorInterface:
         text: str = "<>",
         dimstyle: str = "EZDXF",
         override: Dict = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> DimStyleOverride:
         """Shortcut to add a y-type feature ordinate DIMENSION, for more
         information see :meth:`add_ordinate_dim`.
@@ -2600,7 +2585,7 @@ class CreatorInterface:
         insert: "Vertex",
         size: float = 1.0,
         rotation: float = 0,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> Vec3:
         return ARROWS.render_arrow(
             self,  # type: ignore
@@ -2609,7 +2594,7 @@ class CreatorInterface:
             size=size,
             rotation=rotation,
             dxfattribs=dxfattribs,
-        )
+        ).vec3
 
     def add_arrow_blockref(
         self,
@@ -2617,7 +2602,7 @@ class CreatorInterface:
         insert: "Vertex",
         size: float = 1.0,
         rotation: float = 0,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> Vec3:
         return ARROWS.insert_arrow(
             self,  # type: ignore
@@ -2626,14 +2611,14 @@ class CreatorInterface:
             size=size,
             rotation=rotation,
             dxfattribs=dxfattribs,
-        )
+        ).vec3
 
     def add_leader(
         self,
         vertices: Iterable["Vertex"],
         dimstyle: str = "EZDXF",
         override: Dict = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "Leader":
         """
         The :class:`~ezdxf.entities.Leader` entity represents an arrow, made up
@@ -2656,8 +2641,7 @@ class CreatorInterface:
             dimstyle: dimension style name (:class:`~ezdxf.entities.DimStyle`
                 table entry), default is "EZDXF"
             override: override :class:`~ezdxf.entities.DimStyleOverride` attributes
-            dxfattribs: additional DXF attributes for
-                :class:`~ezdxf.entities.Leader` entity
+            dxfattribs: additional DXF attributes
 
         """
 
@@ -2671,9 +2655,9 @@ class CreatorInterface:
         if self.dxfversion < DXF2000:
             raise DXFVersionError("LEADER requires DXF R2000")
 
-        dxfattribs = dxfattribs or {}
+        dxfattribs = dict(dxfattribs or {})
         dxfattribs["dimstyle"] = self._safe_dimstyle(dimstyle)
-        dxfattribs.setdefault("annotation_type", 3)
+        dxfattribs.setdefault("annotation_type", 3)  # type: ignore
         leader = cast("Leader", self.new_entity("LEADER", dxfattribs))
         leader.set_vertices(vertices)
         if override:
@@ -2689,7 +2673,7 @@ class CreatorInterface:
     def add_multileader_mtext(
         self,
         style: str = "Standard",
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "MultiLeaderMTextBuilder":
         """Add a :class:`~ezdxf.entities.MultiLeader` entity but returns
         a :class:`~ezdxf.render.MultiLeaderMTextBuilder`.
@@ -2698,13 +2682,14 @@ class CreatorInterface:
 
         """
         from ezdxf.render.mleader import MultiLeaderMTextBuilder
+
         multileader = self._make_multileader(style, dxfattribs)
         return MultiLeaderMTextBuilder(multileader)
 
     def add_multileader_block(
         self,
         style: str = "Standard",
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "MultiLeaderBlockBuilder":
         """Add a :class:`~ezdxf.entities.MultiLeader` entity but returns
         a :class:`~ezdxf.render.MultiLeaderBlockBuilder`.
@@ -2713,17 +2698,18 @@ class CreatorInterface:
 
         """
         from ezdxf.render.mleader import MultiLeaderBlockBuilder
+
         multileader = self._make_multileader(style, dxfattribs)
         return MultiLeaderBlockBuilder(multileader)
 
     def _make_multileader(
         self,
         style: str,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "MultiLeader":
         if self.dxfversion < DXF2000:
             raise DXFVersionError("MULTILEADER requires DXF R2000")
-        dxfattribs = dxfattribs or dict()
+        dxfattribs = dict(dxfattribs or {})
         mleader_style = self.doc.mleader_styles.get(style)
         if mleader_style is None:
             raise DXFValueError(f"MLEADERSTYLE '{style}' does not exist")
@@ -2735,20 +2721,19 @@ class CreatorInterface:
         vertices: Iterable["Vertex"] = None,
         *,
         close: bool = False,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "MLine":
         """Add a :class:`~ezdxf.entities.MLine` entity
 
         Args:
             vertices: MLINE vertices (in :ref:`WCS`)
             close: ``True`` to add a closed MLINE
-            dxfattribs: additional DXF attributes for
-                :class:`~ezdxf.entities.MLine` entity
+            dxfattribs: additional DXF attributes
 
         """
         if self.dxfversion < DXF2000:
             raise DXFVersionError("MLine requires DXF R2000")
-        dxfattribs = dxfattribs or {}
+        dxfattribs = dict(dxfattribs or {})
         style_name = dxfattribs.pop("style_name", "Standard")
         mline: "MLine" = self.new_entity("MLINE", dxfattribs)  # type: ignore
         # close() method regenerates geometry!

@@ -383,7 +383,7 @@ class Insert(LinkedEntities):
         tag: str,
         text: str,
         insert: "Vertex" = (0, 0),
-        dxfattribs: dict = None,
+        dxfattribs=None,
     ) -> "Attrib":
         """Attach an :class:`Attrib` entity to the block reference.
 
@@ -401,7 +401,7 @@ class Insert(LinkedEntities):
             dxfattribs: additional DXF attributes for the ATTRIB entity
 
         """
-        dxfattribs = dxfattribs or {}
+        dxfattribs = dict(dxfattribs or {})
         dxfattribs["tag"] = tag
         dxfattribs["text"] = text
         dxfattribs["insert"] = insert
@@ -757,5 +757,5 @@ class Insert(LinkedEntities):
         """Support for the "ReferencedBlocks" protocol."""
         block = self.block()
         if block is not None:
-            return block.block_record_handle,
+            return (block.block_record_handle,)
         return tuple()

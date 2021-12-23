@@ -527,12 +527,12 @@ class _Arrows:
         size: float = 1.0,
         rotation: float = 0,
         *,
-        dxfattribs: Dict = None
+        dxfattribs = None
     ) -> Vec2:
         """Insert arrow as block reference into `layout`."""
         block_name = self.create_block(layout.doc.blocks, name)
 
-        dxfattribs = dict(dxfattribs) if dxfattribs else {}  # copy attribs
+        dxfattribs = dict(dxfattribs or {})
         dxfattribs["rotation"] = rotation
         dxfattribs["xscale"] = size
         dxfattribs["yscale"] = size
@@ -549,10 +549,10 @@ class _Arrows:
         size: float = 1.0,
         rotation: float = 0,
         *,
-        dxfattribs: Dict = None
+        dxfattribs = None
     ) -> Vec2:
         """Render arrow as basic DXF entities into `layout`."""
-        dxfattribs = dxfattribs or {}
+        dxfattribs = dict(dxfattribs or {})
         arrow = self.arrow_shape(name, insert, size, rotation)
         arrow.render(layout, dxfattribs)
         return connection_point(
@@ -566,14 +566,13 @@ class _Arrows:
         size: float = 0.625,
         rotation: float = 0,
         *,
-        dxfattribs: Dict = None
+        dxfattribs = None
     ) -> Iterable["DXFGraphic"]:
         """Yield arrow components as virtual DXF entities."""
         from ezdxf.layouts import VirtualLayout
 
         if name in self:
             layout = VirtualLayout()
-            dxfattribs = dxfattribs or {}
             ARROWS.render_arrow(
                 layout,
                 name,

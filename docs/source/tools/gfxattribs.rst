@@ -20,8 +20,8 @@ values.
     msp = doc.modelspace()
 
     attribs = GfxAttribs(layer="MyLayer", color=ezdxf.colors.RED)
-    msp.add_line((0, 0), (1, 0), dxfattribs=dict(attribs))
-    msp.add_circle((0, 0), radius=1.0, dxfattribs=dict(attribs))
+    msp.add_line((0, 0), (1, 0), dxfattribs=attribs)
+    msp.add_circle((0, 0), radius=1.0, dxfattribs=attribs)
 
 Validation features:
 
