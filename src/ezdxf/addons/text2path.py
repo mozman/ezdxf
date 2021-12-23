@@ -183,7 +183,7 @@ def make_hatches_from_str(
     size: float = 1.0,
     align: str = "LEFT",
     length: float = 0,
-    dxfattribs: Dict = None,
+    dxfattribs = None,
     m: Matrix44 = None,
 ) -> List[Hatch]:
     """Convert a single line string `s` into a list of virtual
@@ -206,7 +206,7 @@ def make_hatches_from_str(
     # HATCH is an OCS entity, transforming just the polyline paths
     # is not correct! The Hatch has to be created in the xy-plane!
     paths = make_paths_from_str(s, font, size, align, length)
-    dxfattribs = dxfattribs or dict()
+    dxfattribs = dict(dxfattribs or {})
     dxfattribs.setdefault("solid_fill", 1)
     dxfattribs.setdefault("pattern_name", "SOLID")
     dxfattribs.setdefault("color", const.BYLAYER)

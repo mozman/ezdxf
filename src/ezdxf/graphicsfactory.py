@@ -223,9 +223,7 @@ class CreatorInterface:
             dxfattribs["end_angle"] = float(start_angle)
         return self.new_entity("ARC", dxfattribs)  # type: ignore
 
-    def add_solid(
-        self, points: Iterable["Vertex"], dxfattribs: Dict = None
-    ) -> "Solid":
+    def add_solid(self, points: Iterable["Vertex"], dxfattribs=None) -> "Solid":
         """Add a :class:`~ezdxf.entities.Solid` entity, `points` is an iterable
         of 3 or 4 points.
 
@@ -515,7 +513,7 @@ class CreatorInterface:
         return polyface
 
     def _add_quadrilateral(
-        self, type_: str, points: Iterable["Vertex"], dxfattribs: Dict = None
+        self, type_: str, points: Iterable["Vertex"], dxfattribs=None
     ) -> "DXFGraphic":
         dxfattribs = dict(dxfattribs or {})
         entity = self.new_entity(type_, dxfattribs)
@@ -1515,7 +1513,7 @@ class CreatorInterface:
         text: str = "<>",
         dimstyle: str = "EZDXF",
         override: Dict = None,
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> "DimStyleOverride":
         """
         Add linear dimension aligned with measurement points `p1` and `p2`. If

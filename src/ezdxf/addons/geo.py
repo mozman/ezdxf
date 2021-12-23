@@ -84,7 +84,7 @@ def proxy(
 
 
 def dxf_entities(
-    geo_mapping, polygon: int = 1, dxfattribs: Dict = None
+    geo_mapping, polygon: int = 1, dxfattribs = None
 ) -> Iterable[DXFGraphic]:
     """Returns ``__geo_interface__`` mappings as DXF entities.
 
@@ -386,7 +386,7 @@ class GeoProxy:
         return cls(m)
 
     def to_dxf_entities(
-        self, polygon: int = 1, dxfattribs: Dict = None
+        self, polygon: int = 1, dxfattribs = None
     ) -> Iterable[DXFGraphic]:
         """Returns stored ``__geo_interface__`` mappings as DXF entities.
 
@@ -487,7 +487,7 @@ class GeoProxy:
         if polygon < 1 or polygon > 4:
             raise ValueError(f"invalid value for polygon: {polygon}")
 
-        dxfattribs = dxfattribs or dict()
+        dxfattribs = dict(dxfattribs or {})
         for _mapping in self.__iter__():
             yield from entity(_mapping.get(TYPE), _mapping.get(COORDINATES))
 

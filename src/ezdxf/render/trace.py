@@ -85,7 +85,7 @@ class AbstractTrace:
         return contour
 
     def virtual_entities(
-        self, dxftype="TRACE", dxfattribs: Dict = None, doc: "Drawing" = None
+        self, dxftype="TRACE", dxfattribs=None, doc: "Drawing" = None
     ) -> Iterable[Quadrilateral]:
         """
         Yields faces as SOLID, TRACE or 3DFACE entities with DXF attributes
@@ -105,7 +105,7 @@ class AbstractTrace:
 
         if dxftype not in {"SOLID", "TRACE", "3DFACE"}:
             raise TypeError(f"Invalid dxftype {dxftype}.")
-        dxfattribs = dxfattribs or {}
+        dxfattribs = dict(dxfattribs or {})
         for face in self.faces():
             for i in range(4):
                 dxfattribs[f"vtx{i}"] = face[i]
@@ -487,7 +487,7 @@ class TraceBuilder(Sequence):
             )
 
     def virtual_entities(
-        self, dxftype="TRACE", dxfattribs: Dict = None, doc: "Drawing" = None
+        self, dxftype="TRACE", dxfattribs=None, doc: "Drawing" = None
     ) -> Iterable[Quadrilateral]:
         """Yields faces as SOLID, TRACE or 3DFACE entities with DXF attributes
         given in `dxfattribs`.

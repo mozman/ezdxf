@@ -347,16 +347,16 @@ class Polyline(LinkedEntities):
         self.vertices.append(vertex)
 
     def append_vertices(
-        self, points: Iterable["Vertex"], dxfattribs: Dict = None
+        self, points: Iterable["Vertex"], dxfattribs=None
     ) -> None:
         """Append multiple :class:`Vertex` entities at location `points`.
 
         Args:
             points: iterable of ``(x, y[, z])`` tuples
-            dxfattribs: dict of DXF attributes for :class:`Vertex` class
+            dxfattribs: dict of DXF attributes for the VERTEX objects
 
         """
-        dxfattribs = dxfattribs or {}
+        dxfattribs = dict(dxfattribs or {})
         for vertex in self._build_dxf_vertices(points, dxfattribs):
             self._append_vertex(vertex)
 
@@ -364,7 +364,7 @@ class Polyline(LinkedEntities):
         self,
         points: Iterable["Vertex"],
         format: str = "xy",
-        dxfattribs: Dict = None,
+        dxfattribs=None,
     ) -> None:
         """Append multiple :class:`Vertex` entities at location `points`.
 
@@ -372,10 +372,10 @@ class Polyline(LinkedEntities):
             points: iterable of (x, y, [start_width, [end_width, [bulge]]])
                     tuple
             format: format string, default is ``'xy'``, see: :ref:`format codes`
-            dxfattribs: dict of DXF attributes for :class:`Vertex` class
+            dxfattribs: dict of DXF attributes for the VERTEX objects
 
         """
-        dxfattribs = dxfattribs or {}
+        dxfattribs = dict(dxfattribs or {})
         dxfattribs["flags"] = (
             dxfattribs.get("flags", 0) | self.get_vertex_flags()
         )
@@ -617,12 +617,12 @@ class Polyface(Polyline):
         # do not destroy polyline - all data would be lost
         return polyface
 
-    def append_face(self, face: "FaceType", dxfattribs: Dict = None) -> None:
+    def append_face(self, face: "FaceType", dxfattribs=None) -> None:
         """Append a single face. A `face` is a list of ``(x, y, z)`` tuples.
 
         Args:
             face: List[``(x, y, z)`` tuples]
-            dxfattribs: dict of DXF attributes for :class:`Vertex` entity
+            dxfattribs: dict of DXF attributes for VERTEX objects
 
         """
         self.append_faces([face], dxfattribs)
@@ -654,14 +654,14 @@ class Polyface(Polyline):
         return vertices
 
     def append_faces(
-        self, faces: Iterable["FaceType"], dxfattribs: Dict = None
+        self, faces: Iterable["FaceType"], dxfattribs=None
     ) -> None:
         """Append multiple `faces`. `faces` is a list of single faces and a
         single face is a list of ``(x, y, z)`` tuples.
 
         Args:
             faces: list of List[``(x, y, z)`` tuples]
-            dxfattribs: dict of DXF attributes for :class:`Vertex` entity
+            dxfattribs: dict of DXF attributes for teh VERTEX objects
 
         """
 
@@ -673,7 +673,7 @@ class Polyface(Polyline):
                 DXFVertex, self._new_compound_entity("VERTEX", dxfattribs)
             )
 
-        dxfattribs = dxfattribs or {}
+        dxfattribs = dict(dxfattribs or {})
 
         existing_vertices, existing_faces = self.indexed_faces()
         new_faces: List[FaceProxy] = []
