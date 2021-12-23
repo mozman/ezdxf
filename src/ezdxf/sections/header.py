@@ -47,6 +47,21 @@ $HANDSEED
 FF
 """
 
+# Additional variables may be stored as DICTIONARYVAR in the OBJECTS
+# section in the DICTIONARY "AcDbVariableDictionary" of the root dict.
+# - CANNOSCALE
+# - CENTEREXE
+# - CENTERLTYPEFILE
+# - CETRANSPARENCY
+# - CMLEADERSTYLE
+# - CTABLESTYLE
+# - CVIEWDETAILSTYLE
+# - CVIEWSECTIONSTYLE
+# - LAYEREVAL
+# - LAYERNOTIFY
+# - LIGHTINGUNITS
+# - MSLTSCALE
+
 
 class CustomVars:
     """Stores custom properties in the DXF header as $CUSTOMPROPERTYTAG and
