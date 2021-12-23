@@ -20,8 +20,24 @@ values.
     msp = doc.modelspace()
 
     attribs = GfxAttribs(layer="MyLayer", color=ezdxf.colors.RED)
-    msp.add_line((0, 0), (1, 0), dxfattribs=attribs)
-    msp.add_circle((0, 0), radius=1.0, dxfattribs=attribs)
+    line = msp.add_line((0, 0), (1, 0), dxfattribs=attribs)
+    circle = msp.add_circle((0, 0), radius=1.0, dxfattribs=attribs)
+
+    # Update DXF attributes of existing entities:
+    attribs = GfxAttribs(layer="MyLayer2", color=ezdxf.colors.BLUE)
+    # Convert GfxAttribs() to dict(), but this method cannot reset
+    # attributes to the default values like setting layer to "0".
+    line.update_dxf_attribs(dict(attribs))
+    # Using GfxAttribs.asdict(default_values=True), can reset attributes to the
+    # default values like setting layer to "0", except for true_color and
+    # transparency, which do not have default values, their absence is the
+    # default value.
+    circle.update_dxf_attribs(attribs.asdict(default_values=True))
+
+    # Remove true_color and transparency by assigning None
+    attribs.transparency = None  # reset to transparency by layer!
+    attribs.rgb = None
+
 
 Validation features:
 
@@ -66,4 +82,6 @@ Validation features:
     .. automethod:: load_from_header
 
     .. automethod:: write_to_header
+
+    .. automethod:: from_entity
 

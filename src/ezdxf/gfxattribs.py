@@ -7,16 +7,15 @@ from ezdxf.lldxf import validator, const
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
+    from ezdxf.entities import DXFEntity
 
 __all__ = ["GfxAttribs"]
 
 
 DEFAULT_LAYER = "0"
 DEFAULT_ACI_COLOR = colors.BYLAYER
-DEFAULT_TRUE_COLOR = (-1, -1, -1)
 DEFAULT_LINETYPE = "ByLayer"
 DEFAULT_LINEWEIGHT = const.LINEWEIGHT_BYLAYER
-DEFAULT_TRANSPARENCY = 0.0
 DEFAULT_LTSCALE = 1.0
 
 
@@ -34,7 +33,9 @@ class GfxAttribs:
         linetype (str): linetype name, does not check if the linetype exist!
         lineweight (int):  see :ref:`lineweights` documentation for valid values
         transparency (float): transparency value in the range from 0.0 to 1.0,
-            where 0.0 is opaque and 1.0 if fully transparent
+            where 0.0 is opaque and 1.0 if fully transparent, is ``None``  for
+            transparency by layer, which is the default value and transparency
+            by block is not supported
         ltscale (float): linetype scaling value > 0.0, default value is 1.0
 
 
@@ -45,10 +46,10 @@ class GfxAttribs:
 
     _layer: str = DEFAULT_LAYER
     _aci_color: int = DEFAULT_ACI_COLOR
-    _true_color: colors.RGB = DEFAULT_TRUE_COLOR
+    _true_color: Optional[colors.RGB] = None
     _linetype: str = DEFAULT_LINETYPE
     _lineweight: int = DEFAULT_LINEWEIGHT
-    _transparency: float = DEFAULT_TRANSPARENCY
+    _transparency: Optional[float] = None
     _ltscale: float = DEFAULT_LTSCALE
 
     def __init__(
@@ -56,10 +57,10 @@ class GfxAttribs:
         *,
         layer: str = DEFAULT_LAYER,
         color: int = DEFAULT_ACI_COLOR,
-        rgb: colors.RGB = None,
+        rgb: Optional[colors.RGB] = None,
         linetype: str = DEFAULT_LINETYPE,
         lineweight: int = DEFAULT_LINEWEIGHT,
-        transparency: float = DEFAULT_TRANSPARENCY,
+        transparency: Optional[float] = None,
         ltscale: float = DEFAULT_LTSCALE,
     ):
         self.layer = layer
@@ -76,13 +77,13 @@ class GfxAttribs:
             s.append(f"layer='{self._layer}'")
         if self._aci_color != DEFAULT_ACI_COLOR:
             s.append(f"color={self._aci_color}")
-        if self._true_color is not DEFAULT_TRUE_COLOR:
+        if self._true_color is not None:
             s.append(f"rgb={self._true_color}")
         if self._linetype != DEFAULT_LINETYPE:
             s.append(f"linetype='{self._linetype}'")
         if self._lineweight != DEFAULT_LINEWEIGHT:
             s.append(f"lineweight={self._lineweight}")
-        if self._transparency != DEFAULT_TRANSPARENCY:
+        if self._transparency is not None:
             s.append(f"transparency={round(self._transparency, 3)}")
         if self._ltscale != DEFAULT_LTSCALE:
             s.append(f"ltscale={round(self._ltscale, 3)}")
@@ -96,30 +97,40 @@ class GfxAttribs:
         """Returns iter(self)."""
         return iter(self.items())
 
-    def items(self) -> List[Tuple[str, Any]]:
-        """Returns the DXF attributes as list of name, value pairs."""
+    def items(self, default_values=False) -> List[Tuple[str, Any]]:
+        """Returns the DXF attributes as list of name, value pairs, returns
+        also the default values if argument `default_values` is ``True``.
+        The true_color and transparency attribute do not have default values,
+        the absence of these attributes is the default value.
+        """
         data: List[Tuple[str, Any]] = []
-        if self._layer != DEFAULT_LAYER:
+        if default_values or self._layer != DEFAULT_LAYER:
             data.append(("layer", self._layer))
-        if self._aci_color != DEFAULT_ACI_COLOR:
+        if default_values or self._aci_color != DEFAULT_ACI_COLOR:
             data.append(("color", self._aci_color))
-        if self._true_color is not DEFAULT_TRUE_COLOR:
+        if self._true_color is not None:
+            # absence is the default value
             data.append(("true_color", colors.rgb2int(self._true_color)))
-        if self._linetype != DEFAULT_LINETYPE:
+        if default_values or self._linetype != DEFAULT_LINETYPE:
             data.append(("linetype", self._linetype))
-        if self._lineweight != DEFAULT_LINEWEIGHT:
+        if default_values or self._lineweight != DEFAULT_LINEWEIGHT:
             data.append(("lineweight", self.lineweight))
-        if self._transparency != DEFAULT_TRANSPARENCY:
+        if self._transparency is not None:
+            # absence is the default value
             data.append(
                 ("transparency", colors.float2transparency(self._transparency))
             )
-        if self._ltscale != DEFAULT_LTSCALE:
+        if default_values or self._ltscale != DEFAULT_LTSCALE:
             data.append(("ltscale", self._ltscale))
         return data
 
-    def asdict(self) -> Dict[str, Any]:
-        """Returns the DXF attributes as :class:`dict`."""
-        return dict(self.items())
+    def asdict(self, default_values=False) -> Dict[str, Any]:
+        """Returns the DXF attributes as :class:`dict`, returns also the
+        default values if argument `default_values` is ``True``.
+        The true_color and transparency attribute do not have default values,
+        the absence of these attributes is the default value.
+        """
+        return dict(self.items(default_values))
 
     @property
     def layer(self) -> str:
@@ -148,15 +159,12 @@ class GfxAttribs:
     @property
     def rgb(self) -> Optional[colors.RGB]:
         """true color value as (red, green, blue) tuple"""
-        _rgb = self._true_color
-        if _rgb is DEFAULT_TRUE_COLOR:
-            return None
-        return _rgb
+        return self._true_color
 
     @rgb.setter
     def rgb(self, value: Optional[colors.RGB]):
         if value is None:
-            self._true_color = DEFAULT_TRUE_COLOR
+            self._true_color = None
         elif validator.is_valid_rgb(value):
             self._true_color = value
         else:
@@ -187,13 +195,17 @@ class GfxAttribs:
             raise const.DXFValueError(f"invalid lineweight value '{value}'")
 
     @property
-    def transparency(self) -> float:
-        """transparency value, 0.0 is opaque, 1.0 is fully transparent"""
+    def transparency(self) -> Optional[float]:
+        """transparency value, 0.0 is opaque, 1.0 is fully transparent, ``None``
+        for by layer
+        """
         return self._transparency
 
     @transparency.setter
-    def transparency(self, value: float):
-        if isinstance(value, float) and (0.0 <= value <= 1.0):
+    def transparency(self, value: Optional[float]):
+        if value is None:
+            self._transparency = None
+        elif isinstance(value, float) and (0.0 <= value <= 1.0):
             self._transparency = value
         else:
             raise const.DXFValueError(f"invalid transparency value '{value}'")
@@ -256,3 +268,16 @@ class GfxAttribs:
         header["$CELWEIGHT"] = self.lineweight
         header["$CELTSCALE"] = self.ltscale
 
+    @classmethod
+    def from_entity(cls, entity: "DXFEntity") -> "GfxAttribs":
+        """Get the graphical attributes of `entity` as :class:`GfxAttribs` object."""
+        attribs = cls()
+        dxf = entity.dxf
+        for name in ["layer", "color", "linetype", "lineweight", "ltscale"]:
+            if dxf.hasattr(name):
+                setattr(attribs, name, dxf.get(name))
+        if dxf.hasattr("true_color"):
+            attribs.rgb = colors.int2rgb(dxf.true_color)
+        if dxf.hasattr("transparency"):
+            attribs.transparency = colors.transparency2float(dxf.transparency)
+        return attribs

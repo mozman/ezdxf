@@ -3,7 +3,9 @@
 
 import pytest
 import ezdxf
+from ezdxf import gfxattribs
 from ezdxf.gfxattribs import GfxAttribs
+from ezdxf.entities import factory
 
 
 class TestDefaultGfxAttribs:
@@ -14,7 +16,7 @@ class TestDefaultGfxAttribs:
         assert attribs.rgb is None
         assert attribs.linetype == "ByLayer"
         assert attribs.lineweight == ezdxf.const.LINEWEIGHT_BYLAYER
-        assert attribs.transparency == 0.0
+        assert attribs.transparency is None
         assert attribs.ltscale == 1.0
 
     def test_str(self):
@@ -22,6 +24,18 @@ class TestDefaultGfxAttribs:
 
     def test_repr(self):
         assert repr(GfxAttribs()) == "GfxAttribs()"
+
+    def test_as_dict(self):
+        assert dict(GfxAttribs()) == dict()
+
+    def test_as_dict_default_values(self):
+        assert GfxAttribs().asdict(default_values=True) == {
+            "layer": gfxattribs.DEFAULT_LAYER,
+            "color": gfxattribs.DEFAULT_ACI_COLOR,
+            "linetype": gfxattribs.DEFAULT_LINETYPE,
+            "lineweight": gfxattribs.DEFAULT_LINEWEIGHT,
+            "ltscale": gfxattribs.DEFAULT_LTSCALE,
+        }
 
 
 class TestGfxAttribLayer:
@@ -47,9 +61,6 @@ class TestGfxAttribLayer:
 
     def test_repr(self):
         assert repr(GfxAttribs(layer="Test")) == "GfxAttribs(layer='Test')"
-
-    def test_as_dict(self):
-        assert dict(GfxAttribs()) == dict()
 
 
 class TestGfxAttribColor:
@@ -178,6 +189,11 @@ class TestGfxAttribTransparency:
         attribs.transparency = value
         assert attribs.transparency == value
 
+    def test_reset_value(self):
+        attribs = GfxAttribs(transparency=0.5)
+        attribs.transparency = None
+        assert attribs.transparency is None
+
     def test_set_invalid_value_raises_exception(self):
         attribs = GfxAttribs()
         with pytest.raises(ezdxf.DXFValueError):
@@ -283,6 +299,63 @@ def test_write_back_header_defaults():
     assert doc.header["$CELTYPE"] == "SOLID"
     assert doc.header["$CELWEIGHT"] == 50
     assert doc.header["$CELTSCALE"] == 2.0
+
+
+def test_from_entity():
+    line = factory.new(
+        "LINE",
+        dict(
+            GfxAttribs(
+                layer="Test",
+                color=3,
+                rgb=(10, 20, 30),
+                transparency=0.3019607843137255,
+                linetype="SOLID",
+                lineweight=50,
+                ltscale=3.0,
+            )
+        ),
+    )
+    attribs = GfxAttribs.from_entity(line)
+    assert attribs.layer == "Test"
+    assert attribs.color == 3
+    assert attribs.rgb == (10, 20, 30)
+    assert attribs.transparency == 0.3019607843137255
+    assert attribs.linetype == "SOLID"
+    assert attribs.ltscale == 3.0
+
+
+def test_update_dxf_attributes_from_gfx_attribs():
+    attribs = GfxAttribs(
+        layer="Test",
+        color=3,
+        rgb=(10, 20, 30),
+        transparency=0.3019607843137255,
+        linetype="SOLID",
+        lineweight=50,
+        ltscale=3.0,
+    )
+    line = factory.new("LINE")
+    line.update_dxf_attribs(dict(attribs))
+    assert attribs.layer == line.dxf.layer
+    assert attribs.color == line.dxf.color
+    assert attribs.rgb == ezdxf.colors.int2rgb(line.dxf.true_color)
+    assert attribs.transparency == ezdxf.colors.transparency2float(
+        line.dxf.transparency
+    )
+    assert attribs.linetype == line.dxf.linetype
+    assert attribs.ltscale == line.dxf.ltscale
+
+    line = factory.new("LINE")
+    line.dxf.update(dict(attribs))
+    assert attribs.layer == line.dxf.layer
+    assert attribs.color == line.dxf.color
+    assert attribs.rgb == ezdxf.colors.int2rgb(line.dxf.true_color)
+    assert attribs.transparency == ezdxf.colors.transparency2float(
+        line.dxf.transparency
+    )
+    assert attribs.linetype == line.dxf.linetype
+    assert attribs.ltscale == line.dxf.ltscale
 
 
 if __name__ == "__main__":
