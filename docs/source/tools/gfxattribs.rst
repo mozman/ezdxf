@@ -63,3 +63,7 @@ Validation features:
 
     .. automethod:: items
 
+    .. automethod:: load_from_header
+
+    .. automethod:: write_to_header
+

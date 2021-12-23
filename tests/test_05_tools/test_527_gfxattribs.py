@@ -12,7 +12,7 @@ class TestDefaultGfxAttribs:
         assert attribs.layer == "0"
         assert attribs.color == ezdxf.colors.BYLAYER
         assert attribs.rgb is None
-        assert attribs.linetype == "BYLAYER"
+        assert attribs.linetype == "ByLayer"
         assert attribs.lineweight == ezdxf.const.LINEWEIGHT_BYLAYER
         assert attribs.transparency == 0.0
         assert attribs.ltscale == 1.0
@@ -254,6 +254,35 @@ def test_gfx_attribs_string():
 def test_gfx_attribs_repr():
     attribs = GfxAttribs(layer="Test", color=1, ltscale=2)
     assert repr(attribs) == "GfxAttribs(layer='Test', color=1, ltscale=2.0)"
+
+
+def test_load_header_defaults():
+    doc = ezdxf.new()
+    attribs = GfxAttribs.load_from_header(doc)
+    assert attribs.layer == "0"
+    assert attribs.color == ezdxf.colors.BYLAYER
+    assert attribs.linetype == "ByLayer"
+    assert attribs.lineweight == ezdxf.const.LINEWEIGHT_BYLAYER
+    assert attribs.ltscale == 1.0
+
+
+def test_write_back_header_defaults():
+    doc = ezdxf.new()
+    doc.layers.new("Test")
+    doc.linetypes.new("SOLID")
+    attribs = GfxAttribs(
+        layer="Test",
+        color=1,
+        linetype="SOLID",
+        lineweight=50,
+        ltscale=2,
+    )
+    attribs.write_to_header(doc)
+    assert doc.header["$CLAYER"] == "Test"
+    assert doc.header["$CECOLOR"] == 1
+    assert doc.header["$CELTYPE"] == "SOLID"
+    assert doc.header["$CELWEIGHT"] == 50
+    assert doc.header["$CELTSCALE"] == 2.0
 
 
 if __name__ == "__main__":

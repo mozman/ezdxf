@@ -1,11 +1,12 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Dict, Any, Optional, List, Tuple, Iterator
-import reprlib
+from typing import Dict, Any, Optional, List, Tuple, Iterator, TYPE_CHECKING
 
 from ezdxf import colors
 from ezdxf.lldxf import validator, const
 
+if TYPE_CHECKING:
+    from ezdxf.document import Drawing
 
 __all__ = ["GfxAttribs"]
 
@@ -13,7 +14,7 @@ __all__ = ["GfxAttribs"]
 DEFAULT_LAYER = "0"
 DEFAULT_ACI_COLOR = colors.BYLAYER
 DEFAULT_TRUE_COLOR = (-1, -1, -1)
-DEFAULT_LINETYPE = "BYLAYER"
+DEFAULT_LINETYPE = "ByLayer"
 DEFAULT_LINEWEIGHT = const.LINEWEIGHT_BYLAYER
 DEFAULT_TRANSPARENCY = 0.0
 DEFAULT_LTSCALE = 1.0
@@ -208,3 +209,50 @@ class GfxAttribs:
             self._ltscale = float(value)
         else:
             raise const.DXFValueError(f"invalid linetype scale value '{value}'")
+
+    @classmethod
+    def load_from_header(cls, doc: "Drawing") -> "GfxAttribs":
+        """Load default DXF attributes from the HEADER section.
+
+        There is no default true color value and the default transparency is not
+        stored in HEADER section.
+
+        Loads following header variables:
+
+            - ``$CLAYER`` - current layer name
+            - ``$CECOLOR`` - current ACI color
+            - ``$CELTYPE`` - current linetype name
+            - ``$CELWEIGHT`` - current lineweight
+            - ``$CELTSCALE`` - current linetype scaling factor
+
+        """
+        header = doc.header
+        return cls(
+            layer=header.get("$CLAYER", DEFAULT_LAYER),
+            color=header.get("$CECOLOR", DEFAULT_ACI_COLOR),
+            linetype=header.get("$CELTYPE", DEFAULT_LINETYPE),
+            lineweight=header.get("$CELWEIGHT", DEFAULT_LINEWEIGHT),
+            ltscale=header.get("$CELTSCALE", DEFAULT_LTSCALE),
+        )
+
+    def write_to_header(self, doc: "Drawing") -> None:
+        """Write DXF attributes as default values to HEADER section.
+
+        Writes following header variables:
+
+            - ``$CLAYER`` - current layer name, if exist in `doc`
+            - ``$CECOLOR`` - current ACI color
+            - ``$CELTYPE`` - current linetype name, if exist in `doc`
+            - ``$CELWEIGHT`` - current lineweight
+            - ``$CELTSCALE`` - current linetype scaling factor
+
+        """
+        header = doc.header
+        if doc.layers.has_entry(self.layer):
+            header["$CLAYER"] = self.layer
+        header["$CECOLOR"] = self.color
+        if doc.linetypes.has_entry(self.linetype):
+            header["$CELTYPE"] = self.linetype
+        header["$CELWEIGHT"] = self.lineweight
+        header["$CELTSCALE"] = self.ltscale
+
