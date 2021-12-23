@@ -1,12 +1,13 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List, Tuple, Iterator
+import reprlib
+
 from ezdxf import colors
 from ezdxf.lldxf import validator, const
 
 
 __all__ = ["GfxAttribs"]
-
 
 
 DEFAULT_LAYER = "0"
@@ -40,6 +41,7 @@ class GfxAttribs:
         DXFValueError: invalid attribute value
 
     """
+
     _layer: str = DEFAULT_LAYER
     _aci_color: int = DEFAULT_ACI_COLOR
     _true_color: colors.RGB = DEFAULT_TRUE_COLOR
@@ -88,6 +90,35 @@ class GfxAttribs:
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.__str__()})"
+
+    def __iter__(self) -> Iterator[Tuple[str, Any]]:
+        """Returns iter(self)."""
+        return iter(self.items())
+
+    def items(self) -> List[Tuple[str, Any]]:
+        """Returns the DXF attributes as list of name, value pairs."""
+        data: List[Tuple[str, Any]] = []
+        if self._layer != DEFAULT_LAYER:
+            data.append(("layer", self._layer))
+        if self._aci_color != DEFAULT_ACI_COLOR:
+            data.append(("color", self._aci_color))
+        if self._true_color is not DEFAULT_TRUE_COLOR:
+            data.append(("true_color", colors.rgb2int(self._true_color)))
+        if self._linetype != DEFAULT_LINETYPE:
+            data.append(("linetype", self._linetype))
+        if self._lineweight != DEFAULT_LINEWEIGHT:
+            data.append(("lineweight", self.lineweight))
+        if self._transparency != DEFAULT_TRANSPARENCY:
+            data.append(
+                ("transparency", colors.float2transparency(self._transparency))
+            )
+        if self._ltscale != DEFAULT_LTSCALE:
+            data.append(("ltscale", self._ltscale))
+        return data
+
+    def asdict(self) -> Dict[str, Any]:
+        """Returns the DXF attributes as :class:`dict`."""
+        return dict(self.items())
 
     @property
     def layer(self) -> str:
@@ -164,9 +195,7 @@ class GfxAttribs:
         if isinstance(value, float) and (0.0 <= value <= 1.0):
             self._transparency = value
         else:
-            raise const.DXFValueError(
-                f"invalid transparency value '{value}'"
-            )
+            raise const.DXFValueError(f"invalid transparency value '{value}'")
 
     @property
     def ltscale(self) -> float:
@@ -178,6 +207,4 @@ class GfxAttribs:
         if isinstance(value, (float, int)) and (value > 1e-6):
             self._ltscale = float(value)
         else:
-            raise const.DXFValueError(
-                f"invalid linetype scale value '{value}'"
-            )
+            raise const.DXFValueError(f"invalid linetype scale value '{value}'")

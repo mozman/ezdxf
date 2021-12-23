@@ -48,6 +48,9 @@ class TestGfxAttribLayer:
     def test_repr(self):
         assert repr(GfxAttribs(layer="Test")) == "GfxAttribs(layer='Test')"
 
+    def test_as_dict(self):
+        assert dict(GfxAttribs()) == dict()
+
 
 class TestGfxAttribColor:
     def test_init_by_value(self):
@@ -184,7 +187,10 @@ class TestGfxAttribTransparency:
         assert str(GfxAttribs(transparency=0.5001)) == "transparency=0.5"
 
     def test_repr(self):
-        assert repr(GfxAttribs(transparency=0.5001)) == "GfxAttribs(transparency=0.5)"
+        assert (
+            repr(GfxAttribs(transparency=0.5001))
+            == "GfxAttribs(transparency=0.5)"
+        )
 
 
 class TestGfxAttribLinetypeScale:
@@ -212,6 +218,42 @@ class TestGfxAttribLinetypeScale:
 
     def test_repr(self):
         assert repr(GfxAttribs(ltscale=0.5001)) == "GfxAttribs(ltscale=0.5)"
+
+
+EXPECTED = {
+    "layer": "Test",
+    "color": 1,
+    "true_color": 0x0A0B0C,
+    "linetype": "SOLID",
+    "lineweight": 50,
+    "transparency": 0x200007F,
+    "ltscale": 2.0,
+}
+
+
+def test_gfx_attribs_as_dict():
+    attribs = GfxAttribs(
+        layer="Test",
+        color=1,
+        rgb=(0xA, 0xB, 0xC),
+        linetype="SOLID",
+        lineweight=50,
+        transparency=0.5,
+        ltscale=2,
+    )
+    assert sorted(attribs.items()) == sorted(EXPECTED.items())
+    assert attribs.asdict() == EXPECTED
+    assert dict(attribs) == EXPECTED
+
+
+def test_gfx_attribs_string():
+    attribs = GfxAttribs(layer="Test", color=1, ltscale=2)
+    assert str(attribs) == "layer='Test', color=1, ltscale=2.0"
+
+
+def test_gfx_attribs_repr():
+    attribs = GfxAttribs(layer="Test", color=1, ltscale=2)
+    assert repr(attribs) == "GfxAttribs(layer='Test', color=1, ltscale=2.0)"
 
 
 if __name__ == "__main__":

@@ -14,4 +14,4 @@ Version 0.18 - 2021-12-xx
 - NEW: helper class `ezdxf.math.ConstructionPolyline` to measure, interpolate and 
   divide polylines and anything that can be approximated or flattened into 
   vertices
-- NEW: `ezdxf.gfxattribs.gfxattribs()` function, [docs](https://ezdxf.mozman.at/docs/tools/gfxattribs.html)
+- NEW: `ezdxf.gfxattribs.GfxAttribs()` class, [docs](https://ezdxf.mozman.at/docs/tools/gfxattribs.html)

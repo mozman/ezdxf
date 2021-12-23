@@ -19,9 +19,9 @@ values.
     doc = ezdxf.new()
     msp = doc.modelspace()
 
-    dxfattribs = GfxAttribs(layer="MyLayer", color=ezdxf.colors.RED)
-    msp.add_line((0, 0), (1, 0), dxfattribs=dict(dxfattribs))
-    msp.add_circle((0, 0), radius=1.0, dxfattribs=dict(dxfattribs))
+    attribs = GfxAttribs(layer="MyLayer", color=ezdxf.colors.RED)
+    msp.add_line((0, 0), (1, 0), dxfattribs=dict(attribs))
+    msp.add_circle((0, 0), radius=1.0, dxfattribs=dict(attribs))
 
 Validation features:
 
@@ -56,3 +56,10 @@ Validation features:
     .. automethod:: __str__
 
     .. automethod:: __repr__
+
+    .. automethod:: __iter__
+
+    .. automethod:: asdict
+
+    .. automethod:: items
+
