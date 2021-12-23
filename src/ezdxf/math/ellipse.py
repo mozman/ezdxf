@@ -470,7 +470,7 @@ class ConstructionEllipse:
         self.end_param = (end_param - HALF_PI) % math.tau
 
     def add_to_layout(
-        self, layout: "BaseLayout", dxfattribs: dict = None
+        self, layout: "BaseLayout", dxfattribs=None
     ) -> "Ellipse":
         """Add ellipse as DXF :class:`~ezdxf.entities.Ellipse` entity to a
         layout.
@@ -478,13 +478,12 @@ class ConstructionEllipse:
         Args:
             layout: destination layout as :class:`~ezdxf.layouts.BaseLayout`
                 object
-            dxfattribs: additional DXF attributes for DXF
-                :class:`~ezdxf.entities.Ellipse` entity
+            dxfattribs: additional DXF attributes for the ELLIPSE entity
 
         """
         from ezdxf.entities import Ellipse
 
-        dxfattribs = dxfattribs or dict()
+        dxfattribs = dict(dxfattribs or {})
         dxfattribs.update(self.dxfattribs())
         e = Ellipse.new(dxfattribs=dxfattribs, doc=layout.doc)
         layout.add_entity(e)

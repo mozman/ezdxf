@@ -171,7 +171,7 @@ class MeshBuilder:
     def render_mesh(
         self,
         layout: "GenericLayoutType",
-        dxfattribs: dict = None,
+        dxfattribs=None,
         matrix: "Matrix44" = None,
         ucs: "UCS" = None,
     ):
@@ -204,7 +204,7 @@ class MeshBuilder:
         layout: "GenericLayoutType",
         length: float = 1,
         relative=True,
-        dxfattribs: dict = None,
+        dxfattribs=None,
     ):
         """Render face normals as :class:`~ezdxf.entities.Line` entities into
         `layout`, useful to check orientation of mesh faces.

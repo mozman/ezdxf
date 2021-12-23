@@ -96,7 +96,7 @@ class SierpinskyPyramid:
         self,
         layout: "GenericLayoutType",
         merge: bool = False,
-        dxfattribs: dict = None,
+        dxfattribs=None,
         matrix: "Matrix44" = None,
         ucs: "UCS" = None,
     ) -> None:

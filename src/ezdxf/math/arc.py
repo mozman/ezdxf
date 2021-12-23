@@ -356,7 +356,7 @@ class ConstructionArc:
         )
 
     def add_to_layout(
-        self, layout: "BaseLayout", ucs: UCS = None, dxfattribs: dict = None
+        self, layout: "BaseLayout", ucs: UCS = None, dxfattribs=None
     ) -> "Arc":
         """Add arc as DXF :class:`~ezdxf.entities.Arc` entity to a layout.
 
@@ -368,8 +368,7 @@ class ConstructionArc:
             layout: destination layout as :class:`~ezdxf.layouts.BaseLayout`
                 object
             ucs: place arc in 3D space by :class:`~ezdxf.math.UCS` object
-            dxfattribs: additional DXF attributes for the DXF
-                :class:`~ezdxf.entities.Arc` entity
+            dxfattribs: additional DXF attributes for the ARC entity
 
         """
         arc = layout.add_arc(

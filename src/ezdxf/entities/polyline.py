@@ -394,7 +394,7 @@ class Polyline(LinkedEntities):
             )
             self._append_vertex(vertex)
 
-    def append_vertex(self, point: "Vertex", dxfattribs: dict = None) -> None:
+    def append_vertex(self, point: "Vertex", dxfattribs=None) -> None:
         """Append a single :class:`Vertex` entity at location `point`.
 
         Args:
@@ -402,12 +402,12 @@ class Polyline(LinkedEntities):
             dxfattribs: dict of DXF attributes for :class:`Vertex` class
 
         """
-        dxfattribs = dxfattribs or {}
+        dxfattribs = dict(dxfattribs or {})
         for vertex in self._build_dxf_vertices([point], dxfattribs):
             self._append_vertex(vertex)
 
     def insert_vertices(
-        self, pos: int, points: Iterable["Vertex"], dxfattribs: dict = None
+        self, pos: int, points: Iterable["Vertex"], dxfattribs=None
     ) -> None:
         """Insert vertices `points` into :attr:`Polyline.vertices` list
         at insertion location `pos` .
@@ -418,7 +418,7 @@ class Polyline(LinkedEntities):
             dxfattribs: dict of DXF attributes for :class:`Vertex` class
 
         """
-        dxfattribs = dxfattribs or {}
+        dxfattribs = dict(dxfattribs or {})
         self.vertices[pos:pos] = list(
             self._build_dxf_vertices(points, dxfattribs)
         )
@@ -895,7 +895,7 @@ class Polymesh(Polyline):
         return polymesh
 
     def set_mesh_vertex(
-        self, pos: Tuple[int, int], point: "Vertex", dxfattribs: dict = None
+        self, pos: Tuple[int, int], point: "Vertex", dxfattribs = None
     ):
         """Set location and DXF attributes of a single mesh vertex.
 
@@ -905,7 +905,7 @@ class Polymesh(Polyline):
             dxfattribs: dict of DXF attributes
 
         """
-        dxfattribs = dxfattribs or {}
+        dxfattribs = dict(dxfattribs or {})
         dxfattribs["location"] = point
         vertex = self.get_mesh_vertex(pos)
         vertex.update_dxf_attribs(dxfattribs)

@@ -503,7 +503,7 @@ def to_lwpolylines(
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
     extrusion: "Vertex" = Z_AXIS,
-    dxfattribs: Optional[Dict] = None,
+    dxfattribs=None,
 ) -> Iterable[LWPolyline]:
     """Convert the given `paths` into :class:`~ezdxf.entities.LWPolyline`
     entities.
@@ -534,7 +534,7 @@ def to_lwpolylines(
 
     extrusion = Vec3(extrusion)
     reference_point = paths[0].start
-    dxfattribs = dxfattribs or dict()
+    dxfattribs = dict(dxfattribs or {})
     if not Z_AXIS.isclose(extrusion):
         ocs, elevation = _get_ocs(extrusion, reference_point)
         paths = tools.transform_paths_to_ocs(paths, ocs)
@@ -562,7 +562,7 @@ def to_polylines2d(
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
     extrusion: "Vertex" = Z_AXIS,
-    dxfattribs: Optional[Dict] = None,
+    dxfattribs=None,
 ) -> Iterable[Polyline]:
     """Convert the given `paths` into 2D :class:`~ezdxf.entities.Polyline`
     entities.
@@ -593,7 +593,7 @@ def to_polylines2d(
 
     extrusion = Vec3(extrusion)
     reference_point = paths[0].start
-    dxfattribs = dxfattribs or dict()
+    dxfattribs = dict(dxfattribs or {})
     if not Z_AXIS.isclose(extrusion):
         ocs, elevation = _get_ocs(extrusion, reference_point)
         paths = tools.transform_paths_to_ocs(paths, ocs)
@@ -617,7 +617,7 @@ def to_hatches(
     segments: int = MIN_SEGMENTS,
     g1_tol: float = G1_TOL,
     extrusion: "Vertex" = Z_AXIS,
-    dxfattribs: Optional[Dict] = None,
+    dxfattribs=None,
 ) -> Iterable[Hatch]:
     """Convert the given `paths` into :class:`~ezdxf.entities.Hatch` entities.
     Uses LWPOLYLINE paths for boundaries without curves and edge paths, build
@@ -666,7 +666,7 @@ def to_mpolygons(
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
     extrusion: "Vertex" = Z_AXIS,
-    dxfattribs: Optional[Dict] = None,
+    dxfattribs=None,
 ) -> Iterable[MPolygon]:
     """Convert the given `paths` into :class:`~ezdxf.entities.MPolygon` entities.
     In contrast to HATCH, MPOLYGON supports only polyline boundary paths.
@@ -694,8 +694,8 @@ def to_mpolygons(
     boundary_factory: BoundaryFactory = partial(
         build_poly_path, distance=distance, segments=segments
     )
-    dxfattribs = dxfattribs or dict()
-    dxfattribs.setdefault("fill_color", const.BYLAYER)
+    dxfattribs = dict(dxfattribs or {})
+    dxfattribs.setdefault("fill_color", const.BYLAYER)  # type: ignore
 
     yield from _polygon_converter(
         MPolygon, paths, boundary_factory, extrusion, dxfattribs
@@ -749,7 +749,7 @@ def _polygon_converter(
     paths: Iterable[Path],
     add_boundary: BoundaryFactory,
     extrusion: "Vertex" = Z_AXIS,
-    dxfattribs: Optional[Dict] = None,
+    dxfattribs=None,
 ) -> Iterable[TPolygon]:
     if isinstance(paths, Path):
         paths = [paths]
@@ -760,22 +760,22 @@ def _polygon_converter(
 
     extrusion = Vec3(extrusion)
     reference_point = paths[0].start
-    dxfattribs = dxfattribs or dict()
+    _dxfattribs: Dict = dict(dxfattribs or {})
     if not Z_AXIS.isclose(extrusion):
         ocs, elevation = _get_ocs(extrusion, reference_point)
         paths = tools.transform_paths_to_ocs(paths, ocs)
-        dxfattribs["elevation"] = Vec3(0, 0, elevation)
-        dxfattribs["extrusion"] = extrusion
+        _dxfattribs["elevation"] = Vec3(0, 0, elevation)
+        _dxfattribs["extrusion"] = extrusion
     elif reference_point.z != 0:
-        dxfattribs["elevation"] = Vec3(0, 0, reference_point.z)
-    dxfattribs.setdefault("solid_fill", 1)
-    dxfattribs.setdefault("pattern_name", "SOLID")
-    dxfattribs.setdefault("color", const.BYLAYER)
+        _dxfattribs["elevation"] = Vec3(0, 0, reference_point.z)
+    _dxfattribs.setdefault("solid_fill", 1)
+    _dxfattribs.setdefault("pattern_name", "SOLID")
+    _dxfattribs.setdefault("color", const.BYLAYER)
 
     for group in group_paths(tools.single_paths(paths)):
         if len(group) == 0:
             continue
-        polygon = cls.new(dxfattribs=dxfattribs)
+        polygon = cls.new(dxfattribs=_dxfattribs)
         boundaries = polygon.paths
         external = group[0]
         external.close()
@@ -791,7 +791,7 @@ def to_polylines3d(
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
-    dxfattribs: Optional[Dict] = None,
+    dxfattribs=None,
 ) -> Iterable[Polyline]:
     """Convert the given `paths` into 3D :class:`~ezdxf.entities.Polyline`
     entities.
@@ -811,7 +811,7 @@ def to_polylines3d(
     if isinstance(paths, Path):
         paths = [paths]
 
-    dxfattribs = dxfattribs or {}
+    dxfattribs = dict(dxfattribs or {})
     dxfattribs["flags"] = const.POLYLINE_3D_POLYLINE
     for path in tools.single_paths(paths):
         if len(path) > 0:
@@ -825,7 +825,7 @@ def to_lines(
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
-    dxfattribs: Optional[Dict] = None,
+    dxfattribs=None,
 ) -> Iterable[Line]:
     """Convert the given `paths` into :class:`~ezdxf.entities.Line` entities.
 
@@ -843,7 +843,7 @@ def to_lines(
     """
     if isinstance(paths, Path):
         paths = [paths]
-    dxfattribs = dxfattribs or {}
+    dxfattribs = dict(dxfattribs or {})
     prev_vertex = None
     for path in tools.single_paths(paths):
         if len(path) == 0:
@@ -940,7 +940,7 @@ def to_splines_and_polylines(
     paths: Iterable[Path],
     *,
     g1_tol: float = G1_TOL,
-    dxfattribs: Optional[Dict] = None,
+    dxfattribs=None,
 ) -> Iterable[Union[Spline, Polyline]]:
     """Convert the given `paths` into :class:`~ezdxf.entities.Spline` and 3D
     :class:`~ezdxf.entities.Polyline` entities.
@@ -958,7 +958,7 @@ def to_splines_and_polylines(
     """
     if isinstance(paths, Path):
         paths = [paths]
-    dxfattribs = dxfattribs or {}
+    dxfattribs = dict(dxfattribs or {})
 
     for path in tools.single_paths(paths):
         for data in to_bsplines_and_vertices(path, g1_tol):

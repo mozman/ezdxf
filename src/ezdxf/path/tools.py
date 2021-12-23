@@ -274,7 +274,7 @@ def render_lwpolylines(
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
     extrusion: "Vertex" = Z_AXIS,
-    dxfattribs: Optional[Dict] = None
+    dxfattribs=None
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as
     :class:`~ezdxf.entities.LWPolyline` entities.
@@ -318,7 +318,7 @@ def render_polylines2d(
     distance: float = 0.01,
     segments: int = 4,
     extrusion: "Vertex" = Z_AXIS,
-    dxfattribs: Optional[Dict] = None
+    dxfattribs=None
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as 2D
     :class:`~ezdxf.entities.Polyline` entities.
@@ -364,7 +364,7 @@ def render_hatches(
     segments: int = MIN_SEGMENTS,
     g1_tol: float = G1_TOL,
     extrusion: "Vertex" = Z_AXIS,
-    dxfattribs: Optional[Dict] = None
+    dxfattribs=None
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as
     :class:`~ezdxf.entities.Hatch` entities.
@@ -413,7 +413,7 @@ def render_mpolygons(
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
     extrusion: "Vertex" = Z_AXIS,
-    dxfattribs: Optional[Dict] = None
+    dxfattribs=None
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as
     :class:`~ezdxf.entities.MPolygon` entities. The MPOLYGON entity supports
@@ -458,7 +458,7 @@ def render_polylines3d(
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
-    dxfattribs: Optional[Dict] = None
+    dxfattribs=None
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as 3D
     :class:`~ezdxf.entities.Polyline` entities.
@@ -496,7 +496,7 @@ def render_lines(
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
-    dxfattribs: Optional[Dict] = None
+    dxfattribs=None
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as
     :class:`~ezdxf.entities.Line` entities.
@@ -532,7 +532,7 @@ def render_splines_and_polylines(
     paths: Iterable[Path],
     *,
     g1_tol: float = G1_TOL,
-    dxfattribs: Optional[Dict] = None
+    dxfattribs=None
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as :class:`~ezdxf.entities.Spline`
     and 3D :class:`~ezdxf.entities.Polyline` entities.
