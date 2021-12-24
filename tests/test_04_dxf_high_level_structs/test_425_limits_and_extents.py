@@ -102,8 +102,8 @@ def test_default_active_msp_vport_config(doc):
     assert len(vport_config) == 1
     vport = vport_config[0]
 
-    assert vport.dxf.center == (344.2, 148.5)
-    assert vport.dxf.height == 297
+    assert vport.dxf.center == (0, 0)
+    assert vport.dxf.height == 1000
 
 
 def test_default_active_layout1_viewport(doc):
