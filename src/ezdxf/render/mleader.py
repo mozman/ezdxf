@@ -1060,7 +1060,7 @@ class MultiLeaderBuilder(abc.ABC):
             if linetype is None:
                 raise ValueError(f"required linetype 'BYLAYER' does not exist")
             dxf.leader_linetype_handle = linetype.dxf.handle
-        dxf.property_override_flags = 0xFFFFFFFF
+        dxf.property_override_flags = 0x7FFFFFFF
 
     def _build_leader(
         self,
