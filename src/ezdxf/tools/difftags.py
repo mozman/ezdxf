@@ -1,12 +1,13 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Tuple, Iterator
+from typing import Iterator, NamedTuple, Iterable
 from difflib import SequenceMatcher
 import enum
+
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.types import DXFVertex, DXFTag
 
-__all__ = ["diff_tags", "OpCode"]
+__all__ = ["diff_tags", "print_diff", "OpCode"]
 
 # https://docs.python.org/3/library/difflib.html
 
@@ -18,7 +19,13 @@ class OpCode(enum.Enum):
     equal = enum.auto()
 
 
-Operation = Tuple[OpCode, int, int, int, int]
+class Operation(NamedTuple):
+    opcode: OpCode
+    i1: int
+    i2: int
+    j1: int
+    j2: int
+
 
 CONVERT = {
     "replace": OpCode.replace,
@@ -30,7 +37,7 @@ CONVERT = {
 
 def convert_opcodes(opcodes) -> Iterator[Operation]:
     for tag, i1, i2, j1, j2 in opcodes:
-        yield CONVERT[tag], i1, i2, j1, j2
+        yield Operation(CONVERT[tag], i1, i2, j1, j2)
 
 
 def round_tags(tags: Tags, ndigits: int) -> Iterator[DXFTag]:
@@ -50,3 +57,21 @@ def diff_tags(a: Tags, b: Tags, ndigits: int = None) -> Iterator[Operation]:
 
     sequencer = SequenceMatcher(a=a, b=b)
     return convert_opcodes(sequencer.get_opcodes())
+
+
+def print_diff(a: Tags, b: Tags, operations: Iterable[Operation]):
+    t1: DXFTag
+    t2: DXFTag
+    print()
+    for op in operations:
+        if op.opcode == OpCode.insert:
+            for t1 in b[op.j1 : op.j2]:
+                print(f"insert a[{op.i1}:{op.i2}]: {t1}")
+        elif op.opcode == OpCode.replace:
+            for index, t1 in enumerate(a[op.i1 : op.i2], op.i1):
+                print(f"replace a[{index}]: {t1}")
+            for index, t2 in enumerate(b[op.j1 : op.j2], op.j1):
+                print(f"     by b[{index}]: {t2}")
+        elif op.opcode == OpCode.delete:
+            for index, t1 in enumerate(a[op.i1 : op.i2], op.i1):
+                print(f"delete a[{index}]: {t1}")
