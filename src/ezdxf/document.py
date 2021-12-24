@@ -820,9 +820,7 @@ class Drawing:
         self._acad_compatible = False
         if msg not in self._acad_incompatibility_reason:
             self._acad_incompatibility_reason.add(msg)
-            logger.warning(
-                f"DXF document is not AutoCAD compatible! {msg}."
-            )
+            logger.warning(f"DXF document is not AutoCAD compatible! {msg}.")
 
     def query(self, query: str = "*") -> EntityQuery:
         """
@@ -1065,18 +1063,30 @@ class Drawing:
         else:
             return True
 
-    def set_modelspace_vport(self, height, center=(0, 0)) -> "VPort":
+    def set_modelspace_vport(
+        self, height, center=(0, 0), *, dxfattribs=None
+    ) -> "VPort":
         r"""Set initial view/zoom location for the modelspace, this replaces
-        the current "\*Active" viewport configuration.
+        the current "\*Active" viewport configuration
+        (:class:`~ezdxf.entities.VPort`).
 
         Args:
              height: modelspace area to view
              center: modelspace location to view in the center of the CAD
                 application window.
+             dxfattribs: additional DXF attributes for the VPORT entity
+
+        .. versionchanged:: 0.17.2
+
+            added argument `dxfattribs` to pass additional DXF attributes to
+            the VPORT entity
 
         """
         self.viewports.delete_config("*Active")
-        vport = cast("VPort", self.viewports.new("*Active"))
+        dxfattribs = dict(dxfattribs or {})
+        vport = cast(
+            "VPort", self.viewports.new("*Active", dxfattribs=dxfattribs)
+        )
         vport.dxf.center = center
         vport.dxf.height = height
         return vport

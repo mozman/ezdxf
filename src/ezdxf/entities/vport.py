@@ -32,7 +32,7 @@ acdb_vport = DefSubclass(
         "flags": DXFAttr(70, default=0),
         "lower_left": DXFAttr(10, xtype=XType.point2d, default=Vec2(0, 0)),
         "upper_right": DXFAttr(11, xtype=XType.point2d, default=Vec2(1, 1)),
-        "center": DXFAttr(12, xtype=XType.point2d, default=Vec2(344.2, 148.5)),
+        "center": DXFAttr(12, xtype=XType.point2d, default=Vec2(0, 0)),
         "snap_base": DXFAttr(13, xtype=XType.point2d, default=Vec2(0, 0)),
         "snap_spacing": DXFAttr(
             14, xtype=XType.point2d, default=Vec2(0.5, 0.5)
@@ -49,7 +49,7 @@ acdb_vport = DefSubclass(
         ),
         "target": DXFAttr(17, xtype=XType.point3d, default=NULLVEC),
         # height: DXF reference error: listed as group code 45
-        "height": DXFAttr(40, default=297),
+        "height": DXFAttr(40, default=1000),
         "aspect_ratio": DXFAttr(41, default=1.34),
         "focal_length": DXFAttr(42, default=50),
         "front_clipping": DXFAttr(43, default=0),
@@ -59,7 +59,11 @@ acdb_vport = DefSubclass(
         "view_mode": DXFAttr(71, default=0),
         "circle_sides": DXFAttr(72, default=1000),
         "fast_zoom": DXFAttr(73, default=1),  # removed in R2007
-        "ucs_icon": DXFAttr(74, default=3),
+
+        # ucs_icon:
+        # bit 0: 0=hide, 1=show
+        # bit 1: 0=display in lower left corner, 1=display at origin
+        "ucs_icon": DXFAttr(74, default=3),  # show at origin
         "snap_on": DXFAttr(75, default=0),  # removed in R2007
         "grid_on": DXFAttr(76, default=0),  # removed in R2007
         "snap_style": DXFAttr(77, default=0),  # removed in R2007
