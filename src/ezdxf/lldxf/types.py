@@ -243,7 +243,7 @@ class DXFVertex(DXFTag):
 
     __slots__ = ()
 
-    def __init__(self, code: int, value: Sequence[float]):
+    def __init__(self, code: int, value: Iterable[float]):
         super(DXFVertex, self).__init__(code, array("d", value))
 
     def __str__(self) -> str:
