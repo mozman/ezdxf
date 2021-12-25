@@ -2,9 +2,12 @@
 #  License: MIT License
 
 import pathlib
-import ezdxf
-from ezdxf.math import Vec2, UCS, NULLVEC
 import logging
+
+import ezdxf
+from ezdxf import colors
+from ezdxf.gfxattribs import GfxAttribs
+from ezdxf.math import Vec2, UCS, NULLVEC
 from ezdxf.render.mleader import (
     ConnectionSide,
     VerticalConnection,
@@ -53,7 +56,7 @@ def simple_mtext_content_horizontal(name: str):
 def all_mtext_content_horizontal(name: str):
     doc = ezdxf.new(DXFVERSION, setup=True)
     msp = doc.modelspace()
-    attribs = {"color": ezdxf.colors.RED}
+    attribs = GfxAttribs(color=colors.RED)
     for direction in range(9):
         for ax, alignment in enumerate(
             [
@@ -130,7 +133,7 @@ def simple_mtext_content_vertical(name: str):
     msp.add_circle(
         ml_builder.multileader.context.base_point,
         radius=0.5,
-        dxfattribs={"color": ezdxf.colors.RED},
+        dxfattribs=GfxAttribs(color=colors.RED),
     )
     doc.set_modelspace_vport(60, center=(10, 5))
     doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
@@ -143,7 +146,7 @@ def quick_mtext_horizontal(name: str):
     msp = doc.modelspace()
     target_point = Vec2(40, 15)
     msp.add_circle(
-        target_point, radius=0.5, dxfattribs={"color": ezdxf.colors.RED}
+        target_point, radius=0.5, dxfattribs=GfxAttribs(color=colors.RED)
     )
 
     for angle in [45, 135, 225, -45]:
@@ -165,7 +168,7 @@ def quick_mtext_vertical(name: str):
     msp = doc.modelspace()
     target_point = Vec2(40, 15)
     msp.add_circle(
-        target_point, radius=0.5, dxfattribs={"color": ezdxf.colors.RED}
+        target_point, radius=0.5, dxfattribs=GfxAttribs(color=colors.RED)
     )
 
     for angle in [45, 135, 225, -45]:
