@@ -1,10 +1,14 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 #  Debugging tools to analyze DXF entities.
-from typing import List
+from typing import List, Iterable, Sequence
+import textwrap
+
 import ezdxf
+from ezdxf import colors
 from ezdxf.math import Vec2
 from ezdxf.lldxf import const
+from ezdxf.tools.debug import print_bitmask
 
 from ezdxf.entities import (
     EdgePath,
@@ -13,6 +17,7 @@ from ezdxf.entities import (
     ArcEdge,
     EllipseEdge,
     SplineEdge,
+    mleader,
 )
 from ezdxf.entities.polygon import DXFPolygon
 
@@ -37,39 +42,15 @@ class HatchAnalyzer:
         self.angle = angle
         self.doc = ezdxf.new()
         self.msp = self.doc.modelspace()
-        self._setup_doc()
-
-    def _setup_doc(self):
         self.init_layers()
         self.init_markers()
 
-    def add_hatch(self, hatch: DXFPolygon) -> None:
-        hatch.dxf.discard("extrusion")
-        hatch.dxf.layer = HATCH_LAYER
-        self.msp.add_foreign_entity(hatch)
-
-    def add_boundary_markers(self, hatch: DXFPolygon) -> None:
-        hatch.dxf.discard("extrusion")
-        path_num: int = 0
-
-        for p in hatch.paths:
-            path_num += 1
-            if isinstance(p, PolylinePath):
-                self.add_polyline_markers(p, path_num)
-            elif isinstance(p, EdgePath):
-                self.add_edge_markers(p, path_num)
-            else:
-                raise TypeError(f"unknown boundary path type: {type(p)}")
-
-    def export(self, name: str) -> None:
-        self.doc.saveas(name)
-
     def init_layers(self):
-        self.doc.layers.add(POLYLINE_LAYER, color=const.YELLOW)
-        self.doc.layers.add(LINE_LAYER, color=const.RED)
-        self.doc.layers.add(ARC_LAYER, color=const.GREEN)
-        self.doc.layers.add(ELLIPSE_LAYER, color=const.MAGENTA)
-        self.doc.layers.add(SPLINE_LAYER, color=const.CYAN)
+        self.doc.layers.add(POLYLINE_LAYER, color=colors.YELLOW)
+        self.doc.layers.add(LINE_LAYER, color=colors.RED)
+        self.doc.layers.add(ARC_LAYER, color=colors.GREEN)
+        self.doc.layers.add(ELLIPSE_LAYER, color=colors.MAGENTA)
+        self.doc.layers.add(SPLINE_LAYER, color=colors.CYAN)
         self.doc.layers.add(HATCH_LAYER)
 
     def init_markers(self):
@@ -122,6 +103,27 @@ class HatchAnalyzer:
         )
         text.dxf.height = height
         text.set_pos((text_start, 0), align="MIDDLE_RIGHT")
+
+    def export(self, name: str) -> None:
+        self.doc.saveas(name)
+
+    def add_hatch(self, hatch: DXFPolygon) -> None:
+        hatch.dxf.discard("extrusion")
+        hatch.dxf.layer = HATCH_LAYER
+        self.msp.add_foreign_entity(hatch)
+
+    def add_boundary_markers(self, hatch: DXFPolygon) -> None:
+        hatch.dxf.discard("extrusion")
+        path_num: int = 0
+
+        for p in hatch.paths:
+            path_num += 1
+            if isinstance(p, PolylinePath):
+                self.add_polyline_markers(p, path_num)
+            elif isinstance(p, EdgePath):
+                self.add_edge_markers(p, path_num)
+            else:
+                raise TypeError(f"unknown boundary path type: {type(p)}")
 
     def add_start_marker(self, location: Vec2, name: str, layer: str) -> None:
         self.add_marker(EDGE_START_MARKER, location, name, layer)
@@ -197,7 +199,7 @@ class HatchAnalyzer:
             )
 
     @staticmethod
-    def report(hatch: DXFPolygon):
+    def report(hatch: DXFPolygon) -> List[str]:
         return hatch_report(hatch)
 
     @staticmethod
@@ -257,3 +259,295 @@ def edge_path_report(p: EdgePath, num: int) -> List[str]:
         f"   continuously connected edges:   {connected}",
         f"   closed edge loop:               {closed}",
     ]
+
+
+MULTILEADER = "MULTILEADER_MARKER"
+POINT_MARKER = "POINT_MARKER"
+
+
+class MultileaderAnalyzer:
+    """Multileader can not be added as foreign entity to a new document.
+    Annotations have to be added to the source document.
+
+    """
+
+    def __init__(
+        self,
+        multileader: mleader.MultiLeader,
+        *,
+        marker_size: float = 1.0,
+        report_width: int = 79,
+    ):
+        self.marker_size = marker_size
+        self.report_width = report_width
+        self.multileader = multileader
+        assert self.multileader.doc is not None, "valid DXF document required"
+        self.doc = self.multileader.doc
+        self.msp = self.doc.modelspace()
+        self.init_layers()
+        self.init_markers()
+
+    def init_layers(self):
+        if self.doc.layers.has_entry(MULTILEADER):
+            return
+        self.doc.layers.add(MULTILEADER, color=colors.RED)
+
+    def init_markers(self):
+        if POINT_MARKER not in self.doc.blocks:
+            blk = self.doc.blocks.new(POINT_MARKER)
+            attribs = {"layer": "0"}  # from INSERT
+            size = self.marker_size
+            size_2 = size / 2.0
+            radius = size / 4.0
+            blk.add_circle(
+                center=(0, 0),
+                radius=radius,
+                dxfattribs=attribs,
+            )
+            blk.add_line((-size_2, 0), (size_2, 0), dxfattribs=attribs)
+            blk.add_line((0, -size_2), (0, size_2), dxfattribs=attribs)
+
+    @property
+    def context(self) -> mleader.MLeaderContext:
+        return self.multileader.context
+
+    def divider_line(self, symbol="-") -> str:
+        return symbol * self.report_width
+
+    def shorten_lines(self, lines: Iterable[str]) -> List[str]:
+        return [
+            textwrap.shorten(line, width=self.report_width) for line in lines
+        ]
+
+    def report(self) -> List[str]:
+        report = [
+            str(self.multileader),
+            self.divider_line(),
+            "Existing DXF attributes:",
+            self.divider_line(),
+        ]
+        report.extend(self.multileader_attributes())
+        report.extend(self.context_attributes())
+        if self.context.mtext is not None:
+            report.extend(self.mtext_attributes())
+        if self.context.block is not None:
+            report.extend(self.block_attributes())
+            if self.multileader.block_attribs:
+                report.extend(self.block_reference_attribs())
+        if self.multileader.context.leaders:
+            report.extend(self.leader_attributes())
+        if self.multileader.arrow_heads:
+            report.extend(self.arrow_heads())
+        return self.shorten_lines(report)
+
+    def print_report(self) -> None:
+        width = self.report_width
+        print()
+        print("=" * width)
+        print("\n".join(self.report()))
+        print("=" * width)
+
+    def print_overridden_properties(self):
+        from ezdxf.render.mleader import MLeaderStyleOverride, OVERRIDE_FLAG
+
+        doc = self.doc
+        multileader = self.multileader
+        style = doc.entitydb.get(multileader.dxf.style_handle)
+        print(style)
+        print(f"name='{style.dxf.name}'")
+        print("-" * self.report_width)
+        override = MLeaderStyleOverride(style, multileader)
+        for name in OVERRIDE_FLAG.keys():
+            if override.is_overridden(name):
+                print(f"{name}: {override.get(name)}")
+        print(
+            f"use MTEXT default content: {override.use_mtext_default_content}"
+        )
+
+    def multileader_attributes(self) -> List[str]:
+        attribs = self.multileader.dxf.all_existing_dxf_attribs()
+        keys = sorted(attribs.keys())
+        return [f"{key}: {attribs[key]}" for key in keys]
+
+    def print_override_state(self):
+        flags = self.multileader.dxf.property_override_flags
+        print(f"\nproperty_override_flags:")
+        print(f"dec: {flags}")
+        print(f"hex: {hex(flags)}")
+        print_bitmask(flags)
+
+    def print_context_attributes(self):
+        print("\n".join(self.context_attributes()))
+
+    def context_attributes(self) -> List[str]:
+        context = self.context
+        if context is None:
+            return []
+        report = [
+            self.divider_line(),
+            "CONTEXT object attributes:",
+            self.divider_line(),
+            f"has MTEXT content: {yes_or_no(context.mtext)}",
+            f"has BLOCK content: {yes_or_no(context.block)}",
+            self.divider_line(),
+        ]
+        keys = [
+            key
+            for key in context.__dict__.keys()
+            if key not in ("mtext", "block", "leaders")
+        ]
+        attributes = [f"{name}: {getattr(context, name)}" for name in keys]
+        attributes.sort()
+        report.extend(attributes)
+        return self.shorten_lines(report)
+
+    def print_mtext_attributes(self):
+        print("\n".join(self.mtext_attributes()))
+
+    def mtext_attributes(self) -> List[str]:
+        report = [
+            self.divider_line(),
+            "MTEXT content attributes:",
+            self.divider_line(),
+        ]
+        mtext = self.context.mtext
+        if mtext is not None:
+            report.extend(_content_attributes(mtext))
+        return self.shorten_lines(report)
+
+    def print_block_attributes(self):
+        print("\n".join(self.block_attributes()))
+
+    def block_attributes(self) -> List[str]:
+        report = [
+            self.divider_line(),
+            "BLOCK content attributes:",
+            self.divider_line(),
+        ]
+        block = self.context.block
+        if block is not None:
+            report.extend(_content_attributes(block))
+        return self.shorten_lines(report)
+
+    def print_leader_attributes(self):
+        print("\n".join(self.leader_attributes()))
+
+    def leader_attributes(self) -> List[str]:
+        report = []
+        leaders = self.context.leaders
+        if leaders is not None:
+            for index, leader in enumerate(leaders):
+                report.extend(self._leader_attributes(index, leader))
+        return self.shorten_lines(report)
+
+    def _leader_attributes(
+        self, index: int, leader: mleader.LeaderData
+    ) -> List[str]:
+        report = [
+            self.divider_line(),
+            f"{index+1}. LEADER attributes:",
+            self.divider_line(),
+        ]
+        report.extend(_content_attributes(leader, exclude=("lines", "breaks")))
+        s = ", ".join(map(str, leader.breaks))
+        report.append(f"breaks: [{s}]")
+        if leader.lines:
+            report.extend(self._leader_lines(leader.lines))
+        return report
+
+    def _leader_lines(self, lines) -> List[str]:
+        report = []
+        for num, line in enumerate(lines):
+            report.extend(
+                [
+                    self.divider_line(),
+                    f"{num + 1}. LEADER LINE attributes:",
+                    self.divider_line(),
+                ]
+            )
+            for name, value in line.__dict__.items():
+                if name in ("vertices", "breaks"):
+                    vstr = ""
+                    if value is not None:
+                        vstr = ", ".join(map(str, value))
+                    vstr = f"[{vstr}]"
+                else:
+                    vstr = str(value)
+                report.append(f"{name}: {vstr}")
+        return report
+
+    def print_block_attribs(self):
+        print("\n".join(self.block_reference_attribs()))
+
+    def block_reference_attribs(self) -> List[str]:
+        report = [
+            self.divider_line(),
+            f"BLOCK reference attributes:",
+            self.divider_line(),
+        ]
+        for index, attr in enumerate(self.multileader.block_attribs):
+            report.extend(
+                [
+                    f"{index+1}. Attributes",
+                    self.divider_line(),
+                ]
+            )
+            report.append(f"handle: {attr.handle}")
+            report.append(f"index: {attr.index}")
+            report.append(f"width: {attr.width}")
+            report.append(f"text: {attr.text}")
+        return report
+
+    def arrow_heads(self) -> List[str]:
+        report = [
+            self.divider_line(),
+            f"ARROW HEAD attributes:",
+            self.divider_line(),
+        ]
+        for index, attr in enumerate(self.multileader.arrow_heads):
+            report.extend(
+                [
+                    f"{index+1}. Arrow Head",
+                    self.divider_line(),
+                ]
+            )
+            report.append(f"handle: {attr.handle}")
+            report.append(f"index: {attr.index}")
+        return report
+
+    def print_mleaderstyle(self):
+        print("\n".join(self.mleaderstyle_attributes()))
+
+    def mleaderstyle_attributes(self) -> List[str]:
+        report = []
+        handle = self.multileader.dxf.get("style_handle")
+        style = self.doc.entitydb.get(handle)
+        if style is not None:
+            report.extend(
+                [
+                    self.divider_line("="),
+                    str(style),
+                    self.divider_line("="),
+                ]
+            )
+            attribs = style.dxf.all_existing_dxf_attribs()
+            keys = sorted(attribs.keys())
+            report.extend([f"{name}: {attribs[name]}" for name in keys])
+        else:
+            report.append(f"MLEADERSTYLE(#{handle}) not found")
+        return self.shorten_lines(report)
+
+
+def _content_attributes(entity, exclude: Sequence[str] = None) -> List[str]:
+    exclude = exclude or []
+    if entity is not None:
+        return [
+            f"{name}: {value}"
+            for name, value in entity.__dict__.items()
+            if name not in exclude
+        ]
+    return []
+
+
+def yes_or_no(data) -> str:
+    return "yes" if data else "no"

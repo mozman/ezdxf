@@ -21,7 +21,7 @@ def bitmask_strings(
 ) -> Sequence[str]:
     if base == 10:
         top, bottom = (
-            "3322-2222-2222-1111-1111-1111-1100-0000",
+            "3322-2222-2222-1111-1111-1100-0000-0000",
             "1098-7654-3210-9876-5432-1098-7654-3210",
         )
     elif base == 16:
@@ -43,11 +43,10 @@ def bitmask_strings(
     ]
 
 
-def print_bitmask(value: int, *, name: str = "bitmask", base=10, sep="-"):
+def print_bitmask(value: int, *, base=10, sep="-"):
     lines = bitmask_strings(value, base, sep)
     assert len(lines) > 2
     divider_line = "=" * (max(map(len, lines)) + 4)
-    print(f"\n{name}:")
     print(divider_line)
     print("x0 :" + lines[0])
     print("0x :" + lines[1])
