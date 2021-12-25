@@ -7,12 +7,14 @@ Resource management module for transferring DXF resources between documents.
 Planning state!!!
 
 """
-from typing import TYPE_CHECKING, Dict, List, Iterator, cast, Callable, Iterable
+from typing import Dict, List, Iterator, cast, Callable, Iterable
 from ezdxf.respkg import RTP
+from ezdxf.entities import DXFEntity
+from ezdxf.document import Drawing
 
-if TYPE_CHECKING:
-    from ezdxf.entities import DXFEntity
-    from ezdxf.document import Drawing
+# The goal is that this module should not be imported from any module which
+# implements DXF entities, so that this module can import necessary resource
+# entities like Layer, Linetype or MLeaderStyle
 
 __all__ = ["ResourceTransferManager"]
 
@@ -64,21 +66,21 @@ class Layer(DXFEntity):
 
 class _ResourcePackage:
     # Supports the ResourcePackage protocol
-    def __init__(self, entity: "DXFEntity"):
+    def __init__(self, entity: DXFEntity):
         self.entity = entity
-        self._resources: List[List["DXFEntity"]] = list()
+        self._resources: List[List[DXFEntity]] = list()
 
-    def push(self, resources: List["DXFEntity"]):
+    def push(self, resources: List[DXFEntity]):
         self._resources.append(resources)
 
-    def pop(self) -> List["DXFEntity"]:
+    def pop(self) -> List[DXFEntity]:
         return self._resources.pop()
 
-    def resources(self) -> Iterator["DXFEntity"]:
+    def resources(self) -> Iterator[DXFEntity]:
         for data in self._resources:
             yield from data
 
-    def foreach(self, func: Callable[["DXFEntity"], "DXFEntity"]):
+    def foreach(self, func: Callable[[DXFEntity], DXFEntity]):
         self._resources = [
             [func(entity) for entity in entities]
             for entities in self._resources
@@ -89,14 +91,14 @@ class ResourceTransferManager:
     def __init__(self):
         self.packages: Dict[int, _ResourcePackage] = dict()
 
-    def register(self, entity: "DXFEntity"):
+    def register(self, entity: DXFEntity):
         if id(entity) not in self.packages:
             package = _ResourcePackage(entity)
             assert isinstance(entity, RTP)
             entity.dump_resources(package)
             self.packages[id(entity)] = package
 
-    def transfer(self, target: "Drawing"):
+    def transfer(self, target: Drawing):
         cloner = EntityCloner()
 
         # clone resources
@@ -119,10 +121,10 @@ class ResourceTransferManager:
 
 class EntityCloner:
     def __init__(self):
-        self.clones: Dict[int, "DXFEntity"] = dict()
-        self.originals: Dict[int, "DXFEntity"] = dict()
+        self.clones: Dict[int, DXFEntity] = dict()
+        self.originals: Dict[int, DXFEntity] = dict()
 
-    def add(self, entities: Iterable["DXFEntity"]):
+    def add(self, entities: Iterable[DXFEntity]):
         for e in entities:
             if id(e) not in self.clones:
                 self.originals[id(e)] = e
@@ -157,22 +159,22 @@ class EntityCloner:
             if stuck and len(self.originals) == count:
                 break
 
-    def _clone(self, entity: "DXFEntity") -> int:
+    def _clone(self, entity: DXFEntity) -> int:
         if id(entity) in self.clones:
             return 0
         self.clones[id(entity)] = entity.copy()
         return id(entity)
 
-    def swap(self, entity: "DXFEntity") -> "DXFEntity":
+    def swap(self, entity: DXFEntity) -> DXFEntity:
         return self.clones[id(entity)]
 
-    def bind(self, doc: "Drawing"):
+    def bind(self, doc: Drawing):
         from ezdxf.entities import factory
 
         for clone in self.clones.values():
             factory.bind(clone, doc)
 
 
-def assign_resources(entities: Iterable["DXFEntity"], doc: "Drawing"):
+def assign_resources(entities: Iterable[DXFEntity], doc: Drawing):
     # TODO: Resources have to be added to the correct resource tables
     pass
