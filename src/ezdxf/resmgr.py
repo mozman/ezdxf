@@ -8,35 +8,13 @@ Planning state!!!
 
 """
 from typing import TYPE_CHECKING, Dict, List, Iterator, cast, Callable, Iterable
-from typing_extensions import Protocol, runtime_checkable
-import abc
+from ezdxf.respkg import RTP
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFEntity
     from ezdxf.document import Drawing
 
-__all__ = ["ResourcePackage", "ResourceTransferManager"]
-
-
-class ResourcePackage(abc.ABC):
-    """A DXFEntity stores all required resources which are stored in the owner
-    document as real Python references in the resource Package (not layer or
-    linetype names ...).
-
-    The TransferManager creates the required resources in the target document
-    and replaces the stored Python object by the new created object and calls
-    DXFEntity.load_resources(...), so the entity can update its reference or
-    remove resources which can not be transferred.
-
-    """
-
-    @abc.abstractmethod
-    def push(self, resources: List["DXFEntity"]):
-        ...
-
-    @abc.abstractmethod
-    def pop(self) -> List["DXFEntity"]:
-        ...
+__all__ = ["ResourceTransferManager"]
 
 
 """
@@ -84,18 +62,8 @@ class Layer(DXFEntity):
 """
 
 
-@runtime_checkable
-class RTP(Protocol):
-    """ResourceTransferProtocol"""
-
-    def dump_resources(self, package: ResourcePackage) -> None:
-        ...
-
-    def load_resources(self, package: ResourcePackage) -> None:
-        ...
-
-
-class ResourcePackageImpl(ResourcePackage):
+class _ResourcePackage:
+    # Supports the ResourcePackage protocol
     def __init__(self, entity: "DXFEntity"):
         self.entity = entity
         self._resources: List[List["DXFEntity"]] = list()
@@ -119,11 +87,11 @@ class ResourcePackageImpl(ResourcePackage):
 
 class ResourceTransferManager:
     def __init__(self):
-        self.packages: Dict[int, ResourcePackageImpl] = dict()
+        self.packages: Dict[int, _ResourcePackage] = dict()
 
     def register(self, entity: "DXFEntity"):
         if id(entity) not in self.packages:
-            package = ResourcePackageImpl(entity)
+            package = _ResourcePackage(entity)
             assert isinstance(entity, RTP)
             entity.dump_resources(package)
             self.packages[id(entity)] = package
@@ -167,7 +135,7 @@ class EntityCloner:
             trash.clear()
             extend.clear()
             for entity in self.originals.values():
-                pkg = ResourcePackageImpl(entity)
+                pkg = _ResourcePackage(entity)
                 entity.dump_resources(pkg)  # type: ignore
                 resources = list(pkg.resources())
                 if all(id(e) in self.clones for e in resources):
