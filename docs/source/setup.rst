@@ -80,6 +80,9 @@ I am working on Windows::
     py -m venv py39
     py39\Scripts\activate.bat
 
+Windows Requirements
+++++++++++++++++++++
+
 A working C++ compiler setup is required to compile the C-extensions from source
 code. Windows users need the build tools from
 Microsoft: https://visualstudio.microsoft.com/de/downloads/
@@ -90,6 +93,19 @@ edition and choose the option: `Visual Studio Build Tools 20..`
 Install required packages to build and install ezdxf with C-extensions::
 
     pip3 install setuptools wheel cython
+
+Linux Requirements
+++++++++++++++++++
+
+Install python packages on Linux from the distribution repository if
+available by the system packager, ``apt`` in the case of Ubuntu::
+
+    sudo apt install python3-pip python3-wheel cython3 python3-pytest
+
+By doing as fresh install on WSL2 & Ubuntu, I encountered an additional
+requirement, the ``build-essential`` package adds the required C++ support::
+
+    sudo apt install build-essential
 
 Clone the GitHub repository::
 
@@ -105,9 +121,14 @@ Install the test dependencies and run the tests::
     pip3 install pytest geomdl
     pytest tests integration_tests
 
-Install optional dependencies to use all features, like the drawing add-on::
+Install optional dependencies to use all features, like the drawing add-on
 
     pip3 install matplotlib PySide6
+
+On Linux use the system packager! ``PySide6`` wasn't available for Ubuntu at
+the time of writing this, but ``PyQt5`` is supported as fallback::
+
+    sudo apt install python3-matplotlib python3-pyqt5
 
 Build Documentation
 -------------------
