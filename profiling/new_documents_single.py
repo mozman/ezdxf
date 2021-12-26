@@ -1,3 +1,6 @@
+#  Copyright (c) 2021, Manfred Moitzi
+#  License: MIT License
+
 import time
 import ezdxf
 N = 10000
