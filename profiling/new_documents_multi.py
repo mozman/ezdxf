@@ -14,7 +14,7 @@ if __name__ == '__main__':
     cpu = cpu_count()
     N = 10000
 
-    print(f"using {cpu} processes to create {N} DXF drawings")
+    print(f"create {N} DXF drawings in {cpu} subprocesses")
     t0 = time.perf_counter()
     with Pool(processes=cpu) as pool:
         for _ in range(N):

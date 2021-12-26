@@ -4,6 +4,7 @@
 import time
 import ezdxf
 N = 10000
+print(f"create {N} DXF drawings in a single process")
 t0 = time.perf_counter()
 for _ in range(N):
     ezdxf.new()
