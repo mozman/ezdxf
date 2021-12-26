@@ -83,6 +83,10 @@ logger = logging.getLogger("ezdxf")
 # entity, even if the override flag isn't set!
 IGNORE_OVERRIDE_FLAGS = True
 
+# Distance between baseline and underline as factor of cap-height
+# Just guessing but the descender height is too much!
+UNDERLINE_DISTANCE_FACTOR = 0.20
+
 
 class ConnectionTypeError(const.DXFError):
     pass
@@ -914,9 +918,7 @@ class MultiLeaderBuilder(abc.ABC):
             context.left_attachment = int(left)
 
         if right == HorizontalConnection.by_style:
-            context.right_attachment = (
-                style.dxf.text_right_attachment_type
-            )
+            context.right_attachment = style.dxf.text_right_attachment_type
         else:
             context.right_attachment = int(right)
 
@@ -926,9 +928,7 @@ class MultiLeaderBuilder(abc.ABC):
             context.top_attachment = int(top)
 
         if bottom == VerticalConnection.by_style:
-            context.bottom_attachment = (
-                style.dxf.text_bottom_attachment_type
-            )
+            context.bottom_attachment = style.dxf.text_bottom_attachment_type
         else:
             context.bottom_attachment = int(bottom)
 
@@ -1117,6 +1117,15 @@ class MultiLeaderBuilder(abc.ABC):
             leader.lines.append(line)
 
 
+# TODO: MultiLeaderBuilder & MText horizontal connection type 6 issue in BricsCAD
+# 6 = "underline the bottom of the top line"
+# This connection is not rendered correct in BricsCAD, the rendering in AutoCAD
+# is OK, also the rendering by the ezdxf multileader RenderEngine.
+# Maybe an error in BricsCAD.
+# BricsCAD can create correct MULTILEADER entities with this connection type but
+# I couldn't find the difference in the DXF tags which causes this issue.
+
+
 class MultiLeaderMTextBuilder(MultiLeaderBuilder):
     def _init_content(self):
         self._reset_cache()
@@ -1194,6 +1203,7 @@ class MultiLeaderMTextBuilder(MultiLeaderBuilder):
         def vertical_connection_height(
             connection: HorizontalConnection,
         ) -> float:
+            underline_distance = char_height * UNDERLINE_DISTANCE_FACTOR
             if connection == HorizontalConnection.middle_of_top_line:
                 return -char_height * 0.5
             elif connection == HorizontalConnection.middle_of_text:
@@ -1204,13 +1214,13 @@ class MultiLeaderMTextBuilder(MultiLeaderBuilder):
                 HorizontalConnection.bottom_of_bottom_line,
                 HorizontalConnection.bottom_of_bottom_line_underline,
             ):
-                return -height
+                return -height - underline_distance
             elif connection in (
                 HorizontalConnection.bottom_of_top_line,
                 HorizontalConnection.bottom_of_top_line_underline,
                 HorizontalConnection.bottom_of_top_line_underline_all,
             ):
-                return -char_height
+                return -char_height - underline_distance
             return 0.0
 
         context = self.context

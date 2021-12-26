@@ -1,7 +1,7 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 #  Debugging tools to analyze DXF entities.
-from typing import List, Iterable, Sequence
+from typing import List, Iterable, Sequence, Optional
 import textwrap
 
 import ezdxf
@@ -9,6 +9,8 @@ from ezdxf import colors
 from ezdxf.math import Vec2
 from ezdxf.lldxf import const
 from ezdxf.tools.debug import print_bitmask
+from ezdxf.render.mleader import MLeaderStyleOverride, OVERRIDE_FLAG
+
 
 from ezdxf.entities import (
     EdgePath,
@@ -311,6 +313,11 @@ class MultileaderAnalyzer:
     def context(self) -> mleader.MLeaderContext:
         return self.multileader.context
 
+    @property
+    def mleaderstyle(self) -> Optional[mleader.MLeaderStyle]:
+        handle = self.multileader.dxf.get("style_handle")
+        return self.doc.entitydb.get(handle)
+
     def divider_line(self, symbol="-") -> str:
         return symbol * self.report_width
 
@@ -348,21 +355,31 @@ class MultileaderAnalyzer:
         print("=" * width)
 
     def print_overridden_properties(self):
-        from ezdxf.render.mleader import MLeaderStyleOverride, OVERRIDE_FLAG
+        print("\n".join(self.overridden_attributes()))
 
-        doc = self.doc
+    def overridden_attributes(self) -> List[str]:
         multileader = self.multileader
-        style = doc.entitydb.get(multileader.dxf.style_handle)
-        print(style)
-        print(f"name='{style.dxf.name}'")
-        print("-" * self.report_width)
-        override = MLeaderStyleOverride(style, multileader)
-        for name in OVERRIDE_FLAG.keys():
-            if override.is_overridden(name):
-                print(f"{name}: {override.get(name)}")
-        print(
-            f"use MTEXT default content: {override.use_mtext_default_content}"
-        )
+        style = self.mleaderstyle
+        if style is not None:
+            report = [
+                self.divider_line(),
+                f"Override attributes of {str(style)}: '{style.dxf.name}'",
+                self.divider_line(),
+            ]
+
+            override = MLeaderStyleOverride(style, multileader)
+            for name in OVERRIDE_FLAG.keys():
+                if override.is_overridden(name):
+                    report.append(f"{name}: {override.get(name)}")
+            if override.use_mtext_default_content:
+                report.append("use_mtext_default_content: 1")
+        else:
+            handle = self.multileader.dxf.get("style_handle")
+            report = [
+                self.divider_line(),
+                f"MLEADERSTYLE(#{handle}) not found",
+            ]
+        return report
 
     def multileader_attributes(self) -> List[str]:
         attribs = self.multileader.dxf.all_existing_dxf_attribs()
@@ -520,8 +537,7 @@ class MultileaderAnalyzer:
 
     def mleaderstyle_attributes(self) -> List[str]:
         report = []
-        handle = self.multileader.dxf.get("style_handle")
-        style = self.doc.entitydb.get(handle)
+        style = self.mleaderstyle
         if style is not None:
             report.extend(
                 [
@@ -534,6 +550,7 @@ class MultileaderAnalyzer:
             keys = sorted(attribs.keys())
             report.extend([f"{name}: {attribs[name]}" for name in keys])
         else:
+            handle = self.multileader.dxf.get("style_handle")
             report.append(f"MLEADERSTYLE(#{handle}) not found")
         return self.shorten_lines(report)
 
