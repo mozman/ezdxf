@@ -541,8 +541,7 @@ class MultiLeader(DXFGraphic):
             if handle is not None:
                 yield handle
 
-    # TODO: rename to transform() when tested
-    def _transform(self, m: "Matrix44") -> "MultiLeader":
+    def transform(self, m: "Matrix44") -> "MultiLeader":
         """Transform the MULTILEADER entity by transformation matrix `m` inplace.
 
         Non uniform scaling is not supported.
@@ -582,10 +581,18 @@ class MultiLeader(DXFGraphic):
             dxf.block_rotation = context.block.rotation
             dxf.block_scale_vector = context.block.scale
 
-        # ArrowHeadData: no transformation not needed
-        # AttribData: no transformation not needed
+        # ArrowHeadData: no transformation needed
+        # AttribData: no transformation needed
         self.post_transform(m)
+
+        # The proxy graphic is stored in absolute WCS coordinates and does not
+        # represent the new transformed geometry.
+        self.update_proxy_graphic()
         return self
+
+    def update_proxy_graphic(self):
+        # Maybe this is supported in the future - its very unlikeLy!
+        self.proxy_graphic = None
 
 
 @register_entity

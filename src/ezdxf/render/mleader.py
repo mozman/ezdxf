@@ -1026,6 +1026,7 @@ class MultiLeaderBuilder(abc.ABC):
             self._build_leader(leader_lines, side, connection_box.get(side), m)
         if ucs is not None:
             self._transform_to_wcs(ucs)
+        self.multileader.update_proxy_graphic()
 
     def _set_attachment_direction(self):
         leaders = self._leaders
@@ -1049,7 +1050,7 @@ class MultiLeaderBuilder(abc.ABC):
 
     def _transform_to_wcs(self, ucs: UCS) -> None:
         # transformation from render UCS into WCS
-        self.multileader._transform(ucs.matrix)
+        self.multileader.transform(ucs.matrix)
 
     def _set_required_multileader_attributes(self):
         dxf = self.multileader.dxf
