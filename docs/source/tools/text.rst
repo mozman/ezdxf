@@ -115,24 +115,26 @@ Single Line Text
 Functions
 ---------
 
-.. autofunction:: plain_text
+.. autofunction:: caret_decode
+
+.. autofunction:: estimate_mtext_content_extents
+
+.. autofunction:: estimate_mtext_extents
 
 .. autofunction:: fast_plain_mtext
-
-.. autofunction:: plain_mtext
-
-.. autofunction:: text_wrap
-
-.. autofunction:: caret_decode
 
 .. autofunction:: is_text_vertical_stacked
 
 .. autofunction:: is_upside_down_text_angle
 
-.. autofunction:: upright_text_angle
-
-.. autofunction:: estimate_mtext_extents
-
-.. autofunction:: estimate_mtext_content_extents
-
 .. autofunction:: leading
+
+.. autofunction:: plain_mtext
+
+.. autofunction:: plain_text
+
+.. autofunction:: safe_string
+
+.. autofunction:: text_wrap
+
+.. autofunction:: upright_text_angle

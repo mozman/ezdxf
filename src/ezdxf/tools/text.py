@@ -1795,4 +1795,7 @@ def estimate_mtext_content_extents(
 
 
 def safe_string(s: str, max_len: int = 254) -> str:
+    """Returns a string with line breaks ``\\n`` replaced by ``\\P`` and the
+    length limited to `max_len`.
+    """
     return escape_dxf_line_endings(s)[:max_len]
