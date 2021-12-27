@@ -15,6 +15,7 @@ from ezdxf.lldxf.attributes import (
     group_code_mapping,
 )
 from ezdxf.lldxf.tags import Tags
+from ezdxf.lldxf.const import EXT_MAX_STR_LEN
 from ezdxf.math import (
     Vec3,
     NULLVEC,
@@ -28,7 +29,7 @@ from ezdxf.math import (
 )
 from ezdxf import colors
 from ezdxf.proxygraphic import ProxyGraphicError
-from ezdxf.tools.text import safe_string, EXT_MAX_STR_LEN
+from ezdxf.tools.text import safe_string
 from ezdxf.tools.handle import safe_handle
 
 from .dxfentity import base_class, SubclassProcessor

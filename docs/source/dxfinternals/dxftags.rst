@@ -9,20 +9,27 @@ are DXF tags, a DXF tag consist of a DXF group code as an integer
 value on its own line and a the DXF value on the following line.
 In the ezdxf documentation DXF tags will be written as (group code, value).
 
+With the introduction of extended symbol names in DXF R2000, the 255-character
+limit for strings has been increased to 2049 single-byte characters not
+including the newline at the end of the line.
+Nonetheless its safer to use only strings with 255 and less characters, because
+its not clear if this fact is true for ALL string group codes or only for symbols
+like layer- or text style names and not all 3rd party libraries may handle
+this fact correct. The MTEXT content and binary data is still divided into
+chunks with less than 255 characters.
+
 Group codes are indicating the value type:
 
 ============ ==================
 Group Code   Value Type
 ============ ==================
-0-9          String (with the introduction of extended symbol names in DXF R2000,
-             the 255-character limit has been increased to 2049 single-byte
-             characters not including the newline at the end of the line)
+0-9          String
 10-39        Double precision 3D point value
 40-59        Double-precision floating-point value
 60-79        16-bit integer value
 90-99        32-bit integer value
-100          String (255-character maximum, less for Unicode strings)
-102          String (255-character maximum, less for Unicode strings)
+100          String
+102          String
 105          String representing hexadecimal (hex) handle value
 110-119      Double precision floating-point value
 120-129      Double precision floating-point value
@@ -34,7 +41,7 @@ Group Code   Value Type
 270-279      16-bit integer value
 280-289      16-bit integer value
 290-299      Boolean flag value
-300-309      Arbitrary text string (max. length 255 or 2049?)
+300-309      Arbitrary text string
 310-319      String representing hex value of binary chunk
 320-329      String representing hex handle value
 330-369      String representing hex object IDs
@@ -42,16 +49,16 @@ Group Code   Value Type
 380-389      16-bit integer value
 390-399      String representing hex handle value
 400-409      16-bit integer value
-410-419      String (max. length 255 or 2049?)
+410-419      String
 420-429      32-bit integer value
-430-439      String (max. length 255 or 2049?)
+430-439      String
 440-449      32-bit integer value
 450-459      Long
 460-469      Double-precision floating-point value
-470-479      String (max. length 255 or 2049?)
+470-479      String
 480-481      String representing hex handle value
-999          Comment (string) (max. length 255 or 2049?)
-1000-1009    String, same max. length of 2049 as for group codes 0-9
+999          Comment (string)
+1000-1009    String
 1010-1059    Double-precision floating-point value
 1060-1070    16-bit integer value
 1071         32-bit integer value

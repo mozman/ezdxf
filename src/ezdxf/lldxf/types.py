@@ -17,7 +17,6 @@ from typing import (
     Tuple,
     Iterable,
     Type,
-    Sequence,
     Any,
 )
 from array import array
@@ -331,12 +330,14 @@ def tuples_to_tags(iterable: Iterable[Tuple[int, Any]]) -> Iterable[DXFTag]:
             yield DXFTag(code, value)
 
 
-def is_valid_handle(handle: str) -> bool:
-    try:
-        int(handle, 16)
-        return True
-    except (ValueError, TypeError):
-        return False
+def is_valid_handle(handle) -> bool:
+    if isinstance(handle, str):
+        try:
+            int(handle, 16)
+            return True
+        except (ValueError, TypeError):
+            pass
+    return False
 
 
 def is_binary_data(code: int) -> bool:

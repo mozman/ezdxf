@@ -78,13 +78,14 @@ def test_write_and_read_metadata(doc, tmp_path):
     assert metadata2[custom] == custom, "expected custom metadata"
 
 
-def test_key_and_data_is_limited_to_254_chars(doc):
-    custom = "CUSTOM" * 50
+def test_key_and_data_is_limited_to_255_chars(doc):
+    custom = "CUSTOM" * 60
     metadata = doc.ezdxf_metadata()
     metadata[custom] = custom
     assert custom in metadata
-    custom254 = custom[:254]
-    assert metadata[custom254] == custom254
+    # max string length for DXF R12 without line endings
+    custom255 = custom[:255]
+    assert metadata[custom255] == custom255
 
 
 def test_escape_line_endings_in_key_and_data(doc):

@@ -188,6 +188,10 @@ XDICT_HANDLE_CODE = 360
 REACTOR_HANDLE_CODE = 330
 OWNER_CODE = 330
 
+# https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-2553CF98-44F6-4828-82DD-FE3BC7448113
+MAX_STR_LEN = 255  # DXF R12 without line endings
+EXT_MAX_STR_LEN = 2049  # DXF R2000+ without line endings
+
 # Special tag codes for internal purpose:
 # -1 to -5 id reserved by AutoCAD for internal use, but this tags will never be
 # saved to file.
