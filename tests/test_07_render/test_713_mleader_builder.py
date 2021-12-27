@@ -5,7 +5,7 @@ import pytest
 import ezdxf
 from ezdxf.math import Vec2
 from ezdxf.render import mleader
-from ezdxf.entities import MText, MultiLeader, Insert
+from ezdxf.entities import MultiLeader
 
 
 @pytest.fixture(scope="module")
@@ -47,22 +47,5 @@ class TestMultiLeaderBlockBuilder:
         assert builder is not None
 
 
-class TestRenderEngine:
-    """The RenderEngine renders DXF primitives from a MULTILEADER entity."""
-
-    @pytest.fixture
-    def ml_mtext(self, doc):
-        ml = make_multi_leader(doc)
-        builder = mleader.MultiLeaderMTextBuilder(ml)
-        builder.set_content("line")
-        builder.build(insert=Vec2(0, 0))
-        return ml
-
-    def test_add_mtext_content(self, ml_mtext):
-        engine = mleader.RenderEngine(ml_mtext, ml_mtext.doc)
-        engine.add_mtext_content()
-        assert isinstance(engine.entities[0], MText)
-
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     pytest.main([__file__])

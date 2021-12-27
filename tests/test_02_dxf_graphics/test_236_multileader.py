@@ -1,13 +1,15 @@
 # Copyright (c) 2018-2021 Manfred Moitzi
 # License: MIT License
 import pytest
+
 import ezdxf
+from math import radians
 from ezdxf.layouts import VirtualLayout
 from ezdxf import colors
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tags import Tags
 from ezdxf.lldxf.extendedtags import ExtendedTags
-from ezdxf.math import Matrix44, Z_AXIS
+from ezdxf.math import Matrix44, Z_AXIS, Vec3, WCSTransform, X_AXIS
 
 from ezdxf.entities.mleader import (
     LeaderLine,
@@ -16,6 +18,7 @@ from ezdxf.entities.mleader import (
     MLeaderContext,
     MultiLeader,
     BlockData,
+    MTextData,
 )
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 
@@ -46,6 +49,14 @@ def test_standard_mleader_style():
     assert mleader_style.dxf.content_type == 2
 
 
+def matrix(scale=1.0, rotate=0, tx=0, ty=0, tz=0) -> Matrix44:
+    return (
+        Matrix44.scale(scale)
+        @ Matrix44.z_rotate(radians(rotate))
+        @ Matrix44.translate(tx, ty, tz)
+    )
+
+
 class TestLeaderLine:
     @pytest.fixture(scope="class")
     def tags(self):
@@ -64,6 +75,24 @@ class TestLeaderLine:
         collector = TagCollector()
         line.export_dxf(collector)
         assert collector.tags == expected
+
+    def test_transform(self):
+        point = Vec3(2, 3, 0)
+        marker_value = 777
+        m = matrix(rotate=30, tx=7, ty=9)
+        point_transformed = m.transform(point)
+
+        line = LeaderLine()
+        line.vertices.append(point)
+        line.breaks.append(point)
+        line.index = marker_value
+        line.color = marker_value
+        line.transform(WCSTransform(m))
+
+        assert line.vertices[0].isclose(point_transformed)
+        assert line.breaks[0].isclose(point_transformed)
+        assert line.index == marker_value
+        assert line.color == marker_value
 
 
 LEADER_LINE_1 = """304
@@ -121,6 +150,39 @@ class TestLeader:
         collector = TagCollector()
         leader.export_dxf(collector)
         assert collector.tags == expected
+
+    def test_transform(self):
+        point = Vec3(2, 3, 0)
+        marker_value = 777
+        dogleg_length = 1.0
+        m = matrix(rotate=30, tx=7, ty=9)
+        point_transformed = m.transform(point)
+        direction_transformed = m.transform_direction(point)
+
+        leader = LeaderData()
+        leader.last_leader_point = point
+        leader.dogleg_vector = point
+        leader.dogleg_length = dogleg_length
+        leader.breaks.append(point)
+        leader.has_last_leader_line = marker_value
+        leader.has_dogleg_vector = marker_value
+
+        leader.transform(WCSTransform(m))
+        assert leader.last_leader_point.isclose(point_transformed)
+        assert leader.dogleg_vector.isclose(direction_transformed.normalize())
+        assert leader.dogleg_length == pytest.approx(dogleg_length)
+        assert leader.breaks[0].isclose(point_transformed)
+        assert leader.has_last_leader_line == marker_value
+        assert leader.has_dogleg_vector == marker_value
+
+    def test_scaling(self):
+        dogleg_length = 2.0
+        scale = 3.0
+        m = matrix(scale=scale, rotate=30, tx=7, ty=9)
+        leader = LeaderData()
+        leader.dogleg_length = dogleg_length
+        leader.transform(WCSTransform(m))
+        assert leader.dogleg_length == pytest.approx(dogleg_length * scale)
 
 
 LEADER_1 = """302
@@ -260,6 +322,92 @@ class TestMTextContext(MLeaderTesting):
         assert mtext.column_flow_reversed == 0
         assert len(mtext.column_sizes) == 0
         assert mtext.use_word_break == 0
+
+    def test_transform_context(self):
+        point = Vec3(2, 3, 0)
+        marker_value = 777
+        lenght = 1.0
+        scale = 3.0
+        m = matrix(scale=scale, rotate=30, tx=7, ty=9)
+        point_transformed = m.transform(point)
+
+        ctx = MLeaderContext()
+        ctx.base_point = point
+        ctx.char_height = lenght
+        ctx.arrow_head_size = lenght
+        ctx.landing_gap_size = lenght
+        ctx.left_attachment = marker_value
+        ctx.right_attachment = marker_value
+        ctx.top_attachment = marker_value
+        ctx.bottom_attachment = marker_value
+        ctx.text_align_type = marker_value
+        ctx.attachment_type = marker_value
+
+        ctx.transform(WCSTransform(m))
+        assert ctx.scale == pytest.approx(scale)
+        assert ctx.base_point.isclose(point_transformed)
+        assert ctx.char_height == pytest.approx(scale * lenght)
+        assert ctx.arrow_head_size == pytest.approx(scale * lenght)
+        assert ctx.landing_gap_size == pytest.approx(scale * lenght)
+        assert ctx.left_attachment == marker_value
+        assert ctx.right_attachment == marker_value
+        assert ctx.top_attachment == marker_value
+        assert ctx.bottom_attachment == marker_value
+        assert ctx.text_align_type == marker_value
+        assert ctx.attachment_type == marker_value
+        assert ctx.plane_origin.isclose(m.transform((0, 0, 0)))
+        assert ctx.plane_x_axis.isclose(
+            m.transform_direction((1, 0, 0)).normalize()
+        )
+        assert ctx.plane_y_axis.isclose(
+            m.transform_direction((0, 1, 0)).normalize()
+        )
+        assert ctx.plane_normal_reversed == 0
+
+    def test_transform_context_reversed_extrusion(self):
+        ctx = MLeaderContext()
+        ctx.transform(WCSTransform(Matrix44.scale(-1, 1, 1)))
+        assert ctx.plane_normal_reversed == 1
+
+    def test_transform_mtext_data(self):
+        point = Vec3(2, 3, 0)
+        length = 1.5
+        scale = 3.0
+        m = matrix(scale=scale, rotate=30, tx=7, ty=9)
+        point_transformed = m.transform(point)
+
+        mtext = MTextData()
+        mtext.insert = point
+        mtext.width = length
+        mtext.defined_height = length
+        mtext.column_width = length
+        mtext.column_gutter_width = length
+        mtext.column_sizes = [length]
+        mtext.transform(WCSTransform(m))
+
+        assert mtext.insert.isclose(point_transformed)
+        assert mtext.text_direction.isclose(
+            m.transform_direction(X_AXIS, normalize=True)
+        )
+        # rotation in radians!
+        assert mtext.rotation == pytest.approx(radians(30))
+        assert mtext.width == pytest.approx(scale * length)
+        assert mtext.defined_height == pytest.approx(scale * length)
+        assert mtext.column_width == pytest.approx(scale * length)
+        assert mtext.column_gutter_width == pytest.approx(scale * length)
+        assert mtext.column_sizes[0] == pytest.approx(scale * length)
+
+    def test_transform_mtext_extrusion(self):
+        """The extrusion vector is always created by the right-hand-rule from
+        the transformed x- and y-axis: Z = X "cross" Y.
+        """
+        mtext = MTextData()
+        m = Matrix44.scale(-1, 1, 1)
+        mtext.transform(WCSTransform(m))
+        assert mtext.text_direction.isclose(m.transform(X_AXIS))
+        assert mtext.extrusion.isclose(
+            -m.transform(Z_AXIS)
+        ), "expected reversed z-axis"
 
 
 MTEXT_MLEADER_R2010 = """0
@@ -624,6 +772,37 @@ class TestBlockContext(MLeaderTesting):
             0,
             1,
         ]
+
+    def test_transform_block_data(self):
+        point = Vec3(2, 3, 0)
+        scale = 3.0
+        m = matrix(scale=scale, rotate=30, tx=7, ty=9)
+
+        block = BlockData()
+        block.insert = point
+        block.transform(WCSTransform(m))
+        assert block.insert.isclose(m.transform(point))
+        assert block.scale.isclose(Vec3(scale, scale, scale))
+        assert block.rotation == pytest.approx(radians(30))
+        assert list(block.matrix44) == pytest.approx(list(m))
+
+    def test_transform_block_data_x_reflection(self):
+        block = BlockData()
+        block.transform(WCSTransform(Matrix44.scale(-1, 1, 1)))
+        assert block.extrusion.isclose(-Z_AXIS)
+        assert block.scale.isclose((1, -1, 1))  # ???
+
+    def test_transform_block_data_y_reflection(self):
+        block = BlockData()
+        block.transform(WCSTransform(Matrix44.scale(1, -1, 1)))
+        assert block.extrusion.isclose(-Z_AXIS)
+        assert block.scale.isclose((1, -1, 1))  # ???
+
+    def test_transform_block_data_xy_reflection(self):
+        block = BlockData()
+        block.transform(WCSTransform(Matrix44.scale(-1, -1, 1)))
+        assert block.extrusion.isclose(Z_AXIS)
+        assert block.scale.isclose((1, 1, 1))  # ???
 
 
 BLOCK_MLEADER_R2010 = """  0

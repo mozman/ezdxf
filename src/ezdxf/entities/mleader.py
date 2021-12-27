@@ -747,7 +747,7 @@ class MLeaderContext:
 
     @property
     def plane_z_axis(self) -> Vec3:
-        z_axis = self.plane_x_axis.cross(self.plane_y_axis)
+        z_axis = self.plane_x_axis.cross(self.plane_y_axis).normalize()
         if self.plane_normal_reversed:
             z_axis = -z_axis
         return z_axis
@@ -811,6 +811,11 @@ class MLeaderContext:
         self.plane_y_axis = m.transform_direction(
             self.plane_y_axis, normalize=True
         )
+        self.plane_normal_reversed = 0
+        z_axis = m.transform_direction(Z_AXIS, normalize=True)
+        if z_axis.isclose(-self.plane_z_axis):  # reversed z-axis?
+            self.plane_normal_reversed = 1
+
         for leader in self.leaders:
             leader.transform(wcs)
         if self.mtext is not None:
@@ -975,7 +980,10 @@ class BlockData:
 
     @property
     def matrix44(self) -> Matrix44:
-        m = Matrix44(self._matrix)
+        if len(self._matrix) == 16:
+            m = Matrix44(self._matrix)
+        else:
+            m = Matrix44()
         m.transpose()
         return m
 
@@ -1019,7 +1027,7 @@ class BlockData:
         ocs = OCSTransform(self.extrusion, m)  # source extrusion!
         self.extrusion = ocs.new_extrusion
         self.insert = m.transform(self.insert)  # WCS coordinates!!!
-        self.scale = wcs.transform_scale_vector(self.scale)
+        self.scale = ocs.transform_scale_vector(self.scale)
         self.rotation = ocs.transform_angle(self.rotation)
         self.matrix44 = self.matrix44 * m
 
@@ -1043,7 +1051,9 @@ class LeaderData:
 
         # 0=horizontal; 1=vertical
         self.attachment_direction: int = 0  # group code 271, R2010+
-        self.breaks = []  # group code 12, 13 - multiple breaks possible!
+        self.breaks: List[
+            Vec3
+        ] = []  # group code 12, 13 - multiple breaks possible!
 
     @property
     def has_horizontal_attachment(self) -> bool:
@@ -1123,7 +1133,7 @@ class LeaderData:
 class LeaderLine:
     def __init__(self):
         self.vertices: List[Vec3] = []  # WCS coordinates
-        self.breaks: Optional[List[Union[int, Vec3]]] = None
+        self.breaks: List[Union[int, Vec3]] = []
         # Breaks: 90, 11, 12, [11, 12, ...] [, 90, 11, 12 [11, 12, ...]]
         # group code 90 = break index
         # group code 11 = start vertex of break

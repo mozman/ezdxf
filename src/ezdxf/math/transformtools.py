@@ -232,6 +232,18 @@ class OCSTransform:
         )
         return start * DEG, end * DEG
 
+    def transform_scale_vector(self, vec: Vec3) -> Vec3:
+        ocs = self.old_ocs
+        ux, uy, uz = self.m.transform_directions((ocs.ux, ocs.uy, ocs.uz))
+        x_scale = ux.magnitude * vec.x
+        y_scale = uy.magnitude * vec.y
+        z_scale = uz.magnitude * vec.z
+        expected_uy = uz.cross(ux).normalize()
+        if not expected_uy.isclose(uy.normalize(), abs_tol=1e-12):
+            # new y-axis points into opposite direction:
+            y_scale = -y_scale
+        return Vec3(x_scale, y_scale, z_scale)
+
 
 class WCSTransform:
     def __init__(self, m: Matrix44):
@@ -259,11 +271,3 @@ class WCSTransform:
         else:
             raise ValueError(f"invalid axis '{axis}'")
         return self.m.transform_direction(v).magnitude
-
-    def transform_scale_vector(self, vec: Vec3) -> Vec3:
-        unit_vec = self.m.transform_direction(Vec3(1, 1, 1))
-        return Vec3(
-            unit_vec.x * vec.x,
-            unit_vec.y * vec.y,
-            unit_vec.z * vec.z,
-        )
