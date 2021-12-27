@@ -1,8 +1,8 @@
-# Copyright (c) 2011-2020, Manfred Moitzi
+# Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Optional
 
-START_HANDLE = '1'
+START_HANDLE = "1"
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 class HandleGenerator:
     def __init__(self, start_value: str = START_HANDLE):
-        self._handle = max(1, int(start_value, 16))
+        self._handle: int = max(1, int(start_value, 16))
 
     reset = __init__
 
@@ -18,7 +18,7 @@ class HandleGenerator:
         return "%X" % self._handle
 
     def next(self) -> str:
-        next_handle = str(self)
+        next_handle = self.__str__()
         self._handle += 1
         return next_handle
 
@@ -33,8 +33,8 @@ class UnderlayKeyGenerator(HandleGenerator):
 def safe_handle(handle: Optional[str], doc: Optional["Drawing"] = None) -> str:
     if handle is None:
         return "0"
+    assert isinstance(handle, str), "invalid type"
     if doc is not None:
-        assert doc.entitydb is not None, "valid EntityDB required"
         if handle not in doc.entitydb:
             return "0"
         return handle
@@ -44,6 +44,7 @@ def safe_handle(handle: Optional[str], doc: Optional["Drawing"] = None) -> str:
 
 
 def is_valid_handle(handle: str) -> bool:
+    # duplicated code from ezdxf.lldxf.types to avoid an unnecessary dependency
     try:
         int(handle, 16)
         return True
