@@ -41,7 +41,7 @@ from ezdxf.entitydb import EntityDB
 from ezdxf.layouts.layouts import Layouts
 from ezdxf.tools.codepage import tocodepage, toencoding
 from ezdxf.tools.juliandate import juliandate
-from ezdxf.tools.text import safe_string
+from ezdxf.tools.text import safe_string, MAX_STR_LEN
 
 from ezdxf.tools import guid
 from ezdxf.query import EntityQuery
@@ -93,7 +93,6 @@ CONST_MARKER_STRING = "0.0 @ 2000-01-01T00:00:00.000000+00:00"
 CREATED_BY_EZDXF = "CREATED_BY_EZDXF"
 WRITTEN_BY_EZDXF = "WRITTEN_BY_EZDXF"
 EZDXF_META = "EZDXF_META"
-MAX_STR_LEN = 254
 
 
 def _validate_handle_seed(seed: str) -> str:

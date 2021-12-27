@@ -38,6 +38,8 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import Text, MText, DXFEntity, Tags
 
 X_MIDDLE = 4  # special case for overall alignment "MIDDLE"
+MAX_STR_LEN = 254
+EXT_MAX_STR_LEN = 2048
 
 MTEXT_ALIGN_FLAGS = {
     1: (LEFT, TOP),
@@ -1794,7 +1796,7 @@ def estimate_mtext_content_extents(
     return max_width, height
 
 
-def safe_string(s: str, max_len: int = 254) -> str:
+def safe_string(s: str, max_len: int = MAX_STR_LEN) -> str:
     """Returns a string with line breaks ``\\n`` replaced by ``\\P`` and the
     length limited to `max_len`.
     """
