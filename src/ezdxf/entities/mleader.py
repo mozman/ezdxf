@@ -28,6 +28,8 @@ from ezdxf.math import (
 )
 from ezdxf import colors
 from ezdxf.proxygraphic import ProxyGraphicError
+from ezdxf.tools.text import safe_string, EXT_MAX_STR_LEN
+from ezdxf.tools.handle import safe_handle
 
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
@@ -62,6 +64,7 @@ __all__ = [
 ]
 
 logger = logging.getLogger("ezdxf")
+
 
 # DXF Examples:
 # "D:\source\dxftest\CADKitSamples\house design for two family with common staircasedwg.dxf"
@@ -123,7 +126,6 @@ acdb_mleader = DefSubclass(
         "dogleg_length": DXFAttr(41, default=8),  # depend on $MEASUREMENT?
         # no handle is default arrow 'closed filled':
         "arrow_head_handle": DXFAttr(342),
-
         # unscaled arroe head size:
         "arrow_head_size": DXFAttr(42, default=4),  # depend on $MEASUREMENT?
         "content_type": DXFAttr(172, default=2),
@@ -278,6 +280,61 @@ class MultiLeader(DXFGraphic):
         self.context = MLeaderContext()
         self.arrow_heads: List[ArrowHeadData] = []
         self.block_attribs: List[AttribData] = []
+
+    @property
+    def has_mtext_content(self) -> bool:
+        return self.context.mtext is not None
+
+    def get_mtext_content(self) -> str:
+        """Get MTEXT content as string, return "" if MULTILEADER has
+        BLOCK content.
+        """
+        mtext = self.context.mtext
+        if mtext is not None:
+            return mtext.default_content
+        return ""
+
+    def set_mtext_content(self, text: str):
+        """Set MTEXT content as string, does nothing if MULTILEADER has
+        BLOCK content.
+        """
+        mtext = self.context.mtext
+        if mtext is not None:
+            mtext.default_content = safe_string(text, EXT_MAX_STR_LEN)
+
+    @property
+    def has_block_content(self) -> bool:
+        return self.context.block is not None
+
+    def get_block_content(self) -> Dict[str, str]:
+        """Get BLOCK attributes as dictionary of (tag, value) pairs.
+        Returns an empty dictionary if MULTILEADER has MTEXT content.
+        """
+        assert self.doc is not None, "valid DXF document required"
+        entitydb = self.doc.entitydb
+        tags: Dict[str, str] = dict()
+        for attr in self.block_attribs:
+            attdef = entitydb.get(attr.handle)
+            if attdef is not None:
+                tags[attdef.dxf.tag] = attr.text
+        return tags
+
+    def set_block_content(self, content: Dict[str, str]):
+        """Set BLOCK attributes by a dictionary of (tag, value) pairs.
+        Does nothing if MULTILEADER has MTEXT content.
+        """
+        assert self.doc is not None, "valid DXF document required"
+        entitydb = self.doc.entitydb
+        tags: Dict[str, str] = dict()
+        block_attribs = self.block_attribs
+        for index, attr in enumerate(block_attribs):
+            attdef = entitydb.get(attr.handle)
+            if attdef is not None:
+                tag = attdef.dxf.tag
+                new_text = safe_string(content.get(tag), EXT_MAX_STR_LEN)
+                if new_text is not None:
+                    block_attribs[index] = attr._replace(text=new_text)
+        return tags
 
     def _copy_data(self, entity: "DXFEntity") -> None:
         """Copy leaders"""
@@ -484,7 +541,7 @@ class MultiLeader(DXFGraphic):
             tagwriter.write_tag2(330, attrib.handle)
             tagwriter.write_tag2(177, attrib.index)
             tagwriter.write_tag2(44, attrib.width)
-            tagwriter.write_tag2(302, attrib.text)
+            tagwriter.write_tag2(302, safe_string(attrib.text, EXT_MAX_STR_LEN))
 
     def virtual_entities(self) -> Iterable["DXFGraphic"]:
         """Yields the graphical representation of MULTILEADER as virtual DXF
@@ -744,7 +801,9 @@ class MLeaderContext:
         self.char_height *= scale
         self.arrow_head_size *= scale
         self.landing_gap_size *= scale
-        self.plane_origin = m.transform(self.plane_origin)  # confirmed by BricsCAD
+        self.plane_origin = m.transform(
+            self.plane_origin
+        )  # confirmed by BricsCAD
         self.plane_x_axis = m.transform_direction(
             self.plane_x_axis, normalize=True
         )
@@ -801,7 +860,7 @@ class MTextData:
     def __init__(self):
         self.default_content: str = ""
         self.extrusion: Vec3 = Z_AXIS
-        self.style_handle = None  # handle of TextStyle() table entry
+        self.style_handle: str = "0"  # handle of TextStyle() table entry
         self.insert: Vec3 = NULLVEC
         self.text_direction: Vec3 = X_AXIS  # text direction
         self.rotation: float = 0.0  # in radians!
@@ -838,14 +897,9 @@ class MTextData:
     def export_dxf(self, tagwriter: "TagWriter") -> None:
         write_tag2 = tagwriter.write_tag2
         write_vertex = tagwriter.write_vertex
-        write_tag2(304, self.default_content)
+        write_tag2(304, safe_string(self.default_content, EXT_MAX_STR_LEN))
         write_vertex(11, self.extrusion)
-        if self.style_handle:
-            write_tag2(340, self.style_handle)
-        else:
-            # Do not write None, but "0" is also not valid!
-            # DXF structure error should be detected before export.
-            write_tag2(340, "0")
+        write_tag2(340, safe_handle(self.style_handle))
         write_vertex(12, self.insert)
         write_vertex(13, self.text_direction)
         write_tag2(42, self.rotation)
@@ -874,9 +928,9 @@ class MTextData:
         # MTEXT is not really an OCS entity!
         m = wcs.m
         ocs = OCSTransform(self.extrusion, m)  # source extrusion!
-        self.extrusion = m.transform_direction(self.extrusion, normalize=True)
-        self.insert = m.transform(self.insert)
-        self.text_direction = wcs.m.transform_direction(
+        self.extrusion = ocs.new_extrusion  # process like an OCS entity!
+        self.insert = m.transform(self.insert)  # WCS
+        self.text_direction = wcs.m.transform_direction(  # WCS
             self.text_direction, normalize=True
         )
         # don't use rotation ;)
@@ -894,9 +948,7 @@ class MTextData:
         self.defined_height *= conversion_factor
         self.column_width *= conversion_factor
         self.column_gutter_width *= conversion_factor
-        self.column_sizes = [
-            h * conversion_factor for h in self.column_sizes
-        ]
+        self.column_sizes = [h * conversion_factor for h in self.column_sizes]
 
 
 class BlockData:
@@ -1238,6 +1290,7 @@ class MLeaderStyle(DXFObject):
 
     def set_arrow_head(self, name: str = ""):
         from ezdxf.render.arrows import ARROWS
+
         assert self.doc is not None, "valid DXF document required"
         if name:
             self.dxf.arrow_head_handle = ARROWS.arrow_handle(
