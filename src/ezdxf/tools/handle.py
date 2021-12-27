@@ -1,11 +1,12 @@
 # Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Optional
-
-START_HANDLE = "1"
+from ezdxf.lldxf.types import is_valid_handle
 
 if TYPE_CHECKING:
     from ezdxf.document import Drawing
+
+START_HANDLE = "1"
 
 
 class HandleGenerator:
@@ -41,12 +42,3 @@ def safe_handle(handle: Optional[str], doc: Optional["Drawing"] = None) -> str:
     if not is_valid_handle(handle):
         return "0"
     return handle.upper()
-
-
-def is_valid_handle(handle: str) -> bool:
-    # duplicated code from ezdxf.lldxf.types to avoid an unnecessary dependency
-    try:
-        int(handle, 16)
-        return True
-    except (ValueError, TypeError):
-        return False
