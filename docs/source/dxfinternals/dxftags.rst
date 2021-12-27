@@ -34,7 +34,7 @@ Group Code   Value Type
 270-279      16-bit integer value
 280-289      16-bit integer value
 290-299      Boolean flag value
-300-309      Arbitrary text string
+300-309      Arbitrary text string (max. length 255 or 2049?)
 310-319      String representing hex value of binary chunk
 320-329      String representing hex handle value
 330-369      String representing hex object IDs
@@ -42,16 +42,16 @@ Group Code   Value Type
 380-389      16-bit integer value
 390-399      String representing hex handle value
 400-409      16-bit integer value
-410-419      String
+410-419      String (max. length 255 or 2049?)
 420-429      32-bit integer value
-430-439      String
+430-439      String (max. length 255 or 2049?)
 440-449      32-bit integer value
 450-459      Long
 460-469      Double-precision floating-point value
-470-479      String
+470-479      String (max. length 255 or 2049?)
 480-481      String representing hex handle value
-999          Comment (string)
-1000-1009    String (same limits as indicated with 0-9 code range)
+999          Comment (string) (max. length 255 or 2049?)
+1000-1009    String, same max. length of 2049 as for group codes 0-9
 1010-1059    Double-precision floating-point value
 1060-1070    16-bit integer value
 1071         32-bit integer value
