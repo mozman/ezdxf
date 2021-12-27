@@ -41,7 +41,7 @@ from ezdxf.entitydb import EntityDB
 from ezdxf.layouts.layouts import Layouts
 from ezdxf.tools.codepage import tocodepage, toencoding
 from ezdxf.tools.juliandate import juliandate
-from ezdxf.tools.text import escape_dxf_line_endings
+from ezdxf.tools.text import safe_string
 
 from ezdxf.tools import guid
 from ezdxf.query import EntityQuery
@@ -93,6 +93,7 @@ CONST_MARKER_STRING = "0.0 @ 2000-01-01T00:00:00.000000+00:00"
 CREATED_BY_EZDXF = "CREATED_BY_EZDXF"
 WRITTEN_BY_EZDXF = "WRITTEN_BY_EZDXF"
 EZDXF_META = "EZDXF_META"
+MAX_STR_LEN = 254
 
 
 def _validate_handle_seed(seed: str) -> str:
@@ -1111,7 +1112,7 @@ class MetaData(abc.ABC):
         try:
             return self.__getitem__(key)
         except KeyError:
-            return safe_string(default)
+            return safe_string(default, MAX_STR_LEN)
 
     @abc.abstractmethod
     def __setitem__(self, key: str, value: str) -> None:
@@ -1148,10 +1149,6 @@ def ezdxf_marker_string():
         return ezdxf.__version__ + " @ " + now.isoformat()
 
 
-def safe_string(s: str) -> str:
-    return escape_dxf_line_endings(s)[:254]
-
-
 class R12MetaData(MetaData):
     """Manage ezdxf meta data for DXF version R12 as XDATA of layer "0".
 
@@ -1165,17 +1162,17 @@ class R12MetaData(MetaData):
         self._data = self._load()
 
     def __contains__(self, key: str) -> bool:
-        return safe_string(key) in self._data
+        return safe_string(key, MAX_STR_LEN) in self._data
 
     def __getitem__(self, key: str) -> str:
-        return self._data[safe_string(key)]
+        return self._data[safe_string(key, MAX_STR_LEN)]
 
     def __setitem__(self, key: str, value: str) -> None:
-        self._data[safe_string(key)] = safe_string(value)
+        self._data[safe_string(key)] = safe_string(value, MAX_STR_LEN)
         self._commit()
 
     def __delitem__(self, key: str) -> None:
-        del self._data[safe_string(key)]
+        del self._data[safe_string(key, MAX_STR_LEN)]
         self._commit()
 
     def _commit(self) -> None:
@@ -1210,14 +1207,16 @@ class R2000MetaData(MetaData):
         )
 
     def __contains__(self, key: str) -> bool:
-        return safe_string(key) in self._data
+        return safe_string(key, MAX_STR_LEN) in self._data
 
     def __getitem__(self, key: str) -> str:
-        v = self._data[safe_string(key)]
+        v = self._data[safe_string(key, MAX_STR_LEN)]
         return v.dxf.get("value", "")
 
     def __setitem__(self, key: str, value: str) -> None:
-        self._data.set_or_add_dict_var(safe_string(key), safe_string(value))
+        self._data.set_or_add_dict_var(
+            safe_string(key, MAX_STR_LEN), safe_string(value, MAX_STR_LEN)
+        )
 
     def __delitem__(self, key: str) -> None:
-        self._data.remove(safe_string(key))
+        self._data.remove(safe_string(key, MAX_STR_LEN))

@@ -1792,3 +1792,7 @@ def estimate_mtext_content_extents(
         height = cap_height * line_count + spacing * (line_count - 1)
 
     return max_width, height
+
+
+def safe_string(s: str, max_len: int = 254) -> str:
+    return escape_dxf_line_endings(s)[:max_len]
