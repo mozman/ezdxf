@@ -138,6 +138,9 @@ The system Python 3 interpreter has the version 3.8, but I will show you how to
 install an additional newer Python version from the source code in a later
 section::
 
+    cd ~
+    mkdir build
+    cd build
     python3 -m venv py38
     source py38/bin/activate
 
@@ -193,6 +196,9 @@ writing this - `PyQt5` is supported as fallback.
 Create the venv with access to the system site-packages for using `Matplotlib`
 and the Qt bindings from the system installation::
 
+    cd ~
+    mkdir build
+    cd build
     python3 -m venv --system-site-packages py37
     source py37/bin/activate
 
@@ -261,3 +267,66 @@ Build the HTML documentation::
     make html
 
 The output is located in `build/ezdxf/docs/build/html`.
+
+Python from Source
+------------------
+
+Debian based systems have often very outdated software installed and
+sometimes there is no easy way to install a newer Python version.
+This is a brief summery how I installed Python 3.9.9 on my
+Raspberry Pi 400, for more information go to the source of the recipe: `Real Python`_
+
+Install build requirements::
+
+    sudo apt-get update
+    sudo apt-get upgrade
+
+    sudo apt-get install -y make build-essential libssl-dev zlib1g-dev \
+       libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
+       libncurses5-dev libncursesw5-dev xz-utils tk-dev
+
+Make a build directory::
+
+    cd ~
+    mkdir build
+    cd build
+
+Download and unpack the source code from `Python.org`_, replace 3.9.9 by
+your desired version::
+
+    wget https://www.python.org/ftp/python/3.9.9/Python-3.9.9.tgz
+    tar -xvzf Python-3.9.9.tgz
+    cd Python-3.9.9/
+
+Configure the build process, use a prefix to the directory where the
+interpreter will be installed::
+
+    ./configure --prefix=/opt/python3.9.9 --enable-optimizations
+
+Build & install the Python interpreter. The `-j` option simply tells `make` to
+split the building into parallel steps to speed up the compilation, the
+Raspberry Pi 400 has 4 cores so 4 seems to be a good choice::
+
+    make -j 4
+    sudo make install
+
+The building time was ~25min and the new Python 3.9.9 interpreter is now
+installed as `/opt/python3.9.9/bin/python3`.
+
+At the time there were no system packages for `Matplotlib` and `PyQt5` for
+this new Python version available, so there is no benefit of using the option
+`--system-site-packages` for building the venv::
+
+    cd ~/build
+    /opt/python3.9.9/bin/python3 -m venv py39
+    source py39/bin/activate
+
+I have not tried to build `Matplotlib` and `PyQt5` by myself and the
+installation by `pip` from `piwheels.org` did not work, in this case you don't
+get `Matplotlib` support for better font measuring and the `drawing` add-on will
+not work.
+
+Proceed with the `ezdxf` installation from source as shown for the  `Raspberry Pi OS`_.
+
+.. _Real Python:  https://realpython.com/installing-python/#how-to-build-python-from-source-code
+.. _python.org: https://www.python.org
