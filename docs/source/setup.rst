@@ -72,16 +72,16 @@ Install the latest development version by ``pip3`` from GitHub::
 Build and Install from Source
 -----------------------------
 
-Make a build directory and a virtual environment and I'm sorry, but I mostly
-use Windows for work::
+Windows 10
+++++++++++
+
+Make a build directory and a virtual environment::
 
     mkdir build
     cd build
-    py -m venv py39
-    py39\Scripts\activate.bat
+    py -m venv py310
+    py310/Scripts/activate.bat
 
-Windows Requirements
-++++++++++++++++++++
 
 A working C++ compiler setup is required to compile the C-extensions from source
 code. Windows users need the build tools from
@@ -94,35 +94,56 @@ Install required packages to build and install ezdxf with C-extensions::
 
     pip3 install setuptools wheel cython
 
-Linux Requirements
-++++++++++++++++++
+Clone the GitHub repository::
 
-I got a Raspberry Pi 400 for testing `ezdxf` on ARM64 hardware and I use
-sometimes the Windows Subsystem for Linux (WSL2) with Ubuntu for some tests.
+    git clone https://github.com/mozman/ezdxf.git
 
-Install python packages on Linux from the distribution repository if
-available by the system packager, `apt` in the case of Debian based
-distributions like Raspberry Pi OS or Ubuntu::
+Build and install ezdxf from source code::
 
-    sudo apt install python3-pip python3-wheel
+    cd ezdxf
+    pip3 install .
 
-Create the venv with access to the system site-packages for using `Matplotlib`
-and the Qt bindings from the system installation, see `Install Optional Packages`_::
+Check if the installation was successful::
 
-    python3 -m venv --system-site-packages py37
-    source py37\bin\activate
+    python3 -m ezdxf -V
+
+The `ezdxf` command should run without a preceding `python3 -m`, but calling the
+launcher through the interpreter guarantees to call the version which was
+installed in the venv if there exist a global installation of `ezdxf` like in
+my case.
+
+The output should look like this::
+
+    ezdxf 0.17.2b4 from D:\Source\build\py310\lib\site-packages\ezdxf
+    Python version: 3.10.1 (tags/v3.10.1:2cd268a, Dec  6 2021, 19:10:37) [MSC v.1929 64 bit (AMD64)]
+    using C-extensions: yes
+    using Matplotlib: no
+
+To install optional packages go to section: `Install Optional Packages`_
+
+To run then included tests go to section: `Run the Tests`_
+
+WSL2 & Ubuntu
++++++++++++++
+
+I use sometimes the Windows Subsystem for Linux (WSL2) with Ubuntu 20.04 LTS
+for some tests.
 
 By doing as fresh install on WSL2 & Ubuntu, I encountered an additional
-requirement, the ``build-essential`` package adds the required C++ support::
+requirement, the `build-essential` package adds the required C++ support::
 
     sudo apt install build-essential
 
-Installation from Source
-++++++++++++++++++++++++
+The system Python 3 interpreter has the version 3.8, but I will show you how to
+install an additional newer Python version from the source code in a later
+section::
 
-Install Cython in the venv to got the C-extensions compiled::
+    python3 -m venv py38
+    source py38/bin/activate
 
-    pip3 install cython
+Install `Cython` and `wheel` in the venv to got the C-extensions compiled::
+
+    pip3 install cython wheel
 
 Clone the GitHub repository::
 
@@ -135,42 +156,100 @@ Build and install ezdxf from source code::
 
 Check if the installation was successful::
 
-    ezdxf -V
+    python3 -m ezdxf -V
 
 The output should look like this::
 
-    ezdxf 0.17.2b4 from <path to your venv>
-    Python version: 3.10.1 (tags/v3.10.1:2cd268a, Dec  6 2021, 19:10:37) [MSC v.1929 64 bit (AMD64)]
+    ezdxf 0.17.2b4 from /home/mozman/src/py38/lib/python3.8/site-packages/ezdxf
+    Python version: 3.8.10 (default, Nov 26 2021, 20:14:08)
+    [GCC 9.3.0]
     using C-extensions: yes
-    using Matplotlib: yes <after installing Matplotlib!>
+    using Matplotlib: no
+
+To install optional packages go to section: `Install Optional Packages`_
+
+To run then included tests go to section: `Run the Tests`_
+
+Raspberry Pi OS
++++++++++++++++
+
+Testing platform is a Raspberry Pi 400 and the OS is the Raspberry Pi OS which
+runs on 64bit hardware but it is a 32bit OS.
+
+The system Python 3 interpreter is the version 3.7, but I will show you how to
+install an additional newer Python version from the source code in a later
+section.
+
+Install the build requirements, `Matplotlib` and the `PyQt5` bindings
+from the distribution repository::
+
+    sudo apt install python3-pip python3-matplotlib python3-pyqt5
+
+Installing `Matplotlib` and the `PyQt5` bindings by `pip` from `piwheels.org`
+in the venv worked, but the packages showed errors at import. `PySide6` is the
+preferred Qt binding but wasn't available on Raspberry Pi OS at the time of
+writing this - `PyQt5` is supported as fallback.
+
+Create the venv with access to the system site-packages for using `Matplotlib`
+and the Qt bindings from the system installation::
+
+    python3 -m venv --system-site-packages py37
+    source py37/bin/activate
+
+Install `Cython` and  `wheel` in the venv to got the C-extensions compiled::
+
+    pip3 install cython wheel
+
+Clone the GitHub repository::
+
+    git clone https://github.com/mozman/ezdxf.git
+
+Build and install ezdxf from source code::
+
+    cd ezdxf
+    pip3 install .
+
+Check if the installation was successful::
+
+    python3 -m ezdxf -V
+
+The output should look like this::
+
+    ezdxf 0.17.2b4 from /home/pi/src/py37/lib/python3.7/site-packages/ezdxf
+    Python version: 3.7.3 (default, Jan 22 2021, 20:04:44)
+    [GCC 8.3.0]
+    using C-extensions: yes
+    using Matplotlib: yes
+
+To run then included tests go to section: `Run the Tests`_
+
+Install Optional Packages
+-------------------------
+
+Only Windows & Ubuntu, for Raspberry Pi OS install the packages by the system
+packager.
+
+Install optional dependencies by `pip` to use all features, like the
+`drawing` add-on::
+
+    pip3 install matplotlib PySide6
+
+Run the Tests
+-------------
+
+This is the same procedure for all systems, assuming you are still in
+the build directory `build/ezdxf` and `ezdxf` is now installed in the venv.
 
 Install the test dependencies and run the tests::
 
     pip3 install pytest geomdl
     python3 -m pytest tests integration_tests
 
-Install Optional Packages
-+++++++++++++++++++++++++
-
-Install optional dependencies on Windows by `pip` to use all features, like the
-drawing add-on::
-
-    pip3 install matplotlib PySide6
-
-On Linux install `Matplotlib` and the `PyQt5` bindings also by the system
-packager, an installation by `pip` in the venv worked, but the packages showed
-errors at import on the Raspberry Pi::
-
-    sudo apt install python3-matplotlib python3-pyqt5
-
-`PySide6` is the preferred Qt binding but wasn't available on the Debian based
-distributions at the time of writing this - `PyQt5` is supported as fallback.
-
 Build Documentation
 -------------------
 
-Assuming you are still in the build directory ``build\ezdxf`` of the previous
-section and matplotlib is installed.
+Assuming you are still in the build directory `build/ezdxf` of the previous
+section.
 
 Install Sphinx::
 
@@ -181,4 +260,4 @@ Build the HTML documentation::
     cd docs
     make html
 
-The output is located in ``build\ezdxf\docs\build\html``.
+The output is located in `build/ezdxf/docs/build/html`.
