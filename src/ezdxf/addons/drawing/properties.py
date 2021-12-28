@@ -558,14 +558,19 @@ class RenderContext:
                 color = self.current_block_reference_properties.color  # type: ignore
         else:  # BYOBJECT
             color = self._true_entity_color(entity.rgb, aci)
-        return color + self._entity_alpha_str(
+        alpha = self._entity_alpha_str(
             entity.dxf.get("transparency"), layer_properties.color
         )
+        return color[:7] + alpha
 
     def _entity_alpha_str(
         self, raw_transparency: Optional[int], layer_color: Color
     ) -> str:
         """Returns the alpha value as hex string "xx" or empty string if opaque."""
+        # alpha 0 = fully transparent
+        # alpha 255 = opaque
+        # DXF Transparency 0 = fully transparent
+        # DXF Transparency 255 = opaque
         if raw_transparency == const.TRANSPARENCY_BYBLOCK:
             if self.inside_block_reference:
                 return self.current_block_reference_properties.color[7:]  # type: ignore
@@ -577,7 +582,7 @@ class RenderContext:
         elif raw_transparency is None:
             return layer_color[7:]
 
-        alpha = 255 - (raw_transparency & 0xff)
+        alpha = raw_transparency & 0xff
         if alpha < 255:
             return f"{alpha:02x}"
         return ""
