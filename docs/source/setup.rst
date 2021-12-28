@@ -121,7 +121,7 @@ The output should look like this::
 
 To install optional packages go to section: `Install Optional Packages`_
 
-To run then included tests go to section: `Run the Tests`_
+To run the included tests go to section: `Run the Tests`_
 
 WSL2 & Ubuntu
 +++++++++++++
@@ -171,7 +171,7 @@ The output should look like this::
 
 To install optional packages go to section: `Install Optional Packages`_
 
-To run then included tests go to section: `Run the Tests`_
+To run the included tests go to section: `Run the Tests`_
 
 Raspberry Pi OS
 +++++++++++++++
@@ -227,16 +227,47 @@ The output should look like this::
     using C-extensions: yes
     using Matplotlib: yes
 
-To run then included tests go to section: `Run the Tests`_
+To run the included tests go to section: `Run the Tests`_
+
+Manjaro on Raspberry Pi
++++++++++++++++++++++++
+
+Because the (very well working) Raspberry Pi OS is only a 32bit OS, I searched
+for a 64bit alternative like Ubuntu, which just switched to version 21.10 and
+always freezes at the installation process! So I tried Manjaro as rolling
+release, which I used prior in a virtual machine and wasn't really happy,
+because there is always something to update. Anyway the distribution
+looks really nice and has Python 3.9.9 installed.
+
+Install build requirements and optional packages by the system packager
+`pacman`::
+
+    sudo pacman -S python-pip python-matplotlib python-pyqt5
+
+Create and activate the venv::
+
+    cd ~
+    mkdir build
+    cd build
+    python3 -m venv --system-site-packages py39
+    source py39/bin/activate
+
+The rest is the same procedure as for the `Raspberry Pi OS`::
+
+    pip3 install cython wheel
+    git clone https://github.com/mozman/ezdxf.git
+    cd ezdxf
+    pip3 install .
+    python3 -m ezdxf -V
+
+To run the included tests go to section: `Run the Tests`_
 
 Install Optional Packages
 -------------------------
 
-Only Windows & Ubuntu, for Raspberry Pi OS install the packages by the system
-packager.
-
-Install optional dependencies by `pip` to use all features, like the
-`drawing` add-on::
+Install the optional dependencies by `pip` only for `Windows 10` and
+`Ubuntu on WSL2`, for `Raspberry Pi OS` and `Manjaro ARM` install these packages
+by the system packager::
 
     pip3 install matplotlib PySide6
 
