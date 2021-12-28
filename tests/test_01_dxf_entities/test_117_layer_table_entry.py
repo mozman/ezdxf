@@ -149,6 +149,33 @@ def test_get_default_transparency(layer):
     assert layer.transparency == 0
 
 
+def test_fully_transparent_layer(layer):
+    layer.set_xdata("AcCmTransparency", [(1071, 0x02000000)])
+    assert layer.transparency == 1.0
+
+
+def test_half_transparent_layer(layer):
+    layer.set_xdata("AcCmTransparency", [(1071, 0x0200007f)])
+    assert round(layer.transparency, 2) == 0.5
+
+
+def test_opaque_layer(layer):
+    layer.set_xdata("AcCmTransparency", [(1071, 0x020000ff)])
+    assert layer.transparency == 0.0
+
+
+def test_invalid_transparency_returns_opaque(layer):
+    # The flag 0x02000000 has to be set for a valid transparency
+    layer.set_xdata("AcCmTransparency", [(1071, 0)])
+    assert layer.transparency == 0.0
+
+
+def test_transparency_byblock_returns_opaque(layer):
+    # Transparency BYBLOCK (0x01000000) make no sense for a layer!?
+    layer.set_xdata("AcCmTransparency", [(1071, 0x01000000)])
+    assert layer.transparency == 0.0
+
+
 def test_set_transparency(layer):
     layer.transparency = 0.11
     assert round(layer.transparency, 2) == 0.11

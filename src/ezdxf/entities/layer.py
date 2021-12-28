@@ -286,9 +286,8 @@ class Layer(DXFEntity):
             return 0.0
         else:
             t = xdata[0].value
-            print(hex(t))
             if t & 0x2000000:  # is this a real transparency value?
-                # Transparency BYBLOCK (0x01000000) make no sense for a layer!
+                # Transparency BYBLOCK (0x01000000) make no sense for a layer!?
                 return clr.transparency2float(t)
         return 0.0
 
