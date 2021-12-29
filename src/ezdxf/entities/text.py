@@ -1,7 +1,8 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 import math
-from typing import TYPE_CHECKING, Tuple, Optional
+from typing import TYPE_CHECKING, Tuple, Optional, Union
+import warnings
 
 from ezdxf.lldxf import validator
 from ezdxf.lldxf import const
@@ -17,6 +18,7 @@ from ezdxf.lldxf.const import (
     DXF12,
     SUBCLASS_MARKER,
     DXFValueError,
+    TextEntityAlignment,
 )
 from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS
 from ezdxf.math.transformtools import OCSTransform
@@ -212,50 +214,57 @@ class Text(DXFGraphic):
         self.dxf.export_dxf_attribs(tagwriter, "valign")
 
     def set_pos(
-        self, p1: "Vertex", p2: "Vertex" = None, align: str = None
+        self,
+        p1: "Vertex",
+        p2: "Vertex" = None,
+        align: Union[str, TextEntityAlignment] = None,
     ) -> "Text":
-        """Set text alignment, valid alignments are:
+        """Set text alignment and location.
 
-        ============   =============== ================= =====
-        Vertical       Left            Center            Right
-        ============   =============== ================= =====
-        Top            TOP_LEFT        TOP_CENTER        TOP_RIGHT
-        Middle         MIDDLE_LEFT     MIDDLE_CENTER     MIDDLE_RIGHT
-        Bottom         BOTTOM_LEFT     BOTTOM_CENTER     BOTTOM_RIGHT
-        Baseline       LEFT            CENTER            RIGHT
-        ============   =============== ================= =====
+        The alignments :attr:`TextEntityAlignment.ALIGNED` and :attr:`TextEntityAlignment.FIT`
+        are special, they require a second alignment point, the text is aligned
+        on the virtual line between these two points and sits vertically at the
+        base line.
 
-        Alignments "ALIGNED" and "FIT" are special, they require a
-        second alignment point, text is aligned on the virtual line between
-        these two points and sit vertical at the base line.
+        - :attr:`TextEntityAlignment.ALIGNED`: Text is stretched or compressed
+          to fit exactly between `p1` and `p2` and the text height is also
+          adjusted to preserve height/width ratio.
+        - :attr:`TextEntityAlignment.FIT`: Text is stretched or compressed to fit
+          exactly between `p1` and `p2` but only the text width is adjusted,
+          the text height is fixed by the :attr:`dxf.height` attribute.
+        - :attr:`TextEntityAlignment.MIDDLE`: also a special adjustment, centered
+          text like :attr:`TextEntityAlignment.MIDDLE_CENTER`, but vertically
+          centred at the total height of the text.
 
-        - "ALIGNED": Text is stretched or compressed to fit exactly between
-          `p1` and `p2` and the text height is also adjusted to preserve
-          height/width ratio.
-        - "FIT": Text is stretched or compressed to fit exactly between `p1`
-          and `p2` but only the text width is adjusted, the text height is fixed
-          by the :attr:`dxf.height` attribute.
-        - "MIDDLE": also a special adjustment, centered text like
-          "MIDDLE_CENTER", but vertical centred at the total height of the
-          text.
+        .. warning::
+
+            Support for strings as `align` argument will be removed in v1.0.0
 
         Args:
-            p1: first alignment point as (x, y[, z]) tuple
-            p2: second alignment point as (x, y[, z]) tuple, required for
-                "ALIGNED" and "FIT" else ignored
-            align: new alignment, ``None`` for preserve existing alignment.
+            p1: first alignment point as (x, y[, z])
+            p2: second alignment point as (x, y[, z]), required for
+                :attr:`TextEntityAlignment.ALIGNED` and :attr:`TextEntityAlignment.FIT`
+                else ignored align: new alignment, ``None`` for preserve existing
+                alignment.
+            align: :class:`~ezdxf.lldxf.const.TextEntityAlignment`
 
         """
         if align is None:
-            align = self.get_align()
+            align = self.get_align_enum()
         else:
-            align = align.upper()
+            if isinstance(align, str):
+                # deprecation warning!
+                try:
+                    align = const.StringToTextAlignmentMapping[align.upper()]
+                except KeyError:
+                    raise ValueError(align)
+            assert isinstance(align, TextEntityAlignment)
             self.set_align(align)
         self.dxf.insert = p1
-        if align in ("ALIGNED", "FIT"):
+        if align in (TextEntityAlignment.ALIGNED, TextEntityAlignment.FIT):
             if p2 is None:
                 raise DXFValueError(
-                    f"Alignment '{align}' requires a second alignment point."
+                    f"Alignment '{str(align)}' requires a second alignment point."
                 )
         else:
             p2 = p1
@@ -266,6 +275,10 @@ class Text(DXFGraphic):
         """Returns a tuple (`align`, `p1`, `p2`), `align` is the alignment
         method, `p1` is the alignment point, `p2` is only relevant if `align`
         is "ALIGNED" or "FIT", otherwise it is ``None``.
+
+        .. warning::
+
+            Will be removed in v1.0.0, use :meth:`get_pos_enum`
 
         """
         p1 = Vec3(self.dxf.insert)
@@ -279,20 +292,49 @@ class Text(DXFGraphic):
             return align, p1, p2
         return align, p2, None
 
-    def set_align(self, align: str = "LEFT") -> "Text":
+    def get_pos_enum(self) -> Tuple[TextEntityAlignment, Vec3, Optional[Vec3]]:
+        """Returns a tuple (`align`, `p1`, `p2`), `align` is the alignment
+        enum :class:`~ezdxf.lldxf.const.TextEntityAlignment`, `p1` is the
+        alignment point, `p2` is only relevant if `align` is
+        :attr:`TextEntityAlignment.ALIGNED` or :attr:`TextEntityAlignment.FIT`,
+        otherwise it is ``None``.
+
+        """
+        p1 = Vec3(self.dxf.insert)
+        # Except for "LEFT" is the "align point" the real insert point:
+        # If the required "align point" is not present use "insert"!
+        p2 = Vec3(self.dxf.get("align_point", p1))
+        align = self.get_align_enum()
+        if align is TextEntityAlignment.LEFT:
+            return align, p1, None
+        if align in (TextEntityAlignment.FIT, TextEntityAlignment.ALIGNED):
+            return align, p1, p2
+        return align, p2, None
+
+    def set_align(
+        self, align: Union[str, TextEntityAlignment] = TextEntityAlignment.LEFT
+    ) -> "Text":
         """Just for experts: Sets the text alignment without setting the
         alignment points, set adjustment points attr:`dxf.insert` and
         :attr:`dxf.align_point` manually.
 
+        .. warning::
+
+            Support for strings as `align` argument will be removed in v1.0.0
+
         Args:
-            align: test alignment, see also :meth:`set_pos`
+            align: :class:`~ezdxf.lldxf.const.TextEntityAlignment`
 
         """
-        align = align.upper()
-        try:
-            halign, valign = const.TEXT_ALIGN_FLAGS[align.upper()]
-        except KeyError:
-            raise ValueError(f"invalid argument align: {align}")
+        if isinstance(align, str):
+            # deprecation warning! string support removed in 1.0
+            align = align.upper()
+            try:
+                align = const.StringToTextAlignmentMapping[align]
+            except KeyError:
+                raise ValueError(f"invalid argument align: {align}")
+            assert isinstance(align, TextEntityAlignment)
+        halign, valign = const.TEXT_ENUM_ALIGN_FLAGS[align]
         self.dxf.halign = halign
         self.dxf.valign = valign
         return self
@@ -304,6 +346,18 @@ class Text(DXFGraphic):
         if halign > 2:
             valign = 0
         return const.TEXT_ALIGNMENT_BY_FLAGS.get((halign, valign), "LEFT")
+
+    def get_align_enum(self) -> TextEntityAlignment:
+        """Returns the actual text alignment as enum :class:`~ezdxf.lldxf.const.TextEntityAlignment`,
+        see also :meth:`set_pos`.
+        """
+        halign = self.dxf.get("halign", 0)
+        valign = self.dxf.get("valign", 0)
+        if halign > 2:
+            valign = 0
+        return const.TEXT_ALIGNMENT_ENUM_BY_FLAGS.get(
+            (halign, valign), TextEntityAlignment.LEFT
+        )
 
     def transform(self, m: Matrix44) -> "Text":
         """Transform the TEXT entity by transformation matrix `m` inplace."""
@@ -416,14 +470,14 @@ class Text(DXFGraphic):
         return font_name
 
     def fit_length(self) -> float:
-        """Returns the text length for alignments "FIT" and "ALIGNED", defined
-        by the distance from the insertion point to the align point or 0 for all
-        other alignments.
+        """Returns the text length for alignments :attr:`TextEntityAlignment.FIT`
+        and :attr:`TextEntityAlignment.ALIGNED`, defined by the distance from
+        the insertion point to the align point or 0 for all other alignments.
 
         """
         length = 0.0
-        align, p1, p2 = self.get_pos()
-        if align in ("FIT", "ALIGNED"):
+        align, p1, p2 = self.get_pos_enum()
+        if align in (TextEntityAlignment.FIT, TextEntityAlignment.ALIGNED):
             # text is stretch between p1 and p2
             length = p1.distance(p2)
         return length
@@ -435,12 +489,12 @@ def text_transformation_matrix(entity: Text) -> Matrix44:
     """
     angle = math.radians(entity.dxf.rotation)
     width_factor = entity.dxf.width
-    align, p1, p2 = entity.get_pos()
+    align, p1, p2 = entity.get_pos_enum()
     mirror_x = -1 if entity.is_backward else 1
     mirror_y = -1 if entity.is_upside_down else 1
     oblique = math.radians(entity.dxf.oblique)
     location = p1
-    if align in ("ALIGNED", "FIT"):
+    if align in (TextEntityAlignment.ALIGNED, TextEntityAlignment.FIT):
         width_factor = 1.0  # text goes from p1 to p2, no stretching applied
         location = p1.lerp(p2, factor=0.5)
         angle = (p2 - p1).angle  # override stored angle

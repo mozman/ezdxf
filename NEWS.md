@@ -19,6 +19,15 @@ Version 0.17.2b4 - dev
 - NEW: support for transparency `BYLAYER` and `BYBLOCK` for the `drawing` add-on
 - NEW: `Textstyle.make_font()` returns the ezdxf font abstraction
 - NEW: added `dxfattribs` argument to method `Drawing.set_modelspace_vport()`
+- NEW: `TextEntityAlignment` enum replaces the string based alignment definition
+- NEW: method `Text.get_pos_enum()` 
+- NEW: method `Text.get_align_enum()`
+- CHANGE: method `Text.set_pos()`, string based alignments are deprecated 
+  and the support of them will be removed in v1.0.0
+- CHANGE: method `Text.set_align`, string based alignments are deprecated 
+  and the support of them will be removed in v1.0.0
+- DEPRECATED: method `Text.get_pos()` will be removed in v1.0.0
+- DEPRECATED: method `Text.get_align()` will be removed in v1.0.0
 - BUGFIX [#574](https://github.com/mozman/ezdxf/issues/574):
   flattening issues in `Path()` and `ConstructionEllipse()` 
 - BUGFIX: `drawing` add-on shows block references in `ACAD_TABLE` at the 

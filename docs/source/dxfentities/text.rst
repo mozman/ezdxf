@@ -28,6 +28,43 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
     Do not instantiate entity classes by yourself - always use the provided
     factory functions!
 
+
+.. class:: ezdxf.lldxf.const.TextEntityAlignment
+
+    Enum for text alignment int :class:`Text`, :class:`Attrib` and
+    :class:`AttDef` entities
+
+    .. attribute:: LEFT
+
+    .. attribute:: CENTER
+
+    .. attribute:: RIGHT
+
+    .. attribute:: ALIGNED
+
+    .. attribute:: MIDDLE
+
+    .. attribute:: FIT
+
+    .. attribute:: BOTTOM_LEFT
+
+    .. attribute:: BOTTOM_CENTER
+
+    .. attribute:: BOTTOM_RIGHT
+
+    .. attribute:: MIDDLE_LEFT
+
+    .. attribute:: MIDDLE_CENTER
+
+    .. attribute:: MIDDLE_RIGHT
+
+    .. attribute:: TOP_LEFT
+
+    .. attribute:: TOP_CENTER
+
+    .. attribute:: TOP_RIGHT
+
+
 .. class:: Text
 
     .. attribute:: dxf.text
@@ -108,13 +145,17 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. autoproperty:: is_upside_down
 
-    .. automethod:: set_pos
+    .. automethod:: set_pos(p1: Vertex, p2:Vertex=None, align: TextEntityAlignment=None)
 
-    .. automethod:: get_pos
+    .. automethod:: get_pos()->Tuple[str, Vec3, Optional[Vec3]]
+
+    .. automethod:: get_pos_enum()->Tuple[TextEntityAlignment, Vec3, Optional[Vec3]]
 
     .. automethod:: get_align
 
-    .. automethod:: set_align(align: str = 'LEFT') -> Text
+    .. automethod:: get_align_enum
+
+    .. automethod:: set_align(align = TextEntityAlignment.LEFT) -> Text
 
     .. automethod:: transform(m: Matrix44) -> Text
 

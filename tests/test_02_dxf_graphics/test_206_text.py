@@ -5,7 +5,7 @@ import math
 
 import ezdxf
 from ezdxf.entities.text import Text
-from ezdxf.lldxf.const import DXF12, DXF2000
+from ezdxf.lldxf.const import DXF12, DXF2000, TextEntityAlignment
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Vec3, Matrix44
 
@@ -188,14 +188,14 @@ def text():
 
 
 def test_set_alignment(text):
-    text.set_pos((2, 2), align="TOP_CENTER")
+    text.set_pos((2, 2), align=TextEntityAlignment.TOP_CENTER)
     assert text.dxf.halign == 1
     assert text.dxf.valign == 3
     assert text.dxf.align_point == (2, 2)
 
 
 def test_set_fit_alignment(text):
-    text.set_pos((2, 2), (4, 2), align="FIT")
+    text.set_pos((2, 2), (4, 2), align=TextEntityAlignment.FIT)
     assert text.dxf.halign == 5
     assert text.dxf.valign == 0
     assert text.dxf.insert == (2, 2)
@@ -203,7 +203,7 @@ def test_set_fit_alignment(text):
 
 
 def test_reset_fit_alignment(text):
-    text.set_pos((2, 2), (4, 2), align="FIT")
+    text.set_pos((2, 2), (4, 2), align=TextEntityAlignment.FIT)
     text.set_pos((3, 3), (5, 3))
     assert text.dxf.halign == 5
     assert text.dxf.valign == 0
@@ -212,7 +212,7 @@ def test_reset_fit_alignment(text):
 
 
 def test_resetting_location_raises_value_error_for_missing_point(text):
-    text.set_pos((2, 2), (4, 2), align="FIT")
+    text.set_pos((2, 2), (4, 2), align=TextEntityAlignment.FIT)
     with pytest.raises(ValueError):
         text.set_pos((3, 3))
 
@@ -225,24 +225,30 @@ def test_raises_value_error_for_invalid_alignment(text):
         text.set_pos((2, 2), (4, 2), align="XYZ")
 
 
-def test_get_alignment(text):
+def test_get_align_enum(text):
     text.dxf.halign = 1
     text.dxf.valign = 3
-    assert text.get_align() == "TOP_CENTER"
+    assert text.get_align_enum() == TextEntityAlignment.TOP_CENTER
 
 
-def test_get_pos_TOP_CENTER(text):
-    text.set_pos((2, 2), align="TOP_CENTER")
-    align, p1, p2 = text.get_pos()
-    assert align == "TOP_CENTER"
+def test_get_alignment_enum(text):
+    text.dxf.halign = 1
+    text.dxf.valign = 3
+    assert text.get_align_enum() == TextEntityAlignment.TOP_CENTER
+
+
+def test_get_pos__enumTOP_CENTER(text):
+    text.set_pos((2, 2), align=TextEntityAlignment.TOP_CENTER)
+    align, p1, p2 = text.get_pos_enum()
+    assert align == TextEntityAlignment.TOP_CENTER
     assert p1 == (2, 2)
     assert p2 is None
 
 
 def test_get_pos_LEFT(text):
     text.set_pos((2, 2))
-    align, p1, p2 = text.get_pos()
-    assert align == "LEFT"
+    align, p1, p2 = text.get_pos_enum()
+    assert align == TextEntityAlignment.LEFT
     assert p1 == (2, 2)
     assert p2 is None
 
@@ -261,7 +267,7 @@ def test_transform_interface():
 
 
 def test_fit_length(text):
-    text.set_pos((2, 2), (4, 2), align="FIT")
+    text.set_pos((2, 2), (4, 2), align=TextEntityAlignment.FIT)
     assert text.fit_length() == 2
 
     # remove align point
@@ -283,7 +289,7 @@ def text2():
             "rotation": 0,
             "layer": "text",
         }
-    ).set_pos((0, 0, 0), align="LEFT")
+    ).set_pos((0, 0, 0), align=TextEntityAlignment.LEFT)
 
 
 @pytest.mark.parametrize("rx, ry", [(1, 1), (-1, 1), (-1, -1), (1, -1)])
@@ -342,13 +348,13 @@ def test_get_pos_handles_missing_align_point():
     text.dxf.align_point = (3, 4)  # the real alignment point
 
     # the expected and correct align point:
-    alignment, p1, p2 = text.get_pos()
+    alignment, p1, p2 = text.get_pos_enum()
     assert p1 == (3, 4)
     assert p2 is None  # only used for "FIT" and "ALIGNED"
 
     # remove the align point
     del text.dxf.align_point
 
-    alignment, p1, p2 = text.get_pos()
+    alignment, p1, p2 = text.get_pos_enum()
     assert p1 == (1, 2)  # use the insert point instead
     assert p2 is None  # only used for "FIT" and "ALIGNED"

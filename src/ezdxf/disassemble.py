@@ -48,7 +48,9 @@ class Primitive(abc.ABC):
 
     max_flattening_distance: float = 0.01
 
-    def __init__(self, entity: DXFEntity, max_flattening_distance: Optional[float] = None):
+    def __init__(
+        self, entity: DXFEntity, max_flattening_distance: Optional[float] = None
+    ):
         self.entity: DXFEntity = entity
         # Path representation for linear entities:
         self._path: Optional[Path] = None
@@ -282,10 +284,13 @@ class TextLinePrimitive(ConvertedPrimitive):
             get_font_name(text), text.dxf.height, text.dxf.width
         )
         text_line = TextLine(content, font)
-        alignment, p1, p2 = text.get_pos()
+        alignment, p1, p2 = text.get_pos_enum()
         if p2 is None:
             p2 = p1
-        fit_or_aligned = alignment == "FIT" or alignment == "ALIGNED"
+        fit_or_aligned = (
+            alignment == const.TextEntityAlignment.FIT
+            or alignment == const.TextEntityAlignment.ALIGNED
+        )
         if text.dxf.halign > 2:  # ALIGNED=3, MIDDLE=4, FIT=5
             text_line.stretch(alignment, p1, p2)
         halign, valign = unified_alignment(text)

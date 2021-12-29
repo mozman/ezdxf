@@ -354,7 +354,7 @@ class TextEntityAlignment(Enum):
     TOP_RIGHT = auto()
 
 
-TextAlignmentMapping = {
+StringToTextAlignmentMapping = {
     "LEFT": TextEntityAlignment.LEFT,
     "CENTER": TextEntityAlignment.CENTER,
     "RIGHT": TextEntityAlignment.RIGHT,
@@ -371,12 +371,16 @@ TextAlignmentMapping = {
     "TOP_CENTER": TextEntityAlignment.TOP_CENTER,
     "TOP_RIGHT": TextEntityAlignment.TOP_RIGHT,
 }
+TextAlignmentMappingToStringMapping = {
+    e: s for s, e in StringToTextAlignmentMapping.items()
+}
+
 
 LEFT = 0
 CENTER = 1
 RIGHT = 2
 ALIGNED = 3
-# MIDDLE = 4
+_MIDDLE = 4
 FIT = 5
 
 BASELINE = 0
@@ -388,12 +392,33 @@ BACKWARD = MIRROR_X
 MIRROR_Y = 4
 UPSIDE_DOWN = MIRROR_Y
 
+TEXT_ENUM_ALIGN_FLAGS = {
+    TextEntityAlignment.LEFT: (LEFT, BASELINE),
+    TextEntityAlignment.CENTER: (CENTER, BASELINE),
+    TextEntityAlignment.RIGHT: (RIGHT, BASELINE),
+    TextEntityAlignment.ALIGNED: (ALIGNED, BASELINE),
+    TextEntityAlignment.MIDDLE: (_MIDDLE, BASELINE),
+    TextEntityAlignment.FIT: (FIT, BASELINE),
+    TextEntityAlignment.BOTTOM_LEFT: (LEFT, BOTTOM),
+    TextEntityAlignment.BOTTOM_CENTER: (CENTER, BOTTOM),
+    TextEntityAlignment.BOTTOM_RIGHT: (RIGHT, BOTTOM),
+    TextEntityAlignment.MIDDLE_LEFT: (LEFT, MIDDLE),
+    TextEntityAlignment.MIDDLE_CENTER: (CENTER, MIDDLE),
+    TextEntityAlignment.MIDDLE_RIGHT: (RIGHT, MIDDLE),
+    TextEntityAlignment.TOP_LEFT: (LEFT, TOP),
+    TextEntityAlignment.TOP_CENTER: (CENTER, TOP),
+    TextEntityAlignment.TOP_RIGHT: (RIGHT, TOP),
+}
+TEXT_ALIGNMENT_ENUM_BY_FLAGS = dict(
+    (flags, enum) for enum, flags in TEXT_ENUM_ALIGN_FLAGS.items()
+)
+
 TEXT_ALIGN_FLAGS = {
     "LEFT": (LEFT, BASELINE),
     "CENTER": (CENTER, BASELINE),
     "RIGHT": (RIGHT, BASELINE),
     "ALIGNED": (ALIGNED, BASELINE),
-    "MIDDLE": (4, BASELINE),
+    "MIDDLE": (_MIDDLE, BASELINE),
     "FIT": (FIT, BASELINE),
     "BOTTOM_LEFT": (LEFT, BOTTOM),
     "BOTTOM_CENTER": (CENTER, BOTTOM),
@@ -408,6 +433,7 @@ TEXT_ALIGN_FLAGS = {
 TEXT_ALIGNMENT_BY_FLAGS = dict(
     (flags, name) for name, flags in TEXT_ALIGN_FLAGS.items()
 )
+
 
 VERTICAL_STACKED = 4  # only stored in TextStyle.dxf.flags!
 
