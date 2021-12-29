@@ -380,8 +380,17 @@ LEFT = 0
 CENTER = 1
 RIGHT = 2
 ALIGNED = 3
-_MIDDLE = 4
 FIT = 5
+
+
+class TextHAlign(IntEnum):
+    LEFT = LEFT
+    CENTER = CENTER
+    RIGHT = RIGHT
+    ALIGNED = ALIGNED
+    MIDDLE = 4
+    FIT = FIT
+
 
 BASELINE = 0
 BOTTOM = 1
@@ -392,43 +401,51 @@ BACKWARD = MIRROR_X
 MIRROR_Y = 4
 UPSIDE_DOWN = MIRROR_Y
 
+
+class TextVAlign(IntEnum):
+    BASELINE = 0
+    BOTTOM = 1
+    MIDDLE = 2
+    TOP = 3
+
+
 TEXT_ENUM_ALIGN_FLAGS = {
-    TextEntityAlignment.LEFT: (LEFT, BASELINE),
-    TextEntityAlignment.CENTER: (CENTER, BASELINE),
-    TextEntityAlignment.RIGHT: (RIGHT, BASELINE),
-    TextEntityAlignment.ALIGNED: (ALIGNED, BASELINE),
-    TextEntityAlignment.MIDDLE: (_MIDDLE, BASELINE),
-    TextEntityAlignment.FIT: (FIT, BASELINE),
-    TextEntityAlignment.BOTTOM_LEFT: (LEFT, BOTTOM),
-    TextEntityAlignment.BOTTOM_CENTER: (CENTER, BOTTOM),
-    TextEntityAlignment.BOTTOM_RIGHT: (RIGHT, BOTTOM),
-    TextEntityAlignment.MIDDLE_LEFT: (LEFT, MIDDLE),
-    TextEntityAlignment.MIDDLE_CENTER: (CENTER, MIDDLE),
-    TextEntityAlignment.MIDDLE_RIGHT: (RIGHT, MIDDLE),
-    TextEntityAlignment.TOP_LEFT: (LEFT, TOP),
-    TextEntityAlignment.TOP_CENTER: (CENTER, TOP),
-    TextEntityAlignment.TOP_RIGHT: (RIGHT, TOP),
+    TextEntityAlignment.LEFT: (TextHAlign.LEFT, TextVAlign.BASELINE),
+    TextEntityAlignment.CENTER: (TextHAlign.CENTER, TextVAlign.BASELINE),
+    TextEntityAlignment.RIGHT: (TextHAlign.RIGHT, TextVAlign.BASELINE),
+    TextEntityAlignment.ALIGNED: (TextHAlign.ALIGNED, TextVAlign.BASELINE),
+    TextEntityAlignment.MIDDLE: (TextHAlign.MIDDLE, TextVAlign.BASELINE),
+    TextEntityAlignment.FIT: (TextHAlign.FIT, TextVAlign.BASELINE),
+    TextEntityAlignment.BOTTOM_LEFT: (TextHAlign.LEFT, TextVAlign.BOTTOM),
+    TextEntityAlignment.BOTTOM_CENTER: (TextHAlign.CENTER, TextVAlign.BOTTOM),
+    TextEntityAlignment.BOTTOM_RIGHT: (TextHAlign.RIGHT, TextVAlign.BOTTOM),
+    TextEntityAlignment.MIDDLE_LEFT: (TextHAlign.LEFT, TextVAlign.MIDDLE),
+    TextEntityAlignment.MIDDLE_CENTER: (TextHAlign.CENTER, TextVAlign.MIDDLE),
+    TextEntityAlignment.MIDDLE_RIGHT: (TextHAlign.RIGHT, TextVAlign.MIDDLE),
+    TextEntityAlignment.TOP_LEFT: (TextHAlign.LEFT, TextVAlign.TOP),
+    TextEntityAlignment.TOP_CENTER: (TextHAlign.CENTER, TextVAlign.TOP),
+    TextEntityAlignment.TOP_RIGHT: (TextHAlign.RIGHT, TextVAlign.TOP),
 }
 TEXT_ALIGNMENT_ENUM_BY_FLAGS = dict(
     (flags, enum) for enum, flags in TEXT_ENUM_ALIGN_FLAGS.items()
 )
 
 TEXT_ALIGN_FLAGS = {
-    "LEFT": (LEFT, BASELINE),
-    "CENTER": (CENTER, BASELINE),
-    "RIGHT": (RIGHT, BASELINE),
-    "ALIGNED": (ALIGNED, BASELINE),
-    "MIDDLE": (_MIDDLE, BASELINE),
-    "FIT": (FIT, BASELINE),
-    "BOTTOM_LEFT": (LEFT, BOTTOM),
-    "BOTTOM_CENTER": (CENTER, BOTTOM),
-    "BOTTOM_RIGHT": (RIGHT, BOTTOM),
-    "MIDDLE_LEFT": (LEFT, MIDDLE),
-    "MIDDLE_CENTER": (CENTER, MIDDLE),
-    "MIDDLE_RIGHT": (RIGHT, MIDDLE),
-    "TOP_LEFT": (LEFT, TOP),
-    "TOP_CENTER": (CENTER, TOP),
-    "TOP_RIGHT": (RIGHT, TOP),
+    "LEFT": (TextHAlign.LEFT, TextVAlign.BASELINE),
+    "CENTER": (TextHAlign.CENTER, TextVAlign.BASELINE),
+    "RIGHT": (TextHAlign.RIGHT, TextVAlign.BASELINE),
+    "ALIGNED": (TextHAlign.ALIGNED, TextVAlign.BASELINE),
+    "MIDDLE": (TextHAlign.MIDDLE, TextVAlign.BASELINE),
+    "FIT": (TextHAlign.FIT, TextVAlign.BASELINE),
+    "BOTTOM_LEFT": (TextHAlign.LEFT, TextVAlign.BOTTOM),
+    "BOTTOM_CENTER": (TextHAlign.CENTER, TextVAlign.BOTTOM),
+    "BOTTOM_RIGHT": (TextHAlign.RIGHT, TextVAlign.BOTTOM),
+    "MIDDLE_LEFT": (TextHAlign.LEFT, TextVAlign.MIDDLE),
+    "MIDDLE_CENTER": (TextHAlign.CENTER, TextVAlign.MIDDLE),
+    "MIDDLE_RIGHT": (TextHAlign.RIGHT, TextVAlign.MIDDLE),
+    "TOP_LEFT": (TextHAlign.LEFT, TextVAlign.TOP),
+    "TOP_CENTER": (TextHAlign.CENTER, TextVAlign.TOP),
+    "TOP_RIGHT": (TextHAlign.RIGHT, TextVAlign.TOP),
 }
 TEXT_ALIGNMENT_BY_FLAGS = dict(
     (flags, name) for name, flags in TEXT_ALIGN_FLAGS.items()
