@@ -1,7 +1,7 @@
 # Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
 from typing import List
-from enum import IntEnum, IntFlag
+from enum import IntEnum, IntFlag, auto, Enum
 from dataclasses import dataclass
 
 DXF9 = "AC1004"
@@ -334,26 +334,43 @@ LWPOLYLINE_PLINEGEN = 128
 
 DEFAULT_TTF = "DejaVuSans.ttf"
 
-TEXT_ALIGN_FLAGS = {
-    "LEFT": (0, 0),
-    "CENTER": (1, 0),
-    "RIGHT": (2, 0),
-    "ALIGNED": (3, 0),
-    "MIDDLE": (4, 0),
-    "FIT": (5, 0),
-    "BOTTOM_LEFT": (0, 1),
-    "BOTTOM_CENTER": (1, 1),
-    "BOTTOM_RIGHT": (2, 1),
-    "MIDDLE_LEFT": (0, 2),
-    "MIDDLE_CENTER": (1, 2),
-    "MIDDLE_RIGHT": (2, 2),
-    "TOP_LEFT": (0, 3),
-    "TOP_CENTER": (1, 3),
-    "TOP_RIGHT": (2, 3),
+
+# analog to MTextEntityAlignment, but not in use yet!
+class TextEntityAlignment(Enum):
+    LEFT = auto()
+    CENTER = auto()
+    RIGHT = auto()
+    ALIGNED = auto()
+    MIDDLE = auto()
+    FIT = auto()
+    BOTTOM_LEFT = auto()
+    BOTTOM_CENTER = auto()
+    BOTTOM_RIGHT = auto()
+    MIDDLE_LEFT = auto()
+    MIDDLE_CENTER = auto()
+    MIDDLE_RIGHT = auto()
+    TOP_LEFT = auto()
+    TOP_CENTER = auto()
+    TOP_RIGHT = auto()
+
+
+TextAlignmentMapping = {
+    "LEFT": TextEntityAlignment.LEFT,
+    "CENTER": TextEntityAlignment.CENTER,
+    "RIGHT": TextEntityAlignment.RIGHT,
+    "ALIGNED": TextEntityAlignment.ALIGNED,
+    "MIDDLE": TextEntityAlignment.MIDDLE,
+    "FIT": TextEntityAlignment.FIT,
+    "BOTTOM_LEFT": TextEntityAlignment.BOTTOM_LEFT,
+    "BOTTOM_CENTER": TextEntityAlignment.BOTTOM_CENTER,
+    "BOTTOM_RIGHT": TextEntityAlignment.BOTTOM_RIGHT,
+    "MIDDLE_LEFT": TextEntityAlignment.MIDDLE_LEFT,
+    "MIDDLE_CENTER": TextEntityAlignment.MIDDLE_CENTER,
+    "MIDDLE_RIGHT": TextEntityAlignment.MIDDLE_RIGHT,
+    "TOP_LEFT": TextEntityAlignment.TOP_LEFT,
+    "TOP_CENTER": TextEntityAlignment.TOP_CENTER,
+    "TOP_RIGHT": TextEntityAlignment.TOP_RIGHT,
 }
-TEXT_ALIGNMENT_BY_FLAGS = dict(
-    (flags, name) for name, flags in TEXT_ALIGN_FLAGS.items()
-)
 
 LEFT = 0
 CENTER = 1
@@ -370,6 +387,27 @@ MIRROR_X = 2
 BACKWARD = MIRROR_X
 MIRROR_Y = 4
 UPSIDE_DOWN = MIRROR_Y
+
+TEXT_ALIGN_FLAGS = {
+    "LEFT": (LEFT, BASELINE),
+    "CENTER": (CENTER, BASELINE),
+    "RIGHT": (RIGHT, BASELINE),
+    "ALIGNED": (ALIGNED, BASELINE),
+    "MIDDLE": (4, BASELINE),
+    "FIT": (FIT, BASELINE),
+    "BOTTOM_LEFT": (LEFT, BOTTOM),
+    "BOTTOM_CENTER": (CENTER, BOTTOM),
+    "BOTTOM_RIGHT": (RIGHT, BOTTOM),
+    "MIDDLE_LEFT": (LEFT, MIDDLE),
+    "MIDDLE_CENTER": (CENTER, MIDDLE),
+    "MIDDLE_RIGHT": (RIGHT, MIDDLE),
+    "TOP_LEFT": (LEFT, TOP),
+    "TOP_CENTER": (CENTER, TOP),
+    "TOP_RIGHT": (RIGHT, TOP),
+}
+TEXT_ALIGNMENT_BY_FLAGS = dict(
+    (flags, name) for name, flags in TEXT_ALIGN_FLAGS.items()
+)
 
 VERTICAL_STACKED = 4  # only stored in TextStyle.dxf.flags!
 
