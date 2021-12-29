@@ -245,14 +245,18 @@ class Text(DXFGraphic):
             p2: second alignment point as (x, y[, z]), required for :attr:`ALIGNED`
                 and :attr:`FIT` else ignored
             align: new alignment as enum :class:`~ezdxf.lldxf.const.TextEntityAlignment`,
-                ``None`` for preserve existing alignment.
+                ``None`` to preserve the existing alignment.
 
         """
         if align is None:
             align = self.get_align_enum()
         else:
             if isinstance(align, str):
-                # deprecation warning!
+                warnings.warn(
+                    "use enum of type TextEntityAlignment for argument align, "
+                    "string support will be removed in v1.0.0",
+                    DeprecationWarning,
+                )
                 try:
                     align = const.StringToTextAlignmentMapping[align.upper()]
                 except KeyError:
@@ -273,13 +277,18 @@ class Text(DXFGraphic):
     def get_pos(self) -> Tuple[str, Vec3, Optional[Vec3]]:
         """Returns a tuple (`align`, `p1`, `p2`), `align` is the alignment
         method, `p1` is the alignment point, `p2` is only relevant if `align`
-        is "ALIGNED" or "FIT", otherwise it is ``None``.
+        is "ALIGNED" or "FIT", otherwise it is ``None`` (deprecated).
 
         .. warning::
 
             Will be removed in v1.0.0, use :meth:`get_pos_enum`
 
         """
+        warnings.warn(
+            "use method get_pos_enum(), this method will be removed in v1.0.0",
+            DeprecationWarning,
+        )
+
         p1 = Vec3(self.dxf.insert)
         # Except for "LEFT" is the "align point" the real insert point:
         # If the required "align point" is not present use "insert"!
@@ -325,7 +334,11 @@ class Text(DXFGraphic):
 
         """
         if isinstance(align, str):
-            # deprecation warning! string support removed in 1.0
+            warnings.warn(
+                "use enum of type TextEntityAlignment for argument align, "
+                "string support will be removed in v1.0.0",
+                DeprecationWarning,
+            )
             align = align.upper()
             try:
                 align = const.StringToTextAlignmentMapping[align]
@@ -338,7 +351,18 @@ class Text(DXFGraphic):
         return self
 
     def get_align(self) -> str:
-        """Returns the actual text alignment as string, see also :meth:`set_pos`."""
+        """Returns the actual text alignment as string (deprecated).
+
+        .. warning::
+
+            Will be removed in v1.0.0, use :meth:`get_align_enum`
+
+        """
+        warnings.warn(
+            "use method get_align_enum(), this method will be removed in v1.0.0",
+            DeprecationWarning,
+        )
+
         halign = self.dxf.get("halign", 0)
         valign = self.dxf.get("valign", 0)
         if halign > 2:
