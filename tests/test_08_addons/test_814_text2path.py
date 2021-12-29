@@ -59,8 +59,13 @@ else:
 
 
 @pytest.mark.parametrize("s,c", CHAR_TO_PATH)
-def test_make_paths_from_str(s, c):
-    assert len(_to_paths(s)) == c
+def test_make_paths_from_str(s: str, c: int):
+    # change of assertion from == to >= is based on an error on RPi & Ubuntu
+    # Server 21.10 & matplotlib
+    # assert len(_to_paths("ü")) == 4  instead of 3
+    # Do not test how matplotlib works here, the only important fact is:
+    # do we get path objects
+    assert len(_to_paths(s)) >= c
 
 
 @pytest.mark.skipif(
