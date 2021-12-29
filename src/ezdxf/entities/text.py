@@ -221,19 +221,19 @@ class Text(DXFGraphic):
     ) -> "Text":
         """Set text alignment and location.
 
-        The alignments :attr:`TextEntityAlignment.ALIGNED` and :attr:`TextEntityAlignment.FIT`
+        The alignments :attr:`ALIGNED` and :attr:`FIT`
         are special, they require a second alignment point, the text is aligned
         on the virtual line between these two points and sits vertically at the
         base line.
 
-        - :attr:`TextEntityAlignment.ALIGNED`: Text is stretched or compressed
+        - :attr:`ALIGNED`: Text is stretched or compressed
           to fit exactly between `p1` and `p2` and the text height is also
           adjusted to preserve height/width ratio.
-        - :attr:`TextEntityAlignment.FIT`: Text is stretched or compressed to fit
+        - :attr:`FIT`: Text is stretched or compressed to fit
           exactly between `p1` and `p2` but only the text width is adjusted,
           the text height is fixed by the :attr:`dxf.height` attribute.
-        - :attr:`TextEntityAlignment.MIDDLE`: also a special adjustment, centered
-          text like :attr:`TextEntityAlignment.MIDDLE_CENTER`, but vertically
+        - :attr:`MIDDLE`: also a special adjustment, centered
+          text like :attr:`MIDDLE_CENTER`, but vertically
           centred at the total height of the text.
 
         .. warning::
@@ -242,11 +242,10 @@ class Text(DXFGraphic):
 
         Args:
             p1: first alignment point as (x, y[, z])
-            p2: second alignment point as (x, y[, z]), required for
-                :attr:`TextEntityAlignment.ALIGNED` and :attr:`TextEntityAlignment.FIT`
-                else ignored align: new alignment, ``None`` for preserve existing
-                alignment.
-            align: :class:`~ezdxf.lldxf.const.TextEntityAlignment`
+            p2: second alignment point as (x, y[, z]), required for :attr:`ALIGNED`
+                and :attr:`FIT` else ignored
+            align: new alignment as enum :class:`~ezdxf.lldxf.const.TextEntityAlignment`,
+                ``None`` for preserve existing alignment.
 
         """
         if align is None:

@@ -126,7 +126,7 @@ def test_create_text(layout):
 
 def test_text_set_alignment(layout):
     text = layout.add_text("text")
-    text.set_pos((2, 2), align="TOP_CENTER")
+    text.set_pos((2, 2), align=TextEntityAlignment.TOP_CENTER)
     assert 1 == text.dxf.halign
     assert 3 == text.dxf.valign
     assert (2, 2) == text.dxf.align_point
@@ -134,7 +134,7 @@ def test_text_set_alignment(layout):
 
 def test_text_set_fit_alignment(layout):
     text = layout.add_text("text")
-    text.set_pos((2, 2), (4, 2), align="FIT")
+    text.set_pos((2, 2), (4, 2), align=TextEntityAlignment.FIT)
     assert 5 == text.dxf.halign
     assert 0 == text.dxf.valign
     assert (2, 2) == text.dxf.insert

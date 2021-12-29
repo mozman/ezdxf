@@ -5,6 +5,7 @@ from math import radians
 from typing import Union, Tuple, Dict, Iterable, List, Optional, Callable
 
 import ezdxf.lldxf.const as DXFConstants
+from ezdxf.lldxf.const import TextEntityAlignment
 from ezdxf.addons.drawing.backend import BackendInterface
 from ezdxf.addons.drawing.debug_utils import draw_rect
 from ezdxf.entities import MText, Text, Attrib, AttDef
@@ -47,26 +48,38 @@ AnyText = Union[Text, MText, Attrib, AttDef]
 # baseline of the next line
 DEFAULT_LINE_SPACING = 5 / 3
 
-DXF_TEXT_ALIGNMENT_TO_ALIGNMENT: Dict[str, Alignment] = {
-    "LEFT": (HAlignment.LEFT, VAlignment.BASELINE),
-    "CENTER": (HAlignment.CENTER, VAlignment.BASELINE),
-    "RIGHT": (HAlignment.RIGHT, VAlignment.BASELINE),
-    "ALIGNED": (HAlignment.CENTER, VAlignment.BASELINE),
-    "MIDDLE": (HAlignment.CENTER, VAlignment.LOWER_CASE_CENTER),
-    "FIT": (HAlignment.CENTER, VAlignment.BASELINE),
-    "BOTTOM_LEFT": (HAlignment.LEFT, VAlignment.BOTTOM),
-    "BOTTOM_CENTER": (HAlignment.CENTER, VAlignment.BOTTOM),
-    "BOTTOM_RIGHT": (HAlignment.RIGHT, VAlignment.BOTTOM),
-    "MIDDLE_LEFT": (HAlignment.LEFT, VAlignment.UPPER_CASE_CENTER),
-    "MIDDLE_CENTER": (HAlignment.CENTER, VAlignment.UPPER_CASE_CENTER),
-    "MIDDLE_RIGHT": (HAlignment.RIGHT, VAlignment.UPPER_CASE_CENTER),
-    "TOP_LEFT": (HAlignment.LEFT, VAlignment.TOP),
-    "TOP_CENTER": (HAlignment.CENTER, VAlignment.TOP),
-    "TOP_RIGHT": (HAlignment.RIGHT, VAlignment.TOP),
+DXF_TEXT_ALIGNMENT_TO_ALIGNMENT: Dict[TextEntityAlignment, Alignment] = {
+    TextEntityAlignment.LEFT: (HAlignment.LEFT, VAlignment.BASELINE),
+    TextEntityAlignment.CENTER: (HAlignment.CENTER, VAlignment.BASELINE),
+    TextEntityAlignment.RIGHT: (HAlignment.RIGHT, VAlignment.BASELINE),
+    TextEntityAlignment.ALIGNED: (HAlignment.CENTER, VAlignment.BASELINE),
+    TextEntityAlignment.MIDDLE: (
+        HAlignment.CENTER,
+        VAlignment.LOWER_CASE_CENTER,
+    ),
+    TextEntityAlignment.FIT: (HAlignment.CENTER, VAlignment.BASELINE),
+    TextEntityAlignment.BOTTOM_LEFT: (HAlignment.LEFT, VAlignment.BOTTOM),
+    TextEntityAlignment.BOTTOM_CENTER: (HAlignment.CENTER, VAlignment.BOTTOM),
+    TextEntityAlignment.BOTTOM_RIGHT: (HAlignment.RIGHT, VAlignment.BOTTOM),
+    TextEntityAlignment.MIDDLE_LEFT: (
+        HAlignment.LEFT,
+        VAlignment.UPPER_CASE_CENTER,
+    ),
+    TextEntityAlignment.MIDDLE_CENTER: (
+        HAlignment.CENTER,
+        VAlignment.UPPER_CASE_CENTER,
+    ),
+    TextEntityAlignment.MIDDLE_RIGHT: (
+        HAlignment.RIGHT,
+        VAlignment.UPPER_CASE_CENTER,
+    ),
+    TextEntityAlignment.TOP_LEFT: (HAlignment.LEFT, VAlignment.TOP),
+    TextEntityAlignment.TOP_CENTER: (HAlignment.CENTER, VAlignment.TOP),
+    TextEntityAlignment.TOP_RIGHT: (HAlignment.RIGHT, VAlignment.TOP),
 }
 assert (
     DXF_TEXT_ALIGNMENT_TO_ALIGNMENT.keys()
-    == DXFConstants.TEXT_ALIGN_FLAGS.keys()
+    == DXFConstants.TEXT_ENUM_ALIGN_FLAGS.keys()
 )
 
 DXF_MTEXT_ALIGNMENT_TO_ALIGNMENT: Dict[int, Alignment] = {
@@ -105,7 +118,10 @@ def _calc_aligned_rotation(text: Text) -> float:
 
 def _get_rotation(text: AnyText) -> Matrix44:
     if isinstance(text, Text):  # Attrib and AttDef are sub-classes of Text
-        if text.get_align() in ("FIT", "ALIGNED"):
+        if text.get_align_enum() in (
+            TextEntityAlignment.FIT,
+            TextEntityAlignment.ALIGNED,
+        ):
             rotation = _calc_aligned_rotation(text)
         else:
             rotation = radians(text.dxf.rotation)
@@ -118,7 +134,7 @@ def _get_rotation(text: AnyText) -> Matrix44:
 
 def _get_alignment(text: AnyText) -> Alignment:
     if isinstance(text, Text):  # Attrib and AttDef are sub-classes of Text
-        return DXF_TEXT_ALIGNMENT_TO_ALIGNMENT[text.get_align()]
+        return DXF_TEXT_ALIGNMENT_TO_ALIGNMENT[text.get_align_enum()]
     elif isinstance(text, MText):
         return DXF_MTEXT_ALIGNMENT_TO_ALIGNMENT[text.dxf.attachment_point]
     else:
@@ -175,36 +191,39 @@ def _get_extra_transform(text: AnyText, line_width: float) -> Matrix44:
     if isinstance(text, Text):  # Attrib and AttDef are sub-classes of Text
         # 'width' is the width *scale factor* so 1.0 by default:
         scale_x = text.dxf.width
-        scale_y = 1.
+        scale_y = 1.0
 
         # Calculate text stretching for FIT and ALIGNED:
-        alignment = text.get_align()
+        alignment = text.get_align_enum()
         line_width = abs(line_width)
-        if alignment in ("FIT", "ALIGNED") and line_width > 1e-9:
+        if (
+            alignment in (TextEntityAlignment.FIT, TextEntityAlignment.ALIGNED)
+            and line_width > 1e-9
+        ):
             defined_length = (text.dxf.align_point - text.dxf.insert).magnitude
             stretch_factor = defined_length / line_width
             scale_x = stretch_factor
-            if alignment == "ALIGNED":
+            if alignment == TextEntityAlignment.ALIGNED:
                 scale_y = stretch_factor
 
         if text.dxf.text_generation_flag & DXFConstants.MIRROR_X:
-            scale_x *= -1.
+            scale_x *= -1.0
         if text.dxf.text_generation_flag & DXFConstants.MIRROR_Y:
-            scale_y *= -1.
+            scale_y *= -1.0
 
         # Magnitude of extrusion does not have any effect.
         # An extrusion of (0, 0, 0) acts like (0, 0, 1)
         scale_x *= sign(text.dxf.extrusion.z)
 
-        if scale_x != 1. or scale_y != 1.:
+        if scale_x != 1.0 or scale_y != 1.0:
             extra_transform = Matrix44.scale(scale_x, scale_y)
 
     elif isinstance(text, MText):
         # Not sure about the rationale behind this but it does match AutoCAD
         # behavior...
         scale_y = sign(text.dxf.extrusion.z)
-        if scale_y != 1.:
-            extra_transform = Matrix44.scale(1., scale_y)
+        if scale_y != 1.0:
+            extra_transform = Matrix44.scale(1.0, scale_y)
 
     return extra_transform
 
@@ -232,8 +251,8 @@ def _apply_alignment(
     last_baseline = line_ys[-1]
 
     if halign == HAlignment.LEFT:
-        anchor_x = 0.
-        line_xs = [0.] * len(line_widths)
+        anchor_x = 0.0
+        line_xs = [0.0] * len(line_widths)
     elif halign == HAlignment.CENTER:
         anchor_x = box_width / 2
         line_xs = [anchor_x - w / 2 for w in line_widths]
@@ -244,7 +263,7 @@ def _apply_alignment(
         raise ValueError(halign)
 
     if valign == VAlignment.TOP:
-        anchor_y = 0.
+        anchor_y = 0.0
     elif valign == VAlignment.LOWER_CASE_CENTER:
         first_line_lower_case_top = line_ys[0] + font_measurements.x_height
         anchor_y = (first_line_lower_case_top + last_baseline) / 2
@@ -265,11 +284,11 @@ def _get_wcs_insert(text: AnyText) -> Vec3:
     if isinstance(text, Text):  # Attrib and AttDef are sub-classes of Text
         insert: Vec3 = text.dxf.insert
         align_point: Vec3 = text.dxf.align_point
-        alignment: str = text.get_align()
-        if alignment == "LEFT":
+        alignment: TextEntityAlignment = text.get_align_enum()
+        if alignment == TextEntityAlignment.LEFT:
             # LEFT/BASELINE is always located at the insert point.
             pass
-        elif alignment in ("FIT", "ALIGNED"):
+        elif alignment in (TextEntityAlignment.FIT, TextEntityAlignment.ALIGNED):
             # Interpolate insertion location between insert and align point:
             insert = insert.lerp(align_point, factor=0.5)
         else:

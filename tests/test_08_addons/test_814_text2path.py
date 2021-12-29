@@ -12,6 +12,7 @@ from ezdxf.path import Path
 from ezdxf import path, bbox
 from ezdxf.entities import Text, Hatch
 from ezdxf.layouts import VirtualLayout
+from ezdxf.lldxf.const import TextEntityAlignment
 
 NOTO_SANS_SC = "Noto Sans SC"
 noto_sans_sc_not_found = (
@@ -185,7 +186,11 @@ class TestMakePathFromString:
     def test_length_for_fit_alignment(self, size, ff):
         length = 3
         paths = text2path.make_paths_from_str(
-            "XXX", font=ff, size=size, align="FIT", length=length
+            "XXX",
+            font=ff,
+            size=size,
+            align=TextEntityAlignment.FIT,
+            length=length,
         )
         bbox = path.bbox(paths)
         assert bbox.size.x == pytest.approx(length), "expect exact length"
@@ -197,11 +202,15 @@ class TestMakePathFromString:
     def test_scaled_height_and_length_for_aligned_text(self, size, ff):
         length = 3
         paths = text2path.make_paths_from_str(
-            "XXX", font=ff, size=size, align="LEFT"
+            "XXX", font=ff, size=size, align=TextEntityAlignment.LEFT
         )
         default = path.bbox(paths)
         paths = text2path.make_paths_from_str(
-            "XXX", font=ff, size=size, align="ALIGNED", length=length
+            "XXX",
+            font=ff,
+            size=size,
+            align=TextEntityAlignment.ALIGNED,
+            length=length,
         )
         bbox = path.bbox(paths)
         scale = bbox.size.x / default.size.x
@@ -243,7 +252,7 @@ class TestMakeHatchesFromString:
     def test_total_length_for_fit_alignment(self, ff):
         length = 3
         hatches = text2path.make_hatches_from_str(
-            "XXX", font=ff, align="FIT", length=length
+            "XXX", font=ff, align=TextEntityAlignment.FIT, length=length
         )
         paths = []
         for hatch in hatches:
@@ -314,59 +323,61 @@ class TestMakePathsFromEntity:
         ],
     )
     def test_text_returns_correct_types(self, builder, type_):
-        text = make_text("TEXT", (0, 0), "LEFT")
+        text = make_text("TEXT", (0, 0), TextEntityAlignment.LEFT)
         objects = builder(text)
         assert len(objects) == 4
         assert isinstance(objects[0], type_)
 
     def test_text_height(self, get_bbox):
-        text = make_text("TEXT", (0, 0), "LEFT", height=1.5)
+        text = make_text("TEXT", (0, 0), TextEntityAlignment.LEFT, height=1.5)
         bbox = get_bbox(text)
         assert bbox.size.y == pytest.approx(1.5)
 
     def test_alignment_left(self, get_bbox):
-        text = make_text("TEXT", (7, 7), "LEFT")
+        text = make_text("TEXT", (7, 7), TextEntityAlignment.LEFT)
         bbox = get_bbox(text)
         # font rendering is tricky, base offsets depend on the rendering engine
         # and on extended font metrics, ...
         assert bbox.extmin.x == pytest.approx(7, abs=0.1)
 
     def test_alignment_center(self, get_bbox):
-        text = make_text("TEXT", (7, 7), "CENTER")
+        text = make_text("TEXT", (7, 7), TextEntityAlignment.CENTER)
         bbox = get_bbox(text)
         assert bbox.center.x == pytest.approx(7)
 
     def test_alignment_right(self, get_bbox):
-        text = make_text("TEXT", (7, 7), "RIGHT")
+        text = make_text("TEXT", (7, 7), TextEntityAlignment.RIGHT)
         bbox = get_bbox(text)
         assert bbox.extmax.x == pytest.approx(7)
 
     def test_alignment_baseline(self, get_bbox):
-        text = make_text("TEXT", (7, 7), "CENTER")
+        text = make_text("TEXT", (7, 7), TextEntityAlignment.CENTER)
         bbox = get_bbox(text)
         assert bbox.extmin.y == pytest.approx(7)
 
     def test_alignment_bottom(self, get_bbox):
-        text = make_text("j", (7, 7), "BOTTOM_CENTER")
+        text = make_text("j", (7, 7), TextEntityAlignment.BOTTOM_CENTER)
         bbox = get_bbox(text)
         # bottom border of descender should be 7, but ...
         assert bbox.extmin.y == pytest.approx(7, abs=0.1)
 
     def test_alignment_middle(self, get_bbox):
-        text = make_text("X", (7, 7), "MIDDLE_CENTER")
+        text = make_text("X", (7, 7), TextEntityAlignment.MIDDLE_CENTER)
         bbox = get_bbox(text)
         assert bbox.center.y == pytest.approx(7)
 
     def test_alignment_top(self, get_bbox):
-        text = make_text("X", (7, 7), "TOP_CENTER")
+        text = make_text("X", (7, 7), TextEntityAlignment.TOP_CENTER)
         bbox = get_bbox(text)
         assert bbox.extmax.y == pytest.approx(7)
 
     def test_alignment_fit(self, get_bbox):
         length = 2
         height = 1
-        text = make_text("TEXT", (0, 0), "LEFT", height=height)
-        text.set_pos((1, 0), (1 + length, 0), "FIT")
+        text = make_text(
+            "TEXT", (0, 0), TextEntityAlignment.LEFT, height=height
+        )
+        text.set_pos((1, 0), (1 + length, 0), TextEntityAlignment.FIT)
         bbox = get_bbox(text)
         assert (
             bbox.size.x == length
@@ -379,11 +390,13 @@ class TestMakePathsFromEntity:
     def test_alignment_aligned(self, get_bbox):
         length = 2
         height = 1
-        text = make_text("TEXT", (0, 0), "CENTER", height=height)
+        text = make_text(
+            "TEXT", (0, 0), TextEntityAlignment.CENTER, height=height
+        )
         bbox = get_bbox(text)
         ratio = bbox.size.x / bbox.size.y
 
-        text.set_pos((1, 0), (1 + length, 0), "ALIGNED")
+        text.set_pos((1, 0), (1 + length, 0), TextEntityAlignment.ALIGNED)
         bbox = get_bbox(text)
 
         assert (
@@ -397,9 +410,13 @@ class TestMakePathsFromEntity:
 
     def test_rotation_90(self, get_bbox):
         # Horizontal reference measurements:
-        bbox_hor = get_bbox(make_text("TEXT", (7, 7), "MIDDLE_CENTER"))
+        bbox_hor = get_bbox(
+            make_text("TEXT", (7, 7), TextEntityAlignment.MIDDLE_CENTER)
+        )
 
-        text_vert = make_text("TEXT", (7, 7), "MIDDLE_CENTER", rotation=90)
+        text_vert = make_text(
+            "TEXT", (7, 7), TextEntityAlignment.MIDDLE_CENTER, rotation=90
+        )
         bbox_vert = get_bbox(text_vert)
         assert bbox_hor.center == bbox_vert.center
         assert bbox_hor.size.x == bbox_vert.size.y
@@ -412,7 +429,7 @@ Kind = text2path.Kind
 class TestVirtualEntities:
     @pytest.fixture
     def text(self):
-        return make_text("TEST", (0, 0), "LEFT")
+        return make_text("TEST", (0, 0), TextEntityAlignment.LEFT)
 
     def test_virtual_entities_as_hatches(self, text):
         entities = text2path.virtual_entities(text, kind=Kind.HATCHES)
@@ -442,7 +459,7 @@ class TestExplode:
 
     @pytest.fixture
     def text(self):
-        return make_text("TEST", (0, 0), "LEFT")
+        return make_text("TEST", (0, 0), TextEntityAlignment.LEFT)
 
     def test_source_entity_is_destroyed(self, text):
         assert text.is_alive is True

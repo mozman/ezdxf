@@ -7,6 +7,7 @@ from matplotlib.font_manager import FontProperties, findfont
 
 from ezdxf.entities import Text, Attrib, Hatch, DXFGraphic
 from ezdxf.lldxf import const
+from ezdxf.lldxf.const import TextEntityAlignment
 from ezdxf.math import Matrix44, BoundingBox
 from ezdxf import path
 from ezdxf.path import Path
@@ -33,7 +34,7 @@ def make_path_from_str(
     s: str,
     font: fonts.FontFace,
     size: float = 1.0,
-    align: str = "LEFT",
+    align: TextEntityAlignment = TextEntityAlignment.LEFT,
     length: float = 0,
     m: Matrix44 = None,
 ) -> Path:
@@ -42,12 +43,18 @@ def make_path_from_str(
     The paths are aligned about the insertion point at (0, 0).
     BASELINE means the bottom of the letter "X".
 
+    .. version changed: 0.17.2
+
+        Enum :class:`ezdxf.lldxf.const.TextEntityAlignments` replaces string
+        values.
+
     Args:
          s: text to convert
          font: font face definition as :class:`~ezdxf.tools.fonts.FontFace` object
          size: text size (cap height) in drawing units
-         align: alignment as string, default is "LEFT"
-         length: target length for the "ALIGNED" and "FIT" alignments
+         align: alignment as :class:`ezdxf.lldxf.const.TextEntityAlignments`,
+            default is :attr:`LEFT`
+         length: target length for the :attr:`ALIGNED` and :attr:`FIT` alignments
          m: transformation :class:`~ezdxf.math.Matrix44`
 
     .. versionadded:: 0.17
@@ -74,7 +81,7 @@ def make_paths_from_str(
     s: str,
     font: fonts.FontFace,
     size: float = 1.0,
-    align: str = "LEFT",
+    align: TextEntityAlignment = TextEntityAlignment.LEFT,
     length: float = 0,
     m: Matrix44 = None,
 ) -> List[Path]:
@@ -85,12 +92,18 @@ def make_paths_from_str(
     The paths are aligned about the insertion point at (0, 0).
     BASELINE means the bottom of the letter "X".
 
+    .. version changed: 0.17.2
+
+        Enum :class:`ezdxf.lldxf.const.TextEntityAlignments` replaces string
+        values.
+
     Args:
          s: text to convert
          font: font face definition as :class:`~ezdxf.tools.fonts.FontFace` object
          size: text size (cap height) in drawing units
-         align: alignment as string, default is "LEFT"
-         length: target length for the "ALIGNED" and "FIT" alignments
+         align: alignment as :class:`ezdxf.lldxf.const.TextEntityAlignments`,
+            default is :attr:`LEFT`
+         length: target length for the :attr:`ALIGNED` and :attr:`FIT` alignments
          m: transformation :class:`~ezdxf.math.Matrix44`
 
     """
@@ -122,25 +135,25 @@ def _str_to_path(s: str, fp: FontProperties, size: float = 1.0) -> Path:
 
 
 def alignment_transformation(
-    fm: fonts.FontMeasurements, bbox: BoundingBox, align: str, length: float
+    fm: fonts.FontMeasurements, bbox: BoundingBox, align: TextEntityAlignment, length: float
 ) -> Matrix44:
     """Returns the alignment transformation matrix to transform a basic
-    text path at location (0, 0) and alignment "LEFT" into the final text
+    text path at location (0, 0) and alignment :attr:`LEFT` into the final text
     path of the given alignment.
-    For the alignments FIT and ALIGNED defines the argument `length` the
-    total length of the final text path. The given bounding box defines the
-    rendering borders of the basic text path.
+    For the alignments :attr:`FIT` and :attr:`ALIGNED` defines the argument
+    `length` the  total length of the final text path. The given bounding box
+    defines the rendering borders of the basic text path.
 
     """
-    halign, valign = const.TEXT_ALIGN_FLAGS[align.upper()]
+    halign, valign = const.TEXT_ENUM_ALIGN_FLAGS[align]
     matrix = basic_alignment_transformation(fm, bbox, halign, valign)
 
     stretch_x = 1.0
     stretch_y = 1.0
-    if align == "ALIGNED":
+    if align == TextEntityAlignment.ALIGNED:
         stretch_x = length / bbox.size.x
         stretch_y = stretch_x
-    elif align == "FIT":
+    elif align == TextEntityAlignment.FIT:
         stretch_x = length / bbox.size.x
     if stretch_x != 1.0:
         matrix *= Matrix44.scale(stretch_x, stretch_y, 1.0)
@@ -181,7 +194,7 @@ def make_hatches_from_str(
     s: str,
     font: fonts.FontFace,
     size: float = 1.0,
-    align: str = "LEFT",
+    align: TextEntityAlignment = TextEntityAlignment.LEFT,
     length: float = 0,
     dxfattribs = None,
     m: Matrix44 = None,
@@ -193,12 +206,18 @@ def make_hatches_from_str(
     The HATCH entities are aligned to this insertion point. BASELINE means the
     bottom of the letter "X".
 
+    .. version changed: 0.17.2
+
+        Enum :class:`ezdxf.lldxf.const.TextEntityAlignments` replaces string
+        values.
+
     Args:
          s: text to convert
          font: font face definition as :class:`~ezdxf.tools.fonts.FontFace` object
          size: text size (cap height) in drawing units
-         align: alignment as string, default is "LEFT"
-         length: target length for the "ALIGNED" and "FIT" alignments
+         align: alignment as :class:`ezdxf.lldxf.const.TextEntityAlignments`,
+            default is :attr:`LEFT`
+         length: target length for the :attr:`ALIGNED` and :attr:`FIT` alignments
          dxfattribs: additional DXF attributes
          m: transformation :class:`~ezdxf.math.Matrix44`
 
@@ -241,7 +260,7 @@ def make_path_from_entity(entity: AnyText) -> Path:
         text,
         fonts.get_font_face(entity.font_name()),
         size=entity.dxf.height,  # cap height in drawing units
-        align=entity.get_align(),
+        align=entity.get_align_enum(),
         length=entity.fit_length(),
     )
     m = entity.wcs_transformation_matrix()

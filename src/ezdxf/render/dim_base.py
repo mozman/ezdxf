@@ -21,6 +21,7 @@ from ezdxf.math import (
 )
 from ezdxf.math import UCS, PassTroughUCS, xround, Z_AXIS
 from ezdxf.lldxf import const
+from ezdxf.lldxf.const import TextEntityAlignment
 from ezdxf._options import options
 from ezdxf.lldxf.const import DXFValueError, DXFUndefinedBlockError
 from ezdxf.tools import suppress_zeros
@@ -824,7 +825,7 @@ class Geometry:
         # Therefore remove OCS elevation, the elevation is defined by the
         # DIMENSION 'text_midpoint' (group code 11) and do not set 'extrusion'
         # either!
-        entity.set_pos(self.ucs.to_ocs(Vec3(pos)).vec2, align="MIDDLE_CENTER")
+        entity.set_pos(self.ucs.to_ocs(Vec3(pos)).vec2, align=TextEntityAlignment.MIDDLE_CENTER)
 
     def add_mtext(
         self, text: str, pos: Vec2, rotation: float, dxfattribs: Dict[str, Any]
