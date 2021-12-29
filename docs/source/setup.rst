@@ -2,29 +2,25 @@
 Setup & Dependencies
 ====================
 
-The primary goal is to keep the dependencies for the `core` package as small
+The primary goal is to keep the dependencies of the `core` package as small
 as possible. The add-ons are not part of the core package and can therefore
 use as many packages as needed. The only requirement for these packages is an
-easy way to install them on Windows, Linux and macOS, preferably as
-``pip3 install ...``.
+easy way to install them on `Windows`, `Linux` and `macOS`, preferably as::
 
-The ``pyparsing`` package is the only hard dependency and will be installed
-automatically by ``pip3``!
+    pip3 install ezdxf
 
-Ezdxf provides since v0.15 some C-extensions, which will be deployed
-automatically at each release to PyPI as binary wheels for Windows,
-ManyLinux 2010 and macOS. The supported Python versions start with the latest
-stable version of pypy3, which is currently Python 3.7 (2021) and ends with
-the latest stable release of CPython.
+The `pyparsing`_ package and the `typing_extensions`_ are the only hard dependency
+and will be installed automatically by `pip3`!
 
-The C-extensions are disabled for pypy3, because the JIT compiled code of pypy
-is much faster than the compiled C-extensions for pypy.
+The minimal required Python version is determined by the latest stable version
+of `pypy3`_ and the Python version deployed by the `Raspberry Pi`_ OS, which is
+currently Python 3.7 (2021).
 
 Basic Installation
 ------------------
 
-The most common case is the installation by ``pip3`` including the optional
-C-extensions from PyPI as binary wheels::
+The most common case is the installation by `pip3` including the optional
+C-extensions from `PyPI`_ as binary wheels::
 
     pip3 install ezdxf
 
@@ -46,6 +42,26 @@ Tag      Additional Installed Packages
 [all5]   [draw5] + [test] + [dev]  (use only if PySide6 is not available)
 ======== ===================================================
 
+Binary Wheels
+-------------
+
+Ezdxf includes some C-extensions, which will be deployed
+automatically at each release to `PyPI`_ as binary wheels to `PyPI`:
+
+- `Windows`: only amd64 packages
+- `Linux`: manylinux and musllinux packages for x86_64 & aarch64
+- `macOS`: x86_64, arm64 and universal packages
+
+The wheels are created by the continuous integration (CI) service provided by
+`GitHub`_ and the build container `cibuildwheel`_ provided by `PyPA`_ the Python
+Packaging Authority.
+The `workflows`_ are kept short and simple, so my future me will understand whats
+going on and they are maybe also helpful for other developers which do not touch
+CI services every day.
+
+The C-extensions are disabled for `pypy3`_, because the JIT compiled code of pypy
+is much faster than the compiled C-extensions for pypy.
+
 Disable C-Extensions
 --------------------
 
@@ -65,12 +81,17 @@ working in an interactive environment, you have to restart the interpreter.
 Installation from GitHub
 ------------------------
 
-Install the latest development version by ``pip3`` from GitHub::
+Install the latest development version by `pip3` from `GitHub`_::
 
     pip3 install git+https://github.com/mozman/ezdxf.git@master
 
 Build and Install from Source
 -----------------------------
+
+This is only required if you want the compiled C-extensions, the `ezdxf`
+installation by `pip` from the source code package works without the C-extension
+but is slower. There are many binary wheels including the compiles C-extensions
+available on `PyPi`_.
 
 Windows 10
 ++++++++++
@@ -94,7 +115,7 @@ Install required packages to build and install ezdxf with C-extensions::
 
     pip3 install setuptools wheel cython
 
-Clone the GitHub repository::
+Clone the `GitHub`_ repository::
 
     git clone https://github.com/mozman/ezdxf.git
 
@@ -134,9 +155,8 @@ requirement, the `build-essential` package adds the required C++ support::
 
     sudo apt install build-essential
 
-The system Python 3 interpreter has the version 3.8, but I will show you how to
-install an additional newer Python version from the source code in a later
-section::
+The system Python 3 interpreter has the version 3.8, but I will show in a later
+section how to install an additional newer Python version from the source code::
 
     cd ~
     mkdir build
@@ -144,11 +164,11 @@ section::
     python3 -m venv py38
     source py38/bin/activate
 
-Install `Cython` and `wheel` in the venv to got the C-extensions compiled::
+Install `Cython` and `wheel` in the venv to get the C-extensions compiled::
 
     pip3 install cython wheel
 
-Clone the GitHub repository::
+Clone the `GitHub`_ repository::
 
     git clone https://github.com/mozman/ezdxf.git
 
@@ -201,11 +221,11 @@ and the Qt bindings from the system installation::
     python3 -m venv --system-site-packages py37
     source py37/bin/activate
 
-Install `Cython` and  `wheel` in the venv to got the C-extensions compiled::
+Install `Cython` and  `wheel` in the venv to get the C-extensions compiled::
 
     pip3 install cython wheel
 
-Clone the GitHub repository::
+Clone the `GitHub`_ repository::
 
     git clone https://github.com/mozman/ezdxf.git
 
@@ -391,3 +411,11 @@ Proceed with the `ezdxf` installation from source as shown for the  `Raspberry P
 .. _pyqt5: https://pypi.org/project/PyQt5/
 .. _pyside6: https://pypi.org/project/PySide6/
 .. _numpy: https://pypi.org/project/numpy/
+.. _pyparsing: https://pypi.org/project/pyparsing/
+.. _typing_extensions: https://pypi.org/project/typing_extensions/
+.. _pypi: https://pypi.org/project/ezdxf
+.. _pypy3: https://www.pypy.org
+.. _pypa: https://www.pypa.io/en/latest/
+.. _cibuildwheel: https://github.com/pypa/cibuildwheel
+.. _github: https://github.com
+.. _workflows: https://github.com/mozman/ezdxf/tree/master/.github/workflows
