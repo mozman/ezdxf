@@ -44,6 +44,7 @@ DXF Structures
     xdict
     reactors
     blkrefs
+    const
 
 DXF Entity Creation
 -------------------

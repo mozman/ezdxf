@@ -15,8 +15,7 @@ Don't expect a 100% match compared to CAD applications.
 Text Alignments
 ---------------
 
-The text alignments work the same way as for the :class:`~ezdxf.entities.Text`
-entity:
+The text alignments are enums of type :class:`ezdxf.lldxf.const.TextEntityAlignment`
 
 ============   =============== ================= =====
 Vertical       Left            Center            Right
@@ -56,11 +55,11 @@ A font face is defined by the Matplotlib compatible
 String Functions
 ----------------
 
-.. autofunction:: make_path_from_str(s: str, font: FontFace, size: float = 1.0, align: str = "LEFT", length: float = 0, m: Matrix44 = None) -> Path
+.. autofunction:: make_path_from_str(s: str, font: FontFace, size: float = 1.0, align: TextEntityAlignment.LEFT, length: float = 0, m: Matrix44 = None) -> Path
 
-.. autofunction:: make_paths_from_str(s: str, font: FontFace, size: float = 1.0, align: str = "LEFT", length: float = 0, m: Matrix44 = None) -> List[Path]
+.. autofunction:: make_paths_from_str(s: str, font: FontFace, size: float = 1.0, align: TextEntityAlignment.LEFT, length: float = 0, m: Matrix44 = None) -> List[Path]
 
-.. autofunction:: make_hatches_from_str(s: str, font: FontFace, size: float = 1.0,align: str = "LEFT", length: float = 0, dxfattribs: Dict = None m: Matrix44 = None) -> List[Hatch]
+.. autofunction:: make_hatches_from_str(s: str, font: FontFace, size: float = 1.0,align: TextEntityAlignment.LEFT, length: float = 0, dxfattribs: Dict = None m: Matrix44 = None) -> List[Hatch]
 
 Entity Functions
 ----------------

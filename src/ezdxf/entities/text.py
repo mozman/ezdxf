@@ -294,9 +294,8 @@ class Text(DXFGraphic):
     def get_pos_enum(self) -> Tuple[TextEntityAlignment, Vec3, Optional[Vec3]]:
         """Returns a tuple (`align`, `p1`, `p2`), `align` is the alignment
         enum :class:`~ezdxf.lldxf.const.TextEntityAlignment`, `p1` is the
-        alignment point, `p2` is only relevant if `align` is
-        :attr:`TextEntityAlignment.ALIGNED` or :attr:`TextEntityAlignment.FIT`,
-        otherwise it is ``None``.
+        alignment point, `p2` is only relevant if `align` is :attr:`ALIGNED` or
+        :attr:`FIT`, otherwise it is ``None``.
 
         """
         p1 = Vec3(self.dxf.insert)

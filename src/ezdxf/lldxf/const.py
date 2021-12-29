@@ -56,6 +56,7 @@ acad_release_to_dxf_version = {acad: dxf for dxf, acad in acad_release.items()}
 
 
 class DXFError(Exception):
+    """Base exception for all `ezdxf` exceptions. """
     pass
 
 
@@ -77,13 +78,11 @@ class DXFXDataError(DXFStructureError):
 
 class DXFVersionError(DXFError):
     """Errors related to features not supported by the chosen DXF Version"""
-
     pass
 
 
 class DXFInternalEzdxfError(DXFError):
     """Indicates internal errors -  should be fixed by mozman"""
-
     pass
 
 
@@ -91,7 +90,6 @@ class DXFUnsupportedFeature(DXFError):
     """Indicates unsupported features for DXFEntities e.g. translation for
     ACIS data
     """
-
     pass
 
 
@@ -146,7 +144,6 @@ class DXFRenderError(DXFError):
     complex DXF entities by DXF primitives (LINE, TEXT, ...)
     e.g. for DIMENSION or LEADER entities.
     """
-
     pass
 
 
@@ -337,6 +334,10 @@ DEFAULT_TTF = "DejaVuSans.ttf"
 
 # analog to MTextEntityAlignment, but not in use yet!
 class TextEntityAlignment(Enum):
+    """Text alignment enum for the :class:`~ezdxf.entities.Text`,
+    :class:`~ezdxf.entities.Attrib` and :class:`~ezdxf.entities.AttDef`
+    entities.
+    """
     LEFT = auto()
     CENTER = auto()
     RIGHT = auto()
@@ -493,6 +494,8 @@ MTEXT_ALIGN_FLAGS = {
 
 
 class MTextEntityAlignment(IntEnum):
+    """Text alignment enum for the :class:`~ezdxf.entities.MText` entity.
+    """
     TOP_LEFT = MTEXT_TOP_LEFT
     TOP_CENTER = MTEXT_TOP_CENTER
     TOP_RIGHT = MTEXT_TOP_RIGHT

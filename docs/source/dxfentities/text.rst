@@ -7,7 +7,8 @@ Text
 The single line TEXT entity (`DXF Reference`_). The :attr:`~Text.dxf.style`
 attribute stores the associated :class:`Textstyle` entity as string,
 which defines the basic font properties. The text size is stored as cap height
-in the :attr:`~Text.dxf.height` attribute in drawing units.
+in the :attr:`~Text.dxf.height` attribute in drawing units. Text alignments
+are defined as enums of type :class:`ezdxf.lldxf.const.TextEntityAlignment`.
 
 .. seealso::
 
@@ -27,42 +28,6 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     Do not instantiate entity classes by yourself - always use the provided
     factory functions!
-
-
-.. class:: ezdxf.lldxf.const.TextEntityAlignment
-
-    Enum for text alignment int :class:`Text`, :class:`Attrib` and
-    :class:`AttDef` entities
-
-    .. attribute:: LEFT
-
-    .. attribute:: CENTER
-
-    .. attribute:: RIGHT
-
-    .. attribute:: ALIGNED
-
-    .. attribute:: MIDDLE
-
-    .. attribute:: FIT
-
-    .. attribute:: BOTTOM_LEFT
-
-    .. attribute:: BOTTOM_CENTER
-
-    .. attribute:: BOTTOM_RIGHT
-
-    .. attribute:: MIDDLE_LEFT
-
-    .. attribute:: MIDDLE_CENTER
-
-    .. attribute:: MIDDLE_RIGHT
-
-    .. attribute:: TOP_LEFT
-
-    .. attribute:: TOP_CENTER
-
-    .. attribute:: TOP_RIGHT
 
 
 .. class:: Text
