@@ -38,8 +38,8 @@ To use all features of the drawing add-on, add the [draw] tag::
 ======== ===================================================
 Tag      Additional Installed Packages
 ======== ===================================================
-[draw]   Matplotlib, PySide6
-[draw5]  Matplotlib, PyQt5 (use only if PySide6 is not available)
+[draw]   `Matplotlib`_, `PySide6`_
+[draw5]  `Matplotlib`_, `PyQt5`_ (use only if PySide6 is not available)
 [test]   geomdl, pytest
 [dev]    setuptools, wheel, Cython + [test]
 [all]    [draw] + [test] + [dev]
@@ -123,13 +123,13 @@ To install optional packages go to section: `Install Optional Packages`_
 
 To run the included tests go to section: `Run the Tests`_
 
-WSL2 & Ubuntu
-+++++++++++++
+WSL & Ubuntu
+++++++++++++
 
-I use sometimes the Windows Subsystem for Linux (WSL2) with Ubuntu 20.04 LTS
-for some tests.
+I use sometimes the Windows Subsystem for Linux (`WSL`_) with `Ubuntu`_ 20.04 LTS
+for some tests (how to install `WSL`_).
 
-By doing as fresh install on WSL2 & Ubuntu, I encountered an additional
+By doing as fresh install on `WSL & Ubuntu`, I encountered an additional
 requirement, the `build-essential` package adds the required C++ support::
 
     sudo apt install build-essential
@@ -176,24 +176,23 @@ To run the included tests go to section: `Run the Tests`_
 Raspberry Pi OS
 +++++++++++++++
 
-Testing platform is a Raspberry Pi 400 and the OS is the Raspberry Pi OS which
-runs on 64bit hardware but it is a 32bit OS.
+Testing platform is a `Raspberry Pi`_ 400 and the OS is the `Raspberry Pi`_ OS
+which runs on 64bit hardware but is a 32bit OS. The system Python 3
+interpreter comes in version 3.7, but I will show in a later
+section how to install an additional newer Python version from the source code.
 
-The system Python 3 interpreter is the version 3.7, but I will show you how to
-install an additional newer Python version from the source code in a later
-section.
-
-Install the build requirements, `Matplotlib` and the `PyQt5` bindings
+Install the build requirements, `Matplotlib`_ and the `PyQt5`_ bindings
 from the distribution repository::
 
     sudo apt install python3-pip python3-matplotlib python3-pyqt5
 
-Installing `Matplotlib` and the `PyQt5` bindings by `pip` from `piwheels.org`
-in the venv worked, but the packages showed errors at import. `PySide6` is the
-preferred Qt binding but wasn't available on Raspberry Pi OS at the time of
-writing this - `PyQt5` is supported as fallback.
+Installing `Matplotlib`_ and the `PyQt5`_ bindings by `pip` from `piwheels`_
+in the venv worked, but the packages showed errors at import, seems to be an
+packaging error in the required `numpy`_ package.
+`PySide6`_ is the preferred Qt binding but wasn't available on `Raspberry Pi`_
+OS at the time of writing this - `PyQt5`_ is supported as fallback.
 
-Create the venv with access to the system site-packages for using `Matplotlib`
+Create the venv with access to the system site-packages for using `Matplotlib`_
 and the Qt bindings from the system installation::
 
     cd ~
@@ -232,9 +231,9 @@ To run the included tests go to section: `Run the Tests`_
 Manjaro on Raspberry Pi
 +++++++++++++++++++++++
 
-Because the (very well working) Raspberry Pi OS is only a 32bit OS, I searched
-for a 64bit alternative like Ubuntu, which just switched to version 21.10 and
-always freezes at the installation process! So I tried Manjaro as rolling
+Because the (very well working) `Raspberry Pi`_ OS is only a 32bit OS, I searched
+for a 64bit alternative like `Ubuntu`_, which just switched to version 21.10 and
+always freezes at the installation process! So I tried `Manjaro`_ as rolling
 release, which I used prior in a virtual machine and wasn't really happy,
 because there is always something to update. Anyway the distribution
 looks really nice and has Python 3.9.9 installed.
@@ -252,7 +251,7 @@ Create and activate the venv::
     python3 -m venv --system-site-packages py39
     source py39/bin/activate
 
-The rest is the same procedure as for the `Raspberry Pi OS`::
+The rest is the same procedure as for the `Raspberry Pi OS`_::
 
     pip3 install cython wheel
     git clone https://github.com/mozman/ezdxf.git
@@ -262,12 +261,34 @@ The rest is the same procedure as for the `Raspberry Pi OS`::
 
 To run the included tests go to section: `Run the Tests`_
 
+Ubuntu Server 21.10 on Raspberry Pi
++++++++++++++++++++++++++++++++++++
+
+I gave the `Ubuntu`_ Server 21.10 a chance after the desktop version failed to
+install by a nasty bug and it worked well.
+The distribution comes with Python 3.9.4 and after installing some
+requirements::
+
+    sudo apt install build-essential python3-pip python3.9-venv
+
+The remaining process is like on `WSL & Ubuntu`_ except for the newer Python
+version. Installing `Matplotlib`_ by `pip` works as expected and is maybe useful
+even on a headless server OS to create SVG and PNG from DXF files.
+`PySide6`_ is not available by `pip` and the installation of `PyQt5`_ starts from
+the source code package which I stopped because this already didn't finished
+on `Manjaro`_, but the installation of the `PyQt5`_ bindings by `apt` works::
+
+    sudo apt install python3-pyqt5
+
+Use the ``--system-site-packages`` option for creating the venv to get access to
+the `PyQt5`_ package.
+
 Install Optional Packages
 -------------------------
 
-Install the optional dependencies by `pip` only for `Windows 10` and
-`Ubuntu on WSL2`, for `Raspberry Pi OS` and `Manjaro ARM` install these packages
-by the system packager::
+Install the optional dependencies by `pip` only for `Windows 10`_ and
+`WSL & Ubuntu`_, for `Raspberry Pi OS`_ and `Manjaro on Raspberry Pi`_ install
+these packages by the system packager::
 
     pip3 install matplotlib PySide6
 
@@ -304,8 +325,8 @@ Python from Source
 
 Debian based systems have often very outdated software installed and
 sometimes there is no easy way to install a newer Python version.
-This is a brief summery how I installed Python 3.9.9 on my
-Raspberry Pi 400, for more information go to the source of the recipe: `Real Python`_
+This is a brief summery how I installed Python 3.9.9 on the `Raspberry Pi`_ OS,
+for more information go to the source of the recipe: `Real Python`_
 
 Install build requirements::
 
@@ -330,13 +351,13 @@ your desired version::
     cd Python-3.9.9/
 
 Configure the build process, use a prefix to the directory where the
-interpreter will be installed::
+interpreter should be installed::
 
     ./configure --prefix=/opt/python3.9.9 --enable-optimizations
 
 Build & install the Python interpreter. The `-j` option simply tells `make` to
-split the building into parallel steps to speed up the compilation, the
-Raspberry Pi 400 has 4 cores so 4 seems to be a good choice::
+split the building into parallel steps to speed up the compilation, my
+`Raspberry Pi`_ 400 has 4 cores so 4 seems to be a good choice::
 
     make -j 4
     sudo make install
@@ -344,20 +365,29 @@ Raspberry Pi 400 has 4 cores so 4 seems to be a good choice::
 The building time was ~25min and the new Python 3.9.9 interpreter is now
 installed as `/opt/python3.9.9/bin/python3`.
 
-At the time there were no system packages for `Matplotlib` and `PyQt5` for
+At the time there were no system packages for `Matplotlib`_ and `PyQt5`_ for
 this new Python version available, so there is no benefit of using the option
-`--system-site-packages` for building the venv::
+``--system-site-packages`` for building the venv::
 
     cd ~/build
     /opt/python3.9.9/bin/python3 -m venv py39
     source py39/bin/activate
 
-I have not tried to build `Matplotlib` and `PyQt5` by myself and the
-installation by `pip` from `piwheels.org` did not work, in this case you don't
-get `Matplotlib` support for better font measuring and the `drawing` add-on will
-not work.
+I have not tried to build `Matplotlib`_ and `PyQt5`_ by myself and the
+installation by `pip` from `piwheels`_ did not work, in this case you don't
+get `Matplotlib`_ support for better font measuring and the `drawing` add-on
+will not work.
 
 Proceed with the `ezdxf` installation from source as shown for the  `Raspberry Pi OS`_.
 
 .. _Real Python:  https://realpython.com/installing-python/#how-to-build-python-from-source-code
 .. _python.org: https://www.python.org
+.. _piwheels: https://piwheels.org
+.. _Matplotlib: https://matplotlib.org
+.. _Manjaro: https://www.manjaro.org
+.. _Ubuntu: https://ubuntu.com
+.. _Raspberry Pi: https://www.raspberrypi.com
+.. _wsl: https://docs.microsoft.com/en-us/windows/wsl/install
+.. _pyqt5: https://pypi.org/project/PyQt5/
+.. _pyside6: https://pypi.org/project/PySide6/
+.. _numpy: https://pypi.org/project/numpy/
