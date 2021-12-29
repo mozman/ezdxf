@@ -26,6 +26,7 @@ from ezdxf.entities import (
     Attrib,
 )
 from ezdxf.layouts.blocklayout import BlockLayout
+from ezdxf.math import Vertex, NULLVEC, Vec3
 from ezdxf.render.arrows import ARROWS
 from ezdxf.audit import Auditor, AuditError
 import warnings
@@ -270,7 +271,7 @@ class BlocksSection:
     def new(
         self,
         name: str,
-        base_point: Sequence[float] = (0, 0),
+        base_point: Vertex = NULLVEC,
         dxfattribs: dict = None,
     ) -> "BlockLayout":
         """Create and add a new :class:`~ezdxf.layouts.BlockLayout`, `name`
@@ -282,7 +283,7 @@ class BlocksSection:
         dxfattribs = dxfattribs or {}
         dxfattribs["owner"] = block_record.dxf.handle
         dxfattribs["name"] = name
-        dxfattribs["base_point"] = base_point
+        dxfattribs["base_point"] = Vec3(base_point)
         head = factory.create_db_entry("BLOCK", dxfattribs, self.doc)
         tail = factory.create_db_entry(
             "ENDBLK", {"owner": block_record.dxf.handle}, doc=self.doc
@@ -291,7 +292,7 @@ class BlocksSection:
         return self.add(block_record)
 
     def new_anonymous_block(
-        self, type_char: str = "U", base_point: Sequence[float] = (0, 0)
+        self, type_char: str = "U", base_point: Vertex = NULLVEC
     ) -> "BlockLayout":
         """Create and add a new anonymous :class:`~ezdxf.layouts.BlockLayout`,
         `type_char` is the BLOCK type, `base_point` is the insertion point of

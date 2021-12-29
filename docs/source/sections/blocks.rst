@@ -21,9 +21,9 @@ The BLOCKS section is the home all block definitions (:class:`~ezdxf.layouts.Blo
 
     .. automethod:: get(self, name: str, default=None) -> BlockLayout
 
-    .. automethod:: new(name: str, base_point: Sequence[float] = (0, 0), dxfattribs: dict = None) -> BlockLayout
+    .. automethod:: new(name: str, base_point: Vertex = (0, 0, 0), dxfattribs: dict = None) -> BlockLayout
 
-    .. automethod:: new_anonymous_block(type_char: str = 'U', base_point: Sequence[float] = (0, 0)) -> BlockLayout
+    .. automethod:: new_anonymous_block(type_char: str = "U", base_point: Vertex = (0, 0, 0)) -> BlockLayout
 
     .. automethod:: rename_block
 
