@@ -21,6 +21,7 @@ from ezdxf.colors import luminance, DXF_DEFAULT_COLORS, int2rgb
 from ezdxf.entities import Attrib, Insert, Face3d, Linetype
 from ezdxf.entities.ltype import CONTINUOUS_PATTERN
 from ezdxf.entities.polygon import DXFPolygon
+from ezdxf.enums import InsertUnits, Measurement
 from ezdxf.lldxf import const
 from ezdxf.lldxf.validator import make_table_key as layer_key
 from ezdxf.tools import fonts
@@ -144,8 +145,7 @@ class Properties:
         # Filling properties: Solid, Pattern, Gradient
         self.filling: Optional[Filling] = None
 
-        # default is unit less
-        self.units = 0
+        self.units = InsertUnits.Unitless
 
     def __str__(self):
         return (
@@ -197,16 +197,16 @@ class LayoutProperties:
         name: str,
         background_color: Color,
         foreground_color: Optional[Color] = None,
-        units: int = 0,
+        units=InsertUnits.Unitless,
         dark_background: Optional[bool] = None,
     ):
         """
         Args:
             name: tab/display name
-            units: see InsertUnits for valid values
+            units: enum :class:`ezdxf.enums.InsertUnits`
         """
         self.name = name
-        self.units = int(units)
+        self.units: InsertUnits = units
 
         self._background_color = ""
         self._default_color = ""
@@ -232,11 +232,13 @@ class LayoutProperties:
         return self._has_dark_background
 
     @staticmethod
-    def modelspace(units: int = 0) -> "LayoutProperties":
+    def modelspace(units=InsertUnits.Unitless) -> "LayoutProperties":
         return LayoutProperties("Model", MODEL_SPACE_BG_COLOR, units=units)
 
     @staticmethod
-    def paperspace(name: str = "", units: int = 0) -> "LayoutProperties":
+    def paperspace(
+        name: str = "", units=InsertUnits.Unitless
+    ) -> "LayoutProperties":
         return LayoutProperties(name, PAPER_SPACE_BG_COLOR, units=units)
 
     @staticmethod
@@ -307,26 +309,32 @@ class RenderContext:
         self.layers: Dict[str, LayerProperties] = dict()
         # Text-style -> font mapping
         self.fonts: Dict[str, fonts.FontFace] = dict()
-        self.units = 0  # store modelspace units as enum, see ezdxf/units.py
+        self.units = InsertUnits.Unitless
         self.linetype_scale: float = 1.0  # overall modelspace linetype scaling
-        self.measurement: int = 0
+        self.measurement = Measurement.Imperial
         self.pdsize = 0
         self.pdmode = 0
         if doc:
             self.linetype_scale = doc.header.get("$LTSCALE", 1.0)
-            self.units = doc.header.get("$INSUNITS", 0)
-            self.measurement = doc.header.get("$MEASUREMENT", 0)
+            try:
+                self.units = InsertUnits(doc.header.get("$INSUNITS", 0))
+            except ValueError:
+                self.units = InsertUnits.Unitless
+            try:
+                self.measurement = Measurement(
+                    doc.header.get("$MEASUREMENT", 0)
+                )
+            except ValueError:
+                self.measurement = Measurement.Imperial
             self.pdsize = doc.header.get("$PDSIZE", 1.0)
             self.pdmode = doc.header.get("$PDMODE", 0)
             self._setup_layers(doc)
             self._setup_text_styles(doc)
-            if self.units == 0:
-                # set default units based on measurement system:
-                # imperial (0) / metric (1)
-                if self.measurement == 1:
-                    self.units = 6  # 1 m
+            if self.units == InsertUnits.Unitless:
+                if self.measurement == Measurement.Metric:
+                    self.units = InsertUnits.Meters
                 else:
-                    self.units = 1  # 1 in
+                    self.units = InsertUnits.Inches
         self.current_layout_properties.units = self.units
         self._hatch_pattern_cache: Dict[str, HatchPatternType] = dict()
 
@@ -493,7 +501,7 @@ class RenderContext:
             p.filling = self.resolve_filling(entity)
         return p
 
-    def resolve_units(self) -> int:
+    def resolve_units(self) -> InsertUnits:
         return self.current_layout_properties.units
 
     def resolve_linetype_scale(self, entity: "DXFGraphic") -> float:
@@ -582,7 +590,7 @@ class RenderContext:
         elif raw_transparency is None:
             return layer_color[7:]
 
-        alpha = raw_transparency & 0xff
+        alpha = raw_transparency & 0xFF
         if alpha < 255:
             return f"{alpha:02x}"
         return ""

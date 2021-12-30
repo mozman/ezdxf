@@ -4,7 +4,7 @@ from enum import Enum, auto
 from typing import Optional
 
 from ezdxf import disassemble
-
+from ezdxf.enums import Measurement
 
 class LinePolicy(Enum):
     """
@@ -85,7 +85,7 @@ class Configuration:
 
             see :class:`~ezdxf.entities.Point` class documentation
 
-        measurement: whether to use metric or imperial units
+        measurement: whether to use metric or imperial units as enum :class:`ezdxf.enums.Measurement`
 
             ======= ======================================================
             0       use imperial units (in, ft, yd, ...)
@@ -119,7 +119,7 @@ class Configuration:
 
     pdsize: Optional[int]
     pdmode: Optional[int]
-    measurement: Optional[int]
+    measurement: Optional[Measurement]
     show_defpoints: bool
     proxy_graphic_policy: ProxyGraphicPolicy
     line_policy: LinePolicy

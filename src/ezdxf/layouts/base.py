@@ -2,6 +2,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterator
 from ezdxf.entities import factory, is_graphic_entity
+from ezdxf.enums import InsertUnits
 from ezdxf.lldxf.const import (
     DXFValueError,
     DXFStructureError,
@@ -159,7 +160,7 @@ class BaseLayout(_AbstractLayout):
         return self.block_record.is_block_layout
 
     @property
-    def units(self) -> int:
+    def units(self) -> InsertUnits:
         """Get/Set layout/block drawing units as enum, see also :ref:`set
         drawing units`.
         """
@@ -169,7 +170,7 @@ class BaseLayout(_AbstractLayout):
         return self.block_record.dxf.units
 
     @units.setter
-    def units(self, value: int) -> None:
+    def units(self, value: InsertUnits) -> None:
         """Set layout/block drawing units as enum."""
         self.block_record.dxf.units = value  # has a DXF validator
 
