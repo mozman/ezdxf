@@ -2,10 +2,10 @@
 #  License: MIT License
 
 import pytest
+from ezdxf.enums import MTextParagraphAlignment
 from ezdxf.tools.text import (
     MTextParser,
     TokenType,
-    MTextParagraphAlignment,
     ParagraphProperties,
 )
 

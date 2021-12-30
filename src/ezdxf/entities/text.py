@@ -1,7 +1,7 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
 import math
-from typing import TYPE_CHECKING, Tuple, Optional, Union
+from typing import TYPE_CHECKING, Tuple, Optional
 import warnings
 
 from ezdxf.lldxf import validator

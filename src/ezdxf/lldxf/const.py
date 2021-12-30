@@ -355,6 +355,7 @@ class TextEntityAlignment(Enum):
     TOP_RIGHT = auto()
 
 
+# only required by deprecated method Text.set_pos(), Text.set_align()
 StringToTextAlignmentMapping = {
     "LEFT": TextEntityAlignment.LEFT,
     "CENTER": TextEntityAlignment.CENTER,
@@ -372,10 +373,6 @@ StringToTextAlignmentMapping = {
     "TOP_CENTER": TextEntityAlignment.TOP_CENTER,
     "TOP_RIGHT": TextEntityAlignment.TOP_RIGHT,
 }
-TextAlignmentMappingToStringMapping = {
-    e: s for s, e in StringToTextAlignmentMapping.items()
-}
-
 
 LEFT = 0
 CENTER = 1
@@ -385,6 +382,7 @@ FIT = 5
 
 
 class TextHAlign(IntEnum):
+    """Internal enum can remain in const.py"""
     LEFT = LEFT
     CENTER = CENTER
     RIGHT = RIGHT
@@ -404,6 +402,7 @@ UPSIDE_DOWN = MIRROR_Y
 
 
 class TextVAlign(IntEnum):
+    """Internal enum can remain in const.py"""
     BASELINE = 0
     BOTTOM = 1
     MIDDLE = 2
@@ -470,6 +469,7 @@ SPECIAL_CHAR_ENCODING = {
 # of line.
 # Special codes and formatting is case insensitive: d=D, u=U
 
+# MTextEntityAlignment enum
 MTEXT_TOP_LEFT = 1
 MTEXT_TOP_CENTER = 2
 MTEXT_TOP_RIGHT = 3
@@ -480,30 +480,7 @@ MTEXT_BOTTOM_LEFT = 7
 MTEXT_BOTTOM_CENTER = 8
 MTEXT_BOTTOM_RIGHT = 9
 
-
-class MTextEntityAlignment(IntEnum):
-    """Text alignment enum for the :class:`~ezdxf.entities.MText` entity.
-    """
-    TOP_LEFT = MTEXT_TOP_LEFT
-    TOP_CENTER = MTEXT_TOP_CENTER
-    TOP_RIGHT = MTEXT_TOP_RIGHT
-    MIDDLE_LEFT = MTEXT_MIDDLE_LEFT
-    MIDDLE_CENTER = MTEXT_MIDDLE_CENTER
-    MIDDLE_RIGHT = MTEXT_MIDDLE_RIGHT
-    BOTTOM_LEFT = MTEXT_BOTTOM_LEFT
-    BOTTOM_CENTER = MTEXT_BOTTOM_CENTER
-    BOTTOM_RIGHT = MTEXT_BOTTOM_RIGHT
-
-
-class MTextParagraphAlignment(IntEnum):
-    DEFAULT = 0
-    LEFT = 1
-    RIGHT = 2
-    CENTER = 3
-    JUSTIFIED = 4
-    DISTRIBUTED = 5
-
-
+# MTextFlowDirection enum
 MTEXT_LEFT_TO_RIGHT = 1
 MTEXT_TOP_TO_BOTTOM = 3
 MTEXT_BY_STYLE = 5

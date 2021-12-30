@@ -5,16 +5,18 @@
 # ezdxf.tools.text_layout and a concrete MTEXT renderer implementation like
 # MTextExplode or ComplexMTextRenderer.
 
-from typing import List, Sequence, Dict, Tuple, Optional, cast
+from typing import List, Sequence, Dict, Tuple, Optional
 import abc
 from ezdxf.lldxf import const
 from ezdxf.entities.mtext import MText, MTextColumns
+from ezdxf.enums import (
+    MTextParagraphAlignment,
+)
 from ezdxf.tools import text_layout as tl, fonts
 from ezdxf.tools.text import (
     MTextParser,
     MTextContext,
     TokenType,
-    MTextParagraphAlignment,
     ParagraphProperties,
     AbstractFont,
     estimate_mtext_extents,

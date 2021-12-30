@@ -2,7 +2,7 @@
 #  License: MIT License
 
 import pytest
-from ezdxf.lldxf.const import MTextParagraphAlignment
+from ezdxf.enums import MTextParagraphAlignment
 from ezdxf.tools.text import MTextContext, ParagraphProperties
 
 

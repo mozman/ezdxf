@@ -2,10 +2,10 @@
 # License: MIT License
 from pathlib import Path
 import ezdxf
+from ezdxf.enums import MTextParagraphAlignment
 from ezdxf.tools.text import (
     MTextEditor,
     ParagraphProperties,
-    MTextParagraphAlignment,
 )
 from ezdxf.tools.text_layout import lorem_ipsum
 

@@ -28,6 +28,8 @@ Version 0.17.2b4 - dev
 - DEPRECATED: method `Text.set_pos()` will be removed in v1.0.0
 - DEPRECATED: method `Text.get_align()` will be removed in v1.0.0
 - DEPRECATED: method `Text.set_align()` will be removed in v1.0.0
+- CHANGE: moved enum `MTextEntityAlignment` to `ezdxf.enums`
+- CHANGE: moved enum `MTextParagraphAlignment` to `ezdxf.enums`
 - BUGFIX [#574](https://github.com/mozman/ezdxf/issues/574):
   flattening issues in `Path()` and `ConstructionEllipse()` 
 - BUGFIX: `drawing` add-on shows block references in `ACAD_TABLE` at the 

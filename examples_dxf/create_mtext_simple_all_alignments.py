@@ -2,6 +2,7 @@
 #  License: MIT License
 import ezdxf
 from ezdxf.math import Vec3
+from ezdxf.enums import MTextEntityAlignment
 
 # This is the only way to create MTEXT entities where the "width" attribute
 # is missing or equals 0.
@@ -19,10 +20,10 @@ attribs = {
     "layer": "MTEXT",
 }
 
-Alignment = ezdxf.const.MTextEntityAlignment
 
-
-def add_mtext(location: Vec3, attachment_point: Alignment, size: float = 2):
+def add_mtext(
+    location: Vec3, attachment_point: MTextEntityAlignment, size: float = 2
+):
     msp.add_line(location - (size, 0), location + (size, 0))
     msp.add_line(location - (0, size), location + (0, size))
     mtext = msp.add_mtext(CONTENT, attribs)
@@ -30,15 +31,15 @@ def add_mtext(location: Vec3, attachment_point: Alignment, size: float = 2):
 
 
 params = [
-    ((0, 0), Alignment.BOTTOM_LEFT),
-    ((100, 0), Alignment.BOTTOM_CENTER),
-    ((200, 0), Alignment.BOTTOM_RIGHT),
-    ((0, 100), Alignment.MIDDLE_LEFT),
-    ((100, 100), Alignment.MIDDLE_CENTER),
-    ((200, 100), Alignment.MIDDLE_RIGHT),
-    ((0, 200), Alignment.TOP_LEFT),
-    ((100, 200), Alignment.TOP_CENTER),
-    ((200, 200), Alignment.TOP_RIGHT),
+    ((0, 0), MTextEntityAlignment.BOTTOM_LEFT),
+    ((100, 0), MTextEntityAlignment.BOTTOM_CENTER),
+    ((200, 0), MTextEntityAlignment.BOTTOM_RIGHT),
+    ((0, 100), MTextEntityAlignment.MIDDLE_LEFT),
+    ((100, 100), MTextEntityAlignment.MIDDLE_CENTER),
+    ((200, 100), MTextEntityAlignment.MIDDLE_RIGHT),
+    ((0, 200), MTextEntityAlignment.TOP_LEFT),
+    ((100, 200), MTextEntityAlignment.TOP_CENTER),
+    ((200, 200), MTextEntityAlignment.TOP_RIGHT),
 ]
 
 for location, attachment_point in params:

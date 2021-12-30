@@ -18,10 +18,12 @@ import re
 import math
 
 from ezdxf.lldxf import validator, const
-from ezdxf.lldxf.const import (
+from ezdxf.enums import (
     MTextParagraphAlignment,
     MTextLineAlignment,
     MTextStroke,
+)
+from ezdxf.lldxf.const import (
     LEFT,
     CENTER,
     RIGHT,
