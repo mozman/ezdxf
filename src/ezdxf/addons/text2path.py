@@ -7,7 +7,7 @@ from matplotlib.font_manager import FontProperties, findfont
 
 from ezdxf.entities import Text, Attrib, Hatch, DXFGraphic
 from ezdxf.lldxf import const
-from ezdxf.enums import TextEntityAlignment
+from ezdxf.enums import TextEntityAlignment, MAP_TEXT_ENUM_TO_ALIGN_FLAGS
 from ezdxf.math import Matrix44, BoundingBox
 from ezdxf import path
 from ezdxf.path import Path
@@ -148,7 +148,7 @@ def alignment_transformation(
     defines the rendering borders of the basic text path.
 
     """
-    halign, valign = const.TEXT_ENUM_ALIGN_FLAGS[align]
+    halign, valign = MAP_TEXT_ENUM_TO_ALIGN_FLAGS[align]
     matrix = basic_alignment_transformation(fm, bbox, halign, valign)
 
     stretch_x = 1.0

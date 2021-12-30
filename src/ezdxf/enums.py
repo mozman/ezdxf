@@ -1,8 +1,114 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from enum import IntEnum, IntFlag
+from enum import IntEnum, IntFlag, Enum, auto
 from ezdxf.lldxf import const
-from ezdxf.lldxf.const import TextEntityAlignment
+
+
+class TextHAlign(IntEnum):
+    """ Enumeration for DXF attribute: :attr:`ezdxf.entities.Text.dxf.halign`
+    """
+    LEFT = const.LEFT
+    CENTER = const.CENTER
+    RIGHT = const.RIGHT
+    ALIGNED = const.ALIGNED
+    MIDDLE = 4
+    FIT = const.FIT
+
+
+class TextVAlign(IntEnum):
+    """ Enumeration for DXF attribute: :attr:`ezdxf.entities.Text.dxf.valign`
+    """
+    BASELINE = 0
+    BOTTOM = 1
+    MIDDLE = 2
+    TOP = 3
+
+
+# analog to MTextEntityAlignment, but not in use yet!
+class TextEntityAlignment(Enum):
+    """Text alignment enum for the :class:`~ezdxf.entities.Text`,
+    :class:`~ezdxf.entities.Attrib` and :class:`~ezdxf.entities.AttDef`
+    entities.
+    """
+    LEFT = auto()
+    CENTER = auto()
+    RIGHT = auto()
+    ALIGNED = auto()
+    MIDDLE = auto()
+    FIT = auto()
+    BOTTOM_LEFT = auto()
+    BOTTOM_CENTER = auto()
+    BOTTOM_RIGHT = auto()
+    MIDDLE_LEFT = auto()
+    MIDDLE_CENTER = auto()
+    MIDDLE_RIGHT = auto()
+    TOP_LEFT = auto()
+    TOP_CENTER = auto()
+    TOP_RIGHT = auto()
+
+
+MAP_TEXT_ENUM_TO_ALIGN_FLAGS = {
+    TextEntityAlignment.LEFT: (TextHAlign.LEFT, TextVAlign.BASELINE),
+    TextEntityAlignment.CENTER: (TextHAlign.CENTER, TextVAlign.BASELINE),
+    TextEntityAlignment.RIGHT: (TextHAlign.RIGHT, TextVAlign.BASELINE),
+    TextEntityAlignment.ALIGNED: (TextHAlign.ALIGNED, TextVAlign.BASELINE),
+    TextEntityAlignment.MIDDLE: (TextHAlign.MIDDLE, TextVAlign.BASELINE),
+    TextEntityAlignment.FIT: (TextHAlign.FIT, TextVAlign.BASELINE),
+    TextEntityAlignment.BOTTOM_LEFT: (TextHAlign.LEFT, TextVAlign.BOTTOM),
+    TextEntityAlignment.BOTTOM_CENTER: (TextHAlign.CENTER, TextVAlign.BOTTOM),
+    TextEntityAlignment.BOTTOM_RIGHT: (TextHAlign.RIGHT, TextVAlign.BOTTOM),
+    TextEntityAlignment.MIDDLE_LEFT: (TextHAlign.LEFT, TextVAlign.MIDDLE),
+    TextEntityAlignment.MIDDLE_CENTER: (TextHAlign.CENTER, TextVAlign.MIDDLE),
+    TextEntityAlignment.MIDDLE_RIGHT: (TextHAlign.RIGHT, TextVAlign.MIDDLE),
+    TextEntityAlignment.TOP_LEFT: (TextHAlign.LEFT, TextVAlign.TOP),
+    TextEntityAlignment.TOP_CENTER: (TextHAlign.CENTER, TextVAlign.TOP),
+    TextEntityAlignment.TOP_RIGHT: (TextHAlign.RIGHT, TextVAlign.TOP),
+}
+MAP_TEXT_ALIGN_FLAGS_TO_ENUM = dict(
+    (flags, enum) for enum, flags in MAP_TEXT_ENUM_TO_ALIGN_FLAGS.items()
+)
+
+# Used by legacy add-ons MText and Table!
+MAP_STRING_ALIGN_TO_FLAGS = {
+    "LEFT": (TextHAlign.LEFT, TextVAlign.BASELINE),
+    "CENTER": (TextHAlign.CENTER, TextVAlign.BASELINE),
+    "RIGHT": (TextHAlign.RIGHT, TextVAlign.BASELINE),
+    "ALIGNED": (TextHAlign.ALIGNED, TextVAlign.BASELINE),
+    "MIDDLE": (TextHAlign.MIDDLE, TextVAlign.BASELINE),
+    "FIT": (TextHAlign.FIT, TextVAlign.BASELINE),
+    "BOTTOM_LEFT": (TextHAlign.LEFT, TextVAlign.BOTTOM),
+    "BOTTOM_CENTER": (TextHAlign.CENTER, TextVAlign.BOTTOM),
+    "BOTTOM_RIGHT": (TextHAlign.RIGHT, TextVAlign.BOTTOM),
+    "MIDDLE_LEFT": (TextHAlign.LEFT, TextVAlign.MIDDLE),
+    "MIDDLE_CENTER": (TextHAlign.CENTER, TextVAlign.MIDDLE),
+    "MIDDLE_RIGHT": (TextHAlign.RIGHT, TextVAlign.MIDDLE),
+    "TOP_LEFT": (TextHAlign.LEFT, TextVAlign.TOP),
+    "TOP_CENTER": (TextHAlign.CENTER, TextVAlign.TOP),
+    "TOP_RIGHT": (TextHAlign.RIGHT, TextVAlign.TOP),
+}
+MAP_FLAGS_TO_STRING_ALIGN = dict(
+    (flags, name) for name, flags in MAP_STRING_ALIGN_TO_FLAGS.items()
+)
+
+
+# only required by deprecated method Text.set_pos(), Text.set_align()
+MAP_STRING_ALIGN_TO_ENUM_ALIGN = {
+    "LEFT": TextEntityAlignment.LEFT,
+    "CENTER": TextEntityAlignment.CENTER,
+    "RIGHT": TextEntityAlignment.RIGHT,
+    "ALIGNED": TextEntityAlignment.ALIGNED,
+    "MIDDLE": TextEntityAlignment.MIDDLE,
+    "FIT": TextEntityAlignment.FIT,
+    "BOTTOM_LEFT": TextEntityAlignment.BOTTOM_LEFT,
+    "BOTTOM_CENTER": TextEntityAlignment.BOTTOM_CENTER,
+    "BOTTOM_RIGHT": TextEntityAlignment.BOTTOM_RIGHT,
+    "MIDDLE_LEFT": TextEntityAlignment.MIDDLE_LEFT,
+    "MIDDLE_CENTER": TextEntityAlignment.MIDDLE_CENTER,
+    "MIDDLE_RIGHT": TextEntityAlignment.MIDDLE_RIGHT,
+    "TOP_LEFT": TextEntityAlignment.TOP_LEFT,
+    "TOP_CENTER": TextEntityAlignment.TOP_CENTER,
+    "TOP_RIGHT": TextEntityAlignment.TOP_RIGHT,
+}
 
 
 class MTextEntityAlignment(IntEnum):

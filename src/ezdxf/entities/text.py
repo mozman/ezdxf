@@ -14,7 +14,13 @@ from ezdxf.lldxf.attributes import (
     RETURN_DEFAULT,
     group_code_mapping,
 )
-from ezdxf.enums import TextEntityAlignment
+from ezdxf.enums import (
+    TextEntityAlignment,
+    MAP_STRING_ALIGN_TO_ENUM_ALIGN,
+    MAP_TEXT_ENUM_TO_ALIGN_FLAGS,
+    MAP_TEXT_ALIGN_FLAGS_TO_ENUM,
+    MAP_FLAGS_TO_STRING_ALIGN,
+)
 from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS
 from ezdxf.math.transformtools import OCSTransform
 from ezdxf.audit import Auditor
@@ -250,7 +256,7 @@ class Text(DXFGraphic):
         else:
             assert isinstance(align, str)
             try:
-                align_enum = const.StringToTextAlignmentMapping[align.upper()]
+                align_enum = MAP_STRING_ALIGN_TO_ENUM_ALIGN[align.upper()]
             except KeyError:
                 raise ValueError(align)
             self.set_align_enum(align_enum)
@@ -362,10 +368,10 @@ class Text(DXFGraphic):
         assert isinstance(align, str)
         align = align.upper()
         try:
-            align_enum = const.StringToTextAlignmentMapping[align]
+            align_enum = MAP_STRING_ALIGN_TO_ENUM_ALIGN[align]
         except KeyError:
             raise ValueError(f"invalid argument align: {align}")
-        halign, valign = const.TEXT_ENUM_ALIGN_FLAGS[align_enum]
+        halign, valign = MAP_TEXT_ENUM_TO_ALIGN_FLAGS[align_enum]
         self.dxf.halign = halign
         self.dxf.valign = valign
         return self
@@ -379,7 +385,7 @@ class Text(DXFGraphic):
             align: :class:`~ezdxf.enums.TextEntityAlignment`
 
         """
-        halign, valign = const.TEXT_ENUM_ALIGN_FLAGS[align]
+        halign, valign = MAP_TEXT_ENUM_TO_ALIGN_FLAGS[align]
         self.dxf.halign = halign
         self.dxf.valign = valign
         return self
@@ -401,7 +407,7 @@ class Text(DXFGraphic):
         valign = self.dxf.get("valign", 0)
         if halign > 2:
             valign = 0
-        return const.TEXT_ALIGNMENT_BY_FLAGS.get((halign, valign), "LEFT")
+        return MAP_FLAGS_TO_STRING_ALIGN.get((halign, valign), "LEFT")
 
     def get_align_enum(self) -> TextEntityAlignment:
         """Returns the current text alignment as :class:`~ezdxf.enums.TextEntityAlignment`,
@@ -411,7 +417,7 @@ class Text(DXFGraphic):
         valign = self.dxf.get("valign", 0)
         if halign > 2:
             valign = 0
-        return const.TEXT_ALIGNMENT_ENUM_BY_FLAGS.get(
+        return MAP_TEXT_ALIGN_FLAGS_TO_ENUM.get(
             (halign, valign), TextEntityAlignment.LEFT
         )
 

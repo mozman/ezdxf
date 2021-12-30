@@ -6,6 +6,7 @@ import math
 from ezdxf.entities import DXFEntity, Insert, get_font_name
 
 from ezdxf.lldxf import const
+from ezdxf.enums import TextEntityAlignment
 from ezdxf.math import Vec3, UCS, Z_AXIS, X_AXIS
 from ezdxf.path import Path, make_path, from_vertices
 from ezdxf.render import MeshBuilder, MeshVertexMerger, TraceBuilder
@@ -288,8 +289,8 @@ class TextLinePrimitive(ConvertedPrimitive):
         if p2 is None:
             p2 = p1
         fit_or_aligned = (
-            alignment == const.TextEntityAlignment.FIT
-            or alignment == const.TextEntityAlignment.ALIGNED
+            alignment == TextEntityAlignment.FIT
+            or alignment == TextEntityAlignment.ALIGNED
         )
         if text.dxf.halign > 2:  # ALIGNED=3, MIDDLE=4, FIT=5
             text_line.stretch(alignment, p1, p2)

@@ -26,6 +26,7 @@ from copy import deepcopy
 from abc import abstractmethod
 
 from ezdxf.lldxf import const
+from ezdxf.enums import MAP_FLAGS_TO_STRING_ALIGN, MAP_STRING_ALIGN_TO_FLAGS
 from .mtext import MText
 
 DEFAULT_TABLE_BGLAYER = "TABLEBACKGROUND"
@@ -190,13 +191,13 @@ class Table(object):
         style.update(kwargs)
         if "align" in kwargs:
             align = kwargs.get("align")
-            halign, valign = const.TEXT_ALIGN_FLAGS.get(align)
+            halign, valign = MAP_STRING_ALIGN_TO_FLAGS.get(align)
             style["halign"] = halign
             style["valign"] = valign
         else:
             halign = kwargs.get("halign")
             valign = kwargs.get("valign")
-            style["align"] = const.TEXT_ALIGNMENT_BY_FLAGS.get(halign, valign)
+            style["align"] = MAP_FLAGS_TO_STRING_ALIGN.get(halign, valign)
 
         self.styles[name] = style
         return style

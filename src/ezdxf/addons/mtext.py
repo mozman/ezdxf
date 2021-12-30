@@ -14,6 +14,7 @@ import math
 from .mixins import SubscriptAttributes
 import ezdxf
 from ezdxf.lldxf import const
+from ezdxf.enums import MAP_FLAGS_TO_STRING_ALIGN, MAP_STRING_ALIGN_TO_FLAGS
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Vertex, GenericLayoutType
@@ -68,7 +69,7 @@ class MText(SubscriptAttributes):
         else:  # support for compatibility: valign, halign
             halign = kwargs.get("halign", 0)
             valign = kwargs.get("valign", 3)
-            self.align = const.TEXT_ALIGNMENT_BY_FLAGS.get(
+            self.align = MAP_FLAGS_TO_STRING_ALIGN.get(
                 (halign, valign), "TOP_LEFT"
             )
 
@@ -140,7 +141,7 @@ class MText(SubscriptAttributes):
 
     def _dxfattribs(self, alignpoint: "Vertex") -> dict:
         """Build keyword arguments for TEXT entity creation."""
-        halign, valign = const.TEXT_ALIGN_FLAGS.get(self.align, (0, 3))
+        halign, valign = MAP_STRING_ALIGN_TO_FLAGS.get(self.align, (0, 3))
         return {
             "insert": alignpoint,
             "align_point": alignpoint,

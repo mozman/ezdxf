@@ -331,65 +331,12 @@ LWPOLYLINE_PLINEGEN = 128
 
 DEFAULT_TTF = "DejaVuSans.ttf"
 
-
-# analog to MTextEntityAlignment, but not in use yet!
-class TextEntityAlignment(Enum):
-    """Text alignment enum for the :class:`~ezdxf.entities.Text`,
-    :class:`~ezdxf.entities.Attrib` and :class:`~ezdxf.entities.AttDef`
-    entities.
-    """
-    LEFT = auto()
-    CENTER = auto()
-    RIGHT = auto()
-    ALIGNED = auto()
-    MIDDLE = auto()
-    FIT = auto()
-    BOTTOM_LEFT = auto()
-    BOTTOM_CENTER = auto()
-    BOTTOM_RIGHT = auto()
-    MIDDLE_LEFT = auto()
-    MIDDLE_CENTER = auto()
-    MIDDLE_RIGHT = auto()
-    TOP_LEFT = auto()
-    TOP_CENTER = auto()
-    TOP_RIGHT = auto()
-
-
-# only required by deprecated method Text.set_pos(), Text.set_align()
-StringToTextAlignmentMapping = {
-    "LEFT": TextEntityAlignment.LEFT,
-    "CENTER": TextEntityAlignment.CENTER,
-    "RIGHT": TextEntityAlignment.RIGHT,
-    "ALIGNED": TextEntityAlignment.ALIGNED,
-    "MIDDLE": TextEntityAlignment.MIDDLE,
-    "FIT": TextEntityAlignment.FIT,
-    "BOTTOM_LEFT": TextEntityAlignment.BOTTOM_LEFT,
-    "BOTTOM_CENTER": TextEntityAlignment.BOTTOM_CENTER,
-    "BOTTOM_RIGHT": TextEntityAlignment.BOTTOM_RIGHT,
-    "MIDDLE_LEFT": TextEntityAlignment.MIDDLE_LEFT,
-    "MIDDLE_CENTER": TextEntityAlignment.MIDDLE_CENTER,
-    "MIDDLE_RIGHT": TextEntityAlignment.MIDDLE_RIGHT,
-    "TOP_LEFT": TextEntityAlignment.TOP_LEFT,
-    "TOP_CENTER": TextEntityAlignment.TOP_CENTER,
-    "TOP_RIGHT": TextEntityAlignment.TOP_RIGHT,
-}
-
+# TextHAlign enum
 LEFT = 0
 CENTER = 1
 RIGHT = 2
 ALIGNED = 3
 FIT = 5
-
-
-class TextHAlign(IntEnum):
-    """Internal enum can remain in const.py"""
-    LEFT = LEFT
-    CENTER = CENTER
-    RIGHT = RIGHT
-    ALIGNED = ALIGNED
-    MIDDLE = 4
-    FIT = FIT
-
 
 BASELINE = 0
 BOTTOM = 1
@@ -399,58 +346,6 @@ MIRROR_X = 2
 BACKWARD = MIRROR_X
 MIRROR_Y = 4
 UPSIDE_DOWN = MIRROR_Y
-
-
-class TextVAlign(IntEnum):
-    """Internal enum can remain in const.py"""
-    BASELINE = 0
-    BOTTOM = 1
-    MIDDLE = 2
-    TOP = 3
-
-
-TEXT_ENUM_ALIGN_FLAGS = {
-    TextEntityAlignment.LEFT: (TextHAlign.LEFT, TextVAlign.BASELINE),
-    TextEntityAlignment.CENTER: (TextHAlign.CENTER, TextVAlign.BASELINE),
-    TextEntityAlignment.RIGHT: (TextHAlign.RIGHT, TextVAlign.BASELINE),
-    TextEntityAlignment.ALIGNED: (TextHAlign.ALIGNED, TextVAlign.BASELINE),
-    TextEntityAlignment.MIDDLE: (TextHAlign.MIDDLE, TextVAlign.BASELINE),
-    TextEntityAlignment.FIT: (TextHAlign.FIT, TextVAlign.BASELINE),
-    TextEntityAlignment.BOTTOM_LEFT: (TextHAlign.LEFT, TextVAlign.BOTTOM),
-    TextEntityAlignment.BOTTOM_CENTER: (TextHAlign.CENTER, TextVAlign.BOTTOM),
-    TextEntityAlignment.BOTTOM_RIGHT: (TextHAlign.RIGHT, TextVAlign.BOTTOM),
-    TextEntityAlignment.MIDDLE_LEFT: (TextHAlign.LEFT, TextVAlign.MIDDLE),
-    TextEntityAlignment.MIDDLE_CENTER: (TextHAlign.CENTER, TextVAlign.MIDDLE),
-    TextEntityAlignment.MIDDLE_RIGHT: (TextHAlign.RIGHT, TextVAlign.MIDDLE),
-    TextEntityAlignment.TOP_LEFT: (TextHAlign.LEFT, TextVAlign.TOP),
-    TextEntityAlignment.TOP_CENTER: (TextHAlign.CENTER, TextVAlign.TOP),
-    TextEntityAlignment.TOP_RIGHT: (TextHAlign.RIGHT, TextVAlign.TOP),
-}
-TEXT_ALIGNMENT_ENUM_BY_FLAGS = dict(
-    (flags, enum) for enum, flags in TEXT_ENUM_ALIGN_FLAGS.items()
-)
-
-TEXT_ALIGN_FLAGS = {
-    "LEFT": (TextHAlign.LEFT, TextVAlign.BASELINE),
-    "CENTER": (TextHAlign.CENTER, TextVAlign.BASELINE),
-    "RIGHT": (TextHAlign.RIGHT, TextVAlign.BASELINE),
-    "ALIGNED": (TextHAlign.ALIGNED, TextVAlign.BASELINE),
-    "MIDDLE": (TextHAlign.MIDDLE, TextVAlign.BASELINE),
-    "FIT": (TextHAlign.FIT, TextVAlign.BASELINE),
-    "BOTTOM_LEFT": (TextHAlign.LEFT, TextVAlign.BOTTOM),
-    "BOTTOM_CENTER": (TextHAlign.CENTER, TextVAlign.BOTTOM),
-    "BOTTOM_RIGHT": (TextHAlign.RIGHT, TextVAlign.BOTTOM),
-    "MIDDLE_LEFT": (TextHAlign.LEFT, TextVAlign.MIDDLE),
-    "MIDDLE_CENTER": (TextHAlign.CENTER, TextVAlign.MIDDLE),
-    "MIDDLE_RIGHT": (TextHAlign.RIGHT, TextVAlign.MIDDLE),
-    "TOP_LEFT": (TextHAlign.LEFT, TextVAlign.TOP),
-    "TOP_CENTER": (TextHAlign.CENTER, TextVAlign.TOP),
-    "TOP_RIGHT": (TextHAlign.RIGHT, TextVAlign.TOP),
-}
-TEXT_ALIGNMENT_BY_FLAGS = dict(
-    (flags, name) for name, flags in TEXT_ALIGN_FLAGS.items()
-)
-
 
 VERTICAL_STACKED = 4  # only stored in TextStyle.dxf.flags!
 

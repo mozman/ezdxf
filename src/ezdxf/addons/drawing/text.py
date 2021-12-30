@@ -5,7 +5,7 @@ from math import radians
 from typing import Union, Tuple, Dict, Iterable, List, Optional, Callable
 
 import ezdxf.lldxf.const as DXFConstants
-from ezdxf.enums import TextEntityAlignment
+from ezdxf.enums import TextEntityAlignment, MAP_TEXT_ENUM_TO_ALIGN_FLAGS
 from ezdxf.addons.drawing.backend import BackendInterface
 from ezdxf.addons.drawing.debug_utils import draw_rect
 from ezdxf.entities import MText, Text, Attrib, AttDef
@@ -79,7 +79,7 @@ DXF_TEXT_ALIGNMENT_TO_ALIGNMENT: Dict[TextEntityAlignment, Alignment] = {
 }
 assert (
     DXF_TEXT_ALIGNMENT_TO_ALIGNMENT.keys()
-    == DXFConstants.TEXT_ENUM_ALIGN_FLAGS.keys()
+    == MAP_TEXT_ENUM_TO_ALIGN_FLAGS.keys()
 )
 
 DXF_MTEXT_ALIGNMENT_TO_ALIGNMENT: Dict[int, Alignment] = {
