@@ -3,7 +3,7 @@
 from pathlib import Path
 import ezdxf
 from ezdxf import disassemble, options
-
+from ezdxf.enums import TextEntityAlignment
 DIR = Path("~/Desktop/Outbox").expanduser()
 
 

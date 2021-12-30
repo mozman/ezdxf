@@ -19,6 +19,8 @@ import math
 
 from ezdxf.lldxf import validator, const
 from ezdxf.enums import (
+    TextEntityAlignment,
+    TextHAlign,
     MTextParagraphAlignment,
     MTextLineAlignment,
     MTextStroke,
@@ -73,19 +75,22 @@ class TextLine:
         self._stretch_x: float = 1.0
         self._stretch_y: float = 1.0
 
-    def stretch(self, alignment: str, p1: Vec3, p2: Vec3) -> None:
-        """Set stretch factors for "FIT" and "ALIGNED" alignments to fit the
+    def stretch(
+        self, alignment: TextEntityAlignment, p1: Vec3, p2: Vec3
+    ) -> None:
+        """Set stretch factors for FIT and ALIGNED alignments to fit the
         text between `p1` and `p2`, only the distance between these points is
         important. Other given `alignment` values are ignore.
 
         """
+        assert isinstance(alignment, TextEntityAlignment)
         sx: float = 1.0
         sy: float = 1.0
-        if alignment in ("FIT", "ALIGNED"):
+        if alignment in (TextEntityAlignment.FIT, TextEntityAlignment.ALIGNED):
             defined_length: float = (p2 - p1).magnitude
             if self._text_width > 1e-9:
                 sx = defined_length / self._text_width
-                if alignment == "ALIGNED":
+                if alignment == TextEntityAlignment.ALIGNED:
                     sy = sx
         self._stretch_x = sx
         self._stretch_y = sy
@@ -180,7 +185,7 @@ class TextLine:
         oblique: float = 0,
     ) -> List[Vec3]:
         """Transform any vertices from the text line located at the base
-        location at (0, 0) and alignment "LEFT".
+        location at (0, 0) and alignment LEFT.
 
         Args:
             vertices: iterable of vertices
@@ -265,12 +270,14 @@ def unified_alignment(entity: Union["Text", "MText"]) -> Tuple[int, int]:
     if dxftype in ("TEXT", "ATTRIB", "ATTDEF"):
         halign = entity.dxf.halign
         valign = entity.dxf.valign
-        if halign in (3, 5):  # ALIGNED=3, FIT=5
+        if halign in (TextHAlign.ALIGNED, TextHAlign.FIT):
             # For the alignments ALIGNED and FIT the text stretching has to be
             # handles separately.
             halign = CENTER
             valign = BASELINE
-        elif halign == 4:  # MIDDLE is different to MIDDLE/CENTER
+        elif (
+            halign == TextHAlign.MIDDLE
+        ):  # MIDDLE is different to MIDDLE/CENTER
             halign = CENTER
             valign = X_MIDDLE
         return halign, valign
@@ -1022,7 +1029,7 @@ class MTextContext:
         self.continue_stroke: bool = False
         self._aci = 7  # used if rgb is None
         self.rgb: Optional[RGB] = None  # overrules aci
-        self.align: MTextLineAlignment = MTextLineAlignment.BOTTOM
+        self.align = MTextLineAlignment.BOTTOM
         self.font_face: FontFace = FontFace()  # is immutable
         self.cap_height: float = 1.0
         self.width_factor: float = 1.0

@@ -22,6 +22,7 @@ from ezdxf.tools.text import (
     estimate_mtext_content_extents,
 )
 from ezdxf.tools.fonts import MonospaceFont
+from ezdxf.enums import TextEntityAlignment
 from ezdxf.math import Vec3
 from ezdxf.lldxf import const
 
@@ -42,13 +43,13 @@ class TestTextLine:
         assert text_line.height == 2.5 * 1.333  # 1 + descender factor
 
     def test_shrink_to_fit(self, text_line):
-        text_line.stretch("FIT", Vec3(0, 0), Vec3(5, 0))  # 50% shrink
+        text_line.stretch(TextEntityAlignment.FIT, Vec3(0, 0), Vec3(5, 0))  # 50% shrink
         assert text_line.width == 5.0, "should shrink width"
         # cap height * 1.333 = 3.3325
         assert text_line.height == 3.3325, "should not shrink height"
 
     def test_stretch_to_aligned(self, text_line):
-        text_line.stretch("ALIGNED", Vec3(0, 0), Vec3(15, 0))  # 50% stretch
+        text_line.stretch(TextEntityAlignment.ALIGNED, Vec3(0, 0), Vec3(15, 0))  # 50% stretch
         assert text_line.width == 15.0, "should stretch width"
         # cap height * 1.333 * 1.5 = 4.99875
         assert text_line.height == 4.99875, "should stretch height"
