@@ -284,7 +284,7 @@ class TextLinePrimitive(ConvertedPrimitive):
             get_font_name(text), text.dxf.height, text.dxf.width
         )
         text_line = TextLine(content, font)
-        alignment, p1, p2 = text.get_pos_enum()
+        alignment, p1, p2 = text.get_placement()
         if p2 is None:
             p2 = p1
         fit_or_aligned = (

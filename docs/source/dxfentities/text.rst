@@ -8,7 +8,7 @@ The single line TEXT entity (`DXF Reference`_). The :attr:`~Text.dxf.style`
 attribute stores the associated :class:`Textstyle` entity as string,
 which defines the basic font properties. The text size is stored as cap height
 in the :attr:`~Text.dxf.height` attribute in drawing units. Text alignments
-are defined as enums of type :class:`ezdxf.lldxf.const.TextEntityAlignment`.
+are defined as enums of type :class:`ezdxf.enums.TextEntityAlignment`.
 
 .. seealso::
 
@@ -71,9 +71,9 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. attribute:: dxf.halign
 
-        Horizontal alignment flag as int value, use the :meth:`~Text.set_pos` and
-        :meth:`~Text.get_align` methods to handle text alignment, the default
-        value is 0.
+        Horizontal alignment flag as int value, use the :meth:`~Text.set_placement`
+        and :meth:`~Text.get_align_enum` methods to handle text alignment, the
+        default value is 0.
 
         === =========
         0   Left
@@ -85,9 +85,9 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. attribute:: dxf.valign
 
-        Vertical alignment flag as int value, use the :meth:`~Text.set_pos` and
-        :meth:`~Text.get_align` methods to handle text alignment, the default
-        value is 0.
+        Vertical alignment flag as int value, use the :meth:`~Text.set_placement`
+        and :meth:`~Text.get_align_enum` methods to handle text alignment, the
+        default value is 0.
 
         === =========
         0   Baseline
@@ -110,17 +110,21 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. autoproperty:: is_upside_down
 
-    .. automethod:: set_pos(p1: Vertex, p2:Vertex=None, align: TextEntityAlignment=None)
+    .. automethod:: set_placement(p1: Vertex, p2:Vertex=None, align: TextEntityAlignment=None)
+
+    .. automethod:: set_pos(p1: Vertex, p2:Vertex=None, align: str=None)
+
+    .. automethod:: get_placement()->Tuple[TextEntityAlignment, Vec3, Optional[Vec3]]
 
     .. automethod:: get_pos()->Tuple[str, Vec3, Optional[Vec3]]
 
-    .. automethod:: get_pos_enum()->Tuple[TextEntityAlignment, Vec3, Optional[Vec3]]
+    .. automethod:: get_align_enum
 
     .. automethod:: get_align
 
-    .. automethod:: get_align_enum
+    .. automethod:: set_align_enum(align = TextEntityAlignment.LEFT) -> Text
 
-    .. automethod:: set_align(align = TextEntityAlignment.LEFT) -> Text
+    .. automethod:: set_align(align: str = "LEFT") -> Text
 
     .. automethod:: transform(m: Matrix44) -> Text
 

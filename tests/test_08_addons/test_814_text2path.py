@@ -12,7 +12,7 @@ from ezdxf.path import Path
 from ezdxf import path, bbox
 from ezdxf.entities import Text, Hatch
 from ezdxf.layouts import VirtualLayout
-from ezdxf.lldxf.const import TextEntityAlignment
+from ezdxf.enums import TextEntityAlignment
 
 NOTO_SANS_SC = "Noto Sans SC"
 noto_sans_sc_not_found = (
@@ -279,7 +279,7 @@ def make_text(text, location, alignment, height=1.0, rotation=0):
             "rotation": rotation,
         }
     )
-    text.set_pos(location, align=alignment)
+    text.set_placement(location, align=alignment)
     return text
 
 
@@ -377,7 +377,7 @@ class TestMakePathsFromEntity:
         text = make_text(
             "TEXT", (0, 0), TextEntityAlignment.LEFT, height=height
         )
-        text.set_pos((1, 0), (1 + length, 0), TextEntityAlignment.FIT)
+        text.set_placement((1, 0), (1 + length, 0), TextEntityAlignment.FIT)
         bbox = get_bbox(text)
         assert (
             bbox.size.x == length
@@ -396,7 +396,7 @@ class TestMakePathsFromEntity:
         bbox = get_bbox(text)
         ratio = bbox.size.x / bbox.size.y
 
-        text.set_pos((1, 0), (1 + length, 0), TextEntityAlignment.ALIGNED)
+        text.set_placement((1, 0), (1 + length, 0), TextEntityAlignment.ALIGNED)
         bbox = get_bbox(text)
 
         assert (

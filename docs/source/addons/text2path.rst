@@ -15,7 +15,7 @@ Don't expect a 100% match compared to CAD applications.
 Text Alignments
 ---------------
 
-The text alignments are enums of type :class:`ezdxf.lldxf.const.TextEntityAlignment`
+The text alignments are enums of type :class:`ezdxf.enums.TextEntityAlignment`
 
 ============   =============== ================= =====
 Vertical       Left            Center            Right

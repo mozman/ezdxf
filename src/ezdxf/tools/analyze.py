@@ -8,6 +8,7 @@ import ezdxf
 from ezdxf import colors
 from ezdxf.math import Vec2
 from ezdxf.lldxf import const
+from ezdxf.enums import TextEntityAlignment
 from ezdxf.tools.debug import print_bitmask
 from ezdxf.render.mleader import MLeaderStyleOverride, OVERRIDE_FLAG
 
@@ -78,7 +79,7 @@ class HatchAnalyzer:
             dxfattribs=attribs,
         )
         text.dxf.height = height
-        text.set_pos((text_start, 0), align="MIDDLE_LEFT")
+        text.set_placement((text_start, 0), align=TextEntityAlignment.MIDDLE_LEFT)
 
         # end marker: name --X
         blk = self.doc.blocks.new(EDGE_END_MARKER)
@@ -104,7 +105,7 @@ class HatchAnalyzer:
             dxfattribs=attribs,
         )
         text.dxf.height = height
-        text.set_pos((text_start, 0), align="MIDDLE_RIGHT")
+        text.set_placement((text_start, 0), align=TextEntityAlignment.MIDDLE_RIGHT)
 
     def export(self, name: str) -> None:
         self.doc.saveas(name)

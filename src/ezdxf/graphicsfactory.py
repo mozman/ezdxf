@@ -382,7 +382,9 @@ class CreatorInterface:
 
         Set position and alignment by the idiom::
 
-            layout.add_attdef("NAME").set_pos((2, 3), align="MIDDLE_CENTER")
+            layout.add_attdef("NAME").set_placement(
+                (2, 3), align=TextEntityAlignment.MIDDLE_CENTER
+            )
 
         Args:
             tag: tag name as string

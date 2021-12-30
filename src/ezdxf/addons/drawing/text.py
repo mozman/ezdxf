@@ -5,7 +5,7 @@ from math import radians
 from typing import Union, Tuple, Dict, Iterable, List, Optional, Callable
 
 import ezdxf.lldxf.const as DXFConstants
-from ezdxf.lldxf.const import TextEntityAlignment
+from ezdxf.enums import TextEntityAlignment
 from ezdxf.addons.drawing.backend import BackendInterface
 from ezdxf.addons.drawing.debug_utils import draw_rect
 from ezdxf.entities import MText, Text, Attrib, AttDef

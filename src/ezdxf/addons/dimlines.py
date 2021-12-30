@@ -33,7 +33,7 @@ parameters.
 from typing import Any, Dict, TYPE_CHECKING, Iterable, List, Tuple
 from math import radians, degrees, pi
 from abc import abstractmethod
-
+from ezdxf.enums import TextEntityAlignment
 from ezdxf.math import Vec3, distance, lerp, ConstructionRay
 
 if TYPE_CHECKING:
@@ -420,7 +420,9 @@ class LinearDimension(_DimensionBase):
             layout.add_text(
                 text=dimvalue_text,
                 dxfattribs=attribs,
-            ).set_pos(insert_point, align="MIDDLE_CENTER")
+            ).set_placement(
+                insert_point, align=TextEntityAlignment.MIDDLE_CENTER
+            )
 
     def _get_dimvalue_text(self, section: int) -> str:
         """get the dimension value as text, distance from point1 to point2"""
@@ -568,7 +570,10 @@ class AngularDimension(_DimensionBase):
         layout.add_text(
             text=self._get_dimtext(),
             dxfattribs=attribs,
-        ).set_pos(self._get_text_insert_point(), align="MIDDLE_CENTER")
+        ).set_placement(
+            self._get_text_insert_point(),
+            align=TextEntityAlignment.MIDDLE_CENTER,
+        )
 
     def _get_text_insert_point(self) -> Vec3:
         midvector = ((self.start_vector + self.end_vector) / 2.0).normalize()
@@ -727,7 +732,9 @@ class RadialDimension(_DimensionBase):
                 "style": self.prop("style"),
                 "color": self.prop("textcolor"),
             },
-        ).set_pos(self._get_insert_point(), align="MIDDLE_RIGHT")
+        ).set_placement(
+            self._get_insert_point(), align=TextEntityAlignment.MIDDLE_RIGHT
+        )
 
     def _get_insert_point(self) -> Vec3:
         return self.target - (

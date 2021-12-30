@@ -4,6 +4,7 @@ from typing import cast, Dict, Tuple, Any
 import math
 import ezdxf
 from ezdxf.entities import MText, DXFGraphic, Textstyle
+from ezdxf.enums import TextEntityAlignment
 from ezdxf.layouts import BaseLayout
 from ezdxf.document import Drawing
 from ezdxf.math import Matrix44
@@ -117,7 +118,7 @@ class TextRenderer(FrameRenderer):
     ):
         """Create/render the text content"""
         text = self.layout.add_text(self.text, dxfattribs=self.text_attribs)
-        text.set_pos((left, bottom), align="LEFT")
+        text.set_placement((left, bottom), align=TextEntityAlignment.LEFT)
         if m:
             text.transform(m)
 

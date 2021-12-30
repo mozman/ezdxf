@@ -54,6 +54,14 @@ DXF Entity Creation
 
     entity_creation
 
+Enums
+-----
+
+.. toctree::
+    :maxdepth: 1
+
+    enums
+
 Data Query
 ----------
 

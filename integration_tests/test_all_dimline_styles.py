@@ -109,7 +109,7 @@ def test_draw_all_arrows(drawing, tmpdir):
         def add_connection_point(p):
             msp.add_circle(p, radius=0.01, dxfattribs={"color": 1})
 
-        msp.add_text(label, {"style": "OpenSans", "height": 0.25}).set_pos(
+        msp.add_text(label, {"style": "OpenSans", "height": 0.25}).set_placement(
             (-5, y - 0.5)
         )
         msp.add_line((-5, y), (-1, y))

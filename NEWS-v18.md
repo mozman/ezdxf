@@ -16,12 +16,12 @@ Version 0.18 - 2021-12-xx
   vertices
 - NEW: `ezdxf.gfxattribs.GfxAttribs()` class, [docs](https://ezdxf.mozman.at/docs/tools/gfxattribs.html)
 - NEW: `TextEntityAlignment` enum replaces the string based alignment definition
-- NEW: method `Text.get_pos_enum()` 
-- NEW: method `Text.get_align_enum()`
-- CHANGE: method `Text.set_pos()`, string based alignments are deprecated 
-  and the support of them will be removed in v1.0.0
-- CHANGE: method `Text.set_align`, string based alignments are deprecated 
-  and the support of them will be removed in v1.0.0
+- NEW: method `Text.get_placement()`, replaces `get_pos()` 
+- NEW: method `Text.set_placement()`, replaces `set_pos()` 
+- NEW: method `Text.get_align_enum()`, replaces `get_align()`
+- NEW: method `Text.set_align_enum()`, replaces `set_align()`
 - DEPRECATED: method `Text.get_pos()` will be removed in v1.0.0
+- DEPRECATED: method `Text.set_pos()` will be removed in v1.0.0
 - DEPRECATED: method `Text.get_align()` will be removed in v1.0.0
+- DEPRECATED: method `Text.set_align()` will be removed in v1.0.0
  

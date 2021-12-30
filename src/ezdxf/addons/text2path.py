@@ -1,13 +1,13 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Union, List, Dict, Tuple
+from typing import Union, List, Tuple
 import enum
 from matplotlib.textpath import TextPath
 from matplotlib.font_manager import FontProperties, findfont
 
 from ezdxf.entities import Text, Attrib, Hatch, DXFGraphic
 from ezdxf.lldxf import const
-from ezdxf.lldxf.const import TextEntityAlignment
+from ezdxf.enums import TextEntityAlignment
 from ezdxf.math import Matrix44, BoundingBox
 from ezdxf import path
 from ezdxf.path import Path
@@ -34,7 +34,7 @@ def make_path_from_str(
     s: str,
     font: fonts.FontFace,
     size: float = 1.0,
-    align: TextEntityAlignment = TextEntityAlignment.LEFT,
+    align=TextEntityAlignment.LEFT,
     length: float = 0,
     m: Matrix44 = None,
 ) -> Path:
@@ -43,21 +43,21 @@ def make_path_from_str(
     The paths are aligned about the insertion point at (0, 0).
     BASELINE means the bottom of the letter "X".
 
-    .. version changed: 0.17.2
-
-        Enum :class:`ezdxf.lldxf.const.TextEntityAlignments` replaces string
-        values.
-
     Args:
          s: text to convert
          font: font face definition as :class:`~ezdxf.tools.fonts.FontFace` object
          size: text size (cap height) in drawing units
-         align: alignment as :class:`ezdxf.lldxf.const.TextEntityAlignments`,
+         align: alignment as :class:`ezdxf.enums.TextEntityAlignment`,
             default is :attr:`LEFT`
          length: target length for the :attr:`ALIGNED` and :attr:`FIT` alignments
          m: transformation :class:`~ezdxf.math.Matrix44`
 
     .. versionadded:: 0.17
+
+    .. version changed: 0.17.2
+
+        Enum :class:`ezdxf.enums.TextEntityAlignment` replaces string
+        values.
 
     """
     if len(s) == 0:
@@ -81,7 +81,7 @@ def make_paths_from_str(
     s: str,
     font: fonts.FontFace,
     size: float = 1.0,
-    align: TextEntityAlignment = TextEntityAlignment.LEFT,
+    align=TextEntityAlignment.LEFT,
     length: float = 0,
     m: Matrix44 = None,
 ) -> List[Path]:
@@ -92,19 +92,19 @@ def make_paths_from_str(
     The paths are aligned about the insertion point at (0, 0).
     BASELINE means the bottom of the letter "X".
 
-    .. version changed: 0.17.2
-
-        Enum :class:`ezdxf.lldxf.const.TextEntityAlignments` replaces string
-        values.
-
     Args:
          s: text to convert
          font: font face definition as :class:`~ezdxf.tools.fonts.FontFace` object
          size: text size (cap height) in drawing units
-         align: alignment as :class:`ezdxf.lldxf.const.TextEntityAlignments`,
+         align: alignment as :class:`ezdxf.enums.TextEntityAlignment`,
             default is :attr:`LEFT`
          length: target length for the :attr:`ALIGNED` and :attr:`FIT` alignments
          m: transformation :class:`~ezdxf.math.Matrix44`
+
+    .. version changed: 0.17.2
+
+        Enum :class:`ezdxf.enums.TextEntityAlignment` replaces string
+        values.
 
     """
     if len(s) == 0:
@@ -135,7 +135,10 @@ def _str_to_path(s: str, fp: FontProperties, size: float = 1.0) -> Path:
 
 
 def alignment_transformation(
-    fm: fonts.FontMeasurements, bbox: BoundingBox, align: TextEntityAlignment, length: float
+    fm: fonts.FontMeasurements,
+    bbox: BoundingBox,
+    align: TextEntityAlignment,
+    length: float,
 ) -> Matrix44:
     """Returns the alignment transformation matrix to transform a basic
     text path at location (0, 0) and alignment :attr:`LEFT` into the final text
@@ -166,10 +169,10 @@ def basic_alignment_transformation(
     if halign == const.LEFT:
         shift_x = 0.0
     elif halign == const.RIGHT:
-        assert bbox.extmax is not None,  "invalid empty bounding box"
+        assert bbox.extmax is not None, "invalid empty bounding box"
         shift_x = -bbox.extmax.x
     elif halign == const.CENTER or halign > 2:  # ALIGNED, MIDDLE, FIT
-        assert bbox.center is not None,  "invalid empty bounding box"
+        assert bbox.center is not None, "invalid empty bounding box"
         shift_x = -bbox.center.x
     else:
         raise ValueError(f"invalid halign argument: {halign}")
@@ -194,9 +197,9 @@ def make_hatches_from_str(
     s: str,
     font: fonts.FontFace,
     size: float = 1.0,
-    align: TextEntityAlignment = TextEntityAlignment.LEFT,
+    align=TextEntityAlignment.LEFT,
     length: float = 0,
-    dxfattribs = None,
+    dxfattribs=None,
     m: Matrix44 = None,
 ) -> List[Hatch]:
     """Convert a single line string `s` into a list of virtual
@@ -206,20 +209,20 @@ def make_hatches_from_str(
     The HATCH entities are aligned to this insertion point. BASELINE means the
     bottom of the letter "X".
 
-    .. version changed: 0.17.2
-
-        Enum :class:`ezdxf.lldxf.const.TextEntityAlignments` replaces string
-        values.
-
     Args:
          s: text to convert
          font: font face definition as :class:`~ezdxf.tools.fonts.FontFace` object
          size: text size (cap height) in drawing units
-         align: alignment as :class:`ezdxf.lldxf.const.TextEntityAlignments`,
+         align: alignment as :class:`ezdxf.enums.TextEntityAlignment`,
             default is :attr:`LEFT`
          length: target length for the :attr:`ALIGNED` and :attr:`FIT` alignments
          dxfattribs: additional DXF attributes
          m: transformation :class:`~ezdxf.math.Matrix44`
+
+    .. version changed: 0.17.2
+
+        Enum :class:`ezdxf.enums.TextEntityAlignment` replaces string
+        values.
 
     """
     # HATCH is an OCS entity, transforming just the polyline paths

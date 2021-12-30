@@ -390,8 +390,8 @@ class Insert(LinkedEntities):
         Example for appending an attribute to an INSERT entity with none
         standard alignment::
 
-            e.add_attrib('EXAMPLETAG', 'example text').set_pos(
-                (3, 7), align='MIDDLE_CENTER'
+            e.add_attrib('EXAMPLETAG', 'example text').set_placement(
+                (3, 7), align=TextEntityAlignment.MIDDLE_CENTER
             )
 
         Args:
