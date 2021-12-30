@@ -40,7 +40,8 @@ class MTextLineAlignment(IntEnum):  # exclusive state
     TOP = 2
 
 
-class MTextStroke(IntFlag):  # Combination of flags is possible
+class MTextStroke(IntFlag):
+    """ Combination of flags is supported: UNDERLINE + STRIKE_TROUGH """
     UNDERLINE = 1
     STRIKE_THROUGH = 2
     OVERLINE = 4
@@ -89,3 +90,18 @@ class InsertUnits(IntEnum):
 class Measurement(IntEnum):
     Imperial = 0
     Metric = 1
+
+
+class LengthUnits(IntEnum):
+    Scientific = 1
+    Decimal = 2
+    Engineering = 3
+    Architectural = 4
+    Fractional = 5
+
+
+class AngularUnits(IntEnum):
+    DecimalDegrees = 0
+    DegreesMinutesSeconds = 1
+    Grad = 2
+    Radians = 3
