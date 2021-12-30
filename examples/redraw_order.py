@@ -3,7 +3,7 @@
 import random
 import ezdxf
 from ezdxf.math import Vec3
-from ezdxf.lldxf.const import SortEntities
+from ezdxf.enums import SortEntities
 
 
 def random_in_range(a, b):

@@ -224,3 +224,14 @@ class AngularUnits(IntEnum):
     DegreesMinutesSeconds = 1
     Grad = 2
     Radians = 3
+
+
+class SortEntities(IntFlag):
+    DISABLE = 0
+    SELECTION = 1  # 1 = Sorts for object selection
+    SNAP = 2  # 2 = Sorts for object snap
+    REDRAW = 4  # 4 = Sorts for redraws; obsolete
+    MSLIDE = 8  # 8 = Sorts for MSLIDE command slide creation; obsolete
+    REGEN = 16  # 16 = Sorts for REGEN commands
+    PLOT = 32  # 32 = Sorts for plotting
+    POSTSCRIPT = 64  # 64 = Sorts for PostScript output; obsolete

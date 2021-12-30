@@ -222,3 +222,38 @@ AngularUnits
     .. attribute:: Grad
 
     .. attribute:: Radians
+
+SortEntities
+------------
+
+.. autoclass:: SortEntities
+
+    .. attribute:: DISABLE
+
+    .. attribute:: SELECTION
+
+        Sorts for object selection
+
+    .. attribute:: SNAP
+
+        Sorts for object snap
+
+    .. attribute:: REDRAW
+
+        Sorts for redraws; obsolete
+
+    .. attribute:: MSLIDE
+
+        Sorts for MSLIDE command slide creation; obsolete
+
+    .. attribute:: REGEN
+
+        Sorts for REGEN commands
+
+    .. attribute:: PLOT
+
+        Sorts for plotting
+
+    .. attribute:: POSTSCRIPT
+
+        Sorts for PostScript output; obsolete
