@@ -24,7 +24,6 @@ class TextVAlign(IntEnum):
     TOP = const.TOP
 
 
-# analog to MTextEntityAlignment, but not in use yet!
 class TextEntityAlignment(Enum):
     """Text alignment enum for the :class:`~ezdxf.entities.Text`,
     :class:`~ezdxf.entities.Attrib` and :class:`~ezdxf.entities.AttDef`

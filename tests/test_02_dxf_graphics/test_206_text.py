@@ -337,11 +337,11 @@ def test_get_pos_handles_missing_align_point():
     # the expected and correct align point:
     alignment, p1, p2 = text.get_placement()
     assert p1 == (3, 4)
-    assert p2 is None  # only used for "FIT" and "ALIGNED"
+    assert p2 is None  # only used for FIT and ALIGNED
 
     # remove the align point
     del text.dxf.align_point
 
     alignment, p1, p2 = text.get_placement()
     assert p1 == (1, 2)  # use the insert point instead
-    assert p2 is None  # only used for "FIT" and "ALIGNED"
+    assert p2 is None  # only used for FIT and ALIGNED

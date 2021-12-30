@@ -29,19 +29,19 @@ $INSBASE
   9
 $EXTMIN
  10
--100
+1e+20
  20
--100
+1e+20
  30
--100
+1e+20
   9
 $EXTMAX
  10
-100
+-1e+20
  20
-100
+-1e+20
  30
-100
+-1e+20
   9
 $LIMMIN
  10
@@ -449,7 +449,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2459237.318576389
+2459579.5124537037
   9
 $TDUCREATE
  40
@@ -457,7 +457,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2459237.318576389
+2459579.5124537037
   9
 $TDUUPDATE
  40
@@ -509,7 +509,7 @@ $SPLINESEGS
   9
 $HANDSEED
   5
-69
+6D
   9
 $SURFTAB1
  70
@@ -889,11 +889,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-79B8A51D-5C7C-11EB-988F-1803733EFA49
+{3E4AACA5-239E-4504-BE2B-CAEFEB259AC7}
   9
 $VERSIONGUID
   2
-79B9687E-5C7C-11EB-A1D9-1803733EFA49
+{A1DC7ABF-06A0-4187-8C5D-AFCA0343932E}
   9
 $EXTNAMES
 290
@@ -920,8 +920,8 @@ $HIDETEXT
 1
   9
 $XCLIPFRAME
-280
-2
+290
+0
   9
 $HALOGAP
 280
@@ -1217,7 +1217,7 @@ AcDbSymbolTable
   0
 VPORT
   5
-67
+69
 330
 8
 100
@@ -1523,7 +1523,7 @@ APPID
 100
 AcDbSymbolTable
  70
-2
+3
   0
 APPID
   5
@@ -1541,7 +1541,7 @@ ACAD
   0
 APPID
   5
-68
+6A
 330
 3
 100
@@ -1550,6 +1550,20 @@ AcDbSymbolTableRecord
 AcDbRegAppTableRecord
   2
 HATCHBACKGROUNDCOLOR
+ 70
+0
+  0
+APPID
+  5
+6B
+330
+3
+100
+AcDbSymbolTableRecord
+100
+AcDbRegAppTableRecord
+  2
+EZDXF
  70
 0
   0
@@ -1639,7 +1653,7 @@ Standard
  78
 8
  79
-0
+3
 170
 0
 171
@@ -1659,9 +1673,9 @@ Standard
 178
 0
 179
-0
+2
 271
-0
+2
 272
 2
 273
@@ -1835,54 +1849,6 @@ ENTITIES
   0
 LINE
   5
-2D
-330
-17
-100
-AcDbEntity
-  8
-0
-100
-AcDbLine
- 10
-0.0
- 20
-0.0
- 30
-0.0
- 11
-0.0
- 21
-10.0
- 31
-0.0
-  0
-LINE
-  5
-2E
-330
-17
-100
-AcDbEntity
-  8
-0
-100
-AcDbLine
- 10
-5.0
- 20
-0.0
- 30
-0.0
- 11
-5.0
- 21
-10.0
- 31
-0.0
-  0
-LINE
-  5
 2F
 330
 17
@@ -1893,6 +1859,54 @@ AcDbEntity
 100
 AcDbLine
  10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 11
+0.0
+ 21
+10.0
+ 31
+0.0
+  0
+LINE
+  5
+30
+330
+17
+100
+AcDbEntity
+  8
+0
+100
+AcDbLine
+ 10
+5.0
+ 20
+0.0
+ 30
+0.0
+ 11
+5.0
+ 21
+10.0
+ 31
+0.0
+  0
+LINE
+  5
+31
+330
+17
+100
+AcDbEntity
+  8
+0
+100
+AcDbLine
+ 10
 10.0
  20
 0.0
@@ -1907,7 +1921,7 @@ AcDbLine
   0
 LINE
   5
-30
+32
 330
 17
 100
@@ -1931,7 +1945,7 @@ AcDbLine
   0
 TEXT
   5
-31
+33
 330
 17
 100
@@ -1963,7 +1977,7 @@ AcDbText
   0
 TEXT
   5
-32
+34
 330
 17
 100
@@ -1995,7 +2009,7 @@ AcDbText
   0
 TEXT
   5
-33
+35
 330
 17
 100
@@ -2029,7 +2043,7 @@ AcDbText
   0
 TEXT
   5
-34
+36
 330
 17
 100
@@ -2063,7 +2077,7 @@ AcDbText
   0
 LINE
   5
-35
+37
 330
 17
 100
@@ -2087,7 +2101,7 @@ AcDbLine
   0
 TEXT
   5
-36
+38
 330
 17
 100
@@ -2121,7 +2135,7 @@ AcDbText
   0
 TEXT
   5
-37
+39
 330
 17
 100
@@ -2157,7 +2171,7 @@ AcDbText
   0
 TEXT
   5
-38
+3A
 330
 17
 100
@@ -2193,7 +2207,7 @@ AcDbText
   0
 LINE
   5
-39
+3B
 330
 17
 100
@@ -2217,7 +2231,7 @@ AcDbLine
   0
 TEXT
   5
-3A
+3C
 330
 17
 100
@@ -2251,7 +2265,7 @@ AcDbText
   0
 TEXT
   5
-3B
+3D
 330
 17
 100
@@ -2287,7 +2301,7 @@ AcDbText
   0
 TEXT
   5
-3C
+3E
 330
 17
 100
@@ -2323,7 +2337,7 @@ AcDbText
   0
 LINE
   5
-3D
+3F
 330
 17
 100
@@ -2347,7 +2361,7 @@ AcDbLine
   0
 TEXT
   5
-3E
+40
 330
 17
 100
@@ -2381,7 +2395,7 @@ AcDbText
   0
 TEXT
   5
-3F
+41
 330
 17
 100
@@ -2417,7 +2431,7 @@ AcDbText
   0
 TEXT
   5
-40
+42
 330
 17
 100
@@ -2453,7 +2467,7 @@ AcDbText
   0
 TEXT
   5
-41
+43
 330
 17
 100
@@ -2485,7 +2499,7 @@ AcDbText
   0
 LINE
   5
-42
+44
 330
 17
 100
@@ -2509,7 +2523,7 @@ AcDbLine
   0
 TEXT
   5
-43
+45
 330
 17
 100
@@ -2541,7 +2555,7 @@ AcDbText
   0
 LINE
   5
-44
+46
 330
 17
 100
@@ -2565,7 +2579,7 @@ AcDbLine
   0
 TEXT
   5
-45
+47
 330
 17
 100
@@ -2597,7 +2611,7 @@ AcDbText
   0
 LINE
   5
-46
+48
 330
 17
 100
@@ -2621,50 +2635,6 @@ AcDbLine
   0
 CIRCLE
   5
-47
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-1
-100
-AcDbCircle
- 10
-0.0
- 20
--1.5
- 30
-0.0
- 40
-0.1
-  0
-CIRCLE
-  5
-48
-330
-17
-100
-AcDbEntity
-  8
-INSERT_POINTS
- 62
-2
-100
-AcDbCircle
- 10
-0.0
- 20
--1.5
- 30
-0.0
- 40
-0.075
-  0
-CIRCLE
-  5
 49
 330
 17
@@ -2679,7 +2649,7 @@ AcDbCircle
  10
 0.0
  20
--1.0
+-1.5
  30
 0.0
  40
@@ -2701,7 +2671,7 @@ AcDbCircle
  10
 0.0
  20
--1.0
+-1.5
  30
 0.0
  40
@@ -2721,7 +2691,7 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-5.0
+0.0
  20
 -1.0
  30
@@ -2743,7 +2713,7 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-5.0
+0.0
  20
 -1.0
  30
@@ -2765,7 +2735,7 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-10.0
+5.0
  20
 -1.0
  30
@@ -2787,7 +2757,7 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-10.0
+5.0
  20
 -1.0
  30
@@ -2809,9 +2779,9 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-0.0
+10.0
  20
-0.0
+-1.0
  30
 0.0
  40
@@ -2831,9 +2801,9 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-0.0
+10.0
  20
-0.0
+-1.0
  30
 0.0
  40
@@ -2853,7 +2823,7 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-5.0
+0.0
  20
 0.0
  30
@@ -2875,7 +2845,7 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-5.0
+0.0
  20
 0.0
  30
@@ -2897,7 +2867,7 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-10.0
+5.0
  20
 0.0
  30
@@ -2919,7 +2889,7 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-10.0
+5.0
  20
 0.0
  30
@@ -2941,9 +2911,9 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-0.0
+10.0
  20
-5.0
+0.0
  30
 0.0
  40
@@ -2963,9 +2933,9 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-0.0
+10.0
  20
-5.0
+0.0
  30
 0.0
  40
@@ -2985,7 +2955,7 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-5.0
+0.0
  20
 5.0
  30
@@ -3007,7 +2977,7 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-5.0
+0.0
  20
 5.0
  30
@@ -3029,7 +2999,7 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-10.0
+5.0
  20
 5.0
  30
@@ -3051,7 +3021,7 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-10.0
+5.0
  20
 5.0
  30
@@ -3073,9 +3043,9 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-0.0
- 20
 10.0
+ 20
+5.0
  30
 0.0
  40
@@ -3095,9 +3065,9 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-0.0
- 20
 10.0
+ 20
+5.0
  30
 0.0
  40
@@ -3117,7 +3087,7 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-5.0
+0.0
  20
 10.0
  30
@@ -3139,7 +3109,7 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-5.0
+0.0
  20
 10.0
  30
@@ -3161,7 +3131,7 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-10.0
+5.0
  20
 10.0
  30
@@ -3183,7 +3153,7 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-10.0
+5.0
  20
 10.0
  30
@@ -3205,9 +3175,9 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-15.0
+10.0
  20
-0.0
+10.0
  30
 0.0
  40
@@ -3227,9 +3197,9 @@ INSERT_POINTS
 100
 AcDbCircle
  10
-35.0
+10.0
  20
-5.0
+10.0
  30
 0.0
  40
@@ -3251,7 +3221,7 @@ AcDbCircle
  10
 15.0
  20
-10.0
+0.0
  30
 0.0
  40
@@ -3295,7 +3265,7 @@ AcDbCircle
  10
 15.0
  20
-15.0
+10.0
  30
 0.0
  40
@@ -3304,6 +3274,50 @@ AcDbCircle
 CIRCLE
   5
 66
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+2
+100
+AcDbCircle
+ 10
+35.0
+ 20
+5.0
+ 30
+0.0
+ 40
+0.075
+  0
+CIRCLE
+  5
+67
+330
+17
+100
+AcDbEntity
+  8
+INSERT_POINTS
+ 62
+1
+100
+AcDbCircle
+ 10
+15.0
+ 20
+15.0
+ 30
+0.0
+ 40
+0.1
+  0
+CIRCLE
+  5
+68
 330
 17
 100
@@ -3382,6 +3396,10 @@ ACAD_TABLESTYLE
 ACAD_VISUALSTYLE
 350
 16
+  3
+EZDXF_META
+350
+2D
   0
 DICTIONARY
   5
@@ -3547,21 +3565,21 @@ AcDbPlotSettings
   2
 Adobe PDF
   4
-A4
+A3
   6
 
  40
-3.175
+7.5
  41
-3.175
+20.0
  42
-3.175
+7.5
  43
-3.175
+20.0
  44
-209.91
+420.0
  45
-297.03
+297.0
  46
 0.0
  47
@@ -3581,7 +3599,7 @@ A4
  70
 1024
  72
-0
+1
  73
 1
  74
@@ -3611,13 +3629,13 @@ Model
  71
 0
  10
--3.175
+0.0
  20
--3.175
+0.0
  11
-293.857
+420.0
  21
-206.735
+297.0
  12
 0.0
  22
@@ -3625,17 +3643,17 @@ Model
  32
 0.0
  14
-29.068
+1e+20
  24
-20.356
+1e+20
  34
-0.0
+1e+20
  15
-261.614
+-1e+20
  25
-183.204
+-1e+20
  35
-0.0
+-1e+20
 146
 0.0
  13
@@ -3673,21 +3691,21 @@ AcDbPlotSettings
   2
 Adobe PDF
   4
-A4
+A3
   6
 
  40
-3.175
+7.5
  41
-3.175
+20.0
  42
-3.175
+7.5
  43
-3.175
+20.0
  44
-209.91
+420.0
  45
-297.03
+297.0
  46
 0.0
  47
@@ -3707,7 +3725,7 @@ A4
  70
 0
  72
-0
+1
  73
 1
  74
@@ -3737,13 +3755,13 @@ Layout1
  71
 1
  10
--3.175
+0.0
  20
--3.175
+0.0
  11
-293.857
+420.0
  21
-206.735
+297.0
  12
 0.0
  22
@@ -3751,17 +3769,17 @@ Layout1
  32
 0.0
  14
-29.068
+1e+20
  24
-20.356
+1e+20
  34
-0.0
+1e+20
  15
-261.614
+-1e+20
  25
-183.204
+-1e+20
  35
-0.0
+-1e+20
 146
 0.0
  13
@@ -4294,6 +4312,50 @@ Standard
 9
 273
 9
+  0
+DICTIONARY
+  5
+2D
+330
+A
+100
+AcDbDictionary
+280
+1
+281
+1
+  3
+CREATED_BY_EZDXF
+350
+2E
+  3
+WRITTEN_BY_EZDXF
+350
+6C
+  0
+DICTIONARYVAR
+  5
+2E
+330
+2D
+100
+DictionaryVariables
+280
+0
+  1
+0.17.2b4 @ 2021-12-30T11:17:56.244632+00:00
+  0
+DICTIONARYVAR
+  5
+6C
+330
+2D
+100
+DictionaryVariables
+280
+0
+  1
+0.17.2b4 @ 2021-12-30T11:17:56.244632+00:00
   0
 ENDSEC
   0

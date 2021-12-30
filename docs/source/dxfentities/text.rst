@@ -39,13 +39,13 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
     .. attribute:: dxf.insert
 
         First alignment point of text (2D/3D Point in :ref:`OCS`), relevant for
-        the adjustments "LEFT", "ALIGNED"  and "FIT".
+        the adjustments LEFT, ALIGNED  and FIT.
 
     .. attribute:: dxf.align_point
 
         The main alignment point of text (2D/3D Point in :ref:`OCS`), if the
-        alignment is anything else than "LEFT", or the second alignment point
-        for the "ALIGNED" and "FIT" alignments.
+        alignment is anything else than LEFT, or the second alignment point
+        for the ALIGNED and FIT alignments.
 
     .. attribute:: dxf.height
 

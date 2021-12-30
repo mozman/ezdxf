@@ -8,8 +8,8 @@ DIR = Path("~/Desktop/Outbox").expanduser()
 
 
 def create_doc(filename):
-    def add_justify_text(content, p1, p2, align):
-        msp.add_text(content).set_pos(p1, p2, align)
+    def add_justify_text(content, p1, p2, align: TextEntityAlignment):
+        msp.add_text(content).set_placement(p1, p2, align)
         msp.add_line(p1, p2)
 
     def add_grid(pos, width, height):
@@ -24,53 +24,53 @@ def create_doc(filename):
         msp.add_line((x, y - 1), (x + width, y - 1))
         msp.add_text(
             "BASELINE ADJUSTMENTS (gjpqy)", dxfattribs=attribs
-        ).set_pos((x, y - 1.5))
-        msp.add_text("LEFT", dxfattribs=attribs).set_pos(
-            (x, y - 1), align="LEFT"
+        ).set_placement((x, y - 1.5))
+        msp.add_text("LEFT", dxfattribs=attribs).set_placement(
+            (x, y - 1), align=TextEntityAlignment.LEFT
         )
         msp.add_text("CENTER", dxfattribs=attribs).set_pos(
             (x + dx, y - 1), align="CENTER"
         )
-        msp.add_text("RIGHT", dxfattribs=attribs).set_pos(
-            (x + width, y - 1), align="RIGHT"
+        msp.add_text("RIGHT", dxfattribs=attribs).set_placement(
+            (x + width, y - 1), align=TextEntityAlignment.RIGHT
         )
 
         attribs["color"] = 2
         msp.add_line((x, y), (x + width, y))
-        msp.add_text("BOTTOM_LEFT", dxfattribs=attribs).set_pos(
-            (x, y), align="BOTTOM_LEFT"
+        msp.add_text("BOTTOM_LEFT", dxfattribs=attribs).set_placement(
+            (x, y), align=TextEntityAlignment.BOTTOM_LEFT
         )
-        msp.add_text("BOTTOM_CENTER_gjpqy", dxfattribs=attribs).set_pos(
-            (x + dx, y), align="BOTTOM_CENTER"
+        msp.add_text("BOTTOM_CENTER_gjpqy", dxfattribs=attribs).set_placement(
+            (x + dx, y), align=TextEntityAlignment.BOTTOM_CENTER
         )
-        msp.add_text("BOTTOM_RIGHT", dxfattribs=attribs).set_pos(
-            (x + width, y), align="BOTTOM_RIGHT"
-        )
-
-        y += dy
-
-        msp.add_line((x, y), (x + width, y))
-        msp.add_text("MIDDLE_LEFT", dxfattribs=attribs).set_pos(
-            (x, y), align="MIDDLE_LEFT"
-        )
-        msp.add_text("MIDDLE_CENTER_gjpqy", dxfattribs=attribs).set_pos(
-            (x + dx, y), align="MIDDLE_CENTER"
-        )
-        msp.add_text("MIDDLE_RIGHT", dxfattribs=attribs).set_pos(
-            (x + width, y), align="MIDDLE_RIGHT"
+        msp.add_text("BOTTOM_RIGHT", dxfattribs=attribs).set_placement(
+            (x + width, y), align=TextEntityAlignment.BOTTOM_RIGHT
         )
 
         y += dy
 
         msp.add_line((x, y), (x + width, y))
-        msp.add_text("TOP_LEFT", dxfattribs=attribs).set_pos(
-            (x, y), align="TOP_LEFT"
+        msp.add_text("MIDDLE_LEFT", dxfattribs=attribs).set_placement(
+            (x, y), align=TextEntityAlignment.MIDDLE_LEFT
         )
-        msp.add_text("TOP_CENTER_gjpqy", dxfattribs=attribs).set_pos(
-            (x + dx, y), align="TOP_CENTER"
+        msp.add_text("MIDDLE_CENTER_gjpqy", dxfattribs=attribs).set_placement(
+            (x + dx, y), align=TextEntityAlignment.MIDDLE_CENTER
         )
-        msp.add_text("TOP_RIGHT", dxfattribs=attribs).set_pos(
-            (x + width, y), align="TOP_RIGHT"
+        msp.add_text("MIDDLE_RIGHT", dxfattribs=attribs).set_placement(
+            (x + width, y), align=TextEntityAlignment.MIDDLE_RIGHT
+        )
+
+        y += dy
+
+        msp.add_line((x, y), (x + width, y))
+        msp.add_text("TOP_LEFT", dxfattribs=attribs).set_placement(
+            (x, y), align=TextEntityAlignment.TOP_LEFT
+        )
+        msp.add_text("TOP_CENTER_gjpqy", dxfattribs=attribs).set_placement(
+            (x + dx, y), align=TextEntityAlignment.TOP_CENTER
+        )
+        msp.add_text("TOP_RIGHT", dxfattribs=attribs).set_placement(
+            (x + width, y), align=TextEntityAlignment.TOP_RIGHT
         )
 
     doc = ezdxf.new(dxfversion="R2004")
@@ -79,13 +79,13 @@ def create_doc(filename):
         "ALIGNED-TEXT-ALIGNED-TEXT-gjpqy-ALIGNED-TEXT-ALIGNED-TEXT",
         (15, 0),
         (35, 5),
-        "ALIGNED",
+        TextEntityAlignment.ALIGNED,
     )
     add_justify_text(
         "FITTED-TEXT-FITTED-TEXT-gjpqy-FITTED-TEXT-FITTED-TEXT",
         (15, 10),
         (35, 5),
-        "FIT",
+        TextEntityAlignment.FIT,
     )
     add_grid((0, 0), width=10, height=10)
 
@@ -110,7 +110,7 @@ def draw_text_boundaries(msp, matplotlib=False):
                 "layer": "BOUNDARIES",
             },
         )
-    # Reactive Matplotlib support, if available:
+    # reactivate Matplotlib support, if available:
     options.use_matplotlib = True
 
 

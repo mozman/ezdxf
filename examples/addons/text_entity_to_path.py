@@ -4,6 +4,7 @@
 from pathlib import Path
 import ezdxf
 from ezdxf.addons import text2path
+from ezdxf.enums import TextEntityAlignment
 from ezdxf.math import Vec3
 from ezdxf import path
 
@@ -30,7 +31,7 @@ text = msp.add_text(
         "color": 1,
     },
 )
-text.set_pos(p1, p2, "ALIGNED")
+text.set_placement(p1, p2, TextEntityAlignment.ALIGNED)
 attr = {"layer": "OUTLINE", "color": 2}
 path.render_splines_and_polylines(
     msp, text2path.make_paths_from_entity(text), dxfattribs=attr
@@ -49,7 +50,7 @@ text = msp.add_text(
         "color": 1,
     },
 )
-text.set_pos(p1, p2, "FIT")
+text.set_placement(p1, p2, TextEntityAlignment.FIT)
 path.render_splines_and_polylines(
     msp, text2path.make_paths_from_entity(text), dxfattribs=attr
 )
