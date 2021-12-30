@@ -5,14 +5,14 @@ from math import radians
 from typing import Union, Tuple, Dict, Iterable, List, Optional, Callable
 
 import ezdxf.lldxf.const as DXFConstants
-from ezdxf.enums import TextEntityAlignment, MAP_TEXT_ENUM_TO_ALIGN_FLAGS
+from ezdxf.enums import TextEntityAlignment, MAP_TEXT_ENUM_TO_ALIGN_FLAGS, MTextEntityAlignment
 from ezdxf.addons.drawing.backend import BackendInterface
 from ezdxf.addons.drawing.debug_utils import draw_rect
 from ezdxf.entities import MText, Text, Attrib, AttDef
 from ezdxf.math import Matrix44, Vec3, sign
 from ezdxf.tools import fonts
 from ezdxf.tools.fonts import FontMeasurements
-from ezdxf.tools.text import plain_text, text_wrap, MTEXT_ALIGN_FLAGS
+from ezdxf.tools.text import plain_text, text_wrap
 
 """
 Search google for 'typography' or 'font anatomy' for explanations of terms like 
@@ -102,7 +102,7 @@ DXF_MTEXT_ALIGNMENT_TO_ALIGNMENT: Dict[int, Alignment] = {
     DXFConstants.MTEXT_BOTTOM_CENTER: (HAlignment.CENTER, VAlignment.BOTTOM),
     DXFConstants.MTEXT_BOTTOM_RIGHT: (HAlignment.RIGHT, VAlignment.BOTTOM),
 }
-assert len(DXF_MTEXT_ALIGNMENT_TO_ALIGNMENT) == len(MTEXT_ALIGN_FLAGS)
+assert len(DXF_MTEXT_ALIGNMENT_TO_ALIGNMENT) == len(MTextEntityAlignment)
 
 
 def _calc_aligned_rotation(text: Text) -> float:

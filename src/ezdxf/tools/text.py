@@ -24,13 +24,13 @@ from ezdxf.enums import (
     MTextParagraphAlignment,
     MTextLineAlignment,
     MTextStroke,
+    MAP_MTEXT_ALIGN_TO_FLAGS,
 )
 from ezdxf.lldxf.const import (
     LEFT,
     CENTER,
     RIGHT,
     BASELINE,
-    BOTTOM,
     MIDDLE,
     TOP,
     MAX_STR_LEN,
@@ -43,19 +43,6 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import Text, MText, DXFEntity, Tags
 
 X_MIDDLE = 4  # special case for overall alignment "MIDDLE"
-
-
-MTEXT_ALIGN_FLAGS = {
-    1: (LEFT, TOP),
-    2: (CENTER, TOP),
-    3: (RIGHT, TOP),
-    4: (LEFT, MIDDLE),
-    5: (CENTER, MIDDLE),
-    6: (RIGHT, MIDDLE),
-    7: (LEFT, BOTTOM),
-    8: (CENTER, BOTTOM),
-    9: (RIGHT, BOTTOM),
-}
 
 
 class TextLine:
@@ -282,7 +269,9 @@ def unified_alignment(entity: Union["Text", "MText"]) -> Tuple[int, int]:
             valign = X_MIDDLE
         return halign, valign
     elif dxftype == "MTEXT":
-        return MTEXT_ALIGN_FLAGS.get(entity.dxf.attachment_point, (LEFT, TOP))
+        return MAP_MTEXT_ALIGN_TO_FLAGS.get(
+            entity.dxf.attachment_point, (LEFT, TOP)
+        )
     else:
         raise TypeError(f"invalid DXF {dxftype}")
 

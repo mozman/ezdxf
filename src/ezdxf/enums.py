@@ -18,10 +18,10 @@ class TextHAlign(IntEnum):
 class TextVAlign(IntEnum):
     """ Enumeration for DXF attribute: :attr:`ezdxf.entities.Text.dxf.valign`
     """
-    BASELINE = 0
-    BOTTOM = 1
-    MIDDLE = 2
-    TOP = 3
+    BASELINE = const.BASELINE
+    BOTTOM = const.BOTTOM
+    MIDDLE = const.MIDDLE
+    TOP = const.TOP
 
 
 # analog to MTextEntityAlignment, but not in use yet!
@@ -123,6 +123,19 @@ class MTextEntityAlignment(IntEnum):
     BOTTOM_LEFT = const.MTEXT_BOTTOM_LEFT
     BOTTOM_CENTER = const.MTEXT_BOTTOM_CENTER
     BOTTOM_RIGHT = const.MTEXT_BOTTOM_RIGHT
+
+
+MAP_MTEXT_ALIGN_TO_FLAGS = {
+    MTextEntityAlignment.TOP_LEFT: (TextHAlign.LEFT, TextVAlign.TOP),
+    MTextEntityAlignment.TOP_CENTER: (TextHAlign.CENTER, TextVAlign.TOP),
+    MTextEntityAlignment.TOP_RIGHT: (TextHAlign.RIGHT, TextVAlign.TOP),
+    MTextEntityAlignment.MIDDLE_LEFT: (TextHAlign.LEFT, TextVAlign.MIDDLE),
+    MTextEntityAlignment.MIDDLE_CENTER: (TextHAlign.CENTER, TextVAlign.MIDDLE),
+    MTextEntityAlignment.MIDDLE_RIGHT: (TextHAlign.RIGHT, TextVAlign.MIDDLE),
+    MTextEntityAlignment.BOTTOM_LEFT: (TextHAlign.LEFT, TextVAlign.BOTTOM),
+    MTextEntityAlignment.BOTTOM_CENTER: (TextHAlign.CENTER, TextVAlign.BOTTOM),
+    MTextEntityAlignment.BOTTOM_RIGHT: (TextHAlign.RIGHT, TextVAlign.BOTTOM),
+}
 
 
 class MTextParagraphAlignment(IntEnum):

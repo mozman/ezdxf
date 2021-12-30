@@ -14,12 +14,12 @@ from ezdxf.lldxf.attributes import (
 )
 from ezdxf.lldxf import const
 from ezdxf.lldxf.types import EMBEDDED_OBJ_MARKER, EMBEDDED_OBJ_STR
+from ezdxf.enums import MAP_MTEXT_ALIGN_TO_FLAGS, TextHAlign, TextVAlign
 from ezdxf.tools import set_flag_state
 from ezdxf.tools.text import (
     load_mtext_content,
     fast_plain_mtext,
     plain_mtext,
-    MTEXT_ALIGN_FLAGS,
 )
 
 from .dxfns import SubclassProcessor, DXFNamespace
@@ -398,8 +398,8 @@ def _update_location_from_mtext(text: Text, mtext: MText) -> None:
 
     dxf.insert = insert
     dxf.align_point = insert  # the same point for all MTEXT alignments!
-    dxf.halign, dxf.valign = MTEXT_ALIGN_FLAGS.get(
-        mtext.dxf.attachment_point, (1, 3)  # default: LEFT, TOP
+    dxf.halign, dxf.valign = MAP_MTEXT_ALIGN_TO_FLAGS.get(
+        mtext.dxf.attachment_point, (TextHAlign.LEFT, TextVAlign.TOP)
     )
 
 
