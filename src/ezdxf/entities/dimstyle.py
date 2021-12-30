@@ -2,6 +2,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable
 import logging
+from ezdxf.enums import MTextLineAlignment
 from ezdxf.lldxf.attributes import (
     DXFAttr,
     DXFAttributes,
@@ -782,7 +783,7 @@ class DimStyle(DXFEntity):
         upper: float,
         lower: float = None,
         hfactor: float = 1.0,
-        align: str = None,
+        align: MTextLineAlignment = None,
         dec: int = None,
         leading_zeros: bool = None,
         trailing_zeros: bool = None,
@@ -796,7 +797,7 @@ class DimStyle(DXFEntity):
             lower: lower tolerance value, if ``None`` same as upper
             hfactor: tolerance text height factor in relation to the dimension
                 text height
-            align: tolerance text alignment "TOP", "MIDDLE", "BOTTOM",
+            align: tolerance text alignment enum :class:`ezdxf.enums.MTextLineAlignment`
                 requires DXF R2000+
             dec: Sets the number of decimal places displayed,
                 requires DXF R2000+
@@ -828,7 +829,7 @@ class DimStyle(DXFEntity):
             self.dxf.dimtzin = dimtzin
 
         if align is not None:
-            self.dxf.dimtolj = const.MTEXT_INLINE_ALIGN[align.upper()]
+            self.dxf.dimtolj = int()
         if dec is not None:
             self.dxf.dimtdec = int(dec)
 

@@ -485,33 +485,9 @@ MTEXT_LEFT_TO_RIGHT = 1
 MTEXT_TOP_TO_BOTTOM = 3
 MTEXT_BY_STYLE = 5
 
-
-class MTextFlowDirection(IntEnum):
-    LEFT_TO_RIGHT = MTEXT_LEFT_TO_RIGHT
-    TOP_TO_BOTTOM = MTEXT_TOP_TO_BOTTOM
-    BY_STYLE = MTEXT_BY_STYLE
-
-
-class MTextLineAlignment(IntEnum):  # exclusive state
-    BOTTOM = 0
-    MIDDLE = 1
-    TOP = 2
-
-
-class MTextStroke(IntFlag):  # Combination of flags is possible
-    UNDERLINE = 1
-    STRIKE_THROUGH = 2
-    OVERLINE = 4
-
-
+# MTextLineSpacing enum
 MTEXT_AT_LEAST = 1
 MTEXT_EXACT = 2
-
-
-class MTextLineSpacing(IntEnum):
-    AT_LEAST = MTEXT_AT_LEAST
-    EXACT = MTEXT_EXACT
-
 
 MTEXT_COLOR_INDEX = {
     "red": RED,
@@ -523,25 +499,13 @@ MTEXT_COLOR_INDEX = {
     "white": WHITE,
 }
 
+# MTextBackgroundColor enum
 MTEXT_BG_OFF = 0
 MTEXT_BG_COLOR = 1
 MTEXT_BG_WINDOW_COLOR = 2
 MTEXT_BG_CANVAS_COLOR = 3
 MTEXT_TEXT_FRAME = 16
 
-
-class MTextBackgroundColor(IntEnum):
-    OFF = MTEXT_BG_OFF
-    COLOR = MTEXT_BG_COLOR
-    WINDOW = MTEXT_BG_WINDOW_COLOR
-    CANVAS = MTEXT_BG_CANVAS_COLOR
-
-
-MTEXT_INLINE_ALIGN = {
-    "BOTTOM": MTextLineAlignment.BOTTOM,
-    "MIDDLE": MTextLineAlignment.MIDDLE,
-    "TOP": MTextLineAlignment.TOP,
-}
 
 CLOSED_SPLINE = 1
 PERIODIC_SPLINE = 2

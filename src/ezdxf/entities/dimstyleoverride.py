@@ -1,6 +1,7 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-from typing import Any, TYPE_CHECKING, Tuple, Dict, Optional
+from typing import Any, TYPE_CHECKING, Tuple, Dict
+from ezdxf.enums import MTextLineAlignment
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFAttributeError, DIMJUST, DIMTAD
 from ezdxf.math import Vec3
@@ -223,7 +224,7 @@ class DimStyleOverride:
         upper: float,
         lower: float = None,
         hfactor: float = None,
-        align: str = None,
+        align: MTextLineAlignment = None,
         dec: int = None,
         leading_zeros: bool = None,
         trailing_zeros: bool = None,
@@ -237,7 +238,7 @@ class DimStyleOverride:
             lower: lower tolerance value, if None same as upper
             hfactor: tolerance text height factor in relation to the dimension
                 text height
-            align: tolerance text alignment "TOP", "MIDDLE", "BOTTOM"
+            align: tolerance text alignment enum :class:`ezdxf.enums.MTextLineAlignment`
             dec: Sets the number of decimal places displayed
             leading_zeros: suppress leading zeros for decimal dimensions if False
             trailing_zeros: suppress trailing zeros for decimal dimensions if False
@@ -253,9 +254,7 @@ class DimStyleOverride:
         if hfactor is not None:
             self.dimstyle_attribs["dimtfac"] = float(hfactor)
         if align is not None:
-            self.dimstyle_attribs["dimtolj"] = const.MTEXT_INLINE_ALIGN[
-                align.upper()
-            ]
+            self.dimstyle_attribs["dimtolj"] = int(align)
         if dec is not None:
             self.dimstyle_attribs["dimtdec"] = dec
 

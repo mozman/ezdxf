@@ -11,7 +11,7 @@ import ezdxf
 from ezdxf.tools.standards import setup_dimstyle
 from ezdxf.math import Vec3, UCS
 from ezdxf.entities import DimStyle
-
+from ezdxf.enums import MTextLineAlignment
 
 # ========================================
 # Setup logging
@@ -635,7 +635,9 @@ def linear_tutorial_using_tolerances(version="R2000"):
     # not all features are supported by DXF R12:
     # zero suppression (DIMTZIN), align (DIMTOLJ) and dec (DIMTDEC) require
     # DXF R2000+
-    tol_style.set_tolerance(0.1, hfactor=0.5, align="top", dec=2)
+    tol_style.set_tolerance(
+        0.1, hfactor=0.5, align=MTextLineAlignment.TOP, dec=2
+    )
     msp.add_linear_dim(
         base=(0, 3), p1=(0, 0), p2=(10, 0), dimstyle="tolerance"
     ).render(discard=discard)
