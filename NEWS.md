@@ -35,6 +35,8 @@ Version 0.17.2b4 - dev
 - CHANGE: moved enum `MTextStroke` to `ezdxf.enums`
 - CHANGE: moved enum `MTextLineSpacing` to `ezdxf.enums`
 - CHANGE: moved enum `MTextBackgroundColor` to `ezdxf.enums`
+- CHANGE: `Dimstyle.set_tolerance()`: argument `align` as enum `MTextLineAlignment`
+- CHANGE: `DimstyleOverride.set_tolerance()`: argument `align` as enum `MTextLineAlignment`
 - BUGFIX [#574](https://github.com/mozman/ezdxf/issues/574):
   flattening issues in `Path()` and `ConstructionEllipse()` 
 - BUGFIX: `drawing` add-on shows block references in `ACAD_TABLE` at the 

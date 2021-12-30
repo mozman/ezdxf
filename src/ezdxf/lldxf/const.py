@@ -746,6 +746,7 @@ class SortEntities:
     POSTSCRIPT = 64  # 64 = Sorts for PostScript output; obsolete
 
 
+# TODO: make enum
 DIMJUST = {
     "center": 0,
     "left": 1,
@@ -754,6 +755,8 @@ DIMJUST = {
     "above2": 4,
 }
 
+
+# TODO: make enum
 DIMTAD = {
     "above": 1,
     "center": 0,

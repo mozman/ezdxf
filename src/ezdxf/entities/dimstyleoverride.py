@@ -243,6 +243,10 @@ class DimStyleOverride:
             leading_zeros: suppress leading zeros for decimal dimensions if False
             trailing_zeros: suppress trailing zeros for decimal dimensions if False
 
+        .. versionchanged:: 0.17.2
+
+            argument `align` as enum :class:`ezdxf.enums.MTextLineAlignment`
+
         """
         self.dimstyle_attribs["dimtol"] = 1
         self.dimstyle_attribs["dimlim"] = 0
