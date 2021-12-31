@@ -1,6 +1,13 @@
 # Copyright (c) 2016-2021 Manfred Moitzi
 # License: MIT License
+from pathlib import Path
 import ezdxf
+from ezdxf.render import MeshBuilder
+from ezdxf.gfxattribs import GfxAttribs
+from ezdxf.math import Matrix44
+
+DIR = Path("~/Desktop/Outbox").expanduser()
+
 
 # 8 corner vertices
 cube_vertices = [
@@ -24,26 +31,18 @@ cube_faces = [
     [0, 4, 7, 3],
 ]
 
-polygon5_vertices = [
-    (0, 0, 0),
-    (2, 0, 0),
-    (2, 2, 0),
-    (1, 3, 1),
-    (0, 2, 0),
-]
-
-polygon5_face = [[0, 1, 2, 3, 4]]
-
-doc = ezdxf.new("R2000")
+doc = ezdxf.new("R2018")
 msp = doc.modelspace()
-mesh = msp.add_mesh()
+mesh = msp.add_mesh(dxfattribs=GfxAttribs(color=6))
 with mesh.edit_data() as mesh_data:
     mesh_data.vertices = cube_vertices
     mesh_data.faces = cube_faces
 
-mesh5 = msp.add_mesh()
-with mesh5.edit_data() as mesh_data:
-    mesh_data.vertices = polygon5_vertices
-    mesh_data.faces = polygon5_face
-
-doc.saveas("cube_mesh_1.dxf")
+# Add the same mesh as PolyFaceMesh:
+mesh_builder = MeshBuilder.from_mesh(mesh)
+mesh_builder.render_polyface(
+     msp,
+     dxfattribs=GfxAttribs(color=6),
+     matrix=Matrix44.translate(5, 0, 0),
+ )
+doc.saveas(DIR / "cube_mesh_1.dxf")

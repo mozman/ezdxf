@@ -184,6 +184,7 @@ class MeshBuilder:
             ucs: transform vertices by :class:`~ezdxf.math.UCS` to :ref:`WCS`
 
         """
+        dxfattribs = dict(dxfattribs) if dxfattribs else {}
         vertices = self.vertices
         if matrix is not None:
             vertices = list(matrix.transform_vertices(vertices))
@@ -217,6 +218,7 @@ class MeshBuilder:
             dxfattribs: dict of DXF attributes e.g. ``{'layer': 'normals', 'color': 6}``
 
         """
+        dxfattribs = dict(dxfattribs) if dxfattribs else {}
         for face in self.faces_as_vertices():
             count = len(face)
             if count < 3:
@@ -286,7 +288,7 @@ class MeshBuilder:
     def render_polyface(
         self,
         layout: "GenericLayoutType",
-        dxfattribs: dict = None,
+        dxfattribs=None,
         matrix: "Matrix44" = None,
         ucs: "UCS" = None,
     ):
@@ -300,19 +302,22 @@ class MeshBuilder:
             ucs: transform vertices by :class:`~ezdxf.math.UCS` to :ref:`WCS`
 
         """
+        dxfattribs = dict(dxfattribs) if dxfattribs else {}
         polyface = layout.add_polyface(dxfattribs=dxfattribs)
         t = MeshTransformer.from_builder(self)
         if matrix is not None:
             t.transform(matrix)
         if ucs is not None:
             t.transform(ucs.matrix)
-        polyface.append_faces(subdivide_ngons(t.faces_as_vertices()))
+        polyface.append_faces(
+            subdivide_ngons(t.faces_as_vertices()), dxfattribs=dxfattribs
+        )
         return polyface
 
     def render_3dfaces(
         self,
         layout: "GenericLayoutType",
-        dxfattribs: dict = None,
+        dxfattribs=None,
         matrix: "Matrix44" = None,
         ucs: "UCS" = None,
     ):
@@ -326,6 +331,7 @@ class MeshBuilder:
             ucs: transform vertices by :class:`~ezdxf.math.UCS` to :ref:`WCS`
 
         """
+        dxfattribs = dict(dxfattribs) if dxfattribs else {}
         t = MeshTransformer.from_builder(self)
         if matrix is not None:
             t.transform(matrix)
