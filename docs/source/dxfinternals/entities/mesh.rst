@@ -152,8 +152,8 @@ The following DXF code represents this cube with subdivision level of 0:
     7       <<< face 6, index of 3. vertex
     90
     3       <<< face 6, index of 4. vertex
-    94          <<< edge count, each edge has exact two group code 90 tags
-    4           <<< the real edge count not the group code 90 tags!
+    94              <<< edge count, each edge has exact two group code 90 tags
+    4               <<< the real edge count not the group code 90 tags!
     90
     0       <<< edge 1, vertex 1
     90
@@ -170,7 +170,7 @@ The following DXF code represents this cube with subdivision level of 0:
     3       <<< edge 4, vertex 1
     90
     0       <<< edge 4, vertex 2
-    95          <<< edge crease count, has to match edge count!
+    95              <<< edge crease count, has to match edge count!
     4
     140
     3.0     <<< crease value for edge 1
@@ -180,13 +180,14 @@ The following DXF code represents this cube with subdivision level of 0:
     3.0     <<< crease value for edge 3
     140
     3.0     <<< crease value for edge 4
-    90          <<< property overwrite???
+    90              <<< property overwrite???
     0
 
-The edge and crease data have only a meaning if subdividing is applied!
+The edge and crease data have only a meaning if subdivision of the geometry will
+be applied!
 A crease value equal to the subdivision level prevents subdividing for the
 edge completely, a value between 0.0 and the subdivision level applies
-subdividing partially.
+subdivision partially.
 
 The cube with subdivision level of 3 and crease values of 3.0:
 
