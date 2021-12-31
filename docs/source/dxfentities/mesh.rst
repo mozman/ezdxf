@@ -67,9 +67,10 @@ MeshData
 
     .. attribute:: edges
 
-        A standard Python list with (v1, v2) tuples (read/write)
-
-        Each edge consist of exact two vertex indices (= index in :attr:`vertices`).
+        A standard Python list with (v1, v2) tuples (read/write). These list
+        represents the edges to which the :attr:`edge_crease_values` values
+        will be applied. Each edge consist of exact two vertex indices
+        (= index in :attr:`vertices`).
 
     .. attribute:: edge_crease_values
 
@@ -77,7 +78,7 @@ MeshData
 
     .. automethod:: add_face
 
-    .. automethod:: add_edge
+    .. automethod:: add_edge_crease
 
     .. automethod:: optimize
 

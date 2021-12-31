@@ -141,13 +141,37 @@ def test_add_faces(msp):
         assert [0, 1, 2, 3] == mesh_data.faces[0]
 
 
-def test_add_edges(msp):
+def test_add_edge_crease(msp):
     mesh = msp.add_mesh()
     with mesh.edit_data() as mesh_data:
-        mesh_data.add_edge([(0, 0, 0), (1, 0, 0)])
-        assert 2 == len(mesh_data.vertices)
-        assert 1 == len(mesh_data.edges)
-        assert [0, 1] == mesh_data.edges[0]
+        mesh_data.add_face([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
+        mesh_data.add_edge_crease(v1=0, v2=1, crease=1.0)
+        assert len(mesh_data.edges) == 1
+        assert mesh_data.edges[0] == (0, 1)
+        assert mesh_data.edge_crease_values[0] == 1.0
+        assert len(mesh_data.edge_crease_values) == len(mesh_data.edges)
+
+
+def test_dxf_export_adds_required_crease_values(msp):
+    mesh = msp.add_mesh()
+    with mesh.edit_data() as mesh_data:
+        mesh_data.add_face([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
+        mesh_data.add_edge_crease(v1=0, v2=1, crease=1.0)
+    mesh.creases = []  # edges count does not math creases count
+    collector = TagCollector()
+    mesh.export_dxf(collector)
+    assert [tag.value for tag in collector.tags if tag.code == 140] == [0.0]
+
+
+def test_dxf_export_removes_crease_not_required(msp):
+    mesh = msp.add_mesh()
+    with mesh.edit_data() as mesh_data:
+        mesh_data.add_face([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
+        mesh_data.add_edge_crease(v1=0, v2=1, crease=1.0)
+    mesh.creases = [1, 1]  # too much crease values for only one edge
+    collector = TagCollector()
+    mesh.export_dxf(collector)
+    assert [tag.value for tag in collector.tags if tag.code == 140] == [1.0]
 
 
 def test_vertex_format(msp):

@@ -43,6 +43,9 @@ Version 0.17.2b4 - dev
   correct location
 - BUGFIX [#589](https://github.com/mozman/ezdxf/issues/589):
   `Polyface.virtual_entities()` yields correct triangle faces
+- BUGFIX: prevent invalid DXF export of the `MESH` entity  
+- CHANGE: `MeshData.add_edge()` is changed to `MeshData.add_edge_crease()`, 
+  this fixes my misunderstanding of edge and crease data in the `MESH` entity.  
 - PREVIEW: arc length dimension rendering support, new factory methods: 
   `add_arc_dim_3p()`, `add_arc_dim_cra()`, `add_arc_dim_arc()`
 - PREVIEW: ordinate dimension rendering support, new factory methods: 

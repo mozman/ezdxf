@@ -27,6 +27,7 @@ from ezdxf.lldxf.const import (
     DXF2000,
     DXFValueError,
     DXFStructureError,
+    DXFIndexError,
 )
 from ezdxf.lldxf.packedtags import VertexArray, TagArray, TagList
 from ezdxf.tools import take2
@@ -315,8 +316,18 @@ class Mesh(DXFGraphic):
         self._faces.export_dxf(tagwriter)
         self._edges.export_dxf(tagwriter)
 
+        # The edge count has to match the crease count, otherwise its an invalid
+        # DXF file to AutoCAD!
+        edge_count = len(self._edges)
+        creases = list(self.creases)
+        crease_count = len(creases)
+        if edge_count < crease_count:
+            creases = creases[:edge_count]
+        while edge_count > len(creases):
+            creases.append(0.0)
+
         tagwriter.write_tag2(95, len(self.creases))
-        for crease_value in self.creases:
+        for crease_value in creases:
             tagwriter.write_tag2(140, crease_value)
 
     def export_override_data(self, tagwriter: "TagWriter"):
@@ -371,7 +382,9 @@ class Mesh(DXFGraphic):
         self.vertices = data.vertices
         self._faces.set_data(data.faces)
         self._edges.set_data(data.edges)
-        self.creases = data.edge_crease_values
+        self.creases = array.array("f", data.edge_crease_values)
+        if len(self.edges) != len(self.creases):
+            raise DXFValueError("count of edges must match count of creases")
 
     @contextmanager
     def edit_data(self) -> Iterator["MeshData"]:
@@ -395,42 +408,47 @@ class Mesh(DXFGraphic):
 
 class MeshData:
     def __init__(self, mesh):
-        self.vertices: List[Tuple[float, float, float]] = list(mesh.vertices)
+        self.vertices: List[Sequence[float]] = list(mesh.vertices)
         self.faces: List[array.array] = list(mesh.faces)
         self.edges: List[Tuple[int, int]] = list(mesh.edges)
-        self.edge_crease_values: array.array = mesh.creases
+        self.edge_crease_values: List[float] = list(mesh.creases)
 
-    def add_face(self, vertices: Iterable[Sequence[float]]) -> Sequence[int]:
+    def add_face(self, vertices: Iterable["Vertex"]) -> Sequence[int]:
         """Add a face by coordinates, vertices is a list of ``(x, y, z)``
         tuples.
         """
         return self.add_entity(vertices, self.faces)
 
-    def add_edge(self, vertices: Sequence[Sequence[float]]) -> Sequence[int]:
-        """Add an edge by coordinates, vertices is a list of two ``(x, y, z)``
-        tuples.
+    def add_edge_crease(self, v1: int, v2: int, crease: float):
+        """Add an edge crease value, the edge is defined by the vertex indices
+        `v1` and `v2`.
+        The crease value defines the amount of subdivision that will be applied
+        to this edge.
+        A crease value of the subdivision level prevents the edge from
+        deformation and a value of 0.0 means no protection from
+        subdividing.
         """
-        if len(vertices) != 2:
-            raise DXFValueError(
-                "Parameter vertices has to be a list/tuple of 2 vertices "
-                "[(x1, y1, z1), (x2, y2, z2)]."
-            )
-        return self.add_entity(vertices, self.edges)
+        if v1 < 0 or v1 > len(self.vertices):
+            raise DXFIndexError("vertex index `v1` out of range")
+        if v2 < 0 or v2 > len(self.vertices):
+            raise DXFIndexError("vertex index `v2` out of range")
+        self.edges.append((v1, v2))
+        self.edge_crease_values.append(crease)
 
     def add_entity(
-        self, vertices: Iterable[Sequence[float]], entity_list: List
+        self, vertices: Iterable["Vertex"], entity_list: List
     ) -> Sequence[int]:
         indices = [self.add_vertex(vertex) for vertex in vertices]
         entity_list.append(indices)
         return indices
 
-    def add_vertex(self, vertex: Sequence[float]) -> int:
+    def add_vertex(self, vertex: "Vertex") -> int:
         if len(vertex) != 3:
             raise DXFValueError(
                 "Parameter vertex has to be a 3-tuple (x, y, z)."
             )
         index = len(self.vertices)
-        self.vertices.append(vertex)  # type: ignore
+        self.vertices.append(tuple(vertex))
         return index
 
     def optimize(self, precision: int = 6):
