@@ -29,18 +29,20 @@ cube_faces = [
     [0, 4, 7, 3],
 ]
 
-protected_cube_edges = [(0, 1), (1, 2), (2, 3), (3, 0)]
-
 doc = ezdxf.new("R2018")
 msp = doc.modelspace()
 mesh = msp.add_mesh(dxfattribs=GfxAttribs(color=6))
 mesh.dxf.blend_crease = 1
 mesh.dxf.subdivision_levels = 3
+crease = 3.0
+
 with mesh.edit_data() as mesh_data:
     mesh_data.vertices = cube_vertices
     mesh_data.faces = cube_faces
-    mesh_data.edges = protected_cube_edges
-    # Crease values have to match the edge count!
-    mesh_data.edge_crease_values = [1.0] * 5 # len(protected_cube_edges)
 
-doc.saveas(DIR / "cube_mesh_1.dxf")
+    mesh_data.add_edge_crease(0, 1, crease)
+    mesh_data.add_edge_crease(1, 2, crease)
+    mesh_data.add_edge_crease(2, 3, crease)
+    mesh_data.add_edge_crease(3, 0, crease)
+
+doc.saveas(DIR / f"cube_mesh_{int(crease)}.dxf")
