@@ -14,6 +14,8 @@ import array
 import copy
 from itertools import chain
 from contextlib import contextmanager
+
+from ezdxf.audit import AuditError
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -43,6 +45,7 @@ if TYPE_CHECKING:
         Tags,
         Matrix44,
         DXFEntity,
+        Auditor,
     )
 
 __all__ = ["Mesh", "MeshData"]
@@ -316,6 +319,12 @@ class Mesh(DXFGraphic):
         self._faces.export_dxf(tagwriter)
         self._edges.export_dxf(tagwriter)
 
+        creases = self._fixed_crease_values()
+        tagwriter.write_tag2(95, len(self.creases))
+        for crease_value in creases:
+            tagwriter.write_tag2(140, crease_value)
+
+    def _fixed_crease_values(self) -> List[float]:
         # The edge count has to match the crease count, otherwise its an invalid
         # DXF file to AutoCAD!
         edge_count = len(self._edges)
@@ -325,10 +334,7 @@ class Mesh(DXFGraphic):
             creases = creases[:edge_count]
         while edge_count > len(creases):
             creases.append(0.0)
-
-        tagwriter.write_tag2(95, len(self.creases))
-        for crease_value in creases:
-            tagwriter.write_tag2(140, crease_value)
+        return creases
 
     def export_override_data(self, tagwriter: "TagWriter"):
         tagwriter.write_tag2(90, 0)
@@ -404,6 +410,18 @@ class Mesh(DXFGraphic):
         self._vertices.transform(m)
         self.post_transform(m)
         return self
+
+    def audit(self, auditor: "Auditor") -> None:
+        if not self.is_alive:
+            return
+        super().audit(auditor)
+        if len(self.edges) != len(self.creases):
+            self.creases = self._fixed_crease_values()
+            auditor.fixed_error(
+                code=AuditError.INVALID_CREASE_VALUE_COUNT,
+                message=f"fixed invalid count of crease values in {str(self)}",
+                dxf_entity=self,
+            )
 
 
 class MeshData:

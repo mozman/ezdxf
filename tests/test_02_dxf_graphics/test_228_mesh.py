@@ -5,6 +5,7 @@ import ezdxf
 from ezdxf.entities.mesh import Mesh
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Vec3, Matrix44
+from ezdxf.audit import Auditor
 
 MESH = """0
 MESH
@@ -172,6 +173,30 @@ def test_dxf_export_removes_crease_not_required(msp):
     collector = TagCollector()
     mesh.export_dxf(collector)
     assert [tag.value for tag in collector.tags if tag.code == 140] == [1.0]
+
+
+def test_auditor_fixes_invalid_crease_count(msp):
+    mesh = msp.add_mesh()
+    with mesh.edit_data() as mesh_data:
+        mesh_data.add_face([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
+        mesh_data.add_edge_crease(v1=0, v2=1, crease=1.0)
+
+    auditor = Auditor(msp.doc)
+    mesh.audit(auditor)
+    assert len(auditor.fixes) == 0
+    assert len(auditor.errors) == 0
+
+    auditor.reset()
+    mesh.creases = [1, 1]  # too much crease values for only one edge
+    mesh.audit(auditor)
+    assert len(auditor.fixes) == 1
+    assert list(mesh.creases) == [1.0]
+
+    auditor.reset()
+    mesh.creases = []  # too few crease values for only one edge
+    mesh.audit(auditor)
+    assert len(auditor.fixes) == 1
+    assert list(mesh.creases) == [0.0]
 
 
 def test_vertex_format(msp):
