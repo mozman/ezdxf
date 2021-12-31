@@ -416,7 +416,7 @@ class Mesh(DXFGraphic):
             return
         super().audit(auditor)
         if len(self.edges) != len(self.creases):
-            self.creases = self._fixed_crease_values()
+            self.creases = self._fixed_crease_values()  # type: ignore
             auditor.fixed_error(
                 code=AuditError.INVALID_CREASE_VALUE_COUNT,
                 message=f"fixed invalid count of crease values in {str(self)}",
