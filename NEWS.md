@@ -2,9 +2,9 @@
 News
 ====
 
-Version 0.17.2b4 - dev
+Version 0.17.2b5 - dev
 ----------------------
-- `beta3` and `beta4` are just deployment tests!!!
+
 - NEW: extended binary wheels support
   - `manylinux2010_x86_64` for Python < 3.10 and `manylinux2014_x86_64` 
     for Python >= 3.10 
