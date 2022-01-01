@@ -223,7 +223,7 @@ def block_content_horizontal(
     block = create_block(doc, size=8.0, margin=0.25, base_point=base_point)
     msp = doc.modelspace()
     ml_builder = msp.add_multileader_block(style="Standard")
-    ml_builder.set_content(name=block.name, alignment=align, scale=scale)
+    ml_builder.set_content(name=block.name, alignment=align, scale=scale)  # block scale
     ml_builder.set_leader_properties(linetype="CONTINUOUS")
     ml_builder.set_attribute("ONE", "Data1")
     ml_builder.set_attribute("TWO", "Data2")
@@ -258,7 +258,7 @@ def block_content_vertical(
     block = create_block(doc, size=8.0, margin=0.25, base_point=base_point)
     msp = doc.modelspace()
     ml_builder = msp.add_multileader_block(style="Standard")
-    ml_builder.set_content(name=block.name, alignment=align, scale=scale)
+    ml_builder.set_content(name=block.name, alignment=align, scale=scale)  # block scale
     ml_builder.set_attribute("ONE", "Data1")
     ml_builder.set_attribute("TWO", "Data2")
     ml_builder.add_leader_line(mleader.ConnectionSide.top, [Vec2(20, 20)])
@@ -268,7 +268,7 @@ def block_content_vertical(
     # The insert point (in UCS coordinates= is the insert location for BLOCK
     # content:
     insert = Vec2(5, 2)
-    ml_builder.build(insert=insert)
+    ml_builder.build(insert=insert, rotation=rotation)
     msp.add_circle(insert, radius=0.25)
     msp.add_lwpolyline([(-20, -20), (20, -20), (20, 20), (-20, 20)], close=True)
     doc.set_modelspace_vport(60, center=(10, 5))
@@ -291,19 +291,25 @@ if __name__ == "__main__":
         "block_center_extents_horizontal",
         mleader.BlockAlignment.center_extents,
         base_point=Vec2(1, 2),
+        scale=2,
+        rotation=30,
     )
     block_content_horizontal(
         "block_insertion_point_horizontal",
         mleader.BlockAlignment.insertion_point,
         base_point=Vec2(1, 2),
+        scale=2,
+        rotation=30,
     )
     block_content_vertical(
         "block_center_extents_vertical",
         mleader.BlockAlignment.center_extents,
+        rotation=30,
         base_point=Vec2(1, 2),
     )
     block_content_vertical(
         "block_insertion_point_vertical",
         mleader.BlockAlignment.insertion_point,
+        rotation=30,
         base_point=Vec2(1, 2),
     )

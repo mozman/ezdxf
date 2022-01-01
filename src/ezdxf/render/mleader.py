@@ -1011,10 +1011,13 @@ class MultiLeaderBuilder(abc.ABC):
         rotation = math.radians(rotation)
         # transformation matrix from build ucs to render ucs
         m = Matrix44.z_rotate(rotation)
-        m.set_row(3, (insert.x, insert.y))  # fast translation
+        connection_box = self._build_connection_box()
+        m.set_row(
+            3, (insert.x, insert.y)
+        )  # fast translation
+
         self._set_required_multileader_attributes()
         self._transform_content_to_render_ucs(insert, rotation)
-        connection_box = self._build_connection_box()
         self._set_attachment_direction()
         self._set_base_point(  # MTEXT requires "text_attachment_direction"
             left=m.transform(connection_box.left.vec3),
@@ -1467,7 +1470,7 @@ class MultiLeaderBlockBuilder(MultiLeaderBuilder):
 
         if block_connection_type == BlockAlignment.center_extents:
             # adjustment of the insert point is required!
-            block.insert -= Vec3(center_x, center_y, 0)
+            block.insert = Vec3(-center_x, -center_y, 0)
             center_x = 0.0
             center_y = 0.0
         return ConnectionBox(
@@ -1481,7 +1484,7 @@ class MultiLeaderBlockBuilder(MultiLeaderBuilder):
         block = self.context.block
         assert isinstance(block, BlockData), "undefined BLOCK content"
         block.extrusion = Z_AXIS
-        block.insert += Vec3(insert)
+        block.insert = block.insert.rotate(rotation) + Vec3(insert)
         block.rotation = rotation
 
     def _apply_conversion_factor(self, conversion_factor: float) -> None:
