@@ -1440,7 +1440,11 @@ class MultiLeaderBlockBuilder(MultiLeaderBuilder):
         # todo: block_connection_type
         block_connection_type = self._multileader.dxf.block_connection_type
         block_layout = self.block_layout
-        extents = bbox.extents(block_layout)
+        extents = bbox.extents(
+            e for e in block_layout if e.dxftype() != "ATTDEF"
+        )
+        if not extents.has_data:
+            extents.extend([NULLVEC])
         sx = block.scale.x
         sy = block.scale.y
         width2 = extents.size.x * 0.5 * sx

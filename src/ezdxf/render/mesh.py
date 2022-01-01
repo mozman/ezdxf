@@ -11,7 +11,7 @@ from typing import (
     TypeVar,
     Type,
 )
-from ezdxf.lldxf.const import DXFValueError
+
 from ezdxf.math import (
     Matrix44,
     Vec3,
@@ -36,13 +36,12 @@ T = TypeVar("T")
 
 
 class MeshBuilder:
-    """A simple Mesh builder. Stores a list of vertices, a list of edges where
-    an edge is a list of indices into the vertices list, and a faces list where
+    """A simple Mesh builder. Stores a list of vertices and a faces list where
     each face is a list of indices into the vertices list.
 
-    The render() method, renders the mesh into a DXF MESH entity. The MESH
-    entity supports ngons in AutoCAD, ngons are polygons with more than 4
-    vertices.
+    The :meth:`render_mesh` method, renders the mesh into a DXF MESH entity.
+    The MESH entity supports ngons in AutoCAD, ngons are polygons with more
+    than 4 vertices.
 
     Can only create new meshes.
 
@@ -54,8 +53,6 @@ class MeshBuilder:
         # face storage, each face is a tuple of vertex indices (v0, v1, v2, v3, ....),
         # AutoCAD supports ngons
         self.faces: List[Sequence[int]] = []
-        # edge storage, each edge is a 2-tuple of vertex indices (v0, v1)
-        self.edges: List[Tuple[int, int]] = []
 
     def copy(self):
         """Returns a copy of mesh."""
@@ -66,12 +63,6 @@ class MeshBuilder:
         v = self.vertices
         for face in self.faces:
             yield [v[index] for index in face]
-
-    def edges_as_vertices(self) -> Iterable[Tuple[Vec3, Vec3]]:
-        """Iterate over all mesh edges as tuple of two vertices."""
-        v = self.vertices
-        for edge in self.edges:
-            yield v[edge[0]], v[edge[1]]
 
     def add_face(self, vertices: Iterable["Vertex"]) -> None:
         """Add a face as vertices list to the mesh. A face requires at least 3
@@ -85,23 +76,6 @@ class MeshBuilder:
 
         """
         self.faces.append(self.add_vertices(vertices))
-
-    def add_edge(self, vertices: Iterable["Vertex"]) -> None:
-        """An edge consist of two vertices ``[v1, v2]``, each vertex is a
-        ``(x, y, z)`` tuple or a :class:`~ezdxf.math.Vec3` object. The new
-        vertex indices are stored as edge in the :attr:`edges` list.
-
-        Args:
-            vertices: list of 2 vertices : [(x1, y1, z1), (x2, y2, z2)]
-
-        """
-        vertices = list(vertices)
-        if len(vertices) == 2:
-            self.edges.append(self.add_vertices(vertices))  # type: ignore
-        else:
-            raise DXFValueError(
-                "Invalid vertices count, expected two vertices."
-            )
 
     def add_vertices(self, vertices: Iterable["Vertex"]) -> Sequence[int]:
         """Add new vertices to the mesh, each vertex is a ``(x, y, z)`` tuple
@@ -128,20 +102,18 @@ class MeshBuilder:
         self,
         vertices: List[Vec3] = None,
         faces: List[Sequence[int]] = None,
-        edges: List[Tuple[int, int]] = None,
         mesh=None,
     ) -> None:
         """Add another mesh to this mesh.
 
         A `mesh` can be a :class:`MeshBuilder`, :class:`MeshVertexMerger` or
         :class:`~ezdxf.entities.Mesh` object or requires the attributes
-        :attr:`vertices`, :attr:`edges` and :attr:`faces`.
+        :attr:`vertices` and :attr:`faces`.
 
         Args:
             vertices: list of vertices, a vertex is a ``(x, y, z)`` tuple or
                 :class:`~ezdxf.math.Vec3` object
             faces: list of faces, a face is a list of vertex indices
-            edges: list of edges, an edge is a list of vertex indices
             mesh: another mesh entity
 
         """
@@ -153,11 +125,7 @@ class MeshBuilder:
         if vertices is None:
             raise ValueError("Requires vertices or another mesh.")
         faces = faces or []
-        edges = edges or []
         indices = self.add_vertices(vertices)
-
-        for v1, v2 in edges:
-            self.edges.append((indices[v1], indices[v2]))
 
         for face_vertices in faces:
             self.faces.append(tuple(indices[vi] for vi in face_vertices))
@@ -187,15 +155,15 @@ class MeshBuilder:
         dxfattribs = dict(dxfattribs) if dxfattribs else {}
         vertices = self.vertices
         if matrix is not None:
-            vertices = list(matrix.transform_vertices(vertices))
+            vertices = matrix.transform_vertices(vertices)
         if ucs is not None:
             vertices = ucs.points_to_wcs(vertices)  # type: ignore
         mesh = layout.add_mesh(dxfattribs=dxfattribs)
         with mesh.edit_data() as data:
             # data will be copied at setting in edit_data()
-            data.vertices = vertices
-            data.edges = self.edges
-            data.faces = self.faces  # type: ignore
+            # ignore edges and creases!
+            data.vertices = list(vertices)
+            data.faces = list(self.faces)  # type: ignore
         return mesh
 
     render = render_mesh  # TODO: 2021-02-10 - compatibility alias
@@ -351,7 +319,6 @@ class MeshBuilder:
         mesh = cls()
         assert isinstance(mesh, MeshBuilder)
         mesh.vertices = list(other.vertices)
-        mesh.edges = list(other.edges)
         mesh.faces = list(other.faces)
         return mesh  # type: ignore
 
@@ -360,7 +327,7 @@ class MeshTransformer(MeshBuilder):
     """A mesh builder with inplace transformation support."""
 
     def subdivide(
-        self, level: int = 1, quads=True, edges=False
+        self, level: int = 1, quads=True
     ) -> "MeshTransformer":
         """Returns a new :class:`MeshTransformer` object with subdivided faces
         and edges.
@@ -368,7 +335,6 @@ class MeshTransformer(MeshBuilder):
         Args:
              level: subdivide levels from 1 to max of 5
              quads: create quad faces if ``True`` else create triangles
-             edges: also subdivide edges if ``True``
         """
         mesh = self
         level = min(int(level), 5)
@@ -479,13 +445,12 @@ class MeshTransformer(MeshBuilder):
         return self
 
 
-def _subdivide(mesh, quads=True, edges=False) -> "MeshVertexMerger":
+def _subdivide(mesh, quads=True) -> "MeshVertexMerger":
     """Returns a new :class:`MeshVertexMerger` object with subdivided faces
     and edges.
 
     Args:
          quads: create quad faces if ``True`` else create triangles
-         edges: also subdivide edges if ``True``
 
     """
     new_mesh = MeshVertexMerger()
@@ -494,13 +459,6 @@ def _subdivide(mesh, quads=True, edges=False) -> "MeshVertexMerger":
             continue
         for face in subdivide_face(vertices, quads):
             new_mesh.add_face(face)
-
-    if edges:
-        for start, end in mesh.edges_as_vertices():
-            mid = start.lerp(end)
-            new_mesh.add_edge((start, mid))
-            new_mesh.add_edge((mid, end))
-
     return new_mesh
 
 

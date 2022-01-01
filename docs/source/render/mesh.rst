@@ -4,12 +4,13 @@
 MeshBuilder
 ===========
 
-The :class:`MeshBuilder` is a helper class  to create :class:`~ezdxf.entities.Mesh` entities.
-Stores a list of vertices, a list of edges where an edge is a list of indices into the
-vertices list, and a faces list where each face is a list of indices into the vertices list.
+The :class:`MeshBuilder` is a helper class  to create :class:`~ezdxf.entities.Mesh`
+entities. Stores a list of vertices and a faces list where each face is a list
+of indices into the vertices list.
 
-The :meth:`MeshBuilder.render` method, renders the mesh into a :class:`~ezdxf.entities.Mesh` entity.
-The :class:`~ezdxf.entities.Mesh` entity supports ngons in AutoCAD, ngons are polygons with more than 4 vertices.
+The :meth:`MeshBuilder.render` method, renders the mesh into a
+:class:`~ezdxf.entities.Mesh` entity. The :class:`~ezdxf.entities.Mesh` entity
+supports ngons in AutoCAD, ngons are polygons with more than 4 vertices.
 
 The basic :class:`MeshBuilder` class does not support transformations.
 
@@ -19,26 +20,18 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
         List of vertices as :class:`~ezdxf.math.Vec3` or ``(x, y, z)`` tuple
 
-    .. attribute:: edges
-
-        List of edges as 2-tuple of vertex indices, where a vertex index is the index of the vertex in the
-        :attr:`vertices` list.
-
     .. attribute:: faces
 
-        List of faces as list of vertex indices,  where a vertex index is the index of the vertex in the
-        :attr:`vertices` list. A face requires at least three vertices, :class:`~ezdxf.entities.Mesh` supports ngons,
+        List of faces as list of vertex indices,  where a vertex index is the
+        index of the vertex in the :attr:`vertices` list. A face requires at
+        least three vertices, :class:`~ezdxf.entities.Mesh` supports ngons,
         so the count of vertices is not limited.
 
     .. automethod:: copy()
 
     .. automethod:: faces_as_vertices() -> Iterable[List[Vec3]]
 
-    .. automethod:: edges_as_vertices() -> Iterable[Tuple[Vec3, Vec3]]
-
     .. automethod:: add_vertices
-
-    .. automethod:: add_edge
 
     .. automethod:: add_face
 
@@ -70,7 +63,7 @@ Same functionality as :class:`MeshBuilder` but supports inplace transformation.
 
     Subclass of :class:`MeshBuilder`
 
-    .. automethod:: subdivide(level: int = 1, quads=True, edges=False) -> MeshTransformer
+    .. automethod:: subdivide(level: int = 1, quads=True) -> MeshTransformer
 
     .. automethod:: transform(matrix: Matrix44)
 
@@ -91,12 +84,14 @@ Same functionality as :class:`MeshBuilder` but supports inplace transformation.
 MeshVertexMerger
 ================
 
-Same functionality as :class:`MeshBuilder`, but created meshes with unique vertices and no doublets,
-but :class:`MeshVertexMerger` needs extra memory for bookkeeping and also does not support transformations.
-Location of merged vertices is the location of the first vertex with the same key.
+Same functionality as :class:`MeshBuilder`, but created meshes with unique
+vertices and no doublets, but :class:`MeshVertexMerger` needs extra memory for
+bookkeeping and also does not support transformations. Location of merged
+vertices is the location of the first vertex with the same key.
 
-This class is intended as intermediate object to create a compact meshes and convert them to :class:`MeshTransformer`
-objects to apply transformations to the mesh:
+This class is intended as intermediate object to create a compact meshes and
+convert them to :class:`MeshTransformer` objects to apply transformations to the
+mesh:
 
 .. code-block:: Python
 
@@ -114,8 +109,9 @@ MeshAverageVertexMerger
 =======================
 
 This is an extended version of :class:`MeshVertexMerger`.
-Location of merged vertices is the average location of all vertices with the same key, this needs extra
-memory and runtime in comparision to :class:`MeshVertexMerger` and this class also does not support
+Location of merged vertices is the average location of all vertices with the
+same key, this needs extra memory and runtime in comparison to
+:class:`MeshVertexMerger` and this class also does not support
 transformations.
 
 .. autoclass:: MeshAverageVertexMerger

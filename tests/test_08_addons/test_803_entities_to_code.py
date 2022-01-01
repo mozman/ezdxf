@@ -398,7 +398,6 @@ def test_mesh_to_code():
     )
     c = cube()
     entity.vertices = c.vertices
-    entity.edges = c.edges
     entity.faces = c.faces
 
     assert len(entity.vertices) == 8
