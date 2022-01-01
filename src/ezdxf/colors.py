@@ -1,7 +1,6 @@
 #  Copyright (c) 2020-2021, Manfred Moitzi
 #  License: MIT License
 from typing import Tuple, Union
-from enum import IntEnum
 import math
 
 RGB = Tuple[int, int, int]
@@ -17,21 +16,6 @@ BLUE = 5
 MAGENTA = 6
 BLACK = 7
 WHITE = 7
-
-
-class ACI(IntEnum):
-    BYBLOCK = 0
-    BYLAYER = 256
-    BYOBJECT = 257
-    RED = 1
-    YELLOW = 2
-    GREEN = 3
-    CYAN = 4
-    BLUE = 5
-    MAGENTA = 6
-    BLACK = 7
-    WHITE = 7
-
 
 # Flags for raw color int values:
 # Take color from layer, ignore other bytes.

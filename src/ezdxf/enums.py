@@ -234,3 +234,18 @@ class SortEntities(IntFlag):
     REGEN = 16  # 16 = Sorts for REGEN commands
     PLOT = 32  # 32 = Sorts for plotting
     POSTSCRIPT = 64  # 64 = Sorts for PostScript output; obsolete
+
+
+class ACI(IntEnum):
+    """AutoCAD Color Index"""
+    BYBLOCK = 0
+    BYLAYER = 256
+    BYOBJECT = 257
+    RED = 1
+    YELLOW = 2
+    GREEN = 3
+    CYAN = 4
+    BLUE = 5
+    MAGENTA = 6
+    BLACK = 7
+    WHITE = 7

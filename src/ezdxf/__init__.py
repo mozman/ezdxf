@@ -19,7 +19,6 @@ from ezdxf.colors import (
     rgb2int,
     transparency2float,
     float2transparency,
-    ACI,
 )
 from ezdxf.enums import InsertUnits
 from ezdxf.lldxf import const

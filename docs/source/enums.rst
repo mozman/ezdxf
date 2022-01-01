@@ -257,3 +257,30 @@ SortEntities
     .. attribute:: POSTSCRIPT
 
         Sorts for PostScript output; obsolete
+
+ACI
+---
+
+.. autoclass:: ACI
+
+    .. attribute:: BYBLOCK
+
+    .. attribute:: BYLAYER
+
+    .. attribute:: BYOBJECT
+
+    .. attribute:: RED
+
+    .. attribute:: YELLOW
+
+    .. attribute:: GREEN
+
+    .. attribute:: CYAN
+
+    .. attribute:: BLUE
+
+    .. attribute:: MAGENTA
+
+    .. attribute:: BLACK
+
+    .. attribute:: WHITE

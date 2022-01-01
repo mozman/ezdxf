@@ -27,7 +27,7 @@ DXF documents.
 ACI Color Constants
 -------------------
 
-Common :ref:`ACI` values
+Common :ref:`ACI` values, there also exist an IntEnum :class:`ezdxf.enums.ACI`
 
 =========== ===
 BYBLOCK     0
