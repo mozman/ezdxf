@@ -8,8 +8,12 @@ Glossary
 
     ACIS
         The 3D ACIS Modeler (`ACIS`_) is a geometric modeling kernel developed
-        by `Spatial Corp.`_ ® (formerly Spatial Technology), part of Dassault
-        Systems.
+        by `Spatial Corp.`_ ® (formerly `Spatial Technology`) and now part of
+        `Dassault Systems`. All ACIS based DXF entities store their geometry as
+        :term:`SAT` or :term:`SAB` data. These are not open data formats and
+        a license has to be purchased to get access to their SDK, therefore
+        `ezdxf` can not provide any support for creating, processing or transforming
+        of ACIS based DXF entities.
 
     bulge
         The :ref:`bulge value` is used to create arc shaped line segments in
@@ -33,13 +37,6 @@ Glossary
         interchange data with other :term:`CAD` applications. `DXF`_ is a
         trademark of `Autodesk`_ ®. See also :ref:`what is dxf`
 
-    STB
-        Named plot style table (:class:`~ezdxf.acadctb.NamedPlotStyles`)
-
-    true color
-        RGB color representation, a combination red, green and blue values to
-        define a color.
-
     raw color
         Raw color value as stored in DWG files, this integer value can
         represent :term:`ACI` values as well as and :term:`true color` values
@@ -47,6 +44,19 @@ Glossary
     reliable CAD application
         CAD applications which create valid DXF documents in the meaning and
         interpretation of `Autodesk`_. See also :ref:`what is dxf`
+
+    SAB
+        ACIS file format, data stored as binary data
+
+    SAT
+        ACIS file format, data stored as ASCII text
+
+    STB
+        Named plot style table (:class:`~ezdxf.acadctb.NamedPlotStyles`)
+
+    true color
+        RGB color representation, a combination red, green and blue values to
+        define a color.
 
 
 .. (R) = Atl+0174

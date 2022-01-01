@@ -130,7 +130,7 @@ Miscellaneous
 ACIS Entities
 +++++++++++++
 
-The creation of the required ACIS data has do be done by an external library!
+The creation of the required :term:`ACIS` data has do be done by an external library!
 
 - :meth:`~ezdxf.layouts.BaseLayout.add_3dsolid`
 - :meth:`~ezdxf.layouts.BaseLayout.add_body`
