@@ -31,6 +31,7 @@ from ezdxf.math import (
     OCS,
     UCS,
     is_point_left_of_line,
+    BoundingBox,
 )
 from ezdxf.entities import factory
 from ezdxf.lldxf import const
@@ -1381,6 +1382,7 @@ class MultiLeaderBlockBuilder(MultiLeaderBuilder):
     def __init__(self, multileader: MultiLeader):
         super().__init__(multileader)
         self._block_layout: Optional["BlockLayout"] = None  # cache
+        self._extents = BoundingBox()  # cache
 
     def _init_content(self):
         self._reset_cache()
@@ -1404,6 +1406,7 @@ class MultiLeaderBlockBuilder(MultiLeaderBuilder):
 
     def _reset_cache(self):
         self._block_layout = None
+        self._extents = BoundingBox()
 
     @property
     def block_layout(self) -> "BlockLayout":
@@ -1426,47 +1429,60 @@ class MultiLeaderBlockBuilder(MultiLeaderBuilder):
         self._block_layout = block_layout
         return block_layout
 
+    @property
+    def extents(self) -> BoundingBox:
+        if not self._extents.has_data:
+            from ezdxf import bbox
+
+            block_layout = self.block_layout
+            extents = bbox.extents(
+                e for e in block_layout if e.dxftype() != "ATTDEF"
+            )
+            if not extents.has_data:
+                extents.extend([NULLVEC])
+            self._extents = extents
+        return self._extents
+
     def _build_connection_box(self) -> ConnectionBox:
         """Returns the connection box with the connection points on all 4 sides
         in build UCS coordinates. The origin of the build ucs is the insertion
         point of the BLOCK content.
         """
         # ignore the landing gap for BLOCK content
-        from ezdxf import bbox
-
         block = self.context.block
         assert isinstance(block, BlockData), "undefined BLOCK content"
 
         # todo: block_connection_type
         block_connection_type = self._multileader.dxf.block_connection_type
         block_layout = self.block_layout
-        extents = bbox.extents(
-            e for e in block_layout if e.dxftype() != "ATTDEF"
-        )
-        if not extents.has_data:
-            extents.extend([NULLVEC])
+        extents = self.extents
         sx = block.scale.x
         sy = block.scale.y
         width2 = extents.size.x * 0.5 * sx
         height2 = extents.size.y * 0.5 * sx
         base_x = block_layout.base_point.x * sx
         base_y = block_layout.base_point.y * sy
-        center_x = extents.center.x * sx
-        center_y = extents.center.y * sy
-        insert_x = center_x - base_x
-        insert_y = center_y - base_y
+        center_x = extents.center.x * sx - base_x
+        center_y = extents.center.y * sy - base_y
+
+        if block_connection_type == BlockAlignment.center_extents:
+            # adjustment of the insert point is required!
+            block.insert -= Vec3(center_x, center_y, 0)
+            center_x = 0.0
+            center_y = 0.0
+
         return ConnectionBox(
-            left=Vec2(insert_x - width2, 0.0),
-            right=Vec2(insert_x + width2, 0.0),
-            top=Vec2(0.0, insert_y + height2),
-            bottom=Vec2(0.0, insert_y - height2),
+            left=Vec2(center_x - width2, center_y),
+            right=Vec2(center_x + width2, center_y),
+            top=Vec2(center_x, center_y + height2),
+            bottom=Vec2(center_x, center_y - height2),
         )
 
     def _transform_content_to_render_ucs(self, insert: Vec2, rotation: float):
         block = self.context.block
         assert isinstance(block, BlockData), "undefined BLOCK content"
         block.extrusion = Z_AXIS
-        block.insert = Vec3(insert)
+        block.insert += Vec3(insert)
         block.rotation += rotation
 
     def _apply_conversion_factor(self, conversion_factor: float) -> None:
