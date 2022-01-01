@@ -127,7 +127,7 @@ acdb_mleader = DefSubclass(
         "dogleg_length": DXFAttr(41, default=8),  # depend on $MEASUREMENT?
         # no handle is default arrow 'closed filled':
         "arrow_head_handle": DXFAttr(342),
-        # unscaled arroe head size:
+        # unscaled arrow head size:
         "arrow_head_size": DXFAttr(42, default=4),  # depend on $MEASUREMENT?
         "content_type": DXFAttr(172, default=2),
         # 0 = None

@@ -191,7 +191,9 @@ def quick_mtext_vertical(name: str):
     doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
 
 
-def create_block(doc: "Drawing", size: float, margin: float, base_point: Vec2 = NULLVEC) -> "BlockLayout":
+def create_block(
+    doc: "Drawing", size: float, margin: float, base_point: Vec2 = NULLVEC
+) -> "BlockLayout":
     attribs = GfxAttribs(color=colors.RED)
     block = doc.blocks.new("SQUARE", base_point=base_point)
     block.add_lwpolyline(forms.square(size), close=True, dxfattribs=attribs)
@@ -210,12 +212,19 @@ def create_block(doc: "Drawing", size: float, margin: float, base_point: Vec2 = 
     return block
 
 
-def block_content_horizontal(name: str, align: mleader.BlockAlignment):
+def block_content_horizontal(
+    name: str,
+    align: mleader.BlockAlignment,
+    base_point=Vec2(0, 0),
+    scale=1.0,
+    rotation=0.0,
+):
     doc = ezdxf.new(DXFVERSION, setup=True)
-    block = create_block(doc, size=8.0, margin=0.25)
+    block = create_block(doc, size=8.0, margin=0.25, base_point=base_point)
     msp = doc.modelspace()
     ml_builder = msp.add_multileader_block(style="Standard")
-    ml_builder.set_content(name=block.name, alignment=align)
+    ml_builder.set_content(name=block.name, alignment=align, scale=scale)
+    ml_builder.set_leader_properties(linetype="CONTINUOUS")
     ml_builder.set_attribute("ONE", "Data1")
     ml_builder.set_attribute("TWO", "Data2")
 
@@ -231,18 +240,25 @@ def block_content_horizontal(name: str, align: mleader.BlockAlignment):
     # The insert point (in UCS coordinates= is the insert location for BLOCK
     # content:
     insert = Vec2(5, 2)
-    ml_builder.build(insert=insert)
+    ml_builder.build(insert=insert, rotation=rotation)
     msp.add_circle(insert, radius=0.25)
+    msp.add_lwpolyline([(-20, -15), (40, -15), (40, 15), (-20, 15)], close=True)
     doc.set_modelspace_vport(60, center=(10, 5))
     doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
 
 
-def block_content_vertical(name: str, align: mleader.BlockAlignment):
+def block_content_vertical(
+    name: str,
+    align: mleader.BlockAlignment,
+    base_point=Vec2(0, 0),
+    scale=1.0,
+    rotation=0.0,
+):
     doc = ezdxf.new(DXFVERSION, setup=True)
-    block = create_block(doc, size=8.0, margin=0.25)
+    block = create_block(doc, size=8.0, margin=0.25, base_point=base_point)
     msp = doc.modelspace()
     ml_builder = msp.add_multileader_block(style="Standard")
-    ml_builder.set_content(name=block.name, alignment=align)
+    ml_builder.set_content(name=block.name, alignment=align, scale=scale)
     ml_builder.set_attribute("ONE", "Data1")
     ml_builder.set_attribute("TWO", "Data2")
     ml_builder.add_leader_line(mleader.ConnectionSide.top, [Vec2(20, 20)])
@@ -254,7 +270,14 @@ def block_content_vertical(name: str, align: mleader.BlockAlignment):
     insert = Vec2(5, 2)
     ml_builder.build(insert=insert)
     msp.add_circle(insert, radius=0.25)
+    msp.add_lwpolyline([(-20, -20), (20, -20), (20, 20), (-20, 20)], close=True)
     doc.set_modelspace_vport(60, center=(10, 5))
+    doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
+
+
+def make_template(name: str):
+    doc = ezdxf.new(DXFVERSION, setup=True)
+    create_block(doc, size=8.0, margin=0.25)
     doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
 
 
@@ -267,16 +290,20 @@ if __name__ == "__main__":
     block_content_horizontal(
         "block_center_extents_horizontal",
         mleader.BlockAlignment.center_extents,
+        base_point=Vec2(1, 2),
     )
     block_content_horizontal(
         "block_insertion_point_horizontal",
         mleader.BlockAlignment.insertion_point,
+        base_point=Vec2(1, 2),
     )
     block_content_vertical(
         "block_center_extents_vertical",
         mleader.BlockAlignment.center_extents,
+        base_point=Vec2(1, 2),
     )
     block_content_vertical(
         "block_insertion_point_vertical",
         mleader.BlockAlignment.insertion_point,
+        base_point=Vec2(1, 2),
     )

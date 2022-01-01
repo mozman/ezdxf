@@ -1012,7 +1012,6 @@ class MultiLeaderBuilder(abc.ABC):
         # transformation matrix from build ucs to render ucs
         m = Matrix44.z_rotate(rotation)
         m.set_row(3, (insert.x, insert.y))  # fast translation
-
         self._set_required_multileader_attributes()
         self._transform_content_to_render_ucs(insert, rotation)
         connection_box = self._build_connection_box()
@@ -1405,6 +1404,7 @@ class MultiLeaderBlockBuilder(MultiLeaderBuilder):
         block.color = multileader.dxf.block_color
 
     def _reset_cache(self):
+        super()._reset_cache()
         self._block_layout = None
         self._extents = BoundingBox()
 
@@ -1470,7 +1470,6 @@ class MultiLeaderBlockBuilder(MultiLeaderBuilder):
             block.insert -= Vec3(center_x, center_y, 0)
             center_x = 0.0
             center_y = 0.0
-
         return ConnectionBox(
             left=Vec2(center_x - width2, center_y),
             right=Vec2(center_x + width2, center_y),
@@ -1483,7 +1482,7 @@ class MultiLeaderBlockBuilder(MultiLeaderBuilder):
         assert isinstance(block, BlockData), "undefined BLOCK content"
         block.extrusion = Z_AXIS
         block.insert += Vec3(insert)
-        block.rotation += rotation
+        block.rotation = rotation
 
     def _apply_conversion_factor(self, conversion_factor: float) -> None:
         block = self.context.block
@@ -1495,7 +1494,6 @@ class MultiLeaderBlockBuilder(MultiLeaderBuilder):
         name: str,  # block name
         color: Union[int, colors.RGB] = colors.BYBLOCK,
         scale: float = 1.0,
-        rotation: float = 0.0,
         alignment=BlockAlignment.center_extents,
     ):
         mleader = self._multileader
@@ -1503,10 +1501,10 @@ class MultiLeaderBlockBuilder(MultiLeaderBuilder):
         block = self._doc.blocks.get(name)
         if block is None:
             raise ValueError(f"undefined BLOCK '{name}'")
+        # All angles in MultiLeader are radians!
         mleader.dxf.block_record_handle = block.block_record_handle
         mleader.dxf.block_color = colors.encode_raw_color(color)
         mleader.dxf.block_scale_vector = Vec3(scale, scale, scale)
-        mleader.dxf.block_rotation = rotation
         mleader.dxf.block_connection_type = int(alignment)
         self._init_content()
 
