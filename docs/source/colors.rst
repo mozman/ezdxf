@@ -1,10 +1,13 @@
-Colors
-======
+Colors Module
+=============
 
 .. module:: ezdxf.colors
 
 This module provides functions and constants to manage all kinds of colors in
 DXF documents.
+
+Converter Functions
+===================
 
 .. autofunction:: rgb2int
 
@@ -24,27 +27,27 @@ DXF documents.
 
 .. autofunction:: float2transparency
 
-ACI Color Constants
--------------------
+ACI Color Values
+================
 
-Common :ref:`ACI` values, there also exist an IntEnum :class:`ezdxf.enums.ACI`
+Common :ref:`ACI` values, also accessible as IntEnum :class:`ezdxf.enums.ACI`
 
-=========== ===
-BYBLOCK     0
-BYLAYER     256
-BYOBJECT    257
-RED         1
-YELLOW      2
-GREEN       3
-CYAN        4
-BLUE        5
-MAGENTA     6
-BLACK       7
-WHITE       7
-=========== ===
+=========================== ===
+BYBLOCK                     0
+BYLAYER                     256
+BYOBJECT                    257
+RED                         1
+YELLOW                      2
+GREEN                       3
+CYAN                        4
+BLUE                        5
+MAGENTA                     6
+BLACK (on light background) 7
+WHITE (on dark background)  7
+=========================== ===
 
 Default Palettes
-----------------
+================
 
 Default color mappings from :ref:`ACI` to :term:`true color` values.
 
@@ -54,7 +57,7 @@ paper space DXF_DEFAULT_PAPERSPACE_COLORS
 =========== =============================
 
 Raw Color Types
----------------
+===============
 
 ======================= ====
 COLOR_TYPE_BY_LAYER     0xC0
@@ -64,8 +67,8 @@ COLOR_TYPE_ACI          0xC3
 COLOR_TYPE_WINDOW_BG    0xC8
 ======================= ====
 
-Raw Color Constants
--------------------
+Raw Color Vales
+===============
 
 =================== ============
 BY_LAYER_RAW_VALUE  -1073741824
@@ -73,8 +76,8 @@ BY_BLOCK_RAW_VALUE  -1056964608
 WINDOW_BG_RAW_VALUE -939524096
 =================== ============
 
-Transparency Constants
-----------------------
+Transparency Values
+===================
 
 ======================= =========
 OPAQUE                  0x20000FF

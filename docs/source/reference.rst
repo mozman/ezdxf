@@ -62,6 +62,14 @@ Enums
 
     enums
 
+Colors
+------
+
+.. toctree::
+    :maxdepth: 1
+
+    colors
+
 Data Query
 ----------
 
@@ -106,7 +114,6 @@ Tools
     :maxdepth: 2
 
     tools/functions
-    tools/colors
     tools/gfxattribs
     tools/text
     tools/text_size
