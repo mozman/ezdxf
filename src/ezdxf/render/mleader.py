@@ -492,13 +492,16 @@ class RenderEngine:
         if block_name is None:
             return
         location = block.insert  # in WCS, really funny for an OCS entity!
+        rotation = math.degrees(block.rotation)
         if self.ocs is not None:
             location = self.ocs.from_wcs(location)
         aci_color, true_color = decode_raw_color(block.color)
         scale = block.scale
+
         attribs = {
             "name": block_name,
             "insert": location,
+            "rotation": rotation,
             "color": aci_color,
             "extrusion": block.extrusion,
             "xscale": scale.x,

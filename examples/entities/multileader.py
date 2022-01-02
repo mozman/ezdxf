@@ -8,7 +8,7 @@ import ezdxf
 from ezdxf import colors
 from ezdxf.enums import TextEntityAlignment
 from ezdxf.gfxattribs import GfxAttribs
-from ezdxf.math import Vec2, UCS, NULLVEC
+from ezdxf.math import Vec2, UCS, NULLVEC, ConstructionBox
 from ezdxf.render import forms, mleader
 
 if TYPE_CHECKING:
@@ -216,15 +216,19 @@ def block_content_horizontal(
     name: str,
     align: mleader.BlockAlignment,
     base_point=Vec2(0, 0),
-    scale=1.0,
-    rotation=0.0,
+    block_scale=1.0,
+    block_rotation=0.0,
+    overall_scale=1.0,
 ):
+    x1, y1, x2, y2 = -40, -40, 60, 40
+    construction_box = ConstructionBox.from_points((x1, y1), (x2, y2))
+
     doc = ezdxf.new(DXFVERSION, setup=True)
     block = create_block(doc, size=8.0, margin=0.25, base_point=base_point)
     msp = doc.modelspace()
     ml_builder = msp.add_multileader_block(style="Standard")
-    ml_builder.set_content(name=block.name, alignment=align, scale=scale)  # block scale
-    ml_builder.set_leader_properties(linetype="CONTINUOUS")
+    ml_builder.set_content(name=block.name, alignment=align, scale=block_scale)
+    ml_builder.set_overall_scaling(overall_scale)
     ml_builder.set_attribute("ONE", "Data1")
     ml_builder.set_attribute("TWO", "Data2")
 
@@ -233,17 +237,22 @@ def block_content_horizontal(
     # The leader lines vertices are expected in render UCS coordinates, which
     # means relative to the UCS origin!
     # This example shows the simplest way UCS==WCS!
-    ml_builder.add_leader_line(mleader.ConnectionSide.right, [Vec2(40, 15)])
-    ml_builder.add_leader_line(mleader.ConnectionSide.right, [Vec2(40, -15)])
-    ml_builder.add_leader_line(mleader.ConnectionSide.left, [Vec2(-20, -15)])
+    ml_builder.add_leader_line(mleader.ConnectionSide.right, [Vec2(x2, y1)])
+    ml_builder.add_leader_line(mleader.ConnectionSide.right, [Vec2(x2, y2)])
+    ml_builder.add_leader_line(mleader.ConnectionSide.left, [Vec2(x1, y1)])
+    ml_builder.add_leader_line(mleader.ConnectionSide.left, [Vec2(x1, y2)])
 
-    # The insert point (in UCS coordinates= is the insert location for BLOCK
+    # The insert point (in UCS coordinates is the insert location for BLOCK
     # content:
     insert = Vec2(5, 2)
-    ml_builder.build(insert=insert, rotation=rotation)
-    msp.add_circle(insert, radius=0.25)
-    msp.add_lwpolyline([(-20, -15), (40, -15), (40, 15), (-20, 15)], close=True)
-    doc.set_modelspace_vport(60, center=(10, 5))
+    ml_builder.build(insert=insert, rotation=block_rotation)
+
+    # visual additions:
+    msp.add_circle(insert, radius=0.25)  # show the insertion point
+    msp.add_lwpolyline(construction_box.corners, close=True)  # draw target box
+    doc.set_modelspace_vport(
+        construction_box.width, center=construction_box.center
+    )
     doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
 
 
@@ -251,27 +260,39 @@ def block_content_vertical(
     name: str,
     align: mleader.BlockAlignment,
     base_point=Vec2(0, 0),
-    scale=1.0,
-    rotation=0.0,
+    block_scale=1.0,
+    block_rotation=0.0,
+    overall_scale=1.0,
 ):
+    x1, y1, x2, y2 = -30, -30, 30, 30
+    construction_box = ConstructionBox.from_points((x1, y1), (x2, y2))
+
     doc = ezdxf.new(DXFVERSION, setup=True)
     block = create_block(doc, size=8.0, margin=0.25, base_point=base_point)
     msp = doc.modelspace()
     ml_builder = msp.add_multileader_block(style="Standard")
-    ml_builder.set_content(name=block.name, alignment=align, scale=scale)  # block scale
+    ml_builder.set_content(
+        name=block.name, alignment=align, scale=block_scale
+    )  # block scale
+    ml_builder.set_overall_scaling(overall_scale)
     ml_builder.set_attribute("ONE", "Data1")
     ml_builder.set_attribute("TWO", "Data2")
-    ml_builder.add_leader_line(mleader.ConnectionSide.top, [Vec2(20, 20)])
-    ml_builder.add_leader_line(mleader.ConnectionSide.top, [Vec2(-20, 20)])
-    ml_builder.add_leader_line(mleader.ConnectionSide.bottom, [Vec2(20, -20)])
+    ml_builder.add_leader_line(mleader.ConnectionSide.top, [Vec2(x1, y2)])
+    ml_builder.add_leader_line(mleader.ConnectionSide.top, [Vec2(x2, y2)])
+    ml_builder.add_leader_line(mleader.ConnectionSide.bottom, [Vec2(x1, y1)])
+    ml_builder.add_leader_line(mleader.ConnectionSide.bottom, [Vec2(x2, y1)])
 
     # The insert point (in UCS coordinates= is the insert location for BLOCK
     # content:
     insert = Vec2(5, 2)
-    ml_builder.build(insert=insert, rotation=rotation)
-    msp.add_circle(insert, radius=0.25)
-    msp.add_lwpolyline([(-20, -20), (20, -20), (20, 20), (-20, 20)], close=True)
-    doc.set_modelspace_vport(60, center=(10, 5))
+    ml_builder.build(insert=insert, rotation=block_rotation)
+
+    # visual additions:
+    msp.add_circle(insert, radius=0.25)  # show the insertion point
+    msp.add_lwpolyline(construction_box.corners, close=True)  # draw target box
+    doc.set_modelspace_vport(
+        construction_box.width, center=construction_box.center
+    )
     doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
 
 
@@ -287,29 +308,47 @@ if __name__ == "__main__":
     # simple_mtext_content_horizontal("mleader_simple_mtext_horizontal")
     # simple_mtext_content_vertical("mleader_simple_mtext_vertical")
     # all_mtext_content_horizontal("mleader_all_mtext_horizontal")
+
+    # only block scaling - dogleg_length and arrow_size is not affected
     block_content_horizontal(
-        "block_center_extents_horizontal",
+        "horizontal_block_x2_center_extents",
         mleader.BlockAlignment.center_extents,
         base_point=Vec2(1, 2),
-        scale=2,
-        rotation=30,
+        block_scale=2,
+        block_rotation=30,
+    )
+    # only block scaling - dogleg_length and arrow_size is not affected
+    block_content_horizontal(
+        "horizontal_block_center_extents_all_x2",
+        mleader.BlockAlignment.center_extents,
+        base_point=Vec2(1, 2),
+        overall_scale=2,
+        block_rotation=30,
+    )
+
+    block_content_horizontal(
+        "horizontal_block_x2_insertion_point",
+        mleader.BlockAlignment.insertion_point,
+        base_point=Vec2(1, 2),
+        block_scale=2,
+        block_rotation=30,
     )
     block_content_horizontal(
-        "block_insertion_point_horizontal",
+        "horizontal_block_insertion_point_all_x2",
         mleader.BlockAlignment.insertion_point,
         base_point=Vec2(1, 2),
-        scale=2,
-        rotation=30,
+        block_scale=2,
+        block_rotation=30,
     )
     block_content_vertical(
-        "block_center_extents_vertical",
+        "vertical_block_center_extents",
         mleader.BlockAlignment.center_extents,
-        rotation=30,
+        block_rotation=30,
         base_point=Vec2(1, 2),
     )
     block_content_vertical(
-        "block_insertion_point_vertical",
+        "vertical_block_insertion_point",
         mleader.BlockAlignment.insertion_point,
-        rotation=30,
+        block_rotation=30,
         base_point=Vec2(1, 2),
     )
