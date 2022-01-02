@@ -15,6 +15,7 @@ Version 0.17.2b5 - dev
   - `macosx_11_0_arm64` for Apple silicon
   - `macosx_10_9_universal2` for Apple silicon & x86
 - NEW: Auditor fixes invalid transparency values
+- NEW: Auditor fixes invalid crease data in `MESH` entities
 - NEW: add `transparency` argument to `LayerTable.add()`
 - NEW: support for transparency `BYLAYER` and `BYBLOCK` for the `drawing` add-on
 - NEW: `Textstyle.make_font()` returns the ezdxf font abstraction
