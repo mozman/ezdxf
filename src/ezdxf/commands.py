@@ -1,4 +1,4 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
 from typing import Callable, Optional, Dict, TYPE_CHECKING, Type
 import abc
@@ -240,12 +240,17 @@ def load_document(filename: str):
     return doc, auditor
 
 
-HELP_LTYPE = "select the line type rendering method, default is approximate. " \
-             "Approximate uses the closest approximation available to the " \
-             "backend, the accurate method renders as accurately as possible " \
-             "but this approach is slower."
-HELP_LWSCALE = "set custom line weight scaling, default is 0 to disable line " \
-               "weights at all"
+HELP_LTYPE = (
+    "select the line type rendering method, default is approximate. "
+    "Approximate uses the closest approximation available to the "
+    "backend, the accurate method renders as accurately as possible "
+    "but this approach is slower."
+)
+HELP_LWSCALE = (
+    "set custom line weight scaling, default is 0 to disable line "
+    "weights at all"
+)
+
 
 @register
 class Draw(Command):
@@ -592,6 +597,53 @@ class Config(Command):
             options.write_home_config()
         if args.print:
             options.print()
+
+
+@register
+class Info(Command):
+    """Launcher sub-command: info"""
+
+    NAME = "info"
+
+    @staticmethod
+    def add_parser(subparsers):
+        parser = subparsers.add_parser(
+            Info.NAME, help="show information and metadata of DXF files"
+        )
+        parser.add_argument(
+            "file",
+            metavar="FILE",
+            nargs="+",
+            help='DXF file to process, wildcards "*" and "?" are supported',
+        )
+        parser.add_argument(
+            "-v",
+            "--verbose",
+            action="store_true",
+            required=False,
+            help="give more output",
+        )
+        parser.add_argument(
+            "-s",
+            "--stats",
+            action="store_true",
+            required=False,
+            help="show content stats",
+        )
+
+    @staticmethod
+    def run(args):
+        from ezdxf.document import info
+
+        for pattern in args.file:
+            for filename in glob.glob(pattern):
+                doc, auditor = load_document(filename)
+                print(
+                    "\n".join(
+                        info(doc, verbose=args.verbose, content=args.stats)
+                    )
+                )
+                print()
 
 
 def set_app_icon(app):

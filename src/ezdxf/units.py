@@ -194,3 +194,25 @@ def conversion_factor(
 
     except IndexError:
         raise ValueError("Invalid unit enum.")
+
+
+def unit_name(enum: int) -> str:
+    """Returns the name of the unit enum."""
+    try:
+        name = str(InsertUnits(enum)).split(".")[1]
+    except ValueError:
+        name = f"unknown unit <{enum}>"
+    return name
+
+
+ANGLE_UNITS = {
+    0: "Decimal Degrees",
+    1: "Degrees/Minutes/Seconds",
+    2: "Grad",
+    3: "Radians",
+}
+
+
+def angle_unit_name(enum: int) -> str:
+    """Returns the name of the angle unit enum."""
+    return ANGLE_UNITS.get(enum, f"unknown unit <{enum}>")

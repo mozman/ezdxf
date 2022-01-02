@@ -215,5 +215,9 @@ Helper Tools
 
 .. autofunction:: conversion_factor
 
+.. autofunction:: unit_name
+
+.. autofunction:: angle_unit_name
+
 .. _github: https://github.com/mozman/ezdxf/issues
 .. _DXF reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3

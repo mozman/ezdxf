@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2021, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
 from typing import (
     TYPE_CHECKING,
@@ -1219,3 +1219,100 @@ class R2000MetaData(MetaData):
 
     def __delitem__(self, key: str) -> None:
         self._data.remove(safe_string(key, MAX_STR_LEN))
+
+
+def info(doc: Drawing, verbose=False, content=False) -> List[str]:
+    from ezdxf.units import unit_name
+    from collections import Counter
+
+    def count(entities, indent="  ") -> Iterator[str]:
+        counter: Counter = Counter()
+        for e in entities:
+            counter[e.dxftype()] += 1
+        for name in sorted(counter.keys()):
+            yield f"{indent}{name} ({counter[name]})"
+
+    def append_container(table, name: str, container="table"):
+        indent = "  "
+        data.append(f"{name} {container} entries: {len(table)}")
+        if verbose:
+            if name == "STYLE":
+                names: List[str] = []
+                for entry in table:
+                    name = entry.dxf.name
+                    if name == "":
+                        names.append(f'{indent}*shape-file: "{entry.dxf.font}"')
+                    else:
+                        names.append(f"{indent}{name}")
+            else:
+                names = [f"{indent}{entry.dxf.name}" for entry in table]
+            names.sort()
+            data.extend(names)
+
+    def user_vars(kind: str, indent="") -> Iterator[str]:
+        for i in range(5):
+            name = f"{kind}{i+1}"
+            if name in header:
+                yield f"{indent}{name}={header[name]}"
+
+    header = doc.header
+    data: List[str] = []
+    data.append(f'Filename: "{doc.filename}"')
+    data.append(f"Release: {doc.acad_release}")
+    data.append(f"DXF Version: {doc.dxfversion}")
+    if verbose:
+        data.append(
+            f"Maintenance Version: {header.get('$ACADMAINTVER', '<undefined>')}"
+        )
+    data.append(f"Codepage: {header.get('$DWGCODEPAGE', 'ANSI_1252')}")
+    data.append(f"Encoding: {doc.output_encoding}")
+
+    measurement = "Metric" if header.get("$MEASUREMENT", 0) else "Imperial"
+    if verbose:
+        data.append(f"Last saved by: {header.get('$LASTSAVEDBY', '<unknown>')}")
+        data.append(f"Unit system: {measurement}")
+        data.append(f"Modelspace units: {unit_name(doc.units)}")
+        data.append(
+            f"Next entity handle: #{header.get('$HANDSEED', '<undefined>')}"
+        )
+        data.append(
+            f"Fingerprint GUID: {header.get('$FINGERPRINTGUID', '<undefined>')}"
+        )
+        data.append(
+            f"Version GUID: {header.get('$VERSIONGUID', '<undefined>')}"
+        )
+        data.append("User variables:")
+        data.extend(user_vars(kind="$USERI"))
+        data.extend(user_vars(kind="$USERR"))
+    ezdxf_metadata = doc.ezdxf_metadata()
+    if CREATED_BY_EZDXF in ezdxf_metadata:
+        data.append(f"Created by ezdxf: {ezdxf_metadata.get(CREATED_BY_EZDXF)}")
+    elif verbose:
+        data.append("DXF file was not created by ezdxf >= 0.16.4")
+    if WRITTEN_BY_EZDXF in ezdxf_metadata:
+        data.append(f"Written by ezdxf: {ezdxf_metadata.get(WRITTEN_BY_EZDXF)}")
+    elif verbose:
+        data.append("DXF file was not written by ezdxf >= 0.16.4")
+    if content:
+        data.append("DXF content stats:")
+        append_container(doc.layers, "LAYER")
+        append_container(doc.linetypes, "LTYPE")
+        append_container(doc.styles, "STYLE")
+        append_container(doc.dimstyles, "DIMSTYLE")
+        append_container(doc.appids, "APPID")
+        append_container(doc.ucs, "UCS")
+        append_container(doc.views, "VIEW")
+        append_container(doc.viewports, "VPORT")
+        append_container(doc.block_records, "BLOCK_RECORD")
+        if doc.dxfversion > DXF12:
+            append_container(list(doc.classes), "CLASS", container="section")  # type: ignore
+
+        data.append(f"entities in modelspace: {len(doc.modelspace())}")
+        if verbose:
+            data.extend(count(doc.modelspace()))
+
+        data.append(f"entities in OBJECTS section: {len(doc.objects)}")
+        if verbose:
+            data.extend(count(doc.objects))
+
+    return data

@@ -51,6 +51,7 @@ Version 0.17.2b5 - dev
 - PREVIEW: ordinate dimension rendering support, new factory methods: 
   `add_ordinate_dim()`, `add_ordinate_x_dim()`, `add_ordinate_y_dim()`
 - PREVIEW: `ezdxf.gfxattribs.GfxAttribs()` class, [docs](https://ezdxf.mozman.at/docs/tools/gfxattribs.html)
+- PREVIEW: command `ezdxf info FILE [FILE ...]`, show info and optional stats of DXF files
 
 Version 0.17.1 - 2021-11-14
 ---------------------------

@@ -1,4 +1,4 @@
-Version 0.18 - 2021-12-xx
+Version 0.18 - 2022-01-xx
 -------------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-18.html
@@ -20,6 +20,7 @@ Version 0.18 - 2021-12-xx
 - NEW: method `Text.set_placement()`, replaces `set_pos()` 
 - NEW: method `Text.get_align_enum()`, replaces `get_align()`
 - NEW: method `Text.set_align_enum()`, replaces `set_align()`
+- NEW: command `ezdxf info FILE [FILE ...]`, show info and optional stats of DXF files
 - DEPRECATED: method `Text.get_pos()` will be removed in v1.0.0
 - DEPRECATED: method `Text.set_pos()` will be removed in v1.0.0
 - DEPRECATED: method `Text.get_align()` will be removed in v1.0.0
