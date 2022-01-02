@@ -280,7 +280,7 @@ class Drawing:
         self.header["$ACADVER"] = version
 
     @property
-    def loaded_dxfversion(self) -> str:
+    def loaded_dxfversion(self) -> Optional[str]:
         return self._loaded_dxfversion
 
     @property

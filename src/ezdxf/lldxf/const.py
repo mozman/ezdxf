@@ -1,7 +1,6 @@
 # Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
 from typing import List
-from enum import IntEnum, IntFlag, auto, Enum
 from dataclasses import dataclass
 
 DXF9 = "AC1004"
