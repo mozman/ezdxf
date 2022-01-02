@@ -608,7 +608,10 @@ class Info(Command):
     @staticmethod
     def add_parser(subparsers):
         parser = subparsers.add_parser(
-            Info.NAME, help="show information and metadata of DXF files"
+            Info.NAME, help="show information and optional stats of DXF files loaded "
+                            "by ezdxf, this may not represent the original "
+                            "content of the file, use the browse command to "
+                            "see the original content"
         )
         parser.add_argument(
             "file",

@@ -280,6 +280,10 @@ class Drawing:
         self.header["$ACADVER"] = version
 
     @property
+    def loaded_dxfversion(self) -> str:
+        return self._loaded_dxfversion
+
+    @property
     def output_encoding(self):
         """Returns required output encoding for writing document to a text
         streams.
@@ -1255,9 +1259,21 @@ def info(doc: Drawing, verbose=False, content=False) -> List[str]:
             if name in header:
                 yield f"{indent}{name}={header[name]}"
 
+    def append_header_var(name: str, indent=""):
+        data.append(f"{indent}{name}: {header.get(name, '<undefined>')}")
+
     header = doc.header
+    loaded_dxf_version = doc.loaded_dxfversion
+    if loaded_dxf_version is None:
+        loaded_dxf_version = doc.dxfversion
     data: List[str] = []
     data.append(f'Filename: "{doc.filename}"')
+    if loaded_dxf_version != doc.dxfversion:
+        msg = f"Loaded content was upgraded from DXF Version {loaded_dxf_version}"
+        release = const.acad_release.get(loaded_dxf_version, "")
+        if release:
+            msg += f" ({release})"
+        data.append(msg)
     data.append(f"Release: {doc.acad_release}")
     data.append(f"DXF Version: {doc.dxfversion}")
     if verbose:
@@ -1269,32 +1285,25 @@ def info(doc: Drawing, verbose=False, content=False) -> List[str]:
 
     measurement = "Metric" if header.get("$MEASUREMENT", 0) else "Imperial"
     if verbose:
-        data.append(f"Last saved by: {header.get('$LASTSAVEDBY', '<unknown>')}")
         data.append(f"Unit system: {measurement}")
         data.append(f"Modelspace units: {unit_name(doc.units)}")
-        data.append(
-            f"Next entity handle: #{header.get('$HANDSEED', '<undefined>')}"
-        )
-        data.append(
-            f"Fingerprint GUID: {header.get('$FINGERPRINTGUID', '<undefined>')}"
-        )
-        data.append(
-            f"Version GUID: {header.get('$VERSIONGUID', '<undefined>')}"
-        )
-        data.append("User variables:")
+        append_header_var('$LASTSAVEDBY')
+        append_header_var('$HANDSEED')
+        append_header_var('$FINGERPRINTGUID')
+        append_header_var('$VERSIONGUID')
         data.extend(user_vars(kind="$USERI"))
         data.extend(user_vars(kind="$USERR"))
     ezdxf_metadata = doc.ezdxf_metadata()
     if CREATED_BY_EZDXF in ezdxf_metadata:
         data.append(f"Created by ezdxf: {ezdxf_metadata.get(CREATED_BY_EZDXF)}")
     elif verbose:
-        data.append("DXF file was not created by ezdxf >= 0.16.4")
+        data.append("File was not created by ezdxf >= 0.16.4")
     if WRITTEN_BY_EZDXF in ezdxf_metadata:
         data.append(f"Written by ezdxf: {ezdxf_metadata.get(WRITTEN_BY_EZDXF)}")
     elif verbose:
-        data.append("DXF file was not written by ezdxf >= 0.16.4")
+        data.append("File was not written by ezdxf >= 0.16.4")
     if content:
-        data.append("DXF content stats:")
+        data.append("Content stats:")
         append_container(doc.layers, "LAYER")
         append_container(doc.linetypes, "LTYPE")
         append_container(doc.styles, "STYLE")
