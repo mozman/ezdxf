@@ -11,6 +11,7 @@ The command line script `ezdxf` launches various sub-commands:
 ``browse``  PyQt DXF structure browser for DXF debugging and curious people
 ``strip``   Strip comments and THUMBNAILIMAGE section from DXF files
 ``config``  Manage config files
+``info``    Show information and optional stats of DXF files as loaded by ezdxf
 =========== ====================================================================
 
 The help option ``-h`` is supported by the main script and all sub-commands:
@@ -33,6 +34,9 @@ The help option ``-h`` is supported by the main script and all sub-commands:
         browse              browse DXF file structure
         strip               strip comments from DXF files
         config              manage config files
+        info                show information and optional stats of DXF files loaded by ezdxf,
+                            this may not represent the original content of the file, use the
+                            browse command to see the original content
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -377,6 +381,122 @@ To create a new config file "my.ini" by printing the configuration into a file:
 .. code-block:: Text
 
     C:\> ezdxf config -p > my.ini
+
+Info
+----
+
+Show information and optional stats of DXF files as loaded by ezdxf, this may
+not represent the original content of the file, use the `browse`_ command to see
+the original content. The upgrade is necessary for very old DXF versions
+prior to R12 and for the "special" versions R13 and R14. The `-s` option shows
+some statistics about the DXF content like entity count or table count. Use the
+`-v` option show more of everything.
+
+.. code-block:: Text
+
+    C:\> ezdxf info -h
+    usage: ezdxf info [-h] [-v] [-s] FILE [FILE ...]
+
+    positional arguments:
+      FILE           DXF file to process, wildcards "*" and "?" are supported
+
+    options:
+      -h, --help     show this help message and exit
+      -v, --verbose  give more output
+      -s, --stats    show content stats
+
+This is the verbose output for an old DXF R10 file and shows that the loading
+process created some required structures which do not exist in DXF R10 files,
+like the BLOCK_RECORD table or the OBJECTS section:
+
+.. code-block:: Text
+
+    C:\> ezdxf info -v -s test_R10.dxf
+
+    Filename: "test_R10.dxf"
+    Loaded content was upgraded from DXF Version AC1006 (R10)
+    Release: R12
+    DXF Version: AC1009
+    Maintenance Version: <undefined>
+    Codepage: ANSI_1252
+    Encoding: cp1252
+    Unit system: Imperial
+    Modelspace units: Unitless
+    $LASTSAVEDBY: <undefined>
+    $HANDSEED: 0
+    $FINGERPRINTGUID: {9EADDC7C-5982-4C68-B770-8A62378C2B90}
+    $VERSIONGUID: {49336E63-D99B-45EC-803C-4D2BD03A7DE0}
+    $USERI1=0
+    $USERI2=0
+    $USERI3=0
+    $USERI4=0
+    $USERI5=0
+    $USERR1=0.0
+    $USERR2=0.0
+    $USERR3=0.0
+    $USERR4=0.0
+    $USERR5=0.0
+    File was not created by ezdxf >= 0.16.4
+    File was not written by ezdxf >= 0.16.4
+    Content stats:
+    LAYER table entries: 18
+      0
+      Defpoints
+      LYR_00
+      LYR_01
+      LYR_02
+      LYR_03
+      LYR_04
+      LYR_05
+      LYR_06
+      LYR_07
+      LYR_08
+      LYR_09
+      LYR_10
+      LYR_11
+      LYR_12
+      LYR_13
+      LYR_14
+      LYR_15
+    LTYPE table entries: 13
+      BORDER
+      ByBlock
+      ByLayer
+      CENTER
+      CONTINUOUS
+      CUTTING
+      DASHDOT
+      DASHED
+      DIVIDE
+      DOT
+      HIDDEN
+      PHANTOM
+      STITCH
+    STYLE table entries: 1
+      STANDARD
+    DIMSTYLE table entries: 1
+      Standard
+    APPID table entries: 1
+      ACAD
+    UCS table entries: 0
+    VIEW table entries: 0
+    VPORT table entries: 1
+      *Active
+    BLOCK_RECORD table entries: 2
+      *Model_Space
+      *Paper_Space
+    Entities in modelspace: 78
+      ARC (2)
+      CIRCLE (2)
+      LINE (74)
+    Entities in OBJECTS section: 20
+      ACDBDICTIONARYWDFLT (1)
+      ACDBPLACEHOLDER (1)
+      DICTIONARY (11)
+      LAYOUT (2)
+      MATERIAL (3)
+      MLEADERSTYLE (1)
+      MLINESTYLE (1)
 
 
 Show Version & Configuration

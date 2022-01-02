@@ -1260,7 +1260,7 @@ def info(doc: Drawing, verbose=False, content=False) -> List[str]:
                 yield f"{indent}{name}={header[name]}"
 
     def append_header_var(name: str, indent=""):
-        data.append(f"{indent}{name}: {header.get(name, '<undefined>')}")
+        data.append(f"{indent}{name}: {header.get(name, '<undefined>').strip()}")
 
     header = doc.header
     loaded_dxf_version = doc.loaded_dxfversion
@@ -1293,6 +1293,9 @@ def info(doc: Drawing, verbose=False, content=False) -> List[str]:
         append_header_var('$VERSIONGUID')
         data.extend(user_vars(kind="$USERI"))
         data.extend(user_vars(kind="$USERR"))
+        for name, value in header.custom_vars:
+            data.append(f"Custom property \"{name}\": \"{value}\"")
+
     ezdxf_metadata = doc.ezdxf_metadata()
     if CREATED_BY_EZDXF in ezdxf_metadata:
         data.append(f"Created by ezdxf: {ezdxf_metadata.get(CREATED_BY_EZDXF)}")
@@ -1316,11 +1319,11 @@ def info(doc: Drawing, verbose=False, content=False) -> List[str]:
         if doc.dxfversion > DXF12:
             append_container(list(doc.classes), "CLASS", container="section")  # type: ignore
 
-        data.append(f"entities in modelspace: {len(doc.modelspace())}")
+        data.append(f"Entities in modelspace: {len(doc.modelspace())}")
         if verbose:
             data.extend(count(doc.modelspace()))
 
-        data.append(f"entities in OBJECTS section: {len(doc.objects)}")
+        data.append(f"Entities in OBJECTS section: {len(doc.objects)}")
         if verbose:
             data.extend(count(doc.objects))
 
