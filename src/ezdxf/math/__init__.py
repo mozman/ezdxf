@@ -1,6 +1,6 @@
-# Copyright (c) 2010-2021, Manfred Moitzi
+# Copyright (c) 2010-2022, Manfred Moitzi
 # License: MIT License
-from typing import Union, Sequence, Iterable
+from typing import Iterable
 # Using * imports to simplify namespace imports, therefore every module
 # has to have an export declaration: __all__ = [...]
 
@@ -30,9 +30,6 @@ from .transformtools import *
 from .curvetools import *
 from .clipping import *
 from .polyline import *
-
-AnyVec = Union[Vec2, Vec3]
-Vertex = Union[Sequence[float], AnyVec]
 
 ABS_TOL = 1e-12
 REL_TOL = 1e-9

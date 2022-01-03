@@ -1,7 +1,7 @@
 # Copyright (c) 2010-2020 Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.math import Bezier, Matrix44
+from ezdxf.math import Bezier, Matrix44, split_bezier, Vec2, close_vectors
 
 DEFPOINTS2D = [
     (0.0, 0.0, 0.0),
@@ -91,6 +91,39 @@ def test_flattening():
     curve = Bezier([(0, 0), (1, 1), (2, -1), (3, 0)])
     assert len(list(curve.flattening(1.0, segments=4))) == 5
     assert len(list(curve.flattening(0.1, segments=4))) == 7
+
+
+class TestSplitBezier:
+    @pytest.fixture
+    def points3(self):
+        return Vec2.list([(0, 0), (0, 1), (1.5, 0.75), (2, 2)])
+
+    @pytest.mark.parametrize("t", [-1, 2])
+    def test_t_validation(self, points3, t):
+        with pytest.raises(ValueError):
+            split_bezier(points3, t)
+
+    def test_control_point_validation(self):
+        with pytest.raises(ValueError):
+            split_bezier([Vec2(0, 0)], 0.5)
+
+    def test_split_cubic_bezier(self, points3):
+        left, right = split_bezier(points3, 0.5)
+        assert (
+            close_vectors(
+                left,
+                [(0.0, 0.0), (0.0, 0.5), (0.375, 0.6875), (0.8125, 0.90625)],
+            )
+            is True
+        )
+
+        assert (
+            close_vectors(
+                right,
+                [(2.0, 2.0), (1.75, 1.375), (1.25, 1.125), (0.8125, 0.90625)],
+            )
+            is True
+        )
 
 
 POINTS2D = [
