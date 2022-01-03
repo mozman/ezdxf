@@ -14,6 +14,7 @@ Version 0.18 - 2022-01-xx
 - NEW: helper class `ezdxf.math.ConstructionPolyline` to measure, interpolate and 
   divide polylines and anything that can be approximated or flattened into 
   vertices
+- NEW: approximation tool for parametrized curves: `ezdxf.math.ApproxParamT()`
 - NEW: `ezdxf.gfxattribs.GfxAttribs()` class, [docs](https://ezdxf.mozman.at/docs/tools/gfxattribs.html)
 - NEW: `TextEntityAlignment` enum replaces the string based alignment definition
 - NEW: method `Text.get_placement()`, replaces `get_pos()` 

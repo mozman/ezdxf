@@ -54,6 +54,7 @@ Version 0.17.2b5 - dev
   `add_ordinate_dim()`, `add_ordinate_x_dim()`, `add_ordinate_y_dim()`
 - PREVIEW: `ezdxf.gfxattribs.GfxAttribs()` class, [docs](https://ezdxf.mozman.at/docs/tools/gfxattribs.html)
 - PREVIEW: command `ezdxf info FILE [FILE ...]`, show info and optional stats of DXF files
+- PREVIEW: approximation tool for parametrized curves: `ezdxf.math.ApproxParamT()`
 
 Version 0.17.1 - 2021-11-14
 ---------------------------

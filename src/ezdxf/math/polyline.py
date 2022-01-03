@@ -38,6 +38,8 @@ class ConstructionPolyline(Sequence):
             # get dividing points with a distance of 1.0 drawing unit to each other
             points = list(polyline.divide_by_length(1.0))
 
+    .. versionadded:: 0.18
+
     """
 
     def __init__(
@@ -220,10 +222,17 @@ class ApproxParamT:
     a :meth:`point` method, like :class:`Bezier4P`, :class:`Bezier3P` and
     :class:`BSpline`.
 
+    The approximation is based on equally spaced parameters from 0 to `max_t`
+    for a given segment count.
+    The :meth:`flattening` method can not be used for the curve approximation,
+    because the required parameter `t` is not logged by the flattening process.
+
     Args:
         curve: curve object, requires a method :meth:`point`
         max_t: the max. parameter value
         segments: count of approximation segments
+
+    .. versionadded:: 0.18
 
     """
 
