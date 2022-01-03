@@ -1022,7 +1022,18 @@ Bezier3P
 
     .. automethod:: tangent(t: float) -> Union[Vec3, Vec2]
 
+ApproxParamT
+------------
 
+.. autoclass:: ApproxParamT(curve, *, max_t: float = 1.0, segments: int = 100)
+
+    .. autoproperty:: max_t
+
+    .. autoproperty:: polyline
+
+    .. automethod:: param_t
+
+    .. automethod:: distance
 
 BezierSurface
 -------------

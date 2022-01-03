@@ -1,13 +1,14 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 from typing import Iterable, List, TYPE_CHECKING, Tuple, Iterator, Sequence
-from ezdxf.math import Vec3, linspace, NULLVEC
+from typing_extensions import Protocol
+from ezdxf.math import Vec3, linspace, NULLVEC, Vertex
 import bisect
 
 if TYPE_CHECKING:
     from ezdxf.math import Vertex
 
-__all__ = ["ConstructionPolyline"]
+__all__ = ["ConstructionPolyline", "ApproxParamT"]
 
 REL_TOL = 1e-9
 
@@ -38,9 +39,10 @@ class ConstructionPolyline(Sequence):
             points = list(polyline.divide_by_length(1.0))
 
     """
+
     def __init__(
         self,
-        vertices: Iterable["Vertex"],
+        vertices: Iterable[Vertex],
         close: bool = False,
         rel_tol: float = REL_TOL,
     ):
@@ -201,3 +203,80 @@ def _distances(vertices: Iterable[Vec3]) -> List[float]:
             distances.append(current_station)
         prev_vertex = vertex
     return distances
+
+
+class SupportsPointMethod(Protocol):
+    def point(self, t: float) -> Vertex:
+        ...
+
+
+class ApproxParamT:
+    """Approximation tool for parametrized curves.
+
+    - approximate parameter `t` for a given distance from the start of the curve
+    - approximate the distance for a given parameter `t` from the start of the curve
+
+    This approximations can be applied to all parametrized curves which provide
+    a :meth:`point` method, like :class:`Bezier4P`, :class:`Bezier3P` and
+    :class:`BSpline`.
+
+    Args:
+        curve: curve object, requires a method :meth:`point`
+        max_t: the max. parameter value
+        segments: count of approximation segments
+
+    """
+
+    def __init__(
+        self,
+        curve: SupportsPointMethod,
+        *,
+        max_t: float = 1.0,
+        segments: int = 100,
+    ):
+        assert hasattr(curve, "point")
+        assert segments > 0
+        self._polyline = ConstructionPolyline(
+            curve.point(t) for t in linspace(0.0, max_t, segments + 1)
+        )
+        self._max_t = max_t
+        self._step = max_t / segments
+
+    @property
+    def max_t(self) -> float:
+        return self._max_t
+
+    @property
+    def polyline(self) -> ConstructionPolyline:
+        return self._polyline
+
+    def param_t(self, distance: float):
+        """Approximate parameter t for the given `distance` from the start of
+        the curve.
+        """
+        poly = self._polyline
+        if distance >= poly.length:
+            return self._max_t
+
+        t_step = self._step
+        i = poly.index_at(distance)
+        station, d0, _ = poly.data(i)
+        t = t_step * i  # t for station
+        if d0 > 1e-12:
+            t -= t_step * (station - distance) / d0
+        return min(self._max_t, t)
+
+    def distance(self, t: float) -> float:
+        """Approximate the distance from the start of the curve to the point
+        `t` on the curve.
+        """
+        if t <= 0.0:
+            return 0.0
+        poly = self._polyline
+        if t >= self._max_t:
+            return poly.length
+
+        step = self._step
+        index = int(t / step) + 1
+        station, d0, _ = poly.data(index)
+        return station - d0 * (step * index - t) / step
