@@ -102,6 +102,21 @@ class ConstructionPolyline(Sequence):
         vertex = vertices[index]
         return current_distance, current_distance - prev_distance, vertex
 
+    def index_at(self, distance: float) -> int:
+        """Returns the data index of the exact or next data entry for the given
+        `distance`. Returns the index of last entry if `distance` > :attr:`length`.
+
+        """
+        if distance <= 0.0:
+            return 0
+        if distance >= self.length:
+            return max(0, len(self) - 1)
+        return self._index_at(distance)
+
+    def _index_at(self, distance: float) -> int:
+        # fast method without any checks
+        return bisect.bisect_left(self._distances, distance)
+
     def vertex_at(self, distance: float) -> Vec3:
         """Returns the interpolated vertex at the given `distance` from the
         start of the polyline.
@@ -116,7 +131,7 @@ class ConstructionPolyline(Sequence):
         # fast method without any checks
         vertices = self._vertices
         distances = self._distances
-        index1 = bisect.bisect_left(distances, distance)
+        index1 = self._index_at(distance)
         if index1 == 0:
             return vertices[0]
         index0 = index1 - 1

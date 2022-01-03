@@ -849,6 +849,8 @@ ConstructionPolyline
 
     .. automethod:: data(index: int) -> Tuple[float, float, Vec3]
 
+    .. automethod:: index_at
+
     .. automethod:: vertex_at(distance: float) -> Vec3
 
     .. automethod:: divide(count: int) -> Iterator[Vec3]
@@ -927,7 +929,7 @@ BSpline
 
     .. automethod:: point(t: float) -> Vec3
 
-    .. automethod:: points(t: float) -> List[Vec3]
+    .. automethod:: points(t: Iterable[float]) -> List[Vec3]
 
     .. automethod:: derivative(t: float, n: int=2) -> List[Vec3]
 

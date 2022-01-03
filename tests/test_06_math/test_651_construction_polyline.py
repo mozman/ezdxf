@@ -114,6 +114,35 @@ class TestIsClosed:
         assert poly2.is_closed is True
 
 
+class TestIndexAt:
+    @pytest.mark.parametrize("d", [-1, 0, 1])
+    def test_empty_polyline(self, d):
+        assert ConstructionPolyline([]).index_at(d) == 0
+
+    @pytest.mark.parametrize("d", [-1, 0, 1])
+    def test_polyline_with_one_vertex(self, d):
+        assert ConstructionPolyline([(1, 1)]).index_at(d) == 0
+
+    def test_short_polyline(self):
+        poly = ConstructionPolyline([(0, 0), (1, 0)])
+        assert poly.index_at(0.0) == 0
+        assert poly.index_at(0.5) == 1
+        assert poly.index_at(1) == 1
+
+    def test_long_polyline(self):
+        poly = ConstructionPolyline([(0, 0), (1, 0), (2, 0), (3, 0)])
+        assert poly.index_at(0.0) == 0
+        assert poly.index_at(0.999) == 1
+        assert poly.index_at(1.0) == 1
+        assert poly.index_at(1.001) == 2
+        assert poly.index_at(1.999) == 2
+        assert poly.index_at(2.0) == 2
+        assert poly.index_at(2.001) == 3
+        assert poly.index_at(2.999) == 3
+        assert poly.index_at(3.0) == 3
+        assert poly.index_at(3.001) == 3
+
+
 class TestVertexAt:
     def test_empty_polyline_raises_error(self):
         with pytest.raises(ValueError):
@@ -130,13 +159,13 @@ class TestVertexAt:
             poly1.vertex_at(poly1.length + 0.01)
 
     def test_interpolation_at_vertex_location(self, poly1):
-        assert poly1.vertex_at(0.) == (0, 0)
-        assert poly1.vertex_at(1.) == (1, 0)
-        assert poly1.vertex_at(2.) == (1, 1)
-        assert poly1.vertex_at(3.) == (0, 1)
+        assert poly1.vertex_at(0.0) == (0, 0)
+        assert poly1.vertex_at(1.0) == (1, 0)
+        assert poly1.vertex_at(2.0) == (1, 1)
+        assert poly1.vertex_at(3.0) == (0, 1)
 
     def test_interpolate_last_vertex_of_closed_polyline(self, poly2):
-        assert poly2.vertex_at(0.) == (0, 0)
+        assert poly2.vertex_at(0.0) == (0, 0)
         assert poly2.vertex_at(poly2.length) == (0, 0)
 
     def test_interpolate_at_first_edge(self, poly1):
@@ -168,7 +197,9 @@ class TestVertexAt:
         assert cp.vertex_at(1.0).isclose((1.0, 0.0))
 
     def test_interpolation_for_coincident_vertices_between(self):
-        cp = ConstructionPolyline([(0, 0), (0.5, 0), (0.5, 0), (0.5, 0), (1, 0)])
+        cp = ConstructionPolyline(
+            [(0, 0), (0.5, 0), (0.5, 0), (0.5, 0), (1, 0)]
+        )
         assert cp.vertex_at(0.0).isclose((0.0, 0.0))
         assert cp.vertex_at(0.1).isclose((0.1, 0.0))
         assert cp.vertex_at(0.5).isclose((0.5, 0.0))
@@ -194,7 +225,9 @@ class TestDivide:
         assert vertices[-1].isclose(poly1.vertex_at(2.8))
 
     def test_divide_by_length_force_last_vertex(self, poly1):
-        vertices: List[Vec3] = list(poly1.divide_by_length(0.7, force_last=True))
+        vertices: List[Vec3] = list(
+            poly1.divide_by_length(0.7, force_last=True)
+        )
         assert len(vertices) == 6
         assert vertices[-1].isclose(poly1[-1])
 
@@ -202,8 +235,11 @@ class TestDivide:
 class TestApproximationAccuracy:
     def test_unit_circle(self):
         from ezdxf.entities import Circle
+
         # create unit circle
-        circle: Circle = Circle.new(dxfattribs={"center": (0, 0), "radius": 1.})
+        circle: Circle = Circle.new(
+            dxfattribs={"center": (0, 0), "radius": 1.0}
+        )
         cp = ConstructionPolyline(circle.flattening(0.01))
         assert cp.is_closed is True
         assert len(cp) > 20
@@ -211,6 +247,7 @@ class TestApproximationAccuracy:
 
     def test_unit_circle_by_path(self):
         from ezdxf import path
+
         p = path.unit_circle()
         cp = ConstructionPolyline(p.flattening(0.01))
         assert cp.is_closed is True
