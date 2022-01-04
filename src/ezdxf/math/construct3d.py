@@ -1,6 +1,6 @@
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
-from typing import Sequence, List, Iterable, TYPE_CHECKING, Tuple
+from typing import Sequence, List, Iterable, TYPE_CHECKING, Tuple, Optional
 from enum import IntEnum
 import math
 from ezdxf.math import Vec3, Matrix44, X_AXIS, Y_AXIS, Z_AXIS
@@ -16,6 +16,7 @@ __all__ = [
     "LocationState",
     "normal_vector_3p",
     "distance_point_line_3d",
+    "intersection_line_line_3d",
     "basic_transformation",
     "best_fit_normal",
     "BarycentricCoordinates",
@@ -155,6 +156,39 @@ def distance_point_line_3d(point: Vec3, start: Vec3, end: Vec3) -> float:
         return 0.0
     else:
         return math.sqrt(diff)
+
+
+def intersection_line_line_3d(
+    line1: Tuple[Vec3, Vec3],
+    line2: Tuple[Vec3, Vec3],
+    virtual: bool = True,
+    abs_tol: float = 1e-10,
+) -> Optional[Vec3]:
+    """
+    Returns the intersection point of two 3D lines, returns ``None`` if lines
+    do not intersect.
+
+    Args:
+        line1: first line as tuple of two points as :class:`Vec3` objects
+        line2: second line as tuple of two points as :class:`Vec3` objects
+        virtual: ``True`` returns any intersection point, ``False`` returns only
+            real intersection points
+        abs_tol: absolute tolerance for comparisons
+
+    .. versionadded:: 0.17.2
+
+    """
+    from ezdxf.math import intersection_ray_ray_3d, BoundingBox
+    res = intersection_ray_ray_3d(line1, line2, abs_tol)
+    if len(res) != 1:
+        return None
+
+    point = res[0]
+    if virtual:
+        return point
+    if BoundingBox(line1).inside(point) and BoundingBox(line2).inside(point):
+        return point
+    return None
 
 
 def basic_transformation(

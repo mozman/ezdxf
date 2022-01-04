@@ -120,6 +120,8 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: intersection_ray_ray_3d(ray1: Tuple[Vec3, Vec3], ray2: Tuple[Vec3, Vec3], abs_tol=1e-10) -> Sequence[Vec3]
 
+.. autofunction:: intersection_line_line_3d(line1: Tuple[Vec3, Vec3], line2: Tuple[Vec3, Vec3], virtual=True, abs_tol=1e-10) -> Optional[Vec3]
+
 .. autofunction:: estimate_tangents(points: List[Vec3], method: str = '5-points', normalize = True) -> List[Vec3]
 
 .. autofunction:: estimate_end_tangent_magnitude(points: List[Vec3], method: str = 'chord') -> List[Vec3]

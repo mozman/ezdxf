@@ -8,6 +8,7 @@ from ezdxf.math import (
     Vec2,
     subdivide_face,
     intersection_ray_ray_3d,
+    intersection_line_line_3d,
     normal_vector_3p,
     NULLVEC,
     X_AXIS,
@@ -81,47 +82,88 @@ def test_subdivide_vec2_square_in_quads():
     assert result[0] == ((0, 0), (1, 0), (1, 1), (0, 1))
 
 
-def test_intersection_ray_ray_3d_1():
-    ray1 = (Vec3(0, 0, 0), Vec3(1, 0, 0))
-    ray2 = (Vec3(0, 0, 0), Vec3(0, 0, 1))
+class TestIntersectionRayRay3d:
+    @pytest.fixture
+    def ray1(self):
+        return Vec3(0, 0, 0), Vec3(1, 0, 0)
 
-    # parallel rays return a 0-tuple
-    result = intersection_ray_ray_3d(ray1, ray1)
-    assert len(result) == 0
-    assert bool(result) is False
+    @pytest.fixture
+    def ray2(self):
+        return Vec3(0, 0, 0), Vec3(0, 0, 1)
 
-    # intersecting rays return a 1-tuple
-    result = intersection_ray_ray_3d(ray1, ray2)
-    assert len(result) == 1
-    assert bool(result) is True
-    assert result == (Vec3(0, 0, 0),)
+    def test_parallel_rays_return_empty_tuple(self, ray1, ray2):
+        result = intersection_ray_ray_3d(ray1, ray1)
+        assert len(result) == 0
+        assert bool(result) is False
 
-    # not intersecting and not parallel rays return a 2-tuple
-    line3 = (Vec3(0, 0, 1), Vec3(0, 1, 1))
-    result = intersection_ray_ray_3d(ray1, line3)
-    assert len(result) == 2
-    assert bool(result) is True
-    # returns points of closest approach on each ray
-    assert Vec3(0, 0, 1) in result
-    assert Vec3(0, 0, 0) in result
-
-
-def test_intersection_ray_ray_3d_2():
-    ray1 = (Vec3(1, 0, 0), Vec3(1, 1, 0))
-    ray2 = (Vec3(0, 0.5, 0), Vec3(1, 0.5, 0))
-    result = intersection_ray_ray_3d(ray1, ray2)
-    assert len(result) == 1
-
-
-def test_intersection_ray_ray_3d_random():
-    for _ in range(5):
-        intersection_point = Vec3.random(5)
-        ray1 = (intersection_point, intersection_point + Vec3.random())
-        ray2 = (intersection_point, intersection_point - Vec3.random())
-
+    def test_intersecting_rays_return_one_tuple(self, ray1, ray2):
         result = intersection_ray_ray_3d(ray1, ray2)
         assert len(result) == 1
-        assert result[0].isclose(intersection_point)
+        assert bool(result) is True
+        assert result == (Vec3(0, 0, 0),)
+
+    def test_not_intersecting_and_not_parallel_rays_return_two_tuple(
+        self, ray1, ray2
+    ):
+        line3 = (Vec3(0, 0, 1), Vec3(0, 1, 1))
+        result = intersection_ray_ray_3d(ray1, line3)
+        assert len(result) == 2
+        assert bool(result) is True
+        # returns points of closest approach on each ray
+        assert Vec3(0, 0, 1) in result
+        assert Vec3(0, 0, 0) in result
+
+    def test_intersecting_rays(self):
+        ray1 = (Vec3(1, 0, 0), Vec3(1, 1, 0))
+        ray2 = (Vec3(0, 0.5, 0), Vec3(1, 0.5, 0))
+        result = intersection_ray_ray_3d(ray1, ray2)
+        assert len(result) == 1
+
+    def test_random_intersecting_rays(self):
+        for _ in range(5):
+            intersection_point = Vec3.random(5)
+            ray1 = (intersection_point, intersection_point + Vec3.random())
+            ray2 = (intersection_point, intersection_point - Vec3.random())
+
+            result = intersection_ray_ray_3d(ray1, ray2)
+            assert len(result) == 1
+            assert result[0].isclose(intersection_point)
+
+
+class TestIntersectingLines3d:
+    @pytest.fixture
+    def line1(self):
+        return Vec3(0, 0, 0), Vec3(2, 0, 0)
+
+    @pytest.fixture
+    def line2(self):
+        return Vec3(1, -1, 0), Vec3(1, 1, 0)
+
+    @pytest.fixture
+    def line3(self):
+        return Vec3(3, -1, 0), Vec3(3, 1, 0)
+
+    @pytest.fixture
+    def line4(self):
+        return Vec3(2, -1, 0), Vec3(2, 1, 0)
+
+    def test_real_intersecting_lines(self, line1, line2):
+        assert intersection_line_line_3d(line1, line2, virtual=False).isclose(
+            (1, 0, 0)
+        )
+
+    def test_virtual_intersecting_lines(self, line1, line3):
+        assert intersection_line_line_3d(line1, line3, virtual=True).isclose(
+            (3, 0, 0)
+        )
+
+    def test_not_intersecting_lines(self, line1, line3):
+        assert intersection_line_line_3d(line1, line3, virtual=False) is None
+
+    def test_touching_lines_do_intersect(self, line1, line4):
+        assert intersection_line_line_3d(line1, line4, virtual=False).isclose(
+            (2, 0, 0)
+        )
 
 
 RH_ORTHO = [

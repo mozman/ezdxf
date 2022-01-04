@@ -21,6 +21,7 @@ Version 0.17.2b5 - dev
 - NEW: `Textstyle.make_font()` returns the ezdxf font abstraction
 - NEW: added `dxfattribs` argument to method `Drawing.set_modelspace_vport()`
 - NEW: `ezdxf.math.split_bezier()` function to split Bezier curves of any degree
+- NEW: `ezdxf.math.intersection_line_line_3d()`
 - NEW: `TextEntityAlignment` enum replaces the string based alignment definition
 - NEW: method `Text.get_placement()`, replaces `get_pos()` 
 - NEW: method `Text.set_placement()`, replaces `set_pos()` 

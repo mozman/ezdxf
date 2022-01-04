@@ -203,7 +203,7 @@ class BoundingBox(AbstractBoundingBox):
             bbox2 = BoundingBox([(1, 1, 1), (2, 2, 2)])
             assert bbox1.overlap(bbox2) is True
 
-        .. versionadded:: 0.18
+        .. versionadded:: 0.17.2
 
         """
         # Source: https://gamemath.com/book/geomtests.html#intersection_two_aabbs
@@ -311,7 +311,7 @@ class BoundingBox2d(AbstractBoundingBox):
             bbox2 = BoundingBox2d([(1, 1), (2, 2)])
             assert bbox1.overlap(bbox2) is True
 
-        .. versionadded:: 0.18
+        .. versionadded:: 0.17.2
 
         """
         # Source: https://gamemath.com/book/geomtests.html#intersection_two_aabbs
