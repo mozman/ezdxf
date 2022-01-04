@@ -6,11 +6,16 @@ import random
 from ezdxf.math import (
     cubic_bezier_interpolation,
     Vec3,
+    Vec2,
     Bezier3P,
     quadratic_to_cubic_bezier,
     Bezier4P,
     have_bezier_curves_g1_continuity,
     bezier_to_bspline,
+    split_bezier,
+    quadratic_bezier_from_3p,
+    cubic_bezier_from_3p,
+    close_vectors,
 )
 
 
@@ -137,3 +142,46 @@ def test_quality_of_bezier_to_bspline_conversion_2():
 def test_bezier_curves_to_bspline_error():
     with pytest.raises(ValueError):
         bezier_to_bspline([])  # one or more curves expected
+
+
+class TestSplitBezier:
+    @pytest.fixture
+    def points3(self):
+        return Vec2.list([(0, 0), (0, 1), (1.5, 0.75), (2, 2)])
+
+    @pytest.mark.parametrize("t", [-1, 2])
+    def test_t_validation(self, points3, t):
+        with pytest.raises(ValueError):
+            split_bezier(points3, t)
+
+    def test_control_point_validation(self):
+        with pytest.raises(ValueError):
+            split_bezier([Vec2(0, 0)], 0.5)
+
+    def test_split_cubic_bezier(self, points3):
+        left, right = split_bezier(points3, 0.5)
+        assert (
+            close_vectors(
+                left,
+                [(0.0, 0.0), (0.0, 0.5), (0.375, 0.6875), (0.8125, 0.90625)],
+            )
+            is True
+        )
+
+        assert (
+            close_vectors(
+                right,
+                [(2.0, 2.0), (1.75, 1.375), (1.25, 1.125), (0.8125, 0.90625)],
+            )
+            is True
+        )
+
+
+def test_quadratic_bezier_from_3_points():
+    qbez = quadratic_bezier_from_3p((0, 0), (3, 2), (6, 0))
+    assert qbez.point(0.5).isclose((3, 2))
+
+
+def test_cubic_bezier_from_3_points():
+    cbez = quadratic_bezier_from_3p((0, 0), (3, 2), (6, 0))
+    assert cbez.point(0.5).isclose((3, 2))

@@ -12,7 +12,6 @@ from ezdxf.math import (
 )
 
 
-
 class TestIntersectPolylines2d:
     def test_intersecting_one_liners(self):
         pline1 = Vec2.list([(0, 1), (2, 1)])
@@ -60,7 +59,7 @@ class TestIntersectPolylines2d:
         res.sort()  # do not rely on any order
         assert res[0].isclose(Vec2(2, 2))
         assert res[1].isclose(Vec2(6, 2))
-        
+
     def test_complex_ellipse_spline_intersection(self):
         ellipse = ConstructionEllipse(center=(0, 0), major_axis=(3, 0), ratio=0.5)
         bspline = BSpline([(-4, -4), (-2, -1), (2, 1), (4, 4)])

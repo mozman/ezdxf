@@ -150,9 +150,13 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: cubic_bezier_from_ellipse(ellipse: ConstructionEllipse, segments: int = 1) -> Iterable[Bezier4P]
 
+.. autofunction:: cubic_bezier_from_3p(p1: Vertex, p2: Vertex, p3: Vertex) -> Bezier4P
+
 .. autofunction:: cubic_bezier_interpolation(points: Iterable[Vertex]) -> List[Bezier4P]
 
 .. autofunction:: quadratic_to_cubic_bezier(bezier: Bezier3P) -> Bezier4P
+
+.. autofunction:: quadratic_bezier_from_3p(p1: Vertex, p2: Vertex, p3: Vertex) -> Bezier3P
 
 .. autofunction:: bezier_to_bspline(Iterable[Union[Bezier3P, Bezier4P]], segments int = 4) -> BSpline
 

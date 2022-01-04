@@ -1,8 +1,8 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Iterable, Union, List
+from typing import Iterable, Union, List, Sequence, Tuple, TypeVar
 import math
-from ezdxf.math import BSpline, Bezier4P, Bezier3P
+from ezdxf.math import BSpline, Bezier4P, Bezier3P, Vertex, Vec3, AnyVec
 
 __all__ = [
     "bezier_to_bspline",
@@ -10,7 +10,13 @@ __all__ = [
     "have_bezier_curves_g1_continuity",
     "AnyBezier",
     "reverse_bezier_curves",
+    "split_bezier",
+    "quadratic_bezier_from_3p",
+    "cubic_bezier_from_3p",
 ]
+
+
+T = TypeVar("T", bound=AnyVec)
 
 AnyBezier = Union[Bezier3P, Bezier4P]
 
@@ -96,3 +102,87 @@ def reverse_bezier_curves(curves: List[AnyBezier]) -> List[AnyBezier]:
     curves = list(c.reverse() for c in curves)
     curves.reverse()
     return curves
+
+
+def split_bezier(
+    control_points: Sequence[T], t: float
+) -> Tuple[List[T], List[T]]:
+    """Split Bèzier curves at parameter `t` by de Casteljau's algorithm
+    (source: `pomax-1`_). Returns the control points for two new
+    Bèzier curves of the same degree and type as the input curve.
+
+    Args:
+         control_points: of the Bèzier curve as :class:`Vec2` or :class:`Vec3`
+            objects. Requires 3 points for a quadratic curve, 4 points for a
+            cubic curve , ...
+         t: parameter where to split the curve in the range [0, 1]
+
+    .. versionadded:: 0.17.2
+
+    .. _pomax-1: https://pomax.github.io/bezierinfo/#splitting
+
+    """
+    if len(control_points) < 2:
+        raise ValueError("2 or more control points required")
+    if t < 0.0 or t > 1.0:
+        raise ValueError("parameter `t` must be in range [0, 1]")
+    left: List[T] = []
+    right: List[T] = []
+
+    def split(points: Sequence[T]):
+        n: int = len(points) - 1
+        left.append(points[0])
+        right.append(points[n])
+        if n == 0:
+            return
+        split(
+            tuple(points[i] * (1.0 - t) + points[i + 1] * t for i in range(n))
+        )
+
+    split(control_points)
+    return left, right
+
+
+def quadratic_bezier_from_3p(p1: Vertex, p2: Vertex, p3: Vertex) -> Bezier3P:
+    """Returns a quadratic Bèzier curve :class:`Bezier3P` from three points.
+    The curve starts at `p1`, goes through `p2` and ends at `p3`.
+    (source: `pomax-2`_)
+
+    .. versionadded:: 0.17.2
+
+    .. _pomax-2: https://pomax.github.io/bezierinfo/#pointcurves
+
+    """
+    def u_func(t: float) -> float:
+        mt = 1.0 - t
+        mt2 = mt * mt
+        return mt2 / (t * t + mt2)
+
+    def ratio(t: float) -> float:
+        t2 = t * t
+        mt = 1.0 - t
+        mt2 = mt * mt
+        return abs((t2 + mt2 - 1.0) / (t2 + mt2))
+
+    s = Vec3(p1)
+    b = Vec3(p2)
+    e = Vec3(p3)
+    d1 = (s - b).magnitude
+    d2 = (e - b).magnitude
+    t = d1 / (d1 + d2)
+    u = u_func(t)
+    c = s * u + e * (1.0 - u)
+    a = b + (b - c) / ratio(t)
+    return Bezier3P([s, a, e])
+
+
+def cubic_bezier_from_3p(p1: Vertex, p2: Vertex, p3: Vertex) -> Bezier4P:
+    """Returns a cubic Bèzier curve :class:`Bezier4P` from three points.
+    The curve starts at `p1`, goes through `p2` and ends at `p3`.
+    (source: `pomax-2`_)
+
+    .. versionadded:: 0.17.2
+
+    """
+    qbez = quadratic_bezier_from_3p(p1, p2, p3)
+    return quadratic_to_cubic_bezier(qbez)

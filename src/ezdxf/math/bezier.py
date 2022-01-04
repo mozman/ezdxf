@@ -1,15 +1,14 @@
 # Copyright (c) 2010-2022 Manfred Moitzi
 # License: MIT License
-from typing import Iterable, Tuple, Sequence, List, TypeVar
+from typing import Iterable, Tuple, Sequence
 from functools import lru_cache
 import math
-from ezdxf.math import Vec3, NULLVEC, Matrix44, AnyVec, Vertex
+from ezdxf.math import Vec3, NULLVEC, Matrix44, Vertex
 from .construct2d import linspace
 
 
-__all__ = ["Bezier", "split_bezier"]
+__all__ = ["Bezier"]
 
-T = TypeVar("T", bound=AnyVec)
 
 """
 
@@ -256,41 +255,3 @@ def bernstein_basis(n: int, i: int, t: float) -> float:
 @lru_cache(maxsize=16)
 def factorial(n: int):
     return math.factorial(n)
-
-
-def split_bezier(
-    control_points: Sequence[T], t: float
-) -> Tuple[List[T], List[T]]:
-    """Split Bèzier curves at parameter `t` by de Casteljau's algorithm
-    (source: `pomax-splitting`_). Returns the control points for two new
-    Bèzier curves of the same degree and type as the input curve.
-
-    Args:
-         control_points: of the Bèzier curve as :class:`Vec2` or :class:`Vec3`
-            objects. Requires 3 points for a quadratic curve, 4 points for a
-            cubic curve , ...
-         t: parameter where to split the curve in the range [0, 1]
-
-
-    .. _pomax-splitting: https://pomax.github.io/bezierinfo/#splitting
-
-    """
-    if len(control_points) < 2:
-        raise ValueError("2 or more control points required")
-    if t < 0.0 or t > 1.0:
-        raise ValueError("parameter `t` must be in range [0, 1]")
-    left: List[T] = []
-    right: List[T] = []
-
-    def split(points: Sequence[T]):
-        n: int = len(points) - 1
-        left.append(points[0])
-        right.append(points[n])
-        if n == 0:
-            return
-        split(
-            tuple(points[i] * (1.0 - t) + points[i + 1] * t for i in range(n))
-        )
-
-    split(control_points)
-    return left, right
