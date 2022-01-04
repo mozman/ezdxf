@@ -1,14 +1,40 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
-from typing import Iterable, List, TYPE_CHECKING, Tuple, Iterator, Sequence
+from typing import (
+    Iterable,
+    List,
+    TYPE_CHECKING,
+    Tuple,
+    Iterator,
+    Sequence,
+)
+import abc
 from typing_extensions import Protocol
-from ezdxf.math import Vec3, linspace, NULLVEC, Vertex
+from ezdxf.math import (
+    Vec2,
+    Vec3,
+    linspace,
+    NULLVEC,
+    Vertex,
+    intersection_line_line_2d,
+    BoundingBox2d,
+    intersection_line_line_3d,
+    BoundingBox,
+    AbstractBoundingBox,
+)
+
+
 import bisect
 
 if TYPE_CHECKING:
     from ezdxf.math import Vertex
 
-__all__ = ["ConstructionPolyline", "ApproxParamT"]
+__all__ = [
+    "ConstructionPolyline",
+    "ApproxParamT",
+    "intersect_polylines_2d",
+    "intersect_polylines_3d",
+]
 
 REL_TOL = 1e-9
 
@@ -289,3 +315,143 @@ class ApproxParamT:
         index = int(t / step) + 1
         station, d0, _ = poly.data(index)
         return station - d0 * (step * index - t) / step
+
+
+def intersect_polylines_2d(
+    p1: Sequence[Vec2], p2: Sequence[Vec2], abs_tol=1e-10
+) -> List[Vec2]:
+    """Returns the intersection points for two polylines as list of :class:`Vec2`
+    objects, the list is empty if no intersection points exist.
+    Does not return self intersection points of `p1` or `p2`.
+    Duplicate intersection points are removed from the result list, but the list
+    does not have a particular order! You can sort the result list by
+    :code:`result.sort()` to introduce an order.
+
+    Args:
+        p1: first polyline as sequence of :class:`Vec2` objects
+        p2: second polyline as sequence of :class:`Vec2` objects
+        abs_tol: absolute tolerance for comparisons
+
+    .. versionadded:: 0.17.2
+
+    """
+    intersect = _PolylineIntersection2d(p1, p2, abs_tol)
+    intersect.execute()
+    return intersect.intersections
+
+
+def intersect_polylines_3d(
+    p1: Sequence[Vec3], p2: Sequence[Vec3], abs_tol=1e-10
+) -> List[Vec3]:
+    """Returns the intersection points for two polylines as list of :class:`Vec3`
+    objects, the list is empty if no intersection points exist.
+    Does not return self intersection points of `p1` or `p2`.
+    Duplicate intersection points are removed from the result list, but the list
+    does not have a particular order! You can sort the result list by
+    :code:`result.sort()` to introduce an order.
+
+    Args:
+        p1: first polyline as sequence of :class:`Vec3` objects
+        p2: second polyline as sequence of :class:`Vec3` objects
+        abs_tol: absolute tolerance for comparisons
+
+    .. versionadded:: 0.17.2
+
+    """
+    intersect = _PolylineIntersection3d(p1, p2, abs_tol)
+    intersect.execute()
+    return intersect.intersections
+
+
+def divide(a: int, b: int) -> Tuple[int, int, int, int]:
+    m = (a + b) // 2
+    return a, m, m, b
+
+
+class _PolylineIntersection:
+    p1: Sequence
+    p2: Sequence
+
+    @abc.abstractmethod
+    def bbox(self, points: Sequence) -> AbstractBoundingBox:
+        ...
+
+    @abc.abstractmethod
+    def line_intersection(self, s1, e1, s2, e2):
+        ...
+
+    def execute(self):
+        l1: int = len(self.p1)
+        l2: int = len(self.p2)
+        if l1 < 2 or l2 < 2:  # polylines with only one vertex
+            return
+        self.intersect(0, l1 - 1, 0, l2 - 1)
+
+    def overlap(self, s1: int, e1: int, s2: int, e2: int) -> bool:
+        e1 += 1
+        e2 += 1
+        if e1 - s1 < 2 or e2 - s2 < 2:
+            return False
+        bbox1 = self.bbox(self.p1[s1:e1])
+        return bbox1.overlap(self.bbox(self.p2[s2:e2]))
+
+    def intersect(self, s1: int, e1: int, s2: int, e2: int):
+        assert e1 > s1 and e2 > s2
+        if e1 - s1 == 1 and e2 - s2 == 1:
+            self.line_intersection(s1, e1, s2, e2)
+            return
+
+        s1_a, e1_b, s1_c, e1_d = divide(s1, e1)
+        s2_a, e2_b, s2_c, e2_d = divide(s2, e2)
+        if self.overlap(s1_a, e1_b, s2_a, e2_b):
+            self.intersect(s1_a, e1_b, s2_a, e2_b)
+        if self.overlap(s1_a, e1_b, s2_c, e2_d):
+            self.intersect(s1_a, e1_b, s2_c, e2_d)
+        if self.overlap(s1_c, e1_d, s2_a, e2_b):
+            self.intersect(s1_c, e1_d, s2_a, e2_b)
+        if self.overlap(s1_c, e1_d, s2_c, e2_d):
+            self.intersect(s1_c, e1_d, s2_c, e2_d)
+
+
+class _PolylineIntersection2d(_PolylineIntersection):
+    def __init__(self, p1: Sequence[Vec2], p2: Sequence[Vec2], abs_tol=1e-10):
+        self.p1 = p1
+        self.p2 = p2
+        self.intersections: List[Vec2] = []
+        self.abs_tol = abs_tol
+
+    def bbox(self, points: Sequence) -> AbstractBoundingBox:
+        return BoundingBox2d(points)
+
+    def line_intersection(self, s1, e1, s2, e2):
+        line1 = self.p1[s1], self.p1[e1]
+        line2 = self.p2[s2], self.p2[e2]
+        p = intersection_line_line_2d(
+            line1, line2, virtual=False, abs_tol=self.abs_tol
+        )
+        if p is not None and not any(
+            p.isclose(ip, abs_tol=self.abs_tol) for ip in self.intersections
+        ):
+            self.intersections.append(p)
+
+
+class _PolylineIntersection3d(_PolylineIntersection):
+    def __init__(self, p1: Sequence[Vec3], p2: Sequence[Vec3], abs_tol=1e-10):
+        self.p1 = p1
+        self.p2 = p2
+        self.intersections: List[Vec3] = []
+        self.abs_tol = abs_tol
+
+    def bbox(self, points: Sequence) -> AbstractBoundingBox:
+        return BoundingBox(points)
+
+    def line_intersection(self, s1, e1, s2, e2):
+        line1 = self.p1[s1], self.p1[e1]
+        line2 = self.p2[s2], self.p2[e2]
+        p = intersection_line_line_3d(
+            line1, line2, virtual=False, abs_tol=self.abs_tol
+        )
+        if p is not None and not any(
+            p.isclose(ip, abs_tol=self.abs_tol) for ip in self.intersections
+        ):
+            self.intersections.append(p)
