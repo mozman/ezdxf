@@ -7,6 +7,7 @@ from typing import (
     Tuple,
     Iterator,
     Sequence,
+    Dict,
 )
 import abc
 from typing_extensions import Protocol
@@ -368,19 +369,27 @@ def divide(a: int, b: int) -> Tuple[int, int, int, int]:
     return a, m, m, b
 
 
+TCache = Dict[Tuple[int, int, int], AbstractBoundingBox]
+
+
 class _PolylineIntersection:
     p1: Sequence
     p2: Sequence
+
+    def __init__(self):
+        # At each recursion level the bounding box for each half of the
+        # polyline will be created two times, using a cache is an advantage:
+        self.bbox_cache: TCache = {}
 
     @abc.abstractmethod
     def bbox(self, points: Sequence) -> AbstractBoundingBox:
         ...
 
     @abc.abstractmethod
-    def line_intersection(self, s1, e1, s2, e2):
+    def line_intersection(self, s1: int, e1: int, s2: int, e2: int) -> None:
         ...
 
-    def execute(self):
+    def execute(self) -> None:
         l1: int = len(self.p1)
         l2: int = len(self.p2)
         if l1 < 2 or l2 < 2:  # polylines with only one vertex
@@ -390,19 +399,33 @@ class _PolylineIntersection:
     def overlap(self, s1: int, e1: int, s2: int, e2: int) -> bool:
         e1 += 1
         e2 += 1
+        # If one part of the polylines has less than 2 vertices no intersection
+        # calculation is required:
         if e1 - s1 < 2 or e2 - s2 < 2:
             return False
-        bbox1 = self.bbox(self.p1[s1:e1])
-        return bbox1.overlap(self.bbox(self.p2[s2:e2]))
 
-    def intersect(self, s1: int, e1: int, s2: int, e2: int):
+        cache = self.bbox_cache
+        key1 = (1, s1, e1)
+        bbox1 = cache.get(key1)
+        if bbox1 is None:
+            bbox1 = self.bbox(self.p1[s1:e1])
+            cache[key1] = bbox1
+
+        key2 = (2, s2, e2)
+        bbox2 = cache.get(key2)
+        if bbox2 is None:
+            bbox2 = self.bbox(self.p2[s2:e2])
+            cache[key2] = bbox2
+        return bbox1.overlap(bbox2)
+
+    def intersect(self, s1: int, e1: int, s2: int, e2: int) -> None:
         assert e1 > s1 and e2 > s2
         if e1 - s1 == 1 and e2 - s2 == 1:
             self.line_intersection(s1, e1, s2, e2)
             return
-
         s1_a, e1_b, s1_c, e1_d = divide(s1, e1)
         s2_a, e2_b, s2_c, e2_d = divide(s2, e2)
+
         if self.overlap(s1_a, e1_b, s2_a, e2_b):
             self.intersect(s1_a, e1_b, s2_a, e2_b)
         if self.overlap(s1_a, e1_b, s2_c, e2_d):
@@ -415,6 +438,7 @@ class _PolylineIntersection:
 
 class _PolylineIntersection2d(_PolylineIntersection):
     def __init__(self, p1: Sequence[Vec2], p2: Sequence[Vec2], abs_tol=1e-10):
+        super().__init__()
         self.p1 = p1
         self.p2 = p2
         self.intersections: List[Vec2] = []
@@ -423,7 +447,7 @@ class _PolylineIntersection2d(_PolylineIntersection):
     def bbox(self, points: Sequence) -> AbstractBoundingBox:
         return BoundingBox2d(points)
 
-    def line_intersection(self, s1, e1, s2, e2):
+    def line_intersection(self, s1: int, e1: int, s2: int, e2: int) -> None:
         line1 = self.p1[s1], self.p1[e1]
         line2 = self.p2[s2], self.p2[e2]
         p = intersection_line_line_2d(
@@ -437,6 +461,7 @@ class _PolylineIntersection2d(_PolylineIntersection):
 
 class _PolylineIntersection3d(_PolylineIntersection):
     def __init__(self, p1: Sequence[Vec3], p2: Sequence[Vec3], abs_tol=1e-10):
+        super().__init__()
         self.p1 = p1
         self.p2 = p2
         self.intersections: List[Vec3] = []
@@ -445,7 +470,7 @@ class _PolylineIntersection3d(_PolylineIntersection):
     def bbox(self, points: Sequence) -> AbstractBoundingBox:
         return BoundingBox(points)
 
-    def line_intersection(self, s1, e1, s2, e2):
+    def line_intersection(self, s1: int, e1: int, s2: int, e2: int) -> None:
         line1 = self.p1[s1], self.p1[e1]
         line2 = self.p2[s2], self.p2[e2]
         p = intersection_line_line_3d(
