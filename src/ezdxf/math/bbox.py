@@ -8,7 +8,7 @@ from ezdxf.math import Vec3, Vec2
 if TYPE_CHECKING:
     from ezdxf.math import Vertex, AnyVec
 
-__all__ = ["BoundingBox2d", "BoundingBox"]
+__all__ = ["BoundingBox2d", "BoundingBox", "AbstractBoundingBox"]
 
 
 class AbstractBoundingBox:
@@ -51,6 +51,10 @@ class AbstractBoundingBox:
 
     @abc.abstractmethod
     def intersect(self, other: "AbstractBoundingBox") -> bool:
+        pass
+
+    @abc.abstractmethod
+    def overlap(self, other: "AbstractBoundingBox") -> bool:
         pass
 
     def any_inside(self, vertices: Iterable["Vertex"]) -> bool:
