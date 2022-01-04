@@ -64,38 +64,71 @@ class TestBoundingBox:
         assert bbox1.any_inside(empty) is False
         assert empty.any_inside(bbox1) is False
 
-    def test_do_intersect(self):
+    def test_do_intersect_and_overlap(self):
         bbox1 = BoundingBox([(0, 0, 0), (10, 10, 10)])
         bbox2 = BoundingBox([(1, 1, 1), (9, 9, 9)])
         bbox3 = BoundingBox([(-1, -1, -1), (1.001, 1.001, 1.001)])
         for a, b in permutations([bbox1, bbox2, bbox3], 2):
             assert a.intersect(b) is True
+            assert a.overlap(b) is True
 
-    def test_do_not_intersect(self):
+    def test_do_not_intersect_or_overlap(self):
         bbox1 = BoundingBox([(0, 0, 0), (3, 3, 3)])
         bbox2 = BoundingBox([(4, 4, 4), (9, 9, 9)])
         bbox3 = BoundingBox([(-2, -2, -2), (-1, -1, -1)])
         for a, b in permutations([bbox1, bbox2, bbox3], 2):
             assert a.intersect(b) is False
+            assert a.overlap(b) is False
 
-    def test_do_not_intersect_empty(self):
+    def test_do_not_intersect_or_overlap_empty(self):
         bbox = BoundingBox([(0, 0, 0), (3, 3, 3)])
         empty = BoundingBox()
         assert bbox.intersect(empty) is False
+        assert bbox.overlap(empty) is False
         assert empty.intersect(bbox) is False
+        assert empty.overlap(bbox) is False
         assert empty.intersect(empty) is False
+        assert empty.overlap(empty) is False
 
     def test_crossing_2d_boxes(self):
         # bboxes do overlap, but do not contain corner points of the other bbox
         bbox1 = BoundingBox2d([(0, 1), (3, 2)])
         bbox2 = BoundingBox2d([(1, 0), (2, 3)])
         assert bbox1.intersect(bbox2) is True
+        assert bbox1.overlap(bbox2) is True
 
     def test_crossing_3d_boxes(self):
         # bboxes do overlap, but do not contain corner points of the other bbox
         bbox1 = BoundingBox([(0, 1, 0), (3, 2, 1)])
         bbox2 = BoundingBox([(1, 0, 0), (2, 3, 1)])
         assert bbox1.intersect(bbox2) is True
+        assert bbox1.overlap(bbox2) is True
+
+    def test_touching_2d_boxes(self):
+        bbox1 = BoundingBox2d([(0, 0), (1, 1)])
+        bbox2 = BoundingBox2d([(1, 1), (2, 2)])
+        bbox3 = BoundingBox2d([(-1, -1), (0, 0)])
+        assert bbox1.intersect(bbox2) is False
+        assert bbox1.overlap(bbox2) is True
+        assert bbox2.intersect(bbox1) is False
+        assert bbox2.overlap(bbox1) is True
+        assert bbox1.intersect(bbox3) is False
+        assert bbox1.overlap(bbox3) is True
+        assert bbox3.intersect(bbox1) is False
+        assert bbox3.overlap(bbox1) is True
+
+    def test_touching_3d_boxes(self):
+        bbox1 = BoundingBox([(0, 0, 0), (1, 1, 1)])
+        bbox2 = BoundingBox([(1, 1, 1), (2, 2, 2)])
+        bbox3 = BoundingBox([(-1, -1, -1), (0, 0, 0)])
+        assert bbox1.intersect(bbox2) is False
+        assert bbox1.overlap(bbox2) is True
+        assert bbox2.intersect(bbox1) is False
+        assert bbox2.overlap(bbox1) is True
+        assert bbox1.intersect(bbox3) is False
+        assert bbox1.overlap(bbox3) is True
+        assert bbox3.intersect(bbox1) is False
+        assert bbox3.overlap(bbox1) is True
 
     def test_extend(self):
         bbox = BoundingBox([(0, 0, 0), (10, 10, 10)])
