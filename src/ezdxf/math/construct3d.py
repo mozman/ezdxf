@@ -159,8 +159,8 @@ def distance_point_line_3d(point: Vec3, start: Vec3, end: Vec3) -> float:
 
 
 def intersection_line_line_3d(
-    line1: Tuple[Vec3, Vec3],
-    line2: Tuple[Vec3, Vec3],
+    line1: Sequence[Vec3],
+    line2: Sequence[Vec3],
     virtual: bool = True,
     abs_tol: float = 1e-10,
 ) -> Optional[Vec3]:

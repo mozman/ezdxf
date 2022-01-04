@@ -74,6 +74,15 @@ def test_intersect_real_colinear():
     assert point.isclose(vec2(2, 2))
 
 
+@pytest.mark.parametrize(
+    "p2", [(4, 0), (0, 4), (4, 4)], ids=["horiz", "vert", "diag"]
+)
+def test_intersect_coincident_lines(p2):
+    line1 = (Vec2(0, 0), Vec2(p2))
+    point = intersection_line_line_2d(line1, line1, virtual=False)
+    assert point is None
+
+
 def test_issue_128():
     line1 = (vec2(175.0, 5.0), vec2(175.0, 50.0))
     line2 = (vec2(-10.1231, 30.1235), vec2(300.2344, 30.1235))

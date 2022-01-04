@@ -165,6 +165,13 @@ class TestIntersectingLines3d:
             (2, 0, 0)
         )
 
+    @pytest.mark.parametrize(
+        "p2", [(4, 0), (0, 4), (4, 4)], ids=["horiz", "vert", "diag"]
+    )
+    def test_coincident_lines_do_not_intersect(self, p2):
+        line = (Vec3(), Vec3(p2))
+        assert intersection_line_line_3d(line, line, virtual=False) is None
+
 
 RH_ORTHO = [
     (NULLVEC, X_AXIS, Y_AXIS, Z_AXIS),

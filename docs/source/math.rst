@@ -69,7 +69,9 @@ Bulge Related Functions
 
 .. autofunction:: convex_hull_2d
 
-.. autofunction:: intersection_line_line_2d(line1: Sequence[Vec2], line2: Sequence[Vec2], virtual=True, abs_tol=1e-10) -> Optional[Vec2]
+.. autofunction:: intersection_line_line_2d(line1: Tuple[Vec2, Vec2], line2: Tuple[Vec2, Vec2], virtual=True, abs_tol=1e-10) -> Optional[Vec2]
+
+.. autofunction:: intersect_polylines_2d(p1: Sequence[Vec2], p2: Sequence[Vec2], abs_tol=1e-10) -> List[Vec2]
 
 .. autofunction:: rytz_axis_construction(d1: Vec3, d2: Vec3) -> Tuple[Vec3, Vec3, float]
 
@@ -121,6 +123,8 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 .. autofunction:: intersection_ray_ray_3d(ray1: Tuple[Vec3, Vec3], ray2: Tuple[Vec3, Vec3], abs_tol=1e-10) -> Sequence[Vec3]
 
 .. autofunction:: intersection_line_line_3d(line1: Tuple[Vec3, Vec3], line2: Tuple[Vec3, Vec3], virtual=True, abs_tol=1e-10) -> Optional[Vec3]
+
+.. autofunction:: intersect_polylines_3d(p1: Sequence[Vec3], p2: Sequence[Vec3], abs_tol=1e-10) -> List[Vec3]
 
 .. autofunction:: estimate_tangents(points: List[Vec3], method: str = '5-points', normalize = True) -> List[Vec3]
 
