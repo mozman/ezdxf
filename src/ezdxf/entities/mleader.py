@@ -48,6 +48,7 @@ if TYPE_CHECKING:
         DXFEntity,
         BaseLayout,
         EntityQuery,
+        Auditor,
     )
 
 __all__ = [
@@ -1332,6 +1333,44 @@ class MLeaderStyle(DXFObject):
             handle = self.dxf.get(name, None)
             if handle is not None:
                 yield handle
+
+    def audit(self, auditor: "Auditor") -> None:
+        from ezdxf.audit import AuditError
+
+        if not self.is_alive:
+            return
+        super().audit(auditor)
+        entitydb = auditor.entitydb
+        dxf = self.dxf
+        name = str(self)
+        handle = dxf.get("text_style_handle", None)
+        if handle is not None and handle not in entitydb:
+            standard = auditor.doc.styles.get("Standard")
+            if standard is not None:
+                self.dxf.text_style_handle = standard.dxf.handle
+                auditor.fixed_error(
+                    AuditError.UNDEFINED_TEXT_STYLE,
+                    f"{name}: text_style_handle={handle} is not valid, replaced by "
+                    f"'Standard' text style",
+                    self
+                )
+            else:
+                logger.warning("required text style 'Standard' does not exist")
+                self.dxf.discard("text_style_handle")
+                auditor.fixed_error(
+                    AuditError.UNDEFINED_TEXT_STYLE,
+                    f"{name}: removed invalid text_style_handle={handle}",
+                    self
+                )
+        for attrib in ("arrow_head_handle", "block_record_handle"):
+            handle = dxf.get(attrib)
+            if handle is not None and handle not in entitydb:
+                dxf.discard(attrib)
+                auditor.fixed_error(
+                    AuditError.UNDEFINED_BLOCK,
+                    f"{name}: removed invalid {attrib}={handle}",
+                    self
+                )
 
 
 class MLeaderStyleCollection(ObjectCollection):

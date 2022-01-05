@@ -1,9 +1,10 @@
-# Copyright (c) 2018-2021 Manfred Moitzi
+# Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
 import pytest
 
 import ezdxf
 from math import radians
+from ezdxf.audit import Auditor
 from ezdxf.layouts import VirtualLayout
 from ezdxf import colors
 from ezdxf.lldxf import const
@@ -28,25 +29,70 @@ def msp():
     return VirtualLayout()
 
 
-# todo: real MLEADER tests
-def test_generic_mleader(msp):
-    mleader = msp.new_entity("MLEADER", {})
-    assert mleader.dxftype() == "MLEADER"
-    assert mleader.dxf.style_handle is None
-
-
-def test_synonym_multileader(msp):
+def test_new_multileader(msp):
+    """Tests for building a new MULTILEADER in test suite 713."""
     mleader = msp.new_entity("MULTILEADER", {})
     assert mleader.dxftype() == "MULTILEADER"
     assert mleader.dxf.style_handle is None
 
 
-# todo: real MLEADERSTYLE tests
-def test_standard_mleader_style():
-    doc = ezdxf.new("R2007")
-    mleader_style = doc.mleader_styles.get("Standard")
-    assert mleader_style.dxftype() == "MLEADERSTYLE"
-    assert mleader_style.dxf.content_type == 2
+def test_synonym_mleader(msp):
+    mleader = msp.new_entity("MLEADER", {})
+    assert mleader.dxftype() == "MLEADER"
+    assert mleader.dxf.style_handle is None
+
+
+class TestMLeaderStyle:
+    @pytest.fixture(scope="class")
+    def doc(self):
+        return ezdxf.new("R2007")
+
+    @pytest.fixture(scope="class")
+    def new_style(self, doc):
+        return doc.mleader_styles.new("TEST1")
+
+    def test_standard_mleader_style(self, doc):
+        """The MLEADERSTYLE entity is more a template, most attributes are stored
+        in the MULTILEADER entity itself.
+
+        """
+        mleader_style = doc.mleader_styles.get("Standard")
+        assert mleader_style.dxftype() == "MLEADERSTYLE"
+        assert mleader_style.dxf.content_type == 2
+        textstyle_handle = mleader_style.dxf.text_style_handle
+        standard = doc.entitydb.get(textstyle_handle)
+        assert standard.dxf.name == "Standard"
+        assert (
+            mleader_style.dxf.leader_linetype_handle is None
+        ), "default linetype handle is not set (BYLAYER)"
+        assert (
+            mleader_style.dxf.arrow_head_handle is None
+        ), "default arrow handle is not set (closed filled)"
+        assert (
+            mleader_style.dxf.block_record_handle is None
+        ), "BLOCK_RECORD handle is not set"
+
+    def test_audit_fixes_invalid_text_style_handle(self, doc, new_style):
+        new_style.dxf.text_style_handle = "ABBA"
+        auditor = Auditor(doc)
+        new_style.audit(auditor)
+        assert len(auditor.fixes) == 1
+        text_style = doc.entitydb.get(new_style.dxf.text_style_handle)
+        assert text_style.dxf.name == "Standard"
+
+    def test_audit_fixes_invalid_arrow_head_handle(self, doc, new_style):
+        new_style.dxf.arrow_head_handle = "ABBA"
+        auditor = Auditor(doc)
+        new_style.audit(auditor)
+        assert len(auditor.fixes) == 1
+        assert new_style.dxf.arrow_head_handle is None, "reset to None"
+
+    def test_audit_fixes_invalid_block_record_handle(self, doc, new_style):
+        new_style.dxf.block_record_handle = "ABBA"
+        auditor = Auditor(doc)
+        new_style.audit(auditor)
+        assert len(auditor.fixes) == 1
+        assert new_style.dxf.block_record_handle is None, "reset to None"
 
 
 def matrix(scale=1.0, rotate=0, tx=0, ty=0, tz=0) -> Matrix44:
@@ -727,25 +773,15 @@ class TestBlockContext(MLeaderTesting):
     def test_get_transformation_matrix(self, ctx):
         # The transformation matrix is stored in transposed order
         # of ezdxf.math.Matrix44()!
+        # fmt: off
         assert ctx.block._matrix == [
-            1,
-            0,
-            0,
-            18.42,
-            0,
-            1,
-            0,
-            0.70,
-            0,
-            0,
-            1,
-            0,
-            0,
-            0,
-            0,
-            1,
+            1, 0, 0, 18.42,
+            0, 1, 0, 0.70,
+            0, 0, 1, 0,
+            0, 0, 0, 1,
         ]
         assert ctx.block.matrix44.get_row(3) == (18.42, 0.70, 0, 1)
+        # fmt: on
 
     def test_set_transformation_matrix(self):
         m = Matrix44()
@@ -754,24 +790,14 @@ class TestBlockContext(MLeaderTesting):
         block.matrix44 = m
         # The transformation matrix is stored in transposed order
         # of ezdxf.math.Matrix44()!
+        # fmt: off
         assert block._matrix == [
-            1,
-            0,
-            0,
-            4,
-            0,
-            1,
-            0,
-            3,
-            0,
-            0,
-            1,
-            2,
-            0,
-            0,
-            0,
-            1,
+            1, 0, 0, 4,
+            0, 1, 0, 3,
+            0, 0, 1, 2,
+            0, 0, 0, 1,
         ]
+        # fmt: on
 
     def test_transform_block_data(self):
         point = Vec3(2, 3, 0)

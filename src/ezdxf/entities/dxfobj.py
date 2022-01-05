@@ -40,6 +40,8 @@ class DXFObject(DXFEntity):
 
     def audit(self, auditor: "Auditor") -> None:
         """Validity check. (internal API)"""
+        if not self.is_alive:
+            return
         super().audit(auditor)
         auditor.check_owner_exist(self)
 
