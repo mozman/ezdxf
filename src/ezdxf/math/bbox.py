@@ -166,7 +166,7 @@ class BoundingBox(AbstractBoundingBox):
         )
 
     def intersect(self, other: "AbstractBoundingBox") -> bool:
-        """Returns `True` if this bounding box intersects with `other` but does
+        """Returns ``True`` if this bounding box intersects with `other` but does
         not include touching bounding boxes, see also :meth:`overlap`::
 
             bbox1 = BoundingBox([(0, 0, 0), (1, 1, 1)])
@@ -200,7 +200,7 @@ class BoundingBox(AbstractBoundingBox):
         return True
 
     def overlap(self, other: "AbstractBoundingBox") -> bool:
-        """Returns `True` if this bounding box intersects with `other` but
+        """Returns ``True`` if this bounding box intersects with `other` but
         in contrast to :meth:`intersect` includes touching bounding boxes too::
 
             bbox1 = BoundingBox([(0, 0, 0), (1, 1, 1)])
@@ -234,6 +234,15 @@ class BoundingBox(AbstractBoundingBox):
         if self.extmax.z < other.extmin.z:
             return False
         return True
+
+    def contains(self, other: "BoundingBox") -> bool:
+        """Returns ``True`` if the `other` bounding box is completely inside
+        of this bounding box.
+
+        .. versionadded:: 0.17.2
+
+        """
+        return self.all_inside(other.cube_vertices())
 
     def cube_vertices(self) -> Tuple[Vec3, ...]:
         """Returns the 3D corners of the bounding box as :class:`Vec3` objects."""
@@ -280,7 +289,7 @@ class BoundingBox2d(AbstractBoundingBox):
         return (min_.x <= v.x <= max_.x) and (min_.y <= v.y <= max_.y)
 
     def intersect(self, other: "AbstractBoundingBox") -> bool:
-        """Returns `True` if this bounding box intersects with `other` but does
+        """Returns ``True`` if this bounding box intersects with `other` but does
         not include touching bounding boxes, see also :meth:`overlap`::
 
             bbox1 = BoundingBox2d([(0, 0), (1, 1)])
@@ -308,7 +317,7 @@ class BoundingBox2d(AbstractBoundingBox):
         return True
 
     def overlap(self, other: "AbstractBoundingBox") -> bool:
-        """Returns `True` if this bounding box intersects with `other` but
+        """Returns ``True`` if this bounding box intersects with `other` but
         in contrast to :meth:`intersect` includes touching bounding boxes too::
 
             bbox1 = BoundingBox2d([(0, 0), (1, 1)])
@@ -336,6 +345,15 @@ class BoundingBox2d(AbstractBoundingBox):
         if self.extmax.y < other.extmin.y:
             return False
         return True
+
+    def contains(self, other: "BoundingBox2d") -> bool:
+        """Returns ``True`` if the `other` bounding box is completely inside
+        of this bounding box.
+
+        .. versionadded:: 0.17.2
+
+        """
+        return self.all_inside(other.rect_vertices())
 
 
 def extends3d(vertices: Iterable["Vertex"]) -> Tuple[Vec3, Vec3]:

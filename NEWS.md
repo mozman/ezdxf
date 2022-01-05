@@ -26,6 +26,8 @@ Version 0.17.2b5 - dev
 - NEW: `ezdxf.math.intersect_poylines_3d()`
 - NEW: `ezdxf.math.quadratic_bezier_from_3p()`
 - NEW: `ezdxf.math.cubic_bezier_from_3p()`
+- NEW: `BoundingBox.contains(other)` and `BoundingBox2d.contains(other)`, check 
+  if a bounding box contains completely another bounding box 
 - NEW: `TextEntityAlignment` enum replaces the string based alignment definition
 - NEW: method `Text.get_placement()`, replaces `get_pos()` 
 - NEW: method `Text.set_placement()`, replaces `set_pos()` 

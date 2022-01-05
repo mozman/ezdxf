@@ -217,6 +217,15 @@ class TestBoundingBox:
             ]
         )
 
+    def test_contains_other_bounding_box(self):
+        box_a = BoundingBox([(0, 0, 0), (10, 10, 10)])
+        box_b = BoundingBox([(1, 1, 1), (9, 9, 9)])
+        box_c = BoundingBox([(1, 1, 1), (11, 11, 11)])
+        assert box_a.contains(box_b) is True
+        assert box_a.contains(box_a) is True  # self contained
+        assert box_b.contains(box_a) is False
+        assert box_a.contains(box_c) is False
+
 
 class TestBoundingBox2d:
     def test_init(self):
@@ -281,3 +290,12 @@ class TestBoundingBox2d:
         assert bbox.rect_vertices() == Vec2.tuple(
             [(0, 0), (1, 0), (1, 2), (0, 2)]
         )
+
+    def test_contains_other_bounding_box(self):
+        box_a = BoundingBox2d([(0, 0), (10, 10)])
+        box_b = BoundingBox2d([(1, 1), (9, 9)])
+        box_c = BoundingBox2d([(1, 1), (11, 11)])
+        assert box_a.contains(box_b) is True
+        assert box_a.contains(box_a) is True  # self contained!
+        assert box_b.contains(box_a) is False
+        assert box_a.contains(box_c) is False

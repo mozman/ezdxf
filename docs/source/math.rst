@@ -527,6 +527,8 @@ BoundingBox
 
     .. automethod:: overlap(other: BoundingBox) -> bool
 
+    .. automethod:: contains(other: BoundingBox) -> bool
+
     .. automethod:: extend
 
     .. automethod:: union(other: BoundingBox) -> BoundingBox
@@ -565,6 +567,8 @@ BoundingBox2d
     .. automethod:: intersect(other: BoundingBox2d) -> bool
 
     .. automethod:: overlap(other: BoundingBox2d) -> bool
+
+    .. automethod:: contains(other: BoundingBox2d) -> bool
 
     .. automethod:: extend
 
