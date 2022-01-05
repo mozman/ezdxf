@@ -439,7 +439,7 @@ def qsave(
         config = Configuration.defaults()
 
     try:
-        fig: plt.Figure = plt.figure()
+        fig: plt.Figure = plt.figure(dpi=dpi)
         ax: plt.Axes = fig.add_axes((0, 0, 1, 1))
         ctx = RenderContext(layout.doc)
         layout_properties = LayoutProperties.from_layout(layout)

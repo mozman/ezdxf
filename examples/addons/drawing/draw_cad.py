@@ -87,7 +87,7 @@ def _main():
         else config.line_policy
     )
 
-    fig: plt.Figure = plt.figure()
+    fig: plt.Figure = plt.figure(dpi=args.dpi)
     ax: plt.Axes = fig.add_axes([0, 0, 1, 1])
     ctx = RenderContext(doc)
     out = MatplotlibBackend(ax)
