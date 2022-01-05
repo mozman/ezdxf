@@ -57,6 +57,15 @@ class AbstractBoundingBox:
     def overlap(self, other: "AbstractBoundingBox") -> bool:
         pass
 
+    def contains(self, other: "AbstractBoundingBox") -> bool:
+        """Returns ``True`` if the `other` bounding box is completely inside
+        of this bounding box.
+
+        .. versionadded:: 0.17.2
+
+        """
+        return self.inside(other.extmin) and self.inside(other.extmax)
+
     def any_inside(self, vertices: Iterable["Vertex"]) -> bool:
         """Returns ``True`` if any vertex is inside this bounding box.
 
@@ -235,15 +244,6 @@ class BoundingBox(AbstractBoundingBox):
             return False
         return True
 
-    def contains(self, other: "BoundingBox") -> bool:
-        """Returns ``True`` if the `other` bounding box is completely inside
-        of this bounding box.
-
-        .. versionadded:: 0.17.2
-
-        """
-        return self.all_inside(other.cube_vertices())
-
     def cube_vertices(self) -> Tuple[Vec3, ...]:
         """Returns the 3D corners of the bounding box as :class:`Vec3` objects."""
         if self.extmin is not None and self.extmax is not None:
@@ -345,15 +345,6 @@ class BoundingBox2d(AbstractBoundingBox):
         if self.extmax.y < other.extmin.y:
             return False
         return True
-
-    def contains(self, other: "BoundingBox2d") -> bool:
-        """Returns ``True`` if the `other` bounding box is completely inside
-        of this bounding box.
-
-        .. versionadded:: 0.17.2
-
-        """
-        return self.all_inside(other.rect_vertices())
 
 
 def extends3d(vertices: Iterable["Vertex"]) -> Tuple[Vec3, Vec3]:

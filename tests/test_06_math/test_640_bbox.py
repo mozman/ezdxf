@@ -299,3 +299,19 @@ class TestBoundingBox2d:
         assert box_a.contains(box_a) is True  # self contained!
         assert box_b.contains(box_a) is False
         assert box_a.contains(box_c) is False
+
+    def test_2d_box_contains_3d_box(self):
+        box_a = BoundingBox2d(
+            [(0, 0), (10, 10)]
+        )  # this is flat-land, z-axis does not exist
+        box_b = BoundingBox([(1, 1, 1), (9, 9, 9)])
+        assert box_a.contains(box_b) is True, "z-axis should be ignored"
+
+    def test_3d_box_contains_2d_box(self):
+        box_a = BoundingBox2d(
+            [(1, 1), (9, 9)]
+        )  # lives in the xy-plane, z-axis is 0
+        box_b = BoundingBox([(0, 0, 0), (10, 10, 10)])
+        assert box_b.contains(box_a) is True, "xy-plane is included"
+        box_c = BoundingBox([(0, 0, 1), (10, 10, 10)])
+        assert box_c.contains(box_a) is False, "xy-plane is not included"
