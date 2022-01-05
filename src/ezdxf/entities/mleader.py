@@ -1018,7 +1018,14 @@ class BlockData:
         write_vertex(16, self.scale)
         write_tag2(46, self.rotation)
         write_tag2(93, self.color)
-        for value in self._matrix:
+        m = self._matrix
+        if len(m) != 16:
+            # The content of this matrix is not used for block transformation,
+            # not by AutoCAD nor by BricsCAD, but BricsCAD gets irritated
+            # if this matrix is missing. AutoCAD is fine without the presence
+            # of this matrix.
+            m = list(Matrix44())  # identity matrix
+        for value in m:
             write_tag2(47, value)
 
     def transform(self, wcs: WCSTransform) -> None:

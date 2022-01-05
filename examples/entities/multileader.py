@@ -201,11 +201,19 @@ def create_block(
     attdef_attribs = dict(attribs)
     attdef_attribs["height"] = 1.0
     attdef_attribs["style"] = "OpenSans"
-    bottom_left_attdef = block.add_attdef("ONE", dxfattribs=attdef_attribs)
+    tag = "ONE"
+    attdef_attribs["prompt"] = tag
+    bottom_left_attdef = block.add_attdef(
+        tag, text=tag, dxfattribs=attdef_attribs
+    )
     bottom_left_attdef.set_placement(
         (margin, margin), align=TextEntityAlignment.BOTTOM_LEFT
     )
-    top_right_attdef = block.add_attdef("TWO", dxfattribs=attdef_attribs)
+    tag = "TWO"
+    attdef_attribs["prompt"] = tag
+    top_right_attdef = block.add_attdef(
+        tag, text=tag, dxfattribs=attdef_attribs
+    )
     top_right_attdef.set_placement(
         (size - margin, size - margin), align=TextEntityAlignment.TOP_RIGHT
     )
@@ -303,6 +311,7 @@ def make_template(name: str):
 
 
 if __name__ == "__main__":
+    make_template("brics_block")
     # quick_mtext_horizontal("mleader_quick_mtext_horizontal")
     # quick_mtext_vertical("mleader_quick_mtext_vertical")
     # simple_mtext_content_horizontal("mleader_simple_mtext_horizontal")
