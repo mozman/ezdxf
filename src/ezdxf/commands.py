@@ -9,7 +9,6 @@ import signal
 import logging
 from pathlib import Path
 
-import ezdxf
 from ezdxf import recover
 from ezdxf.lldxf import const
 from ezdxf.lldxf.validator import is_dxf_file
@@ -214,19 +213,25 @@ class Audit(Command):
                 _audit(filename)
 
 
-def load_document(filename: str):
+def load_document(filename: str, panic=True):
     try:
         doc, auditor = recover.readfile(filename)
     except IOError:
-        msg = f"Not a DXF file or a generic I/O error: {filename}"
-        print(msg)
+        msg = f'Not a DXF file or a generic I/O error: "{filename}"'
         logger.error(msg)
-        sys.exit(2)
+        if panic:
+            print(msg)
+            sys.exit(2)
+        else:
+            raise const.DXFLoadError(msg)
     except const.DXFStructureError:
-        msg = f"Invalid or corrupted DXF file: {filename}"
-        print(msg)
+        msg = f'Invalid or corrupted DXF file: "{filename}"'
         logger.error(msg)
-        sys.exit(3)
+        if panic:
+            print(msg)
+            sys.exit(3)
+        else:
+            raise const.DXFLoadError(msg)
 
     if auditor.has_errors:
         # But is most likely good enough for rendering.
@@ -608,10 +613,11 @@ class Info(Command):
     @staticmethod
     def add_parser(subparsers):
         parser = subparsers.add_parser(
-            Info.NAME, help="show information and optional stats of DXF files as "
-                            "loaded by ezdxf, this may not represent the original "
-                            "content of the file, use the browse command to "
-                            "see the original content"
+            Info.NAME,
+            help="show information and optional stats of DXF files as "
+            "loaded by ezdxf, this may not represent the original "
+            "content of the file, use the browse command to "
+            "see the original content",
         )
         parser.add_argument(
             "file",
@@ -639,14 +645,23 @@ class Info(Command):
         from ezdxf.document import info
 
         for pattern in args.file:
+            file_counter = 0
             for filename in glob.glob(pattern):
-                doc, auditor = load_document(filename)
-                print(
-                    "\n".join(
-                        info(doc, verbose=args.verbose, content=args.stats)
+                file_counter += 1
+                try:
+                    doc, auditor = load_document(filename, panic=False)
+                except const.DXFLoadError:
+                    pass
+                else:
+                    print(
+                        "\n".join(
+                            info(doc, verbose=args.verbose, content=args.stats)
+                        )
                     )
-                )
-                print()
+                    print()
+
+            if file_counter == 0:
+                logger.error(f'No matching files for pattern: "{pattern}"')
 
 
 def set_app_icon(app):

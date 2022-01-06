@@ -67,6 +67,10 @@ class DXFStructureError(DXFError):
     pass
 
 
+class DXFLoadError(DXFError):
+    pass
+
+
 class DXFAppDataError(DXFStructureError):
     pass
 
