@@ -2,8 +2,8 @@
 News
 ====
 
-Version 0.17.2b5 - dev
-----------------------
+Version 0.17.2 - 2022-01-06
+---------------------------
 
 - NEW: extended binary wheels support
   - `manylinux2010_x86_64` for Python < 3.10 and `manylinux2014_x86_64` 
@@ -26,8 +26,8 @@ Version 0.17.2b5 - dev
 - NEW: `ezdxf.math.intersect_poylines_3d()`
 - NEW: `ezdxf.math.quadratic_bezier_from_3p()`
 - NEW: `ezdxf.math.cubic_bezier_from_3p()`
-- NEW: `BoundingBox.contains(other)` and `BoundingBox2d.contains(other)`, check 
-  if a bounding box contains completely another bounding box 
+- NEW: `BoundingBox.contains()`, check if a bounding box contains completely 
+  another bounding box 
 - NEW: `TextEntityAlignment` enum replaces the string based alignment definition
 - NEW: method `Text.get_placement()`, replaces `get_pos()` 
 - NEW: method `Text.set_placement()`, replaces `set_pos()` 
@@ -46,6 +46,8 @@ Version 0.17.2b5 - dev
 - CHANGE: moved enum `MTextBackgroundColor` to `ezdxf.enums`
 - CHANGE: `Dimstyle.set_tolerance()`: argument `align` as enum `MTextLineAlignment`
 - CHANGE: `DimstyleOverride.set_tolerance()`: argument `align` as enum `MTextLineAlignment`
+- CHANGE: `MeshData.add_edge()` is changed to `MeshData.add_edge_crease()`, 
+  this fixes my misunderstanding of edge and crease data in the `MESH` entity.  
 - BUGFIX [#574](https://github.com/mozman/ezdxf/issues/574):
   flattening issues in `Path()` and `ConstructionEllipse()` 
 - BUGFIX: `drawing` add-on shows block references in `ACAD_TABLE` at the 
@@ -53,8 +55,6 @@ Version 0.17.2b5 - dev
 - BUGFIX [#589](https://github.com/mozman/ezdxf/issues/589):
   `Polyface.virtual_entities()` yields correct triangle faces
 - BUGFIX: prevent invalid DXF export of the `MESH` entity  
-- CHANGE: `MeshData.add_edge()` is changed to `MeshData.add_edge_crease()`, 
-  this fixes my misunderstanding of edge and crease data in the `MESH` entity.  
 - PREVIEW: arc length dimension rendering support, new factory methods: 
   `add_arc_dim_3p()`, `add_arc_dim_cra()`, `add_arc_dim_arc()`
 - PREVIEW: ordinate dimension rendering support, new factory methods: 
