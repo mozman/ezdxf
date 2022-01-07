@@ -1225,7 +1225,7 @@ class R2000MetaData(MetaData):
         self._data.remove(safe_string(key, MAX_STR_LEN))
 
 
-def info(doc: Drawing, verbose=False, content=False) -> List[str]:
+def info(doc: Drawing, verbose=False, content=False, fmt="ASCII") -> List[str]:
     from ezdxf.units import unit_name
     from collections import Counter
 
@@ -1268,6 +1268,7 @@ def info(doc: Drawing, verbose=False, content=False) -> List[str]:
         loaded_dxf_version = doc.dxfversion
     data: List[str] = []
     data.append(f'Filename: "{doc.filename}"')
+    data.append(f'Format: {fmt}')
     if loaded_dxf_version != doc.dxfversion:
         msg = f"Loaded content was upgraded from DXF Version {loaded_dxf_version}"
         release = const.acad_release.get(loaded_dxf_version, "")

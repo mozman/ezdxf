@@ -9,9 +9,10 @@ import signal
 import logging
 from pathlib import Path
 
+import ezdxf
 from ezdxf import recover
 from ezdxf.lldxf import const
-from ezdxf.lldxf.validator import is_dxf_file
+from ezdxf.lldxf.validator import is_dxf_file, is_binary_dxf_file
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFGraphic
@@ -213,33 +214,25 @@ class Audit(Command):
                 _audit(filename)
 
 
-def load_document(filename: str, panic=True):
+def load_document(filename: str):
     try:
         doc, auditor = recover.readfile(filename)
     except IOError:
         msg = f'Not a DXF file or a generic I/O error: "{filename}"'
-        logger.error(msg)
-        if panic:
-            print(msg)
-            sys.exit(2)
-        else:
-            raise const.DXFLoadError(msg)
+        print(msg, file=sys.stderr)
+        sys.exit(2)
     except const.DXFStructureError:
         msg = f'Invalid or corrupted DXF file: "{filename}"'
-        logger.error(msg)
-        if panic:
-            print(msg)
-            sys.exit(3)
-        else:
-            raise const.DXFLoadError(msg)
+        print(msg, file=sys.stderr)
+        sys.exit(3)
 
     if auditor.has_errors:
         # But is most likely good enough for rendering.
-        msg = f"Found {len(auditor.errors)} unrecoverable errors."
+        msg = f"Audit process found {len(auditor.errors)} unrecoverable error(s)."
         print(msg)
         logger.error(msg)
     if auditor.has_fixes:
-        msg = f"Fixed {len(auditor.fixes)} errors."
+        msg = f"Audit process fixed {len(auditor.fixes)} error(s)."
         print(msg)
         logger.info(msg)
     return doc, auditor
@@ -604,6 +597,37 @@ class Config(Command):
             options.print()
 
 
+def load_every_document(filename: str):
+    def io_error() -> str:
+        msg = f'Not a DXF file or a generic I/O error: "{filename}"'
+        print(msg, file=sys.stderr)
+        return msg
+
+    def structure_error() -> str:
+        msg = f'Invalid or corrupted DXF file: "{filename}"'
+        print(msg, file=sys.stderr)
+        return msg
+
+    binary_fmt = False
+    if is_binary_dxf_file(filename):
+        try:
+            doc = ezdxf.readfile(filename)
+        except IOError:
+            raise const.DXFLoadError(io_error())
+        except const.DXFStructureError:
+            raise const.DXFLoadError(structure_error())
+        auditor = doc.audit()
+        binary_fmt = True
+    else:
+        try:
+            doc, auditor = recover.readfile(filename)
+        except IOError:
+            raise const.DXFLoadError(io_error())
+        except const.DXFStructureError:
+            raise const.DXFLoadError(structure_error())
+    return doc, auditor, binary_fmt
+
+
 @register
 class Info(Command):
     """Launcher sub-command: info"""
@@ -644,24 +668,47 @@ class Info(Command):
     def run(args):
         from ezdxf.document import info
 
-        for pattern in args.file:
-            file_counter = 0
-            for filename in glob.glob(pattern):
-                file_counter += 1
-                try:
-                    doc, auditor = load_document(filename, panic=False)
-                except const.DXFLoadError:
-                    pass
-                else:
-                    print(
-                        "\n".join(
-                            info(doc, verbose=args.verbose, content=args.stats)
+        def process(fn: str):
+            try:
+                doc, auditor, binary_fmt = load_every_document(fn)
+            except const.DXFLoadError:
+                pass
+            else:
+                fmt = "Binary" if binary_fmt else "ASCII"
+                print(
+                    "\n".join(
+                        info(
+                            doc,
+                            verbose=args.verbose,
+                            content=args.stats,
+                            fmt=fmt,
                         )
                     )
-                    print()
+                )
+                if auditor.has_fixes:
+                    print(f"Audit process fixed {len(auditor.fixes)} error(s).")
+                if auditor.has_errors:
+                    print(
+                        f"Audit process found {len(auditor.errors)} unrecoverable error(s)."
+                    )
+                print()
 
-            if file_counter == 0:
-                logger.error(f'No matching files for pattern: "{pattern}"')
+        for pattern in args.file:
+            file_count = 0
+            for filename in glob.glob(pattern):
+                if os.path.isdir(filename):
+                    dir_pattern = os.path.join(filename, "*.dxf")
+                    for filename2 in glob.glob(dir_pattern):
+                        process(filename2)
+                        file_count += 1
+                else:
+                    process(filename)
+                    file_count += 1
+
+            if file_count == 0:
+                sys.stderr.write(
+                    f'No matching files for pattern: "{pattern}"\n'
+                )
 
 
 def set_app_icon(app):
