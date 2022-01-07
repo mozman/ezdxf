@@ -12,6 +12,7 @@ from ezdxf.recover import (
     byte_tag_compiler,
 )
 from ezdxf.lldxf import const
+from ezdxf.audit import AuditError
 
 HEADER = """  0
 SECTION
@@ -113,11 +114,35 @@ DUMMY
 class TestByteTagCompiler:
     def test_malformed_value_tags(self):
         loader = bytes_loader(BytesIO(MALFORMED_VALUE_TAGS))
-        tags = list(byte_tag_compiler(loader))
+        msg = []
+        tags = list(byte_tag_compiler(loader, messages=msg))
         assert tags[0] == (70, 42)
         assert tags[1] == (40, 47.11)
         assert tags[2] == (10, (1, 1, 1))
         assert tags[3] == (11, (2, 2))
+        assert len(msg) == 7
+
+    def test_malformed_integer_tags(self):
+        loader = bytes_loader(BytesIO(b"70\n123x\n"))
+        msg = []
+        tags = list(byte_tag_compiler(loader, messages=msg))
+        assert tags[0] == (70, 123)
+        assert msg[0][0] == AuditError.INVALID_INTEGER_VALUE
+
+    def test_underlines_in_numbers_are_handled_by_python(self):
+        loader = bytes_loader(BytesIO(b"50\n123_000.9\n70\n456_000\n"))
+        msg = []
+        tags = list(byte_tag_compiler(loader, messages=msg))
+        assert tags[0] == (50, 123000.9)
+        assert tags[1] == (70, 456000)
+        assert len(msg) == 0
+
+    def test_spaces_in_floats_returns_invalid_value(self):
+        loader = bytes_loader(BytesIO(b"50\n1.000 e20\n"))
+        msg = []
+        tags = list(byte_tag_compiler(loader, messages=msg))
+        assert tags[0] == (50, 1), "invalid interpretation"
+        assert msg[0][0] == AuditError.INVALID_FLOATING_POINT_VALUE
 
 
 OUT_OF_SYNC_TAGS = """

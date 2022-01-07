@@ -15,6 +15,7 @@ import itertools
 import re
 from collections import defaultdict
 from pathlib import Path
+import logging
 
 from ezdxf.lldxf import const
 from ezdxf.lldxf import repair
@@ -50,6 +51,7 @@ EXCLUDE_STRUCTURE_CHECK = {
     "ENDBLK",
     "SEQEND",
 }
+logger = logging.getLogger("ezdxf")
 
 
 def readfile(
@@ -667,6 +669,27 @@ def byte_tag_compiler(
         value = tag.value.decode(encoding)
         return f'Invalid tag ({code}, "{value}") near line: {line}.'
 
+    def recover_int(s: Union[str, bytes]) -> int:
+        if isinstance(s, bytes):
+            s = s.decode(encoding="utf8" , errors="ignore")
+        value = _search_int(s)
+        msg = f"recovered invalid integer value \"{s}\" near line {line} as \"{value}\""
+        messages.append((AuditError.INVALID_INTEGER_VALUE, msg))
+        logger.warning(msg)
+        return value
+
+    def recover_float(s: Union[str, bytes]) -> float:
+        if isinstance(s, bytes):
+            s = s.decode(encoding="utf8" , errors="ignore")
+        value = _search_float(s)
+        msg = f"recovered invalid floating point value \"{s}\" near line {line} as \"{value}\""
+        messages.append((AuditError.INVALID_FLOATING_POINT_VALUE, msg))
+        logger.warning(msg)
+        return value
+
+    assert isinstance(encoding, str)
+    assert isinstance(errors, str)
+
     if messages is None:
         messages = []
     tags = iter(tags)
@@ -703,17 +726,17 @@ def byte_tag_compiler(
                             )
                         except ValueError:  # search for any float values
                             point = (
-                                _search_float(x.value),
-                                _search_float(y.value),
-                                _search_float(z.value),
+                                recover_float(x.value),
+                                recover_float(y.value),
+                                recover_float(z.value),
                             )
                     else:
                         try:
                             point = (float(x.value), float(y.value))
                         except ValueError:  # seach for any float values
                             point = (
-                                _search_float(x.value),
-                                _search_float(y.value),
+                                recover_float(x.value),
+                                recover_float(y.value),
                             )
                         undo_tag = z
                 except ValueError:
@@ -765,12 +788,12 @@ def byte_tag_compiler(
                         # slow path - e.g. ProE stores int values as floats :((
                         if type_ is int:
                             try:
-                                yield DXFTag(code, _search_int(x.value))
+                                yield DXFTag(code, recover_int(x.value))
                             except ValueError:
                                 raise const.DXFStructureError(error_msg(x))
                         elif type_ is float:
                             try:
-                                yield DXFTag(code, _search_float(x.value))
+                                yield DXFTag(code, recover_float(x.value))
                             except ValueError:
                                 raise const.DXFStructureError(error_msg(x))
                         else:

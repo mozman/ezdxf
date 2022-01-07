@@ -54,7 +54,7 @@ class TestProE:
         doc, auditor = recover.readfile(filename)
         assert doc.filename == filename
         assert doc.dxfversion is not None
-        assert len(auditor.errors) == 0
+        assert len(auditor.errors) == 2
         assert len(auditor.fixes) == 0
 
 

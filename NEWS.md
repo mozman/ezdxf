@@ -26,7 +26,7 @@ Version 0.18b0 - dev
 - NEW: method `Text.get_align_enum()`, replaces `get_align()`
 - NEW: method `Text.set_align_enum()`, replaces `set_align()`
 - NEW: command `ezdxf info FILE [FILE ...]`, show info and optional stats of DXF files
-
+- CHANGE: `recover` module - recovered integer and float values are logged as severe errors
 
 Version 0.17.2 - 2022-01-06
 ---------------------------
