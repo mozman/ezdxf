@@ -2,6 +2,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable
 import math
+from ezdxf.audit import AuditError
 from ezdxf.lldxf import validator
 from ezdxf.math import (
     Vec3,
@@ -27,7 +28,7 @@ from .dxfgfx import DXFGraphic, acdb_entity, add_entity, replace_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Spline
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Spline, Auditor
 
 __all__ = ["Ellipse"]
 
@@ -265,3 +266,29 @@ class Ellipse(DXFGraphic):
         # WCS entity which supports the "extrusion" attribute in a
         # different way!
         return OCS()
+
+    def audit(self, auditor: "Auditor") -> None:
+        if not self.is_alive:
+            return
+        super().audit(auditor)
+        entity = str(self)
+        major_axis = Vec3(self.dxf.major_axis)
+        if major_axis.is_null:
+            auditor.trash(self)
+            auditor.fixed_error(
+                code=AuditError.INVALID_MAJOR_AXIS,
+                message=f"Removed {entity} with invalid major axis: (0, 0, 0).",
+            )
+            return
+        if abs(self.dxf.ratio) > MAX_RATIO:
+            self.swap_axis()
+            auditor.fixed_error(
+                code=AuditError.INVALID_ELLIPSE_RATIO,
+                message=f"Fixed invalid ratio in {entity} by swapping axis.",
+            )
+        elif abs(self.dxf.ratio) < MIN_RATIO:
+            self.dxf.ratio = fix_ratio(self.dxf.ratio)
+            auditor.fixed_error(
+                code=AuditError.INVALID_ELLIPSE_RATIO,
+                message=f"Fixed invalid ratio in {entity}, set to {MIN_RATIO}.",
+            )

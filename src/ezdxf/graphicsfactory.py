@@ -180,10 +180,16 @@ class CreatorInterface:
         """
         if self.dxfversion < DXF2000:
             raise DXFVersionError("ELLIPSE requires DXF R2000")
+        ratio = float(ratio)
+        if abs(ratio) > 1.0:  # not valid for AutoCAD
+            raise DXFValueError("invalid axis ratio > 1.0")
+        _major_axis = Vec3(major_axis)
+        if _major_axis.is_null:  # not valid for AutoCAD
+            raise DXFValueError("invalid major axis: (0, 0, 0)")
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["center"] = Vec3(center)
-        dxfattribs["major_axis"] = Vec3(major_axis)
-        dxfattribs["ratio"] = float(ratio)
+        dxfattribs["major_axis"] = _major_axis
+        dxfattribs["ratio"] = ratio
         dxfattribs["start_param"] = float(start_param)
         dxfattribs["end_param"] = float(end_param)
         return self.new_entity("ELLIPSE", dxfattribs)  # type: ignore

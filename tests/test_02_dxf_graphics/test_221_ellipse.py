@@ -3,6 +3,8 @@
 import pytest
 import math
 
+import ezdxf
+from ezdxf.audit import Auditor
 from ezdxf.math import Vec3
 from ezdxf.entities.ellipse import Ellipse, MIN_RATIO, MAX_RATIO
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
@@ -160,6 +162,54 @@ def test_from_arc():
     assert ellipse.dxf.start_param == 0
     assert math.isclose(ellipse.dxf.end_param, math.tau)
 
+
+class TestEllipseParameters:
+    @pytest.fixture(scope="class")
+    def msp(self):
+        doc = ezdxf.new()
+        return doc.modelspace()
+
+    def test_adding_ellipse_with_too_big_ratio(self, msp):
+        with pytest.raises(ezdxf.DXFValueError):
+            msp.add_ellipse(center=(0, 0), major_axis=(1, 0), ratio=2.0)
+
+    def test_adding_ellipse_with_too_small_ratio(self, msp):
+        ellipse = msp.add_ellipse(center=(0, 0), major_axis=(1, 0), ratio=0.0)
+        assert ellipse.dxf.ratio >= 1e-6
+
+    def test_adding_ellipse_with_invalid_major_axis(self, msp):
+        with pytest.raises(ezdxf.DXFValueError):
+            msp.add_ellipse(center=(0, 0), major_axis=(0, 0), ratio=0.5)
+
+    def test_audit_max_ratio(self, msp):
+        ellipse = msp.add_ellipse((0, 0), (1, 0))
+        # can only happen for loaded DXF files
+        ellipse.dxf.__dict__["ratio"] = 2.0  # hack
+        auditor = Auditor(ellipse.doc)
+        ellipse.audit(auditor)
+        assert len(auditor.fixes) == 1
+        assert ellipse.dxf.ratio == 0.5
+        assert ellipse.dxf.major_axis.isclose((0.0, 2.0))
+
+    def test_audit_min_ratio(self, msp):
+        ellipse = msp.add_ellipse((0, 0), (1, 0))
+        # can only happen for loaded DXF files
+        ellipse.dxf.__dict__["ratio"] = 1e-9  # hack
+        auditor = Auditor(ellipse.doc)
+        ellipse.audit(auditor)
+        assert len(auditor.fixes) == 1
+        assert ellipse.dxf.ratio == 1e-6
+        assert ellipse.dxf.major_axis.isclose((1.0, 0.0)), "should not changed"
+
+    def test_audit_invalid_major_axis(self, msp):
+        ellipse = msp.add_ellipse((0, 0), (1, 0))
+        # can only happen for loaded DXF files
+        ellipse.dxf.__dict__["major_axis"] = Vec3(0, 0, 0)  # hack
+        auditor = Auditor(ellipse.doc)
+        ellipse.audit(auditor)
+        auditor.empty_trashcan()
+        assert len(auditor.fixes) == 1
+        assert ellipse.is_alive is False, "invalid ellipse should be deleted"
 
 # tests for swap_axis() are done in test_648_construction_ellipse.py
 # tests for params() are done in test_648_construction_ellipse.py
