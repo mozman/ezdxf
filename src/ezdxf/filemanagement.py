@@ -136,7 +136,9 @@ def readfile(
         with open(filename, "rb") as fp:
             data = fp.read()
             loader = binary_tags_loader(data, errors=errors)
-            return Drawing.load(loader)
+            doc = Drawing.load(loader)
+            doc.filename = filename
+            return doc
 
     if not is_dxf_file(filename):
         raise IOError(f"File '{filename}' is not a DXF file.")
