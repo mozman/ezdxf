@@ -453,6 +453,7 @@ class SubclassProcessor:
                 return tag.value
         return default
 
+    # TODO: rename to complex_dxfattribs_loader()
     def fast_load_dxfattribs(
         self,
         dxf: DXFNamespace,

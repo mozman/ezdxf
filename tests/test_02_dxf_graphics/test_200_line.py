@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 import pytest
 import math
@@ -7,7 +7,6 @@ from ezdxf.entities.line import Line
 from ezdxf.lldxf.const import DXF12, DXF2000, DXFValueError
 from ezdxf.lldxf.tagwriter import TagCollector, basic_tags_from_text
 from ezdxf.math import Matrix44
-from ezdxf.audit import Auditor
 
 TEST_CLASS = Line
 TEST_TYPE = "LINE"
@@ -302,3 +301,46 @@ def test_recover_acdb_entity_tags():
     assert line.dxf.layer == "0"
     assert line.dxf.color == 1
     assert line.dxf.linetype == "Linetype"
+
+
+MALFORMED_LINE = """0
+LINE
+5
+0
+62
+7
+330
+0
+6
+LT_EZDXF
+8
+LY_EZDXF
+100
+AcDbEntity
+10
+1.0
+20
+1.0
+30
+1.0
+100
+AcDbLine
+11
+2.0
+21
+2.0
+31
+2.0
+100
+AcDbInvalidSubclass
+"""
+
+
+def test_malformed_line():
+    line = Line.from_text(MALFORMED_LINE)
+    assert line.dxf.layer == "LY_EZDXF"
+    assert line.dxf.linetype == "LT_EZDXF"
+    assert line.dxf.color == 7
+    assert line.dxf.start.isclose((1, 1, 1))
+    assert line.dxf.end.isclose((2, 2, 2))
+
