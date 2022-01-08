@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 import pytest
 
@@ -141,3 +141,61 @@ def test_write_endblk_dxf(txt, ver):
     collector2 = TagCollector(dxfversion=ver, optional=False)
     endblk.export_dxf(collector2)
     assert collector.has_all_tags(collector2)
+
+
+MALFORMED_BLOCK = """0
+BLOCK
+5
+0
+8
+LY_EZDXF
+330
+0
+100
+AcDbEntity
+2
+BLOCKNAME
+70
+0
+10
+1.0
+20
+2.0
+30
+3.0
+100
+AcDbBlockBegin
+3
+IGNORED_BLOCKNAME
+1
+
+"""
+
+
+def test_load_malformed_block():
+    block = Block.from_text(MALFORMED_BLOCK)
+    assert block.dxf.layer == "LY_EZDXF"
+    assert block.dxf.base_point.isclose((1, 2, 3))
+    assert block.dxf.name == "BLOCKNAME"
+
+
+MALFORMED_ENDBLK = """0
+ENDBLK
+5
+0
+330
+0
+100
+AcDbBlockEnd
+8
+LY_EZDXF
+100
+AcDbEntity
+100
+AcDbBlockEnd
+"""
+
+
+def test_load_malformed_endblk():
+    endblk = EndBlk.from_text(MALFORMED_ENDBLK)
+    assert endblk.dxf.layer == "LY_EZDXF"

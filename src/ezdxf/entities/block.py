@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING
 from ezdxf.lldxf import validator
@@ -9,6 +9,7 @@ from ezdxf.lldxf.attributes import (
     XType,
     RETURN_DEFAULT,
     group_code_mapping,
+    merge_group_code_mappings,
 )
 from ezdxf.lldxf.const import (
     SUBCLASS_MARKER,
@@ -71,6 +72,9 @@ acdb_block_begin = DefSubclass(
     },
 )
 acdb_block_begin_group_codes = group_code_mapping(acdb_block_begin)
+merged_block_begin_group_codes = merge_group_code_mappings(
+    acdb_entity_group_codes, acdb_block_begin_group_codes
+)
 
 MODEL_SPACE_R2000_LOWER = MODEL_SPACE_R2000.lower()
 MODEL_SPACE_R12_LOWER = MODEL_SPACE_R12.lower()
@@ -113,11 +117,11 @@ class Block(DXFEntity):
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
     ) -> "DXFNamespace":
+        """Loading interface. (internal API)"""
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf
-        processor.fast_load_dxfattribs(dxf, acdb_entity_group_codes, 1)
-        processor.fast_load_dxfattribs(dxf, acdb_block_begin_group_codes, 2)
+        processor.simple_dxfattribs_loader(dxf, merged_block_begin_group_codes)
         if processor.r12:
             name = dxf.name.lower()
             if name == MODEL_SPACE_R12_LOWER:
@@ -194,9 +198,10 @@ class EndBlk(DXFEntity):
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
     ) -> "DXFNamespace":
+        """Loading interface. (internal API)"""
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.fast_load_dxfattribs(dxf, acdb_entity_group_codes, 1)
+            processor.simple_dxfattribs_loader(dxf, acdb_entity_group_codes)  # type: ignore
         return dxf
 
     def export_entity(self, tagwriter: "TagWriter") -> None:
