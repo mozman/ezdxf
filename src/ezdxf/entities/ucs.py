@@ -61,9 +61,7 @@ class UCSTableEntry(DXFEntity):
     ) -> "DXFNamespace":
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.fast_load_dxfattribs(
-                dxf, acdb_ucs_group_codes, subclass=2
-            )
+            processor.simple_dxfattribs_loader(dxf, acdb_ucs_group_codes)  # type: ignore
         return dxf
 
     def export_entity(self, tagwriter: "TagWriter") -> None:
