@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 import pytest
 
@@ -234,3 +234,39 @@ def test_circle_user_ocs():
 def test_circle_flattening(radius, sagitta, count):
     circle = Circle.new(dxfattribs={"radius": radius})
     assert len(list(circle.flattening(sagitta))) == count
+
+
+MALFORMED_CIRCLE = """0
+CIRCLE
+5
+0
+62
+7
+330
+0
+6
+LT_EZDXF
+8
+LY_EZDXF
+100
+AcDbCircle
+10
+1.0
+20
+2.0
+30
+3.0
+100
+AcDbEntity
+40
+2.0
+"""
+
+
+def test_load_malformed_circle():
+    circle = Circle.from_text(MALFORMED_CIRCLE)
+    assert circle.dxf.layer == "LY_EZDXF"
+    assert circle.dxf.linetype == "LT_EZDXF"
+    assert circle.dxf.color == 7
+    assert circle.dxf.center.isclose((1, 2, 3))
+    assert circle.dxf.radius == 2.0

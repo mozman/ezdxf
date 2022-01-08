@@ -577,7 +577,7 @@ class SubclassProcessor:
         This method ignores the subclass structure and can load data from
         very malformed DXF files, like such in issue #604.
         This method works only for very simple DXF entities with unique group
-        codes in all subclasses, most likely all old DXF R12 entities:
+        codes in all subclasses, the old DXF R12 entities:
 
             - POINT
             - LINE
@@ -591,9 +591,8 @@ class SubclassProcessor:
             - POLYLINE/VERTEX/SEQEND
             - DIMENSION and subclasses
             - all table entries: LAYER, LTYPE, ...
-            - XXX: ATTRIB/ATTDEF extended complex data in R2018!
 
-        Possible candidates of newer DXF entities:
+        And the newer DXF entities:
 
             - ELLIPSE
             - RAY/XLINE

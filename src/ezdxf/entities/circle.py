@@ -20,6 +20,7 @@ from ezdxf.lldxf.attributes import (
     XType,
     RETURN_DEFAULT,
     group_code_mapping,
+    merge_group_code_mappings,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, DXFValueError
 from .dxfentity import base_class, SubclassProcessor
@@ -29,6 +30,7 @@ from .dxfgfx import (
     add_entity,
     replace_entity,
     elevation_to_z_axis,
+    acdb_entity_group_codes,
 )
 from .factory import register_entity
 
@@ -60,6 +62,9 @@ acdb_circle = DefSubclass(
 )
 
 acdb_circle_group_codes = group_code_mapping(acdb_circle)
+merged_circle_group_codes = merge_group_code_mappings(
+    acdb_entity_group_codes, acdb_circle_group_codes  # type: ignore
+)
 
 
 @register_entity
@@ -72,11 +77,11 @@ class Circle(DXFGraphic):
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
     ) -> "DXFNamespace":
-        dxf = super().load_dxf_attribs(processor)
+        """Loading interface. (internal API)"""
+        # bypass DXFGraphic, loading proxy graphic is skipped!
+        dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
         if processor:
-            processor.fast_load_dxfattribs(
-                dxf, acdb_circle_group_codes, subclass=2, recover=True
-            )
+            processor.simple_dxfattribs_loader(dxf, merged_circle_group_codes)
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:
                 elevation_to_z_axis(dxf, ("center",))
