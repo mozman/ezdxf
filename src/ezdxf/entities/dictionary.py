@@ -430,6 +430,10 @@ class Dictionary(DXFObject):
         return dxf_dict  # type: ignore
 
     def audit(self, auditor: "Auditor") -> None:
+        if not self.is_alive:
+            return
+        if not self.dxf.hasattr("owner"):
+            self.dxf.owner = "0"
         super().audit(auditor)
         self._check_invalid_entries(auditor)
 
