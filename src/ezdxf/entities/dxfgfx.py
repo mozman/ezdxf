@@ -653,6 +653,16 @@ class DXFGraphic(DXFEntity):
 class SeqEnd(DXFGraphic):
     DXFTYPE = "SEQEND"
 
+    def load_dxf_attribs(
+        self, processor: SubclassProcessor = None
+    ) -> "DXFNamespace":
+        """Loading interface. (internal API)"""
+        # bypass DXFGraphic, loading proxy graphic is skipped!
+        dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
+        if processor:
+            processor.simple_dxfattribs_loader(dxf, acdb_entity_group_codes)  # type: ignore
+        return dxf
+
 
 def add_entity(entity: DXFGraphic, layout: "BaseLayout") -> None:
     """Add `entity` entity to the entity database and to the given `layout`."""
