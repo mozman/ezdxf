@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 import pytest
 
@@ -122,3 +122,47 @@ def test_write_dxf(txt, ver):
     collector2 = TagCollector(dxfversion=ver, optional=False)
     shape.export_dxf(collector2)
     assert collector.has_all_tags(collector2)
+
+
+MALFORMED_SHAPE = """0
+SHAPE
+5
+0
+62
+7
+330
+0
+6
+LT_EZDXF
+8
+LY_EZDXF
+100
+AcDbShape
+10
+1.0
+20
+2.0
+30
+3.0
+40
+1.0
+2
+NAME
+50
+0.0
+41
+1.0
+100
+AcDbEntity
+51
+7.0
+"""
+
+
+def test_load_malformed_shape():
+    entity = Shape.from_text(MALFORMED_SHAPE)
+    assert entity.dxf.layer == "LY_EZDXF"
+    assert entity.dxf.linetype == "LT_EZDXF"
+    assert entity.dxf.color == 7
+    assert entity.dxf.insert.isclose((1, 2, 3))
+    assert entity.dxf.oblique == 7.0
