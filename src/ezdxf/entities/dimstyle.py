@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021, Manfred Moitzi
+# Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable
 import logging
@@ -411,6 +411,7 @@ class DimStyle(DXFEntity):
     ) -> "DXFNamespace":
         dxf = super().load_dxf_attribs(processor)
         if processor:
+            # group code 70 is used 2x, simple_dxfattribs_loader() can't be used!
             processor.fast_load_dxfattribs(dxf, acdb_dimstyle_group_codes, 2)
         return dxf
 
