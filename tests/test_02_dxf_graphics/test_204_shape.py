@@ -160,9 +160,9 @@ AcDbEntity
 
 
 def test_load_malformed_shape():
-    entity = Shape.from_text(MALFORMED_SHAPE)
-    assert entity.dxf.layer == "LY_EZDXF"
-    assert entity.dxf.linetype == "LT_EZDXF"
-    assert entity.dxf.color == 7
-    assert entity.dxf.insert.isclose((1, 2, 3))
-    assert entity.dxf.oblique == 7.0
+    shape = Shape.from_text(MALFORMED_SHAPE)
+    assert shape.dxf.layer == "LY_EZDXF"
+    assert shape.dxf.linetype == "LT_EZDXF"
+    assert shape.dxf.color == 7
+    assert shape.dxf.insert.isclose((1, 2, 3))
+    assert shape.dxf.oblique == 7.0
