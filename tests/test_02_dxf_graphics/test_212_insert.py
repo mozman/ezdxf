@@ -430,3 +430,49 @@ class TestSupportsVirtualEntitiesProtocol:
         assert entities[0].dxftype() == "POINT"
 
 
+MALFORMED_INSERT = """0
+INSERT
+2
+BLOCKNAME
+5
+0
+62
+7
+330
+0
+6
+LT_EZDXF
+8
+LY_EZDXF
+100
+AcDbEntity
+100
+AcDbArc
+2
+BLOCKNAME
+10
+1.0
+20
+2.0
+30
+3.0
+41
+1.0
+42
+1.0
+43
+1.0
+100
+AcDbBlockReference
+50
+0.0
+"""
+
+
+def test_load_malformed_insert():
+    insert = Insert.from_text(MALFORMED_INSERT)
+    assert insert.dxf.layer == "LY_EZDXF"
+    assert insert.dxf.linetype == "LT_EZDXF"
+    assert insert.dxf.color == 7
+    assert insert.dxf.insert.isclose((1, 2, 3))
+    assert insert.dxf.name == "BLOCKNAME"

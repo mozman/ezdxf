@@ -20,6 +20,7 @@ from ezdxf.lldxf.attributes import (
     XType,
     RETURN_DEFAULT,
     group_code_mapping,
+    merge_group_code_mappings,
 )
 from ezdxf.lldxf.const import (
     DXF12,
@@ -47,7 +48,12 @@ from ezdxf.entities import factory
 from ezdxf.query import EntityQuery
 from ezdxf.audit import AuditError
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import DXFGraphic, acdb_entity, elevation_to_z_axis
+from .dxfgfx import (
+    DXFGraphic,
+    acdb_entity,
+    elevation_to_z_axis,
+    acdb_entity_group_codes,
+)
 from .subentity import LinkedEntities
 from .attrib import Attrib
 
@@ -135,6 +141,10 @@ acdb_block_reference = DefSubclass(
     },
 )
 acdb_block_reference_group_codes = group_code_mapping(acdb_block_reference)
+merged_insert_group_codes = merge_group_code_mappings(
+    acdb_entity_group_codes, acdb_block_reference_group_codes  # type: ignore
+)
+
 NON_ORTHO_MSG = (
     "INSERT entity can not represent a non-orthogonal target "
     "coordinate system."
@@ -172,13 +182,11 @@ class Insert(LinkedEntities):
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
     ) -> "DXFNamespace":
-        dxf = super().load_dxf_attribs(processor)
+        """Loading interface. (internal API)"""
+        # bypass DXFGraphic, loading proxy graphic is skipped!
+        dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
         if processor:
-            # Always use the 2nd subclass, could be AcDbBlockReference or
-            # AcDbMInsertBlock:
-            processor.fast_load_dxfattribs(
-                dxf, acdb_block_reference_group_codes, 2, recover=True
-            )
+            processor.simple_dxfattribs_loader(dxf, merged_insert_group_codes)
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:
                 elevation_to_z_axis(dxf, ("insert",))
