@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable
 import math
@@ -21,10 +21,17 @@ from ezdxf.lldxf.attributes import (
     XType,
     RETURN_DEFAULT,
     group_code_mapping,
+    merge_group_code_mappings,
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import DXFGraphic, acdb_entity, add_entity, replace_entity
+from .dxfgfx import (
+    DXFGraphic,
+    acdb_entity,
+    add_entity,
+    replace_entity,
+    acdb_entity_group_codes,
+)
 from .factory import register_entity
 
 if TYPE_CHECKING:
@@ -82,6 +89,10 @@ acdb_ellipse = DefSubclass(
     },
 )
 acdb_ellipse_group_code = group_code_mapping(acdb_ellipse)
+merged_ellipse_group_codes = merge_group_code_mappings(
+    acdb_entity_group_codes, acdb_ellipse_group_code  # type: ignore
+)
+
 HALF_PI = math.pi / 2.0
 
 
@@ -96,11 +107,11 @@ class Ellipse(DXFGraphic):
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
     ) -> "DXFNamespace":
-        dxf = super().load_dxf_attribs(processor)
+        """Loading interface. (internal API)"""
+        # bypass DXFGraphic, loading proxy graphic is skipped!
+        dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
         if processor:
-            processor.fast_load_dxfattribs(
-                dxf, acdb_ellipse_group_code, 2, recover=True
-            )
+            processor.simple_dxfattribs_loader(dxf, merged_ellipse_group_codes)
         return dxf
 
     def export_entity(self, tagwriter: "TagWriter") -> None:

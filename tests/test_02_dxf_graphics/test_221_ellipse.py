@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020, Manfred Moitzi
+# Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
 import pytest
 import math
@@ -211,5 +211,54 @@ class TestEllipseParameters:
         assert len(auditor.fixes) == 1
         assert ellipse.is_alive is False, "invalid ellipse should be deleted"
 
+
 # tests for swap_axis() are done in test_648_construction_ellipse.py
 # tests for params() are done in test_648_construction_ellipse.py
+
+MALFORMED_ELLIPSE = """0
+ELLIPSE
+5
+0
+62
+7
+330
+0
+6
+LT_EZDXF
+8
+LY_EZDXF
+100
+AcDbEllipse
+10
+1.0
+20
+2.0
+30
+3.0
+100
+AcDbEllipse
+11
+1.0
+21
+0.0
+31
+0.0
+40
+1.0
+41
+0.0
+42
+6.283185307179586
+"""
+
+
+def test_malformed_ellipse():
+    ellipse = Ellipse.from_text(MALFORMED_ELLIPSE)
+    assert ellipse.dxf.layer == "LY_EZDXF"
+    assert ellipse.dxf.linetype == "LT_EZDXF"
+    assert ellipse.dxf.color == 7
+    assert ellipse.dxf.center.isclose((1, 2, 3))
+    assert ellipse.dxf.major_axis.isclose((1, 0, 0))
+    assert ellipse.dxf.ratio == 1
+    assert ellipse.dxf.start_param == 0
+    assert ellipse.dxf.end_param == math.pi * 2
