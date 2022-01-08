@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 import pytest
 import math
@@ -266,3 +266,45 @@ def test_30_deg_arc_reflexion(reflexion, angle):
     assert arc_angle_span_deg(
         arc.dxf.start_angle, arc.dxf.end_angle
     ) == pytest.approx(angle)
+
+
+MALFORMED_ARC = """0
+ARC
+5
+0
+62
+7
+330
+0
+6
+LT_EZDXF
+8
+LY_EZDXF
+100
+AcDbCircle
+10
+1.0
+20
+2.0
+30
+3.0
+100
+AcDbEntity
+40
+2.0
+50
+30
+51
+330
+"""
+
+
+def test_load_malformed_circle():
+    arc = Arc.from_text(MALFORMED_ARC)
+    assert arc.dxf.layer == "LY_EZDXF"
+    assert arc.dxf.linetype == "LT_EZDXF"
+    assert arc.dxf.color == 7
+    assert arc.dxf.center.isclose((1, 2, 3))
+    assert arc.dxf.radius == 2.0
+    assert arc.dxf.start_angle == 30.0
+    assert arc.dxf.end_angle == 330.0

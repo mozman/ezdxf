@@ -142,9 +142,9 @@ acdb_text2 = DefSubclass(
 )
 acdb_text2_group_codes = group_code_mapping(acdb_text2)
 merged_text_group_codes = merge_group_code_mappings(
-    acdb_entity_group_codes,
+    acdb_entity_group_codes,  # type: ignore
     acdb_text_group_codes,
-    acdb_text2_group_codes,  # type: ignore
+    acdb_text2_group_codes,
 )
 
 

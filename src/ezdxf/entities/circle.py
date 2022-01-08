@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable
 import math
@@ -73,6 +73,7 @@ class Circle(DXFGraphic):
 
     DXFTYPE = "CIRCLE"
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_circle)
+    MERGED_GROUP_CODES = merged_circle_group_codes
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
@@ -81,7 +82,7 @@ class Circle(DXFGraphic):
         # bypass DXFGraphic, loading proxy graphic is skipped!
         dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
         if processor:
-            processor.simple_dxfattribs_loader(dxf, merged_circle_group_codes)
+            processor.simple_dxfattribs_loader(dxf, self.MERGED_GROUP_CODES)
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:
                 elevation_to_z_axis(dxf, ("center",))

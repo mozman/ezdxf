@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable
 import math
@@ -17,15 +17,16 @@ from ezdxf.lldxf.attributes import (
     DXFAttributes,
     DefSubclass,
     group_code_mapping,
+    merge_group_code_mappings,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
-from .dxfentity import base_class, SubclassProcessor
+from .dxfentity import base_class
 from .dxfgfx import acdb_entity
-from .circle import acdb_circle, Circle
+from .circle import acdb_circle, Circle, merged_circle_group_codes
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Vec3
+    from ezdxf.eztypes import TagWriter, Vec3
 
 __all__ = ["Arc"]
 
@@ -38,6 +39,9 @@ acdb_arc = DefSubclass(
 )
 
 acdb_arc_group_codes = group_code_mapping(acdb_arc)
+merged_arc_group_codes = merge_group_code_mappings(
+    merged_circle_group_codes, acdb_arc_group_codes
+)
 
 
 @register_entity
@@ -46,16 +50,7 @@ class Arc(Circle):
 
     DXFTYPE = "ARC"
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_circle, acdb_arc)
-
-    def load_dxf_attribs(
-        self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
-        dxf = super().load_dxf_attribs(processor)
-        if processor:
-            processor.fast_load_dxfattribs(
-                dxf, acdb_arc_group_codes, subclass=3, recover=True
-            )
-        return dxf
+    MERGED_GROUP_CODES = merged_arc_group_codes
 
     def export_entity(self, tagwriter: "TagWriter") -> None:
         """Export entity specific data as DXF tags."""
