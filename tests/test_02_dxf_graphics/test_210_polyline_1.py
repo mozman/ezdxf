@@ -206,3 +206,40 @@ def test_2d_polyline_has_any_arc():
     assert pline.has_arc is False
     pline.append_formatted_vertices([(0, 0, 1.0)], format="xyb")
     assert pline.has_arc is True
+
+
+MALFORMED_POLYLINE = """0
+POLYLINE
+5
+0
+62
+7
+330
+0
+6
+LT_EZDXF
+8
+LY_EZDXF
+100
+AcDbEntity
+66
+1
+10
+0.0
+20
+0.0
+30
+99.0
+70
+0
+100
+AcDb2dPolyline
+"""
+
+
+def test_malformed_polyline():
+    entity = Polyline.from_text(MALFORMED_POLYLINE)
+    assert entity.dxf.layer == "LY_EZDXF"
+    assert entity.dxf.linetype == "LT_EZDXF"
+    assert entity.dxf.color == 7
+    assert entity.dxf.elevation.isclose((0, 0, 99))

@@ -111,6 +111,9 @@ acdb_polyline = DefSubclass(
     },
 )
 acdb_polyline_group_codes = group_code_mapping(acdb_polyline, ignore=(66,))
+merged_polyline_group_codes = merge_group_code_mappings(
+    acdb_entity_group_codes, acdb_polyline_group_codes  # type: ignore
+)
 
 
 # Notes to SEQEND:
@@ -156,11 +159,11 @@ class Polyline(LinkedEntities):
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
     ) -> "DXFNamespace":
-        dxf = super().load_dxf_attribs(processor)
+        """Loading interface. (internal API)"""
+        # bypass DXFGraphic, loading proxy graphic is skipped!
+        dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
         if processor:
-            processor.fast_load_dxfattribs(
-                dxf, acdb_polyline_group_codes, subclass=2, recover=True
-            )
+            processor.simple_dxfattribs_loader(dxf, merged_polyline_group_codes)
         return dxf
 
     def export_dxf(self, tagwriter: "TagWriter"):
