@@ -4,35 +4,12 @@ import argparse
 import sys
 import glob
 import ezdxf
-from ezdxf.lldxf.tagger import ascii_tags_loader
 from ezdxf import recover
 from ezdxf.addons import Importer
 
 
-def inject_subclass_marker(filename):
-    fixed_file = filename.replace(".dxf", ".fix.dxf")
-    outfile = open(fixed_file, "wt", encoding="cp1252")
-    infile = open(filename, "rt", encoding="cp1252")
-    structure = ""
-    for tag in ascii_tags_loader(infile):
-        if tag.code == 0:
-            structure = tag.value
-        elif structure == "ELLIPSE":
-            if tag.code == 10:
-                outfile.write("100\nAcDbEllipse\n")
-        elif structure == "TEXT":
-            if tag.code == 8:
-                outfile.write("100\nAcDbEntity\n")
-            elif tag.code == 1:
-                outfile.write("100\nAcDbText\n")
-        outfile.write(tag.dxfstr())
-
-    infile.close()
-    outfile.close()
-    return fixed_file
-
-
-def recover_by_ezdxf(filename):
+def fixed_by_ezdxf(filename):
+    new_filename = filename.replace(".dxf", ".fix.dxf")
     # The original file is only readable but not to fix!
     doc, auditor = recover.readfile(filename)
     # Create a new valid DXF document:
@@ -41,7 +18,16 @@ def recover_by_ezdxf(filename):
     importer = Importer(doc, doc2)
     importer.import_modelspace()
     importer.finalize()
-    doc2.saveas(filename)
+    doc2.saveas(new_filename)
+    print(f'saved fixed DXF file "{new_filename}"')
+
+
+def recover_by_ezdxf(filename):
+    # The original file is only readable but not to fix!
+    new_filename = filename.replace(".dxf", ".rec.dxf")
+    doc, auditor = recover.readfile(filename)
+    doc.saveas(new_filename)
+    print(f'saved recovered DXF file "{new_filename}"')
 
 
 def main():
@@ -55,8 +41,10 @@ def main():
     args = parser.parse_args(sys.argv[1:])
     for pattern in args.file:
         for filename in glob.glob(pattern):
-            new_filename = inject_subclass_marker(filename)
-            recover_by_ezdxf(new_filename)
+            # Injecting the subclass markers is no longer necessary due to the
+            # use of the simple_dxfattribs_loader().
+            recover_by_ezdxf(filename)
+            fixed_by_ezdxf(filename)
 
 
 # This fixes are specific to the DXF file provided for issue #604
