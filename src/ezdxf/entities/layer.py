@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021, Manfred Moitzi
+# Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Optional, Tuple
 import logging
@@ -128,8 +128,8 @@ class Layer(DXFEntity):
     ) -> "DXFNamespace":
         dxf = super().load_dxf_attribs(processor)
         if processor:
-            processor.fast_load_dxfattribs(
-                dxf, acdb_layer_table_record_group_codes, 2
+            processor.simple_dxfattribs_loader(
+                dxf, acdb_layer_table_record_group_codes  # type: ignore
             )
         return dxf
 
