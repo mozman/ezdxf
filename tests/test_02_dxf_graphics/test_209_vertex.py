@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 import pytest
 
@@ -106,3 +106,42 @@ def test_write_dxf(txt, ver):
     collector2 = TagCollector(dxfversion=ver, optional=False)
     vertex.export_dxf(collector2)
     assert collector.has_all_tags(collector2)
+
+
+MALFORMED_VERTEX = """0
+VERTEX
+5
+0
+62
+7
+330
+0
+6
+LT_EZDXF
+8
+LY_EZDXF
+100
+AcDbEntity
+100
+AcDbVertex
+10
+1.0
+20
+2.0
+30
+3.0
+100
+AcDbEntity
+70
+0
+100
+AcDb2dVertex
+"""
+
+
+def test_load_malformed_vertex():
+    vertex = DXFVertex.from_text(MALFORMED_VERTEX)
+    assert vertex.dxf.layer == "LY_EZDXF"
+    assert vertex.dxf.linetype == "LT_EZDXF"
+    assert vertex.dxf.color == 7
+    assert vertex.dxf.location.isclose((1, 2, 3))

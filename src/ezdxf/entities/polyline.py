@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from typing import (
     TYPE_CHECKING,
@@ -20,6 +20,7 @@ from ezdxf.lldxf.attributes import (
     XType,
     RETURN_DEFAULT,
     group_code_mapping,
+    merge_group_code_mappings,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER, VERTEXNAMES
 from ezdxf.lldxf import const
@@ -31,7 +32,7 @@ from ezdxf.query import EntityQuery
 from ezdxf.entities import factory
 from ezdxf.audit import AuditError
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import DXFGraphic, acdb_entity
+from .dxfgfx import DXFGraphic, acdb_entity, acdb_entity_group_codes
 from .lwpolyline import FORMAT_CODES
 from .subentity import LinkedEntities
 
@@ -895,7 +896,7 @@ class Polymesh(Polyline):
         return polymesh
 
     def set_mesh_vertex(
-        self, pos: Tuple[int, int], point: "Vertex", dxfattribs = None
+        self, pos: Tuple[int, int], point: "Vertex", dxfattribs=None
     ):
         """Set location and DXF attributes of a single mesh vertex.
 
@@ -1007,6 +1008,9 @@ acdb_vertex = DefSubclass(
     },
 )
 acdb_vertex_group_codes = group_code_mapping(acdb_vertex)
+merged_vertex_group_codes = merge_group_code_mappings(
+    acdb_entity_group_codes, acdb_vertex_group_codes  # type: ignore
+)
 
 
 @factory.register_entity
@@ -1037,18 +1041,18 @@ class DXFVertex(DXFGraphic):
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
     ) -> "DXFNamespace":
-        dxf = super().load_dxf_attribs(processor)
+        """Loading interface. (internal API)"""
+        # bypass DXFGraphic, loading proxy graphic is skipped!
+        dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
         if processor:
-            # VERTEX can have 3 subclasses if representing a `face record` or
-            # 4 subclasses if representing a vertex location, just the last
-            # subclass contains data:
-            processor.fast_load_dxfattribs(
-                dxf, acdb_vertex_group_codes, subclass=-1, recover=True
-            )
+            processor.simple_dxfattribs_loader(dxf, merged_vertex_group_codes)
         return dxf
 
     def export_entity(self, tagwriter: "TagWriter") -> None:
         """Export entity specific data as DXF tags."""
+        # VERTEX can have 3 subclasses if representing a `face record` or
+        # 4 subclasses if representing a vertex location, just the last
+        # subclass contains data
         super().export_entity(tagwriter)
         if tagwriter.dxfversion > DXF12:
             if self.is_face_record:
