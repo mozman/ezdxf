@@ -109,3 +109,40 @@ def test_dxf_details_for_extended_font_data(style):
     group_code, flags = xdata[1]
     assert group_code == 1071
     assert flags == 50331682
+
+
+MALFORMED_STYLE = """0
+STYLE
+5
+FEFE
+100
+AcDbTextStyleTableRecord
+2
+STY_EZDXF
+70
+0
+40
+0.0
+41
+1.5
+50
+30.0
+71
+0
+42
+0.0
+3
+txt
+4
+
+100
+AcDbSymbolTableRecord
+"""
+
+
+def test_malformed_layer():
+    style = Textstyle.from_text(MALFORMED_STYLE)
+    assert style.dxf.name == "STY_EZDXF"
+    assert style.dxf.handle == "FEFE"
+    assert style.dxf.width == 1.5
+    assert style.dxf.oblique == 30.0
