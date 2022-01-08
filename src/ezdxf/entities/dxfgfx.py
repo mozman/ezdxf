@@ -43,6 +43,7 @@ if TYPE_CHECKING:
 __all__ = [
     "DXFGraphic",
     "acdb_entity",
+    "acdb_entity_group_codes",
     "SeqEnd",
     "add_entity",
     "replace_entity",

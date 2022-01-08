@@ -345,3 +345,64 @@ def test_get_pos_handles_missing_align_point():
     alignment, p1, p2 = text.get_placement()
     assert p1 == (1, 2)  # use the insert point instead
     assert p2 is None  # only used for FIT and ALIGNED
+
+MALFORMED_TEXT = """0
+TEXT
+5
+0
+6
+LT_EZDXF
+8
+LY_EZDXF
+330
+0
+100
+AcDbEntity
+10
+1.0
+20
+2.0
+30
+3.0
+40
+1.0
+1
+TEXTCONTENT
+50
+0.0
+51
+0.0
+7
+STY_EZDXF
+41
+1.0
+71
+0
+72
+3
+11
+3.0
+21
+4.0
+31
+5.0
+100
+AcDbText
+73
+1
+62
+7
+"""
+
+
+def test_malformed_text():
+    line = Text.from_text(MALFORMED_TEXT)
+    assert line.dxf.layer == "LY_EZDXF"
+    assert line.dxf.linetype == "LT_EZDXF"
+    assert line.dxf.style == "STY_EZDXF"
+    assert line.dxf.color == 7
+    assert line.dxf.text == "TEXTCONTENT"
+    assert line.dxf.insert.isclose((1, 2, 3))
+    assert line.dxf.align_point.isclose((3, 4, 5))
+    assert line.dxf.halign == 3
+    assert line.dxf.valign == 1

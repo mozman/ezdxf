@@ -13,6 +13,7 @@ from ezdxf.lldxf.attributes import (
     XType,
     RETURN_DEFAULT,
     group_code_mapping,
+    merge_group_code_mappings,
 )
 from ezdxf.enums import (
     TextEntityAlignment,
@@ -27,7 +28,12 @@ from ezdxf.audit import Auditor
 from ezdxf.tools.text import plain_text
 
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import DXFGraphic, acdb_entity, elevation_to_z_axis
+from .dxfgfx import (
+    DXFGraphic,
+    acdb_entity,
+    elevation_to_z_axis,
+    acdb_entity_group_codes,
+)
 from .factory import register_entity
 
 if TYPE_CHECKING:
@@ -135,6 +141,11 @@ acdb_text2 = DefSubclass(
     },
 )
 acdb_text2_group_codes = group_code_mapping(acdb_text2)
+merged_text_group_codes = merge_group_code_mappings(
+    acdb_entity_group_codes,
+    acdb_text_group_codes,
+    acdb_text2_group_codes,  # type: ignore
+)
 
 
 # Formatting codes:
@@ -167,14 +178,9 @@ class Text(DXFGraphic):
         self, processor: SubclassProcessor = None
     ) -> "DXFNamespace":
         """Loading interface. (internal API)"""
-        dxf = super().load_dxf_attribs(processor)
+        dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
         if processor:
-            processor.fast_load_dxfattribs(
-                dxf, acdb_text_group_codes, 2, recover=True
-            )
-            processor.fast_load_dxfattribs(
-                dxf, acdb_text2_group_codes, 3, recover=True
-            )
+            processor.simple_dxfattribs_loader(dxf, merged_text_group_codes)
             if processor.r12:
                 # Transform elevation attribute from R11 to z-axis values:
                 elevation_to_z_axis(dxf, ("insert", "align_point"))
