@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
 from typing import (
     Any,
@@ -11,6 +11,7 @@ from typing import (
     Set,
 )
 import logging
+import itertools
 from ezdxf import options
 from ezdxf.lldxf import const
 from ezdxf.lldxf.attributes import XType, DXFAttributes, DXFAttr
@@ -530,6 +531,8 @@ class SubclassProcessor:
 
         # Only DXF R13+
         if recover and len(unprocessed_tags):
+            # TODO: maybe obsolete if simple_dxfattribs_loader() is used for
+            #  most old DXF R12 entities
             unprocessed_tags = recover_graphic_attributes(unprocessed_tags, dxf)
         if len(unprocessed_tags) and log:
             # First tag is the subclass specifier (100, "AcDb...")
@@ -547,6 +550,8 @@ class SubclassProcessor:
         # This is only needed for DXFEntity, so applying this method
         # automatically to all entities is waste of runtime
         # -> DXFGraphic.load_dxf_attribs()
+        # TODO: maybe obsolete if simple_dxfattribs_loader() is used for
+        #  most old DXF R12 entities
         if self.r12:
             return
 
@@ -557,6 +562,61 @@ class SubclassProcessor:
                 for tag in self.subclasses[0]
                 if tag.code not in BASE_CLASS_CODES
             )
+
+    def simple_dxfattribs_loader(
+        self, dxf: DXFNamespace, group_code_mapping: Dict[int, str]
+    ) -> None:
+        # Most tests in text suite 201 for the POINT entity
+        """Load DXF attributes from all subclasses into the DXF namespace.
+
+        Can not handle same group codes in different subclasses, does not remove
+        processed tags or log unprocessed tags and bypasses the DXF attribute
+        validity checks.
+
+        This method ignores the subclass structure and can load data from
+        very malformed DXF files, like such in issue #604.
+        This method works only for very simple DXF entities with unique group
+        codes in all subclasses, most likely all old DXF R12 entities:
+
+            - POINT
+            - LINE
+            - CIRCLE
+            - ARC
+            - INSERT
+            - SHAPE
+            - SOLID/TRACE/3DFACE
+            - TEXT (ATTRIB/ATTDEF bypasses TEXT loader)
+            - BLOCK/ENDBLK
+            - POLYLINE/VERTEX/SEQEND
+            - DIMENSION and subclasses
+            - all table entries: LAYER, LTYPE, ...
+            - XXX: ATTRIB/ATTDEF extended complex data in R2018!
+
+        Possible candidates of newer DXF entities:
+
+            - ELLIPSE
+            - RAY/XLINE
+
+        The recover mode for graphical attributes is automatically included.
+        Logging of unprocessed tags is not possible but also not required for
+        this simple and well known entities.
+
+        Args:
+            dxf: entity DXF namespace
+            group_code_mapping: group code name mapping for all DXF attributes
+                from all subclasses, callback attributes have to be marked with
+                a leading "*"
+
+        """
+        tags = itertools.chain.from_iterable(self.subclasses)
+        get_attrib_name = group_code_mapping.get
+        unprotected_set_attrib = dxf.unprotected_set
+        for tag in tags:
+            name = get_attrib_name(tag.code)
+            if isinstance(name, str) and not name.startswith("*"):
+                unprotected_set_attrib(
+                    name, cast_value(tag.code, tag.value)  # type: ignore
+                )
 
 
 GRAPHIC_ATTRIBUTES_TO_RECOVER = {
@@ -578,6 +638,8 @@ GRAPHIC_ATTRIBUTES_TO_RECOVER = {
 }
 
 
+# TODO: maybe obsolete if simple_dxfattribs_loader() is used for
+#  most old DXF R12 entities
 def recover_graphic_attributes(tags: Tags, dxf: DXFNamespace) -> Tags:
     unprocessed_tags = Tags()
     for tag in tags:

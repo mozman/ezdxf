@@ -19,11 +19,11 @@ POINT
 8
 0
 10
-0.0
+1.0
 20
-0.0
+2.0
 30
-0.0
+3.0
 """
 
 ENTITY_R2000 = """0
@@ -39,11 +39,11 @@ AcDbEntity
 100
 AcDbPoint
 10
-0.0
+1.0
 20
-0.0
+2.0
 30
-0.0
+3.0
 """
 
 
@@ -89,7 +89,53 @@ def test_default_new():
 def test_load_from_text(entity):
     assert entity.dxf.layer == "0"
     assert entity.dxf.color == 256, "default color is 256 (by layer)"
-    assert entity.dxf.location == (0, 0, 0)
+    assert entity.dxf.location.isclose((1, 2, 3))
+
+
+MALFORMED_POINT = """0
+POINT
+5
+0
+330
+0
+62
+7
+8
+MALFORMED
+102
+{MOZMAN
+8
+APP_DATA_LAYER_IGNORED
+6
+APP_DATA_LTYPE_IGNORED
+62
+0
+102
+}
+100
+AcDbEntity
+10
+1.0
+20
+2.0
+30
+3.0
+100
+AcDbPoint
+6
+DOTTED
+100
+AcDbInvalidSubclassMarker
+"""
+
+
+def test_load_malformed_entity():
+    """Missing AcDbPoint subclass marker."""
+    entity = TEST_CLASS.from_text(MALFORMED_POINT)
+    assert entity.dxf.layer == "MALFORMED"
+    assert entity.dxf.color == 7
+    assert entity.dxf.linetype == "DOTTED"
+    assert entity.dxf.location.isclose((1, 2, 3))
 
 
 @pytest.mark.parametrize(

@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Dict, Any
 from ezdxf.entities import factory
@@ -200,6 +200,7 @@ class DXFGraphic(DXFEntity):
 
         (internal API)
         """
+        # subclasses using simple_dxfattribs_loader() bypass this method!!!
         dxf = super().load_dxf_attribs(processor)
         if processor is None:
             return dxf

@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2021, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
 from enum import Enum
 from typing import (
@@ -14,6 +14,7 @@ from typing import (
     NewType,
     cast,
     NamedTuple,
+    Mapping,
 )
 from .const import DXFAttributeError, DXF12
 import copy
@@ -69,6 +70,18 @@ def group_code_mapping(
         for code in ignore:
             mapping[code] = "*IGNORE"
     return mapping
+
+
+def merge_group_code_mappings(*mappings: Mapping) -> Dict[int, str]:
+    merge_group_code_mapping: Dict[int, str] = {}
+    for index, mapping in enumerate(mappings):
+        msg = f"{index}. mapping contains none unique group codes"
+        if not all(isinstance(e, str) for e in mapping.values()):
+            raise TypeError(msg)
+        if any(k in merge_group_code_mapping for k in mapping.keys()):
+            raise TypeError(msg)
+        merge_group_code_mapping.update(mapping)
+    return merge_group_code_mapping
 
 
 # Unique object as marker
@@ -184,9 +197,7 @@ class DXFAttr:
         except TypeError:
             raise DXFAttributeError(f"DXF attribute {self.name} has no getter.")
 
-    def set_callback_value(
-        self, entity: "DXFEntity", value: Any
-    ) -> None:
+    def set_callback_value(self, entity: "DXFEntity", value: Any) -> None:
         """Executes a callback function in 'entity' to set a DXF value.
 
         Callback function is defined by self.setter as string.

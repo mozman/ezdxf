@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable
 from ezdxf.lldxf import validator
@@ -9,6 +9,7 @@ from ezdxf.lldxf.attributes import (
     XType,
     RETURN_DEFAULT,
     group_code_mapping,
+    merge_group_code_mappings,
 )
 from ezdxf.lldxf.const import DXF12, SUBCLASS_MARKER
 from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS, OCS
@@ -17,7 +18,7 @@ from ezdxf.math.transformtools import (
 )
 from ezdxf.render import point
 from .dxfentity import base_class, SubclassProcessor
-from .dxfgfx import DXFGraphic, acdb_entity
+from .dxfgfx import DXFGraphic, acdb_entity, acdb_entity_group_codes
 from .factory import register_entity
 
 if TYPE_CHECKING:
@@ -65,6 +66,9 @@ acdb_point = DefSubclass(
     },
 )
 acdb_point_group_codes = group_code_mapping(acdb_point)
+merged_point_group_codes = merge_group_code_mappings(
+    acdb_entity_group_codes, acdb_point_group_codes  # type: ignore
+)
 
 
 @register_entity
@@ -78,11 +82,10 @@ class Point(DXFGraphic):
         self, processor: SubclassProcessor = None
     ) -> "DXFNamespace":
         """Loading interface. (internal API)"""
-        dxf = super().load_dxf_attribs(processor)
+        # bypass DXFGraphic, loading proxy graphic is skipped!
+        dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
         if processor:
-            processor.fast_load_dxfattribs(
-                dxf, acdb_point_group_codes, 2, recover=True
-            )
+            processor.simple_dxfattribs_loader(dxf, merged_point_group_codes)
         return dxf
 
     def export_entity(self, tagwriter: "TagWriter") -> None:
