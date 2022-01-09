@@ -14,6 +14,7 @@ from typing import (
 from collections import OrderedDict
 import logging
 
+from ezdxf.audit import Auditor, AuditError
 from ezdxf.lldxf import const, validator
 from ezdxf.entities.table import TableHead
 from ezdxf.entities import factory
@@ -255,6 +256,37 @@ class Table(Generic[T]):
         if self._head.dxf.handle is None:
             self._head.dxf.handle = handle
             self.update_owner_handles()
+
+    def audit(self, auditor: Auditor):
+        self._fix_table_head(auditor)
+        # The table entries are stored in the entity database and are already
+        # audited!
+
+    def _fix_table_head(self, auditor: Auditor):
+        head = self.head
+        # Another exception for an invalid owner tag, but this usage is
+        # covered in Auditor.check_owner_exist():
+        head.dxf.owner = "0"
+        handle = head.dxf.handle
+        if handle is None or handle == "0":
+            # Entity database does not assign new handle:
+            head.dxf.handle = self.entitydb.next_handle()
+            self.entitydb.add(head)
+            auditor.fixed_error(
+                code=AuditError.INVALID_TABLE_HANDLE,
+                message=f"Fixed invalid table head handle in table {self.name}",
+            )
+        else:
+            # Table heads are not stored in the entity database!
+            entry = self.entitydb.get(handle)
+            if entry is not None:  # another entity has the same handle!
+                head.dxf.handle = self.entitydb.next_handle()
+                auditor.fixed_error(
+                    code=AuditError.INVALID_TABLE_HANDLE,
+                    message=f"Fixed invalid table head handle in table {self.name}",
+                )
+        # Just to be sure owner handle is valid in every circumstance:
+        self.update_owner_handles()
 
 
 class LayerTable(Table["Layer"]):

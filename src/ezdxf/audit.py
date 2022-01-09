@@ -269,33 +269,16 @@ class Auditor:
                 )
 
     def check_tables(self) -> None:
-        def fix_table_head(table):
-            head = table.head
-            # Another exception for an invalid owner tag, but this usage is
-            # covered in Auditor.check_owner_exist():
-            head.dxf.owner = "0"
-            handle = head.dxf.handle
-            if handle is None or handle == "0":
-                # Entity database does not assign new handle:
-                head.dxf.handle = self.entitydb.next_handle()
-                self.entitydb.add(head)
-                self.fixed_error(
-                    code=AuditError.INVALID_TABLE_HANDLE,
-                    message=f"Fixed invalid handle in table {table.name}",
-                )
-            # Just to be sure owner handle is valid in every circumstance:
-            table.update_owner_handles()
-
         table_section = self.doc.tables
-        fix_table_head(table_section.viewports)
-        fix_table_head(table_section.linetypes)
-        fix_table_head(table_section.layers)
-        fix_table_head(table_section.styles)
-        fix_table_head(table_section.views)
-        fix_table_head(table_section.ucs)
-        fix_table_head(table_section.appids)
-        fix_table_head(table_section.dimstyles)
-        fix_table_head(table_section.block_records)
+        table_section.viewports.audit(self)
+        table_section.linetypes.audit(self)
+        table_section.layers.audit(self)
+        table_section.styles.audit(self)
+        table_section.views.audit(self)
+        table_section.ucs.audit(self)
+        table_section.appids.audit(self)
+        table_section.dimstyles.audit(self)
+        table_section.block_records.audit(self)
 
     def audit_all_database_entities(self) -> None:
         """Audit all entities stored in the entity database."""
