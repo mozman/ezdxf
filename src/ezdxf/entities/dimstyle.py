@@ -442,7 +442,7 @@ class DimStyle(DXFEntity):
         if style_handle and style_handle != "0":
             try:
                 self.dxf.dimtxsty = db[style_handle].dxf.name
-            except KeyError:
+            except (KeyError, AttributeError):
                 logger.info(f"Ignore undefined text style #{style_handle}.")
 
         for attrib_name in ("dimltype", "dimltex1", "dimltex2"):
@@ -450,7 +450,7 @@ class DimStyle(DXFEntity):
             if lt_handle and lt_handle != "0":
                 try:
                     name = db[lt_handle].dxf.name
-                except KeyError:
+                except (KeyError, AttributeError):
                     logger.info(f"Ignore undefined line type #{lt_handle}.")
                 else:
                     self.dxf.set(attrib_name, name)

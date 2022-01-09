@@ -55,7 +55,7 @@ class TestProE:
         assert doc.filename == filename
         assert doc.dxfversion is not None
         assert len(auditor.errors) == 2
-        assert len(auditor.fixes) == 16
+        assert len(auditor.fixes) == 11
 
 
 FILE_CIVIL_3D = os.path.join(
@@ -100,7 +100,7 @@ class TestCorruptCivil3D:
         assert doc.dxfversion == "AC1032"
         assert auditor.has_errors is True
         assert len(auditor.errors) == 238, "expected decoding errors"
-        assert len(auditor.fixes) == 543
+        assert len(auditor.fixes) == 538
 
 
 FILE_MAP_3D = os.path.join(

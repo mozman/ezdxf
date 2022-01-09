@@ -258,33 +258,49 @@ class Table(Generic[T]):
             self.update_owner_handles()
 
     def audit(self, auditor: Auditor):
-        self._fix_table_head(auditor)
         # The table entries are stored in the entity database and are already
         # audited!
+        self._fix_table_head(auditor)
+        self._fix_entry_handles(auditor)
+
+    def _fix_entry_handles(self, auditor: Auditor):
+        # Why: see duplicate handle issue #604
+        entitydb = self.entitydb
+        for entry in self:
+            entity = entitydb.get(entry.dxf.handle)
+            if entity is not entry:  # duplicate handle usage
+                # This can break entities referring to this entity, but at
+                # least the DXF readable
+                entry.dxf.handle = entitydb.next_handle()
+                self.entitydb.add(entry)
+                auditor.fixed_error(
+                    code=AuditError.INVALID_TABLE_HANDLE,
+                    message=f"Fixed invalid table entry handle in {entry}",
+                )
 
     def _fix_table_head(self, auditor: Auditor):
+        def fix_head():
+            head.dxf.handle = entitydb.next_handle()
+            entitydb.add(head)
+            auditor.fixed_error(
+                code=AuditError.INVALID_TABLE_HANDLE,
+                message=f"Fixed invalid table head handle in table {self.name}",
+            )
+
         head = self.head
         # Another exception for an invalid owner tag, but this usage is
         # covered in Auditor.check_owner_exist():
         head.dxf.owner = "0"
         handle = head.dxf.handle
+        entitydb = self.entitydb
         if handle is None or handle == "0":
             # Entity database does not assign new handle:
-            head.dxf.handle = self.entitydb.next_handle()
-            self.entitydb.add(head)
-            auditor.fixed_error(
-                code=AuditError.INVALID_TABLE_HANDLE,
-                message=f"Fixed invalid table head handle in table {self.name}",
-            )
+            fix_head()
         else:
-            # Table heads are not stored in the entity database!
+            # Why: see duplicate handle issue #604
             entry = self.entitydb.get(handle)
-            if entry is not None:  # another entity has the same handle!
-                head.dxf.handle = self.entitydb.next_handle()
-                auditor.fixed_error(
-                    code=AuditError.INVALID_TABLE_HANDLE,
-                    message=f"Fixed invalid table head handle in table {self.name}",
-                )
+            if entry is not head:  # another entity has the same handle!
+                fix_head()
         # Just to be sure owner handle is valid in every circumstance:
         self.update_owner_handles()
 
