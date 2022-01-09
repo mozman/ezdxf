@@ -186,9 +186,9 @@ class Table(Generic[T]):
         Duplicate entries are possible for Viewports.
         """
         assert self.doc is not None, "valid DXF document expected"
-        entry = cast(T, factory.create_db_entry(
-            self.TABLE_TYPE, dxfattribs, self.doc
-        ))
+        entry = cast(
+            T, factory.create_db_entry(self.TABLE_TYPE, dxfattribs, self.doc)
+        )
 
         self._append(entry)
         return entry
@@ -282,10 +282,14 @@ class Table(Generic[T]):
         def fix_head():
             head.dxf.handle = entitydb.next_handle()
             entitydb.add(head)
-            auditor.fixed_error(
-                code=AuditError.INVALID_TABLE_HANDLE,
-                message=f"Fixed invalid table head handle in table {self.name}",
-            )
+            if log:
+                auditor.fixed_error(
+                    code=AuditError.INVALID_TABLE_HANDLE,
+                    message=f"Fixed invalid table head handle in table {self.name}",
+                )
+
+        # fix silently for older DXF versions
+        log = auditor.doc.dxfversion > const.DXF12
 
         head = self.head
         # Another exception for an invalid owner tag, but this usage is
@@ -571,9 +575,9 @@ class ViewportTable(Table["VPort"]):
         Duplicate entries are possible for Viewports.
         """
         assert self.doc is not None, "valid DXF document expected"
-        entry = cast(T, factory.create_db_entry(
-            self.TABLE_TYPE, dxfattribs, self.doc
-        ))
+        entry = cast(
+            T, factory.create_db_entry(self.TABLE_TYPE, dxfattribs, self.doc)
+        )
         self._append(entry)
         return entry
 
