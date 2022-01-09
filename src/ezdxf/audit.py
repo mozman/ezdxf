@@ -413,7 +413,7 @@ class Auditor:
 
     def check_owner_exist(self, entity: DXFEntity) -> None:
         assert self.doc is entity.doc, "Entity from different DXF document."
-        if not entity.dxf.hasattr("owner"):
+        if not entity.dxf.hasattr("owner"):  # important for recover mode
             return
         doc = self.doc
         owner_handle = entity.dxf.owner

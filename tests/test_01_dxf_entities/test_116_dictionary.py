@@ -141,9 +141,11 @@ def doc():
     return ezdxf.new()
 
 
-def test_loaded_dictionary_has_an_owner_tag():
+def test_do_not_recover_owner_tag_at_loading_stage():
+    # this is the task of the audit process and breaks otherwise the
+    # recover mode for test file: "ProE_AC1018.dxf"
     d = Dictionary.from_text(WITHOUT_OWNER_TAG)
-    assert d.dxf.owner == "0"
+    assert d.dxf.hasattr("owner") is False
 
 
 def test_dictionary_loads_owner_tag():
@@ -278,7 +280,7 @@ def test_audit_restores_deleted_owner_tag():
     d.dxf.discard("owner")
     auditor = Auditor(doc)
     d.audit(auditor)
-    assert d.dxf.owner == "0"
+    assert d.dxf.owner == doc.rootdict.dxf.handle, "assign to root dict"
 
 
 def test_link_dxf_object_to_dictionary():
