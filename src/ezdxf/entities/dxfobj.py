@@ -45,6 +45,15 @@ class DXFObject(DXFEntity):
         super().audit(auditor)
         auditor.check_owner_exist(self)
 
+    def load_dxf_attribs(
+        self, processor: SubclassProcessor = None
+    ) -> "DXFNamespace":
+        """Load DXF attributes into DXF namespace."""
+        dxf = super().load_dxf_attribs(processor)
+        if not dxf.hasattr("owner"):
+            dxf.owner = "0"  # the owner tag is mandatory!
+        return dxf
+
 
 @register_entity
 class Placeholder(DXFObject):
