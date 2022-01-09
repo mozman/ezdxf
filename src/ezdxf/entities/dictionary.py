@@ -446,7 +446,6 @@ class Dictionary(DXFObject):
                 if entry not in db:
                     append(key)
             elif entry.is_alive:
-                # TODO: remove graphical entities without destroying them
                 if entry.dxf.handle not in db:
                     append(key)
             else:  # entry is destroyed
