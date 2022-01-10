@@ -1072,7 +1072,8 @@ class Drawing:
     ) -> "VPort":
         r"""Set initial view/zoom location for the modelspace, this replaces
         the current "\*Active" viewport configuration
-        (:class:`~ezdxf.entities.VPort`).
+        (:class:`~ezdxf.entities.VPort`) and reset the coordinate system to the
+        :ref:`WCS`.
 
         Args:
              height: modelspace area to view
@@ -1094,7 +1095,27 @@ class Drawing:
         vport.dxf.center = center
         vport.dxf.height = height
         vport.reset_wcs()
+        self.reset_ucs_header_settings()
         return vport
+
+    def reset_ucs_header_settings(self):
+        """Reset the current UCS settings in the document HEADER to the
+        :ref:`WCS`.
+        """
+        hdr = self.header
+        hdr["$UCSBASE"] = ""
+        hdr["$UCSNAME"] = ""
+        hdr["$UCSORG"] = (0, 0, 0)
+        hdr["$UCSXDIR"] = (1, 0, 0)
+        hdr["$UCSYDIR"] = (0, 1, 0)
+        hdr["$UCSORTHOREF"] = ""
+        hdr["$UCSORTHOVIEW"] = 0
+        hdr["$UCSORGTOP"] = (0, 0, 0)
+        hdr["$UCSORGBOTTOM"] = (0, 0, 0)
+        hdr["$UCSORGLEFT"] = (0, 0, 0)
+        hdr["$UCSORGRIGHT"] = (0, 0, 0)
+        hdr["$UCSORGFRONT"] = (0, 0, 0)
+        hdr["$UCSORGBACK"] = (0, 0, 0)
 
 
 class MetaData(abc.ABC):
@@ -1261,7 +1282,9 @@ def info(doc: Drawing, verbose=False, content=False, fmt="ASCII") -> List[str]:
                 yield f"{indent}{name}={header[name]}"
 
     def append_header_var(name: str, indent=""):
-        data.append(f"{indent}{name}: {header.get(name, '<undefined>').strip()}")
+        data.append(
+            f"{indent}{name}: {header.get(name, '<undefined>').strip()}"
+        )
 
     header = doc.header
     loaded_dxf_version = doc.loaded_dxfversion
@@ -1269,9 +1292,11 @@ def info(doc: Drawing, verbose=False, content=False, fmt="ASCII") -> List[str]:
         loaded_dxf_version = doc.dxfversion
     data: List[str] = []
     data.append(f'Filename: "{doc.filename}"')
-    data.append(f'Format: {fmt}')
+    data.append(f"Format: {fmt}")
     if loaded_dxf_version != doc.dxfversion:
-        msg = f"Loaded content was upgraded from DXF Version {loaded_dxf_version}"
+        msg = (
+            f"Loaded content was upgraded from DXF Version {loaded_dxf_version}"
+        )
         release = const.acad_release.get(loaded_dxf_version, "")
         if release:
             msg += f" ({release})"
@@ -1289,14 +1314,14 @@ def info(doc: Drawing, verbose=False, content=False, fmt="ASCII") -> List[str]:
     if verbose:
         data.append(f"Unit system: {measurement}")
         data.append(f"Modelspace units: {unit_name(doc.units)}")
-        append_header_var('$LASTSAVEDBY')
-        append_header_var('$HANDSEED')
-        append_header_var('$FINGERPRINTGUID')
-        append_header_var('$VERSIONGUID')
+        append_header_var("$LASTSAVEDBY")
+        append_header_var("$HANDSEED")
+        append_header_var("$FINGERPRINTGUID")
+        append_header_var("$VERSIONGUID")
         data.extend(user_vars(kind="$USERI"))
         data.extend(user_vars(kind="$USERR"))
         for name, value in header.custom_vars:
-            data.append(f"Custom property \"{name}\": \"{value}\"")
+            data.append(f'Custom property "{name}": "{value}"')
 
     ezdxf_metadata = doc.ezdxf_metadata()
     if CREATED_BY_EZDXF in ezdxf_metadata:
