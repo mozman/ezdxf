@@ -1095,27 +1095,8 @@ class Drawing:
         vport.dxf.center = center
         vport.dxf.height = height
         vport.reset_wcs()
-        self.reset_ucs_header_settings()
+        self.header.reset_wcs()
         return vport
-
-    def reset_ucs_header_settings(self):
-        """Reset the current UCS settings in the document HEADER to the
-        :ref:`WCS`.
-        """
-        hdr = self.header
-        hdr["$UCSBASE"] = ""
-        hdr["$UCSNAME"] = ""
-        hdr["$UCSORG"] = (0, 0, 0)
-        hdr["$UCSXDIR"] = (1, 0, 0)
-        hdr["$UCSYDIR"] = (0, 1, 0)
-        hdr["$UCSORTHOREF"] = ""
-        hdr["$UCSORTHOVIEW"] = 0
-        hdr["$UCSORGTOP"] = (0, 0, 0)
-        hdr["$UCSORGBOTTOM"] = (0, 0, 0)
-        hdr["$UCSORGLEFT"] = (0, 0, 0)
-        hdr["$UCSORGRIGHT"] = (0, 0, 0)
-        hdr["$UCSORGFRONT"] = (0, 0, 0)
-        hdr["$UCSORGBACK"] = (0, 0, 0)
 
 
 class MetaData(abc.ABC):

@@ -216,8 +216,6 @@ Drawing Object
 
     .. automethod:: set_modelspace_vport
 
-    .. automethod:: reset_ucs_header_settings
-
     .. automethod:: audit
 
     .. automethod:: validate

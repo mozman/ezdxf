@@ -32,6 +32,8 @@ Autodesk for available `header variables`_.
 
     .. automethod:: __delitem__
 
+    .. automethod:: reset_wcs
+
 
 .. autoclass:: CustomVars
 
