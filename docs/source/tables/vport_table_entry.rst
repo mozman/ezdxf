@@ -121,4 +121,6 @@ Factory function         :meth:`Drawing.viewports.new`
 
     .. attribute:: dxf.snap_isopair
 
+    .. automethod:: reset_wcs
+
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-8CE7CC87-27BD-4490-89DA-C21F516415A9

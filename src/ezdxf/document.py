@@ -1093,6 +1093,7 @@ class Drawing:
         )
         vport.dxf.center = center
         vport.dxf.height = height
+        vport.reset_wcs()
         return vport
 
 

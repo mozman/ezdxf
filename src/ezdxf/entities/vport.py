@@ -247,3 +247,13 @@ class VPort(DXFEntity):
                 "ambient_color_name",
             ],
         )
+
+    def reset_wcs(self) -> None:
+        """Reset coordinate system to the :ref:`WCS`. """
+        self.dxf.ucs_vp = 1
+        self.dxf.ucs_origin = (0, 0, 0)
+        self.dxf.ucs_xaxis = (1, 0, 0)
+        self.dxf.ucs_yaxis = (0, 1, 0)
+        self.dxf.ucs_ortho_type = 0
+        self.dxf.discard("ucs_handle")
+        self.dxf.discard("base_ucs_handle")
