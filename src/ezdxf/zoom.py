@@ -10,7 +10,7 @@ from ezdxf import bbox
 __all__ = ["center", "objects", "extents", "window"]
 
 
-def center(layout: Layout, point: Vertex, size: "Vertex"):
+def center(layout: Layout, point: Vertex, size: Vertex):
     """Resets the active viewport center of `layout` to the given `point`,
     argument `size` defines the width and height of the viewport.
     Replaces the current viewport configuration by a single window

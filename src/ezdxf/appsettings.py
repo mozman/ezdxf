@@ -4,6 +4,8 @@
 from typing import TYPE_CHECKING
 
 from ezdxf.lldxf import const, validator
+from ezdxf.math import BoundingBox
+from ezdxf import bbox
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Drawing
@@ -15,6 +17,8 @@ CURRENT_LINEWEIGHT = "$CELWEIGHT"
 CURRENT_LINETYPE_SCALE = "$CELTSCALE"
 CURRENT_TEXTSTYLE = "$TEXTSTYLE"
 CURRENT_DIMSTYLE = "$DIMSTYLE"
+EXTMIN = "$EXTMIN"
+EXTMAX = "$EXTMAX"
 
 
 def set_current_layer(doc: "Drawing", name: str):
@@ -48,8 +52,7 @@ def set_current_lineweight(doc: "Drawing", lineweight: int):
 
 
 def set_current_linetype_scale(doc: "Drawing", scale: float):
-    """Set current linetype scale.
-    """
+    """Set current linetype scale."""
     if scale <= 0.0:
         raise const.DXFValueError(f'invalid linetype scale: "{scale}"')
     doc.header[CURRENT_LINETYPE_SCALE] = scale
@@ -74,5 +77,35 @@ def restore_wcs(doc: "Drawing"):
     reset all active viewports to the WCS.
     """
     doc.header.reset_wcs()
-    for vport in doc.viewports.get_config("*Active"):
-        vport.reset_wcs()
+    for vport in doc.viewports.get_config("*Active"):  # type: ignore
+        vport.reset_wcs()  # type: ignore
+
+
+def update_extents(doc: "Drawing") -> BoundingBox:
+    """Calculate the extents of the model space, update the HEADER variables
+    $EXTMIN and $EXTMAX and returns the result as :class:`ezdxf.math.BoundingBox`.
+    Note that this function uses the :mod:`ezdxf.bbox` module to calculate the
+    extent of the model space. This module is not very fast and not very
+    accurate for text and ignores all :term:`ACIS` based entities.
+
+    The function updates only the values in the HEADER section, to zoom the
+    active viewport to this extents, use this recipe::
+
+        import ezdxf
+        from ezdxf import zoom, appsettings
+
+        doc = ezdxf.readfile("your.dxf")
+        extents = appsettings.update_extents(doc)
+        zoom.center(doc.modelspace(), extents.center, extents.size)
+
+    .. seealso::
+
+        - the :mod:`ezdxf.bbox` module to understand the limitations of the
+          extent calculation
+        - the :mod:`ezdxf.zoom` module
+
+    """
+    extents = bbox.extents(doc.modelspace(), flatten=0)
+    doc.header[EXTMIN] = extents.extmin
+    doc.header[EXTMAX] = extents.extmax
+    return extents
