@@ -25,6 +25,7 @@ DXF Document
     drawing/management
     drawing/drawing
     drawing/recover
+    appsettings
 
 DXF Structures
 --------------
