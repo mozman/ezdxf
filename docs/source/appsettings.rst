@@ -46,6 +46,9 @@ these settings do not affect how `ezdxf` creates new entities.
 
 .. autofunction:: set_current_dimstyle
 
+Coordinate System
+-----------------
+
 .. autofunction:: restore_wcs
 
 work in progress

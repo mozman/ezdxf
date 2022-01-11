@@ -71,7 +71,8 @@ def set_current_dimstyle(doc: "Drawing", name: str):
 
 def restore_wcs(doc: "Drawing"):
     """Restore the UCS settings in the HEADER section to the :ref:`WCS` and
-    reset all current viewports to the WCS.
+    reset all active viewports to the WCS.
     """
     doc.header.reset_wcs()
-    # TODO: reset viewports
+    for vport in doc.viewports.get_config("*Active"):
+        vport.reset_wcs()
