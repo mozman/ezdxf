@@ -36,6 +36,16 @@ these settings do not affect how `ezdxf` creates new entities.
 
 .. autofunction:: set_current_color
 
+.. autofunction:: set_current_linetype
+
+.. autofunction:: set_current_lineweight
+
+.. autofunction:: set_current_linetype_scale
+
+.. autofunction:: set_current_textstyle
+
+.. autofunction:: set_current_dimstyle
+
 .. autofunction:: restore_wcs
 
 work in progress

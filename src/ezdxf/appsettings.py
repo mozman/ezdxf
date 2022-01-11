@@ -17,11 +17,11 @@ CURRENT_TEXTSTYLE = "$TEXTSTYLE"
 CURRENT_DIMSTYLE = "$DIMSTYLE"
 
 
-def set_current_layer(doc: "Drawing", layer_name: str):
+def set_current_layer(doc: "Drawing", name: str):
     """Set current layer."""
-    if layer_name not in doc.layers:
-        raise const.DXFValueError(f'undefined layer name: "{layer_name}"')
-    doc.header[CURRENT_LAYER] = layer_name
+    if name not in doc.layers:
+        raise const.DXFValueError(f'undefined layer: "{name}"')
+    doc.header[CURRENT_LAYER] = name
 
 
 def set_current_color(doc: "Drawing", color: int):
@@ -29,6 +29,44 @@ def set_current_color(doc: "Drawing", color: int):
     if not validator.is_valid_aci_color(color):
         raise const.DXFValueError(f'invalid ACI color value: "{color}"')
     doc.header[CURRENT_COLOR] = color
+
+
+def set_current_linetype(doc: "Drawing", name: str):
+    """Set current linetype."""
+    if name not in doc.linetypes:
+        raise const.DXFValueError(f'undefined linetype: "{name}"')
+    doc.header[CURRENT_LINETYPE] = name
+
+
+def set_current_lineweight(doc: "Drawing", lineweight: int):
+    """Set current lineweight, see :ref:`lineweights` reference for valid
+    values.
+    """
+    if not validator.is_valid_lineweight(lineweight):
+        raise const.DXFValueError(f'invalid lineweight value: "{lineweight}"')
+    doc.header[CURRENT_LINEWEIGHT] = lineweight
+
+
+def set_current_linetype_scale(doc: "Drawing", scale: float):
+    """Set current linetype scale.
+    """
+    if scale <= 0.0:
+        raise const.DXFValueError(f'invalid linetype scale: "{scale}"')
+    doc.header[CURRENT_LINETYPE_SCALE] = scale
+
+
+def set_current_textstyle(doc: "Drawing", name: str):
+    """Set current textstyle."""
+    if name not in doc.styles:
+        raise const.DXFValueError(f'undefined textstyle: "{name}"')
+    doc.header[CURRENT_TEXTSTYLE] = name
+
+
+def set_current_dimstyle(doc: "Drawing", name: str):
+    """Set current dimstyle."""
+    if name not in doc.dimstyles:
+        raise const.DXFValueError(f'undefined dimstyle: "{name}"')
+    doc.header[CURRENT_DIMSTYLE] = name
 
 
 def restore_wcs(doc: "Drawing"):
