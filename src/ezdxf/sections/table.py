@@ -597,7 +597,7 @@ class ViewportTable(Table["VPort"]):
             for entry in entries:  # type: ignore
                 entry.dxf.owner = owner_handle
 
-    def get_config(self, name: str) -> List[T]:
+    def get_config(self, name: str) -> List["VPort"]:
         """Returns a list of :class:`~ezdxf.entities.VPort` objects, for
         the multi-viewport configuration `name`.
         """

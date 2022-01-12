@@ -1,14 +1,14 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 #  module to set application specific data
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from ezdxf.lldxf import const, validator
 from ezdxf.math import BoundingBox
 from ezdxf import bbox
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Drawing
+    from ezdxf.eztypes import Drawing, VPort
 
 CURRENT_LAYER = "$CLAYER"
 CURRENT_COLOR = "$CECOLOR"
@@ -77,8 +77,8 @@ def restore_wcs(doc: "Drawing"):
     reset all active viewports to the WCS.
     """
     doc.header.reset_wcs()
-    for vport in doc.viewports.get_config("*Active"):  # type: ignore
-        vport.reset_wcs()  # type: ignore
+    for vport in doc.viewports.get_config("*Active"):
+        vport.reset_wcs()
 
 
 def update_extents(doc: "Drawing") -> BoundingBox:
