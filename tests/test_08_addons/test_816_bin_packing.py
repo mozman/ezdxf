@@ -68,7 +68,7 @@ def test_example():
     packer.add_item(Item("250g [powder 8]", 7.8740, 3.9370, 1.9685, 8))
     packer.add_item(Item("250g [powder 9]", 7.8740, 3.9370, 1.9685, 9))
 
-    packer.pack()
+    packer.pack(bigger_first=False)
     b0, b1, b2, b3, b4, b5, b6 = packer.bins
     assert len(b0.items) == 0
     assert b0.get_total_weight() == 0

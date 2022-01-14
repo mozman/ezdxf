@@ -9,7 +9,7 @@
 from typing import Tuple, List, Iterable, Any
 import enum
 import abc
-from ezdxf.math import Vec3, Vec2, BoundingBox, BoundingBox2d
+from ezdxf.math import Vec3, BoundingBox
 
 __all__ = ["Item", "Bin2d", "Bin3d", "Packer2d", "Packer3d", "RotationType"]
 
@@ -46,8 +46,36 @@ class Item:
         self.height = float(height)
         self.depth = float(depth)
         self.weight = float(weight)
-        self.rotation_type = RotationType.WHD
-        self.position = START_POSITION
+        self._rotation_type = RotationType.WHD
+        self._position = START_POSITION
+        self._bbox = BoundingBox()
+        self._update_bbox()
+
+    def _update_bbox(self) -> None:
+        v1 = Vec3(self._position)
+        self._bbox = BoundingBox([v1, v1 + Vec3(self.get_dimension())])
+
+    @property
+    def bbox(self) -> BoundingBox:
+        return self._bbox
+
+    @property
+    def rotation_type(self) -> RotationType:
+        return self._rotation_type
+
+    @rotation_type.setter
+    def rotation_type(self, value: RotationType) -> None:
+        self._rotation_type = value
+        self._update_bbox()
+
+    @property
+    def position(self) -> Tuple[float, float, float]:
+        return self._position
+
+    @position.setter
+    def position(self, value: Tuple[float, float, float]) -> None:
+        self._position = value
+        self._update_bbox()
 
     def __str__(self):
         return (
@@ -95,8 +123,9 @@ class Bin(abc.ABC):
             w, h, d = item.get_dimension()
             if self.width < x + w or self.height < y + h or self.depth < z + d:
                 continue
+            item_bbox = item.bbox
             if (
-                not any(self.intersect(i, item) for i in self.items)
+                not any(item_bbox.intersect(i.bbox) for i in self.items)
                 and self.get_total_weight() + item.weight <= self.max_weight
             ):
                 self.items.append(item)
@@ -114,10 +143,6 @@ class Bin(abc.ABC):
 
     @abc.abstractmethod
     def get_volume(self) -> float:
-        ...
-
-    @abc.abstractmethod
-    def intersect(self, item1: Item, item2: Item) -> bool:
         ...
 
 
@@ -146,13 +171,6 @@ class Bin3d(Bin):
     def rotations(self) -> Iterable[RotationType]:
         return RotationType
 
-    def intersect(self, item1: Item, item2: Item) -> bool:
-        v1 = Vec3(item1.position)
-        v2 = Vec3(item2.position)
-        b1 = BoundingBox([v1, v1 + Vec3(item1.get_dimension())])
-        b2 = BoundingBox([v2, v2 + Vec3(item2.get_dimension())])
-        return b1.intersect(b2)
-
 
 class Bin2d(Bin):
     def __init__(self, name, width: float, height: float, max_weight: float):
@@ -176,13 +194,6 @@ class Bin2d(Bin):
 
     def get_volume(self) -> float:
         return self.width * self.height
-
-    def intersect(self, item1: Item, item2: Item) -> bool:
-        v1 = Vec2(item1.position)
-        v2 = Vec2(item2.position)
-        b1 = BoundingBox2d([v1, v1 + Vec2(item1.get_dimension())])
-        b2 = BoundingBox2d([v2, v2 + Vec2(item2.get_dimension())])
-        return b1.intersect(b2)
 
 
 class Packer(abc.ABC):
