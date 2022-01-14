@@ -13,6 +13,7 @@ from py3dbp.constants import RotationType
 UNLIMITED = 1_000_000
 DEPTH = 1
 WEIGHT = 0
+DEBUG_BOXES = True
 
 
 class Bundle:
@@ -21,6 +22,12 @@ class Bundle:
         self.bounding_box = box
 
     def transform(self, m: Matrix44):
+        self.bounding_box = BoundingBox(
+            [
+                m.transform(self.bounding_box.extmin),
+                m.transform(self.bounding_box.extmax),
+            ]
+        )
         for e in self.entities:
             e.transform(m)
 
@@ -78,13 +85,17 @@ def pack(items: Iterable[DXFGraphic], width, height):
     return bin0
 
 
-def main(filename):
+def add_bbox(msp, box: BoundingBox, color: int):
+    msp.add_lwpolyline(
+        box.rect_vertices(), close=True, dxfattribs={"color": color}
+    )
+
+
+def main(filename, bin_width: float = 60.0, bin_height: float = 60.0):
     doc = ezdxf.readfile(filename)
     doc.layers.add("PACKED")
     doc.layers.add("UNFITTED")
     msp = doc.modelspace()
-    bin_width = 700
-    bin_height = 700
     bin0 = pack(msp, bin_width, bin_height)
     print("packed: " + "=" * 70)
     color = 3
@@ -107,6 +118,8 @@ def main(filename):
                 box.size.y + float(x), float(y), 0
             )
         bundle.transform(m)
+        if DEBUG_BOXES:
+            add_bbox(msp, bundle.bounding_box, 5)
 
     print("unfitted: " + "=" * 70)
     for item in bin0.unfitted_items:
@@ -114,14 +127,13 @@ def main(filename):
         bundle.set_properties("UNFITTED", 2)
         box = bundle.bounding_box
         print(f"{str(bundle)}, size: ({box.size.x:.2f}, {box.size.y:.2f})")
+        if DEBUG_BOXES:
+            add_bbox(msp, box, 5)
 
     # add bin frame:
-    msp.add_lwpolyline(
-        [(0, 0), (bin_width, 0), (bin_width, bin_height), (0, bin_height)],
-        close=True,
-    )
+    add_bbox(msp, BoundingBox([(0, 0), (bin_width, bin_height)]), 1)
     doc.saveas(filename.replace(".dxf", ".pack.dxf"))
 
 
 if __name__ == "__main__":
-    main(r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\case.dxf")
+    main(r"C:\Users\manfred\Desktop\Outbox\items.dxf")
