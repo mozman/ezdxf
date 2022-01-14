@@ -2,12 +2,21 @@
 #  License: MIT License
 from typing import Iterable, List
 import math
+import sys
+
 import ezdxf
 from ezdxf.entities import DXFGraphic
 from ezdxf.math import Matrix44, BoundingBox
 from ezdxf.path import Path, make_path, nesting
 
-import py3dbp
+try:
+    import py3dbp
+except ImportError:
+    print(
+        'This example requires the package "py3dbp", a pure Python package'
+        " hosted on PyPI.\nInstall using pip:\n\n    pip install py3dbp\n"
+    )
+    sys.exit(1)
 from py3dbp.constants import RotationType
 
 UNLIMITED = 1_000_000
