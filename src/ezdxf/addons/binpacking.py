@@ -12,22 +12,12 @@ from ezdxf.math import Vec3, BoundingBox
 
 
 class RotationType(enum.IntEnum):
-    RT_WHD = 0
-    RT_HWD = 1
-    RT_HDW = 2
-    RT_DHW = 3
-    RT_DWH = 4
-    RT_WDH = 5
-
-
-ALL_ROTATIONS = (
-    RotationType.RT_WHD,
-    RotationType.RT_HWD,
-    RotationType.RT_HDW,
-    RotationType.RT_DHW,
-    RotationType.RT_DWH,
-    RotationType.RT_WDH,
-)
+    WHD = 0
+    HWD = 1
+    HDW = 2
+    DHW = 3
+    DWH = 4
+    WDH = 5
 
 
 class Axis(enum.IntEnum):
@@ -37,7 +27,6 @@ class Axis(enum.IntEnum):
 
 
 DEFAULT_NUMBER_OF_DECIMALS = 3
-ALL_AXIS = (Axis.WIDTH, Axis.HEIGHT, Axis.DEPTH)
 START_POSITION: Tuple[float, float, float] = (0, 0, 0)
 
 
@@ -50,7 +39,7 @@ class Item:
         self.height = float(height)
         self.depth = float(depth)
         self.weight = float(weight)
-        self.rotation_type = RotationType.RT_WHD
+        self.rotation_type = RotationType.WHD
         self.position = START_POSITION
 
     def __str__(self):
@@ -65,17 +54,17 @@ class Item:
 
     def get_dimension(self) -> Tuple[float, float, float]:
         rt = self.rotation_type
-        if rt == RotationType.RT_WHD:
+        if rt == RotationType.WHD:
             return self.width, self.height, self.depth
-        elif rt == RotationType.RT_HWD:
+        elif rt == RotationType.HWD:
             return self.height, self.width, self.depth
-        elif rt == RotationType.RT_HDW:
+        elif rt == RotationType.HDW:
             return self.height, self.depth, self.width
-        elif rt == RotationType.RT_DHW:
+        elif rt == RotationType.DHW:
             return self.depth, self.height, self.width
-        elif rt == RotationType.RT_DWH:
+        elif rt == RotationType.DWH:
             return self.depth, self.width, self.height
-        elif rt == RotationType.RT_WDH:
+        elif rt == RotationType.WDH:
             return self.width, self.depth, self.height
         raise TypeError(rt)
 
@@ -110,7 +99,7 @@ class Bin:
         item.position = pivot
         x, y, z = pivot
 
-        for rotation_type in ALL_ROTATIONS:
+        for rotation_type in RotationType:
             item.rotation_type = rotation_type
             w, h, d = item.get_dimension()
             if self.width < x + w or self.height < y + h or self.depth < z + d:
@@ -162,7 +151,7 @@ def pack_to_bin(bin_: Bin, item: Item) -> None:
             bin_.unfitted_items.append(item)
         return
 
-    for axis in ALL_AXIS:
+    for axis in Axis:
         for ib in bin_.items:
             w, h, d = ib.get_dimension()
             x, y, z = ib.position

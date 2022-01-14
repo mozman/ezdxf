@@ -111,7 +111,7 @@ def main(filename, bin_width, bin_height):
         print(f"{str(bundle)}, size: ({box.size.x:.2f}, {box.size.y:.2f})")
         x, y, z = item.position
         m = Matrix44.translate(float(x), float(y), 0)
-        if item.rotation_type == RotationType.RT_HWD:
+        if item.rotation_type == RotationType.HWD:
             # height, width, depth orientation
             m = Matrix44.z_rotate(math.pi / 2) @ Matrix44.translate(
                 box.size.y + float(x), float(y), 0
