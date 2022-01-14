@@ -125,8 +125,9 @@ class Bin:
     def get_total_weight(self) -> Decimal:
         return sum(item.weight for item in self.items)
 
-    def put_item(self, item: Item, pivot: Tuple[Decimal, Decimal, Decimal]) -> bool:
-        fit = False
+    def put_item(
+        self, item: Item, pivot: Tuple[Decimal, Decimal, Decimal]
+    ) -> bool:
         valid_item_position = item.position
         item.position = pivot
 
@@ -136,29 +137,15 @@ class Bin:
             x, y, z = pivot
             if self.width < x + w or self.height < y + h or self.depth < z + d:
                 continue
-
-            fit = True
-
-            for current_item_in_bin in self.items:
-                if intersect(current_item_in_bin, item):
-                    fit = False
-                    break
-
-            if fit:
-                if self.get_total_weight() + item.weight > self.max_weight:
-                    fit = False
-                    return fit
+            if (
+                not any(intersect(i, item) for i in self.items)
+                and self.get_total_weight() + item.weight <= self.max_weight
+            ):
                 self.items.append(item)
+                return True
 
-            if not fit:
-                item.position = valid_item_position
-
-            return fit
-
-        if not fit:
-            item.position = valid_item_position
-
-        return fit
+        item.position = valid_item_position
+        return False
 
 
 class Packer:
