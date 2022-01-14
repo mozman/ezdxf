@@ -199,7 +199,8 @@ class Packer(abc.ABC):
 
     def pack(
         self,
-        bigger_first=False,
+        *,
+        bigger_first=True,  # only this strategy works!
         distribute_items=False,
     ):
         self.bins.sort(key=lambda b: b.get_volume(), reverse=bigger_first)
