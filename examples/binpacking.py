@@ -2,22 +2,13 @@
 #  License: MIT License
 from typing import Iterable, List
 import math
-import sys
 
 import ezdxf
 from ezdxf.entities import DXFGraphic
 from ezdxf.math import Matrix44, BoundingBox
 from ezdxf.path import Path, make_path, nesting
+from ezdxf.addons.binpacking import Bin, Packer, Item, RotationType
 
-try:
-    import py3dbp
-except ImportError:
-    print(
-        'This example requires the package "py3dbp", a pure Python package'
-        " hosted on PyPI.\nInstall using pip:\n\n    pip install py3dbp\n"
-    )
-    sys.exit(1)
-from py3dbp.constants import RotationType
 
 UNLIMITED = 1_000_000
 DEPTH = 1
@@ -81,14 +72,14 @@ def bundle_items(items: Iterable[DXFGraphic]) -> Iterable[Bundle]:
 
 def pack(items: Iterable[DXFGraphic], width, height):
     # ignoring depth and weight
-    bin0 = py3dbp.Bin("B0", width, height, DEPTH, UNLIMITED)
-    packer = py3dbp.Packer()
+    bin0 = Bin("B0", width, height, DEPTH, UNLIMITED)
+    packer = Packer()
     packer.add_bin(bin0)
     for bundle in bundle_items(items):
         box = bundle.bounding_box
         # use "Item.name" as generic data storage, ignore depth and weight
         packer.add_item(
-            py3dbp.Item(bundle, box.size.x, box.size.y, DEPTH, WEIGHT)
+            Item(bundle, box.size.x, box.size.y, DEPTH, WEIGHT)
         )
     packer.pack(bigger_first=True)  # recommended pack strategy!
     return bin0
@@ -145,4 +136,4 @@ def main(filename, bin_width: float = 60.0, bin_height: float = 60.0):
 
 
 if __name__ == "__main__":
-    main(r"C:\Users\manfred\Desktop\Outbox\items.dxf")
+    main(r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\items.dxf")
