@@ -7,10 +7,9 @@ import ezdxf
 from ezdxf.entities import DXFGraphic
 from ezdxf.math import Matrix44, BoundingBox
 from ezdxf.path import Path, make_path, nesting
-from ezdxf.addons.binpacking import Bin3d, Packer3d, Item, RotationType
+from ezdxf.addons.binpacking import Bin2d, Packer2d, Item, RotationType
 
 UNLIMITED = 1_000_000
-DEPTH = 1
 WEIGHT = 0
 DEBUG_BOXES = True
 
@@ -71,15 +70,12 @@ def bundle_items(items: Iterable[DXFGraphic]) -> Iterable[Bundle]:
 
 def pack(items: Iterable[DXFGraphic], width, height):
     # ignoring depth and weight
-    bin0 = Bin3d("B0", width, height, DEPTH, UNLIMITED)
-    packer = Packer3d()
+    bin0 = Bin2d("B0", width, height, UNLIMITED)
+    packer = Packer2d()
     packer.add_bin(bin0)
     for bundle in bundle_items(items):
         box = bundle.bounding_box
-        # ignore depth and weight
-        packer.add_item(
-            Item(bundle, box.size.x, box.size.y, DEPTH, WEIGHT)
-        )
+        packer.add_item(Item(bundle, box.size.x, box.size.y))
     packer.pack(bigger_first=True)  # recommended pack strategy!
     return bin0
 
@@ -122,7 +118,7 @@ def main(filename, bin_width, bin_height):
 
     print("unfitted: " + "=" * 70)
     for item in bin0.unfitted_items:
-        bundle = item.name
+        bundle = item.payload
         bundle.set_properties("UNFITTED", 2)
         box = bundle.bounding_box
         print(f"{str(bundle)}, size: ({box.size.x:.2f}, {box.size.y:.2f})")

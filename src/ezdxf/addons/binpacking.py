@@ -6,9 +6,12 @@
 # - https://github.com/gedex/bp3d - implementation in GoLang
 # - https://github.com/bom-d-van/binpacking - implementation in GoLang
 # Refactoring and type annotations by Manfred Moitzi
-from typing import Tuple, List
+from typing import Tuple, List, Iterable, Any
 import enum
-from ezdxf.math import Vec3, BoundingBox
+import abc
+from ezdxf.math import Vec3, Vec2, BoundingBox, BoundingBox2d
+
+__all__ = ["Item", "Bin2d", "Bin3d", "Packer2d", "Packer3d", "RotationType"]
 
 
 class RotationType(enum.IntEnum):
@@ -26,7 +29,6 @@ class Axis(enum.IntEnum):
     DEPTH = 2
 
 
-DEFAULT_NUMBER_OF_DECIMALS = 3
 START_POSITION: Tuple[float, float, float] = (0, 0, 0)
 
 
@@ -36,7 +38,7 @@ class Item:
         payload,
         width: float,
         height: float,
-        depth: float = 1.0,
+        depth: float = 1.0,  # has to be 1.0 for 2d packing: volume == area
         weight: float = 0.0,
     ):
         self.payload = payload  # arbitrary associated Python object
@@ -74,7 +76,52 @@ class Item:
         raise TypeError(rt)
 
 
-class Bin3d:
+class Bin(abc.ABC):
+    items: List[Item]
+    unfitted_items: List[Item]
+    name: Any
+    width: float
+    height: float
+    depth: float
+    max_weight: float
+
+    def put_item(self, item: Item, pivot: Tuple[float, float, float]) -> bool:
+        valid_item_position = item.position
+        item.position = pivot
+        x, y, z = pivot
+
+        for rotation_type in self.rotations():
+            item.rotation_type = rotation_type
+            w, h, d = item.get_dimension()
+            if self.width < x + w or self.height < y + h or self.depth < z + d:
+                continue
+            if (
+                not any(self.intersect(i, item) for i in self.items)
+                and self.get_total_weight() + item.weight <= self.max_weight
+            ):
+                self.items.append(item)
+                return True
+
+        item.position = valid_item_position
+        return False
+
+    def get_total_weight(self) -> float:
+        return sum(item.weight for item in self.items)
+
+    @abc.abstractmethod
+    def rotations(self) -> Iterable[RotationType]:
+        ...
+
+    @abc.abstractmethod
+    def get_volume(self) -> float:
+        ...
+
+    @abc.abstractmethod
+    def intersect(self, item1: Item, item2: Item) -> bool:
+        ...
+
+
+class Bin3d(Bin):
     def __init__(
         self, name, width: float, height: float, depth: float, max_weight: float
     ):
@@ -96,37 +143,55 @@ class Bin3d:
     def get_volume(self) -> float:
         return self.width * self.height * self.depth
 
-    def get_total_weight(self) -> float:
-        return sum(item.weight for item in self.items)
+    def rotations(self) -> Iterable[RotationType]:
+        return RotationType
 
-    def put_item(self, item: Item, pivot: Tuple[float, float, float]) -> bool:
-        valid_item_position = item.position
-        item.position = pivot
-        x, y, z = pivot
-
-        for rotation_type in RotationType:
-            item.rotation_type = rotation_type
-            w, h, d = item.get_dimension()
-            if self.width < x + w or self.height < y + h or self.depth < z + d:
-                continue
-            if (
-                not any(intersect(i, item) for i in self.items)
-                and self.get_total_weight() + item.weight <= self.max_weight
-            ):
-                self.items.append(item)
-                return True
-
-        item.position = valid_item_position
-        return False
+    def intersect(self, item1: Item, item2: Item) -> bool:
+        v1 = Vec3(item1.position)
+        v2 = Vec3(item2.position)
+        b1 = BoundingBox([v1, v1 + Vec3(item1.get_dimension())])
+        b2 = BoundingBox([v2, v2 + Vec3(item2.get_dimension())])
+        return b1.intersect(b2)
 
 
-class Packer3d:
+class Bin2d(Bin):
+    def __init__(self, name, width: float, height: float, max_weight: float):
+        self.name = name
+        self.width = float(width)
+        self.height = float(height)
+        self.depth = 1.0
+        self.max_weight = float(max_weight)
+        self.items: List[Item] = []
+        self.unfitted_items: List[Item] = []
+
+    def __str__(self) -> str:
+        return (
+            f"{str(self.name)}({self.width}x{self.height}, "
+            f"max_weight:{self.max_weight}) "
+            f"area({self.get_volume()})"
+        )
+
+    def rotations(self) -> Iterable[RotationType]:
+        return RotationType.WHD, RotationType.HWD
+
+    def get_volume(self) -> float:
+        return self.width * self.height
+
+    def intersect(self, item1: Item, item2: Item) -> bool:
+        v1 = Vec2(item1.position)
+        v2 = Vec2(item2.position)
+        b1 = BoundingBox2d([v1, v1 + Vec2(item1.get_dimension())])
+        b2 = BoundingBox2d([v2, v2 + Vec2(item2.get_dimension())])
+        return b1.intersect(b2)
+
+
+class Packer(abc.ABC):
     def __init__(self):
-        self.bins: List[Bin3d] = []
+        self.bins: List[Bin] = []
         self.items: List[Item] = []
         self.unfit_items: List[Item] = []
 
-    def add_bin(self, bin_: Bin3d) -> None:
+    def add_bin(self, bin_: Bin) -> None:
         self.bins.append(bin_)
 
     def add_item(self, item: Item) -> None:
@@ -142,40 +207,63 @@ class Packer3d:
 
         for bin_ in self.bins:
             for item in self.items:
-                pack_to_bin_3d(bin_, item)
+                self.pack_to_bin(bin_, item)
 
             if distribute_items:
                 for item in bin_.items:
                     self.items.remove(item)
 
-
-def pack_to_bin_3d(bin_: Bin3d, item: Item) -> None:
-    if not bin_.items:
-        response = bin_.put_item(item, START_POSITION)
-        if not response:
-            bin_.unfitted_items.append(item)
-        return
-
-    for axis in Axis:
-        for ib in bin_.items:
-            w, h, d = ib.get_dimension()
-            x, y, z = ib.position
-            if axis == Axis.WIDTH:
-                pivot = (x + w, y, z)
-            elif axis == Axis.HEIGHT:
-                pivot = (x, y + h, z)
-            elif axis == Axis.DEPTH:
-                pivot = (x, y, z + d)
-            else:
-                raise TypeError(axis)
-            if bin_.put_item(item, pivot):
-                return
-    bin_.unfitted_items.append(item)
+    @staticmethod
+    @abc.abstractmethod
+    def pack_to_bin(bin_: Bin, item: Item) -> None:
+        ...
 
 
-def intersect(item1: Item, item2: Item) -> bool:
-    v1 = Vec3(item1.position)
-    v2 = Vec3(item2.position)
-    b1 = BoundingBox([v1, v1 + Vec3(item1.get_dimension())])
-    b2 = BoundingBox([v2, v2 + Vec3(item2.get_dimension())])
-    return b1.intersect(b2)
+class Packer3d(Packer):
+    @staticmethod
+    def pack_to_bin(bin_: Bin, item: Item) -> None:
+        if not bin_.items:
+            response = bin_.put_item(item, START_POSITION)
+            if not response:
+                bin_.unfitted_items.append(item)
+            return
+
+        for axis in Axis:
+            for ib in bin_.items:
+                w, h, d = ib.get_dimension()
+                x, y, z = ib.position
+                if axis == Axis.WIDTH:
+                    pivot = (x + w, y, z)
+                elif axis == Axis.HEIGHT:
+                    pivot = (x, y + h, z)
+                elif axis == Axis.DEPTH:
+                    pivot = (x, y, z + d)
+                else:
+                    raise TypeError(axis)
+                if bin_.put_item(item, pivot):
+                    return
+        bin_.unfitted_items.append(item)
+
+
+class Packer2d(Packer):
+    @staticmethod
+    def pack_to_bin(bin_: Bin, item: Item) -> None:
+        if not bin_.items:
+            response = bin_.put_item(item, START_POSITION)
+            if not response:
+                bin_.unfitted_items.append(item)
+            return
+
+        for axis in (Axis.WIDTH, Axis.HEIGHT):
+            for ib in bin_.items:
+                w, h, _ = ib.get_dimension()
+                x, y, _ = ib.position
+                if axis == Axis.WIDTH:
+                    pivot = (x + w, y, 0)
+                elif axis == Axis.HEIGHT:
+                    pivot = (x, y + h, 0)
+                else:
+                    raise TypeError(axis)
+                if bin_.put_item(item, pivot):
+                    return
+        bin_.unfitted_items.append(item)
