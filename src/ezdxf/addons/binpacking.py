@@ -8,8 +8,7 @@
 # Refactoring and type annotations by Manfred Moitzi
 from typing import Tuple, List
 import enum
-from decimal import Decimal
-from functools import lru_cache
+from ezdxf.math import Vec3, BoundingBox
 
 
 class RotationType(enum.IntEnum):
@@ -39,11 +38,7 @@ class Axis(enum.IntEnum):
 
 DEFAULT_NUMBER_OF_DECIMALS = 3
 ALL_AXIS = (Axis.WIDTH, Axis.HEIGHT, Axis.DEPTH)
-START_POSITION: Tuple[Decimal, Decimal, Decimal] = (
-    Decimal(0),
-    Decimal(0),
-    Decimal(0),
-)
+START_POSITION: Tuple[float, float, float] = (0, 0, 0)
 
 
 class Item:
@@ -51,20 +46,12 @@ class Item:
         self, name, width: float, height: float, depth: float, weight: float
     ):
         self.name = name
-        self.width = Decimal(width)
-        self.height = Decimal(height)
-        self.depth = Decimal(depth)
-        self.weight = Decimal(weight)
+        self.width = float(width)
+        self.height = float(height)
+        self.depth = float(depth)
+        self.weight = float(weight)
         self.rotation_type = RotationType.RT_WHD
         self.position = START_POSITION
-        self.number_of_decimals = DEFAULT_NUMBER_OF_DECIMALS
-
-    def format_numbers(self, number_of_decimals: int) -> None:
-        self.width = set_to_decimal(self.width, number_of_decimals)
-        self.height = set_to_decimal(self.height, number_of_decimals)
-        self.depth = set_to_decimal(self.depth, number_of_decimals)
-        self.weight = set_to_decimal(self.weight, number_of_decimals)
-        self.number_of_decimals = number_of_decimals
 
     def __str__(self):
         return (
@@ -74,11 +61,9 @@ class Item:
         )
 
     def get_volume(self):
-        return set_to_decimal(
-            self.width * self.height * self.depth, self.number_of_decimals
-        )
+        return self.width * self.height * self.depth
 
-    def get_dimension(self) -> Tuple[Decimal, Decimal, Decimal]:
+    def get_dimension(self) -> Tuple[float, float, float]:
         rt = self.rotation_type
         if rt == RotationType.RT_WHD:
             return self.width, self.height, self.depth
@@ -100,20 +85,12 @@ class Bin:
         self, name, width: float, height: float, depth: float, max_weight: float
     ):
         self.name = name
-        self.width = Decimal(width)
-        self.height = Decimal(height)
-        self.depth = Decimal(depth)
-        self.max_weight = Decimal(max_weight)
+        self.width = float(width)
+        self.height = float(height)
+        self.depth = float(depth)
+        self.max_weight = float(max_weight)
         self.items: List[Item] = []
         self.unfitted_items: List[Item] = []
-        self.number_of_decimals: int = DEFAULT_NUMBER_OF_DECIMALS
-
-    def format_numbers(self, number_of_decimals: int) -> None:
-        self.width = set_to_decimal(self.width, number_of_decimals)
-        self.height = set_to_decimal(self.height, number_of_decimals)
-        self.depth = set_to_decimal(self.depth, number_of_decimals)
-        self.max_weight = set_to_decimal(self.max_weight, number_of_decimals)
-        self.number_of_decimals = number_of_decimals
 
     def __str__(self) -> str:
         return (
@@ -122,17 +99,13 @@ class Bin:
             f"vol({self.get_volume()})"
         )
 
-    def get_volume(self) -> Decimal:
-        return set_to_decimal(
-            self.width * self.height * self.depth, self.number_of_decimals
-        )
+    def get_volume(self) -> float:
+        return self.width * self.height * self.depth
 
-    def get_total_weight(self) -> Decimal:
-        return sum(item.weight for item in self.items)  # type: ignore
+    def get_total_weight(self) -> float:
+        return sum(item.weight for item in self.items)
 
-    def put_item(
-        self, item: Item, pivot: Tuple[Decimal, Decimal, Decimal]
-    ) -> bool:
+    def put_item(self, item: Item, pivot: Tuple[float, float, float]) -> bool:
         valid_item_position = item.position
         item.position = pivot
         x, y, z = pivot
@@ -169,14 +142,7 @@ class Packer:
         self,
         bigger_first=False,
         distribute_items=False,
-        number_of_decimals=DEFAULT_NUMBER_OF_DECIMALS,
     ):
-        for bin_ in self.bins:
-            bin_.format_numbers(number_of_decimals)
-
-        for item in self.items:
-            item.format_numbers(number_of_decimals)
-
         self.bins.sort(key=lambda b: b.get_volume(), reverse=bigger_first)
         self.items.sort(key=lambda i: i.get_volume(), reverse=bigger_first)
 
@@ -213,33 +179,9 @@ def pack_to_bin(bin_: Bin, item: Item) -> None:
     bin_.unfitted_items.append(item)
 
 
-def rect_intersect(item1: Item, item2: Item, x: Axis, y: Axis) -> bool:
-    d1 = item1.get_dimension()
-    d2 = item2.get_dimension()
-
-    cx1 = item1.position[x] + d1[x] / 2
-    cy1 = item1.position[y] + d1[y] / 2
-    cx2 = item2.position[x] + d2[x] / 2
-    cy2 = item2.position[y] + d2[y] / 2
-
-    ix = abs(cx1 - cx2)
-    iy = abs(cy1 - cy2)
-    return ix < (d1[x] + d2[x]) / 2 and iy < (d1[y] + d2[y]) / 2
-
-
 def intersect(item1: Item, item2: Item) -> bool:
-    return (
-        rect_intersect(item1, item2, Axis.WIDTH, Axis.HEIGHT)
-        and rect_intersect(item1, item2, Axis.HEIGHT, Axis.DEPTH)
-        and rect_intersect(item1, item2, Axis.WIDTH, Axis.DEPTH)
-    )
-
-
-@lru_cache
-def get_limit_number_of_decimals(number_of_decimals: int) -> Decimal:
-    return Decimal("1.{}".format("0" * number_of_decimals))
-
-
-def set_to_decimal(value, number_of_decimals: int) -> Decimal:
-    number_of_decimals = get_limit_number_of_decimals(number_of_decimals)
-    return Decimal(value).quantize(number_of_decimals)
+    v1 = Vec3(item1.position)
+    v2 = Vec3(item2.position)
+    b1 = BoundingBox([v1, v1 + Vec3(item1.get_dimension())])
+    b2 = BoundingBox([v2, v2 + Vec3(item2.get_dimension())])
+    return b1.intersect(b2)
