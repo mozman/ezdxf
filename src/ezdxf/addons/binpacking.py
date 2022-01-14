@@ -32,7 +32,12 @@ START_POSITION: Tuple[float, float, float] = (0, 0, 0)
 
 class Item:
     def __init__(
-        self, payload, width: float, height: float, depth: float, weight: float
+        self,
+        payload,
+        width: float,
+        height: float,
+        depth: float = 1.0,
+        weight: float = 0.0,
     ):
         self.payload = payload  # arbitrary associated Python object
         self.width = float(width)
@@ -69,7 +74,7 @@ class Item:
         raise TypeError(rt)
 
 
-class Bin:
+class Bin3d:
     def __init__(
         self, name, width: float, height: float, depth: float, max_weight: float
     ):
@@ -115,13 +120,13 @@ class Bin:
         return False
 
 
-class Packer:
+class Packer3d:
     def __init__(self):
-        self.bins: List[Bin] = []
+        self.bins: List[Bin3d] = []
         self.items: List[Item] = []
         self.unfit_items: List[Item] = []
 
-    def add_bin(self, bin_: Bin) -> None:
+    def add_bin(self, bin_: Bin3d) -> None:
         self.bins.append(bin_)
 
     def add_item(self, item: Item) -> None:
@@ -137,14 +142,14 @@ class Packer:
 
         for bin_ in self.bins:
             for item in self.items:
-                pack_to_bin(bin_, item)
+                pack_to_bin_3d(bin_, item)
 
             if distribute_items:
                 for item in bin_.items:
                     self.items.remove(item)
 
 
-def pack_to_bin(bin_: Bin, item: Item) -> None:
+def pack_to_bin_3d(bin_: Bin3d, item: Item) -> None:
     if not bin_.items:
         response = bin_.put_item(item, START_POSITION)
         if not response:

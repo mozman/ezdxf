@@ -7,7 +7,7 @@ import ezdxf
 from ezdxf.entities import DXFGraphic
 from ezdxf.math import Matrix44, BoundingBox
 from ezdxf.path import Path, make_path, nesting
-from ezdxf.addons.binpacking import Bin, Packer, Item, RotationType
+from ezdxf.addons.binpacking import Bin3d, Packer3d, Item, RotationType
 
 UNLIMITED = 1_000_000
 DEPTH = 1
@@ -71,8 +71,8 @@ def bundle_items(items: Iterable[DXFGraphic]) -> Iterable[Bundle]:
 
 def pack(items: Iterable[DXFGraphic], width, height):
     # ignoring depth and weight
-    bin0 = Bin("B0", width, height, DEPTH, UNLIMITED)
-    packer = Packer()
+    bin0 = Bin3d("B0", width, height, DEPTH, UNLIMITED)
+    packer = Packer3d()
     packer.add_bin(bin0)
     for bundle in bundle_items(items):
         box = bundle.bounding_box

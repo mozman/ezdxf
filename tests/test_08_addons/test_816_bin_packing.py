@@ -2,13 +2,13 @@
 #  License: MIT License
 import pytest
 
-from ezdxf.addons.binpacking import Bin, Item, Packer
+from ezdxf.addons.binpacking import Bin3d, Item, Packer3d
 UNLIMITED = 1_000_000
 
 
 def test_single_bin_single_item():
-    bin0 = Bin("B0", 1, 1, 1, UNLIMITED)
-    packer = Packer()
+    bin0 = Bin3d("B0", 1, 1, 1, UNLIMITED)
+    packer = Packer3d()
     packer.add_bin(bin0)
     packer.add_item(Item("I0", 1, 1, 1, 1))
     packer.pack()
@@ -22,8 +22,8 @@ def test_single_bin_single_item():
     (1, 1, 3),
 ])
 def test_single_bin_multiple_items(w, h, d):
-    bin0 = Bin("B0", w, h, d, UNLIMITED)
-    packer = Packer()
+    bin0 = Bin3d("B0", w, h, d, UNLIMITED)
+    packer = Packer3d()
     packer.add_bin(bin0)
     for index in range(max(w, h, d)):
         packer.add_item(Item(f"I{index}", 1, 1, 1, 1))
@@ -33,8 +33,8 @@ def test_single_bin_multiple_items(w, h, d):
 
 
 def test_single_bin_different_sized_items():
-    bin0 = Bin("B0", 3, 3, 1, UNLIMITED)
-    packer = Packer()
+    bin0 = Bin3d("B0", 3, 3, 1, UNLIMITED)
+    packer = Packer3d()
     packer.add_bin(bin0)
     packer.add_item(Item("I0", 1, 1, 1, 1))
     packer.add_item(Item("I1", 2, 1, 1, 1))
@@ -49,14 +49,14 @@ if __name__ == '__main__':
 
 
 def test_example():
-    packer = Packer()
-    packer.add_bin(Bin("small-envelope", 11.5, 6.125, 0.25, 10))
-    packer.add_bin(Bin("large-envelope", 15.0, 12.0, 0.75, 15))
-    packer.add_bin(Bin("small-box", 8.625, 5.375, 1.625, 70.0))
-    packer.add_bin(Bin("medium-box", 11.0, 8.5, 5.5, 70.0))
-    packer.add_bin(Bin("medium-2-box", 13.625, 11.875, 3.375, 70.0))
-    packer.add_bin(Bin("large-box", 12.0, 12.0, 5.5, 70.0))
-    packer.add_bin(Bin("large-2-box", 23.6875, 11.75, 3.0, 70.0))
+    packer = Packer3d()
+    packer.add_bin(Bin3d("small-envelope", 11.5, 6.125, 0.25, 10))
+    packer.add_bin(Bin3d("large-envelope", 15.0, 12.0, 0.75, 15))
+    packer.add_bin(Bin3d("small-box", 8.625, 5.375, 1.625, 70.0))
+    packer.add_bin(Bin3d("medium-box", 11.0, 8.5, 5.5, 70.0))
+    packer.add_bin(Bin3d("medium-2-box", 13.625, 11.875, 3.375, 70.0))
+    packer.add_bin(Bin3d("large-box", 12.0, 12.0, 5.5, 70.0))
+    packer.add_bin(Bin3d("large-2-box", 23.6875, 11.75, 3.0, 70.0))
 
     packer.add_item(Item("50g [powder 1]", 3.9370, 1.9685, 1.9685, 1))
     packer.add_item(Item("50g [powder 2]", 3.9370, 1.9685, 1.9685, 2))
