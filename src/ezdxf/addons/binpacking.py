@@ -6,10 +6,10 @@
 # - https://github.com/gedex/bp3d - implementation in GoLang
 # - https://github.com/bom-d-van/binpacking - implementation in GoLang
 # Refactoring and type annotations by Manfred Moitzi
-
 from typing import Tuple, List
 import enum
 from decimal import Decimal
+from functools import lru_cache
 
 
 class RotationType(enum.IntEnum):
@@ -47,7 +47,9 @@ START_POSITION: Tuple[Decimal, Decimal, Decimal] = (
 
 
 class Item:
-    def __init__(self, name, width, height, depth, weight):
+    def __init__(
+        self, name, width: float, height: float, depth: float, weight: float
+    ):
         self.name = name
         self.width = Decimal(width)
         self.height = Decimal(height)
@@ -57,7 +59,7 @@ class Item:
         self.position = START_POSITION
         self.number_of_decimals = DEFAULT_NUMBER_OF_DECIMALS
 
-    def format_numbers(self, number_of_decimals):
+    def format_numbers(self, number_of_decimals: int) -> None:
         self.width = set_to_decimal(self.width, number_of_decimals)
         self.height = set_to_decimal(self.height, number_of_decimals)
         self.depth = set_to_decimal(self.depth, number_of_decimals)
@@ -71,41 +73,42 @@ class Item:
             f"rt({self.rotation_type}) vol({self.get_volume()})"
         )
 
-    def get_volume(self) -> Decimal:
-        return self.width * self.height * self.depth
+    def get_volume(self):
+        return set_to_decimal(
+            self.width * self.height * self.depth, self.number_of_decimals
+        )
 
     def get_dimension(self) -> Tuple[Decimal, Decimal, Decimal]:
         rt = self.rotation_type
         if rt == RotationType.RT_WHD:
-            dimension = (self.width, self.height, self.depth)
+            return self.width, self.height, self.depth
         elif rt == RotationType.RT_HWD:
-            dimension = (self.height, self.width, self.depth)
+            return self.height, self.width, self.depth
         elif rt == RotationType.RT_HDW:
-            dimension = (self.height, self.depth, self.width)
+            return self.height, self.depth, self.width
         elif rt == RotationType.RT_DHW:
-            dimension = (self.depth, self.height, self.width)
+            return self.depth, self.height, self.width
         elif rt == RotationType.RT_DWH:
-            dimension = (self.depth, self.width, self.height)
+            return self.depth, self.width, self.height
         elif rt == RotationType.RT_WDH:
-            dimension = (self.width, self.depth, self.height)
-        else:
-            dimension = []
-
-        return dimension
+            return self.width, self.depth, self.height
+        raise TypeError(rt)
 
 
 class Bin:
-    def __init__(self, name, width, height, depth, max_weight):
+    def __init__(
+        self, name, width: float, height: float, depth: float, max_weight: float
+    ):
         self.name = name
         self.width = Decimal(width)
         self.height = Decimal(height)
         self.depth = Decimal(depth)
         self.max_weight = Decimal(max_weight)
-        self.items = []
-        self.unfitted_items = []
-        self.number_of_decimals = DEFAULT_NUMBER_OF_DECIMALS
+        self.items: List[Item] = []
+        self.unfitted_items: List[Item] = []
+        self.number_of_decimals: int = DEFAULT_NUMBER_OF_DECIMALS
 
-    def format_numbers(self, number_of_decimals):
+    def format_numbers(self, number_of_decimals: int) -> None:
         self.width = set_to_decimal(self.width, number_of_decimals)
         self.height = set_to_decimal(self.height, number_of_decimals)
         self.depth = set_to_decimal(self.depth, number_of_decimals)
@@ -120,10 +123,12 @@ class Bin:
         )
 
     def get_volume(self) -> Decimal:
-        return self.width * self.height * self.depth
+        return set_to_decimal(
+            self.width * self.height * self.depth, self.number_of_decimals
+        )
 
     def get_total_weight(self) -> Decimal:
-        return sum(item.weight for item in self.items)
+        return sum(item.weight for item in self.items)  # type: ignore
 
     def put_item(
         self, item: Item, pivot: Tuple[Decimal, Decimal, Decimal]
@@ -217,9 +222,8 @@ def rect_intersect(item1: Item, item2: Item, x: Axis, y: Axis) -> bool:
     cx2 = item2.position[x] + d2[x] / 2
     cy2 = item2.position[y] + d2[y] / 2
 
-    ix = max(cx1, cx2) - min(cx1, cx2)
-    iy = max(cy1, cy2) - min(cy1, cy2)
-
+    ix = abs(cx1 - cx2)
+    iy = abs(cy1 - cy2)
     return ix < (d1[x] + d2[x]) / 2 and iy < (d1[y] + d2[y]) / 2
 
 
@@ -231,11 +235,11 @@ def intersect(item1: Item, item2: Item) -> bool:
     )
 
 
-def get_limit_number_of_decimals(number_of_decimals):
+@lru_cache
+def get_limit_number_of_decimals(number_of_decimals: int) -> Decimal:
     return Decimal("1.{}".format("0" * number_of_decimals))
 
 
-def set_to_decimal(value, number_of_decimals) -> Decimal:
+def set_to_decimal(value, number_of_decimals: int) -> Decimal:
     number_of_decimals = get_limit_number_of_decimals(number_of_decimals)
-
     return Decimal(value).quantize(number_of_decimals)
