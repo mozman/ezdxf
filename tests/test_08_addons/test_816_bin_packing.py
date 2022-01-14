@@ -3,7 +3,6 @@
 import pytest
 
 from ezdxf.addons.binpacking import Bin, Item, Packer
-
 UNLIMITED = 1_000_000
 
 
@@ -83,14 +82,14 @@ def test_example():
     assert len(b3.items) == 6
     assert b3.get_total_weight() == 21
 
-    assert len(b4.items) == 5
-    assert b4.get_total_weight() == 15
+    assert len(b4.items) == 6
+    assert b4.get_total_weight() == 21
 
-    assert len(b5.items) == 8
-    assert b5.get_total_weight() == 36
+    assert len(b5.items) == 9
+    assert b5.get_total_weight() == 45
 
-    assert len(b6.items) == 6
-    assert b6.get_total_weight() == 21
+    assert len(b6.items) == 8
+    assert b6.get_total_weight() == 36
 
 
 if __name__ == '__main__':

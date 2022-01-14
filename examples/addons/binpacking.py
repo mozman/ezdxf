@@ -9,7 +9,6 @@ from ezdxf.math import Matrix44, BoundingBox
 from ezdxf.path import Path, make_path, nesting
 from ezdxf.addons.binpacking import Bin, Packer, Item, RotationType
 
-
 UNLIMITED = 1_000_000
 DEPTH = 1
 WEIGHT = 0
@@ -136,4 +135,5 @@ def main(filename, bin_width: float = 60.0, bin_height: float = 60.0):
 
 
 if __name__ == "__main__":
-    main(r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\items.dxf")
+    # main(r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\items.dxf", 60, 60)
+    main(r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\case.dxf", 800, 800)
