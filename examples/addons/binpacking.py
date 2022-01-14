@@ -90,7 +90,7 @@ def add_bbox(msp, box: BoundingBox, color: int):
     )
 
 
-def main(filename, bin_width: float = 60.0, bin_height: float = 60.0):
+def main(filename, bin_width, bin_height):
     doc = ezdxf.readfile(filename)
     doc.layers.add("PACKED")
     doc.layers.add("UNFITTED")
@@ -135,5 +135,5 @@ def main(filename, bin_width: float = 60.0, bin_height: float = 60.0):
 
 
 if __name__ == "__main__":
-    # main(r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\items.dxf", 60, 60)
-    main(r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\case.dxf", 800, 800)
+    main(r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\items.dxf", 50, 50)
+    main(r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\case.dxf", 600, 600)

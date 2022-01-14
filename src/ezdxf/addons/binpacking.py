@@ -130,11 +130,11 @@ class Bin:
     ) -> bool:
         valid_item_position = item.position
         item.position = pivot
+        x, y, z = pivot
 
         for rotation_type in ALL_ROTATIONS:
             item.rotation_type = rotation_type
             w, h, d = item.get_dimension()
-            x, y, z = pivot
             if self.width < x + w or self.height < y + h or self.depth < z + d:
                 continue
             if (

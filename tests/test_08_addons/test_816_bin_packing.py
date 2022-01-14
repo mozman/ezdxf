@@ -88,8 +88,8 @@ def test_example():
     assert len(b5.items) == 9
     assert b5.get_total_weight() == 45
 
-    assert len(b6.items) == 8
-    assert b6.get_total_weight() == 36
+    assert len(b6.items) == 9
+    assert b6.get_total_weight() == 45
 
 
 if __name__ == '__main__':
