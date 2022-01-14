@@ -90,7 +90,7 @@ def pack(items: Iterable[DXFGraphic], width, height):
         packer.add_item(
             py3dbp.Item(bundle, box.size.x, box.size.y, DEPTH, WEIGHT)
         )
-    packer.pack(bigger_first=False)
+    packer.pack(bigger_first=True)  # recommended pack strategy!
     return bin0
 
 
