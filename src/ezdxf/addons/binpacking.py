@@ -32,9 +32,9 @@ START_POSITION: Tuple[float, float, float] = (0, 0, 0)
 
 class Item:
     def __init__(
-        self, name, width: float, height: float, depth: float, weight: float
+        self, payload, width: float, height: float, depth: float, weight: float
     ):
-        self.name = name
+        self.payload = payload  # arbitrary associated Python object
         self.width = float(width)
         self.height = float(height)
         self.depth = float(depth)
@@ -44,7 +44,7 @@ class Item:
 
     def __str__(self):
         return (
-            f"{str(self.name)}({self.width}x{self.height}x{self.height}, "
+            f"{str(self.payload)}({self.width}x{self.height}x{self.height}, "
             f"weight: {self.depth}) pos({str(self.position)}) "
             f"rt({self.rotation_type}) vol({self.get_volume()})"
         )

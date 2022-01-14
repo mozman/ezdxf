@@ -76,7 +76,7 @@ def pack(items: Iterable[DXFGraphic], width, height):
     packer.add_bin(bin0)
     for bundle in bundle_items(items):
         box = bundle.bounding_box
-        # use "Item.name" as generic data storage, ignore depth and weight
+        # ignore depth and weight
         packer.add_item(
             Item(bundle, box.size.x, box.size.y, DEPTH, WEIGHT)
         )
@@ -103,7 +103,7 @@ def main(filename, bin_width, bin_height):
             color = 6
         else:
             color = 3
-        bundle = item.name
+        bundle = item.payload
         bundle.set_properties("PACKED", color)
         box = bundle.bounding_box
         # move entity to origin
