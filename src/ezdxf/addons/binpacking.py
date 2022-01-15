@@ -9,7 +9,6 @@
 from typing import Tuple, List, Iterable
 from enum import Enum, auto
 
-import random
 from ezdxf.math import (
     Vec2,
     Vec3,
@@ -28,7 +27,7 @@ __all__ = [
     "PickStrategy",
 ]
 
-UNLIMITED_WEIGHT = 1.0e308
+UNLIMITED_WEIGHT = 1e99
 
 
 class RotationType(Enum):
@@ -49,7 +48,6 @@ class Axis(Enum):
 class PickStrategy(Enum):
     SMALLER_FIRST = auto()
     BIGGER_FIRST = auto()
-    SHUFFLE = auto()
 
 
 START_POSITION: Tuple[float, float, float] = (0, 0, 0)
@@ -61,7 +59,7 @@ class Item:
         payload,
         width: float,
         height: float,
-        depth: float = 1.0,  # has to be 1.0 for 2d packing: volume == area
+        depth: float,
         weight: float = 0.0,
     ):
         self.payload = payload  # arbitrary associated Python object
@@ -158,7 +156,7 @@ class Bin:
         name,
         width: float,
         height: float,
-        depth: float = 1.0,
+        depth: float,
         max_weight: float = UNLIMITED_WEIGHT,
     ):
         self.name = name
@@ -256,15 +254,9 @@ class _Packer:
         pick_strategy=PickStrategy.BIGGER_FIRST,
         distribute_items=False,
     ):
-        if pick_strategy == PickStrategy.SMALLER_FIRST:
-            self.bins.sort(key=lambda b: b.get_volume())
-            self.items.sort(key=lambda i: i.get_volume())
-        elif pick_strategy == PickStrategy.BIGGER_FIRST:
-            self.bins.sort(key=lambda b: b.get_volume(), reverse=True)
-            self.items.sort(key=lambda i: i.get_volume(), reverse=True)
-        elif pick_strategy == PickStrategy.SMALLER_FIRST:
-            random.shuffle(self.bins)
-            random.shuffle(self.items)
+        reverse = True if pick_strategy == PickStrategy.BIGGER_FIRST else False
+        self.bins.sort(key=lambda b: b.get_volume(), reverse=reverse)
+        self.items.sort(key=lambda i: i.get_volume(), reverse=reverse)
 
         for bin_ in self.bins:
             for item in self.items:
@@ -330,7 +322,6 @@ class Packer(_Packer):
 
 
 class FlatPacker(_Packer):
-
     def new_envelope(
         self,
         name: str,
