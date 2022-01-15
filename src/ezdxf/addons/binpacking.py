@@ -37,6 +37,7 @@ __all__ = [
     "FlatPacker",
     "RotationType",
     "PickStrategy",
+    "export_dxf"
 ]
 
 UNLIMITED_WEIGHT = 1e99

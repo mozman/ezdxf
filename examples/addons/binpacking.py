@@ -3,13 +3,11 @@
 from typing import Iterable, List
 import ezdxf
 from ezdxf.entities import DXFGraphic
-from ezdxf.math import Matrix44, BoundingBox, Vec3
+from ezdxf.math import Matrix44, BoundingBox
 from ezdxf.path import Path, make_path, nesting
 from ezdxf.addons import binpacking
 from ezdxf import colors
 
-UNLIMITED = 1_000_000
-WEIGHT = 0
 DEBUG = True
 
 
@@ -91,7 +89,7 @@ def main(
     bin_width: float,
     bin_height: float,
     pick_strategy=binpacking.PickStrategy.BIGGER_FIRST,
-    attemps: int=1,
+    attempts: int = 1,
 ):
     doc = ezdxf.readfile(filename)
     doc.layers.add("PACKED")
@@ -100,7 +98,7 @@ def main(
 
     packer = get_packer(msp, bin_width, bin_height)
     if pick_strategy == binpacking.PickStrategy.SHUFFLE:
-        packer = packer.shuffle_pack(attemps)
+        packer = packer.shuffle_pack(attempts)
     else:
         packer.pack(pick_strategy=pick_strategy)
     envelope = packer.bins[0]
@@ -132,10 +130,10 @@ def main(
     add_bbox(msp, BoundingBox([(0, 0), (bin_width, bin_height)]), colors.YELLOW)
     h = envelope.height
     w = envelope.width
-    doc.set_modelspace_vport(height=h, center=(w/2, h/2))
+    doc.set_modelspace_vport(height=h, center=(w / 2, h / 2))
     doc.saveas(filename.replace(".dxf", ".pack.dxf"))
     if DEBUG:
-        doc = binpacking.export_dxf(packer, Vec3(0, 0, 1))
+        doc = binpacking.export_dxf(packer)
         doc.set_modelspace_vport(height=h, center=(w / 2, h / 2))
         doc.saveas(filename.replace(".dxf", ".debug.dxf"))
 
@@ -148,7 +146,7 @@ if __name__ == "__main__":
         50,
         55,
         pick_strategy=binpacking.PickStrategy.BIGGER_FIRST,
-        attemps=100,
+        attempts=100,
     )
     main(
         r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\case.dxf",
