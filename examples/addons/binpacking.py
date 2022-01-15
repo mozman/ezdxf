@@ -3,7 +3,7 @@
 from typing import Iterable, List
 import ezdxf
 from ezdxf.entities import DXFGraphic
-from ezdxf.math import Matrix44, BoundingBox
+from ezdxf.math import Matrix44, BoundingBox, Vec3
 from ezdxf.path import Path, make_path, nesting
 from ezdxf.addons import binpacking
 
@@ -70,12 +70,12 @@ def bundle_items(items: Iterable[DXFGraphic]) -> Iterable[Bundle]:
 
 def pack(items: Iterable[DXFGraphic], width, height):
     packer = binpacking.FlatPacker()
-    envelope = packer.add_envelope("B0", width, height)
+    packer.add_envelope("B0", width, height)
     for bundle in bundle_items(items):
         box = bundle.bounding_box
         packer.add_item(bundle, box.size.x, box.size.y)
     packer.pack(pick_strategy=binpacking.PickStrategy.BIGGER_FIRST)
-    return envelope
+    return packer
 
 
 def add_bbox(msp, box: BoundingBox, color: int):
@@ -89,10 +89,11 @@ def main(filename, bin_width, bin_height):
     doc.layers.add("PACKED")
     doc.layers.add("UNFITTED")
     msp = doc.modelspace()
-    bin0 = pack(msp, bin_width, bin_height)
+    packer = pack(msp, bin_width, bin_height)
+    envelope = packer.bins[0]
     print("packed: " + "=" * 70)
     color = 3
-    for item in bin0.items:
+    for item in envelope.items:
         if color == 3:
             color = 6
         else:
@@ -110,7 +111,7 @@ def main(filename, bin_width, bin_height):
             add_bbox(msp, bundle.bounding_box, 5)
 
     print("unfitted: " + "=" * 70)
-    for item in bin0.unfitted_items:
+    for item in envelope.unfitted_items:
         bundle = item.payload
         bundle.set_properties("UNFITTED", 2)
         box = bundle.bounding_box
@@ -121,6 +122,8 @@ def main(filename, bin_width, bin_height):
     # add bin frame:
     add_bbox(msp, BoundingBox([(0, 0), (bin_width, bin_height)]), 1)
     doc.saveas(filename.replace(".dxf", ".pack.dxf"))
+    doc2 = binpacking.export_dxf(packer, Vec3(0, 0, 1))
+    doc2.saveas(filename.replace(".dxf", ".debug.dxf"))
 
 
 if __name__ == "__main__":

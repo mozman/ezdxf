@@ -210,17 +210,19 @@ class Bin:
         item.position = pivot
         x, y, z = pivot
 
+        # Try all possible rotations:
         for rotation_type in self.rotations():
             item.rotation_type = rotation_type
             w, h, d = item.get_dimension()
             if self.width < x + w or self.height < y + h or self.depth < z + d:
                 continue
+            # new item fits inside the box at he current location and rotation:
             item_bbox = item.bbox
             if (
                 not any(item_bbox.intersect(i.bbox) for i in self.items)
                 and self.get_total_weight() + item.weight <= self.max_weight
             ):
-                self.items.append(item)
+                self.items.append(item.copy())
                 return True
 
         item.position = valid_item_position
@@ -314,16 +316,21 @@ class _Packer:
             random.shuffle(self.bins)
             random.shuffle(self.items)
 
-        for bin_ in self.bins:
+        for box in self.bins:
+            fitted_items: List[Item] = []
             for item in self.items:
-                self.pack_to_bin(bin_, item)
+                # Add a copy to bins, otherwise items shared state across bins!
+                # The item would have the same location and rotation of the last
+                # placement in all bins.
+                if self.pack_to_bin(box, item.copy()):
+                    fitted_items.append(item)
 
             if distribute_items:
-                for item in bin_.items:
+                for item in fitted_items:
                     self.items.remove(item)
 
     @staticmethod
-    def pack_to_bin(box: Bin, item: Item) -> None:
+    def pack_to_bin(box: Bin, item: Item) -> bool:
         pass
 
 
@@ -353,28 +360,30 @@ class Packer(_Packer):
         return item
 
     @staticmethod
-    def pack_to_bin(box: Bin, item: Item) -> None:
+    def pack_to_bin(box: Bin, item: Item) -> bool:
         if not box.items:
             response = box.put_item(item, START_POSITION)
             if not response:
                 box.unfitted_items.append(item)
-            return
+            return response
 
         for axis in Axis:
-            for ib in box.items:
-                w, h, d = ib.get_dimension()
-                x, y, z = ib.position
+            for placed_item in box.items:
+                w, h, d = placed_item.get_dimension()
+                x, y, z = placed_item.position
                 if axis == Axis.WIDTH:
-                    pivot = (x + w, y, z)
+                    pivot = (x + w, y, z)  # new item right of the placed item
                 elif axis == Axis.HEIGHT:
-                    pivot = (x, y + h, z)
+                    pivot = (x, y + h, z)  # new item above of the placed item
                 elif axis == Axis.DEPTH:
-                    pivot = (x, y, z + d)
+                    pivot = (x, y, z + d)  # new item on top of the placed item
                 else:
                     raise TypeError(axis)
                 if box.put_item(item, pivot):
-                    return
+                    return True
+
         box.unfitted_items.append(item)
+        return False
 
 
 class FlatPacker(_Packer):
@@ -401,12 +410,12 @@ class FlatPacker(_Packer):
         return item
 
     @staticmethod
-    def pack_to_bin(envelope: Bin, item: Item) -> None:
+    def pack_to_bin(envelope: Bin, item: Item) -> bool:
         if not envelope.items:
             response = envelope.put_item(item, START_POSITION)
             if not response:
                 envelope.unfitted_items.append(item)
-            return
+            return response
 
         for axis in (Axis.WIDTH, Axis.HEIGHT):
             for ib in envelope.items:
@@ -419,9 +428,78 @@ class FlatPacker(_Packer):
                 else:
                     raise TypeError(axis)
                 if envelope.put_item(item, pivot):
-                    return
+                    return True
         envelope.unfitted_items.append(item)
+        return False
 
 
-def export_dxf(packer: _Packer) -> "Drawing":
-    pass
+def export_dxf(packer: _Packer, offset: Vec3) -> "Drawing":
+    import ezdxf
+    from ezdxf import colors
+
+    doc = ezdxf.new()
+    doc.layers.add("FRAME", color=colors.YELLOW)
+    msp = doc.modelspace()
+    spacing = 5
+    offset_dir = offset.normalize()
+    start = Vec3()
+    index = 0
+    rgb = (colors.RED, colors.GREEN, colors.BLUE, colors.MAGENTA, colors.CYAN)
+    for box in packer.bins:
+        m = Matrix44.translate(start.x, start.y, start.z)
+        _add_frame(msp, box, "FRAME", m)
+        for item in box.items:
+            _add_mesh(msp, item, "ITEMS", rgb[index], m)
+            index += 1
+            if index >= len(rgb):
+                index = 0
+        start += offset_dir * (box.width + spacing)
+    return doc
+
+
+def _add_frame(msp, box: Bin, layer: str, m: Matrix44):
+    def add_line(v1, v2):
+        line = msp.add_line(v1, v2, dxfattribs=attribs)
+        line.transform(m)
+
+    attribs = {"layer": layer}
+    x0, y0, z0 = (0, 0, 0)
+    x1 = float(box.width)
+    y1 = float(box.height)
+    z1 = float(box.depth)
+    corners = [
+        (x0, y0),
+        (x1, y0),
+        (x1, y1),
+        (x0, y1),
+        (x0, y0),
+    ]
+    for s, e in zip(corners, corners[1:]):
+        add_line((s[0], s[1], z0), (e[0], e[1], z0))
+    for s, e in zip(corners, corners[1:]):
+        add_line((s[0], s[1], z1), (e[0], e[1], z1))
+    for x, y in corners[:-1]:
+        add_line((x, y, z0), (x, y, z1))
+
+    text = msp.add_text(box.name, dxfattribs={"height": 0.25, "layer": layer})
+    text.set_placement((x0 + 0.25, y1 - 0.5, z1))
+    text.transform(m)
+
+
+def _add_mesh(msp, item: Item, layer: str, color: int, m: Matrix44):
+    from ezdxf.render.forms import cube
+
+    attribs = {
+        "layer": layer,
+        "color": color,
+    }
+    mesh = cube(center=False)
+    sx, sy, sz = item.get_dimension()
+    mesh.scale(sx, sy, sz)
+    x, y, z = item.position
+    mesh.translate(x, y, z)
+    mesh.render_mesh(msp, attribs, matrix=m)
+
+    text = msp.add_text(str(item.payload), dxfattribs={"height": 0.25})
+    text.set_placement((x + 0.25, y + 0.25, z + sz))
+    text.transform(m)
