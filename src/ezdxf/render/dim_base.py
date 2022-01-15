@@ -820,7 +820,7 @@ class Geometry:
         self, text: str, pos: Vec2, rotation: float, dxfattribs: Dict[str, Any]
     ) -> None:
         dxfattribs["rotation"] = self.ucs.to_ocs_angle_deg(rotation)
-        entity = self.layout.add_text(text, dxfattribs)
+        entity = self.layout.add_text(text, dxfattribs=dxfattribs)
         # OCS of the measurement text is defined by the DIMENSION entity!
         # Therefore remove OCS elevation, the elevation is defined by the
         # DIMENSION 'text_midpoint' (group code 11) and do not set 'extrusion'

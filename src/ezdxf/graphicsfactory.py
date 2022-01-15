@@ -280,18 +280,31 @@ class CreatorInterface:
         """
         return self._add_quadrilateral("3DFACE", points, dxfattribs)  # type: ignore
 
-    def add_text(self, text: str, dxfattribs=None) -> "Text":
+    def add_text(
+        self,
+        text: str,
+        *,
+        height: float = None,
+        rotation: float = None,
+        dxfattribs=None,
+    ) -> "Text":
         """
         Add a :class:`~ezdxf.entities.Text` entity, see also
         :class:`~ezdxf.entities.Textstyle`.
 
         Args:
             text: content string
+            height: text height in drawing units
+            rotation: text rotation in degrees
             dxfattribs: additional DXF attributes
 
         """
         dxfattribs = dict(dxfattribs or {})
         dxfattribs["text"] = str(text)
+        if height is not None:
+            dxfattribs["height"] = float(height)
+        if rotation is not None:
+            dxfattribs["rotation"] = float(rotation)
         dxfattribs.setdefault("insert", Vec3())
         return self.new_entity("TEXT", dxfattribs)  # type: ignore
 
@@ -381,6 +394,9 @@ class CreatorInterface:
         tag: str,
         insert: "Vertex" = (0, 0),
         text: str = "",
+        *,
+        height: float = None,
+        rotation: float = None,
         dxfattribs=None,
     ) -> "AttDef":
         """
@@ -396,6 +412,8 @@ class CreatorInterface:
             tag: tag name as string
             insert: insert location as 2D/3D point in :ref:`WCS`
             text: tag value as string
+            height: text height in drawing units
+            rotation: text rotation in degrees
             dxfattribs: additional DXF attributes
 
         """
@@ -403,6 +421,10 @@ class CreatorInterface:
         dxfattribs["tag"] = str(tag)
         dxfattribs["insert"] = Vec3(insert)
         dxfattribs["text"] = str(text)
+        if height is not None:
+            dxfattribs["height"] = float(height)
+        if rotation is not None:
+            dxfattribs["rotation"] = float(rotation)
         return self.new_entity("ATTDEF", dxfattribs)  # type: ignore
 
     def add_polyline2d(

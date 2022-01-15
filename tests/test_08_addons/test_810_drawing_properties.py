@@ -105,14 +105,14 @@ def test_resolve_entity_visibility():
     for export_mode in (False, True):
         ctx = RenderContext(layout.doc, export_mode=export_mode)
 
-        text = layout.add_text("a", {"invisible": 0, "layer": "non_existent"})
+        text = layout.add_text("a", dxfattribs={"invisible": 0, "layer": "non_existent"})
         assert ctx.resolve_visible(text) is True
 
-        text = layout.add_text("a", {"invisible": 0, "layer": "visible"})
+        text = layout.add_text("a", dxfattribs={"invisible": 0, "layer": "visible"})
         assert ctx.resolve_visible(text) is True
 
         for layer in ["invisible", "frozen"]:
-            text = layout.add_text("a", {"invisible": 0, "layer": layer})
+            text = layout.add_text("a", dxfattribs={"invisible": 0, "layer": layer})
             assert ctx.resolve_visible(text) is False
 
         for layer in [
@@ -122,15 +122,15 @@ def test_resolve_entity_visibility():
             "frozen",
             "noplot",
         ]:
-            text = layout.add_text("a", {"invisible": 1, "layer": layer})
+            text = layout.add_text("a", dxfattribs={"invisible": 1, "layer": layer})
             assert ctx.resolve_visible(text) is False
 
     ctx = RenderContext(layout.doc, export_mode=False)
-    text = layout.add_text("a", {"invisible": 0, "layer": "noplot"})
+    text = layout.add_text("a", dxfattribs={"invisible": 0, "layer": "noplot"})
     assert ctx.resolve_visible(text) is True
 
     ctx = RenderContext(layout.doc, export_mode=True)
-    text = layout.add_text("a", {"invisible": 0, "layer": "noplot"})
+    text = layout.add_text("a", dxfattribs={"invisible": 0, "layer": "noplot"})
     assert ctx.resolve_visible(text) is False
 
 
@@ -142,9 +142,9 @@ def test_resolve_attrib_visibility():
         name="invisible", dxfattribs={"color": -1}
     )  # color < 0 => invisible
 
-    block.add_attdef("att1", (0, 0), "", {})
-    block.add_attdef("att2", (0, 0), "", {"flags": const.ATTRIB_INVISIBLE})
-    block.add_attdef("att3", (0, 0), "", {"layer": "invisible"})
+    block.add_attdef("att1", (0, 0), "", dxfattribs={})
+    block.add_attdef("att2", (0, 0), "", dxfattribs={"flags": const.ATTRIB_INVISIBLE})
+    block.add_attdef("att3", (0, 0), "",dxfattribs= {"layer": "invisible"})
 
     i = layout.add_blockref("block", (0, 0))
     i.add_auto_attribs({"att1": "abc", "att2": "def", "att3": "hij"})
