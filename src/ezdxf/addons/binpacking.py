@@ -282,6 +282,32 @@ class Envelope(Bin):
         return RotationType.WHD, RotationType.HWD
 
 
+def _smaller_first(bins: List, items: List) -> None:
+    # SMALLER_FIRST is often very bad! Especially for many in small
+    # amounts increasing sizes.
+    bins.sort(key=lambda b: b.get_capacity())
+    items.sort(key=lambda i: i.get_volume())
+
+
+def _bigger_first(bins: List, items: List) -> None:
+    # BIGGER_FIRST is the best strategy
+    bins.sort(key=lambda b: b.get_capacity(), reverse=True)
+    items.sort(key=lambda i: i.get_volume(), reverse=True)
+
+
+def _shuffle(bins: List, items: List) -> None:
+    # Better as SMALLER_FIRST
+    random.shuffle(bins)
+    random.shuffle(items)
+
+
+PICK_STRATEGY = {
+    PickStrategy.SMALLER_FIRST: _smaller_first,
+    PickStrategy.BIGGER_FIRST: _bigger_first,
+    PickStrategy.SHUFFLE: _shuffle,
+}
+
+
 class AbstractPacker(abc.ABC):
     def __init__(self):
         self.bins: List[Bin] = []
@@ -313,19 +339,7 @@ class AbstractPacker(abc.ABC):
         distribute_items=False,
     ):
         self._init_state = False
-        if pick_strategy == PickStrategy.SMALLER_FIRST:
-            # SMALLER_FIRST is often very bad! Especially for many in small
-            # amounts increasing sizes.
-            self.bins.sort(key=lambda b: b.get_capacity())
-            self.items.sort(key=lambda i: i.get_volume())
-        elif pick_strategy == PickStrategy.BIGGER_FIRST:
-            # BIGGER_FIRST is the best strategy
-            self.bins.sort(key=lambda b: b.get_capacity(), reverse=True)
-            self.items.sort(key=lambda i: i.get_volume(), reverse=True)
-        elif pick_strategy == PickStrategy.SHUFFLE:
-            # Better as SMALLER_FIRST
-            random.shuffle(self.bins)
-            random.shuffle(self.items)
+        PICK_STRATEGY[pick_strategy](self.bins, self.items)
 
         for box in self.bins:
             fitted_items: List[Item] = []
