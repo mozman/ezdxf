@@ -8,6 +8,7 @@
 # Refactoring and type annotations by Manfred Moitzi
 from typing import Tuple, List, Iterable, TYPE_CHECKING
 from enum import Enum, auto
+import abc
 import copy
 import math
 import random
@@ -29,7 +30,9 @@ __all__ = [
     "FlatItem",
     "Box",  # contains Item
     "Envelope",  # contains FlatItem
+    "AbstractPacker",
     "Packer",
+    "FlatPacker",
     "RotationType",
     "PickStrategy",
 ]
@@ -273,7 +276,7 @@ class Envelope(Bin):
         return RotationType.WHD, RotationType.HWD
 
 
-class _Packer:
+class AbstractPacker(abc.ABC):
     def __init__(self):
         self.bins: List[Bin] = []
         self.items: List[Item] = []
@@ -329,13 +332,42 @@ class _Packer:
                 for item in fitted_items:
                     self.items.remove(item)
 
+    def shuffle_pack(self, attempts: int) -> "AbstractPacker":
+        """Random shuffle packing. Returns a new packer, the current packer is
+        unchanged.
+        """
+        best_ratio = 0.0
+        best_packer = None
+        for _ in range(attempts):
+            packer = self.copy()
+            packer.pack(
+                pick_strategy=PickStrategy.SHUFFLE,
+                distribute_items=True,
+            )
+            new_ratio = get_total_fill_ratio(packer)
+            if new_ratio > best_ratio:
+                best_ratio = new_ratio
+                best_packer = packer
+        if best_packer is None:
+            return self
+        return best_packer
+
     @staticmethod
+    @abc.abstractmethod
     def pack_to_bin(box: Bin, item: Item) -> bool:
-        pass
+        ...
 
 
-class Packer(_Packer):
-    def add_box(
+def get_total_fill_ratio(packer: AbstractPacker) -> float:
+    total_capacity = sum(box.get_capacity() for box in packer.bins)
+    if total_capacity == 0.0:
+        return 0.0
+    return sum(box.get_total_volume() for box in packer.bins) / total_capacity
+
+
+class Packer(AbstractPacker):
+    """ 3D Packer. """
+    def add_bin(
         self,
         name: str,
         width: float,
@@ -386,8 +418,9 @@ class Packer(_Packer):
         return False
 
 
-class FlatPacker(_Packer):
-    def add_envelope(
+class FlatPacker(AbstractPacker):
+    """ 2D Packer. """
+    def add_bin(
         self,
         name: str,
         width: float,
@@ -433,7 +466,7 @@ class FlatPacker(_Packer):
         return False
 
 
-def export_dxf(packer: _Packer, offset: Vec3) -> "Drawing":
+def export_dxf(packer: AbstractPacker, offset: Vec3) -> "Drawing":
     import ezdxf
     from ezdxf import colors
 

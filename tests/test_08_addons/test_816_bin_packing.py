@@ -8,7 +8,7 @@ from ezdxf.addons import binpacking
 def test_single_bin_single_item():
 
     packer = binpacking.Packer()
-    box = packer.add_box("B0", 1, 1, 1)
+    box = packer.add_bin("B0", 1, 1, 1)
     packer.add_item("I0", 1, 1, 1, 1)
     packer.pack()
     assert len(box.items) == 1
@@ -25,7 +25,7 @@ def test_single_bin_single_item():
 )
 def test_single_bin_multiple_items(w, h, d):
     packer = binpacking.Packer()
-    box = packer.add_box("B0", w, h, d)
+    box = packer.add_bin("B0", w, h, d)
     for index in range(max(w, h, d)):
         packer.add_item(f"I{index}", 1, 1, 1, 1)
     packer.pack()
@@ -35,7 +35,7 @@ def test_single_bin_multiple_items(w, h, d):
 
 def test_single_bin_different_sized_items():
     packer = binpacking.Packer()
-    box = packer.add_box("B0", 3, 3, 1)
+    box = packer.add_bin("B0", 3, 3, 1)
     packer.add_item("I0", 1, 1, 1, 1)
     packer.add_item("I1", 2, 1, 1, 1)
     packer.add_item("I2", 3, 1, 1, 1)
@@ -47,13 +47,13 @@ def test_single_bin_different_sized_items():
 @pytest.fixture
 def packer():
     packer = binpacking.Packer()
-    packer.add_box("small-envelope", 11.5, 6.125, 0.25, 10)
-    packer.add_box("large-envelope", 15.0, 12.0, 0.75, 15)
-    packer.add_box("small-box", 8.625, 5.375, 1.625, 70.0)
-    packer.add_box("medium-box", 11.0, 8.5, 5.5, 70.0)
-    packer.add_box("medium-2-box", 13.625, 11.875, 3.375, 70.0)
-    packer.add_box("large-box", 12.0, 12.0, 5.5, 70.0)
-    packer.add_box("large-2-box", 23.6875, 11.75, 3.0, 70.0)
+    packer.add_bin("small-envelope", 11.5, 6.125, 0.25, 10)
+    packer.add_bin("large-envelope", 15.0, 12.0, 0.75, 15)
+    packer.add_bin("small-box", 8.625, 5.375, 1.625, 70.0)
+    packer.add_bin("medium-box", 11.0, 8.5, 5.5, 70.0)
+    packer.add_bin("medium-2-box", 13.625, 11.875, 3.375, 70.0)
+    packer.add_bin("large-box", 12.0, 12.0, 5.5, 70.0)
+    packer.add_bin("large-2-box", 23.6875, 11.75, 3.0, 70.0)
 
     packer.add_item("50g [powder 1]", 3.9370, 1.9685, 1.9685, 1)
     packer.add_item("50g [powder 2]", 3.9370, 1.9685, 1.9685, 2)

@@ -6,10 +6,11 @@ from ezdxf.entities import DXFGraphic
 from ezdxf.math import Matrix44, BoundingBox, Vec3
 from ezdxf.path import Path, make_path, nesting
 from ezdxf.addons import binpacking
+from ezdxf import colors
 
 UNLIMITED = 1_000_000
 WEIGHT = 0
-DEBUG_BOXES = True
+DEBUG = True
 
 
 class Bundle:
@@ -68,13 +69,14 @@ def bundle_items(items: Iterable[DXFGraphic]) -> Iterable[Bundle]:
     return build_bundles(paths)
 
 
-def pack(items: Iterable[DXFGraphic], width, height):
+def get_packer(
+    items: Iterable[DXFGraphic], width, height
+) -> binpacking.AbstractPacker:
     packer = binpacking.FlatPacker()
-    packer.add_envelope("B0", width, height)
+    packer.add_bin("B0", width, height)
     for bundle in bundle_items(items):
         box = bundle.bounding_box
         packer.add_item(bundle, box.size.x, box.size.y)
-    packer.pack(pick_strategy=binpacking.PickStrategy.BIGGER_FIRST)
     return packer
 
 
@@ -84,22 +86,29 @@ def add_bbox(msp, box: BoundingBox, color: int):
     )
 
 
-def main(filename, bin_width, bin_height):
+def main(
+    filename,
+    bin_width: float,
+    bin_height: float,
+    pick_strategy=binpacking.PickStrategy.BIGGER_FIRST,
+    attemps: int=1,
+):
     doc = ezdxf.readfile(filename)
     doc.layers.add("PACKED")
     doc.layers.add("UNFITTED")
     msp = doc.modelspace()
-    packer = pack(msp, bin_width, bin_height)
+
+    packer = get_packer(msp, bin_width, bin_height)
+    if pick_strategy == binpacking.PickStrategy.SHUFFLE:
+        packer = packer.shuffle_pack(attemps)
+    else:
+        packer.pack(pick_strategy=pick_strategy)
     envelope = packer.bins[0]
     print("packed: " + "=" * 70)
-    color = 3
+    print(f"ratio: {envelope.get_fill_ratio()}")
     for item in envelope.items:
-        if color == 3:
-            color = 6
-        else:
-            color = 3
         bundle = item.payload
-        bundle.set_properties("PACKED", color)
+        bundle.set_properties("PACKED", colors.GREEN)
         box = bundle.bounding_box
         # move entity to origin (0, 0, 0)
         bundle.transform(Matrix44.translate(-box.extmin.x, -box.extmin.y, 0))
@@ -107,25 +116,43 @@ def main(filename, bin_width, bin_height):
         # transformation from (0, 0, 0) to final location including rotations
         m = item.get_transformation()
         bundle.transform(m)
-        if DEBUG_BOXES:
+        if DEBUG:
             add_bbox(msp, bundle.bounding_box, 5)
 
     print("unfitted: " + "=" * 70)
     for item in envelope.unfitted_items:
         bundle = item.payload
-        bundle.set_properties("UNFITTED", 2)
+        bundle.set_properties("UNFITTED", colors.RED)
         box = bundle.bounding_box
         print(f"{str(bundle)}, size: ({box.size.x:.2f}, {box.size.y:.2f})")
-        if DEBUG_BOXES:
-            add_bbox(msp, box, 5)
+        if DEBUG:
+            add_bbox(msp, box, colors.BLUE)
 
     # add bin frame:
-    add_bbox(msp, BoundingBox([(0, 0), (bin_width, bin_height)]), 1)
+    add_bbox(msp, BoundingBox([(0, 0), (bin_width, bin_height)]), colors.YELLOW)
+    h = envelope.height
+    w = envelope.width
+    doc.set_modelspace_vport(height=h, center=(w/2, h/2))
     doc.saveas(filename.replace(".dxf", ".pack.dxf"))
-    doc2 = binpacking.export_dxf(packer, Vec3(0, 0, 1))
-    doc2.saveas(filename.replace(".dxf", ".debug.dxf"))
+    if DEBUG:
+        doc = binpacking.export_dxf(packer, Vec3(0, 0, 1))
+        doc.set_modelspace_vport(height=h, center=(w / 2, h / 2))
+        doc.saveas(filename.replace(".dxf", ".debug.dxf"))
 
 
 if __name__ == "__main__":
-    main(r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\items.dxf", 60, 60)
-    main(r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\case.dxf", 500, 600)
+    # PickStrategy.BIGGER_FIRST is the best strategy
+    # PickStrategy.SMALLER_FIRST is often very bad!
+    main(
+        r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\items.dxf",
+        50,
+        55,
+        pick_strategy=binpacking.PickStrategy.BIGGER_FIRST,
+        attemps=100,
+    )
+    main(
+        r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\case.dxf",
+        500,
+        600,
+        pick_strategy=binpacking.PickStrategy.BIGGER_FIRST,
+    )
