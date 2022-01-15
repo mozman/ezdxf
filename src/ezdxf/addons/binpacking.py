@@ -8,6 +8,7 @@
 # Refactoring and type annotations by Manfred Moitzi
 from typing import Tuple, List, Iterable
 from enum import Enum, auto
+import random
 
 from ezdxf.math import (
     Vec2,
@@ -48,6 +49,7 @@ class Axis(Enum):
 class PickStrategy(Enum):
     SMALLER_FIRST = auto()
     BIGGER_FIRST = auto()
+    SHUFFLE = auto()
 
 
 START_POSITION: Tuple[float, float, float] = (0, 0, 0)
@@ -248,9 +250,15 @@ class _Packer:
         pick_strategy=PickStrategy.BIGGER_FIRST,
         distribute_items=False,
     ):
-        reverse = True if pick_strategy == PickStrategy.BIGGER_FIRST else False
-        self.bins.sort(key=lambda b: b.get_volume(), reverse=reverse)
-        self.items.sort(key=lambda i: i.get_volume(), reverse=reverse)
+        if pick_strategy == PickStrategy.SMALLER_FIRST:
+            self.bins.sort(key=lambda b: b.get_volume())
+            self.items.sort(key=lambda i: i.get_volume())
+        elif pick_strategy == PickStrategy.BIGGER_FIRST:
+            self.bins.sort(key=lambda b: b.get_volume(), reverse=True)
+            self.items.sort(key=lambda i: i.get_volume(), reverse=True)
+        elif pick_strategy == PickStrategy.SHUFFLE:
+            random.shuffle(self.bins)
+            random.shuffle(self.items)
 
         for bin_ in self.bins:
             for item in self.items:
