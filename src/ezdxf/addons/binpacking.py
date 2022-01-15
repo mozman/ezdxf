@@ -16,6 +16,7 @@ import random
 from ezdxf.math import (
     Vec2,
     Vec3,
+    Vertex,
     BoundingBox,
     BoundingBox2d,
     AbstractBoundingBox,
@@ -310,12 +311,16 @@ class AbstractPacker(abc.ABC):
     ):
         self._init_state = False
         if pick_strategy == PickStrategy.SMALLER_FIRST:
+            # SMALLER_FIRST is often very bad! Especially for many in small
+            # amounts increasing sizes.
             self.bins.sort(key=lambda b: b.get_capacity())
             self.items.sort(key=lambda i: i.get_volume())
         elif pick_strategy == PickStrategy.BIGGER_FIRST:
+            # BIGGER_FIRST is the best strategy
             self.bins.sort(key=lambda b: b.get_capacity(), reverse=True)
             self.items.sort(key=lambda i: i.get_volume(), reverse=True)
         elif pick_strategy == PickStrategy.SHUFFLE:
+            # Better as SMALLER_FIRST
             random.shuffle(self.bins)
             random.shuffle(self.items)
 
@@ -366,7 +371,8 @@ def get_total_fill_ratio(packer: AbstractPacker) -> float:
 
 
 class Packer(AbstractPacker):
-    """ 3D Packer. """
+    """3D Packer."""
+
     def add_bin(
         self,
         name: str,
@@ -419,7 +425,8 @@ class Packer(AbstractPacker):
 
 
 class FlatPacker(AbstractPacker):
-    """ 2D Packer. """
+    """2D Packer."""
+
     def add_bin(
         self,
         name: str,
@@ -466,15 +473,14 @@ class FlatPacker(AbstractPacker):
         return False
 
 
-def export_dxf(packer: AbstractPacker, offset: Vec3) -> "Drawing":
+def export_dxf(packer: AbstractPacker, offset: Vertex = (1, 0, 0)) -> "Drawing":
     import ezdxf
     from ezdxf import colors
 
     doc = ezdxf.new()
     doc.layers.add("FRAME", color=colors.YELLOW)
     msp = doc.modelspace()
-    spacing = 5
-    offset_dir = offset.normalize()
+    offset_vec = Vec3(offset)
     start = Vec3()
     index = 0
     rgb = (colors.RED, colors.GREEN, colors.BLUE, colors.MAGENTA, colors.CYAN)
@@ -486,7 +492,7 @@ def export_dxf(packer: AbstractPacker, offset: Vec3) -> "Drawing":
             index += 1
             if index >= len(rgb):
                 index = 0
-        start += offset_dir * (box.width + spacing)
+        start += offset_vec
     return doc
 
 
