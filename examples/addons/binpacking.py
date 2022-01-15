@@ -51,6 +51,8 @@ def build_bundles(paths: Iterable[Path]) -> Iterable[Bundle]:
     for polygon in nesting.fast_bbox_detection(paths):
         contour = polygon[0]
         box = BoundingBox(contour.control_vertices())
+        # optional: add some spacing between items if required:
+        box.grow(0.5)
         entities = [contour.user_data]
         for hole in polygon[1:]:
             append_holes(hole)
@@ -122,5 +124,5 @@ def main(filename, bin_width, bin_height):
 
 
 if __name__ == "__main__":
-    main(r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\items.dxf", 50, 50)
+    main(r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\items.dxf", 60, 60)
     main(r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\case.dxf", 500, 600)
