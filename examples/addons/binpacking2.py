@@ -2,7 +2,6 @@
 #  License: MIT License
 # This is the example provided by the py3dbp package:
 from pathlib import Path
-from ezdxf.math import Vec3
 from ezdxf.addons import binpacking
 
 DIR = Path("~/Desktop/Outbox").expanduser()

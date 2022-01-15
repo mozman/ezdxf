@@ -143,6 +143,7 @@ def test_example_bigger_first(packer):
     ],
 )
 def test_copy_item(item):
+    assert item.bbox is not None  # trigger bounding box update
     item2 = item.copy()
     assert item.payload is item2.payload, "should reference the same object"
     assert item.get_dimension() == item2.get_dimension()

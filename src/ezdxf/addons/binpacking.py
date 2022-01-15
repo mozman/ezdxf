@@ -84,7 +84,7 @@ class Item:
         self._rotation_type = RotationType.WHD
         self._position = START_POSITION
         self._bbox: AbstractBoundingBox = BoundingBox()
-        self._update_bbox()
+        self._tainted_bbox = True
 
     def copy(self):
         # All copies have a reference to the same payload
@@ -106,6 +106,9 @@ class Item:
 
     @property
     def bbox(self) -> AbstractBoundingBox:
+        if self._tainted_bbox:
+            self._update_bbox()
+            self._tainted_bbox = False
         return self._bbox
 
     @property
@@ -115,7 +118,7 @@ class Item:
     @rotation_type.setter
     def rotation_type(self, value: RotationType) -> None:
         self._rotation_type = value
-        self._update_bbox()
+        self._tainted_bbox = True
 
     @property
     def position(self) -> Tuple[float, float, float]:
@@ -124,7 +127,7 @@ class Item:
     @position.setter
     def position(self, value: Tuple[float, float, float]) -> None:
         self._position = value
-        self._update_bbox()
+        self._tainted_bbox = True
 
     def get_dimension(self) -> Tuple[float, float, float]:
         rt = self.rotation_type
