@@ -537,6 +537,8 @@ BoundingBox
 
     .. automethod:: cube_vertices() -> Tuple[Vec3, ...]
 
+    .. automethod:: grow
+
 BoundingBox2d
 -------------
 

@@ -226,6 +226,22 @@ class TestBoundingBox:
         assert box_b.contains(box_a) is False
         assert box_a.contains(box_c) is False
 
+    def test_growing_empty_bounding_box_does_nothing(self):
+        box = BoundingBox()
+        box.grow(1)
+        assert box.has_data is False
+
+    def test_grow_bounding_box(self):
+        box = BoundingBox([(0, 0, 0), (1, 1, 1)])
+        box.grow(1)
+        assert box.extmin.isclose((-1, -1, -1))
+        assert box.extmax.isclose((2, 2, 2))
+
+    def test_shrinking_to_zero_or_below_raises_exception(self):
+        box = BoundingBox([(0, 0, 0), (1, 1, 1)])
+        with pytest.raises(ValueError):
+            box.grow(-0.5)
+
 
 class TestBoundingBox2d:
     def test_init(self):
@@ -315,3 +331,9 @@ class TestBoundingBox2d:
         assert box_b.contains(box_a) is True, "xy-plane is included"
         box_c = BoundingBox([(0, 0, 1), (10, 10, 10)])
         assert box_c.contains(box_a) is False, "xy-plane is not included"
+
+    def test_grow_bounding_box(self):
+        box = BoundingBox2d([(0, 0), (1, 1)])
+        box.grow(1)
+        assert box.extmin.isclose((-1, -1))
+        assert box.extmax.isclose((2, 2))

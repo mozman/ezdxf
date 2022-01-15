@@ -146,6 +146,20 @@ class AbstractBoundingBox:
         else:
             raise ValueError("empty bounding box")
 
+    def grow(self, value: float) -> None:
+        """Grow or shrink the bounding box by an uniform value in x, y and
+        z-axis. A negative value shrinks the bounding box.
+        Raises :class:`ValueError` for shrinking the size of the bounding box to
+        zero or below in any dimension.
+        """
+        if self.has_data:
+            if value < 0.0:
+                min_ext = min(self.size)
+                if -value >= min_ext / 2.0:
+                    raise ValueError("shrinking one or more dimensions <= 0")
+            self.extmax += (value, value, value)  # type: ignore
+            self.extmin += (-value, -value, -value)  # type: ignore
+
 
 class BoundingBox(AbstractBoundingBox):
     """3D bounding box.
