@@ -157,8 +157,8 @@ class AbstractBoundingBox:
                 min_ext = min(self.size)
                 if -value >= min_ext / 2.0:
                     raise ValueError("shrinking one or more dimensions <= 0")
-            self.extmax += (value, value, value)  # type: ignore
-            self.extmin += (-value, -value, -value)  # type: ignore
+            self.extmax += Vec3(value, value, value)  # type: ignore
+            self.extmin += Vec3(-value, -value, -value)  # type: ignore
 
 
 class BoundingBox(AbstractBoundingBox):
