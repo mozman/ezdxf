@@ -70,11 +70,10 @@ def bundle_items(items: Iterable[DXFGraphic]) -> Iterable[Bundle]:
 
 def pack(items: Iterable[DXFGraphic], width, height):
     packer = binpacking.FlatPacker()
-    envelope = packer.new_envelope("B0", width, height)
-    packer.add_bin(envelope)
+    envelope = packer.add_envelope("B0", width, height)
     for bundle in bundle_items(items):
         box = bundle.bounding_box
-        packer.new_item(bundle, box.size.x, box.size.y)
+        packer.add_item(bundle, box.size.x, box.size.y)
     packer.pack(pick_strategy=binpacking.PickStrategy.BIGGER_FIRST)
     return envelope
 

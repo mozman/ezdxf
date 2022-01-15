@@ -135,9 +135,6 @@ class FlatItem(Item):
     ):
         super().__init__(payload, width, height, 1.0, weight)
 
-    def get_volume(self):
-        return self.width * self.height
-
     def _update_bbox(self) -> None:
         v1 = Vec2(self._position)
         self._bbox = BoundingBox2d([v1, v1 + Vec2(self.get_dimension())])
@@ -229,9 +226,6 @@ class Envelope(Bin):
     def rotations(self) -> Iterable[RotationType]:
         return RotationType.WHD, RotationType.HWD
 
-    def get_volume(self) -> float:
-        return self.width * self.height
-
 
 class _Packer:
     def __init__(self):
@@ -242,10 +236,10 @@ class _Packer:
     def __str__(self) -> str:
         return f"{self.__class__.__name__} with {len(self.bins)} bins"
 
-    def add_bin(self, bin_: Bin) -> None:
+    def append_bin(self, bin_: Bin) -> None:
         self.bins.append(bin_)
 
-    def add_item(self, item: Item) -> None:
+    def append_item(self, item: Item) -> None:
         self.items.append(item)
 
     def pack(
@@ -272,7 +266,7 @@ class _Packer:
 
 
 class Packer(_Packer):
-    def new_box(
+    def add_box(
         self,
         name: str,
         width: float,
@@ -281,10 +275,10 @@ class Packer(_Packer):
         max_weight: float = UNLIMITED_WEIGHT,
     ) -> Box:
         box = Box(name, width, height, depth, max_weight)
-        self.add_bin(box)
+        self.append_bin(box)
         return box
 
-    def new_item(
+    def add_item(
         self,
         payload,
         width: float,
@@ -293,7 +287,7 @@ class Packer(_Packer):
         weight: float = 0.0,
     ) -> Item:
         item = Item(payload, width, height, depth, weight)
-        self.add_item(item)
+        self.append_item(item)
         return item
 
     @staticmethod
@@ -322,7 +316,7 @@ class Packer(_Packer):
 
 
 class FlatPacker(_Packer):
-    def new_envelope(
+    def add_envelope(
         self,
         name: str,
         width: float,
@@ -330,10 +324,10 @@ class FlatPacker(_Packer):
         max_weight: float = UNLIMITED_WEIGHT,
     ) -> Envelope:
         envelope = Envelope(name, width, height, max_weight)
-        self.add_bin(envelope)
+        self.append_bin(envelope)
         return envelope
 
-    def new_item(
+    def add_item(
         self,
         payload,
         width: float,
@@ -341,7 +335,7 @@ class FlatPacker(_Packer):
         weight: float = 0.0,
     ) -> Item:
         item = FlatItem(payload, width, height, weight)
-        self.add_item(item)
+        self.append_item(item)
         return item
 
     @staticmethod

@@ -8,8 +8,8 @@ from ezdxf.addons import binpacking
 def test_single_bin_single_item():
 
     packer = binpacking.Packer()
-    box = packer.new_box("B0", 1, 1, 1)
-    packer.new_item("I0", 1, 1, 1, 1)
+    box = packer.add_box("B0", 1, 1, 1)
+    packer.add_item("I0", 1, 1, 1, 1)
     packer.pack()
     assert len(box.items) == 1
     assert len(box.unfitted_items) == 0
@@ -22,9 +22,9 @@ def test_single_bin_single_item():
 ])
 def test_single_bin_multiple_items(w, h, d):
     packer = binpacking.Packer()
-    box = packer.new_box("B0", w, h, d)
+    box = packer.add_box("B0", w, h, d)
     for index in range(max(w, h, d)):
-        packer.new_item(f"I{index}", 1, 1, 1, 1)
+        packer.add_item(f"I{index}", 1, 1, 1, 1)
     packer.pack()
     assert len(box.items) == 3
     assert len(box.unfitted_items) == 0
@@ -32,10 +32,10 @@ def test_single_bin_multiple_items(w, h, d):
 
 def test_single_bin_different_sized_items():
     packer = binpacking.Packer()
-    box = packer.new_box("B0", 3, 3, 1)
-    packer.new_item("I0", 1, 1, 1, 1)
-    packer.new_item("I1", 2, 1, 1, 1)
-    packer.new_item("I2", 3, 1, 1, 1)
+    box = packer.add_box("B0", 3, 3, 1)
+    packer.add_item("I0", 1, 1, 1, 1)
+    packer.add_item("I1", 2, 1, 1, 1)
+    packer.add_item("I2", 3, 1, 1, 1)
     packer.pack()
     assert len(box.items) == 3
     assert len(box.unfitted_items) == 0
@@ -43,23 +43,23 @@ def test_single_bin_different_sized_items():
 
 def test_example():
     packer = binpacking.Packer()
-    packer.new_box("small-envelope", 11.5, 6.125, 0.25, 10)
-    packer.new_box("large-envelope", 15.0, 12.0, 0.75, 15)
-    packer.new_box("small-box", 8.625, 5.375, 1.625, 70.0)
-    packer.new_box("medium-box", 11.0, 8.5, 5.5, 70.0)
-    packer.new_box("medium-2-box", 13.625, 11.875, 3.375, 70.0)
-    packer.new_box("large-box", 12.0, 12.0, 5.5, 70.0)
-    packer.new_box("large-2-box", 23.6875, 11.75, 3.0, 70.0)
+    packer.add_box("small-envelope", 11.5, 6.125, 0.25, 10)
+    packer.add_box("large-envelope", 15.0, 12.0, 0.75, 15)
+    packer.add_box("small-box", 8.625, 5.375, 1.625, 70.0)
+    packer.add_box("medium-box", 11.0, 8.5, 5.5, 70.0)
+    packer.add_box("medium-2-box", 13.625, 11.875, 3.375, 70.0)
+    packer.add_box("large-box", 12.0, 12.0, 5.5, 70.0)
+    packer.add_box("large-2-box", 23.6875, 11.75, 3.0, 70.0)
 
-    packer.new_item("50g [powder 1]", 3.9370, 1.9685, 1.9685, 1)
-    packer.new_item("50g [powder 2]", 3.9370, 1.9685, 1.9685, 2)
-    packer.new_item("50g [powder 3]", 3.9370, 1.9685, 1.9685, 3)
-    packer.new_item("250g [powder 4]", 7.8740, 3.9370, 1.9685, 4)
-    packer.new_item("250g [powder 5]", 7.8740, 3.9370, 1.9685, 5)
-    packer.new_item("250g [powder 6]", 7.8740, 3.9370, 1.9685, 6)
-    packer.new_item("250g [powder 7]", 7.8740, 3.9370, 1.9685, 7)
-    packer.new_item("250g [powder 8]", 7.8740, 3.9370, 1.9685, 8)
-    packer.new_item("250g [powder 9]", 7.8740, 3.9370, 1.9685, 9)
+    packer.add_item("50g [powder 1]", 3.9370, 1.9685, 1.9685, 1)
+    packer.add_item("50g [powder 2]", 3.9370, 1.9685, 1.9685, 2)
+    packer.add_item("50g [powder 3]", 3.9370, 1.9685, 1.9685, 3)
+    packer.add_item("250g [powder 4]", 7.8740, 3.9370, 1.9685, 4)
+    packer.add_item("250g [powder 5]", 7.8740, 3.9370, 1.9685, 5)
+    packer.add_item("250g [powder 6]", 7.8740, 3.9370, 1.9685, 6)
+    packer.add_item("250g [powder 7]", 7.8740, 3.9370, 1.9685, 7)
+    packer.add_item("250g [powder 8]", 7.8740, 3.9370, 1.9685, 8)
+    packer.add_item("250g [powder 9]", 7.8740, 3.9370, 1.9685, 9)
 
     packer.pack(pick_strategy=binpacking.PickStrategy.SMALLER_FIRST)
     b0, b1, b2, b3, b4, b5, b6 = packer.bins
