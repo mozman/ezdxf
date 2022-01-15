@@ -6,27 +6,50 @@
 # - https://github.com/gedex/bp3d - implementation in GoLang
 # - https://github.com/bom-d-van/binpacking - implementation in GoLang
 # Refactoring and type annotations by Manfred Moitzi
-from typing import Tuple, List, Iterable, Any
-import enum
-import abc
-from ezdxf.math import Vec3, BoundingBox
+from typing import Tuple, List, Iterable
+from enum import Enum, auto
 
-__all__ = ["Item", "Bin2d", "Bin3d", "Packer2d", "Packer3d", "RotationType"]
+import random
+from ezdxf.math import (
+    Vec2,
+    Vec3,
+    BoundingBox,
+    BoundingBox2d,
+    AbstractBoundingBox,
+)
+
+__all__ = [
+    "Item",
+    "FlatItem",
+    "Box",  # contains Item
+    "Envelope",  # contains FlatItem
+    "Packer",
+    "RotationType",
+    "PickStrategy",
+]
+
+UNLIMITED_WEIGHT = 1.0e308
 
 
-class RotationType(enum.IntEnum):
-    WHD = 0
-    HWD = 1
-    HDW = 2
-    DHW = 3
-    DWH = 4
-    WDH = 5
+class RotationType(Enum):
+    WHD = auto()
+    HWD = auto()
+    HDW = auto()
+    DHW = auto()
+    DWH = auto()
+    WDH = auto()
 
 
-class Axis(enum.IntEnum):
-    WIDTH = 0
-    HEIGHT = 1
-    DEPTH = 2
+class Axis(Enum):
+    WIDTH = auto()
+    HEIGHT = auto()
+    DEPTH = auto()
+
+
+class PickStrategy(Enum):
+    SMALLER_FIRST = auto()
+    BIGGER_FIRST = auto()
+    SHUFFLE = auto()
 
 
 START_POSITION: Tuple[float, float, float] = (0, 0, 0)
@@ -48,15 +71,25 @@ class Item:
         self.weight = float(weight)
         self._rotation_type = RotationType.WHD
         self._position = START_POSITION
-        self._bbox = BoundingBox()
+        self._bbox: AbstractBoundingBox = BoundingBox()
         self._update_bbox()
+
+    def get_volume(self):
+        return self.width * self.height * self.depth
 
     def _update_bbox(self) -> None:
         v1 = Vec3(self._position)
         self._bbox = BoundingBox([v1, v1 + Vec3(self.get_dimension())])
 
+    def __str__(self):
+        return (
+            f"{str(self.payload)}({self.width}x{self.height}x{self.depth}, "
+            f"weight: {self.weight}) pos({str(self.position)}) "
+            f"rt({self.rotation_type}) vol({self.get_volume()})"
+        )
+
     @property
-    def bbox(self) -> BoundingBox:
+    def bbox(self) -> AbstractBoundingBox:
         return self._bbox
 
     @property
@@ -77,16 +110,6 @@ class Item:
         self._position = value
         self._update_bbox()
 
-    def __str__(self):
-        return (
-            f"{str(self.payload)}({self.width}x{self.height}x{self.height}, "
-            f"weight: {self.depth}) pos({str(self.position)}) "
-            f"rt({self.rotation_type}) vol({self.get_volume()})"
-        )
-
-    def get_volume(self):
-        return self.width * self.height * self.depth
-
     def get_dimension(self) -> Tuple[float, float, float]:
         rt = self.rotation_type
         if rt == RotationType.WHD:
@@ -101,17 +124,57 @@ class Item:
             return self.depth, self.width, self.height
         elif rt == RotationType.WDH:
             return self.width, self.depth, self.height
-        raise TypeError(rt)
+        raise ValueError(rt)
 
 
-class Bin(abc.ABC):
-    items: List[Item]
-    unfitted_items: List[Item]
-    name: Any
-    width: float
-    height: float
-    depth: float
-    max_weight: float
+class FlatItem(Item):
+    def __init__(
+        self,
+        payload,
+        width: float,
+        height: float,
+        weight: float = 0.0,
+    ):
+        super().__init__(payload, width, height, 1.0, weight)
+
+    def get_volume(self):
+        return self.width * self.height
+
+    def _update_bbox(self) -> None:
+        v1 = Vec2(self._position)
+        self._bbox = BoundingBox2d([v1, v1 + Vec2(self.get_dimension())])
+
+    def __str__(self):
+        return (
+            f"{str(self.payload)}({self.width}x{self.height}, "
+            f"weight: {self.weight}) pos({str(self.position)}) "
+            f"rt({self.rotation_type}) area({self.get_volume()})"
+        )
+
+
+class Bin:
+    def __init__(
+        self,
+        name,
+        width: float,
+        height: float,
+        depth: float = 1.0,
+        max_weight: float = UNLIMITED_WEIGHT,
+    ):
+        self.name = name
+        self.width = float(width)
+        self.height = float(height)
+        self.depth = float(depth)
+        self.max_weight = float(max_weight)
+        self.items: List[Item] = []
+        self.unfitted_items: List[Item] = []
+
+    def __str__(self) -> str:
+        return (
+            f"{str(self.name)}({self.width:.3f}x{self.height:.3f}x{self.depth:.3f}, "
+            f"max_weight:{self.max_weight}) "
+            f"vol({self.get_volume():.3f})"
+        )
 
     def put_item(self, item: Item, pivot: Tuple[float, float, float]) -> bool:
         valid_item_position = item.position
@@ -137,34 +200,6 @@ class Bin(abc.ABC):
     def get_total_weight(self) -> float:
         return sum(item.weight for item in self.items)
 
-    @abc.abstractmethod
-    def rotations(self) -> Iterable[RotationType]:
-        ...
-
-    @abc.abstractmethod
-    def get_volume(self) -> float:
-        ...
-
-
-class Bin3d(Bin):
-    def __init__(
-        self, name, width: float, height: float, depth: float, max_weight: float
-    ):
-        self.name = name
-        self.width = float(width)
-        self.height = float(height)
-        self.depth = float(depth)
-        self.max_weight = float(max_weight)
-        self.items: List[Item] = []
-        self.unfitted_items: List[Item] = []
-
-    def __str__(self) -> str:
-        return (
-            f"{str(self.name)}({self.width}x{self.height}x{self.depth}, "
-            f"max_weight:{self.max_weight}) "
-            f"vol({self.get_volume()})"
-        )
-
     def get_volume(self) -> float:
         return self.width * self.height * self.depth
 
@@ -172,21 +207,25 @@ class Bin3d(Bin):
         return RotationType
 
 
-class Bin2d(Bin):
-    def __init__(self, name, width: float, height: float, max_weight: float):
-        self.name = name
-        self.width = float(width)
-        self.height = float(height)
-        self.depth = 1.0
-        self.max_weight = float(max_weight)
-        self.items: List[Item] = []
-        self.unfitted_items: List[Item] = []
+class Box(Bin):
+    pass
+
+
+class Envelope(Bin):
+    def __init__(
+        self,
+        name,
+        width: float,
+        height: float,
+        max_weight: float = UNLIMITED_WEIGHT,
+    ):
+        super().__init__(name, width, height, 1.0, max_weight)
 
     def __str__(self) -> str:
         return (
-            f"{str(self.name)}({self.width}x{self.height}, "
+            f"{str(self.name)}({self.width:.3f}x{self.height:.3f}, "
             f"max_weight:{self.max_weight}) "
-            f"area({self.get_volume()})"
+            f"area({self.get_volume():.3f})"
         )
 
     def rotations(self) -> Iterable[RotationType]:
@@ -196,11 +235,14 @@ class Bin2d(Bin):
         return self.width * self.height
 
 
-class Packer(abc.ABC):
+class _Packer:
     def __init__(self):
         self.bins: List[Bin] = []
         self.items: List[Item] = []
         self.unfit_items: List[Item] = []
+
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__} with {len(self.bins)} bins"
 
     def add_bin(self, bin_: Bin) -> None:
         self.bins.append(bin_)
@@ -211,11 +253,18 @@ class Packer(abc.ABC):
     def pack(
         self,
         *,
-        bigger_first=True,  # only this strategy works!
+        pick_strategy=PickStrategy.BIGGER_FIRST,
         distribute_items=False,
     ):
-        self.bins.sort(key=lambda b: b.get_volume(), reverse=bigger_first)
-        self.items.sort(key=lambda i: i.get_volume(), reverse=bigger_first)
+        if pick_strategy == PickStrategy.SMALLER_FIRST:
+            self.bins.sort(key=lambda b: b.get_volume())
+            self.items.sort(key=lambda i: i.get_volume())
+        elif pick_strategy == PickStrategy.BIGGER_FIRST:
+            self.bins.sort(key=lambda b: b.get_volume(), reverse=True)
+            self.items.sort(key=lambda i: i.get_volume(), reverse=True)
+        elif pick_strategy == PickStrategy.SMALLER_FIRST:
+            random.shuffle(self.bins)
+            random.shuffle(self.items)
 
         for bin_ in self.bins:
             for item in self.items:
@@ -226,22 +275,45 @@ class Packer(abc.ABC):
                     self.items.remove(item)
 
     @staticmethod
-    @abc.abstractmethod
-    def pack_to_bin(bin_: Bin, item: Item) -> None:
-        ...
+    def pack_to_bin(box: Bin, item: Item) -> None:
+        pass
 
 
-class Packer3d(Packer):
+class Packer(_Packer):
+    def new_box(
+        self,
+        name: str,
+        width: float,
+        height: float,
+        depth: float,
+        max_weight: float = UNLIMITED_WEIGHT,
+    ) -> Box:
+        box = Box(name, width, height, depth, max_weight)
+        self.add_bin(box)
+        return box
+
+    def new_item(
+        self,
+        payload,
+        width: float,
+        height: float,
+        depth: float,
+        weight: float = 0.0,
+    ) -> Item:
+        item = Item(payload, width, height, depth, weight)
+        self.add_item(item)
+        return item
+
     @staticmethod
-    def pack_to_bin(bin_: Bin, item: Item) -> None:
-        if not bin_.items:
-            response = bin_.put_item(item, START_POSITION)
+    def pack_to_bin(box: Bin, item: Item) -> None:
+        if not box.items:
+            response = box.put_item(item, START_POSITION)
             if not response:
-                bin_.unfitted_items.append(item)
+                box.unfitted_items.append(item)
             return
 
         for axis in Axis:
-            for ib in bin_.items:
+            for ib in box.items:
                 w, h, d = ib.get_dimension()
                 x, y, z = ib.position
                 if axis == Axis.WIDTH:
@@ -252,22 +324,45 @@ class Packer3d(Packer):
                     pivot = (x, y, z + d)
                 else:
                     raise TypeError(axis)
-                if bin_.put_item(item, pivot):
+                if box.put_item(item, pivot):
                     return
-        bin_.unfitted_items.append(item)
+        box.unfitted_items.append(item)
 
 
-class Packer2d(Packer):
+class FlatPacker(_Packer):
+
+    def new_envelope(
+        self,
+        name: str,
+        width: float,
+        height: float,
+        max_weight: float = UNLIMITED_WEIGHT,
+    ) -> Envelope:
+        envelope = Envelope(name, width, height, max_weight)
+        self.add_bin(envelope)
+        return envelope
+
+    def new_item(
+        self,
+        payload,
+        width: float,
+        height: float,
+        weight: float = 0.0,
+    ) -> Item:
+        item = FlatItem(payload, width, height, weight)
+        self.add_item(item)
+        return item
+
     @staticmethod
-    def pack_to_bin(bin_: Bin, item: Item) -> None:
-        if not bin_.items:
-            response = bin_.put_item(item, START_POSITION)
+    def pack_to_bin(envelope: Bin, item: Item) -> None:
+        if not envelope.items:
+            response = envelope.put_item(item, START_POSITION)
             if not response:
-                bin_.unfitted_items.append(item)
+                envelope.unfitted_items.append(item)
             return
 
         for axis in (Axis.WIDTH, Axis.HEIGHT):
-            for ib in bin_.items:
+            for ib in envelope.items:
                 w, h, _ = ib.get_dimension()
                 x, y, _ = ib.position
                 if axis == Axis.WIDTH:
@@ -276,6 +371,6 @@ class Packer2d(Packer):
                     pivot = (x, y + h, 0)
                 else:
                     raise TypeError(axis)
-                if bin_.put_item(item, pivot):
+                if envelope.put_item(item, pivot):
                     return
-        bin_.unfitted_items.append(item)
+        envelope.unfitted_items.append(item)

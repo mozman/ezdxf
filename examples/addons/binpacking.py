@@ -7,7 +7,7 @@ import ezdxf
 from ezdxf.entities import DXFGraphic
 from ezdxf.math import Matrix44, BoundingBox
 from ezdxf.path import Path, make_path, nesting
-from ezdxf.addons.binpacking import Bin2d, Packer2d, Item, RotationType
+from ezdxf.addons import binpacking
 
 UNLIMITED = 1_000_000
 WEIGHT = 0
@@ -69,15 +69,14 @@ def bundle_items(items: Iterable[DXFGraphic]) -> Iterable[Bundle]:
 
 
 def pack(items: Iterable[DXFGraphic], width, height):
-    # ignoring depth and weight
-    bin0 = Bin2d("B0", width, height, UNLIMITED)
-    packer = Packer2d()
-    packer.add_bin(bin0)
+    packer = binpacking.FlatPacker()
+    envelope = packer.new_envelope("B0", width, height)
+    packer.add_bin(envelope)
     for bundle in bundle_items(items):
         box = bundle.bounding_box
-        packer.add_item(Item(bundle, box.size.x, box.size.y))
-    packer.pack(bigger_first=True)  # recommended pack strategy!
-    return bin0
+        packer.new_item(bundle, box.size.x, box.size.y)
+    packer.pack(pick_strategy=binpacking.PickStrategy.BIGGER_FIRST)
+    return envelope
 
 
 def add_bbox(msp, box: BoundingBox, color: int):
@@ -107,7 +106,7 @@ def main(filename, bin_width, bin_height):
         print(f"{str(bundle)}, size: ({box.size.x:.2f}, {box.size.y:.2f})")
         x, y, z = item.position
         m = Matrix44.translate(float(x), float(y), 0)
-        if item.rotation_type == RotationType.HWD:
+        if item.rotation_type == binpacking.RotationType.HWD:
             # height, width, depth orientation
             m = Matrix44.z_rotate(math.pi / 2) @ Matrix44.translate(
                 box.size.y + float(x), float(y), 0
