@@ -1,12 +1,16 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from typing import Iterable, List
+import pathlib
+
 import ezdxf
 from ezdxf.entities import DXFGraphic
 from ezdxf.math import Matrix44, BoundingBox
 from ezdxf.path import Path, make_path, nesting
 from ezdxf.addons import binpacking
 from ezdxf import colors
+
+DIR = pathlib.Path("~/Desktop/Outbox").expanduser() / "Now" / "ezdxf"
 
 DEBUG = True
 
@@ -88,7 +92,7 @@ def main(
     filename,
     bin_width: float,
     bin_height: float,
-    pick_strategy=binpacking.PickStrategy.BIGGER_FIRST,
+    pick=binpacking.PickStrategy.BIGGER_FIRST,
     attempts: int = 1,
 ):
     doc = ezdxf.readfile(filename)
@@ -97,10 +101,10 @@ def main(
     msp = doc.modelspace()
 
     packer = get_packer(msp, bin_width, bin_height)
-    if pick_strategy == binpacking.PickStrategy.SHUFFLE:
+    if pick == binpacking.PickStrategy.SHUFFLE:
         packer = packer.shuffle_pack(attempts)
     else:
-        packer.pack(pick_strategy=pick_strategy)
+        packer.pack(pick=pick)
     envelope = packer.bins[0]
     print("packed: " + "=" * 70)
     print(f"ratio: {envelope.get_fill_ratio()}")
@@ -142,15 +146,15 @@ if __name__ == "__main__":
     # PickStrategy.BIGGER_FIRST is the best strategy
     # PickStrategy.SMALLER_FIRST is often very bad!
     main(
-        r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\items.dxf",
+        DIR / "items.dxf",
         50,
         55,
-        pick_strategy=binpacking.PickStrategy.BIGGER_FIRST,
+        pick=binpacking.PickStrategy.BIGGER_FIRST,
         attempts=100,
     )
     main(
-        r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\case.dxf",
+        DIR / "case.dxf",
         500,
         600,
-        pick_strategy=binpacking.PickStrategy.BIGGER_FIRST,
+        pick=binpacking.PickStrategy.BIGGER_FIRST,
     )

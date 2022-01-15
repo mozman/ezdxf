@@ -68,7 +68,7 @@ def packer():
 
 
 def test_example_smaller_first(packer):
-    packer.pack(pick_strategy=binpacking.PickStrategy.SMALLER_FIRST)
+    packer.pack(pick=binpacking.PickStrategy.SMALLER_FIRST)
     b0, b1, b2, b3, b4, b5, b6 = packer.bins
     assert len(b0.items) == 0
     assert b0.get_total_weight() == 0
@@ -103,7 +103,7 @@ def test_example_smaller_first(packer):
 
 
 def test_example_bigger_first(packer):
-    packer.pack(pick_strategy=binpacking.PickStrategy.BIGGER_FIRST)
+    packer.pack(pick=binpacking.PickStrategy.BIGGER_FIRST)
     b0, b1, b2, b3, b4, b5, b6 = packer.bins
     assert len(b0.items) == 9
     assert b0.get_total_weight() == 45
@@ -177,7 +177,7 @@ def test_copy_packer(packer):
 
 
 def test_can_not_copy_packed_packer(packer):
-    packer.pack(pick_strategy=binpacking.PickStrategy.BIGGER_FIRST)
+    packer.pack(pick=binpacking.PickStrategy.BIGGER_FIRST)
     with pytest.raises(TypeError):
         packer.copy()
 

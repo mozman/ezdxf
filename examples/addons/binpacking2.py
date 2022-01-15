@@ -31,7 +31,7 @@ def build_packer():
 
 def main(filename):
     packer = build_packer()
-    packer.pack(pick_strategy=binpacking.PickStrategy.BIGGER_FIRST)
+    packer.pack(pick=binpacking.PickStrategy.BIGGER_FIRST)
     doc = binpacking.export_dxf(packer, offset=(0, 20, 0))
     doc.saveas(filename)
 

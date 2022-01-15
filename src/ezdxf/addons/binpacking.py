@@ -335,11 +335,19 @@ class AbstractPacker(abc.ABC):
     def pack(
         self,
         *,
-        pick_strategy=PickStrategy.BIGGER_FIRST,
-        distribute_items=False,
+        pick=PickStrategy.BIGGER_FIRST,
+        distribute=False,
     ):
+        """Pack items into bins.
+
+        Args:
+            pick: pick strategy
+            distribute: ``True`` for distributing all items across all bins,
+                ``False`` restart distributing items for each bin
+
+        """
         self._init_state = False
-        PICK_STRATEGY[pick_strategy](self.bins, self.items)
+        PICK_STRATEGY[pick](self.bins, self.items)
 
         for box in self.bins:
             fitted_items: List[Item] = []
@@ -350,7 +358,7 @@ class AbstractPacker(abc.ABC):
                 if self.pack_to_bin(box, item.copy()):
                     fitted_items.append(item)
 
-            if distribute_items:
+            if distribute:
                 for item in fitted_items:
                     self.items.remove(item)
 
@@ -363,8 +371,8 @@ class AbstractPacker(abc.ABC):
         for _ in range(attempts):
             packer = self.copy()
             packer.pack(
-                pick_strategy=PickStrategy.SHUFFLE,
-                distribute_items=True,
+                pick=PickStrategy.SHUFFLE,
+                distribute=True,
             )
             new_ratio = get_total_fill_ratio(packer)
             if new_ratio > best_ratio:
