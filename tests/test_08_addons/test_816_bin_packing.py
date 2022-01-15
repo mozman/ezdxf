@@ -15,11 +15,14 @@ def test_single_bin_single_item():
     assert len(box.unfitted_items) == 0
 
 
-@pytest.mark.parametrize("w,h,d", [
-    (3, 1, 1),
-    (1, 3, 1),
-    (1, 1, 3),
-])
+@pytest.mark.parametrize(
+    "w,h,d",
+    [
+        (3, 1, 1),
+        (1, 3, 1),
+        (1, 1, 3),
+    ],
+)
 def test_single_bin_multiple_items(w, h, d):
     packer = binpacking.Packer()
     box = packer.add_box("B0", w, h, d)
@@ -41,7 +44,8 @@ def test_single_bin_different_sized_items():
     assert len(box.unfitted_items) == 0
 
 
-def test_example():
+@pytest.fixture
+def packer():
     packer = binpacking.Packer()
     packer.add_box("small-envelope", 11.5, 6.125, 0.25, 10)
     packer.add_box("large-envelope", 15.0, 12.0, 0.75, 15)
@@ -60,7 +64,10 @@ def test_example():
     packer.add_item("250g [powder 7]", 7.8740, 3.9370, 1.9685, 7)
     packer.add_item("250g [powder 8]", 7.8740, 3.9370, 1.9685, 8)
     packer.add_item("250g [powder 9]", 7.8740, 3.9370, 1.9685, 9)
+    return packer
 
+
+def test_example_smaller_first(packer):
     packer.pack(pick_strategy=binpacking.PickStrategy.SMALLER_FIRST)
     b0, b1, b2, b3, b4, b5, b6 = packer.bins
     assert len(b0.items) == 0
@@ -85,5 +92,30 @@ def test_example():
     assert b6.get_total_weight() == 45
 
 
-if __name__ == '__main__':
+def test_example_bigger_first(packer):
+    packer.pack(pick_strategy=binpacking.PickStrategy.BIGGER_FIRST)
+    b0, b1, b2, b3, b4, b5, b6 = packer.bins
+    assert len(b0.items) == 9
+    assert b0.get_total_weight() == 45
+
+    assert len(b1.items) == 9
+    assert b1.get_total_weight() == 45
+
+    assert len(b2.items) == 6
+    assert b2.get_total_weight() == 25
+
+    assert len(b3.items) == 5
+    assert b3.get_total_weight() == 30
+
+    assert len(b4.items) == 0
+    assert b4.get_total_weight() == 0
+
+    assert len(b5.items) == 0
+    assert b5.get_total_weight() == 0
+
+    assert len(b6.items) == 0
+    assert b6.get_total_weight() == 0
+
+
+if __name__ == "__main__":
     pytest.main([__file__])
