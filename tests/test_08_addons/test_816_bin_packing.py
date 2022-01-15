@@ -72,6 +72,8 @@ def test_example_smaller_first(packer):
     b0, b1, b2, b3, b4, b5, b6 = packer.bins
     assert len(b0.items) == 0
     assert b0.get_total_weight() == 0
+    assert b0.get_total_volume() == 0.0
+    assert b0.get_fill_ratio() == 0.0
 
     assert len(b1.items) == 0
     assert b1.get_total_weight() == 0
@@ -81,15 +83,23 @@ def test_example_smaller_first(packer):
 
     assert len(b3.items) == 6
     assert b3.get_total_weight() == 21
+    assert b3.get_total_volume() == pytest.approx(228.83766732374997)
+    assert b3.get_fill_ratio() == pytest.approx(0.44499303320126393)
 
     assert len(b4.items) == 6
     assert b4.get_total_weight() == 21
+    assert b4.get_total_volume() == pytest.approx(228.83766732374997)
+    assert b4.get_fill_ratio() == pytest.approx(0.4190671376138204)
 
     assert len(b5.items) == 9
     assert b5.get_total_weight() == 45
+    assert b5.get_total_volume() == pytest.approx(411.90780118274995)
+    assert b5.get_fill_ratio() == pytest.approx(0.5200856075539773)
 
     assert len(b6.items) == 9
     assert b6.get_total_weight() == 45
+    assert b6.get_total_volume() == pytest.approx(411.90780118274995)
+    assert b6.get_fill_ratio() == pytest.approx(0.4933119870449671)
 
 
 def test_example_bigger_first(packer):
@@ -97,15 +107,23 @@ def test_example_bigger_first(packer):
     b0, b1, b2, b3, b4, b5, b6 = packer.bins
     assert len(b0.items) == 9
     assert b0.get_total_weight() == 45
+    assert b0.get_total_volume() == pytest.approx(411.90780118274995)
+    assert b0.get_fill_ratio() == pytest.approx(0.4933119870449671)
 
     assert len(b1.items) == 9
     assert b1.get_total_weight() == 45
+    assert b1.get_total_volume() == pytest.approx(411.90780118274995)
+    assert b1.get_fill_ratio() == pytest.approx(0.5200856075539773)
 
     assert len(b2.items) == 6
     assert b2.get_total_weight() == 25
+    assert b2.get_total_volume() == pytest.approx(274.6052007884999)
+    assert b2.get_fill_ratio() == pytest.approx(0.5028805651365844)
 
     assert len(b3.items) == 5
     assert b3.get_total_weight() == 30
+    assert b3.get_total_volume() == pytest.approx(305.116889765)
+    assert b3.get_fill_ratio() == pytest.approx(0.593324044268352)
 
     assert len(b4.items) == 0
     assert b4.get_total_weight() == 0

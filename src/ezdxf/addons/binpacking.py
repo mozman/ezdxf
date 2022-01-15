@@ -202,7 +202,7 @@ class Bin:
         return (
             f"{str(self.name)}({self.width:.3f}x{self.height:.3f}x{self.depth:.3f}, "
             f"max_weight:{self.max_weight}) "
-            f"vol({self.get_volume():.3f})"
+            f"vol({self.get_capacity():.3f})"
         )
 
     def put_item(self, item: Item, pivot: Tuple[float, float, float]) -> bool:
@@ -226,11 +226,21 @@ class Bin:
         item.position = valid_item_position
         return False
 
+    def get_capacity(self) -> float:
+        """Returns the maximum fill volume of the bin."""
+        return self.width * self.height * self.depth
+
     def get_total_weight(self) -> float:
+        """Returns the total weight of all fitted items."""
         return sum(item.weight for item in self.items)
 
-    def get_volume(self) -> float:
-        return self.width * self.height * self.depth
+    def get_total_volume(self) -> float:
+        """Returns the total volume of all fitted items."""
+        return sum(item.get_volume() for item in self.items)
+
+    def get_fill_ratio(self) -> float:
+        """Return the fill ratio."""
+        return self.get_total_volume() / self.get_capacity()
 
     def rotations(self) -> Iterable[RotationType]:
         return RotationType
@@ -254,7 +264,7 @@ class Envelope(Bin):
         return (
             f"{str(self.name)}({self.width:.3f}x{self.height:.3f}, "
             f"max_weight:{self.max_weight}) "
-            f"area({self.get_volume():.3f})"
+            f"area({self.get_capacity():.3f})"
         )
 
     def rotations(self) -> Iterable[RotationType]:
@@ -295,10 +305,10 @@ class _Packer:
     ):
         self._init_state = False
         if pick_strategy == PickStrategy.SMALLER_FIRST:
-            self.bins.sort(key=lambda b: b.get_volume())
+            self.bins.sort(key=lambda b: b.get_capacity())
             self.items.sort(key=lambda i: i.get_volume())
         elif pick_strategy == PickStrategy.BIGGER_FIRST:
-            self.bins.sort(key=lambda b: b.get_volume(), reverse=True)
+            self.bins.sort(key=lambda b: b.get_capacity(), reverse=True)
             self.items.sort(key=lambda i: i.get_volume(), reverse=True)
         elif pick_strategy == PickStrategy.SHUFFLE:
             random.shuffle(self.bins)
@@ -413,5 +423,5 @@ class FlatPacker(_Packer):
         envelope.unfitted_items.append(item)
 
 
-def export_dxf(packer: _Packer)->"Drawing":
+def export_dxf(packer: _Packer) -> "Drawing":
     pass
