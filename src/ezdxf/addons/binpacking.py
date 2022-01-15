@@ -37,7 +37,7 @@ __all__ = [
     "FlatPacker",
     "RotationType",
     "PickStrategy",
-    "export_dxf"
+    "export_dxf",
 ]
 
 UNLIMITED_WEIGHT = 1e99
@@ -481,6 +481,8 @@ def export_dxf(packer: AbstractPacker, offset: Vertex = (1, 0, 0)) -> "Drawing":
 
     doc = ezdxf.new()
     doc.layers.add("FRAME", color=colors.YELLOW)
+    doc.layers.add("ITEMS")
+    doc.layers.add("TEXT")
     msp = doc.modelspace()
     offset_vec = Vec3(offset)
     start = Vec3()
@@ -504,7 +506,7 @@ def _add_frame(msp, box: Bin, layer: str, m: Matrix44):
         line.transform(m)
 
     attribs = {"layer": layer}
-    x0, y0, z0 = (0, 0, 0)
+    x0, y0, z0 = (0.0, 0.0, 0.0)
     x1 = float(box.width)
     y1 = float(box.height)
     z1 = float(box.depth)
@@ -515,14 +517,13 @@ def _add_frame(msp, box: Bin, layer: str, m: Matrix44):
         (x0, y1),
         (x0, y0),
     ]
-    for s, e in zip(corners, corners[1:]):
-        add_line((s[0], s[1], z0), (e[0], e[1], z0))
-    for s, e in zip(corners, corners[1:]):
-        add_line((s[0], s[1], z1), (e[0], e[1], z1))
+    for (sx, sy), (ex, ey) in zip(corners, corners[1:]):
+        add_line((sx, sy, z0), (ex, ey, z0))
+        add_line((sx, sy, z1), (ex, ey, z1))
     for x, y in corners[:-1]:
         add_line((x, y, z0), (x, y, z1))
 
-    text = msp.add_text(box.name, height=0.25, dxfattribs={"layer": layer})
+    text = msp.add_text(box.name, height=0.25, dxfattribs=attribs)
     text.set_placement((x0 + 0.25, y1 - 0.5, z1))
     text.transform(m)
 
@@ -540,7 +541,9 @@ def _add_mesh(msp, item: Item, layer: str, color: int, m: Matrix44):
     x, y, z = item.position
     mesh.translate(x, y, z)
     mesh.render_polyface(msp, attribs, matrix=m)
-    text = msp.add_text(str(item.payload), height=0.25)
+    text = msp.add_text(
+        str(item.payload), height=0.25, dxfattribs={"layer": "TEXT"}
+    )
     if sy > sx:
         text.dxf.rotation = 90
         align = TextEntityAlignment.TOP_LEFT
