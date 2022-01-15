@@ -8,6 +8,7 @@
 # Refactoring and type annotations by Manfred Moitzi
 from typing import Tuple, List, Iterable
 from enum import Enum, auto
+import math
 import random
 
 from ezdxf.math import (
@@ -16,6 +17,7 @@ from ezdxf.math import (
     BoundingBox,
     BoundingBox2d,
     AbstractBoundingBox,
+    Matrix44,
 )
 
 __all__ = [
@@ -125,6 +127,22 @@ class Item:
         elif rt == RotationType.WDH:
             return self.width, self.depth, self.height
         raise ValueError(rt)
+
+    def get_transformation(self) -> Matrix44:
+        """Returns the transformation matrix to transform the source entity
+        located with the minimum extension corner of its bounding box in
+        (0, 0, 0) to the final location including the required rotation.
+        """
+        x, y, z = self.position
+        rt = self.rotation_type
+        if rt == RotationType.WHD:
+            return Matrix44.translate(x, y, z)
+        elif rt == RotationType.HWD:
+            # height, width, depth orientation
+            return Matrix44.z_rotate(math.pi / 2) @ Matrix44.translate(
+                x + self.height, y, 0
+            )
+        raise NotImplementedError(f"rotation {str(rt)} not supported yet")
 
 
 class FlatItem(Item):

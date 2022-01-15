@@ -1,8 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from typing import Iterable, List
-import math
-
 import ezdxf
 from ezdxf.entities import DXFGraphic
 from ezdxf.math import Matrix44, BoundingBox
@@ -100,16 +98,11 @@ def main(filename, bin_width, bin_height):
         bundle = item.payload
         bundle.set_properties("PACKED", color)
         box = bundle.bounding_box
-        # move entity to origin
+        # move entity to origin (0, 0, 0)
         bundle.transform(Matrix44.translate(-box.extmin.x, -box.extmin.y, 0))
         print(f"{str(bundle)}, size: ({box.size.x:.2f}, {box.size.y:.2f})")
-        x, y, z = item.position
-        m = Matrix44.translate(float(x), float(y), 0)
-        if item.rotation_type == binpacking.RotationType.HWD:
-            # height, width, depth orientation
-            m = Matrix44.z_rotate(math.pi / 2) @ Matrix44.translate(
-                box.size.y + float(x), float(y), 0
-            )
+        # transformation from (0, 0, 0) to final location including rotations
+        m = item.get_transformation()
         bundle.transform(m)
         if DEBUG_BOXES:
             add_bbox(msp, bundle.bounding_box, 5)
@@ -130,4 +123,4 @@ def main(filename, bin_width, bin_height):
 
 if __name__ == "__main__":
     main(r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\items.dxf", 50, 50)
-    main(r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\case.dxf", 600, 600)
+    main(r"C:\Users\manfred\Desktop\Now\ezdxf\binpacking\case.dxf", 500, 600)
