@@ -8,6 +8,7 @@
 # Refactoring and type annotations by Manfred Moitzi
 from typing import Tuple, List, Iterable, TYPE_CHECKING
 from enum import Enum, auto
+from ezdxf.enums import TextEntityAlignment
 import abc
 import copy
 import math
@@ -520,7 +521,7 @@ def _add_frame(msp, box: Bin, layer: str, m: Matrix44):
     for x, y in corners[:-1]:
         add_line((x, y, z0), (x, y, z1))
 
-    text = msp.add_text(box.name, dxfattribs={"height": 0.25, "layer": layer})
+    text = msp.add_text(box.name, height=0.25, dxfattribs={"layer": layer})
     text.set_placement((x0 + 0.25, y1 - 0.5, z1))
     text.transform(m)
 
@@ -537,8 +538,12 @@ def _add_mesh(msp, item: Item, layer: str, color: int, m: Matrix44):
     mesh.scale(sx, sy, sz)
     x, y, z = item.position
     mesh.translate(x, y, z)
-    mesh.render_mesh(msp, attribs, matrix=m)
-
-    text = msp.add_text(str(item.payload), dxfattribs={"height": 0.25})
-    text.set_placement((x + 0.25, y + 0.25, z + sz))
+    mesh.render_polyface(msp, attribs, matrix=m)
+    text = msp.add_text(str(item.payload), height=0.25)
+    if sy > sx:
+        text.dxf.rotation = 90
+        align = TextEntityAlignment.TOP_LEFT
+    else:
+        align = TextEntityAlignment.BOTTOM_LEFT
+    text.set_placement((x + 0.25, y + 0.25, z + sz), align=align)
     text.transform(m)
