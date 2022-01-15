@@ -174,7 +174,6 @@ def test_copy_packer(packer):
     assert len(packer.bins) == len(packer2.bins)
     assert packer.items is not packer2.items, "expected shallow copy"
     assert len(packer.items) == len(packer2.items)
-    assert packer.unfit_items is not packer2.unfit_items, "expected shallow copy"
 
 
 def test_can_not_copy_packed_packer(packer):

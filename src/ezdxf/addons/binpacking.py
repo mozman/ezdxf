@@ -286,7 +286,6 @@ class AbstractPacker(abc.ABC):
     def __init__(self):
         self.bins: List[Bin] = []
         self.items: List[Item] = []
-        self.unfit_items: List[Item] = []
         self._init_state = True
 
     def copy(self):
@@ -296,7 +295,6 @@ class AbstractPacker(abc.ABC):
         packer = self.__class__()
         packer.bins = [box.copy() for box in self.bins]
         packer.items = [item.copy() for item in self.items]
-        packer.unfit_items = [item.copy() for item in self.unfit_items]
         return packer
 
     def __str__(self) -> str:
@@ -332,7 +330,7 @@ class AbstractPacker(abc.ABC):
         for box in self.bins:
             fitted_items: List[Item] = []
             for item in self.items:
-                # Add a copy to bins, otherwise items shared state across bins!
+                # Add a copy to bins, otherwise items share state across bins!
                 # The item would have the same location and rotation of the last
                 # placement in all bins.
                 if self.pack_to_bin(box, item.copy()):
