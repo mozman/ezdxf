@@ -6,8 +6,9 @@
 # - https://github.com/gedex/bp3d - implementation in GoLang
 # - https://github.com/bom-d-van/binpacking - implementation in GoLang
 # Refactoring and type annotations by Manfred Moitzi
-from typing import Tuple, List, Iterable
+from typing import Tuple, List, Iterable, TYPE_CHECKING
 from enum import Enum, auto
+import copy
 import math
 import random
 
@@ -19,6 +20,9 @@ from ezdxf.math import (
     AbstractBoundingBox,
     Matrix44,
 )
+
+if TYPE_CHECKING:
+    from ezdxf.document import Drawing
 
 __all__ = [
     "Item",
@@ -75,6 +79,10 @@ class Item:
         self._position = START_POSITION
         self._bbox: AbstractBoundingBox = BoundingBox()
         self._update_bbox()
+
+    def copy(self):
+        # All copies have a reference to the same payload
+        return copy.copy(self)  # shallow copy
 
     def get_volume(self):
         return self.width * self.height * self.depth
@@ -184,6 +192,12 @@ class Bin:
         self.items: List[Item] = []
         self.unfitted_items: List[Item] = []
 
+    def copy(self):
+        box = copy.copy(self)  # shallow copy
+        box.items = list(self.items)
+        box.unfitted_items = list(self.unfitted_items)
+        return box
+
     def __str__(self) -> str:
         return (
             f"{str(self.name)}({self.width:.3f}x{self.height:.3f}x{self.depth:.3f}, "
@@ -252,6 +266,17 @@ class _Packer:
         self.bins: List[Bin] = []
         self.items: List[Item] = []
         self.unfit_items: List[Item] = []
+        self._init_state = True
+
+    def copy(self):
+        """Copy packer in init state to apply different pack strategies."""
+        if self._init_state is False:
+            raise TypeError("cannot copy packed state")
+        packer = self.__class__()
+        packer.bins = [box.copy() for box in self.bins]
+        packer.items = [item.copy() for item in self.items]
+        packer.unfit_items = [item.copy() for item in self.unfit_items]
+        return packer
 
     def __str__(self) -> str:
         return f"{self.__class__.__name__} with {len(self.bins)} bins"
@@ -268,6 +293,7 @@ class _Packer:
         pick_strategy=PickStrategy.BIGGER_FIRST,
         distribute_items=False,
     ):
+        self._init_state = False
         if pick_strategy == PickStrategy.SMALLER_FIRST:
             self.bins.sort(key=lambda b: b.get_volume())
             self.items.sort(key=lambda i: i.get_volume())
@@ -385,3 +411,7 @@ class FlatPacker(_Packer):
                 if envelope.put_item(item, pivot):
                     return
         envelope.unfitted_items.append(item)
+
+
+def export_dxf(packer: _Packer)->"Drawing":
+    pass

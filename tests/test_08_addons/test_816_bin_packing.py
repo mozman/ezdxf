@@ -117,5 +117,52 @@ def test_example_bigger_first(packer):
     assert b6.get_total_weight() == 0
 
 
+@pytest.mark.parametrize(
+    "item",
+    [
+        binpacking.Item([1, 2, 3], 1, 2, 3, 4),
+        binpacking.FlatItem([1, 2, 3], 1, 2, 4),
+    ],
+)
+def test_copy_item(item):
+    item2 = item.copy()
+    assert item.payload is item2.payload, "should reference the same object"
+    assert item.get_dimension() == item2.get_dimension()
+    assert item.position == item2.position
+    assert item.weight == item2.weight
+    assert item.bbox is item2.bbox
+
+
+def test_copy_box():
+    box = binpacking.Box("NAME", 1, 2, 3, 4)
+    box.items = [1, 2, 3]
+    box.unfitted_items = [4, 5, 6]
+    box2 = box.copy()
+
+    assert box.name == box2.name
+    assert box.width == box2.width
+    assert box.height == box2.height
+    assert box.max_weight == box2.max_weight
+    assert box.items is not box2.items, "expected shallow copy"
+    assert (
+        box.unfitted_items is not box2.unfitted_items
+    ), "expected shallow copy"
+
+
+def test_copy_packer(packer):
+    packer2 = packer.copy()
+    assert packer.bins is not packer2.bins, "expected shallow copy"
+    assert len(packer.bins) == len(packer2.bins)
+    assert packer.items is not packer2.items, "expected shallow copy"
+    assert len(packer.items) == len(packer2.items)
+    assert packer.unfit_items is not packer2.unfit_items, "expected shallow copy"
+
+
+def test_can_not_copy_packed_packer(packer):
+    packer.pack(pick_strategy=binpacking.PickStrategy.BIGGER_FIRST)
+    with pytest.raises(TypeError):
+        packer.copy()
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
