@@ -738,10 +738,9 @@ class GeneticSolver:
             t1 = time.perf_counter()
             if start_time - t1 > max_time:
                 break
-            if feedback:
-                if t1 - t0 > interval:
-                    feedback()
-                    t0 = t1
+            if feedback and t1 - t0 > interval:
+                feedback()
+                t0 = t1
             self._selection()
 
     def _measure_fitness(self):
