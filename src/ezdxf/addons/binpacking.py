@@ -22,8 +22,17 @@
 #   - AbstractPacker.schematic_pack() interface for genetic algorithms
 #   - DXF exporter for debugging
 
-from typing import Tuple, List, Iterable, TYPE_CHECKING, Iterator, TypeVar
+from typing import (
+    Tuple,
+    List,
+    Iterable,
+    TYPE_CHECKING,
+    Iterator,
+    TypeVar,
+    Sequence,
+)
 import abc
+import array
 from enum import Enum, auto
 import copy
 import itertools
@@ -571,6 +580,88 @@ class FlatPacker(AbstractPacker):
                 if envelope.put_item(item, pivot):
                     return True
         return False
+
+
+def _to_list(values) -> List[float]:
+    return array.array("f", values)  # type: ignore
+
+
+class Gene:
+    __slots__ = ("_length", "_data")
+
+    def __init__(self, length: int, value: float = 0.0):
+        self._length = int(length)
+        if 0.0 <= value <= 1.0:
+            self._data: List[float] = _to_list(
+                itertools.repeat(value, self._length)
+            )
+        else:
+            raise ValueError("data value out of range")
+
+    @classmethod
+    def random(cls, length: int) -> "Gene":
+        g = cls(length)
+        g.reset([random.random() for _ in range(length)])
+        return g
+
+    def _check_valid_data(self):
+        if len(self._data) != self._length:
+            raise ValueError("invalid data count")
+        if not all(0.0 <= v <= 1.0 for v in self._data):
+            raise ValueError("data value out of range")
+
+    def copy(self):
+        return copy.deepcopy(self)
+
+    def __eq__(self, other):
+        assert isinstance(other, Gene)
+        return self._data == other._data
+
+    def __str__(self):
+        return str([round(v, 4) for v in self._data])
+
+    def __len__(self):
+        return len(self._data)
+
+    def __getitem__(self, item):
+        return self._data.__getitem__(item)
+
+    def __iter__(self):
+        return iter(self._data)
+
+    def reset(self, values: Iterable[float]):
+        self._data = _to_list(values)
+        self._check_valid_data()
+
+    def mutate(self, rate: float):
+        for index in range(self._length):
+            if random.random() < rate:
+                self.mutate_at(index)
+
+    def mutate_at(self, index):
+        self._data[index] = 1.0 - self._data[index]  # flip pick location
+
+    def replace_back(self, part: Sequence) -> None:
+        self._data[-len(part) :] = _to_list(part)
+        self._check_valid_data()
+
+    def replace_front(self, part: Sequence) -> None:
+        self._data[: len(part)] = _to_list(part)
+        self._check_valid_data()
+
+
+def recombine_genes(gene1: Gene, gene2: Gene, index: int) -> None:
+    part1 = gene1[index:]
+    part2 = gene2[index:]
+    gene1.replace_back(part2)
+    gene2.replace_back(part1)
+
+
+class GeneticPacker:
+    def __init__(self, crossover_rate: float, mutation_rate: float):
+        self._crossover_rate = float(crossover_rate)
+        self._mutation_rate = float(mutation_rate)
+        self.genes: List[Gene] = []
 
 
 def export_dxf(
