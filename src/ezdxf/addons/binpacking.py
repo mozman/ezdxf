@@ -33,7 +33,6 @@ from typing import (
     Optional,
     Callable,
 )
-import abc
 import array
 from enum import Enum, auto
 import copy
@@ -347,7 +346,7 @@ PICK_STRATEGY = {
 }
 
 
-class AbstractPacker(abc.ABC):
+class AbstractPacker:
     def __init__(self):
         self.bins: List[Bin] = []
         self.items: List[Item] = []
@@ -439,10 +438,29 @@ class AbstractPacker(abc.ABC):
         )
         # unfitted items remain in self.items
 
+    def pack_to_bin(self, box: Bin, item: Item) -> bool:
+        if not box.items:
+            return box.put_item(item, START_POSITION)
+
+        for axis in self._axis():
+            for placed_item in box.items:
+                w, h, d = placed_item.get_dimension()
+                x, y, z = placed_item.position
+                if axis == Axis.WIDTH:
+                    pivot = (x + w, y, z)  # new item right of the placed item
+                elif axis == Axis.HEIGHT:
+                    pivot = (x, y + h, z)  # new item above of the placed item
+                elif axis == Axis.DEPTH:
+                    pivot = (x, y, z + d)  # new item on top of the placed item
+                else:
+                    raise TypeError(axis)
+                if box.put_item(item, pivot):
+                    return True
+        return False
+
     @staticmethod
-    @abc.abstractmethod
-    def pack_to_bin(box: Bin, item: Item) -> bool:
-        ...
+    def _axis() -> Iterable[Axis]:
+        return Axis
 
 
 def shuffle_pack(packer: AbstractPacker, attempts: int) -> AbstractPacker:
@@ -519,28 +537,6 @@ class Packer(AbstractPacker):
         self.append_item(item)
         return item
 
-    @staticmethod
-    def pack_to_bin(box: Bin, item: Item) -> bool:
-        if not box.items:
-            return box.put_item(item, START_POSITION)
-
-        for axis in Axis:
-            for placed_item in box.items:
-                w, h, d = placed_item.get_dimension()
-                x, y, z = placed_item.position
-                if axis == Axis.WIDTH:
-                    pivot = (x + w, y, z)  # new item right of the placed item
-                elif axis == Axis.HEIGHT:
-                    pivot = (x, y + h, z)  # new item above of the placed item
-                elif axis == Axis.DEPTH:
-                    pivot = (x, y, z + d)  # new item on top of the placed item
-                else:
-                    raise TypeError(axis)
-                if box.put_item(item, pivot):
-                    return True
-
-        return False
-
 
 class FlatPacker(AbstractPacker):
     """2D Packer."""
@@ -568,23 +564,8 @@ class FlatPacker(AbstractPacker):
         return item
 
     @staticmethod
-    def pack_to_bin(envelope: Bin, item: Item) -> bool:
-        if not envelope.items:
-            return envelope.put_item(item, START_POSITION)
-
-        for axis in (Axis.WIDTH, Axis.HEIGHT):
-            for ib in envelope.items:
-                w, h, _ = ib.get_dimension()
-                x, y, _ = ib.position
-                if axis == Axis.WIDTH:
-                    pivot = (x + w, y, 0)
-                elif axis == Axis.HEIGHT:
-                    pivot = (x, y + h, 0)
-                else:
-                    raise TypeError(axis)
-                if envelope.put_item(item, pivot):
-                    return True
-        return False
+    def _axis() -> Iterable[Axis]:
+        return Axis.WIDTH, Axis.HEIGHT
 
 
 def _to_list(values) -> List[float]:
@@ -607,7 +588,7 @@ class Gene:
     @classmethod
     def random(cls, length: int) -> "Gene":
         g = cls(length)
-        g.reset([random.random() for _ in range(length)])
+        g.reset(random.random() for _ in range(length))
         return g
 
     def _check_valid_data(self):
