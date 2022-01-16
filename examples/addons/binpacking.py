@@ -136,7 +136,7 @@ def main(
             add_bbox(msp, bundle.bounding_box, 5)
 
     print("unfitted: " + "=" * 70)
-    for item in envelope.unfitted_items:
+    for item in packer.unfitted_items:
         bundle = item.payload
         bundle.set_properties("UNFITTED", colors.RED)
         box = bundle.bounding_box

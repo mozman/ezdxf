@@ -13,7 +13,7 @@ def test_single_bin_single_item():
     packer.add_item("I0", 1, 1, 1, 1)
     packer.pack()
     assert len(box.items) == 1
-    assert len(box.unfitted_items) == 0
+    assert len(packer.unfitted_items) == 0
 
 
 @pytest.mark.parametrize(
@@ -31,7 +31,7 @@ def test_single_bin_multiple_items(w, h, d):
         packer.add_item(f"I{index}", 1, 1, 1, 1)
     packer.pack()
     assert len(box.items) == 3
-    assert len(box.unfitted_items) == 0
+    assert len(packer.unfitted_items) == 0
 
 
 def test_single_bin_different_sized_items():
@@ -42,7 +42,7 @@ def test_single_bin_different_sized_items():
     packer.add_item("I2", 3, 1, 1, 1)
     packer.pack()
     assert len(box.items) == 3
-    assert len(box.unfitted_items) == 0
+    assert len(packer.unfitted_items) == 0
 
 
 SMALL_ENVELOPE = ("small-envelope", 11.5, 6.125, 0.25, 10)
@@ -197,9 +197,6 @@ def test_copy_box():
     assert box.height == box2.height
     assert box.max_weight == box2.max_weight
     assert box.items is not box2.items, "expected shallow copy"
-    assert (
-        box.unfitted_items is not box2.unfitted_items
-    ), "expected shallow copy"
 
 
 def test_copy_packer(packer):
@@ -210,10 +207,37 @@ def test_copy_packer(packer):
     assert len(packer.items) == len(packer2.items)
 
 
-def test_can_not_copy_packed_packer(packer):
+def test_cannot_copy_packed_packer(packer):
     packer.pack(pick=binpacking.PickStrategy.BIGGER_FIRST)
     with pytest.raises(TypeError):
         packer.copy()
+
+
+def test_cannot_copy_packer_with_non_empty_bins(packer):
+    box = binpacking.Bin(*LARGE_BOX)
+    packer.append_bin(box)
+    box.items.append(0)  # type: ignore
+    with pytest.raises(TypeError):
+        packer.copy()
+
+
+def test_cannot_append_bins_to_packed_packer(packer):
+    packer.pack(pick=binpacking.PickStrategy.BIGGER_FIRST)
+    with pytest.raises(TypeError):
+        packer.append_bin(binpacking.Bin(*LARGE_BOX))
+
+
+def test_cannot_append_non_empty_bins(packer):
+    box = binpacking.Bin(*LARGE_BOX)
+    box.items.append(0)  # type: ignore
+    with pytest.raises(TypeError):
+        packer.append_bin(box)
+
+
+def test_cannot_append_items_to_packed_packer(packer):
+    packer.pack(pick=binpacking.PickStrategy.BIGGER_FIRST)
+    with pytest.raises(TypeError):
+        packer.append_item(binpacking.Item(0, 0, 0, 0))
 
 
 def test_random_shuffle_interface(packer):

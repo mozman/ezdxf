@@ -14,13 +14,12 @@
 # - type annotations
 # - adaptations:
 #   - removing Decimal class usage
-#   - utilizing ezdxf.math.BondingBox
-#   - fixed shared state error
-#   - removed non-distributing mode
+#   - utilizing ezdxf.math.BoundingBox for intersection checks
+#   - removed non-distributing mode; copy packer and use different bins for each copy
 # - additions:
 #   - Item.get_transformation()
-#   - AbstractPacker.shuffle_pack()
-#   - AbstractPacker.pack_by_order(): inter face for genetic algorithm
+#   - shuffle_pack()
+#   - AbstractPacker.schematic_pack() interface for genetic algorithms
 #   - DXF exporter for debugging
 
 from typing import Tuple, List, Iterable, TYPE_CHECKING, Iterator, TypeVar
@@ -220,13 +219,18 @@ class Bin:
         self.depth = float(depth)
         self.max_weight = float(max_weight)
         self.items: List[Item] = []
-        self.unfitted_items: List[Item] = []
 
     def copy(self):
         box = copy.copy(self)  # shallow copy
         box.items = list(self.items)
-        box.unfitted_items = list(self.unfitted_items)
         return box
+
+    def reset(self):
+        self.items.clear()
+
+    @property
+    def is_empty(self) -> bool:
+        return not len(self.items)
 
     def __str__(self) -> str:
         return (
@@ -252,7 +256,7 @@ class Bin:
                 not any(item_bbox.intersect(i.bbox) for i in self.items)
                 and self.get_total_weight() + item.weight <= self.max_weight
             ):
-                self.items.append(item.copy())
+                self.items.append(item)
                 return True
 
         item.position = valid_item_position
@@ -337,8 +341,10 @@ class AbstractPacker(abc.ABC):
 
     def copy(self):
         """Copy packer in init state to apply different pack strategies."""
-        if self._init_state is False:
+        if self.is_packed:
             raise TypeError("cannot copy packed state")
+        if not all(box.is_empty for box in self.bins):
+            raise TypeError("bins contain data in unpacked state")
         packer = self.__class__()
         packer.bins = [box.copy() for box in self.bins]
         packer.items = [item.copy() for item in self.items]
@@ -348,16 +354,26 @@ class AbstractPacker(abc.ABC):
     def is_packed(self) -> bool:
         return not self._init_state
 
+    @property
+    def unfitted_items(self) -> List[Item]:  # just an alias
+        return self.items
+
     def __str__(self) -> str:
         fill = ""
         if self.is_packed:
             fill = f", fill ratio: {self.get_fill_ratio()}"
         return f"{self.__class__.__name__}, {len(self.bins)} bins{fill}"
 
-    def append_bin(self, bin_: Bin) -> None:
-        self.bins.append(bin_)
+    def append_bin(self, box: Bin) -> None:
+        if self.is_packed:
+            raise TypeError("cannot append bins to packed state")
+        if not box.is_empty:
+            raise TypeError("cannot append bins with content")
+        self.bins.append(box)
 
     def append_item(self, item: Item) -> None:
+        if self.is_packed:
+            raise TypeError("cannot append items to packed state")
         self.items.append(item)
 
     def get_fill_ratio(self) -> float:
@@ -510,10 +526,7 @@ class Packer(AbstractPacker):
     @staticmethod
     def pack_to_bin(box: Bin, item: Item) -> bool:
         if not box.items:
-            response = box.put_item(item, START_POSITION)
-            if not response:
-                box.unfitted_items.append(item)
-            return response
+            return box.put_item(item, START_POSITION)
 
         for axis in Axis:
             for placed_item in box.items:
@@ -530,7 +543,6 @@ class Packer(AbstractPacker):
                 if box.put_item(item, pivot):
                     return True
 
-        box.unfitted_items.append(item)
         return False
 
 
@@ -562,10 +574,7 @@ class FlatPacker(AbstractPacker):
     @staticmethod
     def pack_to_bin(envelope: Bin, item: Item) -> bool:
         if not envelope.items:
-            response = envelope.put_item(item, START_POSITION)
-            if not response:
-                envelope.unfitted_items.append(item)
-            return response
+            return envelope.put_item(item, START_POSITION)
 
         for axis in (Axis.WIDTH, Axis.HEIGHT):
             for ib in envelope.items:
@@ -579,7 +588,6 @@ class FlatPacker(AbstractPacker):
                     raise TypeError(axis)
                 if envelope.put_item(item, pivot):
                     return True
-        envelope.unfitted_items.append(item)
         return False
 
 
