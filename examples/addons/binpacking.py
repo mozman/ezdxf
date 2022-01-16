@@ -2,6 +2,8 @@
 #  License: MIT License
 from typing import Iterable, List
 import pathlib
+import sys
+import argparse
 
 import ezdxf
 from ezdxf.entities import DXFGraphic
@@ -103,7 +105,11 @@ def main(
     pick=binpacking.PickStrategy.BIGGER_FIRST,
     attempts: int = 1,
 ):
-    doc = ezdxf.readfile(filename)
+    try:
+        doc = ezdxf.readfile(filename)
+    except (IOError, ezdxf.DXFStructureError):
+        print(f"IOError or invalid DXF file: '{filename}'")
+        sys.exit(1)
     doc.layers.add("PACKED")
     doc.layers.add("UNFITTED")
     msp = doc.modelspace()
@@ -151,19 +157,48 @@ def main(
         doc.saveas(filename.replace(".dxf", ".debug.dxf"))
 
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "file",
+        metavar="FILE",
+        nargs=1,
+        help="DXF input file",
+    )
+    parser.add_argument(
+        "width",
+        metavar="WIDTH",
+        type=int,
+        nargs=1,
+        help="width of bin",
+    )
+    parser.add_argument(
+        "height",
+        metavar="HEIGHT",
+        type=int,
+        nargs=1,
+        help="height of bin",
+    )
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    # PickStrategy.BIGGER_FIRST is the best strategy
-    # PickStrategy.SMALLER_FIRST is often very bad!
-    main(
-        str(DIR / "items.dxf"),
-        50,
-        55,
-        pick=binpacking.PickStrategy.BIGGER_FIRST,
-        attempts=100,
-    )
-    main(
-        str(DIR / "case.dxf"),
-        500,
-        600,
-        pick=binpacking.PickStrategy.BIGGER_FIRST,
-    )
+    if len(sys.argv) > 1:
+        args = parse_args()
+        main(args.file[0], args.width[0], args.height[0])
+    else:
+        # PickStrategy.BIGGER_FIRST is the best strategy
+        # PickStrategy.SMALLER_FIRST is often very bad!
+        main(
+            str(DIR / "items.dxf"),
+            50,
+            55,
+            pick=binpacking.PickStrategy.BIGGER_FIRST,
+            attempts=100,
+        )
+        main(
+            str(DIR / "case.dxf"),
+            500,
+            600,
+            pick=binpacking.PickStrategy.BIGGER_FIRST,
+        )
