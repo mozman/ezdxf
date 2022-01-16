@@ -116,7 +116,7 @@ def main(
 
     packer = get_packer(msp, bin_width, bin_height)
     if pick == binpacking.PickStrategy.SHUFFLE:
-        packer = packer.shuffle_pack(attempts)
+        packer = binpacking.shuffle_pack(packer, attempts)
     else:
         packer.pack(pick=pick)
     envelope = packer.bins[0]

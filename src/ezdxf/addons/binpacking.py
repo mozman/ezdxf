@@ -23,7 +23,7 @@
 #   - AbstractPacker.pack_by_order(): inter face for genetic algorithm
 #   - DXF exporter for debugging
 
-from typing import Tuple, List, Iterable, TYPE_CHECKING, Iterator
+from typing import Tuple, List, Iterable, TYPE_CHECKING, Iterator, TypeVar
 import abc
 from enum import Enum, auto
 import copy
@@ -56,10 +56,12 @@ __all__ = [
     "FlatPacker",
     "RotationType",
     "PickStrategy",
+    "shuffle_pack",
     "export_dxf",
 ]
 
 UNLIMITED_WEIGHT = 1e99
+T = TypeVar("T")
 
 
 class RotationType(Enum):
@@ -377,19 +379,21 @@ class AbstractPacker(abc.ABC):
         """Returns the total volume of all fitted items in all bins."""
         return sum(box.get_total_volume() for box in self.bins)
 
-    def pack(
-        self,
-        pick=PickStrategy.BIGGER_FIRST,
-    ):
+    def pack(self, pick=PickStrategy.BIGGER_FIRST) -> None:
         """Pack items into bins. Distributes all items across all bins."""
-        self._init_state = False
         PICK_STRATEGY[pick](self.bins, self.items)
+        # items are removed from self.items while packing!
+        self._pack(self.bins, list(self.items))
+        # unfitted items remain in self.items
 
-        for box in self.bins:
-            for item in list(self.items):  # shallow copy because: remove()!
+    def _pack(self, bins: Iterable[Bin], items: Iterable[Item]) -> None:
+        """Pack items into bins, removes packed items from self.items!"""
+        self._init_state = False
+        for box in bins:
+            for item in items:
                 if self.pack_to_bin(box, item):
                     self.items.remove(item)
-        # unfitted items remain in items
+        # unfitted items remain in self.items
 
     def shuffle_pack(self, attempts: int) -> "AbstractPacker":
         """Random shuffle packing. Returns a new packer, the current packer is
@@ -411,19 +415,16 @@ class AbstractPacker(abc.ABC):
     def schematic_pack(
         self, item_schema: Iterator[float], bin_schema: Iterator[float] = None
     ) -> None:
-        # interface for genetic algorithm
-        self._init_state = False
-        bins = list(self.bins)
-        items = list(self.items)
         # fixed ascending base order
-        _smaller_first(bins, items)
+        _smaller_first(self.bins, self.items)
         if bin_schema is None:
             bin_schema = itertools.repeat(1.0)  # bigger first
-        for box in schematic_picker(bins, bin_schema):
-            for item in schematic_picker(items, item_schema):
-                if self.pack_to_bin(box, item):
-                    self.items.remove(item)
-        # unfitted items remain in items
+        self._pack(
+            # schematic picker uses a shallow copy of the input data!
+            schematic_picker(self.bins, bin_schema),
+            schematic_picker(self.items, item_schema),
+        )
+        # unfitted items remain in self.items
 
     @staticmethod
     @abc.abstractmethod
@@ -431,24 +432,51 @@ class AbstractPacker(abc.ABC):
         ...
 
 
-def schematic_picker(items: List, schema: Iterator[float]) -> Iterator:
-    """Yields all items in the order defined by the schema.
+def shuffle_pack(packer: AbstractPacker, attempts: int) -> AbstractPacker:
+    """Random shuffle packing. Returns a new packer with the best packing result,
+    the input packer is unchanged.
+    """
+    if attempts < 1:
+        raise ValueError("expected attempts >= 1")
+    best_ratio = 0.0
+    best_packer = packer
+    for _ in range(attempts):
+        new_packer = packer.copy()
+        new_packer.pack(PickStrategy.SHUFFLE)
+        new_ratio = new_packer.get_fill_ratio()
+        if new_ratio > best_ratio:
+            best_ratio = new_ratio
+            best_packer = new_packer
+    return best_packer
 
+
+def schematic_picker(
+    items: Iterable[T], schema: Iterator[float]
+) -> Iterator[T]:
+    """Yields all `items` in the order defined by the pick schema.
     The pick values have to be in the range [0, 1] and determine the
-    location from where to pick the next item as: len(items) * pick_value.
-    Each picked item will be removed from the items list.
+    location from where to pick the next item. E.g. 0 picks from the front, 1
+    picks from the end and 0.5 picks from the middle. For each item is a pick
+    value from the `schema` required!
+
+    Args:
+        items: iterable of input data
+        schema: iterator of pick values as float in range [0, 1]
+
+    Raises:
+        ValueError: invalid pick value or not enough pick values
 
     """
+    items = list(items)
     while len(items):
         try:
             value = next(schema)
         except StopIteration:
             raise ValueError("not enough pick values")
-        if 0.0 <= value <= 1.0:
-            pos = round(value * (len(items) - 1))
-        else:
+        try:
+            item = items.pop(round(abs(value) * (len(items) - 1)))
+        except IndexError:
             raise ValueError("pick values have to be in range [0, 1]")
-        item = items.pop(pos)
         yield item
 
 

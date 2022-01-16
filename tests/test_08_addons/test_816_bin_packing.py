@@ -218,8 +218,13 @@ def test_can_not_copy_packed_packer(packer):
 
 def test_random_shuffle_interface(packer):
     packer.add_bin(*LARGE_BOX2)
-    best = packer.shuffle_pack(2)
+    best = binpacking.shuffle_pack(packer, 2)
     assert best.get_fill_ratio() > 0.0
+
+
+def test_random_shuffle_raise_exception_for_invalid_attempts(packer):
+    with pytest.raises(ValueError):
+        binpacking.shuffle_pack(packer, 0)
 
 
 class TestSchematicPicker:
@@ -249,7 +254,7 @@ class TestSchematicPicker:
         with pytest.raises(ValueError):
             self.get_picked_items(items, itertools.repeat(2))
         with pytest.raises(ValueError):
-            self.get_picked_items(items, itertools.repeat(-1))
+            self.get_picked_items(items, itertools.repeat(-2))
 
     def test_not_enough_pick_values(self, items):
         with pytest.raises(ValueError):
