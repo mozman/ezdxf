@@ -182,5 +182,10 @@ def test_can_not_copy_packed_packer(packer):
         packer.copy()
 
 
+def test_random_shuffle_interface(packer):
+    best = packer.shuffle_pack(2)
+    assert best.get_fill_ratio() > 0.0
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

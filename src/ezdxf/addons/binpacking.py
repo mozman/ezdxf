@@ -1,11 +1,28 @@
+# Source package: "py3dbp" hosted on PyPI
 # (c) Enzo Ruiz Pelaez
 # https://github.com/enzoruiz/3dbinpacking
 # License: MIT License
 # Credits:
 # - https://github.com/enzoruiz/3dbinpacking/blob/master/erick_dube_507-034.pdf
-# - https://github.com/gedex/bp3d - implementation in GoLang
-# - https://github.com/bom-d-van/binpacking - implementation in GoLang
-# Refactoring and type annotations by Manfred Moitzi
+# - https://github.com/gedex/bp3d - implementation in Go
+# - https://github.com/bom-d-van/binpacking - implementation in Go
+#
+# ezdxf add-on:
+# License: MIT License
+# (c) 2022, Manfred Moitzi:
+# - refactoring
+# - type annotations
+# - adaptations:
+#   - removing Decimal class usage
+#   - utilizing ezdxf.math.BondingBox
+#   - fixed shared state error
+#   - removed non-distributing mode
+# - additions:
+#   - Item.get_transformation()
+#   - AbstractPacker.shuffle_pack()
+#   - AbstractPacker.pack_by_order(): inter face for genetic algorithm
+#   - DXF exporter for debugging
+
 from typing import Tuple, List, Iterable, TYPE_CHECKING
 from enum import Enum, auto
 from ezdxf.enums import TextEntityAlignment
@@ -374,7 +391,7 @@ class AbstractPacker(abc.ABC):
                 pick=PickStrategy.SHUFFLE,
                 distribute=True,
             )
-            new_ratio = get_total_fill_ratio(packer)
+            new_ratio = packer.get_fill_ratio()
             if new_ratio > best_ratio:
                 best_ratio = new_ratio
                 best_packer = packer
@@ -382,17 +399,29 @@ class AbstractPacker(abc.ABC):
             return self
         return best_packer
 
+    def get_fill_ratio(self) -> float:
+        """Return the fill ratio of all bins."""
+        total_capacity = self.get_capacity()
+        if total_capacity == 0.0:
+            return 0.0
+        return self.get_total_volume() / total_capacity
+
+    def get_capacity(self) -> float:
+        """Returns the maximum fill volume of all bins."""
+        return sum(box.get_capacity() for box in self.bins)
+
+    def get_total_weight(self) -> float:
+        """Returns the total weight of all fitted items in all bins."""
+        return sum(box.get_total_weight() for box in self.bins)
+
+    def get_total_volume(self) -> float:
+        """Returns the total volume of all fitted items in all bins."""
+        return sum(box.get_total_volume() for box in self.bins)
+
     @staticmethod
     @abc.abstractmethod
     def pack_to_bin(box: Bin, item: Item) -> bool:
         ...
-
-
-def get_total_fill_ratio(packer: AbstractPacker) -> float:
-    total_capacity = sum(box.get_capacity() for box in packer.bins)
-    if total_capacity == 0.0:
-        return 0.0
-    return sum(box.get_total_volume() for box in packer.bins) / total_capacity
 
 
 class Packer(AbstractPacker):
