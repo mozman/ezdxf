@@ -30,6 +30,9 @@ from typing import (
     Iterator,
     TypeVar,
     Sequence,
+    Dict,
+    Optional,
+    Callable,
 )
 import abc
 import array
@@ -38,6 +41,8 @@ import copy
 import itertools
 import math
 import random
+import time
+
 
 from ezdxf.enums import TextEntityAlignment
 
@@ -587,7 +592,7 @@ def _to_list(values) -> List[float]:
 
 
 class Gene:
-    __slots__ = ("_length", "_data")
+    __slots__ = ("_length", "_data", "fitness")
 
     def __init__(self, length: int, value: float = 0.0):
         self._length = int(length)
@@ -597,6 +602,7 @@ class Gene:
             )
         else:
             raise ValueError("data value out of range")
+        self.fitness: Optional[float] = None
 
     @classmethod
     def random(cls, length: int) -> "Gene":
@@ -612,6 +618,9 @@ class Gene:
 
     def copy(self):
         return copy.deepcopy(self)
+
+    def taint(self):
+        self.fitness = None
 
     def __eq__(self, other):
         assert isinstance(other, Gene)
@@ -632,6 +641,7 @@ class Gene:
     def reset(self, values: Iterable[float]):
         self._data = _to_list(values)
         self._check_valid_data()
+        self.taint()
 
     def mutate(self, rate: float):
         for index in range(self._length):
@@ -640,14 +650,17 @@ class Gene:
 
     def mutate_at(self, index):
         self._data[index] = 1.0 - self._data[index]  # flip pick location
+        self.taint()
 
     def replace_back(self, part: Sequence) -> None:
         self._data[-len(part) :] = _to_list(part)
         self._check_valid_data()
+        self.taint()
 
     def replace_front(self, part: Sequence) -> None:
         self._data[: len(part)] = _to_list(part)
         self._check_valid_data()
+        self.taint()
 
 
 def recombine_genes(gene1: Gene, gene2: Gene, index: int) -> None:
@@ -657,11 +670,118 @@ def recombine_genes(gene1: Gene, gene2: Gene, index: int) -> None:
     gene2.replace_back(part1)
 
 
-class GeneticPacker:
-    def __init__(self, crossover_rate: float, mutation_rate: float):
+class GeneticSolver:
+    def __init__(
+        self,
+        packer: AbstractPacker,
+        max_runs: int,
+        max_fitness: float,
+        crossover_rate: float = 0.70,
+        mutation_rate: float = 0.001,
+    ):
+        if max_fitness > 1.0 or max_fitness < 0.0:
+            raise ValueError("max_fitness not in range [0, 1]")
+        self._max_fitness = float(max_fitness)
+        if max_runs < 1:
+            raise ValueError("max_runs < 1")
+        self._max_runs = int(max_runs)
+        if packer.is_packed:
+            raise ValueError("packer is already packed")
+        self._packer = packer
+        self._genes: List[Gene] = []
         self._crossover_rate = float(crossover_rate)
         self._mutation_rate = float(mutation_rate)
-        self.genes: List[Gene] = []
+        self.best_fitness: float = 0.0
+        self.best_gene = Gene(0)
+        self.best_packer = packer
+        self.run: int = 0
+
+    @property
+    def is_executed(self) -> bool:
+        return bool(self.run)
+
+    def add_gene(self, gene: Gene):
+        if not self.is_executed:
+            self._genes.append(gene)
+        else:
+            raise TypeError("already executed")
+
+    def execute(
+        self,
+        feedback: Callable = None,
+        interval: float = 1.0,
+        max_time: float = 1e99,
+    ) -> None:
+        if self.is_executed:
+            raise TypeError("can only run once")
+        t0 = time.perf_counter()
+        start_time = t0
+        for run in range(self._max_runs):
+            self.run = run
+            self._measure_fitness()
+            if self.best_fitness >= self._max_fitness:
+                break
+            t1 = time.perf_counter()
+            if start_time - t1 > max_time:
+                break
+            if feedback:
+                if t1 - t0 > interval:
+                    feedback()
+                    t0 = t1
+            self._selection()
+
+    def _measure_fitness(self):
+        for gene in self._genes:
+            if gene.fitness is not None:
+                return
+            p0 = self._packer.copy()
+            p0.schematic_pack(gene)
+            fill_ratio = p0.get_fill_ratio()
+            gene.fitness = fill_ratio
+            if fill_ratio > self.best_fitness:
+                self.best_fitness = fill_ratio
+                self.best_packer = p0
+                self.best_gene = gene
+
+    def _selection(self):
+        wheel = self._make_wheel()
+        genes: List[Gene] = []
+        count = len(self._genes)
+        while len(genes) < count:
+            gene1, gene2 = wheel.pick(2)
+            gene1 = gene1.copy()
+            gene2 = gene2.copy()
+            if random.random() < self._crossover_rate:
+                location = random.randrange(0, len(gene1))
+                recombine_genes(gene1, gene2, location)
+            gene1.mutate(self._mutation_rate)
+            gene2.mutate(self._mutation_rate)
+            genes.append(gene1)
+            genes.append(gene2)
+        self._genes = genes
+
+    def _make_wheel(self):
+        wheel = WheelOfFortune()
+        genes = self._genes
+        sum_fitness = sum(g.fitness for g in genes)
+        if sum_fitness == 0.0:
+            sum_fitness = 1.0
+        for gene in genes:
+            wheel.add_gene(gene, gene.fitness / sum_fitness)
+        return wheel
+
+
+class WheelOfFortune:
+    def __init__(self):
+        self._items: List[Gene] = []
+        self._weights: List[float] = []
+
+    def add_gene(self, item: Gene, weight: float):
+        self._items.append(item)
+        self._weights.append(weight)
+
+    def pick(self, count: int) -> Iterable[Gene]:
+        return random.choices(self._items, self._weights, k=count)
 
 
 def export_dxf(

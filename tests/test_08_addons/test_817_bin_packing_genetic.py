@@ -78,6 +78,5 @@ def test_recombine_genes():
     assert list(g2[0:7]) == [1.0] * 7
     assert list(g2[7:]) == [0.0] * 13
 
-
 if __name__ == "__main__":
     pytest.main([__file__])
