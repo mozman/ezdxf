@@ -9,7 +9,7 @@ import ezdxf
 from ezdxf.entities import DXFGraphic
 from ezdxf.math import Matrix44, BoundingBox
 from ezdxf.path import Path, make_path, nesting
-from ezdxf.addons import binpacking
+from ezdxf.addons import binpacking as bp
 from ezdxf import colors
 
 DIR = pathlib.Path("~/Desktop/Now/ezdxf/binpacking").expanduser()
@@ -75,8 +75,8 @@ def bundle_items(items: Iterable[DXFGraphic]) -> Iterable[Bundle]:
 
 def get_packer(
     items: Iterable[DXFGraphic], width, height
-) -> binpacking.AbstractPacker:
-    packer = binpacking.FlatPacker()
+) -> bp.AbstractPacker:
+    packer = bp.FlatPacker()
     packer.add_bin("B0", width, height)
     for bundle in bundle_items(items):
         box = bundle.bounding_box
@@ -102,7 +102,7 @@ def main(
     filename,
     bin_width: float,
     bin_height: float,
-    pick=binpacking.PickStrategy.BIGGER_FIRST,
+    pick=bp.PickStrategy.BIGGER_FIRST,
     attempts: int = 1,
 ):
     try:
@@ -115,8 +115,8 @@ def main(
     msp = doc.modelspace()
 
     packer = get_packer(msp, bin_width, bin_height)
-    if pick == binpacking.PickStrategy.SHUFFLE:
-        packer = binpacking.shuffle_pack(packer, attempts)
+    if pick == bp.PickStrategy.SHUFFLE:
+        packer = bp.shuffle_pack(packer, attempts)
     else:
         packer.pack(pick=pick)
     envelope = packer.bins[0]
@@ -152,7 +152,7 @@ def main(
     doc.saveas(filename.replace(".dxf", ".pack.dxf"))
     if DEBUG:
         doc = make_debug_doc()
-        binpacking.export_dxf(doc.modelspace(), packer.bins)
+        bp.export_dxf(doc.modelspace(), packer.bins)
         doc.set_modelspace_vport(height=h, center=(w / 2, h / 2))
         doc.saveas(filename.replace(".dxf", ".debug.dxf"))
 
@@ -193,12 +193,12 @@ if __name__ == "__main__":
             str(DIR / "items.dxf"),
             50,
             55,
-            pick=binpacking.PickStrategy.BIGGER_FIRST,
+            pick=bp.PickStrategy.BIGGER_FIRST,
             attempts=100,
         )
         main(
             str(DIR / "case.dxf"),
             500,
             600,
-            pick=binpacking.PickStrategy.BIGGER_FIRST,
+            pick=bp.PickStrategy.BIGGER_FIRST,
         )

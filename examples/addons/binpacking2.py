@@ -5,7 +5,7 @@ from typing import List
 from pathlib import Path
 import ezdxf
 from ezdxf import colors
-from ezdxf.addons import binpacking
+from ezdxf.addons import binpacking as bp
 
 DIR = Path("~/Desktop/Outbox").expanduser()
 
@@ -29,7 +29,7 @@ ALL_BINS = [
 
 
 def build_packer():
-    packer = binpacking.Packer()
+    packer = bp.Packer()
     packer.add_item("50g [powder 1]", 3.9370, 1.9685, 1.9685, 1)
     packer.add_item("50g [powder 2]", 3.9370, 1.9685, 1.9685, 2)
     packer.add_item("50g [powder 3]", 3.9370, 1.9685, 1.9685, 3)
@@ -51,14 +51,14 @@ def make_doc():
 
 
 def main(filename):
-    bins: List[binpacking.Bin] = []
+    bins: List[bp.Bin] = []
     for box in ALL_BINS:
         packer = build_packer()
         packer.add_bin(*box)
-        packer.pack(binpacking.PickStrategy.BIGGER_FIRST)
+        packer.pack(bp.PickStrategy.BIGGER_FIRST)
         bins.extend(packer.bins)
     doc = make_doc()
-    binpacking.export_dxf(doc.modelspace(), bins, offset=(0, 20, 0))
+    bp.export_dxf(doc.modelspace(), bins, offset=(0, 20, 0))
     doc.saveas(filename)
 
 

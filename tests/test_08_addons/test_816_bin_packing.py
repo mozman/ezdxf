@@ -3,12 +3,12 @@
 import pytest
 import itertools
 import random
-from ezdxf.addons import binpacking
+from ezdxf.addons import binpacking as bp
 
 
 def test_single_bin_single_item():
 
-    packer = binpacking.Packer()
+    packer = bp.Packer()
     box = packer.add_bin("B0", 1, 1, 1)
     packer.add_item("I0", 1, 1, 1, 1)
     packer.pack()
@@ -25,7 +25,7 @@ def test_single_bin_single_item():
     ],
 )
 def test_single_bin_multiple_items(w, h, d):
-    packer = binpacking.Packer()
+    packer = bp.Packer()
     box = packer.add_bin("B0", w, h, d)
     for index in range(max(w, h, d)):
         packer.add_item(f"I{index}", 1, 1, 1, 1)
@@ -35,7 +35,7 @@ def test_single_bin_multiple_items(w, h, d):
 
 
 def test_single_bin_different_sized_items():
-    packer = binpacking.Packer()
+    packer = bp.Packer()
     box = packer.add_bin("B0", 3, 3, 1)
     packer.add_item("I0", 1, 1, 1, 1)
     packer.add_item("I1", 2, 1, 1, 1)
@@ -66,7 +66,7 @@ ALL_BINS = [
 
 @pytest.fixture
 def packer():
-    packer = binpacking.Packer()
+    packer = bp.Packer()
     packer.add_item("50g [powder 1]", 3.9370, 1.9685, 1.9685, 1)
     packer.add_item("50g [powder 2]", 3.9370, 1.9685, 1.9685, 2)
     packer.add_item("50g [powder 3]", 3.9370, 1.9685, 1.9685, 3)
@@ -88,7 +88,7 @@ def pack(packer, box, pick):
 class TestExampleSmallerFirst:
     @staticmethod
     def pack(packer, box):
-        return pack(packer, box, binpacking.PickStrategy.SMALLER_FIRST)
+        return pack(packer, box, bp.PickStrategy.SMALLER_FIRST)
 
     @pytest.mark.parametrize("box", [SMALL_ENVELOPE, LARGE_ENVELOPE, SMALL_BOX])
     def test_small_bins(self, packer, box):
@@ -130,7 +130,7 @@ class TestExampleSmallerFirst:
 class TestExampleBiggerFirst:
     @staticmethod
     def pack(packer, box):
-        return pack(packer, box, binpacking.PickStrategy.BIGGER_FIRST)
+        return pack(packer, box, bp.PickStrategy.BIGGER_FIRST)
 
     @pytest.mark.parametrize("box", [SMALL_ENVELOPE, LARGE_ENVELOPE, SMALL_BOX])
     def test_small_bins(self, packer, box):
@@ -172,8 +172,8 @@ class TestExampleBiggerFirst:
 @pytest.mark.parametrize(
     "item",
     [
-        binpacking.Item([1, 2, 3], 1, 2, 3, 4),
-        binpacking.FlatItem([1, 2, 3], 1, 2, 4),
+        bp.Item([1, 2, 3], 1, 2, 3, 4),
+        bp.FlatItem([1, 2, 3], 1, 2, 4),
     ],
 )
 def test_copy_item(item):
@@ -187,7 +187,7 @@ def test_copy_item(item):
 
 
 def test_copy_box():
-    box = binpacking.Box("NAME", 1, 2, 3, 4)
+    box = bp.Box("NAME", 1, 2, 3, 4)
     box.items = [1, 2, 3]
     box.unfitted_items = [4, 5, 6]
     box2 = box.copy()
@@ -208,13 +208,13 @@ def test_copy_packer(packer):
 
 
 def test_cannot_copy_packed_packer(packer):
-    packer.pack(pick=binpacking.PickStrategy.BIGGER_FIRST)
+    packer.pack(pick=bp.PickStrategy.BIGGER_FIRST)
     with pytest.raises(TypeError):
         packer.copy()
 
 
 def test_cannot_copy_packer_with_non_empty_bins(packer):
-    box = binpacking.Bin(*LARGE_BOX)
+    box = bp.Bin(*LARGE_BOX)
     packer.append_bin(box)
     box.items.append(0)  # type: ignore
     with pytest.raises(TypeError):
@@ -222,33 +222,33 @@ def test_cannot_copy_packer_with_non_empty_bins(packer):
 
 
 def test_cannot_append_bins_to_packed_packer(packer):
-    packer.pack(pick=binpacking.PickStrategy.BIGGER_FIRST)
+    packer.pack(pick=bp.PickStrategy.BIGGER_FIRST)
     with pytest.raises(TypeError):
-        packer.append_bin(binpacking.Bin(*LARGE_BOX))
+        packer.append_bin(bp.Bin(*LARGE_BOX))
 
 
 def test_cannot_append_non_empty_bins(packer):
-    box = binpacking.Bin(*LARGE_BOX)
+    box = bp.Bin(*LARGE_BOX)
     box.items.append(0)  # type: ignore
     with pytest.raises(TypeError):
         packer.append_bin(box)
 
 
 def test_cannot_append_items_to_packed_packer(packer):
-    packer.pack(pick=binpacking.PickStrategy.BIGGER_FIRST)
+    packer.pack(pick=bp.PickStrategy.BIGGER_FIRST)
     with pytest.raises(TypeError):
-        packer.append_item(binpacking.Item(0, 0, 0, 0))
+        packer.append_item(bp.Item(0, 0, 0, 0))
 
 
 def test_random_shuffle_interface(packer):
     packer.add_bin(*LARGE_BOX2)
-    best = binpacking.shuffle_pack(packer, 2)
+    best = bp.shuffle_pack(packer, 2)
     assert best.get_fill_ratio() > 0.0
 
 
 def test_random_shuffle_raise_exception_for_invalid_attempts(packer):
     with pytest.raises(ValueError):
-        binpacking.shuffle_pack(packer, 0)
+        bp.shuffle_pack(packer, 0)
 
 
 class TestSchematicPicker:
@@ -258,7 +258,7 @@ class TestSchematicPicker:
 
     @staticmethod
     def get_picked_items(items, order):
-        return list(binpacking.schematic_picker(items, order))
+        return list(bp.schematic_picker(items, order))
 
     def test_pick_from_front(self, items):
         picked_items = self.get_picked_items(items, itertools.repeat(0))
@@ -287,26 +287,26 @@ class TestSchematicPicker:
 
 class TestGeneticDriver:
     def test_init(self, packer):
-        s = binpacking.GeneticDriver(packer, 100, 1.0)
+        s = bp.GeneticDriver(packer, 100, 1.0)
         assert s.is_executed is False
 
     def test_init_invalid_packer(self, packer):
         """Packer is already packed."""
-        pack(packer, SMALL_BOX, binpacking.PickStrategy.SMALLER_FIRST)
+        pack(packer, SMALL_BOX, bp.PickStrategy.SMALLER_FIRST)
         with pytest.raises(ValueError):
-            binpacking.GeneticDriver(packer, 100, 1.0)
+            bp.GeneticDriver(packer, 100, 1.0)
 
     def test_init_invalid_max_runs(self, packer):
         with pytest.raises(ValueError):
-            binpacking.GeneticDriver(packer, 0, 1.0)
+            bp.GeneticDriver(packer, 0, 1.0)
 
     @pytest.mark.parametrize("fitness", [-0.1, 1.1])
     def test_init_invalid_max_fitness(self, packer, fitness):
         with pytest.raises(ValueError):
-            binpacking.GeneticDriver(packer, 100, fitness)
+            bp.GeneticDriver(packer, 100, fitness)
 
     def test_can_only_run_once(self, packer):
-        s = binpacking.GeneticDriver(packer, 100, 1.0)
+        s = bp.GeneticDriver(packer, 100, 1.0)
         s.execute()
         assert s.is_executed is True
         with pytest.raises(TypeError):
@@ -314,7 +314,7 @@ class TestGeneticDriver:
 
     def test_execution(self, packer):
         packer.add_bin(*MEDIUM_BOX)
-        s = binpacking.GeneticDriver(packer, 10, 1.0)
+        s = bp.GeneticDriver(packer, 10, 1.0)
         s.add_random_genes(20)
         s.execute()
         assert s.generation == 10
