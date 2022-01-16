@@ -1,7 +1,8 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 import pytest
-
+import itertools
+import random
 from ezdxf.addons import binpacking
 
 
@@ -59,7 +60,7 @@ ALL_BINS = [
     MEDIUM_BOX,
     MEDIUM_BOX2,
     LARGE_BOX,
-    LARGE_BOX2
+    LARGE_BOX2,
 ]
 
 
@@ -89,9 +90,7 @@ class TestExampleSmallerFirst:
     def pack(packer, box):
         return pack(packer, box, binpacking.PickStrategy.SMALLER_FIRST)
 
-    @pytest.mark.parametrize("box", [
-        SMALL_ENVELOPE, LARGE_ENVELOPE, SMALL_BOX
-    ])
+    @pytest.mark.parametrize("box", [SMALL_ENVELOPE, LARGE_ENVELOPE, SMALL_BOX])
     def test_small_bins(self, packer, box):
         b0 = self.pack(packer, box)
         assert len(b0.items) == 0
@@ -133,9 +132,7 @@ class TestExampleBiggerFirst:
     def pack(packer, box):
         return pack(packer, box, binpacking.PickStrategy.BIGGER_FIRST)
 
-    @pytest.mark.parametrize("box", [
-        SMALL_ENVELOPE, LARGE_ENVELOPE, SMALL_BOX
-    ])
+    @pytest.mark.parametrize("box", [SMALL_ENVELOPE, LARGE_ENVELOPE, SMALL_BOX])
     def test_small_bins(self, packer, box):
         b0 = self.pack(packer, box)
         assert len(b0.items) == 0
@@ -223,6 +220,40 @@ def test_random_shuffle_interface(packer):
     packer.add_bin(*LARGE_BOX2)
     best = packer.shuffle_pack(2)
     assert best.get_fill_ratio() > 0.0
+
+
+class TestSchematicPicker:
+    @pytest.fixture
+    def items(self):
+        return [0, 1, 2, 3, 4]
+
+    @staticmethod
+    def get_picked_items(items, order):
+        return list(binpacking.schematic_picker(items, order))
+
+    def test_pick_from_front(self, items):
+        picked_items = self.get_picked_items(items, itertools.repeat(0))
+        assert picked_items == [0, 1, 2, 3, 4]
+
+    def test_pick_from_back(self, items):
+        picked_items = self.get_picked_items(items, itertools.repeat(1))
+        assert picked_items == [4, 3, 2, 1, 0]
+
+    def test_random_pick(self, items):
+        picked_items = self.get_picked_items(
+            items, (random.random() for _ in range(5))
+        )
+        assert set(picked_items) == {4, 3, 2, 1, 0}
+
+    def test_invalid_pick_values(self, items):
+        with pytest.raises(ValueError):
+            self.get_picked_items(items, itertools.repeat(2))
+        with pytest.raises(ValueError):
+            self.get_picked_items(items, itertools.repeat(-1))
+
+    def test_not_enough_pick_values(self, items):
+        with pytest.raises(ValueError):
+            self.get_picked_items(items, iter([1, 1, 1]))
 
 
 if __name__ == "__main__":

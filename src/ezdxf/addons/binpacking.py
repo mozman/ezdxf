@@ -23,13 +23,15 @@
 #   - AbstractPacker.pack_by_order(): inter face for genetic algorithm
 #   - DXF exporter for debugging
 
-from typing import Tuple, List, Iterable, TYPE_CHECKING
-from enum import Enum, auto
-from ezdxf.enums import TextEntityAlignment
+from typing import Tuple, List, Iterable, TYPE_CHECKING, Iterator
 import abc
+from enum import Enum, auto
 import copy
+import itertools
 import math
 import random
+
+from ezdxf.enums import TextEntityAlignment
 
 from ezdxf.math import (
     Vec2,
@@ -384,9 +386,10 @@ class AbstractPacker(abc.ABC):
         PICK_STRATEGY[pick](self.bins, self.items)
 
         for box in self.bins:
-            for item in list(self.items):
+            for item in list(self.items):  # shallow copy because: remove()!
                 if self.pack_to_bin(box, item):
                     self.items.remove(item)
+        # unfitted items remain in items
 
     def shuffle_pack(self, attempts: int) -> "AbstractPacker":
         """Random shuffle packing. Returns a new packer, the current packer is
@@ -405,17 +408,48 @@ class AbstractPacker(abc.ABC):
             return self
         return best_packer
 
-    def pack_by_order(
-        self, item_order: Iterable[float], bin_order: Iterable[float] = None
+    def schematic_pack(
+        self, item_schema: Iterator[float], bin_schema: Iterator[float] = None
     ) -> None:
+        # interface for genetic algorithm
+        self._init_state = False
+        bins = list(self.bins)
+        items = list(self.items)
         # fixed ascending base order
-        _smaller_first(self.bins, self.items)
-        pass
+        _smaller_first(bins, items)
+        if bin_schema is None:
+            bin_schema = itertools.repeat(1.0)  # bigger first
+        for box in schematic_picker(bins, bin_schema):
+            for item in schematic_picker(items, item_schema):
+                if self.pack_to_bin(box, item):
+                    self.items.remove(item)
+        # unfitted items remain in items
 
     @staticmethod
     @abc.abstractmethod
     def pack_to_bin(box: Bin, item: Item) -> bool:
         ...
+
+
+def schematic_picker(items: List, schema: Iterator[float]) -> Iterator:
+    """Yields all items in the order defined by the schema.
+
+    The pick values have to be in the range [0, 1] and determine the
+    location from where to pick the next item as: len(items) * pick_value.
+    Each picked item will be removed from the items list.
+
+    """
+    while len(items):
+        try:
+            value = next(schema)
+        except StopIteration:
+            raise ValueError("not enough pick values")
+        if 0.0 <= value <= 1.0:
+            pos = round(value * (len(items) - 1))
+        else:
+            raise ValueError("pick values have to be in range [0, 1]")
+        item = items.pop(pos)
+        yield item
 
 
 class Packer(AbstractPacker):
