@@ -3,9 +3,11 @@
 # This is the example provided by the py3dbp package:
 from typing import List
 from pathlib import Path
+import ezdxf
+from ezdxf import colors
 from ezdxf.addons import binpacking
 
-DIR = Path("~/Desktop/Now/ezdxf/binpacking").expanduser()
+DIR = Path("~/Desktop/Outbox").expanduser()
 
 SMALL_ENVELOPE = ("small-envelope", 11.5, 6.125, 0.25, 10)
 LARGE_ENVELOPE = ("large-envelope", 15.0, 12.0, 0.75, 15)
@@ -22,7 +24,7 @@ ALL_BINS = [
     MEDIUM_BOX,
     MEDIUM_BOX2,
     LARGE_BOX,
-    LARGE_BOX2
+    LARGE_BOX2,
 ]
 
 
@@ -40,6 +42,14 @@ def build_packer():
     return packer
 
 
+def make_doc():
+    doc = ezdxf.new()
+    doc.layers.add("FRAME", color=colors.YELLOW)
+    doc.layers.add("ITEMS")
+    doc.layers.add("TEXT")
+    return doc
+
+
 def main(filename):
     bins: List[binpacking.Bin] = []
     for box in ALL_BINS:
@@ -47,9 +57,10 @@ def main(filename):
         packer.add_bin(*box)
         packer.pack(binpacking.PickStrategy.BIGGER_FIRST)
         bins.extend(packer.bins)
-    doc = binpacking.export_dxf(bins, offset=(0, 20, 0))
+    doc = make_doc()
+    binpacking.export_dxf(doc.modelspace(), bins, offset=(0, 20, 0))
     doc.saveas(filename)
 
 
-if __name__ == '__main__':
-    main(DIR / "example.dxf")
+if __name__ == "__main__":
+    main(DIR / "py3dbp_example.dxf")

@@ -42,7 +42,7 @@ from ezdxf.math import (
 )
 
 if TYPE_CHECKING:
-    from ezdxf.document import Drawing
+    from ezdxf.eztypes import GenericLayoutType
 
 __all__ = [
     "Item",
@@ -379,8 +379,7 @@ class AbstractPacker(abc.ABC):
         self,
         pick=PickStrategy.BIGGER_FIRST,
     ):
-        """Pack items into bins. Distributes all items across all bins.
-        """
+        """Pack items into bins. Distributes all items across all bins."""
         self._init_state = False
         PICK_STRATEGY[pick](self.bins, self.items)
 
@@ -522,34 +521,29 @@ class FlatPacker(AbstractPacker):
         return False
 
 
-def export_dxf(bins: List[Bin], offset: Vertex = (1, 0, 0)) -> "Drawing":
-    import ezdxf
+def export_dxf(
+    layout: "GenericLayoutType", bins: List[Bin], offset: Vertex = (1, 0, 0)
+) -> None:
     from ezdxf import colors
 
-    doc = ezdxf.new()
-    doc.layers.add("FRAME", color=colors.YELLOW)
-    doc.layers.add("ITEMS")
-    doc.layers.add("TEXT")
-    msp = doc.modelspace()
     offset_vec = Vec3(offset)
     start = Vec3()
     index = 0
     rgb = (colors.RED, colors.GREEN, colors.BLUE, colors.MAGENTA, colors.CYAN)
     for box in bins:
         m = Matrix44.translate(start.x, start.y, start.z)
-        _add_frame(msp, box, "FRAME", m)
+        _add_frame(layout, box, "FRAME", m)
         for item in box.items:
-            _add_mesh(msp, item, "ITEMS", rgb[index], m)
+            _add_mesh(layout, item, "ITEMS", rgb[index], m)
             index += 1
             if index >= len(rgb):
                 index = 0
         start += offset_vec
-    return doc
 
 
-def _add_frame(msp, box: Bin, layer: str, m: Matrix44):
+def _add_frame(layout: "GenericLayoutType", box: Bin, layer: str, m: Matrix44):
     def add_line(v1, v2):
-        line = msp.add_line(v1, v2, dxfattribs=attribs)
+        line = layout.add_line(v1, v2, dxfattribs=attribs)
         line.transform(m)
 
     attribs = {"layer": layer}
@@ -570,12 +564,14 @@ def _add_frame(msp, box: Bin, layer: str, m: Matrix44):
     for x, y in corners[:-1]:
         add_line((x, y, z0), (x, y, z1))
 
-    text = msp.add_text(box.name, height=0.25, dxfattribs=attribs)
+    text = layout.add_text(box.name, height=0.25, dxfattribs=attribs)
     text.set_placement((x0 + 0.25, y1 - 0.5, z1))
     text.transform(m)
 
 
-def _add_mesh(msp, item: Item, layer: str, color: int, m: Matrix44):
+def _add_mesh(
+    layout: "GenericLayoutType", item: Item, layer: str, color: int, m: Matrix44
+):
     from ezdxf.render.forms import cube
 
     attribs = {
@@ -587,8 +583,8 @@ def _add_mesh(msp, item: Item, layer: str, color: int, m: Matrix44):
     mesh.scale(sx, sy, sz)
     x, y, z = item.position
     mesh.translate(x, y, z)
-    mesh.render_polyface(msp, attribs, matrix=m)
-    text = msp.add_text(
+    mesh.render_polyface(layout, attribs, matrix=m)
+    text = layout.add_text(
         str(item.payload), height=0.25, dxfattribs={"layer": "TEXT"}
     )
     if sy > sx:

@@ -88,6 +88,14 @@ def add_bbox(msp, box: BoundingBox, color: int):
     )
 
 
+def make_debug_doc():
+    doc = ezdxf.new()
+    doc.layers.add("FRAME", color=colors.YELLOW)
+    doc.layers.add("ITEMS")
+    doc.layers.add("TEXT")
+    return doc
+
+
 def main(
     filename,
     bin_width: float,
@@ -137,7 +145,8 @@ def main(
     doc.set_modelspace_vport(height=h, center=(w / 2, h / 2))
     doc.saveas(filename.replace(".dxf", ".pack.dxf"))
     if DEBUG:
-        doc = binpacking.export_dxf(packer.bins)
+        doc = make_debug_doc()
+        binpacking.export_dxf(doc.modelspace(), packer.bins)
         doc.set_modelspace_vport(height=h, center=(w / 2, h / 2))
         doc.saveas(filename.replace(".dxf", ".debug.dxf"))
 
