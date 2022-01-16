@@ -285,28 +285,28 @@ class TestSchematicPicker:
             self.get_picked_items(items, iter([1, 1, 1]))
 
 
-class TestGeneticSolver:
+class TestGeneticDriver:
     def test_init(self, packer):
-        s = binpacking.GeneticSolver(packer, 100, 1.0)
+        s = binpacking.GeneticDriver(packer, 100, 1.0)
         assert s.is_executed is False
 
     def test_init_invalid_packer(self, packer):
         """Packer is already packed."""
         pack(packer, SMALL_BOX, binpacking.PickStrategy.SMALLER_FIRST)
         with pytest.raises(ValueError):
-            binpacking.GeneticSolver(packer, 100, 1.0)
+            binpacking.GeneticDriver(packer, 100, 1.0)
 
     def test_init_invalid_max_runs(self, packer):
         with pytest.raises(ValueError):
-            binpacking.GeneticSolver(packer, 0, 1.0)
+            binpacking.GeneticDriver(packer, 0, 1.0)
 
     @pytest.mark.parametrize("fitness", [-0.1, 1.1])
     def test_init_invalid_max_fitness(self, packer, fitness):
         with pytest.raises(ValueError):
-            binpacking.GeneticSolver(packer, 100, fitness)
+            binpacking.GeneticDriver(packer, 100, fitness)
 
     def test_can_only_run_once(self, packer):
-        s = binpacking.GeneticSolver(packer, 100, 1.0)
+        s = binpacking.GeneticDriver(packer, 100, 1.0)
         s.execute()
         assert s.is_executed is True
         with pytest.raises(TypeError):
@@ -314,10 +314,10 @@ class TestGeneticSolver:
 
     def test_execution(self, packer):
         packer.add_bin(*MEDIUM_BOX)
-        s = binpacking.GeneticSolver(packer, 10, 1.0)
+        s = binpacking.GeneticDriver(packer, 10, 1.0)
         s.add_random_genes(20)
         s.execute()
-        assert s.run == 9
+        assert s.generation == 10
         assert s.best_fitness > 0.1
         assert len(s.best_packer.bins[0].items) > 1
 

@@ -670,11 +670,11 @@ def recombine_genes(gene1: Gene, gene2: Gene, index: int) -> None:
     gene2.replace_tail(part1)
 
 
-class GeneticSolver:
+class GeneticDriver:
     def __init__(
         self,
         packer: AbstractPacker,
-        max_runs: int,
+        max_generations: int,
         max_fitness: float,
         crossover_rate: float = 0.70,
         mutation_rate: float = 0.001,
@@ -682,9 +682,9 @@ class GeneticSolver:
         if max_fitness > 1.0 or max_fitness < 0.0:
             raise ValueError("max_fitness not in range [0, 1]")
         self._max_fitness = float(max_fitness)
-        if max_runs < 1:
+        if max_generations < 1:
             raise ValueError("max_runs < 1")
-        self._max_runs = int(max_runs)
+        self._max_generations = int(max_generations)
         if packer.is_packed:
             raise ValueError("packer is already packed")
         self._packer = packer
@@ -695,11 +695,11 @@ class GeneticSolver:
         self.best_fitness: float = 0.0
         self.best_gene = Gene(0)
         self.best_packer = packer
-        self.run: int = 0
+        self.generation: int = 0
 
     @property
     def is_executed(self) -> bool:
-        return bool(self.run)
+        return bool(self.generation)
 
     def add_gene(self, gene: Gene):
         if not self.is_executed:
@@ -725,8 +725,8 @@ class GeneticSolver:
             raise TypeError("can only run once")
         t0 = time.perf_counter()
         start_time = t0
-        for run in range(self._max_runs):
-            self.run = run
+        for generation in range(self._max_generations):
+            self.generation = generation + 1
             self._measure_fitness()
             if self.best_fitness >= self._max_fitness:
                 break
@@ -734,7 +734,8 @@ class GeneticSolver:
             if start_time - t1 > max_time:
                 break
             if feedback and t1 - t0 > interval:
-                feedback()
+                if feedback():  # stop if feedback() returns True
+                    return
                 t0 = t1
             self._selection()
 
