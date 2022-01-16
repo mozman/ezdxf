@@ -657,13 +657,8 @@ class Gene:
         self._data[index] = 1.0 - self._data[index]  # flip pick location
         self.taint()
 
-    def replace_back(self, part: Sequence) -> None:
+    def replace_tail(self, part: Sequence) -> None:
         self._data[-len(part) :] = _to_list(part)
-        self._check_valid_data()
-        self.taint()
-
-    def replace_front(self, part: Sequence) -> None:
-        self._data[: len(part)] = _to_list(part)
         self._check_valid_data()
         self.taint()
 
@@ -671,8 +666,8 @@ class Gene:
 def recombine_genes(gene1: Gene, gene2: Gene, index: int) -> None:
     part1 = gene1[index:]
     part2 = gene2[index:]
-    gene1.replace_back(part2)
-    gene2.replace_back(part1)
+    gene1.replace_tail(part2)
+    gene2.replace_tail(part1)
 
 
 class GeneticSolver:

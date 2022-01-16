@@ -47,16 +47,9 @@ class TestGene:
         assert len(g) == 20
         assert len(set(g)) > 10
 
-    def test_replace_front(self):
+    def test_replace_tail(self):
         g = binpacking.Gene(20)
-        g.replace_front([0.1, 0.2, 0.3])
-        assert len(g) == 20
-        assert g[0:3] == pytest.approx([0.1, 0.2, 0.3])
-        assert sum(g) == pytest.approx(0.6)
-
-    def test_replace_back(self):
-        g = binpacking.Gene(20)
-        g.replace_back([0.1, 0.2, 0.3])
+        g.replace_tail([0.1, 0.2, 0.3])
         assert len(g) == 20
         assert g[-3:] == pytest.approx([0.1, 0.2, 0.3])
         assert sum(g) == pytest.approx(0.6)
@@ -77,6 +70,7 @@ def test_recombine_genes():
     assert list(g1[7:]) == [1.0] * 13
     assert list(g2[0:7]) == [1.0] * 7
     assert list(g2[7:]) == [0.0] * 13
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
