@@ -30,7 +30,6 @@ from typing import (
     Iterator,
     TypeVar,
     Sequence,
-    Dict,
     Optional,
     Callable,
 )
@@ -117,19 +116,7 @@ class Item:
         self.weight = float(weight)
         self._rotation_type = RotationType.WHD
         self._position = START_POSITION
-        self._bbox: AbstractBoundingBox = BoundingBox()
-        self._tainted_bbox = True
-
-    def copy(self):
-        # All copies have a reference to the same payload
-        return copy.copy(self)  # shallow copy
-
-    def get_volume(self):
-        return self.width * self.height * self.depth
-
-    def _update_bbox(self) -> None:
-        v1 = Vec3(self._position)
-        self._bbox = BoundingBox([v1, v1 + Vec3(self.get_dimension())])
+        self._bbox: Optional[AbstractBoundingBox] = None
 
     def __str__(self):
         return (
@@ -138,12 +125,22 @@ class Item:
             f"rt({self.rotation_type}) vol({self.get_volume()})"
         )
 
+    def copy(self):
+        # All copies have a reference to the same payload
+        return copy.copy(self)  # shallow copy
+
     @property
     def bbox(self) -> AbstractBoundingBox:
-        if self._tainted_bbox:
+        if self._bbox is None:
             self._update_bbox()
-            self._tainted_bbox = False
-        return self._bbox
+        return self._bbox  # type: ignore
+
+    def _update_bbox(self) -> None:
+        v1 = Vec3(self._position)
+        self._bbox = BoundingBox([v1, v1 + Vec3(self.get_dimension())])
+
+    def _taint(self):
+        self._bbox = None
 
     @property
     def rotation_type(self) -> RotationType:
@@ -152,7 +149,7 @@ class Item:
     @rotation_type.setter
     def rotation_type(self, value: RotationType) -> None:
         self._rotation_type = value
-        self._tainted_bbox = True
+        self._taint()
 
     @property
     def position(self) -> Tuple[float, float, float]:
@@ -161,7 +158,10 @@ class Item:
     @position.setter
     def position(self, value: Tuple[float, float, float]) -> None:
         self._position = value
-        self._tainted_bbox = True
+        self._taint()
+
+    def get_volume(self):
+        return self.width * self.height * self.depth
 
     def get_dimension(self) -> Tuple[float, float, float]:
         rt = self.rotation_type
