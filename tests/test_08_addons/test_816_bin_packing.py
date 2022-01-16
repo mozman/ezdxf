@@ -312,6 +312,15 @@ class TestGeneticSolver:
         with pytest.raises(TypeError):
             s.execute()
 
+    def test_execution(self, packer):
+        packer.add_bin(*MEDIUM_BOX)
+        s = binpacking.GeneticSolver(packer, 10, 1.0)
+        s.add_random_genes(20)
+        s.execute()
+        assert s.run == 9
+        assert s.best_fitness > 0.1
+        assert len(s.best_packer.bins[0].items) > 1
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

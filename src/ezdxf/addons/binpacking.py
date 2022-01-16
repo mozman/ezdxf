@@ -627,7 +627,12 @@ class Gene:
         return self._data == other._data
 
     def __str__(self):
-        return str([round(v, 4) for v in self._data])
+        fitness = ", fitness=None"
+        if fitness is None:
+            fitness = ", fitness=None"
+        else:
+            fitness = f", fitness={self.fitness:.4f}"
+        return f"{str([round(v, 4) for v in self._data])}{fitness}"
 
     def __len__(self):
         return len(self._data)
@@ -688,6 +693,7 @@ class GeneticSolver:
         if packer.is_packed:
             raise ValueError("packer is already packed")
         self._packer = packer
+        self._required_gene_length = len(packer.items)
         self._genes: List[Gene] = []
         self._crossover_rate = float(crossover_rate)
         self._mutation_rate = float(mutation_rate)
@@ -702,9 +708,17 @@ class GeneticSolver:
 
     def add_gene(self, gene: Gene):
         if not self.is_executed:
+            if len(gene) != self._required_gene_length:
+                raise ValueError(
+                    f"invalid gene length, requires {self._required_gene_length}"
+                )
             self._genes.append(gene)
         else:
             raise TypeError("already executed")
+
+    def add_random_genes(self, count: int):
+        for _ in range(count):
+            self.add_gene(Gene.random(self._required_gene_length))
 
     def execute(
         self,
@@ -733,9 +747,9 @@ class GeneticSolver:
     def _measure_fitness(self):
         for gene in self._genes:
             if gene.fitness is not None:
-                return
+                continue
             p0 = self._packer.copy()
-            p0.schematic_pack(gene)
+            p0.schematic_pack(iter(gene))
             fill_ratio = p0.get_fill_ratio()
             gene.fitness = fill_ratio
             if fill_ratio > self.best_fitness:
