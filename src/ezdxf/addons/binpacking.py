@@ -411,23 +411,6 @@ class AbstractPacker(abc.ABC):
                     self.items.remove(item)
         # unfitted items remain in self.items
 
-    def shuffle_pack(self, attempts: int) -> "AbstractPacker":
-        """Random shuffle packing. Returns a new packer, the current packer is
-        unchanged.
-        """
-        best_ratio = 0.0
-        best_packer = None
-        for _ in range(attempts):
-            packer = self.copy()
-            packer.pack(PickStrategy.SHUFFLE)
-            new_ratio = packer.get_fill_ratio()
-            if new_ratio > best_ratio:
-                best_ratio = new_ratio
-                best_packer = packer
-        if best_packer is None:
-            return self
-        return best_packer
-
     def schematic_pack(
         self, item_schema: Iterator[float], bin_schema: Iterator[float] = None
     ) -> None:
@@ -490,10 +473,9 @@ def schematic_picker(
         except StopIteration:
             raise ValueError("not enough pick values")
         try:
-            item = items.pop(round(abs(value) * (len(items) - 1)))
+            yield items.pop(round(abs(value) * (len(items) - 1)))
         except IndexError:
             raise ValueError("pick values have to be in range [0, 1]")
-        yield item
 
 
 class Packer(AbstractPacker):
