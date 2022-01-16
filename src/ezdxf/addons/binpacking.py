@@ -765,7 +765,7 @@ class GeneticSolver:
             gene1 = gene1.copy()
             gene2 = gene2.copy()
             if random.random() < self._crossover_rate:
-                location = random.randrange(0, len(gene1))
+                location = random.randrange(0, self._required_gene_length)
                 recombine_genes(gene1, gene2, location)
             gene1.mutate(self._mutation_rate)
             gene2.mutate(self._mutation_rate)
