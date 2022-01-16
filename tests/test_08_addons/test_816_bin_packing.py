@@ -44,17 +44,28 @@ def test_single_bin_different_sized_items():
     assert len(box.unfitted_items) == 0
 
 
+SMALL_ENVELOPE = ("small-envelope", 11.5, 6.125, 0.25, 10)
+LARGE_ENVELOPE = ("large-envelope", 15.0, 12.0, 0.75, 15)
+SMALL_BOX = ("small-box", 8.625, 5.375, 1.625, 70.0)
+MEDIUM_BOX = ("medium-box", 11.0, 8.5, 5.5, 70.0)
+MEDIUM_BOX2 = ("medium-box-2", 13.625, 11.875, 3.375, 70.0)
+LARGE_BOX = ("large-box", 12.0, 12.0, 5.5, 70.0)
+LARGE_BOX2 = ("large-box-2", 23.6875, 11.75, 3.0, 70.0)
+
+ALL_BINS = [
+    SMALL_ENVELOPE,
+    LARGE_ENVELOPE,
+    SMALL_BOX,
+    MEDIUM_BOX,
+    MEDIUM_BOX2,
+    LARGE_BOX,
+    LARGE_BOX2
+]
+
+
 @pytest.fixture
 def packer():
     packer = binpacking.Packer()
-    packer.add_bin("small-envelope", 11.5, 6.125, 0.25, 10)
-    packer.add_bin("large-envelope", 15.0, 12.0, 0.75, 15)
-    packer.add_bin("small-box", 8.625, 5.375, 1.625, 70.0)
-    packer.add_bin("medium-box", 11.0, 8.5, 5.5, 70.0)
-    packer.add_bin("medium-2-box", 13.625, 11.875, 3.375, 70.0)
-    packer.add_bin("large-box", 12.0, 12.0, 5.5, 70.0)
-    packer.add_bin("large-2-box", 23.6875, 11.75, 3.0, 70.0)
-
     packer.add_item("50g [powder 1]", 3.9370, 1.9685, 1.9685, 1)
     packer.add_item("50g [powder 2]", 3.9370, 1.9685, 1.9685, 2)
     packer.add_item("50g [powder 3]", 3.9370, 1.9685, 1.9685, 3)
@@ -67,72 +78,98 @@ def packer():
     return packer
 
 
-def test_example_smaller_first(packer):
-    packer.pack(pick=binpacking.PickStrategy.SMALLER_FIRST)
-    b0, b1, b2, b3, b4, b5, b6 = packer.bins
-    assert len(b0.items) == 0
-    assert b0.get_total_weight() == 0
-    assert b0.get_total_volume() == 0.0
-    assert b0.get_fill_ratio() == 0.0
-
-    assert len(b1.items) == 0
-    assert b1.get_total_weight() == 0
-
-    assert len(b2.items) == 0
-    assert b2.get_total_weight() == 0
-
-    assert len(b3.items) == 6
-    assert b3.get_total_weight() == 21
-    assert b3.get_total_volume() == pytest.approx(228.83766732374997)
-    assert b3.get_fill_ratio() == pytest.approx(0.44499303320126393)
-
-    assert len(b4.items) == 6
-    assert b4.get_total_weight() == 21
-    assert b4.get_total_volume() == pytest.approx(228.83766732374997)
-    assert b4.get_fill_ratio() == pytest.approx(0.4190671376138204)
-
-    assert len(b5.items) == 9
-    assert b5.get_total_weight() == 45
-    assert b5.get_total_volume() == pytest.approx(411.90780118274995)
-    assert b5.get_fill_ratio() == pytest.approx(0.5200856075539773)
-
-    assert len(b6.items) == 9
-    assert b6.get_total_weight() == 45
-    assert b6.get_total_volume() == pytest.approx(411.90780118274995)
-    assert b6.get_fill_ratio() == pytest.approx(0.4933119870449671)
+def pack(packer, box, pick):
+    packer.add_bin(*box)
+    packer.pack(pick)
+    return packer.bins[0]
 
 
-def test_example_bigger_first(packer):
-    packer.pack(pick=binpacking.PickStrategy.BIGGER_FIRST)
-    b0, b1, b2, b3, b4, b5, b6 = packer.bins
-    assert len(b0.items) == 9
-    assert b0.get_total_weight() == 45
-    assert b0.get_total_volume() == pytest.approx(411.90780118274995)
-    assert b0.get_fill_ratio() == pytest.approx(0.4933119870449671)
+class TestExampleSmallerFirst:
+    @staticmethod
+    def pack(packer, box):
+        return pack(packer, box, binpacking.PickStrategy.SMALLER_FIRST)
 
-    assert len(b1.items) == 9
-    assert b1.get_total_weight() == 45
-    assert b1.get_total_volume() == pytest.approx(411.90780118274995)
-    assert b1.get_fill_ratio() == pytest.approx(0.5200856075539773)
+    @pytest.mark.parametrize("box", [
+        SMALL_ENVELOPE, LARGE_ENVELOPE, SMALL_BOX
+    ])
+    def test_small_bins(self, packer, box):
+        b0 = self.pack(packer, box)
+        assert len(b0.items) == 0
+        assert b0.get_total_weight() == 0
+        assert b0.get_total_volume() == 0.0
+        assert b0.get_fill_ratio() == 0.0
 
-    assert len(b2.items) == 6
-    assert b2.get_total_weight() == 25
-    assert b2.get_total_volume() == pytest.approx(274.6052007884999)
-    assert b2.get_fill_ratio() == pytest.approx(0.5028805651365844)
+    def test_medium_box(self, packer):
+        b0 = self.pack(packer, MEDIUM_BOX)
+        assert len(b0.items) == 6
+        assert b0.get_total_weight() == 21
+        assert b0.get_total_volume() == pytest.approx(228.83766732374997)
+        assert b0.get_fill_ratio() == pytest.approx(0.44499303320126393)
 
-    assert len(b3.items) == 5
-    assert b3.get_total_weight() == 30
-    assert b3.get_total_volume() == pytest.approx(305.116889765)
-    assert b3.get_fill_ratio() == pytest.approx(0.593324044268352)
+    def test_medium_box2(self, packer):
+        b0 = self.pack(packer, MEDIUM_BOX2)
+        assert len(b0.items) == 6
+        assert b0.get_total_weight() == 21
+        assert b0.get_total_volume() == pytest.approx(228.83766732374997)
+        assert b0.get_fill_ratio() == pytest.approx(0.4190671376138204)
 
-    assert len(b4.items) == 0
-    assert b4.get_total_weight() == 0
+    def test_large_box(self, packer):
+        b0 = self.pack(packer, LARGE_BOX)
+        assert len(b0.items) == 9
+        assert b0.get_total_weight() == 45
+        assert b0.get_total_volume() == pytest.approx(411.90780118274995)
+        assert b0.get_fill_ratio() == pytest.approx(0.5200856075539773)
 
-    assert len(b5.items) == 0
-    assert b5.get_total_weight() == 0
+    def test_large_box2(self, packer):
+        b0 = self.pack(packer, LARGE_BOX2)
+        assert len(b0.items) == 9
+        assert b0.get_total_weight() == 45
+        assert b0.get_total_volume() == pytest.approx(411.90780118274995)
+        assert b0.get_fill_ratio() == pytest.approx(0.4933119870449671)
 
-    assert len(b6.items) == 0
-    assert b6.get_total_weight() == 0
+
+class TestExampleBiggerFirst:
+    @staticmethod
+    def pack(packer, box):
+        return pack(packer, box, binpacking.PickStrategy.BIGGER_FIRST)
+
+    @pytest.mark.parametrize("box", [
+        SMALL_ENVELOPE, LARGE_ENVELOPE, SMALL_BOX
+    ])
+    def test_small_bins(self, packer, box):
+        b0 = self.pack(packer, box)
+        assert len(b0.items) == 0
+        assert b0.get_total_weight() == 0
+        assert b0.get_total_volume() == 0.0
+        assert b0.get_fill_ratio() == 0.0
+
+    def test_medium_box(self, packer):
+        b0 = self.pack(packer, MEDIUM_BOX)
+        assert len(b0.items) == 5
+        assert b0.get_total_weight() == 30
+        assert b0.get_total_volume() == pytest.approx(305.116889765)
+        assert b0.get_fill_ratio() == pytest.approx(0.593324044268352)
+
+    def test_medium_box2(self, packer):
+        b0 = self.pack(packer, MEDIUM_BOX2)
+        assert len(b0.items) == 6
+        assert b0.get_total_weight() == 25
+        assert b0.get_total_volume() == pytest.approx(274.6052007884999)
+        assert b0.get_fill_ratio() == pytest.approx(0.5028805651365844)
+
+    def test_large_box(self, packer):
+        b0 = self.pack(packer, LARGE_BOX)
+        assert len(b0.items) == 9
+        assert b0.get_total_weight() == 45
+        assert b0.get_total_volume() == pytest.approx(411.90780118274995)
+        assert b0.get_fill_ratio() == pytest.approx(0.5200856075539773)
+
+    def test_large_box2(self, packer):
+        b0 = self.pack(packer, LARGE_BOX2)
+        assert len(b0.items) == 9
+        assert b0.get_total_weight() == 45
+        assert b0.get_total_volume() == pytest.approx(411.90780118274995)
+        assert b0.get_fill_ratio() == pytest.approx(0.4933119870449671)
 
 
 @pytest.mark.parametrize(
@@ -183,6 +220,7 @@ def test_can_not_copy_packed_packer(packer):
 
 
 def test_random_shuffle_interface(packer):
+    packer.add_bin(*LARGE_BOX2)
     best = packer.shuffle_pack(2)
     assert best.get_fill_ratio() > 0.0
 

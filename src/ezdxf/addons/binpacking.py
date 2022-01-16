@@ -340,64 +340,21 @@ class AbstractPacker(abc.ABC):
         packer.items = [item.copy() for item in self.items]
         return packer
 
+    @property
+    def is_packed(self) -> bool:
+        return not self._init_state
+
     def __str__(self) -> str:
-        return f"{self.__class__.__name__} with {len(self.bins)} bins"
+        fill = ""
+        if self.is_packed:
+            fill = f", fill ratio: {self.get_fill_ratio()}"
+        return f"{self.__class__.__name__}, {len(self.bins)} bins{fill}"
 
     def append_bin(self, bin_: Bin) -> None:
         self.bins.append(bin_)
 
     def append_item(self, item: Item) -> None:
         self.items.append(item)
-
-    def pack(
-        self,
-        *,
-        pick=PickStrategy.BIGGER_FIRST,
-        distribute=False,
-    ):
-        """Pack items into bins.
-
-        Args:
-            pick: pick strategy
-            distribute: ``True`` for distributing all items across all bins,
-                ``False`` restart distributing items for each bin
-
-        """
-        self._init_state = False
-        PICK_STRATEGY[pick](self.bins, self.items)
-
-        for box in self.bins:
-            fitted_items: List[Item] = []
-            for item in self.items:
-                # Add a copy to bins, otherwise items share state across bins!
-                # The item would have the same location and rotation of the last
-                # placement in all bins.
-                if self.pack_to_bin(box, item.copy()):
-                    fitted_items.append(item)
-
-            if distribute:
-                for item in fitted_items:
-                    self.items.remove(item)
-
-    def shuffle_pack(self, attempts: int) -> "AbstractPacker":
-        """Random shuffle packing. Returns a new packer, the current packer is
-        unchanged.
-        """
-        best_ratio = 0.0
-        best_packer = None
-        for _ in range(attempts):
-            packer = self.copy()
-            packer.pack(
-                pick=PickStrategy.SHUFFLE,
-                distribute=True,
-            )
-            new_ratio = packer.get_fill_ratio()
-            if new_ratio > best_ratio:
-                best_ratio = new_ratio
-                best_packer = packer
-        if best_packer is None:
-            return self
-        return best_packer
 
     def get_fill_ratio(self) -> float:
         """Return the fill ratio of all bins."""
@@ -417,6 +374,44 @@ class AbstractPacker(abc.ABC):
     def get_total_volume(self) -> float:
         """Returns the total volume of all fitted items in all bins."""
         return sum(box.get_total_volume() for box in self.bins)
+
+    def pack(
+        self,
+        pick=PickStrategy.BIGGER_FIRST,
+    ):
+        """Pack items into bins. Distributes all items across all bins.
+        """
+        self._init_state = False
+        PICK_STRATEGY[pick](self.bins, self.items)
+
+        for box in self.bins:
+            for item in list(self.items):
+                if self.pack_to_bin(box, item):
+                    self.items.remove(item)
+
+    def shuffle_pack(self, attempts: int) -> "AbstractPacker":
+        """Random shuffle packing. Returns a new packer, the current packer is
+        unchanged.
+        """
+        best_ratio = 0.0
+        best_packer = None
+        for _ in range(attempts):
+            packer = self.copy()
+            packer.pack(PickStrategy.SHUFFLE)
+            new_ratio = packer.get_fill_ratio()
+            if new_ratio > best_ratio:
+                best_ratio = new_ratio
+                best_packer = packer
+        if best_packer is None:
+            return self
+        return best_packer
+
+    def pack_by_order(
+        self, item_order: Iterable[float], bin_order: Iterable[float] = None
+    ) -> None:
+        # fixed ascending base order
+        _smaller_first(self.bins, self.items)
+        pass
 
     @staticmethod
     @abc.abstractmethod
@@ -527,7 +522,7 @@ class FlatPacker(AbstractPacker):
         return False
 
 
-def export_dxf(packer: AbstractPacker, offset: Vertex = (1, 0, 0)) -> "Drawing":
+def export_dxf(bins: List[Bin], offset: Vertex = (1, 0, 0)) -> "Drawing":
     import ezdxf
     from ezdxf import colors
 
@@ -540,7 +535,7 @@ def export_dxf(packer: AbstractPacker, offset: Vertex = (1, 0, 0)) -> "Drawing":
     start = Vec3()
     index = 0
     rgb = (colors.RED, colors.GREEN, colors.BLUE, colors.MAGENTA, colors.CYAN)
-    for box in packer.bins:
+    for box in bins:
         m = Matrix44.translate(start.x, start.y, start.z)
         _add_frame(msp, box, "FRAME", m)
         for item in box.items:

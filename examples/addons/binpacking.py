@@ -10,7 +10,7 @@ from ezdxf.path import Path, make_path, nesting
 from ezdxf.addons import binpacking
 from ezdxf import colors
 
-DIR = pathlib.Path("~/Desktop/Outbox").expanduser() / "Now" / "ezdxf"
+DIR = pathlib.Path("~/Desktop/Now/ezdxf/binpacking").expanduser()
 
 DEBUG = True
 
@@ -137,7 +137,7 @@ def main(
     doc.set_modelspace_vport(height=h, center=(w / 2, h / 2))
     doc.saveas(filename.replace(".dxf", ".pack.dxf"))
     if DEBUG:
-        doc = binpacking.export_dxf(packer)
+        doc = binpacking.export_dxf(packer.bins)
         doc.set_modelspace_vport(height=h, center=(w / 2, h / 2))
         doc.saveas(filename.replace(".dxf", ".debug.dxf"))
 
@@ -146,14 +146,14 @@ if __name__ == "__main__":
     # PickStrategy.BIGGER_FIRST is the best strategy
     # PickStrategy.SMALLER_FIRST is often very bad!
     main(
-        DIR / "items.dxf",
+        str(DIR / "items.dxf"),
         50,
         55,
         pick=binpacking.PickStrategy.BIGGER_FIRST,
         attempts=100,
     )
     main(
-        DIR / "case.dxf",
+        str(DIR / "case.dxf"),
         500,
         600,
         pick=binpacking.PickStrategy.BIGGER_FIRST,
