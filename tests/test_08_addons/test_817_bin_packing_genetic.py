@@ -7,28 +7,28 @@ from ezdxf.addons import binpacking as bp
 
 class TestGene:
     def test_init_default(self):
-        g = bp.Gene(20)
-        assert len(g) == 20
-        assert all(v == 0.0 for v in g) is True
+        dna = bp.DNA(20)
+        assert len(dna) == 20
+        assert all(v == 0.0 for v in dna) is True
 
     def test_init_value(self):
-        g = bp.Gene(20, 1.0)
-        assert all(v == 1.0 for v in g) is True
+        dna = bp.DNA(20, 1.0)
+        assert all(v == 1.0 for v in dna) is True
 
     @pytest.mark.parametrize("value", [-0.1, 1.1])
     def test_init_value_is_valid(self, value):
         with pytest.raises(ValueError):
-            bp.Gene(20, value)
+            bp.DNA(20, value)
 
     def test_iter(self):
-        g = bp.Gene(20)
-        assert len(list(g)) == 20
+        dna = bp.DNA(20)
+        assert len(list(dna)) == 20
 
     def test_reset_data(self):
-        g = bp.Gene(20)
-        g.reset([0.5] * 20)
-        assert len(g) == 20
-        assert g[7] == 0.5
+        dna = bp.DNA(20)
+        dna.reset([0.5] * 20)
+        assert len(dna) == 20
+        assert dna[7] == 0.5
 
     @pytest.mark.parametrize(
         "values",
@@ -38,38 +38,38 @@ class TestGene:
         ],
     )
     def test_reset_data_checks_validity(self, values):
-        g = bp.Gene(5)
+        dna = bp.DNA(5)
         with pytest.raises(ValueError):
-            g.reset(values)
+            dna.reset(values)
 
     def test_new_random_gene(self):
-        g = bp.Gene.random(20)
-        assert len(g) == 20
-        assert len(set(g)) > 10
+        dna = bp.DNA.random(20)
+        assert len(dna) == 20
+        assert len(set(dna)) > 10
 
     def test_replace_tail(self):
-        g = bp.Gene(20)
-        g.replace_tail([0.1, 0.2, 0.3])
-        assert len(g) == 20
-        assert g[-3:] == pytest.approx([0.1, 0.2, 0.3])
-        assert sum(g) == pytest.approx(0.6)
+        dna = bp.DNA(20)
+        dna.replace_tail([0.1, 0.2, 0.3])
+        assert len(dna) == 20
+        assert dna[-3:] == pytest.approx([0.1, 0.2, 0.3])
+        assert sum(dna) == pytest.approx(0.6)
 
     def test_mutate(self):
-        g1 = bp.Gene(20)
-        g2 = g1.copy()
-        assert g1 == g2
-        g1.mutate(0.7)
-        assert g1 != g2
+        dna1 = bp.DNA(20)
+        dna2 = dna1.copy()
+        assert dna1 == dna2
+        dna1.mutate(0.7)
+        assert dna1 != dna2
 
 
 def test_recombine_genes():
-    g1 = bp.Gene(20, 0.0)
-    g2 = bp.Gene(20, 1.0)
-    bp.recombine_genes(g1, g2, 7)
-    assert list(g1[0:7]) == [0.0] * 7
-    assert list(g1[7:]) == [1.0] * 13
-    assert list(g2[0:7]) == [1.0] * 7
-    assert list(g2[7:]) == [0.0] * 13
+    dna1 = bp.DNA(20, 0.0)
+    dna2 = bp.DNA(20, 1.0)
+    bp.recombine_dna(dna1, dna2, 7)
+    assert list(dna1[0:7]) == [0.0] * 7
+    assert list(dna1[7:]) == [1.0] * 13
+    assert list(dna2[0:7]) == [1.0] * 7
+    assert list(dna2[7:]) == [0.0] * 13
 
 
 if __name__ == "__main__":

@@ -572,7 +572,7 @@ def _to_list(values) -> List[float]:
     return array.array("f", values)  # type: ignore
 
 
-class Gene:
+class DNA:
     __slots__ = ("_length", "_data", "fitness")
 
     def __init__(self, length: int, value: float = 0.0):
@@ -586,10 +586,10 @@ class Gene:
         self.fitness: Optional[float] = None
 
     @classmethod
-    def random(cls, length: int) -> "Gene":
-        g = cls(length)
-        g.reset(random.random() for _ in range(length))
-        return g
+    def random(cls, length: int) -> "DNA":
+        dna = cls(length)
+        dna.reset(random.random() for _ in range(length))
+        return dna
 
     def _check_valid_data(self):
         if len(self._data) != self._length:
@@ -604,7 +604,7 @@ class Gene:
         self.fitness = None
 
     def __eq__(self, other):
-        assert isinstance(other, Gene)
+        assert isinstance(other, DNA)
         return self._data == other._data
 
     def __str__(self):
@@ -644,11 +644,11 @@ class Gene:
         self.taint()
 
 
-def recombine_genes(gene1: Gene, gene2: Gene, index: int) -> None:
-    part1 = gene1[index:]
-    part2 = gene2[index:]
-    gene1.replace_tail(part2)
-    gene2.replace_tail(part1)
+def recombine_dna(dna1: DNA, dna2: DNA, index: int) -> None:
+    part1 = dna1[index:]
+    part2 = dna2[index:]
+    dna1.replace_tail(part2)
+    dna2.replace_tail(part1)
 
 
 class GeneticDriver:
@@ -669,12 +669,12 @@ class GeneticDriver:
         if packer.is_packed:
             raise ValueError("packer is already packed")
         self._packer = packer
-        self._required_gene_length = len(packer.items)
-        self._genes: List[Gene] = []
+        self._required_dna_length = len(packer.items)
+        self._dna_strands: List[DNA] = []
         self._crossover_rate = float(crossover_rate)
         self._mutation_rate = float(mutation_rate)
         self.best_fitness: float = 0.0
-        self.best_gene = Gene(0)
+        self.best_dna = DNA(0)
         self.best_packer = packer
         self.generation: int = 0
 
@@ -682,19 +682,19 @@ class GeneticDriver:
     def is_executed(self) -> bool:
         return bool(self.generation)
 
-    def add_gene(self, gene: Gene):
+    def add_dna(self, dna: DNA):
         if not self.is_executed:
-            if len(gene) != self._required_gene_length:
+            if len(dna) != self._required_dna_length:
                 raise ValueError(
-                    f"invalid gene length, requires {self._required_gene_length}"
+                    f"invalid DNA length, requires {self._required_dna_length}"
                 )
-            self._genes.append(gene)
+            self._dna_strands.append(dna)
         else:
             raise TypeError("already executed")
 
-    def add_random_genes(self, count: int):
+    def add_random_dna(self, count: int):
         for _ in range(count):
-            self.add_gene(Gene.random(self._required_gene_length))
+            self.add_dna(DNA.random(self._required_dna_length))
 
     def execute(
         self,
@@ -706,8 +706,7 @@ class GeneticDriver:
             raise TypeError("can only run once")
         t0 = time.perf_counter()
         start_time = t0
-        for generation in range(self._max_generations):
-            self.generation = generation + 1
+        for self.generation in range(1, self._max_generations + 1):
             self._measure_fitness()
             if self.best_fitness >= self._max_fitness:
                 break
@@ -716,62 +715,62 @@ class GeneticDriver:
                 break
             if feedback and t1 - t0 > interval:
                 if feedback():  # stop if feedback() returns True
-                    return
+                    break
                 t0 = t1
             self._selection()
 
     def _measure_fitness(self):
-        for gene in self._genes:
-            if gene.fitness is not None:
+        for dna in self._dna_strands:
+            if dna.fitness is not None:
                 continue
             p0 = self._packer.copy()
-            p0.schematic_pack(iter(gene))
+            p0.schematic_pack(iter(dna))
             fill_ratio = p0.get_fill_ratio()
-            gene.fitness = fill_ratio
+            dna.fitness = fill_ratio
             if fill_ratio > self.best_fitness:
                 self.best_fitness = fill_ratio
                 self.best_packer = p0
-                self.best_gene = gene
+                self.best_dna = dna
 
     def _selection(self):
         wheel = self._make_wheel()
-        genes: List[Gene] = []
-        count = len(self._genes)
-        while len(genes) < count:
-            gene1, gene2 = wheel.pick(2)
-            gene1 = gene1.copy()
-            gene2 = gene2.copy()
+        dna_stands: List[DNA] = []
+        count = len(self._dna_strands)
+        while len(dna_stands) < count:
+            dna1, dna2 = wheel.pick(2)
+            dna1 = dna1.copy()
+            dna2 = dna2.copy()
             if random.random() < self._crossover_rate:
-                location = random.randrange(0, self._required_gene_length)
-                recombine_genes(gene1, gene2, location)
-            gene1.mutate(self._mutation_rate)
-            gene2.mutate(self._mutation_rate)
-            genes.append(gene1)
-            genes.append(gene2)
-        self._genes = genes
+                location = random.randrange(0, self._required_dna_length)
+                recombine_dna(dna1, dna2, location)
+            dna1.mutate(self._mutation_rate)
+            dna2.mutate(self._mutation_rate)
+            dna_stands.append(dna1)
+            dna_stands.append(dna2)
+        self._dna_strands = dna_stands
 
     def _make_wheel(self):
         wheel = WheelOfFortune()
-        genes = self._genes
-        sum_fitness = sum(g.fitness for g in genes)
+        dna_strands = self._dna_strands
+        sum_fitness = sum(dna.fitness for dna in dna_strands)
         if sum_fitness == 0.0:
             sum_fitness = 1.0
-        for gene in genes:
-            wheel.add_gene(gene, gene.fitness / sum_fitness)
+        for dna in dna_strands:
+            wheel.add_dna(dna, dna.fitness / sum_fitness)
         return wheel
 
 
 class WheelOfFortune:
     def __init__(self):
-        self._items: List[Gene] = []
+        self._dna_strands: List[DNA] = []
         self._weights: List[float] = []
 
-    def add_gene(self, item: Gene, weight: float):
-        self._items.append(item)
+    def add_dna(self, item: DNA, weight: float):
+        self._dna_strands.append(item)
         self._weights.append(weight)
 
-    def pick(self, count: int) -> Iterable[Gene]:
-        return random.choices(self._items, self._weights, k=count)
+    def pick(self, count: int) -> Iterable[DNA]:
+        return random.choices(self._dna_strands, self._weights, k=count)
 
 
 def export_dxf(
