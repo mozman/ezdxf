@@ -222,7 +222,7 @@ class Layout(BaseLayout):
         The sort_handle doesn't have to be unique, some or all entities can
         share the same sort handle and a sort handle can be an existing handle.
 
-        The "0" handle can be used, but this sort_handle will be drawn as
+        The "0" handle can be used, but this sort handle will be drawn as
         latest (on top of all other entities) and not as first as expected.
 
         Args:

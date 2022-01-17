@@ -734,9 +734,9 @@ class GeneticDriver:
 
     def _selection(self):
         wheel = self._make_wheel()
-        dna_stands: List[DNA] = []
+        dna_strands: List[DNA] = []
         count = len(self._dna_strands)
-        while len(dna_stands) < count:
+        while len(dna_strands) < count:
             dna1, dna2 = wheel.pick(2)
             dna1 = dna1.copy()
             dna2 = dna2.copy()
@@ -745,9 +745,9 @@ class GeneticDriver:
                 recombine_dna(dna1, dna2, location)
             dna1.mutate(self._mutation_rate)
             dna2.mutate(self._mutation_rate)
-            dna_stands.append(dna1)
-            dna_stands.append(dna2)
-        self._dna_strands = dna_stands
+            dna_strands.append(dna1)
+            dna_strands.append(dna2)
+        self._dna_strands = dna_strands
 
     def _make_wheel(self):
         wheel = WheelOfFortune()
