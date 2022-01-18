@@ -13,7 +13,7 @@ Both sources of this package are MIT licensed like `ezdxf` itself.
 The Bin Packing Problem
 -----------------------
 
-Cite from the `Wikipedia`_ article:
+Quote from the `Wikipedia`_ article:
 
     The bin packing problem is an optimization problem, in which items of different
     sizes must be packed into a finite number of bins or containers, each of a fixed
