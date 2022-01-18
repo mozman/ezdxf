@@ -186,6 +186,48 @@ def test_copy_item(item):
     assert item.bbox is item2.bbox
 
 
+class TestItemTransformation:
+    """Transformation of the source entity located with the minimum extension
+    corner of its bounding box in (0, 0, 0) in width (x), height (y) and depth (z)
+    orientation to the final location including the required rotation.
+    """
+    @pytest.fixture
+    def item(self):
+        i = bp.Item("box", 2, 3, 4)
+        i.position = (3, 2, 1)  # target location
+        return i
+
+    def test_whd_rotation(self, item: bp.Item):
+        item.rotation_type = bp.RotationType.WHD  # width, height, depth
+        m = item.get_transformation()
+        assert m.transform((0, 0, 0)).isclose((3, 2, 1))
+
+    def test_hwd_rotation(self, item: bp.Item):
+        item.rotation_type = bp.RotationType.HWD  # height, width, depth
+        m = item.get_transformation()
+        assert m.transform((0, 0, 0)).isclose((6, 2, 1))
+
+    def test_hdw_rotation(self, item: bp.Item):
+        item.rotation_type = bp.RotationType.HDW  # height, depth, width
+        m = item.get_transformation()
+        assert m.transform((0, 0, 0)).isclose((6, 6, 1))
+
+    def test_dhw_rotation(self, item: bp.Item):
+        item.rotation_type = bp.RotationType.DHW  # depth, height, width
+        m = item.get_transformation()
+        assert m.transform((0, 0, 0)).isclose((7, 2, 1))
+
+    def test_dwh_rotation(self, item: bp.Item):
+        item.rotation_type = bp.RotationType.DWH  # depth, width, height
+        m = item.get_transformation()
+        assert m.transform((0, 0, 0)).isclose((3, 2, 1))
+
+    def test_wdh_rotation(self, item: bp.Item):
+        item.rotation_type = bp.RotationType.WDH  # width, depth, height
+        m = item.get_transformation()
+        assert m.transform((0, 0, 0)).isclose((3, 6, 1))
+
+
 def test_copy_box():
     box = bp.Box("NAME", 1, 2, 3, 4)
     box.items = [1, 2, 3]

@@ -73,6 +73,7 @@ __all__ = [
 
 UNLIMITED_WEIGHT = 1e99
 T = TypeVar("T")
+PI_2 = math.pi / 2
 
 
 class RotationType(Enum):
@@ -185,14 +186,29 @@ class Item:
         """
         x, y, z = self.position
         rt = self.rotation_type
-        if rt == RotationType.WHD:
+        if rt == RotationType.WHD:  # width, height, depth
             return Matrix44.translate(x, y, z)
-        elif rt == RotationType.HWD:
-            # height, width, depth orientation
-            return Matrix44.z_rotate(math.pi / 2) @ Matrix44.translate(
-                x + self.height, y, 0
+        if rt == RotationType.HWD:  # height, width, depth
+            return Matrix44.z_rotate(PI_2) @ Matrix44.translate(
+                x + self.height, y, z
             )
-        raise NotImplementedError(f"rotation {str(rt)} not supported yet")
+        if rt == RotationType.HDW:  # height, depth, width
+            return Matrix44.xyz_rotate(PI_2, 0, PI_2) @ Matrix44.translate(
+                x + self.height, y + self.depth, z
+            )
+        if rt == RotationType.DHW:  # depth, height, width
+            return Matrix44.y_rotate(-PI_2) @ Matrix44.translate(
+                x + self.depth, y, z
+            )
+        if rt == RotationType.DWH:  # depth, width, height
+            return Matrix44.xyz_rotate(0, PI_2, PI_2) @ Matrix44.translate(
+                x, y, z
+            )
+        if rt == RotationType.WDH:  # width, depth, height
+            return Matrix44.x_rotate(PI_2) @ Matrix44.translate(
+                x, y + self.depth, z
+            )
+        raise TypeError(rt)
 
 
 class FlatItem(Item):
