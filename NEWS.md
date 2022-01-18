@@ -27,7 +27,8 @@ Version 0.18b0 - dev
 - NEW: method `Text.set_align_enum()`, replaces `set_align()`
 - NEW: command `ezdxf info FILE [FILE ...]`, show info and optional stats of DXF files
 - NEW: module `ezdxf.appsettings`, [docs](https://ezdxf.mozman.at/docs/appsettings.html)
-- NEW: module `ezdxf.addons.binpacking`, a simple solution for the bin-packing problem in 2D and 3D
+- NEW: module `ezdxf.addons.binpacking`, a simple solution for the bin-packing problem 
+  in 2D and 3D, [docs](https://ezdxf.mozman.at/docs/addons/binpacking.html)
 - NEW: arguments `height` and `rotation`for factory methods `add_text()` and `add_attdef()`
 - CHANGE: keyword only argument `dxfattribs` for factory methods `add_text()` and `add_attdef()`
 - CHANGE: `recover` module - recovered integer and float values are logged as severe errors

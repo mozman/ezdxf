@@ -21,6 +21,4 @@ Add-ons
     pycsg
     acadctb
     forms
-
-
-
+    binpacking

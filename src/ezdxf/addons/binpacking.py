@@ -77,6 +77,13 @@ PI_2 = math.pi / 2
 
 
 class RotationType(Enum):
+    """Rotation type of an item:
+
+        - W = width
+        - H = height
+        - D = depth
+
+    """
     WHD = auto()
     HWD = auto()
     HDW = auto()
@@ -92,6 +99,7 @@ class Axis(Enum):
 
 
 class PickStrategy(Enum):
+    """ Order of how to pick items for placement. """
     SMALLER_FIRST = auto()
     BIGGER_FIRST = auto()
     SHUFFLE = auto()
@@ -101,6 +109,7 @@ START_POSITION: Tuple[float, float, float] = (0, 0, 0)
 
 
 class Item:
+    """3D container item. """
     def __init__(
         self,
         payload,
@@ -126,7 +135,9 @@ class Item:
         )
 
     def copy(self):
-        # All copies have a reference to the same payload
+        """Returns a copy, all copies have a reference to the same payload
+        object.
+        """
         return copy.copy(self)  # shallow copy
 
     @property
@@ -153,6 +164,9 @@ class Item:
 
     @property
     def position(self) -> Tuple[float, float, float]:
+        """Returns the position of then lower left corner of the item in the
+        container, the lower left corner is the origin (0, 0, 0).
+        """
         return self._position
 
     @position.setter
@@ -160,10 +174,12 @@ class Item:
         self._position = value
         self._taint()
 
-    def get_volume(self):
+    def get_volume(self) -> float:
+        """Returns the volume of the item. """
         return self.width * self.height * self.depth
 
     def get_dimension(self) -> Tuple[float, float, float]:
+        """Returns the item dimension according the :attr:`rotation_type`. """
         rt = self.rotation_type
         if rt == RotationType.WHD:
             return self.width, self.height, self.depth
@@ -212,6 +228,9 @@ class Item:
 
 
 class FlatItem(Item):
+    """2D container item, inherited from :class:`Item`. Has a default depth of
+    1.0.
+    """
     def __init__(
         self,
         payload,
@@ -250,11 +269,13 @@ class Bin:
         self.items: List[Item] = []
 
     def copy(self):
+        """Returns a copy. """
         box = copy.copy(self)  # shallow copy
         box.items = list(self.items)
         return box
 
     def reset(self):
+        """Reset the container to empty state. """
         self.items.clear()
 
     @property
@@ -312,10 +333,12 @@ class Bin:
 
 
 class Box(Bin):
+    """ 3D container inherited from :class:`Bin`. """
     pass
 
 
 class Envelope(Bin):
+    """ 2D container inherited from :class:`Bin`. """
     def __init__(
         self,
         name,
@@ -381,10 +404,14 @@ class AbstractPacker:
 
     @property
     def is_packed(self) -> bool:
+        """Returns ``True`` if packer is packed, each packer can only be used
+        once.
+        """
         return not self._init_state
 
     @property
     def unfitted_items(self) -> List[Item]:  # just an alias
+        """Returns the unfitted items. """
         return self.items
 
     def __str__(self) -> str:
@@ -394,6 +421,7 @@ class AbstractPacker:
         return f"{self.__class__.__name__}, {len(self.bins)} bins{fill}"
 
     def append_bin(self, box: Bin) -> None:
+        """Append a container. """
         if self.is_packed:
             raise TypeError("cannot append bins to packed state")
         if not box.is_empty:
@@ -401,6 +429,7 @@ class AbstractPacker:
         self.bins.append(box)
 
     def append_item(self, item: Item) -> None:
+        """Append a item. """
         if self.is_packed:
             raise TypeError("cannot append items to packed state")
         self.items.append(item)
@@ -527,7 +556,7 @@ def schematic_picker(
 
 
 class Packer(AbstractPacker):
-    """3D Packer."""
+    """3D Packer inherited form :class:`AbstractPacker`. """
 
     def add_bin(
         self,
@@ -537,6 +566,7 @@ class Packer(AbstractPacker):
         depth: float,
         max_weight: float = UNLIMITED_WEIGHT,
     ) -> Box:
+        """Add a 3D :class:`Box` container. """
         box = Box(name, width, height, depth, max_weight)
         self.append_bin(box)
         return box
@@ -549,13 +579,15 @@ class Packer(AbstractPacker):
         depth: float,
         weight: float = 0.0,
     ) -> Item:
+        """Add a 3D :class:`Item` to pack. """
         item = Item(payload, width, height, depth, weight)
         self.append_item(item)
         return item
 
 
 class FlatPacker(AbstractPacker):
-    """2D Packer."""
+    """2D Packer inherited form :class:`AbstractPacker`. All containers and
+    items used by this packer must have a depth of 1."""
 
     def add_bin(
         self,
@@ -564,6 +596,7 @@ class FlatPacker(AbstractPacker):
         height: float,
         max_weight: float = UNLIMITED_WEIGHT,
     ) -> Envelope:
+        """Add a 2D :class:`Envelope` container. """
         envelope = Envelope(name, width, height, max_weight)
         self.append_bin(envelope)
         return envelope
@@ -575,6 +608,7 @@ class FlatPacker(AbstractPacker):
         height: float,
         weight: float = 0.0,
     ) -> Item:
+        """Add a 2D :class:`FlatItem` to pack. """
         item = FlatItem(payload, width, height, weight)
         self.append_item(item)
         return item
