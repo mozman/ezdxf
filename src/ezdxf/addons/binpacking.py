@@ -680,7 +680,7 @@ class GeneticDriver:
             raise ValueError("max_fitness not in range [0, 1]")
         self._max_fitness = float(max_fitness)
         if max_generations < 1:
-            raise ValueError("max_runs < 1")
+            raise ValueError("max_generations < 1")
         self._max_generations = int(max_generations)
         if packer.is_packed:
             raise ValueError("packer is already packed")
@@ -746,7 +746,7 @@ class GeneticDriver:
             if fill_ratio > self.best_fitness:
                 self.best_fitness = fill_ratio
                 self.best_packer = p0
-                self.best_dna = dna
+                self.best_dna = dna.copy()
 
     def _selection(self):
         wheel = self._make_wheel()
