@@ -263,8 +263,14 @@ class Bin:
     ):
         self.name = name
         self.width = float(width)
+        if self.width <= 0.0:
+            raise ValueError("invalid width")
         self.height = float(height)
+        if self.height <= 0.0:
+            raise ValueError("invalid height")
         self.depth = float(depth)
+        if self.depth <= 0.0:
+            raise ValueError("invalid depth")
         self.max_weight = float(max_weight)
         self.items: List[Item] = []
 
@@ -326,7 +332,10 @@ class Bin:
 
     def get_fill_ratio(self) -> float:
         """Return the fill ratio."""
-        return self.get_total_volume() / self.get_capacity()
+        try:
+            return self.get_total_volume() / self.get_capacity()
+        except ZeroDivisionError:
+            return 0.0
 
     def rotations(self) -> Iterable[RotationType]:
         return RotationType

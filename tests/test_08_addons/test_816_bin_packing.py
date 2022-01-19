@@ -45,6 +45,37 @@ def test_single_bin_different_sized_items():
     assert len(packer.unfitted_items) == 0
 
 
+def test_empty_packer():
+    packer = bp.Packer()
+    assert packer.get_capacity() == 0.0
+    assert packer.get_total_volume() == 0.0
+    assert packer.get_total_weight() == 0.0
+    assert packer.get_fill_ratio() == 0.0
+    assert len(packer.unfitted_items) == 0
+
+
+def test_empty_box():
+    box = bp.Box("box", 1, 1, 1)
+    assert box.get_capacity() == 1.0
+    assert box.get_fill_ratio() == 0.0
+
+
+def test_cannot_create_zero_sized_box():
+    with pytest.raises(ValueError):
+        bp.Box("box", 0, 2, 3)
+    with pytest.raises(ValueError):
+        bp.Box("box", 1, 0, 3)
+    with pytest.raises(ValueError):
+        bp.Box("box", 1, 2, 0)
+
+
+def test_forced_zero_sized_box():
+    box = bp.Box("box", 1, 2, 3)
+    box.width = 0
+    assert box.get_capacity() == 0.0
+    assert box.get_fill_ratio() == 0.0
+
+
 SMALL_ENVELOPE = ("small-envelope", 11.5, 6.125, 0.25, 10)
 LARGE_ENVELOPE = ("large-envelope", 15.0, 12.0, 0.75, 15)
 SMALL_BOX = ("small-box", 8.625, 5.375, 1.625, 70.0)
