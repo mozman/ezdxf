@@ -530,7 +530,7 @@ def schematic_picker(
     items: Iterable[T], schema: Iterator[float]
 ) -> Iterator[T]:
     """Yields all `items` in the order defined by the pick schema.
-    The pick values have to be in the range [0, 1] and determine the
+    The pick values must be in the range [0, 1] and determine the
     location from where to pick the next item. E.g. 0 picks from the front, 1
     picks from the end and 0.5 picks from the middle. For each item is a pick
     value from the `schema` required!
@@ -549,14 +549,13 @@ def schematic_picker(
             value = next(schema)
         except StopIteration:
             raise ValueError("not enough pick values")
-        try:
-            yield items.pop(round(abs(value) * (len(items) - 1)))
-        except IndexError:
-            raise ValueError("pick values have to be in range [0, 1]")
+        if not (0.0 <= value <= 1.0):
+            raise ValueError("pick values must be in range [0, 1]")
+        yield items.pop(round(value * (len(items) - 1)))
 
 
 class Packer(AbstractPacker):
-    """3D Packer inherited form :class:`AbstractPacker`. """
+    """3D Packer inherited from :class:`AbstractPacker`. """
 
     def add_bin(
         self,
@@ -586,7 +585,7 @@ class Packer(AbstractPacker):
 
 
 class FlatPacker(AbstractPacker):
-    """2D Packer inherited form :class:`AbstractPacker`. All containers and
+    """2D Packer inherited from :class:`AbstractPacker`. All containers and
     items used by this packer must have a depth of 1."""
 
     def add_bin(

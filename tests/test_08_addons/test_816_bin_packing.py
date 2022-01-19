@@ -191,6 +191,7 @@ class TestItemTransformation:
     corner of its bounding box in (0, 0, 0) in width (x), height (y) and depth (z)
     orientation to the final location including the required rotation.
     """
+
     @pytest.fixture
     def item(self):
         i = bp.Item("box", 2, 3, 4)
@@ -316,11 +317,16 @@ class TestSchematicPicker:
         )
         assert set(picked_items) == {4, 3, 2, 1, 0}
 
-    def test_invalid_pick_values(self, items):
+    @pytest.mark.parametrize(
+        "value",
+        [
+            1.1,  # upper limit is 1.0
+            -0.1,  # lower limit 0.0
+        ],
+    )
+    def test_invalid_pick_values(self, items, value):
         with pytest.raises(ValueError):
-            self.get_picked_items(items, itertools.repeat(2))
-        with pytest.raises(ValueError):
-            self.get_picked_items(items, itertools.repeat(-2))
+            self.get_picked_items(items, itertools.repeat(value))
 
     def test_not_enough_pick_values(self, items):
         with pytest.raises(ValueError):
