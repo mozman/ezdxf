@@ -15,7 +15,7 @@ if USE_C_EXT is False:
 from ezdxf.math._construct import (
     has_clockwise_orientation as py_has_clockwise_orientation,
 )
-from ezdxf.acc.construct2d import (
+from ezdxf.acc.construct import (
     has_clockwise_orientation as cy_has_clockwise_orientation,
 )
 from ezdxf.math._construct import (

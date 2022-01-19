@@ -3,7 +3,7 @@
 # Created: 28.02.2010
 # License: MIT License
 import pytest
-from ezdxf.math import convex_hull_2d
+from ezdxf.math import convex_hull_2d, Vec2
 from io import StringIO
 
 
@@ -37,26 +37,30 @@ def test_convex_hull_raises():
 
 def test_convex_hull_set1():
     set1 = import_asc_coords(StringIO(cx_set1))
-    hull = convex_hull_2d(set1.values())
-    result_keys = ["3", "18", "19", "1", "7", "8", "2", "16", "17"]
-    for result, result_key in zip(hull, result_keys):
-        assert result == set1[result_key]
+    expected = set(
+        Vec2(set1[k]) for k in ["3", "18", "19", "1", "7", "8", "2", "16", "17"]
+    )
+    hull = set(convex_hull_2d(set1.values()))
+    assert hull == expected
 
 
 def test_convex_hull_set2():
     set2 = import_asc_coords(StringIO(cx_set2))
-    hull = convex_hull_2d(set2.values())
-    result_keys = ["1", "2", "8", "15"]
-    for result, result_key in zip(hull, result_keys):
-        assert result == set2[result_key]
+    expected = set(
+        Vec2(set2[k]) for k in ["1", "2", "8", "15"]
+    )
+
+    hull = set(convex_hull_2d(set2.values()))
+    assert hull == expected
 
 
 def test_convex_hull_set3():
     set3 = import_asc_coords(StringIO(cx_set3))
-    hull = convex_hull_2d(set3.values())
-    result_keys = ["1", "7", "13"]
-    for result, result_key in zip(hull, result_keys):
-        assert result == set3[result_key]
+    expected = set(
+         Vec2(set3[k]) for k in ["1", "7", "13", "19"]
+     )
+    hull = set(convex_hull_2d(set3.values()))
+    assert hull == expected
 
 
 # inline data files

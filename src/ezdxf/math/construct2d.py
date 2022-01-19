@@ -105,8 +105,8 @@ def reflect_angle_y_deg(a: float) -> float:
 
 def decdeg2dms(value: float) -> Tuple[float, float, float]:
     """Return decimal degrees as tuple (Degrees, Minutes, Seconds)."""
-    mnt, sec = divmod(value * 3600., 60.)
-    deg, mnt = divmod(mnt, 60.)
+    mnt, sec = divmod(value * 3600.0, 60.0)
+    deg, mnt = divmod(mnt, 60.0)
     return deg, mnt, sec
 
 
@@ -147,47 +147,41 @@ def closest_point(base: "Vertex", points: Iterable["Vertex"]) -> "Vec3":
     return found
 
 
-def convex_hull_2d(points: Iterable["Vertex"]) -> List["Vertex"]:
-    """Returns 2D convex hull for `points`.
+def convex_hull_2d(points: Iterable["Vertex"]) -> List[Vec2]:
+    """Returns 2D convex hull for `points` as list of :class:`Vec2`.
+    Returns a closed polyline, first vertex == last vertex.
 
     Args:
-        points: iterable of points as :class:`Vec3` compatible objects,
-            z-axis is ignored
+        points: iterable of points, z-axis is ignored
 
     """
+    # Source: https://massivealgorithms.blogspot.com/2019/01/convex-hull-sweep-line.html?m=1
+    def cross(o: Vec2, a: Vec2, b: Vec2) -> float:
+        return (a - o).det(b - o)
 
-    def _convexhull(hull):
-        while len(hull) > 2:
-            # the last three points
-            start_point, check_point, destination_point = hull[-3:]
-            # curve not turns right
-            if not is_point_left_of_line(
-                check_point, start_point, destination_point
-            ):
-                # remove the penultimate point
-                del hull[-2]
-            else:
-                break
-        return hull
-
-    points = sorted(set(Vec2.generate(points)))  # remove duplicate points
-
-    if len(points) < 3:
+    vertices = Vec2.list(set(points))
+    vertices.sort()
+    if len(vertices) < 3:
         raise ValueError(
             "Convex hull calculation requires 3 or more unique points."
         )
 
-    upper_hull = points[:2]  # first two points
-    for next_point in points[2:]:
-        upper_hull.append(next_point)
-        upper_hull = _convexhull(upper_hull)
-    lower_hull = [points[-1], points[-2]]  # last two points
-
-    for next_point in reversed(points[:-2]):
-        lower_hull.append(next_point)
-        lower_hull = _convexhull(lower_hull)
-    upper_hull.extend(lower_hull[1:-1])
-    return upper_hull
+    n: int = len(vertices)
+    hull: List[Vec2] = [Vec2()] * (2 * n)
+    k: int = 0
+    i: int
+    for i in range(n):
+        while k >= 2 and cross(hull[k - 2], hull[k - 1], vertices[i]) <= 0.0:
+            k -= 1
+        hull[k] = vertices[i]
+        k += 1
+    t: int = k + 1
+    for i in range(n-2, -1, -1):
+        while k >= t and cross(hull[k - 2], hull[k - 1], vertices[i]) <= 0.0:
+            k -= 1
+        hull[k] = vertices[i]
+        k += 1
+    return hull[:k]
 
 
 def enclosing_angles(
