@@ -735,6 +735,7 @@ class GeneticDriver:
         self.best_dna = DNA(0)
         self.best_packer = packer
         self.generation: int = 0
+        self.runtime: float = 0.0
 
     @property
     def is_executed(self) -> bool:
@@ -756,7 +757,7 @@ class GeneticDriver:
 
     def execute(
         self,
-        feedback: Callable = None,
+        feedback: Callable[["GeneticDriver"], bool] = None,
         interval: float = 1.0,
         max_time: float = 1e99,
     ) -> None:
@@ -769,10 +770,11 @@ class GeneticDriver:
             if self.best_fitness >= self._max_fitness:
                 break
             t1 = time.perf_counter()
-            if start_time - t1 > max_time:
+            self.runtime = t1 - start_time
+            if self.runtime > max_time:
                 break
             if feedback and t1 - t0 > interval:
-                if feedback():  # stop if feedback() returns True
+                if feedback(self):  # stop if feedback() returns True
                     break
                 t0 = t1
             self._selection()
