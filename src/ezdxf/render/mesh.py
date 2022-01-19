@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2021 Manfred Moitzi
+# Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
 from typing import (
     List,
@@ -339,7 +339,7 @@ class MeshTransformer(MeshBuilder):
         mesh = self
         level = min(int(level), 5)
         while level > 0:
-            mesh = _subdivide(mesh, quads, edges)  # type: ignore
+            mesh = _subdivide(mesh, quads)  # type: ignore
             level -= 1
         return MeshTransformer.from_builder(mesh)
 

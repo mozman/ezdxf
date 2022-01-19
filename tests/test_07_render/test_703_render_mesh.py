@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2020, Manfred Moitzi
+# Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
 import pytest
 from math import radians
@@ -315,3 +315,9 @@ def polyface_181_2(msp):
 def test_from_polyface_182_2(polyface_181_2):
     mesh = MeshVertexMerger.from_polyface(polyface_181_2)
     assert len(mesh.vertices) == 8
+
+
+def test_mesh_subdivide():
+    c = cube().scale_uniform(10).subdivide(2)
+    assert len(c.vertices) == 2 * 25 + 3 * 16
+    assert len(c.faces) == 16 * 6
