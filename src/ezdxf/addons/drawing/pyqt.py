@@ -321,6 +321,7 @@ class PyQtBackend(Backend):
                 self._get_pen(properties),
                 self._no_fill,
             )
+        self.get_qfont.cache_clear()
 
 
 class _CosmeticPath(qw.QGraphicsPathItem):

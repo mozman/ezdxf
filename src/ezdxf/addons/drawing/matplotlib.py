@@ -264,6 +264,7 @@ class MatplotlibBackend(Backend):
                     width, height, forward=True
                 )
         plt.rcParams["lines.scale_dashes"] = self._scale_dashes_backup
+        self.get_font_properties.cache_clear()
 
     def _get_filling(self, properties: Properties):
         fill = True
