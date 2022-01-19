@@ -43,6 +43,8 @@ create 3D meshes and render them as POLYFACE entities by the
 
         doc.saveas("meshes.dxf")
 
+.. image:: gfx/mesh_cubes.png
+
 .. warning::
 
     If the mesh contains n-gons the render methods for POLYFACE and
