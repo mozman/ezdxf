@@ -209,6 +209,33 @@ The :mod:`~ezdxf.zoom` module also works for paperspace layouts.
     the :mod:`~ezdxf.bbox` module to understand its limitations and the
     bounding box calculation for large documents can take a while!
 
+Hide the UCS Icon
+-----------------
+
+The visibility of the UCS icon is controlled by the DXF
+:attr:`~ezdxf.entities.VPort.dxf.ucs_icon` attribute of the
+:class:`~ezdxf.entities.VPort` entity:
+
+    - bit 0: 0=hide, 1=show
+    - bit 1: 0=display in lower left corner, 1=display at origin
+
+The state of the UCS icon can be set in conjunction with the initial
+:class:`~ezdxf.entities.VPort` of the model space, this code turns off the UCS
+icon:
+
+.. code-block:: Python
+
+    doc.set_modelspace_vport(10, center=(10, 10), dxfattribs={"ucs_icon": 0})
+
+Alternative: turn off UCS icons for all :class:`VPort` entries in the active
+viewport configuration:
+
+.. code-block:: Python
+
+    for vport in doc.viewports.get_config("*Active"):
+        vport.dxf.ucs_icon = 0
+
+
 Add `ezdxf` Resources to Existing DXF Document
 ----------------------------------------------
 

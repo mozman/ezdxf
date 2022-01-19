@@ -113,6 +113,9 @@ Factory function         :meth:`Drawing.viewports.new`
 
     .. attribute:: dxf.ucs_icon
 
+       - bit 0: 0=hide, 1=show
+       - bit 1: 0=display in lower left corner, 1=display at origin
+
     .. attribute:: dxf.snap_on
 
     .. attribute:: dxf.grid_on
