@@ -364,43 +364,5 @@ class TestSchematicPicker:
             self.get_picked_items(items, iter([1, 1, 1]))
 
 
-class TestGeneticDriver:
-    def test_init(self, packer):
-        driver = bp.GeneticDriver(packer, 100)
-        assert driver.is_executed is False
-
-    def test_init_invalid_packer(self, packer):
-        """Packer is already packed."""
-        pack(packer, SMALL_BOX, bp.PickStrategy.SMALLER_FIRST)
-        with pytest.raises(ValueError):
-            bp.GeneticDriver(packer, 100)
-
-    def test_init_invalid_max_runs(self, packer):
-        with pytest.raises(ValueError):
-            bp.GeneticDriver(packer, 0)
-
-    @pytest.mark.parametrize("fitness", [-0.1, 1.1])
-    def test_set_invalid_max_fitness(self, packer, fitness):
-        gd = bp.GeneticDriver(packer, 100)
-        with pytest.raises(ValueError):
-            gd.max_fitness = fitness
-
-    def test_can_only_run_once(self, packer):
-        driver = bp.GeneticDriver(packer, 100)
-        driver.execute()
-        assert driver.is_executed is True
-        with pytest.raises(TypeError):
-            driver.execute()
-
-    def test_execution(self, packer):
-        packer.add_bin(*MEDIUM_BOX)
-        driver = bp.GeneticDriver(packer, 10)
-        driver.add_random_dna(20)
-        driver.execute()
-        assert driver.generation == 10
-        assert driver.best_fitness > 0.1
-        assert len(driver.best_packer.bins[0].items) > 1
-
-
 if __name__ == "__main__":
     pytest.main([__file__])

@@ -6,6 +6,7 @@ import time
 import argparse
 
 import ezdxf.addons.binpacking as bp
+import ezdxf.addons.dnapacking as dp
 
 SEED = 47856535
 
@@ -87,7 +88,7 @@ def run_shuffle(packer: bp.AbstractPacker, shuffle_count: int):
 def run_genetic_driver(
     packer: bp.AbstractPacker, generations: int, dns_count: int
 ):
-    def feedback(driver: bp.GeneticDriver):
+    def feedback(driver: dp.GeneticDriver):
         print(
             f"gen: {driver.generation:4}, "
             f"stag: {driver.stagnation:4}, "
@@ -100,9 +101,9 @@ def run_genetic_driver(
     )
     n_generations = generations
     n_dns_strands = dns_count
-    gd = bp.GeneticDriver(packer, n_generations)
-    gd.mutation_type1 = bp.MutationType.FLIP
-    gd.mutation_type2 = bp.MutationType.FLIP
+    gd = dp.GeneticDriver(packer, n_generations)
+    gd.mutation_type1 = dp.MutationType.FLIP
+    gd.mutation_type2 = dp.MutationType.FLIP
     gd.add_random_dna(n_dns_strands)
     gd.execute(feedback, interval=10.0)
     print(
