@@ -730,6 +730,18 @@ def recombine_dna(dna1: DNA, dna2: DNA, index: int) -> None:
     dna2.replace_tail(part1)
 
 
+#############################################################################
+# Optimizing only the order for the pack algorithm was not efficient, the
+# BIGGER_FIRST strategy beats every other attempt!
+# - schematic_packer() can be removed
+#
+# Next approach, find the optimal subset of items for the BIGGER_FIRST strategy
+# to fill all bins
+# 1. If all items fit into the bins, its done.
+# 2. If not all items fit into the bins: search for the optimal subset of
+#    items with the highest fitness.
+
+
 class GeneticDriver:
     def __init__(
         self,

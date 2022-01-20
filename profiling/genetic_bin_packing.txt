@@ -34,3 +34,28 @@ Increase mutation at stagnation: max_stagnation removed
 mutation: FLIP;FLIP
 GeneticDriver: 300 generations x 50 DNS strands, best result:
 Packed 37 items in 463.804s, ratio: 0.874
+
+mutation: FLIP;FLIP
+GeneticDriver: 500 generations x 50 DNS strands, best result:
+Packed 37 items in 419.344s, ratio: 0.874
+
+mutation: SWAP;FLIP
+GeneticDriver: 500 generations x 50 DNS strands, best result:
+Packed 33 items in 437.771s, ratio: 0.894
+
+SEED: 559036
+
+Bigger first strategy:
+Packed 29 items in 0.480s, ratio: 0.920
+
+Shuffle strategy:
+Shuffle 500x, best result:
+Packed 37 items in 33.578s, ratio: 0.842
+
+mutation: SWAP;FLIP
+GeneticDriver: 500 generations x 50 DNS strands, best result:
+Packed 35 items in 765.891s, ratio: 0.926
+
+mutation: FLIP;FLIP
+GeneticDriver: 500 generations x 50 DNS strands, best result:
+Packed 34 items in 875.681s, ratio: 0.910

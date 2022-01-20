@@ -84,7 +84,9 @@ def run_shuffle(packer: bp.AbstractPacker, shuffle_count: int):
     print_result(p0, t1 - t0)
 
 
-def run_genetic_driver(packer: bp.AbstractPacker, generations: int, dns_count: int):
+def run_genetic_driver(
+    packer: bp.AbstractPacker, generations: int, dns_count: int
+):
     def feedback(driver: bp.GeneticDriver):
         print(
             f"gen: {driver.generation:4}, "
@@ -93,11 +95,13 @@ def run_genetic_driver(packer: bp.AbstractPacker, generations: int, dns_count: i
         )
         return False
 
-    print(f"\nGenetic algorithm search: gens={generations}, DNS strands={dns_count}")
+    print(
+        f"\nGenetic algorithm search: gens={generations}, DNS strands={dns_count}"
+    )
     n_generations = generations
     n_dns_strands = dns_count
     gd = bp.GeneticDriver(packer, n_generations)
-    gd.mutation_type1 = bp.MutationType.SWAP
+    gd.mutation_type1 = bp.MutationType.FLIP
     gd.mutation_type2 = bp.MutationType.FLIP
     gd.add_random_dna(n_dns_strands)
     gd.execute(feedback, interval=10.0)
@@ -106,6 +110,7 @@ def run_genetic_driver(packer: bp.AbstractPacker, generations: int, dns_count: i
         f"DNS strands, best result:"
     )
     print_result(gd.best_packer, gd.runtime)
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
