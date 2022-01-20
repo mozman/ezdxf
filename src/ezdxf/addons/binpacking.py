@@ -105,6 +105,11 @@ class PickStrategy(Enum):
     SHUFFLE = auto()
 
 
+class MutationType(Enum):
+    FLIP = auto()
+    SWAP = auto()
+
+
 START_POSITION: Tuple[float, float, float] = (0, 0, 0)
 
 
@@ -687,13 +692,19 @@ class DNA:
         self._check_valid_data()
         self.taint()
 
-    def mutate(self, rate: float):
+    def mutate(self, rate: float, mutation_type=MutationType.FLIP):
         for index in range(self._length):
             if random.random() < rate:
-                self.mutate_at(index)
+                self.mutate_at(index, mutation_type)
 
-    def mutate_at(self, index):
-        self._data[index] = 1.0 - self._data[index]  # flip pick location
+    def mutate_at(self, index, mutation_type=MutationType.FLIP):
+        if mutation_type == MutationType.SWAP:  # better strategy
+            index_left = index - 1  # 0 <-> -1; first <-> last
+            left = self._data[index_left]
+            self._data[index_left] = self._data[index]
+            self._data[index] = left
+        elif mutation_type == MutationType.FLIP:  # worse strategy
+            self._data[index] = 1.0 - self._data[index]  # flip pick location
         self.taint()
 
     def replace_tail(self, part: Sequence) -> None:
@@ -714,28 +725,60 @@ class GeneticDriver:
         self,
         packer: AbstractPacker,
         max_generations: int,
-        max_fitness: float,
-        crossover_rate: float = 0.70,
-        mutation_rate: float = 0.001,
     ):
-        if max_fitness > 1.0 or max_fitness < 0.0:
-            raise ValueError("max_fitness not in range [0, 1]")
-        self._max_fitness = float(max_fitness)
-        if max_generations < 1:
-            raise ValueError("max_generations < 1")
-        self._max_generations = int(max_generations)
         if packer.is_packed:
             raise ValueError("packer is already packed")
+        if max_generations < 1:
+            raise ValueError("max_generations < 1")
+        # data:
         self._packer = packer
         self._required_dna_length = len(packer.items)
         self._dna_strands: List[DNA] = []
-        self._crossover_rate = float(crossover_rate)
-        self._mutation_rate = float(mutation_rate)
-        self.best_fitness: float = 0.0
-        self.best_dna = DNA(0)
-        self.best_packer = packer
+
+        # options:
+        self._max_generations = int(max_generations)
+        self._max_fitness: float = 1.0
+        self._crossover_rate = 0.70
+        self._mutation_rate = 0.001
+        self.selection_always_include_best_dna = True
+        self.mutation_type = MutationType.SWAP
+
+        # state of last (current) generation:
         self.generation: int = 0
         self.runtime: float = 0.0
+        self.best_dna = DNA(0)
+        self.best_fitness: float = 0.0
+        self.best_packer = packer
+
+    @property
+    def max_fitness(self) -> float:
+        return self._max_fitness
+
+    @max_fitness.setter
+    def max_fitness(self, value: float) -> None:
+        if value > 1.0 or value < 0.0:
+            raise ValueError("max_fitness not in range [0, 1]")
+        self._max_fitness = value
+
+    @property
+    def crossover_rate(self) -> float:
+        return self._crossover_rate
+
+    @crossover_rate.setter
+    def crossover_rate(self, value: float) -> None:
+        if value > 1.0 or value < 0.0:
+            raise ValueError("crossover_rate not in range [0, 1]")
+        self._crossover_rate = value
+
+    @property
+    def mutation_rate(self) -> float:
+        return self._mutation_rate
+
+    @mutation_rate.setter
+    def mutation_rate(self, value: float) -> None:
+        if value > 1.0 or value < 0.0:
+            raise ValueError("mutation_rate not in range [0, 1]")
+        self._mutation_rate = value
 
     @property
     def is_executed(self) -> bool:
@@ -763,6 +806,8 @@ class GeneticDriver:
     ) -> None:
         if self.is_executed:
             raise TypeError("can only run once")
+        if not self._dna_strands:
+            print("no DNA defined!")
         t0 = time.perf_counter()
         start_time = t0
         for self.generation in range(1, self._max_generations + 1):
@@ -812,11 +857,21 @@ class GeneticDriver:
     def _make_wheel(self):
         wheel = WheelOfFortune()
         dna_strands = self._dna_strands
+        best_fitness = self.best_fitness
+        has_best = False
+
         sum_fitness = sum(dna.fitness for dna in dna_strands)
         if sum_fitness == 0.0:
             sum_fitness = 1.0
+
         for dna in dna_strands:
+            if dna.fitness == best_fitness:
+                # DNA gets copied, comparing by "is" does not work!
+                has_best = True
             wheel.add_dna(dna, dna.fitness / sum_fitness)
+
+        if not has_best and self.selection_always_include_best_dna:
+            wheel.add_dna(self.best_dna, best_fitness / sum_fitness)
         return wheel
 
 

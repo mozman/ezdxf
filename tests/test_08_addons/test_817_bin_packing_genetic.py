@@ -54,11 +54,18 @@ class TestGene:
         assert dna[-3:] == pytest.approx([0.1, 0.2, 0.3])
         assert sum(dna) == pytest.approx(0.6)
 
-    def test_mutate(self):
+    def test_mutate_flip(self):
         dna1 = bp.DNA(20)
         dna2 = dna1.copy()
         assert dna1 == dna2
-        dna1.mutate(0.7)
+        dna1.mutate(0.7, bp.MutationType.FLIP)
+        assert dna1 != dna2
+
+    def test_mutate_swap(self):
+        dna1 = bp.DNA.random(20)
+        dna2 = dna1.copy()
+        assert dna1 == dna2
+        dna1.mutate(0.7, bp.MutationType.SWAP)
         assert dna1 != dna2
 
 

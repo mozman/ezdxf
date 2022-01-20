@@ -366,26 +366,27 @@ class TestSchematicPicker:
 
 class TestGeneticDriver:
     def test_init(self, packer):
-        driver = bp.GeneticDriver(packer, 100, 1.0)
+        driver = bp.GeneticDriver(packer, 100)
         assert driver.is_executed is False
 
     def test_init_invalid_packer(self, packer):
         """Packer is already packed."""
         pack(packer, SMALL_BOX, bp.PickStrategy.SMALLER_FIRST)
         with pytest.raises(ValueError):
-            bp.GeneticDriver(packer, 100, 1.0)
+            bp.GeneticDriver(packer, 100)
 
     def test_init_invalid_max_runs(self, packer):
         with pytest.raises(ValueError):
-            bp.GeneticDriver(packer, 0, 1.0)
+            bp.GeneticDriver(packer, 0)
 
     @pytest.mark.parametrize("fitness", [-0.1, 1.1])
-    def test_init_invalid_max_fitness(self, packer, fitness):
+    def test_set_invalid_max_fitness(self, packer, fitness):
+        gd = bp.GeneticDriver(packer, 100)
         with pytest.raises(ValueError):
-            bp.GeneticDriver(packer, 100, fitness)
+            gd.max_fitness = fitness
 
     def test_can_only_run_once(self, packer):
-        driver = bp.GeneticDriver(packer, 100, 1.0)
+        driver = bp.GeneticDriver(packer, 100)
         driver.execute()
         assert driver.is_executed is True
         with pytest.raises(TypeError):
@@ -393,7 +394,7 @@ class TestGeneticDriver:
 
     def test_execution(self, packer):
         packer.add_bin(*MEDIUM_BOX)
-        driver = bp.GeneticDriver(packer, 10, 1.0)
+        driver = bp.GeneticDriver(packer, 10)
         driver.add_random_dna(20)
         driver.execute()
         assert driver.generation == 10

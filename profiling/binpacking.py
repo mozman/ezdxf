@@ -9,7 +9,11 @@ import ezdxf.addons.binpacking as bp
 
 def make_sample(n: int, max_width: float, max_height: float, max_depth: float):
     for _ in range(n):
-        yield random.random() * max_width, random.random() * max_height, random.random() * max_depth
+        yield (
+            random.random() * max_width,
+            random.random() * max_height,
+            random.random() * max_depth,
+        )
 
 
 def make_flat_packer(items) -> bp.FlatPacker:
@@ -49,21 +53,11 @@ def setup_3d_packer(n: int) -> bp.Packer:
     return packer
 
 
-def profile_bigger_first(packer: bp.AbstractPacker, strategy):
-    t0 = time.perf_counter()
-    packer.pack(strategy)
-    t1 = time.perf_counter()
-    return t1 - t0
-
-
 def print_result(p0: bp.AbstractPacker, t: float):
     box = p0.bins[0]
     print(
         f"Packed {len(box.items)} items in {t:.3f}s, ratio: {p0.bins[0].get_fill_ratio():.3f}"
     )
-
-
-ROUNDS = 10
 
 
 def main(packer: bp.AbstractPacker):
@@ -78,8 +72,10 @@ def main(packer: bp.AbstractPacker):
     print("Bigger First Strategy:")
     p0 = packer.copy()
     strategy = bp.PickStrategy.BIGGER_FIRST
-    t = profile_bigger_first(p0, strategy)
-    print_result(p0, t)
+    t0 = time.perf_counter()
+    p0.pack(strategy)
+    t1 = time.perf_counter()
+    print_result(p0, t1 - t0)
 
     n_shuffle = 100
     t0 = time.perf_counter()
@@ -88,11 +84,10 @@ def main(packer: bp.AbstractPacker):
     print(f"Shuffle {n_shuffle}x, best result:")
     print_result(p0, t1 - t0)
 
+    print("Genetic selection search:")
     n_generations = 200
     n_dns_strands = 50
-    gd = bp.GeneticDriver(
-        packer, max_generations=n_generations, max_fitness=1.0
-    )
+    gd = bp.GeneticDriver(packer, n_generations)
     gd.add_random_dna(n_dns_strands)
     gd.execute(feedback, interval=10.0)
     print(
