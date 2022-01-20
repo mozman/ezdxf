@@ -3,6 +3,7 @@
 import math
 import random
 import time
+import argparse
 
 import ezdxf.addons.binpacking as bp
 
@@ -96,7 +97,7 @@ def run_genetic_driver(packer: bp.AbstractPacker, generations: int, dns_count: i
     n_generations = generations
     n_dns_strands = dns_count
     gd = bp.GeneticDriver(packer, n_generations)
-    gd.mutation_type1 = bp.MutationType.FLIP
+    gd.mutation_type1 = bp.MutationType.SWAP
     gd.mutation_type2 = bp.MutationType.FLIP
     gd.add_random_dna(n_dns_strands)
     gd.execute(feedback, interval=10.0)
@@ -106,14 +107,47 @@ def run_genetic_driver(packer: bp.AbstractPacker, generations: int, dns_count: i
     )
     print_result(gd.best_packer, gd.runtime)
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-g",
+        "--generations",
+        type=int,
+        default=200,
+        help="generation count",
+    )
+    parser.add_argument(
+        "-d",
+        "--dns",
+        type=int,
+        default=200,
+        help="count of DNS strands",
+    )
+    parser.add_argument(
+        "-i",
+        "--items",
+        type=int,
+        default=50,
+        help="items count",
+    )
+    parser.add_argument(
+        "-s",
+        "--seed",
+        type=int,
+        default=SEED,
+        help="random generator seed",
+    )
+    return parser.parse_args()
+
 
 if __name__ == "__main__":
-    random.seed(SEED)
-    packer = setup_3d_packer(50)
+    args = parse_args()
+    random.seed(args.seed)
+    packer = setup_3d_packer(args.items)
     # packer = setup_flat_packer(50)
     print(packer.bins[0])
     print(f"Total item count: {len(packer.items)}")
     print(f"Total item volume: {packer.get_unfitted_volume():.3f}")
     run_bigger_first(packer)
-    run_shuffle(packer, shuffle_count=100)
-    run_genetic_driver(packer, generations=500, dns_count=50)
+    run_shuffle(packer, shuffle_count=args.generations)
+    run_genetic_driver(packer, generations=args.generations, dns_count=args.dns)
