@@ -86,7 +86,7 @@ def run_shuffle(packer: bp.AbstractPacker, shuffle_count: int):
 
 
 def run_genetic_driver(
-    packer: bp.AbstractPacker, generations: int, dns_count: int
+    packer: bp.AbstractPacker, generations: int, dna_count: int
 ):
     def feedback(driver: dp.GeneticDriver):
         print(
@@ -97,18 +97,18 @@ def run_genetic_driver(
         return False
 
     print(
-        f"\nGenetic algorithm search: gens={generations}, DNS strands={dns_count}"
+        f"\nGenetic algorithm search: gens={generations}, DNA strands={dna_count}"
     )
     n_generations = generations
-    n_dns_strands = dns_count
+    n_dna_strands = dna_count
     gd = dp.GeneticDriver(packer, n_generations)
     gd.mutation_type1 = dp.MutationType.FLIP
     gd.mutation_type2 = dp.MutationType.FLIP
-    gd.add_random_dna(n_dns_strands)
+    gd.add_random_dna(n_dna_strands)
     gd.execute(feedback, interval=10.0)
     print(
-        f"GeneticDriver: {n_generations} generations x {n_dns_strands} "
-        f"DNS strands, best result:"
+        f"GeneticDriver: {n_generations} generations x {n_dna_strands} "
+        f"DNA strands, best result:"
     )
     print_result(gd.best_packer, gd.runtime)
 
@@ -124,10 +124,10 @@ def parse_args():
     )
     parser.add_argument(
         "-d",
-        "--dns",
+        "--dna",
         type=int,
         default=200,
-        help="count of DNS strands",
+        help="count of DNA strands",
     )
     parser.add_argument(
         "-i",
@@ -156,4 +156,4 @@ if __name__ == "__main__":
     print(f"Total item volume: {packer.get_unfitted_volume():.3f}")
     run_bigger_first(packer)
     run_shuffle(packer, shuffle_count=args.generations)
-    run_genetic_driver(packer, generations=args.generations, dns_count=args.dns)
+    run_genetic_driver(packer, generations=args.generations, dna_count=args.dna)

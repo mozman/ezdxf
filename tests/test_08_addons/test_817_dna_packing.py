@@ -5,7 +5,6 @@ import pytest
 from ezdxf.addons import dnapacking as dp
 from ezdxf.addons import binpacking as bp
 
-
 class TestGene:
     def test_init_default(self):
         dna = dp.DNA(20)
@@ -50,7 +49,7 @@ class TestGene:
 
     def test_replace_tail(self):
         dna = dp.DNA(20)
-        dna.replace_tail([0.1, 0.2, 0.3])
+        dna[-3:] = dp.data([0.1, 0.2, 0.3])
         assert len(dna) == 20
         assert dna[-3:] == pytest.approx([0.1, 0.2, 0.3])
         assert sum(dna) == pytest.approx(0.6)
@@ -70,14 +69,26 @@ class TestGene:
         assert dna1 != dna2
 
 
-def test_recombine_genes():
+def test_single_point_crossover():
     dna1 = dp.DNA(20, 0.0)
     dna2 = dp.DNA(20, 1.0)
-    dp.recombine_dna(dna1, dna2, 7)
+    dp.recombine_dna_1pcx(dna1, dna2, 7)
     assert list(dna1[0:7]) == [0.0] * 7
     assert list(dna1[7:]) == [1.0] * 13
     assert list(dna2[0:7]) == [1.0] * 7
     assert list(dna2[7:]) == [0.0] * 13
+
+
+def test_two_point_crossover():
+    dna1 = dp.DNA(20, 0.0)
+    dna2 = dp.DNA(20, 1.0)
+    dp.recombine_dna_2pcx(dna1, dna2, 7, 11)
+    assert list(dna1[0:7]) == [0.0] * 7
+    assert list(dna1[7:11]) == [1.0] * 4
+    assert list(dna1[11:]) == [0.0] * 9
+    assert list(dna2[0:7]) == [1.0] * 7
+    assert list(dna2[7:11]) == [0.0] * 4
+    assert list(dna2[11:]) == [1.0] * 9
 
 
 SMALL_ENVELOPE = ("small-envelope", 11.5, 6.125, 0.25, 10)

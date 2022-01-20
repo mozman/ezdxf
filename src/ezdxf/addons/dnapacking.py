@@ -4,7 +4,6 @@
 from typing import (
     List,
     Iterable,
-    Sequence,
     Optional,
     Callable,
 )
@@ -24,7 +23,7 @@ class MutationType(enum.Enum):
     SWAP = enum.auto()
 
 
-def _to_list(values) -> List[float]:
+def data(values) -> List[float]:
     return array.array("f", values)  # type: ignore
 
 
@@ -34,7 +33,7 @@ class DNA:
     def __init__(self, length: int, value: float = 0.0):
         self._length = int(length)
         if 0.0 <= value <= 1.0:
-            self._data: List[float] = _to_list(
+            self._data: List[float] = data(
                 itertools.repeat(value, self._length)
             )
         else:
@@ -77,11 +76,16 @@ class DNA:
     def __getitem__(self, item):
         return self._data.__getitem__(item)
 
+    def __setitem__(self, key, value):
+        self._data.__setitem__(key, value)
+        self._check_valid_data()
+        self.taint()
+
     def __iter__(self):
         return iter(self._data)
 
     def reset(self, values: Iterable[float]):
-        self._data = _to_list(values)
+        self._data = data(values)
         self._check_valid_data()
         self.taint()
 
@@ -100,17 +104,18 @@ class DNA:
             self._data[index] = left
         self.taint()
 
-    def replace_tail(self, part: Sequence) -> None:
-        self._data[-len(part) :] = _to_list(part)
-        self._check_valid_data()
-        self.taint()
+
+def recombine_dna_1pcx(dna1: DNA, dna2: DNA, index: int) -> None:
+    """Single point crossover."""
+    recombine_dna_2pcx(dna1, dna2, index, len(dna1))
 
 
-def recombine_dna(dna1: DNA, dna2: DNA, index: int) -> None:
-    part1 = dna1[index:]
-    part2 = dna2[index:]
-    dna1.replace_tail(part2)
-    dna2.replace_tail(part1)
+def recombine_dna_2pcx(dna1: DNA, dna2: DNA, i1: int, i2: int) -> None:
+    """Two point crossover."""
+    part1 = dna1[i1:i2]
+    part2 = dna2[i1:i2]
+    dna1[i1:i2] = part2
+    dna2[i1:i2] = part1
 
 
 #############################################################################
@@ -255,8 +260,11 @@ class GeneticDriver:
             dna1 = dna1.copy()
             dna2 = dna2.copy()
             if random.random() < self._crossover_rate:
-                location = random.randrange(0, self._required_dna_length)
-                recombine_dna(dna1, dna2, location)
+                i1 = random.randrange(0, self._required_dna_length)
+                i2 = random.randrange(0, self._required_dna_length)
+                if i1 > i2:
+                    i1, i2 = i2, i1
+                recombine_dna_2pcx(dna1, dna2, i1, i2)
 
             mutation_rate = self._mutation_rate * self.stagnation
             dna1.mutate(mutation_rate, self.mutation_type1)
