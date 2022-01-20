@@ -79,11 +79,12 @@ PI_2 = math.pi / 2
 class RotationType(Enum):
     """Rotation type of an item:
 
-        - W = width
-        - H = height
-        - D = depth
+    - W = width
+    - H = height
+    - D = depth
 
     """
+
     WHD = auto()
     HWD = auto()
     HDW = auto()
@@ -99,7 +100,8 @@ class Axis(Enum):
 
 
 class PickStrategy(Enum):
-    """ Order of how to pick items for placement. """
+    """Order of how to pick items for placement."""
+
     SMALLER_FIRST = auto()
     BIGGER_FIRST = auto()
     SHUFFLE = auto()
@@ -114,7 +116,8 @@ START_POSITION: Tuple[float, float, float] = (0, 0, 0)
 
 
 class Item:
-    """3D container item. """
+    """3D container item."""
+
     def __init__(
         self,
         payload,
@@ -180,11 +183,11 @@ class Item:
         self._taint()
 
     def get_volume(self) -> float:
-        """Returns the volume of the item. """
+        """Returns the volume of the item."""
         return self.width * self.height * self.depth
 
     def get_dimension(self) -> Tuple[float, float, float]:
-        """Returns the item dimension according the :attr:`rotation_type`. """
+        """Returns the item dimension according the :attr:`rotation_type`."""
         rt = self.rotation_type
         if rt == RotationType.WHD:
             return self.width, self.height, self.depth
@@ -236,6 +239,7 @@ class FlatItem(Item):
     """2D container item, inherited from :class:`Item`. Has a default depth of
     1.0.
     """
+
     def __init__(
         self,
         payload,
@@ -280,13 +284,13 @@ class Bin:
         self.items: List[Item] = []
 
     def copy(self):
-        """Returns a copy. """
+        """Returns a copy."""
         box = copy.copy(self)  # shallow copy
         box.items = list(self.items)
         return box
 
     def reset(self):
-        """Reset the container to empty state. """
+        """Reset the container to empty state."""
         self.items.clear()
 
     @property
@@ -347,12 +351,14 @@ class Bin:
 
 
 class Box(Bin):
-    """ 3D container inherited from :class:`Bin`. """
+    """3D container inherited from :class:`Bin`."""
+
     pass
 
 
 class Envelope(Bin):
-    """ 2D container inherited from :class:`Bin`. """
+    """2D container inherited from :class:`Bin`."""
+
     def __init__(
         self,
         name,
@@ -425,7 +431,7 @@ class AbstractPacker:
 
     @property
     def unfitted_items(self) -> List[Item]:  # just an alias
-        """Returns the unfitted items. """
+        """Returns the unfitted items."""
         return self.items
 
     def __str__(self) -> str:
@@ -435,7 +441,7 @@ class AbstractPacker:
         return f"{self.__class__.__name__}, {len(self.bins)} bins{fill}"
 
     def append_bin(self, box: Bin) -> None:
-        """Append a container. """
+        """Append a container."""
         if self.is_packed:
             raise TypeError("cannot append bins to packed state")
         if not box.is_empty:
@@ -443,7 +449,7 @@ class AbstractPacker:
         self.bins.append(box)
 
     def append_item(self, item: Item) -> None:
-        """Append a item. """
+        """Append a item."""
         if self.is_packed:
             raise TypeError("cannot append items to packed state")
         self.items.append(item)
@@ -466,6 +472,10 @@ class AbstractPacker:
     def get_total_volume(self) -> float:
         """Returns the total volume of all fitted items in all bins."""
         return sum(box.get_total_volume() for box in self.bins)
+
+    def get_unfitted_volume(self) -> float:
+        """Returns the total volume of all unfitted items."""
+        return sum(item.get_volume() for item in self.items)
 
     def pack(self, pick=PickStrategy.BIGGER_FIRST) -> None:
         """Pack items into bins. Distributes all items across all bins."""
@@ -569,7 +579,7 @@ def schematic_picker(
 
 
 class Packer(AbstractPacker):
-    """3D Packer inherited from :class:`AbstractPacker`. """
+    """3D Packer inherited from :class:`AbstractPacker`."""
 
     def add_bin(
         self,
@@ -579,7 +589,7 @@ class Packer(AbstractPacker):
         depth: float,
         max_weight: float = UNLIMITED_WEIGHT,
     ) -> Box:
-        """Add a 3D :class:`Box` container. """
+        """Add a 3D :class:`Box` container."""
         box = Box(name, width, height, depth, max_weight)
         self.append_bin(box)
         return box
@@ -592,7 +602,7 @@ class Packer(AbstractPacker):
         depth: float,
         weight: float = 0.0,
     ) -> Item:
-        """Add a 3D :class:`Item` to pack. """
+        """Add a 3D :class:`Item` to pack."""
         item = Item(payload, width, height, depth, weight)
         self.append_item(item)
         return item
@@ -609,7 +619,7 @@ class FlatPacker(AbstractPacker):
         height: float,
         max_weight: float = UNLIMITED_WEIGHT,
     ) -> Envelope:
-        """Add a 2D :class:`Envelope` container. """
+        """Add a 2D :class:`Envelope` container."""
         envelope = Envelope(name, width, height, max_weight)
         self.append_bin(envelope)
         return envelope
@@ -621,7 +631,7 @@ class FlatPacker(AbstractPacker):
         height: float,
         weight: float = 0.0,
     ) -> Item:
-        """Add a 2D :class:`FlatItem` to pack. """
+        """Add a 2D :class:`FlatItem` to pack."""
         item = FlatItem(payload, width, height, weight)
         self.append_item(item)
         return item
@@ -698,13 +708,13 @@ class DNA:
                 self.mutate_at(index, mutation_type)
 
     def mutate_at(self, index, mutation_type=MutationType.FLIP):
-        if mutation_type == MutationType.SWAP:  # better strategy
+        if mutation_type == MutationType.FLIP:
+            self._data[index] = 1.0 - self._data[index]  # flip pick location
+        elif mutation_type == MutationType.SWAP:
             index_left = index - 1  # 0 <-> -1; first <-> last
             left = self._data[index_left]
             self._data[index_left] = self._data[index]
             self._data[index] = left
-        elif mutation_type == MutationType.FLIP:  # worse strategy
-            self._data[index] = 1.0 - self._data[index]  # flip pick location
         self.taint()
 
     def replace_tail(self, part: Sequence) -> None:
@@ -741,7 +751,8 @@ class GeneticDriver:
         self._crossover_rate = 0.70
         self._mutation_rate = 0.001
         self.selection_always_include_best_dna = True
-        self.mutation_type = MutationType.SWAP
+        self.mutation_type1 = MutationType.FLIP
+        self.mutation_type2 = MutationType.FLIP
 
         # state of last (current) generation:
         self.generation: int = 0
@@ -749,6 +760,7 @@ class GeneticDriver:
         self.best_dna = DNA(0)
         self.best_fitness: float = 0.0
         self.best_packer = packer
+        self.stagnation: int = 0  # generations without improvement
 
     @property
     def max_fitness(self) -> float:
@@ -825,6 +837,7 @@ class GeneticDriver:
             self._selection()
 
     def _measure_fitness(self):
+        self.stagnation += 1
         for dna in self._dna_strands:
             if dna.fitness is not None:
                 continue
@@ -836,6 +849,7 @@ class GeneticDriver:
                 self.best_fitness = fill_ratio
                 self.best_packer = p0
                 self.best_dna = dna.copy()
+                self.stagnation = 0
 
     def _selection(self):
         wheel = self._make_wheel()
@@ -848,8 +862,10 @@ class GeneticDriver:
             if random.random() < self._crossover_rate:
                 location = random.randrange(0, self._required_dna_length)
                 recombine_dna(dna1, dna2, location)
-            dna1.mutate(self._mutation_rate)
-            dna2.mutate(self._mutation_rate)
+
+            mutation_rate = self._mutation_rate * self.stagnation
+            dna1.mutate(mutation_rate, self.mutation_type1)
+            dna2.mutate(mutation_rate, self.mutation_type2)
             dna_strands.append(dna1)
             dna_strands.append(dna2)
         self._dna_strands = dna_strands

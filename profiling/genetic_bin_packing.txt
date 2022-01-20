@@ -1,0 +1,36 @@
+SEED: 47856535
+
+Bigger First Strategy:
+Packed 26 items in 0.046s, ratio: 0.902
+Shuffle 100x, best result:
+Packed 35 items in 8.572s, ratio: 0.814
+
+GeneticDriver:
+mutation: SWAP;SWAP
+GeneticDriver: 200 generations x 50 DNS strands, best result:
+Packed 40 items in 585.103s, ratio: 0.856
+
+mutation: SWAP;FLIP
+GeneticDriver: 200 generations x 50 DNS strands, best result:
+Packed 38 items in 676.488s, ratio: 0.876
+
+Increase mutation as stagnation: max_stagnation=10
+mutation: SWAP;FLIP
+GeneticDriver: 200 generations x 50 DNS strands, best result:
+Packed 35 items in 641.776s, ratio: 0.899
+
+Increase mutation at stagnation: max_stagnation=10
+mutation: FLIP;FLIP
+GeneticDriver: 200 generations x 50 DNS strands, best result:
+Packed 35 items in 601.140s, ratio: 0.892
+
+Increase mutation at stagnation: max_stagnation removed
+mutation: FLIP;FLIP
+GeneticDriver: 200 generations x 50 DNS strands, best result:
+Packed 37 items in 633.895s, ratio: 0.874
+
+PyPy 3.7 (same random number algorithm)
+Increase mutation at stagnation: max_stagnation removed
+mutation: FLIP;FLIP
+GeneticDriver: 300 generations x 50 DNS strands, best result:
+Packed 37 items in 463.804s, ratio: 0.874

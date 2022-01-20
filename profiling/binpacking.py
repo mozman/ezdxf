@@ -6,6 +6,8 @@ import time
 
 import ezdxf.addons.binpacking as bp
 
+SEED = 47856535
+
 
 def make_sample(n: int, max_width: float, max_height: float, max_depth: float):
     for _ in range(n):
@@ -35,8 +37,8 @@ def setup_flat_packer(n: int) -> bp.FlatPacker:
     packer = make_flat_packer(
         ((round(w) + 1, round(h) + 1) for w, h, d in items)
     )
-    total_area = sum(item.get_volume() for item in packer.items)
-    w = round(math.sqrt(total_area) / 2.0)
+    area = packer.get_unfitted_volume()
+    w = round(math.sqrt(area) / 2.0)
     h = w * 1.60
     packer.add_bin("bin", w, h)
     return packer
@@ -47,8 +49,8 @@ def setup_3d_packer(n: int) -> bp.Packer:
     packer = make_3d_packer(
         ((round(w) + 1, round(h) + 1, round(d) + 1) for w, h, d in items)
     )
-    total_area = sum(item.get_volume() for item in packer.items)
-    s = round(math.pow(total_area, 0.3))
+    volume = packer.get_unfitted_volume()
+    s = round(math.pow(volume, 1.0 / 3.1))
     packer.add_bin("bin", s, s, s)
     return packer
 
@@ -56,20 +58,13 @@ def setup_3d_packer(n: int) -> bp.Packer:
 def print_result(p0: bp.AbstractPacker, t: float):
     box = p0.bins[0]
     print(
-        f"Packed {len(box.items)} items in {t:.3f}s, ratio: {p0.bins[0].get_fill_ratio():.3f}"
+        f"Packed {len(box.items)} items in {t:.3f}s, "
+        f"ratio: {p0.get_fill_ratio():.3f}"
     )
 
 
-def main(packer: bp.AbstractPacker):
-    def feedback(driver: bp.GeneticDriver):
-        print(
-            f"generation: {driver.generation}, best fitness: {driver.best_fitness:.3f}"
-        )
-        return False
-
-    print(packer.bins[0])
-    print(f"Total item count: {len(packer.items)}")
-    print("Bigger First Strategy:")
+def run_bigger_first(packer: bp.AbstractPacker):
+    print("\nBigger first strategy:")
     p0 = packer.copy()
     strategy = bp.PickStrategy.BIGGER_FIRST
     t0 = time.perf_counter()
@@ -77,26 +72,48 @@ def main(packer: bp.AbstractPacker):
     t1 = time.perf_counter()
     print_result(p0, t1 - t0)
 
-    n_shuffle = 100
+
+def run_shuffle(packer: bp.AbstractPacker, shuffle_count: int):
+    print("\nShuffle strategy:")
+    n_shuffle = shuffle_count
     t0 = time.perf_counter()
     p0 = bp.shuffle_pack(packer, n_shuffle)
     t1 = time.perf_counter()
     print(f"Shuffle {n_shuffle}x, best result:")
     print_result(p0, t1 - t0)
 
-    print("Genetic selection search:")
-    n_generations = 200
-    n_dns_strands = 50
+
+def run_genetic_driver(packer: bp.AbstractPacker, generations: int, dns_count: int):
+    def feedback(driver: bp.GeneticDriver):
+        print(
+            f"gen: {driver.generation:4}, "
+            f"stag: {driver.stagnation:4}, "
+            f"fitness: {driver.best_fitness:.3f}"
+        )
+        return False
+
+    print(f"\nGenetic algorithm search: gens={generations}, DNS strands={dns_count}")
+    n_generations = generations
+    n_dns_strands = dns_count
     gd = bp.GeneticDriver(packer, n_generations)
+    gd.mutation_type1 = bp.MutationType.FLIP
+    gd.mutation_type2 = bp.MutationType.FLIP
     gd.add_random_dna(n_dns_strands)
     gd.execute(feedback, interval=10.0)
     print(
-        f"GeneticDriver: {n_generations} generations x {n_dns_strands} DNS strands, best result:"
+        f"GeneticDriver: {n_generations} generations x {n_dns_strands} "
+        f"DNS strands, best result:"
     )
     print_result(gd.best_packer, gd.runtime)
 
 
 if __name__ == "__main__":
+    random.seed(SEED)
     packer = setup_3d_packer(50)
     # packer = setup_flat_packer(50)
-    main(packer)
+    print(packer.bins[0])
+    print(f"Total item count: {len(packer.items)}")
+    print(f"Total item volume: {packer.get_unfitted_volume():.3f}")
+    run_bigger_first(packer)
+    run_shuffle(packer, shuffle_count=100)
+    run_genetic_driver(packer, generations=500, dns_count=50)
