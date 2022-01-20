@@ -55,7 +55,7 @@ class DNA:
     def copy(self):
         return copy.deepcopy(self)
 
-    def taint(self):
+    def _taint(self):
         self.fitness = None
 
     def __eq__(self, other):
@@ -78,8 +78,7 @@ class DNA:
 
     def __setitem__(self, key, value):
         self._data.__setitem__(key, value)
-        self._check_valid_data()
-        self.taint()
+        self._taint()
 
     def __iter__(self):
         return iter(self._data)
@@ -87,7 +86,7 @@ class DNA:
     def reset(self, values: Iterable[float]):
         self._data = data(values)
         self._check_valid_data()
-        self.taint()
+        self._taint()
 
     def mutate(self, rate: float, mutation_type=MutationType.FLIP):
         for index in range(self._length):
@@ -102,7 +101,7 @@ class DNA:
             left = self._data[index_left]
             self._data[index_left] = self._data[index]
             self._data[index] = left
-        self.taint()
+        self._taint()
 
 
 def recombine_dna_1pcx(dna1: DNA, dna2: DNA, index: int) -> None:
@@ -234,7 +233,7 @@ class GeneticDriver:
                 if feedback(self):  # stop if feedback() returns True
                     break
                 t0 = t1
-            self._selection()
+            self._next_generation()
 
     def _measure_fitness(self):
         self.stagnation += 1
@@ -251,8 +250,8 @@ class GeneticDriver:
                 self.best_dna = dna.copy()
                 self.stagnation = 0
 
-    def _selection(self):
-        wheel = self._make_wheel()
+    def _next_generation(self):
+        wheel = self._selection()
         dna_strands: List[DNA] = []
         count = len(self._dna_strands)
         while len(dna_strands) < count:
@@ -260,20 +259,13 @@ class GeneticDriver:
             dna1 = dna1.copy()
             dna2 = dna2.copy()
             if random.random() < self._crossover_rate:
-                i1 = random.randrange(0, self._required_dna_length)
-                i2 = random.randrange(0, self._required_dna_length)
-                if i1 > i2:
-                    i1, i2 = i2, i1
-                recombine_dna_2pcx(dna1, dna2, i1, i2)
-
-            mutation_rate = self._mutation_rate * self.stagnation
-            dna1.mutate(mutation_rate, self.mutation_type1)
-            dna2.mutate(mutation_rate, self.mutation_type2)
+                self._recombination(dna1, dna2)
+            self._mutation(dna1, dna2)
             dna_strands.append(dna1)
             dna_strands.append(dna2)
         self._dna_strands = dna_strands
 
-    def _make_wheel(self):
+    def _selection(self):
         wheel = WheelOfFortune()
         dna_strands = self._dna_strands
         best_fitness = self.best_fitness
@@ -292,6 +284,18 @@ class GeneticDriver:
         if not has_best and self.selection_always_include_best_dna:
             wheel.add_dna(self.best_dna, best_fitness / sum_fitness)
         return wheel
+
+    def _recombination(self, dna1: DNA, dna2: DNA):
+        i1 = random.randrange(0, self._required_dna_length)
+        i2 = random.randrange(0, self._required_dna_length)
+        if i1 > i2:
+            i1, i2 = i2, i1
+        recombine_dna_2pcx(dna1, dna2, i1, i2)
+
+    def _mutation(self, dna1: DNA, dna2: DNA):
+        mutation_rate = self._mutation_rate * self.stagnation
+        dna1.mutate(mutation_rate, self.mutation_type1)
+        dna2.mutate(mutation_rate, self.mutation_type2)
 
 
 class WheelOfFortune:
