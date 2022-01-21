@@ -85,9 +85,23 @@ def run_shuffle(packer: bp.AbstractPacker, shuffle_count: int):
     print_result(p0, t1 - t0)
 
 
-def run_genetic_driver(
-    packer: bp.AbstractPacker, generations: int, dna_count: int
-):
+def make_subset_driver(packer: bp.AbstractPacker, generations: int):
+    driver = dp.GeneticDriver(packer, generations)
+    driver.set_dna_type(dp.BitDNA)
+    driver.set_evaluator(dp.subset_evaluator)
+    driver.name = "Item Subset Packer"
+    return driver
+
+
+def make_schema_driver(packer: bp.AbstractPacker, generations: int):
+    driver = dp.GeneticDriver(packer, generations)
+    driver.set_dna_type(dp.FloatDNA)
+    driver.set_evaluator(dp.schematic_evaluator)
+    driver.name = "Schematic Item Picker"
+    return driver
+
+
+def run_genetic_driver(driver: dp.GeneticDriver, dna_count: int):
     def feedback(driver: dp.GeneticDriver):
         print(
             f"gen: {driver.generation:4}, "
@@ -95,22 +109,20 @@ def run_genetic_driver(
             f"fitness: {driver.best_fitness:.3f}"
         )
         return False
-
+    generations = driver.max_generations
     print(
-        f"\nGenetic algorithm search: gens={generations}, DNA strands={dna_count}"
+        f"\nGenetic algorithm search: {driver.name}\n"
+        f"max generations={generations}, DNA count={dna_count}"
     )
-    n_generations = generations
-    n_dna_strands = dna_count
-    gd = dp.GeneticDriver(packer, n_generations)
-    gd.mutation_type1 = dp.MutationType.FLIP
-    gd.mutation_type2 = dp.MutationType.FLIP
-    gd.add_random_dna(n_dna_strands)
-    gd.execute(feedback, interval=10.0)
+    driver.mutation_type1 = dp.MutationType.FLIP
+    driver.mutation_type2 = dp.MutationType.FLIP
+    driver.add_random_dna(dna_count)
+    driver.execute(feedback, interval=10.0)
     print(
-        f"GeneticDriver: {n_generations} generations x {n_dna_strands} "
+        f"GeneticDriver: {generations} generations x {dna_count} "
         f"DNA strands, best result:"
     )
-    print_result(gd.best_packer, gd.runtime)
+    print_result(driver.best_packer, driver.runtime)
 
 
 def parse_args():
@@ -155,5 +167,5 @@ if __name__ == "__main__":
     print(f"Total item count: {len(packer.items)}")
     print(f"Total item volume: {packer.get_unfitted_volume():.3f}")
     run_bigger_first(packer)
-    run_shuffle(packer, shuffle_count=args.generations)
-    run_genetic_driver(packer, generations=args.generations, dna_count=args.dna)
+    driver = make_subset_driver(packer, args.generations)
+    run_genetic_driver(driver, dna_count=args.dna)

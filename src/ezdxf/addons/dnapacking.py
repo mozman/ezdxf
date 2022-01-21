@@ -13,7 +13,7 @@ import copy
 import enum
 import random
 import time
-from .binpacking import AbstractPacker
+from .binpacking import AbstractPacker, pack_item_subset
 
 __all__ = ["DNA", "Selection", "FloatDNA", "RouletteSelection", "GeneticDriver"]
 
@@ -169,6 +169,11 @@ def schematic_evaluator(packer: AbstractPacker, dna: DNA) -> float:
     return packer.get_fill_ratio()
 
 
+def subset_evaluator(packer: AbstractPacker, dna: DNA) -> float:
+    pack_item_subset(packer, dna)
+    return packer.get_fill_ratio()
+
+
 #############################################################################
 # Optimizing only the order for the pack algorithm was not efficient, the
 # BIGGER_FIRST strategy beats every other attempt!
@@ -192,6 +197,7 @@ class GeneticDriver:
         if max_generations < 1:
             raise ValueError("max_generations < 1")
         # data:
+        self.name = "GeneticDriver"
         self._packer = packer
         self._required_dna_length = len(packer.items)
         self._dna_strands: List[DNA] = []
@@ -226,6 +232,10 @@ class GeneticDriver:
 
     def set_evaluator(self, evaluator: TEvaluator) -> None:
         self._evaluator = evaluator
+
+    @property
+    def max_generations(self) -> float:
+        return self._max_generations
 
     @property
     def max_fitness(self) -> float:
