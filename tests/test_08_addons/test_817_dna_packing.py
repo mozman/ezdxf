@@ -172,12 +172,6 @@ class TestGeneticDriver:
         with pytest.raises(ValueError):
             dp.GeneticDriver(packer, 0)
 
-    @pytest.mark.parametrize("fitness", [-0.1, 1.1])
-    def test_set_invalid_max_fitness(self, packer, fitness):
-        gd = dp.GeneticDriver(packer, 100)
-        with pytest.raises(ValueError):
-            gd.max_fitness = fitness
-
     def test_can_only_run_once(self, packer):
         driver = dp.GeneticDriver(packer, 100)
         driver.execute()

@@ -2,9 +2,16 @@
 #  License: MIT License
 import math
 import random
+import os
 import time
+import sys
 import argparse
-import matplotlib.pyplot as plt
+
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    plt = None
+
 import json
 
 import ezdxf.addons.binpacking as bp
@@ -87,15 +94,20 @@ def run_shuffle(packer: bp.AbstractPacker, shuffle_count: int):
     print_result(p0, t1 - t0)
 
 
-def make_subset_driver(packer: bp.AbstractPacker, generations: int):
+def make_subset_driver(
+    packer: bp.AbstractPacker, generations: int, dna_count: int
+):
     driver = dp.GeneticDriver(packer, generations)
     driver.set_dna_type(dp.BitDNA)
     driver.set_evaluator(dp.subset_evaluator)
     driver.name = "pack item subset"
+    driver.mutation_type1 = dp.MutationType.FLIP
+    driver.mutation_type2 = dp.MutationType.FLIP
+    driver.add_random_dna(dna_count)
     return driver
 
 
-def run_genetic_driver(driver: dp.GeneticDriver, dna_count: int):
+def run_genetic_driver(driver: dp.GeneticDriver):
     def feedback(driver: dp.GeneticDriver):
         print(
             f"gen: {driver.generation:4}, "
@@ -104,17 +116,13 @@ def run_genetic_driver(driver: dp.GeneticDriver, dna_count: int):
         )
         return False
 
-    generations = driver.max_generations
     print(
         f"\nGenetic algorithm search: {driver.name}\n"
-        f"max generations={generations}, DNA count={dna_count}"
+        f"max generations={driver.max_generations}, DNA count={driver.dna_count}"
     )
-    driver.mutation_type1 = dp.MutationType.FLIP
-    driver.mutation_type2 = dp.MutationType.FLIP
-    driver.add_random_dna(dna_count)
     driver.execute(feedback, interval=3.0)
     print(
-        f"GeneticDriver: {generations} generations x {dna_count} "
+        f"GeneticDriver: {driver.generation} generations x {driver.dna_count} "
         f"DNA strands, best result:"
     )
     print_result(driver.best_packer, driver.runtime)
@@ -123,22 +131,20 @@ def run_genetic_driver(driver: dp.GeneticDriver, dna_count: int):
 def dump_log(log, filename):
     data = [(e.runtime, e.fitness) for e in log]
     with open(filename, "wt") as fp:
-        json.dump(data, fp)
+        json.dump(data, fp, indent=4)
 
 
 def show_log(log):
     x = []
     y = []
-    avg = []
-    sum_ = 0.0
+    moving_avg = []
     for index, entry in enumerate(log, start=1):
-        sum_ += entry.fitness
-        avg.append(sum_ / index)
         x.append(index)
         y.append(entry.fitness)
+        moving_avg.append(sum(y) / len(y))
     fig, ax = plt.subplots()
     ax.plot(x, y)
-    ax.plot(x, avg)
+    ax.plot(x, moving_avg)
     ax.set(
         xlabel="generation",
         ylabel="fitness",
@@ -146,6 +152,12 @@ def show_log(log):
     )
     ax.grid()
     plt.show()
+
+
+def load_log(filename):
+    with open(filename, "rt") as fp:
+        data = json.load(fp)
+    return [dp.LogEntry(t, f) for t, f in data]
 
 
 def parse_args():
@@ -178,11 +190,24 @@ def parse_args():
         default=SEED,
         help="random generator seed",
     )
+    parser.add_argument(
+        "-v",
+        "--view",
+        action="store_true",
+        default=False,
+        help="view logged data",
+    )
     return parser.parse_args()
 
 
+DATA_LOG = "binpacking.json"
+
 if __name__ == "__main__":
     args = parse_args()
+    if args.view and plt and os.path.exists(DATA_LOG):
+        log = load_log(DATA_LOG)
+        show_log(log)
+        sys.exit()
     random.seed(args.seed)
     packer = setup_3d_packer(args.items)
     # packer = setup_flat_packer(50)
@@ -191,7 +216,8 @@ if __name__ == "__main__":
     print(f"Total item volume: {packer.get_unfitted_volume():.3f}")
     print(f"Random Seed: {args.seed}")
     run_bigger_first(packer)
-    driver = make_subset_driver(packer, args.generations)
-    run_genetic_driver(driver, dna_count=args.dna)
-    # dump_log(driver.log, "binpacking.json")
-    show_log(driver.log)
+    driver = make_subset_driver(packer, args.generations, args.dna)
+    run_genetic_driver(driver)
+    dump_log(driver.log, DATA_LOG)
+    if plt is not None:
+        show_log(driver.log)

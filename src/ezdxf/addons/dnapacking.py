@@ -199,10 +199,12 @@ class GeneticDriver:
         self._evaluator: TEvaluator = subset_evaluator
 
         # options:
-        self._max_generations = int(max_generations)
-        self._max_fitness: float = 1.0
-        self._crossover_rate = 0.70
-        self._mutation_rate = 0.001
+        self.max_generations = int(max_generations)
+        self.max_stagnation = 100
+        self.max_fitness: float = 1.0
+        self.max_time: float = 1e99
+        self.crossover_rate = 0.70
+        self.mutation_rate = 0.001
         self.elitism: int = 2
         self.mutation_type1 = MutationType.FLIP
         self.mutation_type2 = MutationType.FLIP
@@ -210,7 +212,7 @@ class GeneticDriver:
         # state of last (current) generation:
         self.generation: int = 0
         self.runtime: float = 0.0
-        self.best_dna = FloatDNA([])
+        self.best_dna = BitDNA([])
         self.best_fitness: float = 0.0
         self.best_packer = packer
         self.stagnation: int = 0  # generations without improvement
@@ -225,42 +227,12 @@ class GeneticDriver:
         self._evaluator = evaluator
 
     @property
-    def max_generations(self) -> float:
-        return self._max_generations
-
-    @property
-    def max_fitness(self) -> float:
-        return self._max_fitness
-
-    @max_fitness.setter
-    def max_fitness(self, value: float) -> None:
-        if value > 1.0 or value < 0.0:
-            raise ValueError("max_fitness not in range [0, 1]")
-        self._max_fitness = value
-
-    @property
-    def crossover_rate(self) -> float:
-        return self._crossover_rate
-
-    @crossover_rate.setter
-    def crossover_rate(self, value: float) -> None:
-        if value > 1.0 or value < 0.0:
-            raise ValueError("crossover_rate not in range [0, 1]")
-        self._crossover_rate = value
-
-    @property
-    def mutation_rate(self) -> float:
-        return self._mutation_rate
-
-    @mutation_rate.setter
-    def mutation_rate(self, value: float) -> None:
-        if value > 1.0 or value < 0.0:
-            raise ValueError("mutation_rate not in range [0, 1]")
-        self._mutation_rate = value
-
-    @property
     def is_executed(self) -> bool:
         return bool(self.generation)
+
+    @property
+    def dna_count(self) -> int:
+        return len(self._dna_strands)
 
     def add_random_dna(self, count: int):
         if not self.is_executed:
@@ -275,7 +247,6 @@ class GeneticDriver:
         self,
         feedback: Callable[["GeneticDriver"], bool] = None,
         interval: float = 1.0,
-        max_time: float = 1e99,
     ) -> None:
         if self.is_executed:
             raise TypeError("can only run once")
@@ -283,14 +254,16 @@ class GeneticDriver:
             print("no DNA defined!")
         t0 = time.perf_counter()
         start_time = t0
-        for self.generation in range(1, self._max_generations + 1):
+        for self.generation in range(1, self.max_generations + 1):
             self.measure_fitness()
             t1 = time.perf_counter()
             self.runtime = t1 - start_time
             self.log.append(LogEntry(self.runtime, self.best_fitness))
-            if self.best_fitness >= self._max_fitness:
-                break
-            if self.runtime > max_time:
+            if (
+                self.best_fitness >= self.max_fitness
+                or self.runtime >= self.max_time
+                or self.stagnation >= self.max_stagnation
+            ):
                 break
             if feedback and t1 - t0 > interval:
                 if feedback(self):  # stop if feedback() returns True
@@ -325,7 +298,7 @@ class GeneticDriver:
             dna1, dna2 = selector.pick(2)
             dna1 = dna1.copy()
             dna2 = dna2.copy()
-            if random.random() < self._crossover_rate:
+            if random.random() < self.crossover_rate:
                 self.recombination(dna1, dna2)
             self.mutation(dna1, dna2)
             dna_strands.append(dna1)
@@ -340,7 +313,7 @@ class GeneticDriver:
         recombine_dna_2pcx(dna1, dna2, i1, i2)
 
     def mutation(self, dna1: DNA, dna2: DNA):
-        mutation_rate = self._mutation_rate * self.stagnation
+        mutation_rate = self.mutation_rate * self.stagnation
         dna1.mutate(mutation_rate, self.mutation_type1)
         dna2.mutate(mutation_rate, self.mutation_type2)
 
