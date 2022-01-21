@@ -6,6 +6,8 @@ from typing import (
     Iterable,
     Optional,
     Callable,
+    TypeVar,
+    Generic,
 )
 import abc
 import copy
@@ -15,7 +17,7 @@ import random
 import time
 from .binpacking import AbstractPacker
 
-__all__ = ["DNA", "GeneticDriver"]
+__all__ = ["DNA", "Selection", "FloatDNA", "RouletteSelection", "GeneticDriver"]
 
 
 class MutationType(enum.Enum):
@@ -48,7 +50,7 @@ class DNA(abc.ABC):
         self.fitness = None
 
     def __eq__(self, other):
-        assert isinstance(other, DNA)
+        assert isinstance(other, self.__class__)
         return self._data == other._data
 
     def __len__(self):
@@ -130,6 +132,15 @@ class FloatDNA(DNA):
         self._taint()
 
 
+D = TypeVar("D", bound=DNA)
+
+
+class Selection(abc.ABC, Generic[D]):
+    @abc.abstractmethod
+    def pick(self, count: int) -> Iterable[D]:
+        ...
+
+
 #############################################################################
 # Optimizing only the order for the pack algorithm was not efficient, the
 # BIGGER_FIRST strategy beats every other attempt!
@@ -162,7 +173,7 @@ class GeneticDriver:
         self._max_fitness: float = 1.0
         self._crossover_rate = 0.70
         self._mutation_rate = 0.001
-        self.selection_always_include_best_dna = True
+        self.elitism: int = 2
         self.mutation_type1 = MutationType.FLIP
         self.mutation_type2 = MutationType.FLIP
 
@@ -248,7 +259,7 @@ class GeneticDriver:
                 t0 = t1
             self._next_generation()
 
-    def _measure_fitness(self):
+    def _measure_fitness(self) -> None:
         self.stagnation += 1
         for dna in self._dna_strands:
             if dna.fitness is not None:
@@ -263,12 +274,16 @@ class GeneticDriver:
                 self.best_dna = dna.copy()
                 self.stagnation = 0
 
-    def _next_generation(self):
-        wheel = self._selection()
-        dna_strands: List[DNA] = []
+    def _next_generation(self) -> None:
+        selector: Selection[FloatDNA] = RouletteSelection(self._dna_strands)
+        dna_strands: List[FloatDNA] = []
         count = len(self._dna_strands)
+
+        if self.elitism > 0:
+            dna_strands.extend([self.best_dna] * self.elitism)
+
         while len(dna_strands) < count:
-            dna1, dna2 = wheel.pick(2)
+            dna1, dna2 = selector.pick(2)
             dna1 = dna1.copy()
             dna2 = dna2.copy()
             if random.random() < self._crossover_rate:
@@ -277,26 +292,6 @@ class GeneticDriver:
             dna_strands.append(dna1)
             dna_strands.append(dna2)
         self._dna_strands = dna_strands
-
-    def _selection(self):
-        wheel = WheelOfFortune()
-        dna_strands = self._dna_strands
-        best_fitness = self.best_fitness
-        has_best = False
-
-        sum_fitness = sum(dna.fitness for dna in dna_strands)
-        if sum_fitness == 0.0:
-            sum_fitness = 1.0
-
-        for dna in dna_strands:
-            if dna.fitness == best_fitness:
-                # DNA gets copied, comparing by "is" does not work!
-                has_best = True
-            wheel.add_dna(dna, dna.fitness / sum_fitness)
-
-        if not has_best and self.selection_always_include_best_dna:
-            wheel.add_dna(self.best_dna, best_fitness / sum_fitness)
-        return wheel
 
     def _recombination(self, dna1: DNA, dna2: DNA):
         i1 = random.randrange(0, self._required_dna_length)
@@ -311,14 +306,17 @@ class GeneticDriver:
         dna2.mutate(mutation_rate, self.mutation_type2)
 
 
-class WheelOfFortune:
-    def __init__(self):
-        self._dna_strands: List[DNA] = []
+class RouletteSelection(Selection):
+    def __init__(self, strands: Iterable[D]):
+        self._strands: List[D] = list(strands)
         self._weights: List[float] = []
+        self.update()
 
-    def add_dna(self, item: DNA, weight: float):
-        self._dna_strands.append(item)
-        self._weights.append(weight)
+    def update(self):
+        sum_fitness = sum(dna.fitness for dna in self._strands)
+        if sum_fitness == 0.0:
+            sum_fitness = 1.0
+        self._weights = [dna.fitness / sum_fitness for dna in self._strands]
 
-    def pick(self, count: int) -> Iterable[DNA]:
-        return random.choices(self._dna_strands, self._weights, k=count)
+    def pick(self, count: int) -> Iterable[D]:
+        return random.choices(self._strands, self._weights, k=count)

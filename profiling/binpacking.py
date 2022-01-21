@@ -126,7 +126,7 @@ def parse_args():
         "-d",
         "--dna",
         type=int,
-        default=200,
+        default=50,
         help="count of DNA strands",
     )
     parser.add_argument(
