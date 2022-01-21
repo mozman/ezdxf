@@ -209,22 +209,8 @@ class MatplotlibBackend(Backend):
             )
         )
 
-    @lru_cache(maxsize=256)  # fonts.Font is a named tuple
     def get_font_properties(self, font: fonts.FontFace) -> FontProperties:
-        font_properties = self._text_renderer.default_font
-        if font:
-            # Font-definitions are created by the matplotlib FontManger(),
-            # but stored as json file and could be altered by an user:
-            try:
-                font_properties = FontProperties(
-                    family=font.family,
-                    style=font.style,
-                    stretch=font.stretch,
-                    weight=font.weight,
-                )
-            except ValueError:
-                pass
-        return font_properties
+        return _get_font_properties(font, self._text_renderer.default_font)
 
     def get_font_measurements(
         self, cap_height: float, font: fonts.FontFace = None
@@ -264,7 +250,6 @@ class MatplotlibBackend(Backend):
                     width, height, forward=True
                 )
         plt.rcParams["lines.scale_dashes"] = self._scale_dashes_backup
-        self.get_font_properties.cache_clear()
 
     def _get_filling(self, properties: Properties):
         fill = True
@@ -294,6 +279,26 @@ def _transform_path(path: Path, transform: Matrix44) -> Path:
         [Vec3(x, y) for x, y in path.vertices]
     )
     return Path([(v.x, v.y) for v in vertices], path.codes)
+
+
+@lru_cache(maxsize=256)  # fonts.Font is a named tuple
+def _get_font_properties(
+    font: fonts.FontFace, default_font: FontProperties
+) -> FontProperties:
+    font_properties = default_font
+    if font:
+        # Font-definitions are created by the matplotlib FontManger(),
+        # but stored as json file and could be altered by an user:
+        try:
+            font_properties = FontProperties(
+                family=font.family,
+                style=font.style,
+                stretch=font.stretch,
+                weight=font.weight,
+            )
+        except ValueError:
+            pass
+    return font_properties
 
 
 class TextRenderer:
