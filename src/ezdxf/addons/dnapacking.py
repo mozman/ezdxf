@@ -34,11 +34,6 @@ class DNA(abc.ABC):
     def random(cls, length):
         ...
 
-    @classmethod
-    @abc.abstractmethod
-    def from_value(cls, value, length):
-        ...
-
     @abc.abstractmethod
     def reset(self, values: Iterable):
         ...
@@ -82,9 +77,9 @@ class DNA(abc.ABC):
         ...
 
     def swap_mutate(self, i1: int, i2: int) -> None:
-        left = self._data[i2]
+        tmp = self._data[i2]
         self._data[i2] = self._data[i1]
-        self._data[i1] = left
+        self._data[i1] = tmp
 
 
 def recombine_dna_1pcx(dna1: DNA, dna2: DNA, index: int) -> None:
@@ -111,10 +106,6 @@ class FloatDNA(DNA):
     @classmethod
     def random(cls, length: int) -> "FloatDNA":
         return cls(random.random() for _ in range(length))
-
-    @classmethod
-    def from_value(cls, value: float, length: int) -> "FloatDNA":
-        return cls(itertools.repeat(value, length))
 
     def _check_valid_data(self):
         if not all(0.0 <= v <= 1.0 for v in self._data):
@@ -146,10 +137,6 @@ class BitDNA(DNA):
     @classmethod
     def random(cls, length: int) -> "BitDNA":
         return cls(bool(random.randint(0, 1)) for _ in range(length))
-
-    @classmethod
-    def from_value(cls, value: bool, length: int) -> "BitDNA":
-        return cls(itertools.repeat(value, length))
 
     def __str__(self):
         if self.fitness is None:

@@ -8,20 +8,20 @@ from ezdxf.addons import binpacking as bp
 
 class TestFloatDNA:
     def test_init_value(self):
-        dna = dp.FloatDNA.from_value(1.0, 20)
+        dna = dp.FloatDNA([1.0] * 20)
         assert all(v == 1.0 for v in dna) is True
 
     @pytest.mark.parametrize("value", [-0.1, 1.1])
     def test_init_value_is_valid(self, value):
         with pytest.raises(ValueError):
-            dp.FloatDNA.from_value(value, 20)
+            dp.FloatDNA([value] * 20)
 
     def test_iter(self):
-        dna = dp.FloatDNA.from_value(0.0, 20)
+        dna = dp.FloatDNA([1.0] * 20)
         assert len(list(dna)) == 20
 
     def test_reset_data(self):
-        dna = dp.FloatDNA.from_value(0.0, 20)
+        dna = dp.FloatDNA([0.0] * 20)
         dna.reset([0.5] * 20)
         assert len(dna) == 20
         assert dna[7] == 0.5
@@ -34,7 +34,7 @@ class TestFloatDNA:
         ],
     )
     def test_reset_data_checks_validity(self, values):
-        dna = dp.FloatDNA.from_value(0.0, 5)
+        dna = dp.FloatDNA([])
         with pytest.raises(ValueError):
             dna.reset(values)
 
@@ -44,14 +44,14 @@ class TestFloatDNA:
         assert len(set(dna)) > 10
 
     def test_subscription_setter(self):
-        dna = dp.FloatDNA.from_value(0.0, 20)
+        dna = dp.FloatDNA([0.0] * 20)
         dna[-3:] = [0.1, 0.2, 0.3]
         assert len(dna) == 20
         assert dna[-3:] == pytest.approx([0.1, 0.2, 0.3])
         assert sum(dna) == pytest.approx(0.6)
 
     def test_mutate_flip(self):
-        dna1 = dp.FloatDNA.from_value(0.0, 20)
+        dna1 = dp.FloatDNA([0.0] * 20)
         dna2 = dna1.copy()
         assert dna1 == dna2
         dna1.mutate(0.7, dp.MutationType.FLIP)
@@ -67,11 +67,11 @@ class TestFloatDNA:
 
 class TestBitDNA:
     def test_init_value(self):
-        dna = dp.BitDNA.from_value(True, 20)
+        dna = dp.BitDNA([1] * 20)
         assert all(v is True for v in dna) is True
 
     def test_reset_data(self):
-        dna = dp.BitDNA.from_value(True, 20)
+        dna = dp.BitDNA([1] * 20)
         dna.reset([False] * 20)
         assert len(dna) == 20
         assert dna[7] is False
@@ -82,13 +82,13 @@ class TestBitDNA:
         assert len(set(dna)) == 2
 
     def test_subscription_setter(self):
-        dna = dp.BitDNA.from_value(True, 20)
+        dna = dp.BitDNA([1] * 20)
         dna[-3:] = [False, False, False]
         assert len(dna) == 20
         assert dna[-4:] == [True, False, False, False]
 
     def test_mutate_flip(self):
-        dna1 = dp.BitDNA.from_value(True, 20)
+        dna1 = dp.BitDNA([1] * 20)
         dna2 = dna1.copy()
         assert dna1 == dna2
         dna1.mutate(0.7, dp.MutationType.FLIP)
@@ -96,25 +96,25 @@ class TestBitDNA:
 
 
 def test_single_point_crossover():
-    dna1 = dp.FloatDNA.from_value(0.0, 20)
-    dna2 = dp.FloatDNA.from_value(1.0, 20)
+    dna1 = dp.BitDNA([False] * 20)
+    dna2 = dp.BitDNA([True] * 20)
     dp.recombine_dna_1pcx(dna1, dna2, 7)
-    assert list(dna1[0:7]) == [0.0] * 7
-    assert list(dna1[7:]) == [1.0] * 13
-    assert list(dna2[0:7]) == [1.0] * 7
-    assert list(dna2[7:]) == [0.0] * 13
+    assert list(dna1[0:7]) == [False] * 7
+    assert list(dna1[7:]) == [True] * 13
+    assert list(dna2[0:7]) == [True] * 7
+    assert list(dna2[7:]) == [False] * 13
 
 
 def test_two_point_crossover():
-    dna1 = dp.FloatDNA.from_value(0.0, 20)
-    dna2 = dp.FloatDNA.from_value(1.0, 20)
+    dna1 = dp.BitDNA([False] * 20)
+    dna2 = dp.BitDNA([True] * 20)
     dp.recombine_dna_2pcx(dna1, dna2, 7, 11)
-    assert list(dna1[0:7]) == [0.0] * 7
-    assert list(dna1[7:11]) == [1.0] * 4
-    assert list(dna1[11:]) == [0.0] * 9
-    assert list(dna2[0:7]) == [1.0] * 7
-    assert list(dna2[7:11]) == [0.0] * 4
-    assert list(dna2[11:]) == [1.0] * 9
+    assert list(dna1[0:7]) == [False] * 7
+    assert list(dna1[7:11]) == [True] * 4
+    assert list(dna1[11:]) == [False] * 9
+    assert list(dna2[0:7]) == [True] * 7
+    assert list(dna2[7:11]) == [False] * 4
+    assert list(dna2[11:]) == [True] * 9
 
 
 SMALL_ENVELOPE = ("small-envelope", 11.5, 6.125, 0.25, 10)
