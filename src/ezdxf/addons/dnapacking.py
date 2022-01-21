@@ -172,8 +172,8 @@ def subset_evaluator(packer: AbstractPacker, dna: DNA) -> float:
 
 @dataclass
 class LogEntry:
-    runtime: float
     fitness: float
+    avg_fitness: float
 
 
 class GeneticDriver:
@@ -258,7 +258,6 @@ class GeneticDriver:
             self.measure_fitness()
             t1 = time.perf_counter()
             self.runtime = t1 - start_time
-            self.log.append(LogEntry(self.runtime, self.best_fitness))
             if (
                 self.best_fitness >= self.max_fitness
                 or self.runtime >= self.max_time
@@ -273,17 +272,26 @@ class GeneticDriver:
 
     def measure_fitness(self) -> None:
         self.stagnation += 1
+        fitness_sum: float = 0.0
         for dna in self._dna_strands:
             if dna.fitness is not None:
+                fitness_sum += dna.fitness
                 continue
             p0 = self._packer.copy()
             fill_ratio = self._evaluator(p0, dna)
             dna.fitness = fill_ratio
+            fitness_sum += fill_ratio
             if fill_ratio > self.best_fitness:
                 self.best_fitness = fill_ratio
                 self.best_packer = p0
                 self.best_dna = dna.copy()
                 self.stagnation = 0
+
+        avg_fitness = 0.0
+        count = len(self._dna_strands)
+        if count > 0:
+            avg_fitness = fitness_sum / count
+        self.log.append(LogEntry(self.best_fitness, avg_fitness))
 
     def next_generation(self) -> None:
         selector = self._selection

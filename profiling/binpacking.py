@@ -129,7 +129,7 @@ def run_genetic_driver(driver: dp.GeneticDriver):
 
 
 def dump_log(log, filename):
-    data = [(e.runtime, e.fitness) for e in log]
+    data = [(e.fitness, e.avg_fitness) for e in log]
     with open(filename, "wt") as fp:
         json.dump(data, fp, indent=4)
 
@@ -137,14 +137,14 @@ def dump_log(log, filename):
 def show_log(log):
     x = []
     y = []
-    moving_avg = []
+    avg = []
     for index, entry in enumerate(log, start=1):
         x.append(index)
         y.append(entry.fitness)
-        moving_avg.append(sum(y) / len(y))
+        avg.append(entry.avg_fitness)
     fig, ax = plt.subplots()
     ax.plot(x, y)
-    ax.plot(x, moving_avg)
+    ax.plot(x, avg)
     ax.set(
         xlabel="generation",
         ylabel="fitness",
@@ -157,7 +157,7 @@ def show_log(log):
 def load_log(filename):
     with open(filename, "rt") as fp:
         data = json.load(fp)
-    return [dp.LogEntry(t, f) for t, f in data]
+    return [dp.LogEntry(f, f_avg) for f, f_avg in data]
 
 
 def parse_args():
