@@ -364,5 +364,13 @@ class TestSchematicPicker:
             self.get_picked_items(items, iter([1, 1, 1]))
 
 
+def test_pack_item_subset(packer):
+    packer.add_bin(*LARGE_BOX)
+    bp.pack_item_subset(packer, picker=[0, 1, 1, 1])
+    assert len(packer.bins[0]) == 3
+    assert packer.get_total_weight() == 9
+    assert len(packer.unfitted_items) == 6
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

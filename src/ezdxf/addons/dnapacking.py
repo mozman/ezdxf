@@ -12,7 +12,6 @@ from typing import (
 import abc
 import copy
 import enum
-import itertools
 import random
 import time
 from .binpacking import AbstractPacker

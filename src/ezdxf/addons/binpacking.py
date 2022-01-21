@@ -274,6 +274,12 @@ class Bin:
         self.max_weight = float(max_weight)
         self.items: List[Item] = []
 
+    def __len__(self):
+        return len(self.items)
+
+    def __iter__(self):
+        return iter(self.items)
+
     def copy(self):
         """Returns a copy."""
         box = copy.copy(self)  # shallow copy
@@ -539,6 +545,40 @@ def shuffle_pack(packer: AbstractPacker, attempts: int) -> AbstractPacker:
             best_ratio = new_ratio
             best_packer = new_packer
     return best_packer
+
+
+def pack_item_subset(
+    packer: AbstractPacker, picker: Iterable, strategy=PickStrategy.BIGGER_FIRST
+) -> None:
+    """Pack a subset of `packer.items`, which are chosen by an iterable
+    yielding a True or False value for each item.
+    """
+    assert packer.is_packed is False
+    chosen, rejects = get_item_subset(packer.items, picker)
+    packer.items = chosen
+    packer.pack(strategy)  # unfitted items remain in packer.items
+    packer.items.extend(rejects)  # append rejects as unfitted items
+
+
+def get_item_subset(
+    items: List[Item], picker: Iterable
+) -> Tuple[List[Item], List[Item]]:
+    """Returns a subset of `items`, where items are chosen by an iterable
+    yielding a True or False value for each item.
+    """
+    chosen: List[Item] = []
+    rejects: List[Item] = []
+    count = 0
+    for item, pick in zip(items, picker):
+        count += 1
+        if pick:
+            chosen.append(item)
+        else:
+            rejects.append(item)
+
+    if count < len(items):  # too few pick values given
+        rejects.extend(items[count:])
+    return chosen, rejects
 
 
 def schematic_picker(
