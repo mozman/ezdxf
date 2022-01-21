@@ -240,19 +240,13 @@ class GeneticDriver:
     def is_executed(self) -> bool:
         return bool(self.generation)
 
-    def add_dna(self, dna: FloatDNA):
+    def add_random_dna(self, count: int):
         if not self.is_executed:
-            if len(dna) != self._required_dna_length:
-                raise ValueError(
-                    f"invalid DNA length, requires {self._required_dna_length}"
-                )
-            self._dna_strands.append(dna)
+            self._dna_strands.extend(
+                FloatDNA.random(self._required_dna_length) for _ in range(count)
+            )
         else:
             raise TypeError("already executed")
-
-    def add_random_dna(self, count: int):
-        for _ in range(count):
-            self.add_dna(FloatDNA.random(self._required_dna_length))
 
     def execute(
         self,
