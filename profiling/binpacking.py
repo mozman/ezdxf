@@ -4,6 +4,8 @@ import math
 import random
 import time
 import argparse
+import matplotlib.pyplot as plt
+import json
 
 import ezdxf.addons.binpacking as bp
 import ezdxf.addons.dnapacking as dp
@@ -89,7 +91,7 @@ def make_subset_driver(packer: bp.AbstractPacker, generations: int):
     driver = dp.GeneticDriver(packer, generations)
     driver.set_dna_type(dp.BitDNA)
     driver.set_evaluator(dp.subset_evaluator)
-    driver.name = "Item Subset Packer"
+    driver.name = "pack item subset"
     return driver
 
 
@@ -101,6 +103,7 @@ def run_genetic_driver(driver: dp.GeneticDriver, dna_count: int):
             f"fitness: {driver.best_fitness:.3f}"
         )
         return False
+
     generations = driver.max_generations
     print(
         f"\nGenetic algorithm search: {driver.name}\n"
@@ -115,6 +118,34 @@ def run_genetic_driver(driver: dp.GeneticDriver, dna_count: int):
         f"DNA strands, best result:"
     )
     print_result(driver.best_packer, driver.runtime)
+
+
+def dump_log(log, filename):
+    data = [(e.runtime, e.fitness) for e in log]
+    with open(filename, "wt") as fp:
+        json.dump(data, fp)
+
+
+def show_log(log):
+    x = []
+    y = []
+    avg = []
+    sum_ = 0.0
+    for index, entry in enumerate(log, start=1):
+        sum_ += entry.fitness
+        avg.append(sum_ / index)
+        x.append(index)
+        y.append(entry.fitness)
+    fig, ax = plt.subplots()
+    ax.plot(x, y)
+    ax.plot(x, avg)
+    ax.set(
+        xlabel="generation",
+        ylabel="fitness",
+        title="Strategy: pack item subset",
+    )
+    ax.grid()
+    plt.show()
 
 
 def parse_args():
@@ -162,3 +193,5 @@ if __name__ == "__main__":
     run_bigger_first(packer)
     driver = make_subset_driver(packer, args.generations)
     run_genetic_driver(driver, dna_count=args.dna)
+    # dump_log(driver.log, "binpacking.json")
+    show_log(driver.log)

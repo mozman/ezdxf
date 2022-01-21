@@ -10,6 +10,7 @@ from typing import (
 )
 import abc
 import copy
+from dataclasses import dataclass
 import enum
 import random
 import time
@@ -169,6 +170,12 @@ def subset_evaluator(packer: AbstractPacker, dna: DNA) -> float:
     return packer.get_fill_ratio()
 
 
+@dataclass
+class LogEntry:
+    runtime: float
+    fitness: float
+
+
 class GeneticDriver:
     def __init__(
         self,
@@ -181,6 +188,7 @@ class GeneticDriver:
             raise ValueError("max_generations < 1")
         # data:
         self.name = "GeneticDriver"
+        self.log: List[LogEntry] = []
         self._packer = packer
         self._required_dna_length = len(packer.items)
         self._dna_strands: List[DNA] = []
@@ -277,10 +285,11 @@ class GeneticDriver:
         start_time = t0
         for self.generation in range(1, self._max_generations + 1):
             self.measure_fitness()
-            if self.best_fitness >= self._max_fitness:
-                break
             t1 = time.perf_counter()
             self.runtime = t1 - start_time
+            self.log.append(LogEntry(self.runtime, self.best_fitness))
+            if self.best_fitness >= self._max_fitness:
+                break
             if self.runtime > max_time:
                 break
             if feedback and t1 - t0 > interval:
