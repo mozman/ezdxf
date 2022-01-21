@@ -376,7 +376,6 @@ class Frontend:
             if all(edge_visibility):
                 self.out.draw_path(from_vertices(points), properties)
             else:
-                assert len(points) - 1 == len(edge_visibility)
                 for a, b, visible in zip(points, points[1:], edge_visibility):
                     if visible:
                         self.out.draw_line(a, b, properties)
