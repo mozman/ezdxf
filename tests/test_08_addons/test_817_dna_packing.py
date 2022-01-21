@@ -5,27 +5,23 @@ import pytest
 from ezdxf.addons import dnapacking as dp
 from ezdxf.addons import binpacking as bp
 
-class TestGene:
-    def test_init_default(self):
-        dna = dp.DNA(20)
-        assert len(dna) == 20
-        assert all(v == 0.0 for v in dna) is True
 
+class TestFloatDNA:
     def test_init_value(self):
-        dna = dp.DNA(20, 1.0)
+        dna = dp.FloatDNA.from_value(1.0, 20)
         assert all(v == 1.0 for v in dna) is True
 
     @pytest.mark.parametrize("value", [-0.1, 1.1])
     def test_init_value_is_valid(self, value):
         with pytest.raises(ValueError):
-            dp.DNA(20, value)
+            dp.FloatDNA.from_value(value, 20)
 
     def test_iter(self):
-        dna = dp.DNA(20)
+        dna = dp.FloatDNA.from_value(0.0, 20)
         assert len(list(dna)) == 20
 
     def test_reset_data(self):
-        dna = dp.DNA(20)
+        dna = dp.FloatDNA.from_value(0.0, 20)
         dna.reset([0.5] * 20)
         assert len(dna) == 20
         assert dna[7] == 0.5
@@ -33,36 +29,36 @@ class TestGene:
     @pytest.mark.parametrize(
         "values",
         [
-            [0, 0, 0],
+            [0, 0, -1],
             [2, 2, 2, 2, 2],
         ],
     )
     def test_reset_data_checks_validity(self, values):
-        dna = dp.DNA(5)
+        dna = dp.FloatDNA.from_value(0.0, 5)
         with pytest.raises(ValueError):
             dna.reset(values)
 
     def test_new_random_gene(self):
-        dna = dp.DNA.random(20)
+        dna = dp.FloatDNA.random(20)
         assert len(dna) == 20
         assert len(set(dna)) > 10
 
-    def test_replace_tail(self):
-        dna = dp.DNA(20)
+    def test_subscription_setter(self):
+        dna = dp.FloatDNA.from_value(0.0, 20)
         dna[-3:] = dp.data([0.1, 0.2, 0.3])
         assert len(dna) == 20
         assert dna[-3:] == pytest.approx([0.1, 0.2, 0.3])
         assert sum(dna) == pytest.approx(0.6)
 
     def test_mutate_flip(self):
-        dna1 = dp.DNA(20)
+        dna1 = dp.FloatDNA.from_value(0.0, 20)
         dna2 = dna1.copy()
         assert dna1 == dna2
         dna1.mutate(0.7, dp.MutationType.FLIP)
         assert dna1 != dna2
 
     def test_mutate_swap(self):
-        dna1 = dp.DNA.random(20)
+        dna1 = dp.FloatDNA.random(20)
         dna2 = dna1.copy()
         assert dna1 == dna2
         dna1.mutate(0.7, dp.MutationType.SWAP)
@@ -70,8 +66,8 @@ class TestGene:
 
 
 def test_single_point_crossover():
-    dna1 = dp.DNA(20, 0.0)
-    dna2 = dp.DNA(20, 1.0)
+    dna1 = dp.FloatDNA.from_value(0.0, 20)
+    dna2 = dp.FloatDNA.from_value(1.0, 20)
     dp.recombine_dna_1pcx(dna1, dna2, 7)
     assert list(dna1[0:7]) == [0.0] * 7
     assert list(dna1[7:]) == [1.0] * 13
@@ -80,8 +76,8 @@ def test_single_point_crossover():
 
 
 def test_two_point_crossover():
-    dna1 = dp.DNA(20, 0.0)
-    dna2 = dp.DNA(20, 1.0)
+    dna1 = dp.FloatDNA.from_value(0.0, 20)
+    dna2 = dp.FloatDNA.from_value(1.0, 20)
     dp.recombine_dna_2pcx(dna1, dna2, 7, 11)
     assert list(dna1[0:7]) == [0.0] * 7
     assert list(dna1[7:11]) == [1.0] * 4

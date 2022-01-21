@@ -6,7 +6,9 @@ from typing import (
     Iterable,
     Optional,
     Callable,
+    MutableSequence,
 )
+import abc
 import array
 import copy
 import enum
@@ -27,30 +29,23 @@ def data(values) -> List[float]:
     return array.array("f", values)  # type: ignore
 
 
-class DNA:
-    __slots__ = ("_length", "_data", "fitness")
-
-    def __init__(self, length: int, value: float = 0.0):
-        self._length = int(length)
-        if 0.0 <= value <= 1.0:
-            self._data: List[float] = data(
-                itertools.repeat(value, self._length)
-            )
-        else:
-            raise ValueError("data value out of range")
-        self.fitness: Optional[float] = None
+class DNA(abc.ABC):
+    fitness: Optional[float] = None
+    _data: MutableSequence
 
     @classmethod
-    def random(cls, length: int) -> "DNA":
-        dna = cls(length)
-        dna.reset(random.random() for _ in range(length))
-        return dna
+    @abc.abstractmethod
+    def random(cls, length):
+        ...
 
-    def _check_valid_data(self):
-        if len(self._data) != self._length:
-            raise ValueError("invalid data count")
-        if not all(0.0 <= v <= 1.0 for v in self._data):
-            raise ValueError("data value out of range")
+    @classmethod
+    @abc.abstractmethod
+    def from_value(cls, value, length):
+        ...
+
+    @abc.abstractmethod
+    def reset(self, values: Iterable):
+        ...
 
     def copy(self):
         return copy.deepcopy(self)
@@ -61,14 +56,6 @@ class DNA:
     def __eq__(self, other):
         assert isinstance(other, DNA)
         return self._data == other._data
-
-    def __str__(self):
-        fitness = ", fitness=None"
-        if fitness is None:
-            fitness = ", fitness=None"
-        else:
-            fitness = f", fitness={self.fitness:.4f}"
-        return f"{str([round(v, 4) for v in self._data])}{fitness}"
 
     def __len__(self):
         return len(self._data)
@@ -83,25 +70,14 @@ class DNA:
     def __iter__(self):
         return iter(self._data)
 
-    def reset(self, values: Iterable[float]):
-        self._data = data(values)
-        self._check_valid_data()
-        self._taint()
-
     def mutate(self, rate: float, mutation_type=MutationType.FLIP):
-        for index in range(self._length):
+        for index in range(len(self)):
             if random.random() < rate:
                 self.mutate_at(index, mutation_type)
 
-    def mutate_at(self, index, mutation_type=MutationType.FLIP):
-        if mutation_type == MutationType.FLIP:
-            self._data[index] = 1.0 - self._data[index]  # flip pick location
-        elif mutation_type == MutationType.SWAP:
-            index_left = index - 1  # 0 <-> -1; first <-> last
-            left = self._data[index_left]
-            self._data[index_left] = self._data[index]
-            self._data[index] = left
-        self._taint()
+    @abc.abstractmethod
+    def mutate_at(self, index: int, mutation_type=MutationType.FLIP):
+        ...
 
 
 def recombine_dna_1pcx(dna1: DNA, dna2: DNA, index: int) -> None:
@@ -115,6 +91,49 @@ def recombine_dna_2pcx(dna1: DNA, dna2: DNA, i1: int, i2: int) -> None:
     part2 = dna2[i1:i2]
     dna1[i1:i2] = part2
     dna2[i1:i2] = part1
+
+
+class FloatDNA(DNA):
+    __slots__ = ("_data", "fitness")
+
+    def __init__(self, values: Iterable):
+        self._data: List[float] = data(values)
+        self._check_valid_data()
+        self.fitness: Optional[float] = None
+
+    @classmethod
+    def random(cls, length: int) -> "FloatDNA":
+        return cls(random.random() for _ in range(length))
+
+    @classmethod
+    def from_value(cls, value: float, length: int) -> "FloatDNA":
+        return cls(itertools.repeat(value, length))
+
+    def _check_valid_data(self):
+        if not all(0.0 <= v <= 1.0 for v in self._data):
+            raise ValueError("data value out of range")
+
+    def __str__(self):
+        if self.fitness is None:
+            fitness = ", fitness=None"
+        else:
+            fitness = f", fitness={self.fitness:.4f}"
+        return f"{str([round(v, 4) for v in self._data])}{fitness}"
+
+    def reset(self, values: Iterable[float]):
+        self._data = data(values)
+        self._check_valid_data()
+        self._taint()
+
+    def mutate_at(self, index, mutation_type=MutationType.FLIP):
+        if mutation_type == MutationType.FLIP:
+            self._data[index] = 1.0 - self._data[index]  # flip pick location
+        elif mutation_type == MutationType.SWAP:
+            index_left = index - 1  # 0 <-> -1; first <-> last
+            left = self._data[index_left]
+            self._data[index_left] = self._data[index]
+            self._data[index] = left
+        self._taint()
 
 
 #############################################################################
@@ -142,7 +161,7 @@ class GeneticDriver:
         # data:
         self._packer = packer
         self._required_dna_length = len(packer.items)
-        self._dna_strands: List[DNA] = []
+        self._dna_strands: List[FloatDNA] = []
 
         # options:
         self._max_generations = int(max_generations)
@@ -156,7 +175,7 @@ class GeneticDriver:
         # state of last (current) generation:
         self.generation: int = 0
         self.runtime: float = 0.0
-        self.best_dna = DNA(0)
+        self.best_dna = FloatDNA([])
         self.best_fitness: float = 0.0
         self.best_packer = packer
         self.stagnation: int = 0  # generations without improvement
@@ -195,7 +214,7 @@ class GeneticDriver:
     def is_executed(self) -> bool:
         return bool(self.generation)
 
-    def add_dna(self, dna: DNA):
+    def add_dna(self, dna: FloatDNA):
         if not self.is_executed:
             if len(dna) != self._required_dna_length:
                 raise ValueError(
@@ -207,7 +226,7 @@ class GeneticDriver:
 
     def add_random_dna(self, count: int):
         for _ in range(count):
-            self.add_dna(DNA.random(self._required_dna_length))
+            self.add_dna(FloatDNA.random(self._required_dna_length))
 
     def execute(
         self,
