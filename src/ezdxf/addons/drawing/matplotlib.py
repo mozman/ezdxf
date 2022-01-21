@@ -209,8 +209,15 @@ class MatplotlibBackend(Backend):
             )
         )
 
-    def get_font_properties(self, font: fonts.FontFace) -> FontProperties:
-        return _get_font_properties(font, self._text_renderer.default_font)
+    def get_font_properties(
+        self, font: Optional[fonts.FontFace]
+    ) -> FontProperties:
+        if font is None:
+            return self._text_renderer.default_font
+        font_properties = _get_font_properties(font)
+        if font_properties is None:
+            return self._text_renderer.default_font
+        return font_properties
 
     def get_font_measurements(
         self, cap_height: float, font: fonts.FontFace = None
@@ -282,22 +289,19 @@ def _transform_path(path: Path, transform: Matrix44) -> Path:
 
 
 @lru_cache(maxsize=256)  # fonts.Font is a named tuple
-def _get_font_properties(
-    font: fonts.FontFace, default_font: FontProperties
-) -> FontProperties:
-    font_properties = default_font
-    if font:
-        # Font-definitions are created by the matplotlib FontManger(),
-        # but stored as json file and could be altered by an user:
-        try:
-            font_properties = FontProperties(
-                family=font.family,
-                style=font.style,
-                stretch=font.stretch,
-                weight=font.weight,
-            )
-        except ValueError:
-            pass
+def _get_font_properties(font: fonts.FontFace) -> Optional[FontProperties]:
+    # Font-definitions are created by the matplotlib FontManger(),
+    # but stored as json file and could be altered by an user:
+    font_properties = None
+    try:
+        font_properties = FontProperties(
+            family=font.family,
+            style=font.style,
+            stretch=font.stretch,
+            weight=font.weight,
+        )
+    except ValueError:
+        pass
     return font_properties
 
 

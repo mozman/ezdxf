@@ -273,12 +273,13 @@ class PyQtBackend(Backend):
         )
         self._set_item_data(item)
 
-    def get_qfont(self, font: fonts.FontFace) -> qg.QFont:
-        # can't pass default font: qg.QFont is not unhashable!
-        font = _get_qfont(font)
+    def get_qfont(self, font: Optional[fonts.FontFace]) -> qg.QFont:
         if font is None:
             return self._text_renderer.default_font
-        return font
+        font_properties = _get_qfont(font)
+        if font_properties is None:
+            return self._text_renderer.default_font
+        return font_properties
 
     def get_font_measurements(
         self, cap_height: float, font: fonts.FontFace = None
