@@ -19,7 +19,7 @@
 # - additions:
 #   - Item.get_transformation()
 #   - shuffle_pack()
-#   - AbstractPacker.schematic_pack() interface for genetic algorithms
+#   - pack_item_subset()
 #   - DXF exporter for debugging
 
 from typing import (
@@ -27,19 +27,16 @@ from typing import (
     List,
     Iterable,
     TYPE_CHECKING,
-    Iterator,
     TypeVar,
     Optional,
 )
 from enum import Enum, auto
 import copy
-import itertools
 import math
 import random
 
 
 from ezdxf.enums import TextEntityAlignment
-
 from ezdxf.math import (
     Vec2,
     Vec3,
@@ -64,6 +61,7 @@ __all__ = [
     "RotationType",
     "PickStrategy",
     "shuffle_pack",
+    "pack_item_subset",
     "export_dxf",
 ]
 
@@ -490,20 +488,6 @@ class AbstractPacker:
                     self.items.remove(item)
         # unfitted items remain in self.items
 
-    def schematic_pack(
-        self, item_schema: Iterator[float], bin_schema: Iterator[float] = None
-    ) -> None:
-        # fixed ascending base order
-        _smaller_first(self.bins, self.items)
-        if bin_schema is None:
-            bin_schema = itertools.repeat(1.0)  # bigger first
-        self._pack(
-            # schematic picker uses a shallow copy of the input data!
-            schematic_picker(self.bins, bin_schema),
-            schematic_picker(self.items, item_schema),
-        )
-        # unfitted items remain in self.items
-
     def pack_to_bin(self, box: Bin, item: Item) -> bool:
         if not box.items:
             return box.put_item(item, START_POSITION)
@@ -579,34 +563,6 @@ def get_item_subset(
     if count < len(items):  # too few pick values given
         rejects.extend(items[count:])
     return chosen, rejects
-
-
-def schematic_picker(
-    items: Iterable[T], schema: Iterator[float]
-) -> Iterator[T]:
-    """Yields all `items` in the order defined by the pick schema.
-    The pick values must be in the range [0, 1] and determine the
-    location from where to pick the next item. E.g. 0 picks from the front, 1
-    picks from the end and 0.5 picks from the middle. For each item is a pick
-    value from the `schema` required!
-
-    Args:
-        items: iterable of input data
-        schema: iterator of pick values as float in range [0, 1]
-
-    Raises:
-        ValueError: invalid pick value or not enough pick values
-
-    """
-    items = list(items)
-    while len(items):
-        try:
-            value = next(schema)
-        except StopIteration:
-            raise ValueError("not enough pick values")
-        if not (0.0 <= value <= 1.0):
-            raise ValueError("pick values must be in range [0, 1]")
-        yield items.pop(round(value * (len(items) - 1)))
 
 
 class Packer(AbstractPacker):

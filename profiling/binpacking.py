@@ -93,14 +93,6 @@ def make_subset_driver(packer: bp.AbstractPacker, generations: int):
     return driver
 
 
-def make_schema_driver(packer: bp.AbstractPacker, generations: int):
-    driver = dp.GeneticDriver(packer, generations)
-    driver.set_dna_type(dp.FloatDNA)
-    driver.set_evaluator(dp.schematic_evaluator)
-    driver.name = "Schematic Item Picker"
-    return driver
-
-
 def run_genetic_driver(driver: dp.GeneticDriver, dna_count: int):
     def feedback(driver: dp.GeneticDriver):
         print(
@@ -117,7 +109,7 @@ def run_genetic_driver(driver: dp.GeneticDriver, dna_count: int):
     driver.mutation_type1 = dp.MutationType.FLIP
     driver.mutation_type2 = dp.MutationType.FLIP
     driver.add_random_dna(dna_count)
-    driver.execute(feedback, interval=10.0)
+    driver.execute(feedback, interval=3.0)
     print(
         f"GeneticDriver: {generations} generations x {dna_count} "
         f"DNA strands, best result:"
@@ -166,6 +158,7 @@ if __name__ == "__main__":
     print(packer.bins[0])
     print(f"Total item count: {len(packer.items)}")
     print(f"Total item volume: {packer.get_unfitted_volume():.3f}")
+    print(f"Random Seed: {args.seed}")
     run_bigger_first(packer)
     driver = make_subset_driver(packer, args.generations)
     run_genetic_driver(driver, dna_count=args.dna)

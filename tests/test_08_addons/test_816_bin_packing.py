@@ -325,45 +325,6 @@ def test_random_shuffle_raise_exception_for_invalid_attempts(packer):
         bp.shuffle_pack(packer, 0)
 
 
-class TestSchematicPicker:
-    @pytest.fixture
-    def items(self):
-        return [0, 1, 2, 3, 4]
-
-    @staticmethod
-    def get_picked_items(items, order):
-        return list(bp.schematic_picker(items, order))
-
-    def test_pick_from_front(self, items):
-        picked_items = self.get_picked_items(items, itertools.repeat(0))
-        assert picked_items == [0, 1, 2, 3, 4]
-
-    def test_pick_from_back(self, items):
-        picked_items = self.get_picked_items(items, itertools.repeat(1))
-        assert picked_items == [4, 3, 2, 1, 0]
-
-    def test_random_pick(self, items):
-        picked_items = self.get_picked_items(
-            items, (random.random() for _ in range(5))
-        )
-        assert set(picked_items) == {4, 3, 2, 1, 0}
-
-    @pytest.mark.parametrize(
-        "value",
-        [
-            1.1,  # upper limit is 1.0
-            -0.1,  # lower limit 0.0
-        ],
-    )
-    def test_invalid_pick_values(self, items, value):
-        with pytest.raises(ValueError):
-            self.get_picked_items(items, itertools.repeat(value))
-
-    def test_not_enough_pick_values(self, items):
-        with pytest.raises(ValueError):
-            self.get_picked_items(items, iter([1, 1, 1]))
-
-
 def test_pack_item_subset(packer):
     packer.add_bin(*LARGE_BOX)
     bp.pack_item_subset(packer, picker=[0, 1, 1, 1])

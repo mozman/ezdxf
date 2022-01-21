@@ -164,26 +164,9 @@ class Selection(abc.ABC):
 TEvaluator = Callable[[AbstractPacker, DNA], float]
 
 
-def schematic_evaluator(packer: AbstractPacker, dna: DNA) -> float:
-    packer.schematic_pack(iter(dna))
-    return packer.get_fill_ratio()
-
-
 def subset_evaluator(packer: AbstractPacker, dna: DNA) -> float:
     pack_item_subset(packer, dna)
     return packer.get_fill_ratio()
-
-
-#############################################################################
-# Optimizing only the order for the pack algorithm was not efficient, the
-# BIGGER_FIRST strategy beats every other attempt!
-# - schematic_packer() can be removed
-#
-# Next approach, find the optimal subset of items for the BIGGER_FIRST strategy
-# to fill all bins
-# 1. If all items fit into the bins, its done.
-# 2. If not all items fit into the bins: search for the optimal subset of
-#    items with the highest fitness.
 
 
 class GeneticDriver:
@@ -203,9 +186,9 @@ class GeneticDriver:
         self._dna_strands: List[DNA] = []
 
         # core components:
-        self._dna_type: Type[DNA] = FloatDNA
+        self._dna_type: Type[DNA] = BitDNA
         self._selection: Selection = RouletteSelection()
-        self._evaluator: TEvaluator = schematic_evaluator
+        self._evaluator: TEvaluator = subset_evaluator
 
         # options:
         self._max_generations = int(max_generations)
