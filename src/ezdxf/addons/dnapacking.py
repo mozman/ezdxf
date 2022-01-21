@@ -6,8 +6,7 @@ from typing import (
     Iterable,
     Optional,
     Callable,
-    TypeVar,
-    Generic,
+    Type,
 )
 import abc
 import copy
@@ -152,13 +151,22 @@ class BitDNA(DNA):
         self._data[index] = not self._data[index]
 
 
-D = TypeVar("D", bound=DNA)
-
-
-class Selection(abc.ABC, Generic[D]):
+class Selection(abc.ABC):
     @abc.abstractmethod
-    def pick(self, count: int) -> Iterable[D]:
+    def pick(self, count: int) -> Iterable[DNA]:
         ...
+
+    @abc.abstractmethod
+    def reset(self, strands: Iterable[DNA]):
+        ...
+
+
+TEvaluator = Callable[[AbstractPacker, DNA], float]
+
+
+def schematic_evaluator(packer: AbstractPacker, dna: DNA) -> float:
+    packer.schematic_pack(iter(dna))
+    return packer.get_fill_ratio()
 
 
 #############################################################################
@@ -186,7 +194,12 @@ class GeneticDriver:
         # data:
         self._packer = packer
         self._required_dna_length = len(packer.items)
-        self._dna_strands: List[FloatDNA] = []
+        self._dna_strands: List[DNA] = []
+
+        # core components:
+        self._dna_type: Type[DNA] = FloatDNA
+        self._selection: Selection = RouletteSelection()
+        self._evaluator: TEvaluator = schematic_evaluator
 
         # options:
         self._max_generations = int(max_generations)
@@ -204,6 +217,15 @@ class GeneticDriver:
         self.best_fitness: float = 0.0
         self.best_packer = packer
         self.stagnation: int = 0  # generations without improvement
+
+    def set_dna_type(self, dna_type: Type[DNA]) -> None:
+        self._dna_type = dna_type
+
+    def set_selection(self, selection: Selection) -> None:
+        self._selection = selection
+
+    def set_evaluator(self, evaluator: TEvaluator) -> None:
+        self._evaluator = evaluator
 
     @property
     def max_fitness(self) -> float:
@@ -242,7 +264,8 @@ class GeneticDriver:
     def add_random_dna(self, count: int):
         if not self.is_executed:
             self._dna_strands.extend(
-                FloatDNA.random(self._required_dna_length) for _ in range(count)
+                self._dna_type.random(self._required_dna_length)
+                for _ in range(count)
             )
         else:
             raise TypeError("already executed")
@@ -260,7 +283,7 @@ class GeneticDriver:
         t0 = time.perf_counter()
         start_time = t0
         for self.generation in range(1, self._max_generations + 1):
-            self._measure_fitness()
+            self.measure_fitness()
             if self.best_fitness >= self._max_fitness:
                 break
             t1 = time.perf_counter()
@@ -271,16 +294,15 @@ class GeneticDriver:
                 if feedback(self):  # stop if feedback() returns True
                     break
                 t0 = t1
-            self._next_generation()
+            self.next_generation()
 
-    def _measure_fitness(self) -> None:
+    def measure_fitness(self) -> None:
         self.stagnation += 1
         for dna in self._dna_strands:
             if dna.fitness is not None:
                 continue
             p0 = self._packer.copy()
-            p0.schematic_pack(iter(dna))
-            fill_ratio = p0.get_fill_ratio()
+            fill_ratio = self._evaluator(p0, dna)
             dna.fitness = fill_ratio
             if fill_ratio > self.best_fitness:
                 self.best_fitness = fill_ratio
@@ -288,9 +310,10 @@ class GeneticDriver:
                 self.best_dna = dna.copy()
                 self.stagnation = 0
 
-    def _next_generation(self) -> None:
-        selector: Selection[FloatDNA] = RouletteSelection(self._dna_strands)
-        dna_strands: List[FloatDNA] = []
+    def next_generation(self) -> None:
+        selector = self._selection
+        selector.reset(self._dna_strands)
+        dna_strands: List[DNA] = []
         count = len(self._dna_strands)
 
         if self.elitism > 0:
@@ -301,36 +324,37 @@ class GeneticDriver:
             dna1 = dna1.copy()
             dna2 = dna2.copy()
             if random.random() < self._crossover_rate:
-                self._recombination(dna1, dna2)
-            self._mutation(dna1, dna2)
+                self.recombination(dna1, dna2)
+            self.mutation(dna1, dna2)
             dna_strands.append(dna1)
             dna_strands.append(dna2)
         self._dna_strands = dna_strands
 
-    def _recombination(self, dna1: DNA, dna2: DNA):
+    def recombination(self, dna1: DNA, dna2: DNA):
         i1 = random.randrange(0, self._required_dna_length)
         i2 = random.randrange(0, self._required_dna_length)
         if i1 > i2:
             i1, i2 = i2, i1
         recombine_dna_2pcx(dna1, dna2, i1, i2)
 
-    def _mutation(self, dna1: DNA, dna2: DNA):
+    def mutation(self, dna1: DNA, dna2: DNA):
         mutation_rate = self._mutation_rate * self.stagnation
         dna1.mutate(mutation_rate, self.mutation_type1)
         dna2.mutate(mutation_rate, self.mutation_type2)
 
 
 class RouletteSelection(Selection):
-    def __init__(self, strands: Iterable[D]):
-        self._strands: List[D] = list(strands)
+    def __init__(self):
+        self._strands: List[DNA] = []
         self._weights: List[float] = []
-        self.update()
 
-    def update(self):
+    def reset(self, strands: Iterable[DNA]):
+        # dna.fitness is not None here!
+        self._strands = list(strands)
         sum_fitness = sum(dna.fitness for dna in self._strands)
         if sum_fitness == 0.0:
             sum_fitness = 1.0
-        self._weights = [dna.fitness / sum_fitness for dna in self._strands]
+        self._weights = [dna.fitness / sum_fitness for dna in self._strands]  # type: ignore
 
-    def pick(self, count: int) -> Iterable[D]:
+    def pick(self, count: int) -> Iterable[DNA]:
         return random.choices(self._strands, self._weights, k=count)
