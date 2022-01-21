@@ -6,10 +6,8 @@ from typing import (
     Iterable,
     Optional,
     Callable,
-    MutableSequence,
 )
 import abc
-import array
 import copy
 import enum
 import itertools
@@ -25,13 +23,9 @@ class MutationType(enum.Enum):
     SWAP = enum.auto()
 
 
-def data(values) -> List[float]:
-    return array.array("f", values)  # type: ignore
-
-
 class DNA(abc.ABC):
     fitness: Optional[float] = None
-    _data: MutableSequence
+    _data: List
 
     @classmethod
     @abc.abstractmethod
@@ -96,8 +90,8 @@ def recombine_dna_2pcx(dna1: DNA, dna2: DNA, i1: int, i2: int) -> None:
 class FloatDNA(DNA):
     __slots__ = ("_data", "fitness")
 
-    def __init__(self, values: Iterable):
-        self._data: List[float] = data(values)
+    def __init__(self, values: Iterable[float]):
+        self._data: List[float] = list(values)
         self._check_valid_data()
         self.fitness: Optional[float] = None
 
@@ -121,7 +115,7 @@ class FloatDNA(DNA):
         return f"{str([round(v, 4) for v in self._data])}{fitness}"
 
     def reset(self, values: Iterable[float]):
-        self._data = data(values)
+        self._data = list(values)
         self._check_valid_data()
         self._taint()
 

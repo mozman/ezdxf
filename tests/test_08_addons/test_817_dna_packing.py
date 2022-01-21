@@ -45,7 +45,7 @@ class TestFloatDNA:
 
     def test_subscription_setter(self):
         dna = dp.FloatDNA.from_value(0.0, 20)
-        dna[-3:] = dp.data([0.1, 0.2, 0.3])
+        dna[-3:] = [0.1, 0.2, 0.3]
         assert len(dna) == 20
         assert dna[-3:] == pytest.approx([0.1, 0.2, 0.3])
         assert sum(dna) == pytest.approx(0.6)
