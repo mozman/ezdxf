@@ -69,11 +69,22 @@ class DNA(abc.ABC):
     def mutate(self, rate: float, mutation_type=MutationType.FLIP):
         for index in range(len(self)):
             if random.random() < rate:
-                self.mutate_at(index, mutation_type)
+                self._taint()
+                if mutation_type == MutationType.FLIP:
+                    self.flip_mutate_at(index)
+                elif mutation_type == MutationType.SWAP:
+                    self.swap_mutate(index, index - 1)
+                else:
+                    raise TypeError(mutation_type)
 
     @abc.abstractmethod
-    def mutate_at(self, index: int, mutation_type=MutationType.FLIP):
+    def flip_mutate_at(self, index: int) -> None:
         ...
+
+    def swap_mutate(self, i1: int, i2: int) -> None:
+        left = self._data[i2]
+        self._data[i2] = self._data[i1]
+        self._data[i1] = left
 
 
 def recombine_dna_1pcx(dna1: DNA, dna2: DNA, index: int) -> None:
@@ -121,15 +132,38 @@ class FloatDNA(DNA):
         self._check_valid_data()
         self._taint()
 
-    def mutate_at(self, index, mutation_type=MutationType.FLIP):
-        if mutation_type == MutationType.FLIP:
-            self._data[index] = 1.0 - self._data[index]  # flip pick location
-        elif mutation_type == MutationType.SWAP:
-            index_left = index - 1  # 0 <-> -1; first <-> last
-            left = self._data[index_left]
-            self._data[index_left] = self._data[index]
-            self._data[index] = left
+    def flip_mutate_at(self, index: int) -> None:
+        self._data[index] = 1.0 - self._data[index]  # flip pick location
+
+
+class BitDNA(DNA):
+    __slots__ = ("_data", "fitness")
+
+    def __init__(self, values: Iterable):
+        self._data: List[bool] = list(bool(v) for v in values)
+        self.fitness: Optional[float] = None
+
+    @classmethod
+    def random(cls, length: int) -> "BitDNA":
+        return cls(bool(random.randint(0, 1)) for _ in range(length))
+
+    @classmethod
+    def from_value(cls, value: bool, length: int) -> "BitDNA":
+        return cls(itertools.repeat(value, length))
+
+    def __str__(self):
+        if self.fitness is None:
+            fitness = ", fitness=None"
+        else:
+            fitness = f", fitness={self.fitness:.4f}"
+        return f"{str([int(v) for v in self._data])}{fitness}"
+
+    def reset(self, values: Iterable) -> None:
+        self._data = list(bool(v) for v in values)
         self._taint()
+
+    def flip_mutate_at(self, index: int) -> None:
+        self._data[index] = not self._data[index]
 
 
 D = TypeVar("D", bound=DNA)

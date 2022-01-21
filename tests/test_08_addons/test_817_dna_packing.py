@@ -65,6 +65,36 @@ class TestFloatDNA:
         assert dna1 != dna2
 
 
+class TestBitDNA:
+    def test_init_value(self):
+        dna = dp.BitDNA.from_value(True, 20)
+        assert all(v is True for v in dna) is True
+
+    def test_reset_data(self):
+        dna = dp.BitDNA.from_value(True, 20)
+        dna.reset([False] * 20)
+        assert len(dna) == 20
+        assert dna[7] is False
+
+    def test_new_random_gene(self):
+        dna = dp.BitDNA.random(20)
+        assert len(dna) == 20
+        assert len(set(dna)) == 2
+
+    def test_subscription_setter(self):
+        dna = dp.BitDNA.from_value(True, 20)
+        dna[-3:] = [False, False, False]
+        assert len(dna) == 20
+        assert dna[-4:] == [True, False, False, False]
+
+    def test_mutate_flip(self):
+        dna1 = dp.BitDNA.from_value(True, 20)
+        dna2 = dna1.copy()
+        assert dna1 == dna2
+        dna1.mutate(0.7, dp.MutationType.FLIP)
+        assert dna1 != dna2
+
+
 def test_single_point_crossover():
     dna1 = dp.FloatDNA.from_value(0.0, 20)
     dna2 = dp.FloatDNA.from_value(1.0, 20)
