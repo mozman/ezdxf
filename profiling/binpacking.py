@@ -102,8 +102,6 @@ def make_subset_optimizer(
     evaluator = bp.SubSetEvaluator(packer)
     optimizer = ga.GeneticOptimizer(evaluator, max_generations=generations)
     optimizer.name = "pack item subset"
-    optimizer.mutation_type1 = ga.MutationType.FLIP
-    optimizer.mutation_type2 = ga.MutationType.FLIP
     optimizer.add_dna(ga.BitDNA.n_random(dna_count, len(packer.items)))
     return optimizer
 

@@ -23,11 +23,6 @@ __all__ = [
 ]
 
 
-class MutationType(enum.Enum):
-    FLIP = enum.auto()
-    SWAP = enum.auto()
-
-
 class DNA(abc.ABC):
     fitness: Optional[float] = None
     _data: List
@@ -68,25 +63,44 @@ class DNA(abc.ABC):
     def __iter__(self):
         return iter(self._data)
 
-    def mutate(self, rate: float, mutation_type=MutationType.FLIP):
-        for index in range(len(self)):
-            if random.random() < rate:
-                self._taint()
-                if mutation_type == MutationType.FLIP:
-                    self.flip_mutate_at(index)
-                elif mutation_type == MutationType.SWAP:
-                    self.swap_mutate(index, index - 1)
-                else:
-                    raise TypeError(mutation_type)
-
     @abc.abstractmethod
     def flip_mutate_at(self, index: int) -> None:
         ...
 
-    def swap_mutate(self, i1: int, i2: int) -> None:
-        tmp = self._data[i2]
-        self._data[i2] = self._data[i1]
-        self._data[i1] = tmp
+
+class Mutate(abc.ABC):
+    @abc.abstractmethod
+    def mutate(self, dna: DNA, rate: float):
+        ...
+
+
+class FlipMutate(Mutate):
+    def mutate(self, dna: DNA, rate: float):
+        for index in range(len(dna)):
+            if random.random() < rate:
+                dna.flip_mutate_at(index)
+
+
+class SwapNeighbors(Mutate):
+    def mutate(self, dna: DNA, rate: float):
+        for index in range(len(dna)):
+            if random.random() < rate:
+                i2 = index - 1
+                tmp = dna[i2]
+                dna[i2] = dna[index]
+                dna[index] = tmp
+
+
+class RandomSwap(Mutate):
+    def mutate(self, dna: DNA, rate: float):
+        length = len(dna)
+        for index in range(len(dna)):
+            if random.random() < rate:
+                i1 = random.randrange(0, length)
+                i2 = random.randrange(0, length)
+                tmp = dna[i2]
+                dna[i2] = dna[i1]
+                dna[i1] = tmp
 
 
 class Mate(abc.ABC):
@@ -218,6 +232,7 @@ class GeneticOptimizer:
         self.evaluator: Evaluator = evaluator
         self.selection: Selection = RouletteSelection()
         self.mate: Mate = Mate2pcx()
+        self.mutation = FlipMutate()
 
         # options:
         self.max_generations = int(max_generations)
@@ -227,8 +242,6 @@ class GeneticOptimizer:
         self.crossover_rate = 0.70
         self.mutation_rate = 0.001
         self.elitism: int = 2
-        self.mutation_type1 = MutationType.FLIP
-        self.mutation_type2 = MutationType.FLIP
 
         # state of last (current) generation:
         self.generation: int = 0
@@ -293,10 +306,10 @@ class GeneticOptimizer:
                 self.best_dna = dna.copy()
                 self.stagnation = 0
 
-        avg_fitness = 0.0
-        count = len(self._dna_strands)
-        if count > 0:
-            avg_fitness = fitness_sum / count
+        try:
+            avg_fitness = fitness_sum / len(self._dna_strands)
+        except ZeroDivisionError:
+            avg_fitness = 0.0
         self.log.append(LogEntry(self.best_fitness, avg_fitness))
 
     def next_generation(self) -> None:
@@ -312,17 +325,20 @@ class GeneticOptimizer:
             dna1, dna2 = selector.pick(2)
             dna1 = dna1.copy()
             dna2 = dna2.copy()
-            if random.random() < self.crossover_rate:
-                self.mate.recombine(dna1, dna2)
-            self.mutation(dna1, dna2)
+            self.recombine(dna1, dna2)
+            self.mutate(dna1, dna2)
             dna_strands.append(dna1)
             dna_strands.append(dna2)
         self._dna_strands = dna_strands
 
-    def mutation(self, dna1: DNA, dna2: DNA):
+    def recombine(self, dna1: DNA, dna2: DNA):
+        if random.random() < self.crossover_rate:
+            self.mate.recombine(dna1, dna2)
+
+    def mutate(self, dna1: DNA, dna2: DNA):
         mutation_rate = self.mutation_rate * self.stagnation
-        dna1.mutate(mutation_rate, self.mutation_type1)
-        dna2.mutate(mutation_rate, self.mutation_type2)
+        self.mutation.mutate(dna1, mutation_rate)
+        self.mutation.mutate(dna2, mutation_rate)
 
 
 class RouletteSelection(Selection):

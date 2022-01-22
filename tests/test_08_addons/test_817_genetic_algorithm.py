@@ -50,20 +50,6 @@ class TestFloatDNA:
         assert dna[-3:] == pytest.approx([0.1, 0.2, 0.3])
         assert sum(dna) == pytest.approx(0.6)
 
-    def test_mutate_flip(self):
-        dna1 = ga.FloatDNA([0.0] * 20)
-        dna2 = dna1.copy()
-        assert dna1 == dna2
-        dna1.mutate(0.7, ga.MutationType.FLIP)
-        assert dna1 != dna2
-
-    def test_mutate_swap(self):
-        dna1 = ga.FloatDNA.random(20)
-        dna2 = dna1.copy()
-        assert dna1 == dna2
-        dna1.mutate(0.7, ga.MutationType.SWAP)
-        assert dna1 != dna2
-
 
 class TestBitDNA:
     def test_init_value(self):
@@ -86,13 +72,6 @@ class TestBitDNA:
         dna[-3:] = [False, False, False]
         assert len(dna) == 20
         assert dna[-4:] == [True, False, False, False]
-
-    def test_mutate_flip(self):
-        dna1 = ga.BitDNA([1] * 20)
-        dna2 = dna1.copy()
-        assert dna1 == dna2
-        dna1.mutate(0.7, ga.MutationType.FLIP)
-        assert dna1 != dna2
 
 
 def test_two_point_crossover():
