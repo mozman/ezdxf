@@ -12,15 +12,6 @@ from dataclasses import dataclass
 import random
 import time
 
-__all__ = [
-    "DNA",
-    "Selection",
-    "BitDNA",
-    "FloatDNA",
-    "RouletteSelection",
-    "GeneticOptimizer",
-]
-
 
 class DNA(abc.ABC):
     fitness: Optional[float] = None
@@ -140,7 +131,8 @@ class MateUniformCX(Mate):
 
 
 class MateOrderedCX(Mate):
-    """Recombination class for ordered DNA like IntegerDNA(). """
+    """Recombination class for ordered DNA like IntegerDNA()."""
+
     def recombine(self, dna1: DNA, dna2: DNA):
         length = len(dna1)
         i1 = random.randrange(0, length)
@@ -455,3 +447,20 @@ class RouletteSelection(Selection):
 
     def pick(self, count: int) -> Iterable[DNA]:
         return random.choices(self._strands, self._weights, k=count)
+
+
+class TournamentSelection(Selection):
+    def __init__(self, candidates: int):
+        self._strands: List[DNA] = []
+        self.candidates = candidates
+
+    def reset(self, strands: Iterable[DNA]):
+        self._strands = list(strands)
+
+    def pick(self, count: int) -> Iterable[DNA]:
+        for _ in range(count):
+            values = [
+                random.choice(self._strands) for _ in range(self.candidates)
+            ]
+            values.sort(key=lambda dna: dna.fitness)
+            yield values[-1]

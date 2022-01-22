@@ -131,6 +131,20 @@ class TestIntegerDNA:
         assert copy2 == dna2
 
 
+def test_tournament_selection():
+    strands = [ga.IntegerDNA(10) for _ in range(10)]
+    for index, dna in enumerate(strands):
+        dna.fitness = index
+    selection = ga.TournamentSelection(2)
+    selection.reset(strands)
+
+    result = list(selection.pick(2))
+    assert len(result) == 2
+
+    result = list(selection.pick(3))
+    assert len(result) == 3
+
+
 def test_two_point_crossover():
     dna1 = ga.BitDNA([False] * 20)
     dna2 = ga.BitDNA([True] * 20)
