@@ -95,16 +95,6 @@ class TestBitDNA:
         assert dna1 != dna2
 
 
-def test_single_point_crossover():
-    dna1 = ga.BitDNA([False] * 20)
-    dna2 = ga.BitDNA([True] * 20)
-    ga.recombine_dna_1pcx(dna1, dna2, 7)
-    assert list(dna1[0:7]) == [False] * 7
-    assert list(dna1[7:]) == [True] * 13
-    assert list(dna2[0:7]) == [True] * 7
-    assert list(dna2[7:]) == [False] * 13
-
-
 def test_two_point_crossover():
     dna1 = ga.BitDNA([False] * 20)
     dna2 = ga.BitDNA([True] * 20)

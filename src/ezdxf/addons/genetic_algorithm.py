@@ -89,9 +89,27 @@ class DNA(abc.ABC):
         self._data[i1] = tmp
 
 
-def recombine_dna_1pcx(dna1: DNA, dna2: DNA, index: int) -> None:
-    """Single point crossover."""
-    recombine_dna_2pcx(dna1, dna2, index, len(dna1))
+class Mate(abc.ABC):
+    @abc.abstractmethod
+    def recombine(self, dna1: DNA, dna2: DNA):
+        pass
+
+
+class Mate1pcx(Mate):
+    def recombine(self, dna1: DNA, dna2: DNA):
+        length = len(dna1)
+        index = random.randrange(0, length)
+        recombine_dna_2pcx(dna1, dna2, index, length)
+
+
+class Mate2pcx(Mate):
+    def recombine(self, dna1: DNA, dna2: DNA):
+        length = len(dna1)
+        i1 = random.randrange(0, length)
+        i2 = random.randrange(0, length)
+        if i1 > i2:
+            i1, i2 = i2, i1
+        recombine_dna_2pcx(dna1, dna2, i1, i2)
 
 
 def recombine_dna_2pcx(dna1: DNA, dna2: DNA, i1: int, i2: int) -> None:
@@ -199,6 +217,7 @@ class GeneticOptimizer:
         # core components:
         self.evaluator: Evaluator = evaluator
         self.selection: Selection = RouletteSelection()
+        self.mate: Mate = Mate2pcx()
 
         # options:
         self.max_generations = int(max_generations)
@@ -294,20 +313,11 @@ class GeneticOptimizer:
             dna1 = dna1.copy()
             dna2 = dna2.copy()
             if random.random() < self.crossover_rate:
-                self.recombination(dna1, dna2)
+                self.mate.recombine(dna1, dna2)
             self.mutation(dna1, dna2)
             dna_strands.append(dna1)
             dna_strands.append(dna2)
         self._dna_strands = dna_strands
-
-    def recombination(self, dna1: DNA, dna2: DNA):
-        length = len(dna1)
-        assert length == len(dna2)
-        i1 = random.randrange(0, length)
-        i2 = random.randrange(0, length)
-        if i1 > i2:
-            i1, i2 = i2, i1
-        recombine_dna_2pcx(dna1, dna2, i1, i2)
 
     def mutation(self, dna1: DNA, dna2: DNA):
         mutation_rate = self.mutation_rate * self.stagnation
