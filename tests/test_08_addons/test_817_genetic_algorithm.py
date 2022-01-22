@@ -38,7 +38,7 @@ class TestFloatDNA:
         with pytest.raises(ValueError):
             dna.reset(values)
 
-    def test_new_random_gene(self):
+    def test_new_random_dna(self):
         dna = ga.FloatDNA.random(20)
         assert len(dna) == 20
         assert len(set(dna)) > 10
@@ -62,7 +62,7 @@ class TestBitDNA:
         assert len(dna) == 20
         assert dna[7] is False
 
-    def test_new_random_gene(self):
+    def test_new_random_dna(self):
         dna = ga.BitDNA.random(20)
         assert len(dna) == 20
         assert len(set(dna)) == 2
@@ -72,6 +72,63 @@ class TestBitDNA:
         dna[-3:] = [False, False, False]
         assert len(dna) == 20
         assert dna[-4:] == [True, False, False, False]
+
+
+class TestIntegerDNA:
+    def test_init_value(self):
+        dna = ga.IntegerDNA(10)
+        assert dna.is_valid is True
+        assert list(dna) == list(range(10))
+
+    def test_reset_data(self):
+        dna = ga.IntegerDNA(10)
+        dna.reset(range(9, -1, -1))
+        assert len(dna) == 10
+        assert dna.is_valid is True
+        assert dna[0] == 9
+        assert dna[9] == 0
+
+    def test_new_random_dna(self):
+        dna = ga.IntegerDNA.random(10)
+        assert len(dna) == 10
+        assert dna.is_valid is True
+
+    def test_subscription_setter(self):
+        dna = ga.IntegerDNA(10)
+        dna[-3:] = [1, 2, 3]
+        assert len(dna) == 10
+        assert dna[-4:] == [6, 1, 2, 3]
+        assert dna.is_valid is False
+
+    def test_recombine_dna_ocx1_preserves_order(self):
+        dna1 = ga.IntegerDNA(10)  # 0, 1, 2, 3, ...
+        dna2 = ga.IntegerDNA(10)
+        dna2._data.reverse()  # 9, 8, 7, 6, ...
+        ga.recombine_dna_ocx1(dna1, dna2, 0, 3)
+        assert list(dna1) == [9, 8, 7, 0, 1, 2, 3, 4, 5, 6]
+        assert list(dna2) == [0, 1, 2, 9, 8, 7, 6, 5, 4, 3]
+
+    @pytest.mark.parametrize("i1, i2", [(0, 3), (3, 7), (7, 9), (0, 9)])
+    def test_random_recombine_dna_ocx1(self, i1, i2):
+        dna1 = ga.IntegerDNA.random(10)
+        dna2 = ga.IntegerDNA.random(10)
+        copy1 = dna1.copy()
+        copy2 = dna2.copy()
+        ga.recombine_dna_ocx1(dna1, dna2, i1, i2)
+        assert dna1.is_valid is True
+        assert dna2.is_valid is True
+        assert copy1 != dna1
+        assert copy2 != dna2
+
+    @pytest.mark.parametrize("i1, i2", [(0, 0), (8, 8), (9, 9), (10, 11)])
+    def test_recombine_dna_ocx1_without_change(self, i1, i2):
+        dna1 = ga.IntegerDNA.random(10)
+        dna2 = ga.IntegerDNA.random(10)
+        copy1 = dna1.copy()
+        copy2 = dna2.copy()
+        ga.recombine_dna_ocx1(dna1, dna2, i1, i2)
+        assert copy1 == dna1
+        assert copy2 == dna2
 
 
 def test_two_point_crossover():

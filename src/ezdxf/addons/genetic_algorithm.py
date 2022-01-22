@@ -9,7 +9,6 @@ from typing import (
 import abc
 import copy
 from dataclasses import dataclass
-import enum
 import random
 import time
 
@@ -38,6 +37,11 @@ class DNA(abc.ABC):
 
     @abc.abstractmethod
     def reset(self, values: Iterable):
+        ...
+
+    @property
+    @abc.abstractmethod
+    def is_valid(self) -> bool:
         ...
 
     def copy(self):
@@ -109,14 +113,14 @@ class Mate(abc.ABC):
         pass
 
 
-class Mate1pcx(Mate):
+class Mate1pCX(Mate):
     def recombine(self, dna1: DNA, dna2: DNA):
         length = len(dna1)
         index = random.randrange(0, length)
         recombine_dna_2pcx(dna1, dna2, index, length)
 
 
-class Mate2pcx(Mate):
+class Mate2pCX(Mate):
     def recombine(self, dna1: DNA, dna2: DNA):
         length = len(dna1)
         i1 = random.randrange(0, length)
@@ -124,6 +128,26 @@ class Mate2pcx(Mate):
         if i1 > i2:
             i1, i2 = i2, i1
         recombine_dna_2pcx(dna1, dna2, i1, i2)
+
+
+class MateUniformCX(Mate):
+    def recombine(self, dna1: DNA, dna2: DNA):
+        for index in range(len(dna1)):
+            if random.random() > 0.5:
+                tmp = dna1[index]
+                dna1[index] = dna2[index]
+                dna2[index] = tmp
+
+
+class MateOrderedCX(Mate):
+    """Recombination class for ordered DNA like IntegerDNA(). """
+    def recombine(self, dna1: DNA, dna2: DNA):
+        length = len(dna1)
+        i1 = random.randrange(0, length)
+        i2 = random.randrange(0, length)
+        if i1 > i2:
+            i1, i2 = i2, i1
+        recombine_dna_ocx1(dna1, dna2, i1, i2)
 
 
 def recombine_dna_2pcx(dna1: DNA, dna2: DNA, i1: int, i2: int) -> None:
@@ -134,7 +158,34 @@ def recombine_dna_2pcx(dna1: DNA, dna2: DNA, i1: int, i2: int) -> None:
     dna2[i1:i2] = part1
 
 
+def recombine_dna_ocx1(dna1: DNA, dna2: DNA, i1: int, i2: int) -> None:
+    """Ordered crossover."""
+    copy1 = dna1.copy()
+    replace_dna_ocx1(dna1, dna2, i1, i2)
+    replace_dna_ocx1(dna2, copy1, i1, i2)
+
+
+def replace_dna_ocx1(dna1: DNA, dna2: DNA, i1: int, i2: int) -> None:
+    """Replace part in dna1 by dna2 and preserve order of remaining values in
+    dna1.
+    """
+    old = dna1.copy()
+    new = dna2[i1:i2]
+    dna1[i1:i2] = new
+    index = 0
+    new_set = set(new)
+    for value in old:
+        if value in new_set:
+            continue
+        if index == i1:
+            index = i2
+        dna1[index] = value
+        index += 1
+
+
 class FloatDNA(DNA):
+    """Arbitrary float numbers in the range [0, 1]."""
+
     __slots__ = ("_data", "fitness")
 
     def __init__(self, values: Iterable[float]):
@@ -146,8 +197,12 @@ class FloatDNA(DNA):
     def random(cls, length: int) -> "FloatDNA":
         return cls(random.random() for _ in range(length))
 
+    @property
+    def is_valid(self) -> bool:
+        return all(0.0 <= v <= 1.0 for v in self._data)
+
     def _check_valid_data(self):
-        if not all(0.0 <= v <= 1.0 for v in self._data):
+        if not self.is_valid:
             raise ValueError("data value out of range")
 
     def __str__(self):
@@ -173,6 +228,10 @@ class BitDNA(DNA):
         self._data: List[bool] = list(bool(v) for v in values)
         self.fitness: Optional[float] = None
 
+    @property
+    def is_valid(self) -> bool:
+        return True  # everything can be evaluated to True/False
+
     @classmethod
     def random(cls, length: int) -> "BitDNA":
         return cls(bool(random.randint(0, 1)) for _ in range(length))
@@ -190,6 +249,46 @@ class BitDNA(DNA):
 
     def flip_mutate_at(self, index: int) -> None:
         self._data[index] = not self._data[index]
+
+
+class IntegerDNA(DNA):
+    """Unique integer values in the range from 0 to length-1.
+    E.g. IntegerDNA(10) = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+    Requires MateOrderedCX() as recombination class to preserve order and
+    validity after DNA recombination.
+
+    """
+
+    __slots__ = ("_data", "fitness")
+
+    def __init__(self, length: int):
+        self._data: List[int] = list(range(length))
+        self.fitness: Optional[float] = None
+
+    @classmethod
+    def random(cls, length: int) -> "IntegerDNA":
+        dna = cls(length)
+        random.shuffle(dna._data)
+        return dna
+
+    @property
+    def is_valid(self) -> bool:
+        return len(set(self._data)) == len(self._data)
+
+    def __str__(self):
+        if self.fitness is None:
+            fitness = ", fitness=None"
+        else:
+            fitness = f", fitness={self.fitness:.4f}"
+        return f"{str([int(v) for v in self._data])}{fitness}"
+
+    def reset(self, values: Iterable) -> None:
+        self._data = list(int(v) for v in values)
+        self._taint()
+
+    def flip_mutate_at(self, index: int) -> None:
+        raise TypeError("flip mutation not supported")
 
 
 class Selection(abc.ABC):
@@ -231,7 +330,7 @@ class GeneticOptimizer:
         # core components:
         self.evaluator: Evaluator = evaluator
         self.selection: Selection = RouletteSelection()
-        self.mate: Mate = Mate2pcx()
+        self.mate: Mate = Mate2pCX()
         self.mutation = FlipMutate()
 
         # options:
