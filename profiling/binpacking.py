@@ -15,7 +15,7 @@ except ImportError:
 import json
 
 import ezdxf.addons.binpacking as bp
-import ezdxf.addons.dnapacking as dp
+import ezdxf.addons.genetic_algorithm as ga
 
 SEED = 47856535
 
@@ -97,18 +97,18 @@ def run_shuffle(packer: bp.AbstractPacker, shuffle_count: int):
 def make_subset_driver(
     packer: bp.AbstractPacker, generations: int, dna_count: int
 ):
-    driver = dp.GeneticDriver(packer, generations)
-    driver.set_dna_type(dp.BitDNA)
-    driver.set_evaluator(dp.subset_evaluator)
+    driver = ga.GeneticOptimizer(packer, generations)
+    driver.set_dna_type(ga.BitDNA)
+    driver.set_evaluator(ga.subset_evaluator)
     driver.name = "pack item subset"
-    driver.mutation_type1 = dp.MutationType.FLIP
-    driver.mutation_type2 = dp.MutationType.FLIP
+    driver.mutation_type1 = ga.MutationType.FLIP
+    driver.mutation_type2 = ga.MutationType.FLIP
     driver.add_random_dna(dna_count)
     return driver
 
 
-def run_genetic_driver(driver: dp.GeneticDriver):
-    def feedback(driver: dp.GeneticDriver):
+def run_genetic_driver(driver: ga.GeneticOptimizer):
+    def feedback(driver: ga.GeneticOptimizer):
         print(
             f"gen: {driver.generation:4}, "
             f"stag: {driver.stagnation:4}, "
@@ -122,7 +122,7 @@ def run_genetic_driver(driver: dp.GeneticDriver):
     )
     driver.execute(feedback, interval=3.0)
     print(
-        f"GeneticDriver: {driver.generation} generations x {driver.dna_count} "
+        f"GeneticOptimizer: {driver.generation} generations x {driver.dna_count} "
         f"DNA strands, best result:"
     )
     print_result(driver.best_packer, driver.runtime)
@@ -157,7 +157,7 @@ def show_log(log):
 def load_log(filename):
     with open(filename, "rt") as fp:
         data = json.load(fp)
-    return [dp.LogEntry(f, f_avg) for f, f_avg in data]
+    return [ga.LogEntry(f, f_avg) for f, f_avg in data]
 
 
 def parse_args():

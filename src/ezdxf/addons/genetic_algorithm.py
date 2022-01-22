@@ -16,7 +16,8 @@ import random
 import time
 from .binpacking import AbstractPacker, pack_item_subset
 
-__all__ = ["DNA", "Selection", "FloatDNA", "RouletteSelection", "GeneticDriver"]
+__all__ = ["DNA", "Selection", "FloatDNA", "RouletteSelection",
+    "GeneticOptimizer"]
 
 
 class MutationType(enum.Enum):
@@ -176,7 +177,7 @@ class LogEntry:
     avg_fitness: float
 
 
-class GeneticDriver:
+class GeneticOptimizer:
     def __init__(
         self,
         packer: AbstractPacker,
@@ -187,7 +188,7 @@ class GeneticDriver:
         if max_generations < 1:
             raise ValueError("max_generations < 1")
         # data:
-        self.name = "GeneticDriver"
+        self.name = "GeneticOptimizer"
         self.log: List[LogEntry] = []
         self._packer = packer
         self._required_dna_length = len(packer.items)
@@ -245,7 +246,7 @@ class GeneticDriver:
 
     def execute(
         self,
-        feedback: Callable[["GeneticDriver"], bool] = None,
+        feedback: Callable[["GeneticOptimizer"], bool] = None,
         interval: float = 1.0,
     ) -> None:
         if self.is_executed:

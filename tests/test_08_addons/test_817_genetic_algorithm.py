@@ -2,26 +2,26 @@
 #  License: MIT License
 
 import pytest
-from ezdxf.addons import dnapacking as dp
+from ezdxf.addons import genetic_algorithm as ga
 from ezdxf.addons import binpacking as bp
 
 
 class TestFloatDNA:
     def test_init_value(self):
-        dna = dp.FloatDNA([1.0] * 20)
+        dna = ga.FloatDNA([1.0] * 20)
         assert all(v == 1.0 for v in dna) is True
 
     @pytest.mark.parametrize("value", [-0.1, 1.1])
     def test_init_value_is_valid(self, value):
         with pytest.raises(ValueError):
-            dp.FloatDNA([value] * 20)
+            ga.FloatDNA([value] * 20)
 
     def test_iter(self):
-        dna = dp.FloatDNA([1.0] * 20)
+        dna = ga.FloatDNA([1.0] * 20)
         assert len(list(dna)) == 20
 
     def test_reset_data(self):
-        dna = dp.FloatDNA([0.0] * 20)
+        dna = ga.FloatDNA([0.0] * 20)
         dna.reset([0.5] * 20)
         assert len(dna) == 20
         assert dna[7] == 0.5
@@ -34,71 +34,71 @@ class TestFloatDNA:
         ],
     )
     def test_reset_data_checks_validity(self, values):
-        dna = dp.FloatDNA([])
+        dna = ga.FloatDNA([])
         with pytest.raises(ValueError):
             dna.reset(values)
 
     def test_new_random_gene(self):
-        dna = dp.FloatDNA.random(20)
+        dna = ga.FloatDNA.random(20)
         assert len(dna) == 20
         assert len(set(dna)) > 10
 
     def test_subscription_setter(self):
-        dna = dp.FloatDNA([0.0] * 20)
+        dna = ga.FloatDNA([0.0] * 20)
         dna[-3:] = [0.1, 0.2, 0.3]
         assert len(dna) == 20
         assert dna[-3:] == pytest.approx([0.1, 0.2, 0.3])
         assert sum(dna) == pytest.approx(0.6)
 
     def test_mutate_flip(self):
-        dna1 = dp.FloatDNA([0.0] * 20)
+        dna1 = ga.FloatDNA([0.0] * 20)
         dna2 = dna1.copy()
         assert dna1 == dna2
-        dna1.mutate(0.7, dp.MutationType.FLIP)
+        dna1.mutate(0.7, ga.MutationType.FLIP)
         assert dna1 != dna2
 
     def test_mutate_swap(self):
-        dna1 = dp.FloatDNA.random(20)
+        dna1 = ga.FloatDNA.random(20)
         dna2 = dna1.copy()
         assert dna1 == dna2
-        dna1.mutate(0.7, dp.MutationType.SWAP)
+        dna1.mutate(0.7, ga.MutationType.SWAP)
         assert dna1 != dna2
 
 
 class TestBitDNA:
     def test_init_value(self):
-        dna = dp.BitDNA([1] * 20)
+        dna = ga.BitDNA([1] * 20)
         assert all(v is True for v in dna) is True
 
     def test_reset_data(self):
-        dna = dp.BitDNA([1] * 20)
+        dna = ga.BitDNA([1] * 20)
         dna.reset([False] * 20)
         assert len(dna) == 20
         assert dna[7] is False
 
     def test_new_random_gene(self):
-        dna = dp.BitDNA.random(20)
+        dna = ga.BitDNA.random(20)
         assert len(dna) == 20
         assert len(set(dna)) == 2
 
     def test_subscription_setter(self):
-        dna = dp.BitDNA([1] * 20)
+        dna = ga.BitDNA([1] * 20)
         dna[-3:] = [False, False, False]
         assert len(dna) == 20
         assert dna[-4:] == [True, False, False, False]
 
     def test_mutate_flip(self):
-        dna1 = dp.BitDNA([1] * 20)
+        dna1 = ga.BitDNA([1] * 20)
         dna2 = dna1.copy()
         assert dna1 == dna2
-        dna1.mutate(0.7, dp.MutationType.FLIP)
+        dna1.mutate(0.7, ga.MutationType.FLIP)
         assert dna1 != dna2
 
 
 def test_single_point_crossover():
-    dna1 = dp.BitDNA([False] * 20)
-    dna2 = dp.BitDNA([True] * 20)
-    dp.recombine_dna_1pcx(dna1, dna2, 7)
+    dna1 = ga.BitDNA([False] * 20)
+    dna2 = ga.BitDNA([True] * 20)
+    ga.recombine_dna_1pcx(dna1, dna2, 7)
     assert list(dna1[0:7]) == [False] * 7
     assert list(dna1[7:]) == [True] * 13
     assert list(dna2[0:7]) == [True] * 7
@@ -106,9 +106,9 @@ def test_single_point_crossover():
 
 
 def test_two_point_crossover():
-    dna1 = dp.BitDNA([False] * 20)
-    dna2 = dp.BitDNA([True] * 20)
-    dp.recombine_dna_2pcx(dna1, dna2, 7, 11)
+    dna1 = ga.BitDNA([False] * 20)
+    dna2 = ga.BitDNA([True] * 20)
+    ga.recombine_dna_2pcx(dna1, dna2, 7, 11)
     assert list(dna1[0:7]) == [False] * 7
     assert list(dna1[7:11]) == [True] * 4
     assert list(dna1[11:]) == [False] * 9
@@ -159,21 +159,21 @@ def pack(packer, box, pick):
 
 class TestGeneticDriver:
     def test_init(self, packer):
-        driver = dp.GeneticDriver(packer, 100)
+        driver = ga.GeneticOptimizer(packer, 100)
         assert driver.is_executed is False
 
     def test_init_invalid_packer(self, packer):
         """Packer is already packed."""
         pack(packer, SMALL_BOX, bp.PickStrategy.SMALLER_FIRST)
         with pytest.raises(ValueError):
-            dp.GeneticDriver(packer, 100)
+            ga.GeneticOptimizer(packer, 100)
 
     def test_init_invalid_max_runs(self, packer):
         with pytest.raises(ValueError):
-            dp.GeneticDriver(packer, 0)
+            ga.GeneticOptimizer(packer, 0)
 
     def test_can_only_run_once(self, packer):
-        driver = dp.GeneticDriver(packer, 100)
+        driver = ga.GeneticOptimizer(packer, 100)
         driver.execute()
         assert driver.is_executed is True
         with pytest.raises(TypeError):
@@ -181,7 +181,7 @@ class TestGeneticDriver:
 
     def test_execution(self, packer):
         packer.add_bin(*MEDIUM_BOX)
-        driver = dp.GeneticDriver(packer, 10)
+        driver = ga.GeneticOptimizer(packer, 10)
         driver.add_random_dna(20)
         driver.execute()
         assert driver.generation == 10
