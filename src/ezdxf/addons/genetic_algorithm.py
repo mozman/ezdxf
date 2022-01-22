@@ -1,12 +1,10 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-
 from typing import (
     List,
     Iterable,
     Optional,
     Callable,
-    Type,
 )
 import abc
 import copy
@@ -14,10 +12,15 @@ from dataclasses import dataclass
 import enum
 import random
 import time
-from .binpacking import AbstractPacker, pack_item_subset
 
-__all__ = ["DNA", "Selection", "FloatDNA", "RouletteSelection",
-    "GeneticOptimizer"]
+__all__ = [
+    "DNA",
+    "Selection",
+    "BitDNA",
+    "FloatDNA",
+    "RouletteSelection",
+    "GeneticOptimizer",
+]
 
 
 class MutationType(enum.Enum):
@@ -31,8 +34,12 @@ class DNA(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def random(cls, length):
+    def random(cls, length: int) -> "DNA":
         ...
+
+    @classmethod
+    def n_random(cls, n: int, length: int) -> List["DNA"]:
+        return [cls.random(length) for _ in range(n)]
 
     @abc.abstractmethod
     def reset(self, values: Iterable):
@@ -163,12 +170,10 @@ class Selection(abc.ABC):
         ...
 
 
-TEvaluator = Callable[[AbstractPacker, DNA], float]
-
-
-def subset_evaluator(packer: AbstractPacker, dna: DNA) -> float:
-    pack_item_subset(packer, dna)
-    return packer.get_fill_ratio()
+class Evaluator(abc.ABC):
+    @abc.abstractmethod
+    def evaluate(self, dna: DNA) -> float:
+        ...
 
 
 @dataclass
@@ -180,30 +185,26 @@ class LogEntry:
 class GeneticOptimizer:
     def __init__(
         self,
-        packer: AbstractPacker,
+        evaluator: Evaluator,
         max_generations: int,
+        max_fitness: float = 1.0,
     ):
-        if packer.is_packed:
-            raise ValueError("packer is already packed")
         if max_generations < 1:
             raise ValueError("max_generations < 1")
         # data:
         self.name = "GeneticOptimizer"
         self.log: List[LogEntry] = []
-        self._packer = packer
-        self._required_dna_length = len(packer.items)
         self._dna_strands: List[DNA] = []
 
         # core components:
-        self._dna_type: Type[DNA] = BitDNA
-        self._selection: Selection = RouletteSelection()
-        self._evaluator: TEvaluator = subset_evaluator
+        self.evaluator: Evaluator = evaluator
+        self.selection: Selection = RouletteSelection()
 
         # options:
         self.max_generations = int(max_generations)
+        self.max_fitness: float = float(max_fitness)
+        self.max_runtime: float = 1e99
         self.max_stagnation = 100
-        self.max_fitness: float = 1.0
-        self.max_time: float = 1e99
         self.crossover_rate = 0.70
         self.mutation_rate = 0.001
         self.elitism: int = 2
@@ -215,17 +216,7 @@ class GeneticOptimizer:
         self.runtime: float = 0.0
         self.best_dna = BitDNA([])
         self.best_fitness: float = 0.0
-        self.best_packer = packer
         self.stagnation: int = 0  # generations without improvement
-
-    def set_dna_type(self, dna_type: Type[DNA]) -> None:
-        self._dna_type = dna_type
-
-    def set_selection(self, selection: Selection) -> None:
-        self._selection = selection
-
-    def set_evaluator(self, evaluator: TEvaluator) -> None:
-        self._evaluator = evaluator
 
     @property
     def is_executed(self) -> bool:
@@ -235,12 +226,9 @@ class GeneticOptimizer:
     def dna_count(self) -> int:
         return len(self._dna_strands)
 
-    def add_random_dna(self, count: int):
+    def add_dna(self, dna: Iterable[DNA]):
         if not self.is_executed:
-            self._dna_strands.extend(
-                self._dna_type.random(self._required_dna_length)
-                for _ in range(count)
-            )
+            self._dna_strands.extend(dna)
         else:
             raise TypeError("already executed")
 
@@ -261,7 +249,7 @@ class GeneticOptimizer:
             self.runtime = t1 - start_time
             if (
                 self.best_fitness >= self.max_fitness
-                or self.runtime >= self.max_time
+                or self.runtime >= self.max_runtime
                 or self.stagnation >= self.max_stagnation
             ):
                 break
@@ -278,13 +266,11 @@ class GeneticOptimizer:
             if dna.fitness is not None:
                 fitness_sum += dna.fitness
                 continue
-            p0 = self._packer.copy()
-            fill_ratio = self._evaluator(p0, dna)
-            dna.fitness = fill_ratio
-            fitness_sum += fill_ratio
-            if fill_ratio > self.best_fitness:
-                self.best_fitness = fill_ratio
-                self.best_packer = p0
+            fitness = self.evaluator.evaluate(dna)
+            dna.fitness = fitness
+            fitness_sum += fitness
+            if fitness > self.best_fitness:
+                self.best_fitness = fitness
                 self.best_dna = dna.copy()
                 self.stagnation = 0
 
@@ -295,7 +281,7 @@ class GeneticOptimizer:
         self.log.append(LogEntry(self.best_fitness, avg_fitness))
 
     def next_generation(self) -> None:
-        selector = self._selection
+        selector = self.selection
         selector.reset(self._dna_strands)
         dna_strands: List[DNA] = []
         count = len(self._dna_strands)
@@ -315,8 +301,10 @@ class GeneticOptimizer:
         self._dna_strands = dna_strands
 
     def recombination(self, dna1: DNA, dna2: DNA):
-        i1 = random.randrange(0, self._required_dna_length)
-        i2 = random.randrange(0, self._required_dna_length)
+        length = len(dna1)
+        assert length == len(dna2)
+        i1 = random.randrange(0, length)
+        i2 = random.randrange(0, length)
         if i1 > i2:
             i1, i2 = i2, i1
         recombine_dna_2pcx(dna1, dna2, i1, i2)

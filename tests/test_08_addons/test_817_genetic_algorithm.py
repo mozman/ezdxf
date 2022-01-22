@@ -157,36 +157,48 @@ def pack(packer, box, pick):
     return packer.bins[0]
 
 
-class TestGeneticDriver:
+class DummyEvaluator(ga.Evaluator):
+    def __init__(self, packer: bp.AbstractPacker):
+        self.packer = packer
+
+    def evaluate(self, dna: ga.DNA) -> float:
+        return 0.5
+
+    def run_packer(self, dna: ga.DNA):
+        packer = self.packer.copy()
+        packer.pack()
+        return packer
+
+
+class TestGeneticOptimizer:
     def test_init(self, packer):
         driver = ga.GeneticOptimizer(packer, 100)
         assert driver.is_executed is False
-
-    def test_init_invalid_packer(self, packer):
-        """Packer is already packed."""
-        pack(packer, SMALL_BOX, bp.PickStrategy.SMALLER_FIRST)
-        with pytest.raises(ValueError):
-            ga.GeneticOptimizer(packer, 100)
 
     def test_init_invalid_max_runs(self, packer):
         with pytest.raises(ValueError):
             ga.GeneticOptimizer(packer, 0)
 
     def test_can_only_run_once(self, packer):
-        driver = ga.GeneticOptimizer(packer, 100)
-        driver.execute()
-        assert driver.is_executed is True
+        evaluator = DummyEvaluator(packer)
+        optimizer = ga.GeneticOptimizer(evaluator, 100)
+        optimizer.execute()
+        assert optimizer.is_executed is True
         with pytest.raises(TypeError):
-            driver.execute()
+            optimizer.execute()
 
     def test_execution(self, packer):
         packer.add_bin(*MEDIUM_BOX)
-        driver = ga.GeneticOptimizer(packer, 10)
-        driver.add_random_dna(20)
-        driver.execute()
-        assert driver.generation == 10
-        assert driver.best_fitness > 0.1
-        assert len(driver.best_packer.bins[0].items) > 1
+        evaluator = DummyEvaluator(packer)
+        optimizer = ga.GeneticOptimizer(evaluator, 10)
+        optimizer.add_dna(ga.BitDNA.n_random(20, len(packer.items)))
+        optimizer.execute()
+        assert optimizer.generation == 10
+        assert optimizer.best_fitness > 0.1
+
+        # Get best packer of SubSetEvaluator:
+        best_packer = evaluator.run_packer(optimizer.best_dna)
+        assert len(best_packer.bins[0].items) > 1
 
 
 if __name__ == "__main__":

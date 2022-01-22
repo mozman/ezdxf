@@ -1,5 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
+from typing import cast
+
 import math
 import random
 import os
@@ -94,38 +96,39 @@ def run_shuffle(packer: bp.AbstractPacker, shuffle_count: int):
     print_result(p0, t1 - t0)
 
 
-def make_subset_driver(
+def make_subset_optimizer(
     packer: bp.AbstractPacker, generations: int, dna_count: int
 ):
-    driver = ga.GeneticOptimizer(packer, generations)
-    driver.set_dna_type(ga.BitDNA)
-    driver.set_evaluator(ga.subset_evaluator)
-    driver.name = "pack item subset"
-    driver.mutation_type1 = ga.MutationType.FLIP
-    driver.mutation_type2 = ga.MutationType.FLIP
-    driver.add_random_dna(dna_count)
-    return driver
+    evaluator = bp.SubSetEvaluator(packer)
+    optimizer = ga.GeneticOptimizer(evaluator, max_generations=generations)
+    optimizer.name = "pack item subset"
+    optimizer.mutation_type1 = ga.MutationType.FLIP
+    optimizer.mutation_type2 = ga.MutationType.FLIP
+    optimizer.add_dna(ga.BitDNA.n_random(dna_count, len(packer.items)))
+    return optimizer
 
 
-def run_genetic_driver(driver: ga.GeneticOptimizer):
-    def feedback(driver: ga.GeneticOptimizer):
+def run(optimizer: ga.GeneticOptimizer):
+    def feedback(optimizer: ga.GeneticOptimizer):
         print(
-            f"gen: {driver.generation:4}, "
-            f"stag: {driver.stagnation:4}, "
-            f"fitness: {driver.best_fitness:.3f}"
+            f"gen: {optimizer.generation:4}, "
+            f"stag: {optimizer.stagnation:4}, "
+            f"fitness: {optimizer.best_fitness:.3f}"
         )
         return False
 
     print(
-        f"\nGenetic algorithm search: {driver.name}\n"
-        f"max generations={driver.max_generations}, DNA count={driver.dna_count}"
+        f"\nGenetic algorithm search: {optimizer.name}\n"
+        f"max generations={optimizer.max_generations}, DNA count={optimizer.dna_count}"
     )
-    driver.execute(feedback, interval=3.0)
+    optimizer.execute(feedback, interval=3.0)
     print(
-        f"GeneticOptimizer: {driver.generation} generations x {driver.dna_count} "
+        f"GeneticOptimizer: {optimizer.generation} generations x {optimizer.dna_count} "
         f"DNA strands, best result:"
     )
-    print_result(driver.best_packer, driver.runtime)
+    evaluator = cast(bp.SubSetEvaluator, optimizer.evaluator)
+    best_packer = evaluator.run_packer(optimizer.best_dna)
+    print_result(best_packer, optimizer.runtime)
 
 
 def dump_log(log, filename):
@@ -202,7 +205,8 @@ def parse_args():
 
 DATA_LOG = "binpacking.json"
 
-if __name__ == "__main__":
+
+def main():
     args = parse_args()
     if args.view and plt and os.path.exists(DATA_LOG):
         log = load_log(DATA_LOG)
@@ -216,8 +220,12 @@ if __name__ == "__main__":
     print(f"Total item volume: {packer.get_unfitted_volume():.3f}")
     print(f"Random Seed: {args.seed}")
     run_bigger_first(packer)
-    driver = make_subset_driver(packer, args.generations, args.dna)
-    run_genetic_driver(driver)
-    dump_log(driver.log, DATA_LOG)
+    optimizer = make_subset_optimizer(packer, args.generations, args.dna)
+    run(optimizer)
+    dump_log(optimizer.log, DATA_LOG)
     if plt is not None:
-        show_log(driver.log)
+        show_log(optimizer.log)
+
+
+if __name__ == "__main__":
+    main()

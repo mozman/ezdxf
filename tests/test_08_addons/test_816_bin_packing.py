@@ -1,8 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 import pytest
-import itertools
-import random
 from ezdxf.addons import binpacking as bp
 
 

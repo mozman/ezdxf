@@ -46,6 +46,7 @@ from ezdxf.math import (
     AbstractBoundingBox,
     Matrix44,
 )
+from . import genetic_algorithm as ga
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import GenericLayoutType
@@ -563,6 +564,20 @@ def get_item_subset(
     if count < len(items):  # too few pick values given
         rejects.extend(items[count:])
     return chosen, rejects
+
+
+class SubSetEvaluator(ga.Evaluator):
+    def __init__(self, packer: AbstractPacker):
+        self.packer = packer
+
+    def evaluate(self, dna: ga.DNA) -> float:
+        packer = self.run_packer(dna)
+        return packer.get_fill_ratio()
+
+    def run_packer(self, dna: ga.DNA) -> AbstractPacker:
+        packer = self.packer.copy()
+        pack_item_subset(packer, dna)
+        return packer
 
 
 class Packer(AbstractPacker):
