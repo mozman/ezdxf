@@ -441,7 +441,7 @@ def fast_plain_mtext(text: str, split=False) -> Union[List[str], str]:
     """
     chars = []
     # split text into chars, in reversed order for efficient pop()
-    raw_chars = list(reversed(text))
+    raw_chars = list(reversed(caret_decode(text)))
     while len(raw_chars):
         char = raw_chars.pop()
         if char == "\\":  # is a formatting command

@@ -275,8 +275,9 @@ def test_plain_mtext_removes_formatting():
     )
     expected = (
         "Das ist eine MText\nZeile mit Formatierung\nänder die Farbe\n"
-        "1.^INummerierung\n2.^INummerierung\n\n1/2500  ein Bruch"
+        "1.\tNummerierung\n2.\tNummerierung\n\n1/2500  ein Bruch"
     )
+    # Includes caret decoding!
     assert fast_plain_mtext(raw_text) == expected
     assert (
         fast_plain_mtext("\\:") == "\\:"
