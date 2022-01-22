@@ -14,6 +14,7 @@ import time
 
 
 class DNA(abc.ABC):
+    """Abstract DNA class. """
     fitness: Optional[float] = None
     _data: List
 
@@ -64,12 +65,14 @@ class DNA(abc.ABC):
 
 
 class Mutate(abc.ABC):
+    """Abstract mutation. """
     @abc.abstractmethod
     def mutate(self, dna: DNA, rate: float):
         ...
 
 
 class FlipMutate(Mutate):
+    """Flip one bit mutation. """
     def mutate(self, dna: DNA, rate: float):
         for index in range(len(dna)):
             if random.random() < rate:
@@ -77,6 +80,7 @@ class FlipMutate(Mutate):
 
 
 class SwapNeighbors(Mutate):
+    """Swap two neighbors mutation. """
     def mutate(self, dna: DNA, rate: float):
         for index in range(len(dna)):
             if random.random() < rate:
@@ -87,6 +91,7 @@ class SwapNeighbors(Mutate):
 
 
 class RandomSwap(Mutate):
+    """Swap two random places mutation. """
     def mutate(self, dna: DNA, rate: float):
         length = len(dna)
         for index in range(len(dna)):
@@ -99,12 +104,14 @@ class RandomSwap(Mutate):
 
 
 class Mate(abc.ABC):
+    """Abstract recombination. """
     @abc.abstractmethod
     def recombine(self, dna1: DNA, dna2: DNA):
         pass
 
 
 class Mate1pCX(Mate):
+    """One point crossover recombination. """
     def recombine(self, dna1: DNA, dna2: DNA):
         length = len(dna1)
         index = random.randrange(0, length)
@@ -112,6 +119,7 @@ class Mate1pCX(Mate):
 
 
 class Mate2pCX(Mate):
+    """Two point crossover recombination. """
     def recombine(self, dna1: DNA, dna2: DNA):
         length = len(dna1)
         i1 = random.randrange(0, length)
@@ -122,6 +130,7 @@ class Mate2pCX(Mate):
 
 
 class MateUniformCX(Mate):
+    """Uniform recombination. """
     def recombine(self, dna1: DNA, dna2: DNA):
         for index in range(len(dna1)):
             if random.random() > 0.5:
@@ -214,6 +223,7 @@ class FloatDNA(DNA):
 
 
 class BitDNA(DNA):
+    """One bit DNA. """
     __slots__ = ("_data", "fitness")
 
     def __init__(self, values: Iterable):
@@ -250,6 +260,7 @@ class IntegerDNA(DNA):
     Requires MateOrderedCX() as recombination class to preserve order and
     validity after DNA recombination.
 
+    Requires mutation by swapping like SwapRandom() or SwapNeighbors()
     """
 
     __slots__ = ("_data", "fitness")
@@ -284,6 +295,7 @@ class IntegerDNA(DNA):
 
 
 class Selection(abc.ABC):
+    """Abstract selection class. """
     @abc.abstractmethod
     def pick(self, count: int) -> Iterable[DNA]:
         ...
@@ -294,6 +306,7 @@ class Selection(abc.ABC):
 
 
 class Evaluator(abc.ABC):
+    """Abstract evaluation class. """
     @abc.abstractmethod
     def evaluate(self, dna: DNA) -> float:
         ...
@@ -306,6 +319,7 @@ class LogEntry:
 
 
 class GeneticOptimizer:
+    """Optimization Algorithm. """
     def __init__(
         self,
         evaluator: Evaluator,
@@ -433,6 +447,7 @@ class GeneticOptimizer:
 
 
 class RouletteSelection(Selection):
+    """Selection by fitness values. """
     def __init__(self):
         self._strands: List[DNA] = []
         self._weights: List[float] = []
@@ -449,7 +464,20 @@ class RouletteSelection(Selection):
         return random.choices(self._strands, self._weights, k=count)
 
 
+class RankBasedSelection(RouletteSelection):
+    """Selection by rank of fitness. """
+    def reset(self, strands: Iterable[DNA]):
+        # dna.fitness is not None here!
+        self._strands = list(strands)
+        self._strands.sort(key=lambda dna: dna.fitness)
+        # weight of best_fitness == len(strands)
+        # and decreases until 1 for the least fitness
+        self._weights = list(range(1, len(self._strands)+1))
+
+
 class TournamentSelection(Selection):
+    """Selection by choosing the best of a certain count of candidates.
+    """
     def __init__(self, candidates: int):
         self._strands: List[DNA] = []
         self.candidates = candidates
