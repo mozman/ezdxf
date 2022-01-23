@@ -10,7 +10,6 @@ from typing import (
 import abc
 import copy
 from dataclasses import dataclass
-import heapq
 import json
 import random
 import time
@@ -63,7 +62,7 @@ class DNA(abc.ABC):
 
 
 def dna_fitness(dna: DNA) -> float:
-    return dna.fitness
+    return dna.fitness  # type: ignore
 
 
 class Mutate(abc.ABC):
@@ -442,6 +441,39 @@ def load_log(filename: str) -> List[LogEntry]:
     ]
 
 
+class HallOfFame:
+    def __init__(self, count):
+        self._count = count
+        self._unique_entries = dict()
+
+    def __iter__(self):
+        return (
+            self._unique_entries[k] for k in self._sorted_keys()[: self._count]
+        )
+
+    def set_count(self, count):
+        self._count = count
+
+    def _sorted_keys(self):
+        return sorted(self._unique_entries.keys(), reverse=True)
+
+    def add(self, dna: DNA):
+        assert dna.fitness is not None
+        self._unique_entries[dna.fitness] = dna
+
+    def get(self, count: int) -> List[DNA]:
+        entries = self._unique_entries
+        keys = self._sorted_keys()
+        return [entries[k] for k in keys[: min(count, self._count)]]
+
+    def purge(self):
+        if len(self._unique_entries) <= self._count:
+            return
+        entries = self._unique_entries
+        keys = self._sorted_keys()
+        self._unique_entries = {k: entries[k] for k in keys[: self._count]}
+
+
 class GeneticOptimizer:
     """Optimization Algorithm."""
 
@@ -480,6 +512,7 @@ class GeneticOptimizer:
         self.best_dna = BitDNA([])
         self.best_fitness: float = 0.0
         self.stagnation: int = 0  # generations without improvement
+        self.hall_of_fame = HallOfFame(10)
 
     @property
     def is_executed(self) -> bool:
@@ -532,11 +565,13 @@ class GeneticOptimizer:
             fitness = self.evaluator.evaluate(dna)
             dna.fitness = fitness
             fitness_sum += fitness
+            self.hall_of_fame.add(dna.copy())
             if fitness > self.best_fitness:
                 self.best_fitness = fitness
                 self.best_dna = dna.copy()
                 self.stagnation = 0
 
+        self.hall_of_fame.purge()
         try:
             avg_fitness = fitness_sum / len(self._dna_strands)
         except ZeroDivisionError:
@@ -556,9 +591,7 @@ class GeneticOptimizer:
         count = len(self._dna_strands)
 
         if self.elitism > 0:
-            dna_strands.extend(
-                heapq.nlargest(self.elitism, self._dna_strands, key=dna_fitness)
-            )
+            dna_strands.extend(self.hall_of_fame.get(self.elitism))
 
         while len(dna_strands) < count:
             dna1, dna2 = selector.pick(2)

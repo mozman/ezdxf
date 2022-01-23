@@ -176,6 +176,38 @@ class TestIntegerDNA:
         assert dna.is_valid is True
 
 
+class TestHallOfFame:
+    @pytest.fixture
+    def strands(self):
+        s = []
+        for fitness in range(1, 10):
+            dna = ga.BitDNA.random(5)
+            dna.fitness = 0.1 * fitness
+            s.append(dna)
+        return s
+
+    def test_build(self, strands):
+        hof = ga.HallOfFame(3)
+        for dna in strands:
+            hof.add(dna)
+        assert [dna.fitness for dna in hof] == pytest.approx([0.9, 0.8, 0.7])
+
+    def test_get_n_best(self, strands):
+        hof = ga.HallOfFame(3)
+        for dna in strands:
+            hof.add(dna)
+        result = hof.get(2)
+        assert result[0].fitness == pytest.approx(0.9)
+        assert result[1].fitness == pytest.approx(0.8)
+
+    def test_purge(self, strands):
+        hof = ga.HallOfFame(3)
+        for dna in strands:
+            hof.add(dna)
+        hof.purge()
+        assert len(hof._unique_entries) == 3
+
+
 def test_reverse_mutate():
     dna = ga.UniqueIntDNA(10)
     mutate = ga.ReverseMutate(3)
