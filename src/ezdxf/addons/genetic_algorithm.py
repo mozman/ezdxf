@@ -99,13 +99,14 @@ class RandomSwap(Mutate):
 
     def mutate(self, dna: DNA, rate: float):
         length = len(dna)
-        for index in range(len(dna)):
+        for index in range(length):
             if random.random() < rate:
-                i1 = random.randrange(0, length)
                 i2 = random.randrange(0, length)
+                if i2 == index:
+                    i2 -= 1
                 tmp = dna[i2]
-                dna[i2] = dna[i1]
-                dna[i1] = tmp
+                dna[i2] = dna[index]
+                dna[index] = tmp
 
 
 class ReverseMutate(Mutate):
@@ -426,7 +427,7 @@ class LogEntry:
     avg_fitness: float
 
 
-def dump_log(log, filename: str) -> None:
+def dump_log(log: List[LogEntry], filename: str) -> None:
     data = [(e.runtime, e.fitness, e.avg_fitness) for e in log]
     with open(filename, "wt") as fp:
         json.dump(data, fp, indent=4)
@@ -608,7 +609,7 @@ class GeneticOptimizer:
             self.mate.recombine(dna1, dna2)
 
     def mutate(self, dna1: DNA, dna2: DNA):
-        mutation_rate = self.mutation_rate * self.stagnation
+        mutation_rate = self.mutation_rate * (self.stagnation + 1)
         self.mutation.mutate(dna1, mutation_rate)
         self.mutation.mutate(dna2, mutation_rate)
 
@@ -623,10 +624,7 @@ class RouletteSelection(Selection):
     def reset(self, strands: Iterable[DNA]):
         # dna.fitness is not None here!
         self._strands = list(strands)
-        sum_fitness = sum(dna.fitness for dna in self._strands)
-        if sum_fitness == 0.0:
-            sum_fitness = 1.0
-        self._weights = [dna.fitness / sum_fitness for dna in self._strands]  # type: ignore
+        self._weights = [dna.fitness for dna in self._strands]  # type: ignore
 
     def pick(self, count: int) -> Iterable[DNA]:
         return random.choices(self._strands, self._weights, k=count)
