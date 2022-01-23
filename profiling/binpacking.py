@@ -129,12 +129,6 @@ def run(optimizer: ga.GeneticOptimizer):
     print_result(best_packer, optimizer.runtime)
 
 
-def dump_log(log, filename):
-    data = [(e.fitness, e.avg_fitness) for e in log]
-    with open(filename, "wt") as fp:
-        json.dump(data, fp, indent=4)
-
-
 def show_log(log):
     x = []
     y = []
@@ -153,12 +147,6 @@ def show_log(log):
     )
     ax.grid()
     plt.show()
-
-
-def load_log(filename):
-    with open(filename, "rt") as fp:
-        data = json.load(fp)
-    return [ga.LogEntry(f, f_avg) for f, f_avg in data]
 
 
 def parse_args():
@@ -207,7 +195,7 @@ DATA_LOG = "binpacking.json"
 def main():
     args = parse_args()
     if args.view and plt and os.path.exists(DATA_LOG):
-        log = load_log(DATA_LOG)
+        log = ga.load_log(DATA_LOG)
         show_log(log)
         sys.exit()
     random.seed(args.seed)
@@ -220,7 +208,7 @@ def main():
     run_bigger_first(packer)
     optimizer = make_subset_optimizer(packer, args.generations, args.dna)
     run(optimizer)
-    dump_log(optimizer.log, DATA_LOG)
+    ga.dump_log(optimizer.log, DATA_LOG)
     if plt is not None:
         show_log(optimizer.log)
 

@@ -10,6 +10,7 @@ from typing import (
 import abc
 import copy
 from dataclasses import dataclass
+import json
 import random
 import time
 
@@ -412,8 +413,24 @@ class Evaluator(abc.ABC):
 
 @dataclass
 class LogEntry:
+    runtime: float
     fitness: float
     avg_fitness: float
+
+
+def dump_log(log, filename: str) -> None:
+    data = [(e.runtime, e.fitness, e.avg_fitness) for e in log]
+    with open(filename, "wt") as fp:
+        json.dump(data, fp, indent=4)
+
+
+def load_log(filename: str) -> List[LogEntry]:
+    with open(filename, "rt") as fp:
+        data = json.load(fp)
+    return [
+        LogEntry(runtime, fitness, avg_fitness)
+        for runtime, fitness, avg_fitness in data
+    ]
 
 
 class GeneticOptimizer:
@@ -449,6 +466,7 @@ class GeneticOptimizer:
 
         # state of last (current) generation:
         self.generation: int = 0
+        self.start_time = 0.0
         self.runtime: float = 0.0
         self.best_dna = BitDNA([])
         self.best_fitness: float = 0.0
@@ -478,11 +496,11 @@ class GeneticOptimizer:
         if not self._dna_strands:
             print("no DNA defined!")
         t0 = time.perf_counter()
-        start_time = t0
+        self.start_time = t0
         for self.generation in range(1, self.max_generations + 1):
             self.measure_fitness()
             t1 = time.perf_counter()
-            self.runtime = t1 - start_time
+            self.runtime = t1 - self.start_time
             if (
                 self.best_fitness >= self.max_fitness
                 or self.runtime >= self.max_runtime
@@ -514,7 +532,13 @@ class GeneticOptimizer:
             avg_fitness = fitness_sum / len(self._dna_strands)
         except ZeroDivisionError:
             avg_fitness = 0.0
-        self.log.append(LogEntry(self.best_fitness, avg_fitness))
+        self.log.append(
+            LogEntry(
+                time.perf_counter() - self.start_time,
+                self.best_fitness,
+                avg_fitness,
+            )
+        )
 
     def next_generation(self) -> None:
         selector = self.selection
@@ -570,7 +594,7 @@ class RankBasedSelection(RouletteSelection):
     def reset(self, strands: Iterable[DNA]):
         # dna.fitness is not None here!
         self._strands = list(strands)
-        self._strands.sort(key=lambda dna: dna.fitness)
+        self._strands.sort(key=lambda dna: dna.fitness)  # type: ignore
         # weight of best_fitness == len(strands)
         # and decreases until 1 for the least fitness
         self._weights = list(range(1, len(self._strands) + 1))
@@ -591,5 +615,5 @@ class TournamentSelection(Selection):
             values = [
                 random.choice(self._strands) for _ in range(self.candidates)
             ]
-            values.sort(key=lambda dna: dna.fitness)
+            values.sort(key=lambda dna: dna.fitness)  # type: ignore
             yield values[-1]
