@@ -110,7 +110,7 @@ class ReverseMutate(Mutate):
     def mutate(self, dna: DNA, rate: float):
         length = len(dna)
         if random.random() < rate * length:  # applied to all bits at ones
-            i1 = random.randrange(length-self._bits)
+            i1 = random.randrange(length - self._bits)
             i2 = i1 + self._bits
             bits = dna[i1:i2]
             dna[i1:i2] = reversed(bits)
@@ -123,7 +123,7 @@ class ScrambleMutate(Mutate):
     def mutate(self, dna: DNA, rate: float):
         length = len(dna)
         if random.random() < rate * length:  # applied to all bits at ones
-            i1 = random.randrange(length-self._bits)
+            i1 = random.randrange(length - self._bits)
             i2 = i1 + self._bits
             bits = dna[i1:i2]
             random.shuffle(bits)
@@ -371,6 +371,9 @@ class IntegerDNA(DNA):
     @property
     def is_valid(self) -> bool:
         return all(0 <= v < self._max for v in self._data)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({str(self._data)}, {self._max})"
 
     def __str__(self):
         if self.fitness is None:
