@@ -1,7 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import Iterable, List
-import pathlib
+from typing import Iterable, List, cast
+import enum
 import sys
 import argparse
 
@@ -10,11 +10,12 @@ from ezdxf.entities import DXFGraphic
 from ezdxf.math import Matrix44, BoundingBox
 from ezdxf.path import Path, make_path, nesting
 from ezdxf.addons import binpacking as bp
+from ezdxf.addons import genetic_algorithm as ga
 from ezdxf import colors
 
-DIR = pathlib.Path("~/Desktop/Now/ezdxf/binpacking").expanduser()
-
 DEBUG = True
+GENERATIONS = 200
+DNA_COUNT = 50
 
 
 class Bundle:
@@ -64,6 +65,32 @@ def build_bundles(paths: Iterable[Path]) -> Iterable[Bundle]:
         yield Bundle(entities, box)
 
 
+def run_optimizer(packer):
+    def feedback(optimizer: ga.GeneticOptimizer):
+        print(
+            f"gen: {optimizer.generation:4}, "
+            f"stag: {optimizer.stagnation:4}, "
+            f"fitness: {optimizer.best_fitness:.3f}"
+        )
+        return False
+    evaluator = bp.SubSetEvaluator(packer)
+    optimizer = ga.GeneticOptimizer(evaluator, max_generations=GENERATIONS)
+    optimizer.name = "pack item subset"
+    optimizer.add_dna(ga.BitDNA.n_random(DNA_COUNT, len(packer.items)))
+    print(
+        f"\nGenetic algorithm search: {optimizer.name}\n"
+        f"max generations={optimizer.max_generations}, DNA count={optimizer.dna_count}"
+    )
+    optimizer.execute(feedback, interval=3)
+    print(
+        f"GeneticOptimizer: {optimizer.generation} generations x {optimizer.dna_count} "
+        f"DNA strands, best result:"
+    )
+    evaluator = cast(bp.SubSetEvaluator, optimizer.evaluator)
+    best_packer = evaluator.run_packer(optimizer.best_dna)
+    return best_packer
+
+
 def bundle_items(items: Iterable[DXFGraphic]) -> Iterable[Bundle]:
     paths: List[Path] = list()
     for entity in items:
@@ -73,9 +100,7 @@ def bundle_items(items: Iterable[DXFGraphic]) -> Iterable[Bundle]:
     return build_bundles(paths)
 
 
-def get_packer(
-    items: Iterable[DXFGraphic], width, height
-) -> bp.AbstractPacker:
+def get_packer(items: Iterable[DXFGraphic], width, height) -> bp.AbstractPacker:
     packer = bp.FlatPacker()
     packer.add_bin("B0", width, height)
     for bundle in bundle_items(items):
@@ -98,11 +123,17 @@ def make_debug_doc():
     return doc
 
 
+class Strategy(enum.Enum):
+    BIGGER_FIRST = enum.auto()
+    SHUFFLE = enum.auto()
+    OPTIMIZE = enum.auto()
+
+
 def main(
     filename,
     bin_width: float,
     bin_height: float,
-    pick=bp.PickStrategy.BIGGER_FIRST,
+    pick=Strategy.BIGGER_FIRST,
     attempts: int = 1,
 ):
     try:
@@ -115,10 +146,13 @@ def main(
     msp = doc.modelspace()
 
     packer = get_packer(msp, bin_width, bin_height)
-    if pick == bp.PickStrategy.SHUFFLE:
+    if pick == Strategy.SHUFFLE:
         packer = bp.shuffle_pack(packer, attempts)
-    else:
-        packer.pack(pick=pick)
+    elif pick == Strategy.BIGGER_FIRST:
+        packer.pack(pick=bp.PickStrategy.BIGGER_FIRST)
+    elif pick == Strategy.OPTIMIZE:
+        packer = run_optimizer(packer)
+
     envelope = packer.bins[0]
     print("packed: " + "=" * 70)
     print(f"ratio: {envelope.get_fill_ratio()}")
@@ -149,7 +183,12 @@ def main(
     h = envelope.height
     w = envelope.width
     doc.set_modelspace_vport(height=h, center=(w / 2, h / 2))
-    doc.saveas(filename.replace(".dxf", ".pack.dxf"))
+
+    dxf_ext = ".pack.dxf"
+    if pick == Strategy.OPTIMIZE:
+        dxf_ext = ".opt.dxf"
+    doc.saveas(filename.replace(".dxf", dxf_ext))
+
     if DEBUG:
         doc = make_debug_doc()
         bp.export_dxf(doc.modelspace(), packer.bins)
@@ -179,26 +218,28 @@ def parse_args():
         nargs=1,
         help="height of bin",
     )
+    parser.add_argument(
+        "-o",
+        "--optimize",
+        action="store_true",
+        default=False,
+        help="use genetic algorithm optimizer",
+    )
     return parser.parse_args()
 
 
 if __name__ == "__main__":
+
     if len(sys.argv) > 1:
         args = parse_args()
-        main(args.file[0], args.width[0], args.height[0])
+        strategy = Strategy.BIGGER_FIRST
+        if args.optimize:
+            strategy = Strategy.OPTIMIZE
+        main(args.file[0], args.width[0], args.height[0], pick=strategy)
     else:
-        # PickStrategy.BIGGER_FIRST is the best strategy
-        # PickStrategy.SMALLER_FIRST is often very bad!
         main(
-            str(DIR / "items.dxf"),
-            50,
-            55,
-            pick=bp.PickStrategy.BIGGER_FIRST,
-            attempts=100,
-        )
-        main(
-            str(DIR / "case.dxf"),
-            500,
+            str("forms.dxf"),
             600,
-            pick=bp.PickStrategy.BIGGER_FIRST,
+            600,
+            pick=Strategy.OPTIMIZE,
         )

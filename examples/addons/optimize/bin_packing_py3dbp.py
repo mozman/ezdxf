@@ -2,12 +2,9 @@
 #  License: MIT License
 # This is the example provided by the py3dbp package:
 from typing import List
-from pathlib import Path
 import ezdxf
 from ezdxf import colors
 from ezdxf.addons import binpacking as bp
-
-DIR = Path("~/Desktop/Outbox").expanduser()
 
 SMALL_ENVELOPE = ("small-envelope", 11.5, 6.125, 0.25, 10)
 LARGE_ENVELOPE = ("large-envelope", 15.0, 12.0, 0.75, 15)
@@ -63,4 +60,4 @@ def main(filename):
 
 
 if __name__ == "__main__":
-    main(DIR / "py3dbp_example.dxf")
+    main("py3dbp_example.dxf")
