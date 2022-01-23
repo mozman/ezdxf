@@ -1,5 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
+import itertools
 from typing import (
     List,
     Iterable,
@@ -14,18 +15,19 @@ import time
 
 
 class DNA(abc.ABC):
-    """Abstract DNA class. """
+    """Abstract DNA class."""
+
     fitness: Optional[float] = None
     _data: List
 
     @classmethod
     @abc.abstractmethod
-    def random(cls, length: int) -> "DNA":
+    def random(cls, length: int, max_=None) -> "DNA":
         ...
 
     @classmethod
-    def n_random(cls, n: int, length: int) -> List["DNA"]:
-        return [cls.random(length) for _ in range(n)]
+    def n_random(cls, n: int, length: int, max_=None) -> List["DNA"]:
+        return [cls.random(length, max_) for _ in range(n)]
 
     @abc.abstractmethod
     def reset(self, values: Iterable):
@@ -65,14 +67,16 @@ class DNA(abc.ABC):
 
 
 class Mutate(abc.ABC):
-    """Abstract mutation. """
+    """Abstract mutation."""
+
     @abc.abstractmethod
     def mutate(self, dna: DNA, rate: float):
         ...
 
 
 class FlipMutate(Mutate):
-    """Flip one bit mutation. """
+    """Flip one bit mutation."""
+
     def mutate(self, dna: DNA, rate: float):
         for index in range(len(dna)):
             if random.random() < rate:
@@ -80,7 +84,8 @@ class FlipMutate(Mutate):
 
 
 class SwapNeighbors(Mutate):
-    """Swap two neighbors mutation. """
+    """Swap two neighbors mutation."""
+
     def mutate(self, dna: DNA, rate: float):
         for index in range(len(dna)):
             if random.random() < rate:
@@ -91,7 +96,8 @@ class SwapNeighbors(Mutate):
 
 
 class RandomSwap(Mutate):
-    """Swap two random places mutation. """
+    """Swap two random places mutation."""
+
     def mutate(self, dna: DNA, rate: float):
         length = len(dna)
         for index in range(len(dna)):
@@ -104,14 +110,16 @@ class RandomSwap(Mutate):
 
 
 class Mate(abc.ABC):
-    """Abstract recombination. """
+    """Abstract recombination."""
+
     @abc.abstractmethod
     def recombine(self, dna1: DNA, dna2: DNA):
         pass
 
 
 class Mate1pCX(Mate):
-    """One point crossover recombination. """
+    """One point crossover recombination."""
+
     def recombine(self, dna1: DNA, dna2: DNA):
         length = len(dna1)
         index = random.randrange(0, length)
@@ -119,7 +127,8 @@ class Mate1pCX(Mate):
 
 
 class Mate2pCX(Mate):
-    """Two point crossover recombination. """
+    """Two point crossover recombination."""
+
     def recombine(self, dna1: DNA, dna2: DNA):
         length = len(dna1)
         i1 = random.randrange(0, length)
@@ -130,7 +139,8 @@ class Mate2pCX(Mate):
 
 
 class MateUniformCX(Mate):
-    """Uniform recombination. """
+    """Uniform recombination."""
+
     def recombine(self, dna1: DNA, dna2: DNA):
         for index in range(len(dna1)):
             if random.random() > 0.5:
@@ -185,22 +195,23 @@ def replace_dna_ocx1(dna1: DNA, dna2: DNA, i1: int, i2: int) -> None:
 
 
 class FloatDNA(DNA):
-    """Arbitrary float numbers in the range [0, 1]."""
+    """Arbitrary float numbers in the range [0, max_]."""
 
     __slots__ = ("_data", "fitness")
 
-    def __init__(self, values: Iterable[float]):
+    def __init__(self, values: Iterable[float], max_: float = 1.0):
+        self._max = float(max_)
         self._data: List[float] = list(values)
         self._check_valid_data()
         self.fitness: Optional[float] = None
 
     @classmethod
-    def random(cls, length: int) -> "FloatDNA":
-        return cls(random.random() for _ in range(length))
+    def random(cls, length: int, max_=1.0) -> "FloatDNA":
+        return cls((random.random() * max_ for _ in range(length)), max_)
 
     @property
     def is_valid(self) -> bool:
-        return all(0.0 <= v <= 1.0 for v in self._data)
+        return all(0.0 <= v <= self._max for v in self._data)
 
     def _check_valid_data(self):
         if not self.is_valid:
@@ -219,11 +230,12 @@ class FloatDNA(DNA):
         self._taint()
 
     def flip_mutate_at(self, index: int) -> None:
-        self._data[index] = 1.0 - self._data[index]  # flip pick location
+        self._data[index] = self._max - self._data[index]  # flip pick location
 
 
 class BitDNA(DNA):
-    """One bit DNA. """
+    """One bit DNA."""
+
     __slots__ = ("_data", "fitness")
 
     def __init__(self, values: Iterable):
@@ -235,7 +247,7 @@ class BitDNA(DNA):
         return True  # everything can be evaluated to True/False
 
     @classmethod
-    def random(cls, length: int) -> "BitDNA":
+    def random(cls, length: int, max_=None) -> "BitDNA":
         return cls(bool(random.randint(0, 1)) for _ in range(length))
 
     def __str__(self):
@@ -270,7 +282,7 @@ class UniqueIntDNA(DNA):
         self.fitness: Optional[float] = None
 
     @classmethod
-    def random(cls, length: int) -> "UniqueIntDNA":
+    def random(cls, length: int, max_=None) -> "UniqueIntDNA":
         dna = cls(length)
         random.shuffle(dna._data)
         return dna
@@ -294,8 +306,47 @@ class UniqueIntDNA(DNA):
         raise TypeError("flip mutation not supported")
 
 
+class IntegerDNA(DNA):
+    """Integer values in the range from 0 to max-1.
+    E.g. IntegerDNA(10, 5) = [0, 1, 2, 3, 4, 0, 1, 2, 3, 4]
+    """
+
+    __slots__ = ("_data", "fitness")
+
+    def __init__(self, values: Iterable[int], max_: int):
+        self._max = int(max_)
+        self._data: List[int] = list(values)
+        if not self.is_valid:
+            raise TypeError(str(self._data))
+        self.fitness: Optional[float] = None
+
+    @classmethod
+    def random(cls, length: int, max_=None) -> "IntegerDNA":
+        imax = int(max_)
+        return cls((random.randrange(0, imax) for _ in range(length)), imax)
+
+    @property
+    def is_valid(self) -> bool:
+        return all(0 <= v < self._max for v in self._data)
+
+    def __str__(self):
+        if self.fitness is None:
+            fitness = ", fitness=None"
+        else:
+            fitness = f", fitness={self.fitness:.4f}"
+        return f"{str([int(v) for v in self._data])}{fitness}"
+
+    def reset(self, values: Iterable) -> None:
+        self._data = list(int(v) for v in values)
+        self._taint()
+
+    def flip_mutate_at(self, index: int) -> None:
+        self._data[index] = self._max - self._data[index] - 1
+
+
 class Selection(abc.ABC):
-    """Abstract selection class. """
+    """Abstract selection class."""
+
     @abc.abstractmethod
     def pick(self, count: int) -> Iterable[DNA]:
         ...
@@ -306,7 +357,8 @@ class Selection(abc.ABC):
 
 
 class Evaluator(abc.ABC):
-    """Abstract evaluation class. """
+    """Abstract evaluation class."""
+
     @abc.abstractmethod
     def evaluate(self, dna: DNA) -> float:
         ...
@@ -319,7 +371,8 @@ class LogEntry:
 
 
 class GeneticOptimizer:
-    """Optimization Algorithm. """
+    """Optimization Algorithm."""
+
     def __init__(
         self,
         evaluator: Evaluator,
@@ -447,7 +500,8 @@ class GeneticOptimizer:
 
 
 class RouletteSelection(Selection):
-    """Selection by fitness values. """
+    """Selection by fitness values."""
+
     def __init__(self):
         self._strands: List[DNA] = []
         self._weights: List[float] = []
@@ -465,19 +519,20 @@ class RouletteSelection(Selection):
 
 
 class RankBasedSelection(RouletteSelection):
-    """Selection by rank of fitness. """
+    """Selection by rank of fitness."""
+
     def reset(self, strands: Iterable[DNA]):
         # dna.fitness is not None here!
         self._strands = list(strands)
         self._strands.sort(key=lambda dna: dna.fitness)
         # weight of best_fitness == len(strands)
         # and decreases until 1 for the least fitness
-        self._weights = list(range(1, len(self._strands)+1))
+        self._weights = list(range(1, len(self._strands) + 1))
 
 
 class TournamentSelection(Selection):
-    """Selection by choosing the best of a certain count of candidates.
-    """
+    """Selection by choosing the best of a certain count of candidates."""
+
     def __init__(self, candidates: int):
         self._strands: List[DNA] = []
         self.candidates = candidates

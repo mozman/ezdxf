@@ -6,7 +6,7 @@ from ezdxf.addons import genetic_algorithm as ga
 from ezdxf.addons import binpacking as bp
 
 
-class TestFloatDNA:
+class TestFloatDNA_Zero_One:
     def test_init_value(self):
         dna = ga.FloatDNA([1.0] * 20)
         assert all(v == 1.0 for v in dna) is True
@@ -15,6 +15,12 @@ class TestFloatDNA:
     def test_init_value_is_valid(self, value):
         with pytest.raises(ValueError):
             ga.FloatDNA([value] * 20)
+
+    def test_flip_mutate_at(self):
+        dna = ga.FloatDNA([0, 0.1, 0.2, 0.3, 0.4])
+        for index in range(5):
+            dna.flip_mutate_at(index)
+        assert list(dna) == pytest.approx([1.0, 0.9, 0.8, 0.7, 0.6])
 
     def test_iter(self):
         dna = ga.FloatDNA([1.0] * 20)
@@ -49,6 +55,39 @@ class TestFloatDNA:
         assert len(dna) == 20
         assert dna[-3:] == pytest.approx([0.1, 0.2, 0.3])
         assert sum(dna) == pytest.approx(0.6)
+
+
+class TestFloatDNARange:
+    def test_init_value(self):
+        dna = ga.FloatDNA([3.0] * 20, 3.0)
+        assert all(v == 3.0 for v in dna) is True
+
+    @pytest.mark.parametrize("value", [-0.1, 3.1])
+    def test_init_value_is_valid(self, value):
+        with pytest.raises(ValueError):
+            ga.FloatDNA([value] * 20, 3.0)
+
+    @pytest.mark.parametrize(
+        "values",
+        [
+            [0, 0, -1],
+            [3.1, 3.2],
+        ],
+    )
+    def test_reset_data_checks_validity(self, values):
+        dna = ga.FloatDNA([], 3.0)
+        with pytest.raises(ValueError):
+            dna.reset(values)
+
+    def test_new_random_dna(self):
+        dna = ga.FloatDNA.random(100, 3.0)
+        assert max(dna) > 1.1
+
+    def test_flip_mutate_at(self):
+        dna = ga.FloatDNA([1.0, 1.1, 1.2, 1.3, 1.4], 3)
+        for index in range(5):
+            dna.flip_mutate_at(index)
+        assert list(dna) == pytest.approx([2.0, 1.9, 1.8, 1.7, 1.6])
 
 
 class TestBitDNA:
@@ -129,6 +168,36 @@ class TestUniquIntDNA:
         ga.recombine_dna_ocx1(dna1, dna2, i1, i2)
         assert copy1 == dna1
         assert copy2 == dna2
+
+
+class TestIntegerDNA:
+    def test_init_value(self):
+        dna = ga.IntegerDNA([0, 1, 2, 3, 4], 5)
+        assert dna.is_valid is True
+        assert max(dna) < 5
+
+    def test_init_invalid_data(self):
+        with pytest.raises(TypeError):
+            ga.IntegerDNA([0, 1, 2, 3, 5], 5)
+
+    def test_flip_mutate_at(self):
+        dna = ga.IntegerDNA([0, 1, 2, 3, 4], 5)
+        for index in range(5):
+            dna.flip_mutate_at(index)
+        assert list(dna) == [4, 3, 2, 1, 0]
+
+    def test_reset_data(self):
+        dna = ga.IntegerDNA([0, 1, 2, 3, 4, 0, 1, 2, 3, 4], 5)
+        dna.reset([4, 3, 2, 1, 0, 1, 2, 3, 2, 1])
+        assert len(dna) == 10
+        assert dna.is_valid is True
+        assert dna[0] == 4
+        assert dna[9] == 1
+
+    def test_new_random_dna(self):
+        dna = ga.UniqueIntDNA.random(10, 5)
+        assert len(dna) == 10
+        assert dna.is_valid is True
 
 
 def test_tournament_selection():
