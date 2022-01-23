@@ -6,7 +6,7 @@ from ezdxf.addons import genetic_algorithm as ga
 from ezdxf.addons import binpacking as bp
 
 
-class TestFloatDNA_Zero_One:
+class TestFloatDNAZeroOne:
     def test_init_value(self):
         dna = ga.FloatDNA([1.0] * 20)
         assert all(v == 1.0 for v in dna) is True
@@ -165,6 +165,22 @@ class TestIntegerDNA:
         dna = ga.IntegerDNA.random(10, 5)
         assert len(dna) == 10
         assert dna.is_valid is True
+
+
+def test_reverse_mutate():
+    dna = ga.UniqueIntDNA(10)
+    mutate = ga.ReverseMutate(3)
+    mutate.mutate(dna, 1.0)
+    assert list(dna) != list(ga.UniqueIntDNA(10))
+    assert len(set(dna)) == 10
+
+
+def test_scramble_mutate():
+    dna = ga.UniqueIntDNA(10)
+    mutate = ga.ScrambleMutate(5)
+    mutate.mutate(dna, 1.0)
+    assert list(dna) != list(ga.UniqueIntDNA(10))
+    assert len(set(dna)) == 10
 
 
 def test_tournament_selection():

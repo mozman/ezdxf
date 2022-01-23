@@ -35,6 +35,9 @@ class DNA(abc.ABC):
     def _taint(self):
         self.fitness = None
 
+    def __repr__(self):
+        return f"{self.__class__}({str(self._data)})"
+
     def __eq__(self, other):
         assert isinstance(other, self.__class__)
         return self._data == other._data
@@ -98,6 +101,33 @@ class RandomSwap(Mutate):
                 tmp = dna[i2]
                 dna[i2] = dna[i1]
                 dna[i1] = tmp
+
+
+class ReverseMutate(Mutate):
+    def __init__(self, bits=3):
+        self._bits = int(bits)
+
+    def mutate(self, dna: DNA, rate: float):
+        length = len(dna)
+        if random.random() < rate * length:  # applied to all bits at ones
+            i1 = random.randrange(length-self._bits)
+            i2 = i1 + self._bits
+            bits = dna[i1:i2]
+            dna[i1:i2] = reversed(bits)
+
+
+class ScrambleMutate(Mutate):
+    def __init__(self, bits=3):
+        self._bits = int(bits)
+
+    def mutate(self, dna: DNA, rate: float):
+        length = len(dna)
+        if random.random() < rate * length:  # applied to all bits at ones
+            i1 = random.randrange(length-self._bits)
+            i2 = i1 + self._bits
+            bits = dna[i1:i2]
+            random.shuffle(bits)
+            dna[i1:i2] = bits
 
 
 class Mate(abc.ABC):
@@ -270,7 +300,8 @@ class UniqueIntDNA(DNA):
     Requires MateOrderedCX() as recombination class to preserve order and
     validity after DNA recombination.
 
-    Requires mutation by swapping like SwapRandom() or SwapNeighbors()
+    Requires mutation by swapping like SwapRandom(), SwapNeighbors(),
+    ReversMutate() or ScrambleMutate()
     """
 
     __slots__ = ("_data", "fitness")
