@@ -14,8 +14,6 @@ try:
 except ImportError:
     plt = None
 
-import json
-
 import ezdxf.addons.binpacking as bp
 import ezdxf.addons.genetic_algorithm as ga
 

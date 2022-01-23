@@ -10,6 +10,7 @@ from typing import (
 import abc
 import copy
 from dataclasses import dataclass
+import heapq
 import json
 import random
 import time
@@ -61,6 +62,10 @@ class DNA(abc.ABC):
         ...
 
 
+def dna_fitness(dna: DNA) -> float:
+    return dna.fitness
+
+
 class Mutate(abc.ABC):
     """Abstract mutation."""
 
@@ -106,6 +111,7 @@ class RandomSwap(Mutate):
 
 class ReverseMutate(Mutate):
     """Reverse some consecutive bits mutation."""
+
     def __init__(self, bits=3):
         self._bits = int(bits)
 
@@ -120,6 +126,7 @@ class ReverseMutate(Mutate):
 
 class ScrambleMutate(Mutate):
     """Scramble some consecutive bits mutation."""
+
     def __init__(self, bits=3):
         self._bits = int(bits)
 
@@ -549,7 +556,9 @@ class GeneticOptimizer:
         count = len(self._dna_strands)
 
         if self.elitism > 0:
-            dna_strands.extend([self.best_dna] * self.elitism)
+            dna_strands.extend(
+                heapq.nlargest(self.elitism, self._dna_strands, key=dna_fitness)
+            )
 
         while len(dna_strands) < count:
             dna1, dna2 = selector.pick(2)
@@ -596,7 +605,7 @@ class RankBasedSelection(RouletteSelection):
     def reset(self, strands: Iterable[DNA]):
         # dna.fitness is not None here!
         self._strands = list(strands)
-        self._strands.sort(key=lambda dna: dna.fitness)  # type: ignore
+        self._strands.sort(key=dna_fitness)  # type: ignore
         # weight of best_fitness == len(strands)
         # and decreases until 1 for the least fitness
         self._weights = list(range(1, len(self._strands) + 1))
@@ -617,5 +626,5 @@ class TournamentSelection(Selection):
             values = [
                 random.choice(self._strands) for _ in range(self.candidates)
             ]
-            values.sort(key=lambda dna: dna.fitness)  # type: ignore
+            values.sort(key=dna_fitness)  # type: ignore
             yield values[-1]
