@@ -1,11 +1,11 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-import itertools
 from typing import (
     List,
     Iterable,
     Optional,
     Callable,
+    Union,
 )
 import abc
 import copy
@@ -36,7 +36,7 @@ class DNA(abc.ABC):
         self.fitness = None
 
     def __repr__(self):
-        return f"{self.__class__}({str(self._data)})"
+        return f"{self.__class__.__name__}({str(self._data)})"
 
     def __eq__(self, other):
         assert isinstance(other, self.__class__)
@@ -306,8 +306,14 @@ class UniqueIntDNA(DNA):
 
     __slots__ = ("_data", "fitness")
 
-    def __init__(self, length: int):
-        self._data: List[int] = list(range(length))
+    def __init__(self, values: Union[int, Iterable]):
+        self._data: List[int]
+        if isinstance(values, int):
+            self._data = list(range(values))
+        else:
+            self._data = [int(v) for v in values]
+            if not self.is_valid:
+                raise TypeError(self._data)
         self.fitness: Optional[float] = None
 
     @classmethod

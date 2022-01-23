@@ -86,6 +86,15 @@ class TestUniquIntDNA:
         assert dna.is_valid is True
         assert list(dna) == list(range(10))
 
+    def test_init_values(self):
+        dna = ga.UniqueIntDNA([0, 1, 2, 3])
+        assert dna.is_valid is True
+        assert list(dna) == [0, 1, 2, 3]
+
+    def test_init_invalid_values(self):
+        with pytest.raises(TypeError):
+            ga.UniqueIntDNA([0, 1, 2, 2])
+
     def test_reset_data(self):
         dna = ga.UniqueIntDNA(10)
         dna.reset(range(9, -1, -1))
