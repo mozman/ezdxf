@@ -74,14 +74,14 @@ class TestBitDNA:
         assert dna[-4:] == [True, False, False, False]
 
 
-class TestIntegerDNA:
+class TestUniquIntDNA:
     def test_init_value(self):
-        dna = ga.IntegerDNA(10)
+        dna = ga.UniqueIntDNA(10)
         assert dna.is_valid is True
         assert list(dna) == list(range(10))
 
     def test_reset_data(self):
-        dna = ga.IntegerDNA(10)
+        dna = ga.UniqueIntDNA(10)
         dna.reset(range(9, -1, -1))
         assert len(dna) == 10
         assert dna.is_valid is True
@@ -89,20 +89,20 @@ class TestIntegerDNA:
         assert dna[9] == 0
 
     def test_new_random_dna(self):
-        dna = ga.IntegerDNA.random(10)
+        dna = ga.UniqueIntDNA.random(10)
         assert len(dna) == 10
         assert dna.is_valid is True
 
     def test_subscription_setter(self):
-        dna = ga.IntegerDNA(10)
+        dna = ga.UniqueIntDNA(10)
         dna[-3:] = [1, 2, 3]
         assert len(dna) == 10
         assert dna[-4:] == [6, 1, 2, 3]
         assert dna.is_valid is False
 
     def test_recombine_dna_ocx1_preserves_order(self):
-        dna1 = ga.IntegerDNA(10)  # 0, 1, 2, 3, ...
-        dna2 = ga.IntegerDNA(10)
+        dna1 = ga.UniqueIntDNA(10)  # 0, 1, 2, 3, ...
+        dna2 = ga.UniqueIntDNA(10)
         dna2._data.reverse()  # 9, 8, 7, 6, ...
         ga.recombine_dna_ocx1(dna1, dna2, 0, 3)
         assert list(dna1) == [9, 8, 7, 0, 1, 2, 3, 4, 5, 6]
@@ -110,8 +110,8 @@ class TestIntegerDNA:
 
     @pytest.mark.parametrize("i1, i2", [(0, 3), (3, 7), (7, 9), (0, 9)])
     def test_random_recombine_dna_ocx1(self, i1, i2):
-        dna1 = ga.IntegerDNA.random(10)
-        dna2 = ga.IntegerDNA.random(10)
+        dna1 = ga.UniqueIntDNA.random(10)
+        dna2 = ga.UniqueIntDNA.random(10)
         copy1 = dna1.copy()
         copy2 = dna2.copy()
         ga.recombine_dna_ocx1(dna1, dna2, i1, i2)
@@ -122,8 +122,8 @@ class TestIntegerDNA:
 
     @pytest.mark.parametrize("i1, i2", [(0, 0), (8, 8), (9, 9), (10, 11)])
     def test_recombine_dna_ocx1_without_change(self, i1, i2):
-        dna1 = ga.IntegerDNA.random(10)
-        dna2 = ga.IntegerDNA.random(10)
+        dna1 = ga.UniqueIntDNA.random(10)
+        dna2 = ga.UniqueIntDNA.random(10)
         copy1 = dna1.copy()
         copy2 = dna2.copy()
         ga.recombine_dna_ocx1(dna1, dna2, i1, i2)
@@ -132,7 +132,7 @@ class TestIntegerDNA:
 
 
 def test_tournament_selection():
-    strands = [ga.IntegerDNA(10) for _ in range(10)]
+    strands = [ga.UniqueIntDNA(10) for _ in range(10)]
     for index, dna in enumerate(strands):
         dna.fitness = index
     selection = ga.TournamentSelection(2)

@@ -140,7 +140,7 @@ class MateUniformCX(Mate):
 
 
 class MateOrderedCX(Mate):
-    """Recombination class for ordered DNA like IntegerDNA()."""
+    """Recombination class for ordered DNA like UniqueIntDNA()."""
 
     def recombine(self, dna1: DNA, dna2: DNA):
         length = len(dna1)
@@ -253,9 +253,9 @@ class BitDNA(DNA):
         self._data[index] = not self._data[index]
 
 
-class IntegerDNA(DNA):
+class UniqueIntDNA(DNA):
     """Unique integer values in the range from 0 to length-1.
-    E.g. IntegerDNA(10) = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    E.g. UniqueIntDNA(10) = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
     Requires MateOrderedCX() as recombination class to preserve order and
     validity after DNA recombination.
@@ -270,7 +270,7 @@ class IntegerDNA(DNA):
         self.fitness: Optional[float] = None
 
     @classmethod
-    def random(cls, length: int) -> "IntegerDNA":
+    def random(cls, length: int) -> "UniqueIntDNA":
         dna = cls(length)
         random.shuffle(dna._data)
         return dna
