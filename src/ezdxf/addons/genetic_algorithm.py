@@ -105,6 +105,7 @@ class RandomSwap(Mutate):
 
 
 class ReverseMutate(Mutate):
+    """Reverse some consecutive bits mutation."""
     def __init__(self, bits=3):
         self._bits = int(bits)
 
@@ -118,6 +119,7 @@ class ReverseMutate(Mutate):
 
 
 class ScrambleMutate(Mutate):
+    """Scramble some consecutive bits mutation."""
     def __init__(self, bits=3):
         self._bits = int(bits)
 
@@ -199,7 +201,7 @@ def recombine_dna_ocx1(dna1: DNA, dna2: DNA, i1: int, i2: int) -> None:
 
 
 def replace_dna_ocx1(dna1: DNA, dna2: DNA, i1: int, i2: int) -> None:
-    """Replace part in dna1 by dna2 and preserve order of remaining values in
+    """Replace a part in dna1 by dna2 and preserve order of remaining values in
     dna1.
     """
     old = dna1.copy()
@@ -347,8 +349,8 @@ class UniqueIntDNA(DNA):
 
 
 class IntegerDNA(DNA):
-    """Integer values in the range from 0 to max-1.
-    E.g. IntegerDNA(10, 5) = [0, 1, 2, 3, 4, 0, 1, 2, 3, 4]
+    """Integer values in the range from 0 to max_ - 1.
+    E.g. IntegerDNA([0, 1, 2, 3, 4, 0, 1, 2, 3, 4], 5)
     """
 
     __slots__ = ("_data", "fitness")
