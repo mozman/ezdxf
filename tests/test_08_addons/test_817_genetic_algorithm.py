@@ -57,39 +57,6 @@ class TestFloatDNA_Zero_One:
         assert sum(dna) == pytest.approx(0.6)
 
 
-class TestFloatDNARange:
-    def test_init_value(self):
-        dna = ga.FloatDNA([3.0] * 20, 3.0)
-        assert all(v == 3.0 for v in dna) is True
-
-    @pytest.mark.parametrize("value", [-0.1, 3.1])
-    def test_init_value_is_valid(self, value):
-        with pytest.raises(ValueError):
-            ga.FloatDNA([value] * 20, 3.0)
-
-    @pytest.mark.parametrize(
-        "values",
-        [
-            [0, 0, -1],
-            [3.1, 3.2],
-        ],
-    )
-    def test_reset_data_checks_validity(self, values):
-        dna = ga.FloatDNA([], 3.0)
-        with pytest.raises(ValueError):
-            dna.reset(values)
-
-    def test_new_random_dna(self):
-        dna = ga.FloatDNA.random(100, 3.0)
-        assert max(dna) > 1.1
-
-    def test_flip_mutate_at(self):
-        dna = ga.FloatDNA([1.0, 1.1, 1.2, 1.3, 1.4], 3)
-        for index in range(5):
-            dna.flip_mutate_at(index)
-        assert list(dna) == pytest.approx([2.0, 1.9, 1.8, 1.7, 1.6])
-
-
 class TestBitDNA:
     def test_init_value(self):
         dna = ga.BitDNA([1] * 20)
@@ -195,7 +162,7 @@ class TestIntegerDNA:
         assert dna[9] == 1
 
     def test_new_random_dna(self):
-        dna = ga.UniqueIntDNA.random(10, 5)
+        dna = ga.IntegerDNA.random(10, 5)
         assert len(dna) == 10
         assert dna.is_valid is True
 

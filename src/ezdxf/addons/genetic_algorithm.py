@@ -20,15 +20,6 @@ class DNA(abc.ABC):
     fitness: Optional[float] = None
     _data: List
 
-    @classmethod
-    @abc.abstractmethod
-    def random(cls, length: int, max_=None) -> "DNA":
-        ...
-
-    @classmethod
-    def n_random(cls, n: int, length: int, max_=None) -> List["DNA"]:
-        return [cls.random(length, max_) for _ in range(n)]
-
     @abc.abstractmethod
     def reset(self, values: Iterable):
         ...
@@ -195,23 +186,26 @@ def replace_dna_ocx1(dna1: DNA, dna2: DNA, i1: int, i2: int) -> None:
 
 
 class FloatDNA(DNA):
-    """Arbitrary float numbers in the range [0, max_]."""
+    """Arbitrary float numbers in the range [0, 1]."""
 
     __slots__ = ("_data", "fitness")
 
-    def __init__(self, values: Iterable[float], max_: float = 1.0):
-        self._max = float(max_)
+    def __init__(self, values: Iterable[float]):
         self._data: List[float] = list(values)
         self._check_valid_data()
         self.fitness: Optional[float] = None
 
     @classmethod
-    def random(cls, length: int, max_=1.0) -> "FloatDNA":
-        return cls((random.random() * max_ for _ in range(length)), max_)
+    def random(cls, length: int) -> "FloatDNA":
+        return cls((random.random() for _ in range(length)))
+
+    @classmethod
+    def n_random(cls, n: int, length: int) -> List["FloatDNA"]:
+        return [cls.random(length) for _ in range(n)]
 
     @property
     def is_valid(self) -> bool:
-        return all(0.0 <= v <= self._max for v in self._data)
+        return all(0.0 <= v <= 1.0 for v in self._data)
 
     def _check_valid_data(self):
         if not self.is_valid:
@@ -230,7 +224,7 @@ class FloatDNA(DNA):
         self._taint()
 
     def flip_mutate_at(self, index: int) -> None:
-        self._data[index] = self._max - self._data[index]  # flip pick location
+        self._data[index] = 1.0 - self._data[index]  # flip pick location
 
 
 class BitDNA(DNA):
@@ -247,8 +241,12 @@ class BitDNA(DNA):
         return True  # everything can be evaluated to True/False
 
     @classmethod
-    def random(cls, length: int, max_=None) -> "BitDNA":
+    def random(cls, length: int) -> "BitDNA":
         return cls(bool(random.randint(0, 1)) for _ in range(length))
+
+    @classmethod
+    def n_random(cls, n: int, length: int) -> List["BitDNA"]:
+        return [cls.random(length) for _ in range(n)]
 
     def __str__(self):
         if self.fitness is None:
@@ -282,10 +280,14 @@ class UniqueIntDNA(DNA):
         self.fitness: Optional[float] = None
 
     @classmethod
-    def random(cls, length: int, max_=None) -> "UniqueIntDNA":
+    def random(cls, length: int) -> "UniqueIntDNA":
         dna = cls(length)
         random.shuffle(dna._data)
         return dna
+
+    @classmethod
+    def n_random(cls, n: int, length: int) -> List["UniqueIntDNA"]:
+        return [cls.random(length) for _ in range(n)]
 
     @property
     def is_valid(self) -> bool:
@@ -317,13 +319,17 @@ class IntegerDNA(DNA):
         self._max = int(max_)
         self._data: List[int] = list(values)
         if not self.is_valid:
-            raise TypeError(str(self._data))
+            raise TypeError(self._data)
         self.fitness: Optional[float] = None
 
     @classmethod
-    def random(cls, length: int, max_=None) -> "IntegerDNA":
+    def random(cls, length: int, max_: int) -> "IntegerDNA":
         imax = int(max_)
         return cls((random.randrange(0, imax) for _ in range(length)), imax)
+
+    @classmethod
+    def n_random(cls, n: int, length: int, max_: int) -> List["IntegerDNA"]:
+        return [cls.random(length, max_) for _ in range(n)]
 
     @property
     def is_valid(self) -> bool:
