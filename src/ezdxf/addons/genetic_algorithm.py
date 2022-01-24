@@ -507,7 +507,7 @@ class GeneticOptimizer:
         self.generation: int = 0
         self.start_time = 0.0
         self.runtime: float = 0.0
-        self.best_dna = BitDNA([])
+        self.best_dna: DNA = BitDNA([])
         self.best_fitness: float = 0.0
         self.stagnation: int = 0  # generations without improvement
         self.hall_of_fame = HallOfFame(10)
