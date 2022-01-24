@@ -51,6 +51,7 @@ def sum_dist(points):
 
 class TSPEvaluator(ga.Evaluator):
     """Traveling Salesmen Problem"""
+
     def __init__(self, data):
         self.cities = Vec2.list(data)
 
@@ -65,21 +66,17 @@ def show_log(log, name: str):
     avg = []
     for index, entry in enumerate(log, start=1):
         x.append(index)
-        y.append(entry.fitness)
-        avg.append(entry.avg_fitness)
+        y.append(abs(entry.fitness))
+        avg.append(abs(entry.avg_fitness))
     fig, ax = plt.subplots()
     ax.plot(x, y)
     ax.plot(x, avg)
-    ax.set(
-        xlabel="generation",
-        ylabel="fitness",
-        title=f"TSP: {name}",
-    )
+    ax.set(xlabel="generation", ylabel="fitness", title=f"TSP: {name}")
     ax.grid()
     plt.show()
 
 
-def show_result(data, order: ga.UniqueIntDNA):
+def show_result(data, order: ga.UniqueIntDNA, name):
     x = []
     y = []
     for city in order:
@@ -90,6 +87,7 @@ def show_result(data, order: ga.UniqueIntDNA):
     x.append(x[0])
     y.append(y[0])
     ax.plot(x, y)
+    ax.set(title=f"TSP: {name}")
     ax.grid()
     plt.show()
 
@@ -98,24 +96,39 @@ def feedback(optimizer: ga.GeneticOptimizer):
     print(
         f"gen: {optimizer.generation:4}, "
         f"stag: {optimizer.stagnation:4}, "
-        f"fitness: {optimizer.best_fitness:.3f}"
+        f"fitness: {abs(optimizer.best_fitness):.3f}"
     )
     return False
 
+# RandomSwapMutate (swapping cities randomly) is very bad for this kind of
+# problem! Changing the order of cities in a local environment is much better:
+# - SwapNeighborMutate()
+# - ReverseMutate()
+# - ScrambleMutate()
 
-def main(data):
-    optimizer = ga.GeneticOptimizer(TSPEvaluator(data), 500)
-    optimizer.best_fitness = -1e99  # searching for shortest path
-    optimizer.max_stagnation = 100
+
+BEST_OVERALL = 9051.741  # seed = 42, pop=300, cr=0.9, mr = 0.06, E=30, SwapNeighbor
+ELITISM = 30
+
+
+def main(data, seed):
+    random.seed(seed)
+    optimizer = ga.GeneticOptimizer(TSPEvaluator(data), 1000)
+    optimizer.best_fitness = -1e99  # required for searching for shortest path
+    optimizer.max_stagnation = 200
     optimizer.mate = ga.MateOrderedCX()
     optimizer.crossover_rate = 0.9
-    optimizer.mutation = ga.ScrambleMutate(6)
-    optimizer.mutation_rate = 0.03
+    optimizer.mutation = ga.NeighborSwapMutate()
+    optimizer.mutation_rate = 0.06
     optimizer.selection = ga.TournamentSelection(2)
-    optimizer.hall_of_fame.set_count(30)  # count >= elitism, stores the <count> overall best solutions
-    optimizer.elitism = 30  # preserve <elitism> overall best solutions in each generation
-    optimizer.add_dna(ga.UniqueIntDNA.n_random(200, length=len(data)))
-    optimizer.execute(feedback, 1)
+
+    # count >= elitism, stores the <count> overall best solutions
+    optimizer.hall_of_fame.count = ELITISM
+    # preserve <elitism> overall best solutions in each generation
+    optimizer.elitism = ELITISM
+
+    optimizer.add_dna(ga.UniqueIntDNA.n_random(300, length=len(data)))
+    optimizer.execute(feedback, 2)
 
     print(
         f"GeneticOptimizer: {optimizer.generation} generations x {optimizer.dna_count} "
@@ -123,13 +136,15 @@ def main(data):
     )
     evaluator = cast(TSPEvaluator, optimizer.evaluator)
     best_dist = abs(evaluator.evaluate(optimizer.best_dna))
-    print(f"Shortest path: {best_dist}")
+    percent = best_dist / BEST_OVERALL * 100
+    print(f"Shortest path overall: {BEST_OVERALL:.3f}")
+    print(f"Shortest path: {best_dist:.3f} ({percent:.1f}%)")
     print(optimizer.best_dna)
-
-    show_log(optimizer.log, "bay29")
-    show_result(data, optimizer.best_dna)
+    name = f"bay29, dist={int(best_dist)} ({percent:.1f}%), seed={seed}"
+    show_log(optimizer.log, name)
+    show_result(data, optimizer.best_dna, name)
 
 
 if __name__ == "__main__":
-    random.seed(44)
-    main(bayg29)
+    for s in range(42, 50):
+        main(bayg29, s)

@@ -82,7 +82,7 @@ class FlipMutate(Mutate):
                 dna.flip_mutate_at(index)
 
 
-class SwapNeighbors(Mutate):
+class NeighborSwapMutate(Mutate):
     """Swap two neighbors mutation."""
 
     def mutate(self, dna: DNA, rate: float):
@@ -94,7 +94,7 @@ class SwapNeighbors(Mutate):
                 dna[index] = tmp
 
 
-class RandomSwap(Mutate):
+class RandomSwapMutate(Mutate):
     """Swap two random places mutation."""
 
     def mutate(self, dna: DNA, rate: float):
@@ -444,16 +444,13 @@ def load_log(filename: str) -> List[LogEntry]:
 
 class HallOfFame:
     def __init__(self, count):
-        self._count = count
+        self.count = count
         self._unique_entries = dict()
 
     def __iter__(self):
         return (
-            self._unique_entries[k] for k in self._sorted_keys()[: self._count]
+            self._unique_entries[k] for k in self._sorted_keys()[: self.count]
         )
-
-    def set_count(self, count):
-        self._count = count
 
     def _sorted_keys(self):
         return sorted(self._unique_entries.keys(), reverse=True)
@@ -465,14 +462,14 @@ class HallOfFame:
     def get(self, count: int) -> List[DNA]:
         entries = self._unique_entries
         keys = self._sorted_keys()
-        return [entries[k] for k in keys[: min(count, self._count)]]
+        return [entries[k] for k in keys[: min(count, self.count)]]
 
     def purge(self):
-        if len(self._unique_entries) <= self._count:
+        if len(self._unique_entries) <= self.count:
             return
         entries = self._unique_entries
         keys = self._sorted_keys()
-        self._unique_entries = {k: entries[k] for k in keys[: self._count]}
+        self._unique_entries = {k: entries[k] for k in keys[: self.count]}
 
 
 class GeneticOptimizer:
@@ -566,10 +563,10 @@ class GeneticOptimizer:
             fitness = self.evaluator.evaluate(dna)
             dna.fitness = fitness
             fitness_sum += fitness
-            self.hall_of_fame.add(dna.copy())
+            self.hall_of_fame.add(dna)
             if fitness > self.best_fitness:
                 self.best_fitness = fitness
-                self.best_dna = dna.copy()
+                self.best_dna = dna
                 self.stagnation = 0
 
         self.hall_of_fame.purge()
