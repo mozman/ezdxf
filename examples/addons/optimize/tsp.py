@@ -12,15 +12,15 @@ except ImportError:
     plt = None
 
 bayg29 = [
-    (150.0, 1760.0),
-    (30.0, 1660.0),
-    (0.0, 2090.0),
-    (50.0, 1100.0),
-    (50.0, 2030.0),
-    (030.0, 2070.0),
-    (650.0, 650.0),
-    (490.0, 1630.0),
-    (90.0, 2260.0),
+    (1150.0, 1760.0),
+    (630.0, 1660.0),
+    (40.0, 2090.0),
+    (750.0, 1100.0),
+    (750.0, 2030.0),
+    (1030.0, 2070.0),
+    (1650.0, 650.0),
+    (1490.0, 1630.0),
+    (790.0, 2260.0),
     (710.0, 1310.0),
     (840.0, 550.0),
     (1170.0, 2300.0),
@@ -107,13 +107,13 @@ def feedback(optimizer: ga.GeneticOptimizer):
 # - ReverseMutate()
 # - ScrambleMutate()
 
-# seed = 42, 46
+# seed = ... not found
 # DNA strands = 300 (population)
-# elitism=30
+# elitism = 30
 # crossover_rate = 0.9, RankBasedSelection
-# mutate_rate = 0.06, SwapNeighbor
+# mutate_rate = 0.05, SwapNeighbor
 
-BEST_OVERALL = 9032.287
+BEST_OVERALL = 9074.147
 
 ELITISM = 30
 
@@ -126,8 +126,8 @@ def main(data, seed):
     optimizer.mate = ga.MateOrderedCX()
     optimizer.crossover_rate = 0.9
     optimizer.mutation = ga.NeighborSwapMutate()
-    optimizer.mutation_rate = 0.06
-    optimizer.selection = ga.RankBasedSelection(negative_values=True)
+    optimizer.mutation_rate = 0.05
+    optimizer.selection = ga.TournamentSelection(2)
 
     # count >= elitism, stores the <count> overall best solutions
     optimizer.hall_of_fame.count = ELITISM
@@ -153,5 +153,5 @@ def main(data, seed):
 
 
 if __name__ == "__main__":
-    for s in range(42, 50):
+    for s in range(40, 50):
         main(bayg29, s)

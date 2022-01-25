@@ -609,9 +609,8 @@ class GeneticOptimizer:
             self.mate.recombine(dna1, dna2)
 
     def mutate(self, dna1: DNA, dna2: DNA):
-        mutation_rate = self.mutation_rate * (self.stagnation + 1)
-        self.mutation.mutate(dna1, mutation_rate)
-        self.mutation.mutate(dna2, mutation_rate)
+        self.mutation.mutate(dna1, self.mutation_rate)
+        self.mutation.mutate(dna2, self.mutation_rate)
 
 
 def conv_negative_weights(weights: Iterable[float]) -> Iterable[float]:
