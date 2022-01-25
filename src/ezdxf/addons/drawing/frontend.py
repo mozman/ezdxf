@@ -371,7 +371,18 @@ class Frontend:
         self, entity: DXFGraphic, properties: Properties
     ) -> None:
         if isinstance(entity, Face3d):
-            points = entity.wcs_vertices(close=True)
+            dxf = entity.dxf
+            try:
+                # this implementation supports all features of example file:
+                # examples_dxf/3dface.dxf without changing the behavior of
+                # Face3d.wcs_vertices() which removes the last vertex if
+                # duplicated.
+                points = [dxf.vtx0, dxf.vtx1, dxf.vtx2, dxf.vtx3, dxf.vtx0]
+            except AttributeError:
+                # all 4 vertices are required, otherwise the entity is invalid
+                # for AutoCAD
+                self.skip_entity(entity, "missing required vertex attribute")
+                return
             edge_visibility = entity.get_edges_visibility()
             if all(edge_visibility):
                 self.out.draw_path(from_vertices(points), properties)
