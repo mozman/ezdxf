@@ -76,7 +76,7 @@ def show_log(log, name: str):
     plt.show()
 
 
-def show_result(data, order: ga.UniqueIntDNA, name):
+def show_result(data, order: ga.DNA, name):
     x = []
     y = []
     for city in order:
@@ -100,27 +100,34 @@ def feedback(optimizer: ga.GeneticOptimizer):
     )
     return False
 
+
 # RandomSwapMutate (swapping cities randomly) is very bad for this kind of
 # problem! Changing the order of cities in a local environment is much better:
 # - SwapNeighborMutate()
 # - ReverseMutate()
 # - ScrambleMutate()
 
+# seed = 42, 46
+# DNA strands = 300 (population)
+# elitism=30
+# crossover_rate = 0.9, RankBasedSelection
+# mutate_rate = 0.06, SwapNeighbor
 
-BEST_OVERALL = 9051.741  # seed = 42, pop=300, cr=0.9, mr = 0.06, E=30, SwapNeighbor
+BEST_OVERALL = 9032.287
+
 ELITISM = 30
 
 
 def main(data, seed):
     random.seed(seed)
     optimizer = ga.GeneticOptimizer(TSPEvaluator(data), 1000)
-    optimizer.best_fitness = -1e99  # required for searching for shortest path
+    optimizer.reset_fitness(-1e99)  # required for searching for shortest path
     optimizer.max_stagnation = 200
     optimizer.mate = ga.MateOrderedCX()
     optimizer.crossover_rate = 0.9
     optimizer.mutation = ga.NeighborSwapMutate()
     optimizer.mutation_rate = 0.06
-    optimizer.selection = ga.TournamentSelection(2)
+    optimizer.selection = ga.RankBasedSelection(negative_values=True)
 
     # count >= elitism, stores the <count> overall best solutions
     optimizer.hall_of_fame.count = ELITISM

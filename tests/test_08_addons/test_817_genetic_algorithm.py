@@ -200,6 +200,16 @@ class TestHallOfFame:
         assert result[0].fitness == pytest.approx(0.9)
         assert result[1].fitness == pytest.approx(0.8)
 
+    def test_get_n_best_negative_values(self, strands):
+        for dna in strands:
+            dna.fitness = -dna.fitness
+        hof = ga.HallOfFame(3)
+        for dna in strands:
+            hof.add(dna)
+        result = hof.get(2)
+        assert result[0].fitness == pytest.approx(-0.1)
+        assert result[1].fitness == pytest.approx(-0.2)
+
     def test_purge(self, strands):
         hof = ga.HallOfFame(3)
         for dna in strands:
@@ -236,6 +246,32 @@ def test_tournament_selection():
 
     result = list(selection.pick(3))
     assert len(result) == 3
+
+
+class TestRouletteSelection:
+    SELECTOR = ga.RouletteSelection
+
+    def test_positive_weights(self):
+        dna_max, dna_min = ga.BitDNA.n_random(2, 10)
+        dna_max.fitness = 10000
+        dna_min.fitness = 1
+        selector = self.SELECTOR()
+        selector.reset([dna_max, dna_min])
+        values = list(selector.pick(20))
+        assert values.count(dna_max) > values.count(dna_min)
+
+    def test_negative_weights(self):
+        dna_max, dna_min = ga.BitDNA.n_random(2, 10)
+        dna_max.fitness = -1
+        dna_min.fitness = -10000
+        selector = self.SELECTOR(negative_values=True)
+        selector.reset([dna_max, dna_min])
+        values = list(selector.pick(20))
+        assert values.count(dna_max) > values.count(dna_min)
+
+
+class TestRankBasedSelection(TestRouletteSelection):
+    SELECTOR = ga.RankBasedSelection
 
 
 def test_two_point_crossover():

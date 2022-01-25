@@ -512,6 +512,9 @@ class GeneticOptimizer:
         self.stagnation: int = 0  # generations without improvement
         self.hall_of_fame = HallOfFame(10)
 
+    def reset_fitness(self, value: float) -> None:
+        self.best_fitness = float(value)
+
     @property
     def is_executed(self) -> bool:
         return bool(self.generation)
@@ -611,17 +614,28 @@ class GeneticOptimizer:
         self.mutation.mutate(dna2, mutation_rate)
 
 
+def conv_negative_weights(weights: Iterable[float]) -> Iterable[float]:
+    # random.choices does not accept negative values: -100 -> 1/100, -10 -> 1/10
+    return (0.0 if w == 0.0 else 1.0 / abs(w) for w in weights)
+
+
 class RouletteSelection(Selection):
     """Selection by fitness values."""
 
-    def __init__(self):
+    def __init__(self, negative_values=False):
         self._strands: List[DNA] = []
         self._weights: List[float] = []
+        self._negative_values = bool(negative_values)
 
     def reset(self, strands: Iterable[DNA]):
         # dna.fitness is not None here!
         self._strands = list(strands)
-        self._weights = [dna.fitness for dna in self._strands]  # type: ignore
+        if self._negative_values:
+            self._weights = list(
+                conv_negative_weights(dna.fitness for dna in self._strands)  # type: ignore
+            )
+        else:
+            self._weights = [dna.fitness for dna in self._strands]  # type: ignore
 
     def pick(self, count: int) -> Iterable[DNA]:
         return random.choices(self._strands, self._weights, k=count)
