@@ -112,12 +112,14 @@ class RandomSwapMutate(Mutate):
 class ReverseMutate(Mutate):
     """Reverse some consecutive bits mutation."""
 
-    def __init__(self, bits=3):
-        self._bits = int(bits)
+    def __init__(self, bits: int = 3):
+        self._bits = int(max(bits, 1))
 
     def mutate(self, dna: DNA, rate: float):
         length = len(dna)
-        if random.random() < rate * length:  # applied to all bits at ones
+        if random.random() < rate * (
+            length / self._bits
+        ):  # applied to all bits at ones
             i1 = random.randrange(length - self._bits)
             i2 = i1 + self._bits
             bits = dna[i1:i2]
@@ -127,12 +129,14 @@ class ReverseMutate(Mutate):
 class ScrambleMutate(Mutate):
     """Scramble some consecutive bits mutation."""
 
-    def __init__(self, bits=3):
-        self._bits = int(bits)
+    def __init__(self, bits: int = 3):
+        self._bits = int(max(bits, 1))
 
     def mutate(self, dna: DNA, rate: float):
         length = len(dna)
-        if random.random() < rate * length:  # applied to all bits at ones
+        if random.random() < rate * (
+            length / self._bits
+        ):  # applied to all bits at ones
             i1 = random.randrange(length - self._bits)
             i2 = i1 + self._bits
             bits = dna[i1:i2]

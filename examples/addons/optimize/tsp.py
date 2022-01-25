@@ -43,6 +43,23 @@ bayg29 = [
     (360.0, 1980.0),
 ]
 
+# RandomSwapMutate (swapping cities randomly) is very bad for this kind of
+# problem! Changing the order of cities in a local environment is much better:
+# - SwapNeighborMutate()
+# - ReverseMutate()
+# - ScrambleMutate()
+
+
+# seed = 44
+# DNA strands = 300 (population)
+# elitism = 30
+# selection =  RankBasedSelection
+# crossover_rate = 0.9, MateOrderedCX()
+# mutate_rate = 0.07, ScrambleMutate(5)
+
+BEST_OVERALL = -9074.150
+ELITISM = 30
+
 
 def sum_dist(points):
     points.append(points[0])
@@ -101,33 +118,18 @@ def feedback(optimizer: ga.GeneticOptimizer):
     return False
 
 
-# RandomSwapMutate (swapping cities randomly) is very bad for this kind of
-# problem! Changing the order of cities in a local environment is much better:
-# - SwapNeighborMutate()
-# - ReverseMutate()
-# - ScrambleMutate()
-
-# seed = ... not found
-# DNA strands = 300 (population)
-# elitism = 30
-# crossover_rate = 0.9, RankBasedSelection
-# mutate_rate = 0.05, SwapNeighbor
-
-BEST_OVERALL = 9074.147
-
-ELITISM = 30
-
-
 def main(data, seed):
     random.seed(seed)
-    optimizer = ga.GeneticOptimizer(TSPEvaluator(data), 1000)
+    optimizer = ga.GeneticOptimizer(
+        TSPEvaluator(data), 1000, max_fitness=BEST_OVERALL
+    )
     optimizer.reset_fitness(-1e99)  # required for searching for shortest path
-    optimizer.max_stagnation = 200
+    optimizer.max_stagnation = 1000
+    optimizer.selection = ga.RankBasedSelection()
     optimizer.mate = ga.MateOrderedCX()
     optimizer.crossover_rate = 0.9
-    optimizer.mutation = ga.NeighborSwapMutate()
-    optimizer.mutation_rate = 0.05
-    optimizer.selection = ga.TournamentSelection(2)
+    optimizer.mutation = ga.ScrambleMutate(5)
+    optimizer.mutation_rate = 0.1
 
     # count >= elitism, stores the <count> overall best solutions
     optimizer.hall_of_fame.count = ELITISM
@@ -143,9 +145,11 @@ def main(data, seed):
     )
     evaluator = cast(TSPEvaluator, optimizer.evaluator)
     best_dist = abs(evaluator.evaluate(optimizer.best_dna))
-    percent = best_dist / BEST_OVERALL * 100
-    print(f"Shortest path overall: {BEST_OVERALL:.3f}")
-    print(f"Shortest path: {best_dist:.3f} ({percent:.1f}%)")
+    percent = best_dist / abs(BEST_OVERALL) * 100
+    print(f"Shortest path overall: {abs(BEST_OVERALL):.3f}")
+    print(
+        f"Shortest path found (seed={seed}): {best_dist:.3f} ({percent:.1f}%)"
+    )
     print(optimizer.best_dna)
     name = f"bay29, dist={int(best_dist)} ({percent:.1f}%), seed={seed}"
     show_log(optimizer.log, name)
