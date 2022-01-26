@@ -27,7 +27,7 @@ class LinearTemperature(Temperature):
 PFunction = Callable[[float, float, float], float]
 
 
-def default_probability(e0: float, e1: float, temperature: float) -> float:
+def minimizer(e0: float, e1: float, temperature: float) -> float:
     """Compute transition probability.
 
     Args:
@@ -40,6 +40,22 @@ def default_probability(e0: float, e1: float, temperature: float) -> float:
         return 1.0
     if temperature > 0.0:
         return math.exp(-abs(e1 - e0) / temperature)
+    return 0.0
+
+
+def maximizer(e0: float, e1: float, temperature: float) -> float:
+    """Compute transition probability.
+
+    Args:
+        e0: current highest energy state (best fitness)
+        e1: new energy state
+        temperature: system temperature
+
+    """
+    if e1 > e0:
+        return 1.0
+    if temperature > 0.0:
+        return math.exp(-abs(e0 - e1) / temperature)
     return 0.0
 
 
@@ -73,13 +89,12 @@ class SimulatedAnnealing:
 
     def __init__(self, evaluator: ga.Evaluator):
         self.log = Log()
-        self.min_fitness: float = 0.0
         self.start_time: float = 0.0
         self.mutation_rate: float = 0.1
         self.evaluator: ga.Evaluator = evaluator
         self.temperature: Temperature = LinearTemperature(500)
         self.mutation: ga.Mutate = ga.NeighborSwapMutate()
-        self.probability: PFunction = default_probability
+        self.probability: PFunction = minimizer
         self.best_fitness: float = 0.0
         self.best_dna: ga.DNA = ga.BitDNA([])
 
@@ -100,9 +115,6 @@ class SimulatedAnnealing:
                 self.add_log(new_fitness, temperature)
                 self.best_fitness = new_fitness
                 self.best_dna = new_dna
-
-            if self.best_fitness < self.min_fitness:
-                break
 
     def neighbor(self, candidate: ga.DNA, step: float) -> ga.DNA:
         candidate2 = candidate.copy()
