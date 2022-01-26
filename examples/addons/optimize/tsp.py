@@ -102,6 +102,24 @@ def show_log(log: ga.Log, name: str):
     plt.show()
 
 
+def show_log_sa(log: sa.Log, name: str):
+    x = []
+    y = []
+    temperature = []
+    for index, entry in enumerate(log.entries, start=1):
+        x.append(entry.runtime)
+        y.append(abs(entry.fitness))
+        temperature.append(entry.temperature)
+    fig, (ax1, ax2) = plt.subplots(2)
+    ax1.plot(x, y)
+    ax1.set(ylabel="Fitness", title=f"TSP: {name}")
+    ax1.grid()
+    ax2.plot(x, temperature)
+    ax2.set(xlabel="Time", ylabel="Temperature")
+    ax2.grid()
+    plt.show()
+
+
 def show_result(data, order: ga.DNA, name):
     x = []
     y = []
@@ -133,7 +151,7 @@ def genetic_probing(data, seed):
         TSPEvaluator(data), 1000, max_fitness=BEST_OVERALL
     )
     optimizer.reset_fitness(-1e99)  # required for searching for shortest path
-    optimizer.max_stagnation = 1000
+    optimizer.max_stagnation = 300
     optimizer.selection = ga.RankBasedSelection()
     optimizer.mate = ga.MateOrderedCX()
     optimizer.crossover_rate = 0.9
@@ -170,11 +188,14 @@ def simulated_annealing(data, seed, count):
     print(f"Testing seed: {seed}, candidate count: {count}")
     TSPEvaluator(data)
     overall_best = 100_000.0
+    best_dna = None
+    best_log = None
     start_time = time.perf_counter()
+
     for _ in range(count):
         optimizer = sa.SimulatedAnnealing(SAEvaluator(data))
-        optimizer.mutation = ga.NeighborSwapMutate()
-        optimizer.temperature = sa.LinearTemperature(10)
+        optimizer.mutation = ga.ScrambleMutate(5)
+        optimizer.temperature = sa.ExponentialTemperature(500, alpha=3)
         optimizer.execute(ga.UniqueIntDNA.random(len(data)), steps=1000)
         new_best = optimizer.best_fitness
         if new_best < overall_best:
@@ -183,6 +204,13 @@ def simulated_annealing(data, seed, count):
                 f"best fitness={new_best:.3f}"
             )
             overall_best = new_best
+            best_dna = optimizer.best_dna
+            best_log = optimizer.log
+
+    percent = overall_best / abs(BEST_OVERALL) * 100
+    name = f"SA seed={seed}; {percent:.1f}%"
+    show_result(data, best_dna, name)
+    show_log_sa(best_log, name)
     print(f"Runtime: {time.perf_counter()-start_time:.2f}s\n")
 
 

@@ -24,10 +24,19 @@ class LinearTemperature(Temperature):
         return self.start * step
 
 
+class ExponentialTemperature(Temperature):
+    def __init__(self, start: float, alpha: float):
+        self.start = start
+        self.alpha = alpha
+
+    def get(self, step: float) -> float:
+        return self.start * math.pow(step, self.alpha)
+
+
 PFunction = Callable[[float, float, float], float]
 
 
-def minimizer(e0: float, e1: float, temperature: float) -> float:
+def minimize(e0: float, e1: float, temperature: float) -> float:
     """Compute transition probability.
 
     Args:
@@ -40,22 +49,6 @@ def minimizer(e0: float, e1: float, temperature: float) -> float:
         return 1.0
     if temperature > 0.0:
         return math.exp(-abs(e1 - e0) / temperature)
-    return 0.0
-
-
-def maximizer(e0: float, e1: float, temperature: float) -> float:
-    """Compute transition probability.
-
-    Args:
-        e0: current highest energy state (best fitness)
-        e1: new energy state
-        temperature: system temperature
-
-    """
-    if e1 > e0:
-        return 1.0
-    if temperature > 0.0:
-        return math.exp(-abs(e0 - e1) / temperature)
     return 0.0
 
 
@@ -91,10 +84,12 @@ class SimulatedAnnealing:
         self.log = Log()
         self.start_time: float = 0.0
         self.mutation_rate: float = 0.1
+        self.stagnation: int = 0
+        self.restart: int = 200
         self.evaluator: ga.Evaluator = evaluator
         self.temperature: Temperature = LinearTemperature(500)
         self.mutation: ga.Mutate = ga.NeighborSwapMutate()
-        self.probability: PFunction = minimizer
+        self.probability: PFunction = minimize
         self.best_fitness: float = 0.0
         self.best_dna: ga.DNA = ga.BitDNA([])
 
@@ -103,18 +98,29 @@ class SimulatedAnnealing:
         self.best_fitness = self.evaluator.evaluate(candidate)
         self.best_dna = candidate
         self.log.add(0.0, self.temperature.get(1.0), self.best_fitness)
+        current_fitness = self.best_fitness
+        current_dna = candidate
 
         for k in range(steps):
+            self.stagnation += 1
             step = 1.0 - (k + 1) / steps  # linear decreasing: 1.0 -> 0.0
-            new_dna = self.neighbor(self.best_dna, step)
+            new_dna = self.neighbor(current_dna, step)
             new_fitness = self.evaluator.evaluate(new_dna)
             temperature = self.temperature.get(step)
-            if random.random() < self.probability(
-                self.best_fitness, new_fitness, temperature
-            ):
+            p = self.probability(current_fitness, new_fitness, temperature)
+            if random.random() < p:
+                self.stagnation = 0
                 self.add_log(new_fitness, temperature)
-                self.best_fitness = new_fitness
-                self.best_dna = new_dna
+                current_fitness = new_fitness
+                current_dna = new_dna
+                if new_fitness < self.best_fitness:
+                    self.best_fitness = new_fitness
+                    self.best_dna = new_dna
+
+            if self.stagnation > self.restart:
+                self.stagnation = 0
+                current_dna = self.best_dna
+                current_fitness = self.best_fitness
 
     def neighbor(self, candidate: ga.DNA, step: float) -> ga.DNA:
         candidate2 = candidate.copy()
