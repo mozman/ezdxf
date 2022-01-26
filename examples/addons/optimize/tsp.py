@@ -2,8 +2,10 @@
 #  License: MIT License
 # test data: http://elib.zib.de/pub/mp-testdata/tsp/tsplib/tsp/
 import random
+import time
 from typing import cast
 from ezdxf.addons import genetic_algorithm as ga
+from ezdxf.addons import simulated_annealing as sa
 from ezdxf.math import Vec2
 
 try:
@@ -77,6 +79,13 @@ class TSPEvaluator(ga.Evaluator):
         return -sum_dist([self.cities[i] for i in dna])
 
 
+class SAEvaluator(TSPEvaluator):
+    """Traveling Salesmen Problem"""
+
+    def evaluate(self, dna: ga.DNA) -> float:
+        return abs(super().evaluate(dna))
+
+
 def show_log(log, name: str):
     x = []
     y = []
@@ -118,7 +127,7 @@ def feedback(optimizer: ga.GeneticOptimizer):
     return False
 
 
-def main(data, seed):
+def genetic_probing(data, seed):
     random.seed(seed)
     optimizer = ga.GeneticOptimizer(
         TSPEvaluator(data), 1000, max_fitness=BEST_OVERALL
@@ -156,6 +165,28 @@ def main(data, seed):
     show_result(data, optimizer.best_dna, name)
 
 
+def simulated_annealing(data, seed, count):
+    random.seed(seed)
+    print(f"Testing seed: {seed}, candidate count: {count}")
+    TSPEvaluator(data)
+    overall_best = 100_000.0
+    start_time = time.perf_counter()
+    for _ in range(count):
+        optimizer = sa.SimulatedAnnealing(SAEvaluator(data))
+        optimizer.mutation = ga.NeighborSwapMutate()
+        optimizer.temperature = sa.LinearTemperature(10)
+        optimizer.execute(ga.UniqueIntDNA.random(len(data)), steps=1000)
+        new_best = optimizer.best_fitness
+        if new_best < overall_best:
+            print(
+                f"{time.perf_counter()-start_time:6.2f}: "
+                f"best fitness={new_best:.3f}"
+            )
+            overall_best = new_best
+    print(f"Runtime: {time.perf_counter()-start_time:.2f}s\n")
+
+
 if __name__ == "__main__":
     for s in range(40, 50):
-        main(bayg29, s)
+        simulated_annealing(bayg29, s, 300)
+        # genetic_probing(bayg29, s)
