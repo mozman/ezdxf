@@ -127,11 +127,11 @@ def run(optimizer: ga.GeneticOptimizer):
     print_result(best_packer, optimizer.runtime)
 
 
-def show_log(log):
+def show_log(log: ga.Log):
     x = []
     y = []
     avg = []
-    for index, entry in enumerate(log, start=1):
+    for index, entry in enumerate(log.entries, start=1):
         x.append(index)
         y.append(entry.fitness)
         avg.append(entry.avg_fitness)
@@ -193,7 +193,7 @@ DATA_LOG = "binpacking.json"
 def main():
     args = parse_args()
     if args.view and plt and os.path.exists(DATA_LOG):
-        log = ga.load_log(DATA_LOG)
+        log = ga.Log.load(DATA_LOG)
         show_log(log)
         sys.exit()
     random.seed(args.seed)
@@ -206,7 +206,7 @@ def main():
     run_bigger_first(packer)
     optimizer = make_subset_optimizer(packer, args.generations, args.dna)
     run(optimizer)
-    ga.dump_log(optimizer.log, DATA_LOG)
+    optimizer.log.dump(DATA_LOG)
     if plt is not None:
         show_log(optimizer.log)
 

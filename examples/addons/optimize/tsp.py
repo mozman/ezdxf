@@ -86,11 +86,11 @@ class SAEvaluator(TSPEvaluator):
         return abs(super().evaluate(dna))
 
 
-def show_log(log, name: str):
+def show_log(log: ga.Log, name: str):
     x = []
     y = []
     avg = []
-    for index, entry in enumerate(log, start=1):
+    for index, entry in enumerate(log.entries, start=1):
         x.append(index)
         y.append(abs(entry.fitness))
         avg.append(abs(entry.avg_fitness))

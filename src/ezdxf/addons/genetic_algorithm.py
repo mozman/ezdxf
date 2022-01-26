@@ -424,26 +424,32 @@ class Evaluator(abc.ABC):
         ...
 
 
-@dataclass
-class LogEntry:
-    runtime: float
-    fitness: float
-    avg_fitness: float
+class Log:
+    @dataclass
+    class Entry:
+        runtime: float
+        fitness: float
+        avg_fitness: float
 
+    def __init__(self):
+        self.entries: List[Log.Entry] = []
 
-def dump_log(log: List[LogEntry], filename: str) -> None:
-    data = [(e.runtime, e.fitness, e.avg_fitness) for e in log]
-    with open(filename, "wt") as fp:
-        json.dump(data, fp, indent=4)
+    def add(self, runtime: float, fitness: float, avg_fitness: float) -> None:
+        self.entries.append(Log.Entry(runtime, fitness, avg_fitness))
 
+    def dump(self, filename: str) -> None:
+        data = [(e.runtime, e.fitness, e.avg_fitness) for e in self.entries]
+        with open(filename, "wt") as fp:
+            json.dump(data, fp, indent=4)
 
-def load_log(filename: str) -> List[LogEntry]:
-    with open(filename, "rt") as fp:
-        data = json.load(fp)
-    return [
-        LogEntry(runtime, fitness, avg_fitness)
-        for runtime, fitness, avg_fitness in data
-    ]
+    @classmethod
+    def load(cls, filename: str) -> "Log":
+        with open(filename, "rt") as fp:
+            data = json.load(fp)
+        log = Log()
+        for runtime, fitness, avg_fitness in data:
+            log.add(runtime, fitness, avg_fitness)
+        return log
 
 
 class HallOfFame:
@@ -489,7 +495,7 @@ class GeneticOptimizer:
             raise ValueError("max_generations < 1")
         # data:
         self.name = "GeneticOptimizer"
-        self.log: List[LogEntry] = []
+        self.log = Log()
         self._dna_strands: List[DNA] = []
 
         # core components:
@@ -581,12 +587,10 @@ class GeneticOptimizer:
             avg_fitness = fitness_sum / len(self._dna_strands)
         except ZeroDivisionError:
             avg_fitness = 0.0
-        self.log.append(
-            LogEntry(
-                time.perf_counter() - self.start_time,
-                self.best_fitness,
-                avg_fitness,
-            )
+        self.log.add(
+            time.perf_counter() - self.start_time,
+            self.best_fitness,
+            avg_fitness,
         )
 
     def next_generation(self) -> None:
