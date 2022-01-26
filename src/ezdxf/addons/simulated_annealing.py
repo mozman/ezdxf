@@ -1,6 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import List
+from typing import List, Callable
 import abc
 from dataclasses import dataclass
 import math
@@ -22,6 +22,25 @@ class LinearTemperature(Temperature):
 
     def get(self, step: float) -> float:
         return self.start * step
+
+
+PFunction = Callable[[float, float, float], float]
+
+
+def default_probability(e0: float, e1: float, temperature: float) -> float:
+    """Compute transition probability.
+
+    Args:
+        e0: current lowest energy state (best fitness)
+        e1: new energy state
+        temperature: system temperature
+
+    """
+    if e1 < e0:
+        return 1.0
+    if temperature > 0.0:
+        return math.exp(-abs(e1 - e0) / temperature)
+    return 0.0
 
 
 class Log:
@@ -60,42 +79,30 @@ class SimulatedAnnealing:
         self.evaluator: ga.Evaluator = evaluator
         self.temperature: Temperature = LinearTemperature(500)
         self.mutation: ga.Mutate = ga.NeighborSwapMutate()
-        # best result:
+        self.probability: PFunction = default_probability
         self.best_fitness: float = 0.0
         self.best_dna: ga.DNA = ga.BitDNA([])
 
     def execute(self, candidate: ga.DNA, steps: int):
         self.start_time = time.perf_counter()
-        temperature = self.temperature.get(1.0)
         self.best_fitness = self.evaluator.evaluate(candidate)
         self.best_dna = candidate
-        self.log.add(0.0, temperature, self.best_fitness)
+        self.log.add(0.0, self.temperature.get(1.0), self.best_fitness)
 
         for k in range(steps):
             step = 1.0 - (k + 1) / steps  # linear decreasing: 1.0 -> 0.0
+            new_dna = self.neighbor(self.best_dna, step)
+            new_fitness = self.evaluator.evaluate(new_dna)
             temperature = self.temperature.get(step)
-            dna_new = self.neighbor(self.best_dna, step)
-            fitness_new = self.evaluator.evaluate(dna_new)
-            if fitness_new < self.best_fitness:
-                self.add_log(fitness_new, temperature)
-                self.best_fitness = fitness_new
-                self.best_dna = dna_new
-            else:
-                p = self.probability(
-                    self.best_fitness, fitness_new, temperature
-                )
-                if random.random() < p:
-                    self.add_log(fitness_new, temperature)
-                    self.best_fitness = fitness_new
-                    self.best_dna = dna_new
+            if random.random() < self.probability(
+                self.best_fitness, new_fitness, temperature
+            ):
+                self.add_log(new_fitness, temperature)
+                self.best_fitness = new_fitness
+                self.best_dna = new_dna
 
             if self.best_fitness < self.min_fitness:
                 break
-
-    def probability(self, f0: float, f1: float, temperature: float) -> float:
-        if temperature > 0.0:
-            return math.exp(-abs(f1 - f0) / temperature)
-        return 0.0
 
     def neighbor(self, candidate: ga.DNA, step: float) -> ga.DNA:
         candidate2 = candidate.copy()
