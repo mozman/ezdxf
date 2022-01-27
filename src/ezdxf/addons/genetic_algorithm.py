@@ -2,6 +2,7 @@
 #  License: MIT License
 from typing import (
     List,
+    Sequence,
     Iterable,
     Optional,
     Callable,
@@ -486,6 +487,17 @@ class HallOfFame:
         self._unique_entries = {k: entries[k] for k in keys[: self.count]}
 
 
+def threshold_filter(
+    candidates: Sequence[DNA], best_fitness: float, threshold: float
+) -> Iterable[DNA]:
+    if best_fitness <= 0.0:
+        minimum = min(candidates, key=dna_fitness)
+        min_value = (1.0 - threshold) * minimum.fitness
+    else:
+        min_value = best_fitness * threshold
+    return (c for c in candidates if c.fitness > min_value)
+
+
 class GeneticOptimizer:
     """A genetic algorithm (GA) is a meta-heuristic inspired by the process of
     natural selection. Genetic algorithms are commonly used to generate
@@ -531,7 +543,7 @@ class GeneticOptimizer:
         self.crossover_rate = 0.70
         self.mutation_rate = 0.01
         self.elitism: int = 2
-        # percentage (0.1 = 10%) of DNA strands with least fitness to ignore in
+        # percentage (0.1 = 10%) of candidates with least fitness to ignore in
         # next generation
         self.threshold: float = 0.0
 
@@ -616,10 +628,10 @@ class GeneticOptimizer:
         )
 
     def next_generation(self) -> None:
-        selector = self.selection
-        selector.reset(self.candidates)
-        candidates: List[DNA] = []
         count = len(self.candidates)
+        candidates: List[DNA] = []
+        selector = self.selection
+        selector.reset(self.filter_threshold(self.candidates))
 
         if self.elitism > 0:
             candidates.extend(self.hall_of_fame.get(self.elitism))
@@ -633,6 +645,14 @@ class GeneticOptimizer:
             candidates.append(dna1)
             candidates.append(dna2)
         self.candidates = candidates
+
+    def filter_threshold(self, candidates: Sequence[DNA]) -> Iterable[DNA]:
+        if self.threshold > 0.0:
+            return threshold_filter(
+                    candidates, self.best_fitness, self.threshold
+                )
+        else:
+            return candidates
 
     def recombine(self, dna1: DNA, dna2: DNA):
         if random.random() < self.crossover_rate:
