@@ -76,15 +76,17 @@ def run_optimizer(packer):
     evaluator = bp.SubSetEvaluator(packer)
     optimizer = ga.GeneticOptimizer(evaluator, max_generations=GENERATIONS)
     optimizer.name = "pack item subset"
-    optimizer.add_dna(ga.BitDNA.n_random(DNA_COUNT, len(packer.items)))
+    optimizer.crossover_rate = 0.9
+    optimizer.mutation_rate = 0.01
+    optimizer.add_candidates(ga.BitDNA.n_random(DNA_COUNT, len(packer.items)))
     print(
         f"\nGenetic algorithm search: {optimizer.name}\n"
-        f"max generations={optimizer.max_generations}, DNA count={optimizer.dna_count}"
+        f"max generations={optimizer.max_generations}, DNA count={optimizer.count}"
     )
     optimizer.execute(feedback, interval=3)
     print(
-        f"GeneticOptimizer: {optimizer.generation} generations x {optimizer.dna_count} "
-        f"DNA strands, best result:"
+        f"GeneticOptimizer: {optimizer.generation} generations x {optimizer.count} "
+        f"candidates, best result:"
     )
     evaluator = cast(bp.SubSetEvaluator, optimizer.evaluator)
     best_packer = evaluator.run_packer(optimizer.best_dna)

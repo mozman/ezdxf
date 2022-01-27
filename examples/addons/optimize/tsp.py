@@ -77,13 +77,6 @@ class TSPEvaluator(ga.Evaluator):
         return -sum_dist([self.cities[i] for i in dna])
 
 
-class SAEvaluator(TSPEvaluator):
-    """Traveling Salesmen Problem"""
-
-    def evaluate(self, dna: ga.DNA) -> float:
-        return abs(super().evaluate(dna))
-
-
 def show_log(log: ga.Log, name: str):
     x = []
     y = []
@@ -143,11 +136,11 @@ def genetic_probing(data, seed):
     # preserve <elitism> overall best solutions in each generation
     optimizer.elitism = ELITISM
 
-    optimizer.add_dna(ga.UniqueIntDNA.n_random(300, length=len(data)))
+    optimizer.add_candidates(ga.UniqueIntDNA.n_random(300, length=len(data)))
     optimizer.execute(feedback, 2)
 
     print(
-        f"GeneticOptimizer: {optimizer.generation} generations x {optimizer.dna_count} "
+        f"GeneticOptimizer: {optimizer.generation} generations x {optimizer.count} "
         f"DNA strands, best result:"
     )
     evaluator = cast(TSPEvaluator, optimizer.evaluator)

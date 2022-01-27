@@ -14,6 +14,10 @@ import json
 import random
 import time
 
+# example usage:
+# examples\addons\optimize\bin_packing_forms.py
+# examples\addons\optimize\tsp.py
+
 
 class DNA(abc.ABC):
     """Abstract DNA class."""
@@ -412,7 +416,7 @@ class Selection(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def reset(self, strands: Iterable[DNA]):
+    def reset(self, candidates: Iterable[DNA]):
         ...
 
 
@@ -483,7 +487,22 @@ class HallOfFame:
 
 
 class GeneticOptimizer:
-    """Optimization Algorithm."""
+    """A genetic algorithm (GA) is a meta-heuristic inspired by the process of
+    natural selection. Genetic algorithms are commonly used to generate
+    high-quality solutions to optimization and search problems by relying on
+    biologically inspired operators such as mutation, crossover and selection.
+
+    Source: https://en.wikipedia.org/wiki/Genetic_algorithm
+
+    This implementation searches always for the maximum fitness, fitness
+    comparisons are always done by the "greater than" operator (">").
+    The algorithm supports negative values to search for the minimum fitness
+    (e.g. Travelling Salesmen Problem: -900 > -1000). Reset the start fitness
+    by the method :meth:`reset_fitness` accordingly::
+
+        optimizer.reset_fitness(-1e99)
+
+    """
 
     def __init__(
         self,
@@ -492,11 +511,11 @@ class GeneticOptimizer:
         max_fitness: float = 1.0,
     ):
         if max_generations < 1:
-            raise ValueError("max_generations < 1")
+            raise ValueError("requires max_generations > 0")
         # data:
         self.name = "GeneticOptimizer"
         self.log = Log()
-        self._dna_strands: List[DNA] = []
+        self.candidates: List[DNA] = []
 
         # core components:
         self.evaluator: Evaluator = evaluator
@@ -510,8 +529,11 @@ class GeneticOptimizer:
         self.max_runtime: float = 1e99
         self.max_stagnation = 100
         self.crossover_rate = 0.70
-        self.mutation_rate = 0.001
+        self.mutation_rate = 0.01
         self.elitism: int = 2
+        # percentage (0.1 = 10%) of DNA strands with least fitness to ignore in
+        # next generation
+        self.threshold: float = 0.0
 
         # state of last (current) generation:
         self.generation: int = 0
@@ -530,12 +552,12 @@ class GeneticOptimizer:
         return bool(self.generation)
 
     @property
-    def dna_count(self) -> int:
-        return len(self._dna_strands)
+    def count(self) -> int:
+        return len(self.candidates)
 
-    def add_dna(self, dna: Iterable[DNA]):
+    def add_candidates(self, dna: Iterable[DNA]):
         if not self.is_executed:
-            self._dna_strands.extend(dna)
+            self.candidates.extend(dna)
         else:
             raise TypeError("already executed")
 
@@ -546,7 +568,7 @@ class GeneticOptimizer:
     ) -> None:
         if self.is_executed:
             raise TypeError("can only run once")
-        if not self._dna_strands:
+        if not self.candidates:
             print("no DNA defined!")
         t0 = time.perf_counter()
         self.start_time = t0
@@ -569,7 +591,7 @@ class GeneticOptimizer:
     def measure_fitness(self) -> None:
         self.stagnation += 1
         fitness_sum: float = 0.0
-        for dna in self._dna_strands:
+        for dna in self.candidates:
             if dna.fitness is not None:
                 fitness_sum += dna.fitness
                 continue
@@ -584,7 +606,7 @@ class GeneticOptimizer:
 
         self.hall_of_fame.purge()
         try:
-            avg_fitness = fitness_sum / len(self._dna_strands)
+            avg_fitness = fitness_sum / len(self.candidates)
         except ZeroDivisionError:
             avg_fitness = 0.0
         self.log.add(
@@ -595,22 +617,22 @@ class GeneticOptimizer:
 
     def next_generation(self) -> None:
         selector = self.selection
-        selector.reset(self._dna_strands)
-        dna_strands: List[DNA] = []
-        count = len(self._dna_strands)
+        selector.reset(self.candidates)
+        candidates: List[DNA] = []
+        count = len(self.candidates)
 
         if self.elitism > 0:
-            dna_strands.extend(self.hall_of_fame.get(self.elitism))
+            candidates.extend(self.hall_of_fame.get(self.elitism))
 
-        while len(dna_strands) < count:
+        while len(candidates) < count:
             dna1, dna2 = selector.pick(2)
             dna1 = dna1.copy()
             dna2 = dna2.copy()
             self.recombine(dna1, dna2)
             self.mutate(dna1, dna2)
-            dna_strands.append(dna1)
-            dna_strands.append(dna2)
-        self._dna_strands = dna_strands
+            candidates.append(dna1)
+            candidates.append(dna2)
+        self.candidates = candidates
 
     def recombine(self, dna1: DNA, dna2: DNA):
         if random.random() < self.crossover_rate:
@@ -630,50 +652,50 @@ class RouletteSelection(Selection):
     """Selection by fitness values."""
 
     def __init__(self, negative_values=False):
-        self._strands: List[DNA] = []
+        self._candidates: List[DNA] = []
         self._weights: List[float] = []
         self._negative_values = bool(negative_values)
 
-    def reset(self, strands: Iterable[DNA]):
+    def reset(self, candidates: Iterable[DNA]):
         # dna.fitness is not None here!
-        self._strands = list(strands)
+        self._candidates = list(candidates)
         if self._negative_values:
             self._weights = list(
-                conv_negative_weights(dna.fitness for dna in self._strands)  # type: ignore
+                conv_negative_weights(dna.fitness for dna in self._candidates)  # type: ignore
             )
         else:
-            self._weights = [dna.fitness for dna in self._strands]  # type: ignore
+            self._weights = [dna.fitness for dna in self._candidates]  # type: ignore
 
     def pick(self, count: int) -> Iterable[DNA]:
-        return random.choices(self._strands, self._weights, k=count)
+        return random.choices(self._candidates, self._weights, k=count)
 
 
 class RankBasedSelection(RouletteSelection):
     """Selection by rank of fitness."""
 
-    def reset(self, strands: Iterable[DNA]):
+    def reset(self, candidates: Iterable[DNA]):
         # dna.fitness is not None here!
-        self._strands = list(strands)
-        self._strands.sort(key=dna_fitness)  # type: ignore
+        self._candidates = list(candidates)
+        self._candidates.sort(key=dna_fitness)  # type: ignore
         # weight of best_fitness == len(strands)
         # and decreases until 1 for the least fitness
-        self._weights = list(range(1, len(self._strands) + 1))
+        self._weights = list(range(1, len(self._candidates) + 1))
 
 
 class TournamentSelection(Selection):
     """Selection by choosing the best of a certain count of candidates."""
 
     def __init__(self, candidates: int):
-        self._strands: List[DNA] = []
+        self._candidates: List[DNA] = []
         self.candidates = candidates
 
-    def reset(self, strands: Iterable[DNA]):
-        self._strands = list(strands)
+    def reset(self, candidates: Iterable[DNA]):
+        self._candidates = list(candidates)
 
     def pick(self, count: int) -> Iterable[DNA]:
         for _ in range(count):
             values = [
-                random.choice(self._strands) for _ in range(self.candidates)
+                random.choice(self._candidates) for _ in range(self.candidates)
             ]
             values.sort(key=dna_fitness)  # type: ignore
             yield values[-1]

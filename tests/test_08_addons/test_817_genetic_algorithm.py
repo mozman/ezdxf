@@ -80,7 +80,7 @@ class TestBitDNA:
         assert dna[-4:] == [True, False, False, False]
 
 
-class TestUniquIntDNA:
+class TestUniqueIntDNA:
     def test_init_value(self):
         dna = ga.UniqueIntDNA(10)
         assert dna.is_valid is True
@@ -178,7 +178,7 @@ class TestIntegerDNA:
 
 class TestHallOfFame:
     @pytest.fixture
-    def strands(self):
+    def candidates(self):
         s = []
         for fitness in range(1, 10):
             dna = ga.BitDNA.random(5)
@@ -186,33 +186,33 @@ class TestHallOfFame:
             s.append(dna)
         return s
 
-    def test_build(self, strands):
+    def test_build(self, candidates):
         hof = ga.HallOfFame(3)
-        for dna in strands:
+        for dna in candidates:
             hof.add(dna)
         assert [dna.fitness for dna in hof] == pytest.approx([0.9, 0.8, 0.7])
 
-    def test_get_n_best(self, strands):
+    def test_get_n_best(self, candidates):
         hof = ga.HallOfFame(3)
-        for dna in strands:
+        for dna in candidates:
             hof.add(dna)
         result = hof.get(2)
         assert result[0].fitness == pytest.approx(0.9)
         assert result[1].fitness == pytest.approx(0.8)
 
-    def test_get_n_best_negative_values(self, strands):
-        for dna in strands:
+    def test_get_n_best_negative_values(self, candidates):
+        for dna in candidates:
             dna.fitness = -dna.fitness
         hof = ga.HallOfFame(3)
-        for dna in strands:
+        for dna in candidates:
             hof.add(dna)
         result = hof.get(2)
         assert result[0].fitness == pytest.approx(-0.1)
         assert result[1].fitness == pytest.approx(-0.2)
 
-    def test_purge(self, strands):
+    def test_purge(self, candidates):
         hof = ga.HallOfFame(3)
-        for dna in strands:
+        for dna in candidates:
             hof.add(dna)
         hof.purge()
         assert len(hof._unique_entries) == 3
@@ -235,11 +235,11 @@ def test_scramble_mutate():
 
 
 def test_tournament_selection():
-    strands = [ga.UniqueIntDNA(10) for _ in range(10)]
-    for index, dna in enumerate(strands):
+    candidates = [ga.UniqueIntDNA(10) for _ in range(10)]
+    for index, dna in enumerate(candidates):
         dna.fitness = index
     selection = ga.TournamentSelection(2)
-    selection.reset(strands)
+    selection.reset(candidates)
 
     result = list(selection.pick(2))
     assert len(result) == 2
@@ -360,7 +360,7 @@ class TestGeneticOptimizer:
         packer.add_bin(*MEDIUM_BOX)
         evaluator = DummyEvaluator(packer)
         optimizer = ga.GeneticOptimizer(evaluator, 10)
-        optimizer.add_dna(ga.BitDNA.n_random(20, len(packer.items)))
+        optimizer.add_candidates(ga.BitDNA.n_random(20, len(packer.items)))
         optimizer.execute()
         assert optimizer.generation == 10
         assert optimizer.best_fitness > 0.1
