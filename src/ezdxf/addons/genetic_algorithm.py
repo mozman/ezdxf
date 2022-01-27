@@ -492,10 +492,10 @@ def threshold_filter(
 ) -> Iterable[DNA]:
     if best_fitness <= 0.0:
         minimum = min(candidates, key=dna_fitness)
-        min_value = (1.0 - threshold) * minimum.fitness
+        min_value = (1.0 - threshold) * minimum.fitness  # type: ignore
     else:
         min_value = best_fitness * threshold
-    return (c for c in candidates if c.fitness > min_value)
+    return (c for c in candidates if c.fitness > min_value)    # type: ignore
 
 
 class GeneticOptimizer:
