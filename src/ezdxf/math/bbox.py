@@ -276,6 +276,22 @@ class BoundingBox(AbstractBoundingBox):
         else:
             raise ValueError("empty bounding box")
 
+    def intersection(self, other: "BoundingBox") -> "BoundingBox":
+        """Returns the bounding box of the intersection cube of both
+        3D bounding boxes.
+        """
+        if not isinstance(other, BoundingBox):
+            raise TypeError(f"invalid type: {other.__class__}")
+        if self.is_empty or other.is_empty:
+            return self.__class__()
+        intersection_box = self.__class__(
+            v for v in other.cube_vertices() if self.inside(v)
+        )
+        intersection_box.extend(
+            v for v in self.cube_vertices() if other.inside(v)
+        )
+        return intersection_box
+
 
 class BoundingBox2d(AbstractBoundingBox):
     """Optimized 2D bounding box.
@@ -329,6 +345,22 @@ class BoundingBox2d(AbstractBoundingBox):
         if self.extmax.y <= other.extmin.y:
             return False
         return True
+
+    def intersection(self, other: "BoundingBox2d") -> "BoundingBox2d":
+        """Returns the bounding box of the intersection rectangle of both
+        2D bounding boxes.
+        """
+        if not isinstance(other, BoundingBox2d):
+            raise TypeError(f"invalid type: {other.__class__}")
+        if self.is_empty or other.is_empty:
+            return self.__class__()
+        intersection_box = self.__class__(
+            v for v in other.rect_vertices() if self.inside(v)
+        )
+        intersection_box.extend(
+            v for v in self.rect_vertices() if other.inside(v)
+        )
+        return intersection_box
 
     def overlap(self, other: "AbstractBoundingBox") -> bool:
         """Returns ``True`` if this bounding box intersects with `other` but

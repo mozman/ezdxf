@@ -337,3 +337,99 @@ class TestBoundingBox2d:
         box.grow(1)
         assert box.extmin.isclose((-1, -1))
         assert box.extmax.isclose((2, 2))
+
+
+class Test2DIntersection:
+    def test_type_check(self):
+        with pytest.raises(TypeError):
+            BoundingBox2d().intersection(BoundingBox())
+
+    def test_empty_box_intersection(self):
+        b = BoundingBox2d().intersection(BoundingBox2d())
+        assert b.is_empty is True
+
+    def test_no_intersection(self):
+        b1 = BoundingBox2d([(0, 0), (1, 1)])
+        b2 = BoundingBox2d([(2, 2), (3, 3)])
+        b = b1.intersection(b2)
+        assert b.is_empty is True
+
+    def test_intersection_at_corner(self):
+        b1 = BoundingBox2d([(0, 0), (1, 1)])
+        b2 = BoundingBox2d([(1, 1), (2, 2)])
+        b = b1.intersection(b2)
+        assert b.is_empty is False
+        assert b.size.isclose((0, 0))
+        assert b.extmin.isclose((1, 1))
+        assert b.extmax.isclose((1, 1))
+
+    def test_half_intersection(self):
+        b1 = BoundingBox2d([(0, 0), (2, 2)])
+        b2 = BoundingBox2d([(1, 1), (3, 3)])
+        b = b1.intersection(b2)
+        assert b.size.isclose((1, 1))
+        assert b.extmin.isclose((1, 1))
+        assert b.extmax.isclose((2, 2))
+
+    def test_full_intersection(self):
+        b1 = BoundingBox2d([(0, 0), (2, 2)])
+        b = b1.intersection(b1)
+        assert b.size.isclose((2, 2))
+        assert b.extmin.isclose((0, 0))
+        assert b.extmax.isclose((2, 2))
+
+    def test_smaller_inside_bigger_intersection(self):
+        b1 = BoundingBox2d([(0, 0), (3, 3)])
+        b2 = BoundingBox2d([(1, 1), (2, 2)])
+        b = b1.intersection(b2)
+        assert b.size.isclose((1, 1))
+        assert b.extmin.isclose((1, 1))
+        assert b.extmax.isclose((2, 2))
+
+
+class Test3DIntersection:
+    def test_type_check(self):
+        with pytest.raises(TypeError):
+            BoundingBox().intersection(BoundingBox2d())
+
+    def test_empty_box_intersection(self):
+        b = BoundingBox().intersection(BoundingBox())
+        assert b.is_empty is True
+
+    def test_no_intersection(self):
+        b1 = BoundingBox([(0, 0, 0), (1, 1, 1)])
+        b2 = BoundingBox([(2, 2, 2), (3, 3, 3)])
+        b = b1.intersection(b2)
+        assert b.is_empty is True
+
+    def test_intersection_at_corner(self):
+        b1 = BoundingBox([(0, 0, 0), (1, 1, 1)])
+        b2 = BoundingBox([(1, 1, 1), (2, 2, 2)])
+        b = b1.intersection(b2)
+        assert b.is_empty is False
+        assert b.size.isclose((0, 0, 0))
+        assert b.extmin.isclose((1, 1, 1))
+        assert b.extmax.isclose((1, 1, 1))
+
+    def test_half_intersection(self):
+        b1 = BoundingBox([(0, 0, 0), (2, 2, 2)])
+        b2 = BoundingBox([(1, 1, 1), (3, 3, 3)])
+        b = b1.intersection(b2)
+        assert b.size.isclose((1, 1, 1))
+        assert b.extmin.isclose((1, 1, 1))
+        assert b.extmax.isclose((2, 2, 2))
+
+    def test_full_intersection(self):
+        b1 = BoundingBox([(0, 0, 0), (2, 2, 2)])
+        b = b1.intersection(b1)
+        assert b.size.isclose((2, 2, 2))
+        assert b.extmin.isclose((0, 0, 0))
+        assert b.extmax.isclose((2, 2, 2))
+
+    def test_smaller_inside_bigger_intersection(self):
+        b1 = BoundingBox([(0, 0, 0), (3, 3, 3)])
+        b2 = BoundingBox([(1, 1, 1), (2, 2, 2)])
+        b = b1.intersection(b2)
+        assert b.size.isclose((1, 1, 1))
+        assert b.extmin.isclose((1, 1, 1))
+        assert b.extmax.isclose((2, 2, 2))

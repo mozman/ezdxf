@@ -533,6 +533,8 @@ BoundingBox
 
     .. automethod:: union(other: BoundingBox) -> BoundingBox
 
+    .. automethod:: intersection(other: BoundingBox) -> BoundingBox
+
     .. automethod:: rect_vertices() -> Tuple[Vec2, ...]
 
     .. automethod:: cube_vertices() -> Tuple[Vec3, ...]
@@ -575,6 +577,8 @@ BoundingBox2d
     .. automethod:: extend
 
     .. automethod:: union(other: BoundingBox2d) -> BoundingBox2d
+
+    .. automethod:: intersection(other: BoundingBox2d) -> BoundingBox2d
 
     .. automethod:: rect_vertices() -> Tuple[Vec2, ...]
 
