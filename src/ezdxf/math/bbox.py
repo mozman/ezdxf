@@ -58,10 +58,6 @@ class AbstractBoundingBox:
     def has_overlap(self, other: "AbstractBoundingBox") -> bool:
         ...
 
-    @abc.abstractmethod
-    def intersection(self, other: "AbstractBoundingBox") -> "AbstractBoundingBox":
-        ...
-
     def contains(self, other: "AbstractBoundingBox") -> bool:
         """Returns ``True`` if the `other` bounding box is completely inside
         of this bounding box.
@@ -304,11 +300,23 @@ class BoundingBox(AbstractBoundingBox):
         new_bbox = self.__class__()
         if not self.has_intersection(other):
             return new_bbox
+        s_min_x, s_min_y, s_min_z = self.extmin
+        o_min_x, o_min_y, o_min_z = other.extmin
+        s_max_x, s_max_y, s_max_z = self.extmax
+        o_max_x, o_max_y, o_max_z = other.extmax
         new_bbox.extend(
-            v for v in other.cube_vertices() if self.inside(v)
-        )
-        new_bbox.extend(
-            v for v in self.cube_vertices() if other.inside(v)
+            [
+                (
+                    max(s_min_x, o_min_x),
+                    max(s_min_y, o_min_y),
+                    max(s_min_z, o_min_z),
+                ),
+                (
+                    min(s_max_x, o_max_x),
+                    min(s_max_y, o_max_y),
+                    min(s_max_z, o_max_z),
+                ),
+            ]
         )
         return new_bbox
 
@@ -382,11 +390,15 @@ class BoundingBox2d(AbstractBoundingBox):
         new_bbox = self.__class__()
         if not self.has_intersection(other):
             return new_bbox
+        s_min_x, s_min_y = self.extmin
+        o_min_x, o_min_y = other.extmin
+        s_max_x, s_max_y = self.extmax
+        o_max_x, o_max_y = other.extmax
         new_bbox.extend(
-            v for v in other.rect_vertices() if self.inside(v)
-        )
-        new_bbox.extend(
-            v for v in self.rect_vertices() if other.inside(v)
+            [
+                (max(s_min_x, o_min_x), max(s_min_y, o_min_y)),
+                (min(s_max_x, o_max_x), min(s_max_y, o_max_y)),
+            ]
         )
         return new_bbox
 

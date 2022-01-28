@@ -368,6 +368,17 @@ class Test2DIntersection:
         assert b.extmin.isclose((1, 1))
         assert b.extmax.isclose((2, 2))
 
+    @pytest.mark.parametrize("v1, v2", [
+        ([(0, 0), (2, 2)], [(1, 1), (3, 3)]),
+        ([(-1, -1), (1, 1)], [(0, 0), (2, 2)]),
+        ([(-2, -2), (0, 0)], [(-3, -3), (-1, -1)]),
+    ])
+    def test_multiple_intersections(self, v1, v2):
+        b1 = BoundingBox2d(v1)
+        b2 = BoundingBox2d(v2)
+        b = b1.intersection(b2)
+        assert b.size.isclose((1, 1))
+
     def test_full_intersection(self):
         b1 = BoundingBox2d([(0, 0), (2, 2)])
         b = b1.intersection(b1)
@@ -412,6 +423,17 @@ class Test3DIntersection:
         assert b.size.isclose((1, 1, 1))
         assert b.extmin.isclose((1, 1, 1))
         assert b.extmax.isclose((2, 2, 2))
+
+    @pytest.mark.parametrize("v1, v2", [
+        ([(0, 0, 0), (2, 2, 2)], [(1, 1, 1), (3, 3, 3)]),
+        ([(-1, -1, -1), (1, 1, 1)], [(0, 0, 0), (2, 2, 2)]),
+        ([(-2, -2, -2), (0, 0, 0)], [(-3, -3, -3), (-1, -1, -1)]),
+    ])
+    def test_multiple_intersections(self, v1, v2):
+        b1 = BoundingBox(v1)
+        b2 = BoundingBox(v2)
+        b = b1.intersection(b2)
+        assert b.size.isclose((1, 1, 1))
 
     def test_full_intersection(self):
         b1 = BoundingBox([(0, 0, 0), (2, 2, 2)])
