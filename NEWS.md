@@ -19,8 +19,11 @@ Version 0.18b0 - dev
   divide polylines and anything that can be approximated or flattened into 
   vertices
 - NEW: approximation tool for parametrized curves: `ezdxf.math.ApproxParamT()`
-- NEW: `BoundingBox.intersection(other)`, returns the 3D bbox of the intersection cube
-- NEW: `BoundingBox2d.intersection(other)`, returns the 2D bbox of the intersection rectangle
+- NEW: `BoundingBox(2d).intersection(other)`, returns the 3D/2D bbox of the intersection space
+- NEW: `BoundingBox(2d).has_intersection(other)` replaces deprecated method `intersect()` 
+- NEW: `BoundingBox(2d).has_overlap(other)` replaces deprecated method `overlap()` 
+- DEPRECATED: method `BoundingBox(2d).intersect()` will be removed in v1.0.0
+- DEPRECATED: method `BoundingBox(2d).overlap()` will be removed in v1.0.0
 - NEW: `ezdxf.gfxattribs.GfxAttribs()` class, [docs](https://ezdxf.mozman.at/docs/tools/gfxattribs.html)
 - NEW: `TextEntityAlignment` enum replaces the string based alignment definition
 - NEW: method `Text.get_placement()`, replaces `get_pos()` 
@@ -61,7 +64,7 @@ Version 0.17.2 - 2022-01-06
 - NEW: `ezdxf.math.quadratic_bezier_from_3p()`
 - NEW: `ezdxf.math.cubic_bezier_from_3p()`
 - NEW: `BoundingBox.contains()`, check if a bounding box contains completely 
-  another bounding box 
+  another bounding box
 - NEW: `TextEntityAlignment` enum replaces the string based alignment definition
 - NEW: method `Text.get_placement()`, replaces `get_pos()` 
 - NEW: method `Text.set_placement()`, replaces `set_pos()` 

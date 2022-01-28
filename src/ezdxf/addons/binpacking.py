@@ -314,7 +314,7 @@ class Bin:
             # new item fits inside the box at he current location and rotation:
             item_bbox = item.bbox
             if (
-                not any(item_bbox.intersect(i.bbox) for i in self.items)
+                not any(item_bbox.has_intersection(i.bbox) for i in self.items)
                 and self.get_total_weight() + item.weight <= self.max_weight
             ):
                 self.items.append(item)

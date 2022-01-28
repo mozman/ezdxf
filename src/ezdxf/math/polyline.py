@@ -416,7 +416,7 @@ class _PolylineIntersection:
         if bbox2 is None:
             bbox2 = self.bbox(self.p2[s2:e2])
             cache[key2] = bbox2
-        return bbox1.overlap(bbox2)
+        return bbox1.has_overlap(bbox2)
 
     def intersect(self, s1: int, e1: int, s2: int, e2: int) -> None:
         assert e1 > s1 and e2 > s2

@@ -2,6 +2,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Tuple, Optional, List, Iterator
 import abc
+import warnings
 
 from ezdxf.math import Vec3, Vec2
 
@@ -47,15 +48,19 @@ class AbstractBoundingBox:
 
     @abc.abstractmethod
     def inside(self, vertex: "Vertex") -> bool:
-        pass
+        ...
 
     @abc.abstractmethod
-    def intersect(self, other: "AbstractBoundingBox") -> bool:
-        pass
+    def has_intersection(self, other: "AbstractBoundingBox") -> bool:
+        ...
 
     @abc.abstractmethod
-    def overlap(self, other: "AbstractBoundingBox") -> bool:
-        pass
+    def has_overlap(self, other: "AbstractBoundingBox") -> bool:
+        ...
+
+    @abc.abstractmethod
+    def intersection(self, other: "AbstractBoundingBox") -> "AbstractBoundingBox":
+        ...
 
     def contains(self, other: "AbstractBoundingBox") -> bool:
         """Returns ``True`` if the `other` bounding box is completely inside
@@ -188,13 +193,13 @@ class BoundingBox(AbstractBoundingBox):
             (xmin <= x <= xmax) and (ymin <= y <= ymax) and (zmin <= z <= zmax)
         )
 
-    def intersect(self, other: "AbstractBoundingBox") -> bool:
+    def has_intersection(self, other: "AbstractBoundingBox") -> bool:
         """Returns ``True`` if this bounding box intersects with `other` but does
-        not include touching bounding boxes, see also :meth:`overlap`::
+        not include touching bounding boxes, see also :meth:`has_overlap`::
 
             bbox1 = BoundingBox([(0, 0, 0), (1, 1, 1)])
             bbox2 = BoundingBox([(1, 1, 1), (2, 2, 2)])
-            assert bbox1.intersect(bbox2) is False
+            assert bbox1.has_intersection(bbox2) is False
 
         """
         # Source: https://gamemath.com/book/geomtests.html#intersection_two_aabbs
@@ -222,13 +227,20 @@ class BoundingBox(AbstractBoundingBox):
             return False
         return True
 
-    def overlap(self, other: "AbstractBoundingBox") -> bool:
+    def intersect(self, other: "AbstractBoundingBox") -> bool:
+        warnings.warn(
+            "intersect() is deprecated, replaced by has_intersection()",
+            DeprecationWarning,
+        )
+        return self.has_intersection(other)
+
+    def has_overlap(self, other: "AbstractBoundingBox") -> bool:
         """Returns ``True`` if this bounding box intersects with `other` but
-        in contrast to :meth:`intersect` includes touching bounding boxes too::
+        in contrast to :meth:`has_intersection` includes touching bounding boxes too::
 
             bbox1 = BoundingBox([(0, 0, 0), (1, 1, 1)])
             bbox2 = BoundingBox([(1, 1, 1), (2, 2, 2)])
-            assert bbox1.overlap(bbox2) is True
+            assert bbox1.has_overlap(bbox2) is True
 
         .. versionadded:: 0.17.2
 
@@ -258,6 +270,13 @@ class BoundingBox(AbstractBoundingBox):
             return False
         return True
 
+    def overlap(self, other: "AbstractBoundingBox") -> bool:
+        warnings.warn(
+            "overlap() is deprecated, replaced by has_overlap()",
+            DeprecationWarning,
+        )
+        return self.has_overlap(other)
+
     def cube_vertices(self) -> Tuple[Vec3, ...]:
         """Returns the 3D corners of the bounding box as :class:`Vec3` objects."""
         if self.extmin is not None and self.extmax is not None:
@@ -276,7 +295,7 @@ class BoundingBox(AbstractBoundingBox):
         else:
             raise ValueError("empty bounding box")
 
-    def intersection(self, other: "BoundingBox") -> "BoundingBox":
+    def intersection(self, other: "AbstractBoundingBox") -> "BoundingBox":
         """Returns the bounding box of the intersection cube of both
         3D bounding boxes.
         """
@@ -318,13 +337,13 @@ class BoundingBox2d(AbstractBoundingBox):
         max_ = self.extmax
         return (min_.x <= v.x <= max_.x) and (min_.y <= v.y <= max_.y)
 
-    def intersect(self, other: "AbstractBoundingBox") -> bool:
+    def has_intersection(self, other: "AbstractBoundingBox") -> bool:
         """Returns ``True`` if this bounding box intersects with `other` but does
-        not include touching bounding boxes, see also :meth:`overlap`::
+        not include touching bounding boxes, see also :meth:`has_overlap`::
 
             bbox1 = BoundingBox2d([(0, 0), (1, 1)])
             bbox2 = BoundingBox2d([(1, 1), (2, 2)])
-            assert bbox1.intersect(bbox2) is False
+            assert bbox1.has_intersection(bbox2) is False
 
         """
         # Source: https://gamemath.com/book/geomtests.html#intersection_two_aabbs
@@ -346,7 +365,14 @@ class BoundingBox2d(AbstractBoundingBox):
             return False
         return True
 
-    def intersection(self, other: "BoundingBox2d") -> "BoundingBox2d":
+    def intersect(self, other: "AbstractBoundingBox") -> bool:
+        warnings.warn(
+            "intersect() is deprecated, replaced by has_intersection()",
+            DeprecationWarning,
+        )
+        return self.has_intersection(other)
+
+    def intersection(self, other: "AbstractBoundingBox") -> "BoundingBox2d":
         """Returns the bounding box of the intersection rectangle of both
         2D bounding boxes.
         """
@@ -362,13 +388,13 @@ class BoundingBox2d(AbstractBoundingBox):
         )
         return intersection_box
 
-    def overlap(self, other: "AbstractBoundingBox") -> bool:
+    def has_overlap(self, other: "AbstractBoundingBox") -> bool:
         """Returns ``True`` if this bounding box intersects with `other` but
-        in contrast to :meth:`intersect` includes touching bounding boxes too::
+        in contrast to :meth:`has_intersection` includes touching bounding boxes too::
 
             bbox1 = BoundingBox2d([(0, 0), (1, 1)])
             bbox2 = BoundingBox2d([(1, 1), (2, 2)])
-            assert bbox1.overlap(bbox2) is True
+            assert bbox1.has_overlap(bbox2) is True
 
         .. versionadded:: 0.17.2
 
@@ -391,6 +417,13 @@ class BoundingBox2d(AbstractBoundingBox):
         if self.extmax.y < other.extmin.y:
             return False
         return True
+
+    def overlap(self, other: "AbstractBoundingBox") -> bool:
+        warnings.warn(
+            "overlap() is deprecated, replaced by has_overlap()",
+            DeprecationWarning,
+        )
+        return self.has_overlap(other)
 
 
 def extends3d(vertices: Iterable["Vertex"]) -> Tuple[Vec3, Vec3]:

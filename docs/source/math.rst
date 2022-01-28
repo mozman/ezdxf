@@ -523,9 +523,9 @@ BoundingBox
 
     .. automethod:: all_inside
 
-    .. automethod:: intersect(other: BoundingBox) -> bool
+    .. automethod:: has_intersection(other: BoundingBox) -> bool
 
-    .. automethod:: overlap(other: BoundingBox) -> bool
+    .. automethod:: has_overlap(other: BoundingBox) -> bool
 
     .. automethod:: contains(other: BoundingBox) -> bool
 
@@ -568,9 +568,9 @@ BoundingBox2d
 
     .. automethod:: all_inside
 
-    .. automethod:: intersect(other: BoundingBox2d) -> bool
+    .. automethod:: has_intersection(other: BoundingBox2d) -> bool
 
-    .. automethod:: overlap(other: BoundingBox2d) -> bool
+    .. automethod:: has_overlap(other: BoundingBox2d) -> bool
 
     .. automethod:: contains(other: BoundingBox2d) -> bool
 
