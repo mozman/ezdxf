@@ -58,6 +58,12 @@ class AbstractBoundingBox:
     def has_overlap(self, other: "AbstractBoundingBox") -> bool:
         ...
 
+    @abc.abstractmethod
+    def intersection(
+        self, other: "AbstractBoundingBox"
+    ) -> "AbstractBoundingBox":
+        ...
+
     def contains(self, other: "AbstractBoundingBox") -> bool:
         """Returns ``True`` if the `other` bounding box is completely inside
         of this bounding box.
@@ -207,19 +213,21 @@ class BoundingBox(AbstractBoundingBox):
             or other.extmax is None
         ):
             return False
+        o_min = Vec3(other.extmin)  # could be a 2D bounding box
+        o_max = Vec3(other.extmax)  # could be a 2D bounding box
 
         # Check for a separating axis:
-        if self.extmin.x >= other.extmax.x:
+        if self.extmin.x >= o_max.x:
             return False
-        if self.extmax.x <= other.extmin.x:
+        if self.extmax.x <= o_min.x:
             return False
-        if self.extmin.y >= other.extmax.y:
+        if self.extmin.y >= o_max.y:
             return False
-        if self.extmax.y <= other.extmin.y:
+        if self.extmax.y <= o_min.y:
             return False
-        if self.extmin.z >= other.extmax.z:
+        if self.extmin.z >= o_max.z:
             return False
-        if self.extmax.z <= other.extmin.z:
+        if self.extmax.z <= o_min.z:
             return False
         return True
 
@@ -250,19 +258,20 @@ class BoundingBox(AbstractBoundingBox):
             or other.extmax is None
         ):
             return False
-
+        o_min = Vec3(other.extmin)  # could be a 2D bounding box
+        o_max = Vec3(other.extmax)  # could be a 2D bounding box
         # Check for a separating axis:
-        if self.extmin.x > other.extmax.x:
+        if self.extmin.x > o_max.x:
             return False
-        if self.extmax.x < other.extmin.x:
+        if self.extmax.x < o_min.x:
             return False
-        if self.extmin.y > other.extmax.y:
+        if self.extmin.y > o_max.y:
             return False
-        if self.extmax.y < other.extmin.y:
+        if self.extmax.y < o_min.y:
             return False
-        if self.extmin.z > other.extmax.z:
+        if self.extmin.z > o_max.z:
             return False
-        if self.extmax.z < other.extmin.z:
+        if self.extmax.z < o_min.z:
             return False
         return True
 
@@ -300,10 +309,10 @@ class BoundingBox(AbstractBoundingBox):
         new_bbox = self.__class__()
         if not self.has_intersection(other):
             return new_bbox
-        s_min_x, s_min_y, s_min_z = self.extmin
-        o_min_x, o_min_y, o_min_z = other.extmin
-        s_max_x, s_max_y, s_max_z = self.extmax
-        o_max_x, o_max_y, o_max_z = other.extmax
+        s_min_x, s_min_y, s_min_z = Vec3(self.extmin)
+        o_min_x, o_min_y, o_min_z = Vec3(other.extmin)
+        s_max_x, s_max_y, s_max_z = Vec3(self.extmax)
+        o_max_x, o_max_y, o_max_z = Vec3(other.extmax)
         new_bbox.extend(
             [
                 (
@@ -390,10 +399,10 @@ class BoundingBox2d(AbstractBoundingBox):
         new_bbox = self.__class__()
         if not self.has_intersection(other):
             return new_bbox
-        s_min_x, s_min_y = self.extmin
-        o_min_x, o_min_y = other.extmin
-        s_max_x, s_max_y = self.extmax
-        o_max_x, o_max_y = other.extmax
+        s_min_x, s_min_y = Vec2(self.extmin)
+        o_min_x, o_min_y = Vec2(other.extmin)
+        s_max_x, s_max_y = Vec2(self.extmax)
+        o_max_x, o_max_y = Vec2(other.extmax)
         new_bbox.extend(
             [
                 (max(s_min_x, o_min_x), max(s_min_y, o_min_y)),

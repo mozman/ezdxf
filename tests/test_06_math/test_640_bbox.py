@@ -64,6 +64,16 @@ class TestBoundingBox:
         assert bbox1.any_inside(empty) is False
         assert empty.any_inside(bbox1) is False
 
+    def test_has_overlap_accepts_2d_bounding_box(self):
+        bbox1 = BoundingBox([(0, 0, 0), (10, 10, 10)])
+        bbox2 = BoundingBox2d([(1, 1), (9, 9)])  # z-axis are 0
+        assert bbox1.has_overlap(bbox2) is True
+
+    def test_has_intersection_accepts_2d_bounding_box(self):
+        bbox1 = BoundingBox([(-1, -1, -1), (10, 10, 10)])
+        bbox2 = BoundingBox2d([(1, 1), (9, 9)])  # z-axis are 0
+        assert bbox1.has_intersection(bbox2) is True
+
     def test_do_intersect_and_overlap(self):
         bbox1 = BoundingBox([(0, 0, 0), (10, 10, 10)])
         bbox2 = BoundingBox([(1, 1, 1), (9, 9, 9)])
@@ -337,6 +347,16 @@ class TestBoundingBox2d:
         box.grow(1)
         assert box.extmin.isclose((-1, -1))
         assert box.extmax.isclose((2, 2))
+
+    def test_has_overlap_accepts_3d_bounding_box(self):
+        bbox1 = BoundingBox([(0, 0, 10), (10, 10, 10)])  # z-axis are ignored
+        bbox2 = BoundingBox2d([(1, 1), (9, 9)])
+        assert bbox2.has_overlap(bbox1) is True
+
+    def test_has_intersection_accepts_3d_bounding_box(self):
+        bbox1 = BoundingBox([(0, 0, 10), (10, 10, 10)])  # z-axis are ignored
+        bbox2 = BoundingBox2d([(1, 1), (9, 9)])
+        assert bbox2.has_intersection(bbox1) is True
 
 
 class Test2DIntersection:
