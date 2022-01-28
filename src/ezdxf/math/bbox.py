@@ -301,15 +301,16 @@ class BoundingBox(AbstractBoundingBox):
         """
         if not isinstance(other, BoundingBox):
             raise TypeError(f"invalid type: {other.__class__}")
-        if self.is_empty or other.is_empty:
-            return self.__class__()
-        intersection_box = self.__class__(
+        new_bbox = self.__class__()
+        if not self.has_intersection(other):
+            return new_bbox
+        new_bbox.extend(
             v for v in other.cube_vertices() if self.inside(v)
         )
-        intersection_box.extend(
+        new_bbox.extend(
             v for v in self.cube_vertices() if other.inside(v)
         )
-        return intersection_box
+        return new_bbox
 
 
 class BoundingBox2d(AbstractBoundingBox):
@@ -378,15 +379,16 @@ class BoundingBox2d(AbstractBoundingBox):
         """
         if not isinstance(other, BoundingBox2d):
             raise TypeError(f"invalid type: {other.__class__}")
-        if self.is_empty or other.is_empty:
-            return self.__class__()
-        intersection_box = self.__class__(
+        new_bbox = self.__class__()
+        if not self.has_intersection(other):
+            return new_bbox
+        new_bbox.extend(
             v for v in other.rect_vertices() if self.inside(v)
         )
-        intersection_box.extend(
+        new_bbox.extend(
             v for v in self.rect_vertices() if other.inside(v)
         )
-        return intersection_box
+        return new_bbox
 
     def has_overlap(self, other: "AbstractBoundingBox") -> bool:
         """Returns ``True`` if this bounding box intersects with `other` but

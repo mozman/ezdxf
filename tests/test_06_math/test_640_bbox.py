@@ -354,14 +354,11 @@ class Test2DIntersection:
         b = b1.intersection(b2)
         assert b.is_empty is True
 
-    def test_intersection_at_corner(self):
+    def test_touches_at_one_corner(self):
         b1 = BoundingBox2d([(0, 0), (1, 1)])
         b2 = BoundingBox2d([(1, 1), (2, 2)])
         b = b1.intersection(b2)
-        assert b.is_empty is False
-        assert b.size.isclose((0, 0))
-        assert b.extmin.isclose((1, 1))
-        assert b.extmax.isclose((1, 1))
+        assert b.is_empty is True
 
     def test_half_intersection(self):
         b1 = BoundingBox2d([(0, 0), (2, 2)])
@@ -402,14 +399,11 @@ class Test3DIntersection:
         b = b1.intersection(b2)
         assert b.is_empty is True
 
-    def test_intersection_at_corner(self):
+    def test_touches_at_one_corner(self):
         b1 = BoundingBox([(0, 0, 0), (1, 1, 1)])
         b2 = BoundingBox([(1, 1, 1), (2, 2, 2)])
         b = b1.intersection(b2)
-        assert b.is_empty is False
-        assert b.size.isclose((0, 0, 0))
-        assert b.extmin.isclose((1, 1, 1))
-        assert b.extmax.isclose((1, 1, 1))
+        assert b.is_empty is True
 
     def test_half_intersection(self):
         b1 = BoundingBox([(0, 0, 0), (2, 2, 2)])
