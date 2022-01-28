@@ -46,6 +46,11 @@ class AbstractBoundingBox:
     ) -> Tuple["AnyVec", "AnyVec"]:
         pass
 
+    @property
+    @abc.abstractmethod
+    def is_empty(self) -> bool:
+        ...
+
     @abc.abstractmethod
     def inside(self, vertex: "Vertex") -> bool:
         ...
@@ -99,13 +104,8 @@ class AbstractBoundingBox:
 
     @property
     def has_data(self) -> bool:
-        """Returns ``True`` if bonding box is not empty"""
+        """Returns ``True`` if the bonding box has known limits."""
         return self.extmin is not None
-
-    @property
-    def is_empty(self) -> bool:
-        """Returns ``True`` if bonding box is empty"""
-        return self.extmin is None
 
     @property
     def size(self):
@@ -175,6 +175,15 @@ class BoundingBox(AbstractBoundingBox):
         vertices: iterable of ``(x, y, z)`` tuples or :class:`Vec3` objects
 
     """
+    @property
+    def is_empty(self) -> bool:
+        """Returns ``True`` if the bounding box is empty. The bounding box has a
+        size of 0 in any or all dimensions or is undefined.
+        """
+        if self.has_data:
+            sx, sy, sz = self.size
+            return sx * sy * sz == 0.0
+        return True
 
     def extends_detector(
         self, vertices: Iterable["Vertex"]
@@ -302,10 +311,9 @@ class BoundingBox(AbstractBoundingBox):
 
     def intersection(self, other: "AbstractBoundingBox") -> "BoundingBox":
         """Returns the bounding box of the intersection cube of both
-        3D bounding boxes.
+        3D bounding boxes. Returns an empty bounding box if the intersection
+        volume is 0.
         """
-        if not isinstance(other, BoundingBox):
-            raise TypeError(f"invalid type: {other.__class__}")
         new_bbox = self.__class__()
         if not self.has_intersection(other):
             return new_bbox
@@ -337,6 +345,15 @@ class BoundingBox2d(AbstractBoundingBox):
         vertices: iterable of ``(x, y[, z])`` tuples or :class:`Vec3` objects
 
     """
+    @property
+    def is_empty(self) -> bool:
+        """Returns ``True`` if the bounding box is empty. The bounding box has a
+        size of 0 in any or all dimensions or is undefined.
+        """
+        if self.has_data:
+            sx, sy = self.size
+            return sx * sy == 0.0
+        return True
 
     def extends_detector(
         self, vertices: Iterable["Vertex"]
@@ -392,10 +409,9 @@ class BoundingBox2d(AbstractBoundingBox):
 
     def intersection(self, other: "AbstractBoundingBox") -> "BoundingBox2d":
         """Returns the bounding box of the intersection rectangle of both
-        2D bounding boxes.
+        2D bounding boxes. Returns an empty bounding box if the intersection
+        area is 0.
         """
-        if not isinstance(other, BoundingBox2d):
-            raise TypeError(f"invalid type: {other.__class__}")
         new_bbox = self.__class__()
         if not self.has_intersection(other):
             return new_bbox

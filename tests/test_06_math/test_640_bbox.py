@@ -29,6 +29,21 @@ class TestBoundingBox:
         assert bbox.is_empty is False
         assert bbox.has_data is True
 
+    @pytest.mark.parametrize("v", [
+        [],
+        [(0, 0, 0)],
+        [(1, 0, 0), (2, 0, 0)],
+        [(1, 1, 0), (2, 2, 0)],
+        [(1, 1, 1), (1, 1, 1)],
+    ])
+    def test_is_empty(self, v):
+        """Volume is 0."""
+        assert BoundingBox(v).is_empty is True
+
+    def test_not_is_empty(self):
+        """Volume is not 0."""
+        assert BoundingBox([(0, 0, 0), (-1, -1, -1)]).is_empty is False
+
     def test_init_with_with_empty_list(self):
         assert BoundingBox([]).is_empty is True
 
@@ -196,6 +211,7 @@ class TestBoundingBox:
 
     def test_union_empty_bounding_boxes(self):
         bbox = BoundingBox().union(BoundingBox())
+        assert bbox.has_data is False
         assert bbox.is_empty is True
 
     def test_rect_vertices_for_empty_bbox_raises_value_error(self):
@@ -272,6 +288,21 @@ class TestBoundingBox2d:
         bbox.extend([(0, 0), (10, 10)])
         assert bbox.size == (10, 10)
         assert bbox.has_data is True
+
+    @pytest.mark.parametrize("v", [
+        [],
+        [(0, 0)],
+        [(1, 0), (2, 0)],
+        [(0, 1), (0, 2)],
+        [(1, 1), (1, 1)],
+    ])
+    def test_is_empty(self, v):
+        """Area is 0."""
+        assert BoundingBox2d(v).is_empty is True
+
+    def test_not_is_empty(self):
+        """Area is not 0."""
+        assert BoundingBox2d([(0, 0), (-1, -1)]).is_empty is False
 
     def test_inside(self):
         bbox = BoundingBox2d([(0, 0), (10, 10)])
@@ -360,9 +391,11 @@ class TestBoundingBox2d:
 
 
 class Test2DIntersection:
-    def test_type_check(self):
-        with pytest.raises(TypeError):
-            BoundingBox2d().intersection(BoundingBox())
+    def test_accept_3d_box(self):
+        b1 = BoundingBox2d([(1, 1), (9, 9)])
+        b2 = BoundingBox([(0, 0, 10), (10, 10, 10)])  # z-axis are ignored
+        b = b1.intersection(b2)
+        assert b.size.isclose((8, 8))
 
     def test_empty_box_intersection(self):
         b = BoundingBox2d().intersection(BoundingBox2d())
@@ -414,11 +447,20 @@ class Test2DIntersection:
         assert b.extmin.isclose((1, 1))
         assert b.extmax.isclose((2, 2))
 
+    def test_intersection_box_without_an_area_is_empty(self):
+        b1 = BoundingBox2d([(0, 0), (0, 3)])  # has no area
+        b2 = BoundingBox2d([(-1, 1), (1, 1)])  # has no area
+
+        b = b1.intersection(b2)
+        assert b.is_empty is True  # intersection has no area
+
 
 class Test3DIntersection:
-    def test_type_check(self):
-        with pytest.raises(TypeError):
-            BoundingBox().intersection(BoundingBox2d())
+    def test_accept_3d_box(self):
+        b1 = BoundingBox([(0, 0, -1), (10, 10, 10)])
+        b2 = BoundingBox2d([(1, 1), (9, 9)])  # z-axis is 0
+        b = b1.intersection(b2)
+        assert b.is_empty is True  # has no volume!
 
     def test_empty_box_intersection(self):
         b = BoundingBox().intersection(BoundingBox())
@@ -469,3 +511,9 @@ class Test3DIntersection:
         assert b.size.isclose((1, 1, 1))
         assert b.extmin.isclose((1, 1, 1))
         assert b.extmax.isclose((2, 2, 2))
+
+    def test_intersection_box_without_a_volume_is_empty(self):
+        b1 = BoundingBox2d([(0, 0, 0), (0, 3, 0)])  # has no volume
+        b2 = BoundingBox2d([(-1, 1, 0), (1, 1, 0)])  # has no volume
+        b = b1.intersection(b2)
+        assert b.is_empty is True  # intersection has no volume

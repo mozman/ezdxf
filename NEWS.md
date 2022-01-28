@@ -24,6 +24,8 @@ Version 0.18b0 - dev
 - NEW: `BoundingBox(2d).has_overlap(other)` replaces deprecated method `overlap()` 
 - DEPRECATED: method `BoundingBox(2d).intersect()` will be removed in v1.0.0
 - DEPRECATED: method `BoundingBox(2d).overlap()` will be removed in v1.0.0
+- CHANGE: `BoundingBox(2d).is_empty` is `True` for bounding boxes with a size 
+  of 0 in any dimension or has no data
 - NEW: `ezdxf.gfxattribs.GfxAttribs()` class, [docs](https://ezdxf.mozman.at/docs/tools/gfxattribs.html)
 - NEW: `TextEntityAlignment` enum replaces the string based alignment definition
 - NEW: method `Text.get_placement()`, replaces `get_pos()` 
