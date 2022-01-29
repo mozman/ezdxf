@@ -175,6 +175,8 @@ class BoundingBox(AbstractBoundingBox):
         vertices: iterable of ``(x, y, z)`` tuples or :class:`Vec3` objects
 
     """
+    __slots__ = ("extmin", "extmax")
+
     @property
     def is_empty(self) -> bool:
         """Returns ``True`` if the bounding box is empty. The bounding box has a
@@ -345,6 +347,8 @@ class BoundingBox2d(AbstractBoundingBox):
         vertices: iterable of ``(x, y[, z])`` tuples or :class:`Vec3` objects
 
     """
+    __slots__ = ("extmin", "extmax")
+
     @property
     def is_empty(self) -> bool:
         """Returns ``True`` if the bounding box is empty. The bounding box has a
