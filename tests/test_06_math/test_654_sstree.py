@@ -39,6 +39,22 @@ class TestFirstLevel:
         assert len(tree) == 1
 
 
+class TestBiggerTree:
+    @pytest.fixture
+    def tree(self):
+        return SsTree([Vec3(x, 0, 0) for x in range(100)], max_node_size=5)
+
+    def test_setup_is_correct(self, tree):
+        assert len(tree) == 100
+
+    @pytest.mark.parametrize(
+        "point", [Vec3(0, 0, 0), Vec3(1, 0, 0), Vec3(99, 0, 0)]
+    )
+    def test_known_point_is_present(self, tree, point):
+        res = tree.contains(point)
+        assert res is True
+
+
 class TestSplitPoints:
     def test_max_node_size_must_be_gt_1(self):
         with pytest.raises(AssertionError):

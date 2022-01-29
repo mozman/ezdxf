@@ -25,7 +25,7 @@ class Node:
         self.centroid: Vec3 = NULLVEC
         self.radius: float = 0.0
         if len(points) > max_size:
-            self._children = _split_points(points, max_size)
+            self.set_children(_split_points(points, max_size))
         else:
             self.set_points(points.copy())
 
@@ -33,7 +33,7 @@ class Node:
     def internal_node(cls, children: List["Node"], max_size) -> "Node":
         assert len(children) <= max_size, "invalid children count"
         node = cls([], max_size)
-        node._children = children
+        node.set_children(children)
         return node
 
     def __len__(self):
@@ -54,6 +54,16 @@ class Node:
             return []
         return self._children
 
+    def set_children(self, children: List["Node"]) -> None:
+        self._points = None  # its an inner node
+        self._children = children
+        points = list(self.iter_points())
+        if len(points):
+            self.centroid, self.radius = _get_sphere_params(points)
+            return
+        self.centroid = NULLVEC
+        self.radius = 0.0
+
     @property
     def points(self) -> List[Vec3]:
         if self._points is None:
@@ -63,11 +73,8 @@ class Node:
     def set_points(self, points: List[Vec3]) -> None:
         self._children = None  # its a leaf
         self._points = points
-        n = len(points)
-        if n:
-            centroid = Vec3.sum(points) / n
-            self.centroid = centroid
-            self.radius = max(centroid.distance(p) for p in points)
+        if len(points):
+            self.centroid, self.radius = _get_sphere_params(points)
             return
         self.centroid = NULLVEC
         self.radius = 0.0
@@ -94,7 +101,7 @@ class Node:
             if len(points) > max_size:
                 self.clear_points()  # moving points into sub-nodes
                 if is_root:
-                    self._children = _split_points(points, max_size)
+                    self.set_children(_split_points(points, max_size))
                 else:
                     new_nodes = _split_points(points, max_size)
             else:
@@ -111,7 +118,7 @@ class Node:
                 if len(children) > max_size:
                     new_nodes = _split_children(children, max_size)
                     if is_root:
-                        self._children = new_nodes
+                        self.set_children(new_nodes)
                         new_nodes = []
         return new_nodes
 
@@ -174,9 +181,9 @@ class Node:
                 min_index = index
         return min_index
 
-    def iter_points(self) -> Iterator:
-        if self.is_leaf:
-            return iter(self.points)
+    def iter_points(self) -> Iterator[Vec3]:
+        if self._points is not None:
+            yield from self._points
         else:
             for child in self.children:
                 yield from child.iter_points()
@@ -278,3 +285,9 @@ def _is_sphere_intersecting_bbox(
     if abs(distance.z) > intersection_distance.z:
         return False
     return True
+
+
+def _get_sphere_params(points: List[Vec3]) -> Tuple[Vec3, float]:
+    centroid = Vec3.sum(points) / len(points)
+    radius = max(centroid.distance(p) for p in points)
+    return centroid, radius
