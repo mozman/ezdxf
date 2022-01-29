@@ -94,16 +94,12 @@ class Node:
                     return child.contains(point)
         return False
 
-    def add(self, point: Vec3, max_size: int, is_root=False) -> List["Node"]:
+    def add(self, point: Vec3, max_size: int) -> List["Node"]:
         def _add_to_leaf() -> List["Node"]:
             points = self.points
             points.append(point)
             if len(points) > max_size:
-                if is_root:
-                    self.set_children(_split_points(points, max_size))
-                    return []
-                else:
-                    return _split_points(points, max_size)
+                return _split_points(points, max_size)
             # update of centroid and radius is required
             self.set_points(points)
             return []
@@ -112,16 +108,12 @@ class Node:
             index = self.closest_child_index(point)
             children = self.children
             closest_child = children[index]
-            resulting_nodes = closest_child.add(point, max_size)
-            if len(resulting_nodes):
+            new_nodes = closest_child.add(point, max_size)
+            if len(new_nodes):
                 children.pop(index)
-                children.extend(resulting_nodes)
+                children.extend(new_nodes)
                 if len(children) > max_size:
-                    new_nodes = _split_children(children, max_size)
-                    if is_root:
-                        self.set_children(new_nodes)
-                        return []
-                    return new_nodes
+                    return _split_children(children, max_size)
             # update of centroid and radius is required
             self.set_children(children)
             return []
@@ -206,7 +198,9 @@ class SsTree:
 
     def add(self, point: Vec3):
         if not self.root.contains(point):
-            self.root.add(point, self.max_node_size, is_root=True)
+            new_nodes = self.root.add(point, self.max_node_size)
+            if len(new_nodes):
+                self.root.set_children(new_nodes)
 
     def extend(self, points: Iterable[Vec3]):
         for point in points:
