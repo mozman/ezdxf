@@ -173,22 +173,19 @@ class Node:
                     yield from child.points_in_bbox(bbox)
 
     def closest_child_index(self, point: Vec3) -> int:
-        min_distance: float = INF
-        min_index: int = 0
-        for index, child in enumerate(self.children):
-            distance = point.distance(child.centroid)
-            if distance < min_distance:
-                min_distance = distance
-                min_index = index
-        return min_index
+        _, index = min(
+            (point.distance(child.centroid), index)
+            for index, child in enumerate(self.children)
+        )
+        return index
 
 
 class SsTree:
     def __init__(self, points: List[Vec3], max_node_size: int = 5):
-        self.root: Node = Node(points, max_node_size)
         if max_node_size < 2:
             raise ValueError("max node size must be > 1")
         self.max_node_size = max_node_size
+        self.root: Node = Node(points, max_node_size)
 
     def __len__(self):
         return len(self.root)
