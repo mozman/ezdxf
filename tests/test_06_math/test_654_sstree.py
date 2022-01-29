@@ -3,7 +3,7 @@
 
 import pytest
 
-from ezdxf.math import Vec3, SsTree
+from ezdxf.math import Vec3, SsTree, BoundingBox
 from ezdxf.math.sstree import _min_distance, _point_variances, _split_points
 
 
@@ -40,7 +40,7 @@ class TestFirstLevel:
 
 
 class TestBiggerTree:
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def tree(self):
         return SsTree([Vec3(x, 0, 0) for x in range(100)], max_node_size=5)
 
@@ -51,8 +51,61 @@ class TestBiggerTree:
         "point", [Vec3(0, 0, 0), Vec3(1, 0, 0), Vec3(99, 0, 0)]
     )
     def test_known_point_is_present(self, tree, point):
-        res = tree.contains(point)
-        assert res is True
+        assert tree.contains(point) is True
+
+    @pytest.mark.parametrize(
+        "n, point",
+        [
+            (Vec3(0.1, 0, 0), Vec3(0, 0, 0)),
+            (Vec3(1, 0.1, 0), Vec3(1, 0, 0)),
+            (Vec3(99, 0, 0.1), Vec3(99, 0, 0)),
+        ],
+    )
+    def test_nearest_neighbour(self, tree, n, point):
+        assert tree.nearest_neighbour(n).isclose(point)
+
+    def test_find_points_in_sphere(self, tree):
+        points = list(tree.points_in_sphere(Vec3(50, 0, 0), radius=5))
+        assert len(points) == 11
+        expected_x_coords = set(range(45, 56))
+        x_coords = set(int(p.x) for p in points)
+        assert x_coords == expected_x_coords
+
+    def test_find_points_in_bbox(self, tree):
+        bbox = BoundingBox([(45, 0, 0), (55, 0, 0)])
+        points = list(tree.points_in_bbox(bbox))
+        assert len(points) == 11
+        expected_x_coords = set(range(45, 56))
+        x_coords = set(int(p.x) for p in points)
+        assert x_coords == expected_x_coords
+
+
+class TestAddPointsToBigTree:
+    @pytest.fixture
+    def tree(self):
+        return SsTree([Vec3(x, 0, 0) for x in range(100)], max_node_size=5)
+
+    @pytest.mark.parametrize(
+        "point",
+        Vec3.list(
+            [
+                (-1, 0, 0),
+                (100, 0, 0),
+                (50, 1, 0),
+                (50, 0, 1),
+            ]
+        ),
+    )
+    def test_add_point_to_big_tree(self, tree, point: Vec3):
+        tree.add(point)
+        assert len(tree) == 101
+        assert tree.contains(point)
+
+    def test_adding_more_points_to_big_tree(self, tree):
+        for point in Vec3.list([(x, 0, 0) for x in range(100, 200)]):
+            tree.add(point)
+            assert tree.contains(point)
+            assert tree.nearest_neighbour(point.replace(z=0.1)).isclose(point)
 
 
 class TestSplitPoints:

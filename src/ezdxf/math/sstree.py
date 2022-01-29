@@ -120,6 +120,10 @@ class Node:
                     if is_root:
                         self.set_children(new_nodes)
                         new_nodes = []
+                else:  # update of centroid and radius is required
+                    self.set_children(children)
+            else:  # update of centroid and radius is required
+                self.set_children(children)
         return new_nodes
 
     def nearest_neighbour(
@@ -288,6 +292,7 @@ def _is_sphere_intersecting_bbox(
 
 
 def _get_sphere_params(points: List[Vec3]) -> Tuple[Vec3, float]:
+    assert len(points) > 0
     centroid = Vec3.sum(points) / len(points)
     radius = max(centroid.distance(p) for p in points)
     return centroid, radius
