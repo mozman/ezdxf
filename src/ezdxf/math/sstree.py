@@ -27,19 +27,7 @@ class Node:
         if len(points) > max_size:
             self._children = _split_points(points, max_size)
         else:
-            self._points = points.copy()
-            self._update_point_stats()
-
-    def _update_point_stats(self):
-        points = self.points
-        n = len(points)
-        if n:
-            centroid = Vec3.sum(points) / n
-            self._centroid = centroid
-            self._radius = max(centroid.distance(p) for p in points)
-        else:
-            self._centroid = NULLVEC
-            self._radius = 0.0
+            self.set_points(points.copy())
 
     @classmethod
     def internal_node(cls, children: List["Node"], max_size) -> "Node":
@@ -50,7 +38,7 @@ class Node:
 
     def __len__(self):
         count: int = 0
-        if self._points is not None:
+        if self._points:
             count = len(self._points)
         if self._children:
             count += sum(len(c) for c in self._children)
@@ -72,6 +60,23 @@ class Node:
             return []
         return self._points
 
+    def set_points(self, points: List[Vec3]) -> None:
+        self._children = None  # its a leaf
+        self._points = points
+        n = len(points)
+        if n:
+            centroid = Vec3.sum(points) / n
+            self._centroid = centroid
+            self._radius = max(centroid.distance(p) for p in points)
+            return
+        self._centroid = NULLVEC
+        self._radius = 0.0
+
+    def clear_points(self):
+        self._points = None
+        self._centroid = NULLVEC
+        self._radius = 0.0
+
     @property
     def centroid(self) -> Vec3:
         return self._centroid
@@ -91,15 +96,15 @@ class Node:
             points = self.points
             points.append(point)
             if len(points) > max_size:
+                self.clear_points()  # moving points into sub-nodes
                 if is_root:
-                    children = _split_points(points, max_size)
-                    self._children = children
-                    self._update_point_stats()
+                    self._children = _split_points(points, max_size)
                 else:
                     new_nodes = _split_points(points, max_size)
             else:
-                self._update_point_stats()
+                self.set_points(points)
         else:
+            # internal node no need to update point stats!
             index = self.closest_child_index(point)
             children = self.children
             closest_child = children[index]
@@ -107,16 +112,11 @@ class Node:
             if len(resulting_nodes):
                 children.pop(index)
                 children.extend(resulting_nodes)
-                if len(children) <= max_size:
-                    self._update_point_stats()
-                else:
+                if len(children) > max_size:
                     new_nodes = _split_children(children, max_size)
                     if is_root:
                         self._children = new_nodes
-                        self._update_point_stats()
                         new_nodes = []
-            else:
-                self._update_point_stats()
         return new_nodes
 
     def nearest_neighbour(
