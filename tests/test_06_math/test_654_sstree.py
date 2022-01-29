@@ -102,8 +102,9 @@ class TestAddPointsToBigTree:
         assert tree.contains(point)
 
     def test_adding_more_points_to_big_tree(self, tree):
-        for point in Vec3.list([(x, 0, 0) for x in range(100, 200)]):
-            tree.add(point)
+        points = Vec3.list([(x, 0, 0) for x in range(100, 200)])
+        tree.extend(points)
+        for point in points:
             assert tree.contains(point)
             assert tree.nearest_neighbour(point.replace(z=0.1)).isclose(point)
 
