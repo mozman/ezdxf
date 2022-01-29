@@ -37,12 +37,11 @@ class Node:
         return node
 
     def __len__(self):
-        count: int = 0
         if self._points:
-            count = len(self._points)
+            return len(self._points)
         if self._children:
-            count += sum(len(c) for c in self._children)
-        return count
+            return sum(len(c) for c in self._children)
+        return 0
 
     @property
     def is_leaf(self) -> bool:
@@ -79,10 +78,12 @@ class Node:
         self.centroid = NULLVEC
         self.radius = 0.0
 
-    def clear_points(self):
-        self._points = None
-        self.centroid = NULLVEC
-        self.radius = 0.0
+    def iter_points(self) -> Iterator[Vec3]:
+        if self._points is not None:
+            yield from self._points
+        else:
+            for child in self.children:
+                yield from child.iter_points()
 
     def contains(self, point: Vec3) -> bool:
         if self.is_leaf:
@@ -94,20 +95,20 @@ class Node:
         return False
 
     def add(self, point: Vec3, max_size: int, is_root=False) -> List["Node"]:
-        new_nodes: List[Node] = []
-        if self.is_leaf:
+        def _add_to_leaf() -> List["Node"]:
             points = self.points
             points.append(point)
             if len(points) > max_size:
-                self.clear_points()  # moving points into sub-nodes
                 if is_root:
                     self.set_children(_split_points(points, max_size))
+                    return []
                 else:
-                    new_nodes = _split_points(points, max_size)
-            else:
-                self.set_points(points)
-        else:
-            # internal node no need to update point stats!
+                    return _split_points(points, max_size)
+            # update of centroid and radius is required
+            self.set_points(points)
+            return []
+
+        def _add_to_children() -> List["Node"]:
             index = self.closest_child_index(point)
             children = self.children
             closest_child = children[index]
@@ -119,12 +120,16 @@ class Node:
                     new_nodes = _split_children(children, max_size)
                     if is_root:
                         self.set_children(new_nodes)
-                        new_nodes = []
-                else:  # update of centroid and radius is required
-                    self.set_children(children)
-            else:  # update of centroid and radius is required
-                self.set_children(children)
-        return new_nodes
+                        return []
+                    return new_nodes
+            # update of centroid and radius is required
+            self.set_children(children)
+            return []
+
+        if self.is_leaf:
+            return _add_to_leaf()
+        else:
+            return _add_to_children()
 
     def nearest_neighbour(
         self, target: Vec3, nn: Vec3 = None, nn_dist: float = INF
@@ -184,13 +189,6 @@ class Node:
                 min_distance = distance
                 min_index = index
         return min_index
-
-    def iter_points(self) -> Iterator[Vec3]:
-        if self._points is not None:
-            yield from self._points
-        else:
-            for child in self.children:
-                yield from child.iter_points()
 
 
 class SsTree:
