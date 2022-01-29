@@ -105,8 +105,8 @@ class Node:
             return []
 
         def _add_to_children() -> List["Node"]:
-            index = self.closest_child_index(point)
             children = self.children
+            index = _closest_child_index(children, point)
             closest_child = children[index]
             new_nodes = closest_child.add(point, max_size)
             if len(new_nodes):
@@ -134,7 +134,7 @@ class Node:
                     nn, nn_dist = point, distance
         elif self._children is not None:
             children = self._children
-            closest_child = children[self.closest_child_index(target)]
+            closest_child = children[_closest_child_index(children, target)]
             nn, nn_dist = closest_child.nearest_neighbour(target, nn, nn_dist)
             for child in children:
                 if child is closest_child:
@@ -171,13 +171,6 @@ class Node:
                     child.centroid, child.radius, bbox_center, bbox_size
                 ):
                     yield from child.points_in_bbox(bbox)
-
-    def closest_child_index(self, point: Vec3) -> int:
-        _, index = min(
-            (point.distance(child.centroid), index)
-            for index, child in enumerate(self.children)
-        )
-        return index
 
 
 class SsTree:
@@ -285,3 +278,12 @@ def _get_sphere_params(points: List[Vec3]) -> Tuple[Vec3, float]:
     centroid = Vec3.sum(points) / len(points)
     radius = max(centroid.distance(p) for p in points)
     return centroid, radius
+
+
+def _closest_child_index(children: List[Node], point: Vec3) -> int:
+    assert len(children) > 0
+    _, index = min(
+        (point.distance(child.centroid), index)
+        for index, child in enumerate(children)
+    )
+    return index
