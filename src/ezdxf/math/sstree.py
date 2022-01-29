@@ -8,7 +8,7 @@
 from typing import List, Optional, Sequence, Iterator, Iterable, Tuple
 import math
 
-from ezdxf.math import Vec3, NULLVEC
+from ezdxf.math import Vec3, NULLVEC, BoundingBox
 import statistics
 
 __all__ = ["SsTree"]
@@ -17,13 +17,13 @@ INF = float("inf")
 
 
 class Node:
-    __slots__ = ("_children", "_points", "_centroid", "_radius")
+    __slots__ = ("_children", "_points", "centroid", "radius")
 
     def __init__(self, points: List[Vec3], max_size: int):
         self._children: Optional[List["Node"]] = None
         self._points: Optional[List[Vec3]] = None
-        self._centroid: Vec3 = NULLVEC
-        self._radius: float = 0.0
+        self.centroid: Vec3 = NULLVEC
+        self.radius: float = 0.0
         if len(points) > max_size:
             self._children = _split_points(points, max_size)
         else:
@@ -66,27 +66,23 @@ class Node:
         n = len(points)
         if n:
             centroid = Vec3.sum(points) / n
-            self._centroid = centroid
-            self._radius = max(centroid.distance(p) for p in points)
+            self.centroid = centroid
+            self.radius = max(centroid.distance(p) for p in points)
             return
-        self._centroid = NULLVEC
-        self._radius = 0.0
+        self.centroid = NULLVEC
+        self.radius = 0.0
 
     def clear_points(self):
         self._points = None
-        self._centroid = NULLVEC
-        self._radius = 0.0
-
-    @property
-    def centroid(self) -> Vec3:
-        return self._centroid
+        self.centroid = NULLVEC
+        self.radius = 0.0
 
     def contains(self, point: Vec3) -> bool:
         if self.is_leaf:
             return any(point.isclose(p) for p in self.points)
         else:
             for child in self.children:
-                if point.distance(child._centroid) <= child._radius:
+                if point.distance(child.centroid) <= child.radius:
                     return child.contains(point)
         return False
 
@@ -135,7 +131,7 @@ class Node:
             for child in children:
                 if child is closest_child:
                     continue
-                if target.distance(child._centroid) - child._radius < nn_dist:
+                if target.distance(child.centroid) - child.radius < nn_dist:
                     point, distance = child.nearest_neighbour(
                         target, nn, nn_dist
                     )
@@ -144,23 +140,35 @@ class Node:
                         nn_dist = distance
         return nn, nn_dist
 
-    def points_within_distance(
-        self, center: Vec3, radius: float
-    ) -> Iterator[Vec3]:
+    def points_in_sphere(self, center: Vec3, radius: float) -> Iterator[Vec3]:
         if self.is_leaf:
             for p in self.points:
                 if center.distance(p) <= radius:
                     yield p
         else:
             for child in self.children:
-                if center.distance(child._centroid) - child._radius <= radius:
-                    yield from child.points_within_distance(center, radius)
+                if center.distance(child.centroid) - child.radius <= radius:
+                    yield from child.points_in_sphere(center, radius)
+
+    def points_in_bbox(self, bbox: BoundingBox) -> Iterator[Vec3]:
+        if self.is_leaf:
+            for p in self.points:
+                if bbox.inside(p):
+                    yield p
+        else:
+            bbox_center = bbox.center
+            bbox_size = bbox.size
+            for child in self.children:
+                if _is_sphere_intersecting_bbox(
+                    child.centroid, child.radius, bbox_center, bbox_size
+                ):
+                    yield from child.points_in_bbox(bbox)
 
     def closest_child_index(self, point: Vec3) -> int:
         min_distance: float = INF
         min_index: int = 0
         for index, child in enumerate(self.children):
-            distance = point.distance(child._centroid)
+            distance = point.distance(child.centroid)
             if distance < min_distance:
                 min_distance = distance
                 min_index = index
@@ -198,12 +206,13 @@ class SsTree:
     def nearest_neighbour(self, target: Vec3) -> Optional[Vec3]:
         return self.root.nearest_neighbour(target)[0]
 
-    def points_within_distance(
-        self, center: Vec3, radius: float
-    ) -> Iterator[Vec3]:
-        return self.root.points_within_distance(center, radius)
+    def points_in_sphere(self, center: Vec3, radius: float) -> Iterator[Vec3]:
+        return self.root.points_in_sphere(center, radius)
 
-    def points(self) -> Iterator[Vec3]:
+    def points_in_bbox(self, bbox: BoundingBox) -> Iterator[Vec3]:
+        return self.root.points_in_bbox(bbox)
+
+    def iter_points(self) -> Iterator[Vec3]:
         return self.root.iter_points()
 
 
@@ -254,3 +263,18 @@ def _min_distance(points: Iterable[Vec3], target: Vec3) -> Tuple[Vec3, float]:
             min_distance = distance
             min_point = p
     return min_point, min_distance
+
+
+def _is_sphere_intersecting_bbox(
+    centroid: Vec3, radius: float, center: Vec3, size: Vec3
+) -> bool:
+    distance = centroid - center
+    intersection_distance = size * 0.5 + Vec3(radius, radius, radius)
+    # non-intersection is more often likely:
+    if abs(distance.x) > intersection_distance.x:
+        return False
+    if abs(distance.y) > intersection_distance.y:
+        return False
+    if abs(distance.z) > intersection_distance.z:
+        return False
+    return True

@@ -14,9 +14,15 @@ def test_empty_tree():
 
 class TestFirstLevel:
     def test_add_point(self):
+        point = Vec3(1, 2, 3)
         tree = SsTree([])
-        tree.add(Vec3())
+        tree.add(point)
         assert len(tree) == 1
+
+    def test_contains_point(self):
+        point = Vec3(1, 2, 3)
+        tree = SsTree([point])
+        assert tree.contains(point)
 
     def test_add_two_points(self):
         tree = SsTree([])
