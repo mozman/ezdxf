@@ -288,7 +288,7 @@ class RNode(AbstractNode):
             for child in children:
                 if child is closest_child:
                     continue
-                # can target be inside the child bounding box + nn_dist in all directions
+                # is target inside the child bounding box + nn_dist in all directions
                 if grow_box(child.bbox, nn_dist).inside(target):
                     point, distance = child._nearest_neighbour(
                         target, nn, nn_dist

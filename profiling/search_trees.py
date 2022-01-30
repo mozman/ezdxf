@@ -107,6 +107,21 @@ def profile_sstree_contains_all_points(repeat: int, max_size: int):
     return log
 
 
+def profile_rtree_contains_all_points(repeat: int, max_size: int):
+    log = []
+    for size in range(100, 2000, 100):
+        points = random_points(size, 50.0)
+        tree = RTree(points, max_size)
+        name = f"RTree({size}, {max_size})"
+        t0 = profile(
+            profile_tree_contains_points, repeat, tree, points
+        )
+        time_str = f"{t0:6.2f}s"
+        print(f"{name} contains all points, {repeat}x , {time_str}")
+        log.append((size, t0))
+    return log
+
+
 def profile_sstree_nearest_neighbour(repeat: int, max_size: int):
     log = []
     for size in range(100, 2000, 100):
@@ -119,7 +134,24 @@ def profile_sstree_nearest_neighbour(repeat: int, max_size: int):
             profile_tree_nearest_neighbour, repeat, tree, search_points
         )
         time_str = f"{t0:6.2f}s"
-        print(f"{name} contains all points, {repeat}x , {time_str}")
+        print(f"{name} nearest neighbour, {repeat}x , {time_str}")
+        log.append((size, t0))
+    return log
+
+
+def profile_rtree_nearest_neighbour(repeat: int, max_size: int):
+    log = []
+    for size in range(100, 2000, 100):
+        points = random_points(size, 50.0)
+        tree = RTree(points, max_size)
+        name = f"RTree({size}, {max_size})"
+
+        search_points = random_points(100, 50.0)
+        t0 = profile(
+            profile_tree_nearest_neighbour, repeat, tree, search_points
+        )
+        time_str = f"{t0:6.2f}s"
+        print(f"{name} nearest neighbour, {repeat}x , {time_str}")
         log.append((size, t0))
     return log
 
@@ -172,19 +204,19 @@ def show_log(log, name: str):
     plt.show()
 
 
-PROFILE_SSTREE_BUILD = True
+PROFILE_SSTREE_BUILD = False
 PROFILE_SSTREE_CONTAINS = False
-PROFILE_SSTREE_NEIGHBOUR = False
+PROFILE_SSTREE_NEIGHBOUR = True
 
-PROFILE_RTREE_BUILD = True
+PROFILE_RTREE_BUILD = False
 PROFILE_RTREE_CONTAINS = False
-PROFILE_RTREE_NEIGHBOUR = False
+PROFILE_RTREE_NEIGHBOUR = True
 
 PROFILE_BRUTE_FORCE_CONTAINS = False
 PROFILE_BRUTE_FORCE_NEIGHBOUR = False
 
 if __name__ == "__main__":
-    max_size = 10
+    max_size = 5
     if PROFILE_SSTREE_BUILD:
         log = profile_sstree_building(10, max_size)
         if plt:
@@ -197,6 +229,10 @@ if __name__ == "__main__":
         log = profile_sstree_contains_all_points(10, max_size)
         if plt:
             show_log(log, f"Random SsTree contains all points, max node size={max_size}")
+    if PROFILE_RTREE_CONTAINS:
+        log = profile_rtree_contains_all_points(10, max_size)
+        if plt:
+            show_log(log, f"Random RTree contains all points, max node size={max_size}")
     if PROFILE_BRUTE_FORCE_CONTAINS:
         log = profile_brute_force_contains_all_points(10)
         if plt:
@@ -205,6 +241,10 @@ if __name__ == "__main__":
         log = profile_sstree_nearest_neighbour(10, max_size)
         if plt:
             show_log(log, f"Random SsTree nearest neighbour, max node size={max_size}")
+    if PROFILE_RTREE_NEIGHBOUR:
+        log = profile_rtree_nearest_neighbour(10, max_size)
+        if plt:
+            show_log(log, f"Random RTree nearest neighbour, max node size={max_size}")
     if PROFILE_BRUTE_FORCE_NEIGHBOUR:
         log = profile_brute_force_nearest_neighbour(10)
         if plt:
