@@ -72,18 +72,10 @@ class SNode(AbstractNode):
         self._points: Optional[List[Vec3]] = None
         self.centroid: Vec3 = NULLVEC
         self.radius: float = 0.0
-        n = len(points)
-        if n > max_size:
+        if len(points) > max_size:
             self.set_children(_st_split_points(points, max_size))
-        elif n:  # for inner nodes n == 0
+        else:
             self.set_points(points.copy())
-
-    @classmethod
-    def internal_node(cls, children: List["SNode"], max_size) -> "SNode":
-        assert len(children) <= max_size, "invalid children count"
-        node = cls([], max_size)
-        node.set_children(children)
-        return node
 
     def __len__(self):
         if self._children:
@@ -137,7 +129,9 @@ class SNode(AbstractNode):
 
     def nearest_neighbour(self, target: Vec3) -> Vec3:
         nn = self._nearest_neighbour(target)[0]
-        assert nn is not None, "empty tree should be prevented tree constructor"
+        assert (
+            nn is not None
+        ), "empty tree should be prevented by tree constructor"
         return nn
 
     def _nearest_neighbour(
