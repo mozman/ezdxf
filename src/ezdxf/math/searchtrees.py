@@ -249,8 +249,7 @@ class RNode(AbstractNode):
     def set_points(self, points: List[Vec3]) -> None:
         """Set leaf node content."""
         self._points = points
-        if len(points):
-            self.bbox = BoundingBox(points)
+        self.bbox = BoundingBox(points)
 
     def contains(self, point: Vec3) -> bool:
         if self.is_leaf:
@@ -272,7 +271,7 @@ class RNode(AbstractNode):
         self, target: Vec3, nn: Vec3 = None, nn_dist: float = INF
     ) -> Tuple[Optional[Vec3], float]:
         def grow_box(box: BoundingBox, dist) -> BoundingBox:
-            b = BoundingBox([box.extmin, box.extmax])
+            b = box.copy()
             b.grow(dist)
             return b
 

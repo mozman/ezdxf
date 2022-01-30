@@ -25,6 +25,12 @@ class AbstractBoundingBox:
                 # No or invalid data creates an empty BoundingBox
                 pass
 
+    def copy(self):
+        box = self.__class__()
+        box.extmin = self.extmin
+        box.extmax = self.extmax
+        return box
+
     def __str__(self) -> str:
         return f"[{self.extmin}, {self.extmax}]"
 
