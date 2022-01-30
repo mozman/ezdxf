@@ -11,7 +11,7 @@
 # phase and immutable afterwards. Rebuilding the tree after changing can be
 # very costly.
 
-from typing import List, Optional, Sequence, Iterator, Tuple
+from typing import List, Optional, Sequence, Iterator, Tuple, Callable
 import abc
 import math
 import statistics
@@ -67,13 +67,18 @@ class AbstractSearchTree(abc.ABC):
 class SNode(AbstractNode):
     __slots__ = ("_children", "_points", "centroid", "radius")
 
-    def __init__(self, points: List[Vec3], max_size: int):
+    def __init__(
+        self,
+        points: List[Vec3],
+        max_size: int,
+        split_strategy: Callable[[List[Vec3], int], List["SNode"]],
+    ):
         self._children: Optional[List["SNode"]] = None
         self._points: Optional[List[Vec3]] = None
         self.centroid: Vec3 = NULLVEC
         self.radius: float = 0.0
         if len(points) > max_size:
-            self.set_children(_st_split_points(points, max_size))
+            self.set_children(split_strategy(points, max_size))
         else:
             self.set_points(points.copy())
 
@@ -190,7 +195,7 @@ class SsTree(AbstractSearchTree):
             raise ValueError("max node size must be > 1")
         if len(points) == 0:
             raise ValueError("no points given")
-        self._root = SNode(points, max_node_size)
+        self._root = SNode(points, max_node_size, _st_split_points)
 
 
 def _st_split_points(points: List[Vec3], max_size: int) -> List[SNode]:
@@ -200,7 +205,8 @@ def _st_split_points(points: List[Vec3], max_size: int) -> List[SNode]:
     points = sorted(points, key=lambda vec: vec[dim])
     k = math.ceil(n / max_size)
     children: List[SNode] = [
-        SNode(points[i : i + k], max_size) for i in range(0, n, k)
+        SNode(points[i : i + k], max_size, _st_split_points)
+        for i in range(0, n, k)
     ]
     return children
 
