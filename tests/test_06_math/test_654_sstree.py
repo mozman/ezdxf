@@ -4,7 +4,11 @@
 import pytest
 
 from ezdxf.math import Vec3, SsTree, BoundingBox
-from ezdxf.math.sstree import _min_distance, _point_variances, _split_points
+from ezdxf.math.searchtrees import (
+    _min_distance,
+    _point_variances,
+    _st_split_points,
+)
 
 
 def test_empty_tree():
@@ -13,10 +17,8 @@ def test_empty_tree():
 
 
 class TestFirstLevel:
-    def test_add_point(self):
-        point = Vec3(1, 2, 3)
-        tree = SsTree([])
-        tree.add(point)
+    def test_from_one_point(self):
+        tree = SsTree([Vec3(1, 2, 3)])
         assert len(tree) == 1
 
     def test_contains_point(self):
@@ -24,19 +26,14 @@ class TestFirstLevel:
         tree = SsTree([point])
         assert tree.contains(point)
 
-    def test_add_two_points(self):
-        tree = SsTree([])
-        tree.add(Vec3(1, 2, 3))
-        tree.add(Vec3(3, 2, 1))
+    def test_from_two_points(self):
+        tree = SsTree([Vec3(1, 2, 3), Vec3(3, 2, 1)])
         assert len(tree) == 2
 
-    def test_reject_adding_existing_point(self):
-        """SsTree stores only unique points."""
-        tree = SsTree([])
+    def test_store_duplicate_points(self):
         p = Vec3(1, 2, 3)
-        tree.add(p)
-        tree.add(p)
-        assert len(tree) == 1
+        tree = SsTree([p, p])
+        assert len(tree) == 2
 
 
 class TestBiggerTree:
@@ -80,54 +77,25 @@ class TestBiggerTree:
         assert x_coords == expected_x_coords
 
 
-class TestAddPointsToBigTree:
-    @pytest.fixture
-    def tree(self):
-        return SsTree([Vec3(x, 0, 0) for x in range(100)], max_node_size=5)
-
-    @pytest.mark.parametrize(
-        "point",
-        Vec3.list(
-            [
-                (-1, 0, 0),
-                (100, 0, 0),
-                (50, 1, 0),
-                (50, 0, 1),
-            ]
-        ),
-    )
-    def test_add_point_to_big_tree(self, tree, point: Vec3):
-        tree.add(point)
-        assert len(tree) == 101
-        assert tree.contains(point)
-
-    def test_adding_more_points_to_big_tree(self, tree):
-        points = Vec3.list([(x, 0, 0) for x in range(100, 200)])
-        tree.extend(points)
-        for point in points:
-            assert tree.contains(point)
-            assert tree.nearest_neighbour(point.replace(z=0.1)).isclose(point)
-
-
 class TestSplitPoints:
     def test_max_node_size_must_be_gt_1(self):
         with pytest.raises(AssertionError):
-            _split_points([], 1)
+            _st_split_points([], 1)
 
     def test_point_count_gt_max_node_size(self):
         with pytest.raises(AssertionError):
-            _split_points([], 2)
+            _st_split_points([], 2)
 
     def test_four_points(self):
         points = Vec3.list([(0, 0), (10, 0), (0, 10), (10, 20)])
-        n1, n2 = _split_points(points, 2)
+        n1, n2 = _st_split_points(points, 2)
         assert len(n1) == 2
         assert len(n2) == 2
 
     def test_100_points(self):
         Vec3.random()
         points = [Vec3.random(100) for _ in range(100)]
-        nodes = _split_points(points, 5)
+        nodes = _st_split_points(points, 5)
         assert len(nodes) == 5
         for node in nodes:
             assert len(node) == 20
