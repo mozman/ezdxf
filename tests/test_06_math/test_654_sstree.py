@@ -78,14 +78,6 @@ class TestBiggerTree:
 
 
 class TestSplitPoints:
-    def test_max_node_size_must_be_gt_1(self):
-        with pytest.raises(AssertionError):
-            _st_split_points([], 1)
-
-    def test_point_count_gt_max_node_size(self):
-        with pytest.raises(AssertionError):
-            _st_split_points([], 2)
-
     def test_four_points(self):
         points = Vec3.list([(0, 0), (10, 0), (0, 10), (10, 20)])
         n1, n2 = _st_split_points(points, 2)

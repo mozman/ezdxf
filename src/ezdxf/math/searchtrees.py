@@ -72,9 +72,10 @@ class SNode(AbstractNode):
         self._points: Optional[List[Vec3]] = None
         self.centroid: Vec3 = NULLVEC
         self.radius: float = 0.0
-        if len(points) > max_size:
+        n = len(points)
+        if n > max_size:
             self.set_children(_st_split_points(points, max_size))
-        else:
+        elif n:  # for inner nodes n == 0
             self.set_points(points.copy())
 
     @classmethod
@@ -85,11 +86,9 @@ class SNode(AbstractNode):
         return node
 
     def __len__(self):
-        if self._points:
-            return len(self._points)
         if self._children:
             return sum(len(c) for c in self._children)
-        return 0
+        return len(self.points)
 
     @property
     def is_leaf(self) -> bool:
@@ -102,14 +101,11 @@ class SNode(AbstractNode):
         return self._children
 
     def set_children(self, children: List["SNode"]) -> None:
-        self._points = None  # its an inner node
+        """Set inner node content."""
         self._children = children
         points = list(self.iter_points())
         if len(points):
             self.centroid, self.radius = _get_sphere_params(points)
-            return
-        self.centroid = NULLVEC
-        self.radius = 0.0
 
     @property
     def points(self) -> List[Vec3]:
@@ -118,13 +114,10 @@ class SNode(AbstractNode):
         return self._points
 
     def set_points(self, points: List[Vec3]) -> None:
-        self._children = None  # its a leaf
+        """Set leaf node content."""
         self._points = points
         if len(points):
             self.centroid, self.radius = _get_sphere_params(points)
-            return
-        self.centroid = NULLVEC
-        self.radius = 0.0
 
     def iter_points(self) -> Iterator[Vec3]:
         if self._points is not None:
@@ -203,9 +196,7 @@ class SsTree(AbstractSearchTree):
 
 
 def _st_split_points(points: List[Vec3], max_size: int) -> List[SNode]:
-    assert max_size > 1
     n = len(points)
-    assert n > max_size
     variances: Sequence[float] = _point_variances(points)
     dim = variances.index(max(variances))
     points = sorted(points, key=lambda vec: vec[dim])
@@ -218,9 +209,9 @@ def _st_split_points(points: List[Vec3], max_size: int) -> List[SNode]:
 
 def _point_variances(points: Sequence[Vec3]) -> Sequence[float]:
     if len(points) > 1:
-        x_var = statistics.variance((v.x for v in points))
-        y_var = statistics.variance((v.y for v in points))
-        z_var = statistics.variance((v.z for v in points))
+        x_var = statistics.variance(v.x for v in points)
+        y_var = statistics.variance(v.y for v in points)
+        z_var = statistics.variance(v.z for v in points)
         return x_var, y_var, z_var
     return 0.0, 0.0, 0.0
 
