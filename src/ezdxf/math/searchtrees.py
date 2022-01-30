@@ -7,11 +7,20 @@
 # - RTree: adaptation of SsTree to use rectangular boxes to store vertices
 #   Further information: http://www-db.deis.unibo.it/courses/SI-LS/papers/Gut84.pdf
 #
-# To keep things simple the search tree is buildup at once in the initialization
+# To keep things simple the search tree is buildup once in the initialization
 # phase and immutable afterwards. Rebuilding the tree after changing can be
 # very costly.
 
-from typing import List, Optional, Sequence, Iterator, Tuple, Callable
+from typing import (
+    List,
+    Optional,
+    Sequence,
+    Iterator,
+    Tuple,
+    Callable,
+    TypeVar,
+    Type,
+)
 import abc
 import math
 import statistics
@@ -71,14 +80,14 @@ class SNode(AbstractNode):
         self,
         points: List[Vec3],
         max_size: int,
-        split_strategy: Callable[[List[Vec3], int], List["SNode"]],
+        split_strategy: Callable,
     ):
         self._children: Optional[List["SNode"]] = None
         self._points: Optional[List[Vec3]] = None
         self.centroid: Vec3 = NULLVEC
         self.radius: float = 0.0
         if len(points) > max_size:
-            self.set_children(split_strategy(points, max_size))
+            self.set_children(split_strategy(points, max_size, SNode))
         else:
             self.set_points(points.copy())
 
@@ -197,7 +206,7 @@ class SsTree(AbstractSearchTree):
             raise ValueError("max node size must be > 1")
         if len(points) == 0:
             raise ValueError("no points given")
-        self._root = SNode(points, max_node_size, _st_split_points)
+        self._root = SNode(points, max_node_size, _box_split)
 
 
 class RNode(AbstractNode):
@@ -207,13 +216,13 @@ class RNode(AbstractNode):
         self,
         points: List[Vec3],
         max_size: int,
-        split_strategy: Callable[[List[Vec3], int], List["RNode"]],
+        split_strategy: Callable,
     ):
         self._children: Optional[List["RNode"]] = None
         self._points: Optional[List[Vec3]] = None
         self.bbox = BoundingBox()
         if len(points) > max_size:
-            self.set_children(split_strategy(points, max_size))
+            self.set_children(split_strategy(points, max_size, RNode))
         else:
             self.set_points(points.copy())
 
@@ -327,31 +336,34 @@ class RTree(AbstractSearchTree):
             raise ValueError("max node size must be > 1")
         if len(points) == 0:
             raise ValueError("no points given")
-        self._root = RNode(points, max_node_size, _rt_split_points)
+        self._root = RNode(points, max_node_size, _box_split)
 
 
-def _st_split_points(points: List[Vec3], max_size: int) -> List[SNode]:
+T = TypeVar("T")
+
+
+def _variant_split(points: List[Vec3], max_size: int, cls: Type[T]) -> List[T]:
+    """Slower split strategy"""
     n = len(points)
     variances: Sequence[float] = _point_variances(points)
     dim = variances.index(max(variances))
     points = sorted(points, key=lambda vec: vec[dim])
     k = math.ceil(n / max_size)
-    children: List[SNode] = [
-        SNode(points[i : i + k], max_size, _st_split_points)
-        for i in range(0, n, k)
+    children: List[T] = [
+        cls(points[i : i + k], max_size, _variant_split) for i in range(0, n, k)  # type: ignore
     ]
     return children
 
 
-def _rt_split_points(points: List[Vec3], max_size: int) -> List[RNode]:
+def _box_split(points: List[Vec3], max_size: int, cls: Type[T]) -> List[T]:
+    """Faster split strategy"""
     n = len(points)
-    variances: Sequence[float] = _point_variances(points)
-    dim = variances.index(max(variances))
+    size = BoundingBox(points).size.xyz
+    dim = size.index(max(size))
     points = sorted(points, key=lambda vec: vec[dim])
     k = math.ceil(n / max_size)
-    children: List[RNode] = [
-        RNode(points[i : i + k], max_size, _rt_split_points)
-        for i in range(0, n, k)
+    children: List[T] = [
+        cls(points[i : i + k], max_size, _box_split) for i in range(0, n, k)  # type: ignore
     ]
     return children
 
