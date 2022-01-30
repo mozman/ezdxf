@@ -5,7 +5,6 @@ import pytest
 
 from ezdxf.math import Vec3, SsTree, BoundingBox
 from ezdxf.math.searchtrees import (
-    _min_distance,
     _point_variances,
     _st_split_points,
 )
@@ -106,15 +105,6 @@ def test_point_variances():
 def test_point_variances_for_less_than_2_points():
     assert _point_variances([]) == (0.0, 0.0, 0.0)
     assert _point_variances([Vec3(1, 2, 3)]) == (0.0, 0.0, 0.0)
-
-
-def test_min_distance():
-    points = Vec3.list([(0, 0), (10, 0), (0, 10), (10, 20)])
-    for index in range(len(points)):
-        target = points[index] + (1.5, 0)
-        p1, distance = _min_distance(points, target)
-        assert p1 is points[index]
-        assert distance == pytest.approx(1.5)
 
 
 if __name__ == "__main__":

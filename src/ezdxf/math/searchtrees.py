@@ -144,7 +144,7 @@ class SNode(AbstractNode):
         if self.is_leaf:
             points = self.points
             if len(points):
-                point, distance = _min_distance(points, target)
+                distance, point = min((target.distance(p), p) for p in points)
                 if distance < nn_dist:
                     nn, nn_dist = point, distance
         elif self._children is not None:
@@ -214,17 +214,6 @@ def _point_variances(points: Sequence[Vec3]) -> Sequence[float]:
         z_var = statistics.variance(v.z for v in points)
         return x_var, y_var, z_var
     return 0.0, 0.0, 0.0
-
-
-def _min_distance(points: Iterable[Vec3], target: Vec3) -> Tuple[Vec3, float]:
-    min_distance = INF
-    min_point = target
-    for p in points:
-        distance = target.distance(p)
-        if distance < min_distance:
-            min_distance = distance
-            min_point = p
-    return min_point, min_distance
 
 
 def _is_sphere_intersecting_bbox(
