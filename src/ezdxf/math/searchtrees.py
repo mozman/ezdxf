@@ -18,7 +18,7 @@ import statistics
 
 from ezdxf.math import Vec3, NULLVEC, BoundingBox
 
-__all__ = ["AbstractSearchTree", "SsTree"]
+__all__ = ["AbstractSearchTree", "SsTree", "RTree"]
 
 INF = float("inf")
 
@@ -152,7 +152,7 @@ class SNode(AbstractNode):
                     nn, nn_dist = point, distance
         elif self._children is not None:
             children = self._children
-            closest_child = children[_st_closest_child_index(children, target)]
+            closest_child = _st_closest_child(children, target)
             nn, nn_dist = closest_child._nearest_neighbour(target, nn, nn_dist)
             for child in children:
                 if child is closest_child:
@@ -200,6 +200,137 @@ class SsTree(AbstractSearchTree):
         self._root = SNode(points, max_node_size, _st_split_points)
 
 
+class RNode(AbstractNode):
+    __slots__ = ("_children", "_points", "_bbox")
+
+    def __init__(
+        self,
+        points: List[Vec3],
+        max_size: int,
+        split_strategy: Callable[[List[Vec3], int], List["RNode"]],
+    ):
+        self._children: Optional[List["RNode"]] = None
+        self._points: Optional[List[Vec3]] = None
+        self.bbox = BoundingBox()
+        if len(points) > max_size:
+            self.set_children(split_strategy(points, max_size))
+        else:
+            self.set_points(points.copy())
+
+    def __len__(self):
+        if self._children:
+            return sum(len(c) for c in self._children)
+        return len(self.points)
+
+    @property
+    def is_leaf(self) -> bool:
+        return self._children is None
+
+    @property
+    def children(self) -> List["RNode"]:
+        if self._children is None:
+            return []
+        return self._children
+
+    def set_children(self, children: List["RNode"]) -> None:
+        """Set inner node content."""
+        self._children = children
+        self.bbox = BoundingBox()
+        for child in children:
+            # build union of all child bounding boxes
+            self.bbox.extend([child.bbox.extmin, child.bbox.extmax])
+
+    @property
+    def points(self) -> List[Vec3]:
+        if self._points is None:
+            return []
+        return self._points
+
+    def set_points(self, points: List[Vec3]) -> None:
+        """Set leaf node content."""
+        self._points = points
+        if len(points):
+            self.bbox = BoundingBox(points)
+
+    def contains(self, point: Vec3) -> bool:
+        if self.is_leaf:
+            return any(point.isclose(p) for p in self.points)
+        else:
+            for child in self.children:
+                if child.bbox.inside(point) and child.contains(point):
+                    return True
+        return False
+
+    def nearest_neighbour(self, target: Vec3) -> Vec3:
+        nn = self._nearest_neighbour(target)[0]
+        assert (
+            nn is not None
+        ), "empty tree should be prevented by tree constructor"
+        return nn
+
+    def _nearest_neighbour(
+        self, target: Vec3, nn: Vec3 = None, nn_dist: float = INF
+    ) -> Tuple[Optional[Vec3], float]:
+        def grow_box(box: BoundingBox, dist) -> BoundingBox:
+            b = BoundingBox([box.extmin, box.extmax])
+            b.grow(dist)
+            return b
+
+        if self.is_leaf:
+            points = self.points
+            if len(points):
+                distance, point = min((target.distance(p), p) for p in points)
+                if distance < nn_dist:
+                    nn, nn_dist = point, distance
+        elif self._children is not None:
+            children = self._children
+            closest_child = _rt_closest_child(children, target)
+            nn, nn_dist = closest_child._nearest_neighbour(target, nn, nn_dist)
+            for child in children:
+                if child is closest_child:
+                    continue
+                # can target be inside the child bounding box + nn_dist in all directions
+                if grow_box(child.bbox, nn_dist).inside(target):
+                    point, distance = child._nearest_neighbour(
+                        target, nn, nn_dist
+                    )
+                    if distance < nn_dist:
+                        nn = point
+                        nn_dist = distance
+        return nn, nn_dist
+
+    def points_in_sphere(self, center: Vec3, radius: float) -> Iterator[Vec3]:
+        if self.is_leaf:
+            for p in self.points:
+                if center.distance(p) <= radius:
+                    yield p
+        else:
+            for child in self.children:
+                if _is_sphere_intersecting_bbox(
+                    center, radius, child.bbox.center, child.bbox.size
+                ):
+                    yield from child.points_in_sphere(center, radius)
+
+    def points_in_bbox(self, bbox: BoundingBox) -> Iterator[Vec3]:
+        if self.is_leaf:
+            for p in self.points:
+                if bbox.inside(p):
+                    yield p
+        else:
+            for child in self.children:
+                if bbox.has_overlap(child.bbox):
+                    yield from child.points_in_bbox(bbox)
+
+
+class RTree(AbstractSearchTree):
+    def __init__(self, points: List[Vec3], max_node_size: int = 5):
+        if max_node_size < 2:
+            raise ValueError("max node size must be > 1")
+        if len(points) == 0:
+            raise ValueError("no points given")
+        self._root = RNode(points, max_node_size, _rt_split_points)
+
+
 def _st_split_points(points: List[Vec3], max_size: int) -> List[SNode]:
     n = len(points)
     variances: Sequence[float] = _point_variances(points)
@@ -208,6 +339,19 @@ def _st_split_points(points: List[Vec3], max_size: int) -> List[SNode]:
     k = math.ceil(n / max_size)
     children: List[SNode] = [
         SNode(points[i : i + k], max_size, _st_split_points)
+        for i in range(0, n, k)
+    ]
+    return children
+
+
+def _rt_split_points(points: List[Vec3], max_size: int) -> List[RNode]:
+    n = len(points)
+    variances: Sequence[float] = _point_variances(points)
+    dim = variances.index(max(variances))
+    points = sorted(points, key=lambda vec: vec[dim])
+    k = math.ceil(n / max_size)
+    children: List[RNode] = [
+        RNode(points[i : i + k], max_size, _rt_split_points)
         for i in range(0, n, k)
     ]
     return children
@@ -244,10 +388,15 @@ def _get_sphere_params(points: List[Vec3]) -> Tuple[Vec3, float]:
     return centroid, radius
 
 
-def _st_closest_child_index(children: List[SNode], point: Vec3) -> int:
+def _st_closest_child(children: List[SNode], point: Vec3) -> SNode:
     assert len(children) > 0
-    _, index = min(
-        (point.distance(child.centroid), index)
-        for index, child in enumerate(children)
+    _, node = min((point.distance(child.centroid), child) for child in children)
+    return node
+
+
+def _rt_closest_child(children: List[RNode], point: Vec3) -> RNode:
+    assert len(children) > 0
+    _, node = min(
+        (point.distance(child.bbox.center), child) for child in children
     )
-    return index
+    return node

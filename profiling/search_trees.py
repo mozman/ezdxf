@@ -2,7 +2,7 @@
 # License: MIT License
 import time
 from pathlib import Path
-from ezdxf.math import SsTree, Vec3, closest_point
+from ezdxf.math import SsTree, Vec3, closest_point, RTree
 try:
     import matplotlib.pyplot as plt
 except ImportError:
@@ -18,6 +18,11 @@ def random_points(n, size=1.0):
 def profile_build_time_random_ss_tree(count: int, points, max_node_size: int):
     for _ in range(count):
         SsTree(points, max_node_size)
+
+
+def profile_build_time_random_rtree(count: int, points, max_node_size: int):
+    for _ in range(count):
+        RTree(points, max_node_size)
 
 
 def profile_tree_contains_points(count, tree, points):
@@ -66,6 +71,20 @@ def profile_sstree_building(repeat: int, max_size: int):
         name = f"SsTree({size}, {max_size})"
         t0 = profile(
             profile_build_time_random_ss_tree, repeat, points, max_size
+        )
+        time_str = f"{t0:6.2f}s"
+        print(f"Build random {name}, {repeat}x , {time_str}")
+        log.append((size, t0))
+    return log
+
+
+def profile_rtree_building(repeat: int, max_size: int):
+    log = []
+    for size in range(100, 2000, 100):
+        points = random_points(size, 50.0)
+        name = f"RTree({size}, {max_size})"
+        t0 = profile(
+            profile_build_time_random_rtree, repeat, points, max_size
         )
         time_str = f"{t0:6.2f}s"
         print(f"Build random {name}, {repeat}x , {time_str}")
@@ -153,18 +172,27 @@ def show_log(log, name: str):
     plt.show()
 
 
-PROFILE_BUILD = False
+PROFILE_SSTREE_BUILD = True
 PROFILE_SSTREE_CONTAINS = False
+PROFILE_SSTREE_NEIGHBOUR = False
+
+PROFILE_RTREE_BUILD = True
+PROFILE_RTREE_CONTAINS = False
+PROFILE_RTREE_NEIGHBOUR = False
+
 PROFILE_BRUTE_FORCE_CONTAINS = False
-PROFILE_SSTREE_NEIGHBOUR = True
-PROFILE_BRUTE_FORCE_NEIGHBOUR = True
+PROFILE_BRUTE_FORCE_NEIGHBOUR = False
 
 if __name__ == "__main__":
     max_size = 10
-    if PROFILE_BUILD:
+    if PROFILE_SSTREE_BUILD:
         log = profile_sstree_building(10, max_size)
         if plt:
             show_log(log, f"Build Random SsTree, max node size={max_size}")
+    if PROFILE_RTREE_BUILD:
+        log = profile_rtree_building(10, max_size)
+        if plt:
+            show_log(log, f"Build Random RTree, max node size={max_size}")
     if PROFILE_SSTREE_CONTAINS:
         log = profile_sstree_contains_all_points(10, max_size)
         if plt:
