@@ -30,7 +30,7 @@ from .transformtools import *
 from .curvetools import *
 from .clipping import *
 from .polyline import *
-from .searchtrees import *
+from .rtree import *
 
 ABS_TOL = 1e-12
 REL_TOL = 1e-9

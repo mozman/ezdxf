@@ -4,6 +4,7 @@
 import pytest
 
 from ezdxf.math import Vec3, RTree, BoundingBox
+from ezdxf.math.rtree import _box_split
 
 
 def test_can_not_build_empty_tree():
@@ -59,8 +60,8 @@ class TestBiggerTree:
             (Vec3(99, 0, 0.1), Vec3(99, 0, 0)),
         ],
     )
-    def test_nearest_neighbour(self, tree, n, point):
-        assert tree.nearest_neighbour(n).isclose(point)
+    def test_nearest_neighbor(self, tree, n, point):
+        assert tree.nearest_neighbor(n).isclose(point)
 
     def test_find_points_in_sphere(self, tree):
         points = list(tree.points_in_sphere(Vec3(50, 0, 0), radius=5))
@@ -76,6 +77,18 @@ class TestBiggerTree:
         expected_x_coords = set(range(45, 56))
         x_coords = set(int(p.x) for p in points)
         assert x_coords == expected_x_coords
+
+
+@pytest.mark.parametrize("strategy", [_box_split])
+def test_split_strategies(strategy):
+    Vec3.random()
+    points = [Vec3.random(100) for _ in range(100)]
+    nodes = strategy(points, 5)
+    assert len(nodes) == 5
+    for node in nodes:
+        assert len(node) == 20
+        assert len(node.children) == 5
+        assert len(node.points) == 0
 
 
 if __name__ == "__main__":
