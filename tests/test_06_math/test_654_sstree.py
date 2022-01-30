@@ -7,6 +7,7 @@ from ezdxf.math import Vec3, SsTree, BoundingBox
 from ezdxf.math.searchtrees import (
     _point_variances,
     _variant_split,
+    _box_split,
     SNode
 )
 
@@ -88,22 +89,16 @@ class TestBiggerTree:
         assert x_coords == expected_x_coords
 
 
-class TestSplitPoints:
-    def test_four_points(self):
-        points = Vec3.list([(0, 0), (10, 0), (0, 10), (10, 20)])
-        n1, n2 = _variant_split(points, 2, SNode)
-        assert len(n1) == 2
-        assert len(n2) == 2
-
-    def test_100_points(self):
-        Vec3.random()
-        points = [Vec3.random(100) for _ in range(100)]
-        nodes = _variant_split(points, 5, SNode)
-        assert len(nodes) == 5
-        for node in nodes:
-            assert len(node) == 20
-            assert len(node.children) == 5
-            assert len(node.points) == 0
+@pytest.mark.parametrize("strategy", [_variant_split, _box_split])
+def test_split_strategies(strategy):
+    Vec3.random()
+    points = [Vec3.random(100) for _ in range(100)]
+    nodes = strategy(points, 5, SNode)
+    assert len(nodes) == 5
+    for node in nodes:
+        assert len(node) == 20
+        assert len(node.children) == 5
+        assert len(node.points) == 0
 
 
 def test_point_variances():

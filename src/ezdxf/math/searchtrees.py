@@ -8,8 +8,8 @@
 #   Further information: http://www-db.deis.unibo.it/courses/SI-LS/papers/Gut84.pdf
 #
 # To keep things simple the search tree is buildup once in the initialization
-# phase and immutable afterwards. Rebuilding the tree after changing can be
-# very costly.
+# phase and immutable afterwards. Rebuilding the tree after inserting or deleting
+# nodes is very costly.
 
 from typing import (
     List,

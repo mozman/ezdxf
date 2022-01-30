@@ -4,7 +4,6 @@
 import pytest
 
 from ezdxf.math import Vec3, RTree, BoundingBox
-from ezdxf.math.searchtrees import _rt_split_points
 
 
 def test_can_not_build_empty_tree():
@@ -77,24 +76,6 @@ class TestBiggerTree:
         expected_x_coords = set(range(45, 56))
         x_coords = set(int(p.x) for p in points)
         assert x_coords == expected_x_coords
-
-
-class TestSplitPoints:
-    def test_four_points(self):
-        points = Vec3.list([(0, 0), (10, 0), (0, 10), (10, 20)])
-        n1, n2 = _rt_split_points(points, 2)
-        assert len(n1) == 2
-        assert len(n2) == 2
-
-    def test_100_points(self):
-        Vec3.random()
-        points = [Vec3.random(100) for _ in range(100)]
-        nodes = _rt_split_points(points, 5)
-        assert len(nodes) == 5
-        for node in nodes:
-            assert len(node) == 20
-            assert len(node.children) == 5
-            assert len(node.points) == 0
 
 
 if __name__ == "__main__":
