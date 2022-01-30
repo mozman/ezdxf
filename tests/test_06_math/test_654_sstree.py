@@ -10,9 +10,9 @@ from ezdxf.math.searchtrees import (
 )
 
 
-def test_empty_tree():
-    tree = SsTree([])
-    assert len(tree) == 0
+def test_can_not_build_empty_tree():
+    with pytest.raises(ValueError):
+        SsTree([])
 
 
 class TestFirstLevel:

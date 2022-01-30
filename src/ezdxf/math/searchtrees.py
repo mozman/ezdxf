@@ -11,7 +11,7 @@
 # phase and immutable afterwards. Rebuilding the tree after changing can be
 # very costly.
 
-from typing import List, Optional, Sequence, Iterator, Iterable, Tuple
+from typing import List, Optional, Sequence, Iterator, Tuple
 import abc
 import math
 import statistics
@@ -33,7 +33,7 @@ class AbstractNode(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def nearest_neighbour(self, target: Vec3) -> Optional[Vec3]:
+    def nearest_neighbour(self, target: Vec3) -> Vec3:
         ...
 
     @abc.abstractmethod
@@ -54,7 +54,7 @@ class AbstractSearchTree(abc.ABC):
     def contains(self, point: Vec3) -> bool:
         return self._root.contains(point)
 
-    def nearest_neighbour(self, target: Vec3) -> Optional[Vec3]:
+    def nearest_neighbour(self, target: Vec3) -> Vec3:
         return self._root.nearest_neighbour(target)
 
     def points_in_sphere(self, center: Vec3, radius: float) -> Iterator[Vec3]:
@@ -135,8 +135,10 @@ class SNode(AbstractNode):
                     return child.contains(point)
         return False
 
-    def nearest_neighbour(self, target: Vec3) -> Optional[Vec3]:
-        return self._nearest_neighbour(target)[0]
+    def nearest_neighbour(self, target: Vec3) -> Vec3:
+        nn = self._nearest_neighbour(target)[0]
+        assert nn is not None, "empty tree should be prevented tree constructor"
+        return nn
 
     def _nearest_neighbour(
         self, target: Vec3, nn: Vec3 = None, nn_dist: float = INF
@@ -192,6 +194,8 @@ class SsTree(AbstractSearchTree):
     def __init__(self, points: List[Vec3], max_node_size: int = 5):
         if max_node_size < 2:
             raise ValueError("max node size must be > 1")
+        if len(points) == 0:
+            raise ValueError("no points given")
         self._root = SNode(points, max_node_size)
 
 
