@@ -128,8 +128,10 @@ class SNode(AbstractNode):
             return any(point.isclose(p) for p in self.points)
         else:
             for child in self.children:
-                if point.distance(child.centroid) <= child.radius:
-                    return child.contains(point)
+                if point.distance(
+                    child.centroid
+                ) <= child.radius and child.contains(point):
+                    return True
         return False
 
     def nearest_neighbour(self, target: Vec3) -> Vec3:

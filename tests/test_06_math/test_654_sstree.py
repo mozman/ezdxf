@@ -49,6 +49,17 @@ class TestBiggerTree:
     def test_known_point_is_present(self, tree, point):
         assert tree.contains(point) is True
 
+    def test_tree_structure(self):
+        points = [Vec3.random(50) for _ in range(100)]
+        tree = SsTree(points, 5)
+        check_sstree_node(tree._root)
+
+    def test_contains_all_random_points(self):
+        points = [Vec3.random(50) for _ in range(100)]
+        tree = SsTree(points, 5)
+        for point in points:
+            assert tree.contains(point) is True
+
     @pytest.mark.parametrize(
         "n, point",
         [
@@ -105,6 +116,17 @@ def test_point_variances():
 def test_point_variances_for_less_than_2_points():
     assert _point_variances([]) == (0.0, 0.0, 0.0)
     assert _point_variances([Vec3(1, 2, 3)]) == (0.0, 0.0, 0.0)
+
+
+def check_sstree_node(node):
+    if node.is_leaf:
+        for p in node.iter_points():
+            assert node.centroid.distance(p) <= node.radius
+    else:
+        for node in node.children:
+            for p in node.iter_points():
+                assert node.centroid.distance(p) <= node.radius
+            check_sstree_node(node)
 
 
 if __name__ == "__main__":
