@@ -153,6 +153,12 @@ class RTree:
     queries can be compared by the ``is`` operator for identity to the input
     points.
 
+    The implementation requires a maximum node size of at least 2 and
+    does not support empty trees!
+
+    Raises:
+        ValueError: max. node size too small or no data given
+
     """
 
     __slots__ = ("_root",)
@@ -171,7 +177,7 @@ class RTree:
 
     def contains(self, point: AnyVec) -> bool:
         """Returns ``True`` if `point` exists, the comparison is done by the
-        :meth:`isclose` method and not by th identity operator ``is``.
+        :meth:`isclose` method and not by the identity operator ``is``.
         """
         return self._root.contains(point)
 
