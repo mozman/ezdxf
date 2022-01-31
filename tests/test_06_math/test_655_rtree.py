@@ -4,7 +4,7 @@
 import pytest
 
 from ezdxf.math import Vec3, RTree, BoundingBox
-from ezdxf.math.rtree import _box_split
+from ezdxf.math.rtree import _box_split, InnerNode
 
 
 def test_can_not_build_empty_tree():
@@ -87,8 +87,9 @@ def test_split_strategies(strategy):
     assert len(nodes) == 5
     for node in nodes:
         assert len(node) == 20
+        assert isinstance(node, InnerNode) is True
         assert len(node.children) == 5
-        assert len(node.points) == 0
+
 
 
 if __name__ == "__main__":
