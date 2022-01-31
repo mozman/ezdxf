@@ -1,17 +1,17 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 
-# Immutable Spatial Search Trees:
-# - SsTree: based on the JS algorithm in "Advanced Algorithms and Data Structures"
-#   https://github.com/mlarocca/AlgorithmsAndDataStructuresInAction/tree/master/JavaScript/src/ss_tree
-# - RTree: adaptation of SsTree to use rectangular boxes to store vertices
-#   Further information: http://www-db.deis.unibo.it/courses/SI-LS/papers/Gut84.pdf
+# RTree:
+# Immutable spatial search tree based on the SsTree implementation of the book
+# "Advanced Algorithms and Data Structures"
+# - JS SsTree implementation: https://github.com/mlarocca/AlgorithmsAndDataStructuresInAction/tree/master/JavaScript/src/ss_tree
+# - Research paper of Antonin Guttman: http://www-db.deis.unibo.it/courses/SI-LS/papers/Gut84.pdf
 #
 # To keep things simple the search tree is buildup once in the initialization
 # phase and immutable afterwards. Rebuilding the tree after inserting or deleting
 # nodes is very costly.
 
-from typing import List, Optional, Iterator, Tuple, Callable
+from typing import List, Optional, Iterator, Tuple, Callable, Sequence
 import math
 
 from ezdxf.math import Vec3, BoundingBox
@@ -28,15 +28,15 @@ class Node:
         self,
         points: List[Vec3],
         max_size: int,
-        split_strategy: Callable[[List[Vec3], int], List["Node"]],
+        split_strategy: Callable[[List[Vec3], int], Sequence["Node"]],
     ):
-        self._children: Optional[List["Node"]] = None
-        self._points: Optional[List[Vec3]] = None
+        self._children: Optional[Sequence["Node"]] = None
+        self._points: Optional[Sequence[Vec3]] = None
         self.bbox = BoundingBox()
         if len(points) > max_size:
             self.set_children(split_strategy(points, max_size))
         else:
-            self.set_points(points.copy())
+            self.set_points(points)
 
     def __len__(self):
         if self._children:
@@ -48,28 +48,28 @@ class Node:
         return self._children is None
 
     @property
-    def children(self) -> List["Node"]:
+    def children(self) -> Sequence["Node"]:
         if self._children is None:
-            return []
+            return tuple()
         return self._children
 
-    def set_children(self, children: List["Node"]) -> None:
+    def set_children(self, children: Sequence["Node"]) -> None:
         """Set inner node content."""
-        self._children = children
+        self._children = tuple(children)
         self.bbox = BoundingBox()
         for child in children:
             # build union of all child bounding boxes
             self.bbox.extend([child.bbox.extmin, child.bbox.extmax])
 
     @property
-    def points(self) -> List[Vec3]:
+    def points(self) -> Sequence[Vec3]:
         if self._points is None:
-            return []
+            return tuple()
         return self._points
 
-    def set_points(self, points: List[Vec3]) -> None:
+    def set_points(self, points: Sequence[Vec3]) -> None:
         """Set leaf node content."""
-        self._points = points
+        self._points = tuple(points)
         self.bbox = BoundingBox(points)
 
     def contains(self, point: Vec3) -> bool:
@@ -166,15 +166,15 @@ class RTree:
         return self._root.points_in_bbox(bbox)
 
 
-def _box_split(points: List[Vec3], max_size: int) -> List[Node]:
+def _box_split(points: List[Vec3], max_size: int) -> Sequence[Node]:
     n = len(points)
     size = BoundingBox(points).size.xyz
     dim = size.index(max(size))
     points = sorted(points, key=lambda vec: vec[dim])
     k = math.ceil(n / max_size)
-    children: List[Node] = [
+    children: Sequence[Node] = tuple(
         Node(points[i : i + k], max_size, _box_split) for i in range(0, n, k)
-    ]
+    )
     return children
 
 
@@ -193,7 +193,7 @@ def _is_sphere_intersecting_bbox(
     return True
 
 
-def _rt_closest_child(children: List[Node], point: Vec3) -> Node:
+def _rt_closest_child(children: Sequence[Node], point: Vec3) -> Node:
     assert len(children) > 0
     _, node = min(
         (point.distance(child.bbox.center), child) for child in children
