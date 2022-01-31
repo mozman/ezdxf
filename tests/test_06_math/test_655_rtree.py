@@ -3,7 +3,7 @@
 
 import pytest
 
-from ezdxf.math import Vec3, RTree, BoundingBox
+from ezdxf.math import Vec2, Vec3, RTree, BoundingBox
 from ezdxf.math.rtree import box_split, InnerNode
 
 
@@ -77,6 +77,17 @@ class TestBiggerTree:
         expected_x_coords = set(range(45, 56))
         x_coords = set(int(p.x) for p in points)
         assert x_coords == expected_x_coords
+
+
+def test_Vec2_compatibility():
+    tree = RTree([Vec2(x, 0) for x in range(100)], max_node_size=5)
+    bbox = BoundingBox([(45, 0, 0), (55, 0, 0)])
+    points = list(tree.points_in_bbox(bbox))
+    assert len(points) == 11
+    expected_x_coords = set(range(45, 56))
+    x_coords = set(int(p.x) for p in points)
+    assert x_coords == expected_x_coords
+    assert any(isinstance(p, Vec2) for p in points)
 
 
 @pytest.mark.parametrize("strategy", [box_split])
