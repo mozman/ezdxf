@@ -141,16 +141,16 @@ class RTree:
     The search tree is buildup once at initialization and immutable afterwards,
     because rebuilding the tree after inserting or deleting nodes is very costly
     and also keeps the implementation very simple. Without the ability to
-    alter the content the restriction, which forces the tree balance at growing
-    and shrinking of the original RTree, could be ignore, like the fixed minimum
-    and maximum node size.
+    alter the content the restrictions which forces the tree balance at growing
+    and shrinking of the original RTree, could be ignored, like the fixed
+    minimum and maximum node size.
 
-    This class works internally only with 3D bounding boxes, but also supports
+    This class uses internally only 3D bounding boxes, but also supports
     :class:`Vec2` as well as :class:`Vec3` objects as input data, but point
     types should not be mixed in a single search tree.
 
     The point objects keep their type and identity and the returned points of
-    queries can be compared by the `is` operator for identity to the input
+    queries can be compared by the ``is`` operator for identity to the input
     points.
 
     """
@@ -166,20 +166,31 @@ class RTree:
         self._root = make_node(_points, max_node_size, box_split)
 
     def __len__(self):
+        """Returns the count of points in the search tree."""
         return len(self._root)
 
     def contains(self, point: AnyVec) -> bool:
+        """Returns ``True`` if `point` exists, the comparison is done by the
+        :meth:`isclose` method and not by th identity operator ``is``.
+        """
         return self._root.contains(point)
 
     def nearest_neighbor(self, target: AnyVec) -> AnyVec:
+        """Returns the closest point to the `target` point. """
         return self._root.nearest_neighbor(target)
 
     def points_in_sphere(
         self, center: AnyVec, radius: float
     ) -> Iterator[AnyVec]:
+        """Returns all points in the range of the given sphere including the
+        points at the boundary.
+        """
         return self._root.points_in_sphere(center, radius)
 
     def points_in_bbox(self, bbox: BoundingBox) -> Iterator[AnyVec]:
+        """Returns all points in the range of the given bounding box including
+        the points at the boundary.
+        """
         return self._root.points_in_bbox(bbox)
 
 
