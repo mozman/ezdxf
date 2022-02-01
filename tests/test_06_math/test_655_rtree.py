@@ -61,7 +61,9 @@ class TestBiggerTree:
         ],
     )
     def test_nearest_neighbor(self, tree, n, point):
-        assert tree.nearest_neighbor(n).isclose(point)
+        result, distance = tree.nearest_neighbor(n)
+        assert result.isclose(point)
+        assert distance == pytest.approx(0.1)
 
     def test_find_points_in_sphere(self, tree):
         points = list(tree.points_in_sphere(Vec3(50, 0, 0), radius=5))

@@ -36,7 +36,7 @@ class Node:
     @abc.abstractmethod
     def _nearest_neighbor(
         self, target: AnyVec, nn: AnyVec = None, nn_dist: float = INF
-    ) -> Tuple[Optional[AnyVec], float]:
+    ) -> Tuple[AnyVec, float]:
         ...
 
     @abc.abstractmethod
@@ -49,12 +49,8 @@ class Node:
     def points_in_bbox(self, bbox: BoundingBox) -> Iterator[AnyVec]:
         ...
 
-    def nearest_neighbor(self, target: AnyVec) -> AnyVec:
-        nn = self._nearest_neighbor(target)[0]
-        assert (
-            nn is not None
-        ), "empty tree should be prevented by tree constructor"
-        return nn
+    def nearest_neighbor(self, target: AnyVec) -> Tuple[AnyVec, float]:
+        return self._nearest_neighbor(target)
 
 
 class LeafNode(Node):
@@ -72,7 +68,7 @@ class LeafNode(Node):
 
     def _nearest_neighbor(
         self, target: AnyVec, nn: AnyVec = None, nn_dist: float = INF
-    ) -> Tuple[Optional[AnyVec], float]:
+    ) -> Tuple[AnyVec, float]:
 
         distance, point = min((target.distance(p), p) for p in self.points)
         if distance < nn_dist:
@@ -109,7 +105,7 @@ class InnerNode(Node):
 
     def _nearest_neighbor(
         self, target: AnyVec, nn: AnyVec = None, nn_dist: float = INF
-    ) -> Tuple[Optional[AnyVec], float]:
+    ) -> Tuple[AnyVec, float]:
         closest_child = find_closest_child(self.children, target)
         nn, nn_dist = closest_child._nearest_neighbor(target, nn, nn_dist)
         for child in self.children:
@@ -184,8 +180,10 @@ class RTree:
         """
         return self._root.contains(point)
 
-    def nearest_neighbor(self, target: AnyVec) -> AnyVec:
-        """Returns the closest point to the `target` point. """
+    def nearest_neighbor(self, target: AnyVec) -> Tuple[AnyVec, float]:
+        """Returns the closest point to the `target` point and the distance
+        between this points.
+        """
         return self._root.nearest_neighbor(target)
 
     def points_in_sphere(
