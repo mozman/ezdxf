@@ -218,7 +218,7 @@ class RTree:
     def avg_leaf_size(self, spread: float = 1.0) -> float:
         """Returns the average size of the leaf bounding boxes.
         The size of a leaf bounding box is the maximum size in all dimensions.
-        Exclude outliers of sizes beyond mean + standard deviation * spread.
+        Excludes outliers of sizes beyond mean + standard deviation * spread.
         """
         sizes: List[float] = [
             max(leaf.bbox.size.xyz) for leaf in collect_leafs(self._root)
@@ -227,13 +227,29 @@ class RTree:
 
     def avg_spherical_envelope_radius(self, spread: float = 1.0) -> float:
         """Returns the average radius of spherical envelopes of the leaf nodes.
-        Exclude outliers with radius beyond mean + standard deviation * spread.
+        Excludes outliers with radius beyond mean + standard deviation * spread.
         """
         radii: List[float] = [
             spherical_envelope(leaf.points)[1]
             for leaf in collect_leafs(self._root)
         ]
         return average_exclusive_outliers(radii, spread)
+
+    def avg_nn_distance(self, spread: float = 1.0) -> float:
+        """Returns the average of the nearest neighbor distances inside (!)
+        leaf nodes. Excludes outliers with a distance beyond the overall
+        mean + standard deviation * spread.
+
+        .. warning::
+
+            This is a brute force check with O(n!) for each leaf node, where n
+            is the point count of the leaf node.
+
+        """
+        distances: List[float] = []
+        for leaf in collect_leafs(self._root):
+            distances.extend(nearest_neighbor_distances(leaf.points))
+        return average_exclusive_outliers(distances, spread)
 
 
 def make_node(
@@ -302,6 +318,7 @@ def average_exclusive_outliers(values: List[float], spread: float) -> float:
 
 
 def collect_leafs(node: Node) -> Iterable[LeafNode]:
+    """Yields all leaf nodes below the given node."""
     if isinstance(node, LeafNode):
         yield node
     elif isinstance(node, InnerNode):
@@ -310,6 +327,17 @@ def collect_leafs(node: Node) -> Iterable[LeafNode]:
 
 
 def spherical_envelope(points: Sequence[AnyVec]) -> Tuple[Vec3, float]:
+    """Calculate the spherical envelope of the given points."""
     centroid = Vec3.sum(points) / len(points)
     radius = max(centroid.distance(p) for p in points)
     return centroid, radius
+
+
+def nearest_neighbor_distances(points: Sequence[AnyVec]) -> List[float]:
+    """Brute force calculation of nearest neighbor distances with a
+    complexity of O(n!).
+    """
+    return [
+        min(point.distance(p) for p in points[index + 1 :])
+        for index, point in enumerate(points[:-1])
+    ]

@@ -95,6 +95,9 @@ class TestBiggerTree:
     def test_avg_leaf_size(self, tree):
         assert tree.avg_leaf_size() == pytest.approx(3.0)
 
+    def test_avg_nn_distance(self, tree):
+        assert tree.avg_nn_distance() == pytest.approx(1.0)
+
 
 def test_Vec2_compatibility():
     tree = RTree([Vec2(x, 0) for x in range(100)], max_node_size=5)
@@ -133,6 +136,12 @@ def test_avg_spherical_envelope_radius_of_random_points():
     tree = RTree([Vec3.random(100) for _ in range(100)])
     radius = tree.avg_spherical_envelope_radius()
     assert radius > 10.0
+
+
+def test_avg_nn_distance_of_random_points():
+    tree = RTree([Vec3.random(100) for _ in range(100)])
+    nn_dist = tree.avg_nn_distance()
+    assert nn_dist > 10.0
 
 
 if __name__ == "__main__":
