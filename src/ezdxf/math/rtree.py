@@ -2,8 +2,11 @@
 #  License: MIT License
 # Immutable spatial search tree based on the SsTree implementation of the book
 # "Advanced Algorithms and Data Structures"
-# - JS SsTree implementation: https://github.com/mlarocca/AlgorithmsAndDataStructuresInAction/tree/master/JavaScript/src/ss_tree
-# - Research paper of Antonin Guttman: http://www-db.deis.unibo.it/courses/SI-LS/papers/Gut84.pdf
+# - SsTree JavaScript source code:
+#   (c) 2019, Marcello La Rocca, released under the GNU Affero General Public License v3.0
+#   https://github.com/mlarocca/AlgorithmsAndDataStructuresInAction/tree/master/JavaScript/src/ss_tree
+# - Research paper of Antonin Guttman:
+#   http://www-db.deis.unibo.it/courses/SI-LS/papers/Gut84.pdf
 
 from typing import List, Optional, Iterator, Tuple, Callable, Sequence, Iterable
 import abc
