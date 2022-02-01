@@ -144,5 +144,12 @@ def test_avg_nn_distance_of_random_points():
     assert nn_dist > 10.0
 
 
+def test_avg_methods_return_0_for_too_small_trees():
+    tree = RTree([Vec3()])
+    assert tree.avg_leaf_size() == 0.0
+    assert tree.avg_spherical_envelope_radius() == 0.0
+    assert tree.avg_nn_distance() == 0.0
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

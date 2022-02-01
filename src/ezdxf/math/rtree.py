@@ -219,6 +219,7 @@ class RTree:
         """Returns the average size of the leaf bounding boxes.
         The size of a leaf bounding box is the maximum size in all dimensions.
         Excludes outliers of sizes beyond mean + standard deviation * spread.
+        Returns 0.0 if less than two points in tree.
         """
         sizes: List[float] = [
             max(leaf.bbox.size.xyz) for leaf in collect_leafs(self._root)
@@ -228,6 +229,7 @@ class RTree:
     def avg_spherical_envelope_radius(self, spread: float = 1.0) -> float:
         """Returns the average radius of spherical envelopes of the leaf nodes.
         Excludes outliers with radius beyond mean + standard deviation * spread.
+        Returns 0.0 if less than two points in tree.
         """
         radii: List[float] = [
             spherical_envelope(leaf.points)[1]
@@ -238,7 +240,8 @@ class RTree:
     def avg_nn_distance(self, spread: float = 1.0) -> float:
         """Returns the average of the nearest neighbor distances inside (!)
         leaf nodes. Excludes outliers with a distance beyond the overall
-        mean + standard deviation * spread.
+        mean + standard deviation * spread. Returns 0.0 if less than two points
+        in tree.
 
         .. warning::
 
@@ -305,13 +308,12 @@ def grow_box(box: BoundingBox, dist: float) -> BoundingBox:
 
 
 def average_exclusive_outliers(values: List[float], spread: float) -> float:
-    if len(values):
-        stdev = statistics.stdev(values)
-        mean = sum(values) / len(values)
-    else:
+    if len(values) < 2:
         return 0.0
+    stdev = statistics.stdev(values)
+    mean = sum(values) / len(values)
     max_value = mean + stdev * spread
-    values = [s for s in values if s <= max_value]
+    values = [value for value in values if value <= max_value]
     if len(values):
         return sum(values) / len(values)
     return 0.0
