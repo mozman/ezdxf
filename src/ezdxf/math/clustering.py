@@ -32,23 +32,21 @@ def dbscan(
         raise ValueError("min_points must be >= 2")
 
     clusters: List[Set[AnyVec]] = []
-    done: Set[AnyVec] = set()
-
-    for point in points:
-        if point in done:
-            continue
-        done.add(point)
+    point_set = set(points)
+    while len(point_set):
+        point = point_set.pop()
         todo = {point}
-        cluster: Set[AnyVec] = {point}
+        cluster = {point}  # the cluster has only a single entry if noise
         clusters.append(cluster)
-        while len(todo) > 0:
+        while len(todo):
             chk_point = todo.pop()
             neighbors = search_func(chk_point, radius)
             if len(neighbors) < min_points:
                 continue
             cluster.add(chk_point)
-            done.add(chk_point)
-            todo |= neighbors - done
+            point_set.discard(chk_point)
+            todo |= neighbors.intersection(point_set)
+
     return [list(cluster) for cluster in clusters]
 
 
