@@ -6,7 +6,7 @@ from collections import defaultdict
 from ezdxf.math import AnyVec, RTree, Vec3
 
 
-__all__ = ["dbscan", "dbscan_rt", "k_means"]
+__all__ = ["dbscan", "k_means"]
 
 
 SearchFunc = Callable[[AnyVec, float], Set[AnyVec]]
@@ -16,52 +16,11 @@ def dbscan(
     points: List[AnyVec],
     *,
     radius: float,
-    search_func: SearchFunc,
-    min_points: int = 4,
-) -> List[List[AnyVec]]:
-    """DBSCAN clustering.
-
-    Args:
-        points: list of points to cluster
-        radius: radius of the dense regions
-        search_func: function to search points in the spherical envelope
-            defined by the given center and radius
-        min_points: minimum number of points that needs to be within the
-            `radius` for a point to be a core point (must be >= 2)
-
-    """
-    if min_points < 2:
-        raise ValueError("min_points must be >= 2")
-
-    clusters: List[Set[AnyVec]] = []
-    point_set = set(points)
-    while len(point_set):
-        point = point_set.pop()
-        todo = {point}
-        cluster = {point}  # the cluster has only a single entry if noise
-        clusters.append(cluster)
-        while len(todo):
-            chk_point = todo.pop()
-            neighbors = search_func(chk_point, radius)
-            if len(neighbors) < min_points:
-                continue
-            cluster.add(chk_point)
-            point_set.discard(chk_point)
-            todo |= neighbors.intersection(point_set)
-
-    return [list(cluster) for cluster in clusters]
-
-
-def dbscan_rt(
-    points: List[AnyVec],
-    *,
-    radius: float,
     min_points: int = 4,
     rtree: RTree = None,
     max_node_size: int = 5,
 ) -> List[List[AnyVec]]:
-    """DBSCAN clustering using an given or otherwise automatically created
-    :class:`RTree` as spatial search tree.
+    """DBSCAN clustering.
 
     Args:
         points: list of points to cluster
@@ -72,21 +31,28 @@ def dbscan_rt(
         max_node_size: max node size for internally created RTree
 
     """
+    if min_points < 2:
+        raise ValueError("min_points must be >= 2")
     if rtree is None:
         rtree = RTree(points, max_node_size)
-    return dbscan(
-        points,
-        radius=radius,
-        search_func=rtree_search_func(rtree),
-        min_points=min_points,
-    )
 
+    clusters: List[Set[AnyVec]] = []
+    point_set = set(points)
+    while len(point_set):
+        point = point_set.pop()
+        todo = {point}
+        cluster = {point}  # the cluster has only a single entry if noise
+        clusters.append(cluster)
+        while len(todo):
+            chk_point = todo.pop()
+            neighbors = set(rtree.points_in_sphere(chk_point, radius))
+            if len(neighbors) < min_points:
+                continue
+            cluster.add(chk_point)
+            point_set.discard(chk_point)
+            todo |= neighbors.intersection(point_set)
 
-def rtree_search_func(tree: "RTree") -> SearchFunc:
-    def search(center: AnyVec, radius: float) -> Set[AnyVec]:
-        return set(tree.points_in_sphere(center, radius))
-
-    return search
+    return [list(cluster) for cluster in clusters]
 
 
 def k_means(
@@ -100,6 +66,7 @@ def k_means(
         max_iter: max iterations
 
     """
+
     def classify(centroids):
         clusters: Dict[AnyVec, Set[AnyVec]] = defaultdict(set)
         tree = RTree(centroids)

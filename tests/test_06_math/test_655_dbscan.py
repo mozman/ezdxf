@@ -2,7 +2,7 @@
 #  License: MIT License
 
 import pytest
-from ezdxf.math import dbscan_rt
+from ezdxf.math import dbscan
 from ezdxf.render import forms
 
 
@@ -15,7 +15,7 @@ def test_two_simple_cluster():
     c2 = make_cluster(1.5, 5, 0, 0)
     points = list(c1)
     points.extend(c2)
-    cluster = dbscan_rt(points, radius=2)
+    cluster = dbscan(points, radius=2)
     assert len(cluster) == 2
     cluster.sort()
     assert set(cluster[0]) == set(c1)
@@ -23,7 +23,7 @@ def test_two_simple_cluster():
 
 
 def test_cluster_noise():
-    cluster = dbscan_rt(make_cluster(10, 0, 0, 0), radius=2)
+    cluster = dbscan(make_cluster(10, 0, 0, 0), radius=2)
     assert len(cluster) == 8  # all noise
 
 
