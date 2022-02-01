@@ -8,7 +8,7 @@
 # - Research paper of Antonin Guttman:
 #   http://www-db.deis.unibo.it/courses/SI-LS/papers/Gut84.pdf
 
-from typing import List, Optional, Iterator, Tuple, Callable, Sequence, Iterable
+from typing import List, Iterator, Tuple, Callable, Sequence, Iterable
 import abc
 import math
 
@@ -27,6 +27,10 @@ class Node:
 
     @abc.abstractmethod
     def __len__(self):
+        ...
+
+    @abc.abstractmethod
+    def __iter__(self) -> Iterator[AnyVec]:
         ...
 
     @abc.abstractmethod
@@ -63,6 +67,9 @@ class LeafNode(Node):
     def __len__(self):
         return len(self.points)
 
+    def __iter__(self) -> Iterator[AnyVec]:
+        return iter(self.points)
+
     def contains(self, point: AnyVec) -> bool:
         return any(point.isclose(p) for p in self.points)
 
@@ -96,6 +103,10 @@ class InnerNode(Node):
 
     def __len__(self):
         return sum(len(c) for c in self.children)
+
+    def __iter__(self) -> Iterator[AnyVec]:
+        for child in self.children:
+            yield from iter(child)
 
     def contains(self, point: AnyVec) -> bool:
         for child in self.children:
@@ -173,6 +184,10 @@ class RTree:
     def __len__(self):
         """Returns the count of points in the search tree."""
         return len(self._root)
+
+    def __iter__(self) -> Iterator[AnyVec]:
+        """Yield all points in tree."""
+        yield from iter(self._root)
 
     def contains(self, point: AnyVec) -> bool:
         """Returns ``True`` if `point` exists, the comparison is done by the

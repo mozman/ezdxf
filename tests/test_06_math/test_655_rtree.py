@@ -22,6 +22,11 @@ class TestFirstLevel:
         tree = RTree([point])
         assert tree.contains(point)
 
+    def test_iter_tree(self):
+        point = Vec3(1, 2, 3)
+        tree = RTree([point])
+        assert list(tree) == [point]
+
     def test_from_two_points(self):
         tree = RTree([Vec3(1, 2, 3), Vec3(3, 2, 1)])
         assert len(tree) == 2
@@ -79,6 +84,11 @@ class TestBiggerTree:
         expected_x_coords = set(range(45, 56))
         x_coords = set(int(p.x) for p in points)
         assert x_coords == expected_x_coords
+
+    def test_iter_tree(self, tree):
+        points = list(tree)
+        assert len(points) == 100
+        assert len(points) == len(tree)
 
 
 def test_Vec2_compatibility():

@@ -29,7 +29,7 @@ def profile_tree_contains_points(count, tree, points):
 def profile_tree_nearest_neighbor(count, tree, points):
     for _ in range(count):
         for point in points:
-            assert isinstance(tree.nearest_neighbor(point), Vec3)
+            assert isinstance(tree.nearest_neighbor(point)[0], Vec3)
 
 
 def brute_force_contains(points, point):
