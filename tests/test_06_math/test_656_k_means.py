@@ -4,13 +4,15 @@
 import pytest
 from ezdxf.math import Vec3, k_means
 
+POINTS = [Vec3.random(100) for _ in range(100)]
 
-def test_random_points():
-    points = [Vec3.random(100) for _ in range(100)]
-    clusters = k_means(points, 5, max_iter=5)
-    assert len(clusters) == 5
+
+@pytest.mark.parametrize("k", [4, 5, 6])
+def test_cluster_random_points(k):
+    clusters = k_means(POINTS, k, max_iter=5)
+    assert len(clusters) == k
     assert sum(map(len, clusters)) == 100
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

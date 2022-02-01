@@ -1,8 +1,10 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import List, Callable, Set, Dict
+from typing import List, Callable, Set, Dict, Iterator, Iterable
 import random
 from collections import defaultdict
+import operator
+from functools import reduce
 from ezdxf.math import AnyVec, RTree, Vec3
 
 
@@ -67,28 +69,34 @@ def k_means(
 
     """
 
-    def classify(centroids):
-        clusters: Dict[AnyVec, Set[AnyVec]] = defaultdict(set)
+    def classify(centroids: Iterable[AnyVec]):
+        new_clusters: Dict[AnyVec, List[AnyVec]] = defaultdict(list)
         tree = RTree(centroids)
         for point in points:
             nn, _ = tree.nearest_neighbor(point)
-            clusters[nn].add(point)
-        return clusters
+            new_clusters[nn].append(point)
+        return new_clusters
 
-    def recenter():
-        for points in clusters.values():
-            if len(points):
-                yield Vec3.sum(points) / len(points)
+    def recenter() -> Iterator[AnyVec]:
+        for cluster_points in clusters.values():
+            yield Vec3.sum(cluster_points) / len(cluster_points)
+        if len(clusters) < k:  # refill centroids if required
+            yield from random.sample(points, k - len(clusters))
+
+    def is_equal_clustering(old_clusters, new_clusters):
+        def hash_list(lst):
+            lst.sort()
+            return reduce(operator.xor, map(hash, lst))
+
+        h1 = sorted(map(hash_list, old_clusters.values()))
+        h2 = sorted(map(hash_list, new_clusters.values()))
+        return h1 == h2
 
     assert k < len(points)
-    centroids = set(random.sample(points, k))
-    clusters = classify(centroids)
+    clusters: Dict[AnyVec, List[AnyVec]] = classify(random.sample(points, k))
     for _ in range(max_iter):
-        centroids = set(recenter())
-        counter = 0
-        while len(centroids) < k and counter < 16:
-            counter += 1
-            centroids.add(random.choice(points))
-        clusters = classify(centroids)
-        # todo: break if new clusters are unchanged
-    return [list(p) for p in clusters.values()]
+        new_clusters = classify(recenter())
+        if is_equal_clustering(clusters, new_clusters):
+            break
+        clusters = new_clusters
+    return list(clusters.values())
