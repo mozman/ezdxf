@@ -7,7 +7,7 @@
 #   https://github.com/mlarocca/AlgorithmsAndDataStructuresInAction/tree/master/JavaScript/src/ss_tree
 # - Research paper of Antonin Guttman:
 #   http://www-db.deis.unibo.it/courses/SI-LS/papers/Gut84.pdf
-
+import statistics
 from typing import List, Iterator, Tuple, Callable, Sequence, Iterable
 import abc
 import math
@@ -215,6 +215,26 @@ class RTree:
         """
         return self._root.points_in_bbox(bbox)
 
+    def avg_leaf_size(self, spread: float = 1.0) -> float:
+        """Returns the average size of the leaf bounding boxes.
+        The size of a leaf bounding box is the maximum size in all dimensions.
+        Exclude outliers of sizes beyond mean + standard deviation * spread.
+        """
+        sizes: List[float] = [
+            max(leaf.bbox.size.xyz) for leaf in collect_leafs(self._root)
+        ]
+        return average_exclusive_outliers(sizes, spread)
+
+    def avg_spherical_envelope_radius(self, spread: float = 1.0) -> float:
+        """Returns the average radius of spherical envelopes of the leaf nodes.
+        Exclude outliers with radius beyond mean + standard deviation * spread.
+        """
+        radii: List[float] = [
+            spherical_envelope(leaf.points)[1]
+            for leaf in collect_leafs(self._root)
+        ]
+        return average_exclusive_outliers(radii, spread)
+
 
 def make_node(
     points: List[AnyVec],
@@ -266,3 +286,30 @@ def grow_box(box: BoundingBox, dist: float) -> BoundingBox:
     bbox = box.copy()
     bbox.grow(dist)
     return bbox
+
+
+def average_exclusive_outliers(values: List[float], spread: float) -> float:
+    if len(values):
+        stdev = statistics.stdev(values)
+        mean = sum(values) / len(values)
+    else:
+        return 0.0
+    max_value = mean + stdev * spread
+    values = [s for s in values if s <= max_value]
+    if len(values):
+        return sum(values) / len(values)
+    return 0.0
+
+
+def collect_leafs(node: Node) -> Iterable[LeafNode]:
+    if isinstance(node, LeafNode):
+        yield node
+    elif isinstance(node, InnerNode):
+        for child in node.children:
+            yield from collect_leafs(child)
+
+
+def spherical_envelope(points: Sequence[AnyVec]) -> Tuple[Vec3, float]:
+    centroid = Vec3.sum(points) / len(points)
+    radius = max(centroid.distance(p) for p in points)
+    return centroid, radius

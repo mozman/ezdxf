@@ -3,8 +3,7 @@
 
 import pytest
 
-from ezdxf.math import Vec2, Vec3, RTree, BoundingBox
-from ezdxf.math.rtree import box_split, InnerNode
+from ezdxf.math import Vec2, Vec3, RTree, BoundingBox, rtree
 
 
 def test_can_not_build_empty_tree():
@@ -90,6 +89,12 @@ class TestBiggerTree:
         assert len(points) == 100
         assert len(points) == len(tree)
 
+    def test_avg_spherical_envelope_radius(self, tree):
+        assert tree.avg_spherical_envelope_radius() == pytest.approx(1.5)
+
+    def test_avg_leaf_size(self, tree):
+        assert tree.avg_leaf_size() == pytest.approx(3.0)
+
 
 def test_Vec2_compatibility():
     tree = RTree([Vec2(x, 0) for x in range(100)], max_node_size=5)
@@ -102,16 +107,32 @@ def test_Vec2_compatibility():
     assert any(isinstance(p, Vec2) for p in points)
 
 
-@pytest.mark.parametrize("strategy", [box_split])
+@pytest.mark.parametrize("strategy", [rtree.box_split])
 def test_split_strategies(strategy):
-    Vec3.random()
     points = [Vec3.random(100) for _ in range(100)]
     nodes = strategy(points, 5)
     assert len(nodes) == 5
     for node in nodes:
         assert len(node) == 20
-        assert isinstance(node, InnerNode) is True
+        assert isinstance(node, rtree.InnerNode) is True
         assert len(node.children) == 5
+
+
+def test_collect_leafs():
+    tree = RTree([Vec3.random(100) for _ in range(100)])
+    assert sum(len(leaf) for leaf in rtree.collect_leafs(tree._root)) == 100
+
+
+def test_average_leaf_size_of_random_points():
+    tree = RTree([Vec3.random(100) for _ in range(100)])
+    size = tree.avg_leaf_size()
+    assert size > 10.0
+
+
+def test_avg_spherical_envelope_radius_of_random_points():
+    tree = RTree([Vec3.random(100) for _ in range(100)])
+    radius = tree.avg_spherical_envelope_radius()
+    assert radius > 10.0
 
 
 if __name__ == "__main__":
