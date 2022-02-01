@@ -12,6 +12,7 @@ DATADIR = "data"
 RECOVER1 = "recover01.dxf"
 RECOVER2 = "recover02.dxf"
 CC_DXFLIB = "cc_dxflib.dxf"
+EMPTY_HANDLES = "empty_handles.dxf"
 
 
 def fullpath(name):
@@ -145,3 +146,13 @@ def test_read_cc_dxflib_file():
     msp = doc.modelspace()
     polyline = msp.query("POLYLINE").first
     assert polyline is not None
+
+
+def test_readfile_empty_handles_dxf():
+    doc, auditor = recover.readfile(fullpath(EMPTY_HANDLES))
+    msp = doc.modelspace()
+    assert doc.dxfversion == "AC1009"
+    assert auditor.has_errors is False
+    assert len(msp.query("LINE")) == 8
+    assert len(msp.query("*[layer=='GEOMETRY-CUTTING']")) == 4
+    assert len(msp.query("*[layer=='GEOMETRY-ENGRAVING']")) == 4

@@ -472,6 +472,7 @@ def safe_tag_loader(
     # Apply repair filter:
     tags = repair.tag_reorder_layer(tags)  # type: ignore
     tags = repair.filter_invalid_point_codes(tags)  # type: ignore
+    tags = repair.filter_invalid_handles(tags)  # type: ignore
     return byte_tag_compiler(tags, encoding, messages=messages, errors=errors)
 
 

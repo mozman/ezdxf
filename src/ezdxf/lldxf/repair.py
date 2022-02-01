@@ -191,3 +191,21 @@ def filter_invalid_xdata_group_codes(
     tags: Iterable[DXFTag],
 ) -> Iterator[DXFTag]:
     return (tag for tag in tags if tag.code in VALID_XDATA_GROUP_CODES)
+
+
+def filter_invalid_handles(
+    tags: Iterable[DXFTag],
+) -> Iterator[DXFTag]:
+    handle_code = 5
+    for tag in tags:
+        if tag.code == 0:
+            if tag.value in (b"DIMSTYLE", "DIMSTYLE"):
+                handle_code = 105
+            else:
+                handle_code = 5
+        elif tag.code == handle_code:
+            try:
+                int(tag.value, 16)
+            except ValueError:
+                continue
+        yield tag
