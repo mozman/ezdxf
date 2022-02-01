@@ -17,6 +17,7 @@ def test_two_simple_cluster():
     points.extend(c2)
     cluster = dbscan_rt(points, radius=2)
     assert len(cluster) == 2
+    cluster.sort()
     assert set(cluster[0]) == set(c1)
     assert set(cluster[1]) == set(c2)
 
