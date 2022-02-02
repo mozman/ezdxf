@@ -162,7 +162,9 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: have_bezier_curves_g1_continuity(b1: AnyBezier, b2 AnyBezier, g1_tol: float = 1e-4) -> bool
 
-.. autofunction:: split_bezier(control_points: Sequence[AnyVec], t: float) -> Tuple[List[AnyVec], List[AnyVec]]:
+.. autofunction:: split_bezier(control_points: Sequence[AnyVec], t: float) -> Tuple[List[AnyVec], List[AnyVec]]
+
+.. autofunction:: spherical_envelope(points: Sequence[Vertex]) -> Tuple[Vec3, float]
 
 
 Transformation Classes

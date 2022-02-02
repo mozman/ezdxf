@@ -12,7 +12,7 @@ from typing import List, Iterator, Tuple, Callable, Sequence, Iterable
 import abc
 import math
 
-from ezdxf.math import BoundingBox, AnyVec, Vec3
+from ezdxf.math import BoundingBox, AnyVec, Vec3, spherical_envelope
 
 __all__ = ["RTree"]
 
@@ -326,13 +326,6 @@ def collect_leafs(node: Node) -> Iterable[LeafNode]:
     elif isinstance(node, InnerNode):
         for child in node.children:
             yield from collect_leafs(child)
-
-
-def spherical_envelope(points: Sequence[AnyVec]) -> Tuple[Vec3, float]:
-    """Calculate the spherical envelope of the given points."""
-    centroid = Vec3.sum(points) / len(points)
-    radius = max(centroid.distance(p) for p in points)
-    return centroid, radius
 
 
 def nearest_neighbor_distances(points: Sequence[AnyVec]) -> List[float]:

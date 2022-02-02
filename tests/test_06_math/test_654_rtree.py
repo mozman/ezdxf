@@ -3,7 +3,7 @@
 
 import pytest
 
-from ezdxf.math import Vec2, Vec3, RTree, BoundingBox, rtree
+from ezdxf.math import Vec2, Vec3, RTree, BoundingBox, rtree, spherical_envelope
 
 
 def test_can_not_build_empty_tree():
@@ -149,6 +149,14 @@ def test_avg_methods_return_0_for_too_small_trees():
     assert tree.avg_leaf_size() == 0.0
     assert tree.avg_spherical_envelope_radius() == 0.0
     assert tree.avg_nn_distance() == 0.0
+
+
+def test_spherical_envelope():
+    from ezdxf.render.forms import cube
+
+    center, radius = spherical_envelope(cube(center=True).vertices)
+    assert center.isclose((0, 0, 0))
+    assert radius == pytest.approx(0.8660254037844386)
 
 
 if __name__ == "__main__":
