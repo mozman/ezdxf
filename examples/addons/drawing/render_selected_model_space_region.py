@@ -20,8 +20,6 @@ COLORS = list(range(1, 7))
 DPI = 300
 WIDTH = 400
 HEIGHT = 200
-LEFT = 0
-BOTTOM = 0
 
 doc = ezdxf.new()
 msp = doc.modelspace()
@@ -52,7 +50,7 @@ VIEWPORT_Y = [BOTTOM, BOTTOM, BOTTOM + HEIGHT / 2, BOTTOM + HEIGHT / 2]
 ctx = RenderContext(doc)
 for quarter in [0, 1, 2, 3]:
     # setup drawing add-on:
-    fig = plt.figure(dpi=300)
+    fig = plt.figure(dpi=DPI)
     ax = fig.add_axes([0, 0, 1, 1])
     out = MatplotlibBackend(ax)
 
@@ -62,16 +60,17 @@ for quarter in [0, 1, 2, 3]:
     ax.set_xlim(left, left + WIDTH / 2)
     ax.set_ylim(bottom, bottom + HEIGHT / 2)
 
-    # set entities outside of the plot area invisible:
+    # set entities outside of the render area invisible:
     # Bounding box calculation can be very costly, especially for deep nested
     # block-references! If you did the extents calculation and reuse the cache
     # you already have paid the price:
-    test_box = BoundingBox2d(
-        [(left, bottom), (left + WIDTH / 2, bottom + HEIGHT / 2)])
+    render_area = BoundingBox2d(
+        [(left, bottom), (left + WIDTH / 2, bottom + HEIGHT / 2)]
+    )
 
     for entity in msp:
         entity_bbox = bbox.extents([entity], cache=cache)
-        if test_box.intersect(entity_bbox):
+        if render_area.has_intersection(entity_bbox):
             entity.dxf.invisible = 0
         else:
             entity.dxf.invisible = 1
@@ -86,8 +85,5 @@ for quarter in [0, 1, 2, 3]:
 
     filename = f"lines{quarter}.png"
     print(f'saving to "{filename}"')
-    fig.savefig(filename, dpi=300)
+    fig.savefig(filename, dpi=DPI)
     plt.close(fig)
-
-
-
