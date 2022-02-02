@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2021, Manfred Moitzi
+# Copyright (c) 2016-2022, Manfred Moitzi
 # License: MIT License
 from typing import (
     Iterable,
@@ -11,7 +11,6 @@ from typing import (
 )
 from functools import partial
 import logging
-import warnings
 from .tags import DXFTag
 from .types import POINT_CODES, NONE_TAG, VALID_XDATA_GROUP_CODES
 
@@ -31,22 +30,16 @@ def tag_reorder_layer(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
 
     """
 
-    def value(v) -> str:
-        if type(v) is bytes:
-            return v.decode("ascii", errors="ignore")
-        else:
-            return v
-
     collector: Optional[List] = None
     for tag in tagger:
         if tag.code == 0:
             if collector is not None:
                 # stop collecting if inside of an supported entity
-                entity = value(collector[0].value)
+                entity = _s(collector[0].value)
                 yield from COORDINATE_FIXING_TOOLBOX[entity](collector)
                 collector = None
 
-            if value(tag.value) in COORDINATE_FIXING_TOOLBOX:
+            if _s(tag.value) in COORDINATE_FIXING_TOOLBOX:
                 collector = [tag]
                 # do not yield collected tag yet
                 tag = NONE_TAG
@@ -82,8 +75,7 @@ def filter_invalid_point_codes(tagger: Iterable[DXFTag]) -> Iterable[DXFTag]:
 
     def entity() -> str:
         if handle_tag:
-            handle = handle_tag[1].decode(errors="ignore")
-            return f"in entity #{handle}"
+            return f"in entity #{_s(handle_tag[1])}"
         else:
             return ""
 
@@ -179,12 +171,9 @@ def fix_coordinate_order(tags: "Tags", codes: Sequence[int] = (10, 11)):
     return remaining_tags
 
 
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", category=BytesWarning)
-    COORDINATE_FIXING_TOOLBOX = {
-        "LINE": partial(fix_coordinate_order, codes=(10, 11)),
-        b"LINE": partial(fix_coordinate_order, codes=(10, 11)),
-    }
+COORDINATE_FIXING_TOOLBOX = {
+    "LINE": partial(fix_coordinate_order, codes=(10, 11)),
+}
 
 
 def filter_invalid_xdata_group_codes(
@@ -196,10 +185,14 @@ def filter_invalid_xdata_group_codes(
 def filter_invalid_handles(
     tags: Iterable[DXFTag],
 ) -> Iterator[DXFTag]:
+    line = -1
     handle_code = 5
+    structure_tag = ""
     for tag in tags:
+        line += 2
         if tag.code == 0:
-            if tag.value in (b"DIMSTYLE", "DIMSTYLE"):
+            structure_tag = tag.value
+            if _s(tag.value) == "DIMSTYLE":
                 handle_code = 105
             else:
                 handle_code = 5
@@ -207,5 +200,15 @@ def filter_invalid_handles(
             try:
                 int(tag.value, 16)
             except ValueError:
+                logger.warning(
+                    f'skipped invalid handle "{_s(tag.value)}" in '
+                    f'DXF entity "{_s(structure_tag)}" near line {line}'
+                )
                 continue
         yield tag
+
+
+def _s(b) -> str:
+    if isinstance(b, bytes):
+        return b.decode(encoding="ascii", errors="ignore")
+    return b
