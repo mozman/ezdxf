@@ -24,6 +24,8 @@ def dbscan(
 ) -> List[List[AnyVec]]:
     """DBSCAN clustering.
 
+    https://en.wikipedia.org/wiki/DBSCAN
+
     Args:
         points: list of points to cluster
         radius: radius of the dense regions
@@ -61,6 +63,8 @@ def k_means(
     points: List[AnyVec], k: int, max_iter: int = 10
 ) -> List[List[AnyVec]]:
     """K-means clustering.
+
+    https://en.wikipedia.org/wiki/K-means_clustering
 
     Args:
         points: list of points to cluster
