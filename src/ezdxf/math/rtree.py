@@ -146,7 +146,7 @@ class InnerNode(Node):
 
 
 class RTree:
-    """Immutable spatial search tree loosely based on RTrees.
+    """Immutable spatial search tree loosely based on `RTrees`_.
 
     The search tree is buildup once at initialization and immutable afterwards,
     because rebuilding the tree after inserting or deleting nodes is very costly
@@ -168,6 +168,10 @@ class RTree:
 
     Raises:
         ValueError: max. node size too small or no data given
+
+    .. versionadded:: 0.18
+
+    .. _RTrees: https://en.wikipedia.org/wiki/R-tree
 
     """
 

@@ -1,6 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import List, Callable, Set, Dict, Iterator, Iterable
+from typing import List, Set, Dict, Iterator, Iterable
 import random
 from collections import defaultdict
 import operator
@@ -9,9 +9,6 @@ from ezdxf.math import AnyVec, RTree, Vec3
 
 
 __all__ = ["dbscan", "k_means"]
-
-
-SearchFunc = Callable[[AnyVec, float], Set[AnyVec]]
 
 
 def dbscan(
@@ -33,6 +30,11 @@ def dbscan(
             `radius` for a point to be a core point (must be >= 2)
         rtree: optional RTree
         max_node_size: max node size for internally created RTree
+
+    Returns:
+        list of clusters, each cluster is a list of points
+
+    .. versionadded:: 0.18
 
     """
     if min_points < 2:
@@ -71,6 +73,11 @@ def k_means(
         k: number of clusters
         max_iter: max iterations
 
+    Returns:
+        list of clusters, each cluster is a list of points
+
+    .. versionadded:: 0.18
+
     """
 
     def classify(centroids: Iterable[AnyVec]):
@@ -96,7 +103,10 @@ def k_means(
         h2 = sorted(map(hash_list, new_clusters.values()))
         return h1 == h2
 
-    assert k < len(points)
+    if not (1 < k < len(points)):
+        raise ValueError(
+            "invalid argument k: must be in range [2, len(points)-1]"
+        )
     clusters: Dict[AnyVec, List[AnyVec]] = classify(random.sample(points, k))
     for _ in range(max_iter):
         new_clusters = classify(recenter())

@@ -166,6 +166,9 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: spherical_envelope(points: Sequence[Vertex]) -> Tuple[Vec3, float]
 
+.. autofunction:: dbscan(points: List[AnyVec], *, radius: float, min_points: int = 4, rtree: RTree = None, max_node_size: int = 5) -> List[List[AnyVec]]
+
+.. autofunction:: k_means(points: List[AnyVec], k: int, max_iter: int = 10) -> List[List[AnyVec]]
 
 Transformation Classes
 ======================
@@ -583,6 +586,29 @@ BoundingBox2d
     .. automethod:: intersection(other: BoundingBox2d) -> BoundingBox2d
 
     .. automethod:: rect_vertices() -> Tuple[Vec2, ...]
+
+RTree
+-----
+
+.. autoclass:: RTree(points: Iterable[AnyVec], max_node_size: int = 5)
+
+    .. automethod:: __len__
+
+    .. automethod:: __iter__
+
+    .. automethod:: contains(AnyVec) -> bool
+
+    .. automethod:: nearest_neighbor(target: AnyVec) -> Tuple[AnyVec, float]
+
+    .. automethod:: points_in_sphere(center: AnyVec, radius: float) -> Iterator[AnyVec]
+
+    .. automethod:: points_in_bbox(bbox: BoundingBox) -> Iterator[AnyVec]
+
+    .. automethod:: avg_leaf_size
+
+    .. automethod:: avg_spherical_envelope_radius
+
+    .. automethod:: avg_nn_distance
 
 
 ConstructionRay
