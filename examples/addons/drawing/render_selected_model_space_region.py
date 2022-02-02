@@ -68,15 +68,15 @@ for quarter in [0, 1, 2, 3]:
         [(left, bottom), (left + WIDTH / 2, bottom + HEIGHT / 2)]
     )
 
-    for entity in msp:
+    def is_intersecting_render_area(entity):
+        # returns True if entity should be rendered
         entity_bbox = bbox.extents([entity], cache=cache)
-        if render_area.has_intersection(entity_bbox):
-            entity.dxf.invisible = 0
-        else:
-            entity.dxf.invisible = 1
+        return render_area.has_intersection(entity_bbox)
 
     # finalizing invokes auto-scaling!
-    Frontend(ctx, out).draw_layout(msp, finalize=False)
+    Frontend(ctx, out).draw_layout(
+        msp, finalize=False, filter_func=is_intersecting_render_area
+    )
 
     # set output size in inches
     # width = 6 in x 300 dpi = 1800 px
