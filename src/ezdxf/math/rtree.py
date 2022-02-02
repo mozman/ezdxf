@@ -135,7 +135,7 @@ class InnerNode(Node):
     ) -> Iterator[AnyVec]:
         for child in self.children:
             if is_sphere_intersecting_bbox(
-                center, radius, child.bbox.center, child.bbox.size
+                Vec3(center), radius, child.bbox.center, child.bbox.size
             ):
                 yield from child.points_in_sphere(center, radius)
 
@@ -146,13 +146,13 @@ class InnerNode(Node):
 
 
 class RTree:
-    """Immutable spatial search tree loosely based on `RTrees`_.
+    """Immutable spatial search tree loosely based on `R-trees`_.
 
     The search tree is buildup once at initialization and immutable afterwards,
     because rebuilding the tree after inserting or deleting nodes is very costly
     and also keeps the implementation very simple. Without the ability to
     alter the content the restrictions which forces the tree balance at growing
-    and shrinking of the original RTree, could be ignored, like the fixed
+    and shrinking of the original `R-trees`_, could be ignored, like the fixed
     minimum and maximum node size.
 
     This class uses internally only 3D bounding boxes, but also supports
@@ -171,7 +171,7 @@ class RTree:
 
     .. versionadded:: 0.18
 
-    .. _RTrees: https://en.wikipedia.org/wiki/R-tree
+    .. _R-trees: https://en.wikipedia.org/wiki/R-tree
 
     """
 
@@ -190,7 +190,7 @@ class RTree:
         return len(self._root)
 
     def __iter__(self) -> Iterator[AnyVec]:
-        """Yield all points in tree."""
+        """Yields all points in the search tree."""
         yield from iter(self._root)
 
     def contains(self, point: AnyVec) -> bool:
@@ -283,7 +283,7 @@ def box_split(points: List[AnyVec], max_size: int) -> Sequence[Node]:
 
 
 def is_sphere_intersecting_bbox(
-    centroid: AnyVec, radius: float, center: AnyVec, size: AnyVec
+    centroid: Vec3, radius: float, center: Vec3, size: Vec3
 ) -> bool:
     distance = centroid - center
     intersection_distance = size * 0.5 + Vec3(radius, radius, radius)

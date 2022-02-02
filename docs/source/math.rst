@@ -594,7 +594,7 @@ RTree
 
     .. automethod:: __len__
 
-    .. automethod:: __iter__
+    .. automethod:: __iter__() -> Iterator[AnyVec]
 
     .. automethod:: contains(AnyVec) -> bool
 
