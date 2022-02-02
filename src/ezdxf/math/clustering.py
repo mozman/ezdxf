@@ -2,13 +2,21 @@
 #  License: MIT License
 from typing import List, Set, Dict, Iterator, Iterable
 import random
-from collections import defaultdict
+import statistics
+import itertools
 import operator
+from collections import defaultdict
 from functools import reduce
-from ezdxf.math import AnyVec, RTree, Vec3
+
+from ezdxf.math import AnyVec, RTree, Vec3, spherical_envelope
 
 
-__all__ = ["dbscan", "k_means"]
+__all__ = [
+    "dbscan",
+    "k_means",
+    "average_cluster_radius",
+    "average_intra_cluster_distance",
+]
 
 
 def dbscan(
@@ -114,3 +122,23 @@ def k_means(
             break
         clusters = new_clusters
     return list(clusters.values())
+
+
+def average_intra_cluster_distance(clusters: List[List[AnyVec]]) -> float:
+    """Returns the average point-to-point intra cluster distance."""
+
+    return statistics.mean(
+        [
+            p.distance(q)
+            for cluster in clusters
+            for (p, q) in itertools.combinations(cluster, 2)
+        ]
+    )
+
+
+def average_cluster_radius(clusters: List[List[AnyVec]]) -> float:
+    """Returns the average cluster radius."""
+
+    return statistics.mean(
+        [spherical_envelope(cluster)[1] for cluster in clusters]
+    )
