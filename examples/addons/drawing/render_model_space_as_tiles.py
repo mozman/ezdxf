@@ -63,6 +63,8 @@ def main(rows: int, cols: int):
 
     # Detecting the drawing extents by ezdxf:
     # The bounding box cache can be reused for entity filtering.
+    # This cache is a lightweight object, which is compatible to the pickle
+    # module, DXF entities are referenced by handle strings. (multiprocessing!)
     cache = bbox.Cache()
 
     # The bounding box calculation can take along time for big DXF files!
