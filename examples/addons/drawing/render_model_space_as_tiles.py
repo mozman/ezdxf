@@ -11,7 +11,7 @@ from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
 from ezdxf import bbox
 from ezdxf.math import BoundingBox2d
 
-assert ezdxf.__version__ >= "0.18", "requires newer ezdxf version"
+assert ezdxf.__version__ >= "0.18", "requires ezdxf v0.18b0 or newer"
 
 # This example renders the DXF file in rows by cols tiles including filtering
 # the DXF entities outside the rendering area.
@@ -62,10 +62,16 @@ def main(rows: int, cols: int):
     create_content(msp)
 
     # Detecting the drawing extents by ezdxf:
-    # Reuse bounding box calculation for entity filtering.
+    # The bounding box cache can be reused for entity filtering.
     cache = bbox.Cache()
-    # This can take along time for big DXF files!
-    extents = bbox.extents(msp, cache=cache)
+
+    # The bounding box calculation can take along time for big DXF files!
+    # If flatten=0 the bounding box calculation for curves (SPLINE, ELLIPSE, ...)
+    # is based on the control points of the Path class, this is less precise but
+    # can speed up the calculation and for this task is a precise bounding box
+    # not required.
+    # This has no impact on this example which uses only straight lines
+    extents = bbox.extents(msp, cache=cache, flatten=0)
 
     ctx = RenderContext(doc)
     for tile, render_area in enumerate(render_areas(extents, (rows, cols))):
@@ -79,8 +85,8 @@ def main(rows: int, cols: int):
 
         # Disable rendering of entities outside of the render area:
         def is_intersecting_render_area(entity):
-            # returns True if entity should be rendered
-            entity_bbox = bbox.extents([entity], cache=cache)
+            """Returns True if entity should be rendered. """
+            entity_bbox = bbox.extents([entity], cache=cache, flatten=0)
             return render_area.has_intersection(entity_bbox)
 
         # Finalizing invokes auto-scaling!
@@ -88,9 +94,9 @@ def main(rows: int, cols: int):
             msp, finalize=False, filter_func=is_intersecting_render_area
         )
 
-        # Set output size in inches
-        # width = 6 in x 300 dpi = 1800 px
-        # height = 3 in x 300 dpi = 900 px
+        # Set output size in inches:
+        # width = 6 inch x 300 dpi = 1800 px
+        # height = 3 inch x 300 dpi = 900 px
         fig.set_size_inches(6, 3, forward=True)
 
         filename = f"tile-{tile:02d}.png"
