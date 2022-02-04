@@ -388,13 +388,12 @@ def has_matrix_3d_stretching(m: Matrix44) -> bool:
 
 
 def spherical_envelope(points: Sequence["Vertex"]) -> Tuple[Vec3, float]:
-    """Calculate the spherical envelope of the given points.
+    """Calculate the spherical envelope for the given points.  Returns the
+    centroid (a.k.a. geometric center) and the radius of the enclosing sphere.
 
-    Args:
-        points: points to process
+    .. note::
 
-    Returns:
-        tuple of center and radius of sphere
+        The result does not represent the minimal bounding sphere!
 
     .. versionadded:: 0.18
 
