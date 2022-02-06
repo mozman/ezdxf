@@ -11,7 +11,7 @@ for each exist a specialized builder class:
 - :class:`MultiLeaderMTextBuilder` for :class:`~ezdxf.entities.MText` content
 - :class:`MultiLeaderBlockBuilder` for :class:`~ezdxf.entities.Block` content
 
-The usual steps in a building process are:
+The usual steps of the building process are:
 
     1. create entity by a factory method
 
