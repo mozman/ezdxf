@@ -43,8 +43,6 @@ Render Tools
 DXF Entities
 ------------
 
-- (v0.18) MLEADER: factory methods to create new MLEADER entities
-
 - (>v1.0) ACAD_TABLE entity load and export support beyond `AcadTableBlockContent`
 - (>v1.0) ACAD_TABLE tool to manage content at table and cell basis
 - (>v1.0) GEODATA version 1 support, see mpolygon examples and DXF reference R2009
