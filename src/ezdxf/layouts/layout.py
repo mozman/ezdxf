@@ -697,8 +697,6 @@ class Paperspace(Layout):
             raise const.DXFValueError("Scale numerator can't be 0.")
         if scale_denom == 0:
             raise const.DXFValueError("Scale denominator can't be 0.")
-
-        self.use_standard_scale(False)  # works best, don't know why
         paper_width, paper_height = size
         margin_top, margin_right, margin_bottom, margin_left = margins
         units = units.lower()
@@ -716,6 +714,9 @@ class Paperspace(Layout):
         # Setup PLOTSETTINGS
         # all paper sizes in mm
         dxf = self.dxf_layout.dxf
+        if not dxf.hasattr("plot_layout_flags"):
+            dxf.plot_layout_flags = dxf.get_default("plot_layout_flags")
+        self.use_standard_scale(False)  # works best, don't know why
         dxf.page_setup_name = ""
         dxf.plot_configuration_file = device
         dxf.paper_size = (
