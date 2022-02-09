@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021, Matthew Broadway
+# Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
 import math
 from typing import (
@@ -12,7 +12,7 @@ from typing import (
     Set,
     Optional,
 )
-
+import logging
 from ezdxf.addons.drawing.config import (
     Configuration,
     ProxyGraphicPolicy,
@@ -71,7 +71,10 @@ __all__ = ["Frontend"]
 
 # typedef
 TDispatchTable = Dict[str, Callable[[DXFGraphic, Properties], None]]
-POST_ISSUE_MSG = "Please post sample DXF file at https://github.com/mozman/ezdxf/issues."
+POST_ISSUE_MSG = (
+    "Please post sample DXF file at https://github.com/mozman/ezdxf/issues."
+)
+logger = logging.getLogger("ezdxf")
 
 
 class Frontend:
@@ -141,7 +144,7 @@ class Frontend:
         return dispatch_table
 
     def log_message(self, message: str):
-        print(message)
+        logger.info(message)
 
     def skip_entity(self, entity: DXFEntity, msg: str) -> None:
         self.log_message(f'skipped entity {str(entity)}. Reason: "{msg}"')
@@ -615,7 +618,6 @@ class Frontend:
     def draw_composite_entity(
         self, entity: DXFGraphic, properties: Properties
     ) -> None:
-
         def draw_insert(insert: Insert):
             self.draw_entities(insert.attribs)
             # draw_entities() includes the visibility check:
