@@ -1,5 +1,4 @@
-# Copyright (c) 2013-2021, Manfred Moitzi
-# Copyright (c) 2013-2021, Manfred Moitzi
+# Copyright (c) 2013-2022, Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Sequence, Dict, Tuple, cast, Type
 import math
@@ -1312,13 +1311,6 @@ class CreatorInterface:
             dxfattribs: additional DXF attributes
 
         """
-
-        def to_vector(units_per_pixel, angle_in_rad):
-            x = math.cos(angle_in_rad) * units_per_pixel
-            y = math.sin(angle_in_rad) * units_per_pixel
-            # supports only images in the xy-plane:
-            return Vec3(round(x, 6), round(y, 6), 0)
-
         if self.dxfversion < DXF2000:
             raise DXFVersionError("IMAGE requires DXF R2000")
         dxfattribs = dict(dxfattribs or {})
@@ -1330,8 +1322,8 @@ class CreatorInterface:
         y_angle_rad = x_angle_rad + (math.pi / 2.0)
 
         dxfattribs["insert"] = Vec3(insert)
-        dxfattribs["u_pixel"] = to_vector(x_units_per_pixel, x_angle_rad)
-        dxfattribs["v_pixel"] = to_vector(y_units_per_pixel, y_angle_rad)
+        dxfattribs["u_pixel"] = Vec3.from_angle(x_angle_rad, x_units_per_pixel)
+        dxfattribs["v_pixel"] = Vec3.from_angle(y_angle_rad, y_units_per_pixel)
         dxfattribs["image_def"] = image_def  # is not a real DXF attrib
         return self.new_entity("IMAGE", dxfattribs)  # type: ignore
 

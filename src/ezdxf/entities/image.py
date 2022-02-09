@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 from typing import (
     TYPE_CHECKING,
@@ -502,7 +502,9 @@ acdb_image_def = DefSubclass(
         # Image size in pixels:
         "image_size": DXFAttr(10, xtype=XType.point2d),
         # Default size of one pixel in AutoCAD units:
-        "pixel_size": DXFAttr(11, xtype=XType.point2d, default=(0.01, 0.01)),
+        "pixel_size": DXFAttr(
+            11, xtype=XType.point2d, default=Vec2(0.01, 0.01)
+        ),
         "loaded": DXFAttr(280, default=1),
         # Resolution units - this enums differ from the usual drawing units,
         # units.py, same as for RasterVariables.dxf.units, but only these 3 values

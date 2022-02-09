@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2020, Manfred Moitzi
+# Copyright (c) 2016-2022, Manfred Moitzi
 # License: MIT License
 import pytest
 import logging
@@ -39,13 +39,13 @@ def test_set_raster_variables():
 
 
 def test_imagedef_attribs(image_def):
-    assert "IMAGEDEF" == image_def.dxftype()
-    assert 0 == image_def.dxf.class_version
-    assert "mycat.jpg" == image_def.dxf.filename
-    assert (640.0, 360.0) == image_def.dxf.image_size
-    assert (0.01, 0.01) == image_def.dxf.pixel_size
-    assert 1 == image_def.dxf.loaded
-    assert 0 == image_def.dxf.resolution_units
+    assert image_def.dxftype() == "IMAGEDEF"
+    assert image_def.dxf.class_version == 0
+    assert image_def.dxf.filename == "mycat.jpg"
+    assert image_def.dxf.image_size.isclose((640.0, 360.0))
+    assert image_def.dxf.pixel_size.isclose((0.01, 0.01))
+    assert image_def.dxf.loaded == 1
+    assert image_def.dxf.resolution_units == 0
 
 
 @pytest.fixture(scope="module")
@@ -55,20 +55,20 @@ def image(doc):
 
 def test_image_dxf_attribs(image):
     assert "IMAGE" == image.dxftype()
-    assert (0.0, 0.0, 0.0) == image.dxf.insert
-    assert (0.01, 0.0, 0.0) == image.dxf.u_pixel
-    assert (0.0, 0.01, 0.0) == image.dxf.v_pixel
-    assert (640.0, 360.0) == image.dxf.image_size
-    assert 7 == image.dxf.flags
-    assert 0 == image.dxf.clipping
-    assert 50 == image.dxf.brightness
-    assert 50 == image.dxf.contrast
-    assert 0 == image.dxf.fade
-    assert "DEAD" == image.dxf.image_def_reactor_handle
-    assert 1 == image.dxf.clipping_boundary_type
-    assert 2 == image.dxf.count_boundary_points
+    assert image.dxf.insert.isclose((0.0, 0.0, 0.0))
+    assert image.dxf.u_pixel.isclose((0.01, 0.0, 0.0))
+    assert image.dxf.v_pixel.isclose((0.0, 0.01, 0.0))
+    assert image.dxf.image_size.isclose((640.0, 360.0))
+    assert image.dxf.flags == 7
+    assert image.dxf.clipping == 0
+    assert image.dxf.brightness == 50
+    assert image.dxf.contrast == 50
+    assert image.dxf.fade == 0
+    assert image.dxf.image_def_reactor_handle == "DEAD"
+    assert image.dxf.clipping_boundary_type == 1
+    assert image.dxf.count_boundary_points == 2
     x, y, *_ = image.dxf.image_size
-    assert [(-0.5, -0.5), (x - 0.5, y - 0.5)] == image.boundary_path
+    assert image.boundary_path == [(-0.5, -0.5), (x - 0.5, y - 0.5)]
 
 
 def test_boundary_path(image):
@@ -88,8 +88,8 @@ def test_set_boundary_path(image):
     image.set_boundary_path(
         [(0, 0), (640, 180), (320, 360)]
     )  # 3 vertices triangle
-    assert 4 == image.dxf.count_boundary_points
-    assert 2 == image.dxf.clipping_boundary_type
+    assert image.dxf.count_boundary_points == 4
+    assert image.dxf.clipping_boundary_type == 2
     # auto close
     assert [(0, 0), (640, 180), (320, 360), (0, 0)] == image.boundary_path
     assert image.dxf.clipping == 1
@@ -111,7 +111,7 @@ def test_post_load_hook_creates_image_def_reactor(doc):
     handle = image.dxf.image_def_reactor_handle
     reactor = doc.entitydb[handle]
 
-    assert handle is not None, "must have a ImageDefReactor"
+    assert handle is not None, "must have an ImageDefReactor"
     assert handle != old_reactor_handle, "must have a new ImageDefReactor"
     assert (
         handle in image_def.reactors
@@ -185,13 +185,13 @@ def test_new_image_def(new_doc):
     image_dict = rootdict["ACAD_IMAGE_DICT"]
     assert imagedef.dxf.owner == image_dict.dxf.handle
 
-    assert "mycat.jpg" == imagedef.dxf.filename
-    assert (640.0, 360.0) == imagedef.dxf.image_size
+    assert imagedef.dxf.filename == "mycat.jpg"
+    assert imagedef.dxf.image_size.isclose((640.0, 360.0))
 
     # rest are default values
-    assert (0.01, 0.01) == imagedef.dxf.pixel_size
-    assert 1 == imagedef.dxf.loaded
-    assert 0 == imagedef.dxf.resolution_units
+    assert imagedef.dxf.pixel_size.isclose((0.01, 0.01))
+    assert imagedef.dxf.loaded == 1
+    assert imagedef.dxf.resolution_units == 0
 
 
 def test_create_and_delete_image(new_doc):
@@ -200,16 +200,16 @@ def test_create_and_delete_image(new_doc):
     image = msp.add_image(
         image_def=image_def, insert=(0, 0), size_in_units=(3.2, 1.8)
     )
-    assert (0, 0, 0) == image.dxf.insert
-    assert (0.005, 0, 0) == image.dxf.u_pixel
-    assert (0.0, 0.005, 0) == image.dxf.v_pixel
-    assert (640, 360) == image.dxf.image_size
+    assert image.dxf.insert.isclose((0, 0, 0))
+    assert image.dxf.u_pixel.isclose((0.005, 0, 0))
+    assert image.dxf.v_pixel.isclose((0.0, 0.005, 0))
+    assert image.dxf.image_size.isclose((640, 360))
     assert image_def.dxf.handle == image.dxf.image_def_handle
-    assert 3 == image.dxf.flags
-    assert 0 == image.dxf.clipping
-    assert 2 == image.dxf.count_boundary_points
+    assert image.dxf.flags == 3
+    assert image.dxf.clipping == 0
+    assert image.dxf.count_boundary_points == 2
     x, y = image.dxf.image_size.vec2
-    assert [(-0.5, -0.5), (x - 0.5, y - 0.5)] == image.boundary_path
+    assert image.boundary_path == [(-0.5, -0.5), (x - 0.5, y - 0.5)]
 
     image_def2 = image.image_def
     assert image_def.dxf.handle, image_def2.dxf.handle
