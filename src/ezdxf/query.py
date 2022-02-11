@@ -11,7 +11,7 @@ from typing import (
     List,
     Sequence,
     Union,
-    cast
+    cast,
 )
 import re
 import operator
@@ -118,10 +118,56 @@ class EntityQuery(abc.Sequence):
 
     def __getitem__(self, item):
         """Returns DXFEntity at index `item`, supports negative indices and
-        slicing.
+        slicing. Returns all entities which support a specific DXF attribute,
+        if `item` is a DXF attribute name as string.
+
+        .. versionchanged:: 0.18
+
+            support DXF attribute name as argument
 
         """
+        if isinstance(item, str):
+            return self._get_entities_with_supported_attribute(item)
         return self.entities.__getitem__(item)
+
+    def __setitem__(self, key, value):
+        """Set the DXF attribute `key` for all supported DXF entities to `value`.
+
+        .. versionadded:: 0.18
+
+        """
+        if not isinstance(key, str):
+            raise TypeError("key has to be a string (DXF attribute name)")
+        self._set_dxf_attribute_for_all(key, value)
+
+    def __delitem__(self, key):
+        """Discard the DXF attribute `key` from all supported DXF entities.
+
+        .. versionadded:: 0.18
+
+        """
+        if not isinstance(key, str):
+            raise TypeError("key has to be a string (DXF attribute name)")
+        self._discard_dxf_attribute_for_all(key)
+
+    def _get_entities_with_supported_attribute(
+        self, attribute: str
+    ) -> "EntityQuery":
+        return EntityQuery(
+            e for e in self.entities if e.dxf.is_supported(attribute)
+        )
+
+    def _set_dxf_attribute_for_all(self, key, value):
+        for e in self.entities:
+            try:
+                e.dxf.set(key, value)
+            except AttributeError:  # ignore unsupported attributes
+                pass
+            # But raises ValueError/TypeError for invalid values!
+
+    def _discard_dxf_attribute_for_all(self, key):
+        for e in self.entities:
+            e.dxf.discard(key)
 
     def __iter__(self) -> Iterator["DXFEntity"]:
         """Returns iterable of DXFEntity objects."""
@@ -330,7 +376,7 @@ def build_entity_attributes_matcher(
 
 
 def unique_entities(entities: Iterable["DXFEntity"]) -> Iterable["DXFEntity"]:
-    """Yield all unique entities, order of all entities will be preserved. """
+    """Yield all unique entities, order of all entities will be preserved."""
     handles = set()
     for entity in entities:
         handle = entity.dxf.handle
@@ -340,7 +386,7 @@ def unique_entities(entities: Iterable["DXFEntity"]) -> Iterable["DXFEntity"]:
 
 
 def name_query(names: Iterable[str], query: str = "*") -> Iterable[str]:
-    """ Filters `names` by `query` string. The `query` string of entity names
+    """Filters `names` by `query` string. The `query` string of entity names
     divided by spaces. The special name "*" matches any given name, a
     preceding "!" means exclude this name. Excluding names is only useful if
     the match any name is also given (e.g. "LINE !CIRCLE" is equal to just

@@ -4,7 +4,7 @@ import pytest
 import ezdxf
 
 from ezdxf.query import EntityQuery, name_query
-from ezdxf.entities import Text
+from ezdxf.entities import Text, Line, Circle
 
 
 class TestNameQuery:
@@ -202,3 +202,48 @@ def test_match_default_values():
     assert text.dxf.hasattr("style") is False
     result = EntityQuery([text], "*[style=='Standard']")
     assert result.first is text
+
+
+class TestGetAndSetItemQuery:
+    def test_select_entities_with_supported_attribute(self, modelspace):
+        """EntityQuery.__getitem__("attribute") returns all entities which
+        support the given DXF attribute
+        """
+        query = modelspace.query()
+        assert len(query) == 4, "expected all entities"
+        lines = query["start"]
+        assert len(lines) == 1
+        assert lines.first.dxftype() == "LINE"
+        assert query["center"].first.dxftype() == "CIRCLE"
+
+    def test_set_item_accepts_only_strings_as_key(self):
+        query = EntityQuery()
+        with pytest.raises(TypeError):
+            query[1] = "has to fail"
+        with pytest.raises(TypeError):
+            query[:] = "has to fail"
+
+    def test_set_item_set_supported_dxf_attributes(self):
+        query = EntityQuery([Line(), Circle(), Text()])
+        query["layer"] = "MyLayer"
+        assert all(e.dxf.layer == "MyLayer" for e in query) is True
+
+    def test_set_item_ignores_unsupported_attributes(self):
+        query = EntityQuery([Line(), Text()])
+        query["text"] = "MyText"
+        assert query.query("TEXT").first.dxf.text == "MyText"
+
+    def test_set_item_does_not_ignore_invalid_attribute_values(self):
+        query = EntityQuery([Line(), Text()])
+        with pytest.raises(TypeError):
+            query["start"] = "InvalidVertex"
+        with pytest.raises(ValueError):
+            query["color"] = "red"
+
+    def test_del_item_ignores_unsupported_attributes(self):
+        query = EntityQuery([Line(), Text()])
+        query["layer"] = "MyLayer"
+        del query["layer"]
+        assert query[0].dxf.layer == "0", "expected the default value"
+        assert query[1].dxf.layer == "0", "expected the default value"
+

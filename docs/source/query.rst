@@ -81,6 +81,10 @@ EntityQuery Class
 
     .. automethod:: __getitem__
 
+    .. automethod:: __setitem__
+
+    .. automethod:: __delitem__
+
     .. automethod:: __iter__
 
     .. automethod:: extend
@@ -91,6 +95,50 @@ EntityQuery Class
 
     .. automethod:: groupby
 
+Extended EntityQuery Features
+-----------------------------
+
+.. versionadded:: 0.18
+
+The ``[]`` operator got extended features in version 0.18, until then the
+:class:`EntityQuery` implemented the :meth:`__getitem__` interface like a
+sequence to get entities from the container:
+
+.. code-block:: Python
+
+    result = msp.query(...)
+    first = result[0]
+    last = result[-1]
+    sequence = result[1:-2]  # returns not an EntityQuery container!
+
+Now the :meth:`__getitem__` function accepts an DXF attribute name and returns
+all entities which support this attribute, this is the base for supporting
+queries by relation operators. More on that later.
+
+The :meth:`__setitem__` method the assigns a DXF attribute all supported
+entities in the :class:`EntityQuery` container:
+
+.. code-block:: Python
+
+    result = msp.query(...)
+    result["layer"] = "MyLayer"
+
+Entities which do not support an attribute are silently ignored:
+
+.. code-block:: Python
+
+    result = msp.query(...)
+    result["center"] = (0, 0)  # set center only of CIRCLE and ARC entities
+
+The :meth:`__delitem__` method discards DXF attributes from all entities in
+the :class:`EntityQuery` container:
+
+.. code-block:: Python
+
+    result = msp.query(...)
+    # reset the layer attribute from all entities in container result to the
+    # default layer "0"
+    del result["layer"]
 
 The new() Function
 ------------------
