@@ -39,6 +39,8 @@ Version 0.18b1 - dev
 - NEW: arguments `height` and `rotation`for factory methods `add_text()` and `add_attdef()`
 - CHANGE: keyword only argument `dxfattribs` for factory methods `add_text()` and `add_attdef()`
 - CHANGE: `recover` module - recovered integer and float values are logged as severe errors
+- CHANGE: method `Path.all_lines_to_curve3` replaced by function `path.lines_to_curve3()`
+- CHANGE: method `Path.all_lines_to_curve4` replaced by function `path.lines_to_curve4()`
 - BUGFIX: add missing caret decoding to `fast_plain_mtext()` [#620](https://github.com/mozman/ezdxf/issues/620)
 
 Version 0.17.2 - 2022-01-06

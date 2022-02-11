@@ -213,6 +213,10 @@ Utility Functions
 
 .. autofunction:: have_close_control_vertices(a: Path, b: Path, *, rel_tol=1e-9, abs_tol=1e-12) -> bool
 
+.. autofunction:: lines_to_curve3(path: Path) -> Path
+
+.. autofunction:: lines_to_curve4(path: Path) -> Path
+
 Basic Shapes
 ------------
 
@@ -288,11 +292,6 @@ The Path Class
     .. automethod:: append_path(path: Path)
 
     .. automethod:: extend_multi_path(path: Path)
-
-    .. automethod:: all_lines_to_curve3
-
-    .. automethod:: all_lines_to_curve4
-
 
 .. _PathPatch: https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.patches.PathPatch.html#matplotlib.patches.PathPatch
 .. _QPainterPath: https://doc.qt.io/qt-5/qpainterpath.html

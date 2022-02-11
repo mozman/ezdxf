@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
 from typing import (
     TYPE_CHECKING,
@@ -6,12 +6,10 @@ from typing import (
     Iterable,
     Tuple,
     Optional,
-    Dict,
     Sequence,
 )
 
 import math
-import itertools
 from ezdxf.math import (
     Vec3,
     Z_AXIS,
@@ -25,11 +23,13 @@ from ezdxf.math import (
     BSpline,
     reverse_bezier_curves,
     bulge_to_arc,
+    linear_vertex_spacing,
 )
 
 from ezdxf.query import EntityQuery
 
 from .path import Path
+from .commands import Command
 from . import converter
 
 if TYPE_CHECKING:
@@ -55,6 +55,8 @@ __all__ = [
     "to_multi_path",
     "single_paths",
     "have_close_control_vertices",
+    "lines_to_curve3",
+    "lines_to_curve4",
 ]
 
 MAX_DISTANCE = 0.01
@@ -728,3 +730,57 @@ def have_close_control_vertices(
         cp_a.isclose(cp_b, rel_tol=rel_tol, abs_tol=abs_tol)
         for cp_a, cp_b in zip(a.control_vertices(), b.control_vertices())
     )
+
+
+def lines_to_curve3(path: Path) -> Path:
+    """Replaces all lines by quadratic Bézier curves.
+    Returns a new :class:`Path` instance.
+    """
+    return _all_lines_to_curve(path, count=3)
+
+
+def lines_to_curve4(path: Path) -> Path:
+    """Replaces all lines by cubic Bézier curves.
+    Returns a new :class:`Path` instance.
+    """
+    return _all_lines_to_curve(path, count=4)
+
+
+def _all_lines_to_curve(path: Path, count: int = 4) -> Path:
+    assert count == 4 or count == 3, f"invalid count: {count}"
+
+    cmds = path.commands()
+    size = len(cmds)
+    if size == 0:  # empty path
+        return Path()
+    start = path.start
+    line_to = Command.LINE_TO
+    new_path = Path(path.start)
+    for cmd in cmds:
+        if cmd.type == line_to:
+            if start.isclose(cmd.end):
+                if size == 1:
+                    # Path has only one LINE_TO command which should not be
+                    # removed:
+                    # 1. may represent a point
+                    # 2. removing the last segment turns the path into
+                    #    an empty path - unexpected behavior?
+                    new_path.append_path_element(cmd)
+                    return new_path
+                # else remove line segment (start==end)
+            else:
+                vertices = linear_vertex_spacing(start, cmd.end, count)
+                if count == 3:
+                    new_path.curve3_to(
+                        vertices[2], ctrl=vertices[1]
+                    )
+                else:  # count == 4
+                    new_path.curve4_to(
+                        vertices[3],
+                        ctrl1=vertices[1],
+                        ctrl2=vertices[2],
+                    )
+        else:
+            new_path.append_path_element(cmd)
+        start = cmd.end
+    return new_path

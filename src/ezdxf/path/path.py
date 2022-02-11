@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
 from typing import (
     List,
@@ -169,7 +169,7 @@ class Path(abc.Sequence):
         """
         if self.has_sub_paths:
             raise TypeError("can't detect orientation of a multi-path object")
-        return has_clockwise_orientation(self.control_vertices())
+        return has_clockwise_orientation(self._vertices)
 
     def append_path_element(self, cmd: PathElement) -> None:
         """Append a single path element."""
