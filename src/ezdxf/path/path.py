@@ -8,8 +8,6 @@ from typing import (
     no_type_check,
     Any,
 )
-from collections import abc
-
 from ezdxf.math import (
     Vec3,
     NULLVEC,
@@ -38,7 +36,7 @@ MIN_SEGMENTS = 4
 G1_TOL = 1e-4
 
 
-class Path(abc.Sequence):
+class Path:
     __slots__ = (
         "_vertices",
         "_start_index",
@@ -57,9 +55,12 @@ class Path(abc.Sequence):
         self._user_data: Any = None  # should be immutable data!
 
     def __len__(self) -> int:
+        """Returns count of path elements."""
         return len(self._commands)
 
     def __getitem__(self, item) -> PathElement:
+        """Returns the path element at given index, slicing is not supported.
+        """
         if isinstance(item, slice):
             raise TypeError("slicing not supported")
         cmd = self._commands[item]
@@ -77,8 +78,12 @@ class Path(abc.Sequence):
             )
         raise ValueError(f"Invalid command: {cmd}")
 
+    def __iter__(self) -> Iterator[PathElement]:
+        return (self[i] for i in range(len(self._commands)))
+
     def commands(self) -> List[PathElement]:
-        return [self[i] for i in range(len(self._commands))]
+        """Returns all path elements as list."""
+        return list(self.__iter__())
 
     def __copy__(self) -> "Path":
         """Returns a new copy of :class:`Path` with shared immutable data."""

@@ -259,7 +259,7 @@ The Path Class
 
     .. automethod:: sub_paths() -> Iterable[Path]
 
-    .. automethod:: control_vertices
+    .. automethod:: control_vertices() -> List[Vec3]
 
     .. automethod:: has_clockwise_orientation
 
