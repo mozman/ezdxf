@@ -204,7 +204,7 @@ def test_match_default_values():
     assert result.first is text
 
 
-class TestGetAndSetItemQuery:
+class TestGetSetDelItemInterface:
     def test_select_entities_with_supported_attribute(self, modelspace):
         """EntityQuery.__getitem__("attribute") returns all entities which
         support the given DXF attribute
@@ -213,6 +213,8 @@ class TestGetAndSetItemQuery:
         assert len(query) == 4, "expected all entities"
         lines = query["start"]
         assert len(lines) == 1
+        assert lines.dxf_attribute == "start"
+
         assert lines.first.dxftype() == "LINE"
         assert query["center"].first.dxftype() == "CIRCLE"
 
@@ -247,3 +249,42 @@ class TestGetAndSetItemQuery:
         assert query[0].dxf.layer == "0", "expected the default value"
         assert query[1].dxf.layer == "0", "expected the default value"
 
+
+class TestEntityQueryRelationOperators:
+    def test_no_selected_dxf_attribute_raises_type_error(self):
+        query = EntityQuery()
+        with pytest.raises(TypeError):
+            query == "MyLayer"
+
+    def test_is_equal_operator(self):
+        query = EntityQuery(
+            [
+                Line.new(dxfattribs={"layer": "Lay1"}),
+                Text.new(dxfattribs={"layer": "Lay2"}),
+            ]
+        )
+        result = query["layer"] == "Lay1"
+        assert len(result) == 1
+        assert result.first.dxftype() == "LINE"
+        assert result.dxf_attribute == "layer", "selection should be propagated"
+
+    def test_is_not_equal_operator(self):
+        query = EntityQuery(
+            [
+                Line.new(dxfattribs={"layer": "Lay1"}),
+                Text.new(dxfattribs={"layer": "Lay2"}),
+            ]
+        )
+        result = query["layer"] != "Lay1"
+        assert len(result) == 1
+        assert result.first.dxftype() == "TEXT"
+
+    def test_query_is_case_insensitive_by_default(self):
+        query = EntityQuery(
+            [
+                Line.new(dxfattribs={"layer": "Lay1"}),
+                Text.new(dxfattribs={"layer": "LaY1"}),
+            ]
+        )
+        result = query["layer"] == "LAY1"
+        assert len(result) == 2

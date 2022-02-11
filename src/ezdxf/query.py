@@ -11,7 +11,6 @@ from typing import (
     List,
     Sequence,
     Union,
-    cast,
 )
 import re
 import operator
@@ -103,6 +102,10 @@ class EntityQuery(abc.Sequence):
             query: query string, see class documentation
 
         """
+        self._selected_dxf_attribute: str = ""
+        # Only for operator comparisons!
+        self.case_insensitive = True
+
         self.entities: List["DXFEntity"]
         if entities is None:
             self.entities = []
@@ -150,12 +153,56 @@ class EntityQuery(abc.Sequence):
             raise TypeError("key has to be a string (DXF attribute name)")
         self._discard_dxf_attribute_for_all(key)
 
+    def __eq__(self, other):
+        if not self._selected_dxf_attribute:
+            raise TypeError("no DXF attribute selected")
+        return self._select_by_operator(other, operator.eq)
+
+    def __ne__(self, other):
+        if not self._selected_dxf_attribute:
+            raise TypeError("no DXF attribute selected")
+        return self._select_by_operator(other, operator.ne)
+
+    def _select_by_operator(self, value, op) -> "EntityQuery":
+        attribute = self._selected_dxf_attribute
+        if self.case_insensitive and isinstance(value, str):
+            value = value.lower()
+
+        query = self.__class__()
+        query.dxf_attribute = attribute
+        entities = query.entities
+        if attribute:
+            for entity in self.entities:
+                try:
+                    entity_value = entity.dxf.get_default(attribute)
+                except AttributeError:
+                    continue
+                if self.case_insensitive and isinstance(entity_value, str):
+                    entity_value = entity_value.lower()
+                if op(entity_value, value):
+                    entities.append(entity)
+        return query
+
     def _get_entities_with_supported_attribute(
         self, attribute: str
     ) -> "EntityQuery":
-        return EntityQuery(
+        query = self.__class__(
             e for e in self.entities if e.dxf.is_supported(attribute)
         )
+        query.dxf_attribute = attribute
+        return query
+
+    @property
+    def dxf_attribute(self) -> str:
+        return self._selected_dxf_attribute
+
+    @dxf_attribute.setter
+    def dxf_attribute(self, value: str) -> None:
+        self._selected_dxf_attribute = value
+
+    @dxf_attribute.deleter
+    def dxf_attribute(self) -> None:
+        self._selected_dxf_attribute = ""
 
     def _set_dxf_attribute_for_all(self, key, value):
         for e in self.entities:

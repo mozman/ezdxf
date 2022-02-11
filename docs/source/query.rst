@@ -140,6 +140,40 @@ the :class:`EntityQuery` container:
     # default layer "0"
     del result["layer"]
 
+Selection by Relation Operators
+-------------------------------
+
+.. versionadded:: 0.18
+
+The attribute selection by :meth:`__getitem__` allows further selections by
+comparison operators:
+
+.. code-block:: Python
+
+    msp.add_line((0, 0), (1, 0), dxfattribs={"layer": "MyLayer})
+    lines = msp.query("LINE")
+    # select all entities on layer "MyLayer"
+    entities = lines["layer"] == "MyLayer"
+    assert len(entities) == 1
+
+    # or select all except the entities on layer "MyLayer"
+    entities = lines["layer"] != "MyLayer"
+
+The selection by operator is case insensitive by default, because all DXF table
+entries are handled case insensitive. But if required the selection mode can
+be set to case sensitive:
+
+.. code-block:: Python
+
+    lines = msp.query("LINE")
+    # use case sensitive selection: "MyLayer" != "MYLAYER"
+    lines.case_insensitive = False
+    entities = lines["layer"] == "MYLAYER"
+    assert len(entities) == 0
+
+    # the entities container has the default setting:
+    assert entities.case_insensitive is True
+
 The new() Function
 ------------------
 
