@@ -20,7 +20,7 @@ __all__ = [
     "DXFTagsRole",
 ]
 
-DXFTagsRole = Qt.UserRole + 1
+DXFTagsRole = Qt.UserRole + 1  # type: ignore
 
 
 def name_fmt(handle, name: str) -> str:
