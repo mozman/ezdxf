@@ -27,7 +27,7 @@ class TestFromMatplotlibPath:
             paths[0][-1].type != path.Command.LINE_TO
         ), "did not expected LINE_TO as last command"
 
-        commands = paths[0][:-1]
+        commands = list(paths[0])[:-1]
         assert all(
             (cmd.type == path.Command.CURVE3_TO for cmd in commands)
         ), "expected only CURVE3_TO commands"

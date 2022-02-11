@@ -135,116 +135,6 @@ def test_sub_paths_inherit_parent_user_data():
         assert p.user_data == "data"
 
 
-class TestAllLinesToCurveConverter:
-    def test_create_a_curve3_command(self):
-        path = Path()
-        path.line_to((1, 0))
-        path.all_lines_to_curve3()
-        assert path[0].type == Command.CURVE3_TO
-
-    def test_create_a_curve4_command(self):
-        path = Path()
-        path.line_to((1, 0))
-        path.all_lines_to_curve4()
-        assert path[0].type == Command.CURVE4_TO
-
-    @pytest.mark.parametrize(
-        "method_name",
-        [
-            "all_lines_to_curve3",
-            "all_lines_to_curve4",
-        ],
-    )
-    def test_line_to_curve_creates_a_linear_segment(self, method_name):
-        v1, v2 = 1, 2
-        path = Path(start=(v1, v1, v1))
-        path.line_to((v2, v2, v2))
-        getattr(path, method_name)()
-        vertices = list(path.flattening(1))
-        assert len(vertices) > 2
-        assert all(
-            [
-                math.isclose(v.x, v.y) and math.isclose(v.x, v.z)
-                for v in vertices
-            ]
-        ), "all vertices have to be located along a line (x == y == z)"
-
-    def test_remove_line_segments_of_zero_length_at_the_start(self):
-        # CURVE3_TO and CURVE4_TO can not process zero length segments
-        path = Path()
-        path.line_to((0, 0))  # line segment of length==0 should be removed
-        path.line_to((1, 0))
-        path.all_lines_to_curve4()
-        assert len(path) == 1
-        assert path.start == (0, 0)
-        assert path[0].type == Command.CURVE4_TO
-        assert path[0].end == (1, 0)
-
-    def test_remove_line_segments_of_zero_length_between_commands(self):
-        # CURVE3_TO and CURVE4_TO can not process zero length segments
-        path = Path()
-        path.line_to((1, 0))
-        path.line_to((1, 0))  # line segment of length==0 should be removed
-        path.line_to((2, 0))
-        path.all_lines_to_curve4()
-        assert len(path) == 2
-        assert path.start == (0, 0)
-        assert path[0].type == Command.CURVE4_TO
-        assert path[0].end == (1, 0)
-        assert path[1].type == Command.CURVE4_TO
-        assert path[1].end == (2, 0)
-
-    def test_remove_line_segments_of_zero_length_at_the_end(self):
-        # CURVE3_TO and CURVE4_TO can not process zero length segments
-        path = Path()
-        path.line_to((1, 0))
-        path.line_to((1, 0))  # line segment of length==0 should be removed
-        path.all_lines_to_curve4()
-        assert len(path) == 1
-        assert path.start == (0, 0)
-        assert path[0].type == Command.CURVE4_TO
-        assert path[0].end == (1, 0)
-
-    def test_does_not_remove_a_line_representing_a_single_point(self):
-        path = Path((1, 0))
-        path.line_to((1, 0))  # represents the point (1, 0)
-        path.all_lines_to_curve4()
-        assert len(path) == 1
-        assert path[0].type == Command.LINE_TO
-
-    @pytest.mark.parametrize(
-        "start,delta",
-        [
-            (0, 1e-11),  # uses absolute tolerance of 1e-12 near zero!
-            (10, 1e-8),  # uses relative tolerance of 1e-9 away from zero!
-        ],
-    )
-    def test_for_very_short_line_segments(self, start, delta):
-        path = Path((start, 0, 0))
-        path.line_to((start + delta, 0, 0))
-        path.all_lines_to_curve4()
-        assert len(path) == 1
-        assert path[0].type == Command.CURVE4_TO
-        assert len(list(path.flattening(1))) > 3
-
-    @pytest.mark.parametrize(
-        "start,delta",
-        [
-            (0, 1e-12),  # uses absolute tolerance of 1e-12 near zero!
-            (10, 1e-9),  # uses relative tolerance of 1e-9 away from zero!
-        ],
-    )
-    def test_which_length_is_too_short_to_create_a_curve(self, start, delta):
-        path = Path((start, 0, 0))
-        path.line_to((start + delta, 0, 0))
-        path.all_lines_to_curve4()
-        assert len(path) == 1
-        assert (
-            path[0].type == Command.LINE_TO
-        ), "should not remove a single line segment representing a point"
-        assert len(list(path.flattening(1))) == 2
-
-
 def test_add_curves3():
     path = Path()
     c1 = Bezier3P(((0, 0), (1, 1), (2, 0)))
@@ -777,9 +667,8 @@ def p1():
 
 def test_path_cloning(p1):
     p2 = p1.clone()
-    # p1 and p2 share immutable data:
     for cmd1, cmd2 in zip(p1, p2):
-        assert cmd1 is cmd2
+        assert cmd1 == cmd2
 
     # but have different command lists:
     p2.line_to((4, 4))
@@ -855,11 +744,18 @@ def test_reversing_one_curve4():
     assert close_vectors(p2, [(3, 0), (2, 1), (1, 1), (0, 0)])
 
 
-def test_reversing_path(p1):
+def test_reversing_path_ctrl_vertices(p1):
     p2 = p1.reversed()
     assert close_vectors(
         p2.control_vertices(), reversed(list(p1.control_vertices()))
     )
+
+
+def test_reversing_path_approx(p1):
+    p2 = p1.reversed()
+    v1 = list(p1.approximate())
+    v2 = list(p2.approximate())
+    assert close_vectors(v1, reversed(v2))
 
 
 def test_reversing_multi_path():

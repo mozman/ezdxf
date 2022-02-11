@@ -308,9 +308,7 @@ def from_hatch_boundary_path(
         p = p.transform(Matrix44.translate(offset.x, offset.y, offset.z))
 
     # attach path type information
-    p.user_data = const.BoundaryPathState.from_flags(
-        boundary.path_type_flags
-    )
+    p.user_data = const.BoundaryPathState.from_flags(boundary.path_type_flags)
     return p
 
 
@@ -1076,7 +1074,7 @@ def to_matplotlib_path(paths: Iterable[Path], extrusion: "Vertex" = Z_AXIS):
     codes: List[MplCmd] = []
     for path in paths:
         add_command(MplCmd.MOVETO, path.start)
-        for cmd in path:
+        for cmd in path.commands():
             if cmd.type == Command.LINE_TO:
                 add_command(MplCmd.LINETO, cmd.end)
             elif cmd.type == Command.MOVE_TO:
@@ -1182,7 +1180,7 @@ def to_qpainter_path(paths: Iterable[Path], extrusion: "Vertex" = Z_AXIS):
     qpath = QPainterPath()
     for path in paths:
         qpath.moveTo(qpnt(path.start))
-        for cmd in path:
+        for cmd in path.commands():
             if cmd.type == Command.LINE_TO:
                 qpath.lineTo(qpnt(cmd.end))
             elif cmd.type == Command.MOVE_TO:

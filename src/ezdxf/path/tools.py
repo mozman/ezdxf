@@ -30,7 +30,6 @@ from ezdxf.math import (
 from ezdxf.query import EntityQuery
 
 from .path import Path
-from .commands import Command
 from . import converter
 
 if TYPE_CHECKING:
@@ -93,65 +92,18 @@ def single_paths(paths: Iterable[Path]) -> Iterable[Path]:
 def transform_paths(paths: Iterable[Path], m: Matrix44) -> List[Path]:
     """Transform multiple :class:`Path` objects at once by transformation
     matrix `m`. Returns a list of the transformed :class:`Path` objects.
-    Warning: transformed paths looses the attached user data!
 
     Args:
         paths: iterable of :class:`Path` objects
         m: transformation matrix of type :class:`~ezdxf.math.Matrix44`
 
     """
-
-    def decompose(path: Path):
-        vertices.append(path.start)
-        commands.append(Command.START_PATH)
-        for cmd in path:
-            commands.extend(itertools.repeat(cmd.type, len(cmd)))
-            vertices.extend(cmd)
-
-    def rebuild(vertices):
-        # localize variables:
-        start_path, line_to, curve3_to, curve4_to, move_to = Command
-
-        path = None
-        collect = []
-        for vertex, cmd in zip(vertices, commands):
-            if cmd == start_path:
-                if path is not None:
-                    transformed_paths.append(path)
-                path = Path(vertex)
-            elif cmd == line_to:
-                path.line_to(vertex)
-            elif cmd == curve3_to:
-                collect.append(vertex)
-                if len(collect) == 2:
-                    path.curve3_to(collect[0], collect[1])
-                    collect.clear()
-            elif cmd == curve4_to:
-                collect.append(vertex)
-                if len(collect) == 3:
-                    path.curve4_to(collect[0], collect[1], collect[2])
-                    collect.clear()
-            elif cmd == move_to:
-                path.move_to(vertex)
-
-        if path is not None:
-            transformed_paths.append(path)
-
-    vertices: List[Vec3] = []
-    commands: List[Command] = []
-    transformed_paths: List[Path] = []
-
-    for path in paths:
-        decompose(path)
-    if len(commands):
-        rebuild(m.transform_vertices(vertices))
-    return transformed_paths
+    return [p.transform(m) for p in paths]
 
 
 def transform_paths_to_ocs(paths: Iterable[Path], ocs: OCS) -> List[Path]:
     """Transform multiple :class:`Path` objects at once from WCS to OCS.
     Returns a list of the transformed :class:`Path` objects.
-    Warning: transformed paths looses the attached user data!
 
     Args:
         paths: iterable of :class:`Path` objects
