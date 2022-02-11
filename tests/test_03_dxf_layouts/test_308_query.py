@@ -213,7 +213,7 @@ class TestGetSetDelItemInterface:
         assert len(query) == 4, "expected all entities"
         lines = query["start"]
         assert len(lines) == 1
-        assert lines.dxf_attribute == "start"
+        assert lines.selected_dxf_attribute == "start"
 
         assert lines.first.dxftype() == "LINE"
         assert query["center"].first.dxftype() == "CIRCLE"
@@ -266,7 +266,9 @@ class TestEntityQueryRelationOperators:
         result = query["layer"] == "Lay1"
         assert len(result) == 1
         assert result.first.dxftype() == "LINE"
-        assert result.dxf_attribute == "layer", "selection should be propagated"
+        assert (
+            result.selected_dxf_attribute == "layer"
+        ), "selection should be propagated"
 
     def test_is_not_equal_operator(self):
         query = EntityQuery(
