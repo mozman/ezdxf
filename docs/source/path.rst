@@ -243,23 +243,43 @@ The Path Class
 
 .. class:: Path
 
-    .. autoproperty:: start
-
     .. autoproperty:: end
-
-    .. autoproperty:: is_closed
-
-    .. autoproperty:: has_lines
 
     .. autoproperty:: has_curves
 
+    .. autoproperty:: has_lines
+
     .. autoproperty:: has_sub_paths
+
+    .. autoproperty:: is_closed
+
+    .. autoproperty:: start
 
     .. autoproperty:: user_data
 
-    .. automethod:: sub_paths() -> Iterable[Path]
+    .. automethod:: append_path(path: Path)
+
+    .. automethod:: approximate(segments: int=20) -> Iterator[Vec3]
+
+    .. automethod:: clockwise() -> Path
+
+    .. automethod:: clone() -> Path
+
+    .. automethod:: close
+
+    .. automethod:: close_sub_path
 
     .. automethod:: control_vertices() -> List[Vec3]
+
+    .. automethod:: counter_clockwise() -> Path
+
+    .. automethod:: curve3_to(location: Vec3, ctrl: Vec3)
+
+    .. automethod:: curve4_to(location: Vec3, ctrl1: Vec3, ctrl2: Vec3)
+
+    .. automethod:: extend_multi_path(path: Path)
+
+    .. automethod:: flattening(distance: float, segments: int=16) -> Iterator[Vec3]
 
     .. automethod:: has_clockwise_orientation
 
@@ -267,31 +287,11 @@ The Path Class
 
     .. automethod:: move_to(location: Vec3)
 
-    .. automethod:: curve3_to(location: Vec3, ctrl: Vec3)
-
-    .. automethod:: curve4_to(location: Vec3, ctrl1: Vec3, ctrl2: Vec3)
-
-    .. automethod:: close
-
-    .. automethod:: close_sub_path
-
-    .. automethod:: clone() -> Path
-
     .. automethod:: reversed() -> Path
 
-    .. automethod:: clockwise() -> Path
-
-    .. automethod:: counter_clockwise() -> Path
+    .. automethod:: sub_paths() -> Iterator[Path]
 
     .. automethod:: transform(m: Matrix44) -> Path
-
-    .. automethod:: approximate(segments: int=20) -> Iterable[Vec3]
-
-    .. automethod:: flattening(distance: float, segments: int=16) -> Iterable[Vec3]
-
-    .. automethod:: append_path(path: Path)
-
-    .. automethod:: extend_multi_path(path: Path)
 
 .. _PathPatch: https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.patches.PathPatch.html#matplotlib.patches.PathPatch
 .. _QPainterPath: https://doc.qt.io/qt-5/qpainterpath.html

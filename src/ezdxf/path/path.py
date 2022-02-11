@@ -432,7 +432,7 @@ class Path:
             ocs.to_wcs(v.replace(z=elevation)) for v in self._vertices
         )
 
-    def sub_paths(self) -> Iterable["Path"]:
+    def sub_paths(self) -> Iterator["Path"]:
         """Yield sub-path as :term:`Single-Path` objects.
 
         It is safe to call :meth:`sub_paths` on any path-type:
