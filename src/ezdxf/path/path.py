@@ -273,10 +273,9 @@ class Path(abc.Sequence):
         vertices.
 
         """
-        commands = self._commands
-        if not commands:
-            return Path(self.start)
         path = self.clone()
+        if not path._commands:
+            return path
         if path._commands[-1] == Command.MOVE_TO:
             # The last move_to will become the first move_to.
             # A move_to as first command just moves the start point and can be
