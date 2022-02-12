@@ -6,6 +6,7 @@ import ezdxf
 from ezdxf.query import EntityQuery, name_query
 from ezdxf.entities import Text, Line, Circle, Arc
 from ezdxf.math import Vec3
+from ezdxf import colors
 
 
 class TestNameQuery:
@@ -361,7 +362,9 @@ class TestRegexMatch:
         return EntityQuery(
             [
                 Line.new(dxfattribs={"layer": "Lay_line", "color": 1}),
-                Circle.new(dxfattribs={"layer": "lAy_circle", "center": Vec3(0, 0)}),
+                Circle.new(
+                    dxfattribs={"layer": "lAy_circle", "center": Vec3(0, 0)}
+                ),
                 Text.new(dxfattribs={"layer": "laY_text"}),
             ]
         )
@@ -405,8 +408,10 @@ class TestSetOperations:
                 Text.new(dxfattribs={"layer": "text", "color": 3}),
             ]
         )
-        result = base | other
-        assert len(result) == 6
+        assert len(base | other) == 6
+
+    def test_union_unique_entities(self, base: EntityQuery):
+        assert len(base | base) == 3
 
     def test_difference(self, base: EntityQuery):
         result = base - base.query("LINE")
@@ -430,3 +435,75 @@ class TestSetOperations:
         result = (base["layer"] == "line") | (base["color"] == 2)
         assert len(result) == 2
         assert [e.dxftype() for e in result] == ["LINE", "CIRCLE"]
+
+
+class TestDescriptors:
+    @pytest.fixture
+    def entities(self):
+        return EntityQuery(
+            [
+                Line.new(
+                    handle="ABBA",
+                    dxfattribs={
+                        "layer": "line",
+                        "color": 1,
+                        "linetype": "SOLID",
+                        "lineweight": 18,
+                    },
+                ),
+                Circle.new(
+                    handle="FEFE",
+                    dxfattribs={
+                        "layer": "circle",
+                        "color": 2,
+                        "linetype": "DOT",
+                        "lineweight": 25,
+                    },
+                ),
+            ]
+        )
+
+    def test_select_layers(self, entities: EntityQuery):
+        assert len(entities.layer == "LINE") == 1
+
+    def test_set_layer_attribute(self, entities: EntityQuery):
+        entities.layer = "TEST"
+        assert len(entities) == 2
+        assert all(e.dxf.layer == "TEST" for e in entities) is True
+
+    def test_delete_layer_attribute(self, entities: EntityQuery):
+        del entities.layer
+        assert len(entities) == 2
+        assert all(e.dxf.layer == "0" for e in entities) is True
+
+    def test_color_descriptor_exists(self, entities: EntityQuery):
+        assert len(entities.color == 1) == 1
+        # set and delete follow the same schema as for layer
+
+    def test_linetype_descriptor_exists(self, entities: EntityQuery):
+        assert len(entities.linetype == "DOT") == 1
+        # set and delete follow the same schema as for layer
+
+    def test_lineweight_descriptor_exists(self, entities: EntityQuery):
+        assert len(entities.lineweight == 18) == 1
+        # set and delete follow the same schema as for layer
+
+    def test_ltscale_descriptor_exists(self, entities: EntityQuery):
+        assert len(entities.ltscale == 1.0) == 2, "default value"
+        # set and delete follow the same schema as for layer
+
+    def test_invisible_descriptor_exists(self, entities: EntityQuery):
+        assert len(entities.invisible == 0) == 2, "default value"
+        # set and delete follow the same schema as for layer
+
+    def test_true_color_descriptor_exists(self, entities: EntityQuery):
+        assert (
+            len(entities.true_color == colors.rgb2int((0, 0, 0))) == 0
+        ), "has no default value"
+        # set and delete follow the same schema as for layer
+
+    def test_transparency_descriptor_exists(self, entities: EntityQuery):
+        assert (
+            len(entities.transparency == colors.float2transparency(0)) == 0
+        ), "has no default value"
+        # set and delete follow the same schema as for layer

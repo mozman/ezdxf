@@ -26,6 +26,20 @@ if TYPE_CHECKING:
     from ezdxf.entities import DXFEntity
 
 
+class _AttributeDescriptor:
+    def __init__(self, name: str):
+        self.name = name
+
+    def __get__(self, obj, objtype=None):
+        return obj.__getitem__(self.name)
+
+    def __set__(self, obj, value):
+        obj.__setitem__(self.name, value)
+
+    def __delete__(self, obj):
+        obj.__delitem__(self.name)
+
+
 class EntityQuery(abc.Sequence):
     """EntityQuery is a result container, which is filled with dxf entities
     matching the query string. It is possible to add entities to the container
@@ -93,6 +107,14 @@ class EntityQuery(abc.Sequence):
           on layer == "construction" and color < 7
 
     """
+    layer = _AttributeDescriptor("layer")
+    color = _AttributeDescriptor("color")
+    linetype = _AttributeDescriptor("linetype")
+    lineweight = _AttributeDescriptor("lineweight")
+    ltscale = _AttributeDescriptor("ltscale")
+    invisible = _AttributeDescriptor("invisible")
+    true_color = _AttributeDescriptor("true_color")
+    transparency = _AttributeDescriptor("transparency")
 
     def __init__(
         self, entities: Iterable["DXFEntity"] = None, query: str = "*"
@@ -487,7 +509,15 @@ def _build_set(entities: Iterable["DXFEntity"]) -> Set[int]:
 def _set_to_container(
     q1: Iterable["DXFEntity"], q2: Iterable["DXFEntity"], selector: Set[int]
 ) -> EntityQuery:
-    return EntityQuery(e for e in itertools.chain(q1, q2) if id(e) in selector)
+    result = EntityQuery()
+    done: Set[int] = set()
+    entities = result.entities
+    for e in itertools.chain(q1, q2):
+        id_ = id(e)
+        if id_ in selector and id_ not in done:
+            entities.append(e)
+            done.add(id_)
+    return result
 
 
 def entity_matcher(query: str) -> Callable[["DXFEntity"], bool]:

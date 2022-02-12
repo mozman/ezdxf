@@ -172,6 +172,35 @@ the :class:`EntityQuery` container:
     # default layer "0"
     del result["layer"]
 
+Descriptors of Basic Attributes
+-------------------------------
+
+.. versionadded:: 0.18
+
+For these basic attributes exist descriptors in the :class:`EntityQuery` class:
+
+- :attr:`layer`: layer name as string
+- :attr:`color`: :ref:`ACI`, see :mod:`ezdxf.colors`
+- :attr:`linetype`: linetype as string
+- :attr:`ltscale`: linetype scaling factor as float value
+- :attr:`lineweight`: :ref:`Lineweights`
+- :attr:`invisible`: 0 if visible 1 if invisible, 0 is the default value
+- :attr:`true_color`: true color as int value, see :mod:`ezdxf.colors`, has no default value
+- :attr:`transparency`: transparency as int value, see :mod:`ezdxf.colors`, has no default value
+
+A descriptor simplifies the attribute access through the :class:`EntityQuery`
+container and has auto-completion support from IDEs:
+
+.. code-block:: Python
+
+    result = msp.query(...)
+    # set attribute of all entities in result
+    result.layer = "MyLayer"
+    # delete attribute from all entities in result
+    del result.layer
+    # and for selector usage, see following section
+    assert len(result.layer == "MyLayer") == 1
+
 .. _relational selection operators:
 
 Relational Selection Operators
@@ -241,13 +270,17 @@ The :meth:`EntityQuery.match` method returns all entities where the selected DXF
 attribute matches the given regular expression. This methods work only on string
 based attributes, raises :class:`TypeError` otherwise.
 
+From here on I use only descriptors for attribute selection if possible.
+
 .. code-block:: Python
 
     msp.add_line((0, 0), (1, 0), dxfattribs={"layer": "Lay1"})
     msp.add_line((0, 0), (1, 0), dxfattribs={"layer": "Lay2"})
     lines = msp.query("LINE")
 
-    assert len(lines["layer"].match("^Lay.*")) == 2
+    # select all entities at layers starting with "Lay",
+    # selection is also case insensitive by default:
+    assert len(lines.layer.match("^Lay.*")) == 2
 
 .. _query set operators:
 
@@ -262,7 +295,7 @@ unique - no duplicates. This operator acts like the logical ``or`` operator.
 
     entities = msp.query()
     # select all entities with color < 2 or color > 7
-    result = (entities["color"] < 2 ) | (entities["color"] > 7)
+    result = (entities.color < 2 ) | (entities.color > 7)
 
 The ``&`` operator or :meth:`EntityQuery.intersection` returns a new
 :class:`EntityQuery` with entities common to `self` and `other`. This operator
@@ -272,7 +305,7 @@ acts like the logical ``and`` operator.
 
     entities = msp.query()
     # select all entities with color > 1 and color < 7
-    result = (entities["color"] > 1) & (entities["color"] < 7)
+    result = (entities.color > 1) & (entities.color < 7)
 
 The ``-`` operator or :meth:`EntityQuery.difference` returns a new
 :class:`EntityQuery` with all entities from `self` that are not in `other`.
@@ -281,7 +314,7 @@ The ``-`` operator or :meth:`EntityQuery.difference` returns a new
 
     entities = msp.query()
     # select all entities with color > 1 and not layer == "MyLayer"
-    result = (entities["color"] > 1) - (entities["layer"] != "MyLayer")
+    result = (entities.color > 1) - (entities.layer != "MyLayer")
 
 The ``^`` operator or :meth:`EntityQuery.symmetric_difference` returns a new
 :class:`EntityQuery` with entities in either `self` or `other` but not both.
@@ -291,7 +324,7 @@ The ``^`` operator or :meth:`EntityQuery.symmetric_difference` returns a new
     entities = msp.query()
     # select all entities with color > 1 or layer == "MyLayer", exclusive
     # entities with color > 1 and layer == "MyLayer"
-    result = (entities["color"] > 1) ^ (entities["layer"] == "MyLayer")
+    result = (entities.color > 1) ^ (entities.layer == "MyLayer")
 
 The new() Function
 ------------------
