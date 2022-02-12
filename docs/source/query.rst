@@ -97,6 +97,14 @@ EntityQuery Class
 
     .. automethod:: __ge__
 
+    .. automethod:: __or__
+
+    .. automethod:: __and__
+
+    .. automethod:: __sub__
+
+    .. automethod:: __xor__
+
     .. automethod:: __iter__
 
     .. automethod:: extend
@@ -106,6 +114,14 @@ EntityQuery Class
     .. automethod:: query
 
     .. automethod:: groupby
+
+    .. automethod:: union
+
+    .. automethod:: intersection
+
+    .. automethod:: difference
+
+    .. automethod:: symmetric_difference
 
 Extended EntityQuery Features
 -----------------------------
@@ -152,13 +168,13 @@ the :class:`EntityQuery` container:
     # default layer "0"
     del result["layer"]
 
-Selection by Relation Operators
--------------------------------
+Selection by Relational Operators
+---------------------------------
 
 .. versionadded:: 0.18
 
 The attribute selection by :meth:`__getitem__` allows further selections by
-comparison operators:
+relational operators:
 
 .. code-block:: Python
 
@@ -170,6 +186,10 @@ comparison operators:
 
     # or select all except the entities on layer "MyLayer"
     entities = lines["layer"] != "MyLayer"
+
+These operators work only with real DXF attribute, for instance the `text`
+attribute of the MTEXT entity is not a real DXF attribute either the vertices
+of the LWPOLYLINE entity.
 
 The selection by operator is case insensitive by default, because all DXF table
 entries are handled case insensitive. But if required the selection mode can
@@ -202,13 +222,50 @@ attributes such as `center` or `insert` and raise a :class:`TypeError`.
 
     These operators are selection operators and not logic operators, therefore
     the logic operators ``and``, ``or`` and ``not`` are **not** implemented.
-    For combining selections are the set operations ``union``, ``difference`` and
-    ``intersect`` implemented. See following section.
+    For combining selections are the set operations ``union``, ``intersection``,
+    ``difference`` and ``symmetric_difference`` implemented. See following section.
 
 Set Operators
 -------------
 
-TODO
+The ``|`` operator or :meth:`EntityQuery.union` returns a new
+:class:`EntityQuery` with all entities from both queries. All entities are
+unique - no duplicates. This operator acts like the logical ``or`` operator.
+
+.. code-block:: Python
+
+    entities = msp.query()
+    # select all entities with color < 2 or color > 7
+    result = (entities["color"] < 2 ) | (entities["color"] > 7)
+
+The ``&`` operator or :meth:`EntityQuery.intersection` returns a new
+:class:`EntityQuery` with entities common to `self` and `other`. This operator
+acts like the logical ``and`` operator.
+
+.. code-block:: Python
+
+    entities = msp.query()
+    # select all entities with color > 1 anda color < 7
+    result = (entities["color"] > 1) & (entities["color"] < 7)
+
+The ``-`` operator or :meth:`EntityQuery.difference` returns a new
+:class:`EntityQuery` with all entities from `self` that are not in `other`.
+
+.. code-block:: Python
+
+    entities = msp.query()
+    # select all entities with color > 1 and not layer == "MyLayer"
+    result = (entities["color"] > 1) - (entities["layer"] != "MyLayer")
+
+The ``^`` operator or :meth:`EntityQuery.symmetric_difference` returns a new
+:class:`EntityQuery` with entities in either `self` or `other` but not both.
+
+.. code-block:: Python
+
+    entities = msp.query()
+    # select all entities with color > 1 or at layer "MyLayer", exclusive
+    # entities with color > 1 and layer == "MyLayer"
+    result = (entities["color"] > 1) ^ (entities["layer"] == "MyLayer")
 
 The new() Function
 ------------------

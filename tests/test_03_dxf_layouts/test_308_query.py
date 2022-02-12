@@ -4,7 +4,7 @@ import pytest
 import ezdxf
 
 from ezdxf.query import EntityQuery, name_query
-from ezdxf.entities import Text, Line, Circle
+from ezdxf.entities import Text, Line, Circle, Arc
 from ezdxf.math import Vec3
 
 
@@ -255,7 +255,7 @@ class TestEntityQueryRelationOperators:
     def test_no_selected_dxf_attribute_raises_type_error(self):
         query = EntityQuery()
         with pytest.raises(TypeError):
-            query == "MyLayer"
+            _ = query == "MyLayer"
 
     def test_is_equal_operator(self):
         query = EntityQuery(
@@ -353,3 +353,49 @@ class TestEntityQueryRelationOperators:
         query = EntityQuery([Text.new(dxfattribs={"insert": Vec3(0, 0)})])
         with pytest.raises(TypeError):
             _ = query["insert"] >= (1, 0)
+
+
+class TestSetOperations:
+    @pytest.fixture
+    def base(self):
+        return EntityQuery(
+            [
+                Line.new(dxfattribs={"layer": "line", "color": 1}),
+                Circle.new(dxfattribs={"layer": "circle", "color": 2}),
+                Text.new(dxfattribs={"layer": "text", "color": 3}),
+            ]
+        )
+
+    def test_union(self, base: EntityQuery):
+        other = EntityQuery(
+            [
+                Line.new(dxfattribs={"layer": "line", "color": 1}),
+                Circle.new(dxfattribs={"layer": "circle", "color": 2}),
+                Text.new(dxfattribs={"layer": "text", "color": 3}),
+            ]
+        )
+        result = base | other
+        assert len(result) == 6
+
+    def test_difference(self, base: EntityQuery):
+        result = base - base.query("LINE")
+        assert len(result) == 2
+        assert [e.dxftype() for e in result] == ["CIRCLE", "TEXT"]
+
+    def test_intersection(self, base: EntityQuery):
+        result = base & base.query("LINE")
+        assert len(result) == 1
+        assert [e.dxftype() for e in result] == ["LINE"]
+
+    def test_symmetric_difference(self, base: EntityQuery):
+        other = base.query("LINE") | EntityQuery(
+            [Arc.new(dxfattribs={"layer": "arc", "color": 4})]
+        )
+        result = base ^ other
+        assert len(result) == 3
+        assert [e.dxftype() for e in result] == ["CIRCLE", "TEXT", "ARC"]
+
+    def test_operator_combination(self, base: EntityQuery):
+        result = (base["layer"] == "line") | (base["color"] == 2)
+        assert len(result) == 2
+        assert [e.dxftype() for e in result] == ["LINE", "CIRCLE"]

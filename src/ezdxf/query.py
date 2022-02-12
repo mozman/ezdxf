@@ -11,11 +11,13 @@ from typing import (
     List,
     Sequence,
     Union,
+    Set,
 )
 import re
 import operator
-
+import itertools
 from collections import abc
+
 from ezdxf.queryparser import EntityQueryParser
 from ezdxf.groupby import groupby
 from ezdxf.math import Vec3, Vec2
@@ -255,6 +257,46 @@ class EntityQuery(abc.Sequence):
             raise TypeError("no DXF attribute selected")
         return self._select_by_operator(other, operator.ge, vectors=False)
 
+    def __or__(self, other):
+        """Union operator, see :meth:`union`.
+
+        .. versionadded:: 0.18
+
+        """
+        if isinstance(other, EntityQuery):
+            return self.union(other)
+        return NotImplemented
+
+    def __and__(self, other):
+        """Intersection operator, see :meth:`intersection`.
+
+        .. versionadded:: 0.18
+
+        """
+        if isinstance(other, EntityQuery):
+            return self.intersection(other)
+        return NotImplemented
+
+    def __sub__(self, other):
+        """Difference operator, see :meth:`difference`.
+
+        .. versionadded:: 0.18
+
+        """
+        if isinstance(other, EntityQuery):
+            return self.difference(other)
+        return NotImplemented
+
+    def __xor__(self, other):
+        """Symmetric difference operator, see :meth:`symmetric_difference`.
+
+        .. versionadded:: 0.18
+
+        """
+        if isinstance(other, EntityQuery):
+            return self.symmetric_difference(other)
+        return NotImplemented
+
     def _select_by_operator(self, value, op, vectors=True) -> "EntityQuery":
         attribute = self.selected_dxf_attribute
         if self.case_insensitive and isinstance(value, str):
@@ -353,6 +395,64 @@ class EntityQuery(abc.Sequence):
 
         """
         return groupby(self.entities, dxfattrib, key)
+
+    def union(self, other: "EntityQuery") -> "EntityQuery":
+        """Returns a new :class:`EntityQuery` with entities from `self` and
+        `other`. All entities are unique - no duplicates.
+
+        .. versionadded:: 0.18
+
+        """
+        s1 = _build_set(self)
+        s2 = _build_set(other)
+        result = s1 | s2
+        return _set_to_container(self, other, result)
+
+    def intersection(self, other: "EntityQuery") -> "EntityQuery":
+        """Returns a new :class:`EntityQuery` with entities common to `self`
+        and `other`.
+
+        .. versionadded:: 0.18
+
+        """
+        s1 = _build_set(self)
+        s2 = _build_set(other)
+        result = s1 & s2
+        return _set_to_container(self, [], result)
+
+    def difference(self, other: "EntityQuery") -> "EntityQuery":
+        """Returns a new :class:`EntityQuery` with all entities from `self` that
+        are not in `other`.
+
+        .. versionadded:: 0.18
+
+        """
+        s1 = _build_set(self)
+        s2 = _build_set(other)
+        result = s1 - s2
+        return _set_to_container(self, [], result)
+
+    def symmetric_difference(self, other: "EntityQuery") -> "EntityQuery":
+        """Returns a new :class:`EntityQuery` with entities in either `self` or
+        `other` but not both.
+
+        .. versionadded:: 0.18
+
+        """
+        s1 = _build_set(self)
+        s2 = _build_set(other)
+        result = s1 ^ s2
+        return _set_to_container(self, other, result)
+
+
+def _build_set(entities: Iterable["DXFEntity"]) -> Set[int]:
+    return set(id(e) for e in entities)
+
+
+def _set_to_container(
+    q1: Iterable["DXFEntity"], q2: Iterable["DXFEntity"], selector: Set[int]
+) -> EntityQuery:
+    return EntityQuery(e for e in itertools.chain(q1, q2) if id(e) in selector)
 
 
 def entity_matcher(query: str) -> Callable[["DXFEntity"], bool]:
