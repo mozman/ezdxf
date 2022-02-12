@@ -97,6 +97,8 @@ EntityQuery Class
 
     .. automethod:: __ge__
 
+    .. automethod:: match
+
     .. automethod:: __or__
 
     .. automethod:: __and__
@@ -123,6 +125,8 @@ EntityQuery Class
 
     .. automethod:: symmetric_difference
 
+.. _extended query features:
+
 Extended EntityQuery Features
 -----------------------------
 
@@ -139,9 +143,9 @@ sequence to get entities from the container:
     last = result[-1]
     sequence = result[1:-2]  # returns not an EntityQuery container!
 
-Now the :meth:`__getitem__` function accepts an DXF attribute name and returns
-all entities which support this attribute, this is the base for supporting
-queries by relation operators. More on that later.
+Since v0.18 the :meth:`__getitem__` function accepts an DXF attribute name and
+returns all entities which support this attribute, this is the base for supporting
+queries by relational operators. More on that later.
 
 The :meth:`__setitem__` method the assigns a DXF attribute all supported
 entities in the :class:`EntityQuery` container:
@@ -168,8 +172,10 @@ the :class:`EntityQuery` container:
     # default layer "0"
     del result["layer"]
 
-Selection by Relational Operators
----------------------------------
+.. _relational selection operators:
+
+Relational Selection Operators
+------------------------------
 
 .. versionadded:: 0.18
 
@@ -199,12 +205,12 @@ be set to case sensitive:
 
     lines = msp.query("LINE")
     # use case sensitive selection: "MyLayer" != "MYLAYER"
-    lines.case_insensitive = False
+    lines.ignore_case = False
     entities = lines["layer"] == "MYLAYER"
     assert len(entities) == 0
 
     # the entities container has the default setting:
-    assert entities.case_insensitive is True
+    assert entities.ignore_case is True
 
 Supported selection operators are:
 
@@ -221,12 +227,32 @@ attributes such as `center` or `insert` and raise a :class:`TypeError`.
 .. note::
 
     These operators are selection operators and not logic operators, therefore
-    the logic operators ``and``, ``or`` and ``not`` are **not** implemented.
-    For combining selections are the set operations ``union``, ``intersection``,
-    ``difference`` and ``symmetric_difference`` implemented. See following section.
+    the logic operators ``and``, ``or`` and ``not`` are **not** applicable.
+    The methods :meth:`~EntityQuery.union`, :meth:`~EntityQuery.intersection`,
+    :meth:`~EntityQuery.difference` and :meth:`~EntityQuery.symmetric_difference`
+    can be used to combine selection. See following section.
 
-Set Operators
--------------
+.. _regular expression selection:
+
+Regular Expression Selection
+-----------------------------
+
+The :meth:`EntityQuery.match` method returns all entities where the selected DXF
+attribute matches the given regular expression. This methods work only on string
+based attributes, raises :class:`TypeError` otherwise.
+
+.. code-block:: Python
+
+    msp.add_line((0, 0), (1, 0), dxfattribs={"layer": "Lay1"})
+    msp.add_line((0, 0), (1, 0), dxfattribs={"layer": "Lay2"})
+    lines = msp.query("LINE")
+
+    assert len(lines["layer"].match("^Lay.*")) == 2
+
+.. _query set operators:
+
+Query Set Operators
+-------------------
 
 The ``|`` operator or :meth:`EntityQuery.union` returns a new
 :class:`EntityQuery` with all entities from both queries. All entities are
@@ -245,7 +271,7 @@ acts like the logical ``and`` operator.
 .. code-block:: Python
 
     entities = msp.query()
-    # select all entities with color > 1 anda color < 7
+    # select all entities with color > 1 and color < 7
     result = (entities["color"] > 1) & (entities["color"] < 7)
 
 The ``-`` operator or :meth:`EntityQuery.difference` returns a new
@@ -263,7 +289,7 @@ The ``^`` operator or :meth:`EntityQuery.symmetric_difference` returns a new
 .. code-block:: Python
 
     entities = msp.query()
-    # select all entities with color > 1 or at layer "MyLayer", exclusive
+    # select all entities with color > 1 or layer == "MyLayer", exclusive
     # entities with color > 1 and layer == "MyLayer"
     result = (entities["color"] > 1) ^ (entities["layer"] == "MyLayer")
 

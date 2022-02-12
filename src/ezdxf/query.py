@@ -108,7 +108,7 @@ class EntityQuery(abc.Sequence):
         # Selected DXF attribute for operator selection:
         self.selected_dxf_attribute: str = ""
         # Text selection mode, but only for operator comparisons:
-        self.case_insensitive = True
+        self.ignore_case = True
 
         self.entities: List["DXFEntity"]
         if entities is None:
@@ -299,7 +299,7 @@ class EntityQuery(abc.Sequence):
 
     def _select_by_operator(self, value, op, vectors=True) -> "EntityQuery":
         attribute = self.selected_dxf_attribute
-        if self.case_insensitive and isinstance(value, str):
+        if self.ignore_case and isinstance(value, str):
             value = value.lower()
 
         query = self.__class__()
@@ -316,11 +316,46 @@ class EntityQuery(abc.Sequence):
                         f"unsupported operation '{str(op.__name__)}' for DXF "
                         f"attribute {attribute}"
                     )
-                if self.case_insensitive and isinstance(entity_value, str):
+                if self.ignore_case and isinstance(entity_value, str):
                     entity_value = entity_value.lower()
                 if op(entity_value, value):
                     entities.append(entity)
         return query
+
+    def match(self, pattern: str) -> "EntityQuery":
+        """Returns all entities where the selected DXF attribute matches the
+        regular expression `pattern`.
+
+        Raises:
+             TypeError: for non-string based attributes
+
+        .. versionadded:: 0.18
+
+        """
+
+        def match(value, regex):
+            if isinstance(value, str):
+                return regex.match(value) is not None
+            raise TypeError(
+                f"cannot apply regular expression to DXF attribute: "
+                f"{self.selected_dxf_attribute}"
+            )
+
+        return self._regex_match(pattern, match)
+
+    def _regex_match(self, pattern: str, func) -> "EntityQuery":
+        ignore_case = self.ignore_case
+        self.ignore_case = False  # deactivate string manipulation
+        re_flags = re.IGNORECASE if ignore_case else 0
+
+        # always match whole pattern
+        if not pattern.endswith("$"):
+            pattern += "$"
+        result = self._select_by_operator(
+            re.compile(pattern, flags=re_flags), func
+        )
+        self.ignore_case = ignore_case  # restore state
+        return result
 
     def __iter__(self) -> Iterator["DXFEntity"]:
         """Returns iterable of DXFEntity objects."""

@@ -355,6 +355,37 @@ class TestEntityQueryRelationOperators:
             _ = query["insert"] >= (1, 0)
 
 
+class TestRegexMatch:
+    @pytest.fixture
+    def base(self):
+        return EntityQuery(
+            [
+                Line.new(dxfattribs={"layer": "Lay_line", "color": 1}),
+                Circle.new(dxfattribs={"layer": "lAy_circle", "center": Vec3(0, 0)}),
+                Text.new(dxfattribs={"layer": "laY_text"}),
+            ]
+        )
+
+    def test_match_nothing(self, base: EntityQuery):
+        result = base["layer"].match("nothing")
+        assert len(result) == 0
+
+    def test_match_is_case_insensitive(self, base: EntityQuery):
+        result = base["layer"].match("lay_.*")
+        assert len(result) == 3
+
+    def test_match_case_insensitive(self, base: EntityQuery):
+        layers = base["layer"]
+        layers.ignore_case = False
+        assert len(layers.match("Lay_.*")) == 1
+
+    def test_match_invalid_attributes_raise_type_error(self, base: EntityQuery):
+        with pytest.raises(TypeError):
+            base["color"].match("nothing")
+        with pytest.raises(TypeError):
+            base["center"].match("nothing")
+
+
 class TestSetOperations:
     @pytest.fixture
     def base(self):

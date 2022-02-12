@@ -13,9 +13,9 @@ Version 0.18b1 - dev
   `add_arc_dim_3p()`, `add_arc_dim_cra()`, `add_arc_dim_arc()`
 - NEW: ordinate dimension rendering support, new factory methods: 
   `add_ordinate_dim()`, `add_ordinate_x_dim()`, `add_ordinate_y_dim()`
+- NEW: extended query functionality for the `EntityQuery` class
 - NEW: function `ezdxf.tools.text.is_upside_down_text_angle()` in WCS
 - NEW: function `ezdxf.tools.text.upright_text_angle()` in WCS
-- NEW: extended query functionality for the `EntityQuery` class
 - NEW: helper class `ezdxf.math.ConstructionPolyline` to measure, interpolate and 
   divide polylines and anything that can be approximated or flattened into 
   vertices
