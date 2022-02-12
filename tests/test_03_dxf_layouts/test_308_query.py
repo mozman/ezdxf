@@ -1,10 +1,11 @@
-# Copyright (c) 2013-2020, Manfred Moitzi
+# Copyright (c) 2013-2022, Manfred Moitzi
 # License: MIT-License
 import pytest
 import ezdxf
 
 from ezdxf.query import EntityQuery, name_query
 from ezdxf.entities import Text, Line, Circle
+from ezdxf.math import Vec3
 
 
 class TestNameQuery:
@@ -290,3 +291,65 @@ class TestEntityQueryRelationOperators:
         )
         result = query["layer"] == "LAY1"
         assert len(result) == 2
+
+    def test_less_than_operator(self):
+        query = EntityQuery(
+            [
+                Line.new(dxfattribs={"color": 1}),
+                Text.new(dxfattribs={"color": 2}),
+            ]
+        )
+        result = query["color"] < 2
+        assert len(result) == 1
+        assert result.first.dxftype() == "LINE"
+
+    def test_less_than_raises_type_error_for_vector_attributes(self):
+        query = EntityQuery([Text.new(dxfattribs={"insert": Vec3(0, 0)})])
+        with pytest.raises(TypeError):
+            _ = query["insert"] < (1, 0)
+
+    def test_greater_than_operator(self):
+        query = EntityQuery(
+            [
+                Line.new(dxfattribs={"color": 1}),
+                Text.new(dxfattribs={"color": 2}),
+            ]
+        )
+        result = query["color"] > 1
+        assert len(result) == 1
+        assert result.first.dxftype() == "TEXT"
+
+    def test_greater_than_raises_type_error_for_vector_attributes(self):
+        query = EntityQuery([Text.new(dxfattribs={"insert": Vec3(0, 0)})])
+        with pytest.raises(TypeError):
+            _ = query["insert"] > (1, 0)
+
+    def test_less_equal_operator(self):
+        query = EntityQuery(
+            [
+                Line.new(dxfattribs={"color": 1}),
+                Text.new(dxfattribs={"color": 2}),
+            ]
+        )
+        result = query["color"] <= 2
+        assert len(result) == 2
+
+    def test_less_equal_raises_type_error_for_vector_attributes(self):
+        query = EntityQuery([Text.new(dxfattribs={"insert": Vec3(0, 0)})])
+        with pytest.raises(TypeError):
+            _ = query["insert"] <= (1, 0)
+
+    def test_greater_equal_operator(self):
+        query = EntityQuery(
+            [
+                Line.new(dxfattribs={"color": 1}),
+                Text.new(dxfattribs={"color": 2}),
+            ]
+        )
+        result = query["color"] >= 1
+        assert len(result) == 2
+
+    def test_greater_equal_raises_type_error_for_vector_attributes(self):
+        query = EntityQuery([Text.new(dxfattribs={"insert": Vec3(0, 0)})])
+        with pytest.raises(TypeError):
+            _ = query["insert"] >= (1, 0)

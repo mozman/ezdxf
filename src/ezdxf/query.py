@@ -18,6 +18,7 @@ import operator
 from collections import abc
 from ezdxf.queryparser import EntityQueryParser
 from ezdxf.groupby import groupby
+from ezdxf.math import Vec3, Vec2
 
 if TYPE_CHECKING:
     from ezdxf.entities import DXFEntity
@@ -176,16 +177,85 @@ class EntityQuery(abc.Sequence):
             e.dxf.discard(key)
 
     def __eq__(self, other):
+        """Equal selector (self == other).
+        Returns all entities where the selected DXF attribute is equal to
+        `other`.
+
+        .. versionadded:: 0.18
+
+        """
         if not self.selected_dxf_attribute:
             raise TypeError("no DXF attribute selected")
         return self._select_by_operator(other, operator.eq)
 
     def __ne__(self, other):
+        """Not equal selector (self != other). Returns all entities where the
+        selected DXF attribute is not equal to `other`.
+
+        .. versionadded:: 0.18
+
+        """
         if not self.selected_dxf_attribute:
             raise TypeError("no DXF attribute selected")
         return self._select_by_operator(other, operator.ne)
 
-    def _select_by_operator(self, value, op) -> "EntityQuery":
+    def __lt__(self, other):
+        """Less than selector (self < other). Returns all entities where the
+        selected DXF attribute is less than `other`.
+
+        Raises:
+             TypeError: for vector based attributes like `center` or `insert`
+
+        .. versionadded:: 0.18
+
+        """
+        if not self.selected_dxf_attribute:
+            raise TypeError("no DXF attribute selected")
+        return self._select_by_operator(other, operator.lt, vectors=False)
+
+    def __gt__(self, other):
+        """Greater than selector (self > other). Returns all entities where the
+        selected DXF attribute is greater than `other`.
+
+        Raises:
+             TypeError: for vector based attributes like `center` or `insert`
+
+        .. versionadded:: 0.18
+
+        """
+        if not self.selected_dxf_attribute:
+            raise TypeError("no DXF attribute selected")
+        return self._select_by_operator(other, operator.gt, vectors=False)
+
+    def __le__(self, other):
+        """Less equal selector (self <= other). Returns all entities where the
+        selected DXF attribute is less or equal `other`.
+
+        Raises:
+             TypeError: for vector based attributes like `center` or `insert`
+
+        .. versionadded:: 0.18
+
+        """
+        if not self.selected_dxf_attribute:
+            raise TypeError("no DXF attribute selected")
+        return self._select_by_operator(other, operator.le, vectors=False)
+
+    def __ge__(self, other):
+        """Greater equal selector (self >= other). Returns all entities where
+        the selected DXF attribute is greater or equal `other`.
+
+        Raises:
+             TypeError: for vector based attributes like `center` or `insert`
+
+        .. versionadded:: 0.18
+
+        """
+        if not self.selected_dxf_attribute:
+            raise TypeError("no DXF attribute selected")
+        return self._select_by_operator(other, operator.ge, vectors=False)
+
+    def _select_by_operator(self, value, op, vectors=True) -> "EntityQuery":
         attribute = self.selected_dxf_attribute
         if self.case_insensitive and isinstance(value, str):
             value = value.lower()
@@ -199,6 +269,11 @@ class EntityQuery(abc.Sequence):
                     entity_value = entity.dxf.get_default(attribute)
                 except AttributeError:
                     continue
+                if not vectors and isinstance(entity_value, (Vec2, Vec3)):
+                    raise TypeError(
+                        f"unsupported operation '{str(op.__name__)}' for DXF "
+                        f"attribute {attribute}"
+                    )
                 if self.case_insensitive and isinstance(entity_value, str):
                     entity_value = entity_value.lower()
                 if op(entity_value, value):

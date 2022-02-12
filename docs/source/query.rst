@@ -38,14 +38,14 @@ The *optional* attribute query is a boolean expression, supported operators are:
 Attribute selection is a term: "name comparator value", where name is a DXF entity attribute in lowercase,
 value is a integer, float or double quoted string, valid comparators are:
 
-  - ``"=="`` equal "value"
-  - ``"!="`` not equal "value"
-  - ``"<"`` lower than "value"
-  - ``"<="`` lower or equal than "value"
-  - ``">"`` greater than "value"
-  - ``">="`` greater or equal than "value"
-  - ``"?"`` match regular expression "value"
-  - ``"!?"`` does not match regular expression "value"
+  - ``==`` equal "value"
+  - ``!=`` not equal "value"
+  - ``<`` lower than "value"
+  - ``<=`` lower or equal than "value"
+  - ``>`` greater than "value"
+  - ``>=`` greater or equal than "value"
+  - ``?`` match regular expression "value"
+  - ``!?`` does not match regular expression "value"
 
 .. _query result:
 
@@ -84,6 +84,18 @@ EntityQuery Class
     .. automethod:: __setitem__
 
     .. automethod:: __delitem__
+
+    .. automethod:: __eq__
+
+    .. automethod:: __ne__
+
+    .. automethod:: __lt__
+
+    .. automethod:: __le__
+
+    .. automethod:: __gt__
+
+    .. automethod:: __ge__
 
     .. automethod:: __iter__
 
@@ -173,6 +185,30 @@ be set to case sensitive:
 
     # the entities container has the default setting:
     assert entities.case_insensitive is True
+
+Supported selection operators are:
+
+  - ``==`` equal "value"
+  - ``!=`` not equal "value"
+  - ``<`` lower than "value"
+  - ``<=`` lower or equal than "value"
+  - ``>`` greater than "value"
+  - ``>=`` greater or equal than "value"
+
+The relational operators <, >, <= and >= are not supported for vector-based
+attributes such as `center` or `insert` and raise a :class:`TypeError`.
+
+.. note::
+
+    These operators are selection operators and not logic operators, therefore
+    the logic operators ``and``, ``or`` and ``not`` are **not** implemented.
+    For combining selections are the set operations ``union``, ``difference`` and
+    ``intersect`` implemented. See following section.
+
+Set Operators
+-------------
+
+TODO
 
 The new() Function
 ------------------
