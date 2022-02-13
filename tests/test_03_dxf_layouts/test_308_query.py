@@ -3,7 +3,7 @@
 import pytest
 import ezdxf
 
-from ezdxf.query import EntityQuery, name_query
+from ezdxf.query import EntityQuery, name_query, unique_entities
 from ezdxf.entities import Text, Line, Circle, Arc, MText
 from ezdxf.math import Vec3
 from ezdxf import colors
@@ -25,6 +25,12 @@ class TestNameQuery:
     def test_exclude_some_names(self, entities):
         result = list(name_query(entities, "* !SOLID"))
         assert "SOLID" not in result
+
+
+def test_unique_entities_supports_virtual_entities():
+    text = Text()
+    result = list(unique_entities([text, Line(), Arc(), text]))
+    assert len(result) == 3
 
 
 @pytest.fixture(scope="module")

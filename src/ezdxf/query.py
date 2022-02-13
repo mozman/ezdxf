@@ -671,17 +671,17 @@ def build_entity_attributes_matcher(
     return match_bool_expr
 
 
-def unique_entities(entities: Iterable["DXFEntity"]) -> Iterable["DXFEntity"]:
+def unique_entities(entities: Iterable["DXFEntity"]) -> Iterator["DXFEntity"]:
     """Yield all unique entities, order of all entities will be preserved."""
-    handles = set()
+    done: Set[int] = set()
     for entity in entities:
-        handle = entity.dxf.handle
-        if handle not in handles:
-            handles.add(handle)
+        id_ = id(entity)
+        if id_ not in done:
+            done.add(id_)
             yield entity
 
 
-def name_query(names: Iterable[str], query: str = "*") -> Iterable[str]:
+def name_query(names: Iterable[str], query: str = "*") -> Iterator[str]:
     """Filters `names` by `query` string. The `query` string of entity names
     divided by spaces. The special name "*" matches any given name, a
     preceding "!" means exclude this name. Excluding names is only useful if
