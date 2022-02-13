@@ -18,6 +18,7 @@ from ezdxf.entities.dxfobj import DXFObject
 from ezdxf.audit import AuditError, Auditor
 from ezdxf.lldxf.const import DXFInternalEzdxfError
 from ezdxf.entities import factory
+from ezdxf.query import EntityQuery
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter
@@ -311,6 +312,21 @@ class EntityDB:
         entity.dxf.handle = handle
         self.add(entity)
         return True
+
+    def query(self, query: str = "*") -> EntityQuery:
+        """Entity query over all entities in the DXF document.
+
+        Args:
+            query: query string
+
+        .. seealso::
+
+            :ref:`entity query string` and :ref:`entity queries`
+
+        """
+        return EntityQuery(
+            (e for e in self._database.values() if e.is_alive), query
+        )
 
 
 class EntitySpace:

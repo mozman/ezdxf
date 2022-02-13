@@ -12,7 +12,6 @@ from typing import (
     Sequence,
     Union,
     Set,
-    Callable,
 )
 import re
 import operator

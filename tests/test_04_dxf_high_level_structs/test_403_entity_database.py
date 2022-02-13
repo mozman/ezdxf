@@ -1,4 +1,4 @@
-# Copyright (c) 2011-2020, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf
@@ -219,3 +219,10 @@ def test_can_not_reset_entity_handle():
 
     assert db.reset_handle(entity1, entity2.dxf.handle) is False
     assert entity1.dxf.handle == handle
+
+
+def test_query_method_exist():
+    db = EntityDB()
+    db.add(DXFEntity())
+    db.add(DXFEntity())
+    assert len(db.query()) == 2

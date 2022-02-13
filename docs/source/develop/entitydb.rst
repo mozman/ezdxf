@@ -53,6 +53,8 @@ do not yield destroyed entities.
 
     .. automethod:: purge
 
+    .. automethod:: query
+
 Entity Space
 ============
 
