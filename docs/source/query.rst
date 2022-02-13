@@ -5,6 +5,8 @@
 
     For usage of the query features see the tutorial: :ref:`tut_getting_data`
 
+.. _entity query string:
+
 Entity Query String
 ===================
 
@@ -144,11 +146,11 @@ sequence to get entities from the container:
     last = result[-1]
     sequence = result[1:-2]  # returns not an EntityQuery container!
 
-Since v0.18 the :meth:`__getitem__` function accepts an DXF attribute name and
-returns all entities which support this attribute, this is the base for supporting
-queries by relational operators. More on that later.
+Now the :meth:`__getitem__` function accepts also a DXF attribute name and
+returns all entities which support this attribute, this is the base for
+supporting queries by relational operators. More on that later.
 
-The :meth:`__setitem__` method the assigns a DXF attribute all supported
+The :meth:`__setitem__` method assigns a DXF attribute to all supported
 entities in the :class:`EntityQuery` container:
 
 .. code-block:: Python
@@ -173,12 +175,12 @@ the :class:`EntityQuery` container:
     # default layer "0"
     del result["layer"]
 
-Descriptors of Basic Attributes
--------------------------------
+Descriptors for DXF Attributes
+------------------------------
 
 .. versionadded:: 0.18
 
-For these basic attributes exist descriptors in the :class:`EntityQuery` class:
+For some basic DXF attributes exist descriptors in the :class:`EntityQuery` class:
 
 - :attr:`layer`: layer name as string
 - :attr:`color`: :ref:`ACI`, see :mod:`ezdxf.colors`
@@ -220,7 +222,7 @@ relational operators:
     entities = lines["layer"] == "MyLayer"
     assert len(entities) == 1
 
-    # or select all except the entities on layer "MyLayer"
+    # or select all entities except the entities on layer "MyLayer"
     entities = lines["layer"] != "MyLayer"
 
 These operators work only with real DXF attributes, for instance the :attr:`rgb`
@@ -239,7 +241,7 @@ the selection mode can be set to case sensitive:
     entities = lines["layer"] == "MYLAYER"
     assert len(entities) == 0
 
-    # the entities container has the default setting:
+    # the result container has the default setting:
     assert entities.ignore_case is True
 
 Supported selection operators are:
