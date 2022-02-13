@@ -415,19 +415,20 @@ class EntityQuery(abc.Sequence):
             self.entities = list(unique_entities(self.entities))
         return self
 
-    def remove(self, query: str = "*") -> None:
+    def remove(self, query: str = "*") -> "EntityQuery":
         """Remove all entities from :class:`EntityQuery` container matching this
         additional query.
 
         """
-        handles_of_entities_to_remove = frozenset(
-            entity.dxf.handle for entity in self.query(query)
+        remove_entities: Set[int] = set(
+            id(e) for e in EntityQuery(self.entities, query)
         )
         self.entities = [
             entity
             for entity in self.entities
-            if entity.dxf.handle not in handles_of_entities_to_remove
+            if id(entity) not in remove_entities
         ]
+        return self  # fluent interface
 
     def query(self, query: str = "*") -> "EntityQuery":
         """Returns a new :class:`EntityQuery` container with all entities

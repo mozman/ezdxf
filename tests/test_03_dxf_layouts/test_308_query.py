@@ -33,6 +33,11 @@ def test_unique_entities_supports_virtual_entities():
     assert len(result) == 3
 
 
+def test_remove_supports_virtual_entities():
+    result = EntityQuery([Text(), Line(), Arc()]).remove("TEXT")
+    assert len(result) == 2
+
+
 @pytest.fixture(scope="module")
 def modelspace():
     doc = ezdxf.new()
