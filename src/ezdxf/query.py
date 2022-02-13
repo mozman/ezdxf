@@ -114,9 +114,7 @@ class EntityQuery(abc.Sequence):
     true_color = _AttributeDescriptor("true_color")
     transparency = _AttributeDescriptor("transparency")
 
-    def __init__(
-        self, entities: Iterable[DXFEntity] = None, query: str = "*"
-    ):
+    def __init__(self, entities: Iterable[DXFEntity] = None, query: str = "*"):
         """
         Setup container with entities matching the initial query.
 
@@ -401,15 +399,12 @@ class EntityQuery(abc.Sequence):
         self,
         entities: Iterable[DXFEntity],
         query: str = "*",
-        unique: bool = True,
     ) -> "EntityQuery":
         """Extent the :class:`EntityQuery` container by entities matching an
         additional query.
 
         """
-        self.entities.extend(EntityQuery(entities, query))
-        if unique:
-            self.entities = list(unique_entities(self.entities))
+        self.entities = self.union(EntityQuery(entities, query)).entities
         return self
 
     def remove(self, query: str = "*") -> "EntityQuery":
@@ -417,14 +412,9 @@ class EntityQuery(abc.Sequence):
         additional query.
 
         """
-        remove_entities: Set[int] = set(
-            id(e) for e in EntityQuery(self.entities, query)
-        )
-        self.entities = [
-            entity
-            for entity in self.entities
-            if id(entity) not in remove_entities
-        ]
+        self.entities = self.difference(
+            EntityQuery(self.entities, query)
+        ).entities
         return self  # fluent interface
 
     def query(self, query: str = "*") -> "EntityQuery":
@@ -475,10 +465,7 @@ class EntityQuery(abc.Sequence):
         .. versionadded:: 0.18
 
         """
-        s1 = _build_set(self)
-        s2 = _build_set(other)
-        result = s1 | s2
-        return self._set_to_container(self, other, result)
+        return EntityQuery(set(self.entities) | set(other.entities))
 
     def intersection(self, other: "EntityQuery") -> "EntityQuery":
         """Returns a new :class:`EntityQuery` with entities common to `self`
@@ -487,10 +474,7 @@ class EntityQuery(abc.Sequence):
         .. versionadded:: 0.18
 
         """
-        s1 = _build_set(self)
-        s2 = _build_set(other)
-        result = s1 & s2
-        return self._set_to_container(self, [], result)
+        return self.__class__(set(self.entities) & set(other.entities))
 
     def difference(self, other: "EntityQuery") -> "EntityQuery":
         """Returns a new :class:`EntityQuery` with all entities from `self` that
@@ -499,10 +483,7 @@ class EntityQuery(abc.Sequence):
         .. versionadded:: 0.18
 
         """
-        s1 = _build_set(self)
-        s2 = _build_set(other)
-        result = s1 - s2
-        return self._set_to_container(self, [], result)
+        return self.__class__(set(self.entities) - set(other.entities))
 
     def symmetric_difference(self, other: "EntityQuery") -> "EntityQuery":
         """Returns a new :class:`EntityQuery` with entities in either `self` or
@@ -511,31 +492,7 @@ class EntityQuery(abc.Sequence):
         .. versionadded:: 0.18
 
         """
-        s1 = _build_set(self)
-        s2 = _build_set(other)
-        result = s1 ^ s2
-        return self._set_to_container(self, other, result)
-
-    @classmethod
-    def _set_to_container(
-        cls,
-        q1: Iterable[DXFEntity],
-        q2: Iterable[DXFEntity],
-        selector: Set[int],
-    ) -> "EntityQuery":
-        result = cls()
-        done: Set[int] = set()
-        entities = result.entities
-        for e in itertools.chain(q1, q2):
-            id_ = id(e)
-            if id_ in selector and id_ not in done:
-                entities.append(e)
-                done.add(id_)
-        return result
-
-
-def _build_set(entities: Iterable[DXFEntity]) -> Set[int]:
-    return set(id(e) for e in entities)
+        return self.__class__(set(self.entities) ^ set(other.entities))
 
 
 def entity_matcher(query: str) -> Callable[[DXFEntity], bool]:
@@ -671,11 +628,10 @@ def build_entity_attributes_matcher(
 
 def unique_entities(entities: Iterable[DXFEntity]) -> Iterator[DXFEntity]:
     """Yield all unique entities, order of all entities will be preserved."""
-    done: Set[int] = set()
+    done: Set[DXFEntity] = set()
     for entity in entities:
-        id_ = id(entity)
-        if id_ not in done:
-            done.add(id_)
+        if entity not in done:
+            done.add(entity)
             yield entity
 
 
@@ -719,9 +675,7 @@ def name_matcher(query: str = "*") -> Callable[[str], bool]:
     return match
 
 
-def new(
-    entities: Iterable[DXFEntity] = None, query: str = "*"
-) -> EntityQuery:
+def new(entities: Iterable[DXFEntity] = None, query: str = "*") -> EntityQuery:
     """Start a new query based on sequence `entities`. The `entities` argument
     has to be an iterable of :class:`~ezdxf.entities.DXFEntity` or inherited
     objects and returns an :class:`EntityQuery` object.

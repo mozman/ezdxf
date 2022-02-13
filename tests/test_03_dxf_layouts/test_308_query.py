@@ -3,7 +3,7 @@
 import pytest
 import ezdxf
 
-from ezdxf.query import EntityQuery, name_query, unique_entities
+from ezdxf.query import EntityQuery, name_query
 from ezdxf.entities import Text, Line, Circle, Arc, MText
 from ezdxf.math import Vec3
 from ezdxf import colors
@@ -25,12 +25,6 @@ class TestNameQuery:
     def test_exclude_some_names(self, entities):
         result = list(name_query(entities, "* !SOLID"))
         assert "SOLID" not in result
-
-
-def test_unique_entities_supports_virtual_entities():
-    text = Text()
-    result = list(unique_entities([text, Line(), Arc(), text]))
-    assert len(result) == 3
 
 
 def test_remove_supports_virtual_entities():
@@ -185,7 +179,7 @@ def test_ignore_case_match_regex(modelspace):
 def test_extend_query(modelspace):
     result = EntityQuery(modelspace, "*")
     length = len(result)
-    result.extend(result, unique=True)
+    result.extend(result)
     assert len(result) == length
 
 
@@ -422,7 +416,7 @@ class TestSetOperations:
     def test_difference(self, base: EntityQuery):
         result = base - base.query("LINE")
         assert len(result) == 2
-        assert [e.dxftype() for e in result] == ["CIRCLE", "TEXT"]
+        assert set([e.dxftype() for e in result]) == {"CIRCLE", "TEXT"}
 
     def test_intersection(self, base: EntityQuery):
         result = base & base.query("LINE")
@@ -435,12 +429,12 @@ class TestSetOperations:
         )
         result = base ^ other
         assert len(result) == 3
-        assert [e.dxftype() for e in result] == ["CIRCLE", "TEXT", "ARC"]
+        assert set(e.dxftype() for e in result) == {"CIRCLE", "TEXT", "ARC"}
 
     def test_operator_combination(self, base: EntityQuery):
         result = (base["layer"] == "line") | (base["color"] == 2)
         assert len(result) == 2
-        assert [e.dxftype() for e in result] == ["LINE", "CIRCLE"]
+        assert set(e.dxftype() for e in result) == {"LINE", "CIRCLE"}
 
 
 class TestDescriptors:
