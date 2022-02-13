@@ -1,15 +1,14 @@
+
 .. module:: ezdxf.query
 
 .. seealso::
 
     For usage of the query features see the tutorial: :ref:`tut_getting_data`
 
-.. _entity query string:
-
 Entity Query String
 ===================
 
-::
+.. code-block::
 
     QueryString := EntityQuery ("[" AttribQuery "]" "i"?)*
 
@@ -117,6 +116,8 @@ EntityQuery Class
 
     .. automethod:: groupby
 
+    .. automethod:: filter
+
     .. automethod:: union
 
     .. automethod:: intersection
@@ -222,13 +223,13 @@ relational operators:
     # or select all except the entities on layer "MyLayer"
     entities = lines["layer"] != "MyLayer"
 
-These operators work only with real DXF attribute, for instance the `text`
-attribute of the MTEXT entity is not a real DXF attribute either the vertices
-of the LWPOLYLINE entity.
+These operators work only with real DXF attributes, for instance the :attr:`rgb`
+attribute of graphical entities is not a real DXF attribute either the
+:attr:`vertices` of the LWPOLYLINE entity.
 
-The selection by operator is case insensitive by default, because all DXF table
-entries are handled case insensitive. But if required the selection mode can
-be set to case sensitive:
+The selection by relational operators is case insensitive by default, because
+all names of DXF table entries are handled case insensitive. But if required
+the selection mode can be set to case sensitive:
 
 .. code-block:: Python
 
@@ -259,7 +260,8 @@ attributes such as `center` or `insert` and raise a :class:`TypeError`.
     the logic operators ``and``, ``or`` and ``not`` are **not** applicable.
     The methods :meth:`~EntityQuery.union`, :meth:`~EntityQuery.intersection`,
     :meth:`~EntityQuery.difference` and :meth:`~EntityQuery.symmetric_difference`
-    can be used to combine selection. See following section.
+    can be used to combine selection. See section `Query Set Operators`_ and
+    `Build Own Filters`_.
 
 .. _regular expression selection:
 
@@ -281,6 +283,53 @@ From here on I use only descriptors for attribute selection if possible.
     # select all entities at layers starting with "Lay",
     # selection is also case insensitive by default:
     assert len(lines.layer.match("^Lay.*")) == 2
+
+.. _build own filters:
+
+Build Own Filters
+-----------------
+
+The method :class:`EntityQuery.filter` can be used to build operators for
+none-DXF attributes or for complex logic expressions.
+
+Find all MTEXT entities in modelspace containing "SearchText".
+All :class:`~ezdxf.entities.MText` entities have a :attr:`text` attribute, no
+need for a safety check:
+
+.. code-block:: Python
+
+    mtext = msp.query("MTEXT").filter(lambda e: "SearchText" in e.text)
+
+This filter checks the non-DXF attribute :attr:`rgb`. The filter has to
+check if the :attr:`rgb` attributes exist to avoid exceptions, because not all
+entities in modelspace may have the :attr:`rgb` attribute e.g. the
+:class:`DXFTagStorage` entities which preserve unknown DXF entities:
+
+.. code-block:: Python
+
+    result = msp.query().filter(
+        lambda e: hasattr(e, "rgb") and e.rgb == (0, 0, 0)
+    )
+
+Build 1-pass logic filters for complex queries, which would require otherwise
+multiple passes:
+
+.. code-block:: Python
+
+    result = msp.query().filter(lambda e: e.dxf.color < 7 and e.dxf.layer == "0")
+
+Combine filters for more complex operations. The first filter passes only
+valid entities and the second filter does the actual check:
+
+.. code-block:: Python
+
+    def validator(entity):
+        return True  # if entity is valid and has all required attributes
+
+    def check(entity):
+        return True  # if entity passes the attribute checks
+
+    result = msp.query().filter(validator).filter(check)
 
 .. _query set operators:
 

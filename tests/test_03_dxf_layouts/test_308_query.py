@@ -4,7 +4,7 @@ import pytest
 import ezdxf
 
 from ezdxf.query import EntityQuery, name_query
-from ezdxf.entities import Text, Line, Circle, Arc
+from ezdxf.entities import Text, Line, Circle, Arc, MText
 from ezdxf.math import Vec3
 from ezdxf import colors
 
@@ -252,19 +252,43 @@ class TestGetSetDelItemInterface:
         assert query[1].dxf.layer == "0", "expected the default value"
 
 
-class TestEntityQueryRelationOperators:
+class TestVirtualAttributes:
+    @pytest.fixture
+    def entities(self):
+        return EntityQuery([
+            MText.new(dxfattribs={"text": "content"}),  # virtual text attribute
+            Text.new(dxfattribs={"text": "content"})
+        ])
+
+    def test_get_virtual_attributes(self, entities):
+        assert len(entities["text"]) == 2
+
+    def test_set_virtual_attributes(self, entities):
+        entities["text"] = "XYZ"
+        assert all(e.dxf.text == "XYZ" for e in entities)
+
+    def test_cannot_delete_virtual_attributes(self, entities):
+        """Cannot delete virtual DXF attributes! """
+        del entities["text"]
+        assert entities.query("MTEXT").first.dxf.text == "content"
+
+
+class TestOperatorSelection:
+    @pytest.fixture
+    def query(self):
+        return EntityQuery(
+            [
+                Line.new(dxfattribs={"layer": "Lay1", "color": 1}),
+                Text.new(dxfattribs={"layer": "Lay2", "color": 2}),
+            ]
+        )
+
     def test_no_selected_dxf_attribute_raises_type_error(self):
         query = EntityQuery()
         with pytest.raises(TypeError):
             _ = query == "MyLayer"
 
-    def test_is_equal_operator(self):
-        query = EntityQuery(
-            [
-                Line.new(dxfattribs={"layer": "Lay1"}),
-                Text.new(dxfattribs={"layer": "Lay2"}),
-            ]
-        )
+    def test_is_equal_operator(self, query: EntityQuery):
         result = query["layer"] == "Lay1"
         assert len(result) == 1
         assert result.first.dxftype() == "LINE"
@@ -272,34 +296,16 @@ class TestEntityQueryRelationOperators:
             result.selected_dxf_attribute == "layer"
         ), "selection should be propagated"
 
-    def test_is_not_equal_operator(self):
-        query = EntityQuery(
-            [
-                Line.new(dxfattribs={"layer": "Lay1"}),
-                Text.new(dxfattribs={"layer": "Lay2"}),
-            ]
-        )
+    def test_is_not_equal_operator(self, query: EntityQuery):
         result = query["layer"] != "Lay1"
         assert len(result) == 1
         assert result.first.dxftype() == "TEXT"
 
-    def test_query_is_case_insensitive_by_default(self):
-        query = EntityQuery(
-            [
-                Line.new(dxfattribs={"layer": "Lay1"}),
-                Text.new(dxfattribs={"layer": "LaY1"}),
-            ]
-        )
+    def test_query_is_case_insensitive_by_default(self, query: EntityQuery):
         result = query["layer"] == "LAY1"
-        assert len(result) == 2
+        assert len(result) == 1
 
-    def test_less_than_operator(self):
-        query = EntityQuery(
-            [
-                Line.new(dxfattribs={"color": 1}),
-                Text.new(dxfattribs={"color": 2}),
-            ]
-        )
+    def test_less_than_operator(self, query: EntityQuery):
         result = query["color"] < 2
         assert len(result) == 1
         assert result.first.dxftype() == "LINE"
@@ -309,13 +315,7 @@ class TestEntityQueryRelationOperators:
         with pytest.raises(TypeError):
             _ = query["insert"] < (1, 0)
 
-    def test_greater_than_operator(self):
-        query = EntityQuery(
-            [
-                Line.new(dxfattribs={"color": 1}),
-                Text.new(dxfattribs={"color": 2}),
-            ]
-        )
+    def test_greater_than_operator(self, query: EntityQuery):
         result = query["color"] > 1
         assert len(result) == 1
         assert result.first.dxftype() == "TEXT"
@@ -325,13 +325,7 @@ class TestEntityQueryRelationOperators:
         with pytest.raises(TypeError):
             _ = query["insert"] > (1, 0)
 
-    def test_less_equal_operator(self):
-        query = EntityQuery(
-            [
-                Line.new(dxfattribs={"color": 1}),
-                Text.new(dxfattribs={"color": 2}),
-            ]
-        )
+    def test_less_equal_operator(self, query: EntityQuery):
         result = query["color"] <= 2
         assert len(result) == 2
 
@@ -340,13 +334,7 @@ class TestEntityQueryRelationOperators:
         with pytest.raises(TypeError):
             _ = query["insert"] <= (1, 0)
 
-    def test_greater_equal_operator(self):
-        query = EntityQuery(
-            [
-                Line.new(dxfattribs={"color": 1}),
-                Text.new(dxfattribs={"color": 2}),
-            ]
-        )
+    def test_greater_equal_operator(self, query: EntityQuery):
         result = query["color"] >= 1
         assert len(result) == 2
 
@@ -354,6 +342,13 @@ class TestEntityQueryRelationOperators:
         query = EntityQuery([Text.new(dxfattribs={"insert": Vec3(0, 0)})])
         with pytest.raises(TypeError):
             _ = query["insert"] >= (1, 0)
+
+    def test_filter_operator(self, query):
+        """Build your own operator to filter non DXF attributes."""
+        for e in query:
+            e.rgb = (0, 0, 0)
+        result = query.filter(lambda e: e.rgb == (0, 0, 0))
+        assert len(result) == 2
 
 
 class TestRegexMatch:

@@ -1,5 +1,5 @@
 # Purpose: Query language and manipulation object for DXF entities
-# Copyright (c) 2013-2021, Manfred Moitzi
+# Copyright (c) 2013-2022, Manfred Moitzi
 # License: MIT License
 from typing import (
     TYPE_CHECKING,
@@ -12,6 +12,7 @@ from typing import (
     Sequence,
     Union,
     Set,
+    Callable,
 )
 import re
 import operator
@@ -107,6 +108,7 @@ class EntityQuery(abc.Sequence):
           on layer == "construction" and color < 7
 
     """
+
     layer = _AttributeDescriptor("layer")
     color = _AttributeDescriptor("color")
     linetype = _AttributeDescriptor("linetype")
@@ -453,6 +455,22 @@ class EntityQuery(abc.Sequence):
         """
         return groupby(self.entities, dxfattrib, key)
 
+    def filter(self, func: Callable[["DXFEntity"], bool]) -> "EntityQuery":
+        """Returns a new :class:`EntityQuery` with all entities from this
+        container for which the callable `func` returns ``True``.
+
+        Build your own operator to filter by attributes which are not DXF
+        attributes or to build complex queries::
+
+            result = msp.query().filter(
+                lambda e: hasattr(e, "rgb") and e.rbg == (0, 0, 0)
+            )
+
+        .. versionadded:: 0.18
+
+        """
+        return self.__class__(filter(func, self.entities))
+
     def union(self, other: "EntityQuery") -> "EntityQuery":
         """Returns a new :class:`EntityQuery` with entities from `self` and
         `other`. All entities are unique - no duplicates.
@@ -463,7 +481,7 @@ class EntityQuery(abc.Sequence):
         s1 = _build_set(self)
         s2 = _build_set(other)
         result = s1 | s2
-        return _set_to_container(self, other, result)
+        return self._set_to_container(self, other, result)
 
     def intersection(self, other: "EntityQuery") -> "EntityQuery":
         """Returns a new :class:`EntityQuery` with entities common to `self`
@@ -475,7 +493,7 @@ class EntityQuery(abc.Sequence):
         s1 = _build_set(self)
         s2 = _build_set(other)
         result = s1 & s2
-        return _set_to_container(self, [], result)
+        return self._set_to_container(self, [], result)
 
     def difference(self, other: "EntityQuery") -> "EntityQuery":
         """Returns a new :class:`EntityQuery` with all entities from `self` that
@@ -487,7 +505,7 @@ class EntityQuery(abc.Sequence):
         s1 = _build_set(self)
         s2 = _build_set(other)
         result = s1 - s2
-        return _set_to_container(self, [], result)
+        return self._set_to_container(self, [], result)
 
     def symmetric_difference(self, other: "EntityQuery") -> "EntityQuery":
         """Returns a new :class:`EntityQuery` with entities in either `self` or
@@ -499,25 +517,28 @@ class EntityQuery(abc.Sequence):
         s1 = _build_set(self)
         s2 = _build_set(other)
         result = s1 ^ s2
-        return _set_to_container(self, other, result)
+        return self._set_to_container(self, other, result)
+
+    @classmethod
+    def _set_to_container(
+        cls,
+        q1: Iterable["DXFEntity"],
+        q2: Iterable["DXFEntity"],
+        selector: Set[int],
+    ) -> "EntityQuery":
+        result = cls()
+        done: Set[int] = set()
+        entities = result.entities
+        for e in itertools.chain(q1, q2):
+            id_ = id(e)
+            if id_ in selector and id_ not in done:
+                entities.append(e)
+                done.add(id_)
+        return result
 
 
 def _build_set(entities: Iterable["DXFEntity"]) -> Set[int]:
     return set(id(e) for e in entities)
-
-
-def _set_to_container(
-    q1: Iterable["DXFEntity"], q2: Iterable["DXFEntity"], selector: Set[int]
-) -> EntityQuery:
-    result = EntityQuery()
-    done: Set[int] = set()
-    entities = result.entities
-    for e in itertools.chain(q1, q2):
-        id_ = id(e)
-        if id_ in selector and id_ not in done:
-            entities.append(e)
-            done.add(id_)
-    return result
 
 
 def entity_matcher(query: str) -> Callable[["DXFEntity"], bool]:
