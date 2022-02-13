@@ -404,8 +404,8 @@ class EntityQuery(abc.Sequence):
         additional query.
 
         """
-        self.entities = self.union(EntityQuery(entities, query)).entities
-        return self
+        self.entities = self.union(self.__class__(entities, query)).entities
+        return self  # fluent interface
 
     def remove(self, query: str = "*") -> "EntityQuery":
         """Remove all entities from :class:`EntityQuery` container matching this
@@ -413,7 +413,7 @@ class EntityQuery(abc.Sequence):
 
         """
         self.entities = self.difference(
-            EntityQuery(self.entities, query)
+            self.__class__(self.entities, query)
         ).entities
         return self  # fluent interface
 
@@ -424,7 +424,7 @@ class EntityQuery(abc.Sequence):
         raises: ParseException (pyparsing.py)
 
         """
-        return EntityQuery(self.entities, query)
+        return self.__class__(self.entities, query)
 
     def groupby(
         self, dxfattrib: str = "", key: Callable[[DXFEntity], Hashable] = None
@@ -465,7 +465,7 @@ class EntityQuery(abc.Sequence):
         .. versionadded:: 0.18
 
         """
-        return EntityQuery(set(self.entities) | set(other.entities))
+        return self.__class__(set(self.entities) | set(other.entities))
 
     def intersection(self, other: "EntityQuery") -> "EntityQuery":
         """Returns a new :class:`EntityQuery` with entities common to `self`
