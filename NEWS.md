@@ -33,6 +33,8 @@ Version 0.18b1 - dev
 - NEW: method `Text.set_placement()`, replaces `set_pos()` 
 - NEW: method `Text.get_align_enum()`, replaces `get_align()`
 - NEW: method `Text.set_align_enum()`, replaces `set_align()`
+- NEW: virtual DXF attribute `MText.dxf.text`, adds compatibility to other text 
+  based entities: `TEXT, ATTRIB, ATTDEF`
 - NEW: command `ezdxf info FILE [FILE ...]`, show info and optional stats of DXF files
 - NEW: module `ezdxf.appsettings`, [docs](https://ezdxf.mozman.at/docs/appsettings.html)
 - NEW: module `ezdxf.addons.binpacking`, a simple solution for the bin-packing problem 

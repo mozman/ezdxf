@@ -22,6 +22,7 @@ from ezdxf.lldxf.attributes import (
     XType,
     RETURN_DEFAULT,
     group_code_mapping,
+    VIRTUAL_TAG,
 )
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXF2018
 from ezdxf.lldxf.types import DXFTag, dxftag
@@ -72,6 +73,14 @@ BG_FILL_MASK = 1 + 2 + 16
 acdb_mtext = DefSubclass(
     "AcDbMText",
     {
+        # virtual text attribute, the actual content is stored in
+        # multiple tags (1, 3, 3, ...)
+        "text": DXFAttr(
+            VIRTUAL_TAG,
+            xtype=XType.callback,
+            getter="_get_text",
+            setter="_set_text",
+        ),
         "insert": DXFAttr(10, xtype=XType.point3d, default=NULLVEC),
         # Nominal (initial) text height
         "char_height": DXFAttr(
@@ -656,6 +665,20 @@ class MText(DXFGraphic):
         self.text: str = ""
         # Linked MText columns do not have a MTextColumns() object!
         self._columns: Optional[MTextColumns] = None
+
+    def _get_text(self):
+        """Getter for virtual Mtext.dxf.text attribute.
+
+        The MText content is stored in multiple tags (1, 3, 3, ...) and cannot
+        be supported as a simple DXF tag. The virtual MText.dxf.text attribute
+        adds compatibility to other text based entities: TEXT, ATTRIB, ATTDEF
+
+        """
+        return self.text
+
+    def _set_text(self, value):
+        """Setter for virtual Mtext.dxf.text attribute. """
+        self.text = str(value)
 
     @property
     def columns(self) -> Optional[MTextColumns]:

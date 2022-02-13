@@ -58,6 +58,30 @@ def test_default_init():
     assert entity.dxf.owner is None
 
 
+def test_virtual_text_attribute():
+    """The MText content is stored in multiple tags (1, 3, 3, ...) and cannot
+    be supported as a simple DXF tag.
+    """
+    entity = MText()
+    assert entity.is_supported_dxf_attrib("text") is True
+
+    entity.dxf.text = "Hello"
+    assert entity.text == "Hello"
+    assert entity.dxf.text == "Hello"
+
+
+def test_setup_by_virtual_text_attribute():
+    entity = MText.new(dxfattribs={"text": "content"})
+    assert entity.text == "content"
+    assert entity.dxf.text == "content"
+
+
+def test_hasattr_for_virtual_text_attribute_is_always_false():
+    entity = MText()
+    entity.dxf.text = "Hello"
+    assert entity.dxf.hasattr("text") is False
+
+
 def test_default_new():
     entity = MText.new(
         handle="ABBA",
