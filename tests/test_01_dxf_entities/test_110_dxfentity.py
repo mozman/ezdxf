@@ -24,6 +24,10 @@ def entity():
     return DXFEntity.from_text(ENTITY)
 
 
+def test_dxfentity_is_set_compatible():
+    assert len({DXFEntity(), DXFEntity(), DXFEntity()}) == 3
+
+
 def test_is_not_graphic_entity(entity):
     assert is_graphic_entity(entity) is False
 

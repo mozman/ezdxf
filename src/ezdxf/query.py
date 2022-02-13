@@ -2,7 +2,6 @@
 # Copyright (c) 2013-2022, Manfred Moitzi
 # License: MIT License
 from typing import (
-    TYPE_CHECKING,
     Iterable,
     Iterator,
     Callable,
@@ -18,12 +17,10 @@ import operator
 import itertools
 from collections import abc
 
-from ezdxf.queryparser import EntityQueryParser
+from ezdxf.entities.dxfentity import DXFEntity
 from ezdxf.groupby import groupby
 from ezdxf.math import Vec3, Vec2
-
-if TYPE_CHECKING:
-    from ezdxf.entities import DXFEntity
+from ezdxf.queryparser import EntityQueryParser
 
 
 class _AttributeDescriptor:
@@ -118,7 +115,7 @@ class EntityQuery(abc.Sequence):
     transparency = _AttributeDescriptor("transparency")
 
     def __init__(
-        self, entities: Iterable["DXFEntity"] = None, query: str = "*"
+        self, entities: Iterable[DXFEntity] = None, query: str = "*"
     ):
         """
         Setup container with entities matching the initial query.
@@ -133,7 +130,7 @@ class EntityQuery(abc.Sequence):
         # Text selection mode, but only for operator comparisons:
         self.ignore_case = True
 
-        self.entities: List["DXFEntity"]
+        self.entities: List[DXFEntity]
         if entities is None:
             self.entities = []
         elif query == "*":
@@ -380,7 +377,7 @@ class EntityQuery(abc.Sequence):
         self.ignore_case = ignore_case  # restore state
         return result
 
-    def __iter__(self) -> Iterator["DXFEntity"]:
+    def __iter__(self) -> Iterator[DXFEntity]:
         """Returns iterable of DXFEntity objects."""
         return iter(self.entities)
 
@@ -402,7 +399,7 @@ class EntityQuery(abc.Sequence):
 
     def extend(
         self,
-        entities: Iterable["DXFEntity"],
+        entities: Iterable[DXFEntity],
         query: str = "*",
         unique: bool = True,
     ) -> "EntityQuery":
@@ -440,8 +437,8 @@ class EntityQuery(abc.Sequence):
         return EntityQuery(self.entities, query)
 
     def groupby(
-        self, dxfattrib: str = "", key: Callable[["DXFEntity"], Hashable] = None
-    ) -> Dict[Hashable, List["DXFEntity"]]:
+        self, dxfattrib: str = "", key: Callable[[DXFEntity], Hashable] = None
+    ) -> Dict[Hashable, List[DXFEntity]]:
         """Returns a dict of entity lists, where entities are grouped by a DXF
         attribute or a key function.
 
@@ -455,7 +452,7 @@ class EntityQuery(abc.Sequence):
         """
         return groupby(self.entities, dxfattrib, key)
 
-    def filter(self, func: Callable[["DXFEntity"], bool]) -> "EntityQuery":
+    def filter(self, func: Callable[[DXFEntity], bool]) -> "EntityQuery":
         """Returns a new :class:`EntityQuery` with all entities from this
         container for which the callable `func` returns ``True``.
 
@@ -522,8 +519,8 @@ class EntityQuery(abc.Sequence):
     @classmethod
     def _set_to_container(
         cls,
-        q1: Iterable["DXFEntity"],
-        q2: Iterable["DXFEntity"],
+        q1: Iterable[DXFEntity],
+        q2: Iterable[DXFEntity],
         selector: Set[int],
     ) -> "EntityQuery":
         result = cls()
@@ -537,18 +534,18 @@ class EntityQuery(abc.Sequence):
         return result
 
 
-def _build_set(entities: Iterable["DXFEntity"]) -> Set[int]:
+def _build_set(entities: Iterable[DXFEntity]) -> Set[int]:
     return set(id(e) for e in entities)
 
 
-def entity_matcher(query: str) -> Callable[["DXFEntity"], bool]:
+def entity_matcher(query: str) -> Callable[[DXFEntity], bool]:
     query_args = EntityQueryParser.parseString(query, parseAll=True)
     entity_matcher_ = build_entity_name_matcher(query_args.EntityQuery)
     attrib_matcher = build_entity_attributes_matcher(
         query_args.AttribQuery, query_args.AttribQueryOptions
     )
 
-    def matcher(entity: "DXFEntity") -> bool:
+    def matcher(entity: DXFEntity) -> bool:
         return entity_matcher_(entity) and attrib_matcher(entity)
 
     return matcher
@@ -556,8 +553,8 @@ def entity_matcher(query: str) -> Callable[["DXFEntity"], bool]:
 
 def build_entity_name_matcher(
     names: Sequence[str],
-) -> Callable[["DXFEntity"], bool]:
-    def match(e: "DXFEntity") -> bool:
+) -> Callable[[DXFEntity], bool]:
+    def match(e: DXFEntity) -> bool:
         return _match(e.dxftype())
 
     _match = name_matcher(query=" ".join(names))
@@ -591,7 +588,7 @@ class Relation:
         else:
             self.value = self.convert_case(value)
 
-    def evaluate(self, entity: "DXFEntity") -> bool:
+    def evaluate(self, entity: DXFEntity) -> bool:
         try:
             value = self.convert_case(entity.dxf.get_default(self.dxf_attrib))
             return self.compare(value, self.value)
@@ -617,7 +614,7 @@ class BoolExpression:
     def __iter__(self):
         return iter(self.tokens)
 
-    def evaluate(self, entity: "DXFEntity") -> bool:
+    def evaluate(self, entity: DXFEntity) -> bool:
         if isinstance(
             self.tokens, Relation
         ):  # expression is just one relation, no bool operations
@@ -660,19 +657,19 @@ def _compile_tokens(
 
 def build_entity_attributes_matcher(
     tokens: Sequence, options: str
-) -> Callable[["DXFEntity"], bool]:
+) -> Callable[[DXFEntity], bool]:
     if not len(tokens):
         return lambda x: True
     ignore_case = "i" == options  # at this time just one option is supported
     expr = BoolExpression(_compile_tokens(tokens, ignore_case))  # type: ignore
 
-    def match_bool_expr(entity: "DXFEntity") -> bool:
+    def match_bool_expr(entity: DXFEntity) -> bool:
         return expr.evaluate(entity)
 
     return match_bool_expr
 
 
-def unique_entities(entities: Iterable["DXFEntity"]) -> Iterator["DXFEntity"]:
+def unique_entities(entities: Iterable[DXFEntity]) -> Iterator[DXFEntity]:
     """Yield all unique entities, order of all entities will be preserved."""
     done: Set[int] = set()
     for entity in entities:
@@ -723,7 +720,7 @@ def name_matcher(query: str = "*") -> Callable[[str], bool]:
 
 
 def new(
-    entities: Iterable["DXFEntity"] = None, query: str = "*"
+    entities: Iterable[DXFEntity] = None, query: str = "*"
 ) -> EntityQuery:
     """Start a new query based on sequence `entities`. The `entities` argument
     has to be an iterable of :class:`~ezdxf.entities.DXFEntity` or inherited
