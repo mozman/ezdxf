@@ -14,7 +14,6 @@ from typing import (
 )
 import re
 import operator
-import itertools
 from collections import abc
 
 from ezdxf.entities.dxfentity import DXFEntity
@@ -141,6 +140,10 @@ class EntityQuery(abc.Sequence):
         """Returns count of DXF entities."""
         return len(self.entities)
 
+    def __iter__(self) -> Iterator[DXFEntity]:
+        """Returns iterable of DXFEntity objects."""
+        return iter(self.entities)
+
     def __getitem__(self, item):
         """Returns DXFEntity at index `item`, supports negative indices and
         slicing. Returns all entities which support a specific DXF attribute,
@@ -174,6 +177,11 @@ class EntityQuery(abc.Sequence):
         if not isinstance(key, str):
             raise TypeError("key has to be a string (DXF attribute name)")
         self._discard_dxf_attribute_for_all(key)
+
+    def purge(self) -> "EntityQuery":
+        """Remove destroyed entities."""
+        self.entities = [e for e in self.entities if e.is_alive]
+        return self  # fluent interface
 
     def _get_entities_with_supported_attribute(
         self, attribute: str
@@ -375,10 +383,6 @@ class EntityQuery(abc.Sequence):
         self.ignore_case = ignore_case  # restore state
         return result
 
-    def __iter__(self) -> Iterator[DXFEntity]:
-        """Returns iterable of DXFEntity objects."""
-        return iter(self.entities)
-
     @property
     def first(self):
         """First entity or ``None``."""
@@ -421,7 +425,8 @@ class EntityQuery(abc.Sequence):
         """Returns a new :class:`EntityQuery` container with all entities
         matching this additional query.
 
-        raises: ParseException (pyparsing.py)
+        Raises:
+            pyparsing.ParseException: query string parsing error
 
         """
         return self.__class__(self.entities, query)
@@ -435,7 +440,7 @@ class EntityQuery(abc.Sequence):
         Args:
             dxfattrib: grouping DXF attribute as string like ``'layer'``
             key: key function, which accepts a DXFEntity as argument, returns
-                grouping key of this entity or None for ignore this object.
+                grouping key of this entity or ``None`` for ignore this object.
                 Reason for ignoring: a queried DXF attribute is not supported by
                 this entity
 

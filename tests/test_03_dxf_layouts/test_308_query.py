@@ -211,6 +211,20 @@ def test_match_default_values():
     assert result.first is text
 
 
+def test_iter_does_not_remove_destroyed_entities():
+    query = EntityQuery([Text(), Text(), Text()])
+    query[0].destroy()
+    assert len(query) == 3
+    assert len(list(query)) == 3
+
+
+def test_purge_does_remove_destroyed_entities():
+    query = EntityQuery([Text(), Text(), Text()])
+    query[0].destroy()
+    query.purge()
+    assert len(query) == 2
+
+
 class TestGetSetDelItemInterface:
     def test_select_entities_with_supported_attribute(self, modelspace):
         """EntityQuery.__getitem__("attribute") returns all entities which

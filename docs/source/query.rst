@@ -14,16 +14,17 @@ Entity Query String
 
     QueryString := EntityQuery ("[" AttribQuery "]" "i"?)*
 
-The query string is the combination of two queries, first the required entity query and second the
-*optional* attribute query, enclosed in square brackets, append ``'i'`` after the closing square bracket
-to ignore case for strings.
+The query string is the combination of two queries, first the required entity
+query and second the optional attribute query, enclosed in square brackets,
+append ``'i'`` after the closing square bracket to ignore case for strings.
 
 Entity Query
 ------------
 
-The entity query is a whitespace separated list of DXF entity names or the special name ``'*'``.
-Where ``'*'`` means all DXF entities, exclude some entity types by appending their names with a preceding ``!``
-(e.g. all entities except LINE = ``'* !LINE'``). All DXF names have to be uppercase.
+The entity query is a whitespace separated list of DXF entity names or the special
+name ``'*'``. Where ``'*'`` means all DXF entities, exclude some entity types by
+appending their names with a preceding ``!`` (e.g. all entities except
+LINE = ``'* !LINE'``). All DXF names have to be uppercase.
 
 Attribute Query
 ---------------
@@ -36,8 +37,9 @@ The *optional* attribute query is a boolean expression, supported operators are:
   - and arbitrary nested round brackets
   - append (i) after the closing square bracket to ignore case for strings
 
-Attribute selection is a term: "name comparator value", where name is a DXF entity attribute in lowercase,
-value is a integer, float or double quoted string, valid comparators are:
+Attribute selection is a term: "name comparator value", where name is a DXF
+entity attribute in lowercase, value is a integer, float or double quoted string,
+valid comparators are:
 
   - ``==`` equal "value"
   - ``!=`` not equal "value"
@@ -56,7 +58,8 @@ Query Result
 The :class:`EntityQuery` class is the return type of all :meth:`query` methods.
 :class:`EntityQuery` contains all DXF entities of the source collection,
 which matches one name of the entity query AND the whole attribute query.
-If a DXF entity does not have or support a required attribute, the corresponding attribute search term is ``False``.
+If a DXF entity does not have or support a required attribute, the corresponding
+attribute search term is ``False``.
 
 examples:
 
@@ -70,9 +73,13 @@ EntityQuery Class
 
 .. class:: EntityQuery
 
-    The :class:`EntityQuery` class is a result container, which is filled with dxf entities matching the query string.
-    It is possible to add entities to the container (extend), remove entities from the container and
-    to filter the container. Supports the standard `Python Sequence`_ methods and protocols.
+    The :class:`EntityQuery` class is a result container, which is filled with
+    DXF entities matching the query string. It is possible to add entities to
+    the container (extend), remove entities from the container and to filter
+    the container. Supports the standard `Python Sequence`_ methods and protocols.
+    Does not remove automatically destroyed entities (entities deleted by
+    calling method :meth:`destroy`), the method :meth:`purge` has to be
+    called explict to remove the destroyed entities.
 
     .. autoattribute:: first
 
@@ -108,17 +115,19 @@ EntityQuery Class
 
     .. automethod:: __xor__
 
-    .. automethod:: __iter__
+    .. automethod:: __iter__() -> Iterator[DXFEntity]
 
-    .. automethod:: extend
+    .. automethod:: purge
+
+    .. automethod:: extend(entities: Iterable[DXFEntity], query: str = "*") -> EntityQuery
 
     .. automethod:: remove
 
     .. automethod:: query
 
-    .. automethod:: groupby
+    .. automethod:: groupby(dxfattrib: str = "", key: Callable[[DXFEntity], Hashable] = None) -> Dict[Hashable, List[DXFEntity]]
 
-    .. automethod:: filter
+    .. automethod:: filter(func: Callable[[DXFEntity], bool]) -> EntityQuery
 
     .. automethod:: union
 
