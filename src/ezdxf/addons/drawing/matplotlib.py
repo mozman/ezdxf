@@ -8,6 +8,7 @@ from typing import (
     Optional,
     Dict,
     Any,
+    Tuple,
 )
 from collections import defaultdict
 from functools import lru_cache
@@ -385,6 +386,27 @@ def _get_path_patch_data(path):
     return [(p.x, p.y) for p in vertices], codes
 
 
+def _get_aspect_ratio(ax: plt.Axes) -> float:
+    minx, maxx = ax.get_xlim()
+    miny, maxy = ax.get_ylim()
+    data_width, data_height = maxx - minx, maxy - miny
+    if abs(data_height) > 1e-9:
+        return data_width / data_height
+    return 1.0
+
+
+def _get_width_height(
+    ratio: float, width: float, height: float
+) -> Tuple[float, float]:
+    if width == 0.0 and height == 0.0:
+        raise ValueError("invalid (width, height) values")
+    if width == 0.0:
+        width = height * ratio
+    elif height == 0.0:
+        height = width / ratio
+    return width, height
+
+
 def qsave(
     layout: "Layout",
     filename: str,
@@ -395,6 +417,7 @@ def qsave(
     backend: str = "agg",
     config: Configuration = None,
     filter_func: FilterFunc = None,
+    size_inches: Optional[Tuple[float, float]] = None,
 ) -> None:
     """Quick and simplified render export by matplotlib.
 
@@ -414,6 +437,10 @@ def qsave(
             white on a dark background, this argument overrides this (ACI=7)
             default color value.
         dpi: image resolution (dots per inches).
+        size_inches: paper size in inch as `(width, height)` tuple, which also
+            defines the size in pixels = (`width` * `dpi`) x (`height` * `dpi`).
+            If `width` or `height` is 0.0 the value is calculated by the aspect
+            ratio of the drawing.
         backend: the matplotlib rendering backend to use (agg, cairo, svg etc)
             (see documentation for `matplotlib.use() <https://matplotlib.org/3.1.1/api/matplotlib_configuration_api.html?highlight=matplotlib%20use#matplotlib.use>`_
             for a complete list of backends)
@@ -435,6 +462,9 @@ def qsave(
 
     .. versionchanged:: 0.17
         `params` argument replaced by `config` argument
+
+    .. versionchanged:: 0.18
+        added argument `size_inches`
 
     """
     from .properties import RenderContext
@@ -466,6 +496,10 @@ def qsave(
         # facecolor sets the figure color
         # (semi-)transparent axes colors do not produce transparent outputs
         # but (semi-)transparent figure colors do.
+        if size_inches is not None:
+            ratio = _get_aspect_ratio(ax)
+            w, h = _get_width_height(ratio, size_inches[0], size_inches[1])
+            fig.set_size_inches(w, h, True)
         fig.savefig(
             filename, dpi=dpi, facecolor=ax.get_facecolor(), transparent=True
         )
