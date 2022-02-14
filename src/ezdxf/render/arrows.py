@@ -1,6 +1,6 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Dict
+from typing import TYPE_CHECKING, Iterable, Iterator
 from ezdxf.math import Vec2, Shape2d, NULLVEC, Vertex
 from .forms import open_arrow, arrow2
 
@@ -470,20 +470,25 @@ class _Arrows:
     }
 
     def is_acad_arrow(self, item: str) -> bool:
+        """Returns ``True`` if `item` is a standard AutoCAD arrow. """
         return item.upper() in self.__acad__
 
     def is_ezdxf_arrow(self, item: str) -> bool:
+        """Returns ``True`` if `item` is a special `ezdxf` arrow. """
         return item.upper() in self.__ezdxf__
 
     def has_extension_line(self, name):
+        """Returns ``True`` if the arrow `name` supports extension lines. """
         return name in self.EXTENSIONS_ALLOWED
 
     def __contains__(self, item: str) -> bool:
+        """Returns `True` if `item` is an arrow managed by this class. """
         if item is None:
             return False
         return item.upper() in self.__all_arrows__
 
     def create_block(self, blocks: "BlocksSection", name: str):
+        """Creates the BLOCK definition for arrow `name`. """
         block_name = self.block_name(name)
         if block_name not in blocks:
             block = blocks.new(block_name)
@@ -492,12 +497,14 @@ class _Arrows:
         return block_name
 
     def arrow_handle(self, blocks: "BlocksSection", name: str) -> str:
+        """Returns the BLOCK_RECORD handle or arrow `name`. """
         arrow_name = self.arrow_name(name)
         block_name = self.create_block(blocks, arrow_name)
         block = blocks.get(block_name)
         return block.block_record_handle
 
     def block_name(self, name):
+        """Returns the block name. """
         if not self.is_acad_arrow(name):  # common BLOCK definition
             # e.g. Dimension.dxf.bkl = 'EZ_ARROW' == Insert.dxf.name
             return name.upper()
@@ -511,6 +518,7 @@ class _Arrows:
             return "_" + name.upper()
 
     def arrow_name(self, block_name: str) -> str:
+        """Returns the arrow name. """
         if block_name.startswith("_"):
             name = block_name[1:].upper()
             if name == "CLOSEDFILLED":
@@ -527,7 +535,7 @@ class _Arrows:
         size: float = 1.0,
         rotation: float = 0,
         *,
-        dxfattribs = None
+        dxfattribs=None
     ) -> Vec2:
         """Insert arrow as block reference into `layout`."""
         block_name = self.create_block(layout.doc.blocks, name)
@@ -549,7 +557,7 @@ class _Arrows:
         size: float = 1.0,
         rotation: float = 0,
         *,
-        dxfattribs = None
+        dxfattribs=None
     ) -> Vec2:
         """Render arrow as basic DXF entities into `layout`."""
         dxfattribs = dict(dxfattribs or {})
@@ -566,9 +574,9 @@ class _Arrows:
         size: float = 0.625,
         rotation: float = 0,
         *,
-        dxfattribs = None
-    ) -> Iterable["DXFGraphic"]:
-        """Yield arrow components as virtual DXF entities."""
+        dxfattribs=None
+    ) -> Iterator["DXFGraphic"]:
+        """Returns all arrow components as virtual DXF entities."""
         from ezdxf.layouts import VirtualLayout
 
         if name in self:
@@ -586,6 +594,8 @@ class _Arrows:
     def arrow_shape(
         self, name: str, insert: Vertex, size: float, rotation: float
     ) -> BaseArrow:
+        """Returns an instance of the shape management class for arrow `name`.
+        """
         # size depending shapes
         name = name.upper()
         if name == self.dot_small:
@@ -599,6 +609,7 @@ class _Arrows:
 def connection_point(
     arrow_name: str, insert: Vertex, scale: float = 1.0, rotation: float = 0.0
 ) -> Vec2:
+    """Returns the connection point for `arrow_name`. """
     insert = Vec2(insert)
     if ARROWS.arrow_name(arrow_name) in _Arrows.ORIGIN_ZERO:
         return insert
@@ -607,6 +618,7 @@ def connection_point(
 
 
 def arrow_length(arrow_name: str, scale: float = 1.0) -> float:
+    """Returns the scaled arrow length of `arrow_name`. """
     if ARROWS.arrow_name(arrow_name) in _Arrows.ORIGIN_ZERO:
         return 0.0
     else:
