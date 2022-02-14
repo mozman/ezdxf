@@ -133,6 +133,13 @@ class TestIntersectPolylines3d:
         assert len(res) == 1
         assert res[0].isclose(Vec3(1, 1))
 
+    def test_intersecting_single_vertical_segment(self):
+        pline1 = Vec3.list([(0, 0, 0), (2, 0, 0)])
+        pline2 = Vec3.list([(1, 0, 0), (1, 0, 1)])
+        res = intersect_polylines_3d(pline1, pline2)
+        assert len(res) == 1
+        assert res[0].isclose(Vec3(1, 0))
+
     def test_none_intersecting_single_segments(self):
         pline1 = Vec3.list([(0, 0), (2, 0)])
         pline2 = Vec3.list([(0, 1), (2, 1)])
