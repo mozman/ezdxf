@@ -15,8 +15,11 @@ AutoCAD, BricsCAD and maybe other CAD applications do accept ``'MLEADER'`` as
 type string but they always create entities with ``'MULTILEADER'`` as type
 string.
 
-Because of the complexity of the MLEADER entity it is recommend to use the
-:class:`~ezdxf.render.MultiLeaderBuilder` to construct the entity.
+Because of the complexity of the MULTILEADER entity, the factory method
+:meth:`~ezdxf.layouts.BaseLayout.add_multileader_mtext` returns a
+:class:`~ezdxf.render.MultiLeaderMTextBuilder` instance to build a new entity
+and the factory method :meth:`~ezdxf.layouts.BaseLayout.add_multileader_block`
+returns a :class:`~ezdxf.render.MultiLeaderBlockBuilder` instance.
 
 The visual design is based on an associated :class:`~ezdxf.entities.MLeaderStyle`,
 but almost all attributes are also stored in the MULTILEADER entity itself.
@@ -40,7 +43,8 @@ coordinates in the usual case.
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
 DXF type                 ``'MULTILEADER'``
-Factory function         :meth:`ezdxf.layouts.BaseLayout.add_multileader`
+Factory functions        - :meth:`ezdxf.layouts.BaseLayout.add_multileader_mtext`
+                         - :meth:`ezdxf.layouts.BaseLayout.add_multileader_block`
 Inherited DXF attributes :ref:`Common graphical DXF attributes`
 Required DXF version     DXF R2000 (``'AC1015'``)
 ======================== ==========================================
