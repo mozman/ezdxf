@@ -4,6 +4,8 @@ from typing import Optional, Set, List
 from functools import partial
 from pathlib import Path
 import subprocess
+import shlex
+
 from ezdxf.addons.xqt import (
     QtWidgets,
     QtGui,
@@ -654,8 +656,9 @@ class DXFStructureBrowser(QtWidgets.QMainWindow):
             filename=filename,
             num=line_number,
         )
+        args = shlex.split(cmd)
         try:
-            subprocess.Popen(cmd)
+            subprocess.Popen(args)
         except FileNotFoundError:
             QMessageBox.critical(
                 self, "Text Editor", "Error calling text editor:\n" + cmd

@@ -6,6 +6,7 @@
 DXFResearch
 build
 dist
+venv
 src/ezdxf.egg-info
 docs/build
 tools/plotstyles
