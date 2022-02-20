@@ -256,13 +256,22 @@ e.g. for the `Notepad++` on Windows:
 
 Quote commands including spaces and always quote the filename argument!
 
+For `xed` on Linux Mint use (note: absolute path to executable):
+
+.. code-block:: ini
+
+    [browse-command]
+
+    text_editor = /usr/bin/xed "{filename}" +{num}
+    icon_size = 32
+
 For `gedit` on Linux use (untested):
 
 .. code-block:: ini
 
     [browse-command]
 
-    text_editor = gedit +{num} "{filename}"
+    text_editor = /use/bin/gedit +{num} "{filename}"
     icon_size = 32
 
 The *browse* command opens a DXF structure browser to investigate the
