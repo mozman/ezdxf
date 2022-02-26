@@ -470,7 +470,6 @@ def safe_tag_loader(
     encoding = detect_encoding(detector_stream)
 
     # Apply repair filter:
-    tags = repair.stop_at_eof(tags)  # type: ignore
     tags = repair.tag_reorder_layer(tags)  # type: ignore
     tags = repair.filter_invalid_point_codes(tags)  # type: ignore
     tags = repair.filter_invalid_handles(tags)  # type: ignore
@@ -526,9 +525,10 @@ def bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
         DXFStructureError: Found invalid group code.
 
     """
+    eof = False
     line = 1
     readline = stream.readline
-    while True:
+    while not eof:
         code = readline()
         # ByteIO(): empty strings indicates EOF - does not raise an exception
         if code:
@@ -548,8 +548,11 @@ def bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
         value = readline()
         # ByteIO(): empty strings indicates EOF
         if value:
+            value = value.rstrip(b"\r\n")
+            if code == 0 and value == b"EOF":
+                eof = True
             if code != 999:
-                yield DXFTag(code, value.rstrip(b"\r\n"))
+                yield DXFTag(code, value)
             line += 2
         else:
             return
@@ -597,7 +600,6 @@ def synced_bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
 
 DWGCODEPAGE = b"$DWGCODEPAGE"
 ACADVER = b"$ACADVER"
-EOF = b"EOF"
 
 
 def detect_encoding(tags: Iterable[DXFTag]) -> str:
@@ -630,8 +632,6 @@ def detect_encoding(tags: Iterable[DXFTag]) -> str:
         elif code == 1 and next_tag == ACADVER:
             dxfversion = value.decode(const.DEFAULT_ENCODING)
             next_tag = None
-        elif code == 0 and value == EOF:
-            break
 
         if encoding and dxfversion:
             return "utf8" if dxfversion >= const.DXF2007 else encoding

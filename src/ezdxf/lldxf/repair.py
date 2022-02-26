@@ -206,13 +206,6 @@ def filter_invalid_handles(tags: Iterable[DXFTag]) -> Iterator[DXFTag]:
         yield tag
 
 
-def stop_at_eof(tags: Iterable[DXFTag]) -> Iterator[DXFTag]:
-    for tag in tags:
-        yield tag
-        if tag.code == 0 and _s(tag.value) == "EOF":
-            break
-
-
 def _s(b) -> str:
     if isinstance(b, bytes):
         return b.decode(encoding="ascii", errors="ignore")
