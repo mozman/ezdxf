@@ -103,12 +103,13 @@ def ascii_tags_loader(
 
     """
     line: int = 1
-    yield_comments: bool = not skip_comments
+    eof = False
+    yield_comments = not skip_comments
     # localize attributes
     readline = stream.readline
     _DXFTag = DXFTag
     # readline() returns an empty string at EOF, not exception will be raised!
-    while True:
+    while not eof:
         code: str = readline()
         if code:  # empty string indicates EOF
             try:
@@ -122,8 +123,11 @@ def ascii_tags_loader(
 
         value: str = readline()
         if value:  # empty string indicates EOF
+            value = value.rstrip("\n")
+            if group_code == 0 and value == "EOF":
+                eof = True  # yield EOF tag but ignore any data beyond EOF
             if group_code != 999 or yield_comments:
-                yield _DXFTag(group_code, value.rstrip("\n"))
+                yield _DXFTag(group_code, value)
             line += 2
         else:
             return
