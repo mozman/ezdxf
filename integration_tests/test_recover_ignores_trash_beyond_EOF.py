@@ -1,4 +1,4 @@
-#  Copyright (c) 2020, Manfred Moitzi
+#  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 import os
 from ezdxf import recover

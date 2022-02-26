@@ -599,6 +599,7 @@ DWGCODEPAGE = b"$DWGCODEPAGE"
 ACADVER = b"$ACADVER"
 EOF = b"EOF"
 
+
 def detect_encoding(tags: Iterable[DXFTag]) -> str:
     """Detect text encoding from header variables $DWGCODEPAGE and $ACADVER
     out of a stream of DXFTag objects.
