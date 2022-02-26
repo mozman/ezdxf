@@ -470,6 +470,7 @@ def safe_tag_loader(
     encoding = detect_encoding(detector_stream)
 
     # Apply repair filter:
+    tags = repair.stop_at_eof(tags)  # type: ignore
     tags = repair.tag_reorder_layer(tags)  # type: ignore
     tags = repair.filter_invalid_point_codes(tags)  # type: ignore
     tags = repair.filter_invalid_handles(tags)  # type: ignore
@@ -596,7 +597,7 @@ def synced_bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
 
 DWGCODEPAGE = b"$DWGCODEPAGE"
 ACADVER = b"$ACADVER"
-
+EOF = b"EOF"
 
 def detect_encoding(tags: Iterable[DXFTag]) -> str:
     """Detect text encoding from header variables $DWGCODEPAGE and $ACADVER
@@ -628,6 +629,8 @@ def detect_encoding(tags: Iterable[DXFTag]) -> str:
         elif code == 1 and next_tag == ACADVER:
             dxfversion = value.decode(const.DEFAULT_ENCODING)
             next_tag = None
+        elif code == 0 and value == EOF:
+            break
 
         if encoding and dxfversion:
             return "utf8" if dxfversion >= const.DXF2007 else encoding

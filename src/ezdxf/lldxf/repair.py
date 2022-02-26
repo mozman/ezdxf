@@ -182,9 +182,7 @@ def filter_invalid_xdata_group_codes(
     return (tag for tag in tags if tag.code in VALID_XDATA_GROUP_CODES)
 
 
-def filter_invalid_handles(
-    tags: Iterable[DXFTag],
-) -> Iterator[DXFTag]:
+def filter_invalid_handles(tags: Iterable[DXFTag]) -> Iterator[DXFTag]:
     line = -1
     handle_code = 5
     structure_tag = ""
@@ -206,6 +204,13 @@ def filter_invalid_handles(
                 )
                 continue
         yield tag
+
+
+def stop_at_eof(tags: Iterable[DXFTag]) -> Iterator[DXFTag]:
+    for tag in tags:
+        yield tag
+        if tag.code == 0 and _s(tag.value) == "EOF":
+            break
 
 
 def _s(b) -> str:
