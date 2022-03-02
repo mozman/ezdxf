@@ -1364,7 +1364,9 @@ class MLeaderStyle(DXFObject):
                 )
         for attrib in ("arrow_head_handle", "block_record_handle"):
             handle = dxf.get(attrib)
-            if handle is not None and handle not in entitydb:
+            if handle is None or handle == "0":  # legit "undefined values"
+                continue
+            if handle not in entitydb:
                 dxf.discard(attrib)
                 auditor.fixed_error(
                     AuditError.UNDEFINED_BLOCK,
