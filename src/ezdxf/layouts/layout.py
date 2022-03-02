@@ -378,7 +378,7 @@ class Layout(BaseLayout):
         self.set_plot_flags(self.PRINT_LINEWEIGHTS, state)
 
     def draw_viewports_first(self, state: bool = True) -> None:
-        self.set_plot_flags(self.PRINT_LINEWEIGHTS, state)
+        self.set_plot_flags(self.DRAW_VIEWPORTS_FIRST, state)
 
     def model_type(self, state: bool = True) -> None:
         self.set_plot_flags(self.MODEL_TYPE, state)
