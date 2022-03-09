@@ -193,7 +193,7 @@ The same example with the pyproj package:
     gpx_points = list(load_gpx_track('track1.gpx'))
 
     # Create transformation object:
-    ct = Transformer.from_crs('EPSG:4326', 'EPSG:3395)
+    ct = Transformer.from_crs('EPSG:4326', 'EPSG:3395')
 
     # Create GeoProxy() object:
     geo_proxy = GeoProxy.parse({
