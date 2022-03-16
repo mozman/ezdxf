@@ -9,7 +9,7 @@ import tempfile
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Union
 
 import ezdxf
 from ezdxf.document import Drawing
@@ -25,6 +25,14 @@ win_exec_path = ezdxf.options.get("odafc-addon", "win_exec_path").strip('"')
 
 
 class ODAFCError(IOError):
+    pass
+
+
+class UnknownODAFCError(ODAFCError):
+    pass
+
+
+class UnsupportedFileFormat(ODAFCError):
     pass
 
 
@@ -102,7 +110,7 @@ def readfile(
         out_file = Path(tmp_dir) / infile.with_suffix(".dxf").name
         if out_file.exists():
             doc = ezdxf.readfile(str(out_file))
-            doc.filename = infile.with_suffix(".dxf")  #type: ignore
+            doc.filename = infile.with_suffix(".dxf")  # type: ignore
             return doc
     raise ODAFCError("Failed to convert file: Unknown Error")
 
@@ -167,6 +175,76 @@ def export_dwg(
         raise FileNotFoundError(
             f"No such file or directory: '{str(out_folder)}'"
         )
+
+
+def convert(
+    source: Union[str, Path],
+    dest: Union[str, Path] = "",
+    *,
+    version="R2018",
+    audit=True,
+    replace=False,
+):
+    """Convert `source` file to `dest` file. The file extension defines the
+    target format e.g. convert("test.dxf", "Test.dwg") converts the source file
+    to a DWG file. If `dest` is an empty string the conversion depends on the
+    source file format and is DXF to DWG or DWG to DXF.
+
+    Args:
+        source: source file
+        dest: destination file, an empty string uses the source filename with
+            the extension of the target format e.g. "test.dxf" -> "test.dxf"
+        version: output DXF/DWG version e.g. "ACAD2018", "R2018", "AC1032", ...
+        audit: audit files
+        replace: replace existing destination file
+
+    """
+    version = map_version(version)
+    if version not in VALID_VERSIONS:
+        raise ezdxf.DXFVersionError(f"Invalid version: '{version}'")
+    src_path = Path(source).expanduser().absolute()
+    if not src_path.exists():
+        raise FileNotFoundError(f"Source file not found: '{source}'")
+    if dest:
+        dest_path = Path(dest)
+    else:
+        ext = src_path.suffix.lower()
+        if ext == ".dwg":
+            dest_path = src_path.with_suffix(".dxf")
+        elif ext == ".dxf":
+            dest_path = src_path.with_suffix(".dwg")
+        else:
+            raise UnsupportedFileFormat(f"Unsupported file format: '{ext}'")
+    if dest_path.exists() and not replace:
+        raise FileExistsError(f"Target file already exists: '{dest_path}'")
+    if not dest_path.parent.is_dir():
+        # Cannot copy result to destination folder!
+        FileNotFoundError(
+            f"Destination folder does not exist: '{dest_path.parent}'"
+        )
+    ext = dest_path.suffix
+    fmt = ext.upper()[1:]
+    if fmt not in ("DXF", "DWG"):
+        raise UnsupportedFileFormat(f"Unsupported file format: '{ext}'")
+
+    with tempfile.TemporaryDirectory(prefix="odafc_") as tmp_dir:
+        arguments = _odafc_arguments(
+            src_path.name,
+            in_folder=str(src_path.parent),
+            out_folder=str(tmp_dir),
+            output_format=fmt,
+            version=version,
+            audit=audit,
+        )
+        _execute_odafc(arguments)
+        result = list(Path(tmp_dir).iterdir())
+        if result:
+            try:
+                shutil.move(result[0], dest_path)
+            except IOError:
+                shutil.copy(result[0], dest_path)
+        else:
+            UnknownODAFCError(f"Unknown error: no {fmt} file was created")
 
 
 def _detect_version(path: str) -> str:
@@ -286,11 +364,16 @@ def _run_with_no_gui(
 
     elif system == "Windows":
         # New code from George-Jiang to solve the GUI pop-up problem
-        startupinfo = subprocess.STARTUPINFO()  # type:ignore  # only a Linux issue?
+        startupinfo = (
+            subprocess.STARTUPINFO()
+        )  # type:ignore  # only a Linux issue?
         startupinfo.dwFlags = (
-            subprocess.CREATE_NEW_CONSOLE | subprocess.STARTF_USESHOWWINDOW  # type:ignore  # only a Linux issue?
+            subprocess.CREATE_NEW_CONSOLE
+            | subprocess.STARTF_USESHOWWINDOW  # type:ignore  # only a Linux issue?
         )
-        startupinfo.wShowWindow = subprocess.SW_HIDE  # type:ignore  # only a Linux issue?
+        startupinfo.wShowWindow = (
+            subprocess.SW_HIDE
+        )  # type:ignore  # only a Linux issue?
         proc = subprocess.Popen(
             [command] + arguments,
             stdout=subprocess.PIPE,
