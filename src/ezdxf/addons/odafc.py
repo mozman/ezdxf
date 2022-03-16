@@ -185,18 +185,35 @@ def convert(
     audit=True,
     replace=False,
 ):
-    """Convert `source` file to `dest` file. The file extension defines the
-    target format e.g. convert("test.dxf", "Test.dwg") converts the source file
-    to a DWG file. If `dest` is an empty string the conversion depends on the
-    source file format and is DXF to DWG or DWG to DXF.
+    """Convert `source` file to `dest` file.
+
+    .. versionadded::  0.18
+
+    The file extension defines the target format
+    e.g. :code:`convert("test.dxf", "Test.dwg")` converts the source file to a
+    DWG file.
+    If `dest` is an empty string the conversion depends on the source file
+    format and is DXF to DWG or DWG to DXF.
+    To convert DXF to DXF an explicit destination filename is required:
+    :code:`convert("r12.dxf", "r2013.dxf", version="R2013")`
 
     Args:
         source: source file
         dest: destination file, an empty string uses the source filename with
-            the extension of the target format e.g. "test.dxf" -> "test.dxf"
-        version: output DXF/DWG version e.g. "ACAD2018", "R2018", "AC1032", ...
+            the extension of the target format e.g. "test.dxf" -> "test.dwg"
+        version: output DXF/DWG version e.g. "ACAD2018", "R2018", "AC1032"
         audit: audit files
         replace: replace existing destination file
+
+    Raises:
+        ezdxf.DXFVersionError: invalid DXF version specified
+        odafc.UnsupportedFileFormat: unsupported file extension
+        FileNotFoundError: source file or destination folder does not exist
+        FileExistsError: destination file already exists and argument `replace`
+            is ``False``
+        odafc.ODAFCError: unknown ODAFC error
+
+    .. versionadded::  0.18
 
     """
     version = map_version(version)

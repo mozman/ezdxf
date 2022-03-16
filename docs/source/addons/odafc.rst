@@ -81,4 +81,6 @@ Usage:
 
 .. autofunction:: export_dwg(doc: Drawing, filename: str, version: str = None, audit=False, replace=False) -> None
 
+.. autofunction:: convert
+
 .. _ODA File Converter: https://www.opendesign.com/guestfiles/oda_file_converter
