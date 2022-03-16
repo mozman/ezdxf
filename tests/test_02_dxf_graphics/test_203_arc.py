@@ -218,6 +218,53 @@ def test_arc_flattening(r, s, e, sagitta, count):
     assert len(points) == count
 
 
+def test_arc_3d_flattening_parallel_to_xy_plane():
+    arc = Arc.new(
+        dxfattribs={
+            "center": Vec3(1, 1, 1),
+            "radius": 1,
+            "start_angle": 0,
+            "end_angle": 90,
+        }
+    )
+    points = list(arc.flattening(0.01))
+    expected = [
+        Vec3(2.0, 1.0, 1.0),
+        Vec3(1.9659258262890682, 1.2588190451025207, 1.0),
+        Vec3(1.8660254037844388, 1.5, 1.0),
+        Vec3(1.7071067811865475, 1.7071067811865475, 1.0),
+        Vec3(1.5, 1.8660254037844386, 1.0),
+        Vec3(1.2588190451025207, 1.9659258262890682, 1.0),
+        Vec3(1.0, 2.0, 1.0),
+    ]
+    for p, e in zip(points, expected):
+        assert p.isclose(e)
+
+
+def test_arc_3d_flattening():
+    arc = Arc.new(
+        dxfattribs={
+            "center": Vec3(1, 1, 1),
+            "radius": 1,
+            "start_angle": 30,
+            "end_angle": 120,
+            "extrusion": Vec3(1, 0, 0),
+        }
+    )
+    points = list(arc.flattening(0.01))
+    expected = [
+        Vec3(1.0, 1.866025403784, 1.5),
+        Vec3(1.0, 1.707106781187, 1.707106781187),
+        Vec3(1.0, 1.5, 1.866025403784),
+        Vec3(1.0, 1.258819045103, 1.965925826289),
+        Vec3(1.0, 1.0, 2.0),
+        Vec3(1.0, 0.741180954897, 1.965925826289),
+        Vec3(1.0, 0.5, 1.866025403784),
+    ]
+    for p, e in zip(points, expected):
+        assert p.isclose(e)
+
+
 def test_arc_flattening_returns_Vec3():
     arc = Arc.new(
         dxfattribs={

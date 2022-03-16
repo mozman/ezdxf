@@ -50,6 +50,8 @@ Version 0.18b1 - dev
   DXF loader ignore data beyond `EOF` tag 
 - BUGFIX [#620](https://github.com/mozman/ezdxf/issues/620): 
   add missing caret decoding to `fast_plain_mtext()` 
+- BUGFIX [#655](https://github.com/mozman/ezdxf/issues/655): 
+  fixed invalid flattening of 3D ARC entities 
 
 Version 0.17.2 - 2022-01-06
 ---------------------------

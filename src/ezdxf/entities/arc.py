@@ -1,6 +1,6 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING, Iterable, Iterator
 import math
 from ezdxf.math import (
     Vec3,
@@ -89,22 +89,23 @@ class Arc(Circle):
         for angle in linspace(start, stop, num=num, endpoint=True):
             yield angle % 360
 
-    def flattening(self, sagitta: float) -> Iterable[Vertex]:
+    def flattening(self, sagitta: float) -> Iterator[Vec3]:
         """Approximate the arc by vertices in WCS, argument `segment` is the
         max. distance from the center of an arc segment to the center of its
-        chord. Yields :class:`~ezdxf.math.Vec2` objects for 2D arcs and
-        :class:`~ezdxf.math.Vec3` objects for 3D arcs.
-
-        .. versionadded:: 0.15
+        chord.
 
         """
         arc = self.construction_tool()
         ocs = self.ocs()
+        elevation = Vec3(self.dxf.center).z
         if ocs.transform:
             to_wcs = ocs.points_to_wcs
         else:
             to_wcs = Vec3.generate
-        yield from to_wcs(arc.flattening(sagitta))
+
+        yield from to_wcs(
+            Vec3(p.x, p.y, elevation) for p in arc.flattening(sagitta)
+        )
 
     def transform(self, m: Matrix44) -> "Arc":
         """Transform ARC entity by transformation matrix `m` inplace.
