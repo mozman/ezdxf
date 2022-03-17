@@ -106,7 +106,7 @@ def map_version(version: str) -> str:
 def readfile(
     filename: str, version: Optional[str] = None, *, audit: bool = False
 ) -> Optional[Drawing]:
-    """Use an installed `ODA File Converter`_ to convert a DWG/DXB/DXF file
+    """Uses an installed `ODA File Converter`_ to convert a DWG/DXB/DXF file
     into a temporary DXF file and load this file by `ezdxf`.
 
     Args:
@@ -155,17 +155,17 @@ def export_dwg(
     audit: bool = False,
     replace: bool = False,
 ) -> None:
-    """Use an installed `ODA File Converter`_ to export a DXF document `doc`
+    """Uses an installed `ODA File Converter`_ to export the DXF document `doc`
     as a DWG file.
 
-    Saves a temporary DXF file and convert this DXF file into a DWG file by the
+    A temporary DXF file will be created and converted to DWG by the
     ODA File Converter. If `version` is not specified the DXF version of the
     source document is used.
 
     Args:
         doc: `ezdxf` DXF document as :class:`~ezdxf.drawing.Drawing` object
-        filename: export filename of DWG file, extension will be changed to ".dwg"
-        version: export file as specific version, by default the same version as
+        filename: output DWG filename, the extension will be set to ".dwg"
+        version: DWG version to export, by default the same version as
             the source document.
         audit: audit source file by ODA File Converter at exporting
         replace: replace existing DWG file if ``True``
