@@ -268,10 +268,11 @@ def convert(
             raise UnsupportedFileFormat(f"Unsupported file format: '{ext}'")
     if dest_path.exists() and not replace:
         raise FileExistsError(f"Target file already exists: '{dest_path}'")
-    if not dest_path.parent.is_dir():
+    parent_dir = dest_path.parent
+    if not parent_dir.exists() or not parent_dir.is_dir():
         # Cannot copy result to destination folder!
         FileNotFoundError(
-            f"Destination folder does not exist: '{dest_path.parent}'"
+            f"Destination folder does not exist: '{parent_dir}'"
         )
     ext = dest_path.suffix
     fmt = ext.upper()[1:]
