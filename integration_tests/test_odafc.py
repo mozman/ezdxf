@@ -1,18 +1,11 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-
-import os
 import pytest
 
 import ezdxf
 from ezdxf.addons import odafc
 
 NO_ODAFC = "ODA File Converter not installed or not found."
-
-
-def odafc_exist() -> bool:
-    # works only on windows
-    return os.path.exists(odafc.win_exec_path)
 
 
 def dummy(name):
@@ -51,7 +44,7 @@ class Test_Convert_ODAFC_Not_Required:
 
     def test_invalid_DXF_version(self, tmp_path):
         src = dummy(tmp_path / "xxx.dxf")
-        with pytest.raises(ezdxf.DXFVersionError):
+        with pytest.raises(odafc.UnsupportedVersion):
             odafc.convert(src, version="ABC")
 
 
@@ -63,7 +56,7 @@ def dxf_r12(name):
 
 
 # noinspection PyPep8Naming
-@pytest.mark.skipif(not odafc_exist(), reason=NO_ODAFC)
+@pytest.mark.skipif(not odafc.is_installed(), reason=NO_ODAFC)
 class Test_Convert_ODAFC_Required:
     def test_dxf_to_dwg_same_stem(self, tmp_path):
         r12 = dxf_r12(tmp_path / "r12.dxf")

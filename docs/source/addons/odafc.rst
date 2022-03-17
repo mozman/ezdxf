@@ -77,6 +77,8 @@ Usage:
     Path to installed `ODA File Converter` executable on Windows systems,
     default is ``"C:\Program Files\ODA\ODAFileConverter\ODAFileConverter.exe"``.
 
+.. autofunction:: is_installed
+
 .. autofunction:: readfile(filename: str, version: str = None, audit=False) -> Drawing
 
 .. autofunction:: export_dwg(doc: Drawing, filename: str, version: str = None, audit=False, replace=False) -> None

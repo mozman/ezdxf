@@ -1,5 +1,6 @@
-# Copyright (c) 2020-2021, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
+# type: ignore
 import logging
 import os
 import platform
@@ -32,7 +33,19 @@ class UnknownODAFCError(ODAFCError):
     pass
 
 
+class ODAFCNotInstalledError(ODAFCError):
+    pass
+
+
 class UnsupportedFileFormat(ODAFCError):
+    pass
+
+
+class UnsupportedPlatform(ODAFCError):
+    pass
+
+
+class UnsupportedVersion(ODAFCError):
     pass
 
 
@@ -74,6 +87,18 @@ VALID_VERSIONS = {
 }
 
 
+def is_installed() -> bool:
+    """Returns ``True`` if the ODAFileConverter is installed.
+
+    .. versionadded:: 0.18
+
+    """
+    if platform.system() in ("Linux", "Darwin"):
+        return shutil.which("ODAFileConverter") is not None
+    # Windows:
+    return os.path.exists(win_exec_path)
+
+
 def map_version(version: str) -> str:
     return VERSION_MAP.get(version.upper(), version.upper())
 
@@ -90,6 +115,13 @@ def readfile(
             as the source file or if not detectable the latest by `ezdxf`
             supported version.
         audit: audit source file before loading
+
+    Raises:
+        FileNotFoundError: source file not found
+        odafc.UnknownODAFCError: conversion failed for unknown reasons
+        odafc.UnsupportedVersion: invalid DWG version specified
+        odafc.UnsupportedFileFormat: unsupported file extension
+        odafc.ODAFCNotInstalledError: ODA File Converter not installed
 
     """
     infile = Path(filename).absolute()
@@ -110,9 +142,9 @@ def readfile(
         out_file = Path(tmp_dir) / infile.with_suffix(".dxf").name
         if out_file.exists():
             doc = ezdxf.readfile(str(out_file))
-            doc.filename = infile.with_suffix(".dxf")  # type: ignore
+            doc.filename = infile.with_suffix(".dxf")
             return doc
-    raise ODAFCError("Failed to convert file: Unknown Error")
+    raise UnknownODAFCError("Failed to convert file: Unknown Error")
 
 
 def export_dwg(
@@ -138,9 +170,12 @@ def export_dwg(
         audit: audit source file by ODA File Converter at exporting
         replace: replace existing DWG file if ``True``
 
-    .. versionchanged:: 0.15
-
-        added `replace` option
+    Raises:
+        FileExistsError: target file already exists, and argument `replace` is
+            ``False``
+        FileNotFoundError: parent directory of target file does not exist
+        odafc.UnknownODAFCError: exporting DWG failed for unknown reasons
+        odafc.ODAFCNotInstalledError: ODA File Converter not installed
 
     """
     if version is None:
@@ -206,19 +241,18 @@ def convert(
         replace: replace existing destination file
 
     Raises:
-        ezdxf.DXFVersionError: invalid DXF version specified
-        odafc.UnsupportedFileFormat: unsupported file extension
         FileNotFoundError: source file or destination folder does not exist
         FileExistsError: destination file already exists and argument `replace`
             is ``False``
-        odafc.ODAFCError: unknown ODAFC error
-
-    .. versionadded::  0.18
+        odafc.UnsupportedVersion: invalid DXF version specified
+        odafc.UnsupportedFileFormat: unsupported file extension
+        odafc.UnknownODAFCError: conversion failed for unknown reasons
+        odafc.ODAFCNotInstalledError: ODA File Converter not installed
 
     """
     version = map_version(version)
     if version not in VALID_VERSIONS:
-        raise ezdxf.DXFVersionError(f"Invalid version: '{version}'")
+        raise UnsupportedVersion(f"Invalid version: '{version}'")
     src_path = Path(source).expanduser().absolute()
     if not src_path.exists():
         raise FileNotFoundError(f"Source file not found: '{source}'")
@@ -265,6 +299,14 @@ def convert(
 
 
 def _detect_version(path: str) -> str:
+    """Returns the DXF/DWG version of file `path` as ODAFC compatible version
+    string.
+
+    Raises:
+        odafc.UnsupportedVersion: unknown or unsupported DWG version
+        odafc.UnsupportedFileFormat; unsupported file extension
+
+    """
     version = "ACAD2018"
     ext = os.path.splitext(path)[1].lower()
     if ext == ".dxf":
@@ -275,11 +317,11 @@ def _detect_version(path: str) -> str:
                 info = dxf_info(fp)
                 version = VERSION_MAP[info.version]
     elif ext == ".dwg":
-        version = dwg_version(path)  # type: ignore
+        version = dwg_version(path)
         if version is None:
-            raise ValueError("Unknown or unsupported DWG version.")
+            raise UnsupportedVersion("Unknown or unsupported DWG version.")
     else:
-        raise ValueError(f"Unsupported file format: '{ext}'")
+        raise UnsupportedFileFormat(f"Unsupported file format: '{ext}'")
 
     return map_version(version)
 
@@ -292,16 +334,16 @@ def _odafc_arguments(
     version: str = "ACAD2013",
     audit: bool = False,
 ) -> List[str]:
-    """
-    ODA File Converter command line format:
-    ---------------------------------------
+    """ODA File Converter command line format:
 
-    OdaFC "Input Folder" "Output Folder" version type recurse audit [filter]
-    version - Output version: "ACAD9" - "ACAD2018"
-    type - Output file type: "DWG", "DXF", "DXB"
-    recurse - Recurse Input Folder: "0" or "1"
-    audit - audit each file: "0" or "1"
-    optional Input files filter: default "*.DWG,*.DXF"
+    ODAFileConverter "Input Folder" "Output Folder" version type recurse audit [filter]
+
+        - version: output version: "ACAD9" - "ACAD2018"
+        - type: output file type: "DWG", "DXF", "DXB"
+        - recurse: recurse Input Folder: "0" or "1"
+        - audit: audit each file: "0" or "1"
+        - optional Input files filter: default "*.DWG,*.DXF"
+
     """
     recurse = "0"
     audit_str = "1" if audit else "0"
@@ -317,6 +359,12 @@ def _odafc_arguments(
 
 
 def _get_odafc_path(system: str) -> str:
+    """Get ODAFC application path.
+
+    Raises:
+        odafc.ODAFCNotInstalledError: ODA File Converter not installed
+
+    """
     path = shutil.which("ODAFileConverter")
     if not path and system == "Windows":
         path = win_exec_path
@@ -324,7 +372,7 @@ def _get_odafc_path(system: str) -> str:
             path = None
 
     if not path:
-        raise FileNotFoundError(
+        raise ODAFCNotInstalledError(
             f"Could not find ODAFileConverter in the path. "
             f"Install application from https://www.opendesign.com/guestfiles/oda_file_converter"
         )
@@ -358,6 +406,18 @@ def _linux_dummy_display():
 def _run_with_no_gui(
     system: str, command: str, arguments: List[str]
 ) -> subprocess.Popen:
+    """Execute ODAFC application without launching the GUI.
+
+    Args:
+        system: "Linux", "Windows" or "Darwin"
+        command: application to execute
+        arguments: ODAFC argument list
+
+    Raises:
+        odafc.UnsupportedPlatform: for unsupported platforms
+        odafc.ODAFCNotInstalledError: ODA File Converter not installed
+
+    """
     if system == "Linux":
         with _linux_dummy_display() as display:
             env = os.environ.copy()
@@ -381,16 +441,11 @@ def _run_with_no_gui(
 
     elif system == "Windows":
         # New code from George-Jiang to solve the GUI pop-up problem
-        startupinfo = (
-            subprocess.STARTUPINFO()  # type: ignore
-        )  # type:ignore  # only a Linux issue?
+        startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags = (
-            subprocess.CREATE_NEW_CONSOLE  # type: ignore
-            | subprocess.STARTF_USESHOWWINDOW  # type:ignore
+            subprocess.CREATE_NEW_CONSOLE | subprocess.STARTF_USESHOWWINDOW
         )
-        startupinfo.wShowWindow = (
-            subprocess.SW_HIDE  # type: ignore
-        )  # type:ignore  # only a Linux issue?
+        startupinfo.wShowWindow = subprocess.SW_HIDE
         proc = subprocess.Popen(
             [command] + arguments,
             stdout=subprocess.PIPE,
@@ -400,7 +455,7 @@ def _run_with_no_gui(
         proc.wait()
     else:
         # ODAFileConverter only has Linux, OSX and Windows versions
-        raise ODAFCError(f"Unsupported platform: {system}")
+        raise UnsupportedPlatform(f"Unsupported platform: {system}")
     return proc
 
 
@@ -418,12 +473,23 @@ def _odafc_failed(system: str, proc: subprocess.Popen, stderr: str) -> bool:
 
 
 def _execute_odafc(arguments: List[str]) -> Optional[bytes]:
+    """ Execute ODAFC application.
+
+    Args:
+        arguments: ODAFC argument list
+
+    Raises:
+        odafc.ODAFCNotInstalledError: ODA File Converter not installed
+        odafc.UnknownODAFCError: execution failed for unknown reasons
+        odafc.UnsupportedPlatform: for unsupported platforms
+
+    """
     logger.debug(f"Running ODAFileConverter with arguments: {arguments}")
     system = platform.system()
     oda_fc = _get_odafc_path(system)
     proc = _run_with_no_gui(system, oda_fc, arguments)
-    stdout = proc.stdout.read().decode("utf-8")  # type: ignore
-    stderr = proc.stderr.read().decode("utf-8")  # type: ignore
+    stdout = proc.stdout.read().decode("utf-8")
+    stderr = proc.stderr.read().decode("utf-8")
 
     if _odafc_failed(system, proc, stderr):
         msg = (
@@ -431,5 +497,5 @@ def _execute_odafc(arguments: List[str]) -> Optional[bytes]:
             f"stdout: {stdout}\nstderr: {stderr}"
         )
         logger.debug(msg)
-        raise ODAFCError(msg)
-    return proc.stdout  # type: ignore
+        raise UnknownODAFCError(msg)
+    return proc.stdout
