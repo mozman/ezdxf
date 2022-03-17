@@ -1,7 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 import pytest
-import platform
 from pathlib import Path
 
 import ezdxf
@@ -77,6 +76,27 @@ class Test_Convert_ODAFC_Required:
         odafc.convert(r12, dest, version="R2013")
         doc = ezdxf.readfile(dest)
         assert doc.acad_release == "R2013"
+
+
+# noinspection PyPep8Naming
+@pytest.mark.skipif(not odafc.is_installed(), reason=NO_ODAFC)
+class Test_Export_And_Load_DWG:
+    @pytest.fixture
+    def doc(self):
+        dxf = ezdxf.new(dxfversion="R12")
+        dxf.modelspace().add_circle((0, 0), radius=1)
+        return dxf
+
+    def test_export_dwg(self, tmp_path, doc):
+        dwg_path = tmp_path / "r2013.dwg"
+        odafc.export_dwg(doc, str(dwg_path), "R2013")
+        assert dwg_path.exists() is True
+
+    def test_read_dwg(self, tmp_path, doc):
+        dwg_path = tmp_path / "r2013.dwg"
+        odafc.export_dwg(doc, str(dwg_path), "R2013")
+        loaded_doc = odafc.readfile(str(dwg_path))
+        assert loaded_doc.acad_release == "R2013"
 
 
 if __name__ == "__main__":
