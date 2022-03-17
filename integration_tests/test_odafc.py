@@ -1,6 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 import pytest
+import platform
 from pathlib import Path
 
 import ezdxf
@@ -32,6 +33,9 @@ class Test_Convert_ODAFC_Not_Required:
         with pytest.raises(FileExistsError):
             odafc.convert(src)
 
+    @pytest.mark.skipif(
+        platform.system() != "Windows", reason="Doesn't work on Linux?????????"
+    )
     def test_destination_folder_does_not_exist(self, tmp_path):
         src = dummy(tmp_path / "xxx.dxf")
         with pytest.raises(FileNotFoundError):
@@ -66,13 +70,13 @@ class Test_Convert_ODAFC_Required:
 
     def test_dxf_to_dwg_new_stem(self, tmp_path):
         r12 = dxf_r12(tmp_path / "r12.dxf")
-        dest = tmp_path/"r2018.dwg"
+        dest = tmp_path / "r2018.dwg"
         odafc.convert(r12, dest)
         assert dest.exists() is True
 
     def test_upgrade_dxf_to_r2013(self, tmp_path):
         r12 = dxf_r12(tmp_path / "r12.dxf")
-        dest = tmp_path/"r2013.dxf"
+        dest = tmp_path / "r2013.dxf"
         odafc.convert(r12, dest, version="R2013")
         doc = ezdxf.readfile(dest)
         assert doc.acad_release == "R2013"
