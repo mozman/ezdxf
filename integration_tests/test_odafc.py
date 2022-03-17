@@ -1,6 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 import pytest
+from pathlib import Path
 
 import ezdxf
 from ezdxf.addons import odafc
@@ -34,7 +35,7 @@ class Test_Convert_ODAFC_Not_Required:
     def test_destination_folder_does_not_exist(self, tmp_path):
         src = dummy(tmp_path / "xxx.dxf")
         with pytest.raises(FileNotFoundError):
-            odafc.convert(src, "ODAFC_FOLDER/xxx.dwg")
+            odafc.convert(src, Path("ODAFC_XXX_FOLDER") / "xxx.dwg")
 
     def test_destination_has_unsupported_extension(self, tmp_path):
         src = dummy(tmp_path / "xxx.dxf")
