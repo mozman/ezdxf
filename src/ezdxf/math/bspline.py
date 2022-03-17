@@ -1070,7 +1070,7 @@ class BSpline:
                 yield from subdiv(m, e, mid_t, end_t)
 
         evaluator = self.evaluator
-        knots = self.knots()
+        knots: List[float] = self.knots()  # type: ignore
         if self.is_clamped:
             lower_bound = 0.0
         else:
