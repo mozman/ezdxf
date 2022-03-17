@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.18b1 - dev
+Version 0.18b2 - dev
 --------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-18.html
@@ -46,12 +46,12 @@ Version 0.18b1 - dev
 - CHANGE: `recover` module - recovered integer and float values are logged as severe errors
 - CHANGE: method `Path.all_lines_to_curve3` replaced by function `path.lines_to_curve3()`
 - CHANGE: method `Path.all_lines_to_curve4` replaced by function `path.lines_to_curve4()`
+- BUGFIX [#655](https://github.com/mozman/ezdxf/issues/655): 
+  fixed invalid flattening of 3D ARC entities 
 - BUGFIX [#640](https://github.com/mozman/ezdxf/issues/640): 
   DXF loader ignore data beyond `EOF` tag 
 - BUGFIX [#620](https://github.com/mozman/ezdxf/issues/620): 
   add missing caret decoding to `fast_plain_mtext()` 
-- BUGFIX [#655](https://github.com/mozman/ezdxf/issues/655): 
-  fixed invalid flattening of 3D ARC entities 
 
 Version 0.17.2 - 2022-01-06
 ---------------------------
