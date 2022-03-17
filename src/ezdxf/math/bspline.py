@@ -1077,7 +1077,8 @@ class BSpline:
             lower_bound = knots[self.order - 1]
             knots = knots[: self.count + 1]
 
-        knots = tuple(set(knots))  # set() must preserve order!
+        knots = list(set(knots))
+        knots.sort()
         t = lower_bound
         start_point = evaluator.point(t)
         yield start_point
