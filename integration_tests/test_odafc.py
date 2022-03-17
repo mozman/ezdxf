@@ -88,13 +88,17 @@ class Test_Export_And_Load_DWG:
         return dxf
 
     def test_export_dwg(self, tmp_path, doc):
-        dwg_path = tmp_path / "r2013.dwg"
+        dwg_path = tmp_path / "r2013_1.dwg"
+        assert dwg_path.exists() is False
+
         odafc.export_dwg(doc, str(dwg_path), "R2013")
         assert dwg_path.exists() is True
 
     def test_read_dwg(self, tmp_path, doc):
-        dwg_path = tmp_path / "r2013.dwg"
+        dwg_path = tmp_path / "r2013_2.dwg"
+        assert dwg_path.exists() is False
         odafc.export_dwg(doc, str(dwg_path), "R2013")
+
         loaded_doc = odafc.readfile(str(dwg_path))
         assert loaded_doc.acad_release == "R2013"
 
