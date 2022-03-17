@@ -269,10 +269,9 @@ def convert(
     if dest_path.exists() and not replace:
         raise FileExistsError(f"Target file already exists: '{dest_path}'")
     parent_dir = dest_path.parent
-    # doesn't work on github/Linux for "System under Test" ???
     if not parent_dir.exists() or not parent_dir.is_dir():
         # Cannot copy result to destination folder!
-        FileNotFoundError(
+        raise FileNotFoundError(
             f"Destination folder does not exist: '{parent_dir}'"
         )
     ext = dest_path.suffix

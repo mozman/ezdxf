@@ -33,10 +33,6 @@ class Test_Convert_ODAFC_Not_Required:
         with pytest.raises(FileExistsError):
             odafc.convert(src)
 
-    @pytest.mark.skipif(
-        platform.system() != "Windows",
-        reason="doesn't work on github/Linux for 'System under Test'???",
-    )
     def test_destination_folder_does_not_exist(self, tmp_path):
         src = dummy(tmp_path / "xxx.dxf")
         with pytest.raises(FileNotFoundError):
