@@ -35,7 +35,41 @@ from CAD application to CAD application.
 MTEXT Quick Draw
 ----------------
 
-TODO
+Full Python script: `mtext_quick_leader.py`_
+
+The :meth:`quick_leader()` method of a MTEXT - MULTILEADER entity constructs the
+geometry parameters in reverse manner, starting from a given target point:
+
+DXF document setup:
+
+.. literalinclude:: src/mleader/mtext_quick_leader.py
+    :lines: 18-23
+
+Draw a red circle to mark the target point:
+
+.. literalinclude:: src/mleader/mtext_quick_leader.py
+    :lines: 24-27
+
+Create four MULTILEADER entities pointing at the target point, the first segment
+of the leader line is determined by an angle in this example pointing away from
+the target point:
+
+.. literalinclude:: src/mleader/mtext_quick_leader.py
+    :lines: 29-35
+
+.. image:: gfx/mleader_mtext_quick_leader_0.png
+
+.. _mtext_quick_leader.py: https://github.com/mozman/ezdxf/blob/master/docs/source/tutorials/src/mleader/mtext_quick_leader.py
+
+The content is automatically aligned to the end of the leader line. The first
+segment is a relative vector to the target point and the optional second segment
+vector is relative to the end of the first segment.
+The default connection type is horizontal but can be changed to vertical.
+This method is not very customizable for ease of use, but follows the settings
+of the associated :class:`~ezdxf.entities.MLeaderStyle`.
+
+The following sections show how to have more control when adding MULTILEADER
+entities.
 
 Create MTEXT Content
 --------------------
