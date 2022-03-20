@@ -447,7 +447,7 @@ class Material(DXFObject):
         )
 
 
-class MaterialCollection(ObjectCollection):
+class MaterialCollection(ObjectCollection[Material]):
     def __init__(self, doc: "Drawing"):
         super().__init__(doc, dict_name="ACAD_MATERIAL", object_type="MATERIAL")
         self.create_required_entries()

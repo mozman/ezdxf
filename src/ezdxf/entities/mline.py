@@ -911,7 +911,7 @@ class MLineStyle(DXFObject):
             )
 
 
-class MLineStyleCollection(ObjectCollection):
+class MLineStyleCollection(ObjectCollection[MLineStyle]):
     def __init__(self, doc: "Drawing"):
         super().__init__(
             doc, dict_name="ACAD_MLINESTYLE", object_type="MLINESTYLE"

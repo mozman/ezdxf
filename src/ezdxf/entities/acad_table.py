@@ -381,7 +381,7 @@ class TableStyle(DXFObject):
     MIN_DXF_VERSION_FOR_EXPORT = const.DXF2007
 
 
-class TableStyleManager(ObjectCollection):
+class TableStyleManager(ObjectCollection[TableStyle]):
     def __init__(self, doc: "Drawing"):
         super().__init__(
             doc, dict_name="ACAD_TABLESTYLE", object_type="TABLESTYLE"

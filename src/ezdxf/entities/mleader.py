@@ -1375,7 +1375,7 @@ class MLeaderStyle(DXFObject):
                 )
 
 
-class MLeaderStyleCollection(ObjectCollection):
+class MLeaderStyleCollection(ObjectCollection[MLeaderStyle]):
     def __init__(self, doc: "Drawing"):
         super().__init__(
             doc, dict_name="ACAD_MLEADERSTYLE", object_type="MLEADERSTYLE"

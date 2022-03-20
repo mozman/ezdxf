@@ -320,7 +320,7 @@ def valid_layout_handles(layouts: "Layouts") -> Set[str]:
     return set(layout.layout_key for layout in layouts if layout.is_any_layout)
 
 
-class GroupCollection(ObjectCollection):
+class GroupCollection(ObjectCollection[DXFGroup]):
     def __init__(self, doc: "Drawing"):
         super().__init__(doc, dict_name="ACAD_GROUP", object_type="GROUP")
         self._next_unnamed_number = 0
