@@ -77,10 +77,10 @@ def all_mtext_content_horizontal(name: str):
                 style="OpenSans",
             )
             width = len(dir_enum.name) * 2.5
-            x0 = -30
-            x1 = 40 + width
-            y0 = -15
-            y1 = 20
+            x0: float = -30
+            x1: float = 40 + width
+            y0: float = -15
+            y1: float = 20
 
             ml_builder.add_leader_line(
                 mleader.ConnectionSide.right, [Vec2(x1, y1)]
@@ -94,7 +94,7 @@ def all_mtext_content_horizontal(name: str):
             ml_builder.add_leader_line(
                 mleader.ConnectionSide.left, [Vec2(x0, y1)]
             )
-            x = 5
+            x: float = 5
             if alignment == mleader.TextAlignment.center:
                 x += width / 2
             elif alignment == mleader.TextAlignment.right:
@@ -149,7 +149,7 @@ def simple_mtext_content_vertical(name: str):
 def quick_mtext_horizontal(name: str):
     doc = ezdxf.new(DXFVERSION, setup=True)
     mleaderstyle = doc.mleader_styles.duplicate_entry("Standard", "EZDXF")
-    mleaderstyle.set_mtext_style("OpenSans")  # type: ignore
+    mleaderstyle.set_mtext_style("OpenSans")
     msp = doc.modelspace()
     target_point = Vec2(40, 15)
     msp.add_circle(
@@ -171,7 +171,7 @@ def quick_mtext_horizontal(name: str):
 def quick_mtext_vertical(name: str):
     doc = ezdxf.new(DXFVERSION, setup=True)
     mleaderstyle = doc.mleader_styles.duplicate_entry("Standard", "EZDXF")
-    mleaderstyle.set_mtext_style("OpenSans")  # type: ignore
+    mleaderstyle.set_mtext_style("OpenSans")
     msp = doc.modelspace()
     target_point = Vec2(40, 15)
     msp.add_circle(
