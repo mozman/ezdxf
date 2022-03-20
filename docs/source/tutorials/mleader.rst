@@ -43,19 +43,19 @@ geometry parameters in reverse manner, starting from a given target point:
 DXF document setup:
 
 .. literalinclude:: src/mleader/mtext_quick_leader.py
-    :lines: 18-23
+    :lines: 20-25
 
 Draw a red circle to mark the target point:
 
 .. literalinclude:: src/mleader/mtext_quick_leader.py
-    :lines: 24-27
+    :lines: 26-29
 
-Create four MULTILEADER entities pointing at the target point, the first segment
-of the leader line is determined by an angle in this example pointing away from
-the target point:
+Create four horizontal placed MULTILEADER entities pointing at the target point,
+the first segment of the leader line is determined by an angle in this example
+pointing away from the target point:
 
 .. literalinclude:: src/mleader/mtext_quick_leader.py
-    :lines: 29-35
+    :lines: 31-37
 
 .. image:: gfx/mleader_mtext_quick_leader_0.png
 
@@ -64,9 +64,38 @@ the target point:
 The content is automatically aligned to the end of the leader line. The first
 segment is a relative vector to the target point and the optional second segment
 vector is relative to the end of the first segment.
-The default connection type is horizontal but can be changed to vertical.
-This method is not very customizable for ease of use, but follows the settings
-of the associated :class:`~ezdxf.entities.MLeaderStyle`.
+The default connection type is horizontal but can be changed to vertical:
+
+A smaller text size is required:
+
+.. literalinclude:: src/mleader/mtext_quick_leader.py
+    :lines: 45-47
+
+Adding vertical placed MULTILEADER entities:
+
+.. literalinclude:: src/mleader/mtext_quick_leader.py
+    :lines: 53-60
+
+This example already shows the limitation caused by different text renderings in
+various CAD applications. The `ezdxf` text measurement by `matplotlib` is
+different to AutoCAD and BricsCAD and the result is a misalignment of the
+overline and the leader line.
+
+The DXF file shown in BricsCAD:
+
+.. image:: gfx/mleader_mtext_quick_leader_1.png
+
+The same DXF file shown with the :code:`ezdxf view` command (drawing add-on):
+
+.. image:: gfx/mleader_mtext_quick_leader_2.png
+
+
+My advice is to avoid vertical placed MULTILEADER entities at all and for
+horizontal placed MULTILEADER entities avoid styles including an "underline" or
+an "overline".
+
+The :meth:`quick_leader` method is not very customizable for ease of use, but
+follows the settings of the associated :class:`~ezdxf.entities.MLeaderStyle`.
 
 The following sections show how to have more control when adding MULTILEADER
 entities.
