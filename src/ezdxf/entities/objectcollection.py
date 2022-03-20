@@ -1,7 +1,19 @@
-# Copyright (c) 2018-2021 Manfred Moitzi
+# Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterator, cast, Optional, Tuple
-from ezdxf.lldxf.const import DXFValueError, DXFKeyError, INVALID_NAME_CHARACTERS
+from typing import (
+    TYPE_CHECKING,
+    Iterator,
+    cast,
+    Optional,
+    Tuple,
+    TypeVar,
+    Generic,
+)
+from ezdxf.lldxf.const import (
+    DXFValueError,
+    DXFKeyError,
+    INVALID_NAME_CHARACTERS,
+)
 from ezdxf.lldxf.validator import make_table_key, is_valid_table_name
 
 if TYPE_CHECKING:
@@ -21,7 +33,10 @@ def validate_name(name: str) -> str:
     return name
 
 
-class ObjectCollection:
+T = TypeVar("T", bound="DXFObject")
+
+
+class ObjectCollection(Generic[T]):
     def __init__(
         self,
         doc: "Drawing",
@@ -34,7 +49,7 @@ class ObjectCollection:
             dict_name
         )
 
-    def __iter__(self) -> Iterator[Tuple[str, "DXFObject"]]:
+    def __iter__(self) -> Iterator[Tuple[str, T]]:
         return self.object_dict.items()
 
     def __len__(self) -> int:
@@ -43,11 +58,11 @@ class ObjectCollection:
     def __contains__(self, name: str) -> bool:
         return self.get(name) is not None
 
-    def __getitem__(self, name: str) -> "DXFObject":
+    def __getitem__(self, name: str) -> T:
         entry = self.get(name)
         if entry is None:
             raise DXFKeyError(name)
-        return cast("DXFObject", entry)
+        return entry
 
     def is_unique_name(self, name: str) -> bool:
         name = make_table_key(name)
@@ -56,9 +71,7 @@ class ObjectCollection:
                 return False
         return True
 
-    def get(
-        self, name: str, default: "DXFObject" = None
-    ) -> Optional["DXFObject"]:
+    def get(self, name: str, default: T = None) -> Optional[T]:
         """Get object by name. Object collection entries are case insensitive.
 
         Args:
@@ -72,7 +85,7 @@ class ObjectCollection:
                 return obj
         return default
 
-    def new(self, name: str) -> "DXFObject":
+    def new(self, name: str) -> T:
         """Create a new object of type `self.object_type` and store its handle
         in the object manager dictionary.  Object collection entry names are
         case insensitive and limited to 255 characters.
@@ -96,7 +109,7 @@ class ObjectCollection:
             )
         return self._new(name, dxfattribs={"name": name})
 
-    def duplicate_entry(self, name: str, new_name: str) -> "DXFObject":
+    def duplicate_entry(self, name: str, new_name: str) -> T:
         """Returns a new table entry `new_name` as copy of `name`,
         replaces entry `new_name` if already exist.
 
@@ -126,7 +139,7 @@ class ObjectCollection:
         new_entry.set_reactors([owner_handle])
         return new_entry  # type: ignore
 
-    def _new(self, name: str, dxfattribs: dict) -> "DXFObject":
+    def _new(self, name: str, dxfattribs: dict) -> T:
         objects = self.doc.objects
         assert objects is not None
 
@@ -136,7 +149,7 @@ class ObjectCollection:
             self.object_type, dxfattribs=dxfattribs
         )
         self.object_dict.add(name, obj)
-        return cast("DXFObject", obj)
+        return cast(T, obj)
 
     def delete(self, name: str) -> None:
         objects = self.doc.objects
@@ -144,7 +157,6 @@ class ObjectCollection:
 
         obj = self.get(name)  # case insensitive
         if obj is not None:
-            obj = cast("DXFObject", obj)
             # The underlying DICTIONARY is not case insensitive implemented,
             # get real object name if available
             if obj.dxf.is_supported("name"):
