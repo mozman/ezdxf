@@ -896,6 +896,9 @@ class MultiLeaderBuilder(abc.ABC):
         """Reset base properties by :class:`~ezdxf.entities.MLeaderStyle`
         properties. This also resets the content!
         """
+        def copy_style_to_context():
+            self.context.char_height = style_dxf.char_height
+            # more to come ...
 
         self._mleader_style = style
         multileader_dxf = self._multileader.dxf
@@ -904,6 +907,7 @@ class MultiLeaderBuilder(abc.ABC):
         for key in keys:
             if multileader_dxf.is_supported(key):
                 multileader_dxf.set(key, style_dxf.get_default(key))
+        copy_style_to_context()
         multileader_dxf.block_scale_vector = Vec3(
             style_dxf.block_scale_x,
             style_dxf.block_scale_y,
