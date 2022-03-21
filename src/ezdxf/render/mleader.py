@@ -846,7 +846,7 @@ class MultiLeaderBuilder(abc.ABC):
         )
         self.set_mleader_style(style)
         self._multileader.context.landing_gap_size = (
-            self._mleader_style.dxf.landing_gap
+            self._mleader_style.dxf.landing_gap_size
         )
 
     @abc.abstractmethod

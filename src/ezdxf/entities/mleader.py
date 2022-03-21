@@ -90,7 +90,7 @@ acdb_mleader = DefSubclass(
         # 1 << 2 = leader_linetype_handle
         # 1 << 3 = leader_lineweight
         # 1 << 4 = has_landing
-        # 1 << 5 = landing_gap ???
+        # 1 << 5 = landing_gap_size ???
         # 1 << 6 = has_dogleg
         # 1 << 7 = dogleg_length
         # 1 << 8 = arrow_head_handle
@@ -1224,7 +1224,7 @@ acdb_mleader_style = DefSubclass(
         "leader_linetype_handle": DXFAttr(340),
         "leader_lineweight": DXFAttr(92, default=-2),
         "has_landing": DXFAttr(290, default=1),
-        "landing_gap": DXFAttr(42, default=2.0),
+        "landing_gap_size": DXFAttr(42, default=2.0),
         "has_dogleg": DXFAttr(291, default=1),
         "dogleg_length": DXFAttr(43, default=8),
         "name": DXFAttr(3, default="Standard"),  # description text
