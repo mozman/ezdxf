@@ -898,7 +898,7 @@ class MultiLeaderBuilder(abc.ABC):
         """
         def copy_style_to_context():
             self.context.char_height = style_dxf.char_height
-            # more to come ...
+            self.context.landing_gap_size = style_dxf.landing_gap_size
 
         self._mleader_style = style
         multileader_dxf = self._multileader.dxf
