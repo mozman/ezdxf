@@ -201,7 +201,7 @@ class Layout(BaseLayout):
                         "block_record_handle": self.layout_key,
                     },
                 )
-                xdict["ACAD_SORTENTS"] = sortents_table.dxf.handle
+                xdict["ACAD_SORTENTS"] = sortents_table
             else:
                 raise const.DXFValueError(
                     "Extension dictionary entry ACAD_SORTENTS does not exist."
