@@ -77,7 +77,7 @@ These are some applications which do fit the criteria of a reliable CAD applicat
 
 Unfortunately, I cannot recommend any open source applications because everyone
 I know has serious shortcomings, at least as a DXF viewer, and I don't trust
-them as a DXF creator either. To be clear, even `ezdxf` (which is not a CAD
+them as a DXF creator either. To be clear, not even `ezdxf` (which is not a CAD
 application) is a `reliable` library in this sense - it just keeps getting better,
 but is far from `reliable`.
 
