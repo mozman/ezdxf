@@ -62,7 +62,7 @@ documents in the meaning and interpretation of `Autodesk`_ and a reliable DXF
 viewer when the result matches in most parts the result of the free `Trueview`_
 viewer provided by `Autodesk`_.
 
-These are some application which do fir the criteria of a reliable CAD application:
+These are some applications which do fit the criteria of a reliable CAD application:
 
 - `AutoCAD`_ and `Trueview`_
 - CAD applications based on the `OpenDesignAlliance`_ (ODA) SDK, see also
