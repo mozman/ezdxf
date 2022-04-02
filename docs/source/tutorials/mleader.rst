@@ -59,7 +59,6 @@ pointing away from the target point:
 
 .. image:: gfx/mleader_mtext_quick_leader_0.png
 
-.. _mtext_quick_leader.py: https://github.com/mozman/ezdxf/blob/master/docs/source/tutorials/src/mleader/mtext_quick_leader.py
 
 The content is automatically aligned to the end of the leader line. The first
 segment is a relative vector to the target point and the optional second segment
@@ -103,7 +102,86 @@ entities.
 Create MTEXT Content
 --------------------
 
-TODO
+Full Python script: `mtext_content.py`_
+
+This section shows how to create a MULTILEADER entity with MTEXT content
+the manual way with full control over all settings.
+
+For good results the MTEXT alignment should match the leader connection side,
+e.g. if you attach leaders to the left side also align the MTEXT to the left side,
+for leaders attached at the right side, align the MTEXT to the right side
+and if you attach leaders at both sides one side will fit better than the other
+or maybe a center aligned MTEXT is a good solution, for further details see
+section `MTEXT Alignment`_.
+
+The first example uses the default connection type of the MLEADERSTYLE
+"Standard" which is "middle of the top line" for left and right attached
+leaders. The render UCS for this example is the WCS to keep things simple.
+
+Create a new MULTILEADER entity.
+
+.. literalinclude:: src/mleader/mtext_content.py
+    :lines: 23
+
+Set MTEXT content, text style and alignment.
+
+.. literalinclude:: src/mleader/mtext_content.py
+    :lines: 24-28
+
+Add the first leader on the left side.
+The leader points always to the first given vertex and all vertices are given
+in render UCS coordinates (= WCS in this example).
+
+.. literalinclude:: src/mleader/mtext_content.py
+    :lines: 29
+
+
+More than one vertex per leader can be used:
+
+.. literalinclude:: src/mleader/mtext_content.py
+    :lines: 30-33
+
+The insert point of the :meth:`build` method is the alignment point for the
+MTEXT content.
+
+.. literalinclude:: src/mleader/mtext_content.py
+    :lines: 34
+
+The "dog leg" settings are defined by the MLEADERSTYLE "Standard".
+
+.. image:: gfx/mleader_mtext_left.png
+
+This example shows a leader attached to the right side and the MTEXT aligned
+to the right side.
+
+.. literalinclude:: src/mleader/mtext_content.py
+    :lines: 46-53
+
+.. image:: gfx/mleader_mtext_right.png
+
+This example shows two leaders attached to both sides and the MTEXT aligned
+to the left side, which shows that the right landing gap (space between text and
+start of vertex) is bigger than the gap on the left size. This is due to the
+different text size calculations from AutoCAD/BricsCAD and Matplotlib.
+The longer the text, the greater the error.
+
+.. literalinclude:: src/mleader/mtext_content.py
+    :lines: 62-70
+
+.. image:: gfx/mleader_mtext_left_right_1.png
+
+A centered MTEXT alignment gives a more even result.
+
+.. literalinclude:: src/mleader/mtext_content.py
+    :lines: 80-84
+
+.. image:: gfx/mleader_mtext_left_right_2.png
+
+But even this has its disadvantages, the attachment calculation is always based
+on the bounding box of the MTEXT content.
+
+.. image:: gfx/mleader_mtext_left_right_3.png
+
 
 MTEXT Connection Types
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -179,3 +257,6 @@ Setup MLEADERSTYLE
 ------------------
 
 TODO
+
+.. _mtext_quick_leader.py: https://github.com/mozman/ezdxf/blob/master/docs/source/tutorials/src/mleader/mtext_quick_leader.py
+.. _mtext_content.py: https://github.com/mozman/ezdxf/blob/master/docs/source/tutorials/src/mleader/mtext_content.py

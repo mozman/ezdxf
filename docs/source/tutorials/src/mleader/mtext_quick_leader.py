@@ -3,10 +3,10 @@
 import pathlib
 import ezdxf
 from ezdxf import colors
-from ezdxf.enums import TextEntityAlignment
+
 from ezdxf.gfxattribs import GfxAttribs
-from ezdxf.math import Vec2, UCS, NULLVEC, ConstructionBox
-from ezdxf.render import forms, mleader
+from ezdxf.math import Vec2
+from ezdxf.render import mleader
 
 # ========================================
 # Setup your preferred output directory
