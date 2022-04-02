@@ -12,10 +12,10 @@ General preconditions:
     try:
         doc = ezdxf.readfile("your_dxf_file.dxf")
     except IOError:
-        print(f'Not a DXF file or a generic I/O error.')
+        print(f"Not a DXF file or a generic I/O error.")
         sys.exit(1)
     except ezdxf.DXFStructureError:
-        print(f'Invalid or corrupted DXF file.')
+        print(f"Invalid or corrupted DXF file.")
         sys.exit(2)
     msp = doc.modelspace()
 
@@ -37,16 +37,16 @@ use the :mod:`ezdxf.recover` module:
     try:  # low level structure repair:
         doc, auditor = recover.readfile(name)
     except IOError:
-        print(f'Not a DXF file or a generic I/O error.')
+        print(f"Not a DXF file or a generic I/O error.")
         sys.exit(1)
     except ezdxf.DXFStructureError:
-        print(f'Invalid or corrupted DXF file: {name}.')
+        print(f"Invalid or corrupted DXF file: {name}.")
         sys.exit(2)
 
     # DXF file can still have unrecoverable errors, but this is maybe
     # just a problem when saving the recovered DXF file.
     if auditor.has_errors:
-        print(f'Found unrecoverable errors in DXF file: {name}.')
+        print(f"Found unrecoverable errors in DXF file: {name}.")
         auditor.print_error_report()
 
 For more loading scenarios follow the link: :mod:`ezdxf.recover`
@@ -60,8 +60,8 @@ Set/Get Header Variables
 
 .. code-block:: python
 
-    doc.header['VarName'] = value
-    value = doc.header['VarName']
+    doc.header["VarName"] = value
+    value = doc.header["VarName"]
 
 .. seealso::
 
@@ -87,7 +87,7 @@ Sets drawing units:
 .. code-block:: python
 
 
-    doc.header['$INSUNITS'] = 6
+    doc.header["$INSUNITS"] = 6
 
 For more information see section :ref:`DXF Units`.
 
@@ -235,6 +235,16 @@ viewport configuration:
     for vport in doc.viewports.get_config("*Active"):
         vport.dxf.ucs_icon = 0
 
+Show Lineweights in DXF Viewers
+-------------------------------
+
+By default lines and curves are shown without lineweights in DXF viewers.
+By setting the header variable $LWDISPLAY to 1 the DXF viewer should display
+lineweights, if supported by the viewer.
+
+.. code-block:: Python
+
+    doc.header["$LWDISPLAY"] = 1
 
 Add `ezdxf` Resources to Existing DXF Document
 ----------------------------------------------

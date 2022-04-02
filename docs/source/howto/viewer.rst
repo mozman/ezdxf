@@ -47,5 +47,15 @@ Set Initial View/Zoom for the Modelspace
 
 See section "General Document": :ref:`set msp initial view`
 
+Show Lineweights in DXF Viewers
+-------------------------------
+
+By default lines and curves are shown without lineweights in DXF viewers.
+By setting the header variable $LWDISPLAY to 1 the DXF viewer should display
+lineweights, if supported by the viewer.
+
+.. code-block:: Python
+
+    doc.header["$LWDISPLAY"] = 1
 
 .. _A360: https://a360.autodesk.com/viewer/
