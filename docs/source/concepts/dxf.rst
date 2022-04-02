@@ -62,7 +62,7 @@ documents in the meaning and interpretation of `Autodesk`_ and a reliable DXF
 viewer when the result matches in most parts the result of the free `Trueview`_
 viewer provided by `Autodesk`_.
 
-These are some application which do fir the criteria of a reliable CAD application:
+These are some applications which do fit the criteria of a reliable CAD application:
 
 - `AutoCAD`_ and `Trueview`_
 - CAD applications based on the `OpenDesignAlliance`_ (ODA) SDK, see also
@@ -77,7 +77,7 @@ These are some application which do fir the criteria of a reliable CAD applicati
 
 Unfortunately, I cannot recommend any open source applications because everyone
 I know has serious shortcomings, at least as a DXF viewer, and I don't trust
-them as a DXF creator either. To be clear, even `ezdxf` (which is not a CAD
+them as a DXF creator either. To be clear, not even `ezdxf` (which is not a CAD
 application) is a `reliable` library in this sense - it just keeps getting better,
 but is far from `reliable`.
 
