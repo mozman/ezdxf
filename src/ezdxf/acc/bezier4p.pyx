@@ -28,6 +28,7 @@ DEF REL_TOL = 1e-9
 DEF M_PI = 3.141592653589793
 DEF M_TAU = M_PI * 2.0
 DEF DEG2RAD = M_PI / 180.0
+DEF RECURSION_LIMIT = 1000
 
 
 # noinspection PyUnresolvedReferences
@@ -106,7 +107,12 @@ cdef class Bezier4P:
                 t1 = 1.0
             else:
                 end_point = self.curve.point(t1)
+            f.reset_recursion_check()
             f.flatten(start_point, end_point, t0, t1)
+            if f.has_recursion_error():
+                raise RecursionError(
+                    "Bezier4P flattening error, check for very large coordinates"
+                )
             t0 = t1
             start_point = end_point
         return f.points
@@ -142,15 +148,31 @@ cdef class _Flattening:
     cdef CppCubicBezier curve
     cdef double distance
     cdef list points
+    cdef int _recursion_level
+    cdef int _recursion_error
 
     def __cinit__(self, Bezier4P curve, double distance):
         self.curve = curve.curve
         self.distance = distance
         self.points = [curve.start_point]
+        self._recursion_level = 0
+        self._recursion_error = 0
+
+    cdef has_recursion_error(self):
+        return self._recursion_error
+
+    cdef reset_recursion_check(self):
+        self._recursion_level = 0
+        self._recursion_error = 0
 
     cdef flatten(self, CppVec3 start_point, CppVec3 end_point,
                  double start_t,
                  double end_t):
+        if self._recursion_level > RECURSION_LIMIT:
+            self._recursion_error = 1
+            return
+
+        self._recursion_level += 1
         cdef double mid_t = (start_t + end_t) * 0.5
         cdef CppVec3 mid_point = self.curve.point(mid_t)
         cdef double d = mid_point.distance(start_point.lerp(end_point, 0.5))
@@ -165,6 +187,7 @@ cdef class _Flattening:
         else:
             self.flatten(start_point, mid_point, start_t, mid_t)
             self.flatten(mid_point, end_point, mid_t, end_t)
+        self._recursion_level -= 1
 
 DEF DEFAULT_TANGENT_FACTOR = 4.0 / 3.0  # 1.333333333333333333
 DEF OPTIMIZED_TANGENT_FACTOR = 1.3324407374108935
