@@ -54,8 +54,10 @@ class Bezier3P:
         """Control points as tuple of :class:`~ezdxf.math.Vec3` or
         :class:`~ezdxf.math.Vec2` objects.
         """
+        # ezdxf optimization: p0 is always (0, 0, 0)
+        p0, p1, p2 = self._control_points
         offset = self._offset
-        return tuple(offset + p for p in self._control_points)
+        return offset, p1 + offset, p2 + offset
 
     def tangent(self, t: float) -> "AnyVec":
         """Returns direction vector of tangent for location `t` at the
@@ -160,21 +162,25 @@ class Bezier3P:
             start_point = end_point
 
     def _get_curve_point(self, t: float) -> "AnyVec":
+        # 1st control point (p0) is always (0, 0, 0)
+        # => p0 * a is always (0, 0, 0)
         p0, p1, p2 = self._control_points
         _1_minus_t = 1.0 - t
-        a = _1_minus_t * _1_minus_t
+        # a = _1_minus_t * _1_minus_t
         b = 2.0 * t * _1_minus_t
         c = t * t
         # add offset at last - it is maybe very large
-        return p0 * a + p1 * b + p2 * c + self._offset
+        return p1 * b + p2 * c + self._offset
 
     def _get_curve_tangent(self, t: float) -> "AnyVec":
         # tangent vector is independent from offset location!
+        # 1st control point (p0) is always (0, 0, 0)
+        # => p0 * a is always (0, 0, 0)
         p0, p1, p2 = self._control_points
-        a = -2.0 * (1.0 - t)
+        # a = -2.0 * (1.0 - t)
         b = 2.0 - 4.0 * t
         c = 2.0 * t
-        return p0 * a + p1 * b + p2 * c
+        return p1 * b + p2 * c
 
     def reverse(self) -> "Bezier3P":
         """Returns a new Bèzier-curve with reversed control point order."""

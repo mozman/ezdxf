@@ -87,6 +87,7 @@ class Bezier4P:
         """Control points as tuple of :class:`~ezdxf.math.Vec3` or
         :class:`~ezdxf.math.Vec2` objects.
         """
+        # ezdxf optimization: p0 is always (0, 0, 0)
         p0, p1, p2, p3 = self._control_points
         offset = self._offset
         return offset, p1 + offset, p2 + offset, p3 + offset
