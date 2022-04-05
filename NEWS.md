@@ -46,6 +46,8 @@ Version 0.18b2 - dev
 - CHANGE: `recover` module - recovered integer and float values are logged as severe errors
 - CHANGE: method `Path.all_lines_to_curve3` replaced by function `path.lines_to_curve3()`
 - CHANGE: method `Path.all_lines_to_curve4` replaced by function `path.lines_to_curve4()`
+- BUGFIX [#663](https://github.com/mozman/ezdxf/issues/663): 
+  improve handling of large coordinates in `Bezier4P` and `Bezier3P` classes
 - BUGFIX [#655](https://github.com/mozman/ezdxf/issues/655): 
   fixed invalid flattening of 3D ARC entities 
 - BUGFIX [#640](https://github.com/mozman/ezdxf/issues/640): 
