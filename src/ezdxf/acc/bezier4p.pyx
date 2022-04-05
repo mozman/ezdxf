@@ -97,13 +97,13 @@ cdef class Bezier4P:
         cdef double dt = 1.0 / segments
         cdef double t0 = 0.0, t1
         cdef _Flattening f = _Flattening(self, distance)
-        cdef CppVec3 start_point = (<Vec3> self.start_point).to_cpp_vec3()
+        cdef CppVec3 start_point = self.curve.p0
         cdef CppVec3 end_point
 
         while t0 < 1.0:
             t1 = t0 + dt
             if isclose(t1, 1.0, REL_TOL, ABS_TOL):
-                end_point = (<Vec3> self.end_point).to_cpp_vec3()
+                end_point = self.curve.p3
                 t1 = 1.0
             else:
                 end_point = self.curve.point(t1)
