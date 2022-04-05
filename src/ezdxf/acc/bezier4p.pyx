@@ -6,7 +6,7 @@ from typing import List, Tuple, TYPE_CHECKING, Sequence, Iterable
 import cython
 from .vector cimport (
     Vec3, isclose, v3_dist, v3_from_angle, normalize_rad_angle,
-    v3_from_cpp_vec3,
+    v3_from_cpp_vec3, v3_add
 )
 from .matrix44 cimport Matrix44
 from libc.math cimport ceil, tan
@@ -52,15 +52,15 @@ cdef class Bezier4P:
 
     @property
     def control_points(self) -> Tuple[Vec3, Vec3, Vec3, Vec3]:
-        offset = self.offset
-        return v3_from_cpp_vec3(self.curve.p0) + offset, \
-               v3_from_cpp_vec3(self.curve.p1) + offset, \
-               v3_from_cpp_vec3(self.curve.p2) + offset, \
-               v3_from_cpp_vec3(self.curve.p3) + offset
+        cdef CppVec3 cpp_offset = self.offset.to_cpp_vec3()
+        return self.offset, \
+               v3_from_cpp_vec3(self.curve.p1 + cpp_offset), \
+               v3_from_cpp_vec3(self.curve.p2 + cpp_offset), \
+               v3_from_cpp_vec3(self.curve.p3 + cpp_offset)
 
     @property
     def start_point(self) -> Vec3:
-        return v3_from_cpp_vec3(self.curve.p0) + self.offset
+        return self.offset
 
     @property
     def end_point(self) -> Vec3:
@@ -82,8 +82,6 @@ cdef class Bezier4P:
             raise ValueError("t not in range [0 to 1]")
 
     def approximate(self, int segments) -> List[Vec3]:
-        # A C++ implementation using std::vector<CppVec3> as return type
-        # was significant slower than the current implementation.
         cdef double delta_t
         cdef int segment
         cdef list points = [self.start_point]
@@ -120,7 +118,7 @@ cdef class Bezier4P:
             t0 = t1
             start_point = end_point
         # translate vertices to original location:
-        return [p + offset  for p in f.points]
+        return [v3_add(p, offset) for p in f.points]
 
     def approximated_length(self, segments: int = 128) -> float:
         cdef double length = 0.0
