@@ -91,5 +91,23 @@ def test_issue_128():
     assert point.isclose(vec2(175.0, 30.1235))
 
 
+def test_issue_664():
+    from ezdxf.math import ConstructionLine
+    p1 = Vec2(16399619.87946683, -199438.8133075837)
+    p2 = Vec2(16399700.34999472, -199438.8133075837)
+    p3 = Vec2(16399659.76235549, -199423.8133075837)
+    p4 = Vec2(16399659.76235549, -199463.8133075837)
+    intersection_line_line_2d((p1, p2), (p3, p4))
+    assert (
+        intersection_line_line_2d(
+            (p1, p2), (p3, p4), virtual=False, abs_tol=1e-5
+        )
+        is not None
+    )
+    cl1 = ConstructionLine(p1, p2)
+    cl2 = ConstructionLine(p3, p4)
+    assert cl1.intersect(cl2, abs_tol=1e-5) is not None
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
