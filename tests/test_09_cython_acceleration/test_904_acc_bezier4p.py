@@ -126,7 +126,8 @@ def test_correctness_bezier_from_ellipse(s, e):
     expected = list(cubic_bezier_from_ellipse(ellipse))
     result = list(bezier.cubic_bezier_from_ellipse(ellipse))
     for e, r in zip(expected, result):
-        assert e.control_points == r.control_points
+        for ep, rp in zip(e.control_points, r.control_points):
+            assert ep.isclose(rp)
 
 
 if __name__ == "__main__":

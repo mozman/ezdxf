@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2021 Manfred Moitzi
+# Copyright (c) 2010-2022 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Union, Sequence, Tuple, Type
 import math
@@ -50,6 +50,7 @@ def bernstein3_d1(t: float) -> Sequence[float]:
 
 
 class Bezier4P:
+    __slots__ = ("_control_points", "_offset")
     """Implements an optimized cubic `Bézier curve`_ for exact 4 control points.
 
     A `Bézier curve`_ is a parametric curve, parameter `t` goes from 0 to 1,
@@ -71,8 +72,12 @@ class Bezier4P:
         if len(defpoints) == 4:
             is3d = any(len(p) > 2 for p in defpoints)
             vector_class: Type["AnyVec"] = Vec3 if is3d else Vec2
-            self._control_points: Sequence["AnyVec"] = vector_class.tuple(
-                defpoints
+            # The start point is the curve offset
+            offset: "AnyVec" = vector_class(defpoints[0])
+            self._offset: "AnyVec" = offset
+            # moving the curve to the origin reduces floating point errors:
+            self._control_points: Sequence["AnyVec"] = tuple(
+                vector_class(p) - offset for p in defpoints
             )
         else:
             raise ValueError("Four control points required.")
@@ -82,7 +87,8 @@ class Bezier4P:
         """Control points as tuple of :class:`~ezdxf.math.Vec3` or
         :class:`~ezdxf.math.Vec2` objects.
         """
-        return self._control_points
+        offset = self._offset
+        return tuple(offset + p for p in self._control_points)
 
     def tangent(self, t: float) -> "AnyVec":
         """Returns direction vector of tangent for location `t` at the
@@ -118,10 +124,11 @@ class Bezier4P:
         if segments < 1:
             raise ValueError(segments)
         delta_t = 1.0 / segments
-        yield self._control_points[0]
+        cp = self.control_points
+        yield cp[0]
         for segment in range(1, segments):
             yield self._get_curve_point(delta_t * segment)
-        yield self._control_points[3]
+        yield cp[3]
 
     def flattening(
         self, distance: float, segments: int = 4
@@ -153,14 +160,8 @@ class Bezier4P:
             chk_point: "AnyVec" = start_point.lerp(end_point)
             # center point point is faster than projecting mid point onto
             # vector start -> end:
-            # very large coordinates (>1e99) can cause calculation errors #574 #663
-            # distance from 2.999999999999987e+99 to 2.9999999999999e+99 is
-            # very large even it is only a floating point imprecision error in the
-            # mantissa!
             d = chk_point.distance(mid_point)
-            if d < distance or d > max_dist:
-                # keep in sync with Cython implementation: ezdxf/acc/bezier4p.pyx
-                # max_dist: emergency exit if distance d is suddenly very large!
+            if d < distance:
                 yield end_point
             else:
                 yield from subdiv(start_point, mid_point, start_t, mid_t)
@@ -169,16 +170,9 @@ class Bezier4P:
         dt: float = 1.0 / segments
         t0: float = 0.0
         t1: float
-        cp = self._control_points
-        max_dist = 1e12  # educated guess
+        cp = self.control_points
         start_point: "AnyVec" = cp[0]
         end_point: "AnyVec"
-
-        if len(start_point) > 2:  # improved large elevation handling only for 3D
-            for i in (3, 2, 1):
-                if not start_point.isclose(cp[i]):
-                    max_dist = (start_point - cp[i]).magnitude_square
-                    break
 
         yield start_point
         while t0 < 1.0:
@@ -195,7 +189,8 @@ class Bezier4P:
     def _get_curve_point(self, t: float) -> Union[Vec3, Vec2]:
         b1, b2, b3, b4 = self._control_points
         a, b, c, d = bernstein3(t)
-        return b1 * a + b2 * b + b3 * c + b4 * d
+        # add offset at last - it is maybe very large
+        return b1 * a + b2 * b + b3 * c + b4 * d + self._offset
 
     def _get_curve_tangent(self, t: float) -> Union[Vec3, Vec2]:
         b1, b2, b3, b4 = self._control_points
@@ -229,10 +224,10 @@ class Bezier4P:
 
         """
         defpoints: Iterable["AnyVec"]
-        if len(self._control_points[0]) == 2:
-            defpoints = Vec3.generate(self._control_points)
+        if len(self._offset) == 2:
+            defpoints = Vec3.generate(self.control_points)
         else:
-            defpoints = self._control_points
+            defpoints = self.control_points
         return Bezier4P(tuple(m.transform_vertices(defpoints)))
 
 
