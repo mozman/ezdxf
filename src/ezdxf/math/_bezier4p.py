@@ -87,8 +87,9 @@ class Bezier4P:
         """Control points as tuple of :class:`~ezdxf.math.Vec3` or
         :class:`~ezdxf.math.Vec2` objects.
         """
+        p0, p1, p2, p3 = self._control_points
         offset = self._offset
-        return tuple(offset + p for p in self._control_points)
+        return offset, p1 + offset, p2 + offset, p3 + offset
 
     def tangent(self, t: float) -> "AnyVec":
         """Returns direction vector of tangent for location `t` at the
@@ -189,14 +190,18 @@ class Bezier4P:
     def _get_curve_point(self, t: float) -> Union[Vec3, Vec2]:
         b1, b2, b3, b4 = self._control_points
         a, b, c, d = bernstein3(t)
+        # 1st control point (b1) is always (0, 0, 0)
+        # => b1 * a is always (0, 0, 0)
         # add offset at last - it is maybe very large
-        return b1 * a + b2 * b + b3 * c + b4 * d + self._offset
+        return b2 * b + b3 * c + b4 * d + self._offset
 
     def _get_curve_tangent(self, t: float) -> Union[Vec3, Vec2]:
         # tangent vector is independent from offset location!
         b1, b2, b3, b4 = self._control_points
         a, b, c, d = bernstein3_d1(t)
-        return b1 * a + b2 * b + b3 * c + b4 * d
+        # 1st control point (b1) is always (0, 0, 0)
+        # => b1 * a is always (0, 0, 0)
+        return b2 * b + b3 * c + b4 * d
 
     def approximated_length(self, segments: int = 128) -> float:
         """Returns estimated length of Bèzier-curve as approximation by line
