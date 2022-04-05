@@ -64,14 +64,14 @@ cdef class Bezier4P:
 
     @property
     def end_point(self) -> Vec3:
-        return v3_from_cpp_vec3(self.curve.p3) + self.offset
+        return v3_add(v3_from_cpp_vec3(self.curve.p3), self.offset)
 
     def __reduce__(self):
         return Bezier4P, (self.control_points,)
 
     def point(self, double t) -> Vec3:
         if 0.0 <= t <= 1.0:
-            return v3_from_cpp_vec3(self.curve.point(t)) + self.offset
+            return v3_add(v3_from_cpp_vec3(self.curve.point(t)), self.offset)
         else:
             raise ValueError("t not in range [0 to 1]")
 
