@@ -3,7 +3,7 @@
 # Copyright (c) 2021-2022 Manfred Moitzi
 # License: MIT License
 from typing import List, Tuple, TYPE_CHECKING, Sequence
-from .vector cimport Vec3, isclose, v3_dist,   v3_from_cpp_vec3
+from .vector cimport Vec3, isclose, v3_dist, v3_from_cpp_vec3, v3_add
 from .matrix44 cimport Matrix44
 from ._cpp_vec3 cimport CppVec3
 from ._cpp_quad_bezier cimport CppQuadBezier
@@ -40,25 +40,25 @@ cdef class Bezier3P:
 
     @property
     def control_points(self) -> Tuple[Vec3, Vec3, Vec3]:
-        cdef Vec3 offset = self.offset
-        return v3_from_cpp_vec3(self.curve.p0) + offset, \
-               v3_from_cpp_vec3(self.curve.p1) + offset, \
-               v3_from_cpp_vec3(self.curve.p2) + offset
+        cdef CppVec3 cpp_offset = self.offset.to_cpp_vec3()
+        return self.offset, \
+               v3_from_cpp_vec3(self.curve.p1 + cpp_offset), \
+               v3_from_cpp_vec3(self.curve.p2 + cpp_offset)
 
     @property
     def start_point(self) -> Vec3:
-        return v3_from_cpp_vec3(self.curve.p0) + self.offset
+        return self.offset
 
     @property
     def end_point(self) -> Vec3:
-        return v3_from_cpp_vec3(self.curve.p2) + self.offset
+        return v3_add(v3_from_cpp_vec3(self.curve.p2), self.offset)
 
     def __reduce__(self):
         return Bezier3P, (self.control_points,)
 
     def point(self, double t) -> Vec3:
         if 0.0 <= t <= 1.0:
-            return v3_from_cpp_vec3(self.curve.point(t)) + self.offset
+            return v3_add(v3_from_cpp_vec3(self.curve.point(t)), self.offset)
         else:
             raise ValueError("t not in range [0 to 1]")
 
@@ -107,7 +107,7 @@ cdef class Bezier3P:
             t0 = t1
             start_point = end_point
         # translate vertices to original location:
-        return [p + offset  for p in f.points]
+        return [v3_add(p, offset) for p in f.points]
 
     def approximated_length(self, segments: int = 128) -> float:
         cdef double length = 0.0
