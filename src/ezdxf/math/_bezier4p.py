@@ -153,16 +153,14 @@ class Bezier4P:
             chk_point: "AnyVec" = start_point.lerp(end_point)
             # center point point is faster than projecting mid point onto
             # vector start -> end:
-            # very big numbers (>1e99) can cause calculation errors #574
+            # very large coordinates (>1e99) can cause calculation errors #574 #663
             # distance from 2.999999999999987e+99 to 2.9999999999999e+99 is
-            # very big even it is only a floating point imprecision error in the
+            # very large even it is only a floating point imprecision error in the
             # mantissa!
             d = chk_point.distance(mid_point)
-            if d < distance or d > max_dist:  # educated guess
-                # Optimizing the max sagitta value, e.g. using the sum of chords
-                # cp0 ... cp3 as max sagitta, does not improve the result!
+            if d < distance or d > max_dist:
                 # keep in sync with Cython implementation: ezdxf/acc/bezier4p.pyx
-                # emergency exit if distance d is suddenly very large!
+                # max_dist: emergency exit if distance d is suddenly very large!
                 yield end_point
             else:
                 yield from subdiv(start_point, mid_point, start_t, mid_t)
@@ -173,11 +171,15 @@ class Bezier4P:
         t1: float
         cp = self._control_points
         max_dist = 1e12  # educated guess
-        if len(cp[0]) > 2:  # improved large elevation handling only for 3D
-            max_dist = (cp[0] - cp[-1]).magnitude_square
-
         start_point: "AnyVec" = cp[0]
         end_point: "AnyVec"
+
+        if len(start_point) > 2:  # improved large elevation handling only for 3D
+            for i in (3, 2, 1):
+                if not start_point.isclose(cp[i]):
+                    max_dist = (start_point - cp[i]).magnitude_square
+                    break
+
         yield start_point
         while t0 < 1.0:
             t1 = t0 + dt
