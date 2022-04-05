@@ -1,6 +1,6 @@
 # cython: language_level=3
 # distutils: language = c++
-# Copyright (c) 2020 Manfred Moitzi
+# Copyright (c) 2020-2022 Manfred Moitzi
 # License: MIT License
 from typing import List, Tuple, TYPE_CHECKING, Sequence, Iterable
 import cython
@@ -34,39 +34,44 @@ DEF RECURSION_LIMIT = 1000
 # noinspection PyUnresolvedReferences
 cdef class Bezier4P:
     cdef CppCubicBezier curve
+    cdef Vec3 offset
 
     def __cinit__(self, defpoints: Sequence['Vertex']):
+        cdef CppVec3 cpp_offset
         if len(defpoints) == 4:
+            self.offset = Vec3(defpoints[0])
+            cpp_offset = self.offset.to_cpp_vec3()
             self.curve = CppCubicBezier(
-                Vec3(defpoints[0]).to_cpp_vec3(),
-                Vec3(defpoints[1]).to_cpp_vec3(),
-                Vec3(defpoints[2]).to_cpp_vec3(),
-                Vec3(defpoints[3]).to_cpp_vec3(),
+                CppVec3(),
+                Vec3(defpoints[1]).to_cpp_vec3() - cpp_offset,
+                Vec3(defpoints[2]).to_cpp_vec3() - cpp_offset,
+                Vec3(defpoints[3]).to_cpp_vec3() - cpp_offset,
             )
         else:
             raise ValueError("Four control points required.")
 
     @property
     def control_points(self) -> Tuple[Vec3, Vec3, Vec3, Vec3]:
-        return v3_from_cpp_vec3(self.curve.p0), \
-               v3_from_cpp_vec3(self.curve.p1), \
-               v3_from_cpp_vec3(self.curve.p2), \
-               v3_from_cpp_vec3(self.curve.p3)
+        offset = self.offset
+        return v3_from_cpp_vec3(self.curve.p0) + offset, \
+               v3_from_cpp_vec3(self.curve.p1) + offset, \
+               v3_from_cpp_vec3(self.curve.p2) + offset, \
+               v3_from_cpp_vec3(self.curve.p3) + offset
 
     @property
     def start_point(self) -> Vec3:
-        return v3_from_cpp_vec3(self.curve.p0)
+        return v3_from_cpp_vec3(self.curve.p0) + self.offset
 
     @property
     def end_point(self) -> Vec3:
-        return v3_from_cpp_vec3(self.curve.p3)
+        return v3_from_cpp_vec3(self.curve.p3) + self.offset
 
     def __reduce__(self):
         return Bezier4P, (self.control_points,)
 
     def point(self, double t) -> Vec3:
         if 0.0 <= t <= 1.0:
-            return v3_from_cpp_vec3(self.curve.point(t))
+            return v3_from_cpp_vec3(self.curve.point(t)) + self.offset
         else:
             raise ValueError("t not in range [0 to 1]")
 
@@ -87,9 +92,7 @@ cdef class Bezier4P:
             raise ValueError(segments)
         delta_t = 1.0 / segments
         for segment in range(1, segments):
-            points.append(v3_from_cpp_vec3(
-                self.curve.point(delta_t * segment)
-            ))
+            points.append(self.point(delta_t * segment))
         points.append(self.end_point)
         return points
 
@@ -99,7 +102,8 @@ cdef class Bezier4P:
         cdef _Flattening f = _Flattening(self, distance)
         cdef CppVec3 start_point = self.curve.p0
         cdef CppVec3 end_point
-
+        cdef Vec3 offset = self.offset
+        # Flattening of the translated curve!
         while t0 < 1.0:
             t1 = t0 + dt
             if isclose(t1, 1.0, REL_TOL, ABS_TOL):
@@ -115,7 +119,8 @@ cdef class Bezier4P:
                 )
             t0 = t1
             start_point = end_point
-        return f.points
+        # translate vertices to original location:
+        return [p + offset  for p in f.points]
 
     def approximated_length(self, segments: int = 128) -> float:
         cdef double length = 0.0
@@ -154,7 +159,7 @@ cdef class _Flattening:
     def __cinit__(self, Bezier4P curve, double distance):
         self.curve = curve.curve
         self.distance = distance
-        self.points = [curve.start_point]
+        self.points = [v3_from_cpp_vec3(self.curve.p0)]
         self._recursion_level = 0
         self._recursion_error = 0
 
@@ -165,26 +170,23 @@ cdef class _Flattening:
         self._recursion_level = 0
         self._recursion_error = 0
 
-    cdef flatten(self, CppVec3 start_point, CppVec3 end_point,
-                 double start_t,
-                 double end_t):
+    cdef flatten(
+        self,
+        CppVec3 start_point,
+        CppVec3 end_point,
+        double start_t,
+        double end_t
+    ):
         # Keep in sync with CPython implementation: ezdxf/math/_bezier4p.py
         # Test suite: 630a
         if self._recursion_level > RECURSION_LIMIT:
             self._recursion_error = 1
             return
         self._recursion_level += 1
-        # Very large coordinates (>1e99) can cause calculation errors #574 #663
-        # distance from 2.999999999999987e+99 to 2.9999999999999e+99 is
-        # very large even it is only a floating point imprecision error in the
-        # mantissa!
-        # The max_dist, the squared distance from start- to end point,
-        # should catch such errors:
-        cdef double max_dist = (start_point - end_point).magnitude_sqr()
         cdef double mid_t = (start_t + end_t) * 0.5
         cdef CppVec3 mid_point = self.curve.point(mid_t)
         cdef double d = mid_point.distance(start_point.lerp(end_point, 0.5))
-        if d < self.distance or d > max_dist:
+        if d < self.distance:
             # Convert CppVec3 to Python type Vec3:
             self.points.append(v3_from_cpp_vec3(end_point))
         else:
