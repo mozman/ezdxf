@@ -1,4 +1,4 @@
-# Copyright (c) 2021 Manfred Moitzi
+# Copyright (c) 2021-2022 Manfred Moitzi
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, Sequence, Type, Optional
 import math
@@ -19,6 +19,7 @@ def check_if_in_valid_range(t: float) -> None:
 
 
 class Bezier3P:
+    __slots__ = ("_control_points", "_offset")
     """Implements an optimized quadratic `Bézier curve`_ for exact 3 control
     points.
 
@@ -38,8 +39,12 @@ class Bezier3P:
         if len(defpoints) == 3:
             is3d = any(len(p) > 2 for p in defpoints)
             vector_class: Type["AnyVec"] = Vec3 if is3d else Vec2
-            self._control_points: Sequence["AnyVec"] = vector_class.tuple(
-                defpoints
+            # The start point is the curve offset
+            offset: "AnyVec" = vector_class(defpoints[0])
+            self._offset: "AnyVec" = offset
+            # moving the curve to the origin reduces floating point errors:
+            self._control_points: Sequence["AnyVec"] = tuple(
+                vector_class(p) - offset for p in defpoints
             )
         else:
             raise ValueError("Three control points required.")
@@ -49,7 +54,8 @@ class Bezier3P:
         """Control points as tuple of :class:`~ezdxf.math.Vec3` or
         :class:`~ezdxf.math.Vec2` objects.
         """
-        return self._control_points
+        offset = self._offset
+        return tuple(offset + p for p in self._control_points)
 
     def tangent(self, t: float) -> "AnyVec":
         """Returns direction vector of tangent for location `t` at the
@@ -83,10 +89,11 @@ class Bezier3P:
         if segments < 1:
             raise ValueError(segments)
         delta_t: float = 1.0 / segments
-        yield self._control_points[0]
+        cp = self.control_points
+        yield cp[0]
         for segment in range(1, segments):
             yield self._get_curve_point(delta_t * segment)
-        yield self._control_points[2]
+        yield cp[2]
 
     def approximated_length(self, segments: int = 128) -> float:
         """Returns estimated length of Bèzier-curve as approximation by line
@@ -128,11 +135,7 @@ class Bezier3P:
             # center point point is faster than projecting mid point onto
             # vector start -> end:
             d = chk_point.distance(mid_point)
-            if d < distance or d > 1e12:  # educated guess
-                # Optimizing the max sagitta value, e.g. using the sum of chords
-                # cp0 ... cp3 as max sagitta, does not improve the result!
-                # keep in sync with Cython implementation: ezdxf/acc/bezier3p.pyx
-                # emergency exit if distance d is suddenly very large!
+            if d < distance:
                 yield end_point
             else:
                 yield from subdiv(start_point, mid_point, start_t, mid_t)
@@ -141,13 +144,14 @@ class Bezier3P:
         dt: float = 1.0 / segments
         t0: float = 0.0
         t1: float
-        start_point: "AnyVec" = self._control_points[0]
+        cp = self.control_points
+        start_point: "AnyVec" = cp[0]
         end_point: "AnyVec"
         yield start_point
         while t0 < 1.0:
             t1 = t0 + dt
             if math.isclose(t1, 1.0):
-                end_point = self._control_points[2]
+                end_point = cp[2]
                 t1 = 1.0
             else:
                 end_point = self._get_curve_point(t1)
@@ -161,9 +165,11 @@ class Bezier3P:
         a = _1_minus_t * _1_minus_t
         b = 2.0 * t * _1_minus_t
         c = t * t
-        return p0 * a + p1 * b + p2 * c
+        # add offset at last - it is maybe very large
+        return p0 * a + p1 * b + p2 * c + self._offset
 
     def _get_curve_tangent(self, t: float) -> "AnyVec":
+        # tangent vector is independent from offset location!
         p0, p1, p2 = self._control_points
         a = -2.0 * (1.0 - t)
         b = 2.0 - 4.0 * t
@@ -183,8 +189,8 @@ class Bezier3P:
 
         """
         defpoints: Iterable["AnyVec"]
-        if len(self._control_points[0]) == 2:
-            defpoints = Vec3.generate(self._control_points)
+        if len(self._offset) == 2:
+            defpoints = Vec3.generate(self.control_points)
         else:
-            defpoints = self._control_points
+            defpoints = self.control_points
         return Bezier3P(tuple(m.transform_vertices(defpoints)))

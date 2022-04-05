@@ -193,6 +193,7 @@ class Bezier4P:
         return b1 * a + b2 * b + b3 * c + b4 * d + self._offset
 
     def _get_curve_tangent(self, t: float) -> Union[Vec3, Vec2]:
+        # tangent vector is independent from offset location!
         b1, b2, b3, b4 = self._control_points
         a, b, c, d = bernstein3_d1(t)
         return b1 * a + b2 * b + b3 * c + b4 * d
