@@ -168,20 +168,23 @@ cdef class _Flattening:
     cdef flatten(self, CppVec3 start_point, CppVec3 end_point,
                  double start_t,
                  double end_t):
+        # Keep in sync with CPython implementation: ezdxf/math/_bezier4p.py
+        # Test suite: 630a
         if self._recursion_level > RECURSION_LIMIT:
             self._recursion_error = 1
             return
-
         self._recursion_level += 1
+        # Very large coordinates (>1e99) can cause calculation errors #574 #663
+        # distance from 2.999999999999987e+99 to 2.9999999999999e+99 is
+        # very large even it is only a floating point imprecision error in the
+        # mantissa!
+        # The max_dist, the squared distance from start- to end point,
+        # should catch such errors:
+        cdef double max_dist = (start_point - end_point).magnitude_sqr()
         cdef double mid_t = (start_t + end_t) * 0.5
         cdef CppVec3 mid_point = self.curve.point(mid_t)
         cdef double d = mid_point.distance(start_point.lerp(end_point, 0.5))
-        # very big numbers (>1e99) can cause calculation errors #574
-        # distance from 2.999999999999987e+99 to 2.9999999999999e+99 is
-        # very big even it is only a floating point imprecision error in the
-        # mantissa!
-        if d < self.distance or d > 1e12:  # educated guess
-            # keep in sync with CPython implementation: ezdxf/math/_bezier4p.py
+        if d < self.distance or d > max_dist:
             # Convert CppVec3 to Python type Vec3:
             self.points.append(v3_from_cpp_vec3(end_point))
         else:

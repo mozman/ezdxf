@@ -158,7 +158,7 @@ class Bezier4P:
             # very big even it is only a floating point imprecision error in the
             # mantissa!
             d = chk_point.distance(mid_point)
-            if d < distance or d > 1e12:  # educated guess
+            if d < distance or d > max_dist:  # educated guess
                 # Optimizing the max sagitta value, e.g. using the sum of chords
                 # cp0 ... cp3 as max sagitta, does not improve the result!
                 # keep in sync with Cython implementation: ezdxf/acc/bezier4p.pyx
@@ -171,13 +171,18 @@ class Bezier4P:
         dt: float = 1.0 / segments
         t0: float = 0.0
         t1: float
-        start_point: "AnyVec" = self._control_points[0]
+        cp = self._control_points
+        max_dist = 1e12  # educated guess
+        if len(cp[0]) > 2:  # improved large elevation handling only for 3D
+            max_dist = (cp[0] - cp[-1]).magnitude_square
+
+        start_point: "AnyVec" = cp[0]
         end_point: "AnyVec"
         yield start_point
         while t0 < 1.0:
             t1 = t0 + dt
             if math.isclose(t1, 1.0):
-                end_point = self._control_points[3]
+                end_point = cp[3]
                 t1 = 1.0
             else:
                 end_point = self._get_curve_point(t1)

@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2020 Manfred Moitzi
+# Copyright (c) 2010-2022 Manfred Moitzi
 # License: MIT License
 import pytest
 import pickle
@@ -114,6 +114,37 @@ def test_flattening(bezier):
     curve = bezier([(0, 0), (1, 1), (2, -1), (3, 0)])
     assert len(list(curve.flattening(1.0, segments=4))) == 5
     assert len(list(curve.flattening(0.1, segments=4))) == 7
+
+
+def test_flattening_for_equal_start_and_end_points(bezier):
+    curve = bezier([(0, 0), (1, 0), (1, 1), (0, 0)])
+    assert len(list(curve.flattening(0.1, segments=4))) == 5
+
+
+def test_flattening_with_large_elevation(bezier):
+    elevation = 1.391912e19
+    curve = bezier(
+        [
+            (0, 0, elevation),
+            (1, 1, elevation),
+            (2, -1, elevation),
+            (3, 0, elevation),
+        ]
+    )
+    assert len(list(curve.flattening(0.1, segments=4))) > 3
+
+
+def test_flattening_for_equal_start_and_end_points_large_elevation(bezier):
+    elevation = 1.391912e19
+    curve = bezier(
+        [
+            (0, 0, elevation),
+            (1, 0, elevation),
+            (1, 1, elevation),
+            (0, 0, elevation),
+        ]
+    )
+    assert len(list(curve.flattening(0.1, segments=4))) == 5
 
 
 @pytest.mark.parametrize(
