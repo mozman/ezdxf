@@ -1,5 +1,6 @@
 # Copyright (c) 2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from pathlib import Path
 import matplotlib.pyplot as plt
 
