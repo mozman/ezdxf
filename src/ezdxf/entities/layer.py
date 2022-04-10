@@ -1,7 +1,8 @@
 # Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple, cast, Dict
 import logging
+from dataclasses import dataclass
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
     DXFAttr,
@@ -29,12 +30,13 @@ from .factory import register_entity
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Viewport
 
-__all__ = ["Layer", "acdb_symbol_table_record"]
+__all__ = ["Layer", "acdb_symbol_table_record", "ViewportOverrides"]
 
 
 def is_valid_layer_color_index(aci: int) -> bool:
+    # BYBLOCK or BYLAYER is not valid a layer color!
     return (-256 < aci < 256) and aci != 0
 
 
@@ -361,3 +363,191 @@ class Layer(DXFEntity):
                     f'renaming layer "{old_name}" - document contains '
                     f"LAYER_INDEX"
                 )
+
+    def get_vp_overrides(self) -> "ViewportOverrides":
+        """Returns the :class:`ViewportOverrides` object of this layer."""
+        return ViewportOverrides(self)
+
+
+@dataclass
+class OverrideAttributes:
+    aci: int
+    rgb: Optional[clr.RGB]
+    transparency: float
+    linetype: str
+    lineweight: int
+    frozen: bool
+
+
+class ViewportOverrides:
+    def __init__(self, layer: Layer):
+        assert layer.doc is not None, "valid DXF document required"
+        self._layer = layer
+        self._overrides = load_layer_overrides(layer)
+
+    def has_overrides(self, vp_handle: str = None) -> bool:
+        """Returns ``True`` if any overrides exist for the given VIEWPORT
+        handle. Returns ``True`` if any overrides exist if no handle is given.
+        """
+        if vp_handle is None:
+            return bool(self._overrides)
+        return vp_handle in self._overrides
+
+    def default_settings(self, frozen: bool) -> OverrideAttributes:
+        """Returns the default settings of the layer."""
+        layer = self._layer
+        return OverrideAttributes(
+            aci=layer.color,
+            rgb=layer.rgb,
+            transparency=layer.transparency,
+            linetype=layer.dxf.linetype,
+            lineweight=layer.dxf.lineweight,
+            frozen=frozen,
+        )
+
+    def commit(self) -> None:
+        """Write VIEWPORT overrides back into the extension dictionary of the
+        layer. Without a commit() all changes are lost!
+        """
+        store_layer_overrides(self._layer, self._overrides)
+
+    def _acquire_overrides(self, vp_handle: str) -> OverrideAttributes:
+        """Returns the OverrideAttributes() instance for `vp_handle`, creates a new
+        OverrideAttributes() instance if none exist.
+        """
+        return self._overrides.setdefault(
+            vp_handle,
+            self.default_settings(
+                is_layer_frozen_in_vp(self._layer, vp_handle)
+            ),
+        )
+
+    def _get_overrides(self, vp_handle: str) -> OverrideAttributes:
+        """Returns the overrides for `vp_handle`, returns the default layer
+        settings if no Override() instance exist.
+        """
+        try:
+            return self._overrides[vp_handle]
+        except KeyError:
+            return self.default_settings(
+                is_layer_frozen_in_vp(self._layer, vp_handle)
+            )
+
+    def set_color(self, vp_handle: str, value: int) -> None:
+        """Override the :ref:`ACI`."""
+        # BYBLOCK or BYLAYER is not valid a layer color
+        if not is_valid_layer_color_index(value):
+            raise ValueError(f"invalid ACI value: {value}")
+        vp_overrides = self._acquire_overrides(vp_handle)
+        vp_overrides.aci = value
+
+    def get_color(self, vp_handle: str) -> int:
+        """Returns the :ref:`ACI` override or the original layer value if no
+        override exist.
+        """
+        vp_overrides = self._get_overrides(vp_handle)
+        return vp_overrides.aci
+
+    def set_rgb(self, vp_handle: str, value: Optional[clr.RGB]):
+        """Set the RGB override as (red, gree, blue) tuple or ``None`` to remove
+        the true color setting.
+
+        """
+        if value is not None and not validator.is_valid_rgb(value):
+            raise ValueError(f"invalid RGB value: {value}")
+        vp_overrides = self._acquire_overrides(vp_handle)
+        vp_overrides.rgb = value
+
+    def get_rgb(self, vp_handle: str) -> Optional[clr.RGB]:
+        """Returns the RGB override or the original layer value if no
+        override exist. Returns ``None`` if no true color value is set.
+        """
+        vp_overrides = self._get_overrides(vp_handle)
+        return vp_overrides.rgb
+
+    def set_transparency(self, vp_handle: str, value: float) -> None:
+        """Set the transparency override. A transparency of 0 is opaque and 1
+        is fully transparent.
+        """
+        if not (0.0 <= value <= 1.0):
+            raise ValueError(
+                f"invalid transparency: {value}, has to be in the range [0, 1]"
+            )
+        vp_overrides = self._acquire_overrides(vp_handle)
+        vp_overrides.transparency = value
+
+    def get_transparency(self, vp_handle: str) -> float:
+        """Returns the transparency override or the original layer value if no
+        override exist. Returns 0 for opaque and 1 for fully transparent.
+        """
+        vp_overrides = self._get_overrides(vp_handle)
+        return vp_overrides.transparency
+
+    def set_linetype(self, vp_handle: str, value: str) -> None:
+        """Set the linetype override."""
+        if value not in self._layer.doc.linetypes:  # type: ignore
+            raise ValueError(
+                f"invalid linetype: {value}, a linetype table entry is required"
+            )
+        vp_overrides = self._acquire_overrides(vp_handle)
+        vp_overrides.linetype = value
+
+    def get_linetype(self, vp_handle: str) -> str:
+        """Returns the linetype override or the original layer value if no
+        override exist.
+        """
+        vp_overrides = self._get_overrides(vp_handle)
+        return vp_overrides.linetype
+
+    def get_lineweight(self, vp_handle: str) -> int:
+        """Returns the lineweight override or the original layer value if no
+        override exist.
+        """
+        vp_overrides = self._get_overrides(vp_handle)
+        return vp_overrides.lineweight
+
+    def set_lineweight(self, vp_handle: str, value: int) -> None:
+        """Set the lineweight override."""
+        if not is_valid_layer_lineweight(value):
+            raise ValueError(
+                f"invalid lineweight: {value}, a linetype table entry is required"
+            )
+        vp_overrides = self._acquire_overrides(vp_handle)
+        vp_overrides.lineweight = value
+
+    def is_frozen(self, vp_handle: str) -> bool:
+        """Returns ``True`` if layer is frozen in VIEWPORT `vp_handle`."""
+        vp_overrides = self._get_overrides(vp_handle)
+        return vp_overrides.frozen
+
+    def freeze(self, vp_handle) -> None:
+        """Freeze layer in given VIEWPORT."""
+        vp_overrides = self._acquire_overrides(vp_handle)
+        vp_overrides.frozen = True
+
+    def thaw(self, vp_handle) -> None:
+        """Thaw layer in given VIEWPORT."""
+        vp_overrides = self._acquire_overrides(vp_handle)
+        vp_overrides.frozen = False
+
+
+def is_layer_frozen_in_vp(layer, vp_handle) -> bool:
+    """Returns ``True`` if layer is frozen in VIEWPORT defined by the vp_handle."""
+    vp = cast("Viewport", layer.doc.entitydb.get(vp_handle))
+    if vp is not None:
+        return layer.dxf.name in vp.frozen_layers
+    return False
+
+
+def load_layer_overrides(layer: Layer) -> Dict[str, OverrideAttributes]:
+    """Load all VIEWPORT overrides from the layer extension dictionary."""
+    return dict()
+
+
+def store_layer_overrides(
+    layer: Layer, overrides: Dict[str, OverrideAttributes]
+) -> None:
+    """Store all VIEWPORT overrides in the layer extension dictionary.
+    Replaces all existing overrides!
+    """
+    pass
