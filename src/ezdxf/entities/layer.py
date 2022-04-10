@@ -30,7 +30,7 @@ from .factory import register_entity
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Viewport
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Viewport, XRecord
 
 __all__ = ["Layer", "acdb_symbol_table_record", "LayerOverrides"]
 
@@ -409,18 +409,6 @@ class LayerOverrides:
             return bool(self._overrides)
         return vp_handle in self._overrides
 
-    def _default_settings(self, frozen: bool) -> OverrideAttributes:
-        """Returns the default settings of the layer."""
-        layer = self._layer
-        return OverrideAttributes(
-            aci=layer.color,
-            rgb=layer.rgb,
-            transparency=layer.transparency,
-            linetype=layer.dxf.linetype,
-            lineweight=layer.dxf.lineweight,
-            frozen=frozen,
-        )
-
     def commit(self) -> None:
         """Write :class:`Viewport` overrides back into the :class:`Layer` entity.
         Without a commit() all changes are lost!
@@ -433,8 +421,8 @@ class LayerOverrides:
         """
         return self._overrides.setdefault(
             vp_handle,
-            self._default_settings(
-                is_layer_frozen_in_vp(self._layer, vp_handle)
+            default_ovr_settings(
+                self._layer, is_layer_frozen_in_vp(self._layer, vp_handle)
             ),
         )
 
@@ -445,8 +433,8 @@ class LayerOverrides:
         try:
             return self._overrides[vp_handle]
         except KeyError:
-            return self._default_settings(
-                is_layer_frozen_in_vp(self._layer, vp_handle)
+            return default_ovr_settings(
+                self._layer, is_layer_frozen_in_vp(self._layer, vp_handle)
             )
 
     def set_color(self, vp_handle: str, value: int) -> None:
@@ -578,6 +566,18 @@ class LayerOverrides:
             pass
 
 
+def default_ovr_settings(layer, frozen: bool) -> OverrideAttributes:
+    """Returns the default settings of the layer."""
+    return OverrideAttributes(
+        aci=layer.color,
+        rgb=layer.rgb,
+        transparency=layer.transparency,
+        linetype=layer.dxf.linetype,
+        lineweight=layer.dxf.lineweight,
+        frozen=frozen,
+    )
+
+
 def is_layer_frozen_in_vp(layer, vp_handle) -> bool:
     """Returns ``True`` if layer is frozen in VIEWPORT defined by the vp_handle."""
     vp = cast("Viewport", layer.doc.entitydb.get(vp_handle))
@@ -586,9 +586,81 @@ def is_layer_frozen_in_vp(layer, vp_handle) -> bool:
     return False
 
 
+OVR_ALPHA_KEY = "ADSK_XREC_LAYER_ALPHA_OVR"
+OVR_COLOR_KEY = "ADSK_XREC_LAYER_COLOR_OVR"
+OVR_LTYPE_KEY = "ADSK_XREC_LAYER_LINETYPE_OVR"
+OVR_LW_KEY = "ADSK_XREC_LAYER_LINEWT_OVR"
+
+
 def load_layer_overrides(layer: Layer) -> Dict[str, OverrideAttributes]:
     """Load all VIEWPORT overrides from the layer extension dictionary."""
-    return dict()
+
+    def get_ovr(vp_handle: str):
+        ovr = overrides.get(vp_handle)
+        if ovr is None:
+            ovr = default_ovr_settings(layer, False)
+            overrides[vp_handle] = ovr
+        return ovr
+
+    def set_alpha(vp_handle: str, value: int):
+        ovr = get_ovr(vp_handle)
+        ovr.transparency = clr.transparency2float(value)
+
+    def set_color(vp_handle: str, value: int):
+        ovr = get_ovr(vp_handle)
+        type_, data = clr.decode_raw_color(value)
+        if type_ == clr.COLOR_TYPE_ACI:
+            ovr.color = data
+        elif type_ == clr.COLOR_TYPE_RGB:
+            ovr.rgb = data
+
+    def set_ltype(vp_handle: str, lt_handle: str):
+        ltype = entitydb.get(lt_handle)
+        if ltype is not None:
+            ovr = get_ovr(vp_handle)
+            ovr.linetype = ltype.dxf.name
+
+    def set_lw(vp_handle: str, value: int):
+        ovr = get_ovr(vp_handle)
+        ovr.lineweight = value
+
+    def set_vp_frozen_state():
+        for vp in entitydb.query("VIEWPORT"):
+            vp_handle = vp.dxf.handle
+            if is_layer_frozen_in_vp(layer, vp_handle):
+                ovr = get_ovr(vp_handle)
+                ovr.frozen = True
+
+    def set_xdict_state():
+        xdict = layer.get_extension_dict()
+        for key, code, setter in [
+            (OVR_ALPHA_KEY, 440, set_alpha),
+            (OVR_COLOR_KEY, 420, set_color),
+            (OVR_LTYPE_KEY, 343, set_ltype),
+            (OVR_LW_KEY, 91, set_lw),
+        ]:
+            xrec = cast("XRecord", xdict.get(key))
+            if xrec is not None:
+                for vp_handle, value in _load_ovr_values(xrec, 440):
+                    setter(vp_handle, value)
+
+    entitydb = layer.doc.entitydb
+    assert entitydb is not None, "valid entity database required"
+
+    overrides: Dict[str, OverrideAttributes] = dict()
+    if not layer.has_extension_dict:
+        return overrides
+
+    set_xdict_state()
+    set_vp_frozen_state()
+    return overrides
+
+
+def _load_ovr_values(xrec: "XRecord", group_code):
+    tags = xrec.tags
+    handles = tags.find_all(335)
+    values = tags.find_all(group_code)
+    return zip(handles, values)
 
 
 def store_layer_overrides(
