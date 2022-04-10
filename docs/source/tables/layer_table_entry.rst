@@ -219,5 +219,7 @@ LayerOverrides
 
     .. automethod:: thaw
 
+    .. automethod:: discard
+
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-D94802B0-8BE8-4AC9-8054-17197688AFDB

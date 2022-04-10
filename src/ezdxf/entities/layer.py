@@ -400,9 +400,9 @@ class LayerOverrides:
         self._overrides = load_layer_overrides(layer)
 
     def has_overrides(self, vp_handle: str = None) -> bool:
-        """Returns ``True`` if layer attribute overrides exist for the given
-        VIEWPORT handle.
-        Returns ``True`` if `any` layer attribute overrides exist if the given
+        """Returns ``True`` if attribute overrides exist for the given
+        :class:`Viewport` handle.
+        Returns ``True`` if `any` attribute overrides exist if the given
         handle is ``None``.
         """
         if vp_handle is None:
@@ -564,6 +564,18 @@ class LayerOverrides:
         """Thaw layer in given VIEWPORT."""
         vp_overrides = self._acquire_overrides(vp_handle)
         vp_overrides.frozen = False
+
+    def discard(self, vp_handle: str = None) -> None:
+        """Discard all attribute overrides for the given :class:`Viewport`
+        handle or for all :class:`Viewport` entities if the handle is ``None``.
+        """
+        if vp_handle is None:
+            self._overrides.clear()
+            return
+        try:
+            del self._overrides[vp_handle]
+        except KeyError:
+            pass
 
 
 def is_layer_frozen_in_vp(layer, vp_handle) -> bool:

@@ -154,6 +154,28 @@ class TestSetOverridesWithoutCommit:
         vp_overrides.thaw(vp_handle)
         assert vp_overrides.is_frozen(vp_handle) is False
 
+    def test_discard_specific_overrides(self, layer_a):
+        vp_overrides = layer_a.get_vp_overrides()
+        vp_handle = "FEFE"
+        vp_overrides.set_color(vp_handle, 6)
+        assert vp_overrides.has_overrides(vp_handle) is True
+        vp_overrides.discard(vp_handle)
+        assert vp_overrides.has_overrides(vp_handle) is False
+
+    def test_discard_all_overrides(self, layer_a):
+        vp_overrides = layer_a.get_vp_overrides()
+        vp_overrides.set_color("FEFE", 6)
+        vp_overrides.set_color("ABBA", 5)
+        assert vp_overrides.has_overrides() is True
+        vp_overrides.discard()
+        assert vp_overrides.has_overrides() is False
+
+    def test_discard_ignores_none_existing_vp_handles(self, layer_a):
+        vp_overrides = layer_a.get_vp_overrides()
+        vp_overrides.set_color("FEFE", 6)
+        vp_overrides.discard("xyz")  # should not throw an exception
+        assert vp_overrides.has_overrides() is True
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
