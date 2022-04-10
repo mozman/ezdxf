@@ -1,6 +1,6 @@
 # Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Optional, Tuple, cast, Dict, List
+from typing import TYPE_CHECKING, Optional, Tuple, cast, Dict, List, Any
 import logging
 from dataclasses import dataclass
 from ezdxf.lldxf import validator
@@ -30,7 +30,13 @@ from .factory import register_entity
 logger = logging.getLogger("ezdxf")
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Viewport, XRecord
+    from ezdxf.eztypes import (
+        TagWriter,
+        DXFNamespace,
+        Viewport,
+        XRecord,
+        EntityDB,
+    )
 
 __all__ = ["Layer", "acdb_symbol_table_record", "LayerOverrides"]
 
@@ -643,8 +649,8 @@ def load_layer_overrides(layer: Layer) -> Dict[str, OverrideAttributes]:
             if xrec is not None:
                 for vp_handle, value in _load_ovr_values(xrec, code):
                     setter(vp_handle, value)
-
-    entitydb = layer.doc.entitydb
+    assert layer.doc is not None, "valid DXF document required"
+    entitydb: EntityDB = layer.doc.entitydb
     assert entitydb is not None, "valid entity database required"
 
     overrides: Dict[str, OverrideAttributes] = dict()
@@ -695,7 +701,7 @@ def store_layer_overrides(
             xdict.discard(key)
 
     def make_tags(
-        data: List[Tuple[any, str]], name: str, code: int
+        data: List[Tuple[Any, str]], name: str, code: int
     ) -> List[DXFTag]:
         tags: List[DXFTag] = []
         for value, vp_handle in data:
@@ -712,7 +718,7 @@ def store_layer_overrides(
     def set_frozen_state():
         layer_name = layer.dxf.name
         for vp_handle, ovr in vp_exist.items():
-            vp = cast("Viewport" , entitydb.get(vp_handle))
+            vp = cast("Viewport", entitydb.get(vp_handle))
             frozen_layers = vp.frozen_layers
             try:
                 index = frozen_layers.index(layer_name)
