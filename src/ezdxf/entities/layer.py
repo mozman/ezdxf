@@ -1,6 +1,6 @@
 # Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Optional, Tuple, cast, Dict
+from typing import TYPE_CHECKING, Optional, Tuple, cast, Dict, List
 import logging
 from dataclasses import dataclass
 from ezdxf.lldxf import validator
@@ -669,4 +669,121 @@ def store_layer_overrides(
     """Store all VIEWPORT overrides in the layer extension dictionary.
     Replaces all existing overrides!
     """
-    pass
+    from ezdxf.lldxf.types import DXFTag
+
+    def get_xdict():
+        if layer.has_extension_dict:
+            return layer.get_extension_dict()
+        else:
+            return layer.new_extension_dict()
+
+    def set_xdict_tags(key: str, tags: List[DXFTag]):
+        xdict = get_xdict()
+        xrec = xdict.get(key)
+        if xrec is None:
+            xrec = xdict.add_xrecord(key)
+            xrec.dxf.cloning = 1
+        xrec.reset(tags)
+
+    def del_xdict_tags(key: str):
+        if not layer.has_extension_dict:
+            return
+        xdict = layer.get_extension_dict()
+        xrec = xdict.get(key)
+        if xrec is not None:
+            xrec.destroy()
+            xdict.discard(key)
+
+    def make_tags(
+        data: List[Tuple[any, str]], name: str, code: int
+    ) -> List[DXFTag]:
+        tags: List[DXFTag] = []
+        for value, vp_handle in data:
+            tags.extend(
+                [
+                    DXFTag(102, name),
+                    DXFTag(335, vp_handle),
+                    DXFTag(code, value),
+                    DXFTag(102, "}"),
+                ]
+            )
+        return tags
+
+    def set_frozen_state():
+        layer_name = layer.dxf.name
+        for vp_handle, ovr in vp_exist.items():
+            vp = cast("Viewport" , entitydb.get(vp_handle))
+            frozen_layers = vp.frozen_layers
+            try:
+                index = frozen_layers.index(layer_name)
+            except ValueError:
+                index = -1
+            if ovr.frozen and index == -1:
+                frozen_layers.append(layer_name)
+                vp.frozen_layers = frozen_layers
+            elif ovr.frozen is False and index != -1:
+                del frozen_layers[layer_name]
+                vp.frozen_layers = frozen_layers
+
+    def collect_alphas():
+        for vp_handle, ovr in vp_exist.items():
+            if ovr.transparency != default.transparency:
+                yield clr.float2transparency(ovr.transparency), vp_handle
+
+    def collect_colors():
+        for vp_handle, ovr in vp_exist.items():
+            if ovr.aci != default.aci or ovr.rgb != ovr.rgb:
+                if ovr.rgb is None:
+                    raw_color = clr.encode_raw_color(ovr.aci)
+                else:
+                    raw_color = clr.encode_raw_color(ovr.rgb)
+                yield raw_color, vp_handle
+
+    def collect_linetypes():
+        for vp_handle, ovr in vp_exist.items():
+            if ovr.linetype != default.linetype:
+                ltype = layer.doc.linetypes.get(ovr.linetype)
+                if ltype is not None:
+                    yield ltype.dxf.handle, vp_handle
+
+    def collect_lineweights():
+        for vp_handle, ovr in vp_exist.items():
+            if ovr.lineweight != default.lineweight:
+                yield ovr.lineweight, vp_handle
+
+    assert layer.doc is not None, "valid DXF document required"
+    entitydb = layer.doc.entitydb
+    vp_exist = {
+        vp_handle: ovr
+        for vp_handle, ovr in overrides.items()
+        if (vp_handle in entitydb) and entitydb[vp_handle].is_alive
+    }
+    default = default_ovr_settings(layer, False)
+    alphas = list(collect_alphas())
+    if alphas:
+        tags = make_tags(alphas, "{ADSK_LYR_ALPHA_OVERRIDE", 440)
+        set_xdict_tags(OVR_ALPHA_KEY, tags)
+    else:
+        del_xdict_tags(OVR_ALPHA_KEY)
+
+    colors = list(collect_colors())
+    if colors:
+        tags = make_tags(colors, "{ADSK_LYR_COLOR_OVERRIDE", 420)
+        set_xdict_tags(OVR_COLOR_KEY, tags)
+    else:
+        del_xdict_tags(OVR_COLOR_KEY)
+
+    linetypes = list(collect_linetypes())
+    if linetypes:
+        tags = make_tags(linetypes, "{ADSK_LYR_LINETYPE_OVERRIDE", 343)
+        set_xdict_tags(OVR_LTYPE_KEY, tags)
+    else:
+        del_xdict_tags(OVR_LTYPE_KEY)
+
+    lineweights = list(collect_lineweights())
+    if lineweights:
+        tags = make_tags(lineweights, "{ADSK_LYR_LINEWT_OVERRIDE", 91)
+        set_xdict_tags(OVR_LW_KEY, tags)
+    else:
+        del_xdict_tags(OVR_LW_KEY)
+    set_frozen_state()
