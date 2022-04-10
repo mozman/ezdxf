@@ -32,7 +32,7 @@ logger = logging.getLogger("ezdxf")
 if TYPE_CHECKING:
     from ezdxf.eztypes import TagWriter, DXFNamespace, Viewport
 
-__all__ = ["Layer", "acdb_symbol_table_record", "ViewportOverrides"]
+__all__ = ["Layer", "acdb_symbol_table_record", "LayerOverrides"]
 
 
 def is_valid_layer_color_index(aci: int) -> bool:
@@ -364,9 +364,9 @@ class Layer(DXFEntity):
                     f"LAYER_INDEX"
                 )
 
-    def get_vp_overrides(self) -> "ViewportOverrides":
-        """Returns the :class:`ViewportOverrides` object of this layer."""
-        return ViewportOverrides(self)
+    def get_vp_overrides(self) -> "LayerOverrides":
+        """Returns the :class:`LayerOverrides` object for this layer."""
+        return LayerOverrides(self)
 
 
 @dataclass
@@ -379,21 +379,37 @@ class OverrideAttributes:
     frozen: bool
 
 
-class ViewportOverrides:
+class LayerOverrides:
+    """This object stores the layer attribute overridden in VIEWPORT entities,
+    where each VIEWPORT can have individual layer attribute overrides.
+
+    Layer attributes which can be overridden:
+
+        - ACI color
+        - true color (rgb)
+        - linetype
+        - lineweight
+        - transparency
+        - frozen/thawed state
+
+    """
+
     def __init__(self, layer: Layer):
         assert layer.doc is not None, "valid DXF document required"
         self._layer = layer
         self._overrides = load_layer_overrides(layer)
 
     def has_overrides(self, vp_handle: str = None) -> bool:
-        """Returns ``True`` if any overrides exist for the given VIEWPORT
-        handle. Returns ``True`` if any overrides exist if no handle is given.
+        """Returns ``True`` if layer attribute overrides exist for the given
+        VIEWPORT handle.
+        Returns ``True`` if `any` layer attribute overrides exist if the given
+        handle is ``None``.
         """
         if vp_handle is None:
             return bool(self._overrides)
         return vp_handle in self._overrides
 
-    def default_settings(self, frozen: bool) -> OverrideAttributes:
+    def _default_settings(self, frozen: bool) -> OverrideAttributes:
         """Returns the default settings of the layer."""
         layer = self._layer
         return OverrideAttributes(
@@ -406,8 +422,8 @@ class ViewportOverrides:
         )
 
     def commit(self) -> None:
-        """Write VIEWPORT overrides back into the extension dictionary of the
-        layer. Without a commit() all changes are lost!
+        """Write :class:`Viewport` overrides back into the :class:`Layer` entity.
+        Without a commit() all changes are lost!
         """
         store_layer_overrides(self._layer, self._overrides)
 
@@ -417,7 +433,7 @@ class ViewportOverrides:
         """
         return self._overrides.setdefault(
             vp_handle,
-            self.default_settings(
+            self._default_settings(
                 is_layer_frozen_in_vp(self._layer, vp_handle)
             ),
         )
@@ -429,12 +445,16 @@ class ViewportOverrides:
         try:
             return self._overrides[vp_handle]
         except KeyError:
-            return self.default_settings(
+            return self._default_settings(
                 is_layer_frozen_in_vp(self._layer, vp_handle)
             )
 
     def set_color(self, vp_handle: str, value: int) -> None:
-        """Override the :ref:`ACI`."""
+        """Override the :ref:`ACI`.
+
+        Raises:
+            ValueError: invalid color value
+        """
         # BYBLOCK or BYLAYER is not valid a layer color
         if not is_valid_layer_color_index(value):
             raise ValueError(f"invalid ACI value: {value}")
@@ -452,6 +472,9 @@ class ViewportOverrides:
         """Set the RGB override as (red, gree, blue) tuple or ``None`` to remove
         the true color setting.
 
+        Raises:
+            ValueError: invalid RGB value
+
         """
         if value is not None and not validator.is_valid_rgb(value):
             raise ValueError(f"invalid RGB value: {value}")
@@ -466,8 +489,12 @@ class ViewportOverrides:
         return vp_overrides.rgb
 
     def set_transparency(self, vp_handle: str, value: float) -> None:
-        """Set the transparency override. A transparency of 0 is opaque and 1
-        is fully transparent.
+        """Set the transparency override. A transparency of 0.0 is opaque and
+        1.0 is fully transparent.
+
+        Raises:
+            ValueError: invalid transparency value
+
         """
         if not (0.0 <= value <= 1.0):
             raise ValueError(
@@ -478,13 +505,17 @@ class ViewportOverrides:
 
     def get_transparency(self, vp_handle: str) -> float:
         """Returns the transparency override or the original layer value if no
-        override exist. Returns 0 for opaque and 1 for fully transparent.
+        override exist. Returns 0.0 for opaque and 1.0 for fully transparent.
         """
         vp_overrides = self._get_overrides(vp_handle)
         return vp_overrides.transparency
 
     def set_linetype(self, vp_handle: str, value: str) -> None:
-        """Set the linetype override."""
+        """Set the linetype override.
+
+        Raises:
+            ValueError: linetype without a LTYPE table entry
+        """
         if value not in self._layer.doc.linetypes:  # type: ignore
             raise ValueError(
                 f"invalid linetype: {value}, a linetype table entry is required"
@@ -507,7 +538,11 @@ class ViewportOverrides:
         return vp_overrides.lineweight
 
     def set_lineweight(self, vp_handle: str, value: int) -> None:
-        """Set the lineweight override."""
+        """Set the lineweight override.
+
+        Raises:
+            ValueError: invalid lineweight value
+        """
         if not is_valid_layer_lineweight(value):
             raise ValueError(
                 f"invalid lineweight: {value}, a linetype table entry is required"

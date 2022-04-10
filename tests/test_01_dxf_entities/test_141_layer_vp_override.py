@@ -7,7 +7,7 @@ import colors
 import ezdxf
 
 from ezdxf.layouts import Paperspace
-from ezdxf.entities.layer import ViewportOverrides
+from ezdxf.entities.layer import LayerOverrides
 from ezdxf.lldxf import const
 
 
@@ -48,7 +48,7 @@ def test_doc_setup(doc):
 
 def test_get_new_vp_override_object(layer_a):
     vp_overrides = layer_a.get_vp_overrides()
-    assert isinstance(vp_overrides, ViewportOverrides) is True
+    assert isinstance(vp_overrides, LayerOverrides) is True
 
 
 def test_if_a_layer_has_any_overrides(layer_a):

@@ -157,4 +157,67 @@ Factory function         :meth:`Drawing.layers.new`
 
     .. automethod:: rename
 
+    .. automethod:: get_vp_overrides() -> LayerOverrides
+
+LayerOverrides
+--------------
+
+.. class:: LayerOverrides
+
+    This object stores the layer attribute overridden in :class:`Viewport`
+    entities,  where each :class:`Viewport` can have individual layer attribute
+    overrides.
+
+    Layer attributes which can be overridden:
+
+        - ACI color
+        - true color (rgb)
+        - linetype
+        - lineweight
+        - transparency
+        - frozen/thawed state
+
+    Get the override object for a certain layer by the :meth:`Layer.get_vp_overrides`
+    method.
+
+    It is important to write changes back by calling :meth:`commit`, otherwise
+    the changes are lost.
+
+    .. important::
+
+        The implementation of this feature as DXF structures is not documented
+        by the DXF reference, so if you encounter problems or errors,
+        **ALWAYS** provide the DXF files, otherwise it is not possible to help.
+
+    .. automethod:: has_overrides
+
+    .. automethod:: commit
+
+    .. automethod:: get_color
+
+    .. automethod:: set_color
+
+    .. automethod:: get_rgb
+
+    .. automethod:: set_rgb
+
+    .. automethod:: get_transparency
+
+    .. automethod:: set_transparency
+
+    .. automethod:: get_linetype
+
+    .. automethod:: set_linetype
+
+    .. automethod:: get_lineweight
+
+    .. automethod:: set_lineweight
+
+    .. automethod:: is_frozen
+
+    .. automethod:: freeze
+
+    .. automethod:: thaw
+
+
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-D94802B0-8BE8-4AC9-8054-17197688AFDB

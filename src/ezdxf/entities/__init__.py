@@ -18,7 +18,7 @@ from .table import TableHead
 
 # register table entries
 from .ltype import Linetype
-from .layer import Layer
+from .layer import Layer, LayerOverrides
 from .textstyle import Textstyle
 from .dimstyle import DimStyle
 from .view import View
