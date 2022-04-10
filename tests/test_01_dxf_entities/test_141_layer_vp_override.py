@@ -2,8 +2,6 @@
 #  License: MIT License
 
 import pytest
-
-import colors
 import ezdxf
 
 from ezdxf.layouts import Paperspace
@@ -80,7 +78,9 @@ class TestSetOverridesWithoutCommit:
         vp_overrides.set_color(vp_handle, 6)
         assert vp_overrides.get_color(vp_handle) == 6
 
-    @pytest.mark.parametrize("value", [300, colors.BYLAYER, colors.BYBLOCK])
+    @pytest.mark.parametrize(
+        "value", [300, ezdxf.colors.BYLAYER, ezdxf.colors.BYBLOCK]
+    )
     def test_invalid_color_raises_value_error(self, layer_a, value):
         vp_overrides = layer_a.get_vp_overrides()
         with pytest.raises(ValueError):
