@@ -42,6 +42,7 @@ Version 0.18b2 - dev
 - NEW: arguments `height` and `rotation`for factory methods `add_text()` and `add_attdef()`
 - NEW: argument `size_inches` in function `ezdxf.addons.drawing.matplotlib.qsave()`
 - NEW: DXF/DWG converter function `ezdxf.addons.odafc.convert()`
+- NEW: support for layer attribute override in VIEWPORT entities
 - CHANGE: keyword only argument `dxfattribs` for factory methods `add_text()` and `add_attdef()`
 - CHANGE: `recover` module - recovered integer and float values are logged as severe errors
 - CHANGE: method `Path.all_lines_to_curve3` replaced by function `path.lines_to_curve3()`
