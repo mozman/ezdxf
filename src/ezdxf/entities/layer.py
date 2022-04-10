@@ -610,7 +610,7 @@ def load_layer_overrides(layer: Layer) -> Dict[str, OverrideAttributes]:
         ovr = get_ovr(vp_handle)
         type_, data = clr.decode_raw_color(value)
         if type_ == clr.COLOR_TYPE_ACI:
-            ovr.color = data
+            ovr.aci = data
         elif type_ == clr.COLOR_TYPE_RGB:
             ovr.rgb = data
 
@@ -641,7 +641,7 @@ def load_layer_overrides(layer: Layer) -> Dict[str, OverrideAttributes]:
         ]:
             xrec = cast("XRecord", xdict.get(key))
             if xrec is not None:
-                for vp_handle, value in _load_ovr_values(xrec, 440):
+                for vp_handle, value in _load_ovr_values(xrec, code):
                     setter(vp_handle, value)
 
     entitydb = layer.doc.entitydb
@@ -658,8 +658,8 @@ def load_layer_overrides(layer: Layer) -> Dict[str, OverrideAttributes]:
 
 def _load_ovr_values(xrec: "XRecord", group_code):
     tags = xrec.tags
-    handles = tags.find_all(335)
-    values = tags.find_all(group_code)
+    handles = [value for code, value in tags.find_all(335)]
+    values = [value for code, value in tags.find_all(group_code)]
     return zip(handles, values)
 
 
@@ -732,7 +732,7 @@ def store_layer_overrides(
 
     def collect_colors():
         for vp_handle, ovr in vp_exist.items():
-            if ovr.aci != default.aci or ovr.rgb != ovr.rgb:
+            if ovr.aci != default.aci or ovr.rgb != default.rgb:
                 if ovr.rgb is None:
                     raw_color = clr.encode_raw_color(ovr.aci)
                 else:

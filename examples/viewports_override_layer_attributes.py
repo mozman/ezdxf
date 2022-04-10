@@ -40,12 +40,22 @@ def override_aci(vp_handle, doc):
         override.commit()
 
 
+RGB = [
+    (206, 25, 230),
+    (11, 84, 244),
+    (237, 141, 18),
+    (87, 242, 246),
+    (137, 109, 186),
+    (246, 246, 145),
+    (126, 235, 61),
+]
+
+
 def override_rgb(vp_handle, doc):
     for index in range(COUNT):
         layer = doc.layers.get(LAYER_NAME.format(index))
         override = layer.get_vp_overrides()
-        rgb = (100, 20 + 10 * index, 180)
-        override.set_rgb(vp_handle, rgb)
+        override.set_rgb(vp_handle, RGB[index])
         override.commit()
 
 
