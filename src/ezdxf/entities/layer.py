@@ -12,6 +12,7 @@ from ezdxf.lldxf.attributes import (
     group_code_mapping,
 )
 from ezdxf import colors as clr
+from ezdxf.lldxf import const
 from ezdxf.lldxf.const import (
     DXF12,
     SUBCLASS_MARKER,
@@ -592,12 +593,6 @@ def is_layer_frozen_in_vp(layer, vp_handle) -> bool:
     return False
 
 
-OVR_ALPHA_KEY = "ADSK_XREC_LAYER_ALPHA_OVR"
-OVR_COLOR_KEY = "ADSK_XREC_LAYER_COLOR_OVR"
-OVR_LTYPE_KEY = "ADSK_XREC_LAYER_LINETYPE_OVR"
-OVR_LW_KEY = "ADSK_XREC_LAYER_LINEWT_OVR"
-
-
 def load_layer_overrides(layer: Layer) -> Dict[str, OverrideAttributes]:
     """Load all VIEWPORT overrides from the layer extension dictionary."""
 
@@ -640,15 +635,16 @@ def load_layer_overrides(layer: Layer) -> Dict[str, OverrideAttributes]:
     def set_xdict_state():
         xdict = layer.get_extension_dict()
         for key, code, setter in [
-            (OVR_ALPHA_KEY, 440, set_alpha),
-            (OVR_COLOR_KEY, 420, set_color),
-            (OVR_LTYPE_KEY, 343, set_ltype),
-            (OVR_LW_KEY, 91, set_lw),
+            (const.OVR_ALPHA_KEY, const.OVR_ALPHA_CODE, set_alpha),
+            (const.OVR_COLOR_KEY, const.OVR_COLOR_CODE, set_color),
+            (const.OVR_LTYPE_KEY, const.OVR_LTYPE_CODE, set_ltype),
+            (const.OVR_LW_KEY, const.OVR_LW_CODE, set_lw),
         ]:
             xrec = cast("XRecord", xdict.get(key))
             if xrec is not None:
                 for vp_handle, value in _load_ovr_values(xrec, code):
                     setter(vp_handle, value)
+
     assert layer.doc is not None, "valid DXF document required"
     entitydb: EntityDB = layer.doc.entitydb
     assert entitydb is not None, "valid entity database required"
@@ -664,7 +660,7 @@ def load_layer_overrides(layer: Layer) -> Dict[str, OverrideAttributes]:
 
 def _load_ovr_values(xrec: "XRecord", group_code):
     tags = xrec.tags
-    handles = [value for code, value in tags.find_all(335)]
+    handles = [value for code, value in tags.find_all(const.OVR_VP_HANDLE_CODE)]
     values = [value for code, value in tags.find_all(group_code)]
     return zip(handles, values)
 
@@ -708,7 +704,7 @@ def store_layer_overrides(
             tags.extend(
                 [
                     DXFTag(102, name),
-                    DXFTag(335, vp_handle),
+                    DXFTag(const.OVR_VP_HANDLE_CODE, vp_handle),
                     DXFTag(code, value),
                     DXFTag(102, "}"),
                 ]
@@ -767,29 +763,37 @@ def store_layer_overrides(
     default = default_ovr_settings(layer, False)
     alphas = list(collect_alphas())
     if alphas:
-        tags = make_tags(alphas, "{ADSK_LYR_ALPHA_OVERRIDE", 440)
-        set_xdict_tags(OVR_ALPHA_KEY, tags)
+        tags = make_tags(
+            alphas, const.OVR_APP_ALPHA, const.OVR_ALPHA_CODE
+        )
+        set_xdict_tags(const.OVR_ALPHA_KEY, tags)
     else:
-        del_xdict_tags(OVR_ALPHA_KEY)
+        del_xdict_tags(const.OVR_ALPHA_KEY)
 
     colors = list(collect_colors())
     if colors:
-        tags = make_tags(colors, "{ADSK_LYR_COLOR_OVERRIDE", 420)
-        set_xdict_tags(OVR_COLOR_KEY, tags)
+        tags = make_tags(
+            colors, const.OVR_APP_COLOR, const.OVR_COLOR_CODE
+        )
+        set_xdict_tags(const.OVR_COLOR_KEY, tags)
     else:
-        del_xdict_tags(OVR_COLOR_KEY)
+        del_xdict_tags(const.OVR_COLOR_KEY)
 
     linetypes = list(collect_linetypes())
     if linetypes:
-        tags = make_tags(linetypes, "{ADSK_LYR_LINETYPE_OVERRIDE", 343)
-        set_xdict_tags(OVR_LTYPE_KEY, tags)
+        tags = make_tags(
+            linetypes, const.OVR_APP_LTYPE, const.OVR_LTYPE_CODE
+        )
+        set_xdict_tags(const.OVR_LTYPE_KEY, tags)
     else:
-        del_xdict_tags(OVR_LTYPE_KEY)
+        del_xdict_tags(const.OVR_LTYPE_KEY)
 
     lineweights = list(collect_lineweights())
     if lineweights:
-        tags = make_tags(lineweights, "{ADSK_LYR_LINEWT_OVERRIDE", 91)
-        set_xdict_tags(OVR_LW_KEY, tags)
+        tags = make_tags(
+            lineweights, const.OVR_APP_LW, const.OVR_LW_CODE
+        )
+        set_xdict_tags(const.OVR_LW_KEY, tags)
     else:
-        del_xdict_tags(OVR_LW_KEY)
+        del_xdict_tags(const.OVR_LW_KEY)
     set_frozen_state()

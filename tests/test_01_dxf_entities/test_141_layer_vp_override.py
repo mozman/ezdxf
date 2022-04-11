@@ -12,22 +12,8 @@ from ezdxf.lldxf import const
 @pytest.fixture(scope="module")
 def doc():
     doc_ = ezdxf.new(setup=["linetypes"])
-    doc_.layers.add("VIEWPORTS")  # default viewport layer
     doc_.layers.add("LayerA", color=ezdxf.colors.RED)
     doc_.layers.add("LayerB", color=ezdxf.colors.YELLOW)
-    layout: Paperspace = doc_.layout("Layout1")  # type: ignore
-    layout.add_viewport(
-        center=(2.5, 2.5),
-        size=(5, 5),
-        view_center_point=(7.5, 7.5),
-        view_height=10,
-    )
-    layout.add_viewport(
-        center=(8.5, 2.5),
-        size=(5, 5),
-        view_center_point=(10, 5),
-        view_height=25,
-    )
     return doc_
 
 
@@ -37,11 +23,7 @@ def layer_a(doc):
 
 
 def test_doc_setup(doc):
-    assert "VIEWPORTS" in doc.layers
     assert "LayerA" in doc.layers
-    l1 = doc.layout("Layout1")
-    viewports = l1.query("VIEWPORT")
-    assert len(viewports) == 2
 
 
 def test_get_new_vp_override_object(layer_a):
@@ -175,6 +157,29 @@ class TestSetOverridesWithoutCommit:
         vp_overrides.set_color("FEFE", 6)
         vp_overrides.discard("xyz")  # should not throw an exception
         assert vp_overrides.has_overrides() is True
+
+
+class TestLoadAndStoreOverrides:
+    @pytest.fixture(scope="class")
+    def vp1(self, doc):
+        layout: Paperspace = doc.layout("Layout1")  # type: ignore
+        return layout.add_viewport(
+            center=(2.5, 2.5),
+            size=(5, 5),
+            view_center_point=(7.5, 7.5),
+            view_height=10,
+        )
+
+    def test_commit_creates_proper_xdict_structure(self, doc, vp1):
+        vp_handle = vp1.dxf.handle
+        layer = doc.layers.add("LS_001")
+        ovr = layer.get_vp_overrides()
+        ovr.set_color(vp_handle, 3)
+        ovr.commit()
+
+        assert layer.has_extension_dict is True
+        xdict = layer.get_extension_dict()
+        assert const.OVR_COLOR_KEY in xdict
 
 
 if __name__ == "__main__":
