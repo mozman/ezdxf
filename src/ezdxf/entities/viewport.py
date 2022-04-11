@@ -271,6 +271,29 @@ class Viewport(DXFGraphic):
     def frozen_layers(self, names: Iterable[str]):
         self._frozen_layers = list(names)
 
+    def _layer_index(self, layer_name: str) -> int:
+        name_key = validator.make_table_key(layer_name)
+        for index, name in enumerate(self._frozen_layers):
+            if name_key == validator.make_table_key(name):
+                return index
+        return -1
+
+    def freeze(self, layer_name: str) -> None:
+        """Freeze `layer_name` in this viewport. """
+        index = self._layer_index(layer_name)
+        if index == -1:
+            self._frozen_layers.append(layer_name)
+
+    def is_frozen(self, layer_name: str) -> bool:
+        """Returns ``True`` if `layer_name` id frozen in this viewport. """
+        return self._layer_index(layer_name) != -1
+
+    def thaw(self, layer_name: str) -> None:
+        """Thaw `layer_name` in this viewport. """
+        index = self._layer_index(layer_name)
+        if index != -1:
+            del self._frozen_layers[index]
+
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
     ) -> "DXFNamespace":

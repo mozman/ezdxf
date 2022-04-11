@@ -284,13 +284,6 @@ def test_write_dxf_r12():
     assert xdata[-1] == (1002, "}")
 
 
-def test_viewport_set_frozen_layer_names():
-    viewport = Viewport.new("F000")
-    layer_names = ["bricks", "steel", "glass"]
-    viewport.frozen_layers = layer_names
-    assert layer_names == viewport.frozen_layers
-
-
 def test_post_load_hook_resolves_frozen_layer_handles_into_names():
     doc = ezdxf.new("R2000")
     l1 = doc.layers.new("Layer1")
@@ -305,3 +298,43 @@ def test_post_load_hook_resolves_frozen_layer_handles_into_names():
         "Layer1",
         "Layer2",
     ], "Layer handles must be resolved"
+
+
+class TestFrozenLayers:
+    @pytest.fixture
+    def vp(self):
+        return Viewport.new("F000")
+
+    def test_set_and_get__frozen_layer_names(self, vp):
+        layer_names = ["bricks", "steel", "glass"]
+        vp.frozen_layers = layer_names
+        assert layer_names == vp.frozen_layers
+
+    def test_freeze_a_specific_layer(self, vp):
+        vp.freeze("MyLayer")
+        assert vp.frozen_layers == ["MyLayer"]
+
+    def test_freezing_a_layer_twice_does_not_duplicate_entry(self, vp):
+        vp.freeze("MyLayer")
+        vp.freeze("MYLAYER")
+        assert vp.frozen_layers == ["MyLayer"]
+
+    def test_is_a_specific_layer_frozen(self, vp):
+        vp.freeze("MyLayer")
+        assert vp.is_frozen("MyLayer") is True
+        assert (
+            vp.is_frozen("MYLAYER") is True
+        ), "layer names are case insensitive!"
+        assert vp.is_frozen("OTHER_LAYER") is False
+
+    def test_thaw_a_specific_layer(self, vp):
+        vp.freeze("MyLayer")
+        vp.thaw("MYLAYER")
+        assert len(vp.frozen_layers) == 0, "layer names are case insensitive!"
+
+    def test_ignore_thawing_non_frozen_layers_silently(self, vp):
+        vp.freeze("MyLayer")
+        vp.thaw("LayerA")
+        vp.thaw("LayerB")
+        assert vp.frozen_layers == ["MyLayer"]
+
