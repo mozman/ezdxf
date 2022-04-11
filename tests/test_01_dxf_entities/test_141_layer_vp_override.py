@@ -159,7 +159,7 @@ class TestSetOverridesWithoutCommit:
         assert vp_overrides.has_overrides() is True
 
 
-class TestLoadAndStoreOverrides:
+class TestCommitChanges:
     @pytest.fixture(scope="class")
     def vp1(self, doc):
         layout: Paperspace = doc.layout("Layout1")  # type: ignore
@@ -170,16 +170,74 @@ class TestLoadAndStoreOverrides:
             view_height=10,
         )
 
+    @pytest.fixture(scope="class")
+    def vp2(self, doc):
+        layout: Paperspace = doc.layout("Layout1")  # type: ignore
+        return layout.add_viewport(
+            center=(2.5, 2.5),
+            size=(5, 5),
+            view_center_point=(7.5, 7.5),
+            view_height=10,
+        )
+
+    @staticmethod
+    def set_all_ovr(ovr: LayerOverrides, vp_handle, color, alpha, ltype, lw):
+        ovr.set_color(vp_handle, color)
+        ovr.set_transparency(vp_handle, alpha)
+        ovr.set_linetype(vp_handle, ltype)
+        ovr.set_lineweight(vp_handle, lw)
+
     def test_commit_creates_proper_xdict_structure(self, doc, vp1):
         vp_handle = vp1.dxf.handle
         layer = doc.layers.add("LS_001")
         ovr = layer.get_vp_overrides()
-        ovr.set_color(vp_handle, 3)
+        self.set_all_ovr(ovr, vp_handle, 3, 0.4, "DASHED", 50)
         ovr.commit()
 
         assert layer.has_extension_dict is True
         xdict = layer.get_extension_dict()
         assert const.OVR_COLOR_KEY in xdict
+        assert const.OVR_ALPHA_KEY in xdict
+        assert const.OVR_LTYPE_KEY in xdict
+        assert const.OVR_LW_KEY in xdict
+
+    def test_load_overrides_for_one_vp(self, doc, vp1):
+        vp_handle = vp1.dxf.handle
+        layer = doc.layers.add("LS_002")
+        ovr = layer.get_vp_overrides()
+        self.set_all_ovr(ovr, vp_handle, 3, 0.4, "DASHED", 50)
+        ovr.commit()
+
+        ovr2 = layer.get_vp_overrides()
+        assert ovr2.has_overrides() is True
+        assert ovr2.has_overrides(vp_handle) is True
+        assert ovr2.get_color(vp_handle) == 3
+        assert ovr2.get_transparency(vp_handle) == pytest.approx(0.4)
+        assert ovr2.get_linetype(vp_handle) == "DASHED"
+        assert ovr2.get_lineweight(vp_handle) == 50
+
+    def test_load_overrides_for_two_vp(self, doc, vp1, vp2):
+        h1 = vp1.dxf.handle
+        h2 = vp2.dxf.handle
+        layer = doc.layers.add("LS_003")
+        ovr = layer.get_vp_overrides()
+        self.set_all_ovr(ovr, h1, 3, 0.4, "DASHED", 50)
+        self.set_all_ovr(ovr, h2, 4, 0.2, "CENTER", 35)
+        ovr.commit()
+
+        ovr2 = layer.get_vp_overrides()
+        assert ovr2.has_overrides() is True
+        assert ovr2.has_overrides(h1) is True
+        assert ovr2.get_color(h1) == 3
+        assert ovr2.get_transparency(h1) == pytest.approx(0.4)
+        assert ovr2.get_linetype(h1) == "DASHED"
+        assert ovr2.get_lineweight(h1) == 50
+
+        assert ovr2.has_overrides(h2) is True
+        assert ovr2.get_color(h2) == 4
+        assert ovr2.get_transparency(h2) == pytest.approx(0.2)
+        assert ovr2.get_linetype(h2) == "CENTER"
+        assert ovr2.get_lineweight(h2) == 35
 
 
 if __name__ == "__main__":
