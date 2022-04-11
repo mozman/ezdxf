@@ -50,7 +50,6 @@ def test_get_default_layer_values_for_missing_overrides(layer_a):
     assert overrides.get_transparency(vp_handle) == 0.0
     assert overrides.get_linetype(vp_handle) == "Continuous"
     assert overrides.get_lineweight(vp_handle) == const.LINEWEIGHT_DEFAULT
-    assert overrides.is_frozen(vp_handle) is False
 
 
 class TestSetOverridesWithoutCommit:
@@ -116,25 +115,6 @@ class TestSetOverridesWithoutCommit:
         vp_overrides = layer_a.get_vp_overrides()
         with pytest.raises(ValueError):
             vp_overrides.set_lineweight("FEFE", value)
-
-    def test_freeze_layer_in_vp(self, layer_a):
-        vp_handle = "FEFE"
-        vp_overrides = layer_a.get_vp_overrides()
-        vp_overrides.freeze(vp_handle)
-        assert vp_overrides.is_frozen(vp_handle) is True
-
-    @pytest.fixture
-    def frozen_layer(self, doc):
-        layer = doc.layers.add("LAYER_FROZEN")
-        layer.freeze()
-        yield layer
-        doc.layers.discard(layer.dxf.name)
-
-    def test_thaw_layer_in_vp(self, frozen_layer):
-        vp_handle = "FEFE"
-        vp_overrides = frozen_layer.get_vp_overrides()
-        vp_overrides.thaw(vp_handle)
-        assert vp_overrides.is_frozen(vp_handle) is False
 
     def test_discard_specific_overrides(self, layer_a):
         vp_overrides = layer_a.get_vp_overrides()

@@ -175,7 +175,6 @@ LayerOverrides
         - linetype
         - lineweight
         - transparency
-        - frozen/thawed state
 
     Get the override object for a certain layer by the :meth:`Layer.get_vp_overrides`
     method.
@@ -212,12 +211,6 @@ LayerOverrides
     .. automethod:: get_lineweight
 
     .. automethod:: set_lineweight
-
-    .. automethod:: is_frozen
-
-    .. automethod:: freeze
-
-    .. automethod:: thaw
 
     .. automethod:: discard
 

@@ -383,7 +383,6 @@ class OverrideAttributes:
     transparency: float
     linetype: str
     lineweight: int
-    frozen: bool
 
 
 class LayerOverrides:
@@ -397,7 +396,6 @@ class LayerOverrides:
         - linetype
         - lineweight
         - transparency
-        - frozen/thawed state
 
     """
 
@@ -428,9 +426,7 @@ class LayerOverrides:
         """
         return self._overrides.setdefault(
             vp_handle,
-            default_ovr_settings(
-                self._layer, is_layer_frozen_in_vp(self._layer, vp_handle)
-            ),
+            default_ovr_settings(self._layer),
         )
 
     def _get_overrides(self, vp_handle: str) -> OverrideAttributes:
@@ -440,9 +436,7 @@ class LayerOverrides:
         try:
             return self._overrides[vp_handle]
         except KeyError:
-            return default_ovr_settings(
-                self._layer, is_layer_frozen_in_vp(self._layer, vp_handle)
-            )
+            return default_ovr_settings(self._layer)
 
     def set_color(self, vp_handle: str, value: int) -> None:
         """Override the :ref:`ACI`.
@@ -545,21 +539,6 @@ class LayerOverrides:
         vp_overrides = self._acquire_overrides(vp_handle)
         vp_overrides.lineweight = value
 
-    def is_frozen(self, vp_handle: str) -> bool:
-        """Returns ``True`` if layer is frozen in VIEWPORT `vp_handle`."""
-        vp_overrides = self._get_overrides(vp_handle)
-        return vp_overrides.frozen
-
-    def freeze(self, vp_handle) -> None:
-        """Freeze layer in given VIEWPORT."""
-        vp_overrides = self._acquire_overrides(vp_handle)
-        vp_overrides.frozen = True
-
-    def thaw(self, vp_handle) -> None:
-        """Thaw layer in given VIEWPORT."""
-        vp_overrides = self._acquire_overrides(vp_handle)
-        vp_overrides.frozen = False
-
     def discard(self, vp_handle: str = None) -> None:
         """Discard all attribute overrides for the given :class:`Viewport`
         handle or for all :class:`Viewport` entities if the handle is ``None``.
@@ -573,7 +552,7 @@ class LayerOverrides:
             pass
 
 
-def default_ovr_settings(layer, frozen: bool) -> OverrideAttributes:
+def default_ovr_settings(layer) -> OverrideAttributes:
     """Returns the default settings of the layer."""
     return OverrideAttributes(
         aci=layer.color,
@@ -581,7 +560,6 @@ def default_ovr_settings(layer, frozen: bool) -> OverrideAttributes:
         transparency=layer.transparency,
         linetype=layer.dxf.linetype,
         lineweight=layer.dxf.lineweight,
-        frozen=frozen,
     )
 
 
@@ -599,7 +577,7 @@ def load_layer_overrides(layer: Layer) -> Dict[str, OverrideAttributes]:
     def get_ovr(vp_handle: str):
         ovr = overrides.get(vp_handle)
         if ovr is None:
-            ovr = default_ovr_settings(layer, False)
+            ovr = default_ovr_settings(layer)
             overrides[vp_handle] = ovr
         return ovr
 
@@ -625,13 +603,6 @@ def load_layer_overrides(layer: Layer) -> Dict[str, OverrideAttributes]:
         ovr = get_ovr(vp_handle)
         ovr.lineweight = value
 
-    def set_vp_frozen_state():
-        for vp in entitydb.query("VIEWPORT"):
-            vp_handle = vp.dxf.handle
-            if is_layer_frozen_in_vp(layer, vp_handle):
-                ovr = get_ovr(vp_handle)
-                ovr.frozen = True
-
     def set_xdict_state():
         xdict = layer.get_extension_dict()
         for key, code, setter in [
@@ -654,7 +625,6 @@ def load_layer_overrides(layer: Layer) -> Dict[str, OverrideAttributes]:
         return overrides
 
     set_xdict_state()
-    set_vp_frozen_state()
     return overrides
 
 
@@ -711,22 +681,6 @@ def store_layer_overrides(
             )
         return tags
 
-    def set_frozen_state():
-        layer_name = layer.dxf.name
-        for vp_handle, ovr in vp_exist.items():
-            vp = cast("Viewport", entitydb.get(vp_handle))
-            frozen_layers = vp.frozen_layers
-            try:
-                index = frozen_layers.index(layer_name)
-            except ValueError:
-                index = -1
-            if ovr.frozen and index == -1:
-                frozen_layers.append(layer_name)
-                vp.frozen_layers = frozen_layers
-            elif ovr.frozen is False and index != -1:
-                del frozen_layers[layer_name]
-                vp.frozen_layers = frozen_layers
-
     def collect_alphas():
         for vp_handle, ovr in vp_exist.items():
             if ovr.transparency != default.transparency:
@@ -760,40 +714,31 @@ def store_layer_overrides(
         for vp_handle, ovr in overrides.items()
         if (vp_handle in entitydb) and entitydb[vp_handle].is_alive
     }
-    default = default_ovr_settings(layer, False)
+    default = default_ovr_settings(layer)
     alphas = list(collect_alphas())
     if alphas:
-        tags = make_tags(
-            alphas, const.OVR_APP_ALPHA, const.OVR_ALPHA_CODE
-        )
+        tags = make_tags(alphas, const.OVR_APP_ALPHA, const.OVR_ALPHA_CODE)
         set_xdict_tags(const.OVR_ALPHA_KEY, tags)
     else:
         del_xdict_tags(const.OVR_ALPHA_KEY)
 
     colors = list(collect_colors())
     if colors:
-        tags = make_tags(
-            colors, const.OVR_APP_COLOR, const.OVR_COLOR_CODE
-        )
+        tags = make_tags(colors, const.OVR_APP_COLOR, const.OVR_COLOR_CODE)
         set_xdict_tags(const.OVR_COLOR_KEY, tags)
     else:
         del_xdict_tags(const.OVR_COLOR_KEY)
 
     linetypes = list(collect_linetypes())
     if linetypes:
-        tags = make_tags(
-            linetypes, const.OVR_APP_LTYPE, const.OVR_LTYPE_CODE
-        )
+        tags = make_tags(linetypes, const.OVR_APP_LTYPE, const.OVR_LTYPE_CODE)
         set_xdict_tags(const.OVR_LTYPE_KEY, tags)
     else:
         del_xdict_tags(const.OVR_LTYPE_KEY)
 
     lineweights = list(collect_lineweights())
     if lineweights:
-        tags = make_tags(
-            lineweights, const.OVR_APP_LW, const.OVR_LW_CODE
-        )
+        tags = make_tags(lineweights, const.OVR_APP_LW, const.OVR_LW_CODE)
         set_xdict_tags(const.OVR_LW_KEY, tags)
     else:
         del_xdict_tags(const.OVR_LW_KEY)
-    set_frozen_state()
