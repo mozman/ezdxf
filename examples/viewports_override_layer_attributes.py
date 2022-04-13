@@ -1,5 +1,6 @@
 # Copyright (c) 2022, Manfred Moitzi
 # License: MIT License
+from typing import cast
 from pathlib import Path
 import ezdxf
 from ezdxf.layouts import Paperspace
@@ -128,7 +129,7 @@ def main():
         for index in range(COUNT):
             doc.layers.add(LAYER_NAME.format(index))
         create_modelspace_content(msp)
-        psp: Paperspace = doc.layout("Layout1")  # type: ignore
+        psp = cast(Paperspace, doc.layout("Layout1"))
         psp.page_setup(
             size=(PAPER_WIDTH, PAPER_HEIGHT),
             margins=(MARGIN, MARGIN, MARGIN, MARGIN),
