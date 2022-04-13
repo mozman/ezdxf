@@ -219,6 +219,32 @@ class TestCommitChanges:
         assert ovr2.get_linetype(h2) == "CENTER"
         assert ovr2.get_lineweight(h2) == 35
 
+    def test_commit_no_overrides_creates_no_xdict(self, doc):
+        layer = doc.layers.add("LS_004")
+        ovr = layer.get_vp_overrides()
+        ovr.commit()
+        assert layer.has_extension_dict is False
+
+    def test_resetting_overrides_to_default_removes_xdict_entry(self, doc, vp1):
+        vp_handle = vp1.dxf.handle
+        layer = doc.layers.add("LS_005")
+        default_color = layer.get_color()
+        ovr = layer.get_vp_overrides()
+        ovr.set_color(vp_handle, 3)
+        ovr.commit()
+        xdict = layer.get_extension_dict()
+
+        # OVR_COLOR_KEY exist:
+        assert const.OVR_COLOR_KEY in xdict
+
+        # reset to default color:
+        ovr.set_color(vp_handle, default_color)
+        ovr.commit()
+
+        # OVR_COLOR_KEY is removed:
+        assert layer.has_extension_dict is True, "expected xdict still exist"
+        assert const.OVR_COLOR_KEY not in xdict, "layer has no color overrides"
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
