@@ -125,12 +125,15 @@ def create_viewports(paperspace: Paperspace):
 def main():
     def make(dxfversion, filename):
         doc = ezdxf.new(dxfversion, setup=True)
+        # create/get the default layer for VIEWPORT entities:
         if "VIEWPORTS" not in doc.layers:
             vp_layer = doc.layers.add("VIEWPORTS")
         else:
             vp_layer = doc.layers.get("VIEWPORTS")
         # switch viewport layer off to hide the viewport border lines
         vp_layer.off()
+        # the VIEWPORT layer is not fixed:
+        # Paperspace.add_viewport(..., dxfattribs={"layer": "MyViewportLayer"})
 
         create_2d_modelspace_content(doc.modelspace())
         create_3d_modelspace_content(doc.modelspace())

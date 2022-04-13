@@ -123,6 +123,8 @@ def main():
         doc = ezdxf.new(dxfversion, setup=True)
         doc.header["$LWDISPLAY"] = 1  # show linewidth in DXF viewer
         msp = doc.modelspace()
+
+        # create the default layer for VIEWPORT entities:
         vp_layer = doc.layers.add("VIEWPORTS")
         # switch viewport layer off to hide the viewport border lines
         vp_layer.off()
