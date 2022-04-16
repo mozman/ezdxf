@@ -674,21 +674,24 @@ def _merge_adjacent_coplanar_faces(
     return mesh
 
 
+VEC3_SENTINEL = Vec3(0, 0, 0)
+
+
 def remove_colinear_vertices(vertices: Iterable[Vec3]) -> Iterator[Vec3]:
     def get_direction(v1: Vec3, v2: Vec3):
         if v1.isclose(v2):
             return current_direction
         return (v2 - v1).normalize()
 
-    start = NULLVEC
-    current_direction = NULLVEC
-    prev_vertex = NULLVEC
+    start = VEC3_SENTINEL
+    current_direction = VEC3_SENTINEL
+    prev_vertex = VEC3_SENTINEL
     for vertex in vertices:
-        if start is NULLVEC:
+        if start is VEC3_SENTINEL:
             start = vertex
             yield vertex
             continue
-        if current_direction is NULLVEC:
+        if current_direction is VEC3_SENTINEL:
             current_direction = get_direction(start, vertex)
             prev_vertex = vertex
             continue
@@ -700,7 +703,7 @@ def remove_colinear_vertices(vertices: Iterable[Vec3]) -> Iterator[Vec3]:
         current_direction = get_direction(start, vertex)
         prev_vertex = vertex
 
-    if prev_vertex is not NULLVEC:
+    if prev_vertex is not VEC3_SENTINEL:
         yield prev_vertex
 
 
@@ -708,7 +711,9 @@ class NodeMergingError(Exception):
     pass
 
 
-def merge_connected_paths(p1: Sequence[int], p2: Sequence[int]) -> Sequence[int]:
+def merge_connected_paths(
+    p1: Sequence[int], p2: Sequence[int]
+) -> Sequence[int]:
     def build_nodes(p: Sequence[int]):
         nodes = {e1: e2 for e1, e2 in zip(p, p[1:])}
         nodes[p[-1]] = p[0]
