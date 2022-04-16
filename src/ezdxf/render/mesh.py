@@ -120,7 +120,6 @@ class MeshBuilder:
         if mesh is not None:
             vertices = Vec3.list(mesh.vertices)
             faces = mesh.faces
-            edges = mesh.edges
 
         if vertices is None:
             raise ValueError("Requires vertices or another mesh.")
@@ -322,13 +321,22 @@ class MeshBuilder:
         mesh.faces = list(other.faces)
         return mesh  # type: ignore
 
+    def merge_coplanar_faces(self) -> "MeshBuilder":
+        """Returns a new :class:`MeshBuilder` object with merged adjacent
+        coplanar faces.
+
+        The faces have to share at least two vertices and have to have the
+        same vertex orientation.
+
+        """
+        mesh = _merge_adjacent_coplanar_faces(self.vertices, self.faces)
+        return self.__class__.from_builder(mesh)
+
 
 class MeshTransformer(MeshBuilder):
     """A mesh builder with inplace transformation support."""
 
-    def subdivide(
-        self, level: int = 1, quads=True
-    ) -> "MeshTransformer":
+    def subdivide(self, level: int = 1, quads=True) -> "MeshTransformer":
         """Returns a new :class:`MeshTransformer` object with subdivided faces
         and edges.
 
@@ -624,3 +632,79 @@ class MeshAverageVertexMerger(MeshBuilder):
         """Create new mesh from other mesh builder."""
         # rebuild from scratch to crate a valid ledger
         return cls.from_mesh(other)  # type: ignore
+
+
+def _merge_adjacent_coplanar_faces(
+    vertices: List[Vec3], faces: List[Sequence[int]]
+) -> MeshVertexMerger:
+    precision = 4
+
+    def get_normal_key(f):
+        return normal_vector_3p(
+            vertices[f[0]],
+            vertices[f[1]],
+            vertices[f[2]],
+        ).round(precision)
+
+    sorted_faces: dict[Vec3, List[Sequence[int]]] = {}
+    for face in faces:
+        key = get_normal_key(face)
+        sorted_faces.setdefault(key, []).append(face)
+
+    mesh = MeshVertexMerger()
+    done = set()
+    for face in faces:
+        fingerprint = hash(face)
+        if fingerprint in done:
+            continue
+        done.add(fingerprint)
+        key = get_normal_key(face)
+        face_set = set(face)
+        for face2 in sorted_faces.get(key, []):
+            fp2 = hash(face2)
+            if fp2 in done:
+                continue
+            # connection by at least 2 vertices required:
+            if len(face_set.intersection(set(face2))) > 1:
+                try:
+                    face = merge_connected_paths(face, face2)
+                    done.add(fp2)
+                    face_set = set(face)
+                except NodeMergingError:
+                    pass
+        mesh.add_face(vertices[i] for i in face)
+    return mesh
+
+
+class NodeMergingError(Exception):
+    pass
+
+
+def merge_connected_paths(p1: Sequence[int], p2: Sequence[int]) -> Sequence[int]:
+    def build_nodes(p: Sequence[int]):
+        nodes = {e1: e2 for e1, e2 in zip(p, p[1:])}
+        nodes[p[-1]] = p[0]
+        return nodes
+
+    current_path = build_nodes(p1)
+    other_path = build_nodes(p2)
+    start = p1[0]
+    finish = start
+    connected_path = [start]
+    while True:
+        try:
+            next_node = current_path[start]
+        except KeyError:
+            raise NodeMergingError
+        if next_node in other_path:
+            current_path, other_path = other_path, current_path
+        if next_node == finish:
+            break
+        start = next_node
+        if start in connected_path:
+            # node duplication is an error, e.g. two path are only connected
+            # by one node:
+            raise NodeMergingError
+        connected_path.append(start)
+
+    return connected_path

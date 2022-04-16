@@ -9,6 +9,8 @@ from ezdxf.render.mesh import (
     MeshBuilder,
     MeshTransformer,
     MeshAverageVertexMerger,
+    merge_connected_paths,
+    NodeMergingError,
 )
 from ezdxf.addons import SierpinskyPyramid
 from ezdxf.layouts import VirtualLayout
@@ -321,3 +323,90 @@ def test_mesh_subdivide():
     c = cube().scale_uniform(10).subdivide(2)
     assert len(c.vertices) == 2 * 25 + 3 * 16
     assert len(c.faces) == 16 * 6
+
+
+def test_merge_coplanar_faces():
+    c = cube().scale_uniform(10).subdivide(1)
+    assert len(c.vertices) == 26
+    assert len(c.faces) == 24
+    optimized_cube = c.merge_coplanar_faces()
+    assert len(optimized_cube.faces) == 6
+    assert len(optimized_cube.vertices) == 20
+
+
+class TestMergeConnectedPaths:
+    @pytest.mark.parametrize(
+        "p",
+        [
+            [1, 2, 3],
+            [3, 2, 1],
+            [1, 2, 3, 4, 5],
+        ],
+    )
+    def test_non_connected_paths(self, p):
+        assert merge_connected_paths(p, [17, 18, 19]) == p
+
+    def test_connected_squares_same_orientation(self):
+        # fmt: off
+        assert merge_connected_paths([1, 2, 3, 4], [4, 3, 5, 6]) == [
+            1, 2, 3, 5, 6, 4,
+        ]
+        assert merge_connected_paths([1, 2, 3, 4], [4, 5, 6, 1]) == [
+            1, 2, 3, 4, 5, 6
+        ]
+        # fmt: on
+
+    def test_connected_squares_different_orientation(self):
+        """The connected structure have to have the same orientation (clockwise
+        or counter-clockwise to be merged.
+        """
+        # fmt: off
+        assert merge_connected_paths([1, 2, 3, 4], [6, 5, 3, 4]) == [
+            1, 2, 3, 4
+        ]
+        # fmt: on
+
+    def test_connected_rect_same_orientation(self):
+        # fmt: off
+        assert merge_connected_paths([1, 2, 3, 4, 5, 6], [6, 5, 4, 7, 8, 9]) == [
+            1, 2, 3, 4, 7, 8, 9, 6
+        ]
+        # fmt: on
+
+    def test_complex_shape(self):
+        # fmt: off
+        assert merge_connected_paths(
+            [1, 2, 3, 4, 5, 6, 7, 8],
+            [6, 9, 10, 11, 8, 7],
+        ) == [
+            1, 2, 3, 4, 5, 6, 9, 10, 11, 8,
+        ]
+        # fmt: on
+
+    def test_connected_by_one_vertex(self):
+        with pytest.raises(NodeMergingError):
+            merge_connected_paths([1, 2, 3, 4], [5, 6, 7, 4])
+
+    @pytest.mark.parametrize(
+        "p2",
+        [
+            [5, 6, 7, 4],
+            [5, 6, 7, 4, 8],
+            [5, 6, 7, 4, 8, 9],
+        ],
+    )
+    def test_connection_error(self, p2):
+        with pytest.raises(NodeMergingError):
+            merge_connected_paths([1, 2, 3, 4], p2)
+
+    def test_merge_multiple_paths(self):
+        p1 = [1, 2, 9, 8]
+        p2 = [3, 4, 9, 2]
+        p3 = [5, 6, 9, 4]
+        p4 = [7, 8, 9, 6]
+        p = merge_connected_paths(p1, p2)
+        assert p == [1, 2, 3, 4, 9, 8]
+        p = merge_connected_paths(p, p3)
+        assert p == [1, 2, 3, 4, 5, 6, 9, 8]
+        p = merge_connected_paths(p, p4)
+        assert p == [1, 2, 3, 4, 5, 6, 7, 8]
