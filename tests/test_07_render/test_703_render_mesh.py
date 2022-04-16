@@ -332,7 +332,7 @@ def test_merge_coplanar_faces():
     assert len(c.faces) == 24
     optimized_cube = c.merge_coplanar_faces()
     assert len(optimized_cube.faces) == 6
-    assert len(optimized_cube.vertices) == 14
+    assert len(optimized_cube.vertices) == 14  # should be 8!
 
 
 def test_merge_coplanar_faces_two_times():

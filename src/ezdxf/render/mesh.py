@@ -20,7 +20,6 @@ from ezdxf.math import (
     is_planar_face,
     subdivide_face,
     normal_vector_3p,
-    best_fit_normal,
     subdivide_ngons,
 )
 
@@ -637,15 +636,21 @@ class MeshAverageVertexMerger(MeshBuilder):
 
 
 def _merge_adjacent_coplanar_faces(
-    vertices: List[Vec3], faces: List[Sequence[int]]
+    vertices: List[Vec3], faces: List[Sequence[int]], precision: int = 4
 ) -> MeshVertexMerger:
-    precision = 4
-
     def get_normal_key(f):
-        return best_fit_normal(vertices[i] for i in f).round(precision)
+        v0, v1, *v = [vertices[i] for i in f]
+        for v2 in v:
+            try:
+                return normal_vector_3p(v0, v1, v2).round(precision)
+            except ZeroDivisionError:
+                continue
+        return NULLVEC
 
     sorted_faces: dict[Vec3, List[Sequence[int]]] = {}
     for face in faces:
+        if len(face) < 3:
+            raise ValueError("found invalid face count < 3")
         key = get_normal_key(face)
         sorted_faces.setdefault(key, []).append(face)
 
