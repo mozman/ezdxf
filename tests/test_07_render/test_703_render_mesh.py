@@ -11,6 +11,7 @@ from ezdxf.render.mesh import (
     MeshAverageVertexMerger,
     merge_connected_paths,
     NodeMergingError,
+    remove_colinear_vertices,
 )
 from ezdxf.addons import SierpinskyPyramid
 from ezdxf.layouts import VirtualLayout
@@ -331,7 +332,17 @@ def test_merge_coplanar_faces():
     assert len(c.faces) == 24
     optimized_cube = c.merge_coplanar_faces()
     assert len(optimized_cube.faces) == 6
-    assert len(optimized_cube.vertices) == 20
+    assert len(optimized_cube.vertices) == 14
+
+
+def test_merge_coplanar_faces_two_times():
+    c = cube().scale_uniform(10).subdivide(2)
+    assert len(c.vertices) == 98
+    assert len(c.faces) == 96
+    optimized_cube = c.merge_coplanar_faces()
+    optimized_cube = optimized_cube.merge_coplanar_faces()
+    assert len(optimized_cube.faces) == 6
+    assert len(optimized_cube.vertices) == 14  # should be 8!
 
 
 class TestMergeConnectedPaths:
@@ -410,3 +421,36 @@ class TestMergeConnectedPaths:
         assert p == [1, 2, 3, 4, 5, 6, 9, 8]
         p = merge_connected_paths(p, p4)
         assert p == [1, 2, 3, 4, 5, 6, 7, 8]
+
+
+class TestRemoveColinearVertices:
+    @pytest.mark.parametrize("v", [
+        [],
+        [Vec3(0, 0)],
+        [Vec3(0, 0), Vec3(1, 0)],
+    ])
+    def test_simple_cases_without_action(self, v):
+        assert list(remove_colinear_vertices(v)) == v
+
+    @pytest.mark.parametrize("v", [
+        [Vec3(0, 0), Vec3(1, 0), Vec3(2, 0)],
+        [Vec3(0, 0), Vec3(1, 0), Vec3(2, 0), Vec3(3, 0)],
+    ])
+    def test_remove_in_between_vertices(self, v):
+        assert list(remove_colinear_vertices(v)) == [v[0], v[-1]]
+
+    @pytest.mark.parametrize("v", [
+        [Vec3(0, 0), Vec3(0, 0), Vec3(2, 0)],
+        [Vec3(0, 0), Vec3(0, 0), Vec3(0, 0), Vec3(3, 0)],
+        [Vec3(0, 0), Vec3(0, 0), Vec3(0, 0), Vec3(0, 0)],
+        [Vec3(1, 0), Vec3(1, 0), Vec3(0, 2), Vec3(0, 2)],
+    ])
+    def test_remove_duplicated_vertices(self, v):
+        assert list(remove_colinear_vertices(v)) == [v[0], v[-1]]
+
+    def test_remove_in_between_vertices_with_direction_change(self):
+        v = [
+            Vec3(0, 0), Vec3(1, 0), Vec3(2, 0),
+            Vec3(2, 1), Vec3(2, 2), Vec3(2, 3),
+        ]
+        assert list(remove_colinear_vertices(v)) == [v[0], v[2], v[-1]]

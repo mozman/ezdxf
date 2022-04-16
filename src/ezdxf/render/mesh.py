@@ -5,6 +5,7 @@ from typing import (
     Sequence,
     Tuple,
     Iterable,
+    Iterator,
     TYPE_CHECKING,
     Union,
     Dict,
@@ -19,6 +20,7 @@ from ezdxf.math import (
     is_planar_face,
     subdivide_face,
     normal_vector_3p,
+    best_fit_normal,
     subdivide_ngons,
 )
 
@@ -640,11 +642,7 @@ def _merge_adjacent_coplanar_faces(
     precision = 4
 
     def get_normal_key(f):
-        return normal_vector_3p(
-            vertices[f[0]],
-            vertices[f[1]],
-            vertices[f[2]],
-        ).round(precision)
+        return best_fit_normal(vertices[i] for i in f).round(precision)
 
     sorted_faces: dict[Vec3, List[Sequence[int]]] = {}
     for face in faces:
@@ -661,19 +659,49 @@ def _merge_adjacent_coplanar_faces(
         key = get_normal_key(face)
         face_set = set(face)
         for face2 in sorted_faces.get(key, []):
-            fp2 = hash(face2)
-            if fp2 in done:
+            fingerprint2 = hash(face2)
+            if fingerprint2 in done:
                 continue
             # connection by at least 2 vertices required:
             if len(face_set.intersection(set(face2))) > 1:
                 try:
                     face = merge_connected_paths(face, face2)
-                    done.add(fp2)
+                    done.add(fingerprint2)
                     face_set = set(face)
                 except NodeMergingError:
                     pass
-        mesh.add_face(vertices[i] for i in face)
+        mesh.add_face(remove_colinear_vertices(vertices[i] for i in face))
     return mesh
+
+
+def remove_colinear_vertices(vertices: Iterable[Vec3]) -> Iterator[Vec3]:
+    def get_direction(v1: Vec3, v2: Vec3):
+        if v1.isclose(v2):
+            return current_direction
+        return (v2 - v1).normalize()
+
+    start = NULLVEC
+    current_direction = NULLVEC
+    prev_vertex = NULLVEC
+    for vertex in vertices:
+        if start is NULLVEC:
+            start = vertex
+            yield vertex
+            continue
+        if current_direction is NULLVEC:
+            current_direction = get_direction(start, vertex)
+            prev_vertex = vertex
+            continue
+        if get_direction(start, vertex).isclose(current_direction):
+            prev_vertex = vertex
+            continue
+        yield prev_vertex
+        start = prev_vertex
+        current_direction = get_direction(start, vertex)
+        prev_vertex = vertex
+
+    if prev_vertex is not NULLVEC:
+        yield prev_vertex
 
 
 class NodeMergingError(Exception):
