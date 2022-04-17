@@ -327,7 +327,10 @@ class MeshBuilder:
         coplanar faces.
 
         The faces have to share at least two vertices and have to have the
-        same vertex orientation.
+        same clockwise or counter-clockwise vertex order.
+
+        This implementation has to be improved, the current algorithm is not
+        very capable!
 
         """
         mesh = self
@@ -662,7 +665,6 @@ class _XFace:
 def _merge_adjacent_coplanar_faces(
     vertices: List[Vec3], faces: List[Sequence[int]], precision: int = 4
 ) -> MeshVertexMerger:
-
     oriented_faces: dict[Vec3, List[_XFace]] = {}
     extended_faces: List[_XFace] = []
     for face in faces:
