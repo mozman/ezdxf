@@ -777,24 +777,24 @@ def merge_connected_paths(
 
     current_path = build_nodes(p1)
     other_path = build_nodes(p2)
-    start = p1[0]
-    finish = start
-    connected_path = [start]
+    current_node = p1[0]
+    finish = p1[0]
+    connected_path = [current_node]
     while True:
         try:
-            next_node = current_path[start]
+            next_node = current_path[current_node]
         except KeyError:
             raise NodeMergingError
         if next_node in other_path:
             current_path, other_path = other_path, current_path
         if next_node == finish:
             break
-        start = next_node
-        if start in connected_path:
+        current_node = next_node
+        if current_node in connected_path:
             # node duplication is an error, e.g. two path are only connected
             # by one node:
             raise NodeMergingError
-        connected_path.append(start)
+        connected_path.append(current_node)
 
     if len(connected_path) < 3:
         raise DegeneratedPathError

@@ -21,13 +21,12 @@ msp = doc.modelspace()
 # build solid union
 union = CSG(cube1) + CSG(cylinder1)
 # convert to mesh and render mesh to modelspace
-m2 = union.mesh().merge_coplanar_faces(passes=2)
-m2.render_mesh(msp, dxfattribs={"color": 1})
+union.mesh().merge_coplanar_faces().render_mesh(msp, dxfattribs={"color": 1})
 
 # build solid difference
 difference = CSG(cube1) - CSG(cylinder1)
 # convert to mesh, translate mesh and render mesh to modelspace
-difference.mesh().translate(1.5).render(msp, dxfattribs={"color": 3})
+difference.mesh().merge_coplanar_faces().translate(1.5).render(msp, dxfattribs={"color": 3})
 
 # build solid intersection
 intersection = CSG(cube1) * CSG(cylinder1)
