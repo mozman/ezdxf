@@ -359,12 +359,11 @@ def test_merge_coplanar_faces():
     assert len(optimized_cube.vertices) == 8
 
 
-def test_merge_coplanar_faces_two_times():
+def test_merge_coplanar_faces_in_two_passes():
     c = cube().scale_uniform(10).subdivide(2)
     assert len(c.vertices) == 98
     assert len(c.faces) == 96
-    optimized_cube = c.merge_coplanar_faces()
-    optimized_cube = optimized_cube.merge_coplanar_faces()
+    optimized_cube = c.merge_coplanar_faces(passes=2)
     assert len(optimized_cube.faces) == 6
     assert len(optimized_cube.vertices) == 8
 

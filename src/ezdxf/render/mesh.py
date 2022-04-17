@@ -322,7 +322,7 @@ class MeshBuilder:
         mesh.faces = list(other.faces)
         return mesh  # type: ignore
 
-    def merge_coplanar_faces(self) -> "MeshBuilder":
+    def merge_coplanar_faces(self, passes: int = 1) -> "MeshBuilder":
         """Returns a new :class:`MeshBuilder` object with merged adjacent
         coplanar faces.
 
@@ -330,7 +330,9 @@ class MeshBuilder:
         same vertex orientation.
 
         """
-        mesh = _merge_adjacent_coplanar_faces(self.vertices, self.faces)
+        mesh = self
+        for _ in range(passes):
+            mesh = _merge_adjacent_coplanar_faces(mesh.vertices, mesh.faces)
         return self.__class__.from_builder(mesh)
 
 
