@@ -53,6 +53,10 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. automethod:: from_builder(other: MeshBuilder)
 
+    .. automethod:: subdivide(level: int = 1, quads=True) -> MeshTransformer
+
+    .. automethod:: merge_coplanar_faces(passes: int = 1) -> MeshTransformer
+
 
 MeshTransformer
 ===============
@@ -62,8 +66,6 @@ Same functionality as :class:`MeshBuilder` but supports inplace transformation.
 .. class:: MeshTransformer
 
     Subclass of :class:`MeshBuilder`
-
-    .. automethod:: subdivide(level: int = 1, quads=True) -> MeshTransformer
 
     .. automethod:: transform(matrix: Matrix44)
 

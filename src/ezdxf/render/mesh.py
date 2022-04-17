@@ -12,7 +12,6 @@ from typing import (
     TypeVar,
     Type,
 )
-from dataclasses import dataclass
 from ezdxf.math import (
     Matrix44,
     Vec3,
@@ -329,8 +328,7 @@ class MeshBuilder:
         The faces have to share at least two vertices and have to have the
         same clockwise or counter-clockwise vertex order.
 
-        This implementation has to be improved, the current algorithm is not
-        very capable!
+        The current implementation is not very capable!
 
         """
         mesh = self
