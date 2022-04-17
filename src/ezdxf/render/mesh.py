@@ -12,7 +12,7 @@ from typing import (
     TypeVar,
     Type,
 )
-
+from dataclasses import dataclass
 from ezdxf.math import (
     Matrix44,
     Vec3,
@@ -635,81 +635,126 @@ class MeshAverageVertexMerger(MeshBuilder):
         return cls.from_mesh(other)  # type: ignore
 
 
+class _XFace:
+    __slots__ = ("fingerprint", "indices", "_orientation")
+
+    def __init__(self, indices: Sequence[int]):
+        self.fingerprint: int = hash(indices)
+        self.indices: Sequence[int] = indices
+        self._orientation: Vec3 = VEC3_SENTINEL
+
+    def orientation(self, vertices: Sequence[Vec3], precision: int = 4) -> Vec3:
+        if self._orientation is VEC3_SENTINEL:
+            orientation = NULLVEC
+            v0, v1, *v = [vertices[i] for i in self.indices]
+            for v2 in v:
+                try:
+                    orientation = normal_vector_3p(v0, v1, v2).round(precision)
+                    break
+                except ZeroDivisionError:
+                    continue
+            self._orientation = orientation
+        return self._orientation
+
+
 def _merge_adjacent_coplanar_faces(
     vertices: List[Vec3], faces: List[Sequence[int]], precision: int = 4
 ) -> MeshVertexMerger:
-    def get_normal_key(f):
-        v0, v1, *v = [vertices[i] for i in f]
-        for v2 in v:
-            try:
-                return normal_vector_3p(v0, v1, v2).round(precision)
-            except ZeroDivisionError:
-                continue
-        return NULLVEC
 
-    sorted_faces: dict[Vec3, List[Sequence[int]]] = {}
+    oriented_faces: dict[Vec3, List[_XFace]] = {}
+    extended_faces: List[_XFace] = []
     for face in faces:
         if len(face) < 3:
             raise ValueError("found invalid face count < 3")
-        key = get_normal_key(face)
-        sorted_faces.setdefault(key, []).append(face)
+        xface = _XFace(face)
+        extended_faces.append(xface)
+        oriented_faces.setdefault(
+            xface.orientation(vertices, precision), []
+        ).append(xface)
 
     mesh = MeshVertexMerger()
     done = set()
-    for face in faces:
-        fingerprint = hash(face)
-        if fingerprint in done:
+    for xface in extended_faces:
+        if xface.fingerprint in done:
             continue
-        done.add(fingerprint)
-        key = get_normal_key(face)
+        done.add(xface.fingerprint)
+        face = xface.indices
+        orientation = xface.orientation(vertices, precision)
+        parallel_faces = oriented_faces[orientation]
         face_set = set(face)
-        for face2 in sorted_faces.get(key, []):
-            fingerprint2 = hash(face2)
-            if fingerprint2 in done:
+        for parallel_face in parallel_faces:
+            if parallel_face.fingerprint in done:
                 continue
             # connection by at least 2 vertices required:
-            if len(face_set.intersection(set(face2))) > 1:
+            if len(face_set.intersection(set(parallel_face.indices))) > 1:
                 try:
-                    face = merge_connected_paths(face, face2)
-                    done.add(fingerprint2)
+                    face = merge_connected_paths(face, parallel_face.indices)
+                    done.add(parallel_face.fingerprint)
                     face_set = set(face)
                 except NodeMergingError:
                     pass
-        mesh.add_face(remove_colinear_vertices(vertices[i] for i in face))
+        v0 = [vertices[i] for i in face]
+        v1 = list(remove_colinear_face_vertices(v0))
+        mesh.add_face(v1)
     return mesh
 
 
 VEC3_SENTINEL = Vec3(0, 0, 0)
 
 
-def remove_colinear_vertices(vertices: Iterable[Vec3]) -> Iterator[Vec3]:
+def remove_colinear_face_vertices(vertices: Sequence[Vec3]) -> Iterator[Vec3]:
     def get_direction(v1: Vec3, v2: Vec3):
-        if v1.isclose(v2):
-            return current_direction
         return (v2 - v1).normalize()
 
-    start = VEC3_SENTINEL
-    current_direction = VEC3_SENTINEL
+    if len(vertices) < 3:
+        yield from vertices
+        return
+
+    # remove duplicated vertices
+    _vertices: List[Vec3] = [vertices[0]]
+    for v in vertices[1:]:
+        if not v.isclose(_vertices[-1]):
+            _vertices.append(v)
+
+    if len(_vertices) < 3:
+        if len(_vertices) == 1:
+            _vertices.append(_vertices[0])
+        yield from _vertices
+        return
+
+    start = _vertices[0]
     prev_vertex = VEC3_SENTINEL
-    for vertex in vertices:
-        if start is VEC3_SENTINEL:
-            start = vertex
-            yield vertex
-            continue
-        if current_direction is VEC3_SENTINEL:
-            current_direction = get_direction(start, vertex)
-            prev_vertex = vertex
-            continue
-        if get_direction(start, vertex).isclose(current_direction):
-            prev_vertex = vertex
+    current_direction = VEC3_SENTINEL
+    start_index = 0
+
+    # find start direction
+    yield start
+    while current_direction is VEC3_SENTINEL:
+        start_index += 1
+        try:
+            prev_vertex = vertices[start_index]
+        except IndexError:
+            yield prev_vertex
+            return
+        current_direction = get_direction(start, prev_vertex)
+
+    yielded_anything = False
+    _vertices.append(start)
+    for vertex in _vertices[start_index:]:
+        try:
+            if get_direction(start, vertex).isclose(current_direction):
+                prev_vertex = vertex
+                continue
+        except ZeroDivisionError:
             continue
         yield prev_vertex
+        yielded_anything = True
         start = prev_vertex
         current_direction = get_direction(start, vertex)
         prev_vertex = vertex
 
-    if prev_vertex is not VEC3_SENTINEL:
-        yield prev_vertex
+    if not yielded_anything:
+        yield _vertices[-2]  # last vertex
 
 
 class NodeMergingError(Exception):

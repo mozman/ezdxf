@@ -11,7 +11,7 @@ from ezdxf.render.mesh import (
     MeshAverageVertexMerger,
     merge_connected_paths,
     NodeMergingError,
-    remove_colinear_vertices,
+    remove_colinear_face_vertices,
 )
 from ezdxf.addons import SierpinskyPyramid
 from ezdxf.layouts import VirtualLayout
@@ -326,13 +326,37 @@ def test_mesh_subdivide():
     assert len(c.faces) == 16 * 6
 
 
+def test_debug_coplanar_faces():
+    source = MeshBuilder()
+    source.vertices = [
+        Vec3(-5.0, -5.0, -5.0),  # 0
+        Vec3(-5.0, 0.0, -5.0),  # 1
+        Vec3(0.0, 0.0, -5.0),  # 2
+        Vec3(0.0, -5.0, -5.0),  # 3
+        Vec3(-5.0, 5.0, -5.0),  # 4
+        Vec3(0.0, 5.0, -5.0),  # 5
+        Vec3(5.0, 5.0, -5.0),  # 6
+        Vec3(5.0, 0.0, -5.0),  # 7
+        Vec3(5.0, -5.0, -5.0),  # 8
+    ]
+    source.faces = [
+        (0, 1, 2, 3),
+        (4, 5, 2, 1),
+        (6, 7, 2, 5),
+        (8, 3, 2, 7),
+    ]
+    optimized_cube = source.merge_coplanar_faces()
+    assert len(optimized_cube.faces) == 1
+    assert len(optimized_cube.vertices) == 4
+
+
 def test_merge_coplanar_faces():
     c = cube().scale_uniform(10).subdivide(1)
     assert len(c.vertices) == 26
     assert len(c.faces) == 24
     optimized_cube = c.merge_coplanar_faces()
     assert len(optimized_cube.faces) == 6
-    assert len(optimized_cube.vertices) == 14  # should be 8!
+    assert len(optimized_cube.vertices) == 8
 
 
 def test_merge_coplanar_faces_two_times():
@@ -342,7 +366,7 @@ def test_merge_coplanar_faces_two_times():
     optimized_cube = c.merge_coplanar_faces()
     optimized_cube = optimized_cube.merge_coplanar_faces()
     assert len(optimized_cube.faces) == 6
-    assert len(optimized_cube.vertices) == 14  # should be 8!
+    assert len(optimized_cube.vertices) == 8
 
 
 class TestMergeConnectedPaths:
@@ -424,33 +448,59 @@ class TestMergeConnectedPaths:
 
 
 class TestRemoveColinearVertices:
-    @pytest.mark.parametrize("v", [
-        [],
-        [Vec3(0, 0)],
-        [Vec3(0, 0), Vec3(1, 0)],
-    ])
+    @pytest.mark.parametrize(
+        "v",
+        [
+            [],
+            [Vec3(0, 0)],
+            [Vec3(0, 0), Vec3(1, 0)],
+        ],
+    )
     def test_simple_cases_without_action(self, v):
-        assert list(remove_colinear_vertices(v)) == v
+        assert list(remove_colinear_face_vertices(v)) == v
 
-    @pytest.mark.parametrize("v", [
-        [Vec3(0, 0), Vec3(1, 0), Vec3(2, 0)],
-        [Vec3(0, 0), Vec3(1, 0), Vec3(2, 0), Vec3(3, 0)],
-    ])
+    @pytest.mark.parametrize(
+        "v",
+        [
+            [Vec3(0, 0), Vec3(1, 0), Vec3(2, 0)],
+            [Vec3(0, 0), Vec3(1, 0), Vec3(2, 0), Vec3(3, 0)],
+        ],
+    )
     def test_remove_in_between_vertices(self, v):
-        assert list(remove_colinear_vertices(v)) == [v[0], v[-1]]
+        assert list(remove_colinear_face_vertices(v)) == [v[0], v[-1]]
 
-    @pytest.mark.parametrize("v", [
-        [Vec3(0, 0), Vec3(0, 0), Vec3(2, 0)],
-        [Vec3(0, 0), Vec3(0, 0), Vec3(0, 0), Vec3(3, 0)],
-        [Vec3(0, 0), Vec3(0, 0), Vec3(0, 0), Vec3(0, 0)],
-        [Vec3(1, 0), Vec3(1, 0), Vec3(0, 2), Vec3(0, 2)],
-    ])
+    @pytest.mark.parametrize(
+        "v",
+        [
+            [Vec3(0, 0), Vec3(0, 0), Vec3(2, 0)],
+            [Vec3(0, 0), Vec3(0, 0), Vec3(0, 0), Vec3(3, 0)],
+            [Vec3(0, 0), Vec3(0, 0), Vec3(0, 0), Vec3(0, 0)],
+            [Vec3(1, 0), Vec3(1, 0), Vec3(0, 2), Vec3(0, 2)],
+        ],
+    )
     def test_remove_duplicated_vertices(self, v):
-        assert list(remove_colinear_vertices(v)) == [v[0], v[-1]]
+        assert list(remove_colinear_face_vertices(v)) == [v[0], v[-1]]
 
     def test_remove_in_between_vertices_with_direction_change(self):
         v = [
-            Vec3(0, 0), Vec3(1, 0), Vec3(2, 0),
-            Vec3(2, 1), Vec3(2, 2), Vec3(2, 3),
+            Vec3(0, 0),
+            Vec3(1, 0),
+            Vec3(2, 0),
+            Vec3(2, 1),
+            Vec3(2, 2),
+            Vec3(2, 3),
         ]
-        assert list(remove_colinear_vertices(v)) == [v[0], v[2], v[-1]]
+        assert list(remove_colinear_face_vertices(v)) == [v[0], v[2], v[-1]]
+
+    def test_x1(self):
+        v = [
+            Vec3(-5.0, -5.0, -5.0),
+            Vec3(-5.0, 0.0, -5.0),
+            Vec3(-5.0, 5.0, -5.0),
+            Vec3(0.0, 5.0, -5.0),
+            Vec3(5.0, 5.0, -5.0),
+            Vec3(5.0, 0.0, -5.0),
+            Vec3(5.0, -5.0, -5.0),
+            Vec3(0.0, -5.0, -5.0),
+        ]
+        assert list(remove_colinear_face_vertices(v)) == [v[0], v[2], v[4], v[6]]
