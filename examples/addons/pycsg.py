@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
 from pathlib import Path
 import ezdxf
@@ -6,6 +6,8 @@ from ezdxf.addons.pycsg import CSG
 from ezdxf.render.forms import cube, cylinder_2p
 
 DIR = Path("~/Desktop/Outbox").expanduser()
+if not DIR.exists():
+    DIR = Path(".")
 
 cube1 = cube()
 cylinder1 = cylinder_2p(
@@ -19,7 +21,8 @@ msp = doc.modelspace()
 # build solid union
 union = CSG(cube1) + CSG(cylinder1)
 # convert to mesh and render mesh to modelspace
-union.mesh().render_mesh(msp, dxfattribs={"color": 1})
+m2 = union.mesh().merge_coplanar_faces(passes=2)
+m2.render_mesh(msp, dxfattribs={"color": 1})
 
 # build solid difference
 difference = CSG(cube1) - CSG(cylinder1)

@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
 from pathlib import Path
 from time import perf_counter
@@ -9,6 +9,8 @@ from ezdxf.addons import MengerSponge
 from ezdxf.addons.pycsg import CSG
 
 DIR = Path("~/Desktop/Outbox").expanduser()
+if not DIR.exists():
+    DIR = Path(".")
 
 doc = ezdxf.new()
 doc.layers.new("sponge", dxfattribs={"color": 5})

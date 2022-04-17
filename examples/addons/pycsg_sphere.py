@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
 
 from pathlib import Path
@@ -8,6 +8,9 @@ from ezdxf.render.forms import sphere, cube
 from ezdxf.addons.pycsg import CSG
 
 DIR = Path("~/Desktop/Outbox").expanduser()
+if not DIR.exists():
+    DIR = Path(".")
+
 NLENGTH = 0.05
 
 doc = ezdxf.new()

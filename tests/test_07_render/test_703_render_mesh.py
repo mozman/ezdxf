@@ -3,7 +3,7 @@
 import pytest
 from math import radians
 from ezdxf.math import Vec3, BoundingBox
-from ezdxf.render.forms import cube
+from ezdxf.render.forms import cube, circle
 from ezdxf.render.mesh import (
     MeshVertexMerger,
     MeshBuilder,
@@ -11,6 +11,7 @@ from ezdxf.render.mesh import (
     MeshAverageVertexMerger,
     merge_connected_paths,
     NodeMergingError,
+    DegeneratedPathError,
     remove_colinear_face_vertices,
 )
 from ezdxf.addons import SierpinskyPyramid
@@ -359,6 +360,19 @@ def test_merge_coplanar_faces():
     assert len(optimized_cube.vertices) == 8
 
 
+def test_merge_disk():
+    m = MeshVertexMerger()
+    vertices = list(circle(8, close=True))
+    for v1, v2 in zip(vertices, vertices[1:]):
+        m.add_face([Vec3(), v1, v2])
+    assert len(m.vertices) == 9
+    assert len(m.faces) == 8
+
+    m2 = m.merge_coplanar_faces()
+    assert len(m2.vertices) == 9
+    assert len(m2.faces) == 2
+
+
 def test_merge_coplanar_faces_in_two_passes():
     c = cube().scale_uniform(10).subdivide(2)
     assert len(c.vertices) == 98
@@ -445,6 +459,13 @@ class TestMergeConnectedPaths:
         p = merge_connected_paths(p, p4)
         assert p == [1, 2, 3, 4, 5, 6, 7, 8]
 
+    def test_degenerated_path(self):
+        """This creates a path [0, 1] which is invalid."""
+        open_segments = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+        closing_segment = [0, 8, 1]
+        with pytest.raises(DegeneratedPathError):
+            merge_connected_paths(open_segments, closing_segment)
+
 
 class TestRemoveColinearVertices:
     @pytest.mark.parametrize(
@@ -491,7 +512,7 @@ class TestRemoveColinearVertices:
         ]
         assert list(remove_colinear_face_vertices(v)) == [v[0], v[2], v[-1]]
 
-    def test_x1(self):
+    def test_subdivided_square(self):
         v = [
             Vec3(-5.0, -5.0, -5.0),
             Vec3(-5.0, 0.0, -5.0),
@@ -502,4 +523,9 @@ class TestRemoveColinearVertices:
             Vec3(5.0, -5.0, -5.0),
             Vec3(0.0, -5.0, -5.0),
         ]
-        assert list(remove_colinear_face_vertices(v)) == [v[0], v[2], v[4], v[6]]
+        assert list(remove_colinear_face_vertices(v)) == [
+            v[0],
+            v[2],
+            v[4],
+            v[6],
+        ]

@@ -322,7 +322,7 @@ class MeshBuilder:
         mesh.faces = list(other.faces)
         return mesh  # type: ignore
 
-    def merge_coplanar_faces(self, passes: int = 1) -> "MeshBuilder":
+    def merge_coplanar_faces(self, passes: int = 1) -> "MeshTransformer":
         """Returns a new :class:`MeshBuilder` object with merged adjacent
         coplanar faces.
 
@@ -333,11 +333,7 @@ class MeshBuilder:
         mesh = self
         for _ in range(passes):
             mesh = _merge_adjacent_coplanar_faces(mesh.vertices, mesh.faces)
-        return self.__class__.from_builder(mesh)
-
-
-class MeshTransformer(MeshBuilder):
-    """A mesh builder with inplace transformation support."""
+        return MeshTransformer.from_builder(mesh)
 
     def subdivide(self, level: int = 1, quads=True) -> "MeshTransformer":
         """Returns a new :class:`MeshTransformer` object with subdivided faces
@@ -353,6 +349,10 @@ class MeshTransformer(MeshBuilder):
             mesh = _subdivide(mesh, quads)  # type: ignore
             level -= 1
         return MeshTransformer.from_builder(mesh)
+
+
+class MeshTransformer(MeshBuilder):
+    """A mesh builder with inplace transformation support."""
 
     def transform(self, matrix: "Matrix44"):
         """Transform mesh inplace by applying the transformation `matrix`.
@@ -693,11 +693,11 @@ def _merge_adjacent_coplanar_faces(
                     face = merge_connected_paths(face, parallel_face.indices)
                     done.add(parallel_face.fingerprint)
                     face_set = set(face)
-                except NodeMergingError:
+                except (NodeMergingError, DegeneratedPathError):
                     pass
-        v0 = [vertices[i] for i in face]
-        v1 = list(remove_colinear_face_vertices(v0))
-        mesh.add_face(v1)
+
+        v0 = list(remove_colinear_face_vertices([vertices[i] for i in face]))
+        mesh.add_face(v0)
     return mesh
 
 
@@ -763,6 +763,10 @@ class NodeMergingError(Exception):
     pass
 
 
+class DegeneratedPathError(Exception):
+    pass
+
+
 def merge_connected_paths(
     p1: Sequence[int], p2: Sequence[int]
 ) -> Sequence[int]:
@@ -792,4 +796,6 @@ def merge_connected_paths(
             raise NodeMergingError
         connected_path.append(start)
 
+    if len(connected_path) < 3:
+        raise DegeneratedPathError
     return connected_path
