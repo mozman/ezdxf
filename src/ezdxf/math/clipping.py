@@ -126,13 +126,13 @@ class _Node:
         self.y: float = vertex.y
 
         # Reference to the next vertex of the polygon
-        self.next: Optional[_Node] = None
+        self.next: _Node = None  # type: ignore
 
         # Reference to the previous vertex of the polygon
-        self.prev: Optional[_Node] = None
+        self.prev: _Node = None  # type: ignore
 
         # Reference to the corresponding intersection vertex in the other polygon
-        self.neighbour: Optional[_Node] = None
+        self.neighbour: _Node = None  # type: ignore
 
         # True if intersection is an entry point, False if exit
         self.entry: bool = entry
@@ -161,7 +161,7 @@ class _Polygon:
     a polygon.
     """
 
-    first: Optional[_Node] = None
+    first: _Node = None  # type: ignore
 
     def add(self, vertex: _Node):
         """Add a vertex object to the polygon (vertex is added at the 'end' of
@@ -175,6 +175,7 @@ class _Polygon:
             _next = self.first
             assert isinstance(_next, _Node)
             prev = _next.prev
+            assert isinstance(prev, _Node)
             _next.prev = vertex
             vertex.next = _next
             vertex.prev = prev
@@ -434,24 +435,30 @@ class BooleanOperation(enum.Enum):
     INTERSECTION = "intersection"
 
 
-def greiner_hormann_intersection(p1: Iterable[Vertex], p2: Iterable[Vertex]):
-    """Returns the INTERSECTION of polygon `p1` &  polygon `p2`. """
+def greiner_hormann_intersection(
+    p1: Iterable[Vertex], p2: Iterable[Vertex]
+) -> List[List[Vec2]]:
+    """Returns the INTERSECTION of polygon `p1` &  polygon `p2`."""
     return greiner_hormann(p1, p2, BooleanOperation.INTERSECTION)
 
 
-def greiner_hormann_difference(p1: Iterable[Vertex], p2: Iterable[Vertex]):
-    """Returns the DIFFERENCE of polygon `p1` - polygon `p2`. """
+def greiner_hormann_difference(
+    p1: Iterable[Vertex], p2: Iterable[Vertex]
+) -> List[List[Vec2]]:
+    """Returns the DIFFERENCE of polygon `p1` - polygon `p2`."""
     return greiner_hormann(p1, p2, BooleanOperation.DIFFERENCE)
 
 
-def greiner_hormann_union(p1: Iterable[Vertex], p2: Iterable[Vertex]):
-    """Returns the UNION of polygon `p1` | polygon `p2`. """
+def greiner_hormann_union(
+    p1: Iterable[Vertex], p2: Iterable[Vertex]
+) -> List[List[Vec2]]:
+    """Returns the UNION of polygon `p1` | polygon `p2`."""
     return greiner_hormann(p1, p2, BooleanOperation.UNION)
 
 
 def greiner_hormann(
-    p1: Iterable[Vertex], p2: Iterable[Vertex], op: BooleanOperation.DIFFERENCE
-):
+    p1: Iterable[Vertex], p2: Iterable[Vertex], op: BooleanOperation
+) -> List[List[Vec2]]:
     """Implements a 2d clipping function to perform 3 boolean operations:
 
     - UNION: p1 | p2 ... p1 OR p2
@@ -465,9 +472,7 @@ def greiner_hormann(
 
     def build(vertices) -> _Polygon:
         polygon = _Polygon()
-        _vertices =  Vec2.list(vertices)
-        if not _vertices[0].isclose(_vertices[-1]):
-            _vertices.append(_vertices[0])
+        _vertices = Vec2.list(vertices)
         for v in _vertices:
             polygon.add(_Node(v))
         return polygon
