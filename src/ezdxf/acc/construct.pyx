@@ -71,81 +71,51 @@ def intersection_line_line_2d(
         intersection point as :class:`Vec2`
 
     """
-    # Sources:
-    # compas: https://github.com/compas-dev/compas/blob/master/src/compas/geometry/_core/intersections.py (MIT)
-    # wikipedia: https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
-    cdef Vec2 a, b, c, d, res = Vec2()
-    cdef double x1, y1, x2, y2, x3, y3, x4, y4, det
-    cdef double x1_x2, y3_y4, y1_y2, x3_x4, e, f
+    # Algorithm based on: http://paulbourke.net/geometry/pointlineplane/
+    # chapter: Intersection point of two line segments in 2 dimensions
+    cdef Vec2 s1, s2, c1, c2, res
+    cdef double s1x, s1y, s2x, s2y, c1x, c1y, c2x, c2y, den
+    cdef double us, uc
+    cdef double lwr = 0.0, upr = 1.0
     cdef bint in_range
 
-    a = line1[0]
-    b = line1[1]
-    c = line2[0]
-    d = line2[1]
+    s1 = line1[0]
+    s2 = line1[1]
+    c1 = line2[0]
+    c2 = line2[1]
 
-    x1 = a.x
-    y1 = a.y
-    x2 = b.x
-    y2 = b.y
-    x3 = c.x
-    y3 = c.y
-    x4 = d.x
-    y4 = d.y
+    s1x = s1.x
+    s1y = s1.y
+    s2x = s2.x
+    s2y = s2.y
+    c1x = c1.x
+    c1y = c1.y
+    c2x = c2.x
+    c2y = c2.y
 
-    x1_x2 = x1 - x2
-    y3_y4 = y3 - y4
-    y1_y2 = y1 - y2
-    x3_x4 = x3 - x4
+    den = (c2y - c1y) * (s2x - s1x) - (c2x - c1x) * (s2y - s1y)
 
-    det = x1_x2 * y3_y4 - y1_y2 * x3_x4
-
-    if fabs(det) <= abs_tol:
+    if fabs(den) <= abs_tol:
         return None
 
-    e = x1 * y2 - y1 * x2
-    f = x3 * y4 - y3 * x4
-    # det near zero is checked by if-statement above:
+
+    # den near zero is checked by if-statement above:
     with cython.cdivision(True):
-        x = (e * x3_x4 - x1_x2 * f) / det
-        y = (e * y3_y4 - y1_y2 * f) / det
+        us = ((c2x - c1x) * (s1y - c1y) - (c2y - c1y) * (s1x - c1x)) / den
 
-    if not virtual:
-        if x1 > x2:
-            in_range = (x2 - abs_tol) <= x <= (x1 + abs_tol)
-        else:
-            in_range = (x1 - abs_tol) <= x <= (x2 + abs_tol)
+    res = Vec2(s1x + us * (s2x - s1x), s1y + us * (s2y - s1y))
+    if virtual:
+        return res
 
-        if not in_range:
-            return None
-
-        if x3 > x4:
-            in_range = (x4 - abs_tol) <= x <= (x3 + abs_tol)
-        else:
-            in_range = (x3 - abs_tol) <= x <= (x4 + abs_tol)
-
-        if not in_range:
-            return None
-
-        if y1 > y2:
-            in_range = (y2 - abs_tol) <= y <= (y1 + abs_tol)
-        else:
-            in_range = (y1 - abs_tol) <= y <= (y2 + abs_tol)
-
-        if not in_range:
-            return None
-
-        if y3 > y4:
-            in_range = (y4 - abs_tol) <= y <= (y3 + abs_tol)
-        else:
-            in_range = (y3 - abs_tol) <= y <= (y4 + abs_tol)
-
-        if not in_range:
-            return None
-
-    res.x = x
-    res.y = y
-    return res
+    # 0 = intersection point is the start point of the line
+    # 1 = intersection point is the end point of the line
+    # otherwise: linear interpolation
+    if lwr <= us <= upr:  # intersection point is on the subject line
+        with cython.cdivision(True):
+            uc = ((s2x - s1x) * (s1y - c1y) - (s2y - s1y) * (s1x - c1x)) / den
+        if lwr <= uc <= upr:  # intersection point is on the clipping line
+            return res
+    return None
 
 cdef double _determinant(CppVec3 v1, CppVec3 v2, CppVec3 v3):
     return v1.x * v2.y * v3.z + v1.y * v2.z * v3.x + \
