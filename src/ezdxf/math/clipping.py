@@ -255,8 +255,8 @@ class _Polygon:
 
         A|B ... A OR B  (Union of A and B)
         A&B ... A AND B (Intersection of A and B)
-        A\B ... A - B
-        B\A ... B - A
+        A\\B ... A - B
+        B\\A ... B - A
 
         The entry records store the direction the algorithm should take when
         it arrives at that entry point in an intersection. Depending on the
@@ -268,8 +268,8 @@ class _Polygon:
               -----
         A|B   b   b
         A&B   f   f
-        A\B   b   f
-        B\A   f   b
+        A\\B  b   f
+        B\\A  f   b
 
         f = True, b = False when stored in the entry record
         """
