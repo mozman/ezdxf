@@ -160,29 +160,24 @@ class IntersectionError(Exception):
 
 
 class _Polygon:
-    """Manages a circular doubly linked list of Vertex objects that represents
+    """Manages a circular doubly linked list of _Node objects that represents
     a polygon.
     """
 
     first: _Node = None  # type: ignore
 
-    def add(self, vertex: _Node):
-        """Add a vertex object to the polygon (vertex is added at the 'end' of
-        the list").
-        """
+    def add(self, node: _Node):
         if self.first is None:
-            self.first = vertex
-            self.first.next = vertex
-            self.first.prev = vertex
-        else:
-            _next = self.first
-            assert isinstance(_next, _Node)
-            prev = _next.prev
-            assert isinstance(prev, _Node)
-            _next.prev = vertex
-            vertex.next = _next
-            vertex.prev = prev
-            prev.next = vertex
+            self.first = node
+            self.first.next = node
+            self.first.prev = node
+        else:  # insert as last node
+            first = self.first
+            last = first.prev
+            first.prev = node
+            node.next = first
+            node.prev = last
+            last.next = node
 
     @staticmethod
     def insert(vertex: _Node, start: _Node, end: _Node):
