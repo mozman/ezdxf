@@ -74,10 +74,8 @@ def intersection_line_line_2d(
     # Algorithm based on: http://paulbourke.net/geometry/pointlineplane/
     # chapter: Intersection point of two line segments in 2 dimensions
     cdef Vec2 s1, s2, c1, c2, res
-    cdef double s1x, s1y, s2x, s2y, c1x, c1y, c2x, c2y, den
-    cdef double us, uc
+    cdef double s1x, s1y, s2x, s2y, c1x, c1y, c2x, c2y, den, us, uc
     cdef double lwr = 0.0, upr = 1.0
-    cdef bint in_range
 
     s1 = line1[0]
     s2 = line1[1]
