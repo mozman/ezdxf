@@ -60,6 +60,17 @@ def test_intersect_normal_vertical():
     assert point.isclose(vec2(10, 3))
 
 
+def test_intersection_by_line_end_points():
+    hor = (vec2(1, 1), vec2(3, 1))
+    vert = (vec2(2, 1), vec2(2, 5))
+    point = intersection_line_line_2d(hor, vert)
+    assert point.isclose(vec2(2, 1))
+
+    vert = (vec2(2, 5), vec2(2, 1))
+    point = intersection_line_line_2d(hor, vert)
+    assert point.isclose(vec2(2, 1))
+
+
 def test_intersect_real():
     line1 = (vec2(0, 0), vec2(4, 4))
     line2 = (vec2(3, 2), vec2(5, 0))
@@ -100,13 +111,13 @@ def test_issue_664():
     expected = Vec2(16399659.76235549, -199438.8133075837)
 
     point = intersection_line_line_2d(
-        (p1, p2), (p3, p4), virtual=False, abs_tol=1e-5
+        (p1, p2), (p3, p4), virtual=False
     )
     assert point.isclose(expected)
 
     cl1 = ConstructionLine(p1, p2)
     cl2 = ConstructionLine(p3, p4)
-    assert cl1.intersect(cl2, abs_tol=1e-5).isclose(expected)
+    assert cl1.intersect(cl2).isclose(expected)
 
 
 if __name__ == "__main__":
