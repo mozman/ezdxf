@@ -10,6 +10,7 @@ from ezdxf.render.mesh import (
     MeshTransformer,
     MeshAverageVertexMerger,
     merge_connected_paths,
+    merge_full_patch,
     NodeMergingError,
     DegeneratedPathError,
     remove_colinear_face_vertices,
@@ -369,8 +370,8 @@ def test_merge_disk():
     assert len(m.faces) == 8
 
     m2 = m.merge_coplanar_faces()
-    assert len(m2.vertices) == 9
-    assert len(m2.faces) == 2
+    assert len(m2.vertices) == 8
+    assert len(m2.faces) == 1
 
 
 def test_merge_coplanar_faces_in_two_passes():
@@ -529,3 +530,15 @@ class TestRemoveColinearVertices:
             v[4],
             v[6],
         ]
+
+
+class TestMergeFullPatch:
+    @pytest.mark.parametrize("seg", [
+        [0, 8, 1],
+        [1, 0, 8],
+        [8, 1, 0],
+    ])
+    def test_fill_pie(self, seg):
+        open_pie = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+        res = merge_full_patch(open_pie, seg)
+        assert res == [1, 2, 3, 4, 5, 6, 7, 8]

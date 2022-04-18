@@ -687,15 +687,18 @@ def _merge_adjacent_coplanar_faces(
         for parallel_face in parallel_faces:
             if parallel_face.fingerprint in done:
                 continue
+            common_vertices = face_set.intersection(set(parallel_face.indices))
             # connection by at least 2 vertices required:
-            if len(face_set.intersection(set(parallel_face.indices))) > 1:
-                try:
-                    face = merge_connected_paths(face, parallel_face.indices)
-                    done.add(parallel_face.fingerprint)
-                    face_set = set(face)
-                except (NodeMergingError, DegeneratedPathError):
-                    pass
-
+            if len(common_vertices) > 1:
+                if len(common_vertices) == len(parallel_face.indices):
+                    face = merge_full_patch(face, parallel_face.indices)
+                else:
+                    try:
+                        face = merge_connected_paths(face, parallel_face.indices)
+                    except (NodeMergingError, DegeneratedPathError):
+                        continue
+                done.add(parallel_face.fingerprint)
+                face_set = set(face)
         v0 = list(remove_colinear_face_vertices([vertices[i] for i in face]))
         mesh.add_face(v0)
     return mesh
@@ -799,3 +802,15 @@ def merge_connected_paths(
     if len(connected_path) < 3:
         raise DegeneratedPathError
     return connected_path
+
+
+def merge_full_patch(path: Sequence[int], patch: Sequence[int]):
+    count = len(path)
+    new_path = []
+    for pos, node in enumerate(path):
+        prev = path[pos - 1]
+        succ = path[(pos + 1) % count]
+        if prev in patch and succ in patch:
+            continue
+        new_path.append(node)
+    return new_path
