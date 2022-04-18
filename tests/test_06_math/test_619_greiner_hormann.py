@@ -4,11 +4,13 @@
 import pytest
 from ezdxf.math import Vec2
 from ezdxf.math.clipping import (
+    greiner_hormann_union,
+    greiner_hormann_difference,
     greiner_hormann_intersection,
     line_intersection,
     IntersectionError,
 )
-from ezdxf.render.forms import circle
+from ezdxf.render.forms import circle, translate
 
 
 class TestLineIntersection:
@@ -100,73 +102,201 @@ def inside():  # complete inside
 
 @pytest.fixture
 def outside():  # complete outside
-    return [(1, 1), (2, 1), (2, 2), (1, 2)]
+    return [(2, 2), (3, 2), (3, 3), (2, 3)]
+
+
+UNION_OVERLAPPING = [
+    Vec2(-1, -1),
+    Vec2(1, -1),
+    Vec2(1, 0),
+    Vec2(2, 0),
+    Vec2(2, 2),
+    Vec2(0, 2),
+    Vec2(0, 1),
+    Vec2(-1, 1),
+]
+
+UNION_OUTSIDE = [
+    Vec2(-1, -1),
+    Vec2(1, -1),
+    Vec2(1, 1),
+    Vec2(2, 0),
+    Vec2(2, 2),
+    Vec2(0, 2),
+    Vec2(0, 1),
+    Vec2(-1, 1),
+]
+
+
+class TestBooleanUnion:
+    def test_overlapping_rectangles(self, rect, overlapping):
+        polygons = greiner_hormann_union(rect, overlapping)
+        assert len(polygons) == 1
+        result = polygons[0]
+        assert len(result) == 9
+        assert result[0] == result[-1], "expected closed polygon"
+        assert set(UNION_OVERLAPPING) == set(result)
+
+    def test_polygon_orientation_is_not_important(self, rect, overlapping):
+        rect.reverse()
+        result = greiner_hormann_union(rect, overlapping)[0]
+        assert set(UNION_OVERLAPPING) == set(result)
+
+        overlapping.reverse()
+        result = greiner_hormann_union(rect, overlapping)[0]
+        assert set(UNION_OVERLAPPING) == set(result)
+
+    def test_subject_inside_rect(self, rect, inside):
+        polygons = greiner_hormann_union(rect, inside)
+        assert len(polygons) == 1
+        result = polygons[0]
+        assert len(result) == 5
+        assert result[0] == result[-1], "expected closed polygon"
+        assert set(rect) == set(result)
+
+    def test_subject_is_outside_rect(self, rect, outside):
+        """Returns the subject polygon `p1`."""
+        polygons = greiner_hormann_union(rect, outside)
+        result = polygons[0]
+        assert set(rect) == set(result)
+
+    def test_circle_outside_rect(self, rect):
+        """Returns the subject polygon `p1`."""
+        result = greiner_hormann_union(rect, circle(16, 3))[0]
+        assert set(rect) == set(result)
+
+    def test_overlapping_adjacent_rects(self, rect):
+        """Algorithm returns weired results for this case!
+
+        Collinear edges seem to be an issue.
+        """
+        offset = Vec2(1.5, 0)
+        rect2 = [offset + v for v in rect]
+        polygons = greiner_hormann_union(rect, rect2)
+        assert len(polygons) == 2  # and what now? This result is weired!
+
+    def test_non_overlapping_adjacent_rects(self, rect):
+        """Algorithm does not recognize non overlapping adjacent figures!"""
+        offset = Vec2(2, 0)
+        rect2 = [offset + v for v in rect]
+        polygons = greiner_hormann_union(rect, rect2)
+        result = polygons[0]
+        assert len(result) == 5
+        # No union of the two rectangles is done, I expected more from this
+        # algorithm!?
+        assert set(rect) == set(result)
+
+
+DIFF_OVERLAPPING = [
+    Vec2(-1, -1),
+    Vec2(1, -1),
+    Vec2(1, 0),
+    Vec2(0, 0),
+    Vec2(0, 1),
+    Vec2(-1, 1),
+]
+
+
+class TestBooleanDifference:
+    def test_overlapping_rectangles(self, rect, overlapping):
+        polygons = greiner_hormann_difference(rect, overlapping)
+        assert len(polygons) == 1
+        result = polygons[0]
+        assert len(result) == 7
+        assert result[0] == result[-1], "expected closed polygon"
+        assert set(DIFF_OVERLAPPING) == set(result)
+
+    def test_polygon_orientation_is_not_important(self, rect, overlapping):
+        rect.reverse()
+        result = greiner_hormann_difference(rect, overlapping)[0]
+        assert set(DIFF_OVERLAPPING) == set(result)
+
+        overlapping.reverse()
+        result = greiner_hormann_difference(rect, overlapping)[0]
+        assert set(DIFF_OVERLAPPING) == set(result)
+
+    def test_subject_inside_rect(self, rect, inside):
+        """This algorthm can not handle holes:
+
+        This returns always the "subject" polygon p1.
+
+        """
+        polygons = greiner_hormann_difference(rect, inside)
+        assert len(polygons) == 1
+        result = polygons[0]
+        assert len(result) == 5
+        assert set(rect) == set(result)
+
+    def test_subject_inside_rect_reverse_difference(self, rect, inside):
+        """This algorthm can not handle holes:
+
+        This returns always the "subject" polygon p1.
+
+        """
+        result = greiner_hormann_difference(inside, rect)[0]
+        assert len(result) == 5
+        assert set(inside) == set(result)
+
+    def test_subject_is_outside_rect(self, rect, outside):
+        """Returns the subject polygon `p1`."""
+        polygons = greiner_hormann_difference(rect, outside)
+        result = polygons[0]
+        assert set(rect) == set(result)
+
+    def test_circle_outside_rect(self, rect):
+        """Returns the subject polygon `p1`."""
+        result = greiner_hormann_difference(rect, circle(16, 3))[0]
+        assert set(rect) == set(result)
+
+
+INTERSECT_OVERLAPPING = [
+    Vec2(0, 0),
+    Vec2(1, 0),
+    Vec2(1, 1),
+    Vec2(0, 1),
+]
 
 
 class TestBooleanIntersection:
-    def test_subject_do_overlap_clipping_rect(self, rect, overlapping):
+    def test_overlapping_rectangles(self, rect, overlapping):
         polygons = greiner_hormann_intersection(rect, overlapping)
         assert len(polygons) == 1
         result = polygons[0]
         assert len(result) == 5
-        assert result[0] == result[-1]
-        assert Vec2(0, 0) in result
-        assert Vec2(1, 0) in result
-        assert Vec2(1, 1) in result
-        assert Vec2(0, 1) in result
+        assert result[0] == result[-1], "expected closed polygon"
+        assert set(INTERSECT_OVERLAPPING) == set(result)
 
-    def test_subject_is_inside_rect(self, rect, inside):
+    def test_polygon_orientation_is_not_important(self, rect, overlapping):
+        rect.reverse()
+        result = greiner_hormann_intersection(rect, overlapping)[0]
+        assert set(INTERSECT_OVERLAPPING) == set(result)
+
+        overlapping.reverse()
+        result = greiner_hormann_intersection(rect, overlapping)[0]
+        assert set(INTERSECT_OVERLAPPING) == set(result)
+
+    def test_subject_inside_rect(self, rect, inside):
+        """This algorthm can not handle holes:
+
+        This returns always the "subject" polygon p1.
+
+        """
         polygons = greiner_hormann_intersection(rect, inside)
         assert len(polygons) == 1
         result = polygons[0]
-        assert len(result) == 4
-        for v in inside:
-            assert Vec2(v) in result
-
-    def test_clockwise_oriented_clipping_rect(self, rect, inside):
-        rect.reverse()
-        polygons = greiner_hormann_intersection(rect, inside)
-        result = polygons[0]
-        assert len(result) == 4
-        for v in inside:
-            assert Vec2(v) in result
+        assert len(result) == 5
+        assert set(rect) == set(result)
 
     def test_subject_is_outside_rect(self, rect, outside):
+        """Returns the subject polygon `p1`."""
         polygons = greiner_hormann_intersection(rect, outside)
         result = polygons[0]
-        assert len(result) == 0
+        assert set(rect) == set(result)
 
     def test_circle_outside_rect(self, rect):
-        c = circle(16, 3)
-        polygons = greiner_hormann_intersection(rect, c)
-        result = polygons[0]
-        assert len(result) == 4
-        for v in rect:
-            assert Vec2(v) in result
-
-    def test_circle_inside_rect(self, rect):
-        c = Vec2.list(circle(16, 0.7))
-        polygons = greiner_hormann_intersection(rect, c)
-        result = polygons[0]
-        assert len(result) == 16
-        for v in c:
-            assert Vec2(v) in result
-
-    def test_rect_outside_circle(self, rect):
-        c = circle(16, 0.7)
-        polygons = greiner_hormann_intersection(rect, c)
-        result = polygons[0]
-        assert len(result) == 16
-        for v in c:
-            assert Vec2(v) in result
-
-    def test_rect_inside_circle(self, rect):
-        c = circle(16, 3)
-        polygons = greiner_hormann_intersection(rect, c)
-        result = polygons[0]
-        assert len(result) == 4
-        for v in rect:
-            assert Vec2(v) in result
+        """Returns the subject polygon `p1`."""
+        result = greiner_hormann_intersection(rect, circle(16, 3))[0]
+        assert set(rect) == set(result)
 
 
 if __name__ == "__main__":

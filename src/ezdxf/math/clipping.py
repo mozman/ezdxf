@@ -224,7 +224,10 @@ class _Polygon:
 
     @property
     def points(self) -> List[Vec2]:
-        return [v.vtx for v in self]
+        points = [v.vtx for v in self]
+        if not points[0].isclose(points[-1]):
+            points.append(points[0])
+        return list(filter_coincident_vertices(points))
 
     def unprocessed(self):
         """Check if any unchecked intersections remain in the polygon."""
@@ -330,9 +333,7 @@ class _Polygon:
         # Phase 3: Construct clipped polygons
         clipped_polygons: List[List[Vec2]] = []
         while self.unprocessed():
-            current: Optional[_Node] = self.first_intersect
-            assert current is not None
-
+            current: _Node = self.first_intersect  # type: ignore
             clipped = _Polygon()
             clipped.add(_Node(current))
             while True:
@@ -360,6 +361,15 @@ class _Polygon:
             clipped_polygons.append(self.points)
 
         return clipped_polygons
+
+
+def filter_coincident_vertices(vertices: Iterable[Vec2]) -> Iterator[Vec2]:
+    prev = None
+    for v in vertices:
+        if prev is not None and v.isclose(prev):
+            continue
+        yield v
+        prev = v
 
 
 def next_non_intersection_node(v: _Node) -> _Node:
