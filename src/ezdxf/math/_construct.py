@@ -64,67 +64,38 @@ def intersection_line_line_2d(
         intersection point as :class:`Vec2`
 
     """
-    # Sources:
-    # compas: https://github.com/compas-dev/compas/blob/master/src/compas/geometry/_core/intersections.py (MIT)
-    # wikipedia: https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
+    # Algorithm based on: http://paulbourke.net/geometry/pointlineplane/
+    # chapter: Intersection point of two line segments in 2 dimensions
+    s1, s2 = line1  # the subject line
+    c1, c2 = line2  # the clipping line
+    s1x = s1.x
+    s1y = s1.y
+    s2x = s2.x
+    s2y = s2.y
+    c1x = c1.x
+    c1y = c1.y
+    c2x = c2.x
+    c2y = c2.y
 
-    a, b = line1
-    c, d = line2
-
-    x1, y1 = a.x, a.y
-    x2, y2 = b.x, b.y
-    x3, y3 = c.x, c.y
-    x4, y4 = d.x, d.y
-
-    x1_x2 = x1 - x2
-    y3_y4 = y3 - y4
-    y1_y2 = y1 - y2
-    x3_x4 = x3 - x4
-
-    d = x1_x2 * y3_y4 - y1_y2 * x3_x4
-
-    if math.fabs(d) <= abs_tol:  # type: ignore
+    den = (c2y - c1y) * (s2x - s1x) - (c2x - c1x) * (s2y - s1y)
+    if math.fabs(den) <= abs_tol:
         return None
 
-    a = x1 * y2 - y1 * x2
-    b = x3 * y4 - y3 * x4
-    x = (a * x3_x4 - x1_x2 * b) / d
-    y = (a * y3_y4 - y1_y2 * b) / d
+    us = ((c2x - c1x) * (s1y - c1y) - (c2y - c1y) * (s1x - c1x)) / den
+    intersection_point = Vec2(s1x + us * (s2x - s1x), s1y + us * (s2y - s1y))
+    if virtual:
+        return intersection_point
 
-    if not virtual:
-        if x1 > x2:
-            in_range = (x2 - abs_tol) <= x <= (x1 + abs_tol)
-        else:
-            in_range = (x1 - abs_tol) <= x <= (x2 + abs_tol)
-
-        if not in_range:
-            return None
-
-        if x3 > x4:
-            in_range = (x4 - abs_tol) <= x <= (x3 + abs_tol)
-        else:
-            in_range = (x3 - abs_tol) <= x <= (x4 + abs_tol)
-
-        if not in_range:
-            return None
-
-        if y1 > y2:
-            in_range = (y2 - abs_tol) <= y <= (y1 + abs_tol)
-        else:
-            in_range = (y1 - abs_tol) <= y <= (y2 + abs_tol)
-
-        if not in_range:
-            return None
-
-        if y3 > y4:
-            in_range = (y4 - abs_tol) <= y <= (y3 + abs_tol)
-        else:
-            in_range = (y3 - abs_tol) <= y <= (y4 + abs_tol)
-
-        if not in_range:
-            return None
-
-    return Vec2(x, y)
+    # 0 = intersection point is the start point of the line
+    # 1 = intersection point is the end point of the line
+    # otherwise: linear interpolation
+    lwr = 0.0  # tolerances required?
+    upr = 1.0  # tolerances required?
+    if lwr <= us <= upr:  # intersection point is on the subject line
+        uc = ((s2x - s1x) * (s1y - c1y) - (s2y - s1y) * (s1x - c1x)) / den
+        if lwr <= uc <= upr:  # intersection point is on the clipping line
+            return intersection_point
+    return None
 
 
 def _determinant(v1, v2, v3) -> float:
@@ -175,7 +146,7 @@ def intersection_ray_ray_3d(
         p2 = o2 + d2 * (det2 / denominator)
         if p1.isclose(p2, abs_tol=abs_tol):
             # ray1 and ray2 have an intersection point
-            return p1,
+            return (p1,)
         else:
             # ray1 and ray2 do not have an intersection point,
             # p1 and p2 are the points of closest approach on each ray

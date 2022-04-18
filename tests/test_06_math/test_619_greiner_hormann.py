@@ -10,7 +10,7 @@ from ezdxf.math.clipping import (
     line_intersection,
     IntersectionError,
 )
-from ezdxf.render.forms import circle, translate
+from ezdxf.render.forms import circle
 
 
 class TestLineIntersection:
@@ -87,45 +87,49 @@ class TestLineIntersection:
 
 @pytest.fixture
 def rect():
-    return [(-1, -1), (1, -1), (1, 1), (-1, 1)]
+    return Vec2.list([(-1, -1), (1, -1), (1, 1), (-1, 1)])
 
 
 @pytest.fixture
 def overlapping():  # overlapping
-    return [(0, 0), (2, 0), (2, 2), (0, 2)]
+    return Vec2.list([(0, 0), (2, 0), (2, 2), (0, 2)])
 
 
 @pytest.fixture
 def inside():  # complete inside
-    return [(0, 0), (0.5, 0), (0.5, 0.5), (0, 0.5)]
+    return Vec2.list([(0, 0), (0.5, 0), (0.5, 0.5), (0, 0.5)])
 
 
 @pytest.fixture
 def outside():  # complete outside
-    return [(2, 2), (3, 2), (3, 3), (2, 3)]
+    return Vec2.list([(2, 2), (3, 2), (3, 3), (2, 3)])
 
 
-UNION_OVERLAPPING = [
-    Vec2(-1, -1),
-    Vec2(1, -1),
-    Vec2(1, 0),
-    Vec2(2, 0),
-    Vec2(2, 2),
-    Vec2(0, 2),
-    Vec2(0, 1),
-    Vec2(-1, 1),
-]
+UNION_OVERLAPPING = Vec2.list(
+    [
+        (-1, -1),
+        (1, -1),
+        (1, 0),
+        (2, 0),
+        (2, 2),
+        (0, 2),
+        (0, 1),
+        (-1, 1),
+    ]
+)
 
-UNION_OUTSIDE = [
-    Vec2(-1, -1),
-    Vec2(1, -1),
-    Vec2(1, 1),
-    Vec2(2, 0),
-    Vec2(2, 2),
-    Vec2(0, 2),
-    Vec2(0, 1),
-    Vec2(-1, 1),
-]
+UNION_OUTSIDE = Vec2.list(
+    [
+        (-1, -1),
+        (1, -1),
+        (1, 1),
+        (2, 0),
+        (2, 2),
+        (0, 2),
+        (0, 1),
+        (-1, 1),
+    ]
+)
 
 
 class TestBooleanUnion:
