@@ -116,14 +116,17 @@ class _Node:
 
     def __init__(
         self,
-        vertex: Union[Vec2, "_Node"],
+        vtx: Union[Vec2, "_Node"],
         alpha: float = 0.0,
         intersect=False,
         entry=True,
         checked=False,
     ):
-        self.x: float = vertex.x
-        self.y: float = vertex.y
+        self.vtx: Vec2
+        if isinstance(vtx, _Node):
+            self.vtx = vtx.vtx
+        else:
+            self.vtx = vtx
 
         # Reference to the next vertex of the polygon
         self.next: _Node = None  # type: ignore
@@ -152,7 +155,7 @@ class _Node:
             self.neighbour.set_checked()
 
 
-class _IntersectionError(Exception):
+class IntersectionError(Exception):
     pass
 
 
@@ -221,7 +224,7 @@ class _Polygon:
 
     @property
     def points(self) -> List[Vec2]:
-        return Vec2.list((v.x, v.y) for v in self)
+        return [v.vtx for v in self]
 
     def unprocessed(self):
         """Check if any unchecked intersections remain in the polygon."""
@@ -273,17 +276,17 @@ class _Polygon:
                 for clipper_vertex in clip:
                     if not clipper_vertex.intersect:
                         try:
-                            intersection_point, alphaS, alphaC = _intersect(
-                                subject_vertex,
-                                next_non_intersection_vertex(
+                            intersection_point, alphaS, alphaC = line_intersection(
+                                subject_vertex.vtx,
+                                next_non_intersection_node(
                                     subject_vertex.next
-                                ),
-                                clipper_vertex,
-                                next_non_intersection_vertex(
+                                ).vtx,
+                                clipper_vertex.vtx,
+                                next_non_intersection_node(
                                     clipper_vertex.next
-                                ),
+                                ).vtx,
                             )
-                        except _IntersectionError:
+                        except IntersectionError:
                             continue
                         subject_node = _Node(
                             intersection_point,
@@ -303,22 +306,22 @@ class _Polygon:
                         self.insert(
                             subject_node,
                             subject_vertex,
-                            next_non_intersection_vertex(subject_vertex.next),
+                            next_non_intersection_node(subject_vertex.next),
                         )
                         clip.insert(
                             clipper_node,
                             clipper_vertex,
-                            next_non_intersection_vertex(clipper_vertex.next),
+                            next_non_intersection_node(clipper_vertex.next),
                         )
 
         # Phase 2: Identify entry/exit points
-        s_entry ^= is_inside_polygon(self.first, clip)
+        s_entry ^= is_inside_polygon(self.first.vtx, clip)
         for subject_vertex in self:
             if subject_vertex.intersect:
                 subject_vertex.entry = s_entry
                 s_entry = not s_entry
 
-        c_entry ^= is_inside_polygon(clip.first, self)
+        c_entry ^= is_inside_polygon(clip.first.vtx, self)
         for clipper_vertex in clip:
             if clipper_vertex.intersect:
                 clipper_vertex.entry = c_entry
@@ -359,7 +362,7 @@ class _Polygon:
         return clipped_polygons
 
 
-def next_non_intersection_vertex(v: _Node):
+def next_non_intersection_node(v: _Node) -> _Node:
     """Return the next non intersecting vertex after the one specified."""
     c = v
     while c.intersect:
@@ -367,7 +370,7 @@ def next_non_intersection_vertex(v: _Node):
     return c
 
 
-def is_inside_polygon(vertex: _Node, polygon: "_Polygon") -> bool:
+def is_inside_polygon(vertex: Vec2, polygon: "_Polygon") -> bool:
     """Returns ``True`´ if  `vertex` is inside `polygon` (odd-even rule).
 
     This function calculates the "winding" number for a point, which
@@ -378,24 +381,24 @@ def is_inside_polygon(vertex: _Node, polygon: "_Polygon") -> bool:
     an odd number means it lies INSIDE it.
     """
     winding_number: int = 0
-    infinity = _Node(Vec2(1e6, vertex.y))
+    infinity = Vec2(1e6, vertex.y)
     for node in polygon:
         if not node.intersect:
             try:
-                _intersect(
+                line_intersection(
                     vertex,
                     infinity,
-                    node,
-                    next_non_intersection_vertex(node.next),
+                    node.vtx,
+                    next_non_intersection_node(node.next).vtx,
                 )
                 winding_number += 1
-            except _IntersectionError:
+            except IntersectionError:
                 pass
-    return (winding_number % 2) != 0
+    return bool(winding_number % 2)
 
 
-def _intersect(
-    s1: _Node, s2: _Node, c1: _Node, c2: _Node
+def line_intersection(
+    s1: Vec2, s2: Vec2, c1: Vec2, c2: Vec2, tol: float = TOLERANCE
 ) -> Tuple[Vec2, float, float]:
     """Returns the intersection point between two lines.
 
@@ -403,8 +406,8 @@ def _intersect(
     """
     den: float = (c2.y - c1.y) * (s2.x - s1.x) - (c2.x - c1.x) * (s2.y - s1.y)
 
-    if abs(den) < TOLERANCE:
-        raise _IntersectionError
+    if abs(den) < tol:
+        raise IntersectionError
 
     us: float = (
         (c2.x - c1.x) * (s1.y - c1.y) - (c2.y - c1.y) * (s1.x - c1.x)
@@ -412,21 +415,15 @@ def _intersect(
     uc: float = (
         (s2.x - s1.x) * (s1.y - c1.y) - (s2.y - s1.y) * (s1.x - c1.x)
     ) / den
-
-    if (
-        (us == 0.0 or us == 1.0)
-        and (0.0 <= uc <= 1.0)
-        or (uc == 0.0 or uc == 1.0)
-        and (0.0 <= us <= 1.0)
-    ):
-        raise _IntersectionError
-
-    elif (0.0 < us < 1.0) and (0.0 < uc < 1.0):
-        x = s1.x + us * (s2.x - s1.x)
-        y = s1.y + us * (s2.y - s1.y)
-        return Vec2(x, y), us, uc
-
-    raise _IntersectionError
+    lwr = 0.0
+    upr = 1.0
+    if (lwr <= us <= upr) and (lwr <= uc <= upr):
+        return (
+            Vec2(s1.x + us * (s2.x - s1.x), s1.y + us * (s2.y - s1.y)),
+            us,
+            uc,
+        )
+    raise IntersectionError
 
 
 class BooleanOperation(enum.Enum):

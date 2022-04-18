@@ -3,8 +3,84 @@
 
 import pytest
 from ezdxf.math import Vec2
-from ezdxf.math.clipping import greiner_hormann_intersection
+from ezdxf.math.clipping import (
+    greiner_hormann_intersection,
+    line_intersection,
+    IntersectionError,
+)
 from ezdxf.render.forms import circle
+
+
+class TestLineIntersection:
+    def test_intersect_vertical_line(self):
+        s1, s2 = Vec2(10, 1), Vec2(10, -7)
+        c1, c2 = Vec2(-10, 3), Vec2(17, -7)
+        point, *_ = line_intersection(s1, s2, c1, c2)
+        assert point.x == 10
+        assert point.isclose(Vec2(10.0, -4.4074), abs_tol=1e-4)
+
+    def test_intersect_horizontal_line(self):
+        s1, s2 = Vec2(-10, 10), Vec2(10, 10)
+        c1, c2 = Vec2(-10, 20), Vec2(10, 0)
+        point, *_ = line_intersection(s1, s2, c1, c2)
+        assert point.y == 10
+        assert point.isclose(Vec2(0.0, 10.0), abs_tol=1e-4)
+
+    def test_intersect_orthogonal_lines(self):
+        s1, s2 = Vec2(-10, 10), Vec2(10, 10)
+        c1, c2 = Vec2(5, 0), Vec2(5, 20)
+        point, us, uc = line_intersection(s1, s2, c1, c2)
+        assert point.y == 10
+        assert point.x == 5
+        assert point.isclose(Vec2(5.0, 10.0), abs_tol=1e-4)
+        assert us == pytest.approx(0.75)
+        assert uc == pytest.approx(0.5)
+
+    def test_intersect_parallel_vertical_lines(self):
+        s1, s2 = Vec2(10, 1), Vec2(10, -7)
+        c1, c2 = Vec2(12, -10), Vec2(12, 7)
+        with pytest.raises(IntersectionError):
+            line_intersection(s1, s2, c1, c2)
+
+    def test_intersect_parallel_horizontal_lines(self):
+        s1, s2 = Vec2(11, 0), Vec2(-11, 0)
+        c1, c2 = Vec2(0, 0), Vec2(1, 0)
+        with pytest.raises(IntersectionError):
+            line_intersection(s1, s2, c1, c2)
+
+    def test_intersect_real_colinear(self):
+        s1, s2 = Vec2(0, 0), Vec2(4, 4)
+        c1, c2 = Vec2(2, 2), Vec2(4, 0)
+        point, *_ = line_intersection(s1, s2, c1, c2)
+        assert point.isclose(Vec2(2, 2))
+
+    @pytest.mark.parametrize(
+        "p2", [(4, 0), (0, 4), (4, 4)], ids=["horiz", "vert", "diag"]
+    )
+    def test_intersect_coincident_lines(self, p2):
+        s1, s2 = Vec2(0, 0), Vec2(p2)
+        with pytest.raises(IntersectionError):
+            line_intersection(s1, s2, s1, s2)
+
+    def test_virtual_intersection(self):
+        s1, s2 = Vec2(0, 0), Vec2(4, 4)
+        c1, c2 = Vec2(3, 2), Vec2(5, 0)
+        with pytest.raises(IntersectionError):
+            line_intersection(s1, s2, c1, c2)
+
+    def test_issue_128(self):
+        s1, s2 = Vec2(175.0, 5.0), Vec2(175.0, 50.0)
+        c1, c2 = Vec2(-10.1231, 30.1235), Vec2(300.2344, 30.1235)
+        point, *_ = line_intersection(s1, s2, c1, c2)
+        assert point.isclose(Vec2(175.0, 30.1235))
+
+    def test_issue_664(self):
+        s1 = Vec2(16399619.87946683, -199438.8133075837)
+        s2 = Vec2(16399700.34999472, -199438.8133075837)
+        c1 = Vec2(16399659.76235549, -199423.8133075837)
+        c2 = Vec2(16399659.76235549, -199463.8133075837)
+        point, *_ = line_intersection(s1, s2, c1, c2)
+        assert point.isclose(Vec2(16399659.76235549, -199438.8133075837))
 
 
 @pytest.fixture
@@ -27,7 +103,7 @@ def outside():  # complete outside
     return [(1, 1), (2, 1), (2, 2), (1, 2)]
 
 
-class TestIntersection:
+class TestBooleanIntersection:
     def test_subject_do_overlap_clipping_rect(self, rect, overlapping):
         polygons = greiner_hormann_intersection(rect, overlapping)
         assert len(polygons) == 1
@@ -41,6 +117,7 @@ class TestIntersection:
 
     def test_subject_is_inside_rect(self, rect, inside):
         polygons = greiner_hormann_intersection(rect, inside)
+        assert len(polygons) == 1
         result = polygons[0]
         assert len(result) == 4
         for v in inside:
