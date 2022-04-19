@@ -72,7 +72,7 @@ def ear_clipping(
 
 
 def _is_clockwise(polygon: List[Vec2]) -> bool:
-    s = 0
+    s = 0.0
     polygon_count = len(polygon)
     for i in range(polygon_count):
         point = polygon[i]
@@ -81,15 +81,15 @@ def _is_clockwise(polygon: List[Vec2]) -> bool:
     return s > 0
 
 
-def _is_convex(prev: Vec2, point: Vec2, next: Vec2):
-    return _triangle_sum(prev.x, prev.y, point.x, point.y, next.x, next.y) < 0
+def _is_convex(a: Vec2, b: Vec2, c: Vec2) -> bool:
+    return a.x * (c.y - b.y) + b.x * (a.y - c.y) + c.x * (b.y - a.y) < 0
 
 
 def _is_ear(p1: Vec2, p2: Vec2, p3: Vec2, polygon: List[Vec2]) -> bool:
     ear = (
         _contains_no_points(p1, p2, p3, polygon)
         and _is_convex(p1, p2, p3)
-        and _triangle_area(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y) > 0
+        and _triangle_area(p1, p2, p3) > 0
     )
     return ear
 
@@ -107,16 +107,14 @@ def _contains_no_points(
 
 
 def _is_point_inside(p: Vec2, a: Vec2, b: Vec2, c: Vec2) -> bool:
-    area = _triangle_area(a.x, a.y, b.x, b.y, c.x, c.y)
-    area1 = _triangle_area(p.x, p.y, b.x, b.y, c.x, c.y)
-    area2 = _triangle_area(p.x, p.y, a.x, a.y, c.x, c.y)
-    area3 = _triangle_area(p.x, p.y, a.x, a.y, b.x, b.y)
+    area = _triangle_area(a, b, c)
+    area1 = _triangle_area(p, b, c)
+    area2 = _triangle_area(p, a, c)
+    area3 = _triangle_area(p, a, b)
     return abs(area - sum([area1, area2, area3])) < EPSILON
 
 
-def _triangle_area(x1, y1, x2, y2, x3, y3):
-    return abs((x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / 2.0)
-
-
-def _triangle_sum(x1, y1, x2, y2, x3, y3):
-    return x1 * (y3 - y2) + x2 * (y1 - y3) + x3 * (y2 - y1)
+def _triangle_area(a: Vec2, b: Vec2, c: Vec2) -> float:
+    return abs(
+        (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y)) / 2.0
+    )
