@@ -98,22 +98,13 @@ def clip_polygon_2d(
     return clipped
 
 
-# Efficient Clipping of Arbitrary Polygons
-#
-# Based on the paper "Efficient Clipping of Arbitrary Polygons" by Günther
-# Greiner (greiner[at]informatik.uni-erlangen.de) and Kai Hormann
-# (hormann[at]informatik.tu-clausthal.de), ACM Transactions on Graphics
-# 1998;17(2):71-83.
-#
+# Based on the paper "Efficient Clipping of Arbitrary Polygons" by
+# Günther Greiner and Kai Hormann,
+# ACM Transactions on Graphics 1998;17(2):71-83
 # Available at: http://www.inf.usi.ch/hormann/papers/Greiner.1998.ECO.pdf
 
 
 class _Node:
-    """Node in a circular doubly linked list.
-
-    This class is almost exactly as described in the paper by Günther/Greiner.
-    """
-
     def __init__(
         self,
         vtx: Union[Vec2, "_Node"],
@@ -160,13 +151,13 @@ class IntersectionError(Exception):
 
 
 class _Polygon:
-    """Manages a circular doubly linked list of _Node objects that represents
-    a polygon.
-    """
-
     first: _Node = None  # type: ignore
+    max_x: float = 1e6
 
     def add(self, node: _Node):
+        """Add a polygon vertex node."""
+
+        self.max_x = max(self.max_x, node.vtx.x)
         if self.first is None:
             self.first = node
             self.first.next = node
@@ -181,14 +172,14 @@ class _Polygon:
 
     @staticmethod
     def insert(vertex: _Node, start: _Node, end: _Node):
-        """Insert and sort a vertex between a specified pair of vertices.
+        """Insert and sort an intersection node.
 
-        This function inserts a vertex (most likely an intersection point)
-        between two other vertices (start and end). These other vertices
-        cannot be intersections (that is, they must be actual vertices of
-        the original polygon). If there are multiple intersection points
-        between the two vertices, then the new vertex is inserted based on
-        its alpha value.
+        This function inserts an intersection node between two other
+        start- and end node of an edge. The start and end node cannot be
+        an intersection node (that is, they must be actual vertex nodes of
+        the original polygon). If there are multiple intersection nodes
+        between the start- and end node, then the new node is inserted
+        based on its alpha value.
         """
         curr = start
         while curr != end and curr.alpha < vertex.alpha:
@@ -211,7 +202,6 @@ class _Polygon:
 
     @property
     def first_intersect(self) -> Optional[_Node]:
-        """Return the first unchecked intersection point in the polygon."""
         for v in self:
             if v.intersect and not v.checked:
                 return v
@@ -222,10 +212,9 @@ class _Polygon:
         points = [v.vtx for v in self]
         if not points[0].isclose(points[-1]):
             points.append(points[0])
-        return list(filter_coincident_vertices(points))
+        return points
 
     def unprocessed(self):
-        """Check if any unchecked intersections remain in the polygon."""
         for v in self:
             if v.intersect and not v.checked:
                 return True
@@ -273,30 +262,19 @@ class _Polygon:
             if not subject_vertex.intersect:
                 for clipper_vertex in clip:
                     if not clipper_vertex.intersect:
-                        try:
-                            intersection_point, alphaS, alphaC = line_intersection(
-                                subject_vertex.vtx,
-                                next_non_intersection_node(
-                                    subject_vertex.next
-                                ).vtx,
-                                clipper_vertex.vtx,
-                                next_non_intersection_node(
-                                    clipper_vertex.next
-                                ).vtx,
-                            )
-                        except IntersectionError:
+                        ip, us, uc = line_intersection(
+                            subject_vertex.vtx,
+                            next_vertex_node(subject_vertex.next).vtx,
+                            clipper_vertex.vtx,
+                            next_vertex_node(clipper_vertex.next).vtx,
+                        )
+                        if ip is None:
                             continue
                         subject_node = _Node(
-                            intersection_point,
-                            alphaS,
-                            intersect=True,
-                            entry=False,
+                            ip, us, intersect=True, entry=False
                         )
                         clipper_node = _Node(
-                            intersection_point,
-                            alphaC,
-                            intersect=True,
-                            entry=False,
+                            ip, uc, intersect=True, entry=False
                         )
                         subject_node.neighbour = clipper_node
                         clipper_node.neighbour = subject_node
@@ -304,12 +282,12 @@ class _Polygon:
                         self.insert(
                             subject_node,
                             subject_vertex,
-                            next_non_intersection_node(subject_vertex.next),
+                            next_vertex_node(subject_vertex.next),
                         )
                         clip.insert(
                             clipper_node,
                             clipper_vertex,
-                            next_non_intersection_node(clipper_vertex.next),
+                            next_vertex_node(clipper_vertex.next),
                         )
 
         # Phase 2: Identify entry/exit points
@@ -358,16 +336,7 @@ class _Polygon:
         return clipped_polygons
 
 
-def filter_coincident_vertices(vertices: Iterable[Vec2]) -> Iterator[Vec2]:
-    prev = None
-    for v in vertices:
-        if prev is not None and v.isclose(prev):
-            continue
-        yield v
-        prev = v
-
-
-def next_non_intersection_node(v: _Node) -> _Node:
+def next_vertex_node(v: _Node) -> _Node:
     """Return the next non intersecting vertex after the one specified."""
     c = v
     while c.intersect:
@@ -386,49 +355,54 @@ def is_inside_polygon(vertex: Vec2, polygon: "_Polygon") -> bool:
     an odd number means it lies INSIDE it.
     """
     winding_number: int = 0
-    infinity = Vec2(1e6, vertex.y)
+    infinity = Vec2(polygon.max_x * 2, vertex.y)
     for node in polygon:
         if not node.intersect:
-            try:
+            if (
                 line_intersection(
                     vertex,
                     infinity,
                     node.vtx,
-                    next_non_intersection_node(node.next).vtx,
-                )
+                    next_vertex_node(node.next).vtx,
+                )[0]
+                is not None
+            ):
                 winding_number += 1
-            except IntersectionError:
-                pass
     return bool(winding_number % 2)
+
+
+_ERROR = None, 0, 0
 
 
 def line_intersection(
     s1: Vec2, s2: Vec2, c1: Vec2, c2: Vec2, tol: float = TOLERANCE
-) -> Tuple[Vec2, float, float]:
+) -> Tuple[Optional[Vec2], float, float]:
     """Returns the intersection point between two lines.
+
+    This special implementation excludes the line end points as intersection
+    points!
 
     Algorithm based on: http://paulbourke.net/geometry/lineline2d/
     """
-    den: float = (c2.y - c1.y) * (s2.x - s1.x) - (c2.x - c1.x) * (s2.y - s1.y)
-
+    den = (c2.y - c1.y) * (s2.x - s1.x) - (c2.x - c1.x) * (s2.y - s1.y)
     if abs(den) < tol:
-        raise IntersectionError
+        return _ERROR
 
-    us: float = (
-        (c2.x - c1.x) * (s1.y - c1.y) - (c2.y - c1.y) * (s1.x - c1.x)
-    ) / den
-    uc: float = (
-        (s2.x - s1.x) * (s1.y - c1.y) - (s2.y - s1.y) * (s1.x - c1.x)
-    ) / den
-    lwr = 0.0
-    upr = 1.0
-    if (lwr <= us <= upr) and (lwr <= uc <= upr):
+    us = ((c2.x - c1.x) * (s1.y - c1.y) - (c2.y - c1.y) * (s1.x - c1.x)) / den
+    uc = ((s2.x - s1.x) * (s1.y - c1.y) - (s2.y - s1.y) * (s1.x - c1.x)) / den
+
+    lwr = 0.0 + tol
+    upr = 1.0 - tol
+    # Line end points are excluded as intersection points:
+    # us =~ 0.0; us =~ 1.0
+    # uc =~ 0.0; uc =~ 1.0
+    if (lwr < us < upr) and (lwr < uc < upr):
         return (
             Vec2(s1.x + us * (s2.x - s1.x), s1.y + us * (s2.y - s1.y)),
             us,
             uc,
         )
-    raise IntersectionError
+    return _ERROR
 
 
 class BooleanOperation(enum.Enum):
@@ -440,21 +414,36 @@ class BooleanOperation(enum.Enum):
 def greiner_hormann_intersection(
     p1: Iterable[Vertex], p2: Iterable[Vertex]
 ) -> List[List[Vec2]]:
-    """Returns the INTERSECTION of polygon `p1` &  polygon `p2`."""
+    """Returns the INTERSECTION of polygon `p1` &  polygon `p2`.
+    This algorithm works only for polygons with real intersection points
+    and line end points on face edges are not considered as such intersection
+    points!
+
+    """
     return greiner_hormann(p1, p2, BooleanOperation.INTERSECTION)
 
 
 def greiner_hormann_difference(
     p1: Iterable[Vertex], p2: Iterable[Vertex]
 ) -> List[List[Vec2]]:
-    """Returns the DIFFERENCE of polygon `p1` - polygon `p2`."""
+    """Returns the DIFFERENCE of polygon `p1` - polygon `p2`.
+    This algorithm works only for polygons with real intersection points
+    and line end points on face edges are not considered as such intersection
+    points!
+
+    """
     return greiner_hormann(p1, p2, BooleanOperation.DIFFERENCE)
 
 
 def greiner_hormann_union(
     p1: Iterable[Vertex], p2: Iterable[Vertex]
 ) -> List[List[Vec2]]:
-    """Returns the UNION of polygon `p1` | polygon `p2`."""
+    """Returns the UNION of polygon `p1` | polygon `p2`.
+    This algorithm works only for polygons with real intersection points
+    and line end points on face edges are not considered as such intersection
+    points!
+
+    """
     return greiner_hormann(p1, p2, BooleanOperation.UNION)
 
 
@@ -469,6 +458,9 @@ def greiner_hormann(
 
     Based on the paper "Efficient Clipping of Arbitrary Polygons" by
     Günther Greiner and Kai Hormann.
+    This algorithm works only for polygons with real intersection points
+    and line end points on face edges are not considered as such intersection
+    points!
 
     """
 
