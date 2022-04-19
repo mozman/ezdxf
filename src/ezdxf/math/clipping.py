@@ -329,10 +329,6 @@ class _Polygon:
                     break
 
             clipped_polygons.append(clipped.points)
-
-        if len(clipped_polygons) == 0:
-            clipped_polygons.append(self.points)
-
         return clipped_polygons
 
 

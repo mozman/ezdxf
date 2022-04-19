@@ -174,23 +174,15 @@ class TestBooleanUnion:
 
     def test_a_polygon_inside_another_polygon_is_ignored(self, rect, inside):
         """This polygons do not have any intersection points and therefore no
-        union is calculated - which could interpreted as the expected result.
+        union is calculated.
         """
-        polygons = greiner_hormann_union(rect, inside)
-        assert len(polygons) == 1
-        result = polygons[0]
-        assert len(result) == 5
-        assert result[0] == result[-1], "expected closed polygon"
-        assert set(rect) == set(result)
+        assert len(greiner_hormann_union(rect, inside)) == 0
 
-    def test_a_failed_union_returns_the_first_polygon(self, rect, outside):
-        polygons = greiner_hormann_union(rect, outside)
-        result = polygons[0]
-        assert set(rect) == set(result)
+    def test_a_failed_union_returns_an_empty_list(self, rect, outside):
+        assert len(greiner_hormann_union(rect, outside)) == 0
 
     def test_disconnected_polygons_cannot_be_united(self, rect):
-        result = greiner_hormann_union(rect, circle(16, 3))[0]
-        assert set(rect) == set(result)
+        assert len(greiner_hormann_union(rect, circle(16, 3))) == 0
 
     def test_overlapping_but_collinear_edges_cannot_be_united(self, rect):
         """As shown in the intersection tests, collinear lines do not intersect,
@@ -198,13 +190,7 @@ class TestBooleanUnion:
         """
         offset = Vec2(1.5, 0)
         rect2 = [offset + v for v in rect]
-        polygons = greiner_hormann_union(rect, rect2)
-        assert len(polygons) == 1
-        result = polygons[0]
-        assert len(result) == 5
-        # no intersection == no union
-        # the union operator returns the source polygon:
-        assert set(rect) == set(result)
+        assert len(greiner_hormann_union(rect, rect2)) == 0
 
     def test_polygons_with_a_shared_edge_cannot_be_united(self, rect):
         """As shown in the intersection tests, collinear lines do not intersect,
@@ -212,13 +198,7 @@ class TestBooleanUnion:
         """
         offset = Vec2(2, 0)
         rect2 = [offset + v for v in rect]
-        polygons = greiner_hormann_union(rect, rect2)
-        assert len(polygons) == 1
-        result = polygons[0]
-        assert len(result) == 5
-        # no intersection == no union
-        # the union operator returns the source polygon:
-        assert set(rect) == set(result)
+        assert len(greiner_hormann_union(rect, rect2)) == 0
 
 
 DIFF_OVERLAPPING = [
@@ -245,29 +225,24 @@ class TestBooleanDifference:
 
     def test_polygon_inside_polygon(self, rect, inside):
         """This polygons do not have any intersection points and therefore no
-        difference is calculated - which is NOT the expected result.
+        difference is calculated - which is NOT the expected result
+        (expected a rect with a hole)
         """
-        polygons = greiner_hormann_difference(rect, inside)
-        assert len(polygons) == 1
-        result = polygons[0]
-        assert len(result) == 5
-        assert set(rect) == set(result)
+        assert len(greiner_hormann_difference(rect, inside)) == 0
 
     def test_polygon_inside_polygon_reverse_difference(self, rect, inside):
         """This polygons do not have any intersection points and therefore no
-        difference is calculated - which is NOT the expected result.
+        difference is calculated - which IS the expected result
+        (subtracting the bigger rect from the smaller rect returns nothing)
         """
-        result = greiner_hormann_difference(inside, rect)[0]
-        assert len(result) == 5
-        assert set(inside) == set(result)
+        assert len(greiner_hormann_difference(inside, rect)) == 0
 
     def test_polygon_outside_polygon(self, rect, outside):
         """This polygons do not have any intersection points and therefore no
-        difference is calculated - which could interpreted as the expected result.
+        difference is calculated - which is NOT the expected result
+        (expected rect)
         """
-        polygons = greiner_hormann_difference(rect, outside)
-        result = polygons[0]
-        assert set(rect) == set(result)
+        assert len(greiner_hormann_difference(rect, outside)) == 0
 
 
 INTERSECT_OVERLAPPING = [
@@ -292,21 +267,17 @@ class TestBooleanIntersection:
 
     def test_polygon_inside_polygon(self, rect, inside):
         """This polygons do not have any intersection points and therefore no
-        intersection is calculated - which is NOT the expected result.
+        intersection is calculated - which is NOT the expected result
+        (expected the inside rect)
         """
-        polygons = greiner_hormann_intersection(rect, inside)
-        assert len(polygons) == 1
-        result = polygons[0]
-        assert len(result) == 5
-        assert set(rect) == set(result)
+        assert len(greiner_hormann_intersection(rect, inside)) == 0
 
     def test_polygon_outside_polygon(self, rect, outside):
         """This polygons do not have any intersection points and therefore no
-        intersection is calculated - which could interpreted as the expected result.
+        intersection is calculated - which could interpreted as the expected
+        result.
         """
-        polygons = greiner_hormann_intersection(rect, outside)
-        result = polygons[0]
-        assert set(rect) == set(result)
+        assert len(greiner_hormann_intersection(rect, outside)) == 0
 
 
 if __name__ == "__main__":
