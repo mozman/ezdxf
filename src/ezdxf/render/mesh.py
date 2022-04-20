@@ -391,10 +391,9 @@ class MeshBuilder:
 
         """
         m1 = MeshVertexMerger(precision=precision)
-        v = self.vertices
-        for face in open_faces(self.faces):
-            m1.add_face([v[index] for index in face])
+        m1.add_mesh(mesh=self)
         m2 = MeshTransformer()
+        # no need for copying
         m2.vertices = m1.vertices
         m2.faces = m1.faces
         return m2
