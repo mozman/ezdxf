@@ -15,7 +15,7 @@ To be clear: this add-on is not a replacement for a proper file format
 interfaces for this data formats!
 
 """
-from typing import Union, List
+from typing import Union, List, Sequence
 import os
 import struct
 
@@ -179,3 +179,68 @@ def off_loads(content: str) -> MeshTransformer:
         mesh.faces.append(tuple(face_indices))
         face_indices.clear()
     return MeshTransformer.from_builder(mesh)
+
+
+def obj_readfile(filename: Union[str, os.PathLike]) -> List[MeshTransformer]:
+    """Read OBJ file content as list of :class:`ezdxf.render.MeshTransformer`
+    instances.
+
+    Raises:
+        ParsingError: vertex or face parsing error
+
+    """
+    with open(filename, "rt", encoding="ascii", errors="ignore") as fp:
+        content = fp.read()
+    return obj_loads(content)
+
+
+def obj_loads(content: str) -> List[MeshTransformer]:
+    """Load one or more meshes from an OBJ content string as list of
+    :class:`ezdxf.render.MeshTransformer` instances.
+
+    Raises:
+        ParsingError: vertex parsing error
+
+    """
+    # https://en.wikipedia.org/wiki/Wavefront_.obj_file
+    # This implementation is not very picky and grabs only lines which start
+    # with "v", "g" or "f" and ignores the rest.
+    def parse_vertex(l: str) -> Vec3:
+        v = l.split()
+        return Vec3(float(v[0]), float(v[1]), float(v[2]))
+
+    def parse_face(l: str) -> Sequence[int]:
+        return tuple(int(s.split("/")[0]) for s in l.split())
+
+    vertices: List[Vec3] = [Vec3()]  # 1-indexed
+    meshes: List[MeshTransformer] = []
+    mesh = MeshVertexMerger()
+    for num, line in enumerate(content.split("\n"), start=1):
+        line = line.strip(" \r")
+        if line.startswith("v"):
+            try:
+                vtx = parse_vertex(line[2:])
+            except (IndexError, ValueError):
+                raise ParsingError(
+                    f"OBJ vertex parsing error in line {num}: {line}"
+                )
+            vertices.append(vtx)
+        elif line.startswith("f"):
+            try:
+                mesh.add_face(vertices[i] for i in parse_face(line[2:]))
+            except ValueError:
+                raise ParsingError(
+                    f"OBJ face parsing error in line {num}: {line}"
+                )
+            except IndexError:
+                raise ParsingError(
+                    f"OBJ face index error (n={len(vertices)}) in line {num}: {line}"
+                )
+
+        elif line.startswith("g"):
+            meshes.append(MeshTransformer.from_builder(mesh))
+            mesh = MeshVertexMerger()
+
+    if len(mesh.vertices) > 0:
+        meshes.append(MeshTransformer.from_builder(mesh))
+    return meshes

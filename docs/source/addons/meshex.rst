@@ -10,7 +10,7 @@ with other file formats like:
 
     - `STL`_, supports only triangles as faces
     - `OFF`_, supports n-gons as faces and is more compact than ascii STL
-    - `OBJ`_
+    - `OBJ`_, supports n-gons as faces and can contain multiple meshes in one file
 
 The source or target entity is always a :class:`~ezdxf.render.MeshBuilder`
 instance and therefore the supported features are also limited by this class.
@@ -31,6 +31,10 @@ Only vertices and faces are exchanged, colors, textures and normals are lost.
 .. autofunction:: off_readfile
 
 .. autofunction:: off_loads
+
+.. autofunction:: obj_readfile
+
+.. autofunction:: obj_loads
 
 .. _OpenSCAD: https://openscad.org/index.html
 .. _STL: https://en.wikipedia.org/wiki/STL_(file_format)

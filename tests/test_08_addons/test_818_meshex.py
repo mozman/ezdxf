@@ -103,5 +103,33 @@ class TestOFFLoader:
             meshex.off_loads(data)
 
 
+class TestOBJLoader:
+    def test_empty_file_returns_empty_mesh(self):
+        meshes = meshex.obj_loads("")
+        assert len(meshes) == 0
+
+    def test_load_a_single_face(self):
+        meshes = meshex.obj_loads(
+            "v 0 0 0\nv 1 0 0\nv 1 1 0\nf 1 2 3\n"
+        )  # OBJ is 1-indexed
+        mesh = meshes[0]
+        assert mesh.vertices[0] == (0, 0, 0)
+        assert mesh.vertices[1] == (1, 0, 0)
+        assert mesh.vertices[2] == (1, 1, 0)
+        assert mesh.faces[0] == (0, 1, 2)
+
+    def test_parsing_error_too_few_axis(self):
+        with pytest.raises(meshex.ParsingError):
+            meshex.obj_loads("v 0 0")
+
+    def test_parsing_error_invalid_coordinate_format(self):
+        with pytest.raises(meshex.ParsingError):
+            meshex.obj_loads("v 0, 0, 0")
+
+    def test_parsing_error_invalid_floats(self):
+        with pytest.raises(meshex.ParsingError):
+            meshex.obj_loads("v 0 0 z")
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
