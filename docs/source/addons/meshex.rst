@@ -8,9 +8,8 @@ MeshExchange
 The :mod:`ezdxf.addons.meshex` module provides functions to exchange meshes
 with other file formats like:
 
-    - `STL`_
-    - `OFF`_
-    - `PLY`_
+    - `STL`_, supports only triangles as faces
+    - `OFF`_, supports n-gons as faces and is more compact than ascii STL
     - `OBJ`_
 
 The source or target entity is always a :class:`~ezdxf.render.MeshBuilder`
@@ -26,6 +25,12 @@ Only vertices and faces are exchanged, colors, textures and normals are lost.
 .. autofunction:: stl_readfile
 
 .. autofunction:: stl_loads
+
+.. autofunction:: stl_loadb
+
+.. autofunction:: off_readfile
+
+.. autofunction:: off_loads
 
 .. _OpenSCAD: https://openscad.org/index.html
 .. _STL: https://en.wikipedia.org/wiki/STL_(file_format)

@@ -17,6 +17,8 @@ interfaces for this data formats!
 """
 from typing import Union, List
 import os
+import struct
+
 from ezdxf.math import Vec3
 from ezdxf.render import MeshTransformer, MeshVertexMerger
 
@@ -30,25 +32,24 @@ class ParsingError(Exception):
 
 
 def stl_readfile(filename: Union[str, os.PathLike]) -> MeshTransformer:
-    """Read ascii STL file content as :class:`ezdxf.render.MeshTransformer`
+    """Read ascii or binary STL file content as :class:`ezdxf.render.MeshTransformer`
     instance.
 
     Raises:
-        UnsupportedFileFormat: invalid data file or binary STL file
-        ParsingError: vertex parsing error
+        ParsingError: vertex parsing error or invalid/corrupt data
 
     """
-    with open(filename, "rt", encoding="ascii", errors="ignore") as fp:
-        content = fp.read()
-    if not content.startswith("solid"):
-        raise UnsupportedFileFormat(
-            "binary STL format not supported or invalid STL file"
-        )
-    return stl_loads(content)
+    with open(filename, "rb") as fp:
+        buffer = fp.read()
+    if buffer.startswith(b"solid"):
+        s = buffer.decode("ascii", errors="ignore")
+        return stl_loads(s)
+    else:
+        return stl_loadb(buffer)
 
 
 def stl_loads(content: str) -> MeshTransformer:
-    """Load a mesh from a STL content string as :class:`ezdxf.render.MeshTransformer`
+    """Load a mesh from an ascii STL content string as :class:`ezdxf.render.MeshTransformer`
     instance.
 
     Raises:
@@ -65,7 +66,7 @@ def stl_loads(content: str) -> MeshTransformer:
     mesh = MeshVertexMerger()
     face: List[Vec3] = []
     for num, line in enumerate(content.split("\n"), start=1):
-        line = line.lstrip()
+        line = line.strip(" \r")
         if line.startswith("vertex"):
             try:
                 face.append(parse_vertex(line))
@@ -75,4 +76,106 @@ def stl_loads(content: str) -> MeshTransformer:
             if len(face) == 3:
                 mesh.add_face(face)
             face.clear()
+    return MeshTransformer.from_builder(mesh)
+
+
+def stl_loadb(buffer: bytes) -> MeshTransformer:
+    """Load a mesh from a binary STL data :class:`ezdxf.render.MeshTransformer`
+    instance.
+
+    Raises:
+        ParsingError: invalid/corrupt data or not a binary STL file
+
+    """
+    # http://www.fabbers.com/tech/STL_Format#Sct_ASCII
+    index = 80
+    n_faces = struct.unpack_from("<I", buffer, index)[0]
+    index += 4
+
+    mesh = MeshVertexMerger()
+    for _ in range(n_faces):
+        try:
+            face = struct.unpack_from("<12fH", buffer, index)
+        except struct.error:
+            raise ParsingError("binary STL parsing error")
+        index += 50
+        v1 = Vec3(face[3:6])
+        v2 = Vec3(face[6:9])
+        v3 = Vec3(face[9:12])
+        mesh.add_face((v1, v2, v3))
+    return MeshTransformer.from_builder(mesh)
+
+
+def off_readfile(filename: Union[str, os.PathLike]) -> MeshTransformer:
+    """Read OFF file content as :class:`ezdxf.render.MeshTransformer`
+    instance.
+
+    Raises:
+        ParsingError: vertex or face parsing error
+
+    """
+    with open(filename, "rt", encoding="ascii", errors="ignore") as fp:
+        content = fp.read()
+    return off_loads(content)
+
+
+def off_loads(content: str) -> MeshTransformer:
+    """Load a mesh from a OFF content string as :class:`ezdxf.render.MeshTransformer`
+    instance.
+
+    Raises:
+        ParsingError: vertex or face parsing error
+
+    """
+    # https://en.wikipedia.org/wiki/OFF_(file_format)
+    mesh = MeshVertexMerger()
+    lines: List[str] = []
+    for line in content.split("\n"):
+        line = line.strip(" \n\r")
+        # "OFF" in a single line
+        if line.startswith("#") or line == "OFF" or line == "":
+            continue
+        lines.append(line)
+
+    if len(lines) == 0:
+        raise ParsingError(f"OFF format parsing error: no data")
+
+    if lines[0].startswith("OFF"):
+        # OFF v f e
+        lines[0] = lines[0][4:]
+
+    n = lines[0].split()
+    try:
+        n_vertices, n_faces = int(n[0]), int(n[1])
+    except ValueError:
+        raise ParsingError(f"OFF format parsing error: {lines[0]}")
+
+    if len(lines) < n_vertices + n_faces:
+        raise ParsingError(f"OFF format parsing error: invalid data count")
+
+    for vertex in lines[1 : n_vertices + 1]:
+        v = vertex.split()
+        try:
+            vtx = Vec3(float(v[0]), float(v[1]), float(v[2]))
+        except (ValueError, IndexError):
+            raise ParsingError(f"OFF format vertex parsing error: {vertex}")
+        mesh.vertices.append(vtx)
+
+    index = n_vertices + 1
+    face_indices = []
+    for face in lines[index : index + n_faces]:
+        f = face.split()
+        try:
+            vertex_count = int(f[0])
+        except ValueError:
+            raise ParsingError(f"OFF format face parsing error: {face}")
+        for index in range(vertex_count):
+            try:
+                face_indices.append(int(f[1 + index]))
+            except (ValueError, IndexError):
+                raise ParsingError(
+                    f"OFF format face index parsing error: {face}"
+                )
+        mesh.faces.append(tuple(face_indices))
+        face_indices.clear()
     return MeshTransformer.from_builder(mesh)
