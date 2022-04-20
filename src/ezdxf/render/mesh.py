@@ -73,13 +73,13 @@ class MeshBuilder:
         return (n_vertices - n_edges + n_faces) == 2  # euler number
 
     def unique_edges(self) -> Iterator[Tuple[int, int]]:
-        """Returns all unique edges of the mesh as index tuples.
+        """Yields all unique edges of the mesh as index tuples.
 
         .. versionadded:: 0.18
 
         """
         unique = set()
-        for face in self.open_faces():
+        for face in open_faces(self.faces):
             for index in range(len(face)):
                 edge = face[index - 1], face[index]
                 if edge not in unique:
@@ -92,21 +92,6 @@ class MeshBuilder:
         v = self.vertices
         for face in self.faces:
             yield [v[index] for index in face]
-
-    def open_faces(self) -> Iterator[Sequence[int]]:
-        """Yields all faces with more than two vertices as open faces
-        (first vertex != last vertex).
-
-        .. versionadded:: 0.18
-
-        """
-        for face in self.faces:
-            if len(face) < 3:
-                continue
-            if face[0] == face[-1]:
-                yield face[:-1]
-            else:
-                yield face
 
     def add_face(self, vertices: Iterable["Vertex"]) -> None:
         """Add a face as vertices list to the mesh. A face requires at least 3
@@ -170,7 +155,7 @@ class MeshBuilder:
         faces = faces or []
         indices = self.add_vertices(vertices)
 
-        for face_vertices in faces:
+        for face_vertices in open_faces(faces):
             self.faces.append(tuple(indices[vi] for vi in face_vertices))
 
     def has_none_planar_faces(self) -> bool:
@@ -407,12 +392,28 @@ class MeshBuilder:
         """
         m1 = MeshVertexMerger(precision=precision)
         v = self.vertices
-        for face in self.open_faces():
+        for face in open_faces(self.faces):
             m1.add_face([v[index] for index in face])
         m2 = MeshTransformer()
         m2.vertices = m1.vertices
         m2.faces = m1.faces
         return m2
+
+
+def open_faces(faces: Iterable[Sequence[int]]) -> Iterator[Sequence[int]]:
+    """Yields all faces with more than two vertices as open faces
+    (first vertex != last vertex).
+
+    .. versionadded:: 0.18
+
+    """
+    for face in faces:
+        if len(face) < 3:
+            continue
+        if face[0] == face[-1]:
+            yield face[:-1]
+        else:
+            yield face
 
 
 class MeshTransformer(MeshBuilder):
