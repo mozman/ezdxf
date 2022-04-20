@@ -61,8 +61,8 @@ class MeshBuilder:
     def is_watertight(self) -> bool:
         """Returns ``True`` if the mesh has a closed surface.
 
-        This is only ``True`` for optimized meshes e.g. a mesh passed through
-        the :class:`VertexMerger` class.
+        This is only ``True`` for meshes with optimized vertices, see method
+        :meth:`optimize_vertices`.
 
         .. versionadded:: 0.18
 
@@ -88,7 +88,7 @@ class MeshBuilder:
                     yield edge
 
     def faces_as_vertices(self) -> Iterable[List[Vec3]]:
-        """Iterate over all mesh faces as list of vertices."""
+        """Yields all faces as list of vertices."""
         v = self.vertices
         for face in self.faces:
             yield [v[index] for index in face]
@@ -398,8 +398,9 @@ class MeshBuilder:
         return MeshTransformer.from_builder(mesh)
 
     def optimize_vertices(self, precision=6) -> "MeshTransformer":
-        """Returns a new mesh with optimizes vertices. Coincident vertices are
-        merged together.
+        """Returns a new mesh with optimized vertices. Coincident vertices are
+        merged together and all faces are open faces (first vertex != last
+        vertex).
 
         .. versionadded:: 0.18
 
@@ -563,13 +564,8 @@ class MeshVertexMerger(MeshBuilder):
 
         """
         super().__init__()
-        self.ledger: Dict["Vertex", int] = {}
+        self.ledger: Dict[Vec3, int] = {}
         self.precision: int = precision
-
-    def key(self, vertex: "Vertex") -> "Vertex":
-        """Returns rounded vertex. (internal API)"""
-        p = self.precision
-        return round(vertex[0], p), round(vertex[1], p), round(vertex[2], p)
 
     def add_vertices(self, vertices: Iterable["Vertex"]) -> Sequence[int]:
         """Add new `vertices` only, if no vertex with identical (x, y, z)
@@ -585,8 +581,9 @@ class MeshVertexMerger(MeshBuilder):
 
         """
         indices = []
-        for vertex in vertices:
-            key = self.key(vertex)
+        precision = self.precision
+        for vertex in Vec3.generate(vertices):
+            key = vertex.round(precision)
             try:
                 indices.append(self.ledger[key])
             except KeyError:
@@ -605,15 +602,15 @@ class MeshVertexMerger(MeshBuilder):
         (internal API)
         """
         try:
-            return self.ledger[self.key(vertex)]
+            return self.ledger[Vec3(vertex).round(self.precision)]
         except KeyError:
             raise IndexError(f"Vertex {str(vertex)} not found.")
 
     @classmethod
-    def from_builder(cls: Type[T], other: "MeshBuilder") -> T:
+    def from_builder(cls, other: "MeshBuilder") -> "MeshVertexMerger":
         """Create new mesh from other mesh builder."""
-        # rebuild from scratch to crate a valid ledger
-        return cls.from_mesh(other)  # type: ignore
+        # rebuild from scratch to create a valid ledger
+        return cls.from_mesh(other)
 
 
 class MeshAverageVertexMerger(MeshBuilder):
@@ -660,9 +657,8 @@ class MeshAverageVertexMerger(MeshBuilder):
         """
         indices = []
         precision = self.precision
-        for vertex in vertices:
-            vertex = Vec3(vertex)
-            key = vertex.round(precision)  # type: ignore
+        for vertex in Vec3.generate(vertices):
+            key = vertex.round(precision)
             try:
                 index, count = self.ledger[key]
             except KeyError:  # new key
@@ -694,10 +690,10 @@ class MeshAverageVertexMerger(MeshBuilder):
             raise IndexError(f"Vertex {str(vertex)} not found.")
 
     @classmethod
-    def from_builder(cls: Type[T], other: "MeshBuilder") -> T:
+    def from_builder(cls, other: "MeshBuilder") -> "MeshAverageVertexMerger":
         """Create new mesh from other mesh builder."""
-        # rebuild from scratch to crate a valid ledger
-        return cls.from_mesh(other)  # type: ignore
+        # rebuild from scratch to create a valid ledger
+        return cls.from_mesh(other)
 
 
 class _XFace:
