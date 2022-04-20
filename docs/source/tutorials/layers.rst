@@ -14,7 +14,7 @@ Create a Layer Definition
 
     doc = ezdxf.new(setup=True)  # setup required line types
     msp = doc.modelspace()
-    doc.layers.add(name="MyLines", color=7, linetype="DASHED", })
+    doc.layers.add(name="MyLines", color=7, linetype="DASHED")
 
 The advantage of assigning a linetype and a color to a layer is that entities
 on this layer can inherit this properties by using ``"BYLAYER"`` as linetype
