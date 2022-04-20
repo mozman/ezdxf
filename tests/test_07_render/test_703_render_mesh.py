@@ -3,7 +3,7 @@
 import pytest
 from math import radians
 from ezdxf.math import Vec3, BoundingBox
-from ezdxf.render.forms import cube, circle
+from ezdxf.render.forms import cube, circle, cylinder
 from ezdxf.render.mesh import (
     MeshVertexMerger,
     MeshBuilder,
@@ -118,6 +118,35 @@ def test_rotate_x():
     bbox = BoundingBox(mesh.vertices)
     assert bbox.extmin.isclose((0, -1, 0))
     assert bbox.extmax.isclose((1, 0, 1))
+
+
+def test_empty_mesh_is_not_watertight():
+    mesh = MeshBuilder()
+    assert mesh.is_watertight() is False
+
+
+def test_single_face_mesh_is_not_watertight():
+    mesh = MeshBuilder()
+    mesh.add_face(REGULAR_FACE)
+    assert mesh.is_watertight() is False
+
+
+def test_cube_is_watertight():
+    mesh = cube(center=False)
+    assert mesh.is_watertight() is True
+
+
+def test_cube_of_separated_faces_is_not_watertight():
+    mesh = cube(center=False)
+    mesh2 = MeshBuilder()
+    for face in mesh.faces_as_vertices():
+        mesh2.add_face(face)
+    assert mesh2.is_watertight() is False
+
+
+def test_cylinder_is_watertight():
+    mesh = cylinder()
+    assert mesh.is_watertight() is True
 
 
 @pytest.fixture

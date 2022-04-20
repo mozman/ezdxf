@@ -58,11 +58,55 @@ class MeshBuilder:
         """Returns a copy of mesh."""
         return self.from_builder(self)
 
+    def is_watertight(self) -> bool:
+        """Returns ``True`` if the mesh has a closed surface.
+
+        This is only ``True`` for optimized meshes e.g. a mesh passed through
+        the :class:`VertexMerger` class.
+
+        .. versionadded:: 0.18
+
+        """
+        n_vertices = len(self.vertices)
+        n_edges = sum(1 for _ in self.unique_edges())
+        n_faces = len(self.faces)
+        return (n_vertices - n_edges + n_faces) == 2  # euler number
+
+    def unique_edges(self) -> Iterator[Tuple[int, int]]:
+        """Returns all unique edges of the mesh as index tuples.
+
+        .. versionadded:: 0.18
+
+        """
+        unique = set()
+        for face in self.open_faces():
+            for index in range(len(face)):
+                edge = face[index - 1], face[index]
+                if edge not in unique:
+                    unique.add(edge)
+                    unique.add((edge[1], edge[0]))
+                    yield edge
+
     def faces_as_vertices(self) -> Iterable[List[Vec3]]:
         """Iterate over all mesh faces as list of vertices."""
         v = self.vertices
         for face in self.faces:
             yield [v[index] for index in face]
+
+    def open_faces(self) -> Iterator[Sequence[int]]:
+        """Yields all faces with more than two vertices as open faces
+        (first vertex != last vertex).
+
+        .. versionadded:: 0.18
+
+        """
+        for face in self.faces:
+            if len(face) < 3:
+                continue
+            if face[0] == face[-1]:
+                yield face[:-1]
+            else:
+                yield face
 
     def add_face(self, vertices: Iterable["Vertex"]) -> None:
         """Add a face as vertices list to the mesh. A face requires at least 3
@@ -330,6 +374,8 @@ class MeshBuilder:
 
         The current implementation is not very capable!
 
+        .. versionadded:: 0.18
+
         """
         mesh = self
         for _ in range(passes):
@@ -350,6 +396,22 @@ class MeshBuilder:
             mesh = _subdivide(mesh, quads)  # type: ignore
             level -= 1
         return MeshTransformer.from_builder(mesh)
+
+    def optimize_vertices(self, precision=6) -> "MeshTransformer":
+        """Returns a new mesh with optimizes vertices. Coincident vertices are
+        merged together.
+
+        .. versionadded:: 0.18
+
+        """
+        m1 = MeshVertexMerger(precision=precision)
+        v = self.vertices
+        for face in self.open_faces():
+            m1.add_face([v[index] for index in face])
+        m2 = MeshTransformer()
+        m2.vertices = m1.vertices
+        m2.faces = m1.faces
+        return m2
 
 
 class MeshTransformer(MeshBuilder):
@@ -694,7 +756,9 @@ def _merge_adjacent_coplanar_faces(
                     face = merge_full_patch(face, parallel_face.indices)
                 else:
                     try:
-                        face = merge_connected_paths(face, parallel_face.indices)
+                        face = merge_connected_paths(
+                            face, parallel_face.indices
+                        )
                     except (NodeMergingError, DegeneratedPathError):
                         continue
                 done.add(parallel_face.fingerprint)
