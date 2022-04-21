@@ -57,9 +57,14 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. automethod:: subdivide(level: int = 1, quads=True) -> MeshTransformer
 
+    .. automethod:: subdivide_ngons(max_vertex_count: int = 4) -> MeshTransformer
+
+    .. automethod:: tessellation(max_vertex_count: int = 4) -> Iterator[Sequence[Vec3]]
+
     .. automethod:: merge_coplanar_faces(passes: int = 1) -> MeshTransformer
 
     .. automethod:: optimize_vertices(precision: int = 6) -> MeshTransformer
+
 
 
 .. class:: MeshStats

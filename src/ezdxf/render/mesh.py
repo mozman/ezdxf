@@ -370,6 +370,11 @@ class MeshBuilder:
             matrix: transformation matrix of type :class:`~ezdxf.math.Matrix44`
             ucs: transform vertices by :class:`~ezdxf.math.UCS` to :ref:`WCS`
 
+        .. versionchanged:: 0.18
+
+            Uses the :meth:`tessellation` method to process ngons with more the
+            4 vertices which can handle concave faces.
+
         """
         dxfattribs = dict(dxfattribs) if dxfattribs else {}
         polyface = layout.add_polyface(dxfattribs=dxfattribs)
@@ -379,7 +384,7 @@ class MeshBuilder:
         if ucs is not None:
             t.transform(ucs.matrix)
         polyface.append_faces(
-            subdivide_ngons(t.faces_as_vertices()), dxfattribs=dxfattribs
+            t.tessellation(max_vertex_count=4), dxfattribs=dxfattribs
         )
         return polyface
 
@@ -399,6 +404,11 @@ class MeshBuilder:
             matrix: transformation matrix of type :class:`~ezdxf.math.Matrix44`
             ucs: transform vertices by :class:`~ezdxf.math.UCS` to :ref:`WCS`
 
+        .. versionchanged:: 0.18
+
+            Uses the :meth:`tessellation` method to process ngons with more the
+            4 vertices which can handle concave faces.
+
         """
         dxfattribs = dict(dxfattribs) if dxfattribs else {}
         t = MeshTransformer.from_builder(self)
@@ -406,7 +416,7 @@ class MeshBuilder:
             t.transform(matrix)
         if ucs is not None:
             t.transform(ucs.matrix)
-        for face in subdivide_ngons(t.faces_as_vertices()):
+        for face in t.tessellation(max_vertex_count=4):
             layout.add_3dface(face, dxfattribs=dxfattribs)
 
     @classmethod
@@ -441,8 +451,7 @@ class MeshBuilder:
         return MeshTransformer.from_builder(mesh)
 
     def subdivide(self, level: int = 1, quads=True) -> "MeshTransformer":
-        """Returns a new :class:`MeshTransformer` object with subdivided faces
-        and edges.
+        """Returns a new :class:`MeshTransformer` object with all faces subdivided.
 
         Args:
              level: subdivide levels from 1 to max of 5
@@ -455,30 +464,50 @@ class MeshBuilder:
             level -= 1
         return MeshTransformer.from_builder(mesh)
 
-    def optimize_vertices(self, precision: int = 6) -> "MeshTransformer":
-        """Returns a new mesh with optimized vertices. Coincident vertices are
-        merged together and all faces are open faces (first vertex != last
-        vertex).
+    def subdivide_ngons(self, max_vertex_count=4) -> "MeshTransformer":
+        """Returns a new :class:`MeshTransformer` object with subdivided ngons
+        which have more than `max_vertex_count` vertices.
+        In contrast to the :meth:`tesselation` method, creates this method a
+        new vertex in the centroid of the face. This can create a more regular
+        tesselation but only works reliable with convex faces!
 
         .. versionadded:: 0.18
 
         """
-        m1 = MeshVertexMerger(precision=precision)
-        m1.add_mesh(mesh=self)
-        m2 = MeshTransformer()
-        # no need for copying
-        m2.vertices = m1.vertices
-        m2.faces = m1.faces
-        return m2
+        mesh = MeshVertexMerger()
+        for face in subdivide_ngons(self.faces_as_vertices(), max_vertex_count):
+            mesh.add_face(face)
+        return MeshTransformer.from_builder(mesh)
 
-    def tessellation(self, max_vertices: int=3) -> Iterator[Sequence[Vec3]]:
+    def optimize_vertices(self, precision: int = 6) -> "MeshTransformer":
+        """Returns a new mesh with optimized vertices. Coincident vertices are
+        merged together and all faces are open faces (first vertex != last
+        vertex). Uses internally the :class:`MeshVertexMerger` class to merge
+        vertices.
+
+        .. versionadded:: 0.18
+
+        """
+        mesh = MeshVertexMerger(precision=precision)
+        mesh.add_mesh(mesh=self)
+        return MeshTransformer.from_builder(mesh)
+
+    def tessellation(
+        self, max_vertex_count: int = 4
+    ) -> Iterator[Sequence[Vec3]]:
         """Yields all faces as sequence of :class:`~ezdxf.math.Vec3` instances,
-        each face has the given maximum vertex count.
+        each face has no more vertices than the given `max_vertex_count`. This
+        method uses the "ear clipping" algorithm which works with concave faces
+        too and does not create any new vertices.
+
+        .. versionadded:: 0.18
+
         """
         from ezdxf.math.triangulation import ear_clipping_3d
+
         for face in self.faces_as_vertices():
             count = len(face)
-            if count <= max_vertices:
+            if count <= max_vertex_count:
                 yield face
             else:
                 yield from ear_clipping_3d(face)

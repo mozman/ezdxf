@@ -88,16 +88,18 @@ def subdivide_face(
 
 def subdivide_ngons(
     faces: Iterable[Sequence["AnyVec"]],
+    max_vertex_count=4,
 ) -> Iterable[Tuple[Vec3, ...]]:
     """Yields only triangles or quad faces, subdivides ngons into triangles.
 
     Args:
         faces: iterable of faces as sequence of :class:`Vec2` and
             :class:`Vec3` objects
+        max_vertex_count: subdivide only ngons with more vertices
 
     """
     for face in faces:
-        if len(face) < 5:
+        if len(face) <= max_vertex_count:
             yield Vec3.tuple(face)
         else:
             mid_pos = Vec3.sum(face) / len(face)
