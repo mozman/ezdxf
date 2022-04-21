@@ -89,7 +89,7 @@ def subdivide_face(
 def subdivide_ngons(
     faces: Iterable[Sequence["AnyVec"]],
     max_vertex_count=4,
-) -> Iterable[Tuple[Vec3, ...]]:
+) -> Iterable[Sequence[Vec3]]:
     """Yields only triangles or quad faces, subdivides ngons into triangles.
 
     Args:

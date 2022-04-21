@@ -464,21 +464,6 @@ class MeshBuilder:
             level -= 1
         return MeshTransformer.from_builder(mesh)
 
-    def subdivide_ngons(self, max_vertex_count=4) -> "MeshTransformer":
-        """Returns a new :class:`MeshTransformer` object with subdivided ngons
-        which have more than `max_vertex_count` vertices.
-        In contrast to the :meth:`tesselation` method, creates this method a
-        new vertex in the centroid of the face. This can create a more regular
-        tesselation but only works reliable with convex faces!
-
-        .. versionadded:: 0.18
-
-        """
-        mesh = MeshVertexMerger()
-        for face in subdivide_ngons(self.faces_as_vertices(), max_vertex_count):
-            mesh.add_face(face)
-        return MeshTransformer.from_builder(mesh)
-
     def optimize_vertices(self, precision: int = 6) -> "MeshTransformer":
         """Returns a new mesh with optimized vertices. Coincident vertices are
         merged together and all faces are open faces (first vertex != last
@@ -492,13 +477,26 @@ class MeshBuilder:
         mesh.add_mesh(mesh=self)
         return MeshTransformer.from_builder(mesh)
 
+    def subdivide_ngons(self, max_vertex_count=4) -> Iterator[Sequence[Vec3]]:
+        """Yields all faces as sequence of :class:`~ezdxf.math.Vec3` instances,
+        where all ngons which have more than `max_vertex_count` vertices gets
+        subdivided.
+        In contrast to the :meth:`tesselation` method, creates this method a
+        new vertex in the centroid of the face. This can create a more regular
+        tesselation but only works reliable for convex faces!
+
+        .. versionadded:: 0.18
+
+        """
+        yield from subdivide_ngons(self.faces_as_vertices(), max_vertex_count)
+
     def tessellation(
         self, max_vertex_count: int = 4
     ) -> Iterator[Sequence[Vec3]]:
         """Yields all faces as sequence of :class:`~ezdxf.math.Vec3` instances,
         each face has no more vertices than the given `max_vertex_count`. This
         method uses the "ear clipping" algorithm which works with concave faces
-        too and does not create any new vertices.
+        too and does not create any additional vertices.
 
         .. versionadded:: 0.18
 
