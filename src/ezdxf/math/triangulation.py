@@ -1,19 +1,21 @@
 # Copyright (c) 2017 Sam Bolgert
 # License: MIT License
 # https://github.com/linuxlewis/tripy
-from typing import Iterable, Iterator, List, Tuple, Sequence, cast
+from typing import Iterable, Iterator, List, Tuple
 import math
 import sys
 from ezdxf.math import Vec2, Vertex, Vec3
 
 EPSILON = math.sqrt(sys.float_info.epsilon)
 
+__all__ = ["ear_clipping_2d", "ear_clipping_3d"]
 
-def ear_clipping(
+
+def ear_clipping_2d(
     vertices: Iterable[Vertex],
 ) -> Iterator[Tuple[Vec2, Vec2, Vec2]]:
-    """This function triangulates the given polygon into simple triangles by the
-    "ear clipping" algorithm. The function yields n-2 triangles for a polygon
+    """This function triangulates the given 2d polygon into simple triangles by
+    the "ear clipping" algorithm. The function yields n-2 triangles for a polygon
     with n vertices, each triangle is a 3-tuple of :class:`Vec2` objects.
 
     Implementation Reference:
@@ -168,7 +170,7 @@ def ear_clipping_3d(
         return
     ocs = OCS(best_fit_normal(polygon))
     elevation = ocs.from_wcs(polygon[0]).z  # type: ignore
-    for triangle in ear_clipping(ocs.points_from_wcs(polygon)):
+    for triangle in ear_clipping_2d(ocs.points_from_wcs(polygon)):
         yield tuple(  # type: ignore
             ocs.points_to_wcs(Vec3(v.x, v.y, elevation) for v in triangle)
         )

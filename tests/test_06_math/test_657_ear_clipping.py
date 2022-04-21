@@ -253,7 +253,7 @@ TEST_DATA = [
 class TestPolygons:
     @pytest.mark.parametrize("poly_data", TEST_DATA)
     def test_polygon(self, poly_data):
-        triangles = list(triangulation.ear_clipping(poly_data.vertices))
+        triangles = list(triangulation.ear_clipping_2d(poly_data.vertices))
         total_area = calculate_total_area(triangles)
         absolute_error = abs(poly_data.total_area - total_area)
         assert (
@@ -271,7 +271,7 @@ class TestPolygons:
 
 def test_open_polygons_are_the_regular_case():
     result = list(
-        triangulation.ear_clipping(
+        triangulation.ear_clipping_2d(
             [(0, 0), (1, 0), (1, 1), (1, 2), (0, 2), (0, 1)]
         )
     )
@@ -280,7 +280,7 @@ def test_open_polygons_are_the_regular_case():
 
 def test_closed_polygons_work_also_as_expected():
     result = list(
-        triangulation.ear_clipping(
+        triangulation.ear_clipping_2d(
             [(0, 0), (1, 0), (1, 1), (1, 2), (0, 2), (0, 1), (0, 0)]
         )
     )
@@ -288,12 +288,12 @@ def test_closed_polygons_work_also_as_expected():
 
 
 def test_empty_input_returns_empty_result():
-    result = list(triangulation.ear_clipping([]))
+    result = list(triangulation.ear_clipping_2d([]))
     assert len(result) == 0
 
 
 def test_single_vertex_returns_empty_result():
-    result = list(triangulation.ear_clipping([(0, 0)]))
+    result = list(triangulation.ear_clipping_2d([(0, 0)]))
     assert len(result) == 0
 
 
