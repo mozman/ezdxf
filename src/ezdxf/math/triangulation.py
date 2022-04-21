@@ -1,7 +1,7 @@
 # Copyright (c) 2017 Sam Bolgert
 # License: MIT License
 # https://github.com/linuxlewis/tripy
-from typing import Iterable, Iterator, List, Tuple, Sequence
+from typing import Iterable, Iterator, List, Tuple, Sequence, cast
 import math
 import sys
 from ezdxf.math import Vec2, Vertex, Vec3
@@ -22,6 +22,8 @@ def ear_clipping(
     """
     ear_vertices: List[Vec2] = []
     polygon: List[Vec2] = Vec2.list(vertices)
+    if len(polygon) == 0:
+        return
 
     # remove closing vertex -> produces a degenerated last triangle
     # [0] -> [-2] -> [-1], where [0] == [-1]
@@ -33,7 +35,8 @@ def ear_clipping(
     point_count = len(polygon)
     if len(polygon) < 3:
         return
-
+    # "simple" polygons are a requirement, see algorithm description:
+    # https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
     if point_count < 6:  # fast simple cases 3..5 vertices
         if point_count == 3:
             yield polygon[0], polygon[1], polygon[2]
@@ -138,9 +141,15 @@ def _triangle_area(a: Vec2, b: Vec2, c: Vec2) -> float:
 def ear_clipping_3d(
     vertices: Iterable[Vec3],
 ) -> Iterator[Tuple[Vec3, Vec3, Vec3]]:
-    """Implements the "ear clipping" algorithm for planar 3d polygons.
-    """
+    """Implements the "ear clipping" algorithm for planar 3d polygons."""
+    from ezdxf.math import best_fit_normal, OCS
+
     polygon = list(vertices)
+    if len(polygon) == 0:
+        return
+
+    if not isinstance(polygon[0], Vec3):
+        raise TypeError("Vec3() as input type required")
     if polygon[0].isclose(polygon[-1]):
         polygon.pop()
     count = len(polygon)
@@ -157,4 +166,9 @@ def ear_clipping_3d(
             yield polygon[0], polygon[1], polygon[3]
             yield polygon[1], polygon[2], polygon[3]
         return
-    raise NotImplementedError
+    ocs = OCS(best_fit_normal(polygon))
+    elevation = ocs.from_wcs(polygon[0]).z  # type: ignore
+    for triangle in ear_clipping(ocs.points_from_wcs(polygon)):
+        yield tuple(  # type: ignore
+            ocs.points_to_wcs(Vec3(v.x, v.y, elevation) for v in triangle)
+        )

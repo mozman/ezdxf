@@ -3,7 +3,8 @@
 # https://github.com/linuxlewis/tripy
 import pytest
 import math
-from ezdxf.math import triangulation
+from ezdxf.math import triangulation, Vec3
+from ezdxf.render import forms
 
 
 def calculate_total_area(triangles):
@@ -284,6 +285,45 @@ def test_closed_polygons_work_also_as_expected():
         )
     )
     assert len(result) == 4
+
+
+def test_empty_input_returns_empty_result():
+    result = list(triangulation.ear_clipping([]))
+    assert len(result) == 0
+
+
+def test_single_vertex_returns_empty_result():
+    result = list(triangulation.ear_clipping([(0, 0)]))
+    assert len(result) == 0
+
+
+class TestEarClipping3D:
+    def test_simple_case(self):
+        cube = forms.cube()
+        for face in list(cube.faces_as_vertices()):
+            result = list(triangulation.ear_clipping_3d(face))
+            assert len(result) == 2
+
+    def test_polygon(self):
+        polygon = Vec3.list([
+            (0, 0, 0),
+            (1, 0, 0),
+            (1, 0, 1),
+            (2, 0, 1),
+            (2, 0, 2),
+            (0, 0, 2),
+        ])
+        result = list(triangulation.ear_clipping_3d(polygon))
+        assert len(result) == 4
+        for triangle in result:
+            assert all(abs(v.y) < 1e-9 for v in triangle)
+
+    def test_input_type_is_Vec3(self):
+        with pytest.raises(TypeError):
+            list(triangulation.ear_clipping_3d([(0, 0, 0)]))  # type: ignore
+
+    def test_empty_input_returns_empty_result(self):
+        assert len(list(triangulation.ear_clipping_3d([]))) == 0
 
 
 if __name__ == "__main__":
