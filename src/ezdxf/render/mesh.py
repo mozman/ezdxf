@@ -34,6 +34,100 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 
+# (a, b): (count, balance)
+# a, b = vertex indices
+# count = how often this edge is used in faces as (a, b) or (b, a)
+# balance = count (a, b) - count (b, a), should be 0 in "well" defined meshes,
+# if balance != 0: maybe doubled faces or mixed face vertex orders
+EdgeStats = Dict[Tuple[int, int], Tuple[int, int]]
+
+
+def open_faces(faces: Iterable[Sequence[int]]) -> Iterator[Sequence[int]]:
+    """Yields all faces with more than two vertices as open faces
+    (first vertex != last vertex).
+    """
+    for face in faces:
+        if len(face) < 3:
+            continue
+        if face[0] == face[-1]:
+            yield face[:-1]
+        else:
+            yield face
+
+
+def all_edges(faces: Iterable[Sequence[int]]) -> Iterator[Tuple[int, int]]:
+    """Yields as face edges as int tuples."""
+    for face in open_faces(faces):
+        size = len(face)
+        for index in range(size):
+            yield face[index], face[(index + 1) % size]
+
+
+def get_edge_stats(faces: Iterable[Sequence[int]]) -> EdgeStats:
+    """Returns the edge statistics.
+
+    The Edge statistic contains for each edge (a, b) the tuple (count, balance)
+    where the vertex index a is always smaller than the vertex index b.
+
+    The count is how often this edge is used in faces as (a, b) or (b, a) and
+    the balance is count of (a, b) minus count of (b, a) and should be 0
+    in "well" defined meshes. A balance != 0 indicates an error which may be
+    double coincident faces or mixed face vertex orders.
+
+    """
+    stats: EdgeStats = {}
+    for a, b in all_edges(faces):
+        edge = a, b
+        orientation = +1
+        if a > b:
+            edge = b, a
+            orientation = -1
+        # for all edges: count should be 2 and balance should be 0
+        count, balance = stats.get(edge, (0, 0))
+        stats[edge] = count + 1, balance + orientation
+    return stats
+
+
+class MeshStats:
+    def __init__(self, mesh: "MeshBuilder"):
+        self.n_vertices: int = len(mesh.vertices)
+        self.n_faces: int = len(mesh.faces)
+        self._edges: EdgeStats = get_edge_stats(mesh.faces)
+
+    @property
+    def n_edges(self) -> int:
+        """Returns the unique edge count."""
+        return len(self._edges)
+
+    @property
+    def is_watertight(self) -> bool:
+        """Returns ``True`` if the mesh has a closed surface.
+
+        This is only ``True`` for meshes with optimized vertices, see method
+        :meth:`MeshBuilder.optimize_vertices`.
+
+        """
+        # https://en.wikipedia.org/wiki/Euler_characteristic
+        return (self.n_vertices - self.n_edges + self.n_faces) == 2
+
+    @property
+    def is_edge_balance_broken(self) -> bool:
+        """Returns ``True`` if the edge balance is broken, this indicates an
+        topology error for closed surfaces (maybe mixed face vertex orientations).
+        """
+        return any(e[1] != 0 for e in self._edges.values())
+
+    def total_edge_count(self) -> int:
+        """Returns the total edge count of all faces, shared edges are counted
+        separately for each face. In closed surfaces this count should be 2x
+        the unique edge count :attr:`n_edges`.
+        """
+        return sum(e[0] for e in self._edges.values())
+
+    def unique_edges(self) -> Iterable[Tuple[int, int]]:
+        """Yields the unique edges of the mesh as int 2-tuples."""
+        return self._edges.keys()
+
 
 class MeshBuilder:
     """A simple Mesh builder. Stores a list of vertices and a faces list where
@@ -58,34 +152,13 @@ class MeshBuilder:
         """Returns a copy of mesh."""
         return self.from_builder(self)
 
-    def is_watertight(self) -> bool:
-        """Returns ``True`` if the mesh has a closed surface.
-
-        This is only ``True`` for meshes with optimized vertices, see method
-        :meth:`optimize_vertices`.
+    def stats(self) -> MeshStats:
+        """Returns the :class:`MeshStats` for this mesh.
 
         .. versionadded:: 0.18
 
         """
-        n_vertices = len(self.vertices)
-        n_edges = sum(1 for _ in self.unique_edges())
-        n_faces = len(self.faces)
-        return (n_vertices - n_edges + n_faces) == 2  # euler number
-
-    def unique_edges(self) -> Iterator[Tuple[int, int]]:
-        """Yields all unique edges of the mesh as index tuples.
-
-        .. versionadded:: 0.18
-
-        """
-        unique = set()
-        for face in open_faces(self.faces):
-            for index in range(len(face)):
-                edge = face[index - 1], face[index]
-                if edge not in unique:
-                    unique.add(edge)
-                    unique.add((edge[1], edge[0]))
-                    yield edge
+        return MeshStats(self)
 
     def faces_as_vertices(self) -> Iterable[List[Vec3]]:
         """Yields all faces as list of vertices."""
@@ -382,7 +455,7 @@ class MeshBuilder:
             level -= 1
         return MeshTransformer.from_builder(mesh)
 
-    def optimize_vertices(self, precision=6) -> "MeshTransformer":
+    def optimize_vertices(self, precision: int = 6) -> "MeshTransformer":
         """Returns a new mesh with optimized vertices. Coincident vertices are
         merged together and all faces are open faces (first vertex != last
         vertex).
@@ -397,22 +470,6 @@ class MeshBuilder:
         m2.vertices = m1.vertices
         m2.faces = m1.faces
         return m2
-
-
-def open_faces(faces: Iterable[Sequence[int]]) -> Iterator[Sequence[int]]:
-    """Yields all faces with more than two vertices as open faces
-    (first vertex != last vertex).
-
-    .. versionadded:: 0.18
-
-    """
-    for face in faces:
-        if len(face) < 3:
-            continue
-        if face[0] == face[-1]:
-            yield face[:-1]
-        else:
-            yield face
 
 
 class MeshTransformer(MeshBuilder):

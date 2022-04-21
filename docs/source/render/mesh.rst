@@ -29,6 +29,8 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. automethod:: copy()
 
+    .. automethod:: stats()
+
     .. automethod:: faces_as_vertices() -> Iterable[List[Vec3]]
 
     .. automethod:: add_vertices
@@ -56,6 +58,33 @@ The basic :class:`MeshBuilder` class does not support transformations.
     .. automethod:: subdivide(level: int = 1, quads=True) -> MeshTransformer
 
     .. automethod:: merge_coplanar_faces(passes: int = 1) -> MeshTransformer
+
+    .. automethod:: optimize_vertices(precision: int = 6) -> MeshTransformer
+
+
+.. class:: MeshStats
+
+    Stores the statistics of a mesh.
+
+    .. versionadded:: 0.18
+
+    .. attribute:: n_vertices
+
+        Count of vertices
+
+    .. attribute:: n_faces
+
+        Count of faces
+
+    .. autoproperty:: n_edges
+
+    .. autoproperty:: is_watertight
+
+    .. autoproperty:: is_edge_balance_broken
+
+    .. automethod:: total_edge_count
+
+    .. automethod:: unique_edges
 
 
 MeshTransformer

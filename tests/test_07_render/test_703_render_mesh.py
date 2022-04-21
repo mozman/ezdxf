@@ -14,6 +14,8 @@ from ezdxf.render.mesh import (
     NodeMergingError,
     DegeneratedPathError,
     remove_colinear_face_vertices,
+    all_edges,
+    get_edge_stats,
 )
 from ezdxf.addons import SierpinskyPyramid
 from ezdxf.layouts import VirtualLayout
@@ -120,33 +122,54 @@ def test_rotate_x():
     assert bbox.extmax.isclose((1, 0, 1))
 
 
-def test_empty_mesh_is_not_watertight():
-    mesh = MeshBuilder()
-    assert mesh.is_watertight() is False
+class TestMeshStats:
+    def test_empty_mesh_is_not_watertight(self):
+        mesh = MeshBuilder()
+        assert mesh.stats().is_watertight is False
 
+    def test_single_face_mesh_is_not_watertight(self):
+        mesh = MeshBuilder()
+        mesh.add_face(REGULAR_FACE)
+        assert mesh.stats().is_watertight is False
 
-def test_single_face_mesh_is_not_watertight():
-    mesh = MeshBuilder()
-    mesh.add_face(REGULAR_FACE)
-    assert mesh.is_watertight() is False
+    def test_cube_is_watertight(self):
+        mesh = cube(center=False)
+        assert mesh.stats().is_watertight is True
 
+    def test_is_watertight_can_not_detect_vertex_orientation_errors(self):
+        mesh = cube(center=False)
+        mesh.faces[-1] = tuple(reversed(mesh.faces[-1]))
+        assert (mesh.stats().is_watertight is True)
 
-def test_cube_is_watertight():
-    mesh = cube(center=False)
-    assert mesh.is_watertight() is True
+    def test_edge_balance_of_closed_surface_is_not_broken(self):
+        mesh = cube(center=False)
+        assert mesh.stats().is_edge_balance_broken is False
 
+    def test_edge_balance_of_wrong_oriented_faces_is_broken(self):
+        mesh = cube(center=False)
+        mesh.faces[-1] = tuple(reversed(mesh.faces[-1]))
+        assert mesh.stats().is_edge_balance_broken is True
 
-def test_cube_of_separated_faces_is_not_watertight():
-    mesh = cube(center=False)
-    mesh2 = MeshBuilder()
-    for face in mesh.faces_as_vertices():
-        mesh2.add_face(face)
-    assert mesh2.is_watertight() is False
+    def test_edge_balance_of_doubled_faces_is_broken(self):
+        mesh = cube(center=False)
+        mesh.faces.append(mesh.faces[-1])
+        assert mesh.stats().is_edge_balance_broken is True
 
+    def test_total_edge_count_of_closed_surface(self):
+        mesh = cube(center=False)
+        stats = mesh.stats()
+        assert stats.total_edge_count() == stats.n_edges * 2
 
-def test_cylinder_is_watertight():
-    mesh = cylinder()
-    assert mesh.is_watertight() is True
+    def test_cube_of_separated_faces_is_not_watertight(self):
+        mesh = cube(center=False)
+        mesh2 = MeshBuilder()
+        for face in mesh.faces_as_vertices():
+            mesh2.add_face(face)
+        assert mesh2.stats().is_watertight is False
+
+    def test_cylinder_is_watertight(self):
+        mesh = cylinder()
+        assert mesh.stats().is_watertight is True
 
 
 @pytest.fixture
@@ -562,12 +585,55 @@ class TestRemoveColinearVertices:
 
 
 class TestMergeFullPatch:
-    @pytest.mark.parametrize("seg", [
-        [0, 8, 1],
-        [1, 0, 8],
-        [8, 1, 0],
-    ])
+    @pytest.mark.parametrize(
+        "seg",
+        [
+            [0, 8, 1],
+            [1, 0, 8],
+            [8, 1, 0],
+        ],
+    )
     def test_fill_pie(self, seg):
         open_pie = [0, 1, 2, 3, 4, 5, 6, 7, 8]
         res = merge_full_patch(open_pie, seg)
         assert res == [1, 2, 3, 4, 5, 6, 7, 8]
+
+
+def test_all_edges_cube():
+    mesh = cube()
+    edges = list(all_edges(mesh.faces))
+    assert len(edges) == 6 * 4
+    assert len(set(edges)) == 24
+
+
+class TestGetEdgeStats:
+    @pytest.fixture(scope="class")
+    def edges(self):
+        mesh = cube()
+        return get_edge_stats(mesh.faces)
+
+    def test_unique_edge_count(self, edges):
+        assert len(edges) == 12
+
+    def test_sum_of_edge_count(self, edges):
+        assert sum(e[0] for e in edges.values()) == 24
+
+    def test_all_balances_are_0(self, edges):
+        assert all(e[1] == 0 for e in edges.values()) is True
+
+    def test_invalid_face_orientation_break_the_rules(self):
+        faces = cube().faces
+        faces[-1] = list(reversed(faces[-1]))
+        edges = get_edge_stats(faces)
+        assert all(e[1] == 0 for e in edges.values()) is False
+
+    def test_coincident_faces_break_the_rules(self):
+        faces = cube().faces
+        faces.append(faces[-1])
+        edges = get_edge_stats(faces)
+        assert all(e[1] == 0 for e in edges.values()) is False
+
+    def test_edge_balance_has_no_meaning_for_open_surfaces(self):
+        faces = [(0, 1, 2)]
+        edges = get_edge_stats(faces)
+        assert all(e[1] != 0 for e in edges.values()) is True

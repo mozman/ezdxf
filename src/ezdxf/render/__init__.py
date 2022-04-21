@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2021, Manfred Moitzi
+# Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
 from .arrows import ARROWS
 from .r12spline import R12Spline
@@ -8,6 +8,7 @@ from .mesh import (
     MeshVertexMerger,
     MeshTransformer,
     MeshAverageVertexMerger,
+    MeshStats,
 )
 from .trace import TraceBuilder
 from .mleader import (
