@@ -471,6 +471,18 @@ class MeshBuilder:
         m2.faces = m1.faces
         return m2
 
+    def tessellation(self, max_vertices: int=3) -> Iterator[Sequence[Vec3]]:
+        """Yields all faces as sequence of :class:`~ezdxf.math.Vec3` instances,
+        each face has the given maximum vertex count.
+        """
+        from ezdxf.math.triangulation import ear_clipping_3d
+        for face in self.faces_as_vertices():
+            count = len(face)
+            if count <= max_vertices:
+                yield face
+            else:
+                yield from ear_clipping_3d(face)
+
 
 class MeshTransformer(MeshBuilder):
     """A mesh builder with inplace transformation support."""

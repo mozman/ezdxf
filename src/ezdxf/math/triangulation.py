@@ -1,10 +1,10 @@
 # Copyright (c) 2017 Sam Bolgert
 # License: MIT License
 # https://github.com/linuxlewis/tripy
-from typing import Iterable, Iterator, List, Tuple
+from typing import Iterable, Iterator, List, Tuple, Sequence
 import math
 import sys
-from ezdxf.math import Vec2, Vertex
+from ezdxf.math import Vec2, Vertex, Vec3
 
 EPSILON = math.sqrt(sys.float_info.epsilon)
 
@@ -31,6 +31,21 @@ def ear_clipping(
         polygon.reverse()
 
     point_count = len(polygon)
+    if len(polygon) < 3:
+        return
+
+    if point_count < 6:  # fast simple cases 3..5 vertices
+        if point_count == 3:
+            yield polygon[0], polygon[1], polygon[2]
+        elif point_count == 4:
+            yield polygon[0], polygon[1], polygon[2]
+            yield polygon[0], polygon[2], polygon[3]
+        elif point_count == 5:
+            yield polygon[0], polygon[3], polygon[4]
+            yield polygon[0], polygon[1], polygon[3]
+            yield polygon[1], polygon[2], polygon[3]
+        return
+
     for i in range(point_count):
         prev_index = i - 1
         prev_point = polygon[prev_index]
@@ -118,3 +133,28 @@ def _triangle_area(a: Vec2, b: Vec2, c: Vec2) -> float:
     return abs(
         (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y)) / 2.0
     )
+
+
+def ear_clipping_3d(
+    vertices: Iterable[Vec3],
+) -> Iterator[Tuple[Vec3, Vec3, Vec3]]:
+    """Implements the "ear clipping" algorithm for planar 3d polygons.
+    """
+    polygon = list(vertices)
+    if polygon[0].isclose(polygon[-1]):
+        polygon.pop()
+    count = len(polygon)
+    if count < 3:
+        return
+    if count < 6:  # fast simple cases 3..5 vertices
+        if count == 3:
+            yield polygon[0], polygon[1], polygon[2]
+        elif count == 4:
+            yield polygon[0], polygon[1], polygon[2]
+            yield polygon[0], polygon[2], polygon[3]
+        elif count == 5:
+            yield polygon[0], polygon[3], polygon[4]
+            yield polygon[0], polygon[1], polygon[3]
+            yield polygon[1], polygon[2], polygon[3]
+        return
+    raise NotImplementedError

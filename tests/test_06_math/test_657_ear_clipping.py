@@ -71,10 +71,7 @@ TEST_DATA = [
             (0, -1),
             (1, 0),
         ],
-        triangles=[
-            ((1, 0), (0, 1), (-1, 0)),
-            ((1, 0), (-1, 0), (0, -1)),
-        ],
+        triangles=[((0, 1), (-1, 0), (0, -1)), ((0, 1), (0, -1), (1, 0))],
         total_area=2.0,
     ),
     PolyData(
@@ -212,7 +209,7 @@ TEST_DATA = [
         ],
         triangles=[
             ((-226.0, -42.0), (-244.2, -147.5), (66.0, 28.7)),
-            ((66.0, 28.7), (229.0, 78.0), (-226.0, -42.0)),
+            ((-226.0, -42.0), (66.0, 28.7), (229.0, 78.0)),
         ],
         total_area=16195.379999999925,
     ),
@@ -227,7 +224,7 @@ TEST_DATA = [
         ],
         triangles=[
             ((-226000, -42000), (-244200, -147500), (66000, 28700)),
-            ((66000, 28700), (229000, 78000), (-226000, -42000)),
+            ((-226000, -42000), (66000, 28700), (229000, 78000)),
         ],
         total_area=16195379999.999996,
     ),
@@ -272,13 +269,21 @@ class TestPolygons:
 
 
 def test_open_polygons_are_the_regular_case():
-    result = list(triangulation.ear_clipping([(0, 0), (1, 0), (1, 1), (0, 1)]))
-    assert len(result) == 2
+    result = list(
+        triangulation.ear_clipping(
+            [(0, 0), (1, 0), (1, 1), (1, 2), (0, 2), (0, 1)]
+        )
+    )
+    assert len(result) == 4
 
 
 def test_closed_polygons_work_also_as_expected():
-    result = list(triangulation.ear_clipping([(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)]))
-    assert len(result) == 2
+    result = list(
+        triangulation.ear_clipping(
+            [(0, 0), (1, 0), (1, 1), (1, 2), (0, 2), (0, 1), (0, 0)]
+        )
+    )
+    assert len(result) == 4
 
 
 if __name__ == "__main__":
