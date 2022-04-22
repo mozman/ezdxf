@@ -88,22 +88,39 @@ def get_edge_stats(faces: Iterable[Sequence[int]]) -> EdgeStats:
     return stats
 
 
-class MeshStats:
+class MeshDiagnose:
     def __init__(self, mesh: "MeshBuilder"):
-        self.n_vertices: int = len(mesh.vertices)
-        self.n_faces: int = len(mesh.faces)
-        self._edges: EdgeStats = get_edge_stats(mesh.faces)
+        self.mesh = mesh
+        self._edge_stats: EdgeStats = {}
+
+    @property
+    def n_vertices(self) -> int:
+        """Returns the vertex count."""
+        return len(self.mesh.vertices)
+
+    @property
+    def n_faces(self) -> int:
+        """Returns the face count."""
+        return len(self.mesh.faces)
 
     @property
     def n_edges(self) -> int:
         """Returns the unique edge count."""
-        return len(self._edges)
+        return len(self.edge_stats)
+
+    @property
+    def edge_stats(self) -> EdgeStats:
+        """Returns the :class:`EdgeStats`."""
+        if len(self._edge_stats) == 0:
+            self._edge_stats = get_edge_stats(self.mesh.faces)
+        return self._edge_stats
 
     @property
     def is_watertight(self) -> bool:
         """Returns ``True`` if the mesh has a closed surface.
 
-        This is only ``True`` for meshes with optimized vertices, see method
+        This works only for meshes with optimized vertices where
+        coincident vertices are merged together, see method
         :meth:`MeshBuilder.optimize_vertices`.
 
         """
@@ -115,18 +132,18 @@ class MeshStats:
         """Returns ``True`` if the edge balance is broken, this indicates an
         topology error for closed surfaces (maybe mixed face vertex orientations).
         """
-        return any(e[1] != 0 for e in self._edges.values())
+        return any(e[1] != 0 for e in self.edge_stats.values())
 
     def total_edge_count(self) -> int:
         """Returns the total edge count of all faces, shared edges are counted
         separately for each face. In closed surfaces this count should be 2x
         the unique edge count :attr:`n_edges`.
         """
-        return sum(e[0] for e in self._edges.values())
+        return sum(e[0] for e in self.edge_stats.values())
 
     def unique_edges(self) -> Iterable[Tuple[int, int]]:
         """Yields the unique edges of the mesh as int 2-tuples."""
-        return self._edges.keys()
+        return self.edge_stats.keys()
 
 
 class MeshBuilder:
@@ -152,13 +169,13 @@ class MeshBuilder:
         """Returns a copy of mesh."""
         return self.from_builder(self)
 
-    def stats(self) -> MeshStats:
-        """Returns the :class:`MeshStats` for this mesh.
+    def diagnose(self) -> MeshDiagnose:
+        """Returns the :class:`MeshDiagnose` for this mesh.
 
         .. versionadded:: 0.18
 
         """
-        return MeshStats(self)
+        return MeshDiagnose(self)
 
     def faces_as_vertices(self) -> Iterable[List[Vec3]]:
         """Yields all faces as list of vertices."""

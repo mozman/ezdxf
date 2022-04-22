@@ -27,9 +27,9 @@ The basic :class:`MeshBuilder` class does not support transformations.
         least three vertices, :class:`~ezdxf.entities.Mesh` supports ngons,
         so the count of vertices is not limited.
 
-    .. automethod:: copy()
+    .. automethod:: copy
 
-    .. automethod:: stats()
+    .. automethod:: diagnose
 
     .. automethod:: faces_as_vertices() -> Iterable[List[Vec3]]
 
@@ -67,19 +67,19 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
 
 
-.. class:: MeshStats
+.. class:: MeshDiagnose
 
-    Stores the statistics of a mesh.
+    Diagnose tools for :class:`MeshBuilder`.
 
     .. versionadded:: 0.18
 
-    .. attribute:: n_vertices
+    .. attribute:: mesh
 
-        Count of vertices
+        The associated :class:`MeshBuilder` instance.
 
-    .. attribute:: n_faces
+    .. autoproperty:: n_vertices
 
-        Count of faces
+    .. autoproperty:: n_faces
 
     .. autoproperty:: n_edges
 

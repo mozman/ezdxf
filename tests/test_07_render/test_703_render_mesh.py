@@ -122,42 +122,42 @@ def test_rotate_x():
     assert bbox.extmax.isclose((1, 0, 1))
 
 
-class TestMeshStats:
+class TestMeshDiagnose:
     def test_empty_mesh_is_not_watertight(self):
         mesh = MeshBuilder()
-        assert mesh.stats().is_watertight is False
+        assert mesh.diagnose().is_watertight is False
 
     def test_single_face_mesh_is_not_watertight(self):
         mesh = MeshBuilder()
         mesh.add_face(REGULAR_FACE)
-        assert mesh.stats().is_watertight is False
+        assert mesh.diagnose().is_watertight is False
 
     def test_cube_is_watertight(self):
         mesh = cube(center=False)
-        assert mesh.stats().is_watertight is True
+        assert mesh.diagnose().is_watertight is True
 
     def test_is_watertight_can_not_detect_vertex_orientation_errors(self):
         mesh = cube(center=False)
         mesh.faces[-1] = tuple(reversed(mesh.faces[-1]))
-        assert (mesh.stats().is_watertight is True)
+        assert (mesh.diagnose().is_watertight is True)
 
     def test_edge_balance_of_closed_surface_is_not_broken(self):
         mesh = cube(center=False)
-        assert mesh.stats().is_edge_balance_broken is False
+        assert mesh.diagnose().is_edge_balance_broken is False
 
     def test_edge_balance_of_wrong_oriented_faces_is_broken(self):
         mesh = cube(center=False)
         mesh.faces[-1] = tuple(reversed(mesh.faces[-1]))
-        assert mesh.stats().is_edge_balance_broken is True
+        assert mesh.diagnose().is_edge_balance_broken is True
 
     def test_edge_balance_of_doubled_faces_is_broken(self):
         mesh = cube(center=False)
         mesh.faces.append(mesh.faces[-1])
-        assert mesh.stats().is_edge_balance_broken is True
+        assert mesh.diagnose().is_edge_balance_broken is True
 
     def test_total_edge_count_of_closed_surface(self):
         mesh = cube(center=False)
-        stats = mesh.stats()
+        stats = mesh.diagnose()
         assert stats.total_edge_count() == stats.n_edges * 2
 
     def test_cube_of_separated_faces_is_not_watertight(self):
@@ -165,11 +165,11 @@ class TestMeshStats:
         mesh2 = MeshBuilder()
         for face in mesh.faces_as_vertices():
             mesh2.add_face(face)
-        assert mesh2.stats().is_watertight is False
+        assert mesh2.diagnose().is_watertight is False
 
     def test_cylinder_is_watertight(self):
         mesh = cylinder()
-        assert mesh.stats().is_watertight is True
+        assert mesh.diagnose().is_watertight is True
 
 
 @pytest.fixture

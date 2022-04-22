@@ -8,7 +8,7 @@ from .mesh import (
     MeshVertexMerger,
     MeshTransformer,
     MeshAverageVertexMerger,
-    MeshStats,
+    MeshDiagnose,
 )
 from .trace import TraceBuilder
 from .mleader import (
