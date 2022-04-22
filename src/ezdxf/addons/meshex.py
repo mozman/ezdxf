@@ -1,26 +1,11 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-"""
-This add-on provides functions to exchange meshes with other file formats like:
-
-    - STL
-    - PLY
-    - OFF
-    - OBJ
-
-The source or target entity is always a :class:`~ezdxf.render.MeshBuilder`
-instance and therefore the supported features are also limited by this class.
-Only vertices and faces are exchanged, colors, textures and normals are lost.
-To be clear: this add-on is not a replacement for a proper file format
-interfaces for this data formats!
-
-"""
-from typing import Union, List, Sequence
+from typing import Union, List, Sequence, Iterable
 import os
 import struct
 
 from ezdxf.math import Vec3
-from ezdxf.render import MeshTransformer, MeshVertexMerger
+from ezdxf.render import MeshTransformer, MeshVertexMerger, MeshBuilder
 
 
 class UnsupportedFileFormat(Exception):
@@ -32,7 +17,7 @@ class ParsingError(Exception):
 
 
 def stl_readfile(filename: Union[str, os.PathLike]) -> MeshTransformer:
-    """Read ascii or binary STL file content as :class:`ezdxf.render.MeshTransformer`
+    """Read ascii or binary `STL`_ file content as :class:`ezdxf.render.MeshTransformer`
     instance.
 
     Raises:
@@ -49,7 +34,7 @@ def stl_readfile(filename: Union[str, os.PathLike]) -> MeshTransformer:
 
 
 def stl_loads(content: str) -> MeshTransformer:
-    """Load a mesh from an ascii STL content string as :class:`ezdxf.render.MeshTransformer`
+    """Load a mesh from an ascii `STL`_ content string as :class:`ezdxf.render.MeshTransformer`
     instance.
 
     Raises:
@@ -80,7 +65,7 @@ def stl_loads(content: str) -> MeshTransformer:
 
 
 def stl_loadb(buffer: bytes) -> MeshTransformer:
-    """Load a mesh from a binary STL data :class:`ezdxf.render.MeshTransformer`
+    """Load a mesh from a binary `STL`_ data :class:`ezdxf.render.MeshTransformer`
     instance.
 
     Raises:
@@ -107,7 +92,7 @@ def stl_loadb(buffer: bytes) -> MeshTransformer:
 
 
 def off_readfile(filename: Union[str, os.PathLike]) -> MeshTransformer:
-    """Read OFF file content as :class:`ezdxf.render.MeshTransformer`
+    """Read `OFF`_ file content as :class:`ezdxf.render.MeshTransformer`
     instance.
 
     Raises:
@@ -120,7 +105,7 @@ def off_readfile(filename: Union[str, os.PathLike]) -> MeshTransformer:
 
 
 def off_loads(content: str) -> MeshTransformer:
-    """Load a mesh from a OFF content string as :class:`ezdxf.render.MeshTransformer`
+    """Load a mesh from a `OFF`_ content string as :class:`ezdxf.render.MeshTransformer`
     instance.
 
     Raises:
@@ -182,7 +167,7 @@ def off_loads(content: str) -> MeshTransformer:
 
 
 def obj_readfile(filename: Union[str, os.PathLike]) -> List[MeshTransformer]:
-    """Read OBJ file content as list of :class:`ezdxf.render.MeshTransformer`
+    """Read `OBJ`_ file content as list of :class:`ezdxf.render.MeshTransformer`
     instances.
 
     Raises:
@@ -195,7 +180,7 @@ def obj_readfile(filename: Union[str, os.PathLike]) -> List[MeshTransformer]:
 
 
 def obj_loads(content: str) -> List[MeshTransformer]:
-    """Load one or more meshes from an OBJ content string as list of
+    """Load one or more meshes from an `OBJ`_ content string as list of
     :class:`ezdxf.render.MeshTransformer` instances.
 
     Raises:
@@ -244,3 +229,61 @@ def obj_loads(content: str) -> List[MeshTransformer]:
     if len(mesh.vertices) > 0:
         meshes.append(MeshTransformer.from_builder(mesh))
     return meshes
+
+
+def stl_dumps(mesh: MeshBuilder) -> str:
+    """Returns the `STL`_ data as string for the given `mesh`.
+    This function triangulates the meshes automatically because the `STL`_
+    format supports only triangles as faces.
+
+    This function does not check if the mesh obey the
+    `STL`_ format `rules <http://www.fabbers.com/tech/STL_Format>`_:
+
+        - The direction of the face normal is outward.
+        - The face vertices are listed in counter-clockwise order when looking
+          at the object from the outside (right-hand rule).
+        - Each triangle must share two vertices with each of its adjacent triangles.
+        - The object represented must be located in the all-positive octant
+          (non-negative and nonzero).
+
+    """
+    raise NotImplementedError
+
+
+def stl_dumpb(mesh: MeshBuilder) -> bytes:
+    """Returns the `STL`_ binary data as bytes for the given `mesh`.
+
+    For more information see function: :func:`stl_dumps`
+    """
+    raise NotImplementedError
+
+
+def off_dumps(mesh: MeshBuilder) -> str:
+    """Returns the `OFF`_ data as string for the given `mesh`.
+    The `OFF`_ format supports ngons as faces.
+
+    """
+    raise NotImplementedError
+
+
+def obj_dumps(mesh: MeshBuilder) -> str:
+    """Returns the `OBJ`_ data as string for the given `mesh`.
+    The `OBJ`_ format supports ngons as faces.
+
+    """
+    raise NotImplementedError
+
+
+def openscad_dumps(mesh: MeshBuilder) -> str:
+    """Returns the `OpenSCAD`_ `polyhedron`_ definition as string for the given
+    `mesh`. `OpenSCAD`_ supports ngons as faces.
+
+    .. Important::
+
+        `OpenSCAD`_ requires the face normals pointing inwards, the method
+        :meth:`~ezdxf.render.MeshBuilder.flip_normals` of the
+        :class:`~ezdxf.render.MeshBuilder` class can flip the normals
+        inplace.
+
+    """
+    raise NotImplementedError

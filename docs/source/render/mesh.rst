@@ -83,7 +83,16 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
 .. class:: MeshDiagnose
 
-    Diagnose tools for :class:`MeshBuilder`.
+    Diagnose tools for :class:`MeshBuilder` which can be used to detect
+    topology errors for closed surfaces.
+
+    .. note::
+
+        There exist no tools in `ezdxf` to repair broken surfaces, but you can
+        use the :mod:`ezdxf.addons.meshex` addon to exchange meshes with the
+        open source tool `MeshLab <https://www.meshlab.net/>`_.
+
+    Create an instance of this tool by the :meth:`MeshBuilder.diagnose` method.
 
     .. versionadded:: 0.18
 

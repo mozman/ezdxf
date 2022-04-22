@@ -6,38 +6,66 @@ MeshExchange
 ============
 
 The :mod:`ezdxf.addons.meshex` module provides functions to exchange meshes
-with other file formats like:
+with other tools in the following file formats:
 
-    - `STL`_, supports only triangles as faces
-    - `OFF`_, supports n-gons as faces and is more compact than ascii STL
-    - `OBJ`_, supports n-gons as faces and can contain multiple meshes in one file
+    - `STL`_: import/export, supports only triangles as faces
+    - `OFF`_: import/export, supports ngons as faces and is more compact than STL
+    - `OBJ`_: import/export, supports ngons as faces and can contain multiple meshes in one file
+    - `OpenSCAD`_: export as `polyhedron`_, supports ngons as faces
 
-The source or target entity is always a :class:`~ezdxf.render.MeshBuilder`
+The source or target object is always a :class:`~ezdxf.render.MeshBuilder`
 instance and therefore the supported features are also limited by this class.
 Only vertices and faces are exchanged, colors, textures and normals are lost.
 
 .. note::
 
     This add-on is not a replacement for a proper file format
-    interfaces for this data formats! It's just a simple and quick way to
-    exchange meshes with other tools like `OpenSCAD`_.
+    interface for this data formats! It's just a simple way to
+    exchange meshes with other tools like `OpenSCAD`_ or `MeshLab`_.
 
-.. autofunction:: stl_readfile
+.. warning::
 
-.. autofunction:: stl_loads
+    The meshes created with the addon :mod:`ezdxf.addons.pycsg` are usually not
+    suitable for export because they often violate the vertex-to-vertex rule:
+    A vertex of a face cannot lie on the edge of another face.
+    This was one of the reasons to create this addon to get an interface to
+    `OpenSCAD`_.
 
-.. autofunction:: stl_loadb
+Import
+------
 
-.. autofunction:: off_readfile
+.. autofunction:: stl_readfile(filename: Union[str, os.PathLike]) -> MeshTransformer
 
-.. autofunction:: off_loads
+.. autofunction:: stl_loads(content: str) -> MeshTransformer
 
-.. autofunction:: obj_readfile
+.. autofunction:: stl_loadb(buffer: bytes) -> MeshTransformer
 
-.. autofunction:: obj_loads
+.. autofunction:: off_readfile(filename: Union[str, os.PathLike]) -> MeshTransformer
+
+.. autofunction:: off_loads(content: str) -> MeshTransformer
+
+.. autofunction:: obj_readfile(filename: Union[str, os.PathLike]) -> List[MeshTransformer]
+
+.. autofunction:: obj_loads(content: str) -> List[MeshTransformer]
+
+Export
+------
+
+.. autofunction:: stl_dumps(mesh: MeshBuilder) -> str
+
+.. autofunction:: stl_dumpb(mesh: MeshBuilder) -> bytes
+
+.. autofunction:: off_dumps(mesh: MeshBuilder) -> str
+
+.. autofunction:: obj_dumps(mesh: MeshBuilder) -> str
+
+.. autofunction:: openscad_dumps(mesh: MeshBuilder) -> str
+
+
 
 .. _OpenSCAD: https://openscad.org/index.html
+.. _MeshLab: https://www.meshlab.net
 .. _STL: https://en.wikipedia.org/wiki/STL_(file_format)
-.. _PLY: https://en.wikipedia.org/wiki/PLY_(file_format)
 .. _OFF: https://en.wikipedia.org/wiki/OFF_(file_format)
 .. _OBJ: https://en.wikipedia.org/wiki/OBJ_(file_format)
+.. _polyhedron: https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Primitive_Solids#polyhedron
