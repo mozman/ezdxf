@@ -244,7 +244,7 @@ class TestOpenSCADDumpString:
     def test_single_face(self):
         mesh = MeshBuilder()
         mesh.add_face([(0, 0), (1, 0), (1, 1)])
-        result = meshex.openscad_dumps(mesh)
+        result = meshex.scad_dumps(mesh)
         assert result == OPENSCAD_SINGLE_TRIANGLE
 
     def test_inverted_cube(self):
@@ -254,7 +254,7 @@ class TestOpenSCADDumpString:
         """
         mesh = cube()
         mesh.flip_normals()
-        result = meshex.openscad_dumps(mesh)
+        result = meshex.scad_dumps(mesh)
         assert result == OPENSCAD_INVERTED_CUBE
 
 

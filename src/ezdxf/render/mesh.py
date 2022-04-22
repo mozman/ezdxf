@@ -288,11 +288,19 @@ class MeshBuilder:
         """
         return MeshDiagnose(self)
 
-    def faces_as_vertices(self) -> Iterable[List[Vec3]]:
+    def faces_as_vertices(self) -> Iterator[List[Vec3]]:
         """Yields all faces as list of vertices."""
         v = self.vertices
         for face in self.faces:
             yield [v[index] for index in face]
+
+    def open_faces(self) -> Iterator[Sequence[int]]:
+        """Yields all faces as sequence of int where first vertex != last vertex.
+
+        .. versionadded:: 0.18
+
+        """
+        yield from open_faces(self.faces)
 
     def add_face(self, vertices: Iterable["Vertex"]) -> None:
         """Add a face as vertices list to the mesh. A face requires at least 3

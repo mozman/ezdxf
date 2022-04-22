@@ -31,7 +31,9 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. automethod:: diagnose
 
-    .. automethod:: faces_as_vertices() -> Iterable[List[Vec3]]
+    .. automethod:: faces_as_vertices() -> Iterator[List[Vec3]]
+
+    .. automethod:: open_faces
 
     .. automethod:: add_vertices
 

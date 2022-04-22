@@ -59,7 +59,7 @@ Export
 
 .. autofunction:: obj_dumps(mesh: MeshBuilder) -> str
 
-.. autofunction:: openscad_dumps(mesh: MeshBuilder) -> str
+.. autofunction:: scad_dumps(mesh: MeshBuilder) -> str
 
 
 

@@ -304,7 +304,7 @@ def off_dumps(mesh: MeshBuilder) -> str:
     for v in mesh.vertices:
         v = v.round(6)
         lines.append(f"{v.x} {v.y} {v.z}")
-    for face in mesh.faces:
+    for face in mesh.open_faces():
         lines.append(f"{len(face)} {' '.join(str(i) for i in face)}")
     lines[-1] += "\n"
     return "\n".join(lines)
@@ -319,14 +319,14 @@ def obj_dumps(mesh: MeshBuilder) -> str:
     for v in mesh.vertices:
         v = v.round(6)
         lines.append(f"v {v.x} {v.y} {v.z}")
-    for face in mesh.faces:
+    for face in mesh.open_faces():
         # OBJ is 1-index
         lines.append("f " + " ".join(str(i+1) for i in face))
     lines[-1] += "\n"
     return "\n".join(lines)
 
 
-def openscad_dumps(mesh: MeshBuilder) -> str:
+def scad_dumps(mesh: MeshBuilder) -> str:
     """Returns the `OpenSCAD`_ `polyhedron`_ definition as string for the given
     `mesh`. `OpenSCAD`_ supports ngons as faces.
 
@@ -345,7 +345,7 @@ def openscad_dumps(mesh: MeshBuilder) -> str:
         lines.append(f"  [{v.x}, {v.y}, {v.z}],")
     # OpenSCAD accept the last ","
     lines.append("], faces = [")
-    for face in mesh.faces:
+    for face in mesh.open_faces():
         lines.append("  [" + ", ".join(str(i) for i in face) + "],")
     # OpenSCAD accept the last ","
     lines.append("], convexity = 10);\n")
