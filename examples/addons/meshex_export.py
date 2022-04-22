@@ -41,12 +41,19 @@ def export_obj(filename):
         fp.write(meshex.obj_dumps(mesh))
 
 
+def export_ply(filename):
+    with open(filename, "wb") as fp:
+        mesh = cylinder()
+        fp.write(meshex.ply_dumpb(mesh))
+
+
 def main():
     export_scad(DIR / "cylinder.scad")
     export_stl_asc(DIR / "cylinder_asc.stl")
     export_stl_bin(DIR / "cylinder_bin.stl")
     export_off(DIR / "cylinder.off")
     export_obj(DIR / "cylinder.obj")
+    export_ply(DIR / "cylinder.ply")
 
 
 if __name__ == "__main__":

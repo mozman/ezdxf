@@ -12,7 +12,9 @@ with other tools in the following file formats:
 
     - `STL`_: import/export, supports only triangles as faces
     - `OFF`_: import/export, supports ngons as faces and is more compact than STL
-    - `OBJ`_: import/export, supports ngons as faces and can contain multiple meshes in one file
+    - `OBJ`_: import/export, supports ngons as faces and can contain multiple
+      meshes in one file
+    - `PLY`_: export only, supports ngons as faces
     - `OpenSCAD`_: export as `polyhedron`_, supports ngons as faces
 
 The source or target object is always a :class:`~ezdxf.render.MeshBuilder`
@@ -61,6 +63,8 @@ Export
 
 .. autofunction:: obj_dumps(mesh: MeshBuilder) -> str
 
+.. autofunction:: ply_dumpb(mesh: MeshBuilder) -> bytes
+
 .. autofunction:: scad_dumps(mesh: MeshBuilder) -> str
 
 
@@ -70,4 +74,5 @@ Export
 .. _STL: https://en.wikipedia.org/wiki/STL_(file_format)
 .. _OFF: https://en.wikipedia.org/wiki/OFF_(file_format)
 .. _OBJ: https://en.wikipedia.org/wiki/OBJ_(file_format)
+.. _PLY: https://en.wikipedia.org/wiki/PLY_(file_format)
 .. _polyhedron: https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Primitive_Solids#polyhedron
