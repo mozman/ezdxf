@@ -5,6 +5,8 @@
 MeshExchange
 ============
 
+.. versionadded:: 0.18
+
 The :mod:`ezdxf.addons.meshex` module provides functions to exchange meshes
 with other tools in the following file formats:
 
