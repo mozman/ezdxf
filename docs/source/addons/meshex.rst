@@ -35,6 +35,24 @@ Only vertices and faces are exchanged, colors, textures and normals are lost.
     This was one of the reasons to create this addon to get an interface to
     `OpenSCAD`_.
 
+Example for a simple STL to DXF converter:
+
+.. code-block:: Python
+
+    import sys
+    import ezdxf
+    from ezdxf.addons import meshex
+
+    try:
+        mesh = meshex.stl_readfile("your.stl")
+    except (meshex.ParsingError, IOError) as e:
+        print(str(e))
+        sys.exit(1)
+
+    doc = ezdxf.new()
+    mesh.render_mesh(doc.modelspace())
+    doc.saveas("your.dxf")
+
 Import
 ------
 
