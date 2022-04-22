@@ -11,6 +11,7 @@ from typing import (
     Dict,
     TypeVar,
     Type,
+    NamedTuple,
 )
 from ezdxf.math import (
     Matrix44,
@@ -34,12 +35,19 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 
+
+class EdgeStat(NamedTuple):
+    """Named tuple of edge statistics."""
+    count: int  # type: ignore
+    balance: int
+
+
 # (a, b): (count, balance)
 # a, b = vertex indices
 # count = how often this edge is used in faces as (a, b) or (b, a)
 # balance = count (a, b) - count (b, a), should be 0 in "well" defined meshes,
 # if balance != 0: maybe doubled faces or mixed face vertex orders
-EdgeStats = Dict[Tuple[int, int], Tuple[int, int]]
+EdgeStats = Dict[Tuple[int, int], EdgeStat]
 
 
 def open_faces(faces: Iterable[Sequence[int]]) -> Iterator[Sequence[int]]:
@@ -66,15 +74,18 @@ def all_edges(faces: Iterable[Sequence[int]]) -> Iterator[Tuple[int, int]]:
 def get_edge_stats(faces: Iterable[Sequence[int]]) -> EdgeStats:
     """Returns the edge statistics.
 
-    The Edge statistic contains for each edge (a, b) the tuple (count, balance)
-    where the vertex index a is always smaller than the vertex index b.
+    The Edge statistic contains for each edge `(a, b)` the :class:`EdgeStat` as
+    tuple `(count, balance)` where the vertex index `a` is always smaller than
+    the vertex index `b`.
 
-    The count is how often this edge is used in faces as (a, b) or (b, a) and
-    the balance is count of (a, b) minus count of (b, a) and should be 0
-    in "well" defined meshes. A balance != 0 indicates an error which may be
-    double coincident faces or mixed face vertex orders.
+    The edge count is how often this edge is used in faces as `(a, b)` or
+    `(b, a)` and the balance is the count of edge `(a, b)` minus the count of
+    edge `(b, a)` and should be 0 in "healthy" closed surfaces.
+    A balance not 0 indicates an error which may be double coincident faces or
+    mixed face vertex orders.
 
     """
+    new_edge = EdgeStat(0, 0)
     stats: EdgeStats = {}
     for a, b in all_edges(faces):
         edge = a, b
@@ -83,8 +94,8 @@ def get_edge_stats(faces: Iterable[Sequence[int]]) -> EdgeStats:
             edge = b, a
             orientation = -1
         # for all edges: count should be 2 and balance should be 0
-        count, balance = stats.get(edge, (0, 0))
-        stats[edge] = count + 1, balance + orientation
+        count, balance = stats.get(edge, new_edge)
+        stats[edge] = EdgeStat(count + 1, balance + orientation)
     return stats
 
 
@@ -110,7 +121,12 @@ class MeshDiagnose:
 
     @property
     def edge_stats(self) -> EdgeStats:
-        """Returns the :class:`EdgeStats`."""
+        """Returns the edge statistics as a ``dict``. The dict-key is the edge
+        as tuple of two vertex indices `(a, b)` where `a` is always smaller than
+        `b`. The dict-value is an :class:`EdgeStat` tuple of edge count and edge
+        balance, see :class:`EdgeStat` for the definition of edge count and
+        edge balance.
+        """
         if len(self._edge_stats) == 0:
             self._edge_stats = get_edge_stats(self.mesh.faces)
         return self._edge_stats
@@ -132,14 +148,14 @@ class MeshDiagnose:
         """Returns ``True`` if the edge balance is broken, this indicates an
         topology error for closed surfaces (maybe mixed face vertex orientations).
         """
-        return any(e[1] != 0 for e in self.edge_stats.values())
+        return any(e.balance != 0 for e in self.edge_stats.values())
 
     def total_edge_count(self) -> int:
         """Returns the total edge count of all faces, shared edges are counted
         separately for each face. In closed surfaces this count should be 2x
         the unique edge count :attr:`n_edges`.
         """
-        return sum(e[0] for e in self.edge_stats.values())
+        return sum(e.count for e in self.edge_stats.values())
 
     def unique_edges(self) -> Iterable[Tuple[int, int]]:
         """Yields the unique edges of the mesh as int 2-tuples."""

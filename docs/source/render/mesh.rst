@@ -66,6 +66,18 @@ The basic :class:`MeshBuilder` class does not support transformations.
     .. automethod:: tessellation(max_vertex_count: int = 4) -> Iterator[Sequence[Vec3]]
 
 
+.. autoclass:: ezdxf.render.mesh.EdgeStat
+
+    .. attribute:: count
+
+        how often the edge `(a, b)` is used in faces as `(a, b)` or `(b, a)`
+
+    .. attribute:: balance
+
+        count of edges `(a, b)` - count of edges `(b, a)` and should be 0 in
+        "healthy" closed surfaces, if the balance is not 0, maybe doubled
+        coincident faces exist or faces may have mixed clockwise and
+        counter-clockwise vertex orders
 
 .. class:: MeshDiagnose
 
@@ -82,6 +94,8 @@ The basic :class:`MeshBuilder` class does not support transformations.
     .. autoproperty:: n_faces
 
     .. autoproperty:: n_edges
+
+    .. autoproperty:: edge_stats
 
     .. autoproperty:: is_watertight
 
