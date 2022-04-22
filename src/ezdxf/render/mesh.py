@@ -38,15 +38,11 @@ T = TypeVar("T")
 
 class EdgeStat(NamedTuple):
     """Named tuple of edge statistics."""
+
     count: int  # type: ignore
     balance: int
 
 
-# (a, b): (count, balance)
-# a, b = vertex indices
-# count = how often this edge is used in faces as (a, b) or (b, a)
-# balance = count (a, b) - count (b, a), should be 0 in "well" defined meshes,
-# if balance != 0: maybe doubled faces or mixed face vertex orders
 EdgeStats = Dict[Tuple[int, int], EdgeStat]
 
 
@@ -99,20 +95,86 @@ def get_edge_stats(faces: Iterable[Sequence[int]]) -> EdgeStats:
     return stats
 
 
+def estimate_normals_direction(
+    vertices: Sequence[Vec3], faces: Sequence[Sequence[int]]
+) -> float:
+    """Returns the estimated normals direction as ``float`` value
+    in the range [-1.0, 1.0] for a closed surface.
+
+    This heuristic works well for simple convex hulls but struggles with
+    more complex structures like a torus (doughnut).
+
+    A counter-clockwise (ccw) vertex arrangement is assumed but a
+    clockwise (cw) arrangement works too but the values are reversed.
+
+    The closer the value to 1.0 (-1.0 for cw) the more likely all normals
+    pointing outwards from the surface.
+
+    The closer the value to -1.0 (1.0 for cw) the more likely all normals
+    pointing inwards from the surface.
+
+    """
+    n_vertices = len(vertices)
+    if n_vertices == 0:
+        return 0.0
+
+    mesh_centroid = Vec3.sum(vertices) / n_vertices
+    count = 0
+    direction_sum = 0.0
+    for face in faces:
+        if len(face) < 3:
+            continue
+        try:
+            face_vertices = tuple(vertices[i] for i in face)
+        except IndexError:
+            continue
+        face_centroid = Vec3.sum(face_vertices) / len(face)
+        try:
+            face_normal = normal_vector_3p(
+                face_vertices[0], face_vertices[1], face_vertices[2]
+            )
+        except ZeroDivisionError:
+            continue
+        try:
+            outward_vec = (face_centroid - mesh_centroid).normalize()
+        except ZeroDivisionError:
+            continue
+        direction_sum += face_normal.dot(outward_vec)
+        count += 1
+    if count > 0:
+        return direction_sum / count
+    return 0.0
+
+
+def flip_face_normals(
+    faces: Sequence[Sequence[int]],
+) -> Iterator[Sequence[int]]:
+    for face in faces:
+        yield tuple(reversed(face))
+
+
 class MeshDiagnose:
     def __init__(self, mesh: "MeshBuilder"):
-        self.mesh = mesh
+        self._mesh = mesh
         self._edge_stats: EdgeStats = {}
+
+    @property
+    def vertices(self) -> Sequence[Vec3]:
+        return self._mesh.vertices
+
+    @property
+    def faces(self) -> Sequence[Sequence[int]]:
+        return self._mesh.faces
 
     @property
     def n_vertices(self) -> int:
         """Returns the vertex count."""
-        return len(self.mesh.vertices)
+        return len(self.vertices)
 
     @property
     def n_faces(self) -> int:
         """Returns the face count."""
-        return len(self.mesh.faces)
+        return len(self.faces)
 
     @property
     def n_edges(self) -> int:
@@ -128,7 +190,7 @@ class MeshDiagnose:
         edge balance.
         """
         if len(self._edge_stats) == 0:
-            self._edge_stats = get_edge_stats(self.mesh.faces)
+            self._edge_stats = get_edge_stats(self.faces)
         return self._edge_stats
 
     @property
@@ -145,7 +207,7 @@ class MeshDiagnose:
 
     @property
     def is_edge_balance_broken(self) -> bool:
-        """Returns ``True`` if the edge balance is broken, this indicates an
+        """Returns ``True`` if the edge balance is broken, this indicates a
         topology error for closed surfaces (maybe mixed face vertex orientations).
         """
         return any(e.balance != 0 for e in self.edge_stats.values())
@@ -160,6 +222,39 @@ class MeshDiagnose:
     def unique_edges(self) -> Iterable[Tuple[int, int]]:
         """Yields the unique edges of the mesh as int 2-tuples."""
         return self.edge_stats.keys()
+
+    def estimate_normals_direction(self) -> float:
+        """Returns the estimated normals direction as ``float`` value
+        in the range [-1.0, 1.0] for a closed surface.
+
+        This heuristic works well for simple convex hulls but struggles with
+        more complex structures like a torus (doughnut).
+
+        A counter-clockwise (ccw) vertex arrangement for outward pointing faces
+        is assumed but a clockwise (cw) arrangement works too but the return
+        values are reversed.
+
+        The closer the value to 1.0 (-1.0 for cw) the more likely all normals
+        pointing outwards from the surface.
+
+        The closer the value to -1.0 (1.0 for cw) the more likely all normals
+        pointing inwards from the surface.
+
+        There are no exact confidence values if all faces pointing outwards,
+        here some examples for surfaces created by :mod:`ezdxf.render.forms`
+        functions:
+
+            - :func:`~ezdxf.render.forms.cube` returns 1.0
+            - :func:`~ezdxf.render.forms.cylinder` returns 0.9992
+            - :func:`~ezdxf.render.forms.sphere` returns 0.9994
+            - :func:`~ezdxf.render.forms.cone` returns 0.9162
+            - :func:`~ezdxf.render.forms.cylinder` with all hull faces pointing
+              outwards but caps pointing inwards returns 0.7785 but the
+              property :attr:`is_edge_balance_broken` returns ``True`` which
+              indicates the mixed vertex orientation
+
+        """
+        return estimate_normals_direction(self.vertices, self.faces)
 
 
 class MeshBuilder:
@@ -542,6 +637,14 @@ class MeshBuilder:
                 yield face
             else:
                 yield from ear_clipping_3d(face)
+
+    def flip_normals(self) -> None:
+        """Flips the normals of all faces by reversing the vertex order inplace.
+
+        .. versionadded:: 0.18
+
+        """
+        self.faces = list(flip_face_normals(self.faces))
 
 
 class MeshTransformer(MeshBuilder):

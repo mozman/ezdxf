@@ -3,7 +3,7 @@
 import pytest
 from math import radians
 from ezdxf.math import Vec3, BoundingBox
-from ezdxf.render.forms import cube, circle, cylinder
+from ezdxf.render.forms import cube, circle, cylinder, cone, sphere
 from ezdxf.render.mesh import (
     MeshVertexMerger,
     MeshBuilder,
@@ -170,6 +170,27 @@ class TestMeshDiagnose:
     def test_cylinder_is_watertight(self):
         mesh = cylinder()
         assert mesh.diagnose().is_watertight is True
+
+    @pytest.mark.parametrize("surface", [cube(), cylinder(), cone(), sphere()])
+    def test_surface_normals_pointing_outwards(self, surface):
+        diagnose = surface.diagnose()
+        assert diagnose.estimate_normals_direction() > 0.9
+
+    def test_cylinder_with_reversed_cap_normals(self):
+        c = cylinder()
+        for i, face in enumerate(c.faces):
+            if len(face) > 4:
+                c.faces[i] = tuple(reversed(c.faces[i]))
+        diagnose = c.diagnose()
+        assert diagnose.estimate_normals_direction() < 0.8
+        assert diagnose.is_edge_balance_broken is True
+
+
+def test_flipped_cube_normals_pointing_inwards():
+    c = cube()
+    c.flip_normals()
+    diagnose = c.diagnose()
+    assert diagnose.estimate_normals_direction() == pytest.approx(-1.0)
 
 
 @pytest.fixture

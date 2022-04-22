@@ -55,6 +55,8 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. automethod:: from_builder(other: MeshBuilder)
 
+    .. automethod:: flip_normals
+
     .. automethod:: subdivide(level: int = 1, quads=True) -> MeshTransformer
 
     .. automethod:: merge_coplanar_faces(passes: int = 1) -> MeshTransformer
@@ -85,9 +87,13 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. versionadded:: 0.18
 
-    .. attribute:: mesh
+    .. attribute:: vertices
 
-        The associated :class:`MeshBuilder` instance.
+        Sequence of mesh vertices as :class:`~ezdxf.math.Vec3` instances
+
+    .. attribute:: faces
+
+        Sequence of faces as ``Sequence[int]``
 
     .. autoproperty:: n_vertices
 
@@ -104,6 +110,8 @@ The basic :class:`MeshBuilder` class does not support transformations.
     .. automethod:: total_edge_count
 
     .. automethod:: unique_edges
+
+    .. automethod:: estimate_normals_direction
 
 
 MeshTransformer
