@@ -488,7 +488,7 @@ DATA;
         for face in mesh.open_faces():
             vertices = ",".join("#" + str(first_vertex + i) for i in face)
             add_line(f"IFCPOLYLOOP(({vertices}));")
-            add_line(f"IFCFACEOUTERBOUND(#{idx-1},.F.);")
+            add_line(f"IFCFACEOUTERBOUND(#{idx-1},.T.);")
             add_line(f"IFCFACE((#{idx-1}));")
             faces.append(f"#{str(idx - 1)}")
         # make closed shell
@@ -521,10 +521,10 @@ DATA;
         return "\n".join(lines)
 
     if entity_type == 1:
-        header, index = make_header("PolygonFaceSet")
+        header, index = make_header("Surface")
         content, index = make_polygon_face_set(index)
     elif entity_type == 2:
-        header, index = make_header("BRep")
+        header, index = make_header("Brep")
         content, index = make_closed_shell(index)
     else:
         raise ValueError(f"invalid entity type: {entity_type}")
