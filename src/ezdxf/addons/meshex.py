@@ -424,8 +424,7 @@ DATA;
 #18= IFCSIUNIT(*,.TIMEUNIT.,$,.SECOND.);
 #19= IFCSIUNIT(*,.MASSUNIT.,$,.GRAM.);
 #20= IFCLOCALPLACEMENT($,#8);
-#21= IFCSITE('{site_id}',#2,'Site',$,$,#20,$,$,.ELEMENT.,(37,47,42,0),(-122,-23,-38,-400000),0.,$,$);
-#22= IFCRELAGGREGATES('{rel_agg_id}',#2,$,$,#1,(#21));
+#21= IFCBUILDING('{building_id}',#2,'MeshExport',$,$, #20,$,$,.ELEMENT.,$,$,$);
 #23= IFCBUILDINGELEMENTPROXY('{proxy_id}',#2,$,$,$,#24,#25,$,$);
 #24= IFCLOCALPLACEMENT(#20,#8);
 #25= IFCPRODUCTDEFINITIONSHAPE($,$,(#26));
@@ -483,15 +482,13 @@ DATA;
 #71= IFCSURFACESTYLESHADING(#72,0.);
 #72= IFCCOLOURRGB($,1.,1.,1.);
 #73= IFCRELCONTAINEDINSPATIALSTRUCTURE('{spatial_struct_id}',#2,$,$,(#23),#21);
-#74= IFCRELAGGREGATES('{rel_agg2_id}',#2,$,$,#21,(#75));
-#75= IFCBUILDING('{building_id}',#2,'Site',$,$,#76,$,$,.ELEMENT.,0.,0.,$);
-#76= IFCLOCALPLACEMENT(#20,#8);
+#74= IFCRELAGGREGATES('{rel_agg2_id}',#2,$,$,#1,(#21));
+#75= IFCLOCALPLACEMENT(#20,#8);
 ENDSEC;
 END-ISO-10303-21;
 """
 
     project_id = make_id()
-    site_id = make_id()
     rel_agg_id = make_id()
     proxy_id = make_id()
     spatial_struct_id = make_id()
