@@ -393,9 +393,13 @@ def make_id() -> str:
     return id_.decode()
 
 
-def ifc4_dumps(mesh: MeshBuilder) -> str:
+def ifc4_dumps(mesh: MeshBuilder, entity_type: int = 1) -> str:
     """Returns the `IFC4`_ string for the given `mesh`. The SI units are fixed
     to meters.
+
+    Args:
+        mesh: :class:`~ezdxf.render.MeshBuilder`
+        entity_type: 1=PolygonFaceSet, 2=ClosedShell
 
     .. warning::
 
@@ -404,7 +408,7 @@ def ifc4_dumps(mesh: MeshBuilder) -> str:
 
     """
 
-    def make_header():
+    def make_header(kind: str):
         date = datetime.datetime.now().isoformat()[:-7]
         content_record = 28
         return (
@@ -440,7 +444,7 @@ DATA;
 #23= IFCBUILDINGELEMENTPROXY('{make_id()}',#2,$,$,$,#24,#25,$,$);
 #24= IFCLOCALPLACEMENT(#20,#8);
 #25= IFCPRODUCTDEFINITIONSHAPE($,$,(#26));
-#26= IFCSHAPEREPRESENTATION(#27,'Body','MeshExport',(#{content_record}));
+#26= IFCSHAPEREPRESENTATION(#27,'Body','{kind}',(#{content_record}));
 #27= IFCGEOMETRICREPRESENTATIONSUBCONTEXT('Body','Model',*,*,*,*,#7,$,.MODEL_VIEW.,$);
 """,
             content_record,
@@ -451,11 +455,15 @@ DATA;
             nonlocal idx
             lines.append(f"#{idx}= {line}")
             idx += 1
+
         lines: List[str] = []
         face_records = ",".join(
-            [f"#{idx + i + 2}" for i in range(len(mesh.faces))])
+            [f"#{idx + i + 2}" for i in range(len(mesh.faces))]
+        )
         # the first record #idx has to define the top level entity:
-        add_line(f"IFCPOLYGONALFACESET(#{idx + 1},$,({face_records}), $);")  # 28
+        add_line(
+            f"IFCPOLYGONALFACESET(#{idx + 1},$,({face_records}), $);"
+        )  # 28
         vertices = ",".join([str(v.xyz) for v in mesh.vertices])
         add_line(f"IFCCARTESIANPOINTLIST3D(({vertices}));")  # 29
         for face in mesh.open_faces():
@@ -463,11 +471,37 @@ DATA;
             add_line(f"IFCINDEXEDPOLYGONALFACE(({indices}));")
         return "\n".join(lines) + "\n", idx
 
+    def make_closed_shell(idx: int):
+        def add_line(line):
+            nonlocal idx
+            lines.append(f"#{idx}= {line}")
+            idx += 1
+
+        lines: List[str] = ["#28= PLACEHOLDER", "#29= PLACEHOLDER"]
+        idx += len(lines)
+        # add vertices
+        first_vertex = idx
+        for v in mesh.vertices:
+            add_line(f"IFCCARTESIANPOINT({str(v.xyz)});")
+        # add faces
+        faces: list[str] = []
+        for face in mesh.open_faces():
+            vertices = ",".join("#" + str(first_vertex + i) for i in face)
+            add_line(f"IFCPOLYLOOP(({vertices}));")
+            add_line(f"IFCFACEOUTERBOUND(#{idx-1},.F.);")
+            add_line(f"IFCFACE((#{idx-1}));")
+            faces.append(f"#{str(idx - 1)}")
+        # make closed shell
+        lines[0] = f"#28= IFCFACETEDBREP(#29);"
+        lines[1] = f"#29= IFCCLOSEDSHELL(({','.join(faces)}));"
+        return "\n".join(lines) + "\n", idx
+
     def make_epilog(idx: int):
         def add_line(line):
             nonlocal idx
             lines.append(f"#{idx}= {line}")
             idx += 1
+
         # records < 28 from template header have always the same number
         # fmt: off
         lines: List[str] = []
@@ -482,12 +516,18 @@ DATA;
         add_line("IFCCOLOURRGB($,1.,1.,1.);")
         add_line(f"IFCRELCONTAINEDINSPATIALSTRUCTURE('{make_id()}',#2,$,$,(#23),#21);")
         add_line(f"IFCRELAGGREGATES('{make_id()}',#2,$,$,#1,(#21));")
-        add_line("IFCLOCALPLACEMENT(#20,#8);")
         # fmt: on
         lines.extend(["ENDSEC;", "END-ISO-10303-21;"])
         return "\n".join(lines)
 
-    header, index = make_header()
-    content, index = make_polygon_face_set(index)
+    if entity_type == 1:
+        header, index = make_header("PolygonFaceSet")
+        content, index = make_polygon_face_set(index)
+    elif entity_type == 2:
+        header, index = make_header("BRep")
+        content, index = make_closed_shell(index)
+    else:
+        raise ValueError(f"invalid entity type: {entity_type}")
+
     epilog = make_epilog(index)
     return header + content + epilog

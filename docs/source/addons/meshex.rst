@@ -86,7 +86,7 @@ Export
 
 .. autofunction:: scad_dumps(mesh: MeshBuilder) -> str
 
-.. autofunction:: ifc4_dumps(mesh: MeshBuilder) -> str
+.. autofunction:: ifc4_dumps(mesh: MeshBuilder, entity_type = 1) -> str
 
 
 

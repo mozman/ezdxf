@@ -52,10 +52,10 @@ def export_ply(filename):
         fp.write(meshex.ply_dumpb(mesh))
 
 
-def export_ifc4(filename):
+def export_ifc4(filename, kind):
     with open(filename, "wt") as fp:
         mesh = make_mesh(SIDES)
-        fp.write(meshex.ifc4_dumps(mesh))
+        fp.write(meshex.ifc4_dumps(mesh, kind))
 
 
 def export_dxf(filename):
@@ -73,7 +73,8 @@ def main():
     export_obj(DIR / "cylinder.obj")
     export_ply(DIR / "cylinder.ply")
     export_dxf(DIR / "cylinder.dxf")
-    export_ifc4(DIR / "cylinder.ifc")
+    export_ifc4(DIR / "cylinder_polygon_face_set.ifc", 1)
+    export_ifc4(DIR / "cylinder_closed_shell.ifc", 2)
 
 
 if __name__ == "__main__":
