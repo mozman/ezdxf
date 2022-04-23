@@ -406,6 +406,16 @@ def ifc4_dumps(mesh: MeshBuilder, entity_type: int = 1) -> str:
         This is a very dirty template based exporter and the exported
         data may not be importable by all CAD applications.
 
+        Import works with:
+
+        - BricsCAD
+        - Tekla BIMsight
+        - FreeCAD (IfcOpenShell)
+
+        Import doesn't work or corrupt data:
+
+        - Allplan
+
     """
 
     def make_header(kind: str):
@@ -510,7 +520,7 @@ DATA;
         add_line(f"IFCSURFACESTYLE($,.POSITIVE.,(#{idx-1}));")
         add_line(f"IFCPRESENTATIONSTYLEASSIGNMENT((#{idx-1}));")
         add_line(f"IFCSTYLEDITEM(#28,(#{idx-1}),$);")
-        add_line(f"IFCPRESENTATIONLAYERWITHSTYLE('0',$,(#26),$,.T.,.F.,.F.,(#{idx+1}));")
+        add_line(f"IFCPRESENTATIONLAYERWITHSTYLE('MeshExport',$,(#26),$,.T.,.F.,.F.,(#{idx+1}));")
         add_line(f"IFCSURFACESTYLE($,.POSITIVE.,(#{idx+1}));")
         add_line(f"IFCSURFACESTYLESHADING(#{idx+1},0.);")
         add_line("IFCCOLOURRGB($,1.,1.,1.);")
