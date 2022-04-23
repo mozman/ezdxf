@@ -4,7 +4,6 @@ from pathlib import Path
 import ezdxf
 from ezdxf.addons import meshex
 from ezdxf.render.forms import cylinder
-
 DIR = Path("~/Desktop/Outbox").expanduser()
 if not DIR.exists():
     DIR = Path(".")
@@ -53,6 +52,12 @@ def export_ply(filename):
         fp.write(meshex.ply_dumpb(mesh))
 
 
+def export_ifc4(filename):
+    with open(filename, "wt") as fp:
+        mesh = make_mesh(SIDES)
+        fp.write(meshex.ifc4_dumps(mesh))
+
+
 def export_dxf(filename):
     doc = ezdxf.new()
     mesh = make_mesh(SIDES)
@@ -61,13 +66,14 @@ def export_dxf(filename):
 
 
 def main():
-    export_scad(DIR / "cylinder.scad")
+    # export_scad(DIR / "cylinder.scad")
     export_stl_asc(DIR / "cylinder_asc.stl")
-    export_stl_bin(DIR / "cylinder_bin.stl")
-    export_off(DIR / "cylinder.off")
+    # export_stl_bin(DIR / "cylinder_bin.stl")
+    # export_off(DIR / "cylinder.off")
     export_obj(DIR / "cylinder.obj")
     export_ply(DIR / "cylinder.ply")
-    export_dxf(DIR / "cylinder.dxf")
+    # export_dxf(DIR / "cylinder.dxf")
+    export_ifc4(DIR / "cylinder-ezdxf.ifc")
 
 
 if __name__ == "__main__":
