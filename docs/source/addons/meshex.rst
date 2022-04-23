@@ -16,6 +16,7 @@ with other tools in the following file formats:
       meshes in one file
     - `PLY`_: export only, supports ngons as faces
     - `OpenSCAD`_: export as `polyhedron`_, supports ngons as faces
+    - `IFC4`_: export only, supports ngons as faces
 
 The source or target object is always a :class:`~ezdxf.render.MeshBuilder`
 instance and therefore the supported features are also limited by this class.
@@ -85,6 +86,8 @@ Export
 
 .. autofunction:: scad_dumps(mesh: MeshBuilder) -> str
 
+.. autofunction:: ifc4_dumps(mesh: MeshBuilder) -> str
+
 
 
 .. _OpenSCAD: https://openscad.org/index.html
@@ -94,3 +97,4 @@ Export
 .. _OBJ: https://en.wikipedia.org/wiki/OBJ_(file_format)
 .. _PLY: https://en.wikipedia.org/wiki/PLY_(file_format)
 .. _polyhedron: https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Primitive_Solids#polyhedron
+.. _IFC4: https://en.wikipedia.org/wiki/Industry_Foundation_Classes

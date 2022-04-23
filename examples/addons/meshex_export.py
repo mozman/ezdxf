@@ -8,7 +8,7 @@ DIR = Path("~/Desktop/Outbox").expanduser()
 if not DIR.exists():
     DIR = Path(".")
 
-SIDES = 32
+SIDES = 16
 
 
 def make_mesh(sides: int):
@@ -66,14 +66,14 @@ def export_dxf(filename):
 
 
 def main():
-    # export_scad(DIR / "cylinder.scad")
+    export_scad(DIR / "cylinder.scad")
     export_stl_asc(DIR / "cylinder_asc.stl")
-    # export_stl_bin(DIR / "cylinder_bin.stl")
-    # export_off(DIR / "cylinder.off")
+    export_stl_bin(DIR / "cylinder_bin.stl")
+    export_off(DIR / "cylinder.off")
     export_obj(DIR / "cylinder.obj")
     export_ply(DIR / "cylinder.ply")
-    # export_dxf(DIR / "cylinder.dxf")
-    export_ifc4(DIR / "cylinder-ezdxf.ifc")
+    export_dxf(DIR / "cylinder.dxf")
+    export_ifc4(DIR / "cylinder.ifc")
 
 
 if __name__ == "__main__":
