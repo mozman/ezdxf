@@ -3,15 +3,19 @@
 from pathlib import Path
 import ezdxf
 from ezdxf.addons import meshex
-from ezdxf.render.forms import cylinder
+from ezdxf.render.forms import cylinder, sphere
+
 DIR = Path("~/Desktop/Outbox").expanduser()
 if not DIR.exists():
     DIR = Path(".")
 
 SIDES = 16
+NAME = "sphere"
 
 
 def make_mesh(sides: int):
+    if NAME == "sphere":
+        return sphere(count=sides, stacks=sides // 2)
     return cylinder(count=sides)
 
 
@@ -66,15 +70,15 @@ def export_dxf(filename):
 
 
 def main():
-    export_scad(DIR / "cylinder.scad")
-    export_stl_asc(DIR / "cylinder_asc.stl")
-    export_stl_bin(DIR / "cylinder_bin.stl")
-    export_off(DIR / "cylinder.off")
-    export_obj(DIR / "cylinder.obj")
-    export_ply(DIR / "cylinder.ply")
-    export_dxf(DIR / "cylinder.dxf")
-    export_ifc4(DIR / "cylinder_polygon_face_set.ifc", 1)
-    export_ifc4(DIR / "cylinder_closed_shell.ifc", 2)
+    export_scad(DIR / f"{NAME}.scad")
+    export_stl_asc(DIR / f"{NAME}_asc.stl")
+    export_stl_bin(DIR / f"{NAME}_bin.stl")
+    export_off(DIR / f"{NAME}.off")
+    export_obj(DIR / f"{NAME}.obj")
+    export_ply(DIR / f"{NAME}.ply")
+    export_dxf(DIR / f"{NAME}.dxf")
+    export_ifc4(DIR / f"{NAME}_polygon_face_set.ifc", 1)
+    export_ifc4(DIR / f"{NAME}_closed_shell.ifc", 2)
 
 
 if __name__ == "__main__":
