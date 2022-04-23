@@ -7,7 +7,7 @@ import uuid
 import base64
 import datetime
 
-from ezdxf.math import Vec3, normal_vector_3p
+from ezdxf.math import Vec3, normal_vector_3p, BoundingBox
 from ezdxf.render import MeshTransformer, MeshVertexMerger, MeshBuilder
 from ezdxf import __version__
 
@@ -411,16 +411,13 @@ def ifc4_dumps(mesh: MeshBuilder, entity_type: int = 1) -> str:
         - BricsCAD
         - Tekla BIMsight
         - FreeCAD (IfcOpenShell)
-
-        Import doesn't work or corrupt data:
-
-        - Allplan
+        - Allplan, but only ClosedShell, PolygonFaceSet does not work
 
     """
 
     def make_header(kind: str):
         date = datetime.datetime.now().isoformat()[:-7]
-        content_record = 28
+        content_record = 32
         return (
             f"""ISO-10303-21;
 HEADER;
@@ -451,11 +448,15 @@ DATA;
 #19= IFCSIUNIT(*,.MASSUNIT.,$,.GRAM.);
 #20= IFCLOCALPLACEMENT($,#8);
 #21= IFCBUILDING('{make_id()}',#2,'MeshExport',$,$, #20,$,$,.ELEMENT.,$,$,$);
-#23= IFCBUILDINGELEMENTPROXY('{make_id()}',#2,$,$,$,#24,#25,$,$);
-#24= IFCLOCALPLACEMENT(#20,#8);
-#25= IFCPRODUCTDEFINITIONSHAPE($,$,(#26));
-#26= IFCSHAPEREPRESENTATION(#27,'Body','{kind}',(#{content_record}));
-#27= IFCGEOMETRICREPRESENTATIONSUBCONTEXT('Body','Model',*,*,*,*,#7,$,.MODEL_VIEW.,$);
+#23= IFCBUILDINGELEMENTPROXY('{make_id()}',#2,$,$,$,#24,#29,$,$);
+#24= IFCLOCALPLACEMENT(#25,#26);
+#25= IFCLOCALPLACEMENT(#20,#8);
+#26= IFCAXIS2PLACEMENT3D(#27,#10,#28);
+#27= IFCCARTESIANPOINT(({emin.x},{emin.y},{emin.z}));
+#28= IFCDIRECTION((1.,0.,0.));
+#29= IFCPRODUCTDEFINITIONSHAPE($,$,(#30));
+#30= IFCSHAPEREPRESENTATION(#31,'Body','{kind}',(#{content_record}));
+#31= IFCGEOMETRICREPRESENTATIONSUBCONTEXT('Body','Model',*,*,*,*,#7,$,.MODEL_VIEW.,$);
 """,
             content_record,
         )
@@ -486,8 +487,8 @@ DATA;
             nonlocal idx
             lines.append(f"#{idx}= {line}")
             idx += 1
-
-        lines: List[str] = ["#28= PLACEHOLDER", "#29= PLACEHOLDER"]
+        start_index = idx
+        lines: List[str] = ["#0= PLACEHOLDER", "#0= PLACEHOLDER"]
         idx += len(lines)
         # add vertices
         first_vertex = idx
@@ -502,8 +503,8 @@ DATA;
             add_line(f"IFCFACE((#{idx-1}));")
             faces.append(f"#{str(idx - 1)}")
         # make closed shell
-        lines[0] = f"#28= IFCFACETEDBREP(#29);"
-        lines[1] = f"#29= IFCCLOSEDSHELL(({','.join(faces)}));"
+        lines[0] = f"#{start_index}= IFCFACETEDBREP(#{start_index+1});"
+        lines[1] = f"#{start_index+1}= IFCCLOSEDSHELL(({','.join(faces)}));"
         return "\n".join(lines) + "\n", idx
 
     def make_epilog(idx: int):
@@ -512,15 +513,15 @@ DATA;
             lines.append(f"#{idx}= {line}")
             idx += 1
 
-        # records < 28 from template header have always the same number
+        # records < 31 from template header have always the same number
         # fmt: off
         lines: List[str] = []
         add_line("IFCCOLOURRGB($,1.,1.,1.);")
         add_line(f"IFCSURFACESTYLESHADING(#{idx-1},0.);")
         add_line(f"IFCSURFACESTYLE($,.POSITIVE.,(#{idx-1}));")
         add_line(f"IFCPRESENTATIONSTYLEASSIGNMENT((#{idx-1}));")
-        add_line(f"IFCSTYLEDITEM(#28,(#{idx-1}),$);")
-        add_line(f"IFCPRESENTATIONLAYERWITHSTYLE('MeshExport',$,(#26),$,.T.,.F.,.F.,(#{idx+1}));")
+        add_line(f"IFCSTYLEDITEM(#32,(#{idx-1}),$);")
+        add_line(f"IFCPRESENTATIONLAYERWITHSTYLE('MeshExport',$,(#30),$,.T.,.F.,.F.,(#{idx+1}));")
         add_line(f"IFCSURFACESTYLE($,.POSITIVE.,(#{idx+1}));")
         add_line(f"IFCSURFACESTYLESHADING(#{idx+1},0.);")
         add_line("IFCCOLOURRGB($,1.,1.,1.);")
@@ -529,6 +530,19 @@ DATA;
         # fmt: on
         lines.extend(["ENDSEC;", "END-ISO-10303-21;"])
         return "\n".join(lines)
+
+    if len(mesh.vertices) == 0:
+        return ""
+    bbox = BoundingBox(mesh.vertices)
+    emin = Vec3()
+    assert bbox.extmin is not None
+    if bbox.extmin.x < 0 or bbox.extmin.y < 0 or bbox.extmin.z < 0:
+        # Allplan (IFC?) requires all mesh vertices in the all-positive octant
+        # (non-negative).  Record #27 does the final placement at the correct
+        # location.
+        emin = bbox.extmin
+        mesh = MeshTransformer.from_builder(mesh)
+        mesh.translate(-emin.x, -emin.y, -emin.z)
 
     if entity_type == 1:
         header, index = make_header("Surface")
