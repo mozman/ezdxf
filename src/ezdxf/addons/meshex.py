@@ -426,13 +426,28 @@ class Records:
     def __init__(self):
         self.records: List[str] = []
 
-    def add(self, record: str, num: int = 0) -> Tuple[int, str]:
+    @property
+    def last_num(self) -> int:
+        return len(self.records)
+
+    @property
+    def prev_num(self) -> int:
+        return self.last_num - 1
+
+    @property
+    def next_num(self) -> int:
+        return self.last_num + 1
+
+    def add(self, record: str, num: int = 0) -> str:
         assert record.endswith(");"), "invalid structure"
         self.records.append(record)
         if num != 0 and num != len(self.records):
             raise ValueError("unexpected record number")
         num = len(self.records)
-        return num, f"#{num}"
+        return f"#{num}"
+
+    def add_dummy(self):
+        self.records.append("")
 
     def get(self, num: int) -> str:
         return self.records[num - 1]
@@ -444,7 +459,7 @@ class Records:
 
     def dumps(self) -> str:
         return "\n".join(
-            f"#{num+1}= {data}" for num, data in enumerate(self.records)
+            f"#{num+1}= {data}" for num, data in enumerate(self.records) if data
         )
 
 
@@ -478,11 +493,9 @@ def ifc4_dumps(
 
     """
 
-    def make_header(kind: str):
+    def make_header():
         date = datetime.datetime.now().isoformat()[:-7]
-        content_record = 32
-        return (
-            f"""ISO-10303-21;
+        return f"""ISO-10303-21;
 HEADER;
 FILE_DESCRIPTION(('ViewDefinition [CoordinationView_V2.0]'),'2;1');
 FILE_NAME('undefined.ifc','{date}',('Undefined'),('Undefined'),'ezdxf {__version__}','ezdxf {__version__}','Undefined');
@@ -490,147 +503,105 @@ FILE_SCHEMA(('IFC4'));
 ENDSEC;
 
 DATA;
-#1= IFCPROJECT('{ifc_guid()}',#2,'MeshExport',$,$,$,$,(#7),#13);
-#2= IFCOWNERHISTORY(#3,#6,$,$,$,$,$,0);
-#3= IFCPERSONANDORGANIZATION(#4,#5,$);
-#4= IFCPERSON($,$,'Undefined',$,$,$,$,$);
-#5= IFCORGANIZATION($,'Undefined',$,$,$);
-#6= IFCAPPLICATION(#5,'{__version__}','ezdxf','ezdxf');
-#7= IFCGEOMETRICREPRESENTATIONCONTEXT($,'Model',3,1.000000000000000E-05,#8,#12);
-#8= IFCAXIS2PLACEMENT3D(#9,#10,#11);
-#9= IFCCARTESIANPOINT((0.,0.,0.));
-#10= IFCDIRECTION((0.,0.,1.));
-#11= IFCDIRECTION((1.,0.,0.));
-#12= IFCDIRECTION((1.,0.));
-#13= IFCUNITASSIGNMENT((#14,#15,#16,#17,#18,#19));
-#14= IFCSIUNIT(*,.LENGTHUNIT.,$,.METRE.);
-#15= IFCSIUNIT(*,.AREAUNIT.,$,.SQUARE_METRE.);
-#16= IFCSIUNIT(*,.VOLUMEUNIT.,$,.CUBIC_METRE.);
-#17= IFCSIUNIT(*,.PLANEANGLEUNIT.,$,.RADIAN.);
-#18= IFCSIUNIT(*,.TIMEUNIT.,$,.SECOND.);
-#19= IFCSIUNIT(*,.MASSUNIT.,$,.GRAM.);
-#20= IFCLOCALPLACEMENT($,#8);
-#21= IFCBUILDING('{ifc_guid()}',#2,'MeshExport',$,$, #20,$,$,.ELEMENT.,$,$,$);
-#23= IFCBUILDINGELEMENTPROXY('{ifc_guid()}',#2,$,$,$,#24,#29,$,$);
-#24= IFCLOCALPLACEMENT(#25,#26);
-#25= IFCLOCALPLACEMENT(#20,#8);
-#26= IFCAXIS2PLACEMENT3D(#27,#10,#28);
-#27= IFCCARTESIANPOINT(({emin.x},{emin.y},{emin.z}));
-#28= IFCDIRECTION((1.,0.,0.));
-#29= IFCPRODUCTDEFINITIONSHAPE($,$,(#30));
-#30= IFCSHAPEREPRESENTATION(#31,'Body','{kind}',(#{content_record}));
-#31= IFCGEOMETRICREPRESENTATIONSUBCONTEXT('Body','Model',*,*,*,*,#7,$,.MODEL_VIEW.,$);
-""",
-            content_record,
-        )
+"""
 
-    def make_polygon_face_set(idx: int):
-        def add_line(line):
-            nonlocal idx
-            lines.append(f"#{idx}= {line}")
-            idx += 1
+    def make_data_records() -> Records:
+        records = Records()
+        # fmt: off
+        if entity_type == IfcEntityType.POLYGON_FACE_SET:
+            kind = "Surface"
+        elif entity_type == IfcEntityType.CLOSED_SHELL:
+            kind = "Brep"
+        else:
+            raise ValueError(f"invalid entity type: {entity_type}")
+        # for simplicity the first part has absolute record numbering:
+        records.add(f"IFCPROJECT('{ifc_guid()}',#2,'MeshExport',$,$,$,$,(#7),#13);", 1)
+        records.add("IFCOWNERHISTORY(#3,#6,$,$,$,$,$,0);", 2)
+        records.add("IFCPERSONANDORGANIZATION(#4,#5,$);", 3)
+        records.add("IFCPERSON($,$,'Undefined',$,$,$,$,$);", 4)
+        records.add("IFCORGANIZATION($,'Undefined',$,$,$);", 5)
+        records.add(f"IFCAPPLICATION(#5,'{__version__}','ezdxf','ezdxf');", 6)
+        records.add("IFCGEOMETRICREPRESENTATIONCONTEXT($,'Model',3,1.000000000000000E-05,#8,#12);", 7)
+        records.add("IFCAXIS2PLACEMENT3D(#9,#10,#11);", 8)
+        records.add("IFCCARTESIANPOINT((0.,0.,0.));", 9)
+        records.add("IFCDIRECTION((0.,0.,1.));", 10)
+        records.add("IFCDIRECTION((1.,0.,0.));", 11)
+        records.add("IFCDIRECTION((1.,0.));", 12)
+        records.add("IFCUNITASSIGNMENT((#14,#15,#16,#17,#18,#19));", 13)
+        records.add("IFCSIUNIT(*,.LENGTHUNIT.,$,.METRE.);", 14)
+        records.add("IFCSIUNIT(*,.AREAUNIT.,$,.SQUARE_METRE.);", 15)
+        records.add("IFCSIUNIT(*,.VOLUMEUNIT.,$,.CUBIC_METRE.);", 16)
+        records.add("IFCSIUNIT(*,.PLANEANGLEUNIT.,$,.RADIAN.);", 17)
+        records.add("IFCSIUNIT(*,.TIMEUNIT.,$,.SECOND.);", 18)
+        records.add("IFCSIUNIT(*,.MASSUNIT.,$,.GRAM.);", 19)
+        records.add("IFCLOCALPLACEMENT($,#8);", 20)
+        building = records.add(f"IFCBUILDING('{ifc_guid()}',#2,'MeshExport',$,$, #20,$,$,.ELEMENT.,$,$,$);", 21)
+        records.add_dummy()
+        proxy = records.add(f"IFCBUILDINGELEMENTPROXY('{ifc_guid()}',#2,$,$,$,#24,#29,$,$);", 23)
+        records.add("IFCLOCALPLACEMENT(#25,#26);", 24)
+        records.add("IFCLOCALPLACEMENT(#20,#8);", 25)
+        records.add("IFCAXIS2PLACEMENT3D(#27,#10,#28);", 26)
+        records.add(f"IFCCARTESIANPOINT(({emin.x},{emin.y},{emin.z}));", 27)
+        records.add("IFCDIRECTION((1.,0.,0.));", 28)
+        records.add("IFCPRODUCTDEFINITIONSHAPE($,$,(#30));", 29)
+        shape = records.add(f"IFCSHAPEREPRESENTATION(#31,'Body','{kind}',($ENTITY$));", 30)
+        records.add("IFCGEOMETRICREPRESENTATIONSUBCONTEXT('Body','Model',*,*,*,*,#7,$,.MODEL_VIEW.,$);", 31)
 
-        lines: List[str] = []
-        face_records = ",".join(
-            [f"#{idx + i + 2}" for i in range(len(mesh.faces))]
-        )
+        # from here on only relative record numbering:
+        if entity_type == IfcEntityType.POLYGON_FACE_SET:
+            make_polygon_face_set(records)
+        elif entity_type == IfcEntityType.CLOSED_SHELL:
+            make_closed_shell(records)
+
+        records.add("IFCCOLOURRGB($,1.,1.,1.);")
+        records.add(f"IFCSURFACESTYLESHADING(#{records.prev_num},0.);")
+        records.add(f"IFCSURFACESTYLE($,.POSITIVE.,(#{records.prev_num}));")
+        records.add(f"IFCPRESENTATIONSTYLEASSIGNMENT((#{records.prev_num}));")
+        records.add(f"IFCSTYLEDITEM(#32,(#{records.prev_num}),$);")
+        # IFCPRESENTATIONLAYERWITHSTYLE('MeshExport',$,(#30),$,.T.,.F.,.F.,(#{idx+1}));
+        records.add(f"IFCPRESENTATIONLAYERWITHSTYLE('MeshExport',$,({shape}),$,.T.,.F.,.F.,(#{records.next_num}));")
+        records.add(f"IFCSURFACESTYLE($,.POSITIVE.,(#{records.next_num}));")
+        records.add(f"IFCSURFACESTYLESHADING(#{records.next_num},0.);")
+        records.add("IFCCOLOURRGB($,1.,1.,1.);")
+        # IFCRELCONTAINEDINSPATIALSTRUCTURE('{ifc_guid()}',#2,$,$,(#23),#21);
+        records.add(f"IFCRELCONTAINEDINSPATIALSTRUCTURE('{ifc_guid()}',#2,$,$,({proxy}),{building});")
+        # IFCRELAGGREGATES('{ifc_guid()}',#2,$,$,#1,(#21));
+        records.add(f"IFCRELAGGREGATES('{ifc_guid()}',#2,$,$,#1,({building}));")
+        # fmt: on
+        return records
+
+    def make_polygon_face_set(records: Records) -> None:
         # the first record #idx has to define the top level entity:
-        add_line(
-            f"IFCPOLYGONALFACESET(#{idx + 1},$,({face_records}), $);"
-        )  # 28
+        entity = records.add(
+            f"IFCPOLYGONALFACESET(#{records.next_num},$,($FACES$), $);"
+        )
+        records.update("$ENTITY$", entity)
         vertices = ",".join([str(v.xyz) for v in mesh.vertices])
-        add_line(f"IFCCARTESIANPOINTLIST3D(({vertices}));")  # 29
+        records.add(f"IFCCARTESIANPOINTLIST3D(({vertices}));")
+        face_records: List[str] = []
         for face in mesh.open_faces():
-            indices = ",".join(str(i + 1) for i in face)
-            add_line(f"IFCINDEXEDPOLYGONALFACE(({indices}));")
-        return "\n".join(lines) + "\n", idx
+            indices = ",".join(str(i + 1) for i in face)  # 1-based indexing
+            face_records.append(
+                records.add(f"IFCINDEXEDPOLYGONALFACE(({indices}));")
+            )
+        records.update("$FACES$", ",".join(face_records))
 
-    def make_closed_shell(idx: int):
-        def add_line(line):
-            nonlocal idx
-            lines.append(f"#{idx}= {line}")
-            idx += 1
-
-        start_index = idx
-        lines: List[str] = ["#0= PLACEHOLDER", "#0= PLACEHOLDER"]
-        idx += len(lines)
+    def make_closed_shell(records: Records) -> None:
+        entity = records.add(f"IFCFACETEDBREP(#{records.next_num});")
+        records.update("$ENTITY$", entity)
+        records.add(f"IFCCLOSEDSHELL(($FACES$));")
         # add vertices
-        first_vertex = idx
+        first_vertex = records.next_num
         for v in mesh.vertices:
-            add_line(f"IFCCARTESIANPOINT({str(v.xyz)});")
+            records.add(f"IFCCARTESIANPOINT({str(v.xyz)});")
         # add faces
-        faces: list[str] = []
+        face_records: List[str] = []
         for face in mesh.open_faces():
             vertices = ",".join("#" + str(first_vertex + i) for i in face)
-            add_line(f"IFCPOLYLOOP(({vertices}));")
-            add_line(f"IFCFACEOUTERBOUND(#{idx-1},.T.);")
-            add_line(f"IFCFACE((#{idx-1}));")
-            faces.append(f"#{str(idx - 1)}")
-        # make closed shell
-        lines[0] = f"#{start_index}= IFCFACETEDBREP(#{start_index+1});"
-        lines[1] = f"#{start_index+1}= IFCCLOSEDSHELL(({','.join(faces)}));"
-        return "\n".join(lines) + "\n", idx
-
-    def make_data_records(records: Records):
-        records.add(
-            f"IFCPROJECT('{ifc_guid()}',#2,'MeshExport',$,$,$,$,(#7),#13);"
-        )  # 1
-        records.add("IFCOWNERHISTORY(#3,#6,$,$,$,$,$,0);")  # 2
-        records.add("IFCPERSONANDORGANIZATION(#4,#5,$);")  # 3
-        records.add("IFCPERSON($,$,'Undefined',$,$,$,$,$);")  # 4
-        records.add("IFCORGANIZATION($,'Undefined',$,$,$);")  # 5
-        records.add("IFCAPPLICATION(#5,'{__version__}','ezdxf','ezdxf');")  # 6
-        records.add(
-            "IFCGEOMETRICREPRESENTATIONCONTEXT($,'Model',3,1.000000000000000E-05,#8,#12);"
-        )  # 7
-        records.add("IFCAXIS2PLACEMENT3D(#9,#10,#11);")  # 8
-        records.add("IFCCARTESIANPOINT((0.,0.,0.));")  # 9
-
-    # 10= IFCDIRECTION((0.,0.,1.));
-    # 11= IFCDIRECTION((1.,0.,0.));
-    # 12= IFCDIRECTION((1.,0.));
-    # 13= IFCUNITASSIGNMENT((#14,#15,#16,#17,#18,#19));
-    # 14= IFCSIUNIT(*,.LENGTHUNIT.,$,.METRE.);
-    # 15= IFCSIUNIT(*,.AREAUNIT.,$,.SQUARE_METRE.);
-    # 16= IFCSIUNIT(*,.VOLUMEUNIT.,$,.CUBIC_METRE.);
-    # 17= IFCSIUNIT(*,.PLANEANGLEUNIT.,$,.RADIAN.);
-    # 18= IFCSIUNIT(*,.TIMEUNIT.,$,.SECOND.);
-    # 19= IFCSIUNIT(*,.MASSUNIT.,$,.GRAM.);
-    # 20= IFCLOCALPLACEMENT($,#8);
-    # 21= IFCBUILDING('{ifc_guid()}',#2,'MeshExport',$,$, #20,$,$,.ELEMENT.,$,$,$);
-    # 23= IFCBUILDINGELEMENTPROXY('{ifc_guid()}',#2,$,$,$,#24,#29,$,$);
-    # 24= IFCLOCALPLACEMENT(#25,#26);
-    # 25= IFCLOCALPLACEMENT(#20,#8);
-    # 26= IFCAXIS2PLACEMENT3D(#27,#10,#28);
-    # 27= IFCCARTESIANPOINT(({emin.x},{emin.y},{emin.z}));
-    # 28= IFCDIRECTION((1.,0.,0.));
-    # 29= IFCPRODUCTDEFINITIONSHAPE($,$,(#30));
-    # 30= IFCSHAPEREPRESENTATION(#31,'Body','{kind}',(#{content_record}));
-    # 31= IFCGEOMETRICREPRESENTATIONSUBCONTEXT('Body','Model',*,*,*,*,#7,$,.MODEL_VIEW.,$);
-
-    def make_epilog(idx: int):
-        def add_line(line):
-            nonlocal idx
-            lines.append(f"#{idx}= {line}")
-            idx += 1
-
-        # records < 31 from template header have always the same number
-        # fmt: off
-        lines: List[str] = []
-        add_line("IFCCOLOURRGB($,1.,1.,1.);")
-        add_line(f"IFCSURFACESTYLESHADING(#{idx-1},0.);")
-        add_line(f"IFCSURFACESTYLE($,.POSITIVE.,(#{idx-1}));")
-        add_line(f"IFCPRESENTATIONSTYLEASSIGNMENT((#{idx-1}));")
-        add_line(f"IFCSTYLEDITEM(#32,(#{idx-1}),$);")
-        add_line(f"IFCPRESENTATIONLAYERWITHSTYLE('MeshExport',$,(#30),$,.T.,.F.,.F.,(#{idx+1}));")
-        add_line(f"IFCSURFACESTYLE($,.POSITIVE.,(#{idx+1}));")
-        add_line(f"IFCSURFACESTYLESHADING(#{idx+1},0.);")
-        add_line("IFCCOLOURRGB($,1.,1.,1.);")
-        add_line(f"IFCRELCONTAINEDINSPATIALSTRUCTURE('{ifc_guid()}',#2,$,$,(#23),#21);")
-        add_line(f"IFCRELAGGREGATES('{ifc_guid()}',#2,$,$,#1,(#21));")
-        # fmt: on
-        lines.extend(["ENDSEC;", "END-ISO-10303-21;"])
-        return "\n".join(lines)
+            records.add(f"IFCPOLYLOOP(({vertices}));")
+            records.add(f"IFCFACEOUTERBOUND(#{records.prev_num},.T.);")
+            face_records.append(records.add(f"IFCFACE((#{records.prev_num}));"))
+        records.update("$FACES$", ",".join(face_records))
 
     if len(mesh.vertices) == 0:
         return ""
@@ -645,14 +616,6 @@ DATA;
         mesh = MeshTransformer.from_builder(mesh)
         mesh.translate(-emin.x, -emin.y, -emin.z)
 
-    if entity_type == IfcEntityType.POLYGON_FACE_SET:
-        header, index = make_header("Surface")
-        content, index = make_polygon_face_set(index)
-    elif entity_type == IfcEntityType.CLOSED_SHELL:
-        header, index = make_header("Brep")
-        content, index = make_closed_shell(index)
-    else:
-        raise ValueError(f"invalid entity type: {entity_type}")
-
-    epilog = make_epilog(index)
-    return header + content + epilog
+    header = make_header()
+    data = make_data_records()
+    return header + data.dumps() + "\nENDSEC;\nEND-ISO-10303-21;\n"

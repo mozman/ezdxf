@@ -273,8 +273,10 @@ class TestRecords:
 
     def test_add_record_returns_record_number(self, records):
         rec = records.add("IFCSHAPEREPRESENTATION(#31,'Body','Brep',#32);")
-        assert rec[0] == 1
-        assert rec[1] == "#1"
+        assert rec == "#1"
+        assert records.prev_num == 0
+        assert records.last_num == 1
+        assert records.next_num == 2
 
     def test_add_record_check_expected_record_number(self, records):
         with pytest.raises(ValueError):
@@ -283,18 +285,18 @@ class TestRecords:
     def test_update_one_tag(self, records):
         records.add("IFCSHAPEREPRESENTATION($ENTITY$);")
         rec = records.add("IFCENTITY();")
-        records.update("$ENTITY$", rec[1])
+        records.update("$ENTITY$", rec)
         assert records.get(1) == "IFCSHAPEREPRESENTATION(#2);"
 
     def test_update_multiple_tags(self, records):
         records.add("IFCSHAPEREPRESENTATION($ENTITY$,$XREF$);")
         rec1 = records.add("IFCENTITY();")
         rec2 = records.add("IFCXREF();")
-        records.update("$ENTITY$", rec1[1])
-        records.update("$XREF$", rec2[1])
+        records.update("$ENTITY$", rec1)
+        records.update("$XREF$", rec2)
         assert records.get(1) == "IFCSHAPEREPRESENTATION(#2,#3);"
 
-    def teste_dumps(self, records):
+    def test_dumps(self, records):
         records.add("IFCTAG1();")
         records.add("IFCTAG2();")
         assert records.dumps() == "#1= IFCTAG1();\n#2= IFCTAG2();"
