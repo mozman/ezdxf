@@ -426,9 +426,11 @@ class Records:
     def __init__(self):
         self.records: List[str] = []
 
-    def add(self, record: str) -> Tuple[int, str]:
+    def add(self, record: str, num: int = 0) -> Tuple[int, str]:
         assert record.endswith(");"), "invalid structure"
         self.records.append(record)
+        if num != 0 and num != len(self.records):
+            raise ValueError("unexpected record number")
         num = len(self.records)
         return num, f"#{num}"
 
@@ -568,6 +570,43 @@ DATA;
         lines[0] = f"#{start_index}= IFCFACETEDBREP(#{start_index+1});"
         lines[1] = f"#{start_index+1}= IFCCLOSEDSHELL(({','.join(faces)}));"
         return "\n".join(lines) + "\n", idx
+
+    def make_data_records(records: Records):
+        records.add(
+            f"IFCPROJECT('{ifc_guid()}',#2,'MeshExport',$,$,$,$,(#7),#13);"
+        )  # 1
+        records.add("IFCOWNERHISTORY(#3,#6,$,$,$,$,$,0);")  # 2
+        records.add("IFCPERSONANDORGANIZATION(#4,#5,$);")  # 3
+        records.add("IFCPERSON($,$,'Undefined',$,$,$,$,$);")  # 4
+        records.add("IFCORGANIZATION($,'Undefined',$,$,$);")  # 5
+        records.add("IFCAPPLICATION(#5,'{__version__}','ezdxf','ezdxf');")  # 6
+        records.add(
+            "IFCGEOMETRICREPRESENTATIONCONTEXT($,'Model',3,1.000000000000000E-05,#8,#12);"
+        )  # 7
+        records.add("IFCAXIS2PLACEMENT3D(#9,#10,#11);")  # 8
+        records.add("IFCCARTESIANPOINT((0.,0.,0.));")  # 9
+
+    # 10= IFCDIRECTION((0.,0.,1.));
+    # 11= IFCDIRECTION((1.,0.,0.));
+    # 12= IFCDIRECTION((1.,0.));
+    # 13= IFCUNITASSIGNMENT((#14,#15,#16,#17,#18,#19));
+    # 14= IFCSIUNIT(*,.LENGTHUNIT.,$,.METRE.);
+    # 15= IFCSIUNIT(*,.AREAUNIT.,$,.SQUARE_METRE.);
+    # 16= IFCSIUNIT(*,.VOLUMEUNIT.,$,.CUBIC_METRE.);
+    # 17= IFCSIUNIT(*,.PLANEANGLEUNIT.,$,.RADIAN.);
+    # 18= IFCSIUNIT(*,.TIMEUNIT.,$,.SECOND.);
+    # 19= IFCSIUNIT(*,.MASSUNIT.,$,.GRAM.);
+    # 20= IFCLOCALPLACEMENT($,#8);
+    # 21= IFCBUILDING('{ifc_guid()}',#2,'MeshExport',$,$, #20,$,$,.ELEMENT.,$,$,$);
+    # 23= IFCBUILDINGELEMENTPROXY('{ifc_guid()}',#2,$,$,$,#24,#29,$,$);
+    # 24= IFCLOCALPLACEMENT(#25,#26);
+    # 25= IFCLOCALPLACEMENT(#20,#8);
+    # 26= IFCAXIS2PLACEMENT3D(#27,#10,#28);
+    # 27= IFCCARTESIANPOINT(({emin.x},{emin.y},{emin.z}));
+    # 28= IFCDIRECTION((1.,0.,0.));
+    # 29= IFCPRODUCTDEFINITIONSHAPE($,$,(#30));
+    # 30= IFCSHAPEREPRESENTATION(#31,'Body','{kind}',(#{content_record}));
+    # 31= IFCGEOMETRICREPRESENTATIONSUBCONTEXT('Body','Model',*,*,*,*,#7,$,.MODEL_VIEW.,$);
 
     def make_epilog(idx: int):
         def add_line(line):

@@ -276,6 +276,10 @@ class TestRecords:
         assert rec[0] == 1
         assert rec[1] == "#1"
 
+    def test_add_record_check_expected_record_number(self, records):
+        with pytest.raises(ValueError):
+            records.add("IFCSHAPEREPRESENTATION(#31,'Body','Brep',#32);", 7)
+
     def test_update_one_tag(self, records):
         records.add("IFCSHAPEREPRESENTATION($ENTITY$);")
         rec = records.add("IFCENTITY();")
