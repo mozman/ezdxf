@@ -77,8 +77,13 @@ def main():
     export_obj(DIR / f"{NAME}.obj")
     export_ply(DIR / f"{NAME}.ply")
     export_dxf(DIR / f"{NAME}.dxf")
-    export_ifc4(DIR / f"{NAME}_polygon_face_set.ifc", 1)
-    export_ifc4(DIR / f"{NAME}_closed_shell.ifc", 2)
+    export_ifc4(
+        DIR / f"{NAME}_polygon_face_set.ifc",
+        meshex.IfcEntityType.POLYGON_FACE_SET,
+    )
+    export_ifc4(
+        DIR / f"{NAME}_closed_shell.ifc", meshex.IfcEntityType.CLOSED_SHELL
+    )
 
 
 if __name__ == "__main__":

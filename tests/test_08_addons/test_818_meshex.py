@@ -7,6 +7,7 @@ from ezdxf.render import MeshBuilder
 from ezdxf.render.forms import cube
 from ezdxf.version import __version__
 
+
 class TestStlLoader:
     def test_empty_file_returns_empty_mesh(self):
         mesh = meshex.stl_loads("")
@@ -256,6 +257,13 @@ class TestOpenSCADDumpString:
         mesh.flip_normals()
         result = meshex.scad_dumps(mesh)
         assert result == OPENSCAD_INVERTED_CUBE
+
+
+def test_ifc_guid_compression():
+    guid_hex = "a1207e36d39f4c629e6544dc9d6e27c9"
+    ifc_guid = meshex._guid_compress(guid_hex)
+    assert len(ifc_guid) == 22
+    assert ifc_guid == "2X87usqvzCOfvbHDoTRYV9"
 
 
 if __name__ == "__main__":

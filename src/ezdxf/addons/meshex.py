@@ -1,11 +1,11 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import Union, List, Sequence
+from typing import Union, List, Sequence, Tuple
 import os
 import struct
 import uuid
-import base64
 import datetime
+import enum
 
 from ezdxf.math import Vec3, normal_vector_3p, BoundingBox
 from ezdxf.render import MeshTransformer, MeshVertexMerger, MeshBuilder
@@ -388,30 +388,67 @@ def ply_dumpb(mesh: MeshBuilder) -> bytes:
     return b"".join(data)
 
 
-def make_id() -> str:
-    id_ = base64.urlsafe_b64encode(uuid.uuid4().bytes)[:22]
-    return id_.decode()
+def ifc_guid() -> str:
+    return _guid_compress(uuid.uuid4().hex)
 
 
-def ifc4_dumps(mesh: MeshBuilder, entity_type: int = 1) -> str:
-    """Returns the `IFC4`_ string for the given `mesh`. The SI units are fixed
-    to meters.
+def _guid_compress(g: str) -> str:
+    # https://github.com/IfcOpenShell/IfcOpenShell/blob/master/src/ifcopenshell-python/ifcopenshell/guid.py#L56
+    chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$"
+    bs = [int(g[i : i + 2], 16) for i in range(0, len(g), 2)]
+
+    def b64(v: int, size: int = 4):
+        return "".join(
+            [chars[(v // (64**i)) % 64] for i in range(size)][::-1]
+        )
+
+    return "".join(
+        [b64(bs[0], 2)]
+        + [
+            b64((bs[i] << 16) + (bs[i + 1] << 8) + bs[i + 2])
+            for i in range(1, 16, 3)
+        ]
+    )
+
+
+class IfcUnits(enum.Enum):
+    METER = ".METER."
+    CENTIMETER = ".CENTIMETER."
+    MILLIMETER = ".MILLIMETER."
+
+
+class IfcEntityType(enum.Enum):
+    POLYGON_FACE_SET = "POLY_FACE_SET"
+    CLOSED_SHELL = "CLOSED_SHELL"
+
+
+def ifc4_dumps(
+    mesh: MeshBuilder,
+    entity_type=IfcEntityType.POLYGON_FACE_SET,
+    units=IfcUnits.METER,
+    layer: str = "MeshExport",
+    color: Tuple[float, float, float] = (1., 1., 1.),
+) -> str:
+    """Returns the `IFC4`_ string for the given `mesh`.
 
     Args:
         mesh: :class:`~ezdxf.render.MeshBuilder`
-        entity_type: 1=PolygonFaceSet, 2=ClosedShell
+        entity_type: :class:`IfcEntityType`
+        units: :class:`IcfUnits`
+        layer: layer name a string
+        color: entity color as RGB tuple, values in the range [0,1]
 
     .. warning::
 
-        This is a very dirty template based exporter and the exported
+        This is a bare minimum effort exporter and the exported
         data may not be importable by all CAD applications.
 
-        Import works with:
+        Import is tested and works with:
 
         - BricsCAD
         - Tekla BIMsight
         - FreeCAD (IfcOpenShell)
-        - Allplan, but only ClosedShell, PolygonFaceSet does not work
+        - Allplan, but only ``CLOSED_SHELL``, ``POLYGON_FACE_SET`` does not work
 
     """
 
@@ -427,11 +464,11 @@ FILE_SCHEMA(('IFC4'));
 ENDSEC;
 
 DATA;
-#1= IFCPROJECT('{make_id()}',#2,'MeshExport',$,$,$,$,(#7),#13);
+#1= IFCPROJECT('{ifc_guid()}',#2,'MeshExport',$,$,$,$,(#7),#13);
 #2= IFCOWNERHISTORY(#3,#6,$,$,$,$,$,0);
 #3= IFCPERSONANDORGANIZATION(#4,#5,$);
-#4= IFCPERSON($,$,'mozman',$,$,$,$,$);
-#5= IFCORGANIZATION($,'mozman',$,$,$);
+#4= IFCPERSON($,$,'Undefined',$,$,$,$,$);
+#5= IFCORGANIZATION($,'Undefined',$,$,$);
 #6= IFCAPPLICATION(#5,'{__version__}','ezdxf','ezdxf');
 #7= IFCGEOMETRICREPRESENTATIONCONTEXT($,'Model',3,1.000000000000000E-05,#8,#12);
 #8= IFCAXIS2PLACEMENT3D(#9,#10,#11);
@@ -447,8 +484,8 @@ DATA;
 #18= IFCSIUNIT(*,.TIMEUNIT.,$,.SECOND.);
 #19= IFCSIUNIT(*,.MASSUNIT.,$,.GRAM.);
 #20= IFCLOCALPLACEMENT($,#8);
-#21= IFCBUILDING('{make_id()}',#2,'MeshExport',$,$, #20,$,$,.ELEMENT.,$,$,$);
-#23= IFCBUILDINGELEMENTPROXY('{make_id()}',#2,$,$,$,#24,#29,$,$);
+#21= IFCBUILDING('{ifc_guid()}',#2,'MeshExport',$,$, #20,$,$,.ELEMENT.,$,$,$);
+#23= IFCBUILDINGELEMENTPROXY('{ifc_guid()}',#2,$,$,$,#24,#29,$,$);
 #24= IFCLOCALPLACEMENT(#25,#26);
 #25= IFCLOCALPLACEMENT(#20,#8);
 #26= IFCAXIS2PLACEMENT3D(#27,#10,#28);
@@ -487,6 +524,7 @@ DATA;
             nonlocal idx
             lines.append(f"#{idx}= {line}")
             idx += 1
+
         start_index = idx
         lines: List[str] = ["#0= PLACEHOLDER", "#0= PLACEHOLDER"]
         idx += len(lines)
@@ -525,8 +563,8 @@ DATA;
         add_line(f"IFCSURFACESTYLE($,.POSITIVE.,(#{idx+1}));")
         add_line(f"IFCSURFACESTYLESHADING(#{idx+1},0.);")
         add_line("IFCCOLOURRGB($,1.,1.,1.);")
-        add_line(f"IFCRELCONTAINEDINSPATIALSTRUCTURE('{make_id()}',#2,$,$,(#23),#21);")
-        add_line(f"IFCRELAGGREGATES('{make_id()}',#2,$,$,#1,(#21));")
+        add_line(f"IFCRELCONTAINEDINSPATIALSTRUCTURE('{ifc_guid()}',#2,$,$,(#23),#21);")
+        add_line(f"IFCRELAGGREGATES('{ifc_guid()}',#2,$,$,#1,(#21));")
         # fmt: on
         lines.extend(["ENDSEC;", "END-ISO-10303-21;"])
         return "\n".join(lines)
@@ -544,10 +582,10 @@ DATA;
         mesh = MeshTransformer.from_builder(mesh)
         mesh.translate(-emin.x, -emin.y, -emin.z)
 
-    if entity_type == 1:
+    if entity_type == IfcEntityType.POLYGON_FACE_SET:
         header, index = make_header("Surface")
         content, index = make_polygon_face_set(index)
-    elif entity_type == 2:
+    elif entity_type == IfcEntityType.CLOSED_SHELL:
         header, index = make_header("Brep")
         content, index = make_closed_shell(index)
     else:
