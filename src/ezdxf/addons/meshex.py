@@ -411,12 +411,6 @@ def _guid_compress(g: str) -> str:
     )
 
 
-class IfcUnits(enum.Enum):
-    METER = ".METER."
-    CENTIMETER = ".CENTIMETER."
-    MILLIMETER = ".MILLIMETER."
-
-
 class IfcEntityType(enum.Enum):
     POLYGON_FACE_SET = "POLY_FACE_SET"
     CLOSED_SHELL = "CLOSED_SHELL"
@@ -466,7 +460,7 @@ class Records:
 def ifc4_dumps(
     mesh: MeshBuilder,
     entity_type=IfcEntityType.POLYGON_FACE_SET,
-    units=IfcUnits.METER,
+    *,
     layer: str = "MeshExport",
     color: Tuple[float, float, float] = (1.0, 1.0, 1.0),
 ) -> str:
@@ -475,8 +469,7 @@ def ifc4_dumps(
     Args:
         mesh: :class:`~ezdxf.render.MeshBuilder`
         entity_type: :class:`IfcEntityType`
-        units: :class:`IcfUnits`
-        layer: layer name a string
+        layer: layer name as string
         color: entity color as RGB tuple, values in the range [0,1]
 
     .. warning::
@@ -552,16 +545,16 @@ DATA;
             make_polygon_face_set(records)
         elif entity_type == IfcEntityType.CLOSED_SHELL:
             make_closed_shell(records)
-
-        records.add("IFCCOLOURRGB($,1.,1.,1.);")
+        color_str = f"IFCCOLOURRGB($,{color[0]:.3f},{color[1]:.3f},{color[2]:.3f});"
+        records.add(color_str)
         records.add(f"IFCSURFACESTYLESHADING(#{records.prev_num+1},0.);")
         records.add(f"IFCSURFACESTYLE($,.POSITIVE.,(#{records.prev_num+1}));")
         records.add(f"IFCPRESENTATIONSTYLEASSIGNMENT((#{records.prev_num+1}));")
         records.add(f"IFCSTYLEDITEM(#32,(#{records.prev_num+1}),$);")
-        records.add(f"IFCPRESENTATIONLAYERWITHSTYLE('MeshExport',$,({shape}),$,.T.,.F.,.F.,(#{records.next_num+1}));")
+        records.add(f"IFCPRESENTATIONLAYERWITHSTYLE('{layer}',$,({shape}),$,.T.,.F.,.F.,(#{records.next_num+1}));")
         records.add(f"IFCSURFACESTYLE($,.POSITIVE.,(#{records.next_num+1}));")
         records.add(f"IFCSURFACESTYLESHADING(#{records.next_num+1},0.);")
-        records.add("IFCCOLOURRGB($,1.,1.,1.);")
+        records.add(color_str)
         records.add(f"IFCRELCONTAINEDINSPATIALSTRUCTURE('{ifc_guid()}',#2,$,$,({proxy}),{building});")
         records.add(f"IFCRELAGGREGATES('{ifc_guid()}',#2,$,$,#1,({building}));")
         # fmt: on

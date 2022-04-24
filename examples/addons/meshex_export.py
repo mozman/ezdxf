@@ -59,7 +59,7 @@ def export_ply(filename):
 def export_ifc4(filename, kind):
     with open(filename, "wt") as fp:
         mesh = make_mesh(SIDES)
-        fp.write(meshex.ifc4_dumps(mesh, kind))
+        fp.write(meshex.ifc4_dumps(mesh, kind, color=(1, .1, .1), layer="ezdxf-ifc4"))
 
 
 def export_dxf(filename):

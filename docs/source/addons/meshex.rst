@@ -86,21 +86,14 @@ Export
 
 .. autofunction:: scad_dumps(mesh: MeshBuilder) -> str
 
-.. autofunction:: ifc4_dumps(mesh: MeshBuilder, entity_type = IfcEntityType.POLYGON_FACE_SET, units=IfcUnits.METER, layer="MeshExport", color=(1, 1, 1) -> str
-
-.. autoclass:: IfcUnits
-
-    .. attribute::  POLYGON_FACE
-
-    .. attribute::  CLOSED_SHELL
+.. autofunction:: ifc4_dumps(mesh: MeshBuilder, entity_type = IfcEntityType.POLYGON_FACE_SET, layer="MeshExport", color=(1, 1, 1) -> str
 
 .. autoclass:: IfcEntityType
 
-    .. attribute:: METER
+    .. attribute::  POLYGON_FACE_SET
 
-    .. attribute:: CENTIMETER
+    .. attribute::  CLOSED_SHELL
 
-    .. attribute:: MILLIMETER
 
 .. _OpenSCAD: https://openscad.org/index.html
 .. _MeshLab: https://www.meshlab.net
