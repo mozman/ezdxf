@@ -119,7 +119,9 @@ class ACIS:
         acis.parse_sat(s)
         return acis
 
-    def print_annotated_records(self, source=False):
+    def print_annotated_records(
+        self, filter_func=lambda r: True, source=False
+    ):
         def resolve_pointer(ptr: str):
             rec_num = int(ptr[1:])
             if rec_num < 0:
@@ -141,10 +143,11 @@ class ACIS:
                     yield token
 
         for num, record in enumerate(self.records):
+            if not filter_func(record):
+                continue
             if source:
                 data = " ".join(record)
                 print(f" src= {data} #")
-
             record = annotate(record)
             data = " ".join(record)
             print(f"{num:4d}= {data}")
@@ -159,7 +162,7 @@ def main():
     print("<entity-0> ... pointer to entity - record number")
     print("[0]        ... numbered data fields")
     print("--------------------------------------------------")
-    acis = ACIS.sat_loads(PRISM)
+    acis = ACIS.sat_loads(CUBE)
     acis.print_annotated_records()
 
 
