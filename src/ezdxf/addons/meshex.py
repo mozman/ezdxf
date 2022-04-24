@@ -420,18 +420,20 @@ class IfcEntityType(enum.Enum):
 
 class Records:
     def __init__(self):
+        # Record numbers are 1-based, record index in list is 0-based!
+        # records[0] is record #1
         self.records: List[str] = []
 
     @property
-    def last_num(self) -> int:
+    def last_num(self) -> int:  # list index
         return len(self.records)
 
     @property
-    def prev_num(self) -> int:
+    def prev_num(self) -> int:  # list index
         return self.last_num - 1
 
     @property
-    def next_num(self) -> int:
+    def next_num(self) -> int:  # list index
         return self.last_num + 1
 
     def add(self, record: str, num: int = 0) -> str:
@@ -448,10 +450,13 @@ class Records:
     def get(self, num: int) -> str:
         return self.records[num - 1]
 
-    def update(self, tag: str, record_num: str):
-        for num, record in enumerate(self.records):
+    def update_all(self, tag: str, record_num: str):
+        for index, record in enumerate(self.records):
             if tag in record:
-                self.records[num] = self.records[num].replace(tag, record_num)
+                self.update_record(index, tag, record_num)
+
+    def update_record(self, index, tag: str, record_num: str):
+        self.records[index] = self.records[index].replace(tag, record_num)
 
     def dumps(self) -> str:
         return "\n".join(
@@ -561,7 +566,7 @@ DATA;
         records.add(f"IFCSURFACESTYLESHADING(#{records.prev_num+1},0.);")
         records.add(f"IFCSURFACESTYLE($,.POSITIVE.,(#{records.prev_num+1}));")
         records.add(f"IFCPRESENTATIONSTYLEASSIGNMENT((#{records.prev_num+1}));")
-        records.add(f"IFCSTYLEDITEM({entity},(#{records.prev_num+1}),$);")
+        records.add(f"IFCSTYLEDITEM($ENTITY$,(#{records.prev_num+1}),$);")
         records.add(f"IFCPRESENTATIONLAYERWITHSTYLE('{layer}',$,({shape}),$,.T.,.F.,.F.,(#{records.next_num+1}));")
         records.add(f"IFCSURFACESTYLE($,.POSITIVE.,(#{records.next_num+1}));")
         records.add(f"IFCSURFACESTYLESHADING(#{records.next_num+1},0.);")
@@ -569,13 +574,14 @@ DATA;
         records.add(f"IFCRELCONTAINEDINSPATIALSTRUCTURE('{ifc_guid()}',#2,$,$,({proxy}),{building});")
         records.add(f"IFCRELAGGREGATES('{ifc_guid()}',#2,$,$,#1,({building}));")
         # fmt: on
+        records.update_all("$ENTITY$", entity)
         return records
 
     def make_polygon_face_set(records: Records) -> str:
         entity = records.add(
             f"IFCPOLYGONALFACESET(#{records.next_num+1},$,($FACES$), $);"
         )
-        records.update("$ENTITY$", entity)
+        entity_num = records.last_num
         vertices = ",".join([str(v.xyz) for v in mesh.vertices])
         records.add(f"IFCCARTESIANPOINTLIST3D(({vertices}));")
         face_records: List[str] = []
@@ -584,7 +590,8 @@ DATA;
             face_records.append(
                 records.add(f"IFCINDEXEDPOLYGONALFACE(({indices}));")
             )
-        records.update("$FACES$", ",".join(face_records))
+        # list index required
+        records.update_record(entity_num - 1, "$FACES$", ",".join(face_records))
         return entity
 
     def make_shell(records: Records) -> str:
@@ -598,7 +605,7 @@ DATA;
             records.add(f"IFCOPENSHELL(($FACES$));")
         else:
             raise ValueError(f"invalid entity type: {entity_type}")
-        records.update("$ENTITY$", entity)
+        shell_num = records.last_num
         # add vertices
         first_vertex = records.next_num
         for v in mesh.vertices:
@@ -612,7 +619,8 @@ DATA;
             face_records.append(
                 records.add(f"IFCFACE((#{records.prev_num+1}));")
             )
-        records.update("$FACES$", ",".join(face_records))
+        # list index required
+        records.update_record(shell_num - 1, "$FACES$", ",".join(face_records))
         return entity
 
     if len(mesh.vertices) == 0:

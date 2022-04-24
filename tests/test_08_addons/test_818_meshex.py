@@ -285,15 +285,15 @@ class TestRecords:
     def test_update_one_tag(self, records):
         records.add("IFCSHAPEREPRESENTATION($ENTITY$);")
         rec = records.add("IFCENTITY();")
-        records.update("$ENTITY$", rec)
+        records.update_all("$ENTITY$", rec)
         assert records.get(1) == "IFCSHAPEREPRESENTATION(#2);"
 
     def test_update_multiple_tags(self, records):
         records.add("IFCSHAPEREPRESENTATION($ENTITY$,$XREF$);")
         rec1 = records.add("IFCENTITY();")
         rec2 = records.add("IFCXREF();")
-        records.update("$ENTITY$", rec1)
-        records.update("$XREF$", rec2)
+        records.update_all("$ENTITY$", rec1)
+        records.update_all("$XREF$", rec2)
         assert records.get(1) == "IFCSHAPEREPRESENTATION(#2,#3);"
 
     def test_dumps(self, records):
