@@ -54,6 +54,10 @@ Example for a simple STL to DXF converter:
     mesh.render_mesh(doc.modelspace())
     doc.saveas("your.dxf")
 
+.. seealso::
+
+    Example script `meshex_export.py`_ at github.
+
 Import
 ------
 
@@ -112,3 +116,4 @@ Export
 .. _PLY: https://en.wikipedia.org/wiki/PLY_(file_format)
 .. _polyhedron: https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Primitive_Solids#polyhedron
 .. _IFC4: https://en.wikipedia.org/wiki/Industry_Foundation_Classes
+.. _meshex_export.py: https://github.com/mozman/ezdxf/blob/master/examples/addons/meshex_export.py

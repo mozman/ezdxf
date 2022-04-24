@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.18b3 - dev
+Version 0.18b4 - dev
 --------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-18.html
@@ -43,7 +43,8 @@ Version 0.18b3 - dev
 - NEW: argument `size_inches` in function `ezdxf.addons.drawing.matplotlib.qsave()`
 - NEW: DXF/DWG converter function `ezdxf.addons.odafc.convert()`
 - NEW: support for layer attribute override in VIEWPORT entities
-- NEW: mesh exchange add-on `ezdxf.addons.meshex`: STL, OFF and OBJ mesh loader
+- NEW: mesh exchange add-on `ezdxf.addons.meshex`: STL, OFF, and OBJ mesh loader 
+  and STL, OFF, OBJ, PLY, OpenSCAD and IFC4 mesh exporter
 - CHANGE: keyword only argument `dxfattribs` for factory methods `add_text()` and `add_attdef()`
 - CHANGE: `recover` module - recovered integer and float values are logged as severe errors
 - CHANGE: method `Path.all_lines_to_curve3` replaced by function `path.lines_to_curve3()`
