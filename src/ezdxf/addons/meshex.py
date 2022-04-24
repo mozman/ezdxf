@@ -1,6 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import Union, List, Sequence, Tuple
+from typing import Union, List, Sequence, Tuple, Dict
 import os
 import struct
 import uuid
@@ -422,12 +422,36 @@ class IfcEntityType(enum.Enum):
     CLOSED_SHELL = "CLOSED_SHELL"
 
 
+class Records:
+    def __init__(self):
+        self.records: List[str] = []
+
+    def add(self, record: str) -> Tuple[int, str]:
+        assert record.endswith(");"), "invalid structure"
+        self.records.append(record)
+        num = len(self.records)
+        return num, f"#{num}"
+
+    def get(self, num: int) -> str:
+        return self.records[num - 1]
+
+    def update(self, tag: str, record_num: str):
+        for num, record in enumerate(self.records):
+            if tag in record:
+                self.records[num] = self.records[num].replace(tag, record_num)
+
+    def dumps(self) -> str:
+        return "\n".join(
+            f"#{num+1}= {data}" for num, data in enumerate(self.records)
+        )
+
+
 def ifc4_dumps(
     mesh: MeshBuilder,
     entity_type=IfcEntityType.POLYGON_FACE_SET,
     units=IfcUnits.METER,
     layer: str = "MeshExport",
-    color: Tuple[float, float, float] = (1., 1., 1.),
+    color: Tuple[float, float, float] = (1.0, 1.0, 1.0),
 ) -> str:
     """Returns the `IFC4`_ string for the given `mesh`.
 
