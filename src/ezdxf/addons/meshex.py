@@ -554,26 +554,22 @@ DATA;
             make_closed_shell(records)
 
         records.add("IFCCOLOURRGB($,1.,1.,1.);")
-        records.add(f"IFCSURFACESTYLESHADING(#{records.prev_num},0.);")
-        records.add(f"IFCSURFACESTYLE($,.POSITIVE.,(#{records.prev_num}));")
-        records.add(f"IFCPRESENTATIONSTYLEASSIGNMENT((#{records.prev_num}));")
-        records.add(f"IFCSTYLEDITEM(#32,(#{records.prev_num}),$);")
-        # IFCPRESENTATIONLAYERWITHSTYLE('MeshExport',$,(#30),$,.T.,.F.,.F.,(#{idx+1}));
-        records.add(f"IFCPRESENTATIONLAYERWITHSTYLE('MeshExport',$,({shape}),$,.T.,.F.,.F.,(#{records.next_num}));")
-        records.add(f"IFCSURFACESTYLE($,.POSITIVE.,(#{records.next_num}));")
-        records.add(f"IFCSURFACESTYLESHADING(#{records.next_num},0.);")
+        records.add(f"IFCSURFACESTYLESHADING(#{records.prev_num+1},0.);")
+        records.add(f"IFCSURFACESTYLE($,.POSITIVE.,(#{records.prev_num+1}));")
+        records.add(f"IFCPRESENTATIONSTYLEASSIGNMENT((#{records.prev_num+1}));")
+        records.add(f"IFCSTYLEDITEM(#32,(#{records.prev_num+1}),$);")
+        records.add(f"IFCPRESENTATIONLAYERWITHSTYLE('MeshExport',$,({shape}),$,.T.,.F.,.F.,(#{records.next_num+1}));")
+        records.add(f"IFCSURFACESTYLE($,.POSITIVE.,(#{records.next_num+1}));")
+        records.add(f"IFCSURFACESTYLESHADING(#{records.next_num+1},0.);")
         records.add("IFCCOLOURRGB($,1.,1.,1.);")
-        # IFCRELCONTAINEDINSPATIALSTRUCTURE('{ifc_guid()}',#2,$,$,(#23),#21);
         records.add(f"IFCRELCONTAINEDINSPATIALSTRUCTURE('{ifc_guid()}',#2,$,$,({proxy}),{building});")
-        # IFCRELAGGREGATES('{ifc_guid()}',#2,$,$,#1,(#21));
         records.add(f"IFCRELAGGREGATES('{ifc_guid()}',#2,$,$,#1,({building}));")
         # fmt: on
         return records
 
     def make_polygon_face_set(records: Records) -> None:
-        # the first record #idx has to define the top level entity:
         entity = records.add(
-            f"IFCPOLYGONALFACESET(#{records.next_num},$,($FACES$), $);"
+            f"IFCPOLYGONALFACESET(#{records.next_num+1},$,($FACES$), $);"
         )
         records.update("$ENTITY$", entity)
         vertices = ",".join([str(v.xyz) for v in mesh.vertices])
@@ -587,7 +583,7 @@ DATA;
         records.update("$FACES$", ",".join(face_records))
 
     def make_closed_shell(records: Records) -> None:
-        entity = records.add(f"IFCFACETEDBREP(#{records.next_num});")
+        entity = records.add(f"IFCFACETEDBREP(#{records.next_num+1});")
         records.update("$ENTITY$", entity)
         records.add(f"IFCCLOSEDSHELL(($FACES$));")
         # add vertices
@@ -599,8 +595,10 @@ DATA;
         for face in mesh.open_faces():
             vertices = ",".join("#" + str(first_vertex + i) for i in face)
             records.add(f"IFCPOLYLOOP(({vertices}));")
-            records.add(f"IFCFACEOUTERBOUND(#{records.prev_num},.T.);")
-            face_records.append(records.add(f"IFCFACE((#{records.prev_num}));"))
+            records.add(f"IFCFACEOUTERBOUND(#{records.prev_num+1},.T.);")
+            face_records.append(
+                records.add(f"IFCFACE((#{records.prev_num+1}));")
+            )
         records.update("$FACES$", ",".join(face_records))
 
     if len(mesh.vertices) == 0:
