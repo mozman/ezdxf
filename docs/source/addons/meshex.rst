@@ -86,7 +86,9 @@ Export
 
 .. autofunction:: scad_dumps(mesh: MeshBuilder) -> str
 
-.. autofunction:: ifc4_dumps(mesh: MeshBuilder, entity_type = IfcEntityType.POLYGON_FACE_SET, layer="MeshExport", color=(1, 1, 1) -> str
+.. autofunction:: ifc4_dumps(mesh: MeshBuilder, entity_type = IfcEntityType.POLYGON_FACE_SET, layer="MeshExport", color=(1, 1, 1)) -> str
+
+.. autofunction:: export_ifcZIP(filename: Union[str, os.PathLike] , mesh: MeshBuilder, entity_type = IfcEntityType.POLYGON_FACE_SET, layer="MeshExport", color=(1, 1, 1))
 
 .. autoclass:: IfcEntityType
 

@@ -59,7 +59,12 @@ def export_ply(filename):
 def export_ifc4(filename, kind):
     with open(filename, "wt") as fp:
         mesh = make_mesh(SIDES)
-        fp.write(meshex.ifc4_dumps(mesh, kind, color=(1, .1, .1), layer="ezdxf-ifc4"))
+        fp.write(meshex.ifc4_dumps(mesh, kind, color=(1.0, 0.1, 0.1)))
+
+
+def export_ifc4ZIP(filename, kind):
+    mesh = make_mesh(SIDES)
+    meshex.export_ifcZIP(filename, mesh, kind, color=(1.0, 0.1, 0.1))
 
 
 def export_dxf(filename):
@@ -83,6 +88,9 @@ def main():
     )
     export_ifc4(
         DIR / f"{NAME}_closed_shell.ifc", meshex.IfcEntityType.CLOSED_SHELL
+    )
+    export_ifc4ZIP(
+        DIR / f"{NAME}_closed_shell.ifcZIP", meshex.IfcEntityType.CLOSED_SHELL
     )
 
 

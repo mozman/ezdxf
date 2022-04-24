@@ -1,11 +1,12 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import Union, List, Sequence, Tuple, Dict
+from typing import Union, List, Sequence, Tuple
 import os
 import struct
 import uuid
 import datetime
 import enum
+import zipfile
 
 from ezdxf.math import Vec3, normal_vector_3p, BoundingBox
 from ezdxf.render import MeshTransformer, MeshVertexMerger, MeshBuilder
@@ -610,3 +611,38 @@ DATA;
     header = make_header()
     data = make_data_records()
     return header + data.dumps() + "\nENDSEC;\nEND-ISO-10303-21;\n"
+
+
+def export_ifcZIP(
+    filename: Union[str, os.PathLike],
+    mesh: MeshBuilder,
+    entity_type=IfcEntityType.POLYGON_FACE_SET,
+    *,
+    layer: str = "MeshExport",
+    color: Tuple[float, float, float] = (1.0, 1.0, 1.0),
+):
+    """Export the given `mesh` as zip-compressed `IFC4`_ file. The filename
+    suffix should be ``.ifcZIP``. For more information see function
+    :func:`ifc4_dumps`.
+
+    Args:
+        filename: zip filename, the data file has the same name with suffix ``.ifc``
+        mesh: :class:`~ezdxf.render.MeshBuilder`
+        entity_type: :class:`IfcEntityType`
+        layer: layer name as string
+        color: entity color as RGB tuple, values in the range [0,1]
+
+    Raises:
+        IOError: IO error when opening the zip-file for writing
+
+    """
+    name = os.path.basename(filename) + ".ifc"
+    zf = zipfile.ZipFile(
+        filename, mode="w", compression=zipfile.ZIP_DEFLATED
+    )
+    try:
+        zf.writestr(
+            name, ifc4_dumps(mesh, entity_type, layer=layer, color=color)
+        )
+    finally:
+        zf.close()
