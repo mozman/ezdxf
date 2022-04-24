@@ -415,6 +415,7 @@ def _guid_compress(g: str) -> str:
 class IfcEntityType(enum.Enum):
     POLYGON_FACE_SET = "POLY_FACE_SET"
     CLOSED_SHELL = "CLOSED_SHELL"
+    OPEN_SHELL = "OPEN_SHELL"
 
 
 class Records:
@@ -465,7 +466,10 @@ def ifc4_dumps(
     layer: str = "MeshExport",
     color: Tuple[float, float, float] = (1.0, 1.0, 1.0),
 ) -> str:
-    """Returns the `IFC4`_ string for the given `mesh`.
+    """Returns the `IFC4`_ string for the given `mesh`. The caller is
+    responsible for checking if the mesh is a closed or open surface
+    (e.g. :code:`mesh.diagnose().is_watertight`) and using the appropriate
+    entity type.
 
     Args:
         mesh: :class:`~ezdxf.render.MeshBuilder`
@@ -475,15 +479,16 @@ def ifc4_dumps(
 
     .. warning::
 
-        This is a bare minimum effort exporter and the exported
-        data may not be importable by all CAD applications.
+        `IFC4`_ is a very complex data format and this is a minimal effort
+        exporter, so the exported data may not be importable by all CAD
+        applications.
 
-        Import is tested and works with:
+        The exported `IFC4`_ data can be imported by the following applications:
 
         - BricsCAD
-        - Tekla BIMsight
         - FreeCAD (IfcOpenShell)
         - Allplan
+        - Tekla BIMsight
 
     """
 
@@ -503,6 +508,8 @@ DATA;
         records = Records()
         # fmt: off
         if entity_type == IfcEntityType.POLYGON_FACE_SET:
+            kind = "SurfaceModel"
+        elif entity_type == IfcEntityType.OPEN_SHELL:
             kind = "SurfaceModel"
         elif entity_type == IfcEntityType.CLOSED_SHELL:
             kind = "Brep"
@@ -530,7 +537,7 @@ DATA;
         records.add("IFCSIUNIT(*,.MASSUNIT.,$,.GRAM.);", 19)
         records.add("IFCLOCALPLACEMENT($,#8);", 20)
         building = records.add(f"IFCBUILDING('{ifc_guid()}',#2,'MeshExport',$,$, #20,$,$,.ELEMENT.,$,$,$);", 21)
-        records.add_dummy()
+        records.add_dummy()  # I don't wanna redo the absolute record numbering
         proxy = records.add(f"IFCBUILDINGELEMENTPROXY('{ifc_guid()}',#2,$,$,$,#24,#29,$,$);", 23)
         records.add("IFCLOCALPLACEMENT(#25,#26);", 24)
         records.add("IFCLOCALPLACEMENT(#20,#8);", 25)
@@ -542,16 +549,19 @@ DATA;
         records.add("IFCGEOMETRICREPRESENTATIONSUBCONTEXT('Body','Model',*,*,*,*,#7,$,.MODEL_VIEW.,$);", 31)
 
         # from here on only relative record numbering:
+        entity = "#0"
         if entity_type == IfcEntityType.POLYGON_FACE_SET:
-            make_polygon_face_set(records)
+            entity = make_polygon_face_set(records)
         elif entity_type == IfcEntityType.CLOSED_SHELL:
-            make_closed_shell(records)
+            entity = make_shell(records)
+        elif entity_type == IfcEntityType.OPEN_SHELL:
+            entity = make_shell(records)
         color_str = f"IFCCOLOURRGB($,{color[0]:.3f},{color[1]:.3f},{color[2]:.3f});"
         records.add(color_str)
         records.add(f"IFCSURFACESTYLESHADING(#{records.prev_num+1},0.);")
         records.add(f"IFCSURFACESTYLE($,.POSITIVE.,(#{records.prev_num+1}));")
         records.add(f"IFCPRESENTATIONSTYLEASSIGNMENT((#{records.prev_num+1}));")
-        records.add(f"IFCSTYLEDITEM(#32,(#{records.prev_num+1}),$);")
+        records.add(f"IFCSTYLEDITEM({entity},(#{records.prev_num+1}),$);")
         records.add(f"IFCPRESENTATIONLAYERWITHSTYLE('{layer}',$,({shape}),$,.T.,.F.,.F.,(#{records.next_num+1}));")
         records.add(f"IFCSURFACESTYLE($,.POSITIVE.,(#{records.next_num+1}));")
         records.add(f"IFCSURFACESTYLESHADING(#{records.next_num+1},0.);")
@@ -561,7 +571,7 @@ DATA;
         # fmt: on
         return records
 
-    def make_polygon_face_set(records: Records) -> None:
+    def make_polygon_face_set(records: Records) -> str:
         entity = records.add(
             f"IFCPOLYGONALFACESET(#{records.next_num+1},$,($FACES$), $);"
         )
@@ -575,11 +585,20 @@ DATA;
                 records.add(f"IFCINDEXEDPOLYGONALFACE(({indices}));")
             )
         records.update("$FACES$", ",".join(face_records))
+        return entity
 
-    def make_closed_shell(records: Records) -> None:
-        entity = records.add(f"IFCFACETEDBREP(#{records.next_num+1});")
+    def make_shell(records: Records) -> str:
+        if entity_type == IfcEntityType.CLOSED_SHELL:
+            entity = records.add(f"IFCFACETEDBREP(#{records.next_num+1});")
+            records.add(f"IFCCLOSEDSHELL(($FACES$));")
+        elif entity_type == IfcEntityType.OPEN_SHELL:
+            entity = records.add(
+                f"IFCSHELLBASEDSURFACEMODEL((#{records.next_num + 1}));"
+            )
+            records.add(f"IFCOPENSHELL(($FACES$));")
+        else:
+            raise ValueError(f"invalid entity type: {entity_type}")
         records.update("$ENTITY$", entity)
-        records.add(f"IFCCLOSEDSHELL(($FACES$));")
         # add vertices
         first_vertex = records.next_num
         for v in mesh.vertices:
@@ -594,6 +613,7 @@ DATA;
                 records.add(f"IFCFACE((#{records.prev_num+1}));")
             )
         records.update("$FACES$", ",".join(face_records))
+        return entity
 
     if len(mesh.vertices) == 0:
         return ""
@@ -637,9 +657,7 @@ def export_ifcZIP(
 
     """
     name = os.path.basename(filename) + ".ifc"
-    zf = zipfile.ZipFile(
-        filename, mode="w", compression=zipfile.ZIP_DEFLATED
-    )
+    zf = zipfile.ZipFile(filename, mode="w", compression=zipfile.ZIP_DEFLATED)
     try:
         zf.writestr(
             name, ifc4_dumps(mesh, entity_type, layer=layer, color=color)

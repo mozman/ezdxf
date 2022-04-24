@@ -94,10 +94,15 @@ Export
 
     .. attribute::  POLYGON_FACE_SET
 
+        "SurfaceModel" representation usable for open or closed surfaces.
+
     .. attribute::  CLOSED_SHELL
+
+        "Brep" representation usable for closed surfaces.
 
     .. attribute::  OPEN_SHELL
 
+        "SurfaceModel" representation usable for open surfaces.
 
 .. _OpenSCAD: https://openscad.org/index.html
 .. _MeshLab: https://www.meshlab.net

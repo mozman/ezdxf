@@ -67,6 +67,12 @@ def export_ifc4ZIP(filename, kind):
     meshex.export_ifcZIP(filename, mesh, kind, color=(1.0, 0.1, 0.1))
 
 
+def export_ifc4_open_cylinder(filename, kind):
+    with open(filename, "wt") as fp:
+        mesh = cylinder(count=SIDES, caps=False)
+        fp.write(meshex.ifc4_dumps(mesh, kind, color=(0.1, 1.0, 0.1)))
+
+
 def export_dxf(filename):
     doc = ezdxf.new()
     mesh = make_mesh(SIDES)
@@ -91,6 +97,12 @@ def main():
     )
     export_ifc4ZIP(
         DIR / f"{NAME}_closed_shell.ifcZIP", meshex.IfcEntityType.CLOSED_SHELL
+    )
+    export_ifc4_open_cylinder(
+        DIR / f"open_cylinder_open_shell.ifc", meshex.IfcEntityType.OPEN_SHELL
+    )
+    export_ifc4_open_cylinder(
+        DIR / f"open_cylinder_polygon_face_set.ifc", meshex.IfcEntityType.POLYGON_FACE_SET
     )
 
 
