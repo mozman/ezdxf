@@ -483,7 +483,7 @@ def ifc4_dumps(
         - BricsCAD
         - Tekla BIMsight
         - FreeCAD (IfcOpenShell)
-        - Allplan, but only ``CLOSED_SHELL``, ``POLYGON_FACE_SET`` does not work
+        - Allplan
 
     """
 
@@ -503,7 +503,7 @@ DATA;
         records = Records()
         # fmt: off
         if entity_type == IfcEntityType.POLYGON_FACE_SET:
-            kind = "Surface"
+            kind = "SurfaceModel"
         elif entity_type == IfcEntityType.CLOSED_SHELL:
             kind = "Brep"
         else:

@@ -96,6 +96,8 @@ Export
 
     .. attribute::  CLOSED_SHELL
 
+    .. attribute::  OPEN_SHELL
+
 
 .. _OpenSCAD: https://openscad.org/index.html
 .. _MeshLab: https://www.meshlab.net
