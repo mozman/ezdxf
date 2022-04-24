@@ -130,8 +130,8 @@ class ACIS:
             return f"<{self.records[rec_num][0]}-{rec_num}>"
 
         def annotate(tokens):
-            yield tokens[0]  # name
-            yield resolve_pointer(tokens[1])  # pointer to what
+            yield tokens[0]  # entity name
+            yield resolve_pointer(tokens[1])  # attribute pointer
             yield "ID"
             value_count = 0
             for token in tokens[3:]:
