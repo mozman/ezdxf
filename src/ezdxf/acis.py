@@ -67,32 +67,53 @@ class AcisEntity:
         self.attr_ptr = attr_ptr
         self.id = id_
         self.data = data
+        self.attributes: "AcisEntity" = None  # type: ignore
 
 
 NULL_PTR = AcisEntity("null-ptr", "$-1", -1, tuple())
 
 
 def is_ptr(s: str) -> bool:
-    return len(s) and s[0] == "$"
+    return len(s) > 0 and s[0] == "$"
 
 
 class AcisTree:
     def __init__(self):
         self.header = AcisHeader()
         self.bodies: List[AcisEntity] = []
-        self.entities: Dict[int, AcisEntity] = {}
+        self.entities: List[AcisEntity] = []
 
     def dump_sat(self) -> List[str]:
         return [""]
 
-    def set_entities(self, entities: Dict[int, AcisEntity]) -> None:
-        self.bodies = [e for e in entities.values() if e.name == "body"]
+    def set_entities(self, entities: List[AcisEntity]) -> None:
+        self.bodies = [e for e in entities if e.name == "body"]
         self.entities = entities
 
-    def ptr(self, s: str) -> AcisEntity:
+    def record_index(self, entity: AcisEntity) -> int:
+        return self.entities.index(entity)
+
+
+def resolve_str_pointers(entities: Dict[int, AcisEntity]) -> List[AcisEntity]:
+    def ptr(s: str) -> AcisEntity:
         if is_ptr(s):
-            return self.entities[int(s[1:])]
+            num = int(s[1:])
+            if num == -1:
+                return NULL_PTR
+            return entities[num]
         raise ValueError(f"not a pointer: {s}")
+
+    for entity in entities.values():
+        entity.attributes = ptr(entity.attr_ptr)
+        entity.attr_ptr = "$-1"
+        data = []
+        for token in entity.data:
+            if is_ptr(token):
+                data.append(ptr(token))
+            else:
+                data.append(token)
+        entity.data = data
+    return [e for _, e in sorted(entities.items())]
 
 
 def _parse_header_str(s: str) -> Iterator[str]:
@@ -197,6 +218,7 @@ def build_entities(
 
 
 def parse_sat(s: Union[str, Sequence[str]]) -> AcisTree:
+    data: Sequence[str]
     if isinstance(s, str):
         data = s.splitlines()
     else:
@@ -208,5 +230,5 @@ def parse_sat(s: Union[str, Sequence[str]]) -> AcisTree:
     atree.header = header
     records = parse_records(data)
     entities = build_entities(records, header.version)
-    atree.set_entities(entities)
+    atree.set_entities(resolve_str_pointers(entities))
     return atree

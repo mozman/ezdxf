@@ -150,16 +150,22 @@ class TestAcisTree:
         assert len(atree.bodies) == 1
         assert len(atree.entities) == 113
 
+    def test_body_entity(self, atree):
+        body = atree.bodies[0]
+        assert body.name == "body"
+        assert len(body.data) == 4
+        assert body.data[1].name == "lump", "string ptr should be resolved"
+
+    def test_get_entity_index(self, atree):
+        for num, entity in enumerate(atree.entities):
+            assert atree.record_index(entity) == num
+
     def test_ptr_resolving(self, atree):
-        assert atree.ptr("$112").name == "straight-curve"
+        assert atree.entities[0].name == "body"
+        assert atree.entities[112].name == "straight-curve"
 
-    def test_invalid_ptr_raises_value_error(self, atree):
-        with pytest.raises(ValueError):
-            atree.ptr("112")
-
-    def test_non_existing_ptr_target_raises_key_error(self, atree):
-        with pytest.raises(KeyError):
-            atree.ptr("$200")
+    def test_attr_ptr_is_reset(self, atree):
+        assert all(e.attr_ptr == "$-1" for e in atree.entities)
 
 
 PRISM = """700 0 1 0 
