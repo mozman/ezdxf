@@ -124,6 +124,44 @@ def parse_sat_header(data: Sequence[str]) -> Tuple[AcisHeader, Sequence[str]]:
     return header, data[3:]
 
 
+@dataclass
+class Record:
+    num: int
+    tokens: List[str]
+
+
+def _merge_record_strings(data: Sequence[str]) -> Iterator[str]:
+    current_line = ""
+    for line in data:
+        if len(line) == 0:
+            continue
+        if line.startswith("End-of-ACIS-data") or line.startswith(
+            "Begin-of-ACIS-History-Data"
+        ):
+            break
+        current_line += line
+        if current_line[-1] == "#":
+            yield current_line
+            current_line = ""
+        elif current_line[-1] != " ":
+            current_line += " "
+
+
+def parse_records(data: Sequence[str]) -> List[Record]:
+    num = 0
+    records: List[Record] = []
+    for line in _merge_record_strings(data):
+        tokens = line.split()
+        first_token = tokens[0].strip()
+        if first_token.endswith("="):
+            num = int(first_token[:-1])
+            tokens.pop(0)
+        # remove end of record marker "#"
+        records.append(Record(num, tokens[:-1]))
+        num += 1
+    return records
+
+
 def parse_sat(s: Union[str, Sequence[str]]) -> AcisTree:
     if isinstance(s, str):
         data = s.splitlines()
@@ -134,4 +172,5 @@ def parse_sat(s: Union[str, Sequence[str]]) -> AcisTree:
     atree = AcisTree()
     header, data = parse_sat_header(data)
     atree.header = header
+    records = parse_records(data)
     return atree

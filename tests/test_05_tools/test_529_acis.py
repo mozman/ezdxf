@@ -70,5 +70,57 @@ def test_parse_sat_header(hdr, ver):
     assert header.creation_date == datetime(2022, 1, 1, 10, 00)
 
 
+class TestMergeRecordStrings:
+    @pytest.mark.parametrize(
+        "data",
+        [
+            ["test 1 2 3 #", "End-of-ACIS-data", "test 4 5 6"],
+            ["test 4 5 6 #", "Begin-of-ACIS-History-Data", "test 4 5 6"],
+        ],
+    )
+    def test_end_of_records_detection(self, data):
+        assert len(list(acis._merge_record_strings(data))) == 1
+
+    @pytest.mark.parametrize(
+        "data",
+        [
+            ["test 1 2 3 #", "test 1 2 3 #"],
+            ["test 4 5 6 ", "1 2 3 #", "test 1 2 3 #"],
+            ["test 4 5 6 #", "test 1 2 3 ", "4 5 6 #"],
+        ],
+    )
+    def test_merge_records(self, data):
+        assert len(list(acis._merge_record_strings(data))) == 2
+
+
+class TestParseRecords:
+    def test_simple_case(self):
+        records = acis.parse_records(["test 1 2 3 #", "test 4 5 6 #"])
+        assert len(records) == 2
+        assert records[0].num == 0
+        assert records[0].tokens == ["test", "1", "2", "3"]
+        assert records[1].num == 1
+        assert records[1].tokens == ["test", "4", "5", "6"]
+
+    def test_numbered_records(self):
+        records = acis.parse_records(["2= test 1 2 3 #", " 4= test 4 5 6 #"])
+        assert len(records) == 2
+        assert records[0].num == 2
+        assert records[0].tokens == ["test", "1", "2", "3"]
+        assert records[1].num == 4
+        assert records[1].tokens == ["test", "4", "5", "6"]
+
+    @pytest.mark.parametrize("data", [
+        ["sentinel 7 #", "test 1 2 3 4 5 6 #", "sentinel 8 #"],
+        ["sentinel 7 #", "test 1 2 3", " 4 5 6 #", "sentinel 8 #"],
+        ["sentinel 7 #", "test", "1", "2", "3", "4", "5", "6", "#", "sentinel 8 #"],
+    ])
+    def test_merged_records(self, data):
+        records = acis.parse_records(data)
+        assert records[0].tokens == ["sentinel", "7"]
+        assert records[1].tokens == ["test", "1", "2", "3", "4", "5", "6"]
+        assert records[2].tokens == ["sentinel", "8"]
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
