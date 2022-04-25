@@ -168,6 +168,10 @@ class TestAcisTree:
         assert len(lines) == 117
         assert lines == PRISM.splitlines()
 
+    def test_query_entities(self, atree):
+        points = list(atree.query(lambda e: e.name == "point"))
+        assert len(points) == 8
+
 
 def test_build_str_records():
     a = acis.new_acis_entity("test1", data=[acis.NULL_PTR, 1])

@@ -115,6 +115,9 @@ class AcisTree:
         self.bodies = [e for e in entities if e.name == "body"]
         self.entities = entities
 
+    def query(self, func=lambda e: True) -> Iterator[AcisEntity]:
+        return filter(func, self.entities)
+
 
 def build_str_records(
     entities: List[AcisEntity], version: int
