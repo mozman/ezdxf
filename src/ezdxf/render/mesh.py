@@ -961,7 +961,7 @@ class _XFace:
 def _merge_adjacent_coplanar_faces(
     vertices: List[Vec3], faces: List[Sequence[int]], precision: int = 4
 ) -> MeshVertexMerger:
-    oriented_faces: dict[Vec3, List[_XFace]] = {}
+    oriented_faces: Dict[Vec3, List[_XFace]] = {}
     extended_faces: List[_XFace] = []
     for face in faces:
         if len(face) < 3:

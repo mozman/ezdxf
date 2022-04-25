@@ -18,7 +18,15 @@ ACIS_VERSION = {
 }
 
 
-class InvalidACISLinkStructure(Exception):
+class AcisException(Exception):
+    pass
+
+
+class InvalidACISLinkStructure(AcisException):
+    pass
+
+
+class EntityParsingError(AcisException):
     pass
 
 
@@ -96,6 +104,49 @@ class AcisEntity:
         for entity_type in path.split("/"):
             entity = entity.find_first(entity_type)
         return entity
+
+    def parse_data(self, fmt: str) -> Sequence[Any]:
+        content = []
+        next_is_user_string = False
+        fields = fmt.split(";")
+        fields.reverse()
+        for token in self.data:
+            if next_is_user_string:
+                content.append(token)
+                next_is_user_string = False
+                continue
+            if isinstance(token, AcisEntity):
+                if fields[-1] == token.name:
+                    content.append(token)
+                    fields.pop()
+                # ignore entity if do not match expected types
+            else:
+                expected = fields.pop()
+                if expected == "f":  # float
+                    if token == "I":  # infinity
+                        token = "inf"
+                    try:
+                        content.append(float(token))
+                    except ValueError:
+                        raise EntityParsingError(f"expected a float: '{token}' in {self.name}")
+                elif expected == "i":  # integer
+                    try:
+                        content.append(int(token))
+                    except ValueError:
+                        raise EntityParsingError(f"expected an int: '{token}' in {self.name}")
+                elif expected == "s":  # string const like forward and reversed
+                    content.append(token)
+                elif expected == "@":  # user string with length encoding
+                    next_is_user_string = True
+                    # ignor length encoding
+                    continue
+                elif expected == "?":  # skip unknown field
+                    pass
+                else:
+                    raise ValueError(f"expected field '{expected}' not found")
+            if len(fields) == 0:
+                break
+        return content
 
 
 NULL_PTR = AcisEntity("null-ptr", "$-1", -1, tuple())  # type: ignore

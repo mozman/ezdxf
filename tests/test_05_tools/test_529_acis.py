@@ -203,6 +203,42 @@ def test_build_str_records():
     assert s[2] == "test3 $-1 -1 $0 $1 #"
 
 
+class TestParseEntityData:
+    @pytest.fixture
+    def entity(self):
+        n = acis.NULL_PTR
+        a = acis.new_acis_entity("entity1")
+        b = acis.new_acis_entity("entity2")
+        c = acis.new_acis_entity("entity3")
+        return acis.new_acis_entity("entity", data=[n, a, b, c, n, "1.0"])
+
+    def test_parse_entity1(self, entity):
+        result = entity.parse_data("entity1")
+        assert result[0].name == "entity1"
+
+    def test_skip_entity1_but_parse_entity2(self, entity):
+        result = entity.parse_data("entity2")
+        assert result[0].name == "entity2"
+
+    def test_parse_entity1_and_entity2(self, entity):
+        result = entity.parse_data("entity1;entity2")
+        assert result[0].name == "entity1"
+        assert result[1].name == "entity2"
+
+    def test_parse_entity3_and_float(self, entity):
+        result = entity.parse_data("entity3;f")
+        assert result[0].name == "entity3"
+        assert result[1] == 1.0
+
+    def test_parse_data_types(self):
+        entity = acis.new_acis_entity("entity", data="1.0 7 forward @7 unknown".split())
+        f, i, s1, s2 = entity.parse_data("f;i;s;@")
+        assert f == 1.0
+        assert i == 7
+        assert s1 == "forward"
+        assert s2 == "unknown"
+
+
 PRISM = """700 0 1 0 
 @33 Open Design Alliance ACIS Builder @12 ACIS 32.0 NT @24 Sat Apr 23 14:32:04 2022 
 1 9.9999999999999995e-007 1e-010 
