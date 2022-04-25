@@ -97,8 +97,8 @@ class TestParseRecords:
         assert records[1].num == 1
         assert records[1].tokens == ["test", "4", "5", "6"]
 
-    def test_numbered_records(self):
-        records = acis.parse_records(["2= test 1 2 3 #", " 4= test 4 5 6 #"])
+    def test_sequence_numbers(self):
+        records = acis.parse_records(["-2 test 1 2 3 #", " -4 test 4 5 6 #"])
         assert len(records) == 2
         assert records[0].num == 2
         assert records[0].tokens == ["test", "1", "2", "3"]

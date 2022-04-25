@@ -223,12 +223,10 @@ def parse_sat_header(data: Sequence[str]) -> Tuple[AcisHeader, Sequence[str]]:
 def _merge_record_strings(data: Sequence[str]) -> Iterator[str]:
     current_line = ""
     for line in data:
-        if len(line) == 0:
-            continue
         if line.startswith("End-of-ACIS-data") or line.startswith(
             "Begin-of-ACIS-History-Data"
         ):
-            break
+            return
         current_line += line
         if current_line[-1] == "#":
             yield current_line
@@ -243,8 +241,8 @@ def parse_records(data: Sequence[str]) -> List[Record]:
     for line in _merge_record_strings(data):
         tokens = line.split()
         first_token = tokens[0].strip()
-        if first_token.endswith("="):
-            num = int(first_token[:-1])
+        if first_token.startswith("-"):
+            num = -int(first_token)
             tokens.pop(0)
         # remove end of record marker "#"
         records.append(Record(num, tokens[:-1]))
