@@ -44,5 +44,31 @@ def test_dump_header_string_20800():
     assert header.dumps() == HEADER_20800
 
 
+@pytest.mark.parametrize(
+    "s",
+    [
+        "18 ezdxf ACIS Builder 14 ACIS 208.00 NT 24 Sat Jan  1 10:00:00 2022 ",
+        "@18 ezdxf ACIS Builder @14 ACIS 208.00 NT @24 Sat Jan  1 10:00:00 2022 ",
+    ],
+)
+def test_parse_header_str(s):
+    tokens = list(acis._parse_header_str(s))
+    assert tokens == [
+        "ezdxf ACIS Builder",
+        "ACIS 208.00 NT",
+        "Sat Jan  1 10:00:00 2022",
+    ]
+
+
+@pytest.mark.parametrize("hdr,ver", [(HEADER_400, 400), (HEADER_20800, 20800)])
+def test_parse_sat_header(hdr, ver):
+    header, data = acis.parse_sat_header(hdr.split("\n"))
+    assert len(data) == 0
+    assert header.version == ver
+    assert header.product_id == "ezdxf ACIS Builder"
+    assert header.n_entities == 1
+    assert header.creation_date == datetime(2022, 1, 1, 10, 00)
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
