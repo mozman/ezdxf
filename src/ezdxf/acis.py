@@ -1,10 +1,10 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import List, Tuple, Union, Sequence, Iterator
+from typing import List, Tuple, Union, Sequence, Iterator, Any, Dict
 from datetime import datetime
 from dataclasses import dataclass, field
 
-__all__ = ["parse_sat", "new_tree"]
+__all__ = ["parse_sat", "is_ptr"]
 
 # ACIS versions exported by BricsCAD:
 # R2000/AC1015: 400, "ACIS 4.00 NT", text length has no prefix "@"
@@ -55,21 +55,44 @@ class AcisHeader:
             raise ValueError(f"invalid ACIS version number {version}")
 
 
-class AcisNode:
-    pass
+@dataclass
+class Record:
+    num: int
+    tokens: List[str]
 
 
-class AcisTree(AcisNode):
+class AcisEntity:
+    def __init__(self, name: str, attr_ptr: str, id_: int, data: Sequence[Any]):
+        self.name = name
+        self.attr_ptr = attr_ptr
+        self.id = id_
+        self.data = data
+
+
+NULL_PTR = AcisEntity("null-ptr", "$-1", -1, tuple())
+
+
+def is_ptr(s: str) -> bool:
+    return len(s) and s[0] == "$"
+
+
+class AcisTree:
     def __init__(self):
         self.header = AcisHeader()
-        self.bodies: List[AcisNode] = []
+        self.bodies: List[AcisEntity] = []
+        self.entities: Dict[int, AcisEntity] = {}
 
     def dump_sat(self) -> List[str]:
         return [""]
 
+    def set_entities(self, entities: Dict[int, AcisEntity]) -> None:
+        self.bodies = [e for e in entities.values() if e.name == "body"]
+        self.entities = entities
 
-def new_tree() -> AcisTree:
-    return AcisTree()
+    def ptr(self, s: str) -> AcisEntity:
+        if is_ptr(s):
+            return self.entities[int(s[1:])]
+        raise ValueError(f"not a pointer: {s}")
 
 
 def _parse_header_str(s: str) -> Iterator[str]:
@@ -124,12 +147,6 @@ def parse_sat_header(data: Sequence[str]) -> Tuple[AcisHeader, Sequence[str]]:
     return header, data[3:]
 
 
-@dataclass
-class Record:
-    num: int
-    tokens: List[str]
-
-
 def _merge_record_strings(data: Sequence[str]) -> Iterator[str]:
     current_line = ""
     for line in data:
@@ -162,6 +179,23 @@ def parse_records(data: Sequence[str]) -> List[Record]:
     return records
 
 
+def build_entities(
+    records: Sequence[Record], version: int
+) -> Dict[int, AcisEntity]:
+    entities = {}
+    for record in records:
+        name = record.tokens[0]
+        attr = record.tokens[1]
+        id_ = -1
+        if version >= 700:
+            id_ = int(record.tokens[2])
+            data = record.tokens[3:]
+        else:
+            data = record.tokens[2:]
+        entities[record.num] = AcisEntity(name, attr, id_, data)
+    return entities
+
+
 def parse_sat(s: Union[str, Sequence[str]]) -> AcisTree:
     if isinstance(s, str):
         data = s.splitlines()
@@ -173,4 +207,6 @@ def parse_sat(s: Union[str, Sequence[str]]) -> AcisTree:
     header, data = parse_sat_header(data)
     atree.header = header
     records = parse_records(data)
+    entities = build_entities(records, header.version)
+    atree.set_entities(entities)
     return atree
