@@ -4,7 +4,7 @@ from typing import List, Tuple, Union, Sequence, Iterator, Any, Dict
 from datetime import datetime
 from dataclasses import dataclass, field
 
-__all__ = ["parse_sat", "is_ptr"]
+__all__ = ["parse_sat", "is_ptr", "new_acis_entity"]
 
 # ACIS versions exported by BricsCAD:
 # R2000/AC1015: 400, "ACIS 4.00 NT", text length has no prefix "@"
@@ -18,6 +18,10 @@ ACIS_VERSION = {
 }
 
 
+class InvalidACISLinkStructure(Exception):
+    pass
+
+
 @dataclass
 class AcisHeader:
     version: int = 400
@@ -29,14 +33,12 @@ class AcisHeader:
     creation_date: datetime = field(default_factory=datetime.now)
     units_in_mm: float = 1.0
 
-    def dumps(self) -> str:
-        return "\n".join(
-            [
-                f"{self.version} {self.n_records} {self.n_entities} {self.history_flag} ",
-                self._header_str(),
-                f"{self.units_in_mm:g} 9.9999999999999995e-007 1e-010",
-            ]
-        )
+    def dumps(self) -> List[str]:
+        return [
+            f"{self.version} {self.n_records} {self.n_entities} {self.history_flag} ",
+            self._header_str(),
+            f"{self.units_in_mm:g} 9.9999999999999995e-007 1e-010 ",
+        ]
 
     def _header_str(self) -> str:
         p_len = len(self.product_id)
@@ -62,15 +64,35 @@ class Record:
 
 
 class AcisEntity:
-    def __init__(self, name: str, attr_ptr: str, id_: int, data: Sequence[Any]):
+    def __init__(
+        self,
+        name: str,
+        attr_ptr: str = "$-1",
+        id: int = -1,
+        data: List[Any] = None,
+    ):
         self.name = name
         self.attr_ptr = attr_ptr
-        self.id = id_
-        self.data = data
+        self.id = id
+        self.data: List[Any] = data if data is not None else []
         self.attributes: "AcisEntity" = None  # type: ignore
 
+    def __str__(self):
+        return f"{self.name}({self.id})"
 
-NULL_PTR = AcisEntity("null-ptr", "$-1", -1, tuple())
+
+NULL_PTR = AcisEntity("null-ptr", "$-1", -1, [])
+
+
+def new_acis_entity(
+    name: str,
+    attributes=NULL_PTR,
+    id=-1,
+    data: List[Any] = None,
+) -> AcisEntity:
+    e = AcisEntity(name, "$-1", id, data)
+    e.attributes = attributes
+    return e
 
 
 def is_ptr(s: str) -> bool:
@@ -84,14 +106,41 @@ class AcisTree:
         self.entities: List[AcisEntity] = []
 
     def dump_sat(self) -> List[str]:
-        return [""]
+        data = self.header.dumps()
+        data.extend(build_str_records(self.entities, self.header.version))
+        data.append("End-of-ACIS-data ")
+        return data
 
     def set_entities(self, entities: List[AcisEntity]) -> None:
         self.bodies = [e for e in entities if e.name == "body"]
         self.entities = entities
 
-    def record_index(self, entity: AcisEntity) -> int:
-        return self.entities.index(entity)
+
+def build_str_records(
+    entities: List[AcisEntity], version: int
+) -> Iterator[str]:
+    def ptr_str(e: AcisEntity) -> str:
+        if e is NULL_PTR:
+            return "$-1"
+        try:
+            return f"${entities.index(e)}"
+        except ValueError:
+            raise InvalidACISLinkStructure(
+                f"entity {str(e)} not in record storage"
+            )
+
+    for entity in entities:
+        tokens = [entity.name]
+        tokens.append(ptr_str(entity.attributes))
+        if version >= 700:
+            tokens.append(str(entity.id))
+        for data in entity.data:
+            if isinstance(data, AcisEntity):
+                tokens.append(ptr_str(data))
+            else:
+                tokens.append(str(data))
+        tokens.append("#")
+        yield " ".join(tokens)
 
 
 def resolve_str_pointers(entities: Dict[int, AcisEntity]) -> List[AcisEntity]:

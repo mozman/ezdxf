@@ -17,18 +17,18 @@ def test_default_header():
 
 HEADER_400 = """400 0 1 0 
 18 ezdxf ACIS Builder 12 ACIS 4.00 NT 24 Sat Jan  1 10:00:00 2022 
-1 9.9999999999999995e-007 1e-010"""
+1 9.9999999999999995e-007 1e-010 """
 
 HEADER_20800 = """20800 0 1 0 
 @18 ezdxf ACIS Builder @14 ACIS 208.00 NT @24 Sat Jan  1 10:00:00 2022 
-1 9.9999999999999995e-007 1e-010"""
+1 9.9999999999999995e-007 1e-010 """
 
 
 def test_dump_header_string_400():
     header = acis.AcisHeader()
     header.creation_date = datetime(2022, 1, 1, 10, 00)
     header.n_entities = 1
-    assert header.dumps() == HEADER_400
+    assert "\n".join(header.dumps()) == HEADER_400
 
 
 def test_dump_header_string_20800():
@@ -36,7 +36,7 @@ def test_dump_header_string_20800():
     header.set_version(20800)
     header.creation_date = datetime(2022, 1, 1, 10, 00)
     header.n_entities = 1
-    assert header.dumps() == HEADER_20800
+    assert "\n".join(header.dumps()) == HEADER_20800
 
 
 @pytest.mark.parametrize(
@@ -156,16 +156,28 @@ class TestAcisTree:
         assert len(body.data) == 4
         assert body.data[1].name == "lump", "string ptr should be resolved"
 
-    def test_get_entity_index(self, atree):
-        for num, entity in enumerate(atree.entities):
-            assert atree.record_index(entity) == num
-
     def test_ptr_resolving(self, atree):
         assert atree.entities[0].name == "body"
         assert atree.entities[112].name == "straight-curve"
 
     def test_attr_ptr_is_reset(self, atree):
         assert all(e.attr_ptr == "$-1" for e in atree.entities)
+
+    def test_dump_sat_recreates_the_source_structure(self, atree):
+        lines = atree.dump_sat()
+        assert len(lines) == 117
+        assert lines == PRISM.splitlines()
+
+
+def test_build_str_records():
+    a = acis.new_acis_entity("test1", data=[acis.NULL_PTR, 1])
+    b = acis.new_acis_entity("test2", id=7, data=[a, 2.0])
+    c = acis.new_acis_entity("test3", data=[a, b])
+    entities = [a, b, c]
+    s = list(acis.build_str_records(entities, 700))
+    assert s[0] == "test1 $-1 -1 $-1 1 #"
+    assert s[1] == "test2 $-1 7 $0 2.0 #"
+    assert s[2] == "test3 $-1 -1 $0 $1 #"
 
 
 PRISM = """700 0 1 0 
