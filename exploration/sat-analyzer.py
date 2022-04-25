@@ -162,7 +162,7 @@ def main():
     print("<entity-0> ... pointer to entity - record number")
     print("[0]        ... numbered data fields")
     print("--------------------------------------------------")
-    acis = ACIS.sat_loads(CUBE)
+    acis = ACIS.sat_loads(PRISM)
     acis.print_annotated_records()
 
 

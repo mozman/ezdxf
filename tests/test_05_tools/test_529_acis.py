@@ -172,6 +172,25 @@ class TestAcisTree:
         points = list(atree.query(lambda e: e.name == "point"))
         assert len(points) == 8
 
+    def test_find_entities_in_nodes(self, atree):
+        body = atree.bodies[0]
+        face = body.find_first("lump").find_first("shell").find_first("face")
+        assert face.name == "face"
+
+    def test_find_entities_in_path(self, atree):
+        body = atree.bodies[0]
+        face = body.find_path("lump/shell/face")
+        assert face.name == "face"
+
+    def test_find_in_invalid_path_return_null_pointer(self, atree):
+        body = atree.bodies[0]
+        face = body.find_path("lump/xxx/face")
+        assert face is acis.NULL_PTR
+
+    def test_find_all(self, atree):
+        coedge = atree.entities[10]
+        assert len(list(coedge.find_all("coedge"))) == 3
+
 
 def test_build_str_records():
     a = acis.new_acis_entity("test1", data=[acis.NULL_PTR, 1])

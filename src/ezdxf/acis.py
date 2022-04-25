@@ -80,8 +80,25 @@ class AcisEntity:
     def __str__(self):
         return f"{self.name}({self.id})"
 
+    def find_all(self, entity_type) -> Iterator["AcisEntity"]:
+        for token in self.data:
+            if isinstance(token, AcisEntity) and token.name == entity_type:
+                yield token
 
-NULL_PTR = AcisEntity("null-ptr", "$-1", -1, [])
+    def find_first(self, entity_type) -> "AcisEntity":
+        for token in self.data:
+            if isinstance(token, AcisEntity) and token.name == entity_type:
+                return token
+        return NULL_PTR
+
+    def find_path(self, path: str) -> "AcisEntity":
+        entity = self
+        for entity_type in path.split("/"):
+            entity = entity.find_first(entity_type)
+        return entity
+
+
+NULL_PTR = AcisEntity("null-ptr", "$-1", -1, tuple())  # type: ignore
 
 
 def new_acis_entity(
