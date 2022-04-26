@@ -1,5 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
+import enums
 from typing import List, Tuple, Union, Sequence, Iterator, Any, Dict
 from datetime import datetime
 from dataclasses import dataclass, field
@@ -42,6 +43,10 @@ class ParsingError(AcisException):
     pass
 
 
+class Flags(enums.IntFlag):
+    HAS_HISTORY = 1
+
+
 @dataclass
 class AcisHeader:
     """Represents an ACIS file header."""
@@ -49,7 +54,7 @@ class AcisHeader:
     version: int = 400
     n_records: int = 0  # can be 0
     n_entities: int = 0
-    history_flag: int = 0  # 1 if history has been saved
+    flags: int = 0
     product_id: str = "ezdxf ACIS Builder"
     acis_version: str = ACIS_VERSION[400]
     creation_date: datetime = field(default_factory=datetime.now)
@@ -58,7 +63,7 @@ class AcisHeader:
     def dumps(self) -> List[str]:
         """Returns the file header as list of strings."""
         return [
-            f"{self.version} {self.n_records} {self.n_entities} {self.history_flag} ",
+            f"{self.version} {self.n_records} {self.n_entities} {self.flags} ",
             self._header_str(),
             f"{self.units_in_mm:g} 9.9999999999999995e-007 1e-010 ",
         ]
@@ -272,9 +277,7 @@ def build_str_records(
         try:
             return f"${entities.index(e)}"
         except ValueError:
-            raise InvalidLinkStructure(
-                f"entity {str(e)} not in record storage"
-            )
+            raise InvalidLinkStructure(f"entity {str(e)} not in record storage")
 
     for entity in entities:
         tokens = [entity.name]
@@ -339,7 +342,7 @@ def parse_sat_header(data: Sequence[str]) -> Tuple[AcisHeader, Sequence[str]]:
     try:
         header.n_records = int(tokens[1])
         header.n_entities = int(tokens[2])
-        header.history_flag = int(tokens[3])
+        header.flags = int(tokens[3])
     except (IndexError, ValueError):
         pass
     tokens = list(_parse_header_str(data[1]))
