@@ -19,6 +19,10 @@ HEADER_400 = """400 0 1 0
 18 ezdxf ACIS Builder 12 ACIS 4.00 NT 24 Sat Jan  1 10:00:00 2022 
 1 9.9999999999999995e-007 1e-010 """
 
+HEADER_700 = """700 0 1 0 
+@18 ezdxf ACIS Builder @12 ACIS 32.0 NT @24 Sat Jan  1 10:00:00 2022 
+1 9.9999999999999995e-007 1e-010 """
+
 HEADER_20800 = """20800 0 1 0 
 @18 ezdxf ACIS Builder @14 ACIS 208.00 NT @24 Sat Jan  1 10:00:00 2022 
 1 9.9999999999999995e-007 1e-010 """
@@ -29,6 +33,14 @@ def test_dump_header_string_400():
     header.creation_date = datetime(2022, 1, 1, 10, 00)
     header.n_entities = 1
     assert "\n".join(header.dumps()) == HEADER_400
+
+
+def test_dump_header_string_700():
+    header = acis.AcisHeader()
+    header.set_version(700)
+    header.creation_date = datetime(2022, 1, 1, 10, 00)
+    header.n_entities = 1
+    assert "\n".join(header.dumps()) == HEADER_700
 
 
 def test_dump_header_string_20800():

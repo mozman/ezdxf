@@ -14,12 +14,18 @@ __all__ = [
 
 # ACIS versions exported by BricsCAD:
 # R2000/AC1015: 400, "ACIS 4.00 NT", text length has no prefix "@"
-# R2004/AC1018: 20800 @ "ACIS 208.00 NT", text length has "@" prefix
-# R2007/AC1021: 20800 @ "ACIS 208.00 NT", text length has "@" prefix
-# R2010/AC1024: 20800 @ "ACIS 208.00 NT", text length has "@" prefix
+# R2004/AC1018: 20800 @ "ACIS 208.00 NT", text length has "@" prefix ??? wierd
+# R2007/AC1021: 700 @ "ACIS 32.0 NT", text length has "@" prefix
+# R2010/AC1024: 700 @ "ACIS 32.0 NT", text length has "@" prefix
+
+# A test showed that R2000 files that contains ACIS v700/32.0 or v20800/208.0
+# data can be opened by Autodesk TrueView, BricsCAD and Allplan, so exporting
+# only v700/32.0 for all DXF versions should be OK!
+# test script exploration/acis/transplan.py
 
 ACIS_VERSION = {
     400: "ACIS 4.00 NT",
+    700: "ACIS 32.0 NT",
     20800: "ACIS 208.00 NT",
 }
 
