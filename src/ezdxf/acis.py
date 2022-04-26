@@ -1,6 +1,5 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-import enums
 from typing import List, Tuple, Union, Sequence, Iterator, Any, Dict
 from datetime import datetime
 from dataclasses import dataclass, field
@@ -43,7 +42,7 @@ class ParsingError(AcisException):
     pass
 
 
-class Flags(enums.IntFlag):
+class Flags:
     HAS_HISTORY = 1
 
 
