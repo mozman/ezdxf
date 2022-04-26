@@ -1,8 +1,9 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import List, Tuple, Union, Sequence, Iterator, Any, Dict
+from typing import List, Tuple, Union, Sequence, Iterator, Any, Dict, Optional
 from datetime import datetime
 from dataclasses import dataclass, field
+from ezdxf.math import Vec3, Matrix44
 
 __all__ = [
     "parse_sat",
@@ -112,19 +113,23 @@ class AcisEntity:
     def __str__(self):
         return f"{self.name}({self.id})"
 
-    def find_all(self, entity_type) -> Iterator["AcisEntity"]:
-        """Yields all matching ACIS entity referenced by this entity.
+    def find_all(self, entity_type) -> List["AcisEntity"]:
+        """Returns a list of all matching ACIS entities of then given type
+        referenced by this entity.
 
         Args:
             entity_type: entity type (name) as string like "body"
 
         """
-        for token in self.data:
-            if isinstance(token, AcisEntity) and token.name == entity_type:
-                yield token
+        return [
+            e
+            for e in self.data
+            if isinstance(e, AcisEntity) and e.name == entity_type
+        ]
 
     def find_first(self, entity_type) -> "AcisEntity":
         """Returns the first matching ACIS entity referenced by this entity.
+        Returns the ``NULL_PTR`` if no entity was found.
 
         Args:
             entity_type: entity type (name) as string like "body"
@@ -142,7 +147,7 @@ class AcisEntity:
 
             face = entity.find_first("lump").find_first("shell").find_first("face")
 
-        Returns :attr:`NULL_PTR` if no entity could be found or if the path is
+        Returns ``NULL_PTR`` if no entity could be found or if the path is
         invalid.
 
         Args:
@@ -154,52 +159,85 @@ class AcisEntity:
             entity = entity.find_first(entity_type)
         return entity
 
-    def parse_data(self, fmt: str) -> Sequence[Any]:
-        content = []
-        next_is_user_string = False
-        fields = fmt.split(";")
-        fields.reverse()
-        for token in self.data:
-            if next_is_user_string:
-                content.append(token)
-                next_is_user_string = False
-                continue
-            if isinstance(token, AcisEntity):
-                if fields[-1] == token.name:
-                    content.append(token)
-                    fields.pop()
-                # ignore entity if do not match expected types
-            else:
-                expected = fields.pop()
-                if expected == "f":  # float
-                    if token == "I":  # infinity
-                        token = "inf"
-                    try:
-                        content.append(float(token))
-                    except ValueError:
-                        raise ParsingError(
-                            f"expected a float: '{token}' in {self.name}"
-                        )
-                elif expected == "i":  # integer
-                    try:
-                        content.append(int(token))
-                    except ValueError:
-                        raise ParsingError(
-                            f"expected an int: '{token}' in {self.name}"
-                        )
-                elif expected == "s":  # string const like forward and reversed
-                    content.append(token)
-                elif expected == "@":  # user string with length encoding
-                    next_is_user_string = True
-                    # ignor length encoding
-                    continue
-                elif expected == "?":  # skip unknown field
-                    pass
-                else:
-                    raise ValueError(f"expected field '{expected}' not found")
-            if len(fields) == 0:
-                break
-        return content
+    def find_entities(self, names: str) -> List["AcisEntity"]:
+        """Find multiple entities of different types. Returns the first
+        entity of each type. If a type doesn't exist a ``NULL_PTR`` is
+        returned for this type::
+
+            coedge, edge = coedge.find_entities("coedge;edge")
+
+        Returns the first coedge and the first edge in the current coedge.
+        If no edge entity exist, the edge variable is the ``NULL_PTR``.
+
+        Args:
+            names: entity type list as string, separator is ";"
+
+        """
+        return [self.find_first(name) for name in names.split(";")]
+
+    def parse_values(self, fmt: str) -> Sequence[Any]:
+        """Parse only values from entity data, ignores all entities in front
+        or between the data values.
+
+        =========== ==============================
+        specifier   data type
+        =========== ==============================
+        ``f``       float values
+        ``i``       integer values
+        ``s``       string constants like "forward"
+        ``@``       user string with preceding length encoding
+        ``?``       skip (unknown) value
+        =========== ==============================
+
+        Args:
+            fmt: format specifiers separated by ";"
+
+        """
+        return parse_values(self.data, fmt)
+
+
+def parse_values(data: Sequence[Any], fmt: str) -> Sequence[Any]:
+    """Parse only values from entity data, ignores all entities."""
+    content = []
+    next_is_user_string = False
+    specifiers = fmt.split(";")
+    specifiers.reverse()
+    for field in data:
+        if isinstance(field, AcisEntity):
+            next_is_user_string = False
+            continue  # ignore all entities
+
+        if next_is_user_string:
+            content.append(field)
+            next_is_user_string = False
+            continue
+
+        if len(specifiers) == 0:
+            break
+        specifier = specifiers.pop()
+        if specifier == "f":  # float
+            if field == "I":  # infinity
+                field = "inf"
+            try:
+                content.append(float(field))
+            except ValueError:
+                raise ParsingError(f"expected a float: '{field}'")
+        elif specifier == "i":  # integer
+            try:
+                content.append(int(field))
+            except ValueError:
+                raise ParsingError(f"expected an int: '{field}'")
+        elif specifier == "s":  # string const like forward and reversed
+            content.append(field)
+        elif specifier == "@":  # user string with length encoding
+            next_is_user_string = True
+            # ignor length encoding
+            continue
+        elif specifier == "?":  # skip value field
+            pass
+        else:
+            raise ParsingError(f"unknown format specifier: {specifier}")
+    return content
 
 
 NULL_PTR = AcisEntity("null-ptr", "$-1", -1, tuple())  # type: ignore
@@ -435,3 +473,70 @@ def parse_sat(s: Union[str, Sequence[str]]) -> AcisBuilder:
     entities = build_entities(records, header.version)
     atree.set_entities(resolve_str_pointers(entities))
     return atree
+
+
+def transform_to_matrix44(transform: AcisEntity) -> Matrix44:
+    values = transform.parse_values("f;f;f;f;f;f;f;f;f;f;f;f")
+    if len(values) != 12:
+        raise ParsingError("transform entity has not enough data")
+    a, b, c, d, e, f, g, h, i, j, k, l = values
+    return Matrix44(
+        [
+            (a, b, c, 0.0),
+            (d, e, f, 0.0),
+            (g, h, i, 0.0),
+            (j, k, l, 1.0),
+        ]
+    )
+
+
+def extract_polygon_faces(body: AcisEntity) -> Iterator[Sequence[Vec3]]:
+    if body.name != "body":
+        raise TypeError(f"expected body entity, got: {body.name}")
+
+    lump, transform = body.find_entities("lump;transform")
+    if lump is NULL_PTR:
+        raise ParsingError("lump data not found")
+
+    m: Optional[Matrix44] = None
+    if transform is not NULL_PTR:
+        m = transform_to_matrix44(transform)
+
+    face = lump.find_path("shell/face")
+    while face is not NULL_PTR:
+        vertices: List[Vec3] = []
+        face, loop, plane = face.find_entities("face;loop;plane-surface")
+        if plane is NULL_PTR or loop is NULL_PTR:
+            continue  # not a plane-surface or a polygon face
+
+        first_coedge = loop.find_first("coedge")
+        if first_coedge is NULL_PTR:
+            continue  # don't know what is going on
+
+        coedge = first_coedge
+        is_valid_face = True
+        while True:
+            # the first coedge field points to the next coedge
+            # the edge entity contains the vertices and the curve type
+            coedge, edge = coedge.find_entities("coedge;edge")
+
+            # only take the first vertex, the second vertex is the first
+            # vertex of the next edge:
+            vertex, line = edge.find_entities("vertex;straight-curve")
+            if line is NULL_PTR:  # edge is not a straight line
+                is_valid_face = False
+                break
+
+            # the point entity stores the actual coordinates
+            point = vertex.find_first("point")
+            if point is not NULL_PTR:
+                vertices.append(Vec3(point.parse_values("f;f;f")))  # type: ignore
+            # else: invalid data file?
+            if coedge is first_coedge:  # loop is closed
+                break
+
+        if is_valid_face:
+            if m is not None:
+                yield list(m.transform_vertices(vertices))
+            else:
+                yield vertices

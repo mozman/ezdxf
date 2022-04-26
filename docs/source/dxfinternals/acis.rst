@@ -96,7 +96,9 @@ AcisEntity
 
     .. automethod:: find_path
 
-    .. automethod:: parse_data
+    .. automethod:: find_entities
+
+    .. automethod:: parse_values
 
 AcisHeader
 ----------

@@ -14,7 +14,7 @@ reversed/forward/forward_v ... Parameter defining the sense direction.
 ... @7 unknown
 @=text 7=char count: "unknown"
 
-SAT/SAB seems to support only triangles for polygon face meshes.
+SAT/SAB support ngons as polygon faces
 
 The content is version dependent!
 

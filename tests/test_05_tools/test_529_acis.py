@@ -28,11 +28,14 @@ HEADER_20800 = """20800 0 1 0
 1 9.9999999999999995e-007 1e-010 """
 
 
-@pytest.mark.parametrize("ver,s", [
-    (400, HEADER_400),
-    (700, HEADER_700),
-    (20800, HEADER_20800),
-])
+@pytest.mark.parametrize(
+    "ver,s",
+    [
+        (400, HEADER_400),
+        (700, HEADER_700),
+        (20800, HEADER_20800),
+    ],
+)
 def test_dump_header_string(ver, s):
     header = acis.AcisHeader()
     header.set_version(ver)
@@ -191,7 +194,7 @@ class TestAcisBuilder:
 
     def test_find_all(self, builder):
         coedge = builder.entities[10]
-        assert len(list(coedge.find_all("coedge"))) == 3
+        assert len(coedge.find_all("coedge")) == 3
 
 
 def test_build_str_records():
@@ -205,42 +208,101 @@ def test_build_str_records():
     assert s[2] == "test3 $-1 -1 $0 $1 #"
 
 
-class TestParseEntityData:
+class TestFindMultipleEntities:
+    @pytest.fixture
+    def entity(self):
+        n = acis.NULL_PTR
+        a1 = acis.new_acis_entity("entity1")
+        a2 = acis.new_acis_entity("entity1")
+        b1 = acis.new_acis_entity("entity2")
+        b2 = acis.new_acis_entity("entity2")
+        c = acis.new_acis_entity("entity3")
+        return acis.new_acis_entity(
+            "entity", data=[n, a1, a2, "1", b1, b2, c, n, "1.0"]
+        )
+
+    def test_find_first_entity1_and_first_entity2(self, entity):
+        result = entity.find_entities("entity1;entity2")
+        assert result[0].name == "entity1"
+        assert result[1].name == "entity2"
+
+    def test_find_first_entity1_and_first_entity3(self, entity):
+        result = entity.find_entities("entity1;entity3")
+        assert result[0].name == "entity1"
+        assert result[1].name == "entity3"
+
+    def test_find_first_entity4_and_first_entity3(self, entity):
+        result = entity.find_entities("entity4;entity3")
+        assert result[0] is acis.NULL_PTR
+        assert result[1].name == "entity3"
+
+    def test_find_first_entity2_and_first_entity4(self, entity):
+        result = entity.find_entities("entity2;entity4")
+        assert result[0].name == "entity2"
+        assert result[1] is acis.NULL_PTR
+
+
+class TestParseValues:
     @pytest.fixture
     def entity(self):
         n = acis.NULL_PTR
         a = acis.new_acis_entity("entity1")
         b = acis.new_acis_entity("entity2")
         c = acis.new_acis_entity("entity3")
-        return acis.new_acis_entity("entity", data=[n, a, b, c, n, "1.0"])
-
-    def test_parse_entity1(self, entity):
-        result = entity.parse_data("entity1")
-        assert result[0].name == "entity1"
-
-    def test_skip_entity1_but_parse_entity2(self, entity):
-        result = entity.parse_data("entity2")
-        assert result[0].name == "entity2"
-
-    def test_parse_entity1_and_entity2(self, entity):
-        result = entity.parse_data("entity1;entity2")
-        assert result[0].name == "entity1"
-        assert result[1].name == "entity2"
-
-    def test_parse_entity3_and_float(self, entity):
-        result = entity.parse_data("entity3;f")
-        assert result[0].name == "entity3"
-        assert result[1] == 1.0
-
-    def test_parse_data_types(self):
-        entity = acis.new_acis_entity(
-            "entity", data="1.0 7 forward @7 unknown".split()
+        return acis.new_acis_entity(
+            "entity", data=[n, a, b, "1", c, n, "1.0"]
         )
-        f, i, s1, s2 = entity.parse_data("f;i;s;@")
-        assert f == 1.0
-        assert i == 7
-        assert s1 == "forward"
-        assert s2 == "unknown"
+
+    def test_parse_integers(self):
+        data = [acis.NULL_PTR, "1", "2", acis.NULL_PTR]
+        assert acis.parse_values([], "i") == []
+        assert acis.parse_values(data, "i") == [1]
+        assert acis.parse_values(data, "i;i") == [1, 2]
+        assert acis.parse_values(data, "i;i;i") == [1, 2]
+
+    def test_parse_floats(self):
+        data = [acis.NULL_PTR, "1.0", "2.0", acis.NULL_PTR]
+        assert acis.parse_values([], "f") == []
+        assert acis.parse_values(data, "f") == [1.0]
+        assert acis.parse_values(data, "f;f") == [1.0, 2.0]
+        assert acis.parse_values(data, "f;f;f") == [1.0, 2.0]
+
+    def test_parse_constant_strings(self):
+        data = [acis.NULL_PTR, "1.0", "forward", acis.NULL_PTR]
+        assert acis.parse_values([], "s") == []
+        assert acis.parse_values(data, "s") == ["1.0"]
+        assert acis.parse_values(data, "s;s") == ["1.0", "forward"]
+        assert acis.parse_values(data, "s;s;s") == ["1.0", "forward"]
+
+    def test_parse_user_strings(self):
+        data = [acis.NULL_PTR, "@4", "usr1", "@4", "usr2", acis.NULL_PTR]
+        assert acis.parse_values([], "@") == []
+        assert acis.parse_values(data, "@") == ["usr1"]
+        assert acis.parse_values(data, "@;@") == ["usr1", "usr2"]
+        assert acis.parse_values(data, "@;@;@") == ["usr1", "usr2"]
+
+    def test_parse_mixed_values(self):
+        data = ["1.0", "@4", "usr1", "forward"]
+        assert acis.parse_values(data, "f;@;s") == [1.0, "usr1", "forward"]
+
+    def test_value_order_must_match(self):
+        data = ["not_a_float", "1.0"]
+        with pytest.raises(acis.ParsingError):
+            acis.parse_values(data, "f;f")
+
+    def test_skip_unknown_values(self):
+        data = ["7", "not_a_float", "1.0"]
+        assert acis.parse_values(data, "i;?;f") == [7, 1.0]
+
+    def test_ignore_entities_between_values(self):
+        data = ["7", acis.NULL_PTR, "1.0"]
+        assert acis.parse_values(data, "i;f") == [7, 1.0]
+
+
+def test_extract_polygon_faces():
+    builder = acis.parse_sat(PRISM)
+    faces = list(acis.extract_polygon_faces(builder.bodies[0]))
+    assert len(faces) == 10
 
 
 PRISM = """700 0 1 0 
