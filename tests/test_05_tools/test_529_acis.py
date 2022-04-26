@@ -140,55 +140,55 @@ def test_build_entities():
     assert entities[112].name == "straight-curve"
 
 
-class TestAcisTree:
+class TestAcisBuilder:
     @pytest.fixture(scope="class")
-    def atree(self):
+    def builder(self):
         return acis.parse_sat(PRISM)
 
-    def test_parsing_result(self, atree):
-        assert atree.header.version == 700
-        assert len(atree.bodies) == 1
-        assert len(atree.entities) == 113
+    def test_parsing_result(self, builder):
+        assert builder.header.version == 700
+        assert len(builder.bodies) == 1
+        assert len(builder.entities) == 113
 
-    def test_body_entity(self, atree):
-        body = atree.bodies[0]
+    def test_body_entity(self, builder):
+        body = builder.bodies[0]
         assert body.name == "body"
         assert len(body.data) == 4
         assert body.data[1].name == "lump", "string ptr should be resolved"
 
-    def test_ptr_resolving(self, atree):
-        assert atree.entities[0].name == "body"
-        assert atree.entities[112].name == "straight-curve"
+    def test_ptr_resolving(self, builder):
+        assert builder.entities[0].name == "body"
+        assert builder.entities[112].name == "straight-curve"
 
-    def test_attr_ptr_is_reset(self, atree):
-        assert all(e.attr_ptr == "$-1" for e in atree.entities)
+    def test_attr_ptr_is_reset(self, builder):
+        assert all(e.attr_ptr == "$-1" for e in builder.entities)
 
-    def test_dump_sat_recreates_the_source_structure(self, atree):
-        lines = atree.dump_sat()
+    def test_dump_sat_recreates_the_source_structure(self, builder):
+        lines = builder.dump_sat()
         assert len(lines) == 117
         assert lines == PRISM.splitlines()
 
-    def test_query_entities(self, atree):
-        points = list(atree.query(lambda e: e.name == "point"))
+    def test_query_entities(self, builder):
+        points = list(builder.query(lambda e: e.name == "point"))
         assert len(points) == 8
 
-    def test_find_entities_in_nodes(self, atree):
-        body = atree.bodies[0]
+    def test_find_entities_in_nodes(self, builder):
+        body = builder.bodies[0]
         face = body.find_first("lump").find_first("shell").find_first("face")
         assert face.name == "face"
 
-    def test_find_entities_in_path(self, atree):
-        body = atree.bodies[0]
+    def test_find_entities_in_path(self, builder):
+        body = builder.bodies[0]
         face = body.find_path("lump/shell/face")
         assert face.name == "face"
 
-    def test_find_in_invalid_path_return_null_pointer(self, atree):
-        body = atree.bodies[0]
+    def test_find_in_invalid_path_return_null_pointer(self, builder):
+        body = builder.bodies[0]
         face = body.find_path("lump/xxx/face")
         assert face is acis.NULL_PTR
 
-    def test_find_all(self, atree):
-        coedge = atree.entities[10]
+    def test_find_all(self, builder):
+        coedge = builder.entities[10]
         assert len(list(coedge.find_all("coedge"))) == 3
 
 
@@ -231,7 +231,9 @@ class TestParseEntityData:
         assert result[1] == 1.0
 
     def test_parse_data_types(self):
-        entity = acis.new_acis_entity("entity", data="1.0 7 forward @7 unknown".split())
+        entity = acis.new_acis_entity(
+            "entity", data="1.0 7 forward @7 unknown".split()
+        )
         f, i, s1, s2 = entity.parse_data("f;i;s;@")
         assert f == 1.0
         assert i == 7
