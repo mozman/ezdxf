@@ -28,27 +28,17 @@ HEADER_20800 = """20800 0 1 0
 1 9.9999999999999995e-007 1e-010 """
 
 
-def test_dump_header_string_400():
+@pytest.mark.parametrize("ver,s", [
+    (400, HEADER_400),
+    (700, HEADER_700),
+    (20800, HEADER_20800),
+])
+def test_dump_header_string(ver, s):
     header = acis.AcisHeader()
+    header.set_version(ver)
     header.creation_date = datetime(2022, 1, 1, 10, 00)
     header.n_entities = 1
-    assert "\n".join(header.dumps()) == HEADER_400
-
-
-def test_dump_header_string_700():
-    header = acis.AcisHeader()
-    header.set_version(700)
-    header.creation_date = datetime(2022, 1, 1, 10, 00)
-    header.n_entities = 1
-    assert "\n".join(header.dumps()) == HEADER_700
-
-
-def test_dump_header_string_20800():
-    header = acis.AcisHeader()
-    header.set_version(20800)
-    header.creation_date = datetime(2022, 1, 1, 10, 00)
-    header.n_entities = 1
-    assert "\n".join(header.dumps()) == HEADER_20800
+    assert "\n".join(header.dumps()) == s
 
 
 @pytest.mark.parametrize(

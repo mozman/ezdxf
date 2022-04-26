@@ -21,7 +21,7 @@ __all__ = [
 # A test showed that R2000 files that contains ACIS v700/32.0 or v20800/208.0
 # data can be opened by Autodesk TrueView, BricsCAD and Allplan, so exporting
 # only v700/32.0 for all DXF versions should be OK!
-# test script exploration/acis/transplan.py
+# test script: exploration/acis/transplant_acis_data.py
 
 ACIS_VERSION = {
     400: "ACIS 4.00 NT",
