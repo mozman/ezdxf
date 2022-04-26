@@ -255,8 +255,9 @@ class Solid3d(Body):
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         # AcDbModelerGeometry export is done by parent class
-        tagwriter.write_tag2(SUBCLASS_MARKER, acdb_3dsolid.name)
-        self.dxf.export_dxf_attribs(tagwriter, "history_handle")
+        if tagwriter.dxfversion > DXF2000:
+            tagwriter.write_tag2(SUBCLASS_MARKER, acdb_3dsolid.name)
+            self.dxf.export_dxf_attribs(tagwriter, "history_handle")
 
 
 def load_matrix(subclass: "Tags", code: int) -> Matrix44:
