@@ -21,7 +21,7 @@ maybe in the future it is also possible to create such polygon face meshes.
 Functions
 =========
 
-.. autofunction:: parse_sat
+.. autofunction:: parse_sat(s: Union[str, Sequence[str]]) -> AcisBuilder
 
 Classes
 =======
@@ -83,20 +83,20 @@ AcisEntity
         still strings.
 
         Avoid accessing the :attr:`data` directly and use the
-        :meth:`parse_data` method instead to acquire data from an
+        :meth:`parse_values` method instead to acquire data from an
         entity.
 
     .. attribute:: attributes
 
-        Reference to entity attributes or a :attr:`acis.NULL_PTR`.
+        Reference to entity attributes or a ``NULL_PTR``.
 
-    .. automethod:: find_all
+    .. automethod:: find_all(entity_type: str) -> list[AcisEntity]
 
-    .. automethod:: find_first
+    .. automethod:: find_first(entity_type: str) -> AcisEntity
 
-    .. automethod:: find_path
+    .. automethod:: find_path(path: str) -> AcisEntity
 
-    .. automethod:: find_entities
+    .. automethod:: find_entities(names: str) -> list[AcisEntity]
 
     .. automethod:: parse_values
 
@@ -111,35 +111,24 @@ AcisHeader
 
         ACIS version as int
 
-    .. attribute:: n_records
-
-        Count of entities or 0
-
-    .. attribute:: n_entities
-
-        Count of entities
-
-    .. attribute:: flags
-
-        Bit 0: if 1 the file contains history data. This module does not read,
-        write or manage history data!
-
     .. attribute:: acis_version
 
         ACIS version string
-
-    .. attribute:: creation_date
-
-        The creation date stored in the file as :class:`datetime.datetime`
-        instance.
 
     .. attribute:: units_in_mm
 
         Count of millimeters which represent one drawing unit.
 
-    .. automethod:: dumps
+    .. method:: dumps() -> list(str)
 
-    .. automethod:: set_version
+        Returns the file header as list of strings.
+
+    .. method:: set_version(version: int) -> None
+
+        Sets the ACIS version as an integer value and updates the version
+        string accordingly.
+
+
 
 Exceptions
 ==========
