@@ -49,8 +49,8 @@ AcisBuilder
 
     .. attribute:: bodies
 
-        List of :class:`RawEntity` instances, on entry for each body entity.
-        The body entity is always the root entity for an ACIS geometry.
+        List of :class:`RawEntity` instances.
+        The `body` entity is always the root entity for an ACIS geometry.
 
     .. automethod:: dump_sat
 
@@ -77,8 +77,8 @@ RawEntity
 
     .. attribute:: id
 
-        Unique id as int or -1 for id not acquired. The ACIS data embedded
-        in DXF files do not use ids, dso the id is DXF files always -1.
+        Unique `id` as int or -1 for `id` not acquired. The ACIS data embedded
+        in DXF files do not use ids, so the `id` in DXF files is always -1.
 
     .. attribute:: data
 
