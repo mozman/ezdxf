@@ -404,13 +404,21 @@ def parse_sat_header(data: Sequence[str]) -> Tuple[AcisHeader, Sequence[str]]:
     return header, data[3:]
 
 
-def _merge_record_strings(data: Sequence[str]) -> Iterator[str]:
-    current_line = ""
+def _filter_records(data: Sequence[str]) -> Iterator[str]:
     for line in data:
         if line.startswith("End-of-ACIS-data") or line.startswith(
             "Begin-of-ACIS-History-Data"
         ):
             return
+        yield line
+
+
+def _merge_record_strings(data: Sequence[str]) -> Iterator[str]:
+    # Found special cases:
+    # ...  copy @7 bdm_uid 55 #torus-surface $-1 -1 $-1  ...
+    # in a single line!
+    current_line = ""
+    for line in _filter_records(data):
         current_line += line
         if current_line[-1] == "#":
             yield current_line
@@ -429,7 +437,9 @@ def parse_records(data: Sequence[str]) -> List[Record]:
             num = -int(first_token)
             tokens.pop(0)
         # remove end of record marker "#"
-        records.append(Record(num, tokens[:-1]))
+        if "#" in tokens[-1]:
+            tokens.pop()
+        records.append(Record(num, tokens))
         num += 1
     return records
 

@@ -194,6 +194,10 @@ documentation of `transform`  starts at the 4th field.
 transform
 ---------
 
+command structure::
+
+    transform <*-attrib> <id> <a> <b> <c> <d> <e> <f> <g> <h> <i> <j> <k> <l> <?> no_rotate no_reflect no_shear
+
 Example:
 
     transform $-1 -1 1 0 0 0 1 0 0 0 1 388.5 388.5 388.5 1 no_rotate no_reflect no_shear
@@ -201,14 +205,12 @@ Example:
 Represents a transformation matrix without the last column in terms of the
 usage in :class:`ezdxf.math.Matrix44`::
 
-    ... a b c d e f g h i j k l m no_rotate no_reflect no_shear
-
     a b c 0 = 1     0     0     0
     d e f 0 = 0     1     0     0
     g h i 0 = 0     0     1     0
-    j k l m = 388.5 388.5 388.5 1
+    j k l 1 = 388.5 388.5 388.5 1
 
-The `m` value is a 1, no idea if this value is the 4th homogeneous coordinate
+The <?> value is a 1, no idea if this value is the 4th homogeneous coordinate
 of the translation row or something else.
 
 ... there is much TODO
