@@ -79,6 +79,7 @@ class TestMergeRecordStrings:
         ],
     )
     def test_end_of_records_detection(self, data):
+        x = list(io.merge_record_strings(data))
         assert len(list(io.merge_record_strings(data))) == 1
 
     @pytest.mark.parametrize(
@@ -92,6 +93,17 @@ class TestMergeRecordStrings:
     def test_merge_records(self, data):
         assert len(list(io.merge_record_strings(data))) == 2
 
+    def test_weird_placement_of_record_terminator(self):
+        """This example was found in a SAT exported by BricsCAD."""
+        data = [
+            "eye_refinement ... end_fields #",
+            "integer_attrib-name_attrib-gen-attrib ... #torus-surface ...",
+            "I I I I #",
+        ]
+        records = list(io.merge_record_strings(data))
+        assert records[0] == "eye_refinement ... end_fields"
+        assert records[1] == "integer_attrib-name_attrib-gen-attrib ..."
+        assert records[2] == "torus-surface ... I I I I"
 
 class TestParseRecords:
     def test_simple_case(self):

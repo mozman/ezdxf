@@ -384,17 +384,11 @@ def _filter_records(data: Sequence[str]) -> Iterator[str]:
 
 
 def merge_record_strings(data: Sequence[str]) -> Iterator[str]:
-    # Found special cases:
-    # ...  copy @7 bdm_uid 55 #torus-surface $-1 -1 $-1  ...
-    # in a single line!
-    current_line = ""
-    for line in _filter_records(data):
-        current_line += line
-        if current_line[-1] == "#":
-            yield current_line
-            current_line = ""
-        elif current_line[-1] != " ":
-            current_line += " "
+    merged_data = " ".join(_filter_records(data))
+    for record in merged_data.split("#"):
+        record = record.strip()
+        if record:
+            yield record
 
 
 def parse_records(data: Sequence[str]) -> List[RawRecord]:
@@ -406,9 +400,6 @@ def parse_records(data: Sequence[str]) -> List[RawRecord]:
         if first_token.startswith("-"):
             num = -int(first_token)
             tokens.pop(0)
-        # remove end of record marker "#"
-        if "#" in tokens[-1]:
-            tokens.pop()
         records.append(RawRecord(num, tokens))
         num += 1
     return records
