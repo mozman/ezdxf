@@ -10,7 +10,7 @@ from ezdxf._acis.io import (
     parse_sat,
     NULL_PTR,
     AcisBuilder,
-    AcisEntity,
+    RawEntity,
 )
 from ezdxf._acis.parsing import (
     parse_polygon_faces,

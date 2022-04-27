@@ -64,7 +64,7 @@ class RawRecord:
     tokens: List[str]
 
 
-class AcisEntity:
+class RawEntity:
     """Low level representation of an ACIS entity (node)."""
 
     def __init__(
@@ -78,12 +78,12 @@ class AcisEntity:
         self.attr_ptr = attr_ptr
         self.id = id
         self.data: List[Any] = data if data is not None else []
-        self.attributes: "AcisEntity" = None  # type: ignore
+        self.attributes: "RawEntity" = None  # type: ignore
 
     def __str__(self):
         return f"{self.name}({self.id})"
 
-    def find_all(self, entity_type: str) -> List["AcisEntity"]:
+    def find_all(self, entity_type: str) -> List["RawEntity"]:
         """Returns a list of all matching ACIS entities of then given type
         referenced by this entity.
 
@@ -94,10 +94,10 @@ class AcisEntity:
         return [
             e
             for e in self.data
-            if isinstance(e, AcisEntity) and e.name == entity_type
+            if isinstance(e, RawEntity) and e.name == entity_type
         ]
 
-    def find_first(self, entity_type: str) -> "AcisEntity":
+    def find_first(self, entity_type: str) -> "RawEntity":
         """Returns the first matching ACIS entity referenced by this entity.
         Returns the ``NULL_PTR`` if no entity was found.
 
@@ -106,11 +106,11 @@ class AcisEntity:
 
         """
         for token in self.data:
-            if isinstance(token, AcisEntity) and token.name == entity_type:
+            if isinstance(token, RawEntity) and token.name == entity_type:
                 return token
         return NULL_PTR
 
-    def find_path(self, path: str) -> "AcisEntity":
+    def find_path(self, path: str) -> "RawEntity":
         """Returns the last ACIS entity referenced by an `path`.
         The `path` describes the path to the entity starting form the current
         entity like "lump/shell/face". This is equivalent to::
@@ -129,7 +129,7 @@ class AcisEntity:
             entity = entity.find_first(entity_type)
         return entity
 
-    def find_entities(self, names: str) -> List["AcisEntity"]:
+    def find_entities(self, names: str) -> List["RawEntity"]:
         """Find multiple entities of different types. Returns the first
         entity of each type. If a type doesn't exist a ``NULL_PTR`` is
         returned for this type::
@@ -173,7 +173,7 @@ def parse_values(data: Sequence[Any], fmt: str) -> Sequence[Any]:
     specifiers = fmt.split(";")
     specifiers.reverse()
     for field in data:
-        if isinstance(field, AcisEntity):
+        if isinstance(field, RawEntity):
             next_is_user_string = False
             continue  # ignore all entities
 
@@ -210,7 +210,7 @@ def parse_values(data: Sequence[Any], fmt: str) -> Sequence[Any]:
     return content
 
 
-NULL_PTR = AcisEntity("null-ptr", "$-1", -1, tuple())  # type: ignore
+NULL_PTR = RawEntity("null-ptr", "$-1", -1, tuple())  # type: ignore
 
 
 def new_acis_entity(
@@ -218,7 +218,7 @@ def new_acis_entity(
     attributes=NULL_PTR,
     id=-1,
     data: List[Any] = None,
-) -> AcisEntity:
+) -> RawEntity:
     """Factory to create new ACIS entities.
 
     Args:
@@ -228,7 +228,7 @@ def new_acis_entity(
         data: generic data container as list
 
     """
-    e = AcisEntity(name, "$-1", id, data)
+    e = RawEntity(name, "$-1", id, data)
     e.attributes = attributes
     return e
 
@@ -243,8 +243,8 @@ class AcisBuilder:
 
     def __init__(self):
         self.header = AcisHeader()
-        self.bodies: List[AcisEntity] = []
-        self.entities: List[AcisEntity] = []
+        self.bodies: List[RawEntity] = []
+        self.entities: List[RawEntity] = []
 
     def dump_sat(self) -> List[str]:
         """Returns the text representation of the ACIS file as list of strings
@@ -260,13 +260,13 @@ class AcisBuilder:
         data.append("End-of-ACIS-data ")
         return data
 
-    def set_entities(self, entities: List[AcisEntity]) -> None:
+    def set_entities(self, entities: List[RawEntity]) -> None:
         """Reset entities and bodies list. (internal API)"""
         self.bodies = [e for e in entities if e.name == "body"]
         self.entities = entities
 
-    def query(self, func=lambda e: True) -> Iterator[AcisEntity]:
-        """Yields all entities as :class:`AcisEntity` for which the given
+    def query(self, func=lambda e: True) -> Iterator[RawEntity]:
+        """Yields all entities as :class:`RawEntity` for which the given
         function returns ``True`` e.g. query all "point" entities::
 
             points = list(acis_builder.query(lambda e: e.name == "point"))
@@ -276,9 +276,9 @@ class AcisBuilder:
 
 
 def build_str_records(
-    entities: List[AcisEntity], version: int
+    entities: List[RawEntity], version: int
 ) -> Iterator[str]:
-    def ptr_str(e: AcisEntity) -> str:
+    def ptr_str(e: RawEntity) -> str:
         if e is NULL_PTR:
             return "$-1"
         try:
@@ -292,7 +292,7 @@ def build_str_records(
         if version >= 700:
             tokens.append(str(entity.id))
         for data in entity.data:
-            if isinstance(data, AcisEntity):
+            if isinstance(data, RawEntity):
                 tokens.append(ptr_str(data))
             else:
                 tokens.append(str(data))
@@ -300,8 +300,8 @@ def build_str_records(
         yield " ".join(tokens)
 
 
-def resolve_str_pointers(entities: Dict[int, AcisEntity]) -> List[AcisEntity]:
-    def ptr(s: str) -> AcisEntity:
+def resolve_str_pointers(entities: Dict[int, RawEntity]) -> List[RawEntity]:
+    def ptr(s: str) -> RawEntity:
         if is_ptr(s):
             num = int(s[1:])
             if num == -1:
@@ -416,7 +416,7 @@ def parse_records(data: Sequence[str]) -> List[RawRecord]:
 
 def build_entities(
     records: Sequence[RawRecord], version: int
-) -> Dict[int, AcisEntity]:
+) -> Dict[int, RawEntity]:
     entities = {}
     for record in records:
         name = record.tokens[0]
@@ -427,7 +427,7 @@ def build_entities(
             data = record.tokens[3:]
         else:
             data = record.tokens[2:]
-        entities[record.num] = AcisEntity(name, attr, id_, data)
+        entities[record.num] = RawEntity(name, attr, id_, data)
     return entities
 
 

@@ -4,12 +4,12 @@ from typing import Iterator, Sequence, Optional, List
 from ezdxf.math import Vec3, Matrix44
 from ezdxf._acis.const import *
 from ezdxf._acis.io import (
-    AcisEntity,
+    RawEntity,
     NULL_PTR,
 )
 
 
-def parse_transform(transform: AcisEntity) -> Matrix44:
+def parse_transform(transform: RawEntity) -> Matrix44:
     values = transform.parse_values("f;f;f;f;f;f;f;f;f;f;f;f")
     if len(values) != 12:
         raise ParsingError("transform entity has not enough data")
@@ -24,7 +24,7 @@ def parse_transform(transform: AcisEntity) -> Matrix44:
     )
 
 
-def parse_polygon_faces(body: AcisEntity) -> Iterator[Sequence[Vec3]]:
+def parse_polygon_faces(body: RawEntity) -> Iterator[Sequence[Vec3]]:
     if body.name != "body":
         raise TypeError(f"expected body entity, got: {body.name}")
 
