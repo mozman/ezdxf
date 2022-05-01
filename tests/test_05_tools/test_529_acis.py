@@ -319,6 +319,15 @@ def test_parse_body_polygon_faces():
     assert len(faces) == 10
 
 
+def test_body_to_mesh():
+    builder = acis.parse_sat(PRISM)
+    meshes = acis.body_to_mesh(builder.bodies[0])
+    assert len(meshes) == 1
+    mesh = meshes[0]
+    assert len(mesh.faces) == 10
+    assert len(mesh.vertices) == 8
+
+
 PRISM = """700 0 1 0 
 @33 Open Design Alliance ACIS Builder @12 ACIS 32.0 NT @24 Sat Apr 23 14:32:04 2022 
 1 9.9999999999999995e-007 1e-010 

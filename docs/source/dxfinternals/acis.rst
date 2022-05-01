@@ -8,14 +8,15 @@ ACIS Management Tool
 
 .. versionadded:: 0.18
 
-These are low-level ACIS data management tools for analyzing, parsing and
+These are low-level :term:`ACIS` data management tools for analyzing, parsing and
 creating ACIS data structures.
-These tools cannot replace the official ACIS SDK due to the complexity of
+These tools cannot replace the official :term:`ACIS` SDK due to the complexity of
 the data structures, and without access to the full documentation it is very
 cumbersome to reverse-engineer entities and their properties and the analysis
-of ACIS data is limited to use as embedded data in DXF and DWG files.
+of :term:`ACIS` data is limited to use as embedded data in DXF and DWG files.
 
-It is possible to extract geometries made up only by planar polygonal faces and
+The `ezdxf` library does not provide an :term:`ACIS` kernel but it is possible
+to extract geometries made up only by planar polygonal faces and
 maybe in the future it is also possible to create such polygon face meshes.
 
 .. warning::
@@ -27,6 +28,8 @@ Functions
 =========
 
 .. autofunction:: parse_sat(s: Union[str, Sequence[str]]) -> AcisBuilder
+
+.. autofunction:: body_to_mesh(body: RawEntity, merge_lumps=True) -> List[MeshTransformer]
 
 .. autofunction:: body_planar_polygon_faces(body: RawEntity) -> Iterator[List[Sequence[Vec3]]]
 
@@ -212,6 +215,41 @@ body
 Represents a solid geometry, which can consist of multiple `lump`_ entities.
 The `transform`_ entity is an affine transformation operation.
 
+coedge
+------
+
+.. code-block:: text
+
+    coedge <attrib> ID <~> <coedge-0> <coedge-1> <coedge-2> <edge> reversed <loop> <~>
+
+The coedges are a double linked list where `<coedge-0>` points to the next coedge
+and `<coedge-1>` to the previous coedge. The `<coedge-2>` field points to the
+partner coedge of the adjacent face.
+In a closed surface each edge is part of two adjacent faces with opposite
+orientations. The `<edge>` field points the geometric `edge`_
+of the face. The `<loop>` field points to the parent `loop` entity.
+
+edge
+----
+
+.. code-block:: text
+
+    edge <attrib> ID <~> <vertex> <?0> <vertex> <?1> <coedge> <straight-curve> forward @7 unknown
+
+face
+----
+
+.. code-block:: text
+
+    face <attrib> ID <~> <face> <loop> <shell> <~> <plane-surface> forward single
+
+loop
+----
+
+.. code-block:: text
+
+    loop <attrib> ID <~> <~> <coedge> <face>
+
 lump
 ----
 
@@ -220,8 +258,17 @@ lump
     lump <attrib> <id> <~> <lump> <shell> <body>
 
 The lump represents a connected entity and there can be multiple lumps in a
-`body`_. Multiple lumps are linked together `<lump>` attribute which points to
-the next lump entity the last lump has a ``NULL_PTR`` as `<lump>` attribute.
+`body`_. Multiple lumps are linked together by the `<lump>` field which
+points to the next lump entity the last lump has a ``NULL_PTR`` as next pointer.
+The `<body>` field points to the parent `body`_ entity.
+
+
+plane-surface
+-------------
+
+.. code-block:: text
+
+    plane-surface <attrib> ID <~> <x> <y> <z> <ux> <uy> <uz> <vx> <vy> <vz> forward_v I I I I
 
 point
 -----
@@ -232,6 +279,20 @@ point
 
 Represents a point in space where `x`, `y` and `z` are the cartesian
 coordinates as float values.
+
+shell
+-----
+
+.. code-block:: text
+
+    shell <attrib> ID ~ ~ ~ <face> ~ <lump>
+
+straight-curve
+--------------
+
+.. code-block:: text
+
+    straight-curve <attrib> ID <~> <x> <y> <z> <ux> <uy> <uz> I I
 
 transform
 ---------

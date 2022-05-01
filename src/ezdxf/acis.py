@@ -17,3 +17,5 @@ from ezdxf._acis.parsing import (
     lump_planar_polygon_faces,
     parse_transform,
 )
+
+from ezdxf._acis.converter import body_to_mesh
