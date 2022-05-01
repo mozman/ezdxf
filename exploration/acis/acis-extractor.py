@@ -21,9 +21,11 @@ def export_acis(entity: Body):
     data = entity.acis_data
     if isinstance(data, bytes):
         with open(DIR / (fname + ".sab"), "wb") as fp:
+            print(f"Exporting: {fp.name}")
             fp.write(data)
     else:
         with open(DIR / (fname + ".sat"), "wt") as fp:
+            print(f"Exporting: {fp.name}")
             fp.write("\n".join(data))
 
 

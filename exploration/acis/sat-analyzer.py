@@ -1,6 +1,8 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from typing import List, Iterator
+from argparse import ArgumentParser
+
 from ezdxf._acis.io import merge_record_strings
 
 """
@@ -114,7 +116,7 @@ class SatAnalyzer:
     def annotated_records(
         self, filter_func=lambda r: True, source=False
     ) -> Iterator[str]:
-        """ Yields the annotate ACIS records.
+        """Yields the annotate ACIS records.
 
         Example::
 
@@ -140,6 +142,7 @@ class SatAnalyzer:
             source: yield also the source record if true
 
         """
+
         def resolve_pointer(ptr: str):
             rec_num = int(ptr[1:])
             if rec_num < 0:
@@ -189,9 +192,25 @@ def print_legend():
 
 
 def main():
+    parser = ArgumentParser()
+    parser.add_argument("file", nargs=1)
+    parser.add_argument(
+        "-s",
+        "--source",
+        action="store_true",
+        default=False,
+        help="print source content too",
+    )
+    args = parser.parse_args()
+    if args.file:
+        with open(args.file[0], "rt") as fp:
+            sat = fp.read()
+    else:
+        sat = PRISM
+
     print_legend()
-    acis = SatAnalyzer.sat_loads(PRISM)
-    for s in acis.annotated_records():
+    acis = SatAnalyzer.sat_loads(sat)
+    for s in acis.annotated_records(source=args.source):
         print(s)
 
 
