@@ -176,37 +176,91 @@ of the id in DXF files, so it can always be -1.
 The data fields are stored in the :attr:`~RawEntity.data` attribute, the
 meaning of the data fields is the content of this section.
 Each entry describes the fields starting after the `id` field
-which is the 3rd record entry, as example the `transform` entity:
+which is the 3rd record entry, as example the `transform`_ entity:
 
-    transform $-1 -1 1 0 0 0 1 0 0 0 1 388.5 388.5 388.5 1 no_rotate no_reflect no_shear
+    transform $-1 -1 1 0 0 0 1 0 0 0 1 3.5 3.5 3.5 1 no_rotate no_reflect no_shear
 
-The 1st field is the entity type `transform`, the 2nd field is the attribute
+The 1st field is the entity type `transform`_, the 2nd field is the attribute
 pointer, "$-1" is the ``NULL_PTR`` and the 3rd field is an id of -1, the
-documentation of `transform`  starts at the 4th field.
+documentation of `transform`_ starts at the 4th field.
+
+Unknown data is listed as `<?>` for an unknown numeric value and `<~>`
+for an unknown ``NULL_PTR``.
+
+Data Types
+----------
+
+    - float values
+    - integer values
+    - constant strings like "forward" or "reversed"
+    - user strings with a preceding length encoding like "@7 unknown"
+    - pointers as record number with a preceding "$" like "$7" points to the
+      7th record (0-based!) and "$-1" represents the ``NULL_PTR``
+
+body
+----
+
+.. code-block:: text
+
+    body <>attrib> <id> <~> <lump> <~> <transform>
+
+Represents a solid geometry, which can consist of multiple `lump`_ entities.
+The `transform`_ entity is an affine transformation operation.
+
+lump
+----
+
+.. code-block:: text
+
+    lump <attrib> <id> <~> <lump> <shell> <body>
+
+The lump represents a connected entity and there can be multiple lumps in a
+`body`_. Multiple lumps are linked together `<lump>` attribute which points to
+the next lump entity the last lump has a ``NULL_PTR`` as `<lump>` attribute.
+
+point
+-----
+
+.. code-block:: text
+
+    point <attrib> <id> <~> <x> <y> <z>
+
+Represents a point in space where `x`, `y` and `z` are the cartesian
+coordinates as float values.
 
 transform
 ---------
 
-structure::
+.. code-block:: text
 
     transform <attrib> <id> <a> <b> <c> <d> <e> <f> <g> <h> <i> <j> <k> <l> ...
         ... <?> no_rotate no_reflect no_shear
 
 Example:
 
-    transform $-1 -1 1 0 0 0 1 0 0 0 1 388.5 388.5 388.5 1 no_rotate no_reflect no_shear
+.. code-block:: text
+
+    transform $-1 -1 1 0 0 0 1 0 0 0 1 3.5 3.5 3.5 1 no_rotate no_reflect no_shear
 
 Represents a transformation matrix without the last column in terms of the
 usage in :class:`ezdxf.math.Matrix44`::
 
-    a b c 0 = 1     0     0     0
-    d e f 0 = 0     1     0     0
-    g h i 0 = 0     0     1     0
-    j k l 1 = 388.5 388.5 388.5 1
+    a b c 0 = 1   0   0   0
+    d e f 0 = 0   1   0   0
+    g h i 0 = 0   0   1   0
+    j k l 1 = 3.5 3.5 3.5 1
 
-The <?> value is a 1, no idea if this value is the 4th homogeneous coordinate
-of the translation row or something else.
+The `<?>` is an unknown value of 1 in this example.
 
-... there is much TODO
+vertex
+------
+
+.. code-block:: text
+
+    vertex <attrib> <id> <~> <edge> <point>
+
+Represents a vertex of an `edge`_ entity and references a `point`_ entity.
+Multiple `vertex` entities can reference the same `point`_ entity.
+
 
 .. _sat.pdf: https://duckduckgo.com/?q=acis%2Bsat.pdf

@@ -25,10 +25,15 @@ def parse_transform(transform: RawEntity) -> Matrix44:
 
 
 def parse_polygon_faces(body: RawEntity) -> Iterator[Sequence[Vec3]]:
-    if body.name != "body":
-        raise TypeError(f"expected body entity, got: {body.name}")
+    if body.name != "body" and body.name != "lump":
+        raise TypeError(f"expected body or lump entity, got: {body.name}")
 
-    lump, transform = body.find_entities("lump;transform")
+    transform = NULL_PTR
+    if body.name == "body":
+        lump, transform = body.find_entities("lump;transform")
+    else:
+        lump = body
+
     if lump is NULL_PTR:
         raise ParsingError("lump data not found")
 
@@ -63,9 +68,7 @@ def parse_polygon_faces(body: RawEntity) -> Iterator[Sequence[Vec3]]:
 
             # the point entity stores the actual coordinates
             point = vertex.find_first("point")
-            if point is not NULL_PTR:
-                vertices.append(Vec3(point.parse_values("f;f;f")))  # type: ignore
-            # else: invalid data file?
+            vertices.append(parse_point(point))
             if coedge is first_coedge:  # loop is closed
                 break
 
@@ -74,3 +77,19 @@ def parse_polygon_faces(body: RawEntity) -> Iterator[Sequence[Vec3]]:
                 yield list(m.transform_vertices(vertices))
             else:
                 yield vertices
+
+
+def parse_point(point: RawEntity) -> Vec3:
+    """Parses the `point`entity as :class:`ezdxf.math.Vec3` instance.
+
+    Raises:
+         ParsingError: no or invalid point entity
+
+    """
+    if point is not NULL_PTR or point.name != "point":
+        data = point.parse_values("f;f;f")
+        if len(data) > 1:
+            return Vec3(data[:3])
+    raise ParsingError("expected a point entity")
+
+
