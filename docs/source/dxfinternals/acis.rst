@@ -11,12 +11,14 @@ ACIS Management Tool
 These are low-level :term:`ACIS` data management tools for analyzing, parsing and
 creating ACIS data structures.
 These tools cannot replace the official :term:`ACIS` SDK due to the complexity of
-the data structures, and without access to the full documentation it is very
-cumbersome to reverse-engineer entities and their properties and the analysis
-of :term:`ACIS` data is limited to use as embedded data in DXF and DWG files.
+the data structures and the absence of an :term:`ACIS` kernel. Without access to
+the full documentation it is very cumbersome to reverse-engineer entities and
+their properties, therefore the analysis of the :term:`ACIS` data structures is
+limited to the use as embedded data in DXF and DWG files.
 
-The `ezdxf` library does not provide an :term:`ACIS` kernel but it is possible
-to extract geometries made up only by planar polygonal faces and
+The `ezdxf` library does not provide an :term:`ACIS` kernel and there are no
+plans for implementing one because this is far beyond my capabilities, but it
+is possible to extract geometries made up only by planar polygonal faces and
 maybe in the future it is also possible to create such polygon face meshes.
 
 .. warning::
