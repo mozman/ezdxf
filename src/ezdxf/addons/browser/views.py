@@ -15,7 +15,7 @@ class StructureTree(QTreeView):
 
     def expand_to_entity(self, entity: "Tags"):
         model = self.model()
-        index = model.index_of_entity(entity)
+        index = model.index_of_entity(entity)  # type: ignore
         self.setCurrentIndex(index)
 
 

@@ -270,7 +270,7 @@ class DXFStructureBrowser(QtWidgets.QMainWindow):
             action.setIcon(icon)
         if tip:
             action.setToolTip(tip)
-        action.triggered.connect(slot)
+        action.triggered.connect(slot)  # type: ignore
         return action
 
     def setup_menu(self):
