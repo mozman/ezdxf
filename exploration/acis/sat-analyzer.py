@@ -1,6 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from typing import List, Iterator
+from ezdxf._acis.io import merge_record_strings
 
 """
 ===============================================================================
@@ -87,15 +88,6 @@ def parse_record(record: str) -> List[str]:
     return record.split(" ")
 
 
-def merge_records(records):
-    buffer = []
-    for record in records:
-        buffer.extend(record)
-        if buffer[-1] == "#":
-            yield list(buffer[:-1])
-            buffer.clear()
-
-
 def is_float(v):
     try:
         float(v)
@@ -110,8 +102,8 @@ class SatAnalyzer:
 
     def parse_sat(self, data: str) -> None:
         lines = data.splitlines()
-        records = [parse_record(l) for l in lines[3:]]
-        self.records = list(merge_records(records))
+        records = merge_record_strings(lines[3:])
+        self.records = list(parse_record(r) for r in records)
 
     @staticmethod
     def sat_loads(s: str):
@@ -124,8 +116,18 @@ class SatAnalyzer:
     ) -> Iterator[str]:
         """ Yields the annotate ACIS records.
 
+        Example::
+
+           0= body ~ ID ~ <lump-1> ~ ~
+           1= lump ~ ID ~ ~ <shell-2> <body-0>
+           2= shell ~ ID ~ ~ ~ <face-3> ~ <lump-1>
+           3= face ~ ID ~ <face-4> <loop-5> <shell-2> ~ <plane-surface-6> forward single
+           4= face ~ ID ~ <face-7> <loop-8> <shell-2> ~ <plane-surface-9> forward single
+           5= loop ~ ID ~ ~ <coedge-10> <face-3>
+           6= plane-surface ~ ID ~ [0] [1] [2] [3] [4] [5] [6] [7] [8] forward_v I I I I
+
         =========== =================================================
-        0=          record number as first filed
+        0=          record number, always the 1st field
         ~           null-pointer
         ID          id-field, always the 3rd field
         <entity-0>  pointer to entity - record number
