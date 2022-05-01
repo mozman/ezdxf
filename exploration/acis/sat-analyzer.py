@@ -1,6 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import List
+from typing import List, Iterator
 
 """
 ===============================================================================
@@ -104,7 +104,7 @@ def is_float(v):
         return False
 
 
-class ACIS:
+class SatAnalyzer:
     def __init__(self):
         self.records: List[str] = []
 
@@ -115,13 +115,29 @@ class ACIS:
 
     @staticmethod
     def sat_loads(s: str):
-        acis = ACIS()
+        acis = SatAnalyzer()
         acis.parse_sat(s)
         return acis
 
-    def print_annotated_records(
+    def annotated_records(
         self, filter_func=lambda r: True, source=False
-    ):
+    ) -> Iterator[str]:
+        """ Yields the annotate ACIS records.
+
+        =========== =================================================
+        0=          record number as first filed
+        ~           null-pointer
+        ID          id-field, always the 3rd field
+        <entity-0>  pointer to entity - record number
+        [0]         numbered data fields
+        =========== =================================================
+
+        Args:
+            filter_func: a function which returns True or False for a given
+                record, which indicates if a record should be processed
+            source: yield also the source record if true
+
+        """
         def resolve_pointer(ptr: str):
             rec_num = int(ptr[1:])
             if rec_num < 0:
@@ -147,23 +163,34 @@ class ACIS:
                 continue
             if source:
                 data = " ".join(record)
-                print(f" src= {data} #")
+                yield f" src= {data} #"
             record = annotate(record)
             data = " ".join(record)
-            print(f"{num:4d}= {data}")
+            yield f"{num:4d}= {data}"
+
+
+LEGEND = [
+    "Legend:",
+    "--------------------------------------------------",
+    "0=         ... record number",
+    "~          ... null-pointer",
+    "ID         ... id-field",
+    "<entity-0> ... pointer to entity - record number",
+    "[0]        ... numbered data fields",
+    "--------------------------------------------------",
+]
+
+
+def print_legend():
+    for line in LEGEND:
+        print(line)
 
 
 def main():
-    print("Legend:")
-    print("--------------------------------------------------")
-    print("0=         ... record number")
-    print("~          ... null-pointer")
-    print("ID         ... id-field")
-    print("<entity-0> ... pointer to entity - record number")
-    print("[0]        ... numbered data fields")
-    print("--------------------------------------------------")
-    acis = ACIS.sat_loads(PRISM)
-    acis.print_annotated_records()
+    print_legend()
+    acis = SatAnalyzer.sat_loads(PRISM)
+    for s in acis.annotated_records():
+        print(s)
 
 
 PRISM = """700 0 1 0 
