@@ -24,22 +24,60 @@ def parse_transform(transform: RawEntity) -> Matrix44:
     )
 
 
-def parse_polygon_faces(body: RawEntity) -> Iterator[Sequence[Vec3]]:
-    if body.name != "body" and body.name != "lump":
-        raise TypeError(f"expected body or lump entity, got: {body.name}")
+def body_planar_polygon_faces(body: RawEntity) -> Iterator[List[Sequence[Vec3]]]:
+    """Yields all planar polygon faces from all lumps in the given `body`_
+    entity. Yields a separated list of faces for each linked `lump`_ entity.
 
-    transform = NULL_PTR
-    if body.name == "body":
-        lump, transform = body.find_entities("lump;transform")
-    else:
-        lump = body
+    Args:
+        body: ACIS raw entity of type `body`_
 
+    Raises:
+        TypeError: `body` has invalid ACIS type
+        ParsingError: `body` has no linked lump entity
+
+    """
+
+    if body.name != "body":
+        raise TypeError(f"expected body, got: {body.name}")
+
+    lump, transform = body.find_entities("lump;transform")
     if lump is NULL_PTR:
         raise ParsingError("lump data not found")
 
     m: Optional[Matrix44] = None
     if transform is not NULL_PTR:
         m = parse_transform(transform)
+    for lump in all_lumps(lump):
+        yield list(lump_planar_polygon_faces(lump, m))
+
+
+def all_lumps(lump: RawEntity) -> List[RawEntity]:
+    """Returns a list of all linked lumps. """
+    assert lump.name == "lump", "type error, expected lump"
+    lumps = []
+    while lump is not NULL_PTR:
+        lumps.append(lump)
+        lump = lump.find_first("lump")
+    return lumps
+
+
+def lump_planar_polygon_faces(
+    lump: RawEntity, m: Matrix44 = None
+) -> Iterator[Sequence[Vec3]]:
+    """Yields all planar polygon faces from the given `lump`_ entity as sequence
+    of :class:`~ezdxf.math.Vec3` instances. Applies the transformation
+    :class:`~ezdxf.math.Matrix44` `m` to all vertices if not ``None``.
+
+    Args:
+        lump: ACIS raw entity of type `lump`_
+        m: optional transformation matrix
+
+    Raises:
+        TypeError: `lump` has invalid ACIS type
+
+    """
+    if lump.name != "lump" or lump is NULL_PTR:
+        raise TypeError(f"expected lump, got: {lump.name}")
 
     face = lump.find_path("shell/face")
     while face is not NULL_PTR:
@@ -91,5 +129,3 @@ def parse_point(point: RawEntity) -> Vec3:
         if len(data) > 1:
             return Vec3(data[:3])
     raise ParsingError("expected a point entity")
-
-

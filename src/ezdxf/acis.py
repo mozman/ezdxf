@@ -13,6 +13,7 @@ from ezdxf._acis.io import (
     RawEntity,
 )
 from ezdxf._acis.parsing import (
-    parse_polygon_faces,
+    body_planar_polygon_faces,
+    lump_planar_polygon_faces,
     parse_transform,
 )

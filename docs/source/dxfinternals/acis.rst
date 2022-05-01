@@ -15,7 +15,7 @@ the data structures, and without access to the full documentation it is very
 cumbersome to reverse-engineer entities and their properties and the analysis
 of ACIS data is limited to use as embedded data in DXF and DWG files.
 
-It is possible to extract geometries made up only by polygonal faces and
+It is possible to extract geometries made up only by planar polygonal faces and
 maybe in the future it is also possible to create such polygon face meshes.
 
 .. warning::
@@ -27,6 +27,11 @@ Functions
 =========
 
 .. autofunction:: parse_sat(s: Union[str, Sequence[str]]) -> AcisBuilder
+
+.. autofunction:: body_planar_polygon_faces(body: RawEntity) -> Iterator[List[Sequence[Vec3]]]
+
+.. autofunction:: lump_planar_polygon_faces(lump: RawEntity, m: Matrix44 = None) -> Iterator[Sequence[Vec3]]
+
 
 Classes
 =======
@@ -158,7 +163,7 @@ by BricsCAD.
 This documentation ignores the differences to the ACIS format prior to 7.0.
 The missing `id` is handled internally and missing entity references can often
 be ignored if you use the flexible parsing methods of :class:`RawEntity`.
-Writing support for this old formats is not required because all CAD
+Writing support for SAT version < 7.0 is not required because all CAD
 applications should be able to process version 7.0, even if embedded in a very
 old DXF R2000 format (tested with Autodesk TrueView, BricsCAD and Nemetschek
 Allplan).

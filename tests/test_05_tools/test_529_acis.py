@@ -311,9 +311,11 @@ class TestParseValues:
         assert io.parse_values(data, "i;f") == [7, 1.0]
 
 
-def test_parse_polygon_faces():
+def test_parse_body_polygon_faces():
     builder = acis.parse_sat(PRISM)
-    faces = list(acis.parse_polygon_faces(builder.bodies[0]))
+    lumps = list(acis.body_planar_polygon_faces(builder.bodies[0]))
+    assert len(lumps) == 1
+    faces = lumps[0]
     assert len(faces) == 10
 
 
