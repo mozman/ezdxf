@@ -3,6 +3,7 @@
 from typing import List, Tuple, Union, Sequence, Iterator, Any, Dict
 from datetime import datetime
 from dataclasses import dataclass, field
+import struct
 from ezdxf._acis.const import *
 
 # ACIS versions exported by BricsCAD:
@@ -275,9 +276,7 @@ class AcisBuilder:
         return filter(func, self.entities)
 
 
-def build_str_records(
-    entities: List[RawEntity], version: int
-) -> Iterator[str]:
+def build_str_records(entities: List[RawEntity], version: int) -> Iterator[str]:
     def ptr_str(e: RawEntity) -> str:
         if e is NULL_PTR:
             return "$-1"
@@ -342,6 +341,9 @@ def parse_header_str(s: str) -> Iterator[str]:
             num = ""
 
 
+DATE_FMT = "%a %b %d %H:%M:%S %Y"
+
+
 def parse_sat_header(data: Sequence[str]) -> Tuple[AcisHeader, Sequence[str]]:
     header = AcisHeader()
     tokens = data[0].split()
@@ -362,7 +364,7 @@ def parse_sat_header(data: Sequence[str]) -> Tuple[AcisHeader, Sequence[str]]:
     if len(tokens) > 2:
         try:  # Sat Jan  1 10:00:00 2022
             header.creation_date = datetime.strptime(
-                tokens[2], "%a %b %d %H:%M:%S %Y"
+                tokens[2], DATE_FMT
             )
         except ValueError:
             pass
@@ -444,3 +446,80 @@ def parse_sat(s: Union[str, Sequence[str]]) -> AcisBuilder:
     entities = build_entities(records, header.version)
     atree.set_entities(resolve_str_pointers(entities))
     return atree
+
+
+INT_TAG = 0x04
+DBL_TAG = 0x06
+STR_TAG = 0x07
+PTR_TAG = 0x0C
+REC_END_TAG = 0x11
+LNG_STR_TAG = 0x12  # following int4 = count ? see transform
+# command structure:
+# 0x0D 4=count "body"
+# 0x0E 5=count "plane" 0x0D 7=count "surface"
+
+
+class SABDecoder:
+    def __init__(self, data: bytes):
+        self.data = data
+        self.index: int = 0
+
+    def get_header(self) -> AcisHeader:
+        header = AcisHeader()
+        signature = self.data[0:15]
+        if signature != b"ACIS BinaryFile":
+            raise ParsingError("not a SAB file")
+        self.index = 15
+        (
+            header.version,
+            header.n_records,
+            header.n_entities,
+            header.flags,
+        ) = self.read_int(4)
+        header.product_id = self.read_str()
+        header.acis_version = self.read_str()
+        date = self.read_str()
+        header.creation_date = datetime.strptime(
+            date, DATE_FMT
+        )
+        header.units_in_mm = self.read_double()
+        # tolerances are ignored
+        _ = self.read_double()  # res_tol
+        _ = self.read_double()  # nor_tol
+        return header
+
+    def forward(self, count: int):
+        pos = self.index
+        self.index += count
+        return pos
+
+    def read_int(self, count: int) -> Sequence[int]:
+        pos = self.forward(4 * count)
+        values = struct.unpack_from(f"<{count}i", self.data, pos)
+        return values
+
+    def peek(self, count: int = 1) -> bytes:
+        return self.data[self.index: self.index + count]
+
+    def read_byte(self) -> int:
+        pos = self.forward(1)
+        return self.data[pos]
+
+    def read_bytes(self, count: int) -> bytes:
+        pos = self.forward(count)
+        return self.data[pos: pos + count]
+
+    def read_str(self) -> str:
+        tag = self.read_byte()
+        if tag != STR_TAG:
+            raise ParsingError("string tag (7)  not found")
+        length = self.read_byte()
+        text = self.read_bytes(length)
+        return text.decode()
+
+    def read_double(self) -> float:
+        tag = self.read_byte()
+        if tag != DBL_TAG:
+            raise ParsingError("double tag (6)  not found")
+        pos = self.forward(8)
+        return struct.unpack_from("<d", self.data, pos)[0]

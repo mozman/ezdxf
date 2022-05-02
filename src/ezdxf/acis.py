@@ -11,6 +11,7 @@ from ezdxf._acis.io import (
     NULL_PTR,
     AcisBuilder,
     RawEntity,
+    SABDecoder,
 )
 from ezdxf._acis.parsing import (
     body_planar_polygon_faces,
