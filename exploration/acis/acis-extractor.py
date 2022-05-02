@@ -15,16 +15,16 @@ SEARCH_TYPES = {"3DSOLID", "REGION"}
 DEFAULT_FILE = DIR / "acis.dxf"
 
 
-def export_acis(entity: Body):
+def export_acis(entity: Body, folder: Path):
     version = entity.doc.dxfversion
     fname = f"{version}-{entity.dxftype()}-{entity.dxf.handle}"
     data = entity.acis_data
-    if isinstance(data, bytes):
-        with open(DIR / (fname + ".sab"), "wb") as fp:
+    if isinstance(data[0], bytes):
+        with open(folder / (fname + ".sab"), "wb") as fp:
             print(f"Exporting: {fp.name}")
-            fp.write(data)
+            fp.write(b"".join(data))
     else:
-        with open(DIR / (fname + ".sat"), "wt") as fp:
+        with open(folder / (fname + ".sat"), "wt") as fp:
             print(f"Exporting: {fp.name}")
             fp.write("\n".join(data))
 
@@ -39,7 +39,7 @@ def extract_acis(filepath: Path):
     msp = doc.modelspace()
     for e in msp:
         if e.dxftype() in SEARCH_TYPES:
-            export_acis(cast("Body", e))
+            export_acis(cast("Body", e), folder=filepath.parent)
 
 
 def main():
@@ -48,7 +48,7 @@ def main():
     args = parser.parse_args()
     if len(args.files):
         for filename in args.files:
-            extract_acis(filename)
+            extract_acis(Path(filename))
     else:
         extract_acis(DEFAULT_FILE)
 
