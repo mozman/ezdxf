@@ -1,70 +1,19 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import List, Tuple, Union, Sequence, Iterator, Any, Dict
+from dataclasses import dataclass
+from typing import List, Any, Sequence, Dict, Iterator, Tuple, Union
 from datetime import datetime
-from dataclasses import dataclass, field
 from ezdxf._acis.const import *
-
-# ACIS versions exported by BricsCAD:
-# R2000/AC1015: 400, "ACIS 4.00 NT", text length has no prefix "@"
-# R2004/AC1018: 20800 @ "ACIS 208.00 NT", text length has "@" prefix ??? wierd
-# R2007/AC1021: 700 @ "ACIS 32.0 NT", text length has "@" prefix
-# R2010/AC1024: 700 @ "ACIS 32.0 NT", text length has "@" prefix
-
-# A test showed that R2000 files that contains ACIS v700/32.0 or v20800/208.0
-# data can be opened by Autodesk TrueView, BricsCAD and Allplan, so exporting
-# only v700/32.0 for all DXF versions should be OK!
-# test script: exploration/acis/transplant_acis_data.py
+from ezdxf._acis.hdr import AcisHeader
 
 
 @dataclass
-class AcisHeader:
-    """Represents an ACIS file header."""
-
-    version: int = 400
-    n_records: int = 0  # can be 0
-    n_entities: int = 0
-    flags: int = 0
-    product_id: str = "ezdxf ACIS Builder"
-    acis_version: str = ACIS_VERSION[400]
-    creation_date: datetime = field(default_factory=datetime.now)
-    units_in_mm: float = 1.0
-
-    def dumps(self) -> List[str]:
-        """Returns the file header as list of strings."""
-        return [
-            f"{self.version} {self.n_records} {self.n_entities} {self.flags} ",
-            self._header_str(),
-            f"{self.units_in_mm:g} 9.9999999999999995e-007 1e-010 ",
-        ]
-
-    def _header_str(self) -> str:
-        p_len = len(self.product_id)
-        a_len = len(self.acis_version)
-        date = self.creation_date.ctime()
-        if self.version > 400:
-            return f"@{p_len} {self.product_id} @{a_len} {self.acis_version} @{len(date)} {date} "
-        else:
-            return f"{p_len} {self.product_id} {a_len} {self.acis_version} {len(date)} {date} "
-
-    def set_version(self, version: int) -> None:
-        """Sets the ACIS version as an integer value and updates the version
-        string accordingly.
-        """
-        try:
-            self.acis_version = ACIS_VERSION[version]
-            self.version = version
-        except KeyError:
-            raise ValueError(f"invalid ACIS version number {version}")
-
-
-@dataclass
-class RawRecord:
+class SatRecord:
     num: int
     tokens: List[str]
 
 
-class RawEntity:
+class SatEntity:
     """Low level representation of an ACIS entity (node)."""
 
     def __init__(
@@ -78,12 +27,12 @@ class RawEntity:
         self.attr_ptr = attr_ptr
         self.id = id
         self.data: List[Any] = data if data is not None else []
-        self.attributes: "RawEntity" = None  # type: ignore
+        self.attributes: "SatEntity" = None  # type: ignore
 
     def __str__(self):
         return f"{self.name}({self.id})"
 
-    def find_all(self, entity_type: str) -> List["RawEntity"]:
+    def find_all(self, entity_type: str) -> List["SatEntity"]:
         """Returns a list of all matching ACIS entities of then given type
         referenced by this entity.
 
@@ -94,10 +43,10 @@ class RawEntity:
         return [
             e
             for e in self.data
-            if isinstance(e, RawEntity) and e.name == entity_type
+            if isinstance(e, SatEntity) and e.name == entity_type
         ]
 
-    def find_first(self, entity_type: str) -> "RawEntity":
+    def find_first(self, entity_type: str) -> "SatEntity":
         """Returns the first matching ACIS entity referenced by this entity.
         Returns the ``NULL_PTR`` if no entity was found.
 
@@ -106,11 +55,11 @@ class RawEntity:
 
         """
         for token in self.data:
-            if isinstance(token, RawEntity) and token.name == entity_type:
+            if isinstance(token, SatEntity) and token.name == entity_type:
                 return token
         return NULL_PTR
 
-    def find_path(self, path: str) -> "RawEntity":
+    def find_path(self, path: str) -> "SatEntity":
         """Returns the last ACIS entity referenced by an `path`.
         The `path` describes the path to the entity starting form the current
         entity like "lump/shell/face". This is equivalent to::
@@ -129,7 +78,7 @@ class RawEntity:
             entity = entity.find_first(entity_type)
         return entity
 
-    def find_entities(self, names: str) -> List["RawEntity"]:
+    def find_entities(self, names: str) -> List["SatEntity"]:
         """Find multiple entities of different types. Returns the first
         entity of each type. If a type doesn't exist a ``NULL_PTR`` is
         returned for this type::
@@ -173,7 +122,7 @@ def parse_values(data: Sequence[Any], fmt: str) -> Sequence[Any]:
     specifiers = fmt.split(";")
     specifiers.reverse()
     for field in data:
-        if isinstance(field, RawEntity):
+        if isinstance(field, SatEntity):
             next_is_user_string = False
             continue  # ignore all entities
 
@@ -210,7 +159,7 @@ def parse_values(data: Sequence[Any], fmt: str) -> Sequence[Any]:
     return content
 
 
-NULL_PTR = RawEntity("null-ptr", "$-1", -1, tuple())  # type: ignore
+NULL_PTR = SatEntity("null-ptr", "$-1", -1, tuple())  # type: ignore
 
 
 def new_acis_entity(
@@ -218,7 +167,7 @@ def new_acis_entity(
     attributes=NULL_PTR,
     id=-1,
     data: List[Any] = None,
-) -> RawEntity:
+) -> SatEntity:
     """Factory to create new ACIS entities.
 
     Args:
@@ -228,7 +177,7 @@ def new_acis_entity(
         data: generic data container as list
 
     """
-    e = RawEntity(name, "$-1", id, data)
+    e = SatEntity(name, "$-1", id, data)
     e.attributes = attributes
     return e
 
@@ -238,68 +187,8 @@ def is_ptr(s: str) -> bool:
     return len(s) > 0 and s[0] == "$"
 
 
-class AcisBuilder:
-    """Low level data structure to manage ACIS data files."""
-
-    def __init__(self):
-        self.header = AcisHeader()
-        self.bodies: List[RawEntity] = []
-        self.entities: List[RawEntity] = []
-
-    def dump_sat(self) -> List[str]:
-        """Returns the text representation of the ACIS file as list of strings
-        without line endings.
-
-        Raise:
-            InvalidLinkStructure: referenced ACIS entity is not stored in
-                the :attr:`entities` storage
-
-        """
-        data = self.header.dumps()
-        data.extend(build_str_records(self.entities, self.header.version))
-        data.append(END_OF_ACIS_DATA + " ")
-        return data
-
-    def set_entities(self, entities: List[RawEntity]) -> None:
-        """Reset entities and bodies list. (internal API)"""
-        self.bodies = [e for e in entities if e.name == "body"]
-        self.entities = entities
-
-    def query(self, func=lambda e: True) -> Iterator[RawEntity]:
-        """Yields all entities as :class:`RawEntity` for which the given
-        function returns ``True`` e.g. query all "point" entities::
-
-            points = list(acis_builder.query(lambda e: e.name == "point"))
-
-        """
-        return filter(func, self.entities)
-
-
-def build_str_records(entities: List[RawEntity], version: int) -> Iterator[str]:
-    def ptr_str(e: RawEntity) -> str:
-        if e is NULL_PTR:
-            return "$-1"
-        try:
-            return f"${entities.index(e)}"
-        except ValueError:
-            raise InvalidLinkStructure(f"entity {str(e)} not in record storage")
-
-    for entity in entities:
-        tokens = [entity.name]
-        tokens.append(ptr_str(entity.attributes))
-        if version >= 700:
-            tokens.append(str(entity.id))
-        for data in entity.data:
-            if isinstance(data, RawEntity):
-                tokens.append(ptr_str(data))
-            else:
-                tokens.append(str(data))
-        tokens.append("#")
-        yield " ".join(tokens)
-
-
-def resolve_str_pointers(entities: Dict[int, RawEntity]) -> List[RawEntity]:
-    def ptr(s: str) -> RawEntity:
+def resolve_str_pointers(entities: Dict[int, SatEntity]) -> List[SatEntity]:
+    def ptr(s: str) -> SatEntity:
         if is_ptr(s):
             num = int(s[1:])
             if num == -1:
@@ -318,6 +207,66 @@ def resolve_str_pointers(entities: Dict[int, RawEntity]) -> List[RawEntity]:
                 data.append(token)
         entity.data = data
     return [e for _, e in sorted(entities.items())]
+
+
+class AcisBuilder:
+    """Low level data structure to manage ACIS data files."""
+
+    def __init__(self):
+        self.header = AcisHeader()
+        self.bodies: List[SatEntity] = []
+        self.entities: List[SatEntity] = []
+
+    def dump_sat(self) -> List[str]:
+        """Returns the text representation of the ACIS file as list of strings
+        without line endings.
+
+        Raise:
+            InvalidLinkStructure: referenced ACIS entity is not stored in
+                the :attr:`entities` storage
+
+        """
+        data = self.header.dumps()
+        data.extend(build_str_records(self.entities, self.header.version))
+        data.append(END_OF_ACIS_DATA + " ")
+        return data
+
+    def set_entities(self, entities: List[SatEntity]) -> None:
+        """Reset entities and bodies list. (internal API)"""
+        self.bodies = [e for e in entities if e.name == "body"]
+        self.entities = entities
+
+    def query(self, func=lambda e: True) -> Iterator[SatEntity]:
+        """Yields all entities as :class:`RawEntity` for which the given
+        function returns ``True`` e.g. query all "point" entities::
+
+            points = list(acis_builder.query(lambda e: e.name == "point"))
+
+        """
+        return filter(func, self.entities)
+
+
+def build_str_records(entities: List[SatEntity], version: int) -> Iterator[str]:
+    def ptr_str(e: SatEntity) -> str:
+        if e is NULL_PTR:
+            return "$-1"
+        try:
+            return f"${entities.index(e)}"
+        except ValueError:
+            raise InvalidLinkStructure(f"entity {str(e)} not in record storage")
+
+    for entity in entities:
+        tokens = [entity.name]
+        tokens.append(ptr_str(entity.attributes))
+        if version >= 700:
+            tokens.append(str(entity.id))
+        for data in entity.data:
+            if isinstance(data, SatEntity):
+                tokens.append(ptr_str(data))
+            else:
+                tokens.append(str(data))
+        tokens.append("#")
+        yield " ".join(tokens)
 
 
 def parse_header_str(s: str) -> Iterator[str]:
@@ -340,7 +289,7 @@ def parse_header_str(s: str) -> Iterator[str]:
             num = ""
 
 
-def parse_sat_header(data: Sequence[str]) -> Tuple[AcisHeader, Sequence[str]]:
+def parse_header(data: Sequence[str]) -> Tuple[AcisHeader, Sequence[str]]:
     header = AcisHeader()
     tokens = data[0].split()
     header.version = int(tokens[0])
@@ -387,23 +336,23 @@ def merge_record_strings(data: Sequence[str]) -> Iterator[str]:
             yield record
 
 
-def parse_records(data: Sequence[str]) -> List[RawRecord]:
+def parse_records(data: Sequence[str]) -> List[SatRecord]:
     num = 0
-    records: List[RawRecord] = []
+    records: List[SatRecord] = []
     for line in merge_record_strings(data):
         tokens = line.split()
         first_token = tokens[0].strip()
         if first_token.startswith("-"):
             num = -int(first_token)
             tokens.pop(0)
-        records.append(RawRecord(num, tokens))
+        records.append(SatRecord(num, tokens))
         num += 1
     return records
 
 
 def build_entities(
-    records: Sequence[RawRecord], version: int
-) -> Dict[int, RawEntity]:
+    records: Sequence[SatRecord], version: int
+) -> Dict[int, SatEntity]:
     entities = {}
     for record in records:
         name = record.tokens[0]
@@ -414,7 +363,7 @@ def build_entities(
             data = record.tokens[3:]
         else:
             data = record.tokens[2:]
-        entities[record.num] = RawEntity(name, attr, id_, data)
+        entities[record.num] = SatEntity(name, attr, id_, data)
     return entities
 
 
@@ -434,7 +383,7 @@ def parse_sat(s: Union[str, Sequence[str]]) -> AcisBuilder:
     if not isinstance(data, Sequence):
         raise TypeError("expected as string or a sequence of strings")
     atree = AcisBuilder()
-    header, data = parse_sat_header(data)
+    header, data = parse_header(data)
     atree.header = header
     records = parse_records(data)
     entities = build_entities(records, header.version)

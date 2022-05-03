@@ -3,13 +3,10 @@
 from typing import Iterator, Sequence, Optional, List
 from ezdxf.math import Vec3, Matrix44
 from ezdxf._acis.const import *
-from ezdxf._acis.io import (
-    RawEntity,
-    NULL_PTR,
-)
+from ezdxf._acis.sat import NULL_PTR, SatEntity
 
 
-def parse_transform(transform: RawEntity) -> Matrix44:
+def parse_transform(transform: SatEntity) -> Matrix44:
     values = transform.parse_values("f;f;f;f;f;f;f;f;f;f;f;f")
     if len(values) != 12:
         raise ParsingError("transform entity has not enough data")
@@ -24,7 +21,7 @@ def parse_transform(transform: RawEntity) -> Matrix44:
     )
 
 
-def body_planar_polygon_faces(body: RawEntity) -> Iterator[List[Sequence[Vec3]]]:
+def body_planar_polygon_faces(body: SatEntity) -> Iterator[List[Sequence[Vec3]]]:
     """Yields all planar polygon faces from all lumps in the given `body`_
     entity. Yields a separated list of faces for each linked `lump`_ entity.
 
@@ -51,7 +48,7 @@ def body_planar_polygon_faces(body: RawEntity) -> Iterator[List[Sequence[Vec3]]]
         yield list(lump_planar_polygon_faces(lump, m))
 
 
-def all_lumps(lump: RawEntity) -> List[RawEntity]:
+def all_lumps(lump: SatEntity) -> List[SatEntity]:
     """Returns a list of all linked lumps. """
     assert lump.name == "lump", "type error, expected lump"
     lumps = []
@@ -62,7 +59,7 @@ def all_lumps(lump: RawEntity) -> List[RawEntity]:
 
 
 def lump_planar_polygon_faces(
-    lump: RawEntity, m: Matrix44 = None
+    lump: SatEntity, m: Matrix44 = None
 ) -> Iterator[Sequence[Vec3]]:
     """Yields all planar polygon faces from the given `lump`_ entity as sequence
     of :class:`~ezdxf.math.Vec3` instances. Applies the transformation
@@ -117,7 +114,7 @@ def lump_planar_polygon_faces(
                 yield vertices
 
 
-def parse_point(point: RawEntity) -> Vec3:
+def parse_point(point: SatEntity) -> Vec3:
     """Parses the `point`entity as :class:`ezdxf.math.Vec3` instance.
 
     Raises:

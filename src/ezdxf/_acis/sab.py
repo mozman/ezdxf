@@ -4,7 +4,7 @@ from typing import NamedTuple, Any, Sequence, List, Iterator
 from datetime import datetime
 import struct
 from ezdxf._acis.const import ParsingError, DATE_FMT, Tags
-from ezdxf._acis.io import AcisHeader
+from _acis.hdr import AcisHeader
 
 
 class Token(NamedTuple):
