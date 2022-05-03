@@ -11,7 +11,7 @@ from ezdxf._acis.hdr import AcisHeader
 from ezdxf._acis.sat import (
     parse_sat,
     NULL_PTR,
-    AcisBuilder,
+    SatBuilder,
     SatEntity
 )
 from ezdxf._acis.parsing import (

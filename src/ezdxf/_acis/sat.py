@@ -162,7 +162,7 @@ def parse_values(data: Sequence[Any], fmt: str) -> Sequence[Any]:
 NULL_PTR = SatEntity("null-ptr", "$-1", -1, tuple())  # type: ignore
 
 
-def new_acis_entity(
+def new_sat_entity(
     name: str,
     attributes=NULL_PTR,
     id=-1,
@@ -209,7 +209,7 @@ def resolve_str_pointers(entities: Dict[int, SatEntity]) -> List[SatEntity]:
     return [e for _, e in sorted(entities.items())]
 
 
-class AcisBuilder:
+class SatBuilder:
     """Low level data structure to manage ACIS data files."""
 
     def __init__(self):
@@ -367,7 +367,7 @@ def build_entities(
     return entities
 
 
-def parse_sat(s: Union[str, Sequence[str]]) -> AcisBuilder:
+def parse_sat(s: Union[str, Sequence[str]]) -> SatBuilder:
     """Returns the :class:`AcisBuilder` for the ACIS SAT file content given as
     string or list of strings.
 
@@ -382,10 +382,10 @@ def parse_sat(s: Union[str, Sequence[str]]) -> AcisBuilder:
         data = s
     if not isinstance(data, Sequence):
         raise TypeError("expected as string or a sequence of strings")
-    atree = AcisBuilder()
+    builder = SatBuilder()
     header, data = parse_header(data)
-    atree.header = header
+    builder.header = header
     records = parse_records(data)
     entities = build_entities(records, header.version)
-    atree.set_entities(resolve_str_pointers(entities))
-    return atree
+    builder.set_entities(resolve_str_pointers(entities))
+    return builder

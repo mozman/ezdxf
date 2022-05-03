@@ -209,9 +209,9 @@ class TestAcisBuilder:
 
 
 def test_build_str_records():
-    a = sat.new_acis_entity("test1", data=[acis.NULL_PTR, 1])
-    b = sat.new_acis_entity("test2", id=7, data=[a, 2.0])
-    c = sat.new_acis_entity("test3", data=[a, b])
+    a = sat.new_sat_entity("test1", data=[acis.NULL_PTR, 1])
+    b = sat.new_sat_entity("test2", id=7, data=[a, 2.0])
+    c = sat.new_sat_entity("test3", data=[a, b])
     entities = [a, b, c]
     s = list(sat.build_str_records(entities, 700))
     assert s[0] == "test1 $-1 -1 $-1 1 #"
@@ -223,12 +223,12 @@ class TestFindMultipleEntities:
     @pytest.fixture
     def entity(self):
         n = acis.NULL_PTR
-        a1 = sat.new_acis_entity("entity1")
-        a2 = sat.new_acis_entity("entity1")
-        b1 = sat.new_acis_entity("entity2")
-        b2 = sat.new_acis_entity("entity2")
-        c = sat.new_acis_entity("entity3")
-        return sat.new_acis_entity(
+        a1 = sat.new_sat_entity("entity1")
+        a2 = sat.new_sat_entity("entity1")
+        b1 = sat.new_sat_entity("entity2")
+        b2 = sat.new_sat_entity("entity2")
+        c = sat.new_sat_entity("entity3")
+        return sat.new_sat_entity(
             "entity", data=[n, a1, a2, "1", b1, b2, c, n, "1.0"]
         )
 
@@ -257,10 +257,10 @@ class TestParseValues:
     @pytest.fixture
     def entity(self):
         n = sat.NULL_PTR
-        a = sat.new_acis_entity("entity1")
-        b = sat.new_acis_entity("entity2")
-        c = sat.new_acis_entity("entity3")
-        return sat.new_acis_entity(
+        a = sat.new_sat_entity("entity1")
+        b = sat.new_sat_entity("entity2")
+        c = sat.new_sat_entity("entity3")
+        return sat.new_sat_entity(
             "entity", data=[n, a, b, "1", c, n, "1.0"]
         )
 
