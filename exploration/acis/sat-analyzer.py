@@ -3,7 +3,7 @@
 from typing import List, Iterator
 from argparse import ArgumentParser
 
-from ezdxf._acis.io import merge_record_strings
+from ezdxf._acis.sat import merge_record_strings
 
 """
 ===============================================================================
@@ -193,7 +193,7 @@ def print_legend():
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument("file", nargs=1)
+    parser.add_argument("file", nargs="?")
     parser.add_argument(
         "-s",
         "--source",
