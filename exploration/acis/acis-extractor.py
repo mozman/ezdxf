@@ -1,6 +1,5 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import cast
 import sys
 from pathlib import Path
 from argparse import ArgumentParser
@@ -11,7 +10,6 @@ DIR = Path("~/Desktop/Outbox").expanduser()
 if not DIR.exists():
     DIR = Path(".")
 
-SEARCH_TYPES = {"3DSOLID", "REGION"}
 DEFAULT_FILE = DIR / "acis.dxf"
 
 
@@ -38,8 +36,8 @@ def extract_acis(filepath: Path):
         sys.exit(1)
     msp = doc.modelspace()
     for e in msp:
-        if e.dxftype() in SEARCH_TYPES:
-            export_acis(cast("Body", e), folder=filepath.parent)
+        if isinstance(e, Body):
+            export_acis(e, folder=filepath.parent)
 
 
 def main():
