@@ -4,7 +4,7 @@ from typing import NamedTuple, Any, Sequence, List, Iterator
 from datetime import datetime
 import struct
 from ezdxf._acis.const import ParsingError, DATE_FMT, Tags
-from _acis.hdr import AcisHeader
+from ezdxf._acis.hdr import AcisHeader
 
 
 class Token(NamedTuple):
@@ -113,7 +113,7 @@ class Decoder:
             else:
                 raise ParsingError(f"unknown SAB tag: {tag}")
 
-    def read_records(self) -> Iterator[Sequence[Any]]:
+    def read_records(self) -> Iterator[List[Token]]:
         while True:
             try:
                 yield self.read_record()

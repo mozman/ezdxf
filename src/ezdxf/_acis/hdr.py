@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import List
-from _acis.const import ACIS_VERSION
+from ezdxf._acis.const import ACIS_VERSION
 
 # ACIS versions exported by BricsCAD:
 # R2000/AC1015: 400, "ACIS 4.00 NT", text length has no prefix "@"

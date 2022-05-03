@@ -1,7 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from typing import List
-from _acis.sat import SatEntity
+from ezdxf._acis.sat import SatEntity
 from ezdxf._acis.parsing import body_planar_polygon_faces
 from ezdxf.render import MeshVertexMerger, MeshTransformer
 

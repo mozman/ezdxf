@@ -29,7 +29,7 @@ maybe in the future it is also possible to create such polygon face meshes.
 Functions
 =========
 
-.. autofunction:: parse_sat(s: Union[str, Sequence[str]]) -> AcisBuilder
+.. autofunction:: parse_sat(s: Union[str, Sequence[str]]) -> SatBuilder
 
 .. autofunction:: body_to_mesh(body: RawEntity, merge_lumps=True) -> List[MeshTransformer]
 
@@ -41,12 +41,12 @@ Functions
 Classes
 =======
 
-AcisBuilder
------------
+SatBuilder
+----------
 
-.. class:: AcisBuilder
+.. class:: SatBuilder
 
-    Low level data structure to manage ACIS data files.
+    Low level data structure to manage SAT data (Standard ACIS Text) files.
 
     .. attribute:: header
 
@@ -54,12 +54,12 @@ AcisBuilder
 
     .. attribute:: entities
 
-        List of all entities as :class:`RawEntity` instances managed by this
+        List of all entities as :class:`SatEntity` instances managed by this
         builder.
 
     .. attribute:: bodies
 
-        List of :class:`RawEntity` instances.
+        List of :class:`SatEntity` instances.
         The `body` entity is always the root entity for an ACIS geometry.
 
     .. automethod:: dump_sat
@@ -68,18 +68,18 @@ AcisBuilder
 
         .. code-block:: Python
 
-            lines = asic_builder.dump_sat()
+            lines = builder.dump_sat()
             with open("name.sat", "wt") as fp:
                 fp.write("\n".join(lines))
 
-    .. automethod:: query(func=lambda e: True) -> Iterator[RawEntity]
+    .. automethod:: query(func=lambda e: True) -> Iterator[SatEntity]
 
-RawEntity
+SatEntity
 ----------
 
-.. class:: RawEntity
+.. class:: SatEntity
 
-    Low level representation of an ACIS entity (node).
+    Low level representation of an ACIS entity in SAT format.
 
     .. attribute:: name
 
@@ -93,7 +93,7 @@ RawEntity
     .. attribute:: data
 
         Generic data container. References to other entities (pointers) are
-        :class:`RawEntity` instances, the basic types `float` and `int` are
+        :class:`SatEntity` instances, the basic types `float` and `int` are
         still strings.
 
         Avoid accessing the :attr:`data` directly and use the
@@ -104,13 +104,13 @@ RawEntity
 
         Reference to entity attributes or a ``NULL_PTR``.
 
-    .. automethod:: find_all(entity_type: str) -> list[RawEntity]
+    .. automethod:: find_all(entity_type: str) -> list[SatEntity]
 
-    .. automethod:: find_first(entity_type: str) -> RawEntity
+    .. automethod:: find_first(entity_type: str) -> SatEntity
 
-    .. automethod:: find_path(path: str) -> RawEntity
+    .. automethod:: find_path(path: str) -> SatEntity
 
-    .. automethod:: find_entities(names: str) -> list[RawEntity]
+    .. automethod:: find_entities(names: str) -> list[SatEntity]
 
     .. automethod:: parse_values
 
@@ -167,7 +167,7 @@ by BricsCAD.
 
 This documentation ignores the differences to the ACIS format prior to 7.0.
 The missing `id` is handled internally and missing entity references can often
-be ignored if you use the flexible parsing methods of :class:`RawEntity`.
+be ignored if you use the flexible parsing methods of :class:`SatEntity`.
 Writing support for SAT version < 7.0 is not required because all CAD
 applications should be able to process version 7.0, even if embedded in a very
 old DXF R2000 format (tested with Autodesk TrueView, BricsCAD and Nemetschek
@@ -177,13 +177,13 @@ The first goal is to document the entities which are required to represent
 a geometry as polygonal faces (polygon face mesh), which can be converted into
 a :class:`~ezdxf.render.MeshBuilder` object.
 
-The entity data is described as stored in the :class:`RawEntity` class.
-The entity type is stored in :attr:`~RawEntity.name`. The entity attributes
-are stored as reference to an :class:`RawEntity` instance in
-:attr:`~RawEntity.attributes` or the ``NULL_PTR`` instance if no attributes exist.
-The :attr:`~RawEntity.id` is an integer value, but I have not seen any usage
+The entity data is described as stored in the :class:`SatEntity` class.
+The entity type is stored in :attr:`~SatEntity.name`. The entity attributes
+are stored as reference to an :class:`SatEntity` instance in
+:attr:`~SatEntity.attributes` or the ``NULL_PTR`` instance if no attributes exist.
+The :attr:`~SatEntity.id` is an integer value, but I have not seen any usage
 of the id in DXF files, so it can always be -1.
-The data fields are stored in the :attr:`~RawEntity.data` attribute, the
+The data fields are stored in the :attr:`~SatEntity.data` attribute, the
 meaning of the data fields is the content of this section.
 Each entry describes the fields starting after the `id` field
 which is the 3rd record entry, as example the `transform`_ entity:
