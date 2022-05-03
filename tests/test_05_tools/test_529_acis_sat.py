@@ -74,7 +74,7 @@ class TestMergeRecordStrings:
         "data",
         [
             ["test 1 2 3 #", "End-of-ACIS-data", "test 4 5 6"],
-            ["test 4 5 6 #", "Begin-of-ACIS-History-Data", "test 4 5 6"],
+            ["test 4 5 6 #", "Begin-of-ACIS-History-data", "test 4 5 6"],
         ],
     )
     def test_end_of_records_detection(self, data):
