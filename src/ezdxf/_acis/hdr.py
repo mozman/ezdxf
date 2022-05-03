@@ -31,7 +31,7 @@ class AcisHeader:
     units_in_mm: float = 1.0
 
     def dumps(self) -> List[str]:
-        """Returns the file header as list of strings."""
+        """Returns the SAT file header as list of strings."""
         return [
             f"{self.version} {self.n_records} {self.n_entities} {self.flags} ",
             self._header_str(),
