@@ -108,6 +108,10 @@ class Decoder:
                 values.append(Token(tag, self.read_floats(3)))
             elif tag == Tags.DIRECTION_VEC:
                 values.append(Token(tag, self.read_floats(3)))
+            elif tag == Tags.UNKNOWN_0x15:
+                values.append(Token(tag, self.read_int()))
+            elif tag == Tags.UNKNOWN_0x17:
+                values.append(Token(tag, self.read_float()))
             elif tag == Tags.RECORD_END:
                 return values
             else:
