@@ -111,7 +111,9 @@ class Decoder:
             elif tag == Tags.RECORD_END:
                 return values
             else:
-                raise ParsingError(f"unknown SAB tag: {tag}")
+                raise ParsingError(
+                    f"unknown SAB tag: 0x{tag:x} ({tag}) in entity '{values[0].value}'"
+                )
 
     def read_records(self) -> Iterator[List[Token]]:
         while True:
