@@ -3,11 +3,13 @@
 
 import pytest
 from datetime import datetime
-from ezdxf.acis import SABDecoder
+from ezdxf.acis import sab
+
+T = sab.Tags
 
 
 def test_decode_header():
-    decoder = SABDecoder(SAB)
+    decoder = sab.Decoder(SAB)
     header = decoder.read_header()
     assert header.version == 21800
     assert header.n_records == 0
@@ -20,24 +22,19 @@ def test_decode_header():
 
 
 def test_decode_first_record():
-    decoder = SABDecoder(SAB)
+    decoder = sab.Decoder(SAB)
     _ = decoder.read_header()
     record = decoder.read_record()
-    assert record == ["asmheader", "$-1", -1, "208.0.4.7009"]
-
-
-def test_decode_first_entity():
-    decoder = SABDecoder(SAB)
-    _ = decoder.read_header()
-    entity = decoder.read_entity()
-    assert entity.name == "asmheader"
-    assert entity.attr_ptr == "$-1"
-    assert entity.id == -1
-    assert entity.data == ["208.0.4.7009"]
+    assert record == [
+        (T.ENTITY_TYPE, "asmheader"),
+        (T.POINTER, -1),
+        (T.INT, -1),
+        (T.STR, "208.0.4.7009"),
+    ]
 
 
 def test_decode_all_records():
-    decoder = SABDecoder(SAB)
+    decoder = sab.Decoder(SAB)
     _ = decoder.read_header()
     records = list(decoder.read_records())
     assert len(records) == 87

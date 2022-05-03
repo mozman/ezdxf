@@ -14,18 +14,20 @@ BEGIN_OF_ACIS_HISTORY_DATA = "Begin-of-ACIS-History-Data"
 END_OF_ACIS_HISTORY_DATA = "End-of-ACIS-History-Data"
 DATA_END_MARKERS = (END_OF_ACIS_DATA, BEGIN_OF_ACIS_HISTORY_DATA)
 
-INT_TAG = 0x04
-DBL_TAG = 0x06
-STR_TAG = 0x07
-BOOL_FALSE = 0x0A  # reversed, double - meaning depends on context
-BOOL_TRUE = 0x0B  # forward, single, forward_v, I - meaning depends on context
-PTR_TAG = 0x0C
-ENTITY_TAG = 0x0D
-EXT_ENTITY_TAG = 0x0E
-REC_END_TAG = 0x11
-LNG_STR_TAG = 0x12  # following int4 = count ? see transform
-LOC_VEC_TAG = 0x13  # vector (3 doubles)
-DIR_VEC_TAG = 0x14  # vector (3 doubles)
+
+class Tags(enum.IntEnum):
+    INT = 0x04
+    DOUBLE = 0x06
+    STR = 0x07
+    BOOL_FALSE = 0x0A  # reversed, double - meaning depends on context
+    BOOL_TRUE = 0x0B  # forward, single, forward_v, I - meaning depends on context
+    POINTER = 0x0C
+    ENTITY_TYPE = 0x0D
+    ENTITY_TYPE_EX = 0x0E
+    RECORD_END = 0x11
+    LONG_STR = 0x12  # following int4 = count ? see transform
+    LOCATION_VEC = 0x13  # vector (3 doubles)
+    DIRECTION_VEC = 0x14  # vector (3 doubles)
 
 # entity type structure:
 # 0x0D 0x04 (char count of) "body" = SAT "body"
