@@ -8,6 +8,12 @@ ACIS_VERSION = {
     20800: "ACIS 208.00 NT",
 }
 
+DATE_FMT = "%a %b %d %H:%M:%S %Y"
+END_OF_ACIS_DATA = "End-of-ACIS-data"
+BEGIN_OF_ACIS_HISTORY_DATA = "Begin-of-ACIS-History-Data"
+END_OF_ACIS_HISTORY_DATA = "End-of-ACIS-History-Data"
+DATA_END_MARKERS = (END_OF_ACIS_DATA, BEGIN_OF_ACIS_HISTORY_DATA)
+
 
 class Flags(enum.IntFlag):
     HAS_HISTORY = 1
@@ -22,4 +28,8 @@ class InvalidLinkStructure(AcisException):
 
 
 class ParsingError(AcisException):
+    pass
+
+
+class EndOfAcisData(AcisException):
     pass

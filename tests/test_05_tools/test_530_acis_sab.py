@@ -8,7 +8,7 @@ from ezdxf.acis import SABDecoder
 
 def test_decode_header():
     decoder = SABDecoder(SAB)
-    header = decoder.get_header()
+    header = decoder.read_header()
     assert header.version == 21800
     assert header.n_records == 0
     assert header.n_entities == 2
@@ -17,6 +17,30 @@ def test_decode_header():
     assert header.acis_version == "ACIS 218.00 NT"
     assert header.creation_date == datetime(2022, 5, 2, 18, 54, 43)
     assert header.units_in_mm == 1.0
+
+
+def test_decode_first_record():
+    decoder = SABDecoder(SAB)
+    _ = decoder.read_header()
+    record = decoder.read_record()
+    assert record == ["asmheader", "$-1", -1, "208.0.4.7009"]
+
+
+def test_decode_first_entity():
+    decoder = SABDecoder(SAB)
+    _ = decoder.read_header()
+    entity = decoder.read_entity()
+    assert entity.name == "asmheader"
+    assert entity.attr_ptr == "$-1"
+    assert entity.id == -1
+    assert entity.data == ["208.0.4.7009"]
+
+
+def test_decode_all_records():
+    decoder = SABDecoder(SAB)
+    _ = decoder.read_header()
+    records = list(decoder.read_records())
+    assert len(records) == 87
 
 
 SAT = """20800 87 2 0 

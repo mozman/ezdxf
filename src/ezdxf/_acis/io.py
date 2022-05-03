@@ -224,7 +224,7 @@ def new_acis_entity(
 
     Args:
         name: entity type
-        attributes: referenece to the entity attributes or :attr:`NULL_PTR`.
+        attributes: reference to the entity attributes or :attr:`NULL_PTR`.
         id: unique entity id as integer or -1
         data: generic data container as list
 
@@ -258,7 +258,7 @@ class AcisBuilder:
         """
         data = self.header.dumps()
         data.extend(build_str_records(self.entities, self.header.version))
-        data.append("End-of-ACIS-data ")
+        data.append(END_OF_ACIS_DATA + " ")
         return data
 
     def set_entities(self, entities: List[RawEntity]) -> None:
@@ -341,9 +341,6 @@ def parse_header_str(s: str) -> Iterator[str]:
             num = ""
 
 
-DATE_FMT = "%a %b %d %H:%M:%S %Y"
-
-
 def parse_sat_header(data: Sequence[str]) -> Tuple[AcisHeader, Sequence[str]]:
     header = AcisHeader()
     tokens = data[0].split()
@@ -363,9 +360,7 @@ def parse_sat_header(data: Sequence[str]) -> Tuple[AcisHeader, Sequence[str]]:
 
     if len(tokens) > 2:
         try:  # Sat Jan  1 10:00:00 2022
-            header.creation_date = datetime.strptime(
-                tokens[2], DATE_FMT
-            )
+            header.creation_date = datetime.strptime(tokens[2], DATE_FMT)
         except ValueError:
             pass
     tokens = data[2].split()
@@ -378,8 +373,8 @@ def parse_sat_header(data: Sequence[str]) -> Tuple[AcisHeader, Sequence[str]]:
 
 def _filter_records(data: Sequence[str]) -> Iterator[str]:
     for line in data:
-        if line.startswith("End-of-ACIS-data") or line.startswith(
-            "Begin-of-ACIS-History-Data"
+        if line.startswith(END_OF_ACIS_DATA) or line.startswith(
+            BEGIN_OF_ACIS_HISTORY_DATA
         ):
             return
         yield line
@@ -451,12 +446,20 @@ def parse_sat(s: Union[str, Sequence[str]]) -> AcisBuilder:
 INT_TAG = 0x04
 DBL_TAG = 0x06
 STR_TAG = 0x07
+BOOL_FALSE = 0x0A  # reversed, double - meaning depends on context
+BOOL_TRUE = 0x0B  # forward, single, forward_v, I - meaning depends on context
 PTR_TAG = 0x0C
+ENTITY_TAG = 0x0D
+EXT_ENTITY_TAG = 0x0E
 REC_END_TAG = 0x11
 LNG_STR_TAG = 0x12  # following int4 = count ? see transform
-# command structure:
-# 0x0D 4=count "body"
-# 0x0E 5=count "plane" 0x0D 7=count "surface"
+LOC_VEC_TAG = 0x13  # vector (3 doubles)
+DIR_VEC_TAG = 0x14  # vector (3 doubles)
+
+# entity type structure:
+# 0x0D 0x04 (char count of) "body" = SAT "body"
+# 0x0E 0x05 "plane" 0x0D 0x07 "surface" = SAT "plane-surface"
+# 0x0E 0x06 "ref_vt" 0x0E 0x03 "eye" 0x0D 0x06 "attrib" = SAT "ref_vt-eye-attrib"
 
 
 class SABDecoder:
@@ -464,28 +467,25 @@ class SABDecoder:
         self.data = data
         self.index: int = 0
 
-    def get_header(self) -> AcisHeader:
+    def read_header(self) -> AcisHeader:
         header = AcisHeader()
         signature = self.data[0:15]
         if signature != b"ACIS BinaryFile":
             raise ParsingError("not a SAB file")
         self.index = 15
-        (
-            header.version,
-            header.n_records,
-            header.n_entities,
-            header.flags,
-        ) = self.read_int(4)
-        header.product_id = self.read_str()
-        header.acis_version = self.read_str()
-        date = self.read_str()
-        header.creation_date = datetime.strptime(
-            date, DATE_FMT
-        )
-        header.units_in_mm = self.read_double()
+
+        header.version = self.read_int()
+        header.n_records = self.read_int()
+        header.n_entities = self.read_int()
+        header.flags = self.read_int()
+        header.product_id = self.read_str_tag()
+        header.acis_version = self.read_str_tag()
+        date = self.read_str_tag()
+        header.creation_date = datetime.strptime(date, DATE_FMT)
+        header.units_in_mm = self.read_double_tag()
         # tolerances are ignored
-        _ = self.read_double()  # res_tol
-        _ = self.read_double()  # nor_tol
+        _ = self.read_double_tag()  # res_tol
+        _ = self.read_double_tag()  # nor_tol
         return header
 
     def forward(self, count: int):
@@ -493,33 +493,93 @@ class SABDecoder:
         self.index += count
         return pos
 
-    def read_int(self, count: int) -> Sequence[int]:
-        pos = self.forward(4 * count)
-        values = struct.unpack_from(f"<{count}i", self.data, pos)
-        return values
-
-    def peek(self, count: int = 1) -> bytes:
-        return self.data[self.index: self.index + count]
-
     def read_byte(self) -> int:
         pos = self.forward(1)
         return self.data[pos]
 
     def read_bytes(self, count: int) -> bytes:
         pos = self.forward(count)
-        return self.data[pos: pos + count]
+        return self.data[pos : pos + count]
 
-    def read_str(self) -> str:
-        tag = self.read_byte()
-        if tag != STR_TAG:
-            raise ParsingError("string tag (7)  not found")
-        length = self.read_byte()
+    def read_int(self) -> int:
+        pos = self.forward(4)
+        values = struct.unpack_from("<i", self.data, pos)[0]
+        return values
+
+    def read_float(self) -> float:
+        pos = self.forward(8)
+        return struct.unpack_from("<d", self.data, pos)[0]
+
+    def read_floats(self, count: int) -> Sequence[float]:
+        pos = self.forward(8 * count)
+        return struct.unpack_from(f"<{count}d", self.data, pos)
+
+    def read_str(self, length) -> str:
         text = self.read_bytes(length)
         return text.decode()
 
-    def read_double(self) -> float:
+    def read_str_tag(self) -> str:
+        tag = self.read_byte()
+        if tag != STR_TAG:
+            raise ParsingError("string tag (7) not found")
+        return self.read_str(self.read_byte())
+
+    def read_double_tag(self) -> float:
         tag = self.read_byte()
         if tag != DBL_TAG:
-            raise ParsingError("double tag (6)  not found")
-        pos = self.forward(8)
-        return struct.unpack_from("<d", self.data, pos)[0]
+            raise ParsingError("double tag (6) not found")
+        return self.read_float()
+
+    def read_entity(self) -> RawEntity:
+        try:
+            values = self.read_record()
+        except struct.error:
+            raise ParsingError("unknown or invalid SAB data")
+        name = values[0]
+        if name in DATA_END_MARKERS:
+            raise EndOfAcisData("End of ACIS data")
+        entity = RawEntity(name)
+        entity.attr_ptr = values[1]
+        entity.id = int(values[2])
+        entity.data = values[3:]
+        return entity
+
+    def read_record(self) -> List[Any]:
+        values: List[Any] = []
+        entity_type: List[str] = []
+        while True:
+            tag = self.read_byte()
+            if tag == INT_TAG:
+                values.append(self.read_int())
+            elif tag == DBL_TAG:
+                values.append(self.read_float())
+            elif tag == STR_TAG:
+                values.append(self.read_str(self.read_byte()))
+            elif tag == PTR_TAG:
+                values.append("${}".format(self.read_int()))
+            elif tag == BOOL_FALSE:
+                values.append(False)
+            elif tag == BOOL_TRUE:
+                values.append(True)
+            elif tag == LNG_STR_TAG:
+                values.append(self.read_str(self.read_int()))
+            elif tag == EXT_ENTITY_TAG:
+                entity_type.append(self.read_str(self.read_byte()))
+            elif tag == ENTITY_TAG:
+                entity_type.append(self.read_str(self.read_byte()))
+                values.append("-".join(entity_type))
+            elif tag == LOC_VEC_TAG:
+                values.append(self.read_floats(3))
+            elif tag == DIR_VEC_TAG:
+                values.append(self.read_floats(3))
+            elif tag == REC_END_TAG:
+                return values
+            else:
+                raise ParsingError(f"unknown SAB tag: {tag}")
+
+    def read_records(self) -> Iterator[Sequence[Any]]:
+        while True:
+            try:
+                yield self.read_record()
+            except IndexError:
+                return
