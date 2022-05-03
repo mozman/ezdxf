@@ -28,6 +28,7 @@ class Tags(enum.IntEnum):
     LONG_STR = 0x12  # following int4 = count ? see transform
     LOCATION_VEC = 0x13  # vector (3 doubles)
     DIRECTION_VEC = 0x14  # vector (3 doubles)
+    UNKNOWN = 0x15
 
 # entity type structure:
 # 0x0D 0x04 (char count of) "body" = SAT "body"
