@@ -443,25 +443,6 @@ def parse_sat(s: Union[str, Sequence[str]]) -> AcisBuilder:
     return atree
 
 
-INT_TAG = 0x04
-DBL_TAG = 0x06
-STR_TAG = 0x07
-BOOL_FALSE = 0x0A  # reversed, double - meaning depends on context
-BOOL_TRUE = 0x0B  # forward, single, forward_v, I - meaning depends on context
-PTR_TAG = 0x0C
-ENTITY_TAG = 0x0D
-EXT_ENTITY_TAG = 0x0E
-REC_END_TAG = 0x11
-LNG_STR_TAG = 0x12  # following int4 = count ? see transform
-LOC_VEC_TAG = 0x13  # vector (3 doubles)
-DIR_VEC_TAG = 0x14  # vector (3 doubles)
-
-# entity type structure:
-# 0x0D 0x04 (char count of) "body" = SAT "body"
-# 0x0E 0x05 "plane" 0x0D 0x07 "surface" = SAT "plane-surface"
-# 0x0E 0x06 "ref_vt" 0x0E 0x03 "eye" 0x0D 0x06 "attrib" = SAT "ref_vt-eye-attrib"
-
-
 class SABDecoder:
     def __init__(self, data: bytes):
         self.data = data
