@@ -10,26 +10,40 @@ ACIS_VERSION = {
 
 DATE_FMT = "%a %b %d %H:%M:%S %Y"
 END_OF_ACIS_DATA = "End-of-ACIS-data"
-BEGIN_OF_ACIS_HISTORY_DATA = "Begin-of-ACIS-History-Data"
-END_OF_ACIS_HISTORY_DATA = "End-of-ACIS-History-Data"
-DATA_END_MARKERS = (END_OF_ACIS_DATA, BEGIN_OF_ACIS_HISTORY_DATA)
+# Of course Autodesk has its own end marker
+END_OF_ASM_DATA = "End-of-ASM-data"
+BEGIN_OF_ACIS_HISTORY_DATA = "Begin-of-ACIS-History-data"
+END_OF_ACIS_HISTORY_DATA = "End-of-ACIS-History-data"
+DATA_END_MARKERS = (
+    END_OF_ACIS_DATA,
+    BEGIN_OF_ACIS_HISTORY_DATA,
+    END_OF_ASM_DATA,
+)
 
 
 class Tags(enum.IntEnum):
     INT = 0x04
     DOUBLE = 0x06
     STR = 0x07
-    BOOL_FALSE = 0x0A  # reversed, double - meaning depends on context
-    BOOL_TRUE = 0x0B  # forward, single, forward_v, I - meaning depends on context
+
+    # reversed, double - meaning depends on context
+    BOOL_FALSE = 0x0A
+
+    # forward, single, forward_v, I - meaning depends on context
+    BOOL_TRUE = 0x0B
+
     POINTER = 0x0C
     ENTITY_TYPE = 0x0D
     ENTITY_TYPE_EX = 0x0E
+    SUBTYPE_START = 0x0F
+    SUBTYPE_END = 0x10
     RECORD_END = 0x11
     LONG_STR = 0x12  # following int4 = count ? see transform
     LOCATION_VEC = 0x13  # vector (3 doubles)
     DIRECTION_VEC = 0x14  # vector (3 doubles)
-    UNKNOWN_0x15 = 0x15  # int
+    UNKNOWN_0x15 = 0x15  # int, maybe some flags?
     UNKNOWN_0x17 = 0x17  # double
+
 
 # entity type structure:
 # 0x0D 0x04 (char count of) "body" = SAT "body"

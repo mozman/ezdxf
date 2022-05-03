@@ -83,6 +83,7 @@ class Decoder:
     def read_record(self) -> List[Token]:
         values: List[Token] = []
         entity_type: List[str] = []
+        subtype_level: int = 0
         while True:
             tag = self.read_byte()
             if tag == Tags.INT:
@@ -104,6 +105,7 @@ class Decoder:
             elif tag == Tags.ENTITY_TYPE:
                 entity_type.append(self.read_str(self.read_byte()))
                 values.append(Token(tag, "-".join(entity_type)))
+                entity_type.clear()
             elif tag == Tags.LOCATION_VEC:
                 values.append(Token(tag, self.read_floats(3)))
             elif tag == Tags.DIRECTION_VEC:
@@ -112,6 +114,12 @@ class Decoder:
                 values.append(Token(tag, self.read_int()))
             elif tag == Tags.UNKNOWN_0x17:
                 values.append(Token(tag, self.read_float()))
+            elif tag == Tags.SUBTYPE_START:
+                subtype_level += 1
+                values.append(Token(tag, subtype_level))
+            elif tag == Tags.SUBTYPE_END:
+                values.append(Token(tag, subtype_level))
+                subtype_level -= 1
             elif tag == Tags.RECORD_END:
                 return values
             else:
