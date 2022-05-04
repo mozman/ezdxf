@@ -3,10 +3,21 @@
 from typing import Iterator, Sequence, Optional, List
 from ezdxf.math import Vec3, Matrix44
 from ezdxf._acis.const import *
-from ezdxf._acis.sat import NULL_PTR, SatEntity
+from ezdxf._acis.abstract import AbstractEntity
+from ezdxf._acis.sat import SatEntity
+from ezdxf._acis.sab import SabEntity
 
 
-def parse_transform(transform: SatEntity) -> Matrix44:
+def parse_transform(transform: AbstractEntity) -> Matrix44:
+    if isinstance(transform, SatEntity):
+        return parse_sat_transform(transform)
+    elif isinstance(transform, SabEntity):
+        return parse_sab_transform(transform)
+    else:
+        raise TypeError("invalid entity type")
+
+
+def parse_sat_transform(transform: SatEntity) -> Matrix44:
     values = transform.parse_values("f;f;f;f;f;f;f;f;f;f;f;f")
     if len(values) != 12:
         raise ParsingError("transform entity has not enough data")
@@ -21,7 +32,11 @@ def parse_transform(transform: SatEntity) -> Matrix44:
     )
 
 
-def body_planar_polygon_faces(body: SatEntity) -> Iterator[List[Sequence[Vec3]]]:
+def parse_sab_transform(transform: SabEntity) -> Matrix44:
+    return Matrix44()
+
+
+def body_planar_polygon_faces(body: AbstractEntity) -> Iterator[List[Sequence[Vec3]]]:
     """Yields all planar polygon faces from all lumps in the given `body`_
     entity. Yields a separated list of faces for each linked `lump`_ entity.
 
@@ -38,21 +53,20 @@ def body_planar_polygon_faces(body: SatEntity) -> Iterator[List[Sequence[Vec3]]]
         raise TypeError(f"expected body, got: {body.name}")
 
     lump, transform = body.find_entities("lump;transform")
-    if lump is NULL_PTR:
+    if lump.is_null_ptr:
         raise ParsingError("lump data not found")
-
     m: Optional[Matrix44] = None
-    if transform is not NULL_PTR:
+    if not transform.is_null_ptr:
         m = parse_transform(transform)
     for lump in all_lumps(lump):
         yield list(lump_planar_polygon_faces(lump, m))
 
 
-def all_lumps(lump: SatEntity) -> List[SatEntity]:
+def all_lumps(lump: AbstractEntity) -> List[SatEntity]:
     """Returns a list of all linked lumps. """
     assert lump.name == "lump", "type error, expected lump"
     lumps = []
-    while lump is not NULL_PTR:
+    while not lump.is_null_ptr:
         lumps.append(lump)
         lump = lump.find_first("lump")
     return lumps
@@ -73,18 +87,18 @@ def lump_planar_polygon_faces(
         TypeError: `lump` has invalid ACIS type
 
     """
-    if lump.name != "lump" or lump is NULL_PTR:
+    if lump.name != "lump" or lump.name == "null-ptr":
         raise TypeError(f"expected lump, got: {lump.name}")
 
     face = lump.find_path("shell/face")
-    while face is not NULL_PTR:
+    while not face.is_null_ptr:
         vertices: List[Vec3] = []
         face, loop, plane = face.find_entities("face;loop;plane-surface")
-        if plane is NULL_PTR or loop is NULL_PTR:
+        if plane.is_null_ptr or loop.is_null_ptr:
             continue  # not a plane-surface or a polygon face
 
         first_coedge = loop.find_first("coedge")
-        if first_coedge is NULL_PTR:
+        if first_coedge.is_null_ptr:
             continue  # don't know what is going on
 
         coedge = first_coedge
@@ -97,7 +111,7 @@ def lump_planar_polygon_faces(
             # only take the first vertex, the second vertex is the first
             # vertex of the next edge:
             vertex, line = edge.find_entities("vertex;straight-curve")
-            if line is NULL_PTR:  # edge is not a straight line
+            if line.is_null_ptr:  # edge is not a straight line
                 is_valid_face = False
                 break
 
@@ -121,7 +135,7 @@ def parse_point(point: SatEntity) -> Vec3:
          ParsingError: no or invalid point entity
 
     """
-    if point is not NULL_PTR or point.name != "point":
+    if not point.is_null_ptr or point.name != "point":
         data = point.parse_values("f;f;f")
         if len(data) > 1:
             return Vec3(data[:3])

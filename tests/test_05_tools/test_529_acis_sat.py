@@ -4,7 +4,7 @@ import pytest
 from datetime import datetime
 from ezdxf import acis
 from ezdxf.acis import sat
-from ezdxf.acis import sat_tools
+from ezdxf.acis import parsing
 
 def test_default_header():
     header = acis.AcisHeader()
@@ -313,7 +313,7 @@ class TestParseValues:
 
 def test_parse_body_polygon_faces():
     builder = acis.parse_sat(PRISM)
-    lumps = list(sat_tools.body_planar_polygon_faces(builder.bodies[0]))
+    lumps = list(parsing.body_planar_polygon_faces(builder.bodies[0]))
     assert len(lumps) == 1
     faces = lumps[0]
     assert len(faces) == 10

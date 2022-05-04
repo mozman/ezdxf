@@ -13,7 +13,8 @@ from ezdxf._acis.sat import (
     SatBuilder,
     SatEntity
 )
+from ezdxf._acis.abstract import AbstractEntity
 from ezdxf._acis import sat
-from ezdxf._acis import sat_tools
+from ezdxf._acis import parsing
 from ezdxf._acis import sab
 from ezdxf._acis.converter import body_to_mesh

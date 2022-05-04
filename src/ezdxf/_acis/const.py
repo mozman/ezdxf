@@ -19,6 +19,7 @@ DATA_END_MARKERS = (
     BEGIN_OF_ACIS_HISTORY_DATA,
     END_OF_ASM_DATA,
 )
+NULL_PTR_NAME = "null-ptr"
 
 
 class Tags(enum.IntEnum):

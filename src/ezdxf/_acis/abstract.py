@@ -2,6 +2,8 @@
 #  License: MIT License
 from typing import List, Sequence, Any, TypeVar
 from abc import ABC, abstractmethod
+from ezdxf._acis.const import NULL_PTR_NAME
+
 
 T = TypeVar("T", bound="AbstractEntity")
 
@@ -9,10 +11,13 @@ T = TypeVar("T", bound="AbstractEntity")
 class AbstractEntity(ABC):
     """Unified query interface for SAT and SAB data."""
     name: str
-    id: int
 
     def __str__(self):
-        return f"{self.name}({self.id})"
+        return f"{self.name}"
+
+    @property
+    def is_null_ptr(self) -> bool:
+        return self.name == NULL_PTR_NAME
 
     @abstractmethod
     def find_all(self: T, entity_type: str) -> List[T]:
