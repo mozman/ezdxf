@@ -33,6 +33,7 @@ def parse_sat_transform(transform: SatEntity) -> Matrix44:
 
 
 def parse_sab_transform(transform: SabEntity) -> Matrix44:
+    # weired special case
     return Matrix44()
 
 
@@ -136,7 +137,8 @@ def parse_point(point: SatEntity) -> Vec3:
 
     """
     if not point.is_null_ptr or point.name != "point":
-        data = point.parse_values("f;f;f")
-        if len(data) > 1:
-            return Vec3(data[:3])
+        try:
+            return Vec3(point.parse_values("v")[0])
+        except (IndexError, TypeError):
+            pass
     raise ParsingError("expected a point entity")

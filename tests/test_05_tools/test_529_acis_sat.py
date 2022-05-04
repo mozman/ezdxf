@@ -5,6 +5,8 @@ from datetime import datetime
 from ezdxf import acis
 from ezdxf.acis import sat
 from ezdxf.acis import parsing
+from ezdxf.math import Vec3
+
 
 def test_default_header():
     header = acis.AcisHeader()
@@ -104,6 +106,7 @@ class TestMergeRecordStrings:
         assert records[0] == "eye_refinement ... end_fields"
         assert records[1] == "integer_attrib-name_attrib-gen-attrib ..."
         assert records[2] == "torus-surface ... I I I I"
+
 
 class TestParseRecords:
     def test_simple_case(self):
@@ -261,9 +264,7 @@ class TestParseValues:
         a = sat.new_sat_entity("entity1")
         b = sat.new_sat_entity("entity2")
         c = sat.new_sat_entity("entity3")
-        return sat.new_sat_entity(
-            "entity", data=[n, a, b, "1", c, n, "1.0"]
-        )
+        return sat.new_sat_entity("entity", data=[n, a, b, "1", c, n, "1.0"])
 
     def test_parse_integers(self):
         data = [sat.NULL_PTR, "1", "2", sat.NULL_PTR]
@@ -271,6 +272,11 @@ class TestParseValues:
         assert sat.parse_values(data, "i") == [1]
         assert sat.parse_values(data, "i;i") == [1, 2]
         assert sat.parse_values(data, "i;i;i") == [1, 2]
+
+    def test_parse_vec3(self):
+        data = [sat.NULL_PTR, "1.0", "2.0", "3.0", sat.NULL_PTR]
+        assert sat.parse_values([], "v") == []
+        assert sat.parse_values(data, "v") == [(1.0, 2.0, 3.0)]
 
     def test_parse_floats(self):
         data = [sat.NULL_PTR, "1.0", "2.0", sat.NULL_PTR]

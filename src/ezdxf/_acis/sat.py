@@ -6,7 +6,6 @@ from ezdxf._acis.const import *
 from ezdxf._acis.hdr import AcisHeader
 from ezdxf._acis.abstract import AbstractEntity
 
-
 SatRecord = List[str]
 
 
@@ -83,6 +82,7 @@ def parse_values(data: Sequence[Any], fmt: str) -> Sequence[Any]:
     next_is_user_string = False
     specifiers = fmt.split(";")
     specifiers.reverse()
+    vector: List[float] = []
     for field in data:
         if isinstance(field, SatEntity):
             next_is_user_string = False
@@ -96,7 +96,14 @@ def parse_values(data: Sequence[Any], fmt: str) -> Sequence[Any]:
         if len(specifiers) == 0:
             break
         specifier = specifiers.pop()
-        if specifier == "f":  # float
+        if specifier == "v":  # 3x float
+            vector.append(float(field))
+            if len(vector) == 3:
+                content.append(tuple(vector))
+                vector.clear()
+            else:
+                specifiers.append(specifier)
+        elif specifier == "f":  # float
             if field == "I":  # infinity
                 field = "inf"
             try:
