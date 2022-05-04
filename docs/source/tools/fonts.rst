@@ -11,11 +11,17 @@ has no relation how the DXF formats manages text styles.
     The :class:`~ezdxf.entities.Textstyle` entity, the DXF way to define fonts.
 
 The tools in this module provide abstractions to get font measurements with and
-without the optional Matplotlib package.
+without the optional `Matplotlib` package.
 
 For a proper text rendering the font measurements are required. `Ezdxf` has a
 lean approach to package dependencies, therefore the rendering results without
 support from the optional Matplotlib package are not very good.
+
+.. hint::
+
+    If `Matplotlib` does not find an installed font and rebuilding the matplotlib
+    font cache does not help, deleting the cache file ``~/.matplotlib/fontlist-v330.json``
+    may help.
 
 Font Classes
 ------------
