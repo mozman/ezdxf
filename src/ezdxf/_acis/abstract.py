@@ -1,17 +1,21 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import List, Sequence, Any
-import abc
+from typing import List, Sequence, Any, TypeVar
+from abc import ABC, abstractmethod
+
+T = TypeVar("T", bound="AbstractEntity")
 
 
-class AbstractEntity(abc.ABC):
+class AbstractEntity(ABC):
+    """Unified query interface for SAT and SAB data."""
     name: str
     id: int
 
     def __str__(self):
         return f"{self.name}({self.id})"
 
-    def find_all(self, entity_type: str) -> List["AbstractEntity"]:
+    @abstractmethod
+    def find_all(self: T, entity_type: str) -> List[T]:
         """Returns a list of all matching ACIS entities of then given type
         referenced by this entity.
 
@@ -19,9 +23,10 @@ class AbstractEntity(abc.ABC):
             entity_type: entity type (name) as string like "body"
 
         """
-        ...
+        pass
 
-    def find_first(self, entity_type: str) -> "AbstractEntity":
+    @abstractmethod
+    def find_first(self: T, entity_type: str) -> T:
         """Returns the first matching ACIS entity referenced by this entity.
         Returns the ``NULL_PTR`` if no entity was found.
 
@@ -31,7 +36,7 @@ class AbstractEntity(abc.ABC):
         """
         ...
 
-    def find_path(self, path: str) -> "AbstractEntity":
+    def find_path(self: T, path: str) -> T:
         """Returns the last ACIS entity referenced by an `path`.
         The `path` describes the path to the entity starting form the current
         entity like "lump/shell/face". This is equivalent to::
@@ -50,7 +55,7 @@ class AbstractEntity(abc.ABC):
             entity = entity.find_first(entity_type)
         return entity
 
-    def find_entities(self, names: str) -> List["AbstractEntity"]:
+    def find_entities(self: T, names: str) -> List[T]:
         """Find multiple entities of different types. Returns the first
         entity of each type. If a type doesn't exist a ``NULL_PTR`` is
         returned for this type::
@@ -66,6 +71,7 @@ class AbstractEntity(abc.ABC):
         """
         return [self.find_first(name) for name in names.split(";")]
 
+    @abstractmethod
     def parse_values(self, fmt: str) -> Sequence[Any]:
         """Parse only values from entity data, ignores all entities in front
         or between the data values.
@@ -77,6 +83,7 @@ class AbstractEntity(abc.ABC):
         ``v``       vector (3-float) values
         ``i``       integer values
         ``s``       string constants like "forward"
+        ``@``       ??? user string with preceding length encoding (SAT only)
         ``?``       skip (unknown) value
         =========== ==============================
 

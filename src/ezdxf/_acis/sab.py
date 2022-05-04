@@ -8,9 +8,9 @@ from ezdxf._acis.const import (
     DATE_FMT,
     Tags,
     DATA_END_MARKERS,
-    AcisTypeError,
 )
 from ezdxf._acis.hdr import AcisHeader
+from ezdxf._acis.abstract import AbstractEntity
 
 
 class Token(NamedTuple):
@@ -160,7 +160,7 @@ class Decoder:
                 return
 
 
-class SabEntity:
+class SabEntity(AbstractEntity):
     """Low level representation of an ACIS entity (node)."""
 
     def __init__(
@@ -179,11 +179,19 @@ class SabEntity:
     def __str__(self):
         return f"{self.name}({self.id})"
 
-    def pointer(self, index: int) -> "SabEntity":
-        token = self.data[index]
-        if token.tag == Tags.POINTER:
-            return token.value  # type: ignore
-        raise AcisTypeError(f"element at index {index} is not a pointer")
+    def find_all(self, entity_type: str) -> List["SabEntity"]:
+        """Returns a list of all matching ACIS entities of then given type
+        referenced by this entity.
+
+        Args:
+            entity_type: entity type (name) as string like "body"
+
+        """
+        return [
+            t.value
+            for t in self.data
+            if isinstance(t.value, SabEntity) and t.value.name == entity_type
+        ]
 
     def find_first(self, entity_type: str) -> "SabEntity":
         """Returns the first matching ACIS entity referenced by this entity.
@@ -200,24 +208,25 @@ class SabEntity:
                     return entity
         return NULL_PTR
 
-    def find_path(self, path: str) -> "SabEntity":
-        """Returns the last ACIS entity referenced by an `path`.
-        The `path` describes the path to the entity starting form the current
-        entity like "lump/shell/face". This is equivalent to::
+    def parse_values(self, fmt: str) -> Sequence[Any]:
+        """Parse only values from entity data, ignores all entities in front
+        or between the data values.
 
-            face = entity.find_first("lump").find_first("shell").find_first("face")
-
-        Returns ``NULL_PTR`` if no entity could be found or if the path is
-        invalid.
+        =========== ==============================
+        specifier   data type
+        =========== ==============================
+        ``f``       float values
+        ``i``       integer values
+        ``s``       string constants like "forward"
+        ``@``       user string with preceding length encoding
+        ``?``       skip (unknown) value
+        =========== ==============================
 
         Args:
-            path: entity types divided by "/" like "lump/shell/face"
+            fmt: format specifiers separated by ";"
 
         """
-        entity = self
-        for entity_type in path.split("/"):
-            entity = entity.find_first(entity_type)
-        return entity
+        return tuple()
 
 
 NULL_PTR = SabEntity("null-ptr", -1, -1, tuple())  # type: ignore
