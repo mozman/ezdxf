@@ -31,11 +31,7 @@ Functions
 
 .. autofunction:: parse_sat(s: Union[str, Sequence[str]]) -> SatBuilder
 
-.. autofunction:: body_to_mesh(body: RawEntity, merge_lumps=True) -> List[MeshTransformer]
-
-.. autofunction:: body_planar_polygon_faces(body: RawEntity) -> Iterator[List[Sequence[Vec3]]]
-
-.. autofunction:: lump_planar_polygon_faces(lump: RawEntity, m: Matrix44 = None) -> Iterator[Sequence[Vec3]]
+.. autofunction:: body_to_mesh(body: SatEntity, merge_lumps=True) -> List[MeshTransformer]
 
 
 Classes
