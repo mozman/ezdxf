@@ -108,18 +108,18 @@ class TestParseRecords:
     def test_simple_case(self):
         records = sat.parse_records(["test 1 2 3 #", "test 4 5 6 #"])
         assert len(records) == 2
-        assert records[0].num == 0
-        assert records[0].tokens == ["test", "1", "2", "3"]
-        assert records[1].num == 1
-        assert records[1].tokens == ["test", "4", "5", "6"]
+        assert records[0] == ["test", "1", "2", "3"]
+        assert records[1] == ["test", "4", "5", "6"]
 
     def test_sequence_numbers(self):
-        records = sat.parse_records(["-2 test 1 2 3 #", " -4 test 4 5 6 #"])
+        records = sat.parse_records(["-0 test 1 2 3 #", " -1 test 4 5 6 #"])
         assert len(records) == 2
-        assert records[0].num == 2
-        assert records[0].tokens == ["test", "1", "2", "3"]
-        assert records[1].num == 4
-        assert records[1].tokens == ["test", "4", "5", "6"]
+        assert records[0] == ["test", "1", "2", "3"]
+        assert records[1] == ["test", "4", "5", "6"]
+
+    def test_non_continuous_sequence_numbers_raises_exception(self):
+        with pytest.raises(sat.ParsingError):
+            sat.parse_records(["-0 test 1 2 3 #", " -2 test 4 5 6 #"])
 
     @pytest.mark.parametrize(
         "data",
@@ -142,9 +142,9 @@ class TestParseRecords:
     )
     def test_merged_records(self, data):
         records = sat.parse_records(data)
-        assert records[0].tokens == ["sentinel", "7"]
-        assert records[1].tokens == ["test", "1", "2", "3", "4", "5", "6"]
-        assert records[2].tokens == ["sentinel", "8"]
+        assert records[0] == ["sentinel", "7"]
+        assert records[1] == ["test", "1", "2", "3", "4", "5", "6"]
+        assert records[2] == ["sentinel", "8"]
 
 
 def test_build_entities():
@@ -201,7 +201,7 @@ class TestAcisBuilder:
     def test_find_in_invalid_path_return_null_pointer(self, builder):
         body = builder.bodies[0]
         face = body.find_path("lump/xxx/face")
-        assert face is acis.NULL_PTR
+        assert face is sat.NULL_PTR
 
     def test_find_all(self, builder):
         coedge = builder.entities[10]
@@ -209,7 +209,7 @@ class TestAcisBuilder:
 
 
 def test_build_str_records():
-    a = sat.new_sat_entity("test1", data=[acis.NULL_PTR, 1])
+    a = sat.new_sat_entity("test1", data=[sat.NULL_PTR, 1])
     b = sat.new_sat_entity("test2", id=7, data=[a, 2.0])
     c = sat.new_sat_entity("test3", data=[a, b])
     entities = [a, b, c]
@@ -222,7 +222,7 @@ def test_build_str_records():
 class TestFindMultipleEntities:
     @pytest.fixture
     def entity(self):
-        n = acis.NULL_PTR
+        n = sat.NULL_PTR
         a1 = sat.new_sat_entity("entity1")
         a2 = sat.new_sat_entity("entity1")
         b1 = sat.new_sat_entity("entity2")
@@ -244,13 +244,13 @@ class TestFindMultipleEntities:
 
     def test_find_first_entity4_and_first_entity3(self, entity):
         result = entity.find_entities("entity4;entity3")
-        assert result[0] is acis.NULL_PTR
+        assert result[0] is sat.NULL_PTR
         assert result[1].name == "entity3"
 
     def test_find_first_entity2_and_first_entity4(self, entity):
         result = entity.find_entities("entity2;entity4")
         assert result[0].name == "entity2"
-        assert result[1] is acis.NULL_PTR
+        assert result[1] is sat.NULL_PTR
 
 
 class TestParseValues:

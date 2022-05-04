@@ -1,16 +1,11 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from dataclasses import dataclass
-from typing import List, Any, Sequence, Dict, Iterator, Tuple, Union
+from typing import List, Any, Sequence, Iterator, Tuple, Union
 from datetime import datetime
 from ezdxf._acis.const import *
 from ezdxf._acis.hdr import AcisHeader
 
-
-@dataclass
-class SatRecord:
-    num: int
-    tokens: List[str]
+SatRecord = List[str]
 
 
 class SatEntity:
@@ -187,16 +182,14 @@ def is_ptr(s: str) -> bool:
     return len(s) > 0 and s[0] == "$"
 
 
-def resolve_str_pointers(entities: Dict[int, SatEntity]) -> List[SatEntity]:
+def resolve_str_pointers(entities: List[SatEntity]) -> List[SatEntity]:
     def ptr(s: str) -> SatEntity:
-        if is_ptr(s):
-            num = int(s[1:])
-            if num == -1:
-                return NULL_PTR
-            return entities[num]
-        raise ValueError(f"not a pointer: {s}")
+        num = int(s[1:])
+        if num == -1:
+            return NULL_PTR
+        return entities[num]
 
-    for entity in entities.values():
+    for entity in entities:
         entity.attributes = ptr(entity.attr_ptr)
         entity.attr_ptr = "$-1"
         data = []
@@ -206,7 +199,7 @@ def resolve_str_pointers(entities: Dict[int, SatEntity]) -> List[SatEntity]:
             else:
                 data.append(token)
         entity.data = data
-    return [e for _, e in sorted(entities.items())]
+    return entities
 
 
 class SatBuilder:
@@ -337,33 +330,35 @@ def merge_record_strings(data: Sequence[str]) -> Iterator[str]:
 
 
 def parse_records(data: Sequence[str]) -> List[SatRecord]:
-    num = 0
+    expected_seq_num = 0
     records: List[SatRecord] = []
     for line in merge_record_strings(data):
-        tokens = line.split()
+        tokens: SatRecord = line.split()
         first_token = tokens[0].strip()
         if first_token.startswith("-"):
             num = -int(first_token)
+            if num != expected_seq_num:
+                raise ParsingError("non-continuous sequence numbers not supported")
             tokens.pop(0)
-        records.append(SatRecord(num, tokens))
-        num += 1
+        records.append(tokens)
+        expected_seq_num += 1
     return records
 
 
 def build_entities(
     records: Sequence[SatRecord], version: int
-) -> Dict[int, SatEntity]:
-    entities = {}
+) -> List[SatEntity]:
+    entities: List[SatEntity] = []
     for record in records:
-        name = record.tokens[0]
-        attr = record.tokens[1]
+        name = record[0]
+        attr = record[1]
         id_ = -1
         if version >= 700:
-            id_ = int(record.tokens[2])
-            data = record.tokens[3:]
+            id_ = int(record[2])
+            data = record[3:]
         else:
-            data = record.tokens[2:]
-        entities[record.num] = SatEntity(name, attr, id_, data)
+            data = record[2:]
+        entities.append(SatEntity(name, attr, id_, data))
     return entities
 
 
