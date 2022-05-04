@@ -69,3 +69,7 @@ class ParsingError(AcisException):
 
 class EndOfAcisData(AcisException):
     pass
+
+
+class AcisTypeError(AcisException):
+    pass

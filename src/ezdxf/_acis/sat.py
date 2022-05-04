@@ -203,7 +203,7 @@ def resolve_str_pointers(entities: List[SatEntity]) -> List[SatEntity]:
 
 
 class SatBuilder:
-    """Low level data structure to manage ACIS data files."""
+    """Low level data structure to manage ACIS SAT data files."""
 
     def __init__(self):
         self.header = AcisHeader()
@@ -363,7 +363,7 @@ def build_entities(
 
 
 def parse_sat(s: Union[str, Sequence[str]]) -> SatBuilder:
-    """Returns the :class:`AcisBuilder` for the ACIS SAT file content given as
+    """Returns the :class:`SatBuilder` for the ACIS SAT file content given as
     string or list of strings.
 
     Raises:

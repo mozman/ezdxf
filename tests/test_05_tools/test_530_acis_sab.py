@@ -37,101 +37,38 @@ def test_decode_all_records():
     decoder = sab.Decoder(SAB)
     _ = decoder.read_header()
     records = list(decoder.read_records())
-    assert len(records) == 87
+    assert len(records) == 88
+    assert records[-1][0].value == "End-of-ASM-data"
 
 
-SAT = """20800 87 2 0 
-@33 Open Design Alliance ACIS Builder @14 ACIS 208.00 NT @24 Mon Apr 25 09:28:40 2022 
-1 9.9999999999999995e-007 1e-010 
-asmheader $-1 -1 @12 208.0.4.7009 #
-body $-1 -1 $-1 $2 $-1 $3 #
-lump $-1 -1 $-1 $-1 $4 $1 #
-transform $-1 -1 1 0 0 0 1 0 0 0 1 123 85 8.4999999999999947 1 no_rotate no_reflect no_shear #
-shell $-1 -1 $-1 $-1 $-1 $5 $-1 $2 #
-face $-1 -1 $-1 $6 $7 $4 $-1 $8 forward single #
-face $-1 -1 $-1 $9 $10 $4 $-1 $11 reversed single #
-loop $-1 -1 $-1 $-1 $12 $5 #
-plane-surface $-1 -1 $-1 0 0 8.4999999999999947 0 0 1 1 0 0 forward_v I I I I #
-face $-1 -1 $-1 $13 $14 $4 $-1 $15 reversed single #
-loop $-1 -1 $-1 $-1 $16 $6 #
-plane-surface $-1 -1 $-1 0 0 -8.4999999999999947 0 0 1 1 0 0 forward_v I I I I #
-coedge $-1 -1 $-1 $17 $18 $19 $20 forward $7 $-1 #
-face $-1 -1 $-1 $21 $22 $4 $-1 $23 reversed single #
-loop $-1 -1 $-1 $-1 $24 $9 #
-plane-surface $-1 -1 $-1 0 -13 0 0 1 0 0 0 1 forward_v I I I I #
-coedge $-1 -1 $-1 $25 $26 $27 $28 forward $10 $-1 #
-coedge $-1 -1 $-1 $29 $12 $30 $31 forward $7 $-1 #
-coedge $-1 -1 $-1 $12 $29 $32 $33 forward $7 $-1 #
-coedge $-1 -1 $-1 $34 $35 $12 $20 reversed $36 $-1 #
-edge $-1 -1 $-1 $37 -13 $38 13 $19 $39 forward @7 unknown #
-face $-1 -1 $-1 $40 $41 $4 $-1 $42 reversed single #
-loop $-1 -1 $-1 $-1 $43 $13 #
-plane-surface $-1 -1 $-1 -9 0 0 1 0 0 0 0 -1 forward_v I I I I #
-coedge $-1 -1 $-1 $44 $32 $45 $46 forward $14 $-1 #
-coedge $-1 -1 $-1 $47 $16 $44 $48 forward $10 $-1 #
-coedge $-1 -1 $-1 $16 $47 $49 $50 forward $10 $-1 #
-coedge $-1 -1 $-1 $35 $34 $16 $28 reversed $36 $-1 #
-edge $-1 -1 $-1 $51 -13 $52 13 $27 $53 forward @7 unknown #
-coedge $-1 -1 $-1 $18 $17 $54 $55 forward $7 $-1 #
-coedge $-1 -1 $-1 $56 $57 $17 $31 reversed $41 $-1 #
-edge $-1 -1 $-1 $38 -9 $58 9 $30 $59 forward @7 unknown #
-coedge $-1 -1 $-1 $24 $60 $18 $33 reversed $14 $-1 #
-edge $-1 -1 $-1 $61 -9 $37 9 $32 $62 forward @7 unknown #
-coedge $-1 -1 $-1 $27 $19 $60 $63 forward $36 $-1 #
-coedge $-1 -1 $-1 $19 $27 $56 $64 reversed $36 $-1 #
-loop $-1 -1 $-1 $-1 $34 $40 #
-vertex $-1 -1 $-1 $20 $65 #
-vertex $-1 -1 $-1 $20 $66 #
-straight-curve $-1 -1 $-1 9 0 8.4999999999999947 0 1 0 I I #
-face $-1 -1 $-1 $-1 $36 $4 $-1 $67 reversed single #
-loop $-1 -1 $-1 $-1 $56 $21 #
-plane-surface $-1 -1 $-1 0 13 0 0 -1 0 0 0 -1 forward_v I I I I #
-coedge $-1 -1 $-1 $68 $54 $57 $69 forward $22 $-1 #
-coedge $-1 -1 $-1 $60 $24 $25 $48 reversed $14 $-1 #
-coedge $-1 -1 $-1 $54 $68 $24 $46 reversed $22 $-1 #
-edge $-1 -1 $-1 $61 -8.4999999999999947 $70 8.4999999999999947 $45 $71 forward @7 unknown #
-coedge $-1 -1 $-1 $26 $25 $68 $72 forward $10 $-1 #
-edge $-1 -1 $-1 $52 -9 $70 9 $44 $73 forward @7 unknown #
-coedge $-1 -1 $-1 $57 $56 $26 $50 reversed $41 $-1 #
-edge $-1 -1 $-1 $74 -9 $51 9 $49 $75 forward @7 unknown #
-vertex $-1 -1 $-1 $28 $76 #
-vertex $-1 -1 $-1 $63 $77 #
-straight-curve $-1 -1 $-1 9 0 -8.4999999999999947 0 -1 0 I I #
-coedge $-1 -1 $-1 $43 $45 $29 $55 reversed $22 $-1 #
-edge $-1 -1 $-1 $58 -13 $61 13 $54 $78 forward @7 unknown #
-coedge $-1 -1 $-1 $49 $30 $35 $64 forward $41 $-1 #
-coedge $-1 -1 $-1 $30 $49 $43 $69 reversed $41 $-1 #
-vertex $-1 -1 $-1 $31 $79 #
-straight-curve $-1 -1 $-1 0 13 8.4999999999999947 -1 0 0 I I #
-coedge $-1 -1 $-1 $32 $44 $34 $63 reversed $14 $-1 #
-vertex $-1 -1 $-1 $55 $80 #
-straight-curve $-1 -1 $-1 0 -13 8.4999999999999947 1 0 0 I I #
-edge $-1 -1 $-1 $37 -8.4999999999999947 $52 8.4999999999999947 $34 $81 forward @7 unknown #
-edge $-1 -1 $-1 $38 -8.4999999999999947 $51 8.4999999999999947 $35 $82 forward @7 unknown #
-point $-1 -1 $-1 9 -13 8.4999999999999947 #
-point $-1 -1 $-1 9 13 8.4999999999999947 #
-plane-surface $-1 -1 $-1 9 0 0 -1 0 0 0 0 1 forward_v I I I I #
-coedge $-1 -1 $-1 $45 $43 $47 $72 reversed $22 $-1 #
-edge $-1 -1 $-1 $58 -8.4999999999999947 $74 8.4999999999999947 $57 $83 forward @7 unknown #
-vertex $-1 -1 $-1 $72 $84 #
-straight-curve $-1 -1 $-1 -9 -13 0 0 0 -1 I I #
-edge $-1 -1 $-1 $70 -13 $74 13 $68 $85 forward @7 unknown #
-straight-curve $-1 -1 $-1 0 -13 -8.4999999999999947 -1 0 0 I I #
-vertex $-1 -1 $-1 $50 $86 #
-straight-curve $-1 -1 $-1 0 13 -8.4999999999999947 1 0 0 I I #
-point $-1 -1 $-1 9 13 -8.4999999999999947 #
-point $-1 -1 $-1 9 -13 -8.4999999999999947 #
-straight-curve $-1 -1 $-1 -9 0 8.4999999999999947 0 -1 0 I I #
-point $-1 -1 $-1 -9 13 8.4999999999999947 #
-point $-1 -1 $-1 -9 -13 8.4999999999999947 #
-straight-curve $-1 -1 $-1 9 -13 0 0 0 -1 I I #
-straight-curve $-1 -1 $-1 9 13 0 0 0 -1 I I #
-straight-curve $-1 -1 $-1 -9 13 0 0 0 -1 I I #
-point $-1 -1 $-1 -9 -13 -8.4999999999999947 #
-straight-curve $-1 -1 $-1 -9 0 -8.4999999999999947 0 1 0 I I #
-point $-1 -1 $-1 -9 13 -8.4999999999999947 #
-End-of-ACIS-data 
-"""
+def test_parse_sab():
+    builder = sab.parse_sab(SAB)
+    assert builder.header.version == 21800
+    assert len(builder.entities) == 88
+    assert builder.entities[0].name == "asmheader"
+    assert builder.entities[-1].name == "End-of-ASM-data"
+
+
+class TestSabEntity:
+    @pytest.fixture(scope="class")
+    def builder(self):
+        return sab.parse_sab(SAB)
+
+    @pytest.fixture(scope="class")
+    def body(self, builder):
+        return builder.bodies[0]
+
+    def test_get_pointer_at_index(self, body):
+        assert body.name == "body"
+        assert body.attributes is sab.NULL_PTR
+        assert body.pointer(0) is sab.NULL_PTR
+
+    def test_find_first_entity(self, body):
+        assert body.find_first("lump").name == "lump"
+
+    def test_find_first_returns_NULL_PTR_if_not_found(self, body):
+        assert body.find_first("vertex") is sab.NULL_PTR
+
 
 # fmt: off
 SAB = bytearray([
