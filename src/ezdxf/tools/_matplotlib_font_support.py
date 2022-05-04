@@ -76,7 +76,7 @@ def get_font_measurements(
         upper_x = get_text_path("X", font_properties).vertices[:, 1].tolist()
         lower_x = get_text_path("x", font_properties).vertices[:, 1].tolist()
         lower_p = get_text_path("p", font_properties).vertices[:, 1].tolist()
-    except RuntimeError:
+    except (RuntimeError, ValueError):
         print(f"Runtime error processing font: {font_properties.get_name()}")
         return None
     baseline = min(lower_x)
