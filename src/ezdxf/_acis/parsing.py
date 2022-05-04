@@ -63,7 +63,7 @@ def body_planar_polygon_faces(body: AbstractEntity) -> Iterator[List[Sequence[Ve
         yield list(lump_planar_polygon_faces(lump, m))
 
 
-def all_lumps(lump: AbstractEntity) -> List[SatEntity]:
+def all_lumps(lump: AbstractEntity) -> List[AbstractEntity]:
     """Returns a list of all linked lumps. """
     assert lump.name == "lump", "type error, expected lump"
     lumps = []
@@ -74,7 +74,7 @@ def all_lumps(lump: AbstractEntity) -> List[SatEntity]:
 
 
 def lump_planar_polygon_faces(
-    lump: SatEntity, m: Matrix44 = None
+    lump: AbstractEntity, m: Matrix44 = None
 ) -> Iterator[Sequence[Vec3]]:
     """Yields all planar polygon faces from the given `lump`_ entity as sequence
     of :class:`~ezdxf.math.Vec3` instances. Applies the transformation
@@ -129,7 +129,7 @@ def lump_planar_polygon_faces(
                 yield vertices
 
 
-def parse_point(point: SatEntity) -> Vec3:
+def parse_point(point: AbstractEntity) -> Vec3:
     """Parses the `point`entity as :class:`ezdxf.math.Vec3` instance.
 
     Raises:
