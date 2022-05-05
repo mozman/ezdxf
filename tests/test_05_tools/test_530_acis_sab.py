@@ -60,13 +60,13 @@ class TestSabEntity:
 
     def test_get_pointer_at_index(self, body):
         assert body.name == "body"
-        assert body.attributes.name == "null-ptr"
+        assert body.attributes.is_null_ptr is True
 
     def test_find_first_entity(self, body):
         assert body.find_first("lump").name == "lump"
 
-    def test_find_first_returns_NULL_PTR_if_not_found(self, body):
-        assert body.find_first("vertex").name == "null-ptr"
+    def test_find_first_returns_null_ptr_if_not_found(self, body):
+        assert body.find_first("vertex").is_null_ptr is True
 
 
 def ptr_token(v: sab.SabEntity):

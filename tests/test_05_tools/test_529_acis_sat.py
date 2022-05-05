@@ -205,7 +205,7 @@ class TestAcisBuilder:
     def test_find_in_invalid_path_return_null_pointer(self, builder):
         body = builder.bodies[0]
         face = body.find_path("lump/xxx/face")
-        assert face is sat.NULL_PTR
+        assert face.is_null_ptr is True
 
     def test_find_all(self, builder):
         coedge = builder.entities[10]
