@@ -135,7 +135,7 @@ def parse_values(data: Sequence[Any], fmt: str) -> Sequence[Any]:
 NULL_PTR = SatEntity("null-ptr", "$-1", -1, tuple())  # type: ignore
 
 
-def new_sat_entity(
+def new_entity(
     name: str,
     attributes=NULL_PTR,
     id=-1,
