@@ -28,9 +28,11 @@ def parse_sat_transform(transform: sat.SatEntity) -> Matrix44:
 def parse_sab_transform(transform: sab.SabEntity) -> Matrix44:
     # Weired special case, transformation matrix is stored as long string:
     # Token(tag=18, value='1 0 0 0 1 0 0 0 1 123 85 8.4999999999999947 1 no_rotate no_reflect no_shear ')
-    m = transform.data[0].value
-    e = sat.new_entity("transform", data=m.split())
-    return parse_sat_transform(e)
+    strings = transform.parse_values("@")
+    if strings:
+        e = sat.new_entity("transform", data=strings[0].split())
+        return parse_sat_transform(e)
+    return Matrix44()
 
 
 def body_planar_polygon_faces(
