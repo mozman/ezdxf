@@ -4,20 +4,20 @@ from typing import Iterator, Sequence, Optional, List
 from ezdxf.math import Vec3, Matrix44
 from ezdxf._acis.const import *
 from ezdxf._acis.abstract import AbstractEntity
-from ezdxf._acis.sat import SatEntity
-from ezdxf._acis.sab import SabEntity
+from ezdxf._acis import sat
+from ezdxf._acis import sab
 
 
 def parse_transform(transform: AbstractEntity) -> Matrix44:
-    if isinstance(transform, SatEntity):
+    if isinstance(transform, sat.SatEntity):
         return parse_sat_transform(transform)
-    elif isinstance(transform, SabEntity):
+    elif isinstance(transform, sab.SabEntity):
         return parse_sab_transform(transform)
     else:
         raise TypeError("invalid entity type")
 
 
-def parse_sat_transform(transform: SatEntity) -> Matrix44:
+def parse_sat_transform(transform: sat.SatEntity) -> Matrix44:
     values = transform.parse_values("f;f;f;f;f;f;f;f;f;f;f;f")
     if len(values) != 12:
         raise ParsingError("transform entity has not enough data")
@@ -32,9 +32,12 @@ def parse_sat_transform(transform: SatEntity) -> Matrix44:
     )
 
 
-def parse_sab_transform(transform: SabEntity) -> Matrix44:
-    # weired special case
-    return Matrix44()
+def parse_sab_transform(transform: sab.SabEntity) -> Matrix44:
+    # Weired special case, transformation matrix is stored as long string:
+    # Token(tag=18, value='1 0 0 0 1 0 0 0 1 123 85 8.4999999999999947 1 no_rotate no_reflect no_shear ')
+    m = transform.data[0].value
+    e = sat.new_entity("transform", data=m.split())
+    return parse_sat_transform(e)
 
 
 def body_planar_polygon_faces(body: AbstractEntity) -> Iterator[List[Sequence[Vec3]]]:
