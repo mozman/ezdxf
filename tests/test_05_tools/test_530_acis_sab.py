@@ -3,7 +3,8 @@
 
 import pytest
 from datetime import datetime
-from ezdxf.acis import sab
+from ezdxf import acis
+from ezdxf.acis import sab, parsing
 
 T = sab.Tags
 
@@ -67,6 +68,26 @@ class TestSabEntity:
 
     def test_find_first_returns_null_ptr_if_not_found(self, body):
         assert body.find_first("vertex").is_null_ptr is True
+
+    def test_query_entities(self, builder):
+        points = list(builder.query(lambda e: e.name == "point"))
+        assert len(points) == 8
+
+    def test_find_entities_in_nodes(self, body):
+        face = body.find_first("lump").find_first("shell").find_first("face")
+        assert face.name == "face"
+
+    def test_find_entities_in_path(self, body):
+        face = body.find_path("lump/shell/face")
+        assert face.name == "face"
+
+    def test_find_in_invalid_path_return_null_pointer(self, body):
+        face = body.find_path("lump/xxx/face")
+        assert face.is_null_ptr is True
+
+    def test_find_all(self, builder):
+        coedge = builder.entities[12]
+        assert len(coedge.find_all("coedge")) == 3
 
 
 def ptr_token(v: sab.SabEntity):
@@ -152,6 +173,23 @@ class TestParseValues:
     def test_ignore_entities_between_values(self, null):
         data = [int_token(7), null, dbl_token(1)]
         assert sab.parse_values(data, "i;f") == [7, 1.0]
+
+
+def test_parse_body_polygon_faces():
+    builder = sab.parse_sab(SAB)
+    lumps = list(parsing.body_planar_polygon_faces(builder.bodies[0]))
+    assert len(lumps) == 1
+    faces = lumps[0]
+    assert len(faces) == 6
+
+
+def test_body_to_mesh():
+    builder = sab.parse_sab(SAB)
+    meshes = acis.body_to_mesh(builder.bodies[0])
+    assert len(meshes) == 1
+    mesh = meshes[0]
+    assert len(mesh.faces) == 6
+    assert len(mesh.vertices) == 8
 
 
 # fmt: off

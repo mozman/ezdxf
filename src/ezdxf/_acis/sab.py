@@ -5,7 +5,6 @@ from datetime import datetime
 import struct
 from ezdxf._acis.const import (
     ParsingError,
-    AcisTypeError,
     DATE_FMT,
     Tags,
     DATA_END_MARKERS,
@@ -227,7 +226,7 @@ class SabEntity(AbstractEntity):
             fmt: format specifiers separated by ";"
 
         """
-        return tuple()
+        return parse_values(self.data, fmt)
 
 
 TYPE_ERR = "format specifier '{0}' does not match tag (0x{1:02X}, {2})"
@@ -317,6 +316,15 @@ class SabBuilder:
         """Reset entities and bodies list. (internal API)"""
         self.bodies = [e for e in entities if e.name == "body"]
         self.entities = entities
+
+    def query(self, func=lambda e: True) -> Iterator[SabEntity]:
+        """Yields all entities as :class:`SabEntity` for which the given
+        function returns ``True`` e.g. query all "point" entities::
+
+            points = list(acis_builder.query(lambda e: e.name == "point"))
+
+        """
+        return filter(func, self.entities)
 
 
 def build_entities(

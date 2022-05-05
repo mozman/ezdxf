@@ -210,7 +210,7 @@ class SatBuilder:
         self.entities = entities
 
     def query(self, func=lambda e: True) -> Iterator[SatEntity]:
-        """Yields all entities as :class:`RawEntity` for which the given
+        """Yields all entities as :class:`SabEntity` for which the given
         function returns ``True`` e.g. query all "point" entities::
 
             points = list(acis_builder.query(lambda e: e.name == "point"))

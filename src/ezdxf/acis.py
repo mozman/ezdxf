@@ -13,6 +13,11 @@ from ezdxf._acis.sat import (
     SatBuilder,
     SatEntity
 )
+from ezdxf._acis.sab import (
+    parse_sab,
+    SabBuilder,
+    SabEntity
+)
 from ezdxf._acis.abstract import AbstractEntity
 from ezdxf._acis import sat
 from ezdxf._acis import parsing

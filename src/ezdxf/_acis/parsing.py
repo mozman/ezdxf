@@ -141,4 +141,4 @@ def parse_point(point: AbstractEntity) -> Vec3:
             return Vec3(point.parse_values("v")[0])
         except (IndexError, TypeError):
             pass
-    raise ParsingError("expected a point entity")
+    raise ParsingError(f"expected a point entity, got {point.name}")
