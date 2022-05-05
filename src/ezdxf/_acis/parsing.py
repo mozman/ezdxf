@@ -22,14 +22,7 @@ def parse_sat_transform(transform: sat.SatEntity) -> Matrix44:
     if len(values) != 12:
         raise ParsingError("transform entity has not enough data")
     a, b, c, d, e, f, g, h, i, j, k, l = values
-    return Matrix44(
-        [
-            (a, b, c, 0.0),
-            (d, e, f, 0.0),
-            (g, h, i, 0.0),
-            (j, k, l, 1.0),
-        ]
-    )
+    return Matrix44((a, b, c, 0, d, e, f, 0, g, h, i, 0, j, k, l, 1))
 
 
 def parse_sab_transform(transform: sab.SabEntity) -> Matrix44:
@@ -40,7 +33,9 @@ def parse_sab_transform(transform: sab.SabEntity) -> Matrix44:
     return parse_sat_transform(e)
 
 
-def body_planar_polygon_faces(body: AbstractEntity) -> Iterator[List[Sequence[Vec3]]]:
+def body_planar_polygon_faces(
+    body: AbstractEntity,
+) -> Iterator[List[Sequence[Vec3]]]:
     """Yields all planar polygon faces from all lumps in the given `body`_
     entity. Yields a separated list of faces for each linked `lump`_ entity.
 
@@ -67,7 +62,7 @@ def body_planar_polygon_faces(body: AbstractEntity) -> Iterator[List[Sequence[Ve
 
 
 def all_lumps(lump: AbstractEntity) -> List[AbstractEntity]:
-    """Returns a list of all linked lumps. """
+    """Returns a list of all linked lumps."""
     assert lump.name == "lump", "type error, expected lump"
     lumps = []
     while not lump.is_null_ptr:
