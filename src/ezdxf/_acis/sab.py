@@ -5,6 +5,7 @@ from datetime import datetime
 import struct
 from ezdxf._acis.const import (
     ParsingError,
+    AcisTypeError,
     DATE_FMT,
     Tags,
     DATA_END_MARKERS,
@@ -217,7 +218,7 @@ class SabEntity(AbstractEntity):
         =========== ==============================
         ``f``       float values
         ``i``       integer values
-        ``s``       string constants like "forward"
+        ``b``       boolean values like "forward", "reversed", ...
         ``@``       user string with preceding length encoding
         ``?``       skip (unknown) value
         =========== ==============================
@@ -229,7 +230,79 @@ class SabEntity(AbstractEntity):
         return tuple()
 
 
+TYPE_ERR = "format specifier '{0}' does not match tag (0x{1:02X}, {2})"
+
+
+def parse_values(data: Sequence[Any], fmt: str) -> Sequence[Any]:
+    """Parse only values from entity data, ignores all entities."""
+
+    content = []
+    specifiers = fmt.split(";")
+    specifiers.reverse()
+    for tag, value in data:
+        if tag == Tags.POINTER:
+            continue  # ignore all entity pointers
+
+        if len(specifiers) == 0:
+            break
+        specifier = specifiers.pop()
+        if specifier == "v":  # any vector
+            if tag in (Tags.LOCATION_VEC, Tags.DIRECTION_VEC):
+                content.append(value)
+            else:
+                raise ParsingError(TYPE_ERR.format(specifier, tag, value))
+        elif specifier == "f":  # float
+            if tag == Tags.DOUBLE:
+                content.append(value)
+            elif tag == Tags.BOOL_TRUE:  # unbounded value "I"
+                content.append(float("inf"))
+            else:
+                raise ParsingError(TYPE_ERR.format(specifier, tag, value))
+        elif specifier == "i":  # integer
+            if tag == Tags.INT:
+                content.append(value)
+            else:
+                raise ParsingError(TYPE_ERR.format(specifier, tag, value))
+        elif specifier == "b":  # SAT string constant like "forward" and "reversed"
+            if tag == Tags.BOOL_TRUE:
+                content.append(True)
+            elif tag == Tags.BOOL_FALSE:
+                content.append(False)
+            else:
+                raise ParsingError(TYPE_ERR.format(specifier, tag, value))
+        elif specifier == "@":  # user string
+            if tag in (Tags.STR, Tags.LONG_STR):
+                content.append(value)
+            else:
+                raise ParsingError(TYPE_ERR.format(specifier, tag, value))
+        elif specifier == "?":  # skip value field
+            pass
+        else:
+            raise ParsingError(f"unknown format specifier: {specifier}")
+    return content
+
+
 NULL_PTR = SabEntity("null-ptr", -1, -1, tuple())  # type: ignore
+
+
+def new_entity(
+    name: str,
+    attributes=NULL_PTR,
+    id=-1,
+    data: List[Any] = None,
+) -> SabEntity:
+    """Factory to create new ACIS entities.
+
+    Args:
+        name: entity type
+        attributes: reference to the entity attributes or :attr:`NULL_PTR`.
+        id: unique entity id as integer or -1
+        data: generic data container as list
+
+    """
+    e = SabEntity(name, -1, id, data)
+    e.attributes = attributes
+    return e
 
 
 class SabBuilder:

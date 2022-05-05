@@ -120,7 +120,9 @@ def parse_values(data: Sequence[Any], fmt: str) -> Sequence[Any]:
             try:
                 content.append(BOOL_SPECIFIER[field])
             except KeyError:
-                raise ParsingError(f"unknown boolean specifier: '{field}'")
+                raise ParsingError(
+                    f"unknown boolean string specifier: '{field}'"
+                )
         elif specifier == "@":  # user string with length encoding
             next_is_user_string = True
             # ignor length encoding
@@ -316,7 +318,9 @@ def parse_records(data: Sequence[str]) -> List[SatRecord]:
         if first_token.startswith("-"):
             num = -int(first_token)
             if num != expected_seq_num:
-                raise ParsingError("non-continuous sequence numbers not supported")
+                raise ParsingError(
+                    "non-continuous sequence numbers not supported"
+                )
             tokens.pop(0)
         records.append(tokens)
         expected_seq_num += 1

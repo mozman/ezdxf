@@ -258,14 +258,6 @@ class TestFindMultipleEntities:
 
 
 class TestParseValues:
-    @pytest.fixture
-    def entity(self):
-        n = sat.NULL_PTR
-        a = sat.new_entity("entity1")
-        b = sat.new_entity("entity2")
-        c = sat.new_entity("entity3")
-        return sat.new_entity("entity", data=[n, a, b, "1", c, n, "1.0"])
-
     def test_parse_integers(self):
         data = [sat.NULL_PTR, "1", "2", sat.NULL_PTR]
         assert sat.parse_values([], "i") == []
@@ -285,7 +277,7 @@ class TestParseValues:
         assert sat.parse_values(data, "f;f") == [1.0, 2.0]
         assert sat.parse_values(data, "f;f;f") == [1.0, 2.0]
 
-    def test_parse_constant_strings(self):
+    def test_parse_constant_boolean_strings(self):
         data = [sat.NULL_PTR, "1.0", "forward", "double", sat.NULL_PTR]
         assert sat.parse_values([], "b") == []
         assert sat.parse_values(data, "?;b") == [True]
