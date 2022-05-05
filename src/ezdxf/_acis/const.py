@@ -21,6 +21,15 @@ DATA_END_MARKERS = (
 )
 NULL_PTR_NAME = "null-ptr"
 
+BOOL_SPECIFIER = {
+    "forward": True,
+    "forward_v": True,
+    "reversed": False,
+    "reversed_v": False,  # ???
+    "single": True,
+    "double": False,
+}
+
 
 class Tags(enum.IntEnum):
     INT = 0x04

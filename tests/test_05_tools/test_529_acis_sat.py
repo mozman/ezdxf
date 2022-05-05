@@ -286,11 +286,10 @@ class TestParseValues:
         assert sat.parse_values(data, "f;f;f") == [1.0, 2.0]
 
     def test_parse_constant_strings(self):
-        data = [sat.NULL_PTR, "1.0", "forward", sat.NULL_PTR]
-        assert sat.parse_values([], "s") == []
-        assert sat.parse_values(data, "s") == ["1.0"]
-        assert sat.parse_values(data, "s;s") == ["1.0", "forward"]
-        assert sat.parse_values(data, "s;s;s") == ["1.0", "forward"]
+        data = [sat.NULL_PTR, "1.0", "forward", "double", sat.NULL_PTR]
+        assert sat.parse_values([], "b") == []
+        assert sat.parse_values(data, "?;b") == [True]
+        assert sat.parse_values(data, "?;b;b") == [True, False]
 
     def test_parse_user_strings(self):
         data = [sat.NULL_PTR, "@4", "usr1", "@4", "usr2", sat.NULL_PTR]
@@ -301,7 +300,7 @@ class TestParseValues:
 
     def test_parse_mixed_values(self):
         data = ["1.0", "@4", "usr1", "forward"]
-        assert sat.parse_values(data, "f;@;s") == [1.0, "usr1", "forward"]
+        assert sat.parse_values(data, "f;@;b") == [1.0, "usr1", True]
 
     def test_value_order_must_match(self):
         data = ["not_a_float", "1.0"]

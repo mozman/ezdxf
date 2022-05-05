@@ -64,7 +64,7 @@ class SatEntity(AbstractEntity):
         =========== ==============================
         ``f``       float values
         ``i``       integer values
-        ``s``       string constants like "forward"
+        ``b``       boolean values like "forward", "reversed", ...
         ``@``       user string with preceding length encoding
         ``?``       skip (unknown) value
         =========== ==============================
@@ -115,8 +115,12 @@ def parse_values(data: Sequence[Any], fmt: str) -> Sequence[Any]:
                 content.append(int(field))
             except ValueError:
                 raise ParsingError(f"expected an int: '{field}'")
-        elif specifier == "s":  # string const like forward and reversed
-            content.append(field)
+        elif specifier == "b":
+            # boolean string specifier like "forward" and "reversed"
+            try:
+                content.append(BOOL_SPECIFIER[field])
+            except KeyError:
+                raise ParsingError(f"unknown boolean specifier: '{field}'")
         elif specifier == "@":  # user string with length encoding
             next_is_user_string = True
             # ignor length encoding
