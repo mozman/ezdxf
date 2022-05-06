@@ -1,6 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import List, Sequence, Any, TypeVar
+from typing import List, Sequence, Any, TypeVar, Tuple
 from abc import ABC, abstractmethod
 from ezdxf._acis.const import NULL_PTR_NAME
 
@@ -97,4 +97,38 @@ class AbstractEntity(ABC):
             fmt: format specifiers separated by ";"
 
         """
+        pass
+
+
+class DataParser(ABC):
+    """Data parsing interface to parse high level AcisEntity data from low level
+    AbstractEntity representation.
+
+    """
+    @abstractmethod
+    def has_data(self) -> bool:
+        pass
+
+    @abstractmethod
+    def read_int(self) -> int:
+        pass
+
+    @abstractmethod
+    def read_double(self) -> float:
+        pass
+
+    @abstractmethod
+    def read_vec3(self) -> Tuple[float, float, float]:
+        pass
+
+    @abstractmethod
+    def read_bool(self, true: str, false: str) -> bool:
+        pass
+
+    @abstractmethod
+    def read_str(self) -> str:
+        pass
+
+    @abstractmethod
+    def read_ptr(self) -> AbstractEntity:
         pass

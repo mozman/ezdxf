@@ -1,6 +1,16 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import NamedTuple, Any, Sequence, List, Iterator, Union, Iterable, cast
+from typing import (
+    NamedTuple,
+    Any,
+    Sequence,
+    List,
+    Iterator,
+    Union,
+    Iterable,
+    cast,
+    Tuple,
+)
 from datetime import datetime
 import struct
 from ezdxf._acis.const import (
@@ -10,13 +20,17 @@ from ezdxf._acis.const import (
     DATA_END_MARKERS,
 )
 from ezdxf._acis.hdr import AcisHeader
-from ezdxf._acis.abstract import AbstractEntity
+from ezdxf._acis.abstract import AbstractEntity, DataParser
 
 
 class Token(NamedTuple):
-    """Named tuple to store tagged value tokens of the SAB format. """
+    """Named tuple to store tagged value tokens of the SAB format."""
+
     tag: int
     value: Any
+
+    def __str__(self):
+        return f"({self.tag:02x}, {str(self.value)})"
 
 
 SabRecord = List[Token]
@@ -263,7 +277,8 @@ def parse_values(data: Sequence[Any], fmt: str) -> Sequence[Any]:
                 content.append(value)
             else:
                 raise ParsingError(TYPE_ERR.format(specifier, tag, value))
-        elif specifier == "b":  # SAT string constant like "forward" and "reversed"
+        # SAT string constant like "forward" and "reversed"
+        elif specifier == "b":
             if tag == Tags.BOOL_TRUE:
                 content.append(True)
             elif tag == Tags.BOOL_FALSE:
@@ -283,6 +298,37 @@ def parse_values(data: Sequence[Any], fmt: str) -> Sequence[Any]:
 
 
 NULL_PTR = SabEntity("null-ptr", -1, -1, tuple())  # type: ignore
+
+
+class SabDataParser(DataParser):
+    def __init__(self, data: SabRecord):
+        self.data = data
+        self.index = 0
+
+    def has_data(self) -> bool:
+        return self.index <= len(self.data)
+
+    def read_int(self) -> int:
+        token = self.data[self.index]
+        if token.tag == Tags.INT:
+            self.index += 1
+            return cast(int, token.value)
+        raise ParsingError(f"expected int token, got {token}")
+
+    def read_double(self) -> float:
+        return 0.0
+
+    def read_vec3(self) -> Tuple[float, float, float]:
+        return 0.0, 0.0, 0.0
+
+    def read_bool(self, true: str, false: str) -> bool:
+        return True
+
+    def read_str(self) -> str:
+        return ""
+
+    def read_ptr(self) -> AbstractEntity:
+        return NULL_PTR
 
 
 def new_entity(
