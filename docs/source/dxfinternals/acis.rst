@@ -31,6 +31,8 @@ Functions
 
 .. autofunction:: parse_sat(s: Union[str, Sequence[str]]) -> SatBuilder
 
+.. autofunction:: parse_sab(s: Union[bytes, bytearray, Sequence[bytes]]) -> SabBuilder
+
 .. autofunction:: body_to_mesh(body: SatEntity, merge_lumps=True) -> List[MeshTransformer]
 
 
@@ -70,21 +72,63 @@ SatBuilder
 
     .. automethod:: query(func=lambda e: True) -> Iterator[SatEntity]
 
-SatEntity
+SatBuilder
 ----------
 
-.. class:: SatEntity
+.. class:: SabBuilder
 
-    Low level representation of an ACIS entity in SAT format.
+    Low level data structure to manage SAB data (Standard ACIS Binary) files.
+
+    .. attribute:: header
+
+        :class:`AcisHeader`
+
+    .. attribute:: entities
+
+        List of all entities as :class:`SabEntity` instances managed by this
+        builder.
+
+    .. attribute:: bodies
+
+        List of :class:`SabEntity` instances.
+        The `body` entity is always the root entity for an ACIS geometry.
+
+    .. automethod:: query(func=lambda e: True) -> Iterator[SabEntity]
+
+AbstractEntity
+--------------
+
+.. class:: AbstractEntity
+
+    Low level representation of an ACIS entity in SAT or SAB format. This class
+    is the abstraction of the unified query interface for SAT and SAB data.
 
     .. attribute:: name
 
         entity type
 
+    .. autoproperty:: is_null_ptr
+
+    .. automethod:: find_all(entity_type: str) -> list[AbstractEntity]
+
+    .. automethod:: find_first(entity_type: str) -> AbstractEntity
+
+    .. automethod:: find_path(path: str) -> AbstractEntity
+
+    .. automethod:: find_entities(names: str) -> list[AbstractEntity]
+
+    .. automethod:: parse_values
+
+SatEntity
+---------
+
+.. class:: SatEntity
+
+    Implementation of the :class:`AbstractEntity` class for the SAT format.
+
     .. attribute:: id
 
-        Unique `id` as int or -1 for `id` not acquired. The ACIS data embedded
-        in DXF files do not use ids, so the `id` in DXF files is always -1.
+        Entity id as integer, -1 if missing.
 
     .. attribute:: data
 
@@ -98,17 +142,33 @@ SatEntity
 
     .. attribute:: attributes
 
-        Reference to entity attributes or a ``NULL_PTR``.
+        Reference to entity attributes or the ``NULL_PTR`` entity.
 
-    .. automethod:: find_all(entity_type: str) -> list[SatEntity]
+SabEntity
+---------
 
-    .. automethod:: find_first(entity_type: str) -> SatEntity
+.. class:: SabEntity
 
-    .. automethod:: find_path(path: str) -> SatEntity
+    Implementation of the :class:`AbstractEntity` class for the SAB format.
 
-    .. automethod:: find_entities(names: str) -> list[SatEntity]
+    .. attribute:: id
 
-    .. automethod:: parse_values
+        Entity id as integer, -1 if missing.
+
+    .. attribute:: data
+
+        Generic data container. References to other entities (pointers) are
+        :class:`SabEntity` instances, the basic types are stored as tagged
+        tokens of type :class:`sab.Token`.
+
+        Avoid accessing the :attr:`data` directly and use the
+        :meth:`AbstractEntity.parse_values` method instead to acquire data from an
+        entity.
+
+    .. attribute:: attributes
+
+        Reference to entity attributes or the ``NULL_PTR`` entity.
+
 
 AcisHeader
 ----------
@@ -128,10 +188,6 @@ AcisHeader
     .. attribute:: units_in_mm
 
         Count of millimeters which represent one drawing unit.
-
-    .. method:: dumps() -> list(str)
-
-        Returns the file header as list of strings.
 
     .. method:: set_version(version: int) -> None
 
@@ -163,7 +219,7 @@ by BricsCAD.
 
 This documentation ignores the differences to the ACIS format prior to 7.0.
 The missing `id` is handled internally and missing entity references can often
-be ignored if you use the flexible parsing methods of :class:`SatEntity`.
+be ignored if you use the flexible parsing methods of :class:`AbstractEntity`.
 Writing support for SAT version < 7.0 is not required because all CAD
 applications should be able to process version 7.0, even if embedded in a very
 old DXF R2000 format (tested with Autodesk TrueView, BricsCAD and Nemetschek
@@ -173,10 +229,11 @@ The first goal is to document the entities which are required to represent
 a geometry as polygonal faces (polygon face mesh), which can be converted into
 a :class:`~ezdxf.render.MeshBuilder` object.
 
-The entity data is described as stored in the :class:`SatEntity` class.
+The entity data is described as stored in the :class:`SatEntity` class,
+the data in :class:`SabEntity` is similar but stored as tagged tokens.
 The entity type is stored in :attr:`~SatEntity.name`. The entity attributes
 are stored as reference to an :class:`SatEntity` instance in
-:attr:`~SatEntity.attributes` or the ``NULL_PTR`` instance if no attributes exist.
+:attr:`~SatEntity.attributes` or the ``NULL_PTR`` entity if no attributes exist.
 The :attr:`~SatEntity.id` is an integer value, but I have not seen any usage
 of the id in DXF files, so it can always be -1.
 The data fields are stored in the :attr:`~SatEntity.data` attribute, the
@@ -198,7 +255,7 @@ Data Types
 
     - float values
     - integer values
-    - constant strings like "forward" or "reversed"
+    - some boolean values are stored as constant strings like "forward" or "reversed"
     - user strings with a preceding length encoding like "@7 unknown"
     - pointers as record number with a preceding "$" like "$7" points to the
       7th record (0-based!) and "$-1" represents the ``NULL_PTR``

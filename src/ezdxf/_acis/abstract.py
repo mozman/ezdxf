@@ -17,6 +17,7 @@ class AbstractEntity(ABC):
 
     @property
     def is_null_ptr(self) -> bool:
+        """Returns ``True`` if this entity is the ``NULL_PTR`` entity. """
         return self.name == NULL_PTR_NAME
 
     @abstractmethod
@@ -33,7 +34,7 @@ class AbstractEntity(ABC):
     @abstractmethod
     def find_first(self: T, entity_type: str) -> T:
         """Returns the first matching ACIS entity referenced by this entity.
-        Returns the ``NULL_PTR`` if no entity was found.
+        Returns the ``NULL_PTR`` entity if no entity was found.
 
         Args:
             entity_type: entity type (name) as string like "body"
@@ -48,8 +49,8 @@ class AbstractEntity(ABC):
 
             face = entity.find_first("lump").find_first("shell").find_first("face")
 
-        Returns ``NULL_PTR`` if no entity could be found or if the path is
-        invalid.
+        Returns ``NULL_PTR`` entity if no entity could be found or if the path
+        is invalid.
 
         Args:
             path: entity types divided by "/" like "lump/shell/face"
@@ -62,13 +63,13 @@ class AbstractEntity(ABC):
 
     def find_entities(self: T, names: str) -> List[T]:
         """Find multiple entities of different types. Returns the first
-        entity of each type. If a type doesn't exist a ``NULL_PTR`` is
-        returned for this type::
+        entity of each type. If a type doesn't exist the ``NULL_PTR`` entity
+        is returned for this type::
 
             coedge, edge = coedge.find_entities("coedge;edge")
 
         Returns the first coedge and the first edge in the current coedge.
-        If no edge entity exist, the edge variable is the ``NULL_PTR``.
+        If no edge entity exist, the edge variable is the ``NULL_PTR`` entity.
 
         Args:
             names: entity type list as string, separator is ";"
@@ -87,9 +88,9 @@ class AbstractEntity(ABC):
         ``f``       float values
         ``v``       vector (3-float) values
         ``i``       integer values
-        ``s``       string constants like "forward"
-        ``@``       ??? user string with preceding length encoding (SAT only)
-        ``?``       skip (unknown) value
+        ``b``       bool values as constant strings like "forward" or "single"
+        ``@``       user strings
+        ``?``       skip next value
         =========== ==============================
 
         Args:

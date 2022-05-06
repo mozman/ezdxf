@@ -14,6 +14,7 @@ from ezdxf._acis.abstract import AbstractEntity
 
 
 class Token(NamedTuple):
+    """Named tuple to store tagged value tokens of the SAB format. """
     tag: int
     value: Any
 

@@ -6,11 +6,11 @@ ACIS_VERSION = {
     400: "ACIS 4.00 NT",
     700: "ACIS 32.0 NT",
     20800: "ACIS 208.00 NT",
+    21800: "ACIS 218.00 NT",
 }
 
 DATE_FMT = "%a %b %d %H:%M:%S %Y"
 END_OF_ACIS_DATA = "End-of-ACIS-data"
-# Of course Autodesk has its own end marker
 END_OF_ASM_DATA = "End-of-ASM-data"
 BEGIN_OF_ACIS_HISTORY_DATA = "Begin-of-ACIS-History-data"
 END_OF_ACIS_HISTORY_DATA = "End-of-ACIS-History-data"
@@ -32,26 +32,27 @@ BOOL_SPECIFIER = {
 
 
 class Tags(enum.IntEnum):
-    INT = 0x04
-    DOUBLE = 0x06
-    STR = 0x07
-
-    # reversed, double - meaning depends on context
+    INT = 0x04  # 32-bit signed integer
+    # 0x05: ???
+    DOUBLE = 0x06  # 64-bit double precision floating point value
+    STR = 0x07  # count is the following 8-bit uchar
+    # 0x08: ???
+    # 0x09: ???
+    # 0x0A: boolean value for reversed, double - depends on context
     BOOL_FALSE = 0x0A
-
-    # forward, single, forward_v, I - meaning depends on context
+    # 0x0B: boolean value forward, single, forward_v, I - depends on context
     BOOL_TRUE = 0x0B
-
     POINTER = 0x0C
     ENTITY_TYPE = 0x0D
     ENTITY_TYPE_EX = 0x0E
     SUBTYPE_START = 0x0F
     SUBTYPE_END = 0x10
     RECORD_END = 0x11
-    LONG_STR = 0x12  # following int4 = count ? see transform
+    LONG_STR = 0x12  # count is the following 32-bit uint, see transform entity
     LOCATION_VEC = 0x13  # vector (3 doubles)
     DIRECTION_VEC = 0x14  # vector (3 doubles)
     UNKNOWN_0x15 = 0x15  # int, maybe some flags?
+    # 0x16: ???
     UNKNOWN_0x17 = 0x17  # double
 
 
