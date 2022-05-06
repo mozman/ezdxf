@@ -32,26 +32,37 @@ BOOL_SPECIFIER = {
 
 
 class Tags(enum.IntEnum):
+    NO_TYPE = 0x00
+    BYTE = 0x01  # not used in files!
+    CHAR = 0x02  # not used in files!
+    SHORT = 0x03  # not used in files!
     INT = 0x04  # 32-bit signed integer
-    # 0x05: ???
+    FLOAT = 0x05  # not used in files!
     DOUBLE = 0x06  # 64-bit double precision floating point value
     STR = 0x07  # count is the following 8-bit uchar
-    # 0x08: ???
-    # 0x09: ???
-    # 0x0A: boolean value for reversed, double - depends on context
-    BOOL_FALSE = 0x0A
-    # 0x0B: boolean value forward, single, forward_v, I - depends on context
-    BOOL_TRUE = 0x0B
+    STR2 = 0x08  # not used in files!
+    STR3 = 0x09  # not used in files!
+
+    # bool value for reversed, double, I - depends on context
+    BOOL_TRUE = 0x0A
+
+    # bool value forward, single, forward_v - depends on context
+    BOOL_FALSE = 0x0B
     POINTER = 0x0C
     ENTITY_TYPE = 0x0D
     ENTITY_TYPE_EX = 0x0E
     SUBTYPE_START = 0x0F
     SUBTYPE_END = 0x10
     RECORD_END = 0x11
-    LONG_STR = 0x12  # count is the following 32-bit uint, see transform entity
+    LITERAL_STR = 0x12  # count ia a 32-bit uint, see transform entity
     LOCATION_VEC = 0x13  # vector (3 doubles)
     DIRECTION_VEC = 0x14  # vector (3 doubles)
-    UNKNOWN_0x15 = 0x15  # int, maybe some flags?
+
+    # Enumeration are stored as strings in SAT and ints in SAB.
+    # It's not possible to translate SAT enums (strings) to SAB enums (int) and
+    # vice versa without knowing the implementation details. Each enumeration
+    # is specific to the class where it is used.
+    ENUM = 0x15
     # 0x16: ???
     UNKNOWN_0x17 = 0x17  # double
 

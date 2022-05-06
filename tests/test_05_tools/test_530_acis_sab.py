@@ -151,7 +151,7 @@ class TestParseValues:
         assert sab.parse_values(data, "b;b") == [True, False]
 
     def test_parse_user_strings(self, null):
-        data = [null, str_token("usr1"), str_token("usr2", T.LONG_STR), null]
+        data = [null, str_token("usr1"), str_token("usr2", T.LITERAL_STR), null]
         assert sab.parse_values([], "@") == []
         assert sab.parse_values(data, "@") == ["usr1"]
         assert sab.parse_values(data, "@;@") == ["usr1", "usr2"]

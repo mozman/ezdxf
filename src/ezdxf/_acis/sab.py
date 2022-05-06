@@ -131,11 +131,11 @@ class Decoder:
                 values.append(Token(tag, self.read_str(self.read_byte())))
             elif tag == Tags.POINTER:
                 values.append(Token(tag, self.read_int()))
-            elif tag == Tags.BOOL_FALSE:
-                values.append(Token(tag, False))
             elif tag == Tags.BOOL_TRUE:
                 values.append(Token(tag, True))
-            elif tag == Tags.LONG_STR:
+            elif tag == Tags.BOOL_FALSE:
+                values.append(Token(tag, False))
+            elif tag == Tags.LITERAL_STR:
                 values.append(Token(tag, self.read_str(self.read_int())))
             elif tag == Tags.ENTITY_TYPE_EX:
                 entity_type.append(self.read_str(self.read_byte()))
@@ -147,7 +147,7 @@ class Decoder:
                 values.append(Token(tag, self.read_floats(3)))
             elif tag == Tags.DIRECTION_VEC:
                 values.append(Token(tag, self.read_floats(3)))
-            elif tag == Tags.UNKNOWN_0x15:
+            elif tag == Tags.ENUM:
                 values.append(Token(tag, self.read_int()))
             elif tag == Tags.UNKNOWN_0x17:
                 values.append(Token(tag, self.read_float()))
@@ -279,14 +279,14 @@ def parse_values(data: Sequence[Any], fmt: str) -> Sequence[Any]:
                 raise ParsingError(TYPE_ERR.format(specifier, tag, value))
         # SAT string constant like "forward" and "reversed"
         elif specifier == "b":
-            if tag == Tags.BOOL_TRUE:
-                content.append(True)
-            elif tag == Tags.BOOL_FALSE:
+            if tag == Tags.BOOL_FALSE:
                 content.append(False)
+            elif tag == Tags.BOOL_TRUE:
+                content.append(True)
             else:
                 raise ParsingError(TYPE_ERR.format(specifier, tag, value))
         elif specifier == "@":  # user string
-            if tag in (Tags.STR, Tags.LONG_STR):
+            if tag in (Tags.STR, Tags.LITERAL_STR):
                 content.append(value)
             else:
                 raise ParsingError(TYPE_ERR.format(specifier, tag, value))
