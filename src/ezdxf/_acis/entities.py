@@ -28,6 +28,7 @@ def register(cls: Type["AcisEntity"]):
 class NullPtr:
     type: str = const.NULL_PTR_NAME
 
+    @property
     def is_null_ptr(self) -> bool:
         return self.type == const.NULL_PTR_NAME
 

@@ -16,7 +16,7 @@ class TestBody:
         return load(any_cube)[0]
 
     def test_has_transform_attribute(self, body):
-        assert body.transform.is_null_ptr() is False
+        assert body.transform.is_null_ptr is False
 
     def test_transformation_attribute_loaded(self, body):
         m = body.transform.matrix
