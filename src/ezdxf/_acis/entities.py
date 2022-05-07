@@ -100,27 +100,41 @@ class Body(AcisEntity):
 
     def load(self, loader: DataLoader, entity_factory: Factory):
         if loader.version >= 700:
-            _ = loader.read_ptr()  # ignore "Pattern" entity
+            self.load_attrib("pattern", loader, entity_factory)
         self.load_attrib("lump", loader, entity_factory)
         self.load_attrib("wire", loader, entity_factory)
         self.load_attrib("transform", loader, entity_factory)
 
 
 @register
-class Wire(AcisEntity):
+class Wire(AcisEntity):  # not implemented
     type: str = "wire"
 
 
 @register
-class Pattern(AcisEntity):
+class Pattern(AcisEntity):  # not implemented
     type: str = "pattern"
 
 
 @register
 class Lump(AcisEntity):
     type: str = "lump"
+    pattern: "Pattern" = NULL_PTR  # type: ignore
     next_lump: "Lump" = NULL_PTR  # type: ignore
+    shell: "Shell" = NULL_PTR  # type: ignore
     body: "Body" = NULL_PTR  # type: ignore
+
+    def load(self, loader: DataLoader, entity_factory: Factory):
+        if loader.version >= 700:
+            self.load_attrib("pattern", loader, entity_factory)
+        self.load_attrib("next_lump", loader, entity_factory, "lump")
+        self.load_attrib("shell", loader, entity_factory)
+        self.load_attrib("body", loader, entity_factory)
+
+
+@register
+class Shell(AcisEntity):
+    type: str = "shell"
 
 
 class Loader(abc.ABC):
@@ -156,7 +170,7 @@ class Loader(abc.ABC):
             entity.load(data_loader, entity_factory)
 
     @abc.abstractmethod
-    def make_data_loader(self, data: List) -> DataLoader:
+    def make_data_loader(self, data: List[Any]) -> DataLoader:
         pass
 
 
