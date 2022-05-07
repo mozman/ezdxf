@@ -52,17 +52,18 @@ class AcisEntity(NullPtr):
     ) -> None:
         if not expected_type:
             expected_type = name
-        entity = loader.read_ptr()
-        if not entity.is_null_ptr:
-            if entity.name == expected_type:
-                setattr(self, name, entity_factory(entity))
-            else:
-                raise const.ParsingError(
-                    f"expected entity type {expected_type}, got {entity.name}"
-                )
+        raw_entity = loader.read_ptr()
+        if raw_entity.is_null_ptr:
+            return
+        if raw_entity.name == expected_type:
+            setattr(self, name, entity_factory(raw_entity))
+        else:
+            raise const.ParsingError(
+                f"expected entity type '{expected_type}', got '{raw_entity.name}'"
+            )
 
     def export(self, exporter: DataExporter) -> None:
-        raise const.ExportError(f"unsupported entity: {self.type}")
+        raise const.ExportError(f"unsupported entity type: {self.type}")
 
 
 @register
