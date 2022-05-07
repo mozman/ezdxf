@@ -317,19 +317,42 @@ class SabDataLoader(DataLoader):
         raise ParsingError(f"expected int token, got {token}")
 
     def read_double(self) -> float:
-        return 0.0
+        token = self.data[self.index]
+        if token.tag == Tags.DOUBLE:
+            self.index += 1
+            return cast(float, token.value)
+        raise ParsingError(f"expected double token, got {token}")
 
     def read_vec3(self) -> Tuple[float, float, float]:
-        return 0.0, 0.0, 0.0
+        token = self.data[self.index]
+        if token.tag in (Tags.LOCATION_VEC, Tags.DIRECTION_VEC):
+            self.index += 1
+            return cast(Tuple[float, float, float], token.value)
+        raise ParsingError(f"expected vector token, got {token}")
 
     def read_bool(self, true: str, false: str) -> bool:
-        return True
+        token = self.data[self.index]
+        if token.tag == Tags.BOOL_TRUE:
+            self.index += 1
+            return True
+        elif token.tag == Tags.BOOL_FALSE:
+            self.index += 1
+            return False
+        raise ParsingError(f"expected bool token, got {token}")
 
     def read_str(self) -> str:
-        return ""
+        token = self.data[self.index]
+        if token.tag in (Tags.STR, Tags.LITERAL_STR):
+            self.index += 1
+            return cast(str, token.value)
+        raise ParsingError(f"expected str token, got {token}")
 
     def read_ptr(self) -> AbstractEntity:
-        return NULL_PTR
+        token = self.data[self.index]
+        if token.tag == Tags.POINTER:
+            self.index += 1
+            return cast(AbstractEntity, token.value)
+        raise ParsingError(f"expected pointer token, got {token}")
 
 
 def new_entity(

@@ -192,22 +192,56 @@ class SatDataLoader(DataLoader):
         return self.index <= len(self.data)
 
     def read_int(self) -> int:
-        return 0
+        entry = self.data[self.index]
+        try:
+            value = int(entry)
+        except ValueError:
+            raise ParsingError(f"expected integer, got {entry}")
+        self.index += 1
+        return value
 
     def read_double(self) -> float:
-        return 0.0
+        entry = self.data[self.index]
+        if entry == "I":
+            return float("inf")
+        try:
+            value = float(entry)
+        except ValueError:
+            raise ParsingError(f"expected double, got {entry}")
+        self.index += 1
+        return value
 
     def read_vec3(self) -> Tuple[float, float, float]:
-        return 0.0, 0.0, 0.0
+        x = self.read_double()
+        y = self.read_double()
+        z = self.read_double()
+        return x, y, z
 
     def read_bool(self, true: str, false: str) -> bool:
-        return True
+        value = self.data[self.index]
+        if value == true:
+            self.index += 1
+            return True
+        elif value == false:
+            self.index += 1
+            return False
+        raise ParsingError(
+            f"expected bool string '{true}' or '{false}', got {value}"
+        )
 
     def read_str(self) -> str:
-        return ""
+        value = self.data[self.index]
+        if value.startswith("@"):
+            self.index += 2
+            return self.data[self.index-1]
+        raise ParsingError(f"expected string, got {value}")
 
     def read_ptr(self) -> AbstractEntity:
-        return NULL_PTR
+        entity = self.data[self.index]
+        if isinstance(entity, AbstractEntity):
+            self.index += 1
+            return entity
+        raise ParsingError(f"expected pointer, got {type(entity)}")
 
 
 class SatBuilder(AbstractBuilder):

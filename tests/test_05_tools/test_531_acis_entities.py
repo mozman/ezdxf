@@ -15,8 +15,12 @@ class TestBody:
     def body(self, any_cube):
         return load(any_cube)[0]
 
-    def test_has_transformation_attribute(self, body):
-        assert body.transform.is_null_ptr()
+    def test_has_transform_attribute(self, body):
+        assert body.transform.is_null_ptr() is False
+
+    def test_transformation_attribute_loaded(self, body):
+        m = body.transform.matrix
+        assert m.get_row(3) == (388.5, 388.5, 388.5, 1.0)
 
 
 if __name__ == "__main__":
