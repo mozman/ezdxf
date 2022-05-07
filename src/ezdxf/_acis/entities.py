@@ -1,6 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import Union, List, Dict, Callable, Type
+from typing import Union, List, Dict, Callable, Type, Any, Sequence
 import abc
 
 from . import sab, sat, const
@@ -123,6 +123,8 @@ class Lump(AcisEntity):
 
 
 class Loader(abc.ABC):
+    records: Sequence[Union[sat.SatEntity, sab.SabEntity]]
+
     def __init__(self, version: int):
         self.entities: Dict[int, AcisEntity] = {}
         self.version: int = version
@@ -140,8 +142,20 @@ class Loader(abc.ABC):
         # noinspection PyTypeChecker
         return [e for e in self.entities.values() if isinstance(e, Body)]
 
-    @abc.abstractmethod
     def load_entities(self):
+        entity_factory = self.get_entity
+
+        for raw_entity in self.records:
+            entity = entity_factory(raw_entity)
+            entity.id = raw_entity.id
+            attributes = raw_entity.attributes
+            if not attributes.is_null_ptr:
+                entity.attributes = entity_factory(attributes)
+            data_loader = self.make_data_loader(raw_entity.data)
+            entity.load(data_loader, entity_factory)
+
+    @abc.abstractmethod
+    def make_data_loader(self, data: List) -> DataLoader:
         pass
 
 
@@ -151,17 +165,8 @@ class SabLoader(Loader):
         super().__init__(builder.header.version)
         self.records = builder.entities
 
-    def load_entities(self):
-        entity_factory = self.get_entity
-
-        for sab_entity in self.records:
-            entity = entity_factory(sab_entity)
-            entity.id = sab_entity.id
-            attributes = sab_entity.attributes
-            if not attributes.is_null_ptr:
-                entity.attributes = entity_factory(attributes)
-            loader = sab.SabDataLoader(sab_entity.data, self.version)
-            entity.load(loader, entity_factory)
+    def make_data_loader(self, data: List[Any]) -> DataLoader:
+        return sab.SabDataLoader(data, self.version)
 
     @classmethod
     def load(cls, data: Union[bytes, bytearray]) -> List[Body]:
@@ -176,17 +181,8 @@ class SatLoader(Loader):
         super().__init__(builder.header.version)
         self.records = builder.entities
 
-    def load_entities(self):
-        entity_factory = self.get_entity
-
-        for sat_entity in self.records:
-            entity = entity_factory(sat_entity)
-            entity.id = sat_entity.id
-            attributes = sat_entity.attributes
-            if not attributes.is_null_ptr:
-                entity.attributes = entity_factory(attributes)
-            loader = sat.SatDataLoader(sat_entity.data, self.version)
-            entity.load(loader, entity_factory)
+    def make_data_loader(self, data: List[Any]) -> DataLoader:
+        return sat.SatDataLoader(data, self.version)
 
     @classmethod
     def load(cls, data: str) -> List[Body]:
