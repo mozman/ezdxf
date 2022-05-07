@@ -140,3 +140,7 @@ class AbstractBuilder(Generic[T]):
     header: AcisHeader
     bodies: List[T]
     entities: List[T]
+
+
+class DataExporter(ABC):
+    pass

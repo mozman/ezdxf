@@ -4,7 +4,7 @@ from typing import Union, List, Dict, Callable, Type
 import abc
 
 from . import sab, sat, const
-from .abstract import DataLoader, AbstractEntity
+from .abstract import DataLoader, AbstractEntity, DataExporter
 from ezdxf.math import Matrix44, Vec3
 
 Factory = Callable[[AbstractEntity], "AcisEntity"]
@@ -49,7 +49,7 @@ class AcisEntity(NullPtr):
         loader: DataLoader,
         entity_factory: Factory,
         expected_type: str = "",
-    ):
+    ) -> None:
         if not expected_type:
             expected_type = name
         entity = loader.read_ptr()
@@ -60,6 +60,9 @@ class AcisEntity(NullPtr):
                 raise const.ParsingError(
                     f"expected entity type {expected_type}, got {entity.name}"
                 )
+
+    def export(self, exporter: DataExporter) -> None:
+        raise const.ExportError(f"unsupported entity: {self.type}")
 
 
 @register

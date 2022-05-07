@@ -89,5 +89,9 @@ class ParsingError(AcisException):
     pass
 
 
+class ExportError(AcisException):
+    pass
+
+
 class EndOfAcisData(AcisException):
     pass
