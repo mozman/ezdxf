@@ -1,9 +1,9 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import Union, Sequence, List, Dict, Callable, Type
+from typing import Union, List, Dict, Callable, Type
 import abc
 from . import sab, sat
-from .abstract import AbstractBuilder, DataParser
+from .abstract import DataParser
 
 Factory = Callable[[int, str], "AcisEntity"]
 
@@ -12,12 +12,10 @@ ENTITY_TYPES: Dict[str, Type["AcisEntity"]] = {}
 
 def load(data: Union[str, bytes, bytearray]) -> List["Body"]:
     if isinstance(data, (bytes, bytearray)):
-        loader = SabLoader.load(data)
+        return SabLoader.load(data)
     elif isinstance(data, str):
-        loader = SatLoader.load(data)
-    else:
-        raise TypeError("invalid data type")
-    return loader.bodies
+        return SatLoader.load(data)
+    raise TypeError(f"invalid type of data: {type(data)}")
 
 
 def register(cls: Type["AcisEntity"]):
@@ -40,29 +38,20 @@ class Body(AcisEntity):
 
 
 class Loader(abc.ABC):
-    builder: AbstractBuilder
-
-    def __init__(self):
-        self.bodies: List[Body] = []
+    def __init__(self, version: int):
         self.entities: Dict[int, AcisEntity] = {}
+        self.version: int = version
 
-    def get_version(self):
-        return self.builder.header.version
-
-    def get_entity(self, index: int, entity_type: str) -> AcisEntity:
+    def get_entity(self, uid: int, entity_type: str) -> AcisEntity:
         try:
-            return self.entities[index]
+            return self.entities[uid]
         except KeyError:
             entity = ENTITY_TYPES.get(entity_type, AcisEntity)()
-            self.entities[index] = entity
+            self.entities[uid] = entity
             return entity
 
-    def set_bodies(self) -> None:
-        self.bodies = [e for e in self.entities.values() if isinstance(e, Body)]
-
-    def run(self):
-        self.load_entities()
-        self.set_bodies()
+    def bodies(self) -> List[Body]:
+        return [e for e in self.entities.values() if isinstance(e, Body)]  # type: ignore
 
     @abc.abstractmethod
     def load_entities(self):
@@ -71,55 +60,53 @@ class Loader(abc.ABC):
 
 class SabLoader(Loader):
     def __init__(self, data: bytes):
-        super().__init__()
-        self.builder = sab.parse_sab(data)
+        builder = sab.parse_sab(data)
+        super().__init__(builder.header.version)
+        self.records = builder.entities
 
     def load_entities(self):
-        version = self.get_version()
         entity_factory = self.get_entity
-        lookup_index = self.builder.index
 
-        for index, sab_entity in enumerate(self.builder.entities):
-            entity = entity_factory(index, sab_entity.name)
+        for sab_entity in self.records:
+            entity = entity_factory(id(sab_entity), sab_entity.name)
             entity.id = sab_entity.id
             attributes = sab_entity.attributes
             if not attributes.is_null_ptr:
-                index = lookup_index(sab_entity)
-                entity_type = sab_entity.name
-                entity.attributes = entity_factory(index, entity_type)
-            args = sab.SabDataParser(sab_entity.data, version)
+                entity.attributes = entity_factory(
+                    id(sab_entity), sab_entity.name
+                )
+            args = sab.SabDataParser(sab_entity.data, self.version)
             entity.parse(args, entity_factory)
 
     @classmethod
-    def load(cls, data: Union[bytes, bytearray]):
+    def load(cls, data: Union[bytes, bytearray]) -> List[Body]:
         loader = cls(data)
-        loader.run()
-        return loader
+        loader.load_entities()
+        return loader.bodies()
 
 
 class SatLoader(Loader):
     def __init__(self, data: str):
-        super().__init__()
-        self.builder = sat.parse_sat(data)
+        builder = sat.parse_sat(data)
+        super().__init__(builder.header.version)
+        self.records = builder.entities
 
     def load_entities(self):
-        version = self.get_version()
         entity_factory = self.get_entity
-        lookup_index = self.builder.index
 
-        for index, sat_entity in enumerate(self.builder.entities):
-            entity = entity_factory(index, sat_entity.name)
+        for sat_entity in self.records:
+            entity = entity_factory(id(sat_entity), sat_entity.name)
             entity.id = sat_entity.id
             attributes = sat_entity.attributes
             if not attributes.is_null_ptr:
-                index = lookup_index(sat_entity)
-                entity_type = sat_entity.name
-                entity.attributes = entity_factory(index, entity_type)
-            args = sat.SatDataParser(sat_entity.data, version)
+                entity.attributes = entity_factory(
+                    id(sat_entity), sat_entity.name
+                )
+            args = sat.SatDataParser(sat_entity.data, self.version)
             entity.parse(args, entity_factory)
 
     @classmethod
-    def load(cls, data: str):
+    def load(cls, data: str) -> List[Body]:
         loader = cls(data)
-        loader.run()
-        return loader
+        loader.load_entities()
+        return loader.bodies()

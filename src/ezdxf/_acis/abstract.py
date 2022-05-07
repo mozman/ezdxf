@@ -138,7 +138,3 @@ class AbstractBuilder(Generic[T]):
     header: AcisHeader
     bodies: List[T]
     entities: List[T]
-
-    @abstractmethod
-    def index(self, record: T) -> int:
-        pass

@@ -237,9 +237,6 @@ class SatBuilder(AbstractBuilder):
         self.bodies = [e for e in entities if e.name == "body"]
         self.entities = entities
 
-    def index(self, record: SatEntity) -> int:
-        return self.entities.index(record)
-
 
 def build_str_records(entities: List[SatEntity], version: int) -> Iterator[str]:
     def ptr_str(e: SatEntity) -> str:

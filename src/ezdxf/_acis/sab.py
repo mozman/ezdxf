@@ -369,9 +369,6 @@ class SabBuilder(AbstractBuilder):
         self.bodies = [e for e in entities if e.name == "body"]
         self.entities = entities
 
-    def index(self, record: SabEntity) -> int:
-        return self.entities.index(record)
-
 
 def build_entities(
     records: Iterable[SabRecord], version: int
