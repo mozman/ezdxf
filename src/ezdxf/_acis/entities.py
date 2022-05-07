@@ -70,16 +70,14 @@ class Transform(AcisEntity):
     def load(self, loader: DataLoader, entity_factory: Factory):
         # Here comes an ugly hack, but SAT and SAB store the matrix data in a
         # quiet different way:
-        if isinstance(loader, sat.SatDataLoader):
-            # matrix values as 12 float values
-            data = [loader.read_double() for _ in range(12)]
-        else:
-            # matrix values as a literal string
+        if isinstance(loader, sab.SabDataLoader):
+            # SAB matrix data is stored as a literal string and looks like a SAT
+            # record: "1 0 0 0 1 0 0 0 1 0 0 0 1 no_rotate no_reflect no_shear"
             values = loader.read_str().split(" ")
-            if len(values) >= 12:
-                data = [float(v) for v in values[:12]]
-            else:
-                data = [0.0] * 12
+            # delegate to SAT format:
+            loader = sat.SatDataLoader(values, loader.version)
+        data = [loader.read_double() for _ in range(12)]
+        # insert values of the last matrix column (0, 0, 0, 1)
         data.insert(3, 0.0)
         data.insert(7, 0.0)
         data.insert(11, 0.0)
@@ -90,12 +88,14 @@ class Transform(AcisEntity):
 @register
 class Body(AcisEntity):
     type: str = "body"
+    pattern: "Pattern" = NULL_PTR  # type: ignore
     lump: "Lump" = NULL_PTR  # type: ignore
     wire: "Wire" = NULL_PTR  # type: ignore
     transform: "Transform" = NULL_PTR  # type: ignore
 
     def load(self, loader: DataLoader, entity_factory: Factory):
-        _ = loader.read_ptr()  # skip and ignore "Pattern"
+        if loader.version >= 700:
+            _ = loader.read_ptr()  # ignore "Pattern" entity
         self.load_attrib("lump", loader, entity_factory)
         self.load_attrib("wire", loader, entity_factory)
         self.load_attrib("transform", loader, entity_factory)
@@ -104,6 +104,11 @@ class Body(AcisEntity):
 @register
 class Wire(AcisEntity):
     type: str = "wire"
+
+
+@register
+class Pattern(AcisEntity):
+    type: str = "pattern"
 
 
 @register
@@ -122,13 +127,14 @@ class Loader(abc.ABC):
         uid = id(raw_entity)
         try:
             return self.entities[uid]
-        except KeyError:
+        except KeyError:  # create a new entity
             entity = ENTITY_TYPES.get(raw_entity.name, AcisEntity)()
             self.entities[uid] = entity
             return entity
 
     def bodies(self) -> List[Body]:
-        return [e for e in self.entities.values() if isinstance(e, Body)]  # type: ignore
+        # noinspection PyTypeChecker
+        return [e for e in self.entities.values() if isinstance(e, Body)]
 
     @abc.abstractmethod
     def load_entities(self):

@@ -105,6 +105,8 @@ class DataLoader(ABC):
     level AbstractEntity representation.
 
     """
+    version : int = 700
+
     @abstractmethod
     def has_data(self) -> bool:
         pass
