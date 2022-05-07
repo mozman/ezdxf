@@ -301,7 +301,8 @@ NULL_PTR = SabEntity("null-ptr", -1, -1, tuple())  # type: ignore
 
 
 class SabDataParser(DataParser):
-    def __init__(self, data: SabRecord):
+    def __init__(self, data: SabRecord, version: int):
+        self.version = version
         self.data = data
         self.index = 0
 
@@ -359,19 +360,17 @@ class SabBuilder:
         self.bodies: List[SabEntity] = []
         self.entities: List[SabEntity] = []
 
+    def dump_sab(self) -> List[bytes]:
+        """Returns the SAB representation of the ACIS file as list of bytes."""
+        return []
+
     def set_entities(self, entities: List[SabEntity]) -> None:
         """Reset entities and bodies list. (internal API)"""
         self.bodies = [e for e in entities if e.name == "body"]
         self.entities = entities
 
-    def query(self, func=lambda e: True) -> Iterator[SabEntity]:
-        """Yields all entities as :class:`SabEntity` for which the given
-        function returns ``True`` e.g. query all "point" entities::
-
-            points = list(acis_builder.query(lambda e: e.name == "point"))
-
-        """
-        return filter(func, self.entities)
+    def index(self, record: SabEntity) -> int:
+        return self.entities.index(record)
 
 
 def build_entities(

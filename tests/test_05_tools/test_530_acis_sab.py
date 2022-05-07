@@ -69,10 +69,6 @@ class TestSabEntity:
     def test_find_first_returns_null_ptr_if_not_found(self, body):
         assert body.find_first("vertex").is_null_ptr is True
 
-    def test_query_entities(self, builder):
-        points = list(builder.query(lambda e: e.name == "point"))
-        assert len(points) == 8
-
     def test_find_entities_in_nodes(self, body):
         face = body.find_first("lump").find_first("shell").find_first("face")
         assert face.name == "face"

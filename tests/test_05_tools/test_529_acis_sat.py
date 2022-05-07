@@ -188,10 +188,6 @@ class TestAcisBuilder:
         assert len(lines) == 117
         assert lines == prism_sat.splitlines()
 
-    def test_query_entities(self, builder):
-        points = list(builder.query(lambda e: e.name == "point"))
-        assert len(points) == 8
-
     def test_find_entities_in_nodes(self, builder):
         body = builder.bodies[0]
         face = body.find_first("lump").find_first("shell").find_first("face")

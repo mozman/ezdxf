@@ -209,14 +209,8 @@ class SatBuilder:
         self.bodies = [e for e in entities if e.name == "body"]
         self.entities = entities
 
-    def query(self, func=lambda e: True) -> Iterator[SatEntity]:
-        """Yields all entities as :class:`SabEntity` for which the given
-        function returns ``True`` e.g. query all "point" entities::
-
-            points = list(acis_builder.query(lambda e: e.name == "point"))
-
-        """
-        return filter(func, self.entities)
+    def index(self, record: SatEntity) -> int:
+        return self.entities.index(record)
 
 
 def build_str_records(entities: List[SatEntity], version: int) -> Iterator[str]:
