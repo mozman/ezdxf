@@ -50,5 +50,26 @@ class TestLump:
         assert body.lump.shell.is_null_ptr is False
 
 
+class TestShell:
+    @pytest.fixture(scope="class")
+    def shell(self, body):
+        return body.lump.shell
+
+    def test_root_shell(self, shell):
+        assert shell.is_null_ptr is False
+
+    def test_shell_type(self, shell):
+        assert shell.type == "shell"
+
+    def test_back_pointer_to_lump(self, body, shell):
+        assert shell.lump is body.lump
+
+    def test_has_no_next_shell(self, shell):
+        assert shell.next_shell.is_null_ptr is True
+
+    def test_has_attribute_to_first_face(self, shell):
+        assert shell.face.is_null_ptr is False
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
