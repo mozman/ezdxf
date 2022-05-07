@@ -9,8 +9,8 @@ from ezdxf.acis import sab, parsing
 T = sab.Tags
 
 
-def test_decode_header(sab0):
-    decoder = sab.Decoder(sab0)
+def test_decode_header(cube_sab):
+    decoder = sab.Decoder(cube_sab)
     header = decoder.read_header()
     assert header.version == 21800
     assert header.n_records == 0
@@ -18,12 +18,12 @@ def test_decode_header(sab0):
     assert header.flags == 12
     assert header.product_id == "Open Design Alliance ACIS Builder"
     assert header.acis_version == "ACIS 218.00 NT"
-    assert header.creation_date == datetime(2022, 5, 2, 18, 54, 43)
+    assert header.creation_date == datetime(2022, 5, 2, 5, 33, 25)
     assert header.units_in_mm == 1.0
 
 
-def test_decode_first_record(sab0):
-    decoder = sab.Decoder(sab0)
+def test_decode_first_record(cube_sab):
+    decoder = sab.Decoder(cube_sab)
     _ = decoder.read_header()
     record = decoder.read_record()
     assert record == [
@@ -34,26 +34,26 @@ def test_decode_first_record(sab0):
     ]
 
 
-def test_decode_all_records(sab0):
-    decoder = sab.Decoder(sab0)
+def test_decode_all_records(cube_sab):
+    decoder = sab.Decoder(cube_sab)
     _ = decoder.read_header()
     records = list(decoder.read_records())
-    assert len(records) == 88
+    assert len(records) == 116
     assert records[-1][0].value == "End-of-ASM-data"
 
 
-def test_parse_sab(sab0):
-    builder = sab.parse_sab(sab0)
+def test_parse_sab(cube_sab):
+    builder = sab.parse_sab(cube_sab)
     assert builder.header.version == 21800
-    assert len(builder.entities) == 88
+    assert len(builder.entities) == 116
     assert builder.entities[0].name == "asmheader"
     assert builder.entities[-1].name == "End-of-ASM-data"
 
 
 class TestSabEntity:
     @pytest.fixture(scope="class")
-    def builder(self, sab0):
-        return sab.parse_sab(sab0)
+    def builder(self, cube_sab):
+        return sab.parse_sab(cube_sab)
 
     @pytest.fixture(scope="class")
     def body(self, builder):
@@ -61,7 +61,7 @@ class TestSabEntity:
 
     def test_get_pointer_at_index(self, body):
         assert body.name == "body"
-        assert body.attributes.is_null_ptr is True
+        assert body.attributes.is_null_ptr is False
 
     def test_find_first_entity(self, body):
         assert body.find_first("lump").name == "lump"
@@ -86,7 +86,7 @@ class TestSabEntity:
         assert face.is_null_ptr is True
 
     def test_find_all(self, builder):
-        coedge = builder.entities[12]
+        coedge = builder.entities[19]
         assert len(coedge.find_all("coedge")) == 3
 
 
@@ -175,16 +175,16 @@ class TestParseValues:
         assert sab.parse_values(data, "i;f") == [7, 1.0]
 
 
-def test_parse_body_polygon_faces(sab0):
-    builder = sab.parse_sab(sab0)
+def test_parse_body_polygon_faces(cube_sab):
+    builder = sab.parse_sab(cube_sab)
     lumps = list(parsing.body_planar_polygon_faces(builder.bodies[0]))
     assert len(lumps) == 1
     faces = lumps[0]
     assert len(faces) == 6
 
 
-def test_body_to_mesh(sab0):
-    builder = sab.parse_sab(sab0)
+def test_body_to_mesh(cube_sab):
+    builder = sab.parse_sab(cube_sab)
     meshes = acis.body_to_mesh(builder.bodies[0])
     assert len(meshes) == 1
     mesh = meshes[0]
