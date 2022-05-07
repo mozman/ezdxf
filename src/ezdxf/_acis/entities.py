@@ -57,7 +57,7 @@ class AcisEntity(NullPtr):
         raw_entity = loader.read_ptr()
         if raw_entity.is_null_ptr:
             return
-        if raw_entity.name == expected_type:
+        if raw_entity.name.endswith(expected_type):
             setattr(self, name, entity_factory(raw_entity))
         else:
             raise const.ParsingError(
@@ -161,6 +161,38 @@ class Subshell(AcisEntity):  # not implemented
 @register
 class Face(AcisEntity):
     type: str = "face"
+    pattern: "Pattern" = NULL_PTR  # type: ignore
+    next_face: "Face" = NULL_PTR  # type: ignore
+    loop: "Loop" = NULL_PTR  # type: ignore
+    shell: "Shell" = NULL_PTR  # type: ignore
+    subshell: "Subshell" = NULL_PTR  # type: ignore
+    surface: "Surface" = NULL_PTR  # type: ignore
+    sense = True  # True = reversed; False = forward
+    double_sided = False  # True = double; False = single
+    containment = False  # if double_sided: True = in, False = out
+
+    def load(self, loader: DataLoader, entity_factory: Factory):
+        if loader.version >= Features.PATTERN:
+            self.load_attrib("pattern", loader, entity_factory)
+        self.load_attrib("next_face", loader, entity_factory, "face")
+        self.load_attrib("loop", loader, entity_factory)
+        self.load_attrib("shell", loader, entity_factory)
+        self.load_attrib("subshell", loader, entity_factory)
+        self.load_attrib("surface", loader, entity_factory)
+        self.sense = loader.read_bool("reversed", "forward")
+        self.double_sided = loader.read_bool("double", "single")
+        if self.double_sided:
+            self.containment = loader.read_bool("in", "out")
+
+
+@register
+class Surface(AcisEntity):
+    type: str = "surface"
+
+
+@register
+class PlaneSurface(Surface):
+    type: str = "plane-surface"
 
 
 class Loader(abc.ABC):

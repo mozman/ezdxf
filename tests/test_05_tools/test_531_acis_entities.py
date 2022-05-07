@@ -34,7 +34,7 @@ class TestBody:
 
 
 class TestLump:
-    def test_root_lump(self, body):
+    def test_first_lump(self, body):
         assert body.lump.is_null_ptr is False
 
     def test_lump_type(self, body):
@@ -55,7 +55,7 @@ class TestShell:
     def shell(self, body):
         return body.lump.shell
 
-    def test_root_shell(self, shell):
+    def test_first_shell(self, shell):
         assert shell.is_null_ptr is False
 
     def test_shell_type(self, shell):
@@ -69,6 +69,42 @@ class TestShell:
 
     def test_has_attribute_to_first_face(self, shell):
         assert shell.face.is_null_ptr is False
+
+
+class TestFace:
+    @pytest.fixture(scope="class")
+    def face(self, body):
+        return body.lump.shell.face
+
+    def test_first_shell(self, face):
+        assert face.is_null_ptr is False
+
+    def test_face_type(self, face):
+        assert face.type == "face"
+
+    def test_back_pointer_to_shell(self, body, face):
+        assert face.shell is body.lump.shell
+
+    def test_has_a_next_face(self, face):
+        assert face.next_face.is_null_ptr is False
+
+    def test_has_attribute_surface(self, face):
+        assert face.surface.type == "plane-surface"
+
+    def test_has_attribute_to_first_loop(self, face):
+        assert face.loop.is_null_ptr is False
+
+    def test_face_features(self, face):
+        assert face.sense is False  # forward
+        assert face.double_sided is False  # single
+        assert face.containment is False
+
+    def test_traverse_all_six_cube_faces(self, face):
+        count = 1
+        while not face.next_face.is_null_ptr:
+            count += 1
+            face = face.next_face
+        assert count == 6
 
 
 if __name__ == "__main__":
