@@ -865,3 +865,10 @@ straight-curve $-1 -1 $-1 -388.5 0 -388.5 0 1 0 I I #
 point $-1 -1 $-1 -388.5 388.5 -388.5 #
 End-of-ACIS-data 
 """
+
+
+@pytest.fixture(
+    scope="module", params=[CUBE777_SAT, CUBE777_SAB], ids=["SAT", "SAB"]
+)
+def any_cube(request):
+    yield request.param

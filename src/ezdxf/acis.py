@@ -23,4 +23,4 @@ from ezdxf._acis import sat
 from ezdxf._acis import parsing
 from ezdxf._acis import sab
 from ezdxf._acis.converter import body_to_mesh
-from ezdxf._acis.entities import Loader
+from ezdxf._acis.entities import load

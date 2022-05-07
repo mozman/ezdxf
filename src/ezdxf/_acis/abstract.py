@@ -1,9 +1,9 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import List, Sequence, Any, TypeVar, Tuple
+from typing import List, Sequence, Any, TypeVar, Tuple, Generic
 from abc import ABC, abstractmethod
 from ezdxf._acis.const import NULL_PTR_NAME
-
+from ezdxf._acis.hdr import AcisHeader
 
 T = TypeVar("T", bound="AbstractEntity")
 
@@ -131,4 +131,14 @@ class DataParser(ABC):
 
     @abstractmethod
     def read_ptr(self) -> AbstractEntity:
+        pass
+
+
+class AbstractBuilder(Generic[T]):
+    header: AcisHeader
+    bodies: List[T]
+    entities: List[T]
+
+    @abstractmethod
+    def index(self, record: T) -> int:
         pass

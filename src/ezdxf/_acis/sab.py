@@ -20,7 +20,7 @@ from ezdxf._acis.const import (
     DATA_END_MARKERS,
 )
 from ezdxf._acis.hdr import AcisHeader
-from ezdxf._acis.abstract import AbstractEntity, DataParser
+from ezdxf._acis.abstract import AbstractEntity, DataParser, AbstractBuilder
 
 
 class Token(NamedTuple):
@@ -352,7 +352,7 @@ def new_entity(
     return e
 
 
-class SabBuilder:
+class SabBuilder(AbstractBuilder):
     """Low level data structure to manage ACIS SAB data files."""
 
     def __init__(self):

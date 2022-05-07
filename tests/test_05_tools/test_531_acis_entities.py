@@ -2,13 +2,13 @@
 #  License: MIT License
 
 import pytest
-from ezdxf.acis import Loader
+from ezdxf.acis import load
 
 
-def test_load_sab(cube_sab):
-    loader = Loader.load_sab(cube_sab)
-    assert len(loader.bodies) == 1
+def test_load_any_format(any_cube):
+    bodies = load(any_cube)
+    assert len(bodies) == 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])
