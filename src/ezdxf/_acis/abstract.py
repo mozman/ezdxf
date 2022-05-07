@@ -120,6 +120,10 @@ class DataLoader(ABC):
         pass
 
     @abstractmethod
+    def read_interval(self) -> float:
+        pass
+
+    @abstractmethod
     def read_vec3(self) -> Tuple[float, float, float]:
         pass
 

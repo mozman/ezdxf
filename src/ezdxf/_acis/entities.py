@@ -188,11 +188,46 @@ class Face(AcisEntity):
 @register
 class Surface(AcisEntity):
     type: str = "surface"
+    pattern: "Pattern" = NULL_PTR  # type: ignore
+
+    def load(self, loader: DataLoader, entity_factory: Factory):
+        if loader.version >= Features.PATTERN:
+            self.load_attrib("pattern", loader, entity_factory)
+
+
+INF = float("inf")
 
 
 @register
-class PlaneSurface(Surface):
+class Plane(Surface):
     type: str = "plane-surface"
+    origin = Vec3(0, 0, 0)
+    normal = Vec3(1, 0, 0)  # pointing outside
+    u_dir = Vec3(1, 0, 0)  # unit vector!
+    reversed_v = True  # True = reversed_v; False = forward_v
+    u_bounds = INF, INF
+    v_bounds = INF, INF
+
+    def load(self, loader: DataLoader, entity_factory: Factory):
+        super().load(loader, entity_factory)
+        self.origin = Vec3(loader.read_vec3())
+        self.normal = Vec3(loader.read_vec3())
+        self.u_dir = Vec3(loader.read_vec3())
+        self.reversed_v = loader.read_bool("reversed_v", "forward_v")
+        self.u_bounds = loader.read_interval(), loader.read_interval()
+        self.v_bounds = loader.read_interval(), loader.read_interval()
+
+    @property
+    def v_dir(self):
+        v_dir = self.normal.cross(self.u_dir)
+        if self.reversed_v:
+            return -v_dir
+        return v_dir
+
+
+@register
+class Loop(AcisEntity):
+    type: str = "loop"
 
 
 class Loader(abc.ABC):

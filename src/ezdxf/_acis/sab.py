@@ -323,6 +323,12 @@ class SabDataLoader(DataLoader):
             return cast(float, token.value)
         raise ParsingError(f"expected double token, got {token}")
 
+    def read_interval(self) -> float:
+        finite = self.read_bool("F", "I")
+        if finite:
+            return self.read_double()
+        return float("inf")
+
     def read_vec3(self) -> Tuple[float, float, float]:
         token = self.data[self.index]
         if token.tag in (Tags.LOCATION_VEC, Tags.DIRECTION_VEC):

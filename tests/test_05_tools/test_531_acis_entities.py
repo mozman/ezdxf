@@ -3,6 +3,7 @@
 
 import pytest
 from ezdxf.acis import load
+import math
 
 
 def test_load_any_format(any_cube):
@@ -105,6 +106,30 @@ class TestFace:
             count += 1
             face = face.next_face
         assert count == 6
+
+
+class TestPlane:
+    @pytest.fixture(scope="class")
+    def plane(self, body):
+        return body.lump.shell.face.surface
+
+    def test_plane_type(self, plane):
+        assert plane.type == "plane-surface"
+
+    def test_plane_location(self, plane):
+        assert plane.origin.isclose((0, 0, 388.5))
+
+    def test_plane_normal(self, plane):
+        assert plane.normal.isclose((0, 0, 1))
+
+    def test_plane_u_dir(self, plane):
+        assert plane.u_dir.isclose((1, 0, 0))
+
+    def test_plane_has_infinite_bounds(self, plane):
+        assert math.isinf(plane.u_bounds[0])
+        assert math.isinf(plane.u_bounds[1])
+        assert math.isinf(plane.v_bounds[0])
+        assert math.isinf(plane.v_bounds[1])
 
 
 if __name__ == "__main__":

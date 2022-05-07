@@ -203,14 +203,18 @@ class SatDataLoader(DataLoader):
 
     def read_double(self) -> float:
         entry = self.data[self.index]
-        if entry == "I":
-            return float("inf")
         try:
             value = float(entry)
         except ValueError:
             raise ParsingError(f"expected double, got {entry}")
         self.index += 1
         return value
+
+    def read_interval(self) -> float:
+        finite = self.read_bool("F", "I")
+        if finite:
+            return self.read_double()
+        return float("inf")
 
     def read_vec3(self) -> Tuple[float, float, float]:
         x = self.read_double()
