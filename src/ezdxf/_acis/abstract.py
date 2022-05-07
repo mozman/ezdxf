@@ -100,9 +100,9 @@ class AbstractEntity(ABC):
         pass
 
 
-class DataParser(ABC):
-    """Data parsing interface to parse high level AcisEntity data from low level
-    AbstractEntity representation.
+class DataLoader(ABC):
+    """Data loading interface to create high level AcisEntity data from low
+    level AbstractEntity representation.
 
     """
     @abstractmethod

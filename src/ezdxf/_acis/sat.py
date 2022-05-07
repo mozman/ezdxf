@@ -4,7 +4,7 @@ from typing import List, Any, Sequence, Iterator, Tuple, Union
 from datetime import datetime
 from ezdxf._acis.const import *
 from ezdxf._acis.hdr import AcisHeader
-from ezdxf._acis.abstract import AbstractEntity, AbstractBuilder, DataParser
+from ezdxf._acis.abstract import AbstractEntity, AbstractBuilder, DataLoader
 
 SatRecord = List[str]
 
@@ -182,7 +182,7 @@ def resolve_str_pointers(entities: List[SatEntity]) -> List[SatEntity]:
     return entities
 
 
-class SatDataParser(DataParser):
+class SatDataLoader(DataLoader):
     def __init__(self, data: List[Any], version: int):
         self.version = version
         self.data = data

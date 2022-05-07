@@ -4,7 +4,7 @@ from typing import Union, List, Dict, Callable, Type
 import abc
 
 from . import sab, sat, const
-from .abstract import DataParser
+from .abstract import DataLoader
 from ezdxf.math import Matrix44, Vec3
 
 Factory = Callable[[int, str], "AcisEntity"]
@@ -40,7 +40,7 @@ class AcisEntity(NullPtr):
     id: int
     attributes: "AcisEntity" = NULL_PTR  # type: ignore
 
-    def parse(self, parser: DataParser, entity_factory: Factory):
+    def load(self, loader: DataLoader, entity_factory: Factory):
         pass
 
 
@@ -49,10 +49,10 @@ class Transform(AcisEntity):
     type: str = "transform"
     matrix = Matrix44()
 
-    def parse(self, parser: DataParser, entity_factory: Factory):
+    def load(self, loader: DataLoader, entity_factory: Factory):
         # Here comes an ugly hack, but SAT and SAB store the matrix data in a
         # quiet different way:
-        if isinstance(parser, sat.SatDataParser):
+        if isinstance(loader, sat.SatDataLoader):
             self.matrix = Matrix44()
         else:
             self.matrix = Matrix44()
@@ -64,7 +64,7 @@ class Body(AcisEntity):
     transform: "Transform" = NULL_PTR  # type: ignore
     lump: "Lump" = NULL_PTR  # type: ignore
 
-    def parse(self, parser: DataParser, entity_factory: Factory):
+    def load(self, loader: DataLoader, entity_factory: Factory):
         pass
 
 
@@ -113,8 +113,8 @@ class SabLoader(Loader):
                 entity.attributes = entity_factory(
                     id(sab_entity), sab_entity.name
                 )
-            args = sab.SabDataParser(sab_entity.data, self.version)
-            entity.parse(args, entity_factory)
+            loader = sab.SabDataLoader(sab_entity.data, self.version)
+            entity.load(loader, entity_factory)
 
     @classmethod
     def load(cls, data: Union[bytes, bytearray]) -> List[Body]:
@@ -140,8 +140,8 @@ class SatLoader(Loader):
                 entity.attributes = entity_factory(
                     id(sat_entity), sat_entity.name
                 )
-            args = sat.SatDataParser(sat_entity.data, self.version)
-            entity.parse(args, entity_factory)
+            loader = sat.SatDataLoader(sat_entity.data, self.version)
+            entity.load(loader, entity_factory)
 
     @classmethod
     def load(cls, data: str) -> List[Body]:

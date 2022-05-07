@@ -20,7 +20,7 @@ from ezdxf._acis.const import (
     DATA_END_MARKERS,
 )
 from ezdxf._acis.hdr import AcisHeader
-from ezdxf._acis.abstract import AbstractEntity, DataParser, AbstractBuilder
+from ezdxf._acis.abstract import AbstractEntity, DataLoader, AbstractBuilder
 
 
 class Token(NamedTuple):
@@ -300,7 +300,7 @@ def parse_values(data: Sequence[Any], fmt: str) -> Sequence[Any]:
 NULL_PTR = SabEntity("null-ptr", -1, -1, tuple())  # type: ignore
 
 
-class SabDataParser(DataParser):
+class SabDataLoader(DataLoader):
     def __init__(self, data: SabRecord, version: int):
         self.version = version
         self.data = data
