@@ -77,14 +77,16 @@ class SabLoader(Loader):
     def load_entities(self):
         version = self.get_version()
         entity_factory = self.get_entity
+        lookup_index = self.builder.index
+
         for index, sab_entity in enumerate(self.builder.entities):
             entity = entity_factory(index, sab_entity.name)
             entity.id = sab_entity.id
             attributes = sab_entity.attributes
             if not attributes.is_null_ptr:
-                index = self.builder.index(sab_entity)
+                index = lookup_index(sab_entity)
                 entity_type = sab_entity.name
-                entity.attributes = self.get_entity(index, entity_type)
+                entity.attributes = entity_factory(index, entity_type)
             args = sab.SabDataParser(sab_entity.data, version)
             entity.parse(args, entity_factory)
 
@@ -103,14 +105,16 @@ class SatLoader(Loader):
     def load_entities(self):
         version = self.get_version()
         entity_factory = self.get_entity
+        lookup_index = self.builder.index
+
         for index, sat_entity in enumerate(self.builder.entities):
             entity = entity_factory(index, sat_entity.name)
             entity.id = sat_entity.id
             attributes = sat_entity.attributes
             if not attributes.is_null_ptr:
-                index = self.builder.index(sat_entity)
+                index = lookup_index(sat_entity)
                 entity_type = sat_entity.name
-                entity.attributes = self.get_entity(index, entity_type)
+                entity.attributes = entity_factory(index, entity_type)
             args = sat.SatDataParser(sat_entity.data, version)
             entity.parse(args, entity_factory)
 
