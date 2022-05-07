@@ -2,8 +2,10 @@
 #  License: MIT License
 from typing import Union, List, Dict, Callable, Type
 import abc
-from . import sab, sat
+
+from . import sab, sat, const
 from .abstract import DataParser
+from ezdxf.math import Matrix44, Vec3
 
 Factory = Callable[[int, str], "AcisEntity"]
 
@@ -23,18 +25,54 @@ def register(cls: Type["AcisEntity"]):
     return cls
 
 
-class AcisEntity:
+class NullPtr:
+    type: str = const.NULL_PTR_NAME
+
+    def is_null_ptr(self) -> bool:
+        return self.type == const.NULL_PTR_NAME
+
+
+NULL_PTR = NullPtr()
+
+
+class AcisEntity(NullPtr):
     type: str = "unsupported-entity"
     id: int
-    attributes: "AcisEntity" = None  # type: ignore
+    attributes: "AcisEntity" = NULL_PTR  # type: ignore
 
     def parse(self, parser: DataParser, entity_factory: Factory):
         pass
 
 
 @register
+class Transform(AcisEntity):
+    type: str = "transform"
+    matrix = Matrix44()
+
+    def parse(self, parser: DataParser, entity_factory: Factory):
+        # Here comes an ugly hack, but SAT and SAB store the matrix data in a
+        # quiet different way:
+        if isinstance(parser, sat.SatDataParser):
+            self.matrix = Matrix44()
+        else:
+            self.matrix = Matrix44()
+
+
+@register
 class Body(AcisEntity):
     type: str = "body"
+    transform: "Transform" = NULL_PTR  # type: ignore
+    lump: "Lump" = NULL_PTR  # type: ignore
+
+    def parse(self, parser: DataParser, entity_factory: Factory):
+        pass
+
+
+@register
+class Lump(AcisEntity):
+    type: str = "lump"
+    next_lump: "Lump" = NULL_PTR  # type: ignore
+    body: "Body" = NULL_PTR  # type: ignore
 
 
 class Loader(abc.ABC):
