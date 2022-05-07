@@ -4,6 +4,7 @@ from typing import Union, List, Dict, Callable, Type, Any, Sequence
 import abc
 
 from . import sab, sat, const
+from .const import Features
 from .abstract import DataLoader, AbstractEntity, DataExporter
 from ezdxf.math import Matrix44, Vec3
 
@@ -99,7 +100,7 @@ class Body(AcisEntity):
     transform: "Transform" = NULL_PTR  # type: ignore
 
     def load(self, loader: DataLoader, entity_factory: Factory):
-        if loader.version >= 700:
+        if loader.version >= Features.PATTERN:
             self.load_attrib("pattern", loader, entity_factory)
         self.load_attrib("lump", loader, entity_factory)
         self.load_attrib("wire", loader, entity_factory)
@@ -125,7 +126,7 @@ class Lump(AcisEntity):
     body: "Body" = NULL_PTR  # type: ignore
 
     def load(self, loader: DataLoader, entity_factory: Factory):
-        if loader.version >= 700:
+        if loader.version >= Features.PATTERN:
             self.load_attrib("pattern", loader, entity_factory)
         self.load_attrib("next_lump", loader, entity_factory, "lump")
         self.load_attrib("shell", loader, entity_factory)
@@ -135,6 +136,31 @@ class Lump(AcisEntity):
 @register
 class Shell(AcisEntity):
     type: str = "shell"
+    pattern: "Pattern" = NULL_PTR  # type: ignore
+    next_shell: "Shell" = NULL_PTR  # type: ignore
+    sub_shell: "Subshell" = NULL_PTR  # type: ignore
+    face: "Face" = NULL_PTR  # type: ignore
+    wire: "Wire" = NULL_PTR  # type: ignore
+    lump: "Lump" = NULL_PTR  # type: ignore
+
+    def load(self, loader: DataLoader, entity_factory: Factory):
+        if loader.version >= Features.PATTERN:
+            self.load_attrib("pattern", loader, entity_factory)
+        self.load_attrib("next_shell", loader, entity_factory, "shell")
+        self.load_attrib("subshell", loader, entity_factory)
+        self.load_attrib("face", loader, entity_factory)
+        self.load_attrib("wire", loader, entity_factory)
+        self.load_attrib("lump", loader, entity_factory)
+
+
+@register
+class Subshell(AcisEntity):  # not implemented
+    type: str = "subshell"
+
+
+@register
+class Face(AcisEntity):
+    type: str = "face"
 
 
 class Loader(abc.ABC):

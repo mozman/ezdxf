@@ -95,3 +95,31 @@ class ExportError(AcisException):
 
 class EndOfAcisData(AcisException):
     pass
+
+
+class Features:
+    LAW_SPL = 400
+    CONE_SCALING = 400
+    LOFT_LAW = 400
+    REF_MIN_UV_GRID = 400
+    VBLEND_AUTO = 400
+    BL_ENV_SF = 400
+    ELLIPSE_OFFSET = 500
+    TOL_MODELING = 500
+    APPROX_SUMMARY = 500
+    TAPER_SCALING = 500
+    LAZY_B_SPLINE = 500
+    DM_MULTI_SURF = 500
+    GA_COPY_ACTION = 600
+    DM_MULTI_SURF_COLOR = 600
+    RECAL_SKIN_ERROR = 520
+    TAPER_U_RULED = 600
+    DM_60 = 600
+    LOFT_PCURVE = 600
+    EELIST_OWNER = 600
+    ANNO_HOOKED = 700
+    PATTERN = 700
+    ENTITY_TAGS = 700
+    AT = 700
+    NET_LAW = 700
+    STRINGLESS_HISTORY = 700

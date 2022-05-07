@@ -2,7 +2,8 @@
 #  License: MIT License
 from typing import List, Any, Sequence, Iterator, Tuple, Union
 from datetime import datetime
-from ezdxf._acis.const import *
+from ezdxf._acis import const
+from ezdxf._acis.const import ParsingError, InvalidLinkStructure
 from ezdxf._acis.hdr import AcisHeader
 from ezdxf._acis.abstract import AbstractEntity, AbstractBuilder, DataLoader
 
@@ -118,7 +119,7 @@ def parse_values(data: Sequence[Any], fmt: str) -> Sequence[Any]:
         elif specifier == "b":
             # boolean string specifier like "forward" and "reversed"
             try:
-                content.append(BOOL_SPECIFIER[field])
+                content.append(const.BOOL_SPECIFIER[field])
             except KeyError:
                 raise ParsingError(
                     f"unknown boolean string specifier: '{field}'"
@@ -231,7 +232,7 @@ class SatDataLoader(DataLoader):
 
     def read_str(self) -> str:
         value = self.data[self.index]
-        if value.startswith("@"):
+        if self.version < const.Features.AT or value.startswith("@"):
             self.index += 2
             return self.data[self.index-1]
         raise ParsingError(f"expected string, got {value}")
@@ -263,7 +264,7 @@ class SatBuilder(AbstractBuilder):
         """
         data = self.header.dumps()
         data.extend(build_str_records(self.entities, self.header.version))
-        data.append(END_OF_ACIS_DATA + " ")
+        data.append(const.END_OF_ACIS_DATA + " ")
         return data
 
     def set_entities(self, entities: List[SatEntity]) -> None:
@@ -334,7 +335,7 @@ def parse_header(data: Sequence[str]) -> Tuple[AcisHeader, Sequence[str]]:
 
     if len(tokens) > 2:
         try:  # Sat Jan  1 10:00:00 2022
-            header.creation_date = datetime.strptime(tokens[2], DATE_FMT)
+            header.creation_date = datetime.strptime(tokens[2], const.DATE_FMT)
         except ValueError:
             pass
     tokens = data[2].split()
@@ -347,8 +348,8 @@ def parse_header(data: Sequence[str]) -> Tuple[AcisHeader, Sequence[str]]:
 
 def _filter_records(data: Sequence[str]) -> Iterator[str]:
     for line in data:
-        if line.startswith(END_OF_ACIS_DATA) or line.startswith(
-            BEGIN_OF_ACIS_HISTORY_DATA
+        if line.startswith(const.END_OF_ACIS_DATA) or line.startswith(
+            const.BEGIN_OF_ACIS_HISTORY_DATA
         ):
             return
         yield line
