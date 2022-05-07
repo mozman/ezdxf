@@ -355,26 +355,6 @@ class SabDataLoader(DataLoader):
         raise ParsingError(f"expected pointer token, got {token}")
 
 
-def new_entity(
-    name: str,
-    attributes=NULL_PTR,
-    id=-1,
-    data: List[Any] = None,
-) -> SabEntity:
-    """Factory to create new ACIS entities.
-
-    Args:
-        name: entity type
-        attributes: reference to the entity attributes or :attr:`NULL_PTR`.
-        id: unique entity id as integer or -1
-        data: generic data container as list
-
-    """
-    e = SabEntity(name, -1, id, data)
-    e.attributes = attributes
-    return e
-
-
 class SabBuilder(AbstractBuilder):
     """Low level data structure to manage ACIS SAB data files."""
 
