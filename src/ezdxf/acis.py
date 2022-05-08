@@ -12,7 +12,7 @@ It is NOT a goal to edit and export arbitrary existing ACIS structures.
     Don't even try it!
 
 This modules do not implement an ACIS kernel!!!
-So tasks beyond stiching some flat polygonal faces to a polyhedron or creating
+So tasks beyond stitching some flat polygonal faces to a polyhedron or creating
 simple curves is not possible.
 
 To all beginners: GO AWAY!

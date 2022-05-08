@@ -119,6 +119,7 @@ Tools
     tools/text
     tools/text_size
     tools/fonts
+    tools/acis
 
 
 Global Options
