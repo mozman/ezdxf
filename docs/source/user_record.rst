@@ -81,7 +81,7 @@ UserRecord
 
     .. automethod:: __str__
 
-    .. automethod:: commit() -> XRecord
+    .. automethod:: commit
 
 BinaryRecord
 ------------
@@ -102,7 +102,7 @@ BinaryRecord
 
     .. automethod:: __str__
 
-    .. automethod:: commit() -> XRecord
+    .. automethod:: commit
 
 
 .. _BLOB: https://en.wikipedia.org/wiki/Binary_large_object

@@ -115,19 +115,19 @@ EntityQuery Class
 
     .. automethod:: __xor__
 
-    .. automethod:: __iter__() -> Iterator[DXFEntity]
+    .. automethod:: __iter__
 
     .. automethod:: purge
 
-    .. automethod:: extend(entities: Iterable[DXFEntity], query: str = "*") -> EntityQuery
+    .. automethod:: extend
 
     .. automethod:: remove
 
     .. automethod:: query
 
-    .. automethod:: groupby(dxfattrib: str = "", key: Callable[[DXFEntity], Hashable] = None) -> Dict[Hashable, List[DXFEntity]]
+    .. automethod:: groupby
 
-    .. automethod:: filter(func: Callable[[DXFEntity], bool]) -> EntityQuery
+    .. automethod:: filter
 
     .. automethod:: union
 
@@ -389,7 +389,7 @@ The ``^`` operator or :meth:`EntityQuery.symmetric_difference` returns a new
 The new() Function
 ------------------
 
-.. autofunction:: ezdxf.query.new(entities: Iterable['DXFEntity'] = None, query: str = '*') -> EntityQuery
+.. autofunction:: ezdxf.query.new
 
 .. _Python Sequence: http://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence
 

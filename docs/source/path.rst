@@ -122,20 +122,21 @@ Functions to create :class:`Path` objects from other objects.
     .. versionadded:: 0.16
 
     .. versionchanged:: 0.17
+
         support for HATCH as :term:`Multi-Path` object
 
 
-.. autofunction:: from_hatch(hatch: Hatch) -> Iterable[Path]
+.. autofunction:: from_hatch
 
-.. autofunction:: from_vertices(vertices: Iterable[Vertex], close=False) -> Path
+.. autofunction:: from_vertices
 
-.. autofunction:: from_matplotlib_path(mpath, curves=True) -> Iterable[Path]
+.. autofunction:: from_matplotlib_path
 
-.. autofunction:: multi_path_from_matplotlib_path(mpath, curves=True) -> Path
+.. autofunction:: multi_path_from_matplotlib_path
 
-.. autofunction:: from_qpainter_path(qpath) -> Iterable[Path]
+.. autofunction:: from_qpainter_path
 
-.. autofunction:: multi_path_from_qpainter_path(qpath) -> Path
+.. autofunction:: multi_path_from_qpainter_path
 
 Render Functions
 ----------------
@@ -143,96 +144,96 @@ Render Functions
 Functions to create DXF entities from paths and add them to the modelspace, a
 paperspace layout or a block definition.
 
-.. autofunction:: render_lwpolylines(layout: Layout, paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, extrusion: Vertex = (0, 0, 1),  dxfattribs: Dict = None) -> EntityQuery
+.. autofunction:: render_lwpolylines
 
-.. autofunction:: render_polylines2d(layout: Layout, paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, extrusion: Vertex = (0, 0, 1),  dxfattribs: Dict = None) -> EntityQuery
+.. autofunction:: render_polylines2d
 
-.. autofunction:: render_hatches(layout: Layout, paths: Iterable[Path], *, edge_path = True, distance: float = 0.01, segments: int = 4, g1_tol: float = 1e-4, extrusion: Vertex = (0, 0, 1),  dxfattribs: Dict = None) -> EntityQuery
+.. autofunction:: render_hatches
 
-.. autofunction:: render_mpolygons(layout: Layout, paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, extrusion: Vertex = (0, 0, 1),  dxfattribs: Dict = None) -> EntityQuery
+.. autofunction:: render_mpolygons
 
-.. autofunction:: render_polylines3d(layout: Layout, paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, dxfattribs: Dict = None) -> EntityQuery
+.. autofunction:: render_polylines3d
 
-.. autofunction:: render_lines(layout: Layout, paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, dxfattribs: Dict = None) -> EntityQuery
+.. autofunction:: render_lines
 
-.. autofunction:: render_splines_and_polylines(layout: Layout, paths: Iterable[Path], *, g1_tol: float = 1e-4, dxfattribs: Dict = None) -> EntityQuery
+.. autofunction:: render_splines_and_polylines
 
 Entity Maker
 ------------
 
 Functions to create DXF entities from paths.
 
-.. autofunction:: to_lwpolylines(paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, extrusion: Vertex = (0, 0, 1),  dxfattribs: Dict = None) -> Iterable[LWPolyline]
+.. autofunction:: to_lwpolylines
 
-.. autofunction:: to_polylines2d(paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, extrusion: Vertex = (0, 0, 1),  dxfattribs: Dict = None) -> Iterable[Polyline]
+.. autofunction:: to_polylines2d
 
-.. autofunction:: to_hatches(paths: Iterable[Path], *, edge_path: True, distance: float = 0.01, segments: int = 4, g1_tol: float = 1e-4, extrusion: Vertex = (0, 0, 1),  dxfattribs: Dict = None) -> Iterable[Hatch]
+.. autofunction:: to_hatches
 
-.. autofunction:: to_mpolygons(paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, extrusion: Vertex = (0, 0, 1),  dxfattribs: Dict = None) -> Iterable[MPolygon]
+.. autofunction:: to_mpolygons
 
-.. autofunction:: to_polylines3d(paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, dxfattribs: Dict = None) -> Iterable[Polyline]
+.. autofunction:: to_polylines3d
 
-.. autofunction:: to_lines(paths: Iterable[Path], *, distance: float = 0.01, segments: int = 4, dxfattribs: Dict = None) -> Iterable[Line]
+.. autofunction:: to_lines
 
-.. autofunction:: to_splines_and_polylines(paths: Iterable[Path], *, g1_tol: float= 1e-4, dxfattribs: Dict = None) -> Iterable[Union[Spline, Polyline]]
+.. autofunction:: to_splines_and_polylines
 
 Tool Maker
 ----------
 
 Functions to create construction tools.
 
-.. autofunction:: to_bsplines_and_vertices(path: Path, g1_tol: float = 1e-4) -> Iterable[Union[BSpline, List[Vec3]]]
+.. autofunction:: to_bsplines_and_vertices
 
-.. autofunction:: to_matplotlib_path(paths: Iterable[Path], extrusion = (0, 0, 1)) -> matplotlib.path.Path
+.. autofunction:: to_matplotlib_path
 
-.. autofunction:: to_qpainter_path(paths: Iterable[Path], extrusion = (0, 0, 1)) -> QPainterPath
+.. autofunction:: to_qpainter_path
 
 
 Utility Functions
 -----------------
 
-.. autofunction:: transform_paths(paths: Iterable[Path], m: Matrix44) -> List[Path]
+.. autofunction:: transform_paths
 
-.. autofunction:: transform_paths_to_ocs(paths: Iterable[Path], ocs: OCS) -> List[Path]
+.. autofunction:: transform_paths_to_ocs
 
-.. autofunction:: bbox(paths: Iterable[Path]) -> BoundingBox
+.. autofunction:: bbox
 
-.. autofunction:: fit_paths_into_box(paths: Iterable[Path], size: Tuple[float, float, float], uniform = True, source_box: BoundingBox = None) -> List[Path]
+.. autofunction:: fit_paths_into_box
 
-.. autofunction:: add_bezier3p(path: Path, curves: Iterable[Bezier3P])
+.. autofunction:: add_bezier3p
 
-.. autofunction:: add_bezier4p(path: Path, curves: Iterable[Bezier4P])
+.. autofunction:: add_bezier4p
 
-.. autofunction:: add_ellipse(path: Path,ellipse: ConstructionEllipse, segments=1)
+.. autofunction:: add_ellipse
 
-.. autofunction:: add_spline(path: Path, spline: BSpline, level=4)
+.. autofunction:: add_spline
 
-.. autofunction:: to_multi_path(paths: Iterable[Path]) -> Path
+.. autofunction:: to_multi_path
 
-.. autofunction:: single_paths(paths: Iterable[Path]) -> Iterable[Path]
+.. autofunction:: single_paths
 
-.. autofunction:: have_close_control_vertices(a: Path, b: Path, *, rel_tol=1e-9, abs_tol=1e-12) -> bool
+.. autofunction:: have_close_control_vertices
 
-.. autofunction:: lines_to_curve3(path: Path) -> Path
+.. autofunction:: lines_to_curve3
 
-.. autofunction:: lines_to_curve4(path: Path) -> Path
+.. autofunction:: lines_to_curve4
 
 Basic Shapes
 ------------
 
-.. autofunction:: unit_circle(start_angle: float = 0, end_angle: float = 2π, segments: int = 1, transform: Matrix44 = None) -> Path
+.. autofunction:: unit_circle
 
-.. autofunction:: wedge(start_angle: float, end_angle: float, segments: int = 1, transform: Matrix44 = None) -> Path
+.. autofunction:: wedge
 
-.. autofunction:: elliptic_transformation(center: Vertex = (0, 0, 0), radius: float = 1, ratio: float = 1, rotation: float = 0) -> Matrix44
+.. autofunction:: elliptic_transformation
 
-.. autofunction:: rect(width: float = 1, height: float = 1, transform: Matrix44 = None) -> Path
+.. autofunction:: rect
 
-.. autofunction:: ngon(count: int, length: float = None, radius: float = 1.0, transform: Matrix44 = None) -> Path
+.. autofunction:: ngon
 
-.. autofunction:: star(count: int, r1: float, r2: float, transform: Matrix44 = None) -> Path
+.. autofunction:: star
 
-.. autofunction:: gear(count: int, top_width: float, bottom_width: float, height: float, outside_radius: float, transform: Matrix44 = None) -> Path
+.. autofunction:: gear
 
 The :mod:`~ezdxf.addons.text2path` add-on provides additional functions to
 create paths from text strings and DXF text entities.
@@ -257,41 +258,41 @@ The Path Class
 
     .. autoproperty:: user_data
 
-    .. automethod:: append_path(path: Path)
+    .. automethod:: append_path
 
-    .. automethod:: approximate(segments: int=20) -> Iterator[Vec3]
+    .. automethod:: approximate
 
-    .. automethod:: clockwise() -> Path
+    .. automethod:: clockwise
 
-    .. automethod:: clone() -> Path
+    .. automethod:: clone
 
     .. automethod:: close
 
     .. automethod:: close_sub_path
 
-    .. automethod:: control_vertices() -> List[Vec3]
+    .. automethod:: control_vertices
 
-    .. automethod:: counter_clockwise() -> Path
+    .. automethod:: counter_clockwise
 
-    .. automethod:: curve3_to(location: Vec3, ctrl: Vec3)
+    .. automethod:: curve3_to
 
-    .. automethod:: curve4_to(location: Vec3, ctrl1: Vec3, ctrl2: Vec3)
+    .. automethod:: curve4_to
 
-    .. automethod:: extend_multi_path(path: Path)
+    .. automethod:: extend_multi_path
 
-    .. automethod:: flattening(distance: float, segments: int=16) -> Iterator[Vec3]
+    .. automethod:: flattening
 
     .. automethod:: has_clockwise_orientation
 
-    .. automethod:: line_to(location: Vec3)
+    .. automethod:: line_to
 
-    .. automethod:: move_to(location: Vec3)
+    .. automethod:: move_to
 
-    .. automethod:: reversed() -> Path
+    .. automethod:: reversed
 
-    .. automethod:: sub_paths() -> Iterator[Path]
+    .. automethod:: sub_paths
 
-    .. automethod:: transform(m: Matrix44) -> Path
+    .. automethod:: transform
 
 .. _PathPatch: https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.patches.PathPatch.html#matplotlib.patches.PathPatch
 .. _QPainterPath: https://doc.qt.io/qt-5/qpainterpath.html

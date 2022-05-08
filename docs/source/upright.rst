@@ -68,9 +68,9 @@ extrusion vectors.
 Functions
 ---------
 
-.. autofunction:: upright(entity: DXFGraphic) -> None
+.. autofunction:: upright
 
-.. autofunction:: upright_all(entities: Iterable[DXFGraphic]) -> None
+.. autofunction:: upright_all
 
 
 Additional Explanation
