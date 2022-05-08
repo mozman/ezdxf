@@ -39,30 +39,52 @@ NONE_REF: Any = NoneEntity()
 
 
 class AcisEntity(NoneEntity):
+    """Base ACIS entity which also represents unsupported entities.
+
+    Unsupported entities are entities whose internal structure are not fully
+    known or user defined entity types.
+
+    The content of these unsupported entities is not loaded and lost by
+    exporting such entities, therefore exporting unsupported entities raises
+    an :class:`ExportError` exception.
+
+    """
     type: str = "unsupported-entity"
     id: int
     attributes: "AcisEntity" = NONE_REF
 
     def load(self, loader: DataLoader, entity_factory: Factory) -> None:
+        """Load the ACIS entity content from `loader`."""
         self.restore_common(loader, entity_factory)
         self.restore_data(loader)
 
     def restore_common(
         self, loader: DataLoader, entity_factory: Factory
     ) -> None:
+        """Load the common part of an ACIS entity."""
         pass
 
     def restore_data(self, loader: DataLoader) -> None:
+        """Load the data part of an ACIS entity."""
         pass
 
     def export(self, exporter: DataExporter) -> None:
+        """Write the ACIS entity content to `exporter`."""
         self.write_common(exporter)
         self.write_data(exporter)
 
     def write_common(self, exporter: DataExporter) -> None:
+        """Write the common part of the ACIS entity.
+
+        It is not possible to export :class:`Body` entities including
+        unsupported entities, doing so would cause data loss or worse data
+        corruption!
+
+        """
         raise const.ExportError(f"unsupported entity type: {self.type}")
 
     def write_data(self, exporter: DataExporter) -> None:
+        """Write the data part of the ACIS entity. """
         pass
 
 
