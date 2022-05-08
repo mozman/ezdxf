@@ -27,21 +27,21 @@ def register(cls: Type["AcisEntity"]):
     return cls
 
 
-class NullPtr:
-    type: str = const.NULL_PTR_NAME
+class NoneEntity:
+    type: str = const.NONE_ENTITY_NAME
 
     @property
-    def is_null_ptr(self) -> bool:
-        return self.type == const.NULL_PTR_NAME
+    def is_none(self) -> bool:
+        return self.type == const.NONE_ENTITY_NAME
 
 
-NULL_PTR = NullPtr()
+NONE_REF: Any = NoneEntity()
 
 
-class AcisEntity(NullPtr):
+class AcisEntity(NoneEntity):
     type: str = "unsupported-entity"
     id: int
-    attributes: "AcisEntity" = NULL_PTR  # type: ignore
+    attributes: "AcisEntity" = NONE_REF
 
     def load(self, loader: DataLoader, entity_factory: Factory) -> None:
         self.restore_common(loader, entity_factory)
@@ -55,25 +55,6 @@ class AcisEntity(NullPtr):
     def restore_data(self, loader: DataLoader) -> None:
         pass
 
-    def restore_entity(
-        self,
-        name: str,
-        loader: DataLoader,
-        entity_factory: Factory,
-        expected_type: str = "",
-    ) -> None:
-        if not expected_type:
-            expected_type = name
-        raw_entity = loader.read_ptr()
-        if raw_entity.is_null_ptr:
-            return
-        if raw_entity.name.endswith(expected_type):
-            setattr(self, name, entity_factory(raw_entity))
-        else:
-            raise const.ParsingError(
-                f"expected entity type '{expected_type}', got '{raw_entity.name}'"
-            )
-
     def export(self, exporter: DataExporter) -> None:
         self.write_common(exporter)
         self.write_data(exporter)
@@ -83,6 +64,20 @@ class AcisEntity(NullPtr):
 
     def write_data(self, exporter: DataExporter) -> None:
         pass
+
+
+def restore_entity(
+    expected_type: str, loader: DataLoader, entity_factory: Factory
+) -> Any:
+    raw_entity = loader.read_ptr()
+    if raw_entity.is_null_ptr:
+        return NONE_REF
+    if raw_entity.name.endswith(expected_type):
+        return entity_factory(raw_entity)
+    else:
+        raise const.ParsingError(
+            f"expected entity type '{expected_type}', got '{raw_entity.name}'"
+        )
 
 
 @register
@@ -108,26 +103,35 @@ class Transform(AcisEntity):
         self.matrix = Matrix44(data)
 
 
-@register
-class Body(AcisEntity):
-    type: str = "body"
-    pattern: "Pattern" = NULL_PTR  # type: ignore
-    lump: "Lump" = NULL_PTR  # type: ignore
-    wire: "Wire" = NULL_PTR  # type: ignore
-    transform: "Transform" = NULL_PTR  # type: ignore
+class SupportsPattern(AcisEntity):
+    pattern: "Pattern" = NONE_REF
 
     def restore_common(
         self, loader: DataLoader, entity_factory: Factory
     ) -> None:
         if loader.version >= Features.PATTERN:
-            self.restore_entity("pattern", loader, entity_factory)
-        self.restore_entity("lump", loader, entity_factory)
-        self.restore_entity("wire", loader, entity_factory)
-        self.restore_entity("transform", loader, entity_factory)
+            self.pattern = restore_entity("pattern", loader, entity_factory)
 
 
 @register
-class Wire(AcisEntity):  # not implemented
+class Body(SupportsPattern):
+    type: str = "body"
+    pattern: "Pattern" = NONE_REF
+    lump: "Lump" = NONE_REF
+    wire: "Wire" = NONE_REF
+    transform: "Transform" = NONE_REF
+
+    def restore_common(
+        self, loader: DataLoader, entity_factory: Factory
+    ) -> None:
+        super().restore_common(loader, entity_factory)
+        self.lump = restore_entity("lump", loader, entity_factory)
+        self.wire = restore_entity("wire", loader, entity_factory)
+        self.transform = restore_entity("transform", loader, entity_factory)
+
+
+@register
+class Wire(SupportsPattern):  # not implemented
     type: str = "wire"
 
 
@@ -137,59 +141,54 @@ class Pattern(AcisEntity):  # not implemented
 
 
 @register
-class Lump(AcisEntity):
+class Lump(SupportsPattern):
     type: str = "lump"
-    pattern: "Pattern" = NULL_PTR  # type: ignore
-    next_lump: "Lump" = NULL_PTR  # type: ignore
-    shell: "Shell" = NULL_PTR  # type: ignore
-    body: "Body" = NULL_PTR  # type: ignore
+    next_lump: "Lump" = NONE_REF
+    shell: "Shell" = NONE_REF
+    body: "Body" = NONE_REF
 
     def restore_common(
         self, loader: DataLoader, entity_factory: Factory
     ) -> None:
-        if loader.version >= Features.PATTERN:
-            self.restore_entity("pattern", loader, entity_factory)
-        self.restore_entity("next_lump", loader, entity_factory, "lump")
-        self.restore_entity("shell", loader, entity_factory)
-        self.restore_entity("body", loader, entity_factory)
+        super().restore_common(loader, entity_factory)
+        self.next_lump = restore_entity("lump", loader, entity_factory)
+        self.shell = restore_entity("shell", loader, entity_factory)
+        self.body = restore_entity("body", loader, entity_factory)
 
 
 @register
-class Shell(AcisEntity):
+class Shell(SupportsPattern):
     type: str = "shell"
-    pattern: "Pattern" = NULL_PTR  # type: ignore
-    next_shell: "Shell" = NULL_PTR  # type: ignore
-    sub_shell: "Subshell" = NULL_PTR  # type: ignore
-    face: "Face" = NULL_PTR  # type: ignore
-    wire: "Wire" = NULL_PTR  # type: ignore
-    lump: "Lump" = NULL_PTR  # type: ignore
+    next_shell: "Shell" = NONE_REF
+    subshell: "Subshell" = NONE_REF
+    face: "Face" = NONE_REF
+    wire: "Wire" = NONE_REF
+    lump: "Lump" = NONE_REF
 
     def restore_common(
         self, loader: DataLoader, entity_factory: Factory
     ) -> None:
-        if loader.version >= Features.PATTERN:
-            self.restore_entity("pattern", loader, entity_factory)
-        self.restore_entity("next_shell", loader, entity_factory, "shell")
-        self.restore_entity("subshell", loader, entity_factory)
-        self.restore_entity("face", loader, entity_factory)
-        self.restore_entity("wire", loader, entity_factory)
-        self.restore_entity("lump", loader, entity_factory)
+        super().restore_common(loader, entity_factory)
+        self.next_shell = restore_entity("next_shell", loader, entity_factory)
+        self.subshell = restore_entity("subshell", loader, entity_factory)
+        self.face = restore_entity("face", loader, entity_factory)
+        self.wire = restore_entity("wire", loader, entity_factory)
+        self.lump = restore_entity("lump", loader, entity_factory)
 
 
 @register
-class Subshell(AcisEntity):  # not implemented
+class Subshell(SupportsPattern):  # not implemented
     type: str = "subshell"
 
 
 @register
-class Face(AcisEntity):
+class Face(SupportsPattern):
     type: str = "face"
-    pattern: "Pattern" = NULL_PTR  # type: ignore
-    next_face: "Face" = NULL_PTR  # type: ignore
-    loop: "Loop" = NULL_PTR  # type: ignore
-    shell: "Shell" = NULL_PTR  # type: ignore
-    subshell: "Subshell" = NULL_PTR  # type: ignore
-    surface: "Surface" = NULL_PTR  # type: ignore
+    next_face: "Face" = NONE_REF
+    loop: "Loop" = NONE_REF
+    shell: "Shell" = NONE_REF
+    subshell: "Subshell" = NONE_REF
+    surface: "Surface" = NONE_REF
     sense = True  # True = reversed; False = forward
     double_sided = False  # True = double; False = single
     containment = False  # if double_sided: True = in, False = out
@@ -197,13 +196,12 @@ class Face(AcisEntity):
     def restore_common(
         self, loader: DataLoader, entity_factory: Factory
     ) -> None:
-        if loader.version >= Features.PATTERN:
-            self.restore_entity("pattern", loader, entity_factory)
-        self.restore_entity("next_face", loader, entity_factory, "face")
-        self.restore_entity("loop", loader, entity_factory)
-        self.restore_entity("shell", loader, entity_factory)
-        self.restore_entity("subshell", loader, entity_factory)
-        self.restore_entity("surface", loader, entity_factory)
+        super().restore_common(loader, entity_factory)
+        self.next_face = restore_entity("face", loader, entity_factory)
+        self.loop = restore_entity("loop", loader, entity_factory)
+        self.shell = restore_entity("shell", loader, entity_factory)
+        self.subshell = restore_entity("subshell", loader, entity_factory)
+        self.surface = restore_entity("surface", loader, entity_factory)
         self.sense = loader.read_bool("reversed", "forward")
         self.double_sided = loader.read_bool("double", "single")
         if self.double_sided:
@@ -211,17 +209,10 @@ class Face(AcisEntity):
 
 
 @register
-class Surface(AcisEntity):
+class Surface(SupportsPattern):
     type: str = "surface"
-    pattern: "Pattern" = NULL_PTR  # type: ignore
     u_bounds = INF, INF
     v_bounds = INF, INF
-
-    def restore_common(
-        self, loader: DataLoader, entity_factory: Factory
-    ) -> None:
-        if loader.version >= Features.PATTERN:
-            self.restore_entity("pattern", loader, entity_factory)
 
     def restore_data(self, loader: DataLoader) -> None:
         self.u_bounds = loader.read_interval(), loader.read_interval()
@@ -254,7 +245,7 @@ class Plane(Surface):
 
 
 @register
-class Loop(AcisEntity):
+class Loop(SupportsPattern):
     type: str = "loop"
 
 

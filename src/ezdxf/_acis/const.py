@@ -20,6 +20,7 @@ DATA_END_MARKERS = (
     END_OF_ASM_DATA,
 )
 NULL_PTR_NAME = "null-ptr"
+NONE_ENTITY_NAME = "none-entity"
 
 BOOL_SPECIFIER = {
     "forward": True,
