@@ -16,7 +16,6 @@ from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS, OCS
 from ezdxf.math.transformtools import (
     transform_thickness_and_extrusion_without_ocs,
 )
-from ezdxf.render import point
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity, acdb_entity_group_codes
 from .factory import register_entity
@@ -132,6 +131,7 @@ class Point(DXFGraphic):
             pdmode: point styling mode
 
         """
+        from ezdxf.render import point
         for e in point.virtual_entities(self, pdsize, pdmode):
             e.set_source_of_copy(self)
             yield e

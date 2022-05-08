@@ -16,6 +16,7 @@ from typing import (
 from ezdxf.math import (
     Matrix44,
     Vec3,
+    Vertex,
     NULLVEC,
     is_planar_face,
     subdivide_face,
@@ -25,7 +26,6 @@ from ezdxf.math import (
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        Vertex,
         UCS,
         Polyface,
         Polymesh,

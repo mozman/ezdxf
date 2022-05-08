@@ -1,11 +1,12 @@
 # Copyright (c) 2011-2021, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
+
 from typing import (
     TYPE_CHECKING,
     Iterable,
     Iterator,
     Union,
-    Sequence,
     List,
     cast,
 )

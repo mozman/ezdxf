@@ -1,17 +1,14 @@
 #  Copyright (c) 2020-2021, Manfred Moitzi
 #  License: MIT License
-from typing import TYPE_CHECKING, List, cast
+from typing import List, cast
 import math
-from ezdxf.entities import factory
+from ezdxf.entities import factory, Point, DXFGraphic
 from ezdxf.math import Vec3, UCS, NULLVEC
-
-if TYPE_CHECKING:
-    from ezdxf.entities import Point, DXFGraphic
 
 
 def virtual_entities(
-    point: "Point", pdsize: float = 1, pdmode: int = 0
-) -> List["DXFGraphic"]:
+    point: Point, pdsize: float = 1, pdmode: int = 0
+) -> List[DXFGraphic]:
     """Yields point graphic as DXF primitives LINE and CIRCLE entities.
     The dimensionless point is rendered as zero-length line!
 
@@ -34,12 +31,12 @@ def virtual_entities(
     def add_line_symmetrical(offset: Vec3):
         dxfattribs["start"] = ucs.to_wcs(-offset)
         dxfattribs["end"] = ucs.to_wcs(offset)
-        entities.append(cast("DXFGraphic", factory.new("LINE", dxfattribs)))
+        entities.append(cast(DXFGraphic, factory.new("LINE", dxfattribs)))
 
     def add_line(s: Vec3, e: Vec3):
         dxfattribs["start"] = ucs.to_wcs(s)
         dxfattribs["end"] = ucs.to_wcs(e)
-        entities.append(cast("DXFGraphic", factory.new("LINE", dxfattribs)))
+        entities.append(cast(DXFGraphic, factory.new("LINE", dxfattribs)))
 
     center = point.dxf.location
     # This is not a real OCS! Defines just the point orientation,
@@ -50,7 +47,7 @@ def virtual_entities(
     # The point angle is clockwise oriented:
     ucs = ucs.rotate_local_z(math.radians(-point.dxf.angle))
 
-    entities: List["DXFGraphic"] = []
+    entities: List[DXFGraphic] = []
     gfx = point.graphic_properties()
 
     radius = pdsize * 0.5
@@ -87,6 +84,6 @@ def virtual_entities(
         else:
             dxfattribs["center"] = center
         dxfattribs["radius"] = radius
-        entities.append(cast("DXFGraphic", factory.new("CIRCLE", dxfattribs)))
+        entities.append(cast(DXFGraphic, factory.new("CIRCLE", dxfattribs)))
 
     return entities

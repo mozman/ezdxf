@@ -36,6 +36,7 @@ extensions = [
     'sphinx.ext.napoleon',
 ]
 autodoc_typehints_format = "short"
+autodoc_type_aliases = {}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

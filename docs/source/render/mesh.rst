@@ -31,7 +31,7 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. automethod:: diagnose
 
-    .. automethod:: faces_as_vertices() -> Iterator[List[Vec3]]
+    .. automethod:: faces_as_vertices
 
     .. automethod:: open_faces
 
@@ -39,17 +39,17 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. automethod:: add_face
 
-    .. automethod:: add_mesh(vertices=None, faces=None, edges=None, mesh=None) -> None
+    .. automethod:: add_mesh
 
     .. automethod:: has_none_planar_faces
 
-    .. automethod:: render_mesh(layout: BaseLayout, dxfattribs: dict = None, matrix: Matrix44 = None, ucs: UCS = None)
+    .. automethod:: render_mesh
 
-    .. automethod:: render_polyface(layout: BaseLayout, dxfattribs: dict = None, matrix: Matrix44 = None, ucs: UCS = None)
+    .. automethod:: render_polyface
 
-    .. automethod:: render_3dfaces(layout: BaseLayout, dxfattribs: dict = None, matrix: Matrix44 = None, ucs: UCS = None)
+    .. automethod:: render_3dfaces
 
-    .. automethod:: render_normals(layout: BaseLayout, length: float = 1, relative=True, dxfattribs: dict = None)
+    .. automethod:: render_normals
 
     .. automethod:: from_mesh
 
@@ -59,15 +59,15 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. automethod:: flip_normals
 
-    .. automethod:: subdivide(level: int = 1, quads=True) -> MeshTransformer
+    .. automethod:: subdivide
 
-    .. automethod:: merge_coplanar_faces(passes: int = 1) -> MeshTransformer
+    .. automethod:: merge_coplanar_faces
 
-    .. automethod:: optimize_vertices(precision: int = 6) -> MeshTransformer
+    .. automethod:: optimize_vertices
 
-    .. automethod:: subdivide_ngons(max_vertex_count: int = 4) -> Iterator[Sequence[Vec3]]
+    .. automethod:: subdivide_ngons
 
-    .. automethod:: tessellation(max_vertex_count: int = 4) -> Iterator[Sequence[Vec3]]
+    .. automethod:: tessellation
 
 
 .. autoclass:: ezdxf.render.mesh.EdgeStat
@@ -134,7 +134,7 @@ Same functionality as :class:`MeshBuilder` but supports inplace transformation.
 
     Subclass of :class:`MeshBuilder`
 
-    .. automethod:: transform(matrix: Matrix44)
+    .. automethod:: transform
 
     .. automethod:: translate
 
