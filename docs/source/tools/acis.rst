@@ -33,7 +33,7 @@ maybe in the future it is also possible to create such polygon face meshes.
 Functions
 ~~~~~~~~~
 
-.. autofunction:: load(s: Union[str, bytes, bytearray]) -> list[Body]
+.. autofunction:: load
 
 Exceptions
 ~~~~~~~~~~

@@ -3,11 +3,11 @@
 # License: MIT License
 from typing import TYPE_CHECKING, Iterable, List, Sequence, Tuple, Iterator
 import math
-from ezdxf.math import Vec3
+from ezdxf.math import Vec3, Vertex
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, GenericLayoutType, Matrix44, UCS
+    from ezdxf.eztypes import GenericLayoutType, Matrix44, UCS
 
 HEIGHT4 = 1.0 / math.sqrt(2.0)  # pyramid4 height (* length)
 HEIGHT3 = math.sqrt(6.0) / 3.0  # pyramid3 height (* length)

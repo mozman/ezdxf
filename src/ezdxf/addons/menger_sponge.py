@@ -1,12 +1,12 @@
 # Purpose: menger sponge addon for ezdxf
 # Copyright (c) 2016-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List, Tuple, Iterator
-from ezdxf.math import Vec3
+from typing import TYPE_CHECKING, List, Tuple, Iterator
+from ezdxf.math import Vec3, Vertex
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, GenericLayoutType, Matrix44, UCS
+    from ezdxf.eztypes import GenericLayoutType, Matrix44, UCS
 
 # fmt: off
 all_cubes_size_3_template = [
