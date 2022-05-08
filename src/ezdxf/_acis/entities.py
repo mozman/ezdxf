@@ -11,6 +11,7 @@ from ezdxf.math import Matrix44, Vec3
 Factory = Callable[[AbstractEntity], "AcisEntity"]
 
 ENTITY_TYPES: Dict[str, Type["AcisEntity"]] = {}
+INF = float("inf")
 
 
 def load(data: Union[str, bytes, bytearray]) -> List["Body"]:
@@ -42,10 +43,19 @@ class AcisEntity(NullPtr):
     id: int
     attributes: "AcisEntity" = NULL_PTR  # type: ignore
 
-    def load(self, loader: DataLoader, entity_factory: Factory):
+    def load(self, loader: DataLoader, entity_factory: Factory) -> None:
+        self.restore_common(loader, entity_factory)
+        self.restore_data(loader)
+
+    def restore_common(
+        self, loader: DataLoader, entity_factory: Factory
+    ) -> None:
         pass
 
-    def load_attrib(
+    def restore_data(self, loader: DataLoader) -> None:
+        pass
+
+    def restore_entity(
         self,
         name: str,
         loader: DataLoader,
@@ -65,7 +75,14 @@ class AcisEntity(NullPtr):
             )
 
     def export(self, exporter: DataExporter) -> None:
+        self.write_common(exporter)
+        self.write_data(exporter)
+
+    def write_common(self, exporter: DataExporter) -> None:
         raise const.ExportError(f"unsupported entity type: {self.type}")
+
+    def write_data(self, exporter: DataExporter) -> None:
+        pass
 
 
 @register
@@ -73,7 +90,7 @@ class Transform(AcisEntity):
     type: str = "transform"
     matrix = Matrix44()
 
-    def load(self, loader: DataLoader, entity_factory: Factory):
+    def restore_data(self, loader: DataLoader) -> None:
         # Here comes an ugly hack, but SAT and SAB store the matrix data in a
         # quiet different way:
         if isinstance(loader, sab.SabDataLoader):
@@ -99,12 +116,14 @@ class Body(AcisEntity):
     wire: "Wire" = NULL_PTR  # type: ignore
     transform: "Transform" = NULL_PTR  # type: ignore
 
-    def load(self, loader: DataLoader, entity_factory: Factory):
+    def restore_common(
+        self, loader: DataLoader, entity_factory: Factory
+    ) -> None:
         if loader.version >= Features.PATTERN:
-            self.load_attrib("pattern", loader, entity_factory)
-        self.load_attrib("lump", loader, entity_factory)
-        self.load_attrib("wire", loader, entity_factory)
-        self.load_attrib("transform", loader, entity_factory)
+            self.restore_entity("pattern", loader, entity_factory)
+        self.restore_entity("lump", loader, entity_factory)
+        self.restore_entity("wire", loader, entity_factory)
+        self.restore_entity("transform", loader, entity_factory)
 
 
 @register
@@ -125,12 +144,14 @@ class Lump(AcisEntity):
     shell: "Shell" = NULL_PTR  # type: ignore
     body: "Body" = NULL_PTR  # type: ignore
 
-    def load(self, loader: DataLoader, entity_factory: Factory):
+    def restore_common(
+        self, loader: DataLoader, entity_factory: Factory
+    ) -> None:
         if loader.version >= Features.PATTERN:
-            self.load_attrib("pattern", loader, entity_factory)
-        self.load_attrib("next_lump", loader, entity_factory, "lump")
-        self.load_attrib("shell", loader, entity_factory)
-        self.load_attrib("body", loader, entity_factory)
+            self.restore_entity("pattern", loader, entity_factory)
+        self.restore_entity("next_lump", loader, entity_factory, "lump")
+        self.restore_entity("shell", loader, entity_factory)
+        self.restore_entity("body", loader, entity_factory)
 
 
 @register
@@ -143,14 +164,16 @@ class Shell(AcisEntity):
     wire: "Wire" = NULL_PTR  # type: ignore
     lump: "Lump" = NULL_PTR  # type: ignore
 
-    def load(self, loader: DataLoader, entity_factory: Factory):
+    def restore_common(
+        self, loader: DataLoader, entity_factory: Factory
+    ) -> None:
         if loader.version >= Features.PATTERN:
-            self.load_attrib("pattern", loader, entity_factory)
-        self.load_attrib("next_shell", loader, entity_factory, "shell")
-        self.load_attrib("subshell", loader, entity_factory)
-        self.load_attrib("face", loader, entity_factory)
-        self.load_attrib("wire", loader, entity_factory)
-        self.load_attrib("lump", loader, entity_factory)
+            self.restore_entity("pattern", loader, entity_factory)
+        self.restore_entity("next_shell", loader, entity_factory, "shell")
+        self.restore_entity("subshell", loader, entity_factory)
+        self.restore_entity("face", loader, entity_factory)
+        self.restore_entity("wire", loader, entity_factory)
+        self.restore_entity("lump", loader, entity_factory)
 
 
 @register
@@ -171,14 +194,16 @@ class Face(AcisEntity):
     double_sided = False  # True = double; False = single
     containment = False  # if double_sided: True = in, False = out
 
-    def load(self, loader: DataLoader, entity_factory: Factory):
+    def restore_common(
+        self, loader: DataLoader, entity_factory: Factory
+    ) -> None:
         if loader.version >= Features.PATTERN:
-            self.load_attrib("pattern", loader, entity_factory)
-        self.load_attrib("next_face", loader, entity_factory, "face")
-        self.load_attrib("loop", loader, entity_factory)
-        self.load_attrib("shell", loader, entity_factory)
-        self.load_attrib("subshell", loader, entity_factory)
-        self.load_attrib("surface", loader, entity_factory)
+            self.restore_entity("pattern", loader, entity_factory)
+        self.restore_entity("next_face", loader, entity_factory, "face")
+        self.restore_entity("loop", loader, entity_factory)
+        self.restore_entity("shell", loader, entity_factory)
+        self.restore_entity("subshell", loader, entity_factory)
+        self.restore_entity("surface", loader, entity_factory)
         self.sense = loader.read_bool("reversed", "forward")
         self.double_sided = loader.read_bool("double", "single")
         if self.double_sided:
@@ -189,13 +214,18 @@ class Face(AcisEntity):
 class Surface(AcisEntity):
     type: str = "surface"
     pattern: "Pattern" = NULL_PTR  # type: ignore
+    u_bounds = INF, INF
+    v_bounds = INF, INF
 
-    def load(self, loader: DataLoader, entity_factory: Factory):
+    def restore_common(
+        self, loader: DataLoader, entity_factory: Factory
+    ) -> None:
         if loader.version >= Features.PATTERN:
-            self.load_attrib("pattern", loader, entity_factory)
+            self.restore_entity("pattern", loader, entity_factory)
 
-
-INF = float("inf")
+    def restore_data(self, loader: DataLoader) -> None:
+        self.u_bounds = loader.read_interval(), loader.read_interval()
+        self.v_bounds = loader.read_interval(), loader.read_interval()
 
 
 @register
@@ -205,17 +235,15 @@ class Plane(Surface):
     normal = Vec3(1, 0, 0)  # pointing outside
     u_dir = Vec3(1, 0, 0)  # unit vector!
     reversed_v = True  # True = reversed_v; False = forward_v
-    u_bounds = INF, INF
-    v_bounds = INF, INF
 
-    def load(self, loader: DataLoader, entity_factory: Factory):
-        super().load(loader, entity_factory)
+    def restore_common(
+        self, loader: DataLoader, entity_factory: Factory
+    ) -> None:
+        super().restore_common(loader, entity_factory)
         self.origin = Vec3(loader.read_vec3())
         self.normal = Vec3(loader.read_vec3())
         self.u_dir = Vec3(loader.read_vec3())
         self.reversed_v = loader.read_bool("reversed_v", "forward_v")
-        self.u_bounds = loader.read_interval(), loader.read_interval()
-        self.v_bounds = loader.read_interval(), loader.read_interval()
 
     @property
     def v_dir(self):
