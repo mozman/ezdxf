@@ -132,5 +132,23 @@ class TestPlane:
         assert math.isinf(plane.v_bounds[1])
 
 
+class TestLoop:
+    @pytest.fixture(scope="class")
+    def loop(self, body):
+        return body.lump.shell.face.loop
+
+    def test_loop_type(self, loop):
+        assert loop.type == "loop"
+
+    def test_cube_face_has_only_one_loop(self, loop):
+        assert loop.next_loop.is_none is True
+
+    def test_loop_references_the_first_coedge(self, loop):
+        assert loop.coedge.is_none is False
+
+    def test_loop_references_the_parent_face(self, body, loop):
+        assert loop.face is body.lump.shell.face
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

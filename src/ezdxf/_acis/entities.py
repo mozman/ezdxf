@@ -247,16 +247,32 @@ class Plane(Surface):
 @register
 class Loop(SupportsPattern):
     type: str = "loop"
+    next_loop: "Loop" = NONE_REF
+    coedge: "Coedge" = NONE_REF
+    face: "Face" = NONE_REF
+
+    def restore_common(
+        self, loader: DataLoader, entity_factory: Factory
+    ) -> None:
+        super().restore_common(loader, entity_factory)
+        self.next_loop = restore_entity("loop", loader, entity_factory)
+        self.coedge = restore_entity("coedge", loader, entity_factory)
+        self.face = restore_entity("face", loader, entity_factory)
 
 
-class Loader(abc.ABC):
+@register
+class Coedge(SupportsPattern):
+    type: str = "coedge"
+
+
+class FileLoader(abc.ABC):
     records: Sequence[Union[sat.SatEntity, sab.SabEntity]]
 
     def __init__(self, version: int):
         self.entities: Dict[int, AcisEntity] = {}
         self.version: int = version
 
-    def get_entity(self, raw_entity: AbstractEntity) -> AcisEntity:
+    def entity_factory(self, raw_entity: AbstractEntity) -> AcisEntity:
         uid = id(raw_entity)
         try:
             return self.entities[uid]
@@ -270,7 +286,7 @@ class Loader(abc.ABC):
         return [e for e in self.entities.values() if isinstance(e, Body)]
 
     def load_entities(self):
-        entity_factory = self.get_entity
+        entity_factory = self.entity_factory
 
         for raw_entity in self.records:
             entity = entity_factory(raw_entity)
@@ -286,7 +302,7 @@ class Loader(abc.ABC):
         pass
 
 
-class SabLoader(Loader):
+class SabLoader(FileLoader):
     def __init__(self, data: bytes):
         builder = sab.parse_sab(data)
         super().__init__(builder.header.version)
@@ -302,7 +318,7 @@ class SabLoader(Loader):
         return loader.bodies()
 
 
-class SatLoader(Loader):
+class SatLoader(FileLoader):
     def __init__(self, data: str):
         builder = sat.parse_sat(data)
         super().__init__(builder.header.version)
