@@ -1,17 +1,15 @@
 
 .. module:: ezdxf.acis
 
-.. ACIS_internals
+.. ACIS_Tools
 
-ACIS Management Tool
-====================
+ACIS Tools
+==========
 
 .. versionadded:: 0.18
 
-These are low-level :term:`ACIS` data management tools for parsing and
-creating simple and known ACIS data structures.
-
-The main goals of these ACIS support libraries are:
+The :mod:`ezdxf.acis` module provides some :term:`ACIS` data management tools.
+The main goals of this support module are:
 
     1. load and parse simple and known ACIS data structures
     2. create and export simple and known ACIS data structures
@@ -29,7 +27,7 @@ limited to the use as embedded data in DXF and DWG files.
 
 The `ezdxf` library does not provide an :term:`ACIS` kernel and there are no
 plans for implementing one because this is far beyond my capabilities, but it
-is possible to extract geometries made up only by planar polygonal faces and
+is possible to extract geometries made up only by flat polygonal faces and
 maybe in the future it is also possible to create such polygon face meshes.
 
 Functions
@@ -42,7 +40,7 @@ Exceptions
 
 .. class:: AcisException
 
-    Base exception of the :mod:`acis` module.
+    Base exception of the :mod:`ezdxf.acis` module.
 
 .. class:: InvalidLinkStructure
 
@@ -77,18 +75,27 @@ AcisEntity
 
 .. class:: AcisEntity
 
+    Base class for all ACIS entities.
+
+    .. attribute:: type
+
+    .. attribute:: id
+
+    .. attribute:: attributes
+
+
 Transform
 ---------
 
 
-.. class:: Transform
+.. class:: Transform(AcisEntity)
 
     Represents an affine transformation operation.
 
 Body
 ----
 
-.. class:: Body
+.. class:: Body(AcisEntity)
 
     Represents a solid geometry, which can consist of multiple :class:`Lump`
     entities.
@@ -97,7 +104,7 @@ Lump
 ----
 
 
-.. class:: Lump
+.. class:: Lump(AcisEntity)
 
     The lump represents a connected entity and there can be multiple lumps in a
     :class:`Body`. Multiple lumps are linked together by the :attr:`next_lump`
@@ -108,43 +115,43 @@ Lump
 Wire
 ----
 
-.. class:: Wire
+.. class:: Wire(AcisEntity)
 
 Shell
 -----
 
-.. class:: Shell
+.. class:: Shell(AcisEntity)
 
 Subshell
 --------
 
-.. class:: Subshell
+.. class:: Subshell(AcisEntity)
 
 
 Face
 ----
 
-.. class:: Face
+.. class:: Face(AcisEntity)
 
 Surface
 --------
 
-.. class:: Surface
+.. class:: Surface(AcisEntity)
 
 Plane
 -----
 
-.. class:: Plane
+.. class:: Plane(Surface)
 
 Loop
 -----
 
-.. class:: Loop
+.. class:: Loop(AcisEntity)
 
 Coedge
 ------
 
-.. class:: Coedge
+.. class:: Coedge(AcisEntity)
 
     The coedges are a double linked list where :attr:`next_coedge` points to the
     next coedge and :attr:`prev_codege` to the previous coedge.
@@ -158,13 +165,13 @@ Coedge
 Edge
 ----
 
-.. class:: Edge
+.. class:: Edge(AcisEntity)
 
 
 Vertex
 ------
 
-.. class:: Vertex
+.. class:: Vertex(AcisEntity)
 
     Represents a vertex of an :class:`Edge` entity and references a :class`Point`
     entity. Multiple :class:`Vertex` entities can reference the same :class:`Point`
@@ -173,7 +180,7 @@ Vertex
 Point
 -----
 
-.. class:: Point
+.. class:: Point(AcisEntity)
 
     Represents a point in space where :attr:`location` attribute represents
     the cartesian coordinates.
