@@ -12,6 +12,7 @@ from typing import (
 import math
 from ezdxf.math import (
     Vec3,
+    Vertex,
     Z_AXIS,
     OCS,
     Matrix44,
@@ -33,7 +34,7 @@ from .commands import Command
 from . import converter
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, Layout, EntityQuery
+    from ezdxf.eztypes import Layout, EntityQuery
 
 __all__ = [
     "bbox",
@@ -227,7 +228,7 @@ def render_lwpolylines(
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
-    extrusion: "Vertex" = Z_AXIS,
+    extrusion: Vertex = Z_AXIS,
     dxfattribs=None
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as
@@ -271,7 +272,7 @@ def render_polylines2d(
     *,
     distance: float = 0.01,
     segments: int = 4,
-    extrusion: "Vertex" = Z_AXIS,
+    extrusion: Vertex = Z_AXIS,
     dxfattribs=None
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as 2D
@@ -317,7 +318,7 @@ def render_hatches(
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
     g1_tol: float = G1_TOL,
-    extrusion: "Vertex" = Z_AXIS,
+    extrusion: Vertex = Z_AXIS,
     dxfattribs=None
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as
@@ -366,7 +367,7 @@ def render_mpolygons(
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
-    extrusion: "Vertex" = Z_AXIS,
+    extrusion: Vertex = Z_AXIS,
     dxfattribs=None
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as
