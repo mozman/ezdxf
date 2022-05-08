@@ -56,7 +56,7 @@ global option::
 Flatten Complex DXF Entities
 ----------------------------
 
-.. autofunction:: recursive_decompose(entities: Iterable[DXFEntity]) -> Iterable[DXFEntity]
+.. autofunction:: recursive_decompose
 
 Entity Deconstruction
 ---------------------
@@ -65,17 +65,17 @@ These functions disassemble DXF entities into simple geometric objects
 like meshes, paths or vertices. The :class:`Primitive` is a simplified
 intermediate class to use a common interface on various DXF entities.
 
-.. autofunction:: make_primitive(entity: DXFEntity, max_flattening_distance=None) -> Primitive
+.. autofunction:: make_primitive
 
-.. autofunction:: to_primitives(entities: Iterable[DXFEntity], max_flattening_distance: float = None) -> Iterable[Primitive]
+.. autofunction:: to_primitives
 
-.. autofunction:: to_meshes(primitives: Iterable[Primitive]) -> Iterable[MeshBuilder]
+.. autofunction:: to_meshes
 
-.. autofunction:: to_paths(primitives: Iterable[Primitive]) -> Iterable[Path]
+.. autofunction:: to_paths
 
-.. autofunction:: to_vertices(primitives: Iterable[Primitive]) -> Iterable[Vec3]
+.. autofunction:: to_vertices
 
-.. autofunction:: to_control_vertices(primitives: Iterable[Primitive]) -> Iterable[Vec3]
+.. autofunction:: to_control_vertices
 
 .. class:: Primitive
 
@@ -97,6 +97,4 @@ intermediate class to use a common interface on various DXF entities.
 
     .. autoproperty:: is_empty
 
-    .. automethod:: vertices() -> Iterable[Vec3]
-
-
+    .. automethod:: vertices

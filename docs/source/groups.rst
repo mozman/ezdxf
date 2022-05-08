@@ -29,11 +29,11 @@ DXFGroup
 
     .. attribute:: dxf.unnamed
 
-        ``1`` for unnamed, ``0`` for named group (int)
+        1 for unnamed, 0 for named group (int)
 
     .. attribute:: dxf.selectable
 
-        ``1`` for selectable, ``0`` for not selectable group (int)
+        1 for selectable, 0 for not selectable group (int)
 
     .. automethod:: __iter__
 
@@ -65,17 +65,17 @@ by the attribute :attr:`~ezdxf.document.Drawing.groups`.
 
     Manages all :class:`DXFGroup` objects of a :class:`~ezdxf.document.Drawing`.
 
-    .. method:: __len__() -> int
+    .. method:: __len__
 
         Returns the count of DXF groups.
 
-    .. method:: __iter__()
+    .. method:: __iter__
 
         Iterate over all existing groups as (`name`, `group`) tuples. `name` is
         the name of the group as string and `group` is an :class:`DXFGroup`
         object.
 
-    .. method:: __contains__(name: str) -> bool
+    .. method:: __contains__
 
         Returns ``True`` if a group `name` exist.
 
@@ -84,13 +84,13 @@ by the attribute :attr:`~ezdxf.document.Drawing.groups`.
         Returns the group `name`. Raises :class:`DXFKeyError` if group `name`
         does not exist.
 
-    .. automethod:: groups() -> DXFGroup
+    .. automethod:: groups
 
-    .. automethod:: new(name: str=None, description: str='', selectable: bool=True) -> DXFGroup
+    .. automethod:: new
 
-    .. automethod:: delete(group: Union[DXFGroup, str]) -> None
+    .. automethod:: delete
 
-    .. method:: clear()
+    .. method:: clear
 
        Delete all groups.
 

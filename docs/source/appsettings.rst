@@ -54,4 +54,4 @@ Restore the WCS
 Update Extents
 --------------
 
-.. autofunction:: update_extents(doc: Drawing) -> BoundingBox
+.. autofunction:: update_extents
