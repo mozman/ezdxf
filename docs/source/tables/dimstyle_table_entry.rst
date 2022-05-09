@@ -473,7 +473,7 @@ Factory function         :meth:`Drawing.dimstyles.new`
         === ====================================================
 
 
-    .. automethod:: copy_to_header(dwg: Drawing) -> None
+    .. automethod:: copy_to_header
 
     .. automethod:: set_arrows
 

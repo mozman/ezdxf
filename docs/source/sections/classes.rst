@@ -17,13 +17,13 @@ The CLASSES section in DXF files holds the information for application-defined c
         Storage of all :class:`~ezdxf.entities.DXFClass` objects, they are not stored in the entities database, because
         CLASS has no handle attribute.
 
-    .. method:: register(classes: Iterable[DXFClass])
+    .. method:: register
 
     .. automethod:: add_class
 
-    .. automethod:: get(name: str) -> DXFClass
+    .. automethod:: get
 
-    .. automethod:: add_required_classes(name: str) -> DXFClass
+    .. automethod:: add_required_classes
 
     .. automethod:: update_instance_counters
 

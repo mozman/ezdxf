@@ -13,7 +13,7 @@ for `ezdxf` the :class:`EntitySection` is just a proxy for modelspace and the ac
 
 .. class:: EntitySection
 
-    .. automethod:: __iter__() -> Iterable[DXFEntity]
+    .. automethod:: __iter__
 
-    .. automethod:: __len__() -> int
+    .. automethod:: __len__
 

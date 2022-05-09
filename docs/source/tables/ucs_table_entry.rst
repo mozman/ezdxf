@@ -53,6 +53,6 @@ Factory function         :meth:`Drawing.ucs.new`
 
         Y-axis direction as (x, y, z) tuple
 
-    .. automethod:: ucs() -> UCS
+    .. automethod:: ucs
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-1906E8A7-3393-4BF9-BD27-F9AE4352FB8B
