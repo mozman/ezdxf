@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2021 Manfred Moitzi
+# Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
 """
 DXF R12 Splines
@@ -98,13 +98,13 @@ flags (70): 1 = EXTRA_VERTEX_CREATED
 Vertex 70=0, Vertex 70=1, Vertex 70=0, Vertex 70=1
 
 """
+from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, List
 from ezdxf.lldxf import const
-from ezdxf.math import BSpline, closed_uniform_bspline, Vec3
+from ezdxf.math import BSpline, closed_uniform_bspline, Vec3, UCS, UVec
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, BaseLayout, Polyline
-    from ezdxf.math.ucs import UCS
+    from ezdxf.eztypes import BaseLayout, Polyline
 
 
 class R12Spline:
@@ -125,7 +125,7 @@ class R12Spline:
 
     def __init__(
         self,
-        control_points: Iterable["Vertex"],
+        control_points: Iterable[UVec],
         degree: int = 2,
         closed: bool = True,
     ):
@@ -142,7 +142,7 @@ class R12Spline:
 
     def approximate(
         self, segments: int = 40, ucs: "UCS" = None
-    ) -> List["Vertex"]:
+    ) -> List[UVec]:
         """Approximate the B-spline by a polyline with `segments` line segments.
         If `ucs` is not ``None``, ucs defines an :class:`~ezdxf.math.UCS`, to
         transformed the curve into :ref:`OCS`. The control points are placed

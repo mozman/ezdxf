@@ -1,13 +1,12 @@
-# Copyright (c) 2010-2021, Manfred Moitzi
+# Copyright (c) 2010-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Optional
+from __future__ import annotations
+from typing import Optional
 import math
-from ezdxf.math import Vec2, intersection_line_line_2d
+from ezdxf.math import Vec2, intersection_line_line_2d, UVec
 from .construct2d import is_point_left_of_line, TOLERANCE
 from .bbox import BoundingBox2d
 
-if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
 
 __all__ = ["ConstructionRay", "ConstructionLine", "ParallelRaysError"]
 
@@ -32,7 +31,7 @@ class ConstructionRay:
 
     """
 
-    def __init__(self, p1: "Vertex", p2: "Vertex" = None, angle: float = None):
+    def __init__(self, p1: UVec, p2: UVec = None, angle: float = None):
         self._location = Vec2(p1)
         self._angle: Optional[float]
         self._slope: Optional[float]
@@ -157,7 +156,7 @@ class ConstructionRay:
             y = ray1.yof(x)
         return Vec2((x, y))
 
-    def orthogonal(self, location: "Vertex") -> "ConstructionRay":
+    def orthogonal(self, location: UVec) -> "ConstructionRay":
         """Returns orthogonal ray at `location`."""
         return ConstructionRay(location, angle=self.angle + HALF_PI)
 
@@ -205,7 +204,7 @@ class ConstructionLine:
 
     """
 
-    def __init__(self, start: "Vertex", end: "Vertex"):
+    def __init__(self, start: UVec, end: UVec):
         self.start = Vec2(start)
         self.end = Vec2(end)
 
@@ -271,7 +270,7 @@ class ConstructionLine:
         """``True`` if line is horizontal."""
         return math.isclose(self.start.y, self.end.y)
 
-    def inside_bounding_box(self, point: "Vertex") -> bool:
+    def inside_bounding_box(self, point: UVec) -> bool:
         """Returns ``True`` if `point` is inside of line bounding box."""
         return self.bounding_box.inside(point)
 
@@ -299,7 +298,7 @@ class ConstructionLine:
         """Returns ``True`` if has intersection with `other` line."""
         return self.intersect(other, abs_tol=abs_tol) is not None
 
-    def is_point_left_of_line(self, point: "Vertex", colinear=False) -> bool:
+    def is_point_left_of_line(self, point: UVec, colinear=False) -> bool:
         """Returns ``True`` if `point` is left of construction line in relation
         to the line direction from start to end.
 

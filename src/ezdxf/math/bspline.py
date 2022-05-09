@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2021, Manfred Moitzi
+# Copyright (c) 2012-2022, Manfred Moitzi
 # License: MIT License
 """
 B-Splines
@@ -16,6 +16,7 @@ https://www.cl.cam.ac.uk/teaching/2000/AGraphHCI/SMEG/node5.html:
 https://books.google.at/books/about/The_NURBS_Book.html?id=7dqY5dyAwWkC&redir_esc=y
 
 """
+from __future__ import annotations
 from typing import (
     List,
     Iterable,
@@ -28,6 +29,7 @@ from typing import (
 import math
 from ezdxf.math import (
     Vec3,
+    UVec,
     NULLVEC,
     Basis,
     Evaluator,
@@ -48,7 +50,6 @@ from ezdxf.lldxf.const import DXFValueError
 from ezdxf import PYPY
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
     from ezdxf.math import (
         ConstructionArc,
         ConstructionEllipse,
@@ -96,8 +97,8 @@ __all__ = [
 
 
 def fit_points_to_cad_cv(
-    fit_points: Iterable["Vertex"],
-    tangents: Iterable["Vertex"] = None,
+    fit_points: Iterable[UVec],
+    tangents: Iterable[UVec] = None,
     estimate: str = "5-p",
 ) -> "BSpline":
     """Returns a cubic :class:`BSpline` from fit points as close as possible
@@ -170,7 +171,7 @@ def fit_points_to_cad_cv(
     )
 
 
-def fit_points_to_cubic_bezier(fit_points: Iterable["Vertex"]) -> "BSpline":
+def fit_points_to_cubic_bezier(fit_points: Iterable[UVec]) -> "BSpline":
     """Returns a cubic :class:`BSpline` from fit points **without** end
     tangents.
 
@@ -196,9 +197,9 @@ def fit_points_to_cubic_bezier(fit_points: Iterable["Vertex"]) -> "BSpline":
 
 
 def global_bspline_interpolation(
-    fit_points: Iterable["Vertex"],
+    fit_points: Iterable[UVec],
     degree: int = 3,
-    tangents: Iterable["Vertex"] = None,
+    tangents: Iterable[UVec] = None,
     method: str = "chord",
 ) -> "BSpline":
     """`B-spline`_ interpolation by the `Global Curve Interpolation`_.
@@ -282,9 +283,9 @@ def global_bspline_interpolation(
 
 
 def local_cubic_bspline_interpolation(
-    fit_points: Iterable["Vertex"],
+    fit_points: Iterable[UVec],
     method: str = "5-points",
-    tangents: Iterable["Vertex"] = None,
+    tangents: Iterable[UVec] = None,
 ) -> "BSpline":
     """`B-spline`_ interpolation by 'Local Cubic Curve Interpolation', which
     creates B-spline from fit points and estimated tangent direction at start-,
@@ -621,7 +622,7 @@ def _get_best_solver(matrix: Union[List, Matrix], degree: int):
 
 
 def unconstrained_global_bspline_interpolation(
-    fit_points: Sequence["Vertex"],
+    fit_points: Sequence[UVec],
     degree: int,
     t_vector: Sequence[float],
     knot_generation_method: str = "average",
@@ -857,7 +858,7 @@ class BSpline:
 
     def __init__(
         self,
-        control_points: Iterable["Vertex"],
+        control_points: Iterable[UVec],
         order: int = 4,
         knots: Iterable[float] = None,
         weights: Iterable[float] = None,
@@ -934,7 +935,7 @@ class BSpline:
 
     @staticmethod
     def from_fit_points(
-        points: Iterable["Vertex"], degree=3, method="chord"
+        points: Iterable[UVec], degree=3, method="chord"
     ) -> "BSpline":
         """Returns :class:`BSpline` defined by fit points."""
         return global_bspline_interpolation(points, degree, method=method)
@@ -1336,7 +1337,7 @@ def subdivide_params(p: List[float]) -> Iterable[float]:
 
 
 def open_uniform_bspline(
-    control_points: Iterable["Vertex"],
+    control_points: Iterable[UVec],
     order: int = 4,
     weights: Iterable[float] = None,
 ) -> BSpline:
@@ -1358,7 +1359,7 @@ def open_uniform_bspline(
 
 
 def closed_uniform_bspline(
-    control_points: Iterable["Vertex"],
+    control_points: Iterable[UVec],
     order: int = 4,
     weights: Iterable[float] = None,
 ) -> BSpline:

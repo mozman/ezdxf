@@ -128,8 +128,8 @@ attributes. The arrow names should be accessed that way:
 
     .. automethod:: is_ezdxf_arrow
 
-    .. automethod:: insert_arrow(layout, name: str, insert: Vertex, size: float=1.0, rotation: float=0.0, *, dxfattribs=None) -> Vec2
+    .. automethod:: insert_arrow
 
-    .. automethod:: render_arrow(layout, name: str, insert: Vertex, size: float=1.0, rotation: float=0.0, *, dxfattribs=None) -> Vec2
+    .. automethod:: render_arrow
 
-    .. automethod:: virtual_entities(name: str, insert: Vertex, size: float=0.625, rotation: float=0.0, *, dxfattribs=None) -> Iterator[DXFGraphic]
+    .. automethod:: virtual_entities

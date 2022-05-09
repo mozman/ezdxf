@@ -65,6 +65,6 @@ Random Paths
 
 Random path generators for testing purpose.
 
-.. autofunction:: random_2d_path(steps=100, max_step_size=1, max_heading=pi/2, retarget=20) -> Iterable[Vec2]
+.. autofunction:: random_2d_path
 
-.. autofunction:: random_3d_path(steps=100, max_step_size=1, max_heading=pi/2, max_pitch=pi/8, retarget=20) -> Iterable[Vec3]
+.. autofunction:: random_3d_path

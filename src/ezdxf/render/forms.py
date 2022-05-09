@@ -1,18 +1,18 @@
-# Copyright (c) 2018-2021 Manfred Moitzi
+# Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List, Tuple, Sequence
+from __future__ import annotations
+from typing import Iterable, List, Tuple, Sequence
 from math import pi, sin, cos, radians, tan, isclose, asin, fabs
 from enum import IntEnum
 from ezdxf.math import (
     Vec3,
+    UVec,
     Matrix44,
     global_bspline_interpolation,
     EulerSpiral,
 )
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
-if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
 
 __all__ = [
     "circle",
@@ -407,7 +407,7 @@ def gear(
 
 
 def translate(
-    vertices: Iterable["Vertex"], vec: "Vertex" = (0, 0, 0)
+    vertices: Iterable[UVec], vec: UVec = (0, 0, 0)
 ) -> Iterable[Vec3]:
     """Translate `vertices` along `vec`, faster than a Matrix44 transformation.
 
@@ -424,7 +424,7 @@ def translate(
 
 
 def rotate(
-    vertices: Iterable["Vertex"], angle: float = 0.0, deg: bool = True
+    vertices: Iterable[UVec], angle: float = 0.0, deg: bool = True
 ) -> Iterable[Vec3]:
     """Rotate `vertices` about to z-axis at to origin (0, 0), faster than a
     Matrix44 transformation.
@@ -444,7 +444,7 @@ def rotate(
 
 
 def scale(
-    vertices: Iterable["Vertex"], scaling=(1.0, 1.0, 1.0)
+    vertices: Iterable[UVec], scaling=(1.0, 1.0, 1.0)
 ) -> Iterable[Vec3]:
     """Scale `vertices` around the origin (0, 0), faster than a Matrix44
     transformation.
@@ -462,8 +462,8 @@ def scale(
 
 
 def close_polygon(
-    vertices: Iterable["Vertex"], rel_tol: float = 1e-9, abs_tol: float = 1e-12
-) -> List["Vertex"]:
+    vertices: Iterable[UVec], rel_tol: float = 1e-9, abs_tol: float = 1e-12
+) -> List[UVec]:
     """Returns list of vertices, where vertices[0] == vertices[-1]."""
     vertices = list(vertices)
     if not Vec3(vertices[0]).isclose(
@@ -526,7 +526,7 @@ def cube(center: bool = True) -> MeshTransformer:
 
 
 def extrude(
-    profile: Iterable["Vertex"], path: Iterable["Vertex"], close=True
+    profile: Iterable[UVec], path: Iterable[UVec], close=True
 ) -> MeshTransformer:
     """Extrude a `profile` polygon along a `path` polyline, vertices of profile
     should be in counter clockwise order.
@@ -577,7 +577,7 @@ def cylinder(
     count: int = 16,
     radius: float = 1.0,
     top_radius: float = None,
-    top_center: "Vertex" = (0, 0, 1),
+    top_center: UVec = (0, 0, 1),
     caps=True,
     ngons=True,
 ) -> MeshTransformer:
@@ -664,7 +664,7 @@ def cylinder_2p(
     return MeshTransformer.from_builder(mesh)
 
 
-def ngon_to_triangles(face: Iterable["Vertex"]) -> Iterable[Sequence[Vec3]]:
+def ngon_to_triangles(face: Iterable[UVec]) -> Iterable[Sequence[Vec3]]:
     _face = Vec3.list(face)
     if _face[0].isclose(_face[-1]):  # closed shape
         center = Vec3.sum(_face[:-1]) / (len(_face) - 1)
@@ -677,7 +677,7 @@ def ngon_to_triangles(face: Iterable["Vertex"]) -> Iterable[Sequence[Vec3]]:
 
 
 def from_profiles_linear(
-    profiles: Iterable[Iterable["Vertex"]], close=True, caps=False, ngons=True
+    profiles: Iterable[Iterable[UVec]], close=True, caps=False, ngons=True
 ) -> MeshTransformer:
     """Create MESH entity by linear connected `profiles`.
 
@@ -718,7 +718,7 @@ def from_profiles_linear(
 
 
 def spline_interpolation(
-    vertices: Iterable["Vertex"],
+    vertices: Iterable[UVec],
     degree: int = 3,
     method: str = "chord",
     subdivide: int = 4,
@@ -746,7 +746,7 @@ def spline_interpolation(
 
 
 def spline_interpolated_profiles(
-    profiles: Iterable[Iterable["Vertex"]], subdivide: int = 4
+    profiles: Iterable[Iterable[UVec]], subdivide: int = 4
 ) -> Iterable[List[Vec3]]:
     """Profile interpolation by cubic B-spline interpolation.
 
@@ -776,7 +776,7 @@ def spline_interpolated_profiles(
 
 
 def from_profiles_spline(
-    profiles: Iterable[Iterable["Vertex"]],
+    profiles: Iterable[Iterable[UVec]],
     subdivide: int = 4,
     close=True,
     caps=False,
@@ -808,7 +808,7 @@ def from_profiles_spline(
 def cone(
     count: int = 16,
     radius: float = 1.0,
-    apex: "Vertex" = (0, 0, 1),
+    apex: UVec = (0, 0, 1),
     caps=True,
     ngons=True,
 ) -> MeshTransformer:
@@ -897,9 +897,9 @@ def cone_2p(
 
 def rotation_form(
     count: int,
-    profile: Iterable["Vertex"],
+    profile: Iterable[UVec],
     angle: float = 2 * pi,
-    axis: "Vertex" = (1, 0, 0),
+    axis: UVec = (1, 0, 0),
 ) -> MeshTransformer:
     """Create MESH entity by rotating a `profile` around an `axis`.
 

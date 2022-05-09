@@ -53,9 +53,9 @@ The :ref:`tut_mleader` shows how to use these helper classes in more detail.
 
     .. autoproperty:: multileader
 
-    .. automethod:: add_leader_line(self, side: ConnectionSide, vertices: Iterable[Vec2]) -> None
+    .. automethod:: add_leader_line
 
-    .. automethod:: build(insert: Vec2, rotation: float = 0.0, ucs: UCS = None) -> None
+    .. automethod:: build
 
     .. automethod:: set_arrow_properties
 
@@ -80,7 +80,7 @@ with MTEXT content.
 
     .. automethod:: set_content
 
-    .. automethod:: quick_leader(content: str, target: Vec2, segment1: Vec2, segment2: Vec2 = None, connection_type: Union[HorizontalConnection, VerticalConnection] = HorizontalConnection.middle_of_top_line, ucs: UCS = None) -> None
+    .. automethod:: quick_leader
 
 MultiLeaderBlockBuilder
 -----------------------

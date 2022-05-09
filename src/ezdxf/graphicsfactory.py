@@ -1,6 +1,7 @@
 # Copyright (c) 2013-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Sequence, Dict, Tuple, cast, Type
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterable, Sequence, Dict, Tuple, cast
 import math
 import logging
 import warnings
@@ -8,6 +9,7 @@ from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000
 from ezdxf.math import (
     Vec3,
+    UVec,
     global_bspline_interpolation,
     fit_points_to_cad_cv,
     arc_angle_span_deg,
@@ -15,7 +17,7 @@ from ezdxf.math import (
     NULLVEC,
 )
 from ezdxf.render.arrows import ARROWS
-from ezdxf.entities import factory
+from ezdxf.entities import factory, Point, Spline, Body, Surface
 from ezdxf.entities.mtext_columns import *
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 from ezdxf.render.dim_linear import multi_point_linear_dimension
@@ -27,7 +29,6 @@ if TYPE_CHECKING:
         Arc,
         AttDef,
         Attrib,
-        Body,
         Circle,
         Dimension,
         ArcDimension,
@@ -48,7 +49,6 @@ if TYPE_CHECKING:
         MText,
         MPolygon,
         Mesh,
-        Point,
         Polyface,
         Polyline,
         Polymesh,
@@ -56,17 +56,13 @@ if TYPE_CHECKING:
         Region,
         RevolvedSurface,
         Shape,
-        Solid,
         Solid3d,
-        Spline,
-        Surface,
         SweptSurface,
         Text,
         Trace,
         UCS,
         Underlay,
         UnderlayDefinition,
-        Vertex,
         Wipeout,
         XLine,
         GenericLayoutType,
@@ -104,7 +100,7 @@ class CreatorInterface:
     def add_entity(self, entity: "DXFGraphic") -> None:
         pass
 
-    def add_point(self, location: "Vertex", dxfattribs=None) -> "Point":
+    def add_point(self, location: UVec, dxfattribs=None) -> "Point":
         """
         Add a :class:`~ezdxf.entities.Point` entity at `location`.
 
@@ -118,7 +114,7 @@ class CreatorInterface:
         return self.new_entity("POINT", dxfattribs)  # type: ignore
 
     def add_line(
-        self, start: "Vertex", end: "Vertex", dxfattribs=None
+        self, start: UVec, end: UVec, dxfattribs=None
     ) -> "Line":
         """
         Add a :class:`~ezdxf.entities.Line` entity from `start` to `end`.
@@ -135,7 +131,7 @@ class CreatorInterface:
         return self.new_entity("LINE", dxfattribs)  # type: ignore
 
     def add_circle(
-        self, center: "Vertex", radius: float, dxfattribs=None
+        self, center: UVec, radius: float, dxfattribs=None
     ) -> "Circle":
         """
         Add a :class:`~ezdxf.entities.Circle` entity. This is an 2D element,
@@ -154,8 +150,8 @@ class CreatorInterface:
 
     def add_ellipse(
         self,
-        center: "Vertex",
-        major_axis: "Vertex" = (1, 0, 0),
+        center: UVec,
+        major_axis: UVec = (1, 0, 0),
         ratio: float = 1,
         start_param: float = 0,
         end_param: float = math.tau,
@@ -195,7 +191,7 @@ class CreatorInterface:
 
     def add_arc(
         self,
-        center: "Vertex",
+        center: UVec,
         radius: float,
         start_angle: float,
         end_angle: float,
@@ -228,7 +224,7 @@ class CreatorInterface:
             dxfattribs["end_angle"] = float(start_angle)
         return self.new_entity("ARC", dxfattribs)  # type: ignore
 
-    def add_solid(self, points: Iterable["Vertex"], dxfattribs=None) -> "Solid":
+    def add_solid(self, points: Iterable[UVec], dxfattribs=None) -> Spline:
         """Add a :class:`~ezdxf.entities.Solid` entity, `points` is an iterable
         of 3 or 4 points.
 
@@ -244,7 +240,7 @@ class CreatorInterface:
         """
         return self._add_quadrilateral("SOLID", points, dxfattribs)  # type: ignore
 
-    def add_trace(self, points: Iterable["Vertex"], dxfattribs=None) -> "Trace":
+    def add_trace(self, points: Iterable[UVec], dxfattribs=None) -> "Trace":
         """Add a :class:`~ezdxf.entities.Trace` entity, `points` is an iterable
         of 3 or 4 points.
 
@@ -261,7 +257,7 @@ class CreatorInterface:
         return self._add_quadrilateral("TRACE", points, dxfattribs)  # type: ignore
 
     def add_3dface(
-        self, points: Iterable["Vertex"], dxfattribs=None
+        self, points: Iterable[UVec], dxfattribs=None
     ) -> "Face3d":
         """
         Add a :class:`~ezdxf.entities.3DFace` entity, `points` is an iterable
@@ -308,7 +304,7 @@ class CreatorInterface:
         return self.new_entity("TEXT", dxfattribs)  # type: ignore
 
     def add_blockref(
-        self, name: str, insert: "Vertex", dxfattribs=None
+        self, name: str, insert: UVec, dxfattribs=None
     ) -> "Insert":
         """
         Add an :class:`~ezdxf.entities.Insert` entity.
@@ -336,7 +332,7 @@ class CreatorInterface:
     def add_auto_blockref(
         self,
         name: str,
-        insert: "Vertex",
+        insert: UVec,
         values: Dict[str, str],
         dxfattribs=None,
     ) -> "Insert":
@@ -368,7 +364,7 @@ class CreatorInterface:
         if not isinstance(name, str):
             raise DXFValueError("Block name as string required.")
 
-        def unpack(dxfattribs) -> Tuple[str, str, "Vertex"]:
+        def unpack(dxfattribs) -> Tuple[str, str, UVec]:
             tag = dxfattribs.pop("tag")
             text = values.get(tag, "")
             location = dxfattribs.pop("insert")
@@ -391,7 +387,7 @@ class CreatorInterface:
     def add_attdef(
         self,
         tag: str,
-        insert: "Vertex" = (0, 0),
+        insert: UVec = (0, 0),
         text: str = "",
         *,
         height: float = None,
@@ -428,7 +424,7 @@ class CreatorInterface:
 
     def add_polyline2d(
         self,
-        points: Iterable["Vertex"],
+        points: Iterable[UVec],
         format: str = None,
         *,
         close: bool = False,
@@ -466,7 +462,7 @@ class CreatorInterface:
 
     def add_polyline3d(
         self,
-        points: Iterable["Vertex"],
+        points: Iterable[UVec],
         *,
         close: bool = False,
         dxfattribs=None,
@@ -542,7 +538,7 @@ class CreatorInterface:
         return polyface
 
     def _add_quadrilateral(
-        self, type_: str, points: Iterable["Vertex"], dxfattribs=None
+        self, type_: str, points: Iterable[UVec], dxfattribs=None
     ) -> "DXFGraphic":
         dxfattribs = dict(dxfattribs or {})
         entity = self.new_entity(type_, dxfattribs)
@@ -551,7 +547,7 @@ class CreatorInterface:
         return entity
 
     @staticmethod
-    def _four_points(points: Iterable["Vertex"]) -> Iterable["Vertex"]:
+    def _four_points(points: Iterable[UVec]) -> Iterable[UVec]:
         vertices = list(points)
         if len(vertices) not in (3, 4):
             raise DXFValueError("3 or 4 points required.")
@@ -563,7 +559,7 @@ class CreatorInterface:
     def add_shape(
         self,
         name: str,
-        insert: "Vertex" = (0, 0),
+        insert: UVec = (0, 0),
         size: float = 1.0,
         dxfattribs=None,
     ) -> "Shape":
@@ -587,7 +583,7 @@ class CreatorInterface:
 
     def add_lwpolyline(
         self,
-        points: Iterable["Vertex"],
+        points: Iterable[UVec],
         format: str = "xyseb",
         *,
         close: bool = False,
@@ -836,7 +832,7 @@ class CreatorInterface:
         return mtext
 
     def add_ray(
-        self, start: "Vertex", unit_vector: "Vertex", dxfattribs=None
+        self, start: UVec, unit_vector: UVec, dxfattribs=None
     ) -> "Ray":
         """
         Add a :class:`~ezdxf.entities.Ray` that begins at `start` point and
@@ -856,7 +852,7 @@ class CreatorInterface:
         return self.new_entity("RAY", dxfattribs)  # type: ignore
 
     def add_xline(
-        self, start: "Vertex", unit_vector: "Vertex", dxfattribs=None
+        self, start: UVec, unit_vector: UVec, dxfattribs=None
     ) -> "XLine":
         """Add an infinity :class:`~ezdxf.entities.XLine` (construction line).
         (requires DXF R2000)
@@ -876,10 +872,10 @@ class CreatorInterface:
 
     def add_spline(
         self,
-        fit_points: Iterable["Vertex"] = None,
+        fit_points: Iterable[UVec] = None,
         degree: int = 3,
         dxfattribs=None,
-    ) -> "Spline":
+    ) -> Spline:
         """Add a B-spline (:class:`~ezdxf.entities.Spline` entity) defined by
         the given `fit_points` - the control points and knot values are created
         by the CAD application, therefore it is not predictable how the rendered
@@ -918,11 +914,11 @@ class CreatorInterface:
 
     def add_spline_control_frame(
         self,
-        fit_points: Iterable["Vertex"],
+        fit_points: Iterable[UVec],
         degree: int = 3,
         method: str = "chord",
         dxfattribs=None,
-    ) -> "Spline":
+    ) -> Spline:
         """Add a :class:`~ezdxf.entities.Spline` entity passing through the
         given `fit_points`, the control points are calculated by a global curve
         interpolation without start- and end tangent constrains.
@@ -963,11 +959,11 @@ class CreatorInterface:
 
     def add_cad_spline_control_frame(
         self,
-        fit_points: Iterable["Vertex"],
-        tangents: Iterable["Vertex"] = None,
+        fit_points: Iterable[UVec],
+        tangents: Iterable[UVec] = None,
         estimate: str = "5-p",
         dxfattribs=None,
-    ) -> "Spline":
+    ) -> Spline:
         """Add a :class:`~ezdxf.entities.Spline` entity passing through the
         given fit points.
         This method tries to create the same curve as CAD applications do.
@@ -990,11 +986,11 @@ class CreatorInterface:
 
     def add_open_spline(
         self,
-        control_points: Iterable["Vertex"],
+        control_points: Iterable[UVec],
         degree: int = 3,
         knots: Iterable[float] = None,
         dxfattribs=None,
-    ) -> "Spline":
+    ) -> Spline:
         """
         Add an open uniform :class:`~ezdxf.entities.Spline` defined by
         `control_points`. (requires DXF R2000)
@@ -1016,12 +1012,12 @@ class CreatorInterface:
 
     def add_rational_spline(
         self,
-        control_points: Iterable["Vertex"],
+        control_points: Iterable[UVec],
         weights: Sequence[float],
         degree: int = 3,
         knots: Iterable[float] = None,
         dxfattribs=None,
-    ) -> "Spline":
+    ) -> Spline:
         """
         Add an open rational uniform :class:`~ezdxf.entities.Spline` defined by
         `control_points`. (requires DXF R2000)
@@ -1292,7 +1288,7 @@ class CreatorInterface:
     def add_image(
         self,
         image_def: "ImageDef",
-        insert: "Vertex",
+        insert: UVec,
         size_in_units: Tuple[float, float],
         rotation: float = 0.0,
         dxfattribs=None,
@@ -1328,7 +1324,7 @@ class CreatorInterface:
         return self.new_entity("IMAGE", dxfattribs)  # type: ignore
 
     def add_wipeout(
-        self, vertices: Iterable["Vertex"], dxfattribs=None
+        self, vertices: Iterable[UVec], dxfattribs=None
     ) -> "Wipeout":
         """Add a :class:`ezdxf.entities.Wipeout` entity, the masking area is
         defined by WCS `vertices`.
@@ -1348,7 +1344,7 @@ class CreatorInterface:
     def add_underlay(
         self,
         underlay_def: "UnderlayDefinition",
-        insert: "Vertex" = (0, 0, 0),
+        insert: UVec = (0, 0, 0),
         scale=(1, 1, 1),
         rotation: float = 0.0,
         dxfattribs=None,
@@ -1392,10 +1388,10 @@ class CreatorInterface:
 
     def add_linear_dim(
         self,
-        base: "Vertex",
-        p1: "Vertex",
-        p2: "Vertex",
-        location: "Vertex" = None,
+        base: UVec,
+        p1: UVec,
+        p2: UVec,
+        location: UVec = None,
         text: str = "<>",
         angle: float = 0,
         # 0=horizontal, 90=vertical, else=rotated
@@ -1467,8 +1463,8 @@ class CreatorInterface:
 
     def add_multi_point_linear_dim(
         self,
-        base: "Vertex",
-        points: Iterable["Vertex"],
+        base: UVec,
+        points: Iterable[UVec],
         angle: float = 0,
         ucs: "UCS" = None,
         avoid_double_rendering: bool = True,
@@ -1529,8 +1525,8 @@ class CreatorInterface:
 
     def add_aligned_dim(
         self,
-        p1: "Vertex",
-        p2: "Vertex",
+        p1: UVec,
+        p2: UVec,
         distance: float,
         text: str = "<>",
         dimstyle: str = "EZDXF",
@@ -1589,11 +1585,11 @@ class CreatorInterface:
 
     def add_angular_dim_2l(
         self,
-        base: "Vertex",
-        line1: Tuple["Vertex", "Vertex"],
-        line2: Tuple["Vertex", "Vertex"],
+        base: UVec,
+        line1: Tuple[UVec, UVec],
+        line2: Tuple[UVec, UVec],
         *,
-        location: "Vertex" = None,
+        location: UVec = None,
         text: str = "<>",
         text_rotation: float = None,
         dimstyle: str = "EZ_CURVED",
@@ -1669,12 +1665,12 @@ class CreatorInterface:
 
     def add_angular_dim_3p(
         self,
-        base: "Vertex",
-        center: "Vertex",
-        p1: "Vertex",
-        p2: "Vertex",
+        base: UVec,
+        center: UVec,
+        p1: UVec,
+        p2: UVec,
         *,
-        location: "Vertex" = None,
+        location: UVec = None,
         text: str = "<>",
         text_rotation: float = None,
         dimstyle: str = "EZ_CURVED",
@@ -1752,13 +1748,13 @@ class CreatorInterface:
 
     def add_angular_dim_cra(
         self,
-        center: "Vertex",
+        center: UVec,
         radius: float,
         start_angle: float,
         end_angle: float,
         distance: float,
         *,
-        location: "Vertex" = None,
+        location: UVec = None,
         text: str = "<>",
         text_rotation: float = None,
         dimstyle: str = "EZ_CURVED",
@@ -1831,7 +1827,7 @@ class CreatorInterface:
         arc: ConstructionArc,
         distance: float,
         *,
-        location: "Vertex" = None,
+        location: UVec = None,
         text: str = "<>",
         text_rotation: float = None,
         dimstyle: str = "EZ_CURVED",
@@ -1887,12 +1883,12 @@ class CreatorInterface:
 
     def add_arc_dim_3p(
         self,
-        base: "Vertex",
-        center: "Vertex",
-        p1: "Vertex",
-        p2: "Vertex",
+        base: UVec,
+        center: UVec,
+        p1: UVec,
+        p2: UVec,
         *,
-        location: "Vertex" = None,
+        location: UVec = None,
         text: str = "<>",
         text_rotation: float = None,
         dimstyle: str = "EZ_CURVED",
@@ -1979,13 +1975,13 @@ class CreatorInterface:
 
     def add_arc_dim_cra(
         self,
-        center: "Vertex",
+        center: UVec,
         radius: float,
         start_angle: float,
         end_angle: float,
         distance: float,
         *,
-        location: "Vertex" = None,
+        location: UVec = None,
         text: str = "<>",
         text_rotation: float = None,
         dimstyle: str = "EZ_CURVED",
@@ -2059,7 +2055,7 @@ class CreatorInterface:
         arc: ConstructionArc,
         distance: float,
         *,
-        location: "Vertex" = None,
+        location: UVec = None,
         text: str = "<>",
         text_rotation: float = None,
         dimstyle: str = "EZ_CURVED",
@@ -2116,12 +2112,12 @@ class CreatorInterface:
 
     def add_diameter_dim(
         self,
-        center: "Vertex",
-        mpoint: "Vertex" = None,
+        center: UVec,
+        mpoint: UVec = None,
         radius: float = None,
         angle: float = None,
         *,
-        location: "Vertex" = None,
+        location: UVec = None,
         text: str = "<>",
         dimstyle: str = "EZ_RADIUS",
         override: Dict = None,
@@ -2207,8 +2203,8 @@ class CreatorInterface:
 
     def add_diameter_dim_2p(
         self,
-        p1: "Vertex",
-        p2: "Vertex",
+        p1: UVec,
+        p2: UVec,
         text: str = "<>",
         dimstyle: str = "EZ_RADIUS",
         override: Dict = None,
@@ -2252,12 +2248,12 @@ class CreatorInterface:
 
     def add_radius_dim(
         self,
-        center: "Vertex",
-        mpoint: "Vertex" = None,
+        center: UVec,
+        mpoint: UVec = None,
         radius: float = None,
         angle: float = None,
         *,
-        location: "Vertex" = None,
+        location: UVec = None,
         text: str = "<>",
         dimstyle: str = "EZ_RADIUS",
         override: Dict = None,
@@ -2363,8 +2359,8 @@ class CreatorInterface:
 
     def add_radius_dim_2p(
         self,
-        center: "Vertex",
-        mpoint: "Vertex",
+        center: UVec,
+        mpoint: UVec,
         *,
         text: str = "<>",
         dimstyle: str = "EZ_RADIUS",
@@ -2405,7 +2401,7 @@ class CreatorInterface:
 
     def add_radius_dim_cra(
         self,
-        center: "Vertex",
+        center: UVec,
         radius: float,
         angle: float,
         *,
@@ -2450,11 +2446,11 @@ class CreatorInterface:
 
     def add_ordinate_dim(
         self,
-        feature_location: "Vertex",
-        offset: "Vertex",
+        feature_location: UVec,
+        offset: UVec,
         dtype: int,
         *,
-        origin: "Vertex" = NULLVEC,
+        origin: UVec = NULLVEC,
         rotation: float = 0.0,
         text: str = "<>",
         dimstyle: str = "EZDXF",
@@ -2541,10 +2537,10 @@ class CreatorInterface:
 
     def add_ordinate_x_dim(
         self,
-        feature_location: "Vertex",
-        offset: "Vertex",
+        feature_location: UVec,
+        offset: UVec,
         *,
-        origin: "Vertex" = NULLVEC,
+        origin: UVec = NULLVEC,
         rotation: float = 0.0,
         text: str = "<>",
         dimstyle: str = "EZDXF",
@@ -2571,10 +2567,10 @@ class CreatorInterface:
 
     def add_ordinate_y_dim(
         self,
-        feature_location: "Vertex",
-        offset: "Vertex",
+        feature_location: UVec,
+        offset: UVec,
         *,
-        origin: "Vertex" = NULLVEC,
+        origin: UVec = NULLVEC,
         rotation: float = 0.0,
         text: str = "<>",
         dimstyle: str = "EZDXF",
@@ -2602,7 +2598,7 @@ class CreatorInterface:
     def add_arrow(
         self,
         name: str,
-        insert: "Vertex",
+        insert: UVec,
         size: float = 1.0,
         rotation: float = 0,
         dxfattribs=None,
@@ -2619,7 +2615,7 @@ class CreatorInterface:
     def add_arrow_blockref(
         self,
         name: str,
-        insert: "Vertex",
+        insert: UVec,
         size: float = 1.0,
         rotation: float = 0,
         dxfattribs=None,
@@ -2635,7 +2631,7 @@ class CreatorInterface:
 
     def add_leader(
         self,
-        vertices: Iterable["Vertex"],
+        vertices: Iterable[UVec],
         dimstyle: str = "EZDXF",
         override: Dict = None,
         dxfattribs=None,
@@ -2738,7 +2734,7 @@ class CreatorInterface:
 
     def add_mline(
         self,
-        vertices: Iterable["Vertex"] = None,
+        vertices: Iterable[UVec] = None,
         *,
         close: bool = False,
         dxfattribs=None,

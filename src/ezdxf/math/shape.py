@@ -1,14 +1,12 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-from typing import Union, Iterable, List, TYPE_CHECKING
+from typing import Union, Iterable, List
 import math
-from ezdxf.math import Vec2
+from ezdxf.math import Vec2, UVec
 from .construct2d import convex_hull_2d
 from .offset2d import offset_vertices_2d
 from .bbox import BoundingBox2d
 
-if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
 
 __all__ = ["Shape2d"]
 
@@ -22,7 +20,7 @@ class Shape2d:
 
     """
 
-    def __init__(self, vertices: Iterable["Vertex"] = None):
+    def __init__(self, vertices: Iterable[UVec] = None):
         self.vertices: List[Vec2] = (
             [] if vertices is None else Vec2.list(vertices)
         )
@@ -37,7 +35,7 @@ class Shape2d:
 
     __copy__ = copy
 
-    def translate(self, vector: "Vertex") -> None:
+    def translate(self, vector: UVec) -> None:
         """Translate shape about `vector`."""
         delta = Vec2(vector)
         self.vertices = [v + delta for v in self.vertices]
@@ -50,11 +48,11 @@ class Shape2d:
         """Scale shape uniform about `scale` in x- and y-axis."""
         self.vertices = [v * scale for v in self.vertices]
 
-    def rotate(self, angle: float, center: "Vertex" = None) -> None:
+    def rotate(self, angle: float, center: UVec = None) -> None:
         """Rotate shape around rotation `center` about `angle` in degrees."""
         self.rotate_rad(math.radians(angle), center)
 
-    def rotate_rad(self, angle: float, center: "Vertex" = None) -> None:
+    def rotate_rad(self, angle: float, center: UVec = None) -> None:
         """Rotate shape around rotation `center` about `angle` in radians."""
         if center is not None:
             center = Vec2(center)
@@ -92,7 +90,7 @@ class Shape2d:
         return self.vertices[item]
 
     # limited List interface
-    def append(self, vertex: "Vertex") -> None:
+    def append(self, vertex: UVec) -> None:
         """Append single `vertex`.
 
         Args:
