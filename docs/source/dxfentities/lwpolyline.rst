@@ -141,8 +141,8 @@ User Defined Point Format Codes
 
     .. automethod:: points
 
-    .. automethod:: transform(m: Matrix44) -> LWPolyline
+    .. automethod:: transform
 
-    .. automethod:: virtual_entities() -> Iterable[Union[Line, Arc]]
+    .. automethod:: virtual_entities
 
-    .. automethod:: explode(target_layout: BaseLayout = None) -> EntityQuery
+    .. automethod:: explode

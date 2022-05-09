@@ -65,21 +65,21 @@ Factory function         :meth:`ezdxf.sections.objects.ObjectsSection.add_dictio
 
     .. automethod:: __contains__
 
-    .. automethod:: __getitem__(key: str) -> DXFEntity
+    .. automethod:: __getitem__
 
-    .. automethod:: __setitem__(key: str, value: DXFEntity) -> None
+    .. automethod:: __setitem__
 
     .. automethod:: __delitem__
 
-    .. automethod:: keys() -> KeysView
+    .. automethod:: keys
 
-    .. automethod:: items() -> ItemsView
+    .. automethod:: items
 
     .. automethod:: count
 
-    .. automethod:: get(key: str, default: DXFEntity = None) -> Optional[DXFEntity]
+    .. automethod:: get
 
-    .. automethod:: add(key: str, value: DXFEntity) -> None
+    .. automethod:: add
 
     .. automethod:: remove
 
@@ -87,15 +87,15 @@ Factory function         :meth:`ezdxf.sections.objects.ObjectsSection.add_dictio
 
     .. automethod:: clear
 
-    .. automethod:: add_new_dict(key: str, hard_owned: bool = False) -> Dictionary
+    .. automethod:: add_new_dict
 
-    .. automethod:: get_required_dict(key: str) -> Dictionary
+    .. automethod:: get_required_dict
 
-    .. automethod:: add_dict_var(key: str, value: str) -> DictionaryVar
+    .. automethod:: add_dict_var
 
-    .. automethod:: add_xrecord(key: str) -> XRecord
+    .. automethod:: add_xrecord
 
-    .. automethod:: link_dxf_object(name: str, obj: DXFEntity) -> None
+    .. automethod:: link_dxf_object
 
 
 .. _DICTIONARY: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-40B92C63-26F0-485B-A9C2-B349099B26D0
@@ -115,7 +115,7 @@ Factory function         :meth:`ezdxf.sections.objects.ObjectsSection.add_dictio
 
         Handle to default entry as hex string like ``FF00``.
 
-    .. automethod:: get(key: str) -> DXFEntity
+    .. automethod:: get
 
     .. automethod:: set_default
 

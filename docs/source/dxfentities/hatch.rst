@@ -208,17 +208,17 @@ Hatch Boundary Helper Classes
 
         List of all boundary paths. Contains :class:`PolylinePath` and :class:`EdgePath` objects. (read/write)
 
-    .. automethod:: external_paths() -> Iterable[Union[PolylinePath, EdgePath]]
+    .. automethod:: external_paths
 
-    .. automethod:: outermost_paths() -> Iterable[Union[PolylinePath, EdgePath]]
+    .. automethod:: outermost_paths
 
-    .. automethod:: default_paths() -> Iterable[Union[PolylinePath, EdgePath]]
+    .. automethod:: default_paths
 
-    .. automethod:: rendering_paths(hatch_style: int) -> Iterable[Union[PolylinePath, EdgePath]]
+    .. automethod:: rendering_paths
 
-    .. automethod:: add_polyline_path(path_vertices, is_closed=1, flags=1) -> PolylinePath
+    .. automethod:: add_polyline_path
 
-    .. automethod:: add_edge_path(flags=1) -> EdgePath
+    .. automethod:: add_edge_path
 
     .. automethod:: polyline_to_edge_paths
 
@@ -340,13 +340,13 @@ Hatch Boundary Helper Classes
 
     .. automethod:: clear
 
-    .. automethod:: add_line(start, end) -> LineEdge
+    .. automethod:: add_line
 
-    .. automethod:: add_arc(center, radius=1., start_angle=0., end_angle=360., ccw:bool=True) -> ArcEdge
+    .. automethod:: add_arc
 
-    .. automethod:: add_ellipse(center, major_axis_vector=(1., 0.), minor_axis_length=1., start_angle=0., end_angle=360., ccw:bool=True) -> EllipsePath
+    .. automethod:: add_ellipse
 
-    .. automethod:: add_spline(fit_points=None, control_points=None, knot_values=None, weights=None, degree=3, rational=0, periodic=0) -> SplinePath
+    .. automethod:: add_spline
 
 
 .. class:: EdgeType

@@ -37,8 +37,8 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
         extrusion vector, default value is ``(0, 0, 1)``
 
-    .. automethod:: transform(m: Matrix44) -> Line
+    .. automethod:: transform
 
-    .. automethod:: translate(dx: float, dy: float, dz: float) -> Line
+    .. automethod:: translate
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-FCEF5726-53AE-4C43-B4EA-C84EB8686A66

@@ -138,6 +138,6 @@ Required DXF version     R2010 (``'AC1024'``)
 
     .. automethod:: get_crs
 
-    .. automethod:: get_crs_transformation(no_checks: bool = False) -> Tuple[Matrix44, int]
+    .. automethod:: get_crs_transformation
 
-    .. automethod:: setup_local_grid(design_point: Vec3, reference_point: Vec3, north_direction: Vec2=Y_AXIS, crs: str=EPSG_3395)
+    .. automethod:: setup_local_grid
