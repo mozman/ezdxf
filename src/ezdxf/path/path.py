@@ -1,5 +1,6 @@
 # Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import (
     List,
     Iterable,
@@ -16,7 +17,7 @@ from ezdxf.math import (
     Bezier4P,
     Matrix44,
     has_clockwise_orientation,
-    Vertex,
+    UVec,
 )
 
 from .commands import (
@@ -45,7 +46,7 @@ class Path:
         "_user_data",
     )
 
-    def __init__(self, start: Vertex = NULLVEC):
+    def __init__(self, start: UVec = NULLVEC):
         # stores all command vertices in a contiguous list
         self._vertices: List[Vec3] = [Vec3(start)]
         # start index of each command
@@ -119,7 +120,7 @@ class Path:
         return self._vertices[0]
 
     @start.setter
-    def start(self, location: Vertex) -> None:
+    def start(self, location: UVec) -> None:
         if self._commands:
             raise ValueError("Requires an empty path.")
         else:
@@ -190,13 +191,13 @@ class Path:
         else:
             raise ValueError(f"Invalid command: {t}")
 
-    def line_to(self, location: Vertex) -> None:
+    def line_to(self, location: UVec) -> None:
         """Add a line from actual path end point to `location`."""
         self._commands.append(Command.LINE_TO)
         self._start_index.append(len(self._vertices))
         self._vertices.append(Vec3(location))
 
-    def move_to(self, location: Vertex) -> None:
+    def move_to(self, location: UVec) -> None:
         """Start a new sub-path at `location`. This creates a gap between the
         current end-point and the start-point of the new sub-path. This converts
         the instance into a :term:`Multi-Path` object.
@@ -221,7 +222,7 @@ class Path:
         self._start_index.append(len(self._vertices))
         self._vertices.append(Vec3(location))
 
-    def curve3_to(self, location: Vertex, ctrl: Vertex) -> None:
+    def curve3_to(self, location: UVec, ctrl: UVec) -> None:
         """Add a quadratic Bèzier-curve from actual path end point to
         `location`, `ctrl` is the control point for the quadratic Bèzier-curve.
         """
@@ -229,7 +230,7 @@ class Path:
         self._start_index.append(len(self._vertices))
         self._vertices.extend((Vec3(ctrl), Vec3(location)))
 
-    def curve4_to(self, location: Vertex, ctrl1: Vertex, ctrl2: Vertex) -> None:
+    def curve4_to(self, location: UVec, ctrl1: UVec, ctrl2: UVec) -> None:
         """Add a cubic Bèzier-curve from actual path end point to `location`,
         `ctrl1` and `ctrl2` are the control points for the cubic Bèzier-curve.
         """

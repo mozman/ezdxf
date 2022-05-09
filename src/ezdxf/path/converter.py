@@ -1,5 +1,6 @@
 # Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import (
     List,
     Iterable,
@@ -26,7 +27,7 @@ from ezdxf.math import (
     BSpline,
     have_bezier_curves_g1_continuity,
     fit_points_to_cad_cv,
-    Vertex,
+    UVec,
     Matrix44,
 )
 from ezdxf.lldxf import const
@@ -481,7 +482,7 @@ def from_hatch_edge_path(
     return path  # multi path
 
 
-def from_vertices(vertices: Iterable["Vertex"], close=False) -> Path:
+def from_vertices(vertices: Iterable[UVec], close=False) -> Path:
     """Returns a :class:`Path` object from the given `vertices`."""
     _vertices = Vec3.list(vertices)
     if len(_vertices) < 2:
@@ -500,7 +501,7 @@ def to_lwpolylines(
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
-    extrusion: "Vertex" = Z_AXIS,
+    extrusion: UVec = Z_AXIS,
     dxfattribs=None,
 ) -> Iterable[LWPolyline]:
     """Convert the given `paths` into :class:`~ezdxf.entities.LWPolyline`
@@ -559,7 +560,7 @@ def to_polylines2d(
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
-    extrusion: "Vertex" = Z_AXIS,
+    extrusion: UVec = Z_AXIS,
     dxfattribs=None,
 ) -> Iterable[Polyline]:
     """Convert the given `paths` into 2D :class:`~ezdxf.entities.Polyline`
@@ -614,7 +615,7 @@ def to_hatches(
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
     g1_tol: float = G1_TOL,
-    extrusion: "Vertex" = Z_AXIS,
+    extrusion: UVec = Z_AXIS,
     dxfattribs=None,
 ) -> Iterable[Hatch]:
     """Convert the given `paths` into :class:`~ezdxf.entities.Hatch` entities.
@@ -663,7 +664,7 @@ def to_mpolygons(
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
-    extrusion: "Vertex" = Z_AXIS,
+    extrusion: UVec = Z_AXIS,
     dxfattribs=None,
 ) -> Iterable[MPolygon]:
     """Convert the given `paths` into :class:`~ezdxf.entities.MPolygon` entities.
@@ -746,7 +747,7 @@ def _polygon_converter(
     cls: Type[TPolygon],
     paths: Iterable[Path],
     add_boundary: BoundaryFactory,
-    extrusion: "Vertex" = Z_AXIS,
+    extrusion: UVec = Z_AXIS,
     dxfattribs=None,
 ) -> Iterable[TPolygon]:
     if isinstance(paths, Path):
@@ -1039,7 +1040,7 @@ def from_matplotlib_path(mpath, curves=True) -> Iterable[Path]:
         return [path]
 
 
-def to_matplotlib_path(paths: Iterable[Path], extrusion: "Vertex" = Z_AXIS):
+def to_matplotlib_path(paths: Iterable[Path], extrusion: UVec = Z_AXIS):
     """Convert the given `paths` into a single :class:`matplotlib.path.Path`
     object.
     The `extrusion` vector is applied to all paths, all vertices are projected
@@ -1147,7 +1148,7 @@ def from_qpainter_path(qpath) -> Iterable[Path]:
         return [path]
 
 
-def to_qpainter_path(paths: Iterable[Path], extrusion: "Vertex" = Z_AXIS):
+def to_qpainter_path(paths: Iterable[Path], extrusion: UVec = Z_AXIS):
     """Convert the given `paths` into a :class:`QtGui.QPainterPath`
     object.
     The `extrusion` vector is applied to all paths, all vertices are projected

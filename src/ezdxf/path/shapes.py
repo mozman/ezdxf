@@ -1,10 +1,11 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
+from __future__ import annotations
 import math
 from ezdxf.math import (
     cubic_bezier_arc_parameters,
     Matrix44,
-    Vertex,
+    UVec,
     basic_transformation,
 )
 from ezdxf.render import forms
@@ -96,7 +97,7 @@ def wedge(
 
 
 def elliptic_transformation(
-    center: Vertex = (0, 0, 0),
+    center: UVec = (0, 0, 0),
     radius: float = 1,
     ratio: float = 1,
     rotation: float = 0,

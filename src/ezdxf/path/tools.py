@@ -1,5 +1,6 @@
 # Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
     List,
@@ -12,7 +13,7 @@ from typing import (
 import math
 from ezdxf.math import (
     Vec3,
-    Vertex,
+    UVec,
     Z_AXIS,
     OCS,
     Matrix44,
@@ -228,7 +229,7 @@ def render_lwpolylines(
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
-    extrusion: Vertex = Z_AXIS,
+    extrusion: UVec = Z_AXIS,
     dxfattribs=None
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as
@@ -272,7 +273,7 @@ def render_polylines2d(
     *,
     distance: float = 0.01,
     segments: int = 4,
-    extrusion: Vertex = Z_AXIS,
+    extrusion: UVec = Z_AXIS,
     dxfattribs=None
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as 2D
@@ -318,7 +319,7 @@ def render_hatches(
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
     g1_tol: float = G1_TOL,
-    extrusion: Vertex = Z_AXIS,
+    extrusion: UVec = Z_AXIS,
     dxfattribs=None
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as
@@ -367,7 +368,7 @@ def render_mpolygons(
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
-    extrusion: Vertex = Z_AXIS,
+    extrusion: UVec = Z_AXIS,
     dxfattribs=None
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as
