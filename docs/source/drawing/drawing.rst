@@ -220,4 +220,4 @@ Drawing Object
 
     .. automethod:: validate
 
-    .. automethod:: ezdxf_metadata() -> MetaData
+    .. automethod:: ezdxf_metadata

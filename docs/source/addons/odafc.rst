@@ -79,9 +79,9 @@ Usage:
 
 .. autofunction:: is_installed
 
-.. autofunction:: readfile(filename: str, version: str = None, audit=False) -> Drawing
+.. autofunction:: readfile
 
-.. autofunction:: export_dwg(doc: Drawing, filename: str, version: str = None, audit=False, replace=False) -> None
+.. autofunction:: export_dwg
 
 .. autofunction:: convert
 

@@ -55,23 +55,23 @@ A font face is defined by the Matplotlib compatible
 String Functions
 ----------------
 
-.. autofunction:: make_path_from_str(s: str, font: FontFace, size: float = 1.0, align: TextEntityAlignment.LEFT, length: float = 0, m: Matrix44 = None) -> Path
+.. autofunction:: make_path_from_str
 
-.. autofunction:: make_paths_from_str(s: str, font: FontFace, size: float = 1.0, align: TextEntityAlignment.LEFT, length: float = 0, m: Matrix44 = None) -> List[Path]
+.. autofunction:: make_paths_from_str
 
-.. autofunction:: make_hatches_from_str(s: str, font: FontFace, size: float = 1.0,align: TextEntityAlignment.LEFT, length: float = 0, dxfattribs: Dict = None m: Matrix44 = None) -> List[Hatch]
+.. autofunction:: make_hatches_from_str
 
 Entity Functions
 ----------------
 
 .. autoclass:: Kind
 
-.. autofunction:: virtual_entities(entity, kind = Kind.HATCHES) -> EntityQuery
+.. autofunction:: virtual_entities
 
-.. autofunction:: explode(entity, kind = Kind.HATCHES, target = None) -> EntityQuery
+.. autofunction:: explode
 
-.. autofunction:: make_path_from_entity(entity)-> Path
+.. autofunction:: make_path_from_entity
 
-.. autofunction:: make_paths_from_entity(entity)-> List[Path]
+.. autofunction:: make_paths_from_entity
 
 .. _Matplotlib: https://matplotlib.org

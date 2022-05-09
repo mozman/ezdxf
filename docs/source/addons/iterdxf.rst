@@ -82,24 +82,24 @@ the :class:`MeshTransformer` class:
 Another way to import entities from a big source file into new DXF documents is to split the big file into
 smaller parts and use the :class:`~ezdxf.addons.importer.Importer` add-on for a more safe entity import.
 
-.. autofunction:: opendxf(filename: str, errors: str='surrogateescape') -> IterDXF
+.. autofunction:: opendxf
 
-.. autofunction:: modelspace(filename: str, types:Iterable[str]=None, errors: str='surrogateescape') -> Iterable[DXFGraphic]
+.. autofunction:: modelspace
 
-.. autofunction:: single_pass_modelspace(stream: BinaryIO, types:Iterable[str]=None, errors: str='surrogateescape') -> Iterable[DXFGraphic]
+.. autofunction:: single_pass_modelspace
 
 .. class:: IterDXF
 
-    .. automethod:: export(name: str) -> IterDXFWriter
+    .. automethod:: export
 
-    .. automethod:: modelspace(types: Iterable[str] = None) -> Iterable[DXFGraphic]
+    .. automethod:: modelspace
 
     .. automethod:: close
 
 
 .. class:: IterDXFWriter
 
-    .. automethod:: write(entity: DXFGraphic)
+    .. automethod:: write
 
     .. automethod:: close
 

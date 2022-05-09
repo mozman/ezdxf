@@ -19,11 +19,11 @@ style tables, STB files contain named plot style tables.
 
 .. module:: ezdxf.addons.acadctb
 
-.. autofunction:: load(filename: str) -> Union[ColorDependentPlotStyles, NamedPlotStyles]
+.. autofunction:: load
 
-.. autofunction:: new_ctb() -> ColorDependentPlotStyles
+.. autofunction:: new_ctb
 
-.. autofunction:: new_stb() -> NamedPlotStyles
+.. autofunction:: new_stb
 
 ColorDependentPlotStyles
 ------------------------
@@ -53,11 +53,11 @@ Color dependent plot style table (CTB file), table entries are :class:`PlotStyle
 
         Lineweights table as :class:`array.array`
 
-    .. automethod:: __getitem__(aci: int) -> PlotStyle
+    .. automethod:: __getitem__
 
-    .. automethod:: __iter__() -> Iterable[PlotStyle]
+    .. automethod:: __iter__
 
-    .. automethod:: new_style(aci: int, data: dict = None) -> PlotStyle
+    .. automethod:: new_style
 
     .. automethod:: get_lineweight
 
@@ -67,7 +67,7 @@ Color dependent plot style table (CTB file), table entries are :class:`PlotStyle
 
     .. automethod:: set_table_lineweight
 
-    .. method:: save(filename: str) -> None
+    .. method:: save
 
         Save CTB file as `filename` to the file system.
 
@@ -103,13 +103,13 @@ Named plot style table (STB file), table entries are :class:`PlotStyle` objects.
 
         Lineweights table as :class:`array.array`
 
-    .. automethod:: __getitem__(name: str) -> PlotStyle
+    .. automethod:: __getitem__
 
-    .. automethod:: __delitem__(name: str)
+    .. automethod:: __delitem__
 
     .. automethod:: __iter__
 
-    .. automethod:: new_style(name: str, localized_name: str = None, data: dict = None) -> PlotStyle
+    .. automethod:: new_style
 
     .. automethod:: get_lineweight
 
@@ -119,11 +119,11 @@ Named plot style table (STB file), table entries are :class:`PlotStyle` objects.
 
     .. automethod:: set_table_lineweight
 
-    .. method:: save(filename: str) -> None
+    .. method:: save
 
         Save STB file as `filename` to the file system.
 
-    .. method:: write(stream: BinaryIO) -> None
+    .. method:: write
 
         Compress and write STB file to binary `stream`.
 

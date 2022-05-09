@@ -61,38 +61,38 @@ Example for a simple STL to DXF converter:
 Import
 ------
 
-.. autofunction:: stl_readfile(filename: Union[str, os.PathLike]) -> MeshTransformer
+.. autofunction:: stl_readfile
 
-.. autofunction:: stl_loads(content: str) -> MeshTransformer
+.. autofunction:: stl_loads
 
-.. autofunction:: stl_loadb(buffer: bytes) -> MeshTransformer
+.. autofunction:: stl_loadb
 
-.. autofunction:: off_readfile(filename: Union[str, os.PathLike]) -> MeshTransformer
+.. autofunction:: off_readfile
 
-.. autofunction:: off_loads(content: str) -> MeshTransformer
+.. autofunction:: off_loads
 
-.. autofunction:: obj_readfile(filename: Union[str, os.PathLike]) -> List[MeshTransformer]
+.. autofunction:: obj_readfile
 
-.. autofunction:: obj_loads(content: str) -> List[MeshTransformer]
+.. autofunction:: obj_loads
 
 Export
 ------
 
-.. autofunction:: stl_dumps(mesh: MeshBuilder) -> str
+.. autofunction:: stl_dumps
 
-.. autofunction:: stl_dumpb(mesh: MeshBuilder) -> bytes
+.. autofunction:: stl_dumpb
 
-.. autofunction:: off_dumps(mesh: MeshBuilder) -> str
+.. autofunction:: off_dumps
 
-.. autofunction:: obj_dumps(mesh: MeshBuilder) -> str
+.. autofunction:: obj_dumps
 
-.. autofunction:: ply_dumpb(mesh: MeshBuilder) -> bytes
+.. autofunction:: ply_dumpb
 
-.. autofunction:: scad_dumps(mesh: MeshBuilder) -> str
+.. autofunction:: scad_dumps
 
-.. autofunction:: ifc4_dumps(mesh: MeshBuilder, entity_type = IfcEntityType.POLYGON_FACE_SET, layer="MeshExport", color=(1, 1, 1)) -> str
+.. autofunction:: ifc4_dumps
 
-.. autofunction:: export_ifcZIP(filename: Union[str, os.PathLike] , mesh: MeshBuilder, entity_type = IfcEntityType.POLYGON_FACE_SET, layer="MeshExport", color=(1, 1, 1))
+.. autofunction:: export_ifcZIP
 
 .. autoclass:: IfcEntityType
 

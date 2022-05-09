@@ -85,7 +85,7 @@ TODO: influence of layer, linetype, color DXF attributes to block entities
 
     .. automethod:: place
 
-    .. automethod:: grid(size: Tuple[int, int] = (1, 1), spacing: Tuple[float, float] = (1, 1)) -> Insert
+    .. automethod:: grid
 
     .. automethod:: has_attrib
 
@@ -103,17 +103,17 @@ TODO: influence of layer, linetype, color DXF attributes to block entities
 
     .. automethod:: reset_transformation
 
-    .. automethod:: transform(m: Matrix44) -> Insert
+    .. automethod:: transform
 
-    .. automethod:: translate(dx: float, dy: float, dz: float) -> Insert
+    .. automethod:: translate
 
-    .. automethod:: virtual_entities(skipped_entity_callback: Callable[[DXFGraphic, str], None] = None) -> Iterable[DXFGraphic]
+    .. automethod:: virtual_entities
 
-    .. automethod:: multi_insert() -> Iterable[Insert]
+    .. automethod:: multi_insert
 
-    .. automethod:: explode(target_layout: BaseLayout = None) -> EntityQuery
+    .. automethod:: explode
 
-    .. automethod:: ucs() -> UCS
+    .. automethod:: ucs
 
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-28FA4CFB-9D5E-4880-9F11-36C97578252F

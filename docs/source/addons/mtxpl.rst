@@ -43,9 +43,9 @@ There are also many limitations:
 
 .. autoclass:: ezdxf.addons.MTextExplode(layout, doc=None, spacing_factor = 1.0)
 
-    .. automethod:: explode(mtext: MText, destroy=True)
+    .. automethod:: explode
 
-    .. automethod:: finalize()
+    .. automethod:: finalize
 
 Example to explode all MTEXT entities in the DXF file "mtext.dxf":
 
