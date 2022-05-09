@@ -337,6 +337,13 @@ Matrix44
 Construction Tools
 ==================
 
+UVec
+----
+
+.. class:: UVec
+
+    Type alias for :code:`Union[Sequence[float], Vec2, Vec3]`
+
 Vec3
 ----
 
@@ -474,6 +481,7 @@ Vec2
 ----
 
 .. autoclass:: Vec2
+
 
 Plane
 -----

@@ -1,12 +1,13 @@
 # Copyright (c) 2018-2021, Manfred Moitzi
 # License: MIT License
-from typing import Tuple, List, Any, Iterable, Sequence, TYPE_CHECKING, Iterator
+from __future__ import annotations
+from typing import Tuple, List, Iterable, Sequence, TYPE_CHECKING, Iterator
 from functools import partial
 import math
 import random
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, AnyVec
+    from ezdxf.eztypes import UVec, AnyVec
 
 ABS_TOL = 1e-12
 isclose = partial(math.isclose, abs_tol=ABS_TOL)
@@ -115,17 +116,17 @@ class Vec3:
         )
 
     @classmethod
-    def list(cls, items: Iterable["Vertex"]) -> List["Vec3"]:
+    def list(cls, items: Iterable["UVec"]) -> List["Vec3"]:
         """Returns a list of :class:`Vec3` objects."""
         return list(cls.generate(items))
 
     @classmethod
-    def tuple(cls, items: Iterable["Vertex"]) -> Sequence["Vec3"]:
+    def tuple(cls, items: Iterable["UVec"]) -> Sequence["Vec3"]:
         """Returns a tuple of :class:`Vec3` objects."""
         return tuple(cls.generate(items))
 
     @classmethod
-    def generate(cls, items: Iterable["Vertex"]) -> Iterable["Vec3"]:
+    def generate(cls, items: Iterable["UVec"]) -> Iterable["Vec3"]:
         """Returns an iterable of :class:`Vec3` objects."""
         return (cls(item) for item in items)
 
@@ -317,7 +318,7 @@ class Vec3:
             else self.__class__(self._y, -self._x, self._z)
         )
 
-    def lerp(self, other: "Vertex", factor=0.5) -> "Vec3":
+    def lerp(self, other: "UVec", factor=0.5) -> "Vec3":
         """
         Returns linear interpolation between `self` and `other`.
 
@@ -329,7 +330,7 @@ class Vec3:
         d = (self.__class__(other) - self) * float(factor)
         return self.__add__(d)
 
-    def project(self, other: "Vertex") -> "Vec3":
+    def project(self, other: "UVec") -> "Vec3":
         """Returns projected vector of `other` onto `self`."""
         uv = self.normalize()
         return uv * uv.dot(other)
@@ -349,7 +350,7 @@ class Vec3:
         return not self.is_null
 
     def isclose(
-        self, other: "Vertex", *, rel_tol: float = 1e-9, abs_tol: float = 1e-12
+        self, other: "UVec", *, rel_tol: float = 1e-9, abs_tol: float = 1e-12
     ) -> bool:
         """Returns ``True`` if `self` is close to `other`.
         Uses :func:`math.isclose` to compare all axis.
@@ -365,7 +366,7 @@ class Vec3:
             and math.isclose(self._z, z, rel_tol=rel_tol, abs_tol=abs_tol)
         )
 
-    def __eq__(self, other: "Vertex") -> bool:
+    def __eq__(self, other: "UVec") -> bool:
         """
         Equal operator.
 
@@ -376,7 +377,7 @@ class Vec3:
             other = Vec3(other)
         return self.x == other.x and self.y == other.y and self.z == other.z
 
-    def __lt__(self, other: "Vertex") -> bool:
+    def __lt__(self, other: "UVec") -> bool:
         """
         Lower than operator.
 
@@ -393,22 +394,22 @@ class Vec3:
         else:
             return self._x < x
 
-    def __add__(self, other: "Vertex") -> "Vec3":
+    def __add__(self, other: "UVec") -> "Vec3":
         """Add :class:`Vec3` operator: `self` + `other`."""
         x, y, z = self.decompose(other)
         return self.__class__(self._x + x, self._y + y, self._z + z)
 
-    def __radd__(self, other: "Vertex") -> "Vec3":
+    def __radd__(self, other: "UVec") -> "Vec3":
         """RAdd :class:`Vec3` operator: `other` + `self`."""
         return self.__add__(other)
 
-    def __sub__(self, other: "Vertex") -> "Vec3":
+    def __sub__(self, other: "UVec") -> "Vec3":
         """Sub :class:`Vec3` operator: `self` - `other`."""
 
         x, y, z = self.decompose(other)
         return self.__class__(self._x - x, self._y - y, self._z - z)
 
-    def __rsub__(self, other: "Vertex") -> "Vec3":
+    def __rsub__(self, other: "UVec") -> "Vec3":
         """RSub :class:`Vec3` operator: `other` - `self`."""
         x, y, z = self.decompose(other)
         return self.__class__(x - self._x, y - self._y, z - self._z)
@@ -432,14 +433,14 @@ class Vec3:
         )
 
     @staticmethod
-    def sum(items: Iterable["Vertex"]) -> "Vec3":
+    def sum(items: Iterable["UVec"]) -> "Vec3":
         """Add all vectors in `items`."""
         s = NULLVEC
         for v in items:
             s += v
         return s
 
-    def dot(self, other: "Vertex") -> float:
+    def dot(self, other: "UVec") -> float:
         """
         Dot operator: `self` . `other`
 
@@ -449,7 +450,7 @@ class Vec3:
         x, y, z = self.decompose(other)
         return self._x * x + self._y * y + self._z * z
 
-    def cross(self, other: "Vertex") -> "Vec3":
+    def cross(self, other: "UVec") -> "Vec3":
         """
         Dot operator: `self` x `other`
 
@@ -463,12 +464,12 @@ class Vec3:
             self._x * y - self._y * x,
         )
 
-    def distance(self, other: "Vertex") -> float:
+    def distance(self, other: "UVec") -> float:
         """Returns distance between `self` and `other` vector."""
         v = self.__class__(other)
         return v.__sub__(self).magnitude
 
-    def angle_between(self, other: "Vertex") -> float:
+    def angle_between(self, other: "UVec") -> float:
         """Returns angle between `self` and `other` in radians. +angle is
         counter clockwise orientation.
 
@@ -484,7 +485,7 @@ class Vec3:
             cos_theta = 1.0
         return math.acos(cos_theta)
 
-    def angle_about(self, base: "Vertex", target: "Vertex") -> float:
+    def angle_about(self, base: "UVec", target: "UVec") -> float:
         # (c) 2020 by Matt Broadway, MIT License
         """
         Returns counter clockwise angle in radians about `self` from `base` to
@@ -530,7 +531,7 @@ Z_AXIS = Vec3(0, 0, 1)
 NULLVEC = Vec3(0, 0, 0)
 
 
-def distance(p1: "Vertex", p2: "Vertex") -> float:
+def distance(p1: "UVec", p2: "UVec") -> float:
     """
     Returns distance between points `p1` and `p2`.
 
@@ -542,7 +543,7 @@ def distance(p1: "Vertex", p2: "Vertex") -> float:
     return Vec3(p1).distance(p2)
 
 
-def lerp(p1: "Vertex", p2: "Vertex", factor: float = 0.5) -> "Vec3":
+def lerp(p1: "UVec", p2: "UVec", factor: float = 0.5) -> "Vec3":
     """
     Returns linear interpolation between points `p1` and `p2` as :class:`Vec3`.
 
@@ -606,16 +607,16 @@ class Vec2:
         return self.__class__(round(self.x, ndigits), round(self.y, ndigits))
 
     @classmethod
-    def list(cls, items: Iterable["Vertex"]) -> List["Vec2"]:
+    def list(cls, items: Iterable["UVec"]) -> List["Vec2"]:
         return list(cls.generate(items))
 
     @classmethod
-    def tuple(cls, items: Iterable["Vertex"]) -> Sequence["Vec2"]:
+    def tuple(cls, items: Iterable["UVec"]) -> Sequence["Vec2"]:
         """Returns a tuple of :class:`Vec3` objects."""
         return tuple(cls.generate(items))
 
     @classmethod
-    def generate(cls, items: Iterable["Vertex"]) -> Iterable["Vec2"]:
+    def generate(cls, items: Iterable["UVec"]) -> Iterable["Vec2"]:
         return (cls(item) for item in items)
 
     @classmethod
@@ -752,12 +753,12 @@ class Vec2:
             self.x, other.x, rel_tol=rel_tol, abs_tol=abs_tol
         ) and math.isclose(self.y, other.y, rel_tol=rel_tol, abs_tol=abs_tol)
 
-    def __eq__(self, other: "Vertex") -> bool:
+    def __eq__(self, other: "UVec") -> bool:
         if not isinstance(other, Vec2):
             other = Vec2(other)
         return self.x == other.x and self.y == other.y
 
-    def __lt__(self, other: "Vertex") -> bool:
+    def __lt__(self, other: "UVec") -> bool:
         # accepts also tuples, for more convenience at testing
         x, y, *_ = other
         if self.x == x:
