@@ -4,7 +4,8 @@
 # Download-URL: http://code.google.com/p/gameobjects/downloads/list
 # Copyright (c) 2010-2021 Manfred Moitzi
 # License: MIT License
-from typing import Sequence, Iterable, List, Tuple, TYPE_CHECKING, Iterator
+from __future__ import annotations
+from typing import Sequence, Iterable, List, Tuple, Iterator, TYPE_CHECKING
 import math
 from math import sin, cos, tan
 from itertools import chain
@@ -13,7 +14,7 @@ from itertools import chain
 from ._vector import Vec3, X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
+    from ._vector import UVec
 
 __all__ = ["Matrix44"]
 
@@ -164,7 +165,7 @@ class Matrix44:
         else:
             raise IndexError(f"invalid row index: {col}")
 
-    def copy(self) -> "Matrix44":
+    def copy(self) -> Matrix44:
         """Returns a copy of same type."""
         return self.__class__(self._matrix)
 
@@ -176,7 +177,7 @@ class Matrix44:
         return Vec3(m[12], m[13], m[14])
 
     @origin.setter
-    def origin(self, v: "Vertex") -> None:
+    def origin(self, v: UVec) -> None:
         m = self._matrix
         m[12], m[13], m[14] = Vec3(v)
 
@@ -217,7 +218,7 @@ class Matrix44:
         )
 
     @classmethod
-    def scale(cls, sx: float, sy: float = None, sz: float = None) -> "Matrix44":
+    def scale(cls, sx: float, sy: float = None, sz: float = None) -> Matrix44:
         """Returns a scaling transformation matrix. If `sy` is ``None``,
         `sy` = `sx`, and if `sz` is ``None`` `sz` = `sx`.
 
@@ -237,7 +238,7 @@ class Matrix44:
         return m
 
     @classmethod
-    def translate(cls, dx: float, dy: float, dz: float) -> "Matrix44":
+    def translate(cls, dx: float, dy: float, dz: float) -> Matrix44:
         """Returns a translation matrix for translation vector (dx, dy, dz)."""
         # fmt: off
         return cls([
@@ -249,7 +250,7 @@ class Matrix44:
         # fmt: on
 
     @classmethod
-    def x_rotate(cls, angle: float) -> "Matrix44":
+    def x_rotate(cls, angle: float) -> Matrix44:
         """Returns a rotation matrix about the x-axis.
 
         Args:
@@ -268,7 +269,7 @@ class Matrix44:
         # fmt: on
 
     @classmethod
-    def y_rotate(cls, angle: float) -> "Matrix44":
+    def y_rotate(cls, angle: float) -> Matrix44:
         """Returns a rotation matrix about the y-axis.
 
         Args:
@@ -287,7 +288,7 @@ class Matrix44:
         # fmt: on
 
     @classmethod
-    def z_rotate(cls, angle: float) -> "Matrix44":
+    def z_rotate(cls, angle: float) -> Matrix44:
         """Returns a rotation matrix about the z-axis.
 
         Args:
@@ -306,7 +307,7 @@ class Matrix44:
         # fmt: on
 
     @classmethod
-    def axis_rotate(cls, axis: "Vertex", angle: float) -> "Matrix44":
+    def axis_rotate(cls, axis: UVec, angle: float) -> Matrix44:
         """Returns a rotation matrix about an arbitrary `axis`.
 
         Args:
@@ -330,7 +331,7 @@ class Matrix44:
     @classmethod
     def xyz_rotate(
         cls, angle_x: float, angle_y: float, angle_z: float
-    ) -> "Matrix44":
+    ) -> Matrix44:
         """
         Returns a rotation matrix for rotation about each axis.
 
@@ -359,7 +360,7 @@ class Matrix44:
         # fmt: on
 
     @classmethod
-    def shear_xy(cls, angle_x: float = 0, angle_y: float = 0) -> "Matrix44":
+    def shear_xy(cls, angle_x: float = 0, angle_y: float = 0) -> Matrix44:
         """Returns a translation matrix for shear mapping (visually similar
         to slanting) in the xy-plane.
 
@@ -388,7 +389,7 @@ class Matrix44:
         bottom: float,
         near: float,
         far: float,
-    ) -> "Matrix44":
+    ) -> Matrix44:
         """Returns a matrix for a 2D projection.
 
         Args:
@@ -413,7 +414,7 @@ class Matrix44:
     @classmethod
     def perspective_projection_fov(
         cls, fov: float, aspect: float, near: float, far: float
-    ) -> "Matrix44":
+    ) -> Matrix44:
         """Returns a matrix for a 2D projection.
 
         Args:
@@ -431,7 +432,7 @@ class Matrix44:
         return cls.perspective_projection(left, right, bottom, top, near, far)
 
     @staticmethod
-    def chain(*matrices: "Matrix44") -> "Matrix44":
+    def chain(*matrices: Matrix44) -> Matrix44:
         """Compose a transformation matrix from one or more `matrices`."""
         transformation = Matrix44()
         for matrix in matrices:
@@ -444,7 +445,7 @@ class Matrix44:
         uy: Vec3 = Y_AXIS,
         uz: Vec3 = Z_AXIS,
         origin: Vec3 = NULLVEC,
-    ) -> "Matrix44":
+    ) -> Matrix44:
         """Returns a matrix for coordinate transformation from WCS to UCS.
         For transformation from UCS to WCS, transpose the returned matrix.
 
@@ -488,7 +489,7 @@ class Matrix44:
         """Iterates over all matrix values."""
         return iter(self._matrix)
 
-    def __mul__(self, other: "Matrix44") -> "Matrix44":
+    def __mul__(self, other: Matrix44) -> Matrix44:
         """Returns a new matrix as result of the matrix multiplication with
         another matrix.
         """
@@ -498,7 +499,7 @@ class Matrix44:
 
     # __matmul__ = __mul__ does not work!
 
-    def __matmul__(self, other: "Matrix44") -> "Matrix44":
+    def __matmul__(self, other: Matrix44) -> Matrix44:
         """Returns a new matrix as result of the matrix multiplication with
         another matrix.
         """
@@ -506,7 +507,7 @@ class Matrix44:
         res_matrix.__imul__(other)
         return res_matrix
 
-    def __imul__(self, other: "Matrix44") -> "Matrix44":
+    def __imul__(self, other: Matrix44) -> Matrix44:
         """Inplace multiplication with another matrix."""
         m1 = self._matrix
         m2 = other._matrix
@@ -543,7 +544,7 @@ class Matrix44:
         """Iterate over columns as 4-tuples."""
         return (self.get_col(index) for index in (0, 1, 2, 3))
 
-    def transform(self, vector: "Vertex") -> Vec3:
+    def transform(self, vector: UVec) -> Vec3:
         """Returns a transformed vertex."""
         m = self._matrix
         x, y, z = Vec3(vector)
@@ -555,7 +556,7 @@ class Matrix44:
         )
         # fmt: on
 
-    def transform_direction(self, vector: "Vertex", normalize=False) -> Vec3:
+    def transform_direction(self, vector: UVec, normalize=False) -> Vec3:
         """Returns a transformed direction vector without translation."""
         m = self._matrix
         x, y, z = Vec3(vector)
@@ -570,7 +571,7 @@ class Matrix44:
 
     ocs_to_wcs = transform_direction
 
-    def transform_vertices(self, vectors: Iterable["Vertex"]) -> Iterable[Vec3]:
+    def transform_vertices(self, vectors: Iterable[UVec]) -> Iterable[Vec3]:
         """Returns an iterable of transformed vertices."""
         # fmt: off
         (
@@ -591,7 +592,7 @@ class Matrix44:
             # fmt: on
 
     def transform_directions(
-        self, vectors: Iterable["Vertex"], normalize=False
+        self, vectors: Iterable[UVec], normalize=False
     ) -> Iterable[Vec3]:
         """Returns an iterable of transformed direction vectors without
         translation.

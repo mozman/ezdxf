@@ -1,19 +1,21 @@
-# Copyright (c) 2010-2021, Manfred Moitzi
+# Copyright (c) 2010-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Sequence, Optional, Tuple
+from __future__ import annotations
+from typing import Iterable, Sequence, Optional, TYPE_CHECKING
 import math
 
 # The pure Python implementation can't import from ._ctypes or ezdxf.math!
 from ._vector import Vec2, Vec3
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
+    from ._vector import UVec
+
 TOLERANCE = 1e-10
 RAD_ABS_TOL = 1e-15
 DEG_ABS_TOL = 1e-13
 
 
-def has_clockwise_orientation(vertices: Iterable["Vertex"]) -> bool:
+def has_clockwise_orientation(vertices: Iterable[UVec]) -> bool:
     """Returns True if 2D `vertices` have clockwise orientation. Ignores
     z-axis of all vertices.
 

@@ -2,7 +2,7 @@
 #  License: MIT License
 #
 # Pure Python implementation of the B-spline basis function.
-
+from __future__ import annotations
 from typing import List, Iterable, Sequence, Tuple
 import math
 import bisect

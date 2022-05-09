@@ -1,6 +1,7 @@
 # Copyright (c) 2021-2022 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Sequence, Type, Optional
+from __future__ import annotations
+from typing import Iterable, Sequence, Type, Optional, TYPE_CHECKING
 import math
 
 # The pure Python implementation can't import from ._ctypes or ezdxf.math!
@@ -8,7 +9,7 @@ from ._vector import Vec3, Vec2
 from ._matrix44 import Matrix44
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, AnyVec
+    from ._vector import UVec, AnyVec
 
 __all__ = ["Bezier3P"]
 
@@ -35,7 +36,7 @@ class Bezier3P:
 
     """
 
-    def __init__(self, defpoints: Sequence["Vertex"]):
+    def __init__(self, defpoints: Sequence[UVec]):
         if len(defpoints) == 3:
             is3d = any(len(p) > 2 for p in defpoints)
             vector_class: Type["AnyVec"] = Vec3 if is3d else Vec2

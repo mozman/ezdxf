@@ -49,7 +49,7 @@ class EulerSpiral:
             return 0.0  # radius = infinite
 
     def tangent(self, t: float) -> Vec3:
-        """Get tangent at distance `t` as :class.`Vec3` object."""
+        """Get tangent at distance `t` as :class:`Vec3` object."""
         angle = t ** 2 / (2.0 * self.curvature_powers[2])
         return Vec3.from_angle(angle)
 
@@ -58,7 +58,7 @@ class EulerSpiral:
         return self.curvature_powers[2] / float(radius)
 
     def point(self, t: float) -> Vec3:
-        """Get point at distance `t` as :class.`Vec3`."""
+        """Get point at distance `t` as :class:`Vec3`."""
 
         def term(length_power, curvature_power, const):
             return t ** length_power / (

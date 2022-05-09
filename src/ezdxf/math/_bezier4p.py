@@ -1,5 +1,6 @@
 # Copyright (c) 2010-2022 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Union, Sequence, Tuple, Type
 import math
 from functools import lru_cache
@@ -10,7 +11,7 @@ from ._matrix44 import Matrix44
 from ._construct import arc_angle_span_deg
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, AnyVec
+    from ._vector import UVec, AnyVec
     from ezdxf.math.ellipse import ConstructionEllipse
 
 __all__ = [
@@ -68,22 +69,22 @@ class Bezier4P:
 
     """
 
-    def __init__(self, defpoints: Sequence["Vertex"]):
+    def __init__(self, defpoints: Sequence[UVec]):
         if len(defpoints) == 4:
             is3d = any(len(p) > 2 for p in defpoints)
-            vector_class: Type["AnyVec"] = Vec3 if is3d else Vec2
+            vector_class: Type[AnyVec] = Vec3 if is3d else Vec2
             # The start point is the curve offset
-            offset: "AnyVec" = vector_class(defpoints[0])
-            self._offset: "AnyVec" = offset
+            offset: AnyVec = vector_class(defpoints[0])
+            self._offset: AnyVec = offset
             # moving the curve to the origin reduces floating point errors:
-            self._control_points: Sequence["AnyVec"] = tuple(
+            self._control_points: Sequence[AnyVec] = tuple(
                 vector_class(p) - offset for p in defpoints
             )
         else:
             raise ValueError("Four control points required.")
 
     @property
-    def control_points(self) -> Sequence["AnyVec"]:
+    def control_points(self) -> Sequence[AnyVec]:
         """Control points as tuple of :class:`~ezdxf.math.Vec3` or
         :class:`~ezdxf.math.Vec2` objects.
         """
@@ -92,7 +93,7 @@ class Bezier4P:
         offset = self._offset
         return offset, p1 + offset, p2 + offset, p3 + offset
 
-    def tangent(self, t: float) -> "AnyVec":
+    def tangent(self, t: float) -> AnyVec:
         """Returns direction vector of tangent for location `t` at the
         Bèzier-curve.
 
@@ -104,7 +105,7 @@ class Bezier4P:
             raise ValueError("t not in range [0 to 1]")
         return self._get_curve_tangent(t)
 
-    def point(self, t: float) -> "AnyVec":
+    def point(self, t: float) -> AnyVec:
         """Returns point for location `t`` at the Bèzier-curve.
 
         Args:
@@ -115,7 +116,7 @@ class Bezier4P:
             raise ValueError("t not in range [0 to 1]")
         return self._get_curve_point(t)
 
-    def approximate(self, segments: int) -> Iterable["AnyVec"]:
+    def approximate(self, segments: int) -> Iterable[AnyVec]:
         """Approximate `Bézier curve`_ by vertices, yields `segments` + 1
         vertices as ``(x, y[, z])`` tuples.
 
@@ -152,14 +153,14 @@ class Bezier4P:
         """
 
         def subdiv(
-            start_point: "AnyVec",
-            end_point: "AnyVec",
+            start_point: AnyVec,
+            end_point: AnyVec,
             start_t: float,
             end_t: float,
-        ) -> Iterable["AnyVec"]:
+        ) -> Iterable[AnyVec]:
             mid_t: float = (start_t + end_t) * 0.5
-            mid_point: "AnyVec" = self._get_curve_point(mid_t)
-            chk_point: "AnyVec" = start_point.lerp(end_point)
+            mid_point: AnyVec = self._get_curve_point(mid_t)
+            chk_point: AnyVec = start_point.lerp(end_point)
             # center point point is faster than projecting mid point onto
             # vector start -> end:
             d = chk_point.distance(mid_point)
@@ -173,8 +174,8 @@ class Bezier4P:
         t0: float = 0.0
         t1: float
         cp = self.control_points
-        start_point: "AnyVec" = cp[0]
-        end_point: "AnyVec"
+        start_point: AnyVec = cp[0]
+        end_point: AnyVec
 
         yield start_point
         while t0 < 1.0:
@@ -230,7 +231,7 @@ class Bezier4P:
         .. versionadded:: 0.14
 
         """
-        defpoints: Iterable["AnyVec"]
+        defpoints: Iterable[AnyVec]
         if len(self._offset) == 2:
             defpoints = Vec3.generate(self.control_points)
         else:
@@ -239,7 +240,7 @@ class Bezier4P:
 
 
 def cubic_bezier_from_arc(
-    center: "Vertex" = (0, 0, 0),
+    center: UVec = (0, 0, 0),
     radius: float = 1,
     start_angle: float = 0,
     end_angle: float = 360,

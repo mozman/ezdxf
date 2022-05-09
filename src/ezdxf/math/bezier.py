@@ -3,7 +3,7 @@
 from typing import Iterable, Tuple, Sequence
 from functools import lru_cache
 import math
-from ezdxf.math import Vec3, NULLVEC, Matrix44, Vertex
+from ezdxf.math import Vec3, NULLVEC, Matrix44, UVec
 from .construct2d import linspace
 
 
@@ -90,7 +90,7 @@ class Bezier:
 
     """
 
-    def __init__(self, defpoints: Iterable["Vertex"]):
+    def __init__(self, defpoints: Iterable[UVec]):
         self._defpoints: Sequence[Vec3] = Vec3.tuple(defpoints)
 
     @property
