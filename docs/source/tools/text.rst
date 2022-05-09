@@ -102,15 +102,15 @@ Single Line Text
 
     .. autoproperty:: height
 
-    .. automethod:: stretch(alignment: str, p1: Vec3, p2: Vec3) -> None
+    .. automethod:: stretch
 
     .. automethod:: font_measurements
 
-    .. automethod:: baseline_vertices(insert, halign, valign, angle, scale) -> List[Vec3]
+    .. automethod:: baseline_vertices
 
-    .. automethod:: corner_vertices(insert, halign, valign, angle, scale, oblique)  -> List[Vec3]
+    .. automethod:: corner_vertices
 
-    .. automethod:: transform_2d(vertices, insert, shift, rotation, scale, oblique) -> List[Vec3]
+    .. automethod:: transform_2d
 
 Functions
 ---------
