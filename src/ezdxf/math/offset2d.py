@@ -1,18 +1,17 @@
-# Copyright (c) 2019-2021, Manfred Moitzi
+# Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable
-from ezdxf.math import Vec2
+from __future__ import annotations
+from typing import Iterable
+from ezdxf.math import Vec2, UVec
 from ezdxf.math.line import ConstructionRay, ParallelRaysError
 
-if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
 
 __all__ = ["offset_vertices_2d"]
 
 
 def offset_vertices_2d(
-    vertices: Iterable["Vertex"], offset: float, closed: bool = False
-) -> Iterable["Vec2"]:
+    vertices: Iterable[UVec], offset: float, closed: bool = False
+) -> Iterable[Vec2]:
     """Yields vertices of the offset line to the shape defined by `vertices`.
     The source shape consist of straight segments and is located in the xy-plane,
     the z-axis of input vertices is ignored. Takes closed shapes into account if

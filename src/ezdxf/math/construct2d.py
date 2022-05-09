@@ -1,15 +1,21 @@
-# Copyright (c) 2010-2021, Manfred Moitzi
+# Copyright (c) 2010-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, List, Union, Tuple
+from __future__ import annotations
+from typing import Iterable, List, Union, Tuple
 
 from functools import partial
 import math
 import warnings
-from ezdxf.math import Vec3, Vec2, Matrix44, X_AXIS, Y_AXIS, arc_angle_span_rad
+from ezdxf.math import (
+    Vec3,
+    Vec2,
+    UVec,
+    Matrix44,
+    X_AXIS,
+    Y_AXIS,
+    arc_angle_span_rad,
+)
 from decimal import Decimal
-
-if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
 
 TOLERANCE = 1e-10
 RADIANS_90 = math.pi / 2.0
@@ -40,7 +46,7 @@ __all__ = [
 ]
 
 
-def is_close_points(p1: "Vertex", p2: "Vertex", abs_tol=TOLERANCE) -> bool:
+def is_close_points(p1: UVec, p2: UVec, abs_tol=TOLERANCE) -> bool:
     """Deprecated function will be removed in v0.18! Use Vec(p1).isclose(p2)."""
     warnings.warn(
         "Deprecated function will be removed in v0.18! "
@@ -127,7 +133,7 @@ def ellipse_param_span(start_param: float, end_param: float) -> float:
     return arc_angle_span_rad(float(start_param), float(end_param))
 
 
-def closest_point(base: "Vertex", points: Iterable["Vertex"]) -> "Vec3":
+def closest_point(base: UVec, points: Iterable[UVec]) -> "Vec3":
     """Returns closest point to `base`.
 
     Args:
@@ -147,7 +153,7 @@ def closest_point(base: "Vertex", points: Iterable["Vertex"]) -> "Vec3":
     return found
 
 
-def convex_hull_2d(points: Iterable["Vertex"]) -> List[Vec2]:
+def convex_hull_2d(points: Iterable[UVec]) -> List[Vec2]:
     """Returns 2D convex hull for `points` as list of :class:`Vec2`.
     Returns a closed polyline, first vertex == last vertex.
 
@@ -176,7 +182,7 @@ def convex_hull_2d(points: Iterable["Vertex"]) -> List[Vec2]:
         hull[k] = vertices[i]
         k += 1
     t: int = k + 1
-    for i in range(n-2, -1, -1):
+    for i in range(n - 2, -1, -1):
         while k >= t and cross(hull[k - 2], hull[k - 1], vertices[i]) <= 0.0:
             k -= 1
         hull[k] = vertices[i]
@@ -354,7 +360,7 @@ def circle_radius_3p(a: Vec3, b: Vec3, c: Vec3) -> float:
     return upper / lower
 
 
-def area(vertices: Iterable["Vertex"]) -> float:
+def area(vertices: Iterable[UVec]) -> float:
     """Returns the area of a polygon, returns the projected area in the
     xy-plane for 3D vertices.
     """

@@ -1,11 +1,10 @@
-# Copyright (c) 2012-2021, Manfred Moitzi
+# Copyright (c) 2012-2022, Manfred Moitzi
 # License: MIT License
-from typing import List, TYPE_CHECKING
+from __future__ import annotations
+from typing import List
 from .bezier import bernstein_basis
-from ezdxf.math import Vec3, NULLVEC
+from ezdxf.math import Vec3, NULLVEC, UVec
 
-if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
 
 __all__ = ["BezierSurface"]
 
@@ -23,7 +22,7 @@ class BezierSurface:
 
     """
 
-    def __init__(self, defpoints: List[List["Vertex"]]):
+    def __init__(self, defpoints: List[List[UVec]]):
         self._defpoints = defpoints
 
     @property

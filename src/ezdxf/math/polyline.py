@@ -1,9 +1,9 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
+from __future__ import annotations
 from typing import (
     Iterable,
     List,
-    TYPE_CHECKING,
     Tuple,
     Iterator,
     Sequence,
@@ -14,9 +14,9 @@ from typing_extensions import Protocol
 from ezdxf.math import (
     Vec2,
     Vec3,
+    UVec,
     linspace,
     NULLVEC,
-    Vertex,
     intersection_line_line_2d,
     BoundingBox2d,
     intersection_line_line_3d,
@@ -27,8 +27,6 @@ from ezdxf.math import (
 
 import bisect
 
-if TYPE_CHECKING:
-    from ezdxf.math import Vertex
 
 __all__ = [
     "ConstructionPolyline",
@@ -71,7 +69,7 @@ class ConstructionPolyline(Sequence):
 
     def __init__(
         self,
-        vertices: Iterable[Vertex],
+        vertices: Iterable[UVec],
         close: bool = False,
         rel_tol: float = REL_TOL,
     ):
@@ -235,7 +233,7 @@ def _distances(vertices: Iterable[Vec3]) -> List[float]:
 
 
 class SupportsPointMethod(Protocol):
-    def point(self, t: float) -> Vertex:
+    def point(self, t: float) -> UVec:
         ...
 
 

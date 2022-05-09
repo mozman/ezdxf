@@ -1,12 +1,11 @@
 # Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
-from typing import Sequence, List, Iterable, TYPE_CHECKING, Tuple, Optional
+from __future__ import annotations
+from typing import Sequence, List, Iterable, Tuple, Optional
 from enum import IntEnum
 import math
-from ezdxf.math import Vec3, Matrix44, X_AXIS, Y_AXIS, Z_AXIS
+from ezdxf.math import Vec3, Matrix44, X_AXIS, Y_AXIS, Z_AXIS, AnyVec, UVec
 
-if TYPE_CHECKING:
-    from ezdxf.math import Vertex, AnyVec
 
 __all__ = [
     "is_planar_face",
@@ -57,7 +56,7 @@ def is_planar_face(face: Sequence[Vec3], abs_tol=1e-9) -> bool:
 
 
 def subdivide_face(
-    face: Sequence["AnyVec"], quads: bool = True
+    face: Sequence[AnyVec], quads: bool = True
 ) -> Iterable[Tuple[Vec3, ...]]:
     """Yields new subdivided faces. Creates new faces from subdivided edges and
     the face midpoint by linear interpolation.
@@ -87,7 +86,7 @@ def subdivide_face(
 
 
 def subdivide_ngons(
-    faces: Iterable[Sequence["AnyVec"]],
+    faces: Iterable[Sequence[AnyVec]],
     max_vertex_count=4,
 ) -> Iterable[Sequence[Vec3]]:
     """Yields only triangles or quad faces, subdivides ngons into triangles.
@@ -114,7 +113,7 @@ def normal_vector_3p(a: Vec3, b: Vec3, c: Vec3) -> Vec3:
     return (b - a).cross(c - a).normalize()
 
 
-def best_fit_normal(vertices: Iterable["Vertex"]) -> Vec3:
+def best_fit_normal(vertices: Iterable[UVec]) -> Vec3:
     """Returns the "best fit" normal for a plane defined by three or more
     vertices. This function tolerates imperfect plane vertices. Safe function
     to detect the extrusion vector of flat arbitrary polygons.
@@ -195,8 +194,8 @@ def intersection_line_line_3d(
 
 
 def basic_transformation(
-    move: "Vertex" = (0, 0, 0),
-    scale: "Vertex" = (1, 1, 1),
+    move: UVec = (0, 0, 0),
+    scale: UVec = (1, 1, 1),
     z_rotation: float = 0,
 ) -> Matrix44:
     """Returns a combined transformation matrix for translation, scaling and
@@ -326,7 +325,7 @@ class BarycentricCoordinates:
 
     # Source: https://gamemath.com/book/geomprims.html#triangle_barycentric_space
 
-    def __init__(self, a: "Vertex", b: "Vertex", c: "Vertex"):
+    def __init__(self, a: UVec, b: UVec, c: UVec):
         self.a = Vec3(a)
         self.b = Vec3(b)
         self.c = Vec3(c)
@@ -339,7 +338,7 @@ class BarycentricCoordinates:
         if abs(self._denom) < 1e-9:
             raise ValueError("invalid triangle")
 
-    def from_cartesian(self, p: "Vertex") -> Vec3:
+    def from_cartesian(self, p: UVec) -> Vec3:
         p = Vec3(p)
         n = self._n
         denom = self._denom
@@ -351,7 +350,7 @@ class BarycentricCoordinates:
         b3 = self._e3.cross(d2).dot(n) / denom
         return Vec3(b1, b2, b3)
 
-    def to_cartesian(self, b: "Vertex") -> Vec3:
+    def to_cartesian(self, b: UVec) -> Vec3:
         b1, b2, b3 = Vec3(b).xyz
         return self.a * b1 + self.b * b2 + self.c * b3
 
@@ -389,7 +388,7 @@ def has_matrix_3d_stretching(m: Matrix44) -> bool:
     ) or not math.isclose(ux_mag_sqr, uz.magnitude_square)
 
 
-def spherical_envelope(points: Sequence["Vertex"]) -> Tuple[Vec3, float]:
+def spherical_envelope(points: Sequence[UVec]) -> Tuple[Vec3, float]:
     """Calculate the spherical envelope for the given points.  Returns the
     centroid (a.k.a. geometric center) and the radius of the enclosing sphere.
 
