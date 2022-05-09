@@ -10,6 +10,7 @@ T = TypeVar("T", bound="AbstractEntity")
 
 class AbstractEntity(ABC):
     """Unified query interface for SAT and SAB data."""
+
     name: str
 
     def __str__(self):
@@ -17,7 +18,7 @@ class AbstractEntity(ABC):
 
     @property
     def is_null_ptr(self) -> bool:
-        """Returns ``True`` if this entity is the ``NULL_PTR`` entity. """
+        """Returns ``True`` if this entity is the ``NULL_PTR`` entity."""
         return self.name == NULL_PTR_NAME
 
     @abstractmethod
@@ -105,14 +106,18 @@ class DataLoader(ABC):
     level AbstractEntity representation.
 
     """
-    version : int = 700
+
+    version: int = 700
 
     @abstractmethod
     def has_data(self) -> bool:
         pass
 
     @abstractmethod
-    def read_int(self) -> int:
+    def read_int(self, skip_sat: int = None) -> int:
+        """There are sometimes additional int values in SAB files which are
+        not present in SAT files, maybe reference counters e.g. vertex, coedge.
+        """
         pass
 
     @abstractmethod

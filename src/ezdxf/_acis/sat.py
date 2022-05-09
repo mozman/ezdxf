@@ -192,7 +192,10 @@ class SatDataLoader(DataLoader):
     def has_data(self) -> bool:
         return self.index <= len(self.data)
 
-    def read_int(self) -> int:
+    def read_int(self, skip_sat: int = None) -> int:
+        if skip_sat is not None:
+            return skip_sat
+
         entry = self.data[self.index]
         try:
             value = int(entry)
@@ -238,7 +241,7 @@ class SatDataLoader(DataLoader):
         value = self.data[self.index]
         if self.version < const.Features.AT or value.startswith("@"):
             self.index += 2
-            return self.data[self.index-1]
+            return self.data[self.index - 1]
         raise ParsingError(f"expected string, got {value}")
 
     def read_ptr(self) -> AbstractEntity:

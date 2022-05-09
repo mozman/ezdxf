@@ -1,12 +1,13 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
+from __future__ import annotations
 from typing import Union, List, Dict, Callable, Type, Any, Sequence
 import abc
 
 from . import sab, sat, const
 from .const import Features
 from .abstract import DataLoader, AbstractEntity, DataExporter
-from ezdxf.math import Matrix44, Vec3
+from ezdxf.math import Matrix44, Vec3, NULLVEC
 
 Factory = Callable[[AbstractEntity], "AcisEntity"]
 
@@ -271,7 +272,7 @@ class Loop(SupportsPattern):
     type: str = "loop"
     next_loop: "Loop" = NONE_REF
     coedge: "Coedge" = NONE_REF
-    face: "Face" = NONE_REF
+    face: "Face" = NONE_REF  # parent/owner
 
     def restore_common(
         self, loader: DataLoader, entity_factory: Factory
@@ -285,6 +286,104 @@ class Loop(SupportsPattern):
 @register
 class Coedge(SupportsPattern):
     type: str = "coedge"
+    next_coedge: Coedge = NONE_REF
+    prev_coedge: Coedge = NONE_REF
+    partner_coedge: Coedge = NONE_REF
+    edge: Edge = NONE_REF
+    sense: bool = True  # True = reversed; False = forward
+    loop: Loop = NONE_REF  # parent/owner
+    unknown: int = 0  # only in SAB file!?
+    pcurve: PCurve = NONE_REF
+
+    def restore_common(
+        self, loader: DataLoader, entity_factory: Factory
+    ) -> None:
+        super().restore_common(loader, entity_factory)
+        self.next_coedge = restore_entity("coedge", loader, entity_factory)
+        self.prev_coedge = restore_entity("coedge", loader, entity_factory)
+        self.partner_coedge = restore_entity("coedge", loader, entity_factory)
+        self.edge = restore_entity("edge", loader, entity_factory)
+        self.sense = loader.read_bool("reversed", "forward")
+        self.loop = restore_entity("loop", loader, entity_factory)
+        self.unknown = loader.read_int(skip_sat=0)
+        self.pcurve = restore_entity("pcurve", loader, entity_factory)
+
+
+@register
+class Edge(SupportsPattern):
+    type: str = "edge"
+    start_vertex: Vertex = NONE_REF
+    start_param: float = 0.0
+    end_vertex: Vertex = NONE_REF
+    end_param: float = 0.0
+    coedge: Coedge = NONE_REF
+    curve: Curve = NONE_REF
+    sense: bool = True  # True = reversed; False = forward
+    convexity: str = "unknown"
+
+    def restore_common(
+        self, loader: DataLoader, entity_factory: Factory
+    ) -> None:
+        super().restore_common(loader, entity_factory)
+        self.start_vertex = restore_entity("vertex", loader, entity_factory)
+        self.start_param = loader.read_double()
+        self.end_vertex = restore_entity("vertex", loader, entity_factory)
+        self.end_param = loader.read_double()
+        self.coedge = restore_entity("coedge", loader, entity_factory)
+        self.curve = restore_entity("curve", loader, entity_factory)
+        self.sense = loader.read_bool("reversed", "forward")
+        self.convexity = loader.read_str()
+
+
+@register
+class PCurve(SupportsPattern):  # not implemented
+    type: str = "pcurve"
+
+
+@register
+class Vertex(SupportsPattern):
+    type: str = "vertex"
+    edge: Edge = NONE_REF
+    unknown: int = 0  # only in SAB files, reference counter?
+    point: Point = NONE_REF
+
+    def restore_common(
+        self, loader: DataLoader, entity_factory: Factory
+    ) -> None:
+        super().restore_common(loader, entity_factory)
+        self.edge = restore_entity("edge", loader, entity_factory)
+        self.unknown = loader.read_int(skip_sat=0)
+        self.point = restore_entity("point", loader, entity_factory)
+
+
+@register
+class Curve(SupportsPattern):
+    type: str = "curve"
+    bounds = INF, INF
+
+    def restore_data(self, loader: DataLoader) -> None:
+        self.bounds = loader.read_interval(), loader.read_interval()
+
+
+@register
+class StraightCurve(Curve):
+    type: str = "straight-curve"
+    origin = Vec3(0, 0, 0)
+    direction = Vec3(1, 0, 0)
+
+    def restore_data(self, loader: DataLoader) -> None:
+        self.origin = Vec3(loader.read_vec3())
+        self.direction = Vec3(loader.read_vec3())
+        super().restore_data(loader)
+
+
+@register
+class Point(SupportsPattern):
+    type: str = "point"
+    location: Vec3 = NULLVEC
+
+    def restore_data(self, loader: DataLoader) -> None:
+        self.location = Vec3(loader.read_vec3())
 
 
 class FileLoader(abc.ABC):

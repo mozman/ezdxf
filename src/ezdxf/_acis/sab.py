@@ -30,7 +30,7 @@ class Token(NamedTuple):
     value: Any
 
     def __str__(self):
-        return f"({self.tag:02x}, {str(self.value)})"
+        return f"(0x{self.tag:02x}, {str(self.value)})"
 
 
 SabRecord = List[Token]
@@ -309,7 +309,7 @@ class SabDataLoader(DataLoader):
     def has_data(self) -> bool:
         return self.index <= len(self.data)
 
-    def read_int(self) -> int:
+    def read_int(self, skip_sat: int = None) -> int:
         token = self.data[self.index]
         if token.tag == Tags.INT:
             self.index += 1
