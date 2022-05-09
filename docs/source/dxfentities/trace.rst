@@ -58,10 +58,10 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
         Location of 4. vertex (2D/3D Point in :ref:`OCS`)
 
-    .. automethod:: transform(m: Matrix44) -> Trace
+    .. automethod:: transform
 
-    .. automethod:: vertices(close: bool=False) -> List[Vec3]
+    .. automethod:: vertices
 
-    .. automethod:: wcs_vertices(close: bool=False) -> List[Vec3]
+    .. automethod:: wcs_vertices
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-EA6FBCA8-1AD6-4FB2-B149-770313E93511

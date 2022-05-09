@@ -35,16 +35,16 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. attribute:: dxf.rotation
 
-        Rotation angle in degrees; default value is ``0``
+        Rotation angle in degrees; default value is 0
 
     .. attribute:: dxf.xscale
 
-        Relative X scale factor (float); default value is ``1``
+        Relative X scale factor (float); default value is 1
 
     .. attribute:: dxf.oblique
 
-        Oblique angle in degrees (float); default value is ``0``
+        Oblique angle in degrees (float); default value is 0
 
-    .. automethod:: transform(m: Matrix44) -> Shape
+    .. automethod:: transform
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-0988D755-9AAB-4D6C-8E26-EC636F507F2C

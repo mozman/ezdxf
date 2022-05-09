@@ -110,25 +110,25 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. autoproperty:: is_upside_down
 
-    .. automethod:: set_placement(p1: Vertex, p2:Vertex=None, align: TextEntityAlignment=None)
+    .. automethod:: set_placement
 
-    .. automethod:: set_pos(p1: Vertex, p2:Vertex=None, align: str=None)
+    .. automethod:: set_pos
 
-    .. automethod:: get_placement()->Tuple[TextEntityAlignment, Vec3, Optional[Vec3]]
+    .. automethod:: get_placement
 
-    .. automethod:: get_pos()->Tuple[str, Vec3, Optional[Vec3]]
+    .. automethod:: get_pos
 
     .. automethod:: get_align_enum
 
     .. automethod:: get_align
 
-    .. automethod:: set_align_enum(align = TextEntityAlignment.LEFT) -> Text
+    .. automethod:: set_align_enum
 
-    .. automethod:: set_align(align: str = "LEFT") -> Text
+    .. automethod:: set_align
 
-    .. automethod:: transform(m: Matrix44) -> Text
+    .. automethod:: transform
 
-    .. automethod:: translate(dx: float, dy: float, dz: float) -> Text
+    .. automethod:: translate
 
     .. automethod:: plain_text
 

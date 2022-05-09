@@ -155,11 +155,11 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: insert_vertices
 
-    .. automethod:: transform(m: Matrix44) -> Polyline
+    .. automethod:: transform
 
-    .. automethod:: virtual_entities() -> Iterable[Union[Line, Arc, Face3d]]
+    .. automethod:: virtual_entities
 
-    .. automethod:: explode(target_layout: BaseLayout = None) -> EntityQuery
+    .. automethod:: explode
 
 Vertex
 ======
@@ -329,7 +329,7 @@ Inherited DXF Attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: append_faces
 
-    .. automethod:: faces() -> Iterable[List[Vertex]]
+    .. automethod:: faces
 
     .. automethod:: optimize
 

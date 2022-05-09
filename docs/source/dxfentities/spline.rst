@@ -122,11 +122,11 @@ Closed rational uniform spline              :meth:`~ezdxf.layouts.BaseLayout.add
 
     .. automethod:: knot_count
 
-    .. automethod:: construction_tool() -> BSpline
+    .. automethod:: construction_tool
 
-    .. automethod:: apply_construction_tool(s: BSpline) -> Spline
+    .. automethod:: apply_construction_tool
 
-    .. automethod:: flattening(distance: float, segments: int = 4) -> Iterable[Vec3]
+    .. automethod:: flattening
 
     .. automethod:: set_open_uniform
 
@@ -140,9 +140,9 @@ Closed rational uniform spline              :meth:`~ezdxf.layouts.BaseLayout.add
 
     .. automethod:: set_closed_rational
 
-    .. automethod:: transform(m: Matrix44) -> Spline
+    .. automethod:: transform
 
-    .. automethod:: from_arc(entity: DXFGraphic) -> Spline
+    .. automethod:: from_arc
 
 .. _Cambridge: https://www.cl.cam.ac.uk/teaching/2000/AGraphHCI/SMEG/node4.html
 

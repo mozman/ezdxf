@@ -68,11 +68,11 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: dxf.contrast
 
-        Contrast value (``20`` - ``100``; default = ``100``)
+        Contrast value (20 - 100; default = 100)
 
     .. attribute:: dxf.fade
 
-        Fade value (``0`` - ``80``; default = ``0``)
+        Fade value (0 - 80; default = 0)
 
 
     .. attribute:: clipping
@@ -93,7 +93,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: scale
 
-        Scaling ``(x, y, z)`` tuple (read/write)
+        Scaling (x, y, z) tuple (read/write)
 
     .. attribute:: boundary_path
 
@@ -102,15 +102,15 @@ Required DXF version     DXF R2000 (``'AC1015'``)
         Two vertices describe a rectangle (lower left and upper right corner), more than two vertices
         is a polygon as clipping path.
 
-    .. method:: get_underlay_def() -> UnderlayDefinition
+    .. method:: get_underlay_def
 
         Returns the associated DEFINITION entity. see :class:`UnderlayDefinition`.
 
-    .. method:: set_underlay_def(underlay_def: UnderlayDefinition) -> None
+    .. method:: set_underlay_def
 
         Set the associated DEFINITION entity. see :class:`UnderlayDefinition`.
 
-    .. automethod:: reset_boundary_path()
+    .. automethod:: reset_boundary_path
 
 PdfUnderlay
 -----------

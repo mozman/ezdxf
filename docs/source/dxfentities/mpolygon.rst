@@ -127,5 +127,5 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: set_gradient
 
-    .. automethod:: transform(m: Matrix44) -> MPolygon
+    .. automethod:: transform
 

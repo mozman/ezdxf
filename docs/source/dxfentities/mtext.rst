@@ -158,9 +158,9 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: set_bg_color
 
-    .. automethod:: __iadd__(text: str) -> MText
+    .. automethod:: __iadd__
 
-    .. automethod:: append(text: str) -> MText
+    .. automethod:: append
 
     .. automethod:: plain_text
 
@@ -168,9 +168,9 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. automethod:: all_columns_raw_content
 
-    .. automethod:: transform(m: Matrix44) -> MText
+    .. automethod:: transform
 
-    .. automethod:: ucs(m: Matrix44) -> UCS
+    .. automethod:: ucs
 
 .. _mtext_inline_codes:
 
