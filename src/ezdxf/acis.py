@@ -38,8 +38,6 @@ from ezdxf._acis.sab import (
 )
 from ezdxf._acis.abstract import AbstractEntity
 from ezdxf._acis import sat
-from ezdxf._acis import parsing
 from ezdxf._acis import sab
 from ezdxf._acis import mesh
-from ezdxf._acis.converter import body_to_mesh
 from ezdxf._acis.entities import load

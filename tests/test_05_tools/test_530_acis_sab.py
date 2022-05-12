@@ -3,8 +3,7 @@
 
 import pytest
 from datetime import datetime
-from ezdxf import acis
-from ezdxf.acis import sab, parsing
+from ezdxf.acis import sab
 
 T = sab.Tags
 
@@ -169,23 +168,6 @@ class TestParseValues:
     def test_ignore_entities_between_values(self, null):
         data = [int_token(7), null, dbl_token(1)]
         assert sab.parse_values(data, "i;f") == [7, 1.0]
-
-
-def test_parse_body_polygon_faces(cube_sab):
-    builder = sab.parse_sab(cube_sab)
-    lumps = list(parsing.body_planar_polygon_faces(builder.bodies[0]))
-    assert len(lumps) == 1
-    faces = lumps[0]
-    assert len(faces) == 6
-
-
-def test_body_to_mesh(cube_sab):
-    builder = sab.parse_sab(cube_sab)
-    meshes = acis.body_to_mesh(builder.bodies[0])
-    assert len(meshes) == 1
-    mesh = meshes[0]
-    assert len(mesh.faces) == 6
-    assert len(mesh.vertices) == 8
 
 
 if __name__ == "__main__":

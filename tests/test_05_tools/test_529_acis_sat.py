@@ -4,7 +4,6 @@ import pytest
 from datetime import datetime
 from ezdxf import acis
 from ezdxf.acis import sat
-from ezdxf.acis import parsing
 
 
 def test_default_header():
@@ -300,23 +299,6 @@ class TestParseValues:
     def test_ignore_entities_between_values(self):
         data = ["7", sat.NULL_PTR, "1.0"]
         assert sat.parse_values(data, "i;f") == [7, 1.0]
-
-
-def test_parse_body_polygon_faces(prism_sat):
-    builder = acis.parse_sat(prism_sat)
-    lumps = list(parsing.body_planar_polygon_faces(builder.bodies[0]))
-    assert len(lumps) == 1
-    faces = lumps[0]
-    assert len(faces) == 10
-
-
-def test_body_to_mesh(prism_sat):
-    builder = acis.parse_sat(prism_sat)
-    meshes = acis.body_to_mesh(builder.bodies[0])
-    assert len(meshes) == 1
-    mesh = meshes[0]
-    assert len(mesh.faces) == 10
-    assert len(mesh.vertices) == 8
 
 
 if __name__ == "__main__":
