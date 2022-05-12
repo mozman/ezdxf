@@ -80,7 +80,6 @@ class TestMergeRecordStrings:
         ],
     )
     def test_end_of_records_detection(self, data):
-        x = list(sat.merge_record_strings(data))
         assert len(list(sat.merge_record_strings(data))) == 1
 
     @pytest.mark.parametrize(
