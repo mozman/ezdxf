@@ -36,6 +36,11 @@ class Token(NamedTuple):
 SabRecord = List[Token]
 
 
+ACIS_SIGNATURE = b"ACIS BinaryFile"  # DXF R2013
+ASM_SIGNATURE = b"ASM BinaryFile4"  # DXF R2018
+SIGNATURES = [ACIS_SIGNATURE, ASM_SIGNATURE]
+
+
 class Decoder:
     def __init__(self, data: bytes):
         self.data = data
@@ -47,11 +52,12 @@ class Decoder:
 
     def read_header(self) -> AcisHeader:
         header = AcisHeader()
-        signature = self.data[0:15]
-        if signature != b"ACIS BinaryFile":
+        for signature in SIGNATURES:
+            if self.data.startswith(signature):
+                self.index = len(signature)
+                break
+        else:
             raise ParsingError("not a SAB file")
-        self.index = 15
-
         header.version = self.read_int()
         header.n_records = self.read_int()
         header.n_entities = self.read_int()
