@@ -185,25 +185,6 @@ class TestAcisBuilder:
         assert len(lines) == 117
         assert lines == prism_sat.splitlines()
 
-    def test_find_entities_in_nodes(self, builder):
-        body = builder.bodies[0]
-        face = body.find_first("lump").find_first("shell").find_first("face")
-        assert face.name == "face"
-
-    def test_find_entities_in_path(self, builder):
-        body = builder.bodies[0]
-        face = body.find_path("lump/shell/face")
-        assert face.name == "face"
-
-    def test_find_in_invalid_path_return_null_pointer(self, builder):
-        body = builder.bodies[0]
-        face = body.find_path("lump/xxx/face")
-        assert face.is_null_ptr is True
-
-    def test_find_all(self, builder):
-        coedge = builder.entities[10]
-        assert len(coedge.find_all("coedge")) == 3
-
 
 def test_build_str_records():
     a = sat.new_entity("test1", data=[sat.NULL_PTR, 1])
@@ -214,91 +195,6 @@ def test_build_str_records():
     assert s[0] == "test1 $-1 -1 $-1 1 #"
     assert s[1] == "test2 $-1 7 $0 2.0 #"
     assert s[2] == "test3 $-1 -1 $0 $1 #"
-
-
-class TestFindMultipleEntities:
-    @pytest.fixture
-    def entity(self):
-        n = sat.NULL_PTR
-        a1 = sat.new_entity("entity1")
-        a2 = sat.new_entity("entity1")
-        b1 = sat.new_entity("entity2")
-        b2 = sat.new_entity("entity2")
-        c = sat.new_entity("entity3")
-        return sat.new_entity(
-            "entity", data=[n, a1, a2, "1", b1, b2, c, n, "1.0"]
-        )
-
-    def test_find_first_entity1_and_first_entity2(self, entity):
-        result = entity.find_entities("entity1;entity2")
-        assert result[0].name == "entity1"
-        assert result[1].name == "entity2"
-
-    def test_find_first_entity1_and_first_entity3(self, entity):
-        result = entity.find_entities("entity1;entity3")
-        assert result[0].name == "entity1"
-        assert result[1].name == "entity3"
-
-    def test_find_first_entity4_and_first_entity3(self, entity):
-        result = entity.find_entities("entity4;entity3")
-        assert result[0] is sat.NULL_PTR
-        assert result[1].name == "entity3"
-
-    def test_find_first_entity2_and_first_entity4(self, entity):
-        result = entity.find_entities("entity2;entity4")
-        assert result[0].name == "entity2"
-        assert result[1] is sat.NULL_PTR
-
-
-class TestParseValues:
-    def test_parse_integers(self):
-        data = [sat.NULL_PTR, "1", "2", sat.NULL_PTR]
-        assert sat.parse_values([], "i") == []
-        assert sat.parse_values(data, "i") == [1]
-        assert sat.parse_values(data, "i;i") == [1, 2]
-        assert sat.parse_values(data, "i;i;i") == [1, 2]
-
-    def test_parse_vec3(self):
-        data = [sat.NULL_PTR, "1.0", "2.0", "3.0", sat.NULL_PTR]
-        assert sat.parse_values([], "v") == []
-        assert sat.parse_values(data, "v") == [(1.0, 2.0, 3.0)]
-
-    def test_parse_floats(self):
-        data = [sat.NULL_PTR, "1.0", "2.0", sat.NULL_PTR]
-        assert sat.parse_values([], "f") == []
-        assert sat.parse_values(data, "f") == [1.0]
-        assert sat.parse_values(data, "f;f") == [1.0, 2.0]
-        assert sat.parse_values(data, "f;f;f") == [1.0, 2.0]
-
-    def test_parse_constant_boolean_strings(self):
-        data = [sat.NULL_PTR, "1.0", "forward", "double", sat.NULL_PTR]
-        assert sat.parse_values([], "b") == []
-        assert sat.parse_values(data, "?;b") == [True]
-        assert sat.parse_values(data, "?;b;b") == [True, False]
-
-    def test_parse_user_strings(self):
-        data = [sat.NULL_PTR, "@4", "usr1", "@4", "usr2", sat.NULL_PTR]
-        assert sat.parse_values([], "@") == []
-        assert sat.parse_values(data, "@") == ["usr1"]
-        assert sat.parse_values(data, "@;@") == ["usr1", "usr2"]
-        assert sat.parse_values(data, "@;@;@") == ["usr1", "usr2"]
-
-    def test_parse_mixed_values(self):
-        data = ["1.0", "@4", "usr1", "forward"]
-        assert sat.parse_values(data, "f;@;b") == [1.0, "usr1", True]
-
-    def test_value_order_must_match(self):
-        data = ["not_a_float", "1.0"]
-        with pytest.raises(sat.ParsingError):
-            sat.parse_values(data, "f;f")
-
-    def test_skip_unknown_values(self):
-        data = ["7", "not_a_float", "1.0"]
-        assert sat.parse_values(data, "i;?;f") == [7, 1.0]
-
-    def test_ignore_entities_between_values(self):
-        data = ["7", sat.NULL_PTR, "1.0"]
-        assert sat.parse_values(data, "i;f") == [7, 1.0]
 
 
 if __name__ == "__main__":

@@ -1,7 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from typing import List, Iterator, Sequence, Optional
-from ezdxf.acis import ParsingError
 from ezdxf._acis.entities import Body, Lump
 from ezdxf.render import MeshVertexMerger, MeshTransformer
 from ezdxf.math import Matrix44, Vec3
