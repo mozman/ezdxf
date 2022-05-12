@@ -98,46 +98,34 @@ def flat_polygon_faces_from_lump(
         vertices.clear()
         if face.surface.type != "plane-surface":
             continue  # not a plane-surface or a polygon face
-
-        loop = face.loop
-        if loop.is_none:
-            continue  # face has no loop ?!
-
-        first_coedge = loop.coedge
+        try:
+            first_coedge = face.loop.coedge
+        except AttributeError:  # loop is none entity
+            continue
         if first_coedge.is_none:
             continue  # don't know what is going on
 
         coedge = first_coedge
-        is_valid_face = False
         while True:
             # the edge entity contains the vertices and the curve type
             edge = coedge.edge
             if edge.is_none:
                 break
-
             # only straight lines as face edges supported:
             if edge.curve.type != "straight-curve":
                 break
-
-            p1 = edge.start_vertex.point.location
-            p2 = edge.end_vertex.point.location
-            if vertices and p1.isclose(vertices[-1]):
-                vertices.append(p2)
-            else:
-                vertices.append(p1)
-
+            try:
+                vertices.append(edge.start_vertex.point.location)
+            except AttributeError:
+                break
             coedge = coedge.next_coedge
             if coedge.is_none:  # not a closed face
                 break
-
-            if coedge is first_coedge:
-                is_valid_face = True
+            if coedge is first_coedge:  # a valid closed face
+                if m is not None:
+                    yield tuple(m.transform_vertices(vertices))
+                else:
+                    yield tuple(vertices)
                 break
-
-        if is_valid_face:
-            if m is not None:
-                yield list(m.transform_vertices(vertices))
-            else:
-                yield vertices
 
         face = face.next_face

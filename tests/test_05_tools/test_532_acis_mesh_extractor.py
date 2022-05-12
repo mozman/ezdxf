@@ -29,7 +29,7 @@ def test_get_all_points(prism_sat):
     assert len(vertices) == 8
 
 
-def broken_test_mesh_from_body(prism_sat):
+def test_mesh_from_body(prism_sat):
     bodies = acis.load(prism_sat)
     meshes = acis.mesh.from_body(bodies[0])
     assert len(meshes) == 1
