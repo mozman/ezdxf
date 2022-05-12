@@ -210,6 +210,20 @@ class TestPoint:
     def test_point_location(self, point):
         assert point.location.isclose((388.5, -388.5, 388.5))
 
+    def test_get_all_points(self, body):
+        face = body.lump.shell.face
+        vertices = set()
+        while not face.is_none:
+            first_coedge = face.loop.coedge
+            coedge = first_coedge
+            while True:
+                vertices.add(coedge.edge.start_vertex.point.location)
+                coedge = coedge.next_coedge
+                if coedge is first_coedge:
+                    break
+            face = face.next_face
+        assert len(vertices) == 8
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
