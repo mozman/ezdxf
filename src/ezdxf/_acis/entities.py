@@ -290,7 +290,9 @@ class Coedge(SupportsPattern):
     prev_coedge: Coedge = NONE_REF
     partner_coedge: Coedge = NONE_REF
     edge: Edge = NONE_REF
-    sense: bool = True  # True = reversed; False = forward
+    # sense: True = reversed; False = forward;
+    # coedge has the same direction as the underlying edge
+    sense: bool = True
     loop: Loop = NONE_REF  # parent/owner
     unknown: int = 0  # only in SAB file!?
     pcurve: PCurve = NONE_REF
@@ -318,7 +320,9 @@ class Edge(SupportsPattern):
     end_param: float = 0.0
     coedge: Coedge = NONE_REF
     curve: Curve = NONE_REF
-    sense: bool = True  # True = reversed; False = forward
+    # sense: True = reversed; False = forward;
+    # edge has the same direction as the underlying curve
+    sense: bool = True
     convexity: str = "unknown"
 
     def restore_common(

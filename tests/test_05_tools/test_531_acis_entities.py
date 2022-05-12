@@ -27,17 +27,11 @@ class TestBody:
         m = body.transform.matrix
         assert m.get_row(3) == (388.5, 388.5, 388.5, 1.0)
 
-    def test_has_lump_attribute(self, body):
-        assert body.lump.is_none is False
-
     def test_has_wire_attribute(self, body):
         assert body.wire.is_none is True
 
 
 class TestLump:
-    def test_first_lump(self, body):
-        assert body.lump.is_none is False
-
     def test_lump_type(self, body):
         assert body.lump.type == "lump"
 
@@ -56,20 +50,14 @@ class TestShell:
     def shell(self, body):
         return body.lump.shell
 
-    def test_first_shell(self, shell):
-        assert shell.is_none is False
-
     def test_shell_type(self, shell):
         assert shell.type == "shell"
 
-    def test_back_pointer_to_lump(self, body, shell):
-        assert shell.lump is body.lump
+    def test_back_pointer_to_lump(self, shell):
+        assert shell.lump.shell is shell
 
     def test_has_no_next_shell(self, shell):
         assert shell.next_shell.is_none is True
-
-    def test_has_attribute_to_first_face(self, shell):
-        assert shell.face.is_none is False
 
 
 class TestFace:
@@ -77,23 +65,14 @@ class TestFace:
     def face(self, body):
         return body.lump.shell.face
 
-    def test_first_shell(self, face):
-        assert face.is_none is False
-
     def test_face_type(self, face):
         assert face.type == "face"
 
     def test_back_pointer_to_shell(self, body, face):
         assert face.shell is body.lump.shell
 
-    def test_has_a_next_face(self, face):
-        assert face.next_face.is_none is False
-
     def test_has_attribute_surface(self, face):
         assert face.surface.type == "plane-surface"
-
-    def test_has_attribute_to_first_loop(self, face):
-        assert face.loop.is_none is False
 
     def test_face_features(self, face):
         assert face.sense is False  # forward
@@ -143,11 +122,93 @@ class TestLoop:
     def test_cube_face_has_only_one_loop(self, loop):
         assert loop.next_loop.is_none is True
 
-    def test_loop_references_the_first_coedge(self, loop):
-        assert loop.coedge.is_none is False
+    def test_loop_references_the_parent_face(self, loop):
+        assert loop.face.loop is loop
 
-    def test_loop_references_the_parent_face(self, body, loop):
-        assert loop.face is body.lump.shell.face
+
+class TestCoedge:
+    @pytest.fixture(scope="class")
+    def coedge(self, body):
+        return body.lump.shell.face.loop.coedge
+
+    def test_co_edge_type(self, coedge):
+        assert coedge.type == "coedge"
+
+    def test_co_edges_are_organized_as_a_forward_linked_list(self, coedge):
+        next = coedge.next_coedge
+        co_edges = [next]
+        while next is not coedge:
+            next = next.next_coedge
+            co_edges.append(next)
+        assert len(co_edges) == 4
+
+    def test_co_edges_are_organized_as_a_reverse_linked_list(self, coedge):
+        prev = coedge.prev_coedge
+        co_edges = [prev]
+        while prev is not coedge:
+            prev = prev.prev_coedge
+            co_edges.append(prev)
+        assert len(co_edges) == 4
+
+    def test_co_edges_have_partner_co_edges_other_faces(self, coedge):
+        assert coedge.partner_coedge.partner_coedge is coedge
+
+    def test_sense_of_co_edge_is_forward(self, coedge):
+        assert coedge.sense is False
+
+    def test_co_edge_references_the_parent_loop(self, coedge):
+        assert coedge.loop.coedge is coedge
+
+
+class TestEdge:
+    @pytest.fixture(scope="class")
+    def edge(self, body):
+        return body.lump.shell.face.loop.coedge.edge
+
+    def test_edge_type(self, edge):
+        assert edge.type == "edge"
+
+    def test_edge_has_a_start_vertex(self, edge):
+        assert edge.start_vertex.is_none is False
+
+    def test_edge_has_an_end_vertex(self, edge):
+        assert edge.end_vertex.is_none is False
+    # start- and end parameter do not exist in ACIS-400
+
+    def test_sense_of_edge_is_forward(self, edge):
+        assert edge.sense is False
+
+    def test_underlying_curve_of_edge(self, edge):
+        assert edge.curve.type == "straight-curve"
+
+    def test_edge_is_referenced_by_two_parent_co_edges(self, edge):
+        parent = edge.coedge
+        assert parent.edge is edge
+        assert parent.partner_coedge.edge is edge
+
+
+class TestVertex:
+    @pytest.fixture(scope="class")
+    def vertex(self, body):
+        return body.lump.shell.face.loop.coedge.edge.start_vertex
+
+    def test_vertex_type(self, vertex):
+        assert vertex.type == "vertex"
+
+    def test_vertex_references_parent_edge(self, vertex):
+        assert vertex.edge.start_vertex is vertex
+
+
+class TestPoint:
+    @pytest.fixture(scope="class")
+    def point(self, body):
+        return body.lump.shell.face.loop.coedge.edge.start_vertex.point
+
+    def test_point_type(self, point):
+        assert point.type == "point"
+
+    def test_point_location(self, point):
+        assert point.location.isclose((388.5, -388.5, 388.5))
 
 
 if __name__ == "__main__":
