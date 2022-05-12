@@ -5,7 +5,6 @@ from datetime import datetime
 from ezdxf import acis
 from ezdxf.acis import sat
 from ezdxf.acis import parsing
-from ezdxf.math import Vec3
 
 
 def test_default_header():
