@@ -326,13 +326,16 @@ class Edge(SupportsPattern):
     ) -> None:
         super().restore_common(loader, entity_factory)
         self.start_vertex = restore_entity("vertex", loader, entity_factory)
-        self.start_param = loader.read_double()
+        if loader.version >= 700:
+            self.start_param = loader.read_double()
         self.end_vertex = restore_entity("vertex", loader, entity_factory)
-        self.end_param = loader.read_double()
+        if loader.version >= 700:
+            self.end_param = loader.read_double()
         self.coedge = restore_entity("coedge", loader, entity_factory)
         self.curve = restore_entity("curve", loader, entity_factory)
         self.sense = loader.read_bool("reversed", "forward")
-        self.convexity = loader.read_str()
+        if loader.version >= 700:
+            self.convexity = loader.read_str()
 
 
 @register

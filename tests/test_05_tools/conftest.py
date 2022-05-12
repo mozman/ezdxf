@@ -1470,11 +1470,136 @@ point $-1 -1 $-1 -388.5 388.5 -388.5 #
 End-of-ACIS-data 
 """
 
+CUBE777_SAT_400 = """400 0 1 0 
+33 Open Design Alliance ACIS Builder 12 ACIS 32.0 NT 24 Thu May 12 15:03:31 2022 
+1 9.9999999999999995e-007 1e-010 
+body $1 $2 $-1 $3 #
+ref_vt-eye-attrib $-1 $-1 $-1 $0 $4 $-1 #
+lump $5 $-1 $6 $0 #
+transform $-1 1 0 0 0 1 0 0 0 1 388.5 388.5 388.5 1 no_rotate no_reflect no_shear #
+eye_refinement $-1 5 grid  1 3 tri 1 4 surf 0 3 adj 0 4 grad 0 9 postcheck 0 4 stol -5 4 ntol 40 4 dsil 0 8 flatness 0 7 pixarea 0 4 hmax 0 6 gridar 0 5 mgrid 3000 5 ugrid 0 5 vgrid 0 10 end_fields #
+ref_vt-eye-attrib $-1 $-1 $-1 $2 $4 $-1 #
+shell $7 $-1 $-1 $8 $-1 $2 #
+ref_vt-eye-attrib $-1 $-1 $-1 $6 $4 $-1 #
+face $9 $10 $11 $6 $-1 $12 forward single #
+fmesh-eye-attrib $-1 $13 $-1 $8 #
+face $14 $15 $16 $6 $-1 $17 reversed single #
+loop $-1 $-1 $18 $8 #
+plane-surface $-1 0 0 388.5 0 0 1 1 0 0 forward_v I I I I #
+ref_vt-eye-attrib $-1 $-1 $9 $8 $4 $-1 #
+fmesh-eye-attrib $-1 $19 $-1 $10 #
+face $20 $21 $22 $6 $-1 $23 reversed single #
+loop $-1 $-1 $24 $10 #
+plane-surface $-1 0 0 -388.5 0 0 1 1 0 0 forward_v I I I I #
+coedge $-1 $25 $26 $27 $28 forward $11 $-1 #
+ref_vt-eye-attrib $-1 $-1 $14 $10 $4 $-1 #
+fmesh-eye-attrib $-1 $29 $-1 $15 #
+face $30 $31 $32 $6 $-1 $33 reversed single #
+loop $-1 $-1 $34 $15 #
+plane-surface $-1 0 -388.5 0 0 1 0 0 0 1 forward_v I I I I #
+coedge $-1 $35 $36 $37 $38 forward $16 $-1 #
+coedge $-1 $39 $18 $40 $41 forward $11 $-1 #
+coedge $-1 $18 $39 $42 $43 forward $11 $-1 #
+coedge $-1 $44 $45 $18 $28 reversed $46 $-1 #
+edge $47 $48 $49 $27 $50 forward #
+ref_vt-eye-attrib $-1 $-1 $20 $15 $4 $-1 #
+fmesh-eye-attrib $-1 $51 $-1 $21 #
+face $52 $53 $54 $6 $-1 $55 reversed single #
+loop $-1 $-1 $56 $21 #
+plane-surface $-1 -388.5 0 0 1 0 0 0 0 -1 forward_v I I I I #
+coedge $-1 $57 $42 $58 $59 forward $22 $-1 #
+coedge $-1 $60 $24 $57 $61 forward $16 $-1 #
+coedge $-1 $24 $60 $62 $63 forward $16 $-1 #
+coedge $-1 $45 $44 $24 $38 reversed $46 $-1 #
+edge $64 $65 $66 $37 $67 forward #
+coedge $-1 $26 $25 $68 $69 forward $11 $-1 #
+coedge $-1 $70 $71 $25 $41 reversed $54 $-1 #
+edge $72 $49 $73 $40 $74 forward #
+coedge $-1 $34 $75 $26 $43 reversed $22 $-1 #
+edge $76 $77 $48 $42 $78 forward #
+coedge $-1 $37 $27 $75 $79 forward $46 $-1 #
+coedge $-1 $27 $37 $70 $80 reversed $46 $-1 #
+loop $-1 $-1 $44 $53 #
+ptlist-eye-attrib $-1 $-1 $-1 $28 #
+vertex $-1 $28 $81 #
+vertex $-1 $28 $82 #
+straight-curve $-1 388.5 0 388.5 0 1 0 I I #
+ref_vt-eye-attrib $-1 $-1 $30 $21 $4 $-1 #
+fmesh-eye-attrib $-1 $83 $-1 $31 #
+face $84 $-1 $46 $6 $-1 $85 reversed single #
+loop $-1 $-1 $70 $31 #
+plane-surface $-1 0 388.5 0 0 -1 0 0 0 -1 forward_v I I I I #
+coedge $-1 $86 $68 $71 $87 forward $32 $-1 #
+coedge $-1 $75 $34 $35 $61 reversed $22 $-1 #
+coedge $-1 $68 $86 $34 $59 reversed $32 $-1 #
+edge $88 $77 $89 $58 $90 forward #
+coedge $-1 $36 $35 $86 $91 forward $16 $-1 #
+edge $92 $66 $89 $57 $93 forward #
+coedge $-1 $71 $70 $36 $63 reversed $54 $-1 #
+edge $94 $95 $65 $62 $96 forward #
+ptlist-eye-attrib $-1 $-1 $-1 $38 #
+vertex $-1 $38 $97 #
+vertex $-1 $79 $98 #
+straight-curve $-1 388.5 0 -388.5 0 -1 0 I I #
+coedge $-1 $56 $58 $39 $69 reversed $32 $-1 #
+edge $99 $73 $77 $68 $100 forward #
+coedge $-1 $62 $40 $45 $80 forward $54 $-1 #
+coedge $-1 $40 $62 $56 $87 reversed $54 $-1 #
+ptlist-eye-attrib $-1 $-1 $-1 $41 #
+vertex $-1 $41 $101 #
+straight-curve $-1 0 388.5 388.5 -1 0 0 I I #
+coedge $-1 $42 $57 $44 $79 reversed $22 $-1 #
+ptlist-eye-attrib $-1 $-1 $-1 $43 #
+vertex $-1 $69 $102 #
+straight-curve $-1 0 -388.5 388.5 1 0 0 I I #
+edge $103 $48 $66 $44 $104 forward #
+edge $105 $49 $65 $45 $106 forward #
+point $-1 388.5 -388.5 388.5 #
+point $-1 388.5 388.5 388.5 #
+ref_vt-eye-attrib $-1 $-1 $52 $31 $4 $-1 #
+fmesh-eye-attrib $-1 $107 $-1 $53 #
+plane-surface $-1 388.5 0 0 -1 0 0 0 0 1 forward_v I I I I #
+coedge $-1 $58 $56 $60 $91 reversed $32 $-1 #
+edge $108 $73 $95 $71 $109 forward #
+ptlist-eye-attrib $-1 $-1 $-1 $59 #
+vertex $-1 $91 $110 #
+straight-curve $-1 -388.5 -388.5 0 0 0 -1 I I #
+edge $111 $89 $95 $86 $112 forward #
+ptlist-eye-attrib $-1 $-1 $-1 $61 #
+straight-curve $-1 0 -388.5 -388.5 -1 0 0 I I #
+ptlist-eye-attrib $-1 $-1 $-1 $63 #
+vertex $-1 $63 $113 #
+straight-curve $-1 0 388.5 -388.5 1 0 0 I I #
+point $-1 388.5 388.5 -388.5 #
+point $-1 388.5 -388.5 -388.5 #
+ptlist-eye-attrib $-1 $-1 $-1 $69 #
+straight-curve $-1 -388.5 0 388.5 0 -1 0 I I #
+point $-1 -388.5 388.5 388.5 #
+point $-1 -388.5 -388.5 388.5 #
+ptlist-eye-attrib $-1 $-1 $-1 $79 #
+straight-curve $-1 388.5 -388.5 0 0 0 -1 I I #
+ptlist-eye-attrib $-1 $-1 $-1 $80 #
+straight-curve $-1 388.5 388.5 0 0 0 -1 I I #
+ref_vt-eye-attrib $-1 $-1 $84 $53 $4 $-1 #
+ptlist-eye-attrib $-1 $-1 $-1 $87 #
+straight-curve $-1 -388.5 388.5 0 0 0 -1 I I #
+point $-1 -388.5 -388.5 -388.5 #
+ptlist-eye-attrib $-1 $-1 $-1 $91 #
+straight-curve $-1 -388.5 0 -388.5 0 1 0 I I #
+point $-1 -388.5 388.5 -388.5 #
+End-of-ACIS-data 
+"""
+
 
 @pytest.fixture(
     scope="module",
-    params=[CUBE777_SAT_700, CUBE777_SAB_R2013, CUBE777_SAB_R2018],
-    ids=["SAT_700", "SAB_R2013", "SAB_R2018"],
+    params=[
+        CUBE777_SAT_400,
+        CUBE777_SAT_700,
+        CUBE777_SAB_R2013,
+        CUBE777_SAB_R2018,
+    ],
+    ids=["SAT_400", "SAT_700", "SAB_R2013", "SAB_R2018"],
 )
 def any_cube(request):
     yield request.param
