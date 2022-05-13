@@ -15,7 +15,29 @@ ENTITY_TYPES: Dict[str, Type["AcisEntity"]] = {}
 INF = float("inf")
 
 
-def load(data: Union[str, bytes, bytearray]) -> List["Body"]:
+def load(
+    data: Union[str, Sequence[str], bytes, bytearray, Sequence[bytes]]
+) -> List["Body"]:
+    """Returns a list of :class:`Body` entities from :term:`SAT` or :term:`SAB`
+    data. Accepts :term:`SAT` data as a single string or a sequence of strings
+    and :term:`SAB` data as bytes, bytearray or a sequence of bytes.
+
+    Example for loading ACIS data from any DXF entity based on
+    :class:`ezdxf.entities.Body`::
+
+        import ezdxf.acis
+        ...
+
+        for e in msp.query("3DSOLID"):
+            bodies = ezdxf.acis.load(e.acis_data)
+            ...
+
+    """
+    if isinstance(data, Sequence):
+        if isinstance(data[0], str):
+            data = "\n".join(data)  # type: ignore
+        else:
+            data = b"".join(data)  # type: ignore
     if isinstance(data, (bytes, bytearray)):
         return SabLoader.load(data)
     elif isinstance(data, str):
@@ -50,6 +72,7 @@ class AcisEntity(NoneEntity):
     an :class:`ExportError` exception.
 
     """
+
     type: str = "unsupported-entity"
     id: int
     attributes: "AcisEntity" = NONE_REF
@@ -85,7 +108,7 @@ class AcisEntity(NoneEntity):
         raise const.ExportError(f"unsupported entity type: {self.type}")
 
     def write_data(self, exporter: DataExporter) -> None:
-        """Write the data part of the ACIS entity. """
+        """Write the data part of the ACIS entity."""
         pass
 
 

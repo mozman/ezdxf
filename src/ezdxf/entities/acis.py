@@ -87,8 +87,8 @@ class Body(DXFGraphic):
 
     @property
     def acis_data(self) -> ACIS_DATA:
-        """Get ACIS text data as list of strings for DXF R2000 to DXF R2010 and
-        binary encoded ACIS data for DXF R2013 and later as list of bytes.
+        """Returns :term:`SAT` data as list of strings for DXF R2000 up to DXF
+        R2010 and :term:`SAB` data as list of bytes for DXF R2013 and later.
 
         """
         if self.doc is not None and self.has_binary_data:
@@ -98,8 +98,8 @@ class Body(DXFGraphic):
 
     @acis_data.setter
     def acis_data(self, lines: Iterable[str]):
-        """Set ACIS data as list of strings for DXF R2000 to DXF R2010. In case
-        of DXF R2013 and later, setting ACIS data as binary data is not
+        """Set :term:`SAT` data as list of strings for DXF R2000 to DXF R2010.
+        In case of DXF R2013 and later, setting :term:`SAB` data is not
         supported.
 
         """
@@ -112,8 +112,8 @@ class Body(DXFGraphic):
 
     @property
     def has_binary_data(self):
-        """Returns ``True`` if ACIS data is of type ``List[bytes]``, ``False``
-        if data is of type ``List[str]``.
+        """Returns ``True`` if the entity contains :term:`SAB` data and
+        ``False`` if the entity contains :term:`SAT` data.
         """
         if self.doc:
             return self.doc.dxfversion >= DXF2013

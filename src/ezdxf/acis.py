@@ -36,8 +36,5 @@ from ezdxf._acis.sab import (
     SabBuilder,
     SabEntity
 )
-from ezdxf._acis.abstract import AbstractEntity
-from ezdxf._acis import sat
-from ezdxf._acis import sab
-from ezdxf._acis import mesh
+from ezdxf._acis.mesh import mesh_from_body
 from ezdxf._acis.entities import load

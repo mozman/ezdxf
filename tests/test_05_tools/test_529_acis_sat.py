@@ -3,7 +3,7 @@
 import pytest
 from datetime import datetime
 from ezdxf import acis
-from ezdxf.acis import sat
+from ezdxf._acis import sat
 
 
 def test_default_header():

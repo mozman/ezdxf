@@ -6,18 +6,20 @@ from ezdxf.render import MeshVertexMerger, MeshTransformer
 from ezdxf.math import Matrix44, Vec3
 
 
-def from_body(body: Body, merge_lumps=True) -> List[MeshTransformer]:
+def mesh_from_body(body: Body, merge_lumps=True) -> List[MeshTransformer]:
     """Returns a list of :class:`~ezdxf.render.MeshTransformer` instances from
-    the given ACIS :class:`~ezdxf.acis.entities.Body` entity.
+    the given ACIS :class:`Body` entity.
     The list contains multiple meshes if `merge_lumps` is ``False`` or just a
     singe mesh if `merge_lumps` is ``True``.
 
-    This function returns only meshes build up by planar polygonal faces stored
-    in a :class:`~ezdxf.acis.entities.Body` entity, for a conversion of more
-    complex ACIS data structures is an ACIS kernel required.
+    .. note::
+
+        This function returns only meshes build up from flat polygonal faces stored
+        in a :class:`Body` entity, for a tessellation of more complex ACIS entities
+        is an ACIS kernel required which `ezdxf` does not provide.
 
     Args:
-        body: ACIS entity of type :class:`~ezdxf.acis.entities.Body`
+        body: ACIS entity of type :class:`Body`
         merge_lumps: returns all :class:`Lump` entities
             from a body as a single mesh if ``True`` otherwise each :class:`Lump`
             entity is a separated mesh
@@ -46,11 +48,11 @@ def flat_polygon_faces_from_body(
     body: Body,
 ) -> Iterator[List[Sequence[Vec3]]]:
     """Yields all flat polygon faces from all lumps in the given
-    :class:`~ezdxf.acis.entities.Body` entity.
+    :class:`Body` entity.
     Yields a separated list of faces for each linked :class:`Lump` entity.
 
     Args:
-        body: ACIS entity of type :class:`~ezdxf.acis.entities.Body`
+        body: ACIS entity of type :class:`Body`
 
     Raises:
         TypeError: given `body` entity has invalid type
@@ -74,11 +76,11 @@ def flat_polygon_faces_from_lump(
     lump: Lump, m: Matrix44 = None
 ) -> Iterator[Sequence[Vec3]]:
     """Yields all flat polygon faces from the given :class:`Lump` entity as
-    sequence  of :class:`~ezdxf.math.Vec3` instances. Applies the transformation
+    sequence of :class:`~ezdxf.math.Vec3` instances. Applies the transformation
     :class:`~ezdxf.math.Matrix44` `m` to all vertices if not ``None``.
 
     Args:
-        lump: ACIS raw entity of type `lump`_
+        lump: :class:`Lump` entity
         m: optional transformation matrix
 
     Raises:

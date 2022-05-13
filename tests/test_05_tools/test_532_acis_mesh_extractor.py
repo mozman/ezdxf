@@ -2,7 +2,7 @@
 #  License: MIT License
 
 import pytest
-from ezdxf import acis
+from ezdxf.acis import mesh_from_body, load
 
 
 class TestPrismToMesh:
@@ -11,8 +11,8 @@ class TestPrismToMesh:
     """
     @pytest.fixture(scope="class")
     def mesh(self, prism_sat):
-        body = acis.load(prism_sat)[0]
-        return acis.mesh.from_body(body)[0]
+        body = load(prism_sat)[0]
+        return mesh_from_body(body)[0]
 
     def test_mesh_has_10_faces(self, mesh):
         assert len(mesh.faces) == 10
