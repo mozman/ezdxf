@@ -1,7 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from typing import List, Iterator, Sequence, Optional
-from ezdxf._acis.entities import Body, Lump
+from ezdxf._acis.entities import Body, Lump, NONE_REF
 from ezdxf.render import MeshVertexMerger, MeshTransformer
 from ezdxf.math import Matrix44, Vec3
 
@@ -94,42 +94,35 @@ def flat_polygon_faces_from_lump(
     vertices: List[Vec3] = []
     face = shell.face
     while not face.is_none:
+        first_coedge = NONE_REF
         vertices.clear()
-        if face.surface.type != "plane-surface":
-            continue  # not a flat surface or a polygon face at all
-        try:
-            first_coedge = face.loop.coedge
-        except AttributeError:  # loop is none entity
-            continue
-        if first_coedge.is_none:
-            continue  # don't know what is going on
-
+        if face.surface.type == "plane-surface":
+            try:
+                first_coedge = face.loop.coedge
+            except AttributeError:  # loop is a none-entity
+                pass
         coedge = first_coedge
-        while True:
+        while not coedge.is_none:  # invalid coedge or face is not closed
             # the edge entity contains the vertices and the curve type
             edge = coedge.edge
-            if edge.is_none:
-                break
-            # only straight lines as face edges supported:
-            if edge.curve.type != "straight-curve":
-                break
-            try:  # add the first edge vertex to the face vertices
-                if coedge.sense:  # reversed sense as the underlying edge
+            try:
+                # only straight lines as face edges supported:
+                if edge.curve.type != "straight-curve":
+                    break
+                # add the first edge vertex to the face vertices
+                if coedge.sense:  # reversed sense of the underlying edge
                     vertices.append(edge.end_vertex.point.location)
                 else:  # same sense as the underlying edge
                     vertices.append(edge.start_vertex.point.location)
             except AttributeError:
-                # One of the involved entities is the none-entity or an
-                # incompatible entity -> ignore this face!
+                # one of the involved entities is a none-entity or an
+                # incompatible entity type -> ignore this face!
                 break
             coedge = coedge.next_coedge
-            if coedge.is_none:  # not a closed face
-                break
             if coedge is first_coedge:  # a valid closed face
                 if m is not None:
                     yield tuple(m.transform_vertices(vertices))
                 else:
                     yield tuple(vertices)
                 break
-
         face = face.next_face
