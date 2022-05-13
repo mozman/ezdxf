@@ -27,7 +27,7 @@ def from_body(body: Body, merge_lumps=True) -> List[MeshTransformer]:
 
     """
     if not isinstance(body, Body):
-        raise TypeError(f"expected body, got: {type(body)}")
+        raise TypeError(f"expected a body entity, got: {type(body)}")
 
     meshes: List[MeshTransformer] = []
     builder = MeshVertexMerger()
@@ -58,7 +58,7 @@ def flat_polygon_faces_from_body(
     """
 
     if not isinstance(body, Body):
-        raise TypeError(f"expected body, got: {type(body)}")
+        raise TypeError(f"expected a body entity, got: {type(body)}")
     lump = body.lump
     transform = body.transform
 
@@ -86,7 +86,7 @@ def flat_polygon_faces_from_lump(
 
     """
     if not isinstance(lump, Lump):
-        raise TypeError(f"expected body, got: {type(lump)}")
+        raise TypeError(f"expected a lump entity, got: {type(lump)}")
 
     shell = lump.shell
     if shell.is_none:
@@ -96,7 +96,7 @@ def flat_polygon_faces_from_lump(
     while not face.is_none:
         vertices.clear()
         if face.surface.type != "plane-surface":
-            continue  # not a plane-surface or a polygon face
+            continue  # not a flat surface or a polygon face at all
         try:
             first_coedge = face.loop.coedge
         except AttributeError:  # loop is none entity
