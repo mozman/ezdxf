@@ -113,9 +113,14 @@ def flat_polygon_faces_from_lump(
             # only straight lines as face edges supported:
             if edge.curve.type != "straight-curve":
                 break
-            try:
-                vertices.append(edge.start_vertex.point.location)
+            try:  # add the first edge vertex to the face vertices
+                if coedge.sense:  # reversed sense as the underlying edge
+                    vertices.append(edge.end_vertex.point.location)
+                else:  # same sense as the underlying edge
+                    vertices.append(edge.start_vertex.point.location)
             except AttributeError:
+                # One of the involved entities is the none-entity or an
+                # incompatible entity -> ignore this face!
                 break
             coedge = coedge.next_coedge
             if coedge.is_none:  # not a closed face
