@@ -25,11 +25,11 @@ def load(
     Example for loading ACIS data from a DXF entity based on
     :class:`ezdxf.entities.Body`::
 
-        import ezdxf.acis
+        from ezdxf import import acis
         ...
 
         for e in msp.query("3DSOLID"):
-            bodies = ezdxf.acis.load(e.acis_data)
+            bodies = acis.load(e.acis_data)
             ...
 
     """
