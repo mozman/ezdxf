@@ -273,7 +273,7 @@ class Plane(Surface):
     origin = Vec3(0, 0, 0)
     normal = Vec3(1, 0, 0)  # pointing outside
     u_dir = Vec3(1, 0, 0)  # unit vector!
-    reversed_v = True  # True = reversed_v; False = forward_v
+    reverse_v = True  # True = reverse_v; False = forward_v
 
     def restore_common(
         self, loader: DataLoader, entity_factory: Factory
@@ -282,12 +282,12 @@ class Plane(Surface):
         self.origin = Vec3(loader.read_vec3())
         self.normal = Vec3(loader.read_vec3())
         self.u_dir = Vec3(loader.read_vec3())
-        self.reversed_v = loader.read_bool("reversed_v", "forward_v")
+        self.reverse_v = loader.read_bool("reverse_v", "forward_v")
 
     @property
     def v_dir(self):
         v_dir = self.normal.cross(self.u_dir)
-        if self.reversed_v:
+        if self.reverse_v:
             return -v_dir
         return v_dir
 
