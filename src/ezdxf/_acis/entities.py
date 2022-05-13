@@ -34,10 +34,12 @@ def load(
 
     """
     if isinstance(data, Sequence):
+        if len(data) == 0:
+            return []
         if isinstance(data[0], str):
-            data = "\n".join(data)  # type: ignore
-        else:
-            data = b"".join(data)  # type: ignore
+            return SatLoader.load(data)  # type: ignore
+        elif isinstance(data[0], (bytes, bytearray)):
+            return SabLoader.load(data)  # type: ignore
     if isinstance(data, (bytes, bytearray)):
         return SabLoader.load(data)
     elif isinstance(data, str):
@@ -454,7 +456,7 @@ class FileLoader(abc.ABC):
 
 
 class SabLoader(FileLoader):
-    def __init__(self, data: bytes):
+    def __init__(self, data: Union[bytes, bytearray, Sequence[bytes]]):
         builder = sab.parse_sab(data)
         super().__init__(builder.header.version)
         self.records = builder.entities
@@ -463,14 +465,14 @@ class SabLoader(FileLoader):
         return sab.SabDataLoader(data, self.version)
 
     @classmethod
-    def load(cls, data: Union[bytes, bytearray]) -> List[Body]:
+    def load(cls, data: Union[bytes, bytearray, Sequence[bytes]]) -> List[Body]:
         loader = cls(data)
         loader.load_entities()
         return loader.bodies()
 
 
 class SatLoader(FileLoader):
-    def __init__(self, data: str):
+    def __init__(self, data: Union[str, Sequence[str]]):
         builder = sat.parse_sat(data)
         super().__init__(builder.header.version)
         self.records = builder.entities
@@ -479,7 +481,7 @@ class SatLoader(FileLoader):
         return sat.SatDataLoader(data, self.version)
 
     @classmethod
-    def load(cls, data: str) -> List[Body]:
+    def load(cls, data: Union[str, Sequence[str]]) -> List[Body]:
         loader = cls(data)
         loader.load_entities()
         return loader.bodies()

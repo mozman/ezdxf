@@ -301,8 +301,8 @@ def build_entities(
 
 
 def parse_sat(s: Union[str, Sequence[str]]) -> SatBuilder:
-    """Returns the :class:`SatBuilder` for the ACIS SAT file content given as
-    string or list of strings.
+    """Returns the :class:`SatBuilder` for the ACIS :term:`SAT` file content
+    given as string or list of strings.
 
     Raises:
         ParsingError: invalid or unsupported ACIS data structure

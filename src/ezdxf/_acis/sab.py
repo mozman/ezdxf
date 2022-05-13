@@ -317,8 +317,8 @@ def resolve_pointers(entities: List[SabEntity]) -> List[SabEntity]:
 
 
 def parse_sab(b: Union[bytes, bytearray, Sequence[bytes]]) -> SabBuilder:
-    """Returns the :class:`SabBuilder` for the ACIS SAB file content given as
-    string or list of strings.
+    """Returns the :class:`SabBuilder` for the ACIS :term:`SAB` file content
+    given as string or list of strings.
 
     Raises:
         ParsingError: invalid or unsupported ACIS data structure
