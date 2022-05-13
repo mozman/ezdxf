@@ -22,7 +22,7 @@ def load(
     data. Accepts :term:`SAT` data as a single string or a sequence of strings
     and :term:`SAB` data as bytes, bytearray or a sequence of bytes.
 
-    Example for loading ACIS data from any DXF entity based on
+    Example for loading ACIS data from a DXF entity based on
     :class:`ezdxf.entities.Body`::
 
         import ezdxf.acis

@@ -12,11 +12,15 @@ def mesh_from_body(body: Body, merge_lumps=True) -> List[MeshTransformer]:
     The list contains multiple meshes if `merge_lumps` is ``False`` or just a
     singe mesh if `merge_lumps` is ``True``.
 
+    The ACIS format stores the faces in counter-clockwise orientation where the
+    face-normal points outwards (away) from the solid body (material).
+
     .. note::
 
-        This function returns only meshes build up from flat polygonal faces stored
-        in a :class:`Body` entity, for a tessellation of more complex ACIS entities
-        is an ACIS kernel required which `ezdxf` does not provide.
+        This function returns meshes build up only from flat polygonal
+        :class:`Face` entities, for a tessellation of more complex ACIS
+        entities (spline surfaces, tori, cones, ...) is an ACIS kernel
+        required which `ezdxf` does not provide.
 
     Args:
         body: ACIS entity of type :class:`Body`

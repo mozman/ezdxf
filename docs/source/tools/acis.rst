@@ -12,7 +12,7 @@ The :mod:`ezdxf.acis` module provides some :term:`ACIS` data management tools.
 The main goals of this support module are:
 
     1. load and parse simple and known ACIS data structures
-    2. create and export simple and known ACIS data structures
+    2. create and export simple and known ACIS data structures (planned)
 
 It is NOT a goal to edit and export arbitrary existing ACIS structures.
 
@@ -28,12 +28,15 @@ limited to the use as embedded data in DXF and DWG files.
 The `ezdxf` library does not provide an :term:`ACIS` kernel and there are no
 plans for implementing one because this is far beyond my capabilities, but it
 is possible to extract geometries made up only by flat polygonal faces and
-maybe in the future it is also possible to create such polygon face meshes.
+maybe in the future it is also possible to create such simple polygon face
+meshes.
 
 Functions
 ~~~~~~~~~
 
 .. autofunction:: load
+
+.. autofunction:: mesh_from_body
 
 Exceptions
 ~~~~~~~~~~
@@ -173,7 +176,7 @@ Vertex
 
 .. class:: Vertex(AcisEntity)
 
-    Represents a vertex of an :class:`Edge` entity and references a :class`Point`
+    Represents a vertex of an :class:`Edge` entity and references a :class:`Point`
     entity. Multiple :class:`Vertex` entities can reference the same :class:`Point`
     entity.
 
