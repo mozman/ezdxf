@@ -45,6 +45,7 @@ Version 0.18b4 - dev
 - NEW: support for layer attribute override in VIEWPORT entities
 - NEW: mesh exchange add-on `ezdxf.addons.meshex`: STL, OFF, and OBJ mesh loader 
   and STL, OFF, OBJ, PLY, OpenSCAD and IFC4 mesh exporter
+- NEW: `acis` module, a toolbox to handle ACIS data, [docs](https://ezdxf.mozman.at/docs/tools/acis.html)
 - CHANGE: keyword only argument `dxfattribs` for factory methods `add_text()` and `add_attdef()`
 - CHANGE: `recover` module - recovered integer and float values are logged as severe errors
 - CHANGE: method `Path.all_lines_to_curve3` replaced by function `path.lines_to_curve3()`
