@@ -197,24 +197,6 @@ class MeshDiagnose:
         return self._edge_stats
 
     @property
-    def is_watertight(self) -> bool:
-        """Returns ``True`` if the mesh has a closed surface (Euler
-        characteristic is 2).
-
-        This works only for meshes with optimized vertices where
-        coincident vertices are merged together, see method
-        :meth:`MeshBuilder.optimize_vertices`.
-
-        The underlying Euler characteristic is only correct for convex meshes,
-        but not for concave meshes such as a Menger sponge that contains "holes"
-        and has an Euler characteristic of 40 but whose surface is still
-        watertight.
-
-        """
-        # https://en.wikipedia.org/wiki/Euler_characteristic
-        return self.euler_characteristic == 2
-
-    @property
     def euler_characteristic(self) -> int:
         """Returns the Euler characteristic:
         https://en.wikipedia.org/wiki/Euler_characteristic
@@ -227,9 +209,11 @@ class MeshDiagnose:
     def is_edge_balance_broken(self) -> bool:
         """Returns ``True`` if the edge balance is broken, this indicates a
         topology error for closed surfaces. A non-broken edge balance reflects
-        that each edge connects two faces, where a broken edge balance indicates
-        possible topology errors like mixed face vertex orientations or
-        a non-manifold mesh where an edge connects more than two faces.
+        that each edge connects two faces, where the edge is clockwise oriented
+        in the first face and counter-clockwise oriented in the second face.
+        A broken edge balance indicates possible topology errors like mixed
+        face vertex orientations or a non-manifold mesh where an edge connects
+        more than two faces.
 
         """
         return any(e.balance != 0 for e in self.edge_stats.values())

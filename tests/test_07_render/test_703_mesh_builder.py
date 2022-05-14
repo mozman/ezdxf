@@ -126,21 +126,21 @@ def test_rotate_x():
 class TestMeshDiagnose:
     def test_empty_mesh_is_not_watertight(self):
         mesh = MeshBuilder()
-        assert mesh.diagnose().is_watertight is False
+        assert mesh.diagnose().euler_characteristic != 2
 
     def test_single_face_mesh_is_not_watertight(self):
         mesh = MeshBuilder()
         mesh.add_face(REGULAR_FACE)
-        assert mesh.diagnose().is_watertight is False
+        assert mesh.diagnose().euler_characteristic != 2
 
     def test_cube_is_watertight(self):
         mesh = cube(center=False)
-        assert mesh.diagnose().is_watertight is True
+        assert mesh.diagnose().euler_characteristic == 2
 
     def test_is_watertight_can_not_detect_vertex_orientation_errors(self):
         mesh = cube(center=False)
         mesh.faces[-1] = tuple(reversed(mesh.faces[-1]))
-        assert (mesh.diagnose().is_watertight is True)
+        assert (mesh.diagnose().euler_characteristic == 2)
 
     def test_edge_balance_of_closed_surface_is_not_broken(self):
         mesh = cube(center=False)
@@ -166,11 +166,11 @@ class TestMeshDiagnose:
         mesh2 = MeshBuilder()
         for face in mesh.faces_as_vertices():
             mesh2.add_face(face)
-        assert mesh2.diagnose().is_watertight is False
+        assert mesh2.diagnose().euler_characteristic != 2
 
     def test_cylinder_is_watertight(self):
         mesh = cylinder()
-        assert mesh.diagnose().is_watertight is True
+        assert mesh.diagnose().euler_characteristic == 2
 
     @pytest.mark.parametrize("surface", [cube(), cylinder(), cone(), sphere()])
     def test_surface_normals_pointing_outwards(self, surface):
@@ -667,6 +667,5 @@ def test_euler_characteristic_for_menger_sponge():
     diag = ms.mesh().diagnose()
     assert diag.euler_characteristic == 40
     # the is_watertight property not reliable for concave meshes
-    assert diag.is_watertight is False
     # each edge connects two faces
     assert diag.is_edge_balance_broken is False
