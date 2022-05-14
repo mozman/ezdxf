@@ -1142,7 +1142,7 @@ class Lump:
         return f"Lump({id(self)})"
 
     def is_connected(self, other: "Lump") -> bool:
-        return bool(self.edges.intersection(other.edges.intersection()))
+        return not self.edges.isdisjoint(other.edges)
 
     def merge(self, other: "Lump"):
         self.faces.extend(other.faces)
