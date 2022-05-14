@@ -17,6 +17,7 @@ from ezdxf.render.mesh import (
     remove_colinear_face_vertices,
     all_edges,
     get_edge_stats,
+    separate_meshes,
 )
 from ezdxf.addons import SierpinskyPyramid
 from ezdxf.layouts import VirtualLayout
@@ -669,3 +670,42 @@ def test_euler_characteristic_for_menger_sponge():
     # the is_watertight property not reliable for concave meshes
     # each edge connects two faces
     assert diag.is_edge_balance_broken is False
+
+
+class TestSeparateMeshes:
+    def test_separate_a_single_cube_returns_a_single_cube(self):
+        c1 = cube()
+        result = list(separate_meshes(c1))
+        assert len(result) == 1
+        c2 = result[0]
+        # vertex and face structure keeps stable for single meshes:
+        assert c1.vertices == c2.vertices
+        assert c1.faces == c2.faces
+
+    def test_separate_menger_sponge(self):
+        m1 = MengerSponge().mesh()
+        result = list(separate_meshes(m1))
+        assert len(result) == 1
+        m2 = result[0]
+        # vertex and face structure keeps stable for single meshes:
+        assert m1.vertices == m2.vertices
+        assert m1.faces == m2.faces
+
+    def test_separate_two_cubes(self):
+        cubes = cube()
+        cubes.translate(10, 0, 0)
+        cubes.add_mesh(mesh=cube())
+        # a non-broken edge balance is a requirement to work properly:
+        assert cubes.diagnose().is_edge_balance_broken is False
+        result = list(separate_meshes(cubes))
+        assert len(result) == 2
+
+    def test_separate_two_intersecting_cubes(self):
+        cubes = cube()
+        cubes.translate(0.2, 0.2, 0.2)
+        cubes.add_mesh(mesh=cube())
+        # a non-broken edge balance is a requirement to work properly:
+        assert cubes.diagnose().is_edge_balance_broken is False
+        result = list(separate_meshes(cubes))
+        assert len(result) == 2
+

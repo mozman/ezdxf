@@ -8,6 +8,7 @@ from typing import (
     Iterator,
     TYPE_CHECKING,
     Union,
+    Set,
     Dict,
     TypeVar,
     Type,
@@ -60,11 +61,16 @@ def open_faces(faces: Iterable[Sequence[int]]) -> Iterator[Sequence[int]]:
 
 
 def all_edges(faces: Iterable[Sequence[int]]) -> Iterator[Tuple[int, int]]:
-    """Yields as face edges as int tuples."""
+    """Yields all face edges as int tuples."""
     for face in open_faces(faces):
-        size = len(face)
-        for index in range(size):
-            yield face[index], face[(index + 1) % size]
+        yield from face_edges(face)
+
+
+def face_edges(face: Sequence[int]) -> Iterable[Tuple[int, int]]:
+    """Yields all edges of a single face as int tuples."""
+    size = len(face)
+    for index in range(size):
+        yield face[index], face[(index + 1) % size]
 
 
 def get_edge_stats(faces: Iterable[Sequence[int]]) -> EdgeStats:
@@ -151,6 +157,7 @@ def flip_face_normals(
 ) -> Iterator[Sequence[int]]:
     for face in faces:
         yield tuple(reversed(face))
+
 
 # Mesh Topology Analysis using the Euler Characteristic
 # https://max-limper.de/publications/Euler/index.html
@@ -1120,3 +1127,62 @@ def merge_full_patch(path: Sequence[int], patch: Sequence[int]):
             continue
         new_path.append(node)
     return new_path
+
+
+class Lump:
+    def __init__(self, face: Sequence[int]):
+        self.edges: Set[Tuple[int, int]] = set()
+        self.faces: List[Sequence[int]] = [face]
+        for a, b in face_edges(face):
+            # sort vertex indices to guarantee: edge a,b == edge b,a
+            edge = (a, b) if a <= b else (b, a)
+            self.edges.add(edge)
+
+    def __str__(self):
+        return f"Lump({id(self)})"
+
+    def is_connected(self, other: "Lump") -> bool:
+        return bool(self.edges.intersection(other.edges.intersection()))
+
+    def merge(self, other: "Lump"):
+        self.faces.extend(other.faces)
+        self.edges.update(other.edges)
+
+
+def merge_lumps(lumps: Iterable[Lump]) -> List[Lump]:
+    merged_lumps = _merge_lumps(lumps)
+    l0 = 0
+    while 1 < len(merged_lumps) != l0:
+        l0 = len(merged_lumps)
+        merged_lumps = _merge_lumps(merged_lumps)
+    return merged_lumps
+
+
+def _merge_lumps(lumps: Iterable[Lump]) -> List[Lump]:
+    merged_lumps: List[Lump] = []
+    for lump in lumps:
+        for base in merged_lumps:
+            if lump.is_connected(base):
+                base.merge(lump)
+                break
+        else:
+            merged_lumps.append(lump)
+    return merged_lumps
+
+
+def separate_meshes(m: MeshBuilder) -> Iterator[MeshTransformer]:
+    """Returns the separated meshes in a single :class:`MeshBuilder` instance
+    as multiple :class:`MeshTransformer` instances.
+    """
+    # At the beginning each face is a separated lump and all connected faces
+    # should be merged:
+    merged_lumps = list(merge_lumps(Lump(face) for face in open_faces(m.faces)))
+    if len(merged_lumps) > 1:
+        vertices = m.vertices
+        for lump in merged_lumps:
+            builder = MeshVertexMerger()
+            for face in lump.faces:
+                builder.add_face([vertices[i] for i in face])
+            yield MeshTransformer.from_builder(builder)
+    else:
+        yield MeshTransformer.from_builder(m)
