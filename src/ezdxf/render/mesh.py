@@ -50,7 +50,7 @@ EdgeStats = Dict[Tuple[int, int], EdgeStat]
 
 def open_faces(faces: Iterable[Sequence[int]]) -> Iterator[Sequence[int]]:
     """Yields all faces with more than two vertices as open faces
-    (first vertex != last vertex).
+    (first vertex index != last vertex index).
     """
     for face in faces:
         if len(face) < 3:
@@ -309,7 +309,8 @@ class MeshBuilder:
             yield [v[index] for index in face]
 
     def open_faces(self) -> Iterator[Sequence[int]]:
-        """Yields all faces as sequence of int where first vertex != last vertex.
+        """Yields all faces as sequence of integers where the first vertex
+        is not coincident with the last vertex.
 
         .. versionadded:: 0.18
 

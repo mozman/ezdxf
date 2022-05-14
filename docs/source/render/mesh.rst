@@ -4,13 +4,28 @@
 MeshBuilder
 ===========
 
-The :class:`MeshBuilder` is a helper class  to create :class:`~ezdxf.entities.Mesh`
-entities. Stores a list of vertices and a faces list where each face is a list
-of indices into the vertices list.
+The :class:`MeshBuilder` classes are helper tools to manage meshes buildup by
+vertices and faces.
+The vertices are stored in a vertices list as :class:`Vec3` instances.
+The faces are stored as a sequence of vertex indices which is the location of
+the vertex in the vertex list. A single :class:`MeshBuilder` class can contain
+multiple separated meshes at the same time.
 
-The :meth:`MeshBuilder.render` method, renders the mesh into a
-:class:`~ezdxf.entities.Mesh` entity. The :class:`~ezdxf.entities.Mesh` entity
-supports ngons in AutoCAD, ngons are polygons with more than 4 vertices.
+The method :meth:`MeshBuilder.render_mesh` renders the content as a single DXF
+:class:`~ezdxf.entities.Mesh` entity, which supports ngons, ngons are polygons
+with more than 4 vertices. This entity requires at least DXF R2000.
+
+The method :meth:`MeshBuilder.render_polyface` renders the content as a single
+DXF :class:`~ezdxf.entities.Polyface` entity, which supports only triangles and
+quadrilaterals. This entity is supported by DXF R12.
+
+The method :meth:`MeshBuilder.render_3dfaces` renders each face of the mesh as
+a single  DXF :class:`~ezdxf.entities.Face3d` entity, which supports only
+triangles and quadrilaterals. This entity is supported by DXF R12.
+
+The :class:`MeshTransformer` class is often used as an interface object to
+transfer mesh data between functions and moduls, like for the mesh exchange
+add-on :mod:`~ezdxf.addons.meshex`.
 
 The basic :class:`MeshBuilder` class does not support transformations.
 

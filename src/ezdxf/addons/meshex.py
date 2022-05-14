@@ -473,8 +473,8 @@ def ifc4_dumps(
 ) -> str:
     """Returns the `IFC4`_ string for the given `mesh`. The caller is
     responsible for checking if the mesh is a closed or open surface
-    (e.g. :code:`mesh.diagnose().is_watertight`) and using the appropriate
-    entity type.
+    (e.g. :code:`mesh.diagnose().euler_characteristic == 2`) and using the
+    appropriate entity type.
 
     Args:
         mesh: :class:`~ezdxf.render.MeshBuilder`
