@@ -69,6 +69,8 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. automethod:: tessellation
 
+    .. automethod:: separate_meshes
+
 
 .. autoclass:: ezdxf.render.mesh.EdgeStat
 
@@ -114,9 +116,9 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. autoproperty:: edge_stats
 
-    .. autoproperty:: euler_characteristic
+    .. autoproperty:: is_edge_balance_broken
 
-    .. autoproperty:: edge_balance
+    .. autoproperty:: euler_characteristic
 
     .. automethod:: total_edge_count
 
@@ -155,12 +157,12 @@ MeshVertexMerger
 
 Same functionality as :class:`MeshBuilder`, but created meshes with unique
 vertices and no doublets, but :class:`MeshVertexMerger` needs extra memory for
-bookkeeping and also does not support transformations. Location of merged
-vertices is the location of the first vertex with the same key.
+bookkeeping and also does not support transformations.
+The location of the merged vertices is the location of the first vertex with the
+same key.
 
-This class is intended as intermediate object to create a compact meshes and
-convert them to :class:`MeshTransformer` objects to apply transformations to the
-mesh:
+This class is intended as intermediate object to create compact meshes and
+convert them to :class:`MeshTransformer` objects to apply transformations:
 
 .. code-block:: Python
 
@@ -178,8 +180,8 @@ MeshAverageVertexMerger
 =======================
 
 This is an extended version of :class:`MeshVertexMerger`.
-Location of merged vertices is the average location of all vertices with the
-same key, this needs extra memory and runtime in comparison to
+The location of the merged vertices is the average location of all vertices with
+the same key, this needs extra memory and runtime in comparison to
 :class:`MeshVertexMerger` and this class also does not support
 transformations.
 

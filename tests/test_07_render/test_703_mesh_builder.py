@@ -706,6 +706,5 @@ class TestSeparateMeshes:
         cubes.add_mesh(mesh=cube())
         # a non-broken edge balance is a requirement to work properly:
         assert cubes.diagnose().is_edge_balance_broken is False
-        result = list(separate_meshes(cubes))
-        assert len(result) == 2
+        assert len(cubes.separate_meshes()) == 2
 

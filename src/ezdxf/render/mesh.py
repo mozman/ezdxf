@@ -1,5 +1,6 @@
 # Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import (
     List,
     Sequence,
@@ -17,7 +18,7 @@ from typing import (
 from ezdxf.math import (
     Matrix44,
     Vec3,
-    Vertex,
+    UVec,
     NULLVEC,
     is_planar_face,
     subdivide_face,
@@ -164,7 +165,7 @@ def flip_face_normals(
 
 
 class MeshDiagnose:
-    def __init__(self, mesh: "MeshBuilder"):
+    def __init__(self, mesh: MeshBuilder):
         self._mesh = mesh
         self._edge_stats: EdgeStats = {}
 
@@ -315,7 +316,7 @@ class MeshBuilder:
         """
         yield from open_faces(self.faces)
 
-    def add_face(self, vertices: Iterable["Vertex"]) -> None:
+    def add_face(self, vertices: Iterable[UVec]) -> None:
         """Add a face as vertices list to the mesh. A face requires at least 3
         vertices, each vertex is a ``(x, y, z)`` tuple or
         :class:`~ezdxf.math.Vec3` object. The new vertex indices are stored as
@@ -328,7 +329,7 @@ class MeshBuilder:
         """
         self.faces.append(self.add_vertices(vertices))
 
-    def add_vertices(self, vertices: Iterable["Vertex"]) -> Sequence[int]:
+    def add_vertices(self, vertices: Iterable[UVec]) -> Sequence[int]:
         """Add new vertices to the mesh, each vertex is a ``(x, y, z)`` tuple
         or a :class:`~ezdxf.math.Vec3` object, returns the indices of the
         `vertices` added to the :attr:`vertices` list.
@@ -388,10 +389,10 @@ class MeshBuilder:
 
     def render_mesh(
         self,
-        layout: "GenericLayoutType",
+        layout: GenericLayoutType,
         dxfattribs=None,
-        matrix: "Matrix44" = None,
-        ucs: "UCS" = None,
+        matrix: Matrix44 = None,
+        ucs: UCS = None,
     ):
         """Render mesh as :class:`~ezdxf.entities.Mesh` entity into `layout`.
 
@@ -420,7 +421,7 @@ class MeshBuilder:
 
     def render_normals(
         self,
-        layout: "GenericLayoutType",
+        layout: GenericLayoutType,
         length: float = 1,
         relative=True,
         dxfattribs=None,
@@ -457,7 +458,7 @@ class MeshBuilder:
             layout.add_line(center, center + n * _length, dxfattribs=dxfattribs)
 
     @classmethod
-    def from_mesh(cls: Type[T], other: Union["MeshBuilder", "Mesh"]) -> T:
+    def from_mesh(cls: Type[T], other: Union[MeshBuilder, Mesh]) -> T:
         """Create new mesh from other mesh as class method.
 
         Args:
@@ -473,7 +474,7 @@ class MeshBuilder:
         return mesh  # type: ignore
 
     @classmethod
-    def from_polyface(cls: Type[T], other: Union["Polymesh", "Polyface"]) -> T:
+    def from_polyface(cls: Type[T], other: Union[Polymesh, Polyface]) -> T:
         """Create new mesh from a  :class:`~ezdxf.entities.Polyface` or
         :class:`~ezdxf.entities.Polymesh` object.
 
@@ -505,10 +506,10 @@ class MeshBuilder:
 
     def render_polyface(
         self,
-        layout: "GenericLayoutType",
+        layout: GenericLayoutType,
         dxfattribs=None,
-        matrix: "Matrix44" = None,
-        ucs: "UCS" = None,
+        matrix: Matrix44 = None,
+        ucs: UCS = None,
     ):
         """Render mesh as :class:`~ezdxf.entities.Polyface` entity into
         `layout`.
@@ -539,10 +540,10 @@ class MeshBuilder:
 
     def render_3dfaces(
         self,
-        layout: "GenericLayoutType",
+        layout: GenericLayoutType,
         dxfattribs=None,
-        matrix: "Matrix44" = None,
-        ucs: "UCS" = None,
+        matrix: Matrix44 = None,
+        ucs: UCS = None,
     ):
         """Render mesh as :class:`~ezdxf.entities.Face3d` entities into
         `layout`.
@@ -569,7 +570,7 @@ class MeshBuilder:
             layout.add_3dface(face, dxfattribs=dxfattribs)
 
     @classmethod
-    def from_builder(cls: Type[T], other: "MeshBuilder") -> T:
+    def from_builder(cls: Type[T], other: MeshBuilder) -> T:
         """Create new mesh from other mesh builder, faster than
         :meth:`from_mesh` but supports only :class:`MeshBuilder` and inherited
         classes.
@@ -582,7 +583,7 @@ class MeshBuilder:
         mesh.faces = list(other.faces)
         return mesh  # type: ignore
 
-    def merge_coplanar_faces(self, passes: int = 1) -> "MeshTransformer":
+    def merge_coplanar_faces(self, passes: int = 1) -> MeshTransformer:
         """Returns a new :class:`MeshBuilder` object with merged adjacent
         coplanar faces.
 
@@ -599,7 +600,7 @@ class MeshBuilder:
             mesh = _merge_adjacent_coplanar_faces(mesh.vertices, mesh.faces)
         return MeshTransformer.from_builder(mesh)
 
-    def subdivide(self, level: int = 1, quads=True) -> "MeshTransformer":
+    def subdivide(self, level: int = 1, quads=True) -> MeshTransformer:
         """Returns a new :class:`MeshTransformer` object with all faces subdivided.
 
         Args:
@@ -613,7 +614,7 @@ class MeshBuilder:
             level -= 1
         return MeshTransformer.from_builder(mesh)
 
-    def optimize_vertices(self, precision: int = 6) -> "MeshTransformer":
+    def optimize_vertices(self, precision: int = 6) -> MeshTransformer:
         """Returns a new mesh with optimized vertices. Coincident vertices are
         merged together and all faces are open faces (first vertex != last
         vertex). Uses internally the :class:`MeshVertexMerger` class to merge
@@ -667,11 +668,21 @@ class MeshBuilder:
         """
         self.faces = list(flip_face_normals(self.faces))
 
+    def separate_meshes(self) -> List[MeshTransformer]:
+        """A single :class:`MeshBuilder` instance can store multiple separated
+        meshes. This function returns this separated meshes as multiple
+        :class:`MeshTransformer` instances.
+
+        .. versionadded:: 0.18
+
+        """
+        return list(separate_meshes(self))
+
 
 class MeshTransformer(MeshBuilder):
     """A mesh builder with inplace transformation support."""
 
-    def transform(self, matrix: "Matrix44"):
+    def transform(self, matrix: Matrix44):
         """Transform mesh inplace by applying the transformation `matrix`.
 
         Args:
@@ -758,7 +769,7 @@ class MeshTransformer(MeshBuilder):
         )
         return self
 
-    def rotate_axis(self, axis: "Vertex", angle: float):
+    def rotate_axis(self, axis: UVec, angle: float):
         """Rotate mesh around an arbitrary axis located in the origin (0, 0, 0)
         about `angle`.
 
@@ -773,7 +784,7 @@ class MeshTransformer(MeshBuilder):
         return self
 
 
-def _subdivide(mesh, quads=True) -> "MeshVertexMerger":
+def _subdivide(mesh, quads=True) -> MeshVertexMerger:
     """Returns a new :class:`MeshVertexMerger` object with subdivided faces
     and edges.
 
@@ -801,7 +812,7 @@ class MeshVertexMerger(MeshBuilder):
     value. Each vertex with the same key gets the same vertex index, which is
     the index of first vertex with this key, so all vertices with the same key
     will be located at the location of this first vertex. If you want an average
-    location of and for all vertices with the same key look at the
+    location of all vertices with the same key use the
     :class:`MeshAverageVertexMerger` class.
 
     Args:
@@ -820,7 +831,7 @@ class MeshVertexMerger(MeshBuilder):
         self.ledger: Dict[Vec3, int] = {}
         self.precision: int = precision
 
-    def add_vertices(self, vertices: Iterable["Vertex"]) -> Sequence[int]:
+    def add_vertices(self, vertices: Iterable[UVec]) -> Sequence[int]:
         """Add new `vertices` only, if no vertex with identical (x, y, z)
         coordinates already exist, else the index of the existing vertex is
         returned as index of the added vertices.
@@ -846,7 +857,7 @@ class MeshVertexMerger(MeshBuilder):
                 indices.append(index)
         return tuple(indices)
 
-    def index(self, vertex: "Vertex") -> int:
+    def index(self, vertex: UVec) -> int:
         """Get index of `vertex`, raise :class:`KeyError` if not found.
 
         Args:
@@ -860,7 +871,7 @@ class MeshVertexMerger(MeshBuilder):
             raise IndexError(f"Vertex {str(vertex)} not found.")
 
     @classmethod
-    def from_builder(cls, other: "MeshBuilder") -> "MeshVertexMerger":
+    def from_builder(cls, other: MeshBuilder) -> MeshVertexMerger:
         """Create new mesh from other mesh builder."""
         # rebuild from scratch to create a valid ledger
         return cls.from_mesh(other)
@@ -894,7 +905,7 @@ class MeshAverageVertexMerger(MeshBuilder):
         ] = {}  # each key points to a tuple (vertex index, vertex count)
         self.precision: int = precision
 
-    def add_vertices(self, vertices: Iterable["Vertex"]) -> Sequence[int]:
+    def add_vertices(self, vertices: Iterable[UVec]) -> Sequence[int]:
         """Add new `vertices` only, if no vertex with identical ``(x, y, z)``
         coordinates already exist, else the index of the existing vertex is
         returned as index of the added vertices.
@@ -929,7 +940,7 @@ class MeshAverageVertexMerger(MeshBuilder):
             indices.append(index)
         return tuple(indices)
 
-    def index(self, vertex: "Vertex") -> int:
+    def index(self, vertex: UVec) -> int:
         """Get index of `vertex`, raise :class:`KeyError` if not found.
 
         Args:
@@ -943,7 +954,7 @@ class MeshAverageVertexMerger(MeshBuilder):
             raise IndexError(f"Vertex {str(vertex)} not found.")
 
     @classmethod
-    def from_builder(cls, other: "MeshBuilder") -> "MeshAverageVertexMerger":
+    def from_builder(cls, other: MeshBuilder) -> MeshAverageVertexMerger:
         """Create new mesh from other mesh builder."""
         # rebuild from scratch to create a valid ledger
         return cls.from_mesh(other)
@@ -1137,10 +1148,10 @@ class Lump:
             # sort vertex indices to guarantee: edge a,b == edge b,a
             self.edges.add((a, b) if a <= b else (b, a))
 
-    def is_connected(self, other: "Lump") -> bool:
+    def is_connected(self, other: Lump) -> bool:
         return not self.edges.isdisjoint(other.edges)
 
-    def merge(self, other: "Lump"):
+    def merge(self, other: Lump):
         self.faces.extend(other.faces)
         self.edges.update(other.edges)
 
