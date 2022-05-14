@@ -1135,11 +1135,7 @@ class Lump:
         self.faces: List[Sequence[int]] = [face]
         for a, b in face_edges(face):
             # sort vertex indices to guarantee: edge a,b == edge b,a
-            edge = (a, b) if a <= b else (b, a)
-            self.edges.add(edge)
-
-    def __str__(self):
-        return f"Lump({id(self)})"
+            self.edges.add((a, b) if a <= b else (b, a))
 
     def is_connected(self, other: "Lump") -> bool:
         return not self.edges.isdisjoint(other.edges)
@@ -1151,9 +1147,9 @@ class Lump:
 
 def merge_lumps(lumps: Iterable[Lump]) -> List[Lump]:
     merged_lumps = _merge_lumps(lumps)
-    l0 = 0
-    while 1 < len(merged_lumps) != l0:
-        l0 = len(merged_lumps)
+    prior_len = 0
+    while 1 < len(merged_lumps) != prior_len:
+        prior_len = len(merged_lumps)
         merged_lumps = _merge_lumps(merged_lumps)
     return merged_lumps
 
@@ -1176,13 +1172,16 @@ def separate_meshes(m: MeshBuilder) -> Iterator[MeshTransformer]:
     """
     # At the beginning each face is a separated lump and all connected faces
     # should be merged:
-    merged_lumps = list(merge_lumps(Lump(face) for face in open_faces(m.faces)))
-    if len(merged_lumps) > 1:
+    disconnected_lumps = list(
+        merge_lumps(Lump(face) for face in open_faces(m.faces))
+    )
+    if len(disconnected_lumps) > 1:
         vertices = m.vertices
-        for lump in merged_lumps:
-            builder = MeshVertexMerger()
+        # create new separated meshes:
+        for lump in disconnected_lumps:
+            mesh = MeshVertexMerger()
             for face in lump.faces:
-                builder.add_face([vertices[i] for i in face])
-            yield MeshTransformer.from_builder(builder)
+                mesh.add_face(vertices[i] for i in face)
+            yield MeshTransformer.from_builder(mesh)
     else:
         yield MeshTransformer.from_builder(m)
