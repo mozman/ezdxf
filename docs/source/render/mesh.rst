@@ -114,6 +114,8 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. autoproperty:: edge_stats
 
+    .. autoproperty:: euler_characteristic
+
     .. autoproperty:: is_watertight
 
     .. autoproperty:: is_edge_balance_broken

@@ -4,6 +4,7 @@ import pytest
 from math import radians
 from ezdxf.math import Vec3, BoundingBox
 from ezdxf.render.forms import cube, circle, cylinder, cone, sphere
+from ezdxf.addons.menger_sponge import MengerSponge
 from ezdxf.render.mesh import (
     MeshVertexMerger,
     MeshBuilder,
@@ -658,3 +659,14 @@ class TestGetEdgeStats:
         faces = [(0, 1, 2)]
         edges = get_edge_stats(faces)
         assert all(e[1] != 0 for e in edges.values()) is True
+
+
+def test_euler_characteristic_for_menger_sponge():
+    """The euler characteristic does not work for non-convex meshes."""
+    ms = MengerSponge()
+    diag = ms.mesh().diagnose()
+    assert diag.euler_characteristic == 40
+    # the is_watertight property not reliable for concave meshes
+    assert diag.is_watertight is False
+    # each edge connects two faces
+    assert diag.is_edge_balance_broken is False
