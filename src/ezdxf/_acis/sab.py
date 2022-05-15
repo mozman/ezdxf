@@ -290,12 +290,9 @@ class SabBuilder(AbstractBuilder):
         """Returns the SAB representation of the ACIS file as bytearray."""
         self.reorder_records()
         self.header.n_entities = len(self.bodies)
-        self.header.n_records = len(self.entities)
+        self.header.n_records = 0  # is always 0
 
         return bytearray(b"")
-
-    def reorder_records(self):
-        pass
 
     def set_entities(self, entities: List[SabEntity]) -> None:
         """Reset entities and bodies list. (internal API)"""

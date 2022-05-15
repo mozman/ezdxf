@@ -116,6 +116,21 @@ class AbstractBuilder(Generic[T]):
     bodies: List[T]
     entities: List[T]
 
+    def reorder_records(self) -> None:
+        if len(self.entities) == 0:
+            return
+        header: List[T] = []
+        entities: List[T] = []
+        # asm header has to be the first entry
+        if self.entities[0].name == "asmheader":
+            header.append(self.entities.pop(0))
+        for e in self.entities:
+            if e.name == "body":
+                header.append(e)
+            else:
+                entities.append(e)
+        self.entities = header + entities
+
 
 class EntityExporter(Generic[T]):
     def __init__(self, header: AcisHeader):

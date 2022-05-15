@@ -189,14 +189,11 @@ class SatBuilder(AbstractBuilder):
         """
         self.reorder_records()
         self.header.n_entities = len(self.bodies)
-        self.header.n_records = len(self.entities)
+        self.header.n_records = 0  # is always 0
         data = self.header.dumps()
         data.extend(build_str_records(self.entities, self.header.version))
         data.append(const.END_OF_ACIS_DATA + " ")
         return data
-
-    def reorder_records(self):
-        pass
 
     def set_entities(self, entities: List[SatEntity]) -> None:
         """Reset entities and bodies list. (internal API)"""
