@@ -20,8 +20,6 @@ from ezdxf._acis.const import (
     DATE_FMT,
     Tags,
     DATA_END_MARKERS,
-    MIN_EXPORT_VERSION,
-    ExportError,
 )
 from ezdxf._acis.hdr import AcisHeader
 from ezdxf._acis.abstract import (

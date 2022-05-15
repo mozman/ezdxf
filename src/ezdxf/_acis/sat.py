@@ -15,7 +15,7 @@ from typing import (
 )
 from datetime import datetime
 from ezdxf._acis import const
-from ezdxf._acis.const import ParsingError, InvalidLinkStructure, ExportError, MIN_EXPORT_VERSION
+from ezdxf._acis.const import ParsingError, InvalidLinkStructure
 from ezdxf._acis.hdr import AcisHeader
 from ezdxf._acis.abstract import (
     AbstractEntity,
