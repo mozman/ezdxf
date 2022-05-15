@@ -4,9 +4,9 @@ from __future__ import annotations
 from typing import Union, List, Dict, Callable, Type, Any, Sequence
 import abc
 
-from . import sab, sat, const
+from . import sab, sat, const, hdr
 from .const import Features
-from .abstract import DataLoader, AbstractEntity, DataExporter
+from .abstract import DataLoader, AbstractEntity, AbstractBuilder, DataExporter
 from ezdxf.math import Matrix44, Vec3, NULLVEC
 
 Factory = Callable[[AbstractEntity], "AcisEntity"]
@@ -45,6 +45,35 @@ def load(
     elif isinstance(data, str):
         return SatLoader.load(data)
     raise TypeError(f"invalid type of data: {type(data)}")
+
+
+def export_sat(bodies: Sequence[Body], version: int = 700) -> Sequence[str]:
+    builder = sat.SatBuilder()
+    builder.header = _setup_export_header(version)
+    _export_bodies(bodies, builder)
+    return builder.dump_sat()
+
+
+def export_sab(bodies: Sequence[Body], version: int = 700) -> bytearray:
+    builder = sab.SabBuilder()
+    builder.header = _setup_export_header(version)
+    _export_bodies(bodies, builder)
+    return builder.dump_sab()
+
+
+def _setup_export_header(version) -> hdr.AcisHeader:
+    if not const.is_valid_export_version(version):
+        raise const.ExportError(f"invalid export version: {version}")
+    header = hdr.AcisHeader()
+    header.set_version(version)
+    return header
+
+
+def _export_bodies(bodies: Sequence[Body], builder: AbstractBuilder):
+    exporter = builder.exporter()
+    for body in bodies:
+        body.export(exporter)
+        builder.header.n_entities += 1
 
 
 def register(cls: Type["AcisEntity"]):

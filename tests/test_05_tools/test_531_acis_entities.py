@@ -2,7 +2,7 @@
 #  License: MIT License
 
 import pytest
-from ezdxf.acis import load
+from ezdxf.acis import load, export_sat, export_sab, ExportError
 import math
 
 
@@ -223,6 +223,18 @@ class TestPoint:
                     break
             face = face.next_face
         assert len(vertices) == 8
+
+
+class TestExportSat700:
+    def test_export_rejects_unsupported_acis_versions(self, body):
+        with pytest.raises(ExportError):
+            export_sat([body], version=400)
+
+
+class TestExportSab700:
+    def test_export_rejects_unsupported_acis_versions(self, body):
+        with pytest.raises(ExportError):
+            export_sab([body], version=400)
 
 
 if __name__ == "__main__":

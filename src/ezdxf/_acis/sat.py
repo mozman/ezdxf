@@ -5,7 +5,7 @@ from datetime import datetime
 from ezdxf._acis import const
 from ezdxf._acis.const import ParsingError, InvalidLinkStructure
 from ezdxf._acis.hdr import AcisHeader
-from ezdxf._acis.abstract import AbstractEntity, AbstractBuilder, DataLoader
+from ezdxf._acis.abstract import AbstractEntity, AbstractBuilder, DataLoader, DataExporter
 
 SatRecord = List[str]
 
@@ -174,6 +174,8 @@ class SatBuilder(AbstractBuilder):
         self.bodies = [e for e in entities if e.name == "body"]
         self.entities = entities
 
+    def exporter(self) -> DataExporter:
+        return SatDataExporter(self)
 
 def build_str_records(entities: List[SatEntity], version: int) -> Iterator[str]:
     def ptr_str(e: SatEntity) -> str:
@@ -322,3 +324,8 @@ def parse_sat(s: Union[str, Sequence[str]]) -> SatBuilder:
     entities = build_entities(records, header.version)
     builder.set_entities(resolve_str_pointers(entities))
     return builder
+
+
+class SatDataExporter(DataExporter):
+    def __init__(self, builder: SatBuilder):
+        self.builder = builder

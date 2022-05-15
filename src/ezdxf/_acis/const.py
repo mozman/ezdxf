@@ -8,7 +8,7 @@ ACIS_VERSION = {
     20800: "ACIS 208.00 NT",
     21800: "ACIS 218.00 NT",
 }
-
+MIN_EXPORT_VERSION = 700
 DATE_FMT = "%a %b %d %H:%M:%S %Y"
 END_OF_ACIS_DATA = "End-of-ACIS-data"
 END_OF_ASM_DATA = "End-of-ASM-data"
@@ -30,6 +30,10 @@ BOOL_SPECIFIER = {
     "single": True,
     "double": False,
 }
+
+
+def is_valid_export_version(version: int):
+    return version >= MIN_EXPORT_VERSION and version in ACIS_VERSION
 
 
 class Tags(enum.IntEnum):

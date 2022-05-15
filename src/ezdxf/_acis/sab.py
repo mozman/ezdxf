@@ -20,7 +20,12 @@ from ezdxf._acis.const import (
     DATA_END_MARKERS,
 )
 from ezdxf._acis.hdr import AcisHeader
-from ezdxf._acis.abstract import AbstractEntity, DataLoader, AbstractBuilder
+from ezdxf._acis.abstract import (
+    AbstractEntity,
+    DataLoader,
+    AbstractBuilder,
+    DataExporter,
+)
 
 
 class Token(NamedTuple):
@@ -273,14 +278,17 @@ class SabBuilder(AbstractBuilder):
         self.bodies: List[SabEntity] = []
         self.entities: List[SabEntity] = []
 
-    def dump_sab(self) -> List[bytes]:
-        """Returns the SAB representation of the ACIS file as list of bytes."""
-        return []
+    def dump_sab(self) -> bytearray:
+        """Returns the SAB representation of the ACIS file as bytearray."""
+        return bytearray(b"")
 
     def set_entities(self, entities: List[SabEntity]) -> None:
         """Reset entities and bodies list. (internal API)"""
         self.bodies = [e for e in entities if e.name == "body"]
         self.entities = entities
+
+    def exporter(self) -> DataExporter:
+        return SabDataExporter(self)
 
 
 def build_entities(
@@ -339,3 +347,8 @@ def parse_sab(b: Union[bytes, bytearray, Sequence[bytes]]) -> SabBuilder:
     )
     builder.set_entities(resolve_pointers(entities))
     return builder
+
+
+class SabDataExporter(DataExporter):
+    def __init__(self, builder: SabBuilder):
+        self.builder = builder
