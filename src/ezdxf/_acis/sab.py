@@ -32,6 +32,7 @@ from ezdxf._acis.abstract import (
 )
 if TYPE_CHECKING:
     from .entities import AcisEntity
+    from ezdxf.math import Vec3
 
 
 class Token(NamedTuple):
@@ -303,10 +304,9 @@ class SabBuilder(AbstractBuilder):
 
 class SabExporter(EntityExporter):
     def __init__(self, header: AcisHeader):
+        super().__init__(header.version)
         self.builder = SabBuilder()
         self.builder.header = header
-        self.entity_mapping: Dict[int, SabEntity] = {}
-        self.version = header.version
 
     def make_record(self, entity: AcisEntity) -> SabEntity:
         record = SabEntity(entity.type, id=entity.id)
@@ -316,7 +316,7 @@ class SabExporter(EntityExporter):
         self.builder.entities.append(record)
         return record
 
-    def export(self, entity: AcisEntity) -> None:
+    def export(self, entity: AcisEntity) -> SabEntity:
         record = self.make_record(entity)
         if not entity.attributes.is_none:
             record.attributes = self.make_record(entity.attributes)
@@ -325,6 +325,7 @@ class SabExporter(EntityExporter):
             )
         data_exporter = SabDataExporter(self, record.data)
         entity.export(data_exporter)
+        return record
 
     def dump_sab(self) -> bytearray:
         return self.builder.dump_sab()
@@ -393,3 +394,30 @@ class SabDataExporter(DataExporter):
         self.exporter = exporter
         self.data = data
         self.version = exporter.version
+
+    def write_int(self, value: int, skip_sat=False) -> None:
+        """There are sometimes additional int values in SAB files which are
+        not present in SAT files, maybe reference counters e.g. vertex, coedge.
+        """
+        pass
+
+    def write_double(self, value: float) -> None:
+        pass
+
+    def write_interval(self, value: float) -> None:
+        pass
+
+    def write_vec3(self, value: Vec3) -> None:
+        pass
+
+    def write_bool(self, value: bool, true: str, false: str) -> None:
+        pass
+
+    def write_str(self, value: str) -> None:
+        pass
+
+    def write_literal_str(self, value: str) -> None:
+        pass
+
+    def write_ptr(self, value: AcisEntity) -> None:
+        pass

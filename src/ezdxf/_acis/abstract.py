@@ -1,13 +1,14 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import List, TypeVar, Tuple, Generic, TYPE_CHECKING
+from typing import List, TypeVar, Tuple, Generic, TYPE_CHECKING, Dict
 from abc import ABC, abstractmethod
 from ezdxf._acis.const import NULL_PTR_NAME, MIN_EXPORT_VERSION
 from ezdxf._acis.hdr import AcisHeader
 
 if TYPE_CHECKING:
     from .entities import AcisEntity
+    from ezdxf.math import Vec3
 
 
 T = TypeVar("T", bound="AbstractEntity")
@@ -33,7 +34,7 @@ class DataLoader(ABC):
 
     """
 
-    version: int = 700
+    version: int = MIN_EXPORT_VERSION
 
     @abstractmethod
     def has_data(self) -> bool:
@@ -74,6 +75,41 @@ class DataLoader(ABC):
 class DataExporter(ABC):
     version: int = MIN_EXPORT_VERSION
 
+    @abstractmethod
+    def write_int(self, value: int, skip_sat=False) -> None:
+        """There are sometimes additional int values in SAB files which are
+        not present in SAT files, maybe reference counters e.g. vertex, coedge.
+        """
+        pass
+
+    @abstractmethod
+    def write_double(self, value: float) -> None:
+        pass
+
+    @abstractmethod
+    def write_interval(self, value: float) -> None:
+        pass
+
+    @abstractmethod
+    def write_vec3(self, value: Vec3) -> None:
+        pass
+
+    @abstractmethod
+    def write_bool(self, value: bool, true: str, false: str) -> None:
+        pass
+
+    @abstractmethod
+    def write_str(self, value: str) -> None:
+        pass
+
+    @abstractmethod
+    def write_literal_str(self, value: str) -> None:
+        pass
+
+    @abstractmethod
+    def write_ptr(self, entity: AcisEntity) -> None:
+        pass
+
 
 class AbstractBuilder(Generic[T]):
     header: AcisHeader
@@ -82,8 +118,20 @@ class AbstractBuilder(Generic[T]):
 
 
 class EntityExporter:
-    version: int = MIN_EXPORT_VERSION
+    def __init__(self, version: int):
+        self.entity_mapping: Dict[int, AbstractEntity] = {}
+        self.version = version
 
     @abstractmethod
-    def export(self, entity: AcisEntity) -> None:
+    def export(self, entity: AcisEntity) -> AbstractEntity:
         pass
+
+    def get_record(self, entity: AcisEntity) -> AbstractEntity:
+        uid = id(entity)
+        try:
+            return self.entity_mapping[uid]
+        except KeyError:
+            pass
+        record = self.export(entity)
+        self.entity_mapping[uid] = record
+        return record

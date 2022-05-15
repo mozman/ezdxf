@@ -1,6 +1,8 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
+
+import math
 from typing import (
     List,
     Any,
@@ -25,6 +27,7 @@ from ezdxf._acis.abstract import (
 
 if TYPE_CHECKING:
     from .entities import AcisEntity
+    from ezdxf.math import Vec3
 
 SatRecord = List[str]
 
@@ -131,7 +134,7 @@ class SatDataLoader(DataLoader):
         finite = self.read_bool("F", "I")
         if finite:
             return self.read_double()
-        return float("inf")
+        return math.inf
 
     def read_vec3(self) -> Tuple[float, float, float]:
         x = self.read_double()
@@ -203,10 +206,9 @@ class SatBuilder(AbstractBuilder):
 
 class SatExporter(EntityExporter):
     def __init__(self, header: AcisHeader):
+        super().__init__(header.version)
         self.builder = SatBuilder()
         self.builder.header = header
-        self.entity_mapping: Dict[int, SatEntity] = {}
-        self.version = header.version
 
     def make_record(self, entity: AcisEntity) -> SatEntity:
         record = SatEntity(entity.type, id=entity.id)
@@ -216,7 +218,7 @@ class SatExporter(EntityExporter):
         self.builder.entities.append(record)
         return record
 
-    def export(self, entity: AcisEntity) -> None:
+    def export(self, entity: AcisEntity) -> SatEntity:
         record = self.make_record(entity)
         if not entity.attributes.is_none:
             record.attributes = self.make_record(entity.attributes)
@@ -224,6 +226,7 @@ class SatExporter(EntityExporter):
                 SatDataExporter(self, record.attributes.data)
             )
         entity.export(SatDataExporter(self, record.data))
+        return record
 
     def dump_sat(self) -> List[str]:
         return self.builder.dump_sat()
@@ -383,3 +386,38 @@ class SatDataExporter(DataExporter):
         self.exporter = exporter
         self.data = data
         self.version = exporter.version
+
+    def write_int(self, value: int, skip_sat=False) -> None:
+        """There are sometimes additional int values in SAB files which are
+        not present in SAT files, maybe reference counters e.g. vertex, coedge.
+        """
+        if not skip_sat:
+            self.data.append(str(value))
+
+    def write_double(self, value: float) -> None:
+        self.data.append(str(value))
+
+    def write_interval(self, value: float) -> None:
+        if math.isinf(value):
+            self.data.append("I")
+        else:
+            self.data.append("F")
+            self.write_double(value)
+
+    def write_vec3(self, value: Vec3) -> None:
+        self.write_double(value.x)
+        self.write_double(value.y)
+        self.write_double(value.z)
+
+    def write_bool(self, value: bool, true: str, false: str) -> None:
+        self.data.append(true if value else false)
+
+    def write_str(self, value: str) -> None:
+        self.data.append(f"@{len(value)}")
+        self.data.append(str(value))
+
+    def write_literal_str(self, value: str) -> None:
+        self.write_str(value)  # just for SAB files important
+
+    def write_ptr(self, entity: AcisEntity) -> None:
+        self.data.append(self.exporter.get_record(entity))
