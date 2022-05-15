@@ -175,6 +175,7 @@ class TestEdge:
 
     def test_edge_has_an_end_vertex(self, edge):
         assert edge.end_vertex.is_none is False
+
     # start- and end parameter do not exist in ACIS-400
 
     def test_sense_of_edge_is_forward(self, edge):
@@ -254,18 +255,18 @@ class TestExportSab700:
 
 class TestExportTransform:
     @pytest.fixture(scope="class")
-    def sat_exporter(self):
+    def header(self):
         header = hdr.AcisHeader()
         header.version = 700
-        exporter = sat.SatExporter(header)
-        return exporter
+        return header
 
     @pytest.fixture(scope="class")
-    def sab_exporter(self):
-        header = hdr.AcisHeader()
-        header.version = 700
-        exporter = sab.SabExporter(header)
-        return exporter
+    def sat_exporter(self, header):
+        return sat.SatExporter(header)
+
+    @pytest.fixture(scope="class")
+    def sab_exporter(self, header):
+        return sab.SabExporter(header)
 
     def test_export_sat_identity_matrix(self, sat_exporter):
         data = []
@@ -273,7 +274,10 @@ class TestExportTransform:
         t = entities.Transform()
         t.matrix = Matrix44()
         t.export(exporter)
-        assert " ".join(data) == "1 0 0 0 1 0 0 0 1 0 0 0 1 no_rotate no_reflect no_shear"
+        assert (
+            " ".join(data)
+            == "1 0 0 0 1 0 0 0 1 0 0 0 1 no_rotate no_reflect no_shear"
+        )
 
     def test_export_sab_identity_matrix(self, sab_exporter):
         data = []
@@ -281,7 +285,10 @@ class TestExportTransform:
         t = entities.Transform()
         t.matrix = Matrix44()
         t.export(exporter)
-        assert data[0] == (const.Tags.LITERAL_STR , "1 0 0 0 1 0 0 0 1 0 0 0 1 no_rotate no_reflect no_shear")
+        assert data[0] == (
+            const.Tags.LITERAL_STR,
+            "1 0 0 0 1 0 0 0 1 0 0 0 1 no_rotate no_reflect no_shear",
+        )
 
 
 if __name__ == "__main__":
