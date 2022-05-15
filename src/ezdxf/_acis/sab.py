@@ -12,7 +12,6 @@ from typing import (
     cast,
     Tuple,
     TYPE_CHECKING,
-    Dict,
 )
 from datetime import datetime
 import struct
@@ -21,6 +20,8 @@ from ezdxf._acis.const import (
     DATE_FMT,
     Tags,
     DATA_END_MARKERS,
+    MIN_EXPORT_VERSION,
+    ExportError,
 )
 from ezdxf._acis.hdr import AcisHeader
 from ezdxf._acis.abstract import (
@@ -302,21 +303,17 @@ class SabBuilder(AbstractBuilder):
         self.entities = entities
 
 
-class SabExporter(EntityExporter):
-    def __init__(self, header: AcisHeader):
-        super().__init__(header.version)
-        self.builder = SabBuilder()
-        self.builder.header = header
-
+class SabExporter(EntityExporter[SabEntity]):
     def make_record(self, entity: AcisEntity) -> SabEntity:
         record = SabEntity(entity.type, id=entity.id)
-        self.entity_mapping[id(entity)] = record
-        if record.name == "body":
-            self.builder.bodies.append(record)
-        self.builder.entities.append(record)
+        self.exported_entities[id(entity)] = record
         return record
 
     def export(self, entity: AcisEntity) -> SabEntity:
+        try:
+            return self.exported_entities[id(entity)]
+        except KeyError:
+            pass
         record = self.make_record(entity)
         if not entity.attributes.is_none:
             record.attributes = self.export(entity.attributes)
@@ -324,7 +321,10 @@ class SabExporter(EntityExporter):
         return record
 
     def dump_sab(self) -> bytearray:
-        return self.builder.dump_sab()
+        builder = SabBuilder()
+        builder.header = self.header
+        builder.set_entities(list(self.exported_entities.values()))
+        return builder.dump_sab()
 
 
 def build_entities(
@@ -387,9 +387,9 @@ def parse_sab(b: Union[bytes, bytearray, Sequence[bytes]]) -> SabBuilder:
 
 class SabDataExporter(DataExporter):
     def __init__(self, exporter: SabExporter, data: SabRecord):
+        self.version = exporter.version
         self.exporter = exporter
         self.data = data
-        self.version = exporter.version
 
     def write_int(self, value: int, skip_sat=False) -> None:
         """There are sometimes additional int values in SAB files which are

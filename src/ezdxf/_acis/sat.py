@@ -15,7 +15,7 @@ from typing import (
 )
 from datetime import datetime
 from ezdxf._acis import const
-from ezdxf._acis.const import ParsingError, InvalidLinkStructure
+from ezdxf._acis.const import ParsingError, InvalidLinkStructure, ExportError, MIN_EXPORT_VERSION
 from ezdxf._acis.hdr import AcisHeader
 from ezdxf._acis.abstract import (
     AbstractEntity,
@@ -204,21 +204,17 @@ class SatBuilder(AbstractBuilder):
         self.entities = entities
 
 
-class SatExporter(EntityExporter):
-    def __init__(self, header: AcisHeader):
-        super().__init__(header.version)
-        self.builder = SatBuilder()
-        self.builder.header = header
-
+class SatExporter(EntityExporter[SatEntity]):
     def make_record(self, entity: AcisEntity) -> SatEntity:
         record = SatEntity(entity.type, id=entity.id)
-        self.entity_mapping[id(entity)] = record
-        if record.name == "body":
-            self.builder.bodies.append(record)
-        self.builder.entities.append(record)
+        self.exported_entities[id(entity)] = record
         return record
 
     def export(self, entity: AcisEntity) -> SatEntity:
+        try:
+            return self.exported_entities[id(entity)]
+        except KeyError:
+            pass
         record = self.make_record(entity)
         if not entity.attributes.is_none:
             record.attributes = self.export(entity.attributes)
@@ -226,7 +222,10 @@ class SatExporter(EntityExporter):
         return record
 
     def dump_sat(self) -> List[str]:
-        return self.builder.dump_sat()
+        builder = SatBuilder()
+        builder.header = self.header
+        builder.set_entities(list(self.exported_entities.values()))
+        return builder.dump_sat()
 
 
 def build_str_records(entities: List[SatEntity], version: int) -> Iterator[str]:
@@ -380,9 +379,9 @@ def parse_sat(s: Union[str, Sequence[str]]) -> SatBuilder:
 
 class SatDataExporter(DataExporter):
     def __init__(self, exporter: SatExporter, data: List[Any]):
+        self.version = exporter.version
         self.exporter = exporter
         self.data = data
-        self.version = exporter.version
 
     def write_int(self, value: int, skip_sat=False) -> None:
         """There are sometimes additional int values in SAB files which are
@@ -396,9 +395,9 @@ class SatDataExporter(DataExporter):
 
     def write_interval(self, value: float) -> None:
         if math.isinf(value):
-            self.data.append("I")
+            self.data.append("I")  # infinite
         else:
-            self.data.append("F")
+            self.data.append("F")  # finite
             self.write_double(value)
 
     def write_vec3(self, value: Vec3) -> None:
@@ -417,4 +416,4 @@ class SatDataExporter(DataExporter):
         self.write_str(value)  # just for SAB files important
 
     def write_ptr(self, entity: AcisEntity) -> None:
-        self.data.append(self.exporter.get_record(entity))
+        self.data.append(self.exporter.export(entity))

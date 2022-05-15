@@ -117,21 +117,12 @@ class AbstractBuilder(Generic[T]):
     entities: List[T]
 
 
-class EntityExporter:
-    def __init__(self, version: int):
-        self.entity_mapping: Dict[int, AbstractEntity] = {}
-        self.version = version
+class EntityExporter(Generic[T]):
+    def __init__(self, header: AcisHeader):
+        self.header = header
+        self.version = header.version
+        self.exported_entities: Dict[int, T] = {}
 
     @abstractmethod
-    def export(self, entity: AcisEntity) -> AbstractEntity:
+    def export(self, entity: AcisEntity) -> T:
         pass
-
-    def get_record(self, entity: AcisEntity) -> AbstractEntity:
-        uid = id(entity)
-        try:
-            return self.entity_mapping[uid]
-        except KeyError:
-            pass
-        record = self.export(entity)
-        self.entity_mapping[uid] = record
-        return record
