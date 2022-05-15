@@ -319,12 +319,8 @@ class SabExporter(EntityExporter):
     def export(self, entity: AcisEntity) -> SabEntity:
         record = self.make_record(entity)
         if not entity.attributes.is_none:
-            record.attributes = self.make_record(entity.attributes)
-            entity.attributes.export(
-                SabDataExporter(self, record.attributes.data)
-            )
-        data_exporter = SabDataExporter(self, record.data)
-        entity.export(data_exporter)
+            record.attributes = self.export(entity.attributes)
+        entity.export(SabDataExporter(self, record.data))
         return record
 
     def dump_sab(self) -> bytearray:

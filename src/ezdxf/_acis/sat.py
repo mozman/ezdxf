@@ -221,10 +221,7 @@ class SatExporter(EntityExporter):
     def export(self, entity: AcisEntity) -> SatEntity:
         record = self.make_record(entity)
         if not entity.attributes.is_none:
-            record.attributes = self.make_record(entity.attributes)
-            entity.attributes.export(
-                SatDataExporter(self, record.attributes.data)
-            )
+            record.attributes = self.export(entity.attributes)
         entity.export(SatDataExporter(self, record.data))
         return record
 
