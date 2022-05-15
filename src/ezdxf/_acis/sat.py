@@ -20,7 +20,7 @@ from ezdxf._acis.abstract import (
     AbstractBuilder,
     DataLoader,
     DataExporter,
-    AbstractExporter,
+    EntityExporter,
 )
 
 if TYPE_CHECKING:
@@ -201,11 +201,12 @@ class SatBuilder(AbstractBuilder):
         self.entities = entities
 
 
-class SatExporter(AbstractExporter):
+class SatExporter(EntityExporter):
     def __init__(self, header: AcisHeader):
         self.builder = SatBuilder()
         self.builder.header = header
         self.entity_mapping: Dict[int, SatEntity] = {}
+        self.version = header.version
 
     def make_record(self, entity: AcisEntity) -> SatEntity:
         record = SatEntity(entity.type, id=entity.id)
@@ -381,3 +382,4 @@ class SatDataExporter(DataExporter):
     def __init__(self, exporter: SatExporter, data: List[Any]):
         self.exporter = exporter
         self.data = data
+        self.version = exporter.version

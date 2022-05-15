@@ -28,7 +28,7 @@ from ezdxf._acis.abstract import (
     DataLoader,
     AbstractBuilder,
     DataExporter,
-    AbstractExporter,
+    EntityExporter,
 )
 if TYPE_CHECKING:
     from .entities import AcisEntity
@@ -301,11 +301,12 @@ class SabBuilder(AbstractBuilder):
         self.entities = entities
 
 
-class SabExporter(AbstractExporter):
+class SabExporter(EntityExporter):
     def __init__(self, header: AcisHeader):
         self.builder = SabBuilder()
         self.builder.header = header
         self.entity_mapping: Dict[int, SabEntity] = {}
+        self.version = header.version
 
     def make_record(self, entity: AcisEntity) -> SabEntity:
         record = SabEntity(entity.type, id=entity.id)
@@ -391,3 +392,4 @@ class SabDataExporter(DataExporter):
     def __init__(self, exporter: SabExporter, data: SabRecord):
         self.exporter = exporter
         self.data = data
+        self.version = exporter.version

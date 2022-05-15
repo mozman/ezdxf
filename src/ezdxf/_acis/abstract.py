@@ -3,7 +3,7 @@
 from __future__ import annotations
 from typing import List, TypeVar, Tuple, Generic, TYPE_CHECKING
 from abc import ABC, abstractmethod
-from ezdxf._acis.const import NULL_PTR_NAME
+from ezdxf._acis.const import NULL_PTR_NAME, MIN_EXPORT_VERSION
 from ezdxf._acis.hdr import AcisHeader
 
 if TYPE_CHECKING:
@@ -72,7 +72,7 @@ class DataLoader(ABC):
 
 
 class DataExporter(ABC):
-    pass
+    version: int = MIN_EXPORT_VERSION
 
 
 class AbstractBuilder(Generic[T]):
@@ -81,7 +81,9 @@ class AbstractBuilder(Generic[T]):
     entities: List[T]
 
 
-class AbstractExporter:
+class EntityExporter:
+    version: int = MIN_EXPORT_VERSION
+
     @abstractmethod
     def export(self, entity: AcisEntity) -> None:
         pass
