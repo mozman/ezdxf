@@ -1,6 +1,8 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
+
+import math
 from typing import (
     NamedTuple,
     Any,
@@ -29,6 +31,7 @@ from ezdxf._acis.abstract import (
     DataExporter,
     EntityExporter,
 )
+
 if TYPE_CHECKING:
     from .entities import AcisEntity
     from ezdxf.math import Vec3
@@ -242,7 +245,7 @@ class SabDataLoader(DataLoader):
         finite = self.read_bool("F", "I")
         if finite:
             return self.read_double()
-        return float("inf")
+        return math.inf
 
     def read_vec3(self) -> Tuple[float, float, float]:
         token = self.data[self.index]
@@ -301,10 +304,13 @@ class SabBuilder(AbstractBuilder):
 class SabExporter(EntityExporter[SabEntity]):
     def make_record(self, entity: AcisEntity) -> SabEntity:
         record = SabEntity(entity.type, id=entity.id)
+        record.attributes = NULL_PTR
         self.exported_entities[id(entity)] = record
         return record
 
     def export(self, entity: AcisEntity) -> SabEntity:
+        if entity.is_none:
+            return NULL_PTR
         try:
             return self.exported_entities[id(entity)]
         except KeyError:
@@ -381,7 +387,7 @@ def parse_sab(b: Union[bytes, bytearray, Sequence[bytes]]) -> SabBuilder:
 
 
 class SabDataExporter(DataExporter):
-    def __init__(self, exporter: SabExporter, data: SabRecord):
+    def __init__(self, exporter: SabExporter, data: List[Token]):
         self.version = exporter.version
         self.exporter = exporter
         self.data = data
@@ -390,25 +396,35 @@ class SabDataExporter(DataExporter):
         """There are sometimes additional int values in SAB files which are
         not present in SAT files, maybe reference counters e.g. vertex, coedge.
         """
-        pass
+        self.data.append(Token(Tags.INT, value))
 
     def write_double(self, value: float) -> None:
-        pass
+        self.data.append(Token(Tags.DOUBLE, value))
 
     def write_interval(self, value: float) -> None:
-        pass
+        if math.isinf(value):
+            self.data.append(Token(Tags.BOOL_FALSE, False))  # infinite "I"
+        else:
+            self.data.append(Token(Tags.BOOL_TRUE, True))  # finite "F"
+            self.write_double(value)
 
-    def write_vec3(self, value: Vec3) -> None:
-        pass
+    def write_loc_vec3(self, value: Vec3) -> None:
+        self.data.append(Token(Tags.LOCATION_VEC, value))
+
+    def write_dir_vec3(self, value: Vec3) -> None:
+        self.data.append(Token(Tags.DIRECTION_VEC, value))
 
     def write_bool(self, value: bool, true: str, false: str) -> None:
-        pass
+        if value:
+            self.data.append(Token(Tags.BOOL_TRUE, True))
+        else:
+            self.data.append(Token(Tags.BOOL_FALSE, False))
 
     def write_str(self, value: str) -> None:
-        pass
+        self.data.append(Token(Tags.STR, value))
 
     def write_literal_str(self, value: str) -> None:
-        pass
+        self.data.append(Token(Tags.LITERAL_STR, value))
 
-    def write_ptr(self, value: AcisEntity) -> None:
-        pass
+    def write_ptr(self, entity: AcisEntity) -> None:
+        self.data.append(Token(Tags.POINTER, self.exporter.export(entity)))

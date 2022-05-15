@@ -3,6 +3,8 @@
 
 import pytest
 from ezdxf.acis import load, export_sat, export_sab, ExportError
+from ezdxf._acis import sat, sab, entities, hdr, const
+from ezdxf.math import Matrix44
 import math
 
 
@@ -225,16 +227,61 @@ class TestPoint:
         assert len(vertices) == 8
 
 
+@pytest.fixture(scope="module")
+def prism700(prism_sat):
+    return load(prism_sat)
+
+
 class TestExportSat700:
-    def test_export_rejects_unsupported_acis_versions(self, body):
+    def test_export_rejects_unsupported_acis_versions(self, prism700):
         with pytest.raises(ExportError):
-            export_sat([body], version=400)
+            export_sat(prism700, version=400)
+
+    def test_export_acis_700(self, prism700):
+        data = export_sat(prism700, version=700)
+        assert len(data) == 117
+
+    def test_reload_exported_acis_700(self, prism700):
+        bodies = load(export_sat(prism700, version=700))
+        assert len(bodies) == 1
 
 
 class TestExportSab700:
-    def test_export_rejects_unsupported_acis_versions(self, body):
+    def test_export_rejects_unsupported_acis_versions(self, prism700):
         with pytest.raises(ExportError):
-            export_sab([body], version=400)
+            export_sab(prism700, version=400)
+
+
+class TestExportTransform:
+    @pytest.fixture(scope="class")
+    def sat_exporter(self):
+        header = hdr.AcisHeader()
+        header.version = 700
+        exporter = sat.SatExporter(header)
+        return exporter
+
+    @pytest.fixture(scope="class")
+    def sab_exporter(self):
+        header = hdr.AcisHeader()
+        header.version = 700
+        exporter = sab.SabExporter(header)
+        return exporter
+
+    def test_export_sat_identity_matrix(self, sat_exporter):
+        data = []
+        exporter = sat.SatDataExporter(sat_exporter, data)
+        t = entities.Transform()
+        t.matrix = Matrix44()
+        t.export(exporter)
+        assert " ".join(data) == "1 0 0 0 1 0 0 0 1 0 0 0 1 no_rotate no_reflect no_shear"
+
+    def test_export_sab_identity_matrix(self, sab_exporter):
+        data = []
+        exporter = sab.SabDataExporter(sab_exporter, data)
+        t = entities.Transform()
+        t.matrix = Matrix44()
+        t.export(exporter)
+        assert data[0] == (const.Tags.LITERAL_STR , "1 0 0 0 1 0 0 0 1 0 0 0 1 no_rotate no_reflect no_shear")
 
 
 if __name__ == "__main__":

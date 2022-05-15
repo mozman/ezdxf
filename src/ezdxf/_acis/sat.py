@@ -204,10 +204,13 @@ class SatBuilder(AbstractBuilder):
 class SatExporter(EntityExporter[SatEntity]):
     def make_record(self, entity: AcisEntity) -> SatEntity:
         record = SatEntity(entity.type, id=entity.id)
+        record.attributes = NULL_PTR
         self.exported_entities[id(entity)] = record
         return record
 
     def export(self, entity: AcisEntity) -> SatEntity:
+        if entity.is_none:
+            return NULL_PTR
         try:
             return self.exported_entities[id(entity)]
         except KeyError:
@@ -388,7 +391,7 @@ class SatDataExporter(DataExporter):
             self.data.append(str(value))
 
     def write_double(self, value: float) -> None:
-        self.data.append(str(value))
+        self.data.append(f"{value:g}")
 
     def write_interval(self, value: float) -> None:
         if math.isinf(value):
@@ -397,7 +400,12 @@ class SatDataExporter(DataExporter):
             self.data.append("F")  # finite
             self.write_double(value)
 
-    def write_vec3(self, value: Vec3) -> None:
+    def write_loc_vec3(self, value: Vec3) -> None:
+        self.write_double(value.x)
+        self.write_double(value.y)
+        self.write_double(value.z)
+
+    def write_dir_vec3(self, value: Vec3) -> None:
         self.write_double(value.x)
         self.write_double(value.y)
         self.write_double(value.z)

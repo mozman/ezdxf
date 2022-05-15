@@ -156,8 +156,8 @@ class Transform(AcisEntity):
     matrix = Matrix44()
 
     def restore_data(self, loader: DataLoader) -> None:
-        # Here comes an ugly hack, but SAT and SAB store the matrix data in a
-        # quiet different way:
+        # Here comes an ugly hack, but SAT and SAB store the matrix data in
+        # quiet different ways:
         if isinstance(loader, sab.SabDataLoader):
             # SAB matrix data is stored as a literal string and looks like a SAT
             # record: "1 0 0 0 1 0 0 0 1 0 0 0 1 no_rotate no_reflect no_shear"
@@ -172,6 +172,35 @@ class Transform(AcisEntity):
         data.append(1.0)
         self.matrix = Matrix44(data)
 
+    def write_common(self, exporter: DataExporter) -> None:
+        pass
+
+    def write_data(self, exporter: DataExporter) -> None:
+        # Here comes an ugly hack, but SAT and SAB store the matrix data in
+        # quiet different ways:
+        sab_exporter = None
+        data: List[str] = []
+        if isinstance(exporter, sab.SabDataExporter):
+            sab_exporter = exporter
+            fake = sat.SatExporter(exporter.exporter.header)
+            exporter = sat.SatDataExporter(fake, data)
+
+        for row in self.matrix.rows():
+            exporter.write_double(row[0])
+            exporter.write_double(row[1])
+            exporter.write_double(row[2])
+        test_vector = Vec3(1, 0, 0)
+        result = self.matrix.transform_direction(test_vector)
+        # A uniform scaling in x- y- and z-axis is assumed:
+        exporter.write_double(round(result.magnitude, 6))  # scale factor
+        is_rotated = not result.normalize().isclose(test_vector)
+        exporter.write_bool(is_rotated, "rotate", "no_rotate")
+        exporter.write_bool(False, "reflect", "no_reflect")
+        exporter.write_bool(False, "shear", "no_shear")
+        # SAB stores the SAT transformation data as literal string
+        if isinstance(sab_exporter, sab.SabDataExporter):
+            sab_exporter.write_literal_str(" ".join(data))
+
 
 class SupportsPattern(AcisEntity):
     pattern: "Pattern" = NONE_REF
@@ -181,6 +210,9 @@ class SupportsPattern(AcisEntity):
     ) -> None:
         if loader.version >= Features.PATTERN:
             self.pattern = restore_entity("pattern", loader, entity_factory)
+
+    def write_common(self, exporter: DataExporter) -> None:
+        exporter.write_ptr(self.pattern)
 
 
 @register
@@ -198,6 +230,12 @@ class Body(SupportsPattern):
         self.lump = restore_entity("lump", loader, entity_factory)
         self.wire = restore_entity("wire", loader, entity_factory)
         self.transform = restore_entity("transform", loader, entity_factory)
+
+    def write_common(self, exporter: DataExporter) -> None:
+        super().write_common(exporter)
+        exporter.write_ptr(self.lump)
+        exporter.write_ptr(self.wire)
+        exporter.write_ptr(self.transform)
 
 
 @register
@@ -225,6 +263,12 @@ class Lump(SupportsPattern):
         self.shell = restore_entity("shell", loader, entity_factory)
         self.body = restore_entity("body", loader, entity_factory)
 
+    def write_common(self, exporter: DataExporter) -> None:
+        super().write_common(exporter)
+        exporter.write_ptr(self.next_lump)
+        exporter.write_ptr(self.shell)
+        exporter.write_ptr(self.body)
+
 
 @register
 class Shell(SupportsPattern):
@@ -244,6 +288,14 @@ class Shell(SupportsPattern):
         self.face = restore_entity("face", loader, entity_factory)
         self.wire = restore_entity("wire", loader, entity_factory)
         self.lump = restore_entity("lump", loader, entity_factory)
+
+    def write_common(self, exporter: DataExporter) -> None:
+        super().write_common(exporter)
+        exporter.write_ptr(self.next_shell)
+        exporter.write_ptr(self.subshell)
+        exporter.write_ptr(self.face)
+        exporter.write_ptr(self.wire)
+        exporter.write_ptr(self.lump)
 
 
 @register
@@ -277,6 +329,18 @@ class Face(SupportsPattern):
         if self.double_sided:
             self.containment = loader.read_bool("in", "out")
 
+    def write_common(self, exporter: DataExporter) -> None:
+        super().write_common(exporter)
+        exporter.write_ptr(self.next_face)
+        exporter.write_ptr(self.loop)
+        exporter.write_ptr(self.shell)
+        exporter.write_ptr(self.subshell)
+        exporter.write_ptr(self.surface)
+        exporter.write_bool(self.sense, "reversed", "forward")
+        exporter.write_bool(self.double_sided, "double", "single")
+        if self.double_sided:
+            exporter.write_bool(self.containment, "in", "out")
+
 
 @register
 class Surface(SupportsPattern):
@@ -287,6 +351,12 @@ class Surface(SupportsPattern):
     def restore_data(self, loader: DataLoader) -> None:
         self.u_bounds = loader.read_interval(), loader.read_interval()
         self.v_bounds = loader.read_interval(), loader.read_interval()
+
+    def write_data(self, exporter: DataExporter):
+        exporter.write_interval(self.u_bounds[0])
+        exporter.write_interval(self.u_bounds[1])
+        exporter.write_interval(self.v_bounds[0])
+        exporter.write_interval(self.v_bounds[1])
 
 
 @register
@@ -305,6 +375,13 @@ class Plane(Surface):
         self.normal = Vec3(loader.read_vec3())
         self.u_dir = Vec3(loader.read_vec3())
         self.reverse_v = loader.read_bool("reverse_v", "forward_v")
+
+    def write_common(self, exporter: DataExporter) -> None:
+        super().write_common(exporter)
+        exporter.write_loc_vec3(self.origin)
+        exporter.write_dir_vec3(self.normal)
+        exporter.write_dir_vec3(self.u_dir)
+        exporter.write_bool(self.reverse_v, "reverse_v", "forward_v")
 
     @property
     def v_dir(self):
@@ -328,6 +405,12 @@ class Loop(SupportsPattern):
         self.next_loop = restore_entity("loop", loader, entity_factory)
         self.coedge = restore_entity("coedge", loader, entity_factory)
         self.face = restore_entity("face", loader, entity_factory)
+
+    def write_common(self, exporter: DataExporter) -> None:
+        super().write_common(exporter)
+        exporter.write_ptr(self.next_loop)
+        exporter.write_ptr(self.coedge)
+        exporter.write_ptr(self.face)
 
 
 @register
@@ -356,6 +439,18 @@ class Coedge(SupportsPattern):
         self.loop = restore_entity("loop", loader, entity_factory)
         self.unknown = loader.read_int(skip_sat=0)
         self.pcurve = restore_entity("pcurve", loader, entity_factory)
+
+    def write_common(self, exporter: DataExporter) -> None:
+        super().write_common(exporter)
+        exporter.write_ptr(self.next_coedge)
+        exporter.write_ptr(self.prev_coedge)
+        exporter.write_ptr(self.partner_coedge)
+        exporter.write_ptr(self.edge)
+        exporter.write_bool(self.sense, "reversed", "forward")
+        exporter.write_ptr(self.loop)
+        # TODO: write_int() ?
+        exporter.write_int(0, skip_sat=True)
+        exporter.write_ptr(self.pcurve)
 
 
 @register
@@ -388,6 +483,18 @@ class Edge(SupportsPattern):
         if loader.version >= Features.TOL_MODELING:
             self.convexity = loader.read_str()
 
+    def write_common(self, exporter: DataExporter) -> None:
+        # write support >= version 700 only
+        super().write_common(exporter)
+        exporter.write_ptr(self.start_vertex)
+        exporter.write_double(self.start_param)
+        exporter.write_ptr(self.end_vertex)
+        exporter.write_double(self.end_param)
+        exporter.write_ptr(self.coedge)
+        exporter.write_ptr(self.curve)
+        exporter.write_bool(self.sense, "reversed", "forward")
+        exporter.write_str(self.convexity)
+
 
 @register
 class PCurve(SupportsPattern):  # not implemented
@@ -409,6 +516,13 @@ class Vertex(SupportsPattern):
         self.unknown = loader.read_int(skip_sat=0)
         self.point = restore_entity("point", loader, entity_factory)
 
+    def write_common(self, exporter: DataExporter) -> None:
+        super().write_common(exporter)
+        exporter.write_ptr(self.edge)
+        # TODO: write_int() ?
+        exporter.write_int(0, skip_sat=True)
+        exporter.write_ptr(self.point)
+
 
 @register
 class Curve(SupportsPattern):
@@ -417,6 +531,10 @@ class Curve(SupportsPattern):
 
     def restore_data(self, loader: DataLoader) -> None:
         self.bounds = loader.read_interval(), loader.read_interval()
+
+    def write_data(self, exporter: DataExporter) -> None:
+        exporter.write_interval(self.bounds[0])
+        exporter.write_interval(self.bounds[1])
 
 
 @register
@@ -430,6 +548,11 @@ class StraightCurve(Curve):
         self.direction = Vec3(loader.read_vec3())
         super().restore_data(loader)
 
+    def write_data(self, exporter: DataExporter) -> None:
+        exporter.write_loc_vec3(self.origin)
+        exporter.write_dir_vec3(self.direction)
+        super().write_data(exporter)
+
 
 @register
 class Point(SupportsPattern):
@@ -438,6 +561,9 @@ class Point(SupportsPattern):
 
     def restore_data(self, loader: DataLoader) -> None:
         self.location = Vec3(loader.read_vec3())
+
+    def write_data(self, exporter: DataExporter) -> None:
+        exporter.write_loc_vec3(self.location)
 
 
 class FileLoader(abc.ABC):

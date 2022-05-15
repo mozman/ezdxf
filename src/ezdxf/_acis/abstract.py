@@ -91,7 +91,11 @@ class DataExporter(ABC):
         pass
 
     @abstractmethod
-    def write_vec3(self, value: Vec3) -> None:
+    def write_loc_vec3(self, value: Vec3) -> None:
+        pass
+
+    @abstractmethod
+    def write_dir_vec3(self, value: Vec3) -> None:
         pass
 
     @abstractmethod
