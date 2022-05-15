@@ -173,33 +173,27 @@ class Transform(AcisEntity):
         self.matrix = Matrix44(data)
 
     def write_common(self, exporter: DataExporter) -> None:
-        pass
+        def write_double(value: float):
+            data.append(f"{value:g}")
 
-    def write_data(self, exporter: DataExporter) -> None:
-        # Here comes an ugly hack, but SAT and SAB store the matrix data in
-        # quiet different ways:
-        sab_exporter = None
         data: List[str] = []
-        if isinstance(exporter, sab.SabDataExporter):
-            sab_exporter = exporter
-            fake = sat.SatExporter(exporter.exporter.header)
-            exporter = sat.SatDataExporter(fake, data)
-
         for row in self.matrix.rows():
-            exporter.write_double(row[0])
-            exporter.write_double(row[1])
-            exporter.write_double(row[2])
+            write_double(row[0])
+            write_double(row[1])
+            write_double(row[2])
         test_vector = Vec3(1, 0, 0)
         result = self.matrix.transform_direction(test_vector)
         # A uniform scaling in x- y- and z-axis is assumed:
-        exporter.write_double(round(result.magnitude, 6))  # scale factor
+        write_double(round(result.magnitude, 6))  # scale factor
         is_rotated = not result.normalize().isclose(test_vector)
-        exporter.write_bool(is_rotated, "rotate", "no_rotate")
-        exporter.write_bool(False, "reflect", "no_reflect")
-        exporter.write_bool(False, "shear", "no_shear")
-        # SAB stores the SAT transformation data as literal string
-        if isinstance(sab_exporter, sab.SabDataExporter):
-            sab_exporter.write_literal_str(" ".join(data))
+        data.append("rotate" if is_rotated else "no_rotate")
+        data.append("no_reflect")
+        data.append("no_shear")
+        # SAT and SAB store the matrix data in quiet different ways:
+        if isinstance(exporter, sat.SatDataExporter):
+            exporter.data.extend(data)
+        else:  # SAB stores the SAT transformation data as literal string
+            exporter.write_literal_str(" ".join(data))
 
 
 class SupportsPattern(AcisEntity):
