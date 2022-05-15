@@ -1,10 +1,14 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import List, TypeVar, Tuple, Generic
+from typing import List, TypeVar, Tuple, Generic, TYPE_CHECKING
 from abc import ABC, abstractmethod
 from ezdxf._acis.const import NULL_PTR_NAME
 from ezdxf._acis.hdr import AcisHeader
+
+if TYPE_CHECKING:
+    from .entities import AcisEntity
+
 
 T = TypeVar("T", bound="AbstractEntity")
 
@@ -66,6 +70,7 @@ class DataLoader(ABC):
     def read_ptr(self) -> AbstractEntity:
         pass
 
+
 class DataExporter(ABC):
     pass
 
@@ -75,8 +80,8 @@ class AbstractBuilder(Generic[T]):
     bodies: List[T]
     entities: List[T]
 
+
+class AbstractExporter:
     @abstractmethod
-    def exporter(self) -> DataExporter:
+    def export(self, entity: AcisEntity) -> None:
         pass
-
-

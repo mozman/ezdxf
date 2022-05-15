@@ -6,7 +6,7 @@ import abc
 
 from . import sab, sat, const, hdr
 from .const import Features
-from .abstract import DataLoader, AbstractEntity, AbstractBuilder, DataExporter
+from .abstract import DataLoader, AbstractEntity, DataExporter
 from ezdxf.math import Matrix44, Vec3, NULLVEC
 
 Factory = Callable[[AbstractEntity], "AcisEntity"]
@@ -47,18 +47,18 @@ def load(
     raise TypeError(f"invalid type of data: {type(data)}")
 
 
-def export_sat(bodies: Sequence[Body], version: int = 700) -> Sequence[str]:
-    builder = sat.SatBuilder()
-    builder.header = _setup_export_header(version)
-    _export_bodies(bodies, builder)
-    return builder.dump_sat()
+def export_sat(bodies: Sequence[Body], version: int = 700) -> List[str]:
+    exporter = sat.SatExporter(_setup_export_header(version))
+    for body in bodies:
+        exporter.export(body)
+    return exporter.dump_sat()
 
 
 def export_sab(bodies: Sequence[Body], version: int = 700) -> bytearray:
-    builder = sab.SabBuilder()
-    builder.header = _setup_export_header(version)
-    _export_bodies(bodies, builder)
-    return builder.dump_sab()
+    exporter = sab.SabExporter(_setup_export_header(version))
+    for body in bodies:
+        exporter.export(body)
+    return exporter.dump_sab()
 
 
 def _setup_export_header(version) -> hdr.AcisHeader:
@@ -67,13 +67,6 @@ def _setup_export_header(version) -> hdr.AcisHeader:
     header = hdr.AcisHeader()
     header.set_version(version)
     return header
-
-
-def _export_bodies(bodies: Sequence[Body], builder: AbstractBuilder):
-    exporter = builder.exporter()
-    for body in bodies:
-        body.export(exporter)
-        builder.header.n_entities += 1
 
 
 def register(cls: Type["AcisEntity"]):

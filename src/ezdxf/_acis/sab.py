@@ -1,5 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
+from __future__ import annotations
 from typing import (
     NamedTuple,
     Any,
@@ -10,6 +11,8 @@ from typing import (
     Iterable,
     cast,
     Tuple,
+    TYPE_CHECKING,
+    Dict,
 )
 from datetime import datetime
 import struct
@@ -25,7 +28,10 @@ from ezdxf._acis.abstract import (
     DataLoader,
     AbstractBuilder,
     DataExporter,
+    AbstractExporter,
 )
+if TYPE_CHECKING:
+    from .entities import AcisEntity
 
 
 class Token(NamedTuple):
@@ -280,15 +286,47 @@ class SabBuilder(AbstractBuilder):
 
     def dump_sab(self) -> bytearray:
         """Returns the SAB representation of the ACIS file as bytearray."""
+        self.reorder_records()
+        self.header.n_entities = len(self.bodies)
+        self.header.n_records = len(self.entities)
+
         return bytearray(b"")
+
+    def reorder_records(self):
+        pass
 
     def set_entities(self, entities: List[SabEntity]) -> None:
         """Reset entities and bodies list. (internal API)"""
         self.bodies = [e for e in entities if e.name == "body"]
         self.entities = entities
 
-    def exporter(self) -> DataExporter:
-        return SabDataExporter(self)
+
+class SabExporter(AbstractExporter):
+    def __init__(self, header: AcisHeader):
+        self.builder = SabBuilder()
+        self.builder.header = header
+        self.entity_mapping: Dict[int, SabEntity] = {}
+
+    def make_record(self, entity: AcisEntity) -> SabEntity:
+        record = SabEntity(entity.type, id=entity.id)
+        self.entity_mapping[id(entity)] = record
+        if record.name == "body":
+            self.builder.bodies.append(record)
+        self.builder.entities.append(record)
+        return record
+
+    def export(self, entity: AcisEntity) -> None:
+        record = self.make_record(entity)
+        if not entity.attributes.is_none:
+            record.attributes = self.make_record(entity.attributes)
+            entity.attributes.export(
+                SabDataExporter(self, record.attributes.data)
+            )
+        data_exporter = SabDataExporter(self, record.data)
+        entity.export(data_exporter)
+
+    def dump_sab(self) -> bytearray:
+        return self.builder.dump_sab()
 
 
 def build_entities(
@@ -350,5 +388,6 @@ def parse_sab(b: Union[bytes, bytearray, Sequence[bytes]]) -> SabBuilder:
 
 
 class SabDataExporter(DataExporter):
-    def __init__(self, builder: SabBuilder):
-        self.builder = builder
+    def __init__(self, exporter: SabExporter, data: SabRecord):
+        self.exporter = exporter
+        self.data = data

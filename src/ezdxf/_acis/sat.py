@@ -1,11 +1,30 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import List, Any, Sequence, Iterator, Tuple, Union
+from __future__ import annotations
+from typing import (
+    List,
+    Any,
+    Sequence,
+    Iterator,
+    Tuple,
+    Union,
+    TYPE_CHECKING,
+    Dict,
+)
 from datetime import datetime
 from ezdxf._acis import const
 from ezdxf._acis.const import ParsingError, InvalidLinkStructure
 from ezdxf._acis.hdr import AcisHeader
-from ezdxf._acis.abstract import AbstractEntity, AbstractBuilder, DataLoader, DataExporter
+from ezdxf._acis.abstract import (
+    AbstractEntity,
+    AbstractBuilder,
+    DataLoader,
+    DataExporter,
+    AbstractExporter,
+)
+
+if TYPE_CHECKING:
+    from .entities import AcisEntity
 
 SatRecord = List[str]
 
@@ -154,6 +173,7 @@ class SatBuilder(AbstractBuilder):
         self.header = AcisHeader()
         self.bodies: List[SatEntity] = []
         self.entities: List[SatEntity] = []
+        self._export_mapping: Dict[int, SatEntity] = {}
 
     def dump_sat(self) -> List[str]:
         """Returns the text representation of the ACIS file as list of strings
@@ -164,18 +184,49 @@ class SatBuilder(AbstractBuilder):
                 the :attr:`entities` storage
 
         """
+        self.reorder_records()
+        self.header.n_entities = len(self.bodies)
+        self.header.n_records = len(self.entities)
         data = self.header.dumps()
         data.extend(build_str_records(self.entities, self.header.version))
         data.append(const.END_OF_ACIS_DATA + " ")
         return data
+
+    def reorder_records(self):
+        pass
 
     def set_entities(self, entities: List[SatEntity]) -> None:
         """Reset entities and bodies list. (internal API)"""
         self.bodies = [e for e in entities if e.name == "body"]
         self.entities = entities
 
-    def exporter(self) -> DataExporter:
-        return SatDataExporter(self)
+
+class SatExporter(AbstractExporter):
+    def __init__(self, header: AcisHeader):
+        self.builder = SatBuilder()
+        self.builder.header = header
+        self.entity_mapping: Dict[int, SatEntity] = {}
+
+    def make_record(self, entity: AcisEntity) -> SatEntity:
+        record = SatEntity(entity.type, id=entity.id)
+        self.entity_mapping[id(entity)] = record
+        if record.name == "body":
+            self.builder.bodies.append(record)
+        self.builder.entities.append(record)
+        return record
+
+    def export(self, entity: AcisEntity) -> None:
+        record = self.make_record(entity)
+        if not entity.attributes.is_none:
+            record.attributes = self.make_record(entity.attributes)
+            entity.attributes.export(
+                SatDataExporter(self, record.attributes.data)
+            )
+        entity.export(SatDataExporter(self, record.data))
+
+    def dump_sat(self) -> List[str]:
+        return self.builder.dump_sat()
+
 
 def build_str_records(entities: List[SatEntity], version: int) -> Iterator[str]:
     def ptr_str(e: SatEntity) -> str:
@@ -327,5 +378,6 @@ def parse_sat(s: Union[str, Sequence[str]]) -> SatBuilder:
 
 
 class SatDataExporter(DataExporter):
-    def __init__(self, builder: SatBuilder):
-        self.builder = builder
+    def __init__(self, exporter: SatExporter, data: List[Any]):
+        self.exporter = exporter
+        self.data = data
