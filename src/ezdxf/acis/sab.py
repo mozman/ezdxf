@@ -17,6 +17,8 @@ from typing import (
 )
 from datetime import datetime
 import struct
+from ezdxf.math import Vec3
+
 from . import const
 from .const import ParsingError, Tags, InvalidLinkStructure
 from .hdr import AcisHeader
@@ -30,7 +32,6 @@ from .abstract import (
 
 if TYPE_CHECKING:
     from .entities import AcisEntity
-    from ezdxf.math import Vec3
 
 
 class Token(NamedTuple):
@@ -466,6 +467,11 @@ def build_sab_records(entities: List[SabEntity]) -> Iterator[SabRecord]:
 
 
 END_OF_RECORD = bytes([Tags.RECORD_END.value])
+TRUE_RECORD = bytes([Tags.BOOL_TRUE.value])
+FALSE_RECORD = bytes([Tags.BOOL_FALSE.value])
+SUBTYPE_START_RECORD = bytes([Tags.SUBTYPE_START.value])
+SUBTYPE_END_RECORD = bytes([Tags.SUBTYPE_END.value])
+SAB_ENCODING = "utf8"
 
 
 class Encoder:
@@ -475,10 +481,39 @@ class Encoder:
     def write_record(self, record: SabRecord) -> None:
         for token in record:
             self.write_token(token)
-        self.write_end_of_record()
-
-    def write_end_of_record(self):
         self.buffer.append(END_OF_RECORD)
 
     def write_token(self, token: Token) -> None:
-        pass
+        tag = token.tag
+        if tag in (Tags.INT, Tags.POINTER, Tags.ENUM):
+            assert isinstance(token.value, int)
+            self.buffer.append(struct.pack("<BI", tag, token.value))
+        elif tag == Tags.DOUBLE:
+            assert isinstance(token.value, float)
+            self.buffer.append(struct.pack("<Bd", tag, token.value))
+        elif tag == Tags.STR:
+            assert isinstance(token.value, str)
+            data = token.value.encode(encoding=SAB_ENCODING)
+            self.buffer.append(struct.pack("<BB", tag, len(data)) + data)
+        elif tag == Tags.LITERAL_STR:
+            assert isinstance(token.value, str)
+            data = token.value.encode(encoding=SAB_ENCODING)
+            self.buffer.append(struct.pack("<BI", tag, len(data)) + data)
+        elif tag in (Tags.ENTITY_TYPE, Tags.ENTITY_TYPE_EX):
+            assert isinstance(token.value, str)
+            data = token.value.encode(encoding=SAB_ENCODING)
+            self.buffer.append(struct.pack("<BB", tag, len(data)) + data)
+        elif tag in (Tags.LOCATION_VEC, Tags.DIRECTION_VEC):
+            v = token.value
+            assert isinstance(v, Vec3)
+            self.buffer.append(struct.pack("<B3d", tag, v.x, v.y, v.z))
+        elif tag == Tags.BOOL_TRUE:
+            self.buffer.append(TRUE_RECORD)
+        elif tag == Tags.BOOL_FALSE:
+            self.buffer.append(FALSE_RECORD)
+        elif tag == Tags.SUBTYPE_START:
+            self.buffer.append(SUBTYPE_START_RECORD)
+        elif tag == Tags.SUBTYPE_END:
+            self.buffer.append(SUBTYPE_END_RECORD)
+        else:
+            raise ValueError(f"invalid tag in token: {token}")
