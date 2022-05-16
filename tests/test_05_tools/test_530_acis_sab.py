@@ -3,7 +3,7 @@
 
 import pytest
 from datetime import datetime
-from ezdxf._acis import sab
+from ezdxf.acis import sab
 
 T = sab.Tags
 

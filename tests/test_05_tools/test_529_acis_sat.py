@@ -2,12 +2,11 @@
 #  License: MIT License
 import pytest
 from datetime import datetime
-from ezdxf import acis
-from ezdxf._acis import sat
+from ezdxf.acis import sat, hdr
 
 
 def test_default_header():
-    header = acis.AcisHeader()
+    header = hdr.AcisHeader()
     assert header.version == 400
     assert header.acis_version == "ACIS 4.00 NT"
     assert header.n_entities == 0
@@ -37,7 +36,7 @@ HEADER_20800 = """20800 0 1 0
     ],
 )
 def test_dump_header_string(ver, s):
-    header = acis.AcisHeader()
+    header = hdr.AcisHeader()
     header.set_version(ver)
     header.creation_date = datetime(2022, 1, 1, 10, 00)
     header.n_entities = 1
@@ -160,7 +159,7 @@ def test_build_entities(prism_sat):
 class TestAcisBuilder:
     @pytest.fixture(scope="class")
     def builder(self, prism_sat):
-        return acis.parse_sat(prism_sat)
+        return sat.parse_sat(prism_sat)
 
     def test_parsing_result(self, builder):
         assert builder.header.version == 700

@@ -3,8 +3,8 @@
 from __future__ import annotations
 from typing import List, TypeVar, Tuple, Generic, TYPE_CHECKING, Dict
 from abc import ABC, abstractmethod
-from ezdxf._acis.const import NULL_PTR_NAME, MIN_EXPORT_VERSION
-from ezdxf._acis.hdr import AcisHeader
+from .const import NULL_PTR_NAME, MIN_EXPORT_VERSION
+from .hdr import AcisHeader
 
 if TYPE_CHECKING:
     from .entities import AcisEntity

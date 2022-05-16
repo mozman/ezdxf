@@ -1,8 +1,8 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-# API to the ezdxf._acis package
+# Public API module (interface)
 """
-The main goals of these ACIS support libraries are:
+The main goals of these ACIS support library is:
 
     1. load and parse simple and known ACIS data structures
     2. create and export simple and known ACIS data structures
@@ -18,23 +18,13 @@ simple curves is not possible.
 To all beginners: GO AWAY!
 
 """
-from ezdxf._acis.const import (
+from .const import (
     AcisException,
     ParsingError,
     InvalidLinkStructure,
     ExportError,
     Tags,
 )
-from ezdxf._acis.hdr import AcisHeader
-from ezdxf._acis.sat import (
-    parse_sat,
-    SatBuilder,
-    SatEntity
-)
-from ezdxf._acis.sab import (
-    parse_sab,
-    SabBuilder,
-    SabEntity
-)
-from ezdxf._acis.mesh import mesh_from_body
-from ezdxf._acis.entities import load, export_sat, export_sab
+from .hdr import AcisHeader
+from .mesh import mesh_from_body
+from .entities import load, export_sat, export_sab

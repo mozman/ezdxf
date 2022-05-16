@@ -3,7 +3,7 @@
 from typing import List, Iterator
 from argparse import ArgumentParser
 
-from ezdxf._acis.sat import merge_record_strings
+from ezdxf.acis.sat import merge_record_strings
 
 """
 ===============================================================================

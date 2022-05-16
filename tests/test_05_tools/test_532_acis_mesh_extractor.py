@@ -2,7 +2,7 @@
 #  License: MIT License
 
 import pytest
-from ezdxf.acis import mesh_from_body, load
+from ezdxf.acis.api import mesh_from_body, load
 
 
 class TestPrismToMesh:

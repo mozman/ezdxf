@@ -1,9 +1,10 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
+from __future__ import annotations
 from typing import List, Iterator, Sequence, Optional
-from ezdxf._acis.entities import Body, Lump, NONE_REF
 from ezdxf.render import MeshVertexMerger, MeshTransformer
 from ezdxf.math import Matrix44, Vec3
+from .entities import Body, Lump, NONE_REF
 
 
 def mesh_from_body(body: Body, merge_lumps=True) -> List[MeshTransformer]:

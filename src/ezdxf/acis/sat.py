@@ -14,10 +14,10 @@ from typing import (
     Dict,
 )
 from datetime import datetime
-from ezdxf._acis import const
-from ezdxf._acis.const import ParsingError, InvalidLinkStructure
-from ezdxf._acis.hdr import AcisHeader
-from ezdxf._acis.abstract import (
+from . import const
+from .const import ParsingError, InvalidLinkStructure
+from .hdr import AcisHeader
+from .abstract import (
     AbstractEntity,
     AbstractBuilder,
     DataLoader,

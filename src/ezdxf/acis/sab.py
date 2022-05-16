@@ -17,7 +17,7 @@ from typing import (
 )
 from datetime import datetime
 import struct
-from ezdxf._acis.const import (
+from .const import (
     ParsingError,
     DATE_FMT,
     Tags,
@@ -26,8 +26,8 @@ from ezdxf._acis.const import (
     InvalidLinkStructure,
     NULL_PTR_NAME,
 )
-from ezdxf._acis.hdr import AcisHeader
-from ezdxf._acis.abstract import (
+from .hdr import AcisHeader
+from .abstract import (
     AbstractEntity,
     DataLoader,
     AbstractBuilder,

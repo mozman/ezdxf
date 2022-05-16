@@ -2,8 +2,8 @@
 #  License: MIT License
 
 import pytest
-from ezdxf.acis import load, export_sat, export_sab, ExportError
-from ezdxf._acis import sat, sab, entities, hdr, const
+from ezdxf.acis.api import load, export_sat, export_sab, ExportError
+from ezdxf.acis import sat, sab, entities, hdr, const
 from ezdxf.math import Matrix44
 import math
 

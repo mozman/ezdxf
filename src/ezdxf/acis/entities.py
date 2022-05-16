@@ -11,13 +11,13 @@ from ezdxf.math import Matrix44, Vec3, NULLVEC
 
 Factory = Callable[[AbstractEntity], "AcisEntity"]
 
-ENTITY_TYPES: Dict[str, Type["AcisEntity"]] = {}
+ENTITY_TYPES: Dict[str, Type[AcisEntity]] = {}
 INF = float("inf")
 
 
 def load(
     data: Union[str, Sequence[str], bytes, bytearray, Sequence[bytes]]
-) -> List["Body"]:
+) -> List[Body]:
     """Returns a list of :class:`Body` entities from :term:`SAT` or :term:`SAB`
     data. Accepts :term:`SAT` data as a single string or a sequence of strings
     and :term:`SAB` data as bytes, bytearray or a sequence of bytes.
@@ -69,7 +69,7 @@ def _setup_export_header(version) -> hdr.AcisHeader:
     return header
 
 
-def register(cls: Type["AcisEntity"]):
+def register(cls: Type[AcisEntity]):
     ENTITY_TYPES[cls.type] = cls
     return cls
 
@@ -99,7 +99,7 @@ class AcisEntity(NoneEntity):
 
     type: str = "unsupported-entity"
     id: int
-    attributes: "AcisEntity" = NONE_REF
+    attributes: AcisEntity = NONE_REF
 
     def load(self, loader: DataLoader, entity_factory: Factory) -> None:
         """Load the ACIS entity content from `loader`."""
@@ -197,7 +197,7 @@ class Transform(AcisEntity):
 
 
 class SupportsPattern(AcisEntity):
-    pattern: "Pattern" = NONE_REF
+    pattern: Pattern = NONE_REF
 
     def restore_common(
         self, loader: DataLoader, entity_factory: Factory
@@ -212,9 +212,9 @@ class SupportsPattern(AcisEntity):
 @register
 class Body(SupportsPattern):
     type: str = "body"
-    pattern: "Pattern" = NONE_REF
-    lump: "Lump" = NONE_REF
-    wire: "Wire" = NONE_REF
+    pattern: Pattern = NONE_REF
+    lump: Lump = NONE_REF
+    wire: Wire = NONE_REF
     transform: "Transform" = NONE_REF
 
     def restore_common(
@@ -245,9 +245,9 @@ class Pattern(AcisEntity):  # not implemented
 @register
 class Lump(SupportsPattern):
     type: str = "lump"
-    next_lump: "Lump" = NONE_REF
-    shell: "Shell" = NONE_REF
-    body: "Body" = NONE_REF
+    next_lump: Lump = NONE_REF
+    shell: Shell = NONE_REF
+    body: Body = NONE_REF
 
     def restore_common(
         self, loader: DataLoader, entity_factory: Factory
@@ -267,11 +267,11 @@ class Lump(SupportsPattern):
 @register
 class Shell(SupportsPattern):
     type: str = "shell"
-    next_shell: "Shell" = NONE_REF
-    subshell: "Subshell" = NONE_REF
-    face: "Face" = NONE_REF
-    wire: "Wire" = NONE_REF
-    lump: "Lump" = NONE_REF
+    next_shell: Shell = NONE_REF
+    subshell: Subshell = NONE_REF
+    face: Face = NONE_REF
+    wire: Wire = NONE_REF
+    lump: Lump = NONE_REF
 
     def restore_common(
         self, loader: DataLoader, entity_factory: Factory
@@ -301,10 +301,10 @@ class Subshell(SupportsPattern):  # not implemented
 class Face(SupportsPattern):
     type: str = "face"
     next_face: "Face" = NONE_REF
-    loop: "Loop" = NONE_REF
-    shell: "Shell" = NONE_REF
-    subshell: "Subshell" = NONE_REF
-    surface: "Surface" = NONE_REF
+    loop: Loop = NONE_REF
+    shell: Shell = NONE_REF
+    subshell: Subshell = NONE_REF
+    surface: Surface = NONE_REF
     sense = True  # True = reversed; False = forward
     double_sided = False  # True = double; False = single
     containment = False  # if double_sided: True = in, False = out
@@ -388,9 +388,9 @@ class Plane(Surface):
 @register
 class Loop(SupportsPattern):
     type: str = "loop"
-    next_loop: "Loop" = NONE_REF
-    coedge: "Coedge" = NONE_REF
-    face: "Face" = NONE_REF  # parent/owner
+    next_loop: Loop = NONE_REF
+    coedge: Coedge = NONE_REF
+    face: Face = NONE_REF  # parent/owner
 
     def restore_common(
         self, loader: DataLoader, entity_factory: Factory

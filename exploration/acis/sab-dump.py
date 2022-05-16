@@ -1,7 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from argparse import ArgumentParser
-from ezdxf.acis import sab
+from acis.api import sab
 
 
 def print_entity(e):

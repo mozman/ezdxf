@@ -3,8 +3,6 @@
 
 import ezdxf
 from ezdxf.entities import Body
-from ezdxf import acis
-
 
 doc = ezdxf.readfile("3dsolids.dxf")
 msp = doc.modelspace()
