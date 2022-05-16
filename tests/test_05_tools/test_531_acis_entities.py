@@ -233,14 +233,20 @@ def prism700(prism_sat):
     return load(prism_sat)
 
 
-class TestExportSat700:
+class TestExportSat:
     def test_export_rejects_unsupported_acis_versions(self, prism700):
         with pytest.raises(ExportError):
             export_sat(prism700, version=400)
 
     def test_export_acis_700(self, prism700):
         data = export_sat(prism700, version=700)
-        assert len(data) == 117  # includes header and End-of-ACIS-data record
+        assert len(data) == 117  # includes header
+        assert data[-1] == "End-of-ACIS-data "  # an extra space at the end!
+
+    def test_export_22300_asm(self, prism700):
+        data = export_sat(prism700, version=22300)
+        assert len(data) == 118  # includes a AsmHeader entity
+        assert data[-1] == "End-of-ASM-data "  # an extra space at the end!
 
 
 class TestExportSab700:
@@ -254,8 +260,9 @@ class TestExportSab700:
         header = decoder.read_header()
         assert header.version == 700
         records = list(decoder.read_records())
-        # 113 = excludes header and End-of-ACIS-data record
-        assert len(records) == 113
+        # 114 = excludes header
+        assert len(records) == 114
+        assert records[-1][0].value == "End-of-ACIS-data"
 
 
 @pytest.mark.parametrize("export", [export_sat, export_sab], ids=("SAT", "SAB"))

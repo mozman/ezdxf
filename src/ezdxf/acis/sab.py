@@ -321,11 +321,7 @@ class SabExporter(EntityExporter[SabEntity]):
     def dump_sab(self) -> bytes:
         builder = SabBuilder()
         builder.header = self.header
-        entities: List[SabEntity] = []
-        if self.header.has_asm_header:
-            entities.append(self.export(self.header.asm_header()))
-        entities.extend(self.exported_entities.values())
-        builder.set_entities(entities)
+        builder.set_entities(list(self.exported_entities.values()))
         return builder.dump_sab()
 
 

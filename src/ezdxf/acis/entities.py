@@ -127,7 +127,7 @@ class AcisEntity(NoneEntity):
     """
 
     type: str = "unsupported-entity"
-    id: int
+    id: int = -1
     attributes: AcisEntity = NONE_REF
 
     def load(self, loader: DataLoader, entity_factory: Factory) -> None:

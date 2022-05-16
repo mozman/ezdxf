@@ -224,11 +224,7 @@ class SatExporter(EntityExporter[SatEntity]):
     def dump_sat(self) -> List[str]:
         builder = SatBuilder()
         builder.header = self.header
-        entities: List[SatEntity] = []
-        if self.header.has_asm_header:
-            entities.append(self.export(self.header.asm_header()))
-        entities.extend(self.exported_entities.values())
-        builder.set_entities(entities)
+        builder.set_entities(list(self.exported_entities.values()))
         return builder.dump_sat()
 
 

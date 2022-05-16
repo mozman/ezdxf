@@ -125,12 +125,11 @@ class AbstractBuilder(Generic[T]):
             return
         header: List[T] = []
         entities: List[T] = []
-        # asm header has to be the first entry
-        if self.entities[0].name == "asmheader":
-            header.append(self.entities.pop(0))
         for e in self.entities:
             if e.name == "body":
                 header.append(e)
+            elif e.name == "asmheader":
+                header.insert(0, e)  # has to be the first record
             else:
                 entities.append(e)
         self.entities = header + entities
@@ -141,6 +140,8 @@ class EntityExporter(Generic[T]):
         self.header = header
         self.version = header.version
         self.exported_entities: Dict[int, T] = {}
+        if self.header.has_asm_header:
+            self.export(self.header.asm_header())
 
     @abstractmethod
     def export(self, entity: AcisEntity) -> T:

@@ -2,18 +2,25 @@
 #  License: MIT License
 import enum
 
+# ACIS version 700 should work for all DXF version up to R2013
 ACIS_VERSION = {
-    400: "ACIS 4.00 NT",
-    700: "ACIS 32.0 NT",
-    20800: "ACIS 208.00 NT",
-    21800: "ACIS 218.00 NT",
+    400: "ACIS 4.00 NT",  # DXF R2000
+    700: "ACIS 32.0 NT",  # DXF R2004
+    20800: "ACIS 208.00 NT",  # DXF R2013 without asm-header?
+    21800: "ACIS 218.00 NT",  # DXF R2013 with asm-header?
+    22300: "ACIS 223.00 NT",  # DXF R2018
 }
+ASM_VERSION = {
+    21800: "208.0.4.7009",  # DXF R2013
+    22300: "222.0.0.1700",  # DXF R2018
+}
+
 MIN_EXPORT_VERSION = 700
 DATE_FMT = "%a %b %d %H:%M:%S %Y"
 END_OF_ACIS_DATA_SAT = "End-of-ACIS-data"
-END_OF_ACIS_DATA_SAB = b"0x0e03End0x0e02of0x0e04ACIS0x0d04data"
+END_OF_ACIS_DATA_SAB = b"\x0e\x03End\x0e\x02of\x0e\x04ACIS\x0d\x04data"
 END_OF_ASM_DATA_SAT = "End-of-ASM-data"
-END_OF_ASM_DATA_SAB = b"0x0e03End0x0e02of0x0e03ASM0x0d04data"
+END_OF_ASM_DATA_SAB = b"\x0e\x03End\x0e\x02of\x0e\x03ASM\x0d\x04data"
 BEGIN_OF_ACIS_HISTORY_DATA = "Begin-of-ACIS-History-data"
 END_OF_ACIS_HISTORY_DATA = "End-of-ACIS-History-data"
 DATA_END_MARKERS = (

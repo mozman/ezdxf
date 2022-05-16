@@ -90,6 +90,7 @@ class AcisHeader:
             self.version = version
         except KeyError:
             raise ValueError(f"invalid ACIS version number {version}")
+        self.asm_version = const.ASM_VERSION.get(version, "")
 
     def asm_header(self):
         from .entities import AsmHeader
