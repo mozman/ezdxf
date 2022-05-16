@@ -288,10 +288,7 @@ class SabBuilder(AbstractBuilder):
         for record in build_sab_records(self.entities):
             encoder.write_record(record)
         data.extend(encoder.buffer)
-        if self.header.has_asm_header:
-            data.append(const.END_OF_ASM_DATA_SAB)
-        else:
-            data.append(const.END_OF_ACIS_DATA_SAB)
+        data.append(self.header.sab_end_marker())
         return b"".join(data)
 
     def set_entities(self, entities: List[SabEntity]) -> None:

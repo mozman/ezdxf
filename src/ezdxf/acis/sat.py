@@ -192,10 +192,7 @@ class SatBuilder(AbstractBuilder):
         self.header.n_records = 0  # is always 0
         data = self.header.dumps()
         data.extend(build_str_records(self.entities, self.header.version))
-        if self.header.has_asm_header:
-            data.append(const.END_OF_ASM_DATA_SAT + " ")
-        else:
-            data.append(const.END_OF_ACIS_DATA_SAT + " ")
+        data.append(self.header.sat_end_marker())
         return data
 
     def set_entities(self, entities: List[SatEntity]) -> None:

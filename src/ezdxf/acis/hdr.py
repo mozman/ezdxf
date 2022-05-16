@@ -94,3 +94,15 @@ class AcisHeader:
     def asm_header(self):
         from .entities import AsmHeader
         return AsmHeader(self.asm_version)
+
+    def sat_end_marker(self) -> str:
+        if self.has_asm_header:
+            return const.END_OF_ASM_DATA_SAT + " "
+        else:
+            return const.END_OF_ACIS_DATA_SAT + " "
+
+    def sab_end_marker(self) -> bytes:
+        if self.has_asm_header:
+            return const.END_OF_ASM_DATA_SAB
+        else:
+            return const.END_OF_ACIS_DATA_SAB
