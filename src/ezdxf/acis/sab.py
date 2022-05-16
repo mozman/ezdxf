@@ -456,6 +456,7 @@ def build_sab_records(entities: List[SabEntity]) -> Iterator[SabRecord]:
         record: List[Token] = []
         record.extend(encode_entity_type(entity.name))
         record.append(Token(Tags.INT, entity.id))
+        record.append(encode_entity_ptr(entity.attributes, entities))
         for token in entity.data:
             if token.tag == Tags.POINTER:
                 record.append(encode_entity_ptr(token.value, entities))
@@ -487,7 +488,7 @@ class Encoder:
         tag = token.tag
         if tag in (Tags.INT, Tags.POINTER, Tags.ENUM):
             assert isinstance(token.value, int)
-            self.buffer.append(struct.pack("<BI", tag, token.value))
+            self.buffer.append(struct.pack("<Bi", tag, token.value))
         elif tag == Tags.DOUBLE:
             assert isinstance(token.value, float)
             self.buffer.append(struct.pack("<Bd", tag, token.value))
@@ -498,7 +499,7 @@ class Encoder:
         elif tag == Tags.LITERAL_STR:
             assert isinstance(token.value, str)
             data = token.value.encode(encoding=SAB_ENCODING)
-            self.buffer.append(struct.pack("<BI", tag, len(data)) + data)
+            self.buffer.append(struct.pack("<Bi", tag, len(data)) + data)
         elif tag in (Tags.ENTITY_TYPE, Tags.ENTITY_TYPE_EX):
             assert isinstance(token.value, str)
             data = token.value.encode(encoding=SAB_ENCODING)

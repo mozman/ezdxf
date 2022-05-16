@@ -3,7 +3,7 @@
 
 import pytest
 from ezdxf.acis.api import load, export_sat, export_sab, ExportError
-from ezdxf.acis import sat, sab, entities, hdr, const
+from ezdxf.acis import sat, sab, entities, hdr, const, mesh
 from ezdxf.math import Matrix44
 import math
 
@@ -240,17 +240,30 @@ class TestExportSat700:
 
     def test_export_acis_700(self, prism700):
         data = export_sat(prism700, version=700)
-        assert len(data) == 117
-
-    def test_reload_exported_acis_700(self, prism700):
-        bodies = load(export_sat(prism700, version=700))
-        assert len(bodies) == 1
+        assert len(data) == 117  # includes header and End-of-ACIS-data record
 
 
 class TestExportSab700:
     def test_export_rejects_unsupported_acis_versions(self, prism700):
         with pytest.raises(ExportError):
             export_sab(prism700, version=400)
+
+    def test_reload_records_from_acis_700_export(self, prism700):
+        data = export_sab(prism700, version=700)
+        decoder = sab.Decoder(data)
+        header = decoder.read_header()
+        assert header.version == 700
+        records = list(decoder.read_records())
+        # 113 = excludes header and End-of-ACIS-data record
+        assert len(records) == 113
+
+
+@pytest.mark.parametrize("export", [export_sat, export_sab], ids=("SAT", "SAB"))
+def test_load_mesh_from_exported_acis_data(prism700, export):
+    bodies = load(export(prism700, version=700))
+    m = mesh.mesh_from_body(bodies[0])[0]
+    assert len(m.vertices) == 8
+    assert len(m.faces) == 10
 
 
 class TestExportTransform:
