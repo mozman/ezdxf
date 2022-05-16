@@ -8,16 +8,15 @@ ACIS Tools
 
 .. versionadded:: 0.18
 
-The :mod:`ezdxf.acis` module provides some :term:`ACIS` data management tools.
-The main goals of this support module are:
+The :mod:`ezdxf.acis` sub-package provides some :term:`ACIS` data management
+tools. The main goals of this tools are:
 
     1. load and parse simple and known :term:`ACIS` data structures
-    2. create and export simple and known :term:`ACIS` data structures (planned)
+    2. create and export simple and known :term:`ACIS` data structures
 
-It is NOT a goal to edit and export arbitrary existing :term:`ACIS` structures.
+It is NOT a goal to load and edit arbitrary existing :term:`ACIS` structures.
 
     Don't even try it!
-
 
 These tools cannot replace the official :term:`ACIS` SDK due to the complexity of
 the data structures and the absence of an :term:`ACIS` kernel. Without access to
