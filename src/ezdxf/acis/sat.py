@@ -192,7 +192,10 @@ class SatBuilder(AbstractBuilder):
         self.header.n_records = 0  # is always 0
         data = self.header.dumps()
         data.extend(build_str_records(self.entities, self.header.version))
-        data.append(const.END_OF_ACIS_DATA + " ")
+        if self.header.has_asm_header:
+            data.append(const.END_OF_ASM_DATA_SAT + " ")
+        else:
+            data.append(const.END_OF_ACIS_DATA_SAT + " ")
         return data
 
     def set_entities(self, entities: List[SatEntity]) -> None:
@@ -224,7 +227,11 @@ class SatExporter(EntityExporter[SatEntity]):
     def dump_sat(self) -> List[str]:
         builder = SatBuilder()
         builder.header = self.header
-        builder.set_entities(list(self.exported_entities.values()))
+        entities: List[SatEntity] = []
+        if self.header.has_asm_header:
+            entities.append(self.export(self.header.asm_header()))
+        entities.extend(self.exported_entities.values())
+        builder.set_entities(entities)
         return builder.dump_sat()
 
 
@@ -303,7 +310,7 @@ def parse_header(data: Sequence[str]) -> Tuple[AcisHeader, Sequence[str]]:
 
 def _filter_records(data: Sequence[str]) -> Iterator[str]:
     for line in data:
-        if line.startswith(const.END_OF_ACIS_DATA) or line.startswith(
+        if line.startswith(const.END_OF_ACIS_DATA_SAT) or line.startswith(
             const.BEGIN_OF_ACIS_HISTORY_DATA
         ):
             return

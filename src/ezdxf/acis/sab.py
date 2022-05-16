@@ -17,15 +17,8 @@ from typing import (
 )
 from datetime import datetime
 import struct
-from .const import (
-    ParsingError,
-    DATE_FMT,
-    Tags,
-    DATA_END_MARKERS,
-    SIGNATURES,
-    InvalidLinkStructure,
-    NULL_PTR_NAME,
-)
+from . import const
+from .const import ParsingError, Tags, InvalidLinkStructure
 from .hdr import AcisHeader
 from .abstract import (
     AbstractEntity,
@@ -64,7 +57,7 @@ class Decoder:
 
     def read_header(self) -> AcisHeader:
         header = AcisHeader()
-        for signature in SIGNATURES:
+        for signature in const.SIGNATURES:
             if self.data.startswith(signature):
                 self.index = len(signature)
                 break
@@ -77,7 +70,7 @@ class Decoder:
         header.product_id = self.read_str_tag()
         header.acis_version = self.read_str_tag()
         date = self.read_str_tag()
-        header.creation_date = datetime.strptime(date, DATE_FMT)
+        header.creation_date = datetime.strptime(date, const.DATE_FMT)
         header.units_in_mm = self.read_double_tag()
         # tolerances are ignored
         _ = self.read_double_tag()  # res_tol
@@ -137,7 +130,7 @@ class Decoder:
             if not self.has_data:
                 if values:
                     token = values[0]
-                    if token.value in DATA_END_MARKERS:
+                    if token.value in const.DATA_END_MARKERS:
                         return values
                 raise ParsingError("pre-mature end of data")
             tag = self.read_byte()
@@ -213,7 +206,7 @@ class SabEntity(AbstractEntity):
         return f"{self.name}({self.id})"
 
 
-NULL_PTR = SabEntity(NULL_PTR_NAME, -1, -1, tuple())  # type: ignore
+NULL_PTR = SabEntity(const.NULL_PTR_NAME, -1, -1, tuple())  # type: ignore
 
 
 class SabDataLoader(DataLoader):
@@ -285,13 +278,21 @@ class SabBuilder(AbstractBuilder):
         self.bodies: List[SabEntity] = []
         self.entities: List[SabEntity] = []
 
-    def dump_sab(self) -> bytearray:
+    def dump_sab(self) -> bytes:
         """Returns the SAB representation of the ACIS file as bytearray."""
         self.reorder_records()
         self.header.n_entities = len(self.bodies)
         self.header.n_records = 0  # is always 0
-
-        return bytearray(b"")
+        data: List[bytes] = [self.header.dumpb()]
+        encoder = Encoder()
+        for record in build_sab_records(self.entities):
+            encoder.write_record(record)
+        data.extend(encoder.buffer)
+        if self.header.has_asm_header:
+            data.append(const.END_OF_ASM_DATA_SAB)
+        else:
+            data.append(const.END_OF_ACIS_DATA_SAB)
+        return b"".join(data)
 
     def set_entities(self, entities: List[SabEntity]) -> None:
         """Reset entities and bodies list. (internal API)"""
@@ -319,10 +320,14 @@ class SabExporter(EntityExporter[SabEntity]):
         entity.export(SabDataExporter(self, record.data))
         return record
 
-    def dump_sab(self) -> bytearray:
+    def dump_sab(self) -> bytes:
         builder = SabBuilder()
         builder.header = self.header
-        builder.set_entities(list(self.exported_entities.values()))
+        entities: List[SabEntity] = []
+        if self.header.has_asm_header:
+            entities.append(self.export(self.header.asm_header()))
+        entities.extend(self.exported_entities.values())
+        builder.set_entities(entities)
         return builder.dump_sab()
 
 
@@ -331,7 +336,7 @@ def build_entities(
 ) -> Iterator[SabEntity]:
     for record in records:
         name = record[0].value
-        if name in DATA_END_MARKERS:
+        if name in const.DATA_END_MARKERS:
             yield SabEntity(name)
             return
         attr = record[1].value
@@ -429,8 +434,8 @@ class SabDataExporter(DataExporter):
 
 
 def encode_entity_type(name: str) -> List[Token]:
-    if name == NULL_PTR_NAME:
-        raise InvalidLinkStructure(f"invalid record type: {NULL_PTR_NAME}")
+    if name == const.NULL_PTR_NAME:
+        raise InvalidLinkStructure(f"invalid record type: {const.NULL_PTR_NAME}")
     parts = name.split("-")
     tokens = [Token(Tags.ENTITY_TYPE_EX, part) for part in parts[:-1]]
     tokens.append(Token(Tags.ENTITY_TYPE, parts[-1]))
@@ -469,9 +474,6 @@ END_OF_RECORD = bytes([Tags.RECORD_END.value])
 class Encoder:
     def __init__(self):
         self.buffer: List[bytes] = []
-
-    def get_value(self) -> bytes:
-        return b"".join(self.buffer)
 
     def write_record(self, record: SabRecord) -> None:
         for token in record:

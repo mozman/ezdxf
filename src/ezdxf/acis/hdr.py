@@ -39,10 +39,11 @@ class AcisHeader:
     acis_version: str = const.ACIS_VERSION[400]
     creation_date: datetime = field(default_factory=datetime.now)
     units_in_mm: float = 1.0
+    asm_version: str = ""
 
     @property
-    def is_asm(self) -> bool:
-        return False
+    def has_asm_header(self) -> bool:
+        return self.asm_version != ""
 
     def dumps(self) -> List[str]:
         """Returns the SAT file header as list of strings."""
@@ -55,7 +56,7 @@ class AcisHeader:
     def dumpb(self) -> bytes:
         """Returns the SAB file header as bytes."""
         buffer: List[bytes] = []
-        if self.is_asm:
+        if self.has_asm_header:
             buffer.append(const.ASM_SIGNATURE)
         else:
             buffer.append(const.ACIS_SIGNATURE)
@@ -89,3 +90,7 @@ class AcisHeader:
             self.version = version
         except KeyError:
             raise ValueError(f"invalid ACIS version number {version}")
+
+    def asm_header(self):
+        from .entities import AsmHeader
+        return AsmHeader(self.asm_version)

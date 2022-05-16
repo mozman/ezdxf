@@ -73,7 +73,7 @@ def export_sat(bodies: Sequence[Body], version: int = 700) -> List[str]:
     return exporter.dump_sat()
 
 
-def export_sab(bodies: Sequence[Body], version: int = 700) -> bytearray:
+def export_sab(bodies: Sequence[Body], version: int = 700) -> bytes:
     """Export one or more :class:`Body` entities as binary encoded :term:`SAB`
     data.
 
@@ -223,6 +223,22 @@ class Transform(AcisEntity):
             exporter.data.extend(data)
         else:  # SAB stores the SAT transformation data as literal string
             exporter.write_literal_str(" ".join(data))
+
+
+@register
+class AsmHeader(AcisEntity):
+    type: str = "asmheader"
+
+    def __init__(self, version: str = ""):
+        self.version = version
+
+    def restore_common(
+        self, loader: DataLoader, entity_factory: Factory
+    ) -> None:
+        self.version = loader.read_str()
+
+    def write_common(self, exporter: DataExporter) -> None:
+        exporter.write_str(self.version)
 
 
 class SupportsPattern(AcisEntity):
