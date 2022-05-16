@@ -25,12 +25,22 @@ def load(
     Example for loading ACIS data from a DXF entity based on
     :class:`ezdxf.entities.Body`::
 
-        from ezdxf import import acis
+        from ezdxf.acis import api as acis
         ...
 
         for e in msp.query("3DSOLID"):
             bodies = acis.load(e.acis_data)
             ...
+
+    .. warning::
+
+        Only a limited count of :term:`ACIS` entities is supported, all
+        unsupported entities are loaded as ``NONE_ENTITY`` and their data is
+        lost. Exporting such ``NONE_ENTITIES`` will raise an :class:`ExportError`
+        exception.
+
+        To emphasize that again: **It is not possible to load and re-export
+        arbitrary ACIS data!**
 
     """
     if isinstance(data, Sequence):
@@ -48,6 +58,15 @@ def load(
 
 
 def export_sat(bodies: Sequence[Body], version: int = 700) -> List[str]:
+    """Export one or more :class:`Body` entities as text based :term:`SAT` data.
+
+    Minimum :term:`ACIS` version is 700.
+
+    Raises:
+        ExportError: ACIS structures contain unsupported entities
+        InvalidLinkStructure: corrupt link structure
+
+    """
     exporter = sat.SatExporter(_setup_export_header(version))
     for body in bodies:
         exporter.export(body)
@@ -55,6 +74,16 @@ def export_sat(bodies: Sequence[Body], version: int = 700) -> List[str]:
 
 
 def export_sab(bodies: Sequence[Body], version: int = 700) -> bytearray:
+    """Export one or more :class:`Body` entities as binary encoded :term:`SAB`
+    data.
+
+    Minimum :term:`ACIS` version is 700.
+
+    Raises:
+        ExportError: ACIS structures contain unsupported entities
+        InvalidLinkStructure: corrupt link structure
+
+    """
     exporter = sab.SabExporter(_setup_export_header(version))
     for body in bodies:
         exporter.export(body)

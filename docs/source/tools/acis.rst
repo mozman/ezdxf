@@ -11,10 +11,10 @@ ACIS Tools
 The :mod:`ezdxf.acis` module provides some :term:`ACIS` data management tools.
 The main goals of this support module are:
 
-    1. load and parse simple and known ACIS data structures
-    2. create and export simple and known ACIS data structures (planned)
+    1. load and parse simple and known :term:`ACIS` data structures
+    2. create and export simple and known :term:`ACIS` data structures (planned)
 
-It is NOT a goal to edit and export arbitrary existing ACIS structures.
+It is NOT a goal to edit and export arbitrary existing :term:`ACIS` structures.
 
     Don't even try it!
 
@@ -31,10 +31,23 @@ is possible to extract geometries made up only by flat polygonal faces and
 maybe in the future it is also possible to create such simple polygon face
 meshes.
 
+.. module:: ezdxf.acis.api
+
+.. important::
+
+    Always import from the public interface module :mod:`ezdxf.acis.api`,
+    the internal package and module structure may change in the future and
+    imports from other modules than :mod:`api` will break.
+
+
 Functions
 ~~~~~~~~~
 
 .. autofunction:: load
+
+.. autofunction:: export_sat
+
+.. autofunction:: export_sab
 
 .. autofunction:: mesh_from_body
 
@@ -49,7 +62,7 @@ Example script to extracts all flat polygonal faces as meshes:
 .. code-block:: Python
 
     import ezdxf
-    from ezdxf import acis
+    from ezdxf.acis import api as acis
 
 
     doc = ezdxf.readfile("3dsolids.dxf")
@@ -80,13 +93,21 @@ Exceptions
 
 .. class:: AcisException
 
-    Base exception of the :mod:`ezdxf.acis` module.
-
-.. class:: InvalidLinkStructure
+    Base exception of the :mod:`ezdxf.acis` package.
 
 .. class:: ParsingError
 
+    Exception raised when loading invalid or unknown :term:`ACIS` structures.
+
 .. class:: ExportError
+
+    Exception raised when exporting invalid or unknown :term:`ACIS` structures.
+
+.. class:: InvalidLinkStructure
+
+    Exception raised when the internal link structure is damaged.
+
+.. module:: ezdxf.acis.entities
 
 Entities
 ~~~~~~~~

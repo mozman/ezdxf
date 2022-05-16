@@ -23,8 +23,6 @@ from .const import (
     ParsingError,
     InvalidLinkStructure,
     ExportError,
-    Tags,
 )
-from .hdr import AcisHeader
 from .mesh import mesh_from_body
-from .entities import load, export_sat, export_sab
+from .entities import load, export_sat, export_sab, Body

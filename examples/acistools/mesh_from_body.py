@@ -2,6 +2,7 @@
 # License: MIT License
 
 import ezdxf
+from ezdxf.acis import api as acis
 from ezdxf.entities import Body
 
 doc = ezdxf.readfile("3dsolids.dxf")
