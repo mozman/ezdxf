@@ -3,7 +3,8 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import List
-from ezdxf._acis.const import ACIS_VERSION
+import struct
+from ezdxf._acis import const
 
 # ACIS versions exported by BricsCAD:
 # R2000/AC1015: 400, "ACIS 4.00 NT", text length has no prefix "@"
@@ -17,6 +18,15 @@ from ezdxf._acis.const import ACIS_VERSION
 # test script: exploration/acis/transplant_acis_data.py
 
 
+def encode_str(s: str) -> bytes:
+    b = s.encode("utf8", errors="ignore")
+    return struct.pack("<BB", const.Tags.STR, len(b)) + b
+
+
+def encode_double(value: float) -> bytes:
+    return struct.pack("<Bd", const.Tags.DOUBLE, value)
+
+
 @dataclass
 class AcisHeader:
     """Represents an ACIS file header."""
@@ -26,9 +36,13 @@ class AcisHeader:
     n_entities: int = 0
     flags: int = 0
     product_id: str = "ezdxf ACIS Builder"
-    acis_version: str = ACIS_VERSION[400]
+    acis_version: str = const.ACIS_VERSION[400]
     creation_date: datetime = field(default_factory=datetime.now)
     units_in_mm: float = 1.0
+
+    @property
+    def is_asm(self) -> bool:
+        return False
 
     def dumps(self) -> List[str]:
         """Returns the SAT file header as list of strings."""
@@ -37,6 +51,24 @@ class AcisHeader:
             self._header_str(),
             f"{self.units_in_mm:g} 9.9999999999999995e-007 1e-010 ",
         ]
+
+    def dumpb(self) -> bytes:
+        """Returns the SAB file header as bytes."""
+        if self.is_asm:
+            buffer = bytearray(const.ASM_SIGNATURE)
+        else:
+            buffer = bytearray(const.ACIS_SIGNATURE)
+        data = struct.pack(
+            "<iiii", self.version, self.n_records, self.n_entities, self.flags
+        )
+        buffer.extend(data)
+        buffer.extend(encode_str(self.product_id))
+        buffer.extend(encode_str(self.acis_version))
+        buffer.extend(encode_str(self.creation_date.ctime()))
+        buffer.extend(encode_double(self.units_in_mm))
+        buffer.extend(encode_double(const.RES_TOL))
+        buffer.extend(encode_double(const.NOR_TOL))
+        return bytes(buffer)
 
     def _header_str(self) -> str:
         p_len = len(self.product_id)
@@ -52,7 +84,7 @@ class AcisHeader:
         string accordingly.
         """
         try:
-            self.acis_version = ACIS_VERSION[version]
+            self.acis_version = const.ACIS_VERSION[version]
             self.version = version
         except KeyError:
             raise ValueError(f"invalid ACIS version number {version}")

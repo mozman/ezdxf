@@ -21,6 +21,13 @@ def test_decode_header(cube_sab):
     assert header.units_in_mm == 1.0
 
 
+def test_encode_header(cube_sab):
+    decoder = sab.Decoder(cube_sab)
+    header = decoder.read_header()
+    data = header.dumpb()
+    assert data == cube_sab[:len(data)]
+
+
 def test_decode_first_record(cube_sab):
     decoder = sab.Decoder(cube_sab)
     _ = decoder.read_header()

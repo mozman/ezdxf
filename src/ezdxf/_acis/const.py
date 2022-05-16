@@ -21,6 +21,8 @@ DATA_END_MARKERS = (
 )
 NULL_PTR_NAME = "null-ptr"
 NONE_ENTITY_NAME = "none-entity"
+NOR_TOL = 1e-10
+RES_TOL = 9.9999999999999995e-7
 
 BOOL_SPECIFIER = {
     "forward": True,
@@ -30,6 +32,10 @@ BOOL_SPECIFIER = {
     "single": True,
     "double": False,
 }
+
+ACIS_SIGNATURE = b"ACIS BinaryFile"  # DXF R2013
+ASM_SIGNATURE = b"ASM BinaryFile4"  # DXF R2018
+SIGNATURES = [ACIS_SIGNATURE, ASM_SIGNATURE]
 
 
 def is_valid_export_version(version: int):
