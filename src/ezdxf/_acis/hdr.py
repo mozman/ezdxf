@@ -54,21 +54,22 @@ class AcisHeader:
 
     def dumpb(self) -> bytes:
         """Returns the SAB file header as bytes."""
+        buffer: List[bytes] = []
         if self.is_asm:
-            buffer = bytearray(const.ASM_SIGNATURE)
+            buffer.append(const.ASM_SIGNATURE)
         else:
-            buffer = bytearray(const.ACIS_SIGNATURE)
+            buffer.append(const.ACIS_SIGNATURE)
         data = struct.pack(
             "<iiii", self.version, self.n_records, self.n_entities, self.flags
         )
-        buffer.extend(data)
-        buffer.extend(encode_str(self.product_id))
-        buffer.extend(encode_str(self.acis_version))
-        buffer.extend(encode_str(self.creation_date.ctime()))
-        buffer.extend(encode_double(self.units_in_mm))
-        buffer.extend(encode_double(const.RES_TOL))
-        buffer.extend(encode_double(const.NOR_TOL))
-        return bytes(buffer)
+        buffer.append(data)
+        buffer.append(encode_str(self.product_id))
+        buffer.append(encode_str(self.acis_version))
+        buffer.append(encode_str(self.creation_date.ctime()))
+        buffer.append(encode_double(self.units_in_mm))
+        buffer.append(encode_double(const.RES_TOL))
+        buffer.append(encode_double(const.NOR_TOL))
+        return b"".join(buffer)
 
     def _header_str(self) -> str:
         p_len = len(self.product_id)
