@@ -23,6 +23,8 @@ from ezdxf._acis.const import (
     Tags,
     DATA_END_MARKERS,
     SIGNATURES,
+    InvalidLinkStructure,
+    NULL_PTR_NAME,
 )
 from ezdxf._acis.hdr import AcisHeader
 from ezdxf._acis.abstract import (
@@ -211,7 +213,7 @@ class SabEntity(AbstractEntity):
         return f"{self.name}({self.id})"
 
 
-NULL_PTR = SabEntity("null-ptr", -1, -1, tuple())  # type: ignore
+NULL_PTR = SabEntity(NULL_PTR_NAME, -1, -1, tuple())  # type: ignore
 
 
 class SabDataLoader(DataLoader):
@@ -426,136 +428,58 @@ class SabDataExporter(DataExporter):
         self.data.append(Token(Tags.POINTER, self.exporter.export(entity)))
 
 
+def encode_entity_type(name: str) -> List[Token]:
+    if name == NULL_PTR_NAME:
+        raise InvalidLinkStructure(f"invalid record type: {NULL_PTR_NAME}")
+    parts = name.split("-")
+    tokens = [Token(Tags.ENTITY_TYPE_EX, part) for part in parts[:-1]]
+    tokens.append(Token(Tags.ENTITY_TYPE, parts[-1]))
+    return tokens
+
+
+def encode_entity_ptr(entity: SabEntity, entities: List[SabEntity]) -> Token:
+    if entity.is_null_ptr:
+        return Token(Tags.POINTER, -1)
+    try:
+        return Token(Tags.POINTER, entities.index(entity))
+    except ValueError:
+        raise InvalidLinkStructure(
+            f"entity {str(entity)} not in record storage"
+        )
+
+
+def build_sab_records(entities: List[SabEntity]) -> Iterator[SabRecord]:
+    for entity in entities:
+        record: List[Token] = []
+        record.extend(encode_entity_type(entity.name))
+        record.append(Token(Tags.INT, entity.id))
+        for token in entity.data:
+            if token.tag == Tags.POINTER:
+                record.append(encode_entity_ptr(token.value, entities))
+            elif token.tag == Tags.ENTITY_TYPE:
+                record.extend(encode_entity_type(token.value))
+            else:
+                record.append(token)
+        yield record
+
+
+END_OF_RECORD = bytes([Tags.RECORD_END.value])
+
+
 class Encoder:
     def __init__(self):
-        self.data = bytearray()
+        self.buffer: List[bytes] = []
 
-    def write_header(self, header: AcisHeader) -> AcisHeader:
-        header = AcisHeader()
-        for signature in SIGNATURES:
-            if self.data.startswith(signature):
-                self.index = len(signature)
-                break
-        else:
-            raise ParsingError("not a SAB file")
-        header.version = self.read_int()
-        header.n_records = self.read_int()
-        header.n_entities = self.read_int()
-        header.flags = self.read_int()
-        header.product_id = self.read_str_tag()
-        header.acis_version = self.read_str_tag()
-        date = self.read_str_tag()
-        header.creation_date = datetime.strptime(date, DATE_FMT)
-        header.units_in_mm = self.read_double_tag()
-        # tolerances are ignored
-        _ = self.read_double_tag()  # res_tol
-        _ = self.read_double_tag()  # nor_tol
-        return header
+    def get_value(self) -> bytes:
+        return b"".join(self.buffer)
 
-    def forward(self, count: int):
-        pos = self.index
-        self.index += count
-        return pos
+    def write_record(self, record: SabRecord) -> None:
+        for token in record:
+            self.write_token(token)
+        self.write_end_of_record()
 
-    def read_byte(self) -> int:
-        pos = self.forward(1)
-        return self.data[pos]
+    def write_end_of_record(self):
+        self.buffer.append(END_OF_RECORD)
 
-    def read_bytes(self, count: int) -> bytes:
-        pos = self.forward(count)
-        return self.data[pos : pos + count]
-
-    def read_int(self) -> int:
-        pos = self.forward(4)
-        values = struct.unpack_from("<i", self.data, pos)[0]
-        return values
-
-    def read_float(self) -> float:
-        pos = self.forward(8)
-        return struct.unpack_from("<d", self.data, pos)[0]
-
-    def read_floats(self, count: int) -> Sequence[float]:
-        pos = self.forward(8 * count)
-        return struct.unpack_from(f"<{count}d", self.data, pos)
-
-    def read_str(self, length) -> str:
-        text = self.read_bytes(length)
-        return text.decode()
-
-    def read_str_tag(self) -> str:
-        tag = self.read_byte()
-        if tag != Tags.STR:
-            raise ParsingError("string tag (7) not found")
-        return self.read_str(self.read_byte())
-
-    def read_double_tag(self) -> float:
-        tag = self.read_byte()
-        if tag != Tags.DOUBLE:
-            raise ParsingError("double tag (6) not found")
-        return self.read_float()
-
-    def read_record(self) -> SabRecord:
-        def entity_name():
-            return "-".join(entity_type)
-
-        values: SabRecord = []
-        entity_type: List[str] = []
-        subtype_level: int = 0
-        while True:
-            if not self.has_data:
-                if values:
-                    token = values[0]
-                    if token.value in DATA_END_MARKERS:
-                        return values
-                raise ParsingError("pre-mature end of data")
-            tag = self.read_byte()
-            if tag == Tags.INT:
-                values.append(Token(tag, self.read_int()))
-            elif tag == Tags.DOUBLE:
-                values.append(Token(tag, self.read_float()))
-            elif tag == Tags.STR:
-                values.append(Token(tag, self.read_str(self.read_byte())))
-            elif tag == Tags.POINTER:
-                values.append(Token(tag, self.read_int()))
-            elif tag == Tags.BOOL_TRUE:
-                values.append(Token(tag, True))
-            elif tag == Tags.BOOL_FALSE:
-                values.append(Token(tag, False))
-            elif tag == Tags.LITERAL_STR:
-                values.append(Token(tag, self.read_str(self.read_int())))
-            elif tag == Tags.ENTITY_TYPE_EX:
-                entity_type.append(self.read_str(self.read_byte()))
-            elif tag == Tags.ENTITY_TYPE:
-                entity_type.append(self.read_str(self.read_byte()))
-                values.append(Token(tag, entity_name()))
-                entity_type.clear()
-            elif tag == Tags.LOCATION_VEC:
-                values.append(Token(tag, self.read_floats(3)))
-            elif tag == Tags.DIRECTION_VEC:
-                values.append(Token(tag, self.read_floats(3)))
-            elif tag == Tags.ENUM:
-                values.append(Token(tag, self.read_int()))
-            elif tag == Tags.UNKNOWN_0x17:
-                values.append(Token(tag, self.read_float()))
-            elif tag == Tags.SUBTYPE_START:
-                subtype_level += 1
-                values.append(Token(tag, subtype_level))
-            elif tag == Tags.SUBTYPE_END:
-                values.append(Token(tag, subtype_level))
-                subtype_level -= 1
-            elif tag == Tags.RECORD_END:
-                return values
-            else:
-                raise ParsingError(
-                    f"unknown SAB tag: 0x{tag:x} ({tag}) in entity '{values[0].value}'"
-                )
-
-    def read_records(self) -> Iterator[SabRecord]:
-        while True:
-            try:
-                if self.has_data:
-                    yield self.read_record()
-                else:
-                    return
-            except IndexError:
-                return
+    def write_token(self, token: Token) -> None:
+        pass
