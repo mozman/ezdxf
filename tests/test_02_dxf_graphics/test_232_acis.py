@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2019, Manfred Moitzi
+# Copyright (c) 2014-2022, Manfred Moitzi
 # License: MIT License
 import pytest
 import ezdxf

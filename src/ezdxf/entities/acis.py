@@ -103,8 +103,7 @@ class Body(DXFGraphic):
             and self.has_binary_data
             and len(self._sab) == 0
         ):
-            data = self.doc.acdsdata.get_acis_data(self.dxf.handle)
-            self._sab = b"".join(data)
+            self._sab = self.doc.acdsdata.get_acis_data(self.dxf.handle)
         return self._sab
 
     @sab.setter
@@ -150,16 +149,16 @@ class Body(DXFGraphic):
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_modeler_geometry.name)
         if tagwriter.dxfversion >= DXF2013:
-            # ACIS data stored in the ACDSDATA section as binary encoded
-            # information.
+            # ACIS data is stored in the ACDSDATA section as SAB
             if self.doc and self._update:
-                # write back changed SAB data into AcDsDataSection!
+                # write back changed SAB data into AcDsDataSection or create
+                # a new ACIS record:
                 self.doc.acdsdata.set_acis_data(self.dxf.handle, self.sab)
             if self.dxf.hasattr("version"):
                 tagwriter.write_tag2(70, self.dxf.version)
             self.dxf.export_dxf_attribs(tagwriter, ["flags", "uid"])
         else:
-            # DXF R2000 - R2010 stores ACIS data as text in entity
+            # DXF R2000 - R2010 stores the ACIS data as SAT in the entity
             self.dxf.export_dxf_attribs(tagwriter, "version")
             self.export_sat_data(tagwriter)
 

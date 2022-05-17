@@ -1050,7 +1050,7 @@ class CreatorInterface:
         The ACIS data has to be set as :term:`SAT` or :term:`SAB`.
 
         """
-        return self._add_acis_entiy("BODY", dxfattribs)  # type: ignore
+        return self._add_acis_entity("BODY", dxfattribs)  # type: ignore
 
     def add_region(self, dxfattribs=None) -> "Region":
         """Add a :class:`~ezdxf.entities.Region` entity.
@@ -1059,7 +1059,7 @@ class CreatorInterface:
         The ACIS data has to be set as :term:`SAT` or :term:`SAB`.
 
         """
-        return self._add_acis_entiy("REGION", dxfattribs)  # type: ignore
+        return self._add_acis_entity("REGION", dxfattribs)  # type: ignore
 
     def add_3dsolid(self, dxfattribs=None) -> "Solid3d":
         """Add a 3DSOLID entity (:class:`~ezdxf.entities.Solid3d`).
@@ -1068,7 +1068,7 @@ class CreatorInterface:
         The ACIS data has to be set as :term:`SAT` or :term:`SAB`.
 
         """
-        return self._add_acis_entiy("3DSOLID", dxfattribs)  # type: ignore
+        return self._add_acis_entity("3DSOLID", dxfattribs)  # type: ignore
 
     def add_surface(self, dxfattribs=None) -> "Surface":
         """Add a :class:`~ezdxf.entities.Surface` entity.
@@ -1079,7 +1079,7 @@ class CreatorInterface:
         """
         if self.dxfversion < const.DXF2007:
             raise DXFVersionError("SURFACE requires DXF R2007 or later")
-        return self._add_acis_entiy("SURFACE", dxfattribs)  # type: ignore
+        return self._add_acis_entity("SURFACE", dxfattribs)  # type: ignore
 
     def add_extruded_surface(self, dxfattribs=None) -> "ExtrudedSurface":
         """Add a :class:`~ezdxf.entities.ExtrudedSurface` entity.
@@ -1090,7 +1090,7 @@ class CreatorInterface:
         """
         if self.dxfversion < const.DXF2007:
             raise DXFVersionError("EXTRUDEDSURFACE requires DXF R2007 or later")
-        return self._add_acis_entiy("EXTRUDEDSURFACE", dxfattribs)  # type: ignore
+        return self._add_acis_entity("EXTRUDEDSURFACE", dxfattribs)  # type: ignore
 
     def add_lofted_surface(self, dxfattribs=None) -> "LoftedSurface":
         """Add a :class:`~ezdxf.entities.LoftedSurface` entity.
@@ -1101,7 +1101,7 @@ class CreatorInterface:
         """
         if self.dxfversion < const.DXF2007:
             raise DXFVersionError("LOFTEDSURFACE requires DXF R2007 or later")
-        return self._add_acis_entiy("LOFTEDSURFACE", dxfattribs)  # type: ignore
+        return self._add_acis_entity("LOFTEDSURFACE", dxfattribs)  # type: ignore
 
     def add_revolved_surface(self, dxfattribs=None) -> "RevolvedSurface":
         """
@@ -1113,7 +1113,7 @@ class CreatorInterface:
         """
         if self.dxfversion < const.DXF2007:
             raise DXFVersionError("REVOLVEDSURFACE requires DXF R2007 or later")
-        return self._add_acis_entiy("REVOLVEDSURFACE", dxfattribs)  # type: ignore
+        return self._add_acis_entity("REVOLVEDSURFACE", dxfattribs)  # type: ignore
 
     def add_swept_surface(self, dxfattribs=None) -> "SweptSurface":
         """
@@ -1124,10 +1124,10 @@ class CreatorInterface:
 
         """
         if self.dxfversion < const.DXF2007:
-            raise DXFVersionError("SWEPTSURFACE requires DXF R2007-R2010")
-        return self._add_acis_entiy("SWEPTSURFACE", dxfattribs)  # type: ignore
+            raise DXFVersionError("SWEPTSURFACE requires DXF R2007 or later")
+        return self._add_acis_entity("SWEPTSURFACE", dxfattribs)  # type: ignore
 
-    def _add_acis_entiy(self, name, dxfattribs) -> "Body":
+    def _add_acis_entity(self, name, dxfattribs) -> "Body":
         if self.dxfversion < const.DXF2000:
             raise DXFVersionError(f"{name} requires DXF R2000 or later")
         dxfattribs = dict(dxfattribs or {})

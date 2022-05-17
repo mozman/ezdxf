@@ -79,6 +79,7 @@ import abc
 from itertools import islice
 
 from ezdxf.lldxf.tags import group_tags, Tags
+from ezdxf.lldxf.types import dxftag
 from ezdxf.lldxf.const import DXFKeyError, DXFStructureError
 
 if TYPE_CHECKING:
@@ -142,16 +143,21 @@ class AcDsDataSection:
             entity for entity in self.entities if isinstance(entity, AcDsRecord)
         )
 
-    def get_acis_data(self, handle: str) -> List[bytes]:
+    def get_acis_data(self, handle: str) -> bytes:
         asm_record = self.find_acis_record(handle)
         if asm_record is not None:
-            return get_acis_data(asm_record)
-        return []
+            return b"".join(get_acis_data(asm_record))
+        return b""
 
-    def set_acis_data(self, handle, sab_data: bytes) -> None:
+    def set_acis_data(self, handle: str, sab_data: bytes) -> None:
         asm_record = self.find_acis_record(handle)
         if asm_record is not None:
             set_acis_data(asm_record, sab_data)
+        else:
+            self.new_acis_data(handle, sab_data)
+
+    def new_acis_data(self, handle: str, sab_data: bytes) -> None:
+        self.entities.append(new_acis_record(handle, sab_data))
 
     def del_acis_data(self, handle) -> None:
         asm_record = self.find_acis_record(handle)
@@ -214,6 +220,22 @@ class AcDsRecord(AcDsEntity):
         else:
             return default
 
+    def index(self, name: str) -> int:
+        for i, section in enumerate(self.sections):
+            if section.name == name:
+                return i
+        return -1
+
+    def replace(self, section: Section) -> None:
+        index = self.index(section.name)
+        if index == -1:
+            self.sections.append(section)
+        else:
+            self.sections[index] = section
+
+    def append(self, section: Section):
+        self.sections.append(section)
+
     def __len__(self):
         return len(self.sections)
 
@@ -251,8 +273,35 @@ def acis_entity_handle(record: AcDsRecord) -> str:
 
 
 def set_acis_data(record: AcDsRecord, data: bytes) -> None:
-    # TODO
-    pass
+    chunk_size = 127
+    size = len(data)
+    tags = Tags(
+        [
+            dxftag(2, "ASM_Data"),
+            dxftag(280, 15),
+            dxftag(94, size),
+        ]
+    )
+    index = 0
+    while index < size:
+        tags.append(dxftag(310, data[index : index + chunk_size]))
+        index += chunk_size
+    record.replace(Section(tags))
+
+
+def new_acis_record(handle: str, sab_data: bytes) -> AcDsRecord:
+    tags = Tags(
+        [
+            dxftag(0, "ACDSRECORD"),
+            dxftag(90, 1),
+            dxftag(2, "AcDbDs::ID"),
+            dxftag(280, 10),
+            dxftag(320, handle),
+        ]
+    )
+    record = AcDsRecord(tags)
+    set_acis_data(record, sab_data)
+    return record
 
 
 ACDSDATA_TYPES = {
