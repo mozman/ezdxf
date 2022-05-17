@@ -87,14 +87,16 @@ class Body(DXFGraphic):
 
     @property
     def acis_data(self) -> Union[bytes, List[str]]:
-        """Returns :term:`SAT` or :term:`SAB` data."""
+        """Returns :term:`SAT` data  for DXF R2000 up to R2010 and :term:`SAB`
+        data for DXF R2013 and later
+        """
         if self.has_binary_data:
             return self.sab
         return self.sat
 
     @property
     def sat(self) -> List[str]:
-        """Returns :term:`SAT` data as list of strings. """
+        """Get/Set :term:`SAT` data as list of strings. """
         return self._sat
 
     @sat.setter
@@ -104,7 +106,7 @@ class Body(DXFGraphic):
 
     @property
     def sab(self) -> bytes:
-        """Returns :term:`SAB` data as bytes. """
+        """Get/Set :term:`SAB` data as bytes. """
         if (  # load SAB data on demand
             self.doc is not None
             and self.has_binary_data
@@ -180,7 +182,9 @@ class Body(DXFGraphic):
         tagwriter.write_tags(tags)
 
     def tostring(self) -> str:
-        """Returns ACIS data as one string for DXF R2000 to R2010."""
+        """Returns ACIS :term:`SAT` data as a single string if the entity has
+        SAT data.
+        """
         if self.has_binary_data:
             return ""
         else:

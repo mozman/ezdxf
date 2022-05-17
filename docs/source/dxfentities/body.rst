@@ -4,13 +4,13 @@ Body
 .. module:: ezdxf.entities
     :noindex:
 
-BODY (`DXF Reference`_) created by an ACIS based geometry kernel provided by
+BODY (`DXF Reference`_) created by an ACIS geometry kernel provided by
 the `Spatial Corp.`_
 
 .. seealso::
 
-    `Ezdxf` will never create or interpret ACIS data, for more information see
-    the FAQ: :ref:`faq003`
+    `Ezdxf` has only very limited support for ACIS based entities, for more
+    information see the FAQ: :ref:`faq003`
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.DXFGraphic`
@@ -38,18 +38,16 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
         Require DXF R2013.
 
-    .. attribute:: acis_data
+    .. autoproperty:: acis_data
 
-        Get/Set ACIS text data as list of strings for DXF R2000 to R2010 and binary encoded ACIS data for DXF R2013
-        and later as list of bytes.
+    .. autoproperty:: sat
 
-    .. autoattribute:: has_binary_data
+    .. autoproperty:: sab
+
+    .. autoproperty:: has_binary_data
 
     .. automethod:: tostring
 
-    .. automethod:: tobytes
-
-    .. automethod:: set_text
 
 .. _Spatial Corp.: http://www.spatial.com/products/3d-acis-modeling
 

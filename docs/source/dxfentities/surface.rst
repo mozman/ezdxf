@@ -4,13 +4,13 @@ Surface
 .. module:: ezdxf.entities
     :noindex:
 
-SURFACE (`DXF Reference`_) created by an ACIS based geometry kernel provided by
+SURFACE (`DXF Reference`_) created by an ACIS geometry kernel provided by
 the `Spatial Corp.`_
 
 .. seealso::
 
-    `Ezdxf` will never create or interpret ACIS data, for more information see
-    the FAQ: :ref:`faq003`
+    `Ezdxf` has only very limited support for ACIS based entities, for more
+    information see the FAQ: :ref:`faq003`
 
 
 ======================== ==========================================

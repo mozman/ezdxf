@@ -4,14 +4,14 @@ Solid3d
 .. module:: ezdxf.entities
     :noindex:
 
-3DSOLID (`DXF Reference`_) created by an ACIS based geometry kernel provided by
+3DSOLID (`DXF Reference`_) created by an ACIS geometry kernel provided by
 the `Spatial Corp.`_
 
 
 .. seealso::
 
-    `Ezdxf` will never create or interpret ACIS data, for more information see
-    the FAQ: :ref:`faq003`
+    `Ezdxf` has only very limited support for ACIS based entities, for more
+    information see the FAQ: :ref:`faq003`
 
 ======================== ==========================================
 Subclass of              :class:`ezdxf.entities.Body`
