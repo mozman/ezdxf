@@ -20,4 +20,4 @@ def test_get_acis_data_from_surfaces():
             f.write(DELIMITER)
             f.write(str(surface) + ":")
             f.write(DELIMITER)
-            f.write("\n".join(surface.acis_data))
+            f.write(surface.tostring())

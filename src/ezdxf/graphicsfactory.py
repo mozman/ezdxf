@@ -1043,183 +1043,95 @@ class CreatorInterface:
             spline.knots = knots  # type: ignore
         return spline
 
-    def add_body(
-        self, acis_data: Iterable[str] = None, dxfattribs=None
-    ) -> "Body":
-        """
-        Add a :class:`~ezdxf.entities.Body` entity. (requires DXF R2000-R2010)
+    def add_body(self, dxfattribs=None) -> "Body":
+        """Add a :class:`~ezdxf.entities.Body` entity.
+        (requires DXF R2000 or later)
 
-        The ACIS data has to be provided as an iterable of strings with no line
-        endings and only the SAT (text) format is supported, DXF R2013+
-        uses the SAB (binary) format which is not supported, and `ezdxf` has no
-        functionality to create ACIS data.
-
-        Args:
-            acis_data: ACIS data as iterable of text lines as strings, no
-                interpretation by ezdxf possible
-            dxfattribs: additional DXF attributes
+        The ACIS data has to be set as :term:`SAT` or :term:`SAB`.
 
         """
-        return self._add_acis_entiy("BODY", acis_data, dxfattribs)  # type: ignore
+        return self._add_acis_entiy("BODY", dxfattribs)  # type: ignore
 
-    def add_region(
-        self, acis_data: Iterable[str] = None, dxfattribs=None
-    ) -> "Region":
-        """
-        Add a :class:`~ezdxf.entities.Region` entity. (requires DXF R2000-R2010)
+    def add_region(self, dxfattribs=None) -> "Region":
+        """Add a :class:`~ezdxf.entities.Region` entity.
+        (requires DXF R2000 or later)
 
-        The ACIS data has to be provided as an iterable of strings with no line
-        endings and only the SAT (text) format is supported, DXF R2013+
-        uses the SAB (binary) format which is not supported, and `ezdxf` has no
-        functionality to create ACIS data.
-
-        Args:
-            acis_data: ACIS data as iterable of text lines as strings,
-                no interpretation by ezdxf possible
-            dxfattribs: additional DXF attributes
+        The ACIS data has to be set as :term:`SAT` or :term:`SAB`.
 
         """
-        return self._add_acis_entiy("REGION", acis_data, dxfattribs)  # type: ignore
+        return self._add_acis_entiy("REGION", dxfattribs)  # type: ignore
 
-    def add_3dsolid(
-        self, acis_data: Iterable[str] = None, dxfattribs=None
-    ) -> "Solid3d":
-        """
-        Add a 3DSOLID entity (:class:`~ezdxf.entities.Solid3d`).
-        (requires DXF R2000-R2010)
+    def add_3dsolid(self, dxfattribs=None) -> "Solid3d":
+        """Add a 3DSOLID entity (:class:`~ezdxf.entities.Solid3d`).
+        (requires DXF R2000 or later)
 
-        The ACIS data has to be provided as an iterable of strings with no line
-        endings and only the SAT (text) format is supported, DXF R2013+
-        uses the SAB (binary) format which is not supported, and `ezdxf` has no
-        functionality to create ACIS data.
-
-        Args:
-            acis_data: ACIS data as iterable of text lines as strings,
-                no interpretation by ezdxf possible
-            dxfattribs: additional DXF attributes
+        The ACIS data has to be set as :term:`SAT` or :term:`SAB`.
 
         """
-        return self._add_acis_entiy("3DSOLID", acis_data, dxfattribs)  # type: ignore
+        return self._add_acis_entiy("3DSOLID", dxfattribs)  # type: ignore
 
-    def add_surface(
-        self, acis_data: Iterable[str] = None, dxfattribs=None
-    ) -> "Surface":
-        """
-        Add a :class:`~ezdxf.entities.Surface` entity. (requires DXF R2000-R2010)
+    def add_surface(self, dxfattribs=None) -> "Surface":
+        """Add a :class:`~ezdxf.entities.Surface` entity.
+        (requires DXF R2007 or later)
 
-        The ACIS data has to be provided as an iterable of strings with no line
-        endings and only the SAT (text) format is supported, DXF R2013+
-        uses the SAB (binary) format which is not supported, and `ezdxf` has no
-        functionality to create ACIS data.
-
-        Args:
-            acis_data: ACIS data as iterable of text lines as strings,
-                no interpretation by ezdxf possible
-            dxfattribs: additional DXF attributes
+        The ACIS data has to be set as :term:`SAT` or :term:`SAB`.
 
         """
-        if not (const.DXF2007 <= self.dxfversion <= const.DXF2010):
-            raise DXFVersionError("SURFACE requires DXF R2007-R2010")
-        return self._add_acis_entiy("SURFACE", acis_data, dxfattribs)  # type: ignore
+        if self.dxfversion < const.DXF2007:
+            raise DXFVersionError("SURFACE requires DXF R2007 or later")
+        return self._add_acis_entiy("SURFACE", dxfattribs)  # type: ignore
 
-    def add_extruded_surface(
-        self, acis_data: Iterable[str] = None, dxfattribs=None
-    ) -> "ExtrudedSurface":
-        """
-        Add a :class:`~ezdxf.entities.ExtrudedSurface` entity.
-        (requires DXF R2000-R2010)
+    def add_extruded_surface(self, dxfattribs=None) -> "ExtrudedSurface":
+        """Add a :class:`~ezdxf.entities.ExtrudedSurface` entity.
+        (requires DXF R2007 or later)
 
-        The ACIS data has to be provided as an iterable of strings with no line
-        endings and only the SAT (text) format is supported, DXF R2013+
-        uses the SAB (binary) format which is not supported, and `ezdxf` has no
-        functionality to create ACIS data.
-
-        Args:
-            acis_data: ACIS data as iterable of text lines as strings,
-                no interpretation by ezdxf possible
-            dxfattribs: additional DXF attributes
+        The ACIS data has to be set as :term:`SAT` or :term:`SAB`.
 
         """
-        if not (const.DXF2007 <= self.dxfversion <= const.DXF2010):
-            raise DXFVersionError("EXTRUDEDSURFACE requires DXF R2007-R2010")
-        return self._add_acis_entiy("EXTRUDEDSURFACE", acis_data, dxfattribs)  # type: ignore
+        if self.dxfversion < const.DXF2007:
+            raise DXFVersionError("EXTRUDEDSURFACE requires DXF R2007 or later")
+        return self._add_acis_entiy("EXTRUDEDSURFACE", dxfattribs)  # type: ignore
 
-    def add_lofted_surface(
-        self, acis_data: Iterable[str] = None, dxfattribs=None
-    ) -> "LoftedSurface":
-        """
-        Add a :class:`~ezdxf.entities.LoftedSurface` entity.
-        (requires DXF R2007-R2010)
+    def add_lofted_surface(self, dxfattribs=None) -> "LoftedSurface":
+        """Add a :class:`~ezdxf.entities.LoftedSurface` entity.
+        (requires DXF R2007 or later)
 
-        The ACIS data has to be provided as an iterable of strings with no line
-        endings and only the SAT (text) format is supported, DXF R2013+
-        uses the SAB (binary) format which is not supported, and `ezdxf` has no
-        functionality to create ACIS data.
-
-        Args:
-            acis_data: ACIS data as iterable of text lines as strings,
-                no interpretation by ezdxf possible
-            dxfattribs: additional DXF attributes
+        The ACIS data has to be set as :term:`SAT` or :term:`SAB`.
 
         """
-        if not (const.DXF2007 <= self.dxfversion <= const.DXF2010):
-            raise DXFVersionError("LOFTEDSURFACE requires DXF R2007-R2010")
-        return self._add_acis_entiy("LOFTEDSURFACE", acis_data, dxfattribs)  # type: ignore
+        if self.dxfversion < const.DXF2007:
+            raise DXFVersionError("LOFTEDSURFACE requires DXF R2007 or later")
+        return self._add_acis_entiy("LOFTEDSURFACE", dxfattribs)  # type: ignore
 
-    def add_revolved_surface(
-        self, acis_data: Iterable[str] = None, dxfattribs=None
-    ) -> "RevolvedSurface":
+    def add_revolved_surface(self, dxfattribs=None) -> "RevolvedSurface":
         """
         Add a :class:`~ezdxf.entities.RevolvedSurface` entity.
-        (requires DXF R2007-R2010)
+        (requires DXF R2007 or later)
 
-        The ACIS data has to be provided as an iterable of strings with no line
-        endings and only the SAT (text) format is supported, DXF R2013+
-        uses the SAB (binary) format which is not supported, and `ezdxf` has no
-        functionality to create ACIS data.
-
-        Args:
-            acis_data: ACIS data as iterable of text lines as strings,
-                no interpretation by ezdxf possible
-            dxfattribs: additional DXF attributes
+        The ACIS data has to be set as :term:`SAT` or :term:`SAB`.
 
         """
-        if not (const.DXF2007 <= self.dxfversion <= const.DXF2010):
-            raise DXFVersionError("REVOLVEDSURFACE requires DXF R2007-R2010")
-        return self._add_acis_entiy("REVOLVEDSURFACE", acis_data, dxfattribs)  # type: ignore
+        if self.dxfversion < const.DXF2007:
+            raise DXFVersionError("REVOLVEDSURFACE requires DXF R2007 or later")
+        return self._add_acis_entiy("REVOLVEDSURFACE", dxfattribs)  # type: ignore
 
-    def add_swept_surface(
-        self, acis_data: Iterable[str] = None, dxfattribs=None
-    ) -> "SweptSurface":
+    def add_swept_surface(self, dxfattribs=None) -> "SweptSurface":
         """
         Add a :class:`~ezdxf.entities.SweptSurface` entity.
-        (requires DXF R2007-R2010)
+        (requires DXF R2007 or later)
 
-        The ACIS data has to be provided as an iterable of strings with no line
-        endings and only the SAT (text) format is supported, DXF R2013+
-        uses the SAB (binary) format which is not supported, and `ezdxf` has no
-        functionality to create ACIS data.
-
-        Args:
-            acis_data: ACIS data as iterable of text lines as strings,
-                no interpretation by ezdxf possible
-            dxfattribs: additional DXF attributes
+        The ACIS data has to be set as :term:`SAT` or :term:`SAB`.
 
         """
-        if not (const.DXF2007 <= self.dxfversion <= const.DXF2010):
+        if self.dxfversion < const.DXF2007:
             raise DXFVersionError("SWEPTSURFACE requires DXF R2007-R2010")
-        return self._add_acis_entiy("SWEPTSURFACE", acis_data, dxfattribs)  # type: ignore
+        return self._add_acis_entiy("SWEPTSURFACE", dxfattribs)  # type: ignore
 
-    def _add_acis_entiy(
-        self, name, acis_data: Iterable[str], dxfattribs
-    ) -> "Body":
-        if not (const.DXF2000 <= self.dxfversion <= const.DXF2010):
-            raise DXFVersionError(f"{name} requires DXF R2000-R2010")
+    def _add_acis_entiy(self, name, dxfattribs) -> "Body":
+        if self.dxfversion < const.DXF2000:
+            raise DXFVersionError(f"{name} requires DXF R2000 or later")
         dxfattribs = dict(dxfattribs or {})
-        entity: "Body" = self.new_entity(name, dxfattribs)  # type: ignore
-        if acis_data is not None:
-            entity.acis_data = acis_data  # type: ignore
-        return entity
+        return self.new_entity(name, dxfattribs)  # type: ignore
 
     def add_hatch(self, color: int = 7, dxfattribs=None) -> "Hatch":
         """Add a :class:`~ezdxf.entities.Hatch` entity. (requires DXF R2000)

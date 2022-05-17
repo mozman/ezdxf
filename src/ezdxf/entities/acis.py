@@ -70,8 +70,6 @@ acdb_modeler_geometry_group_codes = group_code_mapping(acdb_modeler_geometry)
 # 310
 # 414349532042696E61727946696C6...
 
-ACIS_DATA = Union[List[str], List[bytes]]
-
 
 @register_entity
 class Body(DXFGraphic):
@@ -83,32 +81,37 @@ class Body(DXFGraphic):
 
     def __init__(self):
         super().__init__()
-        self._acis_data: ACIS_DATA = []
+        self._sat: List[str] = []
+        self._sab: bytes = b""
+        self._update = False
 
     @property
-    def acis_data(self) -> ACIS_DATA:
-        """Returns :term:`SAT` data as list of strings for DXF R2000 up to DXF
-        R2010 and :term:`SAB` data as list of bytes for DXF R2013 and later.
+    def sat(self) -> List[str]:
+        """Returns :term:`SAT` data as list of strings. """
+        return self._sat
 
-        """
-        if self.doc is not None and self.has_binary_data:
-            return self.doc.acdsdata.get_acis_data(self.dxf.handle)
-        else:
-            return self._acis_data
+    @sat.setter
+    def sat(self, data: List[str]) -> None:
+        """Set :term:`SAT` data as list of strings. """
+        self._sat = data
 
-    @acis_data.setter
-    def acis_data(self, lines: Iterable[str]):
-        """Set :term:`SAT` data as list of strings for DXF R2000 to DXF R2010.
-        In case of DXF R2013 and later, setting :term:`SAB` data is not
-        supported.
+    @property
+    def sab(self) -> bytes:
+        """Returns :term:`SAB` data as bytes. """
+        if (  # load SAB data on demand
+            self.doc is not None
+            and self.has_binary_data
+            and len(self._sab) == 0
+        ):
+            data = self.doc.acdsdata.get_acis_data(self.dxf.handle)
+            self._sab = b"".join(data)
+        return self._sab
 
-        """
-        if self.has_binary_data:
-            raise DXFTypeError(
-                "Setting ACIS data not supported for DXF R2013 and later."
-            )
-        else:
-            self._acis_data = list(lines)
+    @sab.setter
+    def sab(self, data: bytes) -> None:
+        """Set :term:`SAB` data as bytes. """
+        self._update = True
+        self._sab = data
 
     @property
     def has_binary_data(self):
@@ -134,13 +137,13 @@ class Body(DXFGraphic):
                 dxf, acdb_modeler_geometry_group_codes, 2, log=False
             )
             if not self.has_binary_data:
-                self.load_acis_data(processor.subclasses[2])
+                self.load_sat_data(processor.subclasses[2])
         return dxf
 
-    def load_acis_data(self, tags: Tags):
+    def load_sat_data(self, tags: Tags):
         """Loading interface. (internal API)"""
         text_lines = tags2textlines(tag for tag in tags if tag.code in (1, 3))
-        self.acis_data = crypt.decode(text_lines)  # type: ignore
+        self._sat = list(crypt.decode(text_lines))
 
     def export_entity(self, tagwriter: "TagWriter") -> None:
         """Export entity specific data as DXF tags. (internal API)"""
@@ -149,41 +152,38 @@ class Body(DXFGraphic):
         if tagwriter.dxfversion >= DXF2013:
             # ACIS data stored in the ACDSDATA section as binary encoded
             # information.
+            if self._update:
+                # TODO: write back SAB data into AcDsDataSection!
+                pass
             if self.dxf.hasattr("version"):
                 tagwriter.write_tag2(70, self.dxf.version)
             self.dxf.export_dxf_attribs(tagwriter, ["flags", "uid"])
         else:
-            # DXF R2000 - R2013 stores ACIS data as text in entity
+            # DXF R2000 - R2010 stores ACIS data as text in entity
             self.dxf.export_dxf_attribs(tagwriter, "version")
-            self.export_acis_data(tagwriter)
+            self.export_sat_data(tagwriter)
 
-    def export_acis_data(self, tagwriter: "TagWriter") -> None:
+    def export_sat_data(self, tagwriter: "TagWriter") -> None:
         """Export ACIS data as DXF tags. (internal API)"""
 
         def cleanup(lines):
             for line in lines:
                 yield line.rstrip().replace("\n", "")
 
-        tags = Tags(textlines2tags(crypt.encode(cleanup(self.acis_data))))
+        tags = Tags(textlines2tags(crypt.encode(cleanup(self.sat))))
         tagwriter.write_tags(tags)
-
-    def set_text(self, text: str, sep: str = "\n") -> None:
-        """Set ACIS data from one string."""
-        self.acis_data = text.split(sep)
 
     def tostring(self) -> str:
         """Returns ACIS data as one string for DXF R2000 to R2010."""
         if self.has_binary_data:
             return ""
         else:
-            return "\n".join(self.acis_data)  # type: ignore
+            return "\n".join(self.sat)
 
-    def tobytes(self) -> bytes:
-        """Returns ACIS data as joined bytes for DXF R2013 and later."""
+    def destroy(self) -> None:
         if self.has_binary_data:
-            return b"".join(self.acis_data)  # type: ignore
-        else:
-            return b""
+            self.doc.acdsdata.del_acis_data(self.dxf.handle)
+        super().destroy()
 
 
 def tags2textlines(tags: Iterable) -> Iterable[str]:

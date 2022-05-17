@@ -11,7 +11,7 @@ recipient = recipient_doc.modelspace()[0]
 
 
 # Implant donor ACIS entity into recipient entity
-recipient.acis_data = donor.acis_data
+recipient.sat = donor.sat
 patient_name = f"patient_{recipient_doc.acad_release}.dxf"
 recipient_doc.saveas(patient_name)
 

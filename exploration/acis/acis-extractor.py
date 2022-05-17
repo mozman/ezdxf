@@ -16,15 +16,15 @@ DEFAULT_FILE = DIR / "acis.dxf"
 def export_acis(entity: Body, folder: Path):
     version = entity.doc.dxfversion
     fname = f"{version}-{entity.dxftype()}-{entity.dxf.handle}"
-    data = entity.acis_data
-    if isinstance(data[0], bytes):
+
+    if entity.has_binary_data:
         with open(folder / (fname + ".sab"), "wb") as fp:
             print(f"Exporting: {fp.name}")
-            fp.write(b"".join(data))
+            fp.write(entity.sab)
     else:
         with open(folder / (fname + ".sat"), "wt") as fp:
             print(f"Exporting: {fp.name}")
-            fp.write("\n".join(data))
+            fp.write(entity.tostring())
 
 
 def extract_acis(filepath: Path):

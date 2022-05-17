@@ -19,13 +19,13 @@ def test_surface(msp):
     surface = msp.add_surface()
     assert surface.dxftype() == "SURFACE"
     # ACIS data is tested in test_body()
-    assert surface.acis_data == []
+    assert surface.sat == []
 
 
 def test_extruded_surface(msp):
     surface = msp.add_extruded_surface()
     assert surface.dxftype() == "EXTRUDEDSURFACE"
-    assert surface.acis_data == []
+    assert surface.sat == []
 
     matrix = surface.transformation_matrix_extruded_entity
     assert list(matrix) == IDENTITY_MATRIX
@@ -43,7 +43,7 @@ def test_extruded_surface(msp):
 def test_lofted_surface(msp):
     surface = msp.add_lofted_surface()
     assert surface.dxftype() == "LOFTEDSURFACE"
-    assert surface.acis_data == []
+    assert surface.sat == []
 
     matrix = surface.transformation_matrix_lofted_entity
     assert list(matrix) == IDENTITY_MATRIX
@@ -52,13 +52,13 @@ def test_lofted_surface(msp):
 def test_swept_surface(msp):
     surface = msp.add_swept_surface()
     assert surface.dxftype() == "SWEPTSURFACE"
-    assert surface.acis_data == []
+    assert surface.sat == []
 
 
 def test_revolved_surface(msp):
     surface = msp.add_revolved_surface()
     assert surface.dxftype() == "REVOLVEDSURFACE"
-    assert surface.acis_data == []
+    assert surface.sat == []
 
     matrix = surface.transformation_matrix_revolved_entity
     assert list(matrix) == IDENTITY_MATRIX

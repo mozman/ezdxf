@@ -13,7 +13,10 @@ msp_out = doc_out.modelspace()
 
 for e in msp.query("3DSOLID"):
     assert isinstance(e, Body)
-    data = e.acis_data
+    if e.has_binary_data:
+        data = e.sab
+    else:
+        data = e.sat
     if data:
         for body in acis.load(data):
             for mesh in acis.mesh_from_body(body):
