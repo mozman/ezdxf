@@ -280,7 +280,7 @@ class SabBuilder(AbstractBuilder):
         self.entities: List[SabEntity] = []
 
     def dump_sab(self) -> bytes:
-        """Returns the SAB representation of the ACIS file as bytearray."""
+        """Returns the SAB representation of the ACIS file as bytes."""
         self.reorder_records()
         self.header.n_entities = len(self.bodies)
         self.header.n_records = 0  # is always 0
@@ -358,7 +358,7 @@ def resolve_pointers(entities: List[SabEntity]) -> List[SabEntity]:
     return entities
 
 
-def parse_sab(b: Union[bytes, bytearray, Sequence[bytes]]) -> SabBuilder:
+def parse_sab(data: Union[bytes, bytearray]) -> SabBuilder:
     """Returns the :class:`SabBuilder` for the ACIS :term:`SAB` file content
     given as string or list of strings.
 
@@ -366,13 +366,8 @@ def parse_sab(b: Union[bytes, bytearray, Sequence[bytes]]) -> SabBuilder:
         ParsingError: invalid or unsupported ACIS data structure
 
     """
-    data: bytes
-    if isinstance(b, (bytes, bytearray)):
-        data = b
-    else:
-        data = b"".join(b)
     if not isinstance(data, (bytes, bytearray)):
-        raise TypeError("expected bytes, bytearray or a sequence of bytes")
+        raise TypeError("expected bytes, bytearray")
     builder = SabBuilder()
     decoder = Decoder(data)
     builder.header = decoder.read_header()

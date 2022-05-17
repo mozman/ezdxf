@@ -86,6 +86,13 @@ class Body(DXFGraphic):
         self._update = False
 
     @property
+    def acis_data(self) -> Union[bytes, List[str]]:
+        """Returns :term:`SAT` or :term:`SAB` data."""
+        if self.has_binary_data:
+            return self.sab
+        return self.sat
+
+    @property
     def sat(self) -> List[str]:
         """Returns :term:`SAT` data as list of strings. """
         return self._sat

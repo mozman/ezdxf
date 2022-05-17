@@ -16,11 +16,11 @@ INF = float("inf")
 
 
 def load(
-    data: Union[str, Sequence[str], bytes, bytearray, Sequence[bytes]]
+    data: Union[str, Sequence[str], bytes, bytearray]
 ) -> List[Body]:
     """Returns a list of :class:`Body` entities from :term:`SAT` or :term:`SAB`
     data. Accepts :term:`SAT` data as a single string or a sequence of strings
-    and :term:`SAB` data as bytes, bytearray or a sequence of bytes.
+    and :term:`SAB` data as bytes or bytearray.
 
     Example for loading ACIS data from a DXF entity based on
     :class:`ezdxf.entities.Body`::
@@ -43,18 +43,9 @@ def load(
         arbitrary ACIS data!**
 
     """
-    if isinstance(data, Sequence):
-        if len(data) == 0:
-            return []
-        if isinstance(data[0], str):
-            return SatLoader.load(data)  # type: ignore
-        elif isinstance(data[0], (bytes, bytearray)):
-            return SabLoader.load(data)  # type: ignore
     if isinstance(data, (bytes, bytearray)):
         return SabLoader.load(data)
-    elif isinstance(data, str):
-        return SatLoader.load(data)
-    raise TypeError(f"invalid type of data: {type(data)}")
+    return SatLoader.load(data)
 
 
 def export_sat(bodies: Sequence[Body], version: int = 700) -> List[str]:
@@ -643,7 +634,7 @@ class FileLoader(abc.ABC):
 
 
 class SabLoader(FileLoader):
-    def __init__(self, data: Union[bytes, bytearray, Sequence[bytes]]):
+    def __init__(self, data: Union[bytes, bytearray]):
         builder = sab.parse_sab(data)
         super().__init__(builder.header.version)
         self.records = builder.entities
@@ -652,7 +643,7 @@ class SabLoader(FileLoader):
         return sab.SabDataLoader(data, self.version)
 
     @classmethod
-    def load(cls, data: Union[bytes, bytearray, Sequence[bytes]]) -> List[Body]:
+    def load(cls, data: Union[bytes, bytearray]) -> List[Body]:
         loader = cls(data)
         loader.load_entities()
         return loader.bodies()
