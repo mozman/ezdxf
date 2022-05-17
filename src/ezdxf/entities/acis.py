@@ -152,9 +152,9 @@ class Body(DXFGraphic):
         if tagwriter.dxfversion >= DXF2013:
             # ACIS data stored in the ACDSDATA section as binary encoded
             # information.
-            if self._update:
-                # TODO: write back SAB data into AcDsDataSection!
-                pass
+            if self.doc and self._update:
+                # write back changed SAB data into AcDsDataSection!
+                self.doc.acdsdata.set_acis_data(self.dxf.handle, self.sab)
             if self.dxf.hasattr("version"):
                 tagwriter.write_tag2(70, self.dxf.version)
             self.dxf.export_dxf_attribs(tagwriter, ["flags", "uid"])
@@ -182,7 +182,7 @@ class Body(DXFGraphic):
 
     def destroy(self) -> None:
         if self.has_binary_data:
-            self.doc.acdsdata.del_acis_data(self.dxf.handle)
+            self.doc.acdsdata.del_acis_data(self.dxf.handle)  # type: ignore
         super().destroy()
 
 
