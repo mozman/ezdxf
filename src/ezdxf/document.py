@@ -54,7 +54,7 @@ from ezdxf.sections.tables import TablesSection
 from ezdxf.sections.blocks import BlocksSection
 from ezdxf.sections.entities import EntitySection, StoredSection
 from ezdxf.sections.objects import ObjectsSection
-from ezdxf.sections.acdsdata import AcDsDataSection
+from ezdxf.sections.acdsdata import AcDsDataSection, new_acds_data_section
 
 from ezdxf.entities.dxfgroups import GroupCollection
 from ezdxf.entities.material import MaterialCollection
@@ -189,8 +189,7 @@ class Drawing:
         self.blocks = BlocksSection(self)
         self.entities = EntitySection(self)
         self.objects = ObjectsSection(self)
-        # AcDSData section is not supported for new drawings
-        self.acdsdata = AcDsDataSection(self)
+        self.acdsdata = new_acds_data_section(self)
         self.rootdict = self.objects.rootdict
         # Create missing tables:
         self.objects.setup_object_management_tables(self.rootdict)

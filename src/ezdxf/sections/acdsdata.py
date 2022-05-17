@@ -1,5 +1,5 @@
 # Purpose: acdsdata section manager
-# Copyright (c) 2014-2021, Manfred Moitzi
+# Copyright (c) 2014-2022, Manfred Moitzi
 # License: MIT License
 """
 ACDSDATA entities have NO handles, therefore they can not be stored in the
@@ -73,7 +73,8 @@ section structure (work in progress):
 
 0 <str> ENDSEC
 """
-from typing import TYPE_CHECKING, Iterator, Iterable, List, Any, Union
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterator, Iterable, List, Any
 import abc
 from itertools import islice
 
@@ -86,7 +87,7 @@ if TYPE_CHECKING:
 
 class AcDsEntity(abc.ABC):
     @abc.abstractmethod
-    def export_dxf(self, tagwriter: "TagWriter"):
+    def export_dxf(self, tagwriter: TagWriter):
         ...
 
     @abc.abstractmethod
@@ -97,7 +98,7 @@ class AcDsEntity(abc.ABC):
 class AcDsDataSection:
     name = "ACDSDATA"
 
-    def __init__(self, doc: "Drawing", entities: Iterable[Tags] = None):
+    def __init__(self, doc: Drawing, entities: Iterable[Tags] = None):
         self.doc = doc
         self.entities: List[AcDsEntity] = []
         self.section_info = Tags()
@@ -122,12 +123,12 @@ class AcDsDataSection:
         for entity in entities:
             self.append(AcDsData(entity))  # tags have no subclasses
 
-    def append(self, entity: "AcDsData") -> None:
+    def append(self, entity: AcDsData) -> None:
         cls = ACDSDATA_TYPES.get(entity.dxftype(), AcDsData)
         data = cls(entity.tags)
         self.entities.append(data)
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: TagWriter) -> None:
         if not self.is_valid:
             return
         tagwriter.write_tags(self.section_info)
@@ -136,7 +137,7 @@ class AcDsDataSection:
         tagwriter.write_tag2(0, "ENDSEC")
 
     @property
-    def acdsrecords(self) -> Iterable["AcDsRecord"]:
+    def acdsrecords(self) -> Iterable[AcDsRecord]:
         return (
             entity for entity in self.entities if isinstance(entity, AcDsRecord)
         )
@@ -161,7 +162,7 @@ class AcDsData(AcDsEntity):
     def __init__(self, tags: Tags):
         self.tags = tags
 
-    def export_dxf(self, tagwriter: "TagWriter"):
+    def export_dxf(self, tagwriter: TagWriter):
         tagwriter.write_tags(self.tags)
 
     def dxftype(self) -> str:
@@ -212,10 +213,10 @@ class AcDsRecord(AcDsEntity):
     def __getitem__(self, item) -> Section:
         return self.sections[item]
 
-    def _write_header(self, tagwriter: "TagWriter") -> None:
+    def _write_header(self, tagwriter: TagWriter) -> None:
         tagwriter.write_tags(Tags([self._dxftype, self.flags]))
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: TagWriter) -> None:
         self._write_header(tagwriter)
         for section in self.sections:
             tagwriter.write_tags(section)
@@ -224,3 +225,204 @@ class AcDsRecord(AcDsEntity):
 ACDSDATA_TYPES = {
     "ACDSRECORD": AcDsRecord,
 }
+
+
+DEFAULT_SETUP = """0
+SECTION
+2
+ACDSDATA
+70
+2
+71
+2
+0
+ACDSSCHEMA
+90
+0
+1
+AcDb_Thumbnail_Schema
+2
+AcDbDs::ID
+280
+10
+91
+8
+2
+Thumbnail_Data
+280
+15
+91
+0
+101
+ACDSRECORD
+95
+0
+90
+2
+2
+AcDbDs::TreatedAsObjectData
+280
+1
+291
+1
+101
+ACDSRECORD
+95
+0
+90
+3
+2
+AcDbDs::Legacy
+280
+1
+291
+1
+101
+ACDSRECORD
+1
+AcDbDs::ID
+90
+4
+2
+AcDs:Indexable
+280
+1
+291
+1
+101
+ACDSRECORD
+1
+AcDbDs::ID
+90
+5
+2
+AcDbDs::HandleAttribute
+280
+7
+282
+1
+0
+ACDSSCHEMA
+90
+1
+1
+AcDb3DSolid_ASM_Data
+2
+AcDbDs::ID
+280
+10
+91
+8
+2
+ASM_Data
+280
+15
+91
+0
+101
+ACDSRECORD
+95
+1
+90
+2
+2
+AcDbDs::TreatedAsObjectData
+280
+1
+291
+1
+101
+ACDSRECORD
+95
+1
+90
+3
+2
+AcDbDs::Legacy
+280
+1
+291
+1
+101
+ACDSRECORD
+1
+AcDbDs::ID
+90
+4
+2
+AcDs:Indexable
+280
+1
+291
+1
+101
+ACDSRECORD
+1
+AcDbDs::ID
+90
+5
+2
+AcDbDs::HandleAttribute
+280
+7
+282
+1
+0
+ACDSSCHEMA
+90
+2
+1
+AcDbDs::TreatedAsObjectDataSchema
+2
+AcDbDs::TreatedAsObjectData
+280
+1
+91
+0
+0
+ACDSSCHEMA
+90
+3
+1
+AcDbDs::LegacySchema
+2
+AcDbDs::Legacy
+280
+1
+91
+0
+0
+ACDSSCHEMA
+90
+4
+1
+AcDbDs::IndexedPropertySchema
+2
+AcDs:Indexable
+280
+1
+91
+0
+0
+ACDSSCHEMA
+90
+5
+1
+AcDbDs::HandleAttributeSchema
+2
+AcDbDs::HandleAttribute
+280
+7
+91
+1
+284
+1
+"""
+# (0, ENDSEC) must be omitted!
+
+
+def new_acds_data_section(doc: Drawing) -> AcDsDataSection:
+    if doc.dxfversion >= "AC1027":
+        return AcDsDataSection(doc, group_tags(Tags.from_text(DEFAULT_SETUP)))
+    else:
+        return AcDsDataSection(doc)
