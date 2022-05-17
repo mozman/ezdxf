@@ -74,7 +74,7 @@ section structure (work in progress):
 0 <str> ENDSEC
 """
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterator, Iterable, List, Any
+from typing import TYPE_CHECKING, Iterator, Iterable, List, Any, Optional
 import abc
 from itertools import islice
 
@@ -143,19 +143,26 @@ class AcDsDataSection:
         )
 
     def get_acis_data(self, handle: str) -> List[bytes]:
-        for record in self.acdsrecords:
-            try:
-                section = record.get_section("AcDbDs::ID")
-            except DXFKeyError:  # not present
-                continue
-            asm_handle = section.get_first_value(320, None)
-            if asm_handle == handle:
-                try:
-                    asm_data = record.get_section("ASM_Data")
-                except DXFKeyError:  # no data stored
-                    break
-                return [tag.value for tag in asm_data if tag.code == 310]
+        asm_record = self.find_acis_record(handle)
+        if asm_record is not None:
+            return get_acis_data(asm_record)
         return []
+
+    def set_acis_data(self, handle, sab_data: bytes) -> None:
+        asm_record = self.find_acis_record(handle)
+        if asm_record is not None:
+            set_acis_data(asm_record, sab_data)
+
+    def del_acis_data(self, handle) -> None:
+        asm_record = self.find_acis_record(handle)
+        if asm_record is not None:
+            self.entities.remove(asm_record)
+
+    def find_acis_record(self, handle: str) -> Optional[AcDsRecord]:
+        for record in self.acdsrecords:
+            if is_acis_data(record) and acis_entity_handle(record) == handle:
+                return record
+        return None
 
 
 class AcDsData(AcDsEntity):
@@ -220,6 +227,31 @@ class AcDsRecord(AcDsEntity):
         self._write_header(tagwriter)
         for section in self.sections:
             tagwriter.write_tags(section)
+
+
+def get_acis_data(record: AcDsRecord) -> List[bytes]:
+    try:
+        asm_data = record.get_section("ASM_Data")
+    except DXFKeyError:  # no data stored
+        return []
+    else:
+        return [tag.value for tag in asm_data if tag.code == 310]
+
+
+def is_acis_data(record: AcDsRecord) -> bool:
+    return record.has_section("ASM_Data")
+
+
+def acis_entity_handle(record: AcDsRecord) -> str:
+    try:
+        section = record.get_section("AcDbDs::ID")
+    except DXFKeyError:  # not present
+        return ""
+    return section.get_first_value(320, "")
+
+
+def set_acis_data(record: AcDsRecord, data: bytes) -> None:
+    pass
 
 
 ACDSDATA_TYPES = {
