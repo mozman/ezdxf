@@ -87,7 +87,7 @@ def _setup_export_header(version) -> hdr.AcisHeader:
     return header
 
 
-def register(cls: Type[AcisEntity]):
+def register(cls):
     ENTITY_TYPES[cls.type] = cls
     return cls
 
@@ -266,6 +266,7 @@ class Body(SupportsPattern):
         exporter.write_ptr(self.transform)
 
     def append_lump(self, lump: Lump) -> None:
+        lump.body = self
         if self.lump.is_none:
             self.lump = lump
         else:
@@ -314,6 +315,24 @@ class Lump(SupportsPattern):
         exporter.write_ptr(self.shell)
         exporter.write_ptr(self.body)
 
+    def append_shell(self, shell: Shell) -> None:
+        shell.lump = self
+        if self.shell.is_none:
+            self.shell = shell
+        else:
+            current_shell = self.shell
+            while not current_shell.next_shell.is_none:
+                current_shell = current_shell.next_shell
+            current_shell.next_shell = shell
+
+    def shells(self) -> List[Shell]:
+        shells = []
+        current_shell = self.shell
+        while not current_shell.is_none:
+            shells.append(current_shell)
+            current_shell = current_shell.next_shell
+        return shells
+
 
 @register
 class Shell(SupportsPattern):
@@ -341,6 +360,24 @@ class Shell(SupportsPattern):
         exporter.write_ptr(self.face)
         exporter.write_ptr(self.wire)
         exporter.write_ptr(self.lump)
+
+    def append_face(self, face: Face) -> None:
+        face.shell = self
+        if self.face.is_none:
+            self.face = face
+        else:
+            current_face = self.face
+            while not current_face.next_face.is_none:
+                current_face = current_face.next_face
+            current_face.next_face = face
+
+    def faces(self) -> List[Face]:
+        faces = []
+        current_face = self.face
+        while not current_face.is_none:
+            faces.append(current_face)
+            current_face = current_face.next_face
+        return faces
 
 
 @register

@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import List, Iterator, Sequence, Optional
 from ezdxf.render import MeshVertexMerger, MeshTransformer, MeshBuilder
 from ezdxf.math import Matrix44, Vec3
-from .entities import Body, Lump, NONE_REF
+from .entities import Body, Lump, NONE_REF, Face, Shell
 
 
 def mesh_from_body(body: Body, merge_lumps=True) -> List[MeshTransformer]:
@@ -168,8 +168,27 @@ def body_from_mesh(mesh: MeshBuilder, precision: int = 6) -> Body:
 
 
 def lump_from_mesh(mesh: MeshBuilder) -> Lump:
-    """Returns a :term:`ACIS` :class:`~ezdxf.acis.entities.Lump` entity from a
+    """Returns a :class:`~ezdxf.acis.entities.Lump` entity from a
     :class:`~ezdxf.render.MeshBuilder` instance. The `mesh` has to be a single
     body or shell!
     """
-    return Lump()
+    lump = Lump()
+    shell = Shell()
+    lump.append_shell(shell)
+    face_builder = FaceBuilder(mesh)
+    for face in face_builder.acis_faces():
+        shell.append_face(face)
+    return lump
+
+
+class FaceBuilder:
+    def __init__(self, mesh: MeshBuilder):
+        self.vertices: List[Vec3] = mesh.vertices
+        self.faces: List[Sequence[int]] = mesh.faces
+        self.setup()
+
+    def setup(self):
+        pass
+
+    def acis_faces(self) -> Iterator[Face]:
+        pass

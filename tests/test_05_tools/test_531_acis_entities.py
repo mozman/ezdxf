@@ -59,6 +59,22 @@ class TestLump:
     def test_has_attribute_to_first_shell(self, body):
         assert body.lump.shell.is_none is False
 
+    def test_get_all_shells_as_a_list(self, body):
+        shells = body.lump.shells()
+        assert len(shells) == 1
+        assert isinstance(shells[0], entities.Shell)
+
+    def test_append_shells(self):
+        body = entities.Body()
+        lump = entities.Lump()
+        body.append_lump(lump)
+        assert len(lump.shells()) == 0
+        lump.append_shell(entities.Shell())
+        assert len(lump.shells()) == 1
+        lump.append_shell(entities.Shell())
+        assert len(lump.shells()) == 2
+
+
 class TestShell:
     @pytest.fixture(scope="class")
     def shell(self, body):
@@ -72,6 +88,24 @@ class TestShell:
 
     def test_has_no_next_shell(self, shell):
         assert shell.next_shell.is_none is True
+
+    def test_get_all_faces_as_a_list(self, shell):
+        faces = shell.faces()
+        assert len(faces) == 6
+        assert isinstance(faces[0], entities.Face)
+
+    def test_append_faces(self):
+        body = entities.Body()
+        lump = entities.Lump()
+        shell = entities.Shell()
+        body.append_lump(lump)
+        lump.append_shell(shell)
+
+        assert len(shell.faces()) == 0
+        shell.append_face(entities.Face())
+        assert len(shell.faces()) == 1
+        shell.append_face(entities.Face())
+        assert len(shell.faces()) == 2
 
 
 class TestFace:
