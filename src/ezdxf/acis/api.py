@@ -24,5 +24,5 @@ from .const import (
     InvalidLinkStructure,
     ExportError,
 )
-from .mesh import mesh_from_body
+from .mesh import mesh_from_body, body_from_mesh
 from .entities import load, export_sat, export_sab, Body

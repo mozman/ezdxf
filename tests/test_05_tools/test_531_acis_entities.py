@@ -32,6 +32,19 @@ class TestBody:
     def test_has_wire_attribute(self, body):
         assert body.wire.is_none is True
 
+    def test_get_all_lumps_as_a_list(self, body):
+        bodies = body.lumps()
+        assert len(bodies) == 1
+        assert isinstance(bodies[0], entities.Lump)
+
+    def test_append_lumps(self):
+        body = entities.Body()
+        assert len(body.lumps()) == 0
+        body.append_lump(entities.Lump())
+        assert len(body.lumps()) == 1
+        body.append_lump(entities.Lump())
+        assert len(body.lumps()) == 2
+
 
 class TestLump:
     def test_lump_type(self, body):
@@ -45,7 +58,6 @@ class TestLump:
 
     def test_has_attribute_to_first_shell(self, body):
         assert body.lump.shell.is_none is False
-
 
 class TestShell:
     @pytest.fixture(scope="class")

@@ -2,7 +2,7 @@
 #  License: MIT License
 from __future__ import annotations
 from typing import List, Iterator, Sequence, Optional
-from ezdxf.render import MeshVertexMerger, MeshTransformer
+from ezdxf.render import MeshVertexMerger, MeshTransformer, MeshBuilder
 from ezdxf.math import Matrix44, Vec3
 from .entities import Body, Lump, NONE_REF
 
@@ -133,3 +133,43 @@ def flat_polygon_faces_from_lump(
                     yield tuple(vertices)
                 break
         face = face.next_face
+
+
+def body_from_mesh(mesh: MeshBuilder, precision: int = 6) -> Body:
+    """Returns a :term:`ACIS` :class:`~ezdxf.acis.entities.Body` entity from a
+    :class:`~ezdxf.render.MeshBuilder` instance.
+
+    This entity can be assigned to a :class:`~ezdxf.entities.Solid3d` DXF entity
+    as :term:`SAT` or :term:`SAB` data according to the version your DXF
+    document uses (SAT for DXF R2000 to R2010 and SAB for DXF R2013 and later).
+
+    If the `mesh` contains multiple separated meshes, each mesh will be a
+    separated :class:`~ezdxf.acis.entities.Lump` node.
+    If each mesh should get its own :class:`~ezdxf.acis.entities.Body` entity,
+    separate the meshes beforehand by the method
+    :class:`~ezdxf.render.MeshBuilder.separate_meshes`.
+
+    A closed mesh creates a solid body and an open mesh creates an open (hollow)
+    shell. The detection if the mesh is open or closed is based on the edges
+    of the mesh: if **all** edges of mesh have two adjacent faces the mesh is
+    closed.
+
+    The current implementation applies automatically a vertex optimization,
+    which merges coincident vertices into a single vertex.
+
+    """
+    mesh = mesh.optimize_vertices(precision)
+    body = Body()
+    for mesh in mesh.separate_meshes():
+        # TODO: move mesh to origin and set transformation of body accordingly
+        lump = lump_from_mesh(mesh)
+        body.append_lump(lump)
+    return body
+
+
+def lump_from_mesh(mesh: MeshBuilder) -> Lump:
+    """Returns a :term:`ACIS` :class:`~ezdxf.acis.entities.Lump` entity from a
+    :class:`~ezdxf.render.MeshBuilder` instance. The `mesh` has to be a single
+    body or shell!
+    """
+    return Lump()

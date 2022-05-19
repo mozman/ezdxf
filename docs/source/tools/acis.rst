@@ -83,9 +83,10 @@ and exported as :class:`~ezdxf.entities.Mesh` entities:
 
 .. image:: gfx/solids-mesh.png
 
-
 As you can see all faces which do not have straight lines as boundaries are
 lost.
+
+.. autofunction:: body_from_mesh
 
 Exceptions
 ~~~~~~~~~~

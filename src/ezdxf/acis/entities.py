@@ -15,9 +15,7 @@ ENTITY_TYPES: Dict[str, Type[AcisEntity]] = {}
 INF = float("inf")
 
 
-def load(
-    data: Union[str, Sequence[str], bytes, bytearray]
-) -> List[Body]:
+def load(data: Union[str, Sequence[str], bytes, bytearray]) -> List[Body]:
     """Returns a list of :class:`Body` entities from :term:`SAT` or :term:`SAB`
     data. Accepts :term:`SAT` data as a single string or a sequence of strings
     and :term:`SAB` data as bytes or bytearray.
@@ -266,6 +264,23 @@ class Body(SupportsPattern):
         exporter.write_ptr(self.lump)
         exporter.write_ptr(self.wire)
         exporter.write_ptr(self.transform)
+
+    def append_lump(self, lump: Lump) -> None:
+        if self.lump.is_none:
+            self.lump = lump
+        else:
+            current_lump = self.lump
+            while not current_lump.next_lump.is_none:
+                current_lump = current_lump.next_lump
+            current_lump.next_lump = lump
+
+    def lumps(self) -> List[Lump]:
+        lumps = []
+        current_lump = self.lump
+        while not current_lump.is_none:
+            lumps.append(current_lump)
+            current_lump = current_lump.next_lump
+        return lumps
 
 
 @register
