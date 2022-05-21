@@ -42,53 +42,53 @@ The basic :class:`MeshBuilder` class does not support transformations.
         least three vertices, :class:`~ezdxf.entities.Mesh` supports ngons,
         so the count of vertices is not limited.
 
+    .. automethod:: add_face
+
+    .. automethod:: add_mesh
+
+    .. automethod:: add_vertices
+
     .. automethod:: copy
 
     .. automethod:: diagnose
 
     .. automethod:: faces_as_vertices
 
-    .. automethod:: open_faces
+    .. automethod:: flip_normals
 
-    .. automethod:: add_vertices
-
-    .. automethod:: add_face
-
-    .. automethod:: add_mesh
-
-    .. automethod:: has_none_planar_faces
-
-    .. automethod:: render_mesh
-
-    .. automethod:: render_polyface
-
-    .. automethod:: render_3dfaces
-
-    .. automethod:: render_normals
+    .. automethod:: from_builder(other: MeshBuilder)
 
     .. automethod:: from_mesh
 
     .. automethod:: from_polyface
 
-    .. automethod:: from_builder(other: MeshBuilder)
-
-    .. automethod:: flip_normals
-
-    .. automethod:: subdivide
+    .. automethod:: has_none_planar_faces
 
     .. automethod:: merge_coplanar_faces
-
-    .. automethod:: optimize_vertices
-
-    .. automethod:: subdivide_ngons
-
-    .. automethod:: tessellation
-
-    .. automethod:: separate_meshes
 
     .. automethod:: normalize_faces
 
     .. automethod:: normals
+
+    .. automethod:: open_faces
+
+    .. automethod:: optimize_vertices
+
+    .. automethod:: render_3dfaces
+
+    .. automethod:: render_mesh
+
+    .. automethod:: render_normals
+
+    .. automethod:: render_polyface
+
+    .. automethod:: separate_meshes
+
+    .. automethod:: subdivide
+
+    .. automethod:: subdivide_ngons
+
+    .. automethod:: tessellation
 
 
 .. autoclass:: ezdxf.render.mesh.EdgeStat
