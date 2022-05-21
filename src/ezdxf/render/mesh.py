@@ -61,6 +61,25 @@ def open_faces(faces: Iterable[Sequence[int]]) -> Iterator[Sequence[int]]:
             yield face
 
 
+def normalize_faces(
+    faces: List[Sequence[int]], *, close=False,
+) -> Iterator[Sequence[int]]:
+    """Removes duplicated vertices and returns closed or open face according
+    the `close` argument. Returns only faces with at least 3 edges.
+    """
+    for face in open_faces(faces):
+        new_face = [face[0]]
+        for index in face[1:]:
+            if new_face[-1] != index:
+                new_face.append(index)
+
+        if len(new_face) < 3:
+            continue
+        if close:
+            new_face.append(new_face[0])
+        yield new_face
+
+
 def all_edges(faces: Iterable[Sequence[int]]) -> Iterator[Tuple[int, int]]:
     """Yields all face edges as int tuples."""
     for face in open_faces(faces):
@@ -679,6 +698,16 @@ class MeshBuilder:
         """
         return list(separate_meshes(self))
 
+    def normalize_faces(self) -> None:
+        """Removes duplicated vertx indices from faces and stores all faces as
+        open faces, where the last vertex is not coincident with the first
+        vertex.
+
+        .. versionadded:: 0.18
+
+        """
+        self.faces = list(normalize_faces(self.faces, close=False))
+
     def normals(self) -> Iterator[Vec3]:
         """Yields all face normals, yields ``Vec3(0, 0, 0)`` for degenerated
         faces.
@@ -687,7 +716,7 @@ class MeshBuilder:
 
         """
         vertices = self.vertices
-        for face in open_faces(self.faces):
+        for face in self.faces:
             if len(face) < 3:
                 yield NULLVEC
 

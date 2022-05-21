@@ -86,6 +86,8 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. automethod:: separate_meshes
 
+    .. automethod:: normalize_faces
+
     .. automethod:: normals
 
 

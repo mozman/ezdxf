@@ -3,10 +3,10 @@
 from __future__ import annotations
 from typing import List, Iterator, Sequence, Optional, Tuple, Dict, Iterable
 from ezdxf.render import MeshVertexMerger, MeshTransformer, MeshBuilder
+from ezdxf.render.mesh import normalize_faces
 from ezdxf.math import Matrix44, Vec3, NULLVEC
 from . import entities
 from .entities import Body, Lump, NONE_REF, Face, Shell
-from .const import InvalidVertexIndex
 
 
 def mesh_from_body(body: Body, merge_lumps=True) -> List[MeshTransformer]:
@@ -185,11 +185,12 @@ def lump_from_mesh(mesh: MeshBuilder) -> Lump:
 
 class PolyhedronFaceBuilder:
     def __init__(self, mesh: MeshBuilder):
-        self.vertices: List[Vec3] = mesh.vertices
-        self.faces: List[Sequence[int]] = list(
-            normalize_faces(mesh.faces, len(mesh.vertices))
-        )
-        self.points: List[entities.Point] = list(make_points(mesh.vertices))
+        mesh_copy = mesh.copy()
+        mesh_copy.normalize_faces()  # open faces without duplicates!
+        self.vertices: List[Vec3] = mesh_copy.vertices
+        self.faces: List[Sequence[int]] = mesh_copy.faces
+        self.normals = list(mesh_copy.normals())
+        self.points: List[entities.Point] = list(make_points(self.vertices))
 
         # double_sided:
         # If every edge belongs to two faces the body is for sure a closed
@@ -200,16 +201,21 @@ class PolyhedronFaceBuilder:
         # - False: the body is a closed solid body, one side points outwards of
         #   the body (environment side) and one side points inwards (material
         #   side)
-        self.double_sided = mesh.diagnose().is_edge_balance_broken
-        self.coedges: Dict[Tuple[int, int], entities.Coedge] = {}
+        self.double_sided = mesh_copy.diagnose().is_edge_balance_broken
+
+        # coedges and edges ledger, where index1 <= index2
+        self.partner_coedges: Dict[Tuple[int, int], entities.Coedge] = {}
         self.edges: Dict[Tuple[int, int], entities.Edge] = {}
 
     def acis_faces(self) -> Iterator[Face]:
-        for face in self.faces:
+        for face, face_normal in zip(self.faces, self.normals):
+            if face_normal.is_null:
+                continue
             acis_face = Face()
             plane = self.make_plane(face)
             if plane is None:
                 continue
+            plane.normal = face_normal
             loop = self.make_loop(face)
             if loop is None:
                 continue
@@ -220,35 +226,24 @@ class PolyhedronFaceBuilder:
             yield acis_face
 
     def make_plane(self, face: Sequence[int]) -> Optional[entities.Plane]:
-        assert len(face) > 2, "face requires least 3 vertices"
-        v = self.vertices
-        origin = v[face[0]]
-
+        assert len(face) > 1, "face requires least 2 vertices"
         plane = entities.Plane()
-        plane.reverse_v = False  # normal is calculated by the right-hand rule
-        plane.origin = origin
-        v1 = v[face[1]] - origin
+        # normal is always calculated by the right-hand rule:
+        plane.reverse_v = False
+        plane.origin = self.vertices[face[0]]
         try:
-            plane.u_dir = v1.normalize()
+            plane.u_dir = (self.vertices[face[1]] - plane.origin).normalize()
         except ZeroDivisionError:
             return None  # vertices are too close together
-
-        face_normal = NULLVEC
-        index = 2
-        while face_normal.is_null and index < len(face):
-            v2 = v[face[index]] - origin
-            face_normal = v1.cross(v2)
-            index += 1
-
-        if face_normal.is_null:
-            # can't calculate the face normal, all vertices at a straight line!
-            return None
-        plane.normal = face_normal.normalize()
         return plane
 
     def make_loop(self, face: Sequence[int]) -> Optional[entities.Loop]:
         coedges: List[entities.Coedge] = []
-        for i1, i2 in zip(face, face[1:]):
+        face2 = list(face[1:])
+        if face[0] != face[-1]:
+            face2.append(face[0])
+
+        for i1, i2 in zip(face, face2):
             coedge = self.make_coedge(i1, i2)
             coedge.edge, coedge.sense = self.make_edge(i1, i2)
             coedges.append(coedge)
@@ -263,9 +258,9 @@ class PolyhedronFaceBuilder:
             key = index1, index2
         coedge = entities.Coedge()
         try:
-            partner_coedge = self.coedges[key]
+            partner_coedge = self.partner_coedges[key]
         except KeyError:
-            self.coedges[key] = coedge
+            self.partner_coedges[key] = coedge
         else:
             partner_coedge.add_partner_coedge(coedge)
         return coedge
@@ -307,27 +302,6 @@ class PolyhedronFaceBuilder:
         except ZeroDivisionError:  # avoided by normalize_faces()
             ray.direction = NULLVEC
         return ray
-
-
-def normalize_faces(
-    faces: List[Sequence[int]], max_index: int
-) -> Iterator[Sequence[int]]:
-    """Removes duplicated vertices and returns a closed face where the
-    first vertex == the last index. Returns only faces with at least 3 edges.
-    """
-    for face in faces:
-        new_face = [face[0]]
-        for index in face[1:]:
-            if index < 0 or index >= max_index:
-                raise InvalidVertexIndex(
-                    f"invalid vertex index: {index} (vertex does not exist)"
-                )
-            if new_face[-1] != index:
-                new_face.append(index)
-        if new_face[-1] != new_face[0]:
-            new_face.append(new_face[0])
-        if len(new_face) > 3:
-            yield new_face
 
 
 def make_points(vertices: Iterable[Vec3]) -> Iterator[entities.Point]:
