@@ -720,8 +720,8 @@ class MeshBuilder:
             if len(face) < 3:
                 yield NULLVEC
 
-            origin = vertices[0]
-            v1 = vertices[1] - origin
+            origin = vertices[face[0]]
+            v1 = vertices[face[1]] - origin
             face_normal = NULLVEC
             index = 2
             while face_normal.is_null and index < len(face):

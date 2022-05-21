@@ -714,7 +714,7 @@ class TestNormals:
     def normals(self):
         return list(cube().normals())
 
-    def test_cube_hase_six_normals(self, normals):
+    def test_cube_has_six_normals(self, normals):
         assert len(normals) == 6
 
     def test_all_normals_are_normalized(self, normals):
