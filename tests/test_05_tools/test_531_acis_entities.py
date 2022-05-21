@@ -135,6 +135,21 @@ class TestFace:
         assert count == 6
 
 
+class TestPolyhedronFaceBuilder:
+    @pytest.fixture(scope="class")
+    def cube(self):
+        from ezdxf.render.forms import cube
+        return mesh.PolyhedronFaceBuilder(cube())
+
+    def test_creates_six_faces(self, cube):
+        faces = list(cube.acis_faces())
+        assert len(faces) == 6
+
+    def test_each_face_defines_a_plane_surface(self, cube):
+        for face in cube.acis_faces():
+            assert face.surface.type == "plane-surface"
+
+
 class TestPlane:
     @pytest.fixture(scope="class")
     def plane(self, body):

@@ -1,10 +1,12 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import List, Iterator, Sequence, Optional
+from typing import List, Iterator, Sequence, Optional, Tuple, Dict, Iterable
 from ezdxf.render import MeshVertexMerger, MeshTransformer, MeshBuilder
-from ezdxf.math import Matrix44, Vec3
+from ezdxf.math import Matrix44, Vec3, NULLVEC
+from . import entities
 from .entities import Body, Lump, NONE_REF, Face, Shell
+from .const import InvalidVertexIndex
 
 
 def mesh_from_body(body: Body, merge_lumps=True) -> List[MeshTransformer]:
@@ -175,20 +177,155 @@ def lump_from_mesh(mesh: MeshBuilder) -> Lump:
     lump = Lump()
     shell = Shell()
     lump.append_shell(shell)
-    face_builder = FaceBuilder(mesh)
+    face_builder = PolyhedronFaceBuilder(mesh)
     for face in face_builder.acis_faces():
         shell.append_face(face)
     return lump
 
 
-class FaceBuilder:
+class PolyhedronFaceBuilder:
     def __init__(self, mesh: MeshBuilder):
         self.vertices: List[Vec3] = mesh.vertices
-        self.faces: List[Sequence[int]] = mesh.faces
-        self.setup()
+        self.faces: List[Sequence[int]] = list(
+            normalize_faces(mesh.faces, len(mesh.vertices))
+        )
+        self.points: List[entities.Point] = list(make_points(mesh.vertices))
 
-    def setup(self):
-        pass
+        # double_sided:
+        # If every edge belongs to two faces the body is for sure a closed
+        # surface. But the "is_edge_balance_broken" property can not detect
+        # non-manifold meshes!
+        # - True: the body is an open shell, each side of the face is outside
+        #   (environment side)
+        # - False: the body is a closed solid body, one side points outwards of
+        #   the body (environment side) and one side points inwards (material
+        #   side)
+        self.double_sided = mesh.diagnose().is_edge_balance_broken
+        self.coedges: Dict[Tuple[int, int], entities.Coedge] = {}
 
     def acis_faces(self) -> Iterator[Face]:
-        pass
+        for face in self.faces:
+            acis_face = Face()
+            plane = self.make_plane(face)
+            if plane is None:
+                continue
+            loop = self.make_loop(face)
+            if loop is None:
+                continue
+            acis_face.append_loop(loop)
+            acis_face.surface = plane
+            acis_face.sense = False  # face normal is plane normal
+            acis_face.double_sided = self.double_sided
+            yield acis_face
+
+    def make_plane(self, face: Sequence[int]) -> Optional[entities.Plane]:
+        assert len(face) > 2, "face requires least 3 vertices"
+        v = self.vertices
+        origin = v[face[0]]
+
+        plane = entities.Plane()
+        plane.reverse_v = False  # normal is calculated by the right-hand rule
+        plane.origin = origin
+        v1 = v[face[1]] - origin
+        try:
+            plane.u_dir = v1.normalize()
+        except ZeroDivisionError:
+            return None  # vertices are too close together
+
+        face_normal = NULLVEC
+        index = 2
+        while face_normal.is_null and index < len(face):
+            v2 = v[face[index]] - origin
+            face_normal = v1.cross(v2)
+            index += 1
+
+        if face_normal.is_null:
+            # can't calculate the face normal, all vertices at a straight line!
+            return None
+        plane.normal = face_normal.normalize()
+        return plane
+
+    def make_loop(self, face: Sequence[int]) -> Optional[entities.Loop]:
+        coedges: List[entities.Coedge] = []
+        for i1, i2 in zip(face, face[1:]):
+            coedge = self.make_coedge(i1, i2)
+            coedge.edge, coedge.sense = self.make_edge(i1, i2)
+            coedges.append(coedge)
+        loop = entities.Loop()
+        loop.set_coedges(coedges, close=True)
+        return loop
+
+    def make_coedge(self, index1: int, index2: int) -> entities.Coedge:
+        if index1 > index2:
+            key = index2, index1
+        else:
+            key = index1, index2
+        coedge = entities.Coedge()
+        try:
+            partner_coedge = self.coedges[key]
+        except KeyError:
+            self.coedges[key] = coedge
+        else:
+            partner_coedge.add_partner_coedge(coedge)
+        return coedge
+
+    def make_edge(self, index1: int, index2: int) -> Tuple[entities.Edge, bool]:
+        def make_vertex(index: int):
+            vertex = entities.Vertex()
+            vertex.edge = edge
+            vertex.point = self.points[index]
+            return vertex
+
+        sense = False
+        if index1 > index2:
+            sense = True
+            index1, index2 = index2, index1
+        edge = entities.Edge()
+        # The edge has always the same direction as the underlying
+        # straight curve:
+        edge.sense = False
+        edge.start_vertex = make_vertex(index1)
+        edge.start_param = 0.0
+        edge.end_vertex = make_vertex(index2)
+        edge.end_param = self.vertices[index1].distance(self.vertices[index2])
+        edge.curve = self.make_ray(index1, index2)
+        return edge, sense
+
+    def make_ray(self, index1: int, index2: int) -> entities.StraightCurve:
+        v1 = self.vertices[index1]
+        v2 = self.vertices[index2]
+        ray = entities.StraightCurve()
+        ray.origin = v1
+        try:
+            ray.direction = (v2 - v2).normalize()
+        except ZeroDivisionError:  # avoided by normalize_faces()
+            ray.direction = NULLVEC
+        return ray
+
+
+def normalize_faces(
+    faces: List[Sequence[int]], max_index: int
+) -> Iterator[Sequence[int]]:
+    """Removes duplicated vertices and returns a closed face where the
+    first vertex == the last index. Returns only faces with at least 3 edges.
+    """
+    for face in faces:
+        new_face = [face[0]]
+        for index in face[1:]:
+            if index < 0 or index >= max_index:
+                raise InvalidVertexIndex(
+                    f"invalid vertex index: {index} (vertex does not exist)"
+                )
+            if new_face[-1] != index:
+                new_face.append(index)
+        if new_face[-1] != new_face[0]:
+            new_face.append(new_face[0])
+        if len(new_face) > 3:
+            yield new_face
+
+
+def make_points(vertices: Iterable[Vec3]) -> Iterator[entities.Point]:
+    for v in vertices:
+        point = entities.Point()
+        point.location = v
+        yield point

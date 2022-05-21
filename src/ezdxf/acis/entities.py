@@ -393,8 +393,11 @@ class Face(SupportsPattern):
     shell: Shell = NONE_REF
     subshell: Subshell = NONE_REF
     surface: Surface = NONE_REF
-    sense = True  # True = reversed; False = forward
-    double_sided = False  # True = double; False = single
+    # sense: face normal with respect to the surface
+    sense = False  # True = reversed; False = forward
+    double_sided = (
+        False  # True = double (hollow body); False = single (solid body)
+    )
     containment = False  # if double_sided: True = in, False = out
 
     def restore_common(
@@ -423,6 +426,24 @@ class Face(SupportsPattern):
         if self.double_sided:
             exporter.write_bool(self.containment, "in", "out")
 
+    def append_loop(self, loop: Loop) -> None:
+        loop.face = self
+        if self.loop.is_none:
+            self.loop = loop
+        else:  # order of coedges is important! (right-hand rule)
+            current_loop = self.loop
+            while not current_loop.next_loop.is_none:
+                current_loop = current_loop.next_loop
+            current_loop.next_loop = loop
+
+    def loops(self) -> List[Loop]:
+        loops = []
+        current_loop = self.loop
+        while not current_loop.is_none:
+            loops.append(current_loop)
+            current_loop = current_loop.next_loop
+        return loops
+
 
 @register
 class Surface(SupportsPattern):
@@ -447,7 +468,10 @@ class Plane(Surface):
     origin = Vec3(0, 0, 0)
     normal = Vec3(1, 0, 0)  # pointing outside
     u_dir = Vec3(1, 0, 0)  # unit vector!
-    reverse_v = True  # True = reverse_v; False = forward_v
+    # reverse_v:
+    # True: "reverse_v" - the normal vector does not follow the right-hand rule
+    # False: "forward_v" - the normal vector follows right-hand rule
+    reverse_v = False
 
     def restore_common(
         self, loader: DataLoader, entity_factory: Factory
@@ -494,12 +518,42 @@ class Loop(SupportsPattern):
         exporter.write_ptr(self.coedge)
         exporter.write_ptr(self.face)
 
+    def set_coedges(self, coedges: List[Coedge], close=True) -> None:
+        assert len(coedges) > 0
+        self.coedge = coedges[0]
+        next_coedges = coedges[1:]
+        prev_coedges = coedges[:-1]
+        if close:
+            next_coedges.append(coedges[0])
+            prev_coedges.insert(0, coedges[-1])
+        else:
+            next_coedges.append(NONE_REF)
+            prev_coedges.insert(0, NONE_REF)
+
+        for coedge, next, prev in zip(coedges, next_coedges, prev_coedges):
+            coedge.prev_coedge = prev
+            coedge.next_coedge = next
+
+    def coedges(self) -> List[Coedge]:
+        coedges = []
+        current_coedge = self.coedge
+        while not current_coedge.is_none:  # open loop if none
+            coedges.append(current_coedge)
+            current_coedge = current_coedge.next_coedge
+            if current_coedge is self:  # circular linked list!
+                break  # closed loop
+        return coedges
+
 
 @register
 class Coedge(SupportsPattern):
     type: str = "coedge"
     next_coedge: Coedge = NONE_REF
     prev_coedge: Coedge = NONE_REF
+    # The partner_coedge points to the coedge of an adjacent face, in a
+    # manifold body each coedge has zero (open) or one (closed) partner edge.
+    # ACIS supports also non-manifold bodies, so there can be more than one
+    # partner coedges which are organized in a circular linked list.
     partner_coedge: Coedge = NONE_REF
     edge: Edge = NONE_REF
     # sense: True = reversed; False = forward;
@@ -534,6 +588,21 @@ class Coedge(SupportsPattern):
         exporter.write_int(0, skip_sat=True)
         exporter.write_ptr(self.pcurve)
 
+    def add_partner_coedge(self, coedge: Coedge) -> None:
+        assert coedge.partner_coedge.is_none
+        partner_coedge = self.partner_coedge
+        if partner_coedge.is_none:
+            partner_coedge = self
+        # insert new coedge as first partner coedge:
+        self.partner_coedge = coedge
+        coedge.partner_coedge = partner_coedge
+        self.order_partner_coedges()
+
+    def order_partner_coedges(self) -> None:
+        # todo: the referenced faces of non-manifold coedges have to be ordered
+        #  by the right-hand rule around this edge.
+        pass
+
 
 @register
 class Edge(SupportsPattern):
@@ -545,8 +614,8 @@ class Edge(SupportsPattern):
     coedge: Coedge = NONE_REF
     curve: Curve = NONE_REF
     # sense: True = reversed; False = forward;
-    # edge has the same direction as the underlying curve
-    sense: bool = True
+    # forward: edge has the same direction as the underlying curve
+    sense: bool = False
     convexity: str = "unknown"
 
     def restore_common(

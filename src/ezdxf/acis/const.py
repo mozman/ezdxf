@@ -105,6 +105,10 @@ class InvalidLinkStructure(AcisException):
     pass
 
 
+class InvalidVertexIndex(AcisException):
+    pass
+
+
 class ParsingError(AcisException):
     pass
 
