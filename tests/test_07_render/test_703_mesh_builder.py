@@ -1,7 +1,7 @@
 # Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
 import pytest
-from math import radians
+from math import radians, isclose
 from ezdxf.math import Vec3, BoundingBox
 from ezdxf.render.forms import cube, circle, cylinder, cone, sphere
 from ezdxf.addons.menger_sponge import MengerSponge
@@ -708,3 +708,17 @@ class TestSeparateMeshes:
         assert cubes.diagnose().is_edge_balance_broken is False
         assert len(cubes.separate_meshes()) == 2
 
+
+class TestNormals:
+    @pytest.fixture(scope="class")
+    def normals(self):
+        return list(cube().normals())
+
+    def test_cube_hase_six_normals(self, normals):
+        assert len(normals) == 6
+
+    def test_all_normals_are_normalized(self, normals):
+        assert all(isclose(n.magnitude, 1.0) for n in normals) is True
+
+    def test_all_normals_are_different(self, normals):
+        assert len(set(normals)) == 6

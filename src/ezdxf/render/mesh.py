@@ -679,6 +679,31 @@ class MeshBuilder:
         """
         return list(separate_meshes(self))
 
+    def normals(self) -> Iterator[Vec3]:
+        """Yields all face normals, yields ``Vec3(0, 0, 0)`` for degenerated
+        faces.
+
+        .. versionadded:: 0.18
+
+        """
+        vertices = self.vertices
+        for face in open_faces(self.faces):
+            if len(face) < 3:
+                yield NULLVEC
+
+            origin = vertices[0]
+            v1 = vertices[1] - origin
+            face_normal = NULLVEC
+            index = 2
+            while face_normal.is_null and index < len(face):
+                v2 = vertices[face[index]] - origin
+                face_normal = v1.cross(v2)
+                index += 1
+            try:
+                yield face_normal.normalize()
+            except ZeroDivisionError:
+                yield NULLVEC
+
 
 class MeshTransformer(MeshBuilder):
     """A mesh builder with inplace transformation support."""
