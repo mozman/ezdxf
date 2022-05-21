@@ -202,6 +202,7 @@ class PolyhedronFaceBuilder:
         #   side)
         self.double_sided = mesh.diagnose().is_edge_balance_broken
         self.coedges: Dict[Tuple[int, int], entities.Coedge] = {}
+        self.edges: Dict[Tuple[int, int], entities.Edge] = {}
 
     def acis_faces(self) -> Iterator[Face]:
         for face in self.faces:
@@ -280,15 +281,20 @@ class PolyhedronFaceBuilder:
         if index1 > index2:
             sense = True
             index1, index2 = index2, index1
-        edge = entities.Edge()
+        try:
+            return self.edges[index1, index2], sense
+        except KeyError:
+            pass
         # The edge has always the same direction as the underlying
         # straight curve:
+        edge = entities.Edge()
         edge.sense = False
         edge.start_vertex = make_vertex(index1)
         edge.start_param = 0.0
         edge.end_vertex = make_vertex(index2)
         edge.end_param = self.vertices[index1].distance(self.vertices[index2])
         edge.curve = self.make_ray(index1, index2)
+        self.edges[index1, index2] = edge
         return edge, sense
 
     def make_ray(self, index1: int, index2: int) -> entities.StraightCurve:
