@@ -62,8 +62,6 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. automethod:: from_polyface
 
-    .. automethod:: has_none_planar_faces
-
     .. automethod:: merge_coplanar_faces
 
     .. automethod:: normalize_faces
@@ -138,6 +136,8 @@ The basic :class:`MeshBuilder` class does not support transformations.
     .. autoproperty:: is_edge_balance_broken
 
     .. autoproperty:: euler_characteristic
+
+    .. automethod:: has_non_planar_faces
 
     .. automethod:: total_edge_count
 

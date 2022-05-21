@@ -103,9 +103,9 @@ IRREGULAR_FACE = Vec3.list([(0, 0, 0), (1, 0, 1), (1, 1, 0), (0, 1, 0)])
 def test_has_none_planar_faces():
     mesh = MeshBuilder()
     mesh.add_face(REGULAR_FACE)
-    assert mesh.has_none_planar_faces() is False
+    assert mesh.diagnose().has_non_planar_faces() is False
     mesh.add_face(IRREGULAR_FACE)
-    assert mesh.has_none_planar_faces() is True
+    assert mesh.diagnose().has_non_planar_faces() is True
 
 
 def test_scale_mesh():

@@ -289,6 +289,12 @@ class MeshDiagnose:
         """
         return estimate_normals_direction(self.vertices, self.faces)
 
+    def has_non_planar_faces(self) -> bool:
+        """Returns ``True`` if any face is non-planar."""
+        return not all(
+            is_planar_face(face) for face in self._mesh.faces_as_vertices()
+        )
+
 
 class MeshBuilder:
     """A simple Mesh builder. Stores a list of vertices and a faces list where
@@ -400,12 +406,6 @@ class MeshBuilder:
 
         for face_vertices in open_faces(faces):
             self.faces.append(tuple(indices[vi] for vi in face_vertices))
-
-    def has_none_planar_faces(self) -> bool:
-        """Returns ``True`` if any face is none planar."""
-        return not all(
-            is_planar_face(face) for face in self.faces_as_vertices()
-        )
 
     def render_mesh(
         self,
