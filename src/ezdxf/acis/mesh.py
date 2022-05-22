@@ -189,7 +189,7 @@ class PolyhedronFaceBuilder:
         self.vertices: List[Vec3] = mesh_copy.vertices
         self.faces: List[Sequence[int]] = mesh_copy.faces
         self.normals = list(mesh_copy.normals())
-        self.points: List[entities.Vertex] = []
+        self.points: List[entities.Point] = []
 
         # double_sided:
         # If every edge belongs to two faces the body is for sure a closed
@@ -284,11 +284,13 @@ class PolyhedronFaceBuilder:
             return vertex
 
         sense = False
-        if index1 > index2:
+        ex1 = index1  # vertex index of unified edges
+        ex2 = index2  # vertex index of unified edges
+        if ex1 > ex2:
             sense = True
-            index1, index2 = index2, index1
+            ex1, ex2 = ex2, ex1
         try:
-            return self.edges[index1, index2], sense
+            return self.edges[ex1, ex2], sense
         except KeyError:
             pass
         # The edge has always the same direction as the underlying
@@ -296,12 +298,12 @@ class PolyhedronFaceBuilder:
         edge = entities.Edge()
         edge.coedge = parent  # first coedge which references this edge
         edge.sense = False
-        edge.start_vertex = make_vertex(index1)
+        edge.start_vertex = make_vertex(ex1)
         edge.start_param = 0.0
-        edge.end_vertex = make_vertex(index2)
-        edge.end_param = self.vertices[index1].distance(self.vertices[index2])
-        edge.curve = self.make_ray(index1, index2)
-        self.edges[index1, index2] = edge
+        edge.end_vertex = make_vertex(ex2)
+        edge.end_param = self.vertices[ex1].distance(self.vertices[ex2])
+        edge.curve = self.make_ray(ex1, ex2)
+        self.edges[ex1, ex2] = edge
         return edge, sense
 
     def make_ray(self, index1: int, index2: int) -> entities.StraightCurve:
