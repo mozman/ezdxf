@@ -3,7 +3,6 @@
 from __future__ import annotations
 from typing import List, Iterator, Sequence, Optional, Tuple, Dict, Iterable
 from ezdxf.render import MeshVertexMerger, MeshTransformer, MeshBuilder
-from ezdxf.render.mesh import normalize_faces
 from ezdxf.math import Matrix44, Vec3, NULLVEC
 from . import entities
 from .entities import Body, Lump, NONE_REF, Face, Shell
@@ -190,7 +189,7 @@ class PolyhedronFaceBuilder:
         self.vertices: List[Vec3] = mesh_copy.vertices
         self.faces: List[Sequence[int]] = mesh_copy.faces
         self.normals = list(mesh_copy.normals())
-        self.points: List[entities.Point] = list(make_points(self.vertices))
+        self.points: List[entities.Point] = []
 
         # double_sided:
         # If every edge belongs to two faces the body is for sure a closed
@@ -204,10 +203,17 @@ class PolyhedronFaceBuilder:
         self.double_sided = mesh_copy.diagnose().is_edge_balance_broken
 
         # coedges and edges ledger, where index1 <= index2
-        self.partner_coedges: Dict[Tuple[int, int], entities.Coedge] = {}
-        self.edges: Dict[Tuple[int, int], entities.Edge] = {}
+        self.partner_coedges: Dict[Tuple[int, int], entities.Coedge] = dict()
+        self.edges: Dict[Tuple[int, int], entities.Edge] = dict()
 
-    def acis_faces(self) -> Iterator[Face]:
+    def reset(self):
+        self.points: List[entities.Point] = list(make_points(self.vertices))
+        self.partner_coedges.clear()
+        self.edges.clear()
+
+    def acis_faces(self) -> List[Face]:
+        self.reset()
+        faces: List[Face] = []
         for face, face_normal in zip(self.faces, self.normals):
             if face_normal.is_null:
                 continue
@@ -223,7 +229,10 @@ class PolyhedronFaceBuilder:
             acis_face.surface = plane
             acis_face.sense = False  # face normal is plane normal
             acis_face.double_sided = self.double_sided
-            yield acis_face
+            faces.append(acis_face)
+        # The link structure of all entities is only completed at the end of
+        # the building process. Do not yield faces from the body of the loop!
+        return faces
 
     def make_plane(self, face: Sequence[int]) -> Optional[entities.Plane]:
         assert len(face) > 1, "face requires least 2 vertices"

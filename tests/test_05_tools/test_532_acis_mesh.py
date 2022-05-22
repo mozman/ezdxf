@@ -37,8 +37,7 @@ class TestPolyhedronFaceBuilder:
 
     def test_six_faces_will_be_created(self, builder):
         """There have to be 6 cube faces."""
-        faces = list(builder.acis_faces())
-        assert len(faces) == 6
+        assert len(builder.acis_faces()) == 6
 
     def test_each_face_gets_it_own_plane(self, builder):
         """Each face has to have its own flat surface plane."""
@@ -63,49 +62,86 @@ class TestPolyhedronFaceBuilder:
         """Each face has its own coedges which represent the face boundary and
         each coedge references a 'real' edge entity
         """
-        coedges = set()
-        for face in builder.acis_faces():
-            for coedge in face.loop.coedges():
-                coedges.add(id(coedge))
+        coedges = get_coedges(builder.acis_faces())
         assert len(coedges) == 24
+
+    def test_for_partner_coedges(self, builder):
+        """Each coedge has to have a partner coedge in the adjacent face and
+        because they are sharing the same 'real' edge they have to have an
+        opposite sense.
+        """
+        for coedge in get_coedges(builder.acis_faces()):
+            partner_coedge = coedge.partner_coedge
+            assert partner_coedge.is_none is False
+            assert coedge.sense is not partner_coedge.sense
+            assert partner_coedge.partner_coedge is coedge, "is back linked"
 
     def test_for_12_unique_edges(self, builder):
         """There have to be 12 'real' cube edges."""
-        edges = set()
-        for face in builder.acis_faces():
-            for coedge in face.loop.coedges():
-                edges.add(id(coedge.edge))
+        edges = get_edges(builder.acis_faces())
         assert len(edges) == 12
 
     def test_each_edges_has_a_unique_straight_line(self, builder):
         """Each edge has to have a straight lines as base curve."""
-        edges = []
-        for face in builder.acis_faces():
-            for coedge in face.loop.coedges():
-                edges.append(coedge.edge)
-
+        edges = get_edges(builder.acis_faces())
         assert all(e.curve.type == "straight-curve" for e in edges) is True
-        assert len({id(e.curve) for e in edges}) == 12
+        assert len(edges) == 12
 
     def test_for_24_unique_vertices(self, builder):
         """Each edge has its own start- and end vertex which has a reference
         the 'real' point.
         """
-        vertices = set()
-        for face in builder.acis_faces():
-            for coedge in face.loop.coedges():
-                vertices.add(id(coedge.edge.start_vertex))
-                vertices.add(id(coedge.edge.end_vertex))
+        vertices = get_vertices(builder.acis_faces())
         assert len(vertices) == 24
 
     def test_for_8_unique_points(self, builder):
         """There have to be 8 'real' cube corner points."""
-        points = set()
-        for face in builder.acis_faces():
-            for coedge in face.loop.coedges():
-                points.add(id(coedge.edge.start_vertex.point))
-                points.add(id(coedge.edge.end_vertex.point))
+        points = get_points(builder.acis_faces())
         assert len(points) == 8
+
+    def test_build_multiple_times_independent_faces(self, builder):
+        """The two builds should not share any data."""
+        faces1 = builder.acis_faces()
+        faces2 = builder.acis_faces()
+        assert set(faces1).isdisjoint(set(faces2))
+        assert set(get_coedges(faces1)).isdisjoint(set(get_coedges(faces2)))
+        assert set(get_edges(faces1)).isdisjoint(set(get_edges(faces2)))
+        assert set(get_vertices(faces1)).isdisjoint(set(get_vertices(faces2)))
+        assert set(get_points(faces1)).isdisjoint(set(get_points(faces2)))
+
+
+def get_coedges(faces):
+    coedges = set()
+    for face in faces:
+        for coedge in face.loop.coedges():
+            coedges.add(coedge)
+    return coedges
+
+
+def get_edges(faces):
+    edges = set()
+    for face in faces:
+        for coedge in face.loop.coedges():
+            edges.add(coedge.edge)
+    return edges
+
+
+def get_vertices(faces):
+    vertices = set()
+    for face in faces:
+        for coedge in face.loop.coedges():
+            vertices.add(coedge.edge.start_vertex)
+            vertices.add(coedge.edge.end_vertex)
+    return vertices
+
+
+def get_points(faces):
+    points = set()
+    for face in faces:
+        for coedge in face.loop.coedges():
+            points.add(coedge.edge.start_vertex.point)
+            points.add(coedge.edge.end_vertex.point)
+    return points
 
 
 if __name__ == "__main__":
