@@ -536,11 +536,12 @@ class Loop(SupportsPattern):
 
     def coedges(self) -> List[Coedge]:
         coedges = []
+
         current_coedge = self.coedge
         while not current_coedge.is_none:  # open loop if none
             coedges.append(current_coedge)
             current_coedge = current_coedge.next_coedge
-            if current_coedge is self:  # circular linked list!
+            if current_coedge is self.coedge:  # circular linked list!
                 break  # closed loop
         return coedges
 

@@ -188,6 +188,23 @@ class TestLoop:
     def test_loop_references_the_parent_face(self, loop):
         assert loop.face.loop is loop
 
+    def test_set_closed_coedges(self):
+        loop = entities.Loop()
+        coedges = [entities.Coedge() for _ in range(3)]
+        loop.set_coedges(coedges, close=True)
+
+        result = loop.coedges()
+        assert result == coedges
+
+    def test_set_open_coedges(self):
+        loop = entities.Loop()
+        coedges = [entities.Coedge() for _ in range(3)]
+        loop.set_coedges(coedges, close=False)
+        assert loop.coedge.prev_coedge.is_none is True
+
+        result = loop.coedges()
+        assert result == coedges
+
 
 class TestCoedge:
     @pytest.fixture(scope="class")
