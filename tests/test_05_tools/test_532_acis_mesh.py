@@ -67,6 +67,10 @@ class TestPolyhedronFaceBuilder:
         coedges = get_coedges(builder.acis_faces())
         assert len(coedges) == 24
 
+    def test_coedge_references_parent_loop(self, builder):
+        for coedge in get_coedges(builder.acis_faces()):
+            assert coedge.loop.is_none is False
+
     def test_for_partner_coedges(self, builder):
         """Each coedge has to have a partner coedge in the adjacent face and
         because they are sharing the same 'real' edge they have to have an
@@ -82,6 +86,10 @@ class TestPolyhedronFaceBuilder:
         """There have to be 12 'real' cube edges."""
         edges = get_edges(builder.acis_faces())
         assert len(edges) == 12
+
+    def test_edges_have_a_parent_coedge(self, builder):
+        for edge in get_edges(builder.acis_faces()):
+            assert edge.coedge.type == "coedge"
 
     def test_each_edges_has_a_unique_straight_line(self, builder):
         """Each edge has to have a straight lines as base curve."""

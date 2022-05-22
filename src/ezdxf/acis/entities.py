@@ -531,6 +531,7 @@ class Loop(SupportsPattern):
             prev_coedges.insert(0, NONE_REF)
 
         for coedge, next, prev in zip(coedges, next_coedges, prev_coedges):
+            coedge.loop = self
             coedge.prev_coedge = prev
             coedge.next_coedge = next
 

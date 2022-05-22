@@ -189,7 +189,7 @@ class PolyhedronFaceBuilder:
         self.vertices: List[Vec3] = mesh_copy.vertices
         self.faces: List[Sequence[int]] = mesh_copy.faces
         self.normals = list(mesh_copy.normals())
-        self.points: List[entities.Point] = []
+        self.points: List[entities.Vertex] = []
 
         # double_sided:
         # If every edge belongs to two faces the body is for sure a closed
@@ -207,7 +207,7 @@ class PolyhedronFaceBuilder:
         self.edges: Dict[Tuple[int, int], entities.Edge] = dict()
 
     def reset(self):
-        self.points: List[entities.Point] = list(make_points(self.vertices))
+        self.points = list(make_points(self.vertices))
         self.partner_coedges.clear()
         self.edges.clear()
 
@@ -254,7 +254,7 @@ class PolyhedronFaceBuilder:
 
         for i1, i2 in zip(face, face2):
             coedge = self.make_coedge(i1, i2)
-            coedge.edge, coedge.sense = self.make_edge(i1, i2)
+            coedge.edge, coedge.sense = self.make_edge(i1, i2, coedge)
             coedges.append(coedge)
         loop = entities.Loop()
         loop.set_coedges(coedges, close=True)
@@ -274,7 +274,9 @@ class PolyhedronFaceBuilder:
             partner_coedge.add_partner_coedge(coedge)
         return coedge
 
-    def make_edge(self, index1: int, index2: int) -> Tuple[entities.Edge, bool]:
+    def make_edge(
+        self, index1: int, index2: int, parent: entities.Coedge
+    ) -> Tuple[entities.Edge, bool]:
         def make_vertex(index: int):
             vertex = entities.Vertex()
             vertex.edge = edge
@@ -292,6 +294,7 @@ class PolyhedronFaceBuilder:
         # The edge has always the same direction as the underlying
         # straight curve:
         edge = entities.Edge()
+        edge.coedge = parent  # first coedge which references this edge
         edge.sense = False
         edge.start_vertex = make_vertex(index1)
         edge.start_param = 0.0
