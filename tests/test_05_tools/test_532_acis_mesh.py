@@ -2,7 +2,7 @@
 #  License: MIT License
 
 import pytest
-from ezdxf.acis.api import mesh_from_body, load
+from ezdxf.acis.api import mesh_from_body, load, body_from_mesh
 from ezdxf.acis.mesh import PolyhedronFaceBuilder
 from ezdxf.render import forms
 
@@ -142,6 +142,21 @@ def get_points(faces):
             points.add(coedge.edge.start_vertex.point)
             points.add(coedge.edge.end_vertex.point)
     return points
+
+
+def test_rebuild_mesh_from_acis_body():
+    """Convert a cube-mesh into an ACIS body and the ACIS body back to a
+    MeshBuilder instance.
+    """
+    cube = forms.cube()
+    body = body_from_mesh(cube)
+    cube2 = mesh_from_body(body)[0]
+    assert set(cube.vertices) == set(cube2.vertices)
+    assert faces_set(cube) == faces_set(cube2)
+
+
+def faces_set(mesh):
+    return set([tuple(face) for face in mesh.faces_as_vertices()])
 
 
 if __name__ == "__main__":
