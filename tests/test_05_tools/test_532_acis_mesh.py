@@ -1,9 +1,11 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-
+from typing import cast
 import pytest
+import math
 from ezdxf.acis.api import mesh_from_body, load, body_from_mesh
 from ezdxf.acis.mesh import PolyhedronFaceBuilder
+from ezdxf.acis import entities
 from ezdxf.render import forms
 
 
@@ -85,6 +87,9 @@ class TestPolyhedronFaceBuilder:
         """Each edge has to have a straight lines as base curve."""
         edges = get_edges(builder.acis_faces())
         assert all(e.curve.type == "straight-curve" for e in edges) is True
+        for e in edges:
+            ray = cast(entities.StraightCurve, e.curve)
+            assert math.isclose(ray.direction.magnitude, 1.0)
         assert len(edges) == 12
 
     def test_for_24_unique_vertices(self, builder):

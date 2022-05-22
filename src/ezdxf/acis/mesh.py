@@ -307,7 +307,7 @@ class PolyhedronFaceBuilder:
         ray = entities.StraightCurve()
         ray.origin = v1
         try:
-            ray.direction = (v2 - v2).normalize()
+            ray.direction = (v2 - v1).normalize()
         except ZeroDivisionError:  # avoided by normalize_faces()
             ray.direction = NULLVEC
         return ray
