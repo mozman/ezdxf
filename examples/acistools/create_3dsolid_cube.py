@@ -26,3 +26,9 @@ doc.set_modelspace_vport(5)
 doc.saveas(DIR / "acis_cube_R2004.dxf")
 with open(DIR / "acis_cube_R2004.sat", "wt") as fp:
     fp.writelines("\n".join(sat))
+
+debugger = acis.AcisDebugger(body)
+for e in debugger.entities.values():
+    print(e)
+    debugger.print_content(e, 2)
+print(f"{len(debugger.entities)} entities")

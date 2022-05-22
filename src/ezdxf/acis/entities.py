@@ -119,6 +119,9 @@ class AcisEntity(NoneEntity):
     id: int = -1
     attributes: AcisEntity = NONE_REF
 
+    def __str__(self) -> str:
+        return f"{self.type}({self.id})"
+
     def load(self, loader: DataLoader, entity_factory: Factory) -> None:
         """Load the ACIS entity content from `loader`."""
         self.restore_common(loader, entity_factory)
