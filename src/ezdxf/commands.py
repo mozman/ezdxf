@@ -13,6 +13,7 @@ import ezdxf
 from ezdxf import recover
 from ezdxf.lldxf import const
 from ezdxf.lldxf.validator import is_dxf_file, is_binary_dxf_file
+from ezdxf.dwginfo import dwg_file_info
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFGraphic
@@ -228,7 +229,9 @@ def load_document(filename: str):
 
     if auditor.has_errors:
         # But is most likely good enough for rendering.
-        msg = f"Audit process found {len(auditor.errors)} unrecoverable error(s)."
+        msg = (
+            f"Audit process found {len(auditor.errors)} unrecoverable error(s)."
+        )
         print(msg)
         logger.error(msg)
     if auditor.has_fixes:
@@ -624,6 +627,16 @@ def load_every_document(filename: str):
         except IOError:
             raise const.DXFLoadError(io_error())
         except const.DXFStructureError:
+            dwginfo = dwg_file_info(filename)
+            if dwginfo.version != "invalid":
+                print(
+                    f"This is a DWG file!!!\n"
+                    f"Filename: \"{filename}\"\n"
+                    f"Format: DWG\n"
+                    f"Release: {dwginfo.release}\n"
+                    f"DWG Version: {dwginfo.version}\n"
+                )
+                raise const.DXFLoadError()
             raise const.DXFLoadError(structure_error())
     return doc, auditor, binary_fmt
 
