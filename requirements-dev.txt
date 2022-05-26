@@ -1,0 +1,9 @@
+pyparsing>=2.0.1
+typing_extensions
+pytest
+geomdl
+cython
+matplotlib
+pyside6
+sphinx
+sphinx-rtd-theme<1.0
