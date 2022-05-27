@@ -1,6 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import Dict, Iterator, Tuple, Iterable
+from typing import List, Iterator, Iterable
 
 from ezdxf.addons.xqt import (
     QtWidgets,
@@ -9,6 +9,7 @@ from ezdxf.addons.xqt import (
     QFileDialog,
     QInputDialog,
     Qt,
+    QModelIndex,
 )
 
 import ezdxf
@@ -37,7 +38,7 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
     ):
         super().__init__()
         self.filename = filename
-        self.acis_entities: Dict[str, AcisData] = dict()
+        self.acis_entities: List[AcisData] = []
         self._acis_tree = AcisTree()
         self._raw_acis_viewer = AcisRawView()
         self._current_acis_entity = AcisData()
@@ -158,42 +159,48 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
             self.update_title(path)
 
     def set_acis_entities(self, doc: Drawing):
-        self.acis_entities = dict(get_acis_entities(doc))
+        self.acis_entities = list(get_acis_entities(doc))
         if self.acis_entities:
-            values = iter(self.acis_entities.values())
-            self.set_current_acis_entity(next(values))
-            self.update_acis_tree(self.acis_entities.values())
+            self.set_current_acis_entity(self.acis_entities[0])
+            self.update_acis_tree_viewer(self.acis_entities)
 
     def reload_dxf(self):
+        try:
+            index = self.acis_entities.index(self._current_acis_entity)
+        except IndexError:
+            index = -1
         self.load_dxf(self.filename)
+        if index > 0:
+            self.set_current_acis_entity(self.acis_entities[index])
 
     def export_entity(self):
-        if self._dxf_tags_table is None:
-            return
         path, _ = QFileDialog.getSaveFileName(
             self,
             caption="Export ACIS Entity",
             filter="Text Files (*.txt *.TXT)",
         )
         if path:
-            pass
+            write_data(self._current_acis_entity, path)
 
     def copy_entity(self):
-        pass
+        clipboard = QtWidgets.QApplication.clipboard()
+        clipboard.setText(
+            "\n".join(self._current_acis_entity.lines), mode=clipboard.Clipboard
+        )
 
     def update_title(self, path: str):
         self.setWindowTitle(f"{APP_NAME} - {path}")
 
-    def acis_entity_activated(self, event):
-        pass
+    def acis_entity_activated(self, index: QModelIndex):
+        if len(self.acis_entities) == 0:
+            return
+        try:
+            self.set_current_acis_entity(self.acis_entities[index.row()])
+        except IndexError:
+            self.set_current_acis_entity(self.acis_entities[0])
 
     def get_current_acis_entity(self) -> AcisData:
         return self._current_acis_entity
-
-    def set_current_entity_by_handle(self, handle: str):
-        entity = self.acis_entities.get(handle)
-        if entity:
-            self.set_current_acis_entity(entity)
 
     def set_current_acis_entity(self, entity: AcisData):
         if entity:
@@ -205,7 +212,7 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         viewer.clear()
         viewer.addItems(entity.lines)
 
-    def update_acis_tree(self, entities: Iterable[AcisData]):
+    def update_acis_tree_viewer(self, entities: Iterable[AcisData]):
         viewer = self._acis_tree
         viewer.clear()
         viewer.addItems([e.name for e in entities])
@@ -221,10 +228,10 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
                 self.show_error_handle_not_found(handle)
 
     def goto_handle(self, handle: str) -> bool:
-        entity = self.acis_entities.get(handle)
-        if entity:
-            self.set_current_acis_entity(entity)
-            return True
+        for entity in self.acis_entities:
+            if entity.handle == handle:
+                self.set_current_acis_entity(entity)
+                return True
         return False
 
     def show_error_handle_not_found(self, handle: str):
@@ -235,12 +242,20 @@ def load_doc(filename: str) -> Drawing:
     return ezdxf.readfile(filename)
 
 
-def get_acis_entities(doc: Drawing) -> Iterator[Tuple[str, AcisData]]:
+def get_acis_entities(doc: Drawing) -> Iterator[AcisData]:
     for e in doc.entitydb.values():
         if isinstance(e, Body):
             handle = e.dxf.handle
             name = str(e)
             if e.has_binary_data:
-                yield handle, BinaryAcisData(e.sab, name)
+                yield BinaryAcisData(e.sab, name, handle)
             else:
-                yield handle, TextAcisData(e.sat, name)
+                yield TextAcisData(e.sat, name, handle)
+
+
+def write_data(entity: AcisData, path: str):
+    try:
+        with open(path, "wt") as fp:
+            fp.write("\n".join(entity.lines))
+    except IOError:
+        pass
