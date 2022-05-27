@@ -21,4 +21,9 @@ for e in msp.query("3DSOLID"):
         for body in acis.load(data):
             for mesh in acis.mesh_from_body(body):
                 mesh.render_mesh(msp_out)
+            print(str(e) + " - face link structure:")
+            dbg = acis.AcisDebugger(body)
+            for shell in dbg.filter_type("shell"):
+                print("\n".join(dbg.face_link_structure(shell.face, 2)))
+
 doc_out.saveas("meshes.dxf")

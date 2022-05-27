@@ -30,5 +30,8 @@ with open(DIR / "acis_cube_R2004.sat", "wt") as fp:
 debugger = acis.AcisDebugger(body)
 for e in debugger.entities.values():
     print(e)
-    debugger.print_content(e, 2)
-print(f"{len(debugger.entities)} entities")
+    print("\n".join(debugger.entity_attributes(e, 2)))
+print(f"{len(debugger.entities)} entities\n")
+print("face link structure:")
+for shell in debugger.filter_type("shell"):
+    print("\n".join(debugger.face_link_structure(shell.face)))

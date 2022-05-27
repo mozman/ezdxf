@@ -1,7 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import Iterator, Set, Callable, Dict
-from .entities import AcisEntity, NONE_REF
+from typing import Iterator, Set, Callable, Dict, Any, List
+from .entities import AcisEntity, NONE_REF, Face, Coedge
 
 
 class AcisDebugger:
@@ -50,22 +50,43 @@ class AcisDebugger:
 
     def filter(
         self, func: Callable[[AcisEntity], bool], entity: AcisEntity = NONE_REF
-    ) -> Iterator[AcisEntity]:
+    ) -> Iterator[Any]:
         if entity.is_none:
             entity = self._root
         yield from filter(func, self.walk(entity))
 
     def filter_type(
         self, name: str, entity: AcisEntity = NONE_REF
-    ) -> Iterator[AcisEntity]:
+    ) -> Iterator[Any]:
         if entity.is_none:
             entity = self._root
         yield from filter(lambda x: x.type == name, self.walk(entity))
 
     @staticmethod
-    def print_content(entity: AcisEntity, indent: int = 0):
+    def entity_attributes(entity: AcisEntity, indent: int = 0) -> Iterator[str]:
         indent_str = " " * indent
         for name, data in vars(entity).items():
             if name == "id":
                 continue
-            print(f"{indent_str}{name}: {data}")
+            yield f"{indent_str}{name}: {data}"
+
+    @staticmethod
+    def face_link_structure(face: Face, indent: int = 0) -> Iterator[str]:
+        indent_str = " " * indent
+        while not face.is_none:
+            partner_faces = list(AcisDebugger.partner_faces(face))
+            yield f"{indent_str}{str(face)} >> {partner_faces}"
+            face = face.next_face
+
+    @staticmethod
+    def partner_faces(face: Face) -> Iterator[int]:
+        coedges: List[Coedge] = []
+        loop = face.loop
+        while not loop.is_none:
+            coedges.extend(co for co in loop.coedges())
+            loop = loop.next_loop
+        for coedge in coedges:
+            partner_coedge = coedge.partner_coedge
+            if not partner_coedge.is_none:
+                yield partner_coedge.loop.face.id
+
