@@ -46,29 +46,47 @@ def load(data: Union[str, Sequence[str], bytes, bytearray]) -> List[Body]:
     return SatLoader.load(data)
 
 
-def export_sat(
-    bodies: Sequence[Body], version: int = 700, asm_end_marker=False
-) -> List[str]:
+def normalize_dxfversion(dxfversion: str) -> str:
+    from ezdxf.lldxf.const import (
+        acad_release_to_dxf_version,
+        versions_supported_by_save,
+    )
+
+    dxfversion = acad_release_to_dxf_version.get(dxfversion, dxfversion)
+    if dxfversion not in versions_supported_by_save:
+        raise const.ExportError(f"Invalid DXF version: {dxfversion}")
+    return dxfversion
+
+
+def export_sat(bodies: Sequence[Body], dxfversion: str = "R2000") -> List[str]:
     """Export one or more :class:`Body` entities as text based :term:`SAT` data.
 
-    Minimum :term:`ACIS` version is 700.
+    The dxfversion has to be R2000, R2004, R2007 or R2010, later DXF versions
+    require rterm:`SAB` data.
 
     Raises:
         ExportError: ACIS structures contain unsupported entities
         InvalidLinkStructure: corrupt link structure
 
     """
-    exporter = sat.SatExporter(_setup_export_header(version))
-    if version > 700:
-        # DXF >= R2013 requires an "End-of-ASM-data" marker
-        exporter.header.asm_end_marker = asm_end_marker
+    dxfversion = normalize_dxfversion(dxfversion)
+    if not ("AC1015" <= dxfversion <= "AC1024"):
+        raise const.ExportError("SAT requires DXF R2000, R2004, R2007 or R2010")
+
+    acis_version = 700
+    if dxfversion >= "AC1018":  # R2004
+        acis_version = 20800
+
+    exporter = sat.SatExporter(_setup_export_header(acis_version))
+    exporter.header.asm_end_marker = False
+    if exporter.header.has_asm_header:
         exporter.add_asm_header()
     for body in bodies:
         exporter.export(body)
     return exporter.dump_sat()
 
 
-def export_sab(bodies: Sequence[Body], version: int = 700) -> bytes:
+def export_sab(bodies: Sequence[Body], dxfversion: str = "R2013") -> bytes:
     """Export one or more :class:`Body` entities as binary encoded :term:`SAB`
     data.
 
@@ -79,7 +97,14 @@ def export_sab(bodies: Sequence[Body], version: int = 700) -> bytes:
         InvalidLinkStructure: corrupt link structure
 
     """
-    exporter = sab.SabExporter(_setup_export_header(version))
+    dxfversion = normalize_dxfversion(dxfversion)
+    if dxfversion < "AC1027":
+        raise const.ExportError("SAB requires DXF R2013 or later")
+    exporter = sab.SabExporter(_setup_export_header(21800))
+    exporter.header.asm_end_marker = True
+    if exporter.header.has_asm_header:
+        exporter.add_asm_header()
+
     for body in bodies:
         exporter.export(body)
     return exporter.dump_sab()

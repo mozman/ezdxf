@@ -27,7 +27,7 @@ body = acis.body_from_mesh(forms.cube())
 # create the DXF 3DSOLID entity
 solid3d = msp.add_3dsolid()
 # set SAT data for DXF R2004
-sat = acis.export_sat([body], version=700)
+sat = acis.export_sat([body], doc.dxfversion)
 solid3d.sat = sat
 
 

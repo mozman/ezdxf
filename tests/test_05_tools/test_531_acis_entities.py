@@ -314,38 +314,43 @@ def prism700(prism_sat):
 class TestExportSat:
     def test_export_rejects_unsupported_acis_versions(self, prism700):
         with pytest.raises(ExportError):
-            export_sat(prism700, version=400)
+            export_sat(prism700, dxfversion="R12")
 
     def test_export_acis_700(self, prism700):
-        data = export_sat(prism700, version=700, asm_end_marker=False)
+        data = export_sat(prism700, dxfversion="R2000")
         assert len(data) == 117  # includes header
         assert data[-1] == "End-of-ACIS-data "  # an extra space at the end!
 
-    def test_export_22300_asm(self, prism700):
-        data = export_sat(prism700, version=22300, asm_end_marker=True)
-        assert len(data) == 118  # includes a AsmHeader entity
-        assert data[-1] == "End-of-ASM-data "  # an extra space at the end!
+    def test_export_rejects_dxf_2013_and_later(self, prism700):
+        with pytest.raises(const.ExportError):
+            export_sat(prism700, dxfversion="R2013")
 
 
-class TestExportSab700:
+class TestExportSab21800:
     def test_export_rejects_unsupported_acis_versions(self, prism700):
         with pytest.raises(ExportError):
-            export_sab(prism700, version=400)
+            export_sab(prism700, dxfversion="R2010")
 
     def test_reload_records_from_acis_700_export(self, prism700):
-        data = export_sab(prism700, version=700)
+        data = export_sab(prism700, dxfversion="R2013")
         decoder = sab.Decoder(data)
         header = decoder.read_header()
-        assert header.version == 700
+        assert header.version == 21800
         records = list(decoder.read_records())
-        # 114 = excludes header
-        assert len(records) == 114
-        assert records[-1][0].value == "End-of-ACIS-data"
+        # 115 = excludes header
+        assert len(records) == 115
+        assert records[-1][0].value == "End-of-ASM-data"
 
 
-@pytest.mark.parametrize("export", [export_sat, export_sab], ids=("SAT", "SAB"))
-def test_load_mesh_from_exported_acis_data(prism700, export):
-    bodies = load(export(prism700, version=700))
+def test_load_mesh_from_exported_sat_data(prism700):
+    bodies = load(export_sat(prism700, dxfversion="R2000"))
+    m = mesh.mesh_from_body(bodies[0])[0]
+    assert len(m.vertices) == 8
+    assert len(m.faces) == 10
+
+
+def test_load_mesh_from_exported_sab_data(prism700):
+    bodies = load(export_sab(prism700, dxfversion="R2013"))
     m = mesh.mesh_from_body(bodies[0])[0]
     assert len(m.vertices) == 8
     assert len(m.faces) == 10
