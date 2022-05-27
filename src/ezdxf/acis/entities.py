@@ -79,8 +79,6 @@ def export_sat(bodies: Sequence[Body], dxfversion: str = "R2000") -> List[str]:
 
     exporter = sat.SatExporter(_setup_export_header(acis_version))
     exporter.header.asm_end_marker = False
-    if exporter.header.has_asm_header:
-        exporter.add_asm_header()
     for body in bodies:
         exporter.export(body)
     return exporter.dump_sat()
@@ -103,8 +101,6 @@ def export_sab(bodies: Sequence[Body], dxfversion: str = "R2013") -> bytes:
         raise const.ExportError("SAB requires DXF R2013 or later")
     exporter = sab.SabExporter(_setup_export_header(21800))
     exporter.header.asm_end_marker = True
-    if exporter.header.has_asm_header:
-        exporter.add_asm_header()
 
     for body in bodies:
         exporter.export(body)

@@ -331,7 +331,7 @@ class TestExportSab21800:
         with pytest.raises(ExportError):
             export_sab(prism700, dxfversion="R2010")
 
-    def test_reload_records_from_acis_700_export(self, prism700):
+    def test_reload_records_from_acis_export(self, prism700):
         data = export_sab(prism700, dxfversion="R2013")
         decoder = sab.Decoder(data)
         header = decoder.read_header()
