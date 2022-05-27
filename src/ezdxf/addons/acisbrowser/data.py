@@ -2,7 +2,7 @@
 #  License: MIT License
 from typing import List, Iterator
 
-from ezdxf.acis.sab import parse_sab
+from ezdxf.acis.sab import parse_sab, SabEntity
 
 
 class AcisData:
@@ -29,7 +29,12 @@ def make_sab_records(data: bytes) -> Iterator[str]:
     builder.reset_ids()
     for entity in builder.entities:
         content = [str(entity)]
-        content.append(str(entity.attributes))
+        if not entity.attributes.is_null_ptr:
+            content.append(str(entity.attributes))
         for tag in entity.data:
-            content.append(str(tag.value))
+            if isinstance(tag.value, SabEntity):
+                if not tag.value.is_null_ptr:
+                    content.append(str(tag.value))
+            else:
+                content.append(f"{tag.value}<{tag.tag}>")
         yield " ".join(content)
