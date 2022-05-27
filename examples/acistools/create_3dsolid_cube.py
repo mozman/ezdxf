@@ -35,3 +35,7 @@ print(f"{len(debugger.entities)} entities\n")
 print("face link structure:")
 for shell in debugger.filter_type("shell"):
     print("\n".join(debugger.face_link_structure(shell.face)))
+    print("\nloop vertices:")
+    for face in shell.faces():
+        print(face)
+        print(debugger.loop_vertices(face.loop))

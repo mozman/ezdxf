@@ -25,5 +25,10 @@ for e in msp.query("3DSOLID"):
             dbg = acis.AcisDebugger(body)
             for shell in dbg.filter_type("shell"):
                 print("\n".join(dbg.face_link_structure(shell.face, 2)))
+                print("\nloop vertices:")
+                for face in shell.faces():
+                    print(face)
+                    print(dbg.loop_vertices(face.loop, 2))
+                print()
 
 doc_out.saveas("meshes.dxf")

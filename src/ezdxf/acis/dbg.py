@@ -1,7 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from typing import Iterator, Set, Callable, Dict, Any, List
-from .entities import AcisEntity, NONE_REF, Face, Coedge
+from .entities import AcisEntity, NONE_REF, Face, Coedge, Loop
 
 
 class AcisDebugger:
@@ -90,3 +90,23 @@ class AcisDebugger:
             if not partner_coedge.is_none:
                 yield partner_coedge.loop.face.id
 
+    @staticmethod
+    def loop_vertices(loop: Loop, indent: int = 0) -> str:
+        indent_str = " " * indent
+        return f"{indent_str}{loop} >> {list(AcisDebugger.loop_edges(loop))}"
+
+    @staticmethod
+    def loop_edges(loop: Loop) -> Iterator[List[int]]:
+        coedge = loop.coedge
+        first = coedge
+        while not coedge.is_none:
+            edge = coedge.edge
+            sv = edge.start_vertex
+            ev = edge.end_vertex
+            if coedge.sense:
+                yield [ev.id, sv.id]
+            else:
+                yield [sv.id, ev.id]
+            coedge = coedge.next_coedge
+            if coedge is first:
+                break

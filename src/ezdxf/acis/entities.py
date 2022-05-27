@@ -612,8 +612,12 @@ class Coedge(SupportsPattern):
 @register
 class Edge(SupportsPattern):
     type: str = "edge"
+
+    # The parent edge of the start_vertex doesn't have to be this edge!
     start_vertex: Vertex = NONE_REF
     start_param: float = 0.0
+
+    # The parent edge of the end_vertex doesn't have to be this edge!
     end_vertex: Vertex = NONE_REF
     end_param: float = 0.0
     coedge: Coedge = NONE_REF
