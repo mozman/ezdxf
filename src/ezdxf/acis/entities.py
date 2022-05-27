@@ -61,8 +61,8 @@ def normalize_dxfversion(dxfversion: str) -> str:
 def export_sat(bodies: Sequence[Body], dxfversion: str = "R2000") -> List[str]:
     """Export one or more :class:`Body` entities as text based :term:`SAT` data.
 
-    The dxfversion has to be R2000, R2004, R2007 or R2010, later DXF versions
-    require rterm:`SAB` data.
+    The `dxfversion` has to be R2000, R2004, R2007 or R2010, later DXF versions
+    require term:`SAB` data.
 
     Raises:
         ExportError: ACIS structures contain unsupported entities
@@ -90,7 +90,8 @@ def export_sab(bodies: Sequence[Body], dxfversion: str = "R2013") -> bytes:
     """Export one or more :class:`Body` entities as binary encoded :term:`SAB`
     data.
 
-    Minimum :term:`ACIS` version is 700.
+    The `dxfversion` has to be R2013 or later, earlier DXF versions require
+    term:`SAT` data.
 
     Raises:
         ExportError: ACIS structures contain unsupported entities
