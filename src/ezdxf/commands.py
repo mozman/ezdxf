@@ -506,6 +506,51 @@ class Browse(Command):
 
 
 @register
+class AcisBrowse(Command):
+    """Launcher sub-command: acis-browse"""
+
+    NAME = "acis-browse"
+
+    @staticmethod
+    def add_parser(subparsers):
+        parser = subparsers.add_parser(
+            AcisBrowse.NAME, help="browse ACIS structures in DXF files"
+        )
+        parser.add_argument(
+            "file",
+            metavar="FILE",
+            nargs="?",
+            help="DXF file to browse",
+        )
+        parser.add_argument(
+            "-g",
+            "--handle",
+            required=False,
+            help="go to entity by HANDLE, HANDLE has to be a hex value without "
+            "any prefix like 'fefe'",
+        )
+
+    @staticmethod
+    def run(args):
+        try:
+            from ezdxf.addons.xqt import QtWidgets
+        except ImportError as e:
+            print(str(e))
+            sys.exit(1)
+        from ezdxf.addons.acisbrowser.browser import AcisStructureBrowser
+
+        signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl+C properly
+        app = QtWidgets.QApplication(sys.argv)
+        set_app_icon(app)
+        main_window = AcisStructureBrowser(
+            args.file,
+            handle=args.handle,
+        )
+        main_window.show()
+        sys.exit(app.exec())
+
+
+@register
 class Strip(Command):
     """Launcher sub-command: strip"""
 
