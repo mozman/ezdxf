@@ -100,12 +100,12 @@ class TestPolyhedronFaceBuilder:
             assert math.isclose(ray.direction.magnitude, 1.0)
         assert len(edges) == 12
 
-    def test_for_24_unique_vertices(self, builder):
-        """Each edge has its own start- and end vertex which has a reference
+    def test_for_8_unique_vertices(self, builder):
+        """Edges do share start- and end vertices which has a reference
         the 'real' point.
         """
         vertices = get_vertices(builder.acis_faces())
-        assert len(vertices) == 24
+        assert len(vertices) == 8
 
     def test_for_8_unique_points(self, builder):
         """There have to be 8 'real' cube corner points."""

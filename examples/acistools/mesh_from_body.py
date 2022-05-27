@@ -25,7 +25,9 @@ for e in msp.query("3DSOLID"):
             dbg = acis.AcisDebugger(body)
             for shell in dbg.filter_type("shell"):
                 print("\n".join(dbg.face_link_structure(shell.face, 2)))
-                print("\nloop vertices:")
+                vertices = list(dbg.filter_type("vertex"))
+                print(f"\nThe shell has {len(vertices)} unique vertices.\nEach face has one loop.")
+                print("Loop vertices:")
                 for face in shell.faces():
                     print(face)
                     print(dbg.loop_vertices(face.loop, 2))

@@ -665,7 +665,7 @@ class PCurve(SupportsPattern):  # not implemented
 class Vertex(SupportsPattern):
     type: str = "vertex"
     edge: Edge = NONE_REF
-    unknown: int = 0  # only in SAB files, reference counter?
+    ref_count: int = 0  # only in SAB files, reference counter?
     point: Point = NONE_REF
 
     def restore_common(
@@ -673,14 +673,14 @@ class Vertex(SupportsPattern):
     ) -> None:
         super().restore_common(loader, entity_factory)
         self.edge = restore_entity("edge", loader, entity_factory)
-        self.unknown = loader.read_int(skip_sat=0)
+        self.ref_count = loader.read_int(skip_sat=0)
         self.point = restore_entity("point", loader, entity_factory)
 
     def write_common(self, exporter: DataExporter) -> None:
         super().write_common(exporter)
         exporter.write_ptr(self.edge)
         # TODO: write_int() ?
-        exporter.write_int(0, skip_sat=True)
+        exporter.write_int(self.ref_count, skip_sat=True)
         exporter.write_ptr(self.point)
 
 
