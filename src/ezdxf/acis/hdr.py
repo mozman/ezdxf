@@ -40,6 +40,7 @@ class AcisHeader:
     creation_date: datetime = field(default_factory=datetime.now)
     units_in_mm: float = 1.0
     asm_version: str = ""
+    asm_end_marker: bool = False  # depends on DXF version: R2013, RT2018
 
     @property
     def has_asm_header(self) -> bool:
@@ -97,13 +98,13 @@ class AcisHeader:
         return AsmHeader(self.asm_version)
 
     def sat_end_marker(self) -> str:
-        if self.has_asm_header:
+        if self.asm_end_marker:
             return const.END_OF_ASM_DATA_SAT + " "
         else:
             return const.END_OF_ACIS_DATA_SAT + " "
 
     def sab_end_marker(self) -> bytes:
-        if self.has_asm_header:
+        if self.asm_end_marker:
             return const.END_OF_ASM_DATA_SAB
         else:
             return const.END_OF_ACIS_DATA_SAB

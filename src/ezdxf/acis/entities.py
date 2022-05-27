@@ -46,7 +46,9 @@ def load(data: Union[str, Sequence[str], bytes, bytearray]) -> List[Body]:
     return SatLoader.load(data)
 
 
-def export_sat(bodies: Sequence[Body], version: int = 700) -> List[str]:
+def export_sat(
+    bodies: Sequence[Body], version: int = 700, asm_end_marker=False
+) -> List[str]:
     """Export one or more :class:`Body` entities as text based :term:`SAT` data.
 
     Minimum :term:`ACIS` version is 700.
@@ -57,6 +59,10 @@ def export_sat(bodies: Sequence[Body], version: int = 700) -> List[str]:
 
     """
     exporter = sat.SatExporter(_setup_export_header(version))
+    if version > 700:
+        # DXF >= R2013 requires an "End-of-ASM-data" marker
+        exporter.header.asm_end_marker = asm_end_marker
+        exporter.add_asm_header()
     for body in bodies:
         exporter.export(body)
     return exporter.dump_sat()
@@ -665,7 +671,7 @@ class PCurve(SupportsPattern):  # not implemented
 class Vertex(SupportsPattern):
     type: str = "vertex"
     edge: Edge = NONE_REF
-    unknown: int = 0  # only in SAB files, reference counter?
+    ref_count: int = 0  # only in SAB files, reference counter?
     point: Point = NONE_REF
 
     def restore_common(
@@ -673,14 +679,14 @@ class Vertex(SupportsPattern):
     ) -> None:
         super().restore_common(loader, entity_factory)
         self.edge = restore_entity("edge", loader, entity_factory)
-        self.unknown = loader.read_int(skip_sat=0)
+        self.ref_count = loader.read_int(skip_sat=0)
         self.point = restore_entity("point", loader, entity_factory)
 
     def write_common(self, exporter: DataExporter) -> None:
         super().write_common(exporter)
         exporter.write_ptr(self.edge)
         # TODO: write_int() ?
-        exporter.write_int(0, skip_sat=True)
+        exporter.write_int(self.ref_count, skip_sat=True)
         exporter.write_ptr(self.point)
 
 

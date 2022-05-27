@@ -188,8 +188,11 @@ class SatBuilder(AbstractBuilder):
 
         """
         self.reorder_records()
-        self.header.n_entities = len(self.bodies)
-        self.header.n_records = 0  # is always 0
+        self.header.n_entities = len(self.bodies) + int(self.header.has_asm_header)
+        if self.header.version == 700:
+            self.header.n_records = 0  # ignored for old versions
+        else:
+            self.header.n_records = len(self.entities)
         data = self.header.dumps()
         data.extend(build_str_records(self.entities, self.header.version))
         data.append(self.header.sat_end_marker())
@@ -226,6 +229,9 @@ class SatExporter(EntityExporter[SatEntity]):
         builder.header = self.header
         builder.set_entities(list(self.exported_entities.values()))
         return builder.dump_sat()
+
+    def add_asm_header(self):
+        self.export(self.header.asm_header())
 
 
 def build_str_records(entities: List[SatEntity], version: int) -> Iterator[str]:

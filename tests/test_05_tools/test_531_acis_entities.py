@@ -317,12 +317,12 @@ class TestExportSat:
             export_sat(prism700, version=400)
 
     def test_export_acis_700(self, prism700):
-        data = export_sat(prism700, version=700)
+        data = export_sat(prism700, version=700, asm_end_marker=False)
         assert len(data) == 117  # includes header
         assert data[-1] == "End-of-ACIS-data "  # an extra space at the end!
 
     def test_export_22300_asm(self, prism700):
-        data = export_sat(prism700, version=22300)
+        data = export_sat(prism700, version=22300, asm_end_marker=True)
         assert len(data) == 118  # includes a AsmHeader entity
         assert data[-1] == "End-of-ASM-data "  # an extra space at the end!
 

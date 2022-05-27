@@ -10,7 +10,16 @@ DIR = Path("~/Desktop/Outbox").expanduser()
 if not DIR.exists():
     DIR = Path(".")
 
-doc = ezdxf.new("R2004")
+# R2000 and ACIS 700 works also with Autodesk Trueview!
+
+# R2004 requirement
+# 20800 ...
+# @33 ... @14 ACIS 208.00 NT @24 ...
+# asmheader $-1 -1 @12 208.0.4.7009
+# End-of-ACIS-data
+
+VERSION = "R2000"
+doc = ezdxf.new(VERSION)
 msp = doc.modelspace()
 
 # create the ACIS body entity from the cube-mesh
@@ -18,13 +27,13 @@ body = acis.body_from_mesh(forms.cube())
 # create the DXF 3DSOLID entity
 solid3d = msp.add_3dsolid()
 # set SAT data for DXF R2004
-sat = acis.export_sat([body])
+sat = acis.export_sat([body], version=700)
 solid3d.sat = sat
 
 
 doc.set_modelspace_vport(5)
-doc.saveas(DIR / "acis_cube_R2004.dxf")
-with open(DIR / "acis_cube_R2004.sat", "wt") as fp:
+doc.saveas(DIR / f"acis_cube_{VERSION}.dxf")
+with open(DIR / f"acis_cube_{VERSION}.sat", "wt") as fp:
     fp.writelines("\n".join(sat))
 
 debugger = acis.AcisDebugger(body)

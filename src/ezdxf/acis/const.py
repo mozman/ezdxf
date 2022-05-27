@@ -5,12 +5,13 @@ import enum
 # ACIS version 700 should work for all DXF version up to R2013
 ACIS_VERSION = {
     400: "ACIS 4.00 NT",  # DXF R2000
-    700: "ACIS 32.0 NT",  # DXF R2004
-    20800: "ACIS 208.00 NT",  # DXF R2013 without asm-header?
-    21800: "ACIS 218.00 NT",  # DXF R2013 with asm-header?
+    700: "ACIS 32.0 NT",  # DXF R2004, no asm header - only R2000
+    20800: "ACIS 208.00 NT",  # DXF R2013 with asm-header
+    21800: "ACIS 218.00 NT",  # DXF R2013 with asm-header
     22300: "ACIS 223.00 NT",  # DXF R2018
 }
 ASM_VERSION = {
+    20800: "208.0.4.7009",  # DXF R2004, R2007, R2010
     21800: "208.0.4.7009",  # DXF R2013
     22300: "222.0.0.1700",  # DXF R2018
 }
