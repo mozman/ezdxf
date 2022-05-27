@@ -424,7 +424,9 @@ class SabDataExporter(DataExporter):
 
 def encode_entity_type(name: str) -> List[Token]:
     if name == const.NULL_PTR_NAME:
-        raise InvalidLinkStructure(f"invalid record type: {const.NULL_PTR_NAME}")
+        raise InvalidLinkStructure(
+            f"invalid record type: {const.NULL_PTR_NAME}"
+        )
     parts = name.split("-")
     tokens = [Token(Tags.ENTITY_TYPE_EX, part) for part in parts[:-1]]
     tokens.append(Token(Tags.ENTITY_TYPE, parts[-1]))

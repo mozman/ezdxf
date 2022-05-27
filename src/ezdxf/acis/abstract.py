@@ -18,6 +18,7 @@ class AbstractEntity(ABC):
     """Unified query interface for SAT and SAB data."""
 
     name: str
+    id: int = -1
 
     def __str__(self):
         return f"{self.name}"
@@ -133,6 +134,14 @@ class AbstractBuilder(Generic[T]):
             else:
                 entities.append(e)
         self.entities = header + entities
+
+    def reset_ids(self, start: int = 0) -> None:
+        for num, entity in enumerate(self.entities, start=start):
+            entity.id = num
+
+    def clear_ids(self) -> None:
+        for entity in self.entities:
+            entity.id = -1
 
 
 class EntityExporter(Generic[T]):
