@@ -35,7 +35,7 @@ class AcisHeader:
     n_records: int = 0  # can be 0
     n_entities: int = 0
     flags: int = 0
-    product_id: str = "ezdxf ACIS Builder"
+    product_id: str = const.EZDXF_BUILDER_ID
     acis_version: str = const.ACIS_VERSION[400]
     creation_date: datetime = field(default_factory=datetime.now)
     units_in_mm: float = 1.0

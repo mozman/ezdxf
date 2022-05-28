@@ -1,7 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 import enum
-
+from ezdxf.version import __version__
 # ACIS version 700 should work for all DXF version up to R2013
 ACIS_VERSION = {
     400: "ACIS 4.00 NT",  # DXF R2000, no asm header - only R2000
@@ -15,7 +15,7 @@ ASM_VERSION = {
     21800: "208.0.4.7009",  # DXF R2013
     22300: "222.0.0.1700",  # DXF R2018
 }
-
+EZDXF_BUILDER_ID = f"ezdxf v{__version__} ACIS Builder"
 MIN_EXPORT_VERSION = 700
 DATE_FMT = "%a %b %d %H:%M:%S %Y"
 END_OF_ACIS_DATA_SAT = "End-of-ACIS-data"
@@ -38,12 +38,12 @@ BOOL_SPECIFIER = {
     "forward": True,
     "forward_v": True,
     "reversed": False,
-    "reversed_v": False,  # ???
+    "reversed_v": False,
     "single": True,
     "double": False,
 }
 
-ACIS_SIGNATURE = b"ACIS BinaryFile"  # DXF R2013
+ACIS_SIGNATURE = b"ACIS BinaryFile"  # DXF R2013/R2018
 ASM_SIGNATURE = b"ASM BinaryFile4"  # DXF R2018
 SIGNATURES = [ACIS_SIGNATURE, ASM_SIGNATURE]
 
