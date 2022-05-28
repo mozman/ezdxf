@@ -11,6 +11,7 @@ from ezdxf.lldxf.attributes import (
 from ezdxf.lldxf.const import (
     SUBCLASS_MARKER,
     DXF2000,
+    DXF2004,
     DXFTypeError,
     DXF2013,
     DXFStructureError,
@@ -265,7 +266,7 @@ class Solid3d(Body):
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
         # AcDbModelerGeometry export is done by parent class
-        if tagwriter.dxfversion > DXF2000:
+        if tagwriter.dxfversion > DXF2004:
             tagwriter.write_tag2(SUBCLASS_MARKER, acdb_3dsolid.name)
             self.dxf.export_dxf_attribs(tagwriter, "history_handle")
 
