@@ -8,13 +8,6 @@ from . import sab, sat, const, hdr
 from .const import Features
 from .abstract import DataLoader, AbstractEntity, DataExporter
 from ezdxf.math import Matrix44, Vec3, NULLVEC
-from ezdxf.lldxf.const import (
-    normalize_dxfversion,
-    DXFVersionError,
-    DXF2000,
-    DXF2004,
-    DXF2013,
-)
 
 Factory = Callable[[AbstractEntity], "AcisEntity"]
 
@@ -38,7 +31,7 @@ def load(data: Union[str, Sequence[str], bytes, bytearray]) -> List[Body]:
 # Script to create test files:
 # examples/acistools/create_3dsolid_cube.py
 #
-# DXF R2000: OK, tested with TrueView 2022
+# DXF R2000, R2004, R2007, R2010: OK, tested with TrueView 2022
 # ACIS version 700
 # ACIS version string: "ACIS 32.0 NT"
 # record count: 0, not required
@@ -55,50 +48,42 @@ def load(data: Union[str, Sequence[str], bytes, bytearray]) -> List[Body]:
 # end-marker: "End-of-ACIS-data"
 
 
-def export_sat(bodies: Sequence[Body], dxfversion: str = DXF2000) -> List[str]:
+def export_sat(bodies: Sequence[Body], version: int = 700) -> List[str]:
     """Export one or more :class:`Body` entities as text based :term:`SAT` data.
 
-    The `dxfversion` has to be R2000, R2004, R2007 or R2010, later DXF versions
-    require :term:`SAB` data.
+    ACIS version 700 is sufficient for DXF versions R2000, R2004, R2007 and
+    R2010, later DXF versions require :term:`SAB` data.
 
     Raises:
         ExportError: ACIS structures contain unsupported entities
         InvalidLinkStructure: corrupt link structure
 
     """
-    dxfversion = normalize_dxfversion(dxfversion)
-    if not ("AC1015" <= dxfversion <= "AC1024"):
-        raise DXFVersionError("SAT requires DXF R2000, R2004, R2007 or R2010")
-
-    acis_version = 700
-    if dxfversion >= DXF2004:
-        acis_version = 20800
-
-    exporter = sat.SatExporter(_setup_export_header(acis_version))
+    if version < 700:
+        raise const.ExportError(f"invalid ACIS version: {version}")
+    exporter = sat.SatExporter(_setup_export_header(version))
     exporter.header.asm_end_marker = False
     for body in bodies:
         exporter.export(body)
     return exporter.dump_sat()
 
 
-def export_sab(bodies: Sequence[Body], dxfversion: str = DXF2013) -> bytes:
+def export_sab(bodies: Sequence[Body], version: int = 21800) -> bytes:
     """Export one or more :class:`Body` entities as binary encoded :term:`SAB`
     data.
 
-    The `dxfversion` has to be R2013 or later, earlier DXF versions require
-    :term:`SAT` data.
+    ACIS version 21800 is sufficient for DXF versions R2013 and R2018, earlier
+    DXF versions require :term:`SAT` data.
 
     Raises:
         ExportError: ACIS structures contain unsupported entities
         InvalidLinkStructure: corrupt link structure
 
     """
-    dxfversion = normalize_dxfversion(dxfversion)
-    if dxfversion < DXF2013:
-        raise DXFVersionError("SAB requires DXF R2013 or later")
-    exporter = sab.SabExporter(_setup_export_header(21800))
+    if version < 700:
+        raise const.ExportError(f"invalid ACIS version: {version}")
+    exporter = sab.SabExporter(_setup_export_header(version))
     exporter.header.asm_end_marker = True
-
     for body in bodies:
         exporter.export(body)
     return exporter.dump_sab()

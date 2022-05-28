@@ -314,26 +314,22 @@ def prism700(prism_sat):
 
 class TestExportSat:
     def test_export_rejects_unsupported_acis_versions(self, prism700):
-        with pytest.raises(ezdxf.DXFVersionError):
-            export_sat(prism700, dxfversion="R12")
+        with pytest.raises(ExportError):
+            export_sat(prism700, version=400)
 
     def test_export_acis_700(self, prism700):
-        data = export_sat(prism700, dxfversion="R2000")
+        data = export_sat(prism700)
         assert len(data) == 117  # includes header
         assert data[-1] == "End-of-ACIS-data "  # an extra space at the end!
-
-    def test_export_rejects_dxf_2013_and_later(self, prism700):
-        with pytest.raises(ezdxf.DXFVersionError):
-            export_sat(prism700, dxfversion="R2013")
 
 
 class TestExportSab21800:
     def test_export_rejects_unsupported_acis_versions(self, prism700):
-        with pytest.raises(ezdxf.DXFVersionError):
-            export_sab(prism700, dxfversion="R2010")
+        with pytest.raises(ExportError):
+            export_sab(prism700, version=400)
 
     def test_reload_records_from_acis_export(self, prism700):
-        data = export_sab(prism700, dxfversion="R2013")
+        data = export_sab(prism700)
         decoder = sab.Decoder(data)
         header = decoder.read_header()
         assert header.version == 21800
@@ -344,14 +340,14 @@ class TestExportSab21800:
 
 
 def test_load_mesh_from_exported_sat_data(prism700):
-    bodies = load(export_sat(prism700, dxfversion="R2000"))
+    bodies = load(export_sat(prism700))
     m = mesh.mesh_from_body(bodies[0])[0]
     assert len(m.vertices) == 8
     assert len(m.faces) == 10
 
 
 def test_load_mesh_from_exported_sab_data(prism700):
-    bodies = load(export_sab(prism700, dxfversion="R2013"))
+    bodies = load(export_sab(prism700))
     m = mesh.mesh_from_body(bodies[0])[0]
     assert len(m.vertices) == 8
     assert len(m.faces) == 10

@@ -38,9 +38,9 @@ def export_dxf(entity: DXFEntity, bodies: Sequence[Body]):
         raise DXFVersionError(f"invalid DXF version {dxfversion}")
 
     if dxfversion < DXF2013:
-        body.sat = export_sat(bodies, dxfversion)
+        body.sat = export_sat(bodies)
     else:
-        body.sab = export_sab(bodies, dxfversion)
+        body.sab = export_sab(bodies)
 
 
 def load_dxf(entity: DXFEntity) -> List[Body]:
