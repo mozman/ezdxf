@@ -57,7 +57,7 @@ class AcisHeader:
     def dumpb(self) -> bytes:
         """Returns the SAB file header as bytes."""
         buffer: List[bytes] = []
-        if self.has_asm_header:
+        if self.version > 21800:
             buffer.append(const.ASM_SIGNATURE)
         else:
             buffer.append(const.ACIS_SIGNATURE)
