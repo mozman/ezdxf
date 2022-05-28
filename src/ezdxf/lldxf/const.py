@@ -154,6 +154,15 @@ class DXFMissingDefinitionPoint(DXFRenderError):
     """Missing required definition points in the DIMENSION entity."""
 
 
+def normalize_dxfversion(dxfversion: str, check_save=True) -> str:
+    """Normalizes the DXF version string to "AC10xx"."""
+    dxfversion = dxfversion.upper()
+    dxfversion = acad_release_to_dxf_version.get(dxfversion, dxfversion)
+    if check_save and dxfversion not in versions_supported_by_save:
+        raise DXFVersionError(f"Invalid DXF version: {dxfversion}")
+    return dxfversion
+
+
 MANAGED_SECTIONS = {
     "HEADER",
     "CLASSES",

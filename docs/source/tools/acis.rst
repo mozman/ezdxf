@@ -26,9 +26,23 @@ limited to the use as embedded data in DXF and DWG files.
 
 The `ezdxf` library does not provide an :term:`ACIS` kernel and there are no
 plans for implementing one because this is far beyond my capabilities, but it
-is possible to extract geometries made up only by flat polygonal faces and
-maybe in the future it is also possible to create such simple polygon face
-meshes.
+is possible to extract geometries made up only by flat polygonal faces (polyhedron)
+and maybe in the future it is also possible to create ACIS bodies from such
+polyhedrons.
+
+Implementation status for exporting polyhedrons as ACIS data and loading
+the DXF file by Autodesk products or BricsCAD:
+
+=========== =========== ==========
+DXF Version Autodesk    BricsCAD
+=========== =========== ==========
+R2000       **Yes**     **Yes**
+R2004       No          **Yes**
+R2007       No          No
+R2010       No          No
+R2013       No          No
+R2018       No          No
+=========== =========== ==========
 
 .. module:: ezdxf.acis.api
 
@@ -41,6 +55,42 @@ meshes.
 
 Functions
 ~~~~~~~~~
+
+.. autofunction:: load_dxf
+
+Example:
+
+.. code-block:: Python
+
+    import ezdxf
+    from ezdxf.acis import api as acis
+
+    doc = ezdxf.readfile("your.dxf")
+    msp = doc.modelspace()
+
+    for e in msp.query("3DSOLID"):
+        bodies = acis.load_dxf(e)
+        ...
+
+.. autofunction:: export_dxf
+
+Example:
+
+.. code-block:: Python
+
+    import ezdxf
+    from ezdxf.render import forms
+    from ezdxf.acis import api as acis
+
+    doc = ezdxf.new("R2000")
+    msp = doc.modelspace()
+
+    # create an ACIS body from a simple cube-mesh
+    body = acis.body_from_mesh(forms.cube())
+    solid3d = msp.add_3dsolid()
+    acis.export_dxf(solid3d, [body])
+    doc.saveas("cube.dxf")
+
 
 .. autofunction:: load
 
@@ -71,11 +121,9 @@ Example script to extracts all flat polygonal faces as meshes:
     msp_out = doc_out.modelspace()
 
     for e in msp.query("3DSOLID"):
-        data = e.acis_data
-        if data:
-            for body in acis.load(data):
-                for mesh in acis.mesh_from_body(body):
-                    mesh.render_mesh(msp_out)
+        for body in acis.load_dxf(data):
+            for mesh in acis.mesh_from_body(body):
+                mesh.render_mesh(msp_out)
     doc_out.saveas("meshes.dxf")
 
 The second image shows the flat faces extracted from the ``3DSOLID`` entities

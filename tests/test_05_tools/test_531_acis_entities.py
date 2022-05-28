@@ -2,6 +2,7 @@
 #  License: MIT License
 
 import pytest
+import ezdxf
 from ezdxf.acis.api import load, export_sat, export_sab, ExportError
 from ezdxf.acis import sat, sab, entities, hdr, const, mesh
 from ezdxf.math import Matrix44
@@ -313,7 +314,7 @@ def prism700(prism_sat):
 
 class TestExportSat:
     def test_export_rejects_unsupported_acis_versions(self, prism700):
-        with pytest.raises(ExportError):
+        with pytest.raises(ezdxf.DXFVersionError):
             export_sat(prism700, dxfversion="R12")
 
     def test_export_acis_700(self, prism700):
@@ -322,13 +323,13 @@ class TestExportSat:
         assert data[-1] == "End-of-ACIS-data "  # an extra space at the end!
 
     def test_export_rejects_dxf_2013_and_later(self, prism700):
-        with pytest.raises(const.ExportError):
+        with pytest.raises(ezdxf.DXFVersionError):
             export_sat(prism700, dxfversion="R2013")
 
 
 class TestExportSab21800:
     def test_export_rejects_unsupported_acis_versions(self, prism700):
-        with pytest.raises(ExportError):
+        with pytest.raises(ezdxf.DXFVersionError):
             export_sab(prism700, dxfversion="R2010")
 
     def test_reload_records_from_acis_export(self, prism700):

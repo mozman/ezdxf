@@ -26,15 +26,12 @@ msp = doc.modelspace()
 body = acis.body_from_mesh(forms.cube())
 # create the DXF 3DSOLID entity
 solid3d = msp.add_3dsolid()
-# set SAT data for DXF R2004
-sat = acis.export_sat([body], doc.dxfversion)
-solid3d.sat = sat
-
+acis.export_dxf(solid3d, [body])
 
 doc.set_modelspace_vport(5)
 doc.saveas(DIR / f"acis_cube_{VERSION}.dxf")
 with open(DIR / f"acis_cube_{VERSION}.sat", "wt") as fp:
-    fp.writelines("\n".join(sat))
+    fp.writelines("\n".join(solid3d.sat))
 
 debugger = acis.AcisDebugger(body)
 for e in debugger.entities.values():

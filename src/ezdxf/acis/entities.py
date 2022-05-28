@@ -8,6 +8,13 @@ from . import sab, sat, const, hdr
 from .const import Features
 from .abstract import DataLoader, AbstractEntity, DataExporter
 from ezdxf.math import Matrix44, Vec3, NULLVEC
+from ezdxf.lldxf.const import (
+    normalize_dxfversion,
+    DXFVersionError,
+    DXF2000,
+    DXF2004,
+    DXF2013,
+)
 
 Factory = Callable[[AbstractEntity], "AcisEntity"]
 
@@ -20,49 +27,17 @@ def load(data: Union[str, Sequence[str], bytes, bytearray]) -> List[Body]:
     data. Accepts :term:`SAT` data as a single string or a sequence of strings
     and :term:`SAB` data as bytes or bytearray.
 
-    Example for loading ACIS data from a DXF entity based on
-    :class:`ezdxf.entities.Body`::
-
-        from ezdxf.acis import api as acis
-        ...
-
-        for e in msp.query("3DSOLID"):
-            bodies = acis.load(e.acis_data)
-            ...
-
-    .. warning::
-
-        Only a limited count of :term:`ACIS` entities is supported, all
-        unsupported entities are loaded as ``NONE_ENTITY`` and their data is
-        lost. Exporting such ``NONE_ENTITIES`` will raise an :class:`ExportError`
-        exception.
-
-        To emphasize that again: **It is not possible to load and re-export
-        arbitrary ACIS data!**
-
     """
     if isinstance(data, (bytes, bytearray)):
         return SabLoader.load(data)
     return SatLoader.load(data)
 
 
-def normalize_dxfversion(dxfversion: str) -> str:
-    from ezdxf.lldxf.const import (
-        acad_release_to_dxf_version,
-        versions_supported_by_save,
-    )
-
-    dxfversion = acad_release_to_dxf_version.get(dxfversion, dxfversion)
-    if dxfversion not in versions_supported_by_save:
-        raise const.ExportError(f"Invalid DXF version: {dxfversion}")
-    return dxfversion
-
-
-def export_sat(bodies: Sequence[Body], dxfversion: str = "R2000") -> List[str]:
+def export_sat(bodies: Sequence[Body], dxfversion: str = DXF2000) -> List[str]:
     """Export one or more :class:`Body` entities as text based :term:`SAT` data.
 
     The `dxfversion` has to be R2000, R2004, R2007 or R2010, later DXF versions
-    require term:`SAB` data.
+    require :term:`SAB` data.
 
     Raises:
         ExportError: ACIS structures contain unsupported entities
@@ -71,10 +46,10 @@ def export_sat(bodies: Sequence[Body], dxfversion: str = "R2000") -> List[str]:
     """
     dxfversion = normalize_dxfversion(dxfversion)
     if not ("AC1015" <= dxfversion <= "AC1024"):
-        raise const.ExportError("SAT requires DXF R2000, R2004, R2007 or R2010")
+        raise DXFVersionError("SAT requires DXF R2000, R2004, R2007 or R2010")
 
     acis_version = 700
-    if dxfversion >= "AC1018":  # R2004
+    if dxfversion >= DXF2004:
         acis_version = 20800
 
     exporter = sat.SatExporter(_setup_export_header(acis_version))
@@ -84,12 +59,12 @@ def export_sat(bodies: Sequence[Body], dxfversion: str = "R2000") -> List[str]:
     return exporter.dump_sat()
 
 
-def export_sab(bodies: Sequence[Body], dxfversion: str = "R2013") -> bytes:
+def export_sab(bodies: Sequence[Body], dxfversion: str = DXF2013) -> bytes:
     """Export one or more :class:`Body` entities as binary encoded :term:`SAB`
     data.
 
     The `dxfversion` has to be R2013 or later, earlier DXF versions require
-    term:`SAT` data.
+    :term:`SAT` data.
 
     Raises:
         ExportError: ACIS structures contain unsupported entities
@@ -97,8 +72,8 @@ def export_sab(bodies: Sequence[Body], dxfversion: str = "R2013") -> bytes:
 
     """
     dxfversion = normalize_dxfversion(dxfversion)
-    if dxfversion < "AC1027":
-        raise const.ExportError("SAB requires DXF R2013 or later")
+    if dxfversion < DXF2013:
+        raise DXFVersionError("SAB requires DXF R2013 or later")
     exporter = sab.SabExporter(_setup_export_header(21800))
     exporter.header.asm_end_marker = True
 
