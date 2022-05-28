@@ -6,7 +6,7 @@ import math
 import logging
 import warnings
 from ezdxf.lldxf import const
-from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000
+from ezdxf.lldxf.const import DXFValueError, DXFVersionError, DXF2000, DXF2013
 from ezdxf.math import (
     Vec3,
     UVec,
@@ -21,6 +21,7 @@ from ezdxf.entities import factory, Point, Spline, Body, Surface
 from ezdxf.entities.mtext_columns import *
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 from ezdxf.render.dim_linear import multi_point_linear_dimension
+from ezdxf.tools import guid
 
 logger = logging.getLogger("ezdxf")
 
@@ -1131,6 +1132,9 @@ class CreatorInterface:
         if self.dxfversion < const.DXF2000:
             raise DXFVersionError(f"{name} requires DXF R2000 or later")
         dxfattribs = dict(dxfattribs or {})
+        if self.dxfversion >= DXF2013:
+            dxfattribs.setdefault("flags", 0)  # type: ignore
+            dxfattribs.setdefault("uid", guid())
         return self.new_entity(name, dxfattribs)  # type: ignore
 
     def add_hatch(self, color: int = 7, dxfattribs=None) -> "Hatch":
