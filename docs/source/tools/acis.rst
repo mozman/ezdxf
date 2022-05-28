@@ -40,7 +40,7 @@ R2000       SAT **Yes**     **Yes**
 R2004       SAT **Yes**     **Yes**
 R2007       SAT **Yes**     **Yes**
 R2010       SAT **Yes**     **Yes**
-R2013       SAB No          No
+R2013       SAT **Yes**     **Yes**
 R2018       SAB No          No
 =========== === =========== ==========
 

@@ -285,6 +285,7 @@ class SabBuilder(AbstractBuilder):
         self.header.n_entities = len(self.bodies) + int(
             self.header.has_asm_header)
         self.header.n_records = 0  # is always 0
+        self.header.flags = 12
         data: List[bytes] = [self.header.dumpb()]
         encoder = Encoder()
         for record in build_sab_records(self.entities):
@@ -330,14 +331,17 @@ def build_entities(
     records: Iterable[SabRecord], version: int
 ) -> Iterator[SabEntity]:
     for record in records:
-        name = record[0].value
+        assert record[0].tag == Tags.ENTITY_TYPE, "invalid entity-name tag"
+        name = record[0].value  # 1. entity-name
         if name in const.DATA_END_MARKERS:
             yield SabEntity(name)
             return
-        attr = record[1].value
+        assert record[1].tag == Tags.POINTER, "invalid attribute pointer tag"
+        attr = record[1].value  # 2. attribute record pointer
         id_ = -1
         if version >= 700:
-            id_ = record[2].value
+            assert record[2].tag == Tags.INT, "invalid id tag"
+            id_ = record[2].value  # 3. int id
             data = record[3:]
         else:
             data = record[2:]
@@ -449,8 +453,10 @@ def build_sab_records(entities: List[SabEntity]) -> Iterator[SabRecord]:
     for entity in entities:
         record: List[Token] = []
         record.extend(encode_entity_type(entity.name))
-        record.append(Token(Tags.INT, entity.id))
+        # 1. attribute record pointer
         record.append(encode_entity_ptr(entity.attributes, entities))
+        # 2. int id
+        record.append(Token(Tags.INT, entity.id))
         for token in entity.data:
             if token.tag == Tags.POINTER:
                 record.append(encode_entity_ptr(token.value, entities))

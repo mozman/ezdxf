@@ -11,7 +11,7 @@ def main():
     if args.file:
         with open(args.file[0], "rb") as fp:
             data = fp.read()
-    acis.dump_sab_as_text(data)
+    print("\n".join(acis.dump_sab_as_text(data)))
 
 
 if __name__ == "__main__":
