@@ -10,15 +10,7 @@ DIR = Path("~/Desktop/Outbox").expanduser()
 if not DIR.exists():
     DIR = Path(".")
 
-# R2000 and ACIS 700 works also with Autodesk Trueview!
-
-# R2004 requirement
-# 20800 ...
-# @33 ... @14 ACIS 208.00 NT @24 ...
-# asmheader $-1 -1 @12 208.0.4.7009
-# End-of-ACIS-data
-
-VERSION = "R2000"
+VERSION = "R2004"
 doc = ezdxf.new(VERSION)
 msp = doc.modelspace()
 

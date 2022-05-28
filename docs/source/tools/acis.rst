@@ -37,7 +37,7 @@ the DXF file by Autodesk products or BricsCAD:
 DXF Version Autodesk    BricsCAD
 =========== =========== ==========
 R2000       **Yes**     **Yes**
-R2004       No          **Yes**
+R2004       **Yes**     **Yes**
 R2007       No          No
 R2010       No          No
 R2013       No          No
