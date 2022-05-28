@@ -58,6 +58,7 @@ Version 0.18b4 - dev
   DXF loader ignore data beyond `EOF` tag 
 - BUGFIX [#620](https://github.com/mozman/ezdxf/issues/620): 
   add missing caret decoding to `fast_plain_mtext()` 
+- BUGFIX: `3DSOLID` export for DXF R2004 has no subclass `AcDb3dSolid`
 
 Version 0.17.2 - 2022-01-06
 ---------------------------
@@ -69,8 +70,8 @@ Version 0.17.2 - 2022-01-06
     for Python >= 3.10
   - `manylinux_2014_aarch64` for ARM64 based Linux
   - `musllinux_2014_aarch64` for ARM64 based Linux
-  - `macosx_11_0_arm64` for Apple silicon
-  - `macosx_10_9_universal2` for Apple silicon & x86
+  - `macosx_11_0_arm64` for Apple Silicon
+  - `macosx_10_9_universal2` for Apple Silicon & x86
 - NEW: Auditor fixes invalid transparency values
 - NEW: Auditor fixes invalid crease data in `MESH` entities
 - NEW: add `transparency` argument to `LayerTable.add()`
