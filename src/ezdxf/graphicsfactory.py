@@ -1133,7 +1133,7 @@ class CreatorInterface:
             raise DXFVersionError(f"{name} requires DXF R2000 or later")
         dxfattribs = dict(dxfattribs or {})
         if self.dxfversion >= DXF2013:
-            dxfattribs.setdefault("flags", 0)  # type: ignore
+            dxfattribs.setdefault("flags", 1)  # type: ignore
             dxfattribs.setdefault("uid", guid())
         return self.new_entity(name, dxfattribs)  # type: ignore
 
