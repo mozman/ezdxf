@@ -32,6 +32,7 @@ def load(data: Union[str, Sequence[str], bytes, bytearray]) -> List[Body]:
         return SabLoader.load(data)
     return SatLoader.load(data)
 
+
 # SAT Export Requirements for Autodesk Products
 # ---------------------------------------------
 # Script to create test files:
@@ -45,27 +46,11 @@ def load(data: Union[str, Sequence[str], bytes, bytearray]) -> List[Body]:
 # ASM header: no
 # end-marker: "End-of-ACIS-data"
 #
-# DXF R2004: OK, tested with TrueView 2022
+# DXF R2004, R2007, R2010: OK, tested with TrueView 2022
 # ACIS version 20800
 # ACIS version string: "ACIS 208.00 NT"
 # record count: n without asm-header, required
 # body count: 1 + 1 (asm-header?), required
-# ASM header: "208.0.4.7009"
-# end-marker: "End-of-ACIS-data"
-#
-# DXF R2007: does not work
-# ACIS version 20800
-# record count: 0, not required
-# body count: 1, required
-# ACIS version string: "ACIS 208.00 NT"
-# ASM header: "208.0.4.7009"
-# end-marker: "End-of-ACIS-data"
-#
-# DXF R2010: does not work
-# ACIS version 20800
-# ACIS version string: "ACIS 208.00 NT"
-# record count: 0, not required
-# body count: 1, required
 # ASM header: "208.0.4.7009"
 # end-marker: "End-of-ACIS-data"
 

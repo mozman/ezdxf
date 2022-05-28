@@ -33,16 +33,16 @@ polyhedrons.
 Implementation status for exporting polyhedrons as ACIS data and loading
 the DXF file by Autodesk products or BricsCAD:
 
-=========== =========== ==========
-DXF Version Autodesk    BricsCAD
-=========== =========== ==========
-R2000       **Yes**     **Yes**
-R2004       **Yes**     **Yes**
-R2007       No          No
-R2010       No          No
-R2013       No          No
-R2018       No          No
-=========== =========== ==========
+=========== === =========== ==========
+DXF Version FMT Autodesk    BricsCAD
+=========== === =========== ==========
+R2000       SAT **Yes**     **Yes**
+R2004       SAT **Yes**     **Yes**
+R2007       SAT **Yes**     **Yes**
+R2010       SAT **Yes**     **Yes**
+R2013       SAB No          No
+R2018       SAB No          No
+=========== === =========== ==========
 
 .. module:: ezdxf.acis.api
 
