@@ -2,14 +2,13 @@
 #  License: MIT License
 import pytest
 from datetime import datetime
-from ezdxf.acis import sat, hdr
+from ezdxf.acis import sat, hdr, const
 from ezdxf.version import __version__
 
 
 def test_default_header():
     header = hdr.AcisHeader()
-    assert header.version == 400
-    assert header.acis_version == "ACIS 4.00 NT"
+    assert header.version == const.MIN_EXPORT_VERSION
     assert header.n_entities == 0
     assert header.n_records == 0
     assert isinstance(header.creation_date, datetime)

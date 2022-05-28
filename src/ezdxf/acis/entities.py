@@ -26,29 +26,9 @@ def load(data: Union[str, Sequence[str], bytes, bytearray]) -> List[Body]:
     return SatLoader.load(data)
 
 
-# SAT Export Requirements for Autodesk Products
-# ---------------------------------------------
-# Script to create test files:
-# examples/acistools/create_3dsolid_cube.py
-#
-# DXF R2000, R2004, R2007, R2010: OK, tested with TrueView 2022
-# ACIS version 700
-# ACIS version string: "ACIS 32.0 NT"
-# record count: 0, not required
-# body count: 1, required
-# ASM header: no
-# end-marker: "End-of-ACIS-data"
-#
-# DXF R2004, R2007, R2010: OK, tested with TrueView 2022
-# ACIS version 20800
-# ACIS version string: "ACIS 208.00 NT"
-# record count: n without asm-header, required
-# body count: 1 + 1 (asm-header?), required
-# ASM header: "208.0.4.7009"
-# end-marker: "End-of-ACIS-data"
-
-
-def export_sat(bodies: Sequence[Body], version: int = 700) -> List[str]:
+def export_sat(
+    bodies: Sequence[Body], version: int = const.DEFAULT_SAT_VERSION
+) -> List[str]:
     """Export one or more :class:`Body` entities as text based :term:`SAT` data.
 
     ACIS version 700 is sufficient for DXF versions R2000, R2004, R2007 and
@@ -59,7 +39,7 @@ def export_sat(bodies: Sequence[Body], version: int = 700) -> List[str]:
         InvalidLinkStructure: corrupt link structure
 
     """
-    if version < 700:
+    if version < const.MIN_EXPORT_VERSION:
         raise const.ExportError(f"invalid ACIS version: {version}")
     exporter = sat.SatExporter(_setup_export_header(version))
     exporter.header.asm_end_marker = False
@@ -68,7 +48,9 @@ def export_sat(bodies: Sequence[Body], version: int = 700) -> List[str]:
     return exporter.dump_sat()
 
 
-def export_sab(bodies: Sequence[Body], version: int = 21800) -> bytes:
+def export_sab(
+    bodies: Sequence[Body], version: int = const.DEFAULT_SAB_VERSION
+) -> bytes:
     """Export one or more :class:`Body` entities as binary encoded :term:`SAB`
     data.
 
@@ -80,7 +62,7 @@ def export_sab(bodies: Sequence[Body], version: int = 21800) -> bytes:
         InvalidLinkStructure: corrupt link structure
 
     """
-    if version < 700:
+    if version < const.MIN_EXPORT_VERSION:
         raise const.ExportError(f"invalid ACIS version: {version}")
     exporter = sab.SabExporter(_setup_export_header(version))
     exporter.header.asm_end_marker = True
@@ -689,7 +671,6 @@ class Vertex(SupportsPattern):
     def write_common(self, exporter: DataExporter) -> None:
         super().write_common(exporter)
         exporter.write_ptr(self.edge)
-        # TODO: write_int() ?
         exporter.write_int(self.ref_count, skip_sat=True)
         exporter.write_ptr(self.point)
 

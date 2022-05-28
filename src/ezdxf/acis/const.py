@@ -2,21 +2,58 @@
 #  License: MIT License
 import enum
 from ezdxf.version import __version__
-# ACIS version 700 should work for all DXF version up to R2013
+
+# SAT Export Requirements for Autodesk Products
+# ---------------------------------------------
+# Script to create test files:
+# examples/acistools/create_3dsolid_cube.py
+
+# DXF R2000, R2004, R2007, R2010: OK, tested with TrueView 2022
+# ACIS version 700
+# ACIS version string: "ACIS 32.0 NT"
+# record count: 0, not required
+# body count: 1, required
+# ASM header: no
+# end-marker: "End-of-ACIS-data"
+
+# DXF R2004, R2007, R2010: OK, tested with TrueView 2022
+# ACIS version 20800
+# ACIS version string: "ACIS 208.00 NT"
+# record count: 0, not required
+# body count: n + 1 (asm-header), required
+# ASM header: "208.0.4.7009"
+# end-marker: "End-of-ACIS-data"
+
+# SAB Export Requirements for Autodesk Products
+# ---------------------------------------------
+# DXF R2013, R2018: OK, tested with TrueView 2022
+# ACIS version 21800
+# ACIS version string: "ACIS 208.00 NT"
+# record count: 0, not required
+# body count: n + 1  (asm-header), required
+# ASM header: "208.0.4.7009"
+# end-marker: "End-of-ASM-data"
+
 ACIS_VERSION = {
     400: "ACIS 4.00 NT",  # DXF R2000, no asm header - only R2000
-    700: "ACIS 32.0 NT",  # DXF R2000, no asm header - only R2000
-    20800: "ACIS 208.00 NT",  # DXF R2013 with asm-header
-    21800: "ACIS 218.00 NT",  # DXF R2013 with asm-header
-    22300: "ACIS 223.00 NT",  # DXF R2018
+    700: "ACIS 32.0 NT",  # DXF R2000-R2010, no asm header
+    20800: "ACIS 208.00 NT",  # DXF R2013 with asm-header, asm-end-marker
+    21800: "ACIS 218.00 NT",  # DXF R2013 with asm-header, asm-end-marker
+    22300: "ACIS 223.00 NT",  # DXF R2018 with asm-header, asm-end-marker
 }
 ASM_VERSION = {
     20800: "208.0.4.7009",  # DXF R2004, R2007, R2010
-    21800: "208.0.4.7009",  # DXF R2013
+    21800: "208.0.4.7009",  # DXF R2013, default version for R2013 and R2018
     22300: "222.0.0.1700",  # DXF R2018
 }
 EZDXF_BUILDER_ID = f"ezdxf v{__version__} ACIS Builder"
 MIN_EXPORT_VERSION = 700
+
+# ACIS version 700 is the default version for DXF R2000, R2004, R2007 and R2010 (SAT)
+# ACIS version 21800 is the default version for DXF R2013 and R2018 (SAB)
+DEFAULT_SAT_VERSION = 700
+DEFAULT_SAB_VERSION = 21800
+
 DATE_FMT = "%a %b %d %H:%M:%S %Y"
 END_OF_ACIS_DATA_SAT = "End-of-ACIS-data"
 END_OF_ACIS_DATA_SAB = b"\x0e\x03End\x0e\x02of\x0e\x04ACIS\x0d\x04data"

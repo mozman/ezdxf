@@ -31,12 +31,12 @@ def encode_double(value: float) -> bytes:
 class AcisHeader:
     """Represents an ACIS file header."""
 
-    version: int = 400
+    version: int = const.MIN_EXPORT_VERSION
     n_records: int = 0  # can be 0
     n_entities: int = 0
     flags: int = 0
     product_id: str = const.EZDXF_BUILDER_ID
-    acis_version: str = const.ACIS_VERSION[400]
+    acis_version: str = const.ACIS_VERSION[const.MIN_EXPORT_VERSION]
     creation_date: datetime = field(default_factory=datetime.now)
     units_in_mm: float = 1.0
     asm_version: str = ""
