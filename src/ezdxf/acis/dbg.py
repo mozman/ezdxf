@@ -2,7 +2,7 @@
 #  License: MIT License
 from typing import Iterator, Set, Callable, Dict, Any, List
 from .entities import AcisEntity, NONE_REF, Face, Coedge, Loop
-
+from . import sab
 
 class AcisDebugger:
     def __init__(self, root: AcisEntity = NONE_REF, start_id: int = 1):
@@ -110,3 +110,24 @@ class AcisDebugger:
             coedge = coedge.next_coedge
             if coedge is first:
                 break
+
+
+def dump_sab_as_text(data: bytes) -> Iterator[str]:
+    def entity_data(e):
+        for tag, value in e:
+            name = sab.Tags(tag).name
+            yield f"{name} = {value}"
+
+    decoder = sab.Decoder(data)
+    header = decoder.read_header()
+    yield from header.dumps()
+    index = 0
+    try:
+        for record in decoder.read_records():
+            yield f"--------------------- record: {index}"
+            yield from entity_data(record)
+            index += 1
+    except sab.ParsingError as e:
+        yield str(e)
+
+

@@ -26,5 +26,5 @@ from .const import (
 )
 from .mesh import mesh_from_body, body_from_mesh
 from .entities import load, export_sat, export_sab, Body
-from .dbg import AcisDebugger
+from .dbg import AcisDebugger, dump_sab_as_text
 from .dxf import export_dxf, load_dxf

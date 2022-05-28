@@ -10,7 +10,8 @@ DIR = Path("~/Desktop/Outbox").expanduser()
 if not DIR.exists():
     DIR = Path(".")
 
-VERSION = "R2004"
+VERSION = "R2013"
+DEBUG = False
 doc = ezdxf.new(VERSION)
 msp = doc.modelspace()
 
@@ -22,18 +23,23 @@ acis.export_dxf(solid3d, [body])
 
 doc.set_modelspace_vport(5)
 doc.saveas(DIR / f"acis_cube_{VERSION}.dxf")
-with open(DIR / f"acis_cube_{VERSION}.sat", "wt") as fp:
-    fp.writelines("\n".join(solid3d.sat))
+if solid3d.has_binary_data:
+    with open(DIR / f"acis_cube_{VERSION}.sab.txt", "wt") as fp:
+        fp.writelines("\n".join(acis.dump_sab_as_text(solid3d.sab)))
+else:
+    with open(DIR / f"acis_cube_{VERSION}.sat.txt", "wt") as fp:
+        fp.writelines("\n".join(solid3d.sat))
 
-debugger = acis.AcisDebugger(body)
-for e in debugger.entities.values():
-    print(e)
-    print("\n".join(debugger.entity_attributes(e, 2)))
-print(f"{len(debugger.entities)} entities\n")
-print("face link structure:")
-for shell in debugger.filter_type("shell"):
-    print("\n".join(debugger.face_link_structure(shell.face)))
-    print("\nloop vertices:")
-    for face in shell.faces():
-        print(face)
-        print(debugger.loop_vertices(face.loop))
+if DEBUG:
+    debugger = acis.AcisDebugger(body)
+    for e in debugger.entities.values():
+        print(e)
+        print("\n".join(debugger.entity_attributes(e, 2)))
+    print(f"{len(debugger.entities)} entities\n")
+    print("face link structure:")
+    for shell in debugger.filter_type("shell"):
+        print("\n".join(debugger.face_link_structure(shell.face)))
+        print("\nloop vertices:")
+        for face in shell.faces():
+            print(face)
+            print(debugger.loop_vertices(face.loop))

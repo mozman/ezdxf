@@ -282,8 +282,10 @@ class SabBuilder(AbstractBuilder):
     def dump_sab(self) -> bytes:
         """Returns the SAB representation of the ACIS file as bytes."""
         self.reorder_records()
-        self.header.n_entities = len(self.bodies)
+        self.header.n_entities = len(self.bodies) + int(
+            self.header.has_asm_header)
         self.header.n_records = 0  # is always 0
+        # self.header.flags = 12
         data: List[bytes] = [self.header.dumpb()]
         encoder = Encoder()
         for record in build_sab_records(self.entities):

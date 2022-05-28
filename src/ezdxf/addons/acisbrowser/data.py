@@ -26,6 +26,7 @@ class TextAcisData(AcisData):
 
 def make_sab_records(data: bytes) -> Iterator[str]:
     builder = parse_sab(data)
+    yield from builder.header.dumps()
     builder.reset_ids()
     for entity in builder.entities:
         content = [str(entity)]
