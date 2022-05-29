@@ -37,18 +37,12 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         handle: str = "",
     ):
         super().__init__()
-        self.filename = filename
         self.doc: Optional[Drawing] = None
         self.acis_entities: List[AcisData] = []
-        self.entities_viewer = QtWidgets.QListWidget(self)
-        self.acis_content_viewer = QtWidgets.QPlainTextEdit(self)
-        self.acis_content_viewer.setReadOnly(True)
-        self.acis_content_viewer.setLineWrapMode(
-            QtWidgets.QPlainTextEdit.NoWrap
-        )
-        self.acis_content_viewer.setFont(make_font())
-        self.statusbar = QtWidgets.QStatusBar(self)
         self.current_acis_entity = AcisData()
+        self.entity_selector = self.make_entity_selector()
+        self.acis_content_viewer = self.make_content_viewer()
+        self.statusbar = QtWidgets.QStatusBar(self)
         self.setup_actions()
         self.setup_menu()
 
@@ -58,25 +52,34 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
             self.setWindowTitle(APP_NAME)
 
         self.setStatusBar(self.statusbar)
-        self.setCentralWidget(self.build_central_widget())
+        self.setCentralWidget(self.make_central_widget())
         self.resize(BROWSER_WIDTH, BROWSER_HEIGHT)
         self.connect_slots()
         if handle:
             try:
                 int(handle, 16)
             except ValueError:
-                msg = f"Given handle is not a hex value: {handle}"
+                msg = f"Given handle is not a hex value: '{handle}'"
                 self.statusbar.showMessage(msg)
                 print(msg)
             else:
                 if not self.goto_handle(handle):
-                    msg = f"Handle {handle} not found."
+                    msg = f"Handle '{handle}' not found."
                     self.statusbar.showMessage(msg)
                     print(msg)
 
-    def build_central_widget(self):
+    def make_entity_selector(self):
+        return QtWidgets.QListWidget(self)
+
+    def make_content_viewer(self):
+        viewer = QtWidgets.QPlainTextEdit(self)
+        viewer.setReadOnly(True)
+        viewer.setLineWrapMode(QtWidgets.QPlainTextEdit.NoWrap)
+        return viewer
+
+    def make_central_widget(self):
         container = QtWidgets.QSplitter(Qt.Horizontal)
-        container.addWidget(self.entities_viewer)
+        container.addWidget(self.entity_selector)
         container.addWidget(self.acis_content_viewer)
         selector_width = int(BROWSER_WIDTH * SELECTOR_WIDTH_FACTOR)
         entity_view_width = BROWSER_WIDTH - selector_width
@@ -86,8 +89,8 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         return container
 
     def connect_slots(self):
-        self.entities_viewer.clicked.connect(self.acis_entity_activated)
-        self.entities_viewer.activated.connect(self.acis_entity_activated)
+        self.entity_selector.clicked.connect(self.acis_entity_activated)
+        self.entity_selector.activated.connect(self.acis_entity_activated)
 
     # noinspection PyAttributeOutsideInit
     def setup_actions(self):
@@ -154,36 +157,42 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
             doc = ezdxf.readfile(path)
         except IOError as e:
             QMessageBox.critical(self, "Loading Error", str(e))
+            return
         except DXFStructureError as e:
             QMessageBox.critical(
                 self,
                 "DXF Structure Error",
                 f'Invalid DXF file "{path}": {str(e)}',
             )
-        else:
-            self.filename = path
+            return
+        entities = list(get_acis_entities(doc))
+        if len(entities):
             self.doc = doc
-            self.set_acis_entities(doc)
+            self.set_acis_entities(entities)
             self.update_title(path)
-            self.statusbar.showMessage(self.make_status_message())
+            self.statusbar.showMessage(self.make_loading_message())
+        else:
+            msg = f"DXF file '{path}' contains no ACIS data"
+            QMessageBox.information(self, "Loading Error", msg)
 
-    def make_status_message(self) -> str:
+    def make_loading_message(self) -> str:
+        assert self.doc is not None
         dxfversion = self.doc.dxfversion
         acis_type = "SAB" if dxfversion >= "AC1027" else "SAT"
-        return f"Loaded DXF file has version {self.doc.acad_release}/{dxfversion} and contains {acis_type} data"
+        return f"Loaded DXF file has version {self.doc.acad_release}/{dxfversion}" \
+               f" and contains {acis_type} data"
 
-    def set_acis_entities(self, doc: Drawing):
-        self.acis_entities = list(get_acis_entities(doc))
-        if self.acis_entities:
-            self.set_current_acis_entity(self.acis_entities[0])
-            self.update_entities_viewer(self.acis_entities)
+    def set_acis_entities(self, entities: List[AcisData]):
+        self.acis_entities = entities
+        self.update_entities_viewer(entities)
+        self.set_current_acis_entity(entities[0])
 
     def reload_dxf(self):
         try:
             index = self.acis_entities.index(self.current_acis_entity)
         except IndexError:
             index = -1
-        self.load_dxf(self.filename)
+        self.load_dxf(self.doc.filename)
         if index > 0:
             self.set_current_acis_entity(self.acis_entities[index])
 
@@ -255,7 +264,7 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         viewer.setPlainText("\n".join(entity.lines))
 
     def update_entities_viewer(self, entities: Iterable[AcisData]):
-        viewer = self.entities_viewer
+        viewer = self.entity_selector
         viewer.clear()
         viewer.addItems([e.name for e in entities])
 
@@ -284,3 +293,4 @@ def write_data(entity: AcisData, path: str):
             fp.write("\n".join(entity.lines))
     except IOError:
         pass
+
