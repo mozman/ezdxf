@@ -88,19 +88,23 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         self._open_action = self.make_action(
             "&Open DXF File...", self.open_dxf, shortcut="Ctrl+O"
         )
-        self._export_entity_action = self.make_action(
-            "&Export Current ACIS Entity View...", self.export_entity, shortcut="Ctrl+E"
-        )
-        self._export_raw_data_action = self.make_action(
-            "&Export Raw ACIS Data...", self.export_raw_entity, shortcut="Ctrl+W"
-        )
-        self._quit_action = self.make_action(
-            "&Quit", self.close, shortcut="Ctrl+Q"
-        )
         self._reload_action = self.make_action(
             "Reload DXF File",
             self.reload_dxf,
             shortcut="Ctrl+R",
+        )
+        self._export_entity_action = self.make_action(
+            "&Export Current Entity View...",
+            self.export_entity,
+            shortcut="Ctrl+E",
+        )
+        self._export_raw_data_action = self.make_action(
+            "&Export Raw SAT/SAB Data...",
+            self.export_raw_entity,
+            shortcut="Ctrl+W",
+        )
+        self._quit_action = self.make_action(
+            "&Quit", self.close, shortcut="Ctrl+Q"
         )
 
     def make_action(
@@ -174,7 +178,7 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
     def export_entity(self):
         path, _ = QFileDialog.getSaveFileName(
             self,
-            caption="Export Current ACIS Entity View",
+            caption="Export Current Entity View",
             filter="Text Files (*.txt *.TXT)",
         )
         if path:
