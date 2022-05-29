@@ -1,7 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from typing import List, Iterator, Iterable
-
+import ezdxf
 from ezdxf.addons.xqt import (
     QtWidgets,
     QtGui,
@@ -11,20 +11,13 @@ from ezdxf.addons.xqt import (
     Qt,
     QModelIndex,
 )
-
-import ezdxf
 from ezdxf.document import Drawing
 from ezdxf.entities import Body
-
 from ezdxf.lldxf.const import DXFStructureError
 from .data import AcisData, BinaryAcisData, TextAcisData
 
 
-__all__ = ["AcisStructureBrowser"]
-
 APP_NAME = "ACIS Structure Browser"
-
-
 BROWSER_WIDTH = 1024
 BROWSER_HEIGHT = 768
 TREE_WIDTH_FACTOR = 0.33
@@ -49,6 +42,9 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         self._entities_viewer = QtWidgets.QListWidget()
         self._acis_content_viewer = QtWidgets.QPlainTextEdit()
         self._acis_content_viewer.setReadOnly(True)
+        self._acis_content_viewer.setLineWrapMode(
+            QtWidgets.QPlainTextEdit.NoWrap
+        )
         self._acis_content_viewer.setFont(make_font())
         self._current_acis_entity = AcisData()
         self.setup_actions()
