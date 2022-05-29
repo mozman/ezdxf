@@ -25,17 +25,18 @@ class TextAcisData(AcisData):
 
 
 def make_sab_records(data: bytes) -> Iterator[str]:
+    def ptr_str(e):
+        return "~" if e.is_null_ptr else str(e)
+
     builder = parse_sab(data)
     yield from builder.header.dumps()
     builder.reset_ids()
     for entity in builder.entities:
         content = [str(entity)]
-        if not entity.attributes.is_null_ptr:
-            content.append(str(entity.attributes))
+        content.append(ptr_str(entity.attributes))
         for tag in entity.data:
             if isinstance(tag.value, SabEntity):
-                if not tag.value.is_null_ptr:
-                    content.append(str(tag.value))
+                content.append(ptr_str(tag.value))
             else:
                 content.append(f"{tag.value}<{tag.tag}>")
         yield " ".join(content)

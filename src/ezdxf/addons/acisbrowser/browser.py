@@ -4,14 +4,12 @@ from typing import List, Iterator, Iterable
 
 from ezdxf.addons.xqt import (
     QtWidgets,
+    QtGui,
     QAction,
     QMessageBox,
     QFileDialog,
     Qt,
     QModelIndex,
-    QListWidget,
-    QPlainTextEdit,
-    QFont,
 )
 
 import ezdxf
@@ -34,8 +32,8 @@ FONT_FAMILY = "monospaced"
 
 
 def make_font():
-    font = QFont(FONT_FAMILY)
-    font.setStyleHint(QFont.Monospace)
+    font = QtGui.QFont(FONT_FAMILY)
+    font.setStyleHint(QtGui.QFont.Monospace)
     return font
 
 
@@ -48,8 +46,8 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         super().__init__()
         self.filename = filename
         self.acis_entities: List[AcisData] = []
-        self._entities_viewer = QListWidget()
-        self._acis_content_viewer = QPlainTextEdit()
+        self._entities_viewer = QtWidgets.QListWidget()
+        self._acis_content_viewer = QtWidgets.QPlainTextEdit()
         self._acis_content_viewer.setReadOnly(True)
         self._acis_content_viewer.setFont(make_font())
         self._current_acis_entity = AcisData()
