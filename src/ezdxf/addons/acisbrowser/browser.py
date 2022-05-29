@@ -1,6 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import List, Iterator, Iterable
+from typing import List, Iterator, Iterable, Optional
 import ezdxf
 from ezdxf.addons.xqt import (
     QtWidgets,
@@ -38,15 +38,16 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
     ):
         super().__init__()
         self.filename = filename
+        self.doc: Optional[Drawing] = None
         self.acis_entities: List[AcisData] = []
-        self._entities_viewer = QtWidgets.QListWidget()
-        self._acis_content_viewer = QtWidgets.QPlainTextEdit()
-        self._acis_content_viewer.setReadOnly(True)
-        self._acis_content_viewer.setLineWrapMode(
+        self.entities_viewer = QtWidgets.QListWidget()
+        self.acis_content_viewer = QtWidgets.QPlainTextEdit()
+        self.acis_content_viewer.setReadOnly(True)
+        self.acis_content_viewer.setLineWrapMode(
             QtWidgets.QPlainTextEdit.NoWrap
         )
-        self._acis_content_viewer.setFont(make_font())
-        self._current_acis_entity = AcisData()
+        self.acis_content_viewer.setFont(make_font())
+        self.current_acis_entity = AcisData()
         self.setup_actions()
         self.setup_menu()
 
@@ -69,8 +70,8 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
 
     def build_central_widget(self):
         container = QtWidgets.QSplitter(Qt.Horizontal)
-        container.addWidget(self._entities_viewer)
-        container.addWidget(self._acis_content_viewer)
+        container.addWidget(self.entities_viewer)
+        container.addWidget(self.acis_content_viewer)
         tree_width = int(BROWSER_WIDTH * TREE_WIDTH_FACTOR)
         table_width = BROWSER_WIDTH - tree_width
         container.setSizes([tree_width, table_width])
@@ -79,8 +80,8 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         return container
 
     def connect_slots(self):
-        self._entities_viewer.clicked.connect(self.acis_entity_activated)
-        self._entities_viewer.activated.connect(self.acis_entity_activated)
+        self.entities_viewer.clicked.connect(self.acis_entity_activated)
+        self.entities_viewer.activated.connect(self.acis_entity_activated)
 
     # noinspection PyAttributeOutsideInit
     def setup_actions(self):
@@ -88,7 +89,10 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
             "&Open DXF File...", self.open_dxf, shortcut="Ctrl+O"
         )
         self._export_entity_action = self.make_action(
-            "&Export ACIS Entity...", self.export_entity, shortcut="Ctrl+E"
+            "&Export Current ACIS Entity View...", self.export_entity, shortcut="Ctrl+E"
+        )
+        self._export_raw_data_action = self.make_action(
+            "&Export Raw ACIS Data...", self.export_raw_entity, shortcut="Ctrl+W"
         )
         self._quit_action = self.make_action(
             "&Quit", self.close, shortcut="Ctrl+Q"
@@ -122,6 +126,7 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         file_menu.addAction(self._reload_action)
         file_menu.addSeparator()
         file_menu.addAction(self._export_entity_action)
+        file_menu.addAction(self._export_raw_data_action)
         file_menu.addSeparator()
         file_menu.addAction(self._quit_action)
 
@@ -147,6 +152,7 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
             )
         else:
             self.filename = path
+            self.doc = doc
             self.set_acis_entities(doc)
             self.update_title(path)
 
@@ -158,7 +164,7 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
 
     def reload_dxf(self):
         try:
-            index = self.acis_entities.index(self._current_acis_entity)
+            index = self.acis_entities.index(self.current_acis_entity)
         except IndexError:
             index = -1
         self.load_dxf(self.filename)
@@ -168,11 +174,40 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
     def export_entity(self):
         path, _ = QFileDialog.getSaveFileName(
             self,
-            caption="Export ACIS Entity",
+            caption="Export Current ACIS Entity View",
             filter="Text Files (*.txt *.TXT)",
         )
         if path:
-            write_data(self._current_acis_entity, path)
+            write_data(self.current_acis_entity, path)
+
+    def export_raw_entity(self):
+        dxf_entity = self.get_current_dxf_entity()
+        if dxf_entity is None:
+            return
+        sab = dxf_entity.has_binary_data
+        if sab:
+            filter_ = "Standard ACIS Binary Files (*.sab *.SAB)"
+        else:
+            filter_ = "Standard ACIS Text Files (*.sat *.SAT)"
+
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            caption="Export ACIS Raw Data",
+            filter=filter_,
+        )
+        if path:
+            if sab:
+                with open(path, "wb") as fp:
+                    fp.write(dxf_entity.sab)
+            else:
+                with open(path, "wt") as fp:
+                    fp.write("\n".join(dxf_entity.sat))
+
+    def get_current_dxf_entity(self) -> Optional[Body]:
+        current = self.current_acis_entity
+        if not current.handle or self.doc is None:
+            return None
+        return self.doc.entitydb.get(current.handle)  # type: ignore
 
     def update_title(self, path: str):
         self.setWindowTitle(f"{APP_NAME} - {path}")
@@ -187,16 +222,16 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
 
     def set_current_acis_entity(self, entity: AcisData):
         if entity:
-            self._current_acis_entity = entity
+            self.current_acis_entity = entity
             self.update_acis_content_viewer(entity)
 
     def update_acis_content_viewer(self, entity: AcisData):
-        viewer = self._acis_content_viewer
+        viewer = self.acis_content_viewer
         viewer.clear()
         viewer.setPlainText("\n".join(entity.lines))
 
     def update_entities_viewer(self, entities: Iterable[AcisData]):
-        viewer = self._entities_viewer
+        viewer = self.entities_viewer
         viewer.clear()
         viewer.addItems([e.name for e in entities])
 
