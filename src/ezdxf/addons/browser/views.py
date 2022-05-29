@@ -34,3 +34,10 @@ class DXFTagsTable(QTableView):
         if selection:
             first_row = selection[0].row()  # type: ignore
         return first_row
+
+    def selected_rows(self) -> typing.List[int]:
+        rows: typing.Set[int] = set()
+        selection = self.selectedIndexes()
+        for item in selection:
+            rows.add(item.row())
+        return sorted(rows)

@@ -145,13 +145,18 @@ class DXFStructureBrowser(QtWidgets.QMainWindow):
         self._copy_entity_action = self.make_action(
             "&Copy DXF Entity to Clipboard",
             self.copy_entity,
+            shortcut="Shift+Ctrl+C",
+            icon_name="icon-copy-64px.png",
+        )
+        self._copy_selected_tags_action = self.make_action(
+            "&Copy selected DXF Tags to Clipboard",
+            self.copy_selected_tags,
             shortcut="Ctrl+C",
             icon_name="icon-copy-64px.png",
         )
         self._quit_action = self.make_action(
             "&Quit", self.close, shortcut="Ctrl+Q"
         )
-        self.close()
         self._goto_handle_action = self.make_action(
             "&Go to Handle...",
             self.ask_for_handle,
@@ -280,8 +285,9 @@ class DXFStructureBrowser(QtWidgets.QMainWindow):
         file_menu.addAction(self._reload_action)
         file_menu.addAction(self._open_entity_in_text_editor_action)
         file_menu.addSeparator()
-        file_menu.addAction(self._export_entity_action)
+        file_menu.addAction(self._copy_selected_tags_action)
         file_menu.addAction(self._copy_entity_action)
+        file_menu.addAction(self._export_entity_action)
         file_menu.addSeparator()
         file_menu.addAction(self._quit_action)
 
@@ -319,7 +325,7 @@ class DXFStructureBrowser(QtWidgets.QMainWindow):
         toolbar.addAction(self._goto_handle_action)
         toolbar.addAction(self._store_bookmark)
         toolbar.addAction(self._go_to_bookmark)
-        toolbar.addAction(self._copy_entity_action)
+        toolbar.addAction(self._copy_selected_tags_action)
         self.addToolBar(toolbar)
 
     def create_find_dialog(self) -> "FindDialog":
@@ -420,6 +426,18 @@ class DXFStructureBrowser(QtWidgets.QMainWindow):
         model = self._dxf_tags_table.model()
         tags = model.compiled_tags()
         copy_dxf_to_clipboard(tags)
+
+    def copy_selected_tags(self):
+        if self._current_entity is None:
+            return
+        rows = self._dxf_tags_table.selected_rows()
+        model = self._dxf_tags_table.model()
+        tags = model.compiled_tags()
+        try:
+            export_tags = Tags(tags[row] for row in rows)
+        except IndexError:
+            return
+        copy_dxf_to_clipboard(export_tags)
 
     def view_header_section(self):
         header = self.doc.get_section("HEADER")
