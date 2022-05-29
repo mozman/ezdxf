@@ -20,7 +20,7 @@ from .data import AcisData, BinaryAcisData, TextAcisData
 APP_NAME = "ACIS Structure Browser"
 BROWSER_WIDTH = 1024
 BROWSER_HEIGHT = 768
-TREE_WIDTH_FACTOR = 0.33
+SELECTOR_WIDTH_FACTOR = 0.20
 FONT_FAMILY = "monospaced"
 
 
@@ -72,9 +72,9 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         container = QtWidgets.QSplitter(Qt.Horizontal)
         container.addWidget(self.entities_viewer)
         container.addWidget(self.acis_content_viewer)
-        tree_width = int(BROWSER_WIDTH * TREE_WIDTH_FACTOR)
-        table_width = BROWSER_WIDTH - tree_width
-        container.setSizes([tree_width, table_width])
+        selector_width = int(BROWSER_WIDTH * SELECTOR_WIDTH_FACTOR)
+        entity_view_width = BROWSER_WIDTH - selector_width
+        container.setSizes([selector_width, entity_view_width])
         container.setCollapsible(0, False)
         container.setCollapsible(1, False)
         return container
@@ -176,9 +176,13 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
             self.set_current_acis_entity(self.acis_entities[index])
 
     def export_entity(self):
+        dxf_entity = self.get_current_dxf_entity()
+        if dxf_entity is None:
+            return
         path, _ = QFileDialog.getSaveFileName(
-            self,
+            self,  # type: ignore
             caption="Export Current Entity View",
+            dir=f"{dxf_entity.dxftype()}-{dxf_entity.dxf.handle}.txt",
             filter="Text Files (*.txt *.TXT)",
         )
         if path:
@@ -188,15 +192,19 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         dxf_entity = self.get_current_dxf_entity()
         if dxf_entity is None:
             return
+        filename = f"{dxf_entity.dxftype()}-{dxf_entity.dxf.handle}"
         sab = dxf_entity.has_binary_data
         if sab:
             filter_ = "Standard ACIS Binary Files (*.sab *.SAB)"
+            filename += ".sab"
         else:
             filter_ = "Standard ACIS Text Files (*.sat *.SAT)"
+            filename += ".sat"
 
         path, _ = QFileDialog.getSaveFileName(
-            self,
+            self,  # type: ignore
             caption="Export ACIS Raw Data",
+            dir=filename,
             filter=filter_,
         )
         if path:
