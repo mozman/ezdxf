@@ -506,15 +506,15 @@ class Browse(Command):
 
 
 @register
-class AcisBrowse(Command):
-    """Launcher sub-command: acis-browse"""
+class BrowseAcisData(Command):
+    """Launcher sub-command: browse-acis"""
 
-    NAME = "acis-browse"
+    NAME = "browse-acis"
 
     @staticmethod
     def add_parser(subparsers):
         parser = subparsers.add_parser(
-            AcisBrowse.NAME, help="browse ACIS structures in DXF files"
+            BrowseAcisData.NAME, help="browse ACIS structures in DXF files"
         )
         parser.add_argument(
             "file",

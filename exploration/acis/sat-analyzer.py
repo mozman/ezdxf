@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 
 from ezdxf.acis.sat import merge_record_strings
 
-# The command "ezdxf acis-browse <dxf-file>" shows similar information.
+# The command "ezdxf browse-acis <dxf-file>" shows similar information.
 """
 ===============================================================================
 Notes:
