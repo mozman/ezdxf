@@ -40,13 +40,14 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         self.filename = filename
         self.doc: Optional[Drawing] = None
         self.acis_entities: List[AcisData] = []
-        self.entities_viewer = QtWidgets.QListWidget()
-        self.acis_content_viewer = QtWidgets.QPlainTextEdit()
+        self.entities_viewer = QtWidgets.QListWidget(self)
+        self.acis_content_viewer = QtWidgets.QPlainTextEdit(self)
         self.acis_content_viewer.setReadOnly(True)
         self.acis_content_viewer.setLineWrapMode(
             QtWidgets.QPlainTextEdit.NoWrap
         )
         self.acis_content_viewer.setFont(make_font())
+        self.statusbar = QtWidgets.QStatusBar(self)
         self.current_acis_entity = AcisData()
         self.setup_actions()
         self.setup_menu()
@@ -56,6 +57,7 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         else:
             self.setWindowTitle(APP_NAME)
 
+        self.setStatusBar(self.statusbar)
         self.setCentralWidget(self.build_central_widget())
         self.resize(BROWSER_WIDTH, BROWSER_HEIGHT)
         self.connect_slots()
@@ -63,10 +65,14 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
             try:
                 int(handle, 16)
             except ValueError:
-                print(f"Given handle is not a hex value: {handle}")
+                msg = f"Given handle is not a hex value: {handle}"
+                self.statusbar.showMessage(msg)
+                print(msg)
             else:
                 if not self.goto_handle(handle):
-                    print(f"Handle {handle} not found.")
+                    msg = f"Handle {handle} not found."
+                    self.statusbar.showMessage(msg)
+                    print(msg)
 
     def build_central_widget(self):
         container = QtWidgets.QSplitter(Qt.Horizontal)
@@ -159,6 +165,12 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
             self.doc = doc
             self.set_acis_entities(doc)
             self.update_title(path)
+            self.statusbar.showMessage(self.make_status_message())
+
+    def make_status_message(self) -> str:
+        dxfversion = self.doc.dxfversion
+        acis_type = "SAB" if dxfversion >= "AC1027" else "SAT"
+        return f"Loaded DXF file has version {self.doc.acad_release}/{dxfversion} and contains {acis_type} data"
 
     def set_acis_entities(self, doc: Drawing):
         self.acis_entities = list(get_acis_entities(doc))
