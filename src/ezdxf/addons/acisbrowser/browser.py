@@ -136,7 +136,7 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
 
     def load_dxf(self, path: str):
         try:
-            doc = load_doc(path)
+            doc = ezdxf.readfile(path)
         except IOError as e:
             QMessageBox.critical(self, "Loading Error", str(e))
         except DXFStructureError as e:
@@ -154,7 +154,7 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         self.acis_entities = list(get_acis_entities(doc))
         if self.acis_entities:
             self.set_current_acis_entity(self.acis_entities[0])
-            self.update_acis_tree_viewer(self.acis_entities)
+            self.update_entities_viewer(self.acis_entities)
 
     def reload_dxf(self):
         try:
@@ -185,20 +185,17 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         except IndexError:
             self.set_current_acis_entity(self.acis_entities[0])
 
-    def get_current_acis_entity(self) -> AcisData:
-        return self._current_acis_entity
-
     def set_current_acis_entity(self, entity: AcisData):
         if entity:
             self._current_acis_entity = entity
-            self.update_acis_entity_viewer(entity)
+            self.update_acis_content_viewer(entity)
 
-    def update_acis_entity_viewer(self, entity: AcisData):
+    def update_acis_content_viewer(self, entity: AcisData):
         viewer = self._acis_content_viewer
         viewer.clear()
         viewer.setPlainText("\n".join(entity.lines))
 
-    def update_acis_tree_viewer(self, entities: Iterable[AcisData]):
+    def update_entities_viewer(self, entities: Iterable[AcisData]):
         viewer = self._entities_viewer
         viewer.clear()
         viewer.addItems([e.name for e in entities])
@@ -209,13 +206,6 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
                 self.set_current_acis_entity(entity)
                 return True
         return False
-
-    def show_error_handle_not_found(self, handle: str):
-        QMessageBox.critical(self, "Error", f"Handle {handle} not found!")
-
-
-def load_doc(filename: str) -> Drawing:
-    return ezdxf.readfile(filename)
 
 
 def get_acis_entities(doc: Drawing) -> Iterator[AcisData]:
