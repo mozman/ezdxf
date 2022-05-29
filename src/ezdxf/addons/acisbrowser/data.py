@@ -2,6 +2,7 @@
 #  License: MIT License
 from typing import List, Iterator
 
+from ezdxf.acis.sat import parse_sat, SatEntity
 from ezdxf.acis.sab import parse_sab, SabEntity
 
 
@@ -21,13 +22,29 @@ class BinaryAcisData(AcisData):
 class TextAcisData(AcisData):
     def __init__(self, data: List[str], name: str, handle: str):
         super().__init__(name, handle)
-        self.lines = list(data)
+        self.lines = list(make_sat_records(data))
+
+
+def ptr_str(e):
+    return "~" if e.is_null_ptr else str(e)
+
+
+def make_sat_records(data: List[str]) -> Iterator[str]:
+    builder = parse_sat(data)
+    yield from builder.header.dumps()
+    builder.reset_ids()
+    for entity in builder.entities:
+        content = [str(entity)]
+        content.append(ptr_str(entity.attributes))
+        for field in entity.data:
+            if isinstance(field, SatEntity):
+                content.append(ptr_str(field))
+            else:
+                content.append(field)
+        yield " ".join(content)
 
 
 def make_sab_records(data: bytes) -> Iterator[str]:
-    def ptr_str(e):
-        return "~" if e.is_null_ptr else str(e)
-
     builder = parse_sab(data)
     yield from builder.header.dumps()
     builder.reset_ids()
