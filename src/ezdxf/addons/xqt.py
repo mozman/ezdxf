@@ -20,6 +20,8 @@ if TRY_PYSIDE6:
             QTreeView,
             QListView,
             QListWidget,
+            QTextEdit,
+            QPlainTextEdit,
         )
         from PySide6.QtCore import (
             QAbstractTableModel,
@@ -39,6 +41,7 @@ if TRY_PYSIDE6:
             QPainterPath,
             QStandardItem,
             QStandardItemModel,
+            QFont,
         )
 
         PYSIDE6 = True
@@ -61,6 +64,8 @@ if TRY_PYQT5 and not PYSIDE6:
             QTreeView,
             QListView,
             QListWidget,
+            QTextEdit,
+            QPlainTextEdit,
         )
         from PyQt5.QtCore import (
             QAbstractTableModel,
@@ -77,6 +82,7 @@ if TRY_PYQT5 and not PYSIDE6:
             QPainterPath,
             QStandardItem,
             QStandardItemModel,
+            QFont,
         )
 
         PYQT5 = True

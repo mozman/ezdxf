@@ -7,9 +7,11 @@ from ezdxf.addons.xqt import (
     QAction,
     QMessageBox,
     QFileDialog,
-    QInputDialog,
     Qt,
     QModelIndex,
+    QListWidget,
+    QPlainTextEdit,
+    QFont,
 )
 
 import ezdxf
@@ -18,7 +20,7 @@ from ezdxf.entities import Body
 
 from ezdxf.lldxf.const import DXFStructureError
 from .data import AcisData, BinaryAcisData, TextAcisData
-from .views import AcisTree, AcisRawView
+
 
 __all__ = ["AcisStructureBrowser"]
 
@@ -28,6 +30,13 @@ APP_NAME = "ACIS Structure Browser"
 BROWSER_WIDTH = 1024
 BROWSER_HEIGHT = 768
 TREE_WIDTH_FACTOR = 0.33
+FONT_FAMILY = "monospaced"
+
+
+def make_font():
+    font = QFont(FONT_FAMILY)
+    font.setStyleHint(QFont.Monospace)
+    return font
 
 
 class AcisStructureBrowser(QtWidgets.QMainWindow):
@@ -39,8 +48,10 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         super().__init__()
         self.filename = filename
         self.acis_entities: List[AcisData] = []
-        self._acis_tree = AcisTree()
-        self._raw_acis_viewer = AcisRawView()
+        self._entities_viewer = QListWidget()
+        self._acis_content_viewer = QPlainTextEdit()
+        self._acis_content_viewer.setReadOnly(True)
+        self._acis_content_viewer.setFont(make_font())
         self._current_acis_entity = AcisData()
         self.setup_actions()
         self.setup_menu()
@@ -64,8 +75,8 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
 
     def build_central_widget(self):
         container = QtWidgets.QSplitter(Qt.Horizontal)
-        container.addWidget(self._acis_tree)
-        container.addWidget(self._raw_acis_viewer)
+        container.addWidget(self._entities_viewer)
+        container.addWidget(self._acis_content_viewer)
         tree_width = int(BROWSER_WIDTH * TREE_WIDTH_FACTOR)
         table_width = BROWSER_WIDTH - tree_width
         container.setSizes([tree_width, table_width])
@@ -74,31 +85,19 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         return container
 
     def connect_slots(self):
-        self._acis_tree.activated.connect(self.acis_entity_activated)
+        self._entities_viewer.clicked.connect(self.acis_entity_activated)
+        self._entities_viewer.activated.connect(self.acis_entity_activated)
 
     # noinspection PyAttributeOutsideInit
     def setup_actions(self):
-
         self._open_action = self.make_action(
             "&Open DXF File...", self.open_dxf, shortcut="Ctrl+O"
         )
         self._export_entity_action = self.make_action(
             "&Export ACIS Entity...", self.export_entity, shortcut="Ctrl+E"
         )
-        self._copy_entity_action = self.make_action(
-            "&Copy ACIS Entity to Clipboard",
-            self.copy_entity,
-            shortcut="Ctrl+C",
-        )
         self._quit_action = self.make_action(
             "&Quit", self.close, shortcut="Ctrl+Q"
-        )
-        self.close()
-        self._goto_handle_action = self.make_action(
-            "&Go to Handle...",
-            self.ask_for_handle,
-            shortcut="Ctrl+G",
-            tip="Go to Entity Handle",
         )
         self._reload_action = self.make_action(
             "Reload DXF File",
@@ -129,7 +128,6 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         file_menu.addAction(self._reload_action)
         file_menu.addSeparator()
         file_menu.addAction(self._export_entity_action)
-        file_menu.addAction(self._copy_entity_action)
         file_menu.addSeparator()
         file_menu.addAction(self._quit_action)
 
@@ -182,12 +180,6 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         if path:
             write_data(self._current_acis_entity, path)
 
-    def copy_entity(self):
-        clipboard = QtWidgets.QApplication.clipboard()
-        clipboard.setText(
-            "\n".join(self._current_acis_entity.lines), mode=clipboard.Clipboard
-        )
-
     def update_title(self, path: str):
         self.setWindowTitle(f"{APP_NAME} - {path}")
 
@@ -208,24 +200,14 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
             self.update_acis_entity_viewer(entity)
 
     def update_acis_entity_viewer(self, entity: AcisData):
-        viewer = self._raw_acis_viewer
+        viewer = self._acis_content_viewer
         viewer.clear()
-        viewer.addItems(entity.lines)
+        viewer.setPlainText("\n".join(entity.lines))
 
     def update_acis_tree_viewer(self, entities: Iterable[AcisData]):
-        viewer = self._acis_tree
+        viewer = self._entities_viewer
         viewer.clear()
         viewer.addItems([e.name for e in entities])
-
-    def ask_for_handle(self):
-        handle, ok = QInputDialog.getText(
-            self,
-            "Go to",
-            "Go to entity handle:",
-        )
-        if ok:
-            if not self.goto_handle(handle):
-                self.show_error_handle_not_found(handle)
 
     def goto_handle(self, handle: str) -> bool:
         for entity in self.acis_entities:
