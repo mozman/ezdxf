@@ -184,7 +184,7 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
 
     def set_acis_entities(self, entities: List[AcisData]):
         self.acis_entities = entities
-        self.update_entities_viewer(entities)
+        self.update_entity_selector(entities)
         self.set_current_acis_entity(entities[0])
 
     def reload_dxf(self):
@@ -263,7 +263,7 @@ class AcisStructureBrowser(QtWidgets.QMainWindow):
         viewer.clear()
         viewer.setPlainText("\n".join(entity.lines))
 
-    def update_entities_viewer(self, entities: Iterable[AcisData]):
+    def update_entity_selector(self, entities: Iterable[AcisData]):
         viewer = self.entity_selector
         viewer.clear()
         viewer.addItems([e.name for e in entities])
@@ -280,7 +280,7 @@ def get_acis_entities(doc: Drawing) -> Iterator[AcisData]:
     for e in doc.entitydb.values():
         if isinstance(e, Body):
             handle = e.dxf.handle
-            name = str(e)
+            name = f"<{handle}> {e.dxftype()}"
             if e.has_binary_data:
                 yield BinaryAcisData(e.sab, name, handle)
             else:
