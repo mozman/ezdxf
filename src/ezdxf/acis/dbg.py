@@ -1,8 +1,9 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from typing import Iterator, Set, Callable, Dict, Any, List
-from .entities import AcisEntity, NONE_REF, Face, Coedge, Loop
+from .entities import AcisEntity, NONE_REF, Face, Coedge, Loop, Vertex, StraightCurve
 from . import sab
+
 
 class AcisDebugger:
     def __init__(self, root: AcisEntity = NONE_REF, start_id: int = 1):
@@ -111,6 +112,15 @@ class AcisDebugger:
             if coedge is first:
                 break
 
+    def vertex_to_edge_relation(self) -> Iterator[str]:
+        for vertex in (
+            e for e in self.entities.values() if isinstance(e, Vertex)
+        ):
+            edge = vertex.edge
+            sv = edge.start_vertex
+            ev = edge.end_vertex
+            yield f"{vertex}: parent edge is {edge.id}; {sv.id} => {ev.id}; {edge.curve}"
+
 
 def dump_sab_as_text(data: bytes) -> Iterator[str]:
     def entity_data(e):
@@ -129,5 +139,3 @@ def dump_sab_as_text(data: bytes) -> Iterator[str]:
             index += 1
     except sab.ParsingError as e:
         yield str(e)
-
-

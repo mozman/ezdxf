@@ -35,5 +35,7 @@ for e in msp.query("3DSOLID"):
                     print(face)
                     print(dbg.loop_vertices(face.loop, 2))
                 print()
+            print("\n".join(dbg.vertex_to_edge_relation()))
+            print()
 
 doc_out.saveas("meshes.dxf")
