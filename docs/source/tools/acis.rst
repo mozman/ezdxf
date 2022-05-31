@@ -420,19 +420,74 @@ Loop
 
 .. class:: Loop(AcisEntity)
 
+    A loop represents connected coedges which are building the boundaries of
+    a :class:`Face`, there can be multiple loops for a single face e.g. faces
+    can contain holes.
+    The :attr:`coedge` attribute references the first :class:`Coedge` of the
+    loop, the additional coedges are linked to this first :class:`Coedge`.
+    In closed loops the coedges are organized as a circular list, in open loops
+    the last coedge references the :attr:`NONE_REF` entity as :attr:`next_coedge`
+    and the first coedge references the :attr:`NONE_REF` as :attr:`prev_coedge`.
+
+    .. attribute:: next_loop
+
+        Reference to the next :class:`Loop` entity, the last loop references
+        :attr:`NONE_REF`.
+
+    .. attribute:: coedge
+
+        Reference to the first :class:`Coedge` entity.
+
+    .. attribute:: face
+
+        Reference to the parent :class:`Face` entity.
+
+    .. automethod:: coedges
+
+    .. automethod:: set_coedges
+
 Coedge
 ------
 
 .. class:: Coedge(AcisEntity)
 
     The coedges are a double linked list where :attr:`next_coedge` points to the
-    next coedge and :attr:`prev_codege` to the previous coedge.
-    The :attr:`partner` field points to the partner coedge of the adjacent face.
+    next :class:`Coedge` and :attr:`prev_coedge` to the previous :class:`Coedge`.
 
-    In a closed surface each edge is part of two adjacent faces with opposite
-    orientations. The :attr:`edge` attribute references the geometric :class:`Edge`
-    of the face and the :attr:`loop` attribute references to the parent :class:`Loop`
-    entity.
+    The :attr:`partner_coedge` attribute references the first partner
+    :class:`Coedge` of an adjacent :class:`Face`, the partner edges are
+    organized as a circular list. In a manifold closed surface each
+    :class:`Face` is connected to one partner face by an :class:`Coedge`.
+    In a non-manifold surface a face can have more than one partner face.
+
+
+    .. attribute:: next_coedge
+
+        References the next :class:`Coedge`, reference the :attr:`NONE_REF` if
+        it is the last coedge in an open :class:`Loop`.
+
+    .. attribute:: prev_coedge
+
+        References the previous :class:`Coedge`, reference the :attr:`NONE_REF`
+        if it is the first coedge in an open :class:`Loop`.
+
+    .. attribute:: partner_coedge
+
+        References the partner :class:`Coedge` of an adjacent :class:`Face`
+        entity. The partner coedges are organized in a circular list.
+
+
+    .. attribute:: edge
+
+        References the :class:`Edge` entity.
+
+    .. attribute:: loop
+
+        References the parent :class:`Loop` entity.
+
+    .. attribute:: pcurve
+
+        References the :class:`PCurve` entity.
 
 Edge
 ----
@@ -469,6 +524,13 @@ StraightCurve
 
 .. class:: StraightCurve(AcisEntity)
 
+PCurve
+------
+
+.. class:: PCurve(AcisEntity)
+
+    Not implemented.
+
 Point
 -----
 
@@ -480,7 +542,6 @@ Point
     .. attribute:: location
 
         Cartesian coordinates of type :class:`~ezdxf.math.Vec3`.
-
 
 
 .. _sat.pdf: https://duckduckgo.com/?q=acis%2Bsat.pdf

@@ -522,6 +522,7 @@ class Loop(SupportsPattern):
         exporter.write_ptr(self.face)
 
     def set_coedges(self, coedges: List[Coedge], close=True) -> None:
+        """Set all coedges of a loop at once."""
         assert len(coedges) > 0
         self.coedge = coedges[0]
         next_coedges = coedges[1:]
@@ -539,6 +540,7 @@ class Loop(SupportsPattern):
             coedge.next_coedge = next
 
     def coedges(self) -> List[Coedge]:
+        """Returns all linked :class:`Coedge` entities as a list."""
         coedges = []
 
         current_coedge = self.coedge
