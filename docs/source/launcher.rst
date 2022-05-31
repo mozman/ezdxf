@@ -321,8 +321,10 @@ Menus and Shortcuts
       editor at the current location
     - **Export DXF Entity...** *Ctrl+E*, export the current DXF entity shown in the
       list view as text file
-    - **Copy DXF Entity to Clipboard** *Ctrl+C*, copy the current DXF entity shown
-      in the list view into the clipboard
+    - **Copy selected DXF Tags to Clipboard** *Ctrl+C*, copy the current
+      selected DXF tags into the clipboard
+    - **Copy DXF Entity to Clipboard** *Ctrl+Shift+C*, copy all DXF tags of the
+      current DXF entity shown in the list view into the clipboard
     - **Quit** *Ctrl+Q*
 
 - Navigate Menu
