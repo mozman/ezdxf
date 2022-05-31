@@ -176,8 +176,38 @@ old DXF R2000 format (tested with Autodesk TrueView, BricsCAD and Nemetschek
 Allplan).
 
 The first goal is to document the entities which are required to represent
-a geometry as polygonal faces (polygon face mesh), which can be converted into
+a geometry as flat polygonal faces (polyhedron), which can be converted into
 a :class:`~ezdxf.render.MeshBuilder` object.
+
+Topology Entities:
+
+    - :class:`Body`
+    - :class:`Lump`
+    - :class:`Shell`
+    - :class:`Face`
+    - :class:`Loop`
+    - :class:`Coedge`
+    - :class:`Edge`
+    - :class:`Vertex`
+
+Geometry Entities:
+
+    - :class:`Transform`
+    - :class:`Surface`
+    - :class:`Plane`
+    - :class:`Curve`
+    - :class:`StraightCurve`
+    - :class:`Point`
+
+.. attribute:: NONE_REF
+
+    Special sentinel entity which supports the :attr:`type` attribute and the
+    :attr:`is_none` property. Represents all unset entities.
+    Use this idiom on any entity type to check if an entity is unset::
+
+        if entity.is_none:
+            ...
+
 
 AcisEntity
 ----------
@@ -188,18 +218,32 @@ AcisEntity
 
     .. attribute:: type
 
+        Name of the type as str.
+
     .. attribute:: id
+
+        Unique id as int or -1 if not set.
 
     .. attribute:: attributes
 
+        Reference to the first :class:`Attribute` entity (not supported).
+
+    .. attribute:: is_none
+
+        ``True`` for unset entities represented by the :attr:`NONE_REF`
+        instance.
 
 Transform
 ---------
 
-
 .. class:: Transform(AcisEntity)
 
-    Represents an affine transformation operation.
+    Represents an affine transformation operation which transform the
+    :class:`body` to the final location, size and rotation.
+
+    .. attribute:: matrix
+
+        Transformation matrix of type :class:`ezdxf.math.Matrix44`.
 
 Body
 ----
@@ -208,6 +252,33 @@ Body
 
     Represents a solid geometry, which can consist of multiple :class:`Lump`
     entities.
+
+    .. attribute:: pattern
+
+        Reference to the :class:`Pattern` entity.
+
+    .. attribute:: lump
+
+        Reference to the first :class:`Lump` entity
+
+    .. attribute:: wire
+
+        Reference to the first :class:`Wire` entity
+
+    .. attribute:: transform
+
+        Reference to the :class:`Transform` entity (optional)
+
+    .. automethod:: lumps
+
+    .. automethod:: append_lump
+
+Pattern
+-------
+
+.. class:: Pattern(AcisEntity)
+
+    Not implemented.
 
 Lump
 ----
@@ -221,36 +292,128 @@ Lump
     as next lump. The :attr:`body` attribute references to the parent :class:`Body`
     entity.
 
+    .. attribute:: next_lump
+
+        Reference to the next :class:`Lump` entity, the last lump references
+        :attr:`NONE_REF`.
+
+    .. attribute:: shell
+
+        Reference to the :class:`Shell` entity.
+
+    .. attribute:: body
+
+        Reference to the parent :class:`Body` entity.
+
+    .. automethod:: shells
+
+    .. automethod:: append_shell
+
 Wire
 ----
 
 .. class:: Wire(AcisEntity)
+
+    Not implemented.
 
 Shell
 -----
 
 .. class:: Shell(AcisEntity)
 
+    A shell defines the boundary of a solid object or a void (subtraction object).
+    A shell references a list of :class:`Face` and :class:`Wire` entities.
+    All linked :class:`Shell` entities are disconnected.
+
+    .. attribute:: next_shell
+
+        Reference to the next :class:`Shell` entity, the last shell references
+        :attr:`NONE_REF`.
+
+    .. attribute:: subshell
+
+        Reference to the first :class:`Subshell` entity.
+
+    .. attribute:: face
+
+        Reference to the first :class:`Face` entity.
+
+    .. attribute:: wire
+
+        Reference to the first :class:`Wire` entity.
+
+    .. attribute:: lump
+
+        Reference to the parent :class:`Lump` entity.
+
+    .. automethod:: faces
+
+    .. automethod:: append_face
+
 Subshell
 --------
 
 .. class:: Subshell(AcisEntity)
 
+    Not implemented.
 
 Face
 ----
 
 .. class:: Face(AcisEntity)
 
-Surface
---------
+    A face is the building block for :class:`Shell` entities.
+    The boundary of a face is represented by one or more :class:`Loop` entities.
 
-.. class:: Surface(AcisEntity)
+    .. attribute:: next_face
 
-Plane
------
+        Reference to the next :class:`Face` entity, the last face references
+        :attr:`NONE_REF`.
 
-.. class:: Plane(Surface)
+    .. attribute:: loop
+
+        Reference to the first :class:`Loop` entity.
+
+    .. attribute:: shell
+
+        Reference to the parent :class:`Shell` entity.
+
+    .. attribute:: subshell
+
+        Reference to the parent :class:`Subshell` entity.
+
+    .. attribute:: surface
+
+        Reference to the parametric :class:`Surface` geometry.
+
+    .. attribute:: sense
+
+        Boolean value of direction of the face normal with respect to the
+        :class:`Surface` entity:
+
+            - ``True``: "reversed" direction of the face normal
+            - ``False``: "forward" for same direction of the face normal
+
+    .. attribute:: double_sided
+
+        Boolean value which indicates the sides of the face:
+
+            - ``True``: the face is part of a hollow object and has two sides.
+            - ``False``: the face is part of a solid object and has only one
+              side which points away from the "material".
+
+    .. attribute:: containment
+
+        Unknown meaning.
+
+        If :attr:`double_sided` is ``True``:
+
+            - ``True`` is "in"
+            - ``False`` is "out"
+
+    .. automethod:: loops
+
+    .. automethod:: append_loop
 
 Loop
 -----
@@ -286,17 +449,37 @@ Vertex
     entity. Multiple :class:`Vertex` entities can reference the same :class:`Point`
     entity.
 
+Surface
+--------
+
+.. class:: Surface(AcisEntity)
+
+Plane
+-----
+
+.. class:: Plane(Surface)
+
+Curve
+-----
+
+.. class:: Curve(AcisEntity)
+
+StraightCurve
+-------------
+
+.. class:: StraightCurve(AcisEntity)
+
 Point
 -----
 
 .. class:: Point(AcisEntity)
 
-    Represents a point in space where :attr:`location` attribute represents
+    Represents a point in space where the :attr:`location` attribute represents
     the cartesian coordinates.
 
     .. attribute:: location
 
-        Cartesian coordinates as :class:`~ezdxf.math.Vec3` instance
+        Cartesian coordinates of type :class:`~ezdxf.math.Vec3`.
 
 
 

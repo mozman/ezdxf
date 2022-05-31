@@ -261,6 +261,7 @@ class Body(SupportsPattern):
         exporter.write_ptr(self.transform)
 
     def append_lump(self, lump: Lump) -> None:
+        """Append a :class:`Lump` entity as last lump."""
         lump.body = self
         if self.lump.is_none:
             self.lump = lump
@@ -271,6 +272,7 @@ class Body(SupportsPattern):
             current_lump.next_lump = lump
 
     def lumps(self) -> List[Lump]:
+        """Returns all linked :class:`Lump` entities as a list."""
         lumps = []
         current_lump = self.lump
         while not current_lump.is_none:
@@ -311,6 +313,7 @@ class Lump(SupportsPattern):
         exporter.write_ptr(self.body)
 
     def append_shell(self, shell: Shell) -> None:
+        """Append a :class:`Shell` entity as last shell."""
         shell.lump = self
         if self.shell.is_none:
             self.shell = shell
@@ -321,6 +324,7 @@ class Lump(SupportsPattern):
             current_shell.next_shell = shell
 
     def shells(self) -> List[Shell]:
+        """Returns all linked :class:`Shell` entities as a list."""
         shells = []
         current_shell = self.shell
         while not current_shell.is_none:
@@ -357,6 +361,7 @@ class Shell(SupportsPattern):
         exporter.write_ptr(self.lump)
 
     def append_face(self, face: Face) -> None:
+        """Append a :class:`Face` entity as last face."""
         face.shell = self
         if self.face.is_none:
             self.face = face
@@ -367,6 +372,7 @@ class Shell(SupportsPattern):
             current_face.next_face = face
 
     def faces(self) -> List[Face]:
+        """Returns all linked :class:`Face` entities as a list."""
         faces = []
         current_face = self.face
         while not current_face.is_none:
@@ -422,6 +428,7 @@ class Face(SupportsPattern):
             exporter.write_bool(self.containment, "in", "out")
 
     def append_loop(self, loop: Loop) -> None:
+        """Append a :class:`Loop` entity as last loop."""
         loop.face = self
         if self.loop.is_none:
             self.loop = loop
@@ -432,6 +439,7 @@ class Face(SupportsPattern):
             current_loop.next_loop = loop
 
     def loops(self) -> List[Loop]:
+        """Returns all linked :class:`Loop` entities as a list."""
         loops = []
         current_loop = self.loop
         while not current_loop.is_none:
