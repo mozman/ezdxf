@@ -351,6 +351,9 @@ Face
 
     A face is the building block for :class:`Shell` entities.
     The boundary of a face is represented by one or more :class:`Loop` entities.
+    The spatial geometry of the face is defined by the :attr:`surface` object,
+    which is a bounded or unbounded parametric 3d surface (plane, ellipsoid,
+    spline-surface, ...).
 
     .. attribute:: next_face
 
@@ -533,29 +536,116 @@ Vertex
 
 .. class:: Vertex(AcisEntity)
 
-    Represents a vertex of an :class:`Edge` entity and references a :class:`Point`
-    entity. Multiple :class:`Vertex` entities can reference the same :class:`Point`
-    entity.
+    Represents a vertex of an :class:`Edge` entity and references a
+    :class:`Point` entity.
+
+    .. attribute:: point
+
+        The spatial location in object-space as :class:`Point` entity.
+
+    .. attribute:: edge
+
+        Parent :class:`Edge` of this vertex. The vertex can be referenced by
+        multiple edges, anyone of them can be the parent of the vertex.
 
 Surface
 --------
 
 .. class:: Surface(AcisEntity)
 
+    Abstract base class for all parametric surfaces.
+
+    The parameterization of any :class:`Surface` maps a 2D rectangle
+    (u, v parameters) into the spatial object-space (x, y, z).
+
+    .. attribute:: u_bounds
+
+        Tuple of (start bound, end bound) parameters as two floats which define
+        the bounds of the parametric surface in the u-direction, one or both
+        values can be :attr:`math.inf` which indicates an unbounded state of
+        the surface in that direction.
+
+    .. attribute:: v_bounds
+
+        Tuple of (start bound, end bound) parameters as two floats which define
+        the bounds of the parametric surface in the v-direction, one or both
+        values can be :attr:`math.inf` which indicates an unbounded state of
+        the surface in that direction.
+
+    .. automethod:: evaluate
+
 Plane
 -----
 
 .. class:: Plane(Surface)
+
+    Defines a flat plan as parametric surface.
+
+    .. attribute:: origin
+
+        Location vector of the origin of the flat plane as
+        :class:`~ezdxf.math.Vec3`.
+
+    .. attribute:: normal
+
+        Normal vector of the plane as :class:`~ezdxf.math.Vec3`.
+        Has to be an unit-vector!
+
+    .. attribute:: u_dir
+
+        Direction vector of the plane in u-direction as :class:`~ezdxf.math.Vec3`.
+        Has to be an unit-vector!
+
+    .. attribute:: v_dir
+
+        Direction vector of the plane in v-direction as :class:`~ezdxf.math.Vec3`.
+        Has to be an unit-vector!
+
+    .. attribute:: reverse_v
+
+       Boolean value which indicates the orientation of the coordinate system:
+
+            - ``True``: left-handed system, the v-direction is reversed and the
+              normal vector is :attr:`v_dir` cross :attr:`u_dir`.
+            - ``False``: right-handed system and the normal vector is
+              :attr:`u_dir` cross :attr:`v_dir`.
 
 Curve
 -----
 
 .. class:: Curve(AcisEntity)
 
+    Abstract base class for all parametric curves.
+
+    The parameterization of any :class:`Curve` maps a 1D line (the parameter)
+    into the spatial object-space (x, y, z).
+
+    .. attribute:: bounds
+
+        Tuple of (start bound, end bound) parameters as two floats which define
+        the bounds of the parametric curve, one or both values can be
+        :attr:`math.inf` which indicates an unbounded state of the curve in that
+        direction.
+
+    .. automethod:: evaluate
+
+
 StraightCurve
 -------------
 
-.. class:: StraightCurve(AcisEntity)
+.. class:: StraightCurve(Curve)
+
+    Defines a straight line as parametric curve.
+
+    .. attribute:: origin
+
+        Location vector of the origin of the straight line as
+        :class:`~ezdxf.math.Vec3`.
+
+    .. attribute:: direction
+
+        Direction vector the straight line as :class:`~ezdxf.math.Vec3`.
+        Has to be an unit-vector!
 
 PCurve
 ------
@@ -569,12 +659,11 @@ Point
 
 .. class:: Point(AcisEntity)
 
-    Represents a point in space where the :attr:`location` attribute represents
-    the cartesian coordinates.
+    Represents a point in the 3D object-space.
 
     .. attribute:: location
 
-        Cartesian coordinates of type :class:`~ezdxf.math.Vec3`.
+        Cartesian coordinates as :class:`~ezdxf.math.Vec3`.
 
 
 .. _sat.pdf: https://duckduckgo.com/?q=acis%2Bsat.pdf

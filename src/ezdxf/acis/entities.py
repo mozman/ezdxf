@@ -466,6 +466,10 @@ class Surface(SupportsPattern):
 
     @abc.abstractmethod
     def evaluate(self, u: float, v: float) -> Vec3:
+        """Returns the spatial location at the parametric surface for the given
+        parameters `u` and `v`.
+
+        """
         pass
 
 
@@ -676,7 +680,7 @@ class PCurve(SupportsPattern):  # not implemented
 class Vertex(SupportsPattern):
     type: str = "vertex"
     edge: Edge = NONE_REF
-    ref_count: int = 0  # only in SAB files, reference counter?
+    ref_count: int = 0  # only in SAB files
     point: Point = NONE_REF
 
     def restore_common(
@@ -708,6 +712,10 @@ class Curve(SupportsPattern):
 
     @abc.abstractmethod
     def evaluate(self, param: float) -> Vec3:
+        """Returns the spatial location at the parametric curve for the given
+        parameter.
+
+        """
         pass
 
 
