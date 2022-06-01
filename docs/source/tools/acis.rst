@@ -19,7 +19,7 @@ It is NOT a goal to load and edit arbitrary existing :term:`ACIS` structures.
     Don't even try it!
 
 These tools cannot replace the official :term:`ACIS` SDK due to the complexity of
-the data structures and the absence of an :term:`ACIS` kernel. Without access to
+the data structures and the absence of an :term:`ACIS` kernel.  Without access to
 the full documentation it is very cumbersome to reverse-engineer entities and
 their properties, therefore the analysis of the :term:`ACIS` data structures is
 limited to the use as embedded data in DXF and DWG files.
@@ -27,22 +27,9 @@ limited to the use as embedded data in DXF and DWG files.
 The `ezdxf` library does not provide an :term:`ACIS` kernel and there are no
 plans for implementing one because this is far beyond my capabilities, but it
 is possible to extract geometries made up only by flat polygonal faces (polyhedron)
-and maybe in the future it is also possible to create ACIS bodies from such
-polyhedrons.
-
-Implementation status for exporting polyhedrons as ACIS data and loading
-the DXF file by Autodesk products or BricsCAD:
-
-=========== === =========== ==========
-DXF Version FMT Autodesk    BricsCAD
-=========== === =========== ==========
-R2000       SAT **Yes**     **Yes**
-R2004       SAT **Yes**     **Yes**
-R2007       SAT **Yes**     **Yes**
-R2010       SAT **Yes**     **Yes**
-R2013       SAT **Yes**     **Yes**
-R2018       SAT **Yes**     **Yes**
-=========== === =========== ==========
+from ACIS data.  Exporting polyhedrons as ACIS data and loading this DXF file by
+Autodesk products or BricsCAD works for :term:`SAT` data for DXF R2000-R2010 and
+for :term:`SAB` data for DXF R2013-R2018.
 
 .. module:: ezdxf.acis.api
 
@@ -494,6 +481,52 @@ Edge
 
 .. class:: Edge(AcisEntity)
 
+    The :class:`Edge` entity represents the physical edge of an object. Its
+    geometry is defined by the the bounded portion of a parametric space curve.
+    This bounds are stored as object-space :class:`Vertex` entities.
+
+    .. attribute:: start_vertex
+
+        The start :class:`Vertex` of the space-curve in object coordinates, if
+        :attr:`NONE_REF` the curve is unbounded in this direction.
+
+    .. attribute:: start_param
+
+        The parametric starting bound for the parametric curve. Evaluating the
+        :attr:`curve` for this parameter should return the coordinates of the
+        :attr:`start_vertex`.
+
+
+    .. attribute:: end_vertex
+
+        The end :class:`Vertex` of the space-curve in object coordinates, if
+        :attr:`NONE_REF` the curve is unbounded in this direction.
+
+    .. attribute:: end_param
+
+        The parametric end bound for the parametric curve.
+
+    .. attribute:: coedge
+
+        Parent :class:`Coedge` of this edge.
+
+    .. attribute:: curve
+
+        The parametric space-curve which defines this edge. The curve can be the
+        :attr:`NULL_REF` while both :class:`Vertex` entities are the same vertex.
+        In this case the :class:`Edge` represents an single point like the
+        apex of a cone.
+
+    .. attribute:: sense
+
+        Boolean value which indicates the direction of the edge:
+
+            - ``True``: the edge has the "reversed" direction as the underlying curve
+            - ``False``: the edge has the same direction as the underlying curve ("forward")
+
+    .. attribute:: convexity
+
+        Unknown meaning, always the string "unknown".
 
 Vertex
 ------
