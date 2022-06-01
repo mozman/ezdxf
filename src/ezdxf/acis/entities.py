@@ -464,13 +464,18 @@ class Surface(SupportsPattern):
         exporter.write_interval(self.v_bounds[0])
         exporter.write_interval(self.v_bounds[1])
 
+    @abc.abstractmethod
+    def evaluate(self, u: float, v: float) -> Vec3:
+        pass
+
 
 @register
 class Plane(Surface):
     type: str = "plane-surface"
     origin = Vec3(0, 0, 0)
-    normal = Vec3(1, 0, 0)  # pointing outside
+    normal = Vec3(0, 0, 1)  # pointing outside
     u_dir = Vec3(1, 0, 0)  # unit vector!
+    v_dir = Vec3(0, 1, 0)  # unit vector!
     # reverse_v:
     # True: "reverse_v" - the normal vector does not follow the right-hand rule
     # False: "forward_v" - the normal vector follows right-hand rule
@@ -484,6 +489,7 @@ class Plane(Surface):
         self.normal = Vec3(loader.read_vec3())
         self.u_dir = Vec3(loader.read_vec3())
         self.reverse_v = loader.read_bool("reverse_v", "forward_v")
+        self.update_v_dir()
 
     def write_common(self, exporter: DataExporter) -> None:
         super().write_common(exporter)
@@ -491,13 +497,16 @@ class Plane(Surface):
         exporter.write_dir_vec3(self.normal)
         exporter.write_dir_vec3(self.u_dir)
         exporter.write_bool(self.reverse_v, "reverse_v", "forward_v")
+        # v_dir is not exported
 
-    @property
-    def v_dir(self):
+    def update_v_dir(self):
         v_dir = self.normal.cross(self.u_dir)
         if self.reverse_v:
-            return -v_dir
-        return v_dir
+            v_dir = -v_dir
+        self.v_dir = v_dir
+
+    def evaluate(self, u: float, v: float) -> Vec3:
+        return self.origin + (self.u_dir * u) + (self.v_dir * v)
 
 
 @register
@@ -697,6 +706,10 @@ class Curve(SupportsPattern):
         exporter.write_interval(self.bounds[0])
         exporter.write_interval(self.bounds[1])
 
+    @abc.abstractmethod
+    def evaluate(self, param: float) -> Vec3:
+        pass
+
 
 @register
 class StraightCurve(Curve):
@@ -713,6 +726,9 @@ class StraightCurve(Curve):
         exporter.write_loc_vec3(self.origin)
         exporter.write_dir_vec3(self.direction)
         super().write_data(exporter)
+
+    def evaluate(self, param: float) -> Vec3:
+        return self.origin + (self.direction * param)
 
 
 @register
