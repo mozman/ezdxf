@@ -169,16 +169,8 @@ class Transform(AcisEntity):
     matrix = Matrix44()
 
     def restore_data(self, loader: DataLoader) -> None:
-        # Here comes an ugly hack, but SAT and SAB store the matrix data in
-        # quiet different ways:
-        if isinstance(loader, sab.SabDataLoader):
-            # SAB matrix data is stored as a literal string and looks like a SAT
-            # record: "1 0 0 0 1 0 0 0 1 0 0 0 1 no_rotate no_reflect no_shear"
-            values = loader.read_str().split(" ")
-            # delegate to SAT format:
-            loader = sat.SatDataLoader(values, loader.version)
-        data = [loader.read_double() for _ in range(12)]
-        # insert values of the last matrix column (0, 0, 0, 1)
+        data = loader.read_transform()
+        # insert values of the 4th matrix column (0, 0, 0, 1)
         data.insert(3, 0.0)
         data.insert(7, 0.0)
         data.insert(11, 0.0)
@@ -202,11 +194,7 @@ class Transform(AcisEntity):
         data.append("rotate" if is_rotated else "no_rotate")
         data.append("no_reflect")
         data.append("no_shear")
-        # SAT and SAB store the matrix data in quiet different ways:
-        if isinstance(exporter, sat.SatDataExporter):
-            exporter.data.extend(data)
-        else:  # SAB stores the SAT transformation data as literal string
-            exporter.write_literal_str(" ".join(data))
+        exporter.write_transform(data)
 
 
 @register

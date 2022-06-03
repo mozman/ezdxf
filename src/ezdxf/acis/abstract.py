@@ -72,6 +72,10 @@ class DataLoader(ABC):
     def read_ptr(self) -> AbstractEntity:
         pass
 
+    @abstractmethod
+    def read_transform(self) -> List[float]:
+        pass
+
 
 class DataExporter(ABC):
     version: int = MIN_EXPORT_VERSION
@@ -113,6 +117,10 @@ class DataExporter(ABC):
 
     @abstractmethod
     def write_ptr(self, entity: AcisEntity) -> None:
+        pass
+
+    @abstractmethod
+    def write_transform(self, data: List[str]) -> None:
         pass
 
 

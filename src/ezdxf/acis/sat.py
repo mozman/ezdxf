@@ -168,6 +168,13 @@ class SatDataLoader(DataLoader):
             return entity
         raise ParsingError(f"expected pointer, got {type(entity)}")
 
+    def read_transform(self) -> List[float]:
+        # 4th column is not stored
+        # Read only the matrix values which contain all information needed,
+        # the additional data are only hints for the kernel how to process
+        # the data (rotation, reflection, scaling, shearing).
+        return [self.read_double() for _ in range(12)]
+
 
 class SatBuilder(AbstractBuilder):
     """Low level data structure to manage ACIS SAT data files."""
@@ -188,7 +195,9 @@ class SatBuilder(AbstractBuilder):
 
         """
         self.reorder_records()
-        self.header.n_entities = len(self.bodies) + int(self.header.has_asm_header)
+        self.header.n_entities = len(self.bodies) + int(
+            self.header.has_asm_header
+        )
         if self.header.version == 700:
             self.header.n_records = 0  # ignored for old versions
         else:
@@ -425,3 +434,6 @@ class SatDataExporter(DataExporter):
 
     def write_ptr(self, entity: AcisEntity) -> None:
         self.data.append(self.exporter.export(entity))
+
+    def write_transform(self, data: List[str]) -> None:
+        self.data.extend(data)

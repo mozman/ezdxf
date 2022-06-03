@@ -270,6 +270,15 @@ class SabDataLoader(DataLoader):
             return cast(AbstractEntity, token.value)
         raise ParsingError(f"expected pointer token, got {token}")
 
+    def read_transform(self) -> List[float]:
+        # Transform matrix is stored as literal string like in the SAT format!
+        # 4th column is not stored
+        # Read only the matrix values which contain all information needed,
+        # the additional data are only hints for the kernel how to process
+        # the data (rotation, reflection, scaling, shearing).
+        values = self.read_str().split(" ")
+        return [float(v) for v in values[:12]]
+
 
 class SabBuilder(AbstractBuilder):
     """Low level data structure to manage ACIS SAB data files."""
@@ -283,7 +292,8 @@ class SabBuilder(AbstractBuilder):
         """Returns the SAB representation of the ACIS file as bytes."""
         self.reorder_records()
         self.header.n_entities = len(self.bodies) + int(
-            self.header.has_asm_header)
+            self.header.has_asm_header
+        )
         self.header.n_records = 0  # is always 0
         self.header.flags = 12  # important for 21800 - meaning unknown
         data: List[bytes] = [self.header.dumpb()]
@@ -425,6 +435,9 @@ class SabDataExporter(DataExporter):
 
     def write_ptr(self, entity: AcisEntity) -> None:
         self.data.append(Token(Tags.POINTER, self.exporter.export(entity)))
+
+    def write_transform(self, data: List[str]) -> None:
+        self.write_literal_str(" ".join(data))
 
 
 def encode_entity_type(name: str) -> List[Token]:
