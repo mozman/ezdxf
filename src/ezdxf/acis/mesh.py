@@ -3,7 +3,7 @@
 from __future__ import annotations
 from typing import List, Iterator, Sequence, Optional, Tuple, Dict, Iterable
 from ezdxf.render import MeshVertexMerger, MeshTransformer, MeshBuilder
-from ezdxf.math import Matrix44, Vec3, NULLVEC
+from ezdxf.math import Matrix44, Vec3, NULLVEC, BoundingBox
 from . import entities
 from .entities import Body, Lump, NONE_REF, Face, Shell
 
@@ -161,8 +161,14 @@ def body_from_mesh(mesh: MeshBuilder, precision: int = 6) -> Body:
     """
     mesh = mesh.optimize_vertices(precision)
     body = Body()
+    bbox = BoundingBox(mesh.vertices)
+    if not bbox.center.is_null:
+        mesh.translate(-bbox.center)
+        transform = entities.Transform()
+        transform.matrix = Matrix44.translate(*bbox.center)
+        body.transform = transform
+
     for mesh in mesh.separate_meshes():
-        # TODO: move mesh to origin and set transformation of body accordingly
         lump = lump_from_mesh(mesh)
         body.append_lump(lump)
     return body

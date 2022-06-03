@@ -5,8 +5,9 @@ import pytest
 import math
 from ezdxf.acis.api import mesh_from_body, load, body_from_mesh
 from ezdxf.acis.mesh import PolyhedronFaceBuilder
-from ezdxf.acis import entities
+from ezdxf.acis import entities, dbg
 from ezdxf.render import forms
+from ezdxf.math import BoundingBox, Vec3
 
 
 class TestPrismToMesh:
@@ -170,6 +171,25 @@ def test_rebuild_mesh_from_acis_body():
 
 def faces_set(mesh):
     return set([tuple(face) for face in mesh.faces_as_vertices()])
+
+
+class TestTransformCenterOfMeshToOriginAtConversionToAcisBody:
+    @pytest.fixture(scope="class")
+    def body(self):
+        cube = forms.cube(center=False)
+        return body_from_mesh(cube)
+
+    def test_transformation_matrix_for_translation(self, body):
+        matrix = body.transform.matrix
+        translation = Vec3(matrix.get_row(3)[:3])
+        assert translation.isclose((0.5, 0.5, 0.5))
+
+    def test_if_acis_points_are_centered_around_the_origin(self, body):
+        debugger = dbg.AcisDebugger(body)
+        vertices = [p.location for p in debugger.filter_type("point")]
+        bbox = BoundingBox(vertices)
+        assert bbox.extmin.isclose((-0.5, -0.5, -0.5))
+        assert bbox.extmax.isclose((0.5, 0.5, 0.5))
 
 
 if __name__ == "__main__":
