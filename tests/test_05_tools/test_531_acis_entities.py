@@ -387,7 +387,8 @@ class TestExportTransform:
         t.export(exporter)
         assert data[0] == (
             const.Tags.LITERAL_STR,
-            "1 0 0 0 1 0 0 0 1 0 0 0 1 no_rotate no_reflect no_shear",
+            # The last space is important!
+            "1 0 0 0 1 0 0 0 1 0 0 0 1 no_rotate no_reflect no_shear ",
         )
 
 

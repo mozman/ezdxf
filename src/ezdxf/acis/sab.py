@@ -430,7 +430,7 @@ class SabDataExporter(DataExporter):
         self.data.append(Token(Tags.POINTER, record))
 
     def write_transform(self, data: List[str]) -> None:
-        # last space is important!
+        # The last space is important!
         self.write_literal_str(" ".join(data) + " ")
 
 
