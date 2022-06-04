@@ -14,6 +14,11 @@ VERSION = "R2010"
 doc = ezdxf.new(VERSION)
 msp = doc.modelspace()
 
+# The Menger sponge can be opened by BricsCAD and DWG TrueView,
+# but BricsCAD RECOVER finds an error:
+# "Coedges out of order about edge"
+# No idea how to fix this!
+
 menger = MengerSponge(length=3.0, level=1).mesh()
 menger.translate(10, 0, 5)
 # create the ACIS body entity from the uv-sphere mesh (polyhedron)
