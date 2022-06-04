@@ -171,10 +171,6 @@ class EntityExporter(Generic[T]):
     def make_data_exporter(self, record: T) -> DataExporter:
         pass
 
-    def add_record(self, entity: AcisEntity, record: T) -> None:
-        assert not entity.is_none
-        self._exported_entities[id(entity)] = record
-
     def get_record(self, entity: AcisEntity) -> T:
         assert not entity.is_none
         return self._exported_entities[id(entity)]
@@ -188,10 +184,14 @@ class EntityExporter(Generic[T]):
     def _has_record(self, entity: AcisEntity) -> bool:
         return id(entity) in self._exported_entities
 
+    def _add_record(self, entity: AcisEntity, record: T) -> None:
+        assert not entity.is_none
+        self._exported_entities[id(entity)] = record
+
     def _make_all_records(self, entity: AcisEntity):
         def add(e: AcisEntity) -> bool:
             if not e.is_none and not self._has_record(e):
-                self.make_record(e)
+                self._add_record(e, self.make_record(e))
                 return True
             return False
 
@@ -209,7 +209,7 @@ class EntityExporter(Generic[T]):
                 done.add(id(e))
                 record = self.get_record(e)
                 if not e.attributes.is_none:
-                    record.attributes = self.get_record(e.attributes)
+                    record.attributes = self.get_record(e.attributes)  # type: ignore
                 e.export(self.make_data_exporter(record))
                 return True
             return False

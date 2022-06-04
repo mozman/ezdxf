@@ -315,7 +315,6 @@ class SabExporter(EntityExporter[SabEntity]):
     def make_record(self, entity: AcisEntity) -> SabEntity:
         record = SabEntity(entity.type, id=entity.id)
         record.attributes = NULL_PTR
-        self.add_record(entity, record)
         return record
 
     def make_data_exporter(self, record: SabEntity) -> DataExporter:
