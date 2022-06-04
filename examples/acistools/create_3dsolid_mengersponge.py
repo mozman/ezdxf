@@ -21,9 +21,9 @@ msp = doc.modelspace()
 
 menger = MengerSponge(length=3.0, level=1).mesh()
 menger.translate(10, 0, 5)
-# create the ACIS body entity from the uv-sphere mesh (polyhedron)
+menger.render_normals(msp, length=0.2, dxfattribs={"color": 3})
+
 body = acis.body_from_mesh(menger)
-# create the DXF 3DSOLID entity
 solid3d = msp.add_3dsolid()
 acis.export_dxf(solid3d, [body])
 

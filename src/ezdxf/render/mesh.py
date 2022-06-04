@@ -462,7 +462,7 @@ class MeshBuilder:
             count = len(face)
             if count < 3:
                 continue
-            center = sum(face) / count
+            center = Vec3.sum(face) / count
             i = 0
             n = NULLVEC
             while i <= count - 3:
