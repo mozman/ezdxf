@@ -217,26 +217,16 @@ class SatExporter(EntityExporter[SatEntity]):
     def make_record(self, entity: AcisEntity) -> SatEntity:
         record = SatEntity(entity.type, id=entity.id)
         record.attributes = NULL_PTR
-        self.exported_entities[id(entity)] = record
+        self.add_record(entity, record)
         return record
 
-    def export(self, entity: AcisEntity) -> SatEntity:
-        if entity.is_none:
-            return NULL_PTR
-        try:
-            return self.exported_entities[id(entity)]
-        except KeyError:
-            pass
-        record = self.make_record(entity)
-        if not entity.attributes.is_none:
-            record.attributes = self.export(entity.attributes)
-        entity.export(SatDataExporter(self, record.data))
-        return record
+    def make_data_exporter(self, record: SatEntity) -> DataExporter:
+        return SatDataExporter(self, record.data)
 
     def dump_sat(self) -> List[str]:
         builder = SatBuilder()
         builder.header = self.header
-        builder.set_entities(list(self.exported_entities.values()))
+        builder.set_entities(self.export_records())
         return builder.dump_sat()
 
 
@@ -433,7 +423,10 @@ class SatDataExporter(DataExporter):
         self.write_str(value)  # just for SAB files important
 
     def write_ptr(self, entity: AcisEntity) -> None:
-        self.data.append(self.exporter.export(entity))
+        record = NULL_PTR
+        if not entity.is_none:
+            record = self.exporter.get_record(entity)
+        self.data.append(record)
 
     def write_transform(self, data: List[str]) -> None:
         self.data.extend(data)

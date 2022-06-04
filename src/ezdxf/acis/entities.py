@@ -1,7 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Union, List, Dict, Callable, Type, Any, Sequence
+from typing import Union, List, Dict, Callable, Type, Any, Sequence, Iterator
 import abc
 
 from . import sab, sat, const, hdr
@@ -147,6 +147,12 @@ class AcisEntity(NoneEntity):
     def write_data(self, exporter: DataExporter) -> None:
         """Write the data part of the ACIS entity."""
         pass
+
+    def entities(self) -> Iterator[AcisEntity]:
+        """Yield all attributes of this entity of type AcisEntity. """
+        for e in vars(self).values():
+            if isinstance(e, AcisEntity):
+                yield e
 
 
 def restore_entity(

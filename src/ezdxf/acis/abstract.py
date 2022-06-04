@@ -1,7 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import List, TypeVar, Tuple, Generic, TYPE_CHECKING, Dict
+from typing import List, TypeVar, Tuple, Generic, TYPE_CHECKING, Dict, Set
 from abc import ABC, abstractmethod
 from .const import NULL_PTR_NAME, MIN_EXPORT_VERSION
 from .hdr import AcisHeader
@@ -156,10 +156,69 @@ class EntityExporter(Generic[T]):
     def __init__(self, header: AcisHeader):
         self.header = header
         self.version = header.version
-        self.exported_entities: Dict[int, T] = {}
+        self._exported_entities: Dict[int, T] = {}
         if self.header.has_asm_header:
             self.export(self.header.asm_header())
 
+    def export_records(self) -> List[T]:
+        return list(self._exported_entities.values())
+
     @abstractmethod
-    def export(self, entity: AcisEntity) -> T:
+    def make_record(self, entity: AcisEntity) -> T:
         pass
+
+    @abstractmethod
+    def make_data_exporter(self, record: T) -> DataExporter:
+        pass
+
+    def add_record(self, entity: AcisEntity, record: T) -> None:
+        assert not entity.is_none
+        self._exported_entities[id(entity)] = record
+
+    def get_record(self, entity: AcisEntity) -> T:
+        assert not entity.is_none
+        return self._exported_entities[id(entity)]
+
+    def export(self, entity: AcisEntity):
+        if entity.is_none:
+            raise TypeError("invalid NONE_REF entity given")
+        self._make_all_records(entity)
+        self._export_data(entity)
+
+    def _has_record(self, entity: AcisEntity) -> bool:
+        return id(entity) in self._exported_entities
+
+    def _make_all_records(self, entity: AcisEntity):
+        def add(e: AcisEntity) -> bool:
+            if not e.is_none and not self._has_record(e):
+                self.make_record(e)
+                return True
+            return False
+
+        entities = [entity]
+        while entities:
+            next_entity = entities.pop(0)
+            add(next_entity)
+            for sub_entity in next_entity.entities():
+                if add(sub_entity):
+                    entities.append(sub_entity)
+
+    def _export_data(self, entity: AcisEntity):
+        def _export_record(e: AcisEntity):
+            if id(e) not in done:
+                done.add(id(e))
+                record = self.get_record(e)
+                if not e.attributes.is_none:
+                    record.attributes = self.get_record(e.attributes)
+                e.export(self.make_data_exporter(record))
+                return True
+            return False
+
+        entities = [entity]
+        done: Set[int] = set()
+        while entities:
+            next_entity = entities.pop(0)
+            _export_record(next_entity)
+            for sub_entity in next_entity.entities():
+                if _export_record(sub_entity):
+                    entities.append(sub_entity)

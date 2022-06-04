@@ -8,6 +8,7 @@ from typing import (
     Any,
     Sequence,
     List,
+    Set,
     Iterator,
     Union,
     Iterable,
@@ -314,26 +315,16 @@ class SabExporter(EntityExporter[SabEntity]):
     def make_record(self, entity: AcisEntity) -> SabEntity:
         record = SabEntity(entity.type, id=entity.id)
         record.attributes = NULL_PTR
-        self.exported_entities[id(entity)] = record
+        self.add_record(entity, record)
         return record
 
-    def export(self, entity: AcisEntity) -> SabEntity:
-        if entity.is_none:
-            return NULL_PTR
-        try:
-            return self.exported_entities[id(entity)]
-        except KeyError:
-            pass
-        record = self.make_record(entity)
-        if not entity.attributes.is_none:
-            record.attributes = self.export(entity.attributes)
-        entity.export(SabDataExporter(self, record.data))
-        return record
+    def make_data_exporter(self, record: SabEntity) -> DataExporter:
+        return SabDataExporter(self, record.data)
 
     def dump_sab(self) -> bytes:
         builder = SabBuilder()
         builder.header = self.header
-        builder.set_entities(list(self.exported_entities.values()))
+        builder.set_entities(self.export_records())
         return builder.dump_sab()
 
 
@@ -434,7 +425,10 @@ class SabDataExporter(DataExporter):
         self.data.append(Token(Tags.LITERAL_STR, value))
 
     def write_ptr(self, entity: AcisEntity) -> None:
-        self.data.append(Token(Tags.POINTER, self.exporter.export(entity)))
+        record = NULL_PTR
+        if not entity.is_none:
+            record = self.exporter.get_record(entity)
+        self.data.append(Token(Tags.POINTER, record))
 
     def write_transform(self, data: List[str]) -> None:
         self.write_literal_str(" ".join(data))
