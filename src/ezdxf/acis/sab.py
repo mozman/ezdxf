@@ -430,7 +430,8 @@ class SabDataExporter(DataExporter):
         self.data.append(Token(Tags.POINTER, record))
 
     def write_transform(self, data: List[str]) -> None:
-        self.write_literal_str(" ".join(data))
+        # last space is important!
+        self.write_literal_str(" ".join(data) + " ")
 
 
 def encode_entity_type(name: str) -> List[Token]:
