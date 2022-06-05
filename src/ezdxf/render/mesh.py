@@ -40,8 +40,7 @@ T = TypeVar("T")
 
 class EdgeStat(NamedTuple):
     """Named tuple of edge statistics."""
-
-    count: int
+    count: int  # type: ignore
     balance: int
 
 

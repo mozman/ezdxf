@@ -14,7 +14,7 @@ def mesh():
 def test_euler_characteristic_for_menger_sponge(mesh):
     """The euler characteristic does not work for non-convex meshes."""
     diag = mesh.diagnose()
-    assert diag.euler_characteristic == 40
+    assert diag.euler_characteristic == -8
 
 
 def test_edge_balance_for_menger_sponge(mesh):
@@ -27,7 +27,15 @@ def test_edge_balance_for_menger_sponge(mesh):
 
 def test_menger_sponge_is_non_manifold(mesh):
     diag = mesh.diagnose()
-    assert diag.is_manifold is False
+    assert diag.is_manifold is True
+
+
+def test_menger_sponge_face_count(mesh):
+    assert len(mesh.faces) == 72
+
+
+def test_menger_sponge_edge_count(mesh):
+    assert len(mesh.vertices) == 64
 
 
 if __name__ == '__main__':

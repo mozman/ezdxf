@@ -619,7 +619,7 @@ class Coedge(SupportsPattern):
 
     def partner_coedges(self) -> List[Coedge]:
         """Returns all partner coedges of this coedge without `self`. """
-        coedges = []
+        coedges: List[Coedge] = []
         partner_coedge = self.partner_coedge
         if partner_coedge.is_none:
             return coedges

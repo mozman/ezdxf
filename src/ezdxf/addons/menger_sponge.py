@@ -1,7 +1,8 @@
 # Purpose: menger sponge addon for ezdxf
 # Copyright (c) 2016-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List, Tuple, Iterator
+from typing import TYPE_CHECKING, List, Tuple, Iterator, Sequence, Dict
+from collections import defaultdict
 from ezdxf.math import Vec3, Vertex
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer, MeshBuilder
 
@@ -178,7 +179,23 @@ class MengerSponge:
 
 
 def remove_duplicate_inner_faces(mesh: MeshBuilder) -> MeshTransformer:
-    return MeshTransformer.from_builder(mesh)
+    new_mesh = MeshTransformer()
+    new_mesh.vertices = mesh.vertices
+    new_mesh.faces = list(manifold_faces(mesh.faces))
+    return new_mesh
+
+
+def manifold_faces(faces: List[Sequence[int]]) -> Iterator[Sequence[int]]:
+    ledger: Dict[Tuple[int, ...], List[Sequence[int]]] = {}
+    for face in faces:
+        key = tuple(sorted(face))
+        try:
+            ledger[key].append(face)
+        except KeyError:
+            ledger[key] = [face]
+    for faces in ledger.values():
+        if len(faces) == 1:
+            yield faces[0]
 
 
 def _subdivide(

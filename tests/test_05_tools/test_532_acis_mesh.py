@@ -201,13 +201,13 @@ def test_non_manifold_detection():
     assert debugger.is_manifold() is False
 
 
-def test_body_form_menger_sponge_is_non_manifold():
+def test_body_from_menger_sponge_is_manifold():
     from ezdxf.addons import MengerSponge
 
     sponge = MengerSponge().mesh()
     body = body_from_mesh(sponge)
     debugger = dbg.AcisDebugger(body)
-    assert debugger.is_manifold() is False
+    assert debugger.is_manifold() is True
 
 
 if __name__ == "__main__":

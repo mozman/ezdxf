@@ -16,17 +16,8 @@ DEBUG = True
 doc = ezdxf.new(VERSION)
 msp = doc.modelspace()
 
-# The Menger sponge can be opened by BricsCAD and DWG TrueView,
-# but the BricsCAD RECOVER command shows a topologie-error:
-# "Coedges out of order about edge"
-# The Menger sponge contains duplicated faces and is therefore non-manifold,
-# which means at some edges are more tha two faces connected by co-edges.
-# This co-edges have to be ordered in counter-clockwise order of the
-# connected faces.
-
 menger = MengerSponge(length=3.0, level=1).mesh()
 menger.translate(10, 0, 5)
-menger.render_normals(msp, length=0.2, dxfattribs={"color": 3})
 
 body = acis.body_from_mesh(menger)
 solid3d = msp.add_3dsolid()
