@@ -28,9 +28,8 @@ def backend():
 # Works if launched in PyCharm, but not if launched by command line
 # "pytest ..." ???
 
-@pytest.mark.skipif(
-    WIN and PY310,
-    reason="Does not work for Win & CPython 3.10 & PySide6",
+@pytest.mark.skip(
+    reason="Does not work for CPython 3.10 & PySide6",
 )
 def test_get_text_width(backend):
     assert backend.get_text_line_width(
