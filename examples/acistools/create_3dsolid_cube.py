@@ -12,11 +12,18 @@ if not DIR.exists():
 
 VERSION = "R2010"
 DEBUG = False
+OPEN_SHELL = False
+
 doc = ezdxf.new(VERSION)
 msp = doc.modelspace()
 
+
 # create the ACIS body entity from the cube-mesh
-body = acis.body_from_mesh(forms.cube())
+cube = forms.cube()
+if OPEN_SHELL:
+    cube.faces.pop()
+
+body = acis.body_from_mesh(cube)
 # create the DXF 3DSOLID entity
 solid3d = msp.add_3dsolid()
 acis.export_dxf(solid3d, [body])
