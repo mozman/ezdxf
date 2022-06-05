@@ -192,5 +192,23 @@ class TestTransformCenterOfMeshToOriginAtConversionToAcisBody:
         assert bbox.extmax.isclose((0.5, 0.5, 0.5))
 
 
+def test_non_manifold_detection():
+    cube = forms.cube(center=False)
+    # duplicate last face
+    cube.faces.append(cube.faces[-1])
+    body = body_from_mesh(cube)
+    debugger = dbg.AcisDebugger(body)
+    assert debugger.is_manifold() is False
+
+
+def test_body_form_menger_sponge_is_non_manifold():
+    from ezdxf.addons import MengerSponge
+
+    sponge = MengerSponge().mesh()
+    body = body_from_mesh(sponge)
+    debugger = dbg.AcisDebugger(body)
+    assert debugger.is_manifold() is False
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

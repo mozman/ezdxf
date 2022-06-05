@@ -617,6 +617,19 @@ class Coedge(SupportsPattern):
         #  by the right-hand rule around this edge.
         pass
 
+    def partner_coedges(self) -> List[Coedge]:
+        """Returns all partner coedges of this coedge without `self`. """
+        coedges = []
+        partner_coedge = self.partner_coedge
+        if partner_coedge.is_none:
+            return coedges
+        while True:
+            coedges.append(partner_coedge)
+            partner_coedge = partner_coedge.partner_coedge
+            if partner_coedge.is_none or partner_coedge is self:
+                break
+        return coedges
+
 
 @register
 class Edge(SupportsPattern):

@@ -231,6 +231,9 @@ class TestCoedge:
             co_edges.append(prev)
         assert len(co_edges) == 4
 
+    def test_partner_co_edge_count_is_two(self, coedge):
+        assert len(coedge.partner_coedges()) == 1
+
     def test_co_edges_have_partner_co_edges_other_faces(self, coedge):
         assert coedge.partner_coedge.partner_coedge is coedge
 
@@ -239,6 +242,11 @@ class TestCoedge:
 
     def test_co_edge_references_the_parent_loop(self, coedge):
         assert coedge.loop.coedge is coedge
+
+
+def test_default_partner_co_edge_count_is_two():
+    coedge = entities.Coedge()
+    assert len(coedge.partner_coedges()) == 0
 
 
 class TestEdge:

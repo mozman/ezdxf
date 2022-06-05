@@ -11,7 +11,7 @@ if not DIR.exists():
     DIR = Path(".")
 
 VERSION = "R2010"
-DEBUG = False
+DEBUG = True
 OPEN_SHELL = False
 
 doc = ezdxf.new(VERSION)

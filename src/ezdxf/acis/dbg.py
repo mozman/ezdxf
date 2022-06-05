@@ -1,7 +1,15 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from typing import Iterator, Set, Callable, Dict, Any, List
-from .entities import AcisEntity, NONE_REF, Face, Coedge, Loop, Vertex, StraightCurve
+from .entities import (
+    AcisEntity,
+    NONE_REF,
+    Face,
+    Coedge,
+    Loop,
+    Vertex,
+    StraightCurve,
+)
 from . import sab
 
 
@@ -71,12 +79,29 @@ class AcisDebugger:
                 continue
             yield f"{indent_str}{name}: {data}"
 
-    @staticmethod
-    def face_link_structure(face: Face, indent: int = 0) -> Iterator[str]:
+    def face_link_structure(self, face: Face, indent: int = 0) -> Iterator[str]:
         indent_str = " " * indent
+
         while not face.is_none:
-            partner_faces = list(AcisDebugger.partner_faces(face))
-            yield f"{indent_str}{str(face)} >> {partner_faces}"
+            partner_faces = list(self.partner_faces(face))
+            error = ""
+            linked_partner_faces = []
+            unlinked_partner_faces = []
+            for pface_id in partner_faces:
+                pface = self.entities.get(pface_id)
+                if pface is None:
+                    error += f" face {pface_id} does not exist;"
+                if isinstance(pface, Face):
+                    reverse_faces = self.partner_faces(pface)
+                    if face.id in reverse_faces:
+                        linked_partner_faces.append(pface_id)
+                    else:
+                        unlinked_partner_faces.append(pface_id)
+                else:
+                    error += f" entity {pface_id} is not a face;"
+            if unlinked_partner_faces:
+                error = f"unlinked partner faces: {unlinked_partner_faces} {error}"
+            yield f"{indent_str}{str(face)} >> {partner_faces} {error}"
             face = face.next_face
 
     @staticmethod
@@ -87,9 +112,30 @@ class AcisDebugger:
             coedges.extend(co for co in loop.coedges())
             loop = loop.next_loop
         for coedge in coedges:
-            partner_coedge = coedge.partner_coedge
-            if not partner_coedge.is_none:
+            for partner_coedge in coedge.partner_coedges():
                 yield partner_coedge.loop.face.id
+
+    @staticmethod
+    def coedge_structure(face: Face, ident: int = 4) -> List[str]:
+        lines: List[str] = []
+        coedges: List[Coedge] = []
+        loop = face.loop
+
+        while not loop.is_none:
+            coedges.extend(co for co in loop.coedges())
+            loop = loop.next_loop
+        for coedge in coedges:
+            edge1 = coedge.edge
+            sense1 = coedge.sense
+            lines.append(f"Coedge={coedge.id} edge={edge1.id} sense={sense1}")
+            for partner_coedge in coedge.partner_coedges():
+                edge2 = partner_coedge.edge
+                sense2 = partner_coedge.sense
+                lines.append(
+                    f"    Partner Coedge={partner_coedge.id} edge={edge2.id} sense={sense2}"
+                )
+        ident_str = " " * ident
+        return [ident_str + line for line in lines]
 
     @staticmethod
     def loop_vertices(loop: Loop, indent: int = 0) -> str:
@@ -120,6 +166,12 @@ class AcisDebugger:
             sv = edge.start_vertex
             ev = edge.end_vertex
             yield f"{vertex}: parent edge is {edge.id}; {sv.id} => {ev.id}; {edge.curve}"
+
+    def is_manifold(self) -> bool:
+        for coedge in self.filter_type("coedge"):
+            if len(coedge.partner_coedges()) > 1:
+                return False
+        return True
 
 
 def dump_sab_as_text(data: bytes) -> Iterator[str]:
