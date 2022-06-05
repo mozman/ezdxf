@@ -3,7 +3,7 @@
 # License: MIT License
 from typing import TYPE_CHECKING, List, Tuple, Iterator
 from ezdxf.math import Vec3, Vertex
-from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
+from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer, MeshBuilder
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import GenericLayoutType, Matrix44, UCS
@@ -174,7 +174,11 @@ class MengerSponge:
         mesh = MeshVertexMerger()
         for vertices in self:
             mesh.add_mesh(vertices=vertices, faces=faces)  # type: ignore
-        return MeshTransformer.from_builder(mesh)
+        return remove_duplicate_inner_faces(mesh)
+
+
+def remove_duplicate_inner_faces(mesh: MeshBuilder) -> MeshTransformer:
+    return MeshTransformer.from_builder(mesh)
 
 
 def _subdivide(
