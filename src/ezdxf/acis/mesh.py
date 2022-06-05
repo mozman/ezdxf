@@ -195,7 +195,7 @@ class PolyhedronFaceBuilder:
         self.vertices: List[Vec3] = mesh_copy.vertices
         self.faces: List[Sequence[int]] = mesh_copy.faces
         self.normals = list(mesh_copy.normals())
-        self.acis_vectices: List[entities.Vertex] = []
+        self.acis_vertices: List[entities.Vertex] = []
 
         # double_sided:
         # If every edge belongs to two faces the body is for sure a closed
@@ -213,7 +213,7 @@ class PolyhedronFaceBuilder:
         self.edges: Dict[Tuple[int, int], entities.Edge] = dict()
 
     def reset(self):
-        self.acis_vectices = list(make_vertices(self.vertices))
+        self.acis_vertices = list(make_vertices(self.vertices))
         self.partner_coedges.clear()
         self.edges.clear()
 
@@ -284,7 +284,7 @@ class PolyhedronFaceBuilder:
         self, index1: int, index2: int, parent: entities.Coedge
     ) -> Tuple[entities.Edge, bool]:
         def make_vertex(index: int):
-            vertex = self.acis_vectices[index]
+            vertex = self.acis_vertices[index]
             vertex.ref_count += 1
             # assign first edge which references the vertex as parent edge (?):
             if vertex.edge.is_none:
