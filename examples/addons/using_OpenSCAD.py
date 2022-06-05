@@ -6,7 +6,7 @@ import ezdxf
 import os
 
 from ezdxf.render.forms import sphere
-from ezdxf.render import MeshBuilder
+from ezdxf.render import MeshBuilder, MeshTransformer
 from ezdxf.addons import MengerSponge, meshex
 
 DIR = Path("~/Desktop/Outbox").expanduser()
@@ -25,28 +25,38 @@ DXF_FILE = str(DIR / "OpenSCAD.dxf")
 # counter-clockwise ordered vertices to create outward pointing normals.
 
 
-def difference(mesh1: MeshBuilder, mesh2: MeshBuilder, cmd=OPENSCAD) -> MeshBuilder:
+def difference(
+    mesh1: MeshBuilder, mesh2: MeshBuilder, cmd=OPENSCAD
+) -> MeshTransformer:
+    """Executes the boolean operation `mesh1` - `mesh2` by OpenSCAD."""
     off_filename = "ezdxf_temp.off"
     openscad_filename = "ezdxf_temp.scad"
-    s1 = meshex.scad_dumps(mesh1)
-    s2 = meshex.scad_dumps(mesh2)
+    s1 = meshex.scad_dumps(mesh1)  # returns a polyhedron definition as string
+    s2 = meshex.scad_dumps(mesh2)  # returns a polyhedron definition as string
+
+    # Write the OpenSCAD script:
     with open(openscad_filename, "wt") as fp:
         fp.write(f"difference(){{\n{s1}\n{s2}}}\n")
-    subprocess.call([
-        cmd,
-        "--export-format",
-        "off",
-        "-o",
-        off_filename,
-        openscad_filename,
-    ])
+    subprocess.call(
+        [
+            cmd,
+            "--export-format",
+            "off",  # The OFF format is more compact than the default STL format
+            "-o",
+            off_filename,
+            openscad_filename,
+        ]
+    )
+    # Remove the OpenSCAD temp file:
     if os.path.exists(openscad_filename):
         os.unlink(openscad_filename)
 
-    new_mesh = MeshBuilder()
+    new_mesh = MeshTransformer()
+    # Import the OpenSCAD result from OFF file:
     if os.path.exists(off_filename):
         with open(off_filename, "rt") as fp:
             new_mesh = meshex.off_loads(fp.read())
+        # Remove the OFF temp file:
         os.unlink(off_filename)
     return new_mesh
 
