@@ -18,11 +18,11 @@
 #   release: public release
 #
 # examples:
-#   major pre release alpha 2: VERSION = "0.9.0a2"; version = (0, 9, 0, 'a2')
+#   major pre-release alpha 2: VERSION = "0.9.0a2"; version = (0, 9, 0, 'a2')
 #   major release candidate 0: VERSION = "0.9.0rc0"; version = (0, 9, 0, 'rc0')
 #   major release: VERSION = "0.9.0"; version = (0, 9, 0, 'release')
 #   1. bug fix release beta0: VERSION = "0.9.1b0"; version = (0, 9, 1, 'b0')
 #   2. bug fix release: VERSION = "0.9.2"; version = (0, 9, 2, 'release')
 
-version = (0, 18, 0, "b4")
-__version__ = "0.18b4"
+version = (0, 18, 0, "b5")
+__version__ = "0.18b5"
