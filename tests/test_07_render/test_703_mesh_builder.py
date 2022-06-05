@@ -661,6 +661,10 @@ class TestGetEdgeStats:
         edges = get_edge_stats(faces)
         assert all(e[1] != 0 for e in edges.values()) is True
 
+    def test_cube_is_manifold(self, edges):
+        diag = cube().diagnose()
+        assert diag.is_manifold is True
+
 
 def test_euler_characteristic_for_menger_sponge():
     """The euler characteristic does not work for non-convex meshes."""
@@ -670,6 +674,7 @@ def test_euler_characteristic_for_menger_sponge():
     # the is_watertight property not reliable for concave meshes
     # each edge connects two faces
     assert diag.is_edge_balance_broken is False
+    assert diag.is_manifold is False
 
 
 class TestSeparateMeshes:

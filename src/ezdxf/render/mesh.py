@@ -41,7 +41,7 @@ T = TypeVar("T")
 class EdgeStat(NamedTuple):
     """Named tuple of edge statistics."""
 
-    count: int  # type: ignore
+    count: int
     balance: int
 
 
@@ -244,6 +244,15 @@ class MeshDiagnose:
 
         """
         return any(e.balance != 0 for e in self.edge_stats.values())
+
+    @property
+    def is_manifold(self) -> bool:
+        """Returns ``True`` if all edges have an edge count < 3.
+
+        A non-manifold mesh has edges with 3 or more connected faces.
+
+        """
+        return all(edge.count < 3 for edge in self.edge_stats.values())
 
     def total_edge_count(self) -> int:
         """Returns the total edge count of all faces, shared edges are counted

@@ -135,6 +135,8 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. autoproperty:: is_edge_balance_broken
 
+    .. autoproperty:: is_manifold
+
     .. autoproperty:: euler_characteristic
 
     .. automethod:: has_non_planar_faces
