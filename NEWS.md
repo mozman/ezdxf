@@ -44,7 +44,9 @@ Version 0.18b4 - dev
 - NEW: DXF/DWG converter function `ezdxf.addons.odafc.convert()`
 - NEW: support for layer attribute override in VIEWPORT entities
 - NEW: mesh exchange add-on `ezdxf.addons.meshex`: STL, OFF, and OBJ mesh loader 
-  and STL, OFF, OBJ, PLY, OpenSCAD and IFC4 mesh exporter
+  and STL, OFF, OBJ, PLY, OpenSCAD and IFC4 mesh exporter, [docs](https://ezdxf.mozman.at/docs/addons/meshex.html)
+- NEW: `ezdxf.addons.openscad` add-on as interface to [OpenSCAD](https://openscad.org), 
+  [docs](https://ezdxf.mozman.at/docs/addons/openscad.html) 
 - NEW: `acis` module, a toolbox to handle ACIS data, [docs](https://ezdxf.mozman.at/docs/tools/acis.html)
 - CHANGE: keyword only argument `dxfattribs` for factory methods `add_text()` and `add_attdef()`
 - CHANGE: `recover` module - recovered integer and float values are logged as severe errors

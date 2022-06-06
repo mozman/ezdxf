@@ -10,7 +10,6 @@ DIR = Path("~/Desktop/Outbox").expanduser()
 if not DIR.exists():
     DIR = Path(".")
 
-OPENSCAD = r"C:\Program Files\OpenSCAD\openscad.exe"
 DXF_FILE = str(DIR / "OpenSCAD.dxf")
 
 # This example shows the usage of the 'meshex' add-on to export/import meshes
@@ -24,6 +23,7 @@ DXF_FILE = str(DIR / "OpenSCAD.dxf")
 
 def main(filename: str):
     doc = ezdxf.new()
+    doc.layers.add("NORMALS", color=3)
     msp = doc.modelspace()
 
     sponge = MengerSponge(level=3).mesh()
@@ -42,7 +42,7 @@ def main(filename: str):
 
     # The exported mesh from OpenSCAD has outward pointing normals, so flipping
     # normals is not necessary!
-    result.render_normals(msp, length=0.1, dxfattribs={"color": 3})
+    result.render_normals(msp, length=0.1, dxfattribs={"layer": "NORMALS"})
 
     doc.set_modelspace_vport(6, center=(5, 0))
     doc.saveas(filename)

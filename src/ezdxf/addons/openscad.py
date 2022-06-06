@@ -35,20 +35,26 @@ def get_openscad_path() -> str:
 
 
 def is_installed() -> bool:
-    f"""Returns ``True`` if OpenSCAD is installed. On Windows only the
-    default install path '{DEFAULT_WIN_OPENSCAD_PATH}' is checked.
+    r"""Returns ``True`` if OpenSCAD is installed. On Windows only the
+    default install path 'C:\\Program Files\\OpenSCAD\\openscad.exe' is checked.
     """
     if platform.system() in ("Linux", "Darwin"):
         return shutil.which(CMD) is not None
     return Path(DEFAULT_WIN_OPENSCAD_PATH).exists()
 
 
-def run(script: str, prg: str = None) -> MeshTransformer:
+def run(script: str, exec_path: str = None) -> MeshTransformer:
     """Executes the given `script` by OpenSCAD and returns the result mesh as
     :class:`~ezdxf.render.MeshTransformer`.
+
+    Args:
+        script: the OpenSCAD script as string
+        exec_path: path to the executable as string or ``None`` to use the
+            default installation path
+
     """
-    if prg is None:
-        prg = get_openscad_path()
+    if exec_path is None:
+        exec_path = get_openscad_path()
 
     workdir = Path(tempfile.gettempdir())
     uuid = str(uuid4())
@@ -59,7 +65,7 @@ def run(script: str, prg: str = None) -> MeshTransformer:
     scad_path.write_text(script)
     subprocess.call(
         [
-            prg,
+            exec_path,
             "--quiet",
             "-o",
             str(off_path),
@@ -102,7 +108,17 @@ class Script:
 def boolean_operation(
     op: Operation, mesh1: MeshBuilder, mesh2: MeshBuilder
 ) -> str:
-    assert isinstance(op, Operation), "Operation() enum expected"
+    """Returns an `OpenSCAD`_ script to apply the given boolean operation to the
+    given meshes.
+
+    The supported operations are:
+
+        - UNION
+        - DIFFERENCE
+        - INTERSECTION
+
+    """
+    assert isinstance(op, Operation), "enum of type Operation expected"
     script = Script()
     script.add(f"{op.name}()")
     script.begin_block()
