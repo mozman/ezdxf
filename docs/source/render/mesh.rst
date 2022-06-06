@@ -52,6 +52,8 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. automethod:: diagnose
 
+    .. automethod:: bbox
+
     .. automethod:: faces_as_vertices
 
     .. automethod:: flip_normals
@@ -124,6 +126,8 @@ The basic :class:`MeshBuilder` class does not support transformations.
     .. attribute:: faces
 
         Sequence of faces as ``Sequence[int]``
+
+    .. autoproperty:: bbox
 
     .. autoproperty:: n_vertices
 

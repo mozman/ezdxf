@@ -124,6 +124,12 @@ def test_rotate_x():
     assert bbox.extmax.isclose((1, 0, 1))
 
 
+def test_mesh_bounding_box():
+    bbox = cube().bbox()
+    assert bbox.extmin.isclose((-0.5, -0.5, -0.5))
+    assert bbox.extmax.isclose((0.5, 0.5, 0.5))
+
+
 class TestMeshDiagnose:
     def test_empty_mesh_is_not_watertight(self):
         mesh = MeshBuilder()
@@ -141,7 +147,7 @@ class TestMeshDiagnose:
     def test_is_watertight_can_not_detect_vertex_orientation_errors(self):
         mesh = cube(center=False)
         mesh.faces[-1] = tuple(reversed(mesh.faces[-1]))
-        assert (mesh.diagnose().euler_characteristic == 2)
+        assert mesh.diagnose().euler_characteristic == 2
 
     def test_edge_balance_of_closed_surface_is_not_broken(self):
         mesh = cube(center=False)
@@ -186,6 +192,15 @@ class TestMeshDiagnose:
         diagnose = c.diagnose()
         assert diagnose.estimate_normals_direction() < 0.8
         assert diagnose.is_edge_balance_broken is True
+
+    def test_cube_is_manifold(self):
+        diag = cube().diagnose()
+        assert diag.is_manifold is True
+
+    def test_mesh_bounding_box(self):
+        bbox = cube().diagnose().bbox
+        assert bbox.extmin.isclose((-0.5, -0.5, -0.5))
+        assert bbox.extmax.isclose((0.5, 0.5, 0.5))
 
 
 def test_flipped_cube_normals_pointing_inwards():
@@ -660,10 +675,6 @@ class TestGetEdgeStats:
         faces = [(0, 1, 2)]
         edges = get_edge_stats(faces)
         assert all(e[1] != 0 for e in edges.values()) is True
-
-    def test_cube_is_manifold(self, edges):
-        diag = cube().diagnose()
-        assert diag.is_manifold is True
 
 
 class TestSeparateMeshes:

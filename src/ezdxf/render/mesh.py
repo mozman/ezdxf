@@ -18,6 +18,7 @@ from typing import (
 from ezdxf.math import (
     Matrix44,
     Vec3,
+    BoundingBox,
     UVec,
     NULLVEC,
     is_planar_face,
@@ -186,6 +187,7 @@ class MeshDiagnose:
     def __init__(self, mesh: MeshBuilder):
         self._mesh = mesh
         self._edge_stats: EdgeStats = {}
+        self._bbox = BoundingBox()
 
     @property
     def vertices(self) -> Sequence[Vec3]:
@@ -194,6 +196,13 @@ class MeshDiagnose:
     @property
     def faces(self) -> Sequence[Sequence[int]]:
         return self._mesh.faces
+
+    @property
+    def bbox(self) -> BoundingBox:
+        """Returns the :class:`~ezdxf.math.BoundingBox` of the mesh."""
+        if not self._bbox.has_data:
+            self._bbox = self._mesh.bbox()
+        return self._bbox
 
     @property
     def n_vertices(self) -> int:
@@ -334,6 +343,14 @@ class MeshBuilder:
 
         """
         return MeshDiagnose(self)
+
+    def bbox(self) -> BoundingBox:
+        """Returns the :class:`~ezdxf.math.BoundingBox` of the mesh.
+
+        .. versionadded:: 0.18
+
+        """
+        return BoundingBox(self.vertices)
 
     def faces_as_vertices(self) -> Iterator[List[Vec3]]:
         """Yields all faces as list of vertices."""
