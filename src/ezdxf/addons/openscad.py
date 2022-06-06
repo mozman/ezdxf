@@ -52,6 +52,7 @@ def run(script: str, prg: str = None) -> MeshTransformer:
 
     workdir = Path(tempfile.gettempdir())
     uuid = str(uuid4())
+    # The OFF format is more compact than the default STL format
     off_path = workdir / f"ezdxf_{uuid}.off"
     scad_path = workdir / f"ezdxf_{uuid}.scad"
 
@@ -60,8 +61,6 @@ def run(script: str, prg: str = None) -> MeshTransformer:
         [
             prg,
             "--quiet",
-            "--export-format",
-            "off",  # The OFF format is more compact than the default STL format
             "-o",
             str(off_path),
             str(scad_path),

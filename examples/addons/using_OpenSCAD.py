@@ -34,7 +34,7 @@ def main(filename: str):
     sphere.flip_normals()  # important for OpenSCAD
 
     script = openscad.boolean_operation(openscad.DIFFERENCE, sponge, sphere)
-    result = openscad.run(script, OPENSCAD)
+    result = openscad.run(script)
     print("Result has:")
     print(f"{len(result.vertices)} vertices")
     print(f"{len(result.faces)} faces")
