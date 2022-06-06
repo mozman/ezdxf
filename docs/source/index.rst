@@ -28,19 +28,26 @@ Quick-Info
 Included Extensions
 -------------------
 
-- :mod:`~ezdxf.addons.drawing` add-on to visualise and convert DXF files to images which can be saved to
-  various formats such as png, pdf and svg
+- :mod:`~ezdxf.addons.drawing` add-on to visualise and convert DXF files to
+  images which can be saved to various formats such as png, pdf and svg
 - :mod:`~ezdxf.addons.geo` add-on to support the `__geo_interface__ <https://gist.github.com/sgillies/2217756>`_
-- :mod:`~ezdxf.addons.r12writer` add-on to write basic DXF entities direct and fast into a DXF R12 file or stream
-- :mod:`~ezdxf.addons.iterdxf` add-on to iterate over entities of the modelspace of really big (> 5GB) DXF files which
-  do not fit into memory
-- :mod:`~ezdxf.addons.importer` add-on to import entities, blocks and table entries from another DXF document
-- :mod:`~ezdxf.addons.dxf2code` add-on to generate Python code for DXF structures loaded from DXF
-  documents as starting point for parametric DXF entity creation
+- :mod:`~ezdxf.addons.r12writer` add-on to write basic DXF entities direct and
+  fast into a DXF R12 file or stream
+- :mod:`~ezdxf.addons.iterdxf` add-on to iterate over entities of the modelspace
+  of really big (> 5GB) DXF files which do not fit into memory
+- :mod:`~ezdxf.addons.importer` add-on to import entities, blocks and table
+  entries from another DXF document
+- :mod:`~ezdxf.addons.dxf2code` add-on to generate Python code for DXF structures
+  loaded from DXF documents as starting point for parametric DXF entity creation
 - :mod:`~ezdxf.addons.acadctb` add-on to read/write :ref:`plot_style_files`
-- :mod:`~ezdxf.addons.pycsg` add-on for Constructive Solid Geometry (CSG) modeling technique
 - :class:`~ezdxf.addons.MTextExplode` add-on for exploding MTEXT entities into
   single line TEXT entities
+- :class:`~ezdxf.addons.meshex` add-on for mesh exchange with other tools in
+  various file formats
+- :class:`~ezdxf.addons.openscad` add-on uses the `OpenSCAD <https://openscad.org/>`_
+  application to apply boolean operations to meshes
+- :mod:`~ezdxf.addons.pycsg` add-on for Constructive Solid Geometry (CSG)
+  modeling technique
 
 Website
 -------
