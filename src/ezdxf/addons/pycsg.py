@@ -4,7 +4,7 @@
 # Additions by Alex Pletzer (Pennsylvania State University)
 # Integration as ezdxf add-on, Copyright (c) 2020, Manfred Moitzi, MIT License.
 from typing import List, Optional
-from ezdxf.math import Vec3
+from ezdxf.math import Vec3, best_fit_normal
 from ezdxf.render import MeshVertexMerger, MeshBuilder, MeshTransformer
 
 # Implementation Details
@@ -312,8 +312,10 @@ class CSG:
         if mesh is None:
             self.polygons: List[Polygon] = []
         else:
+            mesh_copy = mesh.copy()
+            mesh_copy.normalize_faces()
             self.polygons = [
-                Polygon(face, meshid) for face in mesh.faces_as_vertices()
+                Polygon(face, meshid) for face in mesh_copy.faces_as_vertices()
             ]
 
     @classmethod

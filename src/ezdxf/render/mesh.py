@@ -724,7 +724,7 @@ class MeshBuilder:
         return list(separate_meshes(self))
 
     def normalize_faces(self) -> None:
-        """Removes duplicated vertx indices from faces and stores all faces as
+        """Removes duplicated vertex indices from faces and stores all faces as
         open faces, where the last vertex is not coincident with the first
         vertex.
 
