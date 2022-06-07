@@ -4,7 +4,7 @@
 # Additions by Alex Pletzer (Pennsylvania State University)
 # Integration as ezdxf add-on, Copyright (c) 2020, Manfred Moitzi, MIT License.
 from typing import List, Optional
-from ezdxf.math import Vec3, best_fit_normal
+from ezdxf.math import Vec3, best_fit_normal, normal_vector_3p
 from ezdxf.render import MeshVertexMerger, MeshBuilder, MeshTransformer
 
 # Implementation Details
@@ -57,7 +57,7 @@ class Plane:
 
     @classmethod
     def from_points(cls, a: Vec3, b: Vec3, c: Vec3) -> "Plane":
-        n = (b - a).cross(c - a).normalize()
+        n = normal_vector_3p(a, b, c)
         return Plane(n, n.dot(a))
 
     def clone(self) -> "Plane":
@@ -158,7 +158,11 @@ class Polygon:
 
     def __init__(self, vertices: List[Vec3], meshid: int = 0):
         self.vertices = vertices
-        self.plane = Plane.from_points(vertices[0], vertices[1], vertices[2])
+        try:
+            normal = normal_vector_3p(vertices[0], vertices[1], vertices[2])
+        except ZeroDivisionError:  # got three colinear vertices
+            normal = best_fit_normal(vertices)
+        self.plane = Plane(normal, normal.dot(vertices[0]))
         # number of mesh, this polygon is associated to
         self.meshid = meshid
 
