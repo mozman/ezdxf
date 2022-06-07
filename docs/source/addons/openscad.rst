@@ -55,6 +55,16 @@ Functions
 
 .. autofunction:: is_installed
 
+.. class:: Script
+
+    Helper class to build OpenSCAD scripts.
+
+    .. automethod:: add
+
+    .. automethod:: add_polyhedron
+
+    .. automethod:: get_string
+
 Boolean Operation Constants
 ---------------------------
 

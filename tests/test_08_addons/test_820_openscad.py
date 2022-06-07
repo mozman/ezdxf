@@ -7,19 +7,11 @@ from ezdxf.render import MeshBuilder
 
 
 class TestScriptBuilder:
-    def test_build_block_operation(self):
-        script = openscad.Script()
-        script.add("union()")
-        script.begin_block()
-        script.end_block()
-        assert script.get_string() == "union()\n{\n}\n"
-
     def test_build_boolean_operation(self):
         m = MeshBuilder()
         script = openscad.boolean_operation(openscad.UNION, m, m)
         assert script == (
-            "union()\n"
-            "{\n"
+            "union() {\n"
             "polyhedron(points = [\n"
             "], faces = [\n"
             "], convexity = 10);\n"
@@ -28,7 +20,7 @@ class TestScriptBuilder:
             "], faces = [\n"
             "], convexity = 10);\n"
             "\n"
-            "}\n"
+            "}"
         )
 
     @pytest.mark.parametrize("op,func", [

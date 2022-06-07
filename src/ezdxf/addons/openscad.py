@@ -90,19 +90,16 @@ class Script:
         self.data: List[str] = []
 
     def add(self, data: str) -> None:
+        """Add a string."""
         self.data.append(data)
 
-    def begin_block(self):
-        self.add("{")
-
-    def end_block(self):
-        self.add("}")
-
-    def add_mesh(self, mesh: MeshBuilder) -> None:
+    def add_polyhedron(self, mesh: MeshBuilder) -> None:
+        """Add `mesh` as polyhedron() entity."""
         self.add(meshex.scad_dumps(mesh))
 
     def get_string(self) -> str:
-        return "\n".join(self.data) + "\n"
+        """Returns the OpenSCAD build script. """
+        return "\n".join(self.data)
 
 
 def boolean_operation(
@@ -120,9 +117,8 @@ def boolean_operation(
     """
     assert isinstance(op, Operation), "enum of type Operation expected"
     script = Script()
-    script.add(f"{op.name}()")
-    script.begin_block()
-    script.add_mesh(mesh1)
-    script.add_mesh(mesh2)
-    script.end_block()
+    script.add(f"{op.name}() {{")
+    script.add_polyhedron(mesh1)
+    script.add_polyhedron(mesh2)
+    script.add("}")
     return script.get_string()
