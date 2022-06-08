@@ -1,5 +1,7 @@
 # Copyright (c) 2018-2021 Manfred Moitzi
 # License: MIT License
+import pytest
+
 import math
 from ezdxf.render.forms import (
     circle,
@@ -262,3 +264,16 @@ class TestTorus:
             diag.n_faces == (16 * 8) * 2 + end_cap_face_count * 2
         ), "invalid count of end cap triangles?"
         assert diag.is_manifold is True
+
+    @pytest.mark.parametrize("r", [2, 1, -2])
+    def test_major_radius_is_bigger_than_minor_radius(self, r):
+        with pytest.raises(ValueError):
+            torus(major_radius=1, minor_radius=r)
+
+    def test_major_radius_is_bigger_than_zero(self):
+        with pytest.raises(ValueError):
+            torus(major_radius=0)
+
+    def test_minor_radius_is_bigger_than_zero(self):
+        with pytest.raises(ValueError):
+            torus(minor_radius=0)

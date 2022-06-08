@@ -1024,8 +1024,12 @@ def torus(
         raise ValueError(f"minor_count < 3")
     major_radius = fabs(float(major_radius))
     minor_radius = fabs(float(minor_radius))
-    if minor_radius > major_radius:
-        raise ValueError("minor_radius > major_radius")
+    if major_radius < 1e-9:
+        raise ValueError("major_radius is 0")
+    if minor_radius < 1e-9:
+        raise ValueError("minor_radius is 0")
+    if minor_radius >= major_radius:
+        raise ValueError("minor_radius >= major_radius")
     start_angle = float(start_angle) % tau
     if end_angle is not tau:
         end_angle = float(end_angle) % tau
