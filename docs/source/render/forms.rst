@@ -72,6 +72,8 @@ Create 3D forms as :class:`~ezdxf.render.MeshTransformer` objects.
 
 .. autofunction:: sphere
 
+.. autofunction:: torus
+
 3D Form Builder
 ---------------
 

@@ -927,14 +927,14 @@ def sphere(
     count: int = 16, stacks: int = 8, radius: float = 1, quads=True
 ) -> MeshTransformer:
     """Create a `sphere <https://en.wikipedia.org/wiki/Sphere>`_ as
-    :class:`~ezdxf.render.MeshTransformer` object, center is fixed at origin
-    (0, 0, 0).
+    :class:`~ezdxf.render.MeshTransformer` object, the center of the sphere is
+    always at (0, 0, 0).
 
     Args:
         count: longitudinal slices
         stacks: latitude slices
         radius: radius of sphere
-        quads: use quads for body faces if ``True`` else triangles
+        quads: use quads for faces if ``True`` else triangles
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
@@ -1009,6 +1009,27 @@ def torus(
     caps=True,
     ngons=True,
 ) -> MeshTransformer:
+    """Create a `torus <https://en.wikipedia.org/wiki/Torus>`_ as
+    :class:`~ezdxf.render.MeshTransformer` object, the center of the torus is
+    always at (0, 0, 0). The `major_radius` has to be bigger than the
+    `minor_radius`.
+
+    Args:
+        major_count: count of circles
+        minor_count: count of circle vertices
+        major_radius: radius of the circle center
+        minor_radius: radius of circle
+        start_angle: start angle of torus in radians
+        end_angle: end angle of torus in radians
+        caps: close hull with start- and end caps if the torus is open
+        ngons: use ngons for faces if ``True`` else triangles
+
+    Returns: :class:`~ezdxf.render.MeshTransformer`
+
+    .. versionadded:: 0.18
+
+    """
+
     def add_cap(profile):
         if ngons:
             mesh.add_face(profile)
