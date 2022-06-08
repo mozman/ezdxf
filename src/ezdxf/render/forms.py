@@ -1009,7 +1009,15 @@ def torus(
     start_angle: float = 0.0,
     end_angle: float = tau,
     caps=True,
+    ngons=True,
 ) -> MeshTransformer:
+    def add_cap(profile):
+        if ngons:
+            mesh.add_face(profile)
+        else:
+            for face in ngon_to_triangles(profile):
+                mesh.add_face(face)
+
     if major_count < 1:
         raise ValueError(f"major_count < 1")
     if minor_count < 3:
@@ -1038,29 +1046,51 @@ def torus(
     end_profile = [v.rotate(step_angle) for v in circle_profile]
 
     if not closed_torus and caps:  # add start cap
-        mesh.add_face(start_profile)
+        add_cap(start_profile)
 
     for _ in range(major_count):
-        for face in connection_faces(start_profile, end_profile):
+        for face in connection_faces(start_profile, end_profile, ngons):
             mesh.add_face(face)
         start_profile = end_profile
         end_profile = [v.rotate(step_angle) for v in end_profile]
 
     if not closed_torus and caps:  # add end cap
-        mesh.add_face(reversed(start_profile))
+        # end_profile is rotated to the next profile!
+        add_cap(reversed(start_profile))
 
     return MeshTransformer.from_builder(mesh)
 
 
 def connection_faces(
-    start_profile: List[Vec3], end_profile: List[Vec3]
+    start_profile: List[Vec3], end_profile: List[Vec3], quad: bool
 ) -> Iterator[Sequence[Vec3]]:
     assert len(start_profile) == len(
         end_profile
     ), "profiles differ in vertex count"
+    if quad:
+        yield from _quad_connection_faces(start_profile, end_profile)
+    else:
+        yield from _tri_connection_faces(start_profile, end_profile)
+
+
+def _quad_connection_faces(
+    start_profile: List[Vec3], end_profile: List[Vec3]
+) -> Iterator[Sequence[Vec3]]:
     v0_prev = start_profile[0]
     v1_prev = end_profile[0]
     for v0, v1 in zip(start_profile[1:], end_profile[1:]):
         yield v0_prev, v1_prev, v1, v0
+        v0_prev = v0
+        v1_prev = v1
+
+
+def _tri_connection_faces(
+    start_profile: List[Vec3], end_profile: List[Vec3]
+) -> Iterator[Sequence[Vec3]]:
+    v0_prev = start_profile[0]
+    v1_prev = end_profile[0]
+    for v0, v1 in zip(start_profile[1:], end_profile[1:]):
+        yield v0_prev, v1_prev, v1
+        yield v1, v0, v0_prev
         v0_prev = v0
         v1_prev = v1

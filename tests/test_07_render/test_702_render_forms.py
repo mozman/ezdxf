@@ -230,16 +230,35 @@ def test_ngons_to_triangles():
 
 
 class TestTorus:
-    def test_closed_torus(self):
+    def test_closed_torus_ngon_faces(self):
         t = torus(major_count=16, minor_count=8)
         diag = t.diagnose()
         assert diag.n_vertices == 16 * 8
         assert diag.n_faces == 16 * 8
         assert diag.is_manifold is True
 
-    def test_open_torus(self):
+    def test_open_torus_ngon_faces(self):
         t = torus(major_count=16, minor_count=8, end_angle=math.pi)
         diag = t.diagnose()
         assert diag.n_vertices == 17 * 8
         assert diag.n_faces == 16 * 8 + 2
+        assert diag.is_manifold is True
+
+    def test_closed_torus_triangle_faces(self):
+        t = torus(major_count=16, minor_count=8, ngons=False)
+        diag = t.diagnose()
+        assert diag.n_vertices == 16 * 8
+        assert diag.n_faces == 16 * 8 * 2
+        assert diag.is_manifold is True
+
+    def test_open_torus_triangle_faces(self):
+        t = torus(major_count=16, minor_count=8, end_angle=math.pi, ngons=False)
+        diag = t.diagnose()
+        assert (
+            diag.n_vertices == 17 * 8 + 2
+        ), "expected two additional vertices in the center of the end caps"
+        end_cap_face_count = 8
+        assert (
+            diag.n_faces == (16 * 8) * 2 + end_cap_face_count * 2
+        ), "invalid count of end cap triangles?"
         assert diag.is_manifold is True
