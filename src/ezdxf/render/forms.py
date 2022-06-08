@@ -1047,7 +1047,7 @@ def torus(
         end_profile = [v.rotate(step_angle) for v in end_profile]
 
     if not closed_torus and caps:  # add end cap
-        mesh.add_face(reversed(end_profile))
+        mesh.add_face(reversed(start_profile))
 
     return MeshTransformer.from_builder(mesh)
 

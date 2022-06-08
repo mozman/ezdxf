@@ -2,6 +2,7 @@
 # License: MIT License
 
 from pathlib import Path
+import math
 import ezdxf
 
 from ezdxf.render.forms import torus
@@ -17,8 +18,13 @@ doc.layers.new("normals", dxfattribs={"color": 6})
 doc.set_modelspace_vport(6, center=(5, 0))
 msp = doc.modelspace()
 
-torus_mesh = torus(major_count=32, minor_count=16)
-torus_mesh.render_mesh(msp, dxfattribs={"layer": "form"})
-torus_mesh.render_normals(msp, dxfattribs={"layer": "normals"})
+closed_torus = torus(major_count=32, minor_count=16)
+closed_torus.render_mesh(msp, dxfattribs={"layer": "form"})
+closed_torus.render_normals(msp, dxfattribs={"layer": "normals"})
+
+open_torus = torus(major_count=16, minor_count=16, end_angle=math.pi, caps=True)
+open_torus.translate(5)
+open_torus.render_mesh(msp, dxfattribs={"layer": "form"})
+open_torus.render_normals(msp, dxfattribs={"layer": "normals"})
 
 doc.saveas(DIR / "torus.dxf")

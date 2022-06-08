@@ -1,5 +1,6 @@
 # Copyright (c) 2018-2021 Manfred Moitzi
 # License: MIT License
+import math
 from ezdxf.render.forms import (
     circle,
     close_polygon,
@@ -234,4 +235,11 @@ class TestTorus:
         diag = t.diagnose()
         assert diag.n_vertices == 16 * 8
         assert diag.n_faces == 16 * 8
+        assert diag.is_manifold is True
+
+    def test_open_torus(self):
+        t = torus(major_count=16, minor_count=8, end_angle=math.pi)
+        diag = t.diagnose()
+        assert diag.n_vertices == 17 * 8
+        assert diag.n_faces == 16 * 8 + 2
         assert diag.is_manifold is True
