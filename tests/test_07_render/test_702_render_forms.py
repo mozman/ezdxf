@@ -7,6 +7,7 @@ from ezdxf.render.forms import (
     extrude,
     cylinder,
     cone,
+    torus,
     square,
     box,
     ngon,
@@ -225,3 +226,12 @@ def test_ngons_to_triangles():
     # also subdivide triangles
     r = list(ngon_to_triangles([(0, 0), (1, 0), (1, 1)]))
     assert len(r) == 3
+
+
+class TestTorus:
+    def test_closed_torus(self):
+        t = torus(major_count=16, minor_count=8)
+        diag = t.diagnose()
+        assert diag.n_vertices == 16 * 8
+        assert diag.n_faces == 16 * 8
+        assert diag.is_manifold is True

@@ -1,8 +1,8 @@
 # Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Iterable, List, Tuple, Sequence
-from math import pi, sin, cos, radians, tan, isclose, asin, fabs
+from typing import Iterable, List, Tuple, Sequence, Iterator
+from math import pi, tau, sin, cos, radians, tan, isclose, asin, fabs
 from enum import IntEnum
 from ezdxf.math import (
     Vec3,
@@ -10,6 +10,7 @@ from ezdxf.math import (
     Matrix44,
     global_bspline_interpolation,
     EulerSpiral,
+    arc_angle_span_rad,
 )
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
@@ -41,6 +42,7 @@ __all__ = [
     "cone_2p",
     "rotation_form",
     "sphere",
+    "torus",
 ]
 
 
@@ -443,9 +445,7 @@ def rotate(
         return (Vec3(v).rotate(angle) for v in vertices)
 
 
-def scale(
-    vertices: Iterable[UVec], scaling=(1.0, 1.0, 1.0)
-) -> Iterable[Vec3]:
+def scale(vertices: Iterable[UVec], scaling=(1.0, 1.0, 1.0)) -> Iterable[Vec3]:
     """Scale `vertices` around the origin (0, 0), faster than a Matrix44
     transformation.
 
@@ -520,8 +520,8 @@ def cube(center: bool = True) -> MeshTransformer:
 
     """
     mesh = MeshTransformer()
-    vectices = _cube0_vertices if center else _cube_vertices
-    mesh.add_mesh(vertices=vectices, faces=cube_faces)  # type: ignore
+    vertices = _cube0_vertices if center else _cube_vertices
+    mesh.add_mesh(vertices=vertices, faces=cube_faces)  # type: ignore
     return mesh
 
 
@@ -529,11 +529,11 @@ def extrude(
     profile: Iterable[UVec], path: Iterable[UVec], close=True
 ) -> MeshTransformer:
     """Extrude a `profile` polygon along a `path` polyline, vertices of profile
-    should be in counter clockwise order.
+    should be in counter-clockwise order.
 
     Args:
-        profile: sweeping profile as list of (x, y, z) tuples in counter
-            clockwise order
+        profile: sweeping profile as list of (x, y, z) tuples in
+            counter-clockwise order
         path:  extrusion path as list of (x, y, z) tuples
         close: close profile polygon if ``True``
 
@@ -550,7 +550,7 @@ def extrude(
                 bottom,
                 top,
                 prev_top,
-            )  # counter clock wise: normals outwards
+            )  # counter clock wise: normals pointing outwards
             mesh.faces.append(face)
             prev_bottom = bottom
             prev_top = top
@@ -999,3 +999,68 @@ def sphere(
     cap_triangles(stacks_2 - 1, top=True)
 
     return MeshTransformer.from_builder(mesh)
+
+
+def torus(
+    major_count: int = 16,
+    minor_count: int = 8,
+    major_radius=1.0,
+    minor_radius=0.1,
+    start_angle: float = 0.0,
+    end_angle: float = tau,
+    caps=True,
+) -> MeshTransformer:
+    if major_count < 1:
+        raise ValueError(f"major_count < 1")
+    if minor_count < 3:
+        raise ValueError(f"minor_count < 3")
+    major_radius = fabs(float(major_radius))
+    minor_radius = fabs(float(minor_radius))
+    if minor_radius > major_radius:
+        raise ValueError("minor_radius > major_radius")
+    start_angle = float(start_angle) % tau
+    if end_angle is not tau:
+        end_angle = float(end_angle) % tau
+    angle_span = arc_angle_span_rad(start_angle, end_angle)
+    closed_torus = isclose(angle_span, tau)
+    step_angle = angle_span / major_count
+    circle_profile = [
+        Vec3(v.x, 0, v.y)
+        for v in translate(
+            circle(minor_count, minor_radius, close=True),
+            Vec3(major_radius, 0, 0),
+        )
+    ]
+    if start_angle > 1e-9:
+        circle_profile = [v.rotate(start_angle) for v in circle_profile]
+    mesh = MeshVertexMerger()
+    start_profile = circle_profile
+    end_profile = [v.rotate(step_angle) for v in circle_profile]
+
+    if not closed_torus and caps:  # add start cap
+        mesh.add_face(start_profile)
+
+    for _ in range(major_count):
+        for face in connection_faces(start_profile, end_profile):
+            mesh.add_face(face)
+        start_profile = end_profile
+        end_profile = [v.rotate(step_angle) for v in end_profile]
+
+    if not closed_torus and caps:  # add end cap
+        mesh.add_face(reversed(end_profile))
+
+    return MeshTransformer.from_builder(mesh)
+
+
+def connection_faces(
+    start_profile: List[Vec3], end_profile: List[Vec3]
+) -> Iterator[Sequence[Vec3]]:
+    assert len(start_profile) == len(
+        end_profile
+    ), "profiles differ in vertex count"
+    v0_prev = start_profile[0]
+    v1_prev = end_profile[0]
+    for v0, v1 in zip(start_profile[1:], end_profile[1:]):
+        yield v0_prev, v1_prev, v1, v0
+        v0_prev = v0
+        v1_prev = v1

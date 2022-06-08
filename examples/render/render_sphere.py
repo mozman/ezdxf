@@ -7,6 +7,8 @@ import ezdxf
 from ezdxf.render.forms import sphere
 
 DIR = Path("~/Desktop/Outbox").expanduser()
+if not DIR.exists():
+    DIR = Path(".")
 
 doc = ezdxf.new()
 doc.layers.new("form", dxfattribs={"color": 5})
