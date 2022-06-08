@@ -87,12 +87,33 @@ def test_cube():
     assert len(c.faces) == 6
 
 
-def test_extrude():
-    profile = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
-    path = ((0, 0, 0), (0, 0, 1))
-    mesh = extrude(profile, path, close=True)
-    assert len(mesh.vertices) == 8
-    assert len(mesh.faces) == 4
+class TestExtrude:
+    @pytest.fixture
+    def profile(self):
+        return [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+
+    def test_extrude_without_caps(self, profile):
+        path = ((0, 0, 0), (0, 0, 1))
+        diag = extrude(profile, path, close=True, caps=False).diagnose()
+        assert diag.n_vertices == 8
+        assert diag.n_faces == 4
+        assert diag.is_manifold is True
+
+    def test_extrude_open_profiles_ignore_caps(self, profile):
+        path = ((0, 0, 0), (0, 0, 1))
+        diag = extrude(profile, path, close=False, caps=True).diagnose()
+        assert diag.n_vertices == 8
+        assert diag.n_faces == 3, "hull should be open"
+        assert diag.is_manifold is True
+
+    def test_extrude_with_caps(self, profile):
+        path = ((0, 0, 0), (0, 0, 1))
+        diag = extrude(profile, path, close=True, caps=True).diagnose()
+        assert len(diag.faces[0]) == 4, "bottom face should have 4 vertices"
+        assert diag.n_vertices == 8
+        assert diag.n_faces == 6
+        assert diag.is_manifold is True
+        assert len(diag.faces[-1]) == 4, "top face should have 4 vertices"
 
 
 def test_from_profiles_linear():

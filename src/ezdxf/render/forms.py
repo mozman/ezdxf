@@ -526,50 +526,48 @@ def cube(center: bool = True) -> MeshTransformer:
 
 
 def extrude(
-    profile: Iterable[UVec], path: Iterable[UVec], close=True
+    profile: Iterable[UVec], path: Iterable[UVec], close=True, caps=False
 ) -> MeshTransformer:
     """Extrude a `profile` polygon along a `path` polyline, vertices of profile
-    should be in counter-clockwise order.
+    should be in counter-clockwise order. The sweeping profile will not be
+    rotated at extrusion!
 
     Args:
         profile: sweeping profile as list of (x, y, z) tuples in
             counter-clockwise order
         path:  extrusion path as list of (x, y, z) tuples
         close: close profile polygon if ``True``
+        caps: close hull with bottom cap and top cap if `profile` is closed
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
+    .. versionchanged:: 0.18
+
+        added parameter `caps` to close hull with bottom cap and top cap if
+        `profile` is closed
+
     """
-
-    def add_hull(bottom_profile, top_profile):
-        prev_bottom = bottom_profile[0]
-        prev_top = top_profile[0]
-        for bottom, top in zip(bottom_profile[1:], top_profile[1:]):
-            face = (
-                prev_bottom,
-                bottom,
-                top,
-                prev_top,
-            )  # counter clock wise: normals pointing outwards
-            mesh.faces.append(face)
-            prev_bottom = bottom
-            prev_top = top
-
     mesh = MeshVertexMerger()
-    profile = Vec3.list(profile)
+    profile0 = Vec3.list(profile)
     if close:
-        profile = close_polygon(profile)
+        profile0 = close_polygon(profile0)
+    is_closed = profile0[0].isclose(profile0[-1])
+
     path = Vec3.list(path)
+    if is_closed and caps:
+        mesh.add_face(profile0[:-1])
     start_point = path[0]  # type: ignore
-    bottom_indices = mesh.add_vertices(profile)  # base profile
     for target_point in path[1:]:  # type: ignore
         translation_vector = target_point - start_point
-        # profile will just be translated
-        profile = [vec + translation_vector for vec in profile]
-        top_indices = mesh.add_vertices(profile)
-        add_hull(bottom_indices, top_indices)
-        bottom_indices = top_indices
+        # translate profile
+        profile1 = [vec + translation_vector for vec in profile0]
+        for face in _quad_connection_faces(profile0, profile1):
+            mesh.add_face(face)
+        profile0 = profile1
         start_point = target_point
+    if is_closed and caps:
+        mesh.add_face(profile0[:-1])
+
     return MeshTransformer.from_builder(mesh)
 
 
