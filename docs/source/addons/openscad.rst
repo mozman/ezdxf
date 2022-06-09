@@ -45,6 +45,47 @@ Example:
 .. image:: gfx/openscad_menger_minus_sphere.png
     :align: center
 
+openpyscad
+----------
+
+This add-on is not a complete wrapper around `OpenSCAD`_, if you need such a
+tool look at the `openpyscad`_ package at the PyPI.
+
+This code snippet shows how to get the :class:`~ezdxf.render.MeshTransformer`
+object from the basic `openpyscad`_ example:
+
+.. code-block:: Python
+
+    from ezdxf.addons import openscad
+    import openpyscad as ops
+
+    c1 = ops.Cube([10, 20, 10])
+    c2 = ops.Cube([20, 10, 10])
+
+    # dump OpenSCAD script as string:
+    script = (c1 + c2).dumps()
+
+    # execute script and load the result as MeshTransformer instance:
+    mesh = openscad.run(script)
+
+Create an `openpyscad`_ :class:`Polyhedron` object from a, `ezdxf`
+:class:`~ezdxf.render.MeshBuilder` object:
+
+.. code-block:: Python
+
+    from ezdxf.render import forms
+    import openpyscad as ops
+
+    # create an ezdxf MeshBuilder() object
+    sphere = forms.sphere()
+
+    # create an openpyscad Polyhedron() object
+    polyhedron = ops.Polyhedron(
+        points=[list(p) for p in sphere.vertices],  # convert Vec3 objects to lists!
+        faces=[list(f) for f in sphere.faces],  # convert face tuples to face lists!
+    )
+
+The type conversion is needed to get valid `OpenSCAD`_ code from `openpyscad`_!
 
 Functions
 ---------
@@ -89,3 +130,4 @@ Boolean Operation Constants
 .. attribute:: INTERSECTION
 
 .. _OpenSCAD: https://openscad.org
+.. _openpyscad: https://pypi.org/project/openpyscad/
