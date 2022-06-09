@@ -179,7 +179,7 @@ Create a `pysolid`_ :class:`polyhedron` object from an `ezdxf`
     sphere = forms.sphere()
     sphere.flip_normals()  # required for OpenSCAD
 
-    # create an pysolid polyhedron() object
+    # create a pysolid polyhedron() object
     ph = polyhedron(
         points=[v.xyz for v in sphere.vertices],  # convert Vec3 objects to tuples!
         faces=sphere.faces,  # types are compatible
