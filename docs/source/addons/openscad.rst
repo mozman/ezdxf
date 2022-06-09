@@ -120,6 +120,7 @@ Create an `openpyscad`_ :class:`Polyhedron` object from an `ezdxf`
 
     # create an ezdxf MeshBuilder() object
     sphere = forms.sphere()
+    sphere.flip_normals()  # required for OpenSCAD
 
     # create an openpyscad Polyhedron() object
     polyhedron = ops.Polyhedron(
@@ -162,6 +163,7 @@ Create a `pysolid`_ :class:`polyhedron` object from an `ezdxf`
 
     # create an ezdxf MeshBuilder() object
     sphere = forms.sphere()
+    sphere.flip_normals()  # required for OpenSCAD
 
     # create an pysolid polyhedron() object
     ph = polyhedron(
