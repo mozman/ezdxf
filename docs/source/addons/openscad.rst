@@ -61,14 +61,12 @@ Script Class
 
     Helper class to build OpenSCAD scripts. This is a very simple string
     building class and does no checks at all! If you need more advanced
-    features to build OpenSCAD scripts look  at the packages `pysolid`_ and
+    features to build OpenSCAD scripts look at the packages `pysolid`_ and
     `openpyscad`_.
 
     .. automethod:: add
 
     .. automethod:: add_mirror
-
-    .. automethod:: add_module
 
     .. automethod:: add_multmatrix
 

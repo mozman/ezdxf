@@ -95,7 +95,6 @@ def str_matrix44(m: Matrix44) -> str:
 
 class Script:
     def __init__(self):
-        self.modules: List[Script] = []
         self.data: List[str] = []
 
     def add(self, data: str) -> None:
@@ -214,34 +213,9 @@ class Script:
         n = Vec3(v).normalize()
         self.add(f"mirror(v = [{n.x:g}, {n.y:g}, {n.z:g}])")
 
-    def add_module(self, definition: str) -> Script:
-        """Add a module definition. The definition string is the module signature
-        without preceding "module" and without the opening curly brace like
-        ``"m0(x)"``, this code::
-
-            m0 = script.add_module("m0(x)")
-            m0.add("sphere(x);")
-
-        creates this module definition::
-
-            module m0(x) {
-            sphere(x);
-            }
-
-        The closing curly brace is added automatically by building the script by
-        :meth:`get_string`.
-
-        """
-        script = Script()
-        self.modules.append(script)
-        script.add(f"module {definition} {{")
-        return script
-
     def get_string(self) -> str:
         """Returns the OpenSCAD build script."""
-        data = [module.get_string() + "\n}" for module in self.modules]
-        data.extend(self.data)
-        return "\n".join(data)
+        return "\n".join(self.data)
 
 
 def boolean_operation(
