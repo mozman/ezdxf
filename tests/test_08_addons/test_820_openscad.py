@@ -81,17 +81,50 @@ class TestScriptBuilder:
     def test_add_auto_resize_operation(self):
         script = openscad.Script()
         script.add_resize(10, 0, 0, auto=True)
-        assert script.get_string() == "resize(newsize = [10, 0, 0], auto = true)"
+        assert (
+            script.get_string() == "resize(newsize = [10, 0, 0], auto = true)"
+        )
 
     def test_add_multi_auto_resize_operation(self):
         script = openscad.Script()
         script.add_resize(10, 0, 0, auto=(False, True, False))
-        assert script.get_string() == "resize(newsize = [10, 0, 0], auto = [false, true, false])"
+        assert (
+            script.get_string()
+            == "resize(newsize = [10, 0, 0], auto = [false, true, false])"
+        )
 
     def test_add_mirror_operation(self):
         script = openscad.Script()
         script.add_mirror((10, 0, 0))
         assert script.get_string() == "mirror(v = [1, 0, 0])"
+
+    def test_add_one_module(self):
+        script = openscad.Script()
+        m0 = script.add_module("m0(x)")
+        m0.add("sphere(r=x);")
+        assert script.get_string() == "module m0(x) {\nsphere(r=x);\n}"
+
+    def test_add_two_modules(self):
+        script = openscad.Script()
+        m0 = script.add_module("m0(x)")
+        m1 = script.add_module("m1(y)")
+        m0.add("sphere(r=x);")
+        m1.add("sphere(r=y);")
+        # all the models
+        script.add("m0(7);")
+        script.add_translate((7, 0))
+        script.add("m1(7);")
+        assert (
+            script.get_string() == "module m0(x) {\n"
+            "sphere(r=x);\n"
+            "}\n"
+            "module m1(y) {\n"
+            "sphere(r=y);\n"
+            "}\n"
+            "m0(7);\n"
+            "translate(v = [7, 0, 0])\n"
+            "m1(7);"
+        )
 
 
 if __name__ == "__main__":

@@ -54,13 +54,21 @@ Functions
 
 .. autofunction:: is_installed
 
+Script Class
+------------
+
 .. class:: Script
 
-    Helper class to build OpenSCAD scripts.
+    Helper class to build OpenSCAD scripts. This is a very simple string
+    building class and does no checks at all! If you need more advanced
+    features to build OpenSCAD scripts look  at the packages `pysolid`_ and
+    `openpyscad`_.
 
     .. automethod:: add
 
     .. automethod:: add_mirror
+
+    .. automethod:: add_module
 
     .. automethod:: add_multmatrix
 
@@ -95,7 +103,7 @@ tool look at the `openpyscad`_ or `pysolid`_ packages at PyPI.
 
 Not sure if the `openpyscad`_ package is still maintained, the last commit at
 `github <https://github.com/taxpon/openpyscad>`_ is more than a year old and
-did not pass CI process! (state June 2022)
+did not pass the CI process! (state June 2022)
 
 This code snippet shows how to get the :class:`~ezdxf.render.MeshTransformer`
 object from the basic `openpyscad`_ example:
