@@ -61,7 +61,21 @@ Functions
 
     .. automethod:: add
 
+    .. automethod:: add_mirror
+
+    .. automethod:: add_multmatrix
+
     .. automethod:: add_polyhedron
+
+    .. automethod:: add_resize
+
+    .. automethod:: add_rotate
+
+    .. automethod:: add_rotate_about_axis
+
+    .. automethod:: add_scale
+
+    .. automethod:: add_translate
 
     .. automethod:: get_string
 

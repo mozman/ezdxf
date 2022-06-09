@@ -1,6 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import List
+from typing import List, Union, Tuple
 from pathlib import Path
 import enum
 import platform
@@ -9,7 +9,7 @@ import subprocess
 from uuid import uuid4
 import tempfile
 
-from ezdxf.math import Matrix44
+from ezdxf.math import Matrix44, UVec, Vec3
 from ezdxf.render import MeshBuilder, MeshTransformer
 from ezdxf.addons import meshex
 
@@ -101,16 +101,119 @@ class Script:
         self.data.append(data)
 
     def add_polyhedron(self, mesh: MeshBuilder) -> None:
-        """Add `mesh` as polyhedron() entity."""
+        """Add `mesh` as ``polyhedron()`` command.
+
+        OpenSCAD docs: https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Primitive_Solids#polyhedron
+
+        """
         self.add(meshex.scad_dumps(mesh))
 
-    def add_multmatrix(self, m: Matrix44):
+    def add_multmatrix(self, m: Matrix44) -> None:
         """Add a transformation matrix of type :class:`~ezdxf.math.Matrix44` as
-        ``multmatrix()`` operation."""
+        ``multmatrix()`` operation.
+
+        OpenSCAD docs: https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Transformations#multmatrix
+
+        """
         self.add(f"multmatrix(m = {str_matrix44(m)})")  # no pending ";"
 
+    def add_translate(self, v: UVec) -> None:
+        """Add a ``translate()`` operation.
+
+        OpenSCAD docs: https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Transformations#translate
+
+        Args:
+            v: translation vector
+
+        """
+        vec = Vec3(v)
+        self.add(f"translate(v = [{vec.x:g}, {vec.y:g}, {vec.z:g}])")
+
+    def add_rotate(self, ax: float, ay: float, az: float) -> None:
+        """Add a ``rotation()`` operation.
+
+        OpenSCAD docs: https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Transformations#rotate
+
+        Args:
+            ax: rotation about the x-axis in degrees
+            ay: rotation about the y-axis in degrees
+            az: rotation about the z-axis in degrees
+
+        """
+        self.add(f"rotate(a = [{ax:g}, {ay:g}, {az:g}])")
+
+    def add_rotate_about_axis(self, a: float, v: UVec) -> None:
+        """Add a ``rotation()`` operation about the given axis `v`.
+
+        OpenSCAD docs: https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Transformations#rotate
+
+        Args:
+            a: rotation angle about axis `v` in degrees
+            v: rotation axis as :class:`ezdxf.math.UVec` object
+
+        """
+        vec = Vec3(v)
+        self.add(f"rotate(a = {a:g}, v = [{vec.x:g}, {vec.y:g}, {vec.z:g}])")
+
+    def add_scale(self, sx: float, sy: float, sz: float) -> None:
+        """Add a ``scale()`` operation.
+
+        OpenSCAD docs: https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Transformations#scale
+
+        Args:
+            sx: scaling factor for the x-axis
+            sy: scaling factor for the y-axis
+            sz: scaling factor for the z-axis
+
+        """
+        self.add(f"scale(v = [{sx:g}, {sy:g}, {sz:g}])")
+
+    def add_resize(
+        self,
+        nx: float,
+        ny: float,
+        nz: float,
+        auto: Union[bool, Tuple[bool, bool, bool]] = None,
+    ) -> None:
+        """Add a ``resize()`` operation.
+
+        OpenSCAD docs: https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Transformations#resize
+
+        Args:
+            nx: new size in x-axis
+            ny: new size in y-axis
+            nz: new size in z-axis
+            auto: If the `auto` argument is set to ``True``, the operation
+                auto-scales any 0-dimensions to match. Set the `auto` argument
+                as a  3-tuple of bool values to auto-scale individual axis.
+
+        """
+        main = f"resize(newsize = [{nx:g}, {ny:g}, {nz:g}]"
+        if auto is None:
+            self.add(main + ")")
+            return
+        elif isinstance(auto, bool):
+            flags = str(auto).lower()
+        else:
+            flags = ", ".join([str(a).lower() for a in auto])
+            flags = f"[{flags}]"
+        self.add(main + f", auto = {flags})")
+
+    def add_mirror(self, v: UVec) -> None:
+        """Add a ``mirror()`` operation.
+
+        OpenSCAD docs: https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Transformations#mirror
+
+        Args:
+            v: the normal vector of a plane intersecting the origin through
+                which to mirror the object
+
+        """
+        n = Vec3(v).normalize()
+        self.add(f"mirror(v = [{n.x:g}, {n.y:g}, {n.z:g}])")
+
     def get_string(self) -> str:
-        """Returns the OpenSCAD build script. """
+        """Returns the OpenSCAD build script."""
         return "\n".join(self.data)
 
 
