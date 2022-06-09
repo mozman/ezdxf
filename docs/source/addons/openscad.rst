@@ -93,6 +93,10 @@ openpyscad
 This add-on is not a complete wrapper around `OpenSCAD`_, if you need such a
 tool look at the `openpyscad`_ or `pysolid`_ packages at PyPI.
 
+Not sure if the `openpyscad`_ package is still maintained, the last commit at
+`github <https://github.com/taxpon/openpyscad>`_ is more than a year old and
+did not pass CI process! (state June 2022)
+
 This code snippet shows how to get the :class:`~ezdxf.render.MeshTransformer`
 object from the basic `openpyscad`_ example:
 
@@ -138,8 +142,8 @@ pysolid
 -------
 
 The `pysolid`_ package seems to be better maintained than the `openpyscad`_ package,
-but this is just an opinion based on newer commits at github for the `pysolid`_
-package.
+but this is just an opinion based on newer commits at github
+(`link <https://github.com/SolidCode/SolidPython>`_) for the `pysolid`_ package.
 
 Same example for `pysolid`_:
 
