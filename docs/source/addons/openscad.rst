@@ -137,6 +137,10 @@ The type conversion is needed to get valid `OpenSCAD`_ code from `openpyscad`_!
 pysolid
 -------
 
+The `pysolid`_ package seems to be better maintained than the `openpyscad`_ package,
+but this is just an opinion based on newer commits at github for the `pysolid`_
+package.
+
 Same example for `pysolid`_:
 
 .. code-block:: Python
@@ -167,7 +171,7 @@ Create a `pysolid`_ :class:`polyhedron` object from an `ezdxf`
 
     # create an pysolid polyhedron() object
     ph = polyhedron(
-        points=[tuple(v) for v in sphere.vertices],  # convert Vec3 objects to tuples!
+        points=[v.xyz for v in sphere.vertices],  # convert Vec3 objects to tuples!
         faces=sphere.faces,  # types are compatible
     )
 
