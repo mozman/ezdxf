@@ -1175,25 +1175,15 @@ def _make_sweep_start_and_end_profiles(
 ) -> Tuple[List[Sequence[Vec3]], List[Sequence[Vec3]]]:
     spath = Vec3.list(sweeping_path)
     reference_profile = Vec3.list(profile)
-    origin = spath[0]
-    segment_vector = spath[1] - origin
-    ucs = reference_frame(segment_vector, origin)
-    start_profiles = [list(ucs.points_to_wcs(reference_profile))]
+    start_profiles = []
     end_profiles = []
 
-    for index, target in enumerate(spath[1:]):
+    for origin, target in zip(spath, spath[1:]):
         segment_vector = target - origin
-        if index > 0:  # start next segment:
-            ucs = reference_frame(segment_vector, origin)
-            start_profile = list(ucs.points_to_wcs(reference_profile))
-            start_profiles.append(start_profile)
-
-        # extrude profile by shifting the ucs to the location of the
-        # end profile:
-        ucs.origin = target
-        end_profile = list(ucs.points_to_wcs(reference_profile))
-        end_profiles.append(end_profile)
-        origin = target
+        ucs = reference_frame(segment_vector, origin)
+        start_profile = list(ucs.points_to_wcs(reference_profile))
+        start_profiles.append(start_profile)
+        end_profiles.append([v + segment_vector for v in start_profile])
     return start_profiles, end_profiles
 
 
