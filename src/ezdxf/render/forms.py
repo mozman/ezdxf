@@ -11,6 +11,10 @@ from ezdxf.math import (
     global_bspline_interpolation,
     EulerSpiral,
     arc_angle_span_rad,
+    NULLVEC,
+    Z_AXIS,
+    UCS,
+    intersection_ray_ray_3d,
 )
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
@@ -43,6 +47,7 @@ __all__ = [
     "rotation_form",
     "sphere",
     "torus",
+    "reference_frame",
 ]
 
 
@@ -1117,3 +1122,84 @@ def _tri_connection_faces(
         yield v1, v0, v0_prev
         v0_prev = v0
         v1_prev = v1
+
+
+def reference_frame(tangent: Vec3, origin: Vec3 = NULLVEC, ref_z=Z_AXIS) -> UCS:
+    """Returns a reference frame as UCS from the given tangent and the
+    WCS z-axis as reference "up" direction.
+    The z-axis of the reference frame is pointing in tangent direction, the
+    x-axis is pointing right and the y-axis is pointing upwards.
+
+    The reference frame is used to project vertices in xy-plane
+    (construction plane) onto the normal plane of the given tangent.
+
+    """
+    try:
+        return UCS(uy=ref_z.cross(tangent), uz=tangent, origin=origin)
+    except ZeroDivisionError:
+        return UCS(origin=origin)
+
+
+def _partial_path_factors(path: List[Vec3]) -> List[float]:
+    partial_lengths = [v1.distance(v2) for v1, v2 in zip(path, path[1:])]
+    total_length = sum(partial_lengths)
+    factors = [0.0]
+    partial_sum = 0.0
+    for pl in partial_lengths:
+        partial_sum += pl
+        factors.append(partial_sum / total_length)
+    return factors
+
+
+def _intersect_rays(
+    prev_rays: Sequence[Sequence[Vec3]], next_rays: Sequence[Sequence[Vec3]]
+) -> Iterator[Vec3]:
+    for ray1, ray2 in zip(prev_rays, next_rays):
+        ip = intersection_ray_ray_3d(ray1, ray2)
+        count = len(ip)
+        if count == 1:  # exact intersection
+            yield ip[0]
+        elif count == 2:  # imprecise intersection
+            yield ip[0].lerp(ip[1])
+        else:  # parallel rays
+            yield ray1[-1].lerp(ray2[0])
+
+
+def _intersection_profiles(
+    start_profiles: Sequence[Sequence[Vec3]],
+    end_profiles: Sequence[Sequence[Vec3]],
+) -> List[Sequence[Vec3]]:
+    profiles: List[Sequence[Vec3]] = [start_profiles[0]]
+    rays = [
+        [(v0, v1) for v0, v1 in zip(p0, p1)]
+        for p0, p1 in zip(start_profiles, end_profiles)
+    ]
+    for prev_rays, next_rays in zip(rays, rays[1:]):
+        profiles.append(list(_intersect_rays(prev_rays, next_rays)))
+    profiles.append(end_profiles[-1])
+    return profiles
+
+
+def sweep(
+    profile: Sequence[Vec3], sweeping_path: Iterable[Vec3]
+) -> List[Sequence[Vec3]]:
+    # profile_factors = partial_path_factors(sweeping_path)
+    spath = list(sweeping_path)
+    origin = spath[0]
+    start_profiles = []
+    end_profiles = []
+    start_profile = list(profile)
+
+    for target in spath[1:]:
+        segment_vector = target - origin
+
+        # extrude profile along tangent
+        end_profile = [v + segment_vector for v in start_profile]
+        start_profiles.append(start_profile)
+        end_profiles.append(end_profile)
+
+        # calculate next start profile
+        ucs = reference_frame(segment_vector, target)
+        start_profile = list(ucs.points_to_wcs(profile))
+        origin = target
+    return _intersection_profiles(start_profiles, end_profiles)

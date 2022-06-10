@@ -24,6 +24,7 @@ from ezdxf.render.forms import from_profiles_linear, from_profiles_spline
 from ezdxf.render.forms import rotation_form, ngon_to_triangles
 from ezdxf.render.forms import translate, rotate, scale
 from ezdxf.math import Vec3, close_vectors
+from ezdxf.render.forms import _intersection_profiles
 
 
 def test_circle_open():
@@ -298,3 +299,17 @@ class TestTorus:
     def test_minor_radius_is_bigger_than_zero(self):
         with pytest.raises(ValueError):
             torus(minor_radius=0)
+
+
+def test_intersection_profiles():
+    p0 = Vec3.list([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
+    p1 = Vec3.list([(0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)])
+    p2 = Vec3.list([(0, 0, 1), (0, 0, 2), (0, 1, 2), (0, 1, 1)])
+    p3 = Vec3.list([(-1, 0, 1), (-1, 0, 2), (-1, 1, 2), (-1, 1, 1)])
+    profiles = _intersection_profiles([p0, p2], [p1, p3])
+    assert profiles[0] == p0
+    assert (
+        close_vectors(profiles[1], [(0, 0, 1), (1, 0, 2), (1, 1, 2), (0, 1, 1)])
+        is True
+    )
+    assert profiles[2] == p3
