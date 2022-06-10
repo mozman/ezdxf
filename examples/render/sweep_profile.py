@@ -20,12 +20,14 @@ sweeping_path = list(p0.flattening(distance=0.1))
 doc = ezdxf.new()
 msp = doc.modelspace()
 
-msp.add_polyline3d(
-    circle, close=True, dxfattribs={"color": ezdxf.colors.YELLOW}
-)
-msp.add_polyline3d(sweeping_path, dxfattribs={"color": ezdxf.colors.BLUE})
-profiles = forms.sweep(circle, sweeping_path)
-mesh = forms.from_profiles_linear(profiles, close=True)
+profiles = forms.sweep_profile(circle, sweeping_path)
+mesh = forms.from_profiles_linear(profiles, close=True, caps=True)
+mesh.render_mesh(msp, dxfattribs={"color": ezdxf.colors.MAGENTA})
+
+square = forms.square()
+profiles = forms.sweep_profile(square, [(0, 0, 0), (0, 0, 5), (5, 0, 5)])
+mesh = forms.from_profiles_linear(profiles, close=True, caps=True)
+mesh.translate(10, 0, 0)
 mesh.render_mesh(msp, dxfattribs={"color": ezdxf.colors.MAGENTA})
 
 doc.saveas(DIR / "sweep_profile.dxf")
