@@ -1170,23 +1170,22 @@ def _intersection_profiles(
 
 
 def _make_sweep_start_and_end_profiles(
-    profile: Sequence[UVec],
+    profile: Iterable[UVec],
     sweeping_path: Iterable[UVec],
 ) -> Tuple[List[Sequence[Vec3]], List[Sequence[Vec3]]]:
     spath = Vec3.list(sweeping_path)
     reference_profile = Vec3.list(profile)
-
-    start_profiles = [list(reference_profile)]
-    end_profiles = []
-    ucs = UCS()
     origin = spath[0]
+    segment_vector = spath[1] - origin
+    ucs = reference_frame(segment_vector, origin)
+    start_profiles = [list(ucs.points_to_wcs(reference_profile))]
+    end_profiles = []
+
     for index, target in enumerate(spath[1:]):
         segment_vector = target - origin
         if index > 0:  # start next segment:
             ucs = reference_frame(segment_vector, origin)
-            start_profile = list(
-                ucs.points_to_wcs(reference_profile)
-            )
+            start_profile = list(ucs.points_to_wcs(reference_profile))
             start_profiles.append(start_profile)
 
         # extrude profile by shifting the ucs to the location of the
@@ -1199,9 +1198,46 @@ def _make_sweep_start_and_end_profiles(
 
 
 def sweep_profile(
-    profile: Sequence[UVec],
+    profile: Iterable[UVec],
     sweeping_path: Iterable[UVec],
 ) -> List[Sequence[Vec3]]:
+    """Returns the intermediate profiles of sweeping a profile along a 3D path
+    where the sweeping path defines the final location in the `WCS`.
+
+    The profile is defined in a reference system. The origin of this reference
+    system will be moved along the sweeping path where the z-axis of the
+    reference system is pointing into the moving direction.
+
+    Returns the start-, end- and all intermediate profiles along the sweeping
+    path.
+
+    """
     return _intersection_profiles(
         *_make_sweep_start_and_end_profiles(profile, sweeping_path)
     )
+
+
+def sweep(
+    profile: Iterable[UVec], sweeping_path: Iterable[UVec], close=True, caps=True
+) -> MeshTransformer:
+    """Returns the mesh from sweeping a profile along a 3D path, where the
+    sweeping path defines the final location in the `WCS`.
+
+    The profile is defined in a reference system. The origin of this reference
+    system will be moved along the sweeping path where the z-axis of the
+    reference system is pointing into the moving direction.
+
+    Returns the mesh as :class:`ezdxf.render.MeshTransformer` object.
+
+    Args:
+        profile: sweeping profile defined in the reference system as
+            iterable of (x, y, z) coordinates in counter-clockwise order
+        sweeping_path: the sweeping path defined in the WCS as iterable of
+            (x, y, z) coordinates
+        close: close sweeping profile if ``True``
+        caps: close hull with bottom cap and top cap
+
+    """
+
+    profiles = sweep_profile(profile, sweeping_path)
+    return from_profiles_linear(profiles, close=close, caps=caps)
