@@ -13,6 +13,7 @@ from ezdxf.math import (
     arc_angle_span_rad,
     NULLVEC,
     Z_AXIS,
+    X_AXIS,
     UCS,
     intersection_ray_ray_3d,
 )
@@ -48,6 +49,7 @@ __all__ = [
     "sphere",
     "torus",
     "reference_frame",
+    "reference_frame_ext",
 ]
 
 
@@ -1124,7 +1126,7 @@ def _tri_connection_faces(
         v1_prev = v1
 
 
-def reference_frame(tangent: Vec3, origin: Vec3 = NULLVEC, ref_z=Z_AXIS) -> UCS:
+def reference_frame(tangent: Vec3, origin: Vec3 = NULLVEC) -> UCS:
     """Returns a reference frame as UCS from the given tangent and the
     WCS z-axis as reference "up" direction.
     The z-axis of the reference frame is pointing in tangent direction, the
@@ -1133,15 +1135,38 @@ def reference_frame(tangent: Vec3, origin: Vec3 = NULLVEC, ref_z=Z_AXIS) -> UCS:
     The reference frame is used to project vertices in xy-plane
     (construction plane) onto the normal plane of the given tangent.
 
+    Use the :func:`reference_frame_ext` if tangent is parallel to the WCS
+    Z_AXIS.
+
+    Args:
+        tangent: WCS direction of the reference frame z-axis
+        origin: new UCS origin
+
+    Raises:
+        ZeroDivisionError: tangent in parallel to WCS Z_AXIS
+
     .. versionadded:: 0.18
 
-        has still errors, if tangent is parallel to Z_AXIS
+    """
+    return UCS(uy=Z_AXIS.cross(tangent), uz=tangent, origin=origin)
+
+
+def reference_frame_ext(ux: Vec3, uy: Vec3, origin: Vec3 = NULLVEC) -> UCS:
+    """Reference frame calculation if tangent vector is parallel to the WCS
+    Z_AXIS.
+
+    Args:
+        ux: x-axis of the previous reference frame
+        uy: y-axis of the previous reference frame
+        origin: new UCS origin
+
+    .. versionadded:: 0.18
 
     """
-    try:
-        return UCS(uy=ref_z.cross(tangent), uz=tangent, origin=origin)
-    except ZeroDivisionError:
-        return UCS(origin=origin)
+    try:  # preserve x-axis
+        return UCS(uy=Z_AXIS.cross(ux), uz=Z_AXIS, origin=origin)
+    except ZeroDivisionError:  # preserve y-axis
+        return UCS(ux=uy.cross(Z_AXIS), uz=Z_AXIS, origin=origin)
 
 
 def _intersect_rays(
@@ -1181,10 +1206,14 @@ def _make_sweep_start_and_end_profiles(
     reference_profile = Vec3.list(profile)
     start_profiles = []
     end_profiles = []
-
+    ucs = UCS()
     for origin, target in zip(spath, spath[1:]):
         segment_vector = target - origin
-        ucs = reference_frame(segment_vector, origin)
+        try:
+            ucs = reference_frame(segment_vector, origin)
+        except ZeroDivisionError:
+            # segment vector is parallel to the Z_AXIS
+            ucs = reference_frame_ext(ucs.ux, ucs.uy, origin)
         start_profile = list(ucs.points_to_wcs(reference_profile))
         start_profiles.append(start_profile)
         end_profiles.append([v + segment_vector for v in start_profile])

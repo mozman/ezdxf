@@ -24,7 +24,11 @@ from ezdxf.render.forms import from_profiles_linear, from_profiles_spline
 from ezdxf.render.forms import rotation_form, ngon_to_triangles
 from ezdxf.render.forms import translate, rotate, scale
 from ezdxf.math import Vec3, close_vectors
-from ezdxf.render.forms import _intersection_profiles
+from ezdxf.render.forms import (
+    _intersection_profiles,
+    reference_frame,
+    reference_frame_ext,
+)
 
 
 def test_circle_open():
@@ -314,3 +318,28 @@ def test_intersection_profiles():
     )
     assert profiles[2] == p3
 
+
+class TestReferenceFrame:
+    def test_ref_z_in_x_axis(self):
+        ucs = reference_frame(Vec3(1, 0, 0))
+        assert ucs.uy.isclose((0, 1, 0))
+        assert ucs.uz.isclose((1, 0, 0))
+        assert ucs.ux.isclose((0, 0, -1))
+
+    @pytest.mark.parametrize("n", [Vec3(0, 0, 1), Vec3(0, 0, -1)])
+    def test_ref_z_in_z_axis_raise_exception(self, n):
+        with pytest.raises(ZeroDivisionError):
+            reference_frame(n)
+
+    def test_ref_ext_preserve_x(self):
+        ucs = reference_frame_ext(Vec3(1, 0, 0), Vec3(0, 1, 0))
+        assert ucs.ux.isclose((1, 0, 0))
+        assert ucs.uy.isclose((0, 1, 0))
+        assert ucs.uz.isclose((0, 0, 1))
+
+    def test_ref_ext_preserve_y(self):
+        # x-axis of previous reference frame is parallel to the Z_AXIS
+        ucs = reference_frame_ext(Vec3(0, 0, 1), Vec3(0, 1, 0))
+        assert ucs.ux.isclose((1, 0, 0))
+        assert ucs.uy.isclose((0, 1, 0))
+        assert ucs.uz.isclose((0, 0, 1))
