@@ -163,7 +163,7 @@ def open_arrow(
 ) -> Tuple[Vec3, Vec3, Vec3]:
     """Returns 3 vertices for an open arrow `<` with a length of the given
     `size`, argument `angle` defines the enclosing angle in degrees.
-    Vertex order: upward end vertex, tip (0, 0) , downward end vertex (counter
+    Vertex order: upward end vertex, tip (0, 0) , downward end vertex (counter-
     clockwise order)
 
     Args:
@@ -1140,17 +1140,6 @@ def reference_frame(tangent: Vec3, origin: Vec3 = NULLVEC, ref_z=Z_AXIS) -> UCS:
         return UCS(origin=origin)
 
 
-def _partial_path_factors(path: Sequence[Vec3]) -> List[float]:
-    partial_lengths = [v1.distance(v2) for v1, v2 in zip(path, path[1:])]
-    total_length = sum(partial_lengths)
-    factors = [0.0]
-    partial_sum = 0.0
-    for pl in partial_lengths:
-        partial_sum += pl
-        factors.append(partial_sum / total_length)
-    return factors
-
-
 def _intersect_rays(
     prev_rays: Sequence[Sequence[Vec3]], next_rays: Sequence[Sequence[Vec3]]
 ) -> Iterator[Vec3]:
@@ -1180,54 +1169,39 @@ def _intersection_profiles(
     return profiles
 
 
-def sweep_profile(
+def _make_sweep_start_and_end_profiles(
     profile: Sequence[UVec],
     sweeping_path: Iterable[UVec],
-    scaling: float = 1.0,
-    twist: float = 0.0,
-) -> List[Sequence[Vec3]]:
-    def transform_ref(factor: float, angle: float) -> Sequence[Vec3]:
-        _profile = list(reference_profile)
-        if factor != 1.0:
-            _profile = [v * factor for v in _profile]
-        if angle:
-            _profile = [v.rotate(angle) for v in _profile]
-        return _profile
-
+) -> Tuple[List[Sequence[Vec3]], List[Sequence[Vec3]]]:
     spath = Vec3.list(sweeping_path)
     reference_profile = Vec3.list(profile)
 
-    profile_factors = _partial_path_factors(spath)
     start_profiles = [list(reference_profile)]
     end_profiles = []
-    angle = 0.0
-    scaling_delta = scaling - 1.0
-    factor = 1.0
     ucs = UCS()
     origin = spath[0]
     for index, target in enumerate(spath[1:]):
-        profile_factor = profile_factors[index + 1]
         segment_vector = target - origin
         if index > 0:  # start next segment:
             ucs = reference_frame(segment_vector, origin)
             start_profile = list(
-                ucs.points_to_wcs(transform_ref(factor, angle))
+                ucs.points_to_wcs(reference_profile)
             )
             start_profiles.append(start_profile)
-
-        # scale and twist parameters for the next joint
-        if twist:
-            angle = twist * profile_factor
-        if scaling_delta:
-            factor = 1.0 + scaling_delta * profile_factor
 
         # extrude profile by shifting the ucs to the location of the
         # end profile:
         ucs.origin = target
-        end_profile = list(
-            ucs.points_to_wcs(transform_ref(factor, angle))
-        )
+        end_profile = list(ucs.points_to_wcs(reference_profile))
         end_profiles.append(end_profile)
         origin = target
+    return start_profiles, end_profiles
 
-    return _intersection_profiles(start_profiles, end_profiles)
+
+def sweep_profile(
+    profile: Sequence[UVec],
+    sweeping_path: Iterable[UVec],
+) -> List[Sequence[Vec3]]:
+    return _intersection_profiles(
+        *_make_sweep_start_and_end_profiles(profile, sweeping_path)
+    )

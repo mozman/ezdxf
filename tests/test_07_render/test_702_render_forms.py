@@ -24,7 +24,7 @@ from ezdxf.render.forms import from_profiles_linear, from_profiles_spline
 from ezdxf.render.forms import rotation_form, ngon_to_triangles
 from ezdxf.render.forms import translate, rotate, scale
 from ezdxf.math import Vec3, close_vectors
-from ezdxf.render.forms import _intersection_profiles, _partial_path_factors
+from ezdxf.render.forms import _intersection_profiles
 
 
 def test_circle_open():
@@ -314,7 +314,3 @@ def test_intersection_profiles():
     )
     assert profiles[2] == p3
 
-
-def test_partial_path_factors():
-    factors = _partial_path_factors(Vec3.list([(0, 0), (1, 0), (3, 0), (4, 0)]))
-    assert factors == pytest.approx([0.0, 0.25, 0.75, 1.0])
