@@ -29,7 +29,8 @@ offset = 10, 0, 0
 mesh.translate(*offset)
 mesh.render_mesh(msp, dxfattribs={"color": ezdxf.colors.MAGENTA})
 
-sweeping_path = [(0, 0, 5), (5, 0, 5), (5, 5, 5), (5, 5, 10)]
+# shows error in reference frame calculation:
+sweeping_path = [(0, 0, 5), (5, 0, 5), (5, 5, 5), (6, 5, 10)]
 mesh = forms.sweep(square, sweeping_path, close=True, caps=True)
 offset = 10, 10, 0
 mesh.translate(*offset)

@@ -1133,6 +1133,10 @@ def reference_frame(tangent: Vec3, origin: Vec3 = NULLVEC, ref_z=Z_AXIS) -> UCS:
     The reference frame is used to project vertices in xy-plane
     (construction plane) onto the normal plane of the given tangent.
 
+    .. versionadded:: 0.18
+
+        has still errors, if tangent is parallel to Z_AXIS
+
     """
     try:
         return UCS(uy=ref_z.cross(tangent), uz=tangent, origin=origin)
@@ -1172,7 +1176,7 @@ def _intersection_profiles(
 def _make_sweep_start_and_end_profiles(
     profile: Iterable[UVec],
     sweeping_path: Iterable[UVec],
-) -> Tuple[List[Sequence[Vec3]], List[Sequence[Vec3]]]:
+) -> Tuple[List[List[Vec3]], List[List[Vec3]]]:
     spath = Vec3.list(sweeping_path)
     reference_profile = Vec3.list(profile)
     start_profiles = []
@@ -1201,6 +1205,10 @@ def sweep_profile(
     Returns the start-, end- and all intermediate profiles along the sweeping
     path.
 
+    .. versionadded:: 0.18
+
+        has still errors in reference frame calculation
+
     """
     return _intersection_profiles(
         *_make_sweep_start_and_end_profiles(profile, sweeping_path)
@@ -1227,7 +1235,10 @@ def sweep(
         close: close sweeping profile if ``True``
         caps: close hull with bottom cap and top cap
 
-    """
+    .. versionadded:: 0.18
 
+        has still errors in reference frame calculation
+
+    """
     profiles = sweep_profile(profile, sweeping_path)
     return from_profiles_linear(profiles, close=close, caps=caps)
