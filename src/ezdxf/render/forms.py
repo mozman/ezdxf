@@ -13,7 +13,6 @@ from ezdxf.math import (
     arc_angle_span_rad,
     NULLVEC,
     Z_AXIS,
-    X_AXIS,
     UCS,
     intersection_ray_ray_3d,
 )
@@ -145,20 +144,41 @@ def euler_spiral(
         yield vertex.replace(z=elevation)
 
 
-def square(size: float = 1.0) -> Tuple[Vec3, Vec3, Vec3, Vec3]:
-    """Returns 4 vertices for a square with a side length of the given `size`,
-    lower left corner is ``(0, 0)``, upper right corner is (`size`, `size`).
+def square(size: float = 1.0, center=False) -> Tuple[Vec3, Vec3, Vec3, Vec3]:
+    """Returns 4 vertices for a square with a side length of the given `size`.
+    The center of the square in (0, 0) if `center` is ``True`` otherwise
+    the lower left corner is (0, 0), upper right corner is (`size`, `size`).
+
+    .. versionchanged:: 0.18
+
+        added argument `center`
 
     """
-    return Vec3(0, 0), Vec3(size, 0), Vec3(size, size), Vec3(0, size)
+    if center:
+        a = size / 2.0
+        return Vec3(-a, -a), Vec3(a, -a), Vec3(a, a), Vec3(-a, a)
+    else:
+        return Vec3(0, 0), Vec3(size, 0), Vec3(size, size), Vec3(0, size)
 
 
-def box(sx: float = 1.0, sy: float = 1.0) -> Tuple[Vec3, Vec3, Vec3, Vec3]:
+def box(
+    sx: float = 1.0, sy: float = 1.0, center=False
+) -> Tuple[Vec3, Vec3, Vec3, Vec3]:
     """Returns 4 vertices for a box with a width of `sx` by and a height of
-    `sy`, lower left corner is ``(0, 0)``, upper right corner is (`sx`, `sy`).
+    `sy`. The center of the box in (0, 0) if `center` is ``True`` otherwise
+    the lower left corner is (0, 0), upper right corner is (`sx`, `sy`).
+
+    .. versionchanged:: 0.18
+
+        added argument `center`
 
     """
-    return Vec3(0, 0), Vec3(sx, 0), Vec3(sx, sy), Vec3(0, sy)
+    if center:
+        a = sx / 2.0
+        b = sy / 2.0
+        return Vec3(-a, -b), Vec3(a, -b), Vec3(a, b), Vec3(-a, b)
+    else:
+        return Vec3(0, 0), Vec3(sx, 0), Vec3(sx, sy), Vec3(0, sy)
 
 
 def open_arrow(

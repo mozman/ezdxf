@@ -19,10 +19,7 @@ msp = doc.modelspace()
 
 def add_debug_profiles(profiles, sweeping_path):
     attribs = {"layer": "DEBUG"}
-    msp.add_polyline3d(
-        sweeping_path,
-        dxfattribs={"layer": "DEBUG", "color": ezdxf.colors.MAGENTA},
-    )
+    msp.add_polyline3d(sweeping_path, dxfattribs=attribs)
     msp.add_polyline3d(profiles[0], dxfattribs=attribs)
     count = 0
     for p0, p1 in zip(profiles, profiles[1:]):
@@ -41,7 +38,7 @@ sweeping_path = list(p0.flattening(distance=0.1))
 mesh = forms.sweep(circle, sweeping_path, close=True, caps=True)
 mesh.render_mesh(msp, dxfattribs={"color": ezdxf.colors.MAGENTA})
 
-square = list(forms.translate(forms.square(), (-0.5, -0.5)))
+square = forms.square(center=True)
 sweeping_path = [(0, 0, 0), (0, 0, 5), (5, 0, 5), (5, 5, 5), (10, 5, 5)]
 mesh = forms.sweep(square, sweeping_path, close=True, caps=True)
 offset = 10, 0, 0
