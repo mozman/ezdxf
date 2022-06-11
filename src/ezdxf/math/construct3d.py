@@ -22,8 +22,10 @@ __all__ = [
     "linear_vertex_spacing",
     "has_matrix_3d_stretching",
     "spherical_envelope",
+    "inscribe_circle_tangent_length",
+    "bending_angle",
 ]
-
+PI2 = math.pi / 2.0
 
 class LocationState(IntEnum):
     COPLANAR = 0  # all the vertices are within the plane
@@ -402,3 +404,35 @@ def spherical_envelope(points: Sequence[UVec]) -> Tuple[Vec3, float]:
     centroid = Vec3.sum(points) / len(points)
     radius = max(centroid.distance(p) for p in points)
     return centroid, radius
+
+
+def inscribe_circle_tangent_length(
+    dir1: Vec3, dir2: Vec3, radius: float
+) -> float:
+    """Returns the tangent length of an inscribe-circle of the given `radius`.
+    The direction `dir1` and `dir2` define two intersection tangents,
+    The tangent length is the distance from the intersection point of the
+    tangents to the touching point on the inscribe-circle.
+
+    """
+    alpha = dir1.angle_between(dir2)
+    beta = PI2 - (alpha / 2.0)
+    if math.isclose(abs(beta), PI2):
+        return 0.0
+    return abs(math.tan(beta) * radius)
+
+
+def bending_angle(dir1: Vec3, dir2: Vec3, normal=Z_AXIS) -> float:
+    """Returns the bending angle from `dir1` to `dir2` in radians.
+
+    The normal vector is required to detect the bending orientation,
+    an angle > 0 bends to the "left" an angle < 0 bends to the "right".
+
+    """
+    angle = dir1.angle_between(dir2)
+    nn = dir1.cross(dir2)
+    if nn.isclose(normal) or nn.is_null:
+        return angle
+    elif nn.isclose(-normal):
+        return -angle
+    raise ValueError("invalid normal vector")
