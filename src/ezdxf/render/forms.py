@@ -490,11 +490,13 @@ def scale(vertices: Iterable[UVec], scaling=(1.0, 1.0, 1.0)) -> Iterable[Vec3]:
 
 
 def close_polygon(
-    vertices: Iterable[UVec], rel_tol: float = 1e-9, abs_tol: float = 1e-12
-) -> List[UVec]:
-    """Returns list of vertices, where vertices[0] == vertices[-1]."""
+    vertices: Iterable[Vec3], rel_tol: float = 1e-9, abs_tol: float = 1e-12
+) -> List[Vec3]:
+    """Returns list of :class:`~ezdxf.math.Vec3`, where the first vertex is
+    equal to the last vertex.
+    """
     vertices = list(vertices)
-    if not Vec3(vertices[0]).isclose(
+    if not vertices[0].isclose(
         vertices[-1], rel_tol=rel_tol, abs_tol=abs_tol
     ):
         vertices.append(vertices[0])
@@ -717,7 +719,7 @@ def from_profiles_linear(
 
     """
     mesh = MeshVertexMerger()
-    profiles = list(profiles)
+    profiles = [Vec3.list(p) for p in profiles]
     if close:
         profiles = [close_polygon(p) for p in profiles]
     if caps:
@@ -772,7 +774,7 @@ def spline_interpolation(
 
 
 def spline_interpolated_profiles(
-    profiles: Iterable[Iterable[UVec]], subdivide: int = 4
+    profiles: List[Sequence[Vec3]], subdivide: int = 4
 ) -> Iterable[List[Vec3]]:
     """Profile interpolation by cubic B-spline interpolation.
 
@@ -784,16 +786,16 @@ def spline_interpolated_profiles(
     Returns: yields profiles as list of vertices
 
     """
-    _profiles = [list(p) for p in profiles]
-    if len(set(len(p) for p in _profiles)) != 1:
+
+    if len(set(len(p) for p in profiles)) != 1:
         raise ValueError("All profiles have to have the same vertex count")
 
-    vertex_count = len(_profiles[0])
+    vertex_count = len(profiles[0])
     edges = (
         []
     )  # interpolated spline vertices, where profile vertices are fit points
     for index in range(vertex_count):
-        edge_vertices = [p[index] for p in _profiles]
+        edge_vertices = [p[index] for p in profiles]
         edges.append(spline_interpolation(edge_vertices, subdivide=subdivide))
 
     profile_count = len(edges[0])
@@ -823,7 +825,7 @@ def from_profiles_spline(
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
     """
-    profiles = list(profiles)
+    profiles = list(Vec3.list(p) for p in profiles)
     if len(profiles) > 3:
         profiles = spline_interpolated_profiles(profiles, subdivide)  # type: ignore
     else:

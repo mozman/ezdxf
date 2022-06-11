@@ -42,20 +42,20 @@ def test_circle_closed():
 
 
 def test_close_polygon():
-    p = list(close_polygon([(1, 0), (2, 0), (3, 0), (4, 0)]))
+    p = close_polygon(Vec3.generate([(1, 0), (2, 0), (3, 0), (4, 0)]))
     assert len(p) == 5
     assert p[4] == (1, 0)
 
 
 def test_close_polygon_without_doublets():
-    p = list(close_polygon([(1, 0), (2, 0), (3, 0), (4, 0), (1, 0)]))
+    p = close_polygon(Vec3.generate([(1, 0), (2, 0), (3, 0), (4, 0), (1, 0)]))
     assert len(p) == 5
 
 
 def test_close_circle():
     assert len(list(circle(8, close=True))) == 9
-    assert len(list(close_polygon(circle(8, close=True)))) == 9
-    assert len(list(close_polygon(circle(8, close=False)))) == 9
+    assert len(close_polygon(circle(8, close=True))) == 9
+    assert len(close_polygon(circle(8, close=False))) == 9
 
 
 def test_square():
@@ -167,7 +167,11 @@ def test_spline_interpolated_profiles():
     p2 = circle(12, radius=3, elevation=2, close=True)
     p3 = circle(12, radius=1, elevation=4, close=True)
     p4 = circle(12, radius=2, elevation=6, close=True)
-    profiles = list(spline_interpolated_profiles([p1, p2, p3, p4], subdivide=4))
+    profiles = list(
+        spline_interpolated_profiles(
+            [Vec3.list(p) for p in [p1, p2, p3, p4]], subdivide=4
+        )
+    )
     assert len(profiles) == 13  # 3*4 + 1
 
 
