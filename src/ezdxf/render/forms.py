@@ -1287,8 +1287,6 @@ def sweep_profile(
 
     .. versionadded:: 0.18
 
-        has still errors in reference frame calculation
-
     """
     return _intersection_profiles(
         *_make_sweep_start_and_end_profiles(
@@ -1339,8 +1337,6 @@ def sweep(
         caps: close hull with bottom cap and top cap
 
     .. versionadded:: 0.18
-
-        has still errors in reference frame calculation
 
     """
     profiles = sweep_profile(profile, sweeping_path)
