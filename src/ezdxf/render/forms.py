@@ -777,7 +777,7 @@ def spline_interpolation(
 
 
 def spline_interpolated_profiles(
-    profiles: List[Sequence[Vec3]], subdivide: int = 4
+    profiles: Sequence[Sequence[Vec3]], subdivide: int = 4
 ) -> Iterable[List[Vec3]]:
     """Profile interpolation by cubic B-spline interpolation.
 
@@ -811,7 +811,7 @@ def spline_interpolated_profiles(
 
 
 def from_profiles_spline(
-    profiles: Iterable[Iterable[UVec]],
+    profiles: Sequence[Sequence[Vec3]],
     subdivide: int = 4,
     close=True,
     caps=False,
@@ -831,10 +831,13 @@ def from_profiles_spline(
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
+    .. versionchanged: 0.18
+
+        restrict type of argument profiles
+
     """
-    profiles = list(Vec3.list(p) for p in profiles)
     if len(profiles) > 3:
-        profiles = spline_interpolated_profiles(profiles, subdivide)  # type: ignore
+        profiles = list(spline_interpolated_profiles(profiles, subdivide))
     else:
         raise ValueError("Spline interpolation requires at least 4 profiles")
     return from_profiles_linear(profiles, close=close, caps=caps, ngons=ngons)
