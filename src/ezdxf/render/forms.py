@@ -1,7 +1,7 @@
 # Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Iterable, List, Tuple, Sequence, Iterator
+from typing import Iterable, List, Tuple, Sequence, Iterator, Callable
 from math import pi, tau, sin, cos, radians, tan, isclose, asin, fabs
 from enum import IntEnum
 from ezdxf.math import (
@@ -48,8 +48,9 @@ __all__ = [
     "rotation_form",
     "sphere",
     "torus",
-    "reference_frame",
+    "reference_frame_z",
     "reference_frame_ext",
+    "make_next_reference_frame",
 ]
 
 
@@ -1126,47 +1127,46 @@ def _tri_connection_faces(
         v1_prev = v1
 
 
-def reference_frame(tangent: Vec3, origin: Vec3 = NULLVEC) -> UCS:
-    """Returns a reference frame as UCS from the given tangent and the
+def reference_frame_z(heading: Vec3, origin: Vec3 = NULLVEC) -> UCS:
+    """Returns a reference frame as UCS from the given heading and the
     WCS z-axis as reference "up" direction.
-    The z-axis of the reference frame is pointing in tangent direction, the
+    The z-axis of the reference frame is pointing in heading direction, the
     x-axis is pointing right and the y-axis is pointing upwards.
 
     The reference frame is used to project vertices in xy-plane
-    (construction plane) onto the normal plane of the given tangent.
+    (construction plane) onto the normal plane of the given heading.
 
-    Use the :func:`reference_frame_ext` if tangent is parallel to the WCS
+    Use the :func:`reference_frame_ext` if heading is parallel to the WCS
     Z_AXIS.
 
     Args:
-        tangent: WCS direction of the reference frame z-axis
+        heading: WCS direction of the reference frame z-axis
         origin: new UCS origin
 
     Raises:
-        ZeroDivisionError: tangent in parallel to WCS Z_AXIS
+        ZeroDivisionError: heading is parallel to WCS Z_AXIS
 
     .. versionadded:: 0.18
 
     """
-    return UCS(uy=Z_AXIS.cross(tangent), uz=tangent, origin=origin)
+    return UCS(uy=Z_AXIS.cross(heading), uz=heading, origin=origin)
 
 
-def reference_frame_ext(ux: Vec3, uy: Vec3, origin: Vec3 = NULLVEC) -> UCS:
-    """Reference frame calculation if tangent vector is parallel to the WCS
+def reference_frame_ext(frame: UCS, origin: Vec3 = NULLVEC) -> UCS:
+    """Reference frame calculation if heading vector is parallel to the WCS
     Z_AXIS.
 
     Args:
-        ux: x-axis of the previous reference frame
-        uy: y-axis of the previous reference frame
+        frame: previous reference frame
         origin: new UCS origin
 
     .. versionadded:: 0.18
 
     """
     try:  # preserve x-axis
-        return UCS(uy=Z_AXIS.cross(ux), uz=Z_AXIS, origin=origin)
+        return UCS(uy=Z_AXIS.cross(frame.ux), uz=Z_AXIS, origin=origin)
     except ZeroDivisionError:  # preserve y-axis
-        return UCS(ux=uy.cross(Z_AXIS), uz=Z_AXIS, origin=origin)
+        return UCS(ux=frame.uy.cross(Z_AXIS), uz=Z_AXIS, origin=origin)
 
 
 def _intersect_rays(
@@ -1198,25 +1198,39 @@ def _intersection_profiles(
     return profiles
 
 
+def make_next_reference_frame(frame: UCS, heading: Vec3, origin: Vec3) -> UCS:
+    """Returns the following reference frame next to the current reference
+    `frame`.
+
+    Args:
+        frame: the current reference frame
+        heading: z-axis direction of the following frame in WCS
+        origin: origin of the following reference frame
+
+    """
+    try:
+        return reference_frame_z(heading, origin)
+    except ZeroDivisionError:
+        # segment vector is parallel to the Z_AXIS
+        return reference_frame_ext(frame, origin)
+
+
 def _make_sweep_start_and_end_profiles(
     profile: Iterable[UVec],
     sweeping_path: Iterable[UVec],
+    next_ref_frame: Callable[[UCS, Vec3, Vec3], UCS],
 ) -> Tuple[List[List[Vec3]], List[List[Vec3]]]:
     spath = Vec3.list(sweeping_path)
     reference_profile = Vec3.list(profile)
     start_profiles = []
     end_profiles = []
-    ucs = UCS()
+    ref_frame = UCS()
     for origin, target in zip(spath, spath[1:]):
-        segment_vector = target - origin
-        try:
-            ucs = reference_frame(segment_vector, origin)
-        except ZeroDivisionError:
-            # segment vector is parallel to the Z_AXIS
-            ucs = reference_frame_ext(ucs.ux, ucs.uy, origin)
-        start_profile = list(ucs.points_to_wcs(reference_profile))
+        heading = target - origin
+        ref_frame = next_ref_frame(ref_frame, heading, origin)
+        start_profile = list(ref_frame.points_to_wcs(reference_profile))
         start_profiles.append(start_profile)
-        end_profiles.append([v + segment_vector for v in start_profile])
+        end_profiles.append([v + heading for v in start_profile])
     return start_profiles, end_profiles
 
 
@@ -1240,12 +1254,17 @@ def sweep_profile(
 
     """
     return _intersection_profiles(
-        *_make_sweep_start_and_end_profiles(profile, sweeping_path)
+        *_make_sweep_start_and_end_profiles(
+            profile, sweeping_path, make_next_reference_frame
+        )
     )
 
 
 def sweep(
-    profile: Iterable[UVec], sweeping_path: Iterable[UVec], close=True, caps=True
+    profile: Iterable[UVec],
+    sweeping_path: Iterable[UVec],
+    close=True,
+    caps=True,
 ) -> MeshTransformer:
     """Returns the mesh from sweeping a profile along a 3D path, where the
     sweeping path defines the final location in the `WCS`.

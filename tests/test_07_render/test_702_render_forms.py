@@ -23,10 +23,10 @@ from ezdxf.render.forms import (
 from ezdxf.render.forms import from_profiles_linear, from_profiles_spline
 from ezdxf.render.forms import rotation_form, ngon_to_triangles
 from ezdxf.render.forms import translate, rotate, scale
-from ezdxf.math import Vec3, close_vectors
+from ezdxf.math import Vec3, close_vectors, UCS
 from ezdxf.render.forms import (
     _intersection_profiles,
-    reference_frame,
+    reference_frame_z,
     reference_frame_ext,
 )
 
@@ -321,7 +321,7 @@ def test_intersection_profiles():
 
 class TestReferenceFrame:
     def test_ref_z_in_x_axis(self):
-        ucs = reference_frame(Vec3(1, 0, 0))
+        ucs = reference_frame_z(Vec3(1, 0, 0))
         assert ucs.uy.isclose((0, 1, 0))
         assert ucs.uz.isclose((1, 0, 0))
         assert ucs.ux.isclose((0, 0, -1))
@@ -329,17 +329,19 @@ class TestReferenceFrame:
     @pytest.mark.parametrize("n", [Vec3(0, 0, 1), Vec3(0, 0, -1)])
     def test_ref_z_in_z_axis_raise_exception(self, n):
         with pytest.raises(ZeroDivisionError):
-            reference_frame(n)
+            reference_frame_z(n)
 
     def test_ref_ext_preserve_x(self):
-        ucs = reference_frame_ext(Vec3(1, 0, 0), Vec3(0, 1, 0))
+        frame = UCS()
+        ucs = reference_frame_ext(frame)
         assert ucs.ux.isclose((1, 0, 0))
         assert ucs.uy.isclose((0, 1, 0))
         assert ucs.uz.isclose((0, 0, 1))
 
     def test_ref_ext_preserve_y(self):
         # x-axis of previous reference frame is parallel to the Z_AXIS
-        ucs = reference_frame_ext(Vec3(0, 0, 1), Vec3(0, 1, 0))
+        frame = UCS(ux=(0, 0, 1), uy=(0, 1, 0))
+        ucs = reference_frame_ext(frame)
         assert ucs.ux.isclose((1, 0, 0))
         assert ucs.uy.isclose((0, 1, 0))
         assert ucs.uz.isclose((0, 0, 1))
