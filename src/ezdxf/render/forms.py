@@ -1209,9 +1209,14 @@ def make_next_reference_frame(frame: UCS, heading: Vec3, origin: Vec3) -> UCS:
 
     """
     try:
-        return reference_frame_z(heading, origin)
+        next_frame = reference_frame_z(heading, origin)
+        # reverse y-axis if the next frame y-axis has opposite orientation to
+        # the previous frame y-axis:
+        if next_frame.uy.dot(frame.uy) < 0:
+            next_frame = UCS(origin=origin, uz=next_frame.uz, uy=-next_frame.uy)
+        return next_frame
     except ZeroDivisionError:
-        # segment vector is parallel to the Z_AXIS
+        # heading vector is parallel to the Z_AXIS
         return reference_frame_ext(frame, origin)
 
 
@@ -1258,6 +1263,24 @@ def sweep_profile(
             profile, sweeping_path, make_next_reference_frame
         )
     )
+
+
+def debug_sweep_profiles(
+    profile: Iterable[UVec],
+    sweeping_path: Iterable[UVec],
+    close=True,
+) -> List[Sequence[Vec3]]:
+    if close:
+        profile = close_polygon(profile)
+    profiles: List[Sequence[Vec3]] = []
+    for sp, ep in zip(
+        *_make_sweep_start_and_end_profiles(
+            profile, sweeping_path, make_next_reference_frame
+        )
+    ):
+        profiles.append(sp)
+        profiles.append(ep)
+    return profiles
 
 
 def sweep(
