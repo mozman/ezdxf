@@ -26,6 +26,7 @@ from ezdxf.math import (
     reverse_bezier_curves,
     bulge_to_arc,
     linear_vertex_spacing,
+    bending_angle,
 )
 
 from ezdxf.query import EntityQuery
@@ -59,6 +60,9 @@ __all__ = [
     "have_close_control_vertices",
     "lines_to_curve3",
     "lines_to_curve4",
+    "fillet",
+    "chamfer",
+    "chamfer2",
 ]
 
 MAX_DISTANCE = 0.01
@@ -230,7 +234,7 @@ def render_lwpolylines(
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
     extrusion: UVec = Z_AXIS,
-    dxfattribs=None
+    dxfattribs=None,
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as
     :class:`~ezdxf.entities.LWPolyline` entities.
@@ -274,7 +278,7 @@ def render_polylines2d(
     distance: float = 0.01,
     segments: int = 4,
     extrusion: UVec = Z_AXIS,
-    dxfattribs=None
+    dxfattribs=None,
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as 2D
     :class:`~ezdxf.entities.Polyline` entities.
@@ -320,7 +324,7 @@ def render_hatches(
     segments: int = MIN_SEGMENTS,
     g1_tol: float = G1_TOL,
     extrusion: UVec = Z_AXIS,
-    dxfattribs=None
+    dxfattribs=None,
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as
     :class:`~ezdxf.entities.Hatch` entities.
@@ -369,7 +373,7 @@ def render_mpolygons(
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
     extrusion: UVec = Z_AXIS,
-    dxfattribs=None
+    dxfattribs=None,
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as
     :class:`~ezdxf.entities.MPolygon` entities. The MPOLYGON entity supports
@@ -414,7 +418,7 @@ def render_polylines3d(
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
-    dxfattribs=None
+    dxfattribs=None,
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as 3D
     :class:`~ezdxf.entities.Polyline` entities.
@@ -452,7 +456,7 @@ def render_lines(
     *,
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
-    dxfattribs=None
+    dxfattribs=None,
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as
     :class:`~ezdxf.entities.Line` entities.
@@ -488,7 +492,7 @@ def render_splines_and_polylines(
     paths: Iterable[Path],
     *,
     g1_tol: float = G1_TOL,
-    dxfattribs=None
+    dxfattribs=None,
 ) -> EntityQuery:
     """Render the given `paths` into `layout` as :class:`~ezdxf.entities.Spline`
     and 3D :class:`~ezdxf.entities.Polyline` entities.
@@ -773,9 +777,7 @@ def _all_lines_to_curve(path: Path, count: int = 4) -> Path:
             else:
                 vertices = linear_vertex_spacing(start, cmd.end, count)
                 if count == 3:
-                    new_path.curve3_to(
-                        vertices[2], ctrl=vertices[1]
-                    )
+                    new_path.curve3_to(vertices[2], ctrl=vertices[1])
                 else:  # count == 4
                     new_path.curve4_to(
                         vertices[3],
@@ -786,3 +788,49 @@ def _all_lines_to_curve(path: Path, count: int = 4) -> Path:
             new_path.append_path_element(cmd)
         start = cmd.end
     return new_path
+
+
+def fillet(points: Sequence[Vec3], radius: float) -> Path:
+    return Path()
+
+
+def chamfer(points: Sequence[Vec3], length: float) -> Path:
+    if len(points) < 3:
+        raise ValueError("at least 3 not coincident points required")
+    lines = [(p0, p1) for p0, p1 in zip(points, points[1:])]
+    p = Path(points[0])
+    for (p0, p1), (p2, p3) in zip(lines, lines[1:]):
+        # p1 is p2 !
+        dir1 = p0 - p1
+        dir2 = p3 - p2
+        try:
+            angle = dir1.angle_between(dir2) / 2.0
+            a = abs((length / 2.0) / math.sin(angle))
+            offset0 = dir1.normalize(a)
+            offset1 = dir2.normalize(a)
+        except ZeroDivisionError:
+            p.line_to(p1)
+            continue
+        p.line_to(p1 + offset0)
+        p.line_to(p2 + offset1)
+    p.line_to(points[-1])
+    return p
+
+
+def chamfer2(points: Sequence[Vec3], a: float, b: float) -> Path:
+    if len(points) < 3:
+        raise ValueError("at least 3 non-coincident points required")
+    lines = [(p0, p1) for p0, p1 in zip(points, points[1:])]
+    p = Path(points[0])
+    for (p0, p1), (p2, p3) in zip(lines, lines[1:]):
+        # p1 is p2 !
+        try:
+            offset0 = (p0 - p1).normalize(a)
+            offset1 = (p3 - p2).normalize(b)
+        except ZeroDivisionError:
+            p.line_to(p1)
+            continue
+        p.line_to(p1 + offset0)
+        p.line_to(p2 + offset1)
+    p.line_to(points[-1])
+    return p

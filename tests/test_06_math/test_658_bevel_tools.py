@@ -5,6 +5,7 @@ import pytest
 import math
 from ezdxf.math import X_AXIS, Y_AXIS, Z_AXIS, Vec3
 from ezdxf.math.construct3d import inscribe_circle_tangent_length, bending_angle
+from ezdxf.path.tools import chamfer, chamfer2
 
 
 class TestInscribeCircle:
@@ -56,6 +57,55 @@ def test_bending_angle():
     normal = a.cross(b)
     assert bending_angle(a, b, normal=normal) == pytest.approx(pi2)
     assert bending_angle(a, b, normal=-normal) == pytest.approx(-pi2)
+
+
+class TestChamfer1:
+    def test_requires_three_points(self):
+        with pytest.raises(ValueError):
+            chamfer([Vec3(), Vec3()], 1.0)
+
+    def test_one_chamfer(self):
+        p = chamfer(Vec3.list([(0, 0), (5, 0), (5, 5)]), 1.0)
+        points = list(p.flattening(0))
+        assert points[0].isclose((0, 0))
+        assert points[1].isclose((4.292893218813452, 0))
+        assert points[2].isclose((5, 0.7071067811865475))
+        assert points[3].isclose((5, 5))
+        assert len(points) == 4
+
+    def test_two_chamfers(self):
+        p = chamfer(Vec3.list([(0, 0), (5, 0), (5, 5), (10, 5)]), 1.0)
+        points = list(p.flattening(0))
+        assert points[3].isclose((5, 4.292893218813452))
+        assert points[4].isclose((5.7071067811865475, 5))
+        assert points[5].isclose((10, 5))
+        assert len(points) == 6
+
+
+class TestChamfer2:
+    def test_requires_three_points(self):
+        with pytest.raises(ValueError):
+            chamfer2([Vec3(), Vec3()], 1.0, 1.0)
+
+    def test_one_chamfer(self):
+        p = chamfer2(Vec3.list([(0, 0), (5, 0), (5, 5)]), 1.0, 1.0)
+        points = list(p.flattening(0))
+        assert points[0].isclose((0, 0))
+        assert points[1].isclose((4, 0))
+        assert points[2].isclose((5, 1))
+        assert points[3].isclose((5, 5))
+        assert len(points) == 4
+
+    def test_two_chamfers(self):
+        p = chamfer2(Vec3.list([(0, 0), (5, 0), (5, 5), (10, 5)]), 0.5, 0.5)
+        points = list(p.flattening(0))
+        assert points[0].isclose((0, 0))
+        assert points[1].isclose((4.5, 0))
+        assert points[2].isclose((5, 0.5))
+        assert points[3].isclose((5, 4.5))
+        assert points[4].isclose((5.5, 5))
+        assert points[5].isclose((10, 5))
+        assert len(points) == 6
 
 
 if __name__ == "__main__":
