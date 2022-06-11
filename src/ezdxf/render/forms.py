@@ -705,7 +705,7 @@ def ngon_to_triangles(face: Iterable[UVec]) -> Iterable[Sequence[Vec3]]:
 
 
 def from_profiles_linear(
-    profiles: Iterable[Iterable[UVec]], close=True, caps=False, ngons=True
+    profiles: Sequence[Sequence[Vec3]], close=True, caps=False, ngons=True
 ) -> MeshTransformer:
     """Create MESH entity by linear connected `profiles`.
 
@@ -717,9 +717,12 @@ def from_profiles_linear(
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
+    .. versionchanged: 0.18
+
+        restrict type of argument profiles
+
     """
     mesh = MeshVertexMerger()
-    profiles = [Vec3.list(p) for p in profiles]
     if close:
         profiles = [close_polygon(p) for p in profiles]
     if caps:
@@ -784,6 +787,10 @@ def spline_interpolated_profiles(
             sub-profiles between two main profiles (4 face loops)
 
     Returns: yields profiles as list of vertices
+
+    .. versionchanged: 0.18
+
+        restrict type of argument profiles
 
     """
 

@@ -122,8 +122,8 @@ class TestExtrude:
 
 
 def test_from_profiles_linear():
-    bottom = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
-    top = [(0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)]
+    bottom = Vec3.list([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
+    top = Vec3.list([(0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)])
     mesh = from_profiles_linear([bottom, top], close=True, caps=True)
     assert len(mesh.vertices) == 8
     assert len(mesh.faces) == 6
