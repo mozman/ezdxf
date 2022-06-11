@@ -26,7 +26,7 @@ from ezdxf.math import (
     reverse_bezier_curves,
     bulge_to_arc,
     linear_vertex_spacing,
-    bending_angle,
+    inscribe_circle_tangent_length,
 )
 
 from ezdxf.query import EntityQuery
@@ -790,8 +790,43 @@ def _all_lines_to_curve(path: Path, count: int = 4) -> Path:
     return new_path
 
 
+DEFAULT_TANGENT_FACTOR = 4.0 / 3.0  # 1.333333333333333333
+OPTIMIZED_TANGENT_FACTOR = 1.3324407374108935
+TANGENT_FACTOR = DEFAULT_TANGENT_FACTOR
+
+
 def fillet(points: Sequence[Vec3], radius: float) -> Path:
-    return Path()
+    if len(points) < 3:
+        raise ValueError("at least 3 not coincident points required")
+    if radius < 0:
+        raise ValueError(f"invalid radius: {radius}")
+    lines = [(p0, p1) for p0, p1 in zip(points, points[1:])]
+    p = Path(points[0])
+    for (p0, p1), (p2, p3) in zip(lines, lines[1:]):
+        # p1 is p2 !
+        try:
+            dir1 = (p0 - p1).normalize()
+            dir2 = (p3 - p2).normalize()
+        except ZeroDivisionError:
+            p.line_to(p1)
+            continue
+        # arc start- and end points:
+        angle = dir1.angle_between(dir2)
+        tangent_length = inscribe_circle_tangent_length(dir1, dir2, radius)
+        arc_start_point = p1 + (dir1 * tangent_length)
+        arc_end_point = p2 + (dir2 * tangent_length)
+
+        # cubic bezier control points:
+        tangent_length = TANGENT_FACTOR * math.tan(angle / 4.0)
+        ctrl1 = arc_start_point + (dir1 * -tangent_length)
+        ctrl2 = arc_end_point + (dir2 * -tangent_length)
+
+        # add path elements:
+        p.line_to(arc_start_point)
+        p.curve4_to(arc_end_point, ctrl1, ctrl2)
+
+    p.line_to(points[-1])
+    return p
 
 
 def chamfer(points: Sequence[Vec3], length: float) -> Path:

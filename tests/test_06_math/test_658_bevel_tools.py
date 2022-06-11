@@ -5,7 +5,7 @@ import pytest
 import math
 from ezdxf.math import X_AXIS, Y_AXIS, Z_AXIS, Vec3
 from ezdxf.math.construct3d import inscribe_circle_tangent_length, bending_angle
-from ezdxf.path.tools import chamfer, chamfer2
+from ezdxf.path.tools import chamfer, chamfer2, fillet
 
 
 class TestInscribeCircle:
@@ -59,7 +59,7 @@ def test_bending_angle():
     assert bending_angle(a, b, normal=-normal) == pytest.approx(-pi2)
 
 
-class TestChamfer1:
+class TestChamfer:
     def test_requires_three_points(self):
         with pytest.raises(ValueError):
             chamfer([Vec3(), Vec3()], 1.0)
@@ -106,6 +106,12 @@ class TestChamfer2:
         assert points[4].isclose((5.5, 5))
         assert points[5].isclose((10, 5))
         assert len(points) == 6
+
+
+class TestFillet:
+    def test_requires_three_points(self):
+        with pytest.raises(ValueError):
+            fillet([Vec3(), Vec3()], 1.0)
 
 
 if __name__ == "__main__":
