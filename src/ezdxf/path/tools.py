@@ -16,6 +16,7 @@ from ezdxf.math import (
     UVec,
     Z_AXIS,
     OCS,
+    UCS,
     Matrix44,
     BoundingBox,
     ConstructionEllipse,
@@ -27,6 +28,7 @@ from ezdxf.math import (
     bulge_to_arc,
     linear_vertex_spacing,
     inscribe_circle_tangent_length,
+    cubic_bezier_arc_parameters,
 )
 
 from ezdxf.query import EntityQuery
@@ -807,24 +809,32 @@ def fillet(points: Sequence[Vec3], radius: float) -> Path:
         try:
             dir1 = (p0 - p1).normalize()
             dir2 = (p3 - p2).normalize()
+            if dir1.isclose(dir2) or dir1.isclose(-dir2):
+                raise ZeroDivisionError
         except ZeroDivisionError:
             p.line_to(p1)
             continue
         # arc start- and end points:
         angle = dir1.angle_between(dir2)
         tangent_length = inscribe_circle_tangent_length(dir1, dir2, radius)
+        # starting point of the fillet arc
         arc_start_point = p1 + (dir1 * tangent_length)
-        arc_end_point = p2 + (dir2 * tangent_length)
 
-        # cubic bezier control points:
-        tangent_length = TANGENT_FACTOR * math.tan(angle / 4.0)
-        ctrl1 = arc_start_point + (dir1 * -tangent_length)
-        ctrl2 = arc_end_point + (dir2 * -tangent_length)
+        # create local coordinate system:
+        # origin = center of the fillet arc
+        # x-axis = arc_center -> arc_start_point
+        local_z_axis = dir2.cross(dir1)
+        # radius_vec points from arc_start_point to the center of the fillet arc
+        radius_vec = local_z_axis.cross(-dir1).normalize(radius)
+        arc_center = arc_start_point + radius_vec
+        ucs = UCS(origin=arc_center, ux=-radius_vec, uz=local_z_axis)
 
         # add path elements:
         p.line_to(arc_start_point)
-        p.curve4_to(arc_end_point, ctrl1, ctrl2)
-
+        for params in cubic_bezier_arc_parameters(0, math.pi - angle):
+            # scale arc parameters by radius:
+            bez_points = tuple(ucs.points_to_wcs(v * radius for v in params))
+            p.curve4_to(bez_points[-1], bez_points[1], bez_points[2])
     p.line_to(points[-1])
     return p
 
@@ -836,18 +846,18 @@ def chamfer(points: Sequence[Vec3], length: float) -> Path:
     p = Path(points[0])
     for (p0, p1), (p2, p3) in zip(lines, lines[1:]):
         # p1 is p2 !
-        dir1 = p0 - p1
-        dir2 = p3 - p2
         try:
+            dir1 = (p0 - p1).normalize()
+            dir2 = (p3 - p2).normalize()
+            if dir1.isclose(dir2) or dir1.isclose(-dir2):
+                raise ZeroDivisionError
             angle = dir1.angle_between(dir2) / 2.0
             a = abs((length / 2.0) / math.sin(angle))
-            offset0 = dir1.normalize(a)
-            offset1 = dir2.normalize(a)
         except ZeroDivisionError:
             p.line_to(p1)
             continue
-        p.line_to(p1 + offset0)
-        p.line_to(p2 + offset1)
+        p.line_to(p1 + (dir1 * a))
+        p.line_to(p2 + (dir2 * a))
     p.line_to(points[-1])
     return p
 
@@ -860,12 +870,14 @@ def chamfer2(points: Sequence[Vec3], a: float, b: float) -> Path:
     for (p0, p1), (p2, p3) in zip(lines, lines[1:]):
         # p1 is p2 !
         try:
-            offset0 = (p0 - p1).normalize(a)
-            offset1 = (p3 - p2).normalize(b)
+            dir1 = (p0 - p1).normalize()
+            dir2 = (p3 - p2).normalize()
+            if dir1.isclose(dir2) or dir1.isclose(-dir2):
+                raise ZeroDivisionError
         except ZeroDivisionError:
             p.line_to(p1)
             continue
-        p.line_to(p1 + offset0)
-        p.line_to(p2 + offset1)
+        p.line_to(p1 + (dir1 * a))
+        p.line_to(p2 + (dir2 * b))
     p.line_to(points[-1])
     return p

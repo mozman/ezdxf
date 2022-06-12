@@ -380,9 +380,13 @@ class Path:
         """
 
         def approx_curve3(s, c, e) -> Iterable[Vec3]:
+            if distance == 0.0:
+                raise ValueError(f"invalid max distance: {distance}")
             return Bezier3P((s, c, e)).flattening(distance, segments)
 
         def approx_curve4(s, c1, c2, e) -> Iterable[Vec3]:
+            if distance == 0.0:
+                raise ValueError(f"invalid max distance: {distance}")
             return Bezier4P((s, c1, c2, e)).flattening(distance, segments)
 
         yield from self._approximate(approx_curve3, approx_curve4)
