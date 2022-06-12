@@ -798,6 +798,17 @@ TANGENT_FACTOR = DEFAULT_TANGENT_FACTOR
 
 
 def fillet(points: Sequence[Vec3], radius: float) -> Path:
+    """
+    Returns a :class:`Path` with circular fillets of given `radius` between
+    straight line segments.
+
+    Args:
+        points: coordinates of the line segments
+        radius: fillet radius
+
+    .. versionadded:: 0.18
+
+    """
     if len(points) < 3:
         raise ValueError("at least 3 not coincident points required")
     if radius < 0:
@@ -840,6 +851,17 @@ def fillet(points: Sequence[Vec3], radius: float) -> Path:
 
 
 def chamfer(points: Sequence[Vec3], length: float) -> Path:
+    """
+    Returns a :class:`Path` with chamfers of given `length` between
+    straight line segments.
+
+    Args:
+        points: coordinates of the line segments
+        length: chamfer length
+
+    .. versionadded:: 0.18
+
+    """
     if len(points) < 3:
         raise ValueError("at least 3 not coincident points required")
     lines = [(p0, p1) for p0, p1 in zip(points, points[1:])]
@@ -863,6 +885,18 @@ def chamfer(points: Sequence[Vec3], length: float) -> Path:
 
 
 def chamfer2(points: Sequence[Vec3], a: float, b: float) -> Path:
+    """
+    Returns a :class:`Path` with chamfers at the given distances `a` and `b`
+    from the segment points between straight line segments.
+
+    Args:
+        points: coordinates of the line segments
+        a: distance of the chamfer start point to the segment point
+        b: distance of the chamfer end point to the segment point
+
+    .. versionadded:: 0.18
+
+    """
     if len(points) < 3:
         raise ValueError("at least 3 non-coincident points required")
     lines = [(p0, p1) for p0, p1 in zip(points, points[1:])]

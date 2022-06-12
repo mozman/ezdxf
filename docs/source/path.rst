@@ -218,6 +218,12 @@ Utility Functions
 
 .. autofunction:: lines_to_curve4
 
+.. autofunction:: chamfer
+
+.. autofunction:: chamfer2
+
+.. autofunction:: fillet
+
 Basic Shapes
 ------------
 
