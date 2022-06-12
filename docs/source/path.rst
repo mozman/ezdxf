@@ -224,6 +224,8 @@ Utility Functions
 
 .. autofunction:: fillet
 
+.. autofunction:: polygonal_fillet
+
 Basic Shapes
 ------------
 

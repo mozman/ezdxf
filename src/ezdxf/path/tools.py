@@ -63,6 +63,7 @@ __all__ = [
     "lines_to_curve3",
     "lines_to_curve4",
     "fillet",
+    "polygonal_fillet",
     "chamfer",
     "chamfer2",
 ]
@@ -792,9 +793,27 @@ def _all_lines_to_curve(path: Path, count: int = 4) -> Path:
     return new_path
 
 
-DEFAULT_TANGENT_FACTOR = 4.0 / 3.0  # 1.333333333333333333
-OPTIMIZED_TANGENT_FACTOR = 1.3324407374108935
-TANGENT_FACTOR = DEFAULT_TANGENT_FACTOR
+def _get_local_fillet_ucs(p0, p1, p2, radius) -> Tuple[Vec3, float, UCS]:
+    dir1 = (p0 - p1).normalize()
+    dir2 = (p2 - p1).normalize()
+    if dir1.isclose(dir2) or dir1.isclose(-dir2):
+        raise ZeroDivisionError
+
+    # arc start- and end points:
+    angle = dir1.angle_between(dir2)
+    tangent_length = inscribe_circle_tangent_length(dir1, dir2, radius)
+    # starting point of the fillet arc
+    arc_start_point = p1 + (dir1 * tangent_length)
+
+    # create local coordinate system:
+    # origin = center of the fillet arc
+    # x-axis = arc_center -> arc_start_point
+    local_z_axis = dir2.cross(dir1)
+    # radius_vec points from arc_start_point to the center of the fillet arc
+    radius_vec = local_z_axis.cross(-dir1).normalize(radius)
+    arc_center = arc_start_point + radius_vec
+    ucs = UCS(origin=arc_center, ux=-radius_vec, uz=local_z_axis)
+    return arc_start_point, math.pi - angle, ucs
 
 
 def fillet(points: Sequence[Vec3], radius: float) -> Path:
@@ -811,41 +830,67 @@ def fillet(points: Sequence[Vec3], radius: float) -> Path:
     """
     if len(points) < 3:
         raise ValueError("at least 3 not coincident points required")
-    if radius < 0:
+    if radius <= 0:
         raise ValueError(f"invalid radius: {radius}")
     lines = [(p0, p1) for p0, p1 in zip(points, points[1:])]
     p = Path(points[0])
     for (p0, p1), (p2, p3) in zip(lines, lines[1:]):
-        # p1 is p2 !
         try:
-            dir1 = (p0 - p1).normalize()
-            dir2 = (p3 - p2).normalize()
-            if dir1.isclose(dir2) or dir1.isclose(-dir2):
-                raise ZeroDivisionError
+            start_point, angle, ucs = _get_local_fillet_ucs(p0, p1, p3, radius)
         except ZeroDivisionError:
             p.line_to(p1)
             continue
-        # arc start- and end points:
-        angle = dir1.angle_between(dir2)
-        tangent_length = inscribe_circle_tangent_length(dir1, dir2, radius)
-        # starting point of the fillet arc
-        arc_start_point = p1 + (dir1 * tangent_length)
-
-        # create local coordinate system:
-        # origin = center of the fillet arc
-        # x-axis = arc_center -> arc_start_point
-        local_z_axis = dir2.cross(dir1)
-        # radius_vec points from arc_start_point to the center of the fillet arc
-        radius_vec = local_z_axis.cross(-dir1).normalize(radius)
-        arc_center = arc_start_point + radius_vec
-        ucs = UCS(origin=arc_center, ux=-radius_vec, uz=local_z_axis)
 
         # add path elements:
-        p.line_to(arc_start_point)
-        for params in cubic_bezier_arc_parameters(0, math.pi - angle):
+        p.line_to(start_point)
+        for params in cubic_bezier_arc_parameters(0, angle):
             # scale arc parameters by radius:
             bez_points = tuple(ucs.points_to_wcs(v * radius for v in params))
             p.curve4_to(bez_points[-1], bez_points[1], bez_points[2])
+    p.line_to(points[-1])
+    return p
+
+
+def _segment_count(angle: float, count: int) -> int:
+    count = max(4, count)
+    return max(int(angle / (math.tau / count)), 1)
+
+
+def polygonal_fillet(
+    points: Sequence[Vec3], radius: float, count: int = 32
+) -> Path:
+    """
+    Returns a :class:`Path` with polygonal fillets of given `radius` between
+    straight line segments. The `count` argument defines the vertex count of the
+    fillet for a full circle.
+
+    Args:
+        points: coordinates of the line segments
+        radius: fillet radius
+        count: polygon vertex count for a full circle, minimum is 4
+
+    .. versionadded:: 0.18
+
+    """
+    if len(points) < 3:
+        raise ValueError("at least 3 not coincident points required")
+    if radius <= 0:
+        raise ValueError(f"invalid radius: {radius}")
+    lines = [(p0, p1) for p0, p1 in zip(points, points[1:])]
+    p = Path(points[0])
+    for (p0, p1), (p2, p3) in zip(lines, lines[1:]):
+        try:
+            _, angle, ucs = _get_local_fillet_ucs(p0, p1, p3, radius)
+        except ZeroDivisionError:
+            p.line_to(p1)
+            continue
+        segments = _segment_count(angle, count)
+        delta = angle / segments
+        # add path elements:
+        for i in range(segments + 1):
+            radius_vec = Vec3.from_angle(i * delta, radius)
+            p.line_to(ucs.to_wcs(radius_vec))
+
     p.line_to(points[-1])
     return p
 

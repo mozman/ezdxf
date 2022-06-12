@@ -7,7 +7,7 @@ import pathlib
 
 import ezdxf
 from ezdxf.math import Vec3
-from ezdxf.path import chamfer, chamfer2, fillet
+from ezdxf.path import chamfer, chamfer2, fillet, polygonal_fillet
 
 CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
@@ -52,7 +52,22 @@ def fillet_tool():
     doc.saveas(CWD / "fillet.dxf")
 
 
+def polygonal_fillet_tool():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+
+    for angle in range(-165, 180, 15):
+        points = Vec3.list(
+            [(-100, 0), (0, 0), Vec3.from_deg_angle(angle, 100)]
+        )
+        p = polygonal_fillet(points, radius=10.0, count=16)
+        msp.add_polyline3d(p.flattening(0))
+
+    doc.saveas(CWD / "polygonal_fillet.dxf")
+
+
 if __name__ == "__main__":
     chamfer_tool()
     chamfer2_tool()
     fillet_tool()
+    polygonal_fillet_tool()

@@ -5,7 +5,7 @@ import pytest
 import math
 from ezdxf.math import X_AXIS, Y_AXIS, Z_AXIS, Vec3, close_vectors
 from ezdxf.math.construct3d import inscribe_circle_tangent_length, bending_angle
-from ezdxf.path.tools import chamfer, chamfer2, fillet
+from ezdxf.path.tools import chamfer, chamfer2, fillet, polygonal_fillet
 
 
 class TestInscribeCircle:
@@ -242,6 +242,35 @@ class TestFillet:
             )
             is True
         )
+
+
+class TestPolygonalFillet:
+    def test_requires_three_points(self):
+        with pytest.raises(ValueError):
+            polygonal_fillet([Vec3(), Vec3()], 1.0)
+
+    @pytest.mark.parametrize(
+        "points",
+        [
+            Vec3.list([(0, 0), (5, 0), (10, 0)]),
+            Vec3.list([(0, 0), (5, 0), (0, 0)]),
+        ],
+        ids=["180deg", "360deg"],
+    )
+    def test_colinear_points_are_ignored(self, points):
+        p = polygonal_fillet(points, 1.0)
+        assert points == list(p.flattening(0))
+
+    @pytest.mark.parametrize(
+        "count, expected", [
+            (0, 3), (1, 3), (4, 3),
+            (16, 4 + 2), (32, 8 + 2)
+        ]
+    )
+    def test_for_required_segment_count(self, count, expected):
+        p = polygonal_fillet(Vec3.list([(0, 0), (5, 0), (5, 5)]), 1, count)
+        # min line segment count is 3
+        assert len(p) == expected
 
 
 if __name__ == "__main__":
