@@ -243,7 +243,7 @@ class ApproxParamT:
     - approximate parameter `t` for a given distance from the start of the curve
     - approximate the distance for a given parameter `t` from the start of the curve
 
-    This approximations can be applied to all parametrized curves which provide
+    These approximations can be applied to all parametrized curves which provide
     a :meth:`point` method, like :class:`Bezier4P`, :class:`Bezier3P` and
     :class:`BSpline`.
 
