@@ -496,9 +496,7 @@ def close_polygon(
     equal to the last vertex.
     """
     vertices = list(vertices)
-    if not vertices[0].isclose(
-        vertices[-1], rel_tol=rel_tol, abs_tol=abs_tol
-    ):
+    if not vertices[0].isclose(vertices[-1], rel_tol=rel_tol, abs_tol=abs_tol):
         vertices.append(vertices[0])
     return vertices
 
@@ -578,25 +576,86 @@ def extrude(
 
     """
     mesh = MeshVertexMerger()
-    profile0 = Vec3.list(profile)
+    sweeping_profile = Vec3.list(profile)
     if close:
-        profile0 = close_polygon(profile0)
-    is_closed = profile0[0].isclose(profile0[-1])
+        sweeping_profile = close_polygon(sweeping_profile)
+    is_closed = sweeping_profile[0].isclose(sweeping_profile[-1])
 
-    path0 = Vec3.list(path)
+    extrusion_path = Vec3.list(path)
     if is_closed and caps:
-        mesh.add_face(profile0[:-1])
-    start_point = path0[0]
-    for target_point in path0[1:]:
+        mesh.add_face(sweeping_profile[:-1])
+    start_point = extrusion_path[0]
+    for target_point in extrusion_path[1:]:
         translation_vector = target_point - start_point
-        # translate profile
-        profile1 = [vec + translation_vector for vec in profile0]
-        for face in _quad_connection_faces(profile0, profile1):
+        target_profile = [vec + translation_vector for vec in sweeping_profile]
+        for face in _quad_connection_faces(sweeping_profile, target_profile):
             mesh.add_face(face)
-        profile0 = profile1
+        sweeping_profile = target_profile
         start_point = target_point
     if is_closed and caps:
-        mesh.add_face(profile0[:-1])
+        mesh.add_face(sweeping_profile[:-1])
+    return MeshTransformer.from_builder(mesh)
+
+
+def extrude2(
+    profile: Iterable[UVec],
+    path: Iterable[UVec],
+    close=True,
+    caps=False,
+    scale: float = 1.0,
+    twist: float = 0.0,
+    step_size: float = 1.0,
+) -> MeshTransformer:
+    """Extrude a `profile` polygon along a `path` polyline, vertices of profile
+    should be in counter-clockwise order. This implementation can scale and
+    twist the sweeping profile along the extrusion path. The `path` segment
+    points are fix points, the `step_size` is used to create intermediate
+    profiles between this fix points. The `step_size` is adapted for each
+    segment to create equally spaced distances. The twist angle is the rotation
+    angle in radians and the scale `argument` defines the scale factor of the
+    final profile.  The twist angle and scaling factor of the intermediate
+    profiles will be linear interpolated between the start and end values.
+
+    Args:
+        profile: sweeping profile as list of (x, y, z) tuples in
+            counter-clockwise order
+        path:  extrusion path as list of (x, y, z) tuples
+        close: close profile polygon if ``True``
+        caps: close hull with bottom cap and top cap if `profile` is closed
+        scale: scale sweeping profile gradually from 1.0 to given value
+        twist: rotate sweeping profile up to the given end rotation angle in
+            radians
+        step_size: rough distance between automatically created intermediate
+            profiles, the step size is adapted to the distances between the
+            path segment points
+
+    .. versionadded:: 0.18
+
+    Returns: :class:`~ezdxf.render.MeshTransformer`
+
+    """
+    raise NotImplementedError()
+    # 1. create extrusion path with intermediate points
+    # 2. create scaling and twist parameters
+    # 3. sweep profile along sweeping path
+    mesh = MeshVertexMerger()
+    sweeping_profile = Vec3.list(profile)
+    if close:
+        sweeping_profile = close_polygon(sweeping_profile)
+    is_closed = sweeping_profile[0].isclose(sweeping_profile[-1])
+    extrusion_path = Vec3.list(path)
+    if is_closed and caps:
+        mesh.add_face(sweeping_profile[:-1])
+    start_point = extrusion_path[0]
+    for target_point in extrusion_path[1:]:
+        translation_vector = target_point - start_point
+        target_profile = [vec + translation_vector for vec in sweeping_profile]
+        for face in _quad_connection_faces(sweeping_profile, target_profile):
+            mesh.add_face(face)
+        sweeping_profile = target_profile
+        start_point = target_point
+    if is_closed and caps:
+        mesh.add_face(sweeping_profile[:-1])
     return MeshTransformer.from_builder(mesh)
 
 
