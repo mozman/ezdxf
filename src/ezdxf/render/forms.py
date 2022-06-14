@@ -583,11 +583,11 @@ def extrude(
         profile0 = close_polygon(profile0)
     is_closed = profile0[0].isclose(profile0[-1])
 
-    path = Vec3.list(path)
+    path0 = Vec3.list(path)
     if is_closed and caps:
         mesh.add_face(profile0[:-1])
-    start_point = path[0]  # type: ignore
-    for target_point in path[1:]:  # type: ignore
+    start_point = path0[0]
+    for target_point in path0[1:]:
         translation_vector = target_point - start_point
         # translate profile
         profile1 = [vec + translation_vector for vec in profile0]
@@ -597,7 +597,6 @@ def extrude(
         start_point = target_point
     if is_closed and caps:
         mesh.add_face(profile0[:-1])
-
     return MeshTransformer.from_builder(mesh)
 
 
