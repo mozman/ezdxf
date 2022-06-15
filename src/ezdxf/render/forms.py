@@ -36,6 +36,8 @@ __all__ = [
     "close_polygon",
     "cube",
     "extrude",
+    "extrude_twist_scale",
+    "sweep",
     "cylinder",
     "cylinder_2p",
     "from_profiles_linear",
@@ -625,13 +627,13 @@ def _divide_path_into_steps(
     return new_path
 
 
-def extrude2(
+def extrude_twist_scale(
     profile: Iterable[UVec],
     path: Iterable[UVec],
     close=True,
     caps=False,
-    scale: float = 1.0,
     twist: float = 0.0,
+    scale: float = 1.0,
     step_size: float = 1.0,
 ) -> MeshTransformer:
     """Extrude a `profile` polygon along a `path` polyline, vertices of profile
@@ -650,9 +652,9 @@ def extrude2(
         path:  extrusion path as list of (x, y, z) tuples
         close: close profile polygon if ``True``
         caps: close hull with bottom cap and top cap if `profile` is closed
-        scale: scale sweeping profile gradually from 1.0 to given value
         twist: rotate sweeping profile up to the given end rotation angle in
             radians
+        scale: scale sweeping profile gradually from 1.0 to given value
         step_size: rough distance between automatically created intermediate
             profiles, the step size is adapted to the distances between the
             path segment points
@@ -662,6 +664,21 @@ def extrude2(
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
     """
+    def matrix(fac: float) -> Matrix44:
+        current_scale = 1.0 + (scale - 1.0) * fac
+        current_rotation = twist * fac
+        translation = target_point - start_point
+        scale_cos_a = current_scale * cos(current_rotation)
+        scale_sin_a = current_scale * sin(current_rotation)
+        # fmt: off
+        return Matrix44([
+            scale_cos_a, scale_sin_a, 0.0, 0.0,
+            -scale_sin_a, scale_cos_a, 0.0, 0.0,
+            0.0, 0.0, current_scale, 0.0,
+            translation.x, translation.y, translation.z, 1.0
+        ])
+        # fmt: on
+
     mesh = MeshVertexMerger()
     sweeping_profile = Vec3.list(profile)
     if close:
@@ -676,13 +693,9 @@ def extrude2(
     start_point = extrusion_path[0]
     prev_profile = sweeping_profile
     for target_point, factor in zip(extrusion_path[1:], factors[1:]):
-        current_scale = 1.0 + (scale - 1.0) * factor
-        current_rotation = twist * factor
-        translation_vector = target_point - start_point
-        target_profile = [
-            (v * current_scale).rotate(current_rotation) + translation_vector
-            for v in sweeping_profile
-        ]
+        target_profile = list(
+            matrix(factor).transform_vertices(sweeping_profile)
+        )
         for face in _quad_connection_faces(prev_profile, target_profile):
             mesh.add_face(face)
         prev_profile = target_profile

@@ -7,9 +7,9 @@ from ezdxf.render import forms
 from ezdxf import path
 
 
-DIR = pathlib.Path("~/Desktop/Outbox").expanduser()
-if not DIR.exists():
-    DIR = pathlib.Path(".")
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
 DEBUG_COLOR = ezdxf.colors.CYAN
 
 doc = ezdxf.new()
@@ -62,4 +62,4 @@ add_debug_profiles(
 mesh.translate(*offset)
 mesh.render_mesh(msp, dxfattribs={"color": ezdxf.colors.YELLOW})
 
-doc.saveas(DIR / "sweep_profile.dxf")
+doc.saveas(CWD / "sweep_profile.dxf")
