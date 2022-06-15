@@ -699,8 +699,7 @@ class MeshBuilder:
         from ezdxf.math.triangulation import ear_clipping_3d
 
         for face in self.faces_as_vertices():
-            count = len(face)
-            if count <= max_vertex_count:
+            if len(face) <= max_vertex_count:
                 yield face
             else:
                 yield from ear_clipping_3d(face)

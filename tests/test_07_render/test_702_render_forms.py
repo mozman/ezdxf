@@ -28,6 +28,8 @@ from ezdxf.render.forms import (
     _intersection_profiles,
     reference_frame_z,
     reference_frame_ext,
+    _divide_path_into_steps,
+    _partial_path_factors,
 )
 
 
@@ -349,3 +351,57 @@ class TestReferenceFrame:
         assert ucs.ux.isclose((1, 0, 0))
         assert ucs.uy.isclose((0, 1, 0))
         assert ucs.uz.isclose((0, 0, 1))
+
+
+class TestExtrude2:
+    def test_divide_path_count(self):
+        p = [Vec3(), Vec3(3, 0)]
+        assert len(_divide_path_into_steps(p, max_step_size=3)) == 2
+        assert len(_divide_path_into_steps(p, max_step_size=2)) == 3
+        assert len(_divide_path_into_steps(p, max_step_size=1)) == 4
+        assert len(_divide_path_into_steps(p, max_step_size=0.5)) == 7
+
+    def test_divide_path_vertices(self):
+        p = [Vec3(), Vec3(3, 0)]
+        assert (
+            close_vectors(
+                _divide_path_into_steps(p, 1.0),
+                Vec3.list([(0, 0), (1, 0), (2, 0), (3, 0)]),
+            )
+            is True
+        )
+
+        p = [Vec3(), Vec3(1, 0), Vec3(2, 0), Vec3(3, 0)]
+        assert (
+            close_vectors(
+                _divide_path_into_steps(p, 1.0),
+                Vec3.list([(0, 0), (1, 0), (2, 0), (3, 0)]),
+            )
+            is True
+        )
+
+    def test_divide_path_into_equally_spaced_segments(self):
+        p = [Vec3(), Vec3(1.5, 0), Vec3(3, 0)]
+        assert (
+            close_vectors(
+                _divide_path_into_steps(p, 1.0),
+                Vec3.list([(0, 0), (0.75, 0), (1.5, 0), (2.25, 0), (3, 0)]),
+            )
+            is True
+        )
+
+    def test_divide_path_has_to_include_all_source_vertices(self):
+        p = [Vec3(), Vec3(1, 0), Vec3(1.5, 0), Vec3(2, 0), Vec3(3, 0)]
+        assert (
+            close_vectors(
+                _divide_path_into_steps(p, 1.0),
+                Vec3.list([(0, 0), (1, 0), (1.5, 0), (2, 0), (3, 0)]),
+            )
+            is True
+        )
+
+    def test_partial_path_factors(self):
+        p = _partial_path_factors(
+            Vec3.list([(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)])
+        )
+        assert p == pytest.approx([0, 0.25, 0.5, 0.75, 1.0])

@@ -2,7 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import Iterable, List, Tuple, Sequence, Iterator, Callable
-from math import pi, tau, sin, cos, radians, tan, isclose, asin, fabs
+from math import pi, tau, sin, cos, radians, tan, isclose, asin, fabs, ceil
 from enum import IntEnum
 from ezdxf.math import (
     Vec3,
@@ -597,6 +597,34 @@ def extrude(
     return MeshTransformer.from_builder(mesh)
 
 
+def _partial_path_factors(path: List[Vec3]) -> List[float]:
+    partial_lengths = [v1.distance(v2) for v1, v2 in zip(path, path[1:])]
+    total_length = sum(partial_lengths)
+    factors = [0.0]
+    partial_sum = 0.0
+    for pl in partial_lengths:
+        partial_sum += pl
+        factors.append(partial_sum / total_length)
+    return factors
+
+
+def _divide_path_into_steps(
+    path: Sequence[Vec3], max_step_size: float
+) -> List[Vec3]:
+    new_path: List[Vec3] = [path[0]]
+    for v0, v1 in zip(path, path[1:]):
+        segment_vec = v1 - v0
+        length = segment_vec.magnitude
+        if length > max_step_size:
+            parts = int(ceil(length / max_step_size))
+            step = segment_vec * (1.0 / parts)
+            for _ in range(parts - 1):
+                v0 += step
+                new_path.append(v0)
+        new_path.append(v1)
+    return new_path
+
+
 def extrude2(
     profile: Iterable[UVec],
     path: Iterable[UVec],
@@ -609,8 +637,8 @@ def extrude2(
     """Extrude a `profile` polygon along a `path` polyline, vertices of profile
     should be in counter-clockwise order. This implementation can scale and
     twist the sweeping profile along the extrusion path. The `path` segment
-    points are fix points, the `step_size` is used to create intermediate
-    profiles between this fix points. The `step_size` is adapted for each
+    points are fix points, the `max_step_size` is used to create intermediate
+    profiles between this fix points. The `max_step_size` is adapted for each
     segment to create equally spaced distances. The twist angle is the rotation
     angle in radians and the scale `argument` defines the scale factor of the
     final profile.  The twist angle and scaling factor of the intermediate
@@ -634,28 +662,32 @@ def extrude2(
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
     """
-    raise NotImplementedError()
-    # 1. create extrusion path with intermediate points
-    # 2. create scaling and twist parameters
-    # 3. sweep profile along sweeping path
     mesh = MeshVertexMerger()
     sweeping_profile = Vec3.list(profile)
     if close:
         sweeping_profile = close_polygon(sweeping_profile)
     is_closed = sweeping_profile[0].isclose(sweeping_profile[-1])
-    extrusion_path = Vec3.list(path)
     if is_closed and caps:
         mesh.add_face(sweeping_profile[:-1])
+    # create extrusion path with intermediate points
+    extrusion_path = _divide_path_into_steps(Vec3.list(path), step_size)
+    # create progress factors for each step along the extrusion path
+    factors = _partial_path_factors(extrusion_path)
     start_point = extrusion_path[0]
-    for target_point in extrusion_path[1:]:
+    prev_profile = sweeping_profile
+    for target_point, factor in zip(extrusion_path[1:], factors[1:]):
+        current_scale = 1.0 + (scale - 1.0) * factor
+        current_rotation = twist * factor
         translation_vector = target_point - start_point
-        target_profile = [vec + translation_vector for vec in sweeping_profile]
-        for face in _quad_connection_faces(sweeping_profile, target_profile):
+        target_profile = [
+            (v * current_scale).rotate(current_rotation) + translation_vector
+            for v in sweeping_profile
+        ]
+        for face in _quad_connection_faces(prev_profile, target_profile):
             mesh.add_face(face)
-        sweeping_profile = target_profile
-        start_point = target_point
+        prev_profile = target_profile
     if is_closed and caps:
-        mesh.add_face(sweeping_profile[:-1])
+        mesh.add_face(prev_profile[:-1])
     return MeshTransformer.from_builder(mesh)
 
 
