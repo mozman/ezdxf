@@ -24,7 +24,9 @@ def test_close_polygon():
 
 
 def test_close_polygon_without_doublets():
-    p = forms.close_polygon(Vec3.generate([(1, 0), (2, 0), (3, 0), (4, 0), (1, 0)]))
+    p = forms.close_polygon(
+        Vec3.generate([(1, 0), (2, 0), (3, 0), (4, 0), (1, 0)])
+    )
     assert len(p) == 5
 
 
@@ -260,7 +262,9 @@ class TestTorus:
         assert diag.is_manifold is True
 
     def test_open_torus_triangle_faces(self):
-        t = forms.torus(major_count=16, minor_count=8, end_angle=math.pi, ngons=False)
+        t = forms.torus(
+            major_count=16, minor_count=8, end_angle=math.pi, ngons=False
+        )
         diag = t.diagnose()
         assert (
             diag.n_vertices == 17 * 8 + 2
@@ -379,3 +383,41 @@ class TestExtrude2:
             Vec3.list([(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)])
         )
         assert p == pytest.approx([0, 0.25, 0.5, 0.75, 1.0])
+
+    def test_extrude_square_without_intermediate_profiles(self):
+        profile = forms.square(center=True)
+        path = [(0, 0), (10, 0)]
+        mesh = forms.extrude_twist_scale(
+            profile, path, close=True, step_size=0.0
+        )
+        assert len(mesh.vertices) == 8
+
+    def test_extrude_square_with_intermediate_profiles(self):
+        profile = forms.square(center=True)
+        path = [(0, 0), (0, 0, 10)]
+        mesh = forms.extrude_twist_scale(
+            profile, path, close=True, step_size=1.0
+        )
+        assert len(mesh.vertices) == 11 * 4
+        assert len(mesh.faces) == 10 * 4
+
+    def test_extrude_with_twist(self):
+        profile = forms.square(center=True)
+        path = [(0, 0), (0, 0, 10)]
+        mesh = forms.extrude_twist_scale(
+            profile, path, close=True, step_size=1.0, twist=math.pi / 2
+        )
+        assert close_vectors(
+            mesh.vertices[-4:],
+            [v.rotate(math.pi / 2) + path[-1] for v in profile],
+        )
+
+    def test_extrude_with_scale(self):
+        profile = forms.square(center=True)
+        path = [(0, 0), (0, 0, 10)]
+        mesh = forms.extrude_twist_scale(
+            profile, path, close=True, step_size=1.0, scale=2.0
+        )
+        assert close_vectors(
+            mesh.vertices[-4:], [(v * 2) + path[-1] for v in profile]
+        )

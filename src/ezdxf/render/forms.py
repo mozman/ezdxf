@@ -657,7 +657,8 @@ def extrude_twist_scale(
         scale: scale sweeping profile gradually from 1.0 to given value
         step_size: rough distance between automatically created intermediate
             profiles, the step size is adapted to the distances between the
-            path segment points
+            path segment points, a value od 0.0 disables creating intermediate
+            profiles
 
     .. versionadded:: 0.18
 
@@ -687,7 +688,9 @@ def extrude_twist_scale(
     if is_closed and caps:
         mesh.add_face(sweeping_profile[:-1])
     # create extrusion path with intermediate points
-    extrusion_path = _divide_path_into_steps(Vec3.list(path), step_size)
+    extrusion_path = Vec3.list(path)
+    if step_size != 0.0:
+        extrusion_path = _divide_path_into_steps(extrusion_path, step_size)
     # create progress factors for each step along the extrusion path
     factors = _partial_path_factors(extrusion_path)
     start_point = extrusion_path[0]
