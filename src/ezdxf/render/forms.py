@@ -618,7 +618,7 @@ def extrude(
 
     extrusion_path = Vec3.list(path)
     if caps:
-        mesh.add_face(sweeping_profile[:-1])
+        mesh.add_face(reversed(sweeping_profile[:-1]))
     start_point = extrusion_path[0]
     for target_point in extrusion_path[1:]:
         translation_vector = target_point - start_point

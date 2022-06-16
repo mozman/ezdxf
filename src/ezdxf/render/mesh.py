@@ -24,6 +24,7 @@ from ezdxf.math import (
     is_planar_face,
     subdivide_face,
     normal_vector_3p,
+    best_fit_normal,
     subdivide_ngons,
 )
 
@@ -488,14 +489,10 @@ class MeshBuilder:
             if count < 3:
                 continue
             center = Vec3.sum(face) / count
-            i = 0
-            n = NULLVEC
-            while i <= count - 3:
-                n = normal_vector_3p(face[i], face[i + 1], face[i + 2])
-                if n != NULLVEC:  # not colinear vectors
-                    break
-                i += 1
-
+            try:
+                n = best_fit_normal(face)
+            except ZeroDivisionError:
+                continue
             if relative:
                 _length = (face[0] - center).magnitude * length
             else:
@@ -739,23 +736,16 @@ class MeshBuilder:
         .. versionadded:: 0.18
 
         """
-        vertices = self.vertices
-        for face in self.faces:
+        for face in self.faces_as_vertices():
             if len(face) < 3:
                 yield NULLVEC
-
-            origin = vertices[face[0]]
-            v1 = vertices[face[1]] - origin
-            face_normal = NULLVEC
-            index = 2
-            while face_normal.is_null and index < len(face):
-                v2 = vertices[face[index]] - origin
-                face_normal = v1.cross(v2)
-                index += 1
+                continue
             try:
-                yield face_normal.normalize()
+                yield best_fit_normal(face)
+                continue
             except ZeroDivisionError:
                 yield NULLVEC
+                continue
 
 
 class MeshTransformer(MeshBuilder):
