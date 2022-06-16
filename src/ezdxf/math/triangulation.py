@@ -1,11 +1,12 @@
-# Copyright (c) 2017 Sam Bolgert
+# Copyright (c) 2022, Manfred Moitzi
 # License: MIT License
-# https://github.com/linuxlewis/tripy
+
 from __future__ import annotations
-from typing import Iterable, Iterator, List, Tuple
+from typing import Iterable, Iterator, List, Tuple, Sequence
 import math
 import sys
 from ezdxf.math import Vec2, UVec, Vec3
+
 
 EPSILON = math.sqrt(sys.float_info.epsilon)
 
@@ -23,6 +24,9 @@ def ear_clipping_2d(
         - https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
 
     """
+    # Copyright (c) 2017 Sam Bolgert
+    # License: MIT License
+    # https://github.com/linuxlewis/tripy
     ear_vertices: List[Vec2] = []
     polygon: List[Vec2] = Vec2.list(vertices)
     if len(polygon) == 0:
@@ -175,3 +179,19 @@ def ear_clipping_3d(
         yield tuple(  # type: ignore
             ocs.points_to_wcs(Vec3(v.x, v.y, elevation) for v in triangle)
         )
+
+
+def simple_polygon_triangulation(
+    face: Iterable[Vec3],
+) -> List[Sequence[Vec3]]:
+    """Simple triangulation of convex polygons.
+
+    This function creates regular triangles by adding a center-vertex in the
+    middle of the polygon, but works only for convex shapes.
+    """
+    face_: List[Vec3] = list(face)
+    assert len(face_) > 2
+    if not face_[0].isclose(face_[-1]):
+        face_.append(face_[0])
+    center = Vec3.sum(face_[:-1]) / (len(face_) - 1)
+    return [(v1, v2, center) for v1, v2 in zip(face_, face_[1:])]

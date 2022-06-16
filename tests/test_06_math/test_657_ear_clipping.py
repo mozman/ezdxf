@@ -305,14 +305,16 @@ class TestEarClipping3D:
             assert len(result) == 2
 
     def test_polygon(self):
-        polygon = Vec3.list([
-            (0, 0, 0),
-            (1, 0, 0),
-            (1, 0, 1),
-            (2, 0, 1),
-            (2, 0, 2),
-            (0, 0, 2),
-        ])
+        polygon = Vec3.list(
+            [
+                (0, 0, 0),
+                (1, 0, 0),
+                (1, 0, 1),
+                (2, 0, 1),
+                (2, 0, 2),
+                (0, 0, 2),
+            ]
+        )
         result = list(triangulation.ear_clipping_3d(polygon))
         assert len(result) == 4
         for triangle in result:
@@ -324,6 +326,27 @@ class TestEarClipping3D:
 
     def test_empty_input_returns_empty_result(self):
         assert len(list(triangulation.ear_clipping_3d([]))) == 0
+
+
+def test_simple_polygon_triangulation():
+    open_square = forms.square()
+    r = triangulation.simple_polygon_triangulation(open_square)
+    assert len(r) == 4
+    center = r[0][2]
+    assert center == (0.5, 0.5, 0)
+
+    closed_square = list(forms.circle(4, elevation=2, close=True))
+    assert len(closed_square) == 5
+    r = triangulation.simple_polygon_triangulation(closed_square)
+    assert len(r) == 4
+    center = r[0][2]
+    assert center.isclose((0, 0, 2))
+
+    # also subdivide triangles
+    r = triangulation.simple_polygon_triangulation(
+        Vec3.list([(0, 0), (1, 0), (1, 1)])
+    )
+    assert len(r) == 3
 
 
 if __name__ == "__main__":

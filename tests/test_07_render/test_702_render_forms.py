@@ -220,25 +220,6 @@ def test_heptagon_by_edge_length():
     assert corners[6].isclose((7.18498696363685, -9.009688679024192, 0))
 
 
-def test_regular_ngon_triangulation():
-    open_square = forms.square()
-    r = forms.simple_polygon_triangulation(open_square)
-    assert len(r) == 4
-    center = r[0][2]
-    assert center == (0.5, 0.5, 0)
-
-    closed_square = list(forms.circle(4, elevation=2, close=True))
-    assert len(closed_square) == 5
-    r = forms.simple_polygon_triangulation(closed_square)
-    assert len(r) == 4
-    center = r[0][2]
-    assert center.isclose((0, 0, 2))
-
-    # also subdivide triangles
-    r = forms.simple_polygon_triangulation(Vec3.list([(0, 0), (1, 0), (1, 1)]))
-    assert len(r) == 3
-
-
 class TestTorus:
     def test_closed_torus_ngon_faces(self):
         t = forms.torus(major_count=16, minor_count=8)

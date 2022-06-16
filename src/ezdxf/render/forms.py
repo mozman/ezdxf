@@ -53,7 +53,6 @@ __all__ = [
     "reference_frame_z",
     "reference_frame_ext",
     "make_next_reference_frame",
-    "simple_polygon_triangulation",
 ]
 
 
@@ -1442,19 +1441,3 @@ def sweep(
         quads=quads,
         caps=caps,
     )
-
-
-def simple_polygon_triangulation(
-    face: Iterable[Vec3],
-) -> List[Sequence[Vec3]]:
-    """Simple triangulation of convex polygons.
-
-    This function creates regular triangles by adding a center-vertex in the
-    middle of the polygon, but works only for convex shapes.
-    """
-    face_: List[Vec3] = list(face)
-    assert len(face_) > 2
-    if not face_[0].isclose(face_[-1]):
-        face_.append(face_[0])
-    center = Vec3.sum(face_[:-1]) / (len(face_) - 1)
-    return [(v1, v2, center) for v1, v2 in zip(face_, face_[1:])]
