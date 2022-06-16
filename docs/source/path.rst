@@ -229,19 +229,21 @@ Utility Functions
 Basic Shapes
 ------------
 
-.. autofunction:: unit_circle
-
-.. autofunction:: wedge
-
 .. autofunction:: elliptic_transformation
 
-.. autofunction:: rect
+.. autofunction:: gear
+
+.. autofunction:: helix
 
 .. autofunction:: ngon
 
+.. autofunction:: rect
+
 .. autofunction:: star
 
-.. autofunction:: gear
+.. autofunction:: unit_circle
+
+.. autofunction:: wedge
 
 The :mod:`~ezdxf.addons.text2path` add-on provides additional functions to
 create paths from text strings and DXF text entities.

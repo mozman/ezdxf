@@ -516,7 +516,7 @@ def helix(
     radius: float, pitch: float, turns: float, resolution: int = 16, ccw=True,
 ) -> Iterator[Vec3]:
     """Yields the vertices of a `helix <https://en.wikipedia.org/wiki/Helix>`_.
-    The center of the helix is always (0, 0, 0), a positive `pitch` value
+    The center of the helix is always (0, 0), a positive `pitch` value
     creates a helix along the +z-axis, a negative value along the -z-axis.
 
     Args:

@@ -248,9 +248,9 @@ def helix(
     segments: int = 4,
 ) -> Path:
     """
-    Return sof a `helix <https://en.wikipedia.org/wiki/Helix>`_as
+    Returns a `helix <https://en.wikipedia.org/wiki/Helix>`_ as
     a :class:`Path` object.
-    The center of the helix is always (0, 0, 0), a positive `pitch` value
+    The center of the helix is always (0, 0), a positive `pitch` value
     creates a helix along the +z-axis, a negative value along the -z-axis.
 
     Args:

@@ -125,6 +125,7 @@ def test_helix_positive_pitch_goes_up(ccw):
     bbox = BoundingBox(h.flattening(0.1))
     assert bbox.extmax.isclose((2, 2, 10))
     assert bbox.extmin.isclose((-2, -2, 0))
+    assert h.end.isclose((2, 0, 10))
 
 
 @pytest.mark.parametrize("ccw", [True, False])
@@ -133,6 +134,7 @@ def test_helix_negative_pitch_goes_down(ccw):
     bbox = BoundingBox(h.flattening(0.1))
     assert bbox.extmax.isclose((2, 2, 0))
     assert bbox.extmin.isclose((-2, -2, -10))
+    assert h.end.isclose((2, 0, -10))
 
 
 if __name__ == "__main__":
