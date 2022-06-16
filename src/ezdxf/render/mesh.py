@@ -42,6 +42,7 @@ T = TypeVar("T")
 
 class EdgeStat(NamedTuple):
     """Named tuple of edge statistics."""
+
     count: int  # type: ignore
     balance: int
 
@@ -63,7 +64,9 @@ def open_faces(faces: Iterable[Sequence[int]]) -> Iterator[Sequence[int]]:
 
 
 def normalize_faces(
-    faces: List[Sequence[int]], *, close=False,
+    faces: List[Sequence[int]],
+    *,
+    close=False,
 ) -> Iterator[Sequence[int]]:
     """Removes duplicated vertices and returns closed or open face according
     the `close` argument. Returns only faces with at least 3 edges.
@@ -700,6 +703,18 @@ class MeshBuilder:
                 yield face
             else:
                 yield from ear_clipping_3d(face)
+
+    def mesh_tessellation(self, max_vertex_count: int = 4) -> MeshTransformer:
+        """Returns a new :class:`MeshTransformer` instance, where each face has
+        no more vertices than the given `max_vertex_count`.
+
+        .. versionadded:: 0.18
+
+        """
+        mesh = MeshVertexMerger()
+        for face in self.tessellation(max_vertex_count=max_vertex_count):
+            mesh.add_face(face)
+        return MeshTransformer.from_builder(mesh)
 
     def flip_normals(self) -> None:
         """Flips the normals of all faces by reversing the vertex order inplace.

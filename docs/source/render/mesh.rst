@@ -66,6 +66,8 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. automethod:: merge_coplanar_faces
 
+    .. automethod:: mesh_tessellation
+
     .. automethod:: normalize_faces
 
     .. automethod:: normals

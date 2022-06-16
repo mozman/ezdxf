@@ -3,7 +3,7 @@
 
 from pathlib import Path
 import ezdxf
-from ezdxf.render import forms, MeshBuilder
+from ezdxf.render import forms
 
 CWD = Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
@@ -22,11 +22,8 @@ def main(filepath):
     concave_prism.render_normals(msp, dxfattribs={"color": 6})
 
     # tessellate prism into triangles:
-    concave_prism.translate(20, 0, 0)
-    triangle_mesh = MeshBuilder()
-    for face in concave_prism.tessellation(max_vertex_count=3):
-        triangle_mesh.add_face(face)
-    triangle_mesh = triangle_mesh.optimize_vertices()
+    triangle_mesh = concave_prism.mesh_tessellation(3)
+    triangle_mesh.translate(20, 0, 0)
     triangle_mesh.render_mesh(msp, dxfattribs={"color": 1})
     triangle_mesh.render_normals(msp, dxfattribs={"color": 6})
     doc.saveas(filepath)
