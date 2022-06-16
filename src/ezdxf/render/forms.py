@@ -806,37 +806,15 @@ def cylinder_2p(
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
     """
-    # Copyright (c) 2011 Evan Wallace (http://madebyevan.com/), under the MIT license.
-    # Python port Copyright (c) 2012 Tim Knip (http://www.floorplanner.com), under the MIT license.
-    # Additions by Alex Pletzer (Pennsylvania State University)
-    # Adaptation for ezdxf, Copyright (c) 2020, Manfred Moitzi, MIT License.
-    start = Vec3(base_center)
-    end = Vec3(top_center)
-    radius = float(radius)
-    slices = int(count)
-    ray = end - start
 
-    z_axis = ray.normalize()
-    is_y = math.fabs(z_axis.y) > 0.5
-    x_axis = Vec3(float(is_y), float(not is_y), 0).cross(z_axis).normalize()
-    y_axis = x_axis.cross(z_axis).normalize()
-    mesh = MeshVertexMerger()
-
-    def vertex(stack, angle):
-        out = (x_axis * math.cos(angle)) + (y_axis * math.sin(angle))
-        return start + (ray * stack) + (out * radius)
-
-    dt = math.tau / float(slices)
-    for i in range(0, slices):
-        t0 = i * dt
-        i1 = (i + 1) % slices
-        t1 = i1 * dt
-        mesh.add_face([start, vertex(0, t0), vertex(0, t1)])
-        mesh.add_face(
-            [vertex(0, t1), vertex(0, t0), vertex(1, t0), vertex(1, t1)]
-        )
-        mesh.add_face([end, vertex(1, t1), vertex(1, t0)])
-    return MeshTransformer.from_builder(mesh)
+    origin = Vec3(base_center)
+    heading = Vec3(top_center) - origin
+    mesh = cylinder(
+        count, radius, top_center=(0, 0, heading.magnitude), caps=True
+    )
+    ucs = reference_frame_z(heading, origin=origin)
+    mesh.transform(ucs.matrix)
+    return mesh
 
 
 def from_profiles_linear(
@@ -864,7 +842,9 @@ def from_profiles_linear(
     if close:
         profiles = [close_polygon(p) for p in profiles]
     if caps:
-        mesh.add_face(reversed(profiles[0]))  # for correct outside pointing normals
+        mesh.add_face(
+            reversed(profiles[0])
+        )  # for correct outside pointing normals
     face_generator = _quad_connection_faces if quads else _tri_connection_faces
     for p0, p1 in zip(profiles, profiles[1:]):
         for face in face_generator(p0, p1):
