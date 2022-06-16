@@ -402,22 +402,37 @@ class TestExtrude2:
         assert len(mesh.faces) == 10 * 4
 
     def test_extrude_with_twist(self):
-        profile = forms.square(center=True)
-        path = [(0, 0), (0, 0, 10)]
         mesh = forms.extrude_twist_scale(
-            profile, path, close=True, step_size=1.0, twist=math.pi / 2
+            profile=forms.square(center=True),
+            path=[(0, 0), (0, 0, 10)],
+            close=True,
+            step_size=1.0,
+            twist=math.pi / 2,
         )
         assert close_vectors(
             mesh.vertices[-4:],
-            [v.rotate(math.pi / 2) + path[-1] for v in profile],
+            [
+                Vec3(0.5, 0.5, 10.0),
+                Vec3(0.5, -0.5, 10.0),
+                Vec3(-0.5, 0.5, 10.0),
+                Vec3(-0.5, -0.5, 10.0),
+            ],
         )
 
     def test_extrude_with_scale(self):
-        profile = forms.square(center=True)
-        path = [(0, 0), (0, 0, 10)]
         mesh = forms.extrude_twist_scale(
-            profile, path, close=True, step_size=1.0, scale=2.0
+            profile=forms.square(center=True),
+            path=[(0, 0), (0, 0, 10)],
+            close=True,
+            step_size=1.0,
+            scale=2.0,
         )
         assert close_vectors(
-            mesh.vertices[-4:], [(v * 2) + path[-1] for v in profile]
+            mesh.vertices[-4:],
+            [
+                Vec3(1.0, -1.0, 10.0),
+                Vec3(-1.0, -1.0, 10.0),
+                Vec3(1.0, 1.0, 10.0),
+                Vec3(-1.0, 1.0, 10.0),
+            ],
         )

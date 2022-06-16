@@ -723,7 +723,7 @@ def extrude_twist_scale(
     if close:
         sweeping_profile = close_polygon(sweeping_profile)
     if caps:
-        mesh.add_face(sweeping_profile[:-1])
+        mesh.add_face(reversed(sweeping_profile[:-1]))
     # create extrusion path with intermediate points
     extrusion_path = Vec3.list(path)
     if step_size != 0.0:
