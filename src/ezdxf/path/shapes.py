@@ -7,6 +7,7 @@ from ezdxf.math import (
     Matrix44,
     UVec,
     basic_transformation,
+    Vec3,
 )
 from ezdxf.render import forms
 from .path import Path
@@ -20,6 +21,7 @@ __all__ = [
     "wedge",
     "star",
     "gear",
+    "helix",
 ]
 
 
@@ -236,3 +238,67 @@ def gear(
     if transform is not None:
         vertices = transform.transform_vertices(vertices)
     return converter.from_vertices(vertices, close=True)
+
+
+def helix(
+    radius: float,
+    pitch: float,
+    turns: float,
+    ccw=True,
+    segments: int = 4,
+) -> Path:
+    """
+    Return sof a `helix <https://en.wikipedia.org/wiki/Helix>`_as
+    a :class:`Path` object.
+    The center of the helix is always (0, 0, 0), a positive `pitch` value
+    creates a helix along the +z-axis, a negative value along the -z-axis.
+
+    Args:
+        radius: helix radius
+        pitch: the height of one complete helix turn
+        turns: count of turns
+        ccw: creates a counter-clockwise turning (right-handed) helix if ``True``
+        segments: cubic Bezier segments per turn
+
+    .. versionadded:: 0.18
+
+    """
+
+    def _get_ctrl_points(zz, b, angle, segments):
+        z_step = angle / segments * p
+        z_step_2 = z_step * 0.5
+        for _, v1, v2, v3 in cubic_bezier_arc_parameters(0, angle, segments):
+            yield (
+                Vec3(v1.x * radius, v1.y * radius, zz + z_step_2 - b),
+                Vec3(v2.x * radius, v2.y * radius, zz + z_step_2 + b),
+                Vec3(v3.x * radius, v3.y * radius, zz + z_step),
+            )
+
+            zz += z_step
+
+    def _get_b(alpha: float) -> float:
+        cos_a = math.cos(alpha)
+        b_1 = (1.0 - cos_a) * (3.0 - cos_a) * alpha * p
+        b_2 = math.sin(alpha) * (4.0 - cos_a) * math.tan(alpha)
+        return b_1 / b_2
+
+    path = Path(start=(radius, 0, 0))
+
+    p = pitch / math.tau
+    b = _get_b(math.pi / segments)
+    full_turns = math.floor(turns)
+    reminder = turns - full_turns
+    for _ in range(int(full_turns)):
+        z = path.end.z
+        for v1, v2, v3 in _get_ctrl_points(z, b, math.tau, segments):
+            path.curve4_to(v3, v1, v2)
+
+    if reminder > 1e-6:
+        segments = math.ceil(reminder / math.pi * 2.0)
+        b = _get_b(reminder / segments / 2.0)
+        for v1, v2, v3 in _get_ctrl_points(
+            path.end.z, b, math.tau * reminder, segments
+        ):
+            path.curve4_to(v3, v1, v2)
+
+    return path
