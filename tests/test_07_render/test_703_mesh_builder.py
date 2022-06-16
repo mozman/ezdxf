@@ -732,3 +732,16 @@ class TestNormals:
     def test_all_normals_are_different(self, normals):
         assert len(set(normals)) == 6
 
+
+def test_concave_mesh_tessellation():
+    profile = [(0, 0), (10, 0), (10, 10), (8, 10), (8, 2), (0, 2)]
+    concave_prism = forms.extrude(
+        profile, [(0, 0, 0), (0, 0, 10)], close=True, caps=True
+    )
+    diag = concave_prism.mesh_tessellation(3).diagnose()
+    assert all(len(face) == 3 for face in diag.faces) is True
+    assert diag.n_vertices == 12
+    assert diag.n_faces == 20
+    assert diag.n_edges == 30
+    assert diag.is_manifold is True
+
