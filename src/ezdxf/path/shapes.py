@@ -263,7 +263,7 @@ def helix(
     .. versionadded:: 0.18
 
     """
-
+    # Source of algorithm: https://www.arc.id.au/HelixDrawing.html
     def bezier_ctrl_points(b, angle, segments):
         zz = 0.0
         z_step = angle / segments * p
