@@ -16,7 +16,6 @@ from ezdxf.math import (
     UCS,
     intersection_ray_ray_3d,
 )
-from ezdxf.math.triangulation import ear_clipping_3d
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
 
@@ -55,15 +54,7 @@ __all__ = [
     "reference_frame_ext",
     "make_next_reference_frame",
     "simple_polygon_triangulation",
-    "polygon_triangulation",
-    "no_triangulation",
 ]
-
-Triangulation = Callable[[Iterable[Vec3]], List[Sequence[Vec3]]]
-
-
-def no_triangulation(face: Sequence[Vec3]) -> List[Sequence[Vec3]]:
-    return [face]
 
 
 def circle(
@@ -762,7 +753,6 @@ def cylinder(
     top_center: UVec = (0, 0, 1),
     *,
     caps=True,
-    ngons=True,
 ) -> MeshTransformer:
     """Create a `cylinder <https://en.wikipedia.org/wiki/Cylinder>`_ as
     :class:`~ezdxf.render.MeshTransformer` object, the base center is fixed in
@@ -774,7 +764,6 @@ def cylinder(
         top_radius: radius for top profile, if ``None`` top_radius == radius
         top_center: location vector for the center of the top profile
         caps: close hull with top- and  bottom faces (ngons)
-        ngons: use ngons for caps if ``True`` else subdivide caps into triangles
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
@@ -789,19 +778,11 @@ def cylinder(
     top_profile = list(
         translate(circle(count, top_radius, close=True), top_center)
     )
-    if ngons:
-        triangulation = no_triangulation
-    else:
-        # base is always a circle, the triangulation by
-        # simple_polygon_triangulation() is more regular
-        triangulation = simple_polygon_triangulation
-
     return from_profiles_linear(
         [base_profile, top_profile],
         close=False,
         quads=True,
         caps=caps,
-        triangulation=triangulation,
     )
 
 
@@ -864,7 +845,6 @@ def from_profiles_linear(
     close=True,
     quads=True,
     caps=False,
-    triangulation: Triangulation = None,
 ) -> MeshTransformer:
     """Returns a :class:`~ezdxf.render.MeshTransformer` instance from linear
     connected `profiles`.
@@ -873,35 +853,24 @@ def from_profiles_linear(
         profiles: list of profiles
         close: close profile polygon if ``True``
         quads: use quadrilaterals as connection faces if ``True`` else triangles
-        caps: close hull with top- and bottom faces
-        triangulation: triangulation function for cap-faces, ``None`` for using
-            ngons as top- and bottom faces
+        caps: close hull with top- and bottom faces (ngons)
 
     .. versionchanged: 0.18
 
-        restrict type of argument `profiles`, added argument `quads` and
-        `triangulation`
+        restrict type of argument `profiles`, added argument `quads`
 
     """
-
-    def add_cap(cap_profile):
-        for f in triangulation(cap_profile):
-            mesh.add_face(f)
-
-    if triangulation is None:
-        triangulation = no_triangulation
-
     mesh = MeshVertexMerger()
     if close:
         profiles = [close_polygon(p) for p in profiles]
     if caps:
-        add_cap(reversed(profiles[0]))  # for correct outside pointing normals
+        mesh.add_face(reversed(profiles[0]))  # for correct outside pointing normals
     face_generator = _quad_connection_faces if quads else _tri_connection_faces
     for p0, p1 in zip(profiles, profiles[1:]):
         for face in face_generator(p0, p1):
             mesh.add_face(face)
     if caps:
-        add_cap(profiles[-1])
+        mesh.add_face(profiles[-1])
     return MeshTransformer.from_builder(mesh)
 
 
@@ -974,7 +943,6 @@ def from_profiles_spline(
     close=True,
     quads=True,
     caps=False,
-    triangulation: Triangulation = None,
 ) -> MeshTransformer:
     """Returns a :class:`~ezdxf.render.MeshTransformer` instance by spline
     interpolation between given `profiles`.
@@ -987,9 +955,7 @@ def from_profiles_spline(
         subdivide: count of face loops
         close: close profile polygon if ``True``
         quads: use quadrilaterals as connection faces if ``True`` else triangles
-        caps: close hull with top- and bottom faces
-        triangulation: triangulation function for cap-faces, ``None`` for using
-            ngons as top- and bottom faces
+        caps: close hull with top- and bottom faces (ngons)
 
     .. versionchanged: 0.18
 
@@ -1005,7 +971,6 @@ def from_profiles_spline(
         close=close,
         quads=quads,
         caps=caps,
-        triangulation=triangulation,
     )
 
 
@@ -1026,7 +991,8 @@ def cone(
         radius: radius of basis_vector
         apex: tip of the cone
         caps: add a bottom face if ``True``
-        ngons: use ngons for caps if ``True`` else subdivide caps into triangles
+        ngons: use ngons for cap-faces if ``True`` else subdivide caps into
+            regular triangles
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
@@ -1107,7 +1073,6 @@ def rotation_form(
     axis: UVec = (1, 0, 0),
     *,
     caps=False,
-    triangulation: Triangulation = None,
 ) -> MeshTransformer:
     """Returns a :class:`~ezdxf.render.MeshTransformer` instance created by
     rotating a `profile` around an `axis`.
@@ -1117,9 +1082,7 @@ def rotation_form(
         profile: profile to rotate as list of vertices
         angle: rotation angle in radians
         axis: rotation axis
-        caps: close hull with start- and end faces
-        triangulation: triangulation function for cap-faces, ``None`` for using
-            ngons as top- and bottom faces
+        caps: close hull with start- and end faces (ngons)
 
     .. versionchanged:: 0.18
 
@@ -1132,8 +1095,6 @@ def rotation_form(
     m = Matrix44.axis_rotate(Vec3(axis), delta)
     profile = [Vec3(p) for p in profile]
     profiles = [profile]
-    if triangulation is None:
-        triangulation = polygon_triangulation
     for _ in range(int(count)):
         profile = list(m.transform_vertices(profile))
         profiles.append(profile)
@@ -1142,7 +1103,6 @@ def rotation_form(
         close=False,
         quads=True,
         caps=caps,
-        triangulation=triangulation,
     )
     return mesh
 
@@ -1245,7 +1205,8 @@ def torus(
         start_angle: start angle of torus in radians
         end_angle: end angle of torus in radians
         caps: close hull with start- and end faces (ngons) if the torus is open
-        ngons: use ngons for faces if ``True`` else triangles
+        ngons: use ngons for cap-faces if ``True`` else subdivide caps into
+            regular triangles
 
     .. versionadded:: 0.18
 
@@ -1504,7 +1465,6 @@ def sweep(
     close=True,
     quads=True,
     caps=True,
-    triangulation: Triangulation = None,
 ) -> MeshTransformer:
     """Returns the mesh from sweeping a profile along a 3D path, where the
     sweeping path defines the final location in the `WCS`.
@@ -1522,22 +1482,17 @@ def sweep(
             (x, y, z) coordinates
         close: close sweeping profile if ``True``
         quads: use quadrilaterals as connection faces if ``True`` else triangles
-        caps: close hull with top- and bottom faces
-        triangulation: triangulation function for cap-faces, ``None`` for using
-            ngons as top- and bottom faces
+        caps: close hull with top- and bottom faces (ngons)
 
     .. versionadded:: 0.18
 
     """
     profiles = sweep_profile(profile, sweeping_path)
-    if triangulation is None:
-        triangulation = polygon_triangulation
     return from_profiles_linear(
         profiles,
         close=close,
         quads=quads,
         caps=caps,
-        triangulation=triangulation,
     )
 
 
@@ -1555,8 +1510,3 @@ def simple_polygon_triangulation(
         face_.append(face_[0])
     center = Vec3.sum(face_[:-1]) / (len(face_) - 1)
     return [(v1, v2, center) for v1, v2 in zip(face_, face_[1:])]
-
-
-def polygon_triangulation(face: Iterable[Vec3]) -> List[Sequence[Vec3]]:
-    """Triangulation of convex and concave polygons."""
-    return list(ear_clipping_3d(face))
