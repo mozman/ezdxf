@@ -513,7 +513,7 @@ def close_polygon(
 
 
 def helix(
-    radius: float, pitch: float, turns: float, resolution: int = 16
+    radius: float, pitch: float, turns: float, resolution: int = 16, ccw=True,
 ) -> Iterator[Vec3]:
     """Yields the vertices of a `helix <https://en.wikipedia.org/wiki/Helix>`_.
     The center of the helix is always (0, 0, 0), a positive `pitch` value
@@ -524,18 +524,21 @@ def helix(
         pitch: the height of one complete helix turn
         turns: count of turns
         resolution: vertices per turn
+        ccw: creates a counter-clockwise turning (right-handed) helix if ``True``
 
     .. versionadded:: 0.18
 
     """
     step: float = 1.0 / max(resolution, 1)
-    total_step_count = int(turns / step)
+    if not ccw:
+        step = -step
+    total_step_count = int(turns / abs(step))
     for index in range(total_step_count + 1):
         t = step * index
         angle = t * math.tau
         x = math.cos(angle) * radius
         y = math.sin(angle) * radius
-        yield Vec3(x, y, t * pitch)
+        yield Vec3(x, y, abs(t) * pitch)
 
 
 # 8 corner vertices

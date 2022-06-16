@@ -3,7 +3,7 @@
 import pytest
 
 import math
-from ezdxf.math import Vec3, close_vectors, UCS
+from ezdxf.math import Vec3, close_vectors, UCS, BoundingBox
 from ezdxf.render import forms
 
 
@@ -396,3 +396,17 @@ class TestExtrude2:
                 Vec3(-1.0, 1.0, 10.0),
             ],
         )
+
+
+@pytest.mark.parametrize("ccw", [True, False])
+def test_helix_positive_pitch_goes_up(ccw):
+    bbox = BoundingBox(forms.helix(radius=2.0, pitch=1.0, turns=10, ccw=ccw))
+    assert bbox.extmax.isclose((2, 2, 10))
+    assert bbox.extmin.isclose((-2, -2, 0))
+
+
+@pytest.mark.parametrize("ccw", [True, False])
+def test_helix_negative_pitch_goes_down(ccw):
+    bbox = BoundingBox(forms.helix(radius=2.0, pitch=-1.0, turns=10, ccw=ccw))
+    assert bbox.extmax.isclose((2, 2, 0))
+    assert bbox.extmin.isclose((-2, -2, -10))
