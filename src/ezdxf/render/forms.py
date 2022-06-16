@@ -600,24 +600,22 @@ def extrude(
             counter-clockwise order
         path:  extrusion path as list of (x, y, z) tuples
         close: close profile polygon if ``True``
-        caps: close hull with bottom cap and top cap if `profile` is closed
+        caps: close hull with top- and bottom faces (ngons)
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
     .. versionchanged:: 0.18
 
-        added parameter `caps` to close hull with bottom cap and top cap if
-        `profile` is closed
+        added parameter `caps` to close hull with top- and bottom faces
 
     """
     mesh = MeshVertexMerger()
     sweeping_profile = Vec3.list(profile)
     if close:
         sweeping_profile = close_polygon(sweeping_profile)
-    is_closed = sweeping_profile[0].isclose(sweeping_profile[-1])
 
     extrusion_path = Vec3.list(path)
-    if is_closed and caps:
+    if caps:
         mesh.add_face(sweeping_profile[:-1])
     start_point = extrusion_path[0]
     for target_point in extrusion_path[1:]:
@@ -627,7 +625,7 @@ def extrude(
             mesh.add_face(face)
         sweeping_profile = target_profile
         start_point = target_point
-    if is_closed and caps:
+    if caps:
         mesh.add_face(sweeping_profile[:-1])
     return MeshTransformer.from_builder(mesh)
 
@@ -663,11 +661,13 @@ def _divide_path_into_steps(
 def extrude_twist_scale(
     profile: Iterable[UVec],
     path: Iterable[UVec],
-    close=True,
-    caps=False,
+    *,
     twist: float = 0.0,
     scale: float = 1.0,
     step_size: float = 1.0,
+    close=True,
+    caps=False,
+    quads=True,
 ) -> MeshTransformer:
     """Extrude a `profile` polygon along a `path` polyline, vertices of profile
     should be in counter-clockwise order. This implementation can scale and
@@ -683,8 +683,6 @@ def extrude_twist_scale(
         profile: sweeping profile as list of (x, y, z) tuples in
             counter-clockwise order
         path:  extrusion path as list of (x, y, z) tuples
-        close: close profile polygon if ``True``
-        caps: close hull with bottom cap and top cap if `profile` is closed
         twist: rotate sweeping profile up to the given end rotation angle in
             radians
         scale: scale sweeping profile gradually from 1.0 to given value
@@ -692,6 +690,10 @@ def extrude_twist_scale(
             profiles, the step size is adapted to the distances between the
             path segment points, a value od 0.0 disables creating intermediate
             profiles
+        close: close profile polygon if ``True``
+        caps: close hull with top- and  bottom faces (ngons)
+        quads: use quads for "sweeping" faces if ``True`` else triangles,
+            the top and bottom faces are always ngons
 
     .. versionadded:: 0.18
 
@@ -718,8 +720,7 @@ def extrude_twist_scale(
     sweeping_profile = Vec3.list(profile)
     if close:
         sweeping_profile = close_polygon(sweeping_profile)
-    is_closed = sweeping_profile[0].isclose(sweeping_profile[-1])
-    if is_closed and caps:
+    if caps:
         mesh.add_face(sweeping_profile[:-1])
     # create extrusion path with intermediate points
     extrusion_path = Vec3.list(path)
@@ -729,14 +730,15 @@ def extrude_twist_scale(
     factors = _partial_path_factors(extrusion_path)
     start_point = extrusion_path[0]
     prev_profile = sweeping_profile
+    face_generator = _quad_connection_faces if quads else _tri_connection_faces
     for target_point, factor in zip(extrusion_path[1:], factors[1:]):
         target_profile = list(
             matrix(factor).transform_vertices(sweeping_profile)
         )
-        for face in _quad_connection_faces(prev_profile, target_profile):
+        for face in face_generator(prev_profile, target_profile):
             mesh.add_face(face)
         prev_profile = target_profile
-    if is_closed and caps:
+    if caps:
         mesh.add_face(prev_profile[:-1])
     return MeshTransformer.from_builder(mesh)
 
@@ -758,7 +760,7 @@ def cylinder(
         radius: radius for bottom profile
         top_radius: radius for top profile, if ``None`` top_radius == radius
         top_center: location vector for the center of the top profile
-        caps: close hull with bottom cap and top cap (as N-gons)
+        caps: close hull with top- and  bottom faces (ngons)
         ngons: use ngons for caps if ``True`` else subdivide caps into triangles
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
@@ -852,14 +854,14 @@ def from_profiles_linear(
     Args:
         profiles: list of profiles
         close: close profile polygon if ``True``
-        caps: close hull with bottom cap and top cap
+        caps: close hull with top- and bottom faces
         ngons: use ngons for caps if ``True`` else subdivide caps into triangles
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
     .. versionchanged: 0.18
 
-        restrict type of argument profiles
+        restrict type of argument `profiles`
 
     """
     mesh = MeshVertexMerger()
@@ -966,7 +968,7 @@ def from_profiles_spline(
         profiles: list of profiles
         subdivide: count of face loops
         close: close profile polygon if ``True``
-        caps: close hull with bottom cap and top cap
+        caps: close hull with top- and bottom faces (ngons)
         ngons: use ngons for caps if ``True`` else subdivide caps into triangles
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
@@ -1201,7 +1203,7 @@ def torus(
         minor_radius: radius of circle
         start_angle: start angle of torus in radians
         end_angle: end angle of torus in radians
-        caps: close hull with start- and end caps if the torus is open
+        caps: close hull with start- and end faces (ngons) if the torus is open
         ngons: use ngons for faces if ``True`` else triangles
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
@@ -1474,7 +1476,7 @@ def sweep(
         sweeping_path: the sweeping path defined in the WCS as iterable of
             (x, y, z) coordinates
         close: close sweeping profile if ``True``
-        caps: close hull with bottom cap and top cap
+        caps: close hull with top- and  bottom faces (ngons)
 
     .. versionadded:: 0.18
 

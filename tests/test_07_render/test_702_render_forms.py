@@ -82,11 +82,11 @@ class TestExtrude:
         assert diag.n_faces == 4
         assert diag.is_manifold is True
 
-    def test_extrude_open_profiles_ignore_caps(self, profile):
+    def test_extrude_open_profiles_with_caps(self, profile):
         path = ((0, 0, 0), (0, 0, 1))
         diag = forms.extrude(profile, path, close=False, caps=True).diagnose()
         assert diag.n_vertices == 8
-        assert diag.n_faces == 3, "hull should be open"
+        assert diag.n_faces == 5, "hull should have top- and bottom faces"
         assert diag.is_manifold is True
 
     def test_extrude_with_caps(self, profile):
