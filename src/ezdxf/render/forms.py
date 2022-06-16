@@ -1268,6 +1268,8 @@ def torus(
             Vec3(major_radius, 0, 0),
         )
     ]
+    # required for outwards pointing normals:
+    circle_profile.reverse()
     if start_angle > 1e-9:
         circle_profile = [v.rotate(start_angle) for v in circle_profile]
     mesh = MeshVertexMerger()
@@ -1275,7 +1277,7 @@ def torus(
     end_profile = [v.rotate(step_angle) for v in circle_profile]
 
     if not closed_torus and caps:  # add start cap
-        add_cap(start_profile)
+        add_cap(reversed(start_profile))
 
     face_generator = _quad_connection_faces if ngons else _tri_connection_faces
     for _ in range(major_count):
@@ -1286,7 +1288,7 @@ def torus(
 
     if not closed_torus and caps:  # add end cap
         # end_profile is rotated to the next profile!
-        add_cap(reversed(start_profile))
+        add_cap(start_profile)
 
     return MeshTransformer.from_builder(mesh)
 
