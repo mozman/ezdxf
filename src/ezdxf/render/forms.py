@@ -70,7 +70,7 @@ def circle(
         close: yields first vertex also as last vertex if ``True``.
 
     Returns:
-        vertices in counter clockwise orientation as :class:`~ezdxf.math.Vec3`
+        vertices in counter-clockwise orientation as :class:`~ezdxf.math.Vec3`
         objects
 
     """
@@ -404,7 +404,9 @@ def gear(
         raise ValueError("Argument `height` has to be smaller than `radius`")
 
     base_radius = outside_radius - height
-    alpha_top = math.asin(top_width / 2.0 / outside_radius)  # angle at tooth top
+    alpha_top = math.asin(
+        top_width / 2.0 / outside_radius
+    )  # angle at tooth top
     alpha_bottom = math.asin(
         bottom_width / 2.0 / base_radius
     )  # angle at tooth bottom
@@ -748,6 +750,7 @@ def cylinder(
     radius: float = 1.0,
     top_radius: float = None,
     top_center: UVec = (0, 0, 1),
+    *,
     caps=True,
     ngons=True,
 ) -> MeshTransformer:
@@ -777,7 +780,11 @@ def cylinder(
         translate(circle(count, top_radius, close=True), top_center)
     )
     return from_profiles_linear(
-        [base_profile, top_profile], caps=caps, ngons=ngons
+        [base_profile, top_profile],
+        close=False,
+        quads=True,
+        caps=caps,
+        ngons=ngons,
     )
 
 
@@ -847,46 +854,49 @@ def ngon_to_triangles(face: Iterable[UVec]) -> Iterable[Sequence[Vec3]]:
 
 
 def from_profiles_linear(
-    profiles: Sequence[Sequence[Vec3]], close=True, caps=False, ngons=True
+    profiles: Sequence[Sequence[Vec3]],
+    *,
+    close=True,
+    quads=True,
+    caps=False,
+    ngons=True,
 ) -> MeshTransformer:
-    """Create MESH entity by linear connected `profiles`.
+    """Returns a :class:`~ezdxf.render.MeshTransformer` instance from linear
+    connected `profiles`.
 
     Args:
         profiles: list of profiles
         close: close profile polygon if ``True``
+        quads: use quadrilaterals as connection faces if ``True`` else triangles
         caps: close hull with top- and bottom faces
-        ngons: use ngons for caps if ``True`` else subdivide caps into triangles
+        ngons: use ngons as caps if ``True`` else triangles
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
     .. versionchanged: 0.18
 
-        restrict type of argument `profiles`
+        restrict type of argument `profiles`, added argument `quads`
 
     """
+
+    def add_cap(cap_profile):
+        if ngons:
+            mesh.add_face(cap_profile)
+        else:
+            for f in ngon_to_triangles(cap_profile):
+                mesh.add_face(f)
+
     mesh = MeshVertexMerger()
     if close:
         profiles = [close_polygon(p) for p in profiles]
     if caps:
-        base = reversed(profiles[0])  # type: ignore # for correct outside pointing normals
-        top = profiles[-1]
-        if ngons:
-            mesh.add_face(base)
-            mesh.add_face(top)
-        else:
-            for face in ngon_to_triangles(base):
-                mesh.add_face(face)
-            for face in ngon_to_triangles(top):
-                mesh.add_face(face)
-
-    for profile1, profile2 in zip(profiles, profiles[1:]):
-        prev_v1, prev_v2 = None, None
-        for v1, v2 in zip(profile1, profile2):
-            if prev_v1 is not None:
-                mesh.add_face([prev_v1, v1, v2, prev_v2])
-            prev_v1 = v1
-            prev_v2 = v2
-
+        add_cap(reversed(profiles[0]))  # for correct outside pointing normals
+    face_generator = _quad_connection_faces if quads else _tri_connection_faces
+    for p0, p1 in zip(profiles, profiles[1:]):
+        for face in face_generator(p0, p1):
+            mesh.add_face(face)
+    if caps:
+        add_cap(profiles[-1])
     return MeshTransformer.from_builder(mesh)
 
 
@@ -955,12 +965,15 @@ def spline_interpolated_profiles(
 def from_profiles_spline(
     profiles: Sequence[Sequence[Vec3]],
     subdivide: int = 4,
+    *,
     close=True,
+    quads=True,
     caps=False,
     ngons=True,
 ) -> MeshTransformer:
-    """Create MESH entity by spline interpolation between given `profiles`.
-    Requires at least 4 profiles. A subdivide value of 4, means, create 4 face
+    """Returns a :class:`~ezdxf.render.MeshTransformer` instance by spline
+    interpolation between given `profiles`.
+    Requires at least 4 profiles. A `subdivide` value of 4, means, create 4 face
     loops between two profiles, without interpolation two profiles create one
     face loop.
 
@@ -968,27 +981,31 @@ def from_profiles_spline(
         profiles: list of profiles
         subdivide: count of face loops
         close: close profile polygon if ``True``
-        caps: close hull with top- and bottom faces (ngons)
-        ngons: use ngons for caps if ``True`` else subdivide caps into triangles
+        quads: use quadrilaterals as connection faces if ``True`` else triangles
+        caps: close hull with top- and bottom faces
+        ngons: use ngons as caps if ``True`` else triangles
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
     .. versionchanged: 0.18
 
-        restrict type of argument profiles
+        restrict type of argument profiles, added argument `quads`
 
     """
     if len(profiles) > 3:
         profiles = list(spline_interpolated_profiles(profiles, subdivide))
     else:
         raise ValueError("Spline interpolation requires at least 4 profiles")
-    return from_profiles_linear(profiles, close=close, caps=caps, ngons=ngons)
+    return from_profiles_linear(
+        profiles, close=close, quads=quads, caps=caps, ngons=ngons
+    )
 
 
 def cone(
     count: int = 16,
     radius: float = 1.0,
     apex: UVec = (0, 0, 1),
+    *,
     caps=True,
     ngons=True,
 ) -> MeshTransformer:
@@ -1080,16 +1097,24 @@ def rotation_form(
     profile: Iterable[UVec],
     angle: float = math.tau,
     axis: UVec = (1, 0, 0),
+    *,
+    caps=False,
+    ngons=True,
 ) -> MeshTransformer:
-    """Create MESH entity by rotating a `profile` around an `axis`.
+    """Returns a :class:`~ezdxf.render.MeshTransformer` instance created by
+    rotating a `profile` around an `axis`.
 
     Args:
         count: count of rotated profiles
         profile: profile to rotate as list of vertices
         angle: rotation angle in radians
         axis: rotation axis
+        caps: close hull with start- and end faces
+        ngons: use ngons as caps if ``True`` else triangles
 
-    Returns: :class:`~ezdxf.render.MeshTransformer`
+    .. versionchanged:: 0.18
+
+        added arguments `caps` and `ngons`
 
     """
     if count < 3:
@@ -1101,12 +1126,14 @@ def rotation_form(
     for _ in range(int(count)):
         profile = list(m.transform_vertices(profile))
         profiles.append(profile)
-    mesh = from_profiles_linear(profiles, close=False, caps=False)
+    mesh = from_profiles_linear(
+        profiles, close=False, quads=True, caps=caps, ngons=ngons
+    )
     return mesh
 
 
 def sphere(
-    count: int = 16, stacks: int = 8, radius: float = 1, quads=True
+    count: int = 16, stacks: int = 8, radius: float = 1, *, quads=True
 ) -> MeshTransformer:
     """Create a `sphere <https://en.wikipedia.org/wiki/Sphere>`_ as
     :class:`~ezdxf.render.MeshTransformer` object, the center of the sphere is
@@ -1116,9 +1143,7 @@ def sphere(
         count: longitudinal slices
         stacks: latitude slices
         radius: radius of sphere
-        quads: use quads for faces if ``True`` else triangles
-
-    Returns: :class:`~ezdxf.render.MeshTransformer`
+        quads: use quadrilaterals as faces if ``True`` else triangles
 
     """
     radius = float(radius)
@@ -1188,6 +1213,7 @@ def torus(
     minor_radius=0.1,
     start_angle: float = 0.0,
     end_angle: float = math.tau,
+    *,
     caps=True,
     ngons=True,
 ) -> MeshTransformer:
@@ -1205,8 +1231,6 @@ def torus(
         end_angle: end angle of torus in radians
         caps: close hull with start- and end faces (ngons) if the torus is open
         ngons: use ngons for faces if ``True`` else triangles
-
-    Returns: :class:`~ezdxf.render.MeshTransformer`
 
     .. versionadded:: 0.18
 
@@ -1253,8 +1277,9 @@ def torus(
     if not closed_torus and caps:  # add start cap
         add_cap(start_profile)
 
+    face_generator = _quad_connection_faces if ngons else _tri_connection_faces
     for _ in range(major_count):
-        for face in connection_faces(start_profile, end_profile, ngons):
+        for face in face_generator(start_profile, end_profile):
             mesh.add_face(face)
         start_profile = end_profile
         end_profile = [v.rotate(step_angle) for v in end_profile]
@@ -1284,7 +1309,7 @@ def _quad_connection_faces(
     v0_prev = start_profile[0]
     v1_prev = end_profile[0]
     for v0, v1 in zip(start_profile[1:], end_profile[1:]):
-        yield v0_prev, v1_prev, v1, v0
+        yield v0_prev, v0, v1, v1_prev
         v0_prev = v0
         v1_prev = v1
 
@@ -1295,8 +1320,8 @@ def _tri_connection_faces(
     v0_prev = start_profile[0]
     v1_prev = end_profile[0]
     for v0, v1 in zip(start_profile[1:], end_profile[1:]):
-        yield v0_prev, v1_prev, v1
-        yield v1, v0, v0_prev
+        yield v1, v1_prev, v0_prev,
+        yield v0_prev, v0, v1
         v0_prev = v0
         v1_prev = v1
 
@@ -1458,8 +1483,11 @@ def debug_sweep_profiles(
 def sweep(
     profile: Iterable[UVec],
     sweeping_path: Iterable[UVec],
+    *,
     close=True,
+    quads=True,
     caps=True,
+    ngons=True,
 ) -> MeshTransformer:
     """Returns the mesh from sweeping a profile along a 3D path, where the
     sweeping path defines the final location in the `WCS`.
@@ -1476,10 +1504,14 @@ def sweep(
         sweeping_path: the sweeping path defined in the WCS as iterable of
             (x, y, z) coordinates
         close: close sweeping profile if ``True``
-        caps: close hull with top- and  bottom faces (ngons)
+        quads: use quadrilaterals as connection faces if ``True`` else triangles
+        caps: close hull with top- and bottom faces
+        ngons: use ngons as caps if ``True`` else triangles
 
     .. versionadded:: 0.18
 
     """
     profiles = sweep_profile(profile, sweeping_path)
-    return from_profiles_linear(profiles, close=close, caps=caps)
+    return from_profiles_linear(
+        profiles, close=close, quads=quads, caps=caps, ngons=ngons
+    )

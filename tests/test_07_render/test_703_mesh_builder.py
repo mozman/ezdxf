@@ -179,7 +179,11 @@ class TestMeshDiagnose:
         mesh = cylinder()
         assert mesh.diagnose().euler_characteristic == 2
 
-    @pytest.mark.parametrize("surface", [cube(), cylinder(), cone(), sphere()])
+    @pytest.mark.parametrize(
+        "surface",
+        [cube(), cylinder(), cone(), sphere()],
+        ids="cube cylinder cone sphere".split(),
+    )
     def test_surface_normals_pointing_outwards(self, surface):
         diagnose = surface.diagnose()
         assert diagnose.estimate_normals_direction() > 0.9
