@@ -23,7 +23,9 @@ Forms
     - :func:`cylinder_2p`
     - :func:`cone`
     - :func:`cone_2p`
+    - :func:`helix`
     - :func:`sphere`
+    - :func:`torus`
 
     3D Form Builder
 
@@ -72,6 +74,8 @@ Create 3D forms as :class:`~ezdxf.render.MeshTransformer` objects.
 .. autofunction:: cone
 
 .. autofunction:: cone_2p
+
+.. autofunction:: helix
 
 .. autofunction:: sphere
 

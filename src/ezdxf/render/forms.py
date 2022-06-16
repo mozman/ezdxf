@@ -34,6 +34,7 @@ __all__ = [
     "rotate",
     "scale",
     "close_polygon",
+    "helix",
     "cube",
     "extrude",
     "extrude_twist_scale",
@@ -507,6 +508,32 @@ def close_polygon(
     if not vertices[0].isclose(vertices[-1], rel_tol=rel_tol, abs_tol=abs_tol):
         vertices.append(vertices[0])
     return vertices
+
+
+def helix(
+    radius: float, pitch: float, turns: float, resolution: int = 16
+) -> Iterator[Vec3]:
+    """Yields the vertices of a `helix <https://en.wikipedia.org/wiki/Helix>`_.
+    The center of the helix is always (0, 0, 0), a positive `pitch` value
+    creates a helix along the +z-axis, a negative value along the -z-axis.
+
+    Args:
+        radius: helix radius
+        pitch: the height of one complete helix turn
+        turns: count of turns
+        resolution: vertices per turn
+
+    .. versionadded:: 0.18
+
+    """
+    step: float = 1.0 / max(resolution, 1)
+    total_step_count = int(turns / step)
+    for index in range(total_step_count + 1):
+        t = step * index
+        angle = t * math.tau
+        x = math.cos(angle) * radius
+        y = math.sin(angle) * radius
+        yield Vec3(x, y, t * pitch)
 
 
 # 8 corner vertices
