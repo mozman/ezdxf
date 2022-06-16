@@ -3,7 +3,7 @@
 import pytest
 from math import radians, isclose
 from ezdxf.math import Vec3, BoundingBox
-from ezdxf.render.forms import cube, circle, cylinder, cone, sphere
+from ezdxf.render import forms
 from ezdxf.addons.menger_sponge import MengerSponge
 from ezdxf.render.mesh import (
     MeshVertexMerger,
@@ -109,7 +109,7 @@ def test_has_none_planar_faces():
 
 
 def test_scale_mesh():
-    mesh = cube(center=False)
+    mesh = forms.cube(center=False)
     mesh.scale(2, 3, 4)
     bbox = BoundingBox(mesh.vertices)
     assert bbox.extmin.isclose((0, 0, 0))
@@ -117,7 +117,7 @@ def test_scale_mesh():
 
 
 def test_rotate_x():
-    mesh = cube(center=False)
+    mesh = forms.cube(center=False)
     mesh.rotate_x(radians(90))
     bbox = BoundingBox(mesh.vertices)
     assert bbox.extmin.isclose((0, -1, 0))
@@ -125,7 +125,7 @@ def test_rotate_x():
 
 
 def test_mesh_bounding_box():
-    bbox = cube().bbox()
+    bbox = forms.cube().bbox()
     assert bbox.extmin.isclose((-0.5, -0.5, -0.5))
     assert bbox.extmax.isclose((0.5, 0.5, 0.5))
 
@@ -141,47 +141,47 @@ class TestMeshDiagnose:
         assert mesh.diagnose().euler_characteristic != 2
 
     def test_cube_is_watertight(self):
-        mesh = cube(center=False)
+        mesh = forms.cube(center=False)
         assert mesh.diagnose().euler_characteristic == 2
 
     def test_is_watertight_can_not_detect_vertex_orientation_errors(self):
-        mesh = cube(center=False)
+        mesh = forms.cube(center=False)
         mesh.faces[-1] = tuple(reversed(mesh.faces[-1]))
         assert mesh.diagnose().euler_characteristic == 2
 
     def test_edge_balance_of_closed_surface_is_not_broken(self):
-        mesh = cube(center=False)
+        mesh = forms.cube(center=False)
         assert mesh.diagnose().is_edge_balance_broken is False
 
     def test_edge_balance_of_wrong_oriented_faces_is_broken(self):
-        mesh = cube(center=False)
+        mesh = forms.cube(center=False)
         mesh.faces[-1] = tuple(reversed(mesh.faces[-1]))
         assert mesh.diagnose().is_edge_balance_broken is True
 
     def test_edge_balance_of_doubled_faces_is_broken(self):
-        mesh = cube(center=False)
+        mesh = forms.cube(center=False)
         mesh.faces.append(mesh.faces[-1])
         assert mesh.diagnose().is_edge_balance_broken is True
 
     def test_total_edge_count_of_closed_surface(self):
-        mesh = cube(center=False)
+        mesh = forms.cube(center=False)
         stats = mesh.diagnose()
         assert stats.total_edge_count() == stats.n_edges * 2
 
     def test_cube_of_separated_faces_is_not_watertight(self):
-        mesh = cube(center=False)
+        mesh = forms.cube(center=False)
         mesh2 = MeshBuilder()
         for face in mesh.faces_as_vertices():
             mesh2.add_face(face)
         assert mesh2.diagnose().euler_characteristic != 2
 
     def test_cylinder_is_watertight(self):
-        mesh = cylinder()
+        mesh = forms.cylinder()
         assert mesh.diagnose().euler_characteristic == 2
 
     @pytest.mark.parametrize(
         "surface",
-        [cube(), cylinder(), cone(), sphere()],
+        [forms.cube(), forms.cylinder(), forms.cone(), forms.sphere()],
         ids="cube cylinder cone sphere".split(),
     )
     def test_surface_normals_pointing_outwards(self, surface):
@@ -189,7 +189,7 @@ class TestMeshDiagnose:
         assert diagnose.estimate_normals_direction() > 0.9
 
     def test_cylinder_with_reversed_cap_normals(self):
-        c = cylinder()
+        c = forms.cylinder()
         for i, face in enumerate(c.faces):
             if len(face) > 4:
                 c.faces[i] = tuple(reversed(c.faces[i]))
@@ -198,17 +198,17 @@ class TestMeshDiagnose:
         assert diagnose.is_edge_balance_broken is True
 
     def test_cube_is_manifold(self):
-        diag = cube().diagnose()
+        diag = forms.cube().diagnose()
         assert diag.is_manifold is True
 
     def test_mesh_bounding_box(self):
-        bbox = cube().diagnose().bbox
+        bbox = forms.cube().diagnose().bbox
         assert bbox.extmin.isclose((-0.5, -0.5, -0.5))
         assert bbox.extmax.isclose((0.5, 0.5, 0.5))
 
 
 def test_flipped_cube_normals_pointing_inwards():
-    c = cube()
+    c = forms.cube()
     c.flip_normals()
     diagnose = c.diagnose()
     assert diagnose.estimate_normals_direction() == pytest.approx(-1.0)
@@ -223,7 +223,7 @@ def msp():
 def cube_polyface():
     layout = VirtualLayout()
     p = layout.add_polyface()
-    p.append_faces(cube().faces_as_vertices())
+    p.append_faces(forms.cube().faces_as_vertices())
     return p
 
 
@@ -417,7 +417,7 @@ def test_from_polyface_182_2(polyface_181_2):
 
 
 def test_mesh_subdivide():
-    c = cube().scale_uniform(10).subdivide(2)
+    c = forms.cube().scale_uniform(10).subdivide(2)
     assert len(c.vertices) == 2 * 25 + 3 * 16
     assert len(c.faces) == 16 * 6
 
@@ -447,7 +447,7 @@ def test_debug_coplanar_faces():
 
 
 def test_merge_coplanar_faces():
-    c = cube().scale_uniform(10).subdivide(1)
+    c = forms.cube().scale_uniform(10).subdivide(1)
     assert len(c.vertices) == 26
     assert len(c.faces) == 24
     optimized_cube = c.merge_coplanar_faces()
@@ -457,7 +457,7 @@ def test_merge_coplanar_faces():
 
 def test_merge_disk():
     m = MeshVertexMerger()
-    vertices = list(circle(8, close=True))
+    vertices = list(forms.circle(8, close=True))
     for v1, v2 in zip(vertices, vertices[1:]):
         m.add_face([Vec3(), v1, v2])
     assert len(m.vertices) == 9
@@ -469,7 +469,7 @@ def test_merge_disk():
 
 
 def test_merge_coplanar_faces_in_two_passes():
-    c = cube().scale_uniform(10).subdivide(2)
+    c = forms.cube().scale_uniform(10).subdivide(2)
     assert len(c.vertices) == 98
     assert len(c.faces) == 96
     optimized_cube = c.merge_coplanar_faces(passes=2)
@@ -642,7 +642,7 @@ class TestMergeFullPatch:
 
 
 def test_all_edges_cube():
-    mesh = cube()
+    mesh = forms.cube()
     edges = list(all_edges(mesh.faces))
     assert len(edges) == 6 * 4
     assert len(set(edges)) == 24
@@ -651,7 +651,7 @@ def test_all_edges_cube():
 class TestGetEdgeStats:
     @pytest.fixture(scope="class")
     def edges(self):
-        mesh = cube()
+        mesh = forms.cube()
         return get_edge_stats(mesh.faces)
 
     def test_unique_edge_count(self, edges):
@@ -664,13 +664,13 @@ class TestGetEdgeStats:
         assert all(e[1] == 0 for e in edges.values()) is True
 
     def test_invalid_face_orientation_break_the_rules(self):
-        faces = cube().faces
+        faces = forms.cube().faces
         faces[-1] = list(reversed(faces[-1]))
         edges = get_edge_stats(faces)
         assert all(e[1] == 0 for e in edges.values()) is False
 
     def test_coincident_faces_break_the_rules(self):
-        faces = cube().faces
+        faces = forms.cube().faces
         faces.append(faces[-1])
         edges = get_edge_stats(faces)
         assert all(e[1] == 0 for e in edges.values()) is False
@@ -683,7 +683,7 @@ class TestGetEdgeStats:
 
 class TestSeparateMeshes:
     def test_separate_a_single_cube_returns_a_single_cube(self):
-        c1 = cube()
+        c1 = forms.cube()
         result = list(separate_meshes(c1))
         assert len(result) == 1
         c2 = result[0]
@@ -701,18 +701,18 @@ class TestSeparateMeshes:
         assert m1.faces == m2.faces
 
     def test_separate_two_cubes(self):
-        cubes = cube()
+        cubes = forms.cube()
         cubes.translate(10, 0, 0)
-        cubes.add_mesh(mesh=cube())
+        cubes.add_mesh(mesh=forms.cube())
         # a non-broken edge balance is a requirement to work properly:
         assert cubes.diagnose().is_edge_balance_broken is False
         result = list(separate_meshes(cubes))
         assert len(result) == 2
 
     def test_separate_two_intersecting_cubes(self):
-        cubes = cube()
+        cubes = forms.cube()
         cubes.translate(0.2, 0.2, 0.2)
-        cubes.add_mesh(mesh=cube())
+        cubes.add_mesh(mesh=forms.cube())
         # a non-broken edge balance is a requirement to work properly:
         assert cubes.diagnose().is_edge_balance_broken is False
         assert len(cubes.separate_meshes()) == 2
@@ -721,7 +721,7 @@ class TestSeparateMeshes:
 class TestNormals:
     @pytest.fixture(scope="class")
     def normals(self):
-        return list(cube().normals())
+        return list(forms.cube().normals())
 
     def test_cube_has_six_normals(self, normals):
         assert len(normals) == 6
@@ -731,3 +731,4 @@ class TestNormals:
 
     def test_all_normals_are_different(self, normals):
         assert len(set(normals)) == 6
+
