@@ -506,10 +506,10 @@ def close_polygon(
     """Returns list of :class:`~ezdxf.math.Vec3`, where the first vertex is
     equal to the last vertex.
     """
-    vertices: List[Vec3] = list(vertices)
-    if not vertices[0].isclose(vertices[-1], rel_tol=rel_tol, abs_tol=abs_tol):
-        vertices.append(vertices[0])
-    return vertices
+    polygon: List[Vec3] = list(vertices)
+    if not polygon[0].isclose(polygon[-1], rel_tol=rel_tol, abs_tol=abs_tol):
+        polygon.append(polygon[0])
+    return polygon
 
 
 def helix(
@@ -1306,7 +1306,7 @@ def connection_faces(
 
 
 def _quad_connection_faces(
-    start_profile: List[Vec3], end_profile: List[Vec3]
+    start_profile: Sequence[Vec3], end_profile: Sequence[Vec3]
 ) -> Iterator[Sequence[Vec3]]:
     v0_prev = start_profile[0]
     v1_prev = end_profile[0]
@@ -1317,7 +1317,7 @@ def _quad_connection_faces(
 
 
 def _tri_connection_faces(
-    start_profile: List[Vec3], end_profile: List[Vec3]
+    start_profile: Sequence[Vec3], end_profile: Sequence[Vec3]
 ) -> Iterator[Sequence[Vec3]]:
     v0_prev = start_profile[0]
     v1_prev = end_profile[0]
