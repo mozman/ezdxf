@@ -765,7 +765,9 @@ def cylinder(
         top_center: location vector for the center of the top profile
         caps: close hull with top- and  bottom faces (ngons)
 
-    Returns: :class:`~ezdxf.render.MeshTransformer`
+    .. versionchanged: 0.18
+
+        removed `ngons` argument
 
     """
     if top_radius is None:
@@ -791,6 +793,7 @@ def cylinder_2p(
     radius: float = 1,
     base_center=(0, 0, 0),
     top_center=(0, 0, 1),
+    caps=True,
 ) -> MeshTransformer:
     """Create a `cylinder <https://en.wikipedia.org/wiki/Cylinder>`_ as
     :class:`~ezdxf.render.MeshTransformer` object from two points,
@@ -802,15 +805,20 @@ def cylinder_2p(
         radius: radius for bottom profile
         base_center: center of base circle
         top_center: center of top circle
+        caps: close hull with top- and  bottom faces (ngons)
 
     Returns: :class:`~ezdxf.render.MeshTransformer`
+
+    .. versionchanged: 0.18
+
+        added `caps` argument
 
     """
 
     origin = Vec3(base_center)
     heading = Vec3(top_center) - origin
     mesh = cylinder(
-        count, radius, top_center=(0, 0, heading.magnitude), caps=True
+        count, radius, top_center=(0, 0, heading.magnitude), caps=caps
     )
     ucs = reference_frame_z(heading, origin=origin)
     mesh.transform(ucs.matrix)
@@ -960,7 +968,6 @@ def cone(
     apex: UVec = (0, 0, 1),
     *,
     caps=True,
-    ngons=True,
 ) -> MeshTransformer:
     """Create a `cone <https://en.wikipedia.org/wiki/Cone>`_ as
     :class:`~ezdxf.render.MeshTransformer` object, the base center is fixed in
@@ -970,11 +977,11 @@ def cone(
         count: edge count of basis_vector
         radius: radius of basis_vector
         apex: tip of the cone
-        caps: add a bottom face if ``True``
-        ngons: use ngons for cap-faces if ``True`` else subdivide caps into
-            regular triangles
+        caps: add a bottom face as ngon if ``True``
 
-    Returns: :class:`~ezdxf.render.MeshTransformer`
+    .. versionchanged: 0.18
+
+        removed `ngons` argument
 
     """
     mesh = MeshVertexMerger()
@@ -982,20 +989,18 @@ def cone(
     for p1, p2 in zip(base_circle, base_circle[1:]):
         mesh.add_face([p1, p2, apex])
     if caps:
-        base_circle = reversed(  # type: ignore
-            base_circle
-        )  # for correct outside pointing normals
-        if ngons:
-            mesh.add_face(base_circle)
-        else:
-            for face in simple_polygon_triangulation(base_circle):
-                mesh.add_face(face)
-
+        # reversed for correct outside pointing normals
+        mesh.add_face(reversed(base_circle))
     return MeshTransformer.from_builder(mesh)
 
 
 def cone_2p(
-    count: int = 16, radius: float = 1.0, base_center=(0, 0, 0), apex=(0, 0, 1)
+    count: int = 16,
+    radius: float = 1.0,
+    base_center=(0, 0, 0),
+    apex=(0, 0, 1),
+    *,
+    caps=True,
 ) -> MeshTransformer:
     """Create a `cone <https://en.wikipedia.org/wiki/Cone>`_ as
     :class:`~ezdxf.render.MeshTransformer` object from two points, `base_center`
@@ -1006,44 +1011,19 @@ def cone_2p(
         radius: radius of basis_vector
         base_center: center point of base circle
         apex: tip of the cone
+        caps: add a bottom face as ngon if ``True``
 
-    Returns: :class:`~ezdxf.render.MeshTransformer`
+    .. versionchanged: 0.18
+
+        added `caps` argument
 
     """
-    # Copyright (c) 2011 Evan Wallace (http://madebyevan.com/), under the MIT license.
-    # Python port Copyright (c) 2012 Tim Knip (http://www.floorplanner.com), under the MIT license.
-    # Additions by Alex Pletzer (Pennsylvania State University)
-    # Adaptation for ezdxf, Copyright (c) 2020, Manfred Moitzi, MIT License.
-    start = Vec3(base_center)
-    end = Vec3(apex)
-    slices = int(count)
-    ray = end - start
-    z_axis = ray.normalize()
-    is_y = math.fabs(z_axis.y) > 0.5
-    x_axis = Vec3(float(is_y), float(not is_y), 0).cross(z_axis).normalize()
-    y_axis = x_axis.cross(z_axis).normalize()
-    mesh = MeshVertexMerger()
-
-    def vertex(angle) -> Vec3:
-        # radial direction pointing out
-        out = x_axis * math.cos(angle) + y_axis * math.sin(angle)
-        return start + out * radius
-
-    dt = math.tau / slices
-    for i in range(0, slices):
-        t0 = i * dt
-        i1 = (i + 1) % slices
-        t1 = i1 * dt
-        # coordinates and associated normal pointing outwards of the cone's
-        # side
-        p0 = vertex(t0)
-        p1 = vertex(t1)
-        # polygon on the low side (disk sector)
-        mesh.add_face([start, p0, p1])
-        # polygon extending from the low side to the tip
-        mesh.add_face([p0, end, p1])
-
-    return MeshTransformer.from_builder(mesh)
+    origin = Vec3(base_center)
+    heading = Vec3(apex) - origin
+    mesh = cone(count, radius, apex=(0, 0, heading.magnitude), caps=caps)
+    ucs = reference_frame_z(heading, origin=origin)
+    mesh.transform(ucs.matrix)
+    return mesh
 
 
 def rotation_form(
