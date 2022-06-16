@@ -254,27 +254,6 @@ class TestTorus:
         assert diag.n_faces == 16 * 8 + 2
         assert diag.is_manifold is True
 
-    def test_closed_torus_triangle_faces(self):
-        t = forms.torus(major_count=16, minor_count=8, ngons=False)
-        diag = t.diagnose()
-        assert diag.n_vertices == 16 * 8
-        assert diag.n_faces == 16 * 8 * 2
-        assert diag.is_manifold is True
-
-    def test_open_torus_triangle_faces(self):
-        t = forms.torus(
-            major_count=16, minor_count=8, end_angle=math.pi, ngons=False
-        )
-        diag = t.diagnose()
-        assert (
-            diag.n_vertices == 17 * 8 + 2
-        ), "expected two additional vertices in the center of the end caps"
-        end_cap_face_count = 8
-        assert (
-            diag.n_faces == (16 * 8) * 2 + end_cap_face_count * 2
-        ), "invalid count of end cap triangles?"
-        assert diag.is_manifold is True
-
     @pytest.mark.parametrize("r", [2, 1, -2])
     def test_major_radius_is_bigger_than_minor_radius(self, r):
         with pytest.raises(ValueError):

@@ -1150,7 +1150,6 @@ def torus(
     end_angle: float = math.tau,
     *,
     caps=True,
-    ngons=True,
 ) -> MeshTransformer:
     """Create a `torus <https://en.wikipedia.org/wiki/Torus>`_ as
     :class:`~ezdxf.render.MeshTransformer` object, the center of the torus is
@@ -1165,20 +1164,10 @@ def torus(
         start_angle: start angle of torus in radians
         end_angle: end angle of torus in radians
         caps: close hull with start- and end faces (ngons) if the torus is open
-        ngons: use ngons for cap-faces if ``True`` else subdivide caps into
-            regular triangles
 
     .. versionadded:: 0.18
 
     """
-
-    def add_cap(profile):
-        if ngons:
-            mesh.add_face(profile)
-        else:
-            for face in simple_polygon_triangulation(profile):
-                mesh.add_face(face)
-
     if major_count < 1:
         raise ValueError(f"major_count < 1")
     if minor_count < 3:
@@ -1213,18 +1202,17 @@ def torus(
     end_profile = [v.rotate(step_angle) for v in circle_profile]
 
     if not closed_torus and caps:  # add start cap
-        add_cap(reversed(start_profile))
+        mesh.add_face(reversed(start_profile))
 
-    face_generator = _quad_connection_faces if ngons else _tri_connection_faces
     for _ in range(major_count):
-        for face in face_generator(start_profile, end_profile):
+        for face in _quad_connection_faces(start_profile, end_profile):
             mesh.add_face(face)
         start_profile = end_profile
         end_profile = [v.rotate(step_angle) for v in end_profile]
 
     if not closed_torus and caps:  # add end cap
         # end_profile is rotated to the next profile!
-        add_cap(start_profile)
+        mesh.add_face(start_profile)
 
     return MeshTransformer.from_builder(mesh)
 
