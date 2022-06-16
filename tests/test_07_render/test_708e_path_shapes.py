@@ -3,7 +3,7 @@
 
 import pytest
 import math
-from ezdxf.math import basic_transformation
+from ezdxf.math import basic_transformation, BoundingBox
 from ezdxf.path import shapes, bbox
 
 
@@ -117,6 +117,22 @@ def test_gear():
     assert extends.extmin.isclose((-0.999, -0.999), abs_tol=1e-3)
     assert extends.extmax.isclose((0.999, 0.999), abs_tol=1e-3)
     assert gear.is_closed is True
+
+
+@pytest.mark.parametrize("ccw", [True, False])
+def test_helix_positive_pitch_goes_up(ccw):
+    h = shapes.helix(radius=2.0, pitch=1.0, turns=10, ccw=ccw)
+    bbox = BoundingBox(h.flattening(0.1))
+    assert bbox.extmax.isclose((2, 2, 10))
+    assert bbox.extmin.isclose((-2, -2, 0))
+
+
+@pytest.mark.parametrize("ccw", [True, False])
+def test_helix_negative_pitch_goes_down(ccw):
+    h = shapes.helix(radius=2.0, pitch=-1.0, turns=10, ccw=ccw)
+    bbox = BoundingBox(h.flattening(0.1))
+    assert bbox.extmax.isclose((2, 2, 0))
+    assert bbox.extmin.isclose((-2, -2, -10))
 
 
 if __name__ == "__main__":

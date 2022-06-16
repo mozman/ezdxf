@@ -270,9 +270,9 @@ def helix(
         z_step_2 = z_step * 0.5
         for _, v1, v2, v3 in cubic_bezier_arc_parameters(0, angle, segments):
             yield (
-                Vec3(v1.x * radius, v1.y * radius, zz + z_step_2 - b),
-                Vec3(v2.x * radius, v2.y * radius, zz + z_step_2 + b),
-                Vec3(v3.x * radius, v3.y * radius, zz + z_step),
+                Vec3(v1.x * rx, v1.y * ry, zz + z_step_2 - b),
+                Vec3(v2.x * rx, v2.y * ry, zz + z_step_2 + b),
+                Vec3(v3.x * rx, v3.y * ry, zz + z_step),
             )
             zz += z_step
 
@@ -281,7 +281,10 @@ def helix(
         b_1 = (1.0 - cos_a) * (3.0 - cos_a) * alpha * p
         b_2 = math.sin(alpha) * (4.0 - cos_a) * math.tan(alpha)
         return b_1 / b_2
-
+    rx = radius
+    ry = radius
+    if not ccw:
+        ry = -ry
     path = Path(start=(radius, 0, 0))
 
     p = pitch / math.tau
