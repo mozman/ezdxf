@@ -3,26 +3,27 @@
 Forms
 =====
 
-    This module provides functions to create 2D and 3D forms as vertices or mesh objects.
+    This module provides functions to create 2D and 3D forms as vertices or
+    mesh objects.
 
     2D Forms
 
-    - :func:`circle`
-    - :func:`square`
     - :func:`box`
+    - :func:`circle`
     - :func:`ellipse`
     - :func:`euler_spiral`
-    - :func:`ngon`
-    - :func:`star`
     - :func:`gear`
+    - :func:`ngon`
+    - :func:`square`
+    - :func:`star`
 
     3D Forms
 
+    - :func:`cone_2p`
+    - :func:`cone`
     - :func:`cube`
     - :func:`cylinder`
     - :func:`cylinder_2p`
-    - :func:`cone`
-    - :func:`cone_2p`
     - :func:`helix`
     - :func:`sphere`
     - :func:`torus`
@@ -33,8 +34,8 @@ Forms
     - :func:`extrude_twist_scale`
     - :func:`from_profiles_linear`
     - :func:`from_profiles_spline`
-    - :func:`sweep`
     - :func:`rotation_form`
+    - :func:`sweep`
 
 
 2D Forms
@@ -43,21 +44,21 @@ Forms
     Basic 2D shapes as iterable of :class:`~ezdxf.math.Vec3`.
 
 
-.. autofunction:: circle
-
-.. autofunction:: square
-
 .. autofunction:: box
+
+.. autofunction:: circle
 
 .. autofunction:: ellipse
 
 .. autofunction:: euler_spiral
 
+.. autofunction:: gear
+
 .. autofunction:: ngon
 
-.. autofunction:: star
+.. autofunction:: square
 
-.. autofunction:: gear
+.. autofunction:: star
 
 
 3D Forms
@@ -67,13 +68,13 @@ Create 3D forms as :class:`~ezdxf.render.MeshTransformer` objects.
 
 .. autofunction:: cube
 
-.. autofunction:: cylinder
-
-.. autofunction:: cylinder_2p
-
 .. autofunction:: cone
 
 .. autofunction:: cone_2p
+
+.. autofunction:: cylinder
+
+.. autofunction:: cylinder_2p
 
 .. autofunction:: helix
 
@@ -92,6 +93,6 @@ Create 3D forms as :class:`~ezdxf.render.MeshTransformer` objects.
 
 .. autofunction:: from_profiles_spline
 
-.. autofunction:: sweep
-
 .. autofunction:: rotation_form
+
+.. autofunction:: sweep
