@@ -264,7 +264,8 @@ def helix(
 
     """
 
-    def _get_ctrl_points(zz, b, angle, segments):
+    def bezier_ctrl_points(b, angle, segments):
+        zz = 0.0
         z_step = angle / segments * p
         z_step_2 = z_step * 0.5
         for _, v1, v2, v3 in cubic_bezier_arc_parameters(0, angle, segments):
@@ -273,10 +274,9 @@ def helix(
                 Vec3(v2.x * radius, v2.y * radius, zz + z_step_2 + b),
                 Vec3(v3.x * radius, v3.y * radius, zz + z_step),
             )
-
             zz += z_step
 
-    def _get_b(alpha: float) -> float:
+    def param_b(alpha: float) -> float:
         cos_a = math.cos(alpha)
         b_1 = (1.0 - cos_a) * (3.0 - cos_a) * alpha * p
         b_2 = math.sin(alpha) * (4.0 - cos_a) * math.tan(alpha)
@@ -285,20 +285,21 @@ def helix(
     path = Path(start=(radius, 0, 0))
 
     p = pitch / math.tau
-    b = _get_b(math.pi / segments)
-    full_turns = math.floor(turns)
-    reminder = turns - full_turns
-    for _ in range(int(full_turns)):
-        z = path.end.z
-        for v1, v2, v3 in _get_ctrl_points(z, b, math.tau, segments):
-            path.curve4_to(v3, v1, v2)
+    b = param_b(math.pi / segments)
+    full_turns = int(math.floor(turns))
+    if full_turns > 0:
+        curve_params = list(bezier_ctrl_points(b, math.tau, segments))
+        for _ in range(full_turns):
+            z = Vec3(0, 0, path.end.z)
+            for v1, v2, v3 in curve_params:
+                path.curve4_to(z + v3, z + v1, z + v2)
 
+    reminder = turns - full_turns
     if reminder > 1e-6:
-        segments = math.ceil(reminder / math.pi * 2.0)
-        b = _get_b(reminder / segments / 2.0)
-        for v1, v2, v3 in _get_ctrl_points(
-            path.end.z, b, math.tau * reminder, segments
-        ):
-            path.curve4_to(v3, v1, v2)
+        segments = math.ceil(reminder * 4)
+        b = param_b(reminder * math.pi / segments)
+        z = Vec3(0, 0, path.end.z)
+        for v1, v2, v3 in bezier_ctrl_points(b, math.tau * reminder, segments):
+            path.curve4_to(z + v3, z + v1, z + v2)
 
     return path
