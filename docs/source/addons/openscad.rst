@@ -72,6 +72,8 @@ Script Class
 
     .. automethod:: add_polyhedron
 
+    .. automethod:: add_polygon
+
     .. automethod:: add_resize
 
     .. automethod:: add_rotate

@@ -4,7 +4,7 @@
 import pytest
 from ezdxf.addons import openscad
 from ezdxf.render import MeshBuilder
-from ezdxf.math import Matrix44, Vec3
+from ezdxf.math import Matrix44
 
 
 def test_matrix44_to_multmatrix_str():
@@ -97,6 +97,38 @@ class TestScriptBuilder:
         script = openscad.Script()
         script.add_mirror((10, 0, 0))
         assert script.get_string() == "mirror(v = [1, 0, 0])"
+
+
+def test_str_polygon():
+    s = openscad.str_polygon([(0, 0), (0, 0)])
+    assert s == "polygon(points = [\n  [0, 0],\n  [0, 0],\n],\nconvexity = 10);"
+
+
+def test_str_polygon_is_automatically_closed():
+    s = openscad.str_polygon([(0, 0), (1, 0)])
+    assert s == "polygon(points = [\n  [0, 0],\n  [1, 0],\n  [0, 0],\n],\nconvexity = 10);"
+
+
+def test_str_polygon_with_holes():
+    s = openscad.str_polygon(
+        [(0, 0), (0, 0)], holes=([[1, 1], [1, 1]], [[2, 2], [2, 2]])
+    )
+    assert (
+        s == "polygon(points = [\n"  # list of 6 vertices
+        "  [0, 0],\n"
+        "  [0, 0],\n"
+        "  [1, 1],\n"
+        "  [1, 1],\n"
+        "  [2, 2],\n"
+        "  [2, 2],\n"
+        "],\n"
+        "paths = [\n"  # list of 3 paths
+        "  [0, 1],\n"  # list if vertex indices of exterior path 
+        "  [2, 3],\n"  # list of vertex indices of the 1st hole 
+        "  [4, 5],\n"  # list of vertex indices of the 2nd hole
+        "],\n"
+        "convexity = 10);"
+    )
 
 
 if __name__ == "__main__":

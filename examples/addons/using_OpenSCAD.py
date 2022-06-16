@@ -6,14 +6,40 @@ import ezdxf
 from ezdxf.render import forms
 from ezdxf.addons import MengerSponge, openscad
 
-DIR = Path("~/Desktop/Outbox").expanduser()
-if not DIR.exists():
-    DIR = Path(".")
+CWD = Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = Path(".")
 
-DXF_FILE = str(DIR / "OpenSCAD.dxf")
+POLYHEDRON = str(CWD / "OpenSCAD_polyhedron.dxf")
+POLYGON = str(CWD / "OpenSCAD_polygon.dxf")
 
 # This example shows the usage of the 'meshex' add-on to export/import meshes
 # to/from OpenSCAD.
+
+
+def polygon(filename):
+    doc = ezdxf.new()
+    doc.layers.add("NORMALS", color=3)
+    msp = doc.modelspace()
+    exterior = list(forms.square(10, center=True))
+    hole = list(forms.circle(16, 0.5))
+    holes = [
+        list(forms.translate(hole, (-3, 3))),
+        list(forms.translate(hole, (3, 3))),
+        list(forms.translate(hole, (-3, -3))),
+        list(forms.translate(hole, (3, -3))),
+    ]
+    script = openscad.Script()
+    script.add("linear_extrude(height = 1, convexity=10)")
+    script.add_polygon(exterior, holes)
+    result = openscad.run(script.get_string())
+    print("Result has:")
+    print(f"{len(result.vertices)} vertices")
+    print(f"{len(result.faces)} faces")
+    result.render_mesh(msp)
+    doc.saveas(filename)
+    print(f"exported DXF file: '{filename}'")
+
 
 # IMPORTANT:
 # OpenSCAD expects clockwise ordered face-vertices to create outward pointing
@@ -21,7 +47,7 @@ DXF_FILE = str(DIR / "OpenSCAD.dxf")
 # counter-clockwise ordered vertices to create outward pointing normals.
 
 
-def main(filename: str):
+def polyhedron(filename: str):
     doc = ezdxf.new()
     doc.layers.add("NORMALS", color=3)
     msp = doc.modelspace()
@@ -50,4 +76,5 @@ def main(filename: str):
 
 
 if __name__ == "__main__":
-    main(DXF_FILE)
+    # polyhedron(POLYHEDRON)
+    polygon(POLYGON)

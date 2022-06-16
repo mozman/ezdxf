@@ -1,7 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, Iterable, Sequence
 from pathlib import Path
 import enum
 import platform
@@ -10,7 +10,7 @@ import subprocess
 from uuid import uuid4
 import tempfile
 
-from ezdxf.math import Matrix44, UVec, Vec3
+from ezdxf.math import Matrix44, UVec, Vec3, Vec2
 from ezdxf.render import MeshBuilder, MeshTransformer
 from ezdxf.addons import meshex
 
@@ -93,6 +93,52 @@ def str_matrix44(m: Matrix44) -> str:
     return f"[{s}]"
 
 
+def str_polygon(
+    path: Iterable[UVec],
+    holes: Sequence[Iterable[UVec]] = None,
+) -> str:
+    """Returns a ``polygon()`` command as string. This is a 2D command, all
+    z-axis values of the input vertices are ignored and all paths and holes
+    are closed automatically.
+
+    OpenSCAD docs: https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Using_the_2D_Subsystem#polygon
+
+    Args:
+        path: exterior path
+        holes: a sequences of one or more holes as vertices
+
+    """
+
+    def add_vertices(vertices):
+        index = len(points)
+        indices = []
+        vlist = Vec2.list(vertices)
+        if not vlist[0].isclose(vlist[-1]):
+            vlist.append(vlist[0])
+
+        for v in vlist:
+            indices.append(index)
+            points.append(f"  [{v.x:g}, {v.y:g}],")
+            index += 1
+        return indices
+
+    points: List[str] = []
+    paths = [add_vertices(path)]
+    if holes is not None:
+        for hole in holes:
+            paths.append(add_vertices(hole))
+    lines = ["polygon(points = ["]
+    lines.extend(points)
+    lines.append("],")
+    if holes is not None:
+        lines.append("paths = [")
+        for indices in paths:
+            lines.append(f"  {str(indices)},")
+        lines.append("],")
+    lines.append("convexity = 10);")
+    return "\n".join(lines)
+
+
 class Script:
     def __init__(self):
         self.data: List[str] = []
@@ -108,6 +154,24 @@ class Script:
 
         """
         self.add(meshex.scad_dumps(mesh))
+
+    def add_polygon(
+        self,
+        path: Iterable[UVec],
+        holes: Sequence[Iterable[UVec]] = None,
+    ) -> None:
+        """Add a ``polygon()`` command. This is a 2D command, all
+        z-axis values of the input vertices are ignored and all paths and holes
+        are closed automatically.
+
+        OpenSCAD docs: https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Using_the_2D_Subsystem#polygon
+
+        Args:
+            path: exterior path
+            holes: a sequence of one or more holes as vertices, or ``None`` for no holes
+
+        """
+        self.add(str_polygon(path, holes))
 
     def add_multmatrix(self, m: Matrix44) -> None:
         """Add a transformation matrix of type :class:`~ezdxf.math.Matrix44` as
