@@ -2,7 +2,7 @@
 # License: MIT License
 from __future__ import annotations
 from typing import Iterable, List, Tuple, Sequence, Iterator, Callable
-from math import pi, tau, sin, cos, radians, tan, isclose, asin, fabs, ceil
+import math
 from enum import IntEnum
 from ezdxf.math import (
     Vec3,
@@ -74,11 +74,11 @@ def circle(
 
     """
     radius = float(radius)
-    delta = 2.0 * pi / count
+    delta = math.tau / count
     alpha = 0.0
     for index in range(count):
-        x = cos(alpha) * radius
-        y = sin(alpha) * radius
+        x = math.cos(alpha) * radius
+        y = math.sin(alpha) * radius
         yield Vec3(x, y, elevation)
         alpha += delta
 
@@ -91,7 +91,7 @@ def ellipse(
     rx: float = 1,
     ry: float = 1,
     start_param: float = 0,
-    end_param: float = 2 * pi,
+    end_param: float = math.tau,
     elevation: float = 0,
 ) -> Iterable[Vec3]:
     """Create polygon vertices for an `ellipse <https://en.wikipedia.org/wiki/Ellipse>`_
@@ -119,6 +119,8 @@ def ellipse(
     end_param = float(end_param)
     count = int(count)
     delta = (end_param - start_param) / (count - 1)
+    cos = math.cos
+    sin = math.sin
     for param in range(count):
         alpha = start_param + param * delta
         yield Vec3(cos(alpha) * rx, sin(alpha) * ry, elevation)
@@ -196,7 +198,7 @@ def open_arrow(
         angle: enclosing angle in degrees
 
     """
-    h = sin(radians(angle / 2.0)) * size
+    h = math.sin(math.radians(angle / 2.0)) * size
     return Vec3(-size, h), Vec3(0, 0), Vec3(-size, -h)
 
 
@@ -234,8 +236,8 @@ def arrow2(
         beta: angle if back side in degrees
 
     """
-    h = sin(radians(angle / 2.0)) * size
-    back_step = tan(radians(beta)) * h
+    h = math.sin(math.radians(angle / 2.0)) * size
+    back_step = math.tan(math.radians(beta)) * h
     return (
         Vec3(-size, h),
         Vec3(0, 0),
@@ -273,16 +275,18 @@ def ngon(
     if length is not None:
         if length <= 0.0:
             raise ValueError("Argument `length` has to be greater than 0.")
-        radius = length / 2.0 / sin(pi / count)
+        radius = length / 2.0 / math.sin(math.pi / count)
     elif radius is not None:
         if radius <= 0.0:
             raise ValueError("Argument `radius` has to be greater than 0.")
     else:
         raise ValueError("Argument `length` or `radius` required.")
 
-    delta = 2.0 * pi / count
+    delta = math.tau / count
     angle = rotation
     first = None
+    cos = math.cos
+    sin = math.sin
     for _ in range(count):
         v = Vec3(radius * cos(angle), radius * sin(angle), elevation)
         if first is None:
@@ -333,7 +337,7 @@ def star(
     corners2 = ngon(
         count,
         radius=r2,
-        rotation=pi / count + rotation,
+        rotation=math.pi / count + rotation,
         elevation=elevation,
         close=False,
     )
@@ -399,17 +403,19 @@ def gear(
         raise ValueError("Argument `height` has to be smaller than `radius`")
 
     base_radius = outside_radius - height
-    alpha_top = asin(top_width / 2.0 / outside_radius)  # angle at tooth top
-    alpha_bottom = asin(
+    alpha_top = math.asin(top_width / 2.0 / outside_radius)  # angle at tooth top
+    alpha_bottom = math.asin(
         bottom_width / 2.0 / base_radius
     )  # angle at tooth bottom
     alpha_difference = (
         alpha_bottom - alpha_top
     ) / 2.0  # alpha difference at start and end of tooth
-    beta = (2.0 * pi - count * alpha_bottom) / count
+    beta = (math.tau - count * alpha_bottom) / count
     angle = -alpha_top / 2.0  # center of first tooth is in x-axis direction
     state = _Gear.TOP_START
     first = None
+    cos = math.cos
+    sin = math.sin
     for _ in range(4 * count):
         if state == _Gear.TOP_START or state == _Gear.TOP_END:
             radius = outside_radius
@@ -497,7 +503,7 @@ def close_polygon(
     """Returns list of :class:`~ezdxf.math.Vec3`, where the first vertex is
     equal to the last vertex.
     """
-    vertices = list(vertices)
+    vertices: List[Vec3] = list(vertices)
     if not vertices[0].isclose(vertices[-1], rel_tol=rel_tol, abs_tol=abs_tol):
         vertices.append(vertices[0])
     return vertices
@@ -618,7 +624,7 @@ def _divide_path_into_steps(
         segment_vec = v1 - v0
         length = segment_vec.magnitude
         if length > max_step_size:
-            parts = int(ceil(length / max_step_size))
+            parts = int(math.ceil(length / max_step_size))
             step = segment_vec * (1.0 / parts)
             for _ in range(parts - 1):
                 v0 += step
@@ -665,12 +671,13 @@ def extrude_twist_scale(
     Returns: :class:`~ezdxf.render.MeshTransformer`
 
     """
+
     def matrix(fac: float) -> Matrix44:
         current_scale = 1.0 + (scale - 1.0) * fac
         current_rotation = twist * fac
         translation = target_point - start_point
-        scale_cos_a = current_scale * cos(current_rotation)
-        scale_sin_a = current_scale * sin(current_rotation)
+        scale_cos_a = current_scale * math.cos(current_rotation)
+        scale_sin_a = current_scale * math.sin(current_rotation)
         # fmt: off
         return Matrix44([
             scale_cos_a, scale_sin_a, 0.0, 0.0,
@@ -733,7 +740,7 @@ def cylinder(
     if top_radius is None:
         top_radius = radius
 
-    if isclose(top_radius, 0.0):  # pyramid/cone
+    if math.isclose(top_radius, 0.0):  # pyramid/cone
         return cone(count=count, radius=radius, apex=top_center)
 
     base_profile = list(circle(count, radius, close=True))
@@ -776,16 +783,16 @@ def cylinder_2p(
     ray = end - start
 
     z_axis = ray.normalize()
-    is_y = fabs(z_axis.y) > 0.5
+    is_y = math.fabs(z_axis.y) > 0.5
     x_axis = Vec3(float(is_y), float(not is_y), 0).cross(z_axis).normalize()
     y_axis = x_axis.cross(z_axis).normalize()
     mesh = MeshVertexMerger()
 
     def vertex(stack, angle):
-        out = (x_axis * cos(angle)) + (y_axis * sin(angle))
+        out = (x_axis * math.cos(angle)) + (y_axis * math.sin(angle))
         return start + (ray * stack) + (out * radius)
 
-    dt = pi * 2 / float(slices)
+    dt = math.tau / float(slices)
     for i in range(0, slices):
         t0 = i * dt
         i1 = (i + 1) % slices
@@ -1012,17 +1019,17 @@ def cone_2p(
     slices = int(count)
     ray = end - start
     z_axis = ray.normalize()
-    is_y = fabs(z_axis.y) > 0.5
+    is_y = math.fabs(z_axis.y) > 0.5
     x_axis = Vec3(float(is_y), float(not is_y), 0).cross(z_axis).normalize()
     y_axis = x_axis.cross(z_axis).normalize()
     mesh = MeshVertexMerger()
 
     def vertex(angle) -> Vec3:
         # radial direction pointing out
-        out = x_axis * cos(angle) + y_axis * sin(angle)
+        out = x_axis * math.cos(angle) + y_axis * math.sin(angle)
         return start + out * radius
 
-    dt = pi * 2.0 / slices
+    dt = math.tau / slices
     for i in range(0, slices):
         t0 = i * dt
         i1 = (i + 1) % slices
@@ -1042,7 +1049,7 @@ def cone_2p(
 def rotation_form(
     count: int,
     profile: Iterable[UVec],
-    angle: float = 2 * pi,
+    angle: float = math.tau,
     axis: UVec = (1, 0, 0),
 ) -> MeshTransformer:
     """Create MESH entity by rotating a `profile` around an `axis`.
@@ -1088,19 +1095,19 @@ def sphere(
     radius = float(radius)
     slices = int(count)
     stacks_2 = int(stacks) // 2  # stacks from -stack/2 to +stack/2
-    delta_theta = pi * 2.0 / float(slices)
-    delta_phi = pi / float(stacks)
+    delta_theta = math.tau / float(slices)
+    delta_phi = math.pi / float(stacks)
     mesh = MeshVertexMerger()
 
     def radius_of_stack(stack: float) -> float:
-        return radius * cos(delta_phi * stack)
+        return radius * math.cos(delta_phi * stack)
 
     def vertex(slice_: float, r: float, z: float) -> Vec3:
         actual_theta = delta_theta * slice_
-        return Vec3(cos(actual_theta) * r, sin(actual_theta) * r, z)
+        return Vec3(math.cos(actual_theta) * r, math.sin(actual_theta) * r, z)
 
     def cap_triangles(stack, top=False):
-        z = sin(stack * delta_phi) * radius
+        z = math.sin(stack * delta_phi) * radius
         cap_vertex = Vec3(0, 0, radius) if top else Vec3(0, 0, -radius)
         r1 = radius_of_stack(stack)
         for slice_ in range(slices):
@@ -1119,8 +1126,8 @@ def sphere(
         next_stack = actual_stack + 1
         r1 = radius_of_stack(actual_stack)
         r2 = radius_of_stack(next_stack)
-        z1 = sin(delta_phi * actual_stack) * radius
-        z2 = sin(delta_phi * next_stack) * radius
+        z1 = math.sin(delta_phi * actual_stack) * radius
+        z2 = math.sin(delta_phi * next_stack) * radius
         for i in range(slices):
             v1 = vertex(i, r1, z1)
             v2 = vertex(i + 1, r1, z1)
@@ -1132,7 +1139,7 @@ def sphere(
                 center = vertex(
                     i + 0.5,
                     radius_of_stack(actual_stack + 0.5),
-                    sin(delta_phi * (actual_stack + 0.5)) * radius,
+                    math.sin(delta_phi * (actual_stack + 0.5)) * radius,
                 )
                 mesh.add_face([v1, v2, center])
                 mesh.add_face([v2, v3, center])
@@ -1151,7 +1158,7 @@ def torus(
     major_radius=1.0,
     minor_radius=0.1,
     start_angle: float = 0.0,
-    end_angle: float = tau,
+    end_angle: float = math.tau,
     caps=True,
     ngons=True,
 ) -> MeshTransformer:
@@ -1187,19 +1194,19 @@ def torus(
         raise ValueError(f"major_count < 1")
     if minor_count < 3:
         raise ValueError(f"minor_count < 3")
-    major_radius = fabs(float(major_radius))
-    minor_radius = fabs(float(minor_radius))
+    major_radius = math.fabs(float(major_radius))
+    minor_radius = math.fabs(float(minor_radius))
     if major_radius < 1e-9:
         raise ValueError("major_radius is 0")
     if minor_radius < 1e-9:
         raise ValueError("minor_radius is 0")
     if minor_radius >= major_radius:
         raise ValueError("minor_radius >= major_radius")
-    start_angle = float(start_angle) % tau
-    if end_angle is not tau:
-        end_angle = float(end_angle) % tau
+    start_angle = float(start_angle) % math.tau
+    if end_angle != math.tau:
+        end_angle = float(end_angle) % math.tau
     angle_span = arc_angle_span_rad(start_angle, end_angle)
-    closed_torus = isclose(angle_span, tau)
+    closed_torus = math.isclose(angle_span, math.tau)
     step_angle = angle_span / major_count
     circle_profile = [
         Vec3(v.x, 0, v.y)
