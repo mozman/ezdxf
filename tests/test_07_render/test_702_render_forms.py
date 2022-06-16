@@ -220,22 +220,22 @@ def test_heptagon_by_edge_length():
     assert corners[6].isclose((7.18498696363685, -9.009688679024192, 0))
 
 
-def test_ngons_to_triangles():
+def test_regular_ngon_triangulation():
     open_square = forms.square()
-    r = list(forms.ngon_to_triangles(open_square))
+    r = forms.simple_polygon_triangulation(open_square)
     assert len(r) == 4
     center = r[0][2]
     assert center == (0.5, 0.5, 0)
 
     closed_square = list(forms.circle(4, elevation=2, close=True))
     assert len(closed_square) == 5
-    r = list(forms.ngon_to_triangles(closed_square))
+    r = forms.simple_polygon_triangulation(closed_square)
     assert len(r) == 4
     center = r[0][2]
     assert center.isclose((0, 0, 2))
 
     # also subdivide triangles
-    r = list(forms.ngon_to_triangles([(0, 0), (1, 0), (1, 1)]))
+    r = forms.simple_polygon_triangulation(Vec3.list([(0, 0), (1, 0), (1, 1)]))
     assert len(r) == 3
 
 

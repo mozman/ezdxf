@@ -16,6 +16,7 @@ from ezdxf.math import (
     UCS,
     intersection_ray_ray_3d,
 )
+from ezdxf.math.triangulation import ear_clipping_3d
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
 
@@ -841,18 +842,6 @@ def cylinder_2p(
     return MeshTransformer.from_builder(mesh)
 
 
-def ngon_to_triangles(face: Iterable[UVec]) -> Iterable[Sequence[Vec3]]:
-    _face = Vec3.list(face)
-    if _face[0].isclose(_face[-1]):  # closed shape
-        center = Vec3.sum(_face[:-1]) / (len(_face) - 1)
-    else:
-        center = Vec3.sum(_face) / len(_face)
-        _face.append(_face[0])
-
-    for v1, v2 in zip(_face[:-1], _face[1:]):
-        yield v1, v2, center
-
-
 def from_profiles_linear(
     profiles: Sequence[Sequence[Vec3]],
     *,
@@ -883,7 +872,7 @@ def from_profiles_linear(
         if ngons:
             mesh.add_face(cap_profile)
         else:
-            for f in ngon_to_triangles(cap_profile):
+            for f in simple_polygon_triangulation(cap_profile):
                 mesh.add_face(f)
 
     mesh = MeshVertexMerger()
@@ -1034,7 +1023,7 @@ def cone(
         if ngons:
             mesh.add_face(base_circle)
         else:
-            for face in ngon_to_triangles(base_circle):
+            for face in simple_polygon_triangulation(base_circle):
                 mesh.add_face(face)
 
     return MeshTransformer.from_builder(mesh)
@@ -1240,7 +1229,7 @@ def torus(
         if ngons:
             mesh.add_face(profile)
         else:
-            for face in ngon_to_triangles(profile):
+            for face in simple_polygon_triangulation(profile):
                 mesh.add_face(face)
 
     if major_count < 1:
@@ -1517,3 +1506,24 @@ def sweep(
     return from_profiles_linear(
         profiles, close=close, quads=quads, caps=caps, ngons=ngons
     )
+
+
+def simple_polygon_triangulation(
+    face: Iterable[Vec3],
+) -> List[Sequence[Vec3]]:
+    """Simple triangulation of convex polygons.
+
+    This function creates regular triangles by adding a center-vertex in the
+    middle of the polygon, but works only for convex shapes.
+    """
+    face_: List[Vec3] = list(face)
+    assert len(face_) > 2
+    if not face_[0].isclose(face_[-1]):
+        face_.append(face_[0])
+    center = Vec3.sum(face_[:-1]) / (len(face_) - 1)
+    return [(v1, v2, center) for v1, v2 in zip(face_, face_[1:])]
+
+
+def polygon_triangulation(face: Iterable[Vec3]) -> List[Sequence[Vec3]]:
+    """Triangulation of convex and concave polygons."""
+    return list(ear_clipping_3d(face))
