@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import (
     List,
     Iterable,
+    Iterator,
     Union,
     Tuple,
     Optional,
@@ -259,7 +260,7 @@ def _from_hatch(hatch: Hatch, **kwargs) -> Path:
     return tools.to_multi_path(paths)
 
 
-def from_hatch(hatch: Hatch) -> Iterable[Path]:
+def from_hatch(hatch: Hatch) -> Iterator[Path]:
     """Yield all HATCH boundary paths as separated :class:`Path` objects.
 
 
@@ -503,7 +504,7 @@ def to_lwpolylines(
     segments: int = MIN_SEGMENTS,
     extrusion: UVec = Z_AXIS,
     dxfattribs=None,
-) -> Iterable[LWPolyline]:
+) -> Iterator[LWPolyline]:
     """Convert the given `paths` into :class:`~ezdxf.entities.LWPolyline`
     entities.
     The `extrusion` vector is applied to all paths, all vertices are projected
@@ -545,7 +546,7 @@ def to_lwpolylines(
     for path in tools.single_paths(paths):
         if len(path) > 0:
             p = LWPolyline.new(dxfattribs=dxfattribs)
-            p.append_points(path.flattening(distance, segments), format="xy")
+            p.append_points(path.flattening(distance, segments), format="xy")  # type: ignore
             yield p
 
 
@@ -562,7 +563,7 @@ def to_polylines2d(
     segments: int = MIN_SEGMENTS,
     extrusion: UVec = Z_AXIS,
     dxfattribs=None,
-) -> Iterable[Polyline]:
+) -> Iterator[Polyline]:
     """Convert the given `paths` into 2D :class:`~ezdxf.entities.Polyline`
     entities.
     The `extrusion` vector is applied to all paths, all vertices are projected
@@ -617,7 +618,7 @@ def to_hatches(
     g1_tol: float = G1_TOL,
     extrusion: UVec = Z_AXIS,
     dxfattribs=None,
-) -> Iterable[Hatch]:
+) -> Iterator[Hatch]:
     """Convert the given `paths` into :class:`~ezdxf.entities.Hatch` entities.
     Uses LWPOLYLINE paths for boundaries without curves and edge paths, build
     of LINE and SPLINE edges, as boundary paths for boundaries including curves.
@@ -666,7 +667,7 @@ def to_mpolygons(
     segments: int = MIN_SEGMENTS,
     extrusion: UVec = Z_AXIS,
     dxfattribs=None,
-) -> Iterable[MPolygon]:
+) -> Iterator[MPolygon]:
     """Convert the given `paths` into :class:`~ezdxf.entities.MPolygon` entities.
     In contrast to HATCH, MPOLYGON supports only polyline boundary paths.
     All curves will be approximated.
@@ -749,7 +750,7 @@ def _polygon_converter(
     add_boundary: BoundaryFactory,
     extrusion: UVec = Z_AXIS,
     dxfattribs=None,
-) -> Iterable[TPolygon]:
+) -> Iterator[TPolygon]:
     if isinstance(paths, Path):
         paths = [paths]
     else:
@@ -791,7 +792,7 @@ def to_polylines3d(
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
     dxfattribs=None,
-) -> Iterable[Polyline]:
+) -> Iterator[Polyline]:
     """Convert the given `paths` into 3D :class:`~ezdxf.entities.Polyline`
     entities.
 
@@ -825,7 +826,7 @@ def to_lines(
     distance: float = MAX_DISTANCE,
     segments: int = MIN_SEGMENTS,
     dxfattribs=None,
-) -> Iterable[Line]:
+) -> Iterator[Line]:
     """Convert the given `paths` into :class:`~ezdxf.entities.Line` entities.
 
     Args:
@@ -863,7 +864,7 @@ PathParts = Union[BSpline, List[Vec3]]
 
 def to_bsplines_and_vertices(
     path: Path, g1_tol: float = G1_TOL
-) -> Iterable[PathParts]:
+) -> Iterator[PathParts]:
     """Convert a :class:`Path` object into multiple cubic B-splines and
     polylines as lists of vertices. Breaks adjacent Bèzier without G1
     continuity into separated B-splines.
@@ -940,7 +941,7 @@ def to_splines_and_polylines(
     *,
     g1_tol: float = G1_TOL,
     dxfattribs=None,
-) -> Iterable[Union[Spline, Polyline]]:
+) -> Iterator[Union[Spline, Polyline]]:
     """Convert the given `paths` into :class:`~ezdxf.entities.Spline` and 3D
     :class:`~ezdxf.entities.Polyline` entities.
 
@@ -1023,7 +1024,7 @@ def multi_path_from_matplotlib_path(mpath, curves=True) -> Path:
     return path
 
 
-def from_matplotlib_path(mpath, curves=True) -> Iterable[Path]:
+def from_matplotlib_path(mpath, curves=True) -> Iterator[Path]:
     """Yields multiple :class:`Path` objects from a Matplotlib `Path`_
     (`TextPath`_)  object. (requires Matplotlib)
 
@@ -1037,7 +1038,7 @@ def from_matplotlib_path(mpath, curves=True) -> Iterable[Path]:
     if path.has_sub_paths:
         return path.sub_paths()
     else:
-        return [path]
+        return iter([path])
 
 
 def to_matplotlib_path(paths: Iterable[Path], extrusion: UVec = Z_AXIS):
@@ -1131,7 +1132,7 @@ def multi_path_from_qpainter_path(qpath) -> Path:
     return path
 
 
-def from_qpainter_path(qpath) -> Iterable[Path]:
+def from_qpainter_path(qpath) -> Iterator[Path]:
     """Yields multiple :class:`Path` objects from a `QPainterPath`_.
     (requires Qt bindings)
 
@@ -1145,7 +1146,7 @@ def from_qpainter_path(qpath) -> Iterable[Path]:
     if path.has_sub_paths:
         return path.sub_paths()
     else:
-        return [path]
+        return iter([path])
 
 
 def to_qpainter_path(paths: Iterable[Path], extrusion: UVec = Z_AXIS):
