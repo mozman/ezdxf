@@ -2,7 +2,7 @@
 # License: MIT License
 import pytest
 from math import radians, isclose
-from ezdxf.math import Vec3, BoundingBox
+from ezdxf.math import Vec3, BoundingBox, Matrix44
 from ezdxf.render import forms
 from ezdxf.addons.menger_sponge import MengerSponge
 from ezdxf.render.mesh import (
@@ -18,6 +18,7 @@ from ezdxf.render.mesh import (
     all_edges,
     get_edge_stats,
     separate_meshes,
+    face_normals_after_transformation,
 )
 from ezdxf.addons import SierpinskyPyramid
 from ezdxf.layouts import VirtualLayout
@@ -745,3 +746,22 @@ def test_concave_mesh_tessellation():
     assert diag.n_edges == 30
     assert diag.is_manifold is True
 
+
+@pytest.mark.parametrize(
+    "sx,sy,sz,expected",
+    [
+        (1, 1, 1, True),
+        (-1, 1, 1, False),
+        (1, -1, 1, False),
+        (1, 1, -1, False),
+        (-1, -1, 1, True),
+        (-1, 1, -1, True),
+        (1, -1, -1, True),
+        (-1, -1, -1, False),
+    ],
+    ids="none x y z xy xz yz xyz".split(),
+)
+def test_check_face_normals_after_transformation(sx, sy, sz, expected):
+    assert face_normals_after_transformation(
+        Matrix44.scale(sx, sy, sz)
+    ) is expected

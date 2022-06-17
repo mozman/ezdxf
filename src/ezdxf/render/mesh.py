@@ -1280,3 +1280,43 @@ def separate_meshes(m: MeshBuilder) -> Iterator[MeshTransformer]:
             yield MeshTransformer.from_builder(mesh)
     else:
         yield MeshTransformer.from_builder(m)
+
+
+def have_away_pointing_normals(f0: Sequence[Vec3], f1: Sequence[Vec3]) -> bool:
+    """Returns ``True`` if the normals of the two faces are pointing
+    away from the center of the two faces.
+
+    .. warning::
+
+        This does not work for any arbitrary face pair!
+
+    """
+    c0 = Vec3.sum(f0) / len(f0)
+    c1 = Vec3.sum(f1) / len(f1)
+    n0 = normal_vector_3p(f0[0], f0[1], f0[2]) * 0.5
+    n1 = normal_vector_3p(f1[0], f1[1], f1[2]) * 0.5
+    e0 = c0 + n0
+    e1 = c1 + n1
+    # distance of centroids
+    d0 = c0.distance(c1)
+    # distance of normal end points
+    d1 = e0.distance(e1)
+    return d1 > d0
+
+
+def face_normals_after_transformation(m: Matrix44) -> bool:
+    """Returns the state of face-normals of the unit-cube after the
+    transformation `m` was applied.
+
+        - ``True``: face-normals pointing outwards
+        - ``False``: face-normals pointing inwards
+
+    The state before the transformation is outward-pointing face-normals.
+
+    """
+    from .forms import cube
+
+    unit_cube = cube(True).transform(m)
+    bottom, _, _, _, _, top = unit_cube.faces_as_vertices()
+    # it is not necessary to check all 3 axis!
+    return have_away_pointing_normals(bottom, top)
