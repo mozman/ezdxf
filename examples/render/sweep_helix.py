@@ -20,12 +20,14 @@ def main(filepath):
     doc.layers.add("MESH", color=ezdxf.colors.YELLOW)
     doc.layers.add("SPLINE", color=ezdxf.colors.MAGENTA)
     msp = doc.modelspace()
-    # sweeping a circle
-    circle = list(forms.circle(16, radius=0.1))
+    # sweeping a gear-profile
+    gear = forms.gear(
+        8, top_width=0.01, bottom_width=0.02, height=0.01, outside_radius=0.1
+    )
     helix = path.helix(radius=2, pitch=1, turns=6)
     # along a helix spine
     sweeping_path = helix.flattening(0.1)
-    mesh = forms.sweep(circle, sweeping_path, close=True, caps=True)
+    mesh = forms.sweep(gear, sweeping_path, close=True, caps=True)
     # and render a mesh
     mesh.render_mesh(msp, dxfattribs={"layer": "MESH"})
     # add helix as SPLINE entity:
