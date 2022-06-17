@@ -513,7 +513,11 @@ def close_polygon(
 
 
 def helix(
-    radius: float, pitch: float, turns: float, resolution: int = 16, ccw=True,
+    radius: float,
+    pitch: float,
+    turns: float,
+    resolution: int = 16,
+    ccw=True,
 ) -> Iterator[Vec3]:
     """Yields the vertices of a `helix <https://en.wikipedia.org/wiki/Helix>`_.
     The center of the helix is always (0, 0), a positive `pitch` value
@@ -567,12 +571,12 @@ _cube0_vertices = [
 
 # 6 cube faces
 cube_faces = [
-    [0, 3, 2, 1],
-    [4, 5, 6, 7],
-    [0, 1, 5, 4],
-    [1, 2, 6, 5],
-    [3, 7, 6, 2],
-    [0, 4, 7, 3],
+    [0, 3, 2, 1],  # bottom, normal = -Z
+    [1, 2, 6, 5],  # right, normal = +X
+    [3, 7, 6, 2],  # back, normal = +Y
+    [0, 4, 7, 3],  # left, normal = -X
+    [0, 1, 5, 4],  # front, normal = -Y
+    [4, 5, 6, 7],  # top, normal = +Z
 ]
 
 
