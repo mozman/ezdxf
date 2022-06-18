@@ -764,9 +764,10 @@ def test_concave_mesh_tessellation():
     ids="none x y z xy xz yz xyz".split(),
 )
 def test_check_face_normals_after_transformation(sx, sy, sz, expected):
-    assert face_normals_after_transformation(
-        Matrix44.scale(sx, sy, sz)
-    ) is expected
+    assert (
+        face_normals_after_transformation(Matrix44.scale(sx, sy, sz))
+        is expected
+    )
 
 
 class TestFaceOrientationDetector:
@@ -776,6 +777,26 @@ class TestFaceOrientationDetector:
         assert fod.count == (6, 0)
         assert fod.is_manifold is True
         assert fod.is_complete is True
+
+    def test_multiple_disconnected_cubes(self):
+        """A MeshBuilder can contain multiple disconnected meshes.
+        Only the mesh which contains the reference face will be processed.
+
+        The attribute is_complete shows if all faces from the MeshBuilder are
+        processed.
+        """
+        cubes = forms.cube()
+        cube1 = forms.cube()
+        cube1.translate(10, 0, 0)
+        cubes.add_mesh(mesh=cube1)
+
+        fod = FaceOrientationDetector(cubes)
+        assert fod.has_uniform_face_normals is True
+        assert fod.count == (6, 0)
+        assert fod.is_manifold is True
+        assert (
+            fod.is_complete is False
+        ), "not all faces are reachable from the reference face"
 
     def test_flipped_cube_faces_are_also_uniform(self):
         """It's always the reference face which determines the forward
