@@ -21,6 +21,7 @@ from ezdxf.render.mesh import (
     face_normals_after_transformation,
     FaceOrientationDetector,
     unify_faces_normals_by_reference_face,
+    unify_faces_normals_by_majority,
 )
 from ezdxf.addons import SierpinskyPyramid
 from ezdxf.layouts import VirtualLayout
@@ -843,6 +844,18 @@ def test_unify_cube_normals_by_reference_face():
     cube = forms.cube()
     cube.faces[-1] = tuple(reversed(cube.faces[-1]))
     cube2 = unify_faces_normals_by_reference_face(cube)
+    fod = FaceOrientationDetector(cube2)
+    assert fod.has_uniform_face_normals is True
+    assert fod.count == (6, 0)
+    assert fod.is_manifold is True
+    assert fod.is_complete is True
+
+
+def test_unify_cube_normals_by_majority():
+    cube = forms.cube()
+    # reverse the first face (= reference face)
+    cube.faces[0] = tuple(reversed(cube.faces[0]))
+    cube2 = unify_faces_normals_by_majority(cube)
     fod = FaceOrientationDetector(cube2)
     assert fod.has_uniform_face_normals is True
     assert fod.count == (6, 0)
