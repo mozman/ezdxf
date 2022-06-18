@@ -1344,13 +1344,14 @@ class FaceOrientationDetector:
         self.edge_mapping: Dict[Edge, List[Face]] = _make_edge_mapping(
             mesh.faces
         )
+        self.reference = reference
         self.is_manifold = True  # 2-manifold is meant
         self.forward: List[Face] = []
         self.backward: List[Face] = []
         self.classify_faces(reference)
 
     @property
-    def has_uniform_normals(self) -> bool:
+    def has_uniform_face_normals(self) -> bool:
         """Returns ``True`` if all reachable faces are forward oriented
         according the reference face.
         """
@@ -1376,11 +1377,12 @@ class FaceOrientationDetector:
         """
 
         def add_forward(f: Face):
-            forward[id(f)] = face
+            forward[id(f)] = f
 
         def add_backward(f: Face):
-            backward[id(f)] = face
+            backward[id(f)] = f
 
+        self.reference = int(reference)
         self.is_manifold = True
         edge_mapping = self.edge_mapping
         forward: Dict[int, Face] = dict()
@@ -1416,3 +1418,30 @@ class FaceOrientationDetector:
 
         self.forward = list(forward.values())
         self.backward = list(backward.values())
+
+
+def unify_faces_normals(
+    mesh: MeshBuilder,
+    *,
+    fod: FaceOrientationDetector = None,
+    reference: int = 0,
+) -> MeshTransformer:
+    if fod is None:
+        fod = FaceOrientationDetector(mesh, reference)
+    if not fod.is_manifold:
+        raise ValueError("non-manifold mesh")
+    if not fod.is_complete:
+        raise ValueError(
+            f"not all faces are reachable from reference face #{fod.reference}"
+        )
+    new_mesh = MeshTransformer.from_builder(mesh)
+    if not fod.has_uniform_face_normals:
+        backward_faces = set(id(f) for f in fod.backward)
+        faces = []
+        for face in new_mesh.faces:
+            if id(face) in backward_faces:
+                faces.append(tuple(reversed(face)))
+            else:
+                faces.append(tuple(face))
+        new_mesh.faces = faces
+    return new_mesh

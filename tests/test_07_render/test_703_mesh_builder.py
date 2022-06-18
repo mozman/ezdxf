@@ -20,6 +20,7 @@ from ezdxf.render.mesh import (
     separate_meshes,
     face_normals_after_transformation,
     FaceOrientationDetector,
+    unify_faces_normals,
 )
 from ezdxf.addons import SierpinskyPyramid
 from ezdxf.layouts import VirtualLayout
@@ -771,24 +772,35 @@ def test_check_face_normals_after_transformation(sx, sy, sz, expected):
 class TestFaceOrientationDetector:
     def test_cube_has_uniform_face_normals(self):
         fod = FaceOrientationDetector(forms.cube())
-        assert fod.has_uniform_normals is True
+        assert fod.has_uniform_face_normals is True
         assert fod.count == (6, 0)
         assert fod.is_manifold is True
         assert fod.is_complete is True
 
     def test_modified_cube_has_not_uniform_face_normals(self):
         cube = forms.cube()
-        cube.faces[-1] = list(reversed(cube.faces[-1]))
+        cube.faces[-1] = tuple(reversed(cube.faces[-1]))
         fod = FaceOrientationDetector(cube)
-        assert fod.has_uniform_normals is False
+        assert fod.has_uniform_face_normals is False
+        assert fod.backward[0] == cube.faces[-1]
         assert fod.count == (5, 1)
         assert fod.is_manifold is True
         assert fod.is_complete is True
 
     def test_torus(self):
         fod = FaceOrientationDetector(forms.torus())
-        assert fod.has_uniform_normals is True
+        assert fod.has_uniform_face_normals is True
         assert fod.count == (128, 0)
         assert fod.is_manifold is True
         assert fod.is_complete is True
 
+
+def test_unify_cube_normals():
+    cube = forms.cube()
+    cube.faces[-1] = tuple(reversed(cube.faces[-1]))
+    cube2 = unify_faces_normals(cube)
+    fod = FaceOrientationDetector(cube2)
+    assert fod.has_uniform_face_normals is True
+    assert fod.count == (6, 0)
+    assert fod.is_manifold is True
+    assert fod.is_complete is True
