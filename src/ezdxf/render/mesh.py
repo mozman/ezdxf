@@ -1401,19 +1401,18 @@ class FaceOrientationDetector:
                         add_backward(linked_face)
 
                 # find all adjacent faces at this edge with reversed edges:
-                reversed_edge = edge[1], edge[0]
                 try:
-                    linked_faces = edge_mapping[reversed_edge]
+                    linked_faces = edge_mapping[edge[1], edge[0]]
                 except KeyError:
                     # open surface or backward oriented faces present
                     continue
-                if len(linked_faces) > 0:
+                if len(linked_faces) == 1:
                     adjacent_face = linked_faces[0]
-                    if id(adjacent_face) not in forward:
+                    if id(adjacent_face) not in forward:  # unprocessed face!
                         process_forward_faces.append(adjacent_face)
-                    if len(linked_faces) > 1:  # non-manifold mesh
-                        # only the first linked face is processed
-                        self.is_manifold = False
+                else:  # non-manifold mesh
+                    # none of the linked face is processed!
+                    self.is_manifold = False
 
         self.forward = list(forward.values())
         self.backward = list(backward.values())
