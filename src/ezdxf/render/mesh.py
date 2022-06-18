@@ -1369,12 +1369,12 @@ class FaceOrientationDetector:
 
     @property
     def forward_faces(self) -> Iterator[Face]:
-        """Yields all forward oriented faces. """
+        """Yields all forward oriented faces."""
         return iter(self.forward.values())
 
     @property
     def backward_faces(self) -> Iterator[Face]:
-        """Yields all backward oriented faces. """
+        """Yields all backward oriented faces."""
         return iter(self.backward.values())
 
     def classify_faces(self, reference: int = 0) -> None:
@@ -1426,7 +1426,9 @@ class FaceOrientationDetector:
         forward: Dict[int, Face] = dict()
         backward: Dict[int, Face] = dict()
         # the reference face defines the forward orientation
-        process_faces: List[Face, bool] = [(self._mesh.faces[reference], True)]
+        process_faces: List[Tuple[Face, bool]] = [
+            (self._mesh.faces[reference], True)
+        ]
         while len(process_faces):
             # current face and orientation, True = forward, False = backward
             face, face_orientation = process_faces.pop(0)
@@ -1440,7 +1442,7 @@ class FaceOrientationDetector:
         self.backward = backward
 
 
-def unify_faces_normals(
+def unify_faces_normals_by_reference_face(
     mesh: MeshBuilder,
     *,
     fod: FaceOrientationDetector = None,
@@ -1454,14 +1456,17 @@ def unify_faces_normals(
         raise ValueError(
             f"not all faces are reachable from reference face #{fod.reference}"
         )
-    new_mesh = MeshTransformer.from_builder(mesh)
+    new_mesh = MeshTransformer()
+    new_mesh.vertices = list(mesh.vertices)
     if not fod.has_uniform_face_normals:
         backward = fod.backward
         faces = []
-        for face in new_mesh.faces:
+        for face in mesh.faces:
             if id(face) in backward:
                 faces.append(tuple(reversed(face)))
             else:
                 faces.append(tuple(face))
         new_mesh.faces = faces  # type: ignore
+    else:
+        new_mesh.faces = list(mesh.faces)
     return new_mesh

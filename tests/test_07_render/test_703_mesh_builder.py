@@ -20,7 +20,7 @@ from ezdxf.render.mesh import (
     separate_meshes,
     face_normals_after_transformation,
     FaceOrientationDetector,
-    unify_faces_normals,
+    unify_faces_normals_by_reference_face,
 )
 from ezdxf.addons import SierpinskyPyramid
 from ezdxf.layouts import VirtualLayout
@@ -839,10 +839,10 @@ class TestFaceOrientationDetector:
         assert fod.is_complete is True
 
 
-def test_unify_cube_normals():
+def test_unify_cube_normals_by_reference_face():
     cube = forms.cube()
     cube.faces[-1] = tuple(reversed(cube.faces[-1]))
-    cube2 = unify_faces_normals(cube)
+    cube2 = unify_faces_normals_by_reference_face(cube)
     fod = FaceOrientationDetector(cube2)
     assert fod.has_uniform_face_normals is True
     assert fod.count == (6, 0)
