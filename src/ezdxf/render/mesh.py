@@ -47,10 +47,12 @@ class EdgeStat(NamedTuple):
     balance: int
 
 
-EdgeStats = Dict[Tuple[int, int], EdgeStat]
+Face = Sequence[int]
+Edge = Tuple[int, int]
+EdgeStats = Dict[Edge, EdgeStat]
 
 
-def open_faces(faces: Iterable[Sequence[int]]) -> Iterator[Sequence[int]]:
+def open_faces(faces: Iterable[Face]) -> Iterator[Face]:
     """Yields all faces with more than two vertices as open faces
     (first vertex index != last vertex index).
     """
@@ -84,20 +86,20 @@ def normalize_faces(
         yield new_face
 
 
-def all_edges(faces: Iterable[Sequence[int]]) -> Iterator[Tuple[int, int]]:
+def all_edges(faces: Iterable[Face]) -> Iterator[Edge]:
     """Yields all face edges as int tuples."""
     for face in open_faces(faces):
         yield from face_edges(face)
 
 
-def face_edges(face: Sequence[int]) -> Iterable[Tuple[int, int]]:
+def face_edges(face: Face) -> Iterable[Edge]:
     """Yields all edges of a single face as int tuples."""
     size = len(face)
     for index in range(size):
         yield face[index], face[(index + 1) % size]
 
 
-def get_edge_stats(faces: Iterable[Sequence[int]]) -> EdgeStats:
+def get_edge_stats(faces: Iterable[Face]) -> EdgeStats:
     """Returns the edge statistics.
 
     The Edge statistic contains for each edge `(a, b)` the :class:`EdgeStat` as
@@ -126,7 +128,7 @@ def get_edge_stats(faces: Iterable[Sequence[int]]) -> EdgeStats:
 
 
 def estimate_normals_direction(
-    vertices: Sequence[Vec3], faces: Sequence[Sequence[int]]
+    vertices: Sequence[Vec3], faces: Sequence[Face]
 ) -> float:
     """Returns the estimated normals direction as ``float`` value
     in the range [-1.0, 1.0] for a closed surface.
@@ -198,7 +200,7 @@ class MeshDiagnose:
         return self._mesh.vertices
 
     @property
-    def faces(self) -> Sequence[Sequence[int]]:
+    def faces(self) -> Sequence[Face]:
         return self._mesh.faces
 
     @property
@@ -273,7 +275,7 @@ class MeshDiagnose:
         """
         return sum(e.count for e in self.edge_stats.values())
 
-    def unique_edges(self) -> Iterable[Tuple[int, int]]:
+    def unique_edges(self) -> Iterable[Edge]:
         """Yields the unique edges of the mesh as int 2-tuples."""
         return self.edge_stats.keys()
 
@@ -362,7 +364,7 @@ class MeshBuilder:
         for face in self.faces:
             yield [v[index] for index in face]
 
-    def open_faces(self) -> Iterator[Sequence[int]]:
+    def open_faces(self) -> Iterator[Face]:
         """Yields all faces as sequence of integers where the first vertex
         is not coincident with the last vertex.
 
@@ -384,7 +386,7 @@ class MeshBuilder:
         """
         self.faces.append(self.add_vertices(vertices))
 
-    def add_vertices(self, vertices: Iterable[UVec]) -> Sequence[int]:
+    def add_vertices(self, vertices: Iterable[UVec]) -> Face:
         """Add new vertices to the mesh, each vertex is a ``(x, y, z)`` tuple
         or a :class:`~ezdxf.math.Vec3` object, returns the indices of the
         `vertices` added to the :attr:`vertices` list.
@@ -408,7 +410,7 @@ class MeshBuilder:
     def add_mesh(
         self,
         vertices: List[Vec3] = None,
-        faces: List[Sequence[int]] = None,
+        faces: List[Face] = None,
         mesh=None,
     ) -> None:
         """Add another mesh to this mesh.
@@ -915,7 +917,7 @@ class MeshVertexMerger(MeshBuilder):
         self.ledger: Dict[Vec3, int] = {}
         self.precision: int = precision
 
-    def add_vertices(self, vertices: Iterable[UVec]) -> Sequence[int]:
+    def add_vertices(self, vertices: Iterable[UVec]) -> Face:
         """Add new `vertices` only, if no vertex with identical (x, y, z)
         coordinates already exist, else the index of the existing vertex is
         returned as index of the added vertices.
@@ -989,7 +991,7 @@ class MeshAverageVertexMerger(MeshBuilder):
         ] = {}  # each key points to a tuple (vertex index, vertex count)
         self.precision: int = precision
 
-    def add_vertices(self, vertices: Iterable[UVec]) -> Sequence[int]:
+    def add_vertices(self, vertices: Iterable[UVec]) -> Face:
         """Add new `vertices` only, if no vertex with identical ``(x, y, z)``
         coordinates already exist, else the index of the existing vertex is
         returned as index of the added vertices.
@@ -1047,9 +1049,9 @@ class MeshAverageVertexMerger(MeshBuilder):
 class _XFace:
     __slots__ = ("fingerprint", "indices", "_orientation")
 
-    def __init__(self, indices: Sequence[int]):
+    def __init__(self, indices: Face):
         self.fingerprint: int = hash(indices)
-        self.indices: Sequence[int] = indices
+        self.indices: Face = indices
         self._orientation: Vec3 = VEC3_SENTINEL
 
     def orientation(self, vertices: Sequence[Vec3], precision: int = 4) -> Vec3:
@@ -1067,7 +1069,7 @@ class _XFace:
 
 
 def _merge_adjacent_coplanar_faces(
-    vertices: List[Vec3], faces: List[Sequence[int]], precision: int = 4
+    vertices: List[Vec3], faces: List[Face], precision: int = 4
 ) -> MeshVertexMerger:
     oriented_faces: Dict[Vec3, List[_XFace]] = {}
     extended_faces: List[_XFace] = []
@@ -1225,9 +1227,9 @@ def merge_full_patch(path: Sequence[int], patch: Sequence[int]):
 
 
 class Lump:
-    def __init__(self, face: Sequence[int]):
-        self.edges: Set[Tuple[int, int]] = set()
-        self.faces: List[Sequence[int]] = [face]
+    def __init__(self, face: Face):
+        self.edges: Set[Edge] = set()
+        self.faces: List[Face] = [face]
         for a, b in face_edges(face):
             # sort vertex indices to guarantee: edge a,b == edge b,a
             self.edges.add((a, b) if a <= b else (b, a))
