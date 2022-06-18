@@ -19,6 +19,7 @@ from ezdxf.render.mesh import (
     get_edge_stats,
     separate_meshes,
     face_normals_after_transformation,
+    FaceOrientationDetector,
 )
 from ezdxf.addons import SierpinskyPyramid
 from ezdxf.layouts import VirtualLayout
@@ -765,3 +766,29 @@ def test_check_face_normals_after_transformation(sx, sy, sz, expected):
     assert face_normals_after_transformation(
         Matrix44.scale(sx, sy, sz)
     ) is expected
+
+
+class TestFaceOrientationDetector:
+    def test_cube_has_uniform_face_normals(self):
+        fod = FaceOrientationDetector(forms.cube())
+        assert fod.has_uniform_normals is True
+        assert fod.count == (6, 0)
+        assert fod.is_manifold is True
+        assert fod.is_complete is True
+
+    def test_modified_cube_has_not_uniform_face_normals(self):
+        cube = forms.cube()
+        cube.faces[-1] = list(reversed(cube.faces[-1]))
+        fod = FaceOrientationDetector(cube)
+        assert fod.has_uniform_normals is False
+        assert fod.count == (5, 1)
+        assert fod.is_manifold is True
+        assert fod.is_complete is True
+
+    def test_torus(self):
+        fod = FaceOrientationDetector(forms.torus())
+        assert fod.has_uniform_normals is True
+        assert fod.count == (128, 0)
+        assert fod.is_manifold is True
+        assert fod.is_complete is True
+

@@ -1322,3 +1322,98 @@ def face_normals_after_transformation(m: Matrix44) -> bool:
     bottom, _, _, _, _, top = unit_cube.faces_as_vertices()
     # it is not necessary to check all 3 axis!
     return have_away_pointing_normals(bottom, top)
+
+
+class LinkedFaces:
+    def __init__(self):
+        self.edge: Tuple[int, int] = (0, 0)
+        self.linked_faces = []
+
+
+def _make_edge_mapping(faces: Iterable[Face]) -> Dict[Edge, List[Face]]:
+    mapping: Dict[Edge, List[Face]] = {}
+    for face in faces:
+        for edge in face_edges(face):
+            mapping.setdefault(edge, []).append(face)
+    return mapping
+
+
+class FaceOrientationDetector:
+    def __init__(self, mesh: MeshBuilder, reference: int = 0):
+        self._mesh = mesh
+        self.edge_mapping: Dict[Edge, List[Face]] = _make_edge_mapping(
+            mesh.faces
+        )
+        self.is_manifold = True  # 2-manifold is meant
+        self.forward: List[Face] = []
+        self.backward: List[Face] = []
+        self.classify_faces(reference)
+
+    @property
+    def has_uniform_normals(self) -> bool:
+        """Returns ``True`` if all reachable faces are forward oriented
+        according the reference face.
+        """
+        return len(self.backward) == 0
+
+    @property
+    def is_complete(self) -> bool:
+        """Returns ``True`` if all faces are reachable from the reference face."""
+        return len(self._mesh.faces) == sum(self.count)
+
+    @property
+    def count(self) -> Tuple[int, int]:
+        """Returns the count of forward and backward oriented faces."""
+        return len(self.forward), len(self.backward)
+
+    def classify_faces(self, reference: int = 0) -> None:
+        """Detect the forward and backward oriented faces.
+
+        The forward and backward orientation has to be defined by a `reference`
+        face.  For now, I don't know any reliable algorithm to detect if an
+        arbitrary mesh face is clockwise or counter-clockwise oriented.
+
+        """
+
+        def add_forward(f: Face):
+            forward[id(f)] = face
+
+        def add_backward(f: Face):
+            backward[id(f)] = face
+
+        self.is_manifold = True
+        edge_mapping = self.edge_mapping
+        forward: Dict[int, Face] = dict()
+        backward: Dict[int, Face] = dict()
+        # the reference face defines the forward orientation
+        process_forward_faces = [self._mesh.faces[reference]]
+        while len(process_forward_faces):
+            face = process_forward_faces.pop(0)
+            add_forward(face)
+            for edge in face_edges(face):
+                # find adjacent faces at this edge with same edge orientation:
+                linked_faces = edge_mapping[edge]
+                if len(linked_faces) > 1:
+                    # these faces are backward oriented faces:
+                    for linked_face in linked_faces:
+                        if linked_face is face:  # skip legit current face
+                            continue
+                        add_backward(linked_face)
+
+                # find all adjacent faces at this edge with reversed edges:
+                reversed_edge = edge[1], edge[0]
+                try:
+                    linked_faces = edge_mapping[reversed_edge]
+                except KeyError:
+                    # open surface or backward oriented faces present
+                    continue
+                if len(linked_faces) > 0:
+                    adjacent_face = linked_faces[0]
+                    if id(adjacent_face) not in forward:
+                        process_forward_faces.append(adjacent_face)
+                    if len(linked_faces) > 1:  # non-manifold mesh
+                        # only the first linked face is processed
+                        self.is_manifold = False
+
+        self.forward = list(forward.values())
+        self.backward = list(backward.values())
