@@ -92,6 +92,10 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. automethod:: tessellation
 
+    .. automethod:: unify_face_normals
+
+    .. automethod:: unify_face_normals_by_reference
+
 
 .. autoclass:: ezdxf.render.mesh.EdgeStat
 
@@ -105,6 +109,9 @@ The basic :class:`MeshBuilder` class does not support transformations.
         "healthy" closed surfaces, if the balance is not 0, maybe doubled
         coincident faces exist or faces may have mixed clockwise and
         counter-clockwise vertex orders
+
+MeshDiagnose
+============
 
 .. class:: MeshDiagnose
 

@@ -764,6 +764,46 @@ class MeshBuilder:
                 yield NULLVEC
                 continue
 
+    def unify_face_normals(self) -> MeshTransformer:
+        """Returns a new :class:`MeshTransformer` object with unified
+        normal vectors of all faces.
+        The outward direction is defined by the normals of the majority of
+        the faces.
+        This function can not process non-manifold meshes (more than two faces are
+        connected by a single edge) or multiple disconnected meshes in a single
+        :class:`MeshBuilder` object.
+
+        Raises:
+            ValueError: non-manifold mesh or the :class:`MeshBuilder` object
+                contains multiple disconnected meshes
+
+        .. versionadded:: 0.18
+
+        """
+        return unify_face_normals_by_majority(self)
+
+    def unify_face_normals_by_reference(
+        self, reference: int = 0
+    ) -> MeshTransformer:
+        """Returns a new :class:`MeshTransformer` object with unified
+        normal vectors of all faces.
+        The outward direction is defined by the reference face, which is the first
+        face of the `mesh` by default. This function can not process non-manifold
+        meshes (more than two faces are connected by a single edge) or multiple
+        disconnected meshes in a single :class:`MeshBuilder` object.
+
+        Args:
+            reference: index of the reference face
+
+        Raises:
+            ValueError: non-manifold mesh or the :class:`MeshBuilder` object
+                contains multiple disconnected meshes
+
+        .. versionadded:: 0.18
+
+        """
+        return unify_face_normals_by_reference(self, reference=reference)
+
 
 class MeshTransformer(MeshBuilder):
     """A mesh builder with inplace transformation support."""
@@ -1339,6 +1379,17 @@ def _make_edge_mapping(faces: Iterable[Face]) -> Dict[Edge, List[Face]]:
 
 
 class FaceOrientationDetector:
+    """The face orientation detector classifies the faces of a mesh by their
+    forward or backward orientation.
+    The forward orientation is defined by a reference face, which is the first
+    face of the mesh by default.
+
+    Args:
+        mesh: source mesh as :class:`MeshBuilder` object
+        reference: index of the reference face
+
+    """
+
     def __init__(self, mesh: MeshBuilder, reference: int = 0):
         self._mesh = mesh
         self.edge_mapping: Dict[Edge, List[Face]] = _make_edge_mapping(
@@ -1358,7 +1409,7 @@ class FaceOrientationDetector:
         return len(self.backward) == 0
 
     @property
-    def is_complete(self) -> bool:
+    def all_reachable(self) -> bool:
         """Returns ``True`` if all faces are reachable from the reference face."""
         return len(self._mesh.faces) == sum(self.count)
 
@@ -1442,17 +1493,17 @@ class FaceOrientationDetector:
         self.backward = backward
 
 
-def unify_faces_normals_by_reference_face(
+def unify_face_normals_by_reference(
     mesh: MeshBuilder,
     *,
     fod: FaceOrientationDetector = None,
     reference: int = 0,
 ) -> MeshTransformer:
-    """Unifies all faces of a MeshBuilder.
+    """Unifies the orientation of all faces of a :class:`MeshBuilder` object.
     The forward orientation is defined by a reference face, which is the first
-    face by default. This function can not process non-manifold meshes (more
-    than two faces are connected by a single edge) or multiple disconnected
-    meshes in a single :class:`MeshBuilder` object.
+    face of the `mesh` by default. This function can not process non-manifold
+    meshes (more than two faces are connected by a single edge) or multiple
+    disconnected meshes in a single :class:`MeshBuilder` object.
     Returns always a copy of the source `mesh` as :class:`MeshTransformer`
     object.
 
@@ -1460,7 +1511,7 @@ def unify_faces_normals_by_reference_face(
         mesh: source :class:`MeshBuilder` object
         fod: an already created :class:`FaceOrientationDetector`
             instance or ``None`` to create one internally.
-        reference: reference face index for the internally created
+        reference: index of the reference face for the internally created
             :class:`FaceOrientationDetector` instance
 
     Raises:
@@ -1474,16 +1525,17 @@ def unify_faces_normals_by_reference_face(
     def backward_selector(detector: FaceOrientationDetector):
         return detector.backward
 
-    return _unify_faces_normals(mesh, fod, backward_selector)
+    return _unify_face_normals(mesh, fod, backward_selector)
 
 
-def unify_faces_normals_by_majority(
+def unify_face_normals_by_majority(
     mesh: MeshBuilder,
     *,
     fod: FaceOrientationDetector = None,
 ) -> MeshTransformer:
-    """Unifies all faces of a MeshBuilder. The forward orientation is defined by
-    the orientation of the majority of the faces.
+    """Unifies the orientation of all faces of a :class:`MeshBuilder` object.
+    The forward orientation is defined by the orientation of the majority of
+    the faces.
     This function can not process non-manifold meshes (more than two faces are
     connected by a single edge) or multiple disconnected meshes in a single
     :class:`MeshBuilder` object.
@@ -1507,10 +1559,10 @@ def unify_faces_normals_by_majority(
         count0, count1 = detector.count
         return detector.backward if count0 >= count1 else detector.forward
 
-    return _unify_faces_normals(mesh, fod, backward_selector)
+    return _unify_face_normals(mesh, fod, backward_selector)
 
 
-def _unify_faces_normals(
+def _unify_face_normals(
     mesh: MeshBuilder,
     fod: FaceOrientationDetector,
     backward_selector,
@@ -1520,7 +1572,7 @@ def _unify_faces_normals(
     """
     if not fod.is_manifold:
         raise ValueError("non-manifold mesh")
-    if not fod.is_complete:
+    if not fod.all_reachable:
         raise ValueError(
             f"not all faces are reachable from reference face #{fod.reference}"
         )

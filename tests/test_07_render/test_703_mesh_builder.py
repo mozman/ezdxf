@@ -20,8 +20,8 @@ from ezdxf.render.mesh import (
     separate_meshes,
     face_normals_after_transformation,
     FaceOrientationDetector,
-    unify_faces_normals_by_reference_face,
-    unify_faces_normals_by_majority,
+    unify_face_normals_by_reference,
+    unify_face_normals_by_majority,
 )
 from ezdxf.addons import SierpinskyPyramid
 from ezdxf.layouts import VirtualLayout
@@ -777,13 +777,13 @@ class TestFaceOrientationDetector:
         assert fod.has_uniform_face_normals is True
         assert fod.count == (6, 0)
         assert fod.is_manifold is True
-        assert fod.is_complete is True
+        assert fod.all_reachable is True
 
     def test_multiple_disconnected_cubes(self):
         """A MeshBuilder can contain multiple disconnected meshes.
         Only the mesh which contains the reference face will be processed.
 
-        The attribute is_complete shows if all faces from the MeshBuilder are
+        The attribute all_reachable shows if all faces from the MeshBuilder are
         processed.
         """
         cubes = forms.cube()
@@ -796,7 +796,7 @@ class TestFaceOrientationDetector:
         assert fod.count == (6, 0)
         assert fod.is_manifold is True
         assert (
-            fod.is_complete is False
+            fod.all_reachable is False
         ), "not all faces are reachable from the reference face"
 
     def test_flipped_cube_faces_are_also_uniform(self):
@@ -810,7 +810,7 @@ class TestFaceOrientationDetector:
         assert fod.has_uniform_face_normals is True
         assert fod.count == (6, 0)
         assert fod.is_manifold is True
-        assert fod.is_complete is True
+        assert fod.all_reachable is True
 
     def test_modified_cube_has_not_uniform_face_normals(self):
         cube = forms.cube()
@@ -820,14 +820,14 @@ class TestFaceOrientationDetector:
         assert list(fod.backward_faces)[0] == cube.faces[-1]
         assert fod.count == (5, 1)
         assert fod.is_manifold is True
-        assert fod.is_complete is True
+        assert fod.all_reachable is True
 
     def test_torus_with_uniform_face_normals(self):
         fod = FaceOrientationDetector(forms.torus())
         assert fod.has_uniform_face_normals is True
         assert fod.count == (128, 0)
         assert fod.is_manifold is True
-        assert fod.is_complete is True
+        assert fod.all_reachable is True
 
     def test_find_all_backward_oriented_faces(self):
         torus = forms.torus()
@@ -837,27 +837,27 @@ class TestFaceOrientationDetector:
         assert fod.has_uniform_face_normals is False
         assert fod.count == (1, 127)
         assert fod.is_manifold is True
-        assert fod.is_complete is True
+        assert fod.all_reachable is True
 
 
 def test_unify_cube_normals_by_reference_face():
     cube = forms.cube()
     cube.faces[-1] = tuple(reversed(cube.faces[-1]))
-    cube2 = unify_faces_normals_by_reference_face(cube)
+    cube2 = unify_face_normals_by_reference(cube)
     fod = FaceOrientationDetector(cube2)
     assert fod.has_uniform_face_normals is True
     assert fod.count == (6, 0)
     assert fod.is_manifold is True
-    assert fod.is_complete is True
+    assert fod.all_reachable is True
 
 
 def test_unify_cube_normals_by_majority():
     cube = forms.cube()
     # reverse the first face (= reference face)
     cube.faces[0] = tuple(reversed(cube.faces[0]))
-    cube2 = unify_faces_normals_by_majority(cube)
+    cube2 = unify_face_normals_by_majority(cube)
     fod = FaceOrientationDetector(cube2)
     assert fod.has_uniform_face_normals is True
     assert fod.count == (6, 0)
     assert fod.is_manifold is True
-    assert fod.is_complete is True
+    assert fod.all_reachable is True
