@@ -1443,5 +1443,5 @@ def unify_faces_normals(
                 faces.append(tuple(reversed(face)))
             else:
                 faces.append(tuple(face))
-        new_mesh.faces = faces
+        new_mesh.faces = faces  # type: ignore
     return new_mesh
