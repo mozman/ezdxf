@@ -777,6 +777,19 @@ class TestFaceOrientationDetector:
         assert fod.is_manifold is True
         assert fod.is_complete is True
 
+    def test_flipped_cube_faces_are_also_uniform(self):
+        """It's always the reference face which determines the forward
+        orientation! In this case all face normals are pointing inwards, which
+        is also a uniform orientation.
+        """
+        cube = forms.cube()
+        cube.flip_normals()
+        fod = FaceOrientationDetector(cube)
+        assert fod.has_uniform_face_normals is True
+        assert fod.count == (6, 0)
+        assert fod.is_manifold is True
+        assert fod.is_complete is True
+
     def test_modified_cube_has_not_uniform_face_normals(self):
         cube = forms.cube()
         cube.faces[-1] = tuple(reversed(cube.faces[-1]))
@@ -787,10 +800,20 @@ class TestFaceOrientationDetector:
         assert fod.is_manifold is True
         assert fod.is_complete is True
 
-    def test_torus(self):
+    def test_torus_with_uniform_face_normals(self):
         fod = FaceOrientationDetector(forms.torus())
         assert fod.has_uniform_face_normals is True
         assert fod.count == (128, 0)
+        assert fod.is_manifold is True
+        assert fod.is_complete is True
+
+    def test_find_all_backward_oriented_faces(self):
+        torus = forms.torus()
+        # reverse the first face (= reference face)
+        torus.faces[0] = tuple(reversed(torus.faces[0]))
+        fod = FaceOrientationDetector(torus)
+        assert fod.has_uniform_face_normals is False
+        assert fod.count == (1, 127)
         assert fod.is_manifold is True
         assert fod.is_complete is True
 

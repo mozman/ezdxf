@@ -1392,25 +1392,21 @@ class FaceOrientationDetector:
         def add_backward(f: Face):
             backward[id(f)] = f
 
-        self.reference = int(reference)
-        self.is_manifold = True
-        edge_mapping = self.edge_mapping
-        forward: Dict[int, Face] = dict()
-        backward: Dict[int, Face] = dict()
-        # the reference face defines the forward orientation
-        process_forward_faces = [self._mesh.faces[reference]]
-        while len(process_forward_faces):
-            face = process_forward_faces.pop(0)
-            add_forward(face)
-            for edge in face_edges(face):
+        def add_face_to_process(f: Face, orientation: bool):
+            key = id(f)
+            if key not in forward and key not in backward:  # unprocessed face!
+                process_faces.append((f, orientation))
+
+        def add_adjacent_faces_to_process_queue(f: Face, orientation: bool):
+            for edge in face_edges(f):
                 # find adjacent faces at this edge with same edge orientation:
                 linked_faces = edge_mapping[edge]
                 if len(linked_faces) > 1:
                     # these faces are backward oriented faces:
                     for linked_face in linked_faces:
-                        if linked_face is face:  # skip legit current face
+                        if linked_face is f:  # skip legit current face
                             continue
-                        add_backward(linked_face)
+                        add_face_to_process(linked_face, not orientation)
 
                 # find all adjacent faces at this edge with reversed edges:
                 try:
@@ -1419,12 +1415,26 @@ class FaceOrientationDetector:
                     # open surface or backward oriented faces present
                     continue
                 if len(linked_faces) == 1:
-                    adjacent_face = linked_faces[0]
-                    if id(adjacent_face) not in forward:  # unprocessed face!
-                        process_forward_faces.append(adjacent_face)
+                    add_face_to_process(linked_faces[0], orientation)
                 else:  # non-manifold mesh
                     # none of the linked face is processed!
                     self.is_manifold = False
+
+        self.reference = int(reference)
+        self.is_manifold = True
+        edge_mapping = self.edge_mapping
+        forward: Dict[int, Face] = dict()
+        backward: Dict[int, Face] = dict()
+        # the reference face defines the forward orientation
+        process_faces: List[Face, bool] = [(self._mesh.faces[reference], True)]
+        while len(process_faces):
+            # current face and orientation, True = forward, False = backward
+            face, face_orientation = process_faces.pop(0)
+            if face_orientation:
+                add_forward(face)
+            else:
+                add_backward(face)
+            add_adjacent_faces_to_process_queue(face, face_orientation)
 
         self.forward = forward
         self.backward = backward
