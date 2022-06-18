@@ -1346,8 +1346,8 @@ class FaceOrientationDetector:
         )
         self.reference = reference
         self.is_manifold = True  # 2-manifold is meant
-        self.forward: List[Face] = []
-        self.backward: List[Face] = []
+        self.forward: Dict[int, Face] = dict()
+        self.backward: Dict[int, Face] = dict()
         self.classify_faces(reference)
 
     @property
@@ -1366,6 +1366,16 @@ class FaceOrientationDetector:
     def count(self) -> Tuple[int, int]:
         """Returns the count of forward and backward oriented faces."""
         return len(self.forward), len(self.backward)
+
+    @property
+    def forward_faces(self) -> Iterator[Face]:
+        """Yields all forward oriented faces. """
+        return iter(self.forward.values())
+
+    @property
+    def backward_faces(self) -> Iterator[Face]:
+        """Yields all backward oriented faces. """
+        return iter(self.backward.values())
 
     def classify_faces(self, reference: int = 0) -> None:
         """Detect the forward and backward oriented faces.
@@ -1416,8 +1426,8 @@ class FaceOrientationDetector:
                     # none of the linked face is processed!
                     self.is_manifold = False
 
-        self.forward = list(forward.values())
-        self.backward = list(backward.values())
+        self.forward = forward
+        self.backward = backward
 
 
 def unify_faces_normals(
@@ -1436,10 +1446,10 @@ def unify_faces_normals(
         )
     new_mesh = MeshTransformer.from_builder(mesh)
     if not fod.has_uniform_face_normals:
-        backward_faces = set(id(f) for f in fod.backward)
+        backward = fod.backward
         faces = []
         for face in new_mesh.faces:
-            if id(face) in backward_faces:
+            if id(face) in backward:
                 faces.append(tuple(reversed(face)))
             else:
                 faces.append(tuple(face))

@@ -782,7 +782,7 @@ class TestFaceOrientationDetector:
         cube.faces[-1] = tuple(reversed(cube.faces[-1]))
         fod = FaceOrientationDetector(cube)
         assert fod.has_uniform_face_normals is False
-        assert fod.backward[0] == cube.faces[-1]
+        assert list(fod.backward_faces)[0] == cube.faces[-1]
         assert fod.count == (5, 1)
         assert fod.is_manifold is True
         assert fod.is_complete is True
