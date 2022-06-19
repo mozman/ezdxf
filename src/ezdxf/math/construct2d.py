@@ -319,18 +319,18 @@ def is_point_in_polygon_2d(
     """
     # Source: http://www.faqs.org/faqs/graphics/algorithms-faq/
     # Subject 2.03: How do I find if a point lies within a polygon?
-    polygon = list(polygon)  # shallow copy, because list will be modified
-    if not polygon[0].isclose(polygon[-1]):
-        polygon.append(polygon[0])
-    if len(polygon) < 4:  # 3+1 because first point == last point
+    vertices = list(polygon)  # shallow copy, because list will be modified
+    if not vertices[0].isclose(vertices[-1]):
+        vertices.append(vertices[0])
+    if len(vertices) < 4:  # 3+1 because first point == last point
         raise ValueError("At least 3 polygon points required.")
     x = point.x
     y = point.y
     # ignore z-axis of Vec3()
     inside = False
-    for i in range(len(polygon) - 1):
-        x1, y1 = polygon[i]
-        x2, y2 = polygon[i + 1]
+    for i in range(len(vertices) - 1):
+        x1, y1 = vertices[i]
+        x2, y2 = vertices[i + 1]
         # is point on polygon boundary line:
         # is point in x-range of line
         a, b = (x2, x1) if x2 < x1 else (x1, x2)
