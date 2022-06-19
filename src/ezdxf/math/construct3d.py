@@ -4,7 +4,16 @@ from __future__ import annotations
 from typing import Sequence, List, Iterable, Tuple, Optional
 from enum import IntEnum
 import math
-from ezdxf.math import Vec3, Matrix44, X_AXIS, Y_AXIS, Z_AXIS, AnyVec, UVec
+from ezdxf.math import (
+    Vec3,
+    Vec2,
+    Matrix44,
+    X_AXIS,
+    Y_AXIS,
+    Z_AXIS,
+    AnyVec,
+    UVec,
+)
 
 
 __all__ = [
@@ -16,6 +25,7 @@ __all__ = [
     "normal_vector_3p",
     "distance_point_line_3d",
     "intersection_line_line_3d",
+    "intersection_line_polygon_3d",
     "basic_transformation",
     "best_fit_normal",
     "BarycentricCoordinates",
@@ -339,7 +349,7 @@ class Plane:
         # COPLANAR, FRONT, BACK, SPANNING = FRONT + BACK
         for vertex in vertices:
             vertex_type = self.vertex_location_state(vertex, abs_tol)
-            polygon_type |= vertex_type
+            polygon_type |= vertex_type  # type: ignore
             vertex_types.append(vertex_type)
 
         # Put the polygon in the correct list, splitting it when necessary.
@@ -366,7 +376,9 @@ class Plane:
                     front_vertices.append(vertex)
                 if vertex_type != PlaneLocationState.FRONT:  # BACK or COPLANAR
                     back_vertices.append(vertex)
-                if (vertex_type | next_vertex_type) == PlaneLocationState.SPANNING:
+                if (
+                    vertex_type | next_vertex_type
+                ) == PlaneLocationState.SPANNING:
                     interpolation_weight = (
                         w - normal.dot(vertex)
                     ) / normal.dot(next_vertex - vertex)
@@ -391,7 +403,8 @@ class Plane:
         if state0 is state1:
             return None
         if not coplanar and (
-            state0 is PlaneLocationState.COPLANAR or state1 is PlaneLocationState.COPLANAR
+            state0 is PlaneLocationState.COPLANAR
+            or state1 is PlaneLocationState.COPLANAR
         ):
             return None
         n = self.normal
@@ -411,6 +424,38 @@ class Plane:
             return PlaneLocationState.FRONT
         else:
             return PlaneLocationState.COPLANAR
+
+
+def intersection_line_polygon_3d(
+    start: Vec3,
+    end: Vec3,
+    polygon: Iterable[Vec3],
+    *,
+    coplanar=True,
+    boundary=True,
+    abs_tol=PLANE_EPSILON,
+) -> Optional[Vec3]:
+    from ezdxf.math import is_point_in_polygon_2d, OCS
+
+    vertices = list(polygon)
+    if len(vertices) < 3:
+        raise ValueError("3 or more vertices required")
+    try:
+        normal = best_fit_normal(vertices)
+    except ZeroDivisionError:
+        return None
+    plane = Plane(normal, normal.dot(vertices[0]))
+    ip = plane.intersect_line(start, end, coplanar=coplanar, abs_tol=abs_tol)
+    if ip is None:
+        return None
+    ocs = OCS(normal)
+    ocs_vertices = Vec2.list(ocs.points_from_wcs(vertices))
+    state = is_point_in_polygon_2d(
+        ocs.from_wcs(ip), ocs_vertices, abs_tol=abs_tol
+    )
+    if state > 0 or (boundary and state == 0):
+        return ip
+    return None
 
 
 class BarycentricCoordinates:
