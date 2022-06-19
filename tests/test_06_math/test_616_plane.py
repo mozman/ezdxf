@@ -96,5 +96,45 @@ class TestSplitCConvexPolygon:
         assert len(back) == 4
 
 
+class TestIntersectLine:
+    @pytest.fixture(scope="class")
+    def plane(self):
+        return Plane(Z_AXIS, 5)
+
+    def test_intersection_line(self, plane):
+        ip = plane.intersect_line((0, 0, 0), (0, 0, 10))
+        assert ip.isclose((0, 0, 5))
+
+    def test_line_above_plane(self, plane):
+        ip = plane.intersect_line((0, 0, 6), (0, 0, 10))
+        assert ip is None
+
+    def test_line_below_plane(self, plane):
+        ip = plane.intersect_line((0, 0, 0), (0, 0, 4))
+        assert ip is None
+
+    def test_colinear_start_point_intersection(self, plane):
+        ip = plane.intersect_line((0, 0, 5), (0, 0, 10))
+        assert ip.isclose((0, 0, 5))
+
+    def test_ignore_coplanar_start_point_intersection(self, plane):
+        ip = plane.intersect_line((0, 0, 5), (0, 0, 10), coplanar=False)
+        assert ip is None
+
+    def test_colinear_end_point_intersection(self, plane):
+        ip = plane.intersect_line((0, 0, 0), (0, 0, 5))
+        assert ip.isclose((0, 0, 5))
+
+    def test_ignore_coplanar_end_point_intersection(self, plane):
+        ip = plane.intersect_line((0, 0, 0), (0, 0, 5), coplanar=False)
+        assert ip is None
+
+    def test_ignore_always_coplanar_line(self, plane):
+        ip = plane.intersect_line((0, 0, 5), (1, 0, 5), coplanar=True)
+        assert ip is None
+        ip = plane.intersect_line((0, 0, 5), (1, 0, 5), coplanar=False)
+        assert ip is None
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

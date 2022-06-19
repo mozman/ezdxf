@@ -486,6 +486,7 @@ Vec2
 Plane
 -----
 
+
 .. autoclass:: Plane(normal: Vec3, distance: float)
 
     .. autoattribute:: normal
@@ -508,8 +509,21 @@ Plane
 
     .. automethod:: is_coplanar_plane
 
+    .. automethod:: intersect_line
+
     .. automethod:: intersect_polygon
 
+    .. automethod:: vertex_location_state
+
+.. autoclass:: PlaneLocationState
+
+    .. attribute:: COPLANAR
+
+    .. attribute:: FRONT
+
+    .. attribute:: BACK
+
+    .. attribute:: SPANNING
 
 BoundingBox
 -----------
