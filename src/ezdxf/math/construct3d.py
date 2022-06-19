@@ -129,12 +129,12 @@ def normal_vector_3p(a: Vec3, b: Vec3, c: Vec3) -> Vec3:
 
 def safe_normal_vector(vertices: Sequence[Vec3]) -> Vec3:
     """Safe function to detect the normal vector for a face or polygon defined
-    by 3 or more ` vertices`.
+    by 3 or more `vertices`.
 
     """
     if len(vertices) < 3:
         raise ValueError("3 or more vertices required")
-    a, b, c, *r = vertices
+    a, b, c, *_ = vertices
     try:  # fast path
         return (b - a).cross(c - a).normalize()
     except ZeroDivisionError:  # safe path, can still raise ZeroDivisionError
@@ -500,7 +500,7 @@ def intersection_line_polygon_3d(
     if len(vertices) < 3:
         raise ValueError("3 or more vertices required")
     try:
-        normal = best_fit_normal(vertices)
+        normal = safe_normal_vector(vertices)
     except ZeroDivisionError:
         return None
     plane = Plane(normal, normal.dot(vertices[0]))
@@ -539,7 +539,7 @@ def intersection_ray_polygon_3d(
     if len(vertices) < 3:
         raise ValueError("3 or more vertices required")
     try:
-        normal = best_fit_normal(vertices)
+        normal = safe_normal_vector(vertices)
     except ZeroDivisionError:
         return None
     plane = Plane(normal, normal.dot(vertices[0]))
