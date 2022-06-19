@@ -29,6 +29,10 @@ IRREGULAR_FACE = Vec3.list([(0, 0, 0), (1, 0, 1), (1, 1, 0), (0, 1, 0)])
 REGULAR_FACE_WRONG_ORDER = Vec3.list(
     [(0, 0, 0), (1, 1, 1), (1, 0, 1), (0, 1, 0)]
 )
+ONLY_COLINEAR_EDGES = Vec3.list([(0, 0, 0), (1, 0, 0), (2, 0, 0), (3, 0, 0)])
+REGULAR_FACE_WITH_COLINEAR_EDGE = Vec3.list(
+    [(0, 0, 0), (1, 0, 0), (2, 0, 0), (3, 0, 0), (1.5, 2.0, 0)]
+)
 
 
 def test_face_count():
@@ -42,6 +46,14 @@ def test_regular_face():
 
 def test_irregular_face():
     assert is_planar_face(IRREGULAR_FACE) is False
+
+
+def test_only_colinear_edges():
+    assert is_planar_face(ONLY_COLINEAR_EDGES) is False
+
+
+def test_regular_face_with_colinear_edge():
+    assert is_planar_face(REGULAR_FACE) is True
 
 
 def test_does_not_detect_wrong_order():

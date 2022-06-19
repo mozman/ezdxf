@@ -27,6 +27,7 @@ __all__ = [
 ]
 PI2 = math.pi / 2.0
 
+
 class LocationState(IntEnum):
     COPLANAR = 0  # all the vertices are within the plane
     FRONT = 1  # all the vertices are in front of the plane
@@ -49,12 +50,17 @@ def is_planar_face(face: Sequence[Vec3], abs_tol=1e-9) -> bool:
     first_normal = None
     for index in range(len(face) - 2):
         a, b, c = face[index : index + 3]
-        normal = (b - a).cross(c - b).normalize()
+        try:
+            normal = (b - a).cross(c - b).normalize()
+        except ZeroDivisionError:  # colinear edge
+            continue
         if first_normal is None:
             first_normal = normal
         elif not first_normal.isclose(normal, abs_tol=abs_tol):
             return False
-    return True
+    if first_normal is not None:
+        return True
+    return False
 
 
 def subdivide_face(
