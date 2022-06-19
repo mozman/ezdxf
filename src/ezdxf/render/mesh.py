@@ -287,7 +287,7 @@ class MeshDiagnose:
 
     @property
     def is_closed_surface(self) -> bool:
-        """Returns ``True`` if the mesh is a closed surface."""
+        """Returns ``True`` if the mesh has a closed surface."""
         return all(edge.count == 2 for edge in self.edge_stats.values())
 
     def total_edge_count(self) -> int:

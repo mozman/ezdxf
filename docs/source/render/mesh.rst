@@ -206,6 +206,8 @@ MeshDiagnose
 
     .. autoproperty:: edge_stats
 
+    .. autoproperty:: is_closed_surface
+
     .. autoproperty:: is_edge_balance_broken
 
     .. autoproperty:: is_manifold
