@@ -1,7 +1,8 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.math import Plane, Vec3
+from ezdxf.math import Plane, Vec3, X_AXIS, BoundingBox, Z_AXIS
+from ezdxf.render import forms
 
 
 def test_init():
@@ -57,6 +58,42 @@ def test_is_coplanar_plane():
     p1 = Plane.from_vector((5, 0, 0))
     p2 = Plane.from_vector((-1, 0, 0))
     assert p1.is_coplanar_plane(p2) is True
+
+
+class TestSplitCConvexPolygon:
+    def test_spit_horizontal_square(self):
+        polygon = forms.square(center=True)
+        plane = Plane(X_AXIS, 0)
+        front, back = plane.intersect_polygon(polygon)
+        assert len(front) == 4
+        assert len(back) == 4
+        front_bbox = BoundingBox(front)
+        assert front_bbox.extmin == (0, -0.5)
+        assert front_bbox.extmax == (0.5, 0.5)
+        back_bbox = BoundingBox(back)
+        assert back_bbox.extmin == (-0.5, -0.5)
+        assert back_bbox.extmax == (0, 0.5)
+
+    def test_ignore_coplanar_square(self):
+        polygon = forms.square(center=True)
+        plane = Plane(Z_AXIS, 0)
+        front, back = plane.intersect_polygon(polygon, coplanar=False)
+        assert len(front) == 0
+        assert len(back) == 0
+
+    def test_return_coplanar_square_front(self):
+        polygon = forms.square(center=True)
+        plane = Plane(Z_AXIS, 0)
+        front, back = plane.intersect_polygon(polygon, coplanar=True)
+        assert len(front) == 4
+        assert len(back) == 0
+
+    def test_return_coplanar_square_back(self):
+        polygon = forms.square(center=True)
+        plane = Plane(-Z_AXIS, 0)
+        front, back = plane.intersect_polygon(polygon, coplanar=True)
+        assert len(front) == 0
+        assert len(back) == 4
 
 
 if __name__ == "__main__":

@@ -508,6 +508,8 @@ Plane
 
     .. automethod:: is_coplanar_plane
 
+    .. automethod:: intersect_polygon
+
 
 BoundingBox
 -----------

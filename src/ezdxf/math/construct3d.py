@@ -28,13 +28,6 @@ __all__ = [
 PI2 = math.pi / 2.0
 
 
-class LocationState(IntEnum):
-    COPLANAR = 0  # all the vertices are within the plane
-    FRONT = 1  # all the vertices are in front of the plane
-    BACK = 2  # all the vertices are at the back of the plane
-    SPANNING = 3  # some vertices are in front, some in the back
-
-
 def is_planar_face(face: Sequence[Vec3], abs_tol=1e-9) -> bool:
     """Returns ``True`` if sequence of vectors is a planar face.
 
@@ -226,6 +219,16 @@ def basic_transformation(
     return m
 
 
+PLANE_EPSILON = 1e-9
+
+
+class LocationState(IntEnum):
+    COPLANAR = 0  # all the vertices are within the plane
+    FRONT = 1  # all the vertices are in front of the plane
+    BACK = 2  # all the vertices are at the back of the plane
+    SPANNING = 3  # some vertices are in front, some in the back
+
+
 class Plane:
     """Represents a plane in 3D space as normal vector and the perpendicular
     distance from origin.
@@ -234,6 +237,7 @@ class Plane:
     __slots__ = ("_normal", "_distance_from_origin")
 
     def __init__(self, normal: Vec3, distance: float):
+        assert normal.is_null is False, "invalid plane normal"
         self._normal = normal
         # the (perpendicular) distance of the plane from (0, 0, 0)
         self._distance_from_origin = distance
@@ -312,6 +316,76 @@ class Plane:
         return n_is_close(p._normal, abs_tol=abs_tol) or n_is_close(
             -p._normal, abs_tol=abs_tol
         )
+
+    def intersect_polygon(
+        self, polygon: Iterable[UVec], coplanar=True
+    ) -> Tuple[Sequence[Vec3], Sequence[Vec3]]:
+        """
+        Intersect a convex `polygon` by this plane if needed. Returns a tuple of
+        front- and back vertices (front, back).
+        Returns also coplanar polygons if the
+        argument `coplanar` is ``True``, the coplanar vertices goes into either
+        front or back depending on their orientation with respect to this plane.
+        """
+        polygon_type = LocationState.COPLANAR
+        vertex_types: List[LocationState] = []
+        front_vertices: List[Vec3] = []
+        back_vertices: List[Vec3] = []
+        vertices = Vec3.list(polygon)
+        w = self._distance_from_origin
+        normal = self.normal
+
+        # Classify each point as well as the entire polygon into one of four classes:
+        # COPLANAR, FRONT, BACK, SPANNING = FRONT + BACK
+        for vertex in vertices:
+            distance = normal.dot(vertex) - w
+            if distance < -PLANE_EPSILON:
+                vertex_type = LocationState.BACK
+            elif distance > PLANE_EPSILON:
+                vertex_type = LocationState.FRONT
+            else:
+                vertex_type = LocationState.COPLANAR
+            polygon_type |= vertex_type
+            vertex_types.append(vertex_type)
+
+        # Put the polygon in the correct list, splitting it when necessary.
+        if polygon_type == LocationState.COPLANAR:
+            if coplanar:
+                polygon_normal = best_fit_normal(vertices)
+                if normal.dot(polygon_normal) > 0:
+                    front_vertices = vertices
+                else:
+                    back_vertices = vertices
+        elif polygon_type == LocationState.FRONT:
+            front_vertices = vertices
+        elif polygon_type == LocationState.BACK:
+            back_vertices = vertices
+        elif polygon_type == LocationState.SPANNING:
+            len_vertices = len(vertices)
+            for index in range(len_vertices):
+                next_index = (index + 1) % len_vertices
+                vertex_type = vertex_types[index]
+                next_vertex_type = vertex_types[next_index]
+                vertex = vertices[index]
+                next_vertex = vertices[next_index]
+                if vertex_type != LocationState.BACK:  # FRONT or COPLANAR
+                    front_vertices.append(vertex)
+                if vertex_type != LocationState.FRONT:  # BACK or COPLANAR
+                    back_vertices.append(vertex)
+                if (vertex_type | next_vertex_type) == LocationState.SPANNING:
+                    interpolation_weight = (
+                        w - normal.dot(vertex)
+                    ) / normal.dot(next_vertex - vertex)
+                    plane_intersection_point = vertex.lerp(
+                        next_vertex, interpolation_weight
+                    )
+                    front_vertices.append(plane_intersection_point)
+                    back_vertices.append(plane_intersection_point)
+            if len(front_vertices) < 3:
+                front_vertices = []
+            if len(back_vertices) < 3:
+                back_vertices = []
+        return tuple(front_vertices), tuple(back_vertices)
 
 
 class BarycentricCoordinates:
