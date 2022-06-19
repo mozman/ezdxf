@@ -35,6 +35,7 @@ __all__ = [
     "spherical_envelope",
     "inscribe_circle_tangent_length",
     "bending_angle",
+    "split_polygon_by_plane",
 ]
 PI2 = math.pi / 2.0
 
@@ -328,75 +329,6 @@ class Plane:
             -p._normal, abs_tol=abs_tol
         )
 
-    def split_polygon(
-        self, polygon: Iterable[Vec3], *, coplanar=True, abs_tol=PLANE_EPSILON
-    ) -> Tuple[Sequence[Vec3], Sequence[Vec3]]:
-        """
-        Split a convex `polygon` by this plane if needed. Returns a tuple of
-        front- and back vertices (front, back).
-        Returns also coplanar polygons if the
-        argument `coplanar` is ``True``, the coplanar vertices goes into either
-        front or back depending on their orientation with respect to this plane.
-
-        .. versionadded:: 0.18
-
-        """
-        polygon_type = PlaneLocationState.COPLANAR
-        vertex_types: List[PlaneLocationState] = []
-        front_vertices: List[Vec3] = []
-        back_vertices: List[Vec3] = []
-        vertices = list(polygon)
-        w = self._distance_from_origin
-        normal = self.normal
-
-        # Classify each point as well as the entire polygon into one of four classes:
-        # COPLANAR, FRONT, BACK, SPANNING = FRONT + BACK
-        for vertex in vertices:
-            vertex_type = self.vertex_location_state(vertex, abs_tol)
-            polygon_type |= vertex_type  # type: ignore
-            vertex_types.append(vertex_type)
-
-        # Put the polygon in the correct list, splitting it when necessary.
-        if polygon_type == PlaneLocationState.COPLANAR:
-            if coplanar:
-                polygon_normal = best_fit_normal(vertices)
-                if normal.dot(polygon_normal) > 0:
-                    front_vertices = vertices
-                else:
-                    back_vertices = vertices
-        elif polygon_type == PlaneLocationState.FRONT:
-            front_vertices = vertices
-        elif polygon_type == PlaneLocationState.BACK:
-            back_vertices = vertices
-        elif polygon_type == PlaneLocationState.SPANNING:
-            len_vertices = len(vertices)
-            for index in range(len_vertices):
-                next_index = (index + 1) % len_vertices
-                vertex_type = vertex_types[index]
-                next_vertex_type = vertex_types[next_index]
-                vertex = vertices[index]
-                next_vertex = vertices[next_index]
-                if vertex_type != PlaneLocationState.BACK:  # FRONT or COPLANAR
-                    front_vertices.append(vertex)
-                if vertex_type != PlaneLocationState.FRONT:  # BACK or COPLANAR
-                    back_vertices.append(vertex)
-                if (
-                    vertex_type | next_vertex_type
-                ) == PlaneLocationState.SPANNING:
-                    interpolation_weight = (
-                        w - normal.dot(vertex)
-                    ) / normal.dot(next_vertex - vertex)
-                    plane_intersection_point = vertex.lerp(
-                        next_vertex, interpolation_weight
-                    )
-                    front_vertices.append(plane_intersection_point)
-                    back_vertices.append(plane_intersection_point)
-            if len(front_vertices) < 3:
-                front_vertices = []
-            if len(back_vertices) < 3:
-                back_vertices = []
-        return tuple(front_vertices), tuple(back_vertices)
-
     def intersect_line(
         self, start: Vec3, end: Vec3, *, coplanar=True, abs_tol=PLANE_EPSILON
     ) -> Optional[Vec3]:
@@ -455,6 +387,76 @@ class Plane:
             return PlaneLocationState.FRONT
         else:
             return PlaneLocationState.COPLANAR
+
+
+def split_polygon_by_plane(
+    polygon: Iterable[Vec3], plane: Plane, *, coplanar=True, abs_tol=PLANE_EPSILON
+) -> Tuple[Sequence[Vec3], Sequence[Vec3]]:
+    """
+    Split a convex `polygon` by the given `plane` if needed. Returns a tuple of
+    front- and back vertices (front, back).
+    Returns also coplanar polygons if the
+    argument `coplanar` is ``True``, the coplanar vertices goes into either
+    front or back depending on their orientation with respect to this plane.
+
+    .. versionadded:: 0.18
+
+    """
+    polygon_type = PlaneLocationState.COPLANAR
+    vertex_types: List[PlaneLocationState] = []
+    front_vertices: List[Vec3] = []
+    back_vertices: List[Vec3] = []
+    vertices = list(polygon)
+    w = plane.distance_from_origin
+    normal = plane.normal
+
+    # Classify each point as well as the entire polygon into one of four classes:
+    # COPLANAR, FRONT, BACK, SPANNING = FRONT + BACK
+    for vertex in vertices:
+        vertex_type = plane.vertex_location_state(vertex, abs_tol)
+        polygon_type |= vertex_type  # type: ignore
+        vertex_types.append(vertex_type)
+
+    # Put the polygon in the correct list, splitting it when necessary.
+    if polygon_type == PlaneLocationState.COPLANAR:
+        if coplanar:
+            polygon_normal = best_fit_normal(vertices)
+            if normal.dot(polygon_normal) > 0:
+                front_vertices = vertices
+            else:
+                back_vertices = vertices
+    elif polygon_type == PlaneLocationState.FRONT:
+        front_vertices = vertices
+    elif polygon_type == PlaneLocationState.BACK:
+        back_vertices = vertices
+    elif polygon_type == PlaneLocationState.SPANNING:
+        len_vertices = len(vertices)
+        for index in range(len_vertices):
+            next_index = (index + 1) % len_vertices
+            vertex_type = vertex_types[index]
+            next_vertex_type = vertex_types[next_index]
+            vertex = vertices[index]
+            next_vertex = vertices[next_index]
+            if vertex_type != PlaneLocationState.BACK:  # FRONT or COPLANAR
+                front_vertices.append(vertex)
+            if vertex_type != PlaneLocationState.FRONT:  # BACK or COPLANAR
+                back_vertices.append(vertex)
+            if (
+                vertex_type | next_vertex_type
+            ) == PlaneLocationState.SPANNING:
+                interpolation_weight = (
+                    w - normal.dot(vertex)
+                ) / normal.dot(next_vertex - vertex)
+                plane_intersection_point = vertex.lerp(
+                    next_vertex, interpolation_weight
+                )
+                front_vertices.append(plane_intersection_point)
+                back_vertices.append(plane_intersection_point)
+        if len(front_vertices) < 3:
+            front_vertices = []
+        if len(back_vertices) < 3:
+            back_vertices = []
+    return tuple(front_vertices), tuple(back_vertices)
 
 
 def intersection_line_polygon_3d(

@@ -1,7 +1,14 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
 import pytest
-from ezdxf.math import Plane, Vec3, X_AXIS, BoundingBox, Z_AXIS
+from ezdxf.math import (
+    Plane,
+    Vec3,
+    X_AXIS,
+    BoundingBox,
+    Z_AXIS,
+    split_polygon_by_plane,
+)
 from ezdxf.render import forms
 
 
@@ -64,7 +71,7 @@ class TestSplitConvexPolygon:
     def test_spit_horizontal_square(self):
         polygon = forms.square(center=True)
         plane = Plane(X_AXIS, 0)
-        front, back = plane.split_polygon(polygon)
+        front, back = split_polygon_by_plane(polygon, plane)
         assert len(front) == 4
         assert len(back) == 4
         front_bbox = BoundingBox(front)
@@ -77,21 +84,21 @@ class TestSplitConvexPolygon:
     def test_ignore_coplanar_square(self):
         polygon = forms.square(center=True)
         plane = Plane(Z_AXIS, 0)
-        front, back = plane.split_polygon(polygon, coplanar=False)
+        front, back = split_polygon_by_plane(polygon, plane, coplanar=False)
         assert len(front) == 0
         assert len(back) == 0
 
     def test_return_coplanar_square_front(self):
         polygon = forms.square(center=True)
         plane = Plane(Z_AXIS, 0)
-        front, back = plane.split_polygon(polygon, coplanar=True)
+        front, back = split_polygon_by_plane(polygon, plane, coplanar=True)
         assert len(front) == 4
         assert len(back) == 0
 
     def test_return_coplanar_square_back(self):
         polygon = forms.square(center=True)
         plane = Plane(-Z_AXIS, 0)
-        front, back = plane.split_polygon(polygon, coplanar=True)
+        front, back = split_polygon_by_plane(polygon, plane, coplanar=True)
         assert len(front) == 0
         assert len(back) == 4
 

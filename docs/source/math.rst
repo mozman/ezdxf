@@ -168,6 +168,8 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: split_bezier
 
+.. autofunction:: split_polygon_by_plane
+
 .. autofunction:: spherical_envelope
 
 .. autofunction:: dbscan
@@ -517,19 +519,6 @@ Plane
 
     .. automethod:: intersect_ray
 
-    .. automethod:: split_polygon
-
-    .. automethod:: vertex_location_state
-
-.. autoclass:: PlaneLocationState
-
-    .. attribute:: COPLANAR
-
-    .. attribute:: FRONT
-
-    .. attribute:: BACK
-
-    .. attribute:: SPANNING
 
 BoundingBox
 -----------
