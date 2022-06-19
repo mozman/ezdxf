@@ -23,6 +23,7 @@ __all__ = [
     "Plane",
     "PlaneLocationState",
     "normal_vector_3p",
+    "safe_normal_vector",
     "distance_point_line_3d",
     "intersection_line_line_3d",
     "intersection_ray_polygon_3d",
@@ -124,6 +125,20 @@ def normal_vector_3p(a: Vec3, b: Vec3, c: Vec3) -> Vec3:
     product for: :code:`a->b x a->c`.
     """
     return (b - a).cross(c - a).normalize()
+
+
+def safe_normal_vector(vertices: Sequence[Vec3]) -> Vec3:
+    """Safe function to detect the normal vector for a face or polygon defined
+    by 3 or more ` vertices`.
+
+    """
+    if len(vertices) < 3:
+        raise ValueError("3 or more vertices required")
+    a, b, c, *r = vertices
+    try:  # fast path
+        return (b - a).cross(c - a).normalize()
+    except ZeroDivisionError:  # safe path, can still raise ZeroDivisionError
+        return best_fit_normal(vertices)
 
 
 def best_fit_normal(vertices: Iterable[UVec]) -> Vec3:

@@ -10,6 +10,7 @@ from ezdxf.math import (
     intersection_ray_ray_3d,
     intersection_line_line_3d,
     normal_vector_3p,
+    safe_normal_vector,
     NULLVEC,
     X_AXIS,
     Y_AXIS,
@@ -198,6 +199,27 @@ RH_ORTHO = [
 @pytest.mark.parametrize("a,b,c,r", RH_ORTHO)
 def test_normal_vector_for_3_points(a, b, c, r):
     assert normal_vector_3p(a, b, c) == r
+
+
+def test_safe_normal_vector_regular():
+    vertices = Vec3.list([(0, 0, 0), (1, 0, 0), (1, 1, 0)])
+    assert safe_normal_vector(vertices).isclose((0, 0, 1))
+
+
+def test_safe_normal_vector_for_coincident_vertices():
+    vertices = Vec3.list([(0, 0, 0), (0, 0, 0), (1, 0, 0), (1, 1, 0)])
+    assert safe_normal_vector(vertices).isclose((0, 0, 1))
+
+
+def test_safe_normal_vector_for_colinear_vertices():
+    vertices = Vec3.list([(0, 0, 0), (0.5, 0, 0), (1, 0, 0), (1, 1, 0)])
+    assert safe_normal_vector(vertices).isclose((0, 0, 1))
+
+
+def test_safe_normal_vector_raises_exception_for_undefined_normal_vector():
+    vertices = Vec3.list([(0, 0, 0), (1, 0, 0), (2, 0, 0)])
+    with pytest.raises(ZeroDivisionError):
+        safe_normal_vector(vertices)
 
 
 @pytest.mark.parametrize(

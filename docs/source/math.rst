@@ -108,6 +108,8 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: normal_vector_3p
 
+.. autofunction:: safe_normal_vector
+
 .. autofunction:: linear_vertex_spacing
 
 .. autofunction:: best_fit_normal
