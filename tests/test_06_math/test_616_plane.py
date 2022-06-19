@@ -60,11 +60,11 @@ def test_is_coplanar_plane():
     assert p1.is_coplanar_plane(p2) is True
 
 
-class TestSplitCConvexPolygon:
+class TestSplitConvexPolygon:
     def test_spit_horizontal_square(self):
         polygon = forms.square(center=True)
         plane = Plane(X_AXIS, 0)
-        front, back = plane.intersect_polygon(polygon)
+        front, back = plane.split_polygon(polygon)
         assert len(front) == 4
         assert len(back) == 4
         front_bbox = BoundingBox(front)
@@ -77,21 +77,21 @@ class TestSplitCConvexPolygon:
     def test_ignore_coplanar_square(self):
         polygon = forms.square(center=True)
         plane = Plane(Z_AXIS, 0)
-        front, back = plane.intersect_polygon(polygon, coplanar=False)
+        front, back = plane.split_polygon(polygon, coplanar=False)
         assert len(front) == 0
         assert len(back) == 0
 
     def test_return_coplanar_square_front(self):
         polygon = forms.square(center=True)
         plane = Plane(Z_AXIS, 0)
-        front, back = plane.intersect_polygon(polygon, coplanar=True)
+        front, back = plane.split_polygon(polygon, coplanar=True)
         assert len(front) == 4
         assert len(back) == 0
 
     def test_return_coplanar_square_back(self):
         polygon = forms.square(center=True)
         plane = Plane(-Z_AXIS, 0)
-        front, back = plane.intersect_polygon(polygon, coplanar=True)
+        front, back = plane.split_polygon(polygon, coplanar=True)
         assert len(front) == 0
         assert len(back) == 4
 

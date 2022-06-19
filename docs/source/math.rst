@@ -517,7 +517,7 @@ Plane
 
     .. automethod:: intersect_ray
 
-    .. automethod:: intersect_polygon
+    .. automethod:: split_polygon
 
     .. automethod:: vertex_location_state
 

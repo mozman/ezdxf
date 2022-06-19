@@ -328,11 +328,11 @@ class Plane:
             -p._normal, abs_tol=abs_tol
         )
 
-    def intersect_polygon(
+    def split_polygon(
         self, polygon: Iterable[Vec3], *, coplanar=True, abs_tol=PLANE_EPSILON
     ) -> Tuple[Sequence[Vec3], Sequence[Vec3]]:
         """
-        Intersect a convex `polygon` by this plane if needed. Returns a tuple of
+        Split a convex `polygon` by this plane if needed. Returns a tuple of
         front- and back vertices (front, back).
         Returns also coplanar polygons if the
         argument `coplanar` is ``True``, the coplanar vertices goes into either
