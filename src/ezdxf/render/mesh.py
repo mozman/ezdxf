@@ -269,7 +269,7 @@ class MeshDiagnose:
         """Returns the Euler characteristic:
         https://en.wikipedia.org/wiki/Euler_characteristic
 
-        This number is always two for convex polyhedra.
+        This number is always 2 for convex polyhedra.
         """
         return self.n_vertices - self.n_edges + self.n_faces
 
@@ -379,6 +379,12 @@ class MeshDiagnose:
             polygon = [v[i] for i in face]
             surface_area += area_3d(polygon)
         return surface_area
+
+    def centroid(self) -> Vec3:
+        """Returns the centroid of all vertices. (center of mass)"""
+        if self.n_vertices > 0:
+            return Vec3.sum(self.vertices) / self.n_vertices
+        return NULLVEC
 
 
 class MeshBuilder:

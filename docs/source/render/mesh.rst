@@ -214,14 +214,18 @@ MeshDiagnose
 
     .. autoproperty:: euler_characteristic
 
+    .. automethod:: centroid
+
+    .. automethod:: estimate_normals_direction
+
     .. automethod:: has_non_planar_faces
+
+    .. automethod:: surface_area
 
     .. automethod:: total_edge_count
 
     .. automethod:: unique_edges
 
-    .. automethod:: estimate_normals_direction
-
     .. automethod:: volume
 
-    .. automethod:: surface_area
+
