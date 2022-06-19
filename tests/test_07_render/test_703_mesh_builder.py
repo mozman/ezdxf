@@ -1,7 +1,7 @@
 # Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
 import pytest
-from math import radians, isclose
+import math
 from ezdxf.math import Vec3, BoundingBox, Matrix44
 from ezdxf.render import forms
 from ezdxf.addons.menger_sponge import MengerSponge
@@ -20,6 +20,7 @@ from ezdxf.render.mesh import (
     separate_meshes,
     face_normals_after_transformation,
     FaceOrientationDetector,
+    volume6,
 )
 from ezdxf.addons import SierpinskyPyramid
 from ezdxf.layouts import VirtualLayout
@@ -120,7 +121,7 @@ def test_scale_mesh():
 
 def test_rotate_x():
     mesh = forms.cube(center=False)
-    mesh.rotate_x(radians(90))
+    mesh.rotate_x(math.radians(90))
     bbox = BoundingBox(mesh.vertices)
     assert bbox.extmin.isclose((0, -1, 0))
     assert bbox.extmax.isclose((1, 0, 1))
@@ -729,7 +730,7 @@ class TestNormals:
         assert len(normals) == 6
 
     def test_all_normals_are_normalized(self, normals):
-        assert all(isclose(n.magnitude, 1.0) for n in normals) is True
+        assert all(math.isclose(n.magnitude, 1.0) for n in normals) is True
 
     def test_all_normals_are_different(self, normals):
         assert len(set(normals)) == 6
@@ -884,3 +885,52 @@ def test_unify_torus_normals_by_majority():
     assert fod.all_reachable is True
 
 
+def test_volume6():
+    assert volume6(
+        Vec3(0, 0, 1), Vec3(2, 0, 1), Vec3(1, 1, 1)
+    ) == pytest.approx(2.0)
+
+
+def test_volume_of_closed_surface():
+    diag = forms.cube().diagnose()
+    assert diag.volume() == pytest.approx(1.0)
+
+
+@pytest.mark.parametrize("loc", [
+    (100, 100, 100),
+    (-100, -100, -100),
+
+])
+def test_location_of_mesh_is_not_relevant_for_volume_calculation(loc):
+    cube = forms.cube()
+    cube.translate(loc)
+    assert cube.diagnose().volume() == pytest.approx(1.0)
+
+
+def test_volume_of_an_open_surface_is_null():
+    cube = forms.cube()
+    del cube.faces[-1]
+    assert cube.diagnose().volume() == 0.0
+
+
+def test_volume_of_two_cubes_in_a_single_mesh_is_invalid():
+    cube = forms.cube()
+    c1 = forms.cube()
+    c1.translate(2, 0, 0)
+    cube.add_mesh(mesh=c1)
+    assert len(cube.vertices) == 16
+    assert len(cube.faces) == 12
+
+    diag = forms.cube().diagnose()
+    assert diag.volume() == pytest.approx(1.0)  # invalid result!!!
+
+
+def test_torus_volume():
+    r0 = 1.0
+    r1 = 10.0
+    real_volume = 2.0 * math.pi * math.pi * r0 * r0 * r1
+    diag = forms.torus(
+        major_count=64, minor_count=32, minor_radius=r0, major_radius=r1
+    ).diagnose()
+    # 2% difference expected:
+    assert real_volume * 0.98 < diag.volume() < real_volume

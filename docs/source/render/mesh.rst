@@ -219,3 +219,5 @@ MeshDiagnose
     .. automethod:: unique_edges
 
     .. automethod:: estimate_normals_direction
+
+    .. automethod:: volume

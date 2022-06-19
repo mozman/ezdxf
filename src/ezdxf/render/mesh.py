@@ -184,6 +184,24 @@ def flip_face_normals(
         yield tuple(reversed(face))
 
 
+def volume6(a: Vec3, b: Vec3, c: Vec3) -> float:
+    """
+    Returns six times the volume of the tetrahedron determined by abc
+    and the origin (0, 0, 0).
+    The volume is positive if the origin is on the negative side of abc,
+    where the positive side is determined by the right-hand--rule.
+    So the volume is positive if the ccw normal to abc points outside the
+    tetrahedron.
+
+    This code is taken from chull.c; see "Computational Geometry in C."
+    """
+    return (
+        a.z * (b.x * c.y - b.y * c.x)
+        + a.y * (b.z * c.x - b.x * c.z)
+        + a.x * (b.y * c.z - b.z * c.y)
+    )
+
+
 # Mesh Topology Analysis using the Euler Characteristic
 # https://max-limper.de/publications/Euler/index.html
 
@@ -267,6 +285,11 @@ class MeshDiagnose:
         """
         return all(edge.count < 3 for edge in self.edge_stats.values())
 
+    @property
+    def is_closed_surface(self) -> bool:
+        """Returns ``True`` if the mesh is a closed surface."""
+        return all(edge.count == 2 for edge in self.edge_stats.values())
+
     def total_edge_count(self) -> int:
         """Returns the total edge count of all faces, shared edges are counted
         separately for each face. In closed surfaces this count should be 2x
@@ -307,6 +330,8 @@ class MeshDiagnose:
               outwards but caps pointing inwards returns 0.7785 but the
               property :attr:`is_edge_balance_broken` returns ``True`` which
               indicates the mixed vertex orientation
+            - and the estimation of 0.0469 for a :func:`~ezdxf.render.forms.torus`
+              is barely usable
 
         """
         return estimate_normals_direction(self.vertices, self.faces)
@@ -316,6 +341,25 @@ class MeshDiagnose:
         return not all(
             is_planar_face(face) for face in self._mesh.faces_as_vertices()
         )
+
+    def volume(self) -> float:
+        """Returns the volume of a closed surface or 0 otherwise.
+
+        .. warning::
+
+            The face vertices have to be in counter-clockwise order, this
+            requirement is not checked by this method.
+
+            The result is not correct for multiple separated meshes in a single
+            MeshBuilder object!!!
+
+        """
+        if self.is_closed_surface:
+            volume = 0.0
+            for face in self._mesh.tessellation(3):
+                volume += volume6(face[0], face[1], face[2])
+            return volume / 6.0
+        return 0.0
 
 
 class MeshBuilder:
@@ -818,11 +862,13 @@ class MeshTransformer(MeshBuilder):
         self.vertices = list(matrix.transform_vertices(self.vertices))
         return self
 
-    def translate(self, dx: float = 0, dy: float = 0, dz: float = 0):
+    def translate(
+        self, dx: Union[float, UVec] = 0, dy: float = 0, dz: float = 0
+    ):
         """Translate mesh inplace.
 
         Args:
-            dx: translation in x-axis
+            dx: translation in x-axis or translation vector
             dy: translation in y-axis
             dz: translation in z-axis
 
