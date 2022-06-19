@@ -102,37 +102,51 @@ class TestIntersectLine:
         return Plane(Z_AXIS, 5)
 
     def test_intersection_line(self, plane):
-        ip = plane.intersect_line((0, 0, 0), (0, 0, 10))
+        ip = plane.intersect_line(Vec3(0, 0, 0), Vec3(0, 0, 10))
         assert ip.isclose((0, 0, 5))
 
     def test_line_above_plane(self, plane):
-        ip = plane.intersect_line((0, 0, 6), (0, 0, 10))
+        ip = plane.intersect_line(Vec3(0, 0, 6), Vec3(0, 0, 10))
         assert ip is None
 
     def test_line_below_plane(self, plane):
-        ip = plane.intersect_line((0, 0, 0), (0, 0, 4))
+        ip = plane.intersect_line(Vec3(0, 0, 0), Vec3(0, 0, 4))
         assert ip is None
 
     def test_colinear_start_point_intersection(self, plane):
-        ip = plane.intersect_line((0, 0, 5), (0, 0, 10))
+        ip = plane.intersect_line(Vec3(0, 0, 5), Vec3(0, 0, 10))
         assert ip.isclose((0, 0, 5))
 
     def test_ignore_coplanar_start_point_intersection(self, plane):
-        ip = plane.intersect_line((0, 0, 5), (0, 0, 10), coplanar=False)
+        ip = plane.intersect_line(Vec3(0, 0, 5), Vec3(0, 0, 10), coplanar=False)
         assert ip is None
 
     def test_colinear_end_point_intersection(self, plane):
-        ip = plane.intersect_line((0, 0, 0), (0, 0, 5))
+        ip = plane.intersect_line(Vec3(0, 0, 0), Vec3(0, 0, 5))
         assert ip.isclose((0, 0, 5))
 
     def test_ignore_coplanar_end_point_intersection(self, plane):
-        ip = plane.intersect_line((0, 0, 0), (0, 0, 5), coplanar=False)
+        ip = plane.intersect_line(Vec3(0, 0, 0), Vec3(0, 0, 5), coplanar=False)
         assert ip is None
 
-    def test_ignore_always_coplanar_line(self, plane):
-        ip = plane.intersect_line((0, 0, 5), (1, 0, 5), coplanar=True)
+    def test_coplanar_line_has_no_intersection(self, plane):
+        ip = plane.intersect_line(Vec3(0, 0, 5), Vec3(1, 0, 5), coplanar=True)
         assert ip is None
-        ip = plane.intersect_line((0, 0, 5), (1, 0, 5), coplanar=False)
+        ip = plane.intersect_line(Vec3(0, 0, 5), Vec3(1, 0, 5), coplanar=False)
+        assert ip is None
+
+
+class TestIntersectRay:
+    @pytest.fixture(scope="class")
+    def plane(self):
+        return Plane(Z_AXIS, 5)
+
+    def test_intersection_line(self, plane):
+        ip = plane.intersect_ray(Vec3(0, 0, 0), Vec3(0, 0, 10))
+        assert ip.isclose((0, 0, 5))
+
+    def test_coplanar_ray_has_no_intersection(self, plane):
+        ip = plane.intersect_ray(Vec3(0, 0, 0), Vec3(1, 0, 0))
         assert ip is None
 
 

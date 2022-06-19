@@ -277,8 +277,8 @@ class Plane:
         return Plane(n, n.dot(a))
 
     @classmethod
-    def from_vector(cls, vector) -> "Plane":
-        """Returns a new plane from a location vector."""
+    def from_vector(cls, vector: UVec) -> "Plane":
+        """Returns a new plane from the given location vector."""
         v = Vec3(vector)
         try:
             return Plane(v.normalize(), v.magnitude)
@@ -328,7 +328,7 @@ class Plane:
         )
 
     def intersect_polygon(
-        self, polygon: Iterable[UVec], *, coplanar=True, abs_tol=PLANE_EPSILON
+        self, polygon: Iterable[Vec3], *, coplanar=True, abs_tol=PLANE_EPSILON
     ) -> Tuple[Sequence[Vec3], Sequence[Vec3]]:
         """
         Intersect a convex `polygon` by this plane if needed. Returns a tuple of
@@ -341,7 +341,7 @@ class Plane:
         vertex_types: List[PlaneLocationState] = []
         front_vertices: List[Vec3] = []
         back_vertices: List[Vec3] = []
-        vertices = Vec3.list(polygon)
+        vertices = list(polygon)
         w = self._distance_from_origin
         normal = self.normal
 
@@ -394,12 +394,16 @@ class Plane:
         return tuple(front_vertices), tuple(back_vertices)
 
     def intersect_line(
-        self, start: UVec, end: UVec, *, coplanar=True, abs_tol=PLANE_EPSILON
+        self, start: Vec3, end: Vec3, *, coplanar=True, abs_tol=PLANE_EPSILON
     ) -> Optional[Vec3]:
-        p0 = Vec3(start)
-        p1 = Vec3(end)
-        state0 = self.vertex_location_state(p0, abs_tol)
-        state1 = self.vertex_location_state(p1, abs_tol)
+        """Returns the intersection point of the 3D line from `start` to `end`
+        and this plane or ``None`` if there is no intersection. If the argument
+        `coplanar` is ``False`` the start- or end point of the line are ignored
+        as intersection points.
+
+        """
+        state0 = self.vertex_location_state(start, abs_tol)
+        state1 = self.vertex_location_state(end, abs_tol)
         if state0 is state1:
             return None
         if not coplanar and (
@@ -408,8 +412,24 @@ class Plane:
         ):
             return None
         n = self.normal
-        weight = (self.distance_from_origin - n.dot(p0)) / n.dot(p1 - p0)
-        return p0.lerp(p1, weight)
+        weight = (self.distance_from_origin - n.dot(start)) / n.dot(end - start)
+        return start.lerp(end, weight)
+
+    def intersect_ray(self, origin: Vec3, direction: Vec3) -> Optional[Vec3]:
+        """Returns the intersection point of the infinite 3D ray defined by
+        `origin` and the `direction` vector and this plane or ``None`` if there
+        is no intersection. A coplanar ray does not intersect the plane!
+
+        """
+        p1 = origin + direction
+        n = self.normal
+        try:
+            weight = (self.distance_from_origin - n.dot(origin)) / n.dot(
+                p1 - origin
+            )
+        except ZeroDivisionError:
+            return None
+        return origin.lerp(p1, weight)
 
     def vertex_location_state(
         self, vertex: Vec3, abs_tol=PLANE_EPSILON

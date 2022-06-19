@@ -513,6 +513,8 @@ Plane
 
     .. automethod:: intersect_line
 
+    .. automethod:: intersect_ray
+
     .. automethod:: intersect_polygon
 
     .. automethod:: vertex_location_state
