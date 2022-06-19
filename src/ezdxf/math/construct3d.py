@@ -25,6 +25,7 @@ __all__ = [
     "normal_vector_3p",
     "distance_point_line_3d",
     "intersection_line_line_3d",
+    "intersection_ray_polygon_3d",
     "intersection_line_polygon_3d",
     "basic_transformation",
     "best_fit_normal",
@@ -336,6 +337,9 @@ class Plane:
         Returns also coplanar polygons if the
         argument `coplanar` is ``True``, the coplanar vertices goes into either
         front or back depending on their orientation with respect to this plane.
+
+        .. versionadded:: 0.18
+
         """
         polygon_type = PlaneLocationState.COPLANAR
         vertex_types: List[PlaneLocationState] = []
@@ -401,6 +405,8 @@ class Plane:
         `coplanar` is ``False`` the start- or end point of the line are ignored
         as intersection points.
 
+        .. versionadded:: 0.18
+
         """
         state0 = self.vertex_location_state(start, abs_tol)
         state1 = self.vertex_location_state(end, abs_tol)
@@ -420,6 +426,8 @@ class Plane:
         `origin` and the `direction` vector and this plane or ``None`` if there
         is no intersection. A coplanar ray does not intersect the plane!
 
+        .. versionadded:: 0.18
+
         """
         p1 = origin + direction
         n = self.normal
@@ -436,6 +444,9 @@ class Plane:
     ) -> PlaneLocationState:
         """Returns the :class:`PlaneLocationState` of the given `vertex` in
         relative to this plane.
+
+        .. versionadded:: 0.18
+
         """
         distance = self._normal.dot(vertex) - self._distance_from_origin
         if distance < -abs_tol:
@@ -455,8 +466,22 @@ def intersection_line_polygon_3d(
     boundary=True,
     abs_tol=PLANE_EPSILON,
 ) -> Optional[Vec3]:
-    from ezdxf.math import is_point_in_polygon_2d, OCS
+    """Returns the intersection point of the 3D line form `start` to `end` and
+    the given `polygon`.
 
+    Args:
+        start: start point of 3D line as :class:`Vec3`
+        end: end point of 3D line as :class:`Vec3`
+        polygon: 3D polygon as iterable of :class:`Vec3`
+        coplanar: if ``True`` a coplanar start- or end point as intersection
+            point is valid
+        boundary: if ``True`` an intersection point at the polygon boundary line
+            is valid
+        abs_tol: absolute tolerance for comparisons
+
+    .. versionadded:: 0.18
+
+    """
     vertices = list(polygon)
     if len(vertices) < 3:
         raise ValueError("3 or more vertices required")
@@ -468,6 +493,55 @@ def intersection_line_polygon_3d(
     ip = plane.intersect_line(start, end, coplanar=coplanar, abs_tol=abs_tol)
     if ip is None:
         return None
+    return _is_intersection_point_inside_3d_polygon(
+        ip, vertices, normal, boundary, abs_tol
+    )
+
+
+def intersection_ray_polygon_3d(
+    origin: Vec3,
+    direction: Vec3,
+    polygon: Iterable[Vec3],
+    *,
+    boundary=True,
+    abs_tol=PLANE_EPSILON,
+) -> Optional[Vec3]:
+    """Returns the intersection point of the infinite 3D ray defined by `origin`
+    and the `direction` vector and the given `polygon`.
+
+    Args:
+        origin: origin point of the 3D ray as :class:`Vec3`
+        direction: direction vector of the 3D ray as :class:`Vec3`
+        polygon: 3D polygon as iterable of :class:`Vec3`
+        boundary: if ``True`` intersection points at the polygon boundary line
+            are valid
+        abs_tol: absolute tolerance for comparisons
+
+    .. versionadded:: 0.18
+
+    """
+
+    vertices = list(polygon)
+    if len(vertices) < 3:
+        raise ValueError("3 or more vertices required")
+    try:
+        normal = best_fit_normal(vertices)
+    except ZeroDivisionError:
+        return None
+    plane = Plane(normal, normal.dot(vertices[0]))
+    ip = plane.intersect_ray(origin, direction)
+    if ip is None:
+        return None
+    return _is_intersection_point_inside_3d_polygon(
+        ip, vertices, normal, boundary, abs_tol
+    )
+
+
+def _is_intersection_point_inside_3d_polygon(
+    ip: Vec3, vertices: List[Vec3], normal: Vec3, boundary: bool, abs_tol: float
+):
+    from ezdxf.math import is_point_in_polygon_2d, OCS
+
     ocs = OCS(normal)
     ocs_vertices = Vec2.list(ocs.points_from_wcs(vertices))
     state = is_point_in_polygon_2d(

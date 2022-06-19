@@ -124,6 +124,8 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: intersection_line_line_3d
 
+.. autofunction:: intersection_ray_polygon_3d
+
 .. autofunction:: intersection_line_polygon_3d
 
 .. autofunction:: intersect_polylines_3d
