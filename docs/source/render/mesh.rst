@@ -48,11 +48,13 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. automethod:: add_vertices
 
+    .. automethod:: bbox
+
     .. automethod:: copy
 
     .. automethod:: diagnose
 
-    .. automethod:: bbox
+    .. automethod:: face_normals
 
     .. automethod:: faces_as_vertices
 
@@ -69,8 +71,6 @@ The basic :class:`MeshBuilder` class does not support transformations.
     .. automethod:: mesh_tessellation
 
     .. automethod:: normalize_faces
-
-    .. automethod:: normals
 
     .. automethod:: open_faces
 
@@ -109,57 +109,6 @@ The basic :class:`MeshBuilder` class does not support transformations.
         "healthy" closed surfaces, if the balance is not 0, maybe doubled
         coincident faces exist or faces may have mixed clockwise and
         counter-clockwise vertex orders
-
-MeshDiagnose
-============
-
-.. class:: MeshDiagnose
-
-    Diagnose tools for :class:`MeshBuilder` which can be used to detect
-    topology errors for closed surfaces.
-
-    .. note::
-
-        There exist no tools in `ezdxf` to repair broken surfaces, but you can
-        use the :mod:`ezdxf.addons.meshex` addon to exchange meshes with the
-        open source tool `MeshLab <https://www.meshlab.net/>`_.
-
-    Create an instance of this tool by the :meth:`MeshBuilder.diagnose` method.
-
-    .. versionadded:: 0.18
-
-    .. attribute:: vertices
-
-        Sequence of mesh vertices as :class:`~ezdxf.math.Vec3` instances
-
-    .. attribute:: faces
-
-        Sequence of faces as ``Sequence[int]``
-
-    .. autoproperty:: bbox
-
-    .. autoproperty:: n_vertices
-
-    .. autoproperty:: n_faces
-
-    .. autoproperty:: n_edges
-
-    .. autoproperty:: edge_stats
-
-    .. autoproperty:: is_edge_balance_broken
-
-    .. autoproperty:: is_manifold
-
-    .. autoproperty:: euler_characteristic
-
-    .. automethod:: has_non_planar_faces
-
-    .. automethod:: total_edge_count
-
-    .. automethod:: unique_edges
-
-    .. automethod:: estimate_normals_direction
-
 
 MeshTransformer
 ===============
@@ -221,3 +170,52 @@ transformations.
 
 .. autoclass:: MeshAverageVertexMerger
 
+MeshDiagnose
+============
+
+.. class:: MeshDiagnose
+
+    Diagnose tools for :class:`MeshBuilder` which can be used to detect
+    topology errors for closed surfaces.
+
+    .. note::
+
+        There exist no tools in `ezdxf` to repair broken surfaces, but you can
+        use the :mod:`ezdxf.addons.meshex` addon to exchange meshes with the
+        open source tool `MeshLab <https://www.meshlab.net/>`_.
+
+    Create an instance of this tool by the :meth:`MeshBuilder.diagnose` method.
+
+    .. versionadded:: 0.18
+
+    .. attribute:: vertices
+
+        Sequence of mesh vertices as :class:`~ezdxf.math.Vec3` instances
+
+    .. attribute:: faces
+
+        Sequence of faces as ``Sequence[int]``
+
+    .. autoproperty:: bbox
+
+    .. autoproperty:: n_vertices
+
+    .. autoproperty:: n_faces
+
+    .. autoproperty:: n_edges
+
+    .. autoproperty:: edge_stats
+
+    .. autoproperty:: is_edge_balance_broken
+
+    .. autoproperty:: is_manifold
+
+    .. autoproperty:: euler_characteristic
+
+    .. automethod:: has_non_planar_faces
+
+    .. automethod:: total_edge_count
+
+    .. automethod:: unique_edges
+
+    .. automethod:: estimate_normals_direction

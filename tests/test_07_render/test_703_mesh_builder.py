@@ -20,8 +20,6 @@ from ezdxf.render.mesh import (
     separate_meshes,
     face_normals_after_transformation,
     FaceOrientationDetector,
-    unify_face_normals_by_reference,
-    unify_face_normals_by_majority,
 )
 from ezdxf.addons import SierpinskyPyramid
 from ezdxf.layouts import VirtualLayout
@@ -725,7 +723,7 @@ class TestSeparateMeshes:
 class TestNormals:
     @pytest.fixture(scope="class")
     def normals(self):
-        return list(forms.cube().normals())
+        return list(forms.cube().face_normals())
 
     def test_cube_has_six_normals(self, normals):
         assert len(normals) == 6
@@ -843,7 +841,7 @@ class TestFaceOrientationDetector:
 def test_unify_cube_normals_by_reference_face():
     cube = forms.cube()
     cube.faces[-1] = tuple(reversed(cube.faces[-1]))
-    cube2 = unify_face_normals_by_reference(cube)
+    cube2 = cube.unify_face_normals_by_reference()
     fod = FaceOrientationDetector(cube2)
     assert fod.has_uniform_face_normals is True
     assert fod.count == (6, 0)
@@ -855,9 +853,34 @@ def test_unify_cube_normals_by_majority():
     cube = forms.cube()
     # reverse the first face (= reference face)
     cube.faces[0] = tuple(reversed(cube.faces[0]))
-    cube2 = unify_face_normals_by_majority(cube)
+    cube2 = cube.unify_face_normals()
     fod = FaceOrientationDetector(cube2)
     assert fod.has_uniform_face_normals is True
     assert fod.count == (6, 0)
     assert fod.is_manifold is True
     assert fod.all_reachable is True
+
+
+def test_unify_torus_normals_by_majority():
+    torus = forms.torus()
+    faces = torus.faces
+    # remove some faces
+    faces = [
+        f
+        for i, f in enumerate(faces)
+        if i not in {2, 3, 17, 34, 99, 100, 101, 120}
+    ]
+    # reverse some face normals
+    for i in [0, 3, 17, 34, 99, 100, 101, 119]:
+        faces[i] = tuple(reversed(faces[i]))
+    torus.faces = faces
+
+    # unify face normals
+    unified_torus = torus.unify_face_normals()
+    fod = FaceOrientationDetector(unified_torus)
+    assert fod.has_uniform_face_normals is True
+    assert fod.count == (120, 0)
+    assert fod.is_manifold is True
+    assert fod.all_reachable is True
+
+

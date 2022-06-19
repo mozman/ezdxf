@@ -194,7 +194,7 @@ class PolyhedronFaceBuilder:
         mesh_copy.normalize_faces()  # open faces without duplicates!
         self.vertices: List[Vec3] = mesh_copy.vertices
         self.faces: List[Sequence[int]] = mesh_copy.faces
-        self.normals = list(mesh_copy.normals())
+        self.normals = list(mesh_copy.face_normals())
         self.acis_vertices: List[entities.Vertex] = []
 
         # double_sided:
