@@ -189,6 +189,7 @@ def intersection_line_line_3d(
 
     """
     from ezdxf.math import intersection_ray_ray_3d, BoundingBox
+
     res = intersection_ray_ray_3d(line1, line2, abs_tol)
     if len(res) != 1:
         return None
@@ -255,14 +256,20 @@ class Plane:
     @classmethod
     def from_3p(cls, a: Vec3, b: Vec3, c: Vec3) -> "Plane":
         """Returns a new plane from 3 points in space."""
-        n = (b - a).cross(c - a).normalize()
+        try:
+            n = (b - a).cross(c - a).normalize()
+        except ZeroDivisionError:
+            raise ValueError("undefined plane: colinear vertices")
         return Plane(n, n.dot(a))
 
     @classmethod
     def from_vector(cls, vector) -> "Plane":
         """Returns a new plane from a location vector."""
         v = Vec3(vector)
-        return Plane(v.normalize(), v.magnitude)
+        try:
+            return Plane(v.normalize(), v.magnitude)
+        except ZeroDivisionError:
+            raise ValueError("invalid NULL vector")
 
     def __copy__(self) -> "Plane":
         """Returns a copy of the plane."""

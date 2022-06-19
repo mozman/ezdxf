@@ -10,10 +10,13 @@ def test_init():
     assert p.distance_from_origin == 5
 
 
+def test_init_form_3_colinear_points():
+    with pytest.raises(ValueError):
+        Plane.from_3p(Vec3(1, 0, 0), Vec3(1, 0, 0), Vec3(1, 0, 0))
+
+
 def test_init_form_3p():
     p = Plane.from_3p(Vec3(5, 0, 0), Vec3(5, 1, 5), Vec3(5, 0, 1))
-    assert p.normal == (1, 0, 0)
-    assert p.distance_from_origin == 5
 
 
 def test_equal():
@@ -28,7 +31,7 @@ def test_init_form_vector():
     assert p.normal == (1, 0, 0)
     assert p.distance_from_origin == 5
 
-    with pytest.raises(ZeroDivisionError):
+    with pytest.raises(ValueError):
         Plane.from_vector((0, 0, 0))
 
 
