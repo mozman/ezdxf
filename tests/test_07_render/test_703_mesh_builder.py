@@ -896,6 +896,12 @@ def test_volume_of_closed_surface():
     assert diag.volume() == pytest.approx(1.0)
 
 
+def test_volume_of_surface_with_clockwise_oriented_vertices():
+    cube = forms.cube()
+    cube.flip_normals()
+    assert cube.diagnose().volume() == pytest.approx(-1.0)
+
+
 @pytest.mark.parametrize("loc", [
     (100, 100, 100),
     (-100, -100, -100),
@@ -928,9 +934,25 @@ def test_volume_of_two_cubes_in_a_single_mesh_is_invalid():
 def test_torus_volume():
     r0 = 1.0
     r1 = 10.0
-    real_volume = 2.0 * math.pi * math.pi * r0 * r0 * r1
+    real_volume = 2.0 * math.pi ** 2 * r0 ** 2 * r1
     diag = forms.torus(
         major_count=64, minor_count=32, minor_radius=r0, major_radius=r1
     ).diagnose()
-    # 2% difference expected:
+    # less than 2% difference expected:
     assert real_volume * 0.98 < diag.volume() < real_volume
+
+
+def test_surface_area_of_a_cube():
+    diag = forms.cube().diagnose()
+    assert diag.surface_area() == pytest.approx(6.0)
+
+
+def test_surface_area_of_a_torus():
+    r0 = 1.0
+    r1 = 10.0
+    real_area = 4.0 * math.pi ** 2 * r0 * r1
+    diag = forms.torus(
+        major_count=64, minor_count=32, minor_radius=r0, major_radius=r1
+    ).diagnose()
+    # less than 2% difference expected:
+    assert real_area * 0.98 < diag.surface_area() < real_area

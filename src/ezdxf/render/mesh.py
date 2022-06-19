@@ -26,6 +26,8 @@ from ezdxf.math import (
     normal_vector_3p,
     best_fit_normal,
     subdivide_ngons,
+    area,
+    OCS,
 )
 
 if TYPE_CHECKING:
@@ -202,6 +204,14 @@ def volume6(a: Vec3, b: Vec3, c: Vec3) -> float:
     )
 
 
+def area_3d(polygon: Sequence[Vec3]) -> float:
+    try:
+        ocs = OCS(best_fit_normal(polygon))
+    except ZeroDivisionError:
+        return 0.0
+    return area(ocs.points_from_wcs(polygon))
+
+
 # Mesh Topology Analysis using the Euler Characteristic
 # https://max-limper.de/publications/Euler/index.html
 
@@ -360,6 +370,15 @@ class MeshDiagnose:
                 volume += volume6(face[0], face[1], face[2])
             return volume / 6.0
         return 0.0
+
+    def surface_area(self) -> float:
+        """Returns the surface area."""
+        v = self.vertices
+        surface_area = 0.0
+        for face in self._mesh.open_faces():
+            polygon = [v[i] for i in face]
+            surface_area += area_3d(polygon)
+        return surface_area
 
 
 class MeshBuilder:

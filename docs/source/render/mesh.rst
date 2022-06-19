@@ -223,3 +223,5 @@ MeshDiagnose
     .. automethod:: estimate_normals_direction
 
     .. automethod:: volume
+
+    .. automethod:: surface_area
