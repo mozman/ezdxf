@@ -156,6 +156,11 @@ class TestIntersectRay:
         ip = plane.intersect_ray(Vec3(0, 0, 0), Vec3(1, 0, 0))
         assert ip is None
 
+    def test_plane_parallel_to_yz(self):
+        plane = Plane(Vec3(1, 0, 0), 3)
+        ip = plane.intersect_ray(Vec3(0, 0, 2), Vec3(1, 0, 0))
+        assert ip.isclose((3, 0, 2))
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

@@ -361,15 +361,12 @@ class Plane:
         .. versionadded:: 0.18
 
         """
-        p1 = origin + direction
         n = self.normal
         try:
-            weight = (self.distance_from_origin - n.dot(origin)) / n.dot(
-                p1 - origin
-            )
+            weight = (self.distance_from_origin - n.dot(origin)) / n.dot(direction)
         except ZeroDivisionError:
             return None
-        return origin.lerp(p1, weight)
+        return origin + (direction * weight)
 
     def vertex_location_state(
         self, vertex: Vec3, abs_tol=PLANE_EPSILON
