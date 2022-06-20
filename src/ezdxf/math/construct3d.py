@@ -751,6 +751,7 @@ def front_faces_intersect_face_normal(
     return count
 
 
+# TODO: test with torus(minor_count=11) and cw vertex order detect errors
 def is_face_normal_pointing_outwards(
     faces: Sequence[Sequence[Vec3]],
     face: Sequence[Vec3],
