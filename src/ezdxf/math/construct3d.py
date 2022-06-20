@@ -37,6 +37,7 @@ __all__ = [
     "inscribe_circle_tangent_length",
     "bending_angle",
     "split_polygon_by_plane",
+    "is_face_normal_pointing_outwards",
 ]
 PI2 = math.pi / 2.0
 
@@ -378,7 +379,9 @@ class Plane:
         """
         n = self.normal
         try:
-            weight = (self.distance_from_origin - n.dot(origin)) / n.dot(direction)
+            weight = (self.distance_from_origin - n.dot(origin)) / n.dot(
+                direction
+            )
         except ZeroDivisionError:
             return None
         return origin + (direction * weight)
@@ -402,7 +405,11 @@ class Plane:
 
 
 def split_polygon_by_plane(
-    polygon: Iterable[Vec3], plane: Plane, *, coplanar=True, abs_tol=PLANE_EPSILON
+    polygon: Iterable[Vec3],
+    plane: Plane,
+    *,
+    coplanar=True,
+    abs_tol=PLANE_EPSILON,
 ) -> Tuple[Sequence[Vec3], Sequence[Vec3]]:
     """
     Split a convex `polygon` by the given `plane` if needed. Returns a tuple of
@@ -453,12 +460,10 @@ def split_polygon_by_plane(
                 front_vertices.append(vertex)
             if vertex_type != PlaneLocationState.FRONT:  # BACK or COPLANAR
                 back_vertices.append(vertex)
-            if (
-                vertex_type | next_vertex_type
-            ) == PlaneLocationState.SPANNING:
-                interpolation_weight = (
-                    w - normal.dot(vertex)
-                ) / normal.dot(next_vertex - vertex)
+            if (vertex_type | next_vertex_type) == PlaneLocationState.SPANNING:
+                interpolation_weight = (w - normal.dot(vertex)) / normal.dot(
+                    next_vertex - vertex
+                )
                 plane_intersection_point = vertex.lerp(
                     next_vertex, interpolation_weight
                 )
@@ -701,3 +706,65 @@ def bending_angle(dir1: Vec3, dir2: Vec3, normal=Z_AXIS) -> float:
     elif nn.isclose(-normal):
         return -angle
     raise ValueError("invalid normal vector")
+
+
+def front_faces_intersect_face_normal(
+    faces: Sequence[Sequence[Vec3]],
+    face: Sequence[Vec3],
+    *,
+    abs_tol=PLANE_EPSILON,
+) -> int:
+    """Returns the count of intersections of the normal-vector of the given
+    `face` with the `faces` in front of this `face`.
+
+    A counter-clockwise vertex order is assumed!
+
+    """
+
+    def is_face_in_front_of_detector(vertices: Sequence[Vec3]) -> bool:
+        if len(vertices) < 3:
+            return False
+        return any(
+            detector_plane.signed_distance_to(v) > abs_tol for v in vertices
+        )
+
+    # face-normal for counter-clockwise vertex order
+    face_normal = safe_normal_vector(face)
+    origin: Vec3 = face[0]
+    detector_plane = Plane(face_normal, face_normal.dot(origin))
+
+    # collect all faces with at least one vertex in front of the detection plane
+    front_faces = (f for f in faces if is_face_in_front_of_detector(f))
+
+    # The detector face is excluded by the
+    # is_face_in_front_of_detector() function!
+
+    count = 0
+    for face in front_faces:
+        ip = intersection_ray_polygon_3d(
+            origin, face_normal, face, boundary=True, abs_tol=abs_tol
+        )
+        if ip is None:
+            continue
+        if detector_plane.signed_distance_to(ip) > abs_tol:
+            count += 1
+    return count
+
+
+def is_face_normal_pointing_outwards(
+    faces: Sequence[Sequence[Vec3]],
+    face: Sequence[Vec3],
+    *,
+    abs_tol=PLANE_EPSILON,
+) -> bool:
+    """Returns ``True`` if the face-normal for the given `face` of a
+    closed surface is pointing outwards. A counter-clockwise vertex order is
+    assumed, for faces with clockwise vertex order the result is inverted,
+    therefore ``False`` is pointing outwards.
+
+    This function does not check if the `faces` are a closed surface.
+
+    """
+    return (
+        front_faces_intersect_face_normal(faces, face, abs_tol=abs_tol) % 2 == 0
+    )
