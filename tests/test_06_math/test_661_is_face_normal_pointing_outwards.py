@@ -25,8 +25,7 @@ def test_cube_with_clockwise_vertex_orientation():
         ), f"index = {index}"
 
 
-# COUNT = 11 detect errors!
-COUNT = 8
+COUNT = 11
 
 
 def test_torus_with_ccw_vertex_orientation():

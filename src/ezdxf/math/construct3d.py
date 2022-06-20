@@ -1,7 +1,7 @@
 # Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Sequence, List, Iterable, Tuple, Optional
+from typing import Sequence, List, Iterable, Tuple, Optional, Set
 from enum import IntEnum
 import math
 from ezdxf.math import (
@@ -739,7 +739,7 @@ def front_faces_intersect_face_normal(
     # The detector face is excluded by the
     # is_face_in_front_of_detector() function!
 
-    count = 0
+    intersection_points: Set[Vec3] = set()
     for face in front_faces:
         ip = intersection_ray_polygon_3d(
             origin, face_normal, face, boundary=True, abs_tol=abs_tol
@@ -747,11 +747,12 @@ def front_faces_intersect_face_normal(
         if ip is None:
             continue
         if detector_plane.signed_distance_to(ip) > abs_tol:
-            count += 1
-    return count
+            # Only count unique intersections points, the ip could lie on an
+            # edge (2 ips) or even a corner vertex (3 or more ips).
+            intersection_points.add(ip.round(6))
+    return len(intersection_points)
 
 
-# TODO: test with torus(minor_count=11) and cw vertex order detect errors
 def is_face_normal_pointing_outwards(
     faces: Sequence[Sequence[Vec3]],
     face: Sequence[Vec3],
