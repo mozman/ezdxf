@@ -24,7 +24,7 @@ from ezdxf.math import (
     is_planar_face,
     subdivide_face,
     normal_vector_3p,
-    best_fit_normal,
+    safe_normal_vector,
     subdivide_ngons,
     area,
     OCS,
@@ -206,7 +206,7 @@ def volume6(a: Vec3, b: Vec3, c: Vec3) -> float:
 
 def area_3d(polygon: Sequence[Vec3]) -> float:
     try:
-        ocs = OCS(best_fit_normal(polygon))
+        ocs = OCS(safe_normal_vector(polygon))
     except ZeroDivisionError:
         return 0.0
     return area(ocs.points_from_wcs(polygon))
@@ -563,7 +563,7 @@ class MeshBuilder:
                 continue
             center = Vec3.sum(face) / count
             try:
-                n = best_fit_normal(face)
+                n = safe_normal_vector(face)
             except ZeroDivisionError:
                 continue
             if relative:
@@ -826,11 +826,9 @@ class MeshBuilder:
                 yield NULLVEC
                 continue
             try:
-                yield best_fit_normal(face)
-                continue
+                yield safe_normal_vector(face)
             except ZeroDivisionError:
                 yield NULLVEC
-                continue
 
     def unify_face_normals(self) -> MeshTransformer:
         """Returns a new :class:`MeshTransformer` object with unified
