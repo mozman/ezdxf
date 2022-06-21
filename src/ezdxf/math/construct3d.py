@@ -712,7 +712,7 @@ def any_vertex_inside_face(vertices: Sequence[Vec3]) -> Vec3:
     """Returns a vertex from the "inside" of  the given face.
     """
     # Triangulation is for concave shapes important!
-    from .triangulation import ear_clipping_3d
+    from ezdxf.math.triangulation import ear_clipping_3d
     it = ear_clipping_3d(vertices)
     return Vec3.sum(next(it)) / 3.0
 

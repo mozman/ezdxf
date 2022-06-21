@@ -327,6 +327,12 @@ class TestEarClipping3D:
     def test_empty_input_returns_empty_result(self):
         assert len(list(triangulation.ear_clipping_3d([]))) == 0
 
+    def test_invalid_polygon_raise_zero_division_error(self):
+        with pytest.raises(ZeroDivisionError):
+            list(triangulation.ear_clipping_3d(Vec3.list([
+                (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0)
+            ])))
+
 
 def test_simple_polygon_triangulation():
     open_square = forms.square()

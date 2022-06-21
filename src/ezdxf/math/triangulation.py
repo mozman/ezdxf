@@ -51,6 +51,7 @@ def ear_clipping_2d(
             yield polygon[0], polygon[1], polygon[2]
             yield polygon[0], polygon[2], polygon[3]
         elif point_count == 5:
+            # TODO: this fails for extreme distorted faces!
             yield polygon[0], polygon[3], polygon[4]
             yield polygon[0], polygon[1], polygon[3]
             yield polygon[1], polygon[2], polygon[3]
@@ -148,8 +149,14 @@ def _triangle_area(a: Vec2, b: Vec2, c: Vec2) -> float:
 def ear_clipping_3d(
     vertices: Iterable[Vec3],
 ) -> Iterator[Tuple[Vec3, Vec3, Vec3]]:
-    """Implements the "ear clipping" algorithm for planar 3d polygons."""
-    from ezdxf.math import best_fit_normal, OCS
+    """Implements the "ear clipping" algorithm for planar 3d polygons.
+
+    Raise:
+        TypeError: invalid input data type
+        ZeroDivisionError: normal vector calculation failed
+
+    """
+    from ezdxf.math import safe_normal_vector, OCS
 
     polygon = list(vertices)
     if len(polygon) == 0:
@@ -174,7 +181,7 @@ def ear_clipping_3d(
             yield polygon[0], polygon[1], polygon[3]
             yield polygon[1], polygon[2], polygon[3]
         return
-    ocs = OCS(best_fit_normal(polygon))
+    ocs = OCS(safe_normal_vector(polygon))
     elevation = ocs.from_wcs(polygon[0]).z  # type: ignore
     for triangle in ear_clipping_2d(ocs.points_from_wcs(polygon)):
         yield tuple(  # type: ignore
