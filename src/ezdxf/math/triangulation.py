@@ -15,7 +15,7 @@ __all__ = ["ear_clipping_2d", "ear_clipping_3d"]
 
 def ear_clipping_2d(
     vertices: Iterable[UVec],
-    fast=True,
+    fast=False,
 ) -> Iterator[Tuple[Vec2, Vec2, Vec2]]:
     """This function triangulates the given 2d polygon into simple triangles by
     the "ear clipping" algorithm. The function yields n-2 triangles for a polygon
@@ -152,7 +152,7 @@ def _triangle_area(a: Vec2, b: Vec2, c: Vec2) -> float:
 
 def ear_clipping_3d(
     vertices: Iterable[Vec3],
-    fast=True,
+    fast=False,
 ) -> Iterator[Tuple[Vec3, Vec3, Vec3]]:
     """Implements the "ear clipping" algorithm for planar 3d polygons.
 

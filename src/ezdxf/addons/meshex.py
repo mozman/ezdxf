@@ -236,7 +236,7 @@ def obj_loads(content: str) -> List[MeshTransformer]:
     return meshes
 
 
-def stl_dumps(mesh: MeshBuilder, *, fast=True) -> str:
+def stl_dumps(mesh: MeshBuilder, *, fast=False) -> str:
     """Returns the `STL`_ data as string for the given `mesh`.
     This function triangulates the meshes automatically because the `STL`_
     format supports only triangles as faces.
@@ -277,7 +277,7 @@ def stl_dumps(mesh: MeshBuilder, *, fast=True) -> str:
 STL_SIGNATURE = (b"STL generated ezdxf" + b" " * 80)[:80]
 
 
-def stl_dumpb(mesh: MeshBuilder, *, fast=True) -> bytes:
+def stl_dumpb(mesh: MeshBuilder, *, fast=False) -> bytes:
     """Returns the `STL`_ binary data as bytes for the given `mesh`.
 
     The `fast` mode uses a shortcut for faces with less than 6 vertices

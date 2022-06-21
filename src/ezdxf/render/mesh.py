@@ -649,7 +649,8 @@ class MeshBuilder:
         if ucs is not None:
             t.transform(ucs.matrix)
         polyface.append_faces(
-            t.tessellation(max_vertex_count=4), dxfattribs=dxfattribs
+            t.tessellation(max_vertex_count=4, fast=False),
+            dxfattribs=dxfattribs,
         )
         return polyface
 
@@ -681,7 +682,7 @@ class MeshBuilder:
             t.transform(matrix)
         if ucs is not None:
             t.transform(ucs.matrix)
-        for face in t.tessellation(max_vertex_count=4):
+        for face in t.tessellation(max_vertex_count=4, fast=False):
             layout.add_3dface(face, dxfattribs=dxfattribs)
 
     @classmethod
@@ -756,7 +757,7 @@ class MeshBuilder:
         yield from subdivide_ngons(self.faces_as_vertices(), max_vertex_count)
 
     def tessellation(
-        self, max_vertex_count: int = 4, *, fast=True
+        self, max_vertex_count: int = 4, *, fast=False
     ) -> Iterator[Sequence[Vec3]]:
         """Yields all faces as sequence of :class:`~ezdxf.math.Vec3` instances,
         each face has no more vertices than the given `max_vertex_count`. This
@@ -778,7 +779,7 @@ class MeshBuilder:
                 yield from ear_clipping_3d(face, fast=fast)
 
     def mesh_tessellation(
-        self, max_vertex_count: int = 4, *, fast=True
+        self, max_vertex_count: int = 4, *, fast=False
     ) -> MeshTransformer:
         """Returns a new :class:`MeshTransformer` instance, where each face has
         no more vertices than the given `max_vertex_count`.

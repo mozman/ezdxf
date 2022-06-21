@@ -252,7 +252,9 @@ TEST_DATA = [
 class TestPolygons:
     @pytest.mark.parametrize("poly_data", TEST_DATA)
     def test_polygon(self, poly_data):
-        triangles = list(triangulation.ear_clipping_2d(poly_data.vertices))
+        triangles = list(
+            triangulation.ear_clipping_2d(poly_data.vertices, fast=True)
+        )
         total_area = calculate_total_area(triangles)
         absolute_error = abs(poly_data.total_area - total_area)
         assert (
