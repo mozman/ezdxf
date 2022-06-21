@@ -756,12 +756,15 @@ class MeshBuilder:
         yield from subdivide_ngons(self.faces_as_vertices(), max_vertex_count)
 
     def tessellation(
-        self, max_vertex_count: int = 4
+        self, max_vertex_count: int = 4, *, fast=True
     ) -> Iterator[Sequence[Vec3]]:
         """Yields all faces as sequence of :class:`~ezdxf.math.Vec3` instances,
         each face has no more vertices than the given `max_vertex_count`. This
         method uses the "ear clipping" algorithm which works with concave faces
         too and does not create any additional vertices.
+
+        The `fast` mode uses a shortcut for faces with less than 6 vertices
+        which may not work for concave faces!
 
         .. versionadded:: 0.18
 
@@ -772,17 +775,24 @@ class MeshBuilder:
             if len(face) <= max_vertex_count:
                 yield face
             else:
-                yield from ear_clipping_3d(face)
+                yield from ear_clipping_3d(face, fast=fast)
 
-    def mesh_tessellation(self, max_vertex_count: int = 4) -> MeshTransformer:
+    def mesh_tessellation(
+        self, max_vertex_count: int = 4, *, fast=True
+    ) -> MeshTransformer:
         """Returns a new :class:`MeshTransformer` instance, where each face has
         no more vertices than the given `max_vertex_count`.
+
+        The `fast` mode uses a shortcut for faces with less than 6 vertices
+        which may not work for concave faces!
 
         .. versionadded:: 0.18
 
         """
         mesh = MeshVertexMerger()
-        for face in self.tessellation(max_vertex_count=max_vertex_count):
+        for face in self.tessellation(
+            max_vertex_count=max_vertex_count, fast=fast
+        ):
             mesh.add_face(face)
         return MeshTransformer.from_builder(mesh)
 
