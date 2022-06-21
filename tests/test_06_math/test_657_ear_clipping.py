@@ -358,9 +358,9 @@ def test_simple_polygon_triangulation():
     assert len(r) == 3
 
 
-def test_fast_mode_for_concave_polygons_does_not_work():
+def test_fast_mode_is_not_reliable_for_concave_polygons():
     """The fast mode takes a shortcut for small faces (< 6 vertices) but this
-    does not work for concave faces!
+    is not reliable for concave faces!
     """
     concave = Vec2.list([(0, 0), (1, 1), (2, 0), (1, 2)])
     area_correct = calculate_total_area(
