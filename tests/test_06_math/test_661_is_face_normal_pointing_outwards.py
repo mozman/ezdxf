@@ -47,5 +47,15 @@ def test_torus_with_clockwise_vertex_orientation():
         ), f"index = {index}"
 
 
+def test_flipped_cone():
+    cone = forms.cone(3)
+    cone.flip_normals()
+    faces = list(cone.faces_as_vertices())
+    for index, face in enumerate(faces):
+        assert (
+            is_face_normal_pointing_outwards(faces, face) is False
+        ), f"index = {index}"
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

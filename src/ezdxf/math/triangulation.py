@@ -169,6 +169,7 @@ def ear_clipping_3d(
             yield polygon[0], polygon[1], polygon[2]
             yield polygon[0], polygon[2], polygon[3]
         elif count == 5:
+            # TODO: this fails for extreme distorted faces!
             yield polygon[0], polygon[3], polygon[4]
             yield polygon[0], polygon[1], polygon[3]
             yield polygon[1], polygon[2], polygon[3]

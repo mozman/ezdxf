@@ -708,6 +708,15 @@ def bending_angle(dir1: Vec3, dir2: Vec3, normal=Z_AXIS) -> float:
     raise ValueError("invalid normal vector")
 
 
+def any_vertex_inside_face(vertices: Sequence[Vec3]) -> Vec3:
+    """Returns a vertex from the "inside" of  the given face.
+    """
+    # Triangulation is for concave shapes important!
+    from .triangulation import ear_clipping_3d
+    it = ear_clipping_3d(vertices)
+    return Vec3.sum(next(it)) / 3.0
+
+
 def front_faces_intersect_face_normal(
     faces: Sequence[Sequence[Vec3]],
     face: Sequence[Vec3],
@@ -720,7 +729,6 @@ def front_faces_intersect_face_normal(
     A counter-clockwise vertex order is assumed!
 
     """
-
     def is_face_in_front_of_detector(vertices: Sequence[Vec3]) -> bool:
         if len(vertices) < 3:
             return False
@@ -730,7 +738,7 @@ def front_faces_intersect_face_normal(
 
     # face-normal for counter-clockwise vertex order
     face_normal = safe_normal_vector(face)
-    origin: Vec3 = face[0]
+    origin = any_vertex_inside_face(face)
     detector_plane = Plane(face_normal, face_normal.dot(origin))
 
     # collect all faces with at least one vertex in front of the detection plane
