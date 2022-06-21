@@ -15,10 +15,14 @@ __all__ = ["ear_clipping_2d", "ear_clipping_3d"]
 
 def ear_clipping_2d(
     vertices: Iterable[UVec],
+    fast=True,
 ) -> Iterator[Tuple[Vec2, Vec2, Vec2]]:
     """This function triangulates the given 2d polygon into simple triangles by
     the "ear clipping" algorithm. The function yields n-2 triangles for a polygon
     with n vertices, each triangle is a 3-tuple of :class:`Vec2` objects.
+
+    The `fast` mode uses a shortcut for 4 and 5 vertices which may not work for
+    concave polygons!
 
     Implementation Reference:
         - https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
@@ -44,14 +48,14 @@ def ear_clipping_2d(
         return
     # "simple" polygons are a requirement, see algorithm description:
     # https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
-    if point_count < 6:  # fast simple cases 3..5 vertices
-        if point_count == 3:
-            yield polygon[0], polygon[1], polygon[2]
-        elif point_count == 4:
+    if point_count == 3:
+        yield polygon[0], polygon[1], polygon[2]
+        return
+    if fast and point_count < 6:  # fast simple cases 4..5 vertices
+        if point_count == 4:
             yield polygon[0], polygon[1], polygon[2]
             yield polygon[0], polygon[2], polygon[3]
         elif point_count == 5:
-            # TODO: this fails for extreme distorted faces!
             yield polygon[0], polygon[3], polygon[4]
             yield polygon[0], polygon[1], polygon[3]
             yield polygon[1], polygon[2], polygon[3]
@@ -148,8 +152,12 @@ def _triangle_area(a: Vec2, b: Vec2, c: Vec2) -> float:
 
 def ear_clipping_3d(
     vertices: Iterable[Vec3],
+    fast=True,
 ) -> Iterator[Tuple[Vec3, Vec3, Vec3]]:
     """Implements the "ear clipping" algorithm for planar 3d polygons.
+
+    The `fast` mode uses a shortcut for 4 and 5 vertices which may not work for
+    concave polygons!
 
     Raise:
         TypeError: invalid input data type
@@ -169,21 +177,21 @@ def ear_clipping_3d(
     count = len(polygon)
     if count < 3:
         return
-    if count < 6:  # fast simple cases 3..5 vertices
-        if count == 3:
-            yield polygon[0], polygon[1], polygon[2]
-        elif count == 4:
+    if count == 3:
+        yield polygon[0], polygon[1], polygon[2]
+        return
+    if fast and count < 6:
+        if count == 4:
             yield polygon[0], polygon[1], polygon[2]
             yield polygon[0], polygon[2], polygon[3]
         elif count == 5:
-            # TODO: this fails for extreme distorted faces!
             yield polygon[0], polygon[3], polygon[4]
             yield polygon[0], polygon[1], polygon[3]
             yield polygon[1], polygon[2], polygon[3]
         return
     ocs = OCS(safe_normal_vector(polygon))
     elevation = ocs.from_wcs(polygon[0]).z  # type: ignore
-    for triangle in ear_clipping_2d(ocs.points_from_wcs(polygon)):
+    for triangle in ear_clipping_2d(ocs.points_from_wcs(polygon), fast=False):
         yield tuple(  # type: ignore
             ocs.points_to_wcs(Vec3(v.x, v.y, elevation) for v in triangle)
         )

@@ -1,9 +1,8 @@
-# Copyright (c) 2017 Sam Bolgert
+# Copyright (c) 2021, Manfred Moitzi
 # License: MIT License
-# https://github.com/linuxlewis/tripy
 import pytest
 import math
-from ezdxf.math import triangulation, Vec3
+from ezdxf.math import triangulation, Vec3, Vec2
 from ezdxf.render import forms
 
 
@@ -329,9 +328,11 @@ class TestEarClipping3D:
 
     def test_invalid_polygon_raise_zero_division_error(self):
         with pytest.raises(ZeroDivisionError):
-            list(triangulation.ear_clipping_3d(Vec3.list([
-                (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0)
-            ])))
+            list(
+                triangulation.ear_clipping_3d(
+                    Vec3.list([(1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0)])
+                )
+            )
 
 
 def test_simple_polygon_triangulation():
@@ -353,6 +354,20 @@ def test_simple_polygon_triangulation():
         Vec3.list([(0, 0), (1, 0), (1, 1)])
     )
     assert len(r) == 3
+
+
+def test_fast_mode_for_concave_polygons_does_not_work():
+    """The fast mode takes a shortcut for small faces (< 6 vertices) but this
+    does not work for concave faces!
+    """
+    concave = Vec2.list([(0, 0), (1, 1), (2, 0), (1, 2)])
+    area_correct = calculate_total_area(
+        triangulation.ear_clipping_2d(concave, fast=False)
+    )
+    area_fast = calculate_total_area(
+        triangulation.ear_clipping_2d(concave, fast=True)
+    )
+    assert abs(area_fast - area_correct) > 1e-6
 
 
 if __name__ == "__main__":
