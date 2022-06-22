@@ -471,7 +471,9 @@ class MeshBuilder:
         return self._face_normal_cache
 
     def bbox(self) -> BoundingBox:
-        """Returns the :class:`~ezdxf.math.BoundingBox` of the mesh.
+        """Returns the :class:`~ezdxf.math.BoundingBox` of the mesh. This data
+        is cached, be sure to call :meth:`clear_caches()` if the mesh gets
+        modified.
 
         .. versionadded:: 0.18
 
@@ -513,9 +515,11 @@ class MeshBuilder:
         :class:`~ezdxf.math.Vec3` object. The new vertex indices are stored as
         face in the :attr:`faces` list.
 
-        ..hint::
+        .. hint::
 
-            Call :meth:`clear_caches` method after modifying the mesh!
+            Call the :meth:`clear_caches` method after adding faces to the mesh
+            if you already used cached data of this mesh like the face-normal
+            cache, the edge cache or the bounding box!
 
         Args:
             vertices: list of at least 3 vertices ``[(x1, y1, z1), (x2, y2, z2),
@@ -532,10 +536,6 @@ class MeshBuilder:
         e.g. adding 4 vertices to an empty mesh, returns the indices
         ``(0, 1, 2, 3)``, adding additional 4 vertices returns the indices
         ``(4, 5, 6, 7)``.
-
-        ..hint::
-
-            Call :meth:`clear_caches` method after modifying the mesh!
 
         Args:
             vertices: list of vertices, vertex as ``(x, y, z)`` tuple or
@@ -559,7 +559,8 @@ class MeshBuilder:
 
         A `mesh` can be a :class:`MeshBuilder`, :class:`MeshVertexMerger` or
         :class:`~ezdxf.entities.Mesh` object or requires the attributes
-        :attr:`vertices` and :attr:`faces`.
+        :attr:`vertices` and :attr:`faces`. Calls :meth:`clear_caches()`
+        automatically.
 
         Args:
             vertices: list of vertices, a vertex is a ``(x, y, z)`` tuple or
@@ -579,6 +580,7 @@ class MeshBuilder:
 
         for face_vertices in open_faces(faces):
             self.faces.append(tuple(indices[vi] for vi in face_vertices))
+        self.clear_caches()
 
     def render_mesh(
         self,
@@ -875,6 +877,7 @@ class MeshBuilder:
 
     def flip_normals(self) -> None:
         """Flips the normals of all faces by reversing the vertex order inplace.
+        Calls :meth:`clear_caches()` automatically.
 
         .. versionadded:: 0.18
 
@@ -895,7 +898,7 @@ class MeshBuilder:
     def normalize_faces(self) -> None:
         """Removes duplicated vertex indices from faces and stores all faces as
         open faces, where the last vertex is not coincident with the first
-        vertex.
+        vertex. Calls :meth:`clear_caches()` automatically.
 
         .. versionadded:: 0.18
 
@@ -973,7 +976,9 @@ class MeshBuilder:
 
 
 class MeshTransformer(MeshBuilder):
-    """A mesh builder with inplace transformation support."""
+    """A mesh builder with inplace transformation support. All transformation
+    methods do call :meth:`clear_caches()` automatically.
+    """
 
     def transform(self, matrix: Matrix44):
         """Transform mesh inplace by applying the transformation `matrix`.
