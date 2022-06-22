@@ -213,52 +213,6 @@ def area_3d(polygon: Sequence[Vec3]) -> float:
     return area(ocs.points_from_wcs(polygon))
 
 
-class EdgeCache:
-    """Caching object for all mesh edges."""
-
-    def __init__(self, mesh: MeshBuilder):
-        self._mesh = mesh
-        self._edge_to_face_mapping: Dict[Edge, List[Face]] = dict()
-        self._stale = True
-
-    def refresh(self):
-        if self._stale:
-            self._edge_to_face_mapping = _make_edge_mapping(self._mesh.faces)
-            self._stale = False
-
-    def invalidate(self) -> None:
-        self._stale = True
-
-
-class FaceNormalCache:
-    """Caching object for face normals."""
-
-    def __init__(self, mesh: MeshBuilder):
-        self._mesh = mesh
-        self._normals: List[Vec3] = []
-        self._stale = True
-
-    def refresh(self):
-        if self._stale:
-            self._normals = list(self._mesh.face_normals())
-            self._stale = False
-
-    def invalidate(self) -> None:
-        self._stale = True
-
-    def __len__(self) -> int:
-        self.refresh()
-        return len(self._normals)
-
-    def __getitem__(self, item) -> Vec3:
-        self.refresh()
-        return self._normals[item]
-
-    def __iter__(self) -> Iterator[Vec3]:
-        self.refresh()
-        return iter(self._normals)
-
-
 # Mesh Topology Analysis using the Euler Characteristic
 # https://max-limper.de/publications/Euler/index.html
 
@@ -456,55 +410,13 @@ class MeshBuilder:
         # face storage, each face is a tuple of vertex indices (v0, v1, v2, v3, ....)
         self.faces: List[Sequence[int]] = []
 
-        self._face_normal_cache: Optional[FaceNormalCache] = None
-        self._edge_cache: Optional[EdgeCache] = None
-        self._bounding_box: Optional[BoundingBox] = None
-
-    def clear_caches(self):
-        """Clear all caches.
-
-        .. versionadded:: 0.18
-
-        """
-        if self._edge_cache is not None:
-            # just invalidate, cache refreshes automatically at next access:
-            self._edge_cache.invalidate()
-        if self._face_normal_cache is not None:
-            # just invalidate, cache refreshes automatically at next access:
-            self._face_normal_cache.invalidate()
-        self._bounding_box = None
-
-    def edge_cache(self) -> EdgeCache:
-        """Returns the :class:`EdgeCache` object.
-
-        .. versionadded:: 0.18
-
-        """
-        if self._edge_cache is None:
-            self._edge_cache = EdgeCache(self)
-        return self._edge_cache
-
-    def face_normal_cache(self) -> FaceNormalCache:
-        """Returns the :class:`FaceNormalCache`.
-
-        .. versionadded:: 0.18
-
-        """
-        if self._face_normal_cache is None:
-            self._face_normal_cache = FaceNormalCache(self)
-        return self._face_normal_cache
-
     def bbox(self) -> BoundingBox:
-        """Returns the :class:`~ezdxf.math.BoundingBox` of the mesh. This data
-        is cached, be sure to call :meth:`clear_caches()` if the mesh gets
-        modified.
+        """Returns the :class:`~ezdxf.math.BoundingBox` of the mesh.
 
         .. versionadded:: 0.18
 
         """
-        if self._bounding_box is None:
-            self._bounding_box = BoundingBox(self.vertices)
-        return self._bounding_box
+        return BoundingBox(self.vertices)
 
     def copy(self):
         """Returns a copy of mesh."""
@@ -545,7 +457,6 @@ class MeshBuilder:
 
         """
         self.faces.append(self.add_vertices(vertices))
-        self.clear_caches()
 
     def add_vertices(self, vertices: Iterable[UVec]) -> Face:
         """Add new vertices to the mesh, each vertex is a ``(x, y, z)`` tuple
@@ -578,8 +489,7 @@ class MeshBuilder:
 
         A `mesh` can be a :class:`MeshBuilder`, :class:`MeshVertexMerger` or
         :class:`~ezdxf.entities.Mesh` object or requires the attributes
-        :attr:`vertices` and :attr:`faces`. Calls :meth:`clear_caches()`
-        automatically.
+        :attr:`vertices` and :attr:`faces`.
 
         Args:
             vertices: list of vertices, a vertex is a ``(x, y, z)`` tuple or
@@ -599,7 +509,6 @@ class MeshBuilder:
 
         for face_vertices in open_faces(faces):
             self.faces.append(tuple(indices[vi] for vi in face_vertices))
-        self.clear_caches()
 
     def render_mesh(
         self,
@@ -896,13 +805,11 @@ class MeshBuilder:
 
     def flip_normals(self) -> None:
         """Flips the normals of all faces by reversing the vertex order inplace.
-        Calls :meth:`clear_caches()` automatically.
 
         .. versionadded:: 0.18
 
         """
         self.faces = list(flip_face_normals(self.faces))
-        self.clear_caches()
 
     def separate_meshes(self) -> List[MeshTransformer]:
         """A single :class:`MeshBuilder` instance can store multiple separated
@@ -917,13 +824,12 @@ class MeshBuilder:
     def normalize_faces(self) -> None:
         """Removes duplicated vertex indices from faces and stores all faces as
         open faces, where the last vertex is not coincident with the first
-        vertex. Calls :meth:`clear_caches()` automatically.
+        vertex.
 
         .. versionadded:: 0.18
 
         """
         self.faces = list(normalize_faces(self.faces, close=False))
-        self.clear_caches()
 
     def face_normals(self) -> Iterator[Vec3]:
         """Yields all face normals, yields ``Vec3(0, 0, 0)`` for degenerated
@@ -995,8 +901,7 @@ class MeshBuilder:
 
 
 class MeshTransformer(MeshBuilder):
-    """A mesh builder with inplace transformation support. All transformation
-    methods do call :meth:`clear_caches()` automatically.
+    """A mesh builder with inplace transformation support.
     """
 
     def transform(self, matrix: Matrix44):
@@ -1008,7 +913,6 @@ class MeshTransformer(MeshBuilder):
 
         """
         self.vertices = list(matrix.transform_vertices(self.vertices))
-        self.clear_caches()
         return self
 
     def translate(
@@ -1027,7 +931,6 @@ class MeshTransformer(MeshBuilder):
         else:
             t = Vec3(dx)
         self.vertices = [t + v for v in self.vertices]
-        self.clear_caches()
         return self
 
     def scale(self, sx: float = 1, sy: float = 1, sz: float = 1):
@@ -1042,7 +945,6 @@ class MeshTransformer(MeshBuilder):
         self.vertices = [
             Vec3(x * sx, y * sy, z * sz) for x, y, z in self.vertices
         ]
-        self.clear_caches()
         return self
 
     def scale_uniform(self, s: float):
@@ -1053,7 +955,6 @@ class MeshTransformer(MeshBuilder):
 
         """
         self.vertices = [v * s for v in self.vertices]
-        self.clear_caches()
         return self
 
     def rotate_x(self, angle: float):
@@ -1066,7 +967,6 @@ class MeshTransformer(MeshBuilder):
         self.vertices = list(
             Matrix44.x_rotate(angle).transform_vertices(self.vertices)
         )
-        self.clear_caches()
         return self
 
     def rotate_y(self, angle: float):
@@ -1079,7 +979,6 @@ class MeshTransformer(MeshBuilder):
         self.vertices = list(
             Matrix44.y_rotate(angle).transform_vertices(self.vertices)
         )
-        self.clear_caches()
         return self
 
     def rotate_z(self, angle: float):
@@ -1092,7 +991,6 @@ class MeshTransformer(MeshBuilder):
         self.vertices = list(
             Matrix44.z_rotate(angle).transform_vertices(self.vertices)
         )
-        self.clear_caches()
         return self
 
     def rotate_axis(self, axis: UVec, angle: float):
@@ -1107,7 +1005,6 @@ class MeshTransformer(MeshBuilder):
         self.vertices = list(
             Matrix44.axis_rotate(axis, angle).transform_vertices(self.vertices)
         )
-        self.clear_caches()
         return self
 
 

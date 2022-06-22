@@ -42,8 +42,6 @@ The basic :class:`MeshBuilder` class does not support transformations.
         least three vertices, :class:`~ezdxf.entities.Mesh` supports ngons,
         so the count of vertices is not limited.
 
-    .. automethod:: clear_caches
-
     .. automethod:: add_face
 
     .. automethod:: add_mesh
@@ -103,7 +101,6 @@ MeshTransformer
 ===============
 
 Same functionality as :class:`MeshBuilder` but supports inplace transformation.
-All transformation methods do call :meth:`clear_caches()` automatically.
 
 .. class:: MeshTransformer
 
