@@ -215,6 +215,7 @@ def area_3d(polygon: Sequence[Vec3]) -> float:
 
 class EdgeCache:
     """Caching object for all mesh edges."""
+
     def __init__(self, mesh: MeshBuilder):
         self._edge_to_face_mapping: Dict[Edge, List[Face]] = _make_edge_mapping(
             mesh.faces
@@ -224,6 +225,7 @@ class EdgeCache:
 
 class FaceNormalCache:
     """Caching object for face normals."""
+
     def __init__(self, mesh: MeshBuilder):
         self._normals = list(mesh.face_normals())
 
@@ -235,6 +237,7 @@ class FaceNormalCache:
 
     def __iter__(self) -> Iterator[Vec3]:
         return iter(self._normals)
+
 
 # Mesh Topology Analysis using the Euler Characteristic
 # https://max-limper.de/publications/Euler/index.html
@@ -435,23 +438,33 @@ class MeshBuilder:
 
         self._face_normal_cache: Optional[FaceNormalCache] = None
         self._edge_cache: Optional[EdgeCache] = None
+        self._bounding_box: Optional[BoundingBox] = None
 
     def clear_caches(self):
-        """Clear face-normal cache and edge cache."""
+        """Clear all caches."""
         self._face_normal_cache = None
         self._edge_cache = None
+        self._bounding_box = None
 
-    @property
     def edge_cache(self) -> EdgeCache:
         if self._edge_cache is None:
             self._edge_cache = EdgeCache(self)
         return self._edge_cache
 
-    @property
     def face_normal_cache(self) -> FaceNormalCache:
         if self._face_normal_cache is None:
             self._face_normal_cache = FaceNormalCache(self)
         return self._face_normal_cache
+
+    def bbox(self) -> BoundingBox:
+        """Returns the :class:`~ezdxf.math.BoundingBox` of the mesh.
+
+        .. versionadded:: 0.18
+
+        """
+        if self._bounding_box is None:
+            self._bounding_box = BoundingBox(self.vertices)
+        return self._bounding_box
 
     def copy(self):
         """Returns a copy of mesh."""
@@ -464,14 +477,6 @@ class MeshBuilder:
 
         """
         return MeshDiagnose(self)
-
-    def bbox(self) -> BoundingBox:
-        """Returns the :class:`~ezdxf.math.BoundingBox` of the mesh.
-
-        .. versionadded:: 0.18
-
-        """
-        return BoundingBox(self.vertices)
 
     def faces_as_vertices(self) -> Iterator[List[Vec3]]:
         """Yields all faces as list of vertices."""
