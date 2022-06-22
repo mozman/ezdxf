@@ -14,6 +14,7 @@ from typing import (
     TypeVar,
     Type,
     NamedTuple,
+    Optional,
 )
 from ezdxf.math import (
     Matrix44,
@@ -94,7 +95,7 @@ def all_edges(faces: Iterable[Face]) -> Iterator[Edge]:
 
 
 def face_edges(face: Face) -> Iterable[Edge]:
-    """Yields all edges of a single face as int tuples."""
+    """Yields all edges of a single open face as int tuples."""
     size = len(face)
     for index in range(size):
         yield face[index], face[(index + 1) % size]
@@ -211,6 +212,29 @@ def area_3d(polygon: Sequence[Vec3]) -> float:
         return 0.0
     return area(ocs.points_from_wcs(polygon))
 
+
+class EdgeCache:
+    """Caching object for all mesh edges."""
+    def __init__(self, mesh: MeshBuilder):
+        self._edge_to_face_mapping: Dict[Edge, List[Face]] = _make_edge_mapping(
+            mesh.faces
+        )
+        self._vertices = mesh.vertices
+
+
+class FaceNormalCache:
+    """Caching object for face normals."""
+    def __init__(self, mesh: MeshBuilder):
+        self._normals = list(mesh.face_normals())
+
+    def __len__(self) -> int:
+        return len(self._normals)
+
+    def __getitem__(self, item) -> Vec3:
+        return self._normals[item]
+
+    def __iter__(self) -> Iterator[Vec3]:
+        return iter(self._normals)
 
 # Mesh Topology Analysis using the Euler Characteristic
 # https://max-limper.de/publications/Euler/index.html
@@ -405,11 +429,29 @@ class MeshBuilder:
     """
 
     def __init__(self):
-        # vertex storage, list of (x, y, z) tuples or Vec3() objects
         self.vertices: List[Vec3] = []
-        # face storage, each face is a tuple of vertex indices (v0, v1, v2, v3, ....),
-        # AutoCAD supports ngons
+        # face storage, each face is a tuple of vertex indices (v0, v1, v2, v3, ....)
         self.faces: List[Sequence[int]] = []
+
+        self._face_normal_cache: Optional[FaceNormalCache] = None
+        self._edge_cache: Optional[EdgeCache] = None
+
+    def clear_caches(self):
+        """Clear face-normal cache and edge cache."""
+        self._face_normal_cache = None
+        self._edge_cache = None
+
+    @property
+    def edge_cache(self) -> EdgeCache:
+        if self._edge_cache is None:
+            self._edge_cache = EdgeCache(self)
+        return self._edge_cache
+
+    @property
+    def face_normal_cache(self) -> FaceNormalCache:
+        if self._face_normal_cache is None:
+            self._face_normal_cache = FaceNormalCache(self)
+        return self._face_normal_cache
 
     def copy(self):
         """Returns a copy of mesh."""
@@ -700,6 +742,8 @@ class MeshBuilder:
         # just copy properties
         mesh = cls()
         assert isinstance(mesh, MeshBuilder)
+
+        # DO NOT COPY CACHES!
         mesh.vertices = list(other.vertices)
         mesh.faces = list(other.faces)
         return mesh  # type: ignore
