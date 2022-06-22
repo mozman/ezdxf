@@ -441,17 +441,31 @@ class MeshBuilder:
         self._bounding_box: Optional[BoundingBox] = None
 
     def clear_caches(self):
-        """Clear all caches."""
+        """Clear all caches.
+
+        .. versionadded:: 0.18
+
+        """
         self._face_normal_cache = None
         self._edge_cache = None
         self._bounding_box = None
 
     def edge_cache(self) -> EdgeCache:
+        """Returns the :class:`EdgeCache` object.
+
+        .. versionadded:: 0.18
+
+        """
         if self._edge_cache is None:
             self._edge_cache = EdgeCache(self)
         return self._edge_cache
 
     def face_normal_cache(self) -> FaceNormalCache:
+        """Returns the :class:`FaceNormalCache`.
+
+        .. versionadded:: 0.18
+
+        """
         if self._face_normal_cache is None:
             self._face_normal_cache = FaceNormalCache(self)
         return self._face_normal_cache
@@ -499,6 +513,10 @@ class MeshBuilder:
         :class:`~ezdxf.math.Vec3` object. The new vertex indices are stored as
         face in the :attr:`faces` list.
 
+        ..hint::
+
+            Call :meth:`clear_caches` method after modifying the mesh!
+
         Args:
             vertices: list of at least 3 vertices ``[(x1, y1, z1), (x2, y2, z2),
                 (x3, y3, y3), ...]``
@@ -514,6 +532,10 @@ class MeshBuilder:
         e.g. adding 4 vertices to an empty mesh, returns the indices
         ``(0, 1, 2, 3)``, adding additional 4 vertices returns the indices
         ``(4, 5, 6, 7)``.
+
+        ..hint::
+
+            Call :meth:`clear_caches` method after modifying the mesh!
 
         Args:
             vertices: list of vertices, vertex as ``(x, y, z)`` tuple or
@@ -858,6 +880,7 @@ class MeshBuilder:
 
         """
         self.faces = list(flip_face_normals(self.faces))
+        self.clear_caches()
 
     def separate_meshes(self) -> List[MeshTransformer]:
         """A single :class:`MeshBuilder` instance can store multiple separated
@@ -878,6 +901,7 @@ class MeshBuilder:
 
         """
         self.faces = list(normalize_faces(self.faces, close=False))
+        self.clear_caches()
 
     def face_normals(self) -> Iterator[Vec3]:
         """Yields all face normals, yields ``Vec3(0, 0, 0)`` for degenerated
@@ -960,6 +984,7 @@ class MeshTransformer(MeshBuilder):
 
         """
         self.vertices = list(matrix.transform_vertices(self.vertices))
+        self.clear_caches()
         return self
 
     def translate(
@@ -978,6 +1003,7 @@ class MeshTransformer(MeshBuilder):
         else:
             t = Vec3(dx)
         self.vertices = [t + v for v in self.vertices]
+        self.clear_caches()
         return self
 
     def scale(self, sx: float = 1, sy: float = 1, sz: float = 1):
@@ -992,6 +1018,7 @@ class MeshTransformer(MeshBuilder):
         self.vertices = [
             Vec3(x * sx, y * sy, z * sz) for x, y, z in self.vertices
         ]
+        self.clear_caches()
         return self
 
     def scale_uniform(self, s: float):
@@ -1002,6 +1029,7 @@ class MeshTransformer(MeshBuilder):
 
         """
         self.vertices = [v * s for v in self.vertices]
+        self.clear_caches()
         return self
 
     def rotate_x(self, angle: float):
@@ -1014,6 +1042,7 @@ class MeshTransformer(MeshBuilder):
         self.vertices = list(
             Matrix44.x_rotate(angle).transform_vertices(self.vertices)
         )
+        self.clear_caches()
         return self
 
     def rotate_y(self, angle: float):
@@ -1026,6 +1055,7 @@ class MeshTransformer(MeshBuilder):
         self.vertices = list(
             Matrix44.y_rotate(angle).transform_vertices(self.vertices)
         )
+        self.clear_caches()
         return self
 
     def rotate_z(self, angle: float):
@@ -1038,6 +1068,7 @@ class MeshTransformer(MeshBuilder):
         self.vertices = list(
             Matrix44.z_rotate(angle).transform_vertices(self.vertices)
         )
+        self.clear_caches()
         return self
 
     def rotate_axis(self, axis: UVec, angle: float):
@@ -1052,6 +1083,7 @@ class MeshTransformer(MeshBuilder):
         self.vertices = list(
             Matrix44.axis_rotate(axis, angle).transform_vertices(self.vertices)
         )
+        self.clear_caches()
         return self
 
 
