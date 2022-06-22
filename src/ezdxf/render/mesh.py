@@ -14,7 +14,6 @@ from typing import (
     TypeVar,
     Type,
     NamedTuple,
-    Optional,
 )
 from ezdxf.math import (
     Matrix44,
@@ -847,14 +846,33 @@ class MeshBuilder:
             except ZeroDivisionError:
                 yield NULLVEC
 
-    def unify_face_normals(self) -> MeshTransformer:
+    def face_orientation_detector(
+        self, reference: int = 0
+    ) -> FaceOrientationDetector:
+        """Returns a :class:`FaceOrientationDetector` or short `fod` instance.
+        The forward orientation is defined by the `reference` face which is
+        0 by default.
+
+        The `fod` can check if all faces are reachable from the reference face
+        and if all faces have the same orientation. The `fod` can be reused to
+        unify the face orientation of the mesh.
+
+        """
+        return FaceOrientationDetector(self, reference=reference)
+
+    def unify_face_normals(
+        self, *, fod: FaceOrientationDetector = None
+    ) -> MeshTransformer:
         """Returns a new :class:`MeshTransformer` object with unified
-        normal vectors of all faces.
-        The outward direction is defined by the normals of the majority of
-        the faces.
-        This function can not process non-manifold meshes (more than two faces are
-        connected by a single edge) or multiple disconnected meshes in a single
-        :class:`MeshBuilder` object.
+        face normal vectors of all faces.
+        The forward direction (not necessarily outwards) is defined by the
+        face-normals of the majority of the faces.
+        This function can not process non-manifold meshes (more than two faces
+        are connected by a single edge) or multiple disconnected meshes in a
+        single :class:`MeshBuilder` object.
+
+        It is possible to pass in an existing :class:`FaceOrientationDetector`
+        instance as argument `fod`.
 
         Raises:
             ValueError: non-manifold mesh or the :class:`MeshBuilder` object
@@ -863,15 +881,20 @@ class MeshBuilder:
         .. versionadded:: 0.18
 
         """
-        return unify_face_normals_by_majority(self)
+        return unify_face_normals_by_majority(self, fod=fod)
 
     def unify_face_normals_by_reference(
-        self, reference: int = 0, *, force_outwards=False
+        self,
+        reference: int = 0,
+        *,
+        force_outwards=False,
+        fod: FaceOrientationDetector = None,
     ) -> MeshTransformer:
         """Returns a new :class:`MeshTransformer` object with unified
-        normal vectors of all faces.
-        The outward direction is defined by the reference face, which is the first
-        face of the `mesh` by default. This function can not process non-manifold
+        face normal vectors of all faces.
+        The forward direction (not necessarily outwards) is defined by the
+        reference face, which is the first face of the `mesh` by default.
+        This function can not process non-manifold
         meshes (more than two faces are connected by a single edge) or multiple
         disconnected meshes in a single :class:`MeshBuilder` object.
 
@@ -879,13 +902,19 @@ class MeshBuilder:
         the argument `force_outwards` to ``True`` but this works only for closed
         surfaces, and it's time-consuming!
 
-        Detect if the mesh has a closed surface by property
-        :attr:`MeshDiagnose.is_closed_surface`.
+        It is not possible to check for a closed surface as long the face normal
+        vectors are not unified. But it can be done afterward by the attribute
+        :meth:`MeshDiagnose.is_closed_surface` to see if the result is
+        trustworthy.
+
+        It is possible to pass in an existing :class:`FaceOrientationDetector`
+        instance as argument `fod`.
 
         Args:
             reference: index of the reference face
-            force_outwards: forces face normals to point outwards, this works
+            force_outwards: forces face-normals to point outwards, this works
                 only for closed surfaces, and it's time-consuming!
+            fod: :class:`FaceOrientationDetector` instance
 
         Raises:
             ValueError: non-manifold mesh or the :class:`MeshBuilder` object
@@ -894,15 +923,16 @@ class MeshBuilder:
         .. versionadded:: 0.18
 
         """
-        mesh = unify_face_normals_by_reference(self, reference=reference)
+        mesh = unify_face_normals_by_reference(
+            self, reference=reference, fod=fod
+        )
         if force_outwards:
             _force_face_normals_pointing_outwards(mesh, reference)
         return mesh
 
 
 class MeshTransformer(MeshBuilder):
-    """A mesh builder with inplace transformation support.
-    """
+    """A mesh builder with inplace transformation support."""
 
     def transform(self, matrix: Matrix44):
         """Transform mesh inplace by applying the transformation `matrix`.
@@ -1471,10 +1501,14 @@ def _make_edge_mapping(faces: Iterable[Face]) -> Dict[Edge, List[Face]]:
 
 
 class FaceOrientationDetector:
-    """The face orientation detector classifies the faces of a mesh by their
+    """
+    Helper class for face orientation and face normal vector detection. Use the
+    method :meth:`MeshBuilder.face_orientation_detector` to create an instance.
+
+    The face orientation detector classifies the faces of a mesh by their
     forward or backward orientation.
     The forward orientation is defined by a reference face, which is the first
-    face of the mesh by default.
+    face of the mesh by default and this orientation is not necessarily outwards.
 
     Args:
         mesh: source mesh as :class:`MeshBuilder` object
@@ -1496,7 +1530,7 @@ class FaceOrientationDetector:
     @property
     def has_uniform_face_normals(self) -> bool:
         """Returns ``True`` if all reachable faces are forward oriented
-        according the reference face.
+        according to the reference face.
         """
         return len(self.backward) == 0
 
@@ -1524,9 +1558,7 @@ class FaceOrientationDetector:
         """Detect the forward and backward oriented faces.
 
         The forward and backward orientation has to be defined by a `reference`
-        face.  For now, I don't know any reliable algorithm to detect if an
-        arbitrary mesh face is clockwise or counter-clockwise oriented.
-
+        face.
         """
 
         def add_forward(f: Face):

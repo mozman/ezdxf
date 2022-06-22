@@ -56,6 +56,8 @@ The basic :class:`MeshBuilder` class does not support transformations.
 
     .. automethod:: face_normals
 
+    .. automethod:: face_orientation_detector
+
     .. automethod:: faces_as_vertices
 
     .. automethod:: flip_normals
@@ -229,3 +231,18 @@ MeshDiagnose
     .. automethod:: volume
 
 
+.. autoclass:: FaceOrientationDetector
+
+    .. autoproperty:: has_uniform_face_normals
+
+    .. autoproperty:: all_reachable
+
+    .. autoproperty:: count
+
+    .. autoproperty:: forward_faces
+
+    .. autoproperty:: backward_faces
+
+    .. automethod:: classify_faces
+
+    .. automethod:: is_reference_face_pointing_outwards

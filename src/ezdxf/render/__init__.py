@@ -9,6 +9,7 @@ from .mesh import (
     MeshTransformer,
     MeshAverageVertexMerger,
     MeshDiagnose,
+    FaceOrientationDetector,
 )
 from .trace import TraceBuilder
 from .mleader import (
