@@ -860,7 +860,7 @@ class MeshBuilder:
         return unify_face_normals_by_majority(self)
 
     def unify_face_normals_by_reference(
-        self, reference: int = 0
+        self, reference: int = 0, *, force_outwards=False
     ) -> MeshTransformer:
         """Returns a new :class:`MeshTransformer` object with unified
         normal vectors of all faces.
@@ -869,8 +869,17 @@ class MeshBuilder:
         meshes (more than two faces are connected by a single edge) or multiple
         disconnected meshes in a single :class:`MeshBuilder` object.
 
+        The outward direction of all face normals can be forced by stetting
+        the argument `force_outwards` to ``True`` but this works only for closed
+        surfaces, and it's time-consuming!
+
+        Detect if the mesh has a closed surface by property
+        :attr:`MeshDiagnose.is_closed_surface`.
+
         Args:
             reference: index of the reference face
+            force_outwards: forces face normals to point outwards, this works
+                only for closed surfaces, and it's time-consuming!
 
         Raises:
             ValueError: non-manifold mesh or the :class:`MeshBuilder` object
@@ -879,7 +888,10 @@ class MeshBuilder:
         .. versionadded:: 0.18
 
         """
-        return unify_face_normals_by_reference(self, reference=reference)
+        mesh = unify_face_normals_by_reference(self, reference=reference)
+        if force_outwards:
+            _force_face_normals_pointing_outwards(mesh, reference)
+        return mesh
 
 
 class MeshTransformer(MeshBuilder):
@@ -1676,3 +1688,21 @@ def _unify_face_normals(
     else:
         new_mesh.faces = list(mesh.faces)
     return new_mesh
+
+
+def _force_face_normals_pointing_outwards(
+    mesh: MeshBuilder, reference: int = 0
+) -> None:
+    """Detect the orientation of the reference face and flip all face normals
+    if required.
+
+    Requirements: all face normals have to be unified and the mesh has a closed
+    surface
+
+    """
+    from ezdxf.math import is_face_normal_pointing_outwards
+
+    faces = list(mesh.faces_as_vertices())
+    reference_face = faces[reference]
+    if not is_face_normal_pointing_outwards(faces, reference_face):
+        mesh.flip_normals()

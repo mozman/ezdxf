@@ -853,6 +853,16 @@ def test_unify_cube_normals_by_reference_face():
     assert fod.count == (6, 0)
     assert fod.is_manifold is True
     assert fod.all_reachable is True
+    assert fod.is_reference_face_pointing_outwards() is True
+
+
+@pytest.mark.parametrize("force", [False, True])
+def test_force_unified_cube_normals_pointing_outwards(force):
+    cube = forms.cube()
+    cube.faces[-1] = tuple(reversed(cube.faces[-1]))
+    cube2 = cube.unify_face_normals_by_reference(-1, force_outwards=force)
+    fod = FaceOrientationDetector(cube2)
+    assert fod.is_reference_face_pointing_outwards() is force
 
 
 def test_unify_cube_normals_by_majority():
