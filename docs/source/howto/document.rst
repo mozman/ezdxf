@@ -260,4 +260,18 @@ to an existing DXF document:
     doc = ezdxf.readfile("your.dxf")
     setup_drawing(doc, topics="all")
 
+Set Logging Level of `ezdxf`
+----------------------------
+
+Set the logging level of the `ezdxf` package to a higher level to minimize
+logging messages from ezdxf. At level ``ERROR`` only severe errors will be
+logged and ``WARNING``, ``INFO`` and ``DEBUG`` messages will be suppressed:
+
+.. code-block:: Python
+
+    import logging
+
+    logging.getLogger("ezdxf").setLevel(logging.ERROR)
+
+
 .. _header variables: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-A85E8E67-27CD-4C59-BE61-4DC9FADBE74A
