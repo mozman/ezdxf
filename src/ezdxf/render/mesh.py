@@ -1565,6 +1565,18 @@ class FaceOrientationDetector:
         self.forward = forward
         self.backward = backward
 
+    def is_reference_face_pointing_outwards(self) -> bool:
+        """Returns ``True`` if the normal vector of the reference face is
+        pointing outwards. This works only for closed surfaces, and
+        it's a time-consuming calculation!
+
+        """
+        from ezdxf.math import is_face_normal_pointing_outwards
+
+        faces = list(self._mesh.faces_as_vertices())
+        reference_face = faces[self.reference]
+        return is_face_normal_pointing_outwards(faces, reference_face)
+
 
 def unify_face_normals_by_reference(
     mesh: MeshBuilder,

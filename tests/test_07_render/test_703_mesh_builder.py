@@ -838,6 +838,11 @@ class TestFaceOrientationDetector:
         assert fod.is_manifold is True
         assert fod.all_reachable is True
 
+    def test_detect_reference_face_orientation(self):
+        # Calculation is tested for is_face_normal_pointing_outwards() in 661!
+        fod = FaceOrientationDetector(forms.cube())
+        assert fod.is_reference_face_pointing_outwards() is True
+
 
 def test_unify_cube_normals_by_reference_face():
     cube = forms.cube()
