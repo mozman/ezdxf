@@ -217,25 +217,45 @@ class EdgeCache:
     """Caching object for all mesh edges."""
 
     def __init__(self, mesh: MeshBuilder):
-        self._edge_to_face_mapping: Dict[Edge, List[Face]] = _make_edge_mapping(
-            mesh.faces
-        )
-        self._vertices = mesh.vertices
+        self._mesh = mesh
+        self._edge_to_face_mapping: Dict[Edge, List[Face]] = dict()
+        self._stale = True
+
+    def refresh(self):
+        if self._stale:
+            self._edge_to_face_mapping = _make_edge_mapping(self._mesh.faces)
+            self._stale = False
+
+    def invalidate(self) -> None:
+        self._stale = True
 
 
 class FaceNormalCache:
     """Caching object for face normals."""
 
     def __init__(self, mesh: MeshBuilder):
-        self._normals = list(mesh.face_normals())
+        self._mesh = mesh
+        self._normals: List[Vec3] = []
+        self._stale = True
+
+    def refresh(self):
+        if self._stale:
+            self._normals = list(self._mesh.face_normals())
+            self._stale = False
+
+    def invalidate(self) -> None:
+        self._stale = True
 
     def __len__(self) -> int:
+        self.refresh()
         return len(self._normals)
 
     def __getitem__(self, item) -> Vec3:
+        self.refresh()
         return self._normals[item]
 
     def __iter__(self) -> Iterator[Vec3]:
+        self.refresh()
         return iter(self._normals)
 
 
@@ -446,8 +466,12 @@ class MeshBuilder:
         .. versionadded:: 0.18
 
         """
-        self._face_normal_cache = None
-        self._edge_cache = None
+        if self._edge_cache is not None:
+            # just invalidate, cache refreshes automatically at next access:
+            self._edge_cache.invalidate()
+        if self._face_normal_cache is not None:
+            # just invalidate, cache refreshes automatically at next access:
+            self._face_normal_cache.invalidate()
         self._bounding_box = None
 
     def edge_cache(self) -> EdgeCache:
@@ -515,18 +539,13 @@ class MeshBuilder:
         :class:`~ezdxf.math.Vec3` object. The new vertex indices are stored as
         face in the :attr:`faces` list.
 
-        .. hint::
-
-            Call the :meth:`clear_caches` method after adding faces to the mesh
-            if you already used cached data of this mesh like the face-normal
-            cache, the edge cache or the bounding box!
-
         Args:
             vertices: list of at least 3 vertices ``[(x1, y1, z1), (x2, y2, z2),
                 (x3, y3, y3), ...]``
 
         """
         self.faces.append(self.add_vertices(vertices))
+        self.clear_caches()
 
     def add_vertices(self, vertices: Iterable[UVec]) -> Face:
         """Add new vertices to the mesh, each vertex is a ``(x, y, z)`` tuple
