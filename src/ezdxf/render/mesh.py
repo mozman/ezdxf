@@ -128,10 +128,10 @@ def get_edge_stats(faces: Iterable[Face]) -> EdgeStats:
     return stats
 
 
-def estimate_normals_direction(
+def estimate_face_normals_direction(
     vertices: Sequence[Vec3], faces: Sequence[Face]
 ) -> float:
-    """Returns the estimated normals direction as ``float`` value
+    """Returns the estimated face-normals direction as ``float`` value
     in the range [-1.0, 1.0] for a closed surface.
 
     This heuristic works well for simple convex hulls but struggles with
@@ -316,8 +316,8 @@ class MeshDiagnose:
         """Yields the unique edges of the mesh as int 2-tuples."""
         return self.edge_stats.keys()
 
-    def estimate_normals_direction(self) -> float:
-        """Returns the estimated normal direction as ``float`` value
+    def estimate_face_normals_direction(self) -> float:
+        """Returns the estimated face-normals direction as ``float`` value
         in the range [-1.0, 1.0] for a closed surface.
 
         This heuristic works well for simple convex hulls but struggles with
@@ -349,7 +349,7 @@ class MeshDiagnose:
               is barely usable
 
         """
-        return estimate_normals_direction(self.vertices, self.faces)
+        return estimate_face_normals_direction(self.vertices, self.faces)
 
     def has_non_planar_faces(self) -> bool:
         """Returns ``True`` if any face is non-planar."""

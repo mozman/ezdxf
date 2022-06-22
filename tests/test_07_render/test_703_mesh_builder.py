@@ -189,7 +189,7 @@ class TestMeshDiagnose:
     )
     def test_surface_normals_pointing_outwards(self, surface):
         diagnose = surface.diagnose()
-        assert diagnose.estimate_normals_direction() > 0.9
+        assert diagnose.estimate_face_normals_direction() > 0.9
 
     def test_cylinder_with_reversed_cap_normals(self):
         c = forms.cylinder()
@@ -197,7 +197,7 @@ class TestMeshDiagnose:
             if len(face) > 4:
                 c.faces[i] = tuple(reversed(c.faces[i]))
         diagnose = c.diagnose()
-        assert diagnose.estimate_normals_direction() < 0.8
+        assert diagnose.estimate_face_normals_direction() < 0.8
         assert diagnose.is_edge_balance_broken is True
 
     def test_cube_is_manifold(self):
@@ -214,7 +214,7 @@ def test_flipped_cube_normals_pointing_inwards():
     c = forms.cube()
     c.flip_normals()
     diagnose = c.diagnose()
-    assert diagnose.estimate_normals_direction() == pytest.approx(-1.0)
+    assert diagnose.estimate_face_normals_direction() == pytest.approx(-1.0)
 
 
 @pytest.fixture

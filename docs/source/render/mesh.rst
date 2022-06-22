@@ -172,8 +172,8 @@ transformations.
         coincident faces exist or faces may have mixed clockwise and
         counter-clockwise vertex orders
 
-MeshDiagnose
-============
+MeshBuilder Helper Classes
+==========================
 
 .. class:: MeshDiagnose
 
@@ -218,7 +218,7 @@ MeshDiagnose
 
     .. automethod:: centroid
 
-    .. automethod:: estimate_normals_direction
+    .. automethod:: estimate_face_normals_direction
 
     .. automethod:: has_non_planar_faces
 
