@@ -1443,12 +1443,6 @@ def face_normals_after_transformation(m: Matrix44) -> bool:
     return have_away_pointing_normals(bottom, top)
 
 
-class LinkedFaces:
-    def __init__(self):
-        self.edge: Tuple[int, int] = (0, 0)
-        self.linked_faces = []
-
-
 def _make_edge_mapping(faces: Iterable[Face]) -> Dict[Edge, List[Face]]:
     mapping: Dict[Edge, List[Face]] = {}
     for face in faces:
