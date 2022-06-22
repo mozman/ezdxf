@@ -297,7 +297,12 @@ class MeshDiagnose:
 
     @property
     def is_closed_surface(self) -> bool:
-        """Returns ``True`` if the mesh has a closed surface."""
+        """Returns ``True`` if the mesh has a closed surface.
+
+        Requires a unified face normal orientation of all faces, if the face
+        normals are pointing outwards or inwards is not important.
+
+        """
         return all(edge.count == 2 for edge in self.edge_stats.values())
 
     def total_edge_count(self) -> int:
