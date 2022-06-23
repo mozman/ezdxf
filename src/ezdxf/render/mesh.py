@@ -1520,9 +1520,14 @@ class FaceOrientationDetector:
     The forward orientation is defined by a reference face, which is the first
     face of the mesh by default and this orientation is not necessarily outwards.
 
+    This class has some overlapping features with :class:`MeshDiagnose` but it
+    has a longer setup time and needs more memory than :class:`MeshDiagnose`.
+
     Args:
         mesh: source mesh as :class:`MeshBuilder` object
         reference: index of the reference face
+
+    .. versionadded:: 0.18
 
     """
 

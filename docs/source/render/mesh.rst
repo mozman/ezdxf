@@ -233,6 +233,11 @@ MeshBuilder Helper Classes
 
 .. autoclass:: FaceOrientationDetector
 
+    .. attribute:: is_manifold
+
+        ``True`` if all edges have an edge count < 3. A non-manifold mesh has
+        edges with 3 or more connected faces.
+
     .. autoproperty:: all_reachable
 
     .. autoproperty:: count
