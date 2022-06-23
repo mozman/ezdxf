@@ -233,18 +233,19 @@ MeshBuilder Helper Classes
 
 .. autoclass:: FaceOrientationDetector
 
-    .. autoproperty:: has_uniform_face_normals
-
     .. autoproperty:: all_reachable
 
     .. autoproperty:: count
 
+    .. autoproperty:: backward_faces
+
     .. autoproperty:: forward_faces
 
-    .. autoproperty:: backward_faces
+    .. autoproperty:: has_uniform_face_normals
+
+    .. autoproperty:: is_closed_surface
 
     .. automethod:: classify_faces
 
     .. automethod:: is_reference_face_pointing_outwards
 
-    .. automethod:: is_closed_surface

@@ -1624,6 +1624,7 @@ class FaceOrientationDetector:
         self.forward = forward
         self.backward = backward
 
+    @property
     def is_closed_surface(self) -> bool:
         """Returns ``True`` if the mesh has a closed surface.
         This method does **not** require an unified face orientation!
@@ -1812,9 +1813,6 @@ def normalize_mesh(mesh: MeshBuilder) -> MeshTransformer:
         new_mesh = unify_face_normals_by_reference(new_mesh, fod=fod)
         fod = new_mesh.face_orientation_detector()
 
-    if (
-        fod.is_closed_surface()
-        and not fod.is_reference_face_pointing_outwards()
-    ):
+    if fod.is_closed_surface and not fod.is_reference_face_pointing_outwards():
         new_mesh.flip_normals()
     return new_mesh

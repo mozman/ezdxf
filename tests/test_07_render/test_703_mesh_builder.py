@@ -847,11 +847,11 @@ class TestFaceOrientationDetector:
         cube = forms.cube()
         cube.faces.pop()
         fod = FaceOrientationDetector(cube)
-        assert fod.is_closed_surface() is False
+        assert fod.is_closed_surface is False
 
     def test_regular_cube_has_closed_surface(self):
         fod = FaceOrientationDetector(forms.cube())
-        assert fod.is_closed_surface() is True
+        assert fod.is_closed_surface is True
 
     def test_multiple_cubes_have_closed_surface(self):
         cube = forms.cube()
@@ -859,19 +859,19 @@ class TestFaceOrientationDetector:
         cube2.translate(10)
         cube.add_mesh(mesh=cube2)
         fod = FaceOrientationDetector(cube)
-        assert fod.is_closed_surface() is True
+        assert fod.is_closed_surface is True
 
     def test_cube_with_reversed_face_has_closed_surface(self):
         cube = forms.cube()
         cube.faces[0] = tuple(reversed(cube.faces[0]))
         fod = FaceOrientationDetector(cube)
-        assert fod.is_closed_surface() is True
+        assert fod.is_closed_surface is True
 
     def test_non_manifold_cube_has_not_a_closed_surface(self):
         cube = forms.cube()
         cube.faces.append(cube.faces[0])
         fod = FaceOrientationDetector(cube)
-        assert fod.is_closed_surface() is False
+        assert fod.is_closed_surface is False
 
 
 def test_unify_cube_normals_by_reference_face():
