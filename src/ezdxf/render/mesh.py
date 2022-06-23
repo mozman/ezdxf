@@ -1544,8 +1544,17 @@ class FaceOrientationDetector:
 
     @property
     def all_reachable(self) -> bool:
-        """Returns ``True`` if all faces are reachable from the reference face."""
+        """Returns ``True`` if all faces are reachable from the reference face
+        same as property :attr:`is_single_mesh`.
+        """
         return len(self._mesh.faces) == sum(self.count)
+
+    @property
+    def is_single_mesh(self) -> bool:
+        """Returns ``True`` if only a single mesh is present same as property
+        :attr:`all_reachable`.
+        """
+        return self.all_reachable
 
     @property
     def count(self) -> Tuple[int, int]:

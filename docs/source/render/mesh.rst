@@ -245,6 +245,8 @@ MeshBuilder Helper Classes
 
     .. autoproperty:: is_closed_surface
 
+    .. autoproperty:: is_single_mesh
+
     .. automethod:: classify_faces
 
     .. automethod:: is_reference_face_pointing_outwards
