@@ -62,6 +62,10 @@ class NodeMergingError(MeshBuilderError):
     pass
 
 
+class MultipleMeshesError(MeshBuilderError):
+    pass
+
+
 class DegeneratedPathError(MeshBuilderError):
     pass
 
@@ -893,8 +897,8 @@ class MeshBuilder:
         instance as argument `fod`.
 
         Raises:
-            ValueError: non-manifold mesh or the :class:`MeshBuilder` object
-                contains multiple disconnected meshes
+            NonManifoldError: non-manifold mesh
+            MultipleMeshesError: the :class:`MeshBuilder` object contains multiple disconnected meshes
 
         .. versionadded:: 0.18
 
@@ -1130,7 +1134,7 @@ class MeshVertexMerger(MeshBuilder):
         return tuple(indices)
 
     def index(self, vertex: UVec) -> int:
-        """Get index of `vertex`, raise :class:`KeyError` if not found.
+        """Get index of `vertex`, raises :class:`IndexError` if not found.
 
         Args:
             vertex: ``(x, y, z)`` tuple or :class:`~ezdxf.math.Vec3` object
@@ -1213,7 +1217,7 @@ class MeshAverageVertexMerger(MeshBuilder):
         return tuple(indices)
 
     def index(self, vertex: UVec) -> int:
-        """Get index of `vertex`, raise :class:`KeyError` if not found.
+        """Get index of `vertex`, raises :class:`IndexError` if not found.
 
         Args:
             vertex: ``(x, y, z)`` tuple or :class:`~ezdxf.math.Vec3` object
@@ -1701,8 +1705,9 @@ def unify_face_normals_by_reference(
             :class:`FaceOrientationDetector` instance
 
     Raises:
-        ValueError: non-manifold mesh or the :class:`MeshBuilder` object
-            contains multiple disconnected meshes
+        NonManifoldError: non-manifold mesh
+        MultipleMeshesError: :class:`MeshBuilder` object contains multiple
+            disconnected meshes
 
     """
     if fod is None:
@@ -1734,8 +1739,9 @@ def unify_face_normals_by_majority(
             instance or ``None`` to create one internally.
 
     Raises:
-        ValueError: non-manifold mesh or the :class:`MeshBuilder` object
-            contains multiple disconnected meshes
+        NonManifoldError: non-manifold mesh
+        MultipleMeshesError: :class:`MeshBuilder` object contains multiple
+            disconnected meshes
 
     """
     if fod is None:
@@ -1757,9 +1763,9 @@ def _unify_face_normals(
     returns the face ledger which represents the backward oriented faces.
     """
     if not fod.is_manifold:
-        raise ValueError("non-manifold mesh")
+        raise NonManifoldMeshError("non-manifold mesh")
     if not fod.all_reachable:
-        raise ValueError(
+        raise MultipleMeshesError(
             f"not all faces are reachable from reference face #{fod.reference}"
         )
 

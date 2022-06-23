@@ -10,6 +10,11 @@ from .mesh import (
     MeshAverageVertexMerger,
     MeshDiagnose,
     FaceOrientationDetector,
+    MeshBuilderError,
+    NonManifoldMeshError,
+    MultipleMeshesError,
+    NodeMergingError,
+    DegeneratedPathError,
 )
 from .trace import TraceBuilder
 from .mleader import (
