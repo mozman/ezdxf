@@ -54,6 +54,22 @@ Edge = Tuple[int, int]
 EdgeStats = Dict[Edge, EdgeStat]
 
 
+class MeshBuilderError(Exception):
+    pass
+
+
+class NodeMergingError(MeshBuilderError):
+    pass
+
+
+class DegeneratedPathError(MeshBuilderError):
+    pass
+
+
+class NonManifoldMeshError(MeshBuilderError):
+    pass
+
+
 def open_faces(faces: Iterable[Face]) -> Iterator[Face]:
     """Yields all faces with more than two vertices as open faces
     (first vertex index != last vertex index).
@@ -299,8 +315,8 @@ class MeshDiagnose:
     def is_closed_surface(self) -> bool:
         """Returns ``True`` if the mesh has a closed surface.
 
-        Requires a unified face normal orientation of all faces, if the face
-        normals are pointing outwards or inwards is not important.
+        Requires a unified face orientation (clockwise or counter-clockwise) of
+        all faces.
 
         """
         return all(edge.count == 2 for edge in self.edge_stats.values())
@@ -1340,14 +1356,6 @@ def remove_colinear_face_vertices(vertices: Sequence[Vec3]) -> Iterator[Vec3]:
         yield _vertices[-2]  # last vertex
 
 
-class NodeMergingError(Exception):
-    pass
-
-
-class DegeneratedPathError(Exception):
-    pass
-
-
 def merge_connected_paths(
     p1: Sequence[int], p2: Sequence[int]
 ) -> Sequence[int]:
@@ -1616,10 +1624,35 @@ class FaceOrientationDetector:
         self.forward = forward
         self.backward = backward
 
+    def is_closed_surface(self) -> bool:
+        """Returns ``True`` if the mesh has a closed surface.
+        This method does **not** require an unified face orientation!
+        If multiple separated meshes are present the state is only ``True`` if
+        **all** meshes have a closed surface.
+
+        Returns ``False`` for non-manifold meshes.
+
+        """
+        if not self.is_manifold:
+            return False
+        empty: List[Face] = []
+        edge_mapping = self.edge_mapping
+        # For a closed surface all edges have to connect exact 2 faces.
+        for edge in edge_mapping.keys():
+            forward_connected_faces = edge_mapping.get(edge, empty)
+            reversed_edge = edge[1], edge[0]
+            backward_connected_faces = edge_mapping.get(reversed_edge, empty)
+            if (
+                len(forward_connected_faces) + len(backward_connected_faces)
+                != 2
+            ):
+                return False
+        return True
+
     def is_reference_face_pointing_outwards(self) -> bool:
         """Returns ``True`` if the normal vector of the reference face is
-        pointing outwards. This works only for closed surfaces, and
-        it's a time-consuming calculation!
+        pointing outwards. This works only for meshes with unified faces which
+        represent a closed surfaces, and it's a time-consuming calculation!
 
         """
         from ezdxf.math import is_face_normal_pointing_outwards
@@ -1745,3 +1778,43 @@ def _force_face_normals_pointing_outwards(
     reference_face = faces[reference]
     if not is_face_normal_pointing_outwards(faces, reference_face):
         mesh.flip_normals()
+
+
+def normalize_mesh(mesh: MeshBuilder) -> MeshTransformer:
+    """Returns a new mesh with these properties:
+
+        - one mesh: removes all meshes except the first mesh starting at the
+          first face
+        - optimized vertices: merges shared vertices
+        - normalized faces: removes duplicated face vertices and faces with less
+          than 3 vertices
+        - open faces: all faces are open faces where first vertex != last vertex
+        - unified face-orientation: all faces have the same orientation (ccw or cw)
+        - ccw face-orientation: all face-normals are pointing outwards if the
+          mesh has a closed surface
+
+    Raises:
+        NonManifoldMeshError: non-manifold mesh
+
+    """
+    new_mesh = mesh.optimize_vertices()
+    new_mesh.normalize_faces()
+    fod = new_mesh.face_orientation_detector(reference=0)
+
+    if not fod.is_manifold:
+        raise NonManifoldMeshError("non-manifold mesh")
+
+    if not fod.all_reachable:  # extract first mesh
+        new_mesh = list(separate_meshes(new_mesh))[0]
+        fod = new_mesh.face_orientation_detector(reference=0)
+
+    if not fod.has_uniform_face_normals:
+        new_mesh = unify_face_normals_by_reference(new_mesh, fod=fod)
+        fod = new_mesh.face_orientation_detector()
+
+    if (
+        fod.is_closed_surface()
+        and not fod.is_reference_face_pointing_outwards()
+    ):
+        new_mesh.flip_normals()
+    return new_mesh

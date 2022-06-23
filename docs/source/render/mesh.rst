@@ -246,3 +246,5 @@ MeshBuilder Helper Classes
     .. automethod:: classify_faces
 
     .. automethod:: is_reference_face_pointing_outwards
+
+    .. automethod:: is_closed_surface
