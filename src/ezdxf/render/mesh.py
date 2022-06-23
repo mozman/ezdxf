@@ -314,9 +314,11 @@ class MeshDiagnose:
     @property
     def is_closed_surface(self) -> bool:
         """Returns ``True`` if the mesh has a closed surface.
+        This method does not require a unified face orientation.
+        If multiple separated meshes are present the state is only ``True`` if
+        **all** meshes have a closed surface.
 
-        Requires a unified face orientation (clockwise or counter-clockwise) of
-        all faces.
+        Returns ``False`` for non-manifold meshes.
 
         """
         return all(edge.count == 2 for edge in self.edge_stats.values())
@@ -1636,7 +1638,7 @@ class FaceOrientationDetector:
     @property
     def is_closed_surface(self) -> bool:
         """Returns ``True`` if the mesh has a closed surface.
-        This method does **not** require an unified face orientation!
+        This method does not require a unified face orientation.
         If multiple separated meshes are present the state is only ``True`` if
         **all** meshes have a closed surface.
 

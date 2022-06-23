@@ -209,6 +209,36 @@ class TestMeshDiagnose:
         assert bbox.extmin.isclose((-0.5, -0.5, -0.5))
         assert bbox.extmax.isclose((0.5, 0.5, 0.5))
 
+    def test_regular_open_surface(self):
+        cube = forms.cube()
+        cube.faces.pop()
+        diag = cube.diagnose()
+        assert diag.is_closed_surface is False
+
+    def test_regular_cube_has_closed_surface(self):
+        diag = forms.cube().diagnose()
+        assert diag.is_closed_surface is True
+
+    def test_multiple_cubes_have_closed_surface(self):
+        cube = forms.cube()
+        cube2 = cube.copy()
+        cube2.translate(10)
+        cube.add_mesh(mesh=cube2)
+        diag = cube.diagnose()
+        assert diag.is_closed_surface is True
+
+    def test_cube_with_reversed_face_has_closed_surface(self):
+        cube = forms.cube()
+        cube.faces[0] = tuple(reversed(cube.faces[0]))
+        diag = cube.diagnose()
+        assert diag.is_closed_surface is True
+
+    def test_non_manifold_cube_has_not_a_closed_surface(self):
+        cube = forms.cube()
+        cube.faces.append(cube.faces[0])
+        diag = cube.diagnose()
+        assert diag.is_closed_surface is False
+
 
 def test_flipped_cube_normals_pointing_inwards():
     c = forms.cube()
