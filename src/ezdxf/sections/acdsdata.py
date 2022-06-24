@@ -107,8 +107,14 @@ class AcDsDataSection:
             self.load_tags(iter(entities))
 
     @property
-    def is_valid(self):
-        return len(self.section_info)
+    def is_valid(self) -> bool:
+        return len(self.section_info) > 0
+
+    @property
+    def has_records(self) -> bool:
+        return any(
+            isinstance(entity, AcDsRecord) for entity in self.entities
+        )
 
     def load_tags(self, entities: Iterator[Tags]) -> None:
         section_head = next(entities)
@@ -130,7 +136,10 @@ class AcDsDataSection:
         self.entities.append(data)
 
     def export_dxf(self, tagwriter: TagWriter) -> None:
-        if not self.is_valid:
+        # TODO: AutoCAD does not open DXF files with VISUALSTYLE objects present
+        #  but an empty ACDSDATA section (without ACDSRECORD entries).
+        #  This issue (#697) needs further investigations!
+        if not self.is_valid or not self.has_records:
             return
         tagwriter.write_tags(self.section_info)
         for entity in self.entities:

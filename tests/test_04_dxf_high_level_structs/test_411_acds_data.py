@@ -21,6 +21,15 @@ def test_loader(section):
     assert len(section.entities) > 0
 
 
+def test_default_section_does_not_have_records():
+    acds = AcDsDataSection(None)
+    assert acds.has_records is False
+
+
+def test_loaded_section_does_not_have_records(section):
+    assert section.has_records is True
+
+
 def test_acds_record(section):
     records = list(section.acdsrecords)
     assert len(records) > 0
@@ -41,6 +50,12 @@ def test_write_dxf(section):
     result = TagCollector.dxftags(section)
     expected = basic_tags_from_text(ACDSSECTION)
     assert result[:-1] == expected
+
+
+def test_do_not_write_acds_section_without_records():
+    empty_acds = AcDsDataSection(None)
+    result = TagCollector.dxftags(empty_acds)
+    assert len(result) == 0
 
 
 def test_get_acis_data(section):
