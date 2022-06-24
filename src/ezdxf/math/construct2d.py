@@ -89,7 +89,7 @@ def sign(f: float) -> float:
 
 def reflect_angle_x_deg(a: float) -> float:
     """Returns reflected angle of `a` in x-direction in degrees.
-    Angles are counter clockwise orientated and +x-axis is at 0 degrees.
+    Angles are counter-clockwise orientated and +x-axis is at 0 degrees.
 
     Args:
         a: angle to reflect in degrees
@@ -100,7 +100,7 @@ def reflect_angle_x_deg(a: float) -> float:
 
 def reflect_angle_y_deg(a: float) -> float:
     """Returns reflected angle of `a` in y-direction in degrees.
-    Angles are counter clockwise orientated and +y-axis is at 90 degrees.
+    Angles are counter-clockwise orientated and +y-axis is at 90 degrees.
 
     Args:
         a: angle to reflect in degrees
@@ -117,7 +117,7 @@ def decdeg2dms(value: float) -> Tuple[float, float, float]:
 
 
 def ellipse_param_span(start_param: float, end_param: float) -> float:
-    """Returns the counter clockwise params span of an elliptic arc from start-
+    """Returns the counter-clockwise params span of an elliptic arc from start-
     to end param.
 
     Returns the param span in the range [0, 2π], 2π is a full ellipse.
@@ -134,7 +134,7 @@ def ellipse_param_span(start_param: float, end_param: float) -> float:
 
 
 def closest_point(base: UVec, points: Iterable[UVec]) -> "Vec3":
-    """Returns closest point to `base`.
+    """Returns the closest point to `base`.
 
     Args:
         base: base point as :class:`Vec3` compatible object
@@ -219,7 +219,7 @@ def is_point_on_line_2d(
         end: line definition point as :class:`Vec2`
         ray: if ``True`` point has to be on the infinite ray, if ``False``
             point has to be on the line segment
-        abs_tol: tolerance for on line test
+        abs_tol: tolerance for on the line test
 
     """
     point_x, point_y = point
@@ -303,6 +303,8 @@ def distance_point_line_2d(point: Vec2, start: Vec2, end: Vec2) -> float:
     return math.fabs((start - point).det(end - point)) / (end - start).magnitude
 
 
+# Candidate for a faster Cython implementation:
+# is also used for testing 3D ray and line intersection with polygon
 def is_point_in_polygon_2d(
     point: Union[Vec2, Vec3], polygon: Iterable[Vec2], abs_tol=TOLERANCE
 ) -> int:
