@@ -1,5 +1,8 @@
 # Copyright (c) 2010-2022, Manfred Moitzi
 # License: MIT License
+# These are the pure Python implementations of the Cython accelerated
+# construction tools: ezdxf/acc/construct.pyx
+
 from __future__ import annotations
 from typing import Iterable, Sequence, Optional, TYPE_CHECKING
 import math
@@ -122,7 +125,7 @@ def intersection_ray_ray_3d(
     """
     Calculate intersection of two 3D rays, returns a 0-tuple for parallel rays,
     a 1-tuple for intersecting rays and a 2-tuple for not intersecting and not
-    parallel rays with points of closest approach on each ray.
+    parallel rays with points of the closest approach on each ray.
 
     Args:
         ray1: first ray as tuple of two points as :class:`Vec3` objects
@@ -156,7 +159,7 @@ def intersection_ray_ray_3d(
 
 
 def arc_angle_span_deg(start: float, end: float) -> float:
-    """Returns the counter clockwise angle span from `start` to `end` in degrees.
+    """Returns the counter-clockwise angle span from `start` to `end` in degrees.
 
     Returns the angle span in the range of [0, 360], 360 is a full circle.
     Full circle handling is a special case, because normalization of angles
@@ -186,7 +189,7 @@ def arc_angle_span_deg(start: float, end: float) -> float:
 
 
 def arc_angle_span_rad(start: float, end: float) -> float:
-    """Returns the counter clockwise angle span from `start` to `end` in radians.
+    """Returns the counter-clockwise angle span from `start` to `end` in radians.
 
     Returns the angle span in the range of [0, 2π], 2π is a full circle.
     Full circle handling is a special case, because normalization of angles

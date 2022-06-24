@@ -1,6 +1,7 @@
 #  Copyright (c) 2020-2022, Manfred Moitzi
 #  License: MIT License
 from typing import Union, Sequence
+# noinspection PyUnresolvedReferences
 from ezdxf.acc import USE_C_EXT
 
 __all__ = [
