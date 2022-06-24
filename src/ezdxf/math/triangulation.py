@@ -13,6 +13,7 @@ EPSILON = math.sqrt(sys.float_info.epsilon)
 __all__ = ["ear_clipping_2d", "ear_clipping_3d"]
 
 
+# Candidate for a faster Cython implementation:
 def ear_clipping_2d(
     vertices: Iterable[UVec],
     fast=False,
