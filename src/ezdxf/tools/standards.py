@@ -42,7 +42,10 @@ def setup_drawing(doc: "Drawing", topics: Union[str, bool, Sequence] = "all"):
         topics = []
     else:
         setup_all = False
-        topics = list(t.lower() for t in topics)  # type: ignore
+        if isinstance(topics, str):
+            topics = [topics.lower()]
+        else:
+            topics = list(t.lower() for t in topics)  # type: ignore
 
     if setup_all or "linetypes" in topics:
         setup_linetypes(doc)
@@ -283,8 +286,12 @@ def setup_dimstyle(
     dimstyle.dxf.dimtix = 0  # Draws dimension text between the extension lines even if it would ordinarily be placed outside those lines
     dimstyle.dxf.dimtih = 0  # Align text inside extension lines with dimension line; 1 = Draws text horizontally
     dimstyle.dxf.dimtoh = 0  # Align text outside of extension lines with dimension line; 1 = Draws text horizontally
-    dimstyle.dxf.dimzin = 12  # Suppresses leading trailing zeros in linear dimensions
-    dimstyle.dxf.dimazin = 3  # Suppresses leading + trailing zeros in angular dimensions
+    dimstyle.dxf.dimzin = (
+        12  # Suppresses leading trailing zeros in linear dimensions
+    )
+    dimstyle.dxf.dimazin = (
+        3  # Suppresses leading + trailing zeros in angular dimensions
+    )
     dimstyle.dxf.dimdec = 2  # decimals places for linear measurements
     dimstyle.dxf.dimadec = 2  # decimals places for angle measurements
     dimstyle.dxf.dimsah = 0
