@@ -30,7 +30,7 @@ Only vertices and faces are exchanged, colors, textures and normals are lost.
 
 .. warning::
 
-    The meshes created with the addon :mod:`ezdxf.addons.pycsg` are usually not
+    The meshes created by the :mod:`ezdxf.addons.pycsg` add-on are usually not
     suitable for export because they often violate the vertex-to-vertex rule:
     A vertex of a face cannot lie on the edge of another face.
     This was one of the reasons to create this addon to get an interface to
