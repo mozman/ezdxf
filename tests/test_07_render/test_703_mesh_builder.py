@@ -257,6 +257,10 @@ class TestMeshDiagnose:
         diag = cube.diagnose()
         assert diag.is_closed_surface is False
 
+    def test_get_face_normals(self):
+        cube = forms.cube()
+        assert len(cube.diagnose().face_normals) == 6
+
 
 def test_flipped_cube_normals_pointing_inwards():
     c = forms.cube()

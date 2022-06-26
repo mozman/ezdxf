@@ -241,18 +241,32 @@ class MeshDiagnose:
         self._mesh = mesh
         self._edge_stats: EdgeStats = {}
         self._bbox = BoundingBox()
+        self._face_normals: List[Vec3] = []
 
     @property
     def vertices(self) -> Sequence[Vec3]:
+        """Sequence of mesh vertices as :class:`~ezdxf.math.Vec3` instances"""
         return self._mesh.vertices
 
     @property
     def faces(self) -> Sequence[Face]:
+        """Sequence of faces as ``Sequence[int]``"""
         return self._mesh.faces
 
     @property
+    def face_normals(self) -> Sequence[Vec3]:
+        """Returns all face normal vectors  as sequence. The ``NULLVEC``
+        instance is used as normal vector for degenerated faces. (cached data)
+
+        """
+        if len(self._face_normals) == 0:
+            self._face_normals = list(self._mesh.face_normals())
+        return self._face_normals
+
+    @property
     def bbox(self) -> BoundingBox:
-        """Returns the :class:`~ezdxf.math.BoundingBox` of the mesh."""
+        """Returns the :class:`~ezdxf.math.BoundingBox` of the mesh. (cached data)
+        """
         if not self._bbox.has_data:
             self._bbox = self._mesh.bbox()
         return self._bbox
@@ -269,7 +283,7 @@ class MeshDiagnose:
 
     @property
     def n_edges(self) -> int:
-        """Returns the unique edge count."""
+        """Returns the unique edge count. (cached data)"""
         return len(self.edge_stats)
 
     @property
@@ -278,7 +292,7 @@ class MeshDiagnose:
         as tuple of two vertex indices `(a, b)` where `a` is always smaller than
         `b`. The dict-value is an :class:`EdgeStat` tuple of edge count and edge
         balance, see :class:`EdgeStat` for the definition of edge count and
-        edge balance.
+        edge balance. (cached data)
         """
         if len(self._edge_stats) == 0:
             self._edge_stats = get_edge_stats(self.faces)
@@ -301,14 +315,14 @@ class MeshDiagnose:
         in the first face and counter-clockwise oriented in the second face.
         A broken edge balance indicates possible topology errors like mixed
         face vertex orientations or a non-manifold mesh where an edge connects
-        more than two faces.
+        more than two faces. (cached data)
 
         """
         return any(e.balance != 0 for e in self.edge_stats.values())
 
     @property
     def is_manifold(self) -> bool:
-        """Returns ``True`` if all edges have an edge count < 3.
+        """Returns ``True`` if all edges have an edge count < 3. (cached data)
 
         A non-manifold mesh has edges with 3 or more connected faces.
 
@@ -320,7 +334,7 @@ class MeshDiagnose:
         """Returns ``True`` if the mesh has a closed surface.
         This method does not require a unified face orientation.
         If multiple separated meshes are present the state is only ``True`` if
-        **all** meshes have a closed surface.
+        **all** meshes have a closed surface. (cached data)
 
         Returns ``False`` for non-manifold meshes.
 
@@ -330,12 +344,12 @@ class MeshDiagnose:
     def total_edge_count(self) -> int:
         """Returns the total edge count of all faces, shared edges are counted
         separately for each face. In closed surfaces this count should be 2x
-        the unique edge count :attr:`n_edges`.
+        the unique edge count :attr:`n_edges`. (cached data)
         """
         return sum(e.count for e in self.edge_stats.values())
 
     def unique_edges(self) -> Iterable[Edge]:
-        """Yields the unique edges of the mesh as int 2-tuples."""
+        """Yields the unique edges of the mesh as int 2-tuples. (cached data)"""
         return self.edge_stats.keys()
 
     def estimate_face_normals_direction(self) -> float:

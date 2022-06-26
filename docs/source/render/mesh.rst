@@ -182,7 +182,8 @@ MeshBuilder Helper Classes
 .. class:: MeshDiagnose
 
     Diagnose tools for :class:`MeshBuilder` which can be used to detect
-    topology errors for closed surfaces.
+    topology errors for closed surfaces. The object contains cached values, which
+    do not get updated if the source mesh will be changed!
 
     .. note::
 
@@ -194,23 +195,15 @@ MeshBuilder Helper Classes
 
     .. versionadded:: 0.18
 
-    .. attribute:: vertices
-
-        Sequence of mesh vertices as :class:`~ezdxf.math.Vec3` instances
-
-    .. attribute:: faces
-
-        Sequence of faces as ``Sequence[int]``
-
     .. autoproperty:: bbox
 
-    .. autoproperty:: n_vertices
-
-    .. autoproperty:: n_faces
-
-    .. autoproperty:: n_edges
-
     .. autoproperty:: edge_stats
+
+    .. autoproperty:: euler_characteristic
+
+    .. autoproperty:: face_normals
+
+    .. autoproperty:: faces
 
     .. autoproperty:: is_closed_surface
 
@@ -218,7 +211,13 @@ MeshBuilder Helper Classes
 
     .. autoproperty:: is_manifold
 
-    .. autoproperty:: euler_characteristic
+    .. autoproperty:: n_edges
+
+    .. autoproperty:: n_faces
+
+    .. autoproperty:: n_vertices
+
+    .. autoproperty:: vertices
 
     .. automethod:: centroid
 
