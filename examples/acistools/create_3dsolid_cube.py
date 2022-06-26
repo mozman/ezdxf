@@ -10,11 +10,11 @@ DIR = Path("~/Desktop/Outbox").expanduser()
 if not DIR.exists():
     DIR = Path(".")
 
-VERSION = "R2010"
-DEBUG = True
+VERSION = "R2018"
+DEBUG = False
 OPEN_SHELL = False
 
-doc = ezdxf.new(VERSION)
+doc = ezdxf.new(VERSION, setup=True)
 msp = doc.modelspace()
 
 
