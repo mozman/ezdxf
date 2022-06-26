@@ -451,6 +451,42 @@ class MeshBuilder:
         """
         return MeshDiagnose(self)
 
+    def get_face_vertices(self, index: int) -> Sequence[Vec3]:
+        """Returns the face `index` as sequence of :class:`~ezdxf.math.Vec3`
+        objects.
+
+        .. versionadded:: 0.18
+
+        """
+        vertices = self.vertices
+        return tuple(vertices[vi] for vi in self.faces[index])
+
+    def get_face_normal(self, index: int) -> Vec3:
+        """Returns the normal vector of the face `index` as :class:`~ezdxf.math.Vec3`,
+        returns the ``NULLVEC`` instance for degenerated  faces.
+
+        .. versionadded:: 0.18
+
+        """
+        face = self.get_face_vertices(index)
+        try:
+            return safe_normal_vector(face)
+        except (ValueError, ZeroDivisionError):
+            return NULLVEC
+
+    def face_normals(self) -> Iterator[Vec3]:
+        """Yields all face normals, yields the ``NULLVEC`` instance for degenerated
+        faces.
+
+        .. versionadded:: 0.18
+
+        """
+        for face in self.faces_as_vertices():
+            try:
+                yield safe_normal_vector(face)
+            except (ValueError, ZeroDivisionError):
+                yield NULLVEC
+
     def faces_as_vertices(self) -> Iterator[List[Vec3]]:
         """Yields all faces as list of vertices."""
         v = self.vertices
@@ -851,22 +887,6 @@ class MeshBuilder:
 
         """
         self.faces = list(normalize_faces(self.faces, close=False))
-
-    def face_normals(self) -> Iterator[Vec3]:
-        """Yields all face normals, yields ``Vec3(0, 0, 0)`` for degenerated
-        faces.
-
-        .. versionadded:: 0.18
-
-        """
-        for face in self.faces_as_vertices():
-            if len(face) < 3:
-                yield NULLVEC
-                continue
-            try:
-                yield safe_normal_vector(face)
-            except ZeroDivisionError:
-                yield NULLVEC
 
     def face_orientation_detector(
         self, reference: int = 0

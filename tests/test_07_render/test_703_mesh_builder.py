@@ -2,7 +2,7 @@
 # License: MIT License
 import pytest
 import math
-from ezdxf.math import Vec3, BoundingBox, Matrix44
+from ezdxf.math import Vec3, BoundingBox, Matrix44, close_vectors
 from ezdxf.render import forms
 from ezdxf.addons.menger_sponge import MengerSponge
 from ezdxf.render.mesh import (
@@ -131,6 +131,24 @@ def test_mesh_bounding_box():
     bbox = forms.cube().bbox()
     assert bbox.extmin.isclose((-0.5, -0.5, -0.5))
     assert bbox.extmax.isclose((0.5, 0.5, 0.5))
+
+
+def test_get_face_vertices():
+    mesh = forms.cube(center=False)
+    vertices = mesh.get_face_vertices(0)  # downward bottom face!
+    assert close_vectors(vertices, [(0, 0), (0, 1), (1, 1), (1, 0)]) is True
+
+
+def test_index_error_for_getting_face_vertices():
+    mesh = forms.cube(center=False)
+    with pytest.raises(IndexError):
+        mesh.get_face_vertices(10)
+
+
+def test_get_face_normal():
+    mesh = forms.cube(center=False)
+    assert mesh.get_face_normal(0).isclose((0, 0, -1)), "downward bottom face"
+    assert mesh.get_face_normal(-1).isclose((0, 0, 1)), "upward top face"
 
 
 class TestMeshDiagnose:
