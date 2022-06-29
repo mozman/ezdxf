@@ -2,6 +2,7 @@
 # License: MIT License
 import pytest
 
+import ezdxf
 from ezdxf.sections.acdsdata import AcDsDataSection
 from ezdxf import DXFKeyError
 from ezdxf.lldxf.tags import internal_tag_compiler, group_tags
@@ -52,9 +53,9 @@ def test_write_dxf(section):
     assert result[:-1] == expected
 
 
-def test_do_not_write_acds_section_without_records():
-    empty_acds = AcDsDataSection(None)
-    result = TagCollector.dxftags(empty_acds)
+def test_empty_acds_section_will_not_be_exported():
+    doc = ezdxf.new("R2013")
+    result = TagCollector.dxftags(doc.acdsdata)
     assert len(result) == 0
 
 

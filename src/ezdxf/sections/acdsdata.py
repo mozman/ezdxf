@@ -136,10 +136,8 @@ class AcDsDataSection:
         self.entities.append(data)
 
     def export_dxf(self, tagwriter: TagWriter) -> None:
-        # TODO: AutoCAD does not open DXF files with VISUALSTYLE objects present
-        #  but an empty ACDSDATA section (without ACDSRECORD entries).
-        #  This issue (#697) needs further investigations!
         if not self.is_valid or not self.has_records:
+            # Empty ACDSDATA section is not required!
             return
         tagwriter.write_tags(self.section_info)
         for entity in self.entities:
