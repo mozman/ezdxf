@@ -64,13 +64,9 @@ def ear_clipping_2d(
             yield polygon[1], polygon[2], polygon[3]
         return
 
-    for i in range(point_count):
-        prev_index = i - 1
-        prev_point = polygon[prev_index]
-        point = polygon[i]
-        next_index = (i + 1) % point_count
-        next_point = polygon[next_index]
-
+    for i, point in enumerate(polygon):
+        prev_point = polygon[i - 1]
+        next_point = polygon[(i + 1) % point_count]
         if _is_ear(prev_point, point, next_point, polygon):
             ear_vertices.append(point)
 
@@ -79,8 +75,7 @@ def ear_clipping_2d(
         i = polygon.index(ear)
         prev_index = i - 1
         prev_point = polygon[prev_index]
-        next_index = (i + 1) % point_count
-        next_point = polygon[next_index]
+        next_point = polygon[(i + 1) % point_count]
 
         polygon.remove(ear)
         point_count -= 1
