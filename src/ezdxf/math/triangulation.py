@@ -113,16 +113,15 @@ def _is_clockwise(polygon: List[Vec2]) -> bool:
 
 
 def _is_convex(a: Vec2, b: Vec2, c: Vec2) -> bool:
-    return a.x * (c.y - b.y) + b.x * (a.y - c.y) + c.x * (b.y - a.y) < 0
+    return a.x * (c.y - b.y) + b.x * (a.y - c.y) + c.x * (b.y - a.y) < 0.0
 
 
 def _is_ear(p1: Vec2, p2: Vec2, p3: Vec2, polygon: List[Vec2]) -> bool:
-    ear = (
-        _contains_no_points(p1, p2, p3, polygon)
-        and _is_convex(p1, p2, p3)
-        and _triangle_area(p1, p2, p3) > 0
+    return (
+        _is_convex(p1, p2, p3)
+        and _triangle_area(p1, p2, p3) > 0.0
+        and _contains_no_points(p1, p2, p3, polygon)
     )
-    return ear
 
 
 def _contains_no_points(
@@ -142,7 +141,7 @@ def _is_point_inside(p: Vec2, a: Vec2, b: Vec2, c: Vec2) -> bool:
     area1 = _triangle_area(p, b, c)
     area2 = _triangle_area(p, a, c)
     area3 = _triangle_area(p, a, b)
-    return abs(area - sum([area1, area2, area3])) < EPSILON
+    return abs(area - area1 - area2 - area3) < EPSILON
 
 
 def _triangle_area(a: Vec2, b: Vec2, c: Vec2) -> float:
