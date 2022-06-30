@@ -20,7 +20,8 @@ with other tools in the following file formats:
 
 The source or target object is always a :class:`~ezdxf.render.MeshBuilder`
 instance and therefore the supported features are also limited by this class.
-Only vertices and faces are exchanged, colors, textures and normals are lost.
+Only vertices and faces are exchanged, colors, textures and explicit face- and
+vertex normals are lost.
 
 .. note::
 

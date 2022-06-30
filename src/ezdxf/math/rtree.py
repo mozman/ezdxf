@@ -201,7 +201,7 @@ class RTree:
 
     def nearest_neighbor(self, target: AnyVec) -> Tuple[AnyVec, float]:
         """Returns the closest point to the `target` point and the distance
-        between this points.
+        between these points.
         """
         return self._root.nearest_neighbor(target)
 
