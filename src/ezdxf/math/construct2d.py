@@ -404,20 +404,19 @@ def is_convex_polygon_2d(polygon: List[Vec2], epsilon=1e-6) -> bool:
     This solution works only for simple non-self-intersecting polygons!
 
     """
-    count = len(polygon)
-    if polygon[0].isclose(polygon[-1]):
-        count -= 1
-    if count < 3:
-        return True
+    if len(polygon) < 3:
+        return False
 
     signs: List[int] = []
-    for i, p0 in enumerate(polygon[:count]):
-        p1 = polygon[(i + 1) % count]
-        p2 = polygon[(i + 2) % count]
-        det = (p1 - p0).det(p2 - p1)
+    prev = polygon[-1]
+    prev_prev = polygon[-2]
+    for vertex in polygon:
+        det = (prev - vertex).det(prev_prev - prev)
         # Skip colinear or coincident vertices
         if abs(det) >= epsilon:
             signs.append(-1 if det < 0.0 else +1)
+        prev_prev = prev
+        prev = vertex
 
     if signs:
         # Do all determinants have the same sign?

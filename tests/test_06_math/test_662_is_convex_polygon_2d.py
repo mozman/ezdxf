@@ -6,28 +6,56 @@ from ezdxf.render import forms
 from ezdxf.math import Vec2, is_convex_polygon_2d
 
 
-def test_simple_triangle():
+def test_open_triangle():
     polygon = Vec2.list([(0, 0), (1, 0), (1, 1)])
     assert is_convex_polygon_2d(polygon) is True
     polygon.reverse()
     assert is_convex_polygon_2d(polygon) is True
 
 
-def test_simple_square():
+def test_closed_triangle():
+    polygon = Vec2.list([(0, 0), (1, 0), (1, 1), (0, 0)])
+    assert is_convex_polygon_2d(polygon) is True
+    polygon.reverse()
+    assert is_convex_polygon_2d(polygon) is True
+
+
+def test_open_square():
     polygon = Vec2.list([(0, 0), (1, 0), (1, 1), (0, 1)])
     assert is_convex_polygon_2d(polygon) is True
     polygon.reverse()
     assert is_convex_polygon_2d(polygon) is True
 
 
-def test_some_colinear_vertices():
+def test_closed_square():
+    polygon = Vec2.list([(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)])
+    assert is_convex_polygon_2d(polygon) is True
+    polygon.reverse()
+    assert is_convex_polygon_2d(polygon) is True
+
+
+@pytest.mark.parametrize(
+    "polygon",
+    [
+        Vec2.list([(0, 0)]),
+        Vec2.list([(0, 0), (1, 0)]),
+        Vec2.list([(0, 0), (1, 0), (0, 0)]),
+    ],
+)
+def test_irregular_polygons(polygon):
+    assert is_convex_polygon_2d(polygon) is False
+    polygon.reverse()
+    assert is_convex_polygon_2d(polygon) is False
+
+
+def test_two_colinear_edges():
     polygon = Vec2.list([(0, 0), (1, 0), (2, 0), (0, 1)])
     assert is_convex_polygon_2d(polygon) is True
     polygon.reverse()
     assert is_convex_polygon_2d(polygon) is True
 
 
-def test_all_colinear_vertices():
+def test_all_colinear_edges():
     polygon = Vec2.list([(0, 0), (1, 0), (2, 0), (3, 0)])
     assert is_convex_polygon_2d(polygon) is False
     polygon.reverse()
