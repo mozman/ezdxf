@@ -41,12 +41,14 @@ def ear_clipping_2d(
     # [0] -> [-2] -> [-1], where [0] == [-1]
     if polygon[0].isclose(polygon[-1]):
         polygon.pop()
+
+    point_count = len(polygon)
+    if point_count < 3:
+        return
+
     if _is_clockwise(polygon):
         polygon.reverse()
 
-    point_count = len(polygon)
-    if len(polygon) < 3:
-        return
     # "simple" polygons are a requirement, see algorithm description:
     # https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
     if point_count == 3:
@@ -103,13 +105,11 @@ def ear_clipping_2d(
 
 
 def _is_clockwise(polygon: List[Vec2]) -> bool:
+    # fastest by profiling:
     s = 0.0
-    polygon_count = len(polygon)
-    for i in range(polygon_count):
-        point = polygon[i]
-        point2 = polygon[(i + 1) % polygon_count]
+    for point, point2 in zip(polygon, polygon[1:] + [polygon[0]]):
         s += (point2.x - point.x) * (point2.y + point.y)
-    return s > 0
+    return s > 0.0
 
 
 def _is_convex(a: Vec2, b: Vec2, c: Vec2) -> bool:
