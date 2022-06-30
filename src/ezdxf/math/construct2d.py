@@ -28,6 +28,7 @@ __all__ = [
     "closest_point",
     "convex_hull_2d",
     "distance_point_line_2d",
+    "is_convex_polygon_2d",
     "is_point_on_line_2d",
     "is_point_in_polygon_2d",
     "is_point_left_of_line",
@@ -394,3 +395,32 @@ def has_matrix_2d_stretching(m: Matrix44) -> bool:
     ux = m.transform_direction(X_AXIS)
     uy = m.transform_direction(Y_AXIS)
     return not math.isclose(ux.magnitude_square, uy.magnitude_square)
+
+
+def is_convex_polygon_2d(polygon: List[Vec2], epsilon=1e-6) -> bool:
+    """Returns ``True`` if the 2D `polygon` is convex. The orientation
+    (clockwise or counter-clockwise) of the polygon is not important.
+
+    This solution works only for simple non-self-intersecting polygons!
+
+    """
+    count = len(polygon)
+    if polygon[0].isclose(polygon[-1]):
+        count -= 1
+    if count < 3:
+        return True
+
+    signs: List[int] = []
+    for i, p0 in enumerate(polygon[:count]):
+        p1 = polygon[(i + 1) % count]
+        p2 = polygon[(i + 2) % count]
+        det = (p1 - p0).det(p2 - p1)
+        # Skip colinear or coincident vertices
+        if abs(det) >= epsilon:
+            signs.append(-1 if det < 0.0 else +1)
+
+    if signs:
+        # Do all determinants have the same sign?
+        m = signs[0]
+        return all(m == s for s in signs)
+    return False
