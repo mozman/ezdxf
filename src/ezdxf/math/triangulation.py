@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Iterable, Iterator, List, Tuple, Sequence
 import math
 import sys
-from ezdxf.math import Vec2, UVec, Vec3
+from ezdxf.math import Vec2, UVec, Vec3, has_clockwise_orientation
 
 
 EPSILON = math.sqrt(sys.float_info.epsilon)
@@ -46,7 +46,7 @@ def ear_clipping_2d(
     if point_count < 3:
         return
 
-    if _is_clockwise(polygon):
+    if has_clockwise_orientation(polygon):
         polygon.reverse()
 
     # "simple" polygons are a requirement, see algorithm description:
@@ -97,14 +97,6 @@ def ear_clipping_2d(
                         ear_vertices.append(p)
                 elif p in ear_vertices:
                     ear_vertices.remove(p)
-
-
-def _is_clockwise(polygon: List[Vec2]) -> bool:
-    # fastest by profiling:
-    s = 0.0
-    for point, point2 in zip(polygon, polygon[1:] + [polygon[0]]):
-        s += (point2.x - point.x) * (point2.y + point.y)
-    return s > 0.0
 
 
 def _is_convex(a: Vec2, b: Vec2, c: Vec2) -> bool:
