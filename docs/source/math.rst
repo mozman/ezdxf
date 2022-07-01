@@ -44,38 +44,36 @@ Bulge Related Functions
 
     Description of the :ref:`bulge value`.
 
+.. autofunction:: arc_to_bulge
+
+.. autofunction:: bulge_3_points
+
 .. autofunction:: bulge_center
 
 .. autofunction:: bulge_radius
 
-.. autofunction:: arc_to_bulge
-
 .. autofunction:: bulge_to_arc
-
-.. autofunction:: bulge_3_points
 
 2D Functions
 ============
 
-.. autofunction:: distance_point_line_2d
-
-.. autofunction:: point_to_line_relation
-
-.. autofunction:: is_point_on_line_2d
-
-.. autofunction:: is_point_left_of_line
-
-.. autofunction:: is_point_in_polygon_2d
+.. autofunction:: clip_polygon_2d
 
 .. autofunction:: convex_hull_2d
 
-.. autofunction:: intersection_line_line_2d
+.. autofunction:: distance_point_line_2d
 
 .. autofunction:: intersect_polylines_2d
 
-.. autofunction:: rytz_axis_construction
+.. autofunction:: intersection_line_line_2d
 
-.. autofunction:: clip_polygon_2d
+.. autofunction:: is_convex_polygon_2d
+
+.. autofunction:: is_point_in_polygon_2d
+
+.. autofunction:: is_point_left_of_line
+
+.. autofunction:: is_point_on_line_2d
 
 .. autofunction:: offset_vertices_2d
 
@@ -95,6 +93,10 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. image:: gfx/offset_vertices_2d_2.png
 
+.. autofunction:: point_to_line_relation
+
+.. autofunction:: rytz_axis_construction
+
 3D Functions
 ============
 
@@ -106,35 +108,27 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: basic_transformation
 
-.. autofunction:: normal_vector_3p
-
-.. autofunction:: safe_normal_vector
-
-.. autofunction:: linear_vertex_spacing
-
 .. autofunction:: best_fit_normal
 
-.. autofunction:: is_planar_face
+.. autofunction:: bezier_to_bspline
 
-.. autofunction:: subdivide_face
+.. autofunction:: closed_uniform_bspline
 
-.. autofunction:: subdivide_ngons
+.. autofunction:: cubic_bezier_from_3p
+
+.. autofunction:: cubic_bezier_from_arc
+
+.. autofunction:: cubic_bezier_from_ellipse
+
+.. autofunction:: cubic_bezier_interpolation
+
+.. autofunction:: dbscan
 
 .. autofunction:: distance_point_line_3d
 
-.. autofunction:: intersection_ray_ray_3d
-
-.. autofunction:: intersection_line_line_3d
-
-.. autofunction:: intersection_ray_polygon_3d
-
-.. autofunction:: intersection_line_polygon_3d
-
-.. autofunction:: intersect_polylines_3d
+.. autofunction:: estimate_end_tangent_magnitude
 
 .. autofunction:: estimate_tangents
-
-.. autofunction:: estimate_end_tangent_magnitude
 
 .. autofunction:: fit_points_to_cad_cv
 
@@ -142,41 +136,49 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: global_bspline_interpolation
 
+.. autofunction:: have_bezier_curves_g1_continuity
+
+.. autofunction:: intersect_polylines_3d
+
+.. autofunction:: intersection_line_line_3d
+
+.. autofunction:: intersection_line_polygon_3d
+
+.. autofunction:: intersection_ray_polygon_3d
+
+.. autofunction:: intersection_ray_ray_3d
+
+.. autofunction:: is_planar_face
+
+.. autofunction:: k_means
+
+.. autofunction:: linear_vertex_spacing
+
 .. autofunction:: local_cubic_bspline_interpolation
+
+.. autofunction:: normal_vector_3p
+
+.. autofunction:: open_uniform_bspline
+
+.. autofunction:: quadratic_bezier_from_3p
+
+.. autofunction:: quadratic_to_cubic_bezier
 
 .. autofunction:: rational_bspline_from_arc
 
 .. autofunction:: rational_bspline_from_ellipse
 
-.. autofunction:: open_uniform_bspline
+.. autofunction:: safe_normal_vector
 
-.. autofunction:: closed_uniform_bspline
-
-.. autofunction:: cubic_bezier_from_arc
-
-.. autofunction:: cubic_bezier_from_ellipse
-
-.. autofunction:: cubic_bezier_from_3p
-
-.. autofunction:: cubic_bezier_interpolation
-
-.. autofunction:: quadratic_to_cubic_bezier
-
-.. autofunction:: quadratic_bezier_from_3p
-
-.. autofunction:: bezier_to_bspline
-
-.. autofunction:: have_bezier_curves_g1_continuity
+.. autofunction:: spherical_envelope
 
 .. autofunction:: split_bezier
 
 .. autofunction:: split_polygon_by_plane
 
-.. autofunction:: spherical_envelope
+.. autofunction:: subdivide_face
 
-.. autofunction:: dbscan
-
-.. autofunction:: k_means
+.. autofunction:: subdivide_ngons
 
 Transformation Classes
 ======================
