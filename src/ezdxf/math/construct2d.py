@@ -400,9 +400,15 @@ def has_matrix_2d_stretching(m: Matrix44) -> bool:
     return not math.isclose(ux.magnitude_square, uy.magnitude_square)
 
 
-def is_convex_polygon_2d(polygon: List[Vec2], epsilon=1e-6) -> bool:
-    """Returns ``True`` if the 2D `polygon` is convex. The orientation
-    (clockwise or counter-clockwise) of the polygon is not important.
+def is_convex_polygon_2d(
+    polygon: List[Vec2], *, strict=False, epsilon=1e-6
+) -> bool:
+    """Returns ``True`` if the 2D `polygon` is convex. This function works with
+    open and closed polygons and clockwise or counter-clockwise vertex
+    orientation.
+    Coincident vertices will always be skipped and if argument `strict`
+    is ``True``, polygons with collinear vertices are not considered as
+    convex.
 
     This solution works only for simple non-self-intersecting polygons!
 
@@ -414,10 +420,14 @@ def is_convex_polygon_2d(polygon: List[Vec2], epsilon=1e-6) -> bool:
     prev = polygon[-1]
     prev_prev = polygon[-2]
     for vertex in polygon:
+        if vertex.isclose(prev):  # skip coincident vertices
+            continue
+
         det = (prev - vertex).det(prev_prev - prev)
-        # Skip collinear or coincident vertices
         if abs(det) >= epsilon:
             signs.append(-1 if det < 0.0 else +1)
+        elif strict:  # collinear vertices
+            return False
         prev_prev = prev
         prev = vertex
 

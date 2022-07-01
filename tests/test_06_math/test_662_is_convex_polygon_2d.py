@@ -55,6 +55,13 @@ def test_two_colinear_edges():
     assert is_convex_polygon_2d(polygon) is True
 
 
+def test_strict_mode_for_two_colinear_edges():
+    polygon = Vec2.list([(0, 0), (1, 0), (2, 0), (0, 1)])
+    assert is_convex_polygon_2d(polygon, strict=True) is False
+    polygon.reverse()
+    assert is_convex_polygon_2d(polygon, strict=True) is False
+
+
 def test_all_colinear_edges():
     polygon = Vec2.list([(0, 0), (1, 0), (2, 0), (3, 0)])
     assert is_convex_polygon_2d(polygon) is False
