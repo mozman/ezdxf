@@ -1,7 +1,7 @@
 # Copyright (c) 2010-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import Iterable, List, Union, Tuple
+from typing import Iterable, List, Tuple, Sequence
 
 from functools import partial
 import math
@@ -307,13 +307,14 @@ def distance_point_line_2d(point: Vec2, start: Vec2, end: Vec2) -> float:
 # Candidate for a faster Cython implementation:
 # is also used for testing 3D ray and line intersection with polygon
 def is_point_in_polygon_2d(
-    point: Union[Vec2, Vec3], polygon: Iterable[Vec2], abs_tol=TOLERANCE
+    point: Vec2, polygon: Sequence[Vec2], abs_tol=TOLERANCE
 ) -> int:
-    """Test if `point` is inside `polygon`.
+    """Test if `point` is inside `polygon`. Returns ``-1`` (for outside) if the
+    polygon is degenerated, no exception will be raised.
 
     Args:
         point: 2D point to test as :class:`Vec2`
-        polygon: iterable of 2D points as :class:`Vec2`
+        polygon: sequence of 2D points as :class:`Vec2`
         abs_tol: tolerance for distance check
 
     Returns:
@@ -322,18 +323,18 @@ def is_point_in_polygon_2d(
     """
     # Source: http://www.faqs.org/faqs/graphics/algorithms-faq/
     # Subject 2.03: How do I find if a point lies within a polygon?
-    vertices = list(polygon)  # shallow copy, because list will be modified
-    if not vertices[0].isclose(vertices[-1]):
-        vertices.append(vertices[0])
-    if len(vertices) < 4:  # 3+1 because first point == last point
-        raise ValueError("At least 3 polygon points required.")
+    if not polygon:  # empty polygon
+        return -1
+
+    if polygon[0].isclose(polygon[-1]):  # open polygon is required
+        polygon = polygon[:-1]
+    if len(polygon) < 3:
+        return -1
     x = point.x
     y = point.y
-    # ignore z-axis of Vec3()
     inside = False
-    for i in range(len(vertices) - 1):
-        x1, y1 = vertices[i]
-        x2, y2 = vertices[i + 1]
+    x1, y1 = polygon[-1]
+    for x2, y2 in polygon:
         # is point on polygon boundary line:
         # is point in x-range of line
         a, b = (x2, x1) if x2 < x1 else (x1, x2)
@@ -348,6 +349,8 @@ def is_point_in_polygon_2d(
             x < (x2 - x1) * (y - y1) / (y2 - y1) + x1
         ):
             inside = not inside
+        x1 = x2
+        y1 = y2
     if inside:
         return 1
     else:
@@ -412,7 +415,7 @@ def is_convex_polygon_2d(polygon: List[Vec2], epsilon=1e-6) -> bool:
     prev_prev = polygon[-2]
     for vertex in polygon:
         det = (prev - vertex).det(prev_prev - prev)
-        # Skip colinear or coincident vertices
+        # Skip collinear or coincident vertices
         if abs(det) >= epsilon:
             signs.append(-1 if det < 0.0 else +1)
         prev_prev = prev

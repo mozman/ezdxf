@@ -564,7 +564,7 @@ def _is_intersection_point_inside_3d_polygon(
     ocs = OCS(normal)
     ocs_vertices = Vec2.list(ocs.points_from_wcs(vertices))
     state = is_point_in_polygon_2d(
-        ocs.from_wcs(ip), ocs_vertices, abs_tol=abs_tol
+        Vec2(ocs.from_wcs(ip)), ocs_vertices, abs_tol=abs_tol
     )
     if state > 0 or (boundary and state == 0):
         return ip
