@@ -368,13 +368,13 @@ def circle_radius_3p(a: Vec3, b: Vec3, c: Vec3) -> float:
 
 def area(vertices: Iterable[UVec]) -> float:
     """Returns the area of a polygon, returns the projected area in the
-    xy-plane for 3D vertices.
+    xy-plane for any vertices (z-axis will be ignored).
     """
-    _vertices = Vec3.list(vertices)
+    _vertices = Vec2.list(vertices)
     if len(_vertices) < 3:
-        raise ValueError("At least 3 vertices required.")
+        return 0.0
 
-    # Close polygon:
+    # close polygon:
     if not _vertices[0].isclose(_vertices[-1]):
         _vertices.append(_vertices[0])
 
@@ -383,7 +383,7 @@ def area(vertices: Iterable[UVec]) -> float:
             (p1.x * p2.y - p1.y * p2.x)
             for p1, p2 in zip(_vertices, _vertices[1:])
         )
-        / 2
+        * 0.5
     )
 
 
