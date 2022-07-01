@@ -19,8 +19,8 @@ DEG_ABS_TOL = 1e-13
 
 
 def has_clockwise_orientation(vertices: Iterable[UVec]) -> bool:
-    """Returns True if 2D `vertices` have clockwise orientation. Ignores
-    z-axis of all vertices.
+    """Returns ``True`` if the given 2D `vertices` have clockwise orientation.
+    Ignores the z-axis of all vertices.
 
     Args:
         vertices: iterable of :class:`Vec2` compatible objects
@@ -33,7 +33,7 @@ def has_clockwise_orientation(vertices: Iterable[UVec]) -> bool:
     if len(vertices) < 3:
         raise ValueError("At least 3 vertices required.")
 
-    # Close polygon:
+    # close polygon:
     if not vertices[0].isclose(vertices[-1]):
         vertices.append(vertices[0])
 
@@ -42,7 +42,7 @@ def has_clockwise_orientation(vertices: Iterable[UVec]) -> bool:
             (p2.x - p1.x) * (p2.y + p1.y)
             for p1, p2 in zip(vertices, vertices[1:])
         )
-        > 0
+        > 0.0
     )
 
 
