@@ -24,6 +24,7 @@ class TextVAlign(IntEnum):
     TOP = const.TOP
 
 
+# noinspection PyArgumentList
 class TextEntityAlignment(Enum):
     """Text alignment enum for the :class:`~ezdxf.entities.Text`,
     :class:`~ezdxf.entities.Attrib` and :class:`~ezdxf.entities.AttDef`
