@@ -926,7 +926,7 @@ class MultiLeaderBuilder(abc.ABC):
         """Set the properties how to connect the leader line to the content.
 
         The landing gap is the space between the content and the start of the
-        the leader line. The "dogleg" is the first line segment of the leader
+        leader line. The "dogleg" is the first line segment of the leader
         in the "horizontal" direction of the content.
 
         """

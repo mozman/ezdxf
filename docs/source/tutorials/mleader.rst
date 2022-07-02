@@ -223,7 +223,7 @@ enum :class:`ezdxf.render.VerticalConnection`:
     - center_overline (not recommended)
 
 The connection type for each side can be set by the method
-:meth:`ezdxf.render.MultiLeaderBuilder.set_connection_types`, the default for all
+:meth:`~ezdxf.render.MultiLeaderBuilder.set_connection_types`, the default for all
 sides is `by_style`:
 
 .. literalinclude:: src/mleader/mtext_content.py
@@ -234,14 +234,25 @@ sides is `by_style`:
 .. hint::
 
     As shown in the quick draw section using connection types including underlines
-    or overlines do not render well in AutoCAD/BricsCAD because of the diverging
-    text measurements of `matplotlib`, it's not recommended to use any
+    or overlines do not render well in AutoCAD/BricsCAD because of the different
+    text measurement of `matplotlib`, therefore it's not recommended to use any
     of these connection types when creating MULTILEADERS by `ezdxf`.
 
 MTEXT Alignment
 ~~~~~~~~~~~~~~~
 
-TODO
+In contrast to the standalone MTEXT entity supports the MTEXT
+content entity only three text alignments defined by the enum
+:class:`ezdxf.render.TextAlignment`.
+
+    - left
+    - center
+    - right
+
+The MTEXT alignment is set as argument `alignment` of the
+:meth:`~ezdxf.render.MultiLeaderBuilder.set_content` method and the alignment
+point is the insert point of the :meth:`~ezdxf.render.MultiLeaderBuilder.build`
+method.
 
 Create BLOCK Content
 --------------------

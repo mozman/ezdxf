@@ -108,6 +108,27 @@ def mtext_content_horizontal_connection_types(filename: str):
     doc.saveas(CWD / filename)
 
 
+def mtext_content_alignment(filename: str):
+    doc = ezdxf.new(setup=True)
+    msp = doc.modelspace()
+    ml_builder = msp.add_multileader_mtext("Standard")
+    ml_builder.set_content(
+        "Line1\nLine1",
+        style="OpenSans",
+        alignment=mleader.TextAlignment.left,  # set MTEXT alignment!
+    )
+    ml_builder.add_leader_line(mleader.ConnectionSide.left, [Vec2(-20, -15)])
+    ml_builder.add_leader_line(mleader.ConnectionSide.right, [Vec2(40, -15)])
+    ml_builder.set_connection_types(
+        left=mleader.HorizontalConnection.middle_of_top_line,
+        right=mleader.HorizontalConnection.middle_of_bottom_line,
+    )
+    ml_builder.build(insert=Vec2(5, 0))
+
+    doc.set_modelspace_vport(60, center=(10, 5))
+    doc.saveas(CWD / filename)
+
+
 if __name__ == "__main__":
     mtext_content_horizontal_left("mtext_content_horizontal_left.dxf")
     mtext_content_horizontal_right("mtext_content_horizontal_right.dxf")
