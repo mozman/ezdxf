@@ -155,7 +155,7 @@ This example shows a leader attached to the right side and the MTEXT aligned
 to the right side.
 
 .. literalinclude:: src/mleader/mtext_content.py
-    :lines: 46-53
+    :lines: 43-50
 
 .. image:: gfx/mleader_mtext_right.png
 
@@ -166,14 +166,14 @@ different text size calculations from AutoCAD/BricsCAD and Matplotlib.
 The longer the text, the greater the error.
 
 .. literalinclude:: src/mleader/mtext_content.py
-    :lines: 62-70
+    :lines: 59-67
 
 .. image:: gfx/mleader_mtext_left_right_1.png
 
 A centered MTEXT alignment gives a more even result.
 
 .. literalinclude:: src/mleader/mtext_content.py
-    :lines: 80-84
+    :lines: 76-84
 
 .. image:: gfx/mleader_mtext_left_right_2.png
 
@@ -186,7 +186,57 @@ on the bounding box of the MTEXT content.
 MTEXT Connection Types
 ~~~~~~~~~~~~~~~~~~~~~~
 
-TODO
+There are four connection sides defined by the enum
+:class:`ezdxf.render.ConnectionSide`:
+
+    - left
+    - right
+    - top
+    - bottom
+
+The MultiLeader entity supports as the name says multiple leader lines, but all
+have to have a horizontal (left/right) connection side or a vertical (top/bottom)
+connection side, it's not possible to mix left/right and top/bottom connection
+sides. This is determined by the DXF format.
+
+There are different connection types available for the horizontal and the
+vertical connection sides. All leaders connecting to the same side have the
+same connection type. The horizontal connection sides support following
+connection types, defined by the enum :class:`ezdxf.render.HorizontalConnection`:
+
+    - by_style
+    - top_of_top_line
+    - middle_of_top_line
+    - middle_of_text
+    - middle_of_bottom_line
+    - bottom_of_bottom_line
+    - bottom_of_bottom_line_underline (not recommended)
+    - bottom_of_top_line_underline (not recommended)
+    - bottom_of_top_line
+    - bottom_of_top_line_underline_all (not recommended)
+
+The vertical connection sides support following connection types, defined by the
+enum :class:`ezdxf.render.VerticalConnection`:
+
+    - by_style
+    - center
+    - center_overline (not recommended)
+
+The connection type for each side can be set by the method
+:meth:`ezdxf.render.MultiLeaderBuilder.set_connection_types`, the default for all
+sides is `by_style`:
+
+.. literalinclude:: src/mleader/mtext_content.py
+    :lines: 101-104
+
+.. image:: gfx/mleader_mtext_horiz_connection_types.png
+
+.. hint::
+
+    As shown in the quick draw section using connection types including underlines
+    or overlines do not render well in AutoCAD/BricsCAD because of the diverging
+    text measurements of `matplotlib`, it's not recommended to use any
+    of these connection types when creating MULTILEADERS by `ezdxf`.
 
 MTEXT Alignment
 ~~~~~~~~~~~~~~~

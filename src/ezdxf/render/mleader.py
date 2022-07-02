@@ -739,6 +739,7 @@ class LeaderType(enum.IntEnum):
     splines = 2
 
 
+# noinspection PyArgumentList
 class ConnectionSide(enum.Enum):
     """
     The leader connection side.
