@@ -1038,12 +1038,10 @@ class MultiLeaderBuilder(abc.ABC):
         supported by the builder classes.
 
         """
-        if size:
-            self._multileader.dxf.arrow_head_size = size
-        else:
-            self._multileader.dxf.arrow_head_size = (
-                self._mleader_style.dxf.arrow_head_size
-            )
+        if size == 0.0:
+            size = self._mleader_style.dxf.arrow_head_size
+        self._multileader.dxf.arrow_head_size = size
+        self.context.arrow_head_size = size
         if name:
             self._multileader.dxf.arrow_head_handle = ARROWS.arrow_handle(
                 self._doc.blocks, name
