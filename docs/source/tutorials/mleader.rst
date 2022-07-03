@@ -21,8 +21,17 @@ uncharted territory.
 
 The rendering result of the MULTILEADER entity is highly dependent on the CAD
 application. The MULTILEADER entity does not have a pre-rendered anonymous
-block of DXF primitives like the DIMENSION entities, so results may vary
-from CAD application to CAD application.
+block of DXF primitives like all DIMENSION entities, so results may vary
+from CAD application to CAD application. The general support for this entity is
+only good in Autodesk products other CAD applications often struggle when
+rendering MULTILEADERS, even my preferred testing application BricsCAD has
+rendering issues.
+
+.. important::
+
+    MULTILEADER support has flaws in many CAD applications except Autodesk
+    products!
+
 
 .. seealso::
 
@@ -257,27 +266,144 @@ method.
 Create BLOCK Content
 --------------------
 
-TODO
+Full Python script: `block_content.py`_
+
+This section shows how to create a MULTILEADER entity with BLOCK content
+the manual way with full control over all settings.
+
+The BLOCK content consist of a BLOCK layout and optional ATTDEF entities which
+defines the location and DXF attributes of dynamically created ATTRIB entities.
+
+Create the BLOCK content, the full :func:`create_square_block` function
+can be found in the `block_content.py`_ script.
+
+.. literalinclude:: src/mleader/block_content.py
+    :lines: 71-73
+
+Create the MULTILEADER and set the content:
+
+.. literalinclude:: src/mleader/block_content.py
+    :lines: 74-77
+
+Set the BLOCK attribute content as text:
+
+.. literalinclude:: src/mleader/block_content.py
+    :lines: 78-79
+
+Add some leader lines to the left and right side of the BLOCK:
+
+Construction plane of the entity is defined by a render UCS.
+The leader lines vertices are expected in render UCS coordinates, which
+means relative to the UCS origin and this example shows the simple case
+where the UCS is the WCS which is also the default setting.
+
+.. literalinclude:: src/mleader/block_content.py
+    :lines: 81-84
+
+Last step is to build the final MULTILEADER entity.
+This example uses the alignment type `insertion_point` where the insert point of
+the :meth:`build` method is the base point of the BLOCK:
+
+.. literalinclude:: src/mleader/block_content.py
+    :lines: 86
+
+.. image:: gfx/mleader_block_horiz_1.png
+
+The result is shown in BricsCAD as expected, although BricsCAD shows
+"Center extents" as attachment type in the properties dialog instead of the
+correct attachment type "Insertion point".
 
 BLOCK Connection Types
 ~~~~~~~~~~~~~~~~~~~~~~
 
-TODO
+There are four connection sides defined by the enum
+:class:`ezdxf.render.ConnectionSide`:
+
+    - left
+    - right
+    - top
+    - bottom
+
+The connection point for leader lines is always the center of the side of the
+block bounding box the leader is connected to and has the same limitation as
+for the MTEXT content, it's not possible to mix the connection sides left/right
+and top/bottom.
+
+The connection side is set when adding the leader line by the
+:meth:`~ezdxf.render.MultiLeaderBuilder.add_leader_line` method.
+
+Unfortunately BricsCAD has an error in version 22.2.03 and renders all connection
+types as left/right, this is top/bottom connection shown in Autodesk TrueView 2022:
+
+.. image:: gfx/mleader_block_vertical_1.png
+
+
+The top/bottom connection type does not support the "dog leg" feature.
 
 BLOCK Alignment
 ~~~~~~~~~~~~~~~
 
-TODO
+There are two alignments types, defined by the enum :class:`ezdxf.render.BlockAlignment`
+
+    - center_extents
+    - insertion_point
+
+The alignment is set by the :meth:`~ezdxf.render.MultiLeaderBlockBuilder.set_content` method.
+
+The alignment type `center_extent` inserts the BLOCK with the center of the
+bounding box at the insert point of the :meth:`~ezdxf.render.MultiLeaderBuilder.build`
+method. The insert point is (5, 2) in this example:
+
+.. image:: gfx/mleader_block_horiz_2.png
+
+The same MULTILEADER with alignment type `insert_point`:
+
+.. image:: gfx/mleader_block_horiz_1.png
 
 BLOCK Scaling
 ~~~~~~~~~~~~~
 
-TODO
+The BLOCK content can be scaled independently from the overall scaling of the
+MULTILEADER entity:
+
+The block scaling factor is set by the :meth:`~ezdxf.render.MultiLeaderBlockBuilder.set_content` method::
+
+    ml_builder.set_content(
+        name=block.name, scale=2.0, alignment=mleader.BlockAlignment.center_extents
+    )
+
+
+This is the first example with a block scaling factor of 2. The BLOCK and the
+attached ATTRIB entities are scaled but not the arrows.
+
+.. image:: gfx/mleader_block_horiz_3.png
+
+BLOCK Rotation
+~~~~~~~~~~~~~~
+
+The rotation around the render UCS z-axis in degrees is applied by the
+:meth:`~ezdxf.render.MultiLeaderBuilder.build` method::
+
+    ml_builder.build(insert=Vec2(5, 2), rotation=30)
+
+This is the first example with a rotation of 30 degrees. The BLOCK, the
+attached ATTRIB entities and the last connection lines ("dog leg") are rotated.
+
+.. image:: gfx/mleader_block_rotated.png
 
 BLOCK Attributes
 ~~~~~~~~~~~~~~~~
 
-TODO
+BLOCK attributes are defined as ATTDEF entities in the BLOCK layout. This
+ATTDEF entities will be replaced by ATTRIB entities at the rendering process
+of the CAD application.
+Only the text content and the text width factor can be changed for each
+MULTILEADER entity individually by the :meth:`~ezdxf.render.MultiLeaderBlockBuilder.set_attribute`
+method. The ATTDEF is addressed by it's DXF `tag` attribute::
+
+    ml_builder.set_attribute("ONE", "Data1")
+    ml_builder.set_attribute("TWO", "Data2")
+
 
 Leader Properties
 -----------------
@@ -321,3 +447,4 @@ TODO
 
 .. _mtext_quick_leader.py: https://github.com/mozman/ezdxf/blob/master/docs/source/tutorials/src/mleader/mtext_quick_leader.py
 .. _mtext_content.py: https://github.com/mozman/ezdxf/blob/master/docs/source/tutorials/src/mleader/mtext_content.py
+.. _block_content.py: https://github.com/mozman/ezdxf/blob/master/docs/source/tutorials/src/mleader/block_content.py

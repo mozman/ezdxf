@@ -22,9 +22,9 @@ logging.basicConfig(level="WARNING")
 # ========================================
 # Setup your preferred output directory
 # ========================================
-OUTDIR = pathlib.Path("~/Desktop/Outbox").expanduser()
-if not OUTDIR.exists():
-    OUTDIR = pathlib.Path()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path()
 
 DXFVERSION = "R2013"
 
@@ -49,7 +49,7 @@ def simple_mtext_content_horizontal(name: str):
     ml_builder.build(insert=Vec2(5, 0))
 
     doc.set_modelspace_vport(60, center=(10, 5))
-    doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"{name}_{DXFVERSION}.dxf")
 
 
 def all_mtext_content_horizontal(name: str):
@@ -113,7 +113,7 @@ def all_mtext_content_horizontal(name: str):
 
     height = 600
     doc.set_modelspace_vport(height, center=(200, height / 2))
-    doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"{name}_{DXFVERSION}.dxf")
 
 
 def simple_mtext_content_vertical(name: str):
@@ -143,7 +143,7 @@ def simple_mtext_content_vertical(name: str):
         dxfattribs=GfxAttribs(color=colors.RED),
     )
     doc.set_modelspace_vport(60, center=(10, 5))
-    doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"{name}_{DXFVERSION}.dxf")
 
 
 def quick_mtext_horizontal(name: str):
@@ -165,7 +165,7 @@ def quick_mtext_horizontal(name: str):
         )
 
     doc.set_modelspace_vport(60, center=(10, 5))
-    doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"{name}_{DXFVERSION}.dxf")
 
 
 def quick_mtext_vertical(name: str):
@@ -188,7 +188,7 @@ def quick_mtext_vertical(name: str):
         )
 
     doc.set_modelspace_vport(60, center=(10, 5))
-    doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"{name}_{DXFVERSION}.dxf")
 
 
 def create_block(
@@ -240,7 +240,7 @@ def block_content_horizontal(
     ml_builder.set_attribute("ONE", "Data1")
     ml_builder.set_attribute("TWO", "Data2")
 
-    # Construction plane of the entity is defined by an render UCS.
+    # Construction plane of the entity is defined by a render UCS.
     # The default render UCS is the WCS.
     # The leader lines vertices are expected in render UCS coordinates, which
     # means relative to the UCS origin!
@@ -261,7 +261,7 @@ def block_content_horizontal(
     doc.set_modelspace_vport(
         construction_box.width, center=construction_box.center
     )
-    doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"{name}_{DXFVERSION}.dxf")
 
 
 def block_content_vertical(
@@ -301,17 +301,17 @@ def block_content_vertical(
     doc.set_modelspace_vport(
         construction_box.width, center=construction_box.center
     )
-    doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"{name}_{DXFVERSION}.dxf")
 
 
 def make_template(name: str):
     doc = ezdxf.new(DXFVERSION, setup=True)
     create_block(doc, size=8.0, margin=0.25)
-    doc.saveas(OUTDIR / f"{name}_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"{name}_{DXFVERSION}.dxf")
 
 
 if __name__ == "__main__":
-    make_template("brics_block")
+    # make_template("brics_block")
     # quick_mtext_horizontal("mleader_quick_mtext_horizontal")
     # quick_mtext_vertical("mleader_quick_mtext_vertical")
     # simple_mtext_content_horizontal("mleader_simple_mtext_horizontal")
