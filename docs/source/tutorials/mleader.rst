@@ -457,9 +457,8 @@ leader::
 
 .. image:: gfx/mleader_spline_leader.png
 
-
-Spline leader and polyline leader can not be mixed in a single MULTILEADER
-entity.
+The spline leader has no "dogleg" and spline leaders and polyline leaders can
+not be mixed in a single MULTILEADER entity.
 
 The leader type is set by the :meth:`~ezdxf.render.MultiLeaderBuilder.set_leader_properties`
 method.
@@ -473,7 +472,7 @@ The :class:`~ezdxf.render.LeaderType` enum:
 Line Styling
 ~~~~~~~~~~~~
 
-The leader color linetype and lineweight is set by the
+The leader color, linetype and lineweight is set by the
 :meth:`~ezdxf.render.MultiLeaderBuilder.set_leader_properties` method::
 
     ml_builder.set_leader_properties(
