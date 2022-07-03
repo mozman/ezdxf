@@ -8,6 +8,12 @@ Tutorial for MultiLeader
 A multileader object typically consists of an arrowhead, a horizontal landing
 (a.k.a. "dogleg"), a leader line or curve, and either a MTEXT object or a BLOCK.
 
+Factory methods of the :class:`~ezdxf.layouts.BaseLayout` class to create new
+:class:`~ezdxf.entities.MultiLeader` entities:
+
+    - :meth:`~ezdxf.layouts.BaseLayout.add_multileader_mtext`
+    - :meth:`~ezdxf.layouts.BaseLayout.add_multileader_block`
+
 Because of the complexity of the MULTILEADER entity, the factory method
 :meth:`~ezdxf.layouts.BaseLayout.add_multileader_mtext` returns a
 :class:`~ezdxf.render.MultiLeaderMTextBuilder` instance to build a new entity
@@ -156,7 +162,7 @@ MTEXT content.
 .. literalinclude:: src/mleader/mtext_content.py
     :lines: 34
 
-The "dog leg" settings are defined by the MLEADERSTYLE "Standard".
+The "dogleg" settings are defined by the MLEADERSTYLE "Standard".
 
 .. image:: gfx/mleader_mtext_left.png
 
@@ -338,7 +344,7 @@ types as left/right, this is top/bottom connection shown in Autodesk TrueView 20
 .. image:: gfx/mleader_block_vertical_1.png
 
 
-The top/bottom connection type does not support the "dog leg" feature.
+The top/bottom connection type does not support the "dogleg" feature.
 
 BLOCK Alignment
 ~~~~~~~~~~~~~~~
@@ -387,7 +393,7 @@ The rotation around the render UCS z-axis in degrees is applied by the
     ml_builder.build(insert=Vec2(5, 2), rotation=30)
 
 This is the first example with a rotation of 30 degrees. The BLOCK, the
-attached ATTRIB entities and the last connection lines ("dog leg") are rotated.
+attached ATTRIB entities and the last connection lines ("dogleg") are rotated.
 
 .. image:: gfx/mleader_block_rotated.png
 
@@ -408,42 +414,119 @@ method. The ATTDEF is addressed by it's DXF `tag` attribute::
 Leader Properties
 -----------------
 
-TODO
+"Dogleg" Properties
+~~~~~~~~~~~~~~~~~~~
 
-Connection Properties
-~~~~~~~~~~~~~~~~~~~~~
+The "dogleg" is the last line segment from the last leader vertex
+to the MULTILEADER content for polyline leaders.
 
-TODO
+.. image:: gfx/mleader_landing_props.png
+
+The length of the dogleg and the landing gap size is set by the
+:meth:`~ezdxf.render.MultiLeaderBuilder.set_connection_properties`.
 
 Polyline Leader
 ~~~~~~~~~~~~~~~
 
-TODO
+A polygon leader line has only straight line segments and is added by the
+:meth:`~ezdxf.render.MultiLeaderBuilder.add_leader_line`::
+
+    ml_builder.add_leader_line(
+        mleader.ConnectionSide.left,
+        [Vec2(-20, 15), Vec2(-10, 15), Vec2(-15, 11), Vec2(-10, 7)],
+    )
+
+.. image:: gfx/mleader_polyline_leader.png
+
+All leader line vertices have render UCS coordinates and the start- and
+end-vertex of the "dogleg" is calculated automatically.
 
 Spline Leader
 ~~~~~~~~~~~~~
 
-TODO
+A spline leader line has a single curved line as leader line and is also
+added by the :meth:`~ezdxf.render.MultiLeaderBuilder.add_leader_line`.
+This is spline leader has the same vertices as the previous created polyline
+leader::
+
+    ml_builder.set_leader_properties(leader_type=mleader.LeaderType.splines)
+    ml_builder.add_leader_line(
+        mleader.ConnectionSide.left,
+        [Vec2(-20, 15), Vec2(-10, 15), Vec2(-15, 11), Vec2(-10, 7)],
+    )
+
+.. image:: gfx/mleader_spline_leader.png
+
+
+Spline leader and polyline leader can not be mixed in a single MULTILEADER
+entity.
+
+The leader type is set by the :meth:`~ezdxf.render.MultiLeaderBuilder.set_leader_properties`
+method.
+
+The :class:`~ezdxf.render.LeaderType` enum:
+
+    - none
+    - straight_lines
+    - splines
 
 Line Styling
 ~~~~~~~~~~~~
 
-TODO
+The leader color linetype and lineweight is set by the
+:meth:`~ezdxf.render.MultiLeaderBuilder.set_leader_properties` method::
+
+    ml_builder.set_leader_properties(
+        color=colors.MAGENTA,
+        linetype="DASHEDX2",
+        lineweight=70,
+    )
+
+.. image:: gfx/mleader_line_properties.png
+
+All leader lines have the same properties.
 
 Arrowheads
 ~~~~~~~~~~
 
-TODO
+The arrow head is set by the :meth:`~ezdxf.render.MultiLeaderBuilder.set_arrow_properties`
+method::
+
+    from ezdxf.render import ARROWS
+    ml_builder.set_arrow_properties(name=ARROWS.closed_blank, size=8.0)
+
+.. image:: gfx/mleader_arrow.png
+
+All leader lines have the same arrow head and size.
+The available arrow heads are defined in the :attr:`~ezdxf.render.arrows.ARROWS`
+object.
 
 Overall Scaling
 ---------------
 
-TODO
+The overall scaling has to be applied by the
+:meth:`~ezdxf.render.MultiLeaderBuilder.set_overall_scaling` method
+and scales the MTEXT or BLOCK content **and** the arrows.
+
 
 Setup MLEADERSTYLE
 ------------------
 
-TODO
+The :class:`~ezdxf.entities.MLeaderStyle` stores many of the MULTILEADER
+settings but most of them are copied to the MULTILINE entity at initialization.
+So changing the MLEADERSTYLE style afterwards has little to no effect for
+existing MULTILEADER entities.
+
+Create a new MLEADERSTYLE called "MY_STYLE" and set the MTEXT style to "OpenSans"::
+
+    my_style = doc.mleader_styles.duplicate_entry("Standard", "MY_STYLE")
+    my_style.set_mtext_style("OpenSans")
+
+The style for a MULTILEADER is set at the :meth:`~ezdxf.layouts.BaseLayout.add_multileader_mtext`
+and :meth:`~ezdxf.layouts.BaseLayout.add_multileader_block` factory methods.
+
+
+
 
 .. _mtext_quick_leader.py: https://github.com/mozman/ezdxf/blob/master/docs/source/tutorials/src/mleader/mtext_quick_leader.py
 .. _mtext_content.py: https://github.com/mozman/ezdxf/blob/master/docs/source/tutorials/src/mleader/mtext_content.py
