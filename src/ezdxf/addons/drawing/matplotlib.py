@@ -194,8 +194,13 @@ class MatplotlibBackend(Backend):
         font_properties = self.get_font_properties(properties.font)
         assert self.current_entity is not None
         text = prepare_string_for_rendering(text, self.current_entity.dxftype())
+        try:
+            text_path = self._text_renderer.get_text_path(text, font_properties)
+        except (RuntimeError, ValueError):
+            return
+
         transformed_path = _transform_path(
-            self._text_renderer.get_text_path(text, font_properties),
+            text_path,
             Matrix44.scale(
                 self._text_renderer.get_scale(cap_height, font_properties)
             )
@@ -237,7 +242,10 @@ class MatplotlibBackend(Backend):
         )
         text = prepare_string_for_rendering(text, dxftype)
         font_properties = self.get_font_properties(font)
-        path = self._text_renderer.get_text_path(text, font_properties)
+        try:
+            path = self._text_renderer.get_text_path(text, font_properties)
+        except (RuntimeError, ValueError):
+            return 0
         return max(x for x, y in path.vertices) * self._text_renderer.get_scale(
             cap_height, font_properties
         )
