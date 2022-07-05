@@ -173,6 +173,7 @@ class Frontend:
             self.ctx.current_layout_properties = layout_properties
         else:
             self.ctx.set_current_layout(layout)
+        # set background before drawing entities
         self.out.set_background(
             self.ctx.current_layout_properties.background_color
         )

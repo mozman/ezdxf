@@ -63,9 +63,9 @@ def test_draw_layout(msp, basic):
     basic.draw_layout(msp)
     result = basic.out.collector
     assert len(result) == 3
-    assert result[0][0] == "point"
+    assert result[0][0] == "bgcolor"
     assert result[1][0] == "point"
-    assert result[2][0] == "bgcolor"
+    assert result[2][0] == "point"
 
 
 def test_draw_entities(msp, basic):
