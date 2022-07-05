@@ -173,6 +173,9 @@ class Frontend:
             self.ctx.current_layout_properties = layout_properties
         else:
             self.ctx.set_current_layout(layout)
+        self.out.set_background(
+            self.ctx.current_layout_properties.background_color
+        )
         self.parent_stack = []
         handle_mapping = list(layout.get_redraw_order())
         if handle_mapping:
@@ -185,9 +188,6 @@ class Frontend:
                 layout,
                 filter_func=filter_func,
             )
-        self.out.set_background(
-            self.ctx.current_layout_properties.background_color
-        )
         if finalize:
             self.out.finalize()
 
