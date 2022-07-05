@@ -5,7 +5,7 @@ from typing import Iterable, Tuple
 import math
 from ezdxf.math import Vec3, Vec2, Matrix44, BoundingBox
 from ezdxf.addons.drawing.backend import Backend
-from ezdxf.addons.drawing.properties import Properties, hex_to_rgb
+from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color
 
 from ezdxf.tools.fonts import FontFace, FontMeasurements
@@ -41,7 +41,7 @@ class PillowBackend(Backend):
                 represents a size of 1cm x 1cm.
                 If the `image_size` is given the `resolution` is calculated
                 automatically
-            stretch: `False` to adjust image size according the DXF extends
+            stretch: `False` to adjust the image height according the DXF extends
 
         """
         super().__init__()
