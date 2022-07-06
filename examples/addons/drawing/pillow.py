@@ -91,12 +91,18 @@ def main():
     print(f"SIZE: ({extents.size.x:.3f}, {extents.size.y:.3f})")
 
     ctx = RenderContext(doc)
-    out = PillowBackend(
-        extents,
-        image_size=(img_x, img_y),
-        oversampling=args.oversampling,
-        dpi=args.dpi,
-    )
+    try:
+        out = PillowBackend(
+            extents,
+            image_size=(img_x, img_y),
+            oversampling=args.oversampling,
+            dpi=args.dpi,
+        )
+    except ValueError as e:
+        # invalid image size or empty drawing
+        print(str(e))
+        sys.exit(1)
+
     print("drawing model space ...")
     t0 = perf_counter()
     Frontend(ctx, out).draw_layout(layout)

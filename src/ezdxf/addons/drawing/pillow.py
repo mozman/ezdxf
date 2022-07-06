@@ -52,6 +52,8 @@ class PillowBackend(Backend):
         """
         super().__init__()
         self.region = Vec2(region.size)
+        if self.region.x <= 0.0 or self.region.y <= 0.0:
+            raise ValueError("drawing region is empty")
         self.extmin = Vec2(region.extmin)
         self.margin_x = float(margin)
         self.margin_y = float(margin)
@@ -70,6 +72,8 @@ class PillowBackend(Backend):
             self.res_y = resolution
         else:
             img_x, img_y = image_size
+            if img_y < 1:
+                raise ValueError(f"invalid image size: {image_size}")
             img_ratio = img_x / img_y
             region_ratio = self.region.x / self.region.y
             if img_ratio >= region_ratio:  # image fills the height
