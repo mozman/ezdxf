@@ -53,7 +53,8 @@ class PillowBackend(Backend):
         super().__init__()
         self.region = Vec2(region.size)
         self.extmin = Vec2(region.extmin)
-        self.margin = int(margin)
+        self.margin_x = float(margin)
+        self.margin_y = float(margin)
         self.dpi = int(dpi)
         self.oversampling = max(int(oversampling), 1)
         # The lineweight is stored im mm,
@@ -62,22 +63,23 @@ class PillowBackend(Backend):
 
         if image_size is None:
             image_size = (
-                math.ceil(self.region.x * resolution + 2 * self.margin),
-                math.ceil(self.region.y * resolution + 2 * self.margin),
+                math.ceil(self.region.x * resolution + 2.0 * self.margin_x),
+                math.ceil(self.region.y * resolution + 2.0 * self.margin_y),
             )
             self.res_x = resolution
             self.res_y = resolution
         else:
             img_x, img_y = image_size
-            ratio = img_x / img_y
-            if ratio >= 1.0:  # image fills the height
-                self.res_y = (img_y - 2 * margin) / self.region.y
+            img_ratio = img_x / img_y
+            region_ratio = self.region.x / self.region.y
+            if img_ratio >= region_ratio:  # image fills the height
+                self.res_y = (img_y - 2.0 * self.margin_y) / self.region.y
                 self.res_x = self.res_y
-                # todo: adjust extmin to center the image
+                self.margin_x = (img_x - self.res_x * self.region.x) * 0.5
             else:  # image fills the width
-                self.res_x = (img_x - 2 * margin) / self.region.x
+                self.res_x = (img_x - 2 * self.margin_x) / self.region.x
                 self.res_y = self.res_x
-                # todo: adjust extmin to center the image
+                self.margin_y = (img_y - self.res_y * self.region.y) * 0.5
 
         self.image_size = Vec2(image_size)
         self.bg_color: Color = "#000000"
@@ -111,8 +113,8 @@ class PillowBackend(Backend):
         # with (0,0) in the upper left corner. Note that the coordinates refer
         # to the implied pixel corners; the centre of a pixel addressed as
         # (0, 0) actually lies at (0.5, 0.5).
-        x = (point.x - self.extmin.x) * self.res_x + self.margin
-        y = (point.y - self.extmin.y) * self.res_y + self.margin
+        x = (point.x - self.extmin.x) * self.res_x + self.margin_x
+        y = (point.y - self.extmin.y) * self.res_y + self.margin_y
         return (
             x * self.oversampling,
             # (0, 0) is the top-left corner:
@@ -154,7 +156,9 @@ class PillowBackend(Backend):
         self, cap_height: float, font: "FontFace" = None
     ) -> FontMeasurements:
         # text is not supported yet
-        return FontMeasurements(0, 1, 0.5, 0)
+        return FontMeasurements(
+            0.0, cap_height, cap_height * 0.666, cap_height * 0.333
+        )
 
     def get_text_line_width(
         self, text: str, cap_height: float, font: FontFace = None
