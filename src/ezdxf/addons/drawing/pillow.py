@@ -179,7 +179,8 @@ class PillowBackend(Backend):
         if not supports_transparency(filename):
             # remove alpha channel if not supported
             image = image.convert("RGB")
-        image.save(filename, dpi=(self.dpi, self.dpi), **kwargs)
+        dpi = kwargs.pop("dpi", self.dpi)
+        image.save(filename, dpi=(dpi, dpi), **kwargs)
 
     def finalize(self) -> None:
         pass
