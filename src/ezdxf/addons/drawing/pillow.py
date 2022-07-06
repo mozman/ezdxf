@@ -152,6 +152,9 @@ class PillowBackend(Backend):
             x = int(self.image_size.x)
             y = int(self.image_size.y)
             image = self.image.resize((x, y), resample=Image.LANCZOS)
+        if not filename.lower().endswith(".png"):
+            # remove alpha channel of all other file formats
+            image = image.convert("RGB")
         image.save(filename, dpi=(self.dpi, self.dpi), **kwargs)
 
     def finalize(self) -> None:
