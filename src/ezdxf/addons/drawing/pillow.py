@@ -3,7 +3,7 @@
 from __future__ import annotations
 from typing import Iterable, Tuple
 import math
-from ezdxf.math import Vec3, Vec2, Matrix44, BoundingBox
+from ezdxf.math import Vec3, Vec2, Matrix44, AbstractBoundingBox
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color
@@ -16,11 +16,12 @@ from PIL import Image, ImageDraw
 class PillowBackend(Backend):
     def __init__(
         self,
-        layout_bbox: BoundingBox,
+        region: AbstractBoundingBox,
         image_size: Tuple[int, int] = None,
         resolution: float = 1.0,
         margin: int = 10,
-        stretch=False,
+        dpi: int = 300,
+        oversampling: int = 1,
     ):
         """Experimental backend to use Pillow for image export.
 
@@ -32,43 +33,54 @@ class PillowBackend(Backend):
             - no hatch pattern support
 
         Args:
-            layout_bbox: bounding box of the layout in DXF drawing units
-            image_size: image output size in pixels or ``None`` to be calculated
-                by the bounding box size and the `resolution`
+            region: output region of the layout in DXF drawing units
+            image_size: image output size in pixels or ``None`` to be
+                calculated by the region size and the `resolution`
             margin: image margin in pixels
             resolution: pixels per DXF drawing unit, e.g. 100 is for 100 pixels
                 per drawing unit, "meter" as drawing unit means each pixel
                 represents a size of 1cm x 1cm.
                 If the `image_size` is given the `resolution` is calculated
                 automatically
-            stretch: `False` to adjust the image height according the DXF extends
+            dpi: output image resolution in dots per inch
+            oversampling: canvas size as multiple of the final image size
+                (e.g. 1, 2, 3, ...), the final image will be scaled down by
+                the LANCZOS method
 
         """
         super().__init__()
-        self.layout_extends = Vec2(layout_bbox.size)
-        self.layout_offset = Vec2(layout_bbox.extmin)
+        self.region = Vec2(region.size)
+        self.extmin = Vec2(region.extmin)
         self.margin = int(margin)
+        self.dpi = int(dpi)
+        self.oversampling = int(oversampling)
 
         if image_size is None:
             image_size = (
-                math.ceil(self.layout_extends.x * resolution + 2 * self.margin),
-                math.ceil(self.layout_extends.y * resolution + 2 * self.margin),
+                math.ceil(self.region.x * resolution + 2 * self.margin),
+                math.ceil(self.region.y * resolution + 2 * self.margin),
             )
-            self.scale_x = self.layout_extends.x * resolution
-            self.scale_y = self.layout_extends.y * resolution
+            self.res_x = resolution
+            self.res_y = resolution
         else:
             img_x, img_y = image_size
-            if not stretch:
-                ratio = self.layout_extends.y / self.layout_extends.x
-                img_y = img_x * ratio
-                image_size = (img_x, img_y)
-            self.scale_x = (img_x - 2 * margin) / self.layout_extends.x
-            self.scale_y = (img_y - 2 * margin) / self.layout_extends.y
+            ratio = img_x / img_y
+            if ratio >= 1.0:  # image fills the height
+                self.res_y = (img_y - 2 * margin) / self.region.y
+                self.res_x = self.res_y
+                # todo: adjust extmin to center the image
+            else:  # image fills the width
+                self.res_x = (img_x - 2 * margin) / self.region.x
+                self.res_y = self.res_x
+                # todo: adjust extmin to center the image
 
         self.image_size = Vec2(image_size)
         self.bg_color: Color = "#000000"
         self.image_mode = "RGBA"
-        self.clear()
+
+        # dummy values for declaration, both are set in clear()
+        self.image = Image.new("RGBA", (10, 10))
+        self.draw = ImageDraw.Draw(self.image)
 
     # noinspection PyAttributeOutsideInit,PyTypeChecker
     def clear(self):
@@ -84,8 +96,8 @@ class PillowBackend(Backend):
         self.clear()
 
     def pixel_loc(self, point: Vec3) -> Tuple[int, int]:
-        x = (point.x - self.layout_offset.x) * self.scale_x + self.margin
-        y = (point.y - self.layout_offset.y) * self.scale_y + self.margin
+        x = (point.x - self.extmin.x) * self.res_x + self.margin
+        y = (point.y - self.extmin.y) * self.res_y + self.margin
         return int(x), int(
             self.image_size.y - y
         )  # image (0, 0) is the top-left corner

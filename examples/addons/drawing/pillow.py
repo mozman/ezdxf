@@ -17,11 +17,18 @@ def main():
     parser.add_argument("cad_file", nargs="?")
     parser.add_argument("-o", "--out", required=True)
     parser.add_argument(
-        "-w",
+        "-x",
         "--width",
         type=int,
         default=1920,
         help="image width in pixels, default is 1920",
+    )
+    parser.add_argument(
+        "-y",
+        "--height",
+        type=int,
+        default=1080,
+        help="image height in pixels, default is 1080",
     )
     args = parser.parse_args()
 
@@ -70,10 +77,10 @@ def main():
     print(f"took {perf_counter()-t0:.1f}s {extents}")
 
     ctx = RenderContext(doc)
-    out = PillowBackend(extents, image_size=(args.width, args.width))
+    out = PillowBackend(extents, image_size=(args.width, args.height))
     print("drawing model space")
     t0 = perf_counter()
-    Frontend(ctx, out).draw_layout(layout, finalize=False)
+    Frontend(ctx, out).draw_layout(layout)
     print(f"took {perf_counter() - t0:.1f}s")
     if outfile is not None:
         print(f'exporting to "{outfile}"')
