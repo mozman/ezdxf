@@ -9,8 +9,10 @@ from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color
 
 from ezdxf.tools.fonts import FontFace, FontMeasurements
-
+from .config import Configuration
 from PIL import Image, ImageDraw
+
+INCH_TO_MM = 25.6
 
 
 class PillowBackend(Backend):
@@ -29,8 +31,8 @@ class PillowBackend(Backend):
 
             - no text support
             - no linetype support
-            - no lineweight support
             - no hatch pattern support
+            - no holes in hatches support
 
         Args:
             region: output region of the layout in DXF drawing units
@@ -54,6 +56,9 @@ class PillowBackend(Backend):
         self.margin = int(margin)
         self.dpi = int(dpi)
         self.oversampling = max(int(oversampling), 1)
+        # The lineweight is stored im mm,
+        # line_pixel_factor * lineweight is the width in pixels
+        self.line_pixel_factor = self.dpi / INCH_TO_MM  # pixel per mm
 
         if image_size is None:
             image_size = (
@@ -82,7 +87,11 @@ class PillowBackend(Backend):
         self.image = Image.new("RGBA", (10, 10))
         self.draw = ImageDraw.Draw(self.image)
 
-    # noinspection PyAttributeOutsideInit,PyTypeChecker
+    def configure(self, config: Configuration) -> None:
+        super().configure(config)
+        self.line_pixel_factor *= config.lineweight_scaling
+
+    # noinspection PyTypeChecker
     def clear(self):
         x = int(self.image_size.x) * self.oversampling
         y = int(self.image_size.y) * self.oversampling
@@ -92,6 +101,9 @@ class PillowBackend(Backend):
     def set_background(self, color: Color) -> None:
         self.bg_color = color
         self.clear()
+
+    def width(self, lineweight: float) -> int:
+        return max(int(lineweight * self.line_pixel_factor), 1)
 
     def pixel_loc(self, point: Vec3) -> Tuple[float, float]:
         # Source: https://pillow.readthedocs.io/en/stable/handbook/concepts.html#coordinate-system
@@ -112,17 +124,21 @@ class PillowBackend(Backend):
 
     def draw_line(self, start: Vec3, end: Vec3, properties: Properties) -> None:
         self.draw.line(
-            [self.pixel_loc(start), self.pixel_loc(end)], fill=properties.color
+            [self.pixel_loc(start), self.pixel_loc(end)],
+            fill=properties.color,
+            width=self.width(properties.lineweight),
         )
 
     def draw_filled_polygon(
         self, points: Iterable[Vec3], properties: Properties
     ) -> None:
-        self.draw.polygon(
-            [self.pixel_loc(p) for p in points],
-            fill=properties.color,
-            outline=properties.color,
-        )
+        points = [self.pixel_loc(p) for p in points]
+        if len(points) > 2:
+            self.draw.polygon(
+                points,
+                fill=properties.color,
+                outline=properties.color,
+            )
 
     def draw_text(
         self,

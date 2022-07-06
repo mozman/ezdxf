@@ -22,7 +22,7 @@ def main():
         "--image_size",
         type=str,
         default="1920,1080",
-        help='image size in pixels "x,y", default is "1920,1080"',
+        help='image size in pixels as "width,height", default is "1920,1080"',
     )
     parser.add_argument(
         "-r",
@@ -30,6 +30,12 @@ def main():
         type=int,
         default=2,
         help="oversampling factor, default is 2, use 0 or 1 to disable oversampling",
+    )
+    parser.add_argument(
+        "--dpi",
+        type=int,
+        default=300,
+        help="pixels/inch, default is 300",
     )
 
     args = parser.parse_args()
@@ -69,31 +75,36 @@ def main():
     outfile = args.out
     img_x, img_y = parse_image_size(args.image_size)
     print(f"Image size: {img_x}x{img_y}")
+    print(f"DPI: {args.dpi}")
     print(f"Oversampling factor: {args.oversampling}")
     # The current implementation is optimized to use as less memory as possible,
     # therefore the extents of the layout are required beforehand, otherwise the
     # backend would have to store all drawing commands to determine the required
     # image size.  This could be implemented as a different pillow backend which
     # is optimized for speed.
-    print("detecting model space extents")
+    print("detecting model space extents ...")
     t0 = perf_counter()
     extents = bbox.extents(layout, flatten=0)
+    print(f"... in {perf_counter() - t0:.1f}s")
     print(f"EXTMIN: ({extents.extmin.x:.3f}, {extents.extmin.y:.3f})")
     print(f"EXTMAX: ({extents.extmax.x:.3f}, {extents.extmax.y:.3f})")
     print(f"SIZE: ({extents.size.x:.3f}, {extents.size.y:.3f})")
-    print(f"took {perf_counter() - t0:.1f}s")
 
     ctx = RenderContext(doc)
     out = PillowBackend(
-        extents, image_size=(img_x, img_y), oversampling=args.oversampling
+        extents,
+        image_size=(img_x, img_y),
+        oversampling=args.oversampling,
+        dpi=args.dpi,
     )
-    print("drawing model space")
+    print("drawing model space ...")
     t0 = perf_counter()
     Frontend(ctx, out).draw_layout(layout)
-    print(f"took {perf_counter() - t0:.1f}s")
+    print(f"... in {perf_counter() - t0:.1f}s")
     if outfile is not None:
-        print(f'exporting to "{outfile}"')
+        t0 = perf_counter()
         out.export(outfile)
+        print(f'exported image to "{outfile}" in {perf_counter() - t0:.1f}s')
 
 
 def parse_image_size(image_size: str) -> Tuple[int, int]:
