@@ -53,7 +53,7 @@ class PillowBackend(Backend):
         self.extmin = Vec2(region.extmin)
         self.margin = int(margin)
         self.dpi = int(dpi)
-        self.oversampling = int(oversampling)
+        self.oversampling = max(int(oversampling), 1)
 
         if image_size is None:
             image_size = (
@@ -84,23 +84,28 @@ class PillowBackend(Backend):
 
     # noinspection PyAttributeOutsideInit,PyTypeChecker
     def clear(self):
-        x = int(self.image_size.x)
-        y = int(self.image_size.y)
-        self.image = Image.new(
-            self.image_mode, (x, y), color=self.bg_color
-        )
+        x = int(self.image_size.x) * self.oversampling
+        y = int(self.image_size.y) * self.oversampling
+        self.image = Image.new(self.image_mode, (x, y), color=self.bg_color)
         self.draw = ImageDraw.Draw(self.image)
 
     def set_background(self, color: Color) -> None:
         self.bg_color = color
         self.clear()
 
-    def pixel_loc(self, point: Vec3) -> Tuple[int, int]:
+    def pixel_loc(self, point: Vec3) -> Tuple[float, float]:
+        # Source: https://pillow.readthedocs.io/en/stable/handbook/concepts.html#coordinate-system
+        # The Python Imaging Library uses a Cartesian pixel coordinate system,
+        # with (0,0) in the upper left corner. Note that the coordinates refer
+        # to the implied pixel corners; the centre of a pixel addressed as
+        # (0, 0) actually lies at (0.5, 0.5).
         x = (point.x - self.extmin.x) * self.res_x + self.margin
         y = (point.y - self.extmin.y) * self.res_y + self.margin
-        return int(x), int(
-            self.image_size.y - y
-        )  # image (0, 0) is the top-left corner
+        return (
+            x * self.oversampling,
+            # (0, 0) is the top-left corner:
+            (self.image_size.y - y) * self.oversampling,
+        )
 
     def draw_point(self, pos: Vec3, properties: Properties) -> None:
         self.draw.point([self.pixel_loc(pos)], fill=properties.color)
@@ -114,7 +119,9 @@ class PillowBackend(Backend):
         self, points: Iterable[Vec3], properties: Properties
     ) -> None:
         self.draw.polygon(
-            [self.pixel_loc(p) for p in points], fill=properties.color
+            [self.pixel_loc(p) for p in points],
+            fill=properties.color,
+            outline=properties.color,
         )
 
     def draw_text(
@@ -140,7 +147,12 @@ class PillowBackend(Backend):
         return 0.0
 
     def export(self, filename: str, **kwargs) -> None:
-        self.image.save(filename, **kwargs)
+        image = self.image
+        if self.oversampling > 1:
+            x = int(self.image_size.x)
+            y = int(self.image_size.y)
+            image = self.image.resize((x, y), resample=Image.LANCZOS)
+        image.save(filename, dpi=(self.dpi, self.dpi), **kwargs)
 
     def finalize(self) -> None:
         pass

@@ -1,5 +1,6 @@
 # Copyright (c) 2022, Manfred Moitzi
 # License: MIT License
+from typing import Tuple
 import argparse
 import sys
 from time import perf_counter
@@ -17,19 +18,20 @@ def main():
     parser.add_argument("cad_file", nargs="?")
     parser.add_argument("-o", "--out", required=True)
     parser.add_argument(
-        "-x",
-        "--width",
-        type=int,
-        default=1920,
-        help="image width in pixels, default is 1920",
+        "-i",
+        "--image_size",
+        type=str,
+        default="1920,1080",
+        help='image size in pixels "x,y", default is "1920,1080"',
     )
     parser.add_argument(
-        "-y",
-        "--height",
+        "-r",
+        "--oversampling",
         type=int,
-        default=1080,
-        help="image height in pixels, default is 1080",
+        default=2,
+        help="oversampling factor, default is 2, use 0 or 1 to disable oversampling",
     )
+
     args = parser.parse_args()
 
     if args.cad_file is None:
@@ -65,7 +67,9 @@ def main():
         )
         sys.exit(4)
     outfile = args.out
-
+    img_x, img_y = parse_image_size(args.image_size)
+    print(f"Image size: {img_x}x{img_y}")
+    print(f"Oversampling factor: {args.oversampling}")
     # The current implementation is optimized to use as less memory as possible,
     # therefore the extents of the layout are required beforehand, otherwise the
     # backend would have to store all drawing commands to determine the required
@@ -74,10 +78,15 @@ def main():
     print("detecting model space extents")
     t0 = perf_counter()
     extents = bbox.extents(layout, flatten=0)
-    print(f"took {perf_counter()-t0:.1f}s {extents}")
+    print(f"EXTMIN: ({extents.extmin.x:.3f}, {extents.extmin.y:.3f})")
+    print(f"EXTMAX: ({extents.extmax.x:.3f}, {extents.extmax.y:.3f})")
+    print(f"SIZE: ({extents.size.x:.3f}, {extents.size.y:.3f})")
+    print(f"took {perf_counter() - t0:.1f}s")
 
     ctx = RenderContext(doc)
-    out = PillowBackend(extents, image_size=(args.width, args.height))
+    out = PillowBackend(
+        extents, image_size=(img_x, img_y), oversampling=args.oversampling
+    )
     print("drawing model space")
     t0 = perf_counter()
     Frontend(ctx, out).draw_layout(layout)
@@ -85,6 +94,17 @@ def main():
     if outfile is not None:
         print(f'exporting to "{outfile}"')
         out.export(outfile)
+
+
+def parse_image_size(image_size: str) -> Tuple[int, int]:
+    if "," in image_size:
+        sx, sy = image_size.split(",")
+    elif "x" in image_size:
+        sx, sy = image_size.split("x")
+    else:
+        sx = int(image_size)
+        sy = sx
+    return int(sx), int(sy)
 
 
 if __name__ == "__main__":
