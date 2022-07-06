@@ -152,10 +152,18 @@ class PillowBackend(Backend):
             x = int(self.image_size.x)
             y = int(self.image_size.y)
             image = self.image.resize((x, y), resample=Image.LANCZOS)
-        if not filename.lower().endswith(".png"):
-            # remove alpha channel of all other file formats
+        if not supports_transparency(filename):
+            # remove alpha channel if not supported
             image = image.convert("RGB")
         image.save(filename, dpi=(self.dpi, self.dpi), **kwargs)
 
     def finalize(self) -> None:
         pass
+
+
+SUPPORT_TRANSPARENCY = [".png", ".tif", ".tiff"]
+
+
+def supports_transparency(filename: str) -> bool:
+    filename = filename.lower()
+    return any(filename.endswith(ftype) for ftype in SUPPORT_TRANSPARENCY)
