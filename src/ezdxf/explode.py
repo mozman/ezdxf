@@ -137,6 +137,7 @@ IGNORE_FROM_ATTRIB = {
     "flags",
     "field_length",
     "lock_position",
+    "attribute_type",
 }
 
 
