@@ -62,14 +62,14 @@ class PillowBackend(Backend):
         # The lineweight is stored im mm,
         # line_pixel_factor * lineweight is the width in pixels
         self.line_pixel_factor = self.dpi / INCH_TO_MM  # pixel per mm
-
+        # resolution: pixels per DXF drawing units, same resolution in all
+        # directions
+        self.resolution = float(resolution)
         if image_size is None:
             image_size = (
                 math.ceil(self.region.x * resolution + 2.0 * self.margin_x),
                 math.ceil(self.region.y * resolution + 2.0 * self.margin_y),
             )
-            self.res_x = resolution
-            self.res_y = resolution
         else:
             img_x, img_y = image_size
             if img_y < 1:
@@ -77,13 +77,11 @@ class PillowBackend(Backend):
             img_ratio = img_x / img_y
             region_ratio = self.region.x / self.region.y
             if img_ratio >= region_ratio:  # image fills the height
-                self.res_y = (img_y - 2.0 * self.margin_y) / self.region.y
-                self.res_x = self.res_y
-                self.margin_x = (img_x - self.res_x * self.region.x) * 0.5
+                self.resolution = (img_y - 2.0 * self.margin_y) / self.region.y
+                self.margin_x = (img_x - self.resolution * self.region.x) * 0.5
             else:  # image fills the width
-                self.res_x = (img_x - 2 * self.margin_x) / self.region.x
-                self.res_y = self.res_x
-                self.margin_y = (img_y - self.res_y * self.region.y) * 0.5
+                self.resolution = (img_x - 2.0 * self.margin_x) / self.region.x
+                self.margin_y = (img_y - self.resolution * self.region.y) * 0.5
 
         self.image_size = Vec2(image_size)
         self.bg_color: Color = "#000000"
@@ -117,8 +115,8 @@ class PillowBackend(Backend):
         # with (0,0) in the upper left corner. Note that the coordinates refer
         # to the implied pixel corners; the centre of a pixel addressed as
         # (0, 0) actually lies at (0.5, 0.5).
-        x = (point.x - self.extmin.x) * self.res_x + self.margin_x
-        y = (point.y - self.extmin.y) * self.res_y + self.margin_y
+        x = (point.x - self.extmin.x) * self.resolution + self.margin_x
+        y = (point.y - self.extmin.y) * self.resolution + self.margin_y
         return (
             x * self.oversampling,
             # (0, 0) is the top-left corner:
