@@ -32,22 +32,25 @@ class PillowBackend(Backend):
             - no text support
             - no linetype support
             - no hatch pattern support
-            - no holes in hatches support
+            - holes in hatches are not supported
 
         Args:
             region: output region of the layout in DXF drawing units
             image_size: image output size in pixels or ``None`` to be
                 calculated by the region size and the `resolution`
-            margin: image margin in pixels
-            resolution: pixels per DXF drawing unit, e.g. 100 is for 100 pixels
-                per drawing unit, "meter" as drawing unit means each pixel
-                represents a size of 1cm x 1cm.
+            margin: image margin in pixels, same margin for all four borders
+            resolution: pixels per DXF drawing unit, e.g. a resolution of 100
+                for the drawing unit "meter" means, each pixel represents an
+                area of 1cm x 1cm (1m is 100cm).
                 If the `image_size` is given the `resolution` is calculated
                 automatically
-            dpi: output image resolution in dots per inch
-            oversampling: canvas size as multiple of the final image size
-                (e.g. 1, 2, 3, ...), the final image will be scaled down by
-                the LANCZOS method
+            dpi: output image resolution in dots per inch. The pixel width of
+                lines is determined by the DXF lineweight (in mm) and this image
+                resolution (dots/pixels per inch). The line width is independent
+                of the drawing scale!
+            oversampling: multiplier of the final image size to define the
+                render canvas size (e.g. 1, 2, 3, ...), the final image will
+                be scaled down by the LANCZOS method
 
         """
         super().__init__()
@@ -93,7 +96,7 @@ class PillowBackend(Backend):
 
     def configure(self, config: Configuration) -> None:
         super().configure(config)
-        self.line_pixel_factor *= config.lineweight_scaling
+        self.line_pixel_factor *= self.config.lineweight_scaling
 
     # noinspection PyTypeChecker
     def clear(self):
@@ -179,9 +182,6 @@ class PillowBackend(Backend):
             image = image.convert("RGB")
         dpi = kwargs.pop("dpi", self.dpi)
         image.save(filename, dpi=(dpi, dpi), **kwargs)
-
-    def finalize(self) -> None:
-        pass
 
 
 SUPPORT_TRANSPARENCY = [".png", ".tif", ".tiff"]
