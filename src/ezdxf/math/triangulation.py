@@ -25,6 +25,8 @@ def ear_clipping_2d(
     The `fast` mode uses a shortcut for 4 and 5 vertices which may not work for
     concave polygons!
 
+    .. versionadded:: 0.18
+
     Implementation Reference:
         - https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
 
@@ -150,6 +152,8 @@ def ear_clipping_3d(
         TypeError: invalid input data type
         ZeroDivisionError: normal vector calculation failed
 
+    .. versionadded:: 0.18
+
     """
     from ezdxf.math import safe_normal_vector, OCS
 
@@ -191,6 +195,9 @@ def simple_polygon_triangulation(
 
     This function creates regular triangles by adding a center-vertex in the
     middle of the polygon, but works only for convex shapes.
+
+    .. versionadded:: 0.18
+
     """
     face_: List[Vec3] = list(face)
     assert len(face_) > 2

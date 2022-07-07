@@ -1,7 +1,7 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 """
-Tools in this module should be as independent from DXF entities as possible!
+Tools in this module should be as independent of DXF entities as possible!
 """
 import enum
 from typing import (
@@ -1680,6 +1680,8 @@ def is_upside_down_text_angle(angle: float, tol: float = 3.0) -> bool:
         angle: text angle in degrees
         tol: tolerance range in which text flipping will be avoided
 
+    .. versionadded:: 0.18
+
     """
     angle %= 360.0
     return 90.0 + tol < angle < 270.0 - tol
@@ -1692,6 +1694,8 @@ def upright_text_angle(angle: float, tol: float = 3.0) -> float:
     Args:
         angle: text angle in degrees
         tol: tolerance range in which text flipping will be avoided
+
+    .. versionadded:: 0.18
 
     """
     if is_upside_down_text_angle(angle, tol):
