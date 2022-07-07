@@ -25,7 +25,7 @@ def quadratic_to_cubic_bezier(curve: Bezier3P) -> Bezier4P:
     """Convert quadratic Bèzier curves (:class:`ezdxf.math.Bezier3P`) into
     cubic Bèzier curves (:class:`ezdxf.math.Bezier4P`).
 
-    .. versionadded: 0.16
+    .. versionadded:: 0.16
 
     """
     start, control, end = curve.control_points
@@ -42,7 +42,7 @@ def bezier_to_bspline(curves: Iterable[AnyBezier]) -> BSpline:
     previous curve. G1 continuity or better at the connection points of the
     Bézier curves is required to get best results.
 
-    .. versionadded: 0.16
+    .. versionadded:: 0.16
 
     """
 
@@ -75,7 +75,7 @@ def have_bezier_curves_g1_continuity(
 ) -> bool:
     """Return ``True`` if the given adjacent bezier curves have G1 continuity.
 
-    .. versionadded: 0.16
+    .. versionadded:: 0.16
 
     """
     b1_pnts = tuple(b1.control_points)
