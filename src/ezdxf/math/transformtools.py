@@ -218,7 +218,8 @@ class OCSTransform:
         else:
             new_angle_span = arc_angle_span_rad(new_start, new_end)
 
-        if math.isclose(old_angle_span, new_angle_span):
+        # 2022-07-07: relative tolerance reduced from 1e-9 to 1e-8 for issue #702
+        if math.isclose(old_angle_span, new_angle_span, rel_tol=1e-8):
             return new_start, new_end
         else:  # reversed angle orientation
             return new_end, new_start
