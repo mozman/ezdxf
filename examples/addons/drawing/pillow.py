@@ -13,16 +13,26 @@ from ezdxf.addons.drawing.pillow import PillowBackend
 
 def main():
     parser = argparse.ArgumentParser(
-        description="draw the given CAD file by Pillow and save it to a file"
+        description='draw the given CAD file by the "Pillow" package and export '
+        "it as a pixel based image file"
     )
     parser.add_argument("cad_file", nargs="?")
-    parser.add_argument("-o", "--out", required=True)
+    parser.add_argument(
+        "-o",
+        "--out",
+        required=True,
+        help="output filename, the filename extension defines the image format "
+        "(.png, .jpg, .tif, .bmp, ...)",
+    )
     parser.add_argument(
         "-i",
         "--image_size",
         type=str,
         default="1920,1080",
-        help='image size in pixels as "width,height", default is "1920,1080"',
+        help='image size in pixels as "width,height", default is "1920,1080", '
+        'supports also "x" as delimiter like "1920x1080". A single integer '
+        'is used for both directions e.g. "2000" defines an image size of '
+        "2000x2000. The image is centered for the smaller DXF drawing extent.",
     )
     parser.add_argument(
         "-r",
@@ -35,7 +45,7 @@ def main():
         "--dpi",
         type=int,
         default=300,
-        help="pixels/inch, default is 300",
+        help="output resolution in pixels/inch, default is 300",
     )
 
     args = parser.parse_args()
@@ -64,14 +74,7 @@ def main():
     if auditor.has_fixes:
         print(f"Fixed {len(auditor.fixes)} errors.")
 
-    try:
-        layout = doc.modelspace()
-    except KeyError:
-        print(
-            f'Could not find layout "{args.layout}". '
-            f"Valid layouts: {[l.name for l in doc.layouts]}"
-        )
-        sys.exit(4)
+    msp = doc.modelspace()
     outfile = args.out
     img_x, img_y = parse_image_size(args.image_size)
     print(f"Image size: {img_x}x{img_y}")
@@ -84,7 +87,7 @@ def main():
     # is optimized for speed.
     print("detecting model space extents ...")
     t0 = perf_counter()
-    extents = bbox.extents(layout, flatten=0)
+    extents = bbox.extents(msp, flatten=0)
     print(f"... in {perf_counter() - t0:.1f}s")
     print(f"EXTMIN: ({extents.extmin.x:.3f}, {extents.extmin.y:.3f})")
     print(f"EXTMAX: ({extents.extmax.x:.3f}, {extents.extmax.y:.3f})")
@@ -105,7 +108,7 @@ def main():
 
     print("drawing model space ...")
     t0 = perf_counter()
-    Frontend(ctx, out).draw_layout(layout)
+    Frontend(ctx, out).draw_layout(msp)
     print(f"... in {perf_counter() - t0:.1f}s")
     if outfile is not None:
         t0 = perf_counter()
