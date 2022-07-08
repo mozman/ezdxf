@@ -1,6 +1,8 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
+
+import sys
 from typing import Iterable, Tuple
 import math
 from ezdxf.math import Vec3, Vec2, Matrix44, AbstractBoundingBox
@@ -10,7 +12,17 @@ from ezdxf.addons.drawing.type_hints import Color
 
 from ezdxf.tools.fonts import FontFace, FontMeasurements
 from .config import Configuration
-from PIL import Image, ImageDraw
+
+try:
+    from PIL import Image, ImageDraw
+except ImportError:
+    # The original PIL package does not work with Python3!
+    print(
+        "require Pillow package not found, install by:\n\n"
+        "    pip install Pillow"
+    )
+    sys.exit(1)
+
 
 INCH_TO_MM = 25.6
 
