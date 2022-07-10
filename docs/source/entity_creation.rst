@@ -28,6 +28,7 @@ DXF Primitives
 - :meth:`~ezdxf.layouts.BaseLayout.add_circle`
 - :meth:`~ezdxf.layouts.BaseLayout.add_ellipse`
 - :meth:`~ezdxf.layouts.BaseLayout.add_hatch`
+- :meth:`~ezdxf.layouts.BaseLayout.add_helix`
 - :meth:`~ezdxf.layouts.BaseLayout.add_image`
 - :meth:`~ezdxf.layouts.BaseLayout.add_leader`
 - :meth:`~ezdxf.layouts.BaseLayout.add_line`

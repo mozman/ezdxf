@@ -48,6 +48,7 @@ Version 0.18b6 - dev
 - NEW: `ezdxf.addons.openscad` add-on as interface to [OpenSCAD](https://openscad.org), 
   [docs](https://ezdxf.mozman.at/docs/addons/openscad.html) 
 - NEW: `acis` module, a toolbox to handle ACIS data, [docs](https://ezdxf.mozman.at/docs/tools/acis.html)
+- NEW: factory function `add_helix()` to create new `HELIX` entities 
 - CHANGE: keyword only argument `dxfattribs` for factory methods `add_text()` and `add_attdef()`
 - CHANGE: `recover` module - recovered integer and float values are logged as severe errors
 - CHANGE: method `Path.all_lines_to_curve3` replaced by function `path.lines_to_curve3()`

@@ -26,6 +26,7 @@ and inherited classes like :class:`~ezdxf.layouts.Modelspace`,
     arcdim
     ellipse
     hatch
+    helix
     image
     ../blocks/insert
     leader

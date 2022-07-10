@@ -71,6 +71,7 @@ if TYPE_CHECKING:
         MultiLeaderMTextBuilder,
         MultiLeaderBlockBuilder,
     )
+    from ezdxf.entities import Helix
 
 
 class CreatorInterface:
@@ -114,9 +115,7 @@ class CreatorInterface:
         dxfattribs["location"] = Vec3(location)
         return self.new_entity("POINT", dxfattribs)  # type: ignore
 
-    def add_line(
-        self, start: UVec, end: UVec, dxfattribs=None
-    ) -> "Line":
+    def add_line(self, start: UVec, end: UVec, dxfattribs=None) -> "Line":
         """
         Add a :class:`~ezdxf.entities.Line` entity from `start` to `end`.
 
@@ -257,9 +256,7 @@ class CreatorInterface:
         """
         return self._add_quadrilateral("TRACE", points, dxfattribs)  # type: ignore
 
-    def add_3dface(
-        self, points: Iterable[UVec], dxfattribs=None
-    ) -> "Face3d":
+    def add_3dface(self, points: Iterable[UVec], dxfattribs=None) -> "Face3d":
         """
         Add a :class:`~ezdxf.entities.3DFace` entity, `points` is an iterable
         3 or 4 2D/3D points.
@@ -832,9 +829,7 @@ class CreatorInterface:
         self.add_entity(mtext)
         return mtext
 
-    def add_ray(
-        self, start: UVec, unit_vector: UVec, dxfattribs=None
-    ) -> "Ray":
+    def add_ray(self, start: UVec, unit_vector: UVec, dxfattribs=None) -> "Ray":
         """
         Add a :class:`~ezdxf.entities.Ray` that begins at `start` point and
         continues to infinity (construction line). (requires DXF R2000)
@@ -2674,6 +2669,54 @@ class CreatorInterface:
         if vertices:
             mline.extend(vertices)
         return mline
+
+    def add_helix(
+        self,
+        radius: float,
+        pitch: float,
+        turns: float,
+        ccw=True,
+        dxfattribs=None,
+    ) -> "Helix":
+        """
+        Add a :class:`~ezdxf.entities.Helix` entity.
+
+        The center of the helix is always (0, 0, 0) and the helix axis direction
+        is the +z-axis.
+
+        Transform the new HELIX by the :meth:`~ezdxf.entities.DXFGraphic.transform`
+        method to your needs.
+
+        Args:
+            radius: helix radius
+            pitch: the height of one complete helix turn
+            turns: count of turns
+            ccw: creates a counter-clockwise turning (right-handed) helix if ``True``
+            dxfattribs: additional DXF attributes
+
+        .. versionadded:: 0.18
+
+        """
+        from ezdxf import path
+
+        if self.dxfversion < DXF2000:
+            raise DXFVersionError("Helix requires DXF R2000")
+        dxfattribs = dict(dxfattribs or {})
+        helix: "Helix" = self.new_entity("HELIX", dxfattribs)  # type: ignore
+        base = Vec3(0, 0, 0)
+        helix.dxf.axis_base_point = base
+        helix.dxf.radius = float(radius)
+        helix.dxf.start_point = base + (radius, 0, 0)
+        helix.dxf.axis_vector = Vec3(0, 0, 1 if pitch > 0 else -1)
+        helix.dxf.turns = turns
+        helix.dxf.turn_height = pitch
+        helix.dxf.handedness = int(ccw)
+        helix.dxf.constrain = 1  # turns
+        p = path.helix(radius, pitch, turns, ccw)
+        splines = list(path.to_bsplines_and_vertices(p))
+        if splines:
+            helix.apply_construction_tool(splines[0])
+        return helix
 
 
 LEADER_UNSUPPORTED_DIMSTYLE_ATTRIBS = {"dimblk", "dimblk1", "dimblk2"}

@@ -140,6 +140,8 @@ BaseLayout
 
     .. automethod:: add_hatch
 
+    .. automethod:: add_helix
+
     .. automethod:: add_mpolygon
 
     .. automethod:: add_mesh
