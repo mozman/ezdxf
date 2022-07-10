@@ -31,6 +31,7 @@ EZDXF = "ezdxf"
 XDG_CONFIG_HOME = "XDG_CONFIG_HOME"
 CONFIG_DIRECTORY = ".config"
 ODAFC_ADDON = "odafc-addon"
+OPENSCAD_ADDON = "openscad-addon"
 DRAWING_ADDON = "drawing-addon"
 
 
@@ -77,6 +78,9 @@ def default_config() -> ConfigParser:
     }
     config[ODAFC_ADDON] = {
         "WIN_EXEC_PATH": r'"C:\Program Files\ODA\ODAFileConverter\ODAFileConverter.exe"'
+    }
+    config[OPENSCAD_ADDON] = {
+        "WIN_EXEC_PATH": r'"C:\Program Files\OpenSCAD\openscad.exe"'
     }
     config[DRAWING_ADDON] = {
         # These options are just for testing scenarios!

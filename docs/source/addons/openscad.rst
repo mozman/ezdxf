@@ -11,6 +11,18 @@ Interface to the `OpenSCAD`_ application to apply boolean operations to
 operations read the documentation of `OpenSCAD`_. The `OpenSCAD`_ application is
 not bundled with `ezdxf`, you need to install the application yourself.
 
+On Windows the path to the ``openscad.exe`` executable is
+stored in the config file (see :mod:`ezdxf.options`) in the "openscad-addon"
+section as key "win_exec_path", the default entry is:
+
+.. code-block:: INI
+
+    [openscad-addon]
+    win_exec_path = "C:\Program Files\OpenSCAD\openscad.exe"
+
+On Linux and macOS the ``openscad`` command is located by the
+:func:`shutil.which` function.
+
 Example:
 
 .. code-block:: Python

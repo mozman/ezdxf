@@ -170,7 +170,7 @@ class PillowBackend(Backend):
         pass
 
     def get_font_measurements(
-        self, cap_height: float, font: "FontFace" = None
+        self, cap_height: float, font: FontFace = None
     ) -> FontMeasurements:
         # text is not supported yet
         return FontMeasurements(

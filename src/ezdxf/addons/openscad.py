@@ -10,11 +10,15 @@ import subprocess
 from uuid import uuid4
 import tempfile
 
+import ezdxf
 from ezdxf.math import Matrix44, UVec, Vec3, Vec2
 from ezdxf.render import MeshBuilder, MeshTransformer
 from ezdxf.addons import meshex
 
-DEFAULT_WIN_OPENSCAD_PATH = r"C:\Program Files\OpenSCAD\openscad.exe"
+
+DEFAULT_WIN_OPENSCAD_PATH = ezdxf.options.get(
+    "openscad-addon", "win_exec_path"
+).strip('"')
 CMD = "openscad"
 
 

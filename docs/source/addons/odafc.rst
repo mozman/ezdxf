@@ -41,7 +41,7 @@ ACAD2013    R2013           AC1027
 ACAD2018    R2018           AC1032
 =========== =============== ===========
 
-On Windows systems the path of the ``ODAFileConverter.exe`` application is
+On Windows the path to the ``ODAFileConverter.exe`` executable is
 stored in the config file (see :mod:`ezdxf.options`) in the "odafc-addon"
 section as key "win_exec_path", the default entry is:
 
