@@ -109,3 +109,10 @@ def update_extents(doc: "Drawing") -> BoundingBox:
     doc.header[EXTMIN] = extents.extmin
     doc.header[EXTMAX] = extents.extmax
     return extents
+
+
+def show_lineweight(doc: "Drawing", state=True) -> None:
+    """Show lines and curves with "thickness" (lineweight) if `state` is
+    ``True``.
+    """
+    doc.header["$LWDISPLAY"] = int(state)

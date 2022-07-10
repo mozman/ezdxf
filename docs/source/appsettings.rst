@@ -55,3 +55,8 @@ Update Extents
 --------------
 
 .. autofunction:: update_extents
+
+Show Lineweight
+---------------
+
+.. autofunction:: show_lineweight
