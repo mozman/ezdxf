@@ -32,7 +32,6 @@ acdb_helix = DefSubclass(
             11,
             xtype=XType.point3d,
             default=X_AXIS,
-            validator=validator.is_not_null_vector,
             fixer=RETURN_DEFAULT,
         ),
         "axis_vector": DXFAttr(
@@ -42,7 +41,8 @@ acdb_helix = DefSubclass(
             validator=validator.is_not_null_vector,
             fixer=RETURN_DEFAULT,
         ),
-        "radius": DXFAttr(40, default=1),
+        # base radius = (start-point - axis_base_point).magnitude
+        "radius": DXFAttr(40, default=1),  # top radius
         "turns": DXFAttr(41, default=1),
         "turn_height": DXFAttr(42, default=1),
         # Handedness:
