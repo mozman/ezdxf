@@ -9,7 +9,7 @@ from typing import (
     Optional,
     Sequence,
 )
-import warnings
+
 import math
 from ezdxf.math import (
     Vec3,
