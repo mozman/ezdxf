@@ -212,11 +212,14 @@ class TestBezierCurveBoundingBox:
         assert math.isclose(bbox.extmin.y, -0.28867513459481287)
         assert math.isclose(bbox.extmax.y, +0.28867513459481287)
 
-    def test_closed_cubic_bezier_curve(self):
-        curve = Bezier4P([(0, 0), (2, 3), (-2, 3), (0, 0)])
-        p = curve.point(0.5)
+    def test_closed_3d_cubic_bezier_curve(self):
+        curve = Bezier4P([(0, 0, -1), (2, 3, 0), (-2, 3, 0), (0, 0, -1)])
         bbox = cubic_bezier_bbox(curve)
-        assert math.isclose(p.y, bbox.extmax.y)
+        assert math.isclose(bbox.extmin.x, -0.5773502691896258)
+        assert math.isclose(bbox.extmin.z, -1.0)
+        assert math.isclose(bbox.extmax.x, +0.5773502691896258)
+        assert math.isclose(bbox.extmax.y, +2.25)
+        assert math.isclose(bbox.extmax.z, -0.25)
 
     def test_quadratic_bezier_curve_box(self):
         curve = Bezier3P([(0, 0), (1, 1), (2, 0)])
