@@ -2,7 +2,6 @@
 # License: MIT License
 import pytest
 import random
-import math
 
 from ezdxf.math import (
     cubic_bezier_interpolation,
@@ -202,27 +201,25 @@ class TestBezierCurveBoundingBox:
 
     def test_cubic_bezier_curve_with_one_extrema(self):
         curve = Bezier4P([(0, 0), (0, 1), (2, 1), (2, 0)])
-        p = curve.point(0.5)
         bbox = cubic_bezier_bbox(curve)
-        assert math.isclose(p.y, bbox.extmax.y)
+        assert bbox.extmax.y == pytest.approx(0.75)
 
     def test_cubic_bezier_curve_with_two_extrema(self):
         curve = Bezier4P([(0, 0), (0, 1), (2, -1), (2, 0)])
         bbox = cubic_bezier_bbox(curve)
-        assert math.isclose(bbox.extmin.y, -0.28867513459481287)
-        assert math.isclose(bbox.extmax.y, +0.28867513459481287)
+        assert bbox.extmin.y == pytest.approx(-0.28867513459481287)
+        assert bbox.extmax.y == pytest.approx(+0.28867513459481287)
 
     def test_closed_3d_cubic_bezier_curve(self):
         curve = Bezier4P([(0, 0, -1), (2, 3, 0), (-2, 3, 0), (0, 0, -1)])
         bbox = cubic_bezier_bbox(curve)
-        assert math.isclose(bbox.extmin.x, -0.5773502691896258)
-        assert math.isclose(bbox.extmin.z, -1.0)
-        assert math.isclose(bbox.extmax.x, +0.5773502691896258)
-        assert math.isclose(bbox.extmax.y, +2.25)
-        assert math.isclose(bbox.extmax.z, -0.25)
+        assert bbox.extmin.x == pytest.approx(-0.5773502691896258)
+        assert bbox.extmin.z == pytest.approx(-1.0)
+        assert bbox.extmax.x == pytest.approx(+0.5773502691896258)
+        assert bbox.extmax.y == pytest.approx(+2.25)
+        assert bbox.extmax.z == pytest.approx(-0.25)
 
     def test_quadratic_bezier_curve_box(self):
         curve = Bezier3P([(0, 0), (1, 1), (2, 0)])
-        p = curve.point(0.5)
         bbox = quadratic_bezier_bbox(curve)
-        assert math.isclose(p.y, bbox.extmax.y)
+        assert bbox.extmax.y == pytest.approx(0.5)
