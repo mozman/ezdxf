@@ -114,6 +114,8 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: closed_uniform_bspline
 
+.. autofunction:: cubic_bezier_bbox
+
 .. autofunction:: cubic_bezier_from_3p
 
 .. autofunction:: cubic_bezier_from_arc
@@ -159,6 +161,8 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 .. autofunction:: normal_vector_3p
 
 .. autofunction:: open_uniform_bspline
+
+.. autofunction:: quadratic_bezier_bbox
 
 .. autofunction:: quadratic_bezier_from_3p
 

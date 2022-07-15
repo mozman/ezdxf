@@ -200,9 +200,10 @@ def cubic_bezier_from_3p(p1: Vertex, p2: Vertex, p3: Vertex) -> Bezier4P:
 
 
 def cubic_bezier_bbox(curve: Bezier4P, *, abs_tol=1e-12) -> BoundingBox:
-    """Returns the bounding box of a cubic Bézier curve.
+    """Returns the :class:`~ezdxf.math.BoundingBox` of a cubic Bézier curve
+    of type :class:`~ezdxf.math.Bezier4P`.
 
-    .. versionadded:: 0.16
+    .. versionadded:: 0.18
 
     """
     cp = curve.control_points
@@ -234,9 +235,10 @@ def cubic_bezier_bbox(curve: Bezier4P, *, abs_tol=1e-12) -> BoundingBox:
 
 
 def quadratic_bezier_bbox(curve: Bezier3P, *, abs_tol=1e-12) -> BoundingBox:
-    """Returns the bounding box of a quadratic Bézier curve.
+    """Returns the :class:`~ezdxf.math.BoundingBox` of a quadratic Bézier curve
+    of type :class:`~ezdxf.math.Bezier3P`.
 
-    .. versionadded:: 0.16
+    .. versionadded:: 0.18
 
     """
     return cubic_bezier_bbox(quadratic_to_cubic_bezier(curve), abs_tol=abs_tol)
