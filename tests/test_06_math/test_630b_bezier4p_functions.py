@@ -2,6 +2,7 @@
 # License: MIT License
 import pytest
 import random
+import math
 
 from ezdxf.math import (
     cubic_bezier_interpolation,
@@ -14,8 +15,9 @@ from ezdxf.math import (
     bezier_to_bspline,
     split_bezier,
     quadratic_bezier_from_3p,
-    cubic_bezier_from_3p,
     close_vectors,
+    cubic_bezier_bbox,
+    quadratic_bezier_bbox,
 )
 
 
@@ -185,3 +187,39 @@ def test_quadratic_bezier_from_3_points():
 def test_cubic_bezier_from_3_points():
     cbez = quadratic_bezier_from_3p((0, 0), (3, 2), (6, 0))
     assert cbez.point(0.5).isclose((3, 2))
+
+
+class TestBezierCurveBoundingBox:
+    def test_linear_curve(self):
+        bbox = cubic_bezier_bbox(Bezier4P([(0, 0), (1, 1), (2, 2), (3, 3)]))
+        assert bbox.extmin == (0, 0, 0)
+        assert bbox.extmax == (3, 3, 0)
+
+    def test_reverse_linear_curve(self):
+        bbox = cubic_bezier_bbox(Bezier4P([(3, 3), (2, 2), (-2, -2), (-3, -3)]))
+        assert bbox.extmin == (-3, -3, 0)
+        assert bbox.extmax == (3, 3, 0)
+
+    def test_cubic_bezier_curve_with_one_extrema(self):
+        curve = Bezier4P([(0, 0), (0, 1), (2, 1), (2, 0)])
+        p = curve.point(0.5)
+        bbox = cubic_bezier_bbox(curve)
+        assert math.isclose(p.y, bbox.extmax.y)
+
+    def test_cubic_bezier_curve_with_two_extrema(self):
+        curve = Bezier4P([(0, 0), (0, 1), (2, -1), (2, 0)])
+        bbox = cubic_bezier_bbox(curve)
+        assert math.isclose(bbox.extmin.y, -0.28867513459481287)
+        assert math.isclose(bbox.extmax.y, +0.28867513459481287)
+
+    def test_closed_cubic_bezier_curve(self):
+        curve = Bezier4P([(0, 0), (2, 3), (-2, 3), (0, 0)])
+        p = curve.point(0.5)
+        bbox = cubic_bezier_bbox(curve)
+        assert math.isclose(p.y, bbox.extmax.y)
+
+    def test_quadratic_bezier_curve_box(self):
+        curve = Bezier3P([(0, 0), (1, 1), (2, 0)])
+        p = curve.point(0.5)
+        bbox = quadratic_bezier_bbox(curve)
+        assert math.isclose(p.y, bbox.extmax.y)

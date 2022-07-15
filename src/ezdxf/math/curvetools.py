@@ -2,7 +2,15 @@
 #  License: MIT License
 from typing import Iterable, Union, List, Sequence, Tuple, TypeVar
 import math
-from ezdxf.math import BSpline, Bezier4P, Bezier3P, Vertex, Vec3, AnyVec
+from ezdxf.math import (
+    BSpline,
+    Bezier4P,
+    Bezier3P,
+    Vertex,
+    Vec3,
+    AnyVec,
+    BoundingBox,
+)
 
 __all__ = [
     "bezier_to_bspline",
@@ -13,6 +21,8 @@ __all__ = [
     "split_bezier",
     "quadratic_bezier_from_3p",
     "cubic_bezier_from_3p",
+    "cubic_bezier_bbox",
+    "quadratic_bezier_bbox",
 ]
 
 
@@ -153,6 +163,7 @@ def quadratic_bezier_from_3p(p1: Vertex, p2: Vertex, p3: Vertex) -> Bezier3P:
     .. _pomax-2: https://pomax.github.io/bezierinfo/#pointcurves
 
     """
+
     def u_func(t: float) -> float:
         mt = 1.0 - t
         mt2 = mt * mt
@@ -186,3 +197,46 @@ def cubic_bezier_from_3p(p1: Vertex, p2: Vertex, p3: Vertex) -> Bezier4P:
     """
     qbez = quadratic_bezier_from_3p(p1, p2, p3)
     return quadratic_to_cubic_bezier(qbez)
+
+
+def cubic_bezier_bbox(curve: Bezier4P, *, abs_tol=1e-12) -> BoundingBox:
+    """Returns the bounding box of a cubic Bézier curve.
+
+    .. versionadded:: 0.16
+
+    """
+    cp = curve.control_points
+    points: List[Vec3] = [cp[0], cp[3]]
+    for p1, p2, p3, p4 in zip(*cp):
+        a = 3.0 * (-p1 + 3.0 * p2 - 3.0 * p3 + p4)
+        b = 6.0 * (p1 - 2.0 * p2 + p3)
+        c = 3.0 * (p2 - p1)
+        if abs(a) < abs_tol:
+            if abs(b) < abs_tol:
+                continue
+            t = -c / b
+            if 0.0 < t < 1.0:
+                points.append((curve.point(t)))
+            continue
+
+        try:
+            sqrt_bb4ac = math.sqrt(b * b - 4.0 * a * c)
+        except ValueError:  # domain error
+            continue
+        aa = 2.0 * a
+        t = (-b + sqrt_bb4ac) / aa
+        if 0.0 < t < 1.0:
+            points.append(curve.point(t))
+        t = (-b - sqrt_bb4ac) / aa
+        if 0.0 < t < 1.0:
+            points.append(curve.point(t))
+    return BoundingBox(points)
+
+
+def quadratic_bezier_bbox(curve: Bezier3P, *, abs_tol=1e-12) -> BoundingBox:
+    """Returns the bounding box of a quadratic Bézier curve.
+
+    .. versionadded:: 0.16
+
+    """
+    return cubic_bezier_bbox(quadratic_to_cubic_bezier(curve), abs_tol=abs_tol)
