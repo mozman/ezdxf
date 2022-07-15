@@ -7,6 +7,7 @@ from ezdxf.math import Matrix44, OCS, Vec3, close_vectors
 from ezdxf.path import (
     Path,
     bbox,
+    precise_bbox,
     fit_paths_into_box,
     transform_paths,
     transform_paths_to_ocs,
@@ -150,6 +151,38 @@ class TestTransformPaths:
         assert ocs.from_wcs((0, 1, 3)) == p0[0].end
 
 
+class TestPreciseBoundingBox:
+    def test_empty_path(self):
+        result = precise_bbox(Path())
+        assert result.has_data is False
+
+    def test_line_to(self):
+        p = Path()
+        p.line_to((1, 2, 3))
+        result = precise_bbox(p)
+        assert result.size == (1, 2, 3)
+
+    def test_curve3_to(self):
+        p = Path()
+        p.curve3_to((2, 0), (1, 1))  # end, ctrl
+        result = precise_bbox(p)
+        assert result.extmax.y == pytest.approx(0.5)  # parabola
+
+    def test_curve4_to(self):
+        p = Path()
+        p.curve4_to((2, 0), (0, 1), (2, 1))  # end, ctrl1, ctrl2
+        result = precise_bbox(p)
+        assert result.extmax.y == pytest.approx(0.75)
+
+    def test_move_to(self):
+        p = Path()
+        p.line_to((1, 0, 0))
+        p.move_to((1, 2, 3))
+        p.line_to((1, 0, 0))
+        result = precise_bbox(p)
+        assert result.size == (1, 2, 3)
+
+
 class TestBoundingBox:
     def test_empty_paths(self):
         result = bbox([])
@@ -174,11 +207,11 @@ class TestBoundingBox:
         return p
 
     def test_not_precise_box(self, quadratic):
-        result = bbox([quadratic], flatten=0)
+        result = bbox([quadratic], fast=True)
         assert result.extmax.y == pytest.approx(1)  # control point
 
     def test_precise_box(self, quadratic):
-        result = bbox([quadratic], flatten=0.01)
+        result = bbox([quadratic], fast=False)
         assert result.extmax.y == pytest.approx(0.5)  # parabola
 
 

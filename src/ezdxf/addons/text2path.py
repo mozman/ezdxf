@@ -66,7 +66,7 @@ def make_path_from_str(
     # scale font rendering units to drawing units:
     render_size = size / font_measurements.cap_height
     p = _str_to_path(s, font_properties, render_size)
-    bbox = path.bbox([p], flatten=0)
+    bbox = path.bbox([p], fast=True)
 
     # Text is rendered in drawing units,
     # therefore do alignment in drawing units:

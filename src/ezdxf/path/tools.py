@@ -9,7 +9,7 @@ from typing import (
     Optional,
     Sequence,
 )
-
+import warnings
 import math
 from ezdxf.math import (
     Vec3,
@@ -29,6 +29,8 @@ from ezdxf.math import (
     linear_vertex_spacing,
     inscribe_circle_tangent_length,
     cubic_bezier_arc_parameters,
+    cubic_bezier_bbox,
+    quadratic_bezier_bbox,
 )
 
 from ezdxf.query import EntityQuery
@@ -42,6 +44,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "bbox",
+    "precise_bbox",
     "fit_paths_into_box",
     "transform_paths",
     "transform_paths_to_ocs",
@@ -126,26 +129,60 @@ def transform_paths_to_ocs(paths: Iterable[Path], ocs: OCS) -> List[Path]:
     return transform_paths(paths, t)
 
 
-def bbox(
-    paths: Iterable[Path], flatten=0.01, segments: int = 16
-) -> BoundingBox:
+def bbox(paths: Iterable[Path], *, fast=False) -> BoundingBox:
     """Returns the :class:`~ezdxf.math.BoundingBox` for the given paths.
 
     Args:
         paths: iterable of :class:`~ezdxf.path.Path` objects
-        flatten: value != 0  for bounding box calculation from the flattened
-            path and value == 0 for bounding box from the control vertices.
-            Default value is 0.01 as max flattening distance.
-        segments: minimal segment count for flattening
+        fast: calculates the precise bounding box of Bèzier curves if
+            ``False``, otherwise uses the control points of Bézier curves to
+            determine their bounding box.
+
+    ..versionchanged:: 0.18
+
+        Uses a new algorithm to determine exact Bézier curve bounding boxes.
+        Added argument `fast` and removed the arguments `flatten` and
+        `segments`.
 
     """
     box = BoundingBox()
     for p in paths:
-        if flatten:
-            box.extend(p.flattening(distance=abs(flatten), segments=segments))
-        else:
+        if fast:
             box.extend(p.control_vertices())
+        else:
+            bb = precise_bbox(p)
+            if bb.has_data:
+                box.extend((bb.extmin, bb.extmax))
     return box
+
+
+def precise_bbox(path: Path) -> BoundingBox:
+    """Returns the precise :class:`~ezdxf.math.BoundingBox` for the given
+    :class:`~ezdxf.path.Path`.
+
+    """
+    if len(path) == 0:  # empty path
+        return BoundingBox()
+    start = path.start
+    points: List[Vec3] = [start]
+    for cmd in path:
+        if cmd.type == Command.LINE_TO:
+            points.append(cmd.end)
+        elif cmd.type == Command.CURVE4_TO:
+            bb = cubic_bezier_bbox(
+                Bezier4P((start, cmd.ctrl1, cmd.ctrl2, cmd.end))  # type: ignore
+            )
+            points.append(bb.extmin)
+            points.append(bb.extmax)
+        elif cmd.type == Command.CURVE3_TO:
+            bb = quadratic_bezier_bbox(Bezier3P((start, cmd.ctrl, cmd.end)))  # type: ignore
+            points.append(bb.extmin)
+            points.append(bb.extmax)
+        elif cmd.type == Command.MOVE_TO:
+            points.append(cmd.end)
+        start = cmd.end
+
+    return BoundingBox(points)
 
 
 def fit_paths_into_box(
@@ -155,7 +192,7 @@ def fit_paths_into_box(
     source_box: BoundingBox = None,
 ) -> List[Path]:
     """Scale the given `paths` to fit into a box of the given `size`,
-    so that all path vertices are inside this borders.
+    so that all path vertices are inside these borders.
     If `source_box` is ``None`` the default source bounding box is calculated
     from the control points of the `paths`.
 
@@ -175,7 +212,7 @@ def fit_paths_into_box(
     if len(paths) == 0:
         return paths
     if source_box is None:
-        current_box = bbox(paths, flatten=0)
+        current_box = bbox(paths, fast=True)
     else:
         current_box = source_box
     if not current_box.has_data or current_box.size == (0, 0, 0):

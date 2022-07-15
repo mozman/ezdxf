@@ -42,7 +42,7 @@ class TestMakePath:
         assert p.is_closed is True
 
     def test_bounding_box_calculation(self, lwpolyline):
-        box = tools.bbox([make_path(lwpolyline)], flatten=0)
+        box = tools.bbox([make_path(lwpolyline)], fast=True)
         assert box.extmin.isclose((9.775, 1.0))
         assert box.extmax.isclose((10.225, 1.45))
         assert box.center.isclose((10, 1.225))
