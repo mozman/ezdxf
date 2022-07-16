@@ -1,8 +1,11 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
 from typing import TYPE_CHECKING, Iterable, Dict, Optional
+import warnings
+
+import ezdxf
 from ezdxf import disassemble
-from ezdxf.math import BoundingBox, Vec3
+from ezdxf.math import BoundingBox
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFEntity
@@ -82,29 +85,38 @@ class Cache:
             return key
 
 
+def _resolve_fast_arg(fast: bool, kwargs) -> bool:
+    if "flatten" in kwargs:
+        warnings.warn(
+            "Argument 'flatten' replaced by argument 'fast', "
+            "'flatten' will be removed in v1.0!",
+            DeprecationWarning,
+        )
+        fast = not bool(kwargs["flatten"])
+    return fast
+
+
 def multi_recursive(
     entities: Iterable["DXFEntity"],
     *,
-    flatten: float = MAX_FLATTENING_DISTANCE,
+    fast=False,
     cache: Cache = None,
+    **kwargs,
 ) -> Iterable[BoundingBox]:
     """Yields all bounding boxes for the given `entities` **or** all bounding
     boxes for their sub entities. If an entity (INSERT) has sub entities, only
     the bounding boxes of these sub entities will be yielded, **not** the
     bounding box of entity (INSERT) itself.
 
-    Calculate bounding boxes from flattened curves, if argument `flatten`
-    is not 0 (max flattening distance), else from control points.
+    If argument `fast` is ``True`` the calculation of Bézier curves is based on
+    their control points, this may return a slightly larger bounding box.
+
+    .. versionchanged:: 0.18
+
+        replaced argument `flatten` by argument `fast`
 
     """
-
-    def vertices(p: disassemble.Primitive) -> Iterable[Vec3]:
-        if flatten:
-            primitive.max_flattening_distance = abs(flatten)
-            return primitive.vertices()
-        else:
-            return disassemble.to_control_vertices([p])
-
+    fast = _resolve_fast_arg(fast, kwargs)
     flat_entities = disassemble.recursive_decompose(entities)
     primitives = disassemble.to_primitives(flat_entities)
     for primitive in primitives:
@@ -115,11 +127,11 @@ def multi_recursive(
         if cache is not None:
             box = cache.get(entity)
             if box is None:
-                box = BoundingBox(vertices(primitive))
+                box = primitive.bbox(fast=fast)
                 if box.has_data:
                     cache.store(entity, box)
         else:
-            box = BoundingBox(vertices(primitive))
+            box = primitive.bbox(fast=fast)
 
         if box.has_data:
             yield box
@@ -128,37 +140,63 @@ def multi_recursive(
 def extents(
     entities: Iterable["DXFEntity"],
     *,
-    flatten: float = MAX_FLATTENING_DISTANCE,
+    fast=False,
     cache: Cache = None,
+    **kwargs,
 ) -> BoundingBox:
     """Returns a single bounding box for all given `entities`.
 
-    Calculate bounding boxes from flattened curves, if argument `flatten`
-    is not 0 (max flattening distance), else from control points.
+    If argument `fast` is ``True`` the calculation of Bézier curves is based on
+    their control points, this may return a slightly larger bounding box.
+    The `fast` mode uses also a simpler and mostly inaccurate text size
+    calculation instead of the more precise but very slow calculation by
+    `matplotlib`.
+
+    .. hint::
+
+        The fast mode is not much faster for non-text based entities, so using
+        the slower default mode is not a big disadvantage if a more precise text
+        size calculation is important.
+
+    .. versionchanged:: 0.18
+
+        added fast mode, replaced argument `flatten` by argument `fast`
 
     """
+    fast = _resolve_fast_arg(fast, kwargs)
+    use_matplotlib = ezdxf.options.use_matplotlib  # save current state
+    if fast:
+        ezdxf.options.use_matplotlib = False
     _extends = BoundingBox()
-    for box in multi_flat(entities, flatten=flatten, cache=cache):
+    for box in multi_flat(entities, fast=fast, cache=cache):
         _extends.extend(box)
+    ezdxf.options.use_matplotlib = use_matplotlib  # restore state
     return _extends
 
 
 def multi_flat(
     entities: Iterable["DXFEntity"],
     *,
-    flatten: float = MAX_FLATTENING_DISTANCE,
+    fast=False,
     cache: Cache = None,
+    **kwargs,
 ) -> Iterable[BoundingBox]:
     """Yields a bounding box for each of the given `entities`.
 
-    Calculate bounding boxes from flattened curves, if argument `flatten`
-    is not 0 (max flattening distance), else from control points.
+    If argument `fast` is ``True`` the calculation of Bézier curves is based on
+    their control points, this may return a slightly larger bounding box.
+
+    .. versionchanged:: 0.18
+
+        replaced argument `flatten` by argument `fast`
 
     """
 
     def extends_(entities_: Iterable["DXFEntity"]) -> BoundingBox:
         _extends = BoundingBox()
-        for _box in multi_recursive(entities_, flatten=flatten, cache=cache):
+        for _box in multi_recursive(
+            entities_, fast=_resolve_fast_arg(fast, kwargs), cache=cache
+        ):
             _extends.extend(_box)
         return _extends
 

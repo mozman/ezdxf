@@ -105,7 +105,7 @@ def update_extents(doc: "Drawing") -> BoundingBox:
         - the :mod:`ezdxf.zoom` module
 
     """
-    extents = bbox.extents(doc.modelspace(), flatten=0)
+    extents = bbox.extents(doc.modelspace(), fast=True)
     doc.header[EXTMIN] = extents.extmin
     doc.header[EXTMAX] = extents.extmax
     return extents

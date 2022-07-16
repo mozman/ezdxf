@@ -295,7 +295,7 @@ def get_paths_bbox(text):
 
 def get_hatches_bbox(text):
     hatches = text2path.make_hatches_from_entity(text)
-    return bbox.extents(hatches, flatten=0)
+    return bbox.extents(hatches, fast=True)
 
 
 @pytest.fixture(params=[get_path_bbox, get_paths_bbox, get_hatches_bbox])

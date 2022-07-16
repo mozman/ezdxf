@@ -92,17 +92,11 @@ def main():
     # is optimized for speed.
     print(f"detecting model space extents (fast={args.fast}) ...")
     t0 = perf_counter()
-    flatten = 0.01
-    use_matplotlib = ezdxf.options.use_matplotlib
-    if args.fast:
-        ezdxf.options.use_matplotlib = False
-        flatten = 0
-    extents = bbox.extents(msp, flatten=flatten)
+    extents = bbox.extents(msp, fast=args.fast)
     print(f"... in {perf_counter() - t0:.1f}s")
     print(f"EXTMIN: ({extents.extmin.x:.3f}, {extents.extmin.y:.3f})")
     print(f"EXTMAX: ({extents.extmax.x:.3f}, {extents.extmax.y:.3f})")
     print(f"SIZE: ({extents.size.x:.3f}, {extents.size.y:.3f})")
-    ezdxf.options.use_matplotlib = use_matplotlib
 
     ctx = RenderContext(doc)
     try:

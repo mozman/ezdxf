@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.18b6 - dev
+Version 0.18b7 - dev
 --------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-18.html
@@ -54,8 +54,9 @@ Version 0.18b6 - dev
 - CHANGE: `recover` module - recovered integer and float values are logged as severe errors
 - CHANGE: method `Path.all_lines_to_curve3` replaced by function `path.lines_to_curve3()`
 - CHANGE: method `Path.all_lines_to_curve4` replaced by function `path.lines_to_curve4()`
-- CHANGE: replaced arguments `flatten` and `segments` by argument `fast` of tool 
+- CHANGE: replaced arguments `flatten` and `segments` by argument `fast` of tool
   function `Path.bbox()` 
+- CHANGE: replaced argument `flatten` argument `fast` in the `ezdxf.bbox` module
 - BUGFIX [#663](https://github.com/mozman/ezdxf/issues/663): 
   improve handling of large coordinates in `Bezier4P` and `Bezier3P` classes
 - BUGFIX [#655](https://github.com/mozman/ezdxf/issues/655): 

@@ -62,13 +62,9 @@ worse = 0
 count = 0
 sum_precise = 0.0
 sum_fast = 0.0
-USE_MATPLOTLIB = False
-PRELOAD_CACHE = False
-print(f"preloading matplotlib cache: {PRELOAD_CACHE}")
-print(f"using matplotlib for fast bounding box calculation: {USE_MATPLOTLIB}")
+
 
 for _name in CADKIT_FILES:
-    ezdxf.options.use_matplotlib = True
     count += 1
     filename = os.path.join(EZDXF_TEST_FILES, CADKIT, _name)
     print(f"reading file: {filename}")
@@ -76,22 +72,18 @@ for _name in CADKIT_FILES:
     doc = ezdxf.readfile(filename)
     msp = doc.modelspace()
     print(f"loading time: {time.perf_counter() - t0:.3f} sec")
-    if PRELOAD_CACHE:
-        print("preloading matplotlib font caches ...")
-        bbox.extents(doc.modelspace(), flatten=0)
 
     t0 = time.perf_counter()
-    box0 = bbox.extents(doc.modelspace(), flatten=0.01)
-    precise_result = time.perf_counter() - t0
-    sum_precise += precise_result
-    print(f"precise bounding box calculation in {precise_result:.3f} sec")
-
-    ezdxf.options.use_matplotlib = USE_MATPLOTLIB
-    t0 = time.perf_counter()
-    box1 = bbox.extents(doc.modelspace(), flatten=0)
+    box1 = bbox.extents(doc.modelspace(), fast=True)
     fast_result = time.perf_counter() - t0
     sum_fast += fast_result
     print(f"fast bounding box calculation in {fast_result:.3f} sec")
+
+    t0 = time.perf_counter()
+    box0 = bbox.extents(doc.modelspace(), fast=False)
+    precise_result = time.perf_counter() - t0
+    sum_precise += precise_result
+    print(f"precise bounding box calculation in {precise_result:.3f} sec")
 
     extents = box0.size
     diff = extents - box1.size

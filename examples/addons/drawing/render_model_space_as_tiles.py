@@ -67,13 +67,13 @@ def main(rows: int, cols: int):
     # module, DXF entities are referenced by handle strings. (multiprocessing!)
     cache = bbox.Cache()
 
-    # The bounding box calculation can take along time for big DXF files!
-    # If flatten=0 the bounding box calculation for curves (SPLINE, ELLIPSE, ...)
+    # The bounding box calculation can take a long time for big DXF files!
+    # If fast=True the bounding box calculation for curves (SPLINE, ELLIPSE, ...)
     # is based on the control points of the Path class, this is less precise but
     # can speed up the calculation and for this task is a precise bounding box
     # not required.
     # This has no impact on this example which uses only straight lines
-    extents = bbox.extents(msp, cache=cache, flatten=0)
+    extents = bbox.extents(msp, cache=cache, fast=True)
 
     ctx = RenderContext(doc)
     for tile, render_area in enumerate(render_areas(extents, (rows, cols))):
@@ -85,10 +85,10 @@ def main(rows: int, cols: int):
         ax.set_xlim(render_area.extmin.x, render_area.extmax.x)
         ax.set_ylim(render_area.extmin.y, render_area.extmax.y)
 
-        # Disable rendering of entities outside of the render area:
+        # Disable rendering of entities outside the render area:
         def is_intersecting_render_area(entity):
             """Returns True if entity should be rendered. """
-            entity_bbox = bbox.extents([entity], cache=cache, flatten=0)
+            entity_bbox = bbox.extents([entity], cache=cache, fast=True)
             return render_area.has_intersection(entity_bbox)
 
         # Finalizing invokes auto-scaling!
