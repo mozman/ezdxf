@@ -19,6 +19,7 @@ def test_convert_unsupported_entity_to_primitive():
     assert p.mesh is None
     assert p.is_empty is True
     assert list(p.vertices()) == []
+    assert p.bbox().has_data is False
 
 
 def test_multiple_unsupported_entities_to_vertices():
@@ -36,6 +37,8 @@ def test_point_to_primitive():
     assert p.path is not None
     assert p.mesh is None
     assert list(p.vertices()) == [(1, 2, 3)]
+    assert p.bbox().extmin == (1, 2, 3)
+    assert p.bbox().extmax == (1, 2, 3)
 
 
 def test_line_to_primitive():
@@ -60,6 +63,8 @@ def test_lwpolyline_to_primitive():
     assert p.path is not None
     assert p.mesh is None
     assert list(p.vertices()) == [p1, p2, p3]
+    assert p.bbox().extmin == p1
+    assert p.bbox().extmax == p3
 
 
 def test_circle_to_primitive():
@@ -69,6 +74,9 @@ def test_circle_to_primitive():
     assert p.path is not None
     assert p.mesh is None
     assert len(list(p.vertices())) > 32
+    box = p.bbox()
+    assert box.extmin == (-5, -5, 0)
+    assert box.extmax == (5, 5, 0)
 
 
 def test_arc_to_primitive():
@@ -78,6 +86,9 @@ def test_arc_to_primitive():
     assert p.path is not None
     assert p.mesh is None
     assert len(list(p.vertices())) > 32
+    box = p.bbox()
+    assert box.extmin == (-5, -5, 0)
+    assert box.extmax == (5, 5, 0)
 
 
 def test_ellipse_to_primitive():
@@ -87,6 +98,9 @@ def test_ellipse_to_primitive():
     assert p.path is not None
     assert p.mesh is None
     assert len(list(p.vertices())) > 32
+    box = p.bbox()
+    assert box.extmin == (-5, -5, 0)
+    assert box.extmax == (5, 5, 0)
 
 
 def test_spline_to_primitive():
@@ -98,6 +112,15 @@ def test_spline_to_primitive():
     assert p.mesh is None
     assert len(list(p.vertices())) > 20
     assert len(list(p.path.flattening(0.01))) > 20
+    # fast bounding box calculation
+    box = p.bbox(fast=True)
+    assert box.extmin == (0, -2, 0)
+    assert box.extmax == (9, 4, 0)
+
+    # precise bounding box calculation
+    box = p.bbox(fast=False)
+    assert box.extmin == (0, 0, 0)  # correct: checked visually
+    assert box.extmax == (9, 4, 0)
 
 
 def test_mesh_entity_to_primitive():
@@ -119,6 +142,10 @@ def test_mesh_entity_to_primitive():
     assert len(mesh_builder.faces) == 6
     assert len(list(p.vertices())) == 8
 
+    box = p.bbox()
+    assert box.extmin == (-0.5, -0.5, -0.5)
+    assert box.extmax == (0.5, 0.5, 0.5)
+
 
 @pytest.mark.parametrize("dxftype", ["SOLID", "TRACE", "3DFACE"])
 def test_from_quadrilateral_with_3_points(dxftype):
@@ -133,6 +160,10 @@ def test_from_quadrilateral_with_3_points(dxftype):
     assert p.mesh is None
     assert len(list(p.vertices())) == 4, "expected closed path"
 
+    box = p.bbox()
+    assert box.extmin == (0, 0)
+    assert box.extmax == (1, 1)
+
 
 @pytest.mark.parametrize("dxftype", ["SOLID", "TRACE", "3DFACE"])
 def test_from_quadrilateral_with_4_points(dxftype):
@@ -146,6 +177,10 @@ def test_from_quadrilateral_with_4_points(dxftype):
     assert p.path is not None
     assert p.mesh is None
     assert len(list(p.vertices())) == 5, "expected closed path"
+
+    box = p.bbox()
+    assert box.extmin == (0, 0)
+    assert box.extmax == (1, 1)
 
 
 def test_poly_face_mesh_to_primitive():
@@ -165,6 +200,10 @@ def test_poly_face_mesh_to_primitive():
     assert len(mesh_builder.vertices) == 8
     assert len(mesh_builder.faces) == 6
     assert len(list(p.vertices())) == 8
+
+    box = p.bbox()
+    assert box.extmin == (-0.5, -0.5, -0.5)
+    assert box.extmax == (0.5, 0.5, 0.5)
 
 
 def test_poly_mesh_to_primitive():
@@ -186,6 +225,10 @@ def test_poly_mesh_to_primitive():
     assert len(mesh_builder.faces) == 9
     assert len(list(p.vertices())) == 16
 
+    box = p.bbox()
+    assert box.extmin == (0, 0, 1)
+    assert box.extmax == (3, 3, 1)
+
 
 def test_2d_3d_polyline_to_primitive():
     from ezdxf.layouts import VirtualLayout
@@ -203,6 +246,10 @@ def test_2d_3d_polyline_to_primitive():
         assert p.path is not None
         assert p.mesh is None
         assert list(p.vertices()) == [p1, p2, p3]
+
+    box = p.bbox()
+    assert box.extmin == (1, 1)
+    assert box.extmax == (3, 3)
 
 
 def test_2d_polyline_including_width_to_primitive():
@@ -227,7 +274,7 @@ def test_2d_polyline_including_width_to_primitive():
         vertices = list(p.vertices())
         assert len(vertices) == 4
 
-        box = BoundingBox(vertices)
+        box = p.bbox()
         assert box.extmin.isclose((0, -0.5, 1)), "vertices should be in WCS"
         assert box.extmax.isclose((2, 0.5, 1)), "vertices should be in WCS"
 
@@ -243,6 +290,11 @@ def test_text_to_primitive():
     assert p.mesh is None
     assert len(list(p.vertices())) == 5, "expected closed box"
 
+    box = p.bbox()
+    # exact bounding box size depends on platform and matplotlib usage!
+    assert box.size.x > 20
+    assert box.size.y > 2.5
+
 
 def test_mtext_to_primitive():
     # Testing just the control flow, correct bounding boxes are visually tested.
@@ -254,6 +306,11 @@ def test_mtext_to_primitive():
     assert p.path is not None
     assert p.mesh is None
     assert len(list(p.vertices())) == 5, "expected closed box"
+
+    box = p.bbox()
+    # exact bounding box size depends on platform and matplotlib usage!
+    assert box.size.x > 20
+    assert box.size.y > 2.5
 
 
 def test_mtext_columns_to_primitive():
@@ -271,6 +328,10 @@ def test_mtext_columns_to_primitive():
     assert vertices[1].isclose((32, 0))
     assert vertices[2].isclose((32, -15))
     assert vertices[3].isclose((0, -15))
+
+    box = p.bbox()
+    assert box.extmin == (0, -15)
+    assert box.extmax == (32, 0)
 
 
 def test_hatch_returns_multiple_primitives():
@@ -291,6 +352,10 @@ def test_hatch_returns_multiple_primitives():
     assert len(v0) == 4, "expected closed triangle"
     assert len(v1) == 5, "expected closed box"
 
+    box = p.bbox()
+    assert box.extmin == (0, 0)
+    assert box.extmax == (1, 3)
+
 
 def test_image_primitive():
     image = factory.new("IMAGE")
@@ -299,13 +364,17 @@ def test_image_primitive():
     image.dxf.v_pixel = Vec3(0, -1)
     image.size = (200, 100)
     image.boundary_path = [(0, 0), (200, 100)]
-    prim = disassemble.make_primitive(image)
-    vertices = list(prim.vertices())
+    p = disassemble.make_primitive(image)
+    vertices = list(p.vertices())
     assert len(vertices) == 5, "expected closed box"
     assert vertices[0] == (0.5, -0.5, 0)
     assert vertices[1] == (200.5, -0.5, 0)
     assert vertices[2] == (200.5, 99.5, 0)
     assert vertices[3] == (0.5, 99.5, 0)
+
+    box = p.bbox()
+    assert box.extmin == (0.5, -0.5)
+    assert box.extmax == (200.5, 99.5)
 
 
 @pytest.fixture(scope="module")

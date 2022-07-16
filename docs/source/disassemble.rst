@@ -98,3 +98,5 @@ intermediate class to use a common interface on various DXF entities.
     .. autoproperty:: is_empty
 
     .. automethod:: vertices
+
+    .. automethod:: bbox

@@ -7,8 +7,8 @@ from ezdxf.entities import DXFEntity, Insert, get_font_name
 
 from ezdxf.lldxf import const
 from ezdxf.enums import TextEntityAlignment
-from ezdxf.math import Vec3, UCS, Z_AXIS, X_AXIS
-from ezdxf.path import Path, make_path, from_vertices
+from ezdxf.math import Vec3, UCS, Z_AXIS, X_AXIS, BoundingBox
+from ezdxf.path import Path, make_path, from_vertices, precise_bbox
 from ezdxf.render import MeshBuilder, MeshVertexMerger, TraceBuilder
 from ezdxf.protocols import SupportsVirtualEntities, virtual_entities
 
@@ -36,7 +36,7 @@ __all__ = [
 
 class Primitive(abc.ABC):
     """It is not efficient to create the Path() or MeshBuilder() representation
-    by default. For some entities the it's just not needed (LINE, POINT) and for
+    by default. For some entities it's just not needed (LINE, POINT) and for
     others the builtin flattening() method is more efficient or accurate than
     using a Path() proxy object. (ARC, CIRCLE, ELLIPSE, SPLINE).
 
@@ -100,6 +100,24 @@ class Primitive(abc.ABC):
 
         """
         pass
+
+    def bbox(self, fast=False) -> BoundingBox:
+        """Returns the :class:`~ezdxf.math.BoundingBox` of the path/mesh
+        representation. Returns the precise bounding box for the path
+        representation if `fast` is ``False``, otherwise the bounding box for
+        Bézier curves is based on their control points.
+
+        .. versionadded:: 0.18
+
+        """
+        if self.mesh:
+            return BoundingBox(self.vertices())
+        path = self.path
+        if path:
+            if fast:
+                return BoundingBox(path.control_vertices())
+            return precise_bbox(path)
+        return BoundingBox()
 
 
 class EmptyPrimitive(Primitive):
@@ -171,6 +189,10 @@ class LinePrimitive(Primitive):
         yield e.dxf.start
         yield e.dxf.end
 
+    def bbox(self, fast=False) -> BoundingBox:
+        e = self.entity
+        return BoundingBox((e.dxf.start, e.dxf.start))
+
 
 class LwPolylinePrimitive(ConvertedPrimitive):
     # TODO: apply thickness if not 0
@@ -205,10 +227,13 @@ class PointPrimitive(Primitive):
     def vertices(self) -> Iterable[Vec3]:
         yield self.entity.dxf.location
 
+    def bbox(self, fast=False) -> BoundingBox:
+        return BoundingBox((self.entity.dxf.location, ))
+
 
 class MeshPrimitive(ConvertedPrimitive):
     def _convert_entity(self):
-        self._mesh = MeshBuilder.from_mesh(self.entity)
+        self._mesh = MeshBuilder.from_mesh(self.entity)  # type: ignore
 
 
 class QuadrilateralPrimitive(ConvertedPrimitive):
@@ -233,7 +258,7 @@ class PolylinePrimitive(ConvertedPrimitive):
         elif e.is_2d_polyline or e.is_3d_polyline:
             self._path = make_path(e)
         else:
-            m = MeshVertexMerger.from_polyface(e)
+            m = MeshVertexMerger.from_polyface(e)  # type: ignore
             self._mesh = MeshBuilder.from_builder(m)
 
 
