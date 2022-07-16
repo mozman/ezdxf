@@ -47,6 +47,11 @@ def main():
         default=300,
         help="output resolution in pixels/inch, default is 300",
     )
+    parser.add_argument(
+        "--fast",
+        action="store_true",
+        help="use fast bounding box calculation",
+    )
 
     args = parser.parse_args()
 
@@ -85,13 +90,19 @@ def main():
     # backend would have to store all drawing commands to determine the required
     # image size.  This could be implemented as a different pillow backend which
     # is optimized for speed.
-    print("detecting model space extents ...")
+    print(f"detecting model space extents (fast={args.fast}) ...")
     t0 = perf_counter()
-    extents = bbox.extents(msp, flatten=0)
+    flatten = 0.01
+    use_matplotlib = ezdxf.options.use_matplotlib
+    if args.fast:
+        ezdxf.options.use_matplotlib = False
+        flatten = 0
+    extents = bbox.extents(msp, flatten=flatten)
     print(f"... in {perf_counter() - t0:.1f}s")
     print(f"EXTMIN: ({extents.extmin.x:.3f}, {extents.extmin.y:.3f})")
     print(f"EXTMAX: ({extents.extmax.x:.3f}, {extents.extmax.y:.3f})")
     print(f"SIZE: ({extents.size.x:.3f}, {extents.size.y:.3f})")
+    ezdxf.options.use_matplotlib = use_matplotlib
 
     ctx = RenderContext(doc)
     try:
