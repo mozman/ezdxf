@@ -138,7 +138,7 @@ def bbox(paths: Iterable[Path], *, fast=False) -> BoundingBox:
             ``False``, otherwise uses the control points of Bézier curves to
             determine their bounding box.
 
-    ..versionchanged:: 0.18
+    .. versionchanged:: 0.18
 
         Uses a new algorithm to determine exact Bézier curve bounding boxes.
         Added argument `fast` and removed the arguments `flatten` and

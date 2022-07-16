@@ -600,9 +600,9 @@ def cube(center: bool = True) -> MeshTransformer:
 def extrude(
     profile: Iterable[UVec], path: Iterable[UVec], close=True, caps=False
 ) -> MeshTransformer:
-    """Extrude a `profile` polygon along a `path` polyline, vertices of profile
-    should be in counter-clockwise order. The sweeping profile will not be
-    rotated at extrusion!
+    """Extrude a `profile` polygon along a `path` polyline, the vertices of
+    `profile` should be in counter-clockwise order.
+    The sweeping profile will not be rotated at extrusion!
 
     Args:
         profile: sweeping profile as list of (x, y, z) tuples in
@@ -678,15 +678,17 @@ def extrude_twist_scale(
     caps=False,
     quads=True,
 ) -> MeshTransformer:
-    """Extrude a `profile` polygon along a `path` polyline, vertices of profile
-    should be in counter-clockwise order. This implementation can scale and
-    twist the sweeping profile along the extrusion path. The `path` segment
-    points are fix points, the `max_step_size` is used to create intermediate
-    profiles between this fix points. The `max_step_size` is adapted for each
-    segment to create equally spaced distances. The twist angle is the rotation
-    angle in radians and the scale `argument` defines the scale factor of the
-    final profile.  The twist angle and scaling factor of the intermediate
-    profiles will be linear interpolated between the start and end values.
+    """Extrude a `profile` polygon along a `path` polyline, the vertices of
+    `profile` should be in counter-clockwise order.
+    This implementation can scale and twist the sweeping profile along the
+    extrusion path. The `path` segment points are fix points, the
+    `max_step_size` is used to create intermediate profiles between this
+    fix points. The `max_step_size` is adapted for each
+    segment to create equally spaced distances.
+    The twist angle is the rotation angle in radians and the scale `argument`
+    defines the scale factor of the final profile.
+    The twist angle and scaling factor of the intermediate profiles will be
+    linear interpolated between the start and end values.
 
     Args:
         profile: sweeping profile as list of (x, y, z) tuples in

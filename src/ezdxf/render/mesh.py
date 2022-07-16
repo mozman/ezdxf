@@ -458,7 +458,7 @@ class MeshBuilder:
         return self.from_builder(self)
 
     def diagnose(self) -> MeshDiagnose:
-        """Returns the :class:`MeshDiagnose` for this mesh.
+        """Returns the :class:`MeshDiagnose` object for this mesh.
 
         .. versionadded:: 0.18
 

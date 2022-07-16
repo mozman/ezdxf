@@ -181,9 +181,10 @@ MeshBuilder Helper Classes
 
 .. class:: MeshDiagnose
 
-    Diagnose tools for :class:`MeshBuilder` which can be used to detect
-    topology errors for closed surfaces. The object contains cached values, which
-    do not get updated if the source mesh will be changed!
+    Diagnose tool which can be used to analyze and detect errors of
+    :class:`MeshBuilder` objects like topology errors for closed surfaces.
+    The object contains cached values, which do not get updated if the source
+    mesh will be changed!
 
     .. note::
 

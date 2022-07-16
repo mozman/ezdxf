@@ -112,7 +112,7 @@ def update_extents(doc: "Drawing") -> BoundingBox:
 
 
 def show_lineweight(doc: "Drawing", state=True) -> None:
-    """Show lines and curves with "thickness" (lineweight) if `state` is
-    ``True``.
+    """The CAD application or DXF viewer should show lines and curves with
+    "thickness" (lineweight) if `state` is ``True``.
     """
     doc.header["$LWDISPLAY"] = int(state)

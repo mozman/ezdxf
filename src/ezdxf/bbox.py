@@ -106,7 +106,7 @@ def multi_recursive(
     """Yields all bounding boxes for the given `entities` **or** all bounding
     boxes for their sub entities. If an entity (INSERT) has sub entities, only
     the bounding boxes of these sub entities will be yielded, **not** the
-    bounding box of entity (INSERT) itself.
+    bounding box of the entity (INSERT) itself.
 
     If argument `fast` is ``True`` the calculation of Bézier curves is based on
     their control points, this may return a slightly larger bounding box.

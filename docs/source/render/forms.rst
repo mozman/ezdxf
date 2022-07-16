@@ -36,6 +36,7 @@ Forms
     - :func:`from_profiles_spline`
     - :func:`rotation_form`
     - :func:`sweep`
+    - :func:`sweep_profile`
 
 
 2D Forms
@@ -96,3 +97,5 @@ Create 3D forms as :class:`~ezdxf.render.MeshTransformer` objects.
 .. autofunction:: rotation_form
 
 .. autofunction:: sweep
+
+.. autofunction:: sweep_profile
