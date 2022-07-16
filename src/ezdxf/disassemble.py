@@ -456,21 +456,6 @@ class MTextPrimitive(ConvertedPrimitive):
         )
 
 
-class PathPrimitive(Primitive):
-    def __init__(
-        self, path: Path, entity: DXFEntity, max_flattening_distance=None
-    ):
-        super().__init__(entity, max_flattening_distance)
-        self._path = path
-
-    @property
-    def path(self) -> Optional[Path]:
-        return self._path
-
-    def vertices(self) -> Iterable[Vec3]:
-        yield from self._path.flattening(self.max_flattening_distance)  # type: ignore
-
-
 class ImagePrimitive(ConvertedPrimitive):
     def _convert_entity(self):
         self._path = make_path(self.entity)
