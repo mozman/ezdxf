@@ -808,9 +808,12 @@ def local_cubic_bspline_interpolation_from_tangents(
         p3 = fit_points[i + 1]
         t0 = tangents[i]
         t3 = tangents[i + 1]
-        a = 16.0 - (t0 + t3).magnitude_square
+        a = 16.0 - (t0 + t3).magnitude_square  # always > 0!
         b = 12.0 * (p3 - p0).dot(t0 + t3)
         c = -36.0 * (p3 - p0).magnitude_square
+
+        # Raises an ArithmeticError exception if there is a complex solution.
+        # Is this possible?
         alpha_plus, alpha_minus = quadratic_equation(a, b, c)
         p1 = p0 + alpha_plus * t0 / 3.0
         p2 = p3 - alpha_plus * t3 / 3.0

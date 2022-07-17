@@ -414,8 +414,22 @@ class Matrix:
         return LUDecomposition(self.matrix).determinant()
 
 
-def quadratic_equation(a: float, b: float, c: float) -> Tuple[float, float]:
-    discriminant = math.sqrt(b ** 2 - 4 * a * c)
+def quadratic_equation(
+    a: float, b: float, c: float, abs_tol=1e-12
+) -> Tuple[float, float]:
+    """Returns the solution for the quadratic equation ``a*x^2 + b*x + c = 0``
+    as 2-tuple ``(r0, r1)``. The second result is `math.nan` if argument `a`
+    is 0 and raises an :class:`ArithmeticError` exception if there is a complex
+    solution.
+    """
+    if abs(a) < abs_tol:
+        if abs(b) < abs_tol:
+            return -c, math.nan
+        return -c / b, math.nan
+    try:
+        discriminant = math.sqrt(b**2 - 4 * a * c)
+    except ValueError:  # domain error, sqrt of a negative number
+        raise ArithmeticError("complex solution")
     return ((-b + discriminant) / (2.0 * a)), ((-b - discriminant) / (2.0 * a))
 
 
@@ -458,9 +472,7 @@ def gauss_vector_solver(
     return _backsubstitution(A, B)
 
 
-def gauss_matrix_solver(
-    A: IterableMatrixData, B: IterableMatrixData
-) -> Matrix:
+def gauss_matrix_solver(A: IterableMatrixData, B: IterableMatrixData) -> Matrix:
     """Solves the linear equation system given by a nxn Matrix A . x = B,
     right-hand side quantities as nxm Matrix B by the `Gauss-Elimination`_
     algorithm, which is faster than the `Gauss-Jordan`_ algorithm.
