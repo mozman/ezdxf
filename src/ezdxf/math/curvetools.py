@@ -214,8 +214,9 @@ def cubic_bezier_bbox(curve: Bezier4P, *, abs_tol=1e-12) -> BoundingBox:
         c = 3.0 * (p2 - p1)
         if abs(a) < abs_tol:
             if abs(b) < abs_tol:
-                continue
-            t = -c / b
+                t = -c  # or skip this case?
+            else:
+                t = -c / b
             if 0.0 < t < 1.0:
                 points.append((curve.point(t)))
             continue
