@@ -184,8 +184,11 @@ class BoundingBox(AbstractBoundingBox):
 
     @property
     def is_empty(self) -> bool:
-        """Returns ``True`` if the bounding box is empty. The bounding box has a
-        size of 0 in any or all dimensions or is undefined.
+        """Returns ``True`` if the bounding box is empty or the bounding box
+        has a size of 0 in any or all dimensions or is undefined.
+
+        .. versionchanged:: 0.18
+
         """
         if self.has_data:
             sx, sy, sz = self.size
@@ -218,6 +221,8 @@ class BoundingBox(AbstractBoundingBox):
             bbox1 = BoundingBox([(0, 0, 0), (1, 1, 1)])
             bbox2 = BoundingBox([(1, 1, 1), (2, 2, 2)])
             assert bbox1.has_intersection(bbox2) is False
+
+        .. versionadded: 0.18
 
         """
         # Source: https://gamemath.com/book/geomtests.html#intersection_two_aabbs
@@ -262,7 +267,7 @@ class BoundingBox(AbstractBoundingBox):
             bbox2 = BoundingBox([(1, 1, 1), (2, 2, 2)])
             assert bbox1.has_overlap(bbox2) is True
 
-        .. versionadded:: 0.17.2
+        .. versionadded: 0.18
 
         """
         # Source: https://gamemath.com/book/geomtests.html#intersection_two_aabbs
@@ -320,6 +325,9 @@ class BoundingBox(AbstractBoundingBox):
         """Returns the bounding box of the intersection cube of both
         3D bounding boxes. Returns an empty bounding box if the intersection
         volume is 0.
+
+        .. versionadded: 0.18
+
         """
         new_bbox = self.__class__()
         if not self.has_intersection(other):
