@@ -148,7 +148,7 @@ def extents(
 
     If argument `fast` is ``True`` the calculation of Bézier curves is based on
     their control points, this may return a slightly larger bounding box.
-    The `fast` mode uses also a simpler and mostly inaccurate text size
+    The `fast` mode also uses a simpler and mostly inaccurate text size
     calculation instead of the more precise but very slow calculation by
     `matplotlib`.
 
