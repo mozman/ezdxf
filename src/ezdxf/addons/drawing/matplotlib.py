@@ -12,6 +12,7 @@ from typing import (
 )
 from collections import defaultdict
 from functools import lru_cache
+import logging
 
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
@@ -38,6 +39,7 @@ from .line_renderer import AbstractLineRenderer
 if TYPE_CHECKING:
     from ezdxf.eztypes import Layout
 
+logger = logging.getLogger("ezdxf")
 # matplotlib docs: https://matplotlib.org/index.html
 
 # line style:
@@ -161,16 +163,21 @@ class MatplotlibBackend(Backend):
             v1, c1 = _get_path_patch_data(hole)
             vertices.extend(v1)
             codes.extend(c1)
-
-        patch = PathPatch(
-            Path(vertices, codes),
-            color=properties.color,
-            linewidth=linewidth,
-            fill=fill,
-            hatch=hatch,
-            zorder=self._get_z(),
-        )
-        self.ax.add_patch(patch)
+        try:
+            patch = PathPatch(
+                Path(vertices, codes),
+                color=properties.color,
+                linewidth=linewidth,
+                fill=fill,
+                hatch=hatch,
+                zorder=self._get_z(),
+            )
+        except ValueError as e:
+            logger.info(
+                f"ignored matplotlib error in draw_filled_paths(): {str(e)}"
+            )
+        else:
+            self.ax.add_patch(patch)
 
     def draw_filled_polygon(
         self, points: Iterable[Vec3], properties: Properties
@@ -206,14 +213,17 @@ class MatplotlibBackend(Backend):
             )
             @ transform,
         )
-        self.ax.add_patch(
-            PathPatch(
+        try:
+            patch = PathPatch(
                 transformed_path,
                 facecolor=properties.color,
                 linewidth=0,
                 zorder=self._get_z(),
             )
-        )
+        except ValueError as e:
+            logger.info(f"ignored matplotlib error in draw_text(): {str(e)}")
+        else:
+            self.ax.add_patch(patch)
 
     def get_font_properties(
         self, font: Optional[fonts.FontFace]
@@ -559,17 +569,21 @@ class InternalLineRenderer(MatplotlibLineRenderer):
 
     def draw_path(self, path, properties: Properties, z: float):
         vertices, codes = _get_path_patch_data(path)
-        patch = PathPatch(
-            Path(vertices, codes),
-            linewidth="solid"
-            if self._solid_only
-            else self.lineweight(properties),
-            linestyle=self.linetype(properties),
-            fill=False,
-            color=properties.color,
-            zorder=z,
-        )
-        self.ax.add_patch(patch)
+        try:
+            patch = PathPatch(
+                Path(vertices, codes),
+                linewidth="solid"
+                if self._solid_only
+                else self.lineweight(properties),
+                linestyle=self.linetype(properties),
+                fill=False,
+                color=properties.color,
+                zorder=z,
+            )
+        except ValueError as e:
+            logger.info(f"ignored matplotlib error: {str(e)}")
+        else:
+            self.ax.add_patch(patch)
 
     @property
     def measurement_scale(self) -> float:
@@ -638,14 +652,20 @@ class EzdxfLineRenderer(MatplotlibLineRenderer):
         color = properties.color
         if len(pattern) < 2:
             vertices, codes = _get_path_patch_data(path)
-            patch = PathPatch(
-                Path(vertices, codes),
-                linewidth=lineweight,
-                color=color,
-                fill=False,
-                zorder=z,
-            )
-            self.ax.add_patch(patch)
+            try:
+                patch = PathPatch(
+                    Path(vertices, codes),
+                    linewidth=lineweight,
+                    color=color,
+                    fill=False,
+                    zorder=z,
+                )
+            except ValueError as e:
+                logger.info(
+                    f"ignored matplotlib error in draw_path(): {str(e)}"
+                )
+            else:
+                self.ax.add_patch(patch)
         else:
             renderer = EzdxfLineTypeRenderer(pattern)
             segments = renderer.line_segments(
