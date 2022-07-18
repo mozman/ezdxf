@@ -335,13 +335,10 @@ def from_hatch_edge_path(
     edges: EdgePath,
     ocs: OCS = None,
     elevation: float = 0,
-    open_loops: bool = False,
 ) -> Path:
     """Returns a :class:`Path` object from a :class:`~ezdxf.entities.Hatch`
     edge path.
 
-    In general open loops should be ignored, but for testing it is maybe
-    necessary to override this behavior, by setting `open_loops` to ``True``.
     """
 
     def line(edge: LineEdge):
@@ -474,11 +471,15 @@ def from_hatch_edge_path(
             loop = loop.reversed()
             loop.append_path(next_segment)  # type: ignore
         else:  # gap between current loop and next segment
-            if loop.is_closed or open_loops:
+            if loop.is_closed:  # start a new loop
                 path.extend_multi_path(loop)
-            loop = next_segment  # start a new loop
+                loop = next_segment  # start a new loop
+            # behavior changed in version v0.18 based on issue #706:
+            else:  # close the gap by a straight line and append the segment
+                loop.append_path(next_segment)  # type: ignore
 
-    if loop is not None and (loop.is_closed or open_loops):
+    if loop is not None:
+        loop.close()
         path.extend_multi_path(loop)
     return path  # multi path
 
