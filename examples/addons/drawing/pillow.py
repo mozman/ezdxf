@@ -52,6 +52,12 @@ def main():
         action="store_true",
         help="use fast bounding box calculation",
     )
+    parser.add_argument(
+        "-t",
+        "--text-placeholder",
+        action="store_true",
+        help="draw rectangle as text placeholder",
+    )
 
     args = parser.parse_args()
 
@@ -85,6 +91,7 @@ def main():
     print(f"Image size: {img_x}x{img_y}")
     print(f"DPI: {args.dpi}")
     print(f"Oversampling factor: {args.oversampling}")
+    print(f"Draw text placeholder: {args.text_placeholder}")
     # The current implementation is optimized to use as less memory as possible,
     # therefore the extents of the layout are required beforehand, otherwise the
     # backend would have to store all drawing commands to determine the required
@@ -105,6 +112,7 @@ def main():
             image_size=(img_x, img_y),
             oversampling=args.oversampling,
             dpi=args.dpi,
+            text_placeholder=args.text_placeholder,
         )
     except ValueError as e:
         # invalid image size or empty drawing

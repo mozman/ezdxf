@@ -10,7 +10,7 @@ from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color
 
-from ezdxf.tools.fonts import FontFace, FontMeasurements
+from ezdxf.tools.fonts import FontFace, FontMeasurements, MonospaceFont
 from .config import Configuration
 
 try:
@@ -36,12 +36,13 @@ class PillowBackend(Backend):
         margin: int = 10,
         dpi: int = 300,
         oversampling: int = 1,
+        text_placeholder=True,
     ):
         """Experimental backend to use Pillow for image export.
 
         Current limitations:
 
-            - no text support
+            - no text support, draws an optional placeholder rectangle
             - no linetype support
             - no hatch pattern support
             - holes in hatches are not supported
@@ -63,6 +64,7 @@ class PillowBackend(Backend):
             oversampling: multiplier of the final image size to define the
                 render canvas size (e.g. 1, 2, 3, ...), the final image will
                 be scaled down by the LANCZOS method
+            text_placeholder: draws a rectangle as text placeholder if ``True``
 
         """
         super().__init__()
@@ -74,6 +76,7 @@ class PillowBackend(Backend):
         self.margin_y = float(margin)
         self.dpi = int(dpi)
         self.oversampling = max(int(oversampling), 1)
+        self.text_placeholder = text_placeholder
         # The lineweight is stored im mm,
         # line_pixel_factor * lineweight is the width in pixels
         self.line_pixel_factor = self.dpi / INCH_TO_MM  # pixel per mm
@@ -166,22 +169,24 @@ class PillowBackend(Backend):
         properties: Properties,
         cap_height: float,
     ) -> None:
-        # text is not supported yet
-        pass
+        if not self.text_placeholder:
+            return
+        # draws a placeholder rectangle as text
+        width = self.get_text_line_width(text, cap_height, properties.font)
+        height = cap_height
+        points = Vec3.list([(0, 0), (width, 0), (width, height), (0, height)])
+        points = list(transform.transform_vertices(points))
+        self.draw_filled_polygon(points, properties)
 
     def get_font_measurements(
         self, cap_height: float, font: FontFace = None
     ) -> FontMeasurements:
-        # text is not supported yet
-        return FontMeasurements(
-            0.0, cap_height, cap_height * 0.666, cap_height * 0.333
-        )
+        return MonospaceFont(cap_height).measurements
 
     def get_text_line_width(
         self, text: str, cap_height: float, font: FontFace = None
     ) -> float:
-        # text is not supported yet
-        return 0.0
+        return MonospaceFont(cap_height).text_width(text) * 0.8
 
     def export(self, filename: str, **kwargs) -> None:
         image = self.image
