@@ -673,8 +673,9 @@ def closed_loops(
             path.user_data, const.BoundaryPathState
         ), "missing attached boundary path state"
         for sub_path in path.sub_paths():
-            sub_path.close()
-            loops.append(sub_path)
+            if len(sub_path):
+                sub_path.close()
+                loops.append(sub_path)
     return loops
 
 
