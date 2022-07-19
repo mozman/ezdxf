@@ -7,7 +7,7 @@ import enum
 from typing import Iterable, Tuple, List, Any
 import math
 from ezdxf.math import Vec3, Vec2, Matrix44, AbstractBoundingBox, BoundingBox
-from ezdxf.addons.drawing.backend import Backend
+from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color
 
@@ -24,6 +24,10 @@ except ImportError:
     )
     sys.exit(1)
 
+# reuse the TextRenderer() from the matplotlib backend to create TextPath()
+# objects
+from matplotlib.font_manager import FontProperties
+from .matplotlib import TextRenderer
 
 INCH_TO_MM = 25.6
 
@@ -39,11 +43,10 @@ class PillowBackend(Backend):
         oversampling: int = 1,
         text_placeholder=True,
     ):
-        """Experimental backend to use Pillow for image export.
+        """Backend which uses `Pillow` for image export.
 
         Current limitations:
 
-            - no text support, draws an optional placeholder rectangle
             - no linetype support
             - no hatch pattern support
             - holes in hatches are not supported
@@ -105,6 +108,7 @@ class PillowBackend(Backend):
         self.image_size = Vec2(image_size)
         self.bg_color: Color = "#000000"
         self.image_mode = "RGBA"
+        self.text_renderer = TextRenderer(FontProperties(), True)
 
         # dummy values for declaration, both are set in clear()
         self.image = Image.new("RGBA", (10, 10))
@@ -170,24 +174,52 @@ class PillowBackend(Backend):
         properties: Properties,
         cap_height: float,
     ) -> None:
-        if not self.text_placeholder:
-            return
-        # draws a placeholder rectangle as text
-        width = self.get_text_line_width(text, cap_height, properties.font)
-        height = cap_height
-        points = Vec3.list([(0, 0), (width, 0), (width, height), (0, height)])
-        points = list(transform.transform_vertices(points))
-        self.draw_filled_polygon(points, properties)
+        if self.text_placeholder:
+            # draws a placeholder rectangle as text
+            width = self.get_text_line_width(text, cap_height, properties.font)
+            height = cap_height
+            points = Vec3.list(
+                [(0, 0), (width, 0), (width, height), (0, height)]
+            )
+            points = list(transform.transform_vertices(points))
+            self.draw_filled_polygon(points, properties)
+        else:  # render Text as Path() objects
+            tr = self.text_renderer
+            text = self._prepare_text(text)
+            font_properties = tr.get_font_properties(properties.font)
+            ezdxf_path = tr.get_ezdxf_path(text, font_properties)
+            if len(ezdxf_path) == 0:
+                return
+            scale = tr.get_scale(cap_height, font_properties)
+            m = Matrix44.scale(scale) @ transform
+            for path in ezdxf_path.sub_paths():
+                path = path.transform(m)
+                self.draw_path(path, properties)
 
     def get_font_measurements(
         self, cap_height: float, font: FontFace = None
     ) -> FontMeasurements:
-        return MonospaceFont(cap_height).measurements
+        if self.text_placeholder:
+            return MonospaceFont(cap_height).measurements
+        return self.text_renderer.get_font_measurements(
+            self.text_renderer.get_font_properties(font)
+        ).scale_from_baseline(desired_cap_height=cap_height)
+
+    def _prepare_text(self, text: str) -> str:
+        dxftype = (
+            self.current_entity.dxftype() if self.current_entity else "TEXT"
+        )
+        return prepare_string_for_rendering(text, dxftype)
 
     def get_text_line_width(
         self, text: str, cap_height: float, font: FontFace = None
     ) -> float:
-        return MonospaceFont(cap_height).text_width(text) * 0.8
+        if self.text_placeholder:
+            return MonospaceFont(cap_height).text_width(text) * 0.8
+        if not text.strip():
+            return 0.0
+        text = self._prepare_text(text)
+        return self.text_renderer.get_text_line_width(text, cap_height, font)
 
     def export(self, filename: str, **kwargs) -> None:
         image = self.image
@@ -259,7 +291,7 @@ class PillowDelayedDraw(Backend):
         return max(int(lineweight * self.line_pixel_factor), 1)
 
     def draw_point(self, pos: Vec3, properties: Properties) -> None:
-        self.extents.extend((pos, ))
+        self.extents.extend((pos,))
         self.commands.append((Commands.POINT, pos, properties.color))
 
     def draw_line(self, start: Vec3, end: Vec3, properties: Properties) -> None:
@@ -270,7 +302,7 @@ class PillowDelayedDraw(Backend):
                 start,
                 end,
                 properties.color,
-                self.width(properties.lineweight)
+                self.width(properties.lineweight),
             )
         )
 
@@ -294,7 +326,9 @@ class PillowDelayedDraw(Backend):
         # draws a placeholder rectangle as text
         width = self.get_text_line_width(text, cap_height, properties.font)
         height = cap_height
-        points = Vec3.generate([(0, 0), (width, 0), (width, height), (0, height)])
+        points = Vec3.generate(
+            [(0, 0), (width, 0), (width, height), (0, height)]
+        )
         points = transform.transform_vertices(points)
         self.draw_filled_polygon(points, properties)
 
@@ -351,8 +385,12 @@ class PillowDelayedDraw(Backend):
         canvas_size = self.extents.size
         if self.image_size == Vec2(0, 0):
             self.image_size = Vec2(
-                math.ceil(canvas_size.x * self.resolution + 2.0 * self.margin_x),
-                math.ceil(canvas_size.y * self.resolution + 2.0 * self.margin_y),
+                math.ceil(
+                    canvas_size.x * self.resolution + 2.0 * self.margin_x
+                ),
+                math.ceil(
+                    canvas_size.y * self.resolution + 2.0 * self.margin_y
+                ),
             )
         else:
             img_x, img_y = self.image_size
