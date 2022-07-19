@@ -30,7 +30,7 @@ from ezdxf.tools.fonts import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.tools import fonts
 from ezdxf.math import Vec3, Matrix44
-from ezdxf.path import Command
+import ezdxf.path
 from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer
 from .config import Configuration, LinePolicy, HatchPolicy
 from .matplotlib_hatch import HATCH_NAME_MAPPING
@@ -383,6 +383,15 @@ class TextRenderer:
                 cache[text] = path
         return path
 
+    def get_ezdxf_path(
+        self, text: str, font: FontProperties
+    ) -> ezdxf.path.Path:
+        try:
+            text_path = self.get_text_path(text, font)
+        except (RuntimeError, ValueError):
+            return ezdxf.path.Path()
+        return ezdxf.path.multi_path_from_matplotlib_path(text_path)
+
     def get_text_line_width(
         self, text: str, cap_height: float, font: fonts.FontFace
     ) -> float:
@@ -399,11 +408,13 @@ class TextRenderer:
 def _get_path_patch_data(path):
     codes = [Path.MOVETO]
     vertices = [path.start]
+    LINE_TO = ezdxf.path.Command.LINE_TO
+    CURVE4_TO = ezdxf.path.Command.CURVE4_TO
     for cmd in path:
-        if cmd.type == Command.LINE_TO:
+        if cmd.type == LINE_TO:
             codes.append(Path.LINETO)
             vertices.append(cmd.end)
-        elif cmd.type == Command.CURVE4_TO:
+        elif cmd.type == CURVE4_TO:
             codes.extend(CURVE4x3)
             vertices.extend((cmd.ctrl1, cmd.ctrl2, cmd.end))
         else:
