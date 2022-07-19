@@ -198,7 +198,9 @@ class MatplotlibBackend(Backend):
     ):
         if not text.strip():
             return  # no point rendering empty strings
-        font_properties = self.get_font_properties(properties.font)
+        font_properties = self._text_renderer.get_font_properties(
+            properties.font
+        )
         assert self.current_entity is not None
         text = prepare_string_for_rendering(text, self.current_entity.dxftype())
         try:
@@ -225,21 +227,11 @@ class MatplotlibBackend(Backend):
         else:
             self.ax.add_patch(patch)
 
-    def get_font_properties(
-        self, font: Optional[fonts.FontFace]
-    ) -> FontProperties:
-        if font is None:
-            return self._text_renderer.default_font
-        font_properties = _get_font_properties(font)
-        if font_properties is None:
-            return self._text_renderer.default_font
-        return font_properties
-
     def get_font_measurements(
         self, cap_height: float, font: fonts.FontFace = None
     ) -> FontMeasurements:
         return self._text_renderer.get_font_measurements(
-            self.get_font_properties(font)
+            self._text_renderer.get_font_properties(font)
         ).scale_from_baseline(desired_cap_height=cap_height)
 
     def get_text_line_width(
@@ -251,7 +243,7 @@ class MatplotlibBackend(Backend):
             self.current_entity.dxftype() if self.current_entity else "TEXT"
         )
         text = prepare_string_for_rendering(text, dxftype)
-        font_properties = self.get_font_properties(font)
+        font_properties = self._text_renderer.get_font_properties(font)
         try:
             path = self._text_renderer.get_text_path(text, font_properties)
         except (RuntimeError, ValueError):
@@ -350,6 +342,16 @@ class TextRenderer:
         self, desired_cap_height: float, font: FontProperties
     ) -> float:
         return desired_cap_height / self.get_font_measurements(font).cap_height
+
+    def get_font_properties(
+        self, font: Optional[fonts.FontFace]
+    ) -> FontProperties:
+        if font is None:
+            return self.default_font
+        font_properties = _get_font_properties(font)
+        if font_properties is None:
+            return self.default_font
+        return font_properties
 
     def get_font_measurements(self, font: FontProperties) -> FontMeasurements:
         # None is the default font.

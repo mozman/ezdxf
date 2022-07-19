@@ -53,7 +53,7 @@ class FixedSizedTextMatplotlibBackend(MatplotlibBackend):
     ):
         if not text.strip():
             return  # no point rendering empty strings
-        font_properties = self.get_font_properties(properties.font)
+        font_properties = self._text_renderer.get_font_properties(properties.font)
         assert self.current_entity is not None
         text = prepare_string_for_rendering(text, self.current_entity.dxftype())
         x, y, _, _ = transform.get_row(3)
