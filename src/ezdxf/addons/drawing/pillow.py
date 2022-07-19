@@ -217,11 +217,11 @@ class PillowBackend(Backend):
     def get_text_line_width(
         self, text: str, cap_height: float, font: FontFace = None
     ) -> float:
-        if self.text_placeholder:
-            return MonospaceFont(cap_height).text_width(text) * 0.8
         if not text.strip():
             return 0.0
         text = self._prepare_text(text)
+        if self.text_placeholder:
+            return MonospaceFont(cap_height).text_width(text) * 0.8
         return self.text_renderer.get_text_line_width(text, cap_height, font)
 
     def export(self, filename: str, **kwargs) -> None:
