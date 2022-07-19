@@ -195,8 +195,8 @@ class PillowBackend(Backend):
                 return
             scale = tr.get_scale(cap_height, font_properties)
             m = Matrix44.scale(scale) @ transform
+            ezdxf_path = ezdxf_path.transform(m)
             for path in ezdxf_path.sub_paths():
-                path = path.transform(m)
                 self.draw_path(path, properties)
 
     def get_font_measurements(
