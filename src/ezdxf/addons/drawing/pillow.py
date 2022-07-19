@@ -371,6 +371,11 @@ class PillowDelayedDraw(Backend):
         if not self.extents.has_data:
             return  # empty drawing
         image = self.execute()
+        if self.oversampling > 1:
+            x = int(self.image_size.x)
+            y = int(self.image_size.y)
+            image = image.resize((x, y), resample=Image.LANCZOS)
+
         if not supports_transparency(filename):
             # remove alpha channel if not supported
             image = image.convert("RGB")

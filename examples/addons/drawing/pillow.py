@@ -4,13 +4,14 @@ from typing import Tuple
 import argparse
 import sys
 from time import perf_counter
+import tracemalloc
 
 import ezdxf
 from ezdxf import recover, bbox
 from ezdxf.addons.drawing import RenderContext, Frontend
 from ezdxf.addons.drawing.pillow import PillowBackend, PillowDelayedDraw
 
-DIRECT_DRAW = True
+TRACE_MEMORY = False  # slows execution speed drastically!
 
 
 def main():
@@ -106,8 +107,11 @@ def main():
     # image size.  This could be implemented as a different pillow backend which
     # is optimized for speed.
     ctx = RenderContext(doc)
+    if TRACE_MEMORY:
+        tracemalloc.start()
     try:
         if args.delayed:
+            print("Using the PillowDelayedDraw() backend")
             out = PillowDelayedDraw(
                 image_size=(img_x, img_y),
                 oversampling=args.oversampling,
@@ -115,6 +119,7 @@ def main():
                 text_placeholder=args.text_placeholder,
             )
         else:
+            print("Using PillowBackend()")
             print(f"detecting model space extents (fast={args.fast}) ...")
             t0 = perf_counter()
             extents = bbox.extents(msp, fast=args.fast)
@@ -142,6 +147,11 @@ def main():
         t0 = perf_counter()
         out.export(outfile)
         print(f'exported image to "{outfile}" in {perf_counter() - t0:.1f}s')
+
+    if TRACE_MEMORY:
+        _, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+        print(f"Peak memory usage: {peak/1_048_576:.3f} MiB")
 
 
 def parse_image_size(image_size: str) -> Tuple[int, int]:
