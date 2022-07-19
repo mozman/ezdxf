@@ -243,14 +243,7 @@ class MatplotlibBackend(Backend):
             self.current_entity.dxftype() if self.current_entity else "TEXT"
         )
         text = prepare_string_for_rendering(text, dxftype)
-        font_properties = self._text_renderer.get_font_properties(font)
-        try:
-            path = self._text_renderer.get_text_path(text, font_properties)
-        except (RuntimeError, ValueError):
-            return 0
-        return max(x for x, y in path.vertices) * self._text_renderer.get_scale(
-            cap_height, font_properties
-        )
+        return self._text_renderer.get_text_line_width(text, cap_height, font)
 
     def clear(self):
         self.ax.clear()
@@ -389,6 +382,18 @@ class TextRenderer:
             if self._use_cache:
                 cache[text] = path
         return path
+
+    def get_text_line_width(
+        self, text: str, cap_height: float, font: fonts.FontFace
+    ) -> float:
+        font_properties = self.get_font_properties(font)
+        try:
+            path = self.get_text_path(text, font_properties)
+        except (RuntimeError, ValueError):
+            return 0.0
+        return max(x for x, y in path.vertices) * self.get_scale(
+            cap_height, font_properties
+        )
 
 
 def _get_path_patch_data(path):
