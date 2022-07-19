@@ -119,7 +119,6 @@ def main():
                 image_size=(img_x, img_y),
                 oversampling=args.oversampling,
                 dpi=args.dpi,
-                text_placeholder=args.text_placeholder,
             )
         else:
             print("Using PillowBackend()")

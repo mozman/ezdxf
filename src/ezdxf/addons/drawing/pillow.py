@@ -253,6 +253,17 @@ class Commands(enum.Enum):
 
 
 class PillowDelayedDraw(Backend):
+    """Alternative Backend for Pillow.
+
+    This backend does not need to know the layout extents in advance.
+    The layout extents are calculated on the fly while drawing commands
+    are queued. The pending drawing commands are executed during image export.
+
+    This backend is a proof of concept and not really much faster than the
+    regular PillowBackend, it needs more memory and only draws rectangles as
+    text placeholders.
+
+    """
     def __init__(
         self,
         image_size: Tuple[int, int] = (0, 0),
@@ -260,7 +271,6 @@ class PillowDelayedDraw(Backend):
         margin: int = 10,
         dpi: int = 300,
         oversampling: int = 1,
-        text_placeholder=True,
     ):
         super().__init__()
         self.image_size = Vec2(image_size)
@@ -268,7 +278,6 @@ class PillowDelayedDraw(Backend):
         self.margin_y = float(margin)
         self.dpi = int(dpi)
         self.oversampling = max(int(oversampling), 1)
-        self.text_placeholder = text_placeholder
         # The lineweight is stored im mm,
         # line_pixel_factor * lineweight is the width in pixels
         self.line_pixel_factor = self.dpi / INCH_TO_MM  # pixel per mm
@@ -324,8 +333,6 @@ class PillowDelayedDraw(Backend):
         properties: Properties,
         cap_height: float,
     ) -> None:
-        if not self.text_placeholder:
-            return
         # draws a placeholder rectangle as text
         width = self.get_text_line_width(text, cap_height, properties.font)
         height = cap_height
