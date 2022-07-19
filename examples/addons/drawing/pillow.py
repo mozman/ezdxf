@@ -11,8 +11,6 @@ from ezdxf import recover, bbox
 from ezdxf.addons.drawing import RenderContext, Frontend
 from ezdxf.addons.drawing.pillow import PillowBackend, PillowDelayedDraw
 
-TRACE_MEMORY = False  # slows execution speed drastically!
-
 
 def main():
     parser = argparse.ArgumentParser(
@@ -59,13 +57,18 @@ def main():
         "-t",
         "--text-placeholder",
         action="store_true",
-        help="draw rectangle as text placeholder",
+        help="draw a filled rectangle as placeholder for text",
     )
     parser.add_argument(
         "-d",
         "--delayed",
         action="store_true",
         help="delayed draw",
+    )
+    parser.add_argument(
+        "--trace",
+        action="store_true",
+        help="trace memory usage, slows down the execution speed drastically!",
     )
 
     args = parser.parse_args()
@@ -107,7 +110,7 @@ def main():
     # image size.  This could be implemented as a different pillow backend which
     # is optimized for speed.
     ctx = RenderContext(doc)
-    if TRACE_MEMORY:
+    if args.trace:
         tracemalloc.start()
     try:
         if args.delayed:
@@ -148,7 +151,7 @@ def main():
         out.export(outfile)
         print(f'exported image to "{outfile}" in {perf_counter() - t0:.1f}s')
 
-    if TRACE_MEMORY:
+    if args.trace:
         _, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
         print(f"Peak memory usage: {peak/1_048_576:.3f} MiB")

@@ -314,23 +314,23 @@ class PillowDelayedDraw(Backend):
         draw = ImageDraw.Draw(image)
         for data in self.commands:
             cmd = data[0]
-            if cmd == Commands.POINT:
-                _, pos, color = data
-                draw.point([self.pixel_loc(pos)], fill=color)
-            elif cmd == Commands.LINE:
+            if cmd == Commands.LINE:
                 _, start, end, color, width = data
                 draw.line(
                     [self.pixel_loc(start), self.pixel_loc(end)],
                     fill=color,
                     width=width,
                 )
-            else:
+            elif cmd == Commands.POLYGON:
                 _, points, color = data
                 draw.polygon(
                     [self.pixel_loc(p) for p in points],
                     fill=color,
                     outline=color,
                 )
+            else:  # Commands.POINT:
+                _, pos, color = data
+                draw.point([self.pixel_loc(pos)], fill=color)
         return image
 
     def pixel_loc(self, point: Vec3) -> Tuple[float, float]:
