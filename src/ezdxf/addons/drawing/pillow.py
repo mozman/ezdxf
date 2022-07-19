@@ -117,6 +117,9 @@ class PillowBackend(Backend):
     def configure(self, config: Configuration) -> None:
         super().configure(config)
         self.line_pixel_factor *= self.config.lineweight_scaling
+        # set max flattening distance for Path() objects to 1 pixel
+        one_px = 1.0 / self.resolution
+        self.config = self.config.with_changes(max_flattening_distance=one_px)
 
     # noinspection PyTypeChecker
     def clear(self):
