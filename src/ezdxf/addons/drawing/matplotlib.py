@@ -383,17 +383,8 @@ class TextRenderer:
                 cache[text] = path
         return path
 
-    def get_ezdxf_path(
-        self, text: str, font: FontProperties
-    ) -> ezdxf.path.Path:
-        try:
-            text_path = self.get_text_path(text, font)
-        except (RuntimeError, ValueError):
-            return ezdxf.path.Path()
-        return ezdxf.path.multi_path_from_matplotlib_path(text_path)
-
     def get_text_line_width(
-        self, text: str, cap_height: float, font: fonts.FontFace
+        self, text: str, cap_height: float, font: Optional[fonts.FontFace]
     ) -> float:
         font_properties = self.get_font_properties(font)
         try:
@@ -403,6 +394,15 @@ class TextRenderer:
         return max(x for x, y in path.vertices) * self.get_scale(
             cap_height, font_properties
         )
+
+    def get_ezdxf_path(
+        self, text: str, font: FontProperties
+    ) -> ezdxf.path.Path:
+        try:
+            text_path = self.get_text_path(text, font)
+        except (RuntimeError, ValueError):
+            return ezdxf.path.Path()
+        return ezdxf.path.multi_path_from_matplotlib_path(text_path)
 
 
 def _get_path_patch_data(path):
