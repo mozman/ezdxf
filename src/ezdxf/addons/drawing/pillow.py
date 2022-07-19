@@ -245,7 +245,7 @@ class PillowDelayedDraw(Backend):
         self.extents = BoundingBox()
 
     def clear(self) -> None:
-        self.commands = list()
+        self.commands.clear()
         self.extents = BoundingBox()
 
     def configure(self, config: Configuration) -> None:
