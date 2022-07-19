@@ -279,8 +279,8 @@ class PillowDelayedDraw(Backend):
     ) -> None:
         vertices = tuple(points)
         if len(vertices) > 2:
-            self.extents.extend(points)
-            self.commands.append((Commands.POLYGON, points, properties.color))
+            self.extents.extend(vertices)
+            self.commands.append((Commands.POLYGON, vertices, properties.color))
 
     def draw_text(
         self,
@@ -315,10 +315,10 @@ class PillowDelayedDraw(Backend):
         for data in self.commands:
             cmd = data[0]
             if cmd == Commands.POINT:
-                _, pos, color = cmd
+                _, pos, color = data
                 draw.point([self.pixel_loc(pos)], fill=color)
             elif cmd == Commands.LINE:
-                _, start, end, color, width = cmd
+                _, start, end, color, width = data
                 draw.line(
                     [self.pixel_loc(start), self.pixel_loc(end)],
                     fill=color,
@@ -334,7 +334,7 @@ class PillowDelayedDraw(Backend):
         return image
 
     def pixel_loc(self, point: Vec3) -> Tuple[float, float]:
-        ex, ey = self.extents.extmin  # type: ignore
+        ex, ey, _ = self.extents.extmin  # type: ignore
         x = (point.x - ex) * self.resolution + self.margin_x
         y = (point.y - ey) * self.resolution + self.margin_y
         return (
