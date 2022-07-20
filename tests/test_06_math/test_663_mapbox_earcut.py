@@ -17,19 +17,19 @@ def total_area(triangles: Iterable[Sequence[Vec2]]):
             pt = triangle[i]
             pt2 = triangle[(i + 1) % 3]
             sides.append(pt.distance(pt2))
-        c, b, a = sides
+        a, b, c = sides
         area += 0.25 * math.sqrt(
-            abs((a + (b + c)) * (c - (a - b)) * (c + (a - b)) * (a + (b - c)))
+            (a + b + c) * (-a + b + c) * (a - b + c) * (a + b - c)
         )
     return area
 
 
-def test_triangulate_a_square():
+def test_triangulate_ccw_square():
     square = forms.square(2)
     triangles = list(mapbox_earcut_2d(square))
     assert len(triangles) == 2
     assert total_area(triangles) == pytest.approx(4.0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

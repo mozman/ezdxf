@@ -51,7 +51,8 @@ def earcut(
 ) -> List[int]:
     hasHoles: bool = len(holeIndices) > 0
     outerLen: int = holeIndices[0] * dim if hasHoles else len(data)
-    outerNode: Node = linkedList(data, 0, outerLen, dim, True)
+    # exterior vertices in counter-clockwise order
+    outerNode: Node = linkedList(data, 0, outerLen, dim, ccw=True)
     triangles: List[int] = []
 
     if not outerNode or outerNode.next == outerNode.prev:
@@ -90,20 +91,21 @@ def earcut(
 
 
 def linkedList(
-    data: List[float], start: int, end: int, dim: int, clockwise: bool
+    data: List[float], start: int, end: int, dim: int, ccw: bool
 ) -> Node:
     """Create a circular doubly linked list from polygon points in the specified
     winding order
     """
     last: Optional[Node] = None
-
-    if clockwise == (signedArea(data, start, end, dim) > 0):
+    sa = signedArea(data, start, end, dim)
+    if ccw is (sa < 0):
         for i in range(start, end, dim):
             last = insertNode(i, data[i], data[i + 1], last)
     else:
         for i in range(end - dim, start - 1, -dim):
             last = insertNode(i, data[i], data[i + 1], last)
 
+    # open polygon: where the 1st vertex is not coincident with the last vertex
     if last and equals(last, last.next):
         removeNode(last)
         last = last.next
@@ -111,11 +113,14 @@ def linkedList(
 
 
 def signedArea(data: List[float], start: int, end: int, dim: int) -> float:
-    s: float = 0
+    s: float = 0.0
     j: int = end - dim
     for i in range(start, end, dim):
-        s += (data[j] - data[i]) * (data[i + 1] + data[j + 1])
+        # error in mapbox code: (data[j] - data[i])
+        s += (data[i] - data[j]) * (data[i + 1] + data[j + 1])
         j = i
+    # s < 0 is counter-clockwise
+    # s > 0 is clockwise
     return s
 
 
@@ -178,10 +183,8 @@ def sign(num: float) -> int:
 
 def onSegment(p: Node, q: Node, r: Node) -> bool:
     return (
-        q.x <= max(p.x, r.x)
-        and q.x >= min(p.x, r.x)
-        and q.y <= max(p.y, r.y)
-        and q.y >= min(p.y, r.y)
+        max(p.x, r.x) >= q.x >= min(p.x, r.x)
+        and max(p.y, r.y) >= q.y >= min(p.y, r.y)
     )
 
 
@@ -246,7 +249,8 @@ def eliminateHoles(
     for i in range(len(holeIndices)):
         start = holeIndices[i] * dim
         end = holeIndices[i + 1] * dim if (i < length - 1) else len(data)
-        _list = linkedList(data, start, end, dim, False)
+        # hole vertices in clockwise order
+        _list = linkedList(data, start, end, dim, ccw=False)
         if _list is _list.next:
             _list.steiner = True
         queue.append(getLeftmost(_list))
