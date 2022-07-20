@@ -3,11 +3,14 @@
 
 from __future__ import annotations
 from typing import Iterable, Iterator, List, Tuple, Sequence
+import sys
+import math
 from ezdxf.math import Vec2, UVec, Vec3
 
 
-__all__ = ["ear_clipping_2d", "ear_clipping_3d"]
+__all__ = ["ear_clipping_2d", "ear_clipping_3d", "mapbox_earcut_2d"]
 
+EPSILON = math.sqrt(sys.float_info.epsilon)
 
 # Candidate for a faster Cython implementation:
 def ear_clipping_2d(
@@ -28,6 +31,7 @@ def ear_clipping_2d(
 
     """
     from ._tripy import earclip
+
     yield from earclip(vertices, fast)
 
 
@@ -97,3 +101,48 @@ def simple_polygon_triangulation(
         face_.append(face_[0])
     center = Vec3.sum(face_[:-1]) / (len(face_) - 1)
     return [(v1, v2, center) for v1, v2 in zip(face_, face_[1:])]
+
+
+def mapbox_earcut_2d(
+    exterior: Iterable[Vec2], holes: Iterable[Iterable[Vec2]] = None
+) -> Iterator[Tuple[Vec2, Vec2, Vec2]]:
+    """Mapbox triangulation algorithm with hole support.
+
+    Args:
+        exterior: exterior polygon as iterable of :class:`Vec2` objects
+        holes: iterable of holes as iterable of :class:`Vec2` objects, a single
+            vertex represents a Steiner point.
+
+    Returns:
+        yields the result as 3-tuples of :class:`Vec2` objects
+
+    """
+    from ._mapbox_earcut import earcut
+
+    data: List[float] = []
+    hole_indices: List[int] = []
+    for v in exterior:
+        data.append(v.x)
+        data.append(v.y)
+
+    if len(data) == 0:
+        return
+
+    if holes is not None:
+        for hole in holes:
+            vertices = tuple(hole)
+            if len(vertices):
+                index = len(data)
+                hole_indices.append(index)
+                for v in vertices:
+                    data.append(v.x)
+                    data.append(v.y)
+
+    triangles = earcut(data, hole_indices, 2)
+
+    triangle: List[Vec2] = []
+    for index in triangles:
+        triangle.append(Vec2(data[index], data[index + 1]))
+        if len(triangle) == 3:
+            yield tuple(triangle)
+            triangle.clear()
