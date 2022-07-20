@@ -42,7 +42,7 @@ class Node:
         self.prevZ: Optional[int] = None
         self.nextZ: Optional[int] = None
 
-        # indicates whether self is a steiner point
+        # indicates whether this is a steiner point
         self.steiner: bool = False
 
 
@@ -61,14 +61,12 @@ def earcut(
 
     min_x: float = 0.0
     min_y: float = 0.0
-    max_x: float = 0.0
-    max_y: float = 0.0
     inv_size: float = 0.0
 
     if has_holes:
         outer_node = eliminate_holes(data, hole_indices, outer_node, dim)
 
-    # if the shape is not too simple, we'll use z-order curve hash later;
+    # if the shape is not too simple, we'll use z-order curve hash later
     # calculate polygon bbox
     if len(data) > 80 * dim:
         min_x = max_x = data[0]
@@ -714,15 +712,14 @@ def find_hole_bridge(hole: Node, outer_node: Node) -> Optional[Node]:
     # find a segment intersected by a ray from the hole's leftmost point to the left;
     # segment's endpoint with lesser x will be potential connection point
     while True:
-        if hy <= p.y and hy >= p.next.y and p.next.y != p.y:
+        if p.y >= hy >= p.next.y and p.next.y != p.y:
             x = p.x + (hy - p.y) * (p.next.x - p.x) / (p.next.y - p.y)
             if hx >= x > qx:
                 qx = x
                 m = p if p.x < p.next.x else p.next
                 if x == hx:
-                    return (
-                        m  # hole touches outer segment; pick leftmost endpoint
-                    )
+                    # hole touches outer segment; pick leftmost endpoint
+                    return m
         p = p.next
         if p is outer_node:
             break
@@ -801,5 +798,4 @@ def middle_inside(a: Node, b: Node) -> bool:
         p = p.next
         if p is a:
             break
-
     return inside
