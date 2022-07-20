@@ -4,7 +4,7 @@ from typing import Iterable, Sequence
 import pytest
 import math
 from ezdxf.math.triangulation import mapbox_earcut_2d
-from ezdxf.math import Vec2
+from ezdxf.math import Vec2, area
 from ezdxf.render import forms
 
 

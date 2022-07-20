@@ -73,7 +73,7 @@ def earcut(
         min_x = max_x = data[0]
         min_y = max_y = data[1]
 
-        for i in range(outer_len):
+        for i in range(0, outer_len, dim):
             x = data[i]
             y = data[i + 1]
             min_x = min(min_x, x)
@@ -567,27 +567,23 @@ def z_order(
 # http://www.chiark.greenend.org.uk/~sgtatham/algorithms/listsort.html
 def sort_linked(head: Node) -> Node:
     in_size = 1
-
     while True:
         p = head
         head = None
         tail = None
         num_merges = 0
-
         while p:
             num_merges += 1
             q = p
             p_size = 0
             for i in range(in_size):
-
                 p_size += 1
                 q = q.nextZ
                 if not q:
                     break
-
             q_size = in_size
             while p_size > 0 or (q_size > 0 and q):
-                if p_size != 0 and q_size == 0 or not q or p.z <= q.z:
+                if p_size != 0 and (q_size == 0 or not q or p.z <= q.z):
                     e = p
                     p = p.nextZ
                     p_size -= 1
@@ -600,17 +596,13 @@ def sort_linked(head: Node) -> Node:
                     tail.nextZ = e
                 else:
                     head = e
-
                 e.prevZ = tail
                 tail = e
-
             p = q
-
         tail.nextZ = None
         in_size *= 2
         if num_merges <= 1:
             break
-
     return head
 
 
