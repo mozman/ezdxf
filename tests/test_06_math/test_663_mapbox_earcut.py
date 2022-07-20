@@ -38,5 +38,14 @@ def test_triangulate_cw_square():
     assert total_area(triangles) == pytest.approx(4.0)
 
 
+def test_triangulate_concave_gear_shape():
+    square = list(
+        forms.gear(32, top_width=1, bottom_width=3, height=2, outside_radius=10)
+    )
+    triangles = list(mapbox_earcut_2d(square))
+    assert len(triangles) == 126
+    assert total_area(triangles) == pytest.approx(265.17899685816224)
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
