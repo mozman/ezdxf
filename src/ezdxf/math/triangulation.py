@@ -104,7 +104,7 @@ def simple_polygon_triangulation(
 
 
 def mapbox_earcut_2d(
-    exterior: Iterable[Vec2], holes: Iterable[Iterable[Vec2]] = None
+    exterior: Iterable[UVec], holes: Iterable[Iterable[UVec]] = None
 ) -> Iterator[Tuple[Vec2, Vec2, Vec2]]:
     """Mapbox triangulation algorithm with hole support.
 
@@ -121,7 +121,7 @@ def mapbox_earcut_2d(
 
     data: List[float] = []
     hole_indices: List[int] = []
-    for v in exterior:
+    for v in Vec2.generate(exterior):
         data.append(v.x)
         data.append(v.y)
 
@@ -134,7 +134,7 @@ def mapbox_earcut_2d(
             if len(vertices):
                 index = len(data)
                 hole_indices.append(index)
-                for v in vertices:
+                for v in Vec2.generate(vertices):
                     data.append(v.x)
                     data.append(v.y)
 

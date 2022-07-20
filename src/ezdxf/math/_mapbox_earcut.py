@@ -98,7 +98,7 @@ def linkedList(
     last: Optional[Node] = None
 
     if clockwise == (signedArea(data, start, end, dim) > 0):
-        for i in range(end, step=dim):
+        for i in range(start, end, dim):
             last = insertNode(i, data[i], data[i + 1], last)
     else:
         for i in range(end - dim, start - 1, -dim):
@@ -113,7 +113,7 @@ def linkedList(
 def signedArea(data: List[float], start: int, end: int, dim: int) -> float:
     s: float = 0
     j: int = end - dim
-    for i in range(start, end):
+    for i in range(start, end, dim):
         s += (data[j] - data[i]) * (data[i + 1] + data[j + 1])
         j = i
     return s
