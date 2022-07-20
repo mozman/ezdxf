@@ -12,17 +12,12 @@ from ezdxf.math import Vec2, UVec, has_clockwise_orientation
 
 EPSILON = math.sqrt(sys.float_info.epsilon)
 
+
 # Candidate for a faster Cython implementation:
-def earclip(
-    vertices: Iterable[UVec],
-    fast=False,
-) -> Iterator[Tuple[Vec2, Vec2, Vec2]]:
+def earclip(vertices: Iterable[UVec]) -> Iterator[Tuple[Vec2, Vec2, Vec2]]:
     """This function triangulates the given 2d polygon into simple triangles by
     the "ear clipping" algorithm. The function yields n-2 triangles for a polygon
     with n vertices, each triangle is a 3-tuple of :class:`Vec2` objects.
-
-    The `fast` mode uses a shortcut for 4 and 5 vertices which may not work for
-    concave polygons!
 
     .. versionadded:: 0.18
 
@@ -51,15 +46,6 @@ def earclip(
     # https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
     if point_count == 3:
         yield polygon[0], polygon[1], polygon[2]
-        return
-    if fast and point_count < 6:  # fast simple cases 4..5 vertices
-        if point_count == 4:
-            yield polygon[0], polygon[1], polygon[2]
-            yield polygon[0], polygon[2], polygon[3]
-        elif point_count == 5:
-            yield polygon[0], polygon[3], polygon[4]
-            yield polygon[0], polygon[1], polygon[3]
-            yield polygon[1], polygon[2], polygon[3]
         return
 
     for i, point in enumerate(polygon):
@@ -133,4 +119,3 @@ def _triangle_area(a: Vec2, b: Vec2, c: Vec2) -> float:
     return abs(
         (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y)) / 2.0
     )
-

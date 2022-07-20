@@ -265,8 +265,7 @@ class MeshDiagnose:
 
     @property
     def bbox(self) -> BoundingBox:
-        """Returns the :class:`~ezdxf.math.BoundingBox` of the mesh. (cached data)
-        """
+        """Returns the :class:`~ezdxf.math.BoundingBox` of the mesh. (cached data)"""
         if not self._bbox.has_data:
             self._bbox = self._mesh.bbox()
         return self._bbox
@@ -724,7 +723,7 @@ class MeshBuilder:
         if ucs is not None:
             t.transform(ucs.matrix)
         polyface.append_faces(
-            t.tessellation(max_vertex_count=4, fast=False),
+            t.tessellation(max_vertex_count=4),
             dxfattribs=dxfattribs,
         )
         return polyface
@@ -757,7 +756,7 @@ class MeshBuilder:
             t.transform(matrix)
         if ucs is not None:
             t.transform(ucs.matrix)
-        for face in t.tessellation(max_vertex_count=4, fast=False):
+        for face in t.tessellation(max_vertex_count=4):
             layout.add_3dface(face, dxfattribs=dxfattribs)
 
     @classmethod
@@ -834,15 +833,12 @@ class MeshBuilder:
         yield from subdivide_ngons(self.faces_as_vertices(), max_vertex_count)
 
     def tessellation(
-        self, max_vertex_count: int = 4, *, fast=False
+        self, max_vertex_count: int = 4
     ) -> Iterator[Sequence[Vec3]]:
         """Yields all faces as sequence of :class:`~ezdxf.math.Vec3` instances,
         each face has no more vertices than the given `max_vertex_count`. This
         method uses the "ear clipping" algorithm which works with concave faces
         too and does not create any additional vertices.
-
-        The `fast` mode uses a shortcut for faces with less than 6 vertices
-        which may not work for concave faces!
 
         .. versionadded:: 0.18
 
@@ -853,11 +849,9 @@ class MeshBuilder:
             if len(face) <= max_vertex_count:
                 yield face
             else:
-                yield from ear_clipping_3d(face, fast=fast)
+                yield from ear_clipping_3d(face)
 
-    def mesh_tessellation(
-        self, max_vertex_count: int = 4, *, fast=False
-    ) -> MeshTransformer:
+    def mesh_tessellation(self, max_vertex_count: int = 4) -> MeshTransformer:
         """Returns a new :class:`MeshTransformer` instance, where each face has
         no more vertices than the given `max_vertex_count`.
 
@@ -868,9 +862,7 @@ class MeshBuilder:
 
         """
         mesh = MeshVertexMerger()
-        for face in self.tessellation(
-            max_vertex_count=max_vertex_count, fast=fast
-        ):
+        for face in self.tessellation(max_vertex_count=max_vertex_count):
             mesh.add_face(face)
         return MeshTransformer.from_builder(mesh)
 

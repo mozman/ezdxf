@@ -71,7 +71,10 @@ TEST_DATA = [
             (0, -1),
             (1, 0),
         ],
-        triangles=[((0, 1), (-1, 0), (0, -1)), ((0, 1), (0, -1), (1, 0))],
+        triangles=[(
+            (1, 0), (0, 1), (-1, 0)),
+            ((1, 0), (-1, 0), (0, -1)),
+        ],
         total_area=2.0,
     ),
     PolyData(
@@ -209,7 +212,7 @@ TEST_DATA = [
         ],
         triangles=[
             ((-226.0, -42.0), (-244.2, -147.5), (66.0, 28.7)),
-            ((-226.0, -42.0), (66.0, 28.7), (229.0, 78.0)),
+            ((66.0, 28.7), (229.0, 78.0), (-226.0, -42.0)),
         ],
         total_area=16195.379999999925,
     ),
@@ -224,7 +227,7 @@ TEST_DATA = [
         ],
         triangles=[
             ((-226000, -42000), (-244200, -147500), (66000, 28700)),
-            ((-226000, -42000), (66000, 28700), (229000, 78000)),
+            ((66000, 28700), (229000, 78000), (-226000, -42000)),
         ],
         total_area=16195379999.999996,
     ),
@@ -253,7 +256,7 @@ class TestPolygons:
     @pytest.mark.parametrize("poly_data", TEST_DATA)
     def test_polygon(self, poly_data):
         triangles = list(
-            triangulation.ear_clipping_2d(poly_data.vertices, fast=True)
+            triangulation.ear_clipping_2d(poly_data.vertices)
         )
         total_area = calculate_total_area(triangles)
         absolute_error = abs(poly_data.total_area - total_area)
@@ -356,20 +359,6 @@ def test_simple_polygon_triangulation():
         Vec3.list([(0, 0), (1, 0), (1, 1)])
     )
     assert len(r) == 3
-
-
-def test_fast_mode_is_not_reliable_for_concave_polygons():
-    """The fast mode takes a shortcut for small faces (< 6 vertices) but this
-    is not reliable for concave faces!
-    """
-    concave = Vec2.list([(0, 0), (1, 1), (2, 0), (1, 2)])
-    area_correct = calculate_total_area(
-        triangulation.ear_clipping_2d(concave, fast=False)
-    )
-    area_fast = calculate_total_area(
-        triangulation.ear_clipping_2d(concave, fast=True)
-    )
-    assert abs(area_fast - area_correct) > 1e-6
 
 
 if __name__ == "__main__":

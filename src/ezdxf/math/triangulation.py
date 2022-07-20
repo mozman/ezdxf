@@ -2,7 +2,7 @@
 # License: MIT License
 
 from __future__ import annotations
-from typing import Iterable, Iterator, List, Tuple, Sequence
+from typing import Iterable, Iterator, List, Tuple, Sequence, Callable
 import sys
 import math
 from ezdxf.math import Vec2, UVec, Vec3
@@ -12,10 +12,9 @@ __all__ = ["ear_clipping_2d", "ear_clipping_3d", "mapbox_earcut_2d"]
 
 EPSILON = math.sqrt(sys.float_info.epsilon)
 
-# Candidate for a faster Cython implementation:
+
 def ear_clipping_2d(
     vertices: Iterable[UVec],
-    fast=False,
 ) -> Iterator[Tuple[Vec2, Vec2, Vec2]]:
     """This function triangulates the given 2d polygon into simple triangles by
     the "ear clipping" algorithm. The function yields n-2 triangles for a polygon
@@ -31,18 +30,35 @@ def ear_clipping_2d(
 
     """
     from ._tripy import earclip
-
-    yield from earclip(vertices, fast)
+    return earclip(vertices)
 
 
 def ear_clipping_3d(
     vertices: Iterable[Vec3],
-    fast=False,
 ) -> Iterator[Tuple[Vec3, Vec3, Vec3]]:
     """Implements the "ear clipping" algorithm for planar 3d polygons.
 
     The `fast` mode uses a shortcut for 4 and 5 vertices which may not work for
     concave polygons!
+
+    Raise:
+        TypeError: invalid input data type
+        ZeroDivisionError: normal vector calculation failed
+
+    .. versionadded:: 0.18
+
+    """
+    from ._tripy import earclip
+    return triangulate_3d(vertices, earclip)
+
+
+def triangulate_3d(
+    vertices: Iterable[Vec3],
+    triangulate_2d: Callable[
+        [Iterable[Vec2]], Iterator[Tuple[Vec2, Vec2, Vec2]]
+    ],
+) -> Iterator[Tuple[Vec3, Vec3, Vec3]]:
+    """Applies a 2D triangulation function to planar 3d polygons.
 
     Raise:
         TypeError: invalid input data type
@@ -67,18 +83,9 @@ def ear_clipping_3d(
     if count == 3:
         yield polygon[0], polygon[1], polygon[2]
         return
-    if fast and count < 6:
-        if count == 4:
-            yield polygon[0], polygon[1], polygon[2]
-            yield polygon[0], polygon[2], polygon[3]
-        elif count == 5:
-            yield polygon[0], polygon[3], polygon[4]
-            yield polygon[0], polygon[1], polygon[3]
-            yield polygon[1], polygon[2], polygon[3]
-        return
     ocs = OCS(safe_normal_vector(polygon))
     elevation = ocs.from_wcs(polygon[0]).z  # type: ignore
-    for triangle in ear_clipping_2d(ocs.points_from_wcs(polygon), fast=False):
+    for triangle in triangulate_2d(ocs.points_from_wcs(polygon)):
         yield tuple(  # type: ignore
             ocs.points_to_wcs(Vec3(v.x, v.y, elevation) for v in triangle)
         )
