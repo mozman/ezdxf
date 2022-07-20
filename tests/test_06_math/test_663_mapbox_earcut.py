@@ -47,5 +47,13 @@ def test_triangulate_concave_gear_shape():
     assert total_area(triangles) == pytest.approx(265.17899685816224)
 
 
+def test_triangulate_square_with_square_hole():
+    square = forms.square(4, center=True)
+    hole = forms.square(2, center=True)
+    triangles = list(mapbox_earcut_2d(square, holes=[hole]))
+    assert len(triangles) == 8
+    assert total_area(triangles) == pytest.approx(12.0)
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

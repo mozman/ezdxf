@@ -254,8 +254,8 @@ def eliminate_holes(
     queue.sort(key=lambda n: n.x)
 
     #  process holes from left to right
-    for i in range(len(queue)):
-        outer_node = eliminate_hole(queue[i], outer_node)
+    for hole in queue:
+        outer_node = eliminate_hole(hole, outer_node)
     return outer_node
 
 
@@ -697,7 +697,7 @@ def find_hole_bridge(hole: Node, outer_node: Node) -> Optional[Node]:
     p = outer_node
     hx = hole.x
     hy = hole.y
-    qx = math.inf
+    qx = -math.inf
     m: Optional[Node] = None
     # find a segment intersected by a ray from the hole's leftmost point to the left;
     # segment's endpoint with lesser x will be potential connection point
