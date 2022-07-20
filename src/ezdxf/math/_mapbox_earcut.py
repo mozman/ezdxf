@@ -1,5 +1,4 @@
 # Source: https://github.com/mapbox/earcut
-# Source: https://github.com/mapbox/earcut
 # License: ISC License (MIT compatible)
 #
 # Copyright (c) 2016, Mapbox
