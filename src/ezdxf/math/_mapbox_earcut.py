@@ -1,3 +1,4 @@
+# mypy: ignore_errors=True
 # Source: https://github.com/mapbox/earcut
 # License: ISC License (MIT compatible)
 #

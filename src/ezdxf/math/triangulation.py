@@ -58,7 +58,7 @@ def triangulate_3d(
         [Iterable[Vec2]], Iterator[Tuple[Vec2, Vec2, Vec2]]
     ],
 ) -> Iterator[Tuple[Vec3, Vec3, Vec3]]:
-    """Applies a 2D triangulation function to planar 3d polygons.
+    """Applies a 2D triangulation function to a planar 3D polygon.
 
     Raise:
         TypeError: invalid input data type
@@ -151,5 +151,5 @@ def mapbox_earcut_2d(
     for index in triangles:
         triangle.append(Vec2(data[index], data[index + 1]))
         if len(triangle) == 3:
-            yield tuple(triangle)
+            yield tuple(triangle)  # type: ignore
             triangle.clear()
