@@ -53,6 +53,7 @@ def earcut(
     outerLen: int = holeIndices[0] * dim if hasHoles else len(data)
     # exterior vertices in counter-clockwise order
     outerNode: Node = linkedList(data, 0, outerLen, dim, ccw=True)
+    # list of vertex start indices
     triangles: List[int] = []
 
     if not outerNode or outerNode.next == outerNode.prev:
@@ -332,9 +333,9 @@ def earcutLinked(
         )
         if is_ear:
             # cut off the triangle
-            triangles.append(prev.i // dim)
-            triangles.append(ear.i // dim)
-            triangles.append(next.i // dim)
+            triangles.append(prev.i)
+            triangles.append(ear.i)
+            triangles.append(next.i)
 
             removeNode(ear)
 
@@ -651,9 +652,9 @@ def cureLocalIntersections(start: Node, triangles: List[int], dim: int) -> Node:
             and locallyInside(a, b)
             and locallyInside(b, a)
         ):
-            triangles.append(a.i // dim)
-            triangles.append(p.i // dim)
-            triangles.append(b.i // dim)
+            triangles.append(a.i)
+            triangles.append(p.i)
+            triangles.append(b.i)
 
             # remove two nodes involved
             removeNode(p)

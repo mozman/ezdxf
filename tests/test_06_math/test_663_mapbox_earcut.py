@@ -31,5 +31,12 @@ def test_triangulate_ccw_square():
     assert total_area(triangles) == pytest.approx(4.0)
 
 
+def test_triangulate_cw_square():
+    square = list(reversed(forms.square(2)))
+    triangles = list(mapbox_earcut_2d(square))
+    assert len(triangles) == 2
+    assert total_area(triangles) == pytest.approx(4.0)
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
