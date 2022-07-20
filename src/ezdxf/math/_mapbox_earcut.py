@@ -1,4 +1,5 @@
 # Source: https://github.com/mapbox/earcut
+# Source: https://github.com/mapbox/earcut
 # License: ISC License (MIT compatible)
 #
 # Copyright (c) 2016, Mapbox
@@ -85,7 +86,7 @@ def earcut(
         inv_size = max(max_x - min_x, max_y - min_y)
         inv_size = 32767 / inv_size if inv_size != 0 else 0
 
-    earcut_linked(outer_node, triangles, dim, min_x, min_y, inv_size, 0)
+    earcut_linked(outer_node, triangles, min_x, min_y, inv_size, 0)
     return triangles
 
 
@@ -303,7 +304,6 @@ def filter_points(start: Optional[Node], end: Node = None) -> Optional[Node]:
 def earcut_linked(
     ear: Optional[Node],
     triangles: List[int],
-    dim: int,
     min_x: float,
     min_y: float,
     inv_size: float,
@@ -350,7 +350,6 @@ def earcut_linked(
                 earcut_linked(
                     filter_points(ear),
                     triangles,
-                    dim,
                     min_x,
                     min_y,
                     inv_size,
@@ -360,11 +359,11 @@ def earcut_linked(
             # if this didn't work, try curing all small self-intersections locally
             elif pass_ == 1:
                 ear = cure_local_intersections(filter_points(ear), triangles)
-                earcut_linked(ear, triangles, dim, min_x, min_y, inv_size, 2)
+                earcut_linked(ear, triangles, min_x, min_y, inv_size, 2)
 
             # as a last resort, try splitting the remaining polygon into two
             elif pass_ == 2:
-                split_ear_cut(ear, triangles, dim, min_x, min_y, inv_size)
+                split_ear_cut(ear, triangles, min_x, min_y, inv_size)
             break
 
 
@@ -673,7 +672,6 @@ def cure_local_intersections(start: Node, triangles: List[int]) -> Node:
 def split_ear_cut(
     start: Node,
     triangles: List[int],
-    dim: int,
     min_x: float,
     min_y: float,
     inv_size: float,
@@ -693,8 +691,8 @@ def split_ear_cut(
                 c = filter_points(c, c.next)
 
                 # run earcut on each half
-                earcut_linked(a, triangles, dim, min_x, min_y, inv_size, 0)
-                earcut_linked(c, triangles, dim, min_x, min_y, inv_size, 0)
+                earcut_linked(a, triangles, min_x, min_y, inv_size, 0)
+                earcut_linked(c, triangles, min_x, min_y, inv_size, 0)
                 return
             b = b.next
         a = a.next

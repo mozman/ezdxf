@@ -133,7 +133,7 @@ def mapbox_earcut_2d(
             vertices = tuple(hole)
             if len(vertices):
                 index = len(data)
-                hole_indices.append(index)
+                hole_indices.append(index // 2)
                 for v in Vec2.generate(vertices):
                     data.append(v.x)
                     data.append(v.y)
