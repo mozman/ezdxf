@@ -13,8 +13,8 @@ DATADIR = "mapbox-test-data"
 
 EXPECTED = {
     "bad-diagonals": 7,
-    # "bad-hole": 42,  # error
-    # "boxy": 57,  # error
+    "bad-hole": 42,
+    "boxy": 57,
     "building": 13,
     "collinear-diagonal": 14,
     "degenerate": 0,
@@ -22,17 +22,17 @@ EXPECTED = {
     "eberly-3": 73,
     "eberly-6": 1429,
     "empty-square": 0,
-    # "filtered-bridge-jhl": 25,  # error
+    "filtered-bridge-jhl": 25,
     "hilbert": 1024,
     "hole-touching-outer": 77,
     "hourglass": 2,
-    # "infinite-loop-jhl": 0,  # error
+    "infinite-loop-jhl": 0,
     "issue107": 0,
-    # "issue111": 19,  # error
+    # "issue111": 19,  # error? - I don't see it!
     "issue119": 18,
     "issue131": 12,
     "issue142": 4,
-    # "issue149": 2,  # error
+    "issue149": 2,
     "issue16": 12,
     "issue17": 11,
     "issue29": 40,
@@ -41,23 +41,23 @@ EXPECTED = {
     "issue45": 10,
     "issue52": 109,
     "issue83": 0,
-    # "outside-ring": 64,  # error
-    # "rain": 2681,  # error
+    "outside-ring": 64,
+    "rain": 2681,
     "self-touching": 124,
     "shared-points": 4,
-    # "simplified-us-border": 120,  # error
+    "simplified-us-border": 120,
     "steiner": 9,
     "touching-holes": 57,
     "touching2": 8,
     "touching3": 15,
-    # "touching4": 20,  # error
-    # "water": 2482,  # error
-    # "water-huge": 5177,  # error
-    # "water-huge2": 4462,  # infinite loop
-    # "water2": 1212,  # error
-    # "water3": 197,  # error
-    # "water3b": 25,  # error
-    # "water4": 705,  # error
+    # "touching4": 20,  # error? - I don't see it!
+    "water": 2482,
+    # "water-huge": 5177,  # long running test
+    # "water-huge2": 4462,  # long running test
+    "water2": 1212,
+    "water3": 197,
+    "water3b": 25,
+    "water4": 705,
 }
 
 FILEPATHS = list(

@@ -88,7 +88,7 @@ def earcut(
     # list of vertex start indices
     triangles: List[int] = []
 
-    if not outer_node or outer_node.next is outer_node.prev:
+    if outer_node is None or outer_node.next is outer_node.prev:
         return triangles
 
     min_x: float = 0.0
@@ -121,7 +121,7 @@ def earcut(
     return triangles
 
 
-def linked_list(
+def linked_list(  # check 1
     data: List[float], start: int, end: int, dim: int, ccw: bool
 ) -> Node:
     """Create a circular doubly linked list from polygon points in the specified
@@ -261,7 +261,7 @@ def remove_node(p: Node) -> None:
         p.nextZ.prevZ = p.prevZ
 
 
-def eliminate_holes(
+def eliminate_holes(   # check 1
     data: List[float], hole_indices: List[int], outer_node: Node, dim: int
 ) -> Node:
     """link every hole into the outer loop, producing a single-ring polygon
@@ -277,7 +277,7 @@ def eliminate_holes(
         if _list is _list.next:
             _list.steiner = True
         queue.append(get_leftmost(_list))
-    queue.sort(key=lambda n: n.x)
+    queue.sort(key=lambda node: (node.x, node.y))
 
     #  process holes from left to right
     for hole in queue:
@@ -321,7 +321,7 @@ def filter_points(start: Node, end: Node = None) -> Node:
             again = True
         else:
             p = p.next
-        if not again or p is end:
+        if not (again or p is not end):
             break
     return end
 
@@ -509,7 +509,7 @@ def is_ear_hashed(ear: Node, min_x: float, min_y: float, inv_size: float):
         n = n.nextZ
     return True
 
-
+# check 1
 def get_leftmost(start: Node) -> Node:
     """Find the leftmost node of a polygon ring"""
     p = start
@@ -523,7 +523,7 @@ def get_leftmost(start: Node) -> Node:
     return leftmost
 
 
-def point_in_triangle(
+def point_in_triangle(  # check 1
     ax: float,
     ay: float,
     bx: float,
@@ -541,7 +541,7 @@ def point_in_triangle(
     )
 
 
-def sector_contains_sector(m: Node, p: Node):
+def sector_contains_sector(m: Node, p: Node):  # check 1
     """Whether sector in vertex m contains sector in vertex p in the same
     coordinates.
     """
@@ -632,6 +632,7 @@ def sort_linked(head: Node) -> Node:
     return head
 
 
+# check 1
 def split_polygon(a: Node, b: Node) -> Node:
     """Link two polygon vertices with a bridge.
 
@@ -717,7 +718,7 @@ def split_ear_cut(
         if a is start:
             break
 
-
+# check 1
 # David Eberly's algorithm for finding a bridge between hole and outer polygon
 def find_hole_bridge(hole: Node, outer_node: Node) -> Node:
     p = outer_node
@@ -733,7 +734,7 @@ def find_hole_bridge(hole: Node, outer_node: Node) -> Node:
             if hx >= x > qx:
                 qx = x
                 m = p if p.x < p.next.x else p.next
-                if x == hx:
+                if x == hx:  # ??? use math.isclose
                     # hole touches outer segment; pick leftmost endpoint
                     return m
         p = p.next
@@ -788,7 +789,7 @@ def find_hole_bridge(hole: Node, outer_node: Node) -> Node:
             break
     return m
 
-
+# check 1
 def locally_inside(a: Node, b: Node) -> bool:
     """Check if a polygon diagonal is locally inside the polygon"""
     return (
