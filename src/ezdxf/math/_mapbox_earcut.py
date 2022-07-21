@@ -92,7 +92,7 @@ class Node:
 
 
 def earcut(
-    points: Sequence[T], holes: Sequence[Sequence[T]]
+    exterior: Sequence[T], holes: Sequence[Sequence[T]]
 ) -> List[Sequence[T]]:
     """Implements a modified ear slicing algorithm, optimized by z-order
     curve hashing and extended to handle holes, twisted polygons, degeneracies
@@ -103,25 +103,25 @@ def earcut(
     Source: https://github.com/mapbox/earcut
 
     Args:
-        points: exterior path as sequence of points as objects which provide a
-            `x`- and `y`-attribute
+        exterior: outer path as sequence of points as objects which provide a
+            `x`- and a `y`-attribute
         holes: sequence of holes, each hole is sequence of points, a hole with
             a single points is a Steiner point
 
     Returns:
-        Returns a list of triangles as a tuple of three points, the output
-        points are the same as the input points.
+        Returns a list of triangles, each triangle is a tuple of three points,
+        the output points are the same objects as the input points.
 
     """
     # exterior points in counter-clockwise order
-    outer_node: Node = linked_list(points, 0, ccw=True)
+    outer_node: Node = linked_list(exterior, 0, ccw=True)
     triangles: List[Sequence[T]] = []
 
     if outer_node is None or outer_node.next is outer_node.prev:
         return triangles
 
     if len(holes) > 0:
-        outer_node = eliminate_holes(holes, len(points), outer_node)
+        outer_node = eliminate_holes(holes, len(exterior), outer_node)
 
     min_x: float = 0.0
     min_y: float = 0.0
@@ -129,10 +129,10 @@ def earcut(
 
     # if the shape is not too simple, we'll use z-order curve hash later
     # calculate polygon bbox
-    if len(points) > 80:
-        min_x = max_x = points[0].x
-        min_y = max_y = points[0].y
-        for point in points:
+    if len(exterior) > 80:
+        min_x = max_x = exterior[0].x
+        min_y = max_y = exterior[0].y
+        for point in exterior:
             x = point.x
             y = point.y
             min_x = min(min_x, x)
