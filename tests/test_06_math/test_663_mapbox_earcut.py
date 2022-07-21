@@ -73,6 +73,11 @@ def test_triangulate_square_with_steiner_point():
     assert total_area(triangles) == pytest.approx(16.0)
 
 
+def test_empty():
+    triangles = list(mapbox_earcut_2d([]))
+    assert len(triangles) == 0
+
+
 def test_polygon_data0(polygon_data0):
     data = polygon_data0
     triangles = list(mapbox_earcut_2d(data.vertices))
