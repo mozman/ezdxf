@@ -3,14 +3,10 @@
 
 from __future__ import annotations
 from typing import Iterable, Iterator, List, Tuple, Sequence, Callable
-import sys
-import math
 from ezdxf.math import Vec2, UVec, Vec3
 
 
 __all__ = ["ear_clipping_2d", "ear_clipping_3d", "mapbox_earcut_2d"]
-
-EPSILON = math.sqrt(sys.float_info.epsilon)
 
 
 def ear_clipping_2d(

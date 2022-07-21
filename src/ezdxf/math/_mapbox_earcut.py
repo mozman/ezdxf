@@ -46,6 +46,9 @@ class Node:
         # indicates whether this is a steiner point
         self.steiner: bool = False
 
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+
 
 def earcut(
     data: List[float], hole_indices: List[int], dim: int = 2
@@ -106,7 +109,7 @@ def linked_list(
             last = insert_node(i, data[i], data[i + 1], last)
 
     # open polygon: where the 1st vertex is not coincident with the last vertex
-    if last and equals(last, last.next):
+    if last and last == last.next:
         remove_node(last)
         last = last.next
     return last
@@ -144,7 +147,7 @@ def is_valid_diagonal(a: Node, b: Node):
             and (
                 area(a.prev, a, b.prev) or area(a, b.prev, b)
             )  # does not create opposite-facing sectors
-            or equals(a, b)
+            or a == b
             and area(a.prev, a, a.next) > 0
             and area(b.prev, b, b.next) > 0
         )  # special zero-length case
@@ -167,10 +170,6 @@ def intersects_polygon(a: Node, b: Node) -> bool:
         if p is a:
             break
     return False
-
-
-def equals(p1: Node, p2: Node) -> bool:
-    return p1.x == p2.x and p1.y == p2.y
 
 
 def sign(num: float) -> int:
@@ -286,7 +285,7 @@ def filter_points(start: Optional[Node], end: Node = None) -> Optional[Node]:
     while True:
         again = False
         if not p.steiner and (
-            equals(p, p.next) or area(p.prev, p, p.next) == 0
+            p == p.next or area(p.prev, p, p.next) == 0
         ):
             remove_node(p)
             p = end = p.prev
@@ -641,7 +640,7 @@ def cure_local_intersections(start: Node, triangles: List[int]) -> Node:
         b = p.next.next
 
         if (
-            not equals(a, b)
+            not a == b
             and intersects(a, p, p.next, b)
             and locally_inside(a, b)
             and locally_inside(b, a)
@@ -702,7 +701,7 @@ def find_hole_bridge(hole: Node, outer_node: Node) -> Optional[Node]:
     # find a segment intersected by a ray from the hole's leftmost point to the left;
     # segment's endpoint with lesser x will be potential connection point
     while True:
-        if p.y >= hy >= p.next.y and p.next.y != p.y:
+        if p.y >= hy >= p.next.y != p.y:
             x = p.x + (hy - p.y) * (p.next.x - p.x) / (p.next.y - p.y)
             if hx >= x > qx:
                 qx = x

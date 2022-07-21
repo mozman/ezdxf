@@ -3,7 +3,7 @@
 from typing import Iterable, Sequence
 import pytest
 import math
-from ezdxf.math.triangulation import mapbox_earcut_2d, EPSILON
+from ezdxf.math.triangulation import mapbox_earcut_2d
 from ezdxf.math import Vec2, BoundingBox2d, area
 from ezdxf.render import forms
 
