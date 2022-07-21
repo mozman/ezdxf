@@ -59,7 +59,7 @@ def earcut(
     # list of vertex start indices
     triangles: List[int] = []
 
-    if not outer_node or outer_node.next == outer_node.prev:
+    if not outer_node or outer_node.next is outer_node.prev:
         return triangles
 
     min_x: float = 0.0
@@ -108,7 +108,7 @@ def linked_list(
             last = insert_node(i, data[i], data[i + 1], last)
 
     # open polygon: where the 1st vertex is not coincident with the last vertex
-    if last and last == last.next:
+    if last and last == last.next:  # true equals
         remove_node(last)
         last = last.next
     return last
@@ -146,7 +146,7 @@ def is_valid_diagonal(a: Node, b: Node):
             and (
                 area(a.prev, a, b.prev) or area(a, b.prev, b)
             )  # does not create opposite-facing sectors
-            or a == b
+            or a == b  # true equals
             and area(a.prev, a, a.next) > 0
             and area(b.prev, b, b.next) > 0
         )  # special zero-length case
@@ -284,7 +284,7 @@ def filter_points(start: Node, end: Node = None) -> Node:
     while True:
         again = False
         if not p.steiner and (
-            p == p.next or area(p.prev, p, p.next) == 0
+            p == p.next or area(p.prev, p, p.next) == 0  # true equals
         ):
             remove_node(p)
             p = end = p.prev
@@ -639,7 +639,7 @@ def cure_local_intersections(start: Node, triangles: List[int]) -> Node:
         b = p.next.next
 
         if (
-            not a == b
+            not a == b  # true equals
             and intersects(a, p, p.next, b)
             and locally_inside(a, b)
             and locally_inside(b, a)
