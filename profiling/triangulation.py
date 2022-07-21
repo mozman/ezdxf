@@ -1,6 +1,5 @@
 # Copyright (c) 2020, Manfred Moitzi
 # License: MIT License
-import sys
 import time
 
 from ezdxf.render import forms

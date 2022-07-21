@@ -48,7 +48,7 @@
 # A Steiner point is defined as a hole with a single point!
 #
 from __future__ import annotations
-from typing import List, TypeVar
+from typing import List, TypeVar, Sequence
 from typing_extensions import Protocol
 
 import math
@@ -65,7 +65,10 @@ T = TypeVar("T", bound=_Point)
 class Node:
     def __init__(self, i: int, point: T):
         self.i: int = i
+
+        # store source point for output
         self.point = point
+
         # vertex coordinates
         self.x: float = point.x
         self.y: float = point.y
@@ -88,31 +91,47 @@ class Node:
         return self.x == other.x and self.y == other.y
 
 
-def earcut(vertices: List[T], hole_indices: List[int]) -> List[T]:
+def earcut(points: List[T], hole_indices: List[int]) -> List[Sequence[T]]:
+    """Implements a modified ear slicing algorithm, optimized by z-order
+    curve hashing and extended to handle holes, twisted polygons, degeneracies
+    and self-intersections in a way that doesn't guarantee correctness of
+    triangulation, but attempts to always produce acceptable results for
+    practical data.
+
+    Source: https://github.com/mapbox/earcut
+
+    Args:
+        points: exterior and hole points in a single list as object which
+            provide a `x`- and `y`-attribute
+        hole_indices: start indices of the holes in the `points` list
+
+    Returns:
+        Returns a list of triangles as a tuple of three points, the output
+        points are the same as the input points.
+
+    """
     has_holes: bool = len(hole_indices) > 0
-    outer_len: int = hole_indices[0] if has_holes else len(vertices)
-    # exterior vertices in counter-clockwise order
-    outer_node: Node = linked_list(vertices, 0, outer_len, ccw=True)
-    # list of vertex start indices
-    triangles: List[T] = []
+    outer_len: int = hole_indices[0] if has_holes else len(points)
+    # exterior points in counter-clockwise order
+    outer_node: Node = linked_list(points, 0, outer_len, ccw=True)
+    triangles: List[Sequence[T]] = []
 
     if outer_node is None or outer_node.next is outer_node.prev:
         return triangles
+
+    if has_holes:
+        outer_node = eliminate_holes(points, hole_indices, outer_node)
 
     min_x: float = 0.0
     min_y: float = 0.0
     inv_size: float = 0.0
 
-    if has_holes:
-        outer_node = eliminate_holes(vertices, hole_indices, outer_node)
-
     # if the shape is not too simple, we'll use z-order curve hash later
     # calculate polygon bbox
-    if len(vertices) > 80:
-        min_x = max_x = vertices[0].x
-        min_y = max_y = vertices[0].y
-
-        for i, point in enumerate(vertices[:outer_len]):
+    if len(points) > 80:
+        min_x = max_x = points[0].x
+        min_y = max_y = points[0].y
+        for point in points[:outer_len]:
             x = point.x
             y = point.y
             min_x = min(min_x, x)
@@ -334,7 +353,7 @@ def filter_points(start: Node, end: Node = None) -> Node:
 # main ear slicing loop which triangulates a polygon (given as a linked list)
 def earcut_linked(
     ear: Node,
-    triangles: List[T],
+    triangles: List[Sequence[T]],
     min_x: float,
     min_y: float,
     inv_size: float,
@@ -361,10 +380,7 @@ def earcut_linked(
         )
         if _is_ear:
             # cut off the triangle
-            triangles.append(prev.point)
-            triangles.append(ear.point)
-            triangles.append(next.point)
-
+            triangles.append((prev.point, ear.point, next.point))
             remove_node(ear)
 
             # skipping the next vertex leads to less sliver triangles
@@ -665,7 +681,7 @@ def split_polygon(a: Node, b: Node) -> Node:
 
 
 # go through all polygon nodes and cure small local self-intersections
-def cure_local_intersections(start: Node, triangles: List[T]) -> Node:
+def cure_local_intersections(start: Node, triangles: List[Sequence[T]]) -> Node:
     p = start
     while True:
         a = p.prev
@@ -677,10 +693,7 @@ def cure_local_intersections(start: Node, triangles: List[T]) -> Node:
             and locally_inside(a, b)
             and locally_inside(b, a)
         ):
-            triangles.append(a.point)
-            triangles.append(p.point)
-            triangles.append(b.point)
-
+            triangles.append((a.point, p.point, b.point))
             # remove two nodes involved
             remove_node(p)
             remove_node(p.next)
@@ -694,7 +707,7 @@ def cure_local_intersections(start: Node, triangles: List[T]) -> Node:
 
 def split_ear_cut(
     start: Node,
-    triangles: List[T],
+    triangles: List[Sequence[T]],
     min_x: float,
     min_y: float,
     inv_size: float,

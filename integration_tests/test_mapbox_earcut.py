@@ -76,7 +76,7 @@ def test_mapbox_earcut(filename: Path):
         data = json.load(fp)
         shape = data[0]
         holes = data[1:]
-        triangles = list(mapbox_earcut_2d(shape, holes))
+        triangles = mapbox_earcut_2d(shape, holes)
         assert len(triangles) == EXPECTED[name], f"{name}.json failed"
 
 
