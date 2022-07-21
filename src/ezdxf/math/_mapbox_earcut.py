@@ -15,9 +15,38 @@
 # TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 # THIS SOFTWARE.
 #
+# The Algorithm
+# -------------
+# The library implements a modified ear slicing algorithm, optimized by z-order
+# curve hashing and extended to handle holes, twisted polygons, degeneracies and
+# self-intersections in a way that doesn't guarantee correctness of triangulation,
+# but attempts to always produce acceptable results for practical data.
+#
 # Translation to Python:
 # Copyright (c) 2022, Manfred Moitzi
 # License: MIT License
+#
+# Notes
+# -----
+# Exterior path (outer path) vertices are stored in counter-clockwise order
+# Hole vertices are stored in clockwise order
+# Vertex order will be maintained by the algorithm automatically.
+# Boundary behavior for holes:
+#   - holes outside the exterior path are ignored
+#   - invalid result for holes partially extending beyond the exterior path
+#   - invalid result for overlapping holes
+#   - invalid result for holes in holes
+# Very stable in all circumstances - DOES NOT CRASH!
+#
+# Steiner Point
+# -------------
+# https://en.wikipedia.org/wiki/Steiner_point_(computational_geometry)
+# A Steiner point is a point that is not part of the input to a geometric
+# optimization problem but is added during the solution of the problem, to
+# create a better solution than would be possible from the original points
+# alone.
+# A Steiner point is defined as a hole with a single point!
+#
 from __future__ import annotations
 from typing import List
 import math
@@ -99,8 +128,7 @@ def linked_list(
     winding order
     """
     last: Node = None  # type: ignore
-    sa = signed_area(data, start, end, dim)
-    if ccw is (sa < 0):
+    if ccw is (signed_area(data, start, end, dim) < 0):
         for i in range(start, end, dim):
             last = insert_node(i, data[i], data[i + 1], last)
     else:

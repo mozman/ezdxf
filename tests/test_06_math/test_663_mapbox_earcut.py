@@ -52,7 +52,25 @@ def test_triangulate_square_with_square_hole():
     hole = forms.square(2, center=True)
     triangles = list(mapbox_earcut_2d(square, holes=[hole]))
     assert len(triangles) == 8
-    assert total_area(triangles) == pytest.approx(12.0)
+    assert total_area(triangles) == pytest.approx(16.0 - 4.0)
+
+
+def test_triangulate_square_with_two_holes():
+    square = list(forms.square(4, center=True))
+    hole0 = list(forms.translate(forms.square(1, center=True), (-1, -1)))
+    hole1 = list(forms.translate(forms.square(1, center=True), (1, 1)))
+    holes = [hole0, hole1]
+    triangles = list(mapbox_earcut_2d(square, holes=holes))
+    assert len(triangles) == 14
+    assert total_area(triangles) == pytest.approx(16.0 - 2.0)
+
+
+def test_triangulate_square_with_steiner_point():
+    square = forms.square(4, center=True)
+    steiner_point = [(0, 0)]  # defined as a hole with a single point
+    triangles = list(mapbox_earcut_2d(square, holes=[steiner_point]))
+    assert len(triangles) == 4
+    assert total_area(triangles) == pytest.approx(16.0)
 
 
 def test_polygon_data0(polygon_data0):
