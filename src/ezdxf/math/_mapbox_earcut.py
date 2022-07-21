@@ -1,4 +1,3 @@
-# mypy: ignore_errors=True
 # Source: https://github.com/mapbox/earcut
 # License: ISC License (MIT compatible)
 #
@@ -20,7 +19,7 @@
 # Copyright (c) 2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-from typing import List, Optional
+from typing import List
 import math
 
 
@@ -33,15 +32,15 @@ class Node:
         self.y: float = y
 
         # previous and next vertex nodes in a polygon ring
-        self.prev: Optional[Node] = None
-        self.next: Optional[Node] = None
+        self.prev: Node = None  # type: ignore
+        self.next: Node = None  # type: ignore
 
         # z-order curve value
         self.z: int = 0
 
         # previous and next nodes in z-order
-        self.prevZ: Optional[int] = None
-        self.nextZ: Optional[int] = None
+        self.prevZ: Node = None  # type: ignore
+        self.nextZ: Node = None  # type: ignore
 
         # indicates whether this is a steiner point
         self.steiner: bool = False
@@ -99,7 +98,7 @@ def linked_list(
     """Create a circular doubly linked list from polygon points in the specified
     winding order
     """
-    last: Optional[Node] = None
+    last: Node = None  # type: ignore
     sa = signed_area(data, start, end, dim)
     if ccw is (sa < 0):
         for i in range(start, end, dim):
@@ -207,7 +206,7 @@ def intersects(p1: Node, q1: Node, p2: Node, q2: Node) -> bool:
     return False
 
 
-def insert_node(i: int, x: float, y: float, last: Optional[Node]) -> Node:
+def insert_node(i: int, x: float, y: float, last: Node) -> Node:
     """create a node and optionally link it with previous one (in a circular
     doubly linked list)
     """
@@ -273,10 +272,10 @@ def eliminate_hole(hole: Node, outer_node: Node) -> Node:
     return filter_points(bridge, bridge.next)
 
 
-def filter_points(start: Optional[Node], end: Node = None) -> Optional[Node]:
+def filter_points(start: Node, end: Node = None) -> Node:
     """eliminate colinear or duplicate points"""
     if start is None:
-        return start
+        return start  # type: ignore
     if end is None:
         end = start
 
@@ -301,7 +300,7 @@ def filter_points(start: Optional[Node], end: Node = None) -> Optional[Node]:
 
 # main ear slicing loop which triangulates a polygon (given as a linked list)
 def earcut_linked(
-    ear: Optional[Node],
+    ear: Node,
     triangles: List[int],
     min_x: float,
     min_y: float,
@@ -428,8 +427,8 @@ def is_ear_hashed(ear: Node, min_x: float, min_y: float, inv_size: float):
     min_z = z_order(x0, y0, min_x, min_y, inv_size)
     max_z = z_order(x1, y1, min_x, min_y, inv_size)
 
-    p: Optional[Node] = ear.prevZ
-    n: Optional[Node] = ear.nextZ
+    p: Node = ear.prevZ
+    n: Node = ear.nextZ
 
     # look for points inside the triangle in both directions
     while p and p.z >= min_z and n and n.z <= max_z:
@@ -533,8 +532,8 @@ def index_curve(start: Node, minX: float, minY: float, invSize: float):
         if p is start:
             break
 
-    p.prevZ.nextZ = None
-    p.prevZ = None
+    p.prevZ.nextZ = None  # type: ignore
+    p.prevZ = None  # type: ignore
 
     sort_linked(p)
 
@@ -568,7 +567,7 @@ def sort_linked(head: Node) -> Node:
     in_size = 1
     while True:
         p = head
-        head = None
+        head = None  # type: ignore
         tail = None
         num_merges = 0
         while p:
@@ -595,10 +594,10 @@ def sort_linked(head: Node) -> Node:
                     tail.nextZ = e
                 else:
                     head = e
-                e.prevZ = tail
+                e.prevZ = tail  # type: ignore
                 tail = e
             p = q
-        tail.nextZ = None
+        tail.nextZ = None  # type: ignore
         in_size *= 2
         if num_merges <= 1:
             break
@@ -692,12 +691,12 @@ def split_ear_cut(
 
 
 # David Eberly's algorithm for finding a bridge between hole and outer polygon
-def find_hole_bridge(hole: Node, outer_node: Node) -> Optional[Node]:
+def find_hole_bridge(hole: Node, outer_node: Node) -> Node:
     p = outer_node
     hx = hole.x
     hy = hole.y
     qx = -math.inf
-    m: Optional[Node] = None
+    m: Node = None  # type: ignore
     # find a segment intersected by a ray from the hole's leftmost point to the left;
     # segment's endpoint with lesser x will be potential connection point
     while True:
@@ -714,7 +713,7 @@ def find_hole_bridge(hole: Node, outer_node: Node) -> Optional[Node]:
             break
 
     if m is None:
-        return None
+        return None  # type: ignore
 
     # look for points inside the triangle of hole point, segment intersection and endpoint;
     # if there are no points found, we have a valid connection;
