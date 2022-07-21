@@ -3,8 +3,8 @@
 from typing import Iterable, Sequence
 import pytest
 import math
-from ezdxf.math.triangulation import mapbox_earcut_2d
-from ezdxf.math import Vec2, area
+from ezdxf.math.triangulation import mapbox_earcut_2d, EPSILON
+from ezdxf.math import Vec2, BoundingBox2d, area
 from ezdxf.render import forms
 
 
@@ -53,6 +53,29 @@ def test_triangulate_square_with_square_hole():
     triangles = list(mapbox_earcut_2d(square, holes=[hole]))
     assert len(triangles) == 8
     assert total_area(triangles) == pytest.approx(12.0)
+
+
+def test_polygon_data0(polygon_data0):
+    data = polygon_data0
+    triangles = list(mapbox_earcut_2d(data.vertices))
+    area0 = area(data.vertices)
+    area1 = total_area(triangles)
+    absolute_error = abs(area0 - area1)
+
+    assert math.isclose(
+        area0, area1
+    ), "{}: area absolute error ({:.3f} - {:.3f} = {:.6f})".format(
+        data.name,
+        area0,
+        area1,
+        absolute_error,
+    )
+    bbox0 = BoundingBox2d(data.vertices)
+    bbox1 = BoundingBox2d()
+    for t in triangles:
+        bbox1.extend(t)
+    assert bbox0.extmin.isclose(bbox1.extmin)
+    assert bbox0.extmax.isclose(bbox1.extmax)
 
 
 if __name__ == "__main__":
