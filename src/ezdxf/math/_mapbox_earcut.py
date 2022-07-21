@@ -91,7 +91,9 @@ class Node:
         return self.x == other.x and self.y == other.y
 
 
-def earcut(points: List[T], hole_indices: List[int]) -> List[Sequence[T]]:
+def earcut(
+    points: Sequence[T], holes: Sequence[Sequence[T]]
+) -> List[Sequence[T]]:
     """Implements a modified ear slicing algorithm, optimized by z-order
     curve hashing and extended to handle holes, twisted polygons, degeneracies
     and self-intersections in a way that doesn't guarantee correctness of
@@ -101,26 +103,25 @@ def earcut(points: List[T], hole_indices: List[int]) -> List[Sequence[T]]:
     Source: https://github.com/mapbox/earcut
 
     Args:
-        points: exterior and hole points in a single list as object which
-            provide a `x`- and `y`-attribute
-        hole_indices: start indices of the holes in the `points` list
+        points: exterior path as sequence of points as objects which provide a
+            `x`- and `y`-attribute
+        holes: sequence of holes, each hole is sequence of points, a hole with
+            a single points is a Steiner point
 
     Returns:
         Returns a list of triangles as a tuple of three points, the output
         points are the same as the input points.
 
     """
-    has_holes: bool = len(hole_indices) > 0
-    outer_len: int = hole_indices[0] if has_holes else len(points)
     # exterior points in counter-clockwise order
-    outer_node: Node = linked_list(points, 0, outer_len, ccw=True)
+    outer_node: Node = linked_list(points, 0, ccw=True)
     triangles: List[Sequence[T]] = []
 
     if outer_node is None or outer_node.next is outer_node.prev:
         return triangles
 
-    if has_holes:
-        outer_node = eliminate_holes(points, hole_indices, outer_node)
+    if len(holes) > 0:
+        outer_node = eliminate_holes(holes, len(points), outer_node)
 
     min_x: float = 0.0
     min_y: float = 0.0
@@ -131,7 +132,7 @@ def earcut(points: List[T], hole_indices: List[int]) -> List[Sequence[T]]:
     if len(points) > 80:
         min_x = max_x = points[0].x
         min_y = max_y = points[0].y
-        for point in points[:outer_len]:
+        for point in points:
             x = point.x
             y = point.y
             min_x = min(min_x, x)
@@ -148,17 +149,20 @@ def earcut(points: List[T], hole_indices: List[int]) -> List[Sequence[T]]:
     return triangles
 
 
-def linked_list(data: List[T], start: int, end: int, ccw: bool) -> Node:
+def linked_list(points: Sequence[T], start: int, ccw: bool) -> Node:
     """Create a circular doubly linked list from polygon points in the specified
     winding order
     """
     last: Node = None  # type: ignore
-    if ccw is (signed_area(data, start, end) < 0):
-        for i in range(start, end):
-            last = insert_node(i, data[i], last)
+    if ccw is (signed_area(points) < 0):
+        for point in points:
+            last = insert_node(start, point, last)
+            start += 1
     else:
-        for i in range(end - 1, start - 1, -1):
-            last = insert_node(i, data[i], last)
+        end = start + len(points)
+        for point in reversed(points):
+            last = insert_node(end, point, last)
+            end -= 1
 
     # open polygon: where the 1st vertex is not coincident with the last vertex
     if last and last == last.next:  # true equals
@@ -167,13 +171,14 @@ def linked_list(data: List[T], start: int, end: int, ccw: bool) -> Node:
     return last
 
 
-def signed_area(data: List[T], start: int, end: int) -> float:
+def signed_area(points: Sequence[T]) -> float:
     s: float = 0.0
-    j: int = end - 1
-    for i in range(start, end):
-        # error in mapbox code: (data[j] - data[i])
-        s += (data[i].x - data[j].x) * (data[i].y + data[j].y)
-        j = i
+    if not len(points):
+        return s
+    prev = points[-1]
+    for point in points:
+        s += (point.x - prev.x) * (point.y + prev.y)
+        prev = point
     # s < 0 is counter-clockwise
     # s > 0 is clockwise
     return s
@@ -287,25 +292,26 @@ def remove_node(p: Node) -> None:
 
 
 def eliminate_holes(
-    data: List[T], hole_indices: List[int], outer_node: Node) -> Node:
+    holes: Sequence[Sequence[T]], start: int, outer_node: Node
+) -> Node:
     """link every hole into the outer loop, producing a single-ring polygon
     without holes
     """
-    queue = []
-    length = len(hole_indices)
-    for i in range(len(hole_indices)):
-        start = hole_indices[i]
-        end = hole_indices[i + 1] if (i < length - 1) else len(data)
+    queue: List[Node] = []
+    for hole in holes:
+        if len(hole) < 1:  # skip empty holes
+            continue
         # hole vertices in clockwise order
-        _list = linked_list(data, start, end, ccw=False)
+        _list = linked_list(hole, start, ccw=False)
         if _list is _list.next:
             _list.steiner = True
+        start += len(hole)
         queue.append(get_leftmost(_list))
     queue.sort(key=lambda node: (node.x, node.y))
 
-    #  process holes from left to right
-    for hole in queue:
-        outer_node = eliminate_hole(hole, outer_node)
+    # process holes from left to right
+    for hole_ in queue:
+        outer_node = eliminate_hole(hole_, outer_node)
     return outer_node
 
 

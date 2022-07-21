@@ -26,14 +26,14 @@ def total_area(triangles: Iterable[Sequence[Vec2]]):
 
 def test_triangulate_ccw_square():
     square = forms.square(2)
-    triangles = list(mapbox_earcut_2d(square))
+    triangles = mapbox_earcut_2d(square)
     assert len(triangles) == 2
     assert total_area(triangles) == pytest.approx(4.0)
 
 
 def test_triangulate_cw_square():
     square = list(reversed(forms.square(2)))
-    triangles = list(mapbox_earcut_2d(square))
+    triangles = mapbox_earcut_2d(square)
     assert len(triangles) == 2
     assert total_area(triangles) == pytest.approx(4.0)
 
@@ -42,7 +42,7 @@ def test_triangulate_concave_gear_shape():
     square = list(
         forms.gear(32, top_width=1, bottom_width=3, height=2, outside_radius=10)
     )
-    triangles = list(mapbox_earcut_2d(square))
+    triangles = mapbox_earcut_2d(square)
     assert len(triangles) == 126
     assert total_area(triangles) == pytest.approx(265.17899685816224)
 
@@ -50,7 +50,7 @@ def test_triangulate_concave_gear_shape():
 def test_triangulate_square_with_square_hole():
     square = forms.square(4, center=True)
     hole = forms.square(2, center=True)
-    triangles = list(mapbox_earcut_2d(square, holes=[hole]))
+    triangles = mapbox_earcut_2d(square, holes=[hole])
     assert len(triangles) == 8
     assert total_area(triangles) == pytest.approx(16.0 - 4.0)
 
@@ -60,7 +60,7 @@ def test_triangulate_square_with_two_holes():
     hole0 = list(forms.translate(forms.square(1, center=True), (-1, -1)))
     hole1 = list(forms.translate(forms.square(1, center=True), (1, 1)))
     holes = [hole0, hole1]
-    triangles = list(mapbox_earcut_2d(square, holes=holes))
+    triangles = mapbox_earcut_2d(square, holes=holes)
     assert len(triangles) == 14
     assert total_area(triangles) == pytest.approx(16.0 - 2.0)
 
@@ -68,14 +68,19 @@ def test_triangulate_square_with_two_holes():
 def test_triangulate_square_with_steiner_point():
     square = forms.square(4, center=True)
     steiner_point = [(0, 0)]  # defined as a hole with a single point
-    triangles = list(mapbox_earcut_2d(square, holes=[steiner_point]))
+    triangles = mapbox_earcut_2d(square, holes=[steiner_point])
     assert len(triangles) == 4
     assert total_area(triangles) == pytest.approx(16.0)
 
 
-def test_empty():
+def test_empty_exterior():
     triangles = list(mapbox_earcut_2d([]))
     assert len(triangles) == 0
+
+
+def test_empty_holes():
+    square = forms.square(2)
+    assert len(mapbox_earcut_2d(square, [[]])) == 2
 
 
 def test_polygon_data0(polygon_data0):

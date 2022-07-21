@@ -26,6 +26,7 @@ def ear_clipping_2d(
 
     """
     from ._tripy import earclip
+
     return earclip(vertices)
 
 
@@ -45,6 +46,7 @@ def ear_clipping_3d(
 
     """
     from ._tripy import earclip
+
     return triangulate_3d(vertices, earclip)
 
 
@@ -113,27 +115,18 @@ def mapbox_earcut_2d(
 
     Args:
         exterior: exterior polygon as iterable of :class:`Vec2` objects
-        holes: iterable of holes as iterable of :class:`Vec2` objects, a single
-            vertex represents a Steiner point.
+        holes: iterable of holes as iterable of :class:`Vec2` objects, a hole
+            with single point represents a Steiner point.
 
     Returns:
         yields the result as 3-tuples of :class:`Vec2` objects
 
     """
     from ._mapbox_earcut import earcut
-
-    points: list[Vec2] = Vec2.list(exterior)
-    hole_indices: List[int] = []
-
+    points: Sequence[Vec2] = Vec2.list(exterior)
     if len(points) == 0:
         return []
-
-    if holes is not None:
-        for hole in holes:
-            vertices = tuple(hole)
-            if len(vertices):
-                index = len(points)
-                hole_indices.append(index)
-                points.extend(Vec2.generate(vertices))
-
-    return earcut(points, hole_indices)
+    holes_: Sequence[Sequence[Vec2]] = []
+    if holes:
+        holes_ = [Vec2.list(hole) for hole in holes]
+    return earcut(points, holes_)
