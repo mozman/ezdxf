@@ -237,7 +237,7 @@ POLYGON_DATA0 = [
 
 
 if __name__ == "__main__":
-    # render_mapbox_test_cases()
+    render_mapbox_test_cases()
     render(hole_in_hole)
     render(hole_beyond_exterior_path)
     # render_polydata()

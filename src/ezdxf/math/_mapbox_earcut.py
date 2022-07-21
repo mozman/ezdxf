@@ -48,17 +48,27 @@
 # A Steiner point is defined as a hole with a single point!
 #
 from __future__ import annotations
-from typing import List
+from typing import List, TypeVar
+from typing_extensions import Protocol
+
 import math
 
 
-class Node:
-    def __init__(self, i: int, x: float, y: float):
-        self.i: int = i
+class _Point(Protocol):
+    x: float
+    y: float
 
+
+T = TypeVar("T", bound=_Point)
+
+
+class Node:
+    def __init__(self, i: int, point: T):
+        self.i: int = i
+        self.point = point
         # vertex coordinates
-        self.x: float = x
-        self.y: float = y
+        self.x: float = point.x
+        self.y: float = point.y
 
         # previous and next vertex nodes in a polygon ring
         self.prev: Node = None  # type: ignore
@@ -78,15 +88,13 @@ class Node:
         return self.x == other.x and self.y == other.y
 
 
-def earcut(
-    data: List[float], hole_indices: List[int], dim: int = 2
-) -> List[int]:
+def earcut(vertices: List[T], hole_indices: List[int]) -> List[T]:
     has_holes: bool = len(hole_indices) > 0
-    outer_len: int = hole_indices[0] * dim if has_holes else len(data)
+    outer_len: int = hole_indices[0] if has_holes else len(vertices)
     # exterior vertices in counter-clockwise order
-    outer_node: Node = linked_list(data, 0, outer_len, dim, ccw=True)
+    outer_node: Node = linked_list(vertices, 0, outer_len, ccw=True)
     # list of vertex start indices
-    triangles: List[int] = []
+    triangles: List[T] = []
 
     if outer_node is None or outer_node.next is outer_node.prev:
         return triangles
@@ -96,17 +104,17 @@ def earcut(
     inv_size: float = 0.0
 
     if has_holes:
-        outer_node = eliminate_holes(data, hole_indices, outer_node, dim)
+        outer_node = eliminate_holes(vertices, hole_indices, outer_node)
 
     # if the shape is not too simple, we'll use z-order curve hash later
     # calculate polygon bbox
-    if len(data) > 80 * dim:
-        min_x = max_x = data[0]
-        min_y = max_y = data[1]
+    if len(vertices) > 80:
+        min_x = max_x = vertices[0].x
+        min_y = max_y = vertices[0].y
 
-        for i in range(0, outer_len, dim):
-            x = data[i]
-            y = data[i + 1]
+        for i, point in enumerate(vertices[:outer_len]):
+            x = point.x
+            y = point.y
             min_x = min(min_x, x)
             min_y = min(min_y, y)
             max_x = max(max_x, x)
@@ -121,19 +129,17 @@ def earcut(
     return triangles
 
 
-def linked_list(  # check 1
-    data: List[float], start: int, end: int, dim: int, ccw: bool
-) -> Node:
+def linked_list(data: List[T], start: int, end: int, ccw: bool) -> Node:
     """Create a circular doubly linked list from polygon points in the specified
     winding order
     """
     last: Node = None  # type: ignore
-    if ccw is (signed_area(data, start, end, dim) < 0):
-        for i in range(start, end, dim):
-            last = insert_node(i, data[i], data[i + 1], last)
+    if ccw is (signed_area(data, start, end) < 0):
+        for i in range(start, end):
+            last = insert_node(i, data[i], last)
     else:
-        for i in range(end - dim, start - 1, -dim):
-            last = insert_node(i, data[i], data[i + 1], last)
+        for i in range(end - 1, start - 1, -1):
+            last = insert_node(i, data[i], last)
 
     # open polygon: where the 1st vertex is not coincident with the last vertex
     if last and last == last.next:  # true equals
@@ -142,12 +148,12 @@ def linked_list(  # check 1
     return last
 
 
-def signed_area(data: List[float], start: int, end: int, dim: int) -> float:
+def signed_area(data: List[T], start: int, end: int) -> float:
     s: float = 0.0
-    j: int = end - dim
-    for i in range(start, end, dim):
+    j: int = end - 1
+    for i in range(start, end):
         # error in mapbox code: (data[j] - data[i])
-        s += (data[i] - data[j]) * (data[i + 1] + data[j + 1])
+        s += (data[i].x - data[j].x) * (data[i].y + data[j].y)
         j = i
     # s < 0 is counter-clockwise
     # s > 0 is clockwise
@@ -234,11 +240,11 @@ def intersects(p1: Node, q1: Node, p2: Node, q2: Node) -> bool:
     return False
 
 
-def insert_node(i: int, x: float, y: float, last: Node) -> Node:
+def insert_node(i: int, point: T, last: Node) -> Node:
     """create a node and optionally link it with previous one (in a circular
     doubly linked list)
     """
-    p = Node(i, x, y)
+    p = Node(i, point)
 
     if last is None:
         p.prev = p
@@ -261,19 +267,18 @@ def remove_node(p: Node) -> None:
         p.nextZ.prevZ = p.prevZ
 
 
-def eliminate_holes(   # check 1
-    data: List[float], hole_indices: List[int], outer_node: Node, dim: int
-) -> Node:
+def eliminate_holes(
+    data: List[T], hole_indices: List[int], outer_node: Node) -> Node:
     """link every hole into the outer loop, producing a single-ring polygon
     without holes
     """
     queue = []
     length = len(hole_indices)
     for i in range(len(hole_indices)):
-        start = hole_indices[i] * dim
-        end = hole_indices[i + 1] * dim if (i < length - 1) else len(data)
+        start = hole_indices[i]
+        end = hole_indices[i + 1] if (i < length - 1) else len(data)
         # hole vertices in clockwise order
-        _list = linked_list(data, start, end, dim, ccw=False)
+        _list = linked_list(data, start, end, ccw=False)
         if _list is _list.next:
             _list.steiner = True
         queue.append(get_leftmost(_list))
@@ -329,7 +334,7 @@ def filter_points(start: Node, end: Node = None) -> Node:
 # main ear slicing loop which triangulates a polygon (given as a linked list)
 def earcut_linked(
     ear: Node,
-    triangles: List[int],
+    triangles: List[T],
     min_x: float,
     min_y: float,
     inv_size: float,
@@ -356,9 +361,9 @@ def earcut_linked(
         )
         if _is_ear:
             # cut off the triangle
-            triangles.append(prev.i)
-            triangles.append(ear.i)
-            triangles.append(next.i)
+            triangles.append(prev.point)
+            triangles.append(ear.point)
+            triangles.append(next.point)
 
             remove_node(ear)
 
@@ -509,7 +514,7 @@ def is_ear_hashed(ear: Node, min_x: float, min_y: float, inv_size: float):
         n = n.nextZ
     return True
 
-# check 1
+
 def get_leftmost(start: Node) -> Node:
     """Find the leftmost node of a polygon ring"""
     p = start
@@ -523,7 +528,7 @@ def get_leftmost(start: Node) -> Node:
     return leftmost
 
 
-def point_in_triangle(  # check 1
+def point_in_triangle(
     ax: float,
     ay: float,
     bx: float,
@@ -541,7 +546,7 @@ def point_in_triangle(  # check 1
     )
 
 
-def sector_contains_sector(m: Node, p: Node):  # check 1
+def sector_contains_sector(m: Node, p: Node):
     """Whether sector in vertex m contains sector in vertex p in the same
     coordinates.
     """
@@ -632,7 +637,6 @@ def sort_linked(head: Node) -> Node:
     return head
 
 
-# check 1
 def split_polygon(a: Node, b: Node) -> Node:
     """Link two polygon vertices with a bridge.
 
@@ -640,8 +644,8 @@ def split_polygon(a: Node, b: Node) -> Node:
     If one belongs to the outer ring and another to a hole, it merges it into a
     single ring.
     """
-    a2 = Node(a.i, a.x, a.y)
-    b2 = Node(b.i, b.x, b.y)
+    a2 = Node(a.i, a.point)
+    b2 = Node(b.i, b.point)
     an = a.next
     bp = b.prev
 
@@ -661,7 +665,7 @@ def split_polygon(a: Node, b: Node) -> Node:
 
 
 # go through all polygon nodes and cure small local self-intersections
-def cure_local_intersections(start: Node, triangles: List[int]) -> Node:
+def cure_local_intersections(start: Node, triangles: List[T]) -> Node:
     p = start
     while True:
         a = p.prev
@@ -673,9 +677,9 @@ def cure_local_intersections(start: Node, triangles: List[int]) -> Node:
             and locally_inside(a, b)
             and locally_inside(b, a)
         ):
-            triangles.append(a.i)
-            triangles.append(p.i)
-            triangles.append(b.i)
+            triangles.append(a.point)
+            triangles.append(p.point)
+            triangles.append(b.point)
 
             # remove two nodes involved
             remove_node(p)
@@ -690,7 +694,7 @@ def cure_local_intersections(start: Node, triangles: List[int]) -> Node:
 
 def split_ear_cut(
     start: Node,
-    triangles: List[int],
+    triangles: List[T],
     min_x: float,
     min_y: float,
     inv_size: float,
@@ -718,7 +722,7 @@ def split_ear_cut(
         if a is start:
             break
 
-# check 1
+
 # David Eberly's algorithm for finding a bridge between hole and outer polygon
 def find_hole_bridge(hole: Node, outer_node: Node) -> Node:
     p = outer_node
@@ -789,7 +793,7 @@ def find_hole_bridge(hole: Node, outer_node: Node) -> Node:
             break
     return m
 
-# check 1
+
 def locally_inside(a: Node, b: Node) -> bool:
     """Check if a polygon diagonal is locally inside the polygon"""
     return (

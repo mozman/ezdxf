@@ -122,11 +122,8 @@ def mapbox_earcut_2d(
     """
     from ._mapbox_earcut import earcut
 
-    data: List[float] = []
+    data: list[Vec2] = Vec2.list(exterior)
     hole_indices: List[int] = []
-    for v in Vec2.generate(exterior):
-        data.append(v.x)
-        data.append(v.y)
 
     if len(data) == 0:
         return
@@ -136,16 +133,14 @@ def mapbox_earcut_2d(
             vertices = tuple(hole)
             if len(vertices):
                 index = len(data)
-                hole_indices.append(index // 2)
-                for v in Vec2.generate(vertices):
-                    data.append(v.x)
-                    data.append(v.y)
+                hole_indices.append(index)
+                data.extend(Vec2.generate(vertices))
 
-    triangles = earcut(data, hole_indices, 2)
+    triangles = earcut(data, hole_indices)
 
     triangle: List[Vec2] = []
-    for index in triangles:
-        triangle.append(Vec2(data[index], data[index + 1]))
+    for vec2 in triangles:
+        triangle.append(vec2)
         if len(triangle) == 3:
             yield tuple(triangle)  # type: ignore
             triangle.clear()
