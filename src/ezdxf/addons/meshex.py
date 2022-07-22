@@ -236,13 +236,10 @@ def obj_loads(content: str) -> List[MeshTransformer]:
     return meshes
 
 
-def stl_dumps(mesh: MeshBuilder, *, fast=False) -> str:
+def stl_dumps(mesh: MeshBuilder) -> str:
     """Returns the `STL`_ data as string for the given `mesh`.
     This function triangulates the meshes automatically because the `STL`_
     format supports only triangles as faces.
-
-    The `fast` mode uses a shortcut for faces with less than 6 vertices
-    which may not work for concave faces!
 
     This function does not check if the mesh obey the
     `STL`_ format `rules <http://www.fabbers.com/tech/STL_Format>`_:
@@ -277,11 +274,8 @@ def stl_dumps(mesh: MeshBuilder, *, fast=False) -> str:
 STL_SIGNATURE = (b"STL generated ezdxf" + b" " * 80)[:80]
 
 
-def stl_dumpb(mesh: MeshBuilder, *, fast=False) -> bytes:
+def stl_dumpb(mesh: MeshBuilder) -> bytes:
     """Returns the `STL`_ binary data as bytes for the given `mesh`.
-
-    The `fast` mode uses a shortcut for faces with less than 6 vertices
-    which may not work for concave faces!
 
     For more information see function: :func:`stl_dumps`
     """

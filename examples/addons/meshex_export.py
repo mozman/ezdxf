@@ -29,13 +29,13 @@ def export_scad(filename):
 def export_stl_asc(filename):
     with open(filename, "wt") as fp:
         mesh = make_mesh(SIDES)
-        fp.write(meshex.stl_dumps(mesh, fast=True))
+        fp.write(meshex.stl_dumps(mesh))
 
 
 def export_stl_bin(filename):
     with open(filename, "wb") as fp:
         mesh = make_mesh(SIDES)
-        fp.write(meshex.stl_dumpb(mesh, fast=True))
+        fp.write(meshex.stl_dumpb(mesh))
 
 
 def export_off(filename):
