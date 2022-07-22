@@ -12,14 +12,15 @@ from ezdxf.math import Vec2, UVec, has_clockwise_orientation
 
 EPSILON = math.sqrt(sys.float_info.epsilon)
 
+# This module was replaced by the faster ezdxf.math._mapbox_earcut.py module!
+# This file just preserves the invested time and effort for the ezdxf
+# integration ;)
 
-# Candidate for a faster Cython implementation:
+
 def earclip(vertices: Iterable[UVec]) -> Iterator[Tuple[Vec2, Vec2, Vec2]]:
     """This function triangulates the given 2d polygon into simple triangles by
     the "ear clipping" algorithm. The function yields n-2 triangles for a polygon
     with n vertices, each triangle is a 3-tuple of :class:`Vec2` objects.
-
-    .. versionadded:: 0.18
 
     Implementation Reference:
         - https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
