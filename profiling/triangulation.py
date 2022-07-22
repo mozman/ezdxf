@@ -1,9 +1,10 @@
-# Copyright (c) 2020, Manfred Moitzi
+# Copyright (c) 2022, Manfred Moitzi
 # License: MIT License
 import time
 
+from archive import tripy
 from ezdxf.render import forms
-from ezdxf.math.triangulation import ear_clipping_2d, mapbox_earcut_2d
+from ezdxf.math.triangulation import mapbox_earcut_2d
 
 SMALL_GEAR = list(
     forms.gear(8, top_width=1, bottom_width=3, height=2, outside_radius=10)
@@ -31,10 +32,10 @@ def profile1(func, *args) -> float:
 
 
 def profile(text, func, *args):
-    ear_clipping_2d_time = profile1(func, ear_clipping_2d, *args)
+    ear_clipping_2d_time = profile1(func, tripy.earclip, *args)
     mapbox_earcut_2d_time = profile1(func, mapbox_earcut_2d, *args)
     ratio = ear_clipping_2d_time / mapbox_earcut_2d_time
-    print(f"ear_clipping_2d - {text} {ear_clipping_2d_time:.3f}s")
+    print(f"tripy.earclip - {text} {ear_clipping_2d_time:.3f}s")
     print(f"mapbox_earcut_2d - {text} {mapbox_earcut_2d_time:.3f}s")
     print(f"Ratio {ratio:.1f}x")
 
