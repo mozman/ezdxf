@@ -89,4 +89,13 @@ or the underlying technology is no longer supported.
 All of this is unacceptable for a data storage format that should be accessed
 for many years or decades (e.g. construction drawings for buildings or bridges).
 
+Rendering SHX Fonts
+-------------------
+
+The SHX font format is not documented nor supported by many libraries/packages
+like `Matplotlib` and `Qt`, therefore only SHX fonts which have corresponding
+TTF-fonts can be rendered by these backends. See also how-tos about
+:ref:`howto_fonts`
+
+
 .. _OLE: https://en.wikipedia.org/wiki/Object_Linking_and_Embedding
