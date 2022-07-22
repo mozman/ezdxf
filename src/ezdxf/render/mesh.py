@@ -843,13 +843,13 @@ class MeshBuilder:
         .. versionadded:: 0.18
 
         """
-        from ezdxf.math.triangulation import ear_clipping_3d
+        from ezdxf.math.triangulation import mapbox_earcut_3d
 
         for face in self.faces_as_vertices():
             if len(face) <= max_vertex_count:
                 yield face
             else:
-                yield from ear_clipping_3d(face)
+                yield from mapbox_earcut_3d(face)
 
     def mesh_tessellation(self, max_vertex_count: int = 4) -> MeshTransformer:
         """Returns a new :class:`MeshTransformer` instance, where each face has
