@@ -150,13 +150,20 @@ cdef Node linked_list(points: Sequence[T], int start, bint ccw):
 
 
 cdef double signed_area(points: Sequence[T]):
-    cdef double s = 0.0
+    cdef:
+        double s = 0.0
+        double point_x, prev_x, point_y, prev_y
     if not len(points):
         return s
     prev = points[-1]
+    prev_x = prev.x
+    prev_y = prev.y
     for point in points:
-        s += (point.x - prev.x) * (point.y + prev.y)
-        prev = point
+        point_x = point.x
+        point_y = point.y
+        s += (point_x - prev_x) * (point_y + prev_y)
+        prev_x = point_x
+        prev_y = point_y
     # s < 0 is counter-clockwise
     # s > 0 is clockwise
     return s
