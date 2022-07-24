@@ -36,6 +36,7 @@ clean:
 	rm -f $(ACC)/bezier3p.cpp
 	rm -f $(ACC)/bspline.cpp
 	rm -f $(ACC)/construct.cpp
+	rm -f $(ACC)/mapbox_earcut.cpp
 
 sdist: clean
 	$(PYTHON3) setup.py sdist --formats=zip

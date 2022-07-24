@@ -59,6 +59,15 @@ ext_modules = [
         optional=True,
         language="c++",
     ),
+    Extension(
+        "ezdxf.acc.mapbox_earcut",
+        [
+            "src/ezdxf/acc/mapbox_earcut.pyx",
+        ],
+        optional=True,
+        language="c++",
+    ),
+
 ]
 try:
     from Cython.Distutils import build_ext
