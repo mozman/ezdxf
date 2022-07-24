@@ -1,3 +1,5 @@
+# cython: language_level=3
+# distutils: language = c++
 # Source: https://github.com/mapbox/earcut
 # License: ISC License (MIT compatible)
 #
@@ -17,11 +19,12 @@
 #
 # Cython implementation of module ezdxf.math._mapbox_earcut.py
 
-from typing import List, TypeVar, Sequence
+from typing import List, Sequence, TypeVar
 from typing_extensions import Protocol
 
-import math
+from libc.math cimport fmin, fmax, fabs
 
+import math
 
 class _Point(Protocol):
     x: float
@@ -31,34 +34,36 @@ class _Point(Protocol):
 T = TypeVar("T", bound=_Point)
 
 
-class Node:
-    def __init__(self, i: int, point: T):
-        self.i: int = i
+cdef class Node:
+    cdef:
+        int i
+        double x
+        double y
+        int z
+        bint steiner
+        object point
+        Node prev
+        Node next
+        Node prevZ
+        Node nextZ
 
-        # store source point for output
+    def __init__(self, int i, object point):
+        self.i = i
         self.point = point
+        self.x = point.x
+        self.y = point.y
+        self.z = 0
+        self.steiner = False
+        self.prev = None
+        self.next = None
+        self.prevZ = None
+        self.nextZ = None
 
-        # vertex coordinates
-        self.x: float = point.x
-        self.y: float = point.y
-
-        # previous and next vertex nodes in a polygon ring
-        self.prev: Node = None  # type: ignore
-        self.next: Node = None  # type: ignore
-
-        # z-order curve value
-        self.z: int = 0
-
-        # previous and next nodes in z-order
-        self.prevZ: Node = None  # type: ignore
-        self.nextZ: Node = None  # type: ignore
-
-        # indicates whether this is a steiner point
-        self.steiner: bool = False
-
-    def __eq__(self, other):
+    cdef bint equals(self, Node other):
         return self.x == other.x and self.y == other.y
 
+    def key(self):
+        return self.x, self.y
 
 def earcut(
     exterior: Sequence[T], holes: Sequence[Sequence[T]]
@@ -83,18 +88,19 @@ def earcut(
 
     """
     # exterior points in counter-clockwise order
-    outer_node: Node = linked_list(exterior, 0, ccw=True)
-    triangles: List[Sequence[T]] = []
+    cdef:
+        Node outer_node = linked_list(exterior, 0, ccw=True)
+        list triangles = []
+        double max_x, max_y, x, y
+        double min_x = 0.0
+        double min_y = 0.0
+        double inv_size = 0.0
 
     if outer_node is None or outer_node.next is outer_node.prev:
         return triangles
 
     if len(holes) > 0:
         outer_node = eliminate_holes(holes, len(exterior), outer_node)
-
-    min_x: float = 0.0
-    min_y: float = 0.0
-    inv_size: float = 0.0
 
     # if the shape is not too simple, we'll use z-order curve hash later
     # calculate polygon bbox
@@ -104,25 +110,28 @@ def earcut(
         for point in exterior:
             x = point.x
             y = point.y
-            min_x = min(min_x, x)
-            min_y = min(min_y, y)
-            max_x = max(max_x, x)
-            max_y = max(max_y, y)
+            min_x = fmin(min_x, x)
+            min_y = fmin(min_y, y)
+            max_x = fmax(max_x, x)
+            max_y = fmax(max_y, y)
 
         # min_x, min_y and inv_size are later used to transform coords into
         # integers for z-order calculation
-        inv_size = max(max_x - min_x, max_y - min_y)
+        inv_size = fmax(max_x - min_x, max_y - min_y)
         inv_size = 32767 / inv_size if inv_size != 0 else 0
 
     earcut_linked(outer_node, triangles, min_x, min_y, inv_size, 0)
     return triangles
 
 
-def linked_list(points: Sequence[T], start: int, ccw: bool) -> Node:
+cdef Node linked_list(points: Sequence[T], int start, bint ccw):
     """Create a circular doubly linked list from polygon points in the specified
     winding order
     """
-    last: Node = None  # type: ignore
+    cdef:
+        Node last = None
+        int end
+
     if ccw is (signed_area(points) < 0):
         for point in points:
             last = insert_node(start, point, last)
@@ -134,14 +143,14 @@ def linked_list(points: Sequence[T], start: int, ccw: bool) -> Node:
             end -= 1
 
     # open polygon: where the 1st vertex is not coincident with the last vertex
-    if last and last == last.next:  # true equals
+    if last and last.equals(last.next):
         remove_node(last)
         last = last.next
     return last
 
 
-def signed_area(points: Sequence[T]) -> float:
-    s: float = 0.0
+cdef double signed_area(points: Sequence[T]):
+    cdef double s = 0.0
     if not len(points):
         return s
     prev = points[-1]
@@ -153,12 +162,12 @@ def signed_area(points: Sequence[T]) -> float:
     return s
 
 
-def area(p: Node, q: Node, r: Node) -> float:
+cdef double area(Node p, Node q, Node r):
     """Returns signed area of a triangle"""
     return (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y)
 
 
-def is_valid_diagonal(a: Node, b: Node):
+cdef bint is_valid_diagonal(Node a, Node b):
     """Check if a diagonal between two polygon nodes is valid (lies in polygon
     interior)
     """
@@ -173,16 +182,16 @@ def is_valid_diagonal(a: Node, b: Node):
             and (
                 area(a.prev, a, b.prev) or area(a, b.prev, b)
             )  # does not create opposite-facing sectors
-            or a == b  # true equals
+            or a.equals(b)
             and area(a.prev, a, a.next) > 0
             and area(b.prev, b, b.next) > 0
         )  # special zero-length case
     )
 
 
-def intersects_polygon(a: Node, b: Node) -> bool:
+cdef bint intersects_polygon(Node a, Node b):
     """Check if a polygon diagonal intersects any polygon segments"""
-    p = a
+    cdef Node p = a
     while True:
         if (
             p.i != a.i
@@ -198,7 +207,7 @@ def intersects_polygon(a: Node, b: Node) -> bool:
     return False
 
 
-def sign(num: float) -> int:
+cdef int sign(double num):
     if num < 0.0:
         return -1
     if num > 0.0:
@@ -206,18 +215,19 @@ def sign(num: float) -> int:
     return 0
 
 
-def on_segment(p: Node, q: Node, r: Node) -> bool:
-    return max(p.x, r.x) >= q.x >= min(p.x, r.x) and max(
+cdef bint on_segment(p: Node, q: Node, r: Node):
+    return fmax(p.x, r.x) >= q.x >= fmin(p.x, r.x) and fmax(
         p.y, r.y
-    ) >= q.y >= min(p.y, r.y)
+    ) >= q.y >= fmin(p.y, r.y)
 
 
-def intersects(p1: Node, q1: Node, p2: Node, q2: Node) -> bool:
+cdef bint intersects(Node p1, Node q1, Node p2, Node q2):
     """check if two segments intersect"""
-    o1 = sign(area(p1, q1, p2))
-    o2 = sign(area(p1, q1, q2))
-    o3 = sign(area(p2, q2, p1))
-    o4 = sign(area(p2, q2, q1))
+    cdef:
+        int o1 = sign(area(p1, q1, p2))
+        int o2 = sign(area(p1, q1, q2))
+        int o3 = sign(area(p2, q2, p1))
+        int o4 = sign(area(p2, q2, q1))
 
     if o1 != o2 and o3 != o4:
         return True  # general case
@@ -233,11 +243,11 @@ def intersects(p1: Node, q1: Node, p2: Node, q2: Node) -> bool:
     return False
 
 
-def insert_node(i: int, point: T, last: Node) -> Node:
+cdef Node insert_node(int i, point: T, Node last):
     """create a node and optionally link it with previous one (in a circular
     doubly linked list)
     """
-    p = Node(i, point)
+    cdef Node p = Node(i, point)
 
     if last is None:
         p.prev = p
@@ -250,23 +260,23 @@ def insert_node(i: int, point: T, last: Node) -> Node:
     return p
 
 
-def remove_node(p: Node) -> None:
+cdef remove_node(Node p):
     p.next.prev = p.prev
     p.prev.next = p.next
 
-    if p.prevZ:
+    if p.prevZ is not None:
         p.prevZ.nextZ = p.nextZ
-    if p.nextZ:
+    if p.nextZ is not None:
         p.nextZ.prevZ = p.prevZ
 
 
-def eliminate_holes(
-    holes: Sequence[Sequence[T]], start: int, outer_node: Node
-) -> Node:
+cdef Node eliminate_holes(
+    holes: Sequence[Sequence[T]], int start, Node outer_node
+):
     """link every hole into the outer loop, producing a single-ring polygon
     without holes
     """
-    queue: List[Node] = []
+    cdef list queue = []
     for hole in holes:
         if len(hole) < 1:  # skip empty holes
             continue
@@ -276,7 +286,7 @@ def eliminate_holes(
             _list.steiner = True
         start += len(hole)
         queue.append(get_leftmost(_list))
-    queue.sort(key=lambda node: (node.x, node.y))
+    queue.sort(key=lambda n: n.key())
 
     # process holes from left to right
     for hole_ in queue:
@@ -284,11 +294,14 @@ def eliminate_holes(
     return outer_node
 
 
-def eliminate_hole(hole: Node, outer_node: Node) -> Node:
+cdef Node eliminate_hole(Node hole, Node outer_node):
     """Find a bridge between vertices that connects hole with an outer ring and
     link it
     """
-    bridge = find_hole_bridge(hole, outer_node)
+    cdef:
+        Node bridge = find_hole_bridge(hole, outer_node)
+        Node bridge_reverse
+
     if bridge is None:
         return outer_node
 
@@ -299,19 +312,22 @@ def eliminate_hole(hole: Node, outer_node: Node) -> Node:
     return filter_points(bridge, bridge.next)
 
 
-def filter_points(start: Node, end: Node = None) -> Node:
+cdef Node filter_points(Node start, Node end = None):
     """eliminate colinear or duplicate points"""
+    cdef:
+        Node p
+        bint again
+
     if start is None:
-        return start  # type: ignore
+        return start
     if end is None:
         end = start
 
     p = start
-
     while True:
         again = False
         if not p.steiner and (
-            p == p.next or area(p.prev, p, p.next) == 0  # true equals
+            p.equals(p.next) or area(p.prev, p, p.next) == 0
         ):
             remove_node(p)
             p = end = p.prev
@@ -326,14 +342,18 @@ def filter_points(start: Node, end: Node = None) -> Node:
 
 
 # main ear slicing loop which triangulates a polygon (given as a linked list)
-def earcut_linked(
-    ear: Node,
-    triangles: List[Sequence[T]],
-    min_x: float,
-    min_y: float,
-    inv_size: float,
-    pass_: int,
-) -> None:
+cdef earcut_linked(
+    Node ear,
+    list triangles,
+    double min_x,
+    double min_y,
+    double inv_size,
+    int pass_,
+):
+    cdef:
+        Node stop, prev, next
+        bint _is_ear
+
     if ear is None:
         return
 
@@ -389,35 +409,31 @@ def earcut_linked(
             break
 
 
-def is_ear(ear: Node) -> bool:
+cdef bint is_ear(Node ear):
     """check whether a polygon node forms a valid ear with adjacent nodes"""
-    a: Node = ear.prev
-    b: Node = ear
-    c: Node = ear.next
+    cdef:
+        Node a = ear.prev
+        Node b = ear
+        Node c = ear.next
+        Node p
+        double x0, x1, y0, y1
 
     if area(a, b, c) >= 0:
         return False  # reflex, can't be an ear
 
     # now make sure we don't have other points inside the potential ear
-    ax = a.x
-    bx = b.x
-    cx = c.x
-    ay = a.y
-    by = b.y
-    cy = c.y
-
-    # triangle bbox; min & max are calculated like this for speed
-    x0 = min(ax, bx, cx)
-    x1 = max(ax, bx, cx)
-    y0 = min(ay, by, cy)
-    y1 = max(ay, by, cy)
-    p: Node = c.next
+    # triangle bbox
+    x0 = fmin(a.x, fmin(b.x, c.x))
+    x1 = fmax(a.x, fmax(b.x, c.x))
+    y0 = fmin(a.y, fmin(b.y, c.y))
+    y1 = fmax(a.y, fmax(b.y, c.y))
+    p = c.next
 
     while p is not a:
         if (
             x0 <= p.x <= x1
             and y0 <= p.y <= y1
-            and point_in_triangle(ax, ay, bx, by, cx, cy, p.x, p.y)
+            and point_in_triangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y)
             and area(p.prev, p, p.next) >= 0
         ):
             return False
@@ -426,33 +442,29 @@ def is_ear(ear: Node) -> bool:
     return True
 
 
-def is_ear_hashed(ear: Node, min_x: float, min_y: float, inv_size: float):
-    a: Node = ear.prev
-    b: Node = ear
-    c: Node = ear.next
+cdef bint is_ear_hashed(Node ear, double min_x, double min_y, double inv_size):
+    cdef:
+        Node a = ear.prev
+        Node b = ear
+        Node c = ear.next
+        double x0, x1, y0, y1, min_z, max_z
+        Node p, n
 
     if area(a, b, c) >= 0:
         return False  # reflex, can't be an ear
 
-    ax = a.x
-    bx = b.x
-    cx = c.x
-    ay = a.y
-    by = b.y
-    cy = c.y
-
-    # triangle bbox; min & max are calculated like this for speed
-    x0 = min(ax, bx, cx)
-    x1 = max(ax, bx, cx)
-    y0 = min(ay, by, cy)
-    y1 = max(ay, by, cy)
+    # triangle bbox
+    x0 = fmin(a.x, fmin(b.x, c.x))
+    x1 = fmax(a.x, fmax(b.x, c.x))
+    y0 = fmin(a.y, fmin(b.y, c.y))
+    y1 = fmax(a.y, fmax(b.y, c.y))
 
     # z-order range for the current triangle bbox;
     min_z = z_order(x0, y0, min_x, min_y, inv_size)
     max_z = z_order(x1, y1, min_x, min_y, inv_size)
 
-    p: Node = ear.prevZ
-    n: Node = ear.nextZ
+    p = ear.prevZ
+    n = ear.nextZ
 
     # look for points inside the triangle in both directions
     while p and p.z >= min_z and n and n.z <= max_z:
@@ -461,7 +473,7 @@ def is_ear_hashed(ear: Node, min_x: float, min_y: float, inv_size: float):
             and y0 <= p.y <= y1
             and p is not a
             and p is not c
-            and point_in_triangle(ax, ay, bx, by, cx, cy, p.x, p.y)
+            and point_in_triangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y)
             and area(p.prev, p, p.next) >= 0
         ):
             return False
@@ -472,7 +484,7 @@ def is_ear_hashed(ear: Node, min_x: float, min_y: float, inv_size: float):
             and y0 <= n.y <= y1
             and n is not a
             and n is not c
-            and point_in_triangle(ax, ay, bx, by, cx, cy, n.x, n.y)
+            and point_in_triangle(a.x, a.y, b.x, b.y, c.x, c.y, n.x, n.y)
             and area(n.prev, n, n.next) >= 0
         ):
             return False
@@ -485,7 +497,7 @@ def is_ear_hashed(ear: Node, min_x: float, min_y: float, inv_size: float):
             and y0 <= p.y <= y1
             and p is not a
             and p is not c
-            and point_in_triangle(ax, ay, bx, by, cx, cy, p.x, p.y)
+            and point_in_triangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y)
             and area(p.prev, p, p.next) >= 0
         ):
             return False
@@ -498,7 +510,7 @@ def is_ear_hashed(ear: Node, min_x: float, min_y: float, inv_size: float):
             and y0 <= n.y <= y1
             and n is not a
             and n is not c
-            and point_in_triangle(ax, ay, bx, by, cx, cy, n.x, n.y)
+            and point_in_triangle(a.x, a.y, b.x, b.y, c.x, c.y, n.x, n.y)
             and area(n.prev, n, n.next) >= 0
         ):
             return False
@@ -506,10 +518,12 @@ def is_ear_hashed(ear: Node, min_x: float, min_y: float, inv_size: float):
     return True
 
 
-def get_leftmost(start: Node) -> Node:
+cdef Node get_leftmost(Node start):
     """Find the leftmost node of a polygon ring"""
-    p = start
-    leftmost = start
+    cdef:
+        Node p = start
+        Node leftmost = start
+
     while True:
         if p.x < leftmost.x or (p.x == leftmost.x and p.y < leftmost.y):
             leftmost = p
@@ -519,34 +533,34 @@ def get_leftmost(start: Node) -> Node:
     return leftmost
 
 
-def point_in_triangle(
-    ax: float,
-    ay: float,
-    bx: float,
-    by: float,
-    cx: float,
-    cy: float,
-    px: float,
-    py: float,
-) -> bool:
+cdef bint point_in_triangle(
+    double ax,
+    double ay,
+    double bx,
+    double by_,
+    double cx,
+    double cy,
+    double px,
+    double py,
+):
     """Check if a point lies within a convex triangle"""
     return (
         (cx - px) * (ay - py) >= (ax - px) * (cy - py)
-        and (ax - px) * (by - py) >= (bx - px) * (ay - py)
-        and (bx - px) * (cy - py) >= (cx - px) * (by - py)
+        and (ax - px) * (by_ - py) >= (bx - px) * (ay - py)
+        and (bx - px) * (cy - py) >= (cx - px) * (by_ - py)
     )
 
 
-def sector_contains_sector(m: Node, p: Node):
+cdef bint sector_contains_sector(Node m, Node p):
     """Whether sector in vertex m contains sector in vertex p in the same
     coordinates.
     """
     return area(m.prev, m, p.prev) < 0 and area(p.next, m, m.next) < 0
 
 
-def index_curve(start: Node, minX: float, minY: float, invSize: float):
+cdef index_curve(Node start, double minX, double minY, double invSize):
     """Interlink polygon nodes in z-order"""
-    p = start
+    cdef Node p = start
     while True:
         if p.z == 0:
             p.z = z_order(p.x, p.y, minX, minY, invSize)
@@ -562,15 +576,16 @@ def index_curve(start: Node, minX: float, minY: float, invSize: float):
     sort_linked(p)
 
 
-def z_order(
-    x0: float, y0: float, minX: float, minY: float, invSize: float
-) -> int:
+cdef int z_order(
+    double x0, double y0, double minX, double minY, double invSize
+):
     """Z-order of a point given coords and inverse of the longer side of data
     bbox.
     """
     # coords are transformed into non-negative 15-bit integer range
-    x = int((x0 - minX) * invSize)
-    y = int((y0 - minY) * invSize)
+    cdef:
+        int x = int((x0 - minX) * invSize)
+        int y = int ((y0 - minY) * invSize)
 
     x = (x | (x << 8)) & 0x00FF00FF
     x = (x | (x << 4)) & 0x0F0F0F0F
@@ -587,9 +602,12 @@ def z_order(
 
 # Simon Tatham's linked list merge sort algorithm
 # http://www.chiark.greenend.org.uk/~sgtatham/algorithms/listsort.html
-def sort_linked(head: Node) -> Node:
-    in_size = 1
-    tail : Node
+cdef Node sort_linked(Node head):
+    cdef:
+        int in_size = 1
+        int num_merges, p_size, q_size, i
+        Node tail, p, q, e
+
     while True:
         p = head
         head = None  # type: ignore
@@ -629,17 +647,18 @@ def sort_linked(head: Node) -> Node:
     return head
 
 
-def split_polygon(a: Node, b: Node) -> Node:
+cdef Node split_polygon(Node a, Node b):
     """Link two polygon vertices with a bridge.
 
     If the vertices belong to the same ring, it splits polygon into two.
     If one belongs to the outer ring and another to a hole, it merges it into a
     single ring.
     """
-    a2 = Node(a.i, a.point)
-    b2 = Node(b.i, b.point)
-    an = a.next
-    bp = b.prev
+    cdef :
+        Node a2 = Node(a.i, a.point)
+        Node b2 = Node(b.i, b.point)
+        an = a.next
+        bp = b.prev
 
     a.next = b
     b.prev = a
@@ -657,14 +676,16 @@ def split_polygon(a: Node, b: Node) -> Node:
 
 
 # go through all polygon nodes and cure small local self-intersections
-def cure_local_intersections(start: Node, triangles: List[Sequence[T]]) -> Node:
-    p = start
+cdef Node cure_local_intersections(Node start, list triangles):
+    cdef:
+        Node p = start
+        Node a, b
     while True:
         a = p.prev
         b = p.next.next
 
         if (
-            not a == b  # true equals
+            not a.equals(b)
             and intersects(a, p, p.next, b)
             and locally_inside(a, b)
             and locally_inside(b, a)
@@ -681,16 +702,19 @@ def cure_local_intersections(start: Node, triangles: List[Sequence[T]]) -> Node:
     return filter_points(p)
 
 
-def split_ear_cut(
-    start: Node,
-    triangles: List[Sequence[T]],
-    min_x: float,
-    min_y: float,
-    inv_size: float,
-) -> None:
+cdef split_ear_cut(
+    Node start,
+    list triangles,
+    double min_x,
+    double min_y,
+    double inv_size,
+):
     """Try splitting polygon into two and triangulate them independently"""
     # look for a valid diagonal that divides the polygon into two
-    a = start
+    cdef:
+        Node a = start
+        Node b, c
+
     while True:
         b = a.next.next
         while b is not a.prev:
@@ -713,12 +737,16 @@ def split_ear_cut(
 
 
 # David Eberly's algorithm for finding a bridge between hole and outer polygon
-def find_hole_bridge(hole: Node, outer_node: Node) -> Node:
-    p = outer_node
-    hx = hole.x
-    hy = hole.y
-    qx = -math.inf
-    m: Node = None  # type: ignore
+cdef Node find_hole_bridge(Node hole, Node outer_node):
+    cdef:
+        Node p = outer_node
+        Node m = None
+        Node stop
+        double hx = hole.x
+        double hy = hole.y
+        double qx = -math.inf
+        double mx, my, tan_min, tan
+
     # find a segment intersected by a ray from the hole's leftmost point to the left;
     # segment's endpoint with lesser x will be potential connection point
     while True:
@@ -762,7 +790,7 @@ def find_hole_bridge(hole: Node, outer_node: Node) -> Node:
             )
         ):
 
-            tan = abs(hy - p.y) / (hx - p.x)  # tangential
+            tan = fabs(hy - p.y) / (hx - p.x)  # tangential
 
             if locally_inside(p, hole) and (
                 tan < tan_min
@@ -783,7 +811,7 @@ def find_hole_bridge(hole: Node, outer_node: Node) -> Node:
     return m
 
 
-def locally_inside(a: Node, b: Node) -> bool:
+cdef bint locally_inside(Node a, Node b):
     """Check if a polygon diagonal is locally inside the polygon"""
     return (
         area(a, b, a.next) >= 0 and area(a, a.prev, b) >= 0
@@ -792,12 +820,14 @@ def locally_inside(a: Node, b: Node) -> bool:
     )
 
 
-def middle_inside(a: Node, b: Node) -> bool:
+cdef bint middle_inside(Node a, Node b):
     """Check if the middle point of a polygon diagonal is inside the polygon"""
-    p = a
-    inside = False
-    px = (a.x + b.x) / 2
-    py = (a.y + b.y) / 2
+    cdef:
+        Node p = a
+        bint inside = False
+        double px = (a.x + b.x) / 2
+        double py = (a.y + b.y) / 2
+
     while True:
         if (
             ((p.y > py) != (p.next.y > py))
