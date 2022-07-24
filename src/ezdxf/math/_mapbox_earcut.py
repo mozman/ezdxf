@@ -620,10 +620,11 @@ def z_order(
 # http://www.chiark.greenend.org.uk/~sgtatham/algorithms/listsort.html
 def sort_linked(head: Node) -> Node:
     in_size = 1
+    tail : Node
     while True:
         p = head
         head = None  # type: ignore
-        tail = None
+        tail = None  # type: ignore
         num_merges = 0
         while p:
             num_merges += 1
