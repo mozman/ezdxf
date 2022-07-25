@@ -60,8 +60,8 @@ cdef class Node:
     cdef bint equals(self, Node other):
         return self.x == other.x and self.y == other.y
 
-    def key(self):
-        return self.x, self.y
+def node_key(Node node):
+    return node.x, node.y
 
 def earcut(
     list exterior not None, list holes not None
@@ -291,7 +291,7 @@ cdef Node eliminate_holes(list holes, int start, Node outer_node):
             _list.steiner = True
         start += len(hole)
         queue.append(get_leftmost(_list))
-    queue.sort(key=lambda n: n.key())
+    queue.sort(key=node_key)
 
     # process holes from left to right
     for hole_ in queue:
