@@ -103,9 +103,9 @@ def earcut(
     Source: https://github.com/mapbox/earcut
 
     Args:
-        exterior: outer path as sequence of points as objects which provide a
+        exterior: outer path as list of points as objects which provide a
             `x`- and a `y`-attribute
-        holes: sequence of holes, each hole is sequence of points, a hole with
+        holes: list of holes, each hole is list of points, a hole with
             a single points is a Steiner point
 
     Returns:

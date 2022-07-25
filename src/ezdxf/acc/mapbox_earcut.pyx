@@ -64,7 +64,7 @@ def node_key(Node node):
     return node.x, node.y
 
 def earcut(
-    list exterior not None, list holes not None
+    exterior: List[T], holes: List[List[T]]
 ) -> List[Sequence[T]]:
     """Implements a modified ear slicing algorithm, optimized by z-order
     curve hashing and extended to handle holes, twisted polygons, degeneracies
@@ -75,9 +75,9 @@ def earcut(
     Source: https://github.com/mapbox/earcut
 
     Args:
-        exterior: outer path as sequence of points as objects which provide a
+        exterior: outer path as list of points as objects which provide a
             `x`- and a `y`-attribute
-        holes: sequence of holes, each hole is sequence of points, a hole with
+        holes: list of holes, each hole is list of points, a hole with
             a single points is a Steiner point
 
     Returns:
@@ -87,17 +87,21 @@ def earcut(
     """
     # exterior points in counter-clockwise order
     cdef:
-        Node outer_node = linked_list(exterior, 0, ccw=True)
+        Node outer_node
         list triangles = []
         double max_x, max_y, x, y
         double min_x = 0.0
         double min_y = 0.0
         double inv_size = 0.0
 
+    if not exterior:
+        return []
+
+    outer_node = linked_list(exterior, 0, ccw=True)
     if outer_node is None or outer_node.next is outer_node.prev:
         return triangles
 
-    if len(holes) > 0:
+    if holes:
         outer_node = eliminate_holes(holes, len(exterior), outer_node)
 
     # if the shape is not too simple, we'll use z-order curve hash later
