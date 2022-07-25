@@ -42,8 +42,8 @@ cdef class Node:
         object point
         Node prev
         Node next
-        Node prevZ
-        Node nextZ
+        Node prev_z
+        Node next_z
 
     def __cinit__(self, int i, object point):
         self.i = i
@@ -54,8 +54,8 @@ cdef class Node:
         self.steiner = False
         self.prev = None
         self.next = None
-        self.prevZ = None
-        self.nextZ = None
+        self.prev_z = None
+        self.next_z = None
 
     cdef bint equals(self, Node other):
         return self.x == other.x and self.y == other.y
@@ -269,10 +269,10 @@ cdef remove_node(Node p):
     p.next.prev = p.prev
     p.prev.next = p.next
 
-    if p.prevZ is not None:
-        p.prevZ.nextZ = p.nextZ
-    if p.nextZ is not None:
-        p.nextZ.prevZ = p.prevZ
+    if p.prev_z is not None:
+        p.prev_z.next_z = p.next_z
+    if p.next_z is not None:
+        p.next_z.prev_z = p.prev_z
 
 
 cdef Node eliminate_holes(
@@ -468,8 +468,8 @@ cdef bint is_ear_hashed(Node ear, double min_x, double min_y, double inv_size):
     min_z = z_order(x0, y0, min_x, min_y, inv_size)
     max_z = z_order(x1, y1, min_x, min_y, inv_size)
 
-    p = ear.prevZ
-    n = ear.nextZ
+    p = ear.prev_z
+    n = ear.next_z
 
     # look for points inside the triangle in both directions
     while p and p.z >= min_z and n and n.z <= max_z:
@@ -482,7 +482,7 @@ cdef bint is_ear_hashed(Node ear, double min_x, double min_y, double inv_size):
             and area(p.prev, p, p.next) >= 0
         ):
             return False
-        p = p.prevZ
+        p = p.prev_z
 
         if (
             x0 <= n.x <= x1
@@ -493,7 +493,7 @@ cdef bint is_ear_hashed(Node ear, double min_x, double min_y, double inv_size):
             and area(n.prev, n, n.next) >= 0
         ):
             return False
-        n = n.nextZ
+        n = n.next_z
 
     # look for remaining points in decreasing z-order
     while p and p.z >= min_z:
@@ -506,7 +506,7 @@ cdef bint is_ear_hashed(Node ear, double min_x, double min_y, double inv_size):
             and area(p.prev, p, p.next) >= 0
         ):
             return False
-        p = p.prevZ
+        p = p.prev_z
 
     # look for remaining points in increasing z-order
     while n and n.z <= max_z:
@@ -519,7 +519,7 @@ cdef bint is_ear_hashed(Node ear, double min_x, double min_y, double inv_size):
             and area(n.prev, n, n.next) >= 0
         ):
             return False
-        n = n.nextZ
+        n = n.next_z
     return True
 
 
@@ -569,14 +569,14 @@ cdef index_curve(Node start, double min_x, double min_y, double inv_size):
     while True:
         if p.z == 0:
             p.z = z_order(p.x, p.y, min_x, min_y, inv_size)
-        p.prevZ = p.prev
-        p.nextZ = p.next
+        p.prev_z = p.prev
+        p.next_z = p.next
         p = p.next
         if p is start:
             break
 
-    p.prevZ.nextZ = None
-    p.prevZ = None
+    p.prev_z.next_z = None
+    p.prev_z = None
 
     sort_linked(p)
 
@@ -624,28 +624,28 @@ cdef Node sort_linked(Node head):
             p_size = 0
             for i in range(in_size):
                 p_size += 1
-                q = q.nextZ
+                q = q.next_z
                 if not q:
                     break
             q_size = in_size
             while p_size > 0 or (q_size > 0 and q):
                 if p_size != 0 and (q_size == 0 or not q or p.z <= q.z):
                     e = p
-                    p = p.nextZ
+                    p = p.next_z
                     p_size -= 1
                 else:
                     e = q
-                    q = q.nextZ
+                    q = q.next_z
                     q_size -= 1
 
                 if tail:
-                    tail.nextZ = e
+                    tail.next_z = e
                 else:
                     head = e
-                e.prevZ = tail
+                e.prev_z = tail
                 tail = e
             p = q
-        tail.nextZ = None
+        tail.next_z = None
         in_size *= 2
         if num_merges <= 1:
             break

@@ -81,8 +81,8 @@ class Node:
         self.z: int = 0
 
         # previous and next nodes in z-order
-        self.prevZ: Node = None  # type: ignore
-        self.nextZ: Node = None  # type: ignore
+        self.prev_z: Node = None  # type: ignore
+        self.next_z: Node = None  # type: ignore
 
         # indicates whether this is a steiner point
         self.steiner: bool = False
@@ -285,10 +285,10 @@ def remove_node(p: Node) -> None:
     p.next.prev = p.prev
     p.prev.next = p.next
 
-    if p.prevZ:
-        p.prevZ.nextZ = p.nextZ
-    if p.nextZ:
-        p.nextZ.prevZ = p.prevZ
+    if p.prev_z:
+        p.prev_z.next_z = p.next_z
+    if p.next_z:
+        p.next_z.prev_z = p.prev_z
 
 
 def eliminate_holes(
@@ -482,8 +482,8 @@ def is_ear_hashed(ear: Node, min_x: float, min_y: float, inv_size: float):
     min_z = z_order(x0, y0, min_x, min_y, inv_size)
     max_z = z_order(x1, y1, min_x, min_y, inv_size)
 
-    p: Node = ear.prevZ
-    n: Node = ear.nextZ
+    p: Node = ear.prev_z
+    n: Node = ear.next_z
 
     # look for points inside the triangle in both directions
     while p and p.z >= min_z and n and n.z <= max_z:
@@ -496,7 +496,7 @@ def is_ear_hashed(ear: Node, min_x: float, min_y: float, inv_size: float):
             and area(p.prev, p, p.next) >= 0
         ):
             return False
-        p = p.prevZ
+        p = p.prev_z
 
         if (
             x0 <= n.x <= x1
@@ -507,7 +507,7 @@ def is_ear_hashed(ear: Node, min_x: float, min_y: float, inv_size: float):
             and area(n.prev, n, n.next) >= 0
         ):
             return False
-        n = n.nextZ
+        n = n.next_z
 
     # look for remaining points in decreasing z-order
     while p and p.z >= min_z:
@@ -520,7 +520,7 @@ def is_ear_hashed(ear: Node, min_x: float, min_y: float, inv_size: float):
             and area(p.prev, p, p.next) >= 0
         ):
             return False
-        p = p.prevZ
+        p = p.prev_z
 
     # look for remaining points in increasing z-order
     while n and n.z <= max_z:
@@ -533,7 +533,7 @@ def is_ear_hashed(ear: Node, min_x: float, min_y: float, inv_size: float):
             and area(n.prev, n, n.next) >= 0
         ):
             return False
-        n = n.nextZ
+        n = n.next_z
     return True
 
 
@@ -575,33 +575,33 @@ def sector_contains_sector(m: Node, p: Node):
     return area(m.prev, m, p.prev) < 0 and area(p.next, m, m.next) < 0
 
 
-def index_curve(start: Node, minX: float, minY: float, invSize: float):
+def index_curve(start: Node, min_x: float, min_y: float, inv_size: float):
     """Interlink polygon nodes in z-order"""
     p = start
     while True:
         if p.z == 0:
-            p.z = z_order(p.x, p.y, minX, minY, invSize)
-        p.prevZ = p.prev
-        p.nextZ = p.next
+            p.z = z_order(p.x, p.y, min_x, min_y, inv_size)
+        p.prev_z = p.prev
+        p.next_z = p.next
         p = p.next
         if p is start:
             break
 
-    p.prevZ.nextZ = None  # type: ignore
-    p.prevZ = None  # type: ignore
+    p.prev_z.next_z = None  # type: ignore
+    p.prev_z = None  # type: ignore
 
     sort_linked(p)
 
 
 def z_order(
-    x0: float, y0: float, minX: float, minY: float, invSize: float
+    x0: float, y0: float, min_x: float, min_y: float, inv_size: float
 ) -> int:
     """Z-order of a point given coords and inverse of the longer side of data
     bbox.
     """
     # coords are transformed into non-negative 15-bit integer range
-    x = int((x0 - minX) * invSize)
-    y = int((y0 - minY) * invSize)
+    x = int((x0 - min_x) * inv_size)
+    y = int((y0 - min_y) * inv_size)
 
     x = (x | (x << 8)) & 0x00FF00FF
     x = (x | (x << 4)) & 0x0F0F0F0F
@@ -632,28 +632,28 @@ def sort_linked(head: Node) -> Node:
             p_size = 0
             for i in range(in_size):
                 p_size += 1
-                q = q.nextZ
+                q = q.next_z
                 if not q:
                     break
             q_size = in_size
             while p_size > 0 or (q_size > 0 and q):
                 if p_size != 0 and (q_size == 0 or not q or p.z <= q.z):
                     e = p
-                    p = p.nextZ
+                    p = p.next_z
                     p_size -= 1
                 else:
                     e = q
-                    q = q.nextZ
+                    q = q.next_z
                     q_size -= 1
 
                 if tail:
-                    tail.nextZ = e
+                    tail.next_z = e
                 else:
                     head = e
-                e.prevZ = tail  # type: ignore
+                e.prev_z = tail  # type: ignore
                 tail = e
             p = q
-        tail.nextZ = None  # type: ignore
+        tail.next_z = None  # type: ignore
         in_size *= 2
         if num_merges <= 1:
             break
