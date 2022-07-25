@@ -122,7 +122,7 @@ def earcut(
     return triangles
 
 
-cdef Node linked_list(points: Sequence[T], int start, bint ccw):
+cdef Node linked_list(list points, int start, bint ccw):
     """Create a circular doubly linked list from polygon points in the specified
     winding order
     """
@@ -147,7 +147,7 @@ cdef Node linked_list(points: Sequence[T], int start, bint ccw):
     return last
 
 
-cdef double signed_area(points: Sequence[T]):
+cdef double signed_area(list points):
     cdef:
         double s = 0.0
         double point_x, prev_x, point_y, prev_y
@@ -275,13 +275,13 @@ cdef remove_node(Node p):
         p.next_z.prev_z = p.prev_z
 
 
-cdef Node eliminate_holes(
-    holes: Sequence[Sequence[T]], int start, Node outer_node
-):
+cdef Node eliminate_holes(list holes, int start, Node outer_node):
     """link every hole into the outer loop, producing a single-ring polygon
     without holes
     """
-    cdef list queue = []
+    cdef:
+        list queue = []
+        list hole
     for hole in holes:
         if len(hole) < 1:  # skip empty holes
             continue
