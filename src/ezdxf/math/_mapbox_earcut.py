@@ -92,7 +92,7 @@ class Node:
 
 
 def earcut(
-    exterior: Sequence[T], holes: Sequence[Sequence[T]]
+    exterior: List[T], holes: List[List[T]]
 ) -> List[Sequence[T]]:
     """Implements a modified ear slicing algorithm, optimized by z-order
     curve hashing and extended to handle holes, twisted polygons, degeneracies

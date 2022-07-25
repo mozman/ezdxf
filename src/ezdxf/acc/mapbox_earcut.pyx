@@ -64,7 +64,7 @@ cdef class Node:
         return self.x, self.y
 
 def earcut(
-    exterior: Sequence[T], holes: Sequence[Sequence[T]]
+    list exterior not None, list holes not None
 ) -> List[Sequence[T]]:
     """Implements a modified ear slicing algorithm, optimized by z-order
     curve hashing and extended to handle holes, twisted polygons, degeneracies

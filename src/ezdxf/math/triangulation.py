@@ -47,10 +47,10 @@ def mapbox_earcut_2d(
     """
     from ._mapbox_earcut import earcut
 
-    points: Sequence[Vec2] = Vec2.list(exterior)
+    points: List[Vec2] = Vec2.list(exterior)
     if len(points) == 0:
         return []
-    holes_: Sequence[Sequence[Vec2]] = []
+    holes_: List[List[Vec2]] = []
     if holes:
         holes_ = [Vec2.list(hole) for hole in holes]
     return earcut(points, holes_)
@@ -90,10 +90,10 @@ def mapbox_earcut_3d(
 
     ocs = OCS(safe_normal_vector(polygon))
     elevation = ocs.from_wcs(polygon[0]).z  # type: ignore
-    exterior_ocs = tuple(ocs.points_from_wcs(polygon))
-    holes_ocs: Sequence[Sequence[Vec3]] = []
+    exterior_ocs = list(ocs.points_from_wcs(polygon))
+    holes_ocs: List[List[Vec3]] = []
     if holes:
-        holes_ocs = [tuple(ocs.points_from_wcs(hole)) for hole in holes]
+        holes_ocs = [list(ocs.points_from_wcs(hole)) for hole in holes]
 
     for triangle in earcut(exterior_ocs, holes_ocs):
         yield tuple(  # type: ignore

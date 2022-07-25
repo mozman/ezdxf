@@ -22,10 +22,10 @@ def earcut_driver(
     holes: Iterable[Iterable[UVec]] = None,
     func=_py_earcut,
 ) -> List[Sequence[Vec2]]:
-    points: Sequence[Vec2] = Vec2.list(exterior)
+    points: List[Vec2] = Vec2.list(exterior)
     if len(points) == 0:
         return []
-    holes_: Sequence[Sequence[Vec2]] = []
+    holes_: List[List[Vec2]] = []
     if holes:
         holes_ = [Vec2.list(hole) for hole in holes]
     return func(points, holes_)
