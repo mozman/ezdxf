@@ -22,9 +22,7 @@
 from typing import List, Sequence, TypeVar
 from typing_extensions import Protocol
 
-from libc.math cimport fmin, fmax, fabs
-
-import math
+from libc.math cimport fmin, fmax, fabs, INFINITY
 
 class _Point(Protocol):
     x: float
@@ -47,7 +45,7 @@ cdef class Node:
         Node prevZ
         Node nextZ
 
-    def __init__(self, int i, object point):
+    def __cinit__(self, int i, object point):
         self.i = i
         self.point = point
         self.x = point.x
@@ -565,34 +563,34 @@ cdef bint sector_contains_sector(Node m, Node p):
     return area(m.prev, m, p.prev) < 0 and area(p.next, m, m.next) < 0
 
 
-cdef index_curve(Node start, double minX, double minY, double invSize):
+cdef index_curve(Node start, double min_x, double min_y, double inv_size):
     """Interlink polygon nodes in z-order"""
     cdef Node p = start
     while True:
         if p.z == 0:
-            p.z = z_order(p.x, p.y, minX, minY, invSize)
+            p.z = z_order(p.x, p.y, min_x, min_y, inv_size)
         p.prevZ = p.prev
         p.nextZ = p.next
         p = p.next
         if p is start:
             break
 
-    p.prevZ.nextZ = None  # type: ignore
-    p.prevZ = None  # type: ignore
+    p.prevZ.nextZ = None
+    p.prevZ = None
 
     sort_linked(p)
 
 
 cdef int z_order(
-    double x0, double y0, double minX, double minY, double invSize
+    double x0, double y0, double min_x, double min_y, double inv_size
 ):
     """Z-order of a point given coords and inverse of the longer side of data
     bbox.
     """
     # coords are transformed into non-negative 15-bit integer range
     cdef:
-        int x = int((x0 - minX) * invSize)
-        int y = int ((y0 - minY) * invSize)
+        int x = int((x0 - min_x) * inv_size)
+        int y = int ((y0 - min_y) * inv_size)
 
     x = (x | (x << 8)) & 0x00FF00FF
     x = (x | (x << 4)) & 0x0F0F0F0F
@@ -617,8 +615,8 @@ cdef Node sort_linked(Node head):
 
     while True:
         p = head
-        head = None  # type: ignore
-        tail = None  # type: ignore
+        head = None
+        tail = None
         num_merges = 0
         while p:
             num_merges += 1
@@ -644,10 +642,10 @@ cdef Node sort_linked(Node head):
                     tail.nextZ = e
                 else:
                     head = e
-                e.prevZ = tail  # type: ignore
+                e.prevZ = tail
                 tail = e
             p = q
-        tail.nextZ = None  # type: ignore
+        tail.nextZ = None
         in_size *= 2
         if num_merges <= 1:
             break
@@ -664,8 +662,8 @@ cdef Node split_polygon(Node a, Node b):
     cdef :
         Node a2 = Node(a.i, a.point)
         Node b2 = Node(b.i, b.point)
-        an = a.next
-        bp = b.prev
+        Node an = a.next
+        Node bp = b.prev
 
     a.next = b
     b.prev = a
@@ -751,7 +749,7 @@ cdef Node find_hole_bridge(Node hole, Node outer_node):
         Node stop
         double hx = hole.x
         double hy = hole.y
-        double qx = -math.inf
+        double qx = -INFINITY
         double mx, my, tan_min, tan
 
     # find a segment intersected by a ray from the hole's leftmost point to the left;
@@ -762,7 +760,7 @@ cdef Node find_hole_bridge(Node hole, Node outer_node):
             if hx >= x > qx:
                 qx = x
                 m = p if p.x < p.next.x else p.next
-                if x == hx:  # ??? use math.isclose
+                if x == hx:
                     # hole touches outer segment; pick leftmost endpoint
                     return m
         p = p.next
@@ -770,7 +768,7 @@ cdef Node find_hole_bridge(Node hole, Node outer_node):
             break
 
     if m is None:
-        return None  # type: ignore
+        return None
 
     # look for points inside the triangle of hole point, segment intersection and endpoint;
     # if there are no points found, we have a valid connection;
@@ -778,7 +776,7 @@ cdef Node find_hole_bridge(Node hole, Node outer_node):
     stop = m
     mx = m.x
     my = m.y
-    tan_min = math.inf
+    tan_min = INFINITY
     p = m
 
     while True:
@@ -796,9 +794,7 @@ cdef Node find_hole_bridge(Node hole, Node outer_node):
                 p.y,
             )
         ):
-
             tan = fabs(hy - p.y) / (hx - p.x)  # tangential
-
             if locally_inside(p, hole) and (
                 tan < tan_min
                 or (
@@ -811,7 +807,6 @@ cdef Node find_hole_bridge(Node hole, Node outer_node):
             ):
                 m = p
                 tan_min = tan
-
         p = p.next
         if p is stop:
             break

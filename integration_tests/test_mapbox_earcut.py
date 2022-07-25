@@ -1,11 +1,38 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
+from typing import Sequence, Iterable, List
 import os
 import json
 from pathlib import Path
+from functools import partial
 import pytest
+from ezdxf.math import Vec2, UVec
+from ezdxf.math._mapbox_earcut import earcut as _py_earcut
 
-from ezdxf.math.triangulation import mapbox_earcut_2d
+CYTHON = "Cython"
+try:
+    from ezdxf.acc.mapbox_earcut import earcut as _cy_earcut
+except ImportError:
+    CYTHON = "CPython"
+    _cy_earcut = _py_earcut
+
+
+def earcut_driver(
+    exterior: Iterable[UVec],
+    holes: Iterable[Iterable[UVec]] = None,
+    func=_py_earcut,
+) -> List[Sequence[Vec2]]:
+    points: Sequence[Vec2] = Vec2.list(exterior)
+    if len(points) == 0:
+        return []
+    holes_: Sequence[Sequence[Vec2]] = []
+    if holes:
+        holes_ = [Vec2.list(hole) for hole in holes]
+    return func(points, holes_)
+
+
+py_earcut = partial(earcut_driver, func=_py_earcut)
+cy_earcut = partial(earcut_driver, func=_cy_earcut)
 
 
 BASEDIR = os.path.dirname(__file__)
@@ -70,13 +97,16 @@ def filename(request):
     return request.param
 
 
-def test_mapbox_earcut(filename: Path):
+@pytest.mark.parametrize(
+    "earcut", [py_earcut, cy_earcut], ids=("CPython", CYTHON)
+)
+def test_mapbox_earcut(filename: Path, earcut):
     name = filename.stem
     with filename.open("rt") as fp:
         data = json.load(fp)
         shape = data[0]
         holes = data[1:]
-        triangles = mapbox_earcut_2d(shape, holes)
+        triangles = earcut(shape, holes)
         assert len(triangles) == EXPECTED[name], f"{name}.json failed"
 
 
