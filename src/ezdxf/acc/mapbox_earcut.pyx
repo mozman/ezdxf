@@ -83,7 +83,7 @@ def earcut(list exterior, list holes):
         double inv_size = 0.0
 
     if not exterior:
-        return []
+        return triangles
 
     outer_node = linked_list(exterior, 0, ccw=True)
     if outer_node is None or outer_node.next is outer_node.prev:
