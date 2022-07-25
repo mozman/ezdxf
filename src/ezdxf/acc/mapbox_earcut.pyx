@@ -18,18 +18,9 @@
 # THIS SOFTWARE.
 #
 # Cython implementation of module ezdxf.math._mapbox_earcut.py
-
-from typing import List, Sequence, TypeVar
-from typing_extensions import Protocol
-
+# Copyright (c) 2022, Manfred Moitzi
+# License: MIT License
 from libc.math cimport fmin, fmax, fabs, INFINITY
-
-class _Point(Protocol):
-    x: float
-    y: float
-
-
-T = TypeVar("T", bound=_Point)
 
 
 cdef class Node:
@@ -63,9 +54,7 @@ cdef class Node:
 def node_key(Node node):
     return node.x, node.y
 
-def earcut(
-    exterior: List[T], holes: List[List[T]]
-) -> List[Sequence[T]]:
+def earcut(list exterior, list holes):
     """Implements a modified ear slicing algorithm, optimized by z-order
     curve hashing and extended to handle holes, twisted polygons, degeneracies
     and self-intersections in a way that doesn't guarantee correctness of
@@ -85,7 +74,6 @@ def earcut(
         the output points are the same objects as the input points.
 
     """
-    # exterior points in counter-clockwise order
     cdef:
         Node outer_node
         list triangles = []
@@ -252,7 +240,7 @@ cdef bint intersects(Node p1, Node q1, Node p2, Node q2):
     return False
 
 
-cdef Node insert_node(int i, point: T, Node last):
+cdef Node insert_node(int i, point, Node last):
     """create a node and optionally link it with previous one (in a circular
     doubly linked list)
     """
