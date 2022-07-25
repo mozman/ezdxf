@@ -3,8 +3,15 @@
 
 from __future__ import annotations
 from typing import Iterable, Iterator, List, Tuple, Sequence
-from ezdxf.math import Vec2, UVec, Vec3
-
+import ezdxf
+from ezdxf.math import Vec2, UVec, Vec3, safe_normal_vector, OCS
+if ezdxf.options.use_c_ext:
+    try:
+        from ezdxf.acc.mapbox_earcut import earcut
+    except ImportError:
+        from ._mapbox_earcut import earcut
+else:
+    from ._mapbox_earcut import earcut
 
 __all__ = [
     "mapbox_earcut_2d",
@@ -45,8 +52,6 @@ def mapbox_earcut_2d(
         yields the result as 3-tuples of :class:`Vec2` objects
 
     """
-    from ._mapbox_earcut import earcut
-
     points: List[Vec2] = Vec2.list(exterior)
     if len(points) == 0:
         return []
@@ -69,10 +74,6 @@ def mapbox_earcut_3d(
     .. versionadded:: 0.18
 
     """
-    from ._mapbox_earcut import earcut
-
-    from ezdxf.math import safe_normal_vector, OCS
-
     polygon = list(exterior)
     if len(polygon) == 0:
         return

@@ -14,11 +14,6 @@ BIG_GEAR = list(
 )
 
 
-def cython_earcut_2d(exterior, holes = None):
-    from ezdxf.acc.mapbox_earcut import earcut
-    return earcut(exterior, [])
-
-
 def small_gear(func, count):
     for _ in range(count):
         list(func(SMALL_GEAR))
@@ -39,13 +34,9 @@ def profile1(func, *args) -> float:
 def profile(text, func, *args):
     ear_clipping_2d_time = profile1(func, tripy.earclip, *args)
     mapbox_earcut_2d_time = profile1(func, mapbox_earcut_2d, *args)
-    cython_earcut_2d_time = profile1(func, cython_earcut_2d, *args)
     ratio = ear_clipping_2d_time / mapbox_earcut_2d_time
-    print(f"tripy.earclip - {text} {ear_clipping_2d_time:.3f}s")
-    print(f"mapbox_earcut_2d - {text} {mapbox_earcut_2d_time:.3f}s")
-    print(f"Ratio {ratio:.1f}x")
-    ratio = ear_clipping_2d_time / cython_earcut_2d_time
-    print(f"cython_earcut_2d - {text} {cython_earcut_2d_time:.3f}s")
+    print(f"tripy.earclip (CPython) - {text} {ear_clipping_2d_time:.3f}s")
+    print(f"mapbox_earcut_2d (Cython) - {text} {mapbox_earcut_2d_time:.3f}s")
     print(f"Ratio {ratio:.1f}x")
 
 
