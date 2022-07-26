@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Iterable, Iterator, List, Tuple, Sequence
 import ezdxf
 from ezdxf.math import Vec2, UVec, Vec3, safe_normal_vector, OCS
+
 if ezdxf.options.use_c_ext:
     try:
         from ezdxf.acc.mapbox_earcut import earcut
@@ -19,25 +20,6 @@ __all__ = [
 ]
 
 
-def simple_polygon_triangulation(
-    face: Iterable[Vec3],
-) -> List[Sequence[Vec3]]:
-    """Simple triangulation of convex polygons.
-
-    This function creates regular triangles by adding a center-vertex in the
-    middle of the polygon, but works only for convex shapes.
-
-    .. versionadded:: 0.18
-
-    """
-    face_: List[Vec3] = list(face)
-    assert len(face_) > 2
-    if not face_[0].isclose(face_[-1]):
-        face_.append(face_[0])
-    center = Vec3.sum(face_[:-1]) / (len(face_) - 1)
-    return [(v1, v2, center) for v1, v2 in zip(face_, face_[1:])]
-
-
 def mapbox_earcut_2d(
     exterior: Iterable[UVec], holes: Iterable[Iterable[UVec]] = None
 ) -> List[Sequence[Vec2]]:
@@ -50,6 +32,8 @@ def mapbox_earcut_2d(
 
     Returns:
         yields the result as 3-tuples of :class:`Vec2` objects
+
+    .. versionadded:: 0.18
 
     """
     points: List[Vec2] = Vec2.list(exterior)
