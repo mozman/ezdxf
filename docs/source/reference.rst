@@ -102,6 +102,7 @@ Construction
     disassemble
     bbox
     upright
+    reorder
 
 Custom Data
 -----------
@@ -143,7 +144,6 @@ Miscellaneous
 
     zoom
     comments
-    reorder
 
 .. _DXF Reference: http://docs.autodesk.com/ACD/2014/ENU/index.html?url=files/GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3.htm,topicNumber=d30e652301
 .. _Autodesk: http://usa.autodesk.com/

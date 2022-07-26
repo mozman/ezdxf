@@ -11,11 +11,11 @@ from typing import (
 
 from ezdxf.math import (
     Vec2,
+    UVec,
     intersection_line_line_2d,
     has_clockwise_orientation,
     point_to_line_relation,
     TOLERANCE,
-    Vertex,
 )
 import enum
 
@@ -28,8 +28,8 @@ __all__ = [
 
 
 def clip_polygon_2d(
-    clip: Iterable[Vertex],
-    subject: Iterable[Vertex],
+    clip: Iterable[UVec],
+    subject: Iterable[UVec],
     ccw_check: bool = True,
 ) -> List[Vec2]:
     """Clip the `subject` polygon by the **convex** clipping polygon `clip`.
@@ -39,7 +39,7 @@ def clip_polygon_2d(
     Args:
         clip: the convex clipping polygon as iterable of vertices
         subject: the polygon to clip as a iterable of vertices
-        ccw_check: check if the clipping polygon is in counter clockwise
+        ccw_check: check if the clipping polygon is in counter-clockwise
             orientation if ``True``, set to ``False`` if the ccw check is done
             by the caller
 
@@ -52,7 +52,7 @@ def clip_polygon_2d(
 
     """
 
-    def polygon(vertices: Iterable[Vertex]) -> List[Vec2]:
+    def polygon(vertices: Iterable[UVec]) -> List[Vec2]:
         _vertices = Vec2.list(vertices)
         if len(_vertices) > 1:
             if _vertices[0].isclose(_vertices[-1]):
@@ -333,7 +333,7 @@ class _Polygon:
 
 
 def next_vertex_node(v: _Node) -> _Node:
-    """Return the next non intersecting vertex after the one specified."""
+    """Return the next non-intersecting vertex after the one specified."""
     c = v
     while c.intersect:
         c = c.next
@@ -408,43 +408,49 @@ class BooleanOperation(enum.Enum):
 
 
 def greiner_hormann_intersection(
-    p1: Iterable[Vertex], p2: Iterable[Vertex]
+    p1: Iterable[UVec], p2: Iterable[UVec]
 ) -> List[List[Vec2]]:
     """Returns the INTERSECTION of polygon `p1` &  polygon `p2`.
     This algorithm works only for polygons with real intersection points
     and line end points on face edges are not considered as such intersection
     points!
 
+    .. versionadded:: 0.18
+
     """
     return greiner_hormann(p1, p2, BooleanOperation.INTERSECTION)
 
 
 def greiner_hormann_difference(
-    p1: Iterable[Vertex], p2: Iterable[Vertex]
+    p1: Iterable[UVec], p2: Iterable[UVec]
 ) -> List[List[Vec2]]:
     """Returns the DIFFERENCE of polygon `p1` - polygon `p2`.
     This algorithm works only for polygons with real intersection points
     and line end points on face edges are not considered as such intersection
     points!
 
+    .. versionadded:: 0.18
+
     """
     return greiner_hormann(p1, p2, BooleanOperation.DIFFERENCE)
 
 
 def greiner_hormann_union(
-    p1: Iterable[Vertex], p2: Iterable[Vertex]
+    p1: Iterable[UVec], p2: Iterable[UVec]
 ) -> List[List[Vec2]]:
     """Returns the UNION of polygon `p1` | polygon `p2`.
     This algorithm works only for polygons with real intersection points
     and line end points on face edges are not considered as such intersection
     points!
 
+    .. versionadded:: 0.18
+
     """
     return greiner_hormann(p1, p2, BooleanOperation.UNION)
 
 
 def greiner_hormann(
-    p1: Iterable[Vertex], p2: Iterable[Vertex], op: BooleanOperation
+    p1: Iterable[UVec], p2: Iterable[UVec], op: BooleanOperation
 ) -> List[List[Vec2]]:
     """Implements a 2d clipping function to perform 3 boolean operations:
 
@@ -457,6 +463,8 @@ def greiner_hormann(
     This algorithm works only for polygons with real intersection points
     and line end points on face edges are not considered as such intersection
     points!
+
+    .. versionadded:: 0.18
 
     """
 

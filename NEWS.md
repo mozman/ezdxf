@@ -57,6 +57,7 @@ Version 0.18b7 - dev
 - CHANGE: replaced arguments `flatten` and `segments` by argument `fast` of tool
   function `Path.bbox()` 
 - CHANGE: replaced argument `flatten` argument `fast` in the `ezdxf.bbox` module
+- CHANGE: restructure of the `ezdxf.math` sub-package
 - BUGFIX [#663](https://github.com/mozman/ezdxf/issues/663): 
   improve handling of large coordinates in `Bezier4P` and `Bezier3P` classes
 - BUGFIX [#655](https://github.com/mozman/ezdxf/issues/655): 
