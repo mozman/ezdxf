@@ -91,6 +91,7 @@ Math
     math/clustering
     math/linalg
     math/rtree
+    math/triangulation
 
 Construction
 ------------
