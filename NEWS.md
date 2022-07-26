@@ -50,6 +50,9 @@ Version 0.18b7 - dev
 - NEW: `acis` module, a toolbox to handle ACIS data, [docs](https://ezdxf.mozman.at/docs/tools/acis.html)
 - NEW: factory function `add_helix()` to create new `HELIX` entities
 - NEW: precise bounding box calculation for Bezier curves
+- NEW: module `ezdxf.math.trianglation` for polygon triangulation with hole support
+- NEW: spatial search tree `ezdxf.math.rtree.RTree` 
+- NEW: module `ezdxf.math.clustering` for DBSCAN and K-means clustering 
 - CHANGE: keyword only argument `dxfattribs` for factory methods `add_text()` and `add_attdef()`
 - CHANGE: `recover` module - recovered integer and float values are logged as severe errors
 - CHANGE: method `Path.all_lines_to_curve3` replaced by function `path.lines_to_curve3()`
