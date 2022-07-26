@@ -75,7 +75,7 @@ def binomial_coefficient(k: int, i: int) -> float:
 
 
 class Matrix:
-    """Basic matrix implementation without any optimization for speed of
+    """Basic matrix implementation without any optimization for speed or
     memory usage. Matrix data is stored in row major order, this means in a
     list of rows, where each row is a list of floats. Direct access to the
     data is accessible by the attribute :attr:`Matrix.matrix`.

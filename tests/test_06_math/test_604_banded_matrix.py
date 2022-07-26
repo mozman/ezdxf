@@ -3,7 +3,7 @@
 from typing import Iterable
 import pytest
 import math
-from ezdxf.math import (
+from ezdxf.math.linalg import (
     Matrix,
     detect_banded_matrix,
     compact_banded_matrix,

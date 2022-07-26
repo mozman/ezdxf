@@ -36,16 +36,11 @@ from ezdxf.math import (
     create_t_vector,
     estimate_end_tangent_magnitude,
     estimate_tangents,
-    LUDecomposition,
-    Matrix,
-    BandedMatrixLU,
-    compact_banded_matrix,
-    detect_banded_matrix,
-    quadratic_equation,
     linspace,
     distance_point_line_3d,
     arc_angle_span_deg,
 )
+from ezdxf.math import linalg
 from ezdxf.lldxf.const import DXFValueError
 from ezdxf import PYPY
 
@@ -600,25 +595,25 @@ def double_knots(n: int, p: int, t: Sequence[float]) -> List[float]:
     return u
 
 
-def _get_best_solver(matrix: Union[List, Matrix], degree: int):
+def _get_best_solver(matrix: Union[List, linalg.Matrix], degree: int):
     """Returns best suited linear equation solver depending on matrix
     configuration and python interpreter.
     """
-    A = matrix if isinstance(matrix, Matrix) else Matrix(matrix=matrix)
+    A = matrix if isinstance(matrix, linalg.Matrix) else linalg.Matrix(matrix=matrix)
     if PYPY:
         limit = USE_BANDED_MATRIX_SOLVER_PYPY_LIMIT
     else:
         limit = USE_BANDED_MATRIX_SOLVER_CPYTHON_LIMIT
     if A.nrows < limit:  # use default equation solver
-        return LUDecomposition(A.matrix)
+        return linalg.LUDecomposition(A.matrix)
     else:
         # Theory: band parameters m1, m2 are at maximum degree-1, for
         # B-spline interpolation and approximation:
         # m1 = m2 = degree-1
         # But the speed gain is not that big and just to be sure:
-        m1, m2 = detect_banded_matrix(A, check_all=False)
-        A = compact_banded_matrix(A, m1, m2)
-        return BandedMatrixLU(A, m1, m2)
+        m1, m2 = linalg.detect_banded_matrix(A, check_all=False)
+        A = linalg.compact_banded_matrix(A, m1, m2)
+        return linalg.BandedMatrixLU(A, m1, m2)
 
 
 def unconstrained_global_bspline_interpolation(
@@ -814,7 +809,7 @@ def local_cubic_bspline_interpolation_from_tangents(
 
         # Raises an ArithmeticError exception if there is a complex solution.
         # Is this possible?
-        alpha_plus, alpha_minus = quadratic_equation(a, b, c)
+        alpha_plus, alpha_minus = linalg.quadratic_equation(a, b, c)
         p1 = p0 + alpha_plus * t0 / 3.0
         p2 = p3 - alpha_plus * t3 / 3.0
         control_points.extend((p1, p2))

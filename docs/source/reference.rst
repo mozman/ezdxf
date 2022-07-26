@@ -89,6 +89,7 @@ Math
     math/core
     math/clipping
     math/clustering
+    math/linalg
     math/rtree
 
 Construction

@@ -22,7 +22,7 @@ def cubic_bezier_interpolation(
         points: data points
 
     """
-    from ezdxf.math import tridiagonal_matrix_solver
+    from ezdxf.math.linalg import tridiagonal_matrix_solver
 
     # Source: https://towardsdatascience.com/b%C3%A9zier-interpolation-8033e9a262c2
     pnts = Vec3.tuple(points)

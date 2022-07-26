@@ -9,7 +9,6 @@ from ._ctypes import *
 # Everything else are pure Python imports:
 from .construct2d import *
 from .construct3d import *
-from .linalg import *
 from .parametrize import *
 from .bspline import *
 from .bezier import *
