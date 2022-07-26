@@ -2,7 +2,7 @@
 # Home-page: http://code.google.com/p/gameobjects/
 # Author: Will McGugan
 # Download-URL: http://code.google.com/p/gameobjects/downloads/list
-# Copyright (c) 2010-2021 Manfred Moitzi
+# Copyright (c) 2010-2022 Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Sequence, Iterable, List, Tuple, Iterator, TYPE_CHECKING
@@ -28,9 +28,7 @@ def floats(items: Iterable) -> List[float]:
 
 
 class Matrix44:
-    """This is a pure Python implementation for 4x4 `transformation matrices`_ ,
-    to avoid dependency to big numerical packages like :mod:`numpy`, before binary
-    wheels, installation of these packages wasn't always easy on Windows.
+    """This is a 4x4 `transformation matrix`_.
 
     The utility functions for constructing transformations and transforming
     vectors and points assumes that vectors are stored as row vectors, meaning
@@ -45,7 +43,7 @@ class Matrix44:
         - ``Matrix44(row1, row2, row3, row4)`` four rows, each row with four
           values.
 
-    .. _transformation matrices: https://en.wikipedia.org/wiki/Transformation_matrix
+    .. _transformation matrix: https://en.wikipedia.org/wiki/Transformation_matrix
 
     """
 
@@ -96,7 +94,7 @@ class Matrix44:
         )
 
     def get_2d_transformation(self) -> Tuple[float, ...]:
-        """Returns a the 2D transformation as a row-major matrix in a linear
+        """Returns a 2D transformation as a row-major matrix in a linear
         array (tuple).
 
         A more correct transformation could be implemented like so:
@@ -106,7 +104,7 @@ class Matrix44:
         return m[0], m[1], 0.0, m[4], m[5], 0.0, m[12], m[13], 1.0
 
     def get_row(self, row: int) -> Tuple[float, ...]:
-        """Get row as list of of four float values.
+        """Get row as list of four float values.
 
         Args:
             row: row index [0 .. 3]
@@ -119,8 +117,7 @@ class Matrix44:
             raise IndexError(f"invalid row index: {row}")
 
     def set_row(self, row: int, values: Sequence[float]) -> None:
-        """
-        Sets the values in a row.
+        """Sets the values in a row.
 
         Args:
             row: row index [0 .. 3]
@@ -134,8 +131,7 @@ class Matrix44:
             raise IndexError(f"invalid row index: {row}")
 
     def get_col(self, col: int) -> Tuple[float, ...]:
-        """
-        Returns a column as a tuple of four floats.
+        """Returns a column as a tuple of four floats.
 
         Args:
             col: column index [0 .. 3]
@@ -147,8 +143,7 @@ class Matrix44:
             raise IndexError(f"invalid row index: {col}")
 
     def set_col(self, col: int, values: Sequence[float]):
-        """
-        Sets the values in a column.
+        """Sets the values in a column.
 
         Args:
             col: column index [0 .. 3]
@@ -332,8 +327,7 @@ class Matrix44:
     def xyz_rotate(
         cls, angle_x: float, angle_y: float, angle_z: float
     ) -> Matrix44:
-        """
-        Returns a rotation matrix for rotation about each axis.
+        """Returns a rotation matrix for rotation about each axis.
 
         Args:
             angle_x: rotation angle about x-axis in radians
