@@ -8,8 +8,8 @@ import operator
 from collections import defaultdict
 from functools import reduce
 
-from ezdxf.math import AnyVec, RTree, Vec3, spherical_envelope
-
+from ezdxf.math import AnyVec, Vec3, spherical_envelope
+from ezdxf.math.rtree import RTree
 
 __all__ = [
     "dbscan",

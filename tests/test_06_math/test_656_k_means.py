@@ -2,7 +2,8 @@
 #  License: MIT License
 
 import pytest
-from ezdxf.math import Vec3, k_means, average_cluster_radius, average_intra_cluster_distance
+from ezdxf.math import Vec3
+from ezdxf.math.clustering import k_means, average_cluster_radius, average_intra_cluster_distance
 
 POINTS = [Vec3.random(100) for _ in range(100)]
 

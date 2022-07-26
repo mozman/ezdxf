@@ -80,13 +80,16 @@ Data Query
     query
     groupby
 
-Math Utilities
---------------
+Math
+----
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
-    math
+    math/core
+    math/clipping
+    math/clustering
+    math/rtree
 
 Construction
 ------------

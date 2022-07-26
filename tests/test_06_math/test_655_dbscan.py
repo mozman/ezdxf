@@ -2,7 +2,7 @@
 #  License: MIT License
 
 import pytest
-from ezdxf.math import dbscan
+from ezdxf.math.clustering import dbscan
 from ezdxf.render import forms
 
 

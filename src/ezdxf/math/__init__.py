@@ -28,10 +28,7 @@ from .bbox import *
 from .offset2d import *
 from .transformtools import *
 from .curvetools import *
-from .clipping import *
 from .polyline import *
-from .rtree import *
-from .clustering import *
 
 ABS_TOL = 1e-12
 REL_TOL = 1e-9

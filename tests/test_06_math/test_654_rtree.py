@@ -3,7 +3,9 @@
 
 import pytest
 
-from ezdxf.math import Vec2, Vec3, RTree, BoundingBox, rtree, spherical_envelope
+from ezdxf.math import Vec2, Vec3, BoundingBox, spherical_envelope
+from ezdxf.math import rtree
+from ezdxf.math.rtree import RTree
 
 
 def test_can_not_build_empty_tree():

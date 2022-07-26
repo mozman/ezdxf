@@ -1,8 +1,14 @@
-.. _math utilities:
+.. _math_core:
+
+Core
+####
 
 .. module:: ezdxf.math
 
-Utility functions and classes located in module :mod:`ezdxf.math`.
+Math core module: :mod:`ezdxf.math`
+
+These are the core math functions and classes which should be imported from
+:mod:`ezdxf.math`.
 
 Functions
 =========
@@ -54,10 +60,8 @@ Bulge Related Functions
 
 .. autofunction:: bulge_to_arc
 
-2D Functions
-============
-
-.. autofunction:: clip_polygon_2d
+2D Graphic Functions
+====================
 
 .. autofunction:: convex_hull_2d
 
@@ -97,8 +101,8 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 .. autofunction:: rytz_axis_construction
 
-3D Functions
-============
+3D Graphic Functions
+====================
 
 .. seealso::
 
@@ -123,8 +127,6 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 .. autofunction:: cubic_bezier_from_ellipse
 
 .. autofunction:: cubic_bezier_interpolation
-
-.. autofunction:: dbscan
 
 .. autofunction:: distance_point_line_3d
 
@@ -151,8 +153,6 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 .. autofunction:: intersection_ray_ray_3d
 
 .. autofunction:: is_planar_face
-
-.. autofunction:: k_means
 
 .. autofunction:: linear_vertex_spacing
 
@@ -348,8 +348,8 @@ Matrix44
 
     .. autoproperty:: is_orthogonal
 
-Construction Tools
-==================
+Basic Construction Classes
+==========================
 
 UVec
 ----
@@ -613,30 +613,6 @@ BoundingBox2d
     .. automethod:: intersection
 
     .. automethod:: rect_vertices
-
-RTree
------
-
-.. autoclass:: RTree(points: Iterable[AnyVec], max_node_size: int = 5)
-
-    .. automethod:: __len__
-
-    .. automethod:: __iter__
-
-    .. automethod:: contains
-
-    .. automethod:: nearest_neighbor
-
-    .. automethod:: points_in_sphere
-
-    .. automethod:: points_in_bbox
-
-    .. automethod:: avg_leaf_size
-
-    .. automethod:: avg_spherical_envelope_radius
-
-    .. automethod:: avg_nn_distance
-
 
 ConstructionRay
 ---------------
