@@ -36,7 +36,7 @@ def dbscan(
         radius: radius of the dense regions
         min_points: minimum number of points that needs to be within the
             `radius` for a point to be a core point (must be >= 2)
-        rtree: optional :class:`RTree`
+        rtree: optional :class:`~ezdxf.math.rtree.RTree`
         max_node_size: max node size for internally created RTree
 
     Returns:
