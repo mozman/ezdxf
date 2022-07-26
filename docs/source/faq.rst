@@ -57,7 +57,7 @@ free available documentation or open source libraries to create or edit SAT or
 SAB data, and also `ezdxf` provides no functionality for creating or editing
 ACIS data.
 
-The ACIS support provided by `ezdxf` is only useful for users have to have
+The ACIS support provided by `ezdxf` is only useful for users which have
 access to the ACIS SDK from `Spatial Inc.`_.
 
 .. _Spatial Inc.: https://www.spatial.com/products/3d-acis-modeling

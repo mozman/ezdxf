@@ -6,7 +6,7 @@
 Linear Algebra
 ==============
 
-Clustering module: :mod:`ezdxf.math.linalg`
+Linear algebra module **for internal usage**: :mod:`ezdxf.math.linalg`
 
 Functions
 ---------
