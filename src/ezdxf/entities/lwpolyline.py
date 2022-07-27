@@ -1,5 +1,6 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
     Tuple,
@@ -12,7 +13,7 @@ from typing import (
 import array
 import copy
 from contextlib import contextmanager
-from ezdxf.math import Vec3, Matrix44, Z_AXIS
+from ezdxf.math import Vec3, UVec, Matrix44, Z_AXIS
 from ezdxf.math.transformtools import OCSTransform, NonUniformScalingError
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
@@ -42,7 +43,6 @@ from .factory import register_entity
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
         TagWriter,
-        Vertex,
         DXFNamespace,
         Line,
         Arc,
@@ -106,14 +106,14 @@ class LWPolyline(DXFGraphic):
         super().__init__()
         self.lwpoints = LWPolylinePoints()
 
-    def _copy_data(self, entity: "DXFEntity") -> None:
+    def _copy_data(self, entity: DXFEntity) -> None:
         """Copy lwpoints."""
         assert isinstance(entity, LWPolyline)
         entity.lwpoints = copy.deepcopy(self.lwpoints)
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         """
         Adds subclass processing for AcDbPolyline, requires previous base class
         and AcDbEntity processing by parent class.
@@ -135,16 +135,16 @@ class LWPolyline(DXFGraphic):
                 )
         return dxf
 
-    def load_vertices(self, tags: "Tags") -> Tags:
+    def load_vertices(self, tags: Tags) -> Tags:
         self.lwpoints, unprocessed_tags = LWPolylinePoints.from_tags(tags)
         return unprocessed_tags
 
-    def preprocess_export(self, tagwriter: "TagWriter") -> bool:
+    def preprocess_export(self, tagwriter: TagWriter) -> bool:
         # Returns True if entity should be exported
         # Do not export polylines without vertices
         return len(self.lwpoints) > 0
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: TagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_lwpolyline.name)
@@ -360,10 +360,10 @@ class LWPolyline(DXFGraphic):
         """Remove all points."""
         self.lwpoints.clear()
 
-    def transform(self, m: "Matrix44") -> "LWPolyline":
+    def transform(self, m: Matrix44) -> LWPolyline:
         """Transform the LWPOLYLINE entity by transformation matrix `m` inplace.
 
-        A non uniform scaling is not supported if the entity contains circular
+        A non-uniform scaling is not supported if the entity contains circular
         arc segments (bulges).
 
         Args:
@@ -406,7 +406,7 @@ class LWPolyline(DXFGraphic):
         self.post_transform(m)
         return self
 
-    def virtual_entities(self) -> Iterable[Union["Line", "Arc"]]:
+    def virtual_entities(self) -> Iterable[Union[Line, Arc]]:
         """Yields the graphical representation of LWPOLYLINE as virtual DXF
         primitives (LINE or ARC).
 
@@ -419,7 +419,7 @@ class LWPolyline(DXFGraphic):
             e.set_source_of_copy(self)
             yield e
 
-    def explode(self, target_layout: "BaseLayout" = None) -> "EntityQuery":
+    def explode(self, target_layout: BaseLayout = None) -> EntityQuery:
         """Explode the LWPOLYLINE entity as DXF primitives (LINE or ARC) into
         the target layout, if the target layout is ``None``, the target layout
         is the layout of the source entity.

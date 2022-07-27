@@ -1,5 +1,6 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, Tuple, Iterable, Dict, Any
 from ezdxf.entities import factory
 from ezdxf import options
@@ -26,7 +27,7 @@ from ezdxf.lldxf.const import (
     DXFStructureError,
     TRANSPARENCY_BYBLOCK,
 )
-from ezdxf.math import OCS, Matrix44
+from ezdxf.math import OCS, Matrix44, UVec
 from ezdxf.proxygraphic import load_proxy_graphic, export_proxy_graphic
 from .dxfentity import DXFEntity, base_class, SubclassProcessor, DXFTagStorage
 
@@ -36,7 +37,6 @@ if TYPE_CHECKING:
         TagWriter,
         BaseLayout,
         DXFNamespace,
-        Vertex,
         Drawing,
     )
 
@@ -154,7 +154,7 @@ acdb_entity: DefSubclass = DefSubclass(
 acdb_entity_group_codes = group_code_mapping(acdb_entity)
 
 
-def elevation_to_z_axis(dxf: "DXFNamespace", names: Iterable[str]):
+def elevation_to_z_axis(dxf: DXFNamespace, names: Iterable[str]):
     # The elevation group code (38) is only used for DXF R11 and prior and
     # ignored for DXF R2000 and later.
     # DXF R12 and later store the entity elevation in the z-axis of the
@@ -195,7 +195,7 @@ class DXFGraphic(DXFEntity):
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         """Adds subclass processing for 'AcDbEntity', requires previous base
         class processing by parent class.
 
@@ -310,7 +310,7 @@ class DXFGraphic(DXFEntity):
         else:
             self.dxf.discard("paperspace")
 
-    def link_entity(self, entity: "DXFEntity") -> None:
+    def link_entity(self, entity: DXFEntity) -> None:
         """Store linked or attached entities. Same API for both types of
         appended data, because entities with linked entities (POLYLINE, INSERT)
         have no attached entities and vice versa.
@@ -319,13 +319,13 @@ class DXFGraphic(DXFEntity):
         """
         pass
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: TagWriter) -> None:
         """Export entity specific data as DXF tags. (internal API)"""
         # Base class export is done by parent class.
         self.export_acdb_entity(tagwriter)
         # XDATA and embedded objects export is also done by the parent class.
 
-    def export_acdb_entity(self, tagwriter: "TagWriter"):
+    def export_acdb_entity(self, tagwriter: TagWriter):
         """Export subclass 'AcDbEntity' as DXF tags. (internal API)"""
         # Full control over tag order and YES, sometimes order matters
         not_r12 = tagwriter.dxfversion > DXF12
@@ -360,7 +360,7 @@ class DXFGraphic(DXFEntity):
                 length_code=(92 if tagwriter.dxfversion < DXF2013 else 160),
             )
 
-    def get_layout(self) -> Optional["BaseLayout"]:
+    def get_layout(self) -> Optional[BaseLayout]:
         """Returns the owner layout or returns ``None`` if entity is not
         assigned to any layout.
         """
@@ -398,7 +398,7 @@ class DXFGraphic(DXFEntity):
             layout.unlink_entity(self)
 
     def move_to_layout(
-        self, layout: "BaseLayout", source: "BaseLayout" = None
+        self, layout: BaseLayout, source: BaseLayout = None
     ) -> None:
         """
         Move entity from model space or a paper space layout to another layout.
@@ -420,7 +420,7 @@ class DXFGraphic(DXFEntity):
                 raise DXFValueError("Source layout for entity not found.")
         source.move_to_layout(self, layout)
 
-    def copy_to_layout(self, layout: "BaseLayout") -> "DXFEntity":
+    def copy_to_layout(self, layout: BaseLayout) -> DXFEntity:
         """
         Copy entity to another `layout`, returns new created entity as
         :class:`DXFEntity` object. Copying between different DXF drawings is
@@ -442,7 +442,7 @@ class DXFGraphic(DXFEntity):
         layout.add_entity(new_entity)
         return new_entity
 
-    def audit(self, auditor: "Auditor") -> None:
+    def audit(self, auditor: Auditor) -> None:
         """Audit and repair graphical DXF entities.
 
         .. important::
@@ -475,7 +475,7 @@ class DXFGraphic(DXFEntity):
         if dxf.hasattr("transparency"):
             auditor.check_transparency(self)
 
-    def transform(self, m: "Matrix44") -> "DXFGraphic":
+    def transform(self, m: Matrix44) -> DXFGraphic:
         """Inplace transformation interface, returns `self`
         (floating interface).
 
@@ -485,7 +485,7 @@ class DXFGraphic(DXFEntity):
         """
         raise NotImplementedError()
 
-    def post_transform(self, m: "Matrix44") -> None:
+    def post_transform(self, m: Matrix44) -> None:
         """Should be called if the main entity transformation was successful."""
         if self.xdata is not None:
             self.xdata.transform(m)
@@ -495,7 +495,7 @@ class DXFGraphic(DXFEntity):
         """Check if post transform call is required."""
         return self.xdata is not None
 
-    def translate(self, dx: float, dy: float, dz: float) -> "DXFGraphic":
+    def translate(self, dx: float, dy: float, dz: float) -> DXFGraphic:
         """Translate entity inplace about `dx` in x-axis, `dy` in y-axis and
         `dz` in z-axis, returns `self` (floating interface).
 
@@ -505,7 +505,7 @@ class DXFGraphic(DXFEntity):
         """
         return self.transform(Matrix44.translate(dx, dy, dz))
 
-    def scale(self, sx: float, sy: float, sz: float) -> "DXFGraphic":
+    def scale(self, sx: float, sy: float, sz: float) -> DXFGraphic:
         """Scale entity inplace about `dx` in x-axis, `dy` in y-axis and `dz`
         in z-axis, returns `self` (floating interface).
 
@@ -519,7 +519,7 @@ class DXFGraphic(DXFEntity):
         """
         return self.transform(Matrix44.scale(s))
 
-    def rotate_axis(self, axis: "Vertex", angle: float) -> "DXFGraphic":
+    def rotate_axis(self, axis: UVec, angle: float) -> DXFGraphic:
         """Rotate entity inplace about vector `axis`, returns `self`
         (floating interface).
 
@@ -530,7 +530,7 @@ class DXFGraphic(DXFEntity):
         """
         return self.transform(Matrix44.axis_rotate(axis, angle))
 
-    def rotate_x(self, angle: float) -> "DXFGraphic":
+    def rotate_x(self, angle: float) -> DXFGraphic:
         """Rotate entity inplace about x-axis, returns `self`
         (floating interface).
 
@@ -540,7 +540,7 @@ class DXFGraphic(DXFEntity):
         """
         return self.transform(Matrix44.x_rotate(angle))
 
-    def rotate_y(self, angle: float) -> "DXFGraphic":
+    def rotate_y(self, angle: float) -> DXFGraphic:
         """Rotate entity inplace about y-axis, returns `self`
         (floating interface).
 
@@ -550,7 +550,7 @@ class DXFGraphic(DXFEntity):
         """
         return self.transform(Matrix44.y_rotate(angle))
 
-    def rotate_z(self, angle: float) -> "DXFGraphic":
+    def rotate_z(self, angle: float) -> DXFGraphic:
         """Rotate entity inplace about z-axis, returns `self`
         (floating interface).
 
@@ -601,7 +601,7 @@ class DXFGraphic(DXFEntity):
                 location = xdata[2]
         return link, description, location
 
-    def remove_dependencies(self, other: "Drawing" = None) -> None:
+    def remove_dependencies(self, other: Drawing = None) -> None:
         """Remove all dependencies from current document.
 
         (internal API)
@@ -623,9 +623,7 @@ class DXFGraphic(DXFEntity):
         self.dxf.discard("plotstyle_enum")
         self.dxf.discard("plotstyle_handle")
 
-    def _new_compound_entity(
-        self, type_: str, dxfattribs: dict
-    ) -> "DXFGraphic":
+    def _new_compound_entity(self, type_: str, dxfattribs: dict) -> DXFGraphic:
         """Create and bind  new entity with same layout settings as `self`.
 
         Used by INSERT & POLYLINE to create appended DXF entities, don't use it
@@ -655,7 +653,7 @@ class SeqEnd(DXFGraphic):
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         """Loading interface. (internal API)"""
         # bypass DXFGraphic, loading proxy graphic is skipped!
         dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
@@ -664,7 +662,7 @@ class SeqEnd(DXFGraphic):
         return dxf
 
 
-def add_entity(entity: DXFGraphic, layout: "BaseLayout") -> None:
+def add_entity(entity: DXFGraphic, layout: BaseLayout) -> None:
     """Add `entity` entity to the entity database and to the given `layout`."""
     assert entity.dxf.handle is None
     assert layout is not None
@@ -674,7 +672,7 @@ def add_entity(entity: DXFGraphic, layout: "BaseLayout") -> None:
 
 
 def replace_entity(
-    source: DXFGraphic, target: DXFGraphic, layout: "BaseLayout"
+    source: DXFGraphic, target: DXFGraphic, layout: BaseLayout
 ) -> None:
     """Add `target` entity to the entity database and to the given `layout`
     and replace the `source` entity by the `target` entity.

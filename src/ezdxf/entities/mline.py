@@ -1,6 +1,7 @@
-# Copyright (c) 2018-2021, Manfred Moitzi
+# Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Sequence
+from __future__ import annotations
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Sequence, Iterator
 from collections import OrderedDict, namedtuple
 import math
 
@@ -16,7 +17,7 @@ from ezdxf.lldxf.attributes import (
     group_code_mapping,
 )
 from ezdxf.lldxf.tags import Tags, group_tags
-from ezdxf.math import NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, Vertex, Vec3, UCS, OCS
+from ezdxf.math import NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, UVec, Vec3, UCS, OCS
 
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
@@ -154,7 +155,7 @@ acdb_mline_group_codes = group_code_mapping(acdb_mline)
 #   require a refresh of the MLineVertices.
 
 # Ezdxf does not support the creation of line-break (gap) features, but will be
-# preserve this data if the MLINE stays unchanged.
+# preserving this data if the MLINE stays unchanged.
 # Editing the MLINE entity by ezdxf removes the line-break features (gaps).
 
 
@@ -196,8 +197,8 @@ class MLineVertex:
         # ----------------------------
         #
         # The fill parameterization is also a list of float values.
-        # Similar to the line parameterization, it describes the
-        # parameterization of the fill area for this mline segment.
+        # Similar to the line parametrization, it describes the
+        # parametrization of the fill area for this mline segment.
         # The values are interpreted identically to the line parameters and when
         # taken as a whole for all line elements in the mline segment, they
         # define the boundary of the fill area for the mline segment.
@@ -224,7 +225,7 @@ class MLineVertex:
     copy = __copy__
 
     @classmethod
-    def load(cls, tags: Tags) -> "MLineVertex":
+    def load(cls, tags: Tags) -> MLineVertex:
         vtx = MLineVertex()
         line_params: List[float] = []
         line_params_count = 0
@@ -262,7 +263,7 @@ class MLineVertex:
                     vtx.fill_params.append(tuple(fill_params))
         return vtx
 
-    def export_dxf(self, tagwriter: "TagWriter"):
+    def export_dxf(self, tagwriter: TagWriter):
         tagwriter.write_vertex(11, self.location)
         tagwriter.write_vertex(12, self.line_direction)
         tagwriter.write_vertex(13, self.miter_direction)
@@ -277,9 +278,9 @@ class MLineVertex:
     @classmethod
     def new(
         cls,
-        start: Vertex,
-        line_direction: Vertex,
-        miter_direction: Vertex,
+        start: UVec,
+        line_direction: UVec,
+        miter_direction: UVec,
         line_params: Iterable = None,
         fill_params: Iterable = None,
     ) -> "MLineVertex":
@@ -295,7 +296,7 @@ class MLineVertex:
             )
         return vtx
 
-    def transform(self, m: "Matrix44") -> "MLineVertex":
+    def transform(self, m: Matrix44) -> MLineVertex:
         """Transform MLineVertex by transformation matrix `m` inplace."""
         self.location = m.transform(self.location)
         self.line_direction = m.transform_direction(self.line_direction)
@@ -327,13 +328,13 @@ class MLine(DXFGraphic):
         """Count of MLINE vertices."""
         return len(self.vertices)
 
-    def _copy_data(self, entity: "DXFEntity") -> None:
+    def _copy_data(self, entity: DXFEntity) -> None:
         assert isinstance(entity, MLine)
         entity.vertices = [v.copy() for v in self.vertices]
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.fast_load_dxfattribs(
@@ -347,13 +348,13 @@ class MLine(DXFGraphic):
             MLineVertex.load(tags) for tags in group_tags(tags, splitcode=11)
         )
 
-    def preprocess_export(self, tagwriter: "TagWriter") -> bool:
+    def preprocess_export(self, tagwriter: TagWriter) -> bool:
         # Do not export MLines without vertices
         return len(self.vertices) > 1
         # todo: check if line- and fill parametrization is compatible with
         #  MLINE style, requires same count of elements!
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: TagWriter) -> None:
         # ezdxf does not export MLINE entities without vertices,
         # see method preprocess_export()
         self.set_flag_state(self.HAS_VERTICES, True)
@@ -362,7 +363,7 @@ class MLine(DXFGraphic):
         self.dxf.export_dxf_attribs(tagwriter, acdb_mline.attribs.keys())
         self.export_vertices(tagwriter)
 
-    def export_vertices(self, tagwriter: "TagWriter") -> None:
+    def export_vertices(self, tagwriter: TagWriter) -> None:
         for vertex in self.vertices:
             vertex.export_dxf(tagwriter)
 
@@ -421,7 +422,7 @@ class MLine(DXFGraphic):
             self.update_geometry()
 
     @property
-    def style(self) -> Optional["MLineStyle"]:
+    def style(self) -> Optional[MLineStyle]:
         """Get associated MLINESTYLE."""
         if self.doc is None:
             return None
@@ -471,7 +472,7 @@ class MLine(DXFGraphic):
         """Returns the vertices of the reference line."""
         return [v.location for v in self.vertices]
 
-    def extend(self, vertices: Iterable["Vertex"]) -> None:
+    def extend(self, vertices: Iterable[UVec]) -> None:
         """Append multiple vertices to the reference line.
 
         It is possible to work with 3D vertices, but all vertices have to be in
@@ -587,7 +588,7 @@ class MLine(DXFGraphic):
         """Remove all MLINE vertices."""
         self.vertices.clear()
 
-    def remove_dependencies(self, other: "Drawing" = None) -> None:
+    def remove_dependencies(self, other: Drawing = None) -> None:
         """Remove all dependencies from current document.
 
         (internal API)
@@ -604,7 +605,7 @@ class MLine(DXFGraphic):
                 return
         self.dxf.style_name = "Standard"
 
-    def transform(self, m: "Matrix44") -> "DXFGraphic":
+    def transform(self, m: Matrix44) -> DXFGraphic:
         """Transform MLINE entity by transformation matrix `m` inplace."""
         for vertex in self.vertices:
             vertex.transform(m)
@@ -620,7 +621,7 @@ class MLine(DXFGraphic):
         self.post_transform(m)
         return self
 
-    def __virtual_entities__(self) -> Iterable[DXFGraphic]:
+    def __virtual_entities__(self) -> Iterator[DXFGraphic]:
         """Implements the SupportsVirtualEntities protocol.
 
         This protocol is for consistent internal usage and does not replace
@@ -631,7 +632,7 @@ class MLine(DXFGraphic):
             e.set_source_of_copy(self)
             yield e
 
-    def virtual_entities(self) -> Iterable[DXFGraphic]:
+    def virtual_entities(self) -> Iterator[DXFGraphic]:
         """Yields 'virtual' parts of MLINE as LINE, ARC and HATCH entities.
 
         This entities are located at the original positions, but are not stored
@@ -641,7 +642,7 @@ class MLine(DXFGraphic):
         """
         return self.__virtual_entities__()
 
-    def explode(self, target_layout: "BaseLayout" = None) -> "EntityQuery":
+    def explode(self, target_layout: BaseLayout = None) -> EntityQuery:
         """Explode parts of MLINE as LINE, ARC and HATCH entities into target
         layout, if target layout is ``None``, the target layout is the layout
         of the MLINE.
@@ -656,7 +657,7 @@ class MLine(DXFGraphic):
 
         return explode_entity(self, target_layout)
 
-    def audit(self, auditor: "Auditor") -> None:
+    def audit(self, auditor: Auditor) -> None:
         """Validity check."""
 
         def reset_mline_style(name="Standard"):
@@ -785,7 +786,7 @@ class MLineStyleElements:
     def __iter__(self):
         return iter(self.elements)
 
-    def export_dxf(self, tagwriter: "TagWriter"):
+    def export_dxf(self, tagwriter: TagWriter):
         write_tag = tagwriter.write_tag2
         write_tag(71, len(self.elements))
         for offset, color, linetype in self.elements:
@@ -811,7 +812,7 @@ class MLineStyleElements:
         )
 
     @staticmethod
-    def parse_tags(tags: Tags) -> Iterable[Dict]:
+    def parse_tags(tags: Tags) -> Iterator[Dict]:
         collector = None
         for code, value in tags:
             if code == 49:
@@ -852,7 +853,7 @@ class MLineStyle(DXFObject):
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.subclass_by_index(1)
@@ -876,7 +877,7 @@ class MLineStyle(DXFObject):
             )
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: TagWriter) -> None:
         super().export_entity(tagwriter)
         tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_mline_style.name)
         self.dxf.export_dxf_attribs(tagwriter, acdb_mline_style.attribs.keys())
@@ -901,7 +902,7 @@ class MLineStyle(DXFObject):
     def ordered_indices(self) -> List[int]:
         return self.elements.ordered_indices()
 
-    def audit(self, auditor: "Auditor") -> None:
+    def audit(self, auditor: Auditor) -> None:
         super().audit(auditor)
         if len(self.elements) == 0:
             auditor.add_error(
@@ -912,7 +913,7 @@ class MLineStyle(DXFObject):
 
 
 class MLineStyleCollection(ObjectCollection[MLineStyle]):
-    def __init__(self, doc: "Drawing"):
+    def __init__(self, doc: Drawing):
         super().__init__(
             doc, dict_name="ACAD_MLINESTYLE", object_type="MLINESTYLE"
         )

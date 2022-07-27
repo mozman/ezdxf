@@ -1,10 +1,10 @@
-# Copyright (c) 2019-2021, Manfred Moitzi
+# Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT-License
+from __future__ import annotations
+from typing import TYPE_CHECKING, List, Sequence, Iterable, Tuple, Optional
+from xml.etree import ElementTree
 import math
 import re
-from typing import TYPE_CHECKING, List, Sequence, Iterable
-from typing import Tuple, Optional
-from xml.etree import ElementTree
 import logging
 
 from ezdxf.lldxf import validator
@@ -26,7 +26,7 @@ from ezdxf.lldxf.const import (
 )
 from ezdxf.lldxf.packedtags import VertexArray
 from ezdxf.lldxf.tags import Tags, DXFTag
-from ezdxf.math import NULLVEC, Z_AXIS, Y_AXIS, Vertex, Vec3, Vec2, Matrix44
+from ezdxf.math import NULLVEC, Z_AXIS, Y_AXIS, UVec, Vec3, Vec2, Matrix44
 from ezdxf.tools.text import split_mtext_string
 from .dxfentity import base_class, SubclassProcessor
 from .dxfobj import DXFObject
@@ -322,7 +322,7 @@ class GeoData(DXFObject):
                 "does not match."
             )
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: TagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_geo_data.name)
@@ -364,7 +364,7 @@ class GeoData(DXFObject):
         )
         self.export_mesh_data(tagwriter)
 
-    def export_mesh_data(self, tagwriter: "TagWriter"):
+    def export_mesh_data(self, tagwriter: TagWriter):
         if len(self.source_vertices) != len(self.target_vertices):
             raise DXFStructureError(
                 "GEODATA mesh definition error: source and target point count "
@@ -389,7 +389,7 @@ class GeoData(DXFObject):
             tagwriter.write_tag2(98, f2)
             tagwriter.write_tag2(99, f3)
 
-    def export_coordinate_system_definition(self, tagwriter: "TagWriter"):
+    def export_coordinate_system_definition(self, tagwriter: TagWriter):
         text = self.coordinate_system_definition.replace("\n", "^J")
         chunks = split_mtext_string(text, size=255)
         if len(chunks) == 0:
@@ -561,14 +561,14 @@ class GeoData(DXFObject):
     def setup_local_grid(
         self,
         *,
-        design_point: Vertex,
-        reference_point: Vertex,
-        north_direction: Vertex = (0, 1),
+        design_point: UVec,
+        reference_point: UVec,
+        north_direction: UVec = (0, 1),
         crs: str = EPSG_3395,
     ) -> None:
         """Setup local grid coordinate system. This method is designed to setup
         CRS similar to `EPSG:3395 World Mercator`, the basic features of the
-        CRS should fulfill this assumptions:
+        CRS should fulfill these assumptions:
 
             - base unit of reference coordinates is 1 meter
             - right-handed coordinate system: +Y=north/+X=east/+Z=up

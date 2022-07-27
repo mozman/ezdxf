@@ -20,6 +20,7 @@ from __future__ import annotations
 from typing import (
     List,
     Iterable,
+    Iterator,
     Sequence,
     TYPE_CHECKING,
     Dict,
@@ -1040,7 +1041,7 @@ class BSpline:
         upper_bound = knots[self.count]
         return linspace(lower_bound, upper_bound, segments + 1)
 
-    def flattening(self, distance: float, segments: int = 4) -> Iterable[Vec3]:
+    def flattening(self, distance: float, segments: int = 4) -> Iterator[Vec3]:
         """Adaptive recursive flattening. The argument `segments` is the
         minimum count of approximation segments between two knots, if the
         distance from the center of the approximation segment to the curve is

@@ -1,7 +1,8 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
-import math
+from __future__ import annotations
 from typing import TYPE_CHECKING, Tuple, Optional
+import math
 import warnings
 
 from ezdxf.lldxf import validator
@@ -22,7 +23,7 @@ from ezdxf.enums import (
     MAP_TEXT_ALIGN_FLAGS_TO_ENUM,
     MAP_FLAGS_TO_STRING_ALIGN,
 )
-from ezdxf.math import Vec3, Matrix44, NULLVEC, Z_AXIS
+from ezdxf.math import Vec3, UVec, Matrix44, NULLVEC, Z_AXIS
 from ezdxf.math.transformtools import OCSTransform
 from ezdxf.audit import Auditor
 from ezdxf.tools.text import plain_text
@@ -37,7 +38,7 @@ from .dxfgfx import (
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Vertex, DXFNamespace, Drawing
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing
 
 __all__ = ["Text", "acdb_text", "acdb_text_group_codes"]
 
@@ -176,7 +177,7 @@ class Text(DXFGraphic):
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         """Loading interface. (internal API)"""
         dxf = super(DXFGraphic, self).load_dxf_attribs(processor)
         if processor:
@@ -186,13 +187,13 @@ class Text(DXFGraphic):
                 elevation_to_z_axis(dxf, ("insert", "align_point"))
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: TagWriter) -> None:
         """Export entity specific data as DXF tags. (internal API)"""
         super().export_entity(tagwriter)
         self.export_acdb_text(tagwriter)
         self.export_acdb_text2(tagwriter)
 
-    def export_acdb_text(self, tagwriter: "TagWriter") -> None:
+    def export_acdb_text(self, tagwriter: TagWriter) -> None:
         """Export TEXT data as DXF tags. (internal API)"""
         if tagwriter.dxfversion > const.DXF12:
             tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_text.name)
@@ -214,15 +215,13 @@ class Text(DXFGraphic):
             ],
         )
 
-    def export_acdb_text2(self, tagwriter: "TagWriter") -> None:
+    def export_acdb_text2(self, tagwriter: TagWriter) -> None:
         """Export TEXT data as DXF tags. (internal API)"""
         if tagwriter.dxfversion > const.DXF12:
             tagwriter.write_tag2(const.SUBCLASS_MARKER, acdb_text2.name)
         self.dxf.export_dxf_attribs(tagwriter, "valign")
 
-    def set_pos(
-        self, p1: "Vertex", p2: "Vertex" = None, align: str = None
-    ) -> "Text":
+    def set_pos(self, p1: UVec, p2: UVec = None, align: str = None) -> Text:
         """Set text alignment and location. (deprecated)
 
         The alignments "ALIGNED" and "FIT"
@@ -270,16 +269,16 @@ class Text(DXFGraphic):
 
     def set_placement(
         self,
-        p1: "Vertex",
-        p2: "Vertex" = None,
+        p1: UVec,
+        p2: UVec = None,
         align: TextEntityAlignment = None,
-    ) -> "Text":
+    ) -> Text:
         """Set text alignment and location.
 
         The alignments :attr:`ALIGNED` and :attr:`FIT`
         are special, they require a second alignment point, the text is aligned
         on the virtual line between these two points and sits vertically at the
-        base line.
+        baseline.
 
         - :attr:`ALIGNED`: Text is stretched or compressed
           to fit exactly between `p1` and `p2` and the text height is also
@@ -359,7 +358,7 @@ class Text(DXFGraphic):
             return align, p1, p2
         return align, p2, None
 
-    def set_align(self, align: str = "LEFT") -> "Text":
+    def set_align(self, align: str = "LEFT") -> Text:
         """Set the text alignment as string (deprecated)
 
         .. warning::
@@ -382,7 +381,7 @@ class Text(DXFGraphic):
         self.dxf.valign = valign
         return self
 
-    def set_align_enum(self, align=TextEntityAlignment.LEFT) -> "Text":
+    def set_align_enum(self, align=TextEntityAlignment.LEFT) -> Text:
         """Just for experts: Sets the text alignment without setting the
         alignment points, set adjustment points attr:`dxf.insert` and
         :attr:`dxf.align_point` manually.
@@ -427,7 +426,7 @@ class Text(DXFGraphic):
             (halign, valign), TextEntityAlignment.LEFT
         )
 
-    def transform(self, m: Matrix44) -> "Text":
+    def transform(self, m: Matrix44) -> Text:
         """Transform the TEXT entity by transformation matrix `m` inplace."""
         dxf = self.dxf
         if not dxf.hasattr("align_point"):
@@ -460,7 +459,7 @@ class Text(DXFGraphic):
         self.post_transform(m)
         return self
 
-    def translate(self, dx: float, dy: float, dz: float) -> "Text":
+    def translate(self, dx: float, dy: float, dz: float) -> Text:
         """Optimized TEXT/ATTRIB/ATTDEF translation about `dx` in x-axis, `dy`
         in y-axis and `dz` in z-axis, returns `self`.
 
@@ -477,7 +476,7 @@ class Text(DXFGraphic):
             self.post_transform(Matrix44.translate(dx, dy, dz))
         return self
 
-    def remove_dependencies(self, other: "Drawing" = None) -> None:
+    def remove_dependencies(self, other: Drawing = None) -> None:
         """Remove all dependencies from actual document.
 
         (internal API)

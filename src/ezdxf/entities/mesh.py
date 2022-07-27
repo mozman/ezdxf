@@ -1,5 +1,6 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
     Iterable,
@@ -32,6 +33,7 @@ from ezdxf.lldxf.const import (
     DXFIndexError,
 )
 from ezdxf.lldxf.packedtags import VertexArray, TagArray, TagList
+from ezdxf.math import Matrix44, UVec
 from ezdxf.tools import take2
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -41,9 +43,7 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import (
         TagWriter,
         DXFNamespace,
-        Vertex,
         Tags,
-        Matrix44,
         DXFEntity,
         Auditor,
     )
@@ -101,14 +101,14 @@ class EdgeArray(TagArray):
     def __len__(self) -> int:
         return len(self.values) // 2
 
-    def __iter__(self) -> Iterable[Tuple[int, int]]:
+    def __iter__(self) -> Iterator[Tuple[int, int]]:
         for edge in take2(self.values):
             yield edge
 
     def set_data(self, edges: Iterable[Tuple[int, int]]) -> None:
         self.values = array.array(self.DTYPE, chain.from_iterable(edges))
 
-    def export_dxf(self, tagwriter: "TagWriter"):
+    def export_dxf(self, tagwriter: TagWriter):
         # count = count of edges not tags!
         tagwriter.write_tag2(94, len(self.values) // 2)
         for index in self.values:
@@ -122,7 +122,7 @@ class FaceList(TagList):
     def __iter__(self) -> Iterable[array.array]:
         return iter(self.values)
 
-    def export_dxf(self, tagwriter: "TagWriter"):
+    def export_dxf(self, tagwriter: TagWriter):
         # count = count of tags not faces!
         tagwriter.write_tag2(93, self.tag_count())
         for face in self.values:
@@ -151,12 +151,12 @@ def face_to_array(face: Sequence[int]) -> array.array:
     return array.array(dtype, face)
 
 
-def create_vertex_array(tags: "Tags", start_index: int) -> "VertexArray":
+def create_vertex_array(tags: Tags, start_index: int) -> VertexArray:
     vertex_tags = tags.collect_consecutive_tags(codes=(10,), start=start_index)
     return VertexArray(data=chain.from_iterable(t.value for t in vertex_tags))
 
 
-def create_face_list(tags: "Tags", start_index: int) -> "FaceList":
+def create_face_list(tags: Tags, start_index: int) -> FaceList:
     faces = FaceList()
     faces_list = faces.values
     face: List[int] = []
@@ -182,20 +182,20 @@ def create_face_list(tags: "Tags", start_index: int) -> "FaceList":
     return faces
 
 
-def create_edge_array(tags: "Tags", start_index: int) -> "EdgeArray":
+def create_edge_array(tags: Tags, start_index: int) -> EdgeArray:
     return EdgeArray(
         data=collect_values(tags, start_index, code=90)
     )  # int values
 
 
 def collect_values(
-    tags: "Tags", start_index: int, code: int
+    tags: Tags, start_index: int, code: int
 ) -> Iterable[Union[float, int]]:
     values = tags.collect_consecutive_tags(codes=(code,), start=start_index)
     return (t.value for t in values)
 
 
-def create_crease_array(tags: "Tags", start_index: int) -> "array.array":
+def create_crease_array(tags: Tags, start_index: int) -> array.array:
     return array.array(
         "f", collect_values(tags, start_index, code=140)
     )  # float values
@@ -219,7 +219,7 @@ class Mesh(DXFGraphic):
         self._edges = EdgeArray()  # edge indices stored as array.array('L')
         self._creases = array.array("f")  # creases stored as array.array('f')
 
-    def _copy_data(self, entity: "DXFEntity") -> None:
+    def _copy_data(self, entity: DXFEntity) -> None:
         """Copy data: vertices, faces, edges, creases."""
         assert isinstance(entity, Mesh)
         entity._vertices = copy.deepcopy(self._vertices)
@@ -229,7 +229,7 @@ class Mesh(DXFGraphic):
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.subclass_by_index(2)
@@ -246,7 +246,7 @@ class Mesh(DXFGraphic):
                 )
         return dxf
 
-    def load_mesh_data(self, mesh_tags: "Tags", handle: str) -> None:
+    def load_mesh_data(self, mesh_tags: Tags, handle: str) -> None:
         def process_vertices():
             try:
                 vertex_count_index = mesh_tags.tag_index(92)
@@ -303,7 +303,7 @@ class Mesh(DXFGraphic):
         self._edges = process_edges()
         self._creases = process_creases()
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: TagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_mesh.name)
@@ -336,11 +336,11 @@ class Mesh(DXFGraphic):
             creases.append(0.0)
         return creases
 
-    def export_override_data(self, tagwriter: "TagWriter"):
+    def export_override_data(self, tagwriter: TagWriter):
         tagwriter.write_tag2(90, 0)
 
     @property
-    def creases(self) -> "array.array":
+    def creases(self) -> array.array:
         """Creases as :class:`array.array`. (read/write)"""
         return self._creases
 
@@ -356,7 +356,7 @@ class Mesh(DXFGraphic):
         return self._vertices
 
     @vertices.setter
-    def vertices(self, points: Iterable["Vertex"]) -> None:
+    def vertices(self, points: Iterable[UVec]) -> None:
         self._vertices = VertexArray(chain.from_iterable(points))
 
     @property
@@ -381,10 +381,10 @@ class Mesh(DXFGraphic):
     def faces(self, faces: Iterable[Sequence[int]]) -> None:
         self._faces.set_data(faces)
 
-    def get_data(self) -> "MeshData":
+    def get_data(self) -> MeshData:
         return MeshData(self)
 
-    def set_data(self, data: "MeshData") -> None:
+    def set_data(self, data: MeshData) -> None:
         self.vertices = data.vertices
         self._faces.set_data(data.faces)
         self._edges.set_data(data.edges)
@@ -393,7 +393,7 @@ class Mesh(DXFGraphic):
             raise DXFValueError("count of edges must match count of creases")
 
     @contextmanager
-    def edit_data(self) -> Iterator["MeshData"]:
+    def edit_data(self) -> Iterator[MeshData]:
         """Context manager various mesh data, returns :class:`MeshData`.
 
         Despite that vertices, edge and faces since `ezdxf` v0.8.9 are
@@ -405,13 +405,13 @@ class Mesh(DXFGraphic):
         yield data
         self.set_data(data)
 
-    def transform(self, m: "Matrix44") -> "Mesh":
+    def transform(self, m: Matrix44) -> Mesh:
         """Transform the MESH entity by transformation matrix `m` inplace."""
         self._vertices.transform(m)
         self.post_transform(m)
         return self
 
-    def audit(self, auditor: "Auditor") -> None:
+    def audit(self, auditor: Auditor) -> None:
         if not self.is_alive:
             return
         super().audit(auditor)
@@ -431,7 +431,7 @@ class MeshData:
         self.edges: List[Tuple[int, int]] = list(mesh.edges)
         self.edge_crease_values: List[float] = list(mesh.creases)
 
-    def add_face(self, vertices: Iterable["Vertex"]) -> Sequence[int]:
+    def add_face(self, vertices: Iterable[UVec]) -> Sequence[int]:
         """Add a face by coordinates, vertices is a list of ``(x, y, z)``
         tuples.
         """
@@ -454,13 +454,13 @@ class MeshData:
         self.edge_crease_values.append(crease)
 
     def add_entity(
-        self, vertices: Iterable["Vertex"], entity_list: List
+        self, vertices: Iterable[UVec], entity_list: List
     ) -> Sequence[int]:
         indices = [self.add_vertex(vertex) for vertex in vertices]
         entity_list.append(indices)
         return indices
 
-    def add_vertex(self, vertex: "Vertex") -> int:
+    def add_vertex(self, vertex: UVec) -> int:
         if len(vertex) != 3:
             raise DXFValueError(
                 "Parameter vertex has to be a 3-tuple (x, y, z)."

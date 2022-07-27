@@ -1,5 +1,6 @@
 # Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Iterator
 import math
 from ezdxf.math import (
@@ -7,7 +8,6 @@ from ezdxf.math import (
     Matrix44,
     linspace,
     ConstructionArc,
-    Vertex,
     arc_angle_span_deg,
 )
 from ezdxf.math.transformtools import OCSTransform
@@ -26,7 +26,7 @@ from .circle import acdb_circle, Circle, merged_circle_group_codes
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Vec3
+    from ezdxf.eztypes import TagWriter
 
 __all__ = ["Arc"]
 
@@ -52,7 +52,7 @@ class Arc(Circle):
     DXFATTRIBS = DXFAttributes(base_class, acdb_entity, acdb_circle, acdb_arc)
     MERGED_GROUP_CODES = merged_arc_group_codes
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: TagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         # AcDbEntity export is done by parent class
@@ -62,13 +62,13 @@ class Arc(Circle):
         self.dxf.export_dxf_attribs(tagwriter, ["start_angle", "end_angle"])
 
     @property
-    def start_point(self) -> "Vec3":
+    def start_point(self) -> Vec3:
         """Returns the start point of the arc in WCS, takes OCS into account."""
         v = list(self.vertices([self.dxf.start_angle]))
         return v[0]
 
     @property
-    def end_point(self) -> "Vec3":
+    def end_point(self) -> Vec3:
         """Returns the end point of the arc in WCS, takes OCS into account."""
         v = list(self.vertices([self.dxf.end_angle]))
         return v[0]
@@ -107,7 +107,7 @@ class Arc(Circle):
             Vec3(p.x, p.y, elevation) for p in arc.flattening(sagitta)
         )
 
-    def transform(self, m: Matrix44) -> "Arc":
+    def transform(self, m: Matrix44) -> Arc:
         """Transform ARC entity by transformation matrix `m` inplace.
 
         Raises ``NonUniformScalingError()`` for non uniform scaling.
@@ -138,7 +138,7 @@ class Arc(Circle):
             dxf.end_angle,
         )
 
-    def apply_construction_tool(self, arc: ConstructionArc) -> "Arc":
+    def apply_construction_tool(self, arc: ConstructionArc) -> Arc:
         """Set ARC data from construction tool :class:`ezdxf.math.ConstructionArc`,
         will not change the extrusion vector.
 

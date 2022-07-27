@@ -1,5 +1,6 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import TYPE_CHECKING, Union, Tuple, Iterable, List, Optional
 from ezdxf.lldxf import validator
 from ezdxf.lldxf.attributes import (
@@ -13,14 +14,14 @@ from ezdxf.lldxf.attributes import (
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFTypeError
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tags import Tags
-from ezdxf.math import NULLVEC, Z_AXIS
+from ezdxf.math import NULLVEC, Z_AXIS, UVec
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
 from .dxfobj import DXFObject
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Vertex, Drawing
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Drawing
 
 __all__ = [
     "PdfUnderlay",
@@ -104,15 +105,15 @@ class Underlay(DXFGraphic):
 
     def __init__(self):
         super().__init__()
-        self._boundary_path: List["Vertex"] = []
-        self._underlay_def: Optional["UnderlayDefinition"] = None
+        self._boundary_path: List[UVec] = []
+        self._underlay_def: Optional[UnderlayDefinition] = None
 
     def copy(self):
         raise DXFTypeError("Copying of underlay not supported.")
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.subclass_by_index(2)
@@ -132,7 +133,7 @@ class Underlay(DXFGraphic):
                 )
         return dxf
 
-    def load_boundary_path(self, tags: "Tags") -> Iterable:
+    def load_boundary_path(self, tags: Tags) -> Iterable:
         path = []
         for tag in tags:
             if tag.code == 11:
@@ -141,12 +142,12 @@ class Underlay(DXFGraphic):
                 yield tag
         self._boundary_path = path
 
-    def post_load_hook(self, doc: "Drawing") -> None:
+    def post_load_hook(self, doc: Drawing) -> None:
         super().post_load_hook(doc)
         db = doc.entitydb
         self._underlay_def = db.get(self.dxf.get("underlay_def_handle", None))
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: TagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_underlay.name)
@@ -167,16 +168,16 @@ class Underlay(DXFGraphic):
         )
         self.export_boundary_path(tagwriter)
 
-    def export_boundary_path(self, tagwriter: "TagWriter"):
+    def export_boundary_path(self, tagwriter: TagWriter):
         for vertex in self.boundary_path:
             tagwriter.write_vertex(11, vertex[:2])
 
-    def set_underlay_def(self, underlay_def: "UnderlayDefinition") -> None:
+    def set_underlay_def(self, underlay_def: UnderlayDefinition) -> None:
         self._underlay_def = underlay_def
         self.dxf.underlay_def_handle = underlay_def.dxf.handle
         underlay_def.append_reactor_handle(self.dxf.handle)
 
-    def get_underlay_def(self) -> Optional["UnderlayDefinition"]:
+    def get_underlay_def(self) -> Optional[UnderlayDefinition]:
         return self._underlay_def
 
     @property
@@ -184,7 +185,7 @@ class Underlay(DXFGraphic):
         return self._boundary_path
 
     @boundary_path.setter
-    def boundary_path(self, vertices: Iterable["Vertex"]) -> None:
+    def boundary_path(self, vertices: Iterable[UVec]) -> None:
         self.set_boundary_path(vertices)
 
     @property
@@ -233,7 +234,7 @@ class Underlay(DXFGraphic):
         self.dxf.scale_y = y
         self.dxf.scale_z = z
 
-    def set_boundary_path(self, vertices: Iterable["Vertex"]) -> None:
+    def set_boundary_path(self, vertices: Iterable[UVec]) -> None:
         # path coordinates as drawing coordinates but unscaled
         vertices = list(vertices)
         if len(vertices):
@@ -308,7 +309,7 @@ class UnderlayDefinition(DXFObject):
             )
         return dxf
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: TagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_underlay_def.name)

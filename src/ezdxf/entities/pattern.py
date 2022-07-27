@@ -1,20 +1,21 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import Iterable, List, TYPE_CHECKING
 
 from ezdxf.lldxf.tags import Tags, group_tags
-from ezdxf.math import Vec2
+from ezdxf.math import Vec2, UVec
 from ezdxf.tools import pattern
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, TagWriter
+    from ezdxf.eztypes import TagWriter
 
 __all__ = ["Pattern", "PatternLine"]
 
 
 class Pattern:
-    def __init__(self, lines: Iterable["PatternLine"] = None):
-        self.lines: List["PatternLine"] = list(lines) if lines else []
+    def __init__(self, lines: Iterable[PatternLine] = None):
+        self.lines: List[PatternLine] = list(lines) if lines else []
 
     @classmethod
     def load_tags(cls, tags: Tags) -> "Pattern":
@@ -30,8 +31,8 @@ class Pattern:
     def add_line(
         self,
         angle: float = 0,
-        base_point: "Vertex" = (0, 0),
-        offset: "Vertex" = (0, 0),
+        base_point: UVec = (0, 0),
+        offset: UVec = (0, 0),
         dash_length_items: Iterable[float] = None,
     ) -> None:
         """Create a new pattern definition line and add the line to the
@@ -45,7 +46,7 @@ class Pattern:
             PatternLine(angle, base_point, offset, dash_length_items)
         )
 
-    def export_dxf(self, tagwriter: "TagWriter", force=False) -> None:
+    def export_dxf(self, tagwriter: TagWriter, force=False) -> None:
         if len(self.lines) or force:
             tagwriter.write_tag2(78, len(self.lines))
             for line in self.lines:
@@ -80,8 +81,8 @@ class PatternLine:
     def __init__(
         self,
         angle: float = 0,
-        base_point: "Vertex" = (0, 0),
-        offset: "Vertex" = (0, 0),
+        base_point: UVec = (0, 0),
+        offset: UVec = (0, 0),
         dash_length_items: Iterable[float] = None,
     ):
         self.angle: float = float(angle)  # in degrees
@@ -94,7 +95,7 @@ class PatternLine:
         # item > 0 is line, < 0 is gap, 0.0 = dot;
 
     @staticmethod
-    def load_tags(tags: Tags) -> "PatternLine":
+    def load_tags(tags: Tags) -> PatternLine:
         p = {53: 0, 43: 0, 44: 0, 45: 0, 46: 0}
         dash_length_items = []
         for tag in tags:
@@ -107,7 +108,7 @@ class PatternLine:
             p[53], (p[43], p[44]), (p[45], p[46]), dash_length_items
         )
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: TagWriter) -> None:
         write_tag = tagwriter.write_tag2
         write_tag(53, self.angle)
         write_tag(43, self.base_point.x)

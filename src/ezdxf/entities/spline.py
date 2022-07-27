@@ -1,6 +1,7 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Sequence, cast, List
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterable, Sequence, cast, List, Iterator
 import array
 import copy
 from itertools import chain
@@ -23,6 +24,7 @@ from ezdxf.lldxf.const import (
 from ezdxf.lldxf.packedtags import VertexArray, Tags
 from ezdxf.math import (
     Vec3,
+    UVec,
     Matrix44,
     ConstructionEllipse,
     Z_AXIS,
@@ -41,7 +43,7 @@ from .dxfgfx import DXFGraphic, acdb_entity
 from .factory import register_entity
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, DXFNamespace, Vertex, Auditor, Ellipse
+    from ezdxf.eztypes import TagWriter, DXFNamespace, Auditor, Ellipse
 
 __all__ = ["Spline"]
 
@@ -119,7 +121,7 @@ acdb_spline_group_codes = group_code_mapping(acdb_spline)
 
 
 class SplineData:
-    def __init__(self, spline: "Spline"):
+    def __init__(self, spline: Spline):
         self.fit_points = spline.fit_points
         self.control_points = spline.control_points
         self.knots = spline.knots
@@ -161,7 +163,7 @@ class Spline(DXFGraphic):
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.subclass_by_index(2)
@@ -206,7 +208,7 @@ class Spline(DXFGraphic):
         self.knots = knots
         self.weights = weights
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: TagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_spline.name)
@@ -227,7 +229,7 @@ class Spline(DXFGraphic):
 
         self.export_spline_data(tagwriter)
 
-    def export_spline_data(self, tagwriter: "TagWriter"):
+    def export_spline_data(self, tagwriter: TagWriter):
         for value in self._knots:
             tagwriter.write_tag2(40, value)
 
@@ -280,7 +282,7 @@ class Spline(DXFGraphic):
         return self._control_points
 
     @control_points.setter
-    def control_points(self, points: Iterable["Vertex"]) -> None:
+    def control_points(self, points: Iterable[UVec]) -> None:
         self._control_points: Vertices = cast(
             Vertices, VertexArray(chain.from_iterable(Vec3.generate(points)))
         )
@@ -298,7 +300,7 @@ class Spline(DXFGraphic):
         return self._fit_points
 
     @fit_points.setter
-    def fit_points(self, points: Iterable["Vertex"]) -> None:
+    def fit_points(self, points: Iterable[UVec]) -> None:
         self._fit_points: Vertices = cast(
             Vertices,
             VertexArray(chain.from_iterable(Vec3.generate(points))),
@@ -336,7 +338,7 @@ class Spline(DXFGraphic):
                 "Construction tool requires control- or fit points."
             )
 
-    def apply_construction_tool(self, s) -> "Spline":
+    def apply_construction_tool(self, s) -> Spline:
         """Apply SPLINE data from a :class:`~ezdxf.math.BSpline` construction
         tool or from a :class:`geomdl.BSpline.Curve` object.
 
@@ -354,7 +356,7 @@ class Spline(DXFGraphic):
         self.set_flag_state(Spline.RATIONAL, state=bool(len(self.weights)))
         return self  # floating interface
 
-    def flattening(self, distance: float, segments: int = 4) -> Iterable[Vec3]:
+    def flattening(self, distance: float, segments: int = 4) -> Iterator[Vec3]:
         """Adaptive recursive flattening. The argument `segments` is the
         minimum count of approximation segments between two knots, if the
         distance from the center of the approximation segment to the curve is
@@ -371,7 +373,7 @@ class Spline(DXFGraphic):
         return self.construction_tool().flattening(distance, segments)
 
     @classmethod
-    def from_arc(cls, entity: "DXFGraphic") -> "Spline":
+    def from_arc(cls, entity: DXFGraphic) -> Spline:
         """Create a new SPLINE entity from a CIRCLE, ARC or ELLIPSE entity.
 
         The new SPLINE entity has no owner, no handle, is not stored in
@@ -410,7 +412,7 @@ class Spline(DXFGraphic):
         return spline
 
     def set_open_uniform(
-        self, control_points: Sequence["Vertex"], degree: int = 3
+        self, control_points: Sequence[UVec], degree: int = 3
     ) -> None:
         """Open B-spline with uniform knot vector, start and end at your first
         and last control points.
@@ -422,9 +424,9 @@ class Spline(DXFGraphic):
         self.knots = open_uniform_knot_vector(len(control_points), degree + 1)
 
     def set_uniform(
-        self, control_points: Sequence["Vertex"], degree: int = 3
+        self, control_points: Sequence[UVec], degree: int = 3
     ) -> None:
-        """B-spline with uniform knot vector, does NOT start and end at your
+        """B-spline with a uniform knot vector, does NOT start and end at your
         first and last control points.
 
         """
@@ -433,7 +435,7 @@ class Spline(DXFGraphic):
         self.control_points = control_points  # type: ignore
         self.knots = uniform_knot_vector(len(control_points), degree + 1)
 
-    def set_closed(self, control_points: Sequence["Vertex"], degree=3) -> None:
+    def set_closed(self, control_points: Sequence[UVec], degree=3) -> None:
         """
         Closed B-spline with uniform knot vector, start and end at your first control point.
 
@@ -450,11 +452,11 @@ class Spline(DXFGraphic):
 
     def set_open_rational(
         self,
-        control_points: Sequence["Vertex"],
+        control_points: Sequence[UVec],
         weights: Sequence[float],
         degree: int = 3,
     ) -> None:
-        """Open rational B-spline with uniform knot vector, start and end at
+        """Open rational B-spline with a uniform knot vector, start and end at
         your first and last control points, and has additional control
         possibilities by weighting each control point.
 
@@ -469,11 +471,11 @@ class Spline(DXFGraphic):
 
     def set_uniform_rational(
         self,
-        control_points: Sequence["Vertex"],
+        control_points: Sequence[UVec],
         weights: Sequence[float],
         degree: int = 3,
     ) -> None:
-        """Rational B-spline with uniform knot vector, does NOT start and end
+        """Rational B-spline with a uniform knot vector, does NOT start and end
         at your first and last control points, and has additional control
         possibilities by weighting each control point.
 
@@ -488,11 +490,11 @@ class Spline(DXFGraphic):
 
     def set_closed_rational(
         self,
-        control_points: Sequence["Vertex"],
+        control_points: Sequence[UVec],
         weights: Sequence[float],
         degree: int = 3,
     ) -> None:
-        """Closed rational B-spline with uniform knot vector, start and end at
+        """Closed rational B-spline with a uniform knot vector, start and end at
         your first control point, and has additional control possibilities by
         weighting each control point.
 
@@ -507,7 +509,7 @@ class Spline(DXFGraphic):
             )
         self.weights = weights
 
-    def transform(self, m: "Matrix44") -> "Spline":
+    def transform(self, m: Matrix44) -> Spline:
         """Transform the SPLINE entity by transformation matrix `m` inplace."""
         self._control_points.transform(m)  # type: ignore
         self._fit_points.transform(m)  # type: ignore
@@ -519,12 +521,8 @@ class Spline(DXFGraphic):
         self.post_transform(m)
         return self
 
-    def audit(self, auditor: "Auditor") -> None:
-        """Audit the SPLINE entity.
-
-        .. versionadded:: 0.15.1
-
-        """
+    def audit(self, auditor: Auditor) -> None:
+        """Audit the SPLINE entity."""
         super().audit(auditor)
         degree = self.dxf.degree
         name = str(self)
@@ -554,7 +552,7 @@ class Spline(DXFGraphic):
         elif n_fit_points > 0:
             self._audit_fit_points(auditor)
 
-    def _audit_control_points(self, auditor: "Auditor"):
+    def _audit_control_points(self, auditor: Auditor):
         name = str(self)
         order = self.dxf.degree + 1
         n_control_points = len(self.control_points)
@@ -596,7 +594,7 @@ class Spline(DXFGraphic):
             auditor.trash(self)
             return
 
-    def _audit_fit_points(self, auditor: "Auditor"):
+    def _audit_fit_points(self, auditor: Auditor):
         name = str(self)
         order = self.dxf.degree + 1
         # Assuming end tangents will be estimated if not present,

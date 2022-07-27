@@ -1,5 +1,6 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import TYPE_CHECKING, List, Iterable
 import logging
 from ezdxf.lldxf import validator
@@ -13,7 +14,7 @@ from ezdxf.lldxf.attributes import (
 )
 from ezdxf.lldxf.tags import Tags, DXFTag
 from ezdxf.lldxf.const import SUBCLASS_MARKER, DXF2000, DXFStructureError
-from ezdxf.math import Vec3, X_AXIS, Z_AXIS, NULLVEC
+from ezdxf.math import Vec3, UVec, X_AXIS, Z_AXIS, NULLVEC
 from ezdxf.math.transformtools import transform_extrusion
 from ezdxf.explode import explode_entity
 from ezdxf.audit import AuditError
@@ -28,7 +29,6 @@ if TYPE_CHECKING:
     from ezdxf.eztypes import (
         TagWriter,
         DXFNamespace,
-        Vertex,
         Matrix44,
         BaseLayout,
         EntityQuery,
@@ -171,14 +171,14 @@ class Leader(DXFGraphic, OverrideMixin):
         super().__init__()
         self.vertices: List[Vec3] = []
 
-    def _copy_data(self, entity: "DXFEntity") -> None:
+    def _copy_data(self, entity: DXFEntity) -> None:
         """Copy vertices."""
         assert isinstance(entity, Leader)
         entity.vertices = Vec3.list(self.vertices)
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.subclass_by_index(2)
@@ -204,14 +204,14 @@ class Leader(DXFGraphic, OverrideMixin):
             else:
                 yield tag
 
-    def preprocess_export(self, tagwriter: "TagWriter") -> bool:
+    def preprocess_export(self, tagwriter: TagWriter) -> bool:
         if len(self.vertices) < 2:
             logger.debug(f"Invalid {str(self)}: more than 1 vertex required.")
             return False
         else:
             return True
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: TagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         tagwriter.write_tag2(SUBCLASS_MARKER, acdb_leader.name)
@@ -241,19 +241,19 @@ class Leader(DXFGraphic, OverrideMixin):
             ],
         )
 
-    def export_vertices(self, tagwriter: "TagWriter") -> None:
+    def export_vertices(self, tagwriter: TagWriter) -> None:
         tagwriter.write_tag2(76, len(self.vertices))
         for vertex in self.vertices:
             tagwriter.write_vertex(10, vertex)
 
-    def set_vertices(self, vertices: Iterable["Vertex"]):
+    def set_vertices(self, vertices: Iterable[UVec]):
         """Set vertices of the leader, vertices is an iterable of
         (x, y [,z]) tuples or :class:`~ezdxf.math.Vec3`.
 
         """
         self.vertices = [Vec3(v) for v in vertices]
 
-    def transform(self, m: "Matrix44") -> "Leader":
+    def transform(self, m: Matrix44) -> Leader:
         """Transform LEADER entity by transformation matrix `m` inplace."""
         self.vertices = list(m.transform_vertices(self.vertices))
         self.dxf.normal_vector, _ = transform_extrusion(
@@ -265,14 +265,14 @@ class Leader(DXFGraphic, OverrideMixin):
         self.post_transform(m)
         return self
 
-    def __virtual_entities__(self) -> Iterable["DXFGraphic"]:
+    def __virtual_entities__(self) -> Iterable[DXFGraphic]:
         """Implements the SupportsVirtualEntities protocol. """
         from ezdxf.render.leader import virtual_entities
         for e in virtual_entities(self):
             e.set_source_of_copy(self)
             yield e
 
-    def virtual_entities(self) -> Iterable["DXFGraphic"]:
+    def virtual_entities(self) -> Iterable[DXFGraphic]:
         """Yields 'virtual' parts of LEADER as DXF primitives.
 
         This entities are located at the original positions, but are not stored
@@ -282,7 +282,7 @@ class Leader(DXFGraphic, OverrideMixin):
         """
         return self.__virtual_entities__()
 
-    def explode(self, target_layout: "BaseLayout" = None) -> "EntityQuery":
+    def explode(self, target_layout: BaseLayout = None) -> EntityQuery:
         """
         Explode parts of LEADER as DXF primitives into target layout, if target
         layout is ``None``, the target layout is the layout of the LEADER.
@@ -299,7 +299,7 @@ class Leader(DXFGraphic, OverrideMixin):
         """
         return explode_entity(self, target_layout)
 
-    def audit(self, auditor: "Auditor") -> None:
+    def audit(self, auditor: Auditor) -> None:
         """Validity check."""
         super().audit(auditor)
         if len(self.vertices) < 2:

@@ -1,6 +1,6 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
-import enum
+from __future__ import annotations
 from typing import (
     Union,
     List,
@@ -10,14 +10,16 @@ from typing import (
     Optional,
     TYPE_CHECKING,
 )
-import math
 import abc
+import enum
+import math
 
 from ezdxf.lldxf import const
 from ezdxf.lldxf.tags import Tags, group_tags
 from ezdxf.math import (
     Vec2,
     Vec3,
+    UVec,
     OCS,
     bulge_to_arc,
     ConstructionEllipse,
@@ -33,7 +35,7 @@ from ezdxf.math import (
 from ezdxf.math.transformtools import OCSTransform
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import TagWriter, Vertex
+    from ezdxf.eztypes import TagWriter
 
 __all__ = [
     "BoundaryPaths",
@@ -74,11 +76,11 @@ class AbstractBoundaryPath(abc.ABC):
         ...
 
     @classmethod
-    def load_tags(cls, tags: Tags) -> "AbstractBoundaryPath":
+    def load_tags(cls, tags: Tags) -> AbstractBoundaryPath:
         ...
 
     @abc.abstractmethod
-    def export_dxf(self, tagwriter: "TagWriter", dxftype: str) -> None:
+    def export_dxf(self, tagwriter: TagWriter, dxftype: str) -> None:
         ...
 
     @abc.abstractmethod
@@ -100,7 +102,7 @@ class AbstractEdge(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: TagWriter) -> None:
         ...
 
     @abc.abstractmethod
@@ -119,7 +121,7 @@ class BoundaryPaths:
         return self.paths[item]
 
     @classmethod
-    def load_tags(cls, tags: Tags) -> "BoundaryPaths":
+    def load_tags(cls, tags: Tags) -> BoundaryPaths:
         paths = []
         assert tags[0].code == 92
         grouped_path_tags = group_tags(tags, splitcode=92)
@@ -201,7 +203,7 @@ class BoundaryPaths:
         path_vertices: Iterable[Tuple[float, ...]],
         is_closed: bool = True,
         flags: int = 1,
-    ) -> "PolylinePath":
+    ) -> PolylinePath:
         """Create and add a new :class:`PolylinePath` object.
 
         Args:
@@ -215,7 +217,7 @@ class BoundaryPaths:
         self.paths.append(new_path)
         return new_path
 
-    def add_edge_path(self, flags: int = 1) -> "EdgePath":
+    def add_edge_path(self, flags: int = 1) -> EdgePath:
         """Create and add a new :class:`EdgePath` object.
 
         Args:
@@ -227,7 +229,7 @@ class BoundaryPaths:
         self.paths.append(new_path)
         return new_path
 
-    def export_dxf(self, tagwriter: "TagWriter", dxftype: str) -> None:
+    def export_dxf(self, tagwriter: TagWriter, dxftype: str) -> None:
         tagwriter.write_tag2(91, len(self.paths))
         for path in self.paths:
             path.export_dxf(tagwriter, dxftype)
@@ -730,7 +732,7 @@ class EdgePath(AbstractBoundaryPath):
         for edge in self.edges:
             edge.transform(ocs, elevation=elevation)
 
-    def add_line(self, start: "Vertex", end: "Vertex") -> "LineEdge":
+    def add_line(self, start: UVec, end: UVec) -> "LineEdge":
         """Add a :class:`LineEdge` from `start` to `end`.
 
         Args:
@@ -746,7 +748,7 @@ class EdgePath(AbstractBoundaryPath):
 
     def add_arc(
         self,
-        center: "Vertex",
+        center: UVec,
         radius: float = 1.0,
         start_angle: float = 0.0,
         end_angle: float = 360.0,
@@ -792,13 +794,13 @@ class EdgePath(AbstractBoundaryPath):
 
     def add_ellipse(
         self,
-        center: "Vertex",
-        major_axis: "Vertex" = (1.0, 0.0),
+        center: UVec,
+        major_axis: UVec = (1.0, 0.0),
         ratio: float = 1.0,
         start_angle: float = 0.0,
         end_angle: float = 360.0,
         ccw: bool = True,
-    ) -> "EllipseEdge":
+    ) -> EllipseEdge:
         """Add an :class:`EllipseEdge`.
 
         **Adding Clockwise Oriented Ellipses:**
@@ -845,15 +847,15 @@ class EdgePath(AbstractBoundaryPath):
 
     def add_spline(
         self,
-        fit_points: Iterable["Vertex"] = None,
-        control_points: Iterable["Vertex"] = None,
+        fit_points: Iterable[UVec] = None,
+        control_points: Iterable[UVec] = None,
         knot_values: Iterable[float] = None,
         weights: Iterable[float] = None,
         degree: int = 3,
         periodic: int = 0,
-        start_tangent: "Vertex" = None,
-        end_tangent: "Vertex" = None,
-    ) -> "SplineEdge":
+        start_tangent: UVec = None,
+        end_tangent: UVec = None,
+    ) -> SplineEdge:
         """Add a :class:`SplineEdge`.
 
         Args:
@@ -907,7 +909,7 @@ class EdgePath(AbstractBoundaryPath):
         fit_points: Iterable[Tuple[float, float]],
         degree: int = 3,
         method: str = "distance",
-    ) -> "SplineEdge":
+    ) -> SplineEdge:
         bspline = global_bspline_interpolation(
             fit_points=fit_points, degree=degree, method=method
         )
@@ -946,7 +948,7 @@ class LineEdge(AbstractEdge):
         return self.end
 
     @classmethod
-    def load_tags(cls, tags: Tags) -> "LineEdge":
+    def load_tags(cls, tags: Tags) -> LineEdge:
         edge = cls()
         for tag in tags:
             code, value = tag
@@ -956,7 +958,7 @@ class LineEdge(AbstractEdge):
                 edge.end = Vec2(value)
         return edge
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: TagWriter) -> None:
         tagwriter.write_tag2(72, 1)  # edge type
 
         x, y, *_ = self.start
@@ -994,7 +996,7 @@ class ArcEdge(AbstractEdge):
         return self.construction_tool().end_point
 
     @classmethod
-    def load_tags(cls, tags: Tags) -> "ArcEdge":
+    def load_tags(cls, tags: Tags) -> ArcEdge:
         edge = cls()
         start = 0.0
         end = 0.0
@@ -1026,7 +1028,7 @@ class ArcEdge(AbstractEdge):
             edge.end_angle = 360.0 - start
         return edge
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: TagWriter) -> None:
         tagwriter.write_tag2(72, 2)  # edge type
         x, y, *_ = self.center
         if self.ccw:
@@ -1115,7 +1117,7 @@ class EllipseEdge(AbstractEdge):
         self.end_angle = math.degrees(param_to_angle(self.ratio, param))
 
     @classmethod
-    def load_tags(cls, tags: Tags) -> "EllipseEdge":
+    def load_tags(cls, tags: Tags) -> EllipseEdge:
         edge = cls()
         start = 0.0
         end = 0.0
@@ -1150,7 +1152,7 @@ class EllipseEdge(AbstractEdge):
 
         return edge
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: TagWriter) -> None:
         tagwriter.write_tag2(72, 3)  # edge type
         x, y, *_ = self.center
         tagwriter.write_tag2(10, float(x))
@@ -1248,7 +1250,7 @@ class SplineEdge(AbstractEdge):
         return self.control_points[-1]
 
     @classmethod
-    def load_tags(cls, tags: Tags) -> "SplineEdge":
+    def load_tags(cls, tags: Tags) -> SplineEdge:
         edge = cls()
         for tag in tags:
             code, value = tag
@@ -1272,7 +1274,7 @@ class SplineEdge(AbstractEdge):
                 edge.end_tangent = Vec2(value)
         return edge
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: TagWriter) -> None:
         def set_required_tangents(points: List[Vec2]):
             if len(points) > 1:
                 if self.start_tangent is None:
