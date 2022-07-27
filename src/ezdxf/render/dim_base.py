@@ -1,5 +1,6 @@
-# Copyright (c) 2018-2021, Manfred Moitzi
+# Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
     Tuple,
@@ -15,6 +16,7 @@ import abc
 from ezdxf.math import (
     Vec3,
     Vec2,
+    UVec,
     ConstructionLine,
     ConstructionBox,
     ConstructionArc,
@@ -30,7 +32,6 @@ from ezdxf.entities import DimStyleOverride, Dimension
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import (
-        Vertex,
         Drawing,
         GenericLayoutType,
         Textstyle,
@@ -594,7 +595,7 @@ class Measurement:
         # 3 = Radians
         self.angle_units: int = get("dimaunit", 0)
 
-        self.has_arc_length_prefix = False
+        self.has_arc_length_prefix: bool = False
         if get("dimarcsym", 2) == 0:
             self.has_arc_length_prefix = True
 
@@ -685,7 +686,7 @@ class Measurement:
             return text
 
     def location_override(
-        self, location: "Vertex", leader=False, relative=False
+        self, location: UVec, leader=False, relative=False
     ) -> None:
         """Set user defined dimension text location. ezdxf defines a user
         defined location per definition as 'outside'.
@@ -762,21 +763,21 @@ class Geometry:
     ):
         assert dimension.doc is not None, "valid DXF document required"
         self.dimension: Dimension = dimension
-        self.doc: "Drawing" = dimension.doc
+        self.doc: Drawing = dimension.doc
         self.dxfversion: str = self.doc.dxfversion
         self.supports_dxf_r2000: bool = self.dxfversion >= "AC1015"
         self.supports_dxf_r2007: bool = self.dxfversion >= "AC1021"
         self.ucs: UCS = ucs
         self.extrusion: Vec3 = ucs.uz
         self.requires_extrusion: bool = not self.extrusion.isclose(Z_AXIS)
-        self.layout: "GenericLayoutType" = layout
+        self.layout: GenericLayoutType = layout
         self._text_box: TextBox = TextBox()
 
     @property
     def has_text_box(self) -> bool:
         return self._text_box.width > 0.0 and self._text_box.height > 0.0
 
-    def set_layout(self, layout: "GenericLayoutType") -> None:
+    def set_layout(self, layout: GenericLayoutType) -> None:
         self.layout = layout
 
     def set_text_box(self, text_box: TextBox) -> None:
@@ -977,7 +978,7 @@ class BaseDimensionRenderer:
     def __init__(
         self,
         dimension: Dimension,
-        ucs: "UCS" = None,
+        ucs: UCS = None,
         override: DimStyleOverride = None,
     ):
         self.dimension: Dimension = dimension
@@ -1074,9 +1075,9 @@ class BaseDimensionRenderer:
             width=self.total_text_width(),
             height=measurement.text_height,
             angle=measurement.text_rotation or 0.0,
-            # The currently used mono-spaced abstract font, returns a too large
+            # The currently used monospaced abstract font, returns a too large
             # text width.
-            # Therefore the horizontal text gap is ignored at all - yet!
+            # Therefore, the horizontal text gap is ignored at all - yet!
             hgap=0.0,
             # Arbitrary choice to reduce the too large vertical gap!
             vgap=measurement.text_gap * 0.75,
@@ -1085,7 +1086,7 @@ class BaseDimensionRenderer:
     def get_required_defpoint(self, name: str) -> Vec2:
         return get_required_defpoint(self.dimension, name)
 
-    def render(self, block: "GenericLayoutType"):
+    def render(self, block: GenericLayoutType):
         # Block entities are located in the OCS defined by the extrusion vector
         # of the DIMENSION entity and the z-axis of the OCS point
         # 'text_midpoint' (group code 11).
@@ -1115,7 +1116,7 @@ class BaseDimensionRenderer:
         }
 
     def location_override(
-        self, location: "Vertex", leader=False, relative=False
+        self, location: UVec, leader=False, relative=False
     ) -> None:
         """Set user defined dimension text location. ezdxf defines a user
         defined location per definition as 'outside'.
@@ -1137,7 +1138,7 @@ class BaseDimensionRenderer:
         dxfattribs: Dict[str, Any],
         remove_hidden_lines=False,
     ) -> None:
-        """Add a LINE entity to the dimension BLOCK. Removes parts of the line
+        """Add a LINE entity to the dimension BLOCK. Remove parts of the line
         hidden by dimension text if `remove_hidden_lines` is True.
 
         Args:
@@ -1163,7 +1164,7 @@ class BaseDimensionRenderer:
         dxfattribs: Dict[str, Any] = None,
         remove_hidden_lines=False,
     ) -> None:
-        """Add a ARC entity to the geometry layout. Removes parts of the arc
+        """Add a ARC entity to the geometry layout. Remove parts of the arc
         hidden by dimension text if `remove_hidden_lines` is True.
 
         Args:
@@ -1373,7 +1374,7 @@ def visible_arcs(
         return [(start_angle, end_angle)]
 
 
-def get_text_style(doc: "Drawing", name: str) -> "Textstyle":
+def get_text_style(doc: "Drawing", name: str) -> Textstyle:
     assert doc is not None, "valid DXF document required"
     get_style = doc.tables.styles.get
     try:
@@ -1384,7 +1385,7 @@ def get_text_style(doc: "Drawing", name: str) -> "Textstyle":
 
 
 def get_char_height(
-    dim_style: DimStyleOverride, text_style: "Textstyle"
+    dim_style: DimStyleOverride, text_style: Textstyle
 ) -> float:
     """Unscaled character height defined by text style or DIMTXT."""
     height: float = text_style.dxf.get("height", 0.0)

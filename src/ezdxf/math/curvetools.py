@@ -1,12 +1,13 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
+from __future__ import annotations
 from typing import Iterable, Union, List, Sequence, Tuple, TypeVar
 import math
 from ezdxf.math import (
     BSpline,
     Bezier4P,
     Bezier3P,
-    Vertex,
+    UVec,
     Vec3,
     AnyVec,
     BoundingBox,
@@ -153,7 +154,7 @@ def split_bezier(
     return left, right
 
 
-def quadratic_bezier_from_3p(p1: Vertex, p2: Vertex, p3: Vertex) -> Bezier3P:
+def quadratic_bezier_from_3p(p1: UVec, p2: UVec, p3: UVec) -> Bezier3P:
     """Returns a quadratic Bèzier curve :class:`Bezier3P` from three points.
     The curve starts at `p1`, goes through `p2` and ends at `p3`.
     (source: `pomax-2`_)
@@ -187,7 +188,7 @@ def quadratic_bezier_from_3p(p1: Vertex, p2: Vertex, p3: Vertex) -> Bezier3P:
     return Bezier3P([s, a, e])
 
 
-def cubic_bezier_from_3p(p1: Vertex, p2: Vertex, p3: Vertex) -> Bezier4P:
+def cubic_bezier_from_3p(p1: UVec, p2: UVec, p3: UVec) -> Bezier4P:
     """Returns a cubic Bèzier curve :class:`Bezier4P` from three points.
     The curve starts at `p1`, goes through `p2` and ends at `p3`.
     (source: `pomax-2`_)

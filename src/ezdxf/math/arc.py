@@ -1,9 +1,10 @@
-# Copyright (c) 2018-2021 Manfred Moitzi
+# Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import TYPE_CHECKING, Tuple, Iterable, Sequence
 import math
 
-from ezdxf.math import Vec2
+from ezdxf.math import Vec2, UVec
 from .bbox import BoundingBox2d
 from .construct2d import enclosing_angles, linspace
 from .circle import ConstructionCircle
@@ -11,7 +12,7 @@ from .line import ConstructionRay, ConstructionLine
 from .ucs import UCS
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex, BaseLayout, Arc
+    from ezdxf.eztypes import BaseLayout, Arc
 
 __all__ = ["ConstructionArc", "arc_chord_length", "arc_segment_count"]
 
@@ -39,7 +40,7 @@ class ConstructionArc:
 
     def __init__(
         self,
-        center: "Vertex" = (0, 0),
+        center: UVec = (0, 0),
         radius: float = 1.0,
         start_angle: float = 0.0,
         end_angle: float = 360.0,
@@ -56,12 +57,12 @@ class ConstructionArc:
             self.end_angle = start_angle
 
     @property
-    def start_point(self) -> "Vec2":
+    def start_point(self) -> Vec2:
         """start point of arc as :class:`Vec2`."""
         return self.center + Vec2.from_deg_angle(self.start_angle, self.radius)
 
     @property
-    def end_point(self) -> "Vec2":
+    def end_point(self) -> Vec2:
         """end point of arc as :class:`Vec2`."""
         return self.center + Vec2.from_deg_angle(self.end_angle, self.radius)
 
@@ -75,15 +76,15 @@ class ConstructionArc:
         return ConstructionCircle(self.center, self.radius)
 
     @property
-    def bounding_box(self) -> "BoundingBox2d":
+    def bounding_box(self) -> BoundingBox2d:
         """bounding box of arc as :class:`BoundingBox2d`."""
         bbox = BoundingBox2d((self.start_point, self.end_point))
         bbox.extend(self.main_axis_points())
         return bbox
 
     def angles(self, num: int) -> Iterable[float]:
-        """Returns `num` angles from start- to end angle in degrees in counter
-        clockwise order.
+        """Returns `num` angles from start- to end angle in degrees in
+        counter-clockwise order.
 
         All angles are normalized in the range from [0, 360).
 
@@ -147,8 +148,8 @@ class ConstructionArc:
         direction vectors.
 
         Args:
-            a: angles in the range from 0 to 360 in degrees, arc goes counter
-                clockwise around the z-axis, WCS x-axis = 0 deg.
+            a: angles in the range from 0 to 360 in degrees, arc goes
+                counter-clockwise around the z-axis, WCS x-axis = 0 deg.
 
         """
         for angle in a:
@@ -164,7 +165,7 @@ class ConstructionArc:
             if enclosing_angles(angle, start, end):
                 yield center + Vec2.from_angle(angle, radius)
 
-    def translate(self, dx: float, dy: float) -> "ConstructionArc":
+    def translate(self, dx: float, dy: float) -> ConstructionArc:
         """Move arc about `dx` in x-axis and about `dy` in y-axis, returns
         `self` (floating interface).
 
@@ -176,14 +177,14 @@ class ConstructionArc:
         self.center += Vec2(dx, dy)
         return self
 
-    def scale_uniform(self, s: float) -> "ConstructionArc":
+    def scale_uniform(self, s: float) -> ConstructionArc:
         """Scale arc inplace uniform about `s` in x- and y-axis, returns
         `self` (floating interface).
         """
         self.radius *= float(s)
         return self
 
-    def rotate_z(self, angle: float) -> "ConstructionArc":
+    def rotate_z(self, angle: float) -> ConstructionArc:
         """Rotate arc inplace about z-axis, returns `self`
         (floating interface).
 
@@ -207,7 +208,7 @@ class ConstructionArc:
 
     @staticmethod
     def validate_start_and_end_point(
-        start_point: "Vertex", end_point: "Vertex"
+        start_point: UVec, end_point: UVec
     ) -> Tuple[Vec2, Vec2]:
         start_point = Vec2(start_point)
         end_point = Vec2(end_point)
@@ -220,20 +221,20 @@ class ConstructionArc:
     @classmethod
     def from_2p_angle(
         cls,
-        start_point: "Vertex",
-        end_point: "Vertex",
+        start_point: UVec,
+        end_point: UVec,
         angle: float,
         ccw: bool = True,
-    ) -> "ConstructionArc":
+    ) -> ConstructionArc:
         """Create arc from two points and enclosing angle. Additional
-        precondition: arc goes by default in counter clockwise orientation from
+        precondition: arc goes by default in counter-clockwise orientation from
         `start_point` to `end_point`, can be changed by `ccw` = ``False``.
 
         Args:
             start_point: start point as :class:`Vec2` compatible object
             end_point: end point as :class:`Vec2` compatible object
             angle: enclosing angle in degrees
-            ccw: counter clockwise direction if ``True``
+            ccw: counter-clockwise direction if ``True``
 
         """
         _start_point, _end_point = cls.validate_start_and_end_point(
@@ -266,14 +267,14 @@ class ConstructionArc:
     @classmethod
     def from_2p_radius(
         cls,
-        start_point: "Vertex",
-        end_point: "Vertex",
+        start_point: UVec,
+        end_point: UVec,
         radius: float,
         ccw: bool = True,
         center_is_left: bool = True,
-    ) -> "ConstructionArc":
+    ) -> ConstructionArc:
         """Create arc from two points and arc radius.
-        Additional precondition: arc goes by default in counter clockwise
+        Additional precondition: arc goes by default in counter-clockwise
         orientation from `start_point` to `end_point` can be changed
         by `ccw` = ``False``.
 
@@ -286,7 +287,7 @@ class ConstructionArc:
             start_point: start point as :class:`Vec2` compatible object
             end_point: end point as :class:`Vec2` compatible object
             radius: arc radius
-            ccw: counter clockwise direction if ``True``
+            ccw: counter-clockwise direction if ``True``
             center_is_left: center point of arc is left of line from start- to
                 end point if ``True``
 
@@ -319,13 +320,13 @@ class ConstructionArc:
     @classmethod
     def from_3p(
         cls,
-        start_point: "Vertex",
-        end_point: "Vertex",
-        def_point: "Vertex",
+        start_point: UVec,
+        end_point: UVec,
+        def_point: UVec,
         ccw: bool = True,
-    ) -> "ConstructionArc":
+    ) -> ConstructionArc:
         """Create arc from three points.
-        Additional precondition: arc goes in counter clockwise
+        Additional precondition: arc goes in counter-clockwise
         orientation from `start_point` to `end_point`.
 
         Args:
@@ -333,7 +334,7 @@ class ConstructionArc:
             end_point: end point as :class:`Vec2` compatible object
             def_point: additional definition point as :class:`Vec2` compatible
                 object
-            ccw: counter clockwise direction if ``True``
+            ccw: counter-clockwise direction if ``True``
 
         """
         start_point, end_point = cls.validate_start_and_end_point(
@@ -474,7 +475,7 @@ class ConstructionArc:
         ]
 
     def intersect_arc(
-        self, other: "ConstructionArc", abs_tol: float = 1e-10
+        self, other: ConstructionArc, abs_tol: float = 1e-10
     ) -> Sequence[Vec2]:
         """Returns intersection points of two arcs as sequence of
         :class:`Vec2` objects.

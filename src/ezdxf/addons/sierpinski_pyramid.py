@@ -1,9 +1,10 @@
 # Purpose: create sierpinski pyramid geometry
-# Copyright (c) 2016-2021 Manfred Moitzi
+# Copyright (c) 2016-2022 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, List, Sequence, Tuple, Iterator
 import math
-from ezdxf.math import Vec3, Vertex
+from ezdxf.math import Vec3, UVec
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer
 
 if TYPE_CHECKING:
@@ -28,7 +29,7 @@ class SierpinskyPyramid:
 
     def __init__(
         self,
-        location: "Vertex" = (0.0, 0.0, 0.0),
+        location: UVec = (0.0, 0.0, 0.0),
         length: float = 1.0,
         level: int = 1,
         sides: int = 4,
@@ -38,7 +39,7 @@ class SierpinskyPyramid:
             location=location, length=length, level=level, sides=sides
         )
 
-    def vertices(self) -> Iterator["Vertex"]:
+    def vertices(self) -> Iterator[UVec]:
         """Yields the pyramid vertices as list of (x, y, z) tuples."""
         for location, length in self.pyramid_definitions:
             yield self._calc_vertices(location, length)
@@ -46,8 +47,8 @@ class SierpinskyPyramid:
     __iter__ = vertices
 
     def _calc_vertices(
-        self, location: "Vertex", length: float
-    ) -> List["Vertex"]:
+        self, location: UVec, length: float
+    ) -> List[UVec]:
         """
         Calculates the pyramid vertices.
 

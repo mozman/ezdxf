@@ -1,11 +1,11 @@
-# Copyright (c) 2020-2021, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import (
     List,
     TYPE_CHECKING,
     Iterable,
     Tuple,
-    Dict,
     Union,
     cast,
     Sequence,
@@ -16,7 +16,7 @@ import math
 from ezdxf.math import (
     Vec2,
     Vec3,
-    Vertex,
+    UVec,
     BSpline,
     linspace,
     ConstructionRay,
@@ -62,7 +62,7 @@ class AbstractTrace:
         pass
 
     def polygon(self) -> Polygon:
-        def merge(vertices: Polygon) -> Iterable[Vertex]:
+        def merge(vertices: Polygon) -> Iterable[UVec]:
             if not len(vertices):
                 return
 
@@ -143,7 +143,7 @@ class LinearTrace(AbstractTrace):
         return bool(self._stations)
 
     def add_station(
-        self, point: "Vertex", start_width: float, end_width: float = None
+        self, point: UVec, start_width: float, end_width: float = None
     ) -> None:
         """Add a trace station (like a vertex) at location `point`,
         `start_width` is the width of the next segment starting at this station,
@@ -334,7 +334,7 @@ class CurvedTrace(AbstractTrace):
         start_width: float,
         end_width: float,
         segments: int,
-    ) -> "CurvedTrace":
+    ) -> CurvedTrace:
         """
         Create curved trace from a B-spline.
 
@@ -362,7 +362,7 @@ class CurvedTrace(AbstractTrace):
         start_width: float,
         end_width: float,
         segments: int = 64,
-    ) -> "CurvedTrace":
+    ) -> CurvedTrace:
         """
         Create curved trace from an arc.
 
@@ -487,7 +487,7 @@ class TraceBuilder(Sequence):
             )
 
     def virtual_entities(
-        self, dxftype="TRACE", dxfattribs=None, doc: "Drawing" = None
+        self, dxftype="TRACE", dxfattribs=None, doc: Drawing = None
     ) -> Iterable[Quadrilateral]:
         """Yields faces as SOLID, TRACE or 3DFACE entities with DXF attributes
         given in `dxfattribs`.
@@ -525,8 +525,8 @@ class TraceBuilder(Sequence):
 
     @classmethod
     def from_polyline(
-        cls, polyline: "DXFGraphic", segments: int = 64
-    ) -> "TraceBuilder":
+        cls, polyline: DXFGraphic, segments: int = 64
+    ) -> TraceBuilder:
         """
         Create a complete trace from a LWPOLYLINE or a 2D POLYLINE entity, the
         trace consist of multiple sub-traces if :term:`bulge` values are

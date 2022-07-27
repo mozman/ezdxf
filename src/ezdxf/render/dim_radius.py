@@ -1,21 +1,21 @@
-# Copyright (c) 2018-2021, Manfred Moitzi
+# Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import TYPE_CHECKING
-from ezdxf.math import Vec2, UCS
+from ezdxf.math import Vec2, UCS, UVec
 from ezdxf.tools import normalize_text_angle
 from ezdxf.render.arrows import ARROWS, connection_point
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 from ezdxf.lldxf.const import DXFInternalEzdxfError
 from ezdxf.render.dim_base import (
     BaseDimensionRenderer,
-    TextBox,
     Measurement,
     LengthMeasurement,
     compile_mtext,
 )
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Dimension, Vertex, GenericLayoutType
+    from ezdxf.eztypes import Dimension, GenericLayoutType
 
 
 class RadiusMeasurement(LengthMeasurement):
@@ -348,14 +348,14 @@ class RadiusDimension(BaseDimensionRenderer):
             location = connection_point(arrow_name, location, scale, angle)
         return location
 
-    def add_radial_dim_line(self, end: "Vertex") -> None:
+    def add_radial_dim_line(self, end: UVec) -> None:
         """Add radial dimension line."""
         attribs = self.dimension_line.dxfattribs()
         self.add_line(
             self.center, end, dxfattribs=attribs, remove_hidden_lines=True
         )
 
-    def add_radial_dim_line_from_text(self, start, end: "Vertex") -> None:
+    def add_radial_dim_line_from_text(self, start, end: UVec) -> None:
         """Add radial dimension line, starting point at the measurement text."""
         attribs = self.dimension_line.dxfattribs()
         hshift = self._total_text_width / 2
@@ -368,7 +368,7 @@ class RadiusDimension(BaseDimensionRenderer):
             remove_hidden_lines=False,
         )
 
-    def add_horiz_ext_line_default(self, start: "Vertex") -> None:
+    def add_horiz_ext_line_default(self, start: UVec) -> None:
         """Add horizontal outside extension line from start for default
         locations.
         """
@@ -384,7 +384,7 @@ class RadiusDimension(BaseDimensionRenderer):
         end = self.outside_default_defpoint + Vec2((hdist, 0))
         self.add_line(self.outside_default_defpoint, end, dxfattribs=attribs)
 
-    def add_horiz_ext_line_user(self, start: "Vertex") -> None:
+    def add_horiz_ext_line_user(self, start: UVec) -> None:
         """Add horizontal extension line from start for user defined locations."""
         measurement = self.measurement
         assert isinstance(measurement.user_location, Vec2)
@@ -399,14 +399,14 @@ class RadiusDimension(BaseDimensionRenderer):
         end = measurement.user_location + Vec2((hdist, 0))
         self.add_line(measurement.user_location, end, dxfattribs=attribs)
 
-    def add_radial_ext_line_default(self, start: "Vertex") -> None:
+    def add_radial_ext_line_default(self, start: UVec) -> None:
         """Add radial outside extension line from start for default locations."""
         attribs = self.dimension_line.dxfattribs()
         length = self.measurement.text_gap + self._total_text_width
         end = start + self.dim_line_vec * length
         self.add_line(start, end, dxfattribs=attribs, remove_hidden_lines=True)
 
-    def add_radial_ext_line_user(self, start: "Vertex") -> None:
+    def add_radial_ext_line_user(self, start: UVec) -> None:
         """Add radial outside extension line from start for user defined location."""
         attribs = self.dimension_line.dxfattribs()
         length = self._total_text_width / 2.0

@@ -21,7 +21,7 @@
 #   - shuffle_pack()
 #   - pack_item_subset()
 #   - DXF exporter for debugging
-
+from __future__ import annotations
 from typing import (
     Tuple,
     List,
@@ -40,7 +40,7 @@ from ezdxf.enums import TextEntityAlignment
 from ezdxf.math import (
     Vec2,
     Vec3,
-    Vertex,
+    UVec,
     BoundingBox,
     BoundingBox2d,
     AbstractBoundingBox,
@@ -644,7 +644,7 @@ class FlatPacker(AbstractPacker):
 
 
 def export_dxf(
-    layout: "GenericLayoutType", bins: List[Bin], offset: Vertex = (1, 0, 0)
+    layout: "GenericLayoutType", bins: List[Bin], offset: UVec = (1, 0, 0)
 ) -> None:
     from ezdxf import colors
 

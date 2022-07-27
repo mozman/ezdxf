@@ -1,9 +1,9 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
 """
 Tools in this module should be as independent of DXF entities as possible!
 """
-import enum
+from __future__ import annotations
 from typing import (
     List,
     Iterable,
@@ -14,6 +14,7 @@ from typing import (
     Callable,
     NamedTuple,
 )
+import enum
 import re
 import math
 
@@ -35,7 +36,7 @@ from ezdxf.lldxf.const import (
     TOP,
     MAX_STR_LEN,
 )
-from ezdxf.math import Vec3, Vec2, Vertex
+from ezdxf.math import Vec3, Vec2, UVec
 from ezdxf.colors import rgb2int, RGB, int2rgb
 from .fonts import FontMeasurements, AbstractFont, FontFace, make_font
 
@@ -98,7 +99,7 @@ class TextLine:
 
     def baseline_vertices(
         self,
-        insert: Vertex,
+        insert: UVec,
         halign: int = 0,
         valign: int = 0,
         angle: float = 0,
@@ -126,7 +127,7 @@ class TextLine:
 
     def corner_vertices(
         self,
-        insert: Vertex,
+        insert: UVec,
         halign: int = 0,
         valign: int = 0,
         angle: float = 0,
@@ -164,8 +165,8 @@ class TextLine:
 
     @staticmethod
     def transform_2d(
-        vertices: Iterable[Vertex],
-        insert: Vertex = Vec3(0, 0, 0),
+        vertices: Iterable[UVec],
+        insert: UVec = Vec3(0, 0, 0),
         shift: Tuple[float, float] = (0, 0),
         rotation: float = 0,
         scale: Tuple[float, float] = (1, 1),
@@ -242,7 +243,7 @@ def _shift_y(fm: FontMeasurements, valign: int) -> float:
     return -fm.bottom
 
 
-def unified_alignment(entity: Union["Text", "MText"]) -> Tuple[int, int]:
+def unified_alignment(entity: Union[Text, MText]) -> Tuple[int, int]:
     """Return unified horizontal and vertical alignment.
 
     horizontal alignment: left=0, center=1, right=2
@@ -505,7 +506,7 @@ def caret_decode(text: str) -> str:
 
     """
 
-    def replace_match(match: "re.Match") -> str:
+    def replace_match(match: re.Match) -> str:
         c = ord(match.group(1))
         return chr((c - 64) % 126)
 
@@ -659,7 +660,7 @@ def text_wrap(
     return lines
 
 
-def is_text_vertical_stacked(text: "DXFEntity") -> bool:
+def is_text_vertical_stacked(text: DXFEntity) -> bool:
     """Returns ``True`` if the associated text :class:`~ezdxf.entities.Textstyle`
     is vertical stacked.
     """
@@ -817,12 +818,12 @@ class MTextEditor:
     NBSP = r"\~"  # non breaking space
     TAB = "^I"
 
-    def append(self, text: str) -> "MTextEditor":
+    def append(self, text: str) -> MTextEditor:
         """Append `text`."""
         self.text += text
         return self
 
-    def __iadd__(self, text: str) -> "MTextEditor":
+    def __iadd__(self, text: str) -> MTextEditor:
         r"""
         Append `text`::
 
@@ -843,7 +844,7 @@ class MTextEditor:
 
     def font(
         self, name: str, bold: bool = False, italic: bool = False
-    ) -> "MTextEditor":
+    ) -> MTextEditor:
         """Set the text font by the font family name. Changing the font height
         should be done by the :meth:`height` or the :meth:`scale_height` method.
         The font family name is the name shown in font selection widgets in
@@ -864,7 +865,7 @@ class MTextEditor:
         # Text size should be changed by \H<factor>x;
         return self.append(rf"\f{name}|b{int(bold)}|i{int(italic)};")
 
-    def scale_height(self, factor: float) -> "MTextEditor":
+    def scale_height(self, factor: float) -> MTextEditor:
         """Scale the text height by a `factor`. This scaling will accumulate,
         which means starting at height 2.5 and scaling by 2 and again by 3 will
         set the text height to 2.5 x 2 x 3 = 15. The current text height is not
@@ -876,45 +877,45 @@ class MTextEditor:
         """
         return self.append(rf"\H{round(factor, 3)}x;")
 
-    def height(self, height: float) -> "MTextEditor":
+    def height(self, height: float) -> MTextEditor:
         """Set the absolute text height in drawing units."""
         return self.append(rf"\H{round(height, 3)};")
 
-    def width_factor(self, factor: float) -> "MTextEditor":
+    def width_factor(self, factor: float) -> MTextEditor:
         """Set the absolute text width factor."""
         return self.append(rf"\W{round(factor, 3)};")
 
-    def char_tracking_factor(self, factor: float) -> "MTextEditor":
+    def char_tracking_factor(self, factor: float) -> MTextEditor:
         """Set the absolute character tracking factor."""
         return self.append(rf"\T{round(factor, 3)};")
 
-    def oblique(self, angle: int) -> "MTextEditor":
+    def oblique(self, angle: int) -> MTextEditor:
         """Set the text oblique angle in degrees, vertical is 0, a value of 15
         will lean the text 15 degree to the right.
 
         """
         return self.append(rf"\Q{int(angle)};")
 
-    def color(self, name: str) -> "MTextEditor":
+    def color(self, name: str) -> MTextEditor:
         """Set the text color by color name: "red", "yellow", "green", "cyan",
         "blue", "magenta" or "white".
 
         """
         return self.aci(const.MTEXT_COLOR_INDEX[name.lower()])
 
-    def aci(self, aci: int) -> "MTextEditor":
+    def aci(self, aci: int) -> MTextEditor:
         """Set the text color by :ref:`ACI` in range [0, 256]."""
         if 0 <= aci <= 256:
             return self.append(rf"\C{aci};")
         else:
             raise ValueError("aci not in range [0, 256]")
 
-    def rgb(self, rgb: RGB) -> "MTextEditor":
+    def rgb(self, rgb: RGB) -> MTextEditor:
         """Set the text color as RGB value."""
         r, g, b = rgb
         return self.append(rf"\c{rgb2int((b, g, r))};")
 
-    def stack(self, upr: str, lwr: str, t: str = "^") -> "MTextEditor":
+    def stack(self, upr: str, lwr: str, t: str = "^") -> MTextEditor:
         r"""Append stacked text `upr` over `lwr`, argument `t` defines the
         kind of stacking, the space " " after the "^" will be added
         automatically to avoid caret decoding:
@@ -941,32 +942,32 @@ class MTextEditor:
             t += " "
         return self.append(rf"\S{upr}{t}{lwr};")
 
-    def group(self, text: str) -> "MTextEditor":
+    def group(self, text: str) -> MTextEditor:
         """Group `text`, all properties changed inside a group are reverted at
         the end of the group. AutoCAD supports grouping up to 8 levels.
 
         """
         return self.append(f"{{{text}}}")
 
-    def underline(self, text: str) -> "MTextEditor":
+    def underline(self, text: str) -> MTextEditor:
         """Append `text` with a line below the text."""
         return self.append(rf"\L{text}\l")
 
-    def overline(self, text: str) -> "MTextEditor":
+    def overline(self, text: str) -> MTextEditor:
         """Append `text` with a line above the text."""
         return self.append(rf"\O{text}\o")
 
-    def strike_through(self, text: str) -> "MTextEditor":
+    def strike_through(self, text: str) -> MTextEditor:
         """Append `text` with a line through the text."""
         return self.append(rf"\K{text}\k")
 
-    def paragraph(self, props: ParagraphProperties) -> "MTextEditor":
+    def paragraph(self, props: ParagraphProperties) -> MTextEditor:
         """Set paragraph properties by a :class:`ParagraphProperties` object."""
         return self.append(props.tostring())
 
     def bullet_list(
         self, indent: float, bullets: Iterable[str], content: Iterable[str]
-    ) -> "MTextEditor":
+    ) -> MTextEditor:
         """Build bulleted lists by utilizing paragraph indentation and a
         tabulator stop. Any string can be used as bullet. Indentation is
         a multiple of the initial MTEXT char height (see also docs about
@@ -1028,7 +1029,7 @@ class MTextContext:
         )
         self.paragraph = ParagraphProperties()
 
-    def __copy__(self) -> "MTextContext":
+    def __copy__(self) -> MTextContext:
         p = MTextContext()
         p._stroke = self._stroke
         p.continue_stroke = self.continue_stroke
@@ -1644,7 +1645,7 @@ class MTextParser:
             self.scanner.consume(1)
 
 
-def load_mtext_content(tags: "Tags") -> str:
+def load_mtext_content(tags: Tags) -> str:
     tail = ""
     content = ""
     for code, value in tags:
@@ -1716,7 +1717,7 @@ def leading(cap_height: float, line_spacing: float = 1.0) -> float:
     return cap_height * 1.667 * line_spacing
 
 
-def estimate_mtext_extents(mtext: "MText") -> Tuple[float, float]:
+def estimate_mtext_extents(mtext: MText) -> Tuple[float, float]:
     """Estimate the width and height of a single column
     :class:`~ezdxf.entities.MText` entity.
 

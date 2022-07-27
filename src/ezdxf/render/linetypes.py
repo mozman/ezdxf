@@ -1,8 +1,9 @@
-#  Copyright (c) 2020-2021, Manfred Moitzi
+#  Copyright (c) 2020-2022, Manfred Moitzi
 #  License: MIT License
+from __future__ import annotations
 from typing import Tuple, Iterable
 import math
-from ezdxf.math import Vec3, Vertex
+from ezdxf.math import Vec3, UVec
 
 LineSegment = Tuple[Vec3, Vec3]
 
@@ -23,7 +24,7 @@ class LineTypeRenderer:
             self._current_dash_length = self._dashes[0]
             self._is_dash = True
 
-    def line_segment(self, start: Vertex, end: Vertex) -> Iterable[LineSegment]:
+    def line_segment(self, start: UVec, end: UVec) -> Iterable[LineSegment]:
         _start = Vec3(start)
         _end = Vec3(end)
         if self.is_solid or _start.isclose(_end):
@@ -41,7 +42,7 @@ class LineTypeRenderer:
             _start = _end
 
     def line_segments(
-        self, vertices: Iterable[Vertex]
+        self, vertices: Iterable[UVec]
     ) -> Iterable[LineSegment]:
         last = None
         for vertex in vertices:

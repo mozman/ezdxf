@@ -1,7 +1,6 @@
-# Copyright (c) 2011-2021, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-
 from typing import (
     TYPE_CHECKING,
     Iterable,
@@ -27,7 +26,7 @@ from ezdxf.entities import (
     Attrib,
 )
 from ezdxf.layouts.blocklayout import BlockLayout
-from ezdxf.math import Vertex, NULLVEC, Vec3
+from ezdxf.math import UVec, NULLVEC, Vec3
 from ezdxf.render.arrows import ARROWS
 from ezdxf.audit import Auditor, AuditError
 import warnings
@@ -85,7 +84,7 @@ class BlocksSection:
     """
 
     def __init__(
-        self, doc: "Drawing" = None, entities: List["DXFEntity"] = None
+        self, doc: "Drawing" = None, entities: List[DXFEntity] = None
     ):
         self.doc = doc
         if entities is not None:
@@ -97,20 +96,20 @@ class BlocksSection:
         return len(self.block_records)
 
     @staticmethod
-    def key(entity: Union[str, "BlockLayout"]) -> str:
+    def key(entity: Union[str, BlockLayout]) -> str:
         if not isinstance(entity, str):
             entity = entity.name
         return entity.lower()  # block key is lower case
 
     @property
-    def block_records(self) -> "Table":
+    def block_records(self) -> Table:
         return self.doc.block_records  # type: ignore
 
     @property
-    def entitydb(self) -> "EntityDB":
+    def entitydb(self) -> EntityDB:
         return self.doc.entitydb  # type: ignore
 
-    def load(self, entities: List["DXFEntity"]) -> None:
+    def load(self, entities: List[DXFEntity]) -> None:
         """
         Load DXF entities into BlockLayouts. `entities` is a list of
         entity tags, separated by BLOCK and ENDBLK entities.
@@ -120,8 +119,8 @@ class BlocksSection:
         def load_block_record(
             block: Block,
             endblk: EndBlk,
-            block_entities: List["DXFEntity"],
-        ) -> "BlockRecord":
+            block_entities: List[DXFEntity],
+        ) -> BlockRecord:
             try:
                 block_record = cast(
                     "BlockRecord", block_records.get(block.dxf.name)
@@ -206,14 +205,14 @@ class BlocksSection:
                 block_record.set_block(block, endblk)
                 self.add(block_record)
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: TagWriter) -> None:
         tagwriter.write_str("  0\nSECTION\n  2\nBLOCKS\n")
         for block_record in self.block_records:
             assert isinstance(block_record, BlockRecord)
             block_record.export_block_definition(tagwriter)
         tagwriter.write_tag2(0, "ENDSEC")
 
-    def add(self, block_record: "BlockRecord") -> "BlockLayout":
+    def add(self, block_record: BlockRecord) -> BlockLayout:
         """Add or replace a block layout object defined by its block record.
         (internal API)
         """
@@ -222,7 +221,7 @@ class BlocksSection:
         assert self.block_records.has_entry(block_record.dxf.name)
         return block_layout
 
-    def __iter__(self) -> Iterator["BlockLayout"]:
+    def __iter__(self) -> Iterator[BlockLayout]:
         """Iterable of all :class:`~ezdxf.layouts.BlockLayout` objects."""
         return (
             block_record.block_layout  # type: ignore
@@ -235,7 +234,7 @@ class BlocksSection:
         """
         return self.block_records.has_entry(name)
 
-    def __getitem__(self, name: str) -> "BlockLayout":
+    def __getitem__(self, name: str) -> BlockLayout:
         """Returns :class:`~ezdxf.layouts.BlockLayout` `name`,
         raises :class:`DXFKeyError` if `name` not exist.
         """
@@ -254,7 +253,7 @@ class BlocksSection:
         else:
             raise DXFKeyError(name)
 
-    def get(self, name: str, default=None) -> "BlockLayout":
+    def get(self, name: str, default=None) -> BlockLayout:
         """Returns :class:`~ezdxf.layouts.BlockLayout` `name`, returns
         `default` if `name` not exist.
         """
@@ -265,14 +264,14 @@ class BlocksSection:
 
     def get_block_layout_by_handle(
         self, block_record_handle: str
-    ) -> "BlockLayout":
+    ) -> BlockLayout:
         """Returns a block layout by block record handle. (internal API)"""
         return self.doc.entitydb[block_record_handle].block_layout  # type: ignore
 
     def new(
         self,
         name: str,
-        base_point: Vertex = NULLVEC,
+        base_point: UVec = NULLVEC,
         dxfattribs: dict = None,
     ) -> "BlockLayout":
         """Create and add a new :class:`~ezdxf.layouts.BlockLayout`, `name`
@@ -293,8 +292,8 @@ class BlocksSection:
         return self.add(block_record)
 
     def new_anonymous_block(
-        self, type_char: str = "U", base_point: Vertex = NULLVEC
-    ) -> "BlockLayout":
+        self, type_char: str = "U", base_point: UVec = NULLVEC
+    ) -> BlockLayout:
         """Create and add a new anonymous :class:`~ezdxf.layouts.BlockLayout`,
         `type_char` is the BLOCK type, `base_point` is the insertion point of
         the BLOCK.

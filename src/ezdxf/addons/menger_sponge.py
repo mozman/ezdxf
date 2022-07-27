@@ -1,9 +1,9 @@
 # Purpose: menger sponge addon for ezdxf
-# Copyright (c) 2016-2021 Manfred Moitzi
+# Copyright (c) 2016-2022 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import TYPE_CHECKING, List, Tuple, Iterator, Sequence, Dict
-from collections import defaultdict
-from ezdxf.math import Vec3, Vertex
+from ezdxf.math import Vec3, UVec
 from ezdxf.render.mesh import MeshVertexMerger, MeshTransformer, MeshBuilder
 
 if TYPE_CHECKING:
@@ -100,7 +100,7 @@ class MengerSponge:
 
     def __init__(
         self,
-        location: "Vertex" = (0.0, 0.0, 0.0),
+        location: UVec = (0.0, 0.0, 0.0),
         length: float = 1.0,
         level: int = 1,
         kind: int = 0,
@@ -109,7 +109,7 @@ class MengerSponge:
             location=location, length=length, level=level, kind=kind
         )
 
-    def vertices(self) -> Iterator["Vertex"]:
+    def vertices(self) -> Iterator[UVec]:
         """Yields the cube vertices as list of (x, y, z) tuples."""
         for location, length in self.cube_definitions:
             x, y, z = location
@@ -199,8 +199,8 @@ def manifold_faces(faces: List[Sequence[int]]) -> Iterator[Sequence[int]]:
 
 
 def _subdivide(
-    location: "Vertex" = (0.0, 0.0, 0.0), length: float = 1.0, kind: int = 0
-) -> List[Tuple["Vertex", float]]:
+    location: UVec = (0.0, 0.0, 0.0), length: float = 1.0, kind: int = 0
+) -> List[Tuple[UVec, float]]:
     """Divides a cube in sub-cubes and keeps only cubes determined by the
     building schema.
 
@@ -234,7 +234,7 @@ def _subdivide(
 
 
 def _menger_sponge(
-    location: "Vertex" = (0.0, 0.0, 0.0),
+    location: UVec = (0.0, 0.0, 0.0),
     length: float = 1.0,
     level: int = 1,
     kind: int = 0,

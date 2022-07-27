@@ -1,5 +1,6 @@
-# Copyright (c) 2018-2021, Manfred Moitzi
+# Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
     Tuple,
@@ -9,13 +10,12 @@ from typing import (
     Optional,
 )
 import math
-from ezdxf.math import Vec3, Vec2, ConstructionRay, UCS
+from ezdxf.math import Vec3, Vec2, UVec, ConstructionRay, UCS
 from ezdxf.render.arrows import ARROWS, connection_point
 from ezdxf.entities.dimstyleoverride import DimStyleOverride
 
 from .dim_base import (
     BaseDimensionRenderer,
-    TextBox,
     LengthMeasurement,
     Measurement,
     compile_mtext,
@@ -23,7 +23,7 @@ from .dim_base import (
 )
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Dimension, Vertex, GenericLayoutType
+    from ezdxf.eztypes import Dimension, GenericLayoutType
 
 
 class LinearDimension(BaseDimensionRenderer):
@@ -39,9 +39,9 @@ class LinearDimension(BaseDimensionRenderer):
 
     def __init__(
         self,
-        dimension: "Dimension",
-        ucs: "UCS" = None,
-        override: "DimStyleOverride" = None,
+        dimension: Dimension,
+        ucs: UCS = None,
+        override: DimStyleOverride = None,
     ):
         super().__init__(dimension, ucs, override)
         measurement = self.measurement
@@ -567,7 +567,7 @@ CAN_SUPPRESS_ARROW1 = {
 
 
 def sort_projected_points(
-    points: Iterable["Vertex"], angle: float = 0
+    points: Iterable[UVec], angle: float = 0
 ) -> List[Vec2]:
     direction = Vec2.from_deg_angle(angle)
     projected_vectors = [(direction.project(Vec2(p)), p) for p in points]
@@ -575,11 +575,11 @@ def sort_projected_points(
 
 
 def multi_point_linear_dimension(
-    layout: "GenericLayoutType",
-    base: "Vertex",
-    points: Iterable["Vertex"],
+    layout: GenericLayoutType,
+    base: UVec,
+    points: Iterable[UVec],
     angle: float = 0,
-    ucs: "UCS" = None,
+    ucs: UCS = None,
     avoid_double_rendering: bool = True,
     dimstyle: str = "EZDXF",
     override: dict = None,

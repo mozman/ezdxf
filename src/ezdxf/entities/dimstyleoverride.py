@@ -1,10 +1,11 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import Any, TYPE_CHECKING, Tuple, Dict
 from ezdxf.enums import MTextLineAlignment
 from ezdxf.lldxf import const
 from ezdxf.lldxf.const import DXFAttributeError, DIMJUST, DIMTAD
-from ezdxf.math import Vec3
+from ezdxf.math import Vec3, UVec
 import logging
 
 logger = logging.getLogger("ezdxf")
@@ -15,16 +16,15 @@ if TYPE_CHECKING:
         UCS,
         Drawing,
         DimStyle,
-        Vertex,
         BaseDimensionRenderer,
     )
 
 
 class DimStyleOverride:
-    def __init__(self, dimension: "Dimension", override: dict = None):
-        self.dimension: "Dimension" = dimension
+    def __init__(self, dimension: Dimension, override: dict = None):
+        self.dimension = dimension
         dim_style_name: str = dimension.get_dxf_attrib("dimstyle", "STANDARD")
-        self.dimstyle: "DimStyle" = self.doc.dimstyles.get(dim_style_name)  # type: ignore
+        self.dimstyle: DimStyle = self.doc.dimstyles.get(dim_style_name)  # type: ignore
         self.dimstyle_attribs: Dict = self.get_dstyle_dict()
 
         # Special ezdxf attributes beyond the DXF reference, therefore not
@@ -40,7 +40,7 @@ class DimStyleOverride:
         self.update(override or {})
 
     @property
-    def doc(self) -> "Drawing":
+    def doc(self) -> Drawing:
         """Drawing object (internal API)"""
         return self.dimension.doc  # type: ignore
 
@@ -477,13 +477,13 @@ class DimStyleOverride:
         self.dimstyle_attribs["text_shift_v"] = dv
 
     def set_location(
-        self, location: "Vertex", leader=False, relative=False
+        self, location: UVec, leader=False, relative=False
     ) -> None:
         """Set text location by user, special version for linear dimensions,
         behaves for other dimension types like :meth:`user_location_override`.
 
         Args:
-            location: user defined text location (Vertex)
+            location: user defined text location
             leader: create leader from text to dimension line
             relative: `location` is relative to default location.
 
@@ -495,7 +495,7 @@ class DimStyleOverride:
             self.dimstyle_attribs["dimtmove"] = 1 if leader else 2
             self.dimstyle_attribs["relative_user_location"] = relative
 
-    def user_location_override(self, location: "Vertex") -> None:
+    def user_location_override(self, location: UVec) -> None:
         """Set text location by user, `location` is relative to the origin of
         the UCS defined in the :meth:`render` method or WCS if the `ucs`
         argument is ``None``.
@@ -512,7 +512,7 @@ class DimStyleOverride:
 
     def render(
         self, ucs: "UCS" = None, discard=False
-    ) -> "BaseDimensionRenderer":
+    ) -> BaseDimensionRenderer:
         """Initiate dimension line rendering process and also writes overridden
         dimension style attributes into the DSTYLE XDATA section.
 

@@ -1,14 +1,13 @@
-# Copyright (c) 2019-2021, Manfred Moitzi
+# Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
-from typing import List, Sequence, TYPE_CHECKING, Iterable
+from __future__ import annotations
+from typing import List, Sequence, Iterable
 import math
-from ezdxf.math import Vec2
+from ezdxf.math import Vec2, UVec
 from .bbox import BoundingBox2d
 from .line import ConstructionLine
 from .construct2d import point_to_line_relation
 
-if TYPE_CHECKING:
-    from ezdxf.math import Vertex
 
 ABS_TOL = 1e-12
 
@@ -29,7 +28,7 @@ class ConstructionBox:
 
     def __init__(
         self,
-        center: "Vertex" = (0, 0),
+        center: UVec = (0, 0),
         width: float = 1,
         height: float = 1,
         angle: float = 0,
@@ -43,7 +42,7 @@ class ConstructionBox:
         self._tainted: bool = True
 
     @classmethod
-    def from_points(cls, p1: "Vertex", p2: "Vertex") -> "ConstructionBox":
+    def from_points(cls, p1: UVec, p2: UVec) -> ConstructionBox:
         """Creates a box from two opposite corners, box sides are parallel to x-
         and y-axis.
 
@@ -84,7 +83,7 @@ class ConstructionBox:
         return self._center
 
     @center.setter
-    def center(self, c: "Vertex") -> None:
+    def center(self, c: UVec) -> None:
         self._center = Vec2(c)
         self._tainted = True
 
@@ -145,13 +144,10 @@ class ConstructionBox:
     def __repr__(self) -> str:
         """Returns string representation of box as
         ``ConstructionBox(center, width, height, angle)``"""
-        return "ConstructionBox({0.center}, {0.width}, {0.height}, {0.angle})".format(
-            self
-        )
+        return f"ConstructionBox({self.center}, {self.width}, {self.height}, {self.angle})"
 
     def translate(self, dx: float, dy: float) -> None:
-        """
-        Move box about `dx` in x-axis and about `dy` in y-axis.
+        """Move box about `dx` in x-axis and about `dy` in y-axis.
 
         Args:
             dx: translation in x-axis
@@ -174,7 +170,7 @@ class ConstructionBox:
         """Rotate box by `angle` in degrees."""
         self.angle += angle
 
-    def is_inside(self, point: "Vertex") -> bool:
+    def is_inside(self, point: UVec) -> bool:
         """Returns ``True`` if `point` is inside of box."""
         point = Vec2(point)
         delta = self.center - point
@@ -189,7 +185,7 @@ class ConstructionBox:
             elif distance <= self.incircle_radius:
                 return True
             else:
-                # inside if point is "left of line" of all border lines.
+                # inside if point is "left of line" of all borderlines.
                 p1, p2, p3, p4 = self.corners
                 return all(
                     (
@@ -198,11 +194,11 @@ class ConstructionBox:
                     )
                 )
 
-    def is_any_corner_inside(self, other: "ConstructionBox") -> bool:
+    def is_any_corner_inside(self, other: ConstructionBox) -> bool:
         """Returns ``True`` if any corner of `other` box is inside this box."""
         return any(self.is_inside(p) for p in other.corners)
 
-    def is_overlapping(self, other: "ConstructionBox") -> bool:
+    def is_overlapping(self, other: ConstructionBox) -> bool:
         """Returns ``True`` if this box and `other` box do overlap."""
         distance = (self.center - other.center).magnitude
         max_distance = self.circumcircle_radius + other.circumcircle_radius
@@ -216,7 +212,7 @@ class ConstructionBox:
             return True
         if other.is_any_corner_inside(self):
             return True
-        # no corner inside of any box, maybe crossing boxes?
+        # no corner is inside of any box, maybe crossing boxes?
         # check intersection of diagonals
         c1, c2, c3, c4 = self.corners
         diag1 = ConstructionLine(c1, c3)
@@ -224,17 +220,20 @@ class ConstructionBox:
 
         t1, t2, t3, t4 = other.corners
         test_diag = ConstructionLine(t1, t3)
-        if test_diag.has_intersection(diag1) or test_diag.has_intersection(diag2):
+        if test_diag.has_intersection(diag1) or test_diag.has_intersection(
+            diag2
+        ):
             return True
         test_diag = ConstructionLine(t2, t4)
-        if test_diag.has_intersection(diag1) or test_diag.has_intersection(diag2):
+        if test_diag.has_intersection(diag1) or test_diag.has_intersection(
+            diag2
+        ):
             return True
 
         return False
 
     def border_lines(self) -> Sequence[ConstructionLine]:
-        """Returns border lines of box as sequence of :class:`ConstructionLine`.
-        """
+        """Returns borderlines of box as sequence of :class:`ConstructionLine`."""
         p1, p2, p3, p4 = self.corners
         return (
             ConstructionLine(p1, p2),
@@ -244,11 +243,11 @@ class ConstructionBox:
         )
 
     def intersect(self, line: ConstructionLine) -> List[Vec2]:
-        """Returns 0, 1 or 2 intersection points between `line` and box border
-        lines.
+        """Returns 0, 1 or 2 intersection points between `line` and box
+        borderlines.
 
         Args:
-            line: line to intersect with border lines
+            line: line to intersect with borderlines
 
         Returns:
             list of intersection points

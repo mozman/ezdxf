@@ -126,7 +126,7 @@ class AbstractBoundingBox:
         """Extend bounds by `vertices`.
 
         Args:
-            vertices: iterable of Vertex objects
+            vertices: iterable of vertices
 
         """
         v = list(vertices)
