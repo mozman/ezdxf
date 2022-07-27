@@ -9,7 +9,6 @@ __all__ = [
     "Vec3",
     "Vec2",
     "AnyVec",
-    "Vertex",
     "UVec",
     "X_AXIS",
     "Y_AXIS",
@@ -89,5 +88,4 @@ else:
 
 # Early required type aliases
 AnyVec: TypeAlias = Union[Vec2, Vec3]
-Vertex: TypeAlias = Union[Sequence[float], AnyVec]  # should be replaced by ...
 UVec: TypeAlias = Union[Sequence[float], Vec2, Vec3]

@@ -16,7 +16,7 @@ from typing import (
 if TYPE_CHECKING:
     # Low level stuff
     from ezdxf.math import (
-        Vec3, Vec2, AnyVec, Vertex, Matrix44, BoundingBox, BoundingBox2d, UCS,
+        Vec3, Vec2, AnyVec, Matrix44, BoundingBox, BoundingBox2d, UCS,
         OCS, UVec
     )
     from ezdxf.tools.handle import HandleGenerator
