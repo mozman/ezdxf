@@ -5,8 +5,13 @@
 from typing import List, Tuple, TYPE_CHECKING, Sequence, Iterable
 import cython
 from .vector cimport (
-    Vec3, isclose, v3_dist, v3_from_angle, normalize_rad_angle,
-    v3_from_cpp_vec3, v3_add
+    Vec3,
+    isclose,
+    v3_dist,
+    v3_from_angle,
+    normalize_rad_angle,
+    v3_from_cpp_vec3,
+    v3_add
 )
 from .matrix44 cimport Matrix44
 from libc.math cimport ceil, tan
@@ -15,7 +20,7 @@ from ._cpp_cubic_bezier cimport CppCubicBezier
 from .construct import arc_angle_span_deg
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
+    from ezdxf.math import UVec
     from ezdxf.math.ellipse import ConstructionEllipse
 
 __all__ = [
@@ -36,7 +41,7 @@ cdef class Bezier4P:
     cdef CppCubicBezier curve
     cdef Vec3 offset
 
-    def __cinit__(self, defpoints: Sequence['Vertex']):
+    def __cinit__(self, defpoints: Sequence[UVec]):
         cdef CppVec3 cpp_offset
         if len(defpoints) == 4:
             self.offset = Vec3(defpoints[0])

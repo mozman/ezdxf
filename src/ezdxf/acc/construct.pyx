@@ -1,6 +1,6 @@
 # cython: language_level=3
 # distutils: language = c++
-# Copyright (c) 2020-2021, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
 from typing import Iterable, TYPE_CHECKING, Sequence, Optional, Tuple
 from libc.math cimport fabs
@@ -10,7 +10,7 @@ from ._cpp_vec3 cimport CppVec3
 import cython
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
+    from ezdxf.math import UVec
 
 DEF ABS_TOL = 1e-12
 DEF RAD_ABS_TOL = 1e-15
@@ -19,7 +19,7 @@ DEF REL_TOL = 1e-9
 DEF TOLERANCE = 1e-10
 DEF TAU = 6.283185307179586
 
-def has_clockwise_orientation(vertices: Iterable['Vertex']) -> bool:
+def has_clockwise_orientation(vertices: Iterable[UVec]) -> bool:
     """ Returns True if 2D `vertices` have clockwise orientation. Ignores
     z-axis of all vertices.
 

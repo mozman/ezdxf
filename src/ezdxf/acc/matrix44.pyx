@@ -13,7 +13,7 @@ from .vector import X_AXIS, Y_AXIS, Z_AXIS, NULLVEC
 from libc.math cimport fabs, sin, cos, tan
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
+    from ezdxf.math import UVec
 
 DEF ABS_TOL = 1e-12
 DEF REL_TOL = 1e-9
@@ -146,7 +146,7 @@ cdef class Matrix44:
         return v
 
     @origin.setter
-    def origin(self, v: 'Vertex') -> None:
+    def origin(self, v: UVec) -> None:
         cdef Vec3 origin = Vec3(v)
         self.m[12] = origin.x
         self.m[13] = origin.y
@@ -249,7 +249,7 @@ cdef class Matrix44:
         return mat
 
     @staticmethod
-    def axis_rotate(axis: 'Vertex', double angle) -> 'Matrix44':
+    def axis_rotate(axis: UVec, double angle) -> 'Matrix44':
         cdef Matrix44 mat = Matrix44()
         cdef double cos_a = cos(angle)
         cdef double sin_a = sin(angle)
@@ -505,7 +505,7 @@ cdef class Matrix44:
 
         return mat
 
-    def transform(self, vector: 'Vertex') -> Vec3:
+    def transform(self, vector: UVec) -> Vec3:
         cdef Vec3 res = Vec3(vector)
         cdef double x = res.x
         cdef double y = res.y
@@ -517,7 +517,7 @@ cdef class Matrix44:
         res.z = x * m[2] + y * m[6] + z * m[10] + m[14]
         return res
 
-    def transform_direction(self, vector: 'Vertex', normalize=False) -> Vec3:
+    def transform_direction(self, vector: UVec, normalize=False) -> Vec3:
         cdef Vec3 res = Vec3(vector)
         cdef double x = res.x
         cdef double y = res.y
@@ -534,7 +534,7 @@ cdef class Matrix44:
 
     ocs_to_wcs = transform_direction
 
-    def transform_vertices(self, vectors: Iterable['Vertex']) -> Iterable[Vec3]:
+    def transform_vertices(self, vectors: Iterable[UVec]) -> Iterable[Vec3]:
         cdef double *m = self.m
         cdef Vec3 res
         cdef double x, y, z
@@ -550,7 +550,7 @@ cdef class Matrix44:
             res.z = x * m[2] + y * m[6] + z * m[10] + m[14]
             yield res
 
-    def transform_directions(self, vectors: Iterable['Vertex'],
+    def transform_directions(self, vectors: Iterable[UVec],
                              normalize=False) -> Iterable[Vec3]:
         cdef double *m = self.m
         cdef Vec3 res
@@ -571,7 +571,7 @@ cdef class Matrix44:
     def ucs_vertex_from_wcs(self, wcs: Vec3) -> Vec3:
         return self.ucs_direction_from_wcs(wcs - self.origin)
 
-    def ucs_direction_from_wcs(self, wcs: 'Vertex') -> Vec3:
+    def ucs_direction_from_wcs(self, wcs: UVec) -> Vec3:
         cdef double *m = self.m
         cdef Vec3 res = Vec3(wcs)
         cdef double x = res.x

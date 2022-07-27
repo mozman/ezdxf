@@ -9,7 +9,7 @@ from ._cpp_vec3 cimport CppVec3
 from ._cpp_quad_bezier cimport CppQuadBezier
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import Vertex
+    from ezdxf.math import UVec
 
 __all__ = ['Bezier3P']
 
@@ -25,7 +25,7 @@ cdef class Bezier3P:
     cdef CppQuadBezier curve
     cdef Vec3 offset
 
-    def __cinit__(self, defpoints: Sequence['Vertex']):
+    def __cinit__(self, defpoints: Sequence[UVec]):
         cdef CppVec3 cpp_offset
         if len(defpoints) == 3:
             self.offset = Vec3(defpoints[0])
