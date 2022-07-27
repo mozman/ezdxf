@@ -1,6 +1,7 @@
 #  Copyright (c) 2020-2022, Manfred Moitzi
 #  License: MIT License
 from typing import Union, Sequence
+from typing_extensions import TypeAlias
 # noinspection PyUnresolvedReferences
 from ezdxf.acc import USE_C_EXT
 
@@ -87,6 +88,6 @@ else:
     )
 
 # Early required type aliases
-AnyVec = Union[Vec2, Vec3]
-Vertex = Union[Sequence[float], AnyVec]  # should be replaced by ...
-UVec = Union[Sequence[float], Vec2, Vec3]
+AnyVec: TypeAlias = Union[Vec2, Vec3]
+Vertex: TypeAlias = Union[Sequence[float], AnyVec]  # should be replaced by ...
+UVec: TypeAlias = Union[Sequence[float], Vec2, Vec3]
