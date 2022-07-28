@@ -2,8 +2,8 @@
 News
 ====
 
-Version 0.18b7 - dev
---------------------
+Version 0.18 - 2022-07-31
+-------------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-18.html
 - NEW: angular dimension rendering support, new factory methods:
@@ -59,7 +59,7 @@ Version 0.18b7 - dev
 - CHANGE: method `Path.all_lines_to_curve4` replaced by function `path.lines_to_curve4()`
 - CHANGE: replaced arguments `flatten` and `segments` by argument `fast` of tool
   function `Path.bbox()` 
-- CHANGE: replaced argument `flatten` argument `fast` in the `ezdxf.bbox` module
+- CHANGE: replaced argument `flatten` by argument `fast` in the `ezdxf.bbox` module
 - CHANGE: restructure of the `ezdxf.math` sub-package
 - BUGFIX [#663](https://github.com/mozman/ezdxf/issues/663): 
   improve handling of large coordinates in `Bezier4P` and `Bezier3P` classes

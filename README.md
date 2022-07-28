@@ -5,47 +5,61 @@ ezdxf
 Abstract
 --------
 
-A Python package to create and modify DXF drawings, independent of the DXF
-version. You can open/save every DXF file without losing any content (except comments),
-Unknown tags in the DXF file will be ignored but preserved for saving. With this behavior
-it is possible to open also DXF drawings that contains data from 3rd party applications.
+A Python package for creating and modifying DXF drawings, regardless of the DXF
+version. You can open/save any DXF file without losing content (except comments),
+Unknown tags in the DXF file are ignored but retained for saving. With this behavior
+it is possible to also open DXF drawings that contain data from third-party 
+applications.
 
 Quick-Info
 ----------
 
-- ezdxf is a Python package to create new DXF files and read/modify/write existing DXF files
+- *ezdxf* is a Python package to create new DXF files and read/modify/write 
+  existing DXF files
+- MIT-License
 - the intended audience are programmers
 - requires at least Python 3.7
 - OS independent
 - tested with CPython and pypy3
-- C-extensions for CPython as binary wheels available on PyPI for Windows, Linux and macOS
-- additional required packages: 
+- has type annotations and passes `mypy --ignore-missing-imports -p ezdxf` successful
+- additional required packages for the core package without add-ons: 
   [typing_extensions](https://pypi.org/project/typing-extensions/), 
   [pyparsing](https://pypi.org/project/pyparsing/) 
-- optional Cython implementation of some low level math classes
-- MIT-License
 - read/write/new support for DXF versions: R12, R2000, R2004, R2007, R2010, R2013 and R2018
-- additional read support for DXF versions R13/R14 (upgraded to R2000)
-- additional read support for older DXF versions than R12 (upgraded to R12)
+- read-only support for DXF versions R13/R14 (upgraded to R2000)
+- read-only support for older DXF versions than R12 (upgraded to R12)
 - read/write support for ASCII DXF and Binary DXF
-- preserves third-party DXF content
+- retains third-party DXF content
+- optional Cython implementation of some low-level modules
+- C-extensions for CPython are available on PyPI as binary wheels for Windows, 
+  Linux and macOS
 
 Included Extensions
 -------------------
 
-- The `drawing` add-on is a translation layer to send DXF data to a render backend, interfaces to 
-  [matplotlib](https://pypi.org/project/matplotlib/), which can export images as png, pdf or svg, 
-  and [PyQt5](https://pypi.org/project/PyQt5/) are implemented.
-- `geo` add-on to support the [`__geo_interface__`](https://gist.github.com/sgillies/2217756)
-- `r12writer` add-on to write basic DXF entities direct and fast into a DXF R12 file or stream
-- `iterdxf` add-on to iterate over DXF entities of the modelspace of really big (> 5GB) DXF files which
-  do not fit into memory
+Additional packages required for these add-ons are not automatically installed 
+during the *basic* setup, for more information about the setup & dependencies 
+visit the [documentation](https://ezdxf.mozman.at/docs/setup.html).
+
+- The `drawing` add-on is a translation layer to send DXF data to a render backend, 
+  interfaces to [matplotlib](https://pypi.org/project/matplotlib/), which can export 
+  images as png, pdf or svg, and [PyQt5](https://pypi.org/project/PyQt5/) are implemented.
+- `r12writer` add-on to write basic DXF entities direct and fast into a DXF R12 
+  file or stream
+- `iterdxf` add-on to iterate over DXF entities from the modelspace of huge DXF 
+  files (> 5GB) which do not fit into memory
 - `Importer` add-on to import entities, blocks and table entries from another DXF document
 - `dxf2code` add-on to generate Python code for DXF structures loaded from DXF 
   documents as starting point for parametric DXF entity creation
 - `acadctb` add-on to read/write plot style files (CTB/STB)
-- `pycsg` add-on for Constructive Solid Geometry (CSG) modeling technique
-- `MTextExplode` add-on for exploding MTEXT entities into single line TEXT entities 
+- `pycsg` add-on for basic Constructive Solid Geometry (CSG) modeling
+- `MTextExplode` add-on for exploding MTEXT entities into single-line TEXT entities
+- `text2path` add-on to convert text into linear paths
+- `geo` add-on to support the [`__geo_interface__`](https://gist.github.com/sgillies/2217756)
+- `meshex` for exchanging meshes with other tools as STL, OFF or OBJ files
+- `openscad` add-on, an interface to [OpenSCAD](https://openscad.org)
+- `odafc` add-on, an interface to the [ODA File Converter](https://www.opendesign.com/guestfiles/oda_file_converter) 
+  to read and write DWG files
 
 A simple example:
 
@@ -117,7 +131,7 @@ https://ezdxf.mozman.at/
 Documentation
 -------------
 
-Documentation of development version at https://ezdxf.mozman.at/docs
+Documentation of the development version at https://ezdxf.mozman.at/docs
 
 Documentation of the latest release at https://ezdxf.readthedocs.io/
 
