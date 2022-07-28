@@ -6,7 +6,7 @@ Abstract
 --------
 
 A Python package for creating and modifying DXF drawings, regardless of the DXF
-version. You can open/save any DXF file without losing content (except comments),
+version. You can open/save any DXF file without losing content (except comments).
 Unknown tags in the DXF file are ignored but retained for saving. With this behavior
 it is possible to also open DXF drawings that contain data from third-party 
 applications.
@@ -30,9 +30,8 @@ Quick-Info
 - read-only support for older DXF versions than R12 (upgraded to R12)
 - read/write support for ASCII DXF and Binary DXF
 - retains third-party DXF content
-- optional Cython implementation of some low-level modules
-- C-extensions for CPython are available on PyPI as binary wheels for Windows, 
-  Linux and macOS
+- optional C-extensions for CPython are included in the binary wheels, available 
+  on [PyPI](https://pypi.org/project/ezdxf/) for Windows, Linux and macOS
 
 Included Extensions
 -------------------
