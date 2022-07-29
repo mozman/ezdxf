@@ -2,7 +2,7 @@
 News
 ====
 
-Version 0.18 - 2022-07-31
+Version 0.18 - 2022-07-29
 -------------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-18.html
