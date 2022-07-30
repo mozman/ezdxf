@@ -28,13 +28,4 @@ tox-all.ini
 /examples_dxf/insert_nesting_level_0.dxf
 /examples_dxf/insert_nesting_level_1.dxf
 /examples_dxf/mtext_simple_all_alignments.dxf
-/src/ezdxf/acc/bezier3p.cpp
-/src/ezdxf/acc/bezier4p.cpp
-/src/ezdxf/acc/bspline.cpp
-/src/ezdxf/acc/construct.cpp
-/src/ezdxf/acc/matrix44.cpp
-/src/ezdxf/acc/vector.cpp
-/src/ezdxf/acc/mapbox_earcut.cpp
-/src/ezdxf/acc/*.so
-/src/ezdxf/acc/*.pyd
 /src/mypy-reports/
