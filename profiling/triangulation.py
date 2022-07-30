@@ -3,6 +3,15 @@
 import time
 
 from archive import tripy
+try:
+    from archive import tricy
+except ImportError:
+    print("module 'tricy' from archive not importable!")
+    print("build module:\n")
+    print("    cd archive")
+    print("    python setup.py build_ext -i")
+    exit(1)
+
 from ezdxf.render import forms
 from ezdxf.math.triangulation import mapbox_earcut_2d
 
@@ -32,12 +41,14 @@ def profile1(func, *args) -> float:
 
 
 def profile(text, func, *args):
-    ear_clipping_2d_time = profile1(func, tripy.earclip, *args)
+    tripy_time = profile1(func, tripy.earclip, *args)
+    tricy_time = profile1(func, tricy.earclip, *args)
+    print(f"tripy.earclip (CPython) - {text} {tripy_time:.3f}s")
+    print(f"tricy.earclip (Cython) - {text} {tricy_time:.3f}s")
+    print(f"Ratio tripy/tricy {tripy_time / tricy_time:.1f}x")
     mapbox_earcut_2d_time = profile1(func, mapbox_earcut_2d, *args)
-    ratio = ear_clipping_2d_time / mapbox_earcut_2d_time
-    print(f"tripy.earclip (CPython) - {text} {ear_clipping_2d_time:.3f}s")
     print(f"mapbox_earcut_2d (Cython) - {text} {mapbox_earcut_2d_time:.3f}s")
-    print(f"Ratio {ratio:.1f}x")
+    print(f"Ratio tricy/mapbox {tricy_time/mapbox_earcut_2d_time:.1f}x\n")
 
 
 RUNS = 100
