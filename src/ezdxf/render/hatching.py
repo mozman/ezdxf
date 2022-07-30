@@ -68,10 +68,13 @@ class HatchLine:
                 intersection_points.append(a)
         elif math.isclose(dist_b, line_distance):
             intersection_points.append(b)  # hatch line passes corner point b
-        elif (
-            dist_a > line_distance > dist_b or dist_a < line_distance < dist_b
-        ):  # points a,b on opposite sides of the hatch line
-            factor = abs(dist_a) / (abs(dist_a) + abs(dist_b))
+        elif dist_a > line_distance > dist_b:
+            # points a,b on opposite sides of the hatch line
+            factor = abs(dist_a - line_distance) / (dist_a - dist_b)
+            intersection_points.append(a.lerp(b, factor))
+        elif dist_a < line_distance < dist_b:
+            # points a,b on opposite sides of the hatch line
+            factor = abs(line_distance - dist_a) / (dist_b - dist_a)
             intersection_points.append(a.lerp(b, factor))
 
 
@@ -88,9 +91,10 @@ class HatchBaseLine:
             raise DenseHatchingLinesError("hatching lines are too narrow")
 
     def hatch_lines_intersecting_triangle(
-        self, a: Vec2, b: Vec2, c: Vec2
+        self, triangle: Sequence[Vec2]
     ) -> Iterator[Line]:
         """Returns all hatch lines intersecting the triangle (a, b, c)."""
+        a, b, c = triangle
         if a.isclose(b) or b.isclose(c) or a.isclose(c):
             return  # invalid triangle
 
@@ -120,7 +124,7 @@ class HatchBaseLine:
                     yield Line(points[0], points[2], hatch_line_distance)
                 else:
                     yield Line(points[0], points[1], hatch_line_distance)
-            elif len(points) == 2:
+            elif len(points) == 2 and not points[0].isclose(points[1]):
                 yield Line(points[0], points[1], hatch_line_distance)
 
     def hatch_line(self, distance: float) -> HatchLine:
