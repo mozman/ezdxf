@@ -58,7 +58,7 @@ EXPECTED = {
     # "issue111": 19,  # error? - I don't see it!
     "issue119": 18,
     "issue131": 12,
-    "issue142": 4,
+    # "issue142": 4, disabled because of issue #713 on some aarch64 systems
     "issue149": 2,
     "issue16": 12,
     "issue17": 11,
