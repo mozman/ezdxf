@@ -74,13 +74,13 @@ def earclip(vertices: Iterable[UVec]) -> Iterator[Tuple[Vec2, Vec2, Vec2]]:
             next_next_point = <Vec2> polygon[next_next_index]
 
             groups = [
-                (prev_prev_point, prev_point, next_point, polygon),
-                (prev_point, next_point, next_next_point, polygon),
+                (prev_prev_point, prev_point, next_point),
+                (prev_point, next_point, next_next_point),
             ]
             for j in range(len(groups)):
                 group = groups[j]
-                p = group[1]
-                if _is_ear(<Vec2> group[0], <Vec2> p, <Vec2> group[2], <list> group[3]):
+                p = <Vec2> group[1]
+                if _is_ear(<Vec2> group[0], p, <Vec2> group[2], polygon):
                     if p not in ear_vertices:
                         ear_vertices.append(p)
                 elif p in ear_vertices:
