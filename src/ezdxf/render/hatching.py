@@ -153,26 +153,11 @@ class HatchBaseLine:
             self.origin + self.offset * factor, self.direction, distance
         )
 
-    def signed_point_distances(
-        self, a: Vec2, b: Vec2, c: Vec2
-    ) -> Tuple[float, float, float]:
-        """Returns the signed normal distances of the given points a, b and c to
-        the hatch baseline.
-        """
-
-        def signed_distance(point: Vec2) -> float:
-            # denominator (base_end - base_start).magnitude is 1.0 !!!
-            return (base_start - point).det(base_end - point)
-
-        base_start = self.origin
-        base_end = base_start + self.direction
-        return signed_distance(a), signed_distance(b), signed_distance(c)
-
     def signed_point_distance(self, point: Vec2) -> float:
         """Returns the signed normal distance of the given point to the hatch
         baseline.
         """
-        # denominator (base_end - base_start).magnitude is 1.0 !!!
+        # denominator (_origin2 - origin).magnitude is 1.0 !!!
         return (self.origin - point).det(self._origin2 - point)
 
 
