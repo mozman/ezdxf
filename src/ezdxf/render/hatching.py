@@ -89,7 +89,11 @@ class HatchBaseLine:
         self.normal_distance: float = (-offset).det(self.direction - offset)
         if abs(self.normal_distance) < MIN_HATCH_LINE_DISTANCE:
             raise DenseHatchingLinesError("hatching lines are too narrow")
-        self._origin2 = self.origin + self.direction
+        self._end = self.origin + self.direction
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(origin={self.origin!r}, " \
+               f"direction={self.direction!r}, offset={self.offset!r})"
 
     def hatch_lines_intersecting_triangle(
         self, triangle: Sequence[Vec2]
@@ -157,8 +161,8 @@ class HatchBaseLine:
         """Returns the signed normal distance of the given point to the hatch
         baseline.
         """
-        # denominator (_origin2 - origin).magnitude is 1.0 !!!
-        return (self.origin - point).det(self._origin2 - point)
+        # denominator (_end - origin).magnitude is 1.0 !!!
+        return (self.origin - point).det(self._end - point)
 
 
 def hatch_line_distances(
