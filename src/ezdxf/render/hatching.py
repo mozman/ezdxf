@@ -49,11 +49,11 @@ class Line:
     distance: float
 
 
+@dataclasses.dataclass
 class HatchLine:
-    def __init__(self, origin: Vec2, direction: Vec2, distance: float):
-        self.origin = origin
-        self.direction = direction
-        self.distance = distance
+    origin: Vec2
+    direction: Vec2
+    distance: float
 
     def intersect_line(
         self, a: Vec2, b: Vec2, dist_a: float, dist_b: float
