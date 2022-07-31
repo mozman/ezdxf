@@ -10,7 +10,7 @@ MIN_HATCH_LINE_DISTANCE = 1e-4  # ??? what's a good choice
 NONE_VEC2 = Vec2()
 
 
-class IntersectionType(enum.Enum):
+class IntersectionType(enum.IntEnum):
     NONE = 0
     REGULAR = 1
     START = 2
@@ -55,60 +55,27 @@ class HatchLine:
         self.direction = direction
         self.distance = distance
 
-    def intersect_triangle_side(
-        self,
-        a: Vec2,
-        b: Vec2,
-        dist_a: float,
-        dist_b: float,
-        intersection_points: List[Vec2],
-    ):
-        # all distances are normal distances to the hatch baseline
-        line_distance = self.distance
-        if math.isclose(dist_a, line_distance):
-            if math.isclose(dist_b, line_distance):
-                # Hatch line is collinear to line a,b - not a common case,
-                # no need for optimization!
-                # intersection_points may contain a and/or b already as end
-                # points of the two other triangle lines:
-                intersection_points.clear()
-                intersection_points.append(a)
-                intersection_points.append(b)
-            else:  # hatch line passes only corner point a
-                intersection_points.append(a)
-        elif math.isclose(dist_b, line_distance):
-            intersection_points.append(b)  # hatch line passes corner point b
-        elif dist_a > line_distance > dist_b:
-            # points a,b on opposite sides of the hatch line
-            factor = abs(dist_a - line_distance) / (dist_a - dist_b)
-            intersection_points.append(a.lerp(b, factor))
-        elif dist_a < line_distance < dist_b:
-            # points a,b on opposite sides of the hatch line
-            factor = abs(line_distance - dist_a) / (dist_b - dist_a)
-            intersection_points.append(a.lerp(b, factor))
-
     def intersect_line(
         self, a: Vec2, b: Vec2, dist_a: float, dist_b: float
-    ) -> Tuple[IntersectionType, Vec2]:
+    ) -> Tuple[IntersectionType, Vec2, Vec2]:
         # all distances are normal distances to the hatch baseline
         line_distance = self.distance
         if math.isclose(dist_a, line_distance):
             if math.isclose(dist_b, line_distance):
-                # Hatch line is collinear to line a,b
-                return IntersectionType.COLLINEAR, a
+                return IntersectionType.COLLINEAR, a, b
             else:  # hatch line passes only corner point a
-                return IntersectionType.START, a
+                return IntersectionType.START, a, NONE_VEC2
         elif math.isclose(dist_b, line_distance):
-            return IntersectionType.END, b
+            return IntersectionType.END, b, NONE_VEC2
         elif dist_a > line_distance > dist_b:
             # points a,b on opposite sides of the hatch line
             factor = abs(dist_a - line_distance) / (dist_a - dist_b)
-            return IntersectionType.REGULAR, a.lerp(b, factor)
+            return IntersectionType.REGULAR, a.lerp(b, factor), NONE_VEC2
         elif dist_a < line_distance < dist_b:
             # points a,b on opposite sides of the hatch line
             factor = abs(line_distance - dist_a) / (dist_b - dist_a)
-            return IntersectionType.REGULAR, a.lerp(b, factor)
-        return IntersectionType.NONE, NONE_VEC2
+            return IntersectionType.REGULAR, a.lerp(b, factor), NONE_VEC2
+        return IntersectionType.NONE, NONE_VEC2, NONE_VEC2
 
 
 class HatchBaseLine:
@@ -136,13 +103,16 @@ class HatchBaseLine:
         dist_b = self.signed_point_distance(b)
         dist_c = self.signed_point_distance(c)
 
-        def append_intersection_point(ip: Tuple[IntersectionType, Vec2]):
-            if ip[0] is IntersectionType.COLLINEAR:
+        def append_intersection_point(ip: Tuple[IntersectionType, Vec2, Vec2]):
+            t, p0_, p1_ = ip
+            if t == IntersectionType.COLLINEAR:
+                # intersection_points may contain a and/or b already as end
+                # points of other triangle lines:
                 points.clear()
-                points.append(a)
-                points.append(b)
-            else:
-                points.append(ip[1])
+                points.append(p0_)
+                points.append(p1_)
+            elif t:
+                points.append(p0_)
 
         points: List[Vec2] = []
         for hatch_line_distance in hatch_line_distances(
@@ -150,17 +120,23 @@ class HatchBaseLine:
         ):
             points.clear()
             hatch_line = self.hatch_line(hatch_line_distance)
-            hatch_line.intersect_triangle_side(a, b, dist_a, dist_b, points)
+            append_intersection_point(
+                hatch_line.intersect_line(a, b, dist_a, dist_b)
+            )
             if len(points) == 2:
                 yield Line(points[0], points[1], hatch_line_distance)
                 continue
-            hatch_line.intersect_triangle_side(b, c, dist_b, dist_c, points)
+            append_intersection_point(
+                hatch_line.intersect_line(b, c, dist_b, dist_c)
+            )
             if len(points) == 2:
                 p0, p1 = points
                 if not p0.isclose(p1):  # not a corner point
                     yield Line(p0, p1, hatch_line_distance)
                     continue
-            hatch_line.intersect_triangle_side(c, a, dist_c, dist_a, points)
+            append_intersection_point(
+                hatch_line.intersect_line(c, a, dist_c, dist_a)
+            )
             if len(points) == 3:
                 # one intersection point is duplicated as corner point
                 if points[0].isclose(points[1]):
