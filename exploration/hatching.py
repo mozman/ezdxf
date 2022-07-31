@@ -26,7 +26,7 @@ def main(filename: str):
         Vec2(), direction=Vec2(1, 1), offset=Vec2(-1, 1)
     )
     for triangle in mapbox_earcut_2d(polygon, holes=[hole]):
-        for line in baseline.hatch_lines_intersecting_triangle(triangle):
+        for line in hatching.hatch_triangle(baseline, triangle):
             msp.add_line(line.start, line.end)
     doc.saveas(CWD / filename)
 

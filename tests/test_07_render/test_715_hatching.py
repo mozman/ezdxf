@@ -7,12 +7,6 @@ from ezdxf.render import hatching
 
 
 class TestHatchBaseLine:
-    @pytest.fixture
-    def horizontal_baseline(self):
-        return hatching.HatchBaseLine(
-            Vec2(), direction=Vec2(1, 0), offset=Vec2(0, 1)
-        )
-
     def test_positive_line_distance(self):
         line = hatching.HatchBaseLine(
             origin=Vec2((1, 2)), direction=Vec2(2, 0), offset=Vec2(2, 2)
@@ -51,25 +45,29 @@ class TestHatchBaseLine:
                 Vec2(), direction=Vec2(1, 0), offset=Vec2(0, 1e-6)
             )
 
-    def test_intersect_triangle_0(self, horizontal_baseline):
-        triangle = Vec2.list([(1, 0), (2, 0), (1, 1)])
-        lines = list(
-            horizontal_baseline.hatch_lines_intersecting_triangle(triangle)
+
+class TestHatchTriangle:
+    @pytest.fixture
+    def baseline(self):
+        return hatching.HatchBaseLine(
+            Vec2(), direction=Vec2(1, 0), offset=Vec2(0, 1)
         )
+
+    def test_intersect_triangle_0(self, baseline):
+        triangle = Vec2.list([(1, 0), (2, 0), (1, 1)])
+        lines = list(hatching.hatch_triangle(baseline, triangle))
         assert len(lines) == 1
 
-    def test_intersect_triangle_1(self, horizontal_baseline):
+    def test_intersect_triangle_1(self, baseline):
         triangle = Vec2.list([(1, 0.5), (2, 0.5), (1, 1.5)])
-        lines = list(
-            horizontal_baseline.hatch_lines_intersecting_triangle(triangle)
-        )
+        lines = list(hatching.hatch_triangle(baseline, triangle))
         assert len(lines) == 1
         l0 = lines[0]
         assert l0.start.isclose((1.5, 1))
         assert l0.end.isclose((1, 1))
 
 
-class TestHatchLine:
+class TestIntersectHatchLine:
     @pytest.fixture
     def horizontal_baseline(self):
         return hatching.HatchBaseLine(
