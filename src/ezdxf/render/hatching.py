@@ -1,11 +1,21 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from typing import Iterator, Tuple, Sequence, List
+import enum
 import math
 import dataclasses
 from ezdxf.math import Vec2
 
 MIN_HATCH_LINE_DISTANCE = 1e-4  # ??? what's a good choice
+NONE_VEC2 = Vec2()
+
+
+class IntersectionType(enum.Enum):
+    NONE = 0
+    REGULAR = 1
+    START = 2
+    END = 3
+    COLLINEAR = 4
 
 
 class HatchingError(Exception):
@@ -77,6 +87,29 @@ class HatchLine:
             factor = abs(line_distance - dist_a) / (dist_b - dist_a)
             intersection_points.append(a.lerp(b, factor))
 
+    def intersect_line(
+        self, a: Vec2, b: Vec2, dist_a: float, dist_b: float
+    ) -> Tuple[IntersectionType, Vec2]:
+        # all distances are normal distances to the hatch baseline
+        line_distance = self.distance
+        if math.isclose(dist_a, line_distance):
+            if math.isclose(dist_b, line_distance):
+                # Hatch line is collinear to line a,b
+                return IntersectionType.COLLINEAR, a
+            else:  # hatch line passes only corner point a
+                return IntersectionType.START, a
+        elif math.isclose(dist_b, line_distance):
+            return IntersectionType.END, b
+        elif dist_a > line_distance > dist_b:
+            # points a,b on opposite sides of the hatch line
+            factor = abs(dist_a - line_distance) / (dist_a - dist_b)
+            return IntersectionType.REGULAR, a.lerp(b, factor)
+        elif dist_a < line_distance < dist_b:
+            # points a,b on opposite sides of the hatch line
+            factor = abs(line_distance - dist_a) / (dist_b - dist_a)
+            return IntersectionType.REGULAR, a.lerp(b, factor)
+        return IntersectionType.NONE, NONE_VEC2
+
 
 class HatchBaseLine:
     def __init__(self, origin: Vec2, direction: Vec2, offset: Vec2):
@@ -89,6 +122,7 @@ class HatchBaseLine:
         self.normal_distance: float = (-offset).det(self.direction - offset)
         if abs(self.normal_distance) < MIN_HATCH_LINE_DISTANCE:
             raise DenseHatchingLinesError("hatching lines are too narrow")
+        self._origin2 = self.origin + self.direction
 
     def hatch_lines_intersecting_triangle(
         self, triangle: Sequence[Vec2]
@@ -98,12 +132,21 @@ class HatchBaseLine:
         if a.isclose(b) or b.isclose(c) or a.isclose(c):
             return  # invalid triangle
 
-        point_distances = self.signed_point_distances(a, b, c)
+        dist_a = self.signed_point_distance(a)
+        dist_b = self.signed_point_distance(b)
+        dist_c = self.signed_point_distance(c)
 
-        dist_a, dist_b, dist_c = point_distances
+        def append_intersection_point(ip: Tuple[IntersectionType, Vec2]):
+            if ip[0] is IntersectionType.COLLINEAR:
+                points.clear()
+                points.append(a)
+                points.append(b)
+            else:
+                points.append(ip[1])
+
         points: List[Vec2] = []
         for hatch_line_distance in hatch_line_distances(
-            point_distances, self.normal_distance
+            (dist_a, dist_b, dist_c), self.normal_distance
         ):
             points.clear()
             hatch_line = self.hatch_line(hatch_line_distance)
@@ -148,6 +191,13 @@ class HatchBaseLine:
         base_start = self.origin
         base_end = base_start + self.direction
         return signed_distance(a), signed_distance(b), signed_distance(c)
+
+    def signed_point_distance(self, point: Vec2) -> float:
+        """Returns the signed normal distance of the given point to the hatch
+        baseline.
+        """
+        # denominator (base_end - base_start).magnitude is 1.0 !!!
+        return (self.origin - point).det(self._origin2 - point)
 
 
 def hatch_line_distances(
