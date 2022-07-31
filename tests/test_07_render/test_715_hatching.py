@@ -114,6 +114,19 @@ class TestIntersectHatchLine:
         assert ip.type == hatching.IntersectionType.REGULAR
         assert ip.p0.isclose((4, d))
 
+    def test_missing_line_in_gear_example(self):
+        baseline = hatching.HatchBaseLine(
+            Vec2(), direction=Vec2(1, 1), offset=Vec2(-1, 1)
+        )
+        polygon = [
+            Vec2(-5.099019513592784, 6.164414002968977),
+            Vec2(-6.892024376045109, 7.245688373094721),
+            Vec2(-7.245688373094716, 6.892024376045114),
+            Vec2(-6.164414002968974, 5.099019513592788),
+        ]
+        lines = list(hatching.hatch_polygons(baseline, [polygon]))
+        assert len(lines) == 2
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

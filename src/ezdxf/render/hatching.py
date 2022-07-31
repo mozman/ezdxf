@@ -129,11 +129,10 @@ def hatch_line_distances(
     """
     assert normal_distance != 0.0
     line_numbers = [d / normal_distance for d in point_distances]
-    hatch_line_distance = math.floor(max(line_numbers)) * normal_distance
-    min_hatch_line_distance = math.ceil(min(line_numbers)) * normal_distance
-    while hatch_line_distance >= min_hatch_line_distance:
-        yield hatch_line_distance
-        hatch_line_distance -= normal_distance
+    max_line_number = int(math.ceil(max(line_numbers)))
+    min_line_number = int(math.ceil(min(line_numbers)))
+    for num in range(min_line_number, max_line_number):
+        yield normal_distance * num
 
 
 def hatch_triangle(
