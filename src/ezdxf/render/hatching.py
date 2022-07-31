@@ -1,13 +1,13 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import Iterator, Tuple, Sequence, List
+from typing import Iterator, Sequence, List
 import enum
 import math
 import dataclasses
 from ezdxf.math import Vec2
 
 MIN_HATCH_LINE_DISTANCE = 1e-4  # ??? what's a good choice
-NONE_VEC2 = Vec2()
+NONE_VEC2 = Vec2(math.nan, math.nan)
 
 
 class IntersectionType(enum.IntEnum):
@@ -50,6 +50,13 @@ class Line:
 
 
 @dataclasses.dataclass
+class Intersection:
+    type: IntersectionType = IntersectionType.NONE
+    p0: Vec2 = NONE_VEC2
+    p1: Vec2 = NONE_VEC2
+
+
+@dataclasses.dataclass
 class HatchLine:
     origin: Vec2
     direction: Vec2
@@ -57,25 +64,25 @@ class HatchLine:
 
     def intersect_line(
         self, a: Vec2, b: Vec2, dist_a: float, dist_b: float
-    ) -> Tuple[IntersectionType, Vec2, Vec2]:
+    ) -> Intersection:
         # all distances are normal distances to the hatch baseline
         line_distance = self.distance
         if math.isclose(dist_a, line_distance):
             if math.isclose(dist_b, line_distance):
-                return IntersectionType.COLLINEAR, a, b
+                return Intersection(IntersectionType.COLLINEAR, a, b)
             else:
-                return IntersectionType.START, a, NONE_VEC2
+                return Intersection(IntersectionType.START, a)
         elif math.isclose(dist_b, line_distance):
-            return IntersectionType.END, b, NONE_VEC2
+            return Intersection(IntersectionType.END, b)
         elif dist_a > line_distance > dist_b:
             # points a,b on opposite sides of the hatch line
             factor = abs(dist_a - line_distance) / (dist_a - dist_b)
-            return IntersectionType.REGULAR, a.lerp(b, factor), NONE_VEC2
+            return Intersection(IntersectionType.REGULAR, a.lerp(b, factor))
         elif dist_a < line_distance < dist_b:
             # points a,b on opposite sides of the hatch line
             factor = abs(line_distance - dist_a) / (dist_b - dist_a)
-            return IntersectionType.REGULAR, a.lerp(b, factor), NONE_VEC2
-        return IntersectionType.NONE, NONE_VEC2, NONE_VEC2
+            return Intersection(IntersectionType.REGULAR, a.lerp(b, factor))
+        return Intersection()
 
 
 class HatchBaseLine:
@@ -122,19 +129,18 @@ class HatchBaseLine:
         dist_a = self.signed_point_distance(a)
         dist_b = self.signed_point_distance(b)
         dist_c = self.signed_point_distance(c)
+        points: List[Vec2] = []
 
-        def append_intersection_point(ip: Tuple[IntersectionType, Vec2, Vec2]):
-            t, p0_, p1_ = ip
-            if t == IntersectionType.COLLINEAR:
+        def append_intersection_point(ip: Intersection):
+            if ip.type == IntersectionType.COLLINEAR:
                 # intersection_points may contain a and/or b already as end
                 # points of other triangle lines:
                 points.clear()
-                points.append(p0_)
-                points.append(p1_)
-            elif t:
-                points.append(p0_)
+                points.append(ip.p0)
+                points.append(ip.p1)
+            elif ip.type:
+                points.append(ip.p0)
 
-        points: List[Vec2] = []
         for hatch_line_distance in hatch_line_distances(
             (dist_a, dist_b, dist_c), self.normal_distance
         ):
