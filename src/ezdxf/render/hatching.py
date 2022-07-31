@@ -1,6 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import Iterator, Sequence, List
+from typing import Iterator, Sequence, List, Tuple, Dict
+from collections import defaultdict
 import enum
 import math
 import dataclasses
@@ -8,6 +9,7 @@ from ezdxf.math import Vec2
 
 MIN_HATCH_LINE_DISTANCE = 1e-4  # ??? what's a good choice
 NONE_VEC2 = Vec2(math.nan, math.nan)
+NDIGITS = 4
 
 
 class IntersectionType(enum.IntEnum):
@@ -119,6 +121,21 @@ class HatchBaseLine:
         return (self.origin - point).det(self._end - point)
 
 
+def hatch_line_distances(
+    point_distances: Sequence[float], normal_distance: float
+) -> Iterator[float]:
+    """Yields all hatch line distances in the range of the given points
+    distances. (All hatch lines which do intersect the triangle)
+    """
+    assert normal_distance != 0.0
+    line_numbers = [d / normal_distance for d in point_distances]
+    hatch_line_distance = math.floor(max(line_numbers)) * normal_distance
+    min_hatch_line_distance = math.ceil(min(line_numbers)) * normal_distance
+    while hatch_line_distance >= min_hatch_line_distance:
+        yield hatch_line_distance
+        hatch_line_distance -= normal_distance
+
+
 def hatch_triangle(
     baseline: HatchBaseLine, triangle: Sequence[Vec2]
 ) -> Iterator[Line]:
@@ -174,15 +191,68 @@ def hatch_triangle(
             yield Line(points[0], points[1], hatch_line_distance)
 
 
-def hatch_line_distances(
-    point_distances: Sequence[float], normal_distance: float
-) -> Iterator[float]:
-    """Yields all hatch line distances in the range of the given points
-    distances. (All hatch lines which do intersect the triangle)
+def intersect_polygon(
+    baseline: HatchBaseLine, polygon: Sequence[Vec2]
+) -> Iterator[Tuple[Intersection, float]]:
+    """Yields all intersection points of the hatch defined by the `baseline` and
+    the given `polygon`.
+
+    Returns the intersection point and the normal-distance from the baseline,
+    intersection points with the same normal-distance lay on the same hatch
+    line.
+
     """
-    line_numbers = [d / normal_distance for d in point_distances]
-    hatch_line_distance = math.floor(max(line_numbers)) * normal_distance
-    min_hatch_line_distance = math.ceil(min(line_numbers)) * normal_distance
-    while hatch_line_distance >= min_hatch_line_distance:
-        yield hatch_line_distance
-        hatch_line_distance -= normal_distance
+    if len(polygon) < 3:
+        return
+    if polygon[0].isclose(polygon[-1]):
+        polygon = polygon[:-1]
+    prev_point = polygon[-1]
+    dist_prev = baseline.signed_distance(prev_point)
+
+    for point in polygon:
+        dist_point = baseline.signed_distance(point)
+        for hatch_line_distance in hatch_line_distances(
+            (dist_prev, dist_point), baseline.normal_distance
+        ):
+            hatch_line = baseline.hatch_line(hatch_line_distance)
+            ip = hatch_line.intersect_line(
+                prev_point, point, dist_prev, dist_point
+            )
+            if ip.type != IntersectionType.NONE:
+                yield ip, hatch_line_distance
+        prev_point = point
+        dist_prev = dist_point
+
+
+def hatch_polygons(
+    baseline: HatchBaseLine, polygons: Sequence[Sequence[Vec2]]
+) -> Iterator[Line]:
+    """Returns all hatch lines intersecting the given polygons."""
+    points: Dict[float, List[Intersection]] = defaultdict(list)
+    for polygon in polygons:
+        for ip, distance in intersect_polygon(baseline, polygon):
+            assert ip.type != IntersectionType.NONE
+            points[round(distance, NDIGITS)].append(ip)
+    for distance, vertices in points.items():
+        yield from _line_segments(vertices, distance)
+
+
+def _line_segments(
+    vertices: List[Intersection], distance: float
+) -> Iterator[Line]:
+    if len(vertices) < 2:
+        return
+    vertices.sort(key=lambda p: p.p0)
+    prev_point = vertices[0].p0
+    inside = True
+    for ip in vertices[1:]:
+        point = ip.p0
+        if prev_point.isclose(point):
+            continue
+        if inside:
+            yield Line(prev_point, point, distance)
+        if ip.type == IntersectionType.COLLINEAR and not ip.p1.isclose(point):
+            yield Line(point, ip.p1, distance)
+            point = ip.p1
+        inside = not inside
+        prev_point = point
