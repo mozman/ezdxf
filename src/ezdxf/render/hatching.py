@@ -124,8 +124,8 @@ class HatchBaseLine:
 def hatch_line_distances(
     point_distances: Sequence[float], normal_distance: float
 ) -> Iterator[float]:
-    """Yields all hatch line distances in the range of the given points
-    distances. (All hatch lines which do intersect the triangle)
+    """Yields all hatch line distances in the range of the given point
+    distances.
     """
     assert normal_distance != 0.0
     line_numbers = [d / normal_distance for d in point_distances]
@@ -133,61 +133,6 @@ def hatch_line_distances(
     min_line_number = int(math.ceil(min(line_numbers)))
     for num in range(min_line_number, max_line_number):
         yield normal_distance * num
-
-
-def hatch_triangle(
-    baseline: HatchBaseLine, triangle: Sequence[Vec2]
-) -> Iterator[Line]:
-    """Returns all hatch lines intersecting the triangle (a, b, c)."""
-    a, b, c = triangle
-    if a.isclose(b) or b.isclose(c) or a.isclose(c):
-        return  # invalid triangle
-
-    dist_a = baseline.signed_distance(a)
-    dist_b = baseline.signed_distance(b)
-    dist_c = baseline.signed_distance(c)
-    points: List[Vec2] = []
-
-    def append_intersection_point(ip: Intersection):
-        if ip.type == IntersectionType.COLLINEAR:
-            # intersection_points may contain a and/or b already as end
-            # points of other triangle lines:
-            points.clear()
-            points.append(ip.p0)
-            points.append(ip.p1)
-        elif ip.type:
-            points.append(ip.p0)
-
-    for hatch_line_distance in hatch_line_distances(
-        (dist_a, dist_b, dist_c), baseline.normal_distance
-    ):
-        points.clear()
-        hatch_line = baseline.hatch_line(hatch_line_distance)
-        append_intersection_point(
-            hatch_line.intersect_line(a, b, dist_a, dist_b)
-        )
-        if len(points) == 2:
-            yield Line(points[0], points[1], hatch_line_distance)
-            continue
-        append_intersection_point(
-            hatch_line.intersect_line(b, c, dist_b, dist_c)
-        )
-        if len(points) == 2:
-            p0, p1 = points
-            if not p0.isclose(p1):  # not a corner point
-                yield Line(p0, p1, hatch_line_distance)
-                continue
-        append_intersection_point(
-            hatch_line.intersect_line(c, a, dist_c, dist_a)
-        )
-        if len(points) == 3:
-            # one intersection point is duplicated as corner point
-            if points[0].isclose(points[1]):
-                yield Line(points[0], points[2], hatch_line_distance)
-            else:
-                yield Line(points[0], points[1], hatch_line_distance)
-        elif len(points) == 2 and not points[0].isclose(points[1]):
-            yield Line(points[0], points[1], hatch_line_distance)
 
 
 def intersect_polygon(
