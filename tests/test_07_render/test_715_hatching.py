@@ -108,8 +108,8 @@ class TestHatchLine:
     def test_intersect_line_regular(self, horizontal_baseline, d):
         a = Vec2(4, -3)
         b = Vec2(4, 7)
-        dist_a = horizontal_baseline.signed_point_distance(a)
-        dist_b = horizontal_baseline.signed_point_distance(b)
+        dist_a = horizontal_baseline.signed_distance(a)
+        dist_b = horizontal_baseline.signed_distance(b)
 
         hatch_line = horizontal_baseline.hatch_line(d)
         ip = hatch_line.intersect_line(a, b, dist_a, dist_b)

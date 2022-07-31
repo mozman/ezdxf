@@ -111,7 +111,7 @@ class HatchBaseLine:
             self.origin + self.offset * factor, self.direction, distance
         )
 
-    def signed_point_distance(self, point: Vec2) -> float:
+    def signed_distance(self, point: Vec2) -> float:
         """Returns the signed normal distance of the given point to the hatch
         baseline.
         """
@@ -126,9 +126,9 @@ class HatchBaseLine:
         if a.isclose(b) or b.isclose(c) or a.isclose(c):
             return  # invalid triangle
 
-        dist_a = self.signed_point_distance(a)
-        dist_b = self.signed_point_distance(b)
-        dist_c = self.signed_point_distance(c)
+        dist_a = self.signed_distance(a)
+        dist_b = self.signed_distance(b)
+        dist_c = self.signed_distance(c)
         points: List[Vec2] = []
 
         def append_intersection_point(ip: Intersection):
