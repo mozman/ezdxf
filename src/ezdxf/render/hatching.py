@@ -46,14 +46,14 @@ class PatternRenderer:
 class Line:
     start: Vec2
     end: Vec2
-    distance: float
+    distance: float  # normal distance to the hatch baseline
 
 
 @dataclasses.dataclass
 class HatchLine:
     origin: Vec2
     direction: Vec2
-    distance: float
+    distance: float  # normal distance to the hatch baseline
 
     def intersect_line(
         self, a: Vec2, b: Vec2, dist_a: float, dist_b: float
@@ -63,7 +63,7 @@ class HatchLine:
         if math.isclose(dist_a, line_distance):
             if math.isclose(dist_b, line_distance):
                 return IntersectionType.COLLINEAR, a, b
-            else:  # hatch line passes only corner point a
+            else:
                 return IntersectionType.START, a, NONE_VEC2
         elif math.isclose(dist_b, line_distance):
             return IntersectionType.END, b, NONE_VEC2
@@ -92,8 +92,24 @@ class HatchBaseLine:
         self._end = self.origin + self.direction
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(origin={self.origin!r}, " \
-               f"direction={self.direction!r}, offset={self.offset!r})"
+        return (
+            f"{self.__class__.__name__}(origin={self.origin!r}, "
+            f"direction={self.direction!r}, offset={self.offset!r})"
+        )
+
+    def hatch_line(self, distance: float) -> HatchLine:
+        """Returns the hatch line at the given signed `distance`."""
+        factor = distance / self.normal_distance
+        return HatchLine(
+            self.origin + self.offset * factor, self.direction, distance
+        )
+
+    def signed_point_distance(self, point: Vec2) -> float:
+        """Returns the signed normal distance of the given point to the hatch
+        baseline.
+        """
+        # denominator (_end - origin).magnitude is 1.0 !!!
+        return (self.origin - point).det(self._end - point)
 
     def hatch_lines_intersecting_triangle(
         self, triangle: Sequence[Vec2]
@@ -149,20 +165,6 @@ class HatchBaseLine:
                     yield Line(points[0], points[1], hatch_line_distance)
             elif len(points) == 2 and not points[0].isclose(points[1]):
                 yield Line(points[0], points[1], hatch_line_distance)
-
-    def hatch_line(self, distance: float) -> HatchLine:
-        """Returns the hatch line at the given signed `distance`."""
-        factor = distance / self.normal_distance
-        return HatchLine(
-            self.origin + self.offset * factor, self.direction, distance
-        )
-
-    def signed_point_distance(self, point: Vec2) -> float:
-        """Returns the signed normal distance of the given point to the hatch
-        baseline.
-        """
-        # denominator (_end - origin).magnitude is 1.0 !!!
-        return (self.origin - point).det(self._end - point)
 
 
 def hatch_line_distances(
