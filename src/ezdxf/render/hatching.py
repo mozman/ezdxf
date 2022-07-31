@@ -123,16 +123,17 @@ class HatchBaseLine:
 
 def hatch_line_distances(
     point_distances: Sequence[float], normal_distance: float
-) -> Iterator[float]:
-    """Yields all hatch line distances in the range of the given point
+) -> List[float]:
+    """Returns all hatch line distances in the range of the given point
     distances.
     """
     assert normal_distance != 0.0
-    line_numbers = [d / normal_distance for d in point_distances]
-    max_line_number = int(math.ceil(max(line_numbers)))
-    min_line_number = int(math.ceil(min(line_numbers)))
-    for num in range(min_line_number, max_line_number):
-        yield normal_distance * num
+    normal_factors = [d / normal_distance for d in point_distances]
+    max_line_number = int(math.ceil(max(normal_factors)))
+    min_line_number = int(math.ceil(min(normal_factors)))
+    return [
+        normal_distance * num for num in range(min_line_number, max_line_number)
+    ]
 
 
 def intersect_polygon(
