@@ -42,21 +42,21 @@ class PatternRenderer:
     pass
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Line:
     start: Vec2
     end: Vec2
     distance: float  # normal distance to the hatch baseline
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Intersection:
     type: IntersectionType = IntersectionType.NONE
     p0: Vec2 = NONE_VEC2
     p1: Vec2 = NONE_VEC2
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class HatchLine:
     origin: Vec2
     direction: Vec2
