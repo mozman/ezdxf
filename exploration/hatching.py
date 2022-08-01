@@ -105,7 +105,7 @@ def collinear_hatching(filename: str):
         draw(
             "h+2, v-2, h+2, v-2, h+2, v+4, h+4, v+10, h-2, v+2, h-2, v+2, h-2, v-4, h-4"
         ),
-        draw("h+2, v+2, h+2, v-2, h+2, v+3, h+2, v-3, h+2, v+10, h-10"),
+        draw("h+2, v+2, h+2, v-2, h+2, v+3, h+2, v-3, h+2, v+10, h-2, v+2, h-2, v-2, h-2, v+4, h-2, v-4, h-2"),
         draw("h+3, q1+2, q4+2, h+3, v+10, q3+2, q2+2, h-2, q3+2, q2+2"),
         draw(
             "h+3, q1+1, q1+1, q4+1, q4+1, h+3, v+10, q3+1, q3+1, q2+1, q2+1, h-2, q3+1, q3+1, q2+1, q2+1"

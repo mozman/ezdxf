@@ -57,11 +57,11 @@ class Intersection:
 
 
 def side_of_line(distance: float) -> int:
-    if abs(distance) < 1e-9:
-        return 0
     if distance > 0.0:
         return +1
-    return -1
+    elif distance < 0.0:
+        return -1
+    return 0
 
 
 @dataclasses.dataclass(frozen=True)
