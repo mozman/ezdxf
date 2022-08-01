@@ -809,7 +809,7 @@ def local_cubic_bspline_interpolation_from_tangents(
         c = -36.0 * (p3 - p0).magnitude_square
         try:
             alpha_plus, alpha_minus = linalg.quadratic_equation(a, b, c)
-        except (ArithmeticError, ValueError):  # complex solution
+        except ValueError:  # complex solution
             continue
         p1 = p0 + alpha_plus * t0 / 3.0
         p2 = p3 - alpha_plus * t3 / 3.0

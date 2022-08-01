@@ -419,9 +419,9 @@ class Matrix:
 def quadratic_equation(
     a: float, b: float, c: float, abs_tol=1e-12
 ) -> Sequence[float]:
-    """Returns the solution for the quadratic equation ``a*x^2 + b*x + c = 0``
-    as sequence of floats, there can be one or two solutions. Raises an :class:
-    `ArithmeticError` exception if there is a complex solution.
+    """Returns the solution for the quadratic equation ``a*x^2 + b*x + c = 0``.
+
+    Returns 0-2 solutions as a tuple of floats.
     """
     if abs(a) < abs_tol:
         if abs(b) < abs_tol:
@@ -430,12 +430,16 @@ def quadratic_equation(
     try:
         discriminant = math.sqrt(b**2 - 4 * a * c)
     except ValueError:  # domain error, sqrt of a negative number
-        raise ArithmeticError("complex solution")
+        return tuple()
     return ((-b + discriminant) / (2.0 * a)), ((-b - discriminant) / (2.0 * a))
 
 
 # noinspection PyPep8Naming
 def cubic_equation(a: float, b: float, c: float, d: float) -> Sequence[float]:
+    """Returns the solution for the cubic equation ``a*x^3 + b*x^2 + c*x + d = 0``.
+
+    Returns 0-3 solutions as a tuple of floats.
+    """
     if abs(a) < 1e-12:
         try:
             return quadratic_equation(b, c, d)
