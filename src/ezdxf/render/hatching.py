@@ -200,10 +200,10 @@ def hatch_polygons(
             points[round(distance, NDIGITS)].append(ip)
 
     for distance, vertices in points.items():
-        start = None
-        end = None
+        start = NONE_VEC2
+        end = NONE_VEC2
         for line in _line_segments(vertices, distance):
-            if start is None:
+            if start is NONE_VEC2:
                 start = line.start
                 end = line.end
                 continue
@@ -214,7 +214,7 @@ def hatch_polygons(
                 start = line.start
                 end = line.end
 
-        if start is not None:
+        if start is not NONE_VEC2:
             yield Line(start, end, distance)
 
 
