@@ -1,7 +1,9 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import Iterable, List
+from typing import List
 from pathlib import Path
+import time
+
 import ezdxf
 from ezdxf.math import Vec2
 from ezdxf.render import forms, hatching
@@ -105,7 +107,9 @@ def collinear_hatching(filename: str):
         draw(
             "h+2, v-2, h+2, v-2, h+2, v+4, h+4, v+10, h-2, v+2, h-2, v+2, h-2, v-4, h-4"
         ),
-        draw("h+2, v+2, h+2, v-2, h+2, v+3, h+2, v-3, h+2, v+10, h-2, v+2, h-2, v-2, h-2, v+4, h-2, v-4, h-2"),
+        draw(
+            "h+2, v+2, h+2, v-2, h+2, v+3, h+2, v-3, h+2, v+10, h-2, v+2, h-2, v-2, h-2, v+4, h-2, v-4, h-2"
+        ),
         draw("h+3, q1+2, q4+2, h+3, v+10, q3+2, q2+2, h-2, q3+2, q2+2"),
         draw(
             "h+3, q1+1, q1+1, q4+1, q4+1, h+3, v+10, q3+1, q3+1, q2+1, q2+1, h-2, q3+1, q3+1, q2+1, q2+1"
@@ -119,6 +123,20 @@ def collinear_hatching(filename: str):
     doc.saveas(CWD / filename)
 
 
+def explode_hatch_pattern(filename: str):
+    doc = ezdxf.readfile(CWD / filename)
+    msp = doc.modelspace()
+    attribs = {"layer": "EXPLODE", "color": ezdxf.colors.RED}
+    t0 = time.perf_counter()
+    for hatch in msp.query("HATCH"):
+        for start, end in hatching.explode_hatch_pattern(hatch, 1):  # type: ignore
+            msp.add_line(start, end, attribs)
+    t1 = time.perf_counter()
+    print(f"Exploding hatch pattern took: {t1-t0:.3}s")
+    doc.saveas(CWD / filename.replace(".dxf", ".explode.dxf"))
+
+
 if __name__ == "__main__":
-    polygon_hatching("polygon_hatching.dxf")
-    collinear_hatching("collinear_hatching.dxf")
+    # polygon_hatching("polygon_hatching.dxf")
+    # collinear_hatching("collinear_hatching.dxf")
+    explode_hatch_pattern("hatch_pattern_iso.dxf")

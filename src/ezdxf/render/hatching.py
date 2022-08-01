@@ -1,11 +1,17 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import Iterator, Sequence, List, Tuple, Dict
+from __future__ import annotations
+from typing import Iterator, Sequence, List, Tuple, Dict, TYPE_CHECKING
 from collections import defaultdict
 import enum
 import math
 import dataclasses
-from ezdxf.math import Vec2
+from ezdxf.math import Vec2, AnyVec
+
+
+if TYPE_CHECKING:
+    from ezdxf.path import Path
+    from ezdxf.entities.polygon import DXFPolygon
 
 MIN_HATCH_LINE_DISTANCE = 1e-4  # ??? what's a good choice
 NONE_VEC2 = Vec2(math.nan, math.nan)
@@ -99,7 +105,13 @@ class HatchLine:
 
 
 class HatchBaseLine:
-    def __init__(self, origin: Vec2, direction: Vec2, offset: Vec2):
+    def __init__(
+        self,
+        origin: Vec2,
+        direction: Vec2,
+        offset: Vec2,
+        line_pattern: List[float] = None,
+    ):
         self.origin = origin
         try:
             self.direction = direction.normalize()
@@ -110,6 +122,7 @@ class HatchBaseLine:
         if abs(self.normal_distance) < MIN_HATCH_LINE_DISTANCE:
             raise DenseHatchingLinesError("hatching lines are too narrow")
         self._end = self.origin + self.direction
+        self.line_pattern: List[float] = line_pattern if line_pattern else []
 
     def __repr__(self):
         return (
@@ -252,3 +265,50 @@ def _line_segments(
 
         inside = not inside
         prev_point = point
+
+
+def explode_hatch_pattern(
+    hatch: DXFPolygon, max_flattening_distance: float
+) -> Iterator[Tuple[AnyVec, AnyVec]]:
+    if hatch.pattern is None or hatch.dxf.solid_fill:
+        return
+    if len(hatch.pattern.lines) == 0:
+        return
+    ocs = hatch.ocs()
+    elevation = hatch.dxf.elevation.z
+    paths = hatch_paths(hatch)
+    polygons = [Vec2.list(p.flattening(max_flattening_distance)) for p in paths]
+    # polygons in OCS!
+    for baseline in pattern_baselines(hatch):
+        for line in hatch_polygons(baseline, polygons):
+            # todo: apply line pattern
+            if ocs.transform:
+                s = line.start
+                e = line.end
+                yield ocs.to_wcs((s.x, s.y, elevation)), ocs.to_wcs(
+                    (e.x, e.y, elevation)
+                )
+            yield line.start, line.end
+
+
+def hatch_paths(polygon: DXFPolygon) -> List[Path]:
+    from ezdxf.path import from_hatch_boundary_path
+
+    loops = []
+    for boundary in polygon.paths.rendering_paths(polygon.dxf.hatch_style):
+        path = from_hatch_boundary_path(boundary)
+        for sub_path in path.sub_paths():
+            if len(sub_path):
+                sub_path.close()
+                loops.append(sub_path)
+    return loops
+
+
+def pattern_baselines(polygon: DXFPolygon) -> Iterator[HatchBaseLine]:
+    pattern = polygon.pattern
+    if not pattern:
+        return
+
+    for line in pattern.lines:
+        direction = Vec2.from_deg_angle(line.angle)
+        yield HatchBaseLine(line.base_point, direction, line.offset)
