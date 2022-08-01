@@ -115,8 +115,8 @@ class Matrix:
                 self.matrix = [list(row) for row in items]
             except TypeError:
                 self.matrix = Matrix.reshape(
-                    items, shape
-                ).matrix  # type: ignore
+                    items, shape  # type: ignore
+                ).matrix
 
     def __iter__(self) -> Iterator[float]:
         for row in self.matrix:
