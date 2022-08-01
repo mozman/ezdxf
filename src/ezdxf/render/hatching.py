@@ -15,9 +15,7 @@ NDIGITS = 4
 class IntersectionType(enum.IntEnum):
     NONE = 0
     REGULAR = 1
-    START = 2
-    END = 3
-    COLLINEAR = 4
+    COLLINEAR = 2
 
 
 class HatchingError(Exception):
@@ -78,7 +76,6 @@ class HatchLine:
         b: Vec2,
         dist_a: float,
         dist_b: float,
-        dist_next: float = 0.0,
     ) -> Intersection:
         """Returns the intersection of this hatch line with the line (a, b).
         The arguments `dist_a` and `dist_b` are the normal distances of the
@@ -94,14 +91,9 @@ class HatchLine:
             if side_b == 0:
                 return Intersection(IntersectionType.COLLINEAR, a, b)
             else:
-                return Intersection(IntersectionType.START, a)
+                return Intersection(IntersectionType.REGULAR, a)
         elif side_b == 0:
-            side_next = side_of_line(dist_next - line_distance)
-            # if side_next == side_a:
-                # a->b->next deflects at the hatch line at point b
-                # return Intersection()  # no intersection
-            # a->b->next crosses the hatch line at point b
-            return Intersection(IntersectionType.END, b)
+            return Intersection(IntersectionType.REGULAR, b)
         elif side_a != side_b:
             # points a,b on opposite sides of the hatch line
             factor = abs((dist_a - line_distance) / (dist_a - dist_b))
@@ -177,11 +169,9 @@ def intersect_polygon(
 
     prev_point = polygon[count - 1]  # last point
     dist_prev = baseline.signed_distance(prev_point)
-    point = polygon[0]
-    dist_point = baseline.signed_distance(point)
-    for index in range(0, count):
-        next_point = polygon[(index + 1) % count]
-        dist_next = baseline.signed_distance(next_point)
+    for index in range(count):
+        point = polygon[index]
+        dist_point = baseline.signed_distance(point)
         for hatch_line_distance in hatch_line_distances(
             (dist_prev, dist_point), baseline.normal_distance
         ):
@@ -191,15 +181,15 @@ def intersect_polygon(
                 point,
                 dist_prev,
                 dist_point,
-                dist_next,
             )
-            if ip.type != IntersectionType.NONE:
+            if (
+                ip.type != IntersectionType.NONE
+                and ip.type != IntersectionType.COLLINEAR
+            ):
                 yield ip, hatch_line_distance
 
         prev_point = point
         dist_prev = dist_point
-        point = next_point
-        dist_point = dist_next
 
 
 def hatch_polygons(
@@ -221,16 +211,31 @@ def _line_segments(
     if len(vertices) < 2:
         return
     vertices.sort(key=lambda p: p.p0)
-    prev_point = vertices[0].p0
-    inside = True
-    for ip in vertices[1:]:
-        point = ip.p0
-        if prev_point.isclose(point):
+    inside = False
+    prev_point = NONE_VEC2
+    for ip in vertices:
+        if ip.type == IntersectionType.COLLINEAR:
+            if not inside:
+                if not ip.p0.isclose(ip.p1):
+                    yield Line(ip.p0, ip.p1, distance)
+                inside = True
+                prev_point = ip.p1
+            else:
+                inside = False
+                prev_point = ip.p1
             continue
+
+        if ip.type == IntersectionType.NONE:
+            continue
+        point = ip.p0
+
+        if prev_point is NONE_VEC2:
+            inside = True
+            prev_point = point
+            continue
+
         if inside:
             yield Line(prev_point, point, distance)
-        if ip.type == IntersectionType.COLLINEAR and not ip.p1.isclose(point):
-            yield Line(point, ip.p1, distance)
-            point = ip.p1
+
         inside = not inside
         prev_point = point
