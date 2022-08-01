@@ -271,11 +271,15 @@ def intersection_params_ray_cubic_bezier(
     c0, c1, c2, c3 = cp
     bx = _bezier4poly(c0.x, c1.x, c2.x, c3.x)
     by = _bezier4poly(c0.y, c1.y, c2.y, c3.y)
-    return cubic_equation(
-        A * bx[0] + B * by[0],
-        A * bx[1] + B * by[1],
-        A * bx[2] + B * by[2],
-        A * bx[3] + B * by[3] + C,
+    return sorted(
+        v
+        for v in cubic_equation(
+            A * bx[0] + B * by[0],
+            A * bx[1] + B * by[1],
+            A * bx[2] + B * by[2],
+            A * bx[3] + B * by[3] + C,
+        )
+        if 0.0 <= v <= 1.0
     )
 
 
