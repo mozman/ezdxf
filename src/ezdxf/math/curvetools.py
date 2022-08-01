@@ -9,9 +9,11 @@ from ezdxf.math import (
     Bezier3P,
     UVec,
     Vec3,
+    Vec2,
     AnyVec,
     BoundingBox,
 )
+from ezdxf.math.linalg import cubic_equation
 
 __all__ = [
     "bezier_to_bspline",
@@ -24,6 +26,7 @@ __all__ = [
     "cubic_bezier_from_3p",
     "cubic_bezier_bbox",
     "quadratic_bezier_bbox",
+    "intersection_ray_cubic_bezier_2d",
 ]
 
 
@@ -244,3 +247,54 @@ def quadratic_bezier_bbox(curve: Bezier3P, *, abs_tol=1e-12) -> BoundingBox:
 
     """
     return cubic_bezier_bbox(quadratic_to_cubic_bezier(curve), abs_tol=abs_tol)
+
+
+def _bezier4poly(a: float, b: float, c: float, d: float):
+    a3 = a * 3.0
+    b3 = b * 3.0
+    c3 = c * 3.0
+    return -a + b3 - c3 + d, a3 - b * 6.0 + c3, -a3 + b3, a
+
+
+# noinspection PyPep8Naming
+def intersection_params_ray_cubic_bezier(
+    p0: AnyVec, p1: AnyVec, cp: Sequence[AnyVec]
+) -> List[float]:
+    """Returns the parameters of the intersection points between the ray defined
+    by two points `p0` and `p1` and the cubic Bézier curve defined by four
+    control points `cp`.
+    """
+    A = p1.y - p0.y
+    B = p0.x - p1.x
+    C = p0.x * (p0.y - p1.y) + p0.y * (p1.x - p0.x)
+
+    c0, c1, c2, c3 = cp
+    bx = _bezier4poly(c0.x, c1.x, c2.x, c3.x)
+    by = _bezier4poly(c0.y, c1.y, c2.y, c3.y)
+    return cubic_equation(
+        A * bx[0] + B * by[0],
+        A * bx[1] + B * by[1],
+        A * bx[2] + B * by[2],
+        A * bx[3] + B * by[3] + C,
+    )
+
+
+def intersection_ray_cubic_bezier_2d(
+    p0: UVec,
+    p1: UVec,
+    curve: Bezier4P,
+) -> Sequence[Vec2]:
+    """Returns the intersection points between the `ray` defined by two points
+    `p0` and `p1` and the given cubic Bézier `curve`. Ignores the z-axis of 3D
+    curves.
+
+    Returns 0-3 intersection points as :class:`Vec2` objects in the
+    order start- to end point of the curve.
+
+    """
+    return Vec2.tuple(
+        curve.point(t)
+        for t in intersection_params_ray_cubic_bezier(
+            Vec2(p0), Vec2(p1), curve.control_points
+        )
+    )
