@@ -201,8 +201,24 @@ def hatch_polygons(
         for ip, distance in intersect_polygon(baseline, polygon):
             assert ip.type != IntersectionType.NONE
             points[round(distance, NDIGITS)].append(ip)
+
     for distance, vertices in points.items():
-        yield from _line_segments(vertices, distance)
+        start = None
+        end = None
+        for line in _line_segments(vertices, distance):
+            if start is None:
+                start = line.start
+                end = line.end
+                continue
+            if line.start.isclose(end):
+                end = line.end
+            else:
+                yield Line(start, end, distance)
+                start = line.start
+                end = line.end
+
+        if start is not None:
+            yield Line(start, end, distance)
 
 
 def _line_segments(
