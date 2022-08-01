@@ -114,8 +114,9 @@ class Matrix:
             try:
                 self.matrix = [list(row) for row in items]
             except TypeError:
-                self.matrix = Matrix.reshape(items,
-                    shape).matrix  # type: ignore
+                self.matrix = Matrix.reshape(
+                    items, shape
+                ).matrix  # type: ignore
 
     def __iter__(self) -> Iterator[float]:
         for row in self.matrix:
@@ -417,16 +418,15 @@ class Matrix:
 
 def quadratic_equation(
     a: float, b: float, c: float, abs_tol=1e-12
-) -> Tuple[float, float]:
+) -> Sequence[float]:
     """Returns the solution for the quadratic equation ``a*x^2 + b*x + c = 0``
-    as 2-tuple ``(r0, r1)``. The second result is `math.nan` if argument `a`
-    is 0 and raises an :class:`ArithmeticError` exception if there is a complex
-    solution.
+    as sequence of floats, there can be one or two solutions. Raises an :class:
+    `ArithmeticError` exception if there is a complex solution.
     """
     if abs(a) < abs_tol:
         if abs(b) < abs_tol:
-            return -c, math.nan
-        return -c / b, math.nan
+            return (-c,)
+        return (-c / b,)
     try:
         discriminant = math.sqrt(b**2 - 4 * a * c)
     except ValueError:  # domain error, sqrt of a negative number
@@ -437,7 +437,12 @@ def quadratic_equation(
 # noinspection PyPep8Naming
 def cubic_equation(a: float, b: float, c: float, d: float) -> List[float]:
     if abs(a) < 1e-12:
-        return sorted(v for v in quadratic_equation(b, c, d) if 0.0 <= v <= 1.0)
+        try:
+            return sorted(
+                v for v in quadratic_equation(b, c, d) if 0.0 <= v <= 1.0
+            )
+        except ArithmeticError:  # complex solution
+            return []
     A = b / a
     B = c / a
     C = d / a
