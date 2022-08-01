@@ -807,10 +807,10 @@ def local_cubic_bspline_interpolation_from_tangents(
         a = 16.0 - (t0 + t3).magnitude_square  # always > 0!
         b = 12.0 * (p3 - p0).dot(t0 + t3)
         c = -36.0 * (p3 - p0).magnitude_square
-
-        # Raises an ArithmeticError exception if there is a complex solution.
-        # Is this possible?
-        alpha_plus, alpha_minus = linalg.quadratic_equation(a, b, c)
+        try:
+            alpha_plus, alpha_minus = linalg.quadratic_equation(a, b, c)
+        except (ArithmeticError, ValueError):  # complex solution
+            continue
         p1 = p0 + alpha_plus * t0 / 3.0
         p2 = p3 - alpha_plus * t3 / 3.0
         control_points.extend((p1, p2))
@@ -831,7 +831,7 @@ def local_cubic_bspline_interpolation_from_tangents(
 
 class BSpline:
     """Representation of a `B-spline`_ curve. The default configuration of
-    the knot vector is an uniform open `knot`_ vector ("clamped").
+    the knot vector is a uniform open `knot`_ vector ("clamped").
 
     Factory functions:
 
