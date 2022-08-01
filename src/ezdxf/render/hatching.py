@@ -58,6 +58,14 @@ class Intersection:
     p1: Vec2 = NONE_VEC2
 
 
+def side_of_line(distance: float) -> int:
+    if abs(distance) < 1e-9:
+        return 0
+    if distance > 0.0:
+        return +1
+    return -1
+
+
 @dataclasses.dataclass(frozen=True)
 class HatchLine:
     origin: Vec2
@@ -65,26 +73,40 @@ class HatchLine:
     distance: float  # normal distance to the hatch baseline
 
     def intersect_line(
-        self, a: Vec2, b: Vec2, dist_a: float, dist_b: float
+        self,
+        a: Vec2,
+        b: Vec2,
+        dist_a: float,
+        dist_b: float,
+        dist_next: float = 0.0,
     ) -> Intersection:
+        """Returns the intersection of this hatch line with the line (a, b).
+        The arguments `dist_a` and `dist_b` are the normal distances of the
+        points a,b from the hatch baseline.
+        The `dist_c` is the normal distance from the hatch baseline of the point
+        following point `b`.
+        """
         # all distances are normal distances to the hatch baseline
         line_distance = self.distance
-        if math.isclose(dist_a, line_distance):
-            if math.isclose(dist_b, line_distance):
+        side_a = side_of_line(dist_a - line_distance)
+        side_b = side_of_line(dist_b - line_distance)
+        if side_a == 0:
+            if side_b == 0:
                 return Intersection(IntersectionType.COLLINEAR, a, b)
             else:
                 return Intersection(IntersectionType.START, a)
-        elif math.isclose(dist_b, line_distance):
+        elif side_b == 0:
+            side_next = side_of_line(dist_next - line_distance)
+            # if side_next == side_a:
+                # a->b->next deflects at the hatch line at point b
+                # return Intersection()  # no intersection
+            # a->b->next crosses the hatch line at point b
             return Intersection(IntersectionType.END, b)
-        elif dist_a > line_distance > dist_b:
+        elif side_a != side_b:
             # points a,b on opposite sides of the hatch line
-            factor = abs(dist_a - line_distance) / (dist_a - dist_b)
+            factor = abs((dist_a - line_distance) / (dist_a - dist_b))
             return Intersection(IntersectionType.REGULAR, a.lerp(b, factor))
-        elif dist_a < line_distance < dist_b:
-            # points a,b on opposite sides of the hatch line
-            factor = abs(line_distance - dist_a) / (dist_b - dist_a)
-            return Intersection(IntersectionType.REGULAR, a.lerp(b, factor))
-        return Intersection()
+        return Intersection()  # no intersection
 
 
 class HatchBaseLine:
@@ -147,26 +169,37 @@ def intersect_polygon(
     line.
 
     """
-    if len(polygon) < 3:
+    count = len(polygon)
+    if count < 3:
         return
     if polygon[0].isclose(polygon[-1]):
-        polygon = polygon[:-1]
-    prev_point = polygon[-1]
-    dist_prev = baseline.signed_distance(prev_point)
+        count -= 1
 
-    for point in polygon:
-        dist_point = baseline.signed_distance(point)
+    prev_point = polygon[count - 1]  # last point
+    dist_prev = baseline.signed_distance(prev_point)
+    point = polygon[0]
+    dist_point = baseline.signed_distance(point)
+    for index in range(0, count):
+        next_point = polygon[(index + 1) % count]
+        dist_next = baseline.signed_distance(next_point)
         for hatch_line_distance in hatch_line_distances(
             (dist_prev, dist_point), baseline.normal_distance
         ):
             hatch_line = baseline.hatch_line(hatch_line_distance)
             ip = hatch_line.intersect_line(
-                prev_point, point, dist_prev, dist_point
+                prev_point,
+                point,
+                dist_prev,
+                dist_point,
+                dist_next,
             )
             if ip.type != IntersectionType.NONE:
                 yield ip, hatch_line_distance
+
         prev_point = point
         dist_prev = dist_point
+        point = next_point
+        dist_point = dist_next
 
 
 def hatch_polygons(

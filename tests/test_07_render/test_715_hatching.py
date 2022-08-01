@@ -66,7 +66,6 @@ class TestIntersectHatchLine:
     def test_intersect_line_start(self, horizontal_baseline):
         a = Vec2(0, 0)
         b = Vec2(0, 10)
-
         hatch_line = horizontal_baseline.hatch_line(0)
         ip = hatch_line.intersect_line(a, b, 0, 10)
         assert ip.type == hatching.IntersectionType.START
@@ -89,7 +88,7 @@ class TestIntersectHatchLine:
         dist_b = horizontal_baseline.signed_distance(b)
 
         hatch_line = horizontal_baseline.hatch_line(d)
-        ip = hatch_line.intersect_line(a, b, dist_a, dist_b)
+        ip = hatch_line.intersect_line(a, b, dist_a, dist_b, 0)
         assert ip.type == hatching.IntersectionType.REGULAR
         assert ip.p0.isclose((4, d))
 
