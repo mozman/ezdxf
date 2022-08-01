@@ -80,8 +80,6 @@ class HatchLine:
         """Returns the intersection of this hatch line with the line (a, b).
         The arguments `dist_a` and `dist_b` are the normal distances of the
         points a,b from the hatch baseline.
-        The `dist_c` is the normal distance from the hatch baseline of the point
-        following point `b`.
         """
         # all distances are normal distances to the hatch baseline
         line_distance = self.distance
@@ -95,7 +93,6 @@ class HatchLine:
         elif side_b == 0:
             return Intersection(IntersectionType.REGULAR, b)
         elif side_a != side_b:
-            # points a,b on opposite sides of the hatch line
             factor = abs((dist_a - line_distance) / (dist_a - dist_b))
             return Intersection(IntersectionType.REGULAR, a.lerp(b, factor))
         return Intersection()  # no intersection
