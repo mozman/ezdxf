@@ -436,6 +436,8 @@ def quadratic_equation(
 
 # noinspection PyPep8Naming
 def cubic_roots(a: float, b: float, c: float, d: float) -> List[float]:
+    if abs(a) < 1e-12:
+        return sorted(v for v in quadratic_equation(b, c, d) if 0.0 <= v <= 1.0)
     A = b / a
     B = c / a
     C = d / a
