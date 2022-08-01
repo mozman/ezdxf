@@ -21,6 +21,7 @@ __all__ = [
     "BandedMatrixLU",
     "banded_matrix",
     "quadratic_equation",
+    "cubic_roots",
     "binomial_coefficient",
 ]
 
@@ -431,6 +432,45 @@ def quadratic_equation(
     except ValueError:  # domain error, sqrt of a negative number
         raise ArithmeticError("complex solution")
     return ((-b + discriminant) / (2.0 * a)), ((-b - discriminant) / (2.0 * a))
+
+
+# noinspection PyPep8Naming
+def cubic_roots(a: float, b: float, c: float, d: float) -> List[float]:
+    A = b / a
+    B = c / a
+    C = d / a
+    AA = A * A
+    A3 = A / 3
+
+    Q = (3 * B - AA) / 9
+    R = (9 * A * B - 27 * C - 2 * (AA * A)) / 54
+    QQQ = Q * Q * Q
+    D = QQQ + (R * R)  # polynomial discriminant
+
+    if D >= 0:  # complex or duplicate roots
+        sqrtD = math.sqrt(D)
+        exp = 1 / 3
+        S = math.copysign(1.0, R + sqrtD) * math.pow(abs(R + sqrtD), exp)
+        T = math.copysign(1.0, R - sqrtD) * math.pow(abs(R - sqrtD), exp)
+        ST = S + T
+        if S - T:  # is complex
+            t = [-A3 + ST]  # real root
+        else:
+            ST_2 = ST / 2
+            t = [
+                -A3 + ST,  # real root
+                -A3 - ST_2,  # real part of complex root
+                -A3 - ST_2,  # real part of complex root
+            ]
+    else:  # distinct real roots
+        th = math.acos(R / math.sqrt(-QQQ))
+        sqrtQ2 = 2 * math.sqrt(-Q)
+        t = [
+            sqrtQ2 * math.cos(th / 3) - A3,
+            sqrtQ2 * math.cos((th + 2 * math.pi) / 3) - A3,
+            sqrtQ2 * math.cos((th + 4 * math.pi) / 3) - A3,
+        ]
+    return sorted(v for v in t if 0.0 <= v <= 1.0)
 
 
 def gauss_vector_solver(
