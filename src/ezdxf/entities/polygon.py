@@ -343,7 +343,7 @@ class DXFPolygon(DXFGraphic):
 
         Starts always from the original base scaling, :code:`set_pattern_scale(1)`
         reset the pattern scaling to the original appearance as defined by the
-        pattern designer, but only if the the pattern attribute
+        pattern designer, but only if the pattern attribute
         :attr:`dxf.pattern_scale` represents the actual scaling, it is not
         possible to recreate the original pattern scaling from the pattern
         definition itself.

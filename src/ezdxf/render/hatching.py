@@ -278,7 +278,7 @@ def explode_hatch_pattern(
     elevation = hatch.dxf.elevation.z
     paths = hatch_paths(hatch)
     polygons = [Vec2.list(p.flattening(max_flattening_distance)) for p in paths]
-    # polygons in OCS!
+    # All polygons in OCS!
     for baseline in pattern_baselines(hatch):
         for line in hatch_polygons(baseline, polygons):
             # todo: apply line pattern
@@ -308,7 +308,10 @@ def pattern_baselines(polygon: DXFPolygon) -> Iterator[HatchBaseLine]:
     pattern = polygon.pattern
     if not pattern:
         return
-
+    # The hatch pattern parameters are already scaled and rotated for direct
+    # usage!
+    # The stored scale and angle is just for reconstructing the base pattern
+    # when applying a new scaling or rotation.
     for line in pattern.lines:
         direction = Vec2.from_deg_angle(line.angle)
         yield HatchBaseLine(line.base_point, direction, line.offset)
