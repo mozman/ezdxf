@@ -430,7 +430,10 @@ class Frontend:
                         s, e = ocs.to_wcs((s.x, s.y, elevation)), ocs.to_wcs(
                             (e.x, e.y, elevation)
                         )
-                    self.out.draw_line(s, e, properties)
+                    if e.isclose(s):
+                        self.out.draw_point(s, properties)
+                    else:
+                        self.out.draw_line(s, e, properties)
 
     def draw_hatch_entity(
         self,
