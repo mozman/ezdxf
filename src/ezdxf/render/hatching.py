@@ -112,9 +112,7 @@ class PatternRenderer:
         self.pattern_length = math.fsum([abs(e) for e in pattern])
 
     def sequence_origin(self, index: float) -> Vec2:
-        return self.origin + self.direction * (
-            self.pattern_length * index
-        )
+        return self.origin + self.direction * (self.pattern_length * index)
 
     def render(self, start: Vec2, end: Vec2) -> Iterator[Tuple[Vec2, Vec2]]:
         if start.isclose(end):
@@ -124,18 +122,25 @@ class PatternRenderer:
             yield start, end
             return
 
+        def pattern_offset(index, distance):
+            if math.isclose(index * length, distance):
+                # fix floating point imprecision:
+                # modulo and floor() do not play nice together
+                return 0.0
+            return distance % length
+
         direction = self.direction
         if direction.dot(end - start) < 0.0:
             # Line direction is reversed to the pattern line direction!
             start, end = end, start
-
         origin = self.origin
         s_dist = direction.dot(start - origin)
         e_dist = direction.dot(end - origin)
         s_index = math.floor(s_dist / length)
-        s_offset = s_dist % length
+        s_offset = pattern_offset(s_index, s_dist)
         e_index = math.floor(e_dist / length)
-        e_offset = e_dist % length
+        e_offset = pattern_offset(e_index, e_dist)
+
         if s_index == e_index:
             yield from self.render_offset_to_offset(s_index, s_offset, e_offset)
             return
