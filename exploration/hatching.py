@@ -152,6 +152,7 @@ def hole_examples(filename: str, size=10, dx=13):
 
 
 def debug_hatch():
+    # earth1 pattern
     doc = ezdxf.new()
     msp = doc.modelspace()
     e = msp.add_hatch(
@@ -171,16 +172,20 @@ def debug_hatch():
         },
     )
     e.set_pattern_definition([
-        [0.0, (0.0, 0.0), (1.5875, 1.5875), [0.79375, -2.38125]],
-        [90.0, (0.396875, -0.396875), (-1.5875, 1.5875), [0.79375, -2.38125]],
+        [0.0, (0.0, 0.0), (1.5875, 1.5875), [1.5875, -1.5875]],
+        [0.0, (0.0, 0.5953125), (1.5875, 1.5875), [1.5875, -1.5875]],
+        [0.0, (0.0, 1.190625), (1.5875, 1.5875), [1.5875, -1.5875]],
+        [90.0, (0.1984375, 1.3890625), (-1.5875, 1.5875), [1.5875, -1.5875]],
+        [90.0, (0.79375, 1.3890625), (-1.5875, 1.5875), [1.5875, -1.5875]],
+        [90.0, (1.3890625, 1.3890625), (-1.5875, 1.5875), [1.5875, -1.5875]],
     ])
     e.dxf.solid_fill = 0
     # 1. polyline path
     e.paths.add_polyline_path([
-        (0.0, 234.0, 0.0),
-        (10.0, 234.0, 0.0),
-        (10.0, 244.0, 0.0),
-        (0.0, 244.0, 0.0),
+        (0.0, 223.0, 0.0),
+        (10.0, 223.0, 0.0),
+        (10.0, 233.0, 0.0),
+        (0.0, 233.0, 0.0),
     ],
         is_closed=1,
         flags=3,
@@ -190,7 +195,7 @@ def debug_hatch():
 
 
 if __name__ == "__main__":
-    # debug_hatch()
+    debug_hatch()
     polygon_hatching("polygon_hatching.dxf")
     collinear_hatching("collinear_hatching.dxf")
     explode_hatch_pattern("hatch_pattern_iso.dxf")

@@ -219,5 +219,35 @@ class TestLinePatternRendering:
         assert lines[-1][1] == (10, 0)
 
 
+def test_explode_earth1_pattern():
+    """Visual check by the function explode_hatch_pattern() in script
+    exploration/hatching.py,
+
+    """
+    from ezdxf.entities import Hatch
+    hatch = Hatch.new()
+    hatch.set_pattern_definition([
+        [0.0, (0.0, 0.0), (1.5875, 1.5875), [1.5875, -1.5875]],
+        [0.0, (0.0, 0.5953125), (1.5875, 1.5875), [1.5875, -1.5875]],
+        [0.0, (0.0, 1.190625), (1.5875, 1.5875), [1.5875, -1.5875]],
+        [90.0, (0.1984375, 1.3890625), (-1.5875, 1.5875), [1.5875, -1.5875]],
+        [90.0, (0.79375, 1.3890625), (-1.5875, 1.5875), [1.5875, -1.5875]],
+        [90.0, (1.3890625, 1.3890625), (-1.5875, 1.5875), [1.5875, -1.5875]],
+    ])
+    hatch.dxf.solid_fill = 0
+    # 1. polyline path
+    hatch.paths.add_polyline_path([
+        (0.0, 223.0, 0.0),
+        (10.0, 223.0, 0.0),
+        (10.0, 233.0, 0.0),
+        (0.0, 233.0, 0.0),
+        ],
+        is_closed=1,
+        flags=3,
+    )
+    lines = list(hatching.explode_hatch_pattern(hatch, 1))
+    assert len(lines) == 139
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
