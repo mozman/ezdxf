@@ -418,7 +418,7 @@ class Frontend:
 
         polygons = [
             Vec2.list(p.flattening(self.config.max_flattening_distance))
-            for p in paths
+            for p in ignore_text_boxes(paths)
         ]
         # All polygons in OCS!
         properties.linetype_pattern = tuple()
