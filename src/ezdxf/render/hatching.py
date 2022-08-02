@@ -106,24 +106,30 @@ class PatternRenderer:
     """
 
     def __init__(self, hatch_line: HatchLine, pattern: Sequence[float]):
-        self.hatch_line = hatch_line
+        self.origin = hatch_line.origin
+        self.direction = hatch_line.direction
         self.pattern = pattern
         self.pattern_length = math.fsum([abs(e) for e in pattern])
-        self.abs_tol = 1e-9
 
-    def origin(self, index: float) -> Vec2:
-        return self.hatch_line.origin + self.hatch_line.direction * (
+    def sequence_origin(self, index: float) -> Vec2:
+        return self.origin + self.direction * (
             self.pattern_length * index
         )
 
     def render(self, start: Vec2, end: Vec2) -> Iterator[Tuple[Vec2, Vec2]]:
+        if start.isclose(end):
+            return
         length = self.pattern_length
         if length < 1e-9:
             yield start, end
             return
-        origin = self.hatch_line.origin
-        s_dist = origin.distance(start)
-        e_dist = origin.distance(end)
+        if not self.direction.isclose((end - start).normalize()):
+            # Line direction is reversed to the pattern line direction!
+            start, end = end, start
+
+        origin = self.origin
+        s_dist = self.direction.dot(start - origin)
+        e_dist = self.direction.dot(end - origin)
         s_index = math.floor(s_dist / length)
         s_offset = s_dist % length
         e_index = math.floor(e_dist / length)
@@ -132,7 +138,7 @@ class PatternRenderer:
             yield from self.render_offset_to_offset(s_index, s_offset, e_offset)
             return
         # line crosses pattern border
-        if s_offset >= self.abs_tol:
+        if s_offset > 0.0:
             yield from self.render_offset_to_offset(
                 s_index,
                 s_offset,
@@ -144,7 +150,7 @@ class PatternRenderer:
             yield from self.render_full_pattern(s_index)
             s_index += 1
 
-        if e_offset > 1e-9:
+        if e_offset > 0.0:
             yield from self.render_offset_to_offset(
                 s_index,
                 0.0,
@@ -153,8 +159,8 @@ class PatternRenderer:
 
     def render_full_pattern(self, index: float) -> Iterator[Tuple[Vec2, Vec2]]:
         # fast pattern rendering
-        direction = self.hatch_line.direction
-        start_point = self.origin(index)
+        direction = self.direction
+        start_point = self.sequence_origin(index)
         for dash in self.pattern:
             if dash == 0.0:
                 yield start_point, start_point
@@ -167,8 +173,8 @@ class PatternRenderer:
     def render_offset_to_offset(
         self, index: float, s_offset: float, e_offset: float
     ) -> Iterator[Tuple[Vec2, Vec2]]:
-        direction = self.hatch_line.direction
-        origin = self.origin(index)
+        direction = self.direction
+        origin = self.sequence_origin(index)
         start_point = origin + direction * s_offset
         distance = 0.0
         for dash in self.pattern:
