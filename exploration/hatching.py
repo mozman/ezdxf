@@ -1,6 +1,5 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import List
 from pathlib import Path
 import time
 
@@ -28,30 +27,6 @@ def polygon_hatching(filename: str):
     )
     render_hatch(msp, baseline, polygon, [hole1, hole2])
     doc.saveas(CWD / filename)
-
-
-def draw(d: str) -> List[Vec2]:
-    point = Vec2()
-    points = [point]
-    for cmd in d.split(","):
-        cmd = cmd.strip()
-        if cmd[0] == "h":
-            point += Vec2(float(cmd[1:]), 0)
-        elif cmd[0] == "v":
-            point += Vec2(0, float(cmd[1:]))
-        elif cmd[0] == "q":
-            direction = cmd[1]
-            l = float(cmd[2:])
-            if direction == "1":
-                point += Vec2(l, l)
-            elif direction == "2":
-                point += Vec2(-l, l)
-            elif direction == "3":
-                point += Vec2(-l, -l)
-            else:
-                point += Vec2(l, -l)
-        points.append(point)
-    return points
 
 
 SIZE = 0.1
@@ -137,7 +112,47 @@ def explode_hatch_pattern(filename: str):
     doc.saveas(CWD / filename.replace(".dxf", ".explode.dxf"))
 
 
+def hole_examples(filename: str, size=10, dx=13):
+    doc = ezdxf.new()
+    setup(doc)
+    msp = doc.modelspace()
+    # overlapping holes
+    holes = [
+        list(forms.translate(forms.square(size - 2), (1, 1))),
+        list(forms.translate(forms.square(3), (2, 2))),
+        list(forms.translate(forms.square(3), (4, 3))),
+    ]
+    baseline = hatching.HatchBaseLine(
+        Vec2(0.1, 0.2), direction=Vec2(1, 1), offset=Vec2(-0.25, 0.25)
+    )
+    render_hatch(msp, baseline, forms.square(size), holes)
+    # adjacent holes
+    holes = [
+        list(forms.translate(forms.square(size - 2), (1, 1))),
+        list(forms.translate(forms.square(2), (2, 2))),
+        list(forms.translate(forms.square(2), (6, 2))),
+    ]
+    render_hatch(msp, baseline, forms.square(size), holes, Vec2(dx, 0))
+    # nested holes
+    holes = [
+        list(forms.translate(forms.square(size - 2), (1, 1))),
+        list(forms.translate(forms.square(size - 4), (2, 2))),
+        list(forms.translate(forms.square(size - 6), (3, 3))),
+    ]
+    render_hatch(msp, baseline, forms.square(size), holes, Vec2(dx * 2, 0))
+    # holes extending beyond exterior polygon
+    holes = [
+        list(forms.translate(forms.square(4), (-1.5, -2))),
+        list(forms.translate(forms.square(6), (2, 6))),
+        list(forms.translate(forms.square(2), (5, 2))),
+    ]
+    render_hatch(msp, baseline, forms.square(size), holes, Vec2(dx * 3, 0))
+
+    doc.saveas(CWD / filename)
+
+
 if __name__ == "__main__":
-    # polygon_hatching("polygon_hatching.dxf")
-    # collinear_hatching("collinear_hatching.dxf")
+    polygon_hatching("polygon_hatching.dxf")
+    collinear_hatching("collinear_hatching.dxf")
     explode_hatch_pattern("hatch_pattern_iso.dxf")
+    hole_examples("hole_examples.dxf")
