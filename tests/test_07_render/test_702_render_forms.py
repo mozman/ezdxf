@@ -1,9 +1,9 @@
-# Copyright (c) 2018-2021 Manfred Moitzi
+# Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
 import pytest
 
 import math
-from ezdxf.math import Vec3, close_vectors, UCS, BoundingBox
+from ezdxf.math import Vec3, close_vectors, UCS, BoundingBox, Vec2
 from ezdxf.render import forms
 
 
@@ -410,3 +410,23 @@ def test_helix_negative_pitch_goes_down(ccw):
     bbox = BoundingBox(forms.helix(radius=2.0, pitch=-1.0, turns=10, ccw=ccw))
     assert bbox.extmax.isclose((2, 2, 0))
     assert bbox.extmin.isclose((-2, -2, -10))
+
+
+def test_turtle_turn_left():
+    vertices = list(forms.turtle("10 l 10 l 10"))
+    assert len(vertices) == 4
+    assert vertices[0] == Vec2(0, 0)
+    assert vertices[-1].isclose((0, 10))
+
+
+def test_turtle_turn_right():
+    vertices = list(forms.turtle("10 r 10 r 10"))
+    assert len(vertices) == 4
+    assert vertices[0] == Vec2(0, 0)
+    assert vertices[-1].isclose((0, -10))
+
+
+def test_turtle_move_relative():
+    vertices = list(forms.turtle("@10,10"))
+    assert len(vertices) == 2
+    assert vertices[-1].isclose((10, 10))

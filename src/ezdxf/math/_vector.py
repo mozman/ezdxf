@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2021, Manfred Moitzi
+# Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
 from typing import Tuple, List, Iterable, Sequence, TYPE_CHECKING, Iterator
@@ -250,7 +250,7 @@ class Vec3:
     @property
     def magnitude(self) -> float:
         """Length of vector."""
-        return self.magnitude_square ** 0.5
+        return self.magnitude_square**0.5
 
     @property
     def magnitude_xy(self) -> float:
@@ -772,14 +772,6 @@ class Vec2:
         except AttributeError:
             raise TypeError("invalid argument")
 
-    def __iadd__(self, other: "AnyVec") -> "Vec2":
-        try:
-            self.x += other.x
-            self.y += other.y
-        except AttributeError:
-            raise TypeError("invalid argument")
-        return self
-
     def __sub__(self, other: "AnyVec") -> "Vec2":
         try:
             return self.__class__(self.x - other.x, self.y - other.y)
@@ -792,32 +784,14 @@ class Vec2:
         except AttributeError:
             raise TypeError("invalid argument")
 
-    def __isub__(self, other: "AnyVec") -> "Vec2":
-        try:
-            self.x -= other.x
-            self.y -= other.y
-        except AttributeError:
-            raise TypeError("invalid argument")
-        return self
-
     def __mul__(self, other: float) -> "Vec2":
         return self.__class__(self.x * other, self.y * other)
 
     def __rmul__(self, other: float) -> "Vec2":
         return self.__class__(self.x * other, self.y * other)
 
-    def __imul__(self, other: float) -> "Vec2":
-        self.x *= other
-        self.y *= other
-        return self
-
     def __truediv__(self, other: float) -> "Vec2":
         return self.__class__(self.x / other, self.y / other)
-
-    def __itruediv__(self, other: float) -> "Vec2":
-        self.x /= other
-        self.y /= other
-        return self
 
     def dot(self, other: "AnyVec") -> float:
         return self.x * other.x + self.y * other.y
