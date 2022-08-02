@@ -151,7 +151,46 @@ def hole_examples(filename: str, size=10, dx=13):
     doc.saveas(CWD / filename)
 
 
+def debug_hatch():
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    e = msp.add_hatch(
+        color=7,
+        dxfattribs={
+            'layer': "HATCH",
+            'elevation': (0.0, 0.0, 0.0),
+            'extrusion': (0.0, 0.0, 1.0),
+            'pattern_name': "CROSS",
+            'solid_fill': 0,
+            'associative': 0,
+            'hatch_style': 1,
+            'pattern_type': 1,
+            'pattern_angle': 0.0,
+            'pattern_scale': 0.25,
+            'pattern_double': 0,
+        },
+    )
+    e.set_pattern_definition([
+        [0.0, (0.0, 0.0), (1.5875, 1.5875), [0.79375, -2.38125]],
+        [90.0, (0.396875, -0.396875), (-1.5875, 1.5875), [0.79375, -2.38125]],
+    ])
+    e.dxf.solid_fill = 0
+    # 1. polyline path
+    e.paths.add_polyline_path([
+        (0.0, 234.0, 0.0),
+        (10.0, 234.0, 0.0),
+        (10.0, 244.0, 0.0),
+        (0.0, 244.0, 0.0),
+    ],
+        is_closed=1,
+        flags=3,
+    )
+    for start, end in hatching.explode_hatch_pattern(e, 1):  # type: ignore
+        msp.add_line(start, end)
+
+
 if __name__ == "__main__":
+    # debug_hatch()
     polygon_hatching("polygon_hatching.dxf")
     collinear_hatching("collinear_hatching.dxf")
     explode_hatch_pattern("hatch_pattern_iso.dxf")
