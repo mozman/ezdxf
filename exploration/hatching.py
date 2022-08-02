@@ -138,6 +138,6 @@ def explode_hatch_pattern(filename: str):
 
 
 if __name__ == "__main__":
-    # polygon_hatching("polygon_hatching.dxf")
+    polygon_hatching("polygon_hatching.dxf")
     collinear_hatching("collinear_hatching.dxf")
-    # explode_hatch_pattern("hatch_pattern_iso.dxf")
+    explode_hatch_pattern("hatch_pattern_iso.dxf")

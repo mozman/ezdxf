@@ -36,18 +36,6 @@ class DenseHatchingLinesError(HatchingError):
     pass
 
 
-class PatternRenderer:
-    """
-    A hatch pattern has one or more hatch baselines with an origin,
-    direction, offset and line pattern.
-    The origin is the starting point of the hatch line and also the starting
-    point of the line pattern. The offset defines the origin of the adjacent
-    hatch line and doesn't have to be orthogonal to the hatch line direction.
-    """
-
-    pass
-
-
 @dataclasses.dataclass(frozen=True)
 class Line:
     start: Vec2
@@ -104,6 +92,100 @@ class HatchLine:
         return Intersection()  # no intersection
 
 
+class PatternRenderer:
+    """
+    A hatch pattern has one or more hatch baselines with an origin,
+    direction, offset and line pattern.
+    The origin is the starting point of the hatch line and also the starting
+    point of the line pattern. The offset defines the origin of the adjacent
+    hatch line and doesn't have to be orthogonal to the hatch line direction.
+
+    Line pattern is a list of floats, where a value > 0.0 is a dash, a
+    value < 0.0 is a gap and value == 0.0 is a point.
+
+    """
+
+    def __init__(self, hatch_line: HatchLine, pattern: Sequence[float]):
+        self.hatch_line = hatch_line
+        self.pattern = pattern
+        self.pattern_length = math.fsum([abs(e) for e in pattern])
+        self.abs_tol = 1e-9
+
+    def origin(self, index: float) -> Vec2:
+        return self.hatch_line.origin + self.hatch_line.direction * (
+            self.pattern_length * index
+        )
+
+    def render(self, start: Vec2, end: Vec2) -> Iterator[Tuple[Vec2, Vec2]]:
+        length = self.pattern_length
+        if length < 1e-9:
+            yield start, end
+            return
+        origin = self.hatch_line.origin
+        s_dist = origin.distance(start)
+        e_dist = origin.distance(end)
+        s_index = math.floor(s_dist / length)
+        s_offset = s_dist % length
+        e_index = math.floor(e_dist / length)
+        e_offset = e_dist % length
+        if s_index == e_index:
+            yield from self.render_offset_to_offset(s_index, s_offset, e_offset)
+            return
+        # line crosses pattern border
+        if s_offset >= self.abs_tol:
+            yield from self.render_offset_to_offset(
+                s_index,
+                s_offset,
+                length,
+            )
+            s_index += 1
+
+        while s_index < e_index:
+            yield from self.render_full_pattern(s_index)
+            s_index += 1
+
+        if e_offset > 1e-9:
+            yield from self.render_offset_to_offset(
+                s_index,
+                0.0,
+                e_offset,
+            )
+
+    def render_full_pattern(self, index: float) -> Iterator[Tuple[Vec2, Vec2]]:
+        # fast pattern rendering
+        direction = self.hatch_line.direction
+        start_point = self.origin(index)
+        for dash in self.pattern:
+            if dash == 0.0:
+                yield start_point, start_point
+            else:
+                end_point = start_point + direction * abs(dash)
+                if dash > 0.0:
+                    yield start_point, end_point
+                start_point = end_point
+
+    def render_offset_to_offset(
+        self, index: float, s_offset: float, e_offset: float
+    ) -> Iterator[Tuple[Vec2, Vec2]]:
+        direction = self.hatch_line.direction
+        origin = self.origin(index)
+        start_point = origin + direction * s_offset
+        distance = 0.0
+        for dash in self.pattern:
+            distance += abs(dash)
+            if distance < s_offset:
+                continue
+            if dash == 0.0:
+                yield start_point, start_point
+            else:
+                end_point = origin + direction * min(distance, e_offset)
+                if dash > 0.0:
+                    yield start_point, end_point
+                if distance >= e_offset:
+                    return
+                start_point = end_point
+
+
 class HatchBaseLine:
     def __init__(
         self,
@@ -143,6 +225,9 @@ class HatchBaseLine:
         """
         # denominator (_end - origin).magnitude is 1.0 !!!
         return (self.origin - point).det(self._end - point)
+
+    def pattern_renderer(self, distance: float) -> PatternRenderer:
+        return PatternRenderer(self.hatch_line(distance), self.line_pattern)
 
 
 def hatch_line_distances(
@@ -281,14 +366,13 @@ def explode_hatch_pattern(
     # All polygons in OCS!
     for baseline in pattern_baselines(hatch):
         for line in hatch_polygons(baseline, polygons):
-            # todo: apply line pattern
-            if ocs.transform:
-                s = line.start
-                e = line.end
-                yield ocs.to_wcs((s.x, s.y, elevation)), ocs.to_wcs(
-                    (e.x, e.y, elevation)
-                )
-            yield line.start, line.end
+            line_pattern = baseline.pattern_renderer(line.distance)
+            for s, e in line_pattern.render(line.start, line.end):
+                if ocs.transform:
+                    yield ocs.to_wcs((s.x, s.y, elevation)), ocs.to_wcs(
+                        (e.x, e.y, elevation)
+                    )
+                yield s, e
 
 
 def hatch_paths(polygon: DXFPolygon) -> List[Path]:
@@ -314,4 +398,6 @@ def pattern_baselines(polygon: DXFPolygon) -> Iterator[HatchBaseLine]:
     # when applying a new scaling or rotation.
     for line in pattern.lines:
         direction = Vec2.from_deg_angle(line.angle)
-        yield HatchBaseLine(line.base_point, direction, line.offset)
+        yield HatchBaseLine(
+            line.base_point, direction, line.offset, line.dash_length_items
+        )

@@ -143,5 +143,81 @@ def test_hatch_polygons(d: str, count):
     assert len(lines) == count
 
 
+class TestLinePatternRendering:
+    @pytest.fixture
+    def baseline(self):
+        return hatching.HatchBaseLine(
+            Vec2(),
+            direction=Vec2(1, 0),
+            offset=Vec2(0, 1),
+            line_pattern=[1.0, -0.5, 1.5, -1.0],
+        )
+
+    def test_pattern_length(self, baseline):
+        assert baseline.pattern_renderer(0).pattern_length == 4.0
+
+    def test_render_full_pattern(self, baseline):
+        renderer = baseline.pattern_renderer(0)
+        lines = list(renderer.render_full_pattern(0))
+        dash1, dash2 = lines
+        assert dash1[0] == (0, 0)
+        assert dash1[1] == (1, 0)
+        assert dash2[0] == (1.5, 0)
+        assert dash2[1] == (3.0, 0)
+
+    def test_render_start_to_offset(self, baseline):
+        renderer = baseline.pattern_renderer(0)
+        lines = list(
+            renderer.render_offset_to_offset(
+                index=0, s_offset=0.0, e_offset=2.0
+            )
+        )
+        dash1, dash2 = lines
+        assert dash1[0] == (0, 0)
+        assert dash1[1] == (1, 0)
+        assert dash2[0] == (1.5, 0)
+        assert dash2[1] == (2.0, 0)
+
+    def test_render_offset_to_end(self, baseline):
+        renderer = baseline.pattern_renderer(0)
+        lines = list(
+            renderer.render_offset_to_offset(
+                index=0, s_offset=0.5, e_offset=4.0
+            )
+        )
+        dash1, dash2 = lines
+        assert dash1[0] == (0.5, 0)
+        assert dash1[1] == (1, 0)
+        assert dash2[0] == (1.5, 0)
+        assert dash2[1] == (3.0, 0)
+
+    def test_render_offset_to_offset(self, baseline):
+        renderer = baseline.pattern_renderer(0)
+        lines = list(
+            renderer.render_offset_to_offset(
+                index=0, s_offset=0.5, e_offset=2.0
+            )
+        )
+        dash1, dash2 = lines
+        assert dash1[0] == (0.5, 0)
+        assert dash1[1] == (1, 0)
+        assert dash2[0] == (1.5, 0)
+        assert dash2[1] == (2.0, 0)
+
+    def test_hatch_line_full_pattern(self, baseline):
+        renderer = baseline.pattern_renderer(0)
+        lines = list(renderer.render(Vec2(0, 0), Vec2(12, 0)))
+        assert len(lines) == 6, "expected 3 full pattern sequences"
+        assert lines[0][0] == (0, 0)
+        assert lines[-1][1] == (11, 0)
+
+    def test_hatch_line_with_start_and_end_offset(self, baseline):
+        renderer = baseline.pattern_renderer(0)
+        lines = list(renderer.render(Vec2(1, 0), Vec2(10, 0)))
+        assert len(lines) == 6
+        assert lines[0][0] == (1, 0)
+        assert lines[-1][1] == (10, 0)
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
