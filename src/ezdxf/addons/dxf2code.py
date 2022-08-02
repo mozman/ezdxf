@@ -757,6 +757,7 @@ class _SourceCodeGenerator:
                 prolog="e.set_pattern_definition([",
                 epilog="])",
             )
+            self.add_source_code_line("e.dxf.solid_fill = 0")
         arg = "    {}={},"
 
         if entity.gradient is not None:
