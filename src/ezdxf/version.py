@@ -12,7 +12,7 @@
 #   changes with bug fixes, maybe also minor API changes
 #
 # release_state:
-#   a .. alpha: adding new features - non public development state
+#   a .. alpha: adding new features - non-public development state
 #   b .. beta: testing new features - public development state
 #   rc .. release candidate: testing release - public testing
 #   release: public release
@@ -24,5 +24,5 @@
 #   1. bug fix release beta0: VERSION = "0.9.1b0"; version = (0, 9, 1, 'b0')
 #   2. bug fix release: VERSION = "0.9.2"; version = (0, 9, 2, 'release')
 
-version = (0, 18, 0, "release")
-__version__ = "0.18"
+version = (0, 18, 1, "b0")
+__version__ = "0.18.1b0"
