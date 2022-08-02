@@ -1,9 +1,10 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
+
 from ezdxf.math import Vec2
 
 import pytest
-from ezdxf.render import hatching
+from ezdxf.render import hatching, forms
 
 
 class TestHatchBaseLine:
@@ -104,6 +105,42 @@ class TestIntersectHatchLine:
         ]
         lines = list(hatching.hatch_polygons(baseline, [polygon]))
         assert len(lines) == 2
+
+
+@pytest.mark.parametrize(
+    "d,count",
+    [
+        ("10 l 10 l 10", 11),
+        ("2 l 2 r 2 r 2 l 6 " "l 10 l 2 l 2 r 2 r 2 l 6", 14),
+        (
+            "2 l 2 r 2 l 2 r 2 r 4 l 4 l 10 l 2 l 2 r 2 l 2 r 2 r 4 l 4",
+            18,
+        ),
+        (
+            "2 r 2 l 2 r 2 l 2 l 4 r 4 l 10 l 2 r 2 l 2 r 2 l 2 l 4 r 4",
+            18,
+        ),
+        (
+            "2 l 2 r 2 r 2 l 2 l 4 r 2 r 4 l 2 l 10 l 2 r 2 l 2 l 2 r 2 r 4 l 2 l 4 r 2",
+            22,
+        ),
+        ("3 @2,2 @2,-2 3 l 10 l @-2,-2 @-2,2 2 @-2,-2 @-2,2", 14),
+        (
+            "3 @1,1 @1,1 @1,-1 @1,-1 3 l 10 l @-1,-1 @-1,-1 @-1,1 @-1,1 2 @-1,-1 @-1,-1 @-1,1 @-1,1",
+            14,
+        ),
+    ],
+)
+def test_hatch_polygons(d: str, count):
+    """Visual check by the function collinear_hatching() in script
+    exploration/hatching.py,
+
+    """
+    baseline = hatching.HatchBaseLine(
+        Vec2(), direction=Vec2(1, 0), offset=Vec2(0, 1)
+    )
+    lines = list(hatching.hatch_polygons(baseline, [forms.turtle(d)]))
+    assert len(lines) == count
 
 
 if __name__ == "__main__":

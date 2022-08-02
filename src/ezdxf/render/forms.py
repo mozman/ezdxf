@@ -450,13 +450,12 @@ def gear(
 
 
 def turtle(commands: str, start=Vec2(), angle: float = 0) -> List[Vec2]:
-    """Draw a polygon by turtle graphic like commands:
+    """Draw a polyline by turtle-graphic like commands:
 
     - ``r<angle>`` - turn right <angle> in degrees, missing angle means 90 deg
     - ``l<angle>`` - turn left <angle> in degrees, missing angle means 90 deg
-    - ``<length>`` - go <length> units forward in current direction and add
-      vertex
-    - ``@<x>,<y> - go relative <x>,<y> and add vertex
+    - ``<length>`` - go <length> units forward in current direction and add vertex
+    - ``@<x>,<y>`` - go relative <x>,<y> and add vertex
 
     "10 l 10 l 10" returns the 4 corner vertices of a square
     with a side length of 10 drawing units.
