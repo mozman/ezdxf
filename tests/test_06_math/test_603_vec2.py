@@ -207,6 +207,25 @@ def test_iadd_vector(vec2):
     assert v == (9, 10)
 
 
+def test_inplace_operations_do_not_mutate_vec2_inplace():
+    v = Vec2(2, 3)
+    v_check = v
+    v += Vec2(7, 7)
+    assert v_check is not v, "__iadd__ should not operate inplace"
+
+    v_check = v
+    v -= Vec2(7, 7)
+    assert v_check is not v, "__isub__ should not operate inplace"
+
+    v_check = v
+    v *= 1
+    assert v_check is not v, "__imul__ should not operate inplace"
+
+    v_check = v
+    v /= 1
+    assert v_check is not v, "__itruediv__ should not operate inplace"
+
+
 def test_add_scalar_type_erorr(vcls):
     with pytest.raises(TypeError):
         vcls(1, 1) + 1
