@@ -99,20 +99,21 @@ def collinear_hatching(filename: str):
     msp = doc.modelspace()
     setup(doc)
     polygons = [
-        draw("h+10, v+10, h-10"),
-        draw("h+2, v+2, h+2, v-2, h+6, v+10, h-2, v-2, h-2, v+2, h-6"),
-        draw(
-            "h+2, v+2, h+2, v+2, h+2, v-4, h+4, v+10, h-2, v-2, h-2, v-2, h-2, v+4, h-4"
+        forms.turtle("10 l 10 l 10"),
+        forms.turtle("2 l 2 r 2 r 2 l 6 " "l 10 l 2 l 2 r 2 r 2 l 6"),
+        forms.turtle(
+            "2 l 2 r 2 l 2 r 2 r 4 l 4 l 10 l 2 l 2 r 2 l 2 r 2 r 4 l 4"
         ),
-        draw(
-            "h+2, v-2, h+2, v-2, h+2, v+4, h+4, v+10, h-2, v+2, h-2, v+2, h-2, v-4, h-4"
+        forms.turtle(
+            "2 r 2 l 2 r 2 l 2 l 4 r 4 l 10 l 2 r 2 l 2 r 2 l 2 l 4 r 4"
         ),
-        draw(
-            "h+2, v+2, h+2, v-2, h+2, v+3, h+2, v-3, h+2, v+10, h-2, v+2, h-2, v-2, h-2, v+4, h-2, v-4, h-2"
+        forms.turtle(
+            "2 l 2 r 2 r 2 l 2 l 4 r 2 r 4 l 2 l 10 l 2 r 2 l 2 l 2 r 2 r 4 l 2 l 4 r 2"
         ),
-        draw("h+3, q1+2, q4+2, h+3, v+10, q3+2, q2+2, h-2, q3+2, q2+2"),
-        draw(
-            "h+3, q1+1, q1+1, q4+1, q4+1, h+3, v+10, q3+1, q3+1, q2+1, q2+1, h-2, q3+1, q3+1, q2+1, q2+1"
+        forms.turtle("3 @2,2 @2,-2 3 l 10 l @-2,-2 @-2,2 2 @-2,-2 @-2,2"),
+        forms.turtle(
+            "3 @1,1 @1,1 @1,-1 @1,-1 3 l 10 l @-1,-1 @-1,-1 @-1,1 @-1,1 2 "
+            "@-1,-1 @-1,-1 @-1,1 @-1,1"
         ),
     ]
     for index, polygon in enumerate(polygons):
@@ -138,5 +139,5 @@ def explode_hatch_pattern(filename: str):
 
 if __name__ == "__main__":
     # polygon_hatching("polygon_hatching.dxf")
-    # collinear_hatching("collinear_hatching.dxf")
-    explode_hatch_pattern("hatch_pattern_iso.dxf")
+    collinear_hatching("collinear_hatching.dxf")
+    # explode_hatch_pattern("hatch_pattern_iso.dxf")

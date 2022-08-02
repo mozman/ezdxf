@@ -5,6 +5,7 @@ from typing import Iterable, List, Tuple, Sequence, Iterator, Callable
 import math
 from enum import IntEnum
 from ezdxf.math import (
+    Vec2,
     Vec3,
     UVec,
     Matrix44,
@@ -30,6 +31,7 @@ __all__ = [
     "ngon",
     "star",
     "gear",
+    "turtle",
     "translate",
     "rotate",
     "scale",
@@ -445,6 +447,45 @@ def gear(
 
     if close:
         yield first
+
+
+def turtle(commands: str, start=Vec2(), angle: float = 0) -> List[Vec2]:
+    """Draw a polygon by turtle graphic like commands:
+
+    - ``r<angle>`` - turn right <angle> in degrees, missing angle means 90 deg
+    - ``l<angle>`` - turn left <angle> in degrees, missing angle means 90 deg
+    - ``<length>`` - go <length> units forward in current direction and add
+      vertex
+    - ``@<x>,<y> - go relative <x>,<y> and add vertex
+
+    "10 l 10 l 10" returns the 4 corner vertices of a square
+    with a side length of 10 drawing units.
+
+    """
+
+    cursor = start
+    points = [cursor]
+    for cmd in commands.split(" "):
+        cmd = cmd.strip()
+        if cmd[0] == "l":
+            if len(cmd) == 1:
+                angle += 90
+            else:
+                angle += float(cmd[1:])
+        elif cmd[0] == "r":
+            if len(cmd) == 1:
+                angle -= 90
+            else:
+                angle -= float(cmd[1:])
+        elif cmd[0] == "@":
+            x, y = cmd[1:].split(",")
+            cursor += Vec2(float(x), float(y))
+            points.append(cursor)
+        else:
+            cursor += Vec2.from_deg_angle(angle, float(cmd))
+            points.append(cursor)
+
+    return points
 
 
 def translate(
