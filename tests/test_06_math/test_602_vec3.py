@@ -352,6 +352,25 @@ def test_rdiv_tuple_type_error(vec3):
         (1, 0) / vec3(1, 0)
 
 
+def test_inplace_operations_do_not_mutate_vec3_inplace():
+    v = Vec3(2, 3)
+    v_check = v
+    v += Vec3(7, 7)
+    assert v_check is not v, "__iadd__ should not operate inplace"
+
+    v_check = v
+    v -= Vec3(7, 7)
+    assert v_check is not v, "__isub__ should not operate inplace"
+
+    v_check = v
+    v *= 1
+    assert v_check is not v, "__imul__ should not operate inplace"
+
+    v_check = v
+    v /= 1
+    assert v_check is not v, "__itruediv__ should not operate inplace"
+
+
 def test_dot_product(vec3):
     v1 = vec3(2, 7, 1)
     v2 = vec3(3, 9, 8)
