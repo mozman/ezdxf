@@ -123,13 +123,15 @@ class PatternRenderer:
         if length < 1e-9:
             yield start, end
             return
-        if not self.direction.isclose((end - start).normalize()):
+
+        direction = self.direction
+        if direction.dot(end - start) < 0.0:
             # Line direction is reversed to the pattern line direction!
             start, end = end, start
 
         origin = self.origin
-        s_dist = self.direction.dot(start - origin)
-        e_dist = self.direction.dot(end - origin)
+        s_dist = direction.dot(start - origin)
+        e_dist = direction.dot(end - origin)
         s_index = math.floor(s_dist / length)
         s_offset = s_dist % length
         e_index = math.floor(e_dist / length)
