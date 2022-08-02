@@ -81,8 +81,9 @@ class Filling:
         self.gradient_color1: Optional[Color] = None
         self.gradient_color2: Optional[Color] = None
         self.gradient_centered: float = 0.0  # todo: what's the meaning?
+        # TODO: remove HATCH pattern definition, backends do have to
+        #   render hatch patterns since v0.18.1:
         self.pattern_scale: float = 1.0
-        # Regular HATCH pattern definition:
         self.pattern: HatchPatternType = []
 
 

@@ -420,7 +420,6 @@ class Frontend:
             Vec2.list(p.flattening(self.config.max_flattening_distance))
             for p in ignore_text_boxes(paths)
         ]
-        # All polygons in OCS!
         properties.linetype_pattern = tuple()
         for baseline in hatching.pattern_baselines(polygon):
             for line in hatching.hatch_polygons(baseline, polygons):
@@ -448,8 +447,8 @@ class Frontend:
         if properties.filling.type == Filling.PATTERN:
             if loops is None:
                 loops = hatching.hatch_paths(polygon)
-                self.draw_hatch_pattern(polygon, loops, properties)
-                return
+            self.draw_hatch_pattern(polygon, loops, properties)
+            return
 
         ocs = polygon.ocs()
         # all OCS coordinates have the same z-axis stored as vector (0, 0, z),
