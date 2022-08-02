@@ -139,7 +139,7 @@ def test_hatch_polygons(d: str, count):
     baseline = hatching.HatchBaseLine(
         Vec2(), direction=Vec2(1, 0), offset=Vec2(0, 1)
     )
-    lines = list(hatching.hatch_polygons(baseline, [forms.turtle(d)]))
+    lines = list(hatching.hatch_polygons(baseline, [list(forms.turtle(d))]))
     assert len(lines) == count
 
 

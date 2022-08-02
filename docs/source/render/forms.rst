@@ -16,6 +16,7 @@ Forms
     - :func:`ngon`
     - :func:`square`
     - :func:`star`
+    - :func:`turtle`
 
     3D Forms
 
@@ -60,6 +61,8 @@ Forms
 .. autofunction:: square
 
 .. autofunction:: star
+
+.. autofunction:: turtle
 
 
 3D Forms

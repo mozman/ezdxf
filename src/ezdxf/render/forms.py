@@ -449,21 +449,27 @@ def gear(
         yield first
 
 
-def turtle(commands: str, start=Vec2(), angle: float = 0) -> List[Vec2]:
-    """Draw a polyline by turtle-graphic like commands:
+def turtle(commands: str, start=Vec2(0, 0), angle: float = 0) -> Iterator[Vec2]:
+    """Returns the 2D vertices of a polyline created by turtle-graphic like
+    commands:
 
-    - ``r<angle>`` - turn right <angle> in degrees, missing angle means 90 deg
-    - ``l<angle>`` - turn left <angle> in degrees, missing angle means 90 deg
-    - ``<length>`` - go <length> units forward in current direction and add vertex
-    - ``@<x>,<y>`` - go relative <x>,<y> and add vertex
+    - ``<length>`` - go <length> units forward in current direction and yield vertex
+    - ``r<angle>`` - turn right <angle> in degrees, a missing angle is 90 deg
+    - ``l<angle>`` - turn left <angle> in degrees, a missing angle is 90 deg
+    - ``@<x>,<y>`` - go relative <x>,<y> and yield vertex
 
-    "10 l 10 l 10" returns the 4 corner vertices of a square
-    with a side length of 10 drawing units.
+    The command string ``"10 l 10 l 10"`` returns the 4 corner vertices of a
+    square with a side length of 10 drawing units.
+
+    Args:
+        commands: command string, commands are separated by spaces
+        start: starting point, default is (0, 0)
+        angle: starting direction, default is 0 deg
 
     """
 
     cursor = start
-    points = [cursor]
+    yield cursor
     for cmd in commands.split(" "):
         cmd = cmd.strip()
         if cmd[0] == "l":
@@ -479,12 +485,10 @@ def turtle(commands: str, start=Vec2(), angle: float = 0) -> List[Vec2]:
         elif cmd[0] == "@":
             x, y = cmd[1:].split(",")
             cursor += Vec2(float(x), float(y))
-            points.append(cursor)
+            yield cursor
         else:
             cursor += Vec2.from_deg_angle(angle, float(cmd))
-            points.append(cursor)
-
-    return points
+            yield cursor
 
 
 def translate(

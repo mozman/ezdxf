@@ -2,6 +2,13 @@
 News
 ====
 
+Version 0.18.1b0 - dev
+----------------------
+
+- Release notes: https://ezdxf.mozman.at/release-v0-18.html
+- NEW: `ezdxf.render.forms.turtle()`, create a 2D polyline vertices by 
+  turtle-graphic like commands  
+
 Version 0.18 - 2022-07-29
 -------------------------
 
