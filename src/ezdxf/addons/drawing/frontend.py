@@ -50,7 +50,7 @@ from ezdxf.entities.attrib import BaseAttrib
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.entities.boundary_paths import AbstractBoundaryPath
 from ezdxf.layouts import Layout
-from ezdxf.math import Vec3, OCS, NULLVEC
+from ezdxf.math import Vec3, OCS, NULLVEC, Vec2
 from ezdxf.path import (
     Path,
     make_path,
@@ -65,6 +65,7 @@ from ezdxf.proxygraphic import ProxyGraphic, ProxyGraphicError
 from ezdxf.protocols import SupportsVirtualEntities, virtual_entities
 from ezdxf.tools.text import has_inline_formatting_codes
 from ezdxf.lldxf import const
+from ezdxf.render import hatching
 
 __all__ = ["Frontend"]
 
@@ -407,6 +408,30 @@ class Frontend:
                 "API error, requires a SOLID, TRACE or 3DFACE entity"
             )
 
+    def draw_hatch_pattern(
+        self, polygon: DXFPolygon, paths: List[Path], properties: Properties
+    ):
+        if len(polygon.pattern.lines) == 0:
+            return
+        ocs = polygon.ocs()
+        elevation = polygon.dxf.elevation.z
+
+        polygons = [
+            Vec2.list(p.flattening(self.config.max_flattening_distance))
+            for p in paths
+        ]
+        # All polygons in OCS!
+        properties.linetype_pattern = tuple()
+        for baseline in hatching.pattern_baselines(polygon):
+            for line in hatching.hatch_polygons(baseline, polygons):
+                line_pattern = baseline.pattern_renderer(line.distance)
+                for s, e in line_pattern.render(line.start, line.end):
+                    if ocs.transform:
+                        s, e = ocs.to_wcs((s.x, s.y, elevation)), ocs.to_wcs(
+                            (e.x, e.y, elevation)
+                        )
+                    self.out.draw_line(s, e, properties)
+
     def draw_hatch_entity(
         self,
         entity: DXFGraphic,
@@ -416,8 +441,13 @@ class Frontend:
     ) -> None:
         if self.config.hatch_policy == HatchPolicy.IGNORE:
             return
-
         polygon = cast(DXFPolygon, entity)
+        if properties.filling.type == Filling.PATTERN:
+            if loops is None:
+                loops = hatching.hatch_paths(polygon)
+                self.draw_hatch_pattern(polygon, loops, properties)
+                return
+
         ocs = polygon.ocs()
         # all OCS coordinates have the same z-axis stored as vector (0, 0, z),
         # default (0, 0, 0)
