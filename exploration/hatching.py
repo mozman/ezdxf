@@ -150,6 +150,14 @@ def hole_examples(filename: str, size=10, dx=13):
     ]
     render_hatch(msp, baseline, forms.square(size), holes, Vec2(dx * 3, 0))
 
+    # holes extending beyond exterior polygon
+    holes = [
+        list(forms.translate(forms.square(3), (-1.5, -1.5))),
+        list(forms.translate(forms.square(3), (5, 5))),
+        list(forms.translate(forms.square(3), (8.5, 8.5))),
+    ]
+    render_hatch(msp, baseline, forms.square(size), holes, Vec2(dx * 4, 0))
+
     doc.saveas(CWD / filename)
 
 

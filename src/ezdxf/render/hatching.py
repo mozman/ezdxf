@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 MIN_HATCH_LINE_DISTANCE = 1e-4  # ??? what's a good choice
 NONE_VEC2 = Vec2(math.nan, math.nan)
-NDIGITS = 4
+KEY_NDIGITS = 4
 
 
 class IntersectionType(enum.IntEnum):
@@ -52,12 +52,12 @@ class Intersection:
     p1: Vec2 = NONE_VEC2
 
 
-def side_of_line(distance: float) -> int:
+def side_of_line(distance: float, abs_tol=1e-9) -> int:
+    if abs(distance) < abs_tol:
+        return 0
     if distance > 0.0:
         return +1
-    elif distance < 0.0:
-        return -1
-    return 0
+    return -1
 
 
 @dataclasses.dataclass(frozen=True)
@@ -312,7 +312,7 @@ def hatch_polygons(
     for polygon in polygons:
         for ip, distance in intersect_polygon(baseline, polygon):
             assert ip.type != IntersectionType.NONE
-            points[round(distance, NDIGITS)].append(ip)
+            points[round(distance, KEY_NDIGITS)].append(ip)
 
     for distance, vertices in points.items():
         start = NONE_VEC2
@@ -354,6 +354,7 @@ def _line_segments(
                 inside = False
                 prev_point = ip.p1
             continue
+        # REGULAR, START, END
         point = ip.p0
         if prev_point is NONE_VEC2:
             inside = True
