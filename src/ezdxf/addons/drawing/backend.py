@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 
 class BackendInterface(ABC):
-    """ the public interface which a rendering backend is used through """
+    """the public interface which a rendering backend is used through"""
 
     @abstractmethod
     def configure(self, config: Configuration) -> None:
@@ -51,44 +51,58 @@ class BackendInterface(ABC):
     def draw_line(self, start: Vec3, end: Vec3, properties: Properties) -> None:
         raise NotImplementedError
 
+    def draw_solid_lines(
+        self, lines: Iterable[Tuple[Vec3, Vec3]], properties: Properties
+    ) -> None:
+        """Fast method to draw a bunch of solid lines with the same properties.
+        """
+        # Must be overridden by the backend to gain a performance benefit.
+        # This is the default implementation to ensure compatibility with
+        # existing backends.
+        for s, e in lines:
+            if e.isclose(s):
+                self.draw_point(s, properties)
+            else:
+                self.draw_line(s, e, properties)
+
     @abstractmethod
     def draw_path(self, path: Path, properties: Properties) -> None:
         raise NotImplementedError
 
     @abstractmethod
     def draw_filled_paths(
-            self,
-            paths: Iterable[Path],
-            holes: Iterable[Path],
-            properties: Properties,
+        self,
+        paths: Iterable[Path],
+        holes: Iterable[Path],
+        properties: Properties,
     ) -> None:
         raise NotImplementedError
 
     @abstractmethod
     def draw_filled_polygon(
-            self, points: Iterable[Vec3], properties: Properties
+        self, points: Iterable[Vec3], properties: Properties
     ) -> None:
         raise NotImplementedError
 
     @abstractmethod
     def draw_text(
-            self,
-            text: str,
-            transform: Matrix44,
-            properties: Properties,
-            cap_height: float,
+        self,
+        text: str,
+        transform: Matrix44,
+        properties: Properties,
+        cap_height: float,
     ) -> None:
         raise NotImplementedError
 
     @abstractmethod
     def get_font_measurements(
-            self, cap_height: float, font: "FontFace" = None
+        self, cap_height: float, font: "FontFace" = None
     ) -> "FontMeasurements":
         raise NotImplementedError
 
     @abstractmethod
     def get_text_line_width(
-            self, text: str, cap_height: float, font: "FontFace" = None
+        self, text: str, cap_height: float, font: "FontFace" = None
     ) -> float:
         raise NotImplementedError
 

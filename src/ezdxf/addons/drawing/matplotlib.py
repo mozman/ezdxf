@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021, Matthew Broadway
+# Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
 import math
 from abc import ABCMeta
@@ -127,6 +127,24 @@ class MatplotlibBackend(Backend):
             self.draw_point(start, properties)
         else:
             self._line_renderer.draw_line(start, end, properties, self._get_z())
+
+    def draw_solid_lines(
+        self,
+        lines: Iterable[Tuple[Vec3, Vec3]],
+        properties: Properties,
+    ):
+        """Fast method to draw a bunch of solid lines with the same properties.
+        """
+        color = properties.color
+        lineweight = properties.lineweight
+        _lines = LineCollection(
+            [((s.x, s.y), (e.x, e.y)) for s, e in lines],
+            linewidths=lineweight,
+            color=color,
+            zorder=self._get_z()
+        )
+        _lines.set_capstyle("butt")
+        self.ax.add_collection(_lines)
 
     def draw_path(self, path, properties: Properties):
         self._line_renderer.draw_path(path, properties, self._get_z())

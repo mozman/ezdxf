@@ -411,7 +411,7 @@ class Frontend:
     def draw_hatch_pattern(
         self, polygon: DXFPolygon, paths: List[Path], properties: Properties
     ):
-        if len(polygon.pattern.lines) == 0:
+        if polygon.pattern is None or len(polygon.pattern.lines) == 0:
             return
         ocs = polygon.ocs()
         elevation = polygon.dxf.elevation.z
@@ -421,6 +421,7 @@ class Frontend:
             for p in ignore_text_boxes(paths)
         ]
         properties.linetype_pattern = tuple()
+        lines: List[Tuple[Vec3, Vec3]] = []
         for baseline in hatching.pattern_baselines(polygon):
             for line in hatching.hatch_polygons(baseline, polygons):
                 line_pattern = baseline.pattern_renderer(line.distance)
@@ -429,10 +430,8 @@ class Frontend:
                         s, e = ocs.to_wcs((s.x, s.y, elevation)), ocs.to_wcs(
                             (e.x, e.y, elevation)
                         )
-                    if e.isclose(s):
-                        self.out.draw_point(s, properties)
-                    else:
-                        self.out.draw_line(s, e, properties)
+                    lines.append((s, e))
+        self.out.draw_solid_lines(lines, properties)
 
     def draw_hatch_entity(
         self,
@@ -444,7 +443,7 @@ class Frontend:
         if self.config.hatch_policy == HatchPolicy.IGNORE:
             return
         polygon = cast(DXFPolygon, entity)
-        if properties.filling.type == Filling.PATTERN:
+        if properties.filling and properties.filling.type == Filling.PATTERN:
             if loops is None:
                 loops = hatching.hatch_paths(polygon)
             self.draw_hatch_pattern(polygon, loops, properties)

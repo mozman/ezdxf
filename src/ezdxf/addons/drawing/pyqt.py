@@ -210,6 +210,21 @@ class PyQtBackend(Backend):
             item = self._line_renderer.draw_line(start, end, properties)  # type: ignore
             self._set_item_data(item)
 
+    def draw_solid_lines(
+        self,
+        lines: Iterable[Tuple[Vec3, Vec3]],
+        properties: Properties,
+    ):
+        """Fast method to draw a bunch of solid lines with the same properties."""
+        pen = self._get_pen(properties)
+        add_line = self._scene.addLine
+        set_item_data = self._set_item_data
+        for s, e in lines:
+            if s.isclose(e):
+                self.draw_point(s, properties)
+            else:
+                set_item_data(add_line(s.x, s.y, e.x, e.y, pen))
+
     def draw_path(self, path: Path, properties: Properties) -> None:
         item = self._line_renderer.draw_path(path, properties)  # type: ignore
         self._set_item_data(item)
