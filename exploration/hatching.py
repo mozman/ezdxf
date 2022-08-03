@@ -102,7 +102,8 @@ def collinear_hatching(filename: str):
 
 
 def explode_hatch_pattern(filename: str):
-    doc = ezdxf.readfile(CWD / filename)
+    example = Path(__file__).parent.parent / "examples_dxf" / filename
+    doc = ezdxf.readfile(example)
     msp = doc.modelspace()
     attribs = {"layer": "EXPLODE", "color": ezdxf.colors.RED}
     t0 = time.perf_counter()

@@ -342,17 +342,10 @@ def _line_segments(
     inside = False
     prev_point = NONE_VEC2
     for ip in vertices:
-        if ip.type == IntersectionType.NONE:
-            continue
-        if ip.type == IntersectionType.COLLINEAR:
-            if not inside:
-                if not ip.p0.isclose(ip.p1):
-                    yield Line(ip.p0, ip.p1, distance)
-                inside = True
-                prev_point = ip.p1
-            else:
-                inside = False
-                prev_point = ip.p1
+        if (
+            ip.type == IntersectionType.NONE
+            or ip.type == IntersectionType.COLLINEAR
+        ):
             continue
         # REGULAR, START, END
         point = ip.p0
