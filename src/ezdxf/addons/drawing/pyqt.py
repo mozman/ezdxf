@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021, Matthew Broadway
+# Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
 import math
 from abc import ABCMeta
@@ -8,7 +8,7 @@ from functools import lru_cache
 from ezdxf.addons.xqt import QtCore as qc, QtGui as qg, QtWidgets as qw
 
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
-from ezdxf.addons.drawing.config import Configuration, LinePolicy, HatchPolicy
+from ezdxf.addons.drawing.config import Configuration, LinePolicy
 from ezdxf.tools.fonts import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons.drawing.properties import Properties
@@ -17,7 +17,6 @@ from ezdxf.tools import fonts
 from ezdxf.math import Vec3, Matrix44
 from ezdxf.path import Path, Command
 from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer
-from ezdxf.tools.pattern import PatternAnalyser
 
 PatternKey = Tuple[str, float]
 
@@ -136,50 +135,11 @@ class PyQtBackend(Backend):
         return pen
 
     def _get_brush(self, properties: Properties) -> qg.QBrush:
+        # Hatch patterns are handled by the frontend since v0.18.1
         filling = properties.filling
         if filling:
-            if filling.type == filling.PATTERN:
-                if (
-                    self.config.hatch_policy
-                    == HatchPolicy.SHOW_APPROXIMATE_PATTERN
-                ):
-                    # Default pattern scaling is not supported by PyQt:
-                    key: PatternKey = (filling.name, filling.angle)
-                    qt_pattern = self._pattern_cache.get(key)  # type: ignore
-                    if qt_pattern is None:
-                        qt_pattern = self._get_qt_pattern(filling.pattern)
-                        self._pattern_cache[key] = qt_pattern
-                elif self.config.hatch_policy == HatchPolicy.SHOW_SOLID:
-                    qt_pattern = qc.Qt.SolidPattern  # type: ignore
-                elif self.config.hatch_policy == HatchPolicy.SHOW_OUTLINE:
-                    return self._no_fill
-                else:
-                    raise ValueError(self.config.hatch_policy)
-            else:
-                qt_pattern = qc.Qt.SolidPattern  # type: ignore
-
-            return qg.QBrush(self._get_color(properties.color), qt_pattern)  # type: ignore
-        else:
-            return self._no_fill
-
-    @staticmethod
-    def _get_qt_pattern(pattern) -> int:
-        pattern = PatternAnalyser(pattern)
-        # knowledge of dark or light background would by handy:
-        qt_pattern = qc.Qt.Dense4Pattern
-        if pattern.all_angles(0):
-            qt_pattern = qc.Qt.HorPattern
-        elif pattern.all_angles(90):
-            qt_pattern = qc.Qt.VerPattern
-        elif pattern.has_angle(0) and pattern.has_angle(90):
-            qt_pattern = qc.Qt.CrossPattern
-        if pattern.all_angles(45):
-            qt_pattern = qc.Qt.BDiagPattern
-        elif pattern.all_angles(135):
-            qt_pattern = qc.Qt.FDiagPattern
-        elif pattern.has_angle(45) and pattern.has_angle(135):
-            qt_pattern = qc.Qt.DiagCrossPattern
-        return qt_pattern  # type: ignore
+            return qg.QBrush(self._get_color(properties.color), qc.Qt.SolidPattern)  # type: ignore
+        return self._no_fill
 
     def _set_item_data(self, item: qw.QGraphicsItem) -> None:
         parent_stack = tuple(e for e, props in self.entity_stack[:-1])
