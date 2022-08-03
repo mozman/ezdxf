@@ -6,6 +6,7 @@ import sys
 import os
 import glob
 import signal
+import time
 import logging
 from pathlib import Path
 
@@ -375,15 +376,23 @@ class Draw(Command):
             frontend = AllVisibleFrontend(ctx, out, config=config)
         else:
             frontend = Frontend(ctx, out, config=config)
+        t0 = time.perf_counter()
+        print("drawing Model")
         frontend.draw_layout(layout, finalize=True)
-
+        t1 = time.perf_counter()
+        print(f"took {t1-t0:.4f} seconds")
         if args.out is not None:
             print(f'exporting to "{args.out}"')
+            t0 = time.perf_counter()
             fig.savefig(args.out, dpi=args.dpi)
             plt.close(fig)
-        else:
-            plt.show()
+            t1 = time.perf_counter()
+            print(f"took {t1 - t0:.4f} seconds")
 
+        else:
+            print("opening viewer")
+            plt.show()
+            print("exit")
 
 @register
 class View(Command):
