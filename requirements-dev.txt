@@ -3,6 +3,7 @@ typing_extensions
 pytest
 geomdl
 cython
+pillow
 matplotlib
 pyside6
 sphinx

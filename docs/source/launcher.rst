@@ -8,6 +8,7 @@ The command line script `ezdxf` launches various sub-commands:
 ``audit``       Audit and repair DXF files
 ``draw``        Draw and convert DXF files by the Matplotlib backend
 ``view``        PyQt DXF file viewer
+``pillow``      Draw and convert DXF files by the Pillow backend
 ``browse``      PyQt DXF structure browser for DXF debugging and curious people
 ``browse-acis`` PyQt ACIS entity content browser for SAT/SAB debugging
 ``strip``       Strip comments and THUMBNAILIMAGE section from DXF files
@@ -32,6 +33,7 @@ The help option ``-h`` is supported by the main script and all sub-commands:
         audit               audit and repair DXF files
         draw                draw and convert DXF files by Matplotlib
         view                view DXF files by the PyQt viewer
+        pillow              draw and convert DXF files by Pillow
         browse              browse DXF file structure
         browse-acis         browse ACIS structures in DXF files
         strip               strip comments from DXF files
@@ -214,6 +216,55 @@ Print help:
                             possible but this approach is slower.
       --lwscale LWSCALE     set custom line weight scaling, default is 0 to
                             disable line weights at all
+
+Pillow
+------
+
+.. versionadded:: 0.18.1
+
+Convert the DXF file "gear.dxf" into a PNG file by the *Pillow* backend:
+
+.. code-block:: Text
+
+    C:\> ezdxf pillow -o gear.png gear.dxf
+
+Advantage over the `Draw`_ command is the speed and much less memory usage,
+disadvantages are:
+
+  - text is only rendered by outlines
+  - solid hatches are rendered without holes
+
+.. image:: gfx/pillow-sample.png
+   :align: center
+
+Print help:
+
+.. code-block:: Text
+
+    C:\> ezdxf view -h
+    usage: ezdxf pillow [-h] [-o OUT] [-i IMAGE_SIZE] [-r OVERSAMPLING] [-m MARGIN] [--dpi DPI] [FILE]
+
+    positional arguments:
+      FILE                  DXF file to draw
+
+    options:
+      -h, --help            show this help message and exit
+      -o OUT, --out OUT     output filename, the filename extension defines the
+                            image format (.png, .jpg, .tif, .bmp, ...)
+      -i IMAGE_SIZE, --image_size IMAGE_SIZE
+                            image size in pixels as "width,height", default is
+                            "1920,1080", supports also "x" as delimiter like
+                            "1920x1080". A single integer is used for both
+                            directions e.g. "2000" defines an image size of
+                            2000x2000. The image is centered for the smaller DXF
+                            drawing extent.
+      -r OVERSAMPLING, --oversampling OVERSAMPLING
+                            oversampling factor, default is 2, use 0 or 1 to
+                            disable oversampling
+      -m MARGIN, --margin MARGIN
+                            minimal margin in pixels, default is 10
+      --dpi DPI             output resolution in pixels/inch which is significant
+                            for the linewidth, default is 300
 
 Browse
 ------

@@ -9,6 +9,7 @@ Version 0.18.1b0 - dev
 - NEW: improved hatch pattern support for the `drawing` add-on
 - NEW: `ezdxf.render.forms.turtle()` function to create 2D polyline vertices by 
   turtle-graphic like commands
+- NEW: sub-command `ezdxf pillow` to draw and convert DXF files by `Pillow`
 - BUGFIX: CPython implementation of `Vec2()` was not immutable at inplace 
   operations `+=`, `-=`, `*=` and `/=` like the Cython implementation
 

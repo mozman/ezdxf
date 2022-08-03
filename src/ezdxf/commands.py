@@ -1,6 +1,7 @@
 #  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
-from typing import Callable, Optional, Dict, TYPE_CHECKING, Type
+from __future__ import annotations
+from typing import Callable, Optional, Dict, TYPE_CHECKING, Type, Tuple
 import abc
 import sys
 import os
@@ -392,7 +393,6 @@ class Draw(Command):
         else:
             print("opening viewer")
             plt.show()
-            print("exit")
 
 @register
 class View(Command):
@@ -463,6 +463,120 @@ class View(Command):
             )
         sys.exit(app.exec())
 
+
+@register
+class Pillow(Command):
+    """Launcher sub-command: pil"""
+
+    NAME = "pillow"
+
+    @staticmethod
+    def add_parser(subparsers):
+        parser = subparsers.add_parser(
+            Pillow.NAME, help='draw and convert DXF files by Pillow'
+        )
+        parser.add_argument(
+            "file",
+            metavar="FILE",
+            nargs="?",
+            help="DXF file to draw",
+        )
+        parser.add_argument(
+            "-o",
+            "--out",
+            required=False,
+            help="output filename, the filename extension defines the image format "
+            "(.png, .jpg, .tif, .bmp, ...)",
+        )
+        parser.add_argument(
+            "-i",
+            "--image_size",
+            type=str,
+            default="1920,1080",
+            help='image size in pixels as "width,height", default is "1920,1080", '
+            'supports also "x" as delimiter like "1920x1080". A single integer '
+            'is used for both directions e.g. "2000" defines an image size of '
+            "2000x2000. The image is centered for the smaller DXF drawing extent.",
+        )
+        parser.add_argument(
+            "-r",
+            "--oversampling",
+            type=int,
+            default=2,
+            help="oversampling factor, default is 2, use 0 or 1 to disable oversampling",
+        )
+        parser.add_argument(
+            "-m",
+            "--margin",
+            type=int,
+            default=10,
+            help="minimal margin in pixels, default is 10",
+        )
+        parser.add_argument(
+            "--dpi",
+            type=int,
+            default=300,
+            help="output resolution in pixels/inch which is significant for the "
+                 "linewidth, default is 300",
+        )
+
+    @staticmethod
+    def run(args):
+        # Import on demand for a quicker startup:
+        from ezdxf import bbox
+        from ezdxf.addons.drawing import RenderContext, Frontend
+        from ezdxf.addons.drawing.config import Configuration, LinePolicy
+        from ezdxf.addons.drawing.pillow import PillowBackend
+
+        if args.file:
+            filename = args.file
+        else:
+            print("argument FILE is required")
+            sys.exit(1)
+
+        doc, _ = load_document(filename)
+        msp = doc.modelspace()
+        ctx = RenderContext(doc)
+        # force accurate linetype rendering by the frontend
+        config = Configuration.defaults().with_changes(
+            line_policy=LinePolicy.ACCURATE
+        )
+        extents = bbox.extents(msp, fast=True)
+        img_x, img_y = parse_image_size(args.image_size)
+        print(f"image size: ({img_x:.3f}, {img_y:.3f})")
+        out = PillowBackend(
+            extents,
+            image_size=(img_x, img_y),
+            oversampling=args.oversampling,
+            margin=args.margin,
+            dpi=args.dpi,
+            text_placeholder=False,
+        )
+        t0 = time.perf_counter()
+        print("drawing Model")
+        Frontend(ctx, out, config=config).draw_layout(msp)
+        t1 = time.perf_counter()
+        print(f"took {t1-t0:.4f} seconds")
+        if args.out is not None:
+            print(f'exporting to "{args.out}"')
+            t0 = time.perf_counter()
+            out.export(args.out)
+            t1 = time.perf_counter()
+            print(f"took {t1 - t0:.4f} seconds")
+        else:
+            print("opening image with the system default viewer...")
+            out.image.show(args.file)
+
+
+def parse_image_size(image_size: str) -> Tuple[int, int]:
+    if "," in image_size:
+        sx, sy = image_size.split(",")
+    elif "x" in image_size:
+        sx, sy = image_size.split("x")
+    else:
+        sx = int(image_size)  # type: ignore
+        sy = sx
+    return int(sx), int(sy)
 
 @register
 class Browse(Command):
