@@ -195,6 +195,18 @@ class Frontend:
         if finalize:
             self.out.finalize()
 
+    def backend_draw_line(self, start: Vec3, end: Vec3, properties: Properties):
+        """Indirection layer for Backend.draw_line() to apply accurate linetype
+        rendering by the frontend.
+        """
+        self.out.draw_line(start, end, properties)
+
+    def backend_draw_path(self, path: Path, properties: Properties):
+        """Indirection layer for Backend.draw_line() to apply accurate linetype
+        rendering by the frontend.
+        """
+        self.out.draw_path(path, properties)
+
     def draw_entities(
         self,
         entities: Iterable[DXFGraphic],
@@ -267,17 +279,17 @@ class Frontend:
     ) -> None:
         d, dxftype = entity.dxf, entity.dxftype()
         if dxftype == "LINE":
-            self.out.draw_line(d.start, d.end, properties)
+            self.backend_draw_line(d.start, d.end, properties)
 
         elif dxftype in ("XLINE", "RAY"):
             start = d.start
             delta = d.unit_vector * self.config.infinite_line_length
             if dxftype == "XLINE":
-                self.out.draw_line(
+                self.backend_draw_line(
                     start - delta / 2, start + delta / 2, properties
                 )
             elif dxftype == "RAY":
-                self.out.draw_line(start, start + delta, properties)
+                self.backend_draw_line(start, start + delta, properties)
         else:
             raise TypeError(dxftype)
 
@@ -338,7 +350,7 @@ class Frontend:
             path = make_path(entity)
         except AttributeError:  # API usage error
             raise TypeError(f"Unsupported DXF type {entity.dxftype()}")
-        self.out.draw_path(path, properties)
+        self.backend_draw_path(path, properties)
 
     def draw_point_entity(
         self, entity: DXFGraphic, properties: Properties
@@ -366,8 +378,8 @@ class Frontend:
                     end = entity.dxf.end
                     if start.isclose(end):
                         self.out.draw_point(start, properties)
-                    else:
-                        self.out.draw_line(start, end, properties)
+                    else:  # direct draw by backend is OK!
+                        self.backend_draw_line(start, end, properties)
                     pass
                 elif dxftype == "CIRCLE":
                     self.draw_curve_entity(entity, properties)
@@ -392,11 +404,11 @@ class Frontend:
                 return
             edge_visibility = entity.get_edges_visibility()
             if all(edge_visibility):
-                self.out.draw_path(from_vertices(points), properties)
+                self.backend_draw_path(from_vertices(points), properties)
             else:
                 for a, b, visible in zip(points, points[1:], edge_visibility):
                     if visible:
-                        self.out.draw_line(a, b, properties)
+                        self.backend_draw_line(a, b, properties)
 
         elif isinstance(entity, Solid):
             # set solid fill type for SOLID and TRACE
@@ -495,7 +507,7 @@ class Frontend:
 
         if show_only_outline:
             for p in itertools.chain(ignore_text_boxes(external_paths), holes):
-                self.out.draw_path(p, properties)
+                self.backend_draw_path(p, properties)
             return
 
         if external_paths:
@@ -544,7 +556,7 @@ class Frontend:
         properties.color = line_color
         # draw boundary paths as lines
         for loop in loops:
-            self.out.draw_path(loop, properties)
+            self.backend_draw_path(loop, properties)
 
     def draw_wipeout_entity(
         self, entity: DXFGraphic, properties: Properties
@@ -628,7 +640,7 @@ class Frontend:
         self, builder: MeshBuilder, properties: Properties
     ) -> None:
         for face in builder.faces_as_vertices():
-            self.out.draw_path(
+            self.backend_draw_path(
                 from_vertices(face, close=True), properties=properties
             )
 
@@ -675,7 +687,7 @@ class Frontend:
             return
 
         path = make_path(entity)
-        self.out.draw_path(path, properties)
+        self.backend_draw_path(path, properties)
 
     def draw_composite_entity(
         self, entity: DXFGraphic, properties: Properties
