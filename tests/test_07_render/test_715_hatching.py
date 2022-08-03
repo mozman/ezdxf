@@ -69,7 +69,7 @@ class TestIntersectHatchLine:
         b = Vec2(0, 10)
         hatch_line = horizontal_baseline.hatch_line(0)
         ip = hatch_line.intersect_line(a, b, 0, 10)
-        assert ip.type == hatching.IntersectionType.REGULAR
+        assert ip.type == hatching.IntersectionType.START
         assert ip.p0 is a
 
     def test_intersect_line_end(self, horizontal_baseline):
@@ -78,7 +78,7 @@ class TestIntersectHatchLine:
 
         hatch_line = horizontal_baseline.hatch_line(10)
         ip = hatch_line.intersect_line(a, b, 0, 10)
-        assert ip.type == hatching.IntersectionType.REGULAR
+        assert ip.type == hatching.IntersectionType.END
         assert ip.p0 is b
 
     @pytest.mark.parametrize("d", [-2, 0, 6])
@@ -110,7 +110,7 @@ class TestIntersectHatchLine:
 @pytest.mark.parametrize(
     "d,count",
     [
-        ("10 l 10 l 10", 11),
+        ("10 l 10 l 10", 10),
         ("2 l 2 r 2 r 2 l 6 " "l 10 l 2 l 2 r 2 r 2 l 6", 14),
         (
             "2 l 2 r 2 l 2 r 2 r 4 l 4 l 10 l 2 l 2 r 2 l 2 r 2 r 4 l 4",

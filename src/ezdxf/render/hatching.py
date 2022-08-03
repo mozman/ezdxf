@@ -15,13 +15,15 @@ if TYPE_CHECKING:
 
 MIN_HATCH_LINE_DISTANCE = 1e-4  # ??? what's a good choice
 NONE_VEC2 = Vec2(math.nan, math.nan)
-NDIGITS = 4
+KEY_NDIGITS = 4
 
 
 class IntersectionType(enum.IntEnum):
     NONE = 0
     REGULAR = 1
-    COLLINEAR = 2
+    START = 2
+    END = 3
+    COLLINEAR = 4
 
 
 class HatchingError(Exception):
@@ -50,12 +52,12 @@ class Intersection:
     p1: Vec2 = NONE_VEC2
 
 
-def side_of_line(distance: float) -> int:
+def side_of_line(distance: float, abs_tol=1e-9) -> int:
+    if abs(distance) < abs_tol:
+        return 0
     if distance > 0.0:
         return +1
-    elif distance < 0.0:
-        return -1
-    return 0
+    return -1
 
 
 @dataclasses.dataclass(frozen=True)
@@ -83,9 +85,9 @@ class HatchLine:
             if side_b == 0:
                 return Intersection(IntersectionType.COLLINEAR, a, b)
             else:
-                return Intersection(IntersectionType.REGULAR, a)
+                return Intersection(IntersectionType.START, a)
         elif side_b == 0:
-            return Intersection(IntersectionType.REGULAR, b)
+            return Intersection(IntersectionType.END, b)
         elif side_a != side_b:
             factor = abs((dist_a - line_distance) / (dist_a - dist_b))
             return Intersection(IntersectionType.REGULAR, a.lerp(b, factor))
@@ -274,6 +276,8 @@ def intersect_polygon(
         return
     if polygon[0].isclose(polygon[-1]):
         count -= 1
+        if count < 3:
+            return
 
     prev_point = polygon[count - 1]  # last point
     dist_prev = baseline.signed_distance(prev_point)
@@ -308,7 +312,7 @@ def hatch_polygons(
     for polygon in polygons:
         for ip, distance in intersect_polygon(baseline, polygon):
             assert ip.type != IntersectionType.NONE
-            points[round(distance, NDIGITS)].append(ip)
+            points[round(distance, KEY_NDIGITS)].append(ip)
 
     for distance, vertices in points.items():
         start = NONE_VEC2
@@ -338,26 +342,17 @@ def _line_segments(
     inside = False
     prev_point = NONE_VEC2
     for ip in vertices:
-        if ip.type == IntersectionType.COLLINEAR:
-            if not inside:
-                if not ip.p0.isclose(ip.p1):
-                    yield Line(ip.p0, ip.p1, distance)
-                inside = True
-                prev_point = ip.p1
-            else:
-                inside = False
-                prev_point = ip.p1
+        if (
+            ip.type == IntersectionType.NONE
+            or ip.type == IntersectionType.COLLINEAR
+        ):
             continue
-
-        if ip.type == IntersectionType.NONE:
-            continue
+        # REGULAR, START, END
         point = ip.p0
-
         if prev_point is NONE_VEC2:
             inside = True
             prev_point = point
             continue
-
         if inside:
             yield Line(prev_point, point, distance)
 
