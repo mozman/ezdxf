@@ -6,6 +6,7 @@ from typing import (
     cast,
     Union,
     List,
+    Sequence,
     Dict,
     Callable,
     Tuple,
@@ -29,6 +30,7 @@ from ezdxf.addons.drawing.properties import (
     Filling,
     LayoutProperties,
 )
+from ezdxf.addons.drawing.config import LinePolicy
 from ezdxf.addons.drawing.text import simplified_text_chunks
 from ezdxf.addons.drawing.type_hints import FilterFunc
 from ezdxf.addons.drawing.gfxproxy import DXFGraphicProxy
@@ -61,7 +63,7 @@ from ezdxf.path import (
     winding_deconstruction,
     from_vertices,
 )
-from ezdxf.render import MeshBuilder, TraceBuilder
+from ezdxf.render import MeshBuilder, TraceBuilder, linetypes
 from ezdxf import reorder
 from ezdxf.proxygraphic import ProxyGraphic, ProxyGraphicError
 from ezdxf.protocols import SupportsVirtualEntities, virtual_entities
@@ -74,6 +76,7 @@ __all__ = ["Frontend"]
 
 # typedef
 TDispatchTable = Dict[str, Callable[[DXFGraphic, Properties], None]]
+PatternKey = Tuple[str, float]
 POST_ISSUE_MSG = (
     "Please post sample DXF file at https://github.com/mozman/ezdxf/issues."
 )
@@ -113,6 +116,7 @@ class Frontend:
         self.parent_stack: List[DXFGraphic] = []
 
         self._dispatch = self._build_dispatch_table()
+        self._pattern_cache: Dict[PatternKey, Sequence[float]] = dict()
 
         # Supported DXF entities which use only proxy graphic for rendering:
         self._proxy_graphic_only_entities: Set[str] = {
@@ -195,17 +199,72 @@ class Frontend:
         if finalize:
             self.out.finalize()
 
+    def pattern(self, properties: Properties) -> Sequence[float]:
+        """Get pattern - implements pattern caching."""
+        if self.config.line_policy == LinePolicy.SOLID:
+            scale = 0.0
+        else:
+            scale = properties.linetype_scale
+
+        key: PatternKey = (properties.linetype_name, scale)
+        pattern_ = self._pattern_cache.get(key)
+        if pattern_ is None:
+            pattern_ = self.create_pattern(properties, scale)
+            self._pattern_cache[key] = pattern_
+        return pattern_
+
+    def create_pattern(
+        self, properties: Properties, scale: float
+    ) -> Sequence[float]:
+        """Returns simplified linetype tuple: on_off_sequence"""
+        # only matplotlib needs a different pattern definition
+        if len(properties.linetype_pattern) < 2:
+            # Do not return None -> None indicates: "not cached"
+            return tuple()
+        else:
+            min_dash_length = self.config.min_dash_length
+            pattern = [
+                max(e * scale, min_dash_length)
+                for e in properties.linetype_pattern
+            ]
+            if len(pattern) % 2:
+                pattern.pop()
+            return pattern
+
     def backend_draw_line(self, start: Vec3, end: Vec3, properties: Properties):
         """Indirection layer for Backend.draw_line() to apply accurate linetype
         rendering by the frontend.
         """
-        self.out.draw_line(start, end, properties)
+        if (
+            self.config.line_policy != LinePolicy.ACCURATE
+            or len(properties.linetype_pattern) < 2  # CONTINUOUS
+        ):
+            self.out.draw_line(start, end, properties)
+        else:
+            renderer = linetypes.LineTypeRenderer(self.pattern(properties))
+            self.out.draw_solid_lines(
+                ((s, e) for s, e in renderer.line_segment(start, end)),
+                properties,
+            )
 
     def backend_draw_path(self, path: Path, properties: Properties):
         """Indirection layer for Backend.draw_line() to apply accurate linetype
         rendering by the frontend.
         """
-        self.out.draw_path(path, properties)
+        if (
+            self.config.line_policy != LinePolicy.ACCURATE
+            or len(properties.linetype_pattern) < 2  # CONTINUOUS
+        ):
+            self.out.draw_path(path, properties)
+        else:
+            renderer = linetypes.LineTypeRenderer(self.pattern(properties))
+            vertices = path.flattening(
+                self.config.max_flattening_distance, segments=16
+            )
+            self.out.draw_solid_lines(
+                ((s, e) for s, e in renderer.line_segments(vertices)),
+                properties,
+            )
 
     def draw_entities(
         self,
