@@ -30,7 +30,7 @@ from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.tools import fonts
 from ezdxf.math import Vec3, Matrix44
 import ezdxf.path
-from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer
+
 from .config import Configuration, LinePolicy, HatchPolicy
 from .line_renderer import AbstractLineRenderer
 
@@ -87,21 +87,15 @@ class MatplotlibBackend(Backend):
                 min_lineweight=72 / self.ax.get_figure().dpi
             )
         super().configure(config)
+        # LinePolicy.ACCURATE is handled by the frontend since v0.18.1
         if config.line_policy == LinePolicy.SOLID:
             self._line_renderer = InternalLineRenderer(
                 config, self.ax, solid_only=True
             )
-        elif config.line_policy == LinePolicy.APPROXIMATE:
+        else:
             self._line_renderer = InternalLineRenderer(
                 config, self.ax, solid_only=False
             )
-        elif config.line_policy == LinePolicy.ACCURATE:
-            # This linetype renderer should only be used by "hardcopy" backends!
-            # It is just too slow for interactive backends, and the result of
-            # the matplotlib line rendering is optimized for displays.
-            self._line_renderer = EzdxfLineRenderer(config, self.ax)
-        else:
-            raise ValueError(config.line_policy)
 
     def clear_text_cache(self):
         self._text_renderer.clear_cache()
@@ -626,76 +620,3 @@ class InternalLineRenderer(MatplotlibLineRenderer):
             if len(pattern) % 2:
                 pattern.pop()
             return 0, pattern
-
-
-class EzdxfLineRenderer(MatplotlibLineRenderer):
-    """Replicate AutoCAD linetype rendering oriented on drawing units and
-    various ltscale factors. This rendering method break lines into small
-    segments which causes a longer rendering time!
-    """
-
-    def draw_line(
-        self, start: Vec3, end: Vec3, properties: Properties, z: float
-    ):
-        pattern = self.pattern(properties)
-        lineweight = self.lineweight(properties)
-        color = properties.color
-        if len(pattern) < 2:
-            self.ax.add_line(
-                Line2D(
-                    (start.x, end.x),
-                    (start.y, end.y),
-                    linewidth=lineweight,
-                    color=color,
-                    zorder=z,
-                )
-            )
-        else:
-            renderer = EzdxfLineTypeRenderer(pattern)
-            lines = LineCollection(
-                [
-                    ((s.x, s.y), (e.x, e.y))
-                    for s, e in renderer.line_segment(start, end)
-                ],
-                linewidths=lineweight,
-                color=color,
-                zorder=z,
-            )
-            lines.set_capstyle("butt")
-            self.ax.add_collection(lines)
-
-    def draw_path(self, path, properties: Properties, z: float):
-        pattern = self.pattern(properties)
-        lineweight = self.lineweight(properties)
-        color = properties.color
-        if len(pattern) < 2:
-            vertices, codes = _get_path_patch_data(path)
-            try:
-                patch = PathPatch(
-                    Path(vertices, codes),
-                    linewidth=lineweight,
-                    color=color,
-                    fill=False,
-                    zorder=z,
-                )
-            except ValueError as e:
-                logger.info(
-                    f"ignored matplotlib error in draw_path(): {str(e)}"
-                )
-            else:
-                self.ax.add_patch(patch)
-        else:
-            renderer = EzdxfLineTypeRenderer(pattern)
-            segments = renderer.line_segments(
-                path.flattening(
-                    self._config.max_flattening_distance, segments=16
-                )
-            )
-            lines = LineCollection(
-                [((s.x, s.y), (e.x, e.y)) for s, e in segments],
-                linewidths=lineweight,
-                color=color,
-                zorder=z,
-            )
-            lines.set_capstyle("butt")
-            self.ax.add_collection(lines)
