@@ -160,7 +160,7 @@ class Frontend:
         self, entity: DXFGraphic, properties: Properties
     ) -> None:
         """The :meth:`override_properties` filter can change the properties of
-        an entity independent from the DXF attributes.
+        an entity independent of the DXF attributes.
 
         This filter has access to the DXF attributes by the `entity` object,
         the current render context, and the resolved properties by the
@@ -217,7 +217,6 @@ class Frontend:
         self, properties: Properties, scale: float
     ) -> Sequence[float]:
         """Returns simplified linetype tuple: on_off_sequence"""
-        # only matplotlib needs a different pattern definition
         if len(properties.linetype_pattern) < 2:
             # Do not return None -> None indicates: "not cached"
             return tuple()

@@ -45,10 +45,11 @@ class PillowBackend(Backend):
     ):
         """Backend which uses `Pillow` for image export.
 
+        For linetype support configure the line_policy in the frontend as
+        ACCURATE.
+
         Current limitations:
 
-            - no linetype support
-            - no hatch pattern support
             - holes in hatches are not supported
 
         Args:
