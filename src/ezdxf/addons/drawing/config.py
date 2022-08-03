@@ -112,6 +112,10 @@ class Configuration:
         circle_approximation_count: Approximate a full circle by `n` segments, arcs
             have proportional less segments. Only used for approximation of arcs
             in banded polylines.
+        hatching_timeout: hatching timeout for a single entity, very dense
+            hatching patterns can cause a very long execution time, the default
+            timeout for a single entity is 30 seconds.
+
     """
 
     pdsize: Optional[int]
@@ -127,6 +131,7 @@ class Configuration:
     min_dash_length: float
     max_flattening_distance: float
     circle_approximation_count: int
+    hatching_timeout: float
 
     @staticmethod
     def defaults() -> "Configuration":
@@ -144,6 +149,7 @@ class Configuration:
             min_dash_length=0.1,
             max_flattening_distance=disassemble.Primitive.max_flattening_distance,
             circle_approximation_count=128,
+            hatching_timeout=30.0,
         )
 
     def with_changes(self, **kwargs) -> "Configuration":

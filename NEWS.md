@@ -6,6 +6,7 @@ Version 0.18.1b0 - dev
 ----------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-18.html
+- NEW: improved hatch pattern support for the `drawing` add-on
 - NEW: `ezdxf.render.forms.turtle()` function to create 2D polyline vertices by 
   turtle-graphic like commands
 - BUGFIX: CPython implementation of `Vec2()` was not immutable at inplace 

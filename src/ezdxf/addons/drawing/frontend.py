@@ -14,6 +14,7 @@ from typing import (
 )
 import logging
 import itertools
+import time
 from ezdxf.addons.drawing.config import (
     Configuration,
     ProxyGraphicPolicy,
@@ -423,8 +424,20 @@ class Frontend:
         ]
         properties.linetype_pattern = tuple()
         lines: List[Tuple[Vec3, Vec3]] = []
+
+        t0 = time.perf_counter()
+        max_time = self.config.hatching_timeout
+
+        def timeout() -> bool:
+            if time.perf_counter() - t0 > max_time:
+                print(
+                    f"hatching timeout of {max_time}s reached for {str(polygon)} - aborting"
+                )
+                return True
+            return False
+
         for baseline in hatching.pattern_baselines(polygon):
-            for line in hatching.hatch_polygons(baseline, polygons):
+            for line in hatching.hatch_polygons(baseline, polygons, timeout):
                 line_pattern = baseline.pattern_renderer(line.distance)
                 for s, e in line_pattern.render(line.start, line.end):
                     if ocs.transform:

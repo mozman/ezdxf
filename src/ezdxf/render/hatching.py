@@ -1,7 +1,15 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Iterator, Sequence, List, Tuple, Dict, TYPE_CHECKING
+from typing import (
+    Iterator,
+    Sequence,
+    List,
+    Tuple,
+    Dict,
+    TYPE_CHECKING,
+    Callable,
+)
 from collections import defaultdict
 import enum
 import math
@@ -305,16 +313,27 @@ def intersect_polygon(
 
 
 def hatch_polygons(
-    baseline: HatchBaseLine, polygons: Sequence[Sequence[Vec2]]
+    baseline: HatchBaseLine,
+    polygons: Sequence[Sequence[Vec2]],
+    terminate: Callable[[], bool] = None,
 ) -> Iterator[Line]:
-    """Returns all hatch lines intersecting the given polygons."""
+    """Returns all hatch lines intersecting the given polygons.
+
+    The terminate function should return ``True`` to terminate execution
+    otherwise ``False``. Can be used to implement a timeout.
+
+    """
     points: Dict[float, List[Intersection]] = defaultdict(list)
     for polygon in polygons:
+        if terminate and terminate():
+            return
         for ip, distance in intersect_polygon(baseline, polygon):
             assert ip.type != IntersectionType.NONE
             points[round(distance, KEY_NDIGITS)].append(ip)
 
     for distance, vertices in points.items():
+        if terminate and terminate():
+            return
         start = NONE_VEC2
         end = NONE_VEC2
         for line in _line_segments(vertices, distance):
