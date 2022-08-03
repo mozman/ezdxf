@@ -75,6 +75,8 @@ def collinear_hatching(filename: str):
     setup(doc)
     polygons = [
         forms.turtle("10 l 10 l 10"),
+        forms.turtle("5 r 2 l 5 l 12 l 5 r 2 l 5"),
+        forms.turtle("5 l 2 r 5 l 10 l 5 l 2 r 5"),
         forms.turtle("2 l 2 r 2 r 2 l 6 " "l 10 l 2 l 2 r 2 r 2 l 6"),
         forms.turtle(
             "2 l 2 r 2 l 2 r 2 r 4 l 4 l 10 l 2 l 2 r 2 l 2 r 2 r 4 l 4"
@@ -123,7 +125,7 @@ def hole_examples(filename: str, size=10, dx=13):
         list(forms.translate(forms.square(3), (4, 3))),
     ]
     baseline = hatching.HatchBaseLine(
-        Vec2(0.1, 0.2), direction=Vec2(1, 1), offset=Vec2(-0.25, 0.25)
+        Vec2(0, 0), direction=Vec2(1, 1), offset=Vec2(-0.25, 0.25)
     )
     render_hatch(msp, baseline, forms.square(size), holes)
     # adjacent holes

@@ -21,7 +21,9 @@ NDIGITS = 4
 class IntersectionType(enum.IntEnum):
     NONE = 0
     REGULAR = 1
-    COLLINEAR = 2
+    START = 2
+    END = 3
+    COLLINEAR = 4
 
 
 class HatchingError(Exception):
@@ -83,9 +85,9 @@ class HatchLine:
             if side_b == 0:
                 return Intersection(IntersectionType.COLLINEAR, a, b)
             else:
-                return Intersection(IntersectionType.REGULAR, a)
+                return Intersection(IntersectionType.START, a)
         elif side_b == 0:
-            return Intersection(IntersectionType.REGULAR, b)
+            return Intersection(IntersectionType.END, b)
         elif side_a != side_b:
             factor = abs((dist_a - line_distance) / (dist_a - dist_b))
             return Intersection(IntersectionType.REGULAR, a.lerp(b, factor))
@@ -274,6 +276,8 @@ def intersect_polygon(
         return
     if polygon[0].isclose(polygon[-1]):
         count -= 1
+        if count < 3:
+            return
 
     prev_point = polygon[count - 1]  # last point
     dist_prev = baseline.signed_distance(prev_point)
@@ -338,6 +342,8 @@ def _line_segments(
     inside = False
     prev_point = NONE_VEC2
     for ip in vertices:
+        if ip.type == IntersectionType.NONE:
+            continue
         if ip.type == IntersectionType.COLLINEAR:
             if not inside:
                 if not ip.p0.isclose(ip.p1):
@@ -348,16 +354,11 @@ def _line_segments(
                 inside = False
                 prev_point = ip.p1
             continue
-
-        if ip.type == IntersectionType.NONE:
-            continue
         point = ip.p0
-
         if prev_point is NONE_VEC2:
             inside = True
             prev_point = point
             continue
-
         if inside:
             yield Line(prev_point, point, distance)
 
