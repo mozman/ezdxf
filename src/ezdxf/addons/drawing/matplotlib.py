@@ -7,7 +7,6 @@ from typing import (
     TYPE_CHECKING,
     Optional,
     Dict,
-    Any,
     Tuple,
 )
 from collections import defaultdict
@@ -33,7 +32,6 @@ from ezdxf.math import Vec3, Matrix44
 import ezdxf.path
 from ezdxf.render.linetypes import LineTypeRenderer as EzdxfLineTypeRenderer
 from .config import Configuration, LinePolicy, HatchPolicy
-from .matplotlib_hatch import HATCH_NAME_MAPPING
 from .line_renderer import AbstractLineRenderer
 
 if TYPE_CHECKING:
@@ -164,13 +162,10 @@ class MatplotlibBackend(Backend):
         holes: Iterable[Path],
         properties: Properties,
     ):
-        fill, hatch = self._get_filling(properties)
-        if fill is False and hatch is None:
+        # Hatch patterns are handled by the frontend since v0.18.1
+        if self.config.hatch_policy == HatchPolicy.SHOW_OUTLINE:
             return
-        if hatch:
-            linewidth = self._line_renderer.lineweight(properties)
-        else:
-            linewidth = 0
+        linewidth = 0
         vertices = []
         codes = []
         for path in paths:
@@ -195,8 +190,7 @@ class MatplotlibBackend(Backend):
                 Path(vertices, codes),
                 color=properties.color,
                 linewidth=linewidth,
-                fill=fill,
-                hatch=hatch,
+                fill=True,
                 zorder=self._get_z(),
             )
         except ValueError as e:
@@ -288,28 +282,6 @@ class MatplotlibBackend(Backend):
                     width, height, forward=True
                 )
         plt.rcParams["lines.scale_dashes"] = self._scale_dashes_backup
-
-    def _get_filling(self, properties: Properties):
-        fill = True
-        hatch: Any = None
-        assert properties.filling is not None
-        name = properties.filling.name.upper()
-        if properties.filling.type == 1 and name != "SOLID":
-            if self.config.hatch_policy == HatchPolicy.SHOW_OUTLINE:
-                fill = False
-                hatch = False
-            elif (
-                self.config.hatch_policy == HatchPolicy.SHOW_APPROXIMATE_PATTERN
-            ):
-                # Use predefined hatch pattern by name matching:
-                fill = False
-                hatch = HATCH_NAME_MAPPING.get(name, r"\\\\")
-            elif self.config.hatch_policy == HatchPolicy.SHOW_SOLID:
-                fill = True
-                hatch = False
-            else:
-                raise ValueError(self.config.hatch_policy)
-        return fill, hatch
 
 
 def _transform_path(path: Path, transform: Matrix44) -> Path:
