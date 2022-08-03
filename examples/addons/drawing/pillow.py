@@ -9,6 +9,7 @@ import tracemalloc
 import ezdxf
 from ezdxf import recover, bbox
 from ezdxf.addons.drawing import RenderContext, Frontend
+from ezdxf.addons.drawing.config import Configuration, LinePolicy
 from ezdxf.addons.drawing.pillow import PillowBackend, PillowDelayedDraw
 
 
@@ -110,6 +111,10 @@ def main():
     # image size.  This could be implemented as a different pillow backend which
     # is optimized for speed.
     ctx = RenderContext(doc)
+    # force accurate linetype rendering by the frontend
+    config = Configuration.defaults().with_changes(
+        line_policy=LinePolicy.ACCURATE
+    )
     if args.trace:
         tracemalloc.start()
     try:
@@ -143,7 +148,7 @@ def main():
 
     print("drawing model space ...")
     t0 = perf_counter()
-    Frontend(ctx, out).draw_layout(msp)
+    Frontend(ctx, out, config=config).draw_layout(msp)
     print(f"... in {perf_counter() - t0:.1f}s")
     if outfile is not None:
         t0 = perf_counter()
