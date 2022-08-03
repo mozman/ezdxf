@@ -55,15 +55,12 @@ class HatchPolicy(Enum):
         SHOW_OUTLINE: show only the outline of HATCH entities
         SHOW_SOLID: show HATCH entities but draw with solid fill
             regardless of the pattern
-        SHOW_APPROXIMATE_PATTERN: show HATCH entities using the closest
-            approximation available to the current backend
-
     """
 
     IGNORE = auto()
     SHOW_OUTLINE = auto()
     SHOW_SOLID = auto()
-    SHOW_APPROXIMATE_PATTERN = auto()
+    SHOW_APPROXIMATE_PATTERN = auto()  # ignored since v0.18.1
 
 
 @dataclass(frozen=True)

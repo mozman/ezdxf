@@ -13,6 +13,7 @@ from typing import (
     Optional,
 )
 import logging
+import itertools
 from ezdxf.addons.drawing.config import (
     Configuration,
     ProxyGraphicPolicy,
@@ -440,15 +441,26 @@ class Frontend:
         *,
         loops: List[Path] = None,
     ) -> None:
+        if properties.filling is None:
+            return
+        filling = properties.filling
+        show_only_outline = False
         if self.config.hatch_policy == HatchPolicy.IGNORE:
             return
+        elif self.config.hatch_policy == HatchPolicy.SHOW_SOLID:
+            filling = Filling()  # solid filling
+        elif self.config.hatch_policy == HatchPolicy.SHOW_OUTLINE:
+            filling = Filling()  # solid filling
+            show_only_outline = True
+
         polygon = cast(DXFPolygon, entity)
-        if properties.filling and properties.filling.type == Filling.PATTERN:
+        if filling.type == Filling.PATTERN:
             if loops is None:
                 loops = hatching.hatch_paths(polygon)
             self.draw_hatch_pattern(polygon, loops, properties)
             return
 
+        # draw SOLID filling
         ocs = polygon.ocs()
         # all OCS coordinates have the same z-axis stored as vector (0, 0, z),
         # default (0, 0, 0)
@@ -467,6 +479,11 @@ class Frontend:
                 closed_loops(paths, ocs, elevation)
             )
             external_paths, holes = winding_deconstruction(polygons)
+
+        if show_only_outline:
+            for p in itertools.chain(ignore_text_boxes(external_paths), holes):
+                self.out.draw_path(p, properties)
+            return
 
         if external_paths:
             self.out.draw_filled_paths(
