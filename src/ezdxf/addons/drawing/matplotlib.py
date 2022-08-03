@@ -133,6 +133,7 @@ class MatplotlibBackend(Backend):
     ):
         """Fast method to draw a bunch of solid lines with the same properties."""
         color = properties.color
+        lineweight = self._line_renderer.lineweight(properties)
         _lines = []
         point_x = []
         point_y = []
@@ -147,7 +148,7 @@ class MatplotlibBackend(Backend):
         self.ax.scatter(point_x, point_y, s=0.1, c=color, zorder=z)
         self.ax.add_collection(LineCollection(
             _lines,
-            linewidths=properties.lineweight,
+            linewidths=lineweight,
             color=color,
             zorder=z,
             capstyle="butt",
