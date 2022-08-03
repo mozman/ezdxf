@@ -133,18 +133,27 @@ class MatplotlibBackend(Backend):
         lines: Iterable[Tuple[Vec3, Vec3]],
         properties: Properties,
     ):
-        """Fast method to draw a bunch of solid lines with the same properties.
-        """
+        """Fast method to draw a bunch of solid lines with the same properties."""
         color = properties.color
-        lineweight = properties.lineweight
-        _lines = LineCollection(
-            [((s.x, s.y), (e.x, e.y)) for s, e in lines],
-            linewidths=lineweight,
+        _lines = []
+        point_x = []
+        point_y = []
+        z = self._get_z()
+        for s, e in lines:
+            if s.isclose(e):
+                point_x.append(s.x)
+                point_y.append(s.y)
+            else:
+                _lines.append(((s.x, s.y), (e.x, e.y)))
+
+        self.ax.scatter(point_x, point_y, s=0.1, c=color, zorder=z)
+        self.ax.add_collection(LineCollection(
+            _lines,
+            linewidths=properties.lineweight,
             color=color,
-            zorder=self._get_z()
-        )
-        _lines.set_capstyle("butt")
-        self.ax.add_collection(_lines)
+            zorder=z,
+            capstyle="butt",
+        ))
 
     def draw_path(self, path, properties: Properties):
         self._line_renderer.draw_path(path, properties, self._get_z())
