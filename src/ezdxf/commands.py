@@ -171,8 +171,8 @@ class Audit(Command):
                 print(msg)
                 logger.error(msg)
                 return  # keep on processing additional files
-            except const.DXFStructureError:
-                msg = "Invalid or corrupted DXF file."
+            except const.DXFStructureError as e:
+                msg = f"Invalid or corrupted DXF file: {str(e)}"
                 print(msg)
                 logger.error(msg)
                 return  # keep on processing additional files

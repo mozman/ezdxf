@@ -1,5 +1,6 @@
-#  Copyright (c) 2020-2021, Manfred Moitzi
+#  Copyright (c) 2020-2022, Manfred Moitzi
 #  License: MIT License
+from __future__ import annotations
 import typing
 from typing import (
     TYPE_CHECKING,
@@ -190,7 +191,8 @@ class Recover:
         if tables:
             tables = recover_tool.rebuild_tables(tables)  # type: ignore
             recover_tool.section_dict["TABLES"] = tables
-
+        if recover_tool.dxfversion > "AC1009":
+            recover_tool.recover_rootdict()
         section_dict = recover_tool.section_dict
         for name, entities in section_dict.items():
             if name in {"TABLES", "BLOCKS", "OBJECTS", "ENTITIES"}:
@@ -423,6 +425,19 @@ class Recover:
                 # raises DXFStructureError() for invalid entities
                 yield Tags(entity_structure_validator(entity))
 
+    def recover_rootdict(self):
+        objects = self.section_dict.get("OBJECTS")
+        if not objects or len(objects) < 2:
+            return  # empty OBJECTS section
+        # index 0 is [DXFTag(0, 'SECTION'), DXFTag(2, 'OBJECTS')], this is a
+        # requirement to be stored in the section_dict!
+        if _is_rootdict(objects[1]):
+            return  # everything is fine
+        index, rootdict = _find_rootdict(objects)
+        if index:  # make rootdict to first entity in OBJECTS section
+            objects[index] = objects[1]
+            objects[1] = rootdict
+
 
 def _detect_dxf_version(header: List) -> str:
     next_is_dxf_version = False
@@ -436,6 +451,20 @@ def _detect_dxf_version(header: List) -> str:
         if tag == (9, "$ACADVER"):
             next_is_dxf_version = True
     return const.DXF12
+
+
+def _is_rootdict(entity: Tags) -> bool:
+    if entity[0] != (0, "DICTIONARY"):
+        return False
+    # The entry "ACAD_GROUP" in the rootdict is absolut necessary!
+    return any(tag == (3, "ACAD_GROUP") for tag in entity)
+
+
+def _find_rootdict(objects: List[Tags]) -> Tuple[int, Tags]:
+    for index, entity in enumerate(objects):
+        if _is_rootdict(entity):
+            return index, entity
+    return 0, Tags()
 
 
 def safe_tag_loader(
@@ -674,18 +703,18 @@ def byte_tag_compiler(
 
     def recover_int(s: Union[str, bytes]) -> int:
         if isinstance(s, bytes):
-            s = s.decode(encoding="utf8" , errors="ignore")
+            s = s.decode(encoding="utf8", errors="ignore")
         value = _search_int(s)
-        msg = f"recovered invalid integer value \"{s}\" near line {line} as \"{value}\""
+        msg = f'recovered invalid integer value "{s}" near line {line} as "{value}"'
         messages.append((AuditError.INVALID_INTEGER_VALUE, msg))
         logger.warning(msg)
         return value
 
     def recover_float(s: Union[str, bytes]) -> float:
         if isinstance(s, bytes):
-            s = s.decode(encoding="utf8" , errors="ignore")
+            s = s.decode(encoding="utf8", errors="ignore")
         value = _search_float(s)
-        msg = f"recovered invalid floating point value \"{s}\" near line {line} as \"{value}\""
+        msg = f'recovered invalid floating point value "{s}" near line {line} as "{value}"'
         messages.append((AuditError.INVALID_FLOATING_POINT_VALUE, msg))
         logger.warning(msg)
         return value
