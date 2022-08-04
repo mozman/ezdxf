@@ -575,7 +575,7 @@ def bytes_loader(stream: BinaryIO) -> Iterable[DXFTag]:
                 try:  # harder to find an int
                     code = _search_int(code)
                 except ValueError:
-                    code = code.decode(errors="ignore")
+                    code = code.decode(errors="ignore").rstrip("\r\n")
                     raise const.DXFStructureError(
                         f'Invalid group code "{code}" at line {line}.'
                     )
