@@ -444,7 +444,7 @@ class Recover:
             self.fixes.append(
                 (
                     AuditError.MISPLACED_ROOT_DICT,
-                    f"Recovered misplaced root DICTIONARY(#{handle})",
+                    f"Recovered misplaced root DICTIONARY(#{handle}).",
                 )
             )
 
