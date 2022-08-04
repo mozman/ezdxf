@@ -437,6 +437,16 @@ class Recover:
         if index:  # make rootdict to first entity in OBJECTS section
             objects[index] = objects[1]
             objects[1] = rootdict
+            try:
+                handle = rootdict.get_handle()
+            except const.DXFValueError:
+                handle = "None"
+            self.fixes.append(
+                (
+                    AuditError.MISPLACED_ROOT_DICT,
+                    f"Recovered misplaced root DICTIONARY(#{handle})",
+                )
+            )
 
 
 def _detect_dxf_version(header: List) -> str:
