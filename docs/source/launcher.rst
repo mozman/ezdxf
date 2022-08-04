@@ -157,7 +157,7 @@ Print help:
     C:\> ezdxf draw -h
     usage: ezdxf draw [-h] [--formats] [--layout LAYOUT] [--all-layers-visible]
                       [--all-entities-visible] [-o OUT] [--dpi DPI]
-                      [--ltype {approximate,accurate}]
+                      [--ltype {approximate,accurate}] [-v]
                       [FILE]
 
     positional arguments:
@@ -180,6 +180,7 @@ Print help:
                             approximation available to the backend, the accurate
                             method renders as accurately as possible but this
                             approach is slower.
+      -v, --verbose         give more output
 
 View
 ----
@@ -274,7 +275,7 @@ Print help:
                             minimal margin around the image in pixels, default is 10
       --dpi DPI             output resolution in pixels/inch which is significant
                             for the linewidth, default is 300
-      -v, --verbose         print more info
+      -v, --verbose         give more output
 
 Browse
 ------

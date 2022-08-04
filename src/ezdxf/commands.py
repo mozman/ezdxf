@@ -310,6 +310,12 @@ class Draw(Command):
             choices=["approximate", "accurate"],
             help=HELP_LTYPE,
         )
+        parser.add_argument(
+            "-v",
+            "--verbose",
+            action="store_true",
+            help="give more output",
+        )
 
     @staticmethod
     def run(args):
@@ -323,7 +329,7 @@ class Draw(Command):
         from ezdxf.addons.drawing import RenderContext, Frontend
         from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
         from ezdxf.addons.drawing.config import Configuration, LinePolicy
-
+        verbose = args.verbose
         # Print all supported export formats:
         if args.formats:
             fig = plt.figure()
@@ -339,7 +345,7 @@ class Draw(Command):
         else:
             print("argument FILE is required")
             sys.exit(1)
-
+        print(f'loading file "{filename}"...')
         doc, _ = load_document(filename)
 
         try:
@@ -379,20 +385,24 @@ class Draw(Command):
         else:
             frontend = Frontend(ctx, out, config=config)
         t0 = time.perf_counter()
-        print("drawing Model")
+        if verbose:
+            print("drawing modelspace...")
         frontend.draw_layout(layout, finalize=True)
         t1 = time.perf_counter()
-        print(f"took {t1-t0:.4f} seconds")
+        if verbose:
+            print(f"took {t1-t0:.4f} seconds")
         if args.out is not None:
-            print(f'exporting to "{args.out}"')
+            print(f'exporting to "{args.out}"...')
             t0 = time.perf_counter()
             fig.savefig(args.out, dpi=args.dpi)
             plt.close(fig)
             t1 = time.perf_counter()
-            print(f"took {t1 - t0:.4f} seconds")
+            if verbose:
+                print(f"took {t1 - t0:.4f} seconds")
 
         else:
-            print("opening viewer")
+            if verbose:
+                print("opening viewer...")
             plt.show()
 
 
@@ -535,7 +545,7 @@ class Pillow(Command):
             "-v",
             "--verbose",
             action="store_true",
-            help="print more info",
+            help="give more output",
         )
 
     @staticmethod
@@ -553,7 +563,7 @@ class Pillow(Command):
         else:
             print("argument FILE is required")
             sys.exit(1)
-        print(f'loading file "{filename}"')
+        print(f'loading file "{filename}"...')
         doc, _ = load_document(filename)
         msp = doc.modelspace()
         bg = args.background
