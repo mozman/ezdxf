@@ -132,13 +132,6 @@ class PatternRenderer:
             yield start, end
             return
 
-        def pattern_offset(index, distance):
-            if math.isclose(index * length, distance):
-                # fix floating point imprecision:
-                # modulo and floor() do not play nice together
-                return 0.0
-            return distance % length
-
         direction = self.direction
         if direction.dot(end - start) < 0.0:
             # Line direction is reversed to the pattern line direction!
@@ -146,10 +139,8 @@ class PatternRenderer:
         origin = self.origin
         s_dist = direction.dot(start - origin)
         e_dist = direction.dot(end - origin)
-        s_index = math.floor(s_dist / length)
-        s_offset = pattern_offset(s_index, s_dist)
-        e_index = math.floor(e_dist / length)
-        e_offset = pattern_offset(e_index, e_dist)
+        s_index, s_offset = divmod(s_dist, length)
+        e_index, e_offset = divmod(e_dist, length)
 
         if s_index == e_index:
             yield from self.render_offset_to_offset(s_index, s_offset, e_offset)
