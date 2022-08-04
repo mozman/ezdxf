@@ -16,6 +16,7 @@ from ezdxf import recover
 from ezdxf.lldxf import const
 from ezdxf.lldxf.validator import is_dxf_file, is_binary_dxf_file
 from ezdxf.dwginfo import dwg_file_info
+from ezdxf import units
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFGraphic
@@ -394,6 +395,7 @@ class Draw(Command):
             print("opening viewer")
             plt.show()
 
+
 @register
 class View(Command):
     """Launcher sub-command: view"""
@@ -473,7 +475,7 @@ class Pillow(Command):
     @staticmethod
     def add_parser(subparsers):
         parser = subparsers.add_parser(
-            Pillow.NAME, help='draw and convert DXF files by Pillow'
+            Pillow.NAME, help="draw and convert DXF files by Pillow"
         )
         parser.add_argument(
             "file",
@@ -517,7 +519,7 @@ class Pillow(Command):
             type=int,
             default=300,
             help="output resolution in pixels/inch which is significant for the "
-                 "linewidth, default is 300",
+            "linewidth, default is 300",
         )
 
     @staticmethod
@@ -533,7 +535,7 @@ class Pillow(Command):
         else:
             print("argument FILE is required")
             sys.exit(1)
-
+        print(f'loading file "{filename}"')
         doc, _ = load_document(filename)
         msp = doc.modelspace()
         ctx = RenderContext(doc)
@@ -541,9 +543,14 @@ class Pillow(Command):
         config = Configuration.defaults().with_changes(
             line_policy=LinePolicy.ACCURATE
         )
+        print(f"detecting extents...")
         extents = bbox.extents(msp, fast=True)
+        print(f"units: {units.unit_name(msp.units)}")
+        print(f"size: {extents.size.x:.3f} x {extents.size.y:.3f}")
+        print(f"min extents: ({extents.extmin.x:.3f}, {extents.extmin.y:.3f})")
+        print(f"max extents: ({extents.extmax.x:.3f}, {extents.extmax.y:.3f})")
         img_x, img_y = parse_image_size(args.image_size)
-        print(f"image size: ({img_x:.3f}, {img_y:.3f})")
+        print(f"image size: {img_x} x {img_y}")
         out = PillowBackend(
             extents,
             image_size=(img_x, img_y),
@@ -553,7 +560,7 @@ class Pillow(Command):
             text_placeholder=False,
         )
         t0 = time.perf_counter()
-        print("drawing Model")
+        print("drawing modelspace...")
         Frontend(ctx, out, config=config).draw_layout(msp)
         t1 = time.perf_counter()
         print(f"took {t1-t0:.4f} seconds")
@@ -565,7 +572,7 @@ class Pillow(Command):
             print(f"took {t1 - t0:.4f} seconds")
         else:
             print("opening image with the system default viewer...")
-            out.image.show(args.file)
+            out.resize().show(args.file)
 
 
 def parse_image_size(image_size: str) -> Tuple[int, int]:
@@ -577,6 +584,7 @@ def parse_image_size(image_size: str) -> Tuple[int, int]:
         sx = int(image_size)  # type: ignore
         sy = sx
     return int(sx), int(sy)
+
 
 @register
 class Browse(Command):
@@ -799,7 +807,7 @@ def load_every_document(filename: str):
             if dwginfo.version != "invalid":
                 print(
                     f"This is a DWG file!!!\n"
-                    f"Filename: \"{filename}\"\n"
+                    f'Filename: "{filename}"\n'
                     f"Format: DWG\n"
                     f"Release: {dwginfo.release}\n"
                     f"DWG Version: {dwginfo.version}\n"

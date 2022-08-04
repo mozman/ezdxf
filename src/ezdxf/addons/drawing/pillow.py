@@ -226,16 +226,20 @@ class PillowBackend(Backend):
         return self.text_renderer.get_text_line_width(text, cap_height, font)
 
     def export(self, filename: str, **kwargs) -> None:
-        image = self.image
-        if self.oversampling > 1:
-            x = int(self.image_size.x)
-            y = int(self.image_size.y)
-            image = self.image.resize((x, y), resample=Image.LANCZOS)
+        image = self.resize()
         if not supports_transparency(filename):
             # remove alpha channel if not supported
             image = image.convert("RGB")
         dpi = kwargs.pop("dpi", self.dpi)
         image.save(filename, dpi=(dpi, dpi), **kwargs)
+
+    def resize(self):
+        image = self.image
+        if self.oversampling > 1:
+            x = int(self.image_size.x)
+            y = int(self.image_size.y)
+            image = self.image.resize((x, y), resample=Image.LANCZOS)
+        return image
 
 
 SUPPORT_TRANSPARENCY = [".png", ".tif", ".tiff"]

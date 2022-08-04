@@ -201,7 +201,7 @@ def unit_name(enum: int) -> str:
     try:
         name = str(InsertUnits(enum)).split(".")[1]
     except ValueError:
-        name = f"unknown unit <{enum}>"
+        name = f"unitless"
     return name
 
 
