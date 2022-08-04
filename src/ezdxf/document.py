@@ -451,7 +451,13 @@ class Drawing:
             self.create_all_arrow_blocks()
 
         # Objects section setup:
-        self.rootdict = self.objects.rootdict
+        rootdict = self.objects.rootdict
+        if rootdict.DXFTYPE != "DICTIONARY":
+            raise const.DXFStructureError(
+                f"invalid root dictionary entity {str(rootdict)} "
+            )
+        self.rootdict = rootdict
+
         # Create missing management tables (DICTIONARY):
         self.objects.setup_object_management_tables(self.rootdict)
 
