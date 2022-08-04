@@ -243,7 +243,7 @@ Print help:
 
     C:\> ezdxf view -h
     usage: ezdxf pillow [-h] [-o OUT] [-i IMAGE_SIZE] [-b BACKGROUND]
-                        [-r OVERSAMPLING] [-m MARGIN] [--dpi DPI]
+                        [-r OVERSAMPLING] [-m MARGIN] [--dpi DPI] [-v]
                         [FILE]
 
     positional arguments:
@@ -271,9 +271,11 @@ Print help:
                             oversampling factor, default is 2, use 0 or 1 to
                             disable oversampling
       -m MARGIN, --margin MARGIN
-                            minimal margin in pixels, default is 10
+                            minimal margin around the image in pixels, default is 10
       --dpi DPI             output resolution in pixels/inch which is significant
                             for the linewidth, default is 300
+      -v, --verbose         print more info
+
 Browse
 ------
 

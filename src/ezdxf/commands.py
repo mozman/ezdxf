@@ -522,7 +522,7 @@ class Pillow(Command):
             "--margin",
             type=int,
             default=10,
-            help="minimal margin in pixels, default is 10",
+            help="minimal margin around the image in pixels, default is 10",
         )
         parser.add_argument(
             "--dpi",
@@ -530,6 +530,12 @@ class Pillow(Command):
             default=300,
             help="output resolution in pixels/inch which is significant for the "
             "linewidth, default is 300",
+        )
+        parser.add_argument(
+            "-v",
+            "--verbose",
+            action="store_true",
+            help="print more info",
         )
 
     @staticmethod
@@ -541,6 +547,7 @@ class Pillow(Command):
         from ezdxf.addons.drawing.pillow import PillowBackend
         from ezdxf.addons.drawing.properties import LayoutProperties
 
+        verbose = args.verbose
         if args.file:
             filename = args.file
         else:
@@ -567,14 +574,22 @@ class Pillow(Command):
         config = Configuration.defaults().with_changes(
             line_policy=LinePolicy.ACCURATE
         )
-        print(f"detecting extents...")
+        if verbose:
+            print(f"detecting extents...\n")
         extents = bbox.extents(msp, fast=True)
-        print(f"units: {units.unit_name(msp.units)}")
-        print(f"size: {extents.size.x:.3f} x {extents.size.y:.3f}")
-        print(f"min extents: ({extents.extmin.x:.3f}, {extents.extmin.y:.3f})")
-        print(f"max extents: ({extents.extmax.x:.3f}, {extents.extmax.y:.3f})")
         img_x, img_y = parse_image_size(args.image_size)
-        print(f"image size: {img_x} x {img_y}")
+        if verbose:
+            print(f"    units: {units.unit_name(msp.units)}")
+            print(
+                f"    modelspace size: {extents.size.x:.3f} x {extents.size.y:.3f}"
+            )
+            print(
+                f"    min extents: ({extents.extmin.x:.3f}, {extents.extmin.y:.3f})"
+            )
+            print(
+                f"    max extents: ({extents.extmax.x:.3f}, {extents.extmax.y:.3f})"
+            )
+            print(f"\nimage size: {img_x} x {img_y}")
         out = PillowBackend(
             extents,
             image_size=(img_x, img_y),
@@ -584,20 +599,24 @@ class Pillow(Command):
             text_placeholder=False,
         )
         t0 = time.perf_counter()
-        print("drawing modelspace...")
+        if verbose:
+            print("drawing modelspace...")
         Frontend(ctx, out, config=config).draw_layout(
             msp, layout_properties=layout_properties
         )
         t1 = time.perf_counter()
-        print(f"took {t1-t0:.4f} seconds")
+        if verbose:
+            print(f"took {t1-t0:.4f} seconds")
         if args.out is not None:
             print(f'exporting to "{args.out}"')
             t0 = time.perf_counter()
             out.export(args.out)
             t1 = time.perf_counter()
-            print(f"took {t1 - t0:.4f} seconds")
+            if verbose:
+                print(f"took {t1 - t0:.4f} seconds")
         else:
-            print("opening image with the default system viewer...")
+            if verbose:
+                print("opening image with the default system viewer...")
             out.resize().show(args.file)
 
 
