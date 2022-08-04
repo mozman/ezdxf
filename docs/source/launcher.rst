@@ -242,7 +242,9 @@ Print help:
 .. code-block:: Text
 
     C:\> ezdxf view -h
-    usage: ezdxf pillow [-h] [-o OUT] [-i IMAGE_SIZE] [-r OVERSAMPLING] [-m MARGIN] [--dpi DPI] [FILE]
+    usage: ezdxf pillow [-h] [-o OUT] [-i IMAGE_SIZE] [-b BACKGROUND]
+                        [-r OVERSAMPLING] [-m MARGIN] [--dpi DPI]
+                        [FILE]
 
     positional arguments:
       FILE                  DXF file to draw
@@ -258,6 +260,13 @@ Print help:
                             directions e.g. "2000" defines an image size of
                             2000x2000. The image is centered for the smaller DXF
                             drawing extent.
+      -b BACKGROUND, --background BACKGROUND
+                            override background color in hex format "RRGGBB" or
+                            "RRGGBBAA", e.g. use "FFFFFF00" to get a white
+                            transparent background and a black foreground color
+                            (ACI=7), because a light background gets a black
+                            foreground color or vice versa "00000000" for a black
+                            transparent background and a white foreground color.
       -r OVERSAMPLING, --oversampling OVERSAMPLING
                             oversampling factor, default is 2, use 0 or 1 to
                             disable oversampling
@@ -265,7 +274,6 @@ Print help:
                             minimal margin in pixels, default is 10
       --dpi DPI             output resolution in pixels/inch which is significant
                             for the linewidth, default is 300
-
 Browse
 ------
 

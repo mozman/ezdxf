@@ -241,6 +241,16 @@ class PillowBackend(Backend):
             image = self.image.resize((x, y), resample=Image.LANCZOS)
         return image
 
+    def crop(self):
+        image = self.resize()
+        left, upper, right, lower = image.getbbox()
+        print(f"{left=}, {upper=}, {right=}, {lower=}")
+        left = max(left-self.margin_x, 0)
+        right += self.margin_x
+        upper = max(0, upper - self.margin_y)
+        lower = lower + self.margin_y
+        print(f"{left=}, {upper=}, {right=}, {lower=}")
+
 
 SUPPORT_TRANSPARENCY = [".png", ".tif", ".tiff"]
 

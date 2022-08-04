@@ -501,6 +501,16 @@ class Pillow(Command):
             "2000x2000. The image is centered for the smaller DXF drawing extent.",
         )
         parser.add_argument(
+            "-b",
+            "--background",
+            default=None,
+            help='override background color in hex format "RRGGBB" or "RRGGBBAA", '
+            'e.g. use "FFFFFF00" to get a white transparent background and a black '
+            "foreground color (ACI=7), because a light background gets a "
+            'black foreground color or vice versa  "00000000" for a black transparent '
+            "background and a white foreground color.",
+        ),
+        parser.add_argument(
             "-r",
             "--oversampling",
             type=int,
@@ -529,6 +539,7 @@ class Pillow(Command):
         from ezdxf.addons.drawing import RenderContext, Frontend
         from ezdxf.addons.drawing.config import Configuration, LinePolicy
         from ezdxf.addons.drawing.pillow import PillowBackend
+        from ezdxf.addons.drawing.properties import LayoutProperties
 
         if args.file:
             filename = args.file
@@ -538,6 +549,19 @@ class Pillow(Command):
         print(f'loading file "{filename}"')
         doc, _ = load_document(filename)
         msp = doc.modelspace()
+        bg = args.background
+        layout_properties = LayoutProperties.from_layout(msp)
+        if bg is not None:
+            if not bg.startswith("#"):
+                bg = "#" + bg
+            try:
+                layout_properties.set_colors(bg)
+            except ValueError:
+                print(
+                    f'ERROR: invalid background color value "{args.background}"'
+                )
+                sys.exit(4)
+
         ctx = RenderContext(doc)
         # force accurate linetype rendering by the frontend
         config = Configuration.defaults().with_changes(
@@ -561,7 +585,9 @@ class Pillow(Command):
         )
         t0 = time.perf_counter()
         print("drawing modelspace...")
-        Frontend(ctx, out, config=config).draw_layout(msp)
+        Frontend(ctx, out, config=config).draw_layout(
+            msp, layout_properties=layout_properties
+        )
         t1 = time.perf_counter()
         print(f"took {t1-t0:.4f} seconds")
         if args.out is not None:
@@ -571,7 +597,7 @@ class Pillow(Command):
             t1 = time.perf_counter()
             print(f"took {t1 - t0:.4f} seconds")
         else:
-            print("opening image with the system default viewer...")
+            print("opening image with the default system viewer...")
             out.resize().show(args.file)
 
 
