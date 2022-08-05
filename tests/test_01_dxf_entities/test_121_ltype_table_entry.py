@@ -89,3 +89,17 @@ def test_compile_pattern():
         0.0,
         0.2,
     )
+
+
+def test_get_simplified_line_pattern():
+    dash_dot = Linetype.new(
+        dxfattribs=dict(
+            name="DASHDOT",
+            description="Dash dot __ . __ . __ . __ . __ . __ . __ . __",
+        )
+    )
+    dash_dot.setup_pattern([1.4, 0.5, 0.5, -0.1, -0.1, 0.0, 0.0, -0.1, -0.1])
+    # merges consecutive dashes, gaps and points and returns a
+    # line-gap-line-gap... pattern, line == 0 is a point
+    pattern = dash_dot.simplified_line_pattern()
+    assert pattern == (1.0, 0.2, 0, 0.2)

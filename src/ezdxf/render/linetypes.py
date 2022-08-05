@@ -10,7 +10,8 @@ LineSegment = Tuple[Vec3, Vec3]
 
 class LineTypeRenderer:
     def __init__(self, dashes: Iterable[float]):
-        # Simplified dash pattern: line-gap-line-gap
+        # Get the simplified line pattern from LineType.simplified_line_pattern()
+        # Simplified line pattern: line-gap-line-gap; line == 0 is a point
         # Dash pattern should end with a gap (even count).
         # Dash length in drawing units.
 
@@ -41,9 +42,7 @@ class LineTypeRenderer:
                 yield _start, _end
             _start = _end
 
-    def line_segments(
-        self, vertices: Iterable[UVec]
-    ) -> Iterable[LineSegment]:
+    def line_segments(self, vertices: Iterable[UVec]) -> Iterable[LineSegment]:
         last = None
         for vertex in vertices:
             if last is not None:

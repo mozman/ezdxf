@@ -869,5 +869,5 @@ def _load_line_pattern(linetypes: "Table") -> Dict[str, Sequence[float]]:
     for linetype in linetypes:
         assert isinstance(linetype, Linetype)
         name = linetype.dxf.name.upper()
-        pattern[name] = linetype.pattern_tags.compile()
+        pattern[name] = linetype.simplified_line_pattern()
     return pattern

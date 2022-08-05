@@ -238,3 +238,10 @@ class Linetype(DXFEntity):
         tags2[0] = DXFTag(73, count)
         tags.extend(tags2)
         return tags
+
+    def simplified_line_pattern(self) -> Sequence[float]:
+        """Returns the simplified dash-gap-dash... line pattern,
+        a dash-length of 0 represents a point. Complex line types including text
+        or shapes are not supported and return a continuous line pattern.
+        """
+        return self.pattern_tags.compile()
