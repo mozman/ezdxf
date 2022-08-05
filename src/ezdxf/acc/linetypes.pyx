@@ -3,10 +3,8 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from typing import Tuple, Iterable, TYPE_CHECKING, Sequence
-from .vector cimport (
-    Vec3, v3_isclose, v3_add, v3_sub, v3_magnitude, v3_mul, isclose, v3_from_cpp_vec3
-)
 import cython
+from .vector cimport Vec3, isclose, v3_from_cpp_vec3
 from ._cpp_vec3 cimport CppVec3
 from libcpp.vector cimport vector
 
