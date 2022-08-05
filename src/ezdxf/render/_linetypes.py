@@ -9,14 +9,14 @@ LineSegment = Tuple[Vec3, Vec3]
 
 
 class _LineTypeRenderer:
-    def __init__(self, dashes: Iterable[float]):
+    def __init__(self, dashes: Sequence[float]):
         # Get the simplified line pattern from LineType.simplified_line_pattern()
         # Simplified line pattern: line-gap-line-gap; line == 0 is a point
         # Dash pattern should end with a gap (even count).
         # Dash length in drawing units.
 
-        self._dashes: Sequence[float] = tuple(dashes)
-        self._dash_count: int = len(self._dashes)
+        self._dashes = dashes
+        self._dash_count: int = len(dashes)
         self.is_solid: bool = True
         self._current_dash: int = 0
         self._current_dash_length: float = 0.0

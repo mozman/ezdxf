@@ -1,7 +1,8 @@
 # Copyright (c) 2022, Manfred Moitzi
 # License: MIT License
 import time
-from ezdxf.render.linetypes import LineTypeRenderer
+from ezdxf.render._linetypes import _LineTypeRenderer as PyRenderer
+from ezdxf.acc.linetypes import _LineTypeRenderer as CyRenderer
 
 
 def dashed_lines(func, count):
@@ -17,14 +18,19 @@ def profile1(func, *args) -> float:
 
 
 def py_rendering():
-    r = LineTypeRenderer((1., 1., 2., 1.))  # line-gap-line-gap
+    r = PyRenderer((1., 1., 2., 1.))  # line-gap-line-gap
+    list(r.line_segment((0, 0), (100, 0)))
+
+
+def cy_rendering():
+    r = CyRenderer((1., 1., 2., 1.))  # line-gap-line-gap
     list(r.line_segment((0, 0), (100, 0)))
 
 
 def profile(text, func, *args):
     py_time = profile1(func, py_rendering, *args)
     print(f"CPython: {text} {py_time:.3f}s")
-    cy_time = profile1(func, py_rendering, *args)
+    cy_time = profile1(func, cy_rendering, *args)
     print(f"Cython: {text} {cy_time:.3f}s")
     print(f"Ratio CPython/Cython {py_time/cy_time:.1f}x\n")
 

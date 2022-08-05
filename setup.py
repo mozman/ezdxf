@@ -67,6 +67,14 @@ ext_modules = [
         optional=True,
         language="c++",
     ),
+    Extension(
+        "ezdxf.acc.linetypes",
+        [
+            "src/ezdxf/acc/linetypes.pyx",
+        ],
+        optional=True,
+        language="c++",
+    ),
 
 ]
 try:

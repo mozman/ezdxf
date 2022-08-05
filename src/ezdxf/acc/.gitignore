@@ -5,6 +5,7 @@ construct.cpp
 matrix44.cpp
 vector.cpp
 mapbox_earcut.cpp
+linetypes.cpp
 *.so
 *.pyd
 *.html
