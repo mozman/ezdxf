@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2020-2021, Matthew Broadway
+# Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
 # mypy: ignore_errors=True
 
@@ -15,7 +15,6 @@ import ezdxf
 from ezdxf import recover
 from ezdxf.addons import odafc
 from ezdxf.addons.drawing import Frontend, RenderContext
-from ezdxf.addons.drawing.backend import BackendScaler
 from ezdxf.addons.drawing.config import Configuration
 
 from ezdxf.addons.drawing.properties import is_dark_color
@@ -227,12 +226,9 @@ class CadViewer(qw.QMainWindow):
         self.resize(1600, 900)
         self.show()
 
-    def _reset_backend(self, scale: float = 1.0):
-        backend = PyQtBackend(use_text_cache=True)
-        if scale != 1.0:
-            backend = BackendScaler(backend, factor=scale)
+    def _reset_backend(self):
         # clear caches
-        self._backend = backend
+        self._backend = PyQtBackend(use_text_cache=True)
 
     def _select_doc(self):
         path, _ = qw.QFileDialog.getOpenFileName(

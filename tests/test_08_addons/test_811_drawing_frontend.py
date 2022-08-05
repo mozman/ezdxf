@@ -1,16 +1,15 @@
-# Copyright (c) 2020-2021, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
-from typing import List, Set, cast
+from typing import List, Set
 import pytest
 import ezdxf
 from ezdxf.addons.drawing import Frontend, RenderContext, Properties
-from ezdxf.addons.drawing.backend import Backend, BackendScaler
+from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.debug_backend import BasicBackend, PathBackend
 from ezdxf.document import Drawing
 from ezdxf.entities import DXFGraphic
 from ezdxf.render.forms import cube
-from ezdxf.path import Path, from_vertices
-from ezdxf.math import Vec3, Matrix44
+from ezdxf.path import from_vertices
 
 
 @pytest.fixture
@@ -481,45 +480,6 @@ def test_override_filter(msp, ctx):
     assert result[0] == "text"
     assert result[1] == "T2"
     assert result[3].layer == "T2"
-
-
-class TestBackendScaler:
-    @pytest.fixture
-    def backend(self):
-        return BackendScaler(PathBackend(), 2)
-
-    def test_can_call_delegate_methods(self, backend):
-        backend.set_background("#000000")
-        backend.clear()
-        backend.finalize()
-
-    def test_draw_scaled_point(self, backend):
-        backend.draw_point(Vec3(1, 2, 3), Properties())
-        assert backend.collector[0][1] == Vec3(2, 4, 6)
-
-    def test_draw_scaled_path(self, backend):
-        p1 = Path((1, 2))
-        p1.line_to((2, 3))
-        backend.draw_path(p1, Properties())
-        f = backend.factor
-        expected_p2 = p1.transform(Matrix44.scale(f, f, f))
-        p2 = backend.collector[0][1]
-        for v1, v2 in zip(
-            p2.control_vertices(), expected_p2.control_vertices()
-        ):
-            assert v1.isclose(v2)
-
-
-def test_draw_scaled_entities(msp, ctx):
-    msp.add_point((1, 1))
-    msp.add_point((2, 3))
-    out = cast(PathBackend, BackendScaler(PathBackend(), factor=2))
-    frontend = Frontend(ctx, out)
-    frontend.draw_entities(msp)
-    result = out.collector
-    assert len(result) == 2
-    assert result[0][1] == (2, 2)
-    assert result[1][1] == (4, 6)
 
 
 if __name__ == "__main__":
