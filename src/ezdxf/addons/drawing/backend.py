@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021, Matthew Broadway
+# Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
 from abc import ABC, abstractmethod, ABCMeta
 from typing import (
@@ -7,9 +7,6 @@ from typing import (
     TYPE_CHECKING,
     Iterable,
     List,
-    Dict,
-    SupportsFloat,
-    Union,
 )
 
 from ezdxf.addons.drawing.config import Configuration
@@ -18,7 +15,7 @@ from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.entities import DXFGraphic
 from ezdxf.tools.text import replace_non_printable_characters
 from ezdxf.math import Vec3, Matrix44
-from ezdxf.path import Path, transform_paths
+from ezdxf.path import Path
 
 if TYPE_CHECKING:
     from ezdxf.tools.fonts import FontFace, FontMeasurements
