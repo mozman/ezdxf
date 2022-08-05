@@ -4,9 +4,10 @@
 #  License: MIT License
 from typing import Tuple, Iterable, TYPE_CHECKING, Sequence
 from .vector cimport (
-    Vec3, v3_isclose, v3_add, v3_sub, v3_magnitude, v3_mul, isclose
+    Vec3, v3_isclose, v3_add, v3_sub, v3_magnitude, v3_mul, isclose, v3_from_cpp_vec3
 )
 import cython
+from ._cpp_vec3 cimport CppVec3
 from libcpp.vector cimport vector
 
 if TYPE_CHECKING:
@@ -42,25 +43,27 @@ cdef class _LineTypeRenderer:
     def line_segment(self, start: UVec, end: UVec) -> Iterable[LineSegment]:
         cdef Vec3 _start = Vec3(start)
         cdef Vec3 _end = Vec3(end)
-        cdef Vec3 segment_vec, segment_dir
+        cdef CppVec3 cpp_start = CppVec3(_start.x, _start.y, _start.z)
+        cdef CppVec3 cpp_end = CppVec3(_end.x, _end.y, _end.z)
+        cdef CppVec3 segment_vec, segment_dir
         cdef double segment_length, dash_length
         cdef vector[double] dashes
 
-        if self.is_solid or v3_isclose(_start, _end, ABS_TOL, REL_TOL):
-            yield _start, _end
+        if self.is_solid or cpp_start.isclose(cpp_end, ABS_TOL):
+            yield v3_from_cpp_vec3(cpp_start), v3_from_cpp_vec3(cpp_end)
             return
 
-        segment_vec = v3_sub(_end, _start)
-        segment_length = v3_magnitude(segment_vec)
+        segment_vec = cpp_end - cpp_start
+        segment_length = segment_vec.magnitude()
         with cython.cdivision:
-            segment_dir = v3_mul(segment_vec, 1.0 / segment_length)  # normalize
+            segment_dir = segment_vec * (1.0 / segment_length)  # normalize
 
         self._render_dashes(segment_length, dashes)
         for dash_length in dashes:
-            _end = v3_add(_start, v3_mul(segment_dir, abs(dash_length)))
+            cpp_end = cpp_start + (segment_dir * abs(dash_length))
             if dash_length > 0:
-                yield _start, _end
-            _start = _end
+                yield v3_from_cpp_vec3(cpp_start), v3_from_cpp_vec3(cpp_end)
+            cpp_start = cpp_end
 
     cdef _render_dashes(self, double length, vector[double] &dashes):
         if length <= self._current_dash_length:
