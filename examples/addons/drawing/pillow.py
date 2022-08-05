@@ -10,7 +10,7 @@ import ezdxf
 from ezdxf import recover, bbox
 from ezdxf.addons.drawing import RenderContext, Frontend
 from ezdxf.addons.drawing.config import Configuration, LinePolicy
-from ezdxf.addons.drawing.pillow import PillowBackend, PillowDelayedDraw
+from ezdxf.addons.drawing.pillow import PillowBackend
 
 
 def main():
@@ -59,12 +59,6 @@ def main():
         "--text-placeholder",
         action="store_true",
         help="draw a filled rectangle as placeholder for text",
-    )
-    parser.add_argument(
-        "-d",
-        "--delayed",
-        action="store_true",
-        help="delayed draw",
     )
     parser.add_argument(
         "--trace",
@@ -118,29 +112,20 @@ def main():
     if args.trace:
         tracemalloc.start()
     try:
-        if args.delayed:
-            print("Using the PillowDelayedDraw() backend")
-            out = PillowDelayedDraw(
-                image_size=(img_x, img_y),
-                oversampling=args.oversampling,
-                dpi=args.dpi,
-            )
-        else:
-            print("Using PillowBackend()")
-            print(f"detecting model space extents (fast={args.fast}) ...")
-            t0 = perf_counter()
-            extents = bbox.extents(msp, fast=args.fast)
-            print(f"... in {perf_counter() - t0:.1f}s")
-            print(f"EXTMIN: ({extents.extmin.x:.3f}, {extents.extmin.y:.3f})")
-            print(f"EXTMAX: ({extents.extmax.x:.3f}, {extents.extmax.y:.3f})")
-            print(f"SIZE: ({extents.size.x:.3f}, {extents.size.y:.3f})")
-            out = PillowBackend(
-                extents,
-                image_size=(img_x, img_y),
-                oversampling=args.oversampling,
-                dpi=args.dpi,
-                text_placeholder=args.text_placeholder,
-            )
+        print(f"detecting model space extents (fast={args.fast}) ...")
+        t0 = perf_counter()
+        extents = bbox.extents(msp, fast=args.fast)
+        print(f"... in {perf_counter() - t0:.1f}s")
+        print(f"EXTMIN: ({extents.extmin.x:.3f}, {extents.extmin.y:.3f})")
+        print(f"EXTMAX: ({extents.extmax.x:.3f}, {extents.extmax.y:.3f})")
+        print(f"SIZE: ({extents.size.x:.3f}, {extents.size.y:.3f})")
+        out = PillowBackend(
+            extents,
+            image_size=(img_x, img_y),
+            oversampling=args.oversampling,
+            dpi=args.dpi,
+            text_placeholder=args.text_placeholder,
+        )
     except ValueError as e:
         # invalid image size or empty drawing
         print(str(e))
