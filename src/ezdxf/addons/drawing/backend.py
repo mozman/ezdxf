@@ -51,19 +51,11 @@ class BackendInterface(ABC):
     def draw_line(self, start: Vec3, end: Vec3, properties: Properties) -> None:
         raise NotImplementedError
 
+    @abstractmethod
     def draw_solid_lines(
         self, lines: Iterable[Tuple[Vec3, Vec3]], properties: Properties
     ) -> None:
-        """Fast method to draw a bunch of solid lines with the same properties.
-        """
-        # Must be overridden by the backend to gain a performance benefit.
-        # This is the default implementation to ensure compatibility with
-        # existing backends.
-        for s, e in lines:
-            if e.isclose(s):
-                self.draw_point(s, properties)
-            else:
-                self.draw_line(s, e, properties)
+        raise NotImplementedError
 
     @abstractmethod
     def draw_path(self, path: Path, properties: Properties) -> None:
@@ -149,6 +141,20 @@ class Backend(BackendInterface, metaclass=ABCMeta):
     @abstractmethod
     def draw_line(self, start: Vec3, end: Vec3, properties: Properties) -> None:
         raise NotImplementedError
+
+    def draw_solid_lines(
+        self, lines: Iterable[Tuple[Vec3, Vec3]], properties: Properties
+    ) -> None:
+        """Fast method to draw a bunch of solid lines with the same properties.
+        """
+        # Must be overridden by the backend to gain a performance benefit.
+        # This is the default implementation to ensure compatibility with
+        # existing backends.
+        for s, e in lines:
+            if e.isclose(s):
+                self.draw_point(s, properties)
+            else:
+                self.draw_line(s, e, properties)
 
     def draw_path(self, path: Path, properties: Properties) -> None:
         """Draw an outline path (connected string of line segments and Bezier
