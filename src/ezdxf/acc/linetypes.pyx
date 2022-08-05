@@ -3,7 +3,9 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from typing import Tuple, Iterable, TYPE_CHECKING, Sequence
-from .vector cimport Vec3, v3_isclose, v3_sub, v3_magnitude, v3_mul, isclose
+from .vector cimport (
+    Vec3, v3_isclose, v3_add, v3_sub, v3_magnitude, v3_mul, isclose
+)
 import cython
 
 if TYPE_CHECKING:
@@ -47,7 +49,7 @@ cdef class _LineTypeRenderer:
         cdef Vec3 _start = Vec3(start)
         cdef Vec3 _end = Vec3(end)
         cdef Vec3 segment_vec, segment_dir
-        cdef double segment_length
+        cdef double segment_length, dash_length
 
         if self.is_solid or v3_isclose(_start, _end, ABS_TOL, REL_TOL):
             yield _start, _end
@@ -58,16 +60,16 @@ cdef class _LineTypeRenderer:
         with cython.cdivision:
             segment_dir = v3_mul(segment_vec, 1.0 / segment_length)  # normalize
 
-        for is_dash, dash_length in self._render_dashes(segment_length):
-            _end = _start + segment_dir * dash_length
-            if is_dash:
+        for dash_length in self._render_dashes(segment_length):
+            _end = v3_add(_start, v3_mul(segment_dir, abs(dash_length)))
+            if dash_length > 0:
                 yield _start, _end
             _start = _end
 
     def _render_dashes(self, double length):
         if length <= self._current_dash_length:
             self._current_dash_length -= length
-            yield self._is_dash, length
+            yield length if self._is_dash else -length
             if self._current_dash_length < ABS_TOL:
                 self._cycle_dashes()
         else:
