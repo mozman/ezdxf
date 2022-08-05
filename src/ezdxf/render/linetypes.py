@@ -1,7 +1,7 @@
 #  Copyright (c) 2020-2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Tuple, Iterable
+from typing import Tuple, Iterable, Sequence
 import math
 from ezdxf.math import Vec3, UVec
 
@@ -14,7 +14,7 @@ class LineTypeRenderer:
         # Dash pattern should end with a gap (even count).
         # Dash length in drawing units.
 
-        self._dashes: Tuple[float] = tuple(dashes)  # type: ignore  # why Tuple[float, ...]?
+        self._dashes: Sequence[float] = tuple(dashes)
         self._dash_count: int = len(self._dashes)
         self.is_solid: bool = True
         self._current_dash: int = 0
