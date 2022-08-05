@@ -1,6 +1,7 @@
-# Copyright (c) 2020-2021, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterable, Tuple, Dict, Union, List
+from __future__ import annotations
+from typing import TYPE_CHECKING, Iterable, Tuple, Dict, Union, List, Mapping
 import heapq
 
 if TYPE_CHECKING:
@@ -8,23 +9,17 @@ if TYPE_CHECKING:
 
 __all__ = ["ascending", "descending"]
 
-# ODA DWG Specs: 2.13. Handle References
-# COUNTER is 4 bits, which allows handles up to 16 * 1 byte = 128-bit
-# Example for 128-bit handles: "CADKitSamples\AEC Plan Elev Sample.dxf"
-MAX_HANDLE = "FFFFFFFFFFFFFFFF"
-NULL_HANDLE = "0"
-
 
 def ascending(
-    entities: Iterable["DXFGraphic"],
+    entities: Iterable[DXFGraphic],
     mapping: Union[Dict, Iterable[Tuple[str, str]]] = None,
-) -> Iterable["DXFGraphic"]:
+) -> Iterable[DXFGraphic]:
     """Yields entities in ascending handle order.
 
-    The sort handle doesn't have to be the entity handle, every entity handle
-    in `mapping` will be replaced by the given sort handle, `mapping` is an
+    The sort-handle doesn't have to be the entity handle, every entity handle
+    in `mapping` will be replaced by the given sort-handle, `mapping` is an
     iterable of 2-tuples (entity_handle, sort_handle) or a
-    dict (entity_handle, sort_handle). Entities with equal sort handles show
+    dict (entity_handle, sort_handle). Entities with equal sort-handles show
     up in source entities order.
 
     Args:
@@ -39,15 +34,15 @@ def ascending(
 
 
 def descending(
-    entities: Iterable["DXFGraphic"],
+    entities: Iterable[DXFGraphic],
     mapping: Union[Dict, Iterable[Tuple[str, str]]] = None,
-) -> Iterable["DXFGraphic"]:
+) -> Iterable[DXFGraphic]:
     """Yields entities in descending handle order.
 
-    The sort handle doesn't have to be the entity handle, every entity handle
-    in `mapping` will be replaced by the given sort handle, `mapping` is an
+    The sort-handle doesn't have to be the entity handle, every entity handle
+    in `mapping` will be replaced by the given sort-handle, `mapping` is an
     iterable of 2-tuples (entity_handle, sort_handle) or a
-    dict (entity_handle, sort_handle). Entities with equal sort handles show
+    dict (entity_handle, sort_handle). Entities with equal sort-handles show
     up in reversed source entities order.
 
     Args:
@@ -61,15 +56,15 @@ def descending(
     return _sorted(heap)
 
 
-def _sorted(heap) -> Iterable["DXFGraphic"]:
+def _sorted(heap) -> Iterable[DXFGraphic]:
     """Yields heap content in order."""
     while heap:
         yield heapq.heappop(heap)[-1]
 
 
 def _build(
-    entities: Iterable["DXFGraphic"], mapping: Dict, order: int
-) -> List[Tuple[int, int, "DXFGraphic"]]:
+    entities: Iterable[DXFGraphic], mapping: Mapping, order: int
+) -> List[Tuple[int, int, DXFGraphic]]:
     """Returns a heap structure.
 
     Args:
@@ -79,20 +74,21 @@ def _build(
 
     """
 
-    def sort_handle(entity: "DXFGraphic") -> int:
+    def sort_handle(entity: DXFGraphic) -> int:
         handle = entity.dxf.handle
-        sort_handle_ = mapping.get(handle, handle)
-        if sort_handle_ == NULL_HANDLE:
-            # This behavior is defined by AutoCAD but not documented in the
-            # DXF reference.
-            sort_handle_ = MAX_HANDLE
-        return int(sort_handle_, 16)
+        sort_handle_ = int(mapping.get(handle, handle), 16)
+        # Special handling of sort-handle "0": this behavior is defined by
+        # AutoCAD but not documented in the DXF reference.
+        # max handle value: ODA DWG Specs: 2.13. Handle References
+        # COUNTER is 4 bits, which allows handles up to 16 * 1 byte = 128-bit
+        # Example for 128-bit handles: "CADKitSamples\AEC Plan Elev Sample.dxf"
+        return sort_handle_ if sort_handle_ else 0xFFFFFFFFFFFFFFFF
 
-    heap: List[Tuple[int, int, "DXFGraphic"]] = []
+    heap: List[Tuple[int, int, DXFGraphic]] = []
     for index, entity in enumerate(entities):
         # DXFGraphic is not sortable, using the index as second value avoids
-        # a key function and preserves explicit the source order of
-        # equal sort handles.
+        # a key function and preserves explicit the source order for
+        # equal sort-handles.
         heapq.heappush(
             heap,
             (
