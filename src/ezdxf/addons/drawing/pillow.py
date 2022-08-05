@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import sys
-import enum
-from typing import Iterable, Tuple, List, Any
+from typing import Iterable, Tuple
 import math
-from ezdxf.math import Vec3, Vec2, Matrix44, AbstractBoundingBox, BoundingBox
+from ezdxf.math import Vec3, Vec2, Matrix44, AbstractBoundingBox
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color
