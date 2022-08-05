@@ -1,8 +1,15 @@
 #  Copyright (c) 2020-2022, Manfred Moitzi
 #  License: MIT License
 from typing import Iterable
+import ezdxf
 from ezdxf.math import UVec
 from ._linetypes import _LineTypeRenderer, LineSegment
+
+if ezdxf.options.use_c_ext:
+    try:
+        from ezdxf.acc.linetypes import _LineTypeRenderer  # type: ignore
+    except ImportError:
+        pass
 
 
 class LineTypeRenderer(_LineTypeRenderer):

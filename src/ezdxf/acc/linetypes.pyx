@@ -50,6 +50,7 @@ cdef class _LineTypeRenderer:
         cdef Vec3 _end = Vec3(end)
         cdef Vec3 segment_vec, segment_dir
         cdef double segment_length, dash_length
+        cdef list dashes = []
 
         if self.is_solid or v3_isclose(_start, _end, ABS_TOL, REL_TOL):
             yield _start, _end
@@ -60,25 +61,26 @@ cdef class _LineTypeRenderer:
         with cython.cdivision:
             segment_dir = v3_mul(segment_vec, 1.0 / segment_length)  # normalize
 
-        for dash_length in self._render_dashes(segment_length):
+        self._render_dashes(segment_length, dashes)
+        for dash_length in dashes:
             _end = v3_add(_start, v3_mul(segment_dir, abs(dash_length)))
             if dash_length > 0:
                 yield _start, _end
             _start = _end
 
-    def _render_dashes(self, double length):
+    cdef _render_dashes(self, double length, list dashes):
         if length <= self._current_dash_length:
             self._current_dash_length -= length
-            yield length if self._is_dash else -length
+            dashes.append(length if self._is_dash else -length)
             if self._current_dash_length < ABS_TOL:
                 self._cycle_dashes()
         else:
             # Avoid deep recursions!
             while length > self._current_dash_length:
                 length -= self._current_dash_length
-                yield from self._render_dashes(self._current_dash_length)
+                self._render_dashes(self._current_dash_length, dashes)
             if length > 0.0:
-                yield from self._render_dashes(length)
+                self._render_dashes(length, dashes)
 
     cdef _cycle_dashes(self):
         with cython.cdivision:
