@@ -9,12 +9,20 @@ LineSegment = Tuple[Vec3, Vec3]
 
 
 class _LineTypeRenderer:
-    def __init__(self, dashes: Sequence[float]):
-        # Get the simplified line pattern from LineType.simplified_line_pattern()
-        # Simplified line pattern: line-gap-line-gap; line == 0 is a point
-        # Dash pattern should end with a gap (even count).
-        # Dash length in drawing units.
+    """Renders a line segment as multiple short segments according to the given
+    line pattern.
 
+    In contrast to the DXF line pattern is this pattern simplified and follow
+    the rule line-gap-line-gap-... a line of length 0 is a point.
+    The pattern should end with a gap (even count) and the dash length is in
+    drawing units.
+
+    Args:
+          dashes: sequence of floats, line-gap-line-gap-...
+
+    """
+    # Get the simplified line pattern by LineType.simplified_line_pattern()
+    def __init__(self, dashes: Sequence[float]):
         self._dashes = dashes
         self._dash_count: int = len(dashes)
         self.is_solid: bool = True
@@ -26,6 +34,11 @@ class _LineTypeRenderer:
             self._is_dash = True
 
     def line_segment(self, start: UVec, end: UVec) -> Iterable[LineSegment]:
+        """Yields the line from `start` to `end` according to stored line
+        pattern as short segments. Yields only the lines and points not the
+        gaps.
+
+        """
         _start = Vec3(start)
         _end = Vec3(end)
         if self.is_solid or _start.isclose(_end):
