@@ -1,12 +1,13 @@
-# Purpose: using true color and transparency
-# Copyright (c) 2018-2021 Manfred Moitzi
+# Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
 import pathlib
 import ezdxf
 from ezdxf import zoom
 from ezdxf.lldxf.const import VALID_DXF_LINEWEIGHTS
 
-DIR = pathlib.Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
 
 doc = ezdxf.new()
 msp = doc.modelspace()
@@ -18,4 +19,4 @@ for index, weight in enumerate(VALID_DXF_LINEWEIGHTS):
     ).set_pos((0, y + 0.3))
 
 zoom.extents(msp, factor=1.2)
-doc.saveas(DIR / "valid_lineweights.dxf")
+doc.saveas(CWD / "valid_lineweights.dxf")
