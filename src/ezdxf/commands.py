@@ -535,6 +535,14 @@ class Pillow(Command):
             help="minimal margin around the image in pixels, default is 10",
         )
         parser.add_argument(
+            "-t",
+            "--text-mode",
+            type=int,
+            choices=[0, 1, 2],
+            default=2,
+            help="text mode: 0=placeholder, 1=outline, 2=filled",
+        )
+        parser.add_argument(
             "--dpi",
             type=int,
             default=300,
@@ -606,7 +614,7 @@ class Pillow(Command):
             oversampling=args.oversampling,
             margin=args.margin,
             dpi=args.dpi,
-            text_placeholder=False,
+            text_mode=args.text_mode,
         )
         t0 = time.perf_counter()
         if verbose:

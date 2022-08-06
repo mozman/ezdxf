@@ -1,11 +1,14 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-
-import sys
 from typing import Iterable, Tuple
+import sys
+import enum
+import itertools
 import math
 from ezdxf.math import Vec3, Vec2, Matrix44, AbstractBoundingBox
+from ezdxf.path import Path
+from ezdxf.render import hatching
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color
@@ -31,6 +34,12 @@ from .matplotlib import TextRenderer
 INCH_TO_MM = 25.6
 
 
+class TextMode(enum.IntEnum):
+    PLACEHOLDER = 0
+    OUTLINE = 1
+    FILLED = 2
+
+
 class PillowBackend(Backend):
     def __init__(
         self,
@@ -40,7 +49,8 @@ class PillowBackend(Backend):
         margin: int = 10,
         dpi: int = 300,
         oversampling: int = 1,
-        text_placeholder=True,
+        text_mode=TextMode.FILLED,
+
     ):
         """Backend which uses `Pillow` for image export.
 
@@ -68,7 +78,10 @@ class PillowBackend(Backend):
             oversampling: multiplier of the final image size to define the
                 render canvas size (e.g. 1, 2, 3, ...), the final image will
                 be scaled down by the LANCZOS method
-            text_placeholder: draws a rectangle as text placeholder if ``True``
+            text_mode: set text rendering mode
+                - PLACEHOLDER draws text as filled rectangles
+                - OUTLINE draws text as outlines
+                - FILLED draws text fillings
 
         """
         super().__init__()
@@ -80,7 +93,7 @@ class PillowBackend(Backend):
         self.margin_y = float(margin)
         self.dpi = int(dpi)
         self.oversampling = max(int(oversampling), 1)
-        self.text_placeholder = text_placeholder
+        self.text_mode = text_mode
         # The lineweight is stored im mm,
         # line_pixel_factor * lineweight is the width in pixels
         self.line_pixel_factor = self.dpi / INCH_TO_MM  # pixel per mm
@@ -170,6 +183,28 @@ class PillowBackend(Backend):
                 outline=properties.color,
             )
 
+    def draw_filled_paths(
+        self,
+        paths: Iterable[Path],
+        holes: Iterable[Path],
+        properties: Properties,
+    ) -> None:
+        one_px = 1.0 / (self.resolution * self.oversampling)
+        baseline = hatching.HatchBaseLine(
+            Vec2(0, 0), Vec2(1, 0), Vec2(0, one_px)
+        )
+        polygons = [
+            Vec2.list(p.flattening(one_px))
+            for p in itertools.chain(paths, holes)
+        ]
+        self.draw_solid_lines(
+            (
+                (Vec3(line.start), Vec3(line.end))
+                for line in hatching.hatch_polygons(baseline, polygons)
+            ),
+            properties,
+        )
+
     def draw_text(
         self,
         text: str,
@@ -177,7 +212,7 @@ class PillowBackend(Backend):
         properties: Properties,
         cap_height: float,
     ) -> None:
-        if self.text_placeholder:
+        if self.text_mode == TextMode.PLACEHOLDER:
             # draws a placeholder rectangle as text
             width = self.get_text_line_width(text, cap_height, properties.font)
             height = cap_height
@@ -188,13 +223,12 @@ class PillowBackend(Backend):
             self.draw_filled_polygon(points, properties)
             return
 
-        outline = True
         tr = self.text_renderer
         text = self._prepare_text(text)
         font_properties = tr.get_font_properties(properties.font)
         scale = tr.get_scale(cap_height, font_properties)
         m = Matrix44.scale(scale) @ transform
-        if outline is True:  # render Text as Path() objects
+        if self.text_mode == TextMode.OUTLINE:
             ezdxf_path = tr.get_ezdxf_path(text, font_properties)
             if len(ezdxf_path) == 0:
                 return
@@ -202,17 +236,17 @@ class PillowBackend(Backend):
             for path in ezdxf_path.sub_paths():
                 self.draw_path(path, properties)
         else:  # render Text as filled polygons
-            for face in tr.get_tessellation(
-                text,
-                font_properties,
-                max_flattening_distance=self.config.max_flattening_distance,
-            ):
-                self.draw_filled_polygon(m.transform_vertices(face), properties)
+            ezdxf_path = tr.get_ezdxf_path(text, font_properties)
+            if len(ezdxf_path) == 0:
+                return
+            self.draw_filled_paths(
+                (p for p in ezdxf_path.transform(m).sub_paths()), [], properties
+            )
 
     def get_font_measurements(
         self, cap_height: float, font: FontFace = None
     ) -> FontMeasurements:
-        if self.text_placeholder:
+        if self.text_mode == TextMode.PLACEHOLDER:
             return MonospaceFont(cap_height).measurements
         return self.text_renderer.get_font_measurements(
             self.text_renderer.get_font_properties(font)
@@ -230,7 +264,7 @@ class PillowBackend(Backend):
         if not text.strip():
             return 0.0
         text = self._prepare_text(text)
-        if self.text_placeholder:
+        if self.text_mode == TextMode.PLACEHOLDER:
             return MonospaceFont(cap_height).text_width(text) * 0.8
         return self.text_renderer.get_text_line_width(text, cap_height, font)
 
