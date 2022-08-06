@@ -69,33 +69,55 @@ def render_hatch(msp, baseline, polygon, holes=None, offset=Vec2()):
         msp.add_blockref("MARKER", line.end, dxfattribs={"layer": "MARKERS"})
 
 
-def collinear_hatching(filename: str):
-    doc = ezdxf.new()
-    msp = doc.modelspace()
-    setup(doc)
-    polygons = [
-        forms.turtle("10 l 10 l 10"),
-        forms.turtle("5 r 2 l 5 l 12 l 5 r 2 l 5"),
-        forms.turtle("5 l 2 r 5 l 10 l 5 l 2 r 5"),
-        forms.turtle("2 l 2 r 2 r 2 l 6 " "l 10 l 2 l 2 r 2 r 2 l 6"),
+POLYGONS = [
+    list(forms.turtle("10 l 10 l 10")),
+    list(forms.turtle("5 r 2 l 5 l 12 l 5 r 2 l 5")),
+    list(forms.turtle("5 l 2 r 5 l 10 l 5 l 2 r 5")),
+    list(forms.turtle("2 l 2 r 2 r 2 l 6 " "l 10 l 2 l 2 r 2 r 2 l 6")),
+    list(
         forms.turtle(
             "2 l 2 r 2 l 2 r 2 r 4 l 4 l 10 l 2 l 2 r 2 l 2 r 2 r 4 l 4"
-        ),
+        )
+    ),
+    list(
         forms.turtle(
             "2 r 2 l 2 r 2 l 2 l 4 r 4 l 10 l 2 r 2 l 2 r 2 l 2 l 4 r 4"
-        ),
+        )
+    ),
+    list(
         forms.turtle(
             "2 l 2 r 2 r 2 l 2 l 4 r 2 r 4 l 2 l 10 l 2 r 2 l 2 l 2 r 2 r 4 l 2 l 4 r 2"
-        ),
-        forms.turtle("3 @2,2 @2,-2 3 l 10 l @-2,-2 @-2,2 2 @-2,-2 @-2,2"),
+        )
+    ),
+    list(forms.turtle("3 @2,2 @2,-2 3 l 10 l @-2,-2 @-2,2 2 @-2,-2 @-2,2")),
+    list(
         forms.turtle(
             "3 @1,1 @1,1 @1,-1 @1,-1 3 l 10 l @-1,-1 @-1,-1 @-1,1 @-1,1 2 "
             "@-1,-1 @-1,-1 @-1,1 @-1,1"
-        ),
-    ]
-    for index, polygon in enumerate(polygons):
+        )
+    ),
+]
+
+
+def collinear_horizontal_hatching(filename: str):
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    setup(doc)
+    for index, polygon in enumerate(POLYGONS):
         baseline = hatching.HatchBaseLine(
             Vec2(), direction=Vec2(1, 0), offset=Vec2(0, 1)
+        )
+        render_hatch(msp, baseline, polygon, offset=Vec2(12 * index, 0))
+    doc.saveas(CWD / filename)
+
+
+def collinear_vertical_hatching(filename: str):
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    setup(doc)
+    for index, polygon in enumerate(POLYGONS):
+        baseline = hatching.HatchBaseLine(
+            Vec2(), direction=Vec2(0, 1), offset=Vec2(1, 0)
         )
         render_hatch(msp, baseline, polygon, offset=Vec2(12 * index, 0))
     doc.saveas(CWD / filename)
@@ -115,7 +137,7 @@ def explode_hatch_pattern(filename: str):
     doc.saveas(CWD / filename.replace(".dxf", ".explode.dxf"))
 
 
-def hole_examples(filename: str, size=10, dx=13):
+def hole_examples(filename: str, size=10, dx=13, angle=0):
     doc = ezdxf.new()
     setup(doc)
     msp = doc.modelspace()
@@ -125,8 +147,10 @@ def hole_examples(filename: str, size=10, dx=13):
         list(forms.translate(forms.square(3), (2, 2))),
         list(forms.translate(forms.square(3), (4, 3))),
     ]
+    direction = Vec2.from_deg_angle(angle)
+    offset = direction.orthogonal() * 0.25
     baseline = hatching.HatchBaseLine(
-        Vec2(0, 0), direction=Vec2(1, 1), offset=Vec2(-0.25, 0.25)
+        Vec2(0, 0), direction=direction, offset=offset
     )
     render_hatch(msp, baseline, forms.square(size), holes)
     # adjacent holes
@@ -169,35 +193,48 @@ def debug_hatch():
     e = msp.add_hatch(
         color=7,
         dxfattribs={
-            'layer': "HATCH",
-            'elevation': (0.0, 0.0, 0.0),
-            'extrusion': (0.0, 0.0, 1.0),
-            'pattern_name': "CROSS",
-            'solid_fill': 0,
-            'associative': 0,
-            'hatch_style': 1,
-            'pattern_type': 1,
-            'pattern_angle': 0.0,
-            'pattern_scale': 0.25,
-            'pattern_double': 0,
+            "layer": "HATCH",
+            "elevation": (0.0, 0.0, 0.0),
+            "extrusion": (0.0, 0.0, 1.0),
+            "pattern_name": "CROSS",
+            "solid_fill": 0,
+            "associative": 0,
+            "hatch_style": 1,
+            "pattern_type": 1,
+            "pattern_angle": 0.0,
+            "pattern_scale": 0.25,
+            "pattern_double": 0,
         },
     )
-    e.set_pattern_definition([
-        [0.0, (0.0, 0.0), (1.5875, 1.5875), [1.5875, -1.5875]],
-        [0.0, (0.0, 0.5953125), (1.5875, 1.5875), [1.5875, -1.5875]],
-        [0.0, (0.0, 1.190625), (1.5875, 1.5875), [1.5875, -1.5875]],
-        [90.0, (0.1984375, 1.3890625), (-1.5875, 1.5875), [1.5875, -1.5875]],
-        [90.0, (0.79375, 1.3890625), (-1.5875, 1.5875), [1.5875, -1.5875]],
-        [90.0, (1.3890625, 1.3890625), (-1.5875, 1.5875), [1.5875, -1.5875]],
-    ])
+    e.set_pattern_definition(
+        [
+            [0.0, (0.0, 0.0), (1.5875, 1.5875), [1.5875, -1.5875]],
+            [0.0, (0.0, 0.5953125), (1.5875, 1.5875), [1.5875, -1.5875]],
+            [0.0, (0.0, 1.190625), (1.5875, 1.5875), [1.5875, -1.5875]],
+            [
+                90.0,
+                (0.1984375, 1.3890625),
+                (-1.5875, 1.5875),
+                [1.5875, -1.5875],
+            ],
+            [90.0, (0.79375, 1.3890625), (-1.5875, 1.5875), [1.5875, -1.5875]],
+            [
+                90.0,
+                (1.3890625, 1.3890625),
+                (-1.5875, 1.5875),
+                [1.5875, -1.5875],
+            ],
+        ]
+    )
     e.dxf.solid_fill = 0
     # 1. polyline path
-    e.paths.add_polyline_path([
-        (0.0, 223.0, 0.0),
-        (10.0, 223.0, 0.0),
-        (10.0, 233.0, 0.0),
-        (0.0, 233.0, 0.0),
-    ],
+    e.paths.add_polyline_path(
+        [
+            (0.0, 223.0, 0.0),
+            (10.0, 223.0, 0.0),
+            (10.0, 233.0, 0.0),
+            (0.0, 233.0, 0.0),
+        ],
         is_closed=1,
         flags=3,
     )
@@ -208,6 +245,9 @@ def debug_hatch():
 if __name__ == "__main__":
     debug_hatch()
     polygon_hatching("polygon_hatching.dxf")
-    collinear_hatching("collinear_hatching.dxf")
+    collinear_horizontal_hatching("collinear_horizontal_hatching.dxf")
+    collinear_vertical_hatching("collinear_vertical_hatching.dxf")
     explode_hatch_pattern("hatch_pattern_iso.dxf")
-    hole_examples("hole_examples.dxf")
+    hole_examples("hole_examples_00_deg.dxf", angle=0)
+    hole_examples("hole_examples_90_deg.dxf", angle=90)
+    hole_examples("hole_examples_45_deg.dxf", angle=45)

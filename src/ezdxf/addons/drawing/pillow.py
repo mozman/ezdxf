@@ -191,7 +191,7 @@ class PillowBackend(Backend):
     ) -> None:
         # Use the HatchBaseLine class to draw solid lines with an offset of one
         # pixel.
-        one_px = 1.0 / self.resolution  # oversampling can be ignored
+        one_px = 1.0 / (self.resolution * self.oversampling)
         baseline = hatching.HatchBaseLine(
             Vec2(0, 0), Vec2(1, 0), Vec2(0, one_px)
         )
