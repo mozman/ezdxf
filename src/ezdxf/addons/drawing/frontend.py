@@ -756,6 +756,7 @@ class Frontend:
             self.draw_entities(
                 insert.virtual_entities(
                     skipped_entity_callback=self.skip_entity
+                    # TODO: redraw_order=True?
                 )
             )
 

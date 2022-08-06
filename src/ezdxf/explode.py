@@ -58,7 +58,10 @@ def default_logging_callback(entity, reason):
 
 
 def explode_block_reference(
-    block_ref: "Insert", target_layout: "BaseLayout"
+    block_ref: "Insert",
+    target_layout: "BaseLayout",
+    *,
+    redraw_order=False,
 ) -> EntityQuery:
     """Explode a block reference into DXF primitives.
 
@@ -74,6 +77,7 @@ def explode_block_reference(
     Args:
         block_ref: Block reference entity (INSERT)
         target_layout: explicit target layout for exploded DXF entities
+        redraw_order: create entities in ascending redraw order if ``True``
 
     .. warning::
 
@@ -92,7 +96,9 @@ def explode_block_reference(
         )
 
     def _explode_single_block_ref(block_ref):
-        for entity in virtual_block_reference_entities(block_ref):
+        for entity in virtual_block_reference_entities(
+            block_ref, redraw_order=redraw_order
+        ):
             dxftype = entity.dxftype()
             target_layout.add_entity(entity)
             if dxftype == "DIMENSION":
@@ -155,9 +161,11 @@ def attrib_to_text(attrib: "Attrib") -> "Text":
 
 def virtual_block_reference_entities(
     block_ref: "Insert",
+    *,
     skipped_entity_callback: Optional[
         Callable[["DXFGraphic", str], None]
     ] = None,
+    redraw_order=False,
 ) -> Iterable["DXFGraphic"]:
     """Yields 'virtual' parts of block reference `block_ref`. This method is meant
     to examine the block reference entities without the need to explode the
@@ -174,6 +182,7 @@ def virtual_block_reference_entities(
         block_ref: Block reference entity (INSERT)
         skipped_entity_callback: called whenever the transformation of an entity
             is not supported and so was skipped.
+        redraw_order: yield entities in ascending redraw order if ``True``
 
     .. warning::
 
@@ -191,9 +200,9 @@ def virtual_block_reference_entities(
     )
 
     def disassemble(layout) -> Iterable["DXFGraphic"]:
-        # TODO: layout.entities_in_redraw_order()?
-        #  This may slow down processing and is only for plotting necessary.
-        for entity in layout:
+        for entity in (
+            layout.entities_in_redraw_order() if redraw_order else layout
+        ):
             # Do not explode ATTDEF entities. Already available in Insert.attribs
             if entity.dxftype() == "ATTDEF":
                 continue

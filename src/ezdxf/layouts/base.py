@@ -396,9 +396,7 @@ class BaseLayout(_AbstractLayout):
             return tuple()
         return iter(sortents_table)
 
-    def entities_in_redraw_order(
-        self, reverse=False
-    ) -> Iterable[DXFGraphic]:
+    def entities_in_redraw_order(self, reverse=False) -> Iterable[DXFGraphic]:
         """Yields all entities from layout in ascending redraw order or
         descending redraw order if `reverse` is ``True``.
 
@@ -406,10 +404,11 @@ class BaseLayout(_AbstractLayout):
 
         """
         from ezdxf import reorder
+
         redraw_order = self.get_redraw_order()
         if reverse:
-            return reorder.descending(self.entity_space, redraw_order)
-        return reorder.ascending(self.entity_space, redraw_order)
+            return reorder.descending(self.entity_space, redraw_order)  # type: ignore
+        return reorder.ascending(self.entity_space, redraw_order)  # type: ignore
 
 
 class VirtualLayout(_AbstractLayout):
