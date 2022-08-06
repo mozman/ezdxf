@@ -1,9 +1,13 @@
 # Copyright (c) 2019-2021, Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, Iterator
-from ezdxf.entities import factory, is_graphic_entity
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Iterator, Union, Dict, Iterable, Tuple
+
+from ezdxf.entities import factory, is_graphic_entity, SortEntsTable
 from ezdxf.enums import InsertUnits
 from ezdxf.lldxf.const import (
+    DXFKeyError,
     DXFValueError,
     DXFStructureError,
     LATEST_DXF_VERSION,
@@ -317,6 +321,80 @@ class BaseLayout(_AbstractLayout):
         # block_records table is owner of block_record has to delete it
         # the block_record is the owner of the entities and deletes them all
         self.doc.block_records.remove(self.block_record.dxf.name)
+
+    def get_sortents_table(self, create: bool = True) -> "SortEntsTable":
+        """Get/Create the SORTENTSTABLE object associated to the layout.
+
+        Args:
+            create: new table if table do not exist and `create` is ``True``
+
+        Raises:
+            DXFValueError: if table not exist and `create` is ``False``
+
+        (internal API)
+        """
+        xdict = self.get_extension_dict()
+        try:
+            sortents_table = xdict["ACAD_SORTENTS"]
+        except DXFKeyError:
+            if create:
+                sortents_table = self.doc.objects.new_entity(
+                    "SORTENTSTABLE",
+                    dxfattribs={
+                        "owner": xdict.handle,
+                        "block_record_handle": self.layout_key,
+                    },
+                )
+                xdict["ACAD_SORTENTS"] = sortents_table
+            else:
+                raise DXFValueError(
+                    "Extension dictionary entry ACAD_SORTENTS does not exist."
+                )
+        return sortents_table
+
+    def set_redraw_order(
+        self, handles: Union[Dict, Iterable[Tuple[str, str]]]
+    ) -> None:
+        """If the header variable $SORTENTS `Regen` flag (bit-code value 16)
+        is set, AutoCAD regenerates entities in ascending handles order.
+
+        To change redraw order associate a different sort handle to entities,
+        this redefines the order in which the entities are regenerated.
+        `handles` can be a dict of entity_handle and sort_handle as (k, v)
+        pairs, or an iterable of (entity_handle, sort_handle) tuples.
+
+        The sort_handle doesn't have to be unique, some or all entities can
+        share the same sort handle and a sort handle can be an existing handle.
+
+        The "0" handle can be used, but this sort handle will be drawn as
+        latest (on top of all other entities) and not as first as expected.
+
+        Args:
+            handles: iterable or dict of handle associations; an iterable
+                of 2-tuples (entity_handle, sort_handle) or a dict (k, v)
+                association as (entity_handle, sort_handle)
+
+        """
+        sortents = self.get_sortents_table()
+        if isinstance(handles, dict):
+            handles = handles.items()
+        sortents.set_handles(handles)
+
+    def get_redraw_order(self) -> Iterable[Tuple[str, str]]:
+        """Returns iterable for all existing table entries as (entity_handle,
+        sort_handle) pairs, see also :meth:`~Layout.set_redraw_order`.
+
+        """
+        if self.block_record.has_extension_dict:
+            xdict = self.get_extension_dict()
+        else:
+            return tuple()
+
+        try:
+            sortents_table = xdict["ACAD_SORTENTS"]
+        except DXFKeyError:
+            return tuple()
+        return iter(sortents_table)
 
 
 class VirtualLayout(_AbstractLayout):

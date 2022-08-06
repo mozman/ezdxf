@@ -1,9 +1,15 @@
 # Copyright (c) 2018 Manfred Moitzi
 # License: MIT License
 import random
+from pathlib import Path
 import ezdxf
 from ezdxf.math import Vec3
 from ezdxf.enums import SortEntities
+
+
+CWD = Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = Path(".")
 
 
 def random_in_range(a, b):
@@ -83,16 +89,16 @@ def run():
     msp = doc.modelspace()
 
     add_solids(msp, count=1000, min_size=3, max_size=7)
-    doc.saveas("sort_solids_unordered.dxf")
+    doc.saveas(CWD / "sort_solids_unordered.dxf")
     order_solids_by_color(msp)  # 1 -> 7
-    doc.saveas("sort_solids_ordered.dxf")
+    doc.saveas(CWD / "sort_solids_ordered.dxf")
     reverse_order_solids_by_color(msp)  # 7 -> 1
-    doc.saveas("sort_solids_reversed_ordered.dxf")
+    doc.saveas(CWD / "sort_solids_reversed_ordered.dxf")
     move_solids_on_top(msp, 6)  # 7, 5, 4, 3, 2, 1, 6
-    doc.saveas("sort_solids_6_on_top.dxf")  # 6 is magenta
+    doc.saveas(CWD / "sort_solids_6_on_top.dxf")  # 6 is magenta
     # AutoCAD has no problem with removed entities in the redraw order table (SORTENTSTABLE)
     remove_solids(msp, 6)
-    doc.saveas("sort_solids_removed_color_6.dxf")
+    doc.saveas(CWD / "sort_solids_removed_color_6.dxf")
 
 
 if __name__ == "__main__":
