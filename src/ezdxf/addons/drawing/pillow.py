@@ -6,7 +6,7 @@ import sys
 import enum
 import itertools
 import math
-from ezdxf.math import Vec3, Vec2, Matrix44, AbstractBoundingBox
+from ezdxf.math import Vec3, Vec2, Matrix44, AbstractBoundingBox, AnyVec
 from ezdxf.path import Path
 from ezdxf.render import hatching
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
@@ -148,7 +148,7 @@ class PillowBackend(Backend):
     def width(self, lineweight: float) -> int:
         return max(int(lineweight * self.line_pixel_factor), 1)
 
-    def pixel_loc(self, point: Vec3) -> Tuple[float, float]:
+    def pixel_loc(self, point: AnyVec) -> Tuple[float, float]:
         # Source: https://pillow.readthedocs.io/en/stable/handbook/concepts.html#coordinate-system
         # The Python Imaging Library uses a Cartesian pixel coordinate system,
         # with (0,0) in the upper left corner. Note that the coordinates refer
@@ -189,7 +189,9 @@ class PillowBackend(Backend):
         holes: Iterable[Path],
         properties: Properties,
     ) -> None:
-        one_px = 1.0 / (self.resolution * self.oversampling)
+        # Use the HatchBaseLine class to draw solid lines with an offset of one
+        # pixel.
+        one_px = 1.0 / self.resolution  # oversampling can be ignored
         baseline = hatching.HatchBaseLine(
             Vec2(0, 0), Vec2(1, 0), Vec2(0, one_px)
         )
@@ -197,13 +199,13 @@ class PillowBackend(Backend):
             Vec2.list(p.flattening(one_px))
             for p in itertools.chain(paths, holes)
         ]
-        self.draw_solid_lines(
-            (
-                (Vec3(line.start), Vec3(line.end))
-                for line in hatching.hatch_polygons(baseline, polygons)
-            ),
-            properties,
-        )
+        color = properties.color
+        for line in hatching.hatch_polygons(baseline, polygons):
+            self.draw.line(
+                [self.pixel_loc(line.start), self.pixel_loc(line.end)],
+                fill=color,
+                width=1,
+            )
 
     def draw_text(
         self,
