@@ -1968,6 +1968,14 @@ HEADER_VAR_MAP = {
         priority=21000,
         default=0,
     ),
+    # 0 = Disables SORTENTS
+    # 1 = Sorts for object selection
+    # 2 = Sorts for object snap
+    # 4 = Sorts for redraws; obsolete
+    # 8 = Sorts for MSLIDE command slide creation; obsolete
+    # 16 = Sorts for REGEN commands
+    # 32 = Sorts for plotting
+    # 64 = Sorts for PostScript output; obsolete
     "$SORTENTS": HeaderVarDef(
         name="$SORTENTS",
         code=280,
