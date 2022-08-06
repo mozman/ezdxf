@@ -358,15 +358,15 @@ class BaseLayout(_AbstractLayout):
         """If the header variable $SORTENTS `Regen` flag (bit-code value 16)
         is set, AutoCAD regenerates entities in ascending handles order.
 
-        To change redraw order associate a different sort handle to entities,
+        To change redraw order associate a different sort-handle to entities,
         this redefines the order in which the entities are regenerated.
         `handles` can be a dict of entity_handle and sort_handle as (k, v)
         pairs, or an iterable of (entity_handle, sort_handle) tuples.
 
-        The sort_handle doesn't have to be unique, some or all entities can
-        share the same sort handle and a sort handle can be an existing handle.
+        The sort-handle doesn't have to be unique, some or all entities can
+        share the same sort-handle and a sort-handle can be an existing handle.
 
-        The "0" handle can be used, but this sort handle will be drawn as
+        The "0" handle can be used, but this sort-handle will be drawn as
         latest (on top of all other entities) and not as first as expected.
 
         Args:
@@ -382,7 +382,7 @@ class BaseLayout(_AbstractLayout):
 
     def get_redraw_order(self) -> Iterable[Tuple[str, str]]:
         """Returns iterable for all existing table entries as (entity_handle,
-        sort_handle) pairs, see also :meth:`~Layout.set_redraw_order`.
+        sort_handle) pairs, see also :meth:`~BaseLayout.set_redraw_order`.
 
         """
         if self.block_record.has_extension_dict:
@@ -395,6 +395,21 @@ class BaseLayout(_AbstractLayout):
         except DXFKeyError:
             return tuple()
         return iter(sortents_table)
+
+    def entities_in_redraw_order(
+        self, reverse=False
+    ) -> Iterable[DXFGraphic]:
+        """Yields all entities from layout in ascending redraw order or
+        descending redraw order if `reverse` is ``True``.
+
+        .. versionadded:: 0.18.1
+
+        """
+        from ezdxf import reorder
+        redraw_order = self.get_redraw_order()
+        if reverse:
+            return reorder.descending(self.entity_space, redraw_order)
+        return reorder.ascending(self.entity_space, redraw_order)
 
 
 class VirtualLayout(_AbstractLayout):

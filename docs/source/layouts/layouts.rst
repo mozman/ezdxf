@@ -74,6 +74,12 @@ BaseLayout
 
     .. automethod:: move_to_layout
 
+    .. automethod:: set_redraw_order
+
+    .. automethod:: get_redraw_order
+
+    .. automethod:: entities_in_redraw_order
+
     .. automethod:: add_entity
 
     .. automethod:: add_foreign_entity
@@ -233,10 +239,6 @@ Layout
     .. automethod:: set_plot_style
 
     .. automethod:: set_plot_window
-
-    .. automethod:: set_redraw_order
-
-    .. automethod:: get_redraw_order
 
     .. automethod:: plot_viewport_borders
 

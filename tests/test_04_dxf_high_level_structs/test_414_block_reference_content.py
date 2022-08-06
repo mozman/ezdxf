@@ -471,5 +471,33 @@ class TestSourceBlockReferenceFromNestedBlockReferences:
             assert point.source_block_reference is blkref2
 
 
+class TestEntitiesInRedrawOrder:
+    @pytest.fixture(scope="class")
+    def blk(self):
+        d = ezdxf.new()
+        blk = d.blocks.new("BLK0")
+        line0 = blk.add_line((0, 0), (1, 0))
+        line1 = blk.add_line((0, 0), (0, 1))
+        line2 = blk.add_line((0, 0), (1, 1))
+        # shuffle entities
+        e = blk.entity_space.entities
+        e[0] = line2
+        e[1] = line0
+        e[2] = line1
+        msp = d.modelspace()
+        msp.add_blockref("Test1", (10, 10))
+        return blk
+
+    def test_ascending_redraw_order(self, blk):
+        entities = list(blk.entities_in_redraw_order())
+        handles = [e.dxf.handle for e in entities]
+        assert handles[0] < handles[1] < handles[2]
+
+    def test_descending_redraw_order(self, blk):
+        entities = list(blk.entities_in_redraw_order(reverse=True))
+        handles = [e.dxf.handle for e in entities]
+        assert handles[0] > handles[1] > handles[2]
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

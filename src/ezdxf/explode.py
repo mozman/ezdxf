@@ -160,14 +160,14 @@ def virtual_block_reference_entities(
     ] = None,
 ) -> Iterable["DXFGraphic"]:
     """Yields 'virtual' parts of block reference `block_ref`. This method is meant
-    to examine the the block reference entities without the need to explode the
+    to examine the block reference entities without the need to explode the
     block reference. The `skipped_entity_callback()` will be called for all
     entities which are not processed, signature:
     :code:`skipped_entity_callback(entity: DXFGraphic, reason: str)`,
     `entity` is the original (untransformed) DXF entity of the block definition,
     the `reason` string is an explanation why the entity was skipped.
 
-    This entities are located at the 'exploded' positions, but are not stored in
+    These entities are located at the 'exploded' positions, but are not stored in
     the entity database, have no handle and are not assigned to any layout.
 
     Args:
@@ -191,6 +191,8 @@ def virtual_block_reference_entities(
     )
 
     def disassemble(layout) -> Iterable["DXFGraphic"]:
+        # TODO: layout.entities_in_redraw_order()?
+        #  This may slow down processing and is only for plotting necessary.
         for entity in layout:
             # Do not explode ATTDEF entities. Already available in Insert.attribs
             if entity.dxftype() == "ATTDEF":
