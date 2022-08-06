@@ -186,18 +186,24 @@ class PillowBackend(Backend):
             )
             points = list(transform.transform_vertices(points))
             self.draw_filled_polygon(points, properties)
-        else:  # render Text as Path() objects
-            tr = self.text_renderer
-            text = self._prepare_text(text)
-            font_properties = tr.get_font_properties(properties.font)
+            return
+
+        outline = True
+        tr = self.text_renderer
+        text = self._prepare_text(text)
+        font_properties = tr.get_font_properties(properties.font)
+        scale = tr.get_scale(cap_height, font_properties)
+        m = Matrix44.scale(scale) @ transform
+        if outline is True:  # render Text as Path() objects
             ezdxf_path = tr.get_ezdxf_path(text, font_properties)
             if len(ezdxf_path) == 0:
                 return
-            scale = tr.get_scale(cap_height, font_properties)
-            m = Matrix44.scale(scale) @ transform
             ezdxf_path = ezdxf_path.transform(m)
             for path in ezdxf_path.sub_paths():
                 self.draw_path(path, properties)
+        else:  # render Text filled polygons
+            for face in tr.get_tessellation(text, font_properties):
+                self.draw_filled_polygon(m.transform_vertices(face), properties)
 
     def get_font_measurements(
         self, cap_height: float, font: FontFace = None

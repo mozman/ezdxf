@@ -4,9 +4,12 @@ import math
 from abc import ABCMeta
 from typing import (
     Iterable,
+    Iterator,
     TYPE_CHECKING,
     Optional,
     Dict,
+    List,
+    Sequence,
     Tuple,
 )
 from collections import defaultdict
@@ -28,8 +31,10 @@ from ezdxf.addons.drawing.type_hints import FilterFunc
 from ezdxf.tools.fonts import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.tools import fonts
-from ezdxf.math import Vec3, Matrix44
+from ezdxf.math import Vec2, Vec3, Matrix44, BoundingBox2d
+from ezdxf.math.triangulation import mapbox_earcut_2d
 import ezdxf.path
+from ezdxf.path import nesting
 
 from .config import Configuration, LinePolicy, HatchPolicy
 from .line_renderer import AbstractLineRenderer
@@ -140,13 +145,15 @@ class MatplotlibBackend(Backend):
                 _lines.append(((s.x, s.y), (e.x, e.y)))
 
         self.ax.scatter(point_x, point_y, s=0.1, c=color, zorder=z)
-        self.ax.add_collection(LineCollection(
-            _lines,
-            linewidths=lineweight,
-            color=color,
-            zorder=z,
-            capstyle="butt",
-        ))
+        self.ax.add_collection(
+            LineCollection(
+                _lines,
+                linewidths=lineweight,
+                color=color,
+                zorder=z,
+                capstyle="butt",
+            )
+        )
 
     def draw_path(self, path, properties: Properties):
         self._line_renderer.draw_path(path, properties, self._get_z())
@@ -397,6 +404,51 @@ class TextRenderer:
         except (RuntimeError, ValueError):
             return ezdxf.path.Path()
         return ezdxf.path.multi_path_from_matplotlib_path(text_path)
+
+    def get_tessellation(
+        self,
+        text: str,
+        font: FontProperties,
+        *,
+        max_flattening_distance: float = 0.01,
+    ) -> Iterator[Sequence[Vec2]]:
+
+        exterior_bbox = BoundingBox2d()
+        paths: List[ezdxf.path.Path] = []
+
+        def triangles():
+            polygon = nesting.fast_bbox_detection(paths)[0]
+            if len(polygon) == 0:
+                return
+            exterior = polygon[0]
+            if len(polygon) > 1:
+                holes = nesting.flatten_polygons(polygon[1])
+            else:
+                holes = []
+            yield from mapbox_earcut_2d(
+                exterior.flattening(max_flattening_distance),
+                [hole.flattening(max_flattening_distance) for hole in holes],
+            )
+
+        for p in self.get_ezdxf_path(text, font).sub_paths():
+            bbox = BoundingBox2d(p.control_vertices())
+            if exterior_bbox.has_data:
+                if exterior_bbox.inside(bbox.center):
+                    if (
+                        bbox.size.x * bbox.size.y
+                        > exterior_bbox.size.x * exterior_bbox.size.y
+                    ):
+                        exterior_bbox = bbox
+                    paths.append(p)
+                    continue
+                else:
+                    yield from triangles()
+                    paths.clear()
+            exterior_bbox = bbox
+            paths.append(p)
+
+        if paths:
+            yield from triangles()
 
 
 def _get_path_patch_data(path):
