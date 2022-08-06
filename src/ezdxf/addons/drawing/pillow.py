@@ -201,8 +201,12 @@ class PillowBackend(Backend):
             ezdxf_path = ezdxf_path.transform(m)
             for path in ezdxf_path.sub_paths():
                 self.draw_path(path, properties)
-        else:  # render Text filled polygons
-            for face in tr.get_tessellation(text, font_properties):
+        else:  # render Text as filled polygons
+            for face in tr.get_tessellation(
+                text,
+                font_properties,
+                max_flattening_distance=self.config.max_flattening_distance,
+            ):
                 self.draw_filled_polygon(m.transform_vertices(face), properties)
 
     def get_font_measurements(

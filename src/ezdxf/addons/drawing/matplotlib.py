@@ -412,43 +412,28 @@ class TextRenderer:
         *,
         max_flattening_distance: float = 0.01,
     ) -> Iterator[Sequence[Vec2]]:
+        """Triangulate text into faces.
 
-        exterior_bbox = BoundingBox2d()
-        paths: List[ezdxf.path.Path] = []
+        !!! Does not work for any arbitrary text !!!
+        """
 
-        def triangles():
-            polygon = nesting.fast_bbox_detection(paths)[0]
+        def top_layer(polygon):
+            return [p for p in polygon if isinstance(p, ezdxf.path.Path)]
+
+        for polygon in nesting.fast_bbox_detection(  # type: ignore
+            list(self.get_ezdxf_path(text, font).sub_paths())
+        ):
             if len(polygon) == 0:
-                return
+                continue
             exterior = polygon[0]
             if len(polygon) > 1:
-                holes = nesting.flatten_polygons(polygon[1])
+                holes = top_layer(polygon[1])
             else:
                 holes = []
             yield from mapbox_earcut_2d(
                 exterior.flattening(max_flattening_distance),
                 [hole.flattening(max_flattening_distance) for hole in holes],
             )
-
-        for p in self.get_ezdxf_path(text, font).sub_paths():
-            bbox = BoundingBox2d(p.control_vertices())
-            if exterior_bbox.has_data:
-                if exterior_bbox.inside(bbox.center):
-                    if (
-                        bbox.size.x * bbox.size.y
-                        > exterior_bbox.size.x * exterior_bbox.size.y
-                    ):
-                        exterior_bbox = bbox
-                    paths.append(p)
-                    continue
-                else:
-                    yield from triangles()
-                    paths.clear()
-            exterior_bbox = bbox
-            paths.append(p)
-
-        if paths:
-            yield from triangles()
 
 
 def _get_path_patch_data(path):
