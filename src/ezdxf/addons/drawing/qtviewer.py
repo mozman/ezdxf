@@ -264,7 +264,6 @@ class CadViewer(qw.QMainWindow):
         auditor: Auditor,
         *,
         layout: str = "Model",
-        overall_scaling_factor: float = 1.0,
     ):
         error_count = len(auditor.errors)
         if error_count > 0:
@@ -279,7 +278,7 @@ class CadViewer(qw.QMainWindow):
                 return
         self.doc = document
         self._render_context = RenderContext(document)
-        self._reset_backend(scale=overall_scaling_factor)
+        self._reset_backend()
         self._visible_layers = None
         self._current_layout = None
         self._populate_layouts()
