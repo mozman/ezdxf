@@ -5,6 +5,7 @@ from typing import Iterable, Tuple
 import sys
 import enum
 import itertools
+import functools
 import math
 from ezdxf.math import Vec3, Vec2, Matrix44, AbstractBoundingBox, AnyVec
 from ezdxf.path import Path
@@ -115,6 +116,14 @@ class PillowBackend(Backend):
                 self.resolution = (img_x - 2.0 * self.margin_x) / self.region.x
                 self.margin_y = (img_y - self.resolution * self.region.y) * 0.5
 
+        # angle for solid fill hatching, see method draw_filled_paths()
+        self.solid_fill_hatching_angle = 0.0
+        # distance to fill solid areas by hatching:
+        self.solid_fill_one_pixel = 1.0 / (self.resolution * self.oversampling)
+        # hatch baseline for solid fill by hatching:
+        self.solid_fill_baseline = self._solid_fill_hatch_baseline(
+            self.solid_fill_one_pixel
+        )
         self.image_size = Vec2(image_size)
         self.bg_color: Color = "#000000"
         self.image_mode = "RGBA"
@@ -123,6 +132,11 @@ class PillowBackend(Backend):
         # dummy values for declaration, both are set in clear()
         self.image = Image.new("RGBA", (10, 10))
         self.draw = ImageDraw.Draw(self.image)
+
+    def _solid_fill_hatch_baseline(self, one_px: float):
+        direction = Vec2.from_deg_angle(self.solid_fill_hatching_angle)
+        offset = direction.orthogonal() * one_px
+        return hatching.HatchBaseLine(Vec2(0, 0), direction, offset)
 
     def configure(self, config: Configuration) -> None:
         super().configure(config)
@@ -186,25 +200,17 @@ class PillowBackend(Backend):
         holes: Iterable[Path],
         properties: Properties,
     ) -> None:
-        # Use the HatchBaseLine class to draw solid lines with an offset of one
-        # pixel.
-        one_px = 1.0 / (self.resolution * self.oversampling)
-        angle = 0
-        direction = Vec2.from_deg_angle(angle)
-        offset = direction.orthogonal() * one_px
-        baseline = hatching.HatchBaseLine(Vec2(0, 0), direction, offset)
+        # Uses the hatching module to draw filled paths by hatching paths with
+        # solid lines with an offset of one pixel.
         polygons = [
-            Vec2.list(p.flattening(one_px))
+            Vec2.list(p.flattening(self.solid_fill_one_pixel))
             for p in itertools.chain(paths, holes)
         ]
-        color = properties.color
-        width = self.oversampling
-        for line in hatching.hatch_polygons(baseline, polygons):
-            self.draw.line(
-                [self.pixel_loc(line.start), self.pixel_loc(line.end)],
-                fill=color,
-                width=width,
-            )
+        draw_line = functools.partial(
+            self.draw.line, fill=properties.color, width=self.oversampling
+        )
+        for line in hatching.hatch_polygons(self.solid_fill_baseline, polygons):
+            draw_line((self.pixel_loc(line.start), self.pixel_loc(line.end)))
 
     def draw_text(
         self,
