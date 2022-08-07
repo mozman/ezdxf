@@ -202,14 +202,11 @@ class PillowBackend(Backend):
     ) -> None:
         # Uses the hatching module to draw filled paths by hatching paths with
         # solid lines with an offset of one pixel.
-        polygons = [
-            Vec2.list(p.flattening(self.solid_fill_one_pixel))
-            for p in itertools.chain(paths, holes)
-        ]
         draw_line = functools.partial(
             self.draw.line, fill=properties.color, width=self.oversampling
         )
-        for line in hatching.hatch_polygons(self.solid_fill_baseline, polygons):
+        all_paths = list(itertools.chain(paths, holes))
+        for line in hatching.hatch_paths(self.solid_fill_baseline, all_paths):
             draw_line((self.pixel_loc(line.start), self.pixel_loc(line.end)))
 
     def draw_text(
