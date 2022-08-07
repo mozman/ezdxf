@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 MIN_HATCH_LINE_DISTANCE = 1e-4  # ??? what's a good choice
 NONE_VEC2 = Vec2(math.nan, math.nan)
 KEY_NDIGITS = 4
+SORT_NDIGITS = 10
 
 
 class IntersectionType(enum.IntEnum):
@@ -60,7 +61,7 @@ class Intersection:
     p1: Vec2 = NONE_VEC2
 
 
-def side_of_line(distance: float, abs_tol=1e-9) -> int:
+def side_of_line(distance: float, abs_tol=1e-12) -> int:
     if abs(distance) < abs_tol:
         return 0
     if distance > 0.0:
@@ -348,7 +349,7 @@ def _line_segments(
 ) -> Iterator[Line]:
     if len(vertices) < 2:
         return
-    vertices.sort(key=lambda p: p.p0)
+    vertices.sort(key=lambda p: p.p0.round(SORT_NDIGITS))
     inside = False
     prev_point = NONE_VEC2
     for ip in vertices:

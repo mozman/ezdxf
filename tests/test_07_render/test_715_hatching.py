@@ -143,6 +143,29 @@ def test_hatch_polygons(d: str, count):
     assert len(lines) == count
 
 
+def test_vertical_hatching_with_hole():
+    """Visual check by the 1st example for 90 deg in function hole_examples()
+    in script exploration/hatching.py,
+
+    """
+    size = 10
+    angle = 90
+
+    polygons = [
+        list(forms.square(size)),
+        list(forms.translate(forms.square(size - 2), (1, 1))),
+        list(forms.translate(forms.square(3), (2, 2))),
+        list(forms.translate(forms.square(3), (4, 3))),
+    ]
+    direction = Vec2.from_deg_angle(angle)
+    offset = direction.orthogonal() * 0.1
+    baseline = hatching.HatchBaseLine(
+        Vec2(0, 0), direction=direction, offset=offset
+    )
+    lines = list(hatching.hatch_polygons(baseline, polygons))
+    assert len(lines) == 241
+
+
 class TestLinePatternRendering:
     @pytest.fixture
     def baseline(self):

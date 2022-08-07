@@ -148,7 +148,7 @@ def hole_examples(filename: str, size=10, dx=13, angle=0):
         list(forms.translate(forms.square(3), (4, 3))),
     ]
     direction = Vec2.from_deg_angle(angle)
-    offset = direction.orthogonal() * 0.25
+    offset = direction.orthogonal() * 0.1
     baseline = hatching.HatchBaseLine(
         Vec2(0, 0), direction=direction, offset=offset
     )
@@ -243,7 +243,7 @@ def debug_hatch():
 
 
 if __name__ == "__main__":
-    debug_hatch()
+    #debug_hatch()
     polygon_hatching("polygon_hatching.dxf")
     collinear_horizontal_hatching("collinear_horizontal_hatching.dxf")
     collinear_vertical_hatching("collinear_vertical_hatching.dxf")
