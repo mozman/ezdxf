@@ -10,7 +10,7 @@ import ezdxf
 from ezdxf import recover, bbox
 from ezdxf.addons.drawing import RenderContext, Frontend
 from ezdxf.addons.drawing.config import Configuration, LinePolicy
-from ezdxf.addons.drawing.pillow import PillowBackend
+from ezdxf.addons.drawing.pillow import PillowBackend, TextMode
 
 
 def main():
@@ -56,9 +56,11 @@ def main():
     )
     parser.add_argument(
         "-t",
-        "--text-placeholder",
-        action="store_true",
-        help="draw a filled rectangle as placeholder for text",
+        "--text-mode",
+        type=int,
+        choices=[0, 1, 2, 3],
+        default=2,
+        help="text mode: 0=ignore, 1=placeholder, 2=outline, 3=filled, default is 2",
     )
     parser.add_argument(
         "--trace",
@@ -98,7 +100,7 @@ def main():
     print(f"Image size: {img_x}x{img_y}")
     print(f"DPI: {args.dpi}")
     print(f"Oversampling factor: {args.oversampling}")
-    print(f"Draw text placeholder: {args.text_placeholder}")
+    print(f"text mode: {TextMode(args.text_mode).name}")
     # The current implementation is optimized to use as less memory as possible,
     # therefore the extents of the layout are required beforehand, otherwise the
     # backend would have to store all drawing commands to determine the required
@@ -124,7 +126,7 @@ def main():
             image_size=(img_x, img_y),
             oversampling=args.oversampling,
             dpi=args.dpi,
-            text_placeholder=args.text_placeholder,
+            text_mode=args.text_mode,
         )
     except ValueError as e:
         # invalid image size or empty drawing
