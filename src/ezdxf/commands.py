@@ -538,9 +538,9 @@ class Pillow(Command):
             "-t",
             "--text-mode",
             type=int,
-            choices=[0, 1, 2],
+            choices=[0, 1, 2, 3],
             default=2,
-            help="text mode: 0=placeholder, 1=outline, 2=filled",
+            help="text mode: 0=ignore, 1=placeholder, 2=outline, 3=filled, default is 2",
         )
         parser.add_argument(
             "--dpi",

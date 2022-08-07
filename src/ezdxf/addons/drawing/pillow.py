@@ -35,9 +35,10 @@ INCH_TO_MM = 25.6
 
 
 class TextMode(enum.IntEnum):
-    PLACEHOLDER = 0
-    OUTLINE = 1
-    FILLED = 2
+    IGNORE = 0
+    PLACEHOLDER = 1
+    OUTLINE = 2
+    FILLED = 3
 
 
 class PillowBackend(Backend):
@@ -49,17 +50,12 @@ class PillowBackend(Backend):
         margin: int = 10,
         dpi: int = 300,
         oversampling: int = 1,
-        text_mode=TextMode.FILLED,
-
+        text_mode=TextMode.OUTLINE,
     ):
         """Backend which uses `Pillow` for image export.
 
         For linetype support configure the line_policy in the frontend as
         ACCURATE.
-
-        Current limitations:
-
-            - holes in hatches are not supported
 
         Args:
             region: output region of the layout in DXF drawing units
@@ -78,10 +74,11 @@ class PillowBackend(Backend):
             oversampling: multiplier of the final image size to define the
                 render canvas size (e.g. 1, 2, 3, ...), the final image will
                 be scaled down by the LANCZOS method
-            text_mode: set text rendering mode
+            text_mode: text rendering mode
+                - IGNORE do not draw text
                 - PLACEHOLDER draws text as filled rectangles
-                - OUTLINE draws text as outlines
-                - FILLED draws text fillings
+                - OUTLINE draws text as outlines (recommended)
+                - FILLED draws text fillings (has some issues!)
 
         """
         super().__init__()
@@ -192,19 +189,21 @@ class PillowBackend(Backend):
         # Use the HatchBaseLine class to draw solid lines with an offset of one
         # pixel.
         one_px = 1.0 / (self.resolution * self.oversampling)
-        baseline = hatching.HatchBaseLine(
-            Vec2(0, 0), Vec2(1, 0), Vec2(0, one_px)
-        )
+        angle = 0
+        direction = Vec2.from_deg_angle(angle)
+        offset = direction.orthogonal() * one_px
+        baseline = hatching.HatchBaseLine(Vec2(0, 0), direction, offset)
         polygons = [
             Vec2.list(p.flattening(one_px))
             for p in itertools.chain(paths, holes)
         ]
         color = properties.color
+        width = self.oversampling
         for line in hatching.hatch_polygons(baseline, polygons):
             self.draw.line(
                 [self.pixel_loc(line.start), self.pixel_loc(line.end)],
                 fill=color,
-                width=1,
+                width=width,
             )
 
     def draw_text(
@@ -214,6 +213,8 @@ class PillowBackend(Backend):
         properties: Properties,
         cap_height: float,
     ) -> None:
+        if self.text_mode == TextMode.IGNORE:
+            return
         if self.text_mode == TextMode.PLACEHOLDER:
             # draws a placeholder rectangle as text
             width = self.get_text_line_width(text, cap_height, properties.font)
