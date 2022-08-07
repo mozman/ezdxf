@@ -461,14 +461,12 @@ def _run_with_no_gui(
 
 
 def _odafc_failed(system: str, proc: subprocess.Popen, stderr: str) -> bool:
-    if proc.returncode != 0:
-        # note: currently, ODAFileConverter does not set the return code
-        return True
-
     stderr = stderr.strip()
     if system == "Linux":
         # ODAFileConverter *always* crashes on Linux even if the output was successful
         return stderr != "" and stderr != "Quit (core dumped)"
+    elif proc.returncode != 0:
+        return True
     else:
         return stderr != ""
 
