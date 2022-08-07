@@ -424,7 +424,10 @@ def _hatch_geometry(
     intersection_func: IFuncType,
     terminate: Callable[[], bool] = None,
 ) -> Iterator[Line]:
-    """Returns all hatch lines intersecting the given paths.
+    """Returns all hatch lines intersecting the given geometries.
+
+    The intersection_func() should yield all intersection points between a
+    HatchBaseLine() and as given geometry.
 
     The terminate function should return ``True`` to terminate execution
     otherwise ``False``. Can be used to implement a timeout.
