@@ -12,6 +12,7 @@ Version 0.18.1b0 - dev
 - NEW: sub-command `ezdxf pillow` to draw and convert DXF files by `Pillow`
 - BUGFIX: CPython implementation of `Vec2()` was not immutable at inplace 
   operations `+=`, `-=`, `*=` and `/=` like the Cython implementation
+- BUGFIX: fixed bounding box calculation for the `LinePrimitive()`
 
 Version 0.18 - 2022-07-29
 -------------------------

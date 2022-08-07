@@ -230,21 +230,18 @@ Convert the DXF file "gear.dxf" into a PNG file by the *Pillow* backend:
     C:\> ezdxf pillow -o gear.png gear.dxf
 
 Advantage over the `Draw`_ command is the speed and much less memory usage,
-disadvantages are:
-
-  - text is only rendered by outlines
-  - solid hatches are rendered without holes
-
-.. image:: gfx/pillow-sample.png
-   :align: center
+disadvantage is the lower text rendering quality. The speed advantages is lost
+for the text modes OUTLINE and FILLED, because the text-path rendering is done
+by `Matplotlib`, but the advantage of the lower memory consumption remains.
 
 Print help:
 
 .. code-block:: Text
 
-    C:\> ezdxf view -h
+    C:\> ezdxf pillow -h
     usage: ezdxf pillow [-h] [-o OUT] [-i IMAGE_SIZE] [-b BACKGROUND]
-                        [-r OVERSAMPLING] [-m MARGIN] [--dpi DPI] [-v]
+                        [-r OVERSAMPLING] [-m MARGIN] [-t {0,1,2,3}] [--dpi DPI]
+                        [-v]
                         [FILE]
 
     positional arguments:
@@ -272,7 +269,11 @@ Print help:
                             oversampling factor, default is 2, use 0 or 1 to
                             disable oversampling
       -m MARGIN, --margin MARGIN
-                            minimal margin around the image in pixels, default is 10
+                            minimal margin around the image in pixels, default is
+                            10
+      -t {0,1,2,3}, --text-mode {0,1,2,3}
+                            text mode: 0=ignore, 1=placeholder, 2=outline,
+                            3=filled, default is 2
       --dpi DPI             output resolution in pixels/inch which is significant
                             for the linewidth, default is 300
       -v, --verbose         give more output
