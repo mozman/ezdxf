@@ -1,7 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 
-from ezdxf.math import Vec2
+from ezdxf.math import Vec2, Bezier4P
 
 import pytest
 from ezdxf.render import hatching, forms
@@ -92,6 +92,17 @@ class TestIntersectHatchLine:
         ip = hatch_line.intersect_line(a, b, dist_a, dist_b)
         assert ip.type == hatching.IntersectionType.REGULAR
         assert ip.p0.isclose((4, d))
+
+    def test_cubic_bezier_curve(self, horizontal_baseline):
+        # low level intersection tests:
+        # test_630b - TestRayCubicBezierCurve2dIntersection()
+        curve = Bezier4P([(0, -2), (2, 6), (4, -6), (6, 2)])
+        hatch_line = horizontal_baseline.hatch_line(0)
+        ips = hatch_line.intersect_cubic_bezier_curve(curve)
+        assert len(ips) == 3
+        assert ips[0].p0.isclose((0.6762099922755492, 0.0))
+        assert ips[1].p0.isclose((3.0, 0.0))
+        assert ips[2].p0.isclose((5.323790007724451, 0.0))
 
     def test_missing_line_in_gear_example(self):
         baseline = hatching.HatchBaseLine(

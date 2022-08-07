@@ -9,16 +9,24 @@ from typing import (
     Dict,
     TYPE_CHECKING,
     Callable,
+    Any,
+    Union,
 )
 from collections import defaultdict
 import enum
 import math
 import dataclasses
-from ezdxf.math import Vec2, AnyVec
-
+from ezdxf.math import (
+    Vec2,
+    AnyVec,
+    Bezier3P,
+    Bezier4P,
+    intersection_ray_cubic_bezier_2d,
+    quadratic_to_cubic_bezier,
+)
+from ezdxf.path import Path, Command
 
 if TYPE_CHECKING:
-    from ezdxf.path import Path
     from ezdxf.entities.polygon import DXFPolygon
 
 MIN_HATCH_LINE_DISTANCE = 1e-4  # ??? what's a good choice
@@ -101,6 +109,19 @@ class HatchLine:
             factor = abs((dist_a - line_distance) / (dist_a - dist_b))
             return Intersection(IntersectionType.REGULAR, a.lerp(b, factor))
         return Intersection()  # no intersection
+
+    def intersect_cubic_bezier_curve(
+        self, curve: Bezier4P
+    ) -> Sequence[Intersection]:
+        """Returns the intersection of this hatch line with a cubic Bèzier
+        curve.
+        """
+        return [
+            Intersection(IntersectionType.REGULAR, p, NONE_VEC2)
+            for p in intersection_ray_cubic_bezier_2d(
+                self.origin, self.origin + self.direction, curve
+            )
+        ]
 
 
 class PatternRenderer:
@@ -315,11 +336,95 @@ def hatch_polygons(
     otherwise ``False``. Can be used to implement a timeout.
 
     """
+    yield from _hatch_geometry(baseline, polygons, intersect_polygon, terminate)
+
+
+def intersect_path(
+    baseline: HatchBaseLine, path: Path
+) -> Iterator[Tuple[Intersection, float]]:
+    """Yields all intersection points of the hatch defined by the `baseline` and
+    the given single `path`.
+
+    Returns the intersection point and the normal-distance from the baseline,
+    intersection points with the same normal-distance lay on the same hatch
+    line.
+
+    """
+    for path_element in _path_elements(path):
+        if isinstance(path_element, Bezier4P):
+            distances = [
+                baseline.signed_distance(p) for p in path_element.control_points
+            ]
+            for hatch_line_distance in hatch_line_distances(
+                distances, baseline.normal_distance
+            ):
+                hatch_line = baseline.hatch_line(hatch_line_distance)
+                yield from hatch_line.intersect_cubic_bezier_curve(path_element)
+
+        else:  # line
+            a, b = Vec2.generate(path_element)
+            dist_a = baseline.signed_distance(a)
+            dist_b = baseline.signed_distance(b)
+            for hatch_line_distance in hatch_line_distances(
+                (dist_a, dist_b), baseline.normal_distance
+            ):
+                hatch_line = baseline.hatch_line(hatch_line_distance)
+                yield hatch_line.intersect_line(a, b, dist_a, dist_b)
+
+
+def _path_elements(path: Path) -> Union[Bezier4P, Tuple[Vec2, Vec2]]:
+
+    if len(path) == 0:
+        return
+    start = path.start
+    for command in path.commands():
+        end = command[0]
+        if command.type == Command.MOVE_TO:
+            start = end
+            continue
+        elif command.type == Command.LINE_TO:
+            yield start, end
+        elif command.type == Command.CURVE4_TO:
+            yield Bezier3P(start, command[1], command[2], end)
+        elif command.type == Command.CURVE3_TO:
+            curve3 = Bezier3P(start, command[1], end)
+            yield quadratic_to_cubic_bezier(curve3)
+
+
+def hatch_paths(
+    baseline: HatchBaseLine,
+    paths: Sequence[Path],
+    terminate: Callable[[], bool] = None,
+) -> Iterator[Line]:
+    """Returns all hatch lines intersecting the given paths.
+
+    The terminate function should return ``True`` to terminate execution
+    otherwise ``False``. Can be used to implement a timeout.
+
+    """
+    yield from _hatch_geometry(baseline, paths, intersect_path, terminate)
+
+
+IFuncType = Callable[[HatchBaseLine, Any], Iterator[Tuple[Intersection, float]]]
+
+
+def _hatch_geometry(
+    baseline: HatchBaseLine,
+    geometries: Sequence[Any],
+    intersection_func: IFuncType,
+    terminate: Callable[[], bool] = None,
+) -> Iterator[Line]:
+    """Returns all hatch lines intersecting the given paths.
+
+    The terminate function should return ``True`` to terminate execution
+    otherwise ``False``. Can be used to implement a timeout.
+
+    """
     points: Dict[float, List[Intersection]] = defaultdict(list)
-    for polygon in polygons:
+    for geometry in geometries:
         if terminate and terminate():
             return
-        for ip, distance in intersect_polygon(baseline, polygon):
+        for ip, distance in intersection_func(baseline, geometry):
             assert ip.type != IntersectionType.NONE
             points[round(distance, KEY_NDIGITS)].append(ip)
 
