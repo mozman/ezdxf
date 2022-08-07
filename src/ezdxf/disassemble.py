@@ -191,7 +191,7 @@ class LinePrimitive(Primitive):
 
     def bbox(self, fast=False) -> BoundingBox:
         e = self.entity
-        return BoundingBox((e.dxf.start, e.dxf.start))
+        return BoundingBox((e.dxf.start, e.dxf.end))
 
 
 class LwPolylinePrimitive(ConvertedPrimitive):

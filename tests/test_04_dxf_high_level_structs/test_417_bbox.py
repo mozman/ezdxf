@@ -22,6 +22,15 @@ def test_extend(points1):
     assert box.extmax == (4, 5, 6)
 
 
+def test_line():
+    lay = VirtualLayout()
+    lay.add_line((0, 0), (10, 0))
+    lay.add_line((0, 1), (10, 1))
+    box = bbox.extents(lay)
+    assert box.extmin == (0, 0, 0)
+    assert box.extmax == (10, 1, 0)
+
+
 def solid_entities():
     lay = VirtualLayout()
     lay.add_solid(translate(square(1), (-10, -10)))
