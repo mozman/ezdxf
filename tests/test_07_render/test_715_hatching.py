@@ -182,12 +182,36 @@ def test_hatch_curved_path():
     baseline = hatching.HatchBaseLine(
         Vec2(), direction=Vec2(1, 0), offset=Vec2(0, 1)
     )
-    lines = list(
-        hatching.hatch_paths(
-            baseline, [p]
-        )
-    )
+    lines = list(hatching.hatch_paths(baseline, [p]))
     assert len(lines) == 10
+
+
+def test_hatch_path_with_hole():
+    """Visual check by the function collinear_hatching() in script
+    exploration/hatching.py,
+
+    """
+    baseline = hatching.HatchBaseLine(
+        Vec2(), direction=Vec2(1, 0), offset=Vec2(0, 1)
+    )
+    polygons = [
+        list(forms.square(10)),
+        list(forms.translate(forms.square(6), (2, 2))),
+    ]
+    ctrL_lines = list(hatching.hatch_polygons(baseline, polygons))
+
+    p = path.Path((0, 0))
+    p.line_to((10, 0))
+    p.curve3_to((10, 10), (14, 5))
+    p.line_to((0, 10))
+    p.close_sub_path()
+    p.move_to((2, 2))
+    p.line_to((8, 2))
+    p.line_to((8, 8))
+    p.line_to((2, 8))
+
+    lines = list(hatching.hatch_paths(baseline, [p]))
+    assert len(lines) == len(ctrL_lines)
 
 
 def test_vertical_hatching_with_hole():
