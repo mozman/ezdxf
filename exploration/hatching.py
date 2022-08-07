@@ -4,8 +4,9 @@ from pathlib import Path
 import time
 
 import ezdxf
-from ezdxf.math import Vec2
+from ezdxf.math import Vec2, Matrix44
 from ezdxf.render import forms, hatching
+from ezdxf import path
 
 CWD = Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
@@ -130,11 +131,34 @@ def explode_hatch_pattern(filename: str):
     attribs = {"layer": "EXPLODE", "color": ezdxf.colors.RED}
     t0 = time.perf_counter()
     for hatch in msp.query("HATCH"):
-        for start, end in hatching.explode_hatch_pattern(hatch, 1):  # type: ignore
+        for start, end in hatching.explode_hatch_pattern(hatch):  # type: ignore
             msp.add_line(start, end, attribs)
     t1 = time.perf_counter()
     print(f"Exploding hatch pattern took: {t1-t0:.3}s")
     doc.saveas(CWD / filename.replace(".dxf", ".explode.dxf"))
+
+
+def hatch_circular_path(filename: str, size=10, angle=0):
+    doc = ezdxf.new()
+    setup(doc)
+    msp = doc.modelspace()
+    m = Matrix44.scale(size)
+    circle = path.unit_circle(segments=8, transform=m)
+    direction = Vec2.from_deg_angle(angle)
+    offset = direction.orthogonal() * 0.1
+    baseline = hatching.HatchBaseLine(
+        Vec2(0, 0), direction=direction, offset=offset
+    )
+    msp.add_lwpolyline(
+        circle.flattening(0.1), close=True, dxfattribs={"layer": "POLYGON"}
+    )
+    for line in hatching.hatch_paths(baseline, [circle]):
+        msp.add_line(
+            line.start,
+            line.end,
+            dxfattribs={"layer": "HATCH"},
+        )
+    doc.saveas(CWD / filename)
 
 
 def hole_examples(filename: str, size=10, dx=13, angle=0):
@@ -243,11 +267,14 @@ def debug_hatch():
 
 
 if __name__ == "__main__":
-    #debug_hatch()
+    # debug_hatch()
     polygon_hatching("polygon_hatching.dxf")
     collinear_horizontal_hatching("collinear_horizontal_hatching.dxf")
     collinear_vertical_hatching("collinear_vertical_hatching.dxf")
     explode_hatch_pattern("hatch_pattern_iso.dxf")
+    hatch_circular_path("circle_00_deg.dxf", 10, 0)
+    hatch_circular_path("circle_90_deg.dxf", 10, 90)
+    hatch_circular_path("circle_45_deg.dxf", 10, 45)
     hole_examples("hole_examples_00_deg.dxf", angle=0)
     hole_examples("hole_examples_90_deg.dxf", angle=90)
     hole_examples("hole_examples_45_deg.dxf", angle=45)

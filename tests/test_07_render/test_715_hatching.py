@@ -187,10 +187,6 @@ def test_hatch_curved_path():
 
 
 def test_hatch_path_with_hole():
-    """Visual check by the function collinear_hatching() in script
-    exploration/hatching.py,
-
-    """
     baseline = hatching.HatchBaseLine(
         Vec2(), direction=Vec2(1, 0), offset=Vec2(0, 1)
     )
@@ -353,7 +349,7 @@ def test_explode_earth1_pattern():
         is_closed=1,
         flags=3,
     )
-    lines = list(hatching.explode_hatch_pattern(hatch, 1))
+    lines = list(hatching.explode_hatch_pattern(hatch))
     assert len(lines) == 139
 
 

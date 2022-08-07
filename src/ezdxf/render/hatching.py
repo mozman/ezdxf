@@ -486,9 +486,7 @@ def _line_segments(
         prev_point = point
 
 
-def explode_hatch_pattern(
-    hatch: DXFPolygon, max_flattening_distance: float
-) -> Iterator[Tuple[AnyVec, AnyVec]]:
+def explode_hatch_pattern(hatch: DXFPolygon) -> Iterator[Tuple[AnyVec, AnyVec]]:
     if hatch.pattern is None or hatch.dxf.solid_fill:
         return
     if len(hatch.pattern.lines) == 0:
@@ -496,10 +494,9 @@ def explode_hatch_pattern(
     ocs = hatch.ocs()
     elevation = hatch.dxf.elevation.z
     paths = hatch_boundary_paths(hatch)
-    polygons = [Vec2.list(p.flattening(max_flattening_distance)) for p in paths]
-    # All polygons in OCS!
+    # All paths in OCS!
     for baseline in pattern_baselines(hatch):
-        for line in hatch_polygons(baseline, polygons):
+        for line in hatch_paths(baseline, paths):
             line_pattern = baseline.pattern_renderer(line.distance)
             for s, e in line_pattern.render(line.start, line.end):
                 if ocs.transform:
