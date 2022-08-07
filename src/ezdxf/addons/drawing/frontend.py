@@ -488,10 +488,7 @@ class Frontend:
         ocs = polygon.ocs()
         elevation = polygon.dxf.elevation.z
 
-        polygons = [
-            Vec2.list(p.flattening(self.config.max_flattening_distance))
-            for p in ignore_text_boxes(paths)
-        ]
+        paths = list(ignore_text_boxes(paths))
         properties.linetype_pattern = tuple()
         lines: List[Tuple[Vec3, Vec3]] = []
 
@@ -507,7 +504,7 @@ class Frontend:
             return False
 
         for baseline in hatching.pattern_baselines(polygon):
-            for line in hatching.hatch_polygons(baseline, polygons, timeout):
+            for line in hatching.hatch_paths(baseline, paths, timeout):
                 line_pattern = baseline.pattern_renderer(line.distance)
                 for s, e in line_pattern.render(line.start, line.end):
                     if ocs.transform:
