@@ -539,7 +539,7 @@ class Frontend:
         polygon = cast(DXFPolygon, entity)
         if filling.type == Filling.PATTERN:
             if loops is None:
-                loops = hatching.hatch_paths(polygon)
+                loops = hatching.hatch_boundary_paths(polygon)
             self.draw_hatch_pattern(polygon, loops, properties)
             return
 

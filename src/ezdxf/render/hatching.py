@@ -24,7 +24,7 @@ from ezdxf.math import (
     intersection_ray_cubic_bezier_2d,
     quadratic_to_cubic_bezier,
 )
-from ezdxf.path import Path, Command
+from ezdxf.path import Path, LineTo, MoveTo, Curve3To, Curve4To
 
 if TYPE_CHECKING:
     from ezdxf.entities.polygon import DXFPolygon
@@ -359,8 +359,8 @@ def intersect_path(
                 distances, baseline.normal_distance
             ):
                 hatch_line = baseline.hatch_line(hatch_line_distance)
-                yield from hatch_line.intersect_cubic_bezier_curve(path_element)
-
+                for ip in hatch_line.intersect_cubic_bezier_curve(path_element):
+                    yield ip, hatch_line_distance
         else:  # line
             a, b = Vec2.generate(path_element)
             dist_a = baseline.signed_distance(a)
@@ -369,26 +369,36 @@ def intersect_path(
                 (dist_a, dist_b), baseline.normal_distance
             ):
                 hatch_line = baseline.hatch_line(hatch_line_distance)
-                yield hatch_line.intersect_line(a, b, dist_a, dist_b)
+                ip = hatch_line.intersect_line(a, b, dist_a, dist_b)
+                if (
+                    ip.type != IntersectionType.NONE
+                    and ip.type != IntersectionType.COLLINEAR
+                ):
+                    yield ip, hatch_line_distance
 
 
 def _path_elements(path: Path) -> Union[Bezier4P, Tuple[Vec2, Vec2]]:
-
     if len(path) == 0:
         return
     start = path.start
+    path_start = start
     for command in path.commands():
-        end = command[0]
-        if command.type == Command.MOVE_TO:
-            start = end
-            continue
-        elif command.type == Command.LINE_TO:
+        end = command.end
+        if isinstance(command, MoveTo):
+            if not path_start.isclose(start):
+                yield start, path_start  # close sub-path
+            path_start = end
+        elif isinstance(command, LineTo) and not start.isclose(end):
             yield start, end
-        elif command.type == Command.CURVE4_TO:
-            yield Bezier3P(start, command[1], command[2], end)
-        elif command.type == Command.CURVE3_TO:
-            curve3 = Bezier3P(start, command[1], end)
+        elif isinstance(command, Curve4To):
+            yield Bezier4P((start, command.ctrl1, command.ctrl2, end))
+        elif isinstance(command, Curve3To):
+            curve3 = Bezier3P((start, command.ctrl, end))
             yield quadratic_to_cubic_bezier(curve3)
+        start = end
+
+    if not path_start.isclose(start):  # close path
+        yield start, path_start
 
 
 def hatch_paths(
@@ -485,7 +495,7 @@ def explode_hatch_pattern(
         return
     ocs = hatch.ocs()
     elevation = hatch.dxf.elevation.z
-    paths = hatch_paths(hatch)
+    paths = hatch_boundary_paths(hatch)
     polygons = [Vec2.list(p.flattening(max_flattening_distance)) for p in paths]
     # All polygons in OCS!
     for baseline in pattern_baselines(hatch):
@@ -499,7 +509,8 @@ def explode_hatch_pattern(
                 yield s, e
 
 
-def hatch_paths(polygon: DXFPolygon) -> List[Path]:
+def hatch_boundary_paths(polygon: DXFPolygon) -> List[Path]:
+    """Returns the hatch boundary paths of HATCH and MPOLYGON entities."""
     from ezdxf.path import from_hatch_boundary_path
 
     loops = []
@@ -513,6 +524,7 @@ def hatch_paths(polygon: DXFPolygon) -> List[Path]:
 
 
 def pattern_baselines(polygon: DXFPolygon) -> Iterator[HatchBaseLine]:
+    """Yields the hatch pattern baselines of HATCH and MPOLYGON entities."""
     pattern = polygon.pattern
     if not pattern:
         return
