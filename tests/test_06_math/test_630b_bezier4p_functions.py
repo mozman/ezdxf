@@ -261,3 +261,21 @@ class TestRayCubicBezierCurve2dIntersection:
             (5.323790007724451, 0.0),
         )
         assert all(p.isclose(e) for e, p in zip(expected, points)) is True
+
+    def test_collinear_ray_and_curve(self):
+        curve = Bezier4P([(0, 0), (1, 0), (2, 0), (3, 0)])
+        ip = intersection_ray_cubic_bezier_2d((0, 0), (1, 0), curve)
+        assert len(ip) == 1
+        assert ip[0].isclose((0, 0))  # ???
+
+    @pytest.mark.parametrize("x", [0, 0.5, 1, 3])
+    def test_linear_ray_and_curve(self, x):
+        curve = Bezier4P([(0, 0), (1, 0), (2, 0), (3, 0)])
+        # ray defined in +y direction
+        ip = intersection_ray_cubic_bezier_2d((x, -1), (x, 0), curve)
+        assert len(ip) == 1
+        assert ip[0].isclose((x, 0))
+        # ray defined in -y direction
+        ip = intersection_ray_cubic_bezier_2d((x, 2), (x, 1), curve)
+        assert len(ip) == 1
+        assert ip[0].isclose((x, 0))
