@@ -3,7 +3,6 @@
 from __future__ import annotations
 from typing import (
     Iterator,
-    Iterable,
     Sequence,
     List,
     Tuple,
@@ -72,6 +71,7 @@ class Line:
 
 @dataclasses.dataclass(frozen=True)
 class Intersection:
+    """Represents an intersection."""
     type: IntersectionType = IntersectionType.NONE
     p0: Vec2 = NONE_VEC2
     p1: Vec2 = NONE_VEC2
@@ -87,9 +87,17 @@ def side_of_line(distance: float, abs_tol=1e-12) -> int:
 
 @dataclasses.dataclass(frozen=True)
 class HatchLine:
+    """Represents a single hatch line.
+
+    Args:
+        origin: the origin of the hatch line as :class:`~ezdxf.math.Vec2` instance
+        direction: the hatch line direction as :class:`~ezdxf.math.Vec2` instance, must not (0, 0)
+        distance: the normal distance to the base hatch line as float
+
+    """
     origin: Vec2
     direction: Vec2
-    distance: float  # normal distance to the hatch baseline
+    distance: float
 
     def intersect_line(
         self,
@@ -98,9 +106,20 @@ class HatchLine:
         dist_a: float,
         dist_b: float,
     ) -> Intersection:
-        """Returns the intersection of this hatch line with the line (a, b).
-        The arguments `dist_a` and `dist_b` are the normal distances of the
-        points a,b from the hatch baseline.
+        """Returns the :class:`Intersection` of this hatch line and the line
+        defined by the points `a` and `b`.
+        The arguments `dist_a` and `dist_b` are the signed normal distances of
+        the points `a` and `b` from the hatch baseline.
+        The normal distances from the baseline are easy to calculate by the
+        :meth:`HatchBaseLine.signed_distance` method and allow a fast
+        intersection calculation by a simple point interpolation.
+
+        Args:
+            a: start point of the line as :class:`~ezdxf.math.Vec2` instance
+            b: end point of the line as :class:`~ezdxf.math.Vec2` instance
+            dist_a: normal distance of point `a` to the hatch baseline as float
+            dist_b: normal distance of point `b` to the hatch baseline as float
+
         """
         # all distances are normal distances to the hatch baseline
         line_distance = self.distance
@@ -121,8 +140,12 @@ class HatchLine:
     def intersect_cubic_bezier_curve(
         self, curve: Bezier4P
     ) -> Sequence[Intersection]:
-        """Returns the intersection of this hatch line with a cubic Bèzier
-        curve.
+        """Returns 0 to 3 :class:`Intersection` points of this hatch line with
+        a cubic Bèzier curve.
+
+        Args:
+            curve: the cubic Bèzier curve as :class:`ezdxf.math.Bezier4P` instance
+
         """
         return [
             Intersection(IntersectionType.REGULAR, p, NONE_VEC2)
@@ -134,14 +157,24 @@ class HatchLine:
 
 class PatternRenderer:
     """
-    A hatch pattern has one or more hatch baselines with an origin,
-    direction, offset and line pattern.
-    The origin is the starting point of the hatch line and also the starting
-    point of the line pattern. The offset defines the origin of the adjacent
+    The hatch pattern of a DXF entity has one or more :class:`HatchBaseLine`
+    instances with an origin, direction, offset and line pattern.
+    The :class:`PatternRenderer` for a certain distance from the
+    baseline has to be acquired from the :class:`HatchBaseLine` by the
+    :meth:`~HatchBaseLine.pattern_renderer` method.
+
+    The origin of the hatch line is the starting point of the line
+    pattern. The offset defines the origin of the adjacent
     hatch line and doesn't have to be orthogonal to the hatch line direction.
 
-    Line pattern is a list of floats, where a value > 0.0 is a dash, a
-    value < 0.0 is a gap and value == 0.0 is a point.
+    **Line Pattern**
+
+    The line pattern is a sequence of floats, where a value > 0.0 is a dash, a
+    value < 0.0 is a gap and value of 0.0 is a point.
+
+    Args:
+        hatch_line: :class:`HatchLine`
+        pattern: the line pattern as sequence of float values
 
     """
 
@@ -155,6 +188,15 @@ class PatternRenderer:
         return self.origin + self.direction * (self.pattern_length * index)
 
     def render(self, start: Vec2, end: Vec2) -> Iterator[Tuple[Vec2, Vec2]]:
+        """Yields the pattern lines as pairs of :class:`~ezdxf.math.Vec2`
+        instances from the start- to the end point on the hatch line.
+        For points the start- and end point are the same :class:`~ezdxf.math.Vec2`
+        instance and can be tested by the ``is`` operator.
+
+        The start- and end points should be located collinear at the hatch line
+        of this instance, otherwise the points a projected onto this hatch line.
+
+        """
         if start.isclose(end):
             return
         length = self.pattern_length
@@ -231,6 +273,21 @@ class PatternRenderer:
 
 
 class HatchBaseLine:
+    """A hatch baseline defines the source line for hatching a geometry.
+    A complete hatch pattern of a DXF entity can consist of one or more hatch
+    baselines.
+
+    Args:
+        origin: the origin of the hatch line as :class:`~ezdxf.math.Vec2` instance
+        direction: the hatch line direction as :class:`~ezdxf.math.Vec2` instance, must not (0, 0)
+        offset: the offset of the hatch line origin to the next or to the previous hatch line
+        line_pattern: line pattern as sequence of floats, see also :class:`PatternRenderer`
+
+    Raises:
+        HatchLineDirectionError: hatch baseline has no direction, (0, 0) vector
+        DenseHatchingLinesError: hatching lines are too narrow
+
+    """
     def __init__(
         self,
         origin: Vec2,
@@ -242,7 +299,7 @@ class HatchBaseLine:
         try:
             self.direction = direction.normalize()
         except ZeroDivisionError:
-            raise HatchLineDirectionError("hatch line has no direction")
+            raise HatchLineDirectionError("hatch baseline has no direction")
         self.offset = offset
         self.normal_distance: float = (-offset).det(self.direction - offset)
         if abs(self.normal_distance) < MIN_HATCH_LINE_DISTANCE:
@@ -257,20 +314,22 @@ class HatchBaseLine:
         )
 
     def hatch_line(self, distance: float) -> HatchLine:
-        """Returns the hatch line at the given signed `distance`."""
+        """Returns the :class:`HatchLine` at the given signed `distance`."""
         factor = distance / self.normal_distance
         return HatchLine(
             self.origin + self.offset * factor, self.direction, distance
         )
 
     def signed_distance(self, point: Vec2) -> float:
-        """Returns the signed normal distance of the given point to the hatch
-        baseline.
+        """Returns the signed normal distance of the given `point` from this
+        hatch baseline.
         """
         # denominator (_end - origin).magnitude is 1.0 !!!
         return (self.origin - point).det(self._end - point)
 
     def pattern_renderer(self, distance: float) -> PatternRenderer:
+        """Returns the :class:`PatternRenderer` for the given signed `distance`.
+        """
         return PatternRenderer(self.hatch_line(distance), self.line_pattern)
 
 

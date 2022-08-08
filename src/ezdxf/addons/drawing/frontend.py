@@ -487,8 +487,6 @@ class Frontend:
             return
         ocs = polygon.ocs()
         elevation = polygon.dxf.elevation.z
-
-        paths = list(ignore_text_boxes(paths))
         properties.linetype_pattern = tuple()
         lines: List[Tuple[Vec3, Vec3]] = []
 
@@ -536,7 +534,9 @@ class Frontend:
         polygon = cast(DXFPolygon, entity)
         if filling.type == Filling.PATTERN:
             if loops is None:
-                loops = hatching.hatch_boundary_paths(polygon)
+                loops = hatching.hatch_boundary_paths(
+                    polygon, filter_text_boxes=True
+                )
             self.draw_hatch_pattern(polygon, loops, properties)
             return
 
@@ -570,7 +570,8 @@ class Frontend:
                 ignore_text_boxes(external_paths), holes, properties
             )
         elif holes:
-            # First path is the exterior path, everything else is a hole
+            # The first path is considered the exterior path, everything else is
+            # holes.
             self.out.draw_filled_paths([holes[0]], holes[1:], properties)
 
     def draw_mpolygon_entity(self, entity: DXFGraphic, properties: Properties):
