@@ -3,8 +3,8 @@
 
 import pytest
 import math
-from ezdxf.math import basic_transformation, BoundingBox
-from ezdxf.path import shapes, bbox
+from ezdxf.math import basic_transformation, BoundingBox, Matrix44
+from ezdxf.path import shapes, bbox, triangulate
 
 
 def test_unit_circle():
@@ -135,6 +135,13 @@ def test_helix_negative_pitch_goes_down(ccw):
     assert bbox.extmax.isclose((2, 2, 0))
     assert bbox.extmin.isclose((-2, -2, -10))
     assert h.end.isclose((2, 0, -10))
+
+
+def test_triangulate_doughnut():
+    circle0 = shapes.unit_circle(segments=8)
+    circle1 = circle0.transform(Matrix44.scale(3))
+    triangles = list(triangulate([circle1, circle0], 0.01))
+    assert len(triangles) == 258
 
 
 if __name__ == "__main__":

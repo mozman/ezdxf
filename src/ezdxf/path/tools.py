@@ -5,6 +5,7 @@ from typing import (
     TYPE_CHECKING,
     List,
     Iterable,
+    Iterator,
     Tuple,
     Optional,
     Sequence,
@@ -12,6 +13,7 @@ from typing import (
 
 import math
 from ezdxf.math import (
+    Vec2,
     Vec3,
     UVec,
     Z_AXIS,
@@ -32,12 +34,12 @@ from ezdxf.math import (
     cubic_bezier_bbox,
     quadratic_bezier_bbox,
 )
-
+from ezdxf.math.triangulation import mapbox_earcut_2d
 from ezdxf.query import EntityQuery
 
 from .path import Path
 from .commands import Command
-from . import converter
+from . import converter, nesting
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Layout, EntityQuery
@@ -69,6 +71,7 @@ __all__ = [
     "polygonal_fillet",
     "chamfer",
     "chamfer2",
+    "triangulate",
 ]
 
 MAX_DISTANCE = 0.01
@@ -997,3 +1000,18 @@ def chamfer2(points: Sequence[Vec3], a: float, b: float) -> Path:
         p.line_to(p2 + (dir2 * b))
     p.line_to(points[-1])
     return p
+
+
+def triangulate(
+    paths: Iterable[Path], max_flattening_distance: float = 0.01
+) -> Iterator[Sequence[Vec2]]:
+    """Tessellate nested 2D paths into triangle-faces. For 3D paths the
+    projection onto the xy-plane will be triangulated.
+
+    .. versionadded:: 0.18.1
+
+    """
+    for polygon in nesting.group_paths(single_paths(paths)):
+        exterior = polygon[0].flattening(max_flattening_distance)
+        holes = [p.flattening(max_flattening_distance) for p in polygon[1:]]
+        yield from mapbox_earcut_2d(exterior, holes)

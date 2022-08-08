@@ -144,17 +144,17 @@ Render Functions
 Functions to create DXF entities from paths and add them to the modelspace, a
 paperspace layout or a block definition.
 
-.. autofunction:: render_lwpolylines
-
-.. autofunction:: render_polylines2d
-
 .. autofunction:: render_hatches
+
+.. autofunction:: render_lines
+
+.. autofunction:: render_lwpolylines
 
 .. autofunction:: render_mpolygons
 
-.. autofunction:: render_polylines3d
+.. autofunction:: render_polylines2d
 
-.. autofunction:: render_lines
+.. autofunction:: render_polylines3d
 
 .. autofunction:: render_splines_and_polylines
 
@@ -163,17 +163,17 @@ Entity Maker
 
 Functions to create DXF entities from paths.
 
-.. autofunction:: to_lwpolylines
-
-.. autofunction:: to_polylines2d
-
 .. autofunction:: to_hatches
+
+.. autofunction:: to_lines
+
+.. autofunction:: to_lwpolylines
 
 .. autofunction:: to_mpolygons
 
-.. autofunction:: to_polylines3d
+.. autofunction:: to_polylines2d
 
-.. autofunction:: to_lines
+.. autofunction:: to_polylines3d
 
 .. autofunction:: to_splines_and_polylines
 
@@ -192,14 +192,6 @@ Functions to create construction tools.
 Utility Functions
 -----------------
 
-.. autofunction:: transform_paths
-
-.. autofunction:: transform_paths_to_ocs
-
-.. autofunction:: bbox
-
-.. autofunction:: fit_paths_into_box
-
 .. autofunction:: add_bezier3p
 
 .. autofunction:: add_bezier4p
@@ -208,15 +200,7 @@ Utility Functions
 
 .. autofunction:: add_spline
 
-.. autofunction:: to_multi_path
-
-.. autofunction:: single_paths
-
-.. autofunction:: have_close_control_vertices
-
-.. autofunction:: lines_to_curve3
-
-.. autofunction:: lines_to_curve4
+.. autofunction:: bbox
 
 .. autofunction:: chamfer
 
@@ -224,7 +208,25 @@ Utility Functions
 
 .. autofunction:: fillet
 
+.. autofunction:: fit_paths_into_box
+
+.. autofunction:: have_close_control_vertices
+
+.. autofunction:: lines_to_curve3
+
+.. autofunction:: lines_to_curve4
+
 .. autofunction:: polygonal_fillet
+
+.. autofunction:: single_paths
+
+.. autofunction:: to_multi_path
+
+.. autofunction:: transform_paths
+
+.. autofunction:: transform_paths_to_ocs
+
+.. autofunction:: triangulate
 
 Basic Shapes
 ------------

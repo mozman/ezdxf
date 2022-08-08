@@ -10,6 +10,7 @@ Version 0.18.1b0 - dev
 - NEW: `ezdxf.render.forms.turtle()` function to create 2D polyline vertices by 
   turtle-graphic like commands
 - NEW: sub-command `ezdxf pillow` to draw and convert DXF files by `Pillow`
+- NEW: `ezdxf.path.triangulate()`, tessellate (nested) paths into triangle-faces
 - BUGFIX: CPython implementation of `Vec2()` was not immutable at inplace 
   operations `+=`, `-=`, `*=` and `/=` like the Cython implementation
 - BUGFIX: fixed bounding box calculation for `LinePrimitive()`
