@@ -86,6 +86,10 @@ VALID_VERSIONS = {
     "ACAD2018",
 }
 
+WINDOWS = "Windows"
+LINUX = "Linux"
+DARWIN = "Darwin"
+
 
 def is_installed() -> bool:
     """Returns ``True`` if the ODAFileConverter is installed.
@@ -93,7 +97,7 @@ def is_installed() -> bool:
     .. versionadded:: 0.18
 
     """
-    if platform.system() in ("Linux", "Darwin"):
+    if platform.system() in (LINUX, DARWIN):
         return shutil.which("ODAFileConverter") is not None
     # Windows:
     return os.path.exists(win_exec_path)
@@ -367,7 +371,7 @@ def _get_odafc_path(system: str) -> str:
 
     """
     path = shutil.which("ODAFileConverter")
-    if not path and system == "Windows":
+    if not path and system == WINDOWS:
         path = win_exec_path
         if not Path(path).is_file():
             path = None
@@ -419,7 +423,7 @@ def _run_with_no_gui(
         odafc.ODAFCNotInstalledError: ODA File Converter not installed
 
     """
-    if system == "Linux":
+    if system == LINUX:
         with _linux_dummy_display() as display:
             env = os.environ.copy()
             env["DISPLAY"] = display
@@ -431,7 +435,7 @@ def _run_with_no_gui(
             )
             proc.wait()
 
-    elif system == "Darwin":
+    elif system == DARWIN:
         # TODO: unknown how to prevent the GUI from appearing on macOS
         proc = subprocess.Popen(
             [command] + arguments,
@@ -440,7 +444,7 @@ def _run_with_no_gui(
         )
         proc.wait()
 
-    elif system == "Windows":
+    elif system == WINDOWS:
         # New code from George-Jiang to solve the GUI pop-up problem
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags = (
@@ -464,7 +468,7 @@ def _run_with_no_gui(
 def _odafc_failed(system: str, proc: subprocess.Popen, stderr: str) -> bool:
     # changed v0.18.1, see https://github.com/mozman/ezdxf/issues/707
     stderr = stderr.strip()
-    if system == "Linux":
+    if system == LINUX:
         # ODAFileConverter *always* crashes on Linux even if the output was successful
         return stderr != "" and stderr != "Quit (core dumped)"
     elif proc.returncode != 0:
