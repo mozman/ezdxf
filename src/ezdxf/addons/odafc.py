@@ -432,7 +432,7 @@ def _run_with_no_gui(
             proc.wait()
 
     elif system == "Darwin":
-        # TODO: unknown how to prevent the GUI from appearing on OSX
+        # TODO: unknown how to prevent the GUI from appearing on macOS
         proc = subprocess.Popen(
             [command] + arguments,
             stdout=subprocess.PIPE,
@@ -455,12 +455,14 @@ def _run_with_no_gui(
         )
         proc.wait()
     else:
-        # ODAFileConverter only has Linux, OSX and Windows versions
+        # The OpenDesign Alliance only provides executables for Linux, macOS
+        # and Windows:
         raise UnsupportedPlatform(f"Unsupported platform: {system}")
     return proc
 
 
 def _odafc_failed(system: str, proc: subprocess.Popen, stderr: str) -> bool:
+    # changed v0.18.1, see https://github.com/mozman/ezdxf/issues/707
     stderr = stderr.strip()
     if system == "Linux":
         # ODAFileConverter *always* crashes on Linux even if the output was successful
