@@ -25,3 +25,5 @@ forms.
     point
     mleader
     arrows
+    hatching
+

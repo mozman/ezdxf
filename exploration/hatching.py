@@ -131,7 +131,7 @@ def explode_hatch_pattern(filename: str):
     attribs = {"layer": "EXPLODE", "color": ezdxf.colors.RED}
     t0 = time.perf_counter()
     for hatch in msp.query("HATCH"):
-        for start, end in hatching.explode_hatch_pattern(hatch):  # type: ignore
+        for start, end in hatching.hatch_entity(hatch):  # type: ignore
             msp.add_line(start, end, attribs)
     t1 = time.perf_counter()
     print(f"Exploding hatch pattern took: {t1-t0:.3}s")
@@ -262,7 +262,7 @@ def debug_hatch():
         is_closed=1,
         flags=3,
     )
-    for start, end in hatching.explode_hatch_pattern(e, 1):  # type: ignore
+    for start, end in hatching.hatch_entity(e, 1):  # type: ignore
         msp.add_line(start, end)
 
 

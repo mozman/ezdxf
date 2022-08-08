@@ -349,7 +349,7 @@ def test_explode_earth1_pattern():
         is_closed=1,
         flags=3,
     )
-    lines = list(hatching.explode_hatch_pattern(hatch))
+    lines = list(hatching.hatch_entity(hatch))
     assert len(lines) == 139
 
 
