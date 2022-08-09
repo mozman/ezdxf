@@ -7,7 +7,6 @@ from typing import (
     Iterator,
     Union,
     Tuple,
-    Sequence,
 )
 
 from ezdxf.math import (
@@ -15,7 +14,6 @@ from ezdxf.math import (
     UVec,
     intersection_line_line_2d,
     has_clockwise_orientation,
-    point_to_line_relation,
     TOLERANCE,
 )
 import enum
@@ -45,9 +43,9 @@ class ClippingPolygon2d:
 
     def clip(self, polygon: Iterable[Vec2]) -> List[Vec2]:
         def is_inside(point: Vec2) -> bool:
-            return (
-                point_to_line_relation(point, clip_start, clip_end) == -1
-            )  # left of line
+            return (clip_end.x - clip_start.x) * (point.y - clip_start.y) - (
+                clip_end.y - clip_start.y
+            ) * (point.x - clip_start.x) > 0.0  # left of line
 
         def edge_intersection() -> Vec2:
             return intersection_line_line_2d(

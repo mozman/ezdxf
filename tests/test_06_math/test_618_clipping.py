@@ -88,5 +88,13 @@ def test_rect_inside_circle(rect):
         assert any(r.isclose(v) for r in result) is True
 
 
+def test_clip_a_single_line(rect):
+    line = [(0.5, 0), (2, 0)]
+    result = clip_polygon_2d(rect, line, ccw_check=False)
+    assert len(result) == 2
+    assert result[0].isclose((1.0, 0))
+    assert result[1].isclose((0.5, 0))
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
