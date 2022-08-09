@@ -24,6 +24,7 @@ __all__ = [
     "greiner_hormann_difference",
     "greiner_hormann_intersection",
     "ClippingPolygon2d",
+    "ClippingRect2d",
 ]
 
 
@@ -39,22 +40,23 @@ class ClippingPolygon2d:
             )
         if ccw_check and has_clockwise_orientation(clip):
             clip.reverse()
-        self.clipping_polygon: List[Vec2] = clip
+        self._clipping_polygon: List[Vec2] = clip
 
     def clip(self, polygon: Iterable[Vec2]) -> List[Vec2]:
         def is_inside(point: Vec2) -> bool:
+            # is point left of line:
             return (clip_end.x - clip_start.x) * (point.y - clip_start.y) - (
                 clip_end.y - clip_start.y
-            ) * (point.x - clip_start.x) > 0.0  # left of line
+            ) * (point.x - clip_start.x) > 0.0
 
         def edge_intersection() -> Vec2:
             return intersection_line_line_2d(
                 (edge_start, edge_end), (clip_start, clip_end)
             )
 
-        clip_start = self.clipping_polygon[-1]
+        clip_start = self._clipping_polygon[-1]
         clipped = list(polygon)
-        for clip_end in self.clipping_polygon:
+        for clip_end in self._clipping_polygon:
             # next clipping edge to test: clip_start -> clip_end
             if not clipped:  # no subject vertices left to test
                 break
@@ -76,6 +78,22 @@ class ClippingPolygon2d:
                 edge_start = edge_end
             clip_start = clip_end
         return clipped
+
+
+class ClippingRect2d:
+    def __init__(self, lower_left: Vec2, upper_right: Vec2):
+        self._clipping_polygon = ClippingPolygon2d(
+            [
+                lower_left,
+                Vec2(upper_right.x, lower_left.y),
+                upper_right,
+                Vec2(lower_left.x, upper_right.y),
+            ],
+            ccw_check=False,
+        )
+
+    def clip(self, polygon: Iterable[Vec2]) -> List[Vec2]:
+        return self._clipping_polygon.clip(polygon)
 
 
 def clip_polygon_2d(
