@@ -339,7 +339,7 @@ class Frontend:
 
     def draw_complex_mtext(self, mtext: MText, properties: Properties) -> None:
         """Draw the content of a MTEXT entity including inline formatting codes."""
-        complex_mtext_renderer(self.ctx, self._designer, mtext, properties)  # type: ignore
+        complex_mtext_renderer(self.ctx, self._designer, mtext, properties)
 
     def draw_curve_entity(
         self, entity: DXFGraphic, properties: Properties
