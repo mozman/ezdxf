@@ -1,6 +1,7 @@
 # Copyright (c) 2019-2021 Manfred Moitzi
 # License: MIT License
-from typing import TYPE_CHECKING, List, Iterable
+from typing import TYPE_CHECKING, List, Iterable, Tuple
+import math
 from ezdxf.lldxf import validator
 from ezdxf.lldxf import const
 from ezdxf.lldxf.attributes import (
@@ -20,7 +21,7 @@ from ezdxf.lldxf.const import (
     DXFValueError,
     DXFTableEntryError,
 )
-from ezdxf.math import Vec3, Vec2, NULLVEC, X_AXIS, Y_AXIS, Z_AXIS
+from ezdxf.math import Vec3, Vec2, NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
 from ezdxf.tools import set_flag_state
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -279,17 +280,17 @@ class Viewport(DXFGraphic):
         return -1
 
     def freeze(self, layer_name: str) -> None:
-        """Freeze `layer_name` in this viewport. """
+        """Freeze `layer_name` in this viewport."""
         index = self._layer_index(layer_name)
         if index == -1:
             self._frozen_layers.append(layer_name)
 
     def is_frozen(self, layer_name: str) -> bool:
-        """Returns ``True`` if `layer_name` id frozen in this viewport. """
+        """Returns ``True`` if `layer_name` id frozen in this viewport."""
         return self._layer_index(layer_name) != -1
 
     def thaw(self, layer_name: str) -> None:
-        """Thaw `layer_name` in this viewport. """
+        """Thaw `layer_name` in this viewport."""
         index = self._layer_index(layer_name)
         if index != -1:
             del self._frozen_layers[index]
@@ -528,7 +529,10 @@ class Viewport(DXFGraphic):
             for name in self.frozen_layers
         ]
 
-    def boundary_path(self) -> List[Vec3]:
+    def clipping_path(self) -> List[Vec3]:
+        """Returns the clipping path as list of vertices. Returns the default
+        clipping rectangle if no clipping path is defined.
+        """
         center = self.dxf.center
         cx = center.x
         cy = center.y
@@ -542,9 +546,48 @@ class Viewport(DXFGraphic):
             Vec3(cx - width2, cy + height2),
         ]
 
+    def clipping_rect(self) -> Tuple[Vec3, Vec3]:
+        """Returns the lower left and the upper right corner of the clipping
+        rectangle.
+        """
+        center = self.dxf.center
+        cx = center.x
+        cy = center.y
+        width2 = self.dxf.width / 2
+        height2 = self.dxf.height / 2
+        return Vec3(cx - width2, cy - height2), Vec3(cx + width2, cy + height2)
+
+    @property
     def has_clipping_path(self) -> bool:
+        """Returns ``True`` if a clipping path is defined."""
         _flag = self.dxf.flags & const.VSF_NON_RECTANGULAR_CLIPPING
         if _flag:
             handle = self.dxf.clipping_boundary_handle
             return handle != "0"
         return False
+
+    def get_scale(self) -> float:
+        """Returns the scaling factor from modelspace to viewport."""
+        msp_height = self.dxf.view_height
+        if abs(msp_height) < 1e-12:
+            return 0.0
+        vp_height = self.dxf.height
+        return vp_height / msp_height
+
+    @property
+    def is_top_view(self) -> bool:
+        """Returns ``True`` if the viewport is a top view."""
+        view_direction: Vec3 = self.dxf.view_direction_vector
+        return view_direction.is_null or view_direction.isclose(Z_AXIS)
+
+    def get_transformation_matrix(self) -> Matrix44:
+        """Returns the transformation matrix from modelspace to viewport."""
+        # supports only top-view viewports yet!
+        scale = self.get_scale()
+        rotation_angle: float = self.dxf.view_twist_angle
+        msp_center_point: Vec3 = self.dxf.view_center_point
+        offset: Vec3 = self.dxf.center - (msp_center_point * scale)
+        m = Matrix44.scale(scale)
+        if rotation_angle:
+            m @= Matrix44.z_rotate(math.radians(rotation_angle))
+        return m @ Matrix44.translate(offset.x, offset.y, 0)

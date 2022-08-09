@@ -338,3 +338,35 @@ class TestFrozenLayers:
         vp.thaw("LayerB")
         assert vp.frozen_layers == ["MyLayer"]
 
+
+def test_is_top_view():
+    vp: Viewport = Viewport.from_text(ENTITY_R2000)
+    assert vp.is_top_view is True
+
+
+def test_get_scale():
+    vp: Viewport = Viewport.from_text(ENTITY_R2000)
+    assert vp.get_scale() == 1.0
+
+
+def test_get_transformation_matrix():
+    vp: Viewport = Viewport.from_text(ENTITY_R2000)
+    m = vp.get_transformation_matrix()
+    assert m.transform((1, 2, 3)).isclose((1, 2, 3))
+
+
+def test_has_clipping_path():
+    vp: Viewport = Viewport.from_text(ENTITY_R2000)
+    assert vp.has_clipping_path is False
+
+
+def test_clipping_path():
+    vp: Viewport = Viewport.from_text(ENTITY_R2000)
+    # the clipping rectangle as corner vertices
+    assert len(vp.clipping_path()) == 4
+
+
+def test_clipping_rect():
+    vp: Viewport = Viewport.from_text(ENTITY_R2000)
+    assert len(vp.clipping_rect()) == 2
+

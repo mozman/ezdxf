@@ -225,7 +225,7 @@ def _from_quadrilateral(solid: "Solid", **kwargs) -> "Path":
 
 @make_path.register(Viewport)
 def _from_viewport(vp: "Viewport", **kwargs) -> Path:
-    if vp.has_clipping_path():
+    if vp.has_clipping_path:
         handle = vp.dxf.clipping_boundary_handle
         if handle != "0" and vp.doc:  # exist
             db = vp.doc.entitydb
@@ -235,7 +235,7 @@ def _from_viewport(vp: "Viewport", **kwargs) -> Path:
                 if clipping_entity:  # exist
                     return make_path(clipping_entity, **kwargs)
     # Return bounding box:
-    return from_vertices(vp.boundary_path(), close=True)
+    return from_vertices(vp.clipping_path(), close=True)
 
 
 @make_path.register(Wipeout)

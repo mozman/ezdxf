@@ -95,26 +95,15 @@ def make(filename):
     return layout
 
 
-def get_transformation_matrix(vp: Viewport) -> Matrix44:
-    msp_height = vp.dxf.view_height
-    vp_height = vp.dxf.height
-    rotation_angle = vp.dxf.view_twist_angle
-    scale = vp_height / msp_height
-    msp_center_point = vp.dxf.view_center_point
-    offset = vp.dxf.center - (msp_center_point * scale)
-    m = Matrix44.scale(scale)
-    if rotation_angle:
-        m *= Matrix44.z_rotate(math.radians(rotation_angle))
-    return m @ Matrix44.translate(offset.x, offset.y, 0)
-
-
 def render_vp_border(vp: Viewport, msp: Modelspace):
     box = ConstructionBox(vp.dxf.center, vp.dxf.width, vp.dxf.height)
     msp.add_lwpolyline(box.corners, close=True)
 
 
 def render_viewport(vp: Viewport, msp: Modelspace):
-    m = get_transformation_matrix(vp)
+    assert vp.is_top_view is True
+    assert vp.get_scale() > 0.0
+    m = vp.get_transformation_matrix()
     for entity in vp.doc.modelspace():
         render_vp_border(vp, msp)
         copy = entity.copy()
