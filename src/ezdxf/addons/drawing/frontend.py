@@ -578,12 +578,8 @@ class Frontend:
         if not vp.is_top_view:
             self.log_message("Cannot render non top-view viewports")
             return
-        if self._designer.set_viewport(vp):
-            for entity in visible_vp_entities(vp):
-                properties = self._designer.resolve_vp_properties(entity)
-                self.draw_entity(entity, properties)
-            self._designer.reset_viewport()
-        else:  # viewports are not supported by the backend
+        if not self._designer.draw_viewport(vp):
+            # viewports are not supported by the backend
             self._draw_filled_rect(vp.clipping_path(), VIEWPORT_COLOR)
 
     def draw_ole2frame_entity(
@@ -760,14 +756,29 @@ class Designer:
         self.scale: float = 0.0
         self.clipping_path: List[Vec2] = []
 
+    def draw_viewport(self, vp: Viewport) -> bool:
+        """Draw the content of the given viewport current viewport.
+        Returns ``False`` if the backend doesn't support viewports.
+        """
+        if self.set_viewport(vp):
+            for entity in visible_vp_entities(vp):
+                properties = self.resolve_vp_properties(entity)
+                self.frontend.draw_entity(entity, properties)
+            self.reset_viewport()
+            return True
+        return False
+
     def set_viewport(self, vp: Viewport) -> bool:
+        """Set current viewport. Returns ``False`` if the backend doesn't
+        support viewports.
+        """
         self.scale = vp.get_scale()
         self.transformation = vp.get_transformation_matrix()
         self.clipping_path = Vec2.list(vp.clipping_path())
-        response = self.backend.set_clipping_path(self.clipping_path)
-        if not response:
+        if not self.backend.set_clipping_path(self.clipping_path):
             self.reset_viewport()
-        return response
+            return False
+        return True
 
     def reset_viewport(self) -> None:
         self.scale = 0.0
@@ -776,7 +787,7 @@ class Designer:
         self.backend.set_clipping_path(None)
 
     def resolve_vp_properties(self, entity: DXFGraphic) -> Properties:
-        # todo: layer overrides
+        # todo: resolve layer overrides
         return self.ctx.resolve_all(entity)
 
     def draw_point(self, pos: Vec3, properties: Properties) -> None:
