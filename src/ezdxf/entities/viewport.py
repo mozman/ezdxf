@@ -529,7 +529,7 @@ class Viewport(DXFGraphic):
             for name in self.frozen_layers
         ]
 
-    def clipping_path(self) -> List[Vec3]:
+    def clipping_path(self) -> List[Vec2]:
         """Returns the clipping path as list of vertices. Returns the default
         clipping rectangle if no clipping path is defined.
         """
@@ -540,13 +540,13 @@ class Viewport(DXFGraphic):
         height2 = self.dxf.height / 2
         # TODO: clipping path support for the Viewport entity
         return [
-            Vec3(cx - width2, cy - height2),
-            Vec3(cx + width2, cy - height2),
-            Vec3(cx + width2, cy + height2),
-            Vec3(cx - width2, cy + height2),
+            Vec2(cx - width2, cy - height2),
+            Vec2(cx + width2, cy - height2),
+            Vec2(cx + width2, cy + height2),
+            Vec2(cx - width2, cy + height2),
         ]
 
-    def clipping_rect(self) -> Tuple[Vec3, Vec3]:
+    def clipping_rect(self) -> Tuple[Vec2, Vec2]:
         """Returns the lower left and the upper right corner of the clipping
         rectangle.
         """
@@ -555,7 +555,7 @@ class Viewport(DXFGraphic):
         cy = center.y
         width2 = self.dxf.width / 2
         height2 = self.dxf.height / 2
-        return Vec3(cx - width2, cy - height2), Vec3(cx + width2, cy + height2)
+        return Vec2(cx - width2, cy - height2), Vec2(cx + width2, cy + height2)
 
     @property
     def has_clipping_path(self) -> bool:

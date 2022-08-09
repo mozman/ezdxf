@@ -306,7 +306,9 @@ class Frontend:
             for line, transform, cap_height in simplified_text_chunks(
                 entity, self.out, font=properties.font
             ):
-                self._designer.draw_text(line, transform, properties, cap_height)
+                self._designer.draw_text(
+                    line, transform, properties, cap_height
+                )
         else:
             raise TypeError(entity.dxftype())
 
@@ -563,34 +565,19 @@ class Frontend:
     def draw_viewport_entity(
         self, entity: DXFGraphic, properties: Properties
     ) -> None:
-        assert entity.dxftype() == "VIEWPORT"
+        assert isinstance(entity, Viewport)
+        vp = entity
         # Special VIEWPORT id == 1, this viewport defines the "active viewport"
         # which is the area currently shown in the layout tab by the CAD
         # application.
         # BricsCAD set id to -1 if the viewport is off and 'status' (group
         # code 68) is not present.
-        if entity.dxf.id < 2 or entity.dxf.status < 1:
+        if vp.dxf.id < 2 or vp.dxf.status < 1:
             return
-        dxf = entity.dxf
-        view_vector: Vec3 = dxf.view_direction_vector
-        mag = view_vector.magnitude
-        if math.isclose(mag, 0.0):
-            self.log_message("Warning: viewport with null view vector")
+        if not vp.is_top_view:
+            self.log_message("Cannot render non top-view viewports")
             return
-        view_vector /= mag
-        if not math.isclose(view_vector.dot(Vec3(0, 0, 1)), 1.0):
-            self.log_message(
-                f"Cannot render viewport with non-perpendicular view direction:"
-                f" {dxf.view_direction_vector}"
-            )
-            return
-
-        cx, cy = dxf.center.x, dxf.center.y
-        dx = dxf.width / 2
-        dy = dxf.height / 2
-        bottom_left = cx - dx, cy - dy
-        top_right = cx + dx, cy + dy
-        self._draw_rect(bottom_left, top_right, VIEWPORT_COLOR)
+        self._draw_filled_rect(vp.clipping_path(), VIEWPORT_COLOR)
 
     def draw_ole2frame_entity(
         self, entity: DXFGraphic, properties: Properties
@@ -598,30 +585,18 @@ class Frontend:
         ole2frame = cast(OLE2Frame, entity)
         bbox = ole2frame.bbox()
         if not bbox.is_empty:
-            self._draw_rect(
-                bbox.extmin.vec2, bbox.extmax.vec2, OLE2FRAME_COLOR  # type: ignore
-            )
+            self._draw_filled_rect(bbox.rect_vertices(), OLE2FRAME_COLOR)
 
-    def _draw_rect(
+    def _draw_filled_rect(
         self,
-        bottom_left: Tuple[float, float],
-        top_right: Tuple[float, float],
+        points: Iterable[Vec2],
         color: str,
     ) -> None:
-        minx, miny = bottom_left
-        maxx, maxy = top_right
-        points = [
-            (minx, miny),
-            (maxx, miny),
-            (maxx, maxy),
-            (minx, maxy),
-            (minx, miny),
-        ]
         props = Properties()
         props.color = color
         # default SOLID filling
         props.filling = Filling()
-        self._designer.draw_filled_polygon([Vec3(x, y, 0) for x, y in points], props)
+        self._designer.draw_filled_polygon(Vec3.list(points), props)
 
     def draw_mesh_entity(
         self, entity: DXFGraphic, properties: Properties
@@ -767,6 +742,7 @@ class Designer:
         - VIEWPORT rendering
 
     """
+
     def __init__(self, frontend: Frontend, backend: BackendInterface):
         self.frontend = frontend
         self.backend = backend
