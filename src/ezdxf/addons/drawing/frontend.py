@@ -3,6 +3,7 @@
 import math
 from typing import (
     Iterable,
+    Iterator,
     cast,
     Union,
     List,
@@ -577,7 +578,13 @@ class Frontend:
         if not vp.is_top_view:
             self.log_message("Cannot render non top-view viewports")
             return
-        self._draw_filled_rect(vp.clipping_path(), VIEWPORT_COLOR)
+        if self._designer.set_viewport(vp):
+            for entity in visible_vp_entities(vp):
+                properties = self._designer.resolve_vp_properties(entity)
+                self.draw_entity(entity, properties)
+            self._designer.reset_viewport()
+        else:  # viewports are not supported by the backend
+            self._draw_filled_rect(vp.clipping_path(), VIEWPORT_COLOR)
 
     def draw_ole2frame_entity(
         self, entity: DXFGraphic, properties: Properties
@@ -747,6 +754,7 @@ class Designer:
         self.frontend = frontend
         self.backend = backend
         self.config = frontend.config
+        self.ctx = frontend.ctx
         self.pattern_cache: Dict[PatternKey, Sequence[float]] = dict()
         self.transformation: Optional[Matrix44] = None
         self.scale: float = 0.0
@@ -767,7 +775,13 @@ class Designer:
         self.clipping_path.clear()
         self.backend.set_clipping_path(None)
 
+    def resolve_vp_properties(self, entity: DXFGraphic) -> Properties:
+        # todo: layer overrides
+        return self.ctx.resolve_all(entity)
+
     def draw_point(self, pos: Vec3, properties: Properties) -> None:
+        if self.transformation:
+            pos = self.transformation.transform(pos)
         self.backend.draw_point(pos, properties)
 
     def draw_line(self, start: Vec3, end: Vec3, properties: Properties):
@@ -775,10 +789,13 @@ class Designer:
             self.config.line_policy != LinePolicy.ACCURATE
             or len(properties.linetype_pattern) < 2  # CONTINUOUS
         ):
+            if self.transformation:
+                start = self.transformation.transform(start)
+                end = self.transformation.transform(end)
             self.backend.draw_line(start, end, properties)
         else:
             renderer = linetypes.LineTypeRenderer(self.pattern(properties))
-            self.backend.draw_solid_lines(
+            self.draw_solid_lines(  # including transformation
                 ((s, e) for s, e in renderer.line_segment(start, end)),
                 properties,
             )
@@ -786,6 +803,9 @@ class Designer:
     def draw_solid_lines(
         self, lines: Iterable[Tuple[Vec3, Vec3]], properties: Properties
     ) -> None:
+        if self.transformation:
+            t = self.transformation.transform
+            lines = [(t(p0), t(p1)) for p0, p1 in lines]
         self.backend.draw_solid_lines(lines, properties)
 
     def draw_path(self, path: Path, properties: Properties):
@@ -793,13 +813,15 @@ class Designer:
             self.config.line_policy != LinePolicy.ACCURATE
             or len(properties.linetype_pattern) < 2  # CONTINUOUS
         ):
+            if self.transformation:
+                path = path.transform(self.transformation)
             self.backend.draw_path(path, properties)
         else:
             renderer = linetypes.LineTypeRenderer(self.pattern(properties))
             vertices = path.flattening(
                 self.config.max_flattening_distance, segments=16
             )
-            self.backend.draw_solid_lines(
+            self.draw_solid_lines(
                 ((s, e) for s, e in renderer.line_segments(vertices)),
                 properties,
             )
@@ -810,11 +832,17 @@ class Designer:
         holes: Iterable[Path],
         properties: Properties,
     ) -> None:
+        if self.transformation:
+            paths = [p.transform(self.transformation) for p in paths]
+            holes = [h.transform(self.transformation) for h in holes]
         self.backend.draw_filled_paths(paths, holes, properties)
 
     def draw_filled_polygon(
         self, points: Iterable[Vec3], properties: Properties
     ) -> None:
+        if self.transformation:
+            t = self.transformation.transform
+            points = [t(p) for p in points]
         self.backend.draw_filled_polygon(points, properties)
 
     def draw_text(
@@ -824,6 +852,9 @@ class Designer:
         properties: Properties,
         cap_height: float,
     ) -> None:
+        if transform:
+            transform *= self.transformation
+            cap_height *= self.scale
         self.backend.draw_text(text, transform, properties, cap_height)
 
     def pattern(self, properties: Properties) -> Sequence[float]:
@@ -856,3 +887,15 @@ class Designer:
             if len(pattern) % 2:
                 pattern.pop()
             return pattern
+
+
+def visible_vp_entities(vp: Viewport) -> Iterator[DXFGraphic]:
+    def is_visible(e):
+        return True  # todo
+
+    doc = vp.doc
+    if doc is None:
+        return
+    for entity in doc.modelspace():
+        if is_visible(entity):
+            yield entity
