@@ -14,7 +14,7 @@ from ezdxf.addons.drawing.properties import Properties
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.entities import DXFGraphic
 from ezdxf.tools.text import replace_non_printable_characters
-from ezdxf.math import Vec3, Matrix44
+from ezdxf.math import Vec3, Matrix44, Vec2
 from ezdxf.path import Path
 
 if TYPE_CHECKING:
@@ -103,6 +103,14 @@ class BackendInterface(ABC):
     def finalize(self) -> None:
         raise NotImplementedError
 
+    @abstractmethod
+    def set_clipping_path(self, path: List[Vec2] = None) -> bool:
+        """Set the current clipping path.
+        Returns True if a clipping path is supported.
+        An empty path or None removes the clipping path.
+        """
+        raise NotImplementedError
+
 
 class Backend(BackendInterface, metaclass=ABCMeta):
     def __init__(self):
@@ -127,6 +135,10 @@ class Backend(BackendInterface, metaclass=ABCMeta):
     @abstractmethod
     def set_background(self, color: Color) -> None:
         raise NotImplementedError
+
+    def set_clipping_path(self, path: List[Vec2] = None) -> bool:
+        """Clipping path is not supported by default."""
+        return False
 
     @abstractmethod
     def draw_point(self, pos: Vec3, properties: Properties) -> None:
