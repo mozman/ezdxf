@@ -2,6 +2,7 @@
 #  License: MIT License
 from typing import cast
 from pathlib import Path
+import math
 import ezdxf
 from ezdxf import colors
 from ezdxf.math import Matrix44, ConstructionBox
@@ -48,12 +49,13 @@ def create_viewports(paperspace: Paperspace):
         "Scale=1:2", height=0.18, dxfattribs=txt_attribs
     ).set_placement((0, 5.2))
 
-    paperspace.add_viewport(
+    psp = paperspace.add_viewport(
         center=(8.5, 2.5),
         size=(5, 5),
         view_center_point=(10, 5),
         view_height=25,
     )
+    psp.dxf.view_twist_angle = 45
     paperspace.add_text(
         "Scale=1:5", height=0.18, dxfattribs=txt_attribs
     ).set_placement((6, 5.2))
@@ -96,10 +98,14 @@ def make(filename):
 def get_transformation_matrix(vp: Viewport) -> Matrix44:
     msp_height = vp.dxf.view_height
     vp_height = vp.dxf.height
+    rotation_angle = vp.dxf.view_twist_angle
     scale = vp_height / msp_height
     msp_center_point = vp.dxf.view_center_point
     offset = vp.dxf.center - (msp_center_point * scale)
-    return Matrix44.scale(scale) @ Matrix44.translate(offset.x, offset.y, 0)
+    m = Matrix44.scale(scale)
+    if rotation_angle:
+        m *= Matrix44.z_rotate(math.radians(rotation_angle))
+    return m @ Matrix44.translate(offset.x, offset.y, 0)
 
 
 def render_vp_border(vp: Viewport, msp: Modelspace):
