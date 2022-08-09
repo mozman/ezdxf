@@ -1,5 +1,6 @@
 #  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
+from __future__ import annotations
 from typing import (
     Iterable,
     List,
@@ -133,7 +134,7 @@ def clip_polygon_2d(
 class _Node:
     def __init__(
         self,
-        vtx: Union[Vec2, "_Node"],
+        vtx: Union[Vec2, _Node],
         alpha: float = 0.0,
         intersect=False,
         entry=True,
@@ -176,7 +177,7 @@ class IntersectionError(Exception):
     pass
 
 
-class _Polygon:
+class GHPolygon:
     first: _Node = None  # type: ignore
     max_x: float = 1e6
 
@@ -195,6 +196,15 @@ class _Polygon:
             node.next = first
             node.prev = last
             last.next = node
+
+    @staticmethod
+    def build(vertices: Iterable[UVec]) -> GHPolygon:
+        """Build a new GHPolygon from an iterable of vertices."""
+        polygon = GHPolygon()
+        _vertices = Vec2.list(vertices)
+        for v in _vertices:
+            polygon.add(_Node(v))
+        return polygon
 
     @staticmethod
     def insert(vertex: _Node, start: _Node, end: _Node):
@@ -246,16 +256,16 @@ class _Polygon:
                 return True
         return False
 
-    def union(self, clip: "_Polygon") -> List[List[Vec2]]:
+    def union(self, clip: GHPolygon) -> List[List[Vec2]]:
         return self.clip(clip, False, False)
 
-    def intersection(self, clip: "_Polygon") -> List[List[Vec2]]:
+    def intersection(self, clip: GHPolygon) -> List[List[Vec2]]:
         return self.clip(clip, True, True)
 
-    def difference(self, clip: "_Polygon") -> List[List[Vec2]]:
+    def difference(self, clip: GHPolygon) -> List[List[Vec2]]:
         return self.clip(clip, False, True)
 
-    def clip(self, clip: "_Polygon", s_entry, c_entry) -> List[List[Vec2]]:
+    def clip(self, clip: GHPolygon, s_entry, c_entry) -> List[List[Vec2]]:
         """Clip this polygon using another one as a clipper.
 
         This is where the algorithm is executed. It allows you to make
@@ -333,7 +343,7 @@ class _Polygon:
         clipped_polygons: List[List[Vec2]] = []
         while self.unprocessed():
             current: _Node = self.first_intersect  # type: ignore
-            clipped = _Polygon()
+            clipped = GHPolygon()
             clipped.add(_Node(current))
             while True:
                 current.set_checked()
@@ -366,8 +376,8 @@ def next_vertex_node(v: _Node) -> _Node:
     return c
 
 
-def is_inside_polygon(vertex: Vec2, polygon: "_Polygon") -> bool:
-    """Returns ``True`´ if  `vertex` is inside `polygon` (odd-even rule).
+def is_inside_polygon(vertex: Vec2, polygon: GHPolygon) -> bool:
+    """Returns ``True`` if  `vertex` is inside `polygon` (odd-even rule).
 
     This function calculates the "winding" number for a point, which
     represents the number of times a ray emitted from the point to
@@ -493,16 +503,8 @@ def greiner_hormann(
     .. versionadded:: 0.18
 
     """
-
-    def build(vertices) -> _Polygon:
-        polygon = _Polygon()
-        _vertices = Vec2.list(vertices)
-        for v in _vertices:
-            polygon.add(_Node(v))
-        return polygon
-
-    polygon1 = build(p1)
-    polygon2 = build(p2)
+    polygon1 = GHPolygon.build(p1)
+    polygon2 = GHPolygon.build(p2)
 
     if op == BooleanOperation.UNION:
         return polygon1.union(polygon2)
