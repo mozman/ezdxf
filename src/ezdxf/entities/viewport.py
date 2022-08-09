@@ -20,7 +20,7 @@ from ezdxf.lldxf.const import (
     DXFValueError,
     DXFTableEntryError,
 )
-from ezdxf.math import Vec3, Vec2, NULLVEC, X_AXIS, Y_AXIS
+from ezdxf.math import Vec3, Vec2, NULLVEC, X_AXIS, Y_AXIS, Z_AXIS
 from ezdxf.tools import set_flag_state
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -69,7 +69,7 @@ acdb_viewport = DefSubclass(
         "grid_spacing": DXFAttr(15, xtype=XType.point2d, default=Vec2(10, 10)),
         # View direction vector (WCS):
         "view_direction_vector": DXFAttr(
-            16, xtype=XType.point3d, default=NULLVEC
+            16, xtype=XType.point3d, default=Z_AXIS
         ),
         # View target point (in WCS):
         "view_target_point": DXFAttr(17, xtype=XType.point3d, default=NULLVEC),
