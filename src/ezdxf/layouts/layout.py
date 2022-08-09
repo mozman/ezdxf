@@ -450,14 +450,14 @@ class Paperspace(Layout):
         dxfattribs = dxfattribs or {}
         width, height = size
         attribs = {
-            "center": center,
-            "width": width,
-            "height": height,
-            "status": 1,  # by default highest priority (stack order)
+            "center": center,  # center in paperspace
+            "width": width,  # width in paperspace
+            "height": height,  # height in paperspace
+            "status": 1,  # has by default the highest priority (stack order)
             "layer": "VIEWPORTS",
             # use separated layer to turn off for plotting
-            "view_center_point": view_center_point,
-            "view_height": view_height,
+            "view_center_point": view_center_point,  # in modelspace
+            "view_height": view_height,  # in modelspace
         }
         attribs.update(dxfattribs)
         viewport = cast("Viewport", self.new_entity("VIEWPORT", attribs))
