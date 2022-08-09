@@ -7,6 +7,7 @@ from typing import (
     Iterator,
     Union,
     Tuple,
+    Sequence,
 )
 
 from ezdxf.math import (
@@ -24,7 +25,59 @@ __all__ = [
     "greiner_hormann_union",
     "greiner_hormann_difference",
     "greiner_hormann_intersection",
+    "ClippingPolygon2d",
 ]
+
+
+class ClippingPolygon2d:
+    def __init__(self, vertices: Iterable[Vec2], ccw_check=True):
+        clip = list(vertices)
+        if len(clip) > 1:
+            if clip[0].isclose(clip[-1]):
+                clip.pop()
+        if len(clip) < 3:
+            raise ValueError(
+                "more than 3 vertices as clipping polygon required"
+            )
+        if ccw_check and has_clockwise_orientation(clip):
+            clip.reverse()
+        self.clipping_polygon: List[Vec2] = clip
+
+    def clip(self, polygon: Iterable[Vec2]) -> List[Vec2]:
+        def is_inside(point: Vec2) -> bool:
+            return (
+                point_to_line_relation(point, clip_start, clip_end) == -1
+            )  # left of line
+
+        def edge_intersection() -> Vec2:
+            return intersection_line_line_2d(
+                (edge_start, edge_end), (clip_start, clip_end)
+            )
+
+        clip_start = self.clipping_polygon[-1]
+        clipped = list(polygon)
+        for clip_end in self.clipping_polygon:
+            # next clipping edge to test: clip_start -> clip_end
+            if not clipped:  # no subject vertices left to test
+                break
+
+            vertices = clipped.copy()
+            if len(vertices) > 1 and vertices[0].isclose(vertices[-1]):
+                vertices.pop()
+
+            clipped.clear()
+            edge_start = vertices[-1]
+            for edge_end in vertices:
+                # next polygon edge to test: edge_start -> edge_end
+                if is_inside(edge_end):
+                    if not is_inside(edge_start):
+                        clipped.append(edge_intersection())
+                    clipped.append(edge_end)
+                elif is_inside(edge_start):
+                    clipped.append(edge_intersection())
+                edge_start = edge_end
+            clip_start = clip_end
+        return clipped
 
 
 def clip_polygon_2d(
@@ -38,7 +91,7 @@ def clip_polygon_2d(
 
     Args:
         clip: the convex clipping polygon as iterable of vertices
-        subject: the polygon to clip as a iterable of vertices
+        subject: the polygon to clip as an iterable of vertices
         ccw_check: check if the clipping polygon is in counter-clockwise
             orientation if ``True``, set to ``False`` if the ccw check is done
             by the caller
@@ -51,51 +104,8 @@ def clip_polygon_2d(
     .. _Sutherland–Hodgman: https://de.wikipedia.org/wiki/Algorithmus_von_Sutherland-Hodgman
 
     """
-
-    def polygon(vertices: Iterable[UVec]) -> List[Vec2]:
-        _vertices = Vec2.list(vertices)
-        if len(_vertices) > 1:
-            if _vertices[0].isclose(_vertices[-1]):
-                _vertices.pop()
-        return _vertices
-
-    def is_inside(point: Vec2) -> bool:
-        return (
-            point_to_line_relation(point, clip_start, clip_end) == -1
-        )  # left of line
-
-    def edge_intersection() -> Vec2:
-        return intersection_line_line_2d(
-            (edge_start, edge_end), (clip_start, clip_end)
-        )
-
-    clipping_polygon = polygon(clip)
-    if ccw_check and has_clockwise_orientation(clipping_polygon):
-        clipping_polygon.reverse()
-    if len(clipping_polygon) > 2:
-        clip_start = clipping_polygon[-1]
-    else:
-        raise ValueError("invalid clipping polygon")
-    clipped = polygon(subject)
-
-    for clip_end in clipping_polygon:
-        # next clipping edge to test: clip_start -> clip_end
-        if not clipped:  # no subject vertices left to test
-            break
-        vertices = list(clipped)
-        clipped.clear()
-        edge_start = vertices[-1]
-        for edge_end in vertices:
-            # next polygon edge to test: edge_start -> edge_end
-            if is_inside(edge_end):
-                if not is_inside(edge_start):
-                    clipped.append(edge_intersection())
-                clipped.append(edge_end)
-            elif is_inside(edge_start):
-                clipped.append(edge_intersection())
-            edge_start = edge_end
-        clip_start = clip_end
-    return clipped
+    clipper = ClippingPolygon2d(Vec2.generate(clip), ccw_check)
+    return clipper.clip(Vec2.generate(subject))
 
 
 # Based on the paper "Efficient Clipping of Arbitrary Polygons" by
