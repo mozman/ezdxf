@@ -397,7 +397,7 @@ class Draw(Command):
             frontend = Frontend(ctx, out, config=config)
         t0 = time.perf_counter()
         if verbose:
-            print("drawing modelspace...")
+            print(f"drawing layout '{layout.name}' ...")
         frontend.draw_layout(layout, finalize=True)
         t1 = time.perf_counter()
         if verbose:
