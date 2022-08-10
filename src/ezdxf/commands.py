@@ -145,6 +145,13 @@ class Audit(Command):
             action="store_true",
             help='save recovered files with extension ".rec.dxf" ',
         )
+        parser.add_argument(
+            "-x",
+            "--explore",
+            action="store_true",
+            help="filters invalid DXF tags, this may load corrupted files but "
+                 "data loss is very likely",
+        )
 
     @staticmethod
     def run(args):
@@ -164,8 +171,11 @@ class Audit(Command):
             msg = f"auditing file: {filename}"
             print(msg)
             logger.info(msg)
+            if args.explore:
+                logger.info("explore mode - skipping invalid tags")
+            loader = recover.explore if args.explore else recover.readfile
             try:
-                doc, auditor = recover.readfile(filename)
+                doc, auditor = loader(filename)
             except IOError:
                 msg = "Not a DXF file or a generic I/O error."
                 print(msg)
@@ -329,6 +339,7 @@ class Draw(Command):
         from ezdxf.addons.drawing import RenderContext, Frontend
         from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
         from ezdxf.addons.drawing.config import Configuration, LinePolicy
+
         verbose = args.verbose
         # Print all supported export formats:
         if args.formats:
