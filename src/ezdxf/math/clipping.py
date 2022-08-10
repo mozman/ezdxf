@@ -9,13 +9,15 @@ from typing import (
     Union,
     Tuple,
 )
-
+from typing_extensions import Protocol
 from ezdxf.math import (
     Vec2,
     UVec,
     intersection_line_line_2d,
+    is_point_in_polygon_2d,
     has_clockwise_orientation,
     TOLERANCE,
+    BoundingBox2d,
 )
 import enum
 
@@ -24,9 +26,18 @@ __all__ = [
     "greiner_hormann_union",
     "greiner_hormann_difference",
     "greiner_hormann_intersection",
+    "Clipping",
     "ClippingPolygon2d",
     "ClippingRect2d",
 ]
+
+
+class Clipping(Protocol):
+    def clip(self, polygon: Iterable[Vec2]) -> List[Vec2]:
+        ...
+
+    def is_inside(self, point: Vec2) -> bool:
+        ...
 
 
 class ClippingPolygon2d:
@@ -80,21 +91,28 @@ class ClippingPolygon2d:
             clip_start = clip_end
         return clipped
 
+    def is_inside(self, point: Vec2) -> bool:
+        return is_point_in_polygon_2d(point, self._clipping_polygon) >= 0
+
 
 class ClippingRect2d:
-    def __init__(self, lower_left: Vec2, upper_right: Vec2):
+    def __init__(self, bottom_left: Vec2, upper_right: Vec2):
+        self._bbox = BoundingBox2d((bottom_left, upper_right))
         self._clipping_polygon = ClippingPolygon2d(
             [
-                lower_left,
-                Vec2(upper_right.x, lower_left.y),
+                bottom_left,
+                Vec2(upper_right.x, bottom_left.y),
                 upper_right,
-                Vec2(lower_left.x, upper_right.y),
+                Vec2(bottom_left.x, upper_right.y),
             ],
             ccw_check=False,
         )
 
     def clip(self, polygon: Iterable[Vec2]) -> List[Vec2]:
         return self._clipping_polygon.clip(polygon)
+
+    def is_inside(self, point: Vec2) -> bool:
+        return self._bbox.inside(point)
 
 
 def clip_polygon_2d(
