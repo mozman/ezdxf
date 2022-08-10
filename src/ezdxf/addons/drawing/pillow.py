@@ -16,7 +16,7 @@ from ezdxf.math import (
     BoundingBox2d,
 )
 from ezdxf.math.clipping import ClippingRect2d
-from ezdxf.path import Path
+import ezdxf.path
 from ezdxf.render import hatching
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.properties import Properties
@@ -165,9 +165,9 @@ class PillowBackend(Backend):
         self.bg_color = color
         self.clear()
 
-    def set_clipping_path(self, path: List[Vec2] = None) -> bool:
-        if path:
-            bbox = BoundingBox2d(path)
+    def set_clipping_path(self, clipping_path: ezdxf.path.Path = None) -> bool:
+        if clipping_path:
+            bbox = ezdxf.path.bbox((clipping_path, ), fast=True)
             self.clipper = ClippingRect2d(bbox.extmin, bbox.extmax)
         else:
             self.clipper = None
@@ -225,8 +225,8 @@ class PillowBackend(Backend):
 
     def draw_filled_paths(
         self,
-        paths: Iterable[Path],
-        holes: Iterable[Path],
+        paths: Iterable[ezdxf.path.Path],
+        holes: Iterable[ezdxf.path.Path],
         properties: Properties,
     ) -> None:
         # Uses the hatching module to draw filled paths by hatching paths with

@@ -754,7 +754,7 @@ class Designer:
         self.pattern_cache: Dict[PatternKey, Sequence[float]] = dict()
         self.transformation: Optional[Matrix44] = None
         self.scale: float = 0.0
-        self.clipping_path: List[Vec2] = []
+        self.clipping_path: Path = Path()
 
     def draw_viewport(self, vp: Viewport) -> bool:
         """Draw the content of the given viewport current viewport.
@@ -774,7 +774,7 @@ class Designer:
         """
         self.scale = vp.get_scale()
         self.transformation = vp.get_transformation_matrix()
-        self.clipping_path = Vec2.list(vp.clipping_path())
+        self.clipping_path = make_path(vp)
         if not self.backend.set_clipping_path(self.clipping_path):
             self.reset_viewport()
             return False
@@ -783,7 +783,7 @@ class Designer:
     def reset_viewport(self) -> None:
         self.scale = 0.0
         self.transformation = None
-        self.clipping_path.clear()
+        self.clipping_path = Path()
         self.backend.set_clipping_path(None)
 
     def resolve_vp_properties(self, entity: DXFGraphic) -> Properties:

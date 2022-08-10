@@ -542,15 +542,15 @@ class Viewport(DXFGraphic):
         ]
 
     def clipping_path(self) -> List[Vec2]:
-        """Returns the clipping path as list of vertices. Returns the default
-        clipping rectangle if no clipping path is defined.
+        """Returns always the default rectangular clipping path as list of
+        vertices. Use function :func:`ezdxf.path.make_path` to get also
+        non-rectangular shaped clipping paths if defined.
         """
         center = self.dxf.center
         cx = center.x
         cy = center.y
         width2 = self.dxf.width / 2
         height2 = self.dxf.height / 2
-        # TODO: clipping path support for the Viewport entity
         return [
             Vec2(cx - width2, cy - height2),
             Vec2(cx + width2, cy - height2),

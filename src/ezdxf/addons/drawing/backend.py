@@ -104,7 +104,7 @@ class BackendInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def set_clipping_path(self, path: List[Vec2] = None) -> bool:
+    def set_clipping_path(self, path: Path = None) -> bool:
         """Set the current clipping path.
         Returns True if a clipping path is supported.
         An empty path or None removes the clipping path.
@@ -136,7 +136,7 @@ class Backend(BackendInterface, metaclass=ABCMeta):
     def set_background(self, color: Color) -> None:
         raise NotImplementedError
 
-    def set_clipping_path(self, path: List[Vec2] = None) -> bool:
+    def set_clipping_path(self, path: Path = None) -> bool:
         """Clipping path is not supported by default."""
         return False
 

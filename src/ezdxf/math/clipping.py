@@ -96,14 +96,16 @@ class ClippingPolygon2d:
 
 
 class ClippingRect2d:
-    def __init__(self, bottom_left: Vec2, upper_right: Vec2):
-        self._bbox = BoundingBox2d((bottom_left, upper_right))
+    def __init__(self, bottom_left: Vec2, top_right: Vec2):
+        self._bbox = BoundingBox2d((bottom_left, top_right))
+        bottom_left = self._bbox.extmin
+        top_right = self._bbox.extmax
         self._clipping_polygon = ClippingPolygon2d(
             [
                 bottom_left,
-                Vec2(upper_right.x, bottom_left.y),
-                upper_right,
-                Vec2(bottom_left.x, upper_right.y),
+                Vec2(top_right.x, bottom_left.y),
+                top_right,
+                Vec2(bottom_left.x, top_right.y),
             ],
             ccw_check=False,
         )
