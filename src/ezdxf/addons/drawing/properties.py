@@ -18,7 +18,7 @@ from ezdxf.addons import acadctb
 from ezdxf.addons.drawing.config import Configuration
 from ezdxf.addons.drawing.type_hints import Color, RGB
 from ezdxf.colors import luminance, DXF_DEFAULT_COLORS, int2rgb
-from ezdxf.entities import Attrib, Insert, Face3d, Linetype
+from ezdxf.entities import Attrib, Insert, Face3d, Linetype, Viewport
 from ezdxf.entities.ltype import CONTINUOUS_PATTERN
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.enums import InsertUnits, Measurement
@@ -519,6 +519,11 @@ class RenderContext:
             return not bool(entity.dxf.invisible)
         elif isinstance(entity, Face3d):
             return any(entity.get_edges_visibility())
+        elif isinstance(entity, Viewport):
+            # The layer visibility of the VIEWPORT entity does not affect the
+            # content of the Viewport. If the layer is off the viewport borders
+            # are invisible.
+            return entity.is_visible
 
         entity_layer = resolved_layer or layer_key(self.resolve_layer(entity))
         layer_properties = self.layers.get(entity_layer)
