@@ -44,6 +44,14 @@ def main():
         help="oversampling factor, default is 2, use 0 or 1 to disable oversampling",
     )
     parser.add_argument(
+        "-l",
+        "--layout",
+        type=str,
+        default="Model",
+        help='name of the layout to draw, default is "Model"',
+    )
+
+    parser.add_argument(
         "--dpi",
         type=int,
         default=300,
@@ -94,7 +102,11 @@ def main():
     if auditor.has_fixes:
         print(f"Fixed {len(auditor.fixes)} errors.")
 
-    msp = doc.modelspace()
+    try:
+        layout = doc.layout(args.layout)
+    except KeyError:
+        print(f'layout "{args.layout}" not found')
+        sys.exit(4)
     outfile = args.out
     img_x, img_y = parse_image_size(args.image_size)
     print(f"Image size: {img_x}x{img_y}")
@@ -116,7 +128,7 @@ def main():
     try:
         print(f"detecting model space extents (fast={args.fast}) ...")
         t0 = perf_counter()
-        extents = bbox.extents(msp, fast=args.fast)
+        extents = bbox.extents(layout, fast=args.fast)
         print(f"... in {perf_counter() - t0:.1f}s")
         print(f"EXTMIN: ({extents.extmin.x:.3f}, {extents.extmin.y:.3f})")
         print(f"EXTMAX: ({extents.extmax.x:.3f}, {extents.extmax.y:.3f})")
@@ -133,9 +145,9 @@ def main():
         print(str(e))
         sys.exit(1)
 
-    print("drawing model space ...")
+    print(f"drawing layout \"{layout.name}\"  ...")
     t0 = perf_counter()
-    Frontend(ctx, out, config=config).draw_layout(msp)
+    Frontend(ctx, out, config=config).draw_layout(layout)
     print(f"... in {perf_counter() - t0:.1f}s")
     if outfile is not None:
         t0 = perf_counter()
