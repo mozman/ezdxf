@@ -295,6 +295,18 @@ class Viewport(DXFGraphic):
         if index != -1:
             del self._frozen_layers[index]
 
+    @property
+    def is_visible(self) -> bool:
+        # Special VIEWPORT id == 1, this viewport defines the "active viewport"
+        # which is the area currently shown in the layout tab by the CAD
+        # application.
+        # BricsCAD set id to -1 if the viewport is off and 'status' (group
+        # code 68) is not present.
+        # status: -1 is off-screen, 0 is off
+        if self.dxf.id < 2 or self.dxf.status < 1:
+            return False
+        return True
+
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
     ) -> "DXFNamespace":
