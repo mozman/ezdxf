@@ -107,8 +107,13 @@ def config_files() -> List[Path]:
 
 def load_config_files(paths: List[Path]) -> ConfigParser:
     config = default_config()
-    config.read(paths, encoding="utf8")
-
+    try:
+        config.read(paths, encoding="utf8")
+    except UnicodeDecodeError as e:
+        print(str(e))
+        print(f"Paths: {paths}")
+        print("Maybe a file with UTF16 LE-BOM encoding. (Powershell!!!)")
+        exit(1)
     # environment variables override config files
     for name, env_name in [
         ("TEST_FILES", "EZDXF_TEST_FILES"),
