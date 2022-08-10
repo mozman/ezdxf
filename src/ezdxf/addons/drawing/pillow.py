@@ -1,13 +1,21 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, Optional, List
 import sys
 import enum
 import itertools
 import functools
 import math
-from ezdxf.math import Vec3, Vec2, Matrix44, AbstractBoundingBox, AnyVec
+from ezdxf.math import (
+    Vec3,
+    Vec2,
+    Matrix44,
+    AbstractBoundingBox,
+    AnyVec,
+    BoundingBox2d,
+)
+from ezdxf.math.clipping import ClippingRect2d
 from ezdxf.path import Path
 from ezdxf.render import hatching
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
@@ -132,6 +140,7 @@ class PillowBackend(Backend):
         # dummy values for declaration, both are set in clear()
         self.image = Image.new("RGBA", (10, 10))
         self.draw = ImageDraw.Draw(self.image)
+        self.clipper: Optional[ClippingRect2d] = None
 
     def _solid_fill_hatch_baseline(self, one_px: float):
         direction = Vec2.from_deg_angle(self.solid_fill_hatching_angle)
@@ -156,6 +165,14 @@ class PillowBackend(Backend):
         self.bg_color = color
         self.clear()
 
+    def set_clipping_path(self, path: List[Vec2] = None) -> bool:
+        if path:
+            bbox = BoundingBox2d(path)
+            self.clipper = ClippingRect2d(bbox.extmin, bbox.extmax)
+        else:
+            self.clipper = None
+        return True  # confirm clipping support
+
     def width(self, lineweight: float) -> int:
         return max(int(lineweight * self.line_pixel_factor), 1)
 
@@ -174,9 +191,17 @@ class PillowBackend(Backend):
         )
 
     def draw_point(self, pos: Vec3, properties: Properties) -> None:
+        if self.clipper and not self.clipper.is_inside(Vec2(pos)):
+            return
         self.draw.point([self.pixel_loc(pos)], fill=properties.color)
 
     def draw_line(self, start: Vec3, end: Vec3, properties: Properties) -> None:
+        if self.clipper:
+            result = self.clipper.clip(Vec2.generate((start, end)))
+            if len(result) == 2:
+                start, end = result
+            else:
+                return
         self.draw.line(
             [self.pixel_loc(start), self.pixel_loc(end)],
             fill=properties.color,
@@ -186,6 +211,10 @@ class PillowBackend(Backend):
     def draw_filled_polygon(
         self, points: Iterable[Vec3], properties: Properties
     ) -> None:
+        if self.clipper:
+            points = self.clipper.clip(Vec2.generate(points))
+            if not len(points) < 3:
+                return
         points = [self.pixel_loc(p) for p in points]
         if len(points) > 2:
             self.draw.polygon(
@@ -202,12 +231,24 @@ class PillowBackend(Backend):
     ) -> None:
         # Uses the hatching module to draw filled paths by hatching paths with
         # solid lines with an offset of one pixel.
+        all_paths = list(itertools.chain(paths, holes))
         draw_line = functools.partial(
             self.draw.line, fill=properties.color, width=self.oversampling
         )
-        all_paths = list(itertools.chain(paths, holes))
+        clip = None
+        if self.clipper:
+            clip = self.clipper.clip
         for line in hatching.hatch_paths(self.solid_fill_baseline, all_paths):
-            draw_line((self.pixel_loc(line.start), self.pixel_loc(line.end)))
+            if clip:  # todo: clip paths -> polygons
+                result = clip((line.start, line.end))
+                if len(result) == 2:
+                    draw_line(
+                        (self.pixel_loc(result[0]), self.pixel_loc(result[1]))
+                    )
+            else:
+                draw_line(
+                    (self.pixel_loc(line.start), self.pixel_loc(line.end))
+                )
 
     def draw_text(
         self,
