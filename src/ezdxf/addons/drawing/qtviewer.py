@@ -308,12 +308,16 @@ class CadViewer(qw.QMainWindow):
         self.layers.blockSignals(False)
 
     def _populate_layouts(self):
+        def draw_layout(name: str):
+            def run():
+                self.draw_layout(name, reset_view=True)
+
+            return run
+
         self.select_layout_menu.clear()
         for layout_name in self.doc.layout_names_in_taborder():
             action = QAction(layout_name, self)
-            action.triggered.connect(
-                lambda: self.draw_layout(layout_name, reset_view=True)
-            )
+            action.triggered.connect(draw_layout(layout_name))
             self.select_layout_menu.addAction(action)
 
     def draw_layout(
