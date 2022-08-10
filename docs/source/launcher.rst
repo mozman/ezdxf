@@ -239,9 +239,8 @@ Print help:
 .. code-block:: Text
 
     C:\> ezdxf pillow -h
-    usage: ezdxf pillow [-h] [-o OUT] [-i IMAGE_SIZE] [-b BACKGROUND]
-                        [-r OVERSAMPLING] [-m MARGIN] [-t {0,1,2,3}] [--dpi DPI]
-                        [-v]
+    usage: ezdxf pillow [-h] [-o OUT] [-l LAYOUT] [-i IMAGE_SIZE] [-b BACKGROUND]
+                        [-r OVERSAMPLING] [-m MARGIN] [-t {0,1,2,3}] [--dpi DPI] [-v]
                         [FILE]
 
     positional arguments:
@@ -249,33 +248,32 @@ Print help:
 
     options:
       -h, --help            show this help message and exit
-      -o OUT, --out OUT     output filename, the filename extension defines the
-                            image format (.png, .jpg, .tif, .bmp, ...)
+      -o OUT, --out OUT     output filename, the filename extension defines the image format
+                            (.png, .jpg, .tif, .bmp, ...)
+      -l LAYOUT, --layout LAYOUT
+                            name of the layout to draw, default is "Model"
       -i IMAGE_SIZE, --image_size IMAGE_SIZE
-                            image size in pixels as "width,height", default is
-                            "1920,1080", supports also "x" as delimiter like
-                            "1920x1080". A single integer is used for both
-                            directions e.g. "2000" defines an image size of
-                            2000x2000. The image is centered for the smaller DXF
+                            image size in pixels as "width,height", default is "1920,1080",
+                            supports also "x" as delimiter like "1920x1080". A single
+                            integer is used for both directions e.g. "2000" defines an image
+                            size of 2000x2000. The image is centered for the smaller DXF
                             drawing extent.
       -b BACKGROUND, --background BACKGROUND
-                            override background color in hex format "RRGGBB" or
-                            "RRGGBBAA", e.g. use "FFFFFF00" to get a white
-                            transparent background and a black foreground color
-                            (ACI=7), because a light background gets a black
-                            foreground color or vice versa "00000000" for a black
+                            override background color in hex format "RRGGBB" or "RRGGBBAA",
+                            e.g. use "FFFFFF00" to get a white transparent background and a
+                            black foreground color (ACI=7), because a light background gets
+                            a black foreground color or vice versa "00000000" for a black
                             transparent background and a white foreground color.
       -r OVERSAMPLING, --oversampling OVERSAMPLING
-                            oversampling factor, default is 2, use 0 or 1 to
-                            disable oversampling
+                            oversampling factor, default is 2, use 0 or 1 to disable
+                            oversampling
       -m MARGIN, --margin MARGIN
-                            minimal margin around the image in pixels, default is
-                            10
+                            minimal margin around the image in pixels, default is 10
       -t {0,1,2,3}, --text-mode {0,1,2,3}
-                            text mode: 0=ignore, 1=placeholder, 2=outline,
-                            3=filled, default is 2
-      --dpi DPI             output resolution in pixels/inch which is significant
-                            for the linewidth, default is 300
+                            text mode: 0=ignore, 1=placeholder, 2=outline, 3=filled, default
+                            is 2
+      --dpi DPI             output resolution in pixels/inch which is significant for the
+                            linewidth, default is 300
       -v, --verbose         give more output
 
 Browse

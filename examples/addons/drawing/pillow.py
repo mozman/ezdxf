@@ -50,7 +50,6 @@ def main():
         default="Model",
         help='name of the layout to draw, default is "Model"',
     )
-
     parser.add_argument(
         "--dpi",
         type=int,

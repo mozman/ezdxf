@@ -150,7 +150,7 @@ class Audit(Command):
             "--explore",
             action="store_true",
             help="filters invalid DXF tags, this may load corrupted files but "
-                 "data loss is very likely",
+            "data loss is very likely",
         )
 
     @staticmethod
@@ -512,6 +512,13 @@ class Pillow(Command):
             "(.png, .jpg, .tif, .bmp, ...)",
         )
         parser.add_argument(
+            "-l",
+            "--layout",
+            type=str,
+            default="Model",
+            help='name of the layout to draw, default is "Model"',
+        )
+        parser.add_argument(
             "-i",
             "--image_size",
             type=str,
@@ -584,9 +591,14 @@ class Pillow(Command):
             sys.exit(1)
         print(f'loading file "{filename}"...')
         doc, _ = load_document(filename)
-        msp = doc.modelspace()
+        try:
+            layout = doc.layout(args.layout)
+        except KeyError:
+            print(f'layout "{args.layout}" not found')
+            sys.exit(4)
+
         bg = args.background
-        layout_properties = LayoutProperties.from_layout(msp)
+        layout_properties = LayoutProperties.from_layout(layout)
         if bg is not None:
             if not bg.startswith("#"):
                 bg = "#" + bg
@@ -605,10 +617,10 @@ class Pillow(Command):
         )
         if verbose:
             print(f"detecting extents...\n")
-        extents = bbox.extents(msp, fast=True)
+        extents = bbox.extents(layout, fast=True)
         img_x, img_y = parse_image_size(args.image_size)
         if verbose:
-            print(f"    units: {units.unit_name(msp.units)}")
+            print(f"    units: {units.unit_name(layout.units)}")
             print(
                 f"    modelspace size: {extents.size.x:.3f} x {extents.size.y:.3f}"
             )
@@ -629,9 +641,9 @@ class Pillow(Command):
         )
         t0 = time.perf_counter()
         if verbose:
-            print("drawing modelspace...")
+            print(f'drawing layout "{layout.name}"...')
         Frontend(ctx, out, config=config).draw_layout(
-            msp, layout_properties=layout_properties
+            layout, layout_properties=layout_properties
         )
         t1 = time.perf_counter()
         if verbose:
