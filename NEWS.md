@@ -11,6 +11,8 @@ Version 0.18.1b0 - dev
   turtle-graphic like commands
 - NEW: sub-command `ezdxf pillow` to draw and convert DXF files by `Pillow`
 - NEW: `ezdxf.path.triangulate()`, tessellate (nested) paths into triangle-faces
+- CHANGE: replaced function `clip_polygon_2d()`, by clipping the classes 
+  `ClippingPolygon2d()` and `ClippingRect2d()` 
 - BUGFIX: CPython implementation of `Vec2()` was not immutable at inplace 
   operations `+=`, `-=`, `*=` and `/=` like the Cython implementation
 - BUGFIX: fixed bounding box calculation for `LinePrimitive()`

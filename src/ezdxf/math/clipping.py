@@ -23,7 +23,6 @@ from ezdxf.math import (
 import enum
 
 __all__ = [
-    "clip_polygon_2d",
     "greiner_hormann_union",
     "greiner_hormann_difference",
     "greiner_hormann_intersection",
@@ -35,7 +34,7 @@ __all__ = [
 
 class Clipping(Protocol):
     def clip_polygon(self, polygon: Iterable[Vec2]) -> Sequence[Vec2]:
-        """Returns the clipped polygon"""
+        """Returns the clipped polygon."""
         ...
 
     def clip_polyline(
@@ -49,10 +48,16 @@ class Clipping(Protocol):
         ...
 
     def is_inside(self, point: Vec2) -> bool:
+        """Returns ``True`` if `point is inside the clipping path. """
         ...
 
 
 class ClippingPolygon2d:
+    """The clipping path is an arbitrary polygon.
+
+    .. versionadded: 0.18.1
+
+    """
     def __init__(self, vertices: Iterable[Vec2], ccw_check=True):
         clip = list(vertices)
         if len(clip) > 1:
@@ -69,6 +74,7 @@ class ClippingPolygon2d:
     def clip_polyline(
         self, polyline: Iterable[Vec2]
     ) -> Sequence[Sequence[Vec2]]:
+        """Returns the parts of the clipped polyline."""
         vertices = list(polyline)
         if len(vertices) < 2:
             return []
@@ -91,6 +97,7 @@ class ClippingPolygon2d:
         return parts
 
     def clip_line(self, start: Vec2, end: Vec2) -> Sequence[Vec2]:
+        """Returns the clipped line."""
         def is_inside(point: Vec2) -> bool:
             # is point left of line:
             return (clip_end.x - clip_start.x) * (point.y - clip_start.y) - (
@@ -119,6 +126,7 @@ class ClippingPolygon2d:
         return edge_start, edge_end
 
     def clip_polygon(self, polygon: Iterable[Vec2]) -> Sequence[Vec2]:
+        """Returns the clipped polygon."""
         def is_inside(point: Vec2) -> bool:
             # is point left of line:
             return (clip_end.x - clip_start.x) * (point.y - clip_start.y) - (
@@ -157,10 +165,18 @@ class ClippingPolygon2d:
         return clipped
 
     def is_inside(self, point: Vec2) -> bool:
+        """Returns ``True`` if `point` is inside the clipping polygon. """
         return is_point_in_polygon_2d(point, self._clipping_polygon) >= 0
 
 
 class ClippingRect2d:
+    """The clipping path is a rectangle parallel to the x- and y-axis.
+
+    This class will get an optimized implementation in the future.
+
+    .. versionadded: 0.18.1
+
+    """
     def __init__(self, bottom_left: Vec2, top_right: Vec2):
         self._bbox = BoundingBox2d((bottom_left, top_right))
         bottom_left = self._bbox.extmin
@@ -176,17 +192,21 @@ class ClippingRect2d:
         )
 
     def clip_polygon(self, polygon: Iterable[Vec2]) -> Sequence[Vec2]:
+        """Returns the clipped polygon."""
         return self._clipping_polygon.clip_polygon(polygon)
 
     def clip_polyline(
         self, polyline: Iterable[Vec2]
     ) -> Sequence[Sequence[Vec2]]:
+        """Returns the parts of the clipped polyline."""
         return self._clipping_polygon.clip_polyline(polyline)
 
     def clip_line(self, start: Vec2, end: Vec2) -> Sequence[Vec2]:
+        """Returns the clipped line."""
         return self._clipping_polygon.clip_line(start, end)
 
     def is_inside(self, point: Vec2) -> bool:
+        """Returns ``True`` if `point` is inside the clipping rectangle. """
         return self._bbox.inside(point)
 
 
