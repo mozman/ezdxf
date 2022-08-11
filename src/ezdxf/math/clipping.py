@@ -9,6 +9,7 @@ from typing import (
     Iterator,
     Union,
     Tuple,
+    Callable,
 )
 from typing_extensions import Protocol
 from ezdxf.math import (
@@ -26,6 +27,7 @@ __all__ = [
     "greiner_hormann_union",
     "greiner_hormann_difference",
     "greiner_hormann_intersection",
+    "cohen_sutherland_line_clipping_2d",
     "Clipping",
     "ClippingPolygon2d",
     "ClippingRect2d",
@@ -48,8 +50,35 @@ class Clipping(Protocol):
         ...
 
     def is_inside(self, point: Vec2) -> bool:
-        """Returns ``True`` if `point is inside the clipping path. """
+        """Returns ``True`` if `point is inside the clipping path."""
         ...
+
+
+def _clip_polyline(
+    polyline: Iterable[Vec2],
+    line_clipper: Callable[[Vec2, Vec2], Sequence[Vec2]],
+) -> Sequence[Sequence[Vec2]]:
+    """Returns the parts of the clipped polyline."""
+    vertices = list(polyline)
+    if len(vertices) < 2:
+        return []
+    result: List[Vec2] = []
+    parts: List[List[Vec2]] = []
+    start = vertices[0]
+    for end in vertices[1:]:
+        clipped_line = line_clipper(start, end)
+        start = end
+        if len(clipped_line) == 2:
+            if result:
+                clip_start, clip_end = clipped_line
+                if result[-1].isclose(clip_start):
+                    result.append(clip_end)
+                    continue
+                parts.append(result)
+            result = list(clipped_line)
+    if result:
+        parts.append(result)
+    return parts
 
 
 class ClippingPolygon2d:
@@ -58,6 +87,7 @@ class ClippingPolygon2d:
     .. versionadded: 0.18.1
 
     """
+
     def __init__(self, vertices: Iterable[Vec2], ccw_check=True):
         clip = list(vertices)
         if len(clip) > 1:
@@ -75,29 +105,11 @@ class ClippingPolygon2d:
         self, polyline: Iterable[Vec2]
     ) -> Sequence[Sequence[Vec2]]:
         """Returns the parts of the clipped polyline."""
-        vertices = list(polyline)
-        if len(vertices) < 2:
-            return []
-        result: List[Vec2] = []
-        parts: List[List[Vec2]] = []
-        start = vertices[0]
-        for end in vertices[1:]:
-            clipped_line = self.clip_line(start, end)
-            start = end
-            if len(clipped_line) == 2:
-                if result:
-                    clip_start, clip_end = clipped_line
-                    if result[-1].isclose(clip_start):
-                        result.append(clip_end)
-                        continue
-                    parts.append(result)
-                result = list(clipped_line)
-        if result:
-            parts.append(result)
-        return parts
+        return _clip_polyline(polyline, self.clip_line)
 
     def clip_line(self, start: Vec2, end: Vec2) -> Sequence[Vec2]:
         """Returns the clipped line."""
+
         def is_inside(point: Vec2) -> bool:
             # is point left of line:
             return (clip_end.x - clip_start.x) * (point.y - clip_start.y) - (
@@ -127,6 +139,7 @@ class ClippingPolygon2d:
 
     def clip_polygon(self, polygon: Iterable[Vec2]) -> Sequence[Vec2]:
         """Returns the clipped polygon."""
+
         def is_inside(point: Vec2) -> bool:
             # is point left of line:
             return (clip_end.x - clip_start.x) * (point.y - clip_start.y) - (
@@ -165,7 +178,7 @@ class ClippingPolygon2d:
         return clipped
 
     def is_inside(self, point: Vec2) -> bool:
-        """Returns ``True`` if `point` is inside the clipping polygon. """
+        """Returns ``True`` if `point` is inside the clipping polygon."""
         return is_point_in_polygon_2d(point, self._clipping_polygon) >= 0
 
 
@@ -177,6 +190,7 @@ class ClippingRect2d:
     .. versionadded: 0.18.1
 
     """
+
     def __init__(self, bottom_left: Vec2, top_right: Vec2):
         self._bbox = BoundingBox2d((bottom_left, top_right))
         bottom_left = self._bbox.extmin
@@ -199,14 +213,16 @@ class ClippingRect2d:
         self, polyline: Iterable[Vec2]
     ) -> Sequence[Sequence[Vec2]]:
         """Returns the parts of the clipped polyline."""
-        return self._clipping_polygon.clip_polyline(polyline)
+        return _clip_polyline(polyline, self.clip_line)
 
     def clip_line(self, start: Vec2, end: Vec2) -> Sequence[Vec2]:
         """Returns the clipped line."""
-        return self._clipping_polygon.clip_line(start, end)
+        return cohen_sutherland_line_clipping_2d(
+            self._bbox.extmin, self._bbox.extmax, start, end
+        )
 
     def is_inside(self, point: Vec2) -> bool:
-        """Returns ``True`` if `point` is inside the clipping rectangle. """
+        """Returns ``True`` if `point` is inside the clipping rectangle."""
         return self._bbox.inside(point)
 
 
@@ -626,3 +642,89 @@ def greiner_hormann(
     elif op == BooleanOperation.INTERSECTION:
         return polygon1.intersection(polygon2)
     raise ValueError(f"unknown or unsupported boolean operation: {op}")
+
+
+LEFT = 0x1
+RIGHT = 0x2
+BOTTOM = 0x4
+TOP = 0x8
+
+
+def cohen_sutherland_line_clipping_2d(
+    w_min: Vec2, w_max: Vec2, p0: Vec2, p1: Vec2
+) -> Sequence[Vec2]:
+    """Cohen-Sutherland 2D line clipping algorithm, source:
+    https://en.wikipedia.org/wiki/Cohen%E2%80%93Sutherland_algorithm
+
+    Args:
+        w_min: bottom-left corner of the clipping rectangle
+        w_max: top-right corner of the clipping rectangle
+        p0: start-point of the line to clip
+        p1: end-point of the line to clip
+
+    """
+
+    def encode(x: float, y: float) -> int:
+        code: int = 0
+        if x < x_min:
+            code |= LEFT
+        elif x > x_max:
+            code |= RIGHT
+        if y < y_min:
+            code |= BOTTOM
+        elif y > y_max:
+            code |= TOP
+        return code
+
+    x0, y0 = p0
+    x1, y1 = p1
+    x_min, y_min = w_min
+    x_max, y_max = w_max
+    code0 = encode(x0, y0)
+    code1 = encode(x1, y1)
+    x = x0
+    y = y0
+    while True:
+        if not (code0 | code1):  # ACCEPT
+            # bitwise OR is 0: both points inside window; trivially accept and
+            # exit loop:
+            return Vec2(x0, y0), Vec2(x1, y1)
+        if code0 & code1:  # REJECT
+            # bitwise AND is not 0: both points share an outside zone (LEFT,
+            # RIGHT, TOP, or BOTTOM), so both must be outside window;
+            # exit loop
+            return tuple()
+
+        # failed both tests, so calculate the line segment to clip
+        # from an outside point to an intersection with clip edge
+        # At least one endpoint is outside the clip rectangle; pick it
+        code = code1 if code1 > code0 else code0
+
+        # Now find the intersection point;
+        # use formulas:
+        # slope = (y1 - y0) / (x1 - x0)
+        # x = x0 + (1 / slope) * (ym - y0), where ym is y_min or y_max
+        # y = y0 + slope * (xm - x0), where xm is x_min or x_max
+        # No need to worry about divide-by-zero because, in each case, the
+        # code bit being tested guarantees the denominator is non-zero
+        if code & TOP:  # point is above the clip window
+            x = x0 + (x1 - x0) * (y_max - y0) / (y1 - y0)
+            y = y_max
+        elif code & BOTTOM:  # point is below the clip window
+            x = x0 + (x1 - x0) * (y_min - y0) / (y1 - y0)
+            y = y_min
+        elif code & RIGHT:  # point is to the right of clip window
+            y = y0 + (y1 - y0) * (x_max - x0) / (x1 - x0)
+            x = x_max
+        elif code & LEFT:  # point is to the left of clip window
+            y = y0 + (y1 - y0) * (x_min - x0) / (x1 - x0)
+            x = x_min
+
+        if code == code0:
+            x0 = x
+            y0 = y
+            code0 = encode(x0, y0)
+        else:
+            x1 = x
+            y1 = y
+            code1 = encode(x1, y1)
