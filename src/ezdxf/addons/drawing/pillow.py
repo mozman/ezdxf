@@ -197,7 +197,7 @@ class PillowBackend(Backend):
 
     def draw_line(self, start: Vec3, end: Vec3, properties: Properties) -> None:
         if self.clipper:
-            result = self.clipper.clip(Vec2.generate((start, end)))
+            result = self.clipper.clip_line(Vec2(start), Vec2(end))
             if len(result) == 2:
                 start, end = result
             else:
@@ -212,7 +212,7 @@ class PillowBackend(Backend):
         self, points: Iterable[Vec3], properties: Properties
     ) -> None:
         if self.clipper:
-            points = self.clipper.clip(Vec2.generate(points))
+            points = self.clipper.clip_polygon(Vec2.generate(points))
             if not len(points) < 3:
                 return
         points = [self.pixel_loc(p) for p in points]
@@ -237,10 +237,10 @@ class PillowBackend(Backend):
         )
         clip = None
         if self.clipper:
-            clip = self.clipper.clip
+            clip = self.clipper.clip_line
         for line in hatching.hatch_paths(self.solid_fill_baseline, all_paths):
             if clip:  # todo: clip paths -> polygons
-                result = clip((line.start, line.end))
+                result = clip(line.start, line.end)
                 if len(result) == 2:
                     draw_line(
                         (self.pixel_loc(result[0]), self.pixel_loc(result[1]))
