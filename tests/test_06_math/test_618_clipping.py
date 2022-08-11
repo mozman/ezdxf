@@ -3,7 +3,11 @@
 
 import pytest
 from ezdxf.math import Vec2
-from ezdxf.math.clipping import clip_polygon_2d, ClippingPolygon2d
+from ezdxf.math.clipping import (
+    clip_polygon_2d,
+    ClippingPolygon2d,
+    ClippingRect2d,
+)
 from ezdxf.render.forms import circle
 
 
@@ -97,9 +101,14 @@ def test_clip_a_single_line(rect):
 
 
 class TestClippingSingleLines:
-    @pytest.fixture(scope="class")
-    def clipper(self):
-        return ClippingPolygon2d(Vec2.list([(0, 0), (2, 0), (2, 2), (0, 2)]))
+    @pytest.fixture(scope="class", params=["polygon", "rect"])
+    def clipper(self, request):
+        if request.param == "polygon":
+            return ClippingPolygon2d(
+                Vec2.list([(0, 0), (2, 0), (2, 2), (0, 2)])
+            )
+        else:
+            return ClippingRect2d(Vec2(0, 0), Vec2(2, 2))
 
     def test_no_clipping(self, clipper):
         assert len(clipper.clip_line(Vec2(-1, 3), Vec2(3, 3))) == 0  # above
@@ -153,6 +162,24 @@ class TestClippingSingleLines:
         s, e = clipper.clip_line(Vec2(x, -1), Vec2(x, 3))
         assert s.isclose((x, 0))
         assert e.isclose((x, 2))
+
+
+class TestClippingPolyline:
+    @pytest.fixture(scope="class", params=["polygon", "rect"])
+    def clipper(self, request):
+        if request.param == "polygon":
+            return ClippingPolygon2d(
+                Vec2.list([(0, 0), (8, 0), (8, 2), (0, 2)])
+            )
+        else:
+            return ClippingRect2d(Vec2(0, 0), Vec2(8, 2))
+
+    def test_crossing_zigzag(self, clipper):
+        p0, p1 = clipper.clip_polyline(Vec2.list([(0, -1), (4, 3), (8, -1)]))
+        assert p0[0].isclose((1, 0))
+        assert p0[1].isclose((3, 2))
+        assert p1[0].isclose((5, 2))
+        assert p1[1].isclose((7, 0))
 
 
 if __name__ == "__main__":

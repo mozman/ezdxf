@@ -77,6 +77,7 @@ class ClippingPolygon2d:
         start = vertices[0]
         for end in vertices[1:]:
             clipped_line = self.clip_line(start, end)
+            start = end
             if len(clipped_line) == 2:
                 if result:
                     clip_start, clip_end = clipped_line
@@ -85,6 +86,8 @@ class ClippingPolygon2d:
                         continue
                     parts.append(result)
                 result = list(clipped_line)
+        if result:
+            parts.append(result)
         return parts
 
     def clip_line(self, start: Vec2, end: Vec2) -> Sequence[Vec2]:
