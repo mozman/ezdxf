@@ -264,8 +264,10 @@ class Drawing:
     def _setup_metadata(self):
         self.header["$ACADVER"] = self.dxfversion
         self.header["$TDCREATE"] = juliandate(datetime.now())
-        self.reset_fingerprint_guid()
-        self.reset_version_guid()
+        if self.header.get("$FINGERPRINTGUID", CONST_GUID) == CONST_GUID:
+            self.reset_fingerprint_guid()
+        if self.header.get("$VERSIONGUID", CONST_GUID) == CONST_GUID:
+            self.reset_version_guid()
 
     @property
     def dxfversion(self) -> str:

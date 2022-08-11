@@ -16,6 +16,8 @@ Version 0.18.1b0 - dev
 - BUGFIX: CPython implementation of `Vec2()` was not immutable at inplace 
   operations `+=`, `-=`, `*=` and `/=` like the Cython implementation
 - BUGFIX: fixed bounding box calculation for `LinePrimitive()`
+- BUGFIX: [#729](https://github.com/mozman/ezdxf/issues/729)
+  fixes `$FINGERPRINTGUID` and `$VERSIONGUID` handling
 
 Version 0.18 - 2022-07-29
 -------------------------
