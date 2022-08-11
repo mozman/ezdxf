@@ -1,7 +1,7 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 from __future__ import annotations
-from typing import Iterable, Tuple, Optional, List
+from typing import Iterable, Tuple, Optional
 import sys
 import enum
 import itertools
@@ -13,7 +13,6 @@ from ezdxf.math import (
     Matrix44,
     AbstractBoundingBox,
     AnyVec,
-    BoundingBox2d,
 )
 from ezdxf.math.clipping import ClippingRect2d
 import ezdxf.path
@@ -48,6 +47,10 @@ class TextMode(enum.IntEnum):
     PLACEHOLDER = 1
     OUTLINE = 2
     FILLED = 3
+
+
+class PillowBackendException(Exception):
+    pass
 
 
 class PillowBackend(Backend):
@@ -91,9 +94,11 @@ class PillowBackend(Backend):
 
         """
         super().__init__()
-        self.region = Vec2(region.size)
+        self.region = Vec2(0, 0)
+        if region.has_data:
+            self.region = Vec2(region.size)
         if self.region.x <= 0.0 or self.region.y <= 0.0:
-            raise ValueError("drawing region is empty")
+            raise PillowBackendException("drawing region is empty")
         self.extmin = Vec2(region.extmin)
         self.margin_x = float(margin)
         self.margin_y = float(margin)
@@ -167,7 +172,7 @@ class PillowBackend(Backend):
 
     def set_clipping_path(self, clipping_path: ezdxf.path.Path = None) -> bool:
         if clipping_path:
-            bbox = ezdxf.path.bbox((clipping_path, ), fast=True)
+            bbox = ezdxf.path.bbox((clipping_path,), fast=True)
             self.clipper = ClippingRect2d(bbox.extmin, bbox.extmax)
         else:
             self.clipper = None

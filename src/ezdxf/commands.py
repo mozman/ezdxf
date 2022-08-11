@@ -580,7 +580,10 @@ class Pillow(Command):
         from ezdxf import bbox
         from ezdxf.addons.drawing import RenderContext, Frontend
         from ezdxf.addons.drawing.config import Configuration, LinePolicy
-        from ezdxf.addons.drawing.pillow import PillowBackend
+        from ezdxf.addons.drawing.pillow import (
+            PillowBackend,
+            PillowBackendException,
+        )
         from ezdxf.addons.drawing.properties import LayoutProperties
 
         verbose = args.verbose
@@ -631,14 +634,19 @@ class Pillow(Command):
                 f"    max extents: ({extents.extmax.x:.3f}, {extents.extmax.y:.3f})"
             )
             print(f"\nimage size: {img_x} x {img_y}")
-        out = PillowBackend(
-            extents,
-            image_size=(img_x, img_y),
-            oversampling=args.oversampling,
-            margin=args.margin,
-            dpi=args.dpi,
-            text_mode=args.text_mode,
-        )
+        try:
+            out = PillowBackend(
+                extents,
+                image_size=(img_x, img_y),
+                oversampling=args.oversampling,
+                margin=args.margin,
+                dpi=args.dpi,
+                text_mode=args.text_mode,
+            )
+        except PillowBackendException as e:
+            print(str(e))
+            sys.exit(5)
+
         t0 = time.perf_counter()
         if verbose:
             print(f'drawing layout "{layout.name}"...')
