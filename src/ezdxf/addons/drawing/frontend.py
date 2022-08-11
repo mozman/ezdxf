@@ -753,7 +753,7 @@ class Designer:
         self.ctx = frontend.ctx
         self.pattern_cache: Dict[PatternKey, Sequence[float]] = dict()
         self.transformation: Optional[Matrix44] = None
-        self.scale: float = 0.0
+        self.scale: float = 1.0
         self.clipping_path: Path = Path()
 
     def draw_viewport(self, vp: Viewport) -> bool:
@@ -781,7 +781,7 @@ class Designer:
         return True
 
     def reset_viewport(self) -> None:
-        self.scale = 0.0
+        self.scale = 1.0
         self.transformation = None
         self.clipping_path = Path()
         self.backend.set_clipping_path(None)
@@ -865,7 +865,6 @@ class Designer:
     ) -> None:
         if self.transformation:
             transform *= self.transformation
-            cap_height *= self.scale
         self.backend.draw_text(text, transform, properties, cap_height)
 
     def pattern(self, properties: Properties) -> Sequence[float]:
