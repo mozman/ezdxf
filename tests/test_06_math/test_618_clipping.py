@@ -3,7 +3,7 @@
 
 import pytest
 from ezdxf.math import Vec2
-from ezdxf.math.clipping import clip_polygon_2d
+from ezdxf.math.clipping import clip_polygon_2d, ClippingPolygon2d
 from ezdxf.render.forms import circle
 
 
@@ -94,6 +94,65 @@ def test_clip_a_single_line(rect):
     assert len(result) == 2
     assert result[0].isclose((1.0, 0))
     assert result[1].isclose((0.5, 0))
+
+
+class TestClippingSingleLines:
+    @pytest.fixture(scope="class")
+    def clipper(self):
+        return ClippingPolygon2d(Vec2.list([(0, 0), (2, 0), (2, 2), (0, 2)]))
+
+    def test_no_clipping(self, clipper):
+        assert len(clipper.clip_line(Vec2(-1, 3), Vec2(3, 3))) == 0  # above
+        assert len(clipper.clip_line(Vec2(-1, -1), Vec2(3, -1))) == 0  # below
+        assert len(clipper.clip_line(Vec2(-1, 0), Vec2(-1, 2))) == 0  # left
+        assert len(clipper.clip_line(Vec2(3, 0), Vec2(3, 2))) == 0  # right
+
+    def test_regular_clip_inside_outside(self, clipper):
+        s, e = clipper.clip_line(Vec2(1, 1), Vec2(3, 1))
+        assert s.isclose((1, 1))
+        assert e.isclose((2, 1))
+
+    def test_regular_clip_outside_inside(self, clipper):
+        s, e = clipper.clip_line(Vec2(3, 1), Vec2(1, 1))
+        assert s.isclose((2, 1))
+        assert e.isclose((1, 1))
+
+    def test_crossing_horiz_left_to_right(self, clipper):
+        s, e = clipper.clip_line(Vec2(-1, 1), Vec2(3, 1))
+        assert s.isclose((0, 1))
+        assert e.isclose((2, 1))
+
+    def test_crossing_horiz_right_to_left(self, clipper):
+        s, e = clipper.clip_line(Vec2(3, 1), Vec2(-1, 1))
+        assert s.isclose((2, 1))
+        assert e.isclose((0, 1))
+
+    def test_crossing_vertical(self, clipper):
+        s, e = clipper.clip_line(Vec2(1, -1), Vec2(1, 3))
+        assert s.isclose((1, 0))
+        assert e.isclose((1, 2))
+
+    def test_crossing_diagonal(self, clipper):
+        s, e = clipper.clip_line(Vec2(-1, 0), Vec2(2, 3))
+        assert s.isclose((0, 1))
+        assert e.isclose((1, 2))
+
+    def test_crossing_diagonal_edge_to_edge(self, clipper):
+        s, e = clipper.clip_line(Vec2(0, 0), Vec2(2, 2))
+        assert s.isclose((0, 0))
+        assert e.isclose((2, 2))
+
+    @pytest.mark.parametrize("y", [0, 2], ids=["bottom", "top"])
+    def test_colinear_horiz_edge(self, clipper, y):
+        s, e = clipper.clip_line(Vec2(-1, y), Vec2(3, y))
+        assert s.isclose((0, y))
+        assert e.isclose((2, y))
+
+    @pytest.mark.parametrize("x", [0, 2], ids=["left", "right"])
+    def test_colinear_vertical_edge(self, clipper, x):
+        s, e = clipper.clip_line(Vec2(x, -1), Vec2(x, 3))
+        assert s.isclose((x, 0))
+        assert e.isclose((x, 2))
 
 
 if __name__ == "__main__":
