@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2020-2021, Matthew Broadway
+# Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
 import argparse
 import signal
@@ -10,7 +10,7 @@ from ezdxf.addons.xqt import QtWidgets as qw
 import ezdxf
 from ezdxf import recover
 from ezdxf.addons.drawing.qtviewer import CadViewer
-from ezdxf.addons.drawing.config import Configuration, LinePolicy
+from ezdxf.addons.drawing.config import Configuration
 
 # IMPORTANT: This example is just a remaining skeleton, the implementation
 # details moved into module: ezdxf.addon.drawing.qtviewer
@@ -25,11 +25,7 @@ ezdxf.options.preserve_proxy_graphics()
 def _main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--cad_file")
-    parser.add_argument("--layout", default="Model")
-    parser.add_argument(
-        "--ltype", default="internal", choices=["internal", "ezdxf"]
-    )
-
+    parser.add_argument("-l", "--layout", default="Model")
     # disable lineweight at all by default:
     parser.add_argument("--lineweight_scaling", type=float, default=0)
     args = parser.parse_args()
@@ -37,9 +33,6 @@ def _main():
     # setup drawing add-on configuration
     config = Configuration.defaults()
     config = config.with_changes(
-        line_policy=LinePolicy.ACCURATE
-        if args.ltype == "ezdxf"
-        else config.line_policy,
         lineweight_scaling=args.lineweight_scaling,
     )
 
