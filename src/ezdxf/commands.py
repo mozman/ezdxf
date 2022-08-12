@@ -289,6 +289,7 @@ class Draw(Command):
             help="show all supported export formats and exit",
         )
         parser.add_argument(
+            "-l",
             "--layout",
             default="Model",
             help="select the layout to draw",
@@ -435,6 +436,7 @@ class View(Command):
             help="DXF file to view",
         )
         parser.add_argument(
+            "-l",
             "--layout",
             default="Model",
             help="select the layout to draw",
