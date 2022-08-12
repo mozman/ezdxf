@@ -18,7 +18,7 @@ class LinePolicy(Enum):
     """
 
     SOLID = auto()
-    APPROXIMATE = auto()
+    APPROXIMATE = auto()  # ignored since v0.18.1 => ACCURATE
     ACCURATE = auto()
 
 

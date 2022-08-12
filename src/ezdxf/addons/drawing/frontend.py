@@ -797,7 +797,7 @@ class Designer:
 
     def draw_line(self, start: Vec3, end: Vec3, properties: Properties):
         if (
-            self.config.line_policy != LinePolicy.ACCURATE
+            self.config.line_policy == LinePolicy.SOLID
             or len(properties.linetype_pattern) < 2  # CONTINUOUS
         ):
             if self.transformation:
@@ -821,7 +821,7 @@ class Designer:
 
     def draw_path(self, path: Path, properties: Properties):
         if (
-            self.config.line_policy != LinePolicy.ACCURATE
+            self.config.line_policy == LinePolicy.SOLID
             or len(properties.linetype_pattern) < 2  # CONTINUOUS
         ):
             if self.transformation:
