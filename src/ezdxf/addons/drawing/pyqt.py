@@ -109,6 +109,7 @@ class PyQtBackend(Backend):
         return True  # confirm clipping support
 
     def _add_item(self, item):
+        self._set_item_data(item)
         if self._current_viewport:
             self._current_viewport.addToGroup(item)
         else:
@@ -180,7 +181,6 @@ class PyQtBackend(Backend):
         else:
             item = qw.QGraphicsLineItem(start.x, start.y, end.x, end.y)
             item.setPen(self._get_pen(properties))
-            self._set_item_data(item)
             self._add_item(item)
 
     def draw_solid_lines(
@@ -191,21 +191,18 @@ class PyQtBackend(Backend):
         """Fast method to draw a bunch of solid lines with the same properties."""
         pen = self._get_pen(properties)
         add_line = self._add_item
-        set_item_data = self._set_item_data
         for s, e in lines:
             if s.isclose(e):
                 self.draw_point(s, properties)
             else:
                 item = qw.QGraphicsLineItem(s.x, s.y, e.x, e.y)
                 item.setPen(pen)
-                set_item_data(item)
                 add_line(item)
 
     def draw_path(self, path: Path, properties: Properties) -> None:
         item = qw.QGraphicsPathItem(to_qpainter_path([path]))
         item.setPen(self._get_pen(properties))
         item.setBrush(self._no_fill)
-        self._set_item_data(item)
         self._add_item(item)
 
     def draw_filled_paths(
@@ -231,7 +228,6 @@ class PyQtBackend(Backend):
         item.setPen(self._get_pen(properties))
         item.setBrush(self._get_brush(properties))
         self._add_item(item)
-        self._set_item_data(item)
 
     def draw_filled_polygon(
         self, points: Iterable[Vec3], properties: Properties
@@ -244,7 +240,6 @@ class PyQtBackend(Backend):
         item.setPen(self._no_line)
         item.setBrush(brush)
         self._add_item(item)
-        self._set_item_data(item)
 
     def draw_text(
         self,
@@ -267,7 +262,6 @@ class PyQtBackend(Backend):
         item.setBrush(brush)
         item.setPen(self._no_line)
         self._add_item(item)
-        self._set_item_data(item)
 
     def get_qfont(self, font: Optional[fonts.FontFace]) -> qg.QFont:
         if font is None:
