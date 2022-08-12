@@ -61,10 +61,9 @@ class MatplotlibBackend(Backend):
         use_text_cache: bool = True,
     ):
         super().__init__()
-        self.ax = ax  # current drawing axes
-        self.main_ax = ax
-        self._adjust_figure = adjust_figure
         setup_axes(ax)
+        self.ax = ax
+        self._adjust_figure = adjust_figure
         self._current_z = 0
         self._text_renderer = TextRenderer(font, use_text_cache)
 
@@ -95,16 +94,10 @@ class MatplotlibBackend(Backend):
 
         if path:
             # This does not work!!!
-            clip_rect = ezdxf.path.bbox([path])
-            x, y, _ = clip_rect.extmin
-            w, h, _ = clip_rect.size
-            ax = self.main_ax.inset_axes([x, y, w, h])
-            setup_axes(ax)
             mpl_path = ezdxf.path.to_matplotlib_path([path])
-            ax.set_clip_path(mpl_path, Transform())
-            self.ax = ax
+            self.ax.set_clip_path(mpl_path, Transform())
         else:
-            self.ax = self.main_ax  # reset
+            self.ax.set_clip_path(None)
         return True  # confirm clipping support
 
     def draw_point(self, pos: Vec3, properties: Properties):
