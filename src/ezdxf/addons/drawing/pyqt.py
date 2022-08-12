@@ -1,21 +1,19 @@
 # Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
 import math
-from abc import ABCMeta
-from typing import Optional, Iterable, Dict, Union, Tuple, no_type_check
+from typing import Optional, Iterable, Dict, Union, Tuple, List
 from collections import defaultdict
 from functools import lru_cache
 from ezdxf.addons.xqt import QtCore as qc, QtGui as qg, QtWidgets as qw
 
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
-from ezdxf.addons.drawing.config import Configuration, LinePolicy
+from ezdxf.addons.drawing.config import Configuration
 from ezdxf.tools.fonts import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.addons.drawing.properties import Properties
-from ezdxf.addons.drawing.line_renderer import AbstractLineRenderer
 from ezdxf.tools import fonts
 from ezdxf.math import Vec3, Matrix44
-from ezdxf.path import Path, Command
+from ezdxf.path import Path, to_qpainter_path
 
 PatternKey = Tuple[str, float]
 
@@ -75,7 +73,6 @@ class PyQtBackend(Backend):
         self._no_fill = qg.QBrush(qc.Qt.NoBrush)
 
         self._text_renderer = TextRenderer(qg.QFont(), use_text_cache)
-        self._line_renderer: PyQtLineRenderer
         self._extra_lineweight_scaling = extra_lineweight_scaling
         self._debug_draw_rect = debug_draw_rect
 
@@ -83,15 +80,6 @@ class PyQtBackend(Backend):
         if config.min_lineweight is None:
             config = config.with_changes(min_lineweight=0.24)
         super().configure(config)
-        # LinePolicy.ACCURATE is handled by the frontend since v0.18.1
-        if config.line_policy == LinePolicy.SOLID:
-            self._line_renderer = InternalLineRenderer(
-                self, config, solid_only=True
-            )
-        else:
-            self._line_renderer = InternalLineRenderer(
-                self, config, solid_only=False
-            )
 
     def set_scene(self, scene: qw.QGraphicsScene):
         self._scene = scene
@@ -163,7 +151,9 @@ class PyQtBackend(Backend):
         if start.isclose(end):
             self.draw_point(start, properties)
         else:
-            item = self._line_renderer.draw_line(start, end, properties)  # type: ignore
+            item = self._scene.addLine(
+                start.x, start.y, end.x, end.y, self._get_pen(properties)
+            )
             self._set_item_data(item)
 
     def draw_solid_lines(
@@ -182,7 +172,11 @@ class PyQtBackend(Backend):
                 set_item_data(add_line(s.x, s.y, e.x, e.y, pen))
 
     def draw_path(self, path: Path, properties: Properties) -> None:
-        item = self._line_renderer.draw_path(path, properties)  # type: ignore
+        item = self._scene.addPath(
+            to_qpainter_path([path]),
+            self._get_pen(properties),
+            self._no_fill,
+        )
         self._set_item_data(item)
 
     def draw_filled_paths(
@@ -191,20 +185,20 @@ class PyQtBackend(Backend):
         holes: Iterable[Path],
         properties: Properties,
     ) -> None:
-        qt_path = qg.QPainterPath()
+        oriented_paths: List[Path] = []
         for path in paths:
             try:
                 path = path.counter_clockwise()
             except ValueError:  # cannot detect path orientation
                 continue
-            _extend_qt_path(qt_path, path)
+            oriented_paths.append(path)
         for path in holes:
             try:
                 path = path.clockwise()
             except ValueError:  # cannot detect path orientation
                 continue
-            _extend_qt_path(qt_path, path)
-        item = _CosmeticPath(qt_path)
+            oriented_paths.append(path)
+        item = _CosmeticPath(to_qpainter_path(oriented_paths))
         item.setPen(self._get_pen(properties))
         item.setBrush(self._get_brush(properties))
         self._scene.addItem(item)
@@ -336,23 +330,6 @@ def _set_cosmetic_brush(
     item.setBrush(brush)
 
 
-@no_type_check
-def _extend_qt_path(qt_path: qg.QPainterPath, path: Path) -> None:
-    start = path.start
-    qt_path.moveTo(start.x, start.y)
-    for cmd in path:
-        if cmd.type == Command.LINE_TO:
-            end = cmd.end
-            qt_path.lineTo(end.x, end.y)
-        elif cmd.type == Command.CURVE4_TO:
-            end = cmd.end
-            ctrl1 = cmd.ctrl1
-            ctrl2 = cmd.ctrl2
-            qt_path.cubicTo(ctrl1.x, ctrl1.y, ctrl2.x, ctrl2.y, end.x, end.y)
-        else:
-            raise ValueError(f"Unknown path command: {cmd.type}")
-
-
 # https://doc.qt.io/qt-5/qfont.html#Weight-enum
 # QFont::Thin	0	0
 # QFont::ExtraLight	12	12
@@ -466,71 +443,3 @@ class TextRenderer:
     def get_text_rect(self, text: str, font: qg.QFont) -> qc.QRectF:
         # no point caching the bounding rect calculation, it is very cheap
         return self.get_text_path(text, font).boundingRect()
-
-
-# noinspection PyProtectedMember
-class PyQtLineRenderer(AbstractLineRenderer, metaclass=ABCMeta):
-    def __init__(self, backend: PyQtBackend, config: Configuration):
-        super().__init__(config)
-        self._backend = backend
-
-    @property
-    def scene(self) -> qw.QGraphicsScene:
-        return self._backend._scene
-
-    @property
-    def no_fill(self) -> qg.QBrush:
-        return self._backend._no_fill
-
-    def get_color(self, color: Color) -> qg.QColor:
-        return self._backend._get_color(color)
-
-    def get_pen(self, properties: Properties) -> qg.QPen:
-        return self._backend._get_pen(properties)
-
-
-# Just guessing here: this values assume a cosmetic pen!
-ISO_LIN_PATTERN_FACTOR = 15
-ANSI_LIN_PATTERN_FACTOR = ISO_LIN_PATTERN_FACTOR * 2.54
-
-
-class InternalLineRenderer(PyQtLineRenderer):
-    """PyQt internal linetype rendering"""
-
-    def __init__(
-        self, backend: PyQtBackend, config: Configuration, solid_only: bool
-    ):
-        super().__init__(backend, config)
-        self._solid_only = solid_only
-
-    @property
-    def measurement_scale(self) -> float:
-        return (
-            ISO_LIN_PATTERN_FACTOR
-            if self._config.measurement
-            else ISO_LIN_PATTERN_FACTOR
-        )
-
-    def get_pen(self, properties: Properties) -> qg.QPen:
-        pen = super().get_pen(properties)
-        if not self._solid_only and len(properties.linetype_pattern) > 1:
-            # The dash pattern is specified in units of the pens width; e.g. a
-            # dash of length 5 in width 10 is 50 pixels long.
-            pattern = self.pattern(properties)
-            if len(pattern):
-                pen.setDashPattern(pattern)
-        return pen
-
-    def draw_line(self, start: Vec3, end: Vec3, properties: Properties, z=0):
-        return self.scene.addLine(
-            start.x, start.y, end.x, end.y, self.get_pen(properties)
-        )
-
-    def draw_path(self, path: Path, properties: Properties, z=0):
-        qt_path = qg.QPainterPath()
-        _extend_qt_path(qt_path, path)
-        return self.scene.addPath(
-            qt_path,
-            self.get_pen(properties),
-            self.no_fill,
-        )
