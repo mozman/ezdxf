@@ -1,18 +1,7 @@
 # Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
 import math
-from typing import (
-    Iterable,
-    Iterator,
-    TYPE_CHECKING,
-    Optional,
-    Dict,
-    List,
-    Sequence,
-    Tuple,
-)
-from collections import defaultdict
-from functools import lru_cache
+from typing import Iterable, TYPE_CHECKING, Optional, List, Tuple
 import logging
 
 import matplotlib.pyplot as plt
@@ -21,16 +10,15 @@ from matplotlib.font_manager import FontProperties
 from matplotlib.lines import Line2D
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
-from matplotlib.textpath import TextPath
 
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.properties import Properties, LayoutProperties
 from ezdxf.addons.drawing.type_hints import FilterFunc
+from ezdxf.addons.drawing.mpl_text_renderer import TextRenderer
 from ezdxf.tools.fonts import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.tools import fonts
-from ezdxf.math import Vec2, Vec3, Matrix44
-from ezdxf.math.triangulation import mapbox_earcut_2d
+from ezdxf.math import Vec3, Matrix44
 import ezdxf.path
 
 from .config import Configuration, HatchPolicy
@@ -127,7 +115,7 @@ class MatplotlibBackend(Backend):
         )
 
     def draw_line(self, start: Vec3, end: Vec3, properties: Properties):
-        """ Draws a single solid line, line type rendering is done by the
+        """Draws a single solid line, line type rendering is done by the
         frontend since v0.18.1
         """
         if start.isclose(end):
@@ -321,142 +309,6 @@ def _transform_path(path: Path, transform: Matrix44) -> Path:
         [Vec3(x, y) for x, y in path.vertices]
     )
     return Path([(v.x, v.y) for v in vertices], path.codes)  # type: ignore
-
-
-@lru_cache(maxsize=256)  # fonts.Font is a named tuple
-def _get_font_properties(font: fonts.FontFace) -> Optional[FontProperties]:
-    # Font-definitions are created by the matplotlib FontManger(),
-    # but stored as json file and could be altered by an user:
-    font_properties = None
-    try:
-        font_properties = FontProperties(
-            family=font.family,
-            style=font.style,
-            stretch=font.stretch,
-            weight=font.weight,
-        )
-    except ValueError:
-        pass
-    return font_properties
-
-
-class TextRenderer:
-    def __init__(self, font: FontProperties, use_cache: bool):
-        self._default_font = font
-        self._use_cache = use_cache
-
-        # Each font has its own text path cache
-        # key is hash(FontProperties)
-        self._text_path_cache: Dict[int, Dict[str, TextPath]] = defaultdict(
-            dict
-        )
-
-        # Each font has its own font measurements cache
-        # key is hash(FontProperties)
-        self._font_measurement_cache: Dict[int, FontMeasurements] = {}
-
-    @property
-    def default_font(self) -> FontProperties:
-        return self._default_font
-
-    def clear_cache(self):
-        self._text_path_cache.clear()
-
-    def get_scale(
-        self, desired_cap_height: float, font: FontProperties
-    ) -> float:
-        return desired_cap_height / self.get_font_measurements(font).cap_height
-
-    def get_font_properties(
-        self, font: Optional[fonts.FontFace]
-    ) -> FontProperties:
-        if font is None:
-            return self.default_font
-        font_properties = _get_font_properties(font)
-        if font_properties is None:
-            return self.default_font
-        return font_properties
-
-    def get_font_measurements(self, font: FontProperties) -> FontMeasurements:
-        # None is the default font.
-        key = hash(font)
-        measurements = self._font_measurement_cache.get(key)
-        if measurements is None:
-            upper_x = self.get_text_path("X", font).vertices[:, 1].tolist()
-            lower_x = self.get_text_path("x", font).vertices[:, 1].tolist()
-            lower_p = self.get_text_path("p", font).vertices[:, 1].tolist()
-            baseline = min(lower_x)
-            measurements = FontMeasurements(
-                baseline=baseline,
-                cap_height=max(upper_x) - baseline,
-                x_height=max(lower_x) - baseline,
-                descender_height=baseline - min(lower_p),
-            )
-            self._font_measurement_cache[key] = measurements
-        return measurements
-
-    def get_text_path(self, text: str, font: FontProperties) -> TextPath:
-        # None is the default font
-        cache = self._text_path_cache[hash(font)]  # defaultdict(dict)
-        path = cache.get(text, None)
-        if path is None:
-            if font is None:
-                font = self._default_font
-            # must replace $ with \$ to avoid matplotlib interpreting it as math text
-            path = TextPath(
-                (0, 0),
-                text.replace("$", "\\$"),
-                size=1,
-                prop=font,
-                usetex=False,
-            )
-            if self._use_cache:
-                cache[text] = path
-        return path
-
-    def get_text_line_width(
-        self, text: str, cap_height: float, font: Optional[fonts.FontFace]
-    ) -> float:
-        font_properties = self.get_font_properties(font)
-        try:
-            path = self.get_text_path(text, font_properties)
-        except (RuntimeError, ValueError):
-            return 0.0
-        return max(x for x, y in path.vertices) * self.get_scale(
-            cap_height, font_properties
-        )
-
-    def get_ezdxf_path(
-        self, text: str, font: FontProperties
-    ) -> ezdxf.path.Path:
-        try:
-            text_path = self.get_text_path(text, font)
-        except (RuntimeError, ValueError):
-            return ezdxf.path.Path()
-        return ezdxf.path.multi_path_from_matplotlib_path(text_path)
-
-    def get_tessellation(
-        self,
-        text: str,
-        font: FontProperties,
-        *,
-        max_flattening_distance: float = 0.01,
-    ) -> Iterator[Sequence[Vec2]]:
-        """Triangulate text into faces.
-
-        !!! Does not work for any arbitrary text !!!
-        """
-        for polygon in ezdxf.path.nesting.group_paths(
-            list(self.get_ezdxf_path(text, font).sub_paths())
-        ):
-            if len(polygon) == 0:
-                continue
-            exterior = polygon[0]
-            holes = polygon[1:]
-            yield from mapbox_earcut_2d(
-                exterior.flattening(max_flattening_distance),
-                [hole.flattening(max_flattening_distance) for hole in holes],
-            )
 
 
 def _get_aspect_ratio(ax: plt.Axes) -> float:

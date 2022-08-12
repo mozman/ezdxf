@@ -34,10 +34,7 @@ except ImportError:
     )
     sys.exit(1)
 
-# reuse the TextRenderer() from the matplotlib backend to create TextPath()
-# objects
-from matplotlib.font_manager import FontProperties
-from .matplotlib import TextRenderer
+from .mpl_text_renderer import TextRenderer, FontProperties
 
 INCH_TO_MM = 25.6
 
