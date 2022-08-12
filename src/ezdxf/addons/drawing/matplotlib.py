@@ -31,7 +31,7 @@ from ezdxf.addons.drawing.type_hints import FilterFunc
 from ezdxf.tools.fonts import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.tools import fonts
-from ezdxf.math import Vec2, Vec3, Matrix44, BoundingBox2d
+from ezdxf.math import Vec2, Vec3, Matrix44
 from ezdxf.math.triangulation import mapbox_earcut_2d
 import ezdxf.path
 from ezdxf.path import nesting
@@ -178,28 +178,24 @@ class MatplotlibBackend(Backend):
         if self.config.hatch_policy == HatchPolicy.SHOW_OUTLINE:
             return
         linewidth = 0
-        vertices = []
-        codes = []
+        oriented_paths: List[ezdxf.path.Path] = []
         for path in paths:
             try:
                 path = path.counter_clockwise()
             except ValueError:  # cannot detect path orientation
                 continue
-            v1, c1 = _get_path_patch_data(path)
-            vertices.extend(v1)
-            codes.extend(c1)
+            oriented_paths.append(path)
 
         for hole in holes:
             try:
                 hole = hole.clockwise()
             except ValueError:  # cannot detect path orientation
                 continue
-            v1, c1 = _get_path_patch_data(hole)
-            vertices.extend(v1)
-            codes.extend(c1)
+            oriented_paths.append(hole)
+
         try:
             patch = PathPatch(
-                Path(vertices, codes),
+                ezdxf.path.to_matplotlib_path(oriented_paths),
                 color=properties.color,
                 linewidth=linewidth,
                 fill=True,
@@ -446,23 +442,6 @@ class TextRenderer:
             )
 
 
-def _get_path_patch_data(path: ezdxf.path.Path):
-    codes: List[int] = [Path.MOVETO]
-    vertices: List[Vec3] = [path.start]
-    LINE_TO = ezdxf.path.Command.LINE_TO
-    CURVE4_TO = ezdxf.path.Command.CURVE4_TO
-    for cmd in path:
-        if cmd.type == LINE_TO:
-            codes.append(Path.LINETO)
-            vertices.append(cmd.end)
-        elif cmd.type == CURVE4_TO:
-            codes.extend(CURVE4x3)
-            vertices.extend((cmd.ctrl1, cmd.ctrl2, cmd.end))  # type: ignore
-        else:
-            raise ValueError(f"Invalid command: {cmd.type}")
-    return [(p.x, p.y) for p in vertices], codes
-
-
 def _get_aspect_ratio(ax: plt.Axes) -> float:
     minx, maxx = ax.get_xlim()
     miny, maxy = ax.get_ylim()
@@ -627,10 +606,10 @@ class InternalLineRenderer(MatplotlibLineRenderer):
         )
 
     def draw_path(self, path, properties: Properties, z: float):
-        vertices, codes = _get_path_patch_data(path)
+        mpl_path = ezdxf.path.to_matplotlib_path([path])
         try:
             patch = PathPatch(
-                Path(vertices, codes),
+                mpl_path,
                 linewidth="solid"
                 if self._solid_only
                 else self.lineweight(properties),
