@@ -104,10 +104,11 @@ class BackendInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def set_clipping_path(self, path: Path = None) -> bool:
+    def set_clipping_path(self, path: Path = None, scale: float = 1.0) -> bool:
         """Set the current clipping path.
         Returns True if a clipping path is supported.
         An empty path or None removes the clipping path.
+        The `scale` is the scaling factor from modelspace to viewport.
         """
         raise NotImplementedError
 
@@ -136,7 +137,7 @@ class Backend(BackendInterface, metaclass=ABCMeta):
     def set_background(self, color: Color) -> None:
         raise NotImplementedError
 
-    def set_clipping_path(self, path: Path = None) -> bool:
+    def set_clipping_path(self, path: Path = None, scale: float = 1.0) -> bool:
         """Clipping path is not supported by default."""
         return False
 

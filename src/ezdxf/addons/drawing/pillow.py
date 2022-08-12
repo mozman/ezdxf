@@ -145,7 +145,10 @@ class PillowBackend(Backend):
         # dummy values for declaration, both are set in clear()
         self.image = Image.new("RGBA", (10, 10))
         self.draw = ImageDraw.Draw(self.image)
+
+        # VIEWPORT support
         self.clipper: Optional[ClippingRect2d] = None
+        self.viewport_scaling: float = 1.0
 
     def _solid_fill_hatch_baseline(self, one_px: float):
         direction = Vec2.from_deg_angle(self.solid_fill_hatching_angle)
@@ -170,12 +173,15 @@ class PillowBackend(Backend):
         self.bg_color = color
         self.clear()
 
-    def set_clipping_path(self, clipping_path: ezdxf.path.Path = None) -> bool:
+    def set_clipping_path(
+        self, clipping_path: ezdxf.path.Path = None, scale: float = 1.0
+    ) -> bool:
         if clipping_path:
             bbox = ezdxf.path.bbox((clipping_path,), fast=True)
             self.clipper = ClippingRect2d(bbox.extmin, bbox.extmax)
         else:
             self.clipper = None
+        self.viewport_scaling = scale
         return True  # confirm clipping support
 
     def width(self, lineweight: float) -> int:

@@ -775,7 +775,7 @@ class Designer:
         self.scale = vp.get_scale()
         self.transformation = vp.get_transformation_matrix()
         self.clipping_path = make_path(vp)
-        if not self.backend.set_clipping_path(self.clipping_path):
+        if not self.backend.set_clipping_path(self.clipping_path, self.scale):
             self.reset_viewport()
             return False
         return True
