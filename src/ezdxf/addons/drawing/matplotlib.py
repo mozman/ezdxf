@@ -34,7 +34,6 @@ from ezdxf.tools import fonts
 from ezdxf.math import Vec2, Vec3, Matrix44
 from ezdxf.math.triangulation import mapbox_earcut_2d
 import ezdxf.path
-from ezdxf.path import nesting
 
 from .config import Configuration, LinePolicy, HatchPolicy
 from .line_renderer import AbstractLineRenderer
@@ -93,14 +92,9 @@ class MatplotlibBackend(Backend):
             )
         super().configure(config)
         # LinePolicy.ACCURATE is handled by the frontend since v0.18.1
-        if config.line_policy == LinePolicy.SOLID:
-            self._line_renderer = InternalLineRenderer(
-                config, self.ax, solid_only=True
-            )
-        else:
-            self._line_renderer = InternalLineRenderer(
-                config, self.ax, solid_only=False
-            )
+        self._line_renderer = InternalLineRenderer(
+            config, self.ax, solid_only=(config.line_policy == LinePolicy.SOLID)
+        )
 
     def clear_text_cache(self):
         self._text_renderer.clear_cache()
@@ -113,8 +107,11 @@ class MatplotlibBackend(Backend):
     def set_background(self, color: Color):
         self.ax.set_facecolor(color)
 
-    def set_clipping_path(self, path: Path = None, scale: float = 1.0) -> bool:
+    def set_clipping_path(
+        self, path: ezdxf.path.Path = None, scale: float = 1.0
+    ) -> bool:
         from matplotlib.transforms import Transform
+
         if path:
             # This does not work!!!
             mpl_path = ezdxf.path.to_matplotlib_path([path])
@@ -296,7 +293,7 @@ def _transform_path(path: Path, transform: Matrix44) -> Path:
     vertices = transform.transform_vertices(
         [Vec3(x, y) for x, y in path.vertices]
     )
-    return Path([(v.x, v.y) for v in vertices], path.codes)
+    return Path([(v.x, v.y) for v in vertices], path.codes)  # type: ignore
 
 
 @lru_cache(maxsize=256)  # fonts.Font is a named tuple
@@ -422,20 +419,13 @@ class TextRenderer:
 
         !!! Does not work for any arbitrary text !!!
         """
-
-        def top_layer(polygon):
-            return [p for p in polygon if isinstance(p, ezdxf.path.Path)]
-
-        for polygon in nesting.fast_bbox_detection(  # type: ignore
+        for polygon in ezdxf.path.nesting.group_paths(
             list(self.get_ezdxf_path(text, font).sub_paths())
         ):
             if len(polygon) == 0:
                 continue
             exterior = polygon[0]
-            if len(polygon) > 1:
-                holes = top_layer(polygon[1])
-            else:
-                holes = []
+            holes = polygon[1:]
             yield from mapbox_earcut_2d(
                 exterior.flattening(max_flattening_distance),
                 [hole.flattening(max_flattening_distance) for hole in holes],
