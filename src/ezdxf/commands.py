@@ -333,7 +333,7 @@ class Draw(Command):
 
         from ezdxf.addons.drawing import RenderContext, Frontend
         from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
-        from ezdxf.addons.drawing.config import Configuration, LinePolicy
+        from ezdxf.addons.drawing.config import Configuration
 
         verbose = args.verbose
         # Print all supported export formats:
@@ -373,12 +373,6 @@ class Draw(Command):
                 layer_properties.is_visible = True
 
         config = Configuration.defaults()
-        config = config.with_changes(
-            line_policy=LinePolicy.ACCURATE
-            if args.ltype == "accurate"
-            else config.line_policy
-        )
-
         if args.all_entities_visible:
 
             class AllVisibleFrontend(Frontend):
@@ -452,13 +446,10 @@ class View(Command):
             print(str(e))
             sys.exit(1)
         from ezdxf.addons.drawing.qtviewer import CadViewer
-        from ezdxf.addons.drawing.config import Configuration, LinePolicy
+        from ezdxf.addons.drawing.config import Configuration
 
         config = Configuration.defaults()
         config = config.with_changes(
-            line_policy=LinePolicy.ACCURATE
-            if args.ltype == "accurate"
-            else config.line_policy,
             lineweight_scaling=args.lwscale,
         )
 
