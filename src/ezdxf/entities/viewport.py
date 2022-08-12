@@ -44,7 +44,8 @@ acdb_viewport = DefSubclass(
         "width": DXFAttr(40, default=1),
         # Height in paper space units:
         "height": DXFAttr(41, default=1),
-        # Viewport status field:
+
+        # Viewport status field: (according to the DXF Reference)
         # -1 = On, but is fully off screen, or is one of the viewports that is not
         #      active because the $MAXACTVP count is currently being exceeded.
         #  0 = Off
@@ -52,6 +53,8 @@ acdb_viewport = DefSubclass(
         # stacking for the viewports, where 1 is the "active viewport", 2 is the
         # next, and so on:
         "status": DXFAttr(68, default=0),
+
+        # Viewport id: (according to the DXF Reference)
         # Special VIEWPORT id == 1, this viewport defines the area of the layout
         # which is currently shown in the layout tab by the CAD application.
         # I guess this is meant by "active viewport" and therefore it is most likely
@@ -60,6 +63,7 @@ acdb_viewport = DefSubclass(
         # BricsCAD set id to -1 if the viewport is off and 'status' (group code 68)
         # is not present.
         "id": DXFAttr(69, default=2),
+
         # DXF reference: View center point (in DCS):
         # Correction to the DXF reference:
         # This point represents the center point in model space (WCS) stored as
