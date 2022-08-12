@@ -46,6 +46,18 @@ class _Point(qw.QAbstractGraphicsShapeItem):
         return qc.QRectF(self.location, qc.QSizeF(1, 1))
 
 
+class ViewportGroup(qw.QGraphicsItemGroup):
+    def __init__(self, clipping_path: Path):
+        super().__init__()
+        self.setFlag(
+            qw.QGraphicsItemGroup.GraphicsItemFlag.ItemClipsChildrenToShape, True
+        )
+        self._clipping_path = to_qpainter_path([clipping_path])
+
+    def shape(self):
+        return self._clipping_path
+
+
 # The key used to store the dxf entity corresponding to each graphics element
 CorrespondingDXFEntity = qc.Qt.UserRole + 0  # type: ignore
 CorrespondingDXFParentStack = qc.Qt.UserRole + 1  # type: ignore
@@ -75,6 +87,7 @@ class PyQtBackend(Backend):
         self._text_renderer = TextRenderer(qg.QFont(), use_text_cache)
         self._extra_lineweight_scaling = extra_lineweight_scaling
         self._debug_draw_rect = debug_draw_rect
+        self._current_viewport: Optional[ViewportGroup] = None
 
     def configure(self, config: Configuration) -> None:
         if config.min_lineweight is None:
@@ -86,6 +99,20 @@ class PyQtBackend(Backend):
 
     def clear_text_cache(self):
         self._text_renderer.clear_cache()
+
+    def set_clipping_path(self, path: Path = None, scale: float = 1.0) -> bool:
+        if path:
+            self._current_viewport = ViewportGroup(path)
+            self._scene.addItem(self._current_viewport)
+        else:
+            self._current_viewport = None
+        return True  # confirm clipping support
+
+    def _add_item(self, item):
+        if self._current_viewport:
+            self._current_viewport.addToGroup(item)
+        else:
+            self._scene.addItem(item)
 
     def _get_color(self, color: Color) -> qg.QColor:
         qt_color = self._color_cache.get(color, None)
@@ -144,17 +171,17 @@ class PyQtBackend(Backend):
         brush = qg.QBrush(self._get_color(properties.color), qc.Qt.SolidPattern)
         item = _Point(pos.x, pos.y, brush)
         self._set_item_data(item)
-        self._scene.addItem(item)
+        self._add_item(item)
 
     def draw_line(self, start: Vec3, end: Vec3, properties: Properties) -> None:
         # PyQt draws a long line for a zero-length line:
         if start.isclose(end):
             self.draw_point(start, properties)
         else:
-            item = self._scene.addLine(
-                start.x, start.y, end.x, end.y, self._get_pen(properties)
-            )
+            item = qw.QGraphicsLineItem(start.x, start.y, end.x, end.y)
+            item.setPen(self._get_pen(properties))
             self._set_item_data(item)
+            self._add_item(item)
 
     def draw_solid_lines(
         self,
@@ -163,21 +190,23 @@ class PyQtBackend(Backend):
     ):
         """Fast method to draw a bunch of solid lines with the same properties."""
         pen = self._get_pen(properties)
-        add_line = self._scene.addLine
+        add_line = self._add_item
         set_item_data = self._set_item_data
         for s, e in lines:
             if s.isclose(e):
                 self.draw_point(s, properties)
             else:
-                set_item_data(add_line(s.x, s.y, e.x, e.y, pen))
+                item = qw.QGraphicsLineItem(s.x, s.y, e.x, e.y)
+                item.setPen(pen)
+                set_item_data(item)
+                add_line(item)
 
     def draw_path(self, path: Path, properties: Properties) -> None:
-        item = self._scene.addPath(
-            to_qpainter_path([path]),
-            self._get_pen(properties),
-            self._no_fill,
-        )
+        item = qw.QGraphicsPathItem(to_qpainter_path([path]))
+        item.setPen(self._get_pen(properties))
+        item.setBrush(self._no_fill)
         self._set_item_data(item)
+        self._add_item(item)
 
     def draw_filled_paths(
         self,
@@ -201,7 +230,7 @@ class PyQtBackend(Backend):
         item = _CosmeticPath(to_qpainter_path(oriented_paths))
         item.setPen(self._get_pen(properties))
         item.setBrush(self._get_brush(properties))
-        self._scene.addItem(item)
+        self._add_item(item)
         self._set_item_data(item)
 
     def draw_filled_polygon(
@@ -214,7 +243,7 @@ class PyQtBackend(Backend):
         item = _CosmeticPolygon(polygon)
         item.setPen(self._no_line)
         item.setBrush(brush)
-        self._scene.addItem(item)
+        self._add_item(item)
         self._set_item_data(item)
 
     def draw_text(
@@ -233,9 +262,11 @@ class PyQtBackend(Backend):
 
         path = self._text_renderer.get_text_path(text, qfont)
         path = _matrix_to_qtransform(transform).map(path)
-        item = self._scene.addPath(
-            path, self._no_line, self._get_color(properties.color)
-        )
+        item = qw.QGraphicsPathItem(path)
+        brush = qg.QBrush(self._get_color(properties.color), qc.Qt.SolidPattern)
+        item.setBrush(brush)
+        item.setPen(self._no_line)
+        self._add_item(item)
         self._set_item_data(item)
 
     def get_qfont(self, font: Optional[fonts.FontFace]) -> qg.QFont:
