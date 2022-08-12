@@ -40,6 +40,17 @@ POINTS = 1.0 / 0.3527  # mm -> points
 CURVE4x3 = (Path.CURVE4, Path.CURVE4, Path.CURVE4)
 
 
+def setup_axes(ax: plt.Axes):
+    # like set_axis_off, except that the face_color can still be set
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+    for s in ax.spines.values():
+        s.set_visible(False)
+
+    ax.autoscale(False)
+    ax.set_aspect("equal", "datalim")
+
+
 class MatplotlibBackend(Backend):
     def __init__(
         self,
@@ -50,18 +61,10 @@ class MatplotlibBackend(Backend):
         use_text_cache: bool = True,
     ):
         super().__init__()
-        self.ax = ax
+        self.ax = ax  # current drawing axes
+        self.main_ax = ax
         self._adjust_figure = adjust_figure
-
-        # like set_axis_off, except that the face_color can still be set
-        self.ax.xaxis.set_visible(False)
-        self.ax.yaxis.set_visible(False)
-        for s in self.ax.spines.values():
-            s.set_visible(False)
-
-        self.ax.autoscale(False)
-        self.ax.set_aspect("equal", "datalim")
-
+        setup_axes(ax)
         self._current_z = 0
         self._text_renderer = TextRenderer(font, use_text_cache)
 
@@ -92,10 +95,16 @@ class MatplotlibBackend(Backend):
 
         if path:
             # This does not work!!!
+            clip_rect = ezdxf.path.bbox([path])
+            x, y, _ = clip_rect.extmin
+            w, h, _ = clip_rect.size
+            ax = self.main_ax.inset_axes([x, y, w, h])
+            setup_axes(ax)
             mpl_path = ezdxf.path.to_matplotlib_path([path])
-            self.ax.set_clip_path(mpl_path, Transform())
+            ax.set_clip_path(mpl_path, Transform())
+            self.ax = ax
         else:
-            self.ax.set_clip_path(None)
+            self.ax = self.main_ax  # reset
         return True  # confirm clipping support
 
     def draw_point(self, pos: Vec3, properties: Properties):
