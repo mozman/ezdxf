@@ -446,9 +446,9 @@ class TextRenderer:
             )
 
 
-def _get_path_patch_data(path):
-    codes = [Path.MOVETO]
-    vertices = [path.start]
+def _get_path_patch_data(path: ezdxf.path.Path):
+    codes: List[int] = [Path.MOVETO]
+    vertices: List[Vec3] = [path.start]
     LINE_TO = ezdxf.path.Command.LINE_TO
     CURVE4_TO = ezdxf.path.Command.CURVE4_TO
     for cmd in path:
@@ -457,7 +457,7 @@ def _get_path_patch_data(path):
             vertices.append(cmd.end)
         elif cmd.type == CURVE4_TO:
             codes.extend(CURVE4x3)
-            vertices.extend((cmd.ctrl1, cmd.ctrl2, cmd.end))
+            vertices.extend((cmd.ctrl1, cmd.ctrl2, cmd.end))  # type: ignore
         else:
             raise ValueError(f"Invalid command: {cmd.type}")
     return [(p.x, p.y) for p in vertices], codes
