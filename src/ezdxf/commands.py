@@ -292,7 +292,7 @@ class Draw(Command):
             "-l",
             "--layout",
             default="Model",
-            help="select the layout to draw",
+            help='select the layout to draw, default is "Model"',
         )
         parser.add_argument(
             "--all-layers-visible",
@@ -314,12 +314,6 @@ class Draw(Command):
             type=int,
             default=300,
             help="target render resolution, default is 300",
-        )
-        parser.add_argument(
-            "--ltype",
-            default="approximate",
-            choices=["approximate", "accurate"],
-            help=HELP_LTYPE,
         )
         parser.add_argument(
             "-v",
@@ -439,13 +433,7 @@ class View(Command):
             "-l",
             "--layout",
             default="Model",
-            help="select the layout to draw",
-        )
-        parser.add_argument(
-            "--ltype",
-            default="approximate",
-            choices=["approximate", "accurate"],
-            help=HELP_LTYPE,
+            help='select the layout to draw, default is "Model"',
         )
         # disable lineweight at all by default:
         parser.add_argument(

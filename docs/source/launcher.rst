@@ -155,9 +155,8 @@ Print help:
 .. code-block:: Text
 
     C:\> ezdxf draw -h
-    usage: ezdxf draw [-h] [--formats] [--layout LAYOUT] [--all-layers-visible]
-                      [--all-entities-visible] [-o OUT] [--dpi DPI]
-                      [--ltype {approximate,accurate}] [-v]
+    usage: ezdxf draw [-h] [--formats] [-l LAYOUT] [--all-layers-visible]
+                      [--all-entities-visible] [-o OUT] [--dpi DPI] [-v]
                       [FILE]
 
     positional arguments:
@@ -166,7 +165,8 @@ Print help:
     optional arguments:
       -h, --help            show this help message and exit
       --formats             show all supported export formats and exit
-      --layout LAYOUT       select the layout to draw
+      -l LAYOUT, --layout LAYOUT
+                            select the layout to draw, default is "Model"
       --all-layers-visible  draw all layers including the ones marked as invisible
       --all-entities-visible
                             draw all entities including the ones marked as
@@ -174,12 +174,6 @@ Print help:
                             invisible even if the layer is visible)
       -o OUT, --out OUT     output filename for export
       --dpi DPI             target render resolution, default is 300
-      --ltype {approximate,accurate}
-                            select the line type rendering method, default is
-                            approximate. Approximate uses the closest
-                            approximation available to the backend, the accurate
-                            method renders as accurately as possible but this
-                            approach is slower.
       -v, --verbose         give more output
 
 View
@@ -199,22 +193,15 @@ Print help:
 .. code-block:: Text
 
     C:\> ezdxf view -h
-    usage: ezdxf view [-h] [--layout LAYOUT]
-                      [--ltype {approximate,accurate}] [--lwscale LWSCALE]
-                      [FILE]
+    usage: ezdxf view [-h] [-l LAYOUT] [--lwscale LWSCALE] [FILE]
 
     positional arguments:
       FILE                  DXF file to view
 
     optional arguments:
       -h, --help            show this help message and exit
-      --layout LAYOUT       select the layout to draw
-      --ltype {approximate,accurate}
-                            select the line type rendering method, default
-                            is approximate. Approximate uses the closest
-                            approximation available to the backend, the
-                            accurate method renders as accurately as
-                            possible but this approach is slower.
+      -l LAYOUT, --layout LAYOUT
+                            select the layout to draw, default is "Model"
       --lwscale LWSCALE     set custom line weight scaling, default is 0 to
                             disable line weights at all
 
