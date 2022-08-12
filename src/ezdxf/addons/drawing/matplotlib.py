@@ -113,6 +113,16 @@ class MatplotlibBackend(Backend):
     def set_background(self, color: Color):
         self.ax.set_facecolor(color)
 
+    def set_clipping_path(self, path: Path = None, scale: float = 1.0) -> bool:
+        from matplotlib.transforms import Transform
+        if path:
+            # This does not work!!!
+            mpl_path = ezdxf.path.to_matplotlib_path([path])
+            self.ax.set_clip_path(mpl_path, Transform())
+        else:
+            self.ax.set_clip_path(None)
+        return True  # confirm clipping support
+
     def draw_point(self, pos: Vec3, properties: Properties):
         """Draw a real dimensionless point."""
         color = properties.color
@@ -155,13 +165,13 @@ class MatplotlibBackend(Backend):
             )
         )
 
-    def draw_path(self, path, properties: Properties):
+    def draw_path(self, path: ezdxf.path.Path, properties: Properties):
         self._line_renderer.draw_path(path, properties, self._get_z())
 
     def draw_filled_paths(
         self,
-        paths: Iterable[Path],
-        holes: Iterable[Path],
+        paths: Iterable[ezdxf.path.Path],
+        holes: Iterable[ezdxf.path.Path],
         properties: Properties,
     ):
         # Hatch patterns are handled by the frontend since v0.18.1
