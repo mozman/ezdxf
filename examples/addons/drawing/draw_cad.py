@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2020, Matthew Broadway
+# Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
 import argparse
 import sys
@@ -10,7 +10,7 @@ import ezdxf
 from ezdxf import recover
 from ezdxf.addons.drawing import RenderContext, Frontend
 from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
-from ezdxf.addons.drawing.config import Configuration, LinePolicy
+from ezdxf.addons.drawing.config import Configuration
 
 from ezdxf.tools import fonts
 
@@ -31,10 +31,9 @@ def _main():
     )
     parser.add_argument("cad_file", nargs="?")
     parser.add_argument("--supported_formats", action="store_true")
-    parser.add_argument("--layout", default="Model")
+    parser.add_argument("-l", "--layout", default="Model")
     parser.add_argument("--out", required=False)
     parser.add_argument("--dpi", type=int, default=300)
-    parser.add_argument("--ltype", default="internal")
     args = parser.parse_args()
 
     if args.supported_formats:
@@ -81,12 +80,6 @@ def _main():
 
     # setup drawing add-on configuration
     config = Configuration.defaults()
-    config = config.with_changes(
-        line_policy=LinePolicy.ACCURATE
-        if args.ltype == "ezdxf"
-        else config.line_policy
-    )
-
     fig: plt.Figure = plt.figure(dpi=args.dpi)
     ax: plt.Axes = fig.add_axes([0, 0, 1, 1])
     ctx = RenderContext(doc)
