@@ -1,7 +1,6 @@
 # Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
 import math
-from abc import ABCMeta
 from typing import (
     Iterable,
     Iterator,
@@ -23,7 +22,6 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 from matplotlib.textpath import TextPath
-import numpy as np
 
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.properties import Properties, LayoutProperties
@@ -35,8 +33,7 @@ from ezdxf.math import Vec2, Vec3, Matrix44
 from ezdxf.math.triangulation import mapbox_earcut_2d
 import ezdxf.path
 
-from .config import Configuration, LinePolicy, HatchPolicy
-from .line_renderer import AbstractLineRenderer
+from .config import Configuration, HatchPolicy
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import Layout
@@ -82,7 +79,6 @@ class MatplotlibBackend(Backend):
 
         self._current_z = 0
         self._text_renderer = TextRenderer(font, use_text_cache)
-        self._line_renderer: MatplotlibLineRenderer
 
     def configure(self, config: Configuration) -> None:
         if config.min_lineweight is None:
@@ -92,9 +88,6 @@ class MatplotlibBackend(Backend):
             )
         super().configure(config)
         # LinePolicy.ACCURATE is handled by the frontend since v0.18.1
-        self._line_renderer = InternalLineRenderer(
-            config, self.ax, solid_only=(config.line_policy == LinePolicy.SOLID)
-        )
 
     def clear_text_cache(self):
         self._text_renderer.clear_cache()
@@ -125,12 +118,31 @@ class MatplotlibBackend(Backend):
         color = properties.color
         self.ax.scatter([pos.x], [pos.y], s=0.1, c=color, zorder=self._get_z())
 
+    def get_lineweight(self, properties: Properties) -> float:
+        """Set lineweight_scaling=0 to use a constant minimal lineweight."""
+        assert self.config.min_lineweight is not None
+        return max(
+            properties.lineweight * self.config.lineweight_scaling,
+            self.config.min_lineweight,
+        )
+
     def draw_line(self, start: Vec3, end: Vec3, properties: Properties):
-        # matplotlib draws nothing for a zero-length line:
+        """ Draws a single solid line, line type rendering is done by the
+        frontend since v0.18.1
+        """
         if start.isclose(end):
+            # matplotlib draws nothing for a zero-length line:
             self.draw_point(start, properties)
         else:
-            self._line_renderer.draw_line(start, end, properties, self._get_z())
+            self.ax.add_line(
+                Line2D(
+                    (start.x, end.x),
+                    (start.y, end.y),
+                    linewidth=self.get_lineweight(properties),
+                    color=properties.color,
+                    zorder=self._get_z(),
+                )
+            )
 
     def draw_solid_lines(
         self,
@@ -139,7 +151,7 @@ class MatplotlibBackend(Backend):
     ):
         """Fast method to draw a bunch of solid lines with the same properties."""
         color = properties.color
-        lineweight = self._line_renderer.lineweight(properties)
+        lineweight = self.get_lineweight(properties)
         _lines = []
         point_x = []
         point_y = []
@@ -163,7 +175,22 @@ class MatplotlibBackend(Backend):
         )
 
     def draw_path(self, path: ezdxf.path.Path, properties: Properties):
-        self._line_renderer.draw_path(path, properties, self._get_z())
+        """Draw a solid line path, line type rendering is done by the
+        frontend since v0.18.1
+        """
+        mpl_path = ezdxf.path.to_matplotlib_path([path])
+        try:
+            patch = PathPatch(
+                mpl_path,
+                linewidth=self.get_lineweight(properties),
+                fill=False,
+                color=properties.color,
+                zorder=self._get_z(),
+            )
+        except ValueError as e:
+            logger.info(f"ignored matplotlib error: {str(e)}")
+        else:
+            self.ax.add_patch(patch)
 
     def draw_filled_paths(
         self,
@@ -552,87 +579,3 @@ def qsave(
         plt.close(fig)
     finally:
         matplotlib.use(old_backend)
-
-
-class MatplotlibLineRenderer(AbstractLineRenderer, metaclass=ABCMeta):
-    def __init__(self, config: Configuration, ax: plt.Axes):
-        super().__init__(config)
-        self.ax = ax
-
-    @property
-    def lineweight_scaling(self) -> float:
-        return self._config.lineweight_scaling * POINTS
-
-
-# Scaling factor for internal renderer, just guessing here:
-ISO_LIN_PATTERN_FACTOR = 3.0 * POINTS
-ANSI_LIN_PATTERN_FACTOR = ISO_LIN_PATTERN_FACTOR * 2.54
-
-
-class InternalLineRenderer(MatplotlibLineRenderer):
-    """matplotlib internal linetype rendering, which is oriented on the output
-    medium and dpi: This method is simpler and faster but may not replicate the
-    results of CAD applications.
-    """
-
-    def __init__(self, config: Configuration, ax: plt.Axes, solid_only: bool):
-        super().__init__(config, ax)
-        self._solid_only = solid_only
-
-    def draw_line(
-        self, start: Vec3, end: Vec3, properties: Properties, z: float
-    ):
-        self.ax.add_line(
-            Line2D(
-                (start.x, end.x),
-                (start.y, end.y),
-                linewidth=self.lineweight(properties),
-                linestyle="solid"
-                if self._solid_only
-                else self.linetype(properties),
-                color=properties.color,
-                zorder=z,
-            )
-        )
-
-    def draw_path(self, path, properties: Properties, z: float):
-        mpl_path = ezdxf.path.to_matplotlib_path([path])
-        try:
-            patch = PathPatch(
-                mpl_path,
-                linewidth="solid"
-                if self._solid_only
-                else self.lineweight(properties),
-                linestyle=self.linetype(properties),
-                fill=False,
-                color=properties.color,
-                zorder=z,
-            )
-        except ValueError as e:
-            logger.info(f"ignored matplotlib error: {str(e)}")
-        else:
-            self.ax.add_patch(patch)
-
-    @property
-    def measurement_scale(self) -> float:
-        return (
-            ISO_LIN_PATTERN_FACTOR
-            if self._config.measurement
-            else ANSI_LIN_PATTERN_FACTOR
-        )
-
-    def create_pattern(self, properties: Properties, scale: float):
-        """Return matplotlib line style tuple: (offset, on_off_sequence) or
-        "solid".
-
-        See examples: https://matplotlib.org/gallery/lines_bars_and_markers/linestyles.html
-
-        """
-        if len(properties.linetype_pattern) < 2:
-            return "solid"
-        else:
-            pattern = np.round(np.array(properties.linetype_pattern) * scale)
-            pattern = [max(element, 1) for element in pattern]
-            if len(pattern) % 2:
-                pattern.pop()
-            return 0, pattern
