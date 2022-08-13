@@ -1,6 +1,6 @@
-# Copyright (c) 2011-2021, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
-from typing import TextIO, List, Union, Tuple
+from typing import TextIO, List, Union, Tuple, Sequence
 import os
 import sys
 from pathlib import Path
@@ -33,6 +33,7 @@ CONFIG_DIRECTORY = ".config"
 ODAFC_ADDON = "odafc-addon"
 OPENSCAD_ADDON = "openscad-addon"
 DRAWING_ADDON = "drawing-addon"
+DIR_SEPARATOR = ";"
 
 
 def xdg_path(xdg_var: str, directory: str) -> Path:
@@ -64,6 +65,7 @@ def default_config() -> ConfigParser:
         "DEFAULT_DIMENSION_TEXT_STYLE": "OpenSansCondensed-Light",
         "TEST_FILES": "",
         "FONT_CACHE_DIRECTORY": "",
+        "SUPPORT_DIRS": "",
         "LOAD_PROXY_GRAPHICS": "true",
         "STORE_PROXY_GRAPHICS": "true",
         "LOG_UNPROCESSED_TAGS": "false",
@@ -73,7 +75,7 @@ def default_config() -> ConfigParser:
     }
     config[BROWSE_COMMAND] = {
         "TEXT_EDITOR": r'"C:\Program Files\Notepad++\notepad++.exe" '
-                       r'"{filename}" -n{num}',
+        r'"{filename}" -n{num}',
         "ICON_SIZE": "32",
     }
     config[ODAFC_ADDON] = {
@@ -250,6 +252,14 @@ class Options:
             raise ValueError(f'directory "{dirname}" does not exist')
 
     @property
+    def support_dirs(self) -> Sequence[str]:
+        return self.get(CORE, "SUPPORT_DIRS", "").split(DIR_SEPARATOR)
+
+    @support_dirs.setter
+    def support_dirs(self, support_dirs: Sequence[str]) -> None:
+        self.set(CORE, "SUPPORT_DIRS", DIR_SEPARATOR.join(support_dirs))
+
+    @property
     def test_files(self) -> str:
         return os.path.expanduser(self.get(CORE, "TEST_FILES"))
 
@@ -287,7 +297,7 @@ class Options:
 
     @property
     def disable_c_ext(self) -> bool:
-        """Disable C-extensions if ``True``. """
+        """Disable C-extensions if ``True``."""
         return self.get_bool(CORE, "DISABLE_C_EXT", default=False)
 
     @property
