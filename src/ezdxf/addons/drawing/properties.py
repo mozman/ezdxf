@@ -16,6 +16,7 @@ from typing import (
 import re
 import copy
 
+from ezdxf import options
 from ezdxf.addons import acadctb
 from ezdxf.addons.drawing.config import Configuration
 from ezdxf.addons.drawing.type_hints import Color, RGB
@@ -34,6 +35,7 @@ from ezdxf.entities import (
 from ezdxf.entities.ltype import CONTINUOUS_PATTERN
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.enums import InsertUnits, Measurement
+from ezdxf.filemanagement import find_support_file
 from ezdxf.lldxf import const
 from ezdxf.lldxf.validator import make_table_key as layer_key
 from ezdxf.tools import fonts
@@ -486,6 +488,7 @@ class RenderContext:
         # Each layout can have a different plot style table stored in
         # Layout.dxf.current_style_sheet.
         # HEADER var $STYLESHEET stores the default ctb-file name.
+        filename = find_support_file(filename, options.support_dirs)
         try:
             ctb = acadctb.load(filename)
         except IOError:

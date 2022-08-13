@@ -614,7 +614,7 @@ class NamedPlotStyles(PlotStyleTable):
 
 
 def _read_ctb(stream: BinaryIO) -> ColorDependentPlotStyles:
-    """Read a CTB-file from from binary `stream`."""
+    """Read a CTB-file from binary `stream`."""
     content: bytes = _decompress(stream)
     styles = ColorDependentPlotStyles()
     styles.parse(content.decode())
@@ -622,7 +622,7 @@ def _read_ctb(stream: BinaryIO) -> ColorDependentPlotStyles:
 
 
 def _read_stb(stream: BinaryIO) -> NamedPlotStyles:
-    """Read a STB-file from from binary `stream`."""
+    """Read a STB-file from binary `stream`."""
     content: bytes = _decompress(stream)
     styles = NamedPlotStyles()
     styles.parse(content.decode())
