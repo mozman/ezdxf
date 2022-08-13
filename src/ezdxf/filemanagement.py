@@ -1,22 +1,24 @@
 # Copyright (C) 2018-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import TextIO, TYPE_CHECKING, Union, Sequence
 import base64
 import io
+import pathlib
+
 from ezdxf.tools.standards import setup_drawing
 from ezdxf.lldxf.const import DXF2013
 from ezdxf.document import Drawing
 
 if TYPE_CHECKING:
     from ezdxf.eztypes import DXFInfo
-    from pathlib import Path
 
 
 def new(
     dxfversion: str = DXF2013,
     setup: Union[str, bool, Sequence[str]] = False,
     units: int = 6,
-) -> "Drawing":
+) -> Drawing:
     """Create a new :class:`~ezdxf.drawing.Drawing` from scratch, `dxfversion`
     can be either "AC1009" the official DXF version name or "R12" the
     AutoCAD release name.
@@ -66,7 +68,7 @@ def new(
     return doc
 
 
-def read(stream: TextIO) -> "Drawing":
+def read(stream: TextIO) -> Drawing:
     """Read a DXF document from a text-stream. Open stream in text mode
     (``mode='rt'``) and set correct text encoding, the stream requires at least
     a :meth:`readline` method.
@@ -93,10 +95,10 @@ def read(stream: TextIO) -> "Drawing":
 
 
 def readfile(
-    filename: Union[str, "Path"],
+    filename: Union[str, pathlib.Path],
     encoding: str = None,
     errors: str = "surrogateescape",
-) -> "Drawing":
+) -> Drawing:
     """Read the DXF document `filename` from the file-system.
 
     This is the preferred method to load existing ASCII or Binary DXF files,
@@ -159,7 +161,7 @@ def readfile(
     return doc
 
 
-def dxf_file_info(filename: str) -> "DXFInfo":
+def dxf_file_info(filename: str) -> DXFInfo:
     """Reads basic file information from a DXF document: DXF version, encoding
     and handle seed.
 
@@ -168,7 +170,7 @@ def dxf_file_info(filename: str) -> "DXFInfo":
         return dxf_stream_info(fp)
 
 
-def dxf_stream_info(stream: TextIO) -> "DXFInfo":
+def dxf_stream_info(stream: TextIO) -> DXFInfo:
     """Reads basic DXF information from a text stream: DXF version, encoding
     and handle seed.
 
@@ -259,14 +261,13 @@ def decode_base64(data: bytes, errors: str = "surrogateescape") -> "Drawing":
 def find_support_file(
     filename: str, support_dirs: Sequence[str] = None
 ) -> str:
-    """Find resource files in the support directories and `extra_dirs`.
-    """
-    if Path(filename).exists():
-        return str(filename)
+    """Find file `filename` in the support directories`."""
+    if pathlib.Path(filename).exists():
+        return filename
     if support_dirs is None:
         support_dirs = []
     for directory in support_dirs:
-        filepath = Path(directory) / filename
+        filepath = pathlib.Path(directory) / filename
         if filepath.exists():
             return str(filepath)
     return filename
