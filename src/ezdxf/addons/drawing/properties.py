@@ -1,6 +1,7 @@
 # Copyright (c) 2020-2021, Matthew Broadway
 # Copyright (c) 2020-2021, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 import re
 from typing import (
     TYPE_CHECKING,
@@ -18,7 +19,16 @@ from ezdxf.addons import acadctb
 from ezdxf.addons.drawing.config import Configuration
 from ezdxf.addons.drawing.type_hints import Color, RGB
 from ezdxf.colors import luminance, DXF_DEFAULT_COLORS, int2rgb
-from ezdxf.entities import Attrib, Insert, Face3d, Linetype, Viewport
+from ezdxf.entities import (
+    Attrib,
+    Insert,
+    Face3d,
+    Linetype,
+    Viewport,
+    Layer,
+    Textstyle,
+    DXFGraphic,
+)
 from ezdxf.entities.ltype import CONTINUOUS_PATTERN
 from ezdxf.entities.polygon import DXFPolygon
 from ezdxf.enums import InsertUnits, Measurement
@@ -28,14 +38,9 @@ from ezdxf.tools import fonts
 from ezdxf.tools.pattern import scale_pattern, HatchPatternType
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        DXFGraphic,
-        Layout,
-        Table,
-        Layer,
-        Drawing,
-        Textstyle,
-    )
+    from ezdxf.document import Drawing
+    from ezdxf.sections.table import Table
+    from ezdxf.layouts import Layout
 
 __all__ = [
     "Properties",
@@ -81,7 +86,7 @@ class Filling:
         self.gradient_color1: Optional[Color] = None
         self.gradient_color2: Optional[Color] = None
         self.gradient_centered: float = 0.0  # todo: what's the meaning?
-        # TODO: remove HATCH pattern definition, backends do have to
+        # TODO: remove HATCH pattern definition, backends do not
         #   render hatch patterns since v0.18.1:
         self.pattern_scale: float = 1.0
         self.pattern: HatchPatternType = []
@@ -134,7 +139,7 @@ class Properties:
         self.is_visible = True
 
         # The 'layer' attribute stores the resolved layer of an entity:
-        # Entities inside of a block references get properties from the layer
+        # Entities inside a block references get properties from the layer
         # of the INSERT entity, if they reside on the layer '0'.
         # To get the "real" layer of an entity, you have to use `entity.dxf.layer`
         self.layer: str = "0"
@@ -233,7 +238,7 @@ class LayoutProperties:
         return self._has_dark_background
 
     @staticmethod
-    def modelspace(units=InsertUnits.Unitless) -> "LayoutProperties":
+    def modelspace(units=InsertUnits.Unitless) -> LayoutProperties:
         return LayoutProperties("Model", MODEL_SPACE_BG_COLOR, units=units)
 
     @staticmethod
@@ -244,8 +249,8 @@ class LayoutProperties:
 
     @staticmethod
     def from_layout(
-        layout: "Layout", units: Optional[int] = None
-    ) -> "LayoutProperties":
+        layout: Layout, units: Optional[int] = None
+    ) -> LayoutProperties:
         """Setup default layout properties."""
         if layout.name == "Model":
             bg = MODEL_SPACE_BG_COLOR
@@ -280,7 +285,7 @@ class LayoutProperties:
 class RenderContext:
     def __init__(
         self,
-        doc: Optional["Drawing"] = None,
+        doc: Optional[Drawing] = None,
         *,
         ctb: str = "",
         export_mode: bool = False,
@@ -352,15 +357,15 @@ class RenderContext:
             changes["measurement"] = self.measurement
         return config.with_changes(**changes)
 
-    def _setup_layers(self, doc: "Drawing"):
+    def _setup_layers(self, doc: Drawing):
         for layer in doc.layers:
-            self.add_layer(cast("Layer", layer))
+            self.add_layer(cast(Layer, layer))
 
-    def _setup_text_styles(self, doc: "Drawing"):
+    def _setup_text_styles(self, doc: Drawing):
         for text_style in doc.styles:
             self.add_text_style(cast("Textstyle", text_style))
 
-    def add_layer(self, layer: "Layer") -> None:
+    def add_layer(self, layer: Layer) -> None:
         """Setup layer properties."""
         properties = LayerProperties()
         name = layer_key(layer.dxf.name)
@@ -392,7 +397,7 @@ class RenderContext:
             properties.is_visible &= bool(layer.dxf.plot)
         self.layers[name] = properties
 
-    def add_text_style(self, text_style: "Textstyle"):
+    def add_text_style(self, text_style: Textstyle):
         """Setup text style properties."""
         name = table_key(text_style.dxf.name)
         font_file = text_style.dxf.font
@@ -408,7 +413,7 @@ class RenderContext:
             font_face = fonts.FontFace()
         self.fonts[name] = font_face
 
-    def _true_layer_color(self, layer: "Layer") -> Color:
+    def _true_layer_color(self, layer: Layer) -> Color:
         if layer.dxf.hasattr("true_color"):
             return rgb_to_hex(layer.rgb)  # type: ignore
         else:
@@ -460,7 +465,7 @@ class RenderContext:
             else:
                 layer.is_visible = not state
 
-    def set_current_layout(self, layout: "Layout"):
+    def set_current_layout(self, layout: Layout):
         self.current_layout_properties = LayoutProperties.from_layout(
             layout, units=self.units
         )
@@ -479,7 +484,7 @@ class RenderContext:
     def pop_state(self) -> None:
         self.current_block_reference_properties = self._saved_states.pop()
 
-    def resolve_all(self, entity: "DXFGraphic") -> Properties:
+    def resolve_all(self, entity: DXFGraphic) -> Properties:
         """Resolve all properties of `entity`."""
         p = Properties()
         p.layer = self.resolve_layer(entity)
@@ -505,11 +510,11 @@ class RenderContext:
     def resolve_units(self) -> InsertUnits:
         return self.current_layout_properties.units
 
-    def resolve_linetype_scale(self, entity: "DXFGraphic") -> float:
+    def resolve_linetype_scale(self, entity: DXFGraphic) -> float:
         return entity.dxf.ltscale * self.linetype_scale
 
     def resolve_visible(
-        self, entity: "DXFGraphic", *, resolved_layer: Optional[str] = None
+        self, entity: DXFGraphic, *, resolved_layer: Optional[str] = None
     ) -> bool:
         """Resolve the visibility state of `entity`. Returns ``True`` if
         `entity` is visible.
@@ -534,7 +539,7 @@ class RenderContext:
         else:
             return not bool(entity.dxf.invisible)
 
-    def resolve_layer(self, entity: "DXFGraphic") -> str:
+    def resolve_layer(self, entity: DXFGraphic) -> str:
         """Resolve the layer of `entity`, this is only relevant for entities
         inside of block references.
         """
@@ -544,7 +549,7 @@ class RenderContext:
         return layer
 
     def resolve_color(
-        self, entity: "DXFGraphic", *, resolved_layer: Optional[str] = None
+        self, entity: DXFGraphic, *, resolved_layer: Optional[str] = None
     ) -> Color:
         """Resolve the rgb-color of `entity` as hex color string:
         "#RRGGBB" or "#RRGGBBAA".
@@ -648,7 +653,7 @@ class RenderContext:
             return rgb_to_hex(self.plot_styles[aci].color)
 
     def resolve_linetype(
-        self, entity: "DXFGraphic", *, resolved_layer: str = None
+        self, entity: DXFGraphic, *, resolved_layer: str = None
     ) -> Tuple[str, Sequence[float]]:
         """Resolve the linetype of `entity`. Returns a tuple of the linetype
         name as upper-case string and the simplified linetype pattern as tuple
@@ -686,7 +691,7 @@ class RenderContext:
         return name, pattern
 
     def resolve_lineweight(
-        self, entity: "DXFGraphic", *, resolved_layer: str = None
+        self, entity: DXFGraphic, *, resolved_layer: str = None
     ) -> float:
         """Resolve the lineweight of `entity` in mm.
 
@@ -736,7 +741,7 @@ class RenderContext:
         # todo: is this value stored anywhere (e.g. HEADER section)?
         return 0.25
 
-    def resolve_font(self, entity: "DXFGraphic") -> Optional[fonts.FontFace]:
+    def resolve_font(self, entity: DXFGraphic) -> Optional[fonts.FontFace]:
         """Resolve the text style of `entity` to a font name.
         Returns ``None`` for the default font.
         """
@@ -744,7 +749,7 @@ class RenderContext:
         style = entity.dxf.get("style", "Standard")
         return self.fonts.get(table_key(style))
 
-    def resolve_filling(self, entity: "DXFGraphic") -> Optional[Filling]:
+    def resolve_filling(self, entity: DXFGraphic) -> Optional[Filling]:
         """Resolve filling properties (SOLID, GRADIENT, PATTERN) of `entity`."""
 
         def setup_gradient():
@@ -865,7 +870,7 @@ def transparency_to_alpha(value: float) -> int:
     return int(round((1.0 - value) * 255))
 
 
-def _load_line_pattern(linetypes: "Table") -> Dict[str, Sequence[float]]:
+def _load_line_pattern(linetypes: Table) -> Dict[str, Sequence[float]]:
     """Load linetypes defined in a DXF document into  as dictionary,
     key is the upper case linetype name, value is the simplified line pattern,
     see :func:`compile_line_pattern`.
