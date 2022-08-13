@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2021, Manfred Moitzi
+# Copyright (C) 2018-2022, Manfred Moitzi
 # License: MIT License
 from typing import TextIO, TYPE_CHECKING, Union, Sequence
 import base64
@@ -254,3 +254,19 @@ def decode_base64(data: bytes, errors: str = "surrogateescape") -> "Drawing":
     doc = read(stream)
     stream.close()
     return doc
+
+
+def find_support_file(
+    filename: str, support_dirs: Sequence[str] = None
+) -> str:
+    """Find resource files in the support directories and `extra_dirs`.
+    """
+    if Path(filename).exists():
+        return str(filename)
+    if support_dirs is None:
+        support_dirs = []
+    for directory in support_dirs:
+        filepath = Path(directory) / filename
+        if filepath.exists():
+            return str(filepath)
+    return filename
