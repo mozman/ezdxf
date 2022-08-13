@@ -1,8 +1,7 @@
 # Copyright (c) 2020-2021, Matthew Broadway
-# Copyright (c) 2020-2021, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
 from __future__ import annotations
-import re
 from typing import (
     TYPE_CHECKING,
     Dict,
@@ -14,6 +13,8 @@ from typing import (
     cast,
     Sequence,
 )
+import re
+import copy
 
 from ezdxf.addons import acadctb
 from ezdxf.addons.drawing.config import Configuration
@@ -26,6 +27,7 @@ from ezdxf.entities import (
     Linetype,
     Viewport,
     Layer,
+    LayerOverrides,
     Textstyle,
     DXFGraphic,
 )
@@ -334,7 +336,7 @@ class RenderContext:
                 self.measurement = Measurement.Imperial
             self.pdsize = doc.header.get("$PDSIZE", 1.0)
             self.pdmode = doc.header.get("$PDMODE", 0)
-            self._setup_layers(doc)
+            self.layers = self._setup_layers(doc)
             self._setup_text_styles(doc)
             if self.units == InsertUnits.Unitless:
                 if self.measurement == Measurement.Metric:
@@ -343,6 +345,10 @@ class RenderContext:
                     self.units = InsertUnits.Inches
         self.current_layout_properties.units = self.units
         self._hatch_pattern_cache: Dict[str, HatchPatternType] = dict()
+
+    def copy(self):
+        """Returns a shallow copy."""
+        return copy.copy(self)
 
     def update_configuration(self, config: Configuration) -> Configuration:
         """Where the user has not specified a value, populate configuration
@@ -357,18 +363,63 @@ class RenderContext:
             changes["measurement"] = self.measurement
         return config.with_changes(**changes)
 
-    def _setup_layers(self, doc: Drawing):
+    def _setup_layers(self, doc: Drawing) -> Dict[str, LayerProperties]:
+        layers: Dict[str, LayerProperties] = dict()
         for layer in doc.layers:
-            self.add_layer(cast(Layer, layer))
+            layer_properties = self.resolve_layer_properties(cast(Layer, layer))
+            layers[layer_key(layer_properties.layer)] = layer_properties
+        return layers
 
     def _setup_text_styles(self, doc: Drawing):
         for text_style in doc.styles:
             self.add_text_style(cast("Textstyle", text_style))
 
-    def add_layer(self, layer: Layer) -> None:
-        """Setup layer properties."""
+    def _setup_vp_layers(self, vp: Viewport) -> Dict[str, LayerProperties]:
+        doc = vp.doc
+        assert doc is not None
+        frozen_layer_names = {layer_key(name) for name in vp.frozen_layers}
+        vp_handle = vp.dxf.handle
+        layers: Dict[str, LayerProperties] = dict()
+        for layer in doc.layers:
+            layer = cast(Layer, layer)
+            overrides = layer.get_vp_overrides()
+            if overrides.has_overrides(vp_handle):
+                layer = layer.copy()
+                self._apply_layer_overrides(vp_handle, layer, overrides)
+            layer_properties = self.resolve_layer_properties(layer)
+            key = layer_key(layer_properties.layer)
+            layers[key] = layer_properties
+            if key in frozen_layer_names:
+                layer_properties.is_visible = False
+        return layers
+
+    @staticmethod
+    def _apply_layer_overrides(
+        vp_handle: str,
+        layer: Layer,
+        overrides: LayerOverrides,
+    ) -> None:
+        layer.color = overrides.get_color(vp_handle)
+        rgb_color = overrides.get_rgb(vp_handle)
+        if rgb_color is not None:
+            layer.rgb = rgb_color
+        layer.transparency = overrides.get_transparency(vp_handle)
+        layer.dxf.linetype = overrides.get_linetype(vp_handle)
+        layer.dxf.lineweight = overrides.get_lineweight(vp_handle)
+
+    def from_viewport(self, vp: Viewport) -> RenderContext:
+        if vp.doc is None:
+            return self
+        vp_ctx = self.copy()
+        plot_style_name = vp.dxf.get("plot_style_name")
+        if plot_style_name:
+            vp_ctx.plot_styles = self._load_plot_style_table(plot_style_name)
+        self.layers = self._setup_vp_layers(vp)
+        return vp_ctx
+
+    def resolve_layer_properties(self, layer: Layer) -> LayerProperties:
+        """Resolve layer properties."""
         properties = LayerProperties()
-        name = layer_key(layer.dxf.name)
         # Store real layer name (mixed case):
         properties.layer = layer.dxf.name
         properties.color = self._true_layer_color(layer)
@@ -395,7 +446,7 @@ class RenderContext:
         properties.is_visible = layer.is_on() and not layer.is_frozen()
         if self.export_mode:
             properties.is_visible &= bool(layer.dxf.plot)
-        self.layers[name] = properties
+        return properties
 
     def add_text_style(self, text_style: Textstyle):
         """Setup text style properties."""

@@ -760,27 +760,29 @@ class Designer:
         """Draw the content of the given viewport current viewport.
         Returns ``False`` if the backend doesn't support viewports.
         """
-        if self.set_viewport(vp):
-            for entity in visible_vp_entities(vp):
+        if self.set_viewport(vp, self.ctx.from_viewport(vp)):
+            for entity in visible_vp_entities(vp, self.ctx):
                 properties = self.resolve_vp_properties(entity)
                 self.frontend.draw_entity(entity, properties)
             self.reset_viewport()
             return True
         return False
 
-    def set_viewport(self, vp: Viewport) -> bool:
+    def set_viewport(self, vp: Viewport, ctx: RenderContext) -> bool:
         """Set current viewport. Returns ``False`` if the backend doesn't
         support viewports.
         """
         self.scale = vp.get_scale()
         self.transformation = vp.get_transformation_matrix()
         self.clipping_path = make_path(vp)
+        self.ctx = ctx
         if not self.backend.set_clipping_path(self.clipping_path, self.scale):
             self.reset_viewport()
             return False
         return True
 
     def reset_viewport(self) -> None:
+        self.ctx = self.frontend.ctx
         self.scale = 1.0
         self.transformation = None
         self.clipping_path = Path()
@@ -899,7 +901,7 @@ class Designer:
             return pattern
 
 
-def visible_vp_entities(vp: Viewport) -> Iterator[DXFGraphic]:
+def visible_vp_entities(vp: Viewport, ctx: RenderContext) -> Iterator[DXFGraphic]:
     def is_visible(e):
         return True  # todo
 
