@@ -33,7 +33,7 @@ CONFIG_DIRECTORY = ".config"
 ODAFC_ADDON = "odafc-addon"
 OPENSCAD_ADDON = "openscad-addon"
 DRAWING_ADDON = "drawing-addon"
-DIR_SEPARATOR = ";"
+DIR_SEPARATOR = "\n"
 
 
 def xdg_path(xdg_var: str, directory: str) -> Path:
@@ -339,13 +339,14 @@ class Options:
             except IOError as e:
                 print(str(e))
                 return
+
+        filename = str(home_path / EZDXF_INI)
         try:
-            with open(home_path / EZDXF_INI, "wt", encoding="utf8") as fp:
-                self.write(fp)
+            self.write_file(filename)
         except IOError as e:
             print(str(e))
         else:
-            print(f"created config file: '{fp.name}'")
+            print(f"created config file: '{filename}'")
 
     def reset(self):
         self._loaded_paths = []

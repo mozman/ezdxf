@@ -823,8 +823,12 @@ class Config(Command):
             "-p",
             "--print",
             action="store_true",
-            help="print configuration, to store the configuration use: "
-            '"ezdxf config -p > my.ini"',
+            help="print configuration",
+        )
+        parser.add_argument(
+            "-w",
+            "--write",
+            help="write configuration",
         )
         parser.add_argument(
             "--home",
@@ -849,6 +853,13 @@ class Config(Command):
             options.write_home_config()
         if args.print:
             options.print()
+        if args.write:
+            filepath = Path(args.write).expanduser()
+            try:
+                options.write_file(str(filepath))
+                print(f"configuration written to: {filepath}")
+            except IOError as e:
+                print(str(e))
 
 
 def load_every_document(filename: str):
