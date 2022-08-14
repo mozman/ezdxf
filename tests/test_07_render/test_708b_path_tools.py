@@ -24,9 +24,11 @@ from ezdxf.path import (
     single_paths,
     lines_to_curve3,
     lines_to_curve4,
+    is_rectangular,
 )
 from ezdxf.path import make_path, Command
 from ezdxf.entities import BoundaryPathType, EdgeType
+from ezdxf.render import forms
 
 
 class TestTransformPaths:
@@ -757,3 +759,32 @@ class TestAllLinesToCurveConverter:
             path[0].type == Command.LINE_TO
         ), "should not remove a single line segment representing a point"
         assert len(list(path.flattening(1))) == 2
+
+
+class TestIsRectangular:
+    def test_empty_path(self):
+        assert is_rectangular(Path()) is False
+
+    def test_less_than_four_corners(self):
+        p = from_vertices([(0, 0), (1, 0), (1, 1)])
+        assert is_rectangular(p) is False
+
+    def test_open_square(self):
+        p = from_vertices([(0, 0), (1, 0), (1, 1), (0, 1)])
+        assert is_rectangular(p) is True
+
+    def test_closed_square(self):
+        p = from_vertices([(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)])
+        assert is_rectangular(p) is True
+
+    def test_rectangle(self):
+        p = from_vertices([(0, 0), (2, 0), (2, 1), (0, 1)])
+        assert is_rectangular(p) is True
+
+    def test_parallelogram(self):
+        p = from_vertices([(0, 0), (2, 0), (3, 1), (1, 1)])
+        assert is_rectangular(p) is False
+
+    def test_non_aligned_square(self):
+        p = from_vertices(forms.rotate(forms.square(2), 30))
+        assert is_rectangular(p, aligned=False) is True

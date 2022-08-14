@@ -72,6 +72,7 @@ __all__ = [
     "chamfer",
     "chamfer2",
     "triangulate",
+    "is_rectangular",
 ]
 
 MAX_DISTANCE = 0.01
@@ -1015,3 +1016,40 @@ def triangulate(
         exterior = polygon[0].flattening(max_flattening_distance)
         holes = [p.flattening(max_flattening_distance) for p in polygon[1:]]
         yield from mapbox_earcut_2d(exterior, holes)
+
+
+def is_rectangular(path: Path, aligned=True) -> bool:
+    """Returns ``True`` if `path` is a rectangular quadrilateral (square or
+    rectangle). If the argument `aligned` is ``True`` all sides of the
+    quadrilateral have to be parallel to the x- and y-axis.
+    """
+    points = path.control_vertices()
+    if len(points) < 4:
+        return False
+    if points[0].isclose(points[-1]):
+        points.pop()
+    if len(points) != 4:
+        return False
+
+    if aligned:
+        first_side = points[1] - points[0]
+        if not (abs(first_side.x) < 1e-12 or abs(first_side.y) < 1e-12):
+            return False
+
+    # horizontal sides
+    v1 = points[0].distance(points[1])
+    v2 = points[2].distance(points[3])
+    if not math.isclose(v1, v2):
+        return False
+    # vertical sides
+    v1 = points[1].distance(points[2])
+    v2 = points[3].distance(points[0])
+    if not math.isclose(v1, v2):
+        return False
+    # diagonals
+    v1 = points[0].distance(points[2])
+    v2 = points[1].distance(points[3])
+    if not math.isclose(v1, v2):
+        return False
+
+    return True
