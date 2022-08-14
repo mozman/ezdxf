@@ -181,6 +181,7 @@ class Frontend:
         layout_properties: Optional[LayoutProperties] = None,
     ) -> None:
         if layout_properties is not None:
+            # TODO: this does not work, layer properties have to be re-evaluated!
             self.ctx.current_layout_properties = layout_properties
         else:
             self.ctx.set_current_layout(layout)

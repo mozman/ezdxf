@@ -175,6 +175,10 @@ class Layout(BaseLayout):
         # super() deletes block_record and associated entity space
         super().destroy()
 
+    @property
+    def plot_layout_flags(self) -> int:
+        return self.dxf_layout.dxf.plot_layout_flags
+
     def reset_extents(
         self, extmin=(+1e20, +1e20, +1e20), extmax=(-1e20, -1e20, -1e20)
     ) -> None:
@@ -253,6 +257,9 @@ class Layout(BaseLayout):
         self.dxf_layout.dxf.current_style_sheet = name
         self.use_plot_styles(True)
         self.show_plot_styles(show)
+
+    def get_plot_style_filename(self) -> str:
+        return self.dxf_layout.dxf.current_style_sheet
 
     def set_plot_window(
         self,

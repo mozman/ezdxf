@@ -243,13 +243,11 @@ class LayoutProperties:
 
     @staticmethod
     def modelspace(units=InsertUnits.Unitless) -> LayoutProperties:
-        return LayoutProperties("Model", MODEL_SPACE_BG_COLOR, units=units)
-
-    @staticmethod
-    def paperspace(
-        name: str = "", units=InsertUnits.Unitless
-    ) -> "LayoutProperties":
-        return LayoutProperties(name, PAPER_SPACE_BG_COLOR, units=units)
+        return LayoutProperties(
+            "Model",
+            MODEL_SPACE_BG_COLOR,
+            units=units,
+        )
 
     @staticmethod
     def from_layout(
@@ -295,37 +293,40 @@ class RenderContext:
         export_mode: bool = False,
     ):
         """Represents the render context for the DXF document `doc`.
-        A given `ctb` file (plot style file)  overrides the default properties.
+        A given `ctb` file (plot style file) overrides the default properties of
+        all layout, which means the plot style table stored in the layout is
+        always ignored.
 
         Args:
-            doc: The document that is being drawn
-            ctb: A path to a plot style table to use
+            doc: DXF document
+            ctb: path to a plot style table
             export_mode: Whether to render the document as it would look when
                 exported (plotted) by a CAD application to a file such as pdf,
                 or whether to render the document as it would appear inside a
                 CAD application.
         """
         self._saved_states: List[Properties] = []
-        self.line_pattern: Dict[str, Sequence[float]] = (
-            _load_line_pattern(doc.linetypes) if doc else dict()
-        )
-        self.current_layout_properties = LayoutProperties.modelspace()
+        self.line_pattern: Dict[str, Sequence[float]] = dict()
         self.current_block_reference_properties: Optional[Properties] = None
-        self.plot_styles = self._load_plot_style_table(ctb)
         self.export_mode = export_mode
-        # Always consider: entity layer may not exist
-        # Layer name as key is normalized, most likely name.lower(), but may
-        # change in the future.
+        self.override_ctb = ctb
         self.layers: Dict[str, LayerProperties] = dict()
-        # Text-style -> font mapping
         self.fonts: Dict[str, fonts.FontFace] = dict()
-        self.units = InsertUnits.Unitless
+        self.units = InsertUnits.Unitless  # modelspace units
         self.linetype_scale: float = 1.0  # overall modelspace linetype scaling
         self.measurement = Measurement.Imperial
-        self.pdsize = 0
-        self.pdmode = 0
+        self.pdsize: float = 0
+        self.pdmode: int = 0
+        self._hatch_pattern_cache: Dict[str, HatchPatternType] = dict()
+        self.current_layout_properties = LayoutProperties.modelspace()
+        self.plot_styles = self._load_plot_style_table(self.override_ctb)
+
         if doc:
+            self.line_pattern = _load_line_pattern(doc.linetypes)
             self.linetype_scale = doc.header.get("$LTSCALE", 1.0)
+            self.pdsize = doc.header.get("$PDSIZE", 1.0)
+            self.pdmode = doc.header.get("$PDMODE", 0)
+            self._setup_text_styles(doc)
             try:
                 self.units = InsertUnits(doc.header.get("$INSUNITS", 0))
             except ValueError:
@@ -336,17 +337,26 @@ class RenderContext:
                 )
             except ValueError:
                 self.measurement = Measurement.Imperial
-            self.pdsize = doc.header.get("$PDSIZE", 1.0)
-            self.pdmode = doc.header.get("$PDMODE", 0)
-            self.layers = self._setup_layers(doc)
-            self._setup_text_styles(doc)
             if self.units == InsertUnits.Unitless:
                 if self.measurement == Measurement.Metric:
                     self.units = InsertUnits.Meters
                 else:
                     self.units = InsertUnits.Inches
-        self.current_layout_properties.units = self.units
-        self._hatch_pattern_cache: Dict[str, HatchPatternType] = dict()
+        self.current_layout_properties.units = self.units  # default modelspace
+
+    def set_current_layout(self, layout: Layout, ctb: str = ""):
+        # the given ctb has the highest priority
+        if ctb == "":
+            # next is the override ctb
+            ctb = self.override_ctb
+        if ctb == "":
+            # last is the ctb stored in the layout
+            ctb = layout.get_plot_style_filename()
+        self.current_layout_properties = LayoutProperties.from_layout(layout)
+        self.plot_styles = self._load_plot_style_table(ctb)
+        self.layers = dict()
+        if layout.doc:
+            self.layers = self._setup_layers(layout.doc)
 
     def copy(self):
         """Returns a shallow copy."""
@@ -518,11 +528,6 @@ class RenderContext:
                 layer.is_visible = state
             else:
                 layer.is_visible = not state
-
-    def set_current_layout(self, layout: Layout):
-        self.current_layout_properties = LayoutProperties.from_layout(
-            layout, units=self.units
-        )
 
     @property
     def inside_block_reference(self) -> bool:
