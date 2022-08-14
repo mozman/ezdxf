@@ -79,6 +79,13 @@ class QtTextRenderer:
         # no point caching the bounding rect calculation, it is very cheap
         return self.get_text_path(text, font).boundingRect()
 
+    def get_text_line_width(
+        self, text: str, cap_height: float, font: FontFace = None
+    ) -> float:
+        qfont = self.get_font_properties(font)
+        scale = self.get_scale(cap_height, qfont)
+        return self.get_text_rect(text, qfont).right() * scale
+
     def get_ezdxf_path(self, text: str, font: qg.QFont) -> ezdxf.path.Path:
         try:
             text_path = self.get_text_path(text, font)

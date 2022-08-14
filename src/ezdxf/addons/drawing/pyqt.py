@@ -283,9 +283,7 @@ class PyQtBackend(Backend):
             self.current_entity.dxftype() if self.current_entity else "TEXT"
         )
         text = prepare_string_for_rendering(text, dxftype)
-        qfont = self.get_qfont(font)
-        scale = self._text_renderer.get_scale(cap_height, qfont)
-        return self._text_renderer.get_text_rect(text, qfont).right() * scale
+        return self._text_renderer.get_text_line_width(text, cap_height, font)
 
     def clear(self) -> None:
         self._scene.clear()
