@@ -103,7 +103,7 @@ Then walk north. If you have to jump the fence you know you are now
 outside the poly. If you have to cross again you know you are now 
 inside again; i.e., if you were inside the field to start with, the total 
 number of fence jumps you would make will be odd, whereas if you were 
-ouside the jumps will be even.
+outside the jumps will be even.
 
 The code below is from Wm. Randolph Franklin <wrf@ecse.rpi.edu>
 (see URL below) with some minor modifications for speed.  It returns 

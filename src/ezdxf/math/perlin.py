@@ -106,7 +106,7 @@ class BaseNoise:
 
         A permutation table consisting of an iterable sequence of whole
         numbers can be specified directly. This should have a power-of-two
-        length. Typical permutation tables are a sequnce of unique integers in
+        length. Typical permutation tables are a sequence of unique integers in
         the range [0,period) in random order, though other arrangements could
         prove useful, they will not be "pure" simplex noise. The largest
         element in the sequence must be no larger than period-1.

@@ -273,7 +273,7 @@ cdef class Basis:
                 s1 = s2
                 s2 = t
 
-        # Multiply through by the the correct factors
+        # Multiply through by the correct factors
         cdef double rr = p
         for k in range(1, n + 1):
             for j in range(order):

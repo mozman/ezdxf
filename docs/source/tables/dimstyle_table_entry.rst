@@ -451,7 +451,7 @@ Factory function         :meth:`Drawing.dimstyles.new`
 
         Length of extension line below dimension line if fixed
         (:attr:`DimStyle.dxf.dimtfxlon` == 1), :attr:`DimStyle.dxf.dimexen`
-        defines the the length above the dimension line, requires DXF R2007+
+        defines the length above the dimension line, requires DXF R2007+
 
     .. attribute:: dxf.dimtfill
 

@@ -206,7 +206,7 @@ def fit_paths_into_box(
 
     Args:
         paths: iterable of :class:`~ezdxf.path.Path` objects
-        size: target box size as tuple of x-, y- ond z-size values
+        size: target box size as tuple of x-, y- and z-size values
         uniform: ``True`` for uniform scaling
         source_box: pass precalculated source bounding box, or ``None`` to
             calculate the default source bounding box from the control vertices

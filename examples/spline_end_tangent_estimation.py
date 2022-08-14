@@ -294,7 +294,7 @@ msp.add_spline(
     fit_points_to_cad_cv(closed_points, [start_tangent, end_tangent])
 )
 
-# The cubic Bèzier curve interpolation does not yield usable results fot this
+# The cubic Bèzier curve interpolation does not yield usable results for this
 # scenario.
 
 zoom.extents(msp)

@@ -12,7 +12,7 @@ existing DXF drawings or create new DXF drawings.
 The main objective in the development of `ezdxf` was to hide complex DXF details
 from the programmer but still support most capabilities of the :term:`DXF`
 format. Nevertheless, a basic understanding of the DXF format is required, also
-to understand which tasks and goals are possible to accomplish by using the the
+to understand which tasks and goals are possible to accomplish by using the
 DXF format.
 
 Not all DXF features are supported yet, but additional features will be added in

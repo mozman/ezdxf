@@ -164,7 +164,7 @@ def test_discard_entity_with_none_handle():
     assert e.dxf.handle is None
     # call should not raise any Exception
     db.discard(e)
-    # 2rd call should not raise any Exception
+    # 2nd call should not raise any Exception
     db.discard(e)
 
 
@@ -175,7 +175,7 @@ def test_discard_entity_with_handle_not_in_database():
     assert e.dxf.handle not in db
     # call should not raise any Exception
     db.discard(e)
-    # 2rd call should not raise any Exception
+    # 2nd call should not raise any Exception
     db.discard(e)
     assert (
         e.dxf.handle is "ABBA"

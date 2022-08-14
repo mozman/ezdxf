@@ -76,7 +76,7 @@ ABS_TOL = 1e-9
 
 # DXF files as XREF:
 # The INSERT entity is used to attach XREFS.
-# The model space is the block content, if the the whole document is used as
+# The model space is the block content, if the whole document is used as
 # BLOCK (XREF), but this is only supported for the DWG format.
 # AutoCAD does not support DXF files as XREFS, they are ignored, but the DXF
 # file is valid! BricsCAD shows DXF files as XREFS, but does not allow to attach

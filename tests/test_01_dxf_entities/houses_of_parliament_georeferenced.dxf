@@ -3281,7 +3281,7 @@ erId>^J          <Value uom="degree">-2</Value>^J        </ParameterValue>^J    
 303
 </ParameterValue>^J      </Projection>^J    </Conversion>^J  </ProjectedCoordinateSystem>^J^J  <Alias id="27700" type="CoordinateSystem">^J    <ObjectId>OSGB1936.NationalGrid</ObjectId>^J    <Namespace>EPSG Code</Namespace>^J  </Alias>^J^J  <GeodeticDatum id="
 303
-OSGB1936">^J    <Name>OSGB1936</Name>^J    <Description>Ordnance Survey of Great Britain 1936</Description>^J    <Authority>Ordnance Survey: OSTN15 NTv2 Transofrmation</Authority>^J    <PrimeMeridianId>Greenwich</PrimeMeridianId>^J    <EllipsoidId>AIRY30<
+OSGB1936">^J    <Name>OSGB1936</Name>^J    <Description>Ordnance Survey of Great Britain 1936</Description>^J    <Authority>Ordnance Survey: OSTN15 NTv2 Transformation</Authority>^J    <PrimeMeridianId>Greenwich</PrimeMeridianId>^J    <EllipsoidId>AIRY30<
 303
 /EllipsoidId>^J  </GeodeticDatum>^J^J  <Alias id="6277" type="Datum">^J    <ObjectId>OSGB1936</ObjectId>^J    <Namespace>EPSG Code</Namespace>^J  </Alias>^J^J  <Ellipsoid id="AIRY30">^J    <Name>AIRY30</Name>^J    <Description>Airy, 1830</Description>^J    <Aut
 303

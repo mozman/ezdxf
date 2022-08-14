@@ -228,8 +228,8 @@ UNDERLINE_START     start underline text
 UNDERLINE_STOP      stop underline text
 OVERSTRIKE_START    start overline
 OVERSTRIKE_STOP     stop overline
-STRIKE_START        start strike trough
-STRIKE_STOP         stop strike trough
+STRIKE_START        start strike through
+STRIKE_STOP         stop strike through
 GROUP_START         start of group
 GROUP_END           end of group
 NEW_LINE            start in new line

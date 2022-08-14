@@ -79,7 +79,7 @@ EntityQuery Class
     the container. Supports the standard `Python Sequence`_ methods and protocols.
     Does not remove automatically destroyed entities (entities deleted by
     calling method :meth:`destroy`), the method :meth:`purge` has to be
-    called explict to remove the destroyed entities.
+    called explicitly to remove the destroyed entities.
 
     .. autoattribute:: first
 

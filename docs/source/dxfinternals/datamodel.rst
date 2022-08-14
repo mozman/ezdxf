@@ -203,7 +203,7 @@ Root DICTIONARY content for DXF R2018
     ACAD_CIP_PREVIOUS_PRODUCT_INFO
     350     <<< handle to target (pointer)
     78B     <<< points to a XRECORD with product info about the creator application
-    3       <<< entry with unknown meaning, if I shoul guess: something with about colors ...
+    3       <<< entry with unknown meaning, if I should guess: something with about colors ...
     ACAD_COLOR
     350
     4FB     <<< points to a DICTIONARY

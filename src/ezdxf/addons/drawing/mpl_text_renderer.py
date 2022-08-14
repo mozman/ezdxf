@@ -17,7 +17,7 @@ import ezdxf.path
 
 @lru_cache(maxsize=256)  # fonts.Font is a named tuple
 def _get_font_properties(font: fonts.FontFace) -> Optional[FontProperties]:
-    # Font-definitions are created by the matplotlib FontManger(),
+    # Font-definitions are created by the matplotlib FontManager(),
     # but stored as json file and could be altered by an user:
     font_properties = None
     try:

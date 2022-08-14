@@ -48,7 +48,7 @@ Text Size Tools
     .. attribute:: column_heights
 
         A tuple of columns heights (float) in drawing units. Contains at least
-        one column height and the the column height is 0 for an empty column.
+        one column height and the column height is 0 for an empty column.
 
     .. attribute:: column_count
 

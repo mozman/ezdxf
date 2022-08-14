@@ -123,7 +123,7 @@ def test_visibility_map():
     expected = [
         (0, 0, textcell),
         (0, 2, empty),  # cell (0, 1) is covered by (0,0)
-        (1, 2, empty),  # cells (1, 0), (1, 2) are coverd by cell (0, 0)
+        (1, 2, empty),  # cells (1, 0), (1, 2) are covered by cell (0, 0)
         (2, 0, empty),
         (2, 1, empty),
         (2, 2, empty),

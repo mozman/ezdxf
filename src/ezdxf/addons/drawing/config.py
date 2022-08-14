@@ -101,7 +101,7 @@ class Configuration:
             correct, in SVG the line width is 0.7 points for 0.25mm as
             required, but it often looks too thick
         min_lineweight: the minimum line width in 1/300 inch, set to None for
-            let the the backend choose.
+            let the backend choose.
         min_dash_length: the minimum length for a dash when drawing a styled line
             (default value is arbitrary)
         max_flattening_distance: Max flattening distance in drawing units

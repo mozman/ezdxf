@@ -33,7 +33,7 @@ The usual steps of the building process are:
         - :meth:`MultiLeaderBuilder.set_mleader_style`
         - :meth:`MultiLeaderBuilder.set_overall_scaling`
 
-    4. add one ore more leader lines
+    4. add one or more leader lines
 
         - :meth:`MultiLeaderBuilder.add_leader_line`
 

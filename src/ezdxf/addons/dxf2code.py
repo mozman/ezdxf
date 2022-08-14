@@ -127,7 +127,7 @@ class Code:
 
     def __init__(self):
         self.code: List[str] = []
-        # global imports -> indention level 0:
+        # global imports -> indentation level 0:
         self.imports: Set[str] = set()
         # layer names as string:
         self.layers: Set[str] = set()

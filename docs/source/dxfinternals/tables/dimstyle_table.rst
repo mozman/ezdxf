@@ -40,7 +40,7 @@ DIMSTYLE Entry DXF R12
 DIMSTYLE Variables DXF R12
 --------------------------
 
-Source: `CADDManger Blog`_
+Source: `CADDManager Blog`_
 
 .. image:: gfx/dimvars1.svg
     :align: center
@@ -313,7 +313,7 @@ Table Structure DXF R2000+
 Additional DIMSTYLE Variables DXF R13/14
 ----------------------------------------
 
-Source: `CADDManger Blog`_
+Source: `CADDManager Blog`_
 
 =================== ======= ==============================================================================================
 DIMVAR              code    Description
@@ -407,7 +407,7 @@ DIMUPT              288     Controls options for user-positioned text.
 Additional DIMSTYLE Variables DXF R2000
 ---------------------------------------
 
-Source: `CADDManger Blog`_
+Source: `CADDManager Blog`_
 
 =================== ======= ==============================================================================================
 DIMVAR              Code    Description
@@ -542,7 +542,7 @@ This XDATA groups requires also an appropriate APPID entry in the APPID table. T
 
 .. _TABLES Section: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-A9FD9590-C97B-4E41-9F26-BD82C34A4F9F
 
-.. _CADDManger Blog: http://www.caddmanager.com/CMB/2009/09/cad-standards-autocad-dimension-variables/
+.. _CADDManager Blog: http://www.caddmanager.com/CMB/2009/09/cad-standards-autocad-dimension-variables/
 
 
 .. include:: ../reflinks.inc

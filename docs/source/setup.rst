@@ -55,7 +55,7 @@ automatically at each release to `PyPI`_ as binary wheels to `PyPI`:
 The wheels are created by the continuous integration (CI) service provided by
 `GitHub`_ and the build container `cibuildwheel`_ provided by `PyPA`_ the Python
 Packaging Authority.
-The `workflows`_ are kept short and simple, so my future me will understand whats
+The `workflows`_ are kept short and simple, so my future me will understand what's
 going on and they are maybe also helpful for other developers which do not touch
 CI services every day.
 
