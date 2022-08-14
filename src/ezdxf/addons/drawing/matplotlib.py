@@ -14,7 +14,7 @@ from matplotlib.path import Path
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
 from ezdxf.addons.drawing.properties import Properties, LayoutProperties
 from ezdxf.addons.drawing.type_hints import FilterFunc
-from ezdxf.addons.drawing.mpl_text_renderer import TextRenderer
+from ezdxf.addons.drawing.mpl_text_renderer import MplTextRenderer
 from ezdxf.tools.fonts import FontMeasurements
 from ezdxf.addons.drawing.type_hints import Color
 from ezdxf.tools import fonts
@@ -65,7 +65,7 @@ class MatplotlibBackend(Backend):
         self.ax = ax
         self._adjust_figure = adjust_figure
         self._current_z = 0
-        self._text_renderer = TextRenderer(font, use_text_cache)
+        self._text_renderer = MplTextRenderer(font, use_text_cache)
 
     def configure(self, config: Configuration) -> None:
         if config.min_lineweight is None:
