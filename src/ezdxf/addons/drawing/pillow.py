@@ -34,6 +34,10 @@ except ImportError:
     )
     sys.exit(1)
 
+# Replace MplTextRender() by QtTextRenderer():
+# from ezdxf.addons.xqt import QtWidgets as qw
+# app = qw.QApplication(sys.argv)
+# from .qt_text_renderer import QtTextRenderer as TextRenderer
 from .mpl_text_renderer import MplTextRenderer as TextRenderer
 
 INCH_TO_MM = 25.6
