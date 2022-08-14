@@ -1,8 +1,7 @@
 # Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
 import math
-from typing import Optional, Iterable, Dict, Union, Tuple, List
-from functools import lru_cache
+from typing import Optional, Iterable, Dict, Tuple, List
 from ezdxf.addons.xqt import QtCore as qc, QtGui as qg, QtWidgets as qw
 
 from ezdxf.addons.drawing.backend import Backend, prepare_string_for_rendering
@@ -264,12 +263,7 @@ class PyQtBackend(Backend):
         self._add_item(item)
 
     def get_qfont(self, font: Optional[fonts.FontFace]) -> qg.QFont:
-        if font is None:
-            return self._text_renderer.default_font
-        font_properties = _get_qfont(font)
-        if font_properties is None:
-            return self._text_renderer.default_font
-        return font_properties
+        return self._text_renderer.get_font(font)
 
     def get_font_measurements(
         self, cap_height: float, font: fonts.FontFace = None
@@ -309,19 +303,6 @@ class PyQtBackend(Backend):
             )
 
 
-@lru_cache(maxsize=256)  # fonts.Font is a named tuple
-def _get_qfont(font: fonts.FontFace) -> Optional[qg.QFont]:
-    qfont = None
-    if font:
-        family = font.family
-        italic = "italic" in font.style.lower()
-        weight = _map_weight(font.weight)
-        qfont = qg.QFont(family, weight=weight, italic=italic)
-        # INFO: setting the stretch value makes results worse!
-        # qfont.setStretch(_map_stretch(font.stretch))
-    return qfont
-
-
 class _CosmeticPath(qw.QGraphicsPathItem):
     def paint(
         self,
@@ -353,41 +334,6 @@ def _set_cosmetic_brush(
     # the hatch mirrored w.r.t the view
     brush.setTransform(painter.transform().inverted()[0].scale(1, -1))  # type: ignore
     item.setBrush(brush)
-
-
-# https://doc.qt.io/qt-5/qfont.html#Weight-enum
-# QFont::Thin	0	0
-# QFont::ExtraLight	12	12
-# QFont::Light	25	25
-# QFont::Normal	50	50
-# QFont::Medium	57	57
-# QFont::DemiBold	63	63
-# QFont::Bold	75	75
-# QFont::ExtraBold	81	81
-# QFont::Black	87	87
-def _map_weight(weight: Union[str, int]) -> int:
-    if isinstance(weight, str):
-        weight = fonts.weight_name_to_value(weight)
-    value = int((weight / 10) + 10)  # normal: 400 -> 50
-    return min(max(0, value), 99)
-
-
-# https://doc.qt.io/qt-5/qfont.html#Stretch-enum
-StretchMapping = {
-    "ultracondensed": 50,
-    "extracondensed": 62,
-    "condensed": 75,
-    "semicondensed": 87,
-    "unstretched": 100,
-    "semiexpanded": 112,
-    "expanded": 125,
-    "extraexpanded": 150,
-    "ultraexpanded": 200,
-}
-
-
-def _map_stretch(stretch: str) -> int:
-    return StretchMapping.get(stretch.lower(), 100)
 
 
 def _get_x_scale(t: qg.QTransform) -> float:

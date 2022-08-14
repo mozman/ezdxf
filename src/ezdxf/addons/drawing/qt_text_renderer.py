@@ -1,10 +1,11 @@
 # Copyright (c) 2020-2022, Matthew Broadway
 # License: MIT License
-from typing import Dict
+from typing import Dict, Optional, Union
 from collections import defaultdict
+from functools import lru_cache
 from ezdxf.addons.xqt import QtCore as qc, QtGui as qg
 from ezdxf.math import Matrix44
-from ezdxf.tools.fonts import FontMeasurements
+from ezdxf.tools.fonts import FontMeasurements, FontFace, weight_name_to_value
 import ezdxf.path
 
 
@@ -33,6 +34,14 @@ class QtTextRenderer:
     def get_scale(self, desired_cap_height: float, font: qg.QFont) -> float:
         measurements = self.get_font_measurements(font)
         return desired_cap_height / measurements.cap_height
+
+    def get_font(self, font: Optional[FontFace]) -> qg.QFont:
+        if font is None:
+            return self.default_font
+        font_properties = _get_font(font)
+        if font_properties is None:
+            return self.default_font
+        return font_properties
 
     def get_font_measurements(self, font: qg.QFont) -> FontMeasurements:
         # None is the default font.
@@ -78,3 +87,47 @@ class QtTextRenderer:
         return ezdxf.path.multi_path_from_qpainter_path(text_path).transform(
             Matrix44.scale(1, -1, 0)
         )
+
+
+@lru_cache(maxsize=256)  # fonts.Font is a named tuple
+def _get_font(font: FontFace) -> Optional[qg.QFont]:
+    qfont = None
+    if font:
+        family = font.family
+        italic = "italic" in font.style.lower()
+        weight = _map_weight(font.weight)
+        qfont = qg.QFont(family, weight=weight, italic=italic)
+        # INFO: setting the stretch value makes results worse!
+        # qfont.setStretch(_map_stretch(font.stretch))
+    return qfont
+
+
+# https://doc.qt.io/qt-5/qfont.html#Weight-enum
+# QFont::Thin	0	0
+# QFont::ExtraLight	12	12
+# QFont::Light	25	25
+# QFont::Normal	50	50
+# QFont::Medium	57	57
+# QFont::DemiBold	63	63
+# QFont::Bold	75	75
+# QFont::ExtraBold	81	81
+# QFont::Black	87	87
+def _map_weight(weight: Union[str, int]) -> int:
+    if isinstance(weight, str):
+        weight = weight_name_to_value(weight)
+    value = int((weight / 10) + 10)  # normal: 400 -> 50
+    return min(max(0, value), 99)
+
+
+# https://doc.qt.io/qt-5/qfont.html#Stretch-enum
+StretchMapping = {
+    "ultracondensed": 50,
+    "extracondensed": 62,
+    "condensed": 75,
+    "semicondensed": 87,
+    "unstretched": 100,
+    "semiexpanded": 112,
+    "expanded": 125,
+    "extraexpanded": 150,
+    "ultraexpanded": 200,
+}
