@@ -1,9 +1,11 @@
 # Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
-from typing import List, Set
+from typing import List, Set, Sequence
 import pytest
 import ezdxf
-from ezdxf.addons.drawing import Frontend, RenderContext, Properties
+from ezdxf.addons.drawing import Frontend, RenderContext
+from ezdxf.addons.drawing.properties import Properties, LayerProperties, set_layers_state
+
 from ezdxf.addons.drawing.backend import Backend
 from ezdxf.addons.drawing.debug_backend import BasicBackend, PathBackend
 from ezdxf.document import Drawing
@@ -360,9 +362,12 @@ def _add_text_block(doc: Drawing):
 
 
 def _get_text_visible_when(doc: Drawing, active_layers: Set[str]) -> List[str]:
+    def update_layers_state(layers: Sequence[LayerProperties]):
+        # set given layer to ON, others to OFF
+        set_layers_state(layers, active_layers, state=True)
+
     ctx = RenderContext(doc)
-    # set given layer to ON, others to OFF
-    ctx.set_layers_state(active_layers, state=True)
+    ctx.set_layer_properties_override(update_layers_state)
 
     backend = BasicBackend()
     Frontend(ctx, backend).draw_layout(doc.modelspace())

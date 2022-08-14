@@ -6,7 +6,7 @@
 import math
 import os
 import time
-from typing import Iterable, Tuple, List
+from typing import Iterable, Tuple, List, Sequence, Optional
 
 from ezdxf.addons.xqt import QtWidgets as qw, QtCore as qc, QtGui as qg
 from ezdxf.addons.xqt import Slot, QAction, Signal
@@ -17,7 +17,7 @@ from ezdxf.addons import odafc
 from ezdxf.addons.drawing import Frontend, RenderContext
 from ezdxf.addons.drawing.config import Configuration
 
-from ezdxf.addons.drawing.properties import is_dark_color
+from ezdxf.addons.drawing.properties import is_dark_color, set_layers_state, LayerProperties
 from ezdxf.addons.drawing.pyqt import (
     _get_x_scale,
     PyQtBackend,
@@ -174,7 +174,7 @@ class CadViewer(qw.QMainWindow):
         super().__init__()
         self._config = config
         self.doc = None
-        self._render_context = None
+        self._render_context: RenderContext = None  # type: ignore
         self._visible_layers = None
         self._current_layout = None
         self._reset_backend()
@@ -276,8 +276,9 @@ class CadViewer(qw.QMainWindow):
             if ret == qw.QMessageBox.No:
                 auditor.print_error_report(auditor.errors)
                 return
+
         self.doc = document
-        self._render_context = RenderContext(document)
+        self._render_context = self._make_render_context(document)
         self._reset_backend()
         self._visible_layers = None
         self._current_layout = None
@@ -285,6 +286,14 @@ class CadViewer(qw.QMainWindow):
         self._populate_layer_list()
         self.draw_layout(layout)
         self.setWindowTitle("CAD Viewer - " + str(document.filename))
+
+    def _make_render_context(self, doc) -> RenderContext:
+        def update_layers_state(layers: Sequence[LayerProperties]):
+            if self._visible_layers:
+                set_layers_state(layers, self._visible_layers, state=True)
+        render_context = RenderContext(doc)
+        render_context.set_layer_properties_override(update_layers_state)
+        return render_context
 
     def _populate_layer_list(self):
         self.layers.blockSignals(True)
@@ -358,14 +367,8 @@ class CadViewer(qw.QMainWindow):
         )
 
     def _update_render_context(self, layout):
-        assert self._render_context
+        assert self._render_context is not None
         self._render_context.set_current_layout(layout)
-        # Direct modification of RenderContext.layers would be more flexible,
-        # but would also expose the internals.
-        if self._visible_layers is not None:
-            self._render_context.set_layers_state(
-                self._visible_layers, state=True
-            )
 
     def resizeEvent(self, event: qg.QResizeEvent) -> None:
         self.view.fit_to_scene()

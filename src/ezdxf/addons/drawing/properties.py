@@ -12,6 +12,8 @@ from typing import (
     Set,
     cast,
     Sequence,
+    Callable,
+    Iterable,
 )
 import re
 import copy
@@ -284,6 +286,9 @@ class LayoutProperties:
             )
 
 
+LayerPropsOverride = Callable[[Sequence[LayerProperties]], None]
+
+
 class RenderContext:
     def __init__(
         self,
@@ -321,7 +326,11 @@ class RenderContext:
         self.current_layout_properties = LayoutProperties.modelspace()
         self.plot_styles = self._load_plot_style_table(self.override_ctb)
 
+        # callable to override layer properties:
+        self._layer_properties_override: Optional[LayerPropsOverride] = None
+
         if doc:
+            self.layers = self._setup_layers(doc)
             self.line_pattern = _load_line_pattern(doc.linetypes)
             self.linetype_scale = doc.header.get("$LTSCALE", 1.0)
             self.pdsize = doc.header.get("$PDSIZE", 1.0)
@@ -344,6 +353,17 @@ class RenderContext:
                     self.units = InsertUnits.Inches
         self.current_layout_properties.units = self.units  # default modelspace
 
+    def set_layer_properties_override(self, func: LayerPropsOverride = None):
+        """The function `func` is called with the current layer properties as
+        argument after resetting them, so the function can override the layer
+        properties.
+        """
+        self._layer_properties_override = func
+
+    def _override_layer_properties(self, layers: Sequence[LayerProperties]):
+        if self._layer_properties_override:
+            self._layer_properties_override(layers)
+
     def set_current_layout(self, layout: Layout, ctb: str = ""):
         # the given ctb has the highest priority
         if ctb == "":
@@ -357,6 +377,7 @@ class RenderContext:
         self.layers = dict()
         if layout.doc:
             self.layers = self._setup_layers(layout.doc)
+            self._override_layer_properties(list(self.layers.values()))
 
     def copy(self):
         """Returns a shallow copy."""
@@ -513,21 +534,6 @@ class RenderContext:
                 # initialize with default AutoCAD palette
                 entry.color = int2rgb(DXF_DEFAULT_COLORS[aci])
         return ctb
-
-    def set_layers_state(self, layers: Set[str], state=True):
-        """Set layer state of `layers` to on/off.
-
-        Args:
-             layers: set of layer names
-             state: `True` turn this `layers` on and others off,
-                    `False` turn this `layers` off and others on
-        """
-        layers = {layer_key(name) for name in layers}
-        for name, layer in self.layers.items():
-            if name in layers:
-                layer.is_visible = state
-            else:
-                layer.is_visible = not state
 
     @property
     def inside_block_reference(self) -> bool:
@@ -940,3 +946,22 @@ def _load_line_pattern(linetypes: Table) -> Dict[str, Sequence[float]]:
         name = linetype.dxf.name.upper()
         pattern[name] = linetype.simplified_line_pattern()
     return pattern
+
+
+def set_layers_state(
+    layers: Sequence[LayerProperties], layer_names: Iterable[str], state=True
+):
+    """Set layer state of `layers` to on/off.
+
+    Args:
+        layers: layer properties
+        layer_names: iterable of layer names
+        state: `True` turn this `layers` on and others off,
+            `False` turn this `layers` off and others on
+    """
+    unique_layer_names = {layer_key(name) for name in layer_names}
+    for layer in layers:
+        if layer_key(layer.layer) in unique_layer_names:
+            layer.is_visible = state
+        else:
+            layer.is_visible = not state
