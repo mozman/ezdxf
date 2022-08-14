@@ -84,7 +84,7 @@ class PyQtBackend(Backend):
         self._no_line = qg.QPen(qc.Qt.NoPen)
         self._no_fill = qg.QBrush(qc.Qt.NoBrush)
 
-        self._text_renderer = QtTextRenderer(qg.QFont(), use_text_cache)
+        self._text_renderer = QtTextRenderer(use_cache=use_text_cache)
         self._extra_lineweight_scaling = extra_lineweight_scaling
         self._debug_draw_rect = debug_draw_rect
         self._current_viewport: Optional[ViewportGroup] = None

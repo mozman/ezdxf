@@ -7,7 +7,7 @@ from ezdxf.tools.fonts import FontMeasurements
 
 
 class QtTextRenderer:
-    def __init__(self, font: qg.QFont, use_cache: bool):
+    def __init__(self, font=qg.QFont(), use_cache: bool = True):
         self._default_font = font
         self._use_cache = use_cache
 

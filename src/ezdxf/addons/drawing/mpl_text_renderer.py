@@ -32,7 +32,7 @@ def _get_font_properties(font: fonts.FontFace) -> Optional[FontProperties]:
 
 
 class MplTextRenderer:
-    def __init__(self, font: FontProperties, use_cache: bool):
+    def __init__(self, font=FontProperties(), use_cache: bool = True):
         self._default_font = font
         self._use_cache = use_cache
 
