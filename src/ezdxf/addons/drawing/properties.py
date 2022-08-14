@@ -444,10 +444,14 @@ class RenderContext:
         if vp.doc is None:
             return self
         vp_ctx = self.copy()
-        plot_style_name = vp.dxf.get("plot_style_name")
-        if plot_style_name:
-            vp_ctx.plot_styles = self._load_plot_style_table(plot_style_name)
-        self.layers = self._setup_vp_layers(vp)
+        ctb = vp_ctx.override_ctb
+        if ctb == "":
+            ctb = vp.dxf.get("plot_style_name")
+        if ctb:
+            vp_ctx.plot_styles = vp_ctx._load_plot_style_table(ctb)
+        layers = vp_ctx._setup_vp_layers(vp)
+        vp_ctx.layers = layers
+        vp_ctx._override_layer_properties(list(layers.values()))
         return vp_ctx
 
     def resolve_layer_properties(self, layer: Layer) -> LayerProperties:
