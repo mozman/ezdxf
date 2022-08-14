@@ -764,7 +764,10 @@ class Designer:
         if self.set_viewport(vp):
             for entity in visible_vp_entities(vp, vp_ctx):
                 properties = vp_ctx.resolve_all(entity)
-                self.frontend.draw_entity(entity, properties)
+                # override entity properties:
+                self.frontend.override_properties(entity, properties)
+                if properties.is_visible:
+                    self.frontend.draw_entity(entity, properties)
             self.reset_viewport()
             return True
         return False
