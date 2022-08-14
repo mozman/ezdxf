@@ -310,6 +310,18 @@ Shortcut attribute:
 
     (Read/Write)  Export proxy graphics if ``True``, default is ``True``.
 
+Support Directories
++++++++++++++++++++
+
+Search directories for support files like `.ctb` or `.stb` files.
+
+Config file key: ``support_dirs``
+
+Shortcut attribute:
+
+.. attribute:: support_dirs
+
+    (Read/Write) Search directories as list of strings.
 
 Debugging Options
 -----------------
