@@ -330,7 +330,7 @@ class RenderContext:
         self._layer_properties_override: Optional[LayerPropsOverride] = None
 
         if doc:
-            self.layers = self._setup_layers(doc)
+            self.set_current_layout(doc.modelspace())
             self.line_pattern = _load_line_pattern(doc.linetypes)
             self.linetype_scale = doc.header.get("$LTSCALE", 1.0)
             self.pdsize = doc.header.get("$PDSIZE", 1.0)

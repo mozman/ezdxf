@@ -6,7 +6,7 @@
 import math
 import os
 import time
-from typing import Iterable, Tuple, List, Sequence, Optional
+from typing import Iterable, Tuple, List, Sequence, Set
 
 from ezdxf.addons.xqt import QtWidgets as qw, QtCore as qc, QtGui as qg
 from ezdxf.addons.xqt import Slot, QAction, Signal
@@ -17,7 +17,11 @@ from ezdxf.addons import odafc
 from ezdxf.addons.drawing import Frontend, RenderContext
 from ezdxf.addons.drawing.config import Configuration
 
-from ezdxf.addons.drawing.properties import is_dark_color, set_layers_state, LayerProperties
+from ezdxf.addons.drawing.properties import (
+    is_dark_color,
+    set_layers_state,
+    LayerProperties,
+)
 from ezdxf.addons.drawing.pyqt import (
     _get_x_scale,
     PyQtBackend,
@@ -173,10 +177,12 @@ class CadViewer(qw.QMainWindow):
     def __init__(self, config: Configuration = Configuration.defaults()):
         super().__init__()
         self._config = config
-        self.doc = None
+        # Avoid using Optional[...], otherwise mypy requires None checks
+        # everywhere!
+        self.doc: Drawing = None  # type: ignore
         self._render_context: RenderContext = None  # type: ignore
-        self._visible_layers = None
-        self._current_layout = None
+        self._visible_layers: Set[str] = set()
+        self._current_layout: str = "Model"
         self._reset_backend()
 
         self.view = CADGraphicsViewWithOverlay()
@@ -280,7 +286,7 @@ class CadViewer(qw.QMainWindow):
         self.doc = document
         self._render_context = self._make_render_context(document)
         self._reset_backend()
-        self._visible_layers = None
+        self._visible_layers = set()
         self._current_layout = None
         self._populate_layouts()
         self._populate_layer_list()
@@ -291,6 +297,7 @@ class CadViewer(qw.QMainWindow):
         def update_layers_state(layers: Sequence[LayerProperties]):
             if self._visible_layers:
                 set_layers_state(layers, self._visible_layers, state=True)
+
         render_context = RenderContext(doc)
         render_context.set_layer_properties_override(update_layers_state)
         return render_context
