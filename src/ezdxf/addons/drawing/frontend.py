@@ -210,24 +210,7 @@ class Frontend:
         *,
         filter_func: FilterFunc = None,
     ) -> None:
-        if filter_func is not None:
-            entities = filter(filter_func, entities)
-        for entity in entities:
-            if not isinstance(entity, DXFGraphic):
-                if (
-                    self.config.proxy_graphic_policy
-                    != ProxyGraphicPolicy.IGNORE
-                ):
-                    entity = DXFGraphicProxy(entity)
-                else:
-                    self.skip_entity(entity, "Cannot parse DXF entity")
-                    continue
-            properties = self.ctx.resolve_all(entity)
-            self.override_properties(entity, properties)
-            if properties.is_visible:
-                self.draw_entity(entity, properties)
-            else:
-                self.skip_entity(entity, "invisible")
+        _draw_entities(self, self.ctx, entities, filter_func=filter_func)
 
     def draw_entity(self, entity: DXFGraphic, properties: Properties) -> None:
         """Draw a single DXF entity.
@@ -762,12 +745,11 @@ class Designer:
         """
         vp_ctx = layout_ctx.from_viewport(vp)
         if self.set_viewport(vp):
-            for entity in visible_vp_entities(vp, vp_ctx):
-                properties = vp_ctx.resolve_all(entity)
-                # override entity properties:
-                self.frontend.override_properties(entity, properties)
-                if properties.is_visible:
-                    self.frontend.draw_entity(entity, properties)
+            _draw_entities(
+                self.frontend,
+                vp_ctx,
+                (e for e in visible_vp_entities(vp, vp_ctx)),
+            )
             self.reset_viewport()
             return True
         return False
@@ -899,7 +881,9 @@ class Designer:
             return pattern
 
 
-def visible_vp_entities(vp: Viewport, ctx: RenderContext) -> Iterator[DXFGraphic]:
+def visible_vp_entities(
+    vp: Viewport, ctx: RenderContext
+) -> Iterator[DXFGraphic]:
     def is_visible(e):
         return True  # todo
 
@@ -909,3 +893,30 @@ def visible_vp_entities(vp: Viewport, ctx: RenderContext) -> Iterator[DXFGraphic
     for entity in doc.modelspace():
         if is_visible(entity):
             yield entity
+
+
+def _draw_entities(
+    frontend: Frontend,
+    ctx: RenderContext,
+    entities: Iterable[DXFGraphic],
+    *,
+    filter_func: FilterFunc = None,
+) -> None:
+    if filter_func is not None:
+        entities = filter(filter_func, entities)
+    for entity in entities:
+        if not isinstance(entity, DXFGraphic):
+            if (
+                frontend.config.proxy_graphic_policy
+                != ProxyGraphicPolicy.IGNORE
+            ):
+                entity = DXFGraphicProxy(entity)
+            else:
+                frontend.skip_entity(entity, "Cannot parse DXF entity")
+                continue
+        properties = ctx.resolve_all(entity)
+        frontend.override_properties(entity, properties)
+        if properties.is_visible:
+            frontend.draw_entity(entity, properties)
+        else:
+            frontend.skip_entity(entity, "invisible")
