@@ -828,6 +828,7 @@ class Config(Command):
         parser.add_argument(
             "-w",
             "--write",
+            metavar="FILE",
             help="write configuration",
         )
         parser.add_argument(

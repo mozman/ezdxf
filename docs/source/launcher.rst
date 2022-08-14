@@ -480,22 +480,17 @@ Manage config files.
 .. code-block:: Text
 
     C:\> ezdxf config -h
-    usage: ezdxf config [-h] [-p] [--home] [--reset]
+    usage: ezdxf config [-h] [-p] [-w FILE] [--home] [--reset]
 
     optional arguments:
       -h, --help   show this help message and exit
-      -p, --print  print configuration, to store the configuration use:
-                   "ezdxf config -p > my.ini"
+      -p, --print  print configuration
+      -w FILE, --write FILE
+                   write configuration
       --home       create config file 'ezdxf.ini' in the user home directory
                    '~/.config/ezdxf', $XDG_CONFIG_HOME is supported if set
 
       --reset      factory reset, delete default config files 'ezdxf.ini'
-
-To create a new config file "my.ini" by printing the configuration into a file:
-
-.. code-block:: Text
-
-    C:\> ezdxf config -p > my.ini
 
 Info
 ----
