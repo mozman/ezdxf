@@ -263,7 +263,7 @@ class PyQtBackend(Backend):
         self._add_item(item)
 
     def get_qfont(self, font: Optional[fonts.FontFace]) -> qg.QFont:
-        return self._text_renderer.get_font(font)
+        return self._text_renderer.get_font_properties(font)
 
     def get_font_measurements(
         self, cap_height: float, font: fonts.FontFace = None

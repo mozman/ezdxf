@@ -35,7 +35,7 @@ class QtTextRenderer:
         measurements = self.get_font_measurements(font)
         return desired_cap_height / measurements.cap_height
 
-    def get_font(self, font: Optional[FontFace]) -> qg.QFont:
+    def get_font_properties(self, font: Optional[FontFace]) -> qg.QFont:
         if font is None:
             return self.default_font
         font_properties = _get_font(font)

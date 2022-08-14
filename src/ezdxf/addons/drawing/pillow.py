@@ -34,7 +34,7 @@ except ImportError:
     )
     sys.exit(1)
 
-from .mpl_text_renderer import MplTextRenderer, FontProperties
+from .mpl_text_renderer import MplTextRenderer as TextRenderer
 
 INCH_TO_MM = 25.6
 
@@ -137,7 +137,7 @@ class PillowBackend(Backend):
         self.image_size = Vec2(image_size)
         self.bg_color: Color = "#000000"
         self.image_mode = "RGBA"
-        self.text_renderer = MplTextRenderer(FontProperties(), True)
+        self.text_renderer = TextRenderer(use_cache=True)
 
         # dummy values for declaration, both are set in clear()
         self.image = Image.new("RGBA", (10, 10))
