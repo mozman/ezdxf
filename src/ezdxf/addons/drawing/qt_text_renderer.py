@@ -3,13 +3,14 @@
 from typing import Dict, Optional, Union
 from collections import defaultdict
 from functools import lru_cache
+from .text_renderer import TextRenderer
 from ezdxf.addons.xqt import QtCore as qc, QtGui as qg
 from ezdxf.math import Matrix44
 from ezdxf.tools.fonts import FontMeasurements, FontFace, weight_name_to_value
 import ezdxf.path
 
 
-class QtTextRenderer:
+class QtTextRenderer(TextRenderer[qg.QFont]):
     def __init__(self, font=qg.QFont(), use_cache: bool = True):
         self._default_font = font
         self._use_cache = use_cache

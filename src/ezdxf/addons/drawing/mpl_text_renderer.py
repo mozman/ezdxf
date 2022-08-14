@@ -4,6 +4,7 @@ from typing import Iterator, Optional, Dict, Sequence
 from collections import defaultdict
 from functools import lru_cache
 
+from .text_renderer import TextRenderer
 from matplotlib.font_manager import FontProperties
 from matplotlib.textpath import TextPath
 
@@ -31,7 +32,7 @@ def _get_font_properties(font: fonts.FontFace) -> Optional[FontProperties]:
     return font_properties
 
 
-class MplTextRenderer:
+class MplTextRenderer(TextRenderer[FontProperties]):
     def __init__(self, font=FontProperties(), use_cache: bool = True):
         self._default_font = font
         self._use_cache = use_cache
@@ -106,7 +107,7 @@ class MplTextRenderer:
         return path
 
     def get_text_line_width(
-        self, text: str, cap_height: float, font: Optional[fonts.FontFace]
+        self, text: str, cap_height: float, font: fonts.FontFace = None
     ) -> float:
         font_properties = self.get_font_properties(font)
         try:
