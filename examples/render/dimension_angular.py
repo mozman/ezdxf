@@ -362,7 +362,7 @@ def usr_location_absolute(angle: float, rotation: float = None):
                 text_rotation=rotation,
                 override={"dimtad": dimtad},
             )
-            # user location in WCS coordinates, absolut location:
+            # user location in WCS coordinates, absolute location:
             usr_location = center + Vec3.from_deg_angle(
                 main_angle, radius + distance * 2.0
             )

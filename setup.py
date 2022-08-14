@@ -89,7 +89,7 @@ except ImportError:
 PYPY = hasattr(sys, "pypy_version_info")
 if PYPY:
     print(
-        "C-extensions are disabled for pypy, because JIT complied Python code "
+        "C-extensions are disabled for pypy, because JIT compiled Python code "
         "is much faster!"
     )
     ext_modules = []

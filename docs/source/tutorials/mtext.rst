@@ -390,7 +390,7 @@ Each paragraph can have its own properties for:
 
 Indentation and tabulator stops are multiples of the default :class:`MText`
 text height stored in :class:`MText.dxf.char_height`. Calculate the drawing
-units for indentation and tabulator stops, by multiplying the the indentation
+units for indentation and tabulator stops, by multiplying the indentation
 value by the :attr:`char_height` value.
 
 :class:`Mtext` paragraphs are separated by new paragraph "\\P" characters.

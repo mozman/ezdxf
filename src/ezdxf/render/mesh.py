@@ -823,9 +823,9 @@ class MeshBuilder:
         """Yields all faces as sequence of :class:`~ezdxf.math.Vec3` instances,
         where all ngons which have more than `max_vertex_count` vertices gets
         subdivided.
-        In contrast to the :meth:`tesselation` method, creates this method a
+        In contrast to the :meth:`tessellation` method, creates this method a
         new vertex in the centroid of the face. This can create a more regular
-        tesselation but only works reliable for convex faces!
+        tessellation but only works reliable for convex faces!
 
         .. versionadded:: 0.18
 

@@ -34,7 +34,7 @@ class LinkedEntities(DXFGraphic):
             entity.seqend = self.seqend.copy()
 
     def link_entity(self, entity: "DXFEntity") -> None:
-        """Link VERTEX ot ATTRIB entities."""
+        """Link VERTEX to ATTRIB entities."""
         assert isinstance(entity, DXFGraphic)
         entity.set_owner(self.dxf.owner, self.dxf.paperspace)
         self._sub_entities.append(entity)
@@ -50,7 +50,7 @@ class LinkedEntities(DXFGraphic):
             self.new_seqend()
 
     def all_sub_entities(self) -> Iterable["DXFEntity"]:
-        """Yields all sub-entities ans SEQEND. (internal API)"""
+        """Yields all sub-entities and SEQEND. (internal API)"""
         yield from self._sub_entities
         if self.seqend:
             yield self.seqend

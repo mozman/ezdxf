@@ -160,7 +160,7 @@ class MTextLineAlignment(IntEnum):  # exclusive state
 
 
 class MTextStroke(IntFlag):
-    """ Combination of flags is supported: UNDERLINE + STRIKE_TROUGH """
+    """ Combination of flags is supported: UNDERLINE + STRIKE_THROUGH """
     UNDERLINE = 1
     STRIKE_THROUGH = 2
     OVERLINE = 4

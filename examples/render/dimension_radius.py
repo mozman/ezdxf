@@ -72,7 +72,7 @@ def radius_default_outside(dxfversion="R2000", delta=10):
         # radius:
         #   specifies the radius of the circle
         # angle:
-        #   specifies the the orientation (angle) of the dimension line
+        #   specifies the orientation (angle) of the dimension line
         dim = msp.add_radius_dim(
             center=(x, y), radius=3, angle=angle, dimstyle="EZ_RADIUS"
         )

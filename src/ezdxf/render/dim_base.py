@@ -312,7 +312,7 @@ class ExtensionLines:
         # line direction
         self.offset: float = get("dimexo", 0.0) * scale
 
-        # Fixed length extension line, lenght above dimension line is still
+        # Fixed length extension line, length above dimension line is still
         # self.ext_line_extension
         self.has_fixed_length: bool = bool(get("dimfxlon", 0))
 
@@ -917,7 +917,7 @@ class Geometry:
                     add_line_to_block(start, p1)
                     add_line_to_block(p2, end)
                     return
-                # else: fall trough
+                # else: fall through
         add_line_to_block(start, end)
 
     def add_arc(

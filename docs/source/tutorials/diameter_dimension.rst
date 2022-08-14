@@ -37,7 +37,7 @@ is defined as 1 drawing unit = 1m, drawing scale = 1:100 and the length
 factor = 100, which creates a measurement text in cm, the default
 location for the measurement text is outside of the circle.
 
-The `center` point defines the the center of the circle but there doesn't have
+The `center` point defines the center of the circle but there doesn't have
 to exist a circle entity, `radius` defines the circle radius and `angle` defines
 the slope of the dimension line, it is also possible to define the circle by a
 measurement point `mpoint` on the circle.

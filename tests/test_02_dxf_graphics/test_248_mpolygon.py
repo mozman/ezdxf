@@ -75,7 +75,7 @@ def test_write_dxf_no_fill(entity):
         (52, 0),  # pattern_angle tag must be presents
         (41, 1),  # pattern_scale tag must be presents
         (77, 0),  # pattern_double tag must be presents
-        (78, 0),  # patten length tag must be presents
+        (78, 0),  # pattern length tag must be presents
     ], "required pattern tags are not in expected order"
 
     assert (

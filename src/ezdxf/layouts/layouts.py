@@ -177,7 +177,7 @@ class Layouts:
         return layout
 
     def setup_from_rootdict(self) -> None:
-        """Setup layout manger from root dictionary. (internal API)"""
+        """Setup layout manager from root dictionary. (internal API)"""
         layout: Layout
         for name, dxf_layout in self._dxf_layouts.items():
             if isinstance(dxf_layout, str):

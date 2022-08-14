@@ -23,7 +23,7 @@ from ezdxf._options import options
 
 USE_C_EXT = not options.disable_c_ext
 
-# C-extensions are always disabled for pypy because JIT complied Python code is
+# C-extensions are always disabled for pypy because JIT compiled Python code is
 # much faster!
 PYPY = hasattr(sys, 'pypy_version_info')
 if PYPY:

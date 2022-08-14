@@ -109,7 +109,7 @@ class DXFPolygon(DXFGraphic):
 
     def load_pattern(self, tags: Tags) -> Tags:
         try:
-            # Group code 78 = Number of patter definition lines
+            # Group code 78 = Number of pattern definition lines
             index = tags.tag_index(78)
         except const.DXFValueError:
             # No pattern definition lines found.
@@ -363,7 +363,7 @@ class DXFPolygon(DXFGraphic):
 
         Starts always from the original base rotation 0,
         :code:`set_pattern_angle(0)` reset the pattern rotation to the original
-        appearance as defined by the pattern designer, but only if the the
+        appearance as defined by the pattern designer, but only if the
         pattern attribute :attr:`dxf.pattern_angle` represents the actual
         rotation, it is not possible to recreate the original rotation from the
         pattern definition itself.

@@ -485,7 +485,7 @@ Edge
 .. class:: Edge(AcisEntity)
 
     The :class:`Edge` entity represents the physical edge of an object. Its
-    geometry is defined by the the bounded portion of a parametric space curve.
+    geometry is defined by the bounded portion of a parametric space curve.
     This bounds are stored as object-space :class:`Vertex` entities.
 
     .. attribute:: start_vertex

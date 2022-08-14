@@ -68,7 +68,7 @@ def diameter_default_outside(dxfversion="R2000", delta=10):
 
         # center: specifies the center of the circle
         # radius: specifies the radius of the circle
-        # angle: specifies the the orientation (angle) of the dimension line
+        # angle: specifies the orientation (angle) of the dimension line
         dim = msp.add_diameter_dim(
             center=(x, y), radius=3, angle=angle, dimstyle="EZ_RADIUS"
         )

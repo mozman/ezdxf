@@ -50,8 +50,8 @@ acdb_block_begin = DefSubclass(
     "AcDbBlockBegin",
     {
         "name": DXFAttr(2, validator=validator.is_valid_block_name),
-        # The 2nd name with group code 3 is handles internally, and is not an
-        # explict DXF attribute.
+        # The 2nd name with group code 3 is handled internally, and is not an
+        # explicit DXF attribute.
         "description": DXFAttr(4, default="", optional=True),
         # Flags:
         # 0 = Indicates none of the following flags apply

@@ -148,7 +148,7 @@ def fit_points_to_cad_cv(
     # interpolating a series of fit points.
     points = Vec3.list(fit_points)
     if len(points) < 2:
-        raise ValueError("two ore more points required ")
+        raise ValueError("two or more points required ")
     m1, m2 = estimate_end_tangent_magnitude(points, method="chord")
     if tangents is None:
         t = estimate_tangents(points, method=estimate, normalize=False)
@@ -184,7 +184,7 @@ def fit_points_to_cubic_bezier(fit_points: Iterable[UVec]) -> "BSpline":
     """
     points = Vec3.list(fit_points)
     if len(points) < 2:
-        raise ValueError("two ore more points required ")
+        raise ValueError("two or more points required ")
 
     from ezdxf.math import cubic_bezier_interpolation, bezier_to_bspline
 

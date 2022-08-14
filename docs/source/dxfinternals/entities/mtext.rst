@@ -164,7 +164,7 @@ Information gathered by implementing the :class:`MTextEditor` and the
 
     - "t" tabulator stops as comma separated list, the default tabulator stops
       are located at 4, 8, 12, ..., by defining at least one tabulator stop,
-      the default tabulator stops wil be ignored.
+      the default tabulator stops will be ignored.
       There 3 kind of tabulator stops: left, right and center adjusted stops,
       e.g. "\pxt1,r5,c8":
 
@@ -335,7 +335,7 @@ embedded object.
 .. hint::
 
     The :attr:`width` attribute for the linked MTEXT entities could be wrong.
-    Always use the the :attr:`column_width` and the :attr:`total_width`
+    Always use the :attr:`column_width` and the :attr:`total_width`
     attributes in column mode.
 
 There are two column types, the **static** type has the same column height for

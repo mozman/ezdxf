@@ -57,7 +57,7 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. attribute:: dxf.oblique
 
-        Text oblique angle (slanting)  in degrees as float vlaue, the default
+        Text oblique angle (slanting)  in degrees as float value, the default
         value is 0 (straight vertical text).
 
     .. attribute:: dxf.style

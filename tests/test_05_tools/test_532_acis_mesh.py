@@ -12,7 +12,7 @@ from ezdxf.math import BoundingBox, Vec3
 
 class TestPrismToMesh:
     """The "prism" is a distorted cube with quadrilateral faces at the
-    top and bottom and eight triangles as connecting faces inbetween.
+    top and bottom and eight triangles as connecting faces in between.
     """
 
     @pytest.fixture(scope="class")

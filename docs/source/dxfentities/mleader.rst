@@ -6,7 +6,7 @@ MultiLeader
 
 .. versionadded:: 0.18
 
-The MULTILEADER entity (`DXF Reference`_) represents one ore more leaders,
+The MULTILEADER entity (`DXF Reference`_) represents one or more leaders,
 made up of one or more vertices (or spline fit points) and an arrowhead.
 In contrast to the :class:`Leader` entity the text- or block content is part of
 the MULTILEADER entity.

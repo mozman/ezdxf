@@ -34,7 +34,7 @@ entity, the default dimension style "EZ_RADIUS" is defined as 1 drawing unit
 measurement text in cm, the default location for the measurement text is outside
 of the circle.
 
-The `center` point defines the the center of the circle but there doesn't have
+The `center` point defines the center of the circle but there doesn't have
 to exist a circle entity, `radius` defines the circle radius, which is also the
 measurement, and angle defines the slope of the dimension line, it is also
 possible to define the circle by a measurement point `mpoint` on the circle.

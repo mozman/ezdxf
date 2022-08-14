@@ -90,7 +90,7 @@ class Path:
         """Returns a new copy of :class:`Path` with shared immutable data."""
         copy = Path()
         copy._commands = self._commands.copy()
-        # vertices are immutable - no coping required
+        # vertices are immutable - no copying required
         copy._vertices = self._vertices.copy()
         copy._start_index = self._start_index.copy()
         copy._has_sub_paths = self._has_sub_paths

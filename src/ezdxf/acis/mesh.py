@@ -12,7 +12,7 @@ def mesh_from_body(body: Body, merge_lumps=True) -> List[MeshTransformer]:
     """Returns a list of :class:`~ezdxf.render.MeshTransformer` instances from
     the given ACIS :class:`Body` entity.
     The list contains multiple meshes if `merge_lumps` is ``False`` or just a
-    singe mesh if `merge_lumps` is ``True``.
+    single mesh if `merge_lumps` is ``True``.
 
     The ACIS format stores the faces in counter-clockwise orientation where the
     face-normal points outwards (away) from the solid body (material).

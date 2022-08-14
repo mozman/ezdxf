@@ -14,7 +14,7 @@ if not DIR.exists():
 def write_mesh(filename, mesh: MeshBuilder):
     """Write MeshBuilder object as a MESH entity."""
     doc = ezdxf.new("R2000")
-    # MESH can represent ngons, no tesselation is applied:
+    # MESH can represent ngons, no tessellation is applied:
     mesh.render_mesh(doc.modelspace())
     try:
         doc.saveas(filename)
@@ -28,7 +28,7 @@ def write_polyface(filename, mesh: MeshBuilder):
     """Write MeshBuilder object as a POLYFACE entity a subtype of POLYLINE."""
     doc = ezdxf.new("R2000")
     # POLYFACE can only represent triangles or quads, the required
-    # tesselation of the mesh is done automatically:
+    # tessellation of the mesh is done automatically:
     mesh.render_polyface(doc.modelspace())
     try:
         doc.saveas(filename)
@@ -42,7 +42,7 @@ def write_3dfaces(filename, mesh: MeshBuilder):
     """Write MeshBuilder object as single 3DFACE entities."""
     doc = ezdxf.new("R2000")
     # 3DFACE can only represent triangles or quads, the required
-    # tesselation of the mesh is done automatically:
+    # tessellation of the mesh is done automatically:
     mesh.render_3dfaces(doc.modelspace())
     try:
         doc.saveas(filename)

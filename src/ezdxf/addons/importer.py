@@ -136,7 +136,7 @@ class Importer:
     def import_tables(
         self, table_names: Union[str, Iterable[str]] = "*", replace=False
     ) -> None:
-        """Import DXF tables from the source document into the target docuement.
+        """Import DXF tables from the source document into the target document.
 
         Args:
             table_names: iterable of tables names as strings, or a single table

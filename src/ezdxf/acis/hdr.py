@@ -8,7 +8,7 @@ from . import const
 
 # ACIS versions exported by BricsCAD:
 # R2000/AC1015: 400, "ACIS 4.00 NT", text length has no prefix "@"
-# R2004/AC1018: 20800 @ "ACIS 208.00 NT", text length has "@" prefix ??? wierd
+# R2004/AC1018: 20800 @ "ACIS 208.00 NT", text length has "@" prefix ??? weird
 # R2007/AC1021: 700 @ "ACIS 32.0 NT", text length has "@" prefix
 # R2010/AC1024: 700 @ "ACIS 32.0 NT", text length has "@" prefix
 

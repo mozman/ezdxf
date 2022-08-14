@@ -21,7 +21,7 @@ msp.add_mtext("Line 1\\PLine 2", attribs).set_location(insert=(0, 10))
 
 attribs["width"] = 15
 text = (
-    "normal \\Oover strike\\o normal\\Pnormal \\Kstrike trough\\k normal"
+    "normal \\Oover strike\\o normal\\Pnormal \\Kstrike through\\k normal"
     "\\Pnormal \\Lunder line\\l normal"
 )
 msp.add_mtext(text, attribs).set_location(insert=(0, 15))

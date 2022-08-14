@@ -466,7 +466,7 @@ def _detect_dxf_version(header: List) -> str:
 def _is_rootdict(entity: Tags) -> bool:
     if entity[0] != (0, "DICTIONARY"):
         return False
-    # The entry "ACAD_GROUP" in the rootdict is absolut necessary!
+    # The entry "ACAD_GROUP" in the rootdict is absolutely necessary!
     return any(tag == (3, "ACAD_GROUP") for tag in entity)
 
 
@@ -775,7 +775,7 @@ def byte_tag_compiler(
                     else:
                         try:
                             point = (float(x.value), float(y.value))
-                        except ValueError:  # seach for any float values
+                        except ValueError:  # search for any float values
                             point = (
                                 recover_float(x.value),
                                 recover_float(y.value),

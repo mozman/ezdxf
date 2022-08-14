@@ -665,7 +665,7 @@ class Polyface(Polyline):
 
         Args:
             faces: list of List[``(x, y, z)`` tuples]
-            dxfattribs: dict of DXF attributes for teh VERTEX objects
+            dxfattribs: dict of DXF attributes for the VERTEX objects
 
         """
 

@@ -54,7 +54,7 @@ acdb_text = DefSubclass(
             validator=validator.is_greater_zero,
             fixer=RETURN_DEFAULT,
         ),
-        # Text content as sting:
+        # Text content as string:
         "text": DXFAttr(
             1,
             default="",
