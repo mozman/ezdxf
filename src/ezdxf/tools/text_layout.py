@@ -520,7 +520,7 @@ def render_text_strokes(cells: List[Cell], m: Matrix44 = None) -> None:
     """Render text cell strokes across glue cells."""
 
     # Should be called for container with horizontal arranged text cells
-    # like HCellGroup to create underline, overline and strike trough
+    # like HCellGroup to create underline, overline and strike through
     # features.
     # Can not render strokes across line breaks!
     def stroke_extension():
@@ -1122,10 +1122,10 @@ class Column(Container):
     def append_paragraphs(
         self, paragraphs: Iterable[Paragraph]
     ) -> List[Paragraph]:
-        remainer: List[Paragraph] = []
+        remainder: List[Paragraph] = []
         for paragraph in paragraphs:
-            if remainer:
-                remainer.append(paragraph)
+            if remainder:
+                remainder.append(paragraph)
                 continue
             paragraph.set_total_width(self.content_width)
             if self.has_flex_height:
@@ -1135,8 +1135,8 @@ class Column(Container):
             rest = paragraph.distribute_content(height)
             self._paragraphs.append(paragraph)
             if rest is not None:
-                remainer.append(rest)
-        return remainer
+                remainder.append(rest)
+        return remainder
 
 
 class Layout(Container):
@@ -1252,21 +1252,21 @@ class Layout(Container):
         return column
 
     def append_paragraphs(self, paragraphs: Iterable[Paragraph]):
-        remainer = list(paragraphs)
+        remainder = list(paragraphs)
         # 1. fill existing columns:
         columns = self._columns
         while self._current_column < len(columns):
             column = columns[self._current_column]
-            remainer = column.append_paragraphs(remainer)
-            if len(remainer) == 0:
+            remainder = column.append_paragraphs(remainder)
+            if len(remainder) == 0:
                 return
             self._current_column += 1
 
         # 2. create additional columns
-        while remainer:
+        while remainder:
             column = self._new_column()
             self._current_column = len(self._columns) - 1
-            remainer = column.append_paragraphs(remainer)
+            remainder = column.append_paragraphs(remainder)
             if self._current_column > 100:
                 raise ValueError("Internal error - not enough space!?")
 

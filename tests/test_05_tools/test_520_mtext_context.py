@@ -95,7 +95,7 @@ class TestParagraphPropertiesToString:
         p = ParagraphProperties(tab_stops=(1, "c2", "r3.7"))
         assert p.tostring() == "\\pxt1,c2,r3.7;"
 
-    def test_indention_and_multiple_tab_stops(self):
+    def test_indentation_and_multiple_tab_stops(self):
         p = ParagraphProperties(indent=1, tab_stops=(1, 2, 3))
         # always a "," after indentations
         assert p.tostring() == "\\pxi1,t1,2,3;"

@@ -143,7 +143,7 @@ class TestFontMeasurements:
             baseline=1.3, cap_height=1.0, x_height=0.5, descender_height=0.25
         )
 
-    def test_total_heigth(self, default):
+    def test_total_height(self, default):
         assert default.total_height == 1.25
 
     def test_scale(self, default):

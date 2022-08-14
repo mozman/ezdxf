@@ -25,10 +25,10 @@ def print_progress(count, max_count, start_time, msg=""):
 
 
 def megagrid(
-    writer, size=(10, 10), heigth: float = 1, scale: float = 1, color: int = 1
+    writer, size=(10, 10), height: float = 1, scale: float = 1, color: int = 1
 ):
     def vertex(x_, y_):
-        return x_, y_, noise.noise2(x_ * dx, y_ * dy) * heigth
+        return x_, y_, noise.noise2(x_ * dx, y_ * dy) * height
 
     t0 = perf_counter()
     m, n = size  # rows, cols
@@ -54,7 +54,7 @@ def megagrid(
 
 def create_r12(filename: str, gridsize: int):
     with r12writer(filename) as r12:
-        megagrid(r12, size=(gridsize, gridsize), heigth=20, scale=3, color=1)
+        megagrid(r12, size=(gridsize, gridsize), height=20, scale=3, color=1)
 
 
 def entities1(filename):
