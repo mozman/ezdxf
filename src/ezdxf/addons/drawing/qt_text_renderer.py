@@ -3,7 +3,9 @@
 from typing import Dict
 from collections import defaultdict
 from ezdxf.addons.xqt import QtCore as qc, QtGui as qg
+from ezdxf.math import Matrix44
 from ezdxf.tools.fonts import FontMeasurements
+import ezdxf.path
 
 
 class QtTextRenderer:
@@ -67,3 +69,12 @@ class QtTextRenderer:
     def get_text_rect(self, text: str, font: qg.QFont) -> qc.QRectF:
         # no point caching the bounding rect calculation, it is very cheap
         return self.get_text_path(text, font).boundingRect()
+
+    def get_ezdxf_path(self, text: str, font: qg.QFont) -> ezdxf.path.Path:
+        try:
+            text_path = self.get_text_path(text, font)
+        except (RuntimeError, ValueError):
+            return ezdxf.path.Path()
+        return ezdxf.path.multi_path_from_qpainter_path(text_path).transform(
+            Matrix44.scale(1, -1, 0)
+        )
