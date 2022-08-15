@@ -913,7 +913,7 @@ def visible_vp_entities(
 
     def is_visible(e):
         entity_bbox = bbox_cache.get(e)
-        if entity_bbox is None:
+        if entity_bbox is None or not entity_bbox.has_data:
             return True
         x0, y0, _ = entity_bbox.extmin
         x1, y1, _ = entity_bbox.extmax
@@ -930,7 +930,7 @@ def visible_vp_entities(
     except ValueError:  # source area not detectable
         bbox_cache = None
 
-    if bbox_cache is None:
+    if not bbox_cache:  # bbox_cache is None or has no data
         return iter(doc.modelspace())
 
     for entity in doc.modelspace():

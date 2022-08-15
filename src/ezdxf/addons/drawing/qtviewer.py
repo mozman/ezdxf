@@ -12,6 +12,7 @@ from ezdxf.addons.xqt import QtWidgets as qw, QtCore as qc, QtGui as qg
 from ezdxf.addons.xqt import Slot, QAction, Signal
 
 import ezdxf
+import ezdxf.bbox
 from ezdxf import recover
 from ezdxf.addons import odafc
 from ezdxf.addons.drawing import Frontend, RenderContext
@@ -184,6 +185,7 @@ class CadViewer(qw.QMainWindow):
         self._visible_layers: Set[str] = set()
         self._current_layout: str = "Model"
         self._reset_backend()
+        self._bbox_cache = ezdxf.bbox.Cache()
 
         self.view = CADGraphicsViewWithOverlay()
         self.view.setScene(qw.QGraphicsScene())
@@ -284,6 +286,11 @@ class CadViewer(qw.QMainWindow):
                 return
 
         self.doc = document
+        # initialize bounding box cache for faste paperspace drawing
+        self._bbox_cache = ezdxf.bbox.Cache()
+        ezdxf.bbox.extents(
+            document.modelspace(), fast=True, cache=self._bbox_cache
+        )
         self._render_context = self._make_render_context(document)
         self._reset_backend()
         self._visible_layers = set()
@@ -368,9 +375,10 @@ class CadViewer(qw.QMainWindow):
 
     def create_frontend(self):
         return Frontend(
-            self._render_context,
-            self._backend,
-            self._config,
+            ctx=self._render_context,
+            out=self._backend,
+            config=self._config,
+            bbox_cache=self._bbox_cache
         )
 
     def _update_render_context(self, layout):
