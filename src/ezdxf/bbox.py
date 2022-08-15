@@ -27,8 +27,9 @@ class Cache:
         self.hits: int = 0
         self.misses: int = 0
 
-    def __len__(self):
-        return len(self._boxes)
+    @property
+    def has_data(self) -> bool:
+        return bool(self._boxes)
 
     def __str__(self):
         return (

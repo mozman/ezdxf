@@ -930,7 +930,7 @@ def visible_vp_entities(
     except ValueError:  # source area not detectable
         bbox_cache = None
 
-    if not bbox_cache:  # bbox_cache is None or has no data
+    if bbox_cache is None or not bbox_cache.has_data:
         return iter(doc.modelspace())
 
     for entity in doc.modelspace():

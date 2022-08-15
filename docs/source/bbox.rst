@@ -170,6 +170,10 @@ Cache Class
 
 .. autoclass:: Cache
 
+    .. py:attribute:: has_data
+
+        ``True`` if the cache contains any bounding boxes
+
     .. py:attribute:: hits
 
     .. py:attribute:: misses

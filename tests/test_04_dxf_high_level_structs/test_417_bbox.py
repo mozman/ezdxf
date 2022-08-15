@@ -48,6 +48,10 @@ def solid_blockrefs():
     return msp
 
 
+def test_empty_cache():
+    assert bbox.Cache().has_data is False
+
+
 @pytest.mark.parametrize(
     "solids",
     [solid_entities(), solid_blockrefs()],
