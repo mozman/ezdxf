@@ -27,6 +27,9 @@ class Cache:
         self.hits: int = 0
         self.misses: int = 0
 
+    def __len__(self):
+        return len(self._boxes)
+
     def __str__(self):
         return (
             f"Cache(n={len(self._boxes)}, "
