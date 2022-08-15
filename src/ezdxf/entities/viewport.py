@@ -1,5 +1,6 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import TYPE_CHECKING, List, Iterable, Tuple
 import math
 from ezdxf.lldxf import validator
@@ -21,7 +22,16 @@ from ezdxf.lldxf.const import (
     DXFValueError,
     DXFTableEntryError,
 )
-from ezdxf.math import Vec3, Vec2, NULLVEC, X_AXIS, Y_AXIS, Z_AXIS, Matrix44
+from ezdxf.math import (
+    Vec3,
+    Vec2,
+    NULLVEC,
+    X_AXIS,
+    Y_AXIS,
+    Z_AXIS,
+    Matrix44,
+    BoundingBox2d,
+)
 from ezdxf.tools import set_flag_state
 from .dxfentity import base_class, SubclassProcessor
 from .dxfgfx import DXFGraphic, acdb_entity
@@ -44,7 +54,6 @@ acdb_viewport = DefSubclass(
         "width": DXFAttr(40, default=1),
         # Height in paper space units:
         "height": DXFAttr(41, default=1),
-
         # Viewport status field: (according to the DXF Reference)
         # -1 = On, but is fully off screen, or is one of the viewports that is not
         #      active because the $MAXACTVP count is currently being exceeded.
@@ -53,7 +62,6 @@ acdb_viewport = DefSubclass(
         # stacking for the viewports, where 1 is the "active viewport", 2 is the
         # next, and so on:
         "status": DXFAttr(68, default=0),
-
         # Viewport id: (according to the DXF Reference)
         # Special VIEWPORT id == 1, this viewport defines the area of the layout
         # which is currently shown in the layout tab by the CAD application.
@@ -63,8 +71,7 @@ acdb_viewport = DefSubclass(
         # BricsCAD set id to -1 if the viewport is off and 'status' (group code 68)
         # is not present.
         "id": DXFAttr(69, default=2),
-
-        # DXF reference: View center point (in DCS):
+        # DXF reference: View center point (in WCS):
         # Correction to the DXF reference:
         # This point represents the center point in model space (WCS) stored as
         # 2D point!
@@ -263,7 +270,7 @@ class Viewport(DXFGraphic):
         super().__init__()
         self._frozen_layers: List[str] = []
 
-    def _copy_data(self, entity: "DXFEntity") -> None:
+    def _copy_data(self, entity: DXFEntity) -> None:
         assert isinstance(entity, Viewport)
         entity._frozen_layers = self._frozen_layers
 
@@ -313,7 +320,7 @@ class Viewport(DXFGraphic):
 
     def load_dxf_attribs(
         self, processor: SubclassProcessor = None
-    ) -> "DXFNamespace":
+    ) -> DXFNamespace:
         dxf = super().load_dxf_attribs(processor)
         if processor:
             tags = processor.fast_load_dxfattribs(
@@ -330,7 +337,7 @@ class Viewport(DXFGraphic):
                     )
         return dxf
 
-    def post_load_hook(self, doc: "Drawing"):
+    def post_load_hook(self, doc: Drawing):
         super().post_load_hook(doc)
         bag: List[str] = []
         db = doc.entitydb
@@ -393,7 +400,7 @@ class Viewport(DXFGraphic):
         self._frozen_layers = tags[26:]
         self.xdata.discard("ACAD")  # type: ignore
 
-    def export_entity(self, tagwriter: "TagWriter") -> None:
+    def export_entity(self, tagwriter: TagWriter) -> None:
         """Export entity specific data as DXF tags."""
         super().export_entity(tagwriter)
         if tagwriter.dxfversion == DXF12:
@@ -472,7 +479,7 @@ class Viewport(DXFGraphic):
                 ],
             )
 
-    def export_acdb_viewport_r12(self, tagwriter: "TagWriter"):
+    def export_acdb_viewport_r12(self, tagwriter: TagWriter):
         self.dxf.export_dxf_attribs(
             tagwriter,
             [
@@ -545,8 +552,8 @@ class Viewport(DXFGraphic):
             for name in self.frozen_layers
         ]
 
-    def clipping_path(self) -> List[Vec2]:
-        """Returns always the default rectangular clipping path as list of
+    def clipping_rect_corners(self) -> List[Vec2]:
+        """Returns the default rectangular clipping path as list of
         vertices. Use function :func:`ezdxf.path.make_path` to get also
         non-rectangular shaped clipping paths if defined.
         """
@@ -574,8 +581,8 @@ class Viewport(DXFGraphic):
         return Vec2(cx - width2, cy - height2), Vec2(cx + width2, cy + height2)
 
     @property
-    def has_clipping_path(self) -> bool:
-        """Returns ``True`` if a clipping path is defined."""
+    def has_extended_clipping_path(self) -> bool:
+        """Returns ``True`` if a non-rectangular clipping path is defined."""
         _flag = self.dxf.flags & const.VSF_NON_RECTANGULAR_CLIPPING
         if _flag:
             handle = self.dxf.clipping_boundary_handle
@@ -607,3 +614,36 @@ class Viewport(DXFGraphic):
         if rotation_angle:
             m @= Matrix44.z_rotate(math.radians(rotation_angle))
         return m @ Matrix44.translate(offset.x, offset.y, 0)
+
+    def get_aspect_ratio(self) -> float:
+        """Returns the aspect ratio of the viewport, return 0.0 if width or
+        height is zero.
+        """
+        try:
+            return self.dxf.width / self.dxf.height
+        except ZeroDivisionError:
+            return 0.0
+
+    def get_modelspace_limits(self) -> Tuple[float, float, float, float]:
+        """Returns the limits of the modelspace to view in drawing units
+        as tuple (min_x, min_y, max_x, max_y).
+        """
+        msp_center_point: Vec3 = self.dxf.view_center_point
+        height: float = self.dxf.view_height
+        rotation_angle: float = self.dxf.view_twist_angle
+        ratio = self.get_aspect_ratio()
+        if ratio == 0.0:
+            raise ValueError("invalid viewport parameters width or height")
+
+        w2 = height * ratio * 0.5
+        h2 = height * 0.5
+        if rotation_angle:
+            frame = Vec2.list(((-w2, -h2), (w2, -h2), (w2, h2), (-w2, h2)))
+            angle = math.radians(rotation_angle)
+            bbox = BoundingBox2d(
+                v.rotate(angle) + msp_center_point for v in frame
+            )
+            return bbox.extmin.x, bbox.extmin.y, bbox.extmax.x, bbox.extmax.y  # type: ignore
+        else:
+            mx, my, _ = msp_center_point
+            return mx - w2, my - h2, mx + w2, mx + h2

@@ -357,16 +357,60 @@ def test_get_transformation_matrix():
 
 def test_has_clipping_path():
     vp: Viewport = Viewport.from_text(ENTITY_R2000)
-    assert vp.has_clipping_path is False
+    assert vp.has_extended_clipping_path is False
 
 
-def test_clipping_path():
+def test_clipping_path_corners():
     vp: Viewport = Viewport.from_text(ENTITY_R2000)
     # the clipping rectangle as corner vertices
-    assert len(vp.clipping_path()) == 4
+    assert len(vp.clipping_rect_corners()) == 4
 
 
 def test_clipping_rect():
     vp: Viewport = Viewport.from_text(ENTITY_R2000)
     assert len(vp.clipping_rect()) == 2
 
+
+def test_aspect_ratio():
+    vp: Viewport = Viewport.new()
+    vp.dxf.width = 2.0
+    vp.dxf.height = 1.0
+    assert vp.get_aspect_ratio() == 2.0
+
+
+def test_invalid_aspect_ratio():
+    vp: Viewport = Viewport.new()
+    vp.dxf.width = 2.0
+    vp.dxf.height = 0.0
+    assert vp.get_aspect_ratio() == 0.0
+
+
+def test_modelspace_limits():
+    vp: Viewport = Viewport.new(dxfattribs={
+        "width": 2.0,
+        "height": 1.0,
+        "view_center_point": (2, 2),
+        "view_height": 2.0,
+    })
+    # view_width = 4.0
+    x0, y0, x1, y1 = vp.get_modelspace_limits()
+    assert x0 == pytest.approx(0.0)
+    assert y0 == pytest.approx(1.0)
+    assert x1 == pytest.approx(4.0)
+    assert y1 == pytest.approx(3.0)
+
+
+def test_modelspace_limits_rotated():
+    vp: Viewport = Viewport.new(dxfattribs={
+        "width": 2.0,
+        "height": 1.0,
+        "view_center_point": (2, 2),
+        "view_height": 2.0,
+        "view_twist_angle": 90
+    })
+    # view_width = 4.0
+    x0, y0, x1, y1 = vp.get_modelspace_limits()
+    assert x0 == pytest.approx(1.0)
+    assert y0 == pytest.approx(0.0)
+    assert x1 == pytest.approx(3.0)
+    assert y1 == pytest.approx(4.0)

@@ -241,5 +241,19 @@ Inherited DXF attributes :ref:`Common graphical DXF attributes`
 
     .. automethod:: thaw
 
+    .. autoattribute:: has_extended_clipping_path
+
+    .. automethod:: clipping_rect
+
+    .. automethod:: clipping_rect_corners
+
+    .. automethod:: get_aspect_ratio
+
+    .. automethod:: get_modelspace_limits
+
+    .. automethod:: get_scale
+
+    .. automethod:: get_transformation_matrix
+
 
 .. _DXF Reference: http://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-2602B0FB-02E4-4B9A-B03C-B1D904753D34
