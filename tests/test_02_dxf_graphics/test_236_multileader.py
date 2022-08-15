@@ -372,16 +372,16 @@ class TestMTextContext(MLeaderTesting):
     def test_transform_context(self):
         point = Vec3(2, 3, 0)
         marker_value = 777
-        lenght = 1.0
+        length = 1.0
         scale = 3.0
         m = matrix(scale=scale, rotate=30, tx=7, ty=9)
         point_transformed = m.transform(point)
 
         ctx = MLeaderContext()
         ctx.base_point = point
-        ctx.char_height = lenght
-        ctx.arrow_head_size = lenght
-        ctx.landing_gap_size = lenght
+        ctx.char_height = length
+        ctx.arrow_head_size = length
+        ctx.landing_gap_size = length
         ctx.left_attachment = marker_value
         ctx.right_attachment = marker_value
         ctx.top_attachment = marker_value
@@ -392,9 +392,9 @@ class TestMTextContext(MLeaderTesting):
         ctx.transform(WCSTransform(m))
         assert ctx.scale == pytest.approx(scale)
         assert ctx.base_point.isclose(point_transformed)
-        assert ctx.char_height == pytest.approx(scale * lenght)
-        assert ctx.arrow_head_size == pytest.approx(scale * lenght)
-        assert ctx.landing_gap_size == pytest.approx(scale * lenght)
+        assert ctx.char_height == pytest.approx(scale * length)
+        assert ctx.arrow_head_size == pytest.approx(scale * length)
+        assert ctx.landing_gap_size == pytest.approx(scale * length)
         assert ctx.left_attachment == marker_value
         assert ctx.right_attachment == marker_value
         assert ctx.top_attachment == marker_value
