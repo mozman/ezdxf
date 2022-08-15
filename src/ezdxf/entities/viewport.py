@@ -629,14 +629,14 @@ class Viewport(DXFGraphic):
         as tuple (min_x, min_y, max_x, max_y).
         """
         msp_center_point: Vec3 = self.dxf.view_center_point
-        height: float = self.dxf.view_height
+        msp_height: float = self.dxf.view_height
         rotation_angle: float = self.dxf.view_twist_angle
         ratio = self.get_aspect_ratio()
         if ratio == 0.0:
             raise ValueError("invalid viewport parameters width or height")
 
-        w2 = height * ratio * 0.5
-        h2 = height * 0.5
+        w2 = msp_height * ratio * 0.5
+        h2 = msp_height * 0.5
         if rotation_angle:
             frame = Vec2.list(((-w2, -h2), (w2, -h2), (w2, h2), (-w2, h2)))
             angle = math.radians(rotation_angle)
@@ -646,4 +646,4 @@ class Viewport(DXFGraphic):
             return bbox.extmin.x, bbox.extmin.y, bbox.extmax.x, bbox.extmax.y  # type: ignore
         else:
             mx, my, _ = msp_center_point
-            return mx - w2, my - h2, mx + w2, mx + h2
+            return mx - w2, my - h2, mx + w2, my + h2

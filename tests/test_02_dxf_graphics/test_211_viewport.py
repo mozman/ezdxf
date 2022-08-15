@@ -387,17 +387,17 @@ def test_invalid_aspect_ratio():
 
 def test_modelspace_limits():
     vp: Viewport = Viewport.new(dxfattribs={
-        "width": 2.0,
-        "height": 1.0,
-        "view_center_point": (2, 2),
-        "view_height": 2.0,
+        "width": 3.0,
+        "height": 2.0,
+        "view_center_point": (5, 7),
+        "view_height": 6.0,
     })
     # view_width = 4.0
     x0, y0, x1, y1 = vp.get_modelspace_limits()
-    assert x0 == pytest.approx(0.0)
-    assert y0 == pytest.approx(1.0)
-    assert x1 == pytest.approx(4.0)
-    assert y1 == pytest.approx(3.0)
+    assert x0 == pytest.approx(0.5)
+    assert y0 == pytest.approx(4.0)
+    assert x1 == pytest.approx(9.5)
+    assert y1 == pytest.approx(10.0)
 
 
 def test_modelspace_limits_rotated():
