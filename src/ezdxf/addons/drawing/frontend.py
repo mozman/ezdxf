@@ -768,12 +768,17 @@ class Designer:
         """Draw the content of the given viewport current viewport.
         Returns ``False`` if the backend doesn't support viewports.
         """
-        vp_ctx = layout_ctx.from_viewport(vp)
+        if vp.doc is None:
+            return False
+        try:
+            msp_limits = vp.get_modelspace_limits()
+        except ValueError:  # modelspace limits not detectable
+            return False
         if self.set_viewport(vp):
             _draw_entities(
                 self.frontend,
-                vp_ctx,
-                filter_vp_entities(vp, bbox_cache),
+                layout_ctx.from_viewport(vp),
+                filter_vp_entities(vp.doc.modelspace(), msp_limits, bbox_cache),
             )
             self.reset_viewport()
             return True
@@ -907,10 +912,10 @@ class Designer:
 
 
 def filter_vp_entities(
-    vp: Viewport, bbox_cache: ezdxf.bbox.Cache = None
+    msp: Layout, limits: Sequence[float], bbox_cache: ezdxf.bbox.Cache = None
 ) -> Iterator[DXFGraphic]:
     """Yields all DXF entities that need to be processed by the given viewport
-    `vp`. The entities may be partially of even complete outside the viewport.
+    `limits`. The entities may be partially of even complete outside the viewport.
     By passing the bounding box cache of the modelspace entities,
     the function can filter entities outside the viewport to speed up rendering
     time.
@@ -925,24 +930,13 @@ def filter_vp_entities(
            multiple viewports need to be processed.
 
     Args:
-         vp: the VIEWPORT entity
-         bbox_cache: the bounding box cache of the modelspace entities
+        msp: modelspace layout
+        limits: modelspace limits of the viewport, as tuple (min_x, min_y, max_x, max_y)
+        bbox_cache: the bounding box cache of the modelspace entities
 
     """
     # WARNING: this works only with top-view viewports
     # The current state of the drawing add-on supports only top-view viewports!
-    def has_intersection(x0: float, y0: float, x1: float, y1: float):
-        # Check for a separating axis:
-        if min_x >= x1:
-            return False
-        if max_x <= x0:
-            return False
-        if min_y >= y1:
-            return False
-        if max_y <= y0:
-            return False
-        return True
-
     def is_visible(e):
         entity_bbox = bbox_cache.get(e)
         if entity_bbox is None:
@@ -950,29 +944,27 @@ def filter_vp_entities(
             entity_bbox = ezdxf.bbox.extents((e,), fast=True, cache=bbox_cache)
         if not entity_bbox.has_data:
             return True
-        x0, y0, _ = entity_bbox.extmin
-        x1, y1, _ = entity_bbox.extmax
-        if has_intersection(x0, y0, x1, y1):
-            return True
-        return False
-
-    doc = vp.doc
-    if doc is None:
-        return
-
-    try:
-        min_x, min_y, max_x, max_y = vp.get_modelspace_limits()
-    except ValueError:  # source area not detectable
-        bbox_cache = None
+        # Check for separating axis:
+        if min_x >= entity_bbox.extmax.x:
+            return False
+        if max_x <= entity_bbox.extmin.x:
+            return False
+        if min_y >= entity_bbox.extmax.y:
+            return False
+        if max_y <= entity_bbox.extmin.y:
+            return False
+        return True
 
     if bbox_cache is None:  # pass through all entities
-        yield from doc.modelspace()
+        yield from msp
         return
+
+    min_x, min_y, max_x, max_y = limits
     if not bbox_cache.has_data:
         # fill cache at once
-        ezdxf.bbox.extents(doc.modelspace(), fast=True, cache=bbox_cache)
+        ezdxf.bbox.extents(msp, fast=True, cache=bbox_cache)
 
-    for entity in doc.modelspace():
+    for entity in msp:
         if is_visible(entity):
             yield entity
 
