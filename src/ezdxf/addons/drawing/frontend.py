@@ -72,6 +72,7 @@ from ezdxf.protocols import SupportsVirtualEntities, virtual_entities
 from ezdxf.tools.text import has_inline_formatting_codes
 from ezdxf.lldxf import const
 from ezdxf.render import hatching
+import ezdxf.bbox
 
 __all__ = ["Frontend"]
 
@@ -101,6 +102,7 @@ class Frontend:
         ctx: RenderContext,
         out: BackendInterface,
         config: Configuration = Configuration.defaults(),
+        bbox_cache: ezdxf.bbox.Cache = None,
     ):
         # RenderContext contains all information to resolve resources for a
         # specific DXF document.
@@ -128,6 +130,12 @@ class Frontend:
         # connection link between frontend and backend, the frontend should not
         # call the draw_...() methods of the backend directly:
         self._designer = Designer(self, out)
+
+        # Optional bounding box cache, may be created by detecting the
+        # modelspace extends. This cache is used for when rendering VIEWPORT
+        # entities paperspace to detect if an entity is even visible, this can
+        # speed up rendering time if many viewports are present.
+        self._bbox_cache = bbox_cache
 
     def _build_dispatch_table(self) -> TDispatchTable:
         dispatch_table: TDispatchTable = {
@@ -562,9 +570,9 @@ class Frontend:
         if not vp.is_top_view:
             self.log_message("Cannot render non top-view viewports")
             return
-        if not self._designer.draw_viewport(vp, self.ctx):
+        if not self._designer.draw_viewport(vp, self.ctx, self._bbox_cache):
             # viewports are not supported by the backend
-            self._draw_filled_rect(vp.clipping_path(), VIEWPORT_COLOR)
+            self._draw_filled_rect(vp.clipping_rect_corners(), VIEWPORT_COLOR)
 
     def draw_ole2frame_entity(
         self, entity: DXFGraphic, properties: Properties
@@ -739,7 +747,12 @@ class Designer:
         self.scale: float = 1.0
         self.clipping_path: Path = Path()
 
-    def draw_viewport(self, vp: Viewport, layout_ctx: RenderContext) -> bool:
+    def draw_viewport(
+        self,
+        vp: Viewport,
+        layout_ctx: RenderContext,
+        bbox_cache: ezdxf.bbox.Cache = None,
+    ) -> bool:
         """Draw the content of the given viewport current viewport.
         Returns ``False`` if the backend doesn't support viewports.
         """
@@ -748,7 +761,7 @@ class Designer:
             _draw_entities(
                 self.frontend,
                 vp_ctx,
-                (e for e in visible_vp_entities(vp, vp_ctx)),
+                (e for e in visible_vp_entities(vp, bbox_cache)),
             )
             self.reset_viewport()
             return True
@@ -882,14 +895,44 @@ class Designer:
 
 
 def visible_vp_entities(
-    vp: Viewport, ctx: RenderContext
+    vp: Viewport, bbox_cache: ezdxf.bbox.Cache = None
 ) -> Iterator[DXFGraphic]:
+    # WARNING: this works only with top-view viewports
+    # The current state of the drawing add-on supports only top-view viewports!
+    def has_intersection(x0: float, y0: float, x1: float, y1: float):
+        # Check for a separating axis:
+        if min_x >= x1:
+            return False
+        if max_x <= x0:
+            return False
+        if min_y >= y1:
+            return False
+        if max_y <= y0:
+            return False
+        return True
+
     def is_visible(e):
-        return True  # todo
+        entity_bbox = bbox_cache.get(e)
+        if entity_bbox is None:
+            return True
+        x0, y0, _ = entity_bbox.extmin
+        x1, y1, _ = entity_bbox.extmax
+        if has_intersection(x0, y0, x1, y1):
+            return True
+        return False
 
     doc = vp.doc
     if doc is None:
         return
+
+    try:
+        min_x, min_y, max_x, max_y = vp.get_modelspace_limits()
+    except ValueError:  # source area not detectable
+        bbox_cache = None
+
+    if bbox_cache is None:
+        return iter(doc.modelspace())
+
     for entity in doc.modelspace():
         if is_visible(entity):
             yield entity
