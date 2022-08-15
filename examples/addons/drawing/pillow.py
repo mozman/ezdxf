@@ -127,7 +127,12 @@ def main():
     try:
         print(f"detecting model space extents (fast={args.fast}) ...")
         t0 = perf_counter()
-        extents = bbox.extents(layout, fast=args.fast)
+        bbox_cache = bbox.Cache()
+        if layout.is_any_paperspace:
+            # acquire entity bounding boxes in modelspace for faster paperspace
+            # rendering
+            bbox.extents(doc.modelspace(), fast=args.fast, cache=bbox_cache)
+        extents = bbox.extents(layout, fast=args.fast, cache=bbox_cache)
         print(f"... in {perf_counter() - t0:.1f}s")
         print(f"EXTMIN: ({extents.extmin.x:.3f}, {extents.extmin.y:.3f})")
         print(f"EXTMAX: ({extents.extmax.x:.3f}, {extents.extmax.y:.3f})")
@@ -146,7 +151,7 @@ def main():
 
     print(f"drawing layout \"{layout.name}\"  ...")
     t0 = perf_counter()
-    Frontend(ctx, out, config=config).draw_layout(layout)
+    Frontend(ctx, out, config=config, bbox_cache=bbox_cache).draw_layout(layout)
     print(f"... in {perf_counter() - t0:.1f}s")
     if outfile is not None:
         t0 = perf_counter()

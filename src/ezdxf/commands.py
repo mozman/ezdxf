@@ -601,7 +601,12 @@ class Pillow(Command):
         )
         if verbose:
             print(f"detecting extents...\n")
-        extents = bbox.extents(layout, fast=True)
+        bbox_cache = bbox.Cache()
+        if layout.is_any_paperspace:
+            # get entity bounding boxes in modelspace for faster paperspace
+            # rendering
+            bbox.extents(doc.modelspace(), fast=True, cache=bbox_cache)
+        extents = bbox.extents(layout, fast=True, bbox_cache=bbox_cache)
         img_x, img_y = parse_image_size(args.image_size)
         if verbose:
             print(f"    units: {units.unit_name(layout.units)}")
@@ -631,7 +636,7 @@ class Pillow(Command):
         t0 = time.perf_counter()
         if verbose:
             print(f'drawing layout "{layout.name}"...')
-        Frontend(ctx, out, config=config).draw_layout(
+        Frontend(ctx, out, config=config, bbox_cache=bbox_cache).draw_layout(
             layout, layout_properties=layout_properties
         )
         t1 = time.perf_counter()
