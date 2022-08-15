@@ -94,6 +94,10 @@ class Frontend:
         ctx: the properties relevant to rendering derived from a DXF document
         out: the backend to draw to
         config: settings to configure the drawing frontend and backend
+        bbox_cache: bounding box cache of the modelspace entities. This can
+            speed up paperspace rendering, because each VIEWPORT entity has to
+            process the whole modelspace. By passing the bbox cache the
+            frontend can filter entities which are not visible in the VIEWPORT.
 
     """
 
