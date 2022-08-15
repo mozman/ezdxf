@@ -946,9 +946,8 @@ def filter_vp_entities(
     def is_visible(e):
         entity_bbox = bbox_cache.get(e)
         if entity_bbox is None:
-            # calculate and store bounding box
-            entity_bbox = ezdxf.bbox.extents([e])
-            bbox_cache.store(e, entity_bbox)
+            # compute and add bounding box
+            entity_bbox = ezdxf.bbox.extents((e,), fast=True, cache=bbox_cache)
         if not entity_bbox.has_data:
             return True
         x0, y0, _ = entity_bbox.extmin
@@ -966,8 +965,12 @@ def filter_vp_entities(
     except ValueError:  # source area not detectable
         bbox_cache = None
 
-    if bbox_cache is None:
-        return iter(doc.modelspace())
+    if bbox_cache is None:  # pass through all entities
+        yield from doc.modelspace()
+        return
+    if not bbox_cache.has_data:
+        # fill cache at once
+        ezdxf.bbox.extents(doc.modelspace(), fast=True, cache=bbox_cache)
 
     for entity in doc.modelspace():
         if is_visible(entity):
