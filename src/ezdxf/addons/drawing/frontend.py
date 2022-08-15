@@ -90,14 +90,18 @@ class Frontend:
     """Drawing frontend, responsible for decomposing entities into graphic
     primitives and resolving entity properties.
 
+    By passing the bounding box cache of the modelspace entities can speed up
+    paperspace rendering, because the frontend can filter entities which are not
+    visible in the VIEWPORT. Even passing in an empty cache can speed up
+    rendering time when multiple viewports need to be processed.
+
     Args:
         ctx: the properties relevant to rendering derived from a DXF document
         out: the backend to draw to
         config: settings to configure the drawing frontend and backend
-        bbox_cache: bounding box cache of the modelspace entities. This can
-            speed up paperspace rendering, because each VIEWPORT entity has to
-            process the whole modelspace. By passing the bbox cache the
-            frontend can filter entities which are not visible in the VIEWPORT.
+        bbox_cache: bounding box cache of the modelspace entities or an empty
+            cache which will be filled dynamically when rendering multiple
+            viewports or ``None`` to disable bounding box caching at all
 
     """
 
@@ -135,10 +139,14 @@ class Frontend:
         # call the draw_...() methods of the backend directly:
         self._designer = Designer(self, out)
 
-        # Optional bounding box cache, may be created by detecting the
-        # modelspace extends. This cache is used for when rendering VIEWPORT
-        # entities paperspace to detect if an entity is even visible, this can
-        # speed up rendering time if many viewports are present.
+        # Optional bounding box cache, which maybe was created by detecting the
+        # modelspace extends. This cache is used when rendering VIEWPORT
+        # entities in paperspace to detect if an entity is even visible,
+        # this can speed up rendering time if multiple viewports are present.
+        # If the bbox_cache is not ``None``, entities not in cache will be
+        # added dynamically. This is only beneficial when rendering multiple
+        # viewports, as the upfront bounding box calculation adds some rendering
+        # time.
         self._bbox_cache = bbox_cache
 
     def _build_dispatch_table(self) -> TDispatchTable:
@@ -765,7 +773,7 @@ class Designer:
             _draw_entities(
                 self.frontend,
                 vp_ctx,
-                (e for e in visible_vp_entities(vp, bbox_cache)),
+                filter_vp_entities(vp, bbox_cache),
             )
             self.reset_viewport()
             return True
@@ -898,9 +906,29 @@ class Designer:
             return pattern
 
 
-def visible_vp_entities(
+def filter_vp_entities(
     vp: Viewport, bbox_cache: ezdxf.bbox.Cache = None
 ) -> Iterator[DXFGraphic]:
+    """Yields all DXF entities that need to be processed by the given viewport
+    `vp`. The entities may be partially of even complete outside the viewport.
+    By passing the bounding box cache of the modelspace entities,
+    the function can filter entities outside the viewport to speed up rendering
+    time.
+
+    There are two processing modes for the `bbox_cache`:
+
+        1. The `bbox_cache` is``None``: all entities must be processed,
+           pass through mode
+        2. If the `bbox_cache` is given but does not contain an entity,
+           the bounding box is computed and added to the cache.
+           Even passing in an empty cache can speed up rendering time when
+           multiple viewports need to be processed.
+
+    Args:
+         vp: the VIEWPORT entity
+         bbox_cache: the bounding box cache of the modelspace entities
+
+    """
     # WARNING: this works only with top-view viewports
     # The current state of the drawing add-on supports only top-view viewports!
     def has_intersection(x0: float, y0: float, x1: float, y1: float):
@@ -917,7 +945,11 @@ def visible_vp_entities(
 
     def is_visible(e):
         entity_bbox = bbox_cache.get(e)
-        if entity_bbox is None or not entity_bbox.has_data:
+        if entity_bbox is None:
+            # calculate and store bounding box
+            entity_bbox = ezdxf.bbox.extents([e])
+            bbox_cache.store(e, entity_bbox)
+        if not entity_bbox.has_data:
             return True
         x0, y0, _ = entity_bbox.extmin
         x1, y1, _ = entity_bbox.extmax
@@ -934,7 +966,7 @@ def visible_vp_entities(
     except ValueError:  # source area not detectable
         bbox_cache = None
 
-    if bbox_cache is None or not bbox_cache.has_data:
+    if bbox_cache is None:
         return iter(doc.modelspace())
 
     for entity in doc.modelspace():

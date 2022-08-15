@@ -288,9 +288,6 @@ class CadViewer(qw.QMainWindow):
         self.doc = document
         # initialize bounding box cache for faste paperspace drawing
         self._bbox_cache = ezdxf.bbox.Cache()
-        ezdxf.bbox.extents(
-            document.modelspace(), fast=True, cache=self._bbox_cache
-        )
         self._render_context = self._make_render_context(document)
         self._reset_backend()
         self._visible_layers = set()

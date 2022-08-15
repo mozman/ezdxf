@@ -128,10 +128,6 @@ def main():
         print(f"detecting model space extents (fast={args.fast}) ...")
         t0 = perf_counter()
         bbox_cache = bbox.Cache()
-        if layout.is_any_paperspace:
-            # acquire entity bounding boxes in modelspace for faster paperspace
-            # rendering
-            bbox.extents(doc.modelspace(), fast=args.fast, cache=bbox_cache)
         extents = bbox.extents(layout, fast=args.fast, cache=bbox_cache)
         print(f"... in {perf_counter() - t0:.1f}s")
         print(f"EXTMIN: ({extents.extmin.x:.3f}, {extents.extmin.y:.3f})")
