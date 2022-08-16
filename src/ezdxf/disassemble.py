@@ -1,5 +1,6 @@
 #  Copyright (c) 2021, Manfred Moitzi
 #  License: MIT License
+from __future__ import annotations
 from typing import Iterable, Optional, cast, TYPE_CHECKING, List
 import abc
 import math
@@ -17,6 +18,7 @@ from ezdxf.tools.text import (
     unified_alignment,
     plain_text,
     text_wrap,
+    estimate_mtext_content_extents,
 )
 from ezdxf.tools import fonts
 
@@ -228,7 +230,7 @@ class PointPrimitive(Primitive):
         yield self.entity.dxf.location
 
     def bbox(self, fast=False) -> BoundingBox:
-        return BoundingBox((self.entity.dxf.location, ))
+        return BoundingBox((self.entity.dxf.location,))
 
 
 class MeshPrimitive(ConvertedPrimitive):
@@ -419,9 +421,14 @@ class MTextPrimitive(ConvertedPrimitive):
             if columns:
                 rect_width = columns.total_width
                 rect_height = columns.total_height
-                # TODO: this works only for reliable sources like AutoCAD,
-                #  BricsCAD and ezdxf! So far no known column support from
-                #  other DXF exporters.
+                if rect_width == 0.0 or rect_height == 0.0:
+                    # Reliable sources like AutoCAD and BricsCAD do write
+                    # correct total_width and total_height values!
+                    w, h = _estimate_column_extents(mtext)
+                    if rect_width == 0.0:
+                        rect_width = w
+                    if rect_height == 0.0:
+                        rect_height = h
             else:
                 rect_width = mtext.dxf.get("rect_width", get_rect_width())
                 rect_height = mtext.dxf.get("rect_height", get_rect_height())
@@ -454,6 +461,26 @@ class MTextPrimitive(ConvertedPrimitive):
             ucs.points_to_wcs(corner_vertices),
             close=True,
         )
+
+
+def _estimate_column_extents(mtext: MText):
+    columns = mtext.columns
+    assert columns is not None
+    _content = mtext.text
+    if columns.count > 1:
+        _columns_content = _content.split("\\N")
+        if len(_columns_content) > 1:
+            _content = max(
+                _columns_content, key=lambda t: len(t)
+            )
+    return estimate_mtext_content_extents(
+        content=_content,
+        font=fonts.MonospaceFont(mtext.dxf.char_height, 1.0),
+        column_width=columns.width,
+        line_spacing_factor=mtext.dxf.get_default(
+            "line_spacing_factor"
+        ),
+    )
 
 
 class ImagePrimitive(ConvertedPrimitive):
