@@ -756,8 +756,16 @@ class Designer:
         self.config = frontend.config
         self.pattern_cache: Dict[PatternKey, Sequence[float]] = dict()
         self.transformation: Optional[Matrix44] = None
+        # scaling factor from modelspace to viewport
         self.scale: float = 1.0
         self.clipping_path: Path = Path()
+
+    @property
+    def vp_ltype_scale(self) -> float:
+        """The linetype pattern should look the same in all viewports
+        independent of the viewport scaling.
+        """
+        return 1.0 / max(self.scale, 0.0001)  # max out at 1:10000
 
     def draw_viewport(
         self,
@@ -884,7 +892,7 @@ class Designer:
         if self.config.line_policy == LinePolicy.SOLID:
             scale = 0.0
         else:
-            scale = properties.linetype_scale
+            scale = properties.linetype_scale * self.vp_ltype_scale
 
         key: PatternKey = (properties.linetype_name, scale)
         pattern_ = self.pattern_cache.get(key)
@@ -901,7 +909,7 @@ class Designer:
             # Do not return None -> None indicates: "not cached"
             return tuple()
         else:
-            min_dash_length = self.config.min_dash_length
+            min_dash_length = self.config.min_dash_length * self.vp_ltype_scale
             pattern = [
                 max(e * scale, min_dash_length)
                 for e in properties.linetype_pattern
