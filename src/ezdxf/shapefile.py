@@ -9,8 +9,13 @@ The documentation about the SHP file format can be found at Autodesk:
 https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-DE941DB5-7044-433C-AA68-2A9AE98A5713
 
 """
-from typing import Dict, Sequence, Iterable, Iterator
+from typing import Dict, Sequence, Iterable, Iterator, Callable, List, Tuple
 import enum
+import logging
+from ezdxf import path
+from ezdxf.math import UVec, Vec2
+
+logger = logging.getLogger("ezdxf")
 
 
 class ShapeFileException(Exception):
@@ -30,6 +35,10 @@ class InvalidShapeRecord(ShapeFileException):
 
 
 class FileStructureError(ShapeFileException):
+    pass
+
+
+class StackUnderflow(ShapeFileException):
     pass
 
 
@@ -61,7 +70,7 @@ class ShapeFile:
     def __init__(
         self,
         name: str,
-        size: int,
+        vector_length: int,
         above: int,
         below: int,
         mode=FontMode.HORIZONTAL,
@@ -70,7 +79,7 @@ class ShapeFile:
     ):
         self.symbols: Dict[int, Symbol] = dict()
         self.name = name
-        self.size = size
+        self.vector_length = vector_length
         self.above = above
         self.below = below
         self.mode = mode
@@ -81,7 +90,7 @@ class ShapeFile:
     def from_str_record(record: Sequence[str]):
         if len(record) == 2:
             try:
-                spec, size, name = record[0].split(",")
+                spec, vector_length, name = record[0].split(",")
             except ValueError:
                 raise InvalidFontDefinition()
             assert spec == "*UNIFONT"
@@ -94,7 +103,7 @@ class ShapeFile:
 
             return ShapeFile(
                 name,
-                int(size),
+                int(vector_length),
                 int(above),
                 int(below),
                 FontMode(int(mode)),
@@ -118,6 +127,23 @@ class ShapeFile:
                 raise FileStructureError(
                     f"file structure error at symbol <{record[0]}>"
                 )
+
+    def get_codes(self, number: int) -> Sequence[int]:
+        symbol = self.symbols.get(number)
+        if symbol is None:
+            return tuple()  # return codes for non-printable chars
+        return symbol.data
+
+    def render_shape(self, number: int, stacked=False) -> path.Path:
+        return render_shape(
+            number, self.vector_length, self.get_codes, stacked=stacked
+        )
+
+    def render_text(self, text: str, stacked=False) -> path.Path:
+        numbers = [ord(char) for char in text]
+        return render_shapes(
+            numbers, self.vector_length, self.get_codes, stacked=stacked
+        )
 
 
 def split_record(record: str) -> Sequence[str]:
@@ -177,3 +203,224 @@ def _filter_comments(lines: Iterable[str]) -> Iterator[str]:
         line = line.split(";")[0]
         if line:
             yield line
+
+
+def render_shape(
+    shape_number: int,
+    vector_length: float,
+    get_codes: Callable[[int], Sequence[int]],
+    stacked: bool,
+    start: UVec = (0, 0),
+):
+    ctx = ShapeRenderer(
+        path.Path(start),
+        start=start,
+        vector_length=vector_length,
+        pen=True,
+        stacked=stacked,
+        get_codes=get_codes,
+    )
+    codes = get_codes(shape_number)
+    try:
+        ctx.render(codes)
+    except StackUnderflow:
+        logger.error(
+            f"stack underflow while rendering shape number {shape_number}"
+        )
+    return ctx.p
+
+
+def render_shapes(
+    shape_numbers: Sequence[int],
+    vector_length: float,
+    get_codes: Callable[[int], Sequence[int]],
+    stacked: bool,
+    start: UVec = (0, 0),
+):
+    ctx = ShapeRenderer(
+        path.Path(start),
+        start=start,
+        vector_length=vector_length,
+        pen=True,
+        stacked=stacked,
+        get_codes=get_codes,
+    )
+    for shape_number in shape_numbers:
+        codes = get_codes(shape_number)
+        try:
+            ctx.render(codes)
+        except StackUnderflow:
+            logger.error(
+                f"stack underflow while rendering shape number {shape_number}"
+            )
+        # move cursor to the start of the next char???
+    return ctx.p
+
+
+#        0, 1, 2,   3, 4,    5,  6,  7,  8,  9,  A,    B, C,   D, E, F
+VEC_X = [1, 1, 1, 0.5, 0, -0.5, -1, -1, -1, -1, -1, -0.5, 0, 0.5, 1, 1]
+#        0,   1, 2, 3, 4, 5, 6,   7, 8,    9,  A,  B,  C,  D,  E,    F
+VEC_Y = [0, 0.5, 1, 1, 1, 1, 1, 0.5, 0, -0.5, -1, -1, -1, -1, -1, -0.5]
+
+
+class ShapeRenderer:
+    def __init__(
+        self,
+        p: path.Path,
+        start: UVec,
+        vector_length: float,
+        pen: bool,
+        stacked: bool,
+        get_codes: Callable[[int], Sequence[int]],
+    ):
+        self.p = p
+        self.location = Vec2(start)
+        self.vector_length = float(vector_length)
+        self.pen = pen
+        self.stacked = stacked
+        self._location_stack: List[Vec2] = []
+        self._get_codes = get_codes
+        self._skip_next = False
+
+    def push(self) -> None:
+        self._location_stack.append(self.location)
+
+    def pop(self) -> None:
+        self.location = self._location_stack.pop()
+
+    def render(
+        self,
+        codes: Sequence[int],
+    ) -> None:
+        index = 0
+        skip_next = False
+        while index < len(codes):
+            code = codes[index]
+            index += 1
+            if code > 15 and not skip_next:
+                self.draw_vector(code)
+            elif code == 0:
+                break
+            elif code == 1 and not skip_next:  # pen down
+                self.pen = True
+            elif code == 2 and not skip_next:  # pen up
+                self.pen = False
+            elif code == 3 or code == 4:  # scale size
+                factor = codes[index]
+                index += 1
+                if not skip_next:
+                    if code == 3 and factor:
+                        self.vector_length /= factor
+                    elif code == 4:
+                        self.vector_length *= factor
+            elif code == 5 and not skip_next:  # push location state
+                self.push()
+            elif code == 6 and not skip_next:  # pop location state
+                try:
+                    self.pop()
+                except IndexError:
+                    raise StackUnderflow()
+            elif code == 7:  # sub-shape:
+                sub_shape_number = codes[index]
+                index += 1
+                if not skip_next:
+                    sub_codes = self._get_codes(sub_shape_number)
+                    # Use current state of pen and location!
+                    self.render(sub_codes)
+                    # resume with current state of pen and location!
+            elif code == 8:  # displacement vector
+                x = codes[index]
+                y = codes[index + 1]
+                index += 2
+                if not skip_next:
+                    self.draw_displacement(x, y)
+            elif code == 9:  # multiple displacements vectors
+                while True:
+                    x = codes[index]
+                    y = codes[index + 1]
+                    index += 2
+                    if x == 0 and y == 0:
+                        break
+                    if not skip_next:
+                        self.draw_displacement(x, y)
+            elif code == 0xA:  # octant arc
+                radius = codes[index]
+                start_octant, octant_span, ccw = decode_octant_specs(
+                    codes[index + 1]
+                )
+                index += 2
+                if not skip_next:
+                    self.draw_arc(radius, start_octant * 45, octant_span * 45, ccw)
+            elif code == 0xB:  # fractional arc
+                start_offset = codes[index]
+                end_offset = codes[index + 1]
+                radius = codes[index + 2] << 8 + codes[index + 3]
+                start_octant, octant_span, ccw = decode_octant_specs(
+                    codes[index + 4]
+                )
+                index += 5
+                start_angle = start_octant * 45 + (start_offset * 45 / 256)
+                span_angle = octant_span * 45 + (end_offset * 45 / 256)
+                if not skip_next:
+                    self.draw_arc(radius, start_angle, span_angle, ccw)
+            elif code == 0xC:  # bulge arc
+                x = codes[index]
+                y = codes[index + 1]
+                bulge = codes[index + 2]
+                index += 3
+                if not skip_next:
+                    self.draw_bulge(x, y, bulge)
+            elif code == 0xD:  # multiple bulge arcs
+                while True:
+                    x = codes[index]
+                    y = codes[index + 1]
+                    if x == 0 and y == 0:
+                        index += 2
+                        break
+                    bulge = codes[index + 2]
+                    index += 3
+                    if not skip_next:
+                        self.draw_bulge(x, y, bulge)
+            elif code == 0xE:  # flag vertical text
+                if not self.stacked:
+                    skip_next = True
+                    continue
+            skip_next = False
+
+    def draw_vector(self, code: int) -> None:
+        if self._skip_next:
+            return
+        angle: int = code & 0xF
+        length: int = (code >> 4) & 0xF
+        self.draw_displacement(VEC_X[angle] * length, VEC_Y[angle] * length)
+
+    def draw_displacement(self, x: int, y: float):
+        vector_length = self.vector_length
+        x *= vector_length
+        y *= vector_length
+        self.location += Vec2(x, y)
+        if self.pen:
+            self.p.line_to(self.location)
+        else:
+            self.p.move_to(self.location)
+
+    def draw_arc(
+        self, radius: float, start_angle: float, span_angle: float, ccw: bool
+    ):
+        radius *= self.vector_length
+
+    def draw_bulge(self, x: int, y: float, bulge: float):
+        vector_length = self.vector_length
+        x *= vector_length
+        y *= vector_length
+        pass
+
+
+def decode_octant_specs(specs: int) -> Tuple[int, int, bool]:
+    ccw = True
+    if specs < 0:
+        ccw = False
+        specs = -specs
+    start_octant = (specs >> 4) & 0xF
+    octant_span = specs & 0xF
+    return start_octant, octant_span, ccw
