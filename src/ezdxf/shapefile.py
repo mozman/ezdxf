@@ -147,7 +147,10 @@ def split_record(record: str) -> Sequence[str]:
 def parse_codes(codes: Iterable[str]) -> Iterator[int]:
     for code in codes:
         code = code.strip("()")
-        yield int(code, 16)
+        if code[0] == "0":
+            yield int(code, 16)
+        else:
+            yield int(code, 10)
 
 
 def shp_loads(data: str) -> ShapeFile:
