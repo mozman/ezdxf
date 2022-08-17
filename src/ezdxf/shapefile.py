@@ -71,7 +71,6 @@ class ShapeFile:
     def __init__(
         self,
         name: str,
-        vector_length: int,
         above: int,
         below: int,
         mode=FontMode.HORIZONTAL,
@@ -80,7 +79,6 @@ class ShapeFile:
     ):
         self.symbols: Dict[int, Symbol] = dict()
         self.name = name
-        self.vector_length = vector_length
         self.above = above
         self.below = below
         self.mode = mode
@@ -91,7 +89,7 @@ class ShapeFile:
     def from_str_record(record: Sequence[str]):
         if len(record) == 2:
             try:
-                spec, vector_length, name = record[0].split(",")
+                spec, _, name = record[0].split(",")
             except ValueError:
                 raise InvalidFontDefinition()
             assert spec == "*UNIFONT"
@@ -104,7 +102,6 @@ class ShapeFile:
 
             return ShapeFile(
                 name,
-                int(vector_length),
                 int(above),
                 int(below),
                 FontMode(int(mode)),
@@ -136,15 +133,11 @@ class ShapeFile:
         return symbol.data
 
     def render_shape(self, number: int, stacked=False) -> path.Path:
-        return render_shape(
-            number, self.vector_length, self.get_codes, stacked=stacked
-        )
+        return render_shape(number, self.get_codes, stacked=stacked)
 
     def render_text(self, text: str, stacked=False) -> path.Path:
         numbers = [ord(char) for char in text]
-        return render_shapes(
-            numbers, self.vector_length, self.get_codes, stacked=stacked
-        )
+        return render_shapes(numbers, self.get_codes, stacked=stacked)
 
 
 def split_record(record: str) -> Sequence[str]:
@@ -173,7 +166,7 @@ def shp_dumps(shapefile: ShapeFile) -> str:
 
 
 def shx_loadb(data: bytes) -> ShapeFile:
-    return ShapeFile("", 0, 0, 0)
+    return ShapeFile("", 0, 0)
 
 
 def shx_dumpb(shapefile: ShapeFile) -> bytes:
@@ -208,14 +201,12 @@ def _filter_comments(lines: Iterable[str]) -> Iterator[str]:
 
 def render_shape(
     shape_number: int,
-    vector_length: float,
     get_codes: Callable[[int], Sequence[int]],
     stacked: bool,
     start: UVec = (0, 0),
 ):
     ctx = ShapeRenderer(
         path.Path(start),
-        vector_length=vector_length,
         pen=True,
         stacked=stacked,
         get_codes=get_codes,
@@ -232,14 +223,12 @@ def render_shape(
 
 def render_shapes(
     shape_numbers: Sequence[int],
-    vector_length: float,
     get_codes: Callable[[int], Sequence[int]],
     stacked: bool,
     start: UVec = (0, 0),
 ):
     ctx = ShapeRenderer(
         path.Path(start),
-        vector_length=vector_length,
         pen=True,
         stacked=stacked,
         get_codes=get_codes,
@@ -266,18 +255,18 @@ class ShapeRenderer:
     def __init__(
         self,
         p: path.Path,
-        vector_length: float,
-        pen: bool,
-        stacked: bool,
         get_codes: Callable[[int], Sequence[int]],
+        *,
+        vector_length: float = 1.0,
+        pen: bool = True,
+        stacked: bool = False,
     ):
         self.p = p
-        self.vector_length = float(vector_length)
-        self.pen = pen
-        self.stacked = stacked
+        self.vector_length = float(vector_length)  # initial vector length
+        self.pen = pen  # pen down =  True, pen up = False
+        self.stacked = stacked  # vertical stacked text
         self._location_stack: List[Vec3] = []
         self._get_codes = get_codes
-        self._skip_next = False
 
     @property
     def current_location(self) -> Vec3:
@@ -396,8 +385,6 @@ class ShapeRenderer:
             skip_next = False
 
     def draw_vector(self, code: int) -> None:
-        if self._skip_next:
-            return
         angle: int = code & 0xF
         length: int = (code >> 4) & 0xF
         self.draw_displacement(VEC_X[angle] * length, VEC_Y[angle] * length)

@@ -8,7 +8,6 @@ from ezdxf import shapefile
 def test_load_shp_file():
     shp = shapefile.shp_loads(TXT)
     assert shp.name == "TXT"
-    assert shp.vector_length == 6
     assert shp.above == 6
     assert shp.below == 2
     assert shp.mode == shapefile.FontMode.VERTICAL
