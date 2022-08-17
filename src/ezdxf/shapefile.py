@@ -9,11 +9,12 @@ The documentation about the SHP file format can be found at Autodesk:
 https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-DE941DB5-7044-433C-AA68-2A9AE98A5713
 
 """
+import math
 from typing import Dict, Sequence, Iterable, Iterator, Callable, List, Tuple
 import enum
 import logging
 from ezdxf import path
-from ezdxf.math import UVec, Vec2
+from ezdxf.math import UVec, Vec2, Vec3, ConstructionEllipse, bulge_to_arc
 
 logger = logging.getLogger("ezdxf")
 
@@ -214,7 +215,6 @@ def render_shape(
 ):
     ctx = ShapeRenderer(
         path.Path(start),
-        start=start,
         vector_length=vector_length,
         pen=True,
         stacked=stacked,
@@ -239,7 +239,6 @@ def render_shapes(
 ):
     ctx = ShapeRenderer(
         path.Path(start),
-        start=start,
         vector_length=vector_length,
         pen=True,
         stacked=stacked,
@@ -267,26 +266,28 @@ class ShapeRenderer:
     def __init__(
         self,
         p: path.Path,
-        start: UVec,
         vector_length: float,
         pen: bool,
         stacked: bool,
         get_codes: Callable[[int], Sequence[int]],
     ):
         self.p = p
-        self.location = Vec2(start)
         self.vector_length = float(vector_length)
         self.pen = pen
         self.stacked = stacked
-        self._location_stack: List[Vec2] = []
+        self._location_stack: List[Vec3] = []
         self._get_codes = get_codes
         self._skip_next = False
 
+    @property
+    def current_location(self) -> Vec3:
+        return self.p.end
+
     def push(self) -> None:
-        self._location_stack.append(self.location)
+        self._location_stack.append(self.current_location)
 
     def pop(self) -> None:
-        self.location = self._location_stack.pop()
+        self.p.move_to(self._location_stack.pop())
 
     def render(
         self,
@@ -350,7 +351,9 @@ class ShapeRenderer:
                 )
                 index += 2
                 if not skip_next:
-                    self.draw_arc(radius, start_octant * 45, octant_span * 45, ccw)
+                    self.draw_arc(
+                        radius, start_octant * 45, octant_span * 45, ccw
+                    )
             elif code == 0xB:  # fractional arc
                 start_offset = codes[index]
                 end_offset = codes[index + 1]
@@ -362,7 +365,12 @@ class ShapeRenderer:
                 start_angle = start_octant * 45 + (start_offset * 45 / 256)
                 span_angle = octant_span * 45 + (end_offset * 45 / 256)
                 if not skip_next:
-                    self.draw_arc(radius, start_angle, span_angle, ccw)
+                    self.draw_arc(
+                        radius,
+                        math.radians(start_angle),
+                        math.radians(span_angle),
+                        ccw,
+                    )
             elif code == 0xC:  # bulge arc
                 x = codes[index]
                 y = codes[index + 1]
@@ -394,26 +402,47 @@ class ShapeRenderer:
         length: int = (code >> 4) & 0xF
         self.draw_displacement(VEC_X[angle] * length, VEC_Y[angle] * length)
 
-    def draw_displacement(self, x: int, y: float):
+    def draw_displacement(self, x: float, y: float):
         vector_length = self.vector_length
         x *= vector_length
         y *= vector_length
-        self.location += Vec2(x, y)
+        target = self.current_location + Vec2(x, y)
         if self.pen:
-            self.p.line_to(self.location)
+            self.p.line_to(target)
         else:
-            self.p.move_to(self.location)
+            self.p.move_to(target)
 
     def draw_arc(
-        self, radius: float, start_angle: float, span_angle: float, ccw: bool
+        self, radius: float, start_param: float, span: float, ccw: bool
     ):
-        radius *= self.vector_length
+        end_param = start_param + (span if ccw else -span)
+        arc = ConstructionEllipse(
+            major_axis=(radius * self.vector_length, 0),
+            start_param=start_param,
+            end_param=end_param,
+            ccw=ccw,
+        )
+        # move arc start-point to the end-point of current path
+        arc.center += self.current_location - arc.start_point
+        if self.pen:
+            path.add_ellipse(self.p, arc, reset=False)
+        else:
+            self.p.move_to(arc.end_point)
 
     def draw_bulge(self, x: int, y: float, bulge: float):
-        vector_length = self.vector_length
-        x *= vector_length
-        y *= vector_length
-        pass
+        if self.pen and bulge:
+            start_point = self.current_location
+            x *= self.vector_length
+            y *= self.vector_length
+            end_point = start_point + (x, y)
+            center, start_angle, end_angle, radius = bulge_to_arc(
+                start_point, end_point, bulge
+            )
+            self.draw_arc(
+                radius, start_angle, end_angle - start_angle, ccw=True
+            )
+        else:
+            self.draw_displacement(x, y)
 
 
 def decode_octant_specs(specs: int) -> Tuple[int, int, bool]:
