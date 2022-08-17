@@ -12,11 +12,8 @@ https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-DE941DB5-7044-433C-AA68-
 import math
 from typing import Dict, Sequence, Iterable, Iterator, Callable, List, Tuple
 import enum
-import logging
 from ezdxf import path
 from ezdxf.math import UVec, Vec2, Vec3, ConstructionEllipse, bulge_to_arc
-
-logger = logging.getLogger("ezdxf")
 
 
 class ShapeFileException(Exception):
@@ -219,7 +216,7 @@ def render_shape(
     try:
         ctx.render(codes)
     except StackUnderflow:
-        logger.error(
+        raise StackUnderflow(
             f"stack underflow while rendering shape number {shape_number}"
         )
     return ctx.p
@@ -242,7 +239,7 @@ def render_shapes(
         try:
             ctx.render(codes)
         except StackUnderflow:
-            logger.error(
+            raise StackUnderflow(
                 f"stack underflow while rendering shape number {shape_number}"
             )
         # move cursor to the start of the next char???
