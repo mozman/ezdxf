@@ -87,7 +87,7 @@ class ShapeFile:
         if len(record) == 2:
             try:
                 # ignore second value: defbytes
-                spec, _, name = record[0].split(",")
+                spec, _, name = record[0].split(",", maxsplit=2)
             except ValueError:
                 raise InvalidFontDefinition()
             assert spec.strip() == "*UNIFONT"
