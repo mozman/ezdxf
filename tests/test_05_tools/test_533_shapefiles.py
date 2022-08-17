@@ -10,7 +10,7 @@ def test_load_shp_file():
     assert shp.name == "TXT"
     assert shp.above == 6
     assert shp.below == 2
-    assert shp.mode == shapefile.FontMode.VERTICAL
+    assert shp.mode == shapefile.FontMode.BIDIRECT
     assert shp.encoding == shapefile.FontEncoding.UNICODE
     assert shp.embed == shapefile.FontEmbedding.ALLOWED
 

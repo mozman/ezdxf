@@ -57,7 +57,7 @@ class FontEncoding(enum.IntEnum):
 
 class FontMode(enum.IntEnum):
     HORIZONTAL = 0
-    VERTICAL = 2
+    BIDIRECT = 2
 
 
 class Symbol:
@@ -89,10 +89,11 @@ class ShapeFile:
     def from_str_record(record: Sequence[str]):
         if len(record) == 2:
             try:
+                # ignore second value: defbytes
                 spec, _, name = record[0].split(",")
             except ValueError:
                 raise InvalidFontDefinition()
-            assert spec == "*UNIFONT"
+            assert spec.strip() == "*UNIFONT"
 
             try:
                 above, below, mode, encoding, embed, end = record[1].split(",")
@@ -101,7 +102,7 @@ class ShapeFile:
             assert int(end) == 0
 
             return ShapeFile(
-                name,
+                name.strip(),
                 int(above),
                 int(below),
                 FontMode(int(mode)),
