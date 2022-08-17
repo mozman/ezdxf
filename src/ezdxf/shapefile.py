@@ -417,7 +417,7 @@ class ShapeRenderer:
         else:
             self.p.move_to(arc.end_point)
 
-    def draw_bulge(self, x: int, y: float, bulge: float):
+    def draw_bulge(self, x: float, y: float, bulge: float):
         if self.pen and bulge:
             start_point = self.current_location
             x *= self.vector_length

@@ -5,7 +5,7 @@ import ezdxf
 from ezdxf import shapefile, path, zoom
 
 # I can not include the test files in the repository because these shape files
-# are generated from copyright protected Autodesk SHX file by the program dumpshx.exe
+# are generated from copyright protected Autodesk SHX files by the program dumpshx.exe
 SHAPE_DIR = pathlib.Path("../DXFResearch/SHX").absolute()
 CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
