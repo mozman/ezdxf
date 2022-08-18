@@ -422,10 +422,10 @@ class ShapeRenderer:
                     end_offset * 45 / 256
                 )
                 if not skip_next:
-                    self.draw_arc_span(
+                    self.draw_arc_start_to_end(
                         radius * self.vector_length,
                         math.radians(start_angle),
-                        math.radians(end_angle - start_angle),
+                        math.radians(end_angle),
                         ccw,
                     )
             elif code == 12:  # bulge arc
@@ -473,17 +473,24 @@ class ShapeRenderer:
             self.p.move_to(target)
 
     def draw_arc_span(
-        self, radius: float, start_param: float, span: float, ccw: bool
+        self, radius: float, start_angle: float, span_angle: float, ccw: bool
     ):
         # IMPORTANT: radius has be scaled by self.vector_length!
-        end_param = start_param + (span if ccw else -span)
+        end_angle = start_angle + (span_angle if ccw else -span_angle)
+        self.draw_arc_start_to_end(radius, start_angle, end_angle, ccw)
+
+    def draw_arc_start_to_end(
+        self, radius: float, start_angle: float, end_angle: float, ccw: bool
+    ):
+        # IMPORTANT: radius has be scaled by self.vector_length!
         assert radius > 0.0
         arc = ConstructionEllipse(
             major_axis=(radius, 0),
-            start_param=start_param,
-            end_param=end_param,
+            start_param=start_angle,
+            end_param=end_angle,
             ccw=ccw,
         )
+        # arc goes start -> end if ccw otherwise end -> start
         # move arc start-point to the end-point of current path
         arc.center += self.current_location - (
             arc.start_point if ccw else arc.end_point
@@ -491,7 +498,7 @@ class ShapeRenderer:
         if self.pen:
             path.add_ellipse(self.p, arc, reset=False)
         else:
-            self.p.move_to(arc.end_point)
+            self.p.move_to(arc.end_point if ccw else arc.start_point)
 
     def draw_arc(
         self,
@@ -512,7 +519,7 @@ class ShapeRenderer:
         if self.pen:
             path.add_ellipse(self.p, arc, reset=False)
         else:
-            self.p.move_to(arc.end_point)
+            self.p.move_to(arc.end_point if ccw else arc.start_point)
 
     def draw_bulge(self, x: float, y: float, bulge: float):
         if self.pen and bulge:
