@@ -311,10 +311,11 @@ class ShapeRenderer:
                 factor = codes[index]
                 index += 1
                 if not skip_next:
-                    if code == 3 and factor:
+                    if code == 3:
                         self.vector_length /= factor
                     elif code == 4:
                         self.vector_length *= factor
+                    continue
             elif code == 5 and not skip_next:  # push location state
                 self.push()
             elif code == 6 and not skip_next:  # pop location state
@@ -353,7 +354,7 @@ class ShapeRenderer:
                 index += 2
                 if not skip_next:
                     self.draw_arc_span(
-                        radius,
+                        radius * self.vector_length,
                         math.radians(start_octant * 45),
                         math.radians(octant_span * 45),
                         ccw,
@@ -370,7 +371,7 @@ class ShapeRenderer:
                 span_angle = octant_span * 45 + (span_offset * 45 / 256)
                 if not skip_next:
                     self.draw_arc_span(
-                        radius,
+                        radius * self.vector_length,
                         math.radians(start_angle),
                         math.radians(span_angle),
                         ccw,
@@ -417,10 +418,11 @@ class ShapeRenderer:
     def draw_arc_span(
         self, radius: float, start_param: float, span: float, ccw: bool
     ):
+        # IMPORTANT: radius has be scaled by self.vector_length!
         end_param = start_param + (span if ccw else -span)
         assert radius > 0.0
         arc = ConstructionEllipse(
-            major_axis=(radius * self.vector_length, 0),
+            major_axis=(radius, 0),
             start_param=start_param,
             end_param=end_param,
             ccw=ccw,
@@ -442,9 +444,10 @@ class ShapeRenderer:
         end_param: float,
         ccw: bool,
     ):
+        # IMPORTANT: radius has to be scaled by self.vector_length!
         arc = ConstructionEllipse(
             center=center,
-            major_axis=(radius * self.vector_length, 0),
+            major_axis=(radius, 0),
             start_param=start_param,
             end_param=end_param,
             ccw=ccw,
