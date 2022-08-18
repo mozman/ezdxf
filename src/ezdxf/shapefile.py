@@ -28,6 +28,10 @@ class InvalidFontDefinition(ShapeFileException):
     pass
 
 
+class InvalidFontParameters(ShapeFileException):
+    pass
+
+
 class InvalidShapeRecord(ShapeFileException):
     pass
 
@@ -82,20 +86,38 @@ class ShapeFile:
         self.encoding = encoding
         self.embed = embed
 
+    @property
+    def cap_height(self) -> float:
+        return float(self.above)
+
+    @property
+    def descender(self) -> float:
+        return float(self.below)
+
     @staticmethod
     def from_str_record(record: Sequence[str]):
         if len(record) == 2:
+            header, params = record
             try:
                 # ignore second value: defbytes
-                spec, _, name = record[0].split(",", maxsplit=2)
+                spec, _, name = header.split(",", maxsplit=2)
             except ValueError:
                 raise InvalidFontDefinition()
-            assert spec.strip() == "*UNIFONT"
+            if spec == "*UNIFONT":
+                try:
+                    above, below, mode, encoding, embed, end = params.split(",")
+                except ValueError:
+                    raise InvalidFontParameters(params)
+            elif spec == "*0":
+                try:
+                    above, below, mode, end = params.split(",")
+                    encoding = FontEncoding.UNICODE
+                    embed = FontEmbedding.ALLOWED
+                except ValueError:
+                    raise InvalidFontParameters(params)
+            else:
+                raise InvalidFontDefinition(header)
 
-            try:
-                above, below, mode, encoding, embed, end = record[1].split(",")
-            except ValueError:
-                raise InvalidFontDefinition()
             assert int(end) == 0
 
             return ShapeFile(
@@ -131,7 +153,10 @@ class ShapeFile:
         return symbol.data
 
     def render_shape(self, number: int, stacked=False) -> path.Path:
-        return render_shape(number, self.get_codes, stacked=stacked)
+        return render_shapes([number], self.get_codes, stacked=stacked)
+
+    def render_shapes(self, numbers: Sequence[int], stacked=False) -> path.Path:
+        return render_shapes(numbers, self.get_codes, stacked=stacked)
 
     def render_text(self, text: str, stacked=False) -> path.Path:
         numbers = [ord(char) for char in text]
@@ -153,9 +178,11 @@ def parse_codes(codes: Iterable[str]) -> Iterator[int]:
 
 def shp_loads(data: str) -> ShapeFile:
     records = _parse_string_records(data)
-    try:
+    if "*UNIFONT" in records:
         font_definition = records.pop("*UNIFONT")
-    except KeyError:
+    elif "*0" in records:
+        font_definition = records.pop("*0")
+    else:
         raise UnsupportedShapeFile()
     shp = ShapeFile.from_str_record(font_definition)
     shp.parse_str_records(records.values())
@@ -200,34 +227,12 @@ def _filter_comments(lines: Iterable[str]) -> Iterator[str]:
             yield line
 
 
-def render_shape(
-    shape_number: int,
-    get_codes: Callable[[int], Sequence[int]],
-    stacked: bool,
-    start: UVec = (0, 0),
-):
-    ctx = ShapeRenderer(
-        path.Path(start),
-        pen=True,
-        stacked=stacked,
-        get_codes=get_codes,
-    )
-    codes = get_codes(shape_number)
-    try:
-        ctx.render(codes)
-    except StackUnderflow:
-        raise StackUnderflow(
-            f"stack underflow while rendering shape number {shape_number}"
-        )
-    return ctx.p
-
-
 def render_shapes(
     shape_numbers: Sequence[int],
     get_codes: Callable[[int], Sequence[int]],
     stacked: bool,
     start: UVec = (0, 0),
-):
+) -> path.Path:
     ctx = ShapeRenderer(
         path.Path(start),
         pen=True,
