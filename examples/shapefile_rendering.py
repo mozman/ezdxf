@@ -64,6 +64,6 @@ def render_txt(fontname: str, text: str):
 
 
 if __name__ == "__main__":
-    render_font("txt.shp")
-    render_font("iso.shp")
-    render_txt("ISO.shp", "S")
+    # render_font("txt.shp")
+    # render_font("iso.shp")
+    render_txt("isocp.shp", "S")

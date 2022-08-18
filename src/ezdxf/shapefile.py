@@ -134,7 +134,7 @@ class ShapeFile:
             if len(record) < 2:
                 raise InvalidShapeRecord()
             # ignore second value: defbytes
-            number, _, name = split_record(record[0])
+            number, _, name = split_def_record(record[0])
             int_num = int(number[1:], 16)
             symbol = Symbol(int_num, name)
             data = "".join(record[1:])
@@ -161,6 +161,10 @@ class ShapeFile:
     def render_text(self, text: str, stacked=False) -> path.Path:
         numbers = [ord(char) for char in text]
         return render_shapes(numbers, self.get_codes, stacked=stacked)
+
+
+def split_def_record(record: str) -> Sequence[str]:
+    return tuple(s.strip() for s in record.split(",", maxsplit=2))
 
 
 def split_record(record: str) -> Sequence[str]:
@@ -341,7 +345,7 @@ class ShapeRenderer:
                         break
                     if not skip_next:
                         self.draw_displacement(x, y)
-            elif code == 0xA:  # octant arc
+            elif code == 10:  # 10 octant arc
                 radius = codes[index]
                 start_octant, octant_span, ccw = decode_octant_specs(
                     codes[index + 1]
@@ -354,10 +358,10 @@ class ShapeRenderer:
                         math.radians(octant_span * 45),
                         ccw,
                     )
-            elif code == 0xB:  # fractional arc
+            elif code == 11:  # fractional arc
                 start_offset = codes[index]
                 span_offset = codes[index + 1]
-                radius = codes[index + 2] << 8 + codes[index + 3]
+                radius = (codes[index + 2] << 8) + codes[index + 3]
                 start_octant, octant_span, ccw = decode_octant_specs(
                     codes[index + 4]
                 )
@@ -371,14 +375,14 @@ class ShapeRenderer:
                         math.radians(span_angle),
                         ccw,
                     )
-            elif code == 0xC:  # bulge arc
+            elif code == 12:  # bulge arc
                 x = codes[index]
                 y = codes[index + 1]
                 bulge = codes[index + 2]
                 index += 3
                 if not skip_next:
                     self.draw_bulge(x, y, bulge)
-            elif code == 0xD:  # multiple bulge arcs
+            elif code == 13:  # multiple bulge arcs
                 while True:
                     x = codes[index]
                     y = codes[index + 1]
@@ -389,7 +393,7 @@ class ShapeRenderer:
                     index += 3
                     if not skip_next:
                         self.draw_bulge(x, y, bulge)
-            elif code == 0xE:  # flag vertical text
+            elif code == 14:  # flag vertical text
                 if not self.stacked:
                     skip_next = True
                     continue
@@ -414,6 +418,7 @@ class ShapeRenderer:
         self, radius: float, start_param: float, span: float, ccw: bool
     ):
         end_param = start_param + (span if ccw else -span)
+        assert radius > 0.0
         arc = ConstructionEllipse(
             major_axis=(radius * self.vector_length, 0),
             start_param=start_param,
