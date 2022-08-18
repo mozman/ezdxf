@@ -429,7 +429,7 @@ class ShapeRenderer:
             y *= self.vector_length
             end_point = start_point + (x, y)
             center, start_angle, end_angle, radius = bulge_to_arc(
-                start_point, end_point, bulge
+                start_point, end_point, bulge / 127.0
             )
             self.draw_arc(
                 radius, start_angle, end_angle - start_angle, ccw=True
