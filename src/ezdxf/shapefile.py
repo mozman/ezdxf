@@ -75,7 +75,8 @@ class FontMode(enum.IntEnum):
 NO_DATA: Sequence[int] = tuple()
 
 
-@dataclasses.dataclass(slots=True)
+# slots=True - Python 3.10+
+@dataclasses.dataclass
 class Symbol:
     number: int
     name: str
