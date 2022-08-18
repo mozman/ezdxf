@@ -16,7 +16,7 @@ if not CWD.exists():
 LETTERS = (
     string.ascii_uppercase,
     string.ascii_lowercase,
-    string.digits,
+    string.digits+string.digits,
     string.punctuation,
 )
 RENDER_POS = 0
@@ -64,7 +64,7 @@ def render_txt(fontname: str, text: str):
 
 
 if __name__ == "__main__":
-    #render_font("txt.shp")
+    render_font("txt.shp")
     render_font("iso.shp")
     render_font("isocp.shp")
     render_txt("isocp.shp", "&")

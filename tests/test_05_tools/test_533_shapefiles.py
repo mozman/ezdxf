@@ -123,8 +123,29 @@ class TestShapeRenderer:
         assert p.start.isclose((14, 22))
         assert p.end.isclose((28, 0))
 
+    def test_render_fractional_octant_arcs(self, shp):
+        p = shp.render_shape(0x26)  # number &
+        commands = p.commands()
+        assert [c.type for c in commands] == [
+            path.Command.LINE_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.LINE_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.LINE_TO,
+            path.Command.MOVE_TO,
+        ]
+        assert p.start.isclose((30, 14))
+        assert p.end.isclose((35.592878624100585, 0.6236849533424156))
+
 
 FILE_1 = """
+*00026,41,&
+2,8,(30,14),1,3,10,4,2,8,(-72,-54),3,2,12,(-89,76,-102),4,4,
+8,(31,45),3,4,4,10,11,(68,187,0,6,076),8,(17,-27),2,8,(10,-2),0
+
 *00038,24,8
 2,8,(14,22),1,10,(8,060),2,08A,1,10,(8,-044),04C,10,(8,-004),044,
 2,8,(22,-14),0
