@@ -5,10 +5,24 @@ import string
 import ezdxf
 from ezdxf import shapefile, path, zoom
 from ezdxf.math import Matrix44
+from ezdxf.filemanagement import find_support_file
 
 # I can not include the test files in the repository because these shape files
 # are generated from copyright protected Autodesk SHX files by the program dumpshx.exe
-SHAPE_DIR = pathlib.Path("../DXFResearch/shx-fonts").absolute()
+# Add the directory containing the shx/shp files to your config file:
+# 1. create a default config file in home directory at ~/.config/ezdxf/ezdxf.ini
+#
+#     $ ezdxf config --home
+#
+# 2. add the font directory as support dir, this is my config file:
+# [core]
+# default_dimension_text_style = OpenSansCondensed-Light
+# test_files = ~/src/dxftest
+# font_cache_directory =
+# support_dirs = ~/src/shx-fonts
+# 	~/src/ctb
+# ...
+
 CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
     CWD = pathlib.Path(".")
@@ -23,7 +37,8 @@ RENDER_POS = 0
 
 
 def render_font(fontname: str):
-    shp_data = (SHAPE_DIR / fontname).read_text()  # the txt.shx font
+    fontname = find_support_file(fontname, ezdxf.options.support_dirs)
+    shp_data = pathlib.Path(fontname).read_text(encoding="latin1")
     font = shapefile.shp_loads(shp_data)
     doc = ezdxf.new()
     msp = doc.modelspace()
@@ -38,13 +53,15 @@ def render_font(fontname: str):
         y -= line_height
 
     zoom.extents(msp)
-    filename = fontname.replace(".shp", ".dxf")
-    doc.saveas(CWD / filename)
+    filename = pathlib.Path(fontname).name
+    filename = CWD / filename.replace(".shp", ".dxf")
+    doc.saveas(filename)
     print(f"created {filename}")
 
 
 def render_txt(fontname: str, text: str):
-    shp_data = (SHAPE_DIR / fontname).read_text()  # the txt.shx font
+    fontname = find_support_file(fontname, ezdxf.options.support_dirs)
+    shp_data = pathlib.Path(fontname).read_text(encoding="latin1")
     font = shapefile.shp_loads(shp_data)
     doc = ezdxf.new()
     msp = doc.modelspace()
@@ -58,13 +75,14 @@ def render_txt(fontname: str, text: str):
     y -= line_height
 
     zoom.extents(msp)
-    filename = "text-sample-" + fontname.replace(".shp", ".dxf")
-    doc.saveas(CWD / filename)
+    filename = pathlib.Path(fontname).name
+    filename = CWD / filename.replace(".shp", ".text.dxf")
+    doc.saveas(filename)
     print(f"created {filename}")
 
 
 if __name__ == "__main__":
     render_font("txt.shp")
-    render_font("iso.shp")
+    render_font("ISO.shp")
     render_font("isocp.shp")
     render_txt("isocp.shp", "A&99&A")
