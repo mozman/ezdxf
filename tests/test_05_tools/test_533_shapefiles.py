@@ -2,7 +2,7 @@
 #  License: MIT License
 
 import pytest
-from ezdxf import shapefile
+from ezdxf import shapefile, path
 
 
 class TestFontShapeFile:
@@ -60,7 +60,79 @@ class TestShapeFile:
         assert shp.find("S").number == 0x53
 
 
+class TestShapeRenderer:
+    @pytest.fixture(scope="class")
+    def shp(self):
+        return shapefile.shp_loads(FILE_1)
+
+    def test_render_only_lines(self, shp):
+        p = shp.render_shape(0x41)  # uppercase letter A
+        commands = p.commands()
+        assert [c.type for c in commands] == [
+            path.Command.LINE_TO,
+            path.Command.LINE_TO,
+            path.Command.MOVE_TO,
+            path.Command.LINE_TO,
+            path.Command.MOVE_TO,
+        ]
+        assert p.start.isclose((6, 2))
+        assert p.end.isclose((36, 0))
+
+    def test_render_bulges(self, shp):
+        p = shp.render_shape(0x53)  # uppercase letter S
+        commands = p.commands()
+        assert [c.type for c in commands] == [
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.LINE_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.MOVE_TO,
+        ]
+        assert p.start.isclose((24, 36))
+        assert p.end.isclose((32, 0))
+        curve3 = commands[2]
+        assert curve3[0].isclose((10.400000000000002, 22.8))
+        assert curve3[1].isclose((5.3604119976499085, 28.205904025073004))
+        assert curve3[2].isclose((7.089973469642831, 24.478591646965565))
+
+        curve5 = commands[4]
+        assert curve5[0].isclose((25.784251968503938, 8.182677165354324))
+        assert curve5[1].isclose((24.910026530357175, 15.52140835303443))
+        assert curve5[2].isclose((26.6395880023501, 11.794095974926988))
+
+    def test_render_full_circle_by_octant_arc(self, shp):
+        p = shp.render_shape(0x38)  # number 8
+        commands = p.commands()
+        assert [c.type for c in commands] == [
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.MOVE_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.LINE_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.LINE_TO,
+            path.Command.MOVE_TO,
+        ]
+        assert p.start.isclose((14, 22))
+        assert p.end.isclose((28, 0))
+
+
 FILE_1 = """
+*00038,24,8
+2,8,(14,22),1,10,(8,060),2,08A,1,10,(8,-044),04C,10,(8,-004),044,
+2,8,(22,-14),0
+
+*00041,28,A
+2,8,(6,2),1,8,(12,36),8,(12,-36),3,2,2,8,(-7,20),1,8,(-34,0),2,
+8,(53,-24),4,2,0
+
 *00053,37,S
 2,8,(24,36),1,12,(-10,2,12),3,10,4,2,12,(-18,-76,100),8,(56,-28),
 12,(-18,-76,-100),4,10,3,2,12,(-12,4,-18),2,8,(26,-6),0

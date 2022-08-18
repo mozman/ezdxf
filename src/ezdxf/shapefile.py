@@ -523,4 +523,6 @@ def decode_octant_specs(specs: int) -> Tuple[int, int, bool]:
         specs = -specs
     start_octant = (specs >> 4) & 0xF
     octant_span = specs & 0xF
+    if octant_span == 0:  # full circle
+        octant_span = 8
     return start_octant, octant_span, ccw
