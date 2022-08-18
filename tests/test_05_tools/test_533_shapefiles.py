@@ -5,17 +5,66 @@ import pytest
 from ezdxf import shapefile
 
 
-def test_load_shp_file():
-    shp = shapefile.shp_loads(TXT)
-    assert shp.name == "TXT"
-    assert shp.above == 6
-    assert shp.below == 2
-    assert shp.mode == shapefile.FontMode.BIDIRECT
-    assert shp.encoding == shapefile.FontEncoding.UNICODE
-    assert shp.embed == shapefile.FontEmbedding.ALLOWED
+class TestFontShapeFile:
+    @pytest.fixture(scope="class")
+    def txt(self):
+        return shapefile.shp_loads(TXT)
 
-    assert len(shp.symbols) == 5
+    def test_shape_file_name(self, txt):
+        assert txt.name == "TXT"
 
+    def test_cap_height(self, txt):
+        assert txt.cap_height == 6
+
+    def test_descender(self, txt):
+        assert txt.descender == 2
+
+    def test_mode(self, txt):
+        assert txt.mode == shapefile.FontMode.BIDIRECT
+
+    def test_encoding(self, txt):
+        assert txt.encoding == shapefile.FontEncoding.UNICODE
+
+    def test_embed(self, txt):
+        assert txt.embed == shapefile.FontEmbedding.ALLOWED
+
+    def test_is_font(self, txt):
+        assert txt.is_font is True
+
+    def test_shape_count(self, txt):
+        assert len(txt) == 5
+
+    def test_shape_by_number(self, txt):
+        assert txt[32].name == "spc"
+
+    def test_find_shape_by_name(self, txt):
+        assert txt.find("spc").number == 32
+
+    def test_find_undefined_shape(self, txt):
+        assert txt.find("undefined") is None
+
+
+class TestShapeFile:
+    """Any shape file without a font definition is a common shape file"""
+    @pytest.fixture(scope="class")
+    def shp(self):
+        return shapefile.shp_loads(FILE_1)
+
+    def test_is_a_shape_file(self, shp):
+        assert shp.is_shape_file is True
+
+    def test_shape_by_number(self, shp):
+        assert shp[0x53].name == "S"
+
+    def test_shape_by_name(self, shp):
+        assert shp.find("S").number == 0x53
+
+
+FILE_1 = """
+*00053,37,S
+2,8,(24,36),1,12,(-10,2,12),3,10,4,2,12,(-18,-76,100),8,(56,-28),
+12,(-18,-76,-100),4,10,3,2,12,(-12,4,-18),2,8,(26,-6),0
+"""
 
 TXT = """
 
@@ -45,5 +94,5 @@ TXT = """
 
 """
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

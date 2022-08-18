@@ -10,8 +10,19 @@ https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-DE941DB5-7044-433C-AA68-
 
 """
 import math
-from typing import Dict, Sequence, Iterable, Iterator, Callable, List, Tuple
+from typing import (
+    Dict,
+    Sequence,
+    Iterable,
+    Iterator,
+    Callable,
+    List,
+    Tuple,
+    Optional,
+)
 import enum
+import dataclasses
+
 from ezdxf import path
 from ezdxf.math import UVec, Vec2, Vec3, ConstructionEllipse, bulge_to_arc
 
@@ -61,11 +72,14 @@ class FontMode(enum.IntEnum):
     BIDIRECT = 2
 
 
+NO_DATA = tuple()
+
+
+@dataclasses.dataclass(slots=True)
 class Symbol:
-    def __init__(self, number: int, name: str):
-        self.number = number
-        self.name = name
-        self.data: Sequence[int] = []
+    number: int
+    name: str
+    data: Sequence[int] = NO_DATA
 
 
 class ShapeFile:
@@ -78,7 +92,7 @@ class ShapeFile:
         encoding=FontEncoding.UNICODE,
         embed=FontEmbedding.ALLOWED,
     ):
-        self.symbols: Dict[int, Symbol] = dict()
+        self._shapes: Dict[int, Symbol] = dict()
         self.name = name
         self.above = above
         self.below = below
@@ -94,9 +108,35 @@ class ShapeFile:
     def descender(self) -> float:
         return float(self.below)
 
+    @property
+    def is_font(self) -> bool:
+        return self.encoding != FontEncoding.SHAPE_FILE
+
+    @property
+    def is_shape_file(self) -> bool:
+        return self.encoding == FontEncoding.SHAPE_FILE
+
+    def find(self, name: str) -> Optional[Symbol]:
+        for symbol in self._shapes.values():
+            if name == symbol.name:
+                return symbol
+        return None
+
+    def __len__(self):
+        return len(self._shapes)
+
+    def __getitem__(self, item):
+        return self._shapes[item]
+
     @staticmethod
     def from_str_record(record: Sequence[str]):
         if len(record) == 2:
+            encoding = FontEncoding.UNICODE
+            above = 0
+            below = 0
+            embed = FontEmbedding.ALLOWED
+            mode = FontMode.HORIZONTAL
+            end = 0
             header, params = record
             try:
                 # ignore second value: defbytes
@@ -111,13 +151,10 @@ class ShapeFile:
             elif spec == "*0":
                 try:
                     above, below, mode, end = params.split(",")
-                    encoding = FontEncoding.UNICODE
-                    embed = FontEmbedding.ALLOWED
                 except ValueError:
                     raise InvalidFontParameters(params)
-            else:
-                raise InvalidFontDefinition(header)
-
+            else:  # it's a simple shape file
+                encoding = FontEncoding.SHAPE_FILE
             assert int(end) == 0
 
             return ShapeFile(
@@ -140,14 +177,14 @@ class ShapeFile:
             data = "".join(record[1:])
             symbol.data = tuple(parse_codes(split_record(data)))
             if symbol.data[-1] == 0:
-                self.symbols[int_num] = symbol
+                self._shapes[int_num] = symbol
             else:
                 raise FileStructureError(
                     f"file structure error at symbol <{record[0]}>"
                 )
 
     def get_codes(self, number: int) -> Sequence[int]:
-        symbol = self.symbols.get(number)
+        symbol = self._shapes.get(number)
         if symbol is None:
             return tuple()  # return codes for non-printable chars
         return symbol.data
@@ -189,7 +226,8 @@ def shp_loads(data: str) -> ShapeFile:
     elif "*0" in records:
         font_definition = records.pop("*0")
     else:
-        raise UnsupportedShapeFile()
+        # a common shape file without a name
+        font_definition = ("_,_,_", "")
     shp = ShapeFile.from_str_record(font_definition)
     shp.parse_str_records(records.values())
     return shp
