@@ -348,7 +348,7 @@ class ShapeRenderer:
                 )
                 index += 2
                 if not skip_next:
-                    self.draw_arc(
+                    self.draw_arc_span(
                         radius,
                         math.radians(start_octant * 45),
                         math.radians(octant_span * 45),
@@ -356,16 +356,16 @@ class ShapeRenderer:
                     )
             elif code == 0xB:  # fractional arc
                 start_offset = codes[index]
-                end_offset = codes[index + 1]
+                span_offset = codes[index + 1]
                 radius = codes[index + 2] << 8 + codes[index + 3]
                 start_octant, octant_span, ccw = decode_octant_specs(
                     codes[index + 4]
                 )
                 index += 5
                 start_angle = start_octant * 45 + (start_offset * 45 / 256)
-                span_angle = octant_span * 45 + (end_offset * 45 / 256)
+                span_angle = octant_span * 45 + (span_offset * 45 / 256)
                 if not skip_next:
-                    self.draw_arc(
+                    self.draw_arc_span(
                         radius,
                         math.radians(start_angle),
                         math.radians(span_angle),
@@ -410,7 +410,7 @@ class ShapeRenderer:
         else:
             self.p.move_to(target)
 
-    def draw_arc(
+    def draw_arc_span(
         self, radius: float, start_param: float, span: float, ccw: bool
     ):
         end_param = start_param + (span if ccw else -span)
@@ -429,18 +429,43 @@ class ShapeRenderer:
         else:
             self.p.move_to(arc.end_point)
 
+    def draw_arc(
+        self,
+        center: Vec2,
+        radius: float,
+        start_param: float,
+        end_param: float,
+        ccw: bool,
+    ):
+        arc = ConstructionEllipse(
+            center=center,
+            major_axis=(radius * self.vector_length, 0),
+            start_param=start_param,
+            end_param=end_param,
+            ccw=ccw,
+        )
+        if self.pen:
+            path.add_ellipse(self.p, arc, reset=False)
+        else:
+            self.p.move_to(arc.end_point)
+
     def draw_bulge(self, x: float, y: float, bulge: float):
         if self.pen and bulge:
             start_point = self.current_location
             x *= self.vector_length
             y *= self.vector_length
+            ccw = bulge > 0
             end_point = start_point + (x, y)
-            center, start_angle, end_angle, radius = bulge_to_arc(
-                start_point, end_point, bulge / 127.0
-            )
-            self.draw_arc(
-                radius, start_angle, end_angle - start_angle, ccw=True
-            )
+            bulge = abs(bulge) / 127.0
+            if ccw:  # counter-clockwise
+                center, start_angle, end_angle, radius = bulge_to_arc(
+                    start_point, end_point, bulge
+                )
+            else:  # clockwise
+                center, start_angle, end_angle, radius = bulge_to_arc(
+                    end_point, start_point, bulge
+                )
+            self.draw_arc(center, radius, start_angle, end_angle, ccw=True)
         else:
             self.draw_displacement(x, y)
 
