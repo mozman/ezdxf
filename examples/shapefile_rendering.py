@@ -67,4 +67,4 @@ if __name__ == "__main__":
     render_font("txt.shp")
     render_font("iso.shp")
     render_font("isocp.shp")
-    render_txt("isocp.shp", "&")
+    render_txt("isocp.shp", "A&99&A")

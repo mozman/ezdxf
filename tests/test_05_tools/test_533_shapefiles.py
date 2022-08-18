@@ -46,6 +46,7 @@ class TestFontShapeFile:
 
 class TestShapeFile:
     """Any shape file without a font definition is a common shape file"""
+
     @pytest.fixture(scope="class")
     def shp(self):
         return shapefile.shp_loads(FILE_1)
@@ -123,8 +124,31 @@ class TestShapeRenderer:
         assert p.start.isclose((14, 22))
         assert p.end.isclose((28, 0))
 
-    def test_render_fractional_octant_arcs(self, shp):
-        p = shp.render_shape(0x26)  # number &
+    def test_render_fractional_octant_arcs_1(self, shp):
+        # This has the correct continuation
+        p = shp.render_text("9")
+        commands = p.commands()
+        assert [c.type for c in commands] == [
+            path.Command.CURVE4_TO,
+            path.Command.LINE_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.LINE_TO,
+            path.Command.CURVE4_TO,
+            path.Command.LINE_TO,
+            path.Command.MOVE_TO,
+        ]
+        assert p.start.isclose((10, 2))
+        # solved by a hack:
+        assert abs(p.end.y) < 1e-9, "has to be on the baseline"
+
+        p = shp.render_shape(0x39)
+        assert p.end.isclose(
+            (28.144414741079267, 0.020931856849379926)
+        ), "fractional arc rendering solved?"
+
+    def test_render_fractional_octant_arcs_2(self, shp):
+        p = shp.render_text("&")
         commands = p.commands()
         assert [c.type for c in commands] == [
             path.Command.LINE_TO,
@@ -138,7 +162,13 @@ class TestShapeRenderer:
             path.Command.MOVE_TO,
         ]
         assert p.start.isclose((30, 14))
-        assert p.end.isclose((35.592878624100585, 0.6236849533424156))
+        # solved by a hack:
+        assert abs(p.end.y) < 1e-9, "has to be on the baseline"
+
+        p = shp.render_shape(0x26)
+        assert p.end.isclose(
+            (35.20458761972391, 1.8112789092494737)
+        ), "fractional arc rendering solved?"
 
 
 FILE_1 = """
@@ -149,6 +179,10 @@ FILE_1 = """
 *00038,24,8
 2,8,(14,22),1,10,(8,060),2,08A,1,10,(8,-044),04C,10,(8,-004),044,
 2,8,(22,-14),0
+
+*00039,25,9
+2,8,(10,2),1,11,(108,0,0,18,062),0B4,10,(8,004),04C,10,(8,042),
+080,2,8,(6,-18),0
 
 *00041,28,A
 2,8,(6,2),1,8,(12,36),8,(12,-36),3,2,2,8,(-7,20),1,8,(-34,0),2,

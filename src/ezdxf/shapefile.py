@@ -72,7 +72,7 @@ class FontMode(enum.IntEnum):
     BIDIRECT = 2
 
 
-NO_DATA = tuple()
+NO_DATA: Sequence[int] = tuple()
 
 
 @dataclasses.dataclass(slots=True)
@@ -145,12 +145,12 @@ class ShapeFile:
                 raise InvalidFontDefinition()
             if spec == "*UNIFONT":
                 try:
-                    above, below, mode, encoding, embed, end = params.split(",")
+                    above, below, mode, encoding, embed, end = params.split(",")  # type: ignore
                 except ValueError:
                     raise InvalidFontParameters(params)
             elif spec == "*0":
                 try:
-                    above, below, mode, end = params.split(",")
+                    above, below, mode, end = params.split(",")  # type: ignore
                 except ValueError:
                     raise InvalidFontParameters(params)
             else:  # it's a simple shape file
@@ -197,7 +197,9 @@ class ShapeFile:
 
     def render_text(self, text: str, stacked=False) -> path.Path:
         numbers = [ord(char) for char in text]
-        return render_shapes(numbers, self.get_codes, stacked=stacked)
+        return render_shapes(
+            numbers, self.get_codes, stacked=stacked, reset_to_baseline=True
+        )
 
 
 def split_def_record(record: str) -> Sequence[str]:
@@ -276,6 +278,7 @@ def render_shapes(
     get_codes: Callable[[int], Sequence[int]],
     stacked: bool,
     start: UVec = (0, 0),
+    reset_to_baseline=False,
 ) -> path.Path:
     ctx = ShapeRenderer(
         path.Path(start),
@@ -286,7 +289,7 @@ def render_shapes(
     for shape_number in shape_numbers:
         codes = get_codes(shape_number)
         try:
-            ctx.render(codes)
+            ctx.render(codes, reset_to_baseline=reset_to_baseline)
         except StackUnderflow:
             raise StackUnderflow(
                 f"stack underflow while rendering shape number {shape_number}"
@@ -317,6 +320,7 @@ class ShapeRenderer:
         self.stacked = stacked  # vertical stacked text
         self._location_stack: List[Vec3] = []
         self._get_codes = get_codes
+        self._baseline_y = self.p.start.y
 
     @property
     def current_location(self) -> Vec3:
@@ -331,6 +335,7 @@ class ShapeRenderer:
     def render(
         self,
         codes: Sequence[int],
+        reset_to_baseline=False,
     ) -> None:
         index = 0
         skip_next = False
@@ -389,6 +394,8 @@ class ShapeRenderer:
                 start_octant, octant_span, ccw = decode_octant_specs(
                     codes[index + 1]
                 )
+                if octant_span == 0:  # full circle
+                    octant_span = 8
                 index += 2
                 if not skip_next:
                     self.draw_arc_span(
@@ -398,20 +405,26 @@ class ShapeRenderer:
                         ccw,
                     )
             elif code == 11:  # fractional arc
+                # TODO: this is still not correct, see chars "9" and "&" for
+                #  font isocp.shx. This is solved by placing the  end point on
+                #  the baseline after each character rendering, but only for
+                #  text rendering.
                 start_offset = codes[index]
-                span_offset = codes[index + 1]
+                end_offset = codes[index + 1]
                 radius = (codes[index + 2] << 8) + codes[index + 3]
                 start_octant, octant_span, ccw = decode_octant_specs(
                     codes[index + 4]
                 )
                 index += 5
                 start_angle = start_octant * 45 + (start_offset * 45 / 256)
-                span_angle = octant_span * 45 - (span_offset * 45 / 256)
+                end_angle = (start_octant + octant_span) * 45 - (
+                    end_offset * 45 / 256
+                )
                 if not skip_next:
                     self.draw_arc_span(
                         radius * self.vector_length,
                         math.radians(start_angle),
-                        math.radians(span_angle),
+                        math.radians(end_angle - start_angle),
                         ccw,
                     )
             elif code == 12:  # bulge arc
@@ -437,6 +450,11 @@ class ShapeRenderer:
                     skip_next = True
                     continue
             skip_next = False
+
+        if reset_to_baseline:
+            # HACK: because of invalid fractional arc rendering!
+            if not math.isclose(self.p.end.y, self._baseline_y):
+                self.p.move_to((self.p.end.x, self._baseline_y))
 
     def draw_vector(self, code: int) -> None:
         angle: int = code & 0xF
@@ -523,6 +541,4 @@ def decode_octant_specs(specs: int) -> Tuple[int, int, bool]:
         specs = -specs
     start_octant = (specs >> 4) & 0xF
     octant_span = specs & 0xF
-    if octant_span == 0:  # full circle
-        octant_span = 8
     return start_octant, octant_span, ccw
