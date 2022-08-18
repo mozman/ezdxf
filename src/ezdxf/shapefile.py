@@ -172,6 +172,8 @@ def parse_codes(codes: Iterable[str]) -> Iterator[int]:
         code = code.strip("()")
         if code[0] == "0":
             yield int(code, 16)
+        elif code[0] == "-" and code[1] == "0":
+            yield int(code, 16)
         else:
             yield int(code, 10)
 
@@ -347,7 +349,10 @@ class ShapeRenderer:
                 index += 2
                 if not skip_next:
                     self.draw_arc(
-                        radius, start_octant * 45, octant_span * 45, ccw
+                        radius,
+                        math.radians(start_octant * 45),
+                        math.radians(octant_span * 45),
+                        ccw,
                     )
             elif code == 0xB:  # fractional arc
                 start_offset = codes[index]
@@ -416,7 +421,9 @@ class ShapeRenderer:
             ccw=ccw,
         )
         # move arc start-point to the end-point of current path
-        arc.center += self.current_location - arc.start_point
+        arc.center += self.current_location - (
+            arc.start_point if ccw else arc.end_point
+        )
         if self.pen:
             path.add_ellipse(self.p, arc, reset=False)
         else:
