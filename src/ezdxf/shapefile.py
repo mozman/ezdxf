@@ -73,6 +73,7 @@ class FontMode(enum.IntEnum):
 
 
 NO_DATA: Sequence[int] = tuple()
+DEBUG = False
 
 
 # slots=True - Python 3.10+
@@ -93,7 +94,7 @@ class ShapeFile:
         encoding=FontEncoding.UNICODE,
         embed=FontEmbedding.ALLOWED,
     ):
-        self._shapes: Dict[int, Symbol] = dict()
+        self.shapes: Dict[int, Symbol] = dict()
         self.name = name
         self.above = above
         self.below = below
@@ -118,16 +119,16 @@ class ShapeFile:
         return self.encoding == FontEncoding.SHAPE_FILE
 
     def find(self, name: str) -> Optional[Symbol]:
-        for symbol in self._shapes.values():
+        for symbol in self.shapes.values():
             if name == symbol.name:
                 return symbol
         return None
 
     def __len__(self):
-        return len(self._shapes)
+        return len(self.shapes)
 
     def __getitem__(self, item):
-        return self._shapes[item]
+        return self.shapes[item]
 
     @staticmethod
     def from_str_record(record: Sequence[str]):
@@ -151,7 +152,8 @@ class ShapeFile:
                     raise InvalidFontParameters(params)
             elif spec == "*0":
                 try:
-                    above, below, mode, end = params.split(",")  # type: ignore
+                    above, below, mode, *rest = params.split(",")  # type: ignore
+                    end = rest[-1]  # type: ignore
                 except ValueError:
                     raise InvalidFontParameters(params)
             else:  # it's a simple shape file
@@ -169,23 +171,30 @@ class ShapeFile:
 
     def parse_str_records(self, records: Iterable[Sequence[str]]) -> None:
         for record in records:
+            if records and record[0].startswith("*BIGFONT"):
+                raise UnsupportedShapeFile("BIGFONT not supported yet")
             if len(record) < 2:
                 raise InvalidShapeRecord()
             # ignore second value: defbytes
-            number, _, name = split_def_record(record[0])
+            try:
+                number, _, name = split_def_record(record[0])
+            except ValueError:  # definition split into 2 line
+                number, _, name = split_def_record(record[0] + record[1])
+                record = record[1:]
+
             int_num = int(number[1:], 16)
             symbol = Symbol(int_num, name)
             data = "".join(record[1:])
             symbol.data = tuple(parse_codes(split_record(data)))
             if symbol.data[-1] == 0:
-                self._shapes[int_num] = symbol
+                self.shapes[int_num] = symbol
             else:
                 raise FileStructureError(
                     f"file structure error at symbol <{record[0]}>"
                 )
 
     def get_codes(self, number: int) -> Sequence[int]:
-        symbol = self._shapes.get(number)
+        symbol = self.shapes.get(number)
         if symbol is None:
             return tuple()  # return codes for non-printable chars
         return symbol.data
@@ -406,6 +415,8 @@ class ShapeRenderer:
                         ccw,
                     )
             elif code == 11:  # fractional arc
+                if DEBUG:
+                    print(f"rendering a fractional arc")
                 # TODO: this is still not correct, see chars "9" and "&" for
                 #  font isocp.shx. This is solved by placing the end point on
                 #  the baseline after each character rendering, but only for

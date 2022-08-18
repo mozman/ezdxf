@@ -30,7 +30,7 @@ if not CWD.exists():
 LETTERS = (
     string.ascii_uppercase,
     string.ascii_lowercase,
-    string.digits+string.digits,
+    string.digits + string.digits,
     string.punctuation,
 )
 RENDER_POS = 0
@@ -46,9 +46,7 @@ def render_font(fontname: str):
     y = RENDER_POS
     for text_line in (f"FONT: {fontname}",) + LETTERS:
         text_path = font.render_text(text_line)
-        text_path = text_path.transform(
-            Matrix44.translate(0, y, 0)
-        )
+        text_path = text_path.transform(Matrix44.translate(0, y, 0))
         path.render_splines_and_polylines(msp, [text_path])
         y -= line_height
 
@@ -68,9 +66,7 @@ def render_txt(fontname: str, text: str):
     line_height = font.cap_height / 3 * 5
     y = RENDER_POS
     text_path = font.render_text(text)
-    text_path = text_path.transform(
-        Matrix44.translate(0, y, 0)
-    )
+    text_path = text_path.transform(Matrix44.translate(0, y, 0))
     path.render_splines_and_polylines(msp, [text_path])
     y -= line_height
 
@@ -81,7 +77,24 @@ def render_txt(fontname: str, text: str):
     print(f"created {filename}")
 
 
+def find_fonts_with_fractional_arcs(folder: str):
+    shapefile.DEBUG = True
+    for filepath in pathlib.Path(folder).glob("*.shp"):
+        print("-" * 79)
+        print(f"probing: {filepath}")
+        shp_data = filepath.read_text(encoding="latin1")
+        try:
+            font = shapefile.shp_loads(shp_data)
+        except shapefile.ShapeFileException as e:
+            print(str(e))
+            continue
+        font.render_shapes(list(font.shapes.keys()))
+        render_font(str(filepath))
+    shapefile.DEBUG = False
+
+
 if __name__ == "__main__":
+    # find_fonts_with_fractional_arcs("C:\\Source\\shx-fonts")
     render_font("txt.shp")
     render_font("ISO.shp")
     render_font("isocp.shp")
