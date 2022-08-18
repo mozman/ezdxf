@@ -167,7 +167,7 @@ class TestShapeRenderer:
 
         p = shp.render_shape(0x26)
         assert p.end.isclose(
-            (35.20458761972391, 1.8112789092494737)
+            (36.031289001494976, -0.1845547786548103)
         ), "fractional arc rendering solved?"
 
 

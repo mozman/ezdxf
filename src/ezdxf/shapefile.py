@@ -407,7 +407,7 @@ class ShapeRenderer:
                     )
             elif code == 11:  # fractional arc
                 # TODO: this is still not correct, see chars "9" and "&" for
-                #  font isocp.shx. This is solved by placing the  end point on
+                #  font isocp.shx. This is solved by placing the end point on
                 #  the baseline after each character rendering, but only for
                 #  text rendering.
                 start_offset = codes[index]
@@ -418,7 +418,9 @@ class ShapeRenderer:
                 )
                 index += 5
                 start_angle = start_octant * 45 + (start_offset * 45 / 256)
-                end_angle = (start_octant + octant_span) * 45 - (
+                if end_offset == 0:
+                    octant_span += 1
+                end_angle = (start_octant + octant_span - 1) * 45 + (
                     end_offset * 45 / 256
                 )
                 if not skip_next:
