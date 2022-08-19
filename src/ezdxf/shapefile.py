@@ -479,7 +479,7 @@ def parse_shape_codes(reader: DataReader) -> Sequence[int]:
         code = reader.u8()
         codes.append(code)
         if code == 0:
-            return codes
+            return tuple(codes)
         elif code in SINGLE_CODES or code > 14:
             continue
         elif code == 3 or code == 4:  # size control

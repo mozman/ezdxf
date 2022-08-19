@@ -372,15 +372,15 @@ class TestLoadShxShapeFile:
 
     # fmt:off
     def test_shape_data(self, shx):
-        assert shx[130].data == [0x14, 0x02, 0x1C, 0x01, 0x1C, 0]
+        assert shx[130].data == (0x14, 0x02, 0x1C, 0x01, 0x1C, 0)
         assert shx[130].name == "TRACK1"
-        assert shx[131].data == [0x12, 0x1E, 0]
-        assert shx[132].data == [0x14, 0x20, 0x2C, 0x28, 0x14, 0]
-        assert shx[133].data == [10, 1, int("-040", 16), 0]
-        assert shx[134].data == [0x25, 10, 2, int("-044", 16), 0x2B, 0]
-        assert shx[135].data == [
+        assert shx[131].data == (0x12, 0x1E, 0)
+        assert shx[132].data == (0x14, 0x20, 0x2C, 0x28, 0x14, 0)
+        assert shx[133].data == (10, 1, int("-040", 16), 0)
+        assert shx[134].data == (0x25, 10, 2, int("-044", 16), 0x2B, 0)
+        assert shx[135].data == (
             9, 108, 0, 15, 56, 30, -112, 15, 56, 107, 0, 0, 0, 0,
-        ]
+        )
     # fmt:on
 
 
@@ -400,11 +400,11 @@ class TestLoadShxFontFile:
         # 2,14,8,(-6,-18),8,(12,5),1,8,(-5,-4),13,(-3,-1,-23),
         # (-4,3,-50),(1,2,-23),(6,7,0),(1,3,28),(-7,0,109),
         # (1,-3,28),(0,0),8,(8,-12),2,080,14,0C9,0
-        assert shx[38].data == [
+        assert shx[38].data == (
             2, 14, 8, -6, -18, 8, 12, 5, 1, 8, -5, -4, 13, -3, -1, -23,
             -4, 3, -50, 1, 2, -23, 6, 7, 0, 1, 3, 28, -7, 0, 109,
             1, -3, 28, 0, 0, 8, 8, -12, 2, 0x80, 14, 0xc9, 0
-        ]
+        )
     # fmt:on
 
 
@@ -423,17 +423,17 @@ class TestLoadUnifontFile:
         # "&" of isocp.shx
         # *00026,41,&
         # 2,8,(30,14),1,3,10,4,2,8,(-72,-54),3,2,12,(-89,76,-102),
-        # 4,4,8,(31,45),3,4,4,10,11,(68,187, 0, 6, 076),8,(17,-27),
+        # 4,4,8,(31,45),3,4,4,10,11,(68,187,0,6,076),8,(17,-27),
         # 2,8,(10,-2),0
         shape = shx[0x26]
         assert shape.number == 0x26
         assert shape.name == "&"
         assert shape.byte_count == 41
-        assert shape.data == [
+        assert shape.data == (
             2, 8, 30, 14, 1, 3, 10, 4, 2, 8, -72, -54, 3, 2, 12, -89, 76, -102,
             4, 4, 8, 31, 45, 3, 4, 4, 10, 11, 68, 187, 0, 6, 0x76, 8, 17, -27,
             2, 8, 10, -2, 0
-        ]
+        )
     # fmt:on
 
 
