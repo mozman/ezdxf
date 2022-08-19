@@ -74,6 +74,17 @@ def render_txt(fontname: str, text: str):
     print(f"created {filename}")
 
 
+def debug_letter(shp_data: str, num: int, filename: str):
+    font = shapefile.shp_loads(shp_data)
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    text_path = font.render_shape(num)
+    path.render_splines_and_polylines(msp, [text_path])
+    zoom.extents(msp)
+    doc.saveas(CWD / filename)
+    print(f"created {filename}")
+
+
 def render_all_chars(fontpath: pathlib.Path):
     shp_data = fontpath.read_text(encoding="latin1")
     font = shapefile.shp_loads(shp_data)
@@ -111,17 +122,33 @@ def find_fonts_with_fractional_arcs(folder: str):
             export_data.extend(font.shape_string(shape_number, as_num=num))
             export_data.append("")
             num += 1
-    with open(
-        CWD / FRACTIONAL_ARC_SYMBOLS, mode="wt", encoding="latin1"
-    ) as fp:
+    with open(CWD / FRACTIONAL_ARC_SYMBOLS, mode="wt", encoding="latin1") as fp:
         fp.write("\n".join(export_data))
     shapefile.DEBUG = False
 
 
+# bold.shp letter C:
+DEBUG_STR = """
+*00043,156,ucc
+2,8,(-2,30),5,1,
+11,(0,125,0,30,044),
+078,2,6,5,1,
+11,(0,125,0,30,-044),
+078,2,6,010,5,1,11,(0,119,0,29,044),2,6,5,1,
+11,(0,119,0,29,-044),2,6,010,5,1,11,(0,114,0,28,044),2,6,5,1,
+11,(0,114,0,28,-044),2,6,010,5,1,11,(0,108,0,27,044),2,6,5,1,
+11,(0,108,0,27,-044),2,6,010,5,1,11,(0,102,0,26,044),2,6,5,1,
+11,(0,102,0,26,-044),2,6,010,5,1,11,(0,97,0,25,044),2,6,5,1,
+11,(0,97,0,25,-044),2,6,010,5,1,11,(0,90,0,24,044),2,6,5,1,
+11,(0,90,0,24,-044),2,6,8,(60,-30),0
+"""
+DEBUG = False
 if __name__ == "__main__":
-    find_fonts_with_fractional_arcs("C:\\Source\\shx-fonts")
-    render_all_chars(CWD / FRACTIONAL_ARC_SYMBOLS)
-    # render_font("txt.shp")
-    # render_font("ISO.shp")
-    # render_font("isocp.shp")
-    # render_txt("isocp.shp", "A&99&A")
+    render_font("bold.shp")
+    render_font("ISO.shp")
+    render_font("isocp.shp")
+    if DEBUG:
+        find_fonts_with_fractional_arcs("C:\\Source\\shx-fonts")
+        render_all_chars(CWD / FRACTIONAL_ARC_SYMBOLS)
+        render_txt("bold.shp", "C")
+        debug_letter(DEBUG_STR, 0x43, "bold_c.dxf")

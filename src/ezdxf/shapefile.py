@@ -251,6 +251,8 @@ def split_record(record: str) -> Sequence[str]:
 def parse_codes(codes: Iterable[str]) -> Iterator[int]:
     for code in codes:
         code = code.strip("()")
+        if code == "":
+            continue
         if code[0] == "0":
             yield int(code, 16)
         elif code[0] == "-" and code[1] == "0":
@@ -447,10 +449,12 @@ class ShapeRenderer:
                     print(
                         f"rendering a fractional arc in shape *{shape_number:05X}"
                     )
-                # TODO: this is still not correct, see chars "9" and "&" for
-                #  font isocp.shx. This is solved by placing the end point on
-                #  the baseline after each character rendering, but only for
-                #  text rendering.
+                # TODO: this seems still not 100% correct, see vertical placing
+                #  of characters "9" and "&" for font isocp.shx.
+                #  This is solved by placing the end point on the baseline after
+                #  each character rendering, but only for text rendering.
+                #  The remaining problems can possibly be due to a loss of
+                #  precision when converting integers to floating point.
                 start_offset = codes[index]
                 end_offset = codes[index + 1]
                 radius = (codes[index + 2] << 8) + codes[index + 3]
@@ -458,12 +462,20 @@ class ShapeRenderer:
                     codes[index + 4]
                 )
                 index += 5
-                start_angle = start_octant * 45 + (start_offset * 45 / 256)
                 if end_offset == 0:
-                    octant_span += 1
-                end_angle = (start_octant + octant_span - 1) * 45 + (
-                    end_offset * 45 / 256
-                )
+                    end_offset = 256
+                binary_deg = 45.0 / 256.0
+                start_offset_angle = start_offset * binary_deg
+                end_offset_angle = end_offset * binary_deg
+                if ccw:
+                    end_octant = start_octant + octant_span - 1
+                    start_angle = start_octant * 45.0 + start_offset_angle
+                    end_angle = end_octant * 45.0 + end_offset_angle
+                else:
+                    end_octant = start_octant - octant_span + 1
+                    start_angle = start_octant * 45.0 - start_offset_angle
+                    end_angle = end_octant * 45.0 - end_offset_angle
+
                 if not skip_next:
                     self.draw_arc_start_to_end(
                         radius * self.vector_length,
