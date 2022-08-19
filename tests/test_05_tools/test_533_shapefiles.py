@@ -124,7 +124,7 @@ class TestShapeRenderer:
         assert p.start.isclose((14, 22))
         assert p.end.isclose((28, 0))
 
-    def test_render_fractional_octant_arcs_1(self, shp):
+    def test_render_ccw_fractional_arcs_number_nine(self, shp):
         # This has the correct continuation
         p = shp.render_text("9")
         commands = p.commands()
@@ -147,7 +147,7 @@ class TestShapeRenderer:
             (28.144414741079267, 0.020931856849379926)
         ), "fractional arc rendering solved?"
 
-    def test_render_fractional_octant_arcs_2(self, shp):
+    def test_render_ccw_fractional_arcs_ampersand(self, shp):
         p = shp.render_text("&")
         commands = p.commands()
         assert [c.type for c in commands] == [
@@ -170,24 +170,96 @@ class TestShapeRenderer:
             (36.031289001494976, -0.1845547786548103)
         ), "fractional arc rendering solved?"
 
+    def test_render_clockwise_fractional_arcs_letter_c(self, shp):
+        p = shp.render_text("C")  # bold.shp
+        commands = p.commands()
+        assert [c.type for c in commands] == [
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.LINE_TO,
+            path.Command.MOVE_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.LINE_TO,
+            path.Command.MOVE_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.MOVE_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.MOVE_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.MOVE_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.MOVE_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.MOVE_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.MOVE_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.MOVE_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.MOVE_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.MOVE_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.MOVE_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.MOVE_TO,
+            path.Command.CURVE4_TO,
+            path.Command.CURVE4_TO,
+            path.Command.MOVE_TO,
+        ]
+        assert p.start.isclose((-2, 30))
+        p2 = shp.render_shape(0x43)
+        assert p2.end.isclose((64, 0))
+        assert p2.end.isclose(
+            p.end
+        ), "should be perfect rendering - no placing-hack required"
+
 
 FILE_1 = """
+;; isocp.shp
 *00026,41,&
 2,8,(30,14),1,3,10,4,2,8,(-72,-54),3,2,12,(-89,76,-102),4,4,
 8,(31,45),3,4,4,10,11,(68,187,0,6,076),8,(17,-27),2,8,(10,-2),0
 
+;; isocp.shp
 *00038,24,8
 2,8,(14,22),1,10,(8,060),2,08A,1,10,(8,-044),04C,10,(8,-004),044,
 2,8,(22,-14),0
 
+;; isocp.shp
 *00039,25,9
 2,8,(10,2),1,11,(108,0,0,18,062),0B4,10,(8,004),04C,10,(8,042),
 080,2,8,(6,-18),0
 
+;; isocp.shp
 *00041,28,A
 2,8,(6,2),1,8,(12,36),8,(12,-36),3,2,2,8,(-7,20),1,8,(-34,0),2,
 8,(53,-24),4,2,0
 
+;; bold.shp
+*00043,156,C
+2,8,(-2,30),5,1,11,(0,125,0,30,044),078,2,6,5,1,
+11,(0,125,0,30,-044),078,2,6,010,5,1,11,(0,119,0,29,044),2,6,5,1,
+11,(0,119,0,29,-044),2,6,010,5,1,11,(0,114,0,28,044),2,6,5,1,
+11,(0,114,0,28,-044),2,6,010,5,1,11,(0,108,0,27,044),2,6,5,1,
+11,(0,108,0,27,-044),2,6,010,5,1,11,(0,102,0,26,044),2,6,5,1,
+11,(0,102,0,26,-044),2,6,010,5,1,11,(0,97,0,25,044),2,6,5,1,
+11,(0,97,0,25,-044),2,6,010,5,1,11,(0,90,0,24,044),2,6,5,1,
+11,(0,90,0,24,-044),2,6,8,(60,-30),0
+
+;; isocp.shp
 *00053,37,S
 2,8,(24,36),1,12,(-10,2,12),3,10,4,2,12,(-18,-76,100),8,(56,-28),
 12,(-18,-76,-100),4,10,3,2,12,(-12,4,-18),2,8,(26,-6),0
