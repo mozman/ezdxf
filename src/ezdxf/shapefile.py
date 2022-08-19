@@ -294,10 +294,10 @@ def load_shx_shape_file(data: bytes) -> ShapeFile:
     font_definition = shapes.get(0)
     if font_definition:
         shapes.pop(0)
-        data = font_definition.data
-        above = data[0]
-        below = data[1]
-        mode = FontMode(data[2])
+        shape_data = font_definition.data
+        above = shape_data[0]
+        below = shape_data[1]
+        mode = FontMode(shape_data[2])
 
     shape_file = ShapeFile(name, above=above, below=below, mode=mode)
     shape_file.shapes = shapes
@@ -328,6 +328,14 @@ class DataReader:
             return (value & 127) - 128  # ???
         return value
 
+    def octant(self) -> int:
+        value = self.data[self.index]
+        self.index += 1
+        if value & 128:
+            return -(value & 127)
+        else:
+            return value
+
     def u16(self) -> int:
         index = self.index
         self.index += 2
@@ -337,9 +345,9 @@ class DataReader:
 def parse_shx_shapes(data: bytes) -> Dict[int, Symbol]:
     shapes: Dict[int, Symbol] = dict()
     reader = DataReader(data, SHAPE_FILE_START_INDEX)
-    _ = reader.u8()  # unknown0: fix value if 1A?
-    _ = reader.u8()  # unknown1: <variable>
-    _ = reader.u16()  # max shape nuber
+    _ = reader.u8()  # unknown0: fix value of 1A?
+    _ = reader.u8()  # unknown1: <different values>
+    _ = reader.u16()  # max shape number
     shape_count = reader.u16()
     index_table: List[Tuple[int, int]] = []
     for _ in range(shape_count):
@@ -401,26 +409,26 @@ def parse_shape_codes(reader: DataReader) -> Sequence[int]:
             codes.append(reader.i8())
         elif code == 9:  # multiple displacement
             x, y = 1, 1
-            while x and y:
+            while x or y:
                 x = reader.i8()
                 y = reader.i8()
                 codes.append(x)
                 codes.append(y)
         elif code == 10:  # octant arc
             codes.append(reader.u8())  # radius
-            codes.append(reader.i8())  # octant specs
+            codes.append(reader.octant())  # octant specs
         elif code == 11:  # fractional arc
             codes.append(reader.u8())  # start offset
             codes.append(reader.u8())  # end offset
             codes.append(reader.u16())  # radius
-            codes.append(reader.i8())  # octant specs
+            codes.append(reader.octant())  # octant specs
         elif code == 12:  # bulge arcs
             codes.append(reader.i8())  # x
             codes.append(reader.i8())  # y
             codes.append(reader.i8())  # bulge
         elif code == 13:  # multiple bulge arcs
             x, y = 1, 1
-            while x and y:
+            while x or y:
                 x = reader.i8()
                 y = reader.i8()
                 codes.append(x)
