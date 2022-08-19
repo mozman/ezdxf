@@ -275,16 +275,158 @@ def shp_loads(data: str) -> ShapeFile:
     return shp
 
 
-def shp_dumps(shapefile: ShapeFile) -> str:
-    return ""
-
-
 def shx_loadb(data: bytes) -> ShapeFile:
-    return ShapeFile("", 0, 0)
+    if data.startswith(b"AutoCAD-86 shapes 1.0"):
+        return load_shx_shape_file(data)
+    elif data.startswith(b"AutoCAD-86 unifont 1.0"):
+        return load_shx_unifont_file(data)
+    elif data.startswith(b"AutoCAD-86 bigfont 1.0"):
+        raise UnsupportedShapeFile("BIGFONT shape files are not supported yet")
+    raise UnsupportedShapeFile("unknown shape file format")
 
 
-def shx_dumpb(shapefile: ShapeFile) -> bytes:
-    return b""
+def load_shx_shape_file(data: bytes) -> ShapeFile:
+    above = 0
+    below = 0
+    mode = FontMode.HORIZONTAL
+    name = ""
+    shapes = parse_shx_shapes(data)
+    font_definition = shapes.get(0)
+    if font_definition:
+        shapes.pop(0)
+        data = font_definition.data
+        above = data[0]
+        below = data[1]
+        mode = FontMode(data[2])
+
+    shape_file = ShapeFile(name, above=above, below=below, mode=mode)
+    shape_file.shapes = shapes
+    return shape_file
+
+
+def load_shx_unifont_file(data: bytes) -> ShapeFile:
+    raise NotImplementedError()
+
+
+SHAPE_FILE_START_INDEX = 0x17
+
+
+class DataReader:
+    def __init__(self, data: bytes, index=0):
+        self.data = data
+        self.index = index
+
+    def u8(self) -> int:
+        index = self.index
+        self.index += 1
+        return self.data[index]
+
+    def i8(self) -> int:
+        value = self.data[self.index]
+        self.index += 1
+        if value > 127:
+            return (value & 127) - 128  # ???
+        return value
+
+    def u16(self) -> int:
+        index = self.index
+        self.index += 2
+        return (self.data[index] << 8) + self.data[index + 1]
+
+
+def parse_shx_shapes(data: bytes) -> Dict[int, Symbol]:
+    shapes: Dict[int, Symbol] = dict()
+    reader = DataReader(data, SHAPE_FILE_START_INDEX)
+    _ = reader.u8()  # unknown0: fix value if 1A?
+    _ = reader.u8()  # unknown1: <variable>
+    _ = reader.u16()  # max shape nuber
+    shape_count = reader.u16()
+    index_table: List[Tuple[int, int]] = []
+    for _ in range(shape_count):
+        shape_number = reader.u16()
+        data_size = reader.u16()
+        index_table.append((shape_number, data_size))
+    if reader.u8() != 0:
+        raise FileStructureError("invalid index table")
+    index = reader.index
+    for shape_number, length in index_table:
+        record = data[index : index + length]
+        try:
+            name, shape_data = parse_shx_data_record(record)
+        except IndexError:
+            raise FileStructureError(
+                f"SHX parsing error shape *{shape_number:05X}: {str(record)}"
+            )
+        byte_count = length - len(name) - 1
+        shapes[shape_number] = Symbol(
+            shape_number, byte_count, name, shape_data
+        )
+        index += length
+    if data[index:] != b"EOF":
+        raise FileStructureError("EOF marker not found")
+    return shapes
+
+
+def parse_shx_data_record(data: bytes) -> Tuple[str, Sequence[int]]:
+    name = ""
+    reader = DataReader(data)
+    while True:
+        char = reader.u8()
+        if char == 0:
+            break
+        else:
+            name += chr(char)
+    codes = parse_shape_codes(reader)
+    return name, codes
+
+
+SINGLE_CODES = {1, 2, 5, 6, 14}
+
+
+def parse_shape_codes(reader: DataReader) -> Sequence[int]:
+    codes: List[int] = []
+    while True:
+        code = reader.u8()
+        codes.append(code)
+        if code == 0:
+            return codes
+        elif code in SINGLE_CODES or code > 14:
+            continue
+        elif code == 3 or code == 4:  # size control
+            codes.append(reader.u8())
+        elif code == 7:  # sub shape
+            codes.append(reader.u16())
+        elif code == 8:  # displacement
+            codes.append(reader.i8())
+            codes.append(reader.i8())
+        elif code == 9:  # multiple displacement
+            x, y = 1, 1
+            while x and y:
+                x = reader.i8()
+                y = reader.i8()
+                codes.append(x)
+                codes.append(y)
+        elif code == 10:  # octant arc
+            codes.append(reader.u8())  # radius
+            codes.append(reader.i8())  # octant specs
+        elif code == 11:  # fractional arc
+            codes.append(reader.u8())  # start offset
+            codes.append(reader.u8())  # end offset
+            codes.append(reader.u16())  # radius
+            codes.append(reader.i8())  # octant specs
+        elif code == 12:  # bulge arcs
+            codes.append(reader.i8())  # x
+            codes.append(reader.i8())  # y
+            codes.append(reader.i8())  # bulge
+        elif code == 13:  # multiple bulge arcs
+            x, y = 1, 1
+            while x and y:
+                x = reader.i8()
+                y = reader.i8()
+                codes.append(x)
+                codes.append(y)
+                if x or y:
+                    codes.append(reader.i8())
 
 
 def filter_noise(lines: Iterable[str]) -> Iterator[str]:
