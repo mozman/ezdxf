@@ -72,7 +72,6 @@ class FontMode(enum.IntEnum):
     BIDIRECT = 2
 
 
-ENCODING = "cp1252"
 NO_DATA: Sequence[int] = tuple()
 DEBUG = False
 DEBUG_SHAPE_NUMBERS = set()
@@ -195,18 +194,12 @@ class ShapeFile:
 
     def parse_str_records(self, records: Iterable[Sequence[str]]) -> None:
         for record in records:
-            if records and record[0].startswith("*BIGFONT"):
-                raise UnsupportedShapeFile("BIGFONT not supported yet")
             if len(record) < 2:
-                raise InvalidShapeRecord()
-            # ignore second value: defbytes
+                raise InvalidShapeRecord(str(record))
             try:
                 number, byte_count, name = split_def_record(record[0])
-            except ValueError:  # definition split into 2 line
-                number, byte_count, name = split_def_record(
-                    record[0] + record[1]
-                )
-                record = record[1:]
+            except ValueError:
+                raise FileStructureError(record[0])
 
             int_num = int(number[1:], 16)
             symbol = Symbol(int_num, int(byte_count), name)
@@ -263,7 +256,7 @@ def parse_codes(codes: Iterable[str]) -> Iterator[int]:
 
 
 def shp_loads(data: str) -> ShapeFile:
-    records = _parse_string_records(data)
+    records = parse_string_records(merge_lines(filter_noise(data.split("\n"))))
     if "*UNIFONT" in records:
         font_definition = records.pop("*UNIFONT")
     elif "*0" in records:
@@ -287,33 +280,59 @@ def shx_loadb(data: bytes) -> ShapeFile:
 def shx_dumpb(shapefile: ShapeFile) -> bytes:
     return b""
 
-def _filter_noise(lines: Iterable[str]) -> Iterator[str]:
-    pass
 
-def _parse_string_records(data: str) -> Dict[str, Sequence[str]]:
-    records: Dict[str, Sequence[str]] = dict()
-    name = None
-    lines = []
-    for line in _filter_comments(data.split("\n")):
-        if line.startswith("*"):
-            if name is not None:
-                records[name] = tuple(lines)
-            name = line.split(",")[0].strip()
-            lines = [line]
-        else:
-            lines.append(line)
-
-    if name is not None:
-        records[name] = tuple(lines)
-    return records
-
-
-def _filter_comments(lines: Iterable[str]) -> Iterator[str]:
+def filter_noise(lines: Iterable[str]) -> Iterator[str]:
     for line in lines:
         line = line.strip()
-        line = line.split(";")[0]
         if line:
-            yield line
+            line = line.split(";")[0]
+            line = line.strip()
+            if line:
+                yield line
+
+
+def merge_lines(lines: Iterable[str]) -> Iterator[str]:
+    current = ""
+    for next_line in lines:
+        if not current:
+            current = next_line
+        elif current.startswith("*"):
+            if next_line.startswith(","):  # wrapped specification line?
+                current += next_line
+            else:
+                yield current
+                current = next_line
+        elif current.endswith(","):
+            current += next_line
+        elif next_line.startswith(","):
+            current += next_line
+        else:
+            yield current
+            current = next_line
+    if current:
+        yield current
+
+
+def parse_string_records(lines: Iterable[str]) -> Dict[str, Sequence[str]]:
+    records: Dict[str, Sequence[str]] = dict()
+    name = None
+    record = []
+    for line in lines:
+        if line.startswith("*BIGFONT"):
+            raise UnsupportedShapeFile(
+                "BIGFONT shape files are not supported yet"
+            )
+        if line.startswith("*"):
+            if name is not None:
+                records[name] = tuple(record)
+            name = line.split(",")[0].strip()
+            record = [line]
+        else:
+            record.append(line)
+
+    if name is not None:
+        records[name] = tuple(record)
+    return records
 
 
 def render_shapes(

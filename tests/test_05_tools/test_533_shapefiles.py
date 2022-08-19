@@ -5,6 +5,71 @@ import pytest
 from ezdxf import shapefile, path
 
 
+def test_filter_noise():
+    lines = list(
+        shapefile.filter_noise(
+            """
+    ;; comment
+    
+    *BIGFONT xxx, 234
+    
+    
+    """.split(
+                "\n"
+            )
+        )
+    )
+    assert lines[0].startswith("*BIGFONT") is True
+
+
+def test_merge_wrapped_spec_line():
+    lines = list(
+        shapefile.merge_lines(
+            shapefile.filter_noise(
+                """*000BB
+,25,NAME
+2,8,(6,4),1,8,(6,10),8,(-6,10),2,0C0,1,8,(6,-10),8,(-6,-10),2,
+8,(12,-4),0
+    """.split(
+                    "\n"
+                )
+            )
+        )
+    )
+    assert len(lines) == 2
+    assert lines[0] == "*000BB,25,NAME"
+    assert len(lines[1]) == 73
+
+
+def test_do_not_merge_spec_without_name():
+    lines = list(
+        shapefile.merge_lines(
+            shapefile.filter_noise(
+                """*00025,29,
+2,8,(6,2),1,8,(32,36),2,8,(-20,-6),1,10,(6,000),2,8,(8,-24),1,
+10,(6,040),2,8,(18,-8),0
+    """.split(
+                    "\n"
+                )
+            )
+        )
+    )
+    assert len(lines) == 2
+    assert lines[0] == "*00025,29,"
+    assert len(lines[1]) == 86
+
+
+def test_big_font_not_supported():
+    with pytest.raises(shapefile.UnsupportedShapeFile):
+        shapefile.shp_loads(
+            """
+*BIGFONT 7392,3,081,09F,0E0,0EA,0FD,0FE
+*0,5,Comment
+15,0,2,14,0
+        """
+        )
+
+
 class TestFontShapeFile:
     @pytest.fixture(scope="class")
     def txt(self):
