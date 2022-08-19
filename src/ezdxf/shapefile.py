@@ -201,7 +201,12 @@ class ShapeFile:
             except ValueError:
                 raise FileStructureError(record[0])
 
-            int_num = int(number[1:], 16)
+            assert len(number) > 1
+            if number[1] == "0":  # hex if first char is "0" like "*0000A"
+                int_num = int(number[1:], 16)
+            else:  # like "*130"
+                int_num = int(number[1:], 10)
+
             symbol = Symbol(int_num, int(byte_count), name)
             data = "".join(record[1:])
             symbol.data = tuple(parse_codes(split_record(data)))
@@ -263,6 +268,7 @@ def shp_loads(data: str) -> ShapeFile:
         font_definition = records.pop("*0")
     else:
         # a common shape file without a name
+        # symbol numbers are decimal!!!
         font_definition = ("_,_,_", "")
     shp = ShapeFile.from_str_record(font_definition)
     shp.parse_str_records(records.values())
