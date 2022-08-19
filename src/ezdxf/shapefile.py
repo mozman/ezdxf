@@ -444,11 +444,8 @@ class ShapeRenderer:
                         ccw,
                     )
             elif code == 11:  # fractional arc
-                if DEBUG and shape_number not in DEBUG_SHAPE_NUMBERS:
+                if DEBUG and shape_number:
                     DEBUG_SHAPE_NUMBERS.add(shape_number)
-                    print(
-                        f"rendering a fractional arc in shape *{shape_number:05X}"
-                    )
                 # TODO: this seems still not 100% correct, see vertical placing
                 #  of characters "9" and "&" for font isocp.shx.
                 #  This is solved by placing the end point on the baseline after
@@ -530,14 +527,14 @@ class ShapeRenderer:
     def draw_arc_span(
         self, radius: float, start_angle: float, span_angle: float, ccw: bool
     ):
-        # IMPORTANT: radius has be scaled by self.vector_length!
+        # IMPORTANT: radius has to be scaled by self.vector_length!
         end_angle = start_angle + (span_angle if ccw else -span_angle)
         self.draw_arc_start_to_end(radius, start_angle, end_angle, ccw)
 
     def draw_arc_start_to_end(
         self, radius: float, start_angle: float, end_angle: float, ccw: bool
     ):
-        # IMPORTANT: radius has be scaled by self.vector_length!
+        # IMPORTANT: radius has to be scaled by self.vector_length!
         assert radius > 0.0
         arc = ConstructionEllipse(
             major_axis=(radius, 0),
