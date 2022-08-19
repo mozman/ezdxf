@@ -376,6 +376,7 @@ class ShapeRenderer:
         shape_number: int,
         reset_to_baseline=False,
     ) -> None:
+        self.pen_down = True
         codes = self._get_codes(shape_number)
         index = 0
         skip_next = False
