@@ -72,6 +72,7 @@ class FontMode(enum.IntEnum):
     BIDIRECT = 2
 
 
+ENCODING = "cp1252"
 NO_DATA: Sequence[int] = tuple()
 DEBUG = False
 DEBUG_SHAPE_NUMBERS = set()
@@ -286,6 +287,8 @@ def shx_loadb(data: bytes) -> ShapeFile:
 def shx_dumpb(shapefile: ShapeFile) -> bytes:
     return b""
 
+def _filter_noise(lines: Iterable[str]) -> Iterator[str]:
+    pass
 
 def _parse_string_records(data: str) -> Dict[str, Sequence[str]]:
     records: Dict[str, Sequence[str]] = dict()
