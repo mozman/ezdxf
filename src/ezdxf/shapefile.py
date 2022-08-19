@@ -322,7 +322,7 @@ def render_shapes(
 ) -> path.Path:
     ctx = ShapeRenderer(
         path.Path(start),
-        pen=True,
+        pen_down=True,
         stacked=stacked,
         get_codes=get_codes,
     )
@@ -350,12 +350,12 @@ class ShapeRenderer:
         get_codes: Callable[[int], Sequence[int]],
         *,
         vector_length: float = 1.0,
-        pen: bool = True,
+        pen_down: bool = True,
         stacked: bool = False,
     ):
         self.p = p
         self.vector_length = float(vector_length)  # initial vector length
-        self.pen = pen  # pen down =  True, pen up = False
+        self.pen_down = pen_down
         self.stacked = stacked  # vertical stacked text
         self._location_stack: List[Vec3] = []
         self._get_codes = get_codes
@@ -387,9 +387,9 @@ class ShapeRenderer:
             elif code == 0:
                 break
             elif code == 1 and not skip_next:  # pen down
-                self.pen = True
+                self.pen_down = True
             elif code == 2 and not skip_next:  # pen up
-                self.pen = False
+                self.pen_down = False
             elif code == 3 or code == 4:  # scale size
                 factor = codes[index]
                 index += 1
@@ -446,12 +446,12 @@ class ShapeRenderer:
             elif code == 11:  # fractional arc
                 if DEBUG and shape_number:
                     DEBUG_SHAPE_NUMBERS.add(shape_number)
-                # TODO: this seems still not 100% correct, see vertical placing
+                # TODO: this still seems not 100% correct, see vertical placing
                 #  of characters "9" and "&" for font isocp.shx.
                 #  This is solved by placing the end point on the baseline after
                 #  each character rendering, but only for text rendering.
                 #  The remaining problems can possibly be due to a loss of
-                #  precision when converting integers to floating point.
+                #  precision when converting floats to ints.
                 start_offset = codes[index]
                 end_offset = codes[index + 1]
                 radius = (codes[index + 2] << 8) + codes[index + 3]
@@ -515,11 +515,9 @@ class ShapeRenderer:
         self.draw_displacement(VEC_X[angle] * length, VEC_Y[angle] * length)
 
     def draw_displacement(self, x: float, y: float):
-        vector_length = self.vector_length
-        x *= vector_length
-        y *= vector_length
-        target = self.current_location + Vec2(x, y)
-        if self.pen:
+        scale = self.vector_length
+        target = self.current_location + (x * scale, y * scale)
+        if self.pen_down:
             self.p.line_to(target)
         else:
             self.p.move_to(target)
@@ -547,7 +545,7 @@ class ShapeRenderer:
         arc.center += self.current_location - (
             arc.start_point if ccw else arc.end_point
         )
-        if self.pen:
+        if self.pen_down:
             path.add_ellipse(self.p, arc, reset=False)
         else:
             self.p.move_to(arc.end_point if ccw else arc.start_point)
@@ -568,18 +566,17 @@ class ShapeRenderer:
             end_param=end_param,
             ccw=ccw,
         )
-        if self.pen:
+        if self.pen_down:
             path.add_ellipse(self.p, arc, reset=False)
         else:
             self.p.move_to(arc.end_point if ccw else arc.start_point)
 
     def draw_bulge(self, x: float, y: float, bulge: float):
-        if self.pen and bulge:
+        if self.pen_down and bulge:
             start_point = self.current_location
-            x *= self.vector_length
-            y *= self.vector_length
+            scale = self.vector_length
             ccw = bulge > 0
-            end_point = start_point + (x, y)
+            end_point = start_point + (x * scale, y * scale)
             bulge = abs(bulge) / 127.0
             if ccw:  # counter-clockwise
                 center, start_angle, end_angle, radius = bulge_to_arc(
