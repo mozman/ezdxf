@@ -34,6 +34,7 @@ LETTERS = (
     string.punctuation,
 )
 RENDER_POS = 0
+FRACTIONAL_ARC_SYMBOLS = "fractional_arc_symbols.shp"
 
 
 def render_font(fontname: str):
@@ -63,12 +64,8 @@ def render_txt(fontname: str, text: str):
     font = shapefile.shp_loads(shp_data)
     doc = ezdxf.new()
     msp = doc.modelspace()
-    line_height = font.cap_height / 3 * 5
-    y = RENDER_POS
     text_path = font.render_text(text)
-    text_path = text_path.transform(Matrix44.translate(0, y, 0))
     path.render_splines_and_polylines(msp, [text_path])
-    y -= line_height
 
     zoom.extents(msp)
     filename = pathlib.Path(fontname).name
@@ -77,8 +74,24 @@ def render_txt(fontname: str, text: str):
     print(f"created {filename}")
 
 
+def render_all_chars(fontpath: pathlib.Path):
+    shp_data = fontpath.read_text(encoding="latin1")
+    font = shapefile.shp_loads(shp_data)
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    numbers = list(font.shapes.keys())
+    text_path = font.render_shapes(numbers)
+    path.render_splines_and_polylines(msp, [text_path])
+    zoom.extents(msp)
+    export_path = fontpath.with_suffix(".dxf")
+    doc.saveas(export_path)
+    print(f"created {export_path}")
+
+
 def find_fonts_with_fractional_arcs(folder: str):
     shapefile.DEBUG = True
+    export_data = []
+    num = 32
     for filepath in pathlib.Path(folder).glob("*.shp"):
         print("-" * 79)
         print(f"probing: {filepath}")
@@ -88,14 +101,27 @@ def find_fonts_with_fractional_arcs(folder: str):
         except shapefile.ShapeFileException as e:
             print(str(e))
             continue
+        shapefile.DEBUG_SHAPE_NUMBERS.clear()
         font.render_shapes(list(font.shapes.keys()))
-        render_font(str(filepath))
+        if len(shapefile.DEBUG_SHAPE_NUMBERS) == 0:
+            continue
+        export_data.append(f";; {str(filepath)}")
+        for shape_number in shapefile.DEBUG_SHAPE_NUMBERS:
+            export_data.append(f";; source shape number *{shape_number:05X}")
+            export_data.extend(font.shape_string(shape_number, as_num=num))
+            export_data.append("")
+            num += 1
+    with open(
+        CWD / FRACTIONAL_ARC_SYMBOLS, mode="wt", encoding="latin1"
+    ) as fp:
+        fp.write("\n".join(export_data))
     shapefile.DEBUG = False
 
 
 if __name__ == "__main__":
-    # find_fonts_with_fractional_arcs("C:\\Source\\shx-fonts")
-    render_font("txt.shp")
-    render_font("ISO.shp")
-    render_font("isocp.shp")
-    render_txt("isocp.shp", "A&99&A")
+    find_fonts_with_fractional_arcs("C:\\Source\\shx-fonts")
+    render_all_chars(CWD / FRACTIONAL_ARC_SYMBOLS)
+    # render_font("txt.shp")
+    # render_font("ISO.shp")
+    # render_font("isocp.shp")
+    # render_txt("isocp.shp", "A&99&A")

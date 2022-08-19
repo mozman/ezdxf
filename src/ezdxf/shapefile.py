@@ -74,14 +74,37 @@ class FontMode(enum.IntEnum):
 
 NO_DATA: Sequence[int] = tuple()
 DEBUG = False
+DEBUG_SHAPE_NUMBERS = set()
 
 
 # slots=True - Python 3.10+
 @dataclasses.dataclass
 class Symbol:
     number: int
+    byte_count: int
     name: str
     data: Sequence[int] = NO_DATA
+
+    def export_str(self, as_num: int = 0) -> List[str]:
+        num = as_num if as_num else self.number
+        export = [f"*{num:05X},{self.byte_count},{self.name}"]
+        export.extend(format_shape_data_string(self.data))
+        return export
+
+
+def format_shape_data_string(data: Sequence[int]) -> List[str]:
+    export = []
+    s = ""
+    for num in data:
+        s2 = s + f"{num},"
+        if len(s2) < 80:
+            s = s2
+        else:
+            export.append(s[:-1])
+            s = f",{num},"
+    if s:
+        export.append(s[:-1])
+    return export
 
 
 class ShapeFile:
@@ -177,13 +200,15 @@ class ShapeFile:
                 raise InvalidShapeRecord()
             # ignore second value: defbytes
             try:
-                number, _, name = split_def_record(record[0])
+                number, byte_count, name = split_def_record(record[0])
             except ValueError:  # definition split into 2 line
-                number, _, name = split_def_record(record[0] + record[1])
+                number, byte_count, name = split_def_record(
+                    record[0] + record[1]
+                )
                 record = record[1:]
 
             int_num = int(number[1:], 16)
-            symbol = Symbol(int_num, name)
+            symbol = Symbol(int_num, int(byte_count), name)
             data = "".join(record[1:])
             symbol.data = tuple(parse_codes(split_record(data)))
             if symbol.data[-1] == 0:
@@ -210,6 +235,9 @@ class ShapeFile:
         return render_shapes(
             numbers, self.get_codes, stacked=stacked, reset_to_baseline=True
         )
+
+    def shape_string(self, shape_number: int, as_num: int = 0) -> List[str]:
+        return self.shapes[shape_number].export_str(as_num)
 
 
 def split_def_record(record: str) -> Sequence[str]:
@@ -297,9 +325,8 @@ def render_shapes(
         get_codes=get_codes,
     )
     for shape_number in shape_numbers:
-        codes = get_codes(shape_number)
         try:
-            ctx.render(codes, reset_to_baseline=reset_to_baseline)
+            ctx.render(shape_number, reset_to_baseline=reset_to_baseline)
         except StackUnderflow:
             raise StackUnderflow(
                 f"stack underflow while rendering shape number {shape_number}"
@@ -344,9 +371,10 @@ class ShapeRenderer:
 
     def render(
         self,
-        codes: Sequence[int],
+        shape_number: int,
         reset_to_baseline=False,
     ) -> None:
+        codes = self._get_codes(shape_number)
         index = 0
         skip_next = False
         while index < len(codes):
@@ -380,9 +408,8 @@ class ShapeRenderer:
                 sub_shape_number = codes[index]
                 index += 1
                 if not skip_next:
-                    sub_codes = self._get_codes(sub_shape_number)
                     # Use current state of pen and location!
-                    self.render(sub_codes)
+                    self.render(sub_shape_number)
                     # resume with current state of pen and location!
             elif code == 8:  # displacement vector
                 x = codes[index]
@@ -415,8 +442,11 @@ class ShapeRenderer:
                         ccw,
                     )
             elif code == 11:  # fractional arc
-                if DEBUG:
-                    print(f"rendering a fractional arc")
+                if DEBUG and shape_number not in DEBUG_SHAPE_NUMBERS:
+                    DEBUG_SHAPE_NUMBERS.add(shape_number)
+                    print(
+                        f"rendering a fractional arc in shape *{shape_number:05X}"
+                    )
                 # TODO: this is still not correct, see chars "9" and "&" for
                 #  font isocp.shx. This is solved by placing the end point on
                 #  the baseline after each character rendering, but only for
