@@ -10,6 +10,7 @@ https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-DE941DB5-7044-433C-AA68-
 
 """
 import math
+import abc
 from typing import (
     Dict,
     Sequence,
@@ -19,6 +20,7 @@ from typing import (
     List,
     Tuple,
     Optional,
+    Any,
 )
 import enum
 import dataclasses
@@ -304,17 +306,17 @@ def load_shx_shape_file(data: bytes) -> ShapeFile:
     return shape_file
 
 
-def load_shx_unifont_file(data: bytes) -> ShapeFile:
-    raise NotImplementedError()
-
-
-SHAPE_FILE_START_INDEX = 0x17
-
-
-class DataReader:
+class DataReader(abc.ABC):
     def __init__(self, data: bytes, index=0):
         self.data = data
         self.index = index
+
+    @property
+    def has_data(self) -> bool:
+        return self.index < len(self.data)
+
+    def skip(self, n: int) -> None:
+        self.index += n
 
     def u8(self) -> int:
         index = self.index
@@ -336,18 +338,50 @@ class DataReader:
         else:
             return value
 
+    def read_str(self) -> str:
+        s = ""
+        while True:
+            char = self.u8()
+            if char == 0:
+                return s
+            else:
+                s += chr(char)
+
+    def read_bytes(self, n: int) -> bytes:
+        index = self.index
+        self.index += n
+        return self.data[index : index + n]
+
+    @abc.abstractmethod
+    def u16(self) -> int:
+        ...
+
+
+class DataReaderBE(DataReader):
     def u16(self) -> int:
         index = self.index
         self.index += 2
         return (self.data[index] << 8) + self.data[index + 1]
 
 
+class DataReaderLE(DataReader):
+    def u16(self) -> int:
+        index = self.index
+        self.index += 2
+        return self.data[index] + (self.data[index + 1] << 8)
+
+
+# the old 'AutoCAD-86 shapes 1.0' format
+SHX_SHAPES_START_INDEX = 0x17
+
+
 def parse_shx_shapes(data: bytes) -> Dict[int, Symbol]:
     shapes: Dict[int, Symbol] = dict()
-    reader = DataReader(data, SHAPE_FILE_START_INDEX)
-    _ = reader.u8()  # unknown0: fix value of 1A?
-    _ = reader.u8()  # unknown1: <different values>
-    _ = reader.u16()  # max shape number
+    reader = DataReaderBE(data, SHX_SHAPES_START_INDEX)
+    reader.skip(4)
+    # u8: unknown0: fix value of 1A?
+    # u8: unknown1: <different values>
+    # u16: biggest shape number
     shape_count = reader.u16()
     index_table: List[Tuple[int, int]] = []
     for _ in range(shape_count):
@@ -356,9 +390,9 @@ def parse_shx_shapes(data: bytes) -> Dict[int, Symbol]:
         index_table.append((shape_number, data_size))
     if reader.u8() != 0:
         raise FileStructureError("invalid index table")
-    index = reader.index
+
     for shape_number, length in index_table:
-        record = data[index : index + length]
+        record = reader.read_bytes(length)
         try:
             name, shape_data = parse_shx_data_record(record)
         except IndexError:
@@ -369,23 +403,71 @@ def parse_shx_shapes(data: bytes) -> Dict[int, Symbol]:
         shapes[shape_number] = Symbol(
             shape_number, byte_count, name, shape_data
         )
-        index += length
-    if data[index:] != b"EOF":
+    if reader.read_bytes(3) != b"EOF":
         raise FileStructureError("EOF marker not found")
     return shapes
 
 
 def parse_shx_data_record(data: bytes) -> Tuple[str, Sequence[int]]:
-    name = ""
-    reader = DataReader(data)
-    while True:
-        char = reader.u8()
-        if char == 0:
-            break
-        else:
-            name += chr(char)
+    reader = DataReaderBE(data)
+    name = reader.read_str()
     codes = parse_shape_codes(reader)
     return name, codes
+
+
+# the new 'AutoCAD-86 unifont 1.0' format
+SHX_UNIFONT_START_INDEX = 0x18
+
+
+def load_shx_unifont_file(data: bytes) -> ShapeFile:
+    reader = DataReaderLE(data, SHX_UNIFONT_START_INDEX)
+    name, above, below, mode, encoding, embed = parse_shx_unifont_definition(
+        reader
+    )
+    shape_file = ShapeFile(
+        name,
+        above=above,
+        below=below,
+        mode=mode,
+        encoding=encoding,
+        embed=embed,
+    )
+    try:
+        shape_file.shapes = parse_shx_unifont_shapes(reader)
+    except IndexError:
+        raise FileStructureError("pre-mature end of file")
+    return shape_file
+
+
+def parse_shx_unifont_definition(reader: DataReader) -> Sequence[Any]:
+    reader.skip(7)
+    # u8:  unknown0: fix value of 1A?
+    # u8:  unknown1: <different values>
+    # u16: biggest shape number?
+    # u8: unknown2: <00>
+    # u16: font-definition size in bytes
+    name = reader.read_str()
+    above = reader.u8()
+    below = reader.u8()
+    mode = FontMode(reader.u8())
+    encoding = FontEncoding(reader.u8())
+    embed = FontEmbedding(reader.u8())
+    reader.skip(1)  # <00> byte - end of font definition
+    return name, above, below, mode, encoding, embed
+
+
+def parse_shx_unifont_shapes(reader: DataReader) -> Dict[int, Symbol]:
+    shapes: Dict[int, Symbol] = dict()
+    while reader.has_data:
+        shape_number = reader.u16()
+        byte_count = reader.u16()
+        name = reader.read_str()
+        byte_count = byte_count - len(name) - 1
+        data_record = reader.read_bytes(byte_count)
+        # TODO: sub-shape number encoding?
+        codes = parse_shape_codes(DataReaderLE(data_record))
+        shapes[shape_number] = Symbol(shape_number, byte_count, name, codes)
+    return shapes
 
 
 SINGLE_CODES = {1, 2, 5, 6, 14}
@@ -403,7 +485,7 @@ def parse_shape_codes(reader: DataReader) -> Sequence[int]:
         elif code == 3 or code == 4:  # size control
             codes.append(reader.u8())
         elif code == 7:  # sub shape
-            codes.append(reader.u16())
+            codes.append(reader.u16())  # TODO: ???
         elif code == 8:  # displacement
             codes.append(reader.i8())
             codes.append(reader.i8())
@@ -420,7 +502,8 @@ def parse_shape_codes(reader: DataReader) -> Sequence[int]:
         elif code == 11:  # fractional arc
             codes.append(reader.u8())  # start offset
             codes.append(reader.u8())  # end offset
-            codes.append(reader.u16())  # radius
+            codes.append(reader.u8())  # radius hi
+            codes.append(reader.u8())  # radius lo
             codes.append(reader.octant())  # octant specs
         elif code == 12:  # bulge arcs
             codes.append(reader.i8())  # x
