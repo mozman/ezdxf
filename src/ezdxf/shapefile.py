@@ -20,6 +20,7 @@ from typing import (
     Tuple,
     Optional,
     Any,
+    Set,
 )
 import enum
 import dataclasses
@@ -76,7 +77,7 @@ class FontMode(enum.IntEnum):
 
 NO_DATA: Sequence[int] = tuple()
 DEBUG = False
-DEBUG_CODES = set()
+DEBUG_CODES: Set[int] = set()
 DEBUG_SHAPE_NUMBERS = set()
 
 
