@@ -68,7 +68,7 @@ def render_txt(fontname: str, text: str):
 
     zoom.extents(msp)
     filename = pathlib.Path(fontname).name
-    filename = CWD / filename.replace(".shp", ".text.dxf")
+    filename = CWD / (filename + ".text.dxf")
     doc.saveas(filename)
     print(f"created {filename}")
 
@@ -162,7 +162,6 @@ DEBUG_UCR = b"""*00052,259,ucr
 """
 DEBUG = False
 if __name__ == "__main__":
-    # find_fonts_with_codes("C:\\Source\\shx-fonts", codes={11})
     render_font("symap.shx")
     render_font("bold.shx")
     render_font("ISO.shx")

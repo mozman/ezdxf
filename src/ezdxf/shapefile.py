@@ -253,12 +253,12 @@ def readfile(filename: str) -> ShapeFile:
     name extension and should be ".shp" or ".shx" otherwise rises an
     exception :class:`UnsupportedShapeFile`.
     """
-    if filename.lower().endswith(".shp"):
-        shp_data = pathlib.Path(filename).read_bytes()
-        return shp_load(shp_data)
-    elif filename.lower().endswith(".shx"):
-        shx_data = pathlib.Path(filename).read_bytes()
-        return shx_load(shx_data)
+    data = pathlib.Path(filename).read_bytes()
+    filename = filename.lower()
+    if filename.endswith(".shp"):
+        return shp_load(data)
+    elif filename.endswith(".shx"):
+        return shx_load(data)
     else:
         raise UnsupportedShapeFile("unknown filetype")
 
