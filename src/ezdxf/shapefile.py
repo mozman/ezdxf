@@ -76,6 +76,7 @@ class FontMode(enum.IntEnum):
 
 NO_DATA: Sequence[int] = tuple()
 DEBUG = False
+DEBUG_CODES = set()
 DEBUG_SHAPE_NUMBERS = set()
 
 
@@ -660,6 +661,8 @@ class ShapeRenderer:
         skip_next = False
         while index < len(codes):
             code = codes[index]
+            if DEBUG and (code in DEBUG_CODES) and shape_number:
+                DEBUG_SHAPE_NUMBERS.add(shape_number)
             index += 1
             if code > 15 and not skip_next:
                 self.draw_vector(code)
@@ -723,8 +726,6 @@ class ShapeRenderer:
                         ccw,
                     )
             elif code == 11:  # fractional arc
-                if DEBUG and shape_number:
-                    DEBUG_SHAPE_NUMBERS.add(shape_number)
                 # TODO: this still seems not 100% correct, see vertical placing
                 #  of characters "9" and "&" for font isocp.shx.
                 #  This is solved by placing the end point on the baseline after

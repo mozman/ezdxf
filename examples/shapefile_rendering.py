@@ -1,5 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
+from typing import Set
 import pathlib
 import string
 import ezdxf
@@ -34,7 +35,7 @@ LETTERS = (
     string.punctuation,
 )
 RENDER_POS = 0
-FRACTIONAL_ARC_SYMBOLS = "fractional_arc_symbols.shp"
+SPECIAL_CODES = "special_codes.shp"
 
 
 def render_font(fontname: str):
@@ -98,8 +99,9 @@ def render_all_chars(fontpath: pathlib.Path):
     print(f"created {export_path}")
 
 
-def find_fonts_with_fractional_arcs(folder: str):
+def find_fonts_with_codes(folder: str, codes: Set[int]):
     shapefile.DEBUG = True
+    shapefile.DEBUG_CODES = set(codes)
     export_data = []
     num = 32
     for filepath in pathlib.Path(folder).glob("*.shp"):
@@ -122,7 +124,7 @@ def find_fonts_with_fractional_arcs(folder: str):
             export_data.extend(font.shape_string(shape_number, as_num=num))
             export_data.append("")
             num += 1
-    with open(CWD / FRACTIONAL_ARC_SYMBOLS, mode="wt", encoding="cp1252") as fp:
+    with open(CWD / SPECIAL_CODES, mode="wt", encoding="cp1252") as fp:
         fp.write("\n".join(export_data))
     shapefile.DEBUG = False
 
@@ -160,15 +162,15 @@ DEBUG_UCR = """*00052,259,ucr
 """
 DEBUG = False
 if __name__ == "__main__":
-    # find_fonts_with_fractional_arcs("C:\\Source\\shx-fonts")
+    # find_fonts_with_codes("C:\\Source\\shx-fonts", codes={7})
     render_font("symap.shx")
-    # render_font("bold.shx")
-    # render_font("ISO.shx")
-    # render_font("isocp.shx")
-    # render_txt("bold.shx", "___A_A___")
+    render_font("bold.shx")
+    render_font("ISO.shx")
+    render_font("isocp.shx")
+    render_txt("bold.shx", "___A_A___")
     if DEBUG:
-        find_fonts_with_fractional_arcs("C:\\Source\\shx-fonts")
-        render_all_chars(CWD / FRACTIONAL_ARC_SYMBOLS)
+        find_fonts_with_codes("C:\\Source\\shx-fonts", codes={11})
+        render_all_chars(CWD / SPECIAL_CODES)
         render_txt("bold.shx", "R?")
         debug_letter(DEBUG_UCR, 0x43, "bold_c.dxf")
         render_all_chars(
