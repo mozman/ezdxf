@@ -296,8 +296,8 @@ def shp_loads(data: str) -> ShapeFile:
 def shx_loadb(data: bytes) -> ShapeFile:
     if data.startswith(b"AutoCAD-86 shapes 1.0"):
         return load_shx_shape_file_1_0(data)
-    elif data.startswith(b"AutoCAD-86 shapes 1.1"):  # example: symap.shx
-        raise UnsupportedShapeFile("shapes version 1.1 are not supported yet")
+    elif data.startswith(b"AutoCAD-86 shapes 1.1"):
+        return load_shx_shape_file_1_1(data)
     elif data.startswith(b"AutoCAD-86 unifont 1.0"):
         return load_shx_unifont_file_1_0(data)
     elif data.startswith(b"AutoCAD-86 bigfont 1.0"):
@@ -322,6 +322,11 @@ def load_shx_shape_file_1_0(data: bytes) -> ShapeFile:
     shape_file = ShapeFile(name, above=above, below=below, mode=mode)
     shape_file.shapes = shapes
     return shape_file
+
+
+def load_shx_shape_file_1_1(data: bytes) -> ShapeFile:
+    # seems to be the same as v1.0:
+    return load_shx_shape_file_1_0(data)
 
 
 class DataReader:

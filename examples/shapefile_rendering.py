@@ -161,10 +161,11 @@ DEBUG_UCR = """*00052,259,ucr
 DEBUG = False
 if __name__ == "__main__":
     # find_fonts_with_fractional_arcs("C:\\Source\\shx-fonts")
-    render_font("bold.shx")
-    render_font("ISO.shx")
-    render_font("isocp.shx")
-    render_txt("bold.shx", "___A_A___")
+    render_font("symap.shx")
+    # render_font("bold.shx")
+    # render_font("ISO.shx")
+    # render_font("isocp.shx")
+    # render_txt("bold.shx", "___A_A___")
     if DEBUG:
         find_fonts_with_fractional_arcs("C:\\Source\\shx-fonts")
         render_all_chars(CWD / FRACTIONAL_ARC_SYMBOLS)
