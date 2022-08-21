@@ -23,6 +23,7 @@ from typing import (
 )
 import enum
 import dataclasses
+import pathlib
 
 from ezdxf import path
 from ezdxf.math import UVec, Vec2, Vec3, ConstructionEllipse, bulge_to_arc
@@ -240,6 +241,22 @@ class ShapeFile:
         return self.shapes[shape_number].export_str(as_num)
 
 
+def readfile(filename: str) -> ShapeFile:
+    """Load shape-file `filename`, the file type is detected by the file
+    name extension and should be ".shp" or ".shx" otherwise rises an
+    exception :class:`UnsupportedShapeFile`.
+    """
+    if filename.lower().endswith(".shp"):
+        # ignore non-ascii characters in comments and names
+        shp_data = pathlib.Path(filename).read_text(errors="ignore")
+        return shp_loads(shp_data)
+    elif filename.lower().endswith(".shx"):
+        shx_data = pathlib.Path(filename).read_bytes()
+        return shx_loadb(shx_data)
+    else:
+        raise UnsupportedShapeFile("unknown filetype")
+
+
 def split_def_record(record: str) -> Sequence[str]:
     return tuple(s.strip() for s in record.split(",", maxsplit=2))
 
@@ -278,15 +295,17 @@ def shp_loads(data: str) -> ShapeFile:
 
 def shx_loadb(data: bytes) -> ShapeFile:
     if data.startswith(b"AutoCAD-86 shapes 1.0"):
-        return load_shx_shape_file(data)
+        return load_shx_shape_file_1_0(data)
+    elif data.startswith(b"AutoCAD-86 shapes 1.1"):  # example: symap.shx
+        raise UnsupportedShapeFile("shapes version 1.1 are not supported yet")
     elif data.startswith(b"AutoCAD-86 unifont 1.0"):
-        return load_shx_unifont_file(data)
+        return load_shx_unifont_file_1_0(data)
     elif data.startswith(b"AutoCAD-86 bigfont 1.0"):
-        raise UnsupportedShapeFile("BIGFONT shape files are not supported yet")
+        raise UnsupportedShapeFile("BIGFONT shapes are not supported yet")
     raise UnsupportedShapeFile("unknown shape file format")
 
 
-def load_shx_shape_file(data: bytes) -> ShapeFile:
+def load_shx_shape_file_1_0(data: bytes) -> ShapeFile:
     above = 0
     below = 0
     mode = FontMode.HORIZONTAL
@@ -366,7 +385,7 @@ def parse_shx_shapes(data: bytes) -> Dict[int, Symbol]:
     shapes: Dict[int, Symbol] = dict()
     reader = DataReader(data, SHX_SHAPES_START_INDEX)
     if reader.u8() != 0x1A:
-        raise FileStructureError("signature byte 0x1A ont found")
+        raise FileStructureError("signature byte 0x1A not found")
     first_number = reader.u16()
     last_number = reader.u16()
     shape_count = reader.u16()
@@ -407,7 +426,7 @@ def parse_shx_data_record(data: bytes) -> Tuple[str, Sequence[int]]:
 SHX_UNIFONT_START_INDEX = 0x18
 
 
-def load_shx_unifont_file(data: bytes) -> ShapeFile:
+def load_shx_unifont_file_1_0(data: bytes) -> ShapeFile:
     reader = DataReader(data, SHX_UNIFONT_START_INDEX)
     name, above, below, mode, encoding, embed = parse_shx_unifont_definition(
         reader
@@ -428,12 +447,15 @@ def load_shx_unifont_file(data: bytes) -> ShapeFile:
 
 
 def parse_shx_unifont_definition(reader: DataReader) -> Sequence[Any]:
-    reader.skip(7)
-    # u8:  unknown0: fix value of 1A?
-    # u8:  unknown1: <different values>
-    # u16: biggest shape number?
-    # u8: unknown2: <00>
-    # u16: font-definition size in bytes
+
+    if reader.u8() != 0x1A:
+        raise FileStructureError("signature byte 0x1A not found")
+    reader.skip(6)
+    # u16 record count: in isocp.shx = 238 (0xEE 0x00)
+    #     = 1 definition record + 237 character records
+    # u16 isocp.shx: 0 (0x00 0x00), always 0???
+    # u16 font definition record size; isocp.shx: 52 (0x34 0x00)
+
     name = reader.read_str()
     above = reader.u8()
     below = reader.u8()

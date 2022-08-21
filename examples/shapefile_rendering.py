@@ -39,13 +39,7 @@ FRACTIONAL_ARC_SYMBOLS = "fractional_arc_symbols.shp"
 
 def render_font(fontname: str):
     fontname = find_support_file(fontname, ezdxf.options.support_dirs)
-    if fontname.endswith(".shp"):
-        # ignore non-ascii characters in comments and names
-        shp_data = pathlib.Path(fontname).read_text(errors="ignore")
-        font = shapefile.shp_loads(shp_data)
-    else:
-        shx_data = pathlib.Path(fontname).read_bytes()
-        font = shapefile.shx_loadb(shx_data)
+    font = shapefile.readfile(fontname)
     doc = ezdxf.new()
     msp = doc.modelspace()
     line_height = font.cap_height / 3 * 5
@@ -58,16 +52,14 @@ def render_font(fontname: str):
 
     zoom.extents(msp)
     filename = pathlib.Path(fontname).name
-    filename = CWD / filename.replace(".shp", ".dxf")
+    filename = CWD / (filename + ".dxf")
     doc.saveas(filename)
     print(f"created {filename}")
 
 
 def render_txt(fontname: str, text: str):
     fontname = find_support_file(fontname, ezdxf.options.support_dirs)
-    # ignore non-ascii characters in comments and names
-    shp_data = pathlib.Path(fontname).read_text(errors="ignore")
-    font = shapefile.shp_loads(shp_data)
+    font = shapefile.readfile(fontname)
     doc = ezdxf.new()
     msp = doc.modelspace()
     text_path = font.render_text(text)
@@ -170,16 +162,16 @@ DEBUG = False
 if __name__ == "__main__":
     # find_fonts_with_fractional_arcs("C:\\Source\\shx-fonts")
     render_font("bold.shx")
-    render_font("ISO.shp")
-    render_font("isocp.shp")
-    render_txt("bold.shp", "___A_A___")
+    render_font("ISO.shx")
+    render_font("isocp.shx")
+    render_txt("bold.shx", "___A_A___")
     if DEBUG:
         find_fonts_with_fractional_arcs("C:\\Source\\shx-fonts")
         render_all_chars(CWD / FRACTIONAL_ARC_SYMBOLS)
-        render_txt("bold.shp", "R?")
+        render_txt("bold.shx", "R?")
         debug_letter(DEBUG_UCR, 0x43, "bold_c.dxf")
         render_all_chars(
             pathlib.Path(
-                find_support_file("bold.shp", ezdxf.options.support_dirs)
+                find_support_file("bold.shx", ezdxf.options.support_dirs)
             )
         )
