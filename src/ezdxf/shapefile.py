@@ -10,7 +10,6 @@ https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-DE941DB5-7044-433C-AA68-
 
 """
 import math
-import abc
 from typing import (
     Dict,
     Sequence,
@@ -306,7 +305,7 @@ def load_shx_shape_file(data: bytes) -> ShapeFile:
     return shape_file
 
 
-class DataReader(abc.ABC):
+class DataReader:
     def __init__(self, data: bytes, index=0):
         self.data = data
         self.index = index
@@ -352,20 +351,8 @@ class DataReader(abc.ABC):
         self.index += n
         return self.data[index : index + n]
 
-    @abc.abstractmethod
     def u16(self) -> int:
-        ...
-
-
-class DataReaderBE(DataReader):
-    def u16(self) -> int:
-        index = self.index
-        self.index += 2
-        return (self.data[index] << 8) + self.data[index + 1]
-
-
-class DataReaderLE(DataReader):
-    def u16(self) -> int:
+        # little ending
         index = self.index
         self.index += 2
         return self.data[index] + (self.data[index + 1] << 8)
@@ -377,20 +364,21 @@ SHX_SHAPES_START_INDEX = 0x17
 
 def parse_shx_shapes(data: bytes) -> Dict[int, Symbol]:
     shapes: Dict[int, Symbol] = dict()
-    reader = DataReaderBE(data, SHX_SHAPES_START_INDEX)
-    reader.skip(4)
-    # u8: unknown0: fix value of 1A?
-    # u8: unknown1: <different values>
-    # u16: biggest shape number
+    reader = DataReader(data, SHX_SHAPES_START_INDEX)
+    if reader.u8() != 0x1A:
+        raise FileStructureError("signature byte 0x1A ont found")
+    first_number = reader.u16()
+    last_number = reader.u16()
     shape_count = reader.u16()
     index_table: List[Tuple[int, int]] = []
     for _ in range(shape_count):
         shape_number = reader.u16()
         data_size = reader.u16()
         index_table.append((shape_number, data_size))
-    if reader.u8() != 0:
-        raise FileStructureError("invalid index table")
-
+    if index_table[0][0] != first_number:
+        raise FileStructureError("invalid first entry in index table")
+    if index_table[-1][0] != last_number:
+        raise FileStructureError("invalid last entry in index table")
     for shape_number, length in index_table:
         record = reader.read_bytes(length)
         try:
@@ -409,7 +397,7 @@ def parse_shx_shapes(data: bytes) -> Dict[int, Symbol]:
 
 
 def parse_shx_data_record(data: bytes) -> Tuple[str, Sequence[int]]:
-    reader = DataReaderBE(data)
+    reader = DataReader(data)
     name = reader.read_str()
     codes = parse_shape_codes(reader)
     return name, codes
@@ -420,7 +408,7 @@ SHX_UNIFONT_START_INDEX = 0x18
 
 
 def load_shx_unifont_file(data: bytes) -> ShapeFile:
-    reader = DataReaderLE(data, SHX_UNIFONT_START_INDEX)
+    reader = DataReader(data, SHX_UNIFONT_START_INDEX)
     name, above, below, mode, encoding, embed = parse_shx_unifont_definition(
         reader
     )
@@ -464,8 +452,7 @@ def parse_shx_unifont_shapes(reader: DataReader) -> Dict[int, Symbol]:
         name = reader.read_str()
         byte_count = byte_count - len(name) - 1
         data_record = reader.read_bytes(byte_count)
-        # TODO: sub-shape number encoding?
-        codes = parse_shape_codes(DataReaderLE(data_record))
+        codes = parse_shape_codes(DataReader(data_record), unifont=True)
         shapes[shape_number] = Symbol(shape_number, byte_count, name, codes)
     return shapes
 
@@ -473,7 +460,7 @@ def parse_shx_unifont_shapes(reader: DataReader) -> Dict[int, Symbol]:
 SINGLE_CODES = {1, 2, 5, 6, 14}
 
 
-def parse_shape_codes(reader: DataReader) -> Sequence[int]:
+def parse_shape_codes(reader: DataReader, unifont=False) -> Sequence[int]:
     codes: List[int] = []
     while True:
         code = reader.u8()
@@ -485,7 +472,10 @@ def parse_shape_codes(reader: DataReader) -> Sequence[int]:
         elif code == 3 or code == 4:  # size control
             codes.append(reader.u8())
         elif code == 7:  # sub shape
-            codes.append(reader.u16())  # TODO: ???
+            if unifont:
+                codes.append(reader.u16())
+            else:
+                codes.append(reader.u8())
         elif code == 8:  # displacement
             codes.append(reader.i8())
             codes.append(reader.i8())

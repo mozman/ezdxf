@@ -39,9 +39,13 @@ FRACTIONAL_ARC_SYMBOLS = "fractional_arc_symbols.shp"
 
 def render_font(fontname: str):
     fontname = find_support_file(fontname, ezdxf.options.support_dirs)
-    # ignore non-ascii characters in comments and names
-    shp_data = pathlib.Path(fontname).read_text(errors="ignore")
-    font = shapefile.shp_loads(shp_data)
+    if fontname.endswith(".shp"):
+        # ignore non-ascii characters in comments and names
+        shp_data = pathlib.Path(fontname).read_text(errors="ignore")
+        font = shapefile.shp_loads(shp_data)
+    else:
+        shx_data = pathlib.Path(fontname).read_bytes()
+        font = shapefile.shx_loadb(shx_data)
     doc = ezdxf.new()
     msp = doc.modelspace()
     line_height = font.cap_height / 3 * 5
@@ -164,8 +168,8 @@ DEBUG_UCR = """*00052,259,ucr
 """
 DEBUG = False
 if __name__ == "__main__":
-    find_fonts_with_fractional_arcs("C:\\Source\\shx-fonts")
-    render_font("bold.shp")
+    # find_fonts_with_fractional_arcs("C:\\Source\\shx-fonts")
+    render_font("bold.shx")
     render_font("ISO.shp")
     render_font("isocp.shp")
     render_txt("bold.shp", "___A_A___")
