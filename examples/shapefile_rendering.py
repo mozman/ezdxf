@@ -1,6 +1,6 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-from typing import Set
+from typing import Set, List
 import pathlib
 import string
 import ezdxf
@@ -73,8 +73,8 @@ def render_txt(fontname: str, text: str):
     print(f"created {filename}")
 
 
-def debug_letter(shp_data: str, num: int, filename: str):
-    font = shapefile.shp_loads(shp_data)
+def debug_letter(shp_data: bytes, num: int, filename: str):
+    font = shapefile.shp_load(shp_data)
     doc = ezdxf.new()
     msp = doc.modelspace()
     text_path = font.render_shape(num)
@@ -86,8 +86,8 @@ def debug_letter(shp_data: str, num: int, filename: str):
 
 def render_all_chars(fontpath: pathlib.Path):
     # ignore non-ascii characters in comments and names
-    shp_data = fontpath.read_text(errors="ignore")
-    font = shapefile.shp_loads(shp_data)
+    shp_data = fontpath.read_bytes()
+    font = shapefile.shp_load(shp_data)
     doc = ezdxf.new()
     msp = doc.modelspace()
     numbers = list(font.shapes.keys())
@@ -102,15 +102,15 @@ def render_all_chars(fontpath: pathlib.Path):
 def find_fonts_with_codes(folder: str, codes: Set[int]):
     shapefile.DEBUG = True
     shapefile.DEBUG_CODES = set(codes)
-    export_data = []
+    export_data: List[bytes] = []
     num = 32
     for filepath in pathlib.Path(folder).glob("*.shp"):
         print("-" * 79)
         print(f"probing: {filepath}")
         # ignore non-ascii characters in comments and names
-        shp_data = filepath.read_text(errors="ignore")
+        shp_data = filepath.read_bytes()
         try:
-            font = shapefile.shp_loads(shp_data)
+            font = shapefile.shp_load(shp_data)
         except shapefile.ShapeFileException as e:
             print(str(e))
             continue
@@ -118,19 +118,19 @@ def find_fonts_with_codes(folder: str, codes: Set[int]):
         font.render_shapes(list(font.shapes.keys()))
         if len(shapefile.DEBUG_SHAPE_NUMBERS) == 0:
             continue
-        export_data.append(f";; {str(filepath)}")
+        export_data.append(b";;" + str(filepath).encode())
         for shape_number in shapefile.DEBUG_SHAPE_NUMBERS:
-            export_data.append(f";; source shape number *{shape_number:05X}")
+            export_data.append(f";; source shape number *{shape_number:05X}".encode())
             export_data.extend(font.shape_string(shape_number, as_num=num))
-            export_data.append("")
+            export_data.append(b"")
             num += 1
-    with open(CWD / SPECIAL_CODES, mode="wt", encoding="cp1252") as fp:
-        fp.write("\n".join(export_data))
+    with open(CWD / SPECIAL_CODES, mode="wb") as fp:
+        fp.write(b"\r\n".join(export_data))
     shapefile.DEBUG = False
 
 
 # bold.shp letter C:
-DEBUG_UCC = """
+DEBUG_UCC = b"""
 *00043,156,ucc
 2,8,(-2,30),5,1,
 11,(0,125,0,30,044),
@@ -144,7 +144,7 @@ DEBUG_UCC = """
 11,(0,97,0,25,-044),2,6,010,5,1,11,(0,90,0,24,044),2,6,5,1,
 11,(0,90,0,24,-044),2,6,8,(60,-30),0
 """
-DEBUG_UCR = """*00052,259,ucr
+DEBUG_UCR = b"""*00052,259,ucr
 060,8,(0,28),2,064,1,8,(0,20),8,(22,0),10,(10,-024),8,(-22,0),2,
 06C,1,8,(23,0),10,(6,-022),8,(1,-18),11,(0,97,0,14,041),3,2,0D0,
 4,2,11,(85,0,0,8,-051),8,(-1,18),11,(0,15,0,12,002),
@@ -162,7 +162,7 @@ DEBUG_UCR = """*00052,259,ucr
 """
 DEBUG = False
 if __name__ == "__main__":
-    # find_fonts_with_codes("C:\\Source\\shx-fonts", codes={7})
+    # find_fonts_with_codes("C:\\Source\\shx-fonts", codes={11})
     render_font("symap.shx")
     render_font("bold.shx")
     render_font("ISO.shx")

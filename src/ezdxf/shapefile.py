@@ -8,6 +8,8 @@ This module provides support for fonts stored as SHX and SHP files.
 The documentation about the SHP file format can be found at Autodesk:
 https://help.autodesk.com/view/OARX/2018/ENU/?guid=GUID-DE941DB5-7044-433C-AA68-2A9AE98A5713
 
+Using bytes for strings because no encoding is defined in of shape-files.
+
 """
 import math
 from typing import (
@@ -79,6 +81,8 @@ NO_DATA: Sequence[int] = tuple()
 DEBUG = False
 DEBUG_CODES: Set[int] = set()
 DEBUG_SHAPE_NUMBERS = set()
+ORD_NULL = ord("0")
+ORD_MINUS = ord("-")
 
 
 # slots=True - Python 3.10+
@@ -86,26 +90,26 @@ DEBUG_SHAPE_NUMBERS = set()
 class Symbol:
     number: int
     byte_count: int
-    name: str
+    name: bytes
     data: Sequence[int] = NO_DATA
 
-    def export_str(self, as_num: int = 0) -> List[str]:
+    def export_str(self, as_num: int = 0) -> List[bytes]:
         num = as_num if as_num else self.number
-        export = [f"*{num:05X},{self.byte_count},{self.name}"]
+        export = [f"*{num:05X},{self.byte_count},".encode() + self.name]
         export.extend(format_shape_data_string(self.data))
         return export
 
 
-def format_shape_data_string(data: Sequence[int]) -> List[str]:
+def format_shape_data_string(data: Sequence[int]) -> List[bytes]:
     export = []
-    s = ""
+    s = b""
     for num in data:
-        s2 = s + f"{num},"
+        s2 = s + f"{num},".encode()
         if len(s2) < 80:
             s = s2
         else:
             export.append(s[:-1])
-            s = f",{num},"
+            s = f",{num},".encode()
     if s:
         export.append(s[:-1])
     return export
@@ -114,7 +118,7 @@ def format_shape_data_string(data: Sequence[int]) -> List[str]:
 class ShapeFile:
     def __init__(
         self,
-        name: str,
+        name: bytes,
         above: int,
         below: int,
         mode=FontMode.HORIZONTAL,
@@ -145,7 +149,7 @@ class ShapeFile:
     def is_shape_file(self) -> bool:
         return self.encoding == FontEncoding.SHAPE_FILE
 
-    def find(self, name: str) -> Optional[Symbol]:
+    def find(self, name: bytes) -> Optional[Symbol]:
         for symbol in self.shapes.values():
             if name == symbol.name:
                 return symbol
@@ -158,28 +162,28 @@ class ShapeFile:
         return self.shapes[item]
 
     @staticmethod
-    def from_str_record(record: Sequence[str]):
-        if len(record) == 2:
+    def from_ascii_records(records: Sequence[bytes]):
+        if len(records) == 2:
             encoding = FontEncoding.UNICODE
             above = 0
             below = 0
             embed = FontEmbedding.ALLOWED
             mode = FontMode.HORIZONTAL
             end = 0
-            header, params = record
+            header, params = records
             try:
                 # ignore second value: defbytes
-                spec, _, name = header.split(",", maxsplit=2)
+                spec, _, name = header.split(b",", maxsplit=2)
             except ValueError:
                 raise InvalidFontDefinition()
-            if spec == "*UNIFONT":
+            if spec == b"*UNIFONT":
                 try:
-                    above, below, mode, encoding, embed, end = params.split(",")  # type: ignore
+                    above, below, mode, encoding, embed, end = params.split(b",")  # type: ignore
                 except ValueError:
                     raise InvalidFontParameters(params)
-            elif spec == "*0":
+            elif spec == b"*0":
                 try:
-                    above, below, mode, *rest = params.split(",")  # type: ignore
+                    above, below, mode, *rest = params.split(b",")  # type: ignore
                     end = rest[-1]  # type: ignore
                 except ValueError:
                     raise InvalidFontParameters(params)
@@ -196,29 +200,30 @@ class ShapeFile:
                 FontEmbedding(int(embed)),
             )
 
-    def parse_str_records(self, records: Iterable[Sequence[str]]) -> None:
+    def parse_ascii_records(self, records: Iterable[Sequence[bytes]]) -> None:
         for record in records:
             if len(record) < 2:
-                raise InvalidShapeRecord(str(record))
+                raise InvalidShapeRecord(record)
             try:
                 number, byte_count, name = split_def_record(record[0])
             except ValueError:
                 raise FileStructureError(record[0])
 
             assert len(number) > 1
-            if number[1] == "0":  # hex if first char is "0" like "*0000A"
+            if number[1] == ORD_NULL:  # hex if first char is "0" like "*0000A"
                 int_num = int(number[1:], 16)
             else:  # like "*130"
                 int_num = int(number[1:], 10)
 
             symbol = Symbol(int_num, int(byte_count), name)
-            data = "".join(record[1:])
+            data = b"".join(record[1:])
             symbol.data = tuple(parse_codes(split_record(data)))
             if symbol.data[-1] == 0:
                 self.shapes[int_num] = symbol
             else:
+                s = record[0].decode(errors="ignore")
                 raise FileStructureError(
-                    f"file structure error at symbol <{record[0]}>"
+                    f"file structure error at symbol <{s}>"
                 )
 
     def get_codes(self, number: int) -> Sequence[int]:
@@ -239,7 +244,7 @@ class ShapeFile:
             numbers, self.get_codes, stacked=stacked, reset_to_baseline=True
         )
 
-    def shape_string(self, shape_number: int, as_num: int = 0) -> List[str]:
+    def shape_string(self, shape_number: int, as_num: int = 0) -> List[bytes]:
         return self.shapes[shape_number].export_str(as_num)
 
 
@@ -249,53 +254,52 @@ def readfile(filename: str) -> ShapeFile:
     exception :class:`UnsupportedShapeFile`.
     """
     if filename.lower().endswith(".shp"):
-        # ignore non-ascii characters in comments and names
-        shp_data = pathlib.Path(filename).read_text(errors="ignore")
-        return shp_loads(shp_data)
+        shp_data = pathlib.Path(filename).read_bytes()
+        return shp_load(shp_data)
     elif filename.lower().endswith(".shx"):
         shx_data = pathlib.Path(filename).read_bytes()
-        return shx_loadb(shx_data)
+        return shx_load(shx_data)
     else:
         raise UnsupportedShapeFile("unknown filetype")
 
 
-def split_def_record(record: str) -> Sequence[str]:
-    return tuple(s.strip() for s in record.split(",", maxsplit=2))
+def split_def_record(record: bytes) -> Sequence[bytes]:
+    return tuple(s.strip() for s in record.split(b",", maxsplit=2))
 
 
-def split_record(record: str) -> Sequence[str]:
-    return tuple(s.strip() for s in record.split(","))
+def split_record(record: bytes) -> Sequence[bytes]:
+    return tuple(s.strip() for s in record.split(b","))
 
 
-def parse_codes(codes: Iterable[str]) -> Iterator[int]:
+def parse_codes(codes: Iterable[bytes]) -> Iterator[int]:
     for code in codes:
-        code = code.strip("()")
-        if code == "":
+        code = code.strip(b"()")
+        if code == b"":
             continue
-        if code[0] == "0":
+        if code[0] == ORD_NULL:
             yield int(code, 16)
-        elif code[0] == "-" and code[1] == "0":
+        elif code[0] == ORD_MINUS and code[1] == ORD_NULL:
             yield int(code, 16)
         else:
             yield int(code, 10)
 
 
-def shp_loads(data: str) -> ShapeFile:
-    records = parse_string_records(merge_lines(filter_noise(data.split("\n"))))
-    if "*UNIFONT" in records:
-        font_definition = records.pop("*UNIFONT")
-    elif "*0" in records:
-        font_definition = records.pop("*0")
+def shp_load(data: bytes) -> ShapeFile:
+    records = parse_string_records(merge_lines(filter_noise(data.split(b"\n"))))
+    if b"*UNIFONT" in records:
+        font_definition = records.pop(b"*UNIFONT")
+    elif b"*0" in records:
+        font_definition = records.pop(b"*0")
     else:
         # a common shape file without a name
         # symbol numbers are decimal!!!
-        font_definition = ("_,_,_", "")
-    shp = ShapeFile.from_str_record(font_definition)
-    shp.parse_str_records(records.values())
+        font_definition = (b"_,_,_", b"")
+    shp = ShapeFile.from_ascii_records(font_definition)
+    shp.parse_ascii_records(records.values())
     return shp
 
 
-def shx_loadb(data: bytes) -> ShapeFile:
+def shx_load(data: bytes) -> ShapeFile:
     if data.startswith(b"AutoCAD-86 shapes 1.0"):
         return load_shx_shape_file_1_0(data)
     elif data.startswith(b"AutoCAD-86 shapes 1.1"):
@@ -311,7 +315,7 @@ def load_shx_shape_file_1_0(data: bytes) -> ShapeFile:
     above = 0
     below = 0
     mode = FontMode.HORIZONTAL
-    name = ""
+    name = b""
     shapes = parse_shx_shapes(data)
     font_definition = shapes.get(0)
     if font_definition:
@@ -363,14 +367,14 @@ class DataReader:
         else:
             return value
 
-    def read_str(self) -> str:
+    def read_str(self) -> bytes:
         data = bytearray()
         while True:
             char = self.u8()
             if char:
                 data.append(char)
             else:
-                return data.decode(errors="ignore")
+                return data
 
     def read_bytes(self, n: int) -> bytes:
         index = self.index
@@ -422,7 +426,7 @@ def parse_shx_shapes(data: bytes) -> Dict[int, Symbol]:
     return shapes
 
 
-def parse_shx_data_record(data: bytes) -> Tuple[str, Sequence[int]]:
+def parse_shx_data_record(data: bytes) -> Tuple[bytes, Sequence[int]]:
     reader = DataReader(data)
     name = reader.read_str()
     codes = parse_shape_codes(reader)
@@ -539,30 +543,31 @@ def parse_shape_codes(reader: DataReader, unifont=False) -> Sequence[int]:
                     codes.append(reader.i8())
 
 
-def filter_noise(lines: Iterable[str]) -> Iterator[str]:
+def filter_noise(lines: Iterable[bytes]) -> Iterator[bytes]:
     for line in lines:
+        line.rstrip(b"\r\n")
         line = line.strip()
         if line:
-            line = line.split(";")[0]
+            line = line.split(b";")[0]
             line = line.strip()
             if line:
                 yield line
 
 
-def merge_lines(lines: Iterable[str]) -> Iterator[str]:
-    current = ""
+def merge_lines(lines: Iterable[bytes]) -> Iterator[bytes]:
+    current = b""
     for next_line in lines:
         if not current:
             current = next_line
-        elif current.startswith("*"):
-            if next_line.startswith(","):  # wrapped specification line?
+        elif current.startswith(b"*"):
+            if next_line.startswith(b","):  # wrapped specification line?
                 current += next_line
             else:
                 yield current
                 current = next_line
-        elif current.endswith(","):
+        elif current.endswith(b","):
             current += next_line
-        elif next_line.startswith(","):
+        elif next_line.startswith(b","):
             current += next_line
         else:
             yield current
@@ -571,19 +576,21 @@ def merge_lines(lines: Iterable[str]) -> Iterator[str]:
         yield current
 
 
-def parse_string_records(lines: Iterable[str]) -> Dict[str, Sequence[str]]:
-    records: Dict[str, Sequence[str]] = dict()
+def parse_string_records(
+    lines: Iterable[bytes],
+) -> Dict[bytes, Sequence[bytes]]:
+    records: Dict[bytes, Sequence[bytes]] = dict()
     name = None
     record = []
     for line in lines:
-        if line.startswith("*BIGFONT"):
+        if line.startswith(b"*BIGFONT"):
             raise UnsupportedShapeFile(
                 "BIGFONT shape files are not supported yet"
             )
-        if line.startswith("*"):
+        if line.startswith(b"*"):
             if name is not None:
                 records[name] = tuple(record)
-            name = line.split(",")[0].strip()
+            name = line.split(b",")[0].strip()
             record = [line]
         else:
             record.append(line)

@@ -8,36 +8,36 @@ from ezdxf import shapefile, path
 def test_filter_noise():
     lines = list(
         shapefile.filter_noise(
-            """
+            b"""
     ;; comment
     
     *BIGFONT xxx, 234
     
     
     """.split(
-                "\n"
+                b"\n"
             )
         )
     )
-    assert lines[0].startswith("*BIGFONT") is True
+    assert lines[0].startswith(b"*BIGFONT") is True
 
 
 def test_merge_wrapped_spec_line():
     lines = list(
         shapefile.merge_lines(
             shapefile.filter_noise(
-                """*000BB
+                b"""*000BB
 ,25,NAME
 2,8,(6,4),1,8,(6,10),8,(-6,10),2,0C0,1,8,(6,-10),8,(-6,-10),2,
 8,(12,-4),0
     """.split(
-                    "\n"
+                    b"\n"
                 )
             )
         )
     )
     assert len(lines) == 2
-    assert lines[0] == "*000BB,25,NAME"
+    assert lines[0] == b"*000BB,25,NAME"
     assert len(lines[1]) == 73
 
 
@@ -45,24 +45,24 @@ def test_do_not_merge_spec_without_name():
     lines = list(
         shapefile.merge_lines(
             shapefile.filter_noise(
-                """*00025,29,
+                b"""*00025,29,
 2,8,(6,2),1,8,(32,36),2,8,(-20,-6),1,10,(6,000),2,8,(8,-24),1,
 10,(6,040),2,8,(18,-8),0
     """.split(
-                    "\n"
+                    b"\n"
                 )
             )
         )
     )
     assert len(lines) == 2
-    assert lines[0] == "*00025,29,"
+    assert lines[0] == b"*00025,29,"
     assert len(lines[1]) == 86
 
 
 def test_big_font_not_supported():
     with pytest.raises(shapefile.UnsupportedShapeFile):
-        shapefile.shp_loads(
-            """
+        shapefile.shp_load(
+            b"""
 *BIGFONT 7392,3,081,09F,0E0,0EA,0FD,0FE
 *0,5,Comment
 15,0,2,14,0
@@ -73,10 +73,10 @@ def test_big_font_not_supported():
 class TestFontShapeFile:
     @pytest.fixture(scope="class")
     def txt(self):
-        return shapefile.shp_loads(TXT)
+        return shapefile.shp_load(TXT)
 
     def test_shape_file_name(self, txt):
-        assert txt.name == "TXT"
+        assert txt.name == b"TXT"
 
     def test_cap_height(self, txt):
         assert txt.cap_height == 6
@@ -100,13 +100,13 @@ class TestFontShapeFile:
         assert len(txt) == 5
 
     def test_shape_by_number(self, txt):
-        assert txt[32].name == "spc"
+        assert txt[32].name == b"spc"
 
     def test_find_shape_by_name(self, txt):
-        assert txt.find("spc").number == 32
+        assert txt.find(b"spc").number == 32
 
     def test_find_undefined_shape(self, txt):
-        assert txt.find("undefined") is None
+        assert txt.find(b"undefined") is None
 
 
 class TestShapeFile:
@@ -114,22 +114,22 @@ class TestShapeFile:
 
     @pytest.fixture(scope="class")
     def shp(self):
-        return shapefile.shp_loads(FILE_1)
+        return shapefile.shp_load(FILE_1)
 
     def test_is_a_shape_file(self, shp):
         assert shp.is_shape_file is True
 
     def test_shape_by_number(self, shp):
-        assert shp[0x53].name == "S"
+        assert shp[0x53].name == b"S"
 
     def test_shape_by_name(self, shp):
-        assert shp.find("S").number == 0x53
+        assert shp.find(b"S").number == 0x53
 
 
 class TestShapeRenderer:
     @pytest.fixture(scope="class")
     def shp(self):
-        return shapefile.shp_loads(FILE_1)
+        return shapefile.shp_load(FILE_1)
 
     def test_render_only_lines(self, shp):
         p = shp.render_shape(0x41)  # uppercase letter A
@@ -292,7 +292,7 @@ class TestShapeRenderer:
         ), "should be perfect rendering - no placing-hack required"
 
 
-FILE_1 = """
+FILE_1 = b"""
 ;; isocp.shp
 *00026,41,&
 2,8,(30,14),1,3,10,4,2,8,(-72,-54),3,2,12,(-89,76,-102),4,4,
@@ -330,7 +330,7 @@ FILE_1 = """
 12,(-18,-76,-100),4,10,3,2,12,(-12,4,-18),2,8,(26,-6),0
 """
 
-TXT = """
+TXT = b"""
 
 ;;type, size, name
 *UNIFONT,6,TXT
@@ -362,18 +362,18 @@ TXT = """
 class TestLoadShxShapeFile:
     @pytest.fixture(scope="class")
     def shx(self) -> shapefile.ShapeFile:
-        return shapefile.shx_loadb(SHX0)
+        return shapefile.shx_load(SHX0)
 
     def test_shape_count(self, shx):
         assert len(shx) == 6
 
     def test_shape_file_has_no_name(self, shx):
-        assert shx.name == ""
+        assert shx.name == b""
 
     # fmt:off
     def test_shape_data(self, shx):
         assert shx[130].data == (0x14, 0x02, 0x1C, 0x01, 0x1C, 0)
-        assert shx[130].name == "TRACK1"
+        assert shx[130].name == b"TRACK1"
         assert shx[131].data == (0x12, 0x1E, 0)
         assert shx[132].data == (0x14, 0x20, 0x2C, 0x28, 0x14, 0)
         assert shx[133].data == (10, 1, int("-040", 16), 0)
@@ -389,7 +389,7 @@ class TestLoadShxFontFile:
 
     @pytest.fixture(scope="class")
     def shx(self) -> shapefile.ShapeFile:
-        return shapefile.shx_loadb(SHX1)
+        return shapefile.shx_load(SHX1)
 
     def test_shape_count(self, shx):
         assert len(shx) == 126
@@ -413,7 +413,7 @@ class TestLoadUnifontFile:
 
     @pytest.fixture(scope="class")
     def shx(self) -> shapefile.ShapeFile:
-        return shapefile.shx_loadb(SHX2)
+        return shapefile.shx_load(SHX2)
 
     def test_shape_count(self, shx):
         assert len(shx) == 8
@@ -427,7 +427,7 @@ class TestLoadUnifontFile:
         # 2,8,(10,-2),0
         shape = shx[0x26]
         assert shape.number == 0x26
-        assert shape.name == "&"
+        assert shape.name == b"&"
         assert shape.byte_count == 41
         assert shape.data == (
             2, 8, 30, 14, 1, 3, 10, 4, 2, 8, -72, -54, 3, 2, 12, -89, 76, -102,
