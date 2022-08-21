@@ -364,13 +364,13 @@ class DataReader:
             return value
 
     def read_str(self) -> str:
-        s = ""
+        data = bytearray()
         while True:
             char = self.u8()
-            if char == 0:
-                return s
+            if char:
+                data.append(char)
             else:
-                s += chr(char)
+                return data.decode(errors="ignore")
 
     def read_bytes(self, n: int) -> bytes:
         index = self.index
