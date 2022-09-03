@@ -5,8 +5,8 @@ Add-ons
 -------
 
 - drawing
-  - (>v1.0) support for switching plot styles (DXF_DEFAULT_PAPERSPACE_COLORS)
-  - (>v1.0) VIEWPORT rendering support?
+  - (>v1.0) render SHX fonts and SHAPE entities as paths by the frontend 
+    from `.shx` or `.shp` files
   
 - (>v1.0) Native SVG exporter, planned after the matplotlib backend supports 
   all v1.0 features. 
@@ -29,6 +29,7 @@ Add-ons
     
 - (>v1.0) DWG loader, planned for the future. Cython will be required for the 
   low level stuff, no pure Python implementation.
+- (>v1.0) text2path: add support for SHX fonts
 
 Render Tools
 ------------
@@ -38,7 +39,7 @@ Render Tools
 - (>v1.0) factory methods to create ACAD_TABLE entities
 - (>v1.0) fix LWPOLYLINE parsing error in ProxyGraphic, see test script 239
 - (>v1.0) tool to create proxy graphic 
-
+- (>v1.0) add `ShxFont` and `ShpFont` classes to `ezdxf.tools.fonts`
 
 DXF Entities
 ------------
@@ -47,6 +48,9 @@ DXF Entities
 - (>v1.0) ACAD_TABLE tool to manage content at table and cell basis
 - (>v1.0) GEODATA version 1 support, see mpolygon examples and DXF reference R2009
 - (>v1.0) FIELD, used by ACAD_TABLE and MTEXT
+- (>v1.0) explode HATCH pattern into LINE entities, points are represented by 
+  zero-length LINE entities, because the POINT entity has a special meaning.
+- (>v1.0) extend ACIS support
 
 DXF Document
 ------------
