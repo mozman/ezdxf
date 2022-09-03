@@ -2,8 +2,8 @@
 News
 ====
 
-Version 0.18.1b0 - dev
-----------------------
+Version 0.18.1 - 2022-09-03
+---------------------------
 
 - Release notes: https://ezdxf.mozman.at/release-v0-18.html
 - NEW: improved hatch pattern support for the `drawing` add-on
