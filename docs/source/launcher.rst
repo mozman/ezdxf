@@ -321,7 +321,7 @@ For `gedit` on Linux use (untested):
 
     [browse-command]
 
-    text_editor = /use/bin/gedit +{num} "{filename}"
+    text_editor = /usr/bin/gedit +{num} "{filename}"
     icon_size = 32
 
 The *browse* command opens a DXF structure browser to investigate the
