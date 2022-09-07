@@ -117,11 +117,11 @@ recover mode:
             print(f'Invalid or corrupted DXF file: {name}.')
             sys.exit(2)
 
-    # DXF file can still have unrecoverable errors, but this is maybe
-    # just a problem when saving the recovered DXF file.
-    if auditor.has_errors:
-        print(f'Found unrecoverable errors in DXF file: {name}.')
-        auditor.print_error_report()
+        # DXF file can still have unrecoverable errors, but this is maybe
+        # just a problem when saving the recovered DXF file.
+        if auditor.has_errors:
+            print(f'Found unrecoverable errors in DXF file: {name}.')
+            auditor.print_error_report()
 
 4. Just use the slow recover module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
