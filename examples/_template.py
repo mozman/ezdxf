@@ -7,7 +7,7 @@ import sys
 import argparse
 import ezdxf
 
-DIR = pathlib.Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 
 
 def parse_args():
