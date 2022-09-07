@@ -1,29 +1,33 @@
-# Copyright (c) 2019-2021 Manfred Moitzi
+# Copyright (c) 2019-2022 Manfred Moitzi
 # License: MIT License
 import pathlib
 import ezdxf
 from ezdxf import zoom
 from ezdxf.lldxf.const import versions_supported_by_new
+from ezdxf.gfxattribs import GfxAttribs
 
-DIR = pathlib.Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# create DXF documents for all supported DXF versions
+# ------------------------------------------------------------------------------
 
 
-def create_doc(dxfversion):
+def create_doc(dxfversion: str):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     msp.add_circle(
         center=(0, 0),
         radius=1.5,
-        dxfattribs={
-            "layer": "test",
-            "linetype": "DASHED",
-        },
+        dxfattribs=GfxAttribs(layer="test", linetype="DASHED"),
     )
 
     zoom.extents(msp, factor=1.1)
-    filename = DIR / f"{doc.acad_release}.dxf"
+    filename = CWD / f"{doc.acad_release}.dxf"
     doc.saveas(filename)
-    print("drawing '%s' created.\n" % filename)
+    print(f"DXF file '{filename}' created.")
 
 
 if __name__ == "__main__":
