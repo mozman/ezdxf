@@ -2,6 +2,12 @@
 News
 ====
 
+Version 1.0.0b0 - dev
+---------------------
+
+- Release notes: https://ezdxf.mozman.at/release-v1-0.html
+- CHANGE: removed deprecated features
+
 Version 0.18.1 - 2022-09-03
 ---------------------------
 
