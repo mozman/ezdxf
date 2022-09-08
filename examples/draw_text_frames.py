@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Manfred Moitzi
+# Copyright (c) 2021-2022, Manfred Moitzi
 # License: MIT License
 
 import pathlib
