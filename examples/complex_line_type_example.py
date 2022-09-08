@@ -10,6 +10,8 @@ if not CWD.exists():
 
 # ------------------------------------------------------------------------------
 # This example shows how to create complex linetypes.
+#
+# docs: https://ezdxf.mozman.at/docs/concepts/linetypes.html
 # ------------------------------------------------------------------------------
 
 doc = ezdxf.new("R2018")  # DXF R13 or later is required
