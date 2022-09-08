@@ -140,4 +140,5 @@ Required DXF version     R2010 (``'AC1024'``)
 
     .. automethod:: get_crs_transformation
 
-    .. automethod:: setup_local_grid
+    .. automethod:: setup_local_grid(*, design_point: UVec, reference_point: UVec, north_direction: UVec = (0, 1), crs: str = EPSG_3395)
+
