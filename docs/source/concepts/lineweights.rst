@@ -31,14 +31,10 @@ viewer to see the effect on screen, which is often disabled by default, the same
 has to be done in the page setup options for plotting lineweights.
 
 Setting the HEADER variable ``$LWDISPLAY`` to 1 may activate support for
-showing lineweights on screen and ``$LWDISPSCALE`` may scale the lineweight
-on screen::
+showing lineweights on screen::
 
     # activate on screen lineweight display
     doc.header["$LWDISPLAY"] = 1
-    # lineweight scaling factor for on screen display
-    doc.header["$LWDISPSCALE"] = 0.55
-
 
 .. image:: ../gfx/valid_lineweights.png
 

@@ -26,6 +26,9 @@ def main():
             f"Lineweight: {weight / 100.0:0.2f}", dxfattribs={"height": 0.18}
         ).set_placement((0, y + 0.3))
 
+    # switch on application support for displaying lineweights:
+    doc.header["$LWDISPLAY"] = 1
+
     zoom.extents(msp, factor=1.2)
     doc.saveas(CWD / "valid_lineweights.dxf")
 
