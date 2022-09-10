@@ -1,12 +1,25 @@
-# Copyright (c) 2020 Manfred Moitzi
+# Copyright (c) 2020-2022 Manfred Moitzi
 # License: MIT License
-from pathlib import Path
+import pathlib
 from time import perf_counter
 from ezdxf.addons import r12writer
 from ezdxf.math.perlin import SimplexNoise
 from ezdxf.addons.iterdxf import single_pass_modelspace, opendxf, modelspace
 
-DIR = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# create a very lage DXF file and process data by the iterdxf add-on
+#
+# DON'T OPEN THE "MEGAGRID" DXF FILE WITH CAD APPLICATIONS OR DXF VIEWERS!
+# - BricsCAD: crashed
+# - Trueview 2023: crashed Windows 11
+#
+# docs: https://ezdxf.mozman.at/docs/addons/iterdxf.html
+# ------------------------------------------------------------------------------
+
 noise = SimplexNoise()
 PRINT_STATUS = True
 
@@ -52,7 +65,7 @@ def megagrid(
                 print_progress(count, max_count, t0, msg="written ")
 
 
-def create_r12(filename: str, gridsize: int):
+def create_r12(filename: pathlib.Path, gridsize: int):
     with r12writer(filename) as r12:
         megagrid(r12, size=(gridsize, gridsize), height=20, scale=3, color=1)
 
@@ -85,32 +98,32 @@ def load(loader, start_time, max_count):
 
 
 def main(gridsize=1024):
-    filename = Path(DIR / f"megagrid_{gridsize}_x_{gridsize}_r12.dxf")
+    filenpath = CWD / f"megagrid_{gridsize}_x_{gridsize}_r12.dxf"
     max_count = gridsize * gridsize
     print(f"Grid size: {gridsize}\nEntities: {max_count} 3DFACE")
 
-    if not filename.exists():
-        print(f'Creating DXF R12 "{filename}"')
+    if not filenpath.exists():
+        print(f'Creating DXF R12 "{filenpath}"')
         t0 = perf_counter()
-        create_r12(filename, gridsize)
+        create_r12(filenpath, gridsize)
         t1 = perf_counter()
         print(f"Runtime {t1 - t0:.2f}s\n")
-    size = round(filename.stat().st_size / 1024)
+    size = round(filenpath.stat().st_size / 1024)
     print(f"File size: {size} KB")
     print(f"Loading 3DFACE entities from R12 file.")
 
     t0 = perf_counter()
-    load(entities2(filename), t0, max_count)
+    load(entities2(filenpath), t0, max_count)
     t1 = perf_counter()
     print(f"Runtime {t1 - t0:.2f}s\n")
 
     t0 = perf_counter()
-    load(entities1(filename), t0, max_count)
+    load(entities1(filenpath), t0, max_count)
     t1 = perf_counter()
     print(f"Runtime {t1 - t0:.2f}s\n")
 
     t0 = perf_counter()
-    load(entities3(filename), t0, max_count)
+    load(entities3(filenpath), t0, max_count)
     t1 = perf_counter()
     print(f"Runtime {t1 - t0:.2f}s\n")
 
