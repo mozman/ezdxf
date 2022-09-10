@@ -1,20 +1,31 @@
-# Purpose: open example files with big polyface models
-# Copyright (c) 2014-2021, Manfred Moitzi
+# Copyright (c) 2014-2022, Manfred Moitzi
 # License: MIT License
+import typing
 import time
 import pathlib
 
 import ezdxf
+from ezdxf.entities import Polyface
 from ezdxf.render import MeshVertexMerger
 
 SRCDIR = pathlib.Path(ezdxf.EZDXF_TEST_FILES) / "CADKitSamples"
-OUTDIR = pathlib.Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# optimize vertices of POLYFACE entities (merge coincident vertices)
+#
+# DXF entity docs:
+# POLYFACE: https://ezdxf.mozman.at/docs/dxfentities/polyline.html#polyface
+# MESH: https://ezdxf.mozman.at/docs/dxfentities/mesh.html
+# ------------------------------------------------------------------------------
 
 
-def optimize_polyfaces(polyfaces):
-    count = 0
-    runtime = 0
-    vertex_diff = 0
+def optimize_polyfaces(polyfaces: typing.Iterable[Polyface]):
+    count: int = 0
+    runtime: float = 0
+    vertex_diff: int = 0
     print("start optimizing...")
     for polyface in polyfaces:
         count += 1
@@ -30,7 +41,7 @@ def optimize_polyfaces(polyfaces):
 
 def optimize(name: str):
     filename = SRCDIR / name
-    new_filename = OUTDIR / ("optimized_" + name)
+    new_filename = CWD / f"optimized_{name}"
     print(f"opening DXF file: {filename}")
     start_time = time.time()
     doc = ezdxf.readfile(filename)
@@ -40,9 +51,9 @@ def optimize(name: str):
     print(f"DXF version: {doc.dxfversion}")
     print(f"Database contains {len(doc.entitydb)} entities.")
     polyfaces = (
-        polyline
+        typing.cast(Polyface, polyline)
         for polyline in msp.query("POLYLINE")
-        if polyline.is_poly_face_mesh
+        if polyline.is_poly_face_mesh  # type: ignore
     )
     optimize_polyfaces(polyfaces)
 
@@ -53,21 +64,21 @@ def optimize(name: str):
     print(f"time for saving: {end_time - start_time:.1f} seconds")
 
 
-def save_as(name):
-    filename = SRCDIR / name
+def save_as(name: str):
+    filepath = SRCDIR / name
 
-    print(f"opening DXF file: {filename}")
+    print(f"opening DXF file: {filepath}")
     start_time = time.time()
-    doc = ezdxf.readfile(filename)
+    doc = ezdxf.readfile(filepath)
     msp = doc.modelspace()
     end_time = time.time()
     print(f"time for reading: {end_time - start_time:.1f} seconds")
     print(f"DXF version: {doc.dxfversion}")
     print(f"Database contains {len(doc.entitydb)} entities.")
     polyfaces = (
-        polyline
+        typing.cast(Polyface, polyline)
         for polyline in msp.query("POLYLINE")
-        if polyline.is_poly_face_mesh
+        if polyline.is_poly_face_mesh  # type: ignore
     )
 
     # create a new documents
@@ -92,14 +103,14 @@ def save_as(name):
             },
         )
 
-    new_filename = OUTDIR / ("mesh_" + name)
+    new_filename = CWD / f"mesh_{name}"
     print(f"saving as mesh DXF file: {new_filename}")
     start_time = time.time()
     doc1.saveas(new_filename)
     end_time = time.time()
     print(f"time for saving: {end_time - start_time:.1f} seconds")
 
-    new_filename = OUTDIR / ("recreated_polyface_" + name)
+    new_filename = CWD / f"recreated_polyface_{name}"
     print(f"saving as polyface DXF file: {new_filename}")
     start_time = time.time()
     doc2.saveas(new_filename)
