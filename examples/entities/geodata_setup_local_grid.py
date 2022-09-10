@@ -1,4 +1,4 @@
-#  Copyright (c) 2020-2022, Manfred Moitzi
+#  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
 import pathlib
 import ezdxf
@@ -6,7 +6,7 @@ from ezdxf import units
 
 CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
-    CWD = pathlib.Path(".")
+    CWD = pathlib.Path("..")
 
 # ------------------------------------------------------------------------------
 # create a GEODATA object for a local grid
