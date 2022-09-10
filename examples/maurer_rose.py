@@ -1,6 +1,4 @@
-# Purpose: draw a maurer rose with polylines
-# https://en.wikipedia.org/wiki/Maurer_rose
-# Copyright (c) 2019-2021, Manfred Moitzi
+# Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
 from typing import Iterable, Tuple
 import pathlib
@@ -8,16 +6,23 @@ import math
 import ezdxf
 from ezdxf import zoom
 
-DIR = pathlib.Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# draw a maurer rose with LWPOLYLINE entities
+# https://en.wikipedia.org/wiki/Maurer_rose
+# ------------------------------------------------------------------------------
+
 N = 6  # The rose has n petals if N is odd, and 2N petals if N is even.
 D = 71  # delta angle in degrees
-TWO_PI = math.pi * 2
-STEP360 = TWO_PI / 360
+STEP360 = math.tau / 360
 
 
 def maurer_rose(n: int, d: int, radius: float) -> Iterable[Tuple[float, float]]:
     i: float = 0.0
-    while i < TWO_PI:
+    while i < math.tau:
         k = i * d
         r = radius * math.sin(n * k)
         x = r * math.cos(k)
@@ -30,8 +35,8 @@ def main(filename: str, n: int, d: int) -> None:
     doc = ezdxf.new()
     doc.layers.add("PETALS", color=1)
     doc.layers.add("NET", color=5)
-
     msp = doc.modelspace()
+
     msp.add_lwpolyline(
         maurer_rose(n, 1, 250), close=True, dxfattribs={"layer": "PETALS"}
     )
@@ -44,4 +49,4 @@ def main(filename: str, n: int, d: int) -> None:
 
 
 if __name__ == "__main__":
-    main(str(DIR / "maurer_rose.dxf"), N, D)
+    main(str(CWD / "maurer_rose.dxf"), N, D)
