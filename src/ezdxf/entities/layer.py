@@ -319,7 +319,13 @@ class Layer(DXFEntity):
 
         .. warning::
 
-            Renaming layers may damage the DXF file in some circumstances!
+            The DXF format is not consistent in storing layer references, the
+            layers are mostly referenced by their case-insensitive name, and in
+            some entities introduced later, layers are referenced by their handle.
+            There is also not a complete overview of where layer references are
+            stored, which means that it is not 100% safe to rename layers via
+            ezdxf, so in some rare cases renaming layers can corrupt the DXF
+            file!
 
         Args:
              name: new layer name

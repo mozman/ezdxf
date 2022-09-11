@@ -1,15 +1,15 @@
 # Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
 import random
-from pathlib import Path
+import pathlib
 import ezdxf
 from ezdxf.math import Vec3
 from ezdxf.enums import SortEntities
 
 
-CWD = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
-    CWD = Path(".")
+    CWD = pathlib.Path(".")
 
 
 # ------------------------------------------------------------------------------
