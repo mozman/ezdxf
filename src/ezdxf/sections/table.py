@@ -1,5 +1,6 @@
-# Copyright (c) 2011-2021, Manfred Moitzi
+# Copyright (c) 2011-2022, Manfred Moitzi
 # License: MIT License
+from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
     Iterator,
@@ -17,24 +18,22 @@ import logging
 from ezdxf.audit import Auditor, AuditError
 from ezdxf.lldxf import const, validator
 from ezdxf.entities.table import TableHead
-from ezdxf.entities import factory
+from ezdxf.entities import (
+    factory,
+    DXFEntity,
+    Layer,
+    Linetype,
+    Textstyle,
+    VPort,
+    View,
+    AppID,
+    UCSTableEntry,
+    BlockRecord,
+    DimStyle,
+)
 
 if TYPE_CHECKING:
-    from ezdxf.eztypes import (
-        TagWriter,
-        EntityDB,
-        Drawing,
-        DXFEntity,
-        Layer,
-        Linetype,
-        Textstyle,
-        VPort,
-        View,
-        AppID,
-        UCSTableEntry,
-        BlockRecord,
-        DimStyle,
-    )
+    from ezdxf.eztypes import TagWriter, EntityDB, Drawing
 
 logger = logging.getLogger("ezdxf")
 
@@ -45,11 +44,11 @@ class Table(Generic[T]):
     TABLE_TYPE = "UNKNOWN"
 
     def __init__(self):
-        self.doc: Optional["Drawing"] = None
+        self.doc: Optional[Drawing] = None
         self.entries: Dict[str, T] = OrderedDict()
         self._head = TableHead()
 
-    def load(self, doc: "Drawing", entities: Iterator["DXFEntity"]) -> None:
+    def load(self, doc: Drawing, entities: Iterator[DXFEntity]) -> None:
         """Loading interface. (internal API)"""
         self.doc = doc
         table_head = next(entities)
@@ -69,7 +68,7 @@ class Table(Generic[T]):
                     f" in {self.TABLE_TYPE} table."
                 )
 
-    def reset(self, doc: "Drawing", handle: str) -> None:
+    def reset(self, doc: Drawing, handle: str) -> None:
         """Reset table. (internal API)"""
         self.doc = doc
         self._set_head(self.TABLE_TYPE, handle)
@@ -95,7 +94,7 @@ class Table(Generic[T]):
         return validator.make_table_key(name)
 
     def has_entry(self, name: str) -> bool:
-        """Returns ``True`` if an table entry `name` exist."""
+        """Returns ``True`` if a table entry `name` exist."""
         return self.key(name) in self.entries
 
     __contains__ = has_entry
@@ -114,7 +113,7 @@ class Table(Generic[T]):
         """Create a new table entry `name`.
 
         Args:
-            name: name of table entry, case insensitive
+            name: name of table entry, case-insensitive
             dxfattribs: additional DXF attributes for table entry
 
         """
@@ -176,7 +175,7 @@ class Table(Generic[T]):
         self._append(entry)
 
     @property
-    def entitydb(self) -> "EntityDB":
+    def entitydb(self) -> EntityDB:
         return self.doc.entitydb  # type: ignore
 
     def new_entry(self, dxfattribs: dict) -> T:
@@ -218,7 +217,7 @@ class Table(Generic[T]):
         entry.dxf.owner = self._head.dxf.handle
         self._append(entry)
 
-    def export_dxf(self, tagwriter: "TagWriter") -> None:
+    def export_dxf(self, tagwriter: TagWriter) -> None:
         """Export DXF representation. (internal API)"""
 
         def prologue():
@@ -309,11 +308,11 @@ class Table(Generic[T]):
         self.update_owner_handles()
 
 
-class LayerTable(Table["Layer"]):
+class LayerTable(Table[Layer]):
     TABLE_TYPE = "LAYER"
 
-    def new_entry(self, dxfattribs: dict) -> "Layer":
-        layer = cast("Layer", super().new_entry(dxfattribs))
+    def new_entry(self, dxfattribs: dict) -> Layer:
+        layer = cast(Layer, super().new_entry(dxfattribs))
         if self.doc:
             layer.set_required_attributes()
         return layer
@@ -329,7 +328,7 @@ class LayerTable(Table["Layer"]):
         plot: bool = True,
         transparency: Optional[float] = None,
         dxfattribs: Dict = None,
-    ) -> "Layer":
+    ) -> Layer:
         """Add a new :class:`~ezdxf.entities.Layer`.
 
         Args:
@@ -366,15 +365,15 @@ class LayerTable(Table["Layer"]):
         return layer
 
 
-class LinetypeTable(Table["Linetype"]):
+class LinetypeTable(Table[Linetype]):
     TABLE_TYPE = "LTYPE"
 
-    def new_entry(self, dxfattribs: dict) -> T:
+    def new_entry(self, dxfattribs: dict) -> Linetype:
         pattern = dxfattribs.pop("pattern", [0.0])
         length = dxfattribs.pop("length", 0)  # required for complex types
-        ltype = cast("Linetype", super().new_entry(dxfattribs))
+        ltype = cast(Linetype, super().new_entry(dxfattribs))
         ltype.setup_pattern(pattern, length)
-        return cast(T, ltype)
+        return ltype
 
     def add(
         self,
@@ -384,7 +383,7 @@ class LinetypeTable(Table["Linetype"]):
         description: str = "",
         length: float = 0.0,
         dxfattribs: Dict = None,
-    ) -> "Linetype":
+    ) -> Linetype:
         """Add a new line type entry. The simple line type pattern is a list of
         floats :code:`[total_pattern_length, elem1, elem2, ...]`
         where an element > 0 is a line, an element < 0 is a gap and  an
@@ -422,12 +421,12 @@ class LinetypeTable(Table["Linetype"]):
         return self.new_entry(dxfattribs)  # type: ignore
 
 
-class TextstyleTable(Table["Textstyle"]):
+class TextstyleTable(Table[Textstyle]):
     TABLE_TYPE = "STYLE"
 
     def add(
         self, name: str, *, font: str, dxfattribs: Dict = None
-    ) -> "Textstyle":
+    ) -> Textstyle:
         """Add a new text style entry for TTF fonts. The entry must not yet
         exist, otherwise an :class:`DXFTableEntryError` exception will be
         raised.
@@ -455,7 +454,7 @@ class TextstyleTable(Table["Textstyle"]):
         )
         return self.new_entry(dxfattribs)
 
-    def add_shx(self, shx_file: str, *, dxfattribs: Dict = None) -> "Textstyle":
+    def add_shx(self, shx_file: str, *, dxfattribs: Dict = None) -> Textstyle:
         """Add a new shape font (SHX file) entry. These are special text style
         entries and have no name. The entry must not yet exist, otherwise an
         :class:`DXFTableEntryError` exception will be raised.
@@ -487,7 +486,7 @@ class TextstyleTable(Table["Textstyle"]):
         )
         return self.new_entry(dxfattribs)
 
-    def get_shx(self, shx_file: str) -> "Textstyle":
+    def get_shx(self, shx_file: str) -> Textstyle:
         """Get existing entry for a shape file (SHX file), or create a new
         entry.
 
@@ -503,9 +502,9 @@ class TextstyleTable(Table["Textstyle"]):
             return self.add_shx(shx_file)
         return shape_file
 
-    def find_shx(self, shx_file: str) -> Optional["Textstyle"]:
-        """Find the shape file (SHX file) text style table entry, by a case
-        insensitive search.
+    def find_shx(self, shx_file: str) -> Optional[Textstyle]:
+        """Find the shape file (SHX file) text style table entry, by a
+        case-insensitive search.
 
         A shape file table entry has no name, so you have to search by the
         font attribute.
@@ -521,18 +520,18 @@ class TextstyleTable(Table["Textstyle"]):
         return None
 
 
-class ViewportTable(Table["VPort"]):
+class ViewportTable(Table[VPort]):
     TABLE_TYPE = "VPORT"
     # Viewport-Table can have multiple entries with same name
     # each table entry is a list of VPORT entries
 
-    def new(self, name: str, dxfattribs: dict = None) -> T:
+    def new(self, name: str, dxfattribs: dict = None) -> VPort:
         """Create a new table entry."""
         dxfattribs = dxfattribs or {}
         dxfattribs["name"] = name
         return self.new_entry(dxfattribs)
 
-    def add(self, name: str, *, dxfattribs: Dict = None) -> "VPort":
+    def add(self, name: str, *, dxfattribs: Dict = None) -> VPort:
         """Add a new modelspace viewport entry. A modelspace viewport
         configuration can consist of multiple viewport entries with the same
         name.
@@ -556,19 +555,19 @@ class ViewportTable(Table["VPort"]):
             self.entitydb.delete_entity(entry)
         del self.entries[key]
 
-    def __iter__(self) -> Iterator[T]:
+    def __iter__(self) -> Iterator[VPort]:
         for entries in self.entries.values():
             yield from iter(entries)  # type: ignore
 
-    def _flatten(self) -> Iterator[T]:
+    def _flatten(self) -> Iterator[VPort]:
         for entries in self.entries.values():
             yield from iter(entries)  # type: ignore
 
-    def __len__(self):
+    def __len__(self) -> int:
         # calling __iter__() invokes recursion!
         return len(list(self._flatten()))
 
-    def new_entry(self, dxfattribs: dict) -> T:
+    def new_entry(self, dxfattribs: dict) -> VPort:
         """Create and add new table-entry of type 'self.entry_dxftype'.
 
         Does not check if an entry dxfattribs['name'] already exists!
@@ -576,12 +575,13 @@ class ViewportTable(Table["VPort"]):
         """
         assert self.doc is not None, "valid DXF document expected"
         entry = cast(
-            T, factory.create_db_entry(self.TABLE_TYPE, dxfattribs, self.doc)
+            VPort,
+            factory.create_db_entry(self.TABLE_TYPE, dxfattribs, self.doc),
         )
         self._append(entry)
         return entry
 
-    def duplicate_entry(self, name: str, new_name: str) -> T:
+    def duplicate_entry(self, name: str, new_name: str) -> VPort:
         raise NotImplementedError()
 
     def _append(self, entry: T) -> None:
@@ -597,7 +597,7 @@ class ViewportTable(Table["VPort"]):
             for entry in entries:  # type: ignore
                 entry.dxf.owner = owner_handle
 
-    def get_config(self, name: str) -> List["VPort"]:
+    def get_config(self, name: str) -> List[VPort]:
         """Returns a list of :class:`~ezdxf.entities.VPort` objects, for
         the multi-viewport configuration `name`.
         """
@@ -613,10 +613,10 @@ class ViewportTable(Table["VPort"]):
         self.remove(name)
 
 
-class AppIDTable(Table["AppID"]):
+class AppIDTable(Table[AppID]):
     TABLE_TYPE = "APPID"
 
-    def add(self, name: str, *, dxfattribs: Dict = None) -> "AppID":
+    def add(self, name: str, *, dxfattribs: Dict = None) -> AppID:
         """Add a new appid table entry.
 
         Args:
@@ -631,10 +631,10 @@ class AppIDTable(Table["AppID"]):
         return self.new_entry(dxfattribs)
 
 
-class ViewTable(Table["View"]):
+class ViewTable(Table[View]):
     TABLE_TYPE = "VIEW"
 
-    def add(self, name: str, *, dxfattribs: Dict = None) -> "View":
+    def add(self, name: str, *, dxfattribs: Dict = None) -> View:
         """Add a new view table entry.
 
         Args:
@@ -649,10 +649,10 @@ class ViewTable(Table["View"]):
         return self.new_entry(dxfattribs)
 
 
-class BlockRecordTable(Table["BlockRecord"]):
+class BlockRecordTable(Table[BlockRecord]):
     TABLE_TYPE = "BLOCK_RECORD"
 
-    def add(self, name: str, *, dxfattribs: Dict = None) -> "BlockRecord":
+    def add(self, name: str, *, dxfattribs: Dict = None) -> BlockRecord:
         """Add a new block record table entry.
 
         Args:
@@ -667,10 +667,10 @@ class BlockRecordTable(Table["BlockRecord"]):
         return self.new_entry(dxfattribs)
 
 
-class DimStyleTable(Table["DimStyle"]):
+class DimStyleTable(Table[DimStyle]):
     TABLE_TYPE = "DIMSTYLE"
 
-    def add(self, name: str, *, dxfattribs: Dict = None) -> "DimStyle":
+    def add(self, name: str, *, dxfattribs: Dict = None) -> DimStyle:
         """Add a new dimension style table entry.
 
         Args:
@@ -685,10 +685,10 @@ class DimStyleTable(Table["DimStyle"]):
         return self.new_entry(dxfattribs)
 
 
-class UCSTable(Table["UCSTableEntry"]):
+class UCSTable(Table[UCSTableEntry]):
     TABLE_TYPE = "UCS"
 
-    def add(self, name: str, *, dxfattribs: Dict = None) -> "UCSTableEntry":
+    def add(self, name: str, *, dxfattribs: Dict = None) -> UCSTableEntry:
         """Add a new UCS table entry.
 
         Args:
