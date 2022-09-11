@@ -1,4 +1,4 @@
-# Copyright (c) 2018 Manfred Moitzi
+# Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
 import random
 from pathlib import Path
@@ -11,6 +11,14 @@ CWD = Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
     CWD = Path(".")
 
+
+# ------------------------------------------------------------------------------
+# This example shows how to change the redraw-order of DXF entities.
+#
+# docs:
+# Baselayout: https://ezdxf.mozman.at/docs/layouts/layouts.html#baselayout
+# reorder module: https://ezdxf.mozman.at/docs/reorder.html
+# ------------------------------------------------------------------------------
 
 def random_in_range(a, b):
     return random.random() * float(b - a) + a
@@ -51,11 +59,14 @@ def add_solids(
 
 def order_solids_by_color(msp):
     # AutoCAD regenerates entities in ascending handle order.
-    # Change redraw order for DXF entities by assigning an sort handle to an objects handle
-    # The sort handle can be any handle you want, even '0', but this sort handle will be drawn as latest (on top of all
-    # other entities) and not as first as expected.
+    # Change redraw order for DXF entities by assigning a sort-handle to an
+    # objects handle.
+    # The sort-handle can be any handle you want, even '0', but this sort-handle
+    # will be drawn as latest (on top of all other entities) and not as first as
+    # expected.
     #
-    # just use color as sort handle, '%X': uppercase hex-value without 0x prefix, like 'FF'
+    # use the ACI color as sort-handle
+    # '%X': uppercase hex-value without 0x prefix, like 'FF'
     msp.set_redraw_order(
         (solid.dxf.handle, "%X" % solid.dxf.color)
         for solid in msp.query("SOLID")
@@ -70,7 +81,7 @@ def reverse_order_solids_by_color(msp):
 
 
 def move_solids_on_top(msp, color, sort_handle="FFFF"):
-    # This also works if a redraw order is already set
+    # This also works if a redraw-order is already set
     # returns a list of [(object_handle, sort_handle), ...] -> dict
     order = dict(msp.get_redraw_order())
     for solid in msp.query(f"SOLID[color=={color}]"):
@@ -83,7 +94,7 @@ def remove_solids(msp, color=6):
         msp.delete_entity(solid)
 
 
-def run():
+def main():
     doc = ezdxf.new("R2004")  # does not work with AC1015/R2000, but it should
     doc.header["$SORTENTS"] = SortEntities.REGEN
     msp = doc.modelspace()
@@ -96,10 +107,10 @@ def run():
     doc.saveas(CWD / "sort_solids_reversed_ordered.dxf")
     move_solids_on_top(msp, 6)  # 7, 5, 4, 3, 2, 1, 6
     doc.saveas(CWD / "sort_solids_6_on_top.dxf")  # 6 is magenta
-    # AutoCAD has no problem with removed entities in the redraw order table (SORTENTSTABLE)
+    # AutoCAD ignores removed entities in the redraw-order-table (SORTENTSTABLE)
     remove_solids(msp, 6)
     doc.saveas(CWD / "sort_solids_removed_color_6.dxf")
 
 
 if __name__ == "__main__":
-    run()
+    main()
