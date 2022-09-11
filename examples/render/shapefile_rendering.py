@@ -8,6 +8,15 @@ from ezdxf import shapefile, path, zoom
 from ezdxf.math import Matrix44
 from ezdxf.filemanagement import find_support_file
 
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path("..")
+
+# ------------------------------------------------------------------------------
+# The support of SHX- and SHP files is a work in progress not ready for
+# production yet!
+# ------------------------------------------------------------------------------
+
 # I can not include the test files in the repository because these shape files
 # are generated from copyright protected Autodesk SHX files by the program dumpshx.exe
 # Add the directory containing the shx/shp files to your config file:
@@ -24,9 +33,6 @@ from ezdxf.filemanagement import find_support_file
 # 	~/src/ctb
 # ...
 
-CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
-if not CWD.exists():
-    CWD = pathlib.Path(".")
 
 LETTERS = (
     string.ascii_uppercase,
@@ -120,7 +126,9 @@ def find_fonts_with_codes(folder: str, codes: Set[int]):
             continue
         export_data.append(b";;" + str(filepath).encode())
         for shape_number in shapefile.DEBUG_SHAPE_NUMBERS:
-            export_data.append(f";; source shape number *{shape_number:05X}".encode())
+            export_data.append(
+                f";; source shape number *{shape_number:05X}".encode()
+            )
             export_data.extend(font.shape_string(shape_number, as_num=num))
             export_data.append(b"")
             num += 1
