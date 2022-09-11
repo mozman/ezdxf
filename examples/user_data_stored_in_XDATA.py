@@ -1,14 +1,22 @@
-#  Copyright (c) 2021, Manfred Moitzi
+#  Copyright (c) 2021-2022, Manfred Moitzi
 #  License: MIT License
 
-from pathlib import Path
+import pathlib
 import ezdxf
 from ezdxf.math import Vec3
 from ezdxf.render.forms import gear
 from ezdxf import zoom
 from ezdxf.entities.xdata import XDataUserDict, XDataUserList
 
-DIR = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example shows how to store user data in the XDATA section of DXF entities.
+# docs: https://ezdxf.mozman.at/docs/user_xdata.html#
+# tutorial: https://ezdxf.mozman.at/docs/tutorials/custom_data.html
+# ------------------------------------------------------------------------------
 
 doc = ezdxf.new()
 msp = doc.modelspace()
@@ -109,10 +117,10 @@ with XDataUserList.entity(gear, name="AppendedPoints") as user_list:
 # XDATA will be preserved by AutoCAD, BricsCAD and of course ezdxf.
 
 zoom.objects(msp, [gear])
-doc.saveas(DIR / "gear_with_xdata.dxf")
+doc.saveas(CWD / "gear_with_xdata.dxf")
 
 # Retrieve data:
-doc2 = ezdxf.readfile(DIR / "gear_with_xdata.dxf")
+doc2 = ezdxf.readfile(CWD / "gear_with_xdata.dxf")
 loaded_gear = doc2.entitydb.get(handle)
 
 

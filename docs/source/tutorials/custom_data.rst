@@ -318,7 +318,7 @@ XDICT for extension dictionaries in this tutorial.
 
 The :ref:`extension_dictionary` is a regular DXF :class:`~ezdxf.entities.Dictionary`
 which can store (key, value) pairs where the key is a string and the value is a
-DXF object from the OBJECTS section but not graphical DXF entities.
+DXF object from the OBJECTS section.
 The usual objects to store custom data are :class:`~ezdxf.entities.DictionaryVar`
 to store simple strings and :class:`~ezdxf.entities.XRecord` to store complex
 data.
@@ -409,7 +409,7 @@ Script output:
 Unlike XDATA, custom data attached by extension dictionary will not be
 transformed along with the DXF entity! To react to entity modifications by a
 CAD applications it is possible to write event handlers by AutoLISP, see the
-`AfraLISP Reactors Tutorial`_ for more information. This very advanced stuff!
+`AfraLISP Reactors Tutorial`_ for more information. This is very advanced stuff!
 
 .. seealso::
 
