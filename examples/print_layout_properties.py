@@ -1,7 +1,11 @@
-# Copyright (c) 2018, Manfred Moitzi
+# Copyright (c) 2018-2022, Manfred Moitzi
 # License: MIT License
 import sys
 import ezdxf
+
+# ------------------------------------------------------------------------------
+# print DXF attributes of layouts
+# ------------------------------------------------------------------------------
 
 
 def print_layout(layout):
