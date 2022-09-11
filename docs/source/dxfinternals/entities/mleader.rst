@@ -9,7 +9,7 @@ unique properties.
 1. MULTILEADER has the alias name MLEADER which is accepted by any
    :term:`reliable CAD application`, but all of them create the entity as
    MULTILEADER
-2. uses :term:`raw color` values to define colors
+2. uses :term:`raw-color` values to define colors
 3. creates a complex context data structures beyond simple tags inside the
    subclass ``AcDbMLeader``
 

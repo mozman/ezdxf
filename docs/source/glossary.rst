@@ -37,7 +37,7 @@ Glossary
         interchange data with other :term:`CAD` applications. `DXF`_ is a
         trademark of `Autodesk`_ ®. See also :ref:`what is dxf`
 
-    raw color
+    raw-color
         Raw color value as stored in DWG files, this integer value can
         represent :term:`ACI` values as well as and :term:`true-color` values
 

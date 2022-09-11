@@ -65,7 +65,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: dxf.block_color
 
-        block color as :term:`raw color` value, default is BY_BLOCK_RAW_VALUE
+        block color as :term:`raw-color` value, default is BY_BLOCK_RAW_VALUE
 
     .. attribute:: dxf.block_connection_type
 
@@ -114,7 +114,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: dxf.leader_line_color
 
-         leader line color as :term:`raw color` value
+         leader line color as :term:`raw-color` value
 
     .. attribute:: dxf.leader_linetype_handle
 
@@ -190,7 +190,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: dxf.text_color
 
-        MTEXT color as :term:`raw color` value
+        MTEXT color as :term:`raw-color` value
 
     .. attribute:: dxf.text_left_attachment_type
 
@@ -478,7 +478,7 @@ Required DXF version     DXF R2000 (``'AC1015'``)
 
     .. attribute:: bg_color
 
-        background color as :term:`raw color` value
+        background color as :term:`raw-color` value
 
     .. attribute:: bg_scale_factor
 

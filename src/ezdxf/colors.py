@@ -33,7 +33,7 @@ COLOR_TYPE_WINDOW_BG = 0xC8
 
 
 def decode_raw_color(value: int) -> Tuple[int, Union[int, RGB]]:
-    """Decode :term:`raw color` value as tuple(type, Union[aci, (r, g, b)]), the
+    """Decode :term:`raw-color` value as tuple(type, Union[aci, (r, g, b)]), the
     true color value is a (r, g, b) tuple.
     """
     data = decode_raw_color_int(value)
@@ -43,7 +43,7 @@ def decode_raw_color(value: int) -> Tuple[int, Union[int, RGB]]:
 
 
 def decode_raw_color_int(value: int) -> Tuple[int, int]:
-    """Decode :term:`raw color` value as tuple(type, int), the true color value
+    """Decode :term:`raw-color` value as tuple(type, int), the true color value
     is a 24-bit int value.
     """
     flags = (value >> 24) & 0xFF

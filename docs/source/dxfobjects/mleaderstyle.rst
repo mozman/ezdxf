@@ -140,7 +140,7 @@ Factory function         :meth:`ezdxf.document.Drawing.mleader_styles.new`
 
     .. attribute:: dxf.leader_line_color
 
-        default leader line color as :term:`raw color` value, default is
+        default leader line color as :term:`raw-color` value, default is
         BY_BLOCK_RAW_VALUE
 
     .. attribute:: dxf.leader_linetype_handle
@@ -223,7 +223,7 @@ Factory function         :meth:`ezdxf.document.Drawing.mleader_styles.new`
 
     .. attribute:: dxf.text_color
 
-        default MTEXT color as :term:`raw color` value, default is
+        default MTEXT color as :term:`raw-color` value, default is
         BY_BLOCK_RAW_VALUE
 
     .. attribute:: dxf.text_left_attachment_type
