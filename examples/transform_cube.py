@@ -1,13 +1,27 @@
-# Copyright (c) 2020-2021 Manfred Moitzi
+# Copyright (c) 2020-2022 Manfred Moitzi
 # License: MIT License
+import pathlib
 
-from pathlib import Path
 import math
 import ezdxf
 from ezdxf import zoom
 from ezdxf.math import UCS
 
-DIR = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+
+# ------------------------------------------------------------------------------
+# use an UCS to place a cube in 3D
+#
+# docs: https://ezdxf.mozman.at/docs/math/core.html#ucs-class
+# tutorial for UCS based transformations: https://ezdxf.mozman.at/docs/tutorials/ucs_transform.html
+#
+# IMPORTANT: the ezdxf.math.UCS is not identical to the UCSTableEntry in
+# the TABLE section, but you can acquire the USC by UCSTableEntry.ucs():
+# https://ezdxf.mozman.at/docs/tables/ucs_table_entry.html#ezdxf.entities.UCSTableEntry.ucs
+# ------------------------------------------------------------------------------
 
 p = [
     (0, 0, 0),
@@ -52,4 +66,4 @@ ucs = ucs.rotate(axis=(0, 0, 1), angle=math.radians(45))
 blockref.transform(ucs.matrix)
 
 zoom.extents(msp)
-doc.saveas(DIR / "cube.dxf")
+doc.saveas(CWD / "cube.dxf")
