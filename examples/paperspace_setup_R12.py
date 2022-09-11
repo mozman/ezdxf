@@ -1,14 +1,26 @@
-# Purpose: setup initial viewport for a DXF drawing
-# Copyright (c) 2016-2021 Manfred Moitzi
+# Copyright (c) 2016-2022 Manfred Moitzi
 # License: MIT License
+from typing import cast
 import pathlib
 import ezdxf
+from ezdxf.document import Drawing
 
-DIR = pathlib.Path("~/Desktop/Outbox").expanduser()
+
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# setup DXF R12 paperspace layout
+#
+# The single paperspace layout of DXF R12 is not well-supported, it is preferable
+# to use DXF R2000 or later if paperspace layouts are important for your project.
+# ------------------------------------------------------------------------------
+
 FILENAME = "page_setup_R12.dxf"
 
 
-def draw_raster(doc):
+def draw_raster(doc: Drawing):
     marker = doc.blocks.new(name="MARKER")
     attribs = {"color": 2}
     marker.add_line((-1, 0), (1, 0), dxfattribs=attribs)
@@ -33,7 +45,9 @@ def draw_raster(doc):
             modelspace.add_auto_blockref("MARKER", (xcoord, ycoord), values)
 
 
-def setup_active_viewport(doc):
+def setup_active_viewport_configuration(doc: Drawing):
+    # This creates a multi-window configuration for the modelspace.
+    #
     # delete '*Active' viewport configuration
     doc.viewports.delete_config("*ACTIVE")
     # the available display area in AutoCAD has the virtual lower-left
@@ -72,9 +86,11 @@ def setup_active_viewport(doc):
     viewport.dxf.aspect_ratio = 2.0
 
 
-def layout_page_setup(doc):
-    # DXF R12 supports just one paper space layout
-    layout = doc.layout()
+def setup_paperspace(doc: Drawing):
+    from ezdxf.layouts import Paperspace
+
+    # DXF R12 supports just one paperspace layout
+    layout = cast(Paperspace, doc.layout())
     layout.page_setup(size=(11, 8.5), margins=(1, 2, 1, 2), units="inch")
     lower_left, upper_right = layout.get_paper_limits()
     x1, y1 = lower_left
@@ -85,10 +101,14 @@ def layout_page_setup(doc):
     layout.add_circle((0, 0), radius=0.1)  # plot origin
 
 
-if __name__ == "__main__":
+def main():
     doc = ezdxf.new("R12")
     draw_raster(doc)
-    setup_active_viewport(doc)
-    layout_page_setup(doc)
-    doc.saveas(DIR / FILENAME)
+    setup_active_viewport_configuration(doc)
+    setup_paperspace(doc)
+    doc.saveas(CWD / FILENAME)
     print(f'DXF file "{FILENAME}" created.')
+
+
+if __name__ == "__main__":
+    main()
