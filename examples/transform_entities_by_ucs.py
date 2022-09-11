@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021 Manfred Moitzi
+# Copyright (c) 2020-2022 Manfred Moitzi
 # License: MIT License
 import pathlib
 import math
@@ -6,7 +6,19 @@ import ezdxf
 from ezdxf import zoom
 from ezdxf.math import UCS, Vec3
 
-OUTDIR = pathlib.Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example shows how to transform entities by the general transformation
+# interface and the UCS class.
+#
+# docs:
+# https://ezdxf.mozman.at/docs/dxfentities/dxfgfx.html#ezdxf.entities.DXFGraphic.transform
+# https://ezdxf.mozman.at/docs/math/core.html#ucs-class
+# ------------------------------------------------------------------------------
+
 NARROW = "OpenSansCondensed-Light"
 X_COUNT = 7
 Y_COUNT = 7
@@ -197,5 +209,5 @@ def scene2(filename):
 
 
 if __name__ == "__main__":
-    scene1(OUTDIR / "transform_scene_1.dxf")
-    scene2(OUTDIR / "transform_scene_2.dxf")
+    scene1(CWD / "transform_scene_1.dxf")
+    scene2(CWD / "transform_scene_2.dxf")
