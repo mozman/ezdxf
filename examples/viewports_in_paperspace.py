@@ -8,7 +8,6 @@ from ezdxf.layouts import Paperspace
 from ezdxf.enums import TextEntityAlignment
 from ezdxf import colors
 
-MESH_SIZE = 20
 CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
     CWD = pathlib.Path(".")
@@ -16,8 +15,10 @@ if not CWD.exists():
 # ------------------------------------------------------------------------------
 # This example shows how to create VIEWPORT entities in paperspace layouts.
 #
-# docs: https://ezdxf.mozman.at/docs/dxfentities/viewport.html
+# VIEWPORT: https://ezdxf.mozman.at/docs/dxfentities/viewport.html
 # ------------------------------------------------------------------------------
+
+MESH_SIZE = 20
 
 
 def build_cos_sin_mesh(mesh):
