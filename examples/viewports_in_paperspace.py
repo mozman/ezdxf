@@ -1,16 +1,23 @@
 # Copyright (c) 2015-2022, Manfred Moitzi
 # License: MIT License
 import math
-from pathlib import Path
+import pathlib
+
 import ezdxf
 from ezdxf.layouts import Paperspace
 from ezdxf.enums import TextEntityAlignment
 from ezdxf import colors
 
 MESH_SIZE = 20
-DIR = Path("~/Desktop/Outbox").expanduser()
-if not DIR.exists():
-    DIR = Path(".")
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example shows how to create VIEWPORT entities in paperspace layouts.
+#
+# docs: https://ezdxf.mozman.at/docs/dxfentities/viewport.html
+# ------------------------------------------------------------------------------
 
 
 def build_cos_sin_mesh(mesh):
@@ -144,7 +151,7 @@ def main():
         create_viewports(layout)
 
         try:
-            doc.saveas(DIR / filename)
+            doc.saveas(CWD / filename)
         except IOError:
             print("Can't write: '%s'" % filename)
 
