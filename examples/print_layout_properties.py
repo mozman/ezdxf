@@ -5,6 +5,8 @@ import ezdxf
 
 # ------------------------------------------------------------------------------
 # print DXF attributes of layouts
+#
+# docs about layouts: https://ezdxf.mozman.at/docs/layouts/index.html
 # ------------------------------------------------------------------------------
 
 

@@ -15,6 +15,8 @@ if not CWD.exists():
 #
 # The single paperspace layout of DXF R12 is not well-supported, it is preferable
 # to use DXF R2000 or later if paperspace layouts are important for your project.
+#
+# docs about layouts: https://ezdxf.mozman.at/docs/layouts/index.html
 # ------------------------------------------------------------------------------
 
 FILENAME = "page_setup_R12.dxf"

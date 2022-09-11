@@ -15,6 +15,8 @@ if not CWD.exists():
 # For most use cases a paperspace scaling of 1:1 is to prefer and important:
 # the paperspace scaling has no influence on the VIEWPORT scaling - this is a
 # total different topic, see example "viewports_in_paperspace.py"
+#
+# docs about layouts: https://ezdxf.mozman.at/docs/layouts/index.html
 # ------------------------------------------------------------------------------
 
 FILENAME = "page_setup_R2000.dxf"
