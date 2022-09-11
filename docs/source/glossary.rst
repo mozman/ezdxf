@@ -37,6 +37,12 @@ Glossary
         interchange data with other :term:`CAD` applications. `DXF`_ is a
         trademark of `Autodesk`_ ®. See also :ref:`what is dxf`
 
+    proxy-graphic
+        The proxy-graphic is an internal data format to add a graphical
+        representation to DXF entities which are unknown (custom DXF entities),
+        not documented or very complex so CAD applications can display them
+        without knowledge about the internal structure of these entities.
+
     raw-color
         Raw color value as stored in DWG files, this integer value can
         represent :term:`ACI` values as well as and :term:`true-color` values
@@ -58,11 +64,6 @@ Glossary
         RGB color representation, a combination red, green and blue values to
         define a color.
 
-    proxy-graphic
-        The proxy-graphic is an internal data format to add a graphical
-        representation to DXF entities which are unknown (custom DXF entities),
-        not documented or very complex so CAD applications can display them
-        without knowledge about the internal structure of these entities.
 
 .. (R) = Atl+0174
 
