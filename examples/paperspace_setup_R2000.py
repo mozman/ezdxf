@@ -46,8 +46,6 @@ def draw_raster(doc: Drawing):
 
 
 def setup_active_viewport_configuration(doc: Drawing):
-    from ezdxf.entities import VPort
-
     # This creates a multi-window configuration for the modelspace.
     #
     # delete the current '*Active' viewport configuration
@@ -56,7 +54,7 @@ def setup_active_viewport_configuration(doc: Drawing):
     # corner (0, 0) and the virtual upper-right corner (1, 1)
 
     # first viewport, uses the left half of the screen
-    viewport = cast(VPort, doc.viewports.new("*ACTIVE"))
+    viewport = doc.viewports.new("*ACTIVE")
     viewport.dxf.lower_left = (0, 0)
     viewport.dxf.upper_right = (0.5, 1)
 
@@ -73,7 +71,7 @@ def setup_active_viewport_configuration(doc: Drawing):
     viewport.dxf.aspect_ratio = 1.0
 
     # second viewport, uses the right half of the screen
-    viewport = cast(VPort, doc.viewports.new("*ACTIVE"))
+    viewport = doc.viewports.new("*ACTIVE")
     viewport.dxf.lower_left = (0.5, 0)
     viewport.dxf.upper_right = (1, 1)
 
