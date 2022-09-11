@@ -17,6 +17,11 @@ if not CWD.exists():
 # docs:
 # https://ezdxf.mozman.at/docs/dxfentities/dxfgfx.html#ezdxf.entities.DXFGraphic.transform
 # https://ezdxf.mozman.at/docs/math/core.html#ucs-class
+# tutorial for UCS based transformations: https://ezdxf.mozman.at/docs/tutorials/ucs_transform.html
+#
+# IMPORTANT: the ezdxf.math.UCS is not identical to the UCSTableEntry in
+# the TABLE section, but you can acquire the USC by UCSTableEntry.ucs():
+# https://ezdxf.mozman.at/docs/tables/ucs_table_entry.html#ezdxf.entities.UCSTableEntry.ucs
 # ------------------------------------------------------------------------------
 
 NARROW = "OpenSansCondensed-Light"
