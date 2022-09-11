@@ -67,7 +67,7 @@ WINDOW_BG_RAW_VALUE = -939524096
 
 
 def encode_raw_color(value: Union[int, RGB]) -> int:
-    """Encode :term:`true color` value or :ref:`ACI` color value into a :term:
+    """Encode :term:`true-color` value or :ref:`ACI` color value into a :term:
     `raw color` value.
     """
     if isinstance(value, int):

@@ -49,7 +49,7 @@ WHITE (on dark background)  7
 Default Palettes
 ================
 
-Default color mappings from :ref:`ACI` to :term:`true color` values.
+Default color mappings from :ref:`ACI` to :term:`true-color` values.
 
 =========== =============================
 model space DXF_DEFAULT_COLORS

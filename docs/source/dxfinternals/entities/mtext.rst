@@ -240,7 +240,7 @@ Group codes to define background fill attributes:
 45  scaling factor for the border around the text, the value should be in the
     range of [1, 5], where 1 fits exact the MText entity
 63  set the background color by :term:`ACI`.
-421 set the background color as :term:`true color` value.
+421 set the background color as :term:`true-color` value.
 431 set the background color by color name - no idea how this works
 441 set the transparency of the background fill, not supported by AutoCAD or BricsCAD.
 === ===============================

@@ -39,7 +39,7 @@ Glossary
 
     raw color
         Raw color value as stored in DWG files, this integer value can
-        represent :term:`ACI` values as well as and :term:`true color` values
+        represent :term:`ACI` values as well as and :term:`true-color` values
 
     reliable CAD application
         CAD applications which create valid DXF documents in the meaning and
@@ -54,10 +54,15 @@ Glossary
     STB
         Named plot style table (:class:`~ezdxf.acadctb.NamedPlotStyles`)
 
-    true color
+    true-color
         RGB color representation, a combination red, green and blue values to
         define a color.
 
+    proxy-graphic
+        The proxy-graphic is an internal data format to add a graphical
+        representation to DXF entities which are unknown (custom DXF entities),
+        not documented or very complex so CAD applications can display them
+        without knowledge about the internal structure of these entities.
 
 .. (R) = Atl+0174
 
