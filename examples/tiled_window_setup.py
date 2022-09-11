@@ -1,17 +1,22 @@
-# Purpose: tiled window model space setup for AutoCAD
-# Copyright (c) 2018-2021 Manfred Moitzi
+# Copyright (c) 2018-2022 Manfred Moitzi
 # License: MIT License
+import pathlib
+
 import ezdxf
-from pathlib import Path
+from ezdxf.document import Drawing
 
-DIR = Path("~/Desktop/Outbox").expanduser()
-FILENAME = "tiled_windows_R2000.dxf"
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# Tiled window setup for modelspace in AutoCAD/BricsCAD.
+#
+# docs: https://ezdxf.mozman.at/docs/tables/vport_table_entry.html
+# ------------------------------------------------------------------------------
 
 
-# FILENAME = 'tiled_windows_R2000.dxf'
-
-
-def draw_raster(doc):
+def draw_raster(doc: Drawing):
     marker = doc.blocks.new(name="MARKER")
     attribs = {"color": 2}
     marker.add_line((-1, 0), (1, 0), dxfattribs=attribs)
@@ -36,7 +41,7 @@ def draw_raster(doc):
             modelspace.add_auto_blockref("MARKER", (xcoord, ycoord), values)
 
 
-def setup_active_viewport(doc):
+def setup_active_viewport(doc: Drawing):
     # delete '*Active' viewport configuration
     doc.viewports.delete_config("*ACTIVE")
     # the available display area in AutoCAD has the virtual lower-left
@@ -72,9 +77,13 @@ def setup_active_viewport(doc):
     viewport.dxf.aspect_ratio = 2.0
 
 
-if __name__ == "__main__":
+def main(filename="tiled_windows_R2000.dxf"):
     doc = ezdxf.new("R2000")
     draw_raster(doc)
     setup_active_viewport(doc)
-    doc.saveas(DIR / FILENAME)
-    print(f"DXF file '{FILENAME}' created.")
+    doc.saveas(CWD / filename)
+    print(f"DXF file '{filename}' created.")
+
+
+if __name__ == "__main__":
+    main()
