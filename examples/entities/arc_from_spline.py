@@ -1,11 +1,18 @@
-# Copyright (c) 2021, Manfred Moitzi
+# Copyright (c) 2021-2022, Manfred Moitzi
 # License: MIT License
-from pathlib import Path
+import pathlib
 import ezdxf
 from ezdxf import zoom
 from ezdxf.math import ConstructionArc, BSpline
 
-DIR = Path("~/Desktop/Outbox/").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This is a more theoretical example which shows how to recreate an ARC entity
+# from a SPLINE entity, assuming the SPLINE represents an ARC.
+# ------------------------------------------------------------------------------
 
 doc = ezdxf.new()
 msp = doc.modelspace()
@@ -35,9 +42,12 @@ arc_tool = arc.construction_tool()
 bspline = BSpline.from_arc(arc_tool)
 spline.apply_construction_tool(bspline)
 
-# Recreate ARC from SPLINE, if you ASSUME or KNOW it is an ARC:
+# ------------------------------------------------------------------------------
+# Recreate ARC from SPLINE, if you ASSUME or KNOW it represents an ARC:
 # for spline in msp.query("SPLINE):
 #     ...
+# ------------------------------------------------------------------------------
+
 # 1. get the B-spline construction tool from the SPLINE entity
 bspline = spline.construction_tool()
 max_t = bspline.max_t
@@ -59,13 +69,13 @@ arc_tool.add_to_layout(
 
 # This only works for flat B-splines in the xy-plane, a.k.a. 2D splines!
 
-# Check the assumption:
+# Verify the assumption:
 center = arc_tool.center
 radius = arc_tool.radius
 err = max(abs(radius - p.distance(center)) for p in (chk1, chk2))
 print(f"max error: {err:.6f}")
 
-# Warning: this does not proof that the assumption was correct, it is always
+# Warning: this does not proof that the assumption was correct, it's always
 # possible to create a diverging B-spline which matches the check points:
 
 foul = (4.5, 1)
@@ -78,9 +88,9 @@ msp.add_spline(
     },
 )
 
-# add check marks
+# add checkmarks
 for p in fit_points:
     msp.add_circle(p, radius=0.03, dxfattribs={"color": ezdxf.const.RED})
 
 zoom.objects(msp, [arc])
-doc.saveas(DIR / "arc_recreation.dxf")
+doc.saveas(CWD / "arc_recreation.dxf")
