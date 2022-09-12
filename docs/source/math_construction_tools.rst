@@ -2,7 +2,7 @@
 Math Construction Tools
 =======================
 
-This are links to tools which are located in the :mod:`ezdxf.math` core module:
+These are links to tools in the :mod:`ezdxf.math` core module:
 
 - :class:`ezdxf.math.ConstructionRay`
 - :class:`ezdxf.math.ConstructionLine`
