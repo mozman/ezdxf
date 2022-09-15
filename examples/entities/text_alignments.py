@@ -1,10 +1,20 @@
-# Copyright (c) 2013-2021, Manfred Moitzi
+# Copyright (c) 2013-2022, Manfred Moitzi
 # License: MIT License
-from pathlib import Path
+import pathlib
 import ezdxf
 from ezdxf import disassemble, options
 from ezdxf.enums import TextEntityAlignment
-DIR = Path("~/Desktop/Outbox").expanduser()
+
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example shows how to create all kinds of TEXT alignments.
+#
+# docs: https://ezdxf.mozman.at/docs/dxfentities/text.html
+# tutorial: https://ezdxf.mozman.at/docs/tutorials/text.html
+# ------------------------------------------------------------------------------
 
 
 def create_doc(filename):
@@ -135,4 +145,4 @@ def draw_insert_points(msp):
 
 
 if __name__ == "__main__":
-    create_doc(DIR / "text_alignments.dxf")
+    create_doc(CWD / "text_alignments.dxf")
