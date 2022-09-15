@@ -1,9 +1,19 @@
-# Copyright (c) 2013-2021 Manfred Moitzi
+# Copyright (c) 2013-2022 Manfred Moitzi
 # License: MIT License
-from pathlib import Path
+import pathlib
 import ezdxf
 
-OUTBOX = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example adds a MTEXT entity to the modelspace.
+#
+# docs: https://ezdxf.mozman.at/docs/dxfentities/mtext.html
+# tutorial: https://ezdxf.mozman.at/docs/tutorials/mtext.html
+# ------------------------------------------------------------------------------
+
 
 doc = ezdxf.new("R2007", setup=True)
 msp = doc.modelspace()
@@ -29,6 +39,6 @@ msp.add_mtext(text, attribs).set_location(insert=(0, 15))
 # result without complicated escape sequences.
 
 
-filename = "mtext.dxf"
-doc.saveas(OUTBOX / filename)
+filename = CWD / "mtext.dxf"
+doc.saveas(filename)
 print(f"saved {filename}")
