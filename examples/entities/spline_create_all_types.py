@@ -1,13 +1,23 @@
-# Copyright (c) 2020-2021, Manfred Moitzi
+# Copyright (c) 2020-2022, Manfred Moitzi
 # License: MIT License
 import math
-from pathlib import Path
+import pathlib
 import ezdxf
 from ezdxf import zoom
 from ezdxf.math import Vec3, BSpline
 
 
-DIR = Path("~/Desktop/outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example shows how to create all types of SPLINE entities.
+#
+# docs: https://ezdxf.mozman.at/docs/dxfentities/spline.html
+# tutorial: https://ezdxf.mozman.at/docs/tutorials/spline.html
+# ------------------------------------------------------------------------------
+
 
 points = Vec3.list([(1, 1), (4, 5), (7, 4), (10, 7), (12, 3), (7, 1)])
 closed_points = list(points)
@@ -28,7 +38,7 @@ def new_doc():
 
 def save(name):
     zoom.extents(msp, factor=1.1)
-    doc.saveas(DIR / name)
+    doc.saveas(CWD / name)
 
 
 def add_control_polyline(spline):
@@ -90,7 +100,7 @@ spline = msp.add_cad_spline_control_frame(
 add_fit_points(points)
 add_control_frame(spline)
 add_control_polyline(spline)
-save(DIR / "open_spline_from_fit_points.dxf")
+save(CWD / "open_spline_from_fit_points.dxf")
 
 # ------------------------------------------------------------------------------
 # OPEN SPLINE from fit points WITH given end tangents.
@@ -132,7 +142,7 @@ spline = msp.add_cad_spline_control_frame(
 )
 add_fit_points(points)
 add_control_frame(spline)
-save(DIR / "open_spline_from_fit_points_with_end_tangents.dxf")
+save(CWD / "open_spline_from_fit_points_with_end_tangents.dxf")
 
 # ------------------------------------------------------------------------------
 # Add SPLINE defined by control points from fit points.
@@ -151,7 +161,7 @@ spline = msp.add_spline_control_frame(
 add_fit_points(points)
 add_control_frame(spline)
 add_control_polyline(spline)
-save(DIR / "open_spline_by_add_spline_control_frame.dxf")
+save(CWD / "open_spline_by_add_spline_control_frame.dxf")
 
 # ------------------------------------------------------------------------------
 # Add CLOSED SPLINE defined by control points from fit points.
@@ -168,7 +178,7 @@ spline = msp.add_cad_spline_control_frame(
 add_control_frame(spline)
 add_control_polyline(spline)
 add_fit_points(points)
-save(DIR / "closed_spline_from_fit_points.dxf")
+save(CWD / "closed_spline_from_fit_points.dxf")
 
 # ------------------------------------------------------------------------------
 # Add smooth (C1) CLOSED SPLINE defined by control points from fit points
@@ -189,7 +199,7 @@ spline = msp.add_cad_spline_control_frame(
 add_control_frame(spline)
 add_control_polyline(spline)
 add_fit_points(points)
-save(DIR / "closed_spline_from_fit_points_smooth.dxf")
+save(CWD / "closed_spline_from_fit_points_smooth.dxf")
 
 # ------------------------------------------------------------------------------
 # Define SPLINE only by control points
@@ -211,7 +221,7 @@ spline = msp.add_open_spline(points, dxfattribs={"layer": "SPLINE"})
 
 add_control_frame(spline)
 add_control_polyline(spline)
-save(DIR / "open_clamped_spline_by_control_points.dxf")
+save(CWD / "open_clamped_spline_by_control_points.dxf")
 
 # ------------------------------------------------------------------------------
 # Create SPLINE from ARC
@@ -233,7 +243,7 @@ spline.apply_construction_tool(s)
 
 add_control_frame(spline)
 add_control_polyline(spline)
-save(DIR / "spline_from_arc.dxf")
+save(CWD / "spline_from_arc.dxf")
 
 # ------------------------------------------------------------------------------
 # Create SPLINE from ELLIPSE
@@ -256,7 +266,7 @@ spline.apply_construction_tool(s)
 
 add_control_frame(spline)
 add_control_polyline(spline)
-save(DIR / "spline_from_ellipse.dxf")
+save(CWD / "spline_from_ellipse.dxf")
 
 # ------------------------------------------------------------------------------
 # Open unclamped SPLINE by control points
@@ -268,4 +278,4 @@ spline.set_uniform(points)
 
 add_control_frame(spline)
 add_control_polyline(spline)
-save(DIR / "open_unclamped_spline_by_control_points.dxf")
+save(CWD / "open_unclamped_spline_by_control_points.dxf")
