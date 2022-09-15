@@ -1158,7 +1158,14 @@ Bezier
 Bezier4P
 --------
 
-.. autoclass:: Bezier4P
+.. class:: Bezier4P
+
+    Implements an optimized cubic `Bézier curve`_ for exact 4 control points.
+
+    - immutable
+    - 2D control points in, returns 2D results as :class:`Vec2` objects
+    - 3D control points in, returns 3D results as :class:`Vec3` objects
+
 
     .. autoattribute:: control_points
 
@@ -1179,7 +1186,13 @@ Bezier4P
 Bezier3P
 --------
 
-.. autoclass:: Bezier3P
+.. class:: Bezier3P
+
+    Implements an optimized quadratic `Bézier curve`_ for exact 3 control points.
+
+    - immutable
+    - 2D control points in, returns 2D results as :class:`Vec2` objects
+    - 3D control points in, returns 3D results as :class:`Vec3` objects
 
     .. autoattribute:: control_points
 

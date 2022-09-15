@@ -72,7 +72,9 @@ continuous to any degree.
 
 
 class Bezier:
-    """A `Bézier curve`_ is a parametric curve used in computer graphics and
+    """Generic Bézier curve of any degree.
+
+    A `Bézier curve`_ is a parametric curve used in computer graphics and
     related fields. Bézier curves are used to model smooth curves that can be
     scaled indefinitely. "Paths", as they are commonly referred to in image
     manipulation programs, are combinations of linked Bézier curves.
@@ -81,7 +83,8 @@ class Bezier:
 
     This is a generic implementation which works with any count of definition
     points greater than 2, but it is a simple and slow implementation. For more
-    performance look at the specialized :class:`Bezier4P` class.
+    performance look at the specialized :class:`Bezier4P` and :class:`Bezier3P`
+    classes.
 
     Objects are immutable.
 
