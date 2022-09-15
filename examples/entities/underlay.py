@@ -1,6 +1,21 @@
-# Copyright (c) 2016-2021 Manfred Moitzi
+# Copyright (c) 2016-2022 Manfred Moitzi
 # License: MIT License
+import pathlib
 import ezdxf
+import shutil
+
+
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example shows how to use UNDERLAY objects.
+#
+# This does not work reliable across CAD applications - don't use UNDERLAY objects!
+# docs: https://ezdxf.mozman.at/docs/dxfentities/underlay.html
+# tutorial: https://ezdxf.mozman.at/docs/tutorials/underlay.html
+# ------------------------------------------------------------------------------
 
 dwg = ezdxf.new("R2000")  # underlay requires the DXF R2000 format or newer
 pdf_underlay_def = dwg.add_underlay_def(
@@ -32,4 +47,8 @@ pdf_defs = dwg.objects.query(
     "PDFDEFINITION"
 )  # get all pdf underlay defs in drawing
 
-dwg.saveas("underlay.dxf")
+dwg.saveas(CWD / "underlay.dxf")
+
+# copy underlay files to the same folder as the DXF file:
+for name in ["underlay.pdf", "underlay.dwf", "underlay.dgn"]:
+    shutil.copy(name, CWD / name)
