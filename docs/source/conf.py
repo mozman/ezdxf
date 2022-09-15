@@ -34,6 +34,7 @@ html_context = {
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
+    'sphinx.ext.autosummary',
 ]
 autodoc_typehints_format = "short"
 # autodoc_type_aliases = {"Vertex": "UVec"}

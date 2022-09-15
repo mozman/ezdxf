@@ -10,8 +10,27 @@ Math core module: :mod:`ezdxf.math`
 These are the core math functions and classes which should be imported from
 :mod:`ezdxf.math`.
 
-Functions
-=========
+
+Utility Functions
+=================
+
+.. autosummary::
+    :nosignatures:
+
+    arc_angle_span_deg
+    arc_angle_span_rad
+    arc_chord_length
+    arc_segment_count
+    area
+    closest_point
+    ellipse_param_span
+    has_matrix_2d_stretching
+    has_matrix_3d_stretching
+    linspace
+    open_uniform_knot_vector
+    required_knot_values
+    uniform_knot_vector
+    xround
 
 .. autofunction:: closest_point
 
@@ -44,7 +63,16 @@ Functions
 .. _bulge_related_functions:
 
 Bulge Related Functions
------------------------
+=======================
+
+.. autosummary::
+    :nosignatures:
+
+    arc_to_bulge
+    bulge_3_points
+    bulge_center
+    bulge_radius
+    bulge_to_arc
 
 .. seealso::
 
@@ -62,6 +90,22 @@ Bulge Related Functions
 
 2D Graphic Functions
 ====================
+
+.. autosummary::
+    :nosignatures:
+
+    convex_hull_2d
+    distance_point_line_2d
+    intersect_polylines_2d
+    intersection_line_line_2d
+    is_convex_polygon_2d
+    is_point_in_polygon_2d
+    is_point_left_of_line
+    is_point_on_line_2d
+    offset_vertices_2d
+    point_to_line_relation
+    rytz_axis_construction
+
 
 .. autofunction:: convex_hull_2d
 
@@ -103,6 +147,47 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 3D Graphic Functions
 ====================
+
+.. autosummary::
+    :nosignatures:
+
+    basic_transformation
+    best_fit_normal
+    bezier_to_bspline
+    closed_uniform_bspline
+    cubic_bezier_bbox
+    cubic_bezier_from_3p
+    cubic_bezier_from_arc
+    cubic_bezier_from_ellipse
+    cubic_bezier_interpolation
+    distance_point_line_3d
+    estimate_end_tangent_magnitude
+    estimate_tangents
+    fit_points_to_cad_cv
+    fit_points_to_cubic_bezier
+    global_bspline_interpolation
+    have_bezier_curves_g1_continuity
+    intersect_polylines_3d
+    intersection_line_line_3d
+    intersection_line_polygon_3d
+    intersection_ray_polygon_3d
+    intersection_ray_ray_3d
+    is_planar_face
+    linear_vertex_spacing
+    local_cubic_bspline_interpolation
+    normal_vector_3p
+    open_uniform_bspline
+    quadratic_bezier_bbox
+    quadratic_bezier_from_3p
+    quadratic_to_cubic_bezier
+    rational_bspline_from_arc
+    rational_bspline_from_ellipse
+    safe_normal_vector
+    spherical_envelope
+    split_bezier
+    split_polygon_by_plane
+    subdivide_face
+    subdivide_ngons
 
 .. seealso::
 
@@ -186,6 +271,13 @@ Example for a closed collinear shape, which creates 2 additional vertices and th
 
 Transformation Classes
 ======================
+
+.. autosummary::
+    :nosignatures:
+
+    Matrix44
+    OCS
+    UCS
 
 OCS Class
 ---------
@@ -350,6 +442,23 @@ Matrix44
 
 Basic Construction Classes
 ==========================
+
+.. autosummary::
+    :nosignatures:
+
+    BoundingBox
+    BoundingBox2d
+    ConstructionArc
+    ConstructionBox
+    ConstructionCircle
+    ConstructionEllipse
+    ConstructionLine
+    ConstructionPolyline
+    ConstructionRay
+    Plane
+    Shape2d
+    Vec2
+    Vec3
 
 UVec
 ----
@@ -948,6 +1057,17 @@ Shape2d
 
 Curves
 ======
+
+.. autosummary::
+    :nosignatures:
+
+    ApproxParamT
+    BSpline
+    Bezier
+    Bezier3P
+    Bezier4P
+    BezierSurface
+    EulerSpiral
 
 BSpline
 -------
