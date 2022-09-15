@@ -1,8 +1,20 @@
-# Copyright (c) 2016-2021 Manfred Moitzi
+# Copyright (c) 2016-2022 Manfred Moitzi
 # License: MIT License
+import pathlib
 import ezdxf
 
-doc = ezdxf.new("R2000")
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example adds an ellipse to the modelspace.
+#
+# docs: https://ezdxf.mozman.at/docs/dxfentities/ellipse.html
+# ------------------------------------------------------------------------------
+
+# setup=True is required to get the DASHED linetype.
+doc = ezdxf.new("R2000", setup=True)
 modelspace = doc.modelspace()
 modelspace.add_ellipse(
     center=(0, 0),
@@ -14,6 +26,6 @@ modelspace.add_ellipse(
     },
 )
 
-filename = "ellipse.dxf"
+filename = CWD / "ellipse.dxf"
 doc.saveas(filename)
-print("drawing '%s' created.\n" % filename)
+print(f"drawing '{filename}' created.")
