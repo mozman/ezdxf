@@ -1,10 +1,18 @@
-# Copyright (c) 2016-2021 Manfred Moitzi
+# Copyright (c) 2016-2022 Manfred Moitzi
 # License: MIT License
-from pathlib import Path
+import pathlib
 import ezdxf
 from ezdxf.gfxattribs import GfxAttribs
 
-DIR = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example shows how to use subdivision and creases at a MESH entity.
+#
+# docs: https://ezdxf.mozman.at/docs/dxfentities/mesh.html
+# ------------------------------------------------------------------------------
 
 
 # 8 corner vertices
@@ -34,6 +42,10 @@ msp = doc.modelspace()
 mesh = msp.add_mesh(dxfattribs=GfxAttribs(color=6))
 mesh.dxf.blend_crease = 1
 mesh.dxf.subdivision_levels = 3
+
+
+# The bigger the crease value the more the edge will be protected from
+# subdivision.
 crease = 3.0
 
 with mesh.edit_data() as mesh_data:
@@ -45,4 +57,4 @@ with mesh.edit_data() as mesh_data:
     mesh_data.add_edge_crease(2, 3, crease)
     mesh_data.add_edge_crease(3, 0, crease)
 
-doc.saveas(DIR / f"cube_mesh_{int(crease)}.dxf")
+doc.saveas(CWD / f"cube_mesh_crease_value_{int(crease)}.dxf")
