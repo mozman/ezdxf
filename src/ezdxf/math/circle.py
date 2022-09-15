@@ -14,7 +14,7 @@ __all__ = ["ConstructionCircle"]
 
 
 class ConstructionCircle:
-    """Circle construction tool.
+    """Construction tool for 2D circles.
 
     Args:
         center: center point as :class:`Vec2` compatible object

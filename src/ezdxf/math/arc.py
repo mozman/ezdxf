@@ -20,11 +20,11 @@ QUARTER_ANGLES = [0, math.pi * 0.5, math.pi, math.pi * 1.5]
 
 
 class ConstructionArc:
-    """This is a helper class to create parameters for the DXF
-    :class:`~ezdxf.entities.Arc` class.
+    """Construction tool for 2D arcs.
 
     :class:`ConstructionArc` represents a 2D arc in the xy-plane, use an
-    :class:`UCS` to place arc in 3D space, see method :meth:`add_to_layout`.
+    :class:`UCS` to place a DXF :class:`~ezdxf.entities.Arc` entity in 3D space,
+    see method :meth:`add_to_layout`.
 
     Implements the 2D transformation tools: :meth:`translate`,
     :meth:`scale_uniform` and :meth:`rotate_z`

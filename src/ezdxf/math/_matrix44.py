@@ -28,7 +28,7 @@ def floats(items: Iterable) -> List[float]:
 
 
 class Matrix44:
-    """This is a 4x4 `transformation matrix`_.
+    """An optimized 4x4 `transformation matrix`_.
 
     The utility functions for constructing transformations and transforming
     vectors and points assumes that vectors are stored as row vectors, meaning

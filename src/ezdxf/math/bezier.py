@@ -72,7 +72,7 @@ continuous to any degree.
 
 
 class Bezier:
-    """Generic Bézier curve of any degree.
+    """Generic `Bézier curve`_ of any degree.
 
     A `Bézier curve`_ is a parametric curve used in computer graphics and
     related fields. Bézier curves are used to model smooth curves that can be

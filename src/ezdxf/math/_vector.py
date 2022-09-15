@@ -14,8 +14,9 @@ isclose = partial(math.isclose, abs_tol=ABS_TOL)
 
 
 class Vec3:
-    """
-    This is an immutable universal 3D vector object. This class is optimized for universality not for speed.
+    """Immutable 3D vector class.
+
+    This class is optimized for universality not for speed.
     Immutable means you can't change (x, y, z) components after initialization::
 
         v1 = Vec3(1, 2, 3)
@@ -33,7 +34,8 @@ class Vec3:
         - ``Vec3(x, y)``, returns ``Vec3(x, y, 0)``
         - ``Vec3(x, y, z)``, returns  ``Vec3(x, y, z)``
 
-    Addition, subtraction, scalar multiplication and scalar division left and right handed are supported::
+    Addition, subtraction, scalar multiplication and scalar division left and
+    right-handed are supported::
 
         v = Vec3(1, 2, 3)
         v + (1, 2, 3) == Vec3(2, 4, 6)
@@ -557,19 +559,12 @@ def lerp(p1: "UVec", p2: "UVec", factor: float = 0.5) -> "Vec3":
 
 
 class Vec2:
-    """
-    :class:`Vec2` represents a special 2D vector ``(x, y)``. The :class:`Vec2`
-    class is optimized for speed and not immutable, :meth:`iadd`, :meth:`isub`,
-    :meth:`imul` and :meth:`idiv` modifies the vector itself, the :class:`Vec3`
-    class returns a new object.
-
-    :class:`Vec2` initialization accepts float-tuples ``(x, y[, z])``, two
-    floats or any object providing :attr:`x` and :attr:`y` attributes like
-    :class:`Vec2` and :class:`Vec3` objects.
+    """Immutable 2D vector class.
 
     Args:
-        v: vector object with :attr:`x` and :attr:`y` attributes/properties or a sequence of float ``[x, y, ...]`` or
-           x-axis as float if argument `y` is not ``None``
+        v: vector object with :attr:`x` and :attr:`y` attributes/properties or a
+           sequence of float ``[x, y, ...]`` or x-axis as float if argument `y`
+           is not ``None``
         y: second float for :code:`Vec2(x, y)`
 
     :class:`Vec2` implements a subset of :class:`Vec3`.
@@ -592,10 +587,7 @@ class Vec2:
 
     @property
     def vec3(self) -> "Vec3":
-        """
-        Returns a 3D vector.
-
-        """
+        """Returns a 3D vector."""
         return Vec3(self.x, self.y, 0)
 
     def round(self, ndigits=None) -> "Vec2":

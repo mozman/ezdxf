@@ -354,7 +354,7 @@ class BoundingBox(AbstractBoundingBox):
 
 
 class BoundingBox2d(AbstractBoundingBox):
-    """Optimized 2D bounding box.
+    """2D bounding box.
 
     Args:
         vertices: iterable of ``(x, y[, z])`` tuples or :class:`Vec3` objects

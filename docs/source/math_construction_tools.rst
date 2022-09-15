@@ -22,3 +22,4 @@ These are links to tools in the :mod:`ezdxf.math` core module:
     ezdxf.math.BezierSurface
     ezdxf.math.EulerSpiral
 
+.. _Bézier curve: https://en.wikipedia.org/wiki/B%C3%A9zier_curve

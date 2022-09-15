@@ -12,7 +12,9 @@ __all__ = ["Shape2d"]
 
 
 class Shape2d:
-    """2D geometry object as list of :class:`Vec2` objects, vertices can be
+    """Construction tools for 2D shapes.
+
+    A 2D geometry object as list of :class:`Vec2` objects, vertices can be
     moved, rotated and scaled.
 
     Args:

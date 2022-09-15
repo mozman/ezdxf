@@ -22,7 +22,7 @@ ABS_TOL = 1e-12
 
 
 class ConstructionRay:
-    """Infinite 2D construction ray as immutable object.
+    """Construction tool for infinite 2D rays.
 
     Args:
         p1: definition point 1
@@ -194,9 +194,11 @@ class ConstructionRay:
 
 
 class ConstructionLine:
-    """2D ConstructionLine is similar to :class:`ConstructionRay`, but has a
-    start- and endpoint. The direction of line goes from start- to endpoint,
-    "left of line" is always in relation to this line direction.
+    """Construction tool for 2D lines.
+
+    The :class:`ConstructionLine` class is similar to :class:`ConstructionRay`,
+    but has a start- and endpoint. The direction of line goes from start- to
+    endpoint, "left of line" is always in relation to this line direction.
 
     Args:
         start: start point of line as :class:`Vec2` compatible object

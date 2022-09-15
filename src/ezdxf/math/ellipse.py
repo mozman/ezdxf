@@ -31,7 +31,7 @@ HALF_PI = math.pi / 2.0
 
 
 class ConstructionEllipse:
-    """This is a helper class to create parameters for 3D ellipses.
+    """Construction tool for 3D ellipsis.
 
     Args:
         center: 3D center point
@@ -40,7 +40,7 @@ class ConstructionEllipse:
         ratio: ratio of minor axis to major axis
         start_param: start param in radians
         end_param: end param in radians
-        ccw: is counter clockwise flag - swaps start- and end param if ``False``
+        ccw: is counter-clockwise flag - swaps start- and end param if ``False``
 
     """
 

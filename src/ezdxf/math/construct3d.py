@@ -262,8 +262,10 @@ class PlaneLocationState(IntEnum):
 
 
 class Plane:
-    """Represents a plane in 3D space as normal vector and the perpendicular
-    distance from origin.
+    """Construction tool for 3D planes.
+
+    Represents a plane in 3D space as a normal vector and the perpendicular
+    distance from the origin.
     """
 
     __slots__ = ("_normal", "_distance_from_origin")

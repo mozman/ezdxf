@@ -39,7 +39,9 @@ REL_TOL = 1e-9
 
 
 class ConstructionPolyline(Sequence):
-    """A polyline construction tool to measure, interpolate and divide anything
+    """Construction tool for 3D polylines.
+
+    A polyline construction tool to measure, interpolate and divide anything
     that can be approximated or flattened into vertices.
     This is an immutable data structure which supports the :class:`Sequence`
     interface.

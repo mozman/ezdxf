@@ -20,7 +20,6 @@ def check_if_in_valid_range(t: float) -> None:
 
 
 class Bezier3P:
-    __slots__ = ("_control_points", "_offset")
     """Implements an optimized quadratic `Bézier curve`_ for exact 3 control
     points.
 
@@ -35,6 +34,7 @@ class Bezier3P:
             :class:`Vec3` compatible objects.
 
     """
+    __slots__ = ("_control_points", "_offset")
 
     def __init__(self, defpoints: Sequence[UVec]):
         if len(defpoints) == 3:

@@ -15,8 +15,7 @@ __all__ = ["ConstructionBox"]
 
 
 class ConstructionBox:
-    """
-    Helper class to create rectangles.
+    """Construction tool for 2D rectangles.
 
     Args:
         center: center of rectangle

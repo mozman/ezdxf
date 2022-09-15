@@ -51,7 +51,6 @@ def bernstein3_d1(t: float) -> Sequence[float]:
 
 
 class Bezier4P:
-    __slots__ = ("_control_points", "_offset")
     """Implements an optimized cubic `Bézier curve`_ for exact 4 control points.
 
     A `Bézier curve`_ is a parametric curve, parameter `t` goes from 0 to 1,
@@ -68,6 +67,8 @@ class Bezier4P:
             :class:`Vec3` compatible objects.
 
     """
+
+    __slots__ = ("_control_points", "_offset")
 
     def __init__(self, defpoints: Sequence[UVec]):
         if len(defpoints) == 4:
