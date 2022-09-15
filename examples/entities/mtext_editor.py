@@ -1,6 +1,6 @@
-# Copyright (c) 2021 Manfred Moitzi
+# Copyright (c) 2021-2022 Manfred Moitzi
 # License: MIT License
-from pathlib import Path
+import pathlib
 import ezdxf
 from ezdxf.enums import MTextParagraphAlignment
 from ezdxf.tools.text import (
@@ -9,7 +9,17 @@ from ezdxf.tools.text import (
 )
 from ezdxf.tools.text_layout import lorem_ipsum
 
-OUTBOX = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example shows how to use the MTextEditor to compose MTEXT content.
+#
+# docs: https://ezdxf.mozman.at/docs/dxfentities/mtext.html
+# tutorial: https://ezdxf.mozman.at/docs/tutorials/mtext.html
+# ------------------------------------------------------------------------------
+
 ATTRIBS = {
     "char_height": 0.7,
     "style": "OpenSans",
@@ -223,11 +233,11 @@ def create(dxfversion):
 
     Inline MTEXT codes are not supported by every CAD application and even
     if inline codes are supported the final rendering may vary.
-    Inline codes are very well supported by AutoCAD (of course!) and BricsCAD,
+    Inline codes are well-supported by AutoCAD (of course!) and BricsCAD,
     but don't expect the same rendering in other CAD applications.
 
-    The drawing add-on of ezdxf may support some features in the future,
-    but very likely with a different rendering result than AutoCAD/BricsCAD.
+    The drawing add-on of ezdxf support some of these features, but with a
+    different rendering result than AutoCAD/BricsCAD.
 
     """
     doc = ezdxf.new(dxfversion, setup=True)
@@ -248,6 +258,6 @@ def create(dxfversion):
 
 for dxfversion in ["R2000", "R2004", "R2007", "R2010", "R2013", "R2018"]:
     doc = create(dxfversion)
-    filename = f"mtext_editor_{dxfversion}.dxf"
-    doc.saveas(OUTBOX / filename)
+    filename = CWD / f"mtext_editor_{dxfversion}.dxf"
+    doc.saveas(filename)
     print(f"saved {filename}")
