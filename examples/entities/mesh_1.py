@@ -1,12 +1,21 @@
-# Copyright (c) 2016-2021 Manfred Moitzi
+# Copyright (c) 2016-2022 Manfred Moitzi
 # License: MIT License
-from pathlib import Path
+import pathlib
 import ezdxf
 from ezdxf.render import MeshBuilder
 from ezdxf.gfxattribs import GfxAttribs
 from ezdxf.math import Matrix44
 
-DIR = Path("~/Desktop/Outbox").expanduser()
+
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example shows how to add a MESH entity by setting vertices and faces.
+#
+# docs: https://ezdxf.mozman.at/docs/dxfentities/mesh.html
+# ------------------------------------------------------------------------------
 
 
 # 8 corner vertices
@@ -30,6 +39,10 @@ cube_faces = [
     [3, 7, 6, 2],
     [0, 4, 7, 3],
 ]
+# The DXF format doesn't care about the face orientation, but it is a good
+# practice to use always the same orientation. The best choice is to use
+# outward pointing faces, the vertices are counter-clockwise oriented around the
+# normal vector of each face.
 
 doc = ezdxf.new("R2018")
 msp = doc.modelspace()
@@ -45,4 +58,4 @@ mesh_builder.render_polyface(
      dxfattribs=GfxAttribs(color=6),
      matrix=Matrix44.translate(5, 0, 0),
  )
-doc.saveas(DIR / "cube_mesh_1.dxf")
+doc.saveas(CWD / "cube_mesh_1.dxf")
