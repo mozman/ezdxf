@@ -1,6 +1,6 @@
-# Copyright (c) 2020-2021, Manfred Moitzi
-# License: MIT License
-from pathlib import Path
+#  Copyright (c) 2022, Manfred Moitzi
+#  License: MIT License
+import pathlib
 import math
 import ezdxf
 from ezdxf import zoom
@@ -17,7 +17,10 @@ from ezdxf.math import (
 )
 from ezdxf.render import random_2d_path
 
-DIR = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path("../examples/entities")
+
 points = Vec3.list([(0, 0), (0, 10), (10, 10), (20, 10), (20, 0)])
 closed_points = list(points)
 closed_points.append(closed_points[0])
@@ -51,7 +54,7 @@ spline = msp.add_spline(
 )
 
 zoom.extents(msp)
-doc.saveas(DIR / "concept-0-fit-points-only.dxf")
+doc.saveas(CWD / "concept-0-fit-points-only.dxf")
 
 # ------------------------------------------------------------------------------
 # SPLINE from fit points WITH given end tangents.
@@ -82,7 +85,7 @@ spline.dxf.start_tangent = Vec3.from_deg_angle(100)
 spline.dxf.end_tangent = Vec3.from_deg_angle(-100)
 
 zoom.extents(msp)
-doc.saveas(DIR / "concept-1-fit-points-and-tangents.dxf")
+doc.saveas(CWD / "concept-1-fit-points-and-tangents.dxf")
 
 # 3. Need control vertices to render the B-spline but start- and
 # end tangents are not stored in the DXF file like in scenario 1.
@@ -108,7 +111,7 @@ msp.add_spline(
 )
 
 zoom.extents(msp)
-doc.saveas(DIR / "concept-2-tangents-estimated.dxf")
+doc.saveas(CWD / "concept-2-tangents-estimated.dxf")
 
 # Theory Check:
 doc, msp = setup()
@@ -132,7 +135,7 @@ msp.add_spline(
 )
 
 zoom.extents(msp)
-doc.saveas(DIR / "concept-3-theory-check.dxf")
+doc.saveas(CWD / "concept-3-theory-check.dxf")
 
 # 1. If tangents are given (stored in DXF) the magnitude of the input tangents for the
 #    interpolation function is "total chord length".
@@ -169,7 +172,7 @@ msp.add_spline(
 ).apply_construction_tool(s)
 
 zoom.extents(msp)
-doc.saveas(DIR / "fit_points_to_cad_cv_with_tangents.dxf")
+doc.saveas(CWD / "fit_points_to_cad_cv_with_tangents.dxf")
 
 # ------------------------------------------------------------------------------
 # SPLINE from fit points WITHOUT given end tangents.
@@ -203,7 +206,7 @@ msp.add_spline(
 ).apply_construction_tool(s)
 
 zoom.extents(msp)
-doc.saveas(DIR / "concept-4-cubic-bezier-curves.dxf")
+doc.saveas(CWD / "concept-4-cubic-bezier-curves.dxf")
 
 # ----------------------------------------------------------------------------
 # A better way to create a SPLINE defined by control vertices from fit points
@@ -237,7 +240,7 @@ for color, mode in [(1, "dif"), (4, "3-p"), (5, "5-p"), (6, "bez")]:
 # This is the ONLY scenario where the cubic Bézier interpolation
 # works better (perfect) than the Global Curve Interpolation!
 zoom.extents(msp)
-doc.saveas(DIR / "fit_points_to_cubic_bezier_open.dxf")
+doc.saveas(CWD / "fit_points_to_cubic_bezier_open.dxf")
 
 # ------------------------------------------------------------------------------
 # Closed SPLINE from fit points WITHOUT given end tangents.
@@ -266,7 +269,7 @@ msp.add_spline(
 
 # Global curve interpolation works better than cubic Bézier interpolation!
 zoom.extents(msp)
-doc.saveas(DIR / "fit_points_to_cubic_bezier_closed.dxf")
+doc.saveas(CWD / "fit_points_to_cubic_bezier_closed.dxf")
 
 # ------------------------------------------------------------------------------
 # Closed SPLINE from fit points WITH given end tangents.
@@ -298,7 +301,7 @@ msp.add_spline(
 # scenario.
 
 zoom.extents(msp)
-doc.saveas(DIR / "fit_points_to_cad_cv_closed_with_tangents.dxf")
+doc.saveas(CWD / "fit_points_to_cad_cv_closed_with_tangents.dxf")
 
 # ------------------------------------------------------------------------------
 # Random walk open SPLINE from fit points
@@ -325,4 +328,4 @@ for color, mode in [(1, "dif"), (4, "3-p"), (5, "5-p"), (6, "bez")]:
     ).apply_construction_tool(fit_points_to_cad_cv(walk, estimate=mode))
 
 zoom.extents(msp, 1.1)
-doc.saveas(DIR / "random_walk.dxf")
+doc.saveas(CWD / "random_walk.dxf")
