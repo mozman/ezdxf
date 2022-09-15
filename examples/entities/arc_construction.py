@@ -28,9 +28,11 @@ for count in range(12):
     modelspace.add_arc(
         center=(0, 0),
         radius=10 + count,
-        start_angle=count * delta,
-        end_angle=(count + 1) * delta,
+        start_angle=count * delta,  # in degrees
+        end_angle=(count + 1) * delta,  # in degrees
     )
+    # The curve is always drawn counter-clockwise from the start angle to the
+    # end angle.
 
 # ------------------------------------------------------------------------------
 # create a 3D arc from 3 points in WCS
