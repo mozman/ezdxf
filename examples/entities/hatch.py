@@ -1,11 +1,20 @@
-# Copyright (c) 2015-2021 Manfred Moitzi
+# Copyright (c) 2015-2022 Manfred Moitzi
 # License: MIT License
-from pathlib import Path
+import pathlib
 import ezdxf
 from ezdxf import zoom
 from ezdxf.lldxf import const
 
-DIR = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# Multiple example for creating a HATCH entity.
+#
+# docs: https://ezdxf.mozman.at/docs/dxfentities/hatch.html
+# tutorial: https://ezdxf.mozman.at/docs/tutorials/hatch.html
+# ------------------------------------------------------------------------------
 
 
 def create_solid_polyline_hatch():
@@ -17,7 +26,7 @@ def create_solid_polyline_hatch():
         [(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)]
     )
     zoom.extents(msp)
-    doc.saveas(DIR / "hatch_solid_polyline.dxf")  # save DXF drawing
+    doc.saveas(CWD / "hatch_solid_polyline.dxf")  # save DXF drawing
 
 
 def create_pattern_fill_polyline_hatch():
@@ -30,7 +39,7 @@ def create_pattern_fill_polyline_hatch():
         [(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)]
     )
     zoom.extents(msp)
-    doc.saveas(DIR / "hatch_pattern_fill_polyline.dxf")  # save DXF drawing
+    doc.saveas(CWD / "hatch_pattern_fill_polyline.dxf")
 
 
 def create_pattern_fill_hatch_with_bgcolor():
@@ -44,7 +53,7 @@ def create_pattern_fill_hatch_with_bgcolor():
     )
     hatch.bgcolor = (100, 200, 100)
     zoom.extents(msp)
-    doc.saveas(DIR / "hatch_pattern_fill_with_bgcolor.dxf")  # save DXF drawing
+    doc.saveas(CWD / "hatch_pattern_fill_with_bgcolor.dxf")
 
 
 def using_hatch_style():
@@ -106,7 +115,7 @@ def using_hatch_style():
     place_square_2(hatch_style_1b, 10, 10)
     place_square_2(hatch_style_2b, 20, 10)
     zoom.extents(msp)
-    doc.saveas(DIR / "hatch_styles_examples.dxf")  # save DXF drawing
+    doc.saveas(CWD / "hatch_styles_examples.dxf")
 
 
 def using_hatch_style_with_edge_path():
@@ -179,9 +188,7 @@ def using_hatch_style_with_edge_path():
     place_square_2(hatch_style_1b, 15, 15)
     place_square_2(hatch_style_2b, 30, 15)
     zoom.extents(msp)
-    doc.saveas(
-        DIR / "hatch_styles_examples_with_edge_path.dxf"
-    )  # save DXF drawing
+    doc.saveas(CWD / "hatch_styles_examples_with_edge_path.dxf")
 
 
 def using_hatch_with_spline_edge():
@@ -205,12 +212,13 @@ def using_hatch_with_spline_edge():
     path.add_line((0, 0), (8, 0))
     path.add_spline_control_frame(fit_points=fitpoints)
     zoom.extents(msp)
-    doc.saveas(DIR / "hatch_with_spline_edge.dxf")  # save DXF drawing
+    doc.saveas(CWD / "hatch_with_spline_edge.dxf")  # save DXF drawing
 
 
-create_solid_polyline_hatch()
-create_pattern_fill_polyline_hatch()
-create_pattern_fill_hatch_with_bgcolor()
-using_hatch_style()
-using_hatch_style_with_edge_path()
-using_hatch_with_spline_edge()
+if __name__ == '__main__':
+    create_solid_polyline_hatch()
+    create_pattern_fill_polyline_hatch()
+    create_pattern_fill_hatch_with_bgcolor()
+    using_hatch_style()
+    using_hatch_style_with_edge_path()
+    using_hatch_with_spline_edge()
