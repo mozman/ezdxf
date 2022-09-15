@@ -26,6 +26,13 @@ CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
     CWD = pathlib.Path()
 
+# ------------------------------------------------------------------------------
+# This example shows how to create MULTILEADER entities.
+#
+# docs: https://ezdxf.mozman.at/docs/dxfentities/mleader.html
+# tutorial: https://ezdxf.mozman.at/docs/tutorials/mleader.html
+# ------------------------------------------------------------------------------
+
 DXFVERSION = "R2013"
 
 
@@ -311,12 +318,12 @@ def make_template(name: str):
 
 
 if __name__ == "__main__":
-    # make_template("brics_block")
-    # quick_mtext_horizontal("mleader_quick_mtext_horizontal")
-    # quick_mtext_vertical("mleader_quick_mtext_vertical")
-    # simple_mtext_content_horizontal("mleader_simple_mtext_horizontal")
-    # simple_mtext_content_vertical("mleader_simple_mtext_vertical")
-    # all_mtext_content_horizontal("mleader_all_mtext_horizontal")
+    make_template("brics_block")
+    quick_mtext_horizontal("mleader_quick_mtext_horizontal")
+    quick_mtext_vertical("mleader_quick_mtext_vertical")
+    simple_mtext_content_horizontal("mleader_simple_mtext_horizontal")
+    simple_mtext_content_vertical("mleader_simple_mtext_vertical")
+    all_mtext_content_horizontal("mleader_all_mtext_horizontal")
 
     # only block scaling - dogleg_length and arrow_size is not affected
     block_content_horizontal(
