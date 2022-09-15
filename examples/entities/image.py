@@ -1,11 +1,26 @@
-# Copyright (c) 2016-2021 Manfred Moitzi
+# Copyright (c) 2016-2022 Manfred Moitzi
 # License: MIT License
+import pathlib
 import ezdxf
 import os
+import shutil
+
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example adds an image to the DXF file.
+#
+# My advice: Do not use pixel images in DXF files!
+# docs: https://ezdxf.mozman.at/docs/dxfentities/ellipse.html
+# ------------------------------------------------------------------------------
 
 IMAGE_PATH = "mycat.jpg"
 ABS_IMAGE_PATH = os.path.abspath(IMAGE_PATH)
-doc = ezdxf.new("R2004")  # image requires the DXF 2000 or newer format
+
+# The IMAGE entity requires the DXF R2000 or newer format:
+doc = ezdxf.new("R2004")
 my_image_def = doc.add_image_def(
     filename=ABS_IMAGE_PATH, size_in_pixel=(640, 360)
 )
@@ -44,4 +59,20 @@ images = msp.query("IMAGE")
 # and there can be multiple references of the same picture in a drawing.
 
 
-doc.saveas("image.dxf")
+doc.saveas(CWD / "image_abs.dxf")
+
+# The IMAGE reference by absolute path works best, but it's a problem if you
+# want to distribute your DXF files.
+# IMPORTANT: This does NOT work with Autodesk products like DWG TrueView or AutoCAD!
+
+my_image_def.dxf.filename = IMAGE_PATH
+doc.saveas(CWD / "image_rel.dxf")
+
+# copy the image file to the same folder as the DXF document
+shutil.copy(IMAGE_PATH, CWD / IMAGE_PATH)
+
+# The relative path works with BricsCAD but not with AutoCAD.
+
+# ------------------------------------------------------------------------------
+# My advice: Do not use pixel images in DXF files!
+# ------------------------------------------------------------------------------
