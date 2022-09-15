@@ -1,39 +1,48 @@
-# Purpose: using splines
-# Copyright (c) 2014-2021, Manfred Moitzi
+# Copyright (c) 2014-2022, Manfred Moitzi
 # License: MIT License
 from typing import cast
+import pathlib
 import ezdxf
-from ezdxf.math.bspline import global_bspline_interpolation
+from ezdxf.math.bspline import fit_points_to_cad_cv
 from ezdxf.math import BSpline, Vec3
 from ezdxf.entities import Spline
 
-new = ezdxf.new
-readfile = ezdxf.readfile
+
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example shows how to create and edit SPLINE entities.
+#
+# docs: https://ezdxf.mozman.at/docs/dxfentities/spline.html
+# tutorial: https://ezdxf.mozman.at/docs/tutorials/spline.html
+# ------------------------------------------------------------------------------
+
+
+def fit_spline():
+    doc = ezdxf.new("R2000")
+    fit_points = [(0, 0, 0), (750, 500, 0), (1750, 500, 0), (2250, 1250, 0)]
+    msp = doc.modelspace()
+    spline = msp.add_spline(fit_points)
+    spline.dxf.start_tangent = (1, 0, 0)
+    spline.dxf.end_tangent = (0, 1, 0)
+    doc.saveas(CWD / "Spline_R2000_fit_spline.dxf")
 
 
 def clone_spline():
-    doc = readfile("Spline_R2000_fit_spline.dxf")
+    doc = ezdxf.readfile(CWD / "Spline_R2000_fit_spline.dxf")
     msp = doc.modelspace()
     spline = cast(Spline, msp.query("SPLINE").first)
     # delete the existing spline from model space and drawing database
     msp.delete_entity(spline)
     # add a new spline
     msp.add_spline(spline.fit_points)
-    doc.saveas("Spline_R2000_clone_Spline.dxf")
-
-
-def fit_spline():
-    doc = new("R2000")
-    fit_points = [(0, 0, 0), (750, 500, 0), (1750, 500, 0), (2250, 1250, 0)]
-    msp = doc.modelspace()
-    spline = msp.add_spline(fit_points)
-    spline.dxf.start_tangent = (1, 0, 0)
-    spline.dxf.end_tangent = (0, 1, 0)
-    doc.saveas("Spline_R2000_fit_spline.dxf")
+    doc.saveas(CWD / "Spline_R2000_clone_Spline.dxf")
 
 
 def fit_spline_with_control_points():
-    doc = new("R2000")
+    doc = ezdxf.new("R2000")
     fit_points = [(0, 0, 0), (750, 500, 0), (1750, 500, 0), (2250, 1250, 0)]
     control_points = [
         (0, 0, 0),
@@ -45,11 +54,11 @@ def fit_spline_with_control_points():
     spline = msp.add_spline(fit_points)
     spline.dxf.degree = 3
     spline.control_points = control_points
-    doc.saveas("Spline_R2000_fit_spline_and_control_points.dxf")
+    doc.saveas(CWD / "Spline_R2000_fit_spline_and_control_points.dxf")
 
 
 def add_points_to_spline():
-    doc = readfile("Spline_R2000_fit_spline.dxf")
+    doc = ezdxf.readfile(CWD / "Spline_R2000_fit_spline.dxf")
     msp = doc.modelspace()
     spline = cast(Spline, msp.query("SPLINE").first)
 
@@ -65,11 +74,11 @@ def add_points_to_spline():
         []
     )  # delete weights, this could modify the geometry of the spline
 
-    doc.saveas("Spline_R2000_with_added_points.dxf")
+    doc.saveas(CWD / "Spline_R2000_with_added_points.dxf")
 
 
 def open_spline():
-    doc = new("R2000")
+    doc = ezdxf.new("R2000")
     control_points = [
         (0, 0, 0),
         (1250, 1560, 0),
@@ -78,11 +87,11 @@ def open_spline():
     ]
     msp = doc.modelspace()
     msp.add_open_spline(control_points, degree=3)
-    doc.saveas("Spline_R2000_open_spline.dxf")
+    doc.saveas(CWD / "Spline_R2000_open_spline.dxf")
 
 
 def rational_spline():
-    doc = new("R2000")
+    doc = ezdxf.new("R2000")
     control_points = [
         (0, 0, 0),
         (1250, 1560, 0),
@@ -92,20 +101,22 @@ def rational_spline():
     weights = [1, 10, 1, 1]
     msp = doc.modelspace()
     msp.add_rational_spline(control_points, weights, degree=3)
-    doc.saveas("Spline_R2000_rational_spline.dxf")
+    doc.saveas(CWD / "Spline_R2000_rational_spline.dxf")
 
 
 def spline_control_frame_from_fit_points():
-    doc = new("R2000", setup=True)
+    # The fit_points_to_cad_cv() function uses always the best method I
+    # currently know of to calculate the control vertices from the fit points.
+    # It is still not perfect if the start- and end tangent of the SPLINE are
+    # not known.
 
+    doc = ezdxf.new("R2000", setup=True)
     fit_points = [(0, 0, 0), (750, 500, 0), (1750, 500, 0), (2250, 1250, 0)]
     msp = doc.modelspace()
     msp.add_polyline2d(fit_points, dxfattribs={"color": 2, "linetype": "DOT2"})
 
-    def add_spline(degree=2, color=3):
-        spline = global_bspline_interpolation(
-            fit_points, degree=degree, method="distance"
-        )
+    def add_spline(color=3):
+        spline = fit_points_to_cad_cv(fit_points)
         msp.add_polyline2d(
             spline.control_points,
             dxfattribs={"color": color, "linetype": "DASHED"},
@@ -116,11 +127,9 @@ def spline_control_frame_from_fit_points():
             dxfattribs={"color": color},
         )
 
-    # add_spline(degree=2, color=3)
-    add_spline(degree=3, color=4)
-
+    add_spline(color=4)
     msp.add_spline(fit_points, degree=3, dxfattribs={"color": 1})
-    doc.saveas("Spline_R2000_spline_control_frame_from_fit_points.dxf")
+    doc.saveas(CWD / "Spline_R2000_spline_control_frame_from_fit_points.dxf")
 
 
 def spline_insert_knot():
@@ -153,7 +162,7 @@ def spline_insert_knot():
     bspline.insert_knot(bspline.max_t / 2)
     add_spline(bspline.control_points, color=4, knots=bspline.knots())
 
-    doc.saveas("Spline_R2000_spline_insert_knot.dxf")
+    doc.saveas(CWD / "Spline_R2000_spline_insert_knot.dxf")
 
 
 if __name__ == "__main__":
