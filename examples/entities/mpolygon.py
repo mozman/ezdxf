@@ -1,11 +1,20 @@
-# Copyright (c) 2015-2021 Manfred Moitzi
+# Copyright (c) 2015-2022 Manfred Moitzi
 # License: MIT License
-from pathlib import Path
+import pathlib
 import ezdxf
 from ezdxf import zoom
 from ezdxf.lldxf import const
 
-DIR = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# Multiple example for creating a MPOLYGON entity.
+# The MPOLYGON is very similar to the HATCH entity.
+#
+# docs: https://ezdxf.mozman.at/docs/dxfentities/mpolygon.html
+# ------------------------------------------------------------------------------
 
 
 def create_simple_mpolygon_no_fill(dxfversion="R2000"):
@@ -16,7 +25,7 @@ def create_simple_mpolygon_no_fill(dxfversion="R2000"):
         [(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)]
     )
     zoom.extents(msp)
-    doc.saveas(DIR / f"simple_mpolygon_no_fill_{dxfversion}.dxf")
+    doc.saveas(CWD / f"simple_mpolygon_no_fill_{dxfversion}.dxf")
 
 
 def create_simple_solid_aci_filled_mpolygon(dxfversion="R2000"):
@@ -27,7 +36,7 @@ def create_simple_solid_aci_filled_mpolygon(dxfversion="R2000"):
         [(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)]
     )
     zoom.extents(msp)
-    doc.saveas(DIR / f"simple_solid_aci_filled_mpolygon_{dxfversion}.dxf")
+    doc.saveas(CWD / f"simple_solid_aci_filled_mpolygon_{dxfversion}.dxf")
 
 
 def create_simple_solid_rgb_filled_mpolygon(dxfversion="R2000"):
@@ -39,7 +48,7 @@ def create_simple_solid_rgb_filled_mpolygon(dxfversion="R2000"):
     )
     mpolygon.set_solid_fill(rgb=(60, 180, 60))  # overrides fill_color!
     zoom.extents(msp)
-    doc.saveas(DIR / f"simple_solid_rgb_filled_mpolygon_{dxfversion}.dxf")
+    doc.saveas(CWD / f"simple_solid_rgb_filled_mpolygon_{dxfversion}.dxf")
 
 
 def create_mpolygon_with_bulge(dxfversion="R2000"):
@@ -50,7 +59,7 @@ def create_mpolygon_with_bulge(dxfversion="R2000"):
         [(0, 0), (0, 3, 0.5), (3, 6), (6, 6), (6, 3), (3, 0)]
     )
     zoom.extents(msp)
-    doc.saveas(DIR / f"simple_mpolygon_with_bulge_{dxfversion}.dxf")
+    doc.saveas(CWD / f"simple_mpolygon_with_bulge_{dxfversion}.dxf")
 
 
 def create_simple_pattern_filled_mpolygon(dxfversion="R2000"):
@@ -62,7 +71,7 @@ def create_simple_pattern_filled_mpolygon(dxfversion="R2000"):
         [(0, 0), (0, 3), (3, 6), (6, 6), (6, 3), (3, 0)]
     )
     zoom.extents(msp)
-    doc.saveas(DIR / f"simple_pattern_filled_mpolygon_{dxfversion}.dxf")
+    doc.saveas(CWD / f"simple_pattern_filled_mpolygon_{dxfversion}.dxf")
 
 
 def create_pattern_filled_mpolygon_with_bgcolor():
@@ -78,7 +87,7 @@ def create_pattern_filled_mpolygon_with_bgcolor():
     mpolygon.bgcolor = (100, 200, 100)
     zoom.extents(msp)
     doc.saveas(
-        DIR / f"simple_pattern_filled_mpolygon_with_bgcolor_{dxfversion}.dxf"
+        CWD / f"simple_pattern_filled_mpolygon_with_bgcolor_{dxfversion}.dxf"
     )
 
 
@@ -159,7 +168,7 @@ def using_hatch_style():
     place_square_2(hatch_style_1b, 10, 10)
     place_square_2(hatch_style_2b, 20, 10)
     zoom.extents(msp)
-    doc.saveas(DIR / "mpolygon_with_hatch_styles.dxf")  # save DXF drawing
+    doc.saveas(CWD / "mpolygon_with_hatch_styles.dxf")  # save DXF drawing
 
 
 for dxfversion in ["R2000", "R2004", "R2007"]:
