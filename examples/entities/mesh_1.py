@@ -44,6 +44,7 @@ cube_faces = [
 # outward pointing faces, the vertices are counter-clockwise oriented around the
 # normal vector of each face.
 
+# The MESH entity requires the DXF R2000 or newer format.
 doc = ezdxf.new("R2018")
 msp = doc.modelspace()
 mesh = msp.add_mesh(dxfattribs=GfxAttribs(color=6))
