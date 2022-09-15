@@ -73,8 +73,7 @@ def is_planar_face(face: Sequence[Vec3], abs_tol=1e-9) -> bool:
 def subdivide_face(
     face: Sequence[AnyVec], quads: bool = True
 ) -> Iterable[Tuple[Vec3, ...]]:
-    """Yields new subdivided faces. Creates new faces from subdivided edges and
-    the face midpoint by linear interpolation.
+    """Subdivides faces by subdividing edges and adding a center vertex.
 
     Args:
         face: a sequence of vertices, :class:`Vec2` and :class:`Vec3` objects
@@ -104,7 +103,7 @@ def subdivide_ngons(
     faces: Iterable[Sequence[AnyVec]],
     max_vertex_count=4,
 ) -> Iterable[Sequence[Vec3]]:
-    """Yields only triangles or quad faces, subdivides ngons into triangles.
+    """Subdivides faces into triangles by adding a center vertex.
 
     Args:
         faces: iterable of faces as sequence of :class:`Vec2` and
@@ -171,8 +170,13 @@ def best_fit_normal(vertices: Iterable[UVec]) -> Vec3:
 
 
 def distance_point_line_3d(point: Vec3, start: Vec3, end: Vec3) -> float:
-    """Returns the normal distance from `point` to 3D line defined by `start-`
-    and `end` point.
+    """Returns the normal distance from a `point` to a 3D line.
+
+    Args:
+        point: point to test
+        start: start point of the 3D line
+        end: end point of the 3D line
+
     """
     if start.isclose(end):
         raise ZeroDivisionError("Not a line.")
@@ -411,9 +415,9 @@ def split_polygon_by_plane(
     coplanar=True,
     abs_tol=PLANE_EPSILON,
 ) -> Tuple[Sequence[Vec3], Sequence[Vec3]]:
-    """
-    Split a convex `polygon` by the given `plane` if needed. Returns a tuple of
-    front- and back vertices (front, back).
+    """Split a convex `polygon` by the given `plane`.
+
+    Returns a tuple of front- and back vertices (front, back).
     Returns also coplanar polygons if the
     argument `coplanar` is ``True``, the coplanar vertices goes into either
     front or back depending on their orientation with respect to this plane.

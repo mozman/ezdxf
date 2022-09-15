@@ -1364,7 +1364,7 @@ def closed_uniform_bspline(
     order: int = 4,
     weights: Iterable[float] = None,
 ) -> BSpline:
-    """Creates an closed uniform (periodic) `B-spline`_ curve (`open curve`_).
+    """Creates a closed uniform (periodic) `B-spline`_ curve (`open curve`_).
 
     This B-spline does not pass any of the control points.
 

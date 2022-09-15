@@ -50,7 +50,8 @@ def quadratic_to_cubic_bezier(curve: Bezier3P) -> Bezier4P:
 
 def bezier_to_bspline(curves: Iterable[AnyBezier]) -> BSpline:
     """Convert multiple quadratic or cubic Bèzier curves into a single cubic
-    B-spline (:class:`ezdxf.math.BSpline`).
+    B-spline.
+
     For good results the curves must be lined up seamlessly, i.e. the starting
     point of the following curve must be the same as the end point of the
     previous curve. G1 continuity or better at the connection points of the
@@ -121,9 +122,10 @@ def reverse_bezier_curves(curves: List[AnyBezier]) -> List[AnyBezier]:
 def split_bezier(
     control_points: Sequence[T], t: float
 ) -> Tuple[List[T], List[T]]:
-    """Split Bèzier curves at parameter `t` by de Casteljau's algorithm
-    (source: `pomax-1`_). Returns the control points for two new
-    Bèzier curves of the same degree and type as the input curve.
+    """Split a Bèzier curve at parameter `t`.
+
+    Returns the control points for two new Bèzier curves of the same degree
+    and type as the input curve. (source: `pomax-1`_)
 
     Args:
          control_points: of the Bèzier curve as :class:`Vec2` or :class:`Vec3`
