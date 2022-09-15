@@ -40,8 +40,9 @@ def close_vectors(a: Iterable[AnyVec], b: Iterable[UVec], *,
 
 
 def xround(value: float, rounding: float = 0.) -> float:
-    """
-    Extended rounding function, argument `rounding` defines the rounding limit:
+    """Extended rounding function.
+
+    The argument `rounding` defines the rounding limit:
 
     ======= ======================================
     0       remove fraction

@@ -24,7 +24,6 @@ RADIANS_270 = RADIANS_90 * 3.0
 RADIANS_360 = 2.0 * math.pi
 
 __all__ = [
-    "is_close_points",
     "closest_point",
     "convex_hull_2d",
     "distance_point_line_2d",
@@ -35,8 +34,6 @@ __all__ = [
     "point_to_line_relation",
     "linspace",
     "enclosing_angles",
-    "reflect_angle_x_deg",
-    "reflect_angle_y_deg",
     "sign",
     "area",
     "circle_radius_3p",
@@ -45,16 +42,6 @@ __all__ = [
     "decdeg2dms",
     "ellipse_param_span",
 ]
-
-
-def is_close_points(p1: UVec, p2: UVec, abs_tol=TOLERANCE) -> bool:
-    """Deprecated function will be removed in v0.18! Use Vec(p1).isclose(p2)."""
-    warnings.warn(
-        "Deprecated function will be removed in v0.18! "
-        "Use Vec3(p1).isclose(p2).",
-        DeprecationWarning,
-    )
-    return Vec3(p1).isclose(p2, abs_tol=abs_tol)
 
 
 def linspace(
@@ -88,28 +75,6 @@ def sign(f: float) -> float:
     return -1.0 if f < 0.0 else +1.0
 
 
-def reflect_angle_x_deg(a: float) -> float:
-    """Returns reflected angle of `a` in x-direction in degrees.
-    Angles are counter-clockwise orientated and +x-axis is at 0 degrees.
-
-    Args:
-        a: angle to reflect in degrees
-
-    """
-    return (180.0 - (a % 360.0)) % 360.0
-
-
-def reflect_angle_y_deg(a: float) -> float:
-    """Returns reflected angle of `a` in y-direction in degrees.
-    Angles are counter-clockwise orientated and +y-axis is at 90 degrees.
-
-    Args:
-        a: angle to reflect in degrees
-
-    """
-    return (360.0 - (a % 360.0)) % 360.0
-
-
 def decdeg2dms(value: float) -> Tuple[float, float, float]:
     """Return decimal degrees as tuple (Degrees, Minutes, Seconds)."""
     mnt, sec = divmod(value * 3600.0, 60.0)
@@ -135,7 +100,7 @@ def ellipse_param_span(start_param: float, end_param: float) -> float:
 
 
 def closest_point(base: UVec, points: Iterable[UVec]) -> "Vec3":
-    """Returns the closest point to `base`.
+    """Returns the closest point to a give `base` point.
 
     Args:
         base: base point as :class:`Vec3` compatible object
@@ -155,8 +120,9 @@ def closest_point(base: UVec, points: Iterable[UVec]) -> "Vec3":
 
 
 def convex_hull_2d(points: Iterable[UVec]) -> List[Vec2]:
-    """Returns 2D convex hull for `points` as list of :class:`Vec2`.
-    Returns a closed polyline, first vertex == last vertex.
+    """Returns the 2D convex hull of given `points`.
+
+    Returns a closed polyline, first vertex is equal to the last vertex.
 
     Args:
         points: iterable of points, z-axis is ignored

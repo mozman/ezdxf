@@ -1,7 +1,7 @@
-# Copyright (c) 2010-2021, Manfred Moitzi
+# Copyright (c) 2010-2022, Manfred Moitzi
 # License: MIT License
 import pytest
-from math import isclose, radians
+from math import radians
 from ezdxf.math import xround, Vec2
 from ezdxf.math.construct2d import *
 
@@ -247,8 +247,8 @@ def test_more_points():
 
 
 def test_decdeg2dms():
-    ss = 1. / 3600.
-    mm = 1. / 60.
+    ss = 1.0 / 3600.0
+    mm = 1.0 / 60.0
     for value in linspace(-2, 2, 71):
         d, m, s = decdeg2dms(value)
         result = d + m * mm + s * ss
@@ -256,7 +256,6 @@ def test_decdeg2dms():
     assert decdeg2dms(-1) == (-1, 0, 0)
     assert decdeg2dms(0) == (0, 0, 0)
     assert decdeg2dms(1) == (1, 0, 0)
-
 
 
 def test_linspace():
@@ -267,36 +266,6 @@ def test_linspace():
     assert list(linspace(2, -2, num=5)) == [2, 1, 0, -1, -2]
     with pytest.raises(ValueError):
         list(linspace(1, 4, num=-1))
-
-
-def test_reflect_angle_x_deg():
-    for a, expected in [
-        (0, 180),
-        (45, 135),
-        (90, 90),
-        (135, 45),
-        (180, 0),
-        (225, 315),
-        (270, 270),
-        (315, 225),
-        (360, 180),
-    ]:
-        assert isclose(reflect_angle_x_deg(a), expected)
-
-
-def test_reflect_angle_y_deg():
-    for a, expected in [
-        (0, 0),
-        (45, 315),
-        (90, 270),
-        (135, 225),
-        (180, 180),
-        (225, 135),
-        (270, 90),
-        (315, 45),
-        (360, 0),
-    ]:
-        assert isclose(reflect_angle_y_deg(a), expected)
 
 
 def test_area():
