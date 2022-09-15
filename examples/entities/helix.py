@@ -10,6 +10,12 @@ CWD = Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
     CWD = Path(".")
 
+# ------------------------------------------------------------------------------
+# this example shows how to create a HELIX entity.
+#
+# docs: https://ezdxf.mozman.at/docs/dxfentities/helix.html
+# ------------------------------------------------------------------------------
+
 
 def simple_helix(filename: str):
     doc = ezdxf.new()
