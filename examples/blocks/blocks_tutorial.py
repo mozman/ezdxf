@@ -68,7 +68,7 @@ placing_points = [get_random_point() for _ in range(50)]
 for number, point in enumerate(placing_points):
     # values is a dict with the attribute tag as item-key and the attribute text content as item-value.
     values = {
-        "NAME": "P(%d)" % (number + 1),
+        "NAME": f"P({number + 1})",
         "XPOS": f"x = {point[0]:.3f}",
         "YPOS": f"y = {point[1]:.3f}",
     }
