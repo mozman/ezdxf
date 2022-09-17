@@ -1,10 +1,17 @@
-# Copyright (c) 2010-2021, Manfred Moitzi
+# Copyright (c) 2010-2022, Manfred Moitzi
 # License: MIT License
+import pathlib
 import random
-from pathlib import Path
 import ezdxf
 
-DIR = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example is the companion file to the tutorial:
+# https://ezdxf.mozman.at/docs/tutorials/blocks.html
+# ------------------------------------------------------------------------------
 
 
 def get_random_point():
@@ -48,7 +55,7 @@ for point in placing_points:
     )
 
 # Save the drawing.
-doc.saveas(DIR / "blockref_tutorial.dxf")
+doc.saveas(CWD / "blockref_tutorial.dxf")
 
 # Define some attributes for the block 'FLAG', placed relative to the base point, (0, 0) in this case.
 flag.add_attdef("NAME", (0.5, -0.5), dxfattribs={"height": 0.5, "color": 3})
@@ -80,7 +87,7 @@ for number, point in enumerate(placing_points):
     )
 
 # Save the drawing.
-doc.saveas(DIR / "auto_blockref_tutorial.dxf")
+doc.saveas(CWD / "auto_blockref_tutorial.dxf")
 
 # Collect all anonymous block references starting with '*U'
 anonymous_block_refs = modelspace.query(r'INSERT[name ? "^\*U.+"]')
