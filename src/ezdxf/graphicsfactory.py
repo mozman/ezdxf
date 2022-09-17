@@ -346,7 +346,7 @@ class CreatorInterface:
 
         This method wraps the INSERT and all the ATTRIB entities into an
         anonymous block, which produces the best visual results, especially for
-        non uniform scaled block references, because the transformation and
+        non-uniform scaled block references, because the transformation and
         scaling is done by the CAD application. But this makes evaluation of
         block references with attributes more complicated, if you prefer INSERT
         and ATTRIB entities without a wrapper block use the
