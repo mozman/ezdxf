@@ -1,15 +1,15 @@
 # Copyright (c) 2022, Manfred Moitzi
 # License: MIT License
-from pathlib import Path
+import pathlib
 import ezdxf
 from ezdxf.addons import text2path
 from ezdxf.tools import fonts
 from ezdxf.math import Matrix44
-from ezdxf import zoom
+from ezdxf import zoom, path
 
-CWD = Path("~/Desktop/Outbox").expanduser()
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
-    CWD = Path(".")
+    CWD = pathlib.Path(".")
 
 # ------------------------------------------------------------------------------
 # This example shows how to render text as HATCH entities by the text2path add-on.
@@ -60,6 +60,7 @@ def text_to_custom_pattern():
     msp = doc.modelspace()
 
     hatches = text2path.make_hatches_from_str(SAMPLE_STRING, font=FONT, size=4)
+
     m = Matrix44.translate(2, 1.5, 0)
     # ANSI31 definition: [angle, base_point, offset, dash_length_items]
     # "ANSI31": [[45.0, (0.0, 0.0), (-2.2450640303, 2.2450640303), []]]
@@ -78,10 +79,15 @@ def text_to_custom_pattern():
             style=0,  # 0 = normal; 1 = outer; 2 = ignore
             pattern_type=2,  # 0 = user-defined; 1 = predefined; 2 = custom
             # I have no idea what the difference between a user-defined pattern
-            # type and custom pattern type is, both values work for this example.
+            # type and a custom pattern type is, both values work for this example.
             definition=MY_PATTERN,
         )
         msp.add_entity(hatch)
+
+    # optional: add outline to text
+    outlines = text2path.make_paths_from_str(SAMPLE_STRING, font=FONT, size=4)
+    outlines = path.transform_paths(outlines, m)
+    path.render_splines_and_polylines(msp, outlines, dxfattribs={"color": 2})
 
     zoom.extents(msp)
     doc.saveas(CWD / "text2custom_pattern.dxf")
