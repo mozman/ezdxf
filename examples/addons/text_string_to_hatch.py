@@ -25,10 +25,10 @@ def text_to_solid_filling():
     doc = ezdxf.new()
     msp = doc.modelspace()
 
-    hatches = text2path.make_hatches_from_str(SAMPLE_STRING, font=FONT, size=4)
-    m = Matrix44.translate(2, 1.5, 0)
+    hatches = text2path.make_hatches_from_str(
+        SAMPLE_STRING, font=FONT, size=4, m=Matrix44.translate(2, 1.5, 0)
+    )
     for hatch in hatches:
-        hatch.transform(m)
         # style: 0 = normal; 1 = outer; 2 = ignore
         hatch.set_solid_fill(color=1, style=0)
         msp.add_entity(hatch)
@@ -41,10 +41,10 @@ def text_to_predefined_pattern():
     doc = ezdxf.new()
     msp = doc.modelspace()
 
-    hatches = text2path.make_hatches_from_str(SAMPLE_STRING, font=FONT, size=4)
-    m = Matrix44.translate(2, 1.5, 0)
+    hatches = text2path.make_hatches_from_str(
+        SAMPLE_STRING, font=FONT, size=4, m=Matrix44.translate(2, 1.5, 0)
+    )
     for hatch in hatches:
-        hatch.transform(m)
         # style: 0 = normal; 1 = outer; 2 = ignore
         hatch.set_pattern_fill(
             name="ANSI31", color=1, scale=0.02, angle=-45, style=0
@@ -59,20 +59,20 @@ def text_to_custom_pattern():
     doc = ezdxf.new()
     msp = doc.modelspace()
 
-    hatches = text2path.make_hatches_from_str(SAMPLE_STRING, font=FONT, size=4)
-
     m = Matrix44.translate(2, 1.5, 0)
+    hatches = text2path.make_hatches_from_str(
+        SAMPLE_STRING, font=FONT, size=4, m=m
+    )
     # ANSI31 definition: [angle, base_point, offset, dash_length_items]
     # "ANSI31": [[45.0, (0.0, 0.0), (-2.2450640303, 2.2450640303), []]]
-    OFFSET = (0, 0.05)  # (x, y) offset in drawing units
-    SOLID = []  # continuous line
-    DASHED = [0.5, -0.3]  # > 0 line, < 0 gap, 0 = point
+    offset = (0, 0.05)  # (x, y) offset in drawing units
+    continuous = []
+    dashed = [0.5, -0.3]  # > 0 line, < 0 gap, 0 = point
     MY_PATTERN = [
-        [0.0, (0.0, 0.0), OFFSET, SOLID],  # a single hatch line definition
+        [0.0, (0.0, 0.0), offset, continuous],  # a single hatch line definition
     ]
 
     for hatch in hatches:
-        hatch.transform(m)
         hatch.set_pattern_fill(
             name="MY_PATTERN",
             color=1,
@@ -85,8 +85,9 @@ def text_to_custom_pattern():
         msp.add_entity(hatch)
 
     # optional: add outline to text
-    outlines = text2path.make_paths_from_str(SAMPLE_STRING, font=FONT, size=4)
-    outlines = path.transform_paths(outlines, m)
+    outlines = text2path.make_paths_from_str(
+        SAMPLE_STRING, font=FONT, size=4, m=m
+    )
     path.render_splines_and_polylines(msp, outlines, dxfattribs={"color": 2})
 
     zoom.extents(msp)
