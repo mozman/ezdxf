@@ -724,7 +724,7 @@ class Insert(LinkedEntities):
         This method avoids the wrapper block of the
         :meth:`~ezdxf.layouts.BaseLayout.add_auto_blockref` method, but the
         visual results may not match the results of CAD applications, especially
-        for non uniform scaling. If the visual result is very important to you,
+        for non-uniform scaling. If the visual result is very important to you,
         use the :meth:`add_auto_blockref` method.
 
         Args:

@@ -29,6 +29,7 @@ FLAG_SYMBOL = [(0, 0), (0, 5), (4, 3), (0, 3)]
 def main():
     doc = ezdxf.new("R2007")
     doc.layers.add("FLAGS")
+    msp = doc.modelspace()
     flag = doc.blocks.new(name="FLAG")
 
     # Add DXF entities to the block (the flag).
@@ -46,7 +47,7 @@ def main():
     flag.add_attdef(
         tag="YPOS", insert=(0.5, -1.5), dxfattribs={"height": 0.25, "color": 4}
     )
-    modelspace = doc.modelspace()
+
     for number, point in enumerate(SAMPLE_COORDS):
         # Create the value dictionary for the ATTRIB entities, key is the tag
         # name of the ATTDEF entity and the value is the content string of the
@@ -62,12 +63,15 @@ def main():
         # anonymous block, which produces the best visual results, especially
         # for non-uniform scaled block references, because the transformation
         # and scaling is done by the CAD application.
-        modelspace.add_auto_blockref(
+        msp.add_auto_blockref(
             "FLAG",
             point,
             values,
             dxfattribs={"layer": "FLAGS", "rotation": -15},
         ).set_scale(random_scale)
+
+        # The example "block_reference_with_attributes.py" shows a different
+        # method to automatically add ATTRIB entities to INSERT entities.
 
     doc.set_modelspace_vport(height=200)
     filename = CWD / "auto_blockref_flags.dxf"
