@@ -1,17 +1,18 @@
 #  Copyright (c) 2022, Manfred Moitzi
 #  License: MIT License
-
-#  Copyright (c) 2022, Manfred Moitzi
-#  License: MIT License
 import pathlib
 
 import ezdxf
 from ezdxf.math import Vec3
-from ezdxf.path import chamfer, chamfer2, fillet, polygonal_fillet
+from ezdxf.path import chamfer, chamfer2, fillet, polygonal_fillet, Path
 
 CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
 if not CWD.exists():
     CWD = pathlib.Path(".")
+
+# ------------------------------------------------------------------------------
+# This example shows how to use the chamfer and fillet tools.
+# ------------------------------------------------------------------------------
 
 
 def chamfer_tool():
@@ -66,8 +67,23 @@ def polygonal_fillet_tool():
     doc.saveas(CWD / "polygonal_fillet.dxf")
 
 
+def square_with_single_edge_fillet():
+    # This example creates a square with a fillet on a single corner.
+    p = Path()
+    p.line_to((10, 0))
+    f = fillet(Vec3.list([(10, 0), (10, 10), (0, 10)]), radius=2)
+    # combine the paths:
+    p.append_path(f)
+    p.close()
+
+    doc = ezdxf.new()
+    doc.modelspace().add_polyline2d(p.flattening(0.1))
+    doc.saveas(CWD / "square_with_single_edge_fillet.dxf")
+
+
 if __name__ == "__main__":
     chamfer_tool()
     chamfer2_tool()
     fillet_tool()
     polygonal_fillet_tool()
+    square_with_single_edge_fillet()
