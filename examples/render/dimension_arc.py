@@ -1,5 +1,4 @@
-# Purpose: using arc DIMENSION
-# Copyright (c) 2021, Manfred Moitzi
+# Copyright (c) 2021-2022, Manfred Moitzi
 # License: MIT License
 from typing import Optional
 import pathlib
@@ -8,34 +7,28 @@ import ezdxf
 from ezdxf.math import Vec3, UCS, ConstructionArc
 import logging
 
-# ========================================
-# Setup logging
-# ========================================
+# ------------------------------------------------------------------------------
+# This example shows how to use arc dimension.
+# ------------------------------------------------------------------------------
+
 logging.basicConfig(level="WARNING")
 
-# ========================================
-# Setup your preferred output directory
-# ========================================
-OUTDIR = pathlib.Path("~/Desktop/Outbox").expanduser()
-if not OUTDIR.exists():
-    OUTDIR = pathlib.Path()
+DXFVERSION = "R2013"
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
 
-# ========================================
-# Default text attributes
-# ========================================
+
+# Default text attributes:
 TEXT_ATTRIBS = {
     "height": 0.25,
     "style": ezdxf.options.default_dimension_text_style,
 }
 DIM_TEXT_STYLE = ezdxf.options.default_dimension_text_style
 
-# =======================================================
-# Discarding dimension rendering is possible
-# for BricsCAD, but is incompatible to AutoCAD -> error
-# =======================================================
+# Discarding the dimension rendering is possible for BricsCAD,
+# but it is incompatible to AutoCAD -> error
 BRICSCAD = False
-
-DXFVERSION = "R2013"
 
 
 def add_lines(
@@ -116,7 +109,7 @@ def arc_cra_default(
             dim.render(discard=BRICSCAD)
 
     doc.set_modelspace_vport(height=70)
-    doc.saveas(OUTDIR / f"{filename}_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"{filename}_{DXFVERSION}.dxf")
 
 
 def arc_cra_default_outside():
@@ -209,29 +202,26 @@ def arc_3p_default(distance: float = 2.0):
             ).render(discard=BRICSCAD)
 
     doc.set_modelspace_vport(height=70)
-    doc.saveas(OUTDIR / f"dim_arc_3p_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"dim_arc_3p_{DXFVERSION}.dxf")
 
 
 def dim_arc_3d():
     doc = ezdxf.new(DXFVERSION, setup=True)
     msp = doc.modelspace()
 
-    for center, radius, sa, ea, distance in [
-        [Vec3(0, 0), 5, 60, 90, 2]
-    ]:
+    for center, radius, sa, ea, distance in [[Vec3(0, 0), 5, 60, 90, 2]]:
         arc = ConstructionArc(center, radius, sa, ea)
         ucs = UCS(origin=center + (5, 5)).rotate_local_x(math.radians(45))
         msp.add_line(arc.center, arc.start_point).transform(ucs.matrix)
         msp.add_line(arc.center, arc.end_point).transform(ucs.matrix)
 
         dim = msp.add_arc_dim_arc(
-            arc=arc,
-            distance=distance, dimstyle="EZ_CURVED"
+            arc=arc, distance=distance, dimstyle="EZ_CURVED"
         )
         dim.render(discard=BRICSCAD, ucs=ucs)
 
     doc.set_modelspace_vport(height=30)
-    doc.saveas(OUTDIR / f"dim_arc_3d_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"dim_arc_3d_{DXFVERSION}.dxf")
 
 
 def arc_units_tol_limits():
@@ -271,7 +261,7 @@ def arc_units_tol_limits():
             dim.render(discard=BRICSCAD)
 
     doc.set_modelspace_vport(height=70)
-    doc.saveas(OUTDIR / f"dim_arc_units_tol_limits_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"dim_arc_units_tol_limits_{DXFVERSION}.dxf")
 
 
 def add_arc_dim(
@@ -317,7 +307,7 @@ def measure_fixed_angle(angle: float):
             )
             dim.render(discard=BRICSCAD)
     doc.set_modelspace_vport(height=100, center=(x_dist * 4, 20))
-    doc.saveas(OUTDIR / f"dim_arc_deg_{angle:.0f}_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"dim_arc_deg_{angle:.0f}_{DXFVERSION}.dxf")
 
 
 def usr_location_absolute(angle: float, rotation: float = None):
@@ -355,7 +345,7 @@ def usr_location_absolute(angle: float, rotation: float = None):
     rstr = ""
     if rotation is not None:
         rstr = f"rot_{rotation}_"
-    doc.saveas(OUTDIR / f"dim_arc_usr_loc_absolute_{rstr}_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"dim_arc_usr_loc_absolute_{rstr}_{DXFVERSION}.dxf")
 
 
 def usr_location_relative(angle: float, rotation: float = None):
@@ -391,7 +381,7 @@ def usr_location_relative(angle: float, rotation: float = None):
     rstr = ""
     if rotation is not None:
         rstr = f"rot_{rotation}_"
-    doc.saveas(OUTDIR / f"dim_arc_usr_loc_relative_{rstr}_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"dim_arc_usr_loc_relative_{rstr}_{DXFVERSION}.dxf")
 
 
 def show_all_arrow_heads():
@@ -415,7 +405,7 @@ def show_all_arrow_heads():
             dim.render(discard=BRICSCAD)
 
     doc.set_modelspace_vport(height=40, center=(50, 5))
-    doc.saveas(OUTDIR / f"dim_arc_all_arrows_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"dim_arc_all_arrows_{DXFVERSION}.dxf")
 
 
 if __name__ == "__main__":
