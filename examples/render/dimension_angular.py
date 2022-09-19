@@ -1,5 +1,4 @@
-# Purpose: using angular DIMENSION
-# Copyright (c) 2021, Manfred Moitzi
+# Copyright (c) 2021-2022, Manfred Moitzi
 # License: MIT License
 from typing import Optional
 import pathlib
@@ -8,34 +7,28 @@ import ezdxf
 from ezdxf.math import Vec3, UCS, NULLVEC
 import logging
 
-# ========================================
-# Setup logging
-# ========================================
+# ------------------------------------------------------------------------------
+# This example shows how to use angular dimension.
+# ------------------------------------------------------------------------------
+
 logging.basicConfig(level="WARNING")
 
-# ========================================
-# Setup your preferred output directory
-# ========================================
-OUTDIR = pathlib.Path("~/Desktop/Outbox").expanduser()
-if not OUTDIR.exists():
-    OUTDIR = pathlib.Path()
+DXFVERSION = "R2013"
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
 
-# ========================================
-# Default text attributes
-# ========================================
+
+# Default text attributes:
 TEXT_ATTRIBS = {
     "height": 0.25,
     "style": ezdxf.options.default_dimension_text_style,
 }
 DIM_TEXT_STYLE = ezdxf.options.default_dimension_text_style
 
-# =======================================================
-# Discarding dimension rendering is possible
-# for BricsCAD, but is incompatible to AutoCAD -> error
-# =======================================================
+# Discarding the dimension rendering is possible for BricsCAD,
+# but it is incompatible to AutoCAD -> error
 BRICSCAD = False
-
-DXFVERSION = "R2013"
 
 
 def locations():
@@ -63,7 +56,7 @@ def angular_2l_default():
             base=base, line1=line1, line2=line2, dimstyle="EZ_CURVED"
         ).render(discard=BRICSCAD)
     doc.set_modelspace_vport(height=30)
-    doc.saveas(OUTDIR / f"dim_angular_2l_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"dim_angular_2l_{DXFVERSION}.dxf")
 
 
 def angular_cra_default(
@@ -128,7 +121,7 @@ def angular_cra_default(
             dim.render(discard=BRICSCAD)
 
     doc.set_modelspace_vport(height=70)
-    doc.saveas(OUTDIR / f"{filename}_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"{filename}_{DXFVERSION}.dxf")
 
 
 def angular_cra_default_outside():
@@ -220,7 +213,7 @@ def angular_3p_default(distance: float = 2.0):
             ).render(discard=BRICSCAD)
 
     doc.set_modelspace_vport(height=70)
-    doc.saveas(OUTDIR / f"dim_angular_3p_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"dim_angular_3p_{DXFVERSION}.dxf")
 
 
 def add_lines(
@@ -249,7 +242,7 @@ def angular_3d():
         dim.render(discard=BRICSCAD, ucs=ucs)
 
     doc.set_modelspace_vport(height=30)
-    doc.saveas(OUTDIR / f"dim_angular_3d_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"dim_angular_3d_{DXFVERSION}.dxf")
 
 
 def angular_units_tol_limits():
@@ -289,7 +282,7 @@ def angular_units_tol_limits():
             dim.render(discard=BRICSCAD)
 
     doc.set_modelspace_vport(height=70)
-    doc.saveas(OUTDIR / f"dim_angular_units_tol_limits_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"dim_angular_units_tol_limits_{DXFVERSION}.dxf")
 
 
 def add_angle_dim(
@@ -335,7 +328,7 @@ def measure_fixed_angle(angle: float):
             )
             dim.render(discard=BRICSCAD)
     doc.set_modelspace_vport(height=100, center=(x_dist * 4, 20))
-    doc.saveas(OUTDIR / f"dim_angular_deg_{angle:.0f}_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"dim_angular_deg_{angle:.0f}_{DXFVERSION}.dxf")
 
 
 def usr_location_absolute(angle: float, rotation: float = None):
@@ -373,7 +366,7 @@ def usr_location_absolute(angle: float, rotation: float = None):
     rstr = ""
     if rotation is not None:
         rstr = f"rot_{rotation}_"
-    doc.saveas(OUTDIR / f"dim_angular_usr_loc_absolute_{rstr}_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"dim_angular_usr_loc_absolute_{rstr}_{DXFVERSION}.dxf")
 
 
 def usr_location_relative(angle: float, rotation: float = None):
@@ -409,7 +402,7 @@ def usr_location_relative(angle: float, rotation: float = None):
     rstr = ""
     if rotation is not None:
         rstr = f"rot_{rotation}_"
-    doc.saveas(OUTDIR / f"dim_angular_usr_loc_relative_{rstr}_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"dim_angular_usr_loc_relative_{rstr}_{DXFVERSION}.dxf")
 
 
 def show_all_arrow_heads():
@@ -433,7 +426,7 @@ def show_all_arrow_heads():
             dim.render(discard=BRICSCAD)
 
     doc.set_modelspace_vport(height=40, center=(50, 5))
-    doc.saveas(OUTDIR / f"dim_angular_all_arrows_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"dim_angular_all_arrows_{DXFVERSION}.dxf")
 
 
 if __name__ == "__main__":
