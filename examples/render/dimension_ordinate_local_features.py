@@ -1,12 +1,19 @@
-# Copyright (c) 2021, Manfred Moitzi
+# Copyright (c) 2021-2022, Manfred Moitzi
 # License: MIT License
 
-from pathlib import Path
+import pathlib
 from ezdxf.math import Vec3, UCS
 import ezdxf
 from ezdxf.render import forms
 
-DIR = Path("~/Desktop/Outbox").expanduser()
+# ------------------------------------------------------------------------------
+# This example shows how to use ordinate dimension in UCS.
+# ------------------------------------------------------------------------------
+
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
 
 doc = ezdxf.new(setup=True)
 msp = doc.modelspace()
@@ -66,4 +73,4 @@ msp.add_ordinate_y_dim(
 ).render(
     ucs=ucs
 )  # Important when using a render UCS!
-doc.saveas(DIR / "ord_local_features.dxf")
+doc.saveas(CWD / "ord_local_features.dxf")

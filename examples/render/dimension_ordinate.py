@@ -1,30 +1,32 @@
-# Purpose: using ordinate DIMENSION
-# Copyright (c) 2021, Manfred Moitzi
+# Copyright (c) 2021-2022, Manfred Moitzi
 # License: MIT License
 import pathlib
 import ezdxf
 from ezdxf.math import Vec3, UCS
 import logging
 
-# ========================================
-# Setup logging
-# ========================================
+# ------------------------------------------------------------------------------
+# This example shows how to use ordinate dimension.
+# ------------------------------------------------------------------------------
+
 logging.basicConfig(level="WARNING")
 
-# ========================================
-# Setup your preferred output directory
-# ========================================
-OUTDIR = pathlib.Path("~/Desktop/Outbox").expanduser()
-if not OUTDIR.exists():
-    OUTDIR = pathlib.Path()
-
-# =======================================================
-# Discarding dimension rendering is possible
-# for BricsCAD, but is incompatible to AutoCAD -> error
-# =======================================================
-BRICSCAD = False
-
 DXFVERSION = "R2013"
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
+
+# Default text attributes:
+TEXT_ATTRIBS = {
+    "height": 0.25,
+    "style": ezdxf.options.default_dimension_text_style,
+}
+DIM_TEXT_STYLE = ezdxf.options.default_dimension_text_style
+
+# Discarding the dimension rendering is possible for BricsCAD,
+# but it is incompatible to AutoCAD -> error
+BRICSCAD = False
 
 
 def add_x_and_y_type(
@@ -95,7 +97,7 @@ def ordinate_wcs(
             msp, Vec3(feature_location), Vec3(-1, -3), rotate, override
         )
     doc.set_modelspace_vport(height=70)
-    doc.saveas(OUTDIR / f"{filename}_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"{filename}_{DXFVERSION}.dxf")
 
 
 def ordinate_ucs(
@@ -121,7 +123,7 @@ def ordinate_ucs(
         ).render(ucs=ucs)
 
     doc.set_modelspace_vport(height=70)
-    doc.saveas(OUTDIR / f"{filename}_{DXFVERSION}.dxf")
+    doc.saveas(CWD / f"{filename}_{DXFVERSION}.dxf")
 
 
 if __name__ == "__main__":

@@ -1,12 +1,19 @@
-# Copyright (c) 2021, Manfred Moitzi
+# Copyright (c) 2021-2022, Manfred Moitzi
 # License: MIT License
 
-from pathlib import Path
+import pathlib
 from ezdxf.math import Vec3
 import ezdxf
 from ezdxf.render import forms
 
-DIR = Path("~/Desktop/Outbox").expanduser()
+# ------------------------------------------------------------------------------
+# This example shows how to use ordinate dimension in WCS.
+# ------------------------------------------------------------------------------
+
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
+
 
 # Use argument setup=True to setup the default dimension styles.
 doc = ezdxf.new(setup=True)
@@ -51,5 +58,5 @@ msp.add_ordinate_y_dim(
 # Necessary second step to create the BLOCK entity with the dimension geometry.
 # Additional processing of the DIMENSION entity could happen between adding
 # the entity and the rendering call.
-doc.saveas(DIR / "ord_global_features.dxf")
+doc.saveas(CWD / "ord_global_features.dxf")
 
