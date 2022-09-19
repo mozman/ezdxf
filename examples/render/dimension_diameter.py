@@ -1,5 +1,4 @@
-# Purpose: using radius DIMENSION
-# Copyright (c) 2019-2021, Manfred Moitzi
+# Copyright (c) 2019-2022, Manfred Moitzi
 # License: MIT License
 import pathlib
 import math
@@ -7,31 +6,27 @@ import ezdxf
 from ezdxf.math import Vec3, UCS
 import logging
 
-# ========================================
-# Setup logging
-# ========================================
+# ------------------------------------------------------------------------------
+# This example shows how to use diameter dimension.
+# ------------------------------------------------------------------------------
+
 logging.basicConfig(level="WARNING")
 
-# ========================================
-# Setup your preferred output directory
-# ========================================
-OUTDIR = pathlib.Path("~/Desktop/Outbox").expanduser()
-if not OUTDIR.exists():
-    OUTDIR = pathlib.Path()
+DXFVERSION = "R2013"
+CWD = pathlib.Path("~/Desktop/Outbox").expanduser()
+if not CWD.exists():
+    CWD = pathlib.Path(".")
 
-# ========================================
-# Default text attributes
-# ========================================
+
+# Default text attributes:
 TEXT_ATTRIBS = {
     "height": 0.25,
     "style": ezdxf.options.default_dimension_text_style,
 }
 DIM_TEXT_STYLE = ezdxf.options.default_dimension_text_style
 
-# =======================================================
-# Discarding dimension rendering is possible
-# for BricsCAD, but is incompatible to AutoCAD -> error
-# =======================================================
+# Discarding the dimension rendering is possible for BricsCAD,
+# but it is incompatible to AutoCAD -> error
 BRICSCAD = False
 
 
@@ -49,7 +44,7 @@ def multiple_locations(delta=10, center=(0, 0)):
     ]
 
 
-def diameter_default_outside(dxfversion="R2000", delta=10):
+def diameter_default_outside(dxfversion=DXFVERSION, delta=10):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
     for x, y in multiple_locations(delta=delta):
@@ -84,10 +79,10 @@ def diameter_default_outside(dxfversion="R2000", delta=10):
         # as dim.dimension, see also ezdxf.override.DimStyleOverride class.
         dim.render(discard=BRICSCAD)
     doc.set_modelspace_vport(height=3 * delta)
-    doc.saveas(OUTDIR / f"dim_diameter_{dxfversion}_default_outside.dxf")
+    doc.saveas(CWD / f"dim_diameter_{dxfversion}_default_outside.dxf")
 
 
-def diameter_default_inside(dxfversion="R2000", delta=10, dimtmove=0):
+def diameter_default_inside(dxfversion=DXFVERSION, delta=10, dimtmove=0):
     def add_dim(x, y, dimtad):
         msp.add_circle((x, y), radius=3)
         dim = msp.add_diameter_dim(
@@ -130,12 +125,12 @@ def diameter_default_inside(dxfversion="R2000", delta=10, dimtmove=0):
 
     doc.set_modelspace_vport(height=3 * delta)
     doc.saveas(
-        OUTDIR
+        CWD
         / f"dim_diameter_{dxfversion}_default_inside_dimtmove_{dimtmove}.dxf"
     )
 
 
-def diameter_default_outside_horizontal(dxfversion="R2000", delta=10):
+def diameter_default_outside_horizontal(dxfversion=DXFVERSION, delta=10):
     def add_dim(x, y, dimtad):
         msp.add_circle((x, y), radius=3)
         dim = msp.add_diameter_dim(
@@ -160,12 +155,12 @@ def diameter_default_outside_horizontal(dxfversion="R2000", delta=10):
 
     doc.set_modelspace_vport(height=3 * delta, center=(4.5 * delta, 0))
     doc.saveas(
-        OUTDIR / f"dim_diameter_{dxfversion}_default_outside_horizontal.dxf"
+        CWD / f"dim_diameter_{dxfversion}_default_outside_horizontal.dxf"
     )
 
 
 def diameter_default_inside_horizontal(
-    dxfversion="R2000", delta=10, dimtmove=0
+    dxfversion=DXFVERSION, delta=10, dimtmove=0
 ):
     doc = ezdxf.new(dxfversion, setup=True)
     style = doc.dimstyles.get("EZ_RADIUS_INSIDE")
@@ -188,12 +183,12 @@ def diameter_default_inside_horizontal(
         dim.render(discard=BRICSCAD)
     doc.set_modelspace_vport(height=3 * delta)
     doc.saveas(
-        OUTDIR
+        CWD
         / f"dim_diameter_{dxfversion}_default_inside_horizontal_dimtmove_{dimtmove}.dxf"
     )
 
 
-def diameter_user_defined_outside(dxfversion="R2000", delta=15):
+def diameter_user_defined_outside(dxfversion=DXFVERSION, delta=15):
     def add_dim(x, y, radius, dimtad):
         center = Vec3(x, y)
         msp.add_circle((x, y), radius=3)
@@ -218,10 +213,10 @@ def diameter_user_defined_outside(dxfversion="R2000", delta=15):
         add_dim(x + 6 * delta, y, 5, dimtad=4)  # below
 
     doc.set_modelspace_vport(height=3 * delta, center=(4.5 * delta, 0))
-    doc.saveas(OUTDIR / f"dim_diameter_{dxfversion}_user_defined_outside.dxf")
+    doc.saveas(CWD / f"dim_diameter_{dxfversion}_user_defined_outside.dxf")
 
 
-def diameter_user_defined_outside_horizontal(dxfversion="R2000", delta=15):
+def diameter_user_defined_outside_horizontal(dxfversion=DXFVERSION, delta=15):
     def add_dim(x, y, radius, dimtad):
         center = Vec3(x, y)
         msp.add_circle((x, y), radius=3)
@@ -248,12 +243,11 @@ def diameter_user_defined_outside_horizontal(dxfversion="R2000", delta=15):
 
     doc.set_modelspace_vport(height=3 * delta, center=(4.5 * delta, 0))
     doc.saveas(
-        OUTDIR
-        / f"dim_diameter_{dxfversion}_user_defined_outside_horizontal.dxf"
+        CWD / f"dim_diameter_{dxfversion}_user_defined_outside_horizontal.dxf"
     )
 
 
-def diameter_user_defined_inside(dxfversion="R2000", delta=10, dimtmove=0):
+def diameter_user_defined_inside(dxfversion=DXFVERSION, delta=10, dimtmove=0):
     def add_dim(x, y, radius, dimtad):
         center = Vec3(x, y)
         msp.add_circle((x, y), radius=3)
@@ -282,12 +276,12 @@ def diameter_user_defined_inside(dxfversion="R2000", delta=10, dimtmove=0):
 
     doc.set_modelspace_vport(height=3 * delta, center=(4.5 * delta, 0))
     doc.saveas(
-        OUTDIR
+        CWD
         / f"dim_diameter_{dxfversion}_user_defined_inside_dimtmove_{dimtmove}.dxf"
     )
 
 
-def diameter_user_defined_inside_horizontal(dxfversion="R2000", delta=10):
+def diameter_user_defined_inside_horizontal(dxfversion=DXFVERSION, delta=10):
     def add_dim(x, y, radius, dimtad):
         center = Vec3(x, y)
         msp.add_circle((x, y), radius=3)
@@ -314,11 +308,11 @@ def diameter_user_defined_inside_horizontal(dxfversion="R2000", delta=10):
 
     doc.set_modelspace_vport(height=3 * delta, center=(4.5 * delta, 0))
     doc.saveas(
-        OUTDIR / f"dim_diameter_{dxfversion}_user_defined_inside_horizontal.dxf"
+        CWD / f"dim_diameter_{dxfversion}_user_defined_inside_horizontal.dxf"
     )
 
 
-def diameter_3d(dxfversion="R2000", delta=10):
+def diameter_3d(dxfversion=DXFVERSION, delta=10):
     doc = ezdxf.new(dxfversion, setup=True)
     msp = doc.modelspace()
 
@@ -332,7 +326,7 @@ def diameter_3d(dxfversion="R2000", delta=10):
         dim.render(discard=BRICSCAD, ucs=ucs)
 
     doc.set_modelspace_vport(height=3 * delta)
-    doc.saveas(OUTDIR / f"dim_diameter_{dxfversion}_3d.dxf")
+    doc.saveas(CWD / f"dim_diameter_{dxfversion}_3d.dxf")
 
 
 if __name__ == "__main__":
